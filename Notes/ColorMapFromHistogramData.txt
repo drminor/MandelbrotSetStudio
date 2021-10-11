@@ -1,0 +1,17 @@
+
+
+ColorMap consists of a list of targetPercentages and color values.
+
+The targetPercentages are used to determine cut off values.
+CutOff values determine how each sample is colored. Samples that reach an iteration count of x get colored with color value y.
+
+When the color map form is updated, the map display is requested to update it's canvas using the new cutoffs.
+
+When the map display's coordinates are updated a new histogram is generated. 
+When a new histogram is generated a new set of cutoffs are determined (from the unchanged targetPercentages) 
+and the map display is then requested to update its canvas.
+
+Coord change -> map update -> histogram update - ColorMap update -> canvas update.
+The second canvas update does not generate a new histogram.
+
+ColorMap update -> canvas update.

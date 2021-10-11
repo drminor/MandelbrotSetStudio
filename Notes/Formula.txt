@@ -1,0 +1,19 @@
+Formula
+The Mandelbrot Set is defined as follows. Define a function f to be this formula:
+
+f[{a_, b_}] := {a*a - b*b + c1, 2*a*b + c2}
+The a, b, c1, c2 are (real) numbers, and c1 and c2 are fixed numbers (constants).
+
+For example, if we set c1=0 and c2=0, then the formula becomes:
+
+f[{a_,b_}] := {a * a - b * b , 2 * a * b}
+and then f[{3,4}] evaluates to {-7,24}.
+
+The input is a pair of numbers, and output is also a pair of numbers. You can plot them as points on the plane.
+
+Iteration of Formula
+For each point {c1,c2} in the plane, let's compute the recursion (nesting) of f, starting at the initial input {0,0}. That is, we compute f[f[f[…f[{0,0}]…]]].
+
+Everytime we evaluate f, we get a point. We feed the point back to f, and get another point. We repeat this. If, in the limit, the point gets further and further from the origin {0,0} in a way that it eventually is outside of any circle centered on {0,0} however large, then we say that the number {c1,c2} escapes.
+
+We define the Mandelbrot set as the set of points that do NOT escape.

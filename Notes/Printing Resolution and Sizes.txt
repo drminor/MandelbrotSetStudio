@@ -1,0 +1,21 @@
+11 x 7.33 is the 1:1.5 ratio for a regular printer.
+
+At 600 dpi, this is 
+
+600 x 600 x 4 bytes per square inch = 1,440,000 bytes / sq. in.
+
+11 x 7.33 = 80.66 sq. inches.
+
+80.66 x 1,440,000 = 116,154,720 bytes = 117.7 MB
+
+11 x 7.33 is 6,600 x 4,398 pixels or about 29 Mega Pixels (using 1,000,000 = 1 MB) or 27 Mega Pixels using 1024 x 1024.
+
+
+6' x 4'
+72" x 48" = 3,456 sq. in.
+
+3,456 x 1,440,000 = 4,976,640,000 = 4.63 TB
+1,244,160,000 pixels 1.16 Tera Pixels
+
+
+
