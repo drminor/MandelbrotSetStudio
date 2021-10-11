@@ -38,7 +38,7 @@ namespace CountsRepo
 		public string SerializedKey { get; }
 		public K Key { get; }
 
-		private string GetKeyAsString(K key)
+		private static string GetKeyAsString(K key)
 		{
 			StringBuilder sb = new();
 			SerializationHelper.Serialize(key, ref sb);
@@ -288,7 +288,7 @@ namespace CountsRepo
 			return success;
 		}
 
-		private uint WriteParts(BinaryWriter bw, V value)
+		private static uint WriteParts(BinaryWriter bw, V value)
 		{
 			uint totalBytes = 0;
 
@@ -305,7 +305,7 @@ namespace CountsRepo
 			return totalBytes;
 		}
 
-		private bool LoadParts(BinaryReader br, FileStream fs, V value)
+		private static bool LoadParts(BinaryReader br, FileStream fs, V value)
 		{
 			for (int partCntr = 0; partCntr < value.PartCount; partCntr++)
 			{

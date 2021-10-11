@@ -19,7 +19,7 @@ namespace MqMessages
 
 		public RectangleInt Translate(PointInt amount)
 		{
-			RectangleInt result = new RectangleInt(new PointInt(this.Point.X + amount.X, this.Point.Y + amount.Y), new SizeInt(Size.W, Size.H));
+			RectangleInt result = new(new PointInt(Point.X + amount.X, Point.Y + amount.Y), new SizeInt(Size.W, Size.H));
 			return result;
 		}
 
@@ -51,10 +51,7 @@ namespace MqMessages
 
 		public override int GetHashCode()
 		{
-			var hashCode = 1392910933;
-			hashCode = hashCode * -1521134295 + EqualityComparer<PointInt>.Default.GetHashCode(Point);
-			hashCode = hashCode * -1521134295 + EqualityComparer<SizeInt>.Default.GetHashCode(Size);
-			return hashCode;
+			return HashCode.Combine(Point, Size);
 		}
 
 		public int GetHashCode(RectangleInt obj)

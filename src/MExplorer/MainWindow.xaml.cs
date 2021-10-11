@@ -41,7 +41,7 @@ namespace MExplorer
 		}
 
 
-		private CanvasBitmap GetCanvasBitmap(CanvasDrawingSession drawingSession)
+		private static CanvasBitmap GetCanvasBitmap(CanvasDrawingSession drawingSession)
 		{
 			byte[] buf = GetImageBytes();
 			CanvasBitmap result = CanvasBitmap.CreateFromBytes(drawingSession, buf, 100, 100, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
@@ -49,7 +49,7 @@ namespace MExplorer
 			return result;
 		}
 
-		private byte[] GetImageBytes()
+		private static byte[] GetImageBytes()
 		{
 			byte[] buf = new byte[32 * 100 * 100];
 

@@ -31,10 +31,7 @@ namespace MqMessages
 
 		public override int GetHashCode()
 		{
-			var hashCode = 1861411795;
-			hashCode = hashCode * -1521134295 + X.GetHashCode();
-			hashCode = hashCode * -1521134295 + Y.GetHashCode();
-			return hashCode;
+			return HashCode.Combine(X, Y);
 		}
 
 		public static bool operator ==(PointInt int1, PointInt int2)

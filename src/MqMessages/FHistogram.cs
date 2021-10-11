@@ -58,7 +58,7 @@ namespace MqMessages
 		//	StrOccurances = GetStringFromInts(occurances);
 		//}
 
-		private string GetStringFromInts(ICollection<int> vals)
+		private static string GetStringFromInts(ICollection<int> vals)
 		{
 			byte[] tempBuf = vals.SelectMany(value => BitConverter.GetBytes(value)).ToArray();
 			string result = Convert.ToBase64String(tempBuf);
