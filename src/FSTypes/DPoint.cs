@@ -93,13 +93,13 @@
         }
 
 		public static DPoint operator -(DPoint a, DPoint b)
-			=> new DPoint(a.X - b.X, a.Y - b.Y);
+			=> new(a.X - b.X, a.Y - b.Y);
 
 		public static DPoint operator +(DPoint a, DPoint b)
-			=> new DPoint(a.X + b.X, a.Y + b.Y);
+			=> new(a.X + b.X, a.Y + b.Y);
 
 		public static DPoint operator *(DPoint a, DPoint b)
-			=> new DPoint(a.X * b.X - a.Y * b.Y, a.X * b.Y + a.Y * b.X);
+			=> new(a.X * b.X - a.Y * b.Y, a.X * b.Y + a.Y * b.X);
 
 	}
 }

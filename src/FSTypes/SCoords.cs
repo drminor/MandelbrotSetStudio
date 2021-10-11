@@ -23,7 +23,7 @@ namespace FSTypes
 
 		public MqMessages.Coords GetCoords()
 		{
-			MqMessages.Coords result = new MqMessages.Coords(LeftBot.X, RightTop.X, LeftBot.Y, RightTop.Y);
+			MqMessages.Coords result = new(LeftBot.X, RightTop.X, LeftBot.Y, RightTop.Y);
 			return result;
 		}
 

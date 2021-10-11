@@ -16,7 +16,7 @@ namespace CountsRepo
 
 			try
 			{
-				XmlSerializer xmlserializer = new XmlSerializer(typeof(T));
+				XmlSerializer xmlserializer = new(typeof(T));
 				using (XmlWriter writer = XmlWriter.Create(sb))
 				{
 					xmlserializer.Serialize(writer, value);
@@ -35,13 +35,13 @@ namespace CountsRepo
 		{
 			if (xml == null)
 			{
-				obj = default(T);
+				obj = default;
 				return false;
 			}
 
 			try
 			{
-				XmlSerializer xmlserializer = new XmlSerializer(typeof(T));
+				XmlSerializer xmlserializer = new(typeof(T));
 				using (TextReader reader = new StringReader(xml))
 				{
 					obj = (T)xmlserializer.Deserialize(reader);
@@ -52,7 +52,7 @@ namespace CountsRepo
 			catch (Exception ex)
 			{
 				Debug.WriteLine(ex);
-				obj = default(T);
+				obj = default;
 				return false;
 			}
 		}
