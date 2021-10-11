@@ -1,0 +1,35 @@
+﻿<Window
+    x:Class="MExplorer.MainWindow"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:local="using:MExplorer"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"    
+    mc:Ignorable="d" >
+
+    <!--<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
+    </StackPanel>-->
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="80"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!--<Image Grid.Column="0" Grid.Row="0" Source="WP_20131215_001.jpg"/>-->
+
+        <canvas:CanvasControl Draw="CanvasControl_Draw" ClearColor="AntiqueWhite"  />
+
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" Orientation="Horizontal" >
+            <Button HorizontalAlignment="Center" Width="100" Margin="0,15,0,15" Click="Button_Click">Close</Button>
+        </StackPanel>
+
+
+
+    </Grid>
+</Window>
