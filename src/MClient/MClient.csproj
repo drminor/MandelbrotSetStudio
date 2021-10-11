@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="SubJobProcessor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="SubJobProcessor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Experimental.System.Messaging" Version="1.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CountsRepo\CountsRepo.csproj" />
+    <ProjectReference Include="..\FSTypes\FSTypes.csproj" />
+    <ProjectReference Include="..\MFile\MFile.csproj" />
+    <ProjectReference Include="..\MqMessages\MqMessages.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,5 +1,6 @@
 ﻿using System;
 
+// TODO: Make this class only support read/write responsibilities and move all "Color Processing" responsibilites to another project.
 namespace MFile
 {
     public class ColorMap
