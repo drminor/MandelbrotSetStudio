@@ -1,4 +1,10 @@
 ﻿[*.cs]
 
 # CA1822: Mark members as static
-dotnet_diagnostic.CA1822.severity = suggestion
+dotnet_diagnostic.CA1822.severity = none
+
+# Default severity for all analyzer diagnostics
+dotnet_analyzer_diagnostic.severity = silent
+
+# Default severity for analyzer diagnostics with category 'Performance'
+dotnet_analyzer_diagnostic.category-Performance.severity = silent

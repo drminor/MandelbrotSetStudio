@@ -1,4 +1,4 @@
-﻿namespace MFile
+﻿namespace FSTypes
 {
     public class ColorMapColor
     {

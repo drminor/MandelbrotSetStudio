@@ -61,7 +61,7 @@ namespace FSTypes
 			}
 		}
 
-		private double GetSamplePointDiff(double s, double e, int extent)
+		private static double GetSamplePointDiff(double s, double e, int extent)
 		{
 			double unit = (e - s) / extent;
 			double second = s + unit;
@@ -69,7 +69,7 @@ namespace FSTypes
 			return diff;
 		}
 
-		private bool HasPrecision(double x)
+		private static bool HasPrecision(double x)
 		{
 			if (x == 0)
 				return false;
@@ -81,7 +81,7 @@ namespace FSTypes
 		}
 
 		const long ExponentMask = 0x7FF0000000000000;
-		private bool IsSubnormal(double v)
+		private static bool IsSubnormal(double v)
 		{
 			long bithack = BitConverter.DoubleToInt64Bits(v);
 			if (bithack == 0) return false;

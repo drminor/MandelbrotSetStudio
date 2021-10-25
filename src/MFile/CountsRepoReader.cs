@@ -4,7 +4,7 @@ using System;
 
 namespace MFile
 {
-	class CountsRepoReader
+	public class CountsRepoReader
 	{
 		readonly bool _hiRez;
 		readonly int _blockWidth;

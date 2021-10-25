@@ -15,20 +15,24 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\Printing Resolution and Sizes.txt = Notes\Printing Resolution and Sizes.txt
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CountsRepo", "src\CountsRepo\CountsRepo.csproj", "{45E80061-595B-4D46-8AFC-B18DAA2EB2AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CountsRepo", "src\CountsRepo\CountsRepo.csproj", "{45E80061-595B-4D46-8AFC-B18DAA2EB2AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FSTypes", "src\FSTypes\FSTypes.csproj", "{F5B5B4EC-49FF-4157-83E9-92725C5EDC5C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FSTypes", "src\FSTypes\FSTypes.csproj", "{F5B5B4EC-49FF-4157-83E9-92725C5EDC5C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MqMessages", "src\MqMessages\MqMessages.csproj", "{42C7E2F2-D050-4C1C-9DBB-387F4B5F9CAD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MqMessages", "src\MqMessages\MqMessages.csproj", "{42C7E2F2-D050-4C1C-9DBB-387F4B5F9CAD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8D960C02-80E3-48F0-9A6A-241B384D90B0}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MFile", "src\MFile\MFile.csproj", "{4D790BA0-80FD-455C-975D-54959B0379C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MFile", "src\MFile\MFile.csproj", "{4D790BA0-80FD-455C-975D-54959B0379C8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MClient", "src\MClient\MClient.csproj", "{0361B630-6E9A-438E-B283-F476904BD8E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MClient", "src\MClient\MClient.csproj", "{0361B630-6E9A-438E-B283-F476904BD8E8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageBuilder", "src\ImageBuilder\ImageBuilder.csproj", "{9115DA6A-D180-44F7-B9A4-8B681490BC9C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PngImageLib", "src\PngImageLib\PngImageLib.csproj", "{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -156,6 +160,38 @@ Global
 		{0361B630-6E9A-438E-B283-F476904BD8E8}.Release|x64.Build.0 = Release|Any CPU
 		{0361B630-6E9A-438E-B283-F476904BD8E8}.Release|x86.ActiveCfg = Release|Any CPU
 		{0361B630-6E9A-438E-B283-F476904BD8E8}.Release|x86.Build.0 = Release|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Debug|arm64.Build.0 = Debug|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Debug|x64.Build.0 = Debug|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Debug|x86.Build.0 = Debug|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Release|arm64.ActiveCfg = Release|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Release|arm64.Build.0 = Release|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Release|x64.ActiveCfg = Release|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Release|x64.Build.0 = Release|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Release|x86.ActiveCfg = Release|Any CPU
+		{9115DA6A-D180-44F7-B9A4-8B681490BC9C}.Release|x86.Build.0 = Release|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Debug|arm64.Build.0 = Debug|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Debug|x64.Build.0 = Debug|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Debug|x86.Build.0 = Debug|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Release|arm64.ActiveCfg = Release|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Release|arm64.Build.0 = Release|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Release|x64.ActiveCfg = Release|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Release|x64.Build.0 = Release|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Release|x86.ActiveCfg = Release|Any CPU
+		{225B45CC-6FDA-4E3F-A24F-8DF96A5F88A9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

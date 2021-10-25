@@ -1,29 +1,16 @@
-﻿namespace MFile
+﻿using System;
+
+namespace MFile
 {
-    public class ColorMapEntry
+    public record ColorMapEntry(int Cutoff, string StartCssColor, int BlendStyle, string EndCssColor)
     {
-        public readonly int CutOff;
-        public readonly ColorMapColor StartColor;
-        public readonly ColorMapBlendStyle BlendStyle;
-        public ColorMapColor EndColor;
 
-        public int PrevCutOff;
-        public int BucketWidth;
+        public const int BLEND_STYLE_NONE = 0;
+        public const int BLEND_STYLE_NEXT = 1;
+        public const int BLEND_STYLE_END = 2;
 
-        public ColorMapEntry(int cutOff, string startCssColor, ColorMapBlendStyle blendStyle, string endCssColor)
-        {
-            CutOff = cutOff;
-            StartColor = new ColorMapColor(startCssColor);
-            BlendStyle = blendStyle;
-            EndColor = new ColorMapColor(endCssColor);
-        }
+        public ColorMapEntry(int cutOff, string cssColor) : this(cutOff, cssColor ?? throw new ArgumentNullException(nameof(cssColor)), BLEND_STYLE_NONE, cssColor)
+        { }
 
-        public ColorMapEntry(int cutOff, string startCssColor)
-        {
-            CutOff = cutOff;
-            StartColor = new ColorMapColor(startCssColor);
-            BlendStyle = ColorMapBlendStyle.None;
-            EndColor = new ColorMapColor(startCssColor);
-        }
     }
 }

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MFile
+namespace FSTypes
 {
 	public class MapSectionWorkResult : IPartsBin
 	{
