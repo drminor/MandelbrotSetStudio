@@ -3,12 +3,10 @@ using MapSectionRepo;
 using MFile;
 using PngImageLib;
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace ImageBuilder
 {
-	using ColorMapEntry = MFile.ColorMapEntry;
 	public class PngBuilder
 	{
 		public readonly string BasePath;
@@ -22,17 +20,18 @@ namespace ImageBuilder
 			BlockHeight = blockHeight;
 		}
 
-		public void Build(string fn, bool hiRez)
+		// TODO: HiRez, blockWidth and blockHeight should come from the RepoFile.
+		public void Build(string fn, bool isHighRes)
 		{
-			// TODO: HiRez, blockWidth and blockHeight should come from the RepoFile.
-
 			MFileInfo mFileInfo = ReadFromJson(fn);
-			int maxIterations = mFileInfo.MaxIterations;
-			IList<ColorMapEntry> colorRanges = mFileInfo.ColorMapEntries;
 
-			string repofilename = mFileInfo.Name;
+			var mSetInfo = MFileHelper.GetMSetInfo(mFileInfo);
+			var maxIterations = mSetInfo.MaxIterations;
+			var colorMap = mSetInfo.ColorMap;
 
-			var countsRepoReader = new CountsRepoReader(repofilename, hiRez, BlockWidth, BlockHeight);
+			var repofilename = mFileInfo.Name;
+
+			ICountsRepoReader countsRepoReader = GetReader(repofilename, isHighRes);
 			CanvasSize imageSizeInBlocks = GetImageSizeInBlocks(countsRepoReader);
 
 			int w = imageSizeInBlocks.Width;
@@ -40,7 +39,7 @@ namespace ImageBuilder
 
 			var imageSize = new CanvasSize(w * BlockWidth, h * BlockHeight);
 
-			string imagePath = GetImageFilename(fn, imageSize.Width, hiRez, BasePath);
+			string imagePath = GetImageFilename(fn, imageSize.Width, isHighRes, BasePath);
 
 			var key = new KPoint(0, 0);
 
@@ -59,8 +58,7 @@ namespace ImageBuilder
 						int[] countsForThisLine = countsRepoReader.GetCounts(key, lPtr);
 						if (countsForThisLine != null)
 						{
-							// TODO: Fix me
-							//BuildPngImageLineSegment(hBPtr * BlockWidth, countsForThisLine, iLine, maxIterations, colorMap);
+							BuildPngImageLineSegment(hBPtr * BlockWidth, countsForThisLine, iLine, maxIterations, colorMap);
 						}
 						else
 						{
@@ -70,6 +68,18 @@ namespace ImageBuilder
 
 					pngImage.WriteLine(iLine);
 				}
+			}
+		}
+
+		private ICountsRepoReader GetReader(string fn, bool isHighRes)
+		{
+			if (isHighRes)
+			{
+				return new CountsRepoReaderHiRes(fn, BlockWidth, BlockHeight);
+			}
+			else
+			{
+				return new CountsRepoReader(fn, BlockWidth, BlockHeight);
 			}
 		}
 
@@ -83,10 +93,10 @@ namespace ImageBuilder
 			return mFileInfo;
 		}
 
-		private static string GetImageFilename(string fn, int imageWidth, bool hiRez, string basePath)
+		private static string GetImageFilename(string fn, int imageWidth, bool isHighRes, string basePath)
 		{
 			string imagePath;
-			if (hiRez)
+			if (isHighRes)
 			{
 				imagePath = Path.Combine(basePath, $"{fn}_hrez_{imageWidth}.png");
 			}
@@ -97,25 +107,6 @@ namespace ImageBuilder
 
 			return imagePath;
 		}
-
-		//private int[] GetOneLineFromCountsBlock(int[] counts, int lPtr)
-		//{
-		//	int[] result = new int[BlockWidth];
-
-		//	Array.Copy(counts, lPtr * BlockWidth, result, 0, BlockWidth);
-		//	return result;
-		//}
-
-		//private int[] GetOneLineFromCountsBlock(uint[] counts, int lPtr)
-		//{
-		//	int[] result = new int[BlockWidth];
-		//	int srcPtr = lPtr * BlockWidth;
-
-		//	for (int i = 0; i < result.Length; i++)
-		//		result[i] = (int)counts[srcPtr++];
-
-		//	return result;
-		//}
 
 		public static void BuildPngImageLineSegment(int pixPtr, int[] counts, ImageLine iLine, int maxIterations, ColorMap colorMap)
 		{
@@ -153,9 +144,8 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private static CanvasSize GetImageSizeInBlocks(CountsRepoReader countsRepo)
+		private static CanvasSize GetImageSizeInBlocks(ICountsRepoReader countsRepo)
 		{
-
 			int w = 10;
 			int h = 0;
 

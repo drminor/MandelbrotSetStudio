@@ -1,5 +1,5 @@
 ﻿
-namespace MClient
+namespace FSTypes
 {
 	public class SPoint
 	{

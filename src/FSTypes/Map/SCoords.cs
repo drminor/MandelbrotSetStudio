@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MClient
+namespace FSTypes
 {
 	public class SCoords
 	{
@@ -20,11 +20,11 @@ namespace MClient
 			RightTop = rightTop ?? throw new ArgumentNullException(nameof(rightTop));
 		}
 
-		public MqMessages.Coords GetCoords()
-		{
-			MqMessages.Coords result = new(LeftBot.X, RightTop.X, LeftBot.Y, RightTop.Y);
-			return result;
-		}
+		//public MqMessages.Coords GetCoords()
+		//{
+		//	MqMessages.Coords result = new(LeftBot.X, RightTop.X, LeftBot.Y, RightTop.Y);
+		//	return result;
+		//}
 
 		public override string ToString()
 		{

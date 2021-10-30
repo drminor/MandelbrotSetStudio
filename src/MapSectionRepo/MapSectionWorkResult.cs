@@ -7,7 +7,7 @@ namespace MapSectionRepo
 {
 	public class MapSectionWorkResult : IPartsBin
 	{
-		public bool IsHiRez { get; private set; }
+		public bool IsHighRes { get; private set; }
 		public int[] Counts { get; private set; }
 		public bool[] DoneFlags { get; private set; }
 		public DDouble[] ZValues { get; private set; }
@@ -23,11 +23,11 @@ namespace MapSectionRepo
 		{
 		}
 
-		public MapSectionWorkResult(int size, bool hiRez, bool includeZValuesOnRead) : this(null, 0, null, null, size, hiRez, includeZValuesOnRead)
+		public MapSectionWorkResult(int size, bool highRes, bool includeZValuesOnRead) : this(null, 0, null, null, size, highRes, includeZValuesOnRead)
 		{
 		}
 
-		private MapSectionWorkResult(int[] counts, int iterationCount, DDouble[] zValues, bool[] doneFlags, int size, bool hiRez, bool includeZValuesOnRead)
+		private MapSectionWorkResult(int[] counts, int iterationCount, DDouble[] zValues, bool[] doneFlags, int size, bool highRes, bool includeZValuesOnRead)
 		{
 			_size = size;
 
@@ -36,7 +36,7 @@ namespace MapSectionRepo
 			IterationCount = iterationCount;
 			ZValues = zValues;
 
-			PartDetails = BuildPartDetails(_size, hiRez, includeZValuesOnRead, out uint totalBytes);
+			PartDetails = BuildPartDetails(_size, highRes, includeZValuesOnRead, out uint totalBytes);
 			TotalBytesToWrite = totalBytes;
 		}
 

@@ -346,7 +346,8 @@ namespace MClient
 
 		private static FJobRequest CreateFJobRequest(int jobId, SMapWorkRequest smwr)
 		{
-			Coords coords = smwr.SCoords.GetCoords();
+			var sCoords = smwr.SCoords;
+			var coords = new Coords(sCoords.LeftBot.X, sCoords.RightTop.X, sCoords.LeftBot.Y, sCoords.RightTop.Y);
 
 			var area = new RectangleInt(new PointInt(smwr.Area.SectionAnchor.X, smwr.Area.SectionAnchor.Y), new SizeInt(smwr.Area.CanvasSize.Width, smwr.Area.CanvasSize.Height));
 			var samplePoints = new SizeInt(smwr.CanvasSize.Width, smwr.CanvasSize.Height);
@@ -359,3 +360,9 @@ namespace MClient
 		#endregion
 	}
 }
+
+//public MqMessages.Coords GetCoords()
+//{
+//	MqMessages.Coords result = new(LeftBot.X, RightTop.X, LeftBot.Y, RightTop.Y);
+//	return result;
+//}

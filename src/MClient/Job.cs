@@ -163,7 +163,7 @@ namespace MClient
 
 			if (_emptyResult == null)
 			{
-				_emptyResult = new MapSectionWorkResult(SECTION_WIDTH * SECTION_HEIGHT, hiRez: false, includeZValuesOnRead: false);
+				_emptyResult = new MapSectionWorkResult(SECTION_WIDTH * SECTION_HEIGHT, highRes: false, includeZValuesOnRead: false);
 			}
 
 			return _emptyResult;
