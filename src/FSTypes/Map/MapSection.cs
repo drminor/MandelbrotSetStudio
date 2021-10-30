@@ -2,6 +2,7 @@
 
 namespace FSTypes
 {
+	
 	public class MapSection
 	{
 		public Point SectionAnchor;
@@ -31,9 +32,9 @@ namespace FSTypes
 		//	return new RectangleInt(SectionAnchor.GetPointInt(), CanvasSize.GetSizeInt());
 		//}
 
-		public KPoint GetKPoint()
-		{
-			return SectionAnchor.GetKPoint();
-		}
+		//public KPoint GetKPoint()
+		//{
+		//	return SectionAnchor.GetKPoint();
+		//}
 	}
 }

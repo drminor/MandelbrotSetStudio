@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace ImageBuilder
+namespace MapSectionRepo
 {
 	internal class SubJobResult : IPartsBin
 	{

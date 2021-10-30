@@ -2,7 +2,7 @@
 using FSTypes;
 using System;
 
-namespace ImageBuilder
+namespace MapSectionRepo
 {
 	public class CountsRepoReader
 	{

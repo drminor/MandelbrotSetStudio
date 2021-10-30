@@ -2,19 +2,19 @@
 
 namespace FSTypes
 {
-	public class Coords
+	public class DCoords
     {
         public DPoint LeftBot;
 
         public DPoint RightTop;
 
-        private Coords()
+        private DCoords()
         {
             LeftBot = new DPoint(0, 0);
             RightTop = new DPoint(0, 0);
         }
 
-        public Coords(DPoint leftBot, DPoint rightTop)
+        public DCoords(DPoint leftBot, DPoint rightTop)
         {
             LeftBot = leftBot ?? throw new ArgumentNullException(nameof(leftBot));
             RightTop = rightTop ?? throw new ArgumentNullException(nameof(rightTop));

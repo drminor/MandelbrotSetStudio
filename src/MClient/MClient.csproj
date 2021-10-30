@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CountsRepo\CountsRepo.csproj" />
+    <ProjectReference Include="..\MapSectionRepo\MapSectionRepo.csproj" />
     <ProjectReference Include="..\MqMessages\MqMessages.csproj" />
   </ItemGroup>
 
