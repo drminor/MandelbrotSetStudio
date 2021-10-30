@@ -1,20 +1,17 @@
-﻿using FSTypes;
-using MFile;
-using System;
+﻿using System;
 
-// TODO: Make this class only support read/write responsibilities and move all "Color Processing" responsibilites to another project.
-namespace ImageBuilder
+namespace FSTypes
 {
     public class ColorMap
     {
-        private readonly FSTypes.ColorMapEntry[] _colorMapEntries;
+        private readonly ColorMapEntry[] _colorMapEntries;
 
         public readonly int[] CutOffs;
-        public readonly FSTypes.ColorMapEntry HighColorEntry;
+        public readonly ColorMapEntry HighColorEntry;
 
-        public ColorMap(FSTypes.ColorMapEntry[] colorMapEntries, string highColor)
+        public ColorMap(ColorMapEntry[] colorMapEntries, string highColor)
         {
-			HighColorEntry = new FSTypes.ColorMapEntry(-1, highColor, ColorMapBlendStyle.None, highColor);
+			HighColorEntry = new ColorMapEntry(-1, highColor, ColorMapBlendStyle.None, highColor);
 
 			_colorMapEntries = colorMapEntries;
             CutOffs = BuildCutOffs(colorMapEntries);
@@ -24,12 +21,12 @@ namespace ImageBuilder
 
         public int[] GetColor(int countVal, double escapeVelocity)
         {
-			FSTypes.ColorMapEntry cme = GetColorMapEntry(countVal);
+			var cme = GetColorMapEntry(countVal);
             int[] result = GetBlendedColor(cme, countVal, escapeVelocity);
             return result;
         }
          
-        private static int[] GetBlendedColor(FSTypes.ColorMapEntry cme, int countVal, double escapeVelocity)
+        private static int[] GetBlendedColor(ColorMapEntry cme, int countVal, double escapeVelocity)
         {
             int[] result;
             if(cme.BlendStyle == ColorMapBlendStyle.None)
@@ -40,14 +37,14 @@ namespace ImageBuilder
 
             int botBucketVal = cme.PrevCutOff;
 
-   //         int[] cStart;
+			//int[] cStart;
 
-   //         if (countVal == botBucketVal)
-   //         {
-   //             cStart = cme.StartColor.ColorComps;
-   //         }
-   //         else
-   //         {
+			//if (countVal == botBucketVal)
+			//{
+			//	cStart = cme.StartColor.ColorComps;
+			//}
+			//else
+			//{
 			//	double stepFactor = (-1 + countVal - botBucketVal) / (double)cme.BucketWidth;
 			//	cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
 			//}
@@ -56,10 +53,9 @@ namespace ImageBuilder
 			////cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
 
 			//double intraStepFactor = escapeVelocity / cme.BucketWidth;
-
 			//result = Interpolate(cStart, cme.StartColor.ColorComps, cme.EndColor.ColorComps, intraStepFactor);
 
-			double stepFactor = (countVal + escapeVelocity - botBucketVal) / (double)cme.BucketWidth;
+			double stepFactor = (countVal + escapeVelocity - botBucketVal) / cme.BucketWidth;
 			result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
 
 
@@ -106,10 +102,10 @@ namespace ImageBuilder
             }
         }
 
-        private FSTypes.ColorMapEntry GetColorMapEntry(int countVal)
+        private ColorMapEntry GetColorMapEntry(int countVal)
         {
-			FSTypes.ColorMapEntry result;
-            int newIndex = System.Array.BinarySearch(CutOffs, countVal);
+			ColorMapEntry result;
+            int newIndex = Array.BinarySearch(CutOffs, countVal);
 
             if(newIndex < 0)
             {
@@ -132,7 +128,7 @@ namespace ImageBuilder
             return result;
         }
 
-        private static int[] BuildCutOffs(FSTypes.ColorMapEntry[] colorMapEntries)
+        private static int[] BuildCutOffs(ColorMapEntry[] colorMapEntries)
         {
             int[] result = new int[colorMapEntries.Length];
 
@@ -143,7 +139,7 @@ namespace ImageBuilder
             return result;
         }
 
-        private static void SetBucketWidths(FSTypes.ColorMapEntry[] colorMapEntries)
+        private static void SetBucketWidths(ColorMapEntry[] colorMapEntries)
         {
             colorMapEntries[0].PrevCutOff = 0;
             colorMapEntries[0].BucketWidth = colorMapEntries[0].CutOff;
@@ -161,7 +157,7 @@ namespace ImageBuilder
             //colorMapEntries[colorMapEntries.Length - 1].PrevCutOff = prevCutOff;
         }
 
-        private void SetEndColors(FSTypes.ColorMapEntry[] colorMapEntries)
+        private void SetEndColors(ColorMapEntry[] colorMapEntries)
         {
             for (int ptr = 0; ptr < colorMapEntries.Length; ptr++)
             {
@@ -181,57 +177,10 @@ namespace ImageBuilder
 
         public int GetCutOff(int countVal)
         {
-			FSTypes.ColorMapEntry cme = GetColorMapEntry(countVal);
+			ColorMapEntry cme = GetColorMapEntry(countVal);
             return cme.CutOff;
         }
 
-        public static ColorMap GetFromColorMapForExport(MFileInfo mFileInfo)
-        {
-			FSTypes.ColorMapEntry[] newRanges = new FSTypes.ColorMapEntry[mFileInfo.ColorMapEntries.Count];
 
-            for (int ptr = 0; ptr < mFileInfo.ColorMapEntries.Count; ptr++)
-            {
-				MFile.ColorMapEntry sourceCme = mFileInfo.ColorMapEntries[ptr];
-
-                ColorMapBlendStyle blendStyle = Enum.Parse<ColorMapBlendStyle>(sourceCme.BlendStyle.ToString());
-                newRanges[ptr] = new FSTypes.ColorMapEntry(sourceCme.Cutoff, sourceCme.StartCssColor, blendStyle, sourceCme.EndCssColor);
-            }
-
-            ColorMap result = new(newRanges, mFileInfo.HighColorCss);
-
-            return result;
-        }
-
-   //     private static ColorMap GetFromColorMapForExportV1(ColorMapForExport cmfe)
-   //     {
-			//FSTypes.ColorMapEntry[] newRanges = new FSTypes.ColorMapEntry[cmfe.Ranges.Length];
-
-   //         for (int ptr = 0; ptr < cmfe.Ranges.Length; ptr++)
-   //         {
-   //             ColorMapEntry sourceCme = cmfe.Ranges[ptr];
-
-   //             newRanges[ptr] = new FSTypes.ColorMapEntry(sourceCme.CutOff, sourceCme.CssColor);
-   //         }
-
-   //         ColorMap result = new(newRanges, cmfe.HighColorCss);
-
-   //         return result;
-   //     }
-
-   //     private static ColorMap GetFromColorMapForExportV2(ColorMapForExport cmfe)
-   //     {
-			//FSTypes.ColorMapEntry[] newRanges = new FSTypes.ColorMapEntry[cmfe.Ranges.Length];
-
-   //         for (int ptr = 0; ptr < cmfe.Ranges.Length; ptr++)
-   //         {
-   //             ColorMapEntry sourceCme = cmfe.Ranges[ptr];
-
-   //             newRanges[ptr] = new FSTypes.ColorMapEntry(sourceCme.CutOff, sourceCme.StartCssColor, sourceCme.BlendStyle, sourceCme.EndCssColor);
-   //         }
-
-   //         ColorMap result = new(newRanges, cmfe.HighColorCss);
-
-   //         return result;
-   //     }
     }
 }

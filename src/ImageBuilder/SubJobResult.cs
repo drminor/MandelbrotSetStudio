@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace MFile
+namespace ImageBuilder
 {
 	internal class SubJobResult : IPartsBin
 	{

@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CountsRepo\CountsRepo.csproj" />
     <ProjectReference Include="..\MFile\MFile.csproj" />
     <ProjectReference Include="..\MqMessages\MqMessages.csproj" />
   </ItemGroup>

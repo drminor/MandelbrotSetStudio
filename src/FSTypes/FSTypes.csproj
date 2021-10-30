@@ -4,12 +4,4 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="MapInfoWithColorMap_FixMe.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="MapInfoWithColorMap_FixMe.cs" />
-  </ItemGroup>
-
 </Project>

@@ -1,11 +1,9 @@
 ﻿using CountsRepo;
 using FSTypes;
-using MFile;
 using MqMessages;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Coords = FSTypes.Coords;
 
 namespace MClient
 {

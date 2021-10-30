@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 
-// TODO: Rename MFileCoords -> SCoords
-
 namespace MFile
 {
 	public record MFileInfo(string Name, SCoords Coords, int MaxIterations, int Threshold, int InterationsPerStep, 

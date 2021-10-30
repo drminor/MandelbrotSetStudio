@@ -2,7 +2,7 @@
 using FSTypes;
 using System;
 
-namespace MFile
+namespace ImageBuilder
 {
 	public class CountsRepoReader
 	{
