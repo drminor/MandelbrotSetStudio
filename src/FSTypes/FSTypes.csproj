@@ -12,8 +12,4 @@
     <None Include="MapInfoWithColorMap_FixMe.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MqMessages\MqMessages.csproj" />
-  </ItemGroup>
-
 </Project>

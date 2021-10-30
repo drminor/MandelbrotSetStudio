@@ -15,10 +15,6 @@ namespace ImageBuilder
             JsonSerializerOptions jsonSerializerOptions = GetReadOptions();
             MFileInfo result = JsonSerializer.Deserialize<MFileInfo>(jsonContent, jsonSerializerOptions);
             return result;
-
-
-            //ColorMap cm = ColorMap.GetFromColorMapForExport(miwcmfe.ColorMapForExport);
-            //var result = new MapInfoWithColorMap(miwcmfe.MapInfo, cm);
         }
 
         private JsonSerializerOptions GetReadOptions()
@@ -27,12 +23,12 @@ namespace ImageBuilder
             return options;
         }
 
-        public string Write(MFileInfo mFileInfo)
+        public void Write(MFileInfo mFileInfo, string path)
         {
             var jsonSerializerOptions = GetWriteOptions();
-            string result = JsonSerializer.Serialize(mFileInfo, jsonSerializerOptions);
+            string jsonContent = JsonSerializer.Serialize(mFileInfo, jsonSerializerOptions);
 
-            return result;
+            File.WriteAllText(path, jsonContent);
         }
 
         private JsonSerializerOptions GetWriteOptions()
@@ -40,20 +36,6 @@ namespace ImageBuilder
             var options = new JsonSerializerOptions { WriteIndented = true };
             return options;
         }
-
-        //private static JsonSerializerSettings BuildSerSettings()
-        //{
-        //    var result = new JsonSerializerSettings
-        //    {
-        //        ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
-                
-        //    };
-
-        //    return result;
-        //}
-
-
-
 
     }
 }

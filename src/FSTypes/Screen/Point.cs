@@ -1,4 +1,4 @@
-﻿using MqMessages;
+﻿//using MqMessages;
 
 namespace FSTypes
 {
@@ -20,10 +20,10 @@ namespace FSTypes
 			Y = y;
 		}
 
-		public PointInt GetPointInt()
-		{
-			return new PointInt(X, Y);
-		}
+		//public PointInt GetPointInt()
+		//{
+		//	return new PointInt(X, Y);
+		//}
 
 		public KPoint GetKPoint()
 		{

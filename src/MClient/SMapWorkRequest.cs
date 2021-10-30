@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
+using FSTypes;
 
-namespace FSTypes
+namespace MClient
 {
 	public class SMapWorkRequest
 	{
@@ -39,26 +40,29 @@ namespace FSTypes
 			ConnectionId = connectionId ?? throw new ArgumentNullException(nameof(connectionId));
 		}
 
+		// TODO: Implement a SCoords to Coords converter
 		public bool RequiresQuadPrecision()
 		{
-			if (Coords.TryGetFromSCoords(SCoords, out Coords coords))
-			{
-				if (!HasPrecision(GetSamplePointDiff(coords.LeftBot.X, coords.RightTop.X, CanvasSize.Width))
-					|| !HasPrecision(GetSamplePointDiff(coords.LeftBot.Y, coords.RightTop.Y, CanvasSize.Height)))
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-			else
-			{
-				// Cannot parse the values -- invalid string values.
-				Debug.WriteLine("Cannot parse the SCoords value.");
-				return false;
-			}
+			//if (Coords.TryGetFromSCoords(MqMessages.SCoords, out Coords coords))
+			//{
+			//	if (!HasPrecision(GetSamplePointDiff(coords.LeftBot.X, coords.RightTop.X, CanvasSize.Width))
+			//		|| !HasPrecision(GetSamplePointDiff(coords.LeftBot.Y, coords.RightTop.Y, CanvasSize.Height)))
+			//	{
+			//		return true;
+			//	}
+			//	else
+			//	{
+			//		return false;
+			//	}
+			//}
+			//else
+			//{
+			//	// Cannot parse the values -- invalid string values.
+			//	Debug.WriteLine("Cannot parse the SCoords value.");
+			//	return false;
+			//}
+
+			return false;
 		}
 
 		private static double GetSamplePointDiff(double s, double e, int extent)

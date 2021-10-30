@@ -1,4 +1,4 @@
-﻿using MqMessages;
+﻿//using MqMessages;
 
 namespace FSTypes
 {
@@ -20,16 +20,16 @@ namespace FSTypes
 			CanvasSize = canvasSize;
 		}
 
-		public MapSection(RectangleInt rectangleInt)
-		{
-			SectionAnchor = new Point(rectangleInt.Point.X, rectangleInt.Point.Y);
-			CanvasSize = new CanvasSize(rectangleInt.Size.W, rectangleInt.Size.H);
-		}
+		//public MapSection(RectangleInt rectangleInt)
+		//{
+		//	SectionAnchor = new Point(rectangleInt.Point.X, rectangleInt.Point.Y);
+		//	CanvasSize = new CanvasSize(rectangleInt.Size.W, rectangleInt.Size.H);
+		//}
 
-		public RectangleInt GetRectangleInt()
-		{
-			return new RectangleInt(SectionAnchor.GetPointInt(), CanvasSize.GetSizeInt());
-		}
+		//public RectangleInt GetRectangleInt()
+		//{
+		//	return new RectangleInt(SectionAnchor.GetPointInt(), CanvasSize.GetSizeInt());
+		//}
 
 		public KPoint GetKPoint()
 		{

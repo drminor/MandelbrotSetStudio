@@ -170,35 +170,38 @@ namespace MClient
 			return _emptyResult;
 		}
 
+		// TODO: Create an SCoords to Coords converter
 		private static SamplePoints<double> GetSamplePoints(SMapWorkRequest sMapWorkRequest)
 		{
-			if (Coords.TryGetFromSCoords(sMapWorkRequest.SCoords, out Coords coords))
-			{
-				double[][] xValueSections = BuildValueSections(coords.LeftBot.X, coords.RightTop.X,
-					sMapWorkRequest.CanvasSize.Width, SECTION_WIDTH,
-					sMapWorkRequest.Area.SectionAnchor.X, sMapWorkRequest.Area.CanvasSize.Width);
+			//if (Coords.TryGetFromSCoords(sMapWorkRequest.SCoords, out Coords coords))
+			//{
+			//	double[][] xValueSections = BuildValueSections(coords.LeftBot.X, coords.RightTop.X,
+			//		sMapWorkRequest.CanvasSize.Width, SECTION_WIDTH,
+			//		sMapWorkRequest.Area.SectionAnchor.X, sMapWorkRequest.Area.CanvasSize.Width);
 
 
-				double[][] yValueSections;
-				if (!coords.IsUpsideDown)
-				{
-					yValueSections = BuildValueSections(coords.RightTop.Y, coords.LeftBot.Y,
-						sMapWorkRequest.CanvasSize.Height, SECTION_HEIGHT,
-						sMapWorkRequest.Area.SectionAnchor.Y, sMapWorkRequest.Area.CanvasSize.Height);
-				}
-				else
-				{
-					yValueSections = BuildValueSections(coords.LeftBot.Y, coords.RightTop.Y,
-						sMapWorkRequest.CanvasSize.Height, SECTION_HEIGHT,
-						sMapWorkRequest.Area.SectionAnchor.Y, sMapWorkRequest.Area.CanvasSize.Height);
-				}
+			//	double[][] yValueSections;
+			//	if (!coords.IsUpsideDown)
+			//	{
+			//		yValueSections = BuildValueSections(coords.RightTop.Y, coords.LeftBot.Y,
+			//			sMapWorkRequest.CanvasSize.Height, SECTION_HEIGHT,
+			//			sMapWorkRequest.Area.SectionAnchor.Y, sMapWorkRequest.Area.CanvasSize.Height);
+			//	}
+			//	else
+			//	{
+			//		yValueSections = BuildValueSections(coords.LeftBot.Y, coords.RightTop.Y,
+			//			sMapWorkRequest.CanvasSize.Height, SECTION_HEIGHT,
+			//			sMapWorkRequest.Area.SectionAnchor.Y, sMapWorkRequest.Area.CanvasSize.Height);
+			//	}
 
-				return new SamplePoints<double>(xValueSections, yValueSections);
-			}
-			else
-			{
-				throw new ArgumentException("Cannot parse the SCoords into a Coords value.");
-			}
+			//	return new SamplePoints<double>(xValueSections, yValueSections);
+			//}
+			//else
+			//{
+			//	throw new ArgumentException("Cannot parse the SCoords into a Coords value.");
+			//}
+
+			throw new NotImplementedException("Need an SCoords to Coords Converter.");
 		}
 
 		private static double[][] BuildValueSections(double start, double end, int extent, int sectionExtent, int areaStart, int areaExtent)

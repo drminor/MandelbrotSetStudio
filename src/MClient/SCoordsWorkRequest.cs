@@ -1,7 +1,8 @@
 ﻿using System;
+using FSTypes;
 using MqMessages;
 
-namespace FSTypes
+namespace MClient
 {
 	public class SCoordsWorkRequest
 	{

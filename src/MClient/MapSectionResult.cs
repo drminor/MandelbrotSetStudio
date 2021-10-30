@@ -1,6 +1,7 @@
-﻿using System;
+﻿using FSTypes;
+using System;
 
-namespace FSTypes
+namespace MClient
 {
 	public class MapSectionResult
 	{

@@ -1,5 +1,7 @@
 ﻿
-namespace FSTypes
+using FSTypes;
+
+namespace MClient
 {
 	public class SPoint
 	{

@@ -31,12 +31,6 @@ namespace ImageBuilder
 
 			string repofilename = mFileInfo.Name;
 
-			//ValueRecords<KPoint, MapSectionWorkResult> countsRepo = new ValueRecords<KPoint, MapSectionWorkResult>(repofilename, useHiRezFolder: hiRez);
-			//int blockLength = BlockWidth * BlockHeight;
-			//MapSectionWorkResult workResult = new MapSectionWorkResult(blockLength, hiRez: hiRez, includeZValuesOnRead: false);
-			//CanvasSize imageSizeInBlocks = GetImageSizeInBlocks(countsRepo);
-			//int blockLength = BlockWidth * BlockHeight;
-
 			var countsRepoReader = new CountsRepoReader(repofilename, hiRez, BlockWidth, BlockHeight);
 			CanvasSize imageSizeInBlocks = GetImageSizeInBlocks(countsRepoReader);
 
@@ -61,17 +55,6 @@ namespace ImageBuilder
 					{
 						key.X = hBPtr;
 
-						//if (countsRepo.ReadParts(key, workResult))
-						//{
-						//	int[] allCounts = workResult.Counts;
-						//	int[] countsForThisLine = GetOneLineFromCountsBlock(allCounts, lPtr);
-						//	BuildPngImageLineSegment(hBPtr * BlockWidth, countsForThisLine, iLine, maxIterations, colorMap);
-						//}
-						//else
-						//{
-						//	BuildBlankPngImageLineSegment(hBPtr * BlockWidth, BlockWidth, iLine);
-						//}
-
 						int[] countsForThisLine = countsRepoReader.GetCounts(key, lPtr);
 						if (countsForThisLine != null)
 						{
@@ -94,8 +77,8 @@ namespace ImageBuilder
 			string fnWithExt = Path.ChangeExtension(fn, "json");
 			string path = Path.Combine(BasePath, fnWithExt);
 
-			var mapInfoReaderWriter = new MFileReaderWriter();
-			MFileInfo mFileInfo = mapInfoReaderWriter.Read(path);
+			var mFileReaderWriter = new MFileReaderWriter();
+			MFileInfo mFileInfo = mFileReaderWriter.Read(path);
 			return mFileInfo;
 		}
 

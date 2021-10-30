@@ -20,27 +20,29 @@ namespace FSTypes
             RightTop = rightTop ?? throw new ArgumentNullException(nameof(rightTop));
         }
 
-		public static bool TryGetFromSCoords(SCoords sCoords, out Coords coords)
-		{
-			if(DPoint.TryGetFromSPoint(sCoords.LeftBot, out DPoint leftBot))
-			{
-				if(DPoint.TryGetFromSPoint(sCoords.RightTop, out DPoint rightTop))
-				{
-					coords = new Coords(leftBot, rightTop);
-					return true;
-				}
-				else
-				{
-					coords = new Coords();
-					return false;
-				}
-			}
-			else
-			{
-				coords = new Coords();
-				return false;
-			}
-		}
+        // TODO: Provide a helper to Convert from SCoords to Coords
+
+		//public static bool TryGetFromSCoords(SCoords sCoords, out Coords coords)
+		//{
+		//	if(DPoint.TryGetFromSPoint(sCoords.LeftBot, out DPoint leftBot))
+		//	{
+		//		if(DPoint.TryGetFromSPoint(sCoords.RightTop, out DPoint rightTop))
+		//		{
+		//			coords = new Coords(leftBot, rightTop);
+		//			return true;
+		//		}
+		//		else
+		//		{
+		//			coords = new Coords();
+		//			return false;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		coords = new Coords();
+		//		return false;
+		//	}
+		//}
 
         public double Width
         {

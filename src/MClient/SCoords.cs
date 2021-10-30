@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FSTypes
+namespace MClient
 {
 	public class SCoords
 	{

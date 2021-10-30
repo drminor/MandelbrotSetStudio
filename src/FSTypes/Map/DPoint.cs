@@ -62,27 +62,28 @@
 			return this;
 		}
 
-		public static bool TryGetFromSPoint(SPoint sPoint, out DPoint dPoint)
-		{
-			if(double.TryParse(sPoint.X, out double x))
-			{
-				if(double.TryParse(sPoint.Y, out double y))
-				{
-					dPoint = new DPoint(x, y);
-					return true;
-				}
-				else
-				{
-					dPoint = new DPoint();
-					return false;
-				}
-			}
-			else
-			{
-				dPoint = new DPoint();
-				return false;
-			}
-		}
+		// TODO: Implement a converter from SPoint to DPoint
+		//public static bool TryGetFromSPoint(SPoint sPoint, out DPoint dPoint)
+		//{
+		//	if(double.TryParse(sPoint.X, out double x))
+		//	{
+		//		if(double.TryParse(sPoint.Y, out double y))
+		//		{
+		//			dPoint = new DPoint(x, y);
+		//			return true;
+		//		}
+		//		else
+		//		{
+		//			dPoint = new DPoint();
+		//			return false;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		dPoint = new DPoint();
+		//		return false;
+		//	}
+		//}
 
         public double SizeSquared
         {

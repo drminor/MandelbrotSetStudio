@@ -347,8 +347,9 @@ namespace MClient
 		private static FJobRequest CreateFJobRequest(int jobId, SMapWorkRequest smwr)
 		{
 			Coords coords = smwr.SCoords.GetCoords();
-			RectangleInt area = smwr.Area.GetRectangleInt();
-			SizeInt samplePoints = smwr.CanvasSize.GetSizeInt();
+
+			var area = new RectangleInt(new PointInt(smwr.Area.SectionAnchor.X, smwr.Area.SectionAnchor.Y), new SizeInt(smwr.Area.CanvasSize.Width, smwr.Area.CanvasSize.Height));
+			var samplePoints = new SizeInt(smwr.CanvasSize.Width, smwr.CanvasSize.Height);
 
 			FJobRequest fJobRequest = new(jobId, smwr.Name, FJobRequestType.Generate, coords, area, samplePoints, (uint) smwr.MaxIterations);
 

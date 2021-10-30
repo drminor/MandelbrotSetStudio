@@ -142,8 +142,12 @@ namespace MClient
 
 		private static MapSectionWorkRequest CreateMSWR(FJobResult jobResult, int maxIterations)
 		{
-			MapSection mapSection = new(jobResult.Area);
-			MapSectionWorkRequest result = new(mapSection, maxIterations, 0, 0);
+			RectangleInt area = jobResult.Area;
+			var sectionAnchor = new Point(area.Point.X, area.Point.Y);
+			var canvasSize = new CanvasSize(area.Size.W, area.Size.H);
+			var mapSection = new MapSection(sectionAnchor, canvasSize);
+
+			var result = new MapSectionWorkRequest(mapSection, maxIterations, 0, 0);
 			return result;
 		}
 

@@ -1,4 +1,4 @@
-﻿using MqMessages;
+﻿//using MqMessages;
 using System;
 
 namespace FSTypes
@@ -21,10 +21,10 @@ namespace FSTypes
             Height = height;
         }
 
-		public SizeInt GetSizeInt()
-		{
-			return new SizeInt(Width, Height);
-		}
+		//public SizeInt GetSizeInt()
+		//{
+		//	return new SizeInt(Width, Height);
+		//}
 
 		public CanvasSize GetWholeUnits(int blockSize)
 		{
