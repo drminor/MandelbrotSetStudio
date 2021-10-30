@@ -1,6 +1,4 @@
 ﻿
-using FSTypes;
-
 namespace MClient
 {
 	public class SPoint
@@ -21,11 +19,11 @@ namespace MClient
 			Y = y;
 		}
 
-		public SPoint(DPoint dPoint)
-		{
-			X = dPoint.X.ToString("R");
-			Y = dPoint.Y.ToString("R");
-		}
+		//public SPoint(DPoint dPoint)
+		//{
+		//	X = dPoint.X.ToString("R");
+		//	Y = dPoint.Y.ToString("R");
+		//}
 
 		public override string ToString()
 		{

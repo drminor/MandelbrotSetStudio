@@ -1,5 +1,6 @@
 ﻿using System;
 using FSTypes;
+using MapSectionRepo;
 using MqMessages;
 
 namespace MClient

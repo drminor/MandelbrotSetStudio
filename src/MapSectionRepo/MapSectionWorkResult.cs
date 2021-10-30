@@ -3,14 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FSTypes
+namespace MapSectionRepo
 {
 	public class MapSectionWorkResult : IPartsBin
 	{
 		public bool IsHiRez { get; private set; }
 		public int[] Counts { get; private set; }
 		public bool[] DoneFlags { get; private set; }
-		public DPoint[] ZValues { get; private set; }
+		public DDouble[] ZValues { get; private set; }
 		public int IterationCount { get; set; }
 
 		private readonly int _size;
@@ -19,7 +19,7 @@ namespace FSTypes
 		{
 		}
 
-		public MapSectionWorkResult(int[] counts, int iterationCount, DPoint[] zValues, bool[] doneFlags) : this(counts, iterationCount, zValues, doneFlags, counts.Length, false, true)
+		public MapSectionWorkResult(int[] counts, int iterationCount, DDouble[] zValues, bool[] doneFlags) : this(counts, iterationCount, zValues, doneFlags, counts.Length, false, true)
 		{
 		}
 
@@ -27,7 +27,7 @@ namespace FSTypes
 		{
 		}
 
-		private MapSectionWorkResult(int[] counts, int iterationCount, DPoint[] zValues, bool[] doneFlags, int size, bool hiRez, bool includeZValuesOnRead)
+		private MapSectionWorkResult(int[] counts, int iterationCount, DDouble[] zValues, bool[] doneFlags, int size, bool hiRez, bool includeZValuesOnRead)
 		{
 			_size = size;
 
@@ -178,9 +178,9 @@ namespace FSTypes
 			}
 		}
 
-		private static DPoint[] GetZValues(byte[] buf, int size)
+		private static DDouble[] GetZValues(byte[] buf, int size)
 		{
-			DPoint[] result = new DPoint[size];
+			DDouble[] result = new DDouble[size];
 
 			for (int i = 0; i < size; i++)
 			{
@@ -188,37 +188,37 @@ namespace FSTypes
 				double x = BitConverter.ToDouble(buf, ptr);
 				double y = BitConverter.ToDouble(buf, ptr + 8);
 
-				result[i] = new DPoint(x, y);
+				result[i] = new DDouble(x, y);
 			}
 
 			return result;
 		}
 
-		private static byte[] GetBytesFromZValues(DPoint[] zValues)
+		private static byte[] GetBytesFromZValues(DDouble[] zValues)
 		{
 			byte[] tempBuf = zValues.SelectMany(value => GetBytesFromDPoint(value)).ToArray();
 			return tempBuf;
 		}
 
-		private static byte[] GetBytesFromDPoint(DPoint value)
+		private static byte[] GetBytesFromDPoint(DDouble value)
 		{
-			byte[] dBufX = BitConverter.GetBytes(value.X);
-			byte[] dBufY = BitConverter.GetBytes(value.Y);
+			byte[] dBufHi = BitConverter.GetBytes(value.Hi);
+			byte[] dBufLo = BitConverter.GetBytes(value.Lo);
 
 			byte[] result = new byte[16];
 
-			Array.Copy(dBufX, result, 8);
-			Array.Copy(dBufY, 0, result, 8, 8);
+			Array.Copy(dBufHi, result, 8);
+			Array.Copy(dBufLo, 0, result, 8, 8);
 
 			return result;
 		}
 
-		private static void LoadBytesFromZValues(DPoint[] values, byte[] buf)
+		private static void LoadBytesFromZValues(DDouble[] values, byte[] buf)
 		{
 			for (int i = 0; i < values.Length; i++)
 			{
-				Array.Copy(BitConverter.GetBytes(values[i].X), 0, buf, i * 16, 8);
-				Array.Copy(BitConverter.GetBytes(values[i].Y), 0, buf, 8 + (i * 16), 8);
+				Array.Copy(BitConverter.GetBytes(values[i].Hi), 0, buf, i * 16, 8);
+				Array.Copy(BitConverter.GetBytes(values[i].Lo), 0, buf, 8 + (i * 16), 8);
 			}
 		}
 

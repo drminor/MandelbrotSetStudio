@@ -1,6 +1,7 @@
-﻿//using MqMessages;
+﻿using FSTypes;
+//using MqMessages;
 
-namespace FSTypes
+namespace MapSectionRepo
 {
 	
 	public class MapSection
