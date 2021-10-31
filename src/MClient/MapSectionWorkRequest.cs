@@ -1,17 +1,17 @@
-﻿using MapSectionRepo;
+﻿using FSTypes;
 using System;
 
 namespace MClient
 {
 	public class MapSectionWorkRequest
 	{
-		public readonly MapSection MapSection;
+		public readonly RectangleInt MapSection;
 		public int MaxIterations;
 
 		public readonly int HPtr;
 		public readonly int VPtr;
 
-		public MapSectionWorkRequest(MapSection mapSection, int maxIterations, int hPtr, int vPtr)
+		public MapSectionWorkRequest(RectangleInt mapSection, int maxIterations, int hPtr, int vPtr)
 		{
 			MaxIterations = maxIterations;
 			MapSection = mapSection ?? throw new ArgumentNullException(nameof(mapSection));

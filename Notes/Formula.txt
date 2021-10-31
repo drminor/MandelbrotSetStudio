@@ -17,3 +17,24 @@ For each point {c1,c2} in the plane, let's compute the recursion (nesting) of f,
 Everytime we evaluate f, we get a point. We feed the point back to f, and get another point. We repeat this. If, in the limit, the point gets further and further from the origin {0,0} in a way that it eventually is outside of any circle centered on {0,0} however large, then we say that the number {c1,c2} escapes.
 
 We define the Mandelbrot set as the set of points that do NOT escape.
+
+l is an integer
+c and z are complex numbers
+set l to 0
+set z to 0
+set c to some point within the region -2, 1 through 1, 1
+
+the repeatly calcualte a new z (z') using z as an input
+
+
+
+0: z' = f(z,c) = z2 + c
+1: set z = z'
+2: set l = l + 1
+3: if |z| > 2,2, exit - else go to 0:
+
+Translate l to a color and paint the pixel at c with that color
+
+
+
+then count the number of times this can be done before the value of z

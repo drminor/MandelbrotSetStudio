@@ -95,7 +95,7 @@ namespace MClient
 		{
 			Type[] rTtypes = new Type[] { typeof(FJobResult) };
 
-			MessagePropertyFilter mpf = new()
+			var mpf = new MessagePropertyFilter()
 			{
 				Body = true,
 				//Id = true,
@@ -122,6 +122,7 @@ namespace MClient
 			}
 			while (m != null);
 		}
+
 		private static SubJob CreateSubJob(FJobResult jobResult, JobForMq parentJob)
 		{
 			MapSectionWorkResult workResult = CreateWorkResult(jobResult);
@@ -129,7 +130,7 @@ namespace MClient
 			MapSectionWorkRequest workRequest = CreateMSWR(jobResult, parentJob.SMapWorkRequest.MaxIterations);
 			MapSectionResult msr = CreateMapSectionResult(parentJob.JobId, workRequest.MapSection, workResult);
 
-			SubJob subJob = new(parentJob, workRequest)
+			var subJob = new SubJob(parentJob, workRequest)
 			{
 				MapSectionResult = msr
 			};
@@ -142,10 +143,10 @@ namespace MClient
 
 		private static MapSectionWorkRequest CreateMSWR(FJobResult jobResult, int maxIterations)
 		{
-			RectangleInt area = jobResult.Area;
-			var sectionAnchor = new Point(area.Point.X, area.Point.Y);
-			var canvasSize = new CanvasSize(area.Size.W, area.Size.H);
-			var mapSection = new MapSection(sectionAnchor, canvasSize);
+			var area = jobResult.Area;
+			var sectionAnchor = new PointInt(area.Point.X, area.Point.Y);
+			var size = new SizeInt(area.Width, area.Height);
+			var mapSection = new RectangleInt(sectionAnchor, size);
 
 			var result = new MapSectionWorkRequest(mapSection, maxIterations, 0, 0);
 			return result;
@@ -154,13 +155,13 @@ namespace MClient
 		private static MapSectionWorkResult CreateWorkResult(FJobResult fJobResult)
 		{
 			int[] counts = fJobResult.GetValues();
-			MapSectionWorkResult result = new(counts);
+			var result = new MapSectionWorkResult(counts);
 			return result;
 		}
 
-		private static MapSectionResult CreateMapSectionResult(int jobId, MapSection mapSection, MapSectionWorkResult workResult)
+		private static MapSectionResult CreateMapSectionResult(int jobId, RectangleInt mapSection, MapSectionWorkResult workResult)
 		{
-			MapSectionResult result = new(jobId, mapSection, workResult.Counts);
+			var result = new MapSectionResult(jobId, mapSection, workResult.Counts);
 			return result;
 		}
 

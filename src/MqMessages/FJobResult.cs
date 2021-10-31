@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FSTypes;
+using System;
 using System.Linq;
 
 namespace MqMessages

@@ -20,30 +20,30 @@ namespace ImageBuilder
 			BlockHeight = blockHeight;
 		}
 
-		// TODO: HiRez, blockWidth and blockHeight should come from the RepoFile.
-		public void Build(string fn, bool isHighRes)
+		public void Build(string fn)
 		{
 			MFileInfo mFileInfo = ReadFromJson(fn);
 
 			var mSetInfo = MFileHelper.GetMSetInfo(mFileInfo);
+			bool isHighRes = mSetInfo.IsHighRes;
 			var maxIterations = mSetInfo.MaxIterations;
 			var colorMap = mSetInfo.ColorMap;
 
 			var repofilename = mFileInfo.Name;
 
 			ICountsRepoReader countsRepoReader = GetReader(repofilename, isHighRes);
-			CanvasSize imageSizeInBlocks = GetImageSizeInBlocks(countsRepoReader);
+			SizeInt imageSizeInBlocks = GetImageSizeInBlocks(countsRepoReader);
 
-			int w = imageSizeInBlocks.Width;
-			int h = imageSizeInBlocks.Height;
+			int w = imageSizeInBlocks.W;
+			int h = imageSizeInBlocks.H;
 
-			var imageSize = new CanvasSize(w * BlockWidth, h * BlockHeight);
+			var imageSize = new SizeInt(w * BlockWidth, h * BlockHeight);
 
-			string imagePath = GetImageFilename(fn, imageSize.Width, isHighRes, BasePath);
+			string imagePath = GetImageFilename(fn, imageSize.W, isHighRes, BasePath);
 
 			var key = new KPoint(0, 0);
 
-			using PngImage pngImage = new PngImage(imagePath, imageSize.Width, imageSize.Height);
+			using PngImage pngImage = new PngImage(imagePath, imageSize.W, imageSize.H);
 			for (int vBPtr = 0; vBPtr < h; vBPtr++)
 			{
 				key.Y = vBPtr;
@@ -144,7 +144,7 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private static CanvasSize GetImageSizeInBlocks(ICountsRepoReader countsRepo)
+		private static SizeInt GetImageSizeInBlocks(ICountsRepoReader countsRepo)
 		{
 			int w = 10;
 			int h = 0;
@@ -152,7 +152,7 @@ namespace ImageBuilder
 			KPoint key = new KPoint(w, h);
 			bool foundMax = !countsRepo.ContainsKey(key);
 
-			if (foundMax) return new CanvasSize(0, 0);
+			if (foundMax) return new SizeInt(0, 0);
 
 			// Find max value where w and h are equal.
 			while (!foundMax)
@@ -188,7 +188,7 @@ namespace ImageBuilder
 
 			//w--;
 
-			return new CanvasSize(w, ++h);
+			return new SizeInt(w, ++h);
 		}
 
 	}

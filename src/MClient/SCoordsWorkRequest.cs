@@ -1,6 +1,5 @@
 ﻿using System;
 using FSTypes;
-using MapSectionRepo;
 using MqMessages;
 
 namespace MClient
@@ -11,9 +10,15 @@ namespace MClient
 
 		public SCoords SCoords;
 
-		public CanvasSize CanvasSize;
+		/// <summary>
+		/// The size of the entire job
+		/// </summary>
+		public SizeInt CanvasSize;
 
-		public MapSection MapSection;
+		/// <summary>
+		/// The size and location of this request
+		/// </summary>
+		public RectangleInt MapSection;
 
 		public int JobId;
 
@@ -21,16 +26,16 @@ namespace MClient
 		{
 			TransformType = TransformType.In;
 			SCoords = null;
-			CanvasSize = new CanvasSize(0, 0);
-			MapSection = new MapSection(new Point(0, 0), new CanvasSize(0, 0));
+			CanvasSize = new SizeInt(0, 0);
+			MapSection = new RectangleInt(new PointInt(0, 0), new SizeInt(0, 0));
 			JobId = -1;
 		}
 
-		public SCoordsWorkRequest(TransformType transformType, SCoords sCoords, CanvasSize canvasSize, MapSection mapSection, int jobId)
+		public SCoordsWorkRequest(TransformType transformType, SCoords sCoords, SizeInt canvasSize, RectangleInt mapSection, int jobId)
 		{
 			TransformType = transformType;
 			SCoords = sCoords ?? throw new ArgumentNullException(nameof(sCoords));
-			CanvasSize = canvasSize ?? throw new ArgumentNullException(nameof(canvasSize));
+			CanvasSize  = canvasSize ?? throw new ArgumentNullException(nameof(canvasSize));
 			MapSection = mapSection ?? throw new ArgumentNullException(nameof(mapSection));
 			JobId = jobId;
 		}

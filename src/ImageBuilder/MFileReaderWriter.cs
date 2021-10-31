@@ -1,12 +1,10 @@
-﻿
-using MFile;
+﻿using MFile;
 using System.IO;
-
 using System.Text.Json;
 
 namespace ImageBuilder
 {
-    public class MFileReaderWriter
+	public class MFileReaderWriter
     {
         public MFileInfo Read(string path)
         {
@@ -14,6 +12,12 @@ namespace ImageBuilder
 
             JsonSerializerOptions jsonSerializerOptions = GetReadOptions();
             MFileInfo result = JsonSerializer.Deserialize<MFileInfo>(jsonContent, jsonSerializerOptions);
+
+            if (result.Coords == null)
+			{
+                throw new InvalidDataException($"The contents of file: {path} could not be read in as a MFileInfo object.");
+			}
+
             return result;
         }
 

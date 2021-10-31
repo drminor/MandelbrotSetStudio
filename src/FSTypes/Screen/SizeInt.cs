@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MqMessages
+namespace FSTypes
 {
 	[Serializable]
 	public class SizeInt : IEquatable<SizeInt>

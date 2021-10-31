@@ -1,10 +1,15 @@
-﻿using FSTypes;
+﻿using FileDictionaryLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace MapSectionRepo
 {
+	/// <summary>
+	/// Implements IPartsBin for either HighRes (Each Z has two doubles for X (real) and two doubles for Y (imaginary)) = 8 + 8 + 8 + 8 = 32
+	/// or Standard (Each Z has a double for X (real) and a double for Y (imaginary)) = 8 + 8 = 16
+	/// Currently only used for Standard
+	/// </summary>
 	public class MapSectionWorkResult : IPartsBin
 	{
 		public bool IsHighRes { get; private set; }

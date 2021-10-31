@@ -15,12 +15,22 @@ namespace MapSectionRepo
 			Y = y;
 		}
 
+		/// <summary>
+		/// Take this instance (which should be a local KPoint) and creates a global KPoint.
+		/// </summary>
+		/// <param name="amount"></param>
+		/// <returns></returns>
 		public KPoint ToGlobal(KPoint amount)
 		{
 			KPoint result = new(X + amount.X, Y + amount.Y);
 			return result;
 		}
 
+		/// <summary>
+		/// Takes this instance (which should be global KPoint) and creates a local KPoint. 
+		/// </summary>
+		/// <param name="amount"></param>
+		/// <returns></returns>
 		public KPoint FromGlobal(KPoint amount)
 		{
 			KPoint result = new(X - amount.X, Y - amount.Y);

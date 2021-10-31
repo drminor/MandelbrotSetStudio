@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="MapSection.cs" />
     <Compile Remove="SubJobProcessor.cs" />
   </ItemGroup>
 

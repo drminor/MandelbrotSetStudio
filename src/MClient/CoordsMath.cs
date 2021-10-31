@@ -88,12 +88,8 @@ namespace MClient
 			SCoords sCoords = sCoordsWorkRequest.SCoords;
 			MqMessages.Coords coords = new(sCoords.LeftBot.X, sCoords.RightTop.X, sCoords.LeftBot.Y, sCoords.RightTop.Y);
 
-			CanvasSize cs = sCoordsWorkRequest.CanvasSize;
-			SizeInt samplePoints = new(cs.Width, cs.Height);
-
-			MapSection ms = sCoordsWorkRequest.MapSection;
-
-			RectangleInt area = new(new PointInt(ms.SectionAnchor.X, ms.SectionAnchor.Y), new SizeInt(ms.CanvasSize.Width, ms.CanvasSize.Height));
+			SizeInt samplePoints = sCoordsWorkRequest.CanvasSize;
+			RectangleInt area = sCoordsWorkRequest.MapSection;
 
 			string name = "CoordsRequest";
 			FJobRequest fJobRequest = new(jobId, name, FJobRequestType.TransformCoords, coords, area, samplePoints, 0, sCoordsWorkRequest.TransformType);

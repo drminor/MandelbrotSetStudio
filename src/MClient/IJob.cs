@@ -1,6 +1,4 @@
-﻿using FSTypes;
-
-namespace MClient
+﻿namespace MClient
 {
 	public interface IJob
 	{
@@ -16,6 +14,5 @@ namespace MClient
 
 		void DecrementSubJobsRemainingToBeSent();
 		void ResetSubJobsRemainingToBeSent();
-
 	}
 }

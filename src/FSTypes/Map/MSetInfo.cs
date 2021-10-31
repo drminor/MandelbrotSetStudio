@@ -4,10 +4,11 @@ namespace FSTypes
 {
 	public class MSetInfo
     {
-		public MSetInfo(string name, SCoords sCoords, int maxIterations, int threshold, int interationsPerStep, ColorMap colorMap)
+		public MSetInfo(string name, SCoords sCoords, bool isHighRes, int maxIterations, int threshold, int interationsPerStep, ColorMap colorMap)
 		{
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			SCoords = sCoords ?? throw new ArgumentNullException(nameof(sCoords));
+			IsHighRes = isHighRes;
 			MaxIterations = maxIterations;
 			Threshold = threshold;
 			InterationsPerStep = interationsPerStep;
@@ -16,7 +17,8 @@ namespace FSTypes
 
 		public string Name { get; init; }
         public SCoords SCoords { get; init; }
-        public int MaxIterations { get; init; }
+		public bool IsHighRes { get; init; }
+		public int MaxIterations { get; init; }
 		public int Threshold { get; init; }
 		public int InterationsPerStep { get; init; }
         public ColorMap ColorMap { get; init; }

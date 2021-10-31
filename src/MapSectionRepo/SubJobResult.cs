@@ -1,4 +1,4 @@
-﻿using FSTypes;
+﻿using FileDictionaryLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,6 +6,9 @@ using System.Linq;
 
 namespace MapSectionRepo
 {
+	/// <summary>
+	/// Implements QuadPrecision IPartsBin (Each Z has two doubles for X (real) and two doubles for Y (imaginary)) = 32 bytes / sample.
+	/// </summary>
 	internal class SubJobResult : IPartsBin
 	{
 		private const uint EMPTY_SUB_JOB_RESULT_MARKER = uint.MaxValue;
@@ -192,7 +195,7 @@ namespace MapSectionRepo
 			{
 				Array.Copy(BitConverter.GetBytes(values[i]), 0, buf, i * 8, 8);
 			}
-	}
+		}
 
 		public static SubJobResult GetEmptySubJobResult(int size, string instanceName, bool includeZValuesOnRead)
 		{

@@ -262,8 +262,8 @@ namespace MClient
 
 		private static MapSectionWorkResult BuildInitialWorkingValues(MapSectionWorkRequest mswr)
 		{
-			int width = mswr.MapSection.CanvasSize.Width;
-			int height = mswr.MapSection.CanvasSize.Height;
+			int width = mswr.MapSection.RectangleInt.Width;
+			int height = mswr.MapSection.RectangleInt.Height;
 
 			int len = width * height;
 

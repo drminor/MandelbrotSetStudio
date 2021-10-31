@@ -1,5 +1,4 @@
-﻿using FSTypes;
-using System;
+﻿using System;
 using System.Threading;
 
 namespace MClient
@@ -63,7 +62,7 @@ namespace MClient
 
 		public void ResetSubJobsRemainingToBeSent()
 		{
-			_numberOfSectionRemainingToSend = SMapWorkRequest.Area.CanvasSize.Width * SMapWorkRequest.Area.CanvasSize.Height;
+			_numberOfSectionRemainingToSend = SMapWorkRequest.Area.Width * SMapWorkRequest.Area.Height;
 			IsLastSubJob = false;
 		}
 	}

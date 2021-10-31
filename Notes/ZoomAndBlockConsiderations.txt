@@ -1,0 +1,59 @@
+1
+4
+16
+
+(2^0)^21x1
+2x2
+4x4
+
+
+Zoom(x) = (2^x)^2
+
+
+0 = 1
+1 = 4
+2 = 16
+3 = 64
+4 = 256
+
+1024 = 
+2^10 = 1024 Zoom(1024) = 3.231700607131100730071487668867e+616
+
+2^20 = 1,048,576 Zoom(1,048,576) = 
+
+
+
+
+Given a line segment A, that begins at x1 and ends at x2 (x1 -> x2)
+
+Then divide A into 128 line segments of equal width, A'0 - A'127.
+
+Given a line segment B, that begins at x1 and ends at x2 * 2 (x1 -> x2 * 2)
+The divide B int 256 line segments of equal width, B'0 - B'255
+
+Then compare the first 127 line segments B'0 - B-127 with A'0 - A'127 and determine the differences found
+
+Repeat as the precision of x2 - x1 approaches epsilon.
+
+CONTRAST WITH
+
+Instead of B as described above, define B as x1 -> (x1 + 2 * (x2 - x1))
+
+
+CONTRAST WITH
+
+Given a line segment A, (x1 -> Ax2)
+Create a new line segment A' (x1 -> x2') where x2' = x1 + (2^50 * ((x2 - x1) * 2^-50))
+Then divide A' into 128 line segments of equal width, A''0 - A''127.
+
+
+Given a line segment B (x1 -> x2'') where x2'' = x2' * 2
+The divide B int 256 line segments of equal width, B'0 - B'255
+
+Then compare the first 127 line segments B'0 - B-127 with A''0 - A''127 and determine the differences found
+
+Repeat as the precision of x2 - x1 approaches epsilon.
+
+-----------
+
+1.57842e+6

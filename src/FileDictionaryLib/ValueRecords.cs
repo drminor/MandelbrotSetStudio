@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace CountsRepo
+namespace FileDictionaryLib
 {
     // Record
     sealed class IndexEntry<K> where K: IEqualityComparer<K>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MqMessages
+namespace FSTypes
 {
 	[Serializable]
 	public class RectangleInt : IEqualityComparer<RectangleInt>, IEquatable<RectangleInt>
@@ -16,6 +16,9 @@ namespace MqMessages
 
 		public PointInt Point { get; set; }
 		public SizeInt Size { get; set; }
+
+		public int Width => Size.W;
+		public int Height => Size.H;
 
 		public RectangleInt Translate(PointInt amount)
 		{

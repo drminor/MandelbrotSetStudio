@@ -1,6 +1,4 @@
-﻿using FSTypes;
-
-namespace MClient
+﻿namespace MClient
 {
 	internal class JobForMq : JobBase
 	{

@@ -4,4 +4,9 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Screen\CanvasSize.cs" />
+    <Compile Remove="Screen\Point.cs" />
+  </ItemGroup>
+
 </Project>

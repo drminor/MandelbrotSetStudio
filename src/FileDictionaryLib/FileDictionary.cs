@@ -2,7 +2,7 @@
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
 
-namespace CountsRepo
+namespace FileDictionaryLib
 {
 	public class FileDictionary<K,T> where K: ISerializable where T : ISerializable
     {

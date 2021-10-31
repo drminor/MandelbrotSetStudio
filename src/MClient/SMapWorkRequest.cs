@@ -11,9 +11,9 @@ namespace MClient
 
 		public SCoords SCoords;
 
-		public CanvasSize CanvasSize;
+		public SizeInt CanvasSize;
 
-		public MapSection Area;
+		public RectangleInt Area;
 
 		public int MaxIterations;
 
@@ -25,13 +25,13 @@ namespace MClient
 		{
 			Name = null;
 			SCoords = null;
-			CanvasSize = new CanvasSize(0, 0);
-			Area = new MapSection(new Point(0, 0), new CanvasSize(0, 0));
+			CanvasSize = new SizeInt(0, 0);
+			Area = new RectangleInt(new PointInt(0, 0), new SizeInt(0, 0));
 			ConnectionId = null;
 			JobId = -1;
 		}
 
-		public SMapWorkRequest(string name, SCoords sCoords, CanvasSize canvasSize, MapSection area, int maxIterations, string connectionId)
+		public SMapWorkRequest(string name, SCoords sCoords, SizeInt canvasSize, RectangleInt area, int maxIterations, string connectionId)
 		{
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			SCoords = sCoords ?? throw new ArgumentNullException(nameof(sCoords));
@@ -46,8 +46,8 @@ namespace MClient
 		{
 			//if (Coords.TryGetFromSCoords(MqMessages.SCoords, out Coords coords))
 			//{
-			//	if (!HasPrecision(GetSamplePointDiff(coords.LeftBot.X, coords.RightTop.X, CanvasSize.Width))
-			//		|| !HasPrecision(GetSamplePointDiff(coords.LeftBot.Y, coords.RightTop.Y, CanvasSize.Height)))
+			//	if (!HasPrecision(GetSamplePointDiff(coords.LeftBot.X, coords.RightTop.X, RectangleInt.Width))
+			//		|| !HasPrecision(GetSamplePointDiff(coords.LeftBot.Y, coords.RightTop.Y, RectangleInt.Height)))
 			//	{
 			//		return true;
 			//	}

@@ -34,7 +34,7 @@ namespace ImageBuilder
 
 			string highColor = "#000000";
 
-			MFileInfo result = new MFileInfo(name, sCoords, 1000, 4, 100, colorMapEntrires, highColor);
+			MFileInfo result = new MFileInfo(name, sCoords, isHighRes:false, 1000, 4, 100, colorMapEntrires, highColor);
 
 			return result;
 		}

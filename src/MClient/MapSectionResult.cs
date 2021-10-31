@@ -1,4 +1,4 @@
-﻿using MapSectionRepo;
+﻿using FSTypes;
 using System;
 
 namespace MClient
@@ -7,11 +7,11 @@ namespace MClient
 	{
 		public readonly int JobId;
 
-		public readonly MapSection MapSection;
+		public readonly RectangleInt MapSection;
 
 		public readonly int[] ImageData;
 
-		public MapSectionResult(int jobId, MapSection mapSection, int[] imageData)
+		public MapSectionResult(int jobId, RectangleInt mapSection, int[] imageData)
 		{
 			JobId = jobId;
 			MapSection = mapSection ?? throw new ArgumentNullException(nameof(mapSection));

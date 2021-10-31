@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Coords = MqMessages.Coords;
 
 namespace MClient
 {
@@ -268,8 +267,8 @@ namespace MClient
 
 							if (_clientConnector != null)
 							{
-								Debug.WriteLine($"Sending subjob with x: {subJob.MapSectionResult.MapSection.SectionAnchor.X} " +
-									$"and y: {subJob.MapSectionResult.MapSection.SectionAnchor.Y}. " +
+								Debug.WriteLine($"Sending subjob with x: {subJob.MapSectionResult.MapSection.Point.X} " +
+									$"and y: {subJob.MapSectionResult.MapSection.Point.Y}. " +
 									$"with connId = {subJob.ConnectionId}. IsLastResult = {isFinalSubJob}.");
 									//$"It has {subJob.result.ImageData.Length} count values.");
 								_clientConnector.ReceiveImageData(subJob.ConnectionId, subJob.MapSectionResult, isFinalSubJob);
@@ -346,11 +345,15 @@ namespace MClient
 
 		private static FJobRequest CreateFJobRequest(int jobId, SMapWorkRequest smwr)
 		{
+			// Create a MqMessage.Coords from an FSTypes.SCoords
 			var sCoords = smwr.SCoords;
 			var coords = new Coords(sCoords.LeftBot.X, sCoords.RightTop.X, sCoords.LeftBot.Y, sCoords.RightTop.Y);
 
-			var area = new RectangleInt(new PointInt(smwr.Area.SectionAnchor.X, smwr.Area.SectionAnchor.Y), new SizeInt(smwr.Area.CanvasSize.Width, smwr.Area.CanvasSize.Height));
-			var samplePoints = new SizeInt(smwr.CanvasSize.Width, smwr.CanvasSize.Height);
+			// Create a RectangleInt from an FSTypes.MapSection
+			var area = smwr.Area;
+
+			// Create a SizeInt from an FSTypes.RectangleInt
+			var samplePoints = smwr.CanvasSize;
 
 			FJobRequest fJobRequest = new(jobId, smwr.Name, FJobRequestType.Generate, coords, area, samplePoints, (uint) smwr.MaxIterations);
 
@@ -361,8 +364,3 @@ namespace MClient
 	}
 }
 
-//public MqMessages.Coords GetCoords()
-//{
-//	MqMessages.Coords result = new(LeftBot.X, RightTop.X, LeftBot.Y, RightTop.Y);
-//	return result;
-//}

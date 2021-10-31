@@ -1,4 +1,4 @@
-﻿using CountsRepo;
+﻿using FileDictionaryLib;
 using FSTypes;
 using MapSectionRepo;
 using MqMessages;
@@ -28,7 +28,7 @@ namespace MClient
 
 		public Job(SMapWorkRequest sMapWorkRequest) : base(sMapWorkRequest)
 		{
-			_position = new KPoint(sMapWorkRequest.Area.SectionAnchor.X, sMapWorkRequest.Area.SectionAnchor.Y);
+			_position = new KPoint(sMapWorkRequest.Area.Point.X, sMapWorkRequest.Area.Point.Y);
 			SamplePoints = GetSamplePoints(sMapWorkRequest);
 			Reset();
 
@@ -70,8 +70,8 @@ namespace MClient
 			int left = _hSectionPtr * SECTION_WIDTH;
 			int top = _vSectionPtr * SECTION_HEIGHT;
 
-			MapSection mapSection = new(new Point(left, top), new CanvasSize(SECTION_WIDTH, SECTION_HEIGHT));
-			MapSectionWorkRequest mswr = new(mapSection, MaxIterations, _hSectionPtr++, _vSectionPtr);
+			RectangleInt mapSection = new(new PointInt(left, top), new SizeInt(SECTION_WIDTH, SECTION_HEIGHT));
+			var mswr = new MapSectionWorkRequest(mapSection, MaxIterations, _hSectionPtr++, _vSectionPtr);
 			SubJob result = new(this, mswr);
 
 			return result;
@@ -175,22 +175,22 @@ namespace MClient
 			//if (Coords.TryGetFromSCoords(sMapWorkRequest.SCoords, out Coords coords))
 			//{
 			//	double[][] xValueSections = BuildValueSections(coords.LeftBot.X, coords.RightTop.X,
-			//		sMapWorkRequest.CanvasSize.Width, SECTION_WIDTH,
-			//		sMapWorkRequest.Area.SectionAnchor.X, sMapWorkRequest.Area.CanvasSize.Width);
+			//		sMapWorkRequest.RectangleInt.Width, SECTION_WIDTH,
+			//		sMapWorkRequest.Area.SectionAnchor.X, sMapWorkRequest.Area.RectangleInt.Width);
 
 
 			//	double[][] yValueSections;
 			//	if (!coords.IsUpsideDown)
 			//	{
 			//		yValueSections = BuildValueSections(coords.RightTop.Y, coords.LeftBot.Y,
-			//			sMapWorkRequest.CanvasSize.Height, SECTION_HEIGHT,
-			//			sMapWorkRequest.Area.SectionAnchor.Y, sMapWorkRequest.Area.CanvasSize.Height);
+			//			sMapWorkRequest.RectangleInt.Height, SECTION_HEIGHT,
+			//			sMapWorkRequest.Area.SectionAnchor.Y, sMapWorkRequest.Area.RectangleInt.Height);
 			//	}
 			//	else
 			//	{
 			//		yValueSections = BuildValueSections(coords.LeftBot.Y, coords.RightTop.Y,
-			//			sMapWorkRequest.CanvasSize.Height, SECTION_HEIGHT,
-			//			sMapWorkRequest.Area.SectionAnchor.Y, sMapWorkRequest.Area.CanvasSize.Height);
+			//			sMapWorkRequest.RectangleInt.Height, SECTION_HEIGHT,
+			//			sMapWorkRequest.Area.SectionAnchor.Y, sMapWorkRequest.Area.RectangleInt.Height);
 			//	}
 
 			//	return new SamplePoints<double>(xValueSections, yValueSections);

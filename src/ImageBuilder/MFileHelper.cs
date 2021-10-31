@@ -8,7 +8,7 @@ namespace ImageBuilder
 	{
         public static MSetInfo GetMSetInfo(MFile.MFileInfo mFileInfo)
 		{
-            var result = new MSetInfo(mFileInfo.Name, GetSCoords(mFileInfo.Coords), mFileInfo.MaxIterations, mFileInfo.Threshold, mFileInfo.InterationsPerStep, GetColorMap(mFileInfo.ColorMapEntries, mFileInfo.HighColorCss));
+            var result = new MSetInfo(mFileInfo.Name, GetSCoords(mFileInfo.Coords), mFileInfo.isHighRes, mFileInfo.MaxIterations, mFileInfo.Threshold, mFileInfo.InterationsPerStep, GetColorMap(mFileInfo.ColorMapEntries, mFileInfo.HighColorCss));
             return result;
 		}
 
