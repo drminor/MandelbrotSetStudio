@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\ColorMapFromHistogramData.txt = Notes\ColorMapFromHistogramData.txt
 		Notes\Formula.txt = Notes\Formula.txt
 		Notes\MapViewerMapInfoDivisionStrategy.txt = Notes\MapViewerMapInfoDivisionStrategy.txt
+		MongoDb_Schemas.txt = MongoDb_Schemas.txt
 		Notes\Printing Resolution and Sizes.txt = Notes\Printing Resolution and Sizes.txt
 	EndProjectSection
 EndProject
@@ -37,6 +38,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapSectionRepo", "src\MapSectionRepo\MapSectionRepo.csproj", "{CB6A70B0-15BD-43DF-A683-36D913068D5E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSetInfoRepo", "src\MSetInfoRepo\MSetInfoRepo.csproj", "{2F275AC2-C2C6-4F2D-8000-DE4480B2595A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectRepo", "src\ProjectRepo\ProjectRepo.csproj", "{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -228,6 +231,22 @@ Global
 		{2F275AC2-C2C6-4F2D-8000-DE4480B2595A}.Release|x64.Build.0 = Release|Any CPU
 		{2F275AC2-C2C6-4F2D-8000-DE4480B2595A}.Release|x86.ActiveCfg = Release|Any CPU
 		{2F275AC2-C2C6-4F2D-8000-DE4480B2595A}.Release|x86.Build.0 = Release|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Debug|arm64.Build.0 = Debug|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Debug|x64.Build.0 = Debug|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Debug|x86.Build.0 = Debug|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Release|arm64.ActiveCfg = Release|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Release|arm64.Build.0 = Release|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Release|x64.ActiveCfg = Release|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Release|x64.Build.0 = Release|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Release|x86.ActiveCfg = Release|Any CPU
+		{EF27CFCF-67AA-4702-803C-DE8CAB11A8E3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -20,6 +20,7 @@
     <ProjectReference Include="..\MapSectionRepo\MapSectionRepo.csproj" />
     <ProjectReference Include="..\MSetInfoRepo\MSetInfoRepo.csproj" />
     <ProjectReference Include="..\PngImageLib\PngImageLib.csproj" />
+    <ProjectReference Include="..\ProjectRepo\ProjectRepo.csproj" />
   </ItemGroup>
 
 </Project>

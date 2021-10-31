@@ -9,20 +9,20 @@ namespace ImageBuilder
 {
 	public class PngBuilder
 	{
-		private readonly string _basePath;
+		private readonly string _imageOutputFolder;
 		private readonly int _blockWidth;
 		private readonly int _blockHeight;
 
-		public PngBuilder(string basePath, int blockWidth, int blockHeight)
+		public PngBuilder(string imageOutputFolder, int blockWidth, int blockHeight)
 		{
-			_basePath = basePath;
+			_imageOutputFolder = imageOutputFolder;
 			_blockWidth = blockWidth;
 			_blockHeight = blockHeight;
 		}
 
-		public void Build(string fn)
+		public void Build(string mFilePath)
 		{
-			var mSetInfo = MSetInfoReaderWriter.Read(fn);
+			var mSetInfo = MSetInfoReaderWriter.Read(mFilePath);
 			bool isHighRes = mSetInfo.IsHighRes;
 			var maxIterations = mSetInfo.MaxIterations;
 			var colorMap = mSetInfo.ColorMap;
@@ -36,7 +36,7 @@ namespace ImageBuilder
 
 			var imageSize = new SizeInt(w * _blockWidth, h * _blockHeight);
 
-			string imagePath = GetImageFilename(fn, imageSize.W, isHighRes, _basePath);
+			string imagePath = GetImageFilename(mFilePath, imageSize.W, isHighRes, _imageOutputFolder);
 
 			var key = new KPoint(0, 0);
 

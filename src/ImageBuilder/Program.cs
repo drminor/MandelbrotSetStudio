@@ -6,7 +6,7 @@ namespace ImageBuilder
 	class Program
 	{
 		private const string BASE_PATH = @"C:\_Mbrodts";
-		//private const string OLD_JSON_FILES_PATH = @"C:\_Mbrodts\OldJsonMFiles";
+		//private const string IMAGE_OUTPUT_FOLDER = @"C:\_Mbrodts";
 
 		static void Main(string[] args)
 		{
@@ -23,10 +23,10 @@ namespace ImageBuilder
 			//MFileReconstructor.Recreate(fn, path);
 
 			string path = GetFullPath(BASE_PATH, fn);
-			var mongoDbWriter = new MongoDbWriter(MSetConstants.BLOCK_WIDTH, MSetConstants.BLOCK_HEIGHT);
-			mongoDbWriter.Build(path);
+			var mongoDbWriter = new MongoDbImporter(MSetConstants.BLOCK_WIDTH, MSetConstants.BLOCK_HEIGHT);
+			mongoDbWriter.Import(path);
 
-			//var pngBuilder = new PngBuilder();
+			//var pngBuilder = new PngBuilder(IMAGE_OUTPUT_FOLDER, MSetConstants.BLOCK_WIDTH, MSetConstants.BLOCK_HEIGHT);
 			//pngBuilder.Build(fn);
 		}
 

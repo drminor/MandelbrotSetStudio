@@ -1,0 +1,74 @@
+
+** ProjectInfo Repository **
+
+Collection
+	Guid
+	DateCreated
+	Name
+
+MapRepository
+	Guid
+	DateCreated
+	Name
+	MongoDB_Connection_String
+	DatabaseName
+
+ProjectRef
+	Guid
+	DateCreated
+	Name
+	Collection.Guid
+	MapRespository.Guid
+	Project.Guid
+
+
+** Project Repo **
+
+Project
+	Guid
+	DateCreated
+	Name
+	CanvasSize
+	BaseCoords
+
+Job
+	Guid
+	DateCreated
+	Project.Guid
+	Job.Guid (Parent Job)
+	Operation
+	OperationAmount
+	Saved
+	Label
+	Zoom
+	CoordValuePrecision (Number of MapSections, each holding 53 bits of precision worth of count data, etc., use to build the composite count, etc., required to calculte the pixel's color.)
+	MCoords
+	MaxIterations
+	Threshold
+	InterationsPerStep
+	ColorMap
+	MapSectionRef[]
+
+MapSectionRef
+	Guid
+	DateCreated
+	Job.Guid
+	MapSection.Guid
+	BlockIndex (X and Y)
+	PrecisionIndex
+	ClippingRectangle
+
+MapSection
+	Guid
+	DateCreated
+	Zoom
+	CoordValuePrecision
+	MPoint
+	Width
+	Height
+	SamplePointDelta (W and H)
+	Counts
+	DoneFlags
+	ZValues
+	TargetIterationCount
+
