@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace ImageBuilder
+namespace MSetInfoRepo
 {
 	class MFileReaderWriterTest
 	{
@@ -44,8 +44,7 @@ namespace ImageBuilder
 			string fnWithExt = Path.ChangeExtension(fileName, "json");
 			string path = Path.Combine(BASE_PATH, OUT_PUT_FOLDER, fnWithExt);
 
-			var mapInfoReaderWriter = new MFileReaderWriter();
-			mapInfoReaderWriter.Write(mFileInfo, path);
+			MFileReaderWriter.Write(mFileInfo, path);
 		}
 
 		private static MFileInfo ReadFromJson(string fileName)
@@ -53,8 +52,7 @@ namespace ImageBuilder
 			string fnWithExt = Path.ChangeExtension(fileName, "json");
 			string path = Path.Combine(BASE_PATH, OUT_PUT_FOLDER, fnWithExt);
 
-			var mapInfoReaderWriter = new MFileReaderWriter();
-			MFileInfo mFileInfo = mapInfoReaderWriter.Read(path);
+			MFileInfo mFileInfo = MFileReaderWriter.Read(path);
 			return mFileInfo;
 		}
 	}

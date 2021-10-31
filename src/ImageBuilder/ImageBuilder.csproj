@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MapSectionRepo\MapSectionRepo.csproj" />
-    <ProjectReference Include="..\MFile\MFile.csproj" />
+    <ProjectReference Include="..\MSetInfoRepo\MSetInfoRepo.csproj" />
     <ProjectReference Include="..\PngImageLib\PngImageLib.csproj" />
   </ItemGroup>
 

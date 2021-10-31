@@ -1,6 +1,6 @@
 ﻿using FSTypes;
 using MapSectionRepo;
-using MFile;
+using MSetInfoRepo;
 using PngImageLib;
 using System;
 using System.IO;
@@ -9,27 +9,24 @@ namespace ImageBuilder
 {
 	public class PngBuilder
 	{
-		public readonly string BasePath;
-		public readonly int BlockWidth;
-		public readonly int BlockHeight;
+		private readonly string _basePath;
+		private readonly int _blockWidth;
+		private readonly int _blockHeight;
 
 		public PngBuilder(string basePath, int blockWidth, int blockHeight)
 		{
-			BasePath = basePath;
-			BlockWidth = blockWidth;
-			BlockHeight = blockHeight;
+			_basePath = basePath;
+			_blockWidth = blockWidth;
+			_blockHeight = blockHeight;
 		}
 
 		public void Build(string fn)
 		{
-			MFileInfo mFileInfo = ReadFromJson(fn);
-
-			var mSetInfo = MFileHelper.GetMSetInfo(mFileInfo);
+			var mSetInfo = MSetInfoReaderWriter.Read(fn);
 			bool isHighRes = mSetInfo.IsHighRes;
 			var maxIterations = mSetInfo.MaxIterations;
 			var colorMap = mSetInfo.ColorMap;
-
-			var repofilename = mFileInfo.Name;
+			var repofilename = mSetInfo.Name;
 
 			ICountsRepoReader countsRepoReader = GetReader(repofilename, isHighRes);
 			SizeInt imageSizeInBlocks = GetImageSizeInBlocks(countsRepoReader);
@@ -37,9 +34,9 @@ namespace ImageBuilder
 			int w = imageSizeInBlocks.W;
 			int h = imageSizeInBlocks.H;
 
-			var imageSize = new SizeInt(w * BlockWidth, h * BlockHeight);
+			var imageSize = new SizeInt(w * _blockWidth, h * _blockHeight);
 
-			string imagePath = GetImageFilename(fn, imageSize.W, isHighRes, BasePath);
+			string imagePath = GetImageFilename(fn, imageSize.W, isHighRes, _basePath);
 
 			var key = new KPoint(0, 0);
 
@@ -58,11 +55,11 @@ namespace ImageBuilder
 						int[] countsForThisLine = countsRepoReader.GetCounts(key, lPtr);
 						if (countsForThisLine != null)
 						{
-							BuildPngImageLineSegment(hBPtr * BlockWidth, countsForThisLine, iLine, maxIterations, colorMap);
+							BuildPngImageLineSegment(hBPtr * _blockWidth, countsForThisLine, iLine, maxIterations, colorMap);
 						}
 						else
 						{
-							BuildBlankPngImageLineSegment(hBPtr * BlockWidth, BlockWidth, iLine);
+							BuildBlankPngImageLineSegment(hBPtr * _blockWidth, _blockWidth, iLine);
 						}
 					}
 
@@ -75,22 +72,12 @@ namespace ImageBuilder
 		{
 			if (isHighRes)
 			{
-				return new CountsRepoReaderHiRes(fn, BlockWidth, BlockHeight);
+				return new CountsRepoReaderHiRes(fn, _blockWidth, _blockHeight);
 			}
 			else
 			{
-				return new CountsRepoReader(fn, BlockWidth, BlockHeight);
+				return new CountsRepoReader(fn, _blockWidth, _blockHeight);
 			}
-		}
-
-		private MFileInfo ReadFromJson(string fn)
-		{
-			string fnWithExt = Path.ChangeExtension(fn, "json");
-			string path = Path.Combine(BasePath, fnWithExt);
-
-			var mFileReaderWriter = new MFileReaderWriter();
-			MFileInfo mFileInfo = mFileReaderWriter.Read(path);
-			return mFileInfo;
 		}
 
 		private static string GetImageFilename(string fn, int imageWidth, bool isHighRes, string basePath)

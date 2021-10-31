@@ -1,25 +1,33 @@
 ﻿using FSTypes;
 using MapSectionRepo;
-using MFile;
+using MSetInfoRepo;
 using System.Diagnostics;
 
 namespace ImageBuilder
 {
 	public class MongoDbWriter
 	{
-		private const int BlockWidth = 100;
-		private const int BlockHeight = 100;
+		private readonly int _blockWidth;
+		private readonly int _blockHeight;
 
-		public static void Build(string mFilePath)
+		public MongoDbWriter(int blockWidth, int blockHeigth)
 		{
-			MFileInfo mFileInfo = ReadFromJson(mFilePath);
+			_blockWidth = blockWidth;
+			_blockHeight = blockHeigth;
+		}
 
-			var mSetInfo = MFileHelper.GetMSetInfo(mFileInfo);
+		public void Build(string mFilePath)
+		{
+			var mSetInfo = MSetInfoReaderWriter.Read(mFilePath);
+
 			bool isHighRes = mSetInfo.IsHighRes;
+			var maxIterations = mSetInfo.MaxIterations;
+			var colorMap = mSetInfo.ColorMap;
 
-			var repofilename = mFileInfo.Name;
+			var repofilename = mSetInfo.Name;
 
 			ICountsRepoReader countsRepoReader = GetReader(repofilename, isHighRes);
+
 			SizeInt imageSizeInBlocks = GetImageSizeInBlocks(countsRepoReader);
 
 			int numHorizBlocks = imageSizeInBlocks.W;
@@ -51,26 +59,19 @@ namespace ImageBuilder
 			}
 		}
 
-		private static ICountsRepoReader GetReader(string fn, bool isHighRes)
+		private ICountsRepoReader GetReader(string fn, bool isHighRes)
 		{
 			if (isHighRes)
 			{
-				return new CountsRepoReaderHiRes(fn, BlockWidth, BlockHeight);
+				return new CountsRepoReaderHiRes(fn, _blockWidth, _blockHeight);
 			}
 			else
 			{
-				return new CountsRepoReader(fn, BlockWidth, BlockHeight);
+				return new CountsRepoReader(fn, _blockWidth, _blockHeight);
 			}
 		}
 
-		private static MFileInfo ReadFromJson(string mFilePath)
-		{
-			var mFileReaderWriter = new MFileReaderWriter();
-			MFileInfo mFileInfo = mFileReaderWriter.Read(mFilePath);
-			return mFileInfo;
-		}
-
-		private static SizeInt GetImageSizeInBlocks(ICountsRepoReader countsRepo)
+		private SizeInt GetImageSizeInBlocks(ICountsRepoReader countsRepo)
 		{
 			int w = 10;
 			int h = 0;

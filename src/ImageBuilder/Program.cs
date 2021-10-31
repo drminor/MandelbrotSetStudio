@@ -1,11 +1,10 @@
-﻿using System.IO;
+﻿using FSTypes;
+using System.IO;
 
 namespace ImageBuilder
 {
 	class Program
 	{
-		public const int BLOCK_SIZE = 100;
-
 		private const string BASE_PATH = @"C:\_Mbrodts";
 		//private const string OLD_JSON_FILES_PATH = @"C:\_Mbrodts\OldJsonMFiles";
 
@@ -24,23 +23,20 @@ namespace ImageBuilder
 			//MFileReconstructor.Recreate(fn, path);
 
 			string path = GetFullPath(BASE_PATH, fn);
-			MongoDbWriter.Build(path);
+			var mongoDbWriter = new MongoDbWriter(MSetConstants.BLOCK_WIDTH, MSetConstants.BLOCK_HEIGHT);
+			mongoDbWriter.Build(path);
 
-
-			//var pngBuilder = new PngBuilder(BASE_PATH, BLOCK_SIZE, BLOCK_SIZE);
+			//var pngBuilder = new PngBuilder();
 			//pngBuilder.Build(fn);
-
-
 		}
 
-		private static string GetFullPath(string basePath, string fn)
+		private static string GetFullPath(string basePath, string fileName)
 		{
-			string fnWithExt = Path.ChangeExtension(fn, "json");
-			string path = Path.Combine(basePath, fnWithExt);
-			return path;
+			string fnWithExt = Path.ChangeExtension(fileName, "json");
+			string result = Path.Combine(basePath, fnWithExt);
+
+			return result;
 		}
-
-
 
 	}
 }

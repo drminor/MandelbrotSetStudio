@@ -2,11 +2,11 @@
 using System.IO;
 using System.Text.Json;
 
-namespace ImageBuilder
+namespace MSetInfoRepo
 {
-	public class MFileReaderWriter
+	public static class MFileReaderWriter
     {
-        public MFileInfo Read(string path)
+        public static MFileInfo Read(string path)
         {
             string jsonContent = File.ReadAllText(path);
 
@@ -21,13 +21,13 @@ namespace ImageBuilder
             return result;
         }
 
-        private JsonSerializerOptions GetReadOptions()
+        private static JsonSerializerOptions GetReadOptions()
         {
             var options = new JsonSerializerOptions();
             return options;
         }
 
-        public void Write(MFileInfo mFileInfo, string path)
+        public static void Write(MFileInfo mFileInfo, string path)
         {
             var jsonSerializerOptions = GetWriteOptions();
             string jsonContent = JsonSerializer.Serialize(mFileInfo, jsonSerializerOptions);
@@ -35,7 +35,7 @@ namespace ImageBuilder
             File.WriteAllText(path, jsonContent);
         }
 
-        private JsonSerializerOptions GetWriteOptions()
+        private static JsonSerializerOptions GetWriteOptions()
 		{
             var options = new JsonSerializerOptions { WriteIndented = true };
             return options;

@@ -1,4 +1,5 @@
 ﻿using MFile;
+using MSetInfoRepo;
 using System.Collections.Generic;
 
 namespace ImageBuilder
@@ -8,8 +9,7 @@ namespace ImageBuilder
 		public static void Recreate(string name, string path)
 		{
 			MFileInfo info = GetMFileInfo(name);
-
-			new MFileReaderWriter().Write(info, path);
+			MFileReaderWriter.Write(info, path);
 		}
 
 		private static MFileInfo GetMFileInfo(string name)
@@ -25,6 +25,7 @@ namespace ImageBuilder
 			}
 		}
 
+		// TODO: Update BuildCircus1 to create a MSetInfo instead
 		private static MFileInfo BuildCircus1()
 		{
 			SCoords coords = new SCoords(

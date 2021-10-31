@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ImageBuilder
+namespace MSetInfoRepo
 {
 	public static class MFileHelper
 	{
