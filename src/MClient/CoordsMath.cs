@@ -47,7 +47,7 @@ namespace MClient
 			Debug.WriteLine("Received a message.");
 			FCoordsResult jobResult = (FCoordsResult)m.Body;
 
-			MqMessages.Coords coords = jobResult.Coords;
+			Coords coords = jobResult.Coords;
 
 			SPoint leftBot = new(coords.StartX, coords.StartY);
 			SPoint rightTop = new(coords.EndX, coords.EndY);

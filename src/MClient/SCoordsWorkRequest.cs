@@ -25,9 +25,9 @@ namespace MClient
 		private SCoordsWorkRequest()
 		{
 			TransformType = TransformType.In;
-			SCoords = null;
-			CanvasSize = new SizeInt(0, 0);
-			MapSection = new RectangleInt(new PointInt(0, 0), new SizeInt(0, 0));
+			SCoords = new SCoords();
+			CanvasSize = new SizeInt();
+			MapSection = new RectangleInt();
 			JobId = -1;
 		}
 

@@ -14,9 +14,9 @@ namespace ImageBuilder
 
         public static SCoords GetSCoords(MFile.SCoords sCoords)
 		{
-            var leftTop = new SPoint(sCoords.sx, sCoords.ey);
-            var rightBot = new SPoint(sCoords.ex, sCoords.sy);
-            var result = new SCoords(leftTop, rightBot);
+            var leftBot = new SPoint(sCoords.StartingX, sCoords.StartingY);
+            var rightTop = new SPoint(sCoords.EndingX, sCoords.EndingY);
+            var result = new SCoords(leftBot, rightTop);
 
             return result;
 		}

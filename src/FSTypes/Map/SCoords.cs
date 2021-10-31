@@ -8,7 +8,7 @@ namespace FSTypes
 
 		public SPoint RightTop;
 
-		private SCoords()
+		public SCoords()
 		{
 			LeftBot = new SPoint("0", "0");
 			RightTop = new SPoint("0", "0");

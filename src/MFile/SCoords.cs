@@ -1,6 +1,6 @@
 ﻿namespace MFile
 {
-	public record SCoords(string sx, string ex, string sy, string ey);
+	public record SCoords(string StartingX, string EndingX, string StartingY, string EndingY);
 
 }
 
