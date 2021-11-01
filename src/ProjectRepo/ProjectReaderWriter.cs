@@ -27,7 +27,7 @@ namespace ProjectRepo
 			var filter = Builders<Project>.Filter.Eq("Name", name);
 			var project = Collection.Find(filter).FirstOrDefault();
 
-			return project.Id;
+			return project?.Id ?? ObjectId.Empty;
 		}
 
 		public ObjectId Insert(Project project)

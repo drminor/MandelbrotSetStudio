@@ -51,8 +51,13 @@ namespace FSTypes
 
         private static string GetCssColor(int[] cComps)
         {
-            string result = $"F{cComps[0].ToString("X")}{cComps[1].ToString("X")}{cComps[2].ToString("X")}";
+            string result = $"F{Get2CharHex(cComps[0])}{Get2CharHex(cComps[1])}{Get2CharHex(cComps[2])}";
             return result;
+        }
+
+        private static string Get2CharHex(int c)
+        {
+            return c.ToString("X").PadLeft(2);
         }
 
         private static int GetColorNum(int[] cComps)

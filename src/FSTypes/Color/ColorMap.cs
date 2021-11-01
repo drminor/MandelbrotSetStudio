@@ -199,7 +199,7 @@ namespace FSTypes
 						endColor = new ColorMapColor(colorMapEntries[ptr + 1].StartColor.ColorComps);
 					}
 
-                    colorMapEntries[ptr] = new ColorMapEntry(cmd.CutOff, cmd.StartColor.CssColor, cmd.BlendStyle, endColor.CssColor);
+                    colorMapEntries[ptr] = new ColorMapEntry(cmd.CutOff, cmd.StartColor, cmd.BlendStyle, endColor);
                 }
             }
         }
