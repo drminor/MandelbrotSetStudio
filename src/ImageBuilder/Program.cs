@@ -30,7 +30,7 @@ namespace ImageBuilder
 				case 0:
 					{
 						/* Reconstructor */
-						MSetInfo mSetInfo = MSetInfoBuilder.Recreate(fileName);
+						MSetInfo mSetInfo = MSetInfoBuilder.Build(fileName);
 
 						string path = GetFullPath(BASE_PATH, fileName);
 						MSetInfoReaderWriter.Write(mSetInfo, path);
@@ -42,10 +42,8 @@ namespace ImageBuilder
 						/* Create png image file */
 						var pngBuilder = new PngBuilder(IMAGE_OUTPUT_FOLDER, _blockSize);
 
-						string mFilePath = GetFullPath(BASE_PATH, fileName);
-						var mSetInfo = MSetInfoReaderWriter.Read(mFilePath);
-
-						var mapSectionReader = GetMapSectionReader(fileName);
+						var mSetInfo = MSetInfoBuilder.Build(fileName);
+						IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfo.Name, mSetInfo.IsHighRes);
 
 						pngBuilder.Build(mSetInfo, mapSectionReader);
 						break;
@@ -53,13 +51,14 @@ namespace ImageBuilder
 				case 2:
 					{
 						/* MongoDb Import */
-						IMapSectionReader mapSectionReader = GetMapSectionReader(fileName);
+						var mSetInfo = MSetInfoBuilder.Build(fileName);
+
+						IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfo.Name, mSetInfo.IsHighRes);
 
 						var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
 						var mongoDbImporter = new MongoDbImporter(dbProvider);
 
-						var project = BuildProject();
-
+						var project = BuildProject(mSetInfo);
 						mongoDbImporter.Import(mapSectionReader, project);
 						break;
 					}
@@ -68,41 +67,33 @@ namespace ImageBuilder
 			}
 		}
 
-		private static IMapSectionReader GetMapSectionReader(string fileName)
-		{
-			string mFilePath = GetFullPath(BASE_PATH, fileName);
-			var mSetInfo = MSetInfoReaderWriter.Read(mFilePath);
-			bool isHighRes = mSetInfo.IsHighRes;
-			var repofilename = mSetInfo.Name;
+		//private static IMapSectionReader GetMapSectionReader(string fileName)
+		//{
+		//	string mFilePath = GetFullPath(BASE_PATH, fileName);
+		//	var mSetInfo = MSetInfoReaderWriter.Read(mFilePath);
+		//	bool isHighRes = mSetInfo.IsHighRes;
+		//	var repofilename = mSetInfo.Name;
 
-			var countsRepoReader = GetReader(repofilename, isHighRes);
-			return countsRepoReader;
-		}
+		//	var mapSectionReader = GetReader(repofilename, isHighRes);
+		//	return mapSectionReader;
+		//}
 
-		private static IMapSectionReader GetReader(string repoFilename, bool isHighRes)
+		private static IMapSectionReader GetMapSectionReader(string repoFilename, bool isHighRes)
 		{
 			if (isHighRes)
 			{
-				return new CountsRepoReaderHiRes(repoFilename, _blockSize);
+				return new MapSectionRepoReaderHiRes(repoFilename, _blockSize);
 			}
 			else
 			{
-				return new CountsRepoReader(repoFilename, _blockSize);
+				return new MapSectionReader(repoFilename, _blockSize);
 			}
 		}
 
-		private static Project BuildProject()
+		private static Project BuildProject(MSetInfo mSetInfo)
 		{
 			var canvasSize = new SizeInt(1280, 1280);
-
-			Coords coords = new Coords(
-				startingX: "-7.66830585754868944856241303572093e-01",
-				startingY: "1.08316038593833397341534199100796e-01",
-				endingX: "-7.66830587074704020221573662634195e-01",
-				endingY: "1.08316039471787068157292062147129e-01"
-				);
-
-			var result = new Project("CircusTest", canvasSize, coords);
+			var result = new Project(mSetInfo.Name, canvasSize, mSetInfo.Coords);
 
 			return result;
 		}

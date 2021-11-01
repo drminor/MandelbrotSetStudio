@@ -36,7 +36,7 @@ namespace ImageBuilder
 			//		{
 			//			key.X = hBPtr;
 
-			//			int[] countsForThisLine = countsRepoReader.GetCounts(key, lPtr);
+			//			int[] countsForThisLine = mapSectionReader.GetCounts(key, lPtr);
 			//			if (countsForThisLine != null)
 			//			{
 			//				Debug.WriteLine($"Read Block. V={vBPtr}, HB={hBPtr}.");

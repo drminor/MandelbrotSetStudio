@@ -1,22 +1,23 @@
 ﻿using FileDictionaryLib;
 using FSTypes;
+using System;
 
 namespace MapSectionRepo
 {
-	public class CountsRepoReaderHiRes : IMapSectionReader
+	public class MapSectionReader : IMapSectionReader
 	{
-		public bool IsHighRes => true;
+		public bool IsHighRes => false;
 		readonly SizeInt _blockSize;
 
-		readonly ValueRecords<KPoint, SubJobResult> _countsRepo;
-		readonly SubJobResult _workResult;
+		readonly ValueRecords<KPoint, MapSectionWorkResult> _countsRepo;
+		readonly MapSectionWorkResult _workResult;
 
-		public CountsRepoReaderHiRes(string repofilename, SizeInt blockSize)
+		public MapSectionReader(string repofilename, SizeInt blockSize)
 		{
 			_blockSize = blockSize;
 
-			_countsRepo = new ValueRecords<KPoint, SubJobResult>(repofilename, useHiRezFolder: IsHighRes);
-			_workResult = SubJobResult.GetEmptySubJobResult(_blockSize.NumberOfCells, "0", false);
+			_countsRepo = new ValueRecords<KPoint, MapSectionWorkResult>(repofilename, useHiRezFolder: IsHighRes);
+			_workResult = new MapSectionWorkResult(_blockSize.NumberOfCells, highRes: IsHighRes, includeZValuesOnRead: false);
 		}
 
 		public int[] GetCounts(KPoint key, int linePtr)
@@ -33,16 +34,11 @@ namespace MapSectionRepo
 
 		public bool ContainsKey(KPoint key) => _countsRepo.ContainsKey(key);
 
-		private int[] GetOneLineFromCountsBlock(uint[] counts, int lPtr)
+		private int[] GetOneLineFromCountsBlock(int[] counts, int lPtr)
 		{
 			int[] result = new int[_blockSize.Width];
-			int srcPtr = lPtr * _blockSize.Width;
 
-			for (int i = 0; i < result.Length; i++)
-			{
-				result[i] = (int)counts[srcPtr++];
-			}
-
+			Array.Copy(counts, lPtr * _blockSize.Width, result, 0, _blockSize.Width);
 			return result;
 		}
 

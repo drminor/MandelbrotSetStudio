@@ -128,6 +128,7 @@ namespace FileDictionaryLib
 
     public sealed class ValueRecords<K,V> : IDisposable where K: IEqualityComparer<K> where V: IPartsBin
 	{
+		// TODO: Define the WORKING_DIR Const (@"C:\_FractalFiles") in the main program and update the ValueRecords constructor to take a path.
 		public const string WORKING_DIR = @"C:\_FractalFiles";
 		public const string HI_REZ_WORKING_FOLDER = "HiRez";
 

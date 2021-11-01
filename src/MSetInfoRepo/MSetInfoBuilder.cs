@@ -5,7 +5,7 @@ namespace MSetInfoRepo
 {
 	public static class MSetInfoBuilder
 	{
-		public static MSetInfo Recreate(string name)
+		public static MSetInfo Build(string name)
 		{
 			MSetInfo info = GetMFileInfo(name);
 			return info;
