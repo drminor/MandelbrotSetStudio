@@ -6,7 +6,7 @@ namespace MSetInfoRepo
 {
 	public static class MFileHelper
 	{
-        public static MSetInfo GetMSetInfo(MFile.MFileInfo mFileInfo)
+        internal static MSetInfo GetMSetInfo(MFileInfo mFileInfo)
 		{
             var result = new MSetInfo(mFileInfo.Name, mFileInfo.Coords, mFileInfo.isHighRes, mFileInfo.MaxIterations, mFileInfo.Threshold, mFileInfo.InterationsPerStep, GetColorMap(mFileInfo.ColorMapEntries, mFileInfo.HighColorCss));
             return result;

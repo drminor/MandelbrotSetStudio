@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FSTypes\FSTypes.csproj" />
-    <ProjectReference Include="..\MFile\MFile.csproj" />
   </ItemGroup>
 
 </Project>

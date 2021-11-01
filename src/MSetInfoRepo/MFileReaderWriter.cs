@@ -1,12 +1,11 @@
-﻿using MFile;
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 
 namespace MSetInfoRepo
 {
 	public static class MFileReaderWriter
     {
-        public static MFileInfo Read(string path)
+        internal static MFileInfo Read(string path)
         {
             string jsonContent = File.ReadAllText(path);
 
@@ -27,7 +26,7 @@ namespace MSetInfoRepo
             return options;
         }
 
-        public static void Write(MFileInfo mFileInfo, string path)
+        internal static void Write(MFileInfo mFileInfo, string path)
         {
             var jsonSerializerOptions = GetWriteOptions();
             string jsonContent = JsonSerializer.Serialize(mFileInfo, jsonSerializerOptions);

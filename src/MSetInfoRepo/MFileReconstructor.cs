@@ -1,13 +1,10 @@
 ﻿using FSTypes;
-using MFile;
-using MSetInfoRepo;
 using System.Collections.Generic;
 
-namespace ImageBuilder
+namespace MSetInfoRepo
 {
-	static class MFileReconstructor
+	public static class MFileReconstructor
 	{
-
 		public static void Recreate(string name, string path)
 		{
 			MFileInfo info = GetMFileInfo(name);
