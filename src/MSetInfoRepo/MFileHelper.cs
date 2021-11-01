@@ -12,16 +12,16 @@ namespace MSetInfoRepo
             return result;
 		}
 
-        public static ColorMap GetColorMap(IList<MFile.ColorMapEntry> colorMapEntries, string highColorCss)
+        public static ColorMap GetColorMap(IList<ColorMapEntry> colorMapEntries, string highColorCss)
         {
             ColorMapEntry[] newRanges = new ColorMapEntry[colorMapEntries.Count];
 
             for (int ptr = 0; ptr < colorMapEntries.Count; ptr++)
             {
-                MFile.ColorMapEntry sourceCme = colorMapEntries[ptr];
+                ColorMapEntry sourceCme = colorMapEntries[ptr];
 
                 ColorMapBlendStyle blendStyle = Enum.Parse<ColorMapBlendStyle>(sourceCme.BlendStyle.ToString());
-                newRanges[ptr] = new ColorMapEntry(sourceCme.Cutoff, sourceCme.StartCssColor, blendStyle, sourceCme.EndCssColor);
+                newRanges[ptr] = new ColorMapEntry(sourceCme.CutOff, sourceCme.StartColor.CssColor, blendStyle, sourceCme.EndColor.CssColor);
             }
 
             ColorMap result = new(newRanges, highColorCss);

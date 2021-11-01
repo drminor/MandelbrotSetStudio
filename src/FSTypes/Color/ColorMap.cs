@@ -1,68 +1,91 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FSTypes
 {
     public class ColorMap
     {
-        private readonly ColorMapEntry[] _colorMapEntries;
+        public ColorMapEntry[] _colorMapEntries { get; init; }
+        public ColorMapEntry HighColorEntry { get; init; }
 
-        public readonly int[] CutOffs;
-        public readonly ColorMapEntry HighColorEntry;
+
+        private readonly int[] _cutOffs;
+        private readonly int[] _prevCutOffs;
+        private readonly int[] _bucketWidths;
 
         public ColorMap(ColorMapEntry[] colorMapEntries, string highColor)
         {
 			HighColorEntry = new ColorMapEntry(-1, highColor, ColorMapBlendStyle.None, highColor);
 
 			_colorMapEntries = colorMapEntries;
-            CutOffs = BuildCutOffs(colorMapEntries);
-			SetBucketWidths(colorMapEntries);
+            _cutOffs = BuildCutOffs(colorMapEntries);
+			IList<Tuple<int, int>> pOffsetsAndBucketWidths = BuildBucketWidths(colorMapEntries);
+
+            _prevCutOffs = pOffsetsAndBucketWidths.Select(x => x.Item1).ToArray();
+            _bucketWidths = pOffsetsAndBucketWidths.Select(x => x.Item2).ToArray();
+
             SetEndColors(colorMapEntries);
         }
 
         public int[] GetColor(int countVal, double escapeVelocity)
         {
-			var cme = GetColorMapEntry(countVal);
-            int[] result = GetBlendedColor(cme, countVal, escapeVelocity);
+            //var cme = GetColorMapEntry(countVal);
+
+            int colorMapIndex = GetColorMapIndex(countVal);
+            int[] result = GetBlendedColor(colorMapIndex, countVal, escapeVelocity);
             return result;
         }
          
-        private static int[] GetBlendedColor(ColorMapEntry cme, int countVal, double escapeVelocity)
+        private int[] GetBlendedColor(int colorMapIndex, int countVal, double escapeVelocity)
         {
             int[] result;
-            if(cme.BlendStyle == ColorMapBlendStyle.None)
+
+            ColorMapEntry cme;
+            if (colorMapIndex > _cutOffs.Length - 1)
+            {
+                cme = HighColorEntry;
+            }
+            else
+            {
+                cme = _colorMapEntries[colorMapIndex];
+            }
+
+            if (cme.BlendStyle == ColorMapBlendStyle.None)
             {
                 result = cme.StartColor.ColorComps;
                 return result;
             }
 
-            int botBucketVal = cme.PrevCutOff;
+            int botBucketVal = _prevCutOffs[colorMapIndex];
 
-			//int[] cStart;
+            //int[] cStart;
 
-			//if (countVal == botBucketVal)
-			//{
-			//	cStart = cme.StartColor.ColorComps;
-			//}
-			//else
-			//{
-			//	double stepFactor = (-1 + countVal - botBucketVal) / (double)cme.BucketWidth;
-			//	cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
-			//}
+            //if (countVal == botBucketVal)
+            //{
+            //	cStart = cme.StartColor.ColorComps;
+            //}
+            //else
+            //{
+            //	double stepFactor = (-1 + countVal - botBucketVal) / (double)cme.BucketWidth;
+            //	cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+            //}
 
-			////double stepFactor = (countVal - botBucketVal) / (double)cme.BucketWidth;
-			////cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+            ////double stepFactor = (countVal - botBucketVal) / (double)cme.BucketWidth;
+            ////cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
 
-			//double intraStepFactor = escapeVelocity / cme.BucketWidth;
-			//result = Interpolate(cStart, cme.StartColor.ColorComps, cme.EndColor.ColorComps, intraStepFactor);
+            //double intraStepFactor = escapeVelocity / cme.BucketWidth;
+            //result = Interpolate(cStart, cme.StartColor.ColorComps, cme.EndColor.ColorComps, intraStepFactor);
 
-			double stepFactor = (countVal + escapeVelocity - botBucketVal) / cme.BucketWidth;
+            int bucketWidth = _bucketWidths[colorMapIndex];
+			double stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
 			result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
 
 
 			return result;
         }
 
-        private static int[] Interpolate(int[] cStart, int[] c1, int[] c2, double factor)
+        private int[] Interpolate(int[] cStart, int[] c1, int[] c2, double factor)
         {
             if(factor == 0)
             {
@@ -104,19 +127,11 @@ namespace FSTypes
 
         private ColorMapEntry GetColorMapEntry(int countVal)
         {
-			ColorMapEntry result;
-            int newIndex = Array.BinarySearch(CutOffs, countVal);
+            ColorMapEntry result;
 
-            if(newIndex < 0)
-            {
-                newIndex = ~newIndex;
-            }
-			else
-			{
-				newIndex++;
-			}
+            int newIndex = GetColorMapIndex(countVal);
 
-            if (newIndex > CutOffs.Length - 1)
+            if (newIndex > _cutOffs.Length - 1)
             {
                 result = HighColorEntry;
             }
@@ -128,7 +143,23 @@ namespace FSTypes
             return result;
         }
 
-        private static int[] BuildCutOffs(ColorMapEntry[] colorMapEntries)
+        private int GetColorMapIndex(int countVal)
+        {
+            int newIndex = Array.BinarySearch(_cutOffs, countVal);
+
+            if (newIndex < 0)
+            {
+                newIndex = ~newIndex;
+            }
+            else
+            {
+                newIndex++;
+            }
+
+            return newIndex;
+        }
+
+        private int[] BuildCutOffs(ColorMapEntry[] colorMapEntries)
         {
             int[] result = new int[colorMapEntries.Length];
 
@@ -136,41 +167,46 @@ namespace FSTypes
             {
                 result[ptr] = colorMapEntries[ptr].CutOff;
             }
+
             return result;
         }
 
-        private static void SetBucketWidths(ColorMapEntry[] colorMapEntries)
+        private IList<Tuple<int, int>> BuildBucketWidths(ColorMapEntry[] colorMapEntries)
         {
-            colorMapEntries[0].PrevCutOff = 0;
-            colorMapEntries[0].BucketWidth = colorMapEntries[0].CutOff;
+            List<Tuple<int, int>> result = new List<Tuple<int, int>>();
 
-            int prevCutOff = colorMapEntries[0].CutOff;
+            int prevCutOff = 0;
 
-            for (int ptr = 1; ptr < colorMapEntries.Length; ptr++)
+            for (int ptr = 0; ptr < colorMapEntries.Length; ptr++)
             {
-                colorMapEntries[ptr].PrevCutOff = prevCutOff;
-                colorMapEntries[ptr].BucketWidth = colorMapEntries[ptr].CutOff - prevCutOff;
+                int cutOff = colorMapEntries[ptr].CutOff;
+                result.Add(new Tuple<int, int>(prevCutOff, cutOff - prevCutOff));
 
-                prevCutOff = colorMapEntries[ptr].CutOff;
+                prevCutOff = cutOff;
             }
 
-            //colorMapEntries[colorMapEntries.Length - 1].PrevCutOff = prevCutOff;
+            return result;
         }
 
         private void SetEndColors(ColorMapEntry[] colorMapEntries)
         {
             for (int ptr = 0; ptr < colorMapEntries.Length; ptr++)
             {
-                if(colorMapEntries[ptr].BlendStyle == ColorMapBlendStyle.Next)
+                ColorMapEntry cmd = colorMapEntries[ptr];
+
+                if (cmd.BlendStyle == ColorMapBlendStyle.Next)
                 {
+                    ColorMapColor endColor;
 					if (ptr == colorMapEntries.Length - 1)
 					{
-						colorMapEntries[ptr].EndColor = new ColorMapColor(HighColorEntry.StartColor.ColorComps);
+						endColor = new ColorMapColor(HighColorEntry.StartColor.ColorComps);
 					}
 					else
 					{
-						colorMapEntries[ptr].EndColor = new ColorMapColor(colorMapEntries[ptr + 1].StartColor.ColorComps);
+						endColor = new ColorMapColor(colorMapEntries[ptr + 1].StartColor.ColorComps);
 					}
+
+                    colorMapEntries[ptr] = new ColorMapEntry(cmd.CutOff, cmd.StartColor.CssColor, cmd.BlendStyle, endColor.CssColor);
                 }
             }
         }

@@ -1,8 +1,15 @@
-﻿namespace FSTypes
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
+
+namespace FSTypes
 {
     public class ColorMapColor
     {
-        public readonly int[] ColorComps;
+        [BsonConstructor]
+        public ColorMapColor(string cssColor) : this(GetComps(cssColor))
+        {
+            _cssColor = cssColor;
+        }
 
         public ColorMapColor(int[] colorComps)
         {
@@ -10,30 +17,42 @@
             ColorComps[0] = colorComps[0];
             ColorComps[1] = colorComps[1];
             ColorComps[2] = colorComps[2];
-            _haveColorNum = false;
         }
 
-        public ColorMapColor(string cssColor)
+        private string _cssColor;
+        public string CssColor
         {
-            ColorComps = new int[3];
-            ColorComps[0] = int.Parse(cssColor.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
-            ColorComps[1] = int.Parse(cssColor.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
-            ColorComps[2] = int.Parse(cssColor.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
-            _haveColorNum = false;
+            get
+            {
+                if (_cssColor == null)
+                {
+                    _cssColor = GetCssColor(ColorComps);
+                }
+                return _cssColor;
+            }
         }
 
-        private readonly bool _haveColorNum;
-        private int _colorNum;
+        [BsonIgnore]
+        [JsonIgnore]
+        public int[] ColorComps { get; init; }
+
+        private int? _colorNum;
         public int ColorNum
         {
             get
             {
-                if(!_haveColorNum)
+                if(!_colorNum.HasValue)
                 {
                     _colorNum = GetColorNum(ColorComps);
                 }
-                return _colorNum;
+                return _colorNum.Value;
             }
+        }
+
+        private static string GetCssColor(int[] cComps)
+        {
+            string result = $"F{cComps[0].ToString("X")}{cComps[1].ToString("X")}{cComps[2].ToString("X")}";
+            return result;
         }
 
         private static int GetColorNum(int[] cComps)
@@ -44,6 +63,16 @@
             result |= cComps[0];
 
             return result;
+        }
+
+        private static int[] GetComps(string cssColor)
+		{
+            int[] colorComps = new int[3];
+            colorComps[0] = int.Parse(cssColor.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
+            colorComps[1] = int.Parse(cssColor.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
+            colorComps[2] = int.Parse(cssColor.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
+
+            return colorComps;
         }
 
     }

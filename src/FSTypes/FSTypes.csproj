@@ -9,4 +9,8 @@
     <Compile Remove="Screen\Point.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Bson" Version="2.13.2" />
+  </ItemGroup>
+
 </Project>

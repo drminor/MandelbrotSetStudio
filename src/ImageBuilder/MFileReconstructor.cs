@@ -5,8 +5,6 @@ using System.Collections.Generic;
 
 namespace ImageBuilder
 {
-	using ColorMapEntry = MFile.ColorMapEntry;
-
 	static class MFileReconstructor
 	{
 
@@ -42,16 +40,16 @@ namespace ImageBuilder
 			bool isHighRes = false;
 			IList<ColorMapEntry> entries = new List<ColorMapEntry>();
 
-			entries.Add(new ColorMapEntry(375, "#ffffff", 1, "#000000"));
-			entries.Add(new ColorMapEntry(399, "#fafdf2", 1, "#000000"));
-			entries.Add(new ColorMapEntry(407, "#98e498", 1, "#000000"));
-			entries.Add(new ColorMapEntry(428, "#0000ff", 1, "#000000"));
-            entries.Add(new ColorMapEntry(446, "#f09ee6", 1, "#000000"));
-            entries.Add(new ColorMapEntry(486, "#00ff00", 1, "#000000"));
-            entries.Add(new ColorMapEntry(500, "#0000ff", 1, "#000000"));
-            entries.Add(new ColorMapEntry(523, "#ffffff", 1, "#000000"));
-			entries.Add(new ColorMapEntry(560, "#3ee2e2", 1, "#000000"));
-			entries.Add(new ColorMapEntry(1011, "#e95ee8", 2, "#758cb7"));
+			entries.Add(new ColorMapEntry(375, "#ffffff", ColorMapBlendStyle.Next, "#000000"));
+			entries.Add(new ColorMapEntry(399, "#fafdf2", ColorMapBlendStyle.Next, "#000000"));
+			entries.Add(new ColorMapEntry(407, "#98e498", ColorMapBlendStyle.Next, "#000000"));
+			entries.Add(new ColorMapEntry(428, "#0000ff", ColorMapBlendStyle.Next, "#000000"));
+            entries.Add(new ColorMapEntry(446, "#f09ee6", ColorMapBlendStyle.Next, "#000000"));
+            entries.Add(new ColorMapEntry(486, "#00ff00", ColorMapBlendStyle.Next, "#000000"));
+            entries.Add(new ColorMapEntry(500, "#0000ff", ColorMapBlendStyle.Next, "#000000"));
+            entries.Add(new ColorMapEntry(523, "#ffffff", ColorMapBlendStyle.Next, "#000000"));
+			entries.Add(new ColorMapEntry(560, "#3ee2e2", ColorMapBlendStyle.Next, "#000000"));
+			entries.Add(new ColorMapEntry(1011, "#e95ee8", ColorMapBlendStyle.End, "#758cb7"));
 
 			string highColorCss = "#000000";
 
