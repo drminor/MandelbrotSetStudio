@@ -64,7 +64,7 @@ namespace MClient
 			return false;
 		}
 
-		private static double GetSamplePointDiff(double s, double e, int extent)
+		private double GetSamplePointDiff(double s, double e, int extent)
 		{
 			double unit = (e - s) / extent;
 			double second = s + unit;
@@ -72,7 +72,7 @@ namespace MClient
 			return diff;
 		}
 
-		private static bool HasPrecision(double x)
+		private bool HasPrecision(double x)
 		{
 			if (x == 0)
 				return false;
@@ -84,7 +84,7 @@ namespace MClient
 		}
 
 		const long ExponentMask = 0x7FF0000000000000;
-		private static bool IsSubnormal(double v)
+		private bool IsSubnormal(double v)
 		{
 			long bithack = BitConverter.DoubleToInt64Bits(v);
 			if (bithack == 0) return false;

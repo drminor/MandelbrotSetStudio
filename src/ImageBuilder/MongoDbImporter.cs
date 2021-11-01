@@ -3,6 +3,8 @@ using MapSectionRepo;
 using MongoDB.Bson;
 using ProjectRepo;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ImageBuilder
 {
@@ -15,10 +17,14 @@ namespace ImageBuilder
 			_dbProvider = dbProvider;
 		}
 
-		// TODO: 
-		public void Import(IMapSectionReader mapSectionReader, Project project)
+		public void Import(IMapSectionReader mapSectionReader, Project projectData, MSetInfo mSetInfo, bool overwrite)
 		{
-			GetMapSectionWriter(project);
+			// Make sure the project record has been written.
+			var project = InsertProject(projectData);
+
+			var jobId = CreateJob(project, mSetInfo, overwrite);
+
+			GetMapSectionWriter(jobId);
 
 			SizeInt imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
 
@@ -51,19 +57,70 @@ namespace ImageBuilder
 			//}
 		}
 
-		private void GetMapSectionWriter(Project project)
+		private void GetMapSectionWriter(ObjectId jobId)
 		{
+			Debug.WriteLine($"The JobId is {jobId}.");
+		}
+
+		private ObjectId CreateJob(Project project, MSetInfo mSetInfo, bool overwrite)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var jobId = jobReaderWriter.GetJobId(project.Id);
+
+			if (jobId == ObjectId.Empty)
+			{
+				Job job = CreateFirstJob(project.Id, project.BaseCoords, mSetInfo);
+
+				jobId = jobReaderWriter.Insert(job);
+			}
+			else
+			{
+				if (!overwrite)
+				{
+					throw new InvalidOperationException($"Overwrite is false and Project: {project.Name} already has at least one job.");
+				}
+				else
+				{
+					throw new NotSupportedException($"Project: {project.Name} already has at least one job. Overwriting an existing job is not yet supported.");
+				}
+			}
+
+			return jobId;
+		}
+
+		//private void UpdateJob(Project project, ObjectId jobId)
+		//{
+
+		//}
+
+		/// <summary>
+		/// Inserts the project record if it does not exist on the database.
+		/// </summary>
+		/// <param name="project"></param>
+		private Project InsertProject(Project project)
+		{
+			Project result;
+
 			string projectName = project.Name;
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			ObjectId projectId = projectReaderWriter.GetProjectId(projectName);
+			result = projectReaderWriter.Get(projectName);
 
-			if (projectId == ObjectId.Empty)
+			if (result == null)
 			{
 				projectReaderWriter.Insert(project);
-				projectId = projectReaderWriter.GetProjectId(projectName);
+				result = project;
 			}
 
+			return result;
+		}
+
+		private Job CreateFirstJob(ObjectId projectId, Coords coords, MSetInfo mSetInfo)
+		{
+			Job job = new Job(projectId, saved:true, coords, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
+				new List<ColorMapEntry>(mSetInfo.ColorMap.ColorMapEntries), mSetInfo.ColorMap.HighColorEntry.StartColor.CssColor);
+
+			return job;
 		}
 
 	}

@@ -29,20 +29,20 @@ Project
 	DateTime DateCreated
 	String Name
 	SizeInt CanvasSize
-	SCoords BaseCoords
+	Coords BaseCoords
 
 Job
 	Guid _id
 	DateTime DateCreated
 	Guid ProjectId
 	Guid ParentJobID
-	OperationEnum Operation **
+	TransformType Operation
 	Double OperationAmount
 	bool Saved
 	string Label
 	int Zoom
 	int CoordValuePrecision (Number of MapSections, each holding 53 bits of precision worth of count data, etc., use to build the composite count, etc., required to calculte the pixel's color.)
-	SCoords Coords **
+	Coords Coords
 	int MaxIterations
 	int Threshold
 	int InterationsPerStep
@@ -55,7 +55,7 @@ MapSectionRef
 	DateTime DateCreated
 	Guid Job._id
 	Guid MapSectionId
-	PointInt BlockIndex **
+	PointInt BlockIndex
 	int PrecisionIndex
 	RectangleInt ClippingRectangle
 
@@ -71,7 +71,7 @@ MapSection
 	DSize SamplePointDelta **
 	int[] Counts
 	bool[] DoneFlags
-	DDouble[] ZValues **
+	DDouble[] ZValues
 
 MapSectionNeighbors
 	Guid _id

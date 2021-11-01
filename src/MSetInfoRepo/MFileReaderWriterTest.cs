@@ -26,7 +26,7 @@ namespace MSetInfoRepo
 		{
 			string name = "Test123";
 
-			var sCoords = new Coords("-7.66830587074704020221573662634195e-01", "-7.66830585754868944856241303572093e-01", "1.08316038593833397341534199100796e-01", "1.08316039471787068157292062147129e-01");
+			var coords = new Coords("-7.66830587074704020221573662634195e-01", "-7.66830585754868944856241303572093e-01", "1.08316038593833397341534199100796e-01", "1.08316039471787068157292062147129e-01");
 
 			IList<ColorMapEntry> colorMapEntrires = new List<ColorMapEntry>();
 			colorMapEntrires.Add(new ColorMapEntry(10, "#f09ee6", ColorMapBlendStyle.None, "#c81788"));
@@ -34,7 +34,7 @@ namespace MSetInfoRepo
 
 			string highColor = "#000000";
 
-			MFileInfo result = new MFileInfo(name, sCoords, isHighRes:false, 1000, 4, 100, colorMapEntrires, highColor);
+			MFileInfo result = new MFileInfo(name, coords, isHighRes:false, 1000, 4, 100, colorMapEntrires, highColor);
 
 			return result;
 		}

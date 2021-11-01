@@ -22,13 +22,13 @@ namespace ProjectRepo
 		) : RecordBase()
 
 	{
-		public Job(ObjectId projectId, Coords coords, int maxIterations, int threshold, int iterationsPerStep, List<ColorMapEntry> colorMapEntries, string highColorCss)
+		public Job(ObjectId projectId, bool saved, Coords coords, int maxIterations, int threshold, int iterationsPerStep, List<ColorMapEntry> colorMapEntries, string highColorCss)
 			: this(
 				  ProjectId: projectId,
 				  ParentJobId: ObjectId.Empty,
 				  Operation: null,
 				  OperationAmount: 0,
-				  Saved: false,
+				  Saved: saved,
 				  Label: null,
 				  Zoom: 0,
 				  CoordValuePrecision: 0,

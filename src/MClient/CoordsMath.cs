@@ -84,7 +84,7 @@ namespace MClient
 			TransformType transformType = sCoordsWorkRequest.TransformType;
 
 			string name = "CoordsRequest";
-			FJobRequest fJobRequest = new(jobId, name, FJobRequestType.TransformCoords, coords, area, samplePoints, 0, transformType);
+			var fJobRequest = new FJobRequest(jobId, name, FJobRequestType.TransformCoords, coords, area, samplePoints, 0, transformType);
 
 			return fJobRequest;
 		}

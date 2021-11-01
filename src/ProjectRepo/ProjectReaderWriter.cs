@@ -14,18 +14,17 @@ namespace ProjectRepo
 			_dbProvider = dbProvider;
 		}
 
-		//public ObjectId GetProjectId(string name)
-		//{
-		//	var filter = Builders<BsonDocument>.Filter.Eq("Name", name);
-		//	var bsonRecord = Document.Find(filter).FirstOrDefault();
-
-		//	return GetRecordId(bsonRecord);
-		//}
-
-		public ObjectId GetProjectId(string name)
+		public Project Get(string name)
 		{
 			var filter = Builders<Project>.Filter.Eq("Name", name);
 			var project = Collection.Find(filter).FirstOrDefault();
+
+			return project;
+		}
+
+		public ObjectId GetProjectId(string name)
+		{
+			var project = Get(name);
 
 			return project?.Id ?? ObjectId.Empty;
 		}
@@ -47,28 +46,39 @@ namespace ProjectRepo
 			}
 		}
 
-		private IMongoCollection<BsonDocument> Document
-		{
-			get
-			{
-				IMongoDatabase db = _dbProvider.Database;
-				var document = db.GetCollection<BsonDocument>(COLLECTION_NAME);
+		#region unused
 
-				return document;
-			}
-		}
+		//public ObjectId GetProjectId(string name)
+		//{
+		//	var filter = Builders<BsonDocument>.Filter.Eq("Name", name);
+		//	var bsonRecord = Document.Find(filter).FirstOrDefault();
 
-		private ObjectId GetRecordId(BsonDocument bsonElements)
-		{
-			ObjectId result = bsonElements == null ? ObjectId.Empty : GetObjectId(bsonElements.GetValue("_id"));
-			return result;
-		}
+		//	return GetRecordId(bsonRecord);
+		//}
 
-		private ObjectId GetObjectId(BsonValue bsonValue)
-		{
-			ObjectId result = bsonValue == null ? ObjectId.Empty : bsonValue.AsObjectId;
-			return result;
-		}
+		//private IMongoCollection<BsonDocument> Document
+		//{
+		//	get
+		//	{
+		//		IMongoDatabase db = _dbProvider.Database;
+		//		var document = db.GetCollection<BsonDocument>(COLLECTION_NAME);
 
+		//		return document;
+		//	}
+		//}
+
+		//private ObjectId GetRecordId(BsonDocument bsonElements)
+		//{
+		//	ObjectId result = bsonElements == null ? ObjectId.Empty : GetObjectId(bsonElements.GetValue("_id"));
+		//	return result;
+		//}
+
+		//private ObjectId GetObjectId(BsonValue bsonValue)
+		//{
+		//	ObjectId result = bsonValue == null ? ObjectId.Empty : bsonValue.AsObjectId;
+		//	return result;
+		//}
+
+		#endregion
 	}
 }
