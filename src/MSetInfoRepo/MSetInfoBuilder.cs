@@ -3,15 +3,15 @@ using System.Collections.Generic;
 
 namespace MSetInfoRepo
 {
-	public static class MFileReconstructor
+	public static class MSetInfoBuilder
 	{
-		public static void Recreate(string name, string path)
+		public static MSetInfo Recreate(string name)
 		{
-			MFileInfo info = GetMFileInfo(name);
-			MFileReaderWriter.Write(info, path);
+			MSetInfo info = GetMFileInfo(name);
+			return info;
 		}
 
-		private static MFileInfo GetMFileInfo(string name)
+		private static MSetInfo GetMFileInfo(string name)
 		{
 			switch (name)
 			{
@@ -25,7 +25,7 @@ namespace MSetInfoRepo
 		}
 
 		// TODO: Update BuildCircus1 to create a MSetInfo instead
-		private static MFileInfo BuildCircus1()
+		private static MSetInfo BuildCircus1()
 		{
 			Coords coords = new Coords(
 				startingX: "-7.66830585754868944856241303572093e-01",
@@ -50,7 +50,13 @@ namespace MSetInfoRepo
 
 			string highColorCss = "#000000";
 
-			MFileInfo result = new MFileInfo("Circus1", coords, isHighRes, 4000, 4, 100, entries, highColorCss);
+			int maxIterations = 4000;
+			int threshold = 4;
+			int iterationsPerStep = 100;
+
+			var colorMap = new ColorMap(entries, maxIterations, highColorCss);
+
+			MSetInfo result = new MSetInfo("Circus1", coords, isHighRes, maxIterations, threshold, iterationsPerStep, colorMap);
 
 			return result;
 		}

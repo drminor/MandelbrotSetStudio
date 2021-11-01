@@ -30,8 +30,11 @@ namespace ImageBuilder
 				case 0:
 					{
 						/* Reconstructor */
+						MSetInfo mSetInfo = MSetInfoBuilder.Recreate(fileName);
+
 						string path = GetFullPath(BASE_PATH, fileName);
-						MFileReconstructor.Recreate(CIRCUS1_PROJECT_NAME, path);
+						MSetInfoReaderWriter.Write(mSetInfo, path);
+
 						break;
 					}
 				case 1:
