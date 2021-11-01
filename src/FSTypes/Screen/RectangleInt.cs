@@ -17,12 +17,12 @@ namespace FSTypes
 		public PointInt Point { get; set; }
 		public SizeInt Size { get; set; }
 
-		public int Width => Size.W;
-		public int Height => Size.H;
+		public int Width => Size.Width;
+		public int Height => Size.Height;
 
 		public RectangleInt Translate(PointInt amount)
 		{
-			RectangleInt result = new(new PointInt(Point.X + amount.X, Point.Y + amount.Y), new SizeInt(Size.W, Size.H));
+			RectangleInt result = new(new PointInt(Point.X + amount.X, Point.Y + amount.Y), new SizeInt(Size.Width, Size.Height));
 			return result;
 		}
 

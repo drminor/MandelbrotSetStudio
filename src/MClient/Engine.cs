@@ -345,14 +345,8 @@ namespace MClient
 
 		private static FJobRequest CreateFJobRequest(int jobId, SMapWorkRequest smwr)
 		{
-			// Create a MqMessage.Coords from an FSTypes.SCoords
-			var sCoords = smwr.SCoords;
-			var coords = new Coords(sCoords.LeftBot.X, sCoords.RightTop.X, sCoords.LeftBot.Y, sCoords.RightTop.Y);
-
-			// Create a RectangleInt from an FSTypes.MapSection
+			var coords = smwr.Coords;
 			var area = smwr.Area;
-
-			// Create a SizeInt from an FSTypes.RectangleInt
 			var samplePoints = smwr.CanvasSize;
 
 			FJobRequest fJobRequest = new(jobId, smwr.Name, FJobRequestType.Generate, coords, area, samplePoints, (uint) smwr.MaxIterations);

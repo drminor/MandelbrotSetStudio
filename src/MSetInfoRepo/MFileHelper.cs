@@ -8,16 +8,7 @@ namespace MSetInfoRepo
 	{
         public static MSetInfo GetMSetInfo(MFile.MFileInfo mFileInfo)
 		{
-            var result = new MSetInfo(mFileInfo.Name, GetSCoords(mFileInfo.Coords), mFileInfo.isHighRes, mFileInfo.MaxIterations, mFileInfo.Threshold, mFileInfo.InterationsPerStep, GetColorMap(mFileInfo.ColorMapEntries, mFileInfo.HighColorCss));
-            return result;
-		}
-
-        public static SCoords GetSCoords(MFile.SCoords sCoords)
-		{
-            var leftBot = new SPoint(sCoords.StartingX, sCoords.StartingY);
-            var rightTop = new SPoint(sCoords.EndingX, sCoords.EndingY);
-            var result = new SCoords(leftBot, rightTop);
-
+            var result = new MSetInfo(mFileInfo.Name, mFileInfo.Coords, mFileInfo.isHighRes, mFileInfo.MaxIterations, mFileInfo.Threshold, mFileInfo.InterationsPerStep, GetColorMap(mFileInfo.ColorMapEntries, mFileInfo.HighColorCss));
             return result;
 		}
 

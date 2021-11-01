@@ -1,6 +1,5 @@
 ﻿using FSTypes;
 using MapSectionRepo;
-using MSetInfoRepo;
 using PngImageLib;
 using System;
 using System.IO;
@@ -9,38 +8,35 @@ namespace ImageBuilder
 {
 	public class PngBuilder
 	{
+		private readonly SizeInt _blockSize;
 		private readonly string _imageOutputFolder;
-		private readonly int _blockWidth;
-		private readonly int _blockHeight;
 
-		public PngBuilder(string imageOutputFolder, int blockWidth, int blockHeight)
+		public PngBuilder(string imageOutputFolder, SizeInt blockSize)
 		{
 			_imageOutputFolder = imageOutputFolder;
-			_blockWidth = blockWidth;
-			_blockHeight = blockHeight;
+			_blockSize = blockSize;
 		}
 
-		public void Build(string mFilePath)
+		public void Build(MSetInfo mSetInfo, IMapSectionReader mapSectionReader)
 		{
-			var mSetInfo = MSetInfoReaderWriter.Read(mFilePath);
-			bool isHighRes = mSetInfo.IsHighRes;
+			var projectName = mSetInfo.Name;
+			var isHighRes = mSetInfo.IsHighRes;
 			var maxIterations = mSetInfo.MaxIterations;
 			var colorMap = mSetInfo.ColorMap;
-			var repofilename = mSetInfo.Name;
 
-			ICountsRepoReader countsRepoReader = GetReader(repofilename, isHighRes);
-			SizeInt imageSizeInBlocks = GetImageSizeInBlocks(countsRepoReader);
+			SizeInt imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
 
-			int w = imageSizeInBlocks.W;
-			int h = imageSizeInBlocks.H;
+			int w = imageSizeInBlocks.Width;
+			int h = imageSizeInBlocks.Height;
 
-			var imageSize = new SizeInt(w * _blockWidth, h * _blockHeight);
+			// TODO: Define * operator for SizeInt
+			var imageSize = new SizeInt(w * _blockSize.Width, h * _blockSize.Height);
 
-			string imagePath = GetImageFilename(mFilePath, imageSize.W, isHighRes, _imageOutputFolder);
+			string imagePath = GetImageFilename(projectName, imageSize.Width, isHighRes, _imageOutputFolder);
 
 			var key = new KPoint(0, 0);
 
-			using PngImage pngImage = new PngImage(imagePath, imageSize.W, imageSize.H);
+			using PngImage pngImage = new PngImage(imagePath, imageSize.Width, imageSize.Height);
 			for (int vBPtr = 0; vBPtr < h; vBPtr++)
 			{
 				key.Y = vBPtr;
@@ -52,47 +48,20 @@ namespace ImageBuilder
 					{
 						key.X = hBPtr;
 
-						int[] countsForThisLine = countsRepoReader.GetCounts(key, lPtr);
+						int[] countsForThisLine = mapSectionReader.GetCounts(key, lPtr);
 						if (countsForThisLine != null)
 						{
-							BuildPngImageLineSegment(hBPtr * _blockWidth, countsForThisLine, iLine, maxIterations, colorMap);
+							BuildPngImageLineSegment(hBPtr * _blockSize.Width, countsForThisLine, iLine, maxIterations, colorMap);
 						}
 						else
 						{
-							BuildBlankPngImageLineSegment(hBPtr * _blockWidth, _blockWidth, iLine);
+							BuildBlankPngImageLineSegment(hBPtr * _blockSize.Width, _blockSize.Width, iLine);
 						}
 					}
 
 					pngImage.WriteLine(iLine);
 				}
 			}
-		}
-
-		private ICountsRepoReader GetReader(string fn, bool isHighRes)
-		{
-			if (isHighRes)
-			{
-				return new CountsRepoReaderHiRes(fn, _blockWidth, _blockHeight);
-			}
-			else
-			{
-				return new CountsRepoReader(fn, _blockWidth, _blockHeight);
-			}
-		}
-
-		private static string GetImageFilename(string fn, int imageWidth, bool isHighRes, string basePath)
-		{
-			string imagePath;
-			if (isHighRes)
-			{
-				imagePath = Path.Combine(basePath, $"{fn}_hrez_{imageWidth}.png");
-			}
-			else
-			{
-				imagePath = Path.Combine(basePath, $"{fn}_{imageWidth}.png");
-			}
-
-			return imagePath;
 		}
 
 		public static void BuildPngImageLineSegment(int pixPtr, int[] counts, ImageLine iLine, int maxIterations, ColorMap colorMap)
@@ -131,51 +100,19 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private static SizeInt GetImageSizeInBlocks(ICountsRepoReader countsRepo)
+		private static string GetImageFilename(string fn, int imageWidth, bool isHighRes, string basePath)
 		{
-			int w = 10;
-			int h = 0;
-
-			KPoint key = new KPoint(w, h);
-			bool foundMax = !countsRepo.ContainsKey(key);
-
-			if (foundMax) return new SizeInt(0, 0);
-
-			// Find max value where w and h are equal.
-			while (!foundMax)
+			string imagePath;
+			if (isHighRes)
 			{
-				w++;
-				h++;
-				key = new KPoint(w, h);
-				foundMax = !countsRepo.ContainsKey(key);
+				imagePath = Path.Combine(basePath, $"{fn}_hrez_{imageWidth}.png");
+			}
+			else
+			{
+				imagePath = Path.Combine(basePath, $"{fn}_{imageWidth}.png");
 			}
 
-			w--;
-			h--;
-		
-			foundMax = false;
-			// Find max value of h
-			while (!foundMax)
-			{
-				h++;
-				key = new KPoint(w, h);
-				foundMax = !countsRepo.ContainsKey(key);
-			}
-
-			h--;
-
-			foundMax = false;
-			// Find max value of h
-			while (!foundMax)
-			{
-				w++;
-				key = new KPoint(w, h);
-				foundMax = !countsRepo.ContainsKey(key);
-			}
-
-			//w--;
-
-			return new SizeInt(w, ++h);
+			return imagePath;
 		}
 
 	}

@@ -1,25 +1,45 @@
 ﻿using FSTypes;
-using System;
+using MongoDB.Bson;
 using System.Collections.Generic;
 
 namespace ProjectRepo
 {
-	public record Job(Guid Id, DateTime DateCreated, string Name,
-		Guid ProjectId,
-		Guid ParentJobId,
-		string Operation,
-		double OperationAmount,
+	public record Job(
+		ObjectId ProjectId,
+		ObjectId ParentJobId,
+		TransformType? Operation,
+		int OperationAmount,
 		bool Saved,
 		string Label,
 		int Zoom,
 		int CoordValuePrecision,
-		MFile.SCoords SCoords,
+		Coords Coords,
 		int MaxInterations,
 		int Threshold,
 		int IterationsPerStep,
-		//IList<ColorMapEntry> ColorMapEntries,
+		List<ColorMapEntry> ColorMapEntries,
 		string HighColorCss
-		) : RecordBase(Id, DateCreated, Name);
+		) : RecordBase()
 
+	{
+		public Job(ObjectId projectId, Coords coords, int maxIterations, int threshold, int iterationsPerStep, List<ColorMapEntry> colorMapEntries, string highColorCss)
+			: this(
+				  ProjectId: projectId,
+				  ParentJobId: ObjectId.Empty,
+				  Operation: null,
+				  OperationAmount: 0,
+				  Saved: false,
+				  Label: null,
+				  Zoom: 0,
+				  CoordValuePrecision: 0,
+				  Coords: coords,
+				  MaxInterations: maxIterations,
+				  Threshold: threshold,
+				  IterationsPerStep: iterationsPerStep,
+				  ColorMapEntries: colorMapEntries,
+				  HighColorCss: highColorCss)
+		{ }
+				  
+	}
 
 }

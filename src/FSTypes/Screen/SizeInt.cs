@@ -8,14 +8,16 @@ namespace FSTypes
 	{
 		public SizeInt() : this(0, 0) { }
 
-		public SizeInt(int w, int h)
+		public SizeInt(int width, int heigth)
 		{
-			W = w;
-			H = h;
+			Width = width;
+			Height = heigth;
 		}
 
-		public int W { get; set; }
-		public int H { get; set; }
+		public int Width { get; set; }
+		public int Height { get; set; }
+
+		public int NumberOfCells => Width * Height;
 
 		public override bool Equals(object obj)
 		{
@@ -25,13 +27,13 @@ namespace FSTypes
 		public bool Equals(SizeInt other)
 		{
 			return other != null &&
-				   W == other.W &&
-				   H == other.H;
+				   Width == other.Width &&
+				   Height == other.Height;
 		}
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(W, H);
+			return HashCode.Combine(Width, Height);
 		}
 
 		public static bool operator ==(SizeInt int1, SizeInt int2)

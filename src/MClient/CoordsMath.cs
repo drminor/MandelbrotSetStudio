@@ -1,6 +1,5 @@
 ﻿using Experimental.System.Messaging;
 using FSTypes;
-using MapSectionRepo;
 using MqMessages;
 using System;
 using System.Diagnostics;
@@ -24,16 +23,16 @@ namespace MClient
 
 		public TimeSpan WaitDuration { get; set; }
 
-		public SCoords DoOp(SCoordsWorkRequest sCoordsWorkRequest)
+		public Coords DoOp(SCoordsWorkRequest sCoordsWorkRequest)
 		{
 			FJobRequest fJobRequest = CreateFJobRequest(sCoordsWorkRequest, ++_nextJobId);
 			string requestMsgId = SendJobToMq(fJobRequest);
 
-			SCoords result = GetResponseFromMq(requestMsgId);
+			Coords result = GetResponseFromMq(requestMsgId);
 			return result;
 		}
 
-		private SCoords GetResponseFromMq(string requestMsgId)
+		private Coords GetResponseFromMq(string requestMsgId)
 		{
 			using MessageQueue inQ = GetJobResponseQueue();
 			Message m = MqHelper.GetMessageByCorId(inQ, requestMsgId, WaitDuration);
@@ -47,13 +46,7 @@ namespace MClient
 			Debug.WriteLine("Received a message.");
 			FCoordsResult jobResult = (FCoordsResult)m.Body;
 
-			Coords coords = jobResult.Coords;
-
-			SPoint leftBot = new(coords.StartX, coords.StartY);
-			SPoint rightTop = new(coords.EndX, coords.EndY);
-			SCoords result = new(leftBot, rightTop);
-
-			return result;
+			return jobResult.Coords;
 		}
 
 		private static MessageQueue GetJobResponseQueue()
@@ -85,14 +78,13 @@ namespace MClient
 
 		private static FJobRequest CreateFJobRequest(SCoordsWorkRequest sCoordsWorkRequest, int jobId)
 		{
-			SCoords sCoords = sCoordsWorkRequest.SCoords;
-			MqMessages.Coords coords = new(sCoords.LeftBot.X, sCoords.RightTop.X, sCoords.LeftBot.Y, sCoords.RightTop.Y);
-
+			Coords coords = sCoordsWorkRequest.Coords;
 			SizeInt samplePoints = sCoordsWorkRequest.CanvasSize;
 			RectangleInt area = sCoordsWorkRequest.MapSection;
+			TransformType transformType = sCoordsWorkRequest.TransformType;
 
 			string name = "CoordsRequest";
-			FJobRequest fJobRequest = new(jobId, name, FJobRequestType.TransformCoords, coords, area, samplePoints, 0, sCoordsWorkRequest.TransformType);
+			FJobRequest fJobRequest = new(jobId, name, FJobRequestType.TransformCoords, coords, area, samplePoints, 0, transformType);
 
 			return fJobRequest;
 		}

@@ -1,24 +1,23 @@
 ﻿using FileDictionaryLib;
+using FSTypes;
 using System;
 
 namespace MapSectionRepo
 {
-	public class CountsRepoReader : ICountsRepoReader
+	public class CountsRepoReader : IMapSectionReader
 	{
 		public bool IsHighRes => false;
-
-		readonly int _blockWidth;
+		readonly SizeInt _blockSize;
 
 		readonly ValueRecords<KPoint, MapSectionWorkResult> _countsRepo;
 		readonly MapSectionWorkResult _workResult;
 
-		public CountsRepoReader(string repofilename, int blockWidth, int blockHeight)
+		public CountsRepoReader(string repofilename, SizeInt blockSize)
 		{
-			_blockWidth = blockWidth;
-			int blockLength = blockWidth * blockHeight;
+			_blockSize = blockSize;
 
 			_countsRepo = new ValueRecords<KPoint, MapSectionWorkResult>(repofilename, useHiRezFolder: IsHighRes);
-			_workResult = new MapSectionWorkResult(blockLength, highRes: IsHighRes, includeZValuesOnRead: false);
+			_workResult = new MapSectionWorkResult(_blockSize.NumberOfCells, highRes: IsHighRes, includeZValuesOnRead: false);
 		}
 
 		public int[] GetCounts(KPoint key, int linePtr)
@@ -37,10 +36,57 @@ namespace MapSectionRepo
 
 		private int[] GetOneLineFromCountsBlock(int[] counts, int lPtr)
 		{
-			int[] result = new int[_blockWidth];
+			int[] result = new int[_blockSize.Width];
 
-			Array.Copy(counts, lPtr * _blockWidth, result, 0, _blockWidth);
+			Array.Copy(counts, lPtr * _blockSize.Width, result, 0, _blockSize.Width);
 			return result;
+		}
+
+		public SizeInt GetImageSizeInBlocks()
+		{
+			int w = 10;
+			int h = 0;
+
+			KPoint key = new KPoint(w, h);
+			bool foundMax = !ContainsKey(key);
+
+			if (foundMax) return new SizeInt(0, 0);
+
+			// Find max value where w and h are equal.
+			while (!foundMax)
+			{
+				w++;
+				h++;
+				key = new KPoint(w, h);
+				foundMax = !ContainsKey(key);
+			}
+
+			w--;
+			h--;
+
+			foundMax = false;
+			// Find max value of h
+			while (!foundMax)
+			{
+				h++;
+				key = new KPoint(w, h);
+				foundMax = !ContainsKey(key);
+			}
+
+			h--;
+
+			foundMax = false;
+			// Find max value of h
+			while (!foundMax)
+			{
+				w++;
+				key = new KPoint(w, h);
+				foundMax = !ContainsKey(key);
+			}
+
+			//w--;
+
+			return new SizeInt(w, ++h);
 		}
 	}
 }

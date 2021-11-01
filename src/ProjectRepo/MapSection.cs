@@ -3,7 +3,8 @@ using System;
 
 namespace ProjectRepo
 {
-	public record MapSection(Guid Id, DateTime DateCreated, string Name,
+	public record MapSection(
+		string Name,
 		int TargetIterationCount,
 		int Zoom,
 		int CoordValuePrecision,
@@ -12,6 +13,6 @@ namespace ProjectRepo
 		SizeInt Size,
 		double SamplePointDeltaV,
 		double SamplePointDeltaH
-	) : RecordBase(Id, DateCreated, Name);
+	) : RecordBase();
 
 }

@@ -3,12 +3,12 @@ using System;
 
 namespace ProjectRepo
 {
-	public record MapSectionRef(Guid Id, DateTime DateCreated, string Name,
+	public record MapSectionRef(
+		string Name,
 		Guid JobId,
 		Guid MapSectionId,
 		PointInt BlockIndex,
 		int PrecisionIndex,
 		RectangleInt ClippingRectangle
-		) : RecordBase(Id, DateCreated, Name);
-
+		) : RecordBase();
 }

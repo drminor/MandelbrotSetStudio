@@ -1,5 +1,5 @@
 ﻿
-namespace MqMessages
+namespace FSTypes
 {
 	public enum TransformType
 	{

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ImageBuilder": {
+      "commandName": "Project",
+      "commandLineArgs": "2"
+    }
+  }
+}

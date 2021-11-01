@@ -40,7 +40,7 @@ namespace MqMessages
 
 		public void SetCountsF(float[] values)
 		{
-			int len = Area.Size.W * Area.Size.H;
+			int len = Area.Size.Width * Area.Size.Height;
 			if (values.Length != len)
 			{
 				throw new ArgumentException($"Values must have {len} elements.");
@@ -53,7 +53,7 @@ namespace MqMessages
 
 		public float[] GetValuesF()
 		{
-			int len = Area.Size.W * Area.Size.H;
+			int len = Area.Size.Width * Area.Size.Height;
 
 			byte[] bytes = Convert.FromBase64String(Counts);
 			if (bytes.Length / 4 != len)
@@ -72,7 +72,7 @@ namespace MqMessages
 
 		public void SetCounts(uint[] values)
 		{
-			int len = Area.Size.W * Area.Size.H;
+			int len = Area.Size.Width * Area.Size.Height;
 			if (values.Length != len)
 			{
 				throw new ArgumentException($"Values must have {len} elements.");
@@ -85,7 +85,7 @@ namespace MqMessages
 
 		public int[] GetValues()
 		{
-			int len = Area.Size.W * Area.Size.H;
+			int len = Area.Size.Width * Area.Size.Height;
 
 			byte[] bytes = Convert.FromBase64String(Counts);
 			if (bytes.Length / 4 != len)

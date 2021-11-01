@@ -1,37 +1,26 @@
 ﻿using FSTypes;
 using MapSectionRepo;
-using MSetInfoRepo;
+using MongoDB.Bson;
 using ProjectRepo;
-
-using System.Diagnostics;
+using System;
 
 namespace ImageBuilder
 {
 	public class MongoDbImporter
 	{
-		private readonly int _blockWidth;
-		private readonly int _blockHeight;
+		private readonly DbProvider _dbProvider;
 
-		public MongoDbImporter(int blockWidth, int blockHeigth)
+		public MongoDbImporter(DbProvider dbProvider)
 		{
-			_blockWidth = blockWidth;
-			_blockHeight = blockHeigth;
+			_dbProvider = dbProvider;
 		}
 
-		public void Import(string mFilePath)
+		// TODO: 
+		public void Import(IMapSectionReader mapSectionReader, Project project)
 		{
-			var mSetInfo = MSetInfoReaderWriter.Read(mFilePath);
-			bool isHighRes = mSetInfo.IsHighRes;
-			var repofilename = mSetInfo.Name;
+			GetMapSectionWriter(project);
 
-			ICountsRepoReader countsRepoReader = GetReader(repofilename, isHighRes);
-
-			var jobReaderWriter = new JobReaderWriter();
-
-			Project test = jobReaderWriter.GetProject("test");
-
-
-			//SizeInt imageSizeInBlocks = GetImageSizeInBlocks(countsRepoReader);
+			SizeInt imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
 
 			//int numHorizBlocks = imageSizeInBlocks.W;
 			//int numVertBlocks = imageSizeInBlocks.H;
@@ -62,64 +51,20 @@ namespace ImageBuilder
 			//}
 		}
 
-		private ICountsRepoReader GetReader(string fn, bool isHighRes)
+		private void GetMapSectionWriter(Project project)
 		{
-			if (isHighRes)
+			string projectName = project.Name;
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+
+			ObjectId projectId = projectReaderWriter.GetProjectId(projectName);
+
+			if (projectId == ObjectId.Empty)
 			{
-				return new CountsRepoReaderHiRes(fn, _blockWidth, _blockHeight);
+				projectReaderWriter.Insert(project);
+				projectId = projectReaderWriter.GetProjectId(projectName);
 			}
-			else
-			{
-				return new CountsRepoReader(fn, _blockWidth, _blockHeight);
-			}
+
 		}
-
-		//private SizeInt GetImageSizeInBlocks(ICountsRepoReader countsRepo)
-		//{
-		//	int w = 10;
-		//	int h = 0;
-
-		//	KPoint key = new KPoint(w, h);
-		//	bool foundMax = !countsRepo.ContainsKey(key);
-
-		//	if (foundMax) return new SizeInt(0, 0);
-
-		//	// Find max value where w and h are equal.
-		//	while (!foundMax)
-		//	{
-		//		w++;
-		//		h++;
-		//		key = new KPoint(w, h);
-		//		foundMax = !countsRepo.ContainsKey(key);
-		//	}
-
-		//	w--;
-		//	h--;
-		
-		//	foundMax = false;
-		//	// Find max value of h
-		//	while (!foundMax)
-		//	{
-		//		h++;
-		//		key = new KPoint(w, h);
-		//		foundMax = !countsRepo.ContainsKey(key);
-		//	}
-
-		//	h--;
-
-		//	foundMax = false;
-		//	// Find max value of h
-		//	while (!foundMax)
-		//	{
-		//		w++;
-		//		key = new KPoint(w, h);
-		//		foundMax = !countsRepo.ContainsKey(key);
-		//	}
-
-		//	//w--;
-
-		//	return new SizeInt(w, ++h);
-		//}
 
 	}
 }

@@ -1,9 +1,12 @@
-﻿using MFile;
+﻿using FSTypes;
+using MFile;
 using System.Collections.Generic;
 using System.IO;
 
 namespace MSetInfoRepo
 {
+	using ColorMapEntry = MFile.ColorMapEntry;
+
 	class MFileReaderWriterTest
 	{
 		private const string BASE_PATH = @"C:\_Mbrodts";
@@ -26,7 +29,7 @@ namespace MSetInfoRepo
 		{
 			string name = "Test123";
 
-			var sCoords = new SCoords("-7.66830587074704020221573662634195e-01", "-7.66830585754868944856241303572093e-01", "1.08316038593833397341534199100796e-01", "1.08316039471787068157292062147129e-01");
+			var sCoords = new Coords("-7.66830587074704020221573662634195e-01", "-7.66830585754868944856241303572093e-01", "1.08316038593833397341534199100796e-01", "1.08316039471787068157292062147129e-01");
 
 			IList<ColorMapEntry> colorMapEntrires = new List<ColorMapEntry>();
 			colorMapEntrires.Add(new ColorMapEntry(10, "#f09ee6", ColorMapEntry.BLEND_STYLE_NONE, "#c81788"));

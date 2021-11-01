@@ -3,72 +3,83 @@
 
 Collection
 	Guid
-	DateCreated
-	Name
+	DateTime DateCreated
+	String Name
 
 MapRepository
-	Guid
-	DateCreated
-	Name
-	MongoDB_Connection_String
-	DatabaseName
+	Guid _id
+	DateTime DateCreated
+	String Name
+	String MongoDB_Connection_String
+	String DatabaseName
 
 ProjectRef
-	Guid
-	DateCreated
-	Name
-	Collection.Guid
-	MapRespository.Guid
-	Project.Guid
+	Guid _id
+	DateTime DateCreated
+	String Name
+	Guid CollectionId
+	Guid MapRespositoryId
+	Guid ProjectId
 
 
 ** Project Repo **
 
 Project
-	Guid
-	DateCreated
-	Name
-	CanvasSize
-	BaseCoords
+	Guid _id
+	DateTime DateCreated
+	String Name
+	SizeInt CanvasSize
+	SCoords BaseCoords
 
 Job
-	Guid
-	DateCreated
-	Project.Guid
-	Job.Guid (Parent Job)
-	Operation
-	OperationAmount
-	Saved
-	Label
-	Zoom
-	CoordValuePrecision (Number of MapSections, each holding 53 bits of precision worth of count data, etc., use to build the composite count, etc., required to calculte the pixel's color.)
-	MCoords
-	MaxIterations
-	Threshold
-	InterationsPerStep
-	ColorMap
-	MapSectionRef[]
+	Guid _id
+	DateTime DateCreated
+	Guid ProjectId
+	Guid ParentJobID
+	OperationEnum Operation **
+	Double OperationAmount
+	bool Saved
+	string Label
+	int Zoom
+	int CoordValuePrecision (Number of MapSections, each holding 53 bits of precision worth of count data, etc., use to build the composite count, etc., required to calculte the pixel's color.)
+	SCoords Coords **
+	int MaxIterations
+	int Threshold
+	int InterationsPerStep
+	ColorMapEntry[] ColorMapEntries
+	String HighColorCss
+	MapSectionRef[] MapSections
 
 MapSectionRef
-	Guid
-	DateCreated
-	Job.Guid
-	MapSection.Guid
-	BlockIndex (X and Y)
-	PrecisionIndex
-	ClippingRectangle
+	Guid _id
+	DateTime DateCreated
+	Guid Job._id
+	Guid MapSectionId
+	PointInt BlockIndex **
+	int PrecisionIndex
+	RectangleInt ClippingRectangle
 
 MapSection
-	Guid
-	DateCreated
-	Zoom
-	CoordValuePrecision
-	MPoint
-	Width
-	Height
-	SamplePointDelta (W and H)
-	Counts
-	DoneFlags
-	ZValues
-	TargetIterationCount
+	Guid _id
+	DateTime DateCreated
+	int Zoom
+	int CoordValuePrecision
+	DPoint Point **
+	MapSectionNeighbors Neighbors
+	int Width
+	int Height
+	DSize SamplePointDelta **
+	int[] Counts
+	bool[] DoneFlags
+	DDouble[] ZValues **
+
+MapSectionNeighbors
+	Guid _id
+	DateTime DateCreated
+	Guid Left
+	Guid Top
+	Guid Right
+	Guid Bottom
+
+
 
