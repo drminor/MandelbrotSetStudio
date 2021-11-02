@@ -5,12 +5,13 @@ using ProjectRepo;
 using System;
 using System.IO;
 using MSS.Common;
+using MSetDatabaseClient;
 
 namespace ImageBuilder
 {
 	class Program
 	{
-		private const string BASE_PATH = @"C:\_Mbrodts";
+		//private const string BASE_PATH = @"C:\_Mbrodts";
 		private const string IMAGE_OUTPUT_FOLDER = @"C:\_Mbrodts";
 
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";

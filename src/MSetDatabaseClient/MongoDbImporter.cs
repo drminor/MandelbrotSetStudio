@@ -5,7 +5,7 @@ using System;
 using System.Diagnostics;
 using MSS.Common;
 
-namespace ImageBuilder
+namespace MSetDatabaseClient
 {
 	public class MongoDbImporter
 	{

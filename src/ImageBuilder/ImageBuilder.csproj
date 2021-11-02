@@ -18,10 +18,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MapSectionRepo\MapSectionRepo.csproj" />
+    <ProjectReference Include="..\MSetDatabaseClient\MSetDatabaseClient.csproj" />
     <ProjectReference Include="..\MSetInfoRepo\MSetInfoRepo.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
     <ProjectReference Include="..\PngImageLib\PngImageLib.csproj" />
-    <ProjectReference Include="..\ProjectRepo\ProjectRepo.csproj" />
   </ItemGroup>
 
 </Project>
