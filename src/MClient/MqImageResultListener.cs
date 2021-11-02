@@ -149,6 +149,7 @@ namespace MClient
 			return result;
 		}
 
+		// TODO: Have the MqImageResultListener take an object that can create new IMapSectionWorkResult instances.
 		private static IMapSectionWorkResult CreateWorkResult(FJobResult fJobResult)
 		{
 			int[] counts = fJobResult.GetValues();
