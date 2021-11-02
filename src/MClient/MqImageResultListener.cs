@@ -6,8 +6,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using MapSectionRepo;
-using MSS.Common.MapSectionRepo;
 
 namespace MClient
 {
@@ -126,10 +124,10 @@ namespace MClient
 
 		private static SubJob CreateSubJob(FJobResult jobResult, JobForMq parentJob)
 		{
-			IMapSectionWorkResult workResult = CreateWorkResult(jobResult);
-
 			MapSectionWorkRequest workRequest = CreateMSWR(jobResult, parentJob.SMapWorkRequest.MaxIterations);
-			MapSectionResult msr = CreateMapSectionResult(parentJob.JobId, workRequest.MapSection, workResult);
+
+			int[] counts = jobResult.GetValues();
+			MapSectionResult msr = CreateMapSectionResult(parentJob.JobId, workRequest.MapSection, counts);
 
 			var subJob = new SubJob(parentJob, workRequest)
 			{
@@ -149,17 +147,17 @@ namespace MClient
 			return result;
 		}
 
-		// TODO: Have the MqImageResultListener take an object that can create new IMapSectionWorkResult instances.
-		private static IMapSectionWorkResult CreateWorkResult(FJobResult fJobResult)
-		{
-			int[] counts = fJobResult.GetValues();
-			var result = new MapSectionWorkResult(counts);
-			return result;
-		}
+		//// TODO: Have the MqImageResultListener take an object that can create new IMapSectionWorkResult instances.
+		//private static IMapSectionWorkResult CreateWorkResult(FJobResult fJobResult)
+		//{
+		//	int[] counts = fJobResult.GetValues();
+		//	var result = new MapSectionWorkResult(counts);
+		//	return result;
+		//}
 
-		private static MapSectionResult CreateMapSectionResult(int jobId, RectangleInt mapSection, IMapSectionWorkResult workResult)
+		private static MapSectionResult CreateMapSectionResult(int jobId, RectangleInt mapSection, int[] counts)
 		{
-			var result = new MapSectionResult(jobId, mapSection, workResult.Counts);
+			var result = new MapSectionResult(jobId, mapSection, counts);
 			return result;
 		}
 

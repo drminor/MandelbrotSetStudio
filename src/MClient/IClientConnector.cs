@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-
+﻿
 namespace MClient
 {
 	public interface IClientConnector

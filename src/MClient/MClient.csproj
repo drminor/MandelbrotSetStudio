@@ -20,7 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MapSectionRepo\MapSectionRepo.csproj" />
     <ProjectReference Include="..\MqMessages\MqMessages.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>
