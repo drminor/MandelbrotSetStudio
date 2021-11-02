@@ -1,5 +1,6 @@
 ﻿using FileDictionaryLib;
-using FSTypes;
+using MSS.Common;
+using MSS.Types;
 
 namespace MapSectionRepo
 {

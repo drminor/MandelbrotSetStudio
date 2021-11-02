@@ -1,4 +1,5 @@
-﻿using FileDictionaryLib;
+﻿using MSS.Common.MapSectionRepo;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,7 +10,7 @@ namespace MapSectionRepo
 	/// <summary>
 	/// Implements QuadPrecision IPartsBin (Each Z has two doubles for X (real) and two doubles for Y (imaginary)) = 32 bytes / sample.
 	/// </summary>
-	internal class SubJobResult : IPartsBin
+	internal class SubJobResult : IPartsBin, IMapSectionWorkResult
 	{
 		private const uint EMPTY_SUB_JOB_RESULT_MARKER = uint.MaxValue;
 		private readonly int _size;
@@ -29,6 +30,7 @@ namespace MapSectionRepo
 		}
 
 		public uint[] Counts { get; set; }
+
 		public uint IterationCount { get; set; }
 		public bool[] DoneFlags { get; set; }
 		public double[] ZValues { get; set; }
@@ -56,6 +58,14 @@ namespace MapSectionRepo
 		public List<PartDetail> PartDetails { get; }
 
 		public uint TotalBytesToWrite { get; }
+
+		int[] IMapSectionWorkResult.Counts => throw new NotImplementedException();
+
+		bool IMapSectionWorkResult.IsHighRes => throw new NotImplementedException();
+
+		int IMapSectionWorkResult.IterationCount { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+		DDouble[] IMapSectionWorkResult.ZValues => throw new NotImplementedException();
 
 		public byte[] GetPart(int partNumber)
 		{

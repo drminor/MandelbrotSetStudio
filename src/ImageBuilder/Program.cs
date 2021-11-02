@@ -1,9 +1,10 @@
-﻿using FSTypes;
+﻿using MSS.Types;
 using MapSectionRepo;
 using MSetInfoRepo;
 using ProjectRepo;
 using System;
 using System.IO;
+using MSS.Common;
 
 namespace ImageBuilder
 {
@@ -29,11 +30,11 @@ namespace ImageBuilder
 			{
 				case 0:
 					{
-						/* Reconstructor */
+						/* Write an MSetInfo to a JSON formatted file. */
 						MSetInfo mSetInfo = MSetInfoBuilder.Build(fileName);
 
-						string path = GetFullPath(BASE_PATH, fileName);
-						MSetInfoReaderWriter.Write(mSetInfo, path);
+						//string path = GetFullPath(BASE_PATH, fileName);
+						//MSetInfoReaderWriter.Write(mSetInfo, path);
 
 						break;
 					}

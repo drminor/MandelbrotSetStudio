@@ -1,4 +1,4 @@
-﻿namespace FSTypes
+﻿namespace MSS.Types
 {
     // TODO: There are corresponding int Const in MFile
     public enum ColorMapBlendStyle

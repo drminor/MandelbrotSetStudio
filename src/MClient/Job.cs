@@ -1,7 +1,7 @@
 ﻿using FileDictionaryLib;
-using FSTypes;
 using MapSectionRepo;
-using MqMessages;
+using MSS.Common.MapSectionRepo;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,7 +18,7 @@ namespace MClient
 		private int _hSectionPtr;
 		private int _vSectionPtr;
 
-		private ValueRecords<KPoint, MapSectionWorkResult> _countsRepo;
+		private ValueRecords<KPoint, IMapSectionWorkResult> _countsRepo;
 		private readonly KPoint _position;
 		private readonly object _repoLock = new();
 
@@ -34,7 +34,7 @@ namespace MClient
 
 			string filename = RepoFilename;
 			Debug.WriteLine($"Creating new Repo. Name: {filename}, JobId: {JobId}.");
-			_countsRepo = new ValueRecords<KPoint, MapSectionWorkResult>(filename, useHiRezFolder: false);
+			_countsRepo = new ValueRecords<KPoint, IMapSectionWorkResult>(filename, useHiRezFolder: false);
 
 			//Debug.WriteLine($"Starting to get histogram for {RepoFilename} at {DateTime.Now.ToString(DiagTimeFormat)}.");
 			//Dictionary<int, int> h = GetHistogram();
@@ -77,7 +77,7 @@ namespace MClient
 			return result;
 		}
 
-		public void WriteWorkResult(KPoint key, MapSectionWorkResult val, bool overwriteResults)
+		public void WriteWorkResult(KPoint key, IMapSectionWorkResult val, bool overwriteResults)
 		{
 			// When writing include the Area's offset.
 			KPoint transKey = key.ToGlobal(_position);
@@ -104,7 +104,7 @@ namespace MClient
 			}
 		}
 
-		public bool RetrieveWorkResultFromRepo(KPoint key, MapSectionWorkResult workResult)
+		public bool RetrieveWorkResultFromRepo(KPoint key, IMapSectionWorkResult workResult)
 		{
 			// When writing include the Area's offset.
 			KPoint transKey = key.ToGlobal(_position);
@@ -132,9 +132,9 @@ namespace MClient
 		public Dictionary<int, int> GetHistogram()
 		{
 			Dictionary<int, int> result = new();
-			IEnumerable<MapSectionWorkResult> workResults = _countsRepo.GetValues(GetEmptyResult);
+			IEnumerable<IMapSectionWorkResult> workResults = _countsRepo.GetValues(GetEmptyResult);
 
-			foreach(MapSectionWorkResult wr in workResults)
+			foreach(IMapSectionWorkResult wr in workResults)
 			{
 				foreach(int cntAndEsc in wr.Counts)
 				{
@@ -153,8 +153,8 @@ namespace MClient
 			return result;
 		}
 
-		private MapSectionWorkResult _emptyResult = null;
-		private MapSectionWorkResult GetEmptyResult(KPoint key)
+		private IMapSectionWorkResult _emptyResult = null;
+		private IMapSectionWorkResult GetEmptyResult(KPoint key)
 		{
 			//if(area.Size.W != SECTION_WIDTH || area.Size.H != SECTION_HEIGHT)
 			//{

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace FileDictionaryLib
+namespace MSS.Common.MapSectionRepo
 {
 	public interface IPartsBin
 	{

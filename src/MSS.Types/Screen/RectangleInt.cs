@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace FSTypes
+namespace MSS.Types
 {
 	[Serializable]
 	public class RectangleInt : IEqualityComparer<RectangleInt>, IEquatable<RectangleInt>

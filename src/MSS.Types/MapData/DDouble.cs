@@ -1,4 +1,4 @@
-﻿namespace MapSectionRepo
+﻿namespace MSS.Types
 {
 	public struct DDouble
 	{

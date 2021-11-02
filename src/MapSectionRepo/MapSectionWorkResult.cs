@@ -1,4 +1,5 @@
-﻿using FileDictionaryLib;
+﻿using MSS.Common.MapSectionRepo;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace MapSectionRepo
 	/// or Standard (Each Z has a double for X (real) and a double for Y (imaginary)) = 8 + 8 = 16
 	/// Currently only used for Standard
 	/// </summary>
-	public class MapSectionWorkResult : IPartsBin
+	public class MapSectionWorkResult : IPartsBin, IMapSectionWorkResult
 	{
 		public bool IsHighRes { get; private set; }
 		public int[] Counts { get; private set; }
@@ -58,7 +59,7 @@ namespace MapSectionRepo
 				new PartDetail(size, includeZValuesOnRead) // DoneFlags
 			};
 
-			totalBytesToWrite = (uint) (4 + size * (4 + zValuesLength + 1));
+			totalBytesToWrite = (uint)(4 + size * (4 + zValuesLength + 1));
 
 			return partDetails;
 		}
@@ -71,7 +72,7 @@ namespace MapSectionRepo
 
 		public byte[] GetPart(int partNumber)
 		{
-			if(partNumber > PartCount - 1)
+			if (partNumber > PartCount - 1)
 			{
 				throw new ArgumentException($"This Parts Bin only has {PartCount} parts. Cannot get Part for PartNumber: {partNumber}.");
 			}

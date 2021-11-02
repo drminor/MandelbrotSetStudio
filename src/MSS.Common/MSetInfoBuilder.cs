@@ -1,7 +1,7 @@
-﻿using FSTypes;
+﻿using MSS.Types;
 using System.Collections.Generic;
 
-namespace MSetInfoRepo
+namespace MSS.Common
 {
 	public static class MSetInfoBuilder
 	{

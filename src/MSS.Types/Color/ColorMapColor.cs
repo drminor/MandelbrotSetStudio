@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
-namespace FSTypes
+namespace MSS.Types
 {
     public class ColorMapColor
     {

@@ -1,5 +1,5 @@
 ﻿using Experimental.System.Messaging;
-using FSTypes;
+using MSS.Types;
 using MqMessages;
 using System;
 using System.Collections.Concurrent;
@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using MapSectionRepo;
+using MSS.Common.MapSectionRepo;
 
 namespace MClient
 {
@@ -125,7 +126,7 @@ namespace MClient
 
 		private static SubJob CreateSubJob(FJobResult jobResult, JobForMq parentJob)
 		{
-			MapSectionWorkResult workResult = CreateWorkResult(jobResult);
+			IMapSectionWorkResult workResult = CreateWorkResult(jobResult);
 
 			MapSectionWorkRequest workRequest = CreateMSWR(jobResult, parentJob.SMapWorkRequest.MaxIterations);
 			MapSectionResult msr = CreateMapSectionResult(parentJob.JobId, workRequest.MapSection, workResult);
@@ -148,14 +149,14 @@ namespace MClient
 			return result;
 		}
 
-		private static MapSectionWorkResult CreateWorkResult(FJobResult fJobResult)
+		private static IMapSectionWorkResult CreateWorkResult(FJobResult fJobResult)
 		{
 			int[] counts = fJobResult.GetValues();
 			var result = new MapSectionWorkResult(counts);
 			return result;
 		}
 
-		private static MapSectionResult CreateMapSectionResult(int jobId, RectangleInt mapSection, MapSectionWorkResult workResult)
+		private static MapSectionResult CreateMapSectionResult(int jobId, RectangleInt mapSection, IMapSectionWorkResult workResult)
 		{
 			var result = new MapSectionResult(jobId, mapSection, workResult.Counts);
 			return result;

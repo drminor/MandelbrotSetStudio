@@ -1,6 +1,6 @@
-﻿using FSTypes;
+﻿using MSS.Types;
 
-namespace MapSectionRepo
+namespace MSS.Common
 {
 	public interface IMapSectionReader
 	{

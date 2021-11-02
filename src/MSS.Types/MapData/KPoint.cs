@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MapSectionRepo
+namespace MSS.Types
 {
 	[Serializable]
 	public struct KPoint : IEquatable<KPoint>, IEqualityComparer<KPoint>

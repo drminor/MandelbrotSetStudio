@@ -1,8 +1,8 @@
-﻿using FSTypes;
-using MapSectionRepo;
+﻿using MSS.Types;
 using PngImageLib;
 using System;
 using System.IO;
+using MSS.Common;
 
 namespace ImageBuilder
 {

@@ -1,4 +1,4 @@
-﻿namespace FileDictionaryLib
+﻿namespace MSS.Common.MapSectionRepo
 {
 	public class PartDetail
 	{

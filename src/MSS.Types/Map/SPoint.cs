@@ -1,5 +1,5 @@
 ﻿
-namespace FSTypes
+namespace MSS.Types
 {
 	public class SPoint
 	{

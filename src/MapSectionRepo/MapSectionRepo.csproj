@@ -6,7 +6,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FileDictionaryLib\FileDictionaryLib.csproj" />
-    <ProjectReference Include="..\FSTypes\FSTypes.csproj" />
+    <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
+    <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
   </ItemGroup>
 
 </Project>

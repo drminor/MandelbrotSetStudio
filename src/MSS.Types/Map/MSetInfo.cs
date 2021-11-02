@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FSTypes
+namespace MSS.Types
 {
 	public class MSetInfo
     {

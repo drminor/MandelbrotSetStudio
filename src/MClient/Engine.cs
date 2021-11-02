@@ -1,5 +1,5 @@
 ﻿using Experimental.System.Messaging;
-using FSTypes;
+using MSS.Types;
 using MqMessages;
 using System;
 using System.Collections.Concurrent;

@@ -1,4 +1,4 @@
-﻿using FSTypes;
+﻿using MSS.Types;
 using System.Collections.Generic;
 
 // TODO: Use a ColorMap object instead of a IList<ColorMapEntry> and HighColorCss.

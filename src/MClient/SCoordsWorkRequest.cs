@@ -1,5 +1,5 @@
 ﻿using System;
-using FSTypes;
+using MSS.Types;
 using MqMessages;
 
 namespace MClient

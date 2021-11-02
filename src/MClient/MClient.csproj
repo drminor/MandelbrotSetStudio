@@ -5,11 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Job.cs" />
     <Compile Remove="MapSection.cs" />
     <Compile Remove="SubJobProcessor.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Job.cs" />
     <None Include="SubJobProcessor.cs" />
   </ItemGroup>
 
@@ -20,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MapSectionRepo\MapSectionRepo.csproj" />
     <ProjectReference Include="..\MqMessages\MqMessages.csproj" />
+    <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>
 
 </Project>

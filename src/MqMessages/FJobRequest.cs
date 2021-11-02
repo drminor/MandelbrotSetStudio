@@ -1,4 +1,4 @@
-﻿using FSTypes;
+﻿using MSS.Types;
 using System;
 
 namespace MqMessages
