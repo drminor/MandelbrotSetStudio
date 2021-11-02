@@ -5,7 +5,6 @@ namespace FSTypes
 {
     public class ColorMapColor
     {
-        [BsonConstructor]
         [JsonConstructor]
         public ColorMapColor(string cssColor) : this(GetComps(cssColor))
         {
@@ -31,17 +30,17 @@ namespace FSTypes
                 }
                 return _cssColor;
             }
+            init
+			{
+                _cssColor = null;
+			}
         }
 
-        //[BsonIgnore]
-        [JsonIgnore]
-        public int[] ColorComps { get; private set; }
+        [BsonIgnore]
+        public int[] ColorComps { get; init; }
 
         private int? _colorNum;
 
-
-        //[BsonIgnore]
-        [JsonIgnore]
         public int ColorNum
         {
             get
@@ -56,13 +55,13 @@ namespace FSTypes
 
         private static string GetCssColor(int[] cComps)
         {
-            string result = $"#F{Get2CharHex(cComps[0])}{Get2CharHex(cComps[1])}{Get2CharHex(cComps[2])}";
+            string result = $"#{Get2CharHex(cComps[0])}{Get2CharHex(cComps[1])}{Get2CharHex(cComps[2])}";
             return result;
         }
 
         private static string Get2CharHex(int c)
         {
-            return c.ToString("X").PadLeft(2);
+            return c.ToString("X").ToLower().PadLeft(2, '0');
         }
 
         private static int GetColorNum(int[] cComps)

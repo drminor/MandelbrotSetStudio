@@ -8,9 +8,11 @@ namespace ProjectRepo
 	{
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
-		public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
+		public ObjectId Id { get; init; } = ObjectId.Empty;
 
 		public DateTime DateCreated => Id.CreationTime;
+
+		public bool Onfile => Id != ObjectId.Empty;
 	}
 
 }

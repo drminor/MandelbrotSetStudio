@@ -70,7 +70,6 @@ namespace ImageBuilder
 			if (jobId == ObjectId.Empty)
 			{
 				Job job = CreateFirstJob(project.Id, project.BaseCoords, mSetInfo);
-
 				jobId = jobReaderWriter.Insert(job);
 			}
 			else
@@ -81,11 +80,23 @@ namespace ImageBuilder
 				}
 				else
 				{
-					throw new NotSupportedException($"Project: {project.Name} already has at least one job. Overwriting an existing job is not yet supported.");
+					//throw new NotSupportedException($"Project: {project.Name} already has at least one job. Overwriting an existing job is not yet supported.");
+					Tuple<long, long> dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
+					Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
+
+					Job job = CreateFirstJob(project.Id, project.BaseCoords, mSetInfo);
+					jobId = jobReaderWriter.Insert(job);
 				}
 			}
 
 			return jobId;
+		}
+
+		private Tuple<long, long> DeleteJobAndChildMapSections(ObjectId jobId, JobReaderWriter jobReaderWriter)
+		{
+			long? deleteCount = jobReaderWriter.Delete(jobId);
+			Tuple<long, long> result = new Tuple<long, long>(deleteCount ?? 0, 0);
+			return result;
 		}
 
 		//private void UpdateJob(Project project, ObjectId jobId)
@@ -117,8 +128,11 @@ namespace ImageBuilder
 
 		private Job CreateFirstJob(ObjectId projectId, Coords coords, MSetInfo mSetInfo)
 		{
-			Job job = new Job(projectId, saved:true, coords, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
-				new List<ColorMapEntry>(mSetInfo.ColorMap.ColorMapEntries), mSetInfo.ColorMap.HighColorEntry.StartColor.CssColor);
+			//Job job = new Job(projectId, saved:true, coords, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
+			//	new List<ColorMapEntry>(mSetInfo.ColorMap.ColorMapEntries), mSetInfo.ColorMap.HighColorEntry.StartColor.CssColor);
+
+			Job job = new Job(projectId, saved: true, coords, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
+				mSetInfo.ColorMap.ColorMapEntries, mSetInfo.ColorMap.HighColorEntry.StartColor.CssColor);
 
 			return job;
 		}

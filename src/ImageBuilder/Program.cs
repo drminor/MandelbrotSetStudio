@@ -59,7 +59,7 @@ namespace ImageBuilder
 						var mongoDbImporter = new MongoDbImporter(dbProvider);
 
 						var project = BuildProject(mSetInfo);
-						mongoDbImporter.Import(mapSectionReader, project, mSetInfo, overwrite: false);
+						mongoDbImporter.Import(mapSectionReader, project, mSetInfo, overwrite: true);
 						break;
 					}
 

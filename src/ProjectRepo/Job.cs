@@ -17,12 +17,13 @@ namespace ProjectRepo
 		int MaxInterations,
 		int Threshold,
 		int IterationsPerStep,
-		List<ColorMapEntry> ColorMapEntries,
-		string HighColorCss
+		IList<ColorMapEntry> ColorMapEntries,
+		string HighColorCss,
+		IList<MapSectionRef> MapSectionRefs
 		) : RecordBase()
 
 	{
-		public Job(ObjectId projectId, bool saved, Coords coords, int maxIterations, int threshold, int iterationsPerStep, List<ColorMapEntry> colorMapEntries, string highColorCss)
+		public Job(ObjectId projectId, bool saved, Coords coords, int maxIterations, int threshold, int iterationsPerStep, IList<ColorMapEntry> colorMapEntries, string highColorCss)
 			: this(
 				  ProjectId: projectId,
 				  ParentJobId: ObjectId.Empty,
@@ -37,7 +38,8 @@ namespace ProjectRepo
 				  Threshold: threshold,
 				  IterationsPerStep: iterationsPerStep,
 				  ColorMapEntries: colorMapEntries,
-				  HighColorCss: highColorCss)
+				  HighColorCss: highColorCss,
+				  MapSectionRefs: null)
 		{ }
 				  
 	}

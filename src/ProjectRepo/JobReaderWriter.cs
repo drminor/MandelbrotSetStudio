@@ -28,6 +28,14 @@ namespace ProjectRepo
 			return job.Id;
 		}
 
+		public long? Delete(ObjectId jobId)
+		{
+			var filter = Builders<Job>.Filter.Eq("_id", jobId);
+			var deleteResult = Collection.DeleteOne(filter);
+
+			return GetReturnCount(deleteResult);
+		}
+
 		private IMongoCollection<Job> Collection
 		{
 			get
@@ -39,6 +47,15 @@ namespace ProjectRepo
 			}
 		}
 
+		private long? GetReturnCount(DeleteResult deleteResult)
+		{
+			if (deleteResult.IsAcknowledged)
+			{
+				return deleteResult.DeletedCount;
+			}
+
+			return null;
+		}
 
 	}
 }
