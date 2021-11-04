@@ -8,4 +8,8 @@
     <ProjectReference Include="..\MSetDatabaseClient\MSetDatabaseClient.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\" />
+  </ItemGroup>
+
 </Project>

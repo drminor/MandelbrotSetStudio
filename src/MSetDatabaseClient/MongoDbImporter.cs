@@ -58,7 +58,10 @@ namespace MSetDatabaseClient
 
 		private void GetMapSectionWriter(ObjectId jobId)
 		{
-			Debug.WriteLine($"The JobId is {jobId}.");
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var job = jobReaderWriter.Get(jobId);
+
+			Debug.WriteLine($"The JobId is {job.Id}.");
 		}
 
 		private ObjectId CreateJob(Project project, MSetInfo mSetInfo, bool overwrite)

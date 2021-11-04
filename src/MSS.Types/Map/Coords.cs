@@ -3,42 +3,48 @@
 namespace MSS.Types
 {
 	[Serializable]
-	public class Coords
+	public record Coords(string StartingX, string EndingX, string StartingY, string EndingY, double[] Bin)
 	{
-		private SPoint _botLeft;
-		private SPoint _topRight;
+		private readonly int _vd = Bin.Length / 4;
 
-		public Coords() : this("0", "0", "0", "0")
+		public Coords() : this(0, 0, 0, 0)
 		{ }
 
-		public Coords(string startingX, string endingX, string startingY, string endingY)
-		{
-			StartingX = startingX;
-			EndingX = endingX;
-			StartingY = startingY;
-			EndingY = endingY;
+		public Coords(double Sx, double Ex, double Sy, double Ey) : this(Sx.ToString(), Ex.ToString(), Sy.ToString(), Ey.ToString(), new double[] { Sx, Ex, Sy, Ey })
+		{ }
 
-			_botLeft = new SPoint(StartingX, StartingY);
-			_topRight = new SPoint(EndingX, EndingY);
+		public double[] Bin { get; init; } = Bin;
+		public int ValueDepth => _vd;
+
+	}
+
+	public class CoordHelper
+	{
+		public Coords BuildCoord(double[] bin)
+		{
+			string[] stringVals = GetStringVals(bin);
+
+			Coords result = new Coords(stringVals[0], stringVals[1], stringVals[2], stringVals[3], bin);
+			return result;
 		}
 
-		//public Coords(double sx, double ex, double sy, double ey) : this()
-		//{
-		//}
+		private string[] GetStringVals(double[] bin)
+		{
+			string[] result;
+			if (bin.Length == 4)
+			{
+				result = new string[4];
+				result[0] = bin[0].ToString();
+				result[1] = bin[1].ToString();
+				result[2] = bin[2].ToString();
+				result[3] = bin[3].ToString();
+			}
+			else
+			{
+				throw new ArgumentException("At this time, only a bin argument with 4 elements is supported.");
+			}
 
-		public string StartingX { get; init; }
-		public string EndingX { get; init; }
-
-		public string StartingY { get; init; }
-		public string EndingY { get; init; }
-
-		//public double StartingXD { get; init; }
-		//public double StartingYD { get; init; }
-
-		//public double EndingXD { get; init; }
-		//public double EndingYD { get; init; }
-
-		public SPoint BottomLeft => _botLeft;
-		public SPoint TopRight => _topRight;
+			return result;
+		}
 	}
 }

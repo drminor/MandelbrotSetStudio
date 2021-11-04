@@ -25,7 +25,9 @@ namespace ImageBuilder
 		{
 			string fileName = CIRCUS1_PROJECT_NAME;
 
-			int cmd = int.Parse(args[0] ?? "-1");
+			//int cmd = int.Parse(args[0] ?? "-1");
+
+			int cmd = 2;
 
 			switch (cmd)
 			{

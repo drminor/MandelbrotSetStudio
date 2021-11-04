@@ -27,12 +27,22 @@ namespace MSS.Common
 		// TODO: Update BuildCircus1 to create a MSetInfo instead
 		private static MSetInfo BuildCircus1()
 		{
+			//Coords coords = new Coords(
+			//  StartingX: "-7.66830587074704020221573662634195e-01",
+			//	EndingX: "-7.66830585754868944856241303572093e-01",
+
+			//	StartingY: "1.08316038593833397341534199100796e-01",
+			//	EndingY: "1.08316039471787068157292062147129e-01"
+			//	);
+
 			Coords coords = new Coords(
-				startingX: "-7.66830585754868944856241303572093e-01",
-				startingY: "1.08316038593833397341534199100796e-01",
-				endingX: "-7.66830587074704020221573662634195e-01",
-				endingY: "1.08316039471787068157292062147129e-01"
+				Sx: -7.66830587074704020221573662634195e-01,
+				Ex: -7.66830585754868944856241303572093e-01,
+
+				Sy: 1.08316038593833397341534199100796e-01,
+				Ey: 1.08316039471787068157292062147129e-01
 				);
+
 
 			bool isHighRes = false;
 			IList<ColorMapEntry> entries = new List<ColorMapEntry>();

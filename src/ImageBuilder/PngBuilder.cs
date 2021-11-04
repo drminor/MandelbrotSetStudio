@@ -105,11 +105,11 @@ namespace ImageBuilder
 			string imagePath;
 			if (isHighRes)
 			{
-				imagePath = Path.Combine(basePath, $"{fn}_hrez_{imageWidth}.png");
+				imagePath = Path.Combine(basePath, $"{fn}_hrez_{imageWidth}_test.png");
 			}
 			else
 			{
-				imagePath = Path.Combine(basePath, $"{fn}_{imageWidth}.png");
+				imagePath = Path.Combine(basePath, $"{fn}_{imageWidth}_test.png");
 			}
 
 			return imagePath;

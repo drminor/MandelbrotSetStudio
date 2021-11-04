@@ -14,6 +14,14 @@ namespace ProjectRepo
 			_dbProvider = dbProvider;
 		}
 
+		public Project Get(ObjectId projectId)
+		{
+			var filter = Builders<Project>.Filter.Eq("_id", projectId);
+			var project = Collection.Find(filter).FirstOrDefault();
+
+			return project;
+		}
+
 		public Project Get(string name)
 		{
 			var filter = Builders<Project>.Filter.Eq("Name", name);
