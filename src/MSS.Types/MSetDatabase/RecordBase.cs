@@ -2,7 +2,7 @@
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 
-namespace ProjectRepo
+namespace MSS.Types.MSetDatabase
 {
 	public record RecordBase()
 	{

@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using MSS.Common;
 using MSetDatabaseClient;
+using MSS.Types.MSetDatabase;
 
 namespace ImageBuilder
 {

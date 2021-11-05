@@ -1,7 +1,7 @@
 ﻿using MSS.Types;
 using System;
 
-namespace ProjectRepo
+namespace MSS.Types.MSetDatabase
 {
 	public record MapSection(
 		string Name,

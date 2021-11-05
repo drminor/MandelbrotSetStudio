@@ -4,6 +4,7 @@ using ProjectRepo;
 using System;
 using System.Diagnostics;
 using MSS.Common;
+using MSS.Types.MSetDatabase;
 
 namespace MSetDatabaseClient
 {

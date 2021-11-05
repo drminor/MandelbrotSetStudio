@@ -2,7 +2,7 @@
 using MongoDB.Bson;
 using System;
 
-namespace ProjectRepo
+namespace MSS.Types.MSetDatabase
 {
 	public record MapSectionRef(
 		string Name,

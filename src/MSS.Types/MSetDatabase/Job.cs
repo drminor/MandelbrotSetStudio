@@ -2,7 +2,7 @@
 using MongoDB.Bson;
 using System.Collections.Generic;
 
-namespace ProjectRepo
+namespace MSS.Types.MSetDatabase
 {
 	public record Job(
 		ObjectId ProjectId,
