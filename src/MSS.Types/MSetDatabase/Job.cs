@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace MSS.Types.MSetDatabase
 {
+	// Record Declaration
 	public record Job(
 		ObjectId ProjectId,
 		ObjectId ParentJobId,
@@ -11,8 +12,6 @@ namespace MSS.Types.MSetDatabase
 		int OperationAmount,
 		bool Saved,
 		string Label,
-		int Zoom,
-		int CoordValuePrecision,
 		Coords Coords,
 		int MaxInterations,
 		int Threshold,
@@ -23,6 +22,7 @@ namespace MSS.Types.MSetDatabase
 		) : RecordBase()
 
 	{
+		// Custom constructor
 		public Job(ObjectId projectId, bool saved, Coords coords, int maxIterations, int threshold, int iterationsPerStep, IList<ColorMapEntry> colorMapEntries, string highColorCss)
 			: this(
 				  ProjectId: projectId,
@@ -31,15 +31,14 @@ namespace MSS.Types.MSetDatabase
 				  OperationAmount: 0,
 				  Saved: saved,
 				  Label: null,
-				  Zoom: 0,
-				  CoordValuePrecision: 0,
 				  Coords: coords,
 				  MaxInterations: maxIterations,
 				  Threshold: threshold,
 				  IterationsPerStep: iterationsPerStep,
 				  ColorMapEntries: colorMapEntries,
 				  HighColorCss: highColorCss,
-				  MapSectionRefs: null)
+				  MapSectionRefs: null
+				  )
 		{ }
 				  
 	}

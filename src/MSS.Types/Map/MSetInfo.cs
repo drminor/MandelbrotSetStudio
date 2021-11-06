@@ -4,10 +4,10 @@ namespace MSS.Types
 {
 	public class MSetInfo
     {
-		public MSetInfo(string name, Coords coords, bool isHighRes, int maxIterations, int threshold, int interationsPerStep, ColorMap colorMap)
+		public MSetInfo(string name, ApCoords apCoords, bool isHighRes, int maxIterations, int threshold, int interationsPerStep, ColorMap colorMap)
 		{
 			Name = name ?? throw new ArgumentNullException(nameof(name));
-			Coords = coords ?? throw new ArgumentNullException(nameof(coords));
+			ApCoords = apCoords ?? throw new ArgumentNullException(nameof(apCoords));
 			IsHighRes = isHighRes;
 			MaxIterations = maxIterations;
 			Threshold = threshold;
@@ -16,7 +16,7 @@ namespace MSS.Types
 		}
 
 		public string Name { get; init; }
-        public Coords Coords { get; init; }
+        public ApCoords ApCoords { get; init; }
 		public bool IsHighRes { get; init; }
 		public int MaxIterations { get; init; }
 		public int Threshold { get; init; }

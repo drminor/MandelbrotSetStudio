@@ -7,6 +7,7 @@ using System.IO;
 using MSS.Common;
 using MSetDatabaseClient;
 using MSS.Types.MSetDatabase;
+using MSS.Common.MSetDatabase;
 
 namespace ImageBuilder
 {
@@ -72,17 +73,6 @@ namespace ImageBuilder
 			}
 		}
 
-		//private static IMapSectionReader GetMapSectionReader(string fileName)
-		//{
-		//	string mFilePath = GetFullPath(BASE_PATH, fileName);
-		//	var mSetInfo = MSetInfoReaderWriter.Read(mFilePath);
-		//	bool isHighRes = mSetInfo.IsHighRes;
-		//	var repofilename = mSetInfo.Name;
-
-		//	var mapSectionReader = GetReader(repofilename, isHighRes);
-		//	return mapSectionReader;
-		//}
-
 		private static IMapSectionReader GetMapSectionReader(string repoFilename, bool isHighRes)
 		{
 			if (isHighRes)
@@ -98,7 +88,8 @@ namespace ImageBuilder
 		private static Project BuildProject(MSetInfo mSetInfo)
 		{
 			var canvasSize = new SizeInt(1280, 1280);
-			var result = new Project(mSetInfo.Name, canvasSize, mSetInfo.Coords);
+			var coords = CoordsHelper.CovertFrom(mSetInfo.ApCoords);
+			var result = new Project(mSetInfo.Name, canvasSize, coords);
 
 			return result;
 		}
@@ -110,7 +101,6 @@ namespace ImageBuilder
 
 			return result;
 		}
-
 
 		#region Project Names
 

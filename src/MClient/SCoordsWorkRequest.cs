@@ -8,7 +8,7 @@ namespace MClient
 	{
 		public TransformType TransformType;
 
-		public Coords Coords;
+		public ApCoords ApCoords;
 
 		/// <summary>
 		/// The size of the entire job
@@ -25,16 +25,16 @@ namespace MClient
 		private SCoordsWorkRequest()
 		{
 			TransformType = TransformType.In;
-			Coords = new Coords();
+			ApCoords = new ApCoords();
 			CanvasSize = new SizeInt();
 			MapSection = new RectangleInt();
 			JobId = -1;
 		}
 
-		public SCoordsWorkRequest(TransformType transformType, Coords coords, SizeInt canvasSize, RectangleInt mapSection, int jobId)
+		public SCoordsWorkRequest(TransformType transformType, ApCoords apCoords, SizeInt canvasSize, RectangleInt mapSection, int jobId)
 		{
 			TransformType = transformType;
-			Coords = coords ?? throw new ArgumentNullException(nameof(coords));
+			ApCoords = apCoords ?? throw new ArgumentNullException(nameof(ApCoords));
 			CanvasSize  = canvasSize ?? throw new ArgumentNullException(nameof(canvasSize));
 			MapSection = mapSection ?? throw new ArgumentNullException(nameof(mapSection));
 			JobId = jobId;

@@ -3,15 +3,15 @@
 namespace MSS.Types
 {
 	[Serializable]
-	public class Coords_old
+	public class CoordsV1
 	{
 		private SPoint _botLeft;
 		private SPoint _topRight;
 
-		public Coords_old() : this("0", "0", "0", "0")
+		public CoordsV1() : this("0", "0", "0", "0")
 		{ }
 
-		public Coords_old(string startingX, string endingX, string startingY, string endingY)
+		public CoordsV1(string startingX, string endingX, string startingY, string endingY)
 		{
 			StartingX = startingX;
 			EndingX = endingX;

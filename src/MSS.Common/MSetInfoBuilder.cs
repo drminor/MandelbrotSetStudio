@@ -35,7 +35,7 @@ namespace MSS.Common
 			//	EndingY: "1.08316039471787068157292062147129e-01"
 			//	);
 
-			Coords coords = new Coords(
+			var apCoords = new ApCoords(
 				Sx: -7.66830587074704020221573662634195e-01,
 				Ex: -7.66830585754868944856241303572093e-01,
 
@@ -66,7 +66,7 @@ namespace MSS.Common
 
 			var colorMap = new ColorMap(entries, maxIterations, highColorCss);
 
-			MSetInfo result = new MSetInfo("Circus1", coords, isHighRes, maxIterations, threshold, iterationsPerStep, colorMap);
+			MSetInfo result = new MSetInfo("Circus1", apCoords, isHighRes, maxIterations, threshold, iterationsPerStep, colorMap);
 
 			return result;
 		}

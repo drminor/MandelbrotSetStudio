@@ -40,35 +40,31 @@ Job
 	Double OperationAmount
 	bool Saved
 	string Label
-	int Zoom
-	int CoordValuePrecision (Number of MapSections, each holding 53 bits of precision worth of count data, etc., use to build the composite count, etc., required to calculte the pixel's color.)
 	Coords Coords
 	int MaxIterations
 	int Threshold
 	int InterationsPerStep
 	ColorMapEntry[] ColorMapEntries
 	String HighColorCss
-	MapSectionRef[] MapSections
+	MapSectionRef[] MapSectionsRefs
 
 MapSectionRef
 	Guid _id
 	DateTime DateCreated
 	Guid Job._id
 	Guid MapSectionId
-	PointInt BlockIndex
-	int PrecisionIndex
 	RectangleInt ClippingRectangle
 
 MapSection
 	Guid _id
 	DateTime DateCreated
 	int Zoom
-	int CoordValuePrecision
-	DPoint Point **
+	int ValueDepth
+	DPoint Point
 	MapSectionNeighbors Neighbors
 	int Width
 	int Height
-	DSize SamplePointDelta **
+	DDouble SamplePointDelta
 	int[] Counts
 	bool[] DoneFlags
 	DDouble[] ZValues

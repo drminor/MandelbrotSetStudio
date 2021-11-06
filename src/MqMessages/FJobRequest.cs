@@ -8,7 +8,7 @@ namespace MqMessages
 	{
 		public int JobId { get; set; }
 		public string Name { get; set; }
-		public Coords Coords { get; set; }
+		public ApCoords Coords { get; set; }
 		public RectangleInt Area { get; set; }
 		public SizeInt SamplePoints { get; set; }
 		public uint MaxIterations { get; set; }
@@ -17,7 +17,7 @@ namespace MqMessages
 
 		public FJobRequest() { }
 
-		public FJobRequest(int jobId, string name, FJobRequestType requestType, Coords coords, RectangleInt area, SizeInt samplePoints, uint maxIterations, TransformType? transformType = null)
+		public FJobRequest(int jobId, string name, FJobRequestType requestType, ApCoords coords, RectangleInt area, SizeInt samplePoints, uint maxIterations, TransformType? transformType = null)
 		{
 			JobId = jobId;
 			Name = name;

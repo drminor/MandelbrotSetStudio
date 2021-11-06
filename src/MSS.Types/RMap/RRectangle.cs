@@ -8,9 +8,9 @@ namespace MSS.Types
 		public long SyN { get; init; }
 		public long EyN { get; init; }
 
-		public uint Exp { get; init; }
+		public int Exp { get; init; }
 
-		public RRectangle(long sxN, long exN, long syN, long eyN, uint exp)
+		public RRectangle(long sxN, long exN, long syN, long eyN, int exp)
 		{
 			SxN = sxN;
 			ExN = exN;

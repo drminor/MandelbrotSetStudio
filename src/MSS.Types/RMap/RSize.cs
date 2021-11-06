@@ -5,11 +5,11 @@ namespace MSS.Types
 	{
 		public long WN { get; init; }
 		public long HN { get; init; }
-		public uint Exp { get; init; }
+		public int Exp { get; init; }
 
 		public RSize() : this(0, 0, 0) { }
 
-		public RSize(long wN, long hN, uint exp)
+		public RSize(long wN, long hN, int exp)
 		{
 			WN = wN;
 			HN = hN;

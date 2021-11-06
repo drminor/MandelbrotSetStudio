@@ -5,12 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Map\Coords_old.cs" />
-    <Compile Remove="Screen\CanvasSize.cs" />
-    <Compile Remove="Screen\Point.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="MongoDB.Bson" Version="2.13.2" />
   </ItemGroup>
 

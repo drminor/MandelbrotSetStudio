@@ -3,14 +3,14 @@
 namespace MSS.Types
 {
 	[Serializable]
-	public record Coords(string StartingX, string EndingX, string StartingY, string EndingY, double[] Bin)
+	public record ApCoords(string StartingX, string EndingX, string StartingY, string EndingY, double[] Bin)
 	{
 		private readonly int _vd = Bin.Length / 4;
 
-		public Coords() : this(0, 0, 0, 0)
+		public ApCoords() : this(0, 0, 0, 0)
 		{ }
 
-		public Coords(double Sx, double Ex, double Sy, double Ey) : this(Sx.ToString(), Ex.ToString(), Sy.ToString(), Ey.ToString(), new double[] { Sx, Ex, Sy, Ey })
+		public ApCoords(double Sx, double Ex, double Sy, double Ey) : this(Sx.ToString(), Ex.ToString(), Sy.ToString(), Ey.ToString(), new double[] { Sx, Ex, Sy, Ey })
 		{ }
 
 		public double[] Bin { get; init; } = Bin;
@@ -18,13 +18,13 @@ namespace MSS.Types
 
 	}
 
-	public class CoordHelper
+	public class ApCoordHelper
 	{
-		public Coords BuildCoord(double[] bin)
+		public ApCoords BuildCoord(double[] bin)
 		{
 			string[] stringVals = GetStringVals(bin);
 
-			Coords result = new Coords(stringVals[0], stringVals[1], stringVals[2], stringVals[3], bin);
+			ApCoords result = new ApCoords(stringVals[0], stringVals[1], stringVals[2], stringVals[3], bin);
 			return result;
 		}
 

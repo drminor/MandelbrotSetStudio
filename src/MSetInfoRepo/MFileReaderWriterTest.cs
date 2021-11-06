@@ -28,7 +28,7 @@ namespace MSetInfoRepo
 
 			//var coords = new Coords("-7.66830587074704020221573662634195e-01", "-7.66830585754868944856241303572093e-01", "1.08316038593833397341534199100796e-01", "1.08316039471787068157292062147129e-01");
 			
-			var coords = new Coords(
+			var apCoords = new ApCoords(
 				Sx: -7.66830587074704020221573662634195e-01,
 				Ex: -7.66830585754868944856241303572093e-01,
 
@@ -42,7 +42,7 @@ namespace MSetInfoRepo
 
 			string highColor = "#000000";
 
-			MFileInfo result = new MFileInfo(name, coords, isHighRes:false, 1000, 4, 100, colorMapEntrires, highColor);
+			MFileInfo result = new MFileInfo(name, apCoords, isHighRes:false, 1000, 4, 100, colorMapEntrires, highColor);
 
 			return result;
 		}

@@ -7,7 +7,7 @@ namespace MClient
 	{
 		public string Name;
 
-		public Coords Coords;
+		public ApCoords Coords;
 
 		public SizeInt CanvasSize;
 
@@ -29,7 +29,7 @@ namespace MClient
 			JobId = -1;
 		}
 
-		public SMapWorkRequest(string name, Coords coords, SizeInt canvasSize, RectangleInt area, int maxIterations, string connectionId)
+		public SMapWorkRequest(string name, ApCoords coords, SizeInt canvasSize, RectangleInt area, int maxIterations, string connectionId)
 		{
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			Coords = coords ?? throw new ArgumentNullException(nameof(coords));

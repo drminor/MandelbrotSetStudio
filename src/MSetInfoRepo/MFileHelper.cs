@@ -9,7 +9,7 @@ namespace MSetInfoRepo
         internal static MSetInfo GetMSetInfo(MFileInfo mFileInfo)
 		{
             var colorMap = GetColorMap(mFileInfo.ColorMapEntries, mFileInfo.MaxIterations, mFileInfo.HighColorCss);
-            var result = new MSetInfo(mFileInfo.Name, mFileInfo.Coords, mFileInfo.isHighRes, mFileInfo.MaxIterations, mFileInfo.Threshold, mFileInfo.InterationsPerStep, colorMap);
+            var result = new MSetInfo(mFileInfo.Name, mFileInfo.ApCoords, mFileInfo.isHighRes, mFileInfo.MaxIterations, mFileInfo.Threshold, mFileInfo.InterationsPerStep, colorMap);
             return result;
 		}
 

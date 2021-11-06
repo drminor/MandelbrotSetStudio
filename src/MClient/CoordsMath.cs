@@ -23,16 +23,16 @@ namespace MClient
 
 		public TimeSpan WaitDuration { get; set; }
 
-		public Coords DoOp(SCoordsWorkRequest sCoordsWorkRequest)
+		public ApCoords DoOp(SCoordsWorkRequest sCoordsWorkRequest)
 		{
 			FJobRequest fJobRequest = CreateFJobRequest(sCoordsWorkRequest, ++_nextJobId);
 			string requestMsgId = SendJobToMq(fJobRequest);
 
-			Coords result = GetResponseFromMq(requestMsgId);
+			ApCoords result = GetResponseFromMq(requestMsgId);
 			return result;
 		}
 
-		private Coords GetResponseFromMq(string requestMsgId)
+		private ApCoords GetResponseFromMq(string requestMsgId)
 		{
 			using MessageQueue inQ = GetJobResponseQueue();
 			Message m = MqHelper.GetMessageByCorId(inQ, requestMsgId, WaitDuration);
@@ -78,13 +78,13 @@ namespace MClient
 
 		private static FJobRequest CreateFJobRequest(SCoordsWorkRequest sCoordsWorkRequest, int jobId)
 		{
-			Coords coords = sCoordsWorkRequest.Coords;
+			var apCoords = sCoordsWorkRequest.ApCoords;
 			SizeInt samplePoints = sCoordsWorkRequest.CanvasSize;
 			RectangleInt area = sCoordsWorkRequest.MapSection;
 			TransformType transformType = sCoordsWorkRequest.TransformType;
 
 			string name = "CoordsRequest";
-			var fJobRequest = new FJobRequest(jobId, name, FJobRequestType.TransformCoords, coords, area, samplePoints, 0, transformType);
+			var fJobRequest = new FJobRequest(jobId, name, FJobRequestType.TransformCoords, apCoords, area, samplePoints, 0, transformType);
 
 			return fJobRequest;
 		}

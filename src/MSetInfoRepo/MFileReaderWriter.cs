@@ -12,7 +12,7 @@ namespace MSetInfoRepo
             JsonSerializerOptions jsonSerializerOptions = GetReadOptions();
             MFileInfo result = JsonSerializer.Deserialize<MFileInfo>(jsonContent, jsonSerializerOptions);
 
-            if (result.Coords == null)
+            if (result.ApCoords == null)
 			{
                 throw new InvalidDataException($"The contents of file: {path} could not be read in as a MFileInfo object.");
 			}
