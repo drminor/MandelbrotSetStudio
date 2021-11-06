@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using MSS.Types.MSetDatabase;
+using System.Linq;
 
 namespace ProjectRepo
 {
@@ -45,14 +46,30 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
+		public long? DeleteAllForProject(ObjectId projectId)
+		{
+			var filter = Builders<Job>.Filter.Eq("ProjectId", projectId);
+			var jobs = Collection.Find(filter).ToList();
+
+			// Get the _id values of the found documents
+			var ids = jobs.Select(d => d.Id);
+
+			// Create an $in filter for those ids
+			var idsFilter = Builders<Job>.Filter.In(d => d.Id, ids);
+
+			// Delete the documents using the $in filter
+			var deleteResult = Collection.DeleteMany(idsFilter);
+			return GetReturnCount(deleteResult);
+		}
+
 		private IMongoCollection<Job> Collection
 		{
 			get
 			{
 				IMongoDatabase db = _dbProvider.Database;
-				IMongoCollection<Job> projCollection = db.GetCollection<Job>(COLLECTION_NAME);
+				IMongoCollection<Job> jobCollection = db.GetCollection<Job>(COLLECTION_NAME);
 
-				return projCollection;
+				return jobCollection;
 			}
 		}
 

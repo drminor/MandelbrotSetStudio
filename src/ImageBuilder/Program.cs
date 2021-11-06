@@ -25,17 +25,16 @@ namespace ImageBuilder
 
 		static void Main(string[] args)
 		{
-			string fileName = CIRCUS1_PROJECT_NAME;
-
 			//int cmd = int.Parse(args[0] ?? "-1");
 
-			int cmd = 2;
+			int cmd = 3;
 
 			switch (cmd)
 			{
 				case 0:
 					{
 						/* Write an MSetInfo to a JSON formatted file. */
+						string fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
 						MSetInfo mSetInfo = MSetInfoBuilder.Build(fileName);
 
 						//string path = GetFullPath(BASE_PATH, fileName);
@@ -48,6 +47,7 @@ namespace ImageBuilder
 						/* Create png image file */
 						var pngBuilder = new PngBuilder(IMAGE_OUTPUT_FOLDER, _blockSize);
 
+						string fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
 						var mSetInfo = MSetInfoBuilder.Build(fileName);
 						IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfo.Name, mSetInfo.IsHighRes);
 
@@ -57,6 +57,7 @@ namespace ImageBuilder
 				case 2:
 					{
 						/* MongoDb Import */
+						string fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
 						var mSetInfo = MSetInfoBuilder.Build(fileName);
 
 						IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfo.Name, mSetInfo.IsHighRes);
@@ -64,11 +65,23 @@ namespace ImageBuilder
 						var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
 						var mongoDbImporter = new MongoDbImporter(dbProvider);
 
-						var project = BuildProject(mSetInfo);
+						var project = BuildProject(mSetInfo.Name);
 						mongoDbImporter.Import(mapSectionReader, project, mSetInfo, overwrite: true);
 						break;
 					}
+				case 3:
+					{
+						/* Zoom Test #1*/
+						string fileName = MSetInfoBuilder.ZOOM_TEST_1;
+						var mSetInfo = MSetInfoBuilder.Build(fileName);
 
+						var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
+						var mongoDbImporter = new MongoDbImporter(dbProvider);
+
+						var project = BuildProject(mSetInfo.Name);
+						mongoDbImporter.DoZoomTest1(project, mSetInfo, overwrite: true);
+						break;
+					}
 				default: throw new InvalidOperationException($"The value: {cmd} for cmd is not recognized or is not supported.");
 			}
 		}
@@ -85,11 +98,12 @@ namespace ImageBuilder
 			}
 		}
 
-		private static Project BuildProject(MSetInfo mSetInfo)
+		private static Project BuildProject(string projectName)
 		{
 			var canvasSize = new SizeInt(1280, 1280);
-			var coords = CoordsHelper.CovertFrom(mSetInfo.ApCoords);
-			var result = new Project(mSetInfo.Name, canvasSize, coords);
+			var rRectangle = RMapConstants.ENTIRE_SET_RECTANGLE;
+			var coords = CoordsHelper.BuildCoords(rRectangle);
+			var result = new Project(projectName, canvasSize, coords);
 
 			return result;
 		}
@@ -102,14 +116,5 @@ namespace ImageBuilder
 			return result;
 		}
 
-		#region Project Names
-
-		const string CIRCUS1_PROJECT_NAME = "Circus1";
-		const string MAP_INFO_1_PROJECT_NAME = "MandlebrodtMapInfo (1)";
-		const string CRHOM_CENTER_2_PROJECT_NAME = "CRhomCenter2";
-		const string SCLUSTER_2_PROJECT_NAME = "SCluster2";
-		const string CUR_RHOMBUS_5_2 = "CurRhombus5_2";
-
-		#endregion
 	}
 }

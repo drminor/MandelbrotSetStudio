@@ -21,6 +21,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8D960C02-80E3-48F0-9A6A-241B384D90B0}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MClient", "src\MClient\MClient.csproj", "{0361B630-6E9A-438E-B283-F476904BD8E8}"
@@ -41,9 +42,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSS.Common", "src\MSS.Commo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSS.Types", "src\MSS.Types\MSS.Types.csproj", "{E0471DC7-9B5E-4ACF-B4C6-181D1203CC4A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSetDatabaseClient", "src\MSetDatabaseClient\MSetDatabaseClient.csproj", "{EB92ED73-308A-4A59-AAB3-E65E72D8C74C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSetDatabaseClient", "src\MSetDatabaseClient\MSetDatabaseClient.csproj", "{EB92ED73-308A-4A59-AAB3-E65E72D8C74C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RussianBoxes", "src\RussianBoxes\RussianBoxes.csproj", "{8167F1CF-CB19-4F02-9BC8-7F888E595AF0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RussianBoxes", "src\RussianBoxes\RussianBoxes.csproj", "{8167F1CF-CB19-4F02-9BC8-7F888E595AF0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

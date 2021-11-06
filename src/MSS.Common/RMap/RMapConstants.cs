@@ -4,7 +4,7 @@ namespace MSS.Common
 {
 	public class RMapConstants
 	{
-		static readonly RRectangle ENTIRE_SET_RECTANGLE;
+		public static readonly RRectangle ENTIRE_SET_RECTANGLE;
 
 		static RMapConstants()
 		{

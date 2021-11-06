@@ -24,25 +24,28 @@ namespace MSS.Common.MSetDatabase
 		{
 			string[] result = new string[4];
 
-			double denominator = Math.Pow(2, rRectangle.Exp);
+			double scaleFactor = Math.Pow(2, rRectangle.Exp);
+			double denominator = 1d / scaleFactor;
 			string strDenominator = denominator.ToString();
 
-			// TODO: Add method to check for underflow when converting a 'RPoint' component to a double.
-			double sx = rRectangle.SxN / denominator;
-			double ex = rRectangle.ExN / denominator;
-			double sy = rRectangle.SyN / denominator;
-			double ey = rRectangle.EyN / denominator;
+			var dRectangle = CreateFrom(rRectangle);
+			dRectangle = dRectangle.Scale(scaleFactor);
 
-			result[0] = $"{rRectangle.SxN}/{strDenominator} ({sx})";
-			result[1] = $"{rRectangle.ExN}/{strDenominator} ({ex})";
-			result[2] = $"{rRectangle.SyN}/{strDenominator} ({sy})";
-			result[3] = $"{rRectangle.EyN}/{strDenominator} ({ey})";
+			result[0] = $"{rRectangle.SxN}/{strDenominator} ({dRectangle.Sx})";
+			result[1] = $"{rRectangle.ExN}/{strDenominator} ({dRectangle.Ex})";
+			result[2] = $"{rRectangle.SyN}/{strDenominator} ({dRectangle.Sy})";
+			result[3] = $"{rRectangle.EyN}/{strDenominator} ({dRectangle.Ey})";
 
 			// TODO: Calculate the # of maximum binary bits of precision from sx, ex, sy and ey.
 			int binaryBitsOfPrecision = 10;
 			valueDepth = CalculateValueDepth(binaryBitsOfPrecision);
 
 			return result;
+		}
+
+		private static DRectangle CreateFrom(RRectangle rRectangle)
+		{
+			return new DRectangle(rRectangle.SxN, rRectangle.ExN, rRectangle.SyN, rRectangle.EyN);
 		}
 
 		private static int CalculateValueDepth(int binaryBitsOfPrecision)

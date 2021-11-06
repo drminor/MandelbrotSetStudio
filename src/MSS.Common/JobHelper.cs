@@ -4,6 +4,7 @@ using System;
 
 using MongoDB.Bson;
 using System.Collections.Generic;
+using MSS.Common.MSetDatabase;
 
 namespace MSS.Common
 {
@@ -30,8 +31,12 @@ namespace MSS.Common
 
 		public static Job ZoomIn(Job job)
 		{
-			Coords coords = job.Coords;
-			IList<MapSectionRef> mapSectionRefs = null;
+			var rRectangle = RMapHelper.GetRRectangle(job.Coords);
+			var rRectangleZoomed = RMapHelper.Zoom(rRectangle);
+
+			var coords = CoordsHelper.BuildCoords(rRectangleZoomed);
+
+			IList<MapSectionRef>? mapSectionRefs = null;
 
 			Job result = new Job(job.ProjectId, job.Id, TransformType.In, 2, Saved:false, Label: null, 
 				coords, 

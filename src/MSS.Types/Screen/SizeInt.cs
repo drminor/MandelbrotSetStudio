@@ -19,14 +19,14 @@ namespace MSS.Types
 
 		public int NumberOfCells => Width * Height;
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return Equals(obj as SizeInt);
 		}
 
-		public bool Equals(SizeInt other)
+		public bool Equals(SizeInt? other)
 		{
-			return other != null &&
+			return !(other is null) &&
 				   Width == other.Width &&
 				   Height == other.Height;
 		}

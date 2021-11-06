@@ -10,9 +10,9 @@ namespace MSetInfoRepo
             string jsonContent = File.ReadAllText(path);
 
             JsonSerializerOptions jsonSerializerOptions = GetReadOptions();
-            MFileInfo result = JsonSerializer.Deserialize<MFileInfo>(jsonContent, jsonSerializerOptions);
+            MFileInfo? result = JsonSerializer.Deserialize<MFileInfo>(jsonContent, jsonSerializerOptions);
 
-            if (result.ApCoords == null)
+            if (result?.ApCoords == null)
 			{
                 throw new InvalidDataException($"The contents of file: {path} could not be read in as a MFileInfo object.");
 			}

@@ -28,11 +28,11 @@ namespace MSS.Types
 
 		#region IEqualityComparer / IEquatable Support
 
-		public bool Equals(RectangleInt x, RectangleInt y)
+		public bool Equals(RectangleInt? x, RectangleInt? y)
 		{
-			if(x == null)
+			if(x is null)
 			{
-				return y == null;
+				return y is null;
 			}
 			else
 			{
@@ -40,14 +40,14 @@ namespace MSS.Types
 			}
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return Equals(obj as RectangleInt);
 		}
 
-		public bool Equals(RectangleInt other)
+		public bool Equals(RectangleInt? other)
 		{
-			return other != null &&
+			return !(other is null) &&
 				   Point == other.Point &&
 				   Size == other.Size;
 		}

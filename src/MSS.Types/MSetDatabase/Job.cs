@@ -7,30 +7,32 @@ namespace MSS.Types.MSetDatabase
 	// Record Declaration
 	public record Job(
 		ObjectId ProjectId,
-		ObjectId ParentJobId,
+		ObjectId? ParentJobId,
 		TransformType? Operation,
 		int OperationAmount,
 		bool Saved,
-		string Label,
+		string? Label,
 		Coords Coords,
 		int MaxInterations,
 		int Threshold,
 		int IterationsPerStep,
 		IList<ColorMapEntry> ColorMapEntries,
 		string HighColorCss,
-		IList<MapSectionRef> MapSectionRefs
+		IList<MapSectionRef>? MapSectionRefs
 		) : RecordBase()
 
 	{
-		// Custom constructor
+		private const string ROOT_JOB_LABEL = "Root";
+
+		// Custom constructor to create the initial or "root" Job. 
 		public Job(ObjectId projectId, bool saved, Coords coords, int maxIterations, int threshold, int iterationsPerStep, IList<ColorMapEntry> colorMapEntries, string highColorCss)
 			: this(
 				  ProjectId: projectId,
-				  ParentJobId: ObjectId.Empty,
+				  ParentJobId: null,
 				  Operation: null,
 				  OperationAmount: 0,
 				  Saved: saved,
-				  Label: null,
+				  Label: ROOT_JOB_LABEL,
 				  Coords: coords,
 				  MaxInterations: maxIterations,
 				  Threshold: threshold,

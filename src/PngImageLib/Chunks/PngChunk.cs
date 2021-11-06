@@ -1,3 +1,4 @@
+#nullable disable
 namespace PngImageLib.Chunks {
 
     using PngImageLib;

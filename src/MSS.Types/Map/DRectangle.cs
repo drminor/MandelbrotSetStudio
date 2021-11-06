@@ -25,5 +25,11 @@ namespace MSS.Types
 		public DPoint TopRight => new DPoint(Ex, Ey);
 
 		public DSize Size => new DSize(Width, Height);
+
+		// TODO: Catch overflow exceptions
+		public DRectangle Scale(double factor)
+		{
+			return new DRectangle(Sx * factor, Ex * factor, Sy * factor, Ey * factor);
+		}
 	}
 }

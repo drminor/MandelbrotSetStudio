@@ -17,14 +17,14 @@ namespace MSS.Types
 		public int X { get; set; }
 		public int Y { get; set; }
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return Equals(obj as PointInt);
 		}
 
-		public bool Equals(PointInt other)
+		public bool Equals(PointInt? other)
 		{
-			return other != null &&
+			return !(other is null) &&
 				   X == other.X &&
 				   Y == other.Y;
 		}

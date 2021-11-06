@@ -1,6 +1,7 @@
+#nullable disable
 namespace PngImageLib {
 
-    using PngImageLib.Chunks;
+using PngImageLib.Chunks;
     using PngImageLib.Zlib;
     using System.Collections.Generic;
     using System.IO;

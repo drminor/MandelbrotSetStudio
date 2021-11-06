@@ -5,6 +5,18 @@ namespace MSS.Common
 {
 	public static class MSetInfoBuilder
 	{
+		#region Project Names
+
+		public const string CIRCUS1_PROJECT_NAME = "Circus1";
+		public const string ZOOM_TEST_1 = "ZoomTest1";
+
+		public const string MAP_INFO_1_PROJECT_NAME = "MandlebrodtMapInfo (1)";
+		public const string CRHOM_CENTER_2_PROJECT_NAME = "CRhomCenter2";
+		public const string SCLUSTER_2_PROJECT_NAME = "SCluster2";
+		public const string CUR_RHOMBUS_5_2 = "CurRhombus5_2";
+
+		#endregion
+
 		public static MSetInfo Build(string name)
 		{
 			MSetInfo info = GetMFileInfo(name);
@@ -19,22 +31,17 @@ namespace MSS.Common
 					{
 						return BuildCircus1();
 					}
+				case "ZoomTest1":
+					{
+						return BuildZoomTest(name);
+					}
 				default:
 					throw new KeyNotFoundException($"Cound not find a recreation script with name = {name}.");
 			}
 		}
 
-		// TODO: Update BuildCircus1 to create a MSetInfo instead
 		private static MSetInfo BuildCircus1()
 		{
-			//Coords coords = new Coords(
-			//  StartingX: "-7.66830587074704020221573662634195e-01",
-			//	EndingX: "-7.66830585754868944856241303572093e-01",
-
-			//	StartingY: "1.08316038593833397341534199100796e-01",
-			//	EndingY: "1.08316039471787068157292062147129e-01"
-			//	);
-
 			var apCoords = new ApCoords(
 				Sx: -7.66830587074704020221573662634195e-01,
 				Ex: -7.66830585754868944856241303572093e-01,
@@ -67,6 +74,36 @@ namespace MSS.Common
 			var colorMap = new ColorMap(entries, maxIterations, highColorCss);
 
 			MSetInfo result = new MSetInfo("Circus1", apCoords, isHighRes, maxIterations, threshold, iterationsPerStep, colorMap);
+
+			return result;
+		}
+
+		private static MSetInfo BuildZoomTest(string projectName)
+		{
+			var apCoords = new ApCoords(
+				Sx: -7.66830587074704020221573662634195e-01,
+				Ex: -7.66830585754868944856241303572093e-01,
+
+				Sy: 1.08316038593833397341534199100796e-01,
+				Ey: 1.08316039471787068157292062147129e-01
+				);
+
+
+			bool isHighRes = false;
+			IList<ColorMapEntry> entries = new List<ColorMapEntry>();
+
+			entries.Add(new ColorMapEntry(375, "#ffffff", ColorMapBlendStyle.Next, "#000000"));
+			entries.Add(new ColorMapEntry(1011, "#e95ee8", ColorMapBlendStyle.End, "#758cb7"));
+
+			string highColorCss = "#000000";
+
+			int maxIterations = 400;
+			int threshold = 4;
+			int iterationsPerStep = 100;
+
+			var colorMap = new ColorMap(entries, maxIterations, highColorCss);
+
+			MSetInfo result = new MSetInfo(projectName, apCoords, isHighRes, maxIterations, threshold, iterationsPerStep, colorMap);
 
 			return result;
 		}

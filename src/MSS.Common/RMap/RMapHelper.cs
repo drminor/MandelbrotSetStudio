@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSetDatabase;
 using System;
 using System.Diagnostics;
 
@@ -10,13 +11,31 @@ namespace MSS.Common
 		{
 			long xLen = rRectangle.ExN - rRectangle.SxN;
 			long quarterOfxLen = Divide4(xLen, rRectangle.Exp, out int newXExp);
-			long newSxN = rRectangle.SxN + quarterOfxLen;
-			long newExN = rRectangle.ExN + 3 * quarterOfxLen;
+
+			//long newSxN = rRectangle.SxN + quarterOfxLen;
+			//long newExN = rRectangle.ExN + 3 * quarterOfxLen;
+
+			long newSxN = Rebase(rRectangle.SxN, rRectangle.ExN, rRectangle.Exp, newXExp, out long newExN);
+
+			double q = GetVal(quarterOfxLen, newXExp);
+			double stX = GetVal(newSxN, newXExp);
+			double enX = GetVal(newExN, newXExp);
+
+			newSxN += quarterOfxLen;
+			newSxN += 3 * quarterOfxLen;
+
+			stX = GetVal(newSxN, newXExp);
+			enX = GetVal(newExN, newXExp);
 
 			long yLen = rRectangle.ExN - rRectangle.SxN;
 			long quarterOfyLen = Divide4(yLen, rRectangle.Exp, out int newYExp);
-			long newSyN = rRectangle.SyN + quarterOfyLen;
-			long newEyN = rRectangle.EyN + 3 * quarterOfyLen;
+
+			//long newSyN = rRectangle.SyN + quarterOfyLen;
+			//long newEyN = rRectangle.EyN + 3 * quarterOfyLen;
+
+			long newSyN = Rebase(rRectangle.SxN, rRectangle.EyN, rRectangle.Exp, newYExp, out long newEyN);
+			newSyN += quarterOfyLen;
+			newEyN += 3 * quarterOfyLen;
 
 			int commonExp = GetCommonExp(newXExp, newYExp);
 
@@ -58,12 +77,12 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static int GetCommonExp(int expX, int expY)
+		private static int GetCommonExp(int expX, int expY)
 		{
 			return Math.Min(expX, expY);
 		}
 
-		public static long Rebase(long x, long y, int currentExp, int newExp, out long newY)
+		private static long Rebase(long x, long y, int currentExp, int newExp, out long newY)
 		{
 			long result;
 
@@ -75,11 +94,12 @@ namespace MSS.Common
 			}
 			else if(newExp < currentExp)
 			{
-				long divisor = (long)Math.Pow(currentExp - newExp, 2);
-				CheckRemainder(x, divisor);
-				CheckRemainder(y, divisor);
-				result = x / divisor;
-				newY = y / divisor;
+				int diff = newExp - currentExp;
+				double divisor = Math.Pow(2, diff);
+				//CheckRemainder(x, divisor);
+				//CheckRemainder(y, divisor);
+				result = (long) (x / divisor);
+				newY = (long) (y / divisor);
 			}
 			else
 			{
@@ -91,10 +111,17 @@ namespace MSS.Common
 		}
 
 		[Conditional("DEBUG")]
-		public static void CheckRemainder(long dividend, long divisor)
+		private static void CheckRemainder(long dividend, long divisor)
 		{
 			Math.DivRem(dividend, divisor, out long remainder);
 			Debug.Assert(remainder == 0);
+		}
+
+		private static double GetVal(long n, int e)
+		{
+			double scaleFactor = Math.Pow(2, e);
+			double result = n * scaleFactor;
+			return result;
 		}
 
 		/*
@@ -105,5 +132,11 @@ namespace MSS.Common
 		 * = 5 / 16
 		 *
 		 */
+
+		public static RRectangle GetRRectangle(Coords coords)
+		{
+			RRectangle result = new RRectangle(coords.StartingX, coords.EndingX, coords.StartingY, coords.EndingY, coords.Exponent);
+			return result;
+		}
 	}
 }

@@ -6,6 +6,7 @@ namespace MSS.Types
     public class ColorMapColor
     {
         [JsonConstructor]
+        [BsonConstructor]
         public ColorMapColor(string cssColor) : this(GetComps(cssColor))
         {
             _cssColor = cssColor;
@@ -17,9 +18,11 @@ namespace MSS.Types
             ColorComps[0] = colorComps[0];
             ColorComps[1] = colorComps[1];
             ColorComps[2] = colorComps[2];
+
+            _cssColor = null;
         }
 
-        private string _cssColor;
+        private string? _cssColor;
         public string CssColor
         {
             get

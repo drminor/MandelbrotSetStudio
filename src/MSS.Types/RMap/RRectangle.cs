@@ -19,9 +19,9 @@ namespace MSS.Types
 			Exp = exp;
 		}
 
-		public RPoint BotLeft => new RPoint(SxN, ExN, Exp);
+		public RPoint LeftBot => new RPoint(SxN, SyN, Exp);
 
-		public RPoint TopRight => new RPoint(SyN, EyN, Exp);
+		public RPoint RightTop => new RPoint(ExN, EyN, Exp);
 
 		public RSize Size => new RSize(ExN - SxN, EyN - SyN, Exp);
 	}

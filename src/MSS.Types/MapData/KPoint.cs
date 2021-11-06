@@ -45,7 +45,7 @@ namespace MSS.Types
 
 		#region IEquatable and IEqualityComparer Support
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return obj is KPoint point && Equals(point);
 		}

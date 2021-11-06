@@ -24,9 +24,15 @@ namespace MSetDatabaseClient
 
 			var jobId = CreateJob(project, mSetInfo, overwrite);
 
-			GetMapSectionWriter(jobId);
+			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
+			var job = GetMapSectionWriter(jobId);
+			CopyBlocks(mapSectionReader, job);
+		}
 
-			SizeInt imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
+		private void CopyBlocks(IMapSectionReader mapSectionReader, Job job)
+		{
+			var imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
+			var jobId = job.Id;
 
 			//int numHorizBlocks = imageSizeInBlocks.W;
 			//int numVertBlocks = imageSizeInBlocks.H;
@@ -57,12 +63,44 @@ namespace MSetDatabaseClient
 			//}
 		}
 
-		private void GetMapSectionWriter(ObjectId jobId)
+		public void DoZoomTest1(Project projectData, MSetInfo mSetInfo, bool overwrite)
+		{
+			// Make sure the project record has been written.
+			var project = InsertProject(projectData);
+
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			long? deleteCount = jobReaderWriter.DeleteAllForProject(project.Id);
+			Debug.WriteLine($"Cleared all jobs, deleted: {deleteCount}");
+
+			var jobId = CreateJob(project, mSetInfo, overwrite);
+
+			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
+			var job = GetMapSectionWriter(jobId);
+
+			ZoomUntil(job, 5);
+		}
+
+		private void ZoomUntil(Job job, int numZooms)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+			for (int zCntr = 0; zCntr < numZooms; zCntr++)
+			{
+				Job zJob = JobHelper.ZoomIn(job);
+
+				jobReaderWriter.Insert(zJob);
+
+				job = zJob;
+			}
+		}
+
+		private Job GetMapSectionWriter(ObjectId jobId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var job = jobReaderWriter.Get(jobId);
-
 			Debug.WriteLine($"The JobId is {job.Id}.");
+
+			return job;
 		}
 
 		private ObjectId CreateJob(Project project, MSetInfo mSetInfo, bool overwrite)
@@ -102,11 +140,6 @@ namespace MSetDatabaseClient
 			return result;
 		}
 
-		//private void UpdateJob(Project project, ObjectId jobId)
-		//{
-
-		//}
-
 		/// <summary>
 		/// Inserts the project record if it does not exist on the database.
 		/// </summary>
@@ -131,11 +164,8 @@ namespace MSetDatabaseClient
 
 		private Job CreateFirstJob(ObjectId projectId, Coords coords, MSetInfo mSetInfo)
 		{
-			//Job job = new Job(projectId, saved:true, coords, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
-			//	new List<ColorMapEntry>(mSetInfo.ColorMap.ColorMapEntries), mSetInfo.ColorMap.HighColorEntry.StartColor.CssColor);
-
 			Job job = new Job(projectId, saved: true, coords, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
-				mSetInfo.ColorMap.ColorMapEntries, mSetInfo.ColorMap.HighColorEntry.StartColor.CssColor);
+				mSetInfo.ColorMap.ColorMapEntries, mSetInfo.HighColorCss);
 
 			return job;
 		}
