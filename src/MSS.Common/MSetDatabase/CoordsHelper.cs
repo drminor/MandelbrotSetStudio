@@ -37,7 +37,7 @@ namespace MSS.Common.MSetDatabase
 
 		private static DRectangle CreateFrom(RRectangle rRectangle)
 		{
-			return new DRectangle(rRectangle.X1, rRectangle.X2, rRectangle.Y1, rRectangle.Y2);
+			return new DRectangle(rRectangle.Values);
 		}
 
 		private static int GetValueDepth(RRectangle _)

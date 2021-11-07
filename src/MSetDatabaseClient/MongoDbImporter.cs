@@ -84,6 +84,7 @@ namespace MSetDatabaseClient
 			for (int zCntr = 0; zCntr < numZooms; zCntr++)
 			{
 				Job zJob = JobHelper.ZoomIn(job);
+				Debug.WriteLine($"Zoom: {zCntr}, Coords: {zJob.Coords.Display}.");
 
 				jobReaderWriter.Insert(zJob);
 

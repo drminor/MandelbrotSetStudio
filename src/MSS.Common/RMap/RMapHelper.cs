@@ -1,124 +1,127 @@
 ﻿using MSS.Types;
-using MSS.Types.MSetDatabase;
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace MSS.Common
 {
 	public static class RMapHelper
 	{
+		/// <summary>
+		/// Divide the given rectangle into 16 squares and then return the coordinates of the "middle" 4 squares.
+		/// </summary>
+		/// <param name="rRectangle"></param>
+		/// <returns>A new RRectangle</returns>
 		public static RRectangle Zoom(RRectangle rRectangle)
 		{
-			long quarterOfxLen = Divide4(rRectangle.WidthNumerator, rRectangle.Exponent, out int newXExp);
+			//DIAG -- double x0n = GetVal(rRectangle.X1, rRectangle.Exponent);
 
-			//long newX1 = rRectangle.X1 + quarterOfxLen;
-			//long newX2 = rRectangle.X2 + 3 * quarterOfxLen;
+			// Here are the current values for the rectangle's Width and Height numerators
+			long curWidth = rRectangle.WidthNumerator;
+			long curHeight = rRectangle.HeigthNumerator;
 
-			long newX1 = Rebase(rRectangle.X1, rRectangle.X2, rRectangle.Exponent, newXExp, out long newX2);
+			// Create a new rectangle with its exponent adjusted to support the new precision required in the numerators.
+			RRectangle rectangleWithNewExp;
 
-			double q = GetVal(quarterOfxLen, newXExp);
-			double stX = GetVal(newX1, newXExp);
-			double enX = GetVal(newX2, newXExp);
+			var quarterOfXLen = Math.DivRem(curWidth, 4, out long remainderX);
+			var quarterOfYLen = Math.DivRem(curHeight, 4, out long remainderY);
 
-			newX1 += quarterOfxLen;
-			newX1 += 3 * quarterOfxLen;
-
-			stX = GetVal(newX1, newXExp);
-			enX = GetVal(newX2, newXExp);
-
-			long quarterOfyLen = Divide4(rRectangle.HeigthNumerator, rRectangle.Exponent, out int newYExp);
-
-			//long newY1 = rRectangle.Y1 + quarterOfyLen;
-			//long newY2 = rRectangle.Y2 + 3 * quarterOfyLen;
-
-			long newY1 = Rebase(rRectangle.X1, rRectangle.Y2, rRectangle.Exponent, newYExp, out long newY2);
-			newY1 += quarterOfyLen;
-			newY2 += 3 * quarterOfyLen;
-
-			int commonExp = GetCommonExp(newXExp, newYExp);
-
-			newX1 = Rebase(newX1, newX2, newXExp, commonExp, out newX2);
-			newY1 = Rebase(newY1, newY2, newYExp, commonExp, out newY2);
-
-			RRectangle result = new RRectangle(newX1, newX2, newY1, newY2, commonExp);
-
-			return result;
-		}
-
-		public static long Divide4(long n, int exp, out int newExp)
-		{
-			long result;
-
-			long t = Math.DivRem(n, 4, out long remainder);
-
-			if (remainder == 0)
+			if (remainderX == 0 && remainderY == 0)
 			{
-				result = t;
-				newExp = exp;
-			}
-			else if (remainder == 1)
-			{
-				result = (t * 4) + 1;
-				newExp = exp - 2;
-			}
-			else if (remainder == 2)
-			{
-				result = (t * 2) + 1;
-				newExp = exp - 1;
+				// The exponent does not need to be changed, the quarter values are naturaly whole numbers
+				rectangleWithNewExp = rRectangle;
 			}
 			else
 			{
-				result = (t * 4) + 3;
-				newExp = exp - 2;
+				var halfOfXLen = Math.DivRem(curWidth, 2, out remainderX);
+				var halfOfYLen = Math.DivRem(curHeight, 2, out remainderY);
+
+				if (remainderX == 0 && remainderY == 0)
+				{
+					// The exponent needs to be reduced by 1 (all values are halved)
+					rectangleWithNewExp = new RRectangle(Rebase(rRectangle.Values, -1), rRectangle.Exponent - 1);
+
+					// The half values are now = 1/4 of the original width
+					quarterOfXLen = halfOfXLen;
+					quarterOfYLen = halfOfYLen;
+				}
+				else
+				{
+					// The exponent needs to be reduced by 2 (all values are quartered)
+					rectangleWithNewExp = new RRectangle(Rebase(rRectangle.Values, -2), rRectangle.Exponent - 2);
+
+					// The current values can be used
+					quarterOfXLen = curWidth;
+					quarterOfYLen = curHeight;
+				}
 			}
+
+			//DIAG double x1n = GetVal(rebased.X1, rebased.Exponent);
+
+			RRectangle result = new RRectangle(
+				rectangleWithNewExp.X1 + quarterOfXLen,
+				rectangleWithNewExp.X1 + 3 * quarterOfXLen,
+				rectangleWithNewExp.Y1 + quarterOfYLen,
+				rectangleWithNewExp.Y1 + 3 * quarterOfYLen,
+				rectangleWithNewExp.Exponent
+				);
 
 			return result;
 		}
 
-		private static int GetCommonExp(int expX, int expY)
-		{
-			return Math.Min(expX, expY);
-		}
+		//public static long Divide4(long n, int exp, out int newExp)
+		//{
+		//	long result;
 
-		private static long Rebase(long x, long y, int currentExp, int newExp, out long newY)
-		{
-			long result;
+		//	long t = Math.DivRem(n, 4, out long remainder);
 
-			if (newExp > currentExp)
+		//	if (remainder == 0)
+		//	{
+		//		result = t;
+		//		newExp = exp;
+		//	}
+		//	else if (remainder == 1)
+		//	{
+		//		result = (t * 4) + 1;
+		//		newExp = exp - 2;
+		//	}
+		//	else if (remainder == 2)
+		//	{
+		//		result = (t * 2) + 1;
+		//		newExp = exp - 1;
+		//	}
+		//	else
+		//	{
+		//		result = (t * 4) + 3;
+		//		newExp = exp - 2;
+		//	}
+
+		//	return result;
+		//}
+
+		private static long[] Rebase(long[] vals, int exponentDelta)
+		{
+			if (exponentDelta == 0)
 			{
-				long multplier = (long) Math.Pow(newExp - currentExp, 2);
-				result = x * multplier;
-				newY = y * multplier;
+				return vals;
 			}
-			else if(newExp < currentExp)
-			{
-				int diff = newExp - currentExp;
-				double divisor = Math.Pow(2, diff);
-				//CheckRemainder(x, divisor);
-				//CheckRemainder(y, divisor);
-				result = (long) (x / divisor);
-				newY = (long) (y / divisor);
-			}
-			else
-			{
-				result = x;
-				newY = y;
-			}
+
+			long multplier = (long)Math.Pow(2, -1 * exponentDelta);
+			long[] result = vals.Select(v => v * multplier).ToArray();
 
 			return result;
 		}
 
-		[Conditional("DEBUG")]
-		private static void CheckRemainder(long dividend, long divisor)
-		{
-			Math.DivRem(dividend, divisor, out long remainder);
-			Debug.Assert(remainder == 0);
-		}
+		//[Conditional("DEBUG")]
+		//private static void CheckRemainder(long dividend, long divisor)
+		//{
+		//	Math.DivRem(dividend, divisor, out long remainder);
+		//	Debug.Assert(remainder == 0);
+		//}
 
 		private static double GetVal(long n, int e)
 		{
-			double scaleFactor = Math.Pow(2, e);
-			double result = n * scaleFactor;
+			var result = Math.ScaleB(n, e);
 			return result;
 		}
 

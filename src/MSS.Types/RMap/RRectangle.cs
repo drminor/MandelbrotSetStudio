@@ -12,6 +12,11 @@ namespace MSS.Types
 			Exponent = 0;
 		}
 
+		public RRectangle(long[] values, int exponent) : base(values)
+		{
+			Exponent = exponent;
+		}
+
 		public RRectangle(long x1, long x2, long y1, long y2, int exponent) : base(x1, x2, y1, y2)
 		{
 			Exponent = exponent;

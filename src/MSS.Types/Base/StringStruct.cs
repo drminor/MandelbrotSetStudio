@@ -3,26 +3,30 @@ using System.Text.Json.Serialization;
 
 namespace MSS.Types.Base
 {
+	/// <summary>
+	/// Imutable, value-type that contains a single string value. 
+	/// This was created so that a rectangle using string values can be created.
+	/// </summary>
 	public struct StringStruct
     {
-        private string _value;
+        private readonly string _stringValue;
 
         [JsonConstructor]
         [BsonConstructor]
         public StringStruct(string value) : this()
         {
-            _value = value;
+            _stringValue = value;
         }
 
-        public string Value
+        public string StringValue
         {
-            get => _value;
-            init => _value = value ?? string.Empty;
+            get => _stringValue;
+            init => _stringValue = value ?? string.Empty;
         }
 
 		public override string? ToString()
 		{
-            return _value;
+            return _stringValue;
 		}
 
 		public static implicit operator StringStruct(string value)
@@ -32,7 +36,7 @@ namespace MSS.Types.Base
 
         public static implicit operator string(StringStruct value)
         {
-            return value.Value;
+            return value.StringValue;
         }
     }
 
