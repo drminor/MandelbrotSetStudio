@@ -26,9 +26,9 @@ namespace MSS.Types
 
 		public bool Equals(SizeInt? other)
 		{
-			return !(other is null) &&
-				   Width == other.Width &&
-				   Height == other.Height;
+			return !(other is null)
+				&& Width == other.Width
+				&& Height == other.Height;
 		}
 
 		public override int GetHashCode()

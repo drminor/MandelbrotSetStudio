@@ -1,20 +1,18 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 namespace MSS.Types.Base
 {
 	[Serializable]
-	public class Point<T> : IEquatable<Point<T>> where T: struct  // where T: notnull
+	public class Point<T> : IEquatable<Point<T>>, IEqualityComparer<Point<T>> where T: struct  // where T: notnull
 	{
 		[JsonIgnore]
 		[BsonIgnore]
 		public T[] Values;
 
 		public Point() : this(default, default) 
-		{
-		}
+		{ }
 
 		[BsonConstructor]
 		[JsonConstructor]
@@ -35,6 +33,20 @@ namespace MSS.Types.Base
 			init => Values[1] = value;
 		}
 
+		#region IEqualityComparer / IEquatable Support
+
+		public bool Equals(Point<T>? a, Point<T>? b)
+		{
+			if (a is null)
+			{
+				return b is null;
+			}
+			else
+			{
+				return a.Equals(b);
+			}
+		}
+
 		public override bool Equals(object? obj)
 		{
 			return Equals(obj as Point<T>);
@@ -50,6 +62,11 @@ namespace MSS.Types.Base
 			return HashCode.Combine(X, Y);
 		}
 
+		public int GetHashCode(Point<T> obj)
+		{
+			return obj.GetHashCode();
+		}
+
 		public static bool operator ==(Point<T> p1, Point<T> p2)
 		{
 			return EqualityComparer<Point<T>>.Default.Equals(p1, p2);
@@ -60,6 +77,7 @@ namespace MSS.Types.Base
 			return !(p1 == p2);
 		}
 
+		#endregion
 
 	}
 }
