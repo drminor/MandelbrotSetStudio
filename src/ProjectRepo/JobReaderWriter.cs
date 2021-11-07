@@ -5,16 +5,12 @@ using System.Linq;
 
 namespace ProjectRepo
 {
-	public class JobReaderWriter
+	public class JobReaderWriter : MongoDbCollectionBase<Job>
 	{
 		private const string COLLECTION_NAME = "Jobs";
 
-		private readonly DbProvider _dbProvider;
-
-		public JobReaderWriter(DbProvider dbProvider)
-		{
-			_dbProvider = dbProvider;
-		}
+		public JobReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
+		{ }
 
 		public Job Get(ObjectId jobId)
 		{
@@ -60,27 +56,6 @@ namespace ProjectRepo
 			// Delete the documents using the $in filter
 			var deleteResult = Collection.DeleteMany(idsFilter);
 			return GetReturnCount(deleteResult);
-		}
-
-		private IMongoCollection<Job> Collection
-		{
-			get
-			{
-				IMongoDatabase db = _dbProvider.Database;
-				IMongoCollection<Job> jobCollection = db.GetCollection<Job>(COLLECTION_NAME);
-
-				return jobCollection;
-			}
-		}
-
-		private long? GetReturnCount(DeleteResult deleteResult)
-		{
-			if (deleteResult.IsAcknowledged)
-			{
-				return deleteResult.DeletedCount;
-			}
-
-			return null;
 		}
 
 	}

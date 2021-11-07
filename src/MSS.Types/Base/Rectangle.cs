@@ -14,9 +14,4 @@ namespace MSS.Types.Base
 	{
 
 	}
-
-	public class Point<T> 
-	{
-
-	}
 }

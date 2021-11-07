@@ -4,16 +4,12 @@ using MSS.Types.MSetDatabase;
 
 namespace ProjectRepo
 {
-	class MapSectionReaderWriter
+	public class MapSectionReaderWriter : MongoDbCollectionBase<MapSection>
 	{
-		private const string COLLECTION_NAME = "Jobs";
+		private const string COLLECTION_NAME = "MapSections";
 
-		private readonly DbProvider _dbProvider;
-
-		public MapSectionReaderWriter(DbProvider dbProvider)
-		{
-			_dbProvider = dbProvider;
-		}
+		public MapSectionReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
+		{ }
 
 		public MapSection Get(ObjectId mapSectionId)
 		{
@@ -45,25 +41,6 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		private IMongoCollection<MapSection> Collection
-		{
-			get
-			{
-				IMongoDatabase db = _dbProvider.Database;
-				IMongoCollection<MapSection> mapSectionCollection = db.GetCollection<MapSection>(COLLECTION_NAME);
 
-				return mapSectionCollection;
-			}
-		}
-
-		private long? GetReturnCount(DeleteResult deleteResult)
-		{
-			if (deleteResult.IsAcknowledged)
-			{
-				return deleteResult.DeletedCount;
-			}
-
-			return null;
-		}
 	}
 }
