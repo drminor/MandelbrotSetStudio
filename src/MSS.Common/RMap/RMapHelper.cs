@@ -9,40 +9,38 @@ namespace MSS.Common
 	{
 		public static RRectangle Zoom(RRectangle rRectangle)
 		{
-			long xLen = rRectangle.ExN - rRectangle.SxN;
-			long quarterOfxLen = Divide4(xLen, rRectangle.Exp, out int newXExp);
+			long quarterOfxLen = Divide4(rRectangle.WidthNumerator, rRectangle.Exponent, out int newXExp);
 
-			//long newSxN = rRectangle.SxN + quarterOfxLen;
-			//long newExN = rRectangle.ExN + 3 * quarterOfxLen;
+			//long newX1 = rRectangle.X1 + quarterOfxLen;
+			//long newX2 = rRectangle.X2 + 3 * quarterOfxLen;
 
-			long newSxN = Rebase(rRectangle.SxN, rRectangle.ExN, rRectangle.Exp, newXExp, out long newExN);
+			long newX1 = Rebase(rRectangle.X1, rRectangle.X2, rRectangle.Exponent, newXExp, out long newX2);
 
 			double q = GetVal(quarterOfxLen, newXExp);
-			double stX = GetVal(newSxN, newXExp);
-			double enX = GetVal(newExN, newXExp);
+			double stX = GetVal(newX1, newXExp);
+			double enX = GetVal(newX2, newXExp);
 
-			newSxN += quarterOfxLen;
-			newSxN += 3 * quarterOfxLen;
+			newX1 += quarterOfxLen;
+			newX1 += 3 * quarterOfxLen;
 
-			stX = GetVal(newSxN, newXExp);
-			enX = GetVal(newExN, newXExp);
+			stX = GetVal(newX1, newXExp);
+			enX = GetVal(newX2, newXExp);
 
-			long yLen = rRectangle.ExN - rRectangle.SxN;
-			long quarterOfyLen = Divide4(yLen, rRectangle.Exp, out int newYExp);
+			long quarterOfyLen = Divide4(rRectangle.HeigthNumerator, rRectangle.Exponent, out int newYExp);
 
-			//long newSyN = rRectangle.SyN + quarterOfyLen;
-			//long newEyN = rRectangle.EyN + 3 * quarterOfyLen;
+			//long newY1 = rRectangle.Y1 + quarterOfyLen;
+			//long newY2 = rRectangle.Y2 + 3 * quarterOfyLen;
 
-			long newSyN = Rebase(rRectangle.SxN, rRectangle.EyN, rRectangle.Exp, newYExp, out long newEyN);
-			newSyN += quarterOfyLen;
-			newEyN += 3 * quarterOfyLen;
+			long newY1 = Rebase(rRectangle.X1, rRectangle.Y2, rRectangle.Exponent, newYExp, out long newY2);
+			newY1 += quarterOfyLen;
+			newY2 += 3 * quarterOfyLen;
 
 			int commonExp = GetCommonExp(newXExp, newYExp);
 
-			newSxN = Rebase(newSxN, newExN, newXExp, commonExp, out newExN);
-			newSyN = Rebase(newSyN, newEyN, newYExp, commonExp, out newEyN);
+			newX1 = Rebase(newX1, newX2, newXExp, commonExp, out newX2);
+			newY1 = Rebase(newY1, newY2, newYExp, commonExp, out newY2);
 
-			RRectangle result = new RRectangle(newSxN, newExN, newSyN, newEyN, commonExp);
+			RRectangle result = new RRectangle(newX1, newX2, newY1, newY2, commonExp);
 
 			return result;
 		}
@@ -132,11 +130,5 @@ namespace MSS.Common
 		 * = 5 / 16
 		 *
 		 */
-
-		public static RRectangle GetRRectangle(Coords coords)
-		{
-			RRectangle result = new RRectangle(coords.StartingX, coords.EndingX, coords.StartingY, coords.EndingY, coords.Exponent);
-			return result;
-		}
 	}
 }

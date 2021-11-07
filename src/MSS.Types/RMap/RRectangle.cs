@@ -1,28 +1,29 @@
 ﻿
+using MSS.Types.Base;
+
 namespace MSS.Types
 {
-	public class RRectangle
+	public class RRectangle : Rectangle<long>
 	{
-		public long SxN { get; init; }
-		public long ExN { get; init; }
-		public long SyN { get; init; }
-		public long EyN { get; init; }
+		public int Exponent { get; init; }
 
-		public int Exp { get; init; }
-
-		public RRectangle(long sxN, long exN, long syN, long eyN, int exp)
+		public RRectangle() : base()
 		{
-			SxN = sxN;
-			ExN = exN;
-			SyN = syN;
-			EyN = eyN;
-			Exp = exp;
+			Exponent = 0;
 		}
 
-		public RPoint LeftBot => new RPoint(SxN, SyN, Exp);
+		public RRectangle(long x1, long x2, long y1, long y2, int exponent) : base(x1, x2, y1, y2)
+		{
+			Exponent = exponent;
+		}
 
-		public RPoint RightTop => new RPoint(ExN, EyN, Exp);
+		public new RPoint LeftBot => new RPoint(X1, Y1, Exponent);
 
-		public RSize Size => new RSize(ExN - SxN, EyN - SyN, Exp);
+		public new RPoint RightTop => new RPoint(X2, Y2, Exponent);
+
+		public RSize Size => new RSize(X2 - X1, Y2 - Y2, Exponent);
+
+		public long WidthNumerator => X2 - X1;
+		public long HeigthNumerator => Y2 - Y1;
 	}
 }

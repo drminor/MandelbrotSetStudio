@@ -20,7 +20,7 @@ namespace MSetDatabaseClient
 		public void Import(IMapSectionReader mapSectionReader, Project projectData, MSetInfo mSetInfo, bool overwrite)
 		{
 			// Make sure the project record has been written.
-			var project = InsertProject(projectData);
+			var project = InsertProject(projectData, overwrite);
 
 			var jobId = CreateJob(project, mSetInfo, overwrite);
 
@@ -65,12 +65,9 @@ namespace MSetDatabaseClient
 
 		public void DoZoomTest1(Project projectData, MSetInfo mSetInfo, bool overwrite)
 		{
-			// Make sure the project record has been written.
-			var project = InsertProject(projectData);
 
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			long? deleteCount = jobReaderWriter.DeleteAllForProject(project.Id);
-			Debug.WriteLine($"Cleared all jobs, deleted: {deleteCount}");
+			// Make sure the project record has been written.
+			var project = InsertProject(projectData, overwrite);
 
 			var jobId = CreateJob(project, mSetInfo, overwrite);
 
@@ -105,13 +102,15 @@ namespace MSetDatabaseClient
 
 		private ObjectId CreateJob(Project project, MSetInfo mSetInfo, bool overwrite)
 		{
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var jobId = jobReaderWriter.GetJobId(project.Id);
+			ObjectId result;
 
-			if (jobId == ObjectId.Empty)
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var jobIds = jobReaderWriter.GetJobIds(project.Id);
+
+			if (jobIds.Length > 0)
 			{
 				Job job = CreateFirstJob(project.Id, project.BaseCoords, mSetInfo);
-				jobId = jobReaderWriter.Insert(job);
+				result = jobReaderWriter.Insert(job);
 			}
 			else
 			{
@@ -121,16 +120,18 @@ namespace MSetDatabaseClient
 				}
 				else
 				{
-					//throw new NotSupportedException($"Project: {project.Name} already has at least one job. Overwriting an existing job is not yet supported.");
-					Tuple<long, long> dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
-					Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
+					foreach (ObjectId jobId in jobIds)
+					{
+						Tuple<long, long> dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
+						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
+					}
 
 					Job job = CreateFirstJob(project.Id, project.BaseCoords, mSetInfo);
-					jobId = jobReaderWriter.Insert(job);
+					result = jobReaderWriter.Insert(job);
 				}
 			}
 
-			return jobId;
+			return result;
 		}
 
 		private Tuple<long, long> DeleteJobAndChildMapSections(ObjectId jobId, JobReaderWriter jobReaderWriter)
@@ -144,7 +145,7 @@ namespace MSetDatabaseClient
 		/// Inserts the project record if it does not exist on the database.
 		/// </summary>
 		/// <param name="project"></param>
-		private Project InsertProject(Project project)
+		private Project InsertProject(Project project, bool overwrite)
 		{
 			Project result;
 
@@ -157,6 +158,32 @@ namespace MSetDatabaseClient
 			{
 				projectReaderWriter.Insert(project);
 				result = project;
+			}
+			else
+			{
+				if (!overwrite)
+				{
+					throw new InvalidOperationException($"Overwrite is false and Project: {project.Name} already exists.");
+				}
+				else
+				{
+					var projectId = result.Id;
+
+					var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+					ObjectId[] jobIds = jobReaderWriter.GetJobIds(projectId);
+
+					foreach(ObjectId jobId in jobIds)
+					{
+						Tuple<long, long> dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
+						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
+					}
+
+					projectReaderWriter.Delete(projectId);
+
+					projectReaderWriter.Insert(project);
+					result = project;
+				}
 			}
 
 			return result;

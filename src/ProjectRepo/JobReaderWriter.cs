@@ -20,12 +20,15 @@ namespace ProjectRepo
 			return job;
 		}
 
-		public ObjectId GetJobId(ObjectId projectId)
+		public ObjectId[] GetJobIds(ObjectId projectId)
 		{
 			var filter = Builders<Job>.Filter.Eq("ProjectId", projectId);
-			var job = Collection.Find(filter).FirstOrDefault();
+			var jobs = Collection.Find(filter).ToList();
 
-			return job?.Id ?? ObjectId.Empty;
+			// Get the _id values of the found documents
+			var ids = jobs.Select(d => d.Id).ToArray();
+
+			return ids;
 		}
 
 		public ObjectId Insert(Job job)

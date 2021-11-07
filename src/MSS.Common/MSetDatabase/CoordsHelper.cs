@@ -1,51 +1,52 @@
 ﻿using MSS.Types;
+using MSS.Types.Base;
 using MSS.Types.MSetDatabase;
 using System;
+using System.Linq;
 
 namespace MSS.Common.MSetDatabase
 {
 	public static class CoordsHelper
 	{
-		public static Coords BuildCoords(long sx, long ex, long sy, long ey, int exp)
-		{
-			Coords result = BuildCoords(new RRectangle(sx, ex, sy, ey, exp));
-			return result;
-		}
-
 		public static Coords BuildCoords(RRectangle rRectangle)
 		{
-			string[] stringVals = GetStringVals(rRectangle, out int valueDepth);
-			Coords result = new Coords(stringVals, rRectangle.SxN, rRectangle.ExN, rRectangle.SyN, rRectangle.EyN, rRectangle.Exp, valueDepth);
+			var display = GetDisplay(rRectangle);
+			var valueDepth = GetValueDepth(rRectangle);
+			var result = new Coords(display, rRectangle, valueDepth);
 
 			return result;
 		}
 
-		private static string[] GetStringVals(RRectangle rRectangle, out int valueDepth)
+		private static string GetDisplay(RRectangle rRectangle)
 		{
-			string[] result = new string[4];
-
-			double scaleFactor = Math.Pow(2, rRectangle.Exp);
+			double scaleFactor = Math.Pow(2, rRectangle.Exponent);
 			double denominator = 1d / scaleFactor;
 			string strDenominator = denominator.ToString();
 
 			var dRectangle = CreateFrom(rRectangle);
 			dRectangle = dRectangle.Scale(scaleFactor);
 
-			result[0] = $"{rRectangle.SxN}/{strDenominator} ({dRectangle.Sx})";
-			result[1] = $"{rRectangle.ExN}/{strDenominator} ({dRectangle.Ex})";
-			result[2] = $"{rRectangle.SyN}/{strDenominator} ({dRectangle.Sy})";
-			result[3] = $"{rRectangle.EyN}/{strDenominator} ({dRectangle.Ey})";
+			Rectangle<StringStruct> strVals = new Rectangle<StringStruct>(
+				rRectangle.Values.Select((x,i) => 
+				new StringStruct(x.ToString() + "/" + strDenominator + " (" + dRectangle.Values[i].ToString() + ")")).ToArray()
+				);
 
-			// TODO: Calculate the # of maximum binary bits of precision from sx, ex, sy and ey.
-			int binaryBitsOfPrecision = 10;
-			valueDepth = CalculateValueDepth(binaryBitsOfPrecision);
-
-			return result;
+			string display = strVals.ToString();
+			return display;
 		}
 
 		private static DRectangle CreateFrom(RRectangle rRectangle)
 		{
-			return new DRectangle(rRectangle.SxN, rRectangle.ExN, rRectangle.SyN, rRectangle.EyN);
+			return new DRectangle(rRectangle.X1, rRectangle.X2, rRectangle.Y1, rRectangle.Y2);
+		}
+
+		private static int GetValueDepth(RRectangle _)
+		{
+			// TODO: Calculate the # of maximum binary bits of precision from sx, ex, sy and ey.
+			int binaryBitsOfPrecision = 10;
+			int valueDepth = CalculateValueDepth(binaryBitsOfPrecision);
+
+			return valueDepth;
 		}
 
 		private static int CalculateValueDepth(int binaryBitsOfPrecision)

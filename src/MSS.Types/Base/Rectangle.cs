@@ -18,6 +18,11 @@ namespace MSS.Types.Base
 		public Rectangle(Point<T> leftBot, Point<T> rightTop) : this(leftBot.X, rightTop.X, leftBot.Y, rightTop.Y)
 		{ }
 
+		public Rectangle(T[] values)
+		{
+			Values = new T[] { values[0], values[1], values[2], values[3] };
+		}
+
 		[BsonConstructor]
 		[JsonConstructor]
 		public Rectangle(T x1, T x2, T y1, T y2)
@@ -49,19 +54,14 @@ namespace MSS.Types.Base
 			init => Values[3] = value;
 		}
 
+		public Point<T> LeftBot => new Point<T>(Values[0], Values[2]);
+		public Point<T> RightTop => new Point<T>(Values[1], Values[3]);
 
-		public Point<T> Point => new Point<T>(Values[0], Values[2]);
-
-		//public SizeInt Size { get; init; }
-
-		//public T Width => Values[1] - Values[0];
-		//public T Height => Values[3] - Values[2];
-
-		//public RectangleInt Translate(PointInt amount)
-		//{
-		//	RectangleInt result = new(new PointInt(Point.X + amount.X, Point.Y + amount.Y), new SizeInt(Size.Width, Size.Height));
-		//	return result;
-		//}
+		public override string ToString()
+		{
+			string result = $"X1: {Values[0]}, X2: {Values[1]}, Y1: {Values[2]}, Y2: {Values[3]}";
+			return result;
+		}
 
 		#region IEqualityComparer / IEquatable Support
 

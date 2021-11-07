@@ -1,18 +1,16 @@
 ﻿
+using MSS.Types.Base;
+
 namespace MSS.Types
 {
-	public class RPoint
+	public class RPoint : Point<long>
 	{
-		public long XN { get; init; }
-		public long YN { get; init; }
 		public int Exp { get; init; }
 
 		public RPoint() : this(0, 0, 0) { }
 
-		public RPoint(long xN, long yN, int exp)
+		public RPoint(long x, long y, int exp) : base(x, y)
 		{
-			XN = xN;
-			YN = yN;
 			Exp = exp;
 		}
 	}

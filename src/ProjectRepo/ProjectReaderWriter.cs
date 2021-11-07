@@ -39,5 +39,16 @@ namespace ProjectRepo
 			Collection.InsertOne(project);
 			return project.Id;
 		}
+
+		public long? Delete(ObjectId projectId)
+		{
+			var filter = Builders<Project>.Filter.Eq("_id", projectId);
+			var project = Collection.Find(filter).FirstOrDefault();
+
+
+			var deleteResult = Collection.DeleteOne(filter);
+
+			return GetReturnCount(deleteResult);
+		}
 	}
 }

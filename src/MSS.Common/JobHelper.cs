@@ -31,7 +31,7 @@ namespace MSS.Common
 
 		public static Job ZoomIn(Job job)
 		{
-			var rRectangle = RMapHelper.GetRRectangle(job.Coords);
+			var rRectangle = job.Coords.RRectangle;
 			var rRectangleZoomed = RMapHelper.Zoom(rRectangle);
 
 			var coords = CoordsHelper.BuildCoords(rRectangleZoomed);
