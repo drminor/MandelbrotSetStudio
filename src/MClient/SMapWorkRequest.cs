@@ -72,24 +72,7 @@ namespace MClient
 			return diff;
 		}
 
-		private bool HasPrecision(double x)
-		{
-			if (x == 0)
-				return false;
 
-			if (IsSubnormal(x))
-				return false;
-
-			return true;
-		}
-
-		const long ExponentMask = 0x7FF0000000000000;
-		private bool IsSubnormal(double v)
-		{
-			long bithack = BitConverter.DoubleToInt64Bits(v);
-			if (bithack == 0) return false;
-			return (bithack & ExponentMask) == 0;
-		}
 	}
 
 }

@@ -1,5 +1,8 @@
-﻿using MongoDB.Driver;
+﻿using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 using MSS.Common.MSetDatabase;
+using MSS.Types;
+using MSS.Types.Base;
 using System;
 
 namespace ProjectRepo
@@ -18,12 +21,11 @@ namespace ProjectRepo
 
             _collectionLazy = new Lazy<IMongoCollection<T>>(() => Database.GetCollection<T>(_collectionName), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
 
-        //    RegisterMapIfNeeded<Address>();
-        //    RegisterMapIfNeeded<Employee>();
-        //    RegisterMapIfNeeded<Organization>();
-        }
+   //         RegisterMapIfNeeded<BWRectangle>();
+			//RegisterMapIfNeeded<BigIntegerWrapper>();
+		}
 
-        public IMongoDatabase Database => _dbProvider.Database;
+		public IMongoDatabase Database => _dbProvider.Database;
         public IMongoCollection<T> Collection => _collectionLazy.Value;
 
 		protected virtual long? GetReturnCount(DeleteResult deleteResult)
@@ -36,13 +38,13 @@ namespace ProjectRepo
 			return null;
 		}
 
-		//private void RegisterMapIfNeeded<TClass>()
-		//{
-		//    if (!BsonClassMap.IsClassMapRegistered(typeof(TClass)))
-		//    {
-		//        BsonClassMap.RegisterClassMap<TClass>();
-		//    }
-		//}
+		private void RegisterMapIfNeeded<TClass>()
+		{
+			if (!BsonClassMap.IsClassMapRegistered(typeof(TClass)))
+			{
+				BsonClassMap.RegisterClassMap<TClass>();
+			}
+		}
 
 		#region unused
 

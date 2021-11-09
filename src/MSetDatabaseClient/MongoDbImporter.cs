@@ -65,7 +65,6 @@ namespace MSetDatabaseClient
 
 		public void DoZoomTest1(Project projectData, MSetInfo mSetInfo, bool overwrite)
 		{
-
 			// Make sure the project record has been written.
 			var project = InsertProject(projectData, overwrite);
 
@@ -74,19 +73,19 @@ namespace MSetDatabaseClient
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
 			var job = GetMapSectionWriter(jobId);
 
-			ZoomUntil(job, 5);
+			ZoomUntil(job, 100);
 		}
 
 		private void ZoomUntil(Job job, int numZooms)
 		{
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
 			for (int zCntr = 0; zCntr < numZooms; zCntr++)
 			{
 				Job zJob = JobHelper.ZoomIn(job);
 				Debug.WriteLine($"Zoom: {zCntr}, Coords: {zJob.Coords.Display}.");
 
-				jobReaderWriter.Insert(zJob);
+				//jobReaderWriter.Insert(zJob);
 
 				job = zJob;
 			}
@@ -190,7 +189,7 @@ namespace MSetDatabaseClient
 			return result;
 		}
 
-		private Job CreateFirstJob(ObjectId projectId, Coords coords, MSetInfo mSetInfo)
+		private Job CreateFirstJob(ObjectId projectId, BCoords coords, MSetInfo mSetInfo)
 		{
 			Job job = new Job(projectId, saved: true, coords, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
 				mSetInfo.ColorMap.ColorMapEntries, mSetInfo.HighColorCss);

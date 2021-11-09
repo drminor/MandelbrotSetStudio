@@ -3,37 +3,38 @@ using MSS.Types.Base;
 using MSS.Types.MSetDatabase;
 using System;
 using System.Linq;
+using System.Numerics;
 
 namespace MSS.Common.MSetDatabase
 {
-	public static class CoordsHelper
+	public static class BCoordsHelper
 	{
-		public static Coords BuildCoords(ApCoords apCoords)
+		public static BCoords BuildCoords(BRectangle bRectangle)
 		{
-			var result = BuildCoords(ConvertFrom(apCoords));
-			return result;
-		}
-
-		public static Coords BuildCoords(RRectangle rRectangle)
-		{
-			var display = GetDisplay(rRectangle);
-			var valueDepth = GetValueDepth(rRectangle);
-			var result = new Coords(display, rRectangle, valueDepth);
+			var display = GetDisplay(bRectangle);
+			var valueDepth = GetValueDepth(bRectangle);
+			var result = new BCoords(display, new BCoordsPoints(bRectangle), valueDepth);
 
 			return result;
 		}
 
-		private static string GetDisplay(RRectangle rRectangle)
+		public static BRectangle BuildBRectangle(BCoordsPoints bCoordsPoints)
 		{
-			double scaleFactor = Math.Pow(2, rRectangle.Exponent);
+			return new BRectangle(bCoordsPoints.GetValues().Select(v => new BigInteger(v)).ToArray(), bCoordsPoints.Exponent);
+		}
+
+
+		private static string GetDisplay(BRectangle bRectangle)
+		{
+			double scaleFactor = Math.Pow(2, bRectangle.Exponent);
 			double denominator = 1d / scaleFactor;
 			string strDenominator = denominator.ToString();
 
-			var dRectangle = new DRectangle(rRectangle.Values);
+			var dRectangle = new DRectangle(bRectangle.Values);
 			dRectangle = dRectangle.Scale(scaleFactor);
 
 			Rectangle<StringStruct> strVals = new Rectangle<StringStruct>(
-				rRectangle.Values.Select((x,i) => 
+				bRectangle.Values.Select((x,i) => 
 				new StringStruct(x.ToString() + "/" + strDenominator + " (" + dRectangle.Values[i].ToString() + ")")).ToArray()
 				);
 
@@ -41,7 +42,7 @@ namespace MSS.Common.MSetDatabase
 			return display;
 		}
 
-		private static int GetValueDepth(RRectangle _)
+		private static int GetValueDepth(BRectangle _)
 		{
 			// TODO: Calculate the # of maximum binary bits of precision from sx, ex, sy and ey.
 			int binaryBitsOfPrecision = 10;
@@ -60,9 +61,9 @@ namespace MSS.Common.MSetDatabase
 		}
 
 		// TODO: Fix the ConvertFrom method that takes an ApCoords object and produces a Coords object.
-		public static RRectangle ConvertFrom(ApCoords _)
+		public static BRectangle ConvertFrom(ApCoords _)
 		{
-			var result = new RRectangle();
+			var result = new BRectangle();
 
 			return result;
 		}

@@ -5,6 +5,7 @@ namespace MSS.Common
 	public class RMapConstants
 	{
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE;
+		public static readonly BRectangle B_ENTIRE_SET_RECTANGLE;
 
 		static RMapConstants()
 		{
@@ -17,6 +18,7 @@ namespace MSS.Common
 
 
 			ENTIRE_SET_RECTANGLE = new RRectangle(-2, 1, -1, 1, 0);
+			B_ENTIRE_SET_RECTANGLE = new BRectangle(-2, 1, -1, 1, 0);
 
 		}
 	}

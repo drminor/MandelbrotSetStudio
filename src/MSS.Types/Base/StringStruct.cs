@@ -3,11 +3,11 @@ using System.Text.Json.Serialization;
 
 namespace MSS.Types.Base
 {
-	/// <summary>
-	/// Imutable, value-type that contains a single string value. 
-	/// This was created so that a rectangle using string values can be created.
-	/// </summary>
-	public struct StringStruct
+    /// <summary>
+    /// Imutable, value-type that contains a single string value. 
+    /// This was created so that a rectangle using string values can be created.
+    /// </summary>
+    public struct StringStruct
     {
         private readonly string _stringValue;
 
@@ -24,12 +24,12 @@ namespace MSS.Types.Base
             init => _stringValue = value ?? string.Empty;
         }
 
-		public override string? ToString()
-		{
+        public override string? ToString()
+        {
             return _stringValue;
-		}
+        }
 
-		public static implicit operator StringStruct(string value)
+        public static implicit operator StringStruct(string value)
         {
             return new StringStruct(value);
         }
@@ -39,5 +39,4 @@ namespace MSS.Types.Base
             return value.StringValue;
         }
     }
-
 }
