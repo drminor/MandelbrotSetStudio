@@ -3,9 +3,9 @@
 namespace MSS.Types.MSetDatabase
 {
 	[Serializable]
-	public record Coords(string Display, RRectangle RRectangle, int ValueDepth)
+	public record Coords(string Display, CoordPoints CoordsPoints, int ValueDepth)
 	{
-		public Coords() : this(string.Empty, new RRectangle(), 0)
+		public Coords() : this(string.Empty, new CoordPoints(), 0)
 		{ }
 	}
 

@@ -12,7 +12,7 @@ namespace MSS.Types.MSetDatabase
 		int OperationAmount,
 		bool Saved,
 		string? Label,
-		BCoords Coords,
+		Coords Coords,
 		int MaxInterations,
 		int Threshold,
 		int IterationsPerStep,
@@ -25,7 +25,7 @@ namespace MSS.Types.MSetDatabase
 		private const string ROOT_JOB_LABEL = "Root";
 
 		// Custom constructor to create the initial or "root" Job. 
-		public Job(ObjectId projectId, bool saved, BCoords coords, int maxIterations, int threshold, int iterationsPerStep, IList<ColorMapEntry> colorMapEntries, string highColorCss)
+		public Job(ObjectId projectId, bool saved, Coords coords, int maxIterations, int threshold, int iterationsPerStep, IList<ColorMapEntry> colorMapEntries, string highColorCss)
 			: this(
 				  ProjectId: projectId,
 				  ParentJobId: null,

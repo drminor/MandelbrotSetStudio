@@ -3,23 +3,31 @@ using MSS.Types.Base;
 using MSS.Types.MSetDatabase;
 using System;
 using System.Linq;
+using System.Numerics;
 
 namespace MSS.Common.MSetDatabase
 {
 	public static class CoordsHelper
 	{
-		public static Coords BuildCoords(ApCoords apCoords)
-		{
-			var result = BuildCoords(ConvertFrom(apCoords));
-			return result;
-		}
-
 		public static Coords BuildCoords(RRectangle rRectangle)
 		{
 			var display = GetDisplay(rRectangle);
 			var valueDepth = GetValueDepth(rRectangle);
-			var result = new Coords(display, rRectangle, valueDepth);
+			var coordPoints = BuildCoordPoints(rRectangle);
+			var result = new Coords(display, coordPoints, valueDepth);
 
+			return result;
+		}
+
+		public static CoordPoints BuildCoordPoints(RRectangle rRectangle)
+		{
+			var result = new CoordPoints(rRectangle.Values, rRectangle.Exponent);
+			return result;
+		}
+
+		public static RRectangle BuildBRectangle(CoordPoints coordsPoints)
+		{
+			var result = new RRectangle(coordsPoints.GetValues().Select(v => new BigInteger(v)).ToArray(), coordsPoints.Exponent);
 			return result;
 		}
 

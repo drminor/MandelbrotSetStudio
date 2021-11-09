@@ -1,9 +1,9 @@
-﻿
-using MSS.Types.Base;
+﻿using MSS.Types.Base;
+using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RRectangle : Rectangle<long>
+	public class RRectangle : Rectangle<BigInteger>
 	{
 		public int Exponent { get; init; }
 
@@ -12,12 +12,12 @@ namespace MSS.Types
 			Exponent = 0;
 		}
 
-		public RRectangle(long[] values, int exponent) : base(values)
+		public RRectangle(BigInteger[] values, int exponent) : base(values)
 		{
 			Exponent = exponent;
 		}
 
-		public RRectangle(long x1, long x2, long y1, long y2, int exponent) : base(x1, x2, y1, y2)
+		public RRectangle(BigInteger x1, BigInteger x2, BigInteger y1, BigInteger y2, int exponent) : base(x1, x2, y1, y2)
 		{
 			Exponent = exponent;
 		}
@@ -28,7 +28,8 @@ namespace MSS.Types
 
 		public RSize Size => new RSize(X2 - X1, Y2 - Y2, Exponent);
 
-		public long WidthNumerator => X2 - X1;
-		public long HeigthNumerator => Y2 - Y1;
+		public BigInteger WidthNumerator => X2 - X1;
+		public BigInteger HeigthNumerator => Y2 - Y1;
 	}
+
 }

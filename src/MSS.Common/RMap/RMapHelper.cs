@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System;
 using System.Linq;
+using System.Numerics;
 
 namespace MSS.Common
 {
@@ -16,26 +17,26 @@ namespace MSS.Common
 			//DIAG -- double x0n = GetVal(rRectangle.X1, rRectangle.Exponent);
 
 			// Here are the current values for the rectangle's Width and Height numerators
-			long curWidth = rRectangle.WidthNumerator;
-			long curHeight = rRectangle.HeigthNumerator;
+			BigInteger curWidth = rRectangle.WidthNumerator;
+			BigInteger curHeight = rRectangle.HeigthNumerator;
 
 			// Create a new rectangle with its exponent adjusted to support the new precision required in the numerators.
 			RRectangle rectangleWithNewExp;
 
 			// And calculate the amount to adjust the x and y coordinates
-			long adjustmentX;
-			long adjustmentY;
+			BigInteger adjustmentX;
+			BigInteger adjustmentY;
 
 			// First see if both the width and height are even
 			// If even, but not integer multiple of 4 then these halves will become quarters
-			var halfOfXLen = Math.DivRem(curWidth, 2, out long remainderX);
-			var halfOfYLen = Math.DivRem(curHeight, 2, out long remainderY);
+			var halfOfXLen = BigInteger.DivRem(curWidth, 2, out BigInteger remainderX);
+			var halfOfYLen = BigInteger.DivRem(curHeight, 2, out BigInteger remainderY);
 
 			if (remainderX == 0 && remainderY == 0)
 			{
 				// Both are even, now let's try 4.
-				var quarterOfXLen = Math.DivRem(curWidth, 4, out remainderX);
-				var quarterOfYLen = Math.DivRem(curHeight, 4, out remainderY);
+				var quarterOfXLen = BigInteger.DivRem(curWidth, 4, out remainderX);
+				var quarterOfYLen = BigInteger.DivRem(curHeight, 4, out remainderY);
 
 				if (remainderX == 0 && remainderY == 0)
 				{
@@ -103,7 +104,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		private static long[] Rebase(long[] vals, int exponentDelta)
+		private static BigInteger[] Rebase(BigInteger[] vals, int exponentDelta)
 		{
 			if (exponentDelta == 0)
 			{
@@ -111,17 +112,10 @@ namespace MSS.Common
 			}
 
 			long multplier = (long)Math.Pow(2, -1 * exponentDelta);
-			long[] result = vals.Select(v => v * multplier).ToArray();
+			BigInteger[] result = vals.Select(v => v * multplier).ToArray();
 
 			return result;
 		}
-
-		//[Conditional("DEBUG")]
-		//private static void CheckRemainder(long dividend, long divisor)
-		//{
-		//	Math.DivRem(dividend, divisor, out long remainder);
-		//	Debug.Assert(remainder == 0);
-		//}
 
 		private static double GetVal(long n, int e)
 		{
@@ -129,13 +123,5 @@ namespace MSS.Common
 			return result;
 		}
 
-		/*
-		 * (5/4) / 4 =
-		 * = (1 + 1/4) / 4
-		 * = 4 * (1 + 1/4) / 16
-		 * = (4 + 1) / 16					
-		 * = 5 / 16
-		 *
-		 */
 	}
 }

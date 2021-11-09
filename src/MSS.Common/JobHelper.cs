@@ -32,9 +32,9 @@ namespace MSS.Common
 
 		public static Job ZoomIn(Job job)
 		{
-			var bRectangleZoomed = BMapHelper.Zoom(BCoordsHelper.BuildBRectangle(job.Coords.BCoordsPoints));
+			var rRectangleZoomed = RMapHelper.Zoom(CoordsHelper.BuildBRectangle(job.Coords.CoordsPoints));
 
-			var coords = BCoordsHelper.BuildCoords(bRectangleZoomed);
+			var coords = CoordsHelper.BuildCoords(rRectangleZoomed);
 
 			IList<MapSectionRef>? mapSectionRefs = null;
 

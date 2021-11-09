@@ -189,7 +189,7 @@ namespace MSetDatabaseClient
 			return result;
 		}
 
-		private Job CreateFirstJob(ObjectId projectId, BCoords coords, MSetInfo mSetInfo)
+		private Job CreateFirstJob(ObjectId projectId, Coords coords, MSetInfo mSetInfo)
 		{
 			Job job = new Job(projectId, saved: true, coords, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
 				mSetInfo.ColorMap.ColorMapEntries, mSetInfo.HighColorCss);

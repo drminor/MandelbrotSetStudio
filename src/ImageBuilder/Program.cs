@@ -102,12 +102,8 @@ namespace ImageBuilder
 		private static Project BuildProject(string projectName)
 		{
 			var canvasSize = new SizeInt(1280, 1280);
-
 			var rRectangle = RMapConstants.ENTIRE_SET_RECTANGLE;
-			var coords = CoordsHelper.BuildCoords(rRectangle);
-
-			var bRectangle = RMapConstants.B_ENTIRE_SET_RECTANGLE;
-			var bCoords = BCoordsHelper.BuildCoords(bRectangle);
+			var bCoords = CoordsHelper.BuildCoords(rRectangle);
 
 			var result = new Project(projectName, canvasSize, bCoords);
 

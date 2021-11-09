@@ -5,7 +5,6 @@ namespace MSS.Common
 	public class RMapConstants
 	{
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE;
-		public static readonly BRectangle B_ENTIRE_SET_RECTANGLE;
 
 		static RMapConstants()
 		{
@@ -16,9 +15,7 @@ namespace MSS.Common
 			// Setting the exponent to 0 (i.e, using a factor of 1) this is
 			// x = -2/1 to 1/1 and y = -1/1 to 1/1
 
-
 			ENTIRE_SET_RECTANGLE = new RRectangle(-2, 1, -1, 1, 0);
-			B_ENTIRE_SET_RECTANGLE = new BRectangle(-2, 1, -1, 1, 0);
 
 		}
 	}
