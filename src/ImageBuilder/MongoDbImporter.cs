@@ -1,0 +1,98 @@
+﻿using MSS.Types;
+using MongoDB.Bson;
+using ProjectRepo;
+using System;
+using System.Diagnostics;
+using MSS.Common;
+using MSS.Types.MSetDatabase;
+using MSetRepo;
+
+namespace MSetDatabaseClient
+{
+	public class MongoDbImporter
+	{
+		private readonly MapSectionAdapter _mapSectionAdapter;
+
+		public MongoDbImporter(MapSectionAdapter mapSectionAdapter)
+		{
+			_mapSectionAdapter = mapSectionAdapter;
+		}
+
+		public void Import(IMapSectionReader mapSectionReader, Project projectData, MSetInfo mSetInfo, bool overwrite)
+		{
+			// Make sure the project record has been written.
+			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
+
+			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, overwrite);
+
+			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
+			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);
+			CopyBlocks(mapSectionReader, job);
+		}
+
+		private void CopyBlocks(IMapSectionReader mapSectionReader, Job job)
+		{
+			var imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
+			var jobId = job.Id;
+
+			//int numHorizBlocks = imageSizeInBlocks.W;
+			//int numVertBlocks = imageSizeInBlocks.H;
+
+			//var key = new KPoint(0, 0);
+
+			//for (int vBPtr = 0; vBPtr < numVertBlocks; vBPtr++)
+			//{
+			//	key.Y = vBPtr;
+			//	for (int lPtr = 0; lPtr < 100; lPtr++)
+			//	{
+			//		for (int hBPtr = 0; hBPtr < numHorizBlocks; hBPtr++)
+			//		{
+			//			key.X = hBPtr;
+
+			//			int[] countsForThisLine = mapSectionReader.GetCounts(key, lPtr);
+			//			if (countsForThisLine != null)
+			//			{
+			//				Debug.WriteLine($"Read Block. V={vBPtr}, HB={hBPtr}.");
+			//			}
+			//			else
+			//			{
+			//				Debug.WriteLine($"No Block. V={vBPtr}, HB={hBPtr}.");
+			//			}
+			//		}
+
+			//	}
+			//}
+		}
+
+		public void DoZoomTest1(Project projectData, MSetInfo mSetInfo, bool overwrite)
+		{
+			// Make sure the project record has been written.
+			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
+
+			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, overwrite);
+
+			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
+			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);
+
+			ZoomUntil(job, 100);
+		}
+
+		private void ZoomUntil(Job job, int numZooms)
+		{
+			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+			for (int zCntr = 0; zCntr < numZooms; zCntr++)
+			{
+				Job zJob = JobHelper.ZoomIn(job);
+				Debug.WriteLine($"Zoom: {zCntr}, Coords: {zJob.Coords.Display}.");
+
+				//jobReaderWriter.Insert(zJob);
+
+				job = zJob;
+			}
+		}
+
+
+
+	}
+}

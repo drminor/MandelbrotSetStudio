@@ -9,6 +9,7 @@ using MSetDatabaseClient;
 using MSS.Types.MSetDatabase;
 using MSS.Common.MSetDatabase;
 using MSS.Types.Base;
+using MSetRepo;
 
 namespace ImageBuilder
 {
@@ -64,7 +65,8 @@ namespace ImageBuilder
 						IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfo.Name, mSetInfo.IsHighRes);
 
 						var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
-						var mongoDbImporter = new MongoDbImporter(dbProvider);
+						var mapSectionAdapter = new MapSectionAdapter(dbProvider);
+						var mongoDbImporter = new MongoDbImporter(mapSectionAdapter);
 
 						var project = BuildProject(mSetInfo.Name);
 						mongoDbImporter.Import(mapSectionReader, project, mSetInfo, overwrite: true);
@@ -77,7 +79,8 @@ namespace ImageBuilder
 						var mSetInfo = MSetInfoBuilder.Build(fileName);
 
 						var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
-						var mongoDbImporter = new MongoDbImporter(dbProvider);
+						var mapSectionAdapter = new MapSectionAdapter(dbProvider);
+						var mongoDbImporter = new MongoDbImporter(mapSectionAdapter);
 
 						var project = BuildProject(mSetInfo.Name);
 						mongoDbImporter.DoZoomTest1(project, mSetInfo, overwrite: true);
