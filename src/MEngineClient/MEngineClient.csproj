@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.Net.Client" Version="2.40.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
+    <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
+  </ItemGroup>
+
+</Project>

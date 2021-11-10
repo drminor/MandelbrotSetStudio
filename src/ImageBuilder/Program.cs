@@ -10,6 +10,8 @@ using MSS.Types.MSetDatabase;
 using MSS.Common.MSetDatabase;
 using MSS.Types.Base;
 using MSetRepo;
+using MEngineClient;
+using System.Diagnostics;
 
 namespace ImageBuilder
 {
@@ -20,6 +22,9 @@ namespace ImageBuilder
 
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 
+		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
+
+
 		private const int BLOCK_WIDTH = 100;
 		private const int BLOCK_HEIGHT = 100;
 
@@ -29,7 +34,7 @@ namespace ImageBuilder
 		{
 			//int cmd = int.Parse(args[0] ?? "-1");
 
-			int cmd = 3;
+			int cmd = 4;
 
 			switch (cmd)
 			{
@@ -84,6 +89,18 @@ namespace ImageBuilder
 
 						var project = BuildProject(mSetInfo.Name);
 						mongoDbImporter.DoZoomTest1(project, mSetInfo, overwrite: true);
+						break;
+					}
+				case 4:
+					{
+						var mClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
+
+						var x = mClient.SendHelloAsync().GetAwaiter().GetResult();
+
+						Debug.WriteLine($"The reply is {x.Message}");
+
+						Console.WriteLine($"reply is {x.Message}");
+
 						break;
 					}
 				default: throw new InvalidOperationException($"The value: {cmd} for cmd is not recognized or is not supported.");
