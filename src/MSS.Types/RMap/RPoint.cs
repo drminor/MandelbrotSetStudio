@@ -5,13 +5,19 @@ namespace MSS.Types
 {
 	public class RPoint : Point<BigInteger>
 	{
-		public int Exp { get; init; }
+		public int Exponent { get; init; }
 
-		public RPoint() : this(0, 0, 0) { }
+		public RPoint() : this(0, 0, 0)
+		{ }
 
-		public RPoint(BigInteger x, BigInteger y, int exp) : base(x, y)
+		public RPoint(BigInteger[] values, int exponent) : base(values)
 		{
-			Exp = exp;
+			Exponent = exponent;
+		}
+
+		public RPoint(BigInteger x, BigInteger y, int exponent) : base(x, y)
+		{
+			Exponent = exponent;
 		}
 	}
 }

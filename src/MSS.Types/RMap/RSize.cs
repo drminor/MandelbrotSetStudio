@@ -5,13 +5,19 @@ namespace MSS.Types
 {
 	public class RSize : Size<BigInteger>
 	{
-		public int Exp { get; init; }
+		public int Exponent { get; init; }
 
-		public RSize() : this(0, 0, 0) { }
+		public RSize() : this(0, 0, 0)
+		{ }
 
-		public RSize(BigInteger width, BigInteger height, int exp) : base(width, height)
+		public RSize(BigInteger[] values, int exponent) : base(values)
 		{
-			Exp = exp;
+			Exponent = exponent;
+		}
+
+		public RSize(BigInteger width, BigInteger height, int exponent) : base(width, height)
+		{
+			Exponent = exponent;
 		}
 	}
 }

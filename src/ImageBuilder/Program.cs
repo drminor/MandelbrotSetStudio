@@ -125,7 +125,7 @@ namespace ImageBuilder
 		{
 			var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
 
-			IMapper<RRectangle, RRectangleDto> dtoMapper = new DtoMapper();
+			var dtoMapper = new DtoMapper();
 			var coordsHelper = new CoordsHelper(dtoMapper);
 			var mSetRecordMapper = new MSetRecordMapper(dtoMapper, coordsHelper);
 			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper, coordsHelper);

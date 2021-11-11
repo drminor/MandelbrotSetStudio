@@ -14,6 +14,9 @@ namespace MSS.Types.Base
 		public Point() : this(default, default) 
 		{ }
 
+		public Point(T[] values) : this(values[0], values[1])
+		{ }
+
 		[BsonConstructor]
 		[JsonConstructor]
 		public Point(T x, T y)

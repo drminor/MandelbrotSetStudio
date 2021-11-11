@@ -84,7 +84,7 @@ namespace MSetDatabaseClient
 
 		private void ZoomUntil(Job job, int numZooms)
 		{
-			DtoMapper dtoMapper = new DtoMapper();
+			var dtoMapper = new DtoMapper();
 			var mSetRecordMapper = new MSetRecordMapper(dtoMapper, new CoordsHelper(dtoMapper));
 			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
 

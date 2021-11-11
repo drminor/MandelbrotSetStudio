@@ -1,6 +1,6 @@
 ﻿using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
-using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo;
 using ProjectRepo.Entities;
@@ -9,10 +9,10 @@ namespace MSetRepo
 {
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>
 	{
-		private readonly IMapper<RRectangle, RRectangleDto> _dtoMapper;
+		private readonly DtoMapper _dtoMapper;
 		private readonly CoordsHelper _coordsHelper;
 
-		public MSetRecordMapper(IMapper<RRectangle, RRectangleDto> dtoMapper, CoordsHelper coordsHelper )
+		public MSetRecordMapper(DtoMapper dtoMapper, CoordsHelper coordsHelper )
 		{
 			_dtoMapper = dtoMapper;
 			_coordsHelper = coordsHelper;

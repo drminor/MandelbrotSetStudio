@@ -15,6 +15,9 @@ namespace MSS.Types.Base
 		public Size() : this(default, default)
 		{ }
 
+		public Size(T[] values) : this(values[0], values[1])
+		{ }
+
 		[BsonConstructor]
 		[JsonConstructor]
 		public Size(T width, T height)
