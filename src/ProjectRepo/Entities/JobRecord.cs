@@ -2,44 +2,45 @@
 using MongoDB.Bson;
 using System.Collections.Generic;
 
-namespace MSS.Types.MSetDatabase
+namespace ProjectRepo.Entities
 {
 	// Record Declaration
-	public record Job(
+	public record JobRecord(
 		ObjectId ProjectId,
 		ObjectId? ParentJobId,
 		TransformType? Operation,
 		int OperationAmount,
-		bool Saved,
 		string? Label,
-		Coords Coords,
+		SizeInt CanvasSize,
+		RRectangleRecord CoordsRecord,
 		int MaxInterations,
 		int Threshold,
 		int IterationsPerStep,
 		IList<ColorMapEntry> ColorMapEntries,
 		string HighColorCss,
-		IList<MapSectionRef>? MapSectionRefs
+
+		IList<MapSectionPtr>? MapSectionPtrs
 		) : RecordBase()
 
 	{
 		private const string ROOT_JOB_LABEL = "Root";
 
 		// Custom constructor to create the initial or "root" Job. 
-		public Job(ObjectId projectId, bool saved, Coords coords, int maxIterations, int threshold, int iterationsPerStep, IList<ColorMapEntry> colorMapEntries, string highColorCss)
+		public JobRecord(ObjectId projectId, SizeInt canvasSize, RRectangleRecord coords, int maxIterations, int threshold, int iterationsPerStep, IList<ColorMapEntry> colorMapEntries, string highColorCss)
 			: this(
 				  ProjectId: projectId,
 				  ParentJobId: null,
 				  Operation: null,
 				  OperationAmount: 0,
-				  Saved: saved,
 				  Label: ROOT_JOB_LABEL,
-				  Coords: coords,
+				  CanvasSize: canvasSize,
+				  CoordsRecord: coords,
 				  MaxInterations: maxIterations,
 				  Threshold: threshold,
 				  IterationsPerStep: iterationsPerStep,
 				  ColorMapEntries: colorMapEntries,
 				  HighColorCss: highColorCss,
-				  MapSectionRefs: null
+				  MapSectionPtrs: null
 				  )
 		{ }
 				  

@@ -6,12 +6,14 @@ using System;
 using System.IO;
 using MSS.Common;
 using MSetDatabaseClient;
-using MSS.Types.MSetDatabase;
-using MSS.Common.MSetDatabase;
+using MSS.Types.MSetRepo;
+using MSS.Common.MSetRepo;
 using MSS.Types.Base;
 using MSetRepo;
 using MEngineClient;
 using System.Diagnostics;
+using MSS.Types.MSet;
+using MongoDB.Bson;
 
 namespace ImageBuilder
 {
@@ -121,11 +123,7 @@ namespace ImageBuilder
 
 		private static Project BuildProject(string projectName)
 		{
-			var canvasSize = new SizeInt(1280, 1280);
-			var rRectangle = RMapConstants.ENTIRE_SET_RECTANGLE;
-			var bCoords = CoordsHelper.BuildCoords(rRectangle);
-
-			var result = new Project(projectName, canvasSize, bCoords);
+			var result = new Project(ObjectId.GenerateNewId(), projectName);
 
 			return result;
 		}

@@ -1,33 +1,36 @@
-﻿using MSS.Types;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
+using MSS.Types;
+using MSS.Types.MSet;
 using ProjectRepo;
+using ProjectRepo.Entities;
 using System;
 using System.Diagnostics;
-using MSS.Common;
-using MSS.Types.MSetDatabase;
-using MSetRepo;
 
 namespace MSetRepo
 {
 	public class MapSectionAdapter
 	{
 		private readonly DbProvider _dbProvider;
+		private readonly MSetRecordMapper _mSetRecordMapper;
 
 		public MapSectionAdapter(DbProvider dbProvider)
 		{
 			_dbProvider = dbProvider;
+			_mSetRecordMapper = new MSetRecordMapper();
 		}
 
 		public Job GetMapSectionWriter(ObjectId jobId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var job = jobReaderWriter.Get(jobId);
-			Debug.WriteLine($"The JobId is {job.Id}.");
+			var jobRecord = jobReaderWriter.Get(jobId);
+			Debug.WriteLine($"The JobId is {jobRecord.Id}.");
+
+			var job = _mSetRecordMapper.MapFrom(jobRecord);
 
 			return job;
 		}
 
-		public ObjectId CreateJob(Project project, MSetInfo mSetInfo, bool overwrite)
+		public ObjectId CreateJob(Project project, SizeInt canvasSize, RRectangle coords, MSetInfo mSetInfo, bool overwrite)
 		{
 			ObjectId result;
 
@@ -36,8 +39,8 @@ namespace MSetRepo
 
 			if (jobIds.Length > 0)
 			{
-				Job job = CreateFirstJob(project.Id, project.BaseCoords, mSetInfo);
-				result = jobReaderWriter.Insert(job);
+				JobRecord jobRecord = CreateFirstJob(project.Id, canvasSize, coords, mSetInfo);
+				result = jobReaderWriter.Insert(jobRecord);
 			}
 			else
 			{
@@ -53,8 +56,8 @@ namespace MSetRepo
 						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
 					}
 
-					Job job = CreateFirstJob(project.Id, project.BaseCoords, mSetInfo);
-					result = jobReaderWriter.Insert(job);
+					JobRecord jobRecord = CreateFirstJob(project.Id, canvasSize, coords, mSetInfo);
+					result = jobReaderWriter.Insert(jobRecord);
 				}
 			}
 
@@ -74,17 +77,17 @@ namespace MSetRepo
 		/// <param name="project"></param>
 		public Project InsertProject(Project project, bool overwrite)
 		{
-			Project result;
+			ProjectRecord projectRecord;
 
 			string projectName = project.Name;
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			result = projectReaderWriter.Get(projectName);
+			projectRecord = projectReaderWriter.Get(projectName);
 
-			if (result == null)
+			if (projectRecord == null)
 			{
-				projectReaderWriter.Insert(project);
-				result = project;
+				projectRecord = _mSetRecordMapper.MapTo(project);
+				projectReaderWriter.Insert(projectRecord);
 			}
 			else
 			{
@@ -94,7 +97,7 @@ namespace MSetRepo
 				}
 				else
 				{
-					var projectId = result.Id;
+					var projectId = projectRecord.Id;
 
 					var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
@@ -108,20 +111,23 @@ namespace MSetRepo
 
 					projectReaderWriter.Delete(projectId);
 
-					projectReaderWriter.Insert(project);
-					result = project;
+					projectRecord = _mSetRecordMapper.MapTo(project);
+					projectReaderWriter.Insert(projectRecord);
 				}
 			}
 
-			return result;
+			project = _mSetRecordMapper.MapFrom(projectRecord);
+
+			return project;
 		}
 
-		private Job CreateFirstJob(ObjectId projectId, Coords coords, MSetInfo mSetInfo)
+		private JobRecord CreateFirstJob(ObjectId projectId, SizeInt canvasSize, RRectangle coords, MSetInfo mSetInfo)
 		{
-			Job job = new Job(projectId, saved: true, coords, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
+			RRectangleRecord coordsDto = CoordsHelper.BuildCoords(coords);
+			JobRecord jobRecord = new JobRecord(projectId, canvasSize, coordsDto, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
 				mSetInfo.ColorMap.ColorMapEntries, mSetInfo.HighColorCss);
 
-			return job;
+			return jobRecord;
 		}
 	}
 }

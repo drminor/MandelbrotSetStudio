@@ -2,7 +2,7 @@
 using MongoDB.Bson.Serialization.Serializers;
 using System.Numerics;
 
-namespace MSS.Types.MSetDatabase
+namespace MSS.Types.MSetRepo
 {
 	public class BigIntegerSerializer : SerializerBase<BigInteger>
 	{

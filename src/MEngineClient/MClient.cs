@@ -19,7 +19,7 @@ namespace MEngineClient
 
 		public async Task<HelloReply1> SendHelloAsync()
 		{
-			IMEngineService mEngineService = GetMEngineService();
+			IMapSectionService mEngineService = GetMapSectionService();
 
 			var reply = await mEngineService.SayHelloAsync(new HelloRequest1 { Name = "GreeterClient" });
 			Debug.WriteLine($"Greeting: {reply.Message}");
@@ -27,9 +27,9 @@ namespace MEngineClient
 			return reply;
 		}
 
-		private IMEngineService GetMEngineService()
+		private IMapSectionService GetMapSectionService()
 		{
-			var client = Channel.CreateGrpcService<IMEngineService>();
+			var client = Channel.CreateGrpcService<IMapSectionService>();
 			return client;
 		}
 

@@ -1,11 +1,8 @@
-﻿using MSS.Types;
-using MongoDB.Bson;
-using ProjectRepo;
-using System;
-using System.Diagnostics;
+﻿using MSetRepo;
 using MSS.Common;
-using MSS.Types.MSetDatabase;
-using MSetRepo;
+using MSS.Types;
+using MSS.Types.MSet;
+using System.Diagnostics;
 
 namespace MSetDatabaseClient
 {
@@ -20,10 +17,13 @@ namespace MSetDatabaseClient
 
 		public void Import(IMapSectionReader mapSectionReader, Project projectData, MSetInfo mSetInfo, bool overwrite)
 		{
+			SizeInt canvasSize = new SizeInt(1280, 1280);
+			RRectangle coords = RMapConstants.ENTIRE_SET_RECTANGLE;
+
 			// Make sure the project record has been written.
 			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
 
-			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, overwrite);
+			var jobId = _mapSectionAdapter.CreateJob(project, canvasSize, coords, mSetInfo, overwrite);
 
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
 			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);
@@ -66,10 +66,13 @@ namespace MSetDatabaseClient
 
 		public void DoZoomTest1(Project projectData, MSetInfo mSetInfo, bool overwrite)
 		{
+			SizeInt canvasSize = new SizeInt(1280, 1280);
+			RRectangle coords = RMapConstants.ENTIRE_SET_RECTANGLE;
+
 			// Make sure the project record has been written.
 			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
 
-			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, overwrite);
+			var jobId = _mapSectionAdapter.CreateJob(project, canvasSize, coords, mSetInfo, overwrite);
 
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
 			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);
@@ -79,12 +82,16 @@ namespace MSetDatabaseClient
 
 		private void ZoomUntil(Job job, int numZooms)
 		{
+			var mSetRecordMapper = new MSetRecordMapper();
 			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
 			for (int zCntr = 0; zCntr < numZooms; zCntr++)
 			{
-				Job zJob = JobHelper.ZoomIn(job);
-				Debug.WriteLine($"Zoom: {zCntr}, Coords: {zJob.Coords.Display}.");
+				var zJob = JobHelper.ZoomIn(job);
+
+				var jobRecord = mSetRecordMapper.MapTo(zJob);
+
+				Debug.WriteLine($"Zoom: {zCntr}, Coords: {jobRecord.CoordsRecord.Display}.");
 
 				//jobReaderWriter.Insert(zJob);
 

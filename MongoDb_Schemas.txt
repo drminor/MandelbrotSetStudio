@@ -28,8 +28,6 @@ Project
 	Guid _id
 	DateTime DateCreated
 	String Name
-	SizeInt CanvasSize
-	Coords BaseCoords
 
 Job
 	Guid _id
@@ -40,12 +38,17 @@ Job
 	Double OperationAmount
 	bool Saved
 	string Label
+
+	SizeInt CanvasSize
+
 	Coords Coords
 	int MaxIterations
 	int Threshold
 	int InterationsPerStep
+
 	ColorMapEntry[] ColorMapEntries
 	String HighColorCss
+
 	MapSectionRef[] MapSectionsRefs
 
 MapSectionRef

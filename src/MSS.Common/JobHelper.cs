@@ -1,6 +1,9 @@
-﻿using MSS.Common.MSetDatabase;
+﻿using MongoDB.Bson;
+using MSS.Common.DataTransferObjects;
+using MSS.Common.MSetRepo;
 using MSS.Types;
-using MSS.Types.MSetDatabase;
+using MSS.Types.MSet;
+using MSS.Types.MSetRepo;
 using System;
 using System.Collections.Generic;
 
@@ -29,16 +32,11 @@ namespace MSS.Common
 
 		public static Job ZoomIn(Job job)
 		{
-			var rRectangleZoomed = RMapHelper.Zoom(CoordsHelper.BuildBRectangle(job.Coords.CoordsPoints));
+			var rRectangleZoomed = RMapHelper.Zoom(job.Coords);
 
-			var coords = CoordsHelper.BuildCoords(rRectangleZoomed);
-
-			IList<MapSectionRef>? mapSectionRefs = null;
-
-			Job result = new Job(job.ProjectId, job.Id, TransformType.In, 2, Saved:false, Label: null, 
-				coords, 
-				job.MaxInterations, job.Threshold, job.IterationsPerStep, job.ColorMapEntries, job.HighColorCss, 
-				mapSectionRefs);
+			Job result = new Job(ObjectId.GenerateNewId(), job.ProjectId, job.Id, TransformType.In, 2, label: null, job.CanvasSize,
+				rRectangleZoomed, 
+				job.MaxInterations, job.Threshold, job.IterationsPerStep, job.ColorMapEntries, job.HighColorCss);
 
 			return result;
 		}

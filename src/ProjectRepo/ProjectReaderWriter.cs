@@ -1,49 +1,49 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-using MSS.Types.MSetDatabase;
+using ProjectRepo.Entities;
 
 namespace ProjectRepo
 {
-	public class ProjectReaderWriter : MongoDbCollectionBase<Project>
+	public class ProjectReaderWriter : MongoDbCollectionBase<ProjectRecord>
 	{
 		private const string COLLECTION_NAME = "Projects";
 
 		public ProjectReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
 
-		public Project Get(ObjectId projectId)
+		public ProjectRecord Get(ObjectId projectId)
 		{
-			var filter = Builders<Project>.Filter.Eq("_id", projectId);
-			var project = Collection.Find(filter).FirstOrDefault();
+			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
+			var projectRecord = Collection.Find(filter).FirstOrDefault();
 
-			return project;
+			return projectRecord;
 		}
 
-		public Project Get(string name)
+		public ProjectRecord Get(string name)
 		{
-			var filter = Builders<Project>.Filter.Eq("Name", name);
-			var project = Collection.Find(filter).FirstOrDefault();
+			var filter = Builders<ProjectRecord>.Filter.Eq("Name", name);
+			var projectRecord = Collection.Find(filter).FirstOrDefault();
 
-			return project;
+			return projectRecord;
 		}
 
 		public ObjectId GetProjectId(string name)
 		{
-			var project = Get(name);
+			var projectRecord = Get(name);
 
-			return project?.Id ?? ObjectId.Empty;
+			return projectRecord?.Id ?? ObjectId.Empty;
 		}
 
-		public ObjectId Insert(Project project)
+		public ObjectId Insert(ProjectRecord projectRecord)
 		{
-			Collection.InsertOne(project);
-			return project.Id;
+			Collection.InsertOne(projectRecord);
+			return projectRecord.Id;
 		}
 
 		public long? Delete(ObjectId projectId)
 		{
-			var filter = Builders<Project>.Filter.Eq("_id", projectId);
-			var project = Collection.Find(filter).FirstOrDefault();
+			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
+			var projectRecord = Collection.Find(filter).FirstOrDefault();
 
 
 			var deleteResult = Collection.DeleteOne(filter);

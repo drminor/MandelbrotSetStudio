@@ -1,8 +1,5 @@
-﻿using MongoDB.Bson.Serialization;
-using MongoDB.Driver;
-using MSS.Common.MSetDatabase;
-using MSS.Types;
-using MSS.Types.Base;
+﻿using MongoDB.Driver;
+using MSS.Common.MSetRepo;
 using System;
 
 namespace ProjectRepo
@@ -21,7 +18,7 @@ namespace ProjectRepo
 
             _collectionLazy = new Lazy<IMongoCollection<T>>(() => Database.GetCollection<T>(_collectionName), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
 
-   //         RegisterMapIfNeeded<BWRectangle>();
+			//RegisterMapIfNeeded<BWRectangle>();
 			//RegisterMapIfNeeded<BigIntegerWrapper>();
 		}
 
@@ -38,15 +35,15 @@ namespace ProjectRepo
 			return null;
 		}
 
-		private void RegisterMapIfNeeded<TClass>()
-		{
-			if (!BsonClassMap.IsClassMapRegistered(typeof(TClass)))
-			{
-				BsonClassMap.RegisterClassMap<TClass>();
-			}
-		}
-
 		#region unused
+
+		//private void RegisterMapIfNeeded<TClass>()
+		//{
+		//	if (!BsonClassMap.IsClassMapRegistered(typeof(TClass)))
+		//	{
+		//		BsonClassMap.RegisterClassMap<TClass>();
+		//	}
+		//}
 
 		//public ObjectId GetProjectId(string name)
 		//{
