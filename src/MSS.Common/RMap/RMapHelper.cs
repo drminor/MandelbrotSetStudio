@@ -123,5 +123,23 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static int GetValueDepth(RRectangle _)
+		{
+			// TODO: Calculate the # of maximum binary bits of precision from sx, ex, sy and ey.
+			int binaryBitsOfPrecision = 10;
+			int valueDepth = CalculateValueDepth(binaryBitsOfPrecision);
+
+			return valueDepth;
+		}
+
+		private static int CalculateValueDepth(int binaryBitsOfPrecision)
+		{
+			int result = Math.DivRem(binaryBitsOfPrecision, 53, out int remainder);
+
+			if (remainder > 0) result++;
+
+			return result;
+		}
+
 	}
 }

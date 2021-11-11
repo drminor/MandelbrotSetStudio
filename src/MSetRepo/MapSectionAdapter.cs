@@ -12,11 +12,13 @@ namespace MSetRepo
 	{
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
+		private readonly CoordsHelper _coordsHelper;
 
-		public MapSectionAdapter(DbProvider dbProvider)
+		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper, CoordsHelper coordsHelper)
 		{
 			_dbProvider = dbProvider;
-			_mSetRecordMapper = new MSetRecordMapper();
+			_mSetRecordMapper = mSetRecordMapper;
+			_coordsHelper = coordsHelper;
 		}
 
 		public Job GetMapSectionWriter(ObjectId jobId)
@@ -123,7 +125,7 @@ namespace MSetRepo
 
 		private JobRecord CreateFirstJob(ObjectId projectId, SizeInt canvasSize, RRectangle coords, MSetInfo mSetInfo)
 		{
-			RRectangleRecord coordsDto = CoordsHelper.BuildCoords(coords);
+			RRectangleRecord coordsDto = _coordsHelper.BuildCoords(coords);
 			JobRecord jobRecord = new JobRecord(projectId, canvasSize, coordsDto, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
 				mSetInfo.ColorMap.ColorMapEntries, mSetInfo.HighColorCss);
 

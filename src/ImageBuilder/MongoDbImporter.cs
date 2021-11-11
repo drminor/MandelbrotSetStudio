@@ -1,7 +1,9 @@
 ﻿using MSetRepo;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
+using ProjectRepo;
 using System.Diagnostics;
 
 namespace MSetDatabaseClient
@@ -82,7 +84,8 @@ namespace MSetDatabaseClient
 
 		private void ZoomUntil(Job job, int numZooms)
 		{
-			var mSetRecordMapper = new MSetRecordMapper();
+			DtoMapper dtoMapper = new DtoMapper();
+			var mSetRecordMapper = new MSetRecordMapper(dtoMapper, new CoordsHelper(dtoMapper));
 			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
 			for (int zCntr = 0; zCntr < numZooms; zCntr++)

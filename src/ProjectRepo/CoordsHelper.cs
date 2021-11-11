@@ -1,27 +1,33 @@
-﻿using MSS.Common.DataTransferObjects;
+﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.Base;
+using MSS.Types.DataTransferObjects;
 using ProjectRepo.Entities;
 using System;
 using System.Linq;
 
 namespace ProjectRepo
 {
-	public static class CoordsHelper
+	public class CoordsHelper
 	{
-		public static RRectangleRecord BuildCoords(RRectangle rRectangle)
+		IMapper<RRectangle, RRectangleDto> _dtoMapper;
+
+		public CoordsHelper(IMapper<RRectangle, RRectangleDto> dtoMapper)
+		{
+			_dtoMapper = dtoMapper;
+		}
+
+		public RRectangleRecord BuildCoords(RRectangle rRectangle)
 		{
 			var display = GetDisplay(rRectangle);
-			//var valueDepth = GetValueDepth(rRectangle);
-			var rRectangleDto = new DtoMapper().MapTo(rRectangle);
+
+			var rRectangleDto = _dtoMapper.MapTo(rRectangle);
 			var result = new RRectangleRecord(display, rRectangleDto);
 
 			return result;
 		}
 
-
-
-		private static string GetDisplay(RRectangle rRectangle)
+		private string GetDisplay(RRectangle rRectangle)
 		{
 			double scaleFactor = Math.Pow(2, rRectangle.Exponent);
 			double denominator = 1d / scaleFactor;
@@ -37,32 +43,6 @@ namespace ProjectRepo
 
 			string display = strVals.ToString();
 			return display;
-		}
-
-		//private static int GetValueDepth(RRectangle _)
-		//{
-		//	// TODO: Calculate the # of maximum binary bits of precision from sx, ex, sy and ey.
-		//	int binaryBitsOfPrecision = 10;
-		//	int valueDepth = CalculateValueDepth(binaryBitsOfPrecision);
-
-		//	return valueDepth;
-		//}
-
-		//private static int CalculateValueDepth(int binaryBitsOfPrecision)
-		//{
-		//	int result = Math.DivRem(binaryBitsOfPrecision, 53, out int remainder);
-
-		//	if (remainder > 0) result++;
-
-		//	return result;
-		//}
-
-		// TODO: Fix the ConvertFrom method that takes an ApCoords object and produces a Coords object.
-		public static RRectangle ConvertFrom(ApCoords _)
-		{
-			var result = new RRectangle();
-
-			return result;
 		}
 
 	}

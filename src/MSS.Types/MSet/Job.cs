@@ -4,11 +4,8 @@ using System.Collections.Generic;
 
 namespace MSS.Types.MSet
 {
-
 	public class Job
 	{
-		private const string ROOT_JOB_LABEL = "Root";
-
 		public ObjectId Id { get; init; }
 		public ObjectId ProjectId { get; init; }
 		public ObjectId? ParentJobId { get; init; }

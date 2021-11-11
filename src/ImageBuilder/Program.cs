@@ -14,6 +14,8 @@ using MEngineClient;
 using System.Diagnostics;
 using MSS.Types.MSet;
 using MongoDB.Bson;
+using MSS.Common.DataTransferObjects;
+using MSS.Types.DataTransferObjects;
 
 namespace ImageBuilder
 {
@@ -71,8 +73,7 @@ namespace ImageBuilder
 
 						IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfo.Name, mSetInfo.IsHighRes);
 
-						var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
-						var mapSectionAdapter = new MapSectionAdapter(dbProvider);
+						var mapSectionAdapter = GetMapSectionAdapter();
 						var mongoDbImporter = new MongoDbImporter(mapSectionAdapter);
 
 						var project = BuildProject(mSetInfo.Name);
@@ -85,8 +86,7 @@ namespace ImageBuilder
 						string fileName = MSetInfoBuilder.ZOOM_TEST_1;
 						var mSetInfo = MSetInfoBuilder.Build(fileName);
 
-						var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
-						var mapSectionAdapter = new MapSectionAdapter(dbProvider);
+						var mapSectionAdapter = GetMapSectionAdapter();
 						var mongoDbImporter = new MongoDbImporter(mapSectionAdapter);
 
 						var project = BuildProject(mSetInfo.Name);
@@ -119,6 +119,18 @@ namespace ImageBuilder
 			{
 				return new MapSectionReader(repoFilename, _blockSize);
 			}
+		}
+
+		private static MapSectionAdapter GetMapSectionAdapter()
+		{
+			var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
+
+			IMapper<RRectangle, RRectangleDto> dtoMapper = new DtoMapper();
+			var coordsHelper = new CoordsHelper(dtoMapper);
+			var mSetRecordMapper = new MSetRecordMapper(dtoMapper, coordsHelper);
+			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper, coordsHelper);
+
+			return mapSectionAdapter;
 		}
 
 		private static Project BuildProject(string projectName)
