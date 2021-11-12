@@ -11,5 +11,4 @@ namespace MEngineDataContracts
 		[DataMember(Order = 2)]
 		public int QueuePosition { get; set; }
 	}
-
 }

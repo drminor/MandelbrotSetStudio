@@ -1,10 +1,8 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types.DataTransferObjects
 {
-	[Serializable]
 	public record RRectangleDto(byte[] X1, byte[] X2, byte[] Y1, byte[] Y2, int Exponent)
 	{
 		public RRectangleDto() : this(new BigInteger[] { 0, 0, 0, 0 }, 0)

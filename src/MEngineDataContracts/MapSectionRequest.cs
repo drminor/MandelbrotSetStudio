@@ -5,29 +5,9 @@ using System.Runtime.Serialization;
 
 namespace MEngineDataContracts
 {
-	//[DataContract]
-	//public class HelloReply1
-	//{
-	//    [DataMember(Order = 1)]
-	//    public string Message { get; set; }
-	//}
-
-	//[DataContract]
-	//public class HelloRequest1
-	//{
-	//    [DataMember(Order = 1)]
-	//    public string Name { get; set; }
-	//}
-
 	[DataContract]
 	public class MapSectionRequest
 	{
-		//public MapSectionRequest()
-		//{
-		//	SubdivisionId = string.Empty;
-		//	BlockSize = new SizeInt();
-		//}
-
 		[DataMember(Order = 1)]
 		public string SubdivisionId { get; set; }
 
