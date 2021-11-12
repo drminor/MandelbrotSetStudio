@@ -44,5 +44,15 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static Subdivision CreateSubdivision(SizeInt canvasSize, SizeInt blockSize, RRectangle coords)
+		{
+			var position = new RPoint();
+			var samplePointDelta = new RSize();
+
+			var result = new Subdivision(position, blockSize, samplePointDelta);
+
+			return result;
+		}
+
 	}
 }

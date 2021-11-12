@@ -23,16 +23,10 @@ namespace ImageBuilder
 	{
 		//private const string BASE_PATH = @"C:\_Mbrodts";
 		private const string IMAGE_OUTPUT_FOLDER = @"C:\_Mbrodts";
-
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
-
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
-
-
-		private const int BLOCK_WIDTH = 100;
-		private const int BLOCK_HEIGHT = 100;
-
-		private static readonly SizeInt _blockSize = new SizeInt(BLOCK_WIDTH, BLOCK_HEIGHT);
+		private static readonly SizeInt _legacyBlockSize = new SizeInt(100, 100);
+		private static readonly SizeInt _blockSize = RMapConstants.BLOCK_SIZE;
 
 		static void Main(string[] args)
 		{
@@ -56,7 +50,7 @@ namespace ImageBuilder
 				case 1:
 					{
 						/* Create png image file */
-						var pngBuilder = new PngBuilder(IMAGE_OUTPUT_FOLDER, _blockSize);
+						var pngBuilder = new PngBuilder(IMAGE_OUTPUT_FOLDER, _legacyBlockSize);
 
 						string fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
 						var mSetInfo = MSetInfoBuilder.Build(fileName);
@@ -113,22 +107,21 @@ namespace ImageBuilder
 		{
 			if (isHighRes)
 			{
-				return new MapSectionRepoReaderHiRes(repoFilename, _blockSize);
+				return new MapSectionRepoReaderHiRes(repoFilename, _legacyBlockSize);
 			}
 			else
 			{
-				return new MapSectionReader(repoFilename, _blockSize);
+				return new MapSectionReader(repoFilename, _legacyBlockSize);
 			}
 		}
 
 		private static MapSectionAdapter GetMapSectionAdapter()
 		{
 			var dbProvider = new DbProvider(MONGO_DB_CONN_STRING);
-
 			var dtoMapper = new DtoMapper();
 			var coordsHelper = new CoordsHelper(dtoMapper);
 			var mSetRecordMapper = new MSetRecordMapper(dtoMapper, coordsHelper);
-			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper, coordsHelper);
+			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper, coordsHelper, _blockSize);
 
 			return mapSectionAdapter;
 		}

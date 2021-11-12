@@ -4,10 +4,12 @@ using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo;
 using ProjectRepo.Entities;
+using System;
+using System.Numerics;
 
 namespace MSetRepo
 {
-	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>
+	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<Subdivision, SubdivisionRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
 		private readonly CoordsHelper _coordsHelper;
@@ -49,6 +51,24 @@ namespace MSetRepo
 				coords, source.SubdivisionId, 
 				source.MaxInterations, source.Threshold, source.IterationsPerStep, source.ColorMapEntries, source.HighColorCss);
 
+			return result;
+		}
+
+		public SubdivisionRecord MapTo(Subdivision source)
+		{
+			var position = _coordsHelper.BuildPointRecord(source.Position);
+			var samplePointDelta = _coordsHelper.BuildSizeRecord(source.SamplePointDelta);
+
+			var result = new SubdivisionRecord(position, source.BlockSize, samplePointDelta);
+			return result;
+		}
+
+		public Subdivision MapFrom(SubdivisionRecord target)
+		{
+			var position = _dtoMapper.MapFrom(target.Position.PointDto);
+			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.SizeDto);
+
+			var result = new Subdivision(position, target.BlockSize, samplePointDelta);
 			return result;
 		}
 	}

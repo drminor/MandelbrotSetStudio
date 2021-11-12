@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo;
@@ -16,12 +17,14 @@ namespace MSetRepo
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
 		private readonly CoordsHelper _coordsHelper;
+		private readonly SizeInt _blockSize;
 
-		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper, CoordsHelper coordsHelper)
+		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper, CoordsHelper coordsHelper, SizeInt blockSize)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
 			_coordsHelper = coordsHelper;
+			_blockSize = blockSize;
 		}
 
 		public Job GetMapSectionWriter(ObjectId jobId)
@@ -84,11 +87,9 @@ namespace MSetRepo
 
 		private ObjectId CreateAndInsertSubdivision(SizeInt canvasSize, RRectangle coords, SubdivisonReaderWriter subdivisionReaderWriter)
 		{
-			var position = new RPointRecord();
-			var samplePointDelta = new RSizeRecord();
-
-			var subdivision = new SubdivisionRecord(position, samplePointDelta);
-			var result = subdivisionReaderWriter.Insert(subdivision);
+			var subdivision = JobHelper.CreateSubdivision(canvasSize, _blockSize, coords);
+			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);
+			var result = subdivisionReaderWriter.Insert(subdivisionRecord);
 
 			return result;
 		}
