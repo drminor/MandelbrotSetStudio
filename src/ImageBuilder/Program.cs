@@ -38,7 +38,7 @@ namespace ImageBuilder
 		{
 			//int cmd = int.Parse(args[0] ?? "-1");
 
-			int cmd = 4;
+			int cmd = 3;
 
 			switch (cmd)
 			{

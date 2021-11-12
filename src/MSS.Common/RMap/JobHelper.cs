@@ -34,8 +34,11 @@ namespace MSS.Common
 		{
 			var rRectangleZoomed = RMapHelper.Zoom(job.Coords);
 
-			Job result = new Job(ObjectId.GenerateNewId(), job.ProjectId, job.Id, TransformType.In, 2, label: null, job.CanvasSize,
-				rRectangleZoomed, 
+			// TODO: search for an existing SubDivision and use it.
+			var subdivisionId = ObjectId.GenerateNewId();
+
+			Job result = new Job(ObjectId.GenerateNewId(), label: null, job.ProjectId, job.Id, job.CanvasSize, 
+				rRectangleZoomed, subdivisionId,
 				job.MaxInterations, job.Threshold, job.IterationsPerStep, job.ColorMapEntries, job.HighColorCss);
 
 			return result;

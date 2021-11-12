@@ -2,46 +2,48 @@
 ** ProjectInfo Repository **
 
 Collection
-	Guid
+	ObjectId
 	DateTime DateCreated
 	String Name
 
 MapRepository
-	Guid _id
+	ObjectId Id
 	DateTime DateCreated
 	String Name
 	String MongoDB_Connection_String
 	String DatabaseName
 
 ProjectRef
-	Guid _id
+	ObjectId Id
 	DateTime DateCreated
 	String Name
-	Guid CollectionId
-	Guid MapRespositoryId
-	Guid ProjectId
+	ObjectId CollectionId
+	ObjectId MapRespositoryId
+	ObjectId ProjectId
 
 
 ** Project Repo **
 
 Project
-	Guid _id
+	ObjectId Id
 	DateTime DateCreated
 	String Name
 
 Job
-	Guid _id
+	ObjectId Id
 	DateTime DateCreated
-	Guid ProjectId
-	Guid ParentJobID
-	TransformType Operation
-	Double OperationAmount
-	bool Saved
 	string Label
+	ObjectId ProjectId
+	ObjectId ParentJobId
 
-	SizeInt CanvasSize
+	TransformType Operation			// These can be calculated by comparing the SubDivision and the Parent Job's SubDivision
+	Double OperationAmount
 
-	Coords Coords
+	SizeInt CanvasSize				// Number of pixels being drawn.
+	Coords Coords					// Consider only storing X1 and Y1
+	ObjectId SubDivisionId
+	SizeRecord SubDivisionPosition	// This can be calculated from Coords and the SubDivision's Position
+
 	int MaxIterations
 	int Threshold
 	int InterationsPerStep
@@ -49,36 +51,35 @@ Job
 	ColorMapEntry[] ColorMapEntries
 	String HighColorCss
 
-	MapSectionRef[] MapSectionsRefs
-
-MapSectionRef
-	Guid _id
+SubDivison
+	ObjectId Id
 	DateTime DateCreated
-	Guid Job._id
-	Guid MapSectionId
-	RectangleInt ClippingRectangle
+
+	PointRecord Position		// absolute coordinates on the complex plane of the origin (Left, Bottom) point of the MapSection whose BlockPosition = 0,0.
+	SizeInt BlockSize			// number of sample points in each MapSection
+	SizeRecord SamplePointDelta	// distance from one sample point to the next
 
 MapSection
-	Guid _id
+	ObjectId Id
 	DateTime DateCreated
-	int Zoom
-	int ValueDepth
-	DPoint Point
-	MapSectionNeighbors Neighbors
-	int Width
-	int Height
-	DDouble SamplePointDelta
+	ObjectId SubDivisionId		
+	PointInt BlockPosition		// in units of SamplePointDelta * BlockSize
+	PointRecord Position		// Can be calculated from the BlockPosition and the SubDivision's Position -- absolute coordinates on the complex plane.
 	int[] Counts
 	bool[] DoneFlags
-	DDouble[] ZValues
+	double[] ZValues
+
+----------
+Known Types or Used by the in-memory object -- no corresponding record type
+
+MapSectionRef
+	ObjectId MapSectionId
+	RectangleInt ClippingRectangle
 
 MapSectionNeighbors
-	Guid _id
+	ObjectId Id
 	DateTime DateCreated
-	Guid Left
-	Guid Top
-	Guid Right
-	Guid Bottom
-
-
-
+	ObjectId Left
+	ObjectId Top
+	ObjectId Right
+	ObjectId Bottom

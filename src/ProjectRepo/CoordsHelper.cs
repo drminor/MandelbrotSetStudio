@@ -3,6 +3,7 @@ using MSS.Types;
 using MSS.Types.Base;
 using ProjectRepo.Entities;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -49,20 +50,52 @@ namespace ProjectRepo
 
 		private string GetDisplay(BigInteger[] values, int exponent)
 		{
-			double scaleFactor = Math.Pow(2, exponent);
-			double denominator = 1d / scaleFactor;
-			string strDenominator = denominator.ToString();
+			var strDenominator = GetValue(1, -1 * exponent).ToString();
 
-			double[] dVals = values.Select(v => Convert.ToDouble(v)).ToArray();
-			dVals = dVals.Select(d => d * scaleFactor).ToArray();
+			var dVals = values.Select(v => GetValue(v, exponent)).ToArray();
 
-			Rectangle<StringStruct> strVals = new Rectangle<StringStruct>(
-				values.Select((x,i) => 
-				new StringStruct(x.ToString() + "/" + strDenominator + " (" + dVals[i].ToString() + ")")).ToArray()
-				);
+			string[] strVals = values.Select((x,i) => new string(x.ToString() + "/" + strDenominator + " (" + dVals[i].ToString() + ")")).ToArray();
 
-			string display = strVals.ToString();
+			string display = string.Join("; ", strVals);
 			return display;
+		}
+
+		public double GetValue(BigInteger bigInteger, int exponent)
+		{
+			double result = Math.ScaleB(ConvertBigIntegerToDouble(bigInteger), exponent);
+			return result;
+		}
+
+		private double ConvertBigIntegerToDouble(BigInteger val)
+		{
+			try
+			{
+				if (!SafeCastToDouble(val))
+				{
+					throw new OverflowException($"It is not safe to cast BigInteger: {val} to a double.");
+				}
+
+				double result = (double)val;
+
+				if (!DoubleHelper.HasPrecision(result))
+				{
+					throw new OverflowException($"When converting BigInteger: {val} to a double, precision was lost.");
+				}
+
+				return result;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Got exception: {e.GetType()}:{e.Message}");
+				return 0;
+			}
+		}
+
+		private static bool SafeCastToDouble(BigInteger value)
+		{
+			BigInteger s_bnDoubleMinValue = (BigInteger)double.MinValue;
+			BigInteger s_bnDoubleMaxValue = (BigInteger)double.MaxValue;
+			return s_bnDoubleMinValue <= value && value <= s_bnDoubleMaxValue;
 		}
 
 	}

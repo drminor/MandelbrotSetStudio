@@ -34,8 +34,9 @@ namespace MSetRepo
 		{
 			var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
 
-			var result = new Job(target.Id, target.ProjectId, target.ParentJobId, target.Operation, target.OperationAmount, target.Label, target.CanvasSize,
-				coords, target.MaxInterations, target.Threshold, target.IterationsPerStep, target.ColorMapEntries, target.HighColorCss);
+			var result = new Job(target.Id, target.Label, target.ProjectId, target.ParentJobId, target.CanvasSize,
+				coords, target.SubDivisionId,
+				target.MaxInterations, target.Threshold, target.IterationsPerStep, target.ColorMapEntries, target.HighColorCss);
 
 			return result;
 		}
@@ -44,8 +45,9 @@ namespace MSetRepo
 		{
 			var coords = _coordsHelper.BuildCoords(source.Coords);
 
-			var result = new JobRecord(source.ProjectId, source.ParentJobId, source.Operation, source.OperationAmount, source.Label, source.CanvasSize,
-				coords, source.MaxInterations, source.Threshold, source.IterationsPerStep, source.ColorMapEntries, source.HighColorCss, null);
+			var result = new JobRecord(source.Label, source.ProjectId, source.ParentJobId, source.CanvasSize, 
+				coords, source.SubdivisionId, 
+				source.MaxInterations, source.Threshold, source.IterationsPerStep, source.ColorMapEntries, source.HighColorCss);
 
 			return result;
 		}

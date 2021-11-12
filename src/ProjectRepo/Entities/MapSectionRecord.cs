@@ -1,11 +1,15 @@
-﻿using MSS.Types;
-using System;
+﻿using MongoDB.Bson;
+using MSS.Types;
 
 namespace ProjectRepo.Entities
 {
 	public record MapSectionRecord(
-		int PrecisionIndex
-		//double[] Counts,
+		ObjectId SubdivisionId,
+		PointInt BlockPosition,
+		RPointRecord Position
+		//int[] Counts,
+		//bool[] DoneFlags,
+		//double[] ZValues
 	) : RecordBase();
 
 }

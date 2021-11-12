@@ -5,11 +5,14 @@ using ProjectRepo;
 using ProjectRepo.Entities;
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace MSetRepo
 {
 	public class MapSectionAdapter
 	{
+		public const string ROOT_JOB_LABEL = "Root";
+
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
 		private readonly CoordsHelper _coordsHelper;
@@ -36,13 +39,20 @@ namespace MSetRepo
 		{
 			ObjectId result;
 
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+			var subdivisionId = GetSubdivision(coords.Exponent, subdivisionReaderWriter);
+
+			if (!subdivisionId.HasValue)
+			{
+				subdivisionId = CreateAndInsertSubdivision(canvasSize, coords, subdivisionReaderWriter);
+			}
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobIds = jobReaderWriter.GetJobIds(project.Id);
 
-			if (jobIds.Length > 0)
+			if (jobIds.Length == 0)
 			{
-				JobRecord jobRecord = CreateFirstJob(project.Id, canvasSize, coords, mSetInfo);
-				result = jobReaderWriter.Insert(jobRecord);
+				result = CreateAndInsertFirstJob(project.Id, canvasSize, coords, subdivisionId.Value, mSetInfo, jobReaderWriter);
 			}
 			else
 			{
@@ -58,10 +68,35 @@ namespace MSetRepo
 						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
 					}
 
-					JobRecord jobRecord = CreateFirstJob(project.Id, canvasSize, coords, mSetInfo);
-					result = jobReaderWriter.Insert(jobRecord);
+					result = CreateAndInsertFirstJob(project.Id, canvasSize, coords, subdivisionId.Value, mSetInfo, jobReaderWriter);
 				}
 			}
+
+			return result;
+		}
+
+		private ObjectId? GetSubdivision(int scale, SubdivisonReaderWriter subdivisionReaderWriter)
+		{
+			var result = subdivisionReaderWriter.Get(scale);
+
+			return result.FirstOrDefault()?.Id;
+		}
+
+		private ObjectId CreateAndInsertSubdivision(SizeInt canvasSize, RRectangle coords, SubdivisonReaderWriter subdivisionReaderWriter)
+		{
+			var position = new RPointRecord();
+			var samplePointDelta = new RSizeRecord();
+
+			var subdivision = new SubdivisionRecord(position, samplePointDelta);
+			var result = subdivisionReaderWriter.Insert(subdivision);
+
+			return result;
+		}
+
+		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId subdivisionId, MSetInfo mSetInfo, JobReaderWriter jobReaderWriter)
+		{
+			JobRecord jobRecord = CreateFirstJob(projectId, canvasSize, coords, subdivisionId, mSetInfo);
+			var result = jobReaderWriter.Insert(jobRecord);
 
 			return result;
 		}
@@ -123,11 +158,23 @@ namespace MSetRepo
 			return project;
 		}
 
-		private JobRecord CreateFirstJob(ObjectId projectId, SizeInt canvasSize, RRectangle coords, MSetInfo mSetInfo)
+		private JobRecord CreateFirstJob(ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId subdivisionId, MSetInfo mSetInfo)
 		{
 			RRectangleRecord coordsDto = _coordsHelper.BuildCoords(coords);
-			JobRecord jobRecord = new JobRecord(projectId, canvasSize, coordsDto, mSetInfo.MaxIterations, mSetInfo.Threshold, mSetInfo.InterationsPerStep,
-				mSetInfo.ColorMap.ColorMapEntries, mSetInfo.HighColorCss);
+
+			JobRecord jobRecord = new JobRecord(
+				Label: ROOT_JOB_LABEL, 
+				ProjectId: projectId,
+				ParentJobId: null,
+				CanvasSize: canvasSize, 
+				CoordsRecord: coordsDto, 
+				SubDivisionId: subdivisionId, 
+				MaxInterations: mSetInfo.MaxIterations, 
+				Threshold: mSetInfo.Threshold, 
+				IterationsPerStep: mSetInfo.InterationsPerStep,
+				ColorMapEntries: mSetInfo.ColorMap.ColorMapEntries, 
+				HighColorCss: mSetInfo.HighColorCss
+				);
 
 			return jobRecord;
 		}

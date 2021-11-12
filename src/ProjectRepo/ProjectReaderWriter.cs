@@ -43,9 +43,6 @@ namespace ProjectRepo
 		public long? Delete(ObjectId projectId)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
-			var projectRecord = Collection.Find(filter).FirstOrDefault();
-
-
 			var deleteResult = Collection.DeleteOne(filter);
 
 			return GetReturnCount(deleteResult);
