@@ -9,7 +9,7 @@ using System.Numerics;
 
 namespace MSetRepo
 {
-	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<Subdivision, SubdivisionRecord>
+	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>, IMapper<Subdivision, SubdivisionRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
 		private readonly CoordsHelper _coordsHelper;
@@ -34,32 +34,48 @@ namespace MSetRepo
 
 		public Job MapFrom(JobRecord target)
 		{
-			var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
-
-			var result = new Job(target.Id, target.Label, target.ProjectId, target.ParentJobId, target.CanvasSize,
-				coords, target.SubDivisionId,
-				target.MapCalcSettings, target.ColorMapEntries, target.HighColorCss);
+			var result = new Job(
+				id: target.Id,
+				parentJobId: target.ParentJobId,
+				projectId: target.ProjectId,
+				subdivisionId: target.SubDivisionId,
+				label: target.Label,
+				mSetInfo: MapFrom(target.MSetInfo));
 
 			return result;
 		}
 
 		public JobRecord MapTo(Job source)
 		{
-			var coords = _coordsHelper.BuildCoords(source.Coords);
-
-			var result = new JobRecord(source.Label, source.ProjectId, source.ParentJobId, source.CanvasSize, 
-				coords, source.SubdivisionId, 
-				source.MapCalcSettings, source.ColorMapEntries, source.HighColorCss);
+			var result = new JobRecord(
+				source.ParentJobId,
+				source.ProjectId,
+				source.SubdivisionId,
+				source.Label,
+				MapTo(source.MSetInfo));
 
 			return result;
 		}
 
-		public SubdivisionRecord MapTo(Subdivision source)
+		public MSetInfo MapFrom(MSetInfoRecord target)
 		{
-			var position = _coordsHelper.BuildPointRecord(source.Position);
-			var samplePointDelta = _coordsHelper.BuildSizeRecord(source.SamplePointDelta);
+			var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
+			var result = new MSetInfo(
+				canvasSize: target.CanvasSize,
+				coords: coords,
+				mapCalcSettings: target.MapCalcSettings,
+				target.ColorMapEntries,
+				target.HighColorCss);
 
-			var result = new SubdivisionRecord(position, source.BlockSize, samplePointDelta);
+			return result;
+		}
+
+		public MSetInfoRecord MapTo(MSetInfo source)
+		{
+			var coords = _coordsHelper.BuildCoords(source.Coords);
+
+			var result = new MSetInfoRecord(source.CanvasSize, coords, source.MapCalcSettings, source.ColorMapEntries, source.HighColorCss);
+
 			return result;
 		}
 
@@ -69,6 +85,15 @@ namespace MSetRepo
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.SizeDto);
 
 			var result = new Subdivision(target.Id, position, target.BlockSize, samplePointDelta);
+			return result;
+		}
+
+		public SubdivisionRecord MapTo(Subdivision source)
+		{
+			var position = _coordsHelper.BuildPointRecord(source.Position);
+			var samplePointDelta = _coordsHelper.BuildSizeRecord(source.SamplePointDelta);
+
+			var result = new SubdivisionRecord(position, source.BlockSize, samplePointDelta);
 			return result;
 		}
 	}

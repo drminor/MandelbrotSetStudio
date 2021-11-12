@@ -3,6 +3,7 @@ using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
+using MSS.Types.MSetOld;
 using ProjectRepo;
 using System.Diagnostics;
 
@@ -94,7 +95,7 @@ namespace MSetDatabaseClient
 
 				var jobRecord = mSetRecordMapper.MapTo(zJob);
 
-				Debug.WriteLine($"Zoom: {zCntr}, Coords: {jobRecord.CoordsRecord.Display}.");
+				Debug.WriteLine($"Zoom: {zCntr}, Coords: {jobRecord.MSetInfo.CoordsRecord.Display}.");
 
 				//jobReaderWriter.Insert(zJob);
 

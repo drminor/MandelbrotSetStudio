@@ -3,6 +3,7 @@ using MSS.Types;
 using MqMessages;
 using System;
 using System.Diagnostics;
+using MSS.Types.MSetOld;
 
 namespace MClient
 {

@@ -55,7 +55,7 @@ namespace MSetRepo
 
 			if (jobIds.Length == 0)
 			{
-				result = CreateAndInsertFirstJob(project.Id, canvasSize, coords, subdivisionId.Value, mSetInfo, jobReaderWriter);
+				result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, jobReaderWriter);
 			}
 			else
 			{
@@ -71,7 +71,7 @@ namespace MSetRepo
 						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
 					}
 
-					result = CreateAndInsertFirstJob(project.Id, canvasSize, coords, subdivisionId.Value, mSetInfo, jobReaderWriter);
+					result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, jobReaderWriter);
 				}
 			}
 
@@ -94,9 +94,9 @@ namespace MSetRepo
 			return result;
 		}
 
-		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId subdivisionId, MSetInfo mSetInfo, JobReaderWriter jobReaderWriter)
+		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo, JobReaderWriter jobReaderWriter)
 		{
-			JobRecord jobRecord = CreateFirstJob(projectId, canvasSize, coords, subdivisionId, mSetInfo);
+			JobRecord jobRecord = CreateFirstJob(projectId, subdivisionId, mSetInfo);
 			var result = jobReaderWriter.Insert(jobRecord);
 
 			return result;
@@ -159,20 +159,18 @@ namespace MSetRepo
 			return project;
 		}
 
-		private JobRecord CreateFirstJob(ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId subdivisionId, MSetInfo mSetInfo)
+		private JobRecord CreateFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo)
 		{
-			RRectangleRecord coordsDto = _coordsHelper.BuildCoords(coords);
+			RRectangleRecord coordsDto = _coordsHelper.BuildCoords(mSetInfo.Coords);
+
+			var mSetInfoRecord = new MSetInfoRecord(mSetInfo.CanvasSize, coordsDto, mSetInfo.MapCalcSettings, mSetInfo.ColorMapEntries, mSetInfo.HighColorCss);
 
 			JobRecord jobRecord = new JobRecord(
-				Label: ROOT_JOB_LABEL, 
-				ProjectId: projectId,
 				ParentJobId: null,
-				CanvasSize: canvasSize, 
-				CoordsRecord: coordsDto, 
+				ProjectId: projectId,
 				SubDivisionId: subdivisionId,
-				MapCalcSettings: mSetInfo.MapCalcSettings,
-				ColorMapEntries: mSetInfo.ColorMap.ColorMapEntries, 
-				HighColorCss: mSetInfo.HighColorCss
+				Label: ROOT_JOB_LABEL,
+				MSetInfo: mSetInfoRecord
 				);
 
 			return jobRecord;

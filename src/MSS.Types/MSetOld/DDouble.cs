@@ -1,4 +1,4 @@
-﻿namespace MSS.Types
+﻿namespace MSS.Types.MSetOld
 {
 	public struct DDouble
 	{

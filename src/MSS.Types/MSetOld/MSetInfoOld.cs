@@ -1,11 +1,11 @@
 ﻿using MSS.Types.MSet;
 using System;
 
-namespace MSS.Types
+namespace MSS.Types.MSetOld
 {
-	public class MSetInfo
+	public class MSetInfoOld
     {
-		public MSetInfo(string name, ApCoords apCoords, bool isHighRes, MapCalcSettings mapCalcSettings, ColorMap colorMap)
+		public MSetInfoOld(string name, ApCoords apCoords, bool isHighRes, MapCalcSettings mapCalcSettings, ColorMap colorMap)
 		{
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			ApCoords = apCoords ?? throw new ArgumentNullException(nameof(apCoords));

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
-namespace MSS.Types
+namespace MSS.Types.MSetOld
 {
 	public class DRectangle : Rectangle<double>
 	{

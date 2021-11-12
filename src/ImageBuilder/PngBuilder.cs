@@ -3,6 +3,7 @@ using PngImageLib;
 using System;
 using System.IO;
 using MSS.Common;
+using MSS.Types.MSetOld;
 
 namespace ImageBuilder
 {
@@ -17,7 +18,7 @@ namespace ImageBuilder
 			_blockSize = blockSize;
 		}
 
-		public void Build(MSetInfo mSetInfo, IMapSectionReader mapSectionReader)
+		public void Build(MSetInfoOld mSetInfo, IMapSectionReader mapSectionReader)
 		{
 			var projectName = mSetInfo.Name;
 			var isHighRes = mSetInfo.IsHighRes;

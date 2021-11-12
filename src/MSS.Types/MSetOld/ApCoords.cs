@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MSS.Types
+namespace MSS.Types.MSetOld
 {
 	[Serializable]
 	public record ApCoords(string StartingX, string EndingX, string StartingY, string EndingY, double[] Bin)

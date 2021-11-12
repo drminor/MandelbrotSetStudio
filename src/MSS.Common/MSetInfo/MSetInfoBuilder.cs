@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
+using MSS.Types.MSetOld;
 using System.Collections.Generic;
 
 namespace MSS.Common
@@ -18,13 +19,13 @@ namespace MSS.Common
 
 		#endregion
 
-		public static MSetInfo Build(string name)
+		public static MSetInfoOld Build(string name)
 		{
-			MSetInfo info = GetMFileInfo(name);
+			MSetInfoOld info = GetMFileInfo(name);
 			return info;
 		}
 
-		private static MSetInfo GetMFileInfo(string name)
+		private static MSetInfoOld GetMFileInfo(string name)
 		{
 			switch (name)
 			{
@@ -41,7 +42,7 @@ namespace MSS.Common
 			}
 		}
 
-		private static MSetInfo BuildCircus1()
+		private static MSetInfoOld BuildCircus1()
 		{
 			var apCoords = new ApCoords(
 				Sx: -7.66830587074704020221573662634195e-01,
@@ -72,12 +73,12 @@ namespace MSS.Common
 
 			var colorMap = new ColorMap(entries, mapCalcSettings.MaxIterations, highColorCss);
 
-			MSetInfo result = new MSetInfo("Circus1", apCoords, isHighRes, mapCalcSettings, colorMap);
+			MSetInfoOld result = new MSetInfoOld("Circus1", apCoords, isHighRes, mapCalcSettings, colorMap);
 
 			return result;
 		}
 
-		private static MSetInfo BuildZoomTest(string projectName)
+		private static MSetInfoOld BuildZoomTest(string projectName)
 		{
 			var apCoords = new ApCoords(
 				Sx: -7.66830587074704020221573662634195e-01,
@@ -100,7 +101,7 @@ namespace MSS.Common
 
 			var colorMap = new ColorMap(entries, mapCalcSettings.MaxIterations, highColorCss);
 
-			MSetInfo result = new MSetInfo(projectName, apCoords, isHighRes, mapCalcSettings, colorMap);
+			MSetInfoOld result = new MSetInfoOld(projectName, apCoords, isHighRes, mapCalcSettings, colorMap);
 
 			return result;
 		}

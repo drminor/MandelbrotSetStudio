@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MSS.Types
+namespace MSS.Types.MSetOld
 {
 	[Serializable]
 	public struct KPoint : IEquatable<KPoint>, IEqualityComparer<KPoint>

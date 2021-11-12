@@ -1,6 +1,7 @@
 ﻿using System;
 using MSS.Types;
 using MqMessages;
+using MSS.Types.MSetOld;
 
 namespace MClient
 {

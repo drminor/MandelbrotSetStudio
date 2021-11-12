@@ -1,18 +1,19 @@
 ﻿using MSS.Types;
+using MSS.Types.MSetOld;
 
 namespace MSetInfoRepo
 {
 	public static class MSetInfoReaderWriter
 	{
-		public static MSetInfo Read(string path)
+		public static MSetInfoOld Read(string path)
 		{
 			MFileInfo mFileInfo = ReadFromJson(path);
-			MSetInfo result = MFileHelper.GetMSetInfo(mFileInfo);
+			MSetInfoOld result = MFileHelper.GetMSetInfo(mFileInfo);
 
 			return result;
 		}
 
-		public static void Write(MSetInfo mSetInfo, string path)
+		public static void Write(MSetInfoOld mSetInfo, string path)
 		{
 
 		}

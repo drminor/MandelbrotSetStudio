@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MSS.Types
+namespace MSS.Types.MSetOld
 {
 	public static class DoubleHelper
 	{

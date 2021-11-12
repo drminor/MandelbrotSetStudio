@@ -1,6 +1,7 @@
 ﻿using FileDictionaryLib;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSetOld;
 using System;
 
 namespace MapSectionRepo

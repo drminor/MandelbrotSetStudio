@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSetOld;
 using System;
 
 namespace MClient

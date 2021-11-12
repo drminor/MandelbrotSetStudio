@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSetOld;
 using System;
 using System.Collections.Generic;
 
@@ -6,10 +7,10 @@ namespace MSetInfoRepo
 {
 	public static class MFileHelper
 	{
-        internal static MSetInfo GetMSetInfo(MFileInfo mFileInfo)
+        internal static MSetInfoOld GetMSetInfo(MFileInfo mFileInfo)
 		{
             var colorMap = GetColorMap(mFileInfo.ColorMapEntries, mFileInfo.MapCalcSettings.MaxIterations, mFileInfo.HighColorCss);
-            var result = new MSetInfo(mFileInfo.Name, mFileInfo.ApCoords, mFileInfo.IsHighRes, mFileInfo.MapCalcSettings, colorMap);
+            var result = new MSetInfoOld(mFileInfo.Name, mFileInfo.ApCoords, mFileInfo.IsHighRes, mFileInfo.MapCalcSettings, colorMap);
             return result;
 		}
 

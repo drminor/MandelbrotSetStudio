@@ -33,14 +33,19 @@ namespace MSS.Common
 
 		public static Job ZoomIn(Job job)
 		{
-			var rRectangleZoomed = RMapHelper.Zoom(job.Coords);
+			var rRectangleZoomed = RMapHelper.Zoom(job.MSetInfo.Coords);
 
 			// TODO: search for an existing SubDivision and use it.
 			var subdivisionId = ObjectId.GenerateNewId();
 
-			Job result = new Job(ObjectId.GenerateNewId(), label: null, job.ProjectId, job.Id, job.CanvasSize, 
-				rRectangleZoomed, subdivisionId,
-				job.MapCalcSettings, job.ColorMapEntries, job.HighColorCss);
+			var result = new Job(
+				id: ObjectId.GenerateNewId(),
+				parentJobId: job.Id, 
+				projectId: job.ProjectId,
+				subdivisionId: subdivisionId,
+				label: null,
+				new MSetInfo(job.MSetInfo.CanvasSize, rRectangleZoomed, job.MSetInfo.MapCalcSettings, job.MSetInfo.ColorMapEntries, job.MSetInfo.HighColorCss)
+				);
 
 			return result;
 		}
