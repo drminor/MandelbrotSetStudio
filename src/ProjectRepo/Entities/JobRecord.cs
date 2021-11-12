@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
+using MSS.Types.MSet;
 using System.Collections.Generic;
 
 namespace ProjectRepo.Entities
@@ -11,9 +12,7 @@ namespace ProjectRepo.Entities
 		SizeInt CanvasSize,
 		RRectangleRecord CoordsRecord,
 		ObjectId SubDivisionId,
-		int MaxInterations,
-		int Threshold,
-		int IterationsPerStep,
+		MapCalcSettings MapCalcSettings,
 		IList<ColorMapEntry> ColorMapEntries,
 		string HighColorCss
 		) : RecordBase()

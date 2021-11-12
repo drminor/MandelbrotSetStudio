@@ -1,21 +1,19 @@
-﻿using MSS.Types;
-using MapSectionRepo;
-using MSetInfoRepo;
+﻿using MapSectionRepo;
+using MEngineClient;
+using MEngineDataContracts;
+using MongoDB.Bson;
+using MSetDatabaseClient;
+using MSetRepo;
+using MSS.Common;
+using MSS.Common.DataTransferObjects;
+using MSS.Types;
+using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 using ProjectRepo;
 using System;
-using System.IO;
-using MSS.Common;
-using MSetDatabaseClient;
-using MSS.Types.MSetRepo;
-using MSS.Common.MSetRepo;
-using MSS.Types.Base;
-using MSetRepo;
-using MEngineClient;
 using System.Diagnostics;
-using MSS.Types.MSet;
-using MongoDB.Bson;
-using MSS.Common.DataTransferObjects;
-using MSS.Types.DataTransferObjects;
+using System.IO;
+using System.Numerics;
 
 namespace ImageBuilder
 {
@@ -32,7 +30,7 @@ namespace ImageBuilder
 		{
 			//int cmd = int.Parse(args[0] ?? "-1");
 
-			int cmd = 3;
+			int cmd = 5;
 
 			switch (cmd)
 			{
@@ -89,18 +87,52 @@ namespace ImageBuilder
 					}
 				case 4:
 					{
+						//var mClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
+
+						//var x = mClient.SendHelloAsync().GetAwaiter().GetResult();
+
+						//Debug.WriteLine($"The reply is {x.Message}");
+
+						//Console.WriteLine($"reply is {x.Message}");
+
+						break;
+					}
+				case 5:
+					{
 						var mClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
+						var request = BuildMapSectionRequest();
 
-						var x = mClient.SendHelloAsync().GetAwaiter().GetResult();
+						try
+						{
+							var x = mClient.SubmitMapSectionRequestAsync(request).GetAwaiter().GetResult();
 
-						Debug.WriteLine($"The reply is {x.Message}");
-
-						Console.WriteLine($"reply is {x.Message}");
+							Debug.WriteLine($"The reply is {x.Status}");
+							Console.WriteLine($"reply is {x.Status}");
+						}
+						catch (Exception e)
+						{
+							Debug.WriteLine($"Got {e.Message}");
+						}
 
 						break;
 					}
 				default: throw new InvalidOperationException($"The value: {cmd} for cmd is not recognized or is not supported.");
 			}
+		}
+
+		private static MapSectionRequest BuildMapSectionRequest()
+		{
+			var result = new MapSectionRequest
+			{
+				SubdivisionId = "TestId",
+				BlockPosition = new PointInt(0, 0),
+				Position = new RPointDto(new BigInteger[] { 1, 2 }, 0),
+				BlockSize = RMapConstants.BLOCK_SIZE,
+				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -11),
+				MapCalcSettings = new MapCalcSettings(maxIterations: 300, threshold: 4, iterationsPerStep: 100)
+			};
+
+			return result;
 		}
 
 		private static IMapSectionReader GetMapSectionReader(string repoFilename, bool isHighRes)

@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSet;
 using System.Collections.Generic;
 
 namespace MSS.Common
@@ -67,13 +68,11 @@ namespace MSS.Common
 
 			string highColorCss = "#000000";
 
-			int maxIterations = 4000;
-			int threshold = 4;
-			int iterationsPerStep = 100;
+			MapCalcSettings mapCalcSettings = new MapCalcSettings(maxIterations: 4000, threshold: 4, iterationsPerStep: 100);
 
-			var colorMap = new ColorMap(entries, maxIterations, highColorCss);
+			var colorMap = new ColorMap(entries, mapCalcSettings.MaxIterations, highColorCss);
 
-			MSetInfo result = new MSetInfo("Circus1", apCoords, isHighRes, maxIterations, threshold, iterationsPerStep, colorMap);
+			MSetInfo result = new MSetInfo("Circus1", apCoords, isHighRes, mapCalcSettings, colorMap);
 
 			return result;
 		}
@@ -97,13 +96,11 @@ namespace MSS.Common
 
 			string highColorCss = "#000000";
 
-			int maxIterations = 400;
-			int threshold = 4;
-			int iterationsPerStep = 100;
+			MapCalcSettings mapCalcSettings = new MapCalcSettings(maxIterations: 400, threshold: 4, iterationsPerStep: 100);
 
-			var colorMap = new ColorMap(entries, maxIterations, highColorCss);
+			var colorMap = new ColorMap(entries, mapCalcSettings.MaxIterations, highColorCss);
 
-			MSetInfo result = new MSetInfo(projectName, apCoords, isHighRes, maxIterations, threshold, iterationsPerStep, colorMap);
+			MSetInfo result = new MSetInfo(projectName, apCoords, isHighRes, mapCalcSettings, colorMap);
 
 			return result;
 		}

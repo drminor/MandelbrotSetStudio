@@ -1,6 +1,7 @@
 ﻿using Grpc.Net.Client;
 using MEngineDataContracts;
 using ProtoBuf.Grpc.Client;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -17,20 +18,38 @@ namespace MEngineClient
 			_grpcChannel = null;
 		}
 
-		public async Task<HelloReply1> SendHelloAsync()
+		//public async Task<HelloReply1> SendHelloAsync()
+		//{
+		//	IMapSectionService mEngineService = GetMapSectionService();
+
+		//	var reply = await mEngineService.SayHelloAsync(new HelloRequest1 { Name = "GreeterClient" });
+		//	Debug.WriteLine($"Greeting: {reply.Message}");
+
+		//	return reply;
+		//}
+
+		public async Task<MapSectionResponse> SubmitMapSectionRequestAsync(MapSectionRequest mapSectionRequest)
 		{
 			IMapSectionService mEngineService = GetMapSectionService();
 
-			var reply = await mEngineService.SayHelloAsync(new HelloRequest1 { Name = "GreeterClient" });
-			Debug.WriteLine($"Greeting: {reply.Message}");
+			var reply = await mEngineService.SubmitMapSectionRequestAsync(mapSectionRequest);
+			Debug.WriteLine($"Submit MapSectionRequest returned: {reply.Status}");
 
 			return reply;
 		}
 
 		private IMapSectionService GetMapSectionService()
 		{
-			var client = Channel.CreateGrpcService<IMapSectionService>();
-			return client;
+			try
+			{
+				var client = Channel.CreateGrpcService<IMapSectionService>();
+				return client;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Got exc: {e.GetType()}:{e.Message}");
+				throw;
+			}
 		}
 
 		private GrpcChannel Channel

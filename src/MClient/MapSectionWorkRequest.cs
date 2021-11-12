@@ -14,7 +14,7 @@ namespace MClient
 		public MapSectionWorkRequest(RectangleInt mapSection, int maxIterations, int hPtr, int vPtr)
 		{
 			MaxIterations = maxIterations;
-			MapSection = mapSection ?? throw new ArgumentNullException(nameof(mapSection));
+			MapSection = mapSection;
 			HPtr = hPtr;
 			VPtr = vPtr;
 		}

@@ -33,8 +33,8 @@ namespace MClient
 		{
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			Coords = coords ?? throw new ArgumentNullException(nameof(coords));
-			CanvasSize = canvasSize ?? throw new ArgumentNullException(nameof(canvasSize));
-			Area = area ?? throw new ArgumentNullException(nameof(area));
+			CanvasSize = canvasSize;
+			Area = area;
 			MaxIterations = maxIterations;
 			ConnectionId = connectionId ?? throw new ArgumentNullException(nameof(connectionId));
 		}

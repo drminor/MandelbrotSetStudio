@@ -1,32 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 
 namespace MSS.Types
 {
-	[Serializable]
-	public class PointInt : IEquatable<PointInt>
+	[DataContract]
+	public struct PointInt : IEquatable<PointInt>, IEqualityComparer<PointInt>
 	{
-		public PointInt() : this(0,0) {	}
-
 		public PointInt(int x, int y)
 		{
 			X = x;
 			Y = y;
 		}
 
+		[DataMember(Order = 1)]
 		public int X { get; set; }
+
+		[DataMember(Order = 2)]
 		public int Y { get; set; }
 
 		public override bool Equals(object? obj)
 		{
-			return Equals(obj as PointInt);
+			return obj is PointInt pi && Equals(pi);
 		}
 
-		public bool Equals(PointInt? other)
+		public bool Equals(PointInt other)
 		{
-			return !(other is null) &&
-				   X == other.X &&
+			return X == other.X &&
 				   Y == other.Y;
+		}
+
+		public bool Equals(PointInt x, PointInt y)
+		{
+			return x.Equals(y);
 		}
 
 		public override int GetHashCode()
@@ -34,14 +41,19 @@ namespace MSS.Types
 			return HashCode.Combine(X, Y);
 		}
 
-		public static bool operator ==(PointInt int1, PointInt int2)
+		public int GetHashCode([DisallowNull] PointInt obj)
 		{
-			return EqualityComparer<PointInt>.Default.Equals(int1, int2);
+			return HashCode.Combine(obj.X, obj.Y);
 		}
 
-		public static bool operator !=(PointInt int1, PointInt int2)
+		public static bool operator ==(PointInt left, PointInt right)
 		{
-			return !(int1 == int2);
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(PointInt left, PointInt right)
+		{
+			return !(left == right);
 		}
 	}
 }

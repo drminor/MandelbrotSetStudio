@@ -32,17 +32,17 @@ namespace MqMessages
 		public static FJobRequest CreateDeleteRequest(int jobId, bool deleteRepo)
 		{
 			string jobName = deleteRepo ? "deljob" : "cancel";
-			return new FJobRequest(jobId, jobName, FJobRequestType.Delete, null, null, null, 0);
+			return new FJobRequest(jobId, jobName, FJobRequestType.Delete, null, new RectangleInt(), new SizeInt(), 0);
 		}
 
 		public static FJobRequest CreateGetHistogramRequest(int jobId)
 		{
-			return new FJobRequest(jobId, "GetHistogram", FJobRequestType.GetHistogram, null, null, null, 0);
+			return new FJobRequest(jobId, "GetHistogram", FJobRequestType.GetHistogram, null, new RectangleInt(), new SizeInt(), 0);
 		}
 
 		public static FJobRequest CreateReplayRequest(int jobId)
 		{
-			return new FJobRequest(jobId, "Replay", FJobRequestType.Replay, null, null, null, 0);
+			return new FJobRequest(jobId, "Replay", FJobRequestType.Replay, null, new RectangleInt(), new SizeInt(), 0);
 		}
 	}
 }

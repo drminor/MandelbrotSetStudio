@@ -14,7 +14,7 @@ namespace MClient
 		public MapSectionResult(int jobId, RectangleInt mapSection, int[] imageData)
 		{
 			JobId = jobId;
-			MapSection = mapSection ?? throw new ArgumentNullException(nameof(mapSection));
+			MapSection = mapSection;
 			ImageData = imageData ?? throw new ArgumentNullException(nameof(imageData));
 		}
 	}

@@ -21,7 +21,7 @@ namespace ImageBuilder
 		{
 			var projectName = mSetInfo.Name;
 			var isHighRes = mSetInfo.IsHighRes;
-			var maxIterations = mSetInfo.MaxIterations;
+			var maxIterations = mSetInfo.MapCalcSettings.MaxIterations;
 			var colorMap = mSetInfo.ColorMap;
 
 			SizeInt imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();

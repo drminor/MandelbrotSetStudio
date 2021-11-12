@@ -38,7 +38,7 @@ namespace MSetRepo
 
 			var result = new Job(target.Id, target.Label, target.ProjectId, target.ParentJobId, target.CanvasSize,
 				coords, target.SubDivisionId,
-				target.MaxInterations, target.Threshold, target.IterationsPerStep, target.ColorMapEntries, target.HighColorCss);
+				target.MapCalcSettings, target.ColorMapEntries, target.HighColorCss);
 
 			return result;
 		}
@@ -49,7 +49,7 @@ namespace MSetRepo
 
 			var result = new JobRecord(source.Label, source.ProjectId, source.ParentJobId, source.CanvasSize, 
 				coords, source.SubdivisionId, 
-				source.MaxInterations, source.Threshold, source.IterationsPerStep, source.ColorMapEntries, source.HighColorCss);
+				source.MapCalcSettings, source.ColorMapEntries, source.HighColorCss);
 
 			return result;
 		}
@@ -68,7 +68,7 @@ namespace MSetRepo
 			var position = _dtoMapper.MapFrom(target.Position.PointDto);
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.SizeDto);
 
-			var result = new Subdivision(position, target.BlockSize, samplePointDelta);
+			var result = new Subdivision(target.Id, position, target.BlockSize, samplePointDelta);
 			return result;
 		}
 	}

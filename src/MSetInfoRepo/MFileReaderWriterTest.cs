@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.IO;
 
@@ -42,7 +43,9 @@ namespace MSetInfoRepo
 
 			string highColor = "#000000";
 
-			MFileInfo result = new MFileInfo(name, apCoords, isHighRes:false, 1000, 4, 100, colorMapEntrires, highColor);
+			var mapCalcSettings = new MapCalcSettings(maxIterations: 1000, threshold: 4, iterationsPerStep: 100);
+
+			MFileInfo result = new MFileInfo(name, apCoords, IsHighRes:false, mapCalcSettings, colorMapEntrires, highColor);
 
 			return result;
 		}

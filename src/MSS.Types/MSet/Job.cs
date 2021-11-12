@@ -13,9 +13,7 @@ namespace MSS.Types.MSet
 		public SizeInt CanvasSize { get; init; }
 		public RRectangle Coords { get; init; }
 		public ObjectId SubdivisionId { get; init; }
-		public int MaxInterations { get; init; }
-		public int Threshold { get; init; }
-		public int IterationsPerStep { get; init; }
+		public MapCalcSettings MapCalcSettings { get; init; }
 		public IList<ColorMapEntry> ColorMapEntries { get; init; }
 		public string HighColorCss { get; init; }
 
@@ -27,13 +25,9 @@ namespace MSS.Types.MSet
 			SizeInt canvasSize,
 			RRectangle coords,
 			ObjectId subdivisionId,
-			int maxInterations,
-			int threshold,
-			int iterationsPerStep,
+			MapCalcSettings mapCalcSettings,
 			IList<ColorMapEntry> colorMapEntries,
 			string highColorCss
-			//,
-			//IList<MapSectionPtr>? mapSectionPtrs
 			)
 		{
 			Id = id;
@@ -43,9 +37,7 @@ namespace MSS.Types.MSet
 			CanvasSize = canvasSize;
 			Coords = coords;
 			SubdivisionId = subdivisionId;
-			MaxInterations = maxInterations;
-			Threshold = threshold;
-			IterationsPerStep = iterationsPerStep;
+			MapCalcSettings = mapCalcSettings;
 			ColorMapEntries = colorMapEntries;
 			HighColorCss = highColorCss;
 		}

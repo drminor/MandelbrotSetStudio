@@ -1,34 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 
 namespace MSS.Types
 {
-	[Serializable]
-	public class SizeInt : IEquatable<SizeInt>
+	[DataContract]
+	public struct SizeInt : IEquatable<SizeInt>, IEqualityComparer<SizeInt>
 	{
-		public SizeInt() : this(0, 0) { }
-
 		public SizeInt(int width, int heigth)
 		{
 			Width = width;
 			Height = heigth;
 		}
 
+		[DataMember(Order = 1)]
 		public int Width { get; set; }
+
+		[DataMember(Order = 2)]
 		public int Height { get; set; }
 
 		public int NumberOfCells => Width * Height;
 
 		public override bool Equals(object? obj)
 		{
-			return Equals(obj as SizeInt);
+			return obj is SizeInt si && Equals(si);
 		}
 
-		public bool Equals(SizeInt? other)
+		public bool Equals(SizeInt other)
 		{
-			return !(other is null)
-				&& Width == other.Width
-				&& Height == other.Height;
+			return Width == other.Width &&
+				   Height == other.Height;
+		}
+
+		public bool Equals(SizeInt x, SizeInt y)
+		{
+			return x.Equals(y);
 		}
 
 		public override int GetHashCode()
@@ -36,14 +43,21 @@ namespace MSS.Types
 			return HashCode.Combine(Width, Height);
 		}
 
-		public static bool operator ==(SizeInt int1, SizeInt int2)
+		public int GetHashCode([DisallowNull] SizeInt obj)
 		{
-			return EqualityComparer<SizeInt>.Default.Equals(int1, int2);
+			return HashCode.Combine(obj.Width, obj.Height);
 		}
 
-		public static bool operator !=(SizeInt int1, SizeInt int2)
+		public static bool operator ==(SizeInt left, SizeInt right)
 		{
-			return !(int1 == int2);
+			return left.Equals(right);
 		}
+
+		public static bool operator !=(SizeInt left, SizeInt right)
+		{
+			return !(left == right);
+		}
+
+
 	}
 }

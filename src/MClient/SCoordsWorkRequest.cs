@@ -35,8 +35,8 @@ namespace MClient
 		{
 			TransformType = transformType;
 			ApCoords = apCoords ?? throw new ArgumentNullException(nameof(ApCoords));
-			CanvasSize  = canvasSize ?? throw new ArgumentNullException(nameof(canvasSize));
-			MapSection = mapSection ?? throw new ArgumentNullException(nameof(mapSection));
+			CanvasSize  = canvasSize;
+			MapSection = mapSection;
 			JobId = jobId;
 		}
 	}

@@ -6,6 +6,7 @@ using MSS.Types.MSet;
 using MSS.Types.MSetRepo;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace MSS.Common
 {
@@ -39,20 +40,48 @@ namespace MSS.Common
 
 			Job result = new Job(ObjectId.GenerateNewId(), label: null, job.ProjectId, job.Id, job.CanvasSize, 
 				rRectangleZoomed, subdivisionId,
-				job.MaxInterations, job.Threshold, job.IterationsPerStep, job.ColorMapEntries, job.HighColorCss);
+				job.MapCalcSettings, job.ColorMapEntries, job.HighColorCss);
 
 			return result;
 		}
 
 		public static Subdivision CreateSubdivision(SizeInt canvasSize, SizeInt blockSize, RRectangle coords)
 		{
-			var position = new RPoint();
-			var samplePointDelta = new RSize();
+			var position = coords.LeftBot;
 
-			var result = new Subdivision(position, blockSize, samplePointDelta);
+			// Round canvasSize up to the nearest power of 2. (1280 --> 2048) 2048 = 2^11
+			// SampleSize is then 1/canvasSize. (2^-11)
+			var samplePointDelta = new RSize(1, 1, -11);
+
+			// TODO: adjust coords to be expanded in proportion to the amount the canvasSize has been expanded.
+
+			var result = new Subdivision(ObjectId.GenerateNewId(), position, blockSize, samplePointDelta);
 
 			return result;
 		}
+
+		///// <summary>
+		///// 
+		///// </summary>
+		///// <param name="canvasExtent"></param>
+		///// <param name="coordExtent"></param>
+		///// <param name="coordExp"></param>
+		///// <returns>Extent in X and SampleWidth in Y</returns>
+		//private static RPoint GetExtentAndSampleWidth(int canvasExtent, BigInteger coordExtent, int coordExp)
+		//{
+		//	RPoint result = new RPoint();
+
+		//	return result;
+		//}
+
+		//private static BigInteger GetExtent(int canvasExtent, BigInteger coordExtent, int coordExp)
+		//{
+		//	BigInteger result = new BigInteger();
+
+		//	return result;
+		//}
+
+
 
 	}
 }

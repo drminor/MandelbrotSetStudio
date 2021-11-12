@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types
 {
-	[Serializable]
-	public class RectangleInt : IEqualityComparer<RectangleInt>, IEquatable<RectangleInt>
-	{
-		public RectangleInt() : this(new PointInt(), new SizeInt()) { }
 
+	//: IEqualityComparer<RectangleInt>, IEquatable<RectangleInt>
+
+
+	public struct RectangleInt : IEquatable<RectangleInt>, IEqualityComparer<RectangleInt>
+	{
 		public RectangleInt(PointInt point, SizeInt size)
 		{
 			Point = point;
@@ -26,30 +28,17 @@ namespace MSS.Types
 			return result;
 		}
 
-		#region IEqualityComparer / IEquatable Support
 
-		public bool Equals(RectangleInt? x, RectangleInt? y)
-		{
-			if(x is null)
-			{
-				return y is null;
-			}
-			else
-			{
-				return x.Equals(y);
-			}
-		}
 
 		public override bool Equals(object? obj)
 		{
-			return Equals(obj as RectangleInt);
+			return obj is RectangleInt @int && Equals(@int);
 		}
 
-		public bool Equals(RectangleInt? other)
+		public bool Equals(RectangleInt other)
 		{
-			return !(other is null) &&
-				   Point == other.Point &&
-				   Size == other.Size;
+			return Point.Equals(other.Point) &&
+				   Size.Equals(other.Size);
 		}
 
 		public override int GetHashCode()
@@ -57,21 +46,24 @@ namespace MSS.Types
 			return HashCode.Combine(Point, Size);
 		}
 
-		public int GetHashCode(RectangleInt obj)
+		public bool Equals(RectangleInt x, RectangleInt y)
 		{
-			return obj.GetHashCode();
+			return x.Equals(y);
 		}
 
-		public static bool operator ==(RectangleInt int1, RectangleInt int2)
+		public int GetHashCode([DisallowNull] RectangleInt obj)
 		{
-			return EqualityComparer<RectangleInt>.Default.Equals(int1, int2);
+			return HashCode.Combine(obj.Point, obj.Size);
 		}
 
-		public static bool operator !=(RectangleInt int1, RectangleInt int2)
+		public static bool operator ==(RectangleInt left, RectangleInt right)
 		{
-			return !(int1 == int2);
+			return left.Equals(right);
 		}
 
-		#endregion
+		public static bool operator !=(RectangleInt left, RectangleInt right)
+		{
+			return !(left == right);
+		}
 	}
 }

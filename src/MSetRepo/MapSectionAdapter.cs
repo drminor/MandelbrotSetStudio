@@ -169,10 +169,8 @@ namespace MSetRepo
 				ParentJobId: null,
 				CanvasSize: canvasSize, 
 				CoordsRecord: coordsDto, 
-				SubDivisionId: subdivisionId, 
-				MaxInterations: mSetInfo.MaxIterations, 
-				Threshold: mSetInfo.Threshold, 
-				IterationsPerStep: mSetInfo.InterationsPerStep,
+				SubDivisionId: subdivisionId,
+				MapCalcSettings: mSetInfo.MapCalcSettings,
 				ColorMapEntries: mSetInfo.ColorMap.ColorMapEntries, 
 				HighColorCss: mSetInfo.HighColorCss
 				);
