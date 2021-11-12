@@ -20,13 +20,10 @@ namespace MSetDatabaseClient
 
 		public void Import(IMapSectionReader mapSectionReader, Project projectData, MSetInfo mSetInfo, bool overwrite)
 		{
-			SizeInt canvasSize = new SizeInt(1280, 1280);
-			RRectangle coords = RMapConstants.ENTIRE_SET_RECTANGLE;
-
 			// Make sure the project record has been written.
 			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
 
-			var jobId = _mapSectionAdapter.CreateJob(project, canvasSize, coords, mSetInfo, overwrite);
+			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, overwrite);
 
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
 			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);
@@ -75,7 +72,7 @@ namespace MSetDatabaseClient
 			// Make sure the project record has been written.
 			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
 
-			var jobId = _mapSectionAdapter.CreateJob(project, canvasSize, coords, mSetInfo, overwrite);
+			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, overwrite);
 
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
 			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);

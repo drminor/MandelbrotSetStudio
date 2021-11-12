@@ -38,17 +38,17 @@ namespace MSetRepo
 			return job;
 		}
 
-		public ObjectId CreateJob(Project project, SizeInt canvasSize, RRectangle coords, MSetInfo mSetInfo, bool overwrite)
+		public ObjectId CreateJob(Project project, MSetInfo mSetInfo, bool overwrite)
 		{
 			ObjectId result;
 
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
-			var subdivisionId = GetSubdivision(coords.Exponent, subdivisionReaderWriter);
+			var subdivisionId = GetSubdivision(mSetInfo.Coords.Exponent, subdivisionReaderWriter);
 
 			if (!subdivisionId.HasValue)
 			{
-				subdivisionId = CreateAndInsertSubdivision(canvasSize, coords, subdivisionReaderWriter);
+				subdivisionId = CreateAndInsertSubdivision(mSetInfo.CanvasSize, mSetInfo.Coords, subdivisionReaderWriter);
 			}
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobIds = jobReaderWriter.GetJobIds(project.Id);
