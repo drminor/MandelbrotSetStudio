@@ -66,9 +66,6 @@ namespace MSetDatabaseClient
 
 		public void DoZoomTest1(Project projectData, MSetInfo mSetInfo, bool overwrite)
 		{
-			SizeInt canvasSize = new SizeInt(1280, 1280);
-			RRectangle coords = RMapConstants.ENTIRE_SET_RECTANGLE;
-
 			// Make sure the project record has been written.
 			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
 

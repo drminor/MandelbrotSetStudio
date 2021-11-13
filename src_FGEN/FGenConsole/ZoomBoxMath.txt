@@ -1,0 +1,336 @@
+export class Box implements IBox {
+  constructor(public botLeft: IPoint, public topRight: IPoint) { }
+
+  public static fromPointExtent(botLeft: IPoint, width: number, height: number): IBox {
+    const result: IBox = new Box(botLeft, new Point(botLeft.x + width, botLeft.y + height));
+
+    return result;
+  }
+
+  public get width(): number {
+    return this.topRight.x - this.botLeft.x;
+  }
+
+  public get height(): number {
+    return this.topRight.y - this.botLeft.y;
+  }
+
+  public get isUpsideDown(): boolean {
+    return this.topRight.y < this.botLeft.y;
+  }
+
+  public get isBackwards(): boolean {
+    return this.topRight.x < this.botLeft.x;
+  }
+
+  public get absHeight(): number {
+    if (this.isUpsideDown) {
+      return this.botLeft.y - this.topRight.y;
+    }
+    else {
+      return this.height;
+    }
+  }
+
+  public get absTop(): number {
+    if (this.isUpsideDown) {
+      return this.botLeft.y;
+    }
+    else {
+      return this.topRight.y;
+    }
+  }
+
+  public get absWidth(): number {
+    if (this.isBackwards) {
+      return this.botLeft.x - this.topRight.x;
+    }
+    else {
+      return this.width;
+    }
+  }
+
+  public get absLeft(): number {
+    if (this.isBackwards) {
+      return this.botLeft.x;
+    }
+    else {
+      return this.topRight.x;
+    }
+  }
+
+  public get size(): ICanvasSize {
+    return new CanvasSize(this.width, this.height);
+  }
+
+  public get absSize(): ICanvasSize {
+    return new CanvasSize(this.absWidth, this.absHeight);
+  }
+
+  public getShiftedBox(dir: string, percent: number): IBox {
+    let result: IBox;
+    let delta: number;
+
+    switch (dir) {
+      case 'r':
+        delta = this.width * percent / 100;
+        result = this.addX(delta);
+        break;
+      case 'l':
+        delta = this.width * percent / 100;
+        result = this.addX(-1 * delta);
+        break;
+      case 'u':
+        delta = this.height * percent / 100;
+        result = this.addY(delta);
+        break;
+      case 'd':
+        delta = this.height * percent / 100;
+        result = this.addY(-1 * delta);
+        break;
+      default:
+        console.log('GetShiftedCoords received unrecognized dir ' + dir + '.');
+        result = this;
+    }
+    return result;
+  }
+
+  public addX(amount: number): IBox {
+    let result = new Box(
+      new Point(this.botLeft.x + amount, this.botLeft.y),
+      new Point(this.topRight.x + amount, this.topRight.y)
+    );
+    return result;
+  }
+
+  public addY(amount: number): IBox {
+    let result = new Box(
+      new Point(this.botLeft.x, this.botLeft.y + amount),
+      new Point(this.topRight.x, this.topRight.y + amount)
+    );
+    return result;
+  }
+
+  public mult(amount: number): IBox {
+
+    let botLeft = new Point(this.botLeft.x * amount, this.botLeft.y * amount);
+    let topRight = new Point(this.topRight.x * amount, this.topRight.y * amount);
+
+    let result = new Box(botLeft, topRight);
+    return result;
+  }
+
+  public scale(factor: ICanvasSize): IBox {
+
+    console.log('The dif in x vs y factor on getScaledBox is ' + (factor.width - factor.height) + '.');
+
+    let result = new Box(
+      new Point(this.botLeft.x * factor.width, this.botLeft.y * factor.height),
+      new Point(this.topRight.x * factor.width, this.topRight.y * factor.height)
+    );
+    return result;
+  }
+
+  public translate(factor: IBox): IBox {
+    return new Box(this.botLeft.translate(factor.botLeft), this.topRight.translate(factor.topRight));
+  }
+
+  public getExpandedBox(percent: number): IBox {
+
+    // 1/2 the amount of change for the width
+    let deltaX = this.width * percent / 200;
+
+    // 1/2 the amount of change for the width
+    let deltaY = this.height * percent / 200;
+
+    let botLeft = new Point(this.botLeft.x - deltaX, this.botLeft.y - deltaY);
+    let topRight = new Point(this.topRight.x + deltaX, this.topRight.y + deltaY);
+
+    let result = new Box(botLeft, topRight);
+    return result;
+  }
+
+  public isEqual(box: IBox): boolean {
+
+    if (box === null) {
+      console.log('Comparing this box to null, returning NOT-EQUAL.');
+      return false;
+    }
+    else
+    {
+      if (!this.botLeft.isEqual(box.botLeft)) {
+        console.log('Comparing two boxes and found that they are NOT-EQUAL.');
+        return false;
+      }
+
+      if (!this.topRight.isEqual(box.topRight)) {
+        console.log('Comparing two boxes and found that they are NOT-EQUAL.');
+        return false;
+      }
+    }
+
+    console.log('Comparing two boxes and found that they are equal.');
+
+    return true;
+  }
+
+  // Return a box of the same size and position
+  // but make sure that the width and height are both positive.
+  public getNormalizedBox(): IBox {
+
+    let box = this;
+
+    let sx: number;
+    let sy: number;
+
+    let ex: number;
+    let ey: number;
+
+    if (box.botLeft.x < box.topRight.x) {
+      if (box.botLeft.y < box.topRight.y) {
+        // Already in normal form.
+        sx = box.botLeft.x;
+        ex = box.topRight.x;
+        sy = box.botLeft.y;
+        ey = box.topRight.y;
+      }
+      else {
+        // Width is already positive, reverse the y values.
+        sx = box.botLeft.x;
+        ex = box.topRight.x;
+        sy = box.topRight.y;
+        ey = box.botLeft.y;
+      }
+    }
+    else {
+      if (box.botLeft.y < box.topRight.y) {
+        // Height is already positive, reverse the x values.
+        sx = box.topRight.x;
+        ex = box.botLeft.x;
+        sy = box.botLeft.y;
+        ey = box.topRight.y;
+      } else {
+        // Reverse both x and y values.
+        sx = box.topRight.x;
+        ex = box.botLeft.x;
+        sy = box.topRight.y;
+        ey = box.botLeft.y;
+      }
+    }
+
+    let result = new Box(new Point(sx, sy), new Point(ex, ey));
+    return result;
+  }
+
+  //private round(x: number): number {
+  //  const result: number = parseInt((x + 0.5).toString(), 10);
+
+  //  return result;
+  //}
+
+  public toString(): string {
+    return 'sx:' + this.botLeft.x + ' ex:' + this.topRight.x + ' sy:' + this.botLeft.y + ' ey:' + this.topRight.y + '.';
+  }
+}
+
+
+-------
+
+  private getIntegerBox(box: IBox): IBox {
+    let result = new Box(new Point(this.round(box.botLeft.x), this.round(box.botLeft.y)), new Point(this.round(box.topRight.x), this.round(box.topRight.y)));
+    return result;
+  }
+
+  private round(x: number): number {
+    const result: number = parseInt((x + 0.5).toString(), 10);
+
+    return result;
+  }
+
+---------
+
+  private zoomIn(box: IBox): void {
+    this.zoomBox = null;
+
+    if (box.width < 2 || box.height < 2) {
+      return;
+    }
+    // The new coordinates must have its width = 1.5 * its height, because our canvas has that aspect ratio.
+
+    let nx: number;
+    let ny: number;
+
+    let nh: number;
+    let nw: number;
+
+    // Get a box where the start point is always in the lower, left.
+    let nBox = box.getNormalizedBox();
+
+    let rnBox = this.getIntegerBox(nBox);
+
+    // Determine if the height or the width of the zoom box will be used to calculate the new coordinates.
+    if (rnBox.width * 1.5 > rnBox.height) {
+      // Using the width will result in the smallest change to the resulting dimensions, use it.
+      //console.log('Using Width, adjusting height.');
+      nw = rnBox.width;
+      nh = this.round(rnBox.width / 1.5);
+      nx = rnBox.botLeft.x;
+
+      // Since we are changing the height, move the starting position 1/2 the distance of the change
+      // this will center the new height around the old box's vertical extent.
+      let vAdj = this.round((nh - rnBox.height) / 2);
+      //console.log('Moving start y back by ' + vAdj + '.');
+      ny = rnBox.botLeft.y - vAdj;
+      //ny = nBox.start.y;
+    }
+    else {
+      // Using the height will result in the smallest change to the resulting dimensions, use it.
+      //console.log('Using height, adjusting width.');
+      nw = this.round(rnBox.height * 1.5);
+      nh = rnBox.height;
+      ny = rnBox.botLeft.y;
+
+      // Since we are changing the width, move the starting position 1/2 the distance of the change
+      // this will center the new width around the old box's horizontal extent.
+      let hAdj = this.round((nw - rnBox.width) / 2);
+      //console.log('Moving start x back by ' + hAdj + '.');
+      nx = rnBox.botLeft.x - hAdj;
+      //nx = nBox.start.x;
+    }
+
+    let zBox = Box.fromPointExtent(new Point(nx, ny), nw, nh);
+
+    let me = this.round(nh * 1.5) - nw;
+
+    if (me > 1 || me < -1) {
+      console.log('The new zoom box has the wrong aspect ratio.');
+    }
+
+    //console.log('Original Zoom Box: ' + box.toString());
+    //console.log('Normalized Zoom Box: ' + nBox.toString());
+    //console.log('Proportioned Zoom Box: ' + zBox.toString());
+
+    //console.log('Current MapInfo = ' + this.mapInfo.toString());
+    //console.log('Canvas = w:' + this.canvasSize.width + ' h:' + this.canvasSize.height + '.');
+
+    let unitExtentX: number = (this._mapInfo.topRight.x - this._mapInfo.bottomLeft.x) / this.canvasSize.width;
+    let unitExtentY: number = (this._mapInfo.topRight.y - this._mapInfo.bottomLeft.y) / this.canvasSize.height;
+
+    //console.log('unit x: ' + unitExtentX + ' unit y' + unitExtentY);
+
+    let msx = this._mapInfo.bottomLeft.x + zBox.botLeft.x * unitExtentX;
+    let mex = this._mapInfo.bottomLeft.x + zBox.topRight.x * unitExtentX;
+    //console.log('new map sx: ' + msx + ' new map ex: ' + mex + '.');
+
+    // Canvas origin is the top, right -- map coordinate origin is the bottom, right.
+    // Invert the canvas coordinates.
+    let invCanvasSY = this.canvasSize.height - zBox.topRight.y;
+    let invCanvasEY = this.canvasSize.height - zBox.botLeft.y;
+
+    //console.log('Inverted Canvas sy:' + invCanvasSY + ' ey:' + invCanvasEY + '.');
+
+    let msy = this._mapInfo.bottomLeft.y + invCanvasSY * unitExtentY;
+    let mey = this._mapInfo.bottomLeft.y + invCanvasEY * unitExtentY;
+    //console.log('new map sy: ' + msy + ' new map ey: ' + mey + '.');
+
+    let coords: IBox = new Box(new Point(msx, msy), new Point(mex, mey));

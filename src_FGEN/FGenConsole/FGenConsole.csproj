@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="MqHelper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="MqHelper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MqMessages\MqMessages.csproj" />
+    <ProjectReference Include="..\..\src\MSS.Types\MSS.Types.csproj" />
+    <ProjectReference Include="..\qdDotNet\qdDotNet.vcxproj" />
+  </ItemGroup>
+
+</Project>

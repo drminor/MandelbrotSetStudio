@@ -1,0 +1,8 @@
+Release Notes
+=============
+
+2015-03-20	Version 1.0x
+	Fixed hypot()  - behaviour for hypot( Inf, NaN ) according to C99 F.9.4.3
+	Fixed fmod()   - case when during reduction, mantissa( x ) < mantissa( y ) can lead to a negative result
+
+2015-03-14	Version 1.0
