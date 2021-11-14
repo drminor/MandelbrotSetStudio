@@ -1,5 +1,5 @@
 ﻿using System;
-using ClrClassLib;
+using MSetGeneratorClr;
 
 namespace QdDotNetConsoleTest
 {
@@ -11,7 +11,7 @@ namespace QdDotNetConsoleTest
 
 			//var y = x.Test1(out string testString);
 
-			var x = new ClrClassLib.Class1();
+			var x = new MSetGenerator();
 
 			var z = x.Test22();
 

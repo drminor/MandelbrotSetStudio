@@ -2,9 +2,10 @@
 
 using namespace System;
 
-namespace ClrClassLib {
+namespace MSetGeneratorClr
+{
 
-	public ref class Class1
+	public ref class MSetGenerator
 	{
 
 	public:

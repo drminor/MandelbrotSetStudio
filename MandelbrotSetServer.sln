@@ -34,7 +34,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSS.Common", "src\MSS.Commo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QdDotNetConsoleTest", "src_FGEN\QdDotNetConsoleTest\QdDotNetConsoleTest.csproj", "{DF8D9693-BFA8-4DC6-8DD7-ACE04DE92249}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClrClassLib", "src_FGEN\ClrClassLib\ClrClassLib.vcxproj", "{A70F3314-503C-4AD9-8C82-1E0E1323E42F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSetGeneratorClr", "src_FGEN\MSetGeneratorClr\MSetGeneratorClr.vcxproj", "{A70F3314-503C-4AD9-8C82-1E0E1323E42F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

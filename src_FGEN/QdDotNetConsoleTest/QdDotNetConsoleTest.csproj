@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClrClassLib\ClrClassLib.vcxproj" />
+    <ProjectReference Include="..\MSetGeneratorClr\MSetGeneratorClr.vcxproj" />
   </ItemGroup>
 
 </Project>
