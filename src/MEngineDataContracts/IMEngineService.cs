@@ -11,7 +11,7 @@ namespace MEngineDataContracts
         //Task<HelloReply1> SayHelloAsync(HelloRequest1 request, CallContext context = default);
 
 		[OperationContract]
-		Task<MapSectionResponse> SubmitMapSectionRequestAsync(MapSectionRequest mapSectionRequest, CallContext context = default);
+		Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default);
 	}
 
 }

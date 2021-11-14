@@ -275,7 +275,7 @@ namespace FGenConsole
 
 			foreach (KPoint key in keys)
 			{
-				SubJobResult subJobResult = GetEmptySubJobResult(key);
+				SubJobResult subJobResult = GetEmptySubJobResult();
 
 				if(RetrieveWorkResultFromRepo(key, subJobResult))
 				{
@@ -303,7 +303,7 @@ namespace FGenConsole
 		}
 
 		private SubJobResult _emptySubJobResult = null;
-		private SubJobResult GetEmptySubJobResult(KPoint dummy)
+		private SubJobResult GetEmptySubJobResult()
 		{
 			if (_emptySubJobResult == null)
 			{

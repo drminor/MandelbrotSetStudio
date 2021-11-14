@@ -15,7 +15,7 @@ namespace MEngineService.Services
         //           });
         //}
 
-		public Task<MapSectionResponse> SubmitMapSectionRequestAsync(MapSectionRequest mapSectionRequest, CallContext context = default)
+		public Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default)
 		{
             return Task.FromResult(
                    new MapSectionResponse

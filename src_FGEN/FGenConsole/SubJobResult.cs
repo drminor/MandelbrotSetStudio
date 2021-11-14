@@ -54,74 +54,74 @@ namespace FGenConsole
 
 		public uint TotalBytesToWrite { get; }
 
-		public byte[] GetPart(int partNumber)
-		{
-			if (partNumber > PartCount - 1)
-			{
-				throw new ArgumentException($"This Parts Bin only has {PartCount} parts. Cannot get Part for PartNumber: {partNumber}.");
-			}
-			switch (partNumber)
-			{
-				case 0:
-					return GetBytesFromCounts(Counts);
-				case 1:
-					return BitConverter.GetBytes(IterationCount);
-				case 2:
-					return GetBytesFromZValues(ZValues);
-				case 3:
-					return GetBytesFromDoneFlags(DoneFlags);
-				default:
-					throw new ArgumentException("The partnumber is out of bounds.");
-			}
-		}
+		//public byte[] GetPart(int partNumber)
+		//{
+		//	if (partNumber > PartCount - 1)
+		//	{
+		//		throw new ArgumentException($"This Parts Bin only has {PartCount} parts. Cannot get Part for PartNumber: {partNumber}.");
+		//	}
+		//	switch (partNumber)
+		//	{
+		//		case 0:
+		//			return GetBytesFromCounts(Counts);
+		//		case 1:
+		//			return BitConverter.GetBytes(IterationCount);
+		//		case 2:
+		//			return GetBytesFromZValues(ZValues);
+		//		case 3:
+		//			return GetBytesFromDoneFlags(DoneFlags);
+		//		default:
+		//			throw new ArgumentException("The partnumber is out of bounds.");
+		//	}
+		//}
 
-		public void LoadPart(int partNumber, byte[] buf)
-		{
-			if (partNumber > PartCount - 1)
-			{
-				throw new ArgumentException($"This Parts Bin only has {PartCount} parts. Cannot get Part for PartNumber: {partNumber}.");
-			}
-			switch (partNumber)
-			{
-				case 0:
-					LoadBytesFromCounts(Counts, buf);
-					break;
-				case 1:
-					Array.Copy(BitConverter.GetBytes(IterationCount), buf, 4);
-					break;
-				case 2:
-					LoadBytesFromZValues(ZValues, buf);
-					break;
-				case 3:
-					LoadBytesFromDoneFlags(DoneFlags, buf);
-					break;
-				default:
-					throw new ArgumentException("The partnumber is out of bounds.");
-			}
-		}
+		//public void LoadPart(int partNumber, byte[] buf)
+		//{
+		//	if (partNumber > PartCount - 1)
+		//	{
+		//		throw new ArgumentException($"This Parts Bin only has {PartCount} parts. Cannot get Part for PartNumber: {partNumber}.");
+		//	}
+		//	switch (partNumber)
+		//	{
+		//		case 0:
+		//			LoadBytesFromCounts(Counts, buf);
+		//			break;
+		//		case 1:
+		//			Array.Copy(BitConverter.GetBytes(IterationCount), buf, 4);
+		//			break;
+		//		case 2:
+		//			LoadBytesFromZValues(ZValues, buf);
+		//			break;
+		//		case 3:
+		//			LoadBytesFromDoneFlags(DoneFlags, buf);
+		//			break;
+		//		default:
+		//			throw new ArgumentException("The partnumber is out of bounds.");
+		//	}
+		//}
 
-		public void SetPart(int partNumber, byte[] value)
-		{
-			if (partNumber > PartCount - 1)
-			{
-				throw new ArgumentException($"This Parts Bin only has {PartCount} parts. Cannot get Part for PartNumber: {partNumber}.");
-			}
-			switch (partNumber)
-			{
-				case 0:
-					Counts = GetCounts(value, _size);
-					break;
-				case 1:
-					IterationCount = BitConverter.ToUInt32(value, 0);
-					break;
-				case 2:
-					ZValues = GetZValues(value, _size);
-					break;
-				case 3:
-					DoneFlags = GetDoneFlags(value, _size);
-					break;
-			}
-		}
+		//public void SetPart(int partNumber, byte[] value)
+		//{
+		//	if (partNumber > PartCount - 1)
+		//	{
+		//		throw new ArgumentException($"This Parts Bin only has {PartCount} parts. Cannot get Part for PartNumber: {partNumber}.");
+		//	}
+		//	switch (partNumber)
+		//	{
+		//		case 0:
+		//			Counts = GetCounts(value, _size);
+		//			break;
+		//		case 1:
+		//			IterationCount = BitConverter.ToUInt32(value, 0);
+		//			break;
+		//		case 2:
+		//			ZValues = GetZValues(value, _size);
+		//			break;
+		//		case 3:
+		//			DoneFlags = GetDoneFlags(value, _size);
+		//			break;
+		//	}
+		//}
 
 		private uint[] GetCounts(byte[] buf, int size)
 		{
@@ -237,34 +237,34 @@ namespace FGenConsole
 			}
 		}
 
-		private List<PartDetail> BuildPartDetails(int size, bool haveZValues, bool includeZValuesOnRead, out uint totalBytesToWrite)
-		{
-			List<PartDetail> partDetails;
+		//private List<PartDetail> BuildPartDetails(int size, bool haveZValues, bool includeZValuesOnRead, out uint totalBytesToWrite)
+		//{
+		//	List<PartDetail> partDetails;
 
-			if (haveZValues)
-			{
-				partDetails = new List<PartDetail>
-				{
-					new PartDetail(size * 4, true), // Counts
-					new PartDetail(4, true), // IterationCount
-					new PartDetail(size * 32, includeZValuesOnRead), // ZValues
-					new PartDetail(size, includeZValuesOnRead) // DoneFlags
-				};
+		//	if (haveZValues)
+		//	{
+		//		partDetails = new List<PartDetail>
+		//		{
+		//			new PartDetail(size * 4, true), // Counts
+		//			new PartDetail(4, true), // IterationCount
+		//			new PartDetail(size * 32, includeZValuesOnRead), // ZValues
+		//			new PartDetail(size, includeZValuesOnRead) // DoneFlags
+		//		};
 
-				totalBytesToWrite = 4 + (uint)size * 37;
-			}
-			else
-			{
-				partDetails = new List<PartDetail>
-				{
-					new PartDetail(size * 4, true),
-				};
+		//		totalBytesToWrite = 4 + (uint)size * 37;
+		//	}
+		//	else
+		//	{
+		//		partDetails = new List<PartDetail>
+		//		{
+		//			new PartDetail(size * 4, true),
+		//		};
 
-				totalBytesToWrite = (uint)size * 4;
-			}
+		//		totalBytesToWrite = (uint)size * 4;
+		//	}
 
-			return partDetails;
-		}
+		//	return partDetails;
+		//}
 
 	}
 }

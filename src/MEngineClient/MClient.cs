@@ -28,11 +28,11 @@ namespace MEngineClient
 		//	return reply;
 		//}
 
-		public async Task<MapSectionResponse> SubmitMapSectionRequestAsync(MapSectionRequest mapSectionRequest)
+		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		{
 			IMapSectionService mEngineService = GetMapSectionService();
 
-			var reply = await mEngineService.SubmitMapSectionRequestAsync(mapSectionRequest);
+			var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
 			Debug.WriteLine($"Submit MapSectionRequest returned: {reply.Status}");
 
 			return reply;

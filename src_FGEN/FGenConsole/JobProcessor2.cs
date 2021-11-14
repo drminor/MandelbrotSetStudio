@@ -32,7 +32,7 @@ namespace FGenConsole
 			bool[] doneFlags = subJobResult.DoneFlags;
 			double[] zValues = subJobResult.ZValues;
 
-			_fGenerator.FillXCounts(position, ref counts, ref doneFlags, ref zValues);
+			_fGenerator.FillCounts(position, ref counts, ref doneFlags, ref zValues);
 
 			subJobResult.Counts = counts;
 			subJobResult.DoneFlags = doneFlags;
@@ -46,8 +46,9 @@ namespace FGenConsole
 			if(_emptySubJobResult == null)
 			{
 				int size = FGenerator.BLOCK_WIDTH * FGenerator.BLOCK_HEIGHT;
-				uint iterationCount = 0;
-				_emptySubJobResult = SubJobResult.GetEmptySubJobResult(size, iterationCount, InstanceNum, true);
+				string instanceName = $"Sub{InstanceNum}";
+
+				_emptySubJobResult = SubJobResult.GetEmptySubJobResult(size, instanceName, true);
 			}
 
 			SubJobResult.ClearSubJobResult(_emptySubJobResult);
