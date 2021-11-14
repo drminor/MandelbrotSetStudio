@@ -17,12 +17,12 @@ namespace MEngineService.Services
 
 		public Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default)
 		{
-            return Task.FromResult(
-                   new MapSectionResponse
-                   {
-                       Status = 0,          // Ok
-                       QueuePosition = -1   // Unknown
-                   });
+
+            var mapSectionGenerator = new MapSectionGenerator();
+
+            var mapSectionResponse = mapSectionGenerator.GenerateMapSection(mapSectionRequest);
+
+            return Task.FromResult(mapSectionResponse);
         }
 	}
 }

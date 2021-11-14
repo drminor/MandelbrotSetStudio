@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "QdDotNetConsoleTest": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

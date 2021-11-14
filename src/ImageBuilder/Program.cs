@@ -112,8 +112,8 @@ namespace ImageBuilder
 						{
 							var x = mClient.GenerateMapSectionAsync(request).GetAwaiter().GetResult();
 
-							Debug.WriteLine($"The reply is {x.Status}");
-							Console.WriteLine($"reply is {x.Status}");
+							Debug.WriteLine($"The reply is {x.TestString}");
+							Console.WriteLine($"reply is {x.TestString}");
 						}
 						catch (Exception e)
 						{
