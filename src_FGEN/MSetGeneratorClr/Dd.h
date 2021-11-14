@@ -1,12 +1,10 @@
 #pragma once
 
-#include "../FGen/FGen.h"
 
 using namespace System;
-using namespace FGen;
 
-namespace qdDotNet {
-
+namespace MSetGeneratorClr
+{
 	public value struct Dd
 	{
 		double hi;
@@ -24,37 +22,22 @@ namespace qdDotNet {
 			this->lo = 0;
 		}
 
-		Dd(qp val)
-		{
-			this->hi = val._hi();
-			this->lo = val._lo();
-		}
+		//Dd(qp val)
+		//{
+		//	this->hi = val._hi();
+		//	this->lo = val._lo();
+		//}
 
-		Dd(String^ val);
+		//Dd(String^ val);
 
-		qp ToQp()
-		{
-			qp result = qp(this->hi, this->lo);
-			return result;
-		}
+		//qp ToQp()
+		//{
+		//	qp result = qp(this->hi, this->lo);qp result = qp(this->hi, this->lo);
+		//	return result;
+		//}
 
-		String^ GetStringVal()
-		{
-			qp temp = ToQp();
-			std::string strVal = temp.to_string();
-
-			String^ result = gcnew String(strVal.c_str());
-
-			return result;
-		}
+		//String^ GetStringVal();
 
 	};
-
-	inline void MarshalString(String ^ s, std::string& os) {
-		using namespace Runtime::InteropServices;
-		const char* chars = (const char*)(Marshal::StringToHGlobalAnsi(s)).ToPointer();
-		os = chars;
-		Marshal::FreeHGlobal(IntPtr((void*)chars));
-	}
 
 }

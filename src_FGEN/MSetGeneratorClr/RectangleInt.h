@@ -5,7 +5,7 @@
 #include "PointInt.h"
 #include "SizeInt.h"
 
-namespace qdDotNet
+namespace MSetGeneratorClr
 {
 	public value struct RectangleInt
 	{

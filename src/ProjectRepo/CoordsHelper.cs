@@ -1,4 +1,5 @@
-﻿using MSS.Common.DataTransferObjects;
+﻿using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.Base;
 using MSS.Types.MSetOld;
@@ -13,10 +14,12 @@ namespace ProjectRepo
 	public class CoordsHelper
 	{
 		DtoMapper _dtoMapper;
+		BiToDDConverter _biToDDConverter;
 
 		public CoordsHelper(DtoMapper dtoMapper)
 		{
 			_dtoMapper = dtoMapper;
+			_biToDDConverter = new BiToDDConverter();
 		}
 
 		public RPointRecord BuildPointRecord(RPoint rPoint)
@@ -52,35 +55,43 @@ namespace ProjectRepo
 		private string GetDisplay(BigInteger[] values, int exponent)
 		{
 			var strDenominator = GetValue(1, -1 * exponent).ToString();
-
 			var dVals = values.Select(v => GetValue(v, exponent)).ToArray();
-
 			string[] strVals = values.Select((x,i) => new string(x.ToString() + "/" + strDenominator + " (" + dVals[i].ToString() + ")")).ToArray();
-
 			string display = string.Join("; ", strVals);
-			return display;
+
+			string[] strVals2 = values.Select(x => GetValue2(x, exponent).ToString()).ToArray();
+			string display2 = string.Join("; ", strVals2);
+
+			return display + " // " + display2;
 		}
 
-		public double GetValue(BigInteger bigInteger, int exponent)
+		public double GetValue(BigInteger n, int exponent)
 		{
-			double result = Math.ScaleB(ConvertBigIntegerToDouble(bigInteger), exponent);
+			double result = Math.ScaleB(ConvertBigIntegerToDouble(n), exponent);
 			return result;
 		}
 
-		private double ConvertBigIntegerToDouble(BigInteger val)
+		public double GetValue2(BigInteger n, int exponent)
+		{
+			double[] hiAndLo = _biToDDConverter.GetDoubles(n, exponent);
+			double result = hiAndLo[0] + hiAndLo[1];
+			return result;
+		}
+
+		private double ConvertBigIntegerToDouble(BigInteger n)
 		{
 			try
 			{
-				if (!SafeCastToDouble(val))
+				if (!SafeCastToDouble(n))
 				{
-					throw new OverflowException($"It is not safe to cast BigInteger: {val} to a double.");
+					throw new OverflowException($"It is not safe to cast BigInteger: {n} to a double.");
 				}
 
-				double result = (double)val;
+				double result = (double)n;
 
 				if (!DoubleHelper.HasPrecision(result))
 				{
-					throw new OverflowException($"When converting BigInteger: {val} to a double, precision was lost.");
+					throw new OverflowException($"When converting BigInteger: {n} to a double, precision was lost.");
 				}
 
 				return result;
@@ -92,11 +103,11 @@ namespace ProjectRepo
 			}
 		}
 
-		private static bool SafeCastToDouble(BigInteger value)
+		private static bool SafeCastToDouble(BigInteger n)
 		{
 			BigInteger s_bnDoubleMinValue = (BigInteger)double.MinValue;
 			BigInteger s_bnDoubleMaxValue = (BigInteger)double.MaxValue;
-			return s_bnDoubleMinValue <= value && value <= s_bnDoubleMaxValue;
+			return s_bnDoubleMinValue <= n && n <= s_bnDoubleMaxValue;
 		}
 
 	}

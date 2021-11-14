@@ -11,7 +11,7 @@ namespace QdDotNetConsoleTest
 
 			//var y = x.Test1(out string testString);
 
-			var x = new MSetGenerator();
+			var x = new MSetGenTest();
 
 			var z = x.Test22();
 

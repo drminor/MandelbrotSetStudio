@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MSetGeneratorClr\MSetGeneratorClr.vcxproj" />
+    <ProjectReference Include="..\MSetGenerator\MSetGenerator.vcxproj" />
   </ItemGroup>
 
 </Project>

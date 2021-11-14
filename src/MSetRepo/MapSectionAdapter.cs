@@ -163,7 +163,7 @@ namespace MSetRepo
 		{
 			RRectangleRecord coordsDto = _coordsHelper.BuildCoords(mSetInfo.Coords);
 
-			var mSetInfoRecord = new MSetInfoRecord(mSetInfo.CanvasSize, coordsDto, mSetInfo.MapCalcSettings, mSetInfo.ColorMapEntries, mSetInfo.HighColorCss);
+			var mSetInfoRecord = new MSetInfoRecord(mSetInfo.CanvasSize.Width, mSetInfo.CanvasSize.Height, coordsDto, mSetInfo.MapCalcSettings, mSetInfo.ColorMapEntries, mSetInfo.HighColorCss);
 
 			JobRecord jobRecord = new JobRecord(
 				ParentJobId: null,

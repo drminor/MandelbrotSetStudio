@@ -1,6 +1,6 @@
 #pragma once
 
-namespace qdDotNet
+namespace MSetGeneratorClr
 {
 	public value struct PointInt
 	{

@@ -3,8 +3,16 @@
 namespace MSS.Types.MSet
 {
 	[DataContract]
-	public struct MapCalcSettings
+	public class MapCalcSettings
 	{
+
+		public MapCalcSettings()
+		{
+			MaxIterations = 0;
+			Threshold = 0;
+			IterationsPerStep = 0;
+		}
+
 		public MapCalcSettings(int maxIterations, int threshold, int iterationsPerStep)
 		{
 			MaxIterations = maxIterations;

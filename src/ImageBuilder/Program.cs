@@ -31,7 +31,7 @@ namespace ImageBuilder
 		{
 			//int cmd = int.Parse(args[0] ?? "-1");
 
-			int cmd = 5;
+			int cmd = 3;
 
 			switch (cmd)
 			{
@@ -119,6 +119,19 @@ namespace ImageBuilder
 						{
 							Debug.WriteLine($"Got {e.Message}");
 						}
+
+						break;
+					}
+				case 6:
+					{
+						var biToDDConverter = new BiToDDConverter();
+
+						var n = new BigInteger();
+						int exponent = -4;
+
+						double[] result = biToDDConverter.GetDoubles(n, exponent);
+
+						Debug.WriteLine($"The result has {result.Length} elements.");
 
 						break;
 					}

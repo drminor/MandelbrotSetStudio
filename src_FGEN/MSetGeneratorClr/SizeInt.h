@@ -1,7 +1,7 @@
 #pragma once
 //#include "../FGen/FGen.h"
 
-namespace qdDotNet
+namespace MSetGeneratorClr
 {
 	public value struct SizeInt
 	{

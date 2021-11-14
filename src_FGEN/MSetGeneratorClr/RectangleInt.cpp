@@ -1,9 +1,7 @@
 #include "pch.h"
-
 #include "RectangleInt.h"
 
-
-namespace qdDotNet
+namespace MSetGeneratorClr
 {
 
 	RectangleInt::RectangleInt(int x, int y, int w, int h) : point(x, y), size(w, h)
