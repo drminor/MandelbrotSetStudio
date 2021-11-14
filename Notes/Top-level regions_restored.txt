@@ -1,0 +1,50 @@
+The area of interest is 
+x (real) -2 to 1		max distance = 3
+y (imaginary) -1 to 1	max distance = 2
+
+or
+
+x(z)	-0.5 to 0.25 (x 4)
+y(z)	-0.5 to 0.5	(x 2)
+
+or
+
+x(tz)	0 to 0.75	(add 0.5, then x 4)
+y(tz)	0 to 1		(add 0.5, then x 2)
+
+-------------
+
+BottomLeft coords of the 6 unit squares that comprise the are of interest
+
+-2,-1
+-1,-1
+0, -1
+
+-2, 0
+-1, 0
+0, 0
+
+Each of these values take 0 bits of mantissa
+-2 and 2 (exp = 1)
+-1 and 1 (exp = 0)
+0		(exp = 0 - denormalized)
+
+
+so a value can be expressed as
+sign * stake + x * 1/2^n
+
+where stake = 1/2^m and n > m (and n > m + 12)
+
+or sign, m, x, n
+
+component	type
+sign		bool
+m			ushort
+x			ulong
+n			ulong
+
+
+
+
+
+

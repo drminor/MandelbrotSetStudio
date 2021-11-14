@@ -1,0 +1,54 @@
+
+
+Given a range of x values and a range of y values
+
+then divide the area into 4 quadrants, labeled 00, 01, 10 and 11
+
+01  11
+00  10
+
+then divide each quadrants, into quarants, producing 16 addresses
+
+00 - 00
+00 - 10
+00 - 01
+00 - 11
+
+10 - 00
+10 - 10
+10 - 01
+10 - 11
+
+01 - 00
+01 - 10
+01 - 01
+01 - 11
+
+11 - 00
+11 - 10
+11 - 01
+11 - 11
+
+then divide each 16th into quadrants producing 64 quadrants
+
+number of times area is sub-divided		num addresses	num digits
+1										4				2
+2										16				4
+3										64				6
+4										256				8
+
+num addresses = 4 ^ divide op occurence
+
+4^1 = 1 = 2^1
+4^2	= 16 = 2^4	
+4^3 = 64 = 2^6
+4^4 = 256 = 2^8
+4^5 = 1024 = 2^10
+4^6	= 4096	= 2^12
+4^7 = 2^14 = 16384
+4^8 = 2^16 = 65,536
+
+4^25 = 2^50 = 1,125,899,906,842,624 addresses, 50 binary digits
+
+Given an x,y pair, calculate a spatial hash consisting of a sequence of boolean values.
+

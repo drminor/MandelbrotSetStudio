@@ -14,8 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\MapViewerMapInfoDivisionStrategy.txt = Notes\MapViewerMapInfoDivisionStrategy.txt
 		MongoDb_Schemas.txt = MongoDb_Schemas.txt
 		Notes\Printing Resolution and Sizes.txt = Notes\Printing Resolution and Sizes.txt
-		src\RussianBoxes\Notes\SpatialCoordsAndHashes.txt = src\RussianBoxes\Notes\SpatialCoordsAndHashes.txt
-		src\RussianBoxes\Notes\Top-level regions.txt = src\RussianBoxes\Notes\Top-level regions.txt
+		Notes\SpatialCoordsAndHashes_restored.txt = Notes\SpatialCoordsAndHashes_restored.txt
+		Notes\Top-level regions_restored.txt = Notes\Top-level regions_restored.txt
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MqMessages", "src\MqMessages\MqMessages.csproj", "{42C7E2F2-D050-4C1C-9DBB-387F4B5F9CAD}"
