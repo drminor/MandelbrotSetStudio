@@ -1,33 +1,41 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="CLR Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{103ba477-cf08-49c3-b8f3-6d0f4b2d60b9}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{217ee3b0-5747-40a6-8e37-47a7cbbab526}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>CLR Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PointInt.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>CLR Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RectangleInt.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>CLR Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SizeInt.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>CLR Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Dd.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>CLR Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MSetGenClrTest2.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>CLR Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
