@@ -33,9 +33,6 @@
     <ClInclude Include="Dd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MSetGenTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -56,7 +53,7 @@
     <ClCompile Include="Dd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MSetGenTest.cpp">
+    <ClCompile Include="MSetGenClrTest2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -2,13 +2,13 @@
 
 #include <string>
 #include <iostream>
-#include "qp.h"
+#include "qpMath.h"
 
 namespace MSetGenerator
 {
-	class qpMath;
+	//class MSETGEN_API qpMath;
 
-	class qpParser
+	class MSETGEN_API qpParser
 	{
 	public:
 		qpParser();

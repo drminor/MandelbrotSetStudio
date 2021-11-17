@@ -1,17 +1,10 @@
 #pragma once
 
-
-//#ifdef FGEN_EXPORTS
-//#define FGEN_API __declspec(dllexport)
-//#else
-//#define FGEN_API __declspec(dllimport)
-//#endif
-
 #include "qp.h"
 
 namespace MSetGenerator
 {
-	class qpMath
+	class MSETGEN_API qpMath
 	{
 
 	public:

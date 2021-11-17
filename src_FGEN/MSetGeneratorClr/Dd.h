@@ -1,8 +1,5 @@
 #pragma once
 
-
-using namespace System;
-
 namespace MSetGeneratorClr
 {
 	public value struct Dd

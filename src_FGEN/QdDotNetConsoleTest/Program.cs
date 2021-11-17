@@ -11,12 +11,17 @@ namespace QdDotNetConsoleTest
 
 			//var y = x.Test1(out string testString);
 
-			var x = new MSetGenTest();
+			//var mSetGenClrTest = new MSetGenClrTest();
 
-			var z = x.Test22();
+			//var test22Result = mSetGenClrTest.Test22();
 
-			string testString = "no yet";
-			Console.WriteLine($"Hello World, the test string is {testString}");
+			//Console.WriteLine($"Hello World. Test22 returned: {test22Result}.");
+
+			ManagedClass a = new ManagedClass();
+			string b = a.get_PropertyA;
+			a.MethodB(b);
+
+			Console.WriteLine($"Hello World. String b is equal to {b}.");
 		}
 	}
 }

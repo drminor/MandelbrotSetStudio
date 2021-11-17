@@ -30,6 +30,9 @@
     <ClCompile Include="ddBridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MSetGenTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="MSetGenerator.def">
@@ -65,6 +68,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ddBridge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MSetGenTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

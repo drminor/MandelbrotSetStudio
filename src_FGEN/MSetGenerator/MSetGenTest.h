@@ -8,12 +8,12 @@
 
 namespace MSetGenerator
 {
-	class MSETGEN_API ddBridge
+	class MSETGEN_API MSetGenTest
 	{
 	public:
-		const char* test(double a, double b);
+
+		double Test22();
 
 	};
-
 }
 

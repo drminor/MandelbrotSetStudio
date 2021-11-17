@@ -1,16 +1,16 @@
 #pragma once
 
-//#ifdef FGEN_EXPORTS
-//#define FGEN_API __declspec(dllexport)
-//#else
-//#define FGEN_API __declspec(dllimport)
-//#endif
+#ifdef MSETGEN_EXPORTS
+#define MSETGEN_API __declspec(dllexport)
+#else
+#define MSETGEN_API __declspec(dllimport)
+#endif
 
 #include <string>
 
 namespace MSetGenerator
 {
-	class /*FGEN_API*/ qp
+	class MSETGEN_API qp
 	{
 
 	public:

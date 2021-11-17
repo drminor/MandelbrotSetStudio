@@ -78,10 +78,11 @@
   <PropertyGroup />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(Outdir)qd.lib;$(Outdir)MSetGenerator.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -122,7 +123,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Dd.h" />
-    <ClInclude Include="MSetGenTest.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PointInt.h" />
     <ClInclude Include="RectangleInt.h" />
@@ -132,7 +132,7 @@
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="Dd.cpp" />
-    <ClCompile Include="MSetGenTest.cpp" />
+    <ClCompile Include="MSetGenClrTest2.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -148,14 +148,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="app.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\MSetGenerator\MSetGenerator.vcxproj">
-      <Project>{696b7e7b-0bec-4be2-b123-b120b7939a10}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\qd\qd.vcxproj">
-      <Project>{06d738a5-a774-4e1c-9a11-2bc39b55bfac}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
