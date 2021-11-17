@@ -22,6 +22,11 @@ namespace QdDotNetConsoleTest
 			a.MethodB(b);
 
 			Console.WriteLine($"Hello World. String b is equal to {b}.");
+
+			RectangleInt ri = new RectangleInt(1, 2, 3, 4);
+
+			Console.WriteLine($"Created a RectangleInt with Width: {ri.Width}");
+
 		}
 	}
 }

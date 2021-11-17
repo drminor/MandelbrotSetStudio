@@ -17,34 +17,40 @@ public:
     void MethodB(LPCWSTR) {}
 };
 
-public ref class ManagedClass {
-public:
-    // Allocate the native object on the C++ Heap via a constructor
-    ManagedClass() : m_Impl(new UnmanagedClass) {}
 
-    // Deallocate the native object on a destructor
-    ~ManagedClass() {
-        delete m_Impl;
-    }
+namespace MSetGeneratorClr
+{
 
-protected:
-    // Deallocate the native object on the finalizer just in case no destructor is called
-    !ManagedClass() {
-        delete m_Impl;
-    }
+    public ref class ManagedClass {
+    public:
+        // Allocate the native object on the C++ Heap via a constructor
+        ManagedClass() : m_Impl(new UnmanagedClass) {}
 
-public:
-    property String^ get_PropertyA {
-        String^ get() {
-            return gcnew String(m_Impl->GetPropertyA());
+        // Deallocate the native object on a destructor
+        ~ManagedClass() {
+            delete m_Impl;
         }
-    }
 
-    void MethodB(String^ theString) {
-        pin_ptr<const WCHAR> str = PtrToStringChars(theString);
-        m_Impl->MethodB(str);
-    }
+    protected:
+        // Deallocate the native object on the finalizer just in case no destructor is called
+        !ManagedClass() {
+            delete m_Impl;
+        }
 
-private:
-    UnmanagedClass* m_Impl;
-};
+    public:
+        property String^ get_PropertyA {
+            String^ get() {
+                return gcnew String(m_Impl->GetPropertyA());
+            }
+        }
+
+        void MethodB(String^ theString) {
+            pin_ptr<const WCHAR> str = PtrToStringChars(theString);
+            m_Impl->MethodB(str);
+        }
+
+    private:
+        UnmanagedClass* m_Impl;
+    };
+
+}
