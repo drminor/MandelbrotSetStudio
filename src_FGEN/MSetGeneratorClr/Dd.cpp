@@ -11,7 +11,7 @@ namespace MSetGeneratorClr
 		double hi;
 		double lo;
 
-
+	public:
 		Dd(double hi, double lo)
 		{
 			this->hi = hi;
@@ -23,6 +23,10 @@ namespace MSetGeneratorClr
 			this->hi = hi;
 			this->lo = 0;
 		}
+
+		property double Hi { double get() { return hi; } }
+		property double Lo { double get() { return lo; } }
+
 
 		//Dd(qp val)
 		//{
