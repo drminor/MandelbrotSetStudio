@@ -1,5 +1,7 @@
-
 #pragma once
+
+#include "pch.h"
+
 #include "PointInt.cpp"
 #include "SizeInt.cpp"
 
