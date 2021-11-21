@@ -19,7 +19,7 @@
 namespace MSetGenerator
 {
 
-	class qpParser
+	public class qpParser
 	{
 	public:
 		qpParser()
@@ -273,7 +273,6 @@ namespace MSetGenerator
 
 		int Read(std::string const& s, double& hi, double& lo) const
 		{
-
 			double* his = new double[50];
 			double* los = new double[50];
 

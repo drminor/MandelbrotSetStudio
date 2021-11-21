@@ -4,7 +4,7 @@
 
 namespace MSetGenerator
 {
-	class qpMath
+	public class qpMath
 	{
 
 	public:

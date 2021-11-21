@@ -34,9 +34,6 @@
     <ClCompile Include="Dd.cpp">
       <Filter>CLR Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MSetGenClrTest2.cpp">
-      <Filter>CLR Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="qp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MEngineDataContracts\MEngineDataContracts.csproj" />
     <ProjectReference Include="..\..\src\MSS.Common\MSS.Common.csproj" />
+    <ProjectReference Include="..\MSetGeneratorClr\MSetGeneratorClr.vcxproj" />
   </ItemGroup>
 
   <ItemGroup>

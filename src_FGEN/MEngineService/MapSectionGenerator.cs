@@ -1,13 +1,6 @@
 ﻿using MEngineDataContracts;
 using MSS.Common.DataTransferObjects;
-using MSS.Types;
-using MSS.Types.DataTransferObjects;
-using qdDotNet;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using MSetGeneratorClr;
 
 namespace MEngineService
 {
@@ -26,7 +19,7 @@ namespace MEngineService
 			//FGenJob? fGenJob = BuildFGenJob(mapSectionRequest);
 			//FGenerator fGenerator = new FGenerator(fGenJob);
 
-			var dd = new Dd(1d, 12132d);
+			var dd = new Dd(11d);
 
 			string strDd = dd.GetStringVal();
 

@@ -21,18 +21,21 @@ namespace QdDotNetConsoleTest
 			//string b = a.get_PropertyA;
 			//a.MethodB(b);
 
-			ManagedClass2 a = new ManagedClass2();
-			string b = a.GetStringFromDouble(12.7639);
+			//ManagedClass2 a = new ManagedClass2();
+			//string b = a.GetStringFromDouble(12.7639);
 
-			Console.WriteLine($"Hello World. String b is equal to {b}.");
+			//Console.WriteLine($"Hello World. String b is equal to {b}.");
 
 			RectangleInt ri = new RectangleInt(1, 2, 3, 4);
 
 			Console.WriteLine($"Created a RectangleInt with Width: {ri.Width}");
 
-			Dd doubleDouble = new Dd(23.15d);
+			//Dd dd = new Dd(23.15d);
+			//string strDd = dd.GetStringVal();
 
-			Console.WriteLine($"Created a Dd with Hi value: {doubleDouble.Hi}");
+			Dd dd = new Dd("123.45");
+
+			Console.WriteLine($"Created a Dd: {dd.hi}, {dd.lo}");
 
 
 		}

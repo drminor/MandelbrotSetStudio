@@ -1,8 +1,5 @@
 #pragma once
-
 #include "pch.h"
-
-#include <string>
 
 namespace MSetGenerator
 {
@@ -24,13 +21,14 @@ namespace MSetGenerator
 			return _hip + _lop;
 		}
 
-		const std::string to_string()
-		{
-			//qpParser parser = qpParser();
+		//const std::string to_string()
+		//{
+		//	qpParser* parser = new qpParser();
+		//	std::string result = parser->ToStr(_hip, _lop);
+		//	delete parser;
 
-			std::string result = "to-string-test";
-			return result;
-		}
+		//	return result;
+		//}
 
 		qp()
 		{
@@ -50,16 +48,16 @@ namespace MSetGenerator
 			_lop = lo;
 		}
 
-		qp(const std::string s)
-		{
-			//qpParser parser = qpParser();
-			//parser.Read(s, _hip, _lop);
+		//qp(const std::string s)
+		//{
+		//	//qpParser parser = qpParser();
+		//	//parser.Read(s, _hip, _lop);
 
-			_hip = 123;
-			_lop = 567;
+		//	_hip = 123;
+		//	_lop = 567;
 
-			//std::string result = parser.ToStr(_hip, _lop);
-		}
+		//	//std::string result = parser.ToStr(_hip, _lop);
+		//}
 
 	private:
 		double _hip;
