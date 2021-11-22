@@ -1,6 +1,9 @@
 #include "pch.h"
 
 #include <stdio.h>
+#include <cmath>
+
+#include "qpMath.h"
 
 extern "C"
 {
@@ -19,8 +22,19 @@ extern "C"
     {
         printf("Filling in the doubles.\n");
 
-        buffer[0] = 1;
-        buffer[1] = 2;
+        qp nHRaw = qp(hi);
+        qp nL = qp(lo);
+        double e = std::ldexp(1, exponent);
+        double factor = std::ldexp(1, 53);
+
+        qpMath* m = new qpMath();
+        qp nH = m->mulD(nHRaw, factor);
+        qp n = m->add(nH, nL);
+        qp result = m->mulD(n, e);
+        delete m;
+
+        buffer[0] = result._hi();
+        buffer[1] = result._lo();
     }
 
 

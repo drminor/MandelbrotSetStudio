@@ -1,6 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Runtime.InteropServices;
+using System.Numerics;
+
+using static MSS.Types.BigIntegerExtensions;
 
 namespace QdDotNetConsoleTest
 {
@@ -52,16 +54,26 @@ namespace QdDotNetConsoleTest
 			Console.WriteLine("This is C# program");
 			DisplayHelloFromDLL();
 
-			long hi = 3;
-			long lo = 4;
-			int exponent = 2;
+			long hi = 0;
+			long lo = 9;
+			int exponent = -2;
 			int rc = SendBigIntUsingLongs(hi, lo, exponent);
 
 			Console.WriteLine($"Got rc: {rc} from SendBig.");
 
-			double[] buf = new double[2];
+			BigInteger a = new BigInteger(Math.ScaleB(5, 54));
+			a += 245;
 
-			ConvertLongsToDoubles(hi, lo, exponent, buf);
+			long[] tmp = a.ToLongs();
+
+			double[] buf = new double[2];
+			ConvertLongsToDoubles(tmp[0], tmp[1], 0, buf);
+
+			BigInteger b = new BigInteger(buf[0]);
+			b += (BigInteger)buf[1];
+
+			Console.WriteLine($"The BigInteger before: {a} and after {b}.");
+
 
 		}
 	}
