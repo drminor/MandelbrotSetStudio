@@ -1,5 +1,12 @@
 #pragma once
 
+
+#ifdef MSETGEN_EXPORTS
+#define MSETGEN_API __declspec(dllexport)
+#else
+#define MSETGEN_API __declspec(dllimport)
+#endif
+
 #include <string>
 #include <iostream>
 #include "qp.h"

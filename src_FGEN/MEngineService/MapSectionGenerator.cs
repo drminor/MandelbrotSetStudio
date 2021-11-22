@@ -1,11 +1,14 @@
 ﻿using MEngineDataContracts;
 using MSS.Common.DataTransferObjects;
-using MSetGeneratorClr;
+using System.Runtime.InteropServices;
 
 namespace MEngineService
 {
 	public class MapSectionGenerator
 	{
+		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll")]
+		public static extern void DisplayHelloFromDLL();
+
 		private readonly DtoMapper _dtoMapper;
 
 		public MapSectionGenerator()
@@ -15,19 +18,20 @@ namespace MEngineService
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
-
 			//FGenJob? fGenJob = BuildFGenJob(mapSectionRequest);
 			//FGenerator fGenerator = new FGenerator(fGenJob);
 
-			var dd = new Dd(11d);
+			DisplayHelloFromDLL();
 
-			string strDd = dd.GetStringVal();
+			//var dd = new Dd(11d);
+			//string strDd = dd.GetStringVal();
+			string strDd = "hi";
 
 			var result = new MapSectionResponse
 			{
 				Status = 0,          // Ok
 				QueuePosition = -1,   // Unknown
-				Test = new double[] { dd.hi, dd.lo },
+				Test = new double[] { 1, 2 },
 				TestString = strDd
 			};
 

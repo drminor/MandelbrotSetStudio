@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{696B7E7B-0BEC-4BE2-B123-B120B7939A10}</ProjectGuid>
+    <ProjectGuid>{3CE9A298-771A-486F-A201-E2806E6E36C7}</ProjectGuid>
     <Keyword>MFCDLLProj</Keyword>
     <RootNamespace>MSetGenerator</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
@@ -91,11 +91,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_WINDOWS;MSETGEN_EXPORTS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MSETGEN_EXPORTS;_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <CallingConvention>Cdecl</CallingConvention>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -186,8 +183,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ddBridge.cpp" />
-    <ClCompile Include="MSetGenTest.cpp" />
+    <ClCompile Include="MSetGenerator.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -197,22 +193,24 @@
     <ClCompile Include="qp.cpp" />
     <ClCompile Include="qpMath.cpp" />
     <ClCompile Include="qpParser.cpp" />
+    <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="MSetGenerator.def" />
     <None Include="res\MSetGenerator.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ddBridge.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MSetGenerator.h" />
-    <ClInclude Include="MSetGenTest.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="qp.h" />
     <ClInclude Include="qpMath.h" />
     <ClInclude Include="qpParser.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MSetGenerator.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

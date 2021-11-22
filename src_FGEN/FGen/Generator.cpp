@@ -32,6 +32,12 @@ namespace FGen
 		return m_Job;
 	};
 
+	//RectangleInt m_Area;
+	//PointDd m_Start;
+	//PointDd m_End;
+	//SizeInt m_SamplePoints;
+	//unsigned int m_MaxIterations;
+
 	void Generator::FillCountsVec(PointInt pos, unsigned int * counts, bool * doneFlags, double * zValues)
 	{
 		int startX = pos.X() * BLOCK_WIDTH;
@@ -472,13 +478,13 @@ namespace FGen
 	//{
 	//	int xSamples = m_Job.SamplePoints().W();
 	//	int ySamples = m_Job.SamplePoints().H();
-
+	//
 	//	int tSamples = xSamples * ySamples;
 	//	std::vector<unsigned int> result; 
 	//	//std::vector<unsigned short> result(tSamples);
-
+	//
 	//	result.reserve(tSamples);
-
+	//
 	//	int rPtr = 0;
 	//	for (int j = 0; j < ySamples; j++) {
 	//		qp yCord = m_YPoints[j];
@@ -488,23 +494,23 @@ namespace FGen
 	//			//result[rPtr++] = Generator::GetCount(c, m_Job.MaxIterations());
 	//			bool done = false;
 	//			PointDd z = PointDd(0, 0);
-
+	//
 	//			result.push_back(Generator::GetCount(c, m_targetIterationCount, 0, &done, &z));
 	//		}
 	//	}
-
+	//
 	//	result.resize(tSamples);
-
+	//
 	//	return result;
 	//}
-
+	//
 	//std::vector<unsigned int> Generator::GetXCounts(int yPtr)
 	//{
 	//	std::vector<unsigned int> result;
-
+	//
 	//	int xSamples = m_Job.SamplePoints().W();
 	//	result.reserve(xSamples);
-
+	//
 	//	qp yCord = m_YPoints[yPtr];
 	//	for (int i = 0; i < xSamples; i++) {
 	//		qp xCord = m_XPoints[i];
@@ -513,9 +519,9 @@ namespace FGen
 	//		PointDd z = PointDd(0, 0);
 	//		result.push_back(Generator::GetCount(c, m_targetIterationCount, 0, &done, &z));
 	//	}
-
+	//
 	//	result.resize(xSamples);
-
+	//
 	//	return result;
 	//}
 
@@ -523,20 +529,20 @@ namespace FGen
 	//{
 	//	int startX = pos.X() * BLOCK_WIDTH;
 	//	int startY = pos.Y() * BLOCK_HEIGHT;
-
+	//
 	//	int resultPtr = 0;
 	//	for (int j = 0; j < FGen::BLOCK_HEIGHT; j++) {
 	//		
 	//		qp yCord = m_YPoints[startY + j];
-
+	//
 	//		for (int i = 0; i < FGen::BLOCK_WIDTH; i++) {
 	//			qp xCord = m_XPoints[startX + i];
 	//			PointDd c = PointDd(xCord, yCord);
-
+	//
 	//			PointDd z = GetPointDd(&zValues[resultPtr * 4]);
 	//			counts[resultPtr] = Generator::GetCount(c, m_targetIterationCount, counts[resultPtr], &doneFlags[resultPtr], &z);
 	//			PointDdToDoubleArray(z, &zValues[resultPtr * 4]);
-
+	//
 	//			resultPtr++;
 	//		}
 	//	}
@@ -546,19 +552,19 @@ namespace FGen
 	//{
 	//	int startX = pos.X() * BLOCK_WIDTH;
 	//	int startY = pos.Y() * BLOCK_HEIGHT;
-
+	//
 	//	int resultPtr = yPtr * BLOCK_WIDTH;
-
+	//
 	//	qp yCord = m_YPoints[startY + yPtr];
-
+	//
 	//	for (int i = 0; i < FGen::BLOCK_WIDTH; i++) {
 	//		qp xCord = m_XPoints[startX + i];
 	//		PointDd c = PointDd(xCord, yCord);
-
+	//
 	//		PointDd z = GetPointDd(&zValues[resultPtr * 4]);
 	//		counts[resultPtr] = Generator::GetCount(c, m_targetIterationCount, counts[resultPtr], &doneFlags[resultPtr], &z);
 	//		PointDdToDoubleArray(z, &zValues[resultPtr * 4]);
-
+	//
 	//		resultPtr++;
 	//	}
 	//}
@@ -569,17 +575,17 @@ namespace FGen
 	//	qp ySquared = qp(0);
 	//	int startX = pos.X() * BLOCK_WIDTH;
 	//	int startY = pos.Y() * BLOCK_HEIGHT;
-
+	//
 	//	int resultPtr = yPtr * BLOCK_WIDTH;
-
+	//
 	//	qp yCord = m_YPoints[startY + yPtr];
-
+	//
 	//	for (int i = 0; i < FGen::BLOCK_WIDTH; i++) {
 	//		qp xCord = m_XPoints[startX + i];
 	//		counts[resultPtr] = Generator::GetCount2(xCord, yCord, &zValues[resultPtr * 4], counts[resultPtr], &doneFlags[resultPtr], xSquared, ySquared);
 	//		resultPtr++;
 	//	}
-
+	//
 	//	for (int i = 0; i < FGen::BLOCK_WIDTH; i++) {
 	//		qp xCord = m_XPoints[startX + i];
 	//		counts[resultPtr] = Generator::GetCount2(xCord, yCord, &zValues[resultPtr * 4], counts[resultPtr], &doneFlags[resultPtr], xSquared, ySquared);

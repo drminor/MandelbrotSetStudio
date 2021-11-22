@@ -14,8 +14,4 @@
     <None Include="QdTest.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MSetGeneratorClr\MSetGeneratorClr.vcxproj" />
-  </ItemGroup>
-
 </Project>
