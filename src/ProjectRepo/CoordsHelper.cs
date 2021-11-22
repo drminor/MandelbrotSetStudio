@@ -1,7 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
-using MSS.Types.Base;
 using MSS.Types.MSetOld;
 using ProjectRepo.Entities;
 using System;
@@ -9,17 +8,17 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
+using static MSS.Types.BigIntegerExtensions;
+
 namespace ProjectRepo
 {
 	public class CoordsHelper
 	{
 		DtoMapper _dtoMapper;
-		BiToDDConverter _biToDDConverter;
 
 		public CoordsHelper(DtoMapper dtoMapper)
 		{
 			_dtoMapper = dtoMapper;
-			_biToDDConverter = new BiToDDConverter();
 		}
 
 		public RPointRecord BuildPointRecord(RPoint rPoint)
@@ -73,8 +72,15 @@ namespace ProjectRepo
 
 		public double GetValue2(BigInteger n, int exponent)
 		{
-			double[] hiAndLo = _biToDDConverter.GetDoubles(n, exponent);
+			if (!SafeCastToDouble(n))
+			{
+				throw new OverflowException($"It is not safe to cast BigInteger: {n} to a double.");
+			}
+
+			long[] hiAndLo = n.ToLongs();
 			double result = hiAndLo[0] + hiAndLo[1];
+			result = Math.ScaleB(result, exponent);
+
 			return result;
 		}
 

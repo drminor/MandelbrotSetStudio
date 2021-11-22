@@ -16,6 +16,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 
+using static MSS.Types.BigIntegerExtensions;
+
 namespace ImageBuilder
 {
 	class Program
@@ -124,14 +126,10 @@ namespace ImageBuilder
 					}
 				case 6:
 					{
-						var biToDDConverter = new BiToDDConverter();
-
-						var n = new BigInteger();
+						var n = new BigInteger(10);
 						int exponent = -4;
-
-						double[] result = biToDDConverter.GetDoubles(n, exponent);
-
-						Debug.WriteLine($"The result has {result.Length} elements.");
+						double result = GetDouble(n, exponent);
+						Debug.WriteLine($"The result is {result}.");
 
 						break;
 					}
@@ -145,7 +143,7 @@ namespace ImageBuilder
 			{
 				SubdivisionId = "TestId",
 				BlockPosition = new PointInt(0, 0),
-				Position = new RPointDto(new BigInteger[] { 1, 2 }, 0),
+				Position = new RPointDto(new BigInteger[] { -1, 1 }, 0),
 				BlockSize = RMapConstants.BLOCK_SIZE,
 				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -11),
 				MapCalcSettings = new MapCalcSettings(maxIterations: 300, threshold: 4, iterationsPerStep: 100)
@@ -192,5 +190,25 @@ namespace ImageBuilder
 			return result;
 		}
 
+		private static double GetDouble(BigInteger n, int exponent)
+		{
+			if (!SafeCastToDouble(n))
+			{
+				throw new OverflowException($"It is not safe to cast BigInteger: {n} to a double.");
+			}
+
+			long[] hiAndLo = n.ToLongs();
+			double result = hiAndLo[0] + hiAndLo[1];
+			result = Math.ScaleB(result, exponent);
+
+			return result;
+		}
+
+		private static bool SafeCastToDouble(BigInteger n)
+		{
+			BigInteger s_bnDoubleMinValue = (BigInteger)double.MinValue;
+			BigInteger s_bnDoubleMaxValue = (BigInteger)double.MaxValue;
+			return s_bnDoubleMinValue <= n && n <= s_bnDoubleMaxValue;
+		}
 	}
 }

@@ -8,10 +8,10 @@ namespace MSS.Types.DataTransferObjects
 	public class RSizeDto
 	{
 		[DataMember(Order = 1)]
-		public byte[] Width { get; init; }
+		public long[] Width { get; init; }
 
 		[DataMember(Order = 2)]
-		public byte[] Height { get; init; }
+		public long[] Height { get; init; }
 
 		[DataMember(Order = 3)]
 		public int Exponent { get; init; }
@@ -19,16 +19,16 @@ namespace MSS.Types.DataTransferObjects
 		public RSizeDto() : this(new BigInteger[] { 0, 0 }, 0)
 		{ }
 
-		public RSizeDto(BigInteger[] bigIntegers, int exponent) : this(bigIntegers.Select(v => v.ToByteArray()).ToArray(), exponent)
+		public RSizeDto(BigInteger[] bigIntegers, int exponent) : this(bigIntegers.Select(v => v.ToLongs()).ToArray(), exponent)
 		{ }
 
-		public RSizeDto(byte[][] values, int exponent)
+		public RSizeDto(long[][] values, int exponent)
 		{
 			Width = values[0];
 			Height = values[1];
 			Exponent = exponent;
 		}
 
-		public byte[][] GetValues() => new byte[][] { Width, Height };
+		public long[][] GetValues() => new long[][] { Width, Height };
 	}
 }

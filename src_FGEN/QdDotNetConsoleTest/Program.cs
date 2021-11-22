@@ -10,9 +10,13 @@ namespace QdDotNetConsoleTest
 		public static extern void DisplayHelloFromDLL();
 
 
-		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll")]
+		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int SendBigIntUsingLongs(long hi, long lo, int exponent);
-		
+
+		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern void ConvertLongsToDoubles(long hi, long lo, int exponent, double[] buffer);
+
+
 		static void Main(string[] args)
 		{
 			//var x = new QdTest();
@@ -54,6 +58,10 @@ namespace QdDotNetConsoleTest
 			int rc = SendBigIntUsingLongs(hi, lo, exponent);
 
 			Console.WriteLine($"Got rc: {rc} from SendBig.");
+
+			double[] buf = new double[2];
+
+			ConvertLongsToDoubles(hi, lo, exponent, buf);
 
 		}
 	}
