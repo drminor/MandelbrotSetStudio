@@ -5,6 +5,14 @@ namespace MSS.Types.MSet
 	[DataContract]
 	public class MapCalcSettings
 	{
+		[DataMember(Order = 1)]
+		public int MaxIterations { get; init; }
+
+		[DataMember(Order = 2)]
+		public int Threshold { get; init; }
+
+		[DataMember(Order = 3)]
+		public int IterationsPerStep { get; init; }
 
 		public MapCalcSettings()
 		{
@@ -19,15 +27,6 @@ namespace MSS.Types.MSet
 			Threshold = threshold;
 			IterationsPerStep = iterationsPerStep;
 		}
-
-		[DataMember(Order = 1)]
-		public int MaxIterations { get; init; }
-
-		[DataMember(Order = 2)]
-		public int Threshold { get; init; }
-
-		[DataMember(Order = 3)]
-		public int IterationsPerStep { get; init; }
 
 		public override bool Equals(object? obj)
 		{

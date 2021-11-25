@@ -22,20 +22,27 @@ extern "C"
     {
         printf("Filling in the doubles.\n");
 
-        qp nHRaw = qp(hi);
-        qp nL = qp(lo);
-        double e = std::ldexp(1, exponent);
-        double factor = std::ldexp(1, 53);
-
         qpMath* m = new qpMath();
-        qp nH = m->mulD(nHRaw, factor);
-        qp n = m->add(nH, nL);
-        qp result = m->mulD(n, e);
+        qp result = m->fromLongRational(hi, lo, exponent);
         delete m;
 
         buffer[0] = result._hi();
         buffer[1] = result._lo();
     }
 
+    __declspec(dllexport) void GenerateMapSection(long hi, long lo, int exponent, unsigned int** ppArray, int size)
+    {
+        printf("Filling in the doubles.\n");
+
+        qpMath* m = new qpMath();
+        qp result = m->fromLongRational(hi, lo, exponent);
+        delete m;
+
+        for (int i = 0; i < size; i++)
+        {
+            (*ppArray)[i] = i;
+        }
+
+    }
 
 }

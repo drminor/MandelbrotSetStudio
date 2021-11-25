@@ -2,7 +2,6 @@
 using System.Numerics;
 using System.Runtime.Serialization;
 
-
 namespace MSS.Types.DataTransferObjects
 {
 	[DataContract]

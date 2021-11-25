@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "qpMath.h"
+#include <cmath>
 #include <corecrt_math.h>
 #include <float.h>
 
@@ -11,6 +12,19 @@ qpMath::qpMath()
 
 qpMath::~qpMath()
 {
+}
+
+qp qpMath::fromLongRational(long hi, long lo, int exponent)
+{
+	qp nHRaw = qp(hi);
+	qp nL = qp(lo);
+	double e = std::ldexp(1, exponent);
+	double factor = std::ldexp(1, 53);
+
+	qp nH = mulD(nHRaw, factor);
+	qp n = add(nH, nL);
+	qp result = mulD(n, e);
+	return result;
 }
 
 qp qpMath::sub(qp a, qp b)

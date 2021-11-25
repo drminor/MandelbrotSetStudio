@@ -3,21 +3,12 @@ using System.Runtime.InteropServices;
 using System.Numerics;
 
 using static MSS.Types.BigIntegerExtensions;
+using System.Linq;
 
 namespace QdDotNetConsoleTest
 {
 	class Program
 	{
-		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll")]
-		public static extern void DisplayHelloFromDLL();
-
-
-		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
-		public static extern int SendBigIntUsingLongs(long hi, long lo, int exponent);
-
-		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
-		public static extern void ConvertLongsToDoubles(long hi, long lo, int exponent, double[] buffer);
-
 
 		static void Main(string[] args)
 		{
@@ -52,12 +43,12 @@ namespace QdDotNetConsoleTest
 			//Console.WriteLine($"Created a Dd: {dd.hi}, {dd.lo}");
 
 			Console.WriteLine("This is C# program");
-			DisplayHelloFromDLL();
+			NativeMethods.DisplayHelloFromDLL();
 
 			long hi = 0;
 			long lo = 9;
 			int exponent = -2;
-			int rc = SendBigIntUsingLongs(hi, lo, exponent);
+			int rc = NativeMethods.SendBigIntUsingLongs(hi, lo, exponent);
 
 			Console.WriteLine($"Got rc: {rc} from SendBig.");
 
@@ -67,12 +58,29 @@ namespace QdDotNetConsoleTest
 			long[] tmp = a.ToLongs();
 
 			double[] buf = new double[2];
-			ConvertLongsToDoubles(tmp[0], tmp[1], 0, buf);
+			NativeMethods.ConvertLongsToDoubles(tmp[0], tmp[1], 0, buf);
 
 			BigInteger b = new BigInteger(buf[0]);
 			b += (BigInteger)buf[1];
 
 			Console.WriteLine($"The BigInteger before: {a} and after {b}.");
+
+			int size = 10;
+			IntPtr buffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(int)) * size);
+			NativeMethods.GenerateMapSection(tmp[0], tmp[1], 0, ref buffer, size);
+
+			int[] arrayRes = new int[size];
+			Marshal.Copy(buffer, arrayRes, 0, size);
+			Marshal.FreeCoTaskMem(buffer);
+
+			// TODO: Update C++ code to use integers
+			uint[] res = arrayRes.Cast<uint>().ToArray();
+
+			for (int i = 0; i < size; i++)
+			{
+				Console.WriteLine($"The results[{i}] is {arrayRes[i]}.");
+			}
+
 
 
 		}
