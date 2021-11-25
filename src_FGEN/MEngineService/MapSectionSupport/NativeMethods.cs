@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace QdDotNetConsoleTest
+namespace MEngineService
 {
 	internal static class NativeMethods
     {

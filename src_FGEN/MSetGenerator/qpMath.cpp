@@ -14,7 +14,7 @@ qpMath::~qpMath()
 {
 }
 
-qp qpMath::fromLongRational(long hi, long lo, int exponent)
+qp qpMath::fromLongRational(LONGLONG hi, LONGLONG lo, int exponent)
 {
 	qp nHRaw = qp(hi);
 	qp nL = qp(lo);

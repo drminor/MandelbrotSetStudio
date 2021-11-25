@@ -149,6 +149,11 @@ namespace ImageBuilder
 				MapCalcSettings = new MapCalcSettings(maxIterations: 300, threshold: 4, iterationsPerStep: 100)
 			};
 
+			//var tSize = new RSizeDto(new BigInteger[] { 11, 12 }, 3);
+
+			//var tSize2 = new RSizeDto(tSize.GetValues(), 33);
+
+
 			return result;
 		}
 

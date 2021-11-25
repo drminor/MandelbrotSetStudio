@@ -1,5 +1,7 @@
 ﻿using MEngineDataContracts;
 using MSS.Common.DataTransferObjects;
+using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace MEngineService
@@ -21,18 +23,26 @@ namespace MEngineService
 			//FGenJob? fGenJob = BuildFGenJob(mapSectionRequest);
 			//FGenerator fGenerator = new FGenerator(fGenJob);
 
-			DisplayHelloFromDLL();
+			MapSectionRequestStruct requestStruct = new MapSectionReqHelper().GetRequestStruct(mapSectionRequest);
 
-			//var dd = new Dd(11d);
-			//string strDd = dd.GetStringVal();
-			string strDd = "hi";
+			int length = 10;
+			IntPtr rawCnts = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(int)) * length);
+			NativeMethods.GenerateMapSection(requestStruct, ref rawCnts, length);
+
+			int[] tmpCnts = new int[length];
+			Marshal.Copy(rawCnts, tmpCnts, 0, length);
+			Marshal.FreeCoTaskMem(rawCnts);
+
+			// TODO: Update C++ code to use integers
+			uint[] cnts = tmpCnts.Cast<uint>().ToArray();
+
 
 			var result = new MapSectionResponse
 			{
 				Status = 0,          // Ok
 				QueuePosition = -1,   // Unknown
 				Test = new double[] { 1, 2 },
-				TestString = strDd
+				TestString = "Hi"
 			};
 
 			return result;

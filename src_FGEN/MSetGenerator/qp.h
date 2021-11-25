@@ -40,10 +40,22 @@ public:
 		_lop = 0.0;
 	}
 
+	qp(LONGLONG h)
+	{
+		_hip = static_cast<double>(h);
+		_lop = 0.0;
+	}
+
 	qp(double hi, double lo)
 	{
 		_hip = hi;
 		_lop = lo;
+	}
+
+	qp(LONGLONG hi, LONGLONG lo)
+	{
+		_hip = static_cast<double>(hi);
+		_lop = static_cast<double>(lo);
 	}
 
 	//qp(const qp &v)

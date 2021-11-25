@@ -1,19 +1,19 @@
-﻿using System.Linq;
+﻿using ProtoBuf;
+using System.Linq;
 using System.Numerics;
-using System.Runtime.Serialization;
 
 namespace MSS.Types.DataTransferObjects
 {
-	[DataContract]
+	[ProtoContract(SkipConstructor = true)]
 	public class RSizeDto
 	{
-		[DataMember(Order = 1)]
+		[ProtoMember(1)]
 		public long[] Width { get; init; }
 
-		[DataMember(Order = 2)]
+		[ProtoMember(2)]
 		public long[] Height { get; init; }
 
-		[DataMember(Order = 3)]
+		[ProtoMember(3)]
 		public int Exponent { get; init; }
 
 		public RSizeDto() : this(new BigInteger[] { 0, 0 }, 0)

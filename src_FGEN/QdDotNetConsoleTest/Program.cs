@@ -4,6 +4,10 @@ using System.Numerics;
 
 using static MSS.Types.BigIntegerExtensions;
 using System.Linq;
+using MEngineDataContracts;
+using MSS.Types;
+using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 
 namespace QdDotNetConsoleTest
 {
@@ -45,6 +49,7 @@ namespace QdDotNetConsoleTest
 			Console.WriteLine("This is C# program");
 			NativeMethods.DisplayHelloFromDLL();
 
+			// ---------
 			long hi = 0;
 			long lo = 9;
 			int exponent = -2;
@@ -52,6 +57,7 @@ namespace QdDotNetConsoleTest
 
 			Console.WriteLine($"Got rc: {rc} from SendBig.");
 
+			// ----------
 			BigInteger a = new BigInteger(Math.ScaleB(5, 54));
 			a += 245;
 
@@ -65,9 +71,10 @@ namespace QdDotNetConsoleTest
 
 			Console.WriteLine($"The BigInteger before: {a} and after {b}.");
 
+			// -------
 			int size = 10;
 			IntPtr buffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(int)) * size);
-			NativeMethods.GenerateMapSection(tmp[0], tmp[1], 0, ref buffer, size);
+			NativeMethods.GenerateMapSection1(tmp[0], tmp[1], 0, ref buffer, size);
 
 			int[] arrayRes = new int[size];
 			Marshal.Copy(buffer, arrayRes, 0, size);
@@ -78,10 +85,36 @@ namespace QdDotNetConsoleTest
 
 			for (int i = 0; i < size; i++)
 			{
-				Console.WriteLine($"The results[{i}] is {arrayRes[i]}.");
+				Console.WriteLine($"The results[{i}] is {res[i]}.");
 			}
 
+			//------
 
+			MapSectionRequest request = new MapSectionRequest();
+			request.SubdivisionId = "TestA";
+			request.BlockPosition = new PointInt(0, 0);
+			request.Position = new RPointDto(new BigInteger[] { 4, 5 }, 1);
+			request.BlockSize = new SizeInt(128, 128);
+			request.SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8);
+			request.MapCalcSettings = new MapCalcSettings(maxIterations: 400, threshold: 4, iterationsPerStep: 100);
+
+			MapSectionRequestStruct requestStruct = new MapSectionReqHelper().GetRequestStruct(request);
+
+			int length = 10;
+			IntPtr rawCnts = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(int)) * length);
+			NativeMethods.GenerateMapSection(requestStruct, ref rawCnts, length);
+
+			int[] tmpCnts = new int[length];
+			Marshal.Copy(rawCnts, tmpCnts, 0, length);
+			Marshal.FreeCoTaskMem(rawCnts);
+
+			// TODO: Update C++ code to use integers
+			uint[] cnts = tmpCnts.Cast<uint>().ToArray();
+
+			for (int i = 0; i < length; i++)
+			{
+				Console.WriteLine($"The results[{i}] is {cnts[i]}.");
+			}
 
 		}
 	}

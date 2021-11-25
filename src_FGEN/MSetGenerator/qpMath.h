@@ -14,7 +14,7 @@ class MSETGEN_API qpMath
 public:
 	qpMath();
 
-	qp fromLongRational(long hi, long lo, int exponent);
+	qp fromLongRational(LONGLONG hi, LONGLONG lo, int exponent);
 
 	qp sub(qp a, qp b);
 	qp add(qp a, qp b);
