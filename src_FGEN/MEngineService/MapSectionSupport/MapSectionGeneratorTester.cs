@@ -13,6 +13,21 @@ namespace MEngineService
 {
 	public class MapSectionGeneratorTester
 	{
+		public static void TestTheGenerator()
+		{
+			MapSectionRequest request = new MapSectionRequest();
+			request.SubdivisionId = "TestA";
+			request.BlockPosition = new PointInt(0, 0);
+			request.Position = new RPointDto(new BigInteger[] { 4, 5 }, 1);
+			request.BlockSize = new SizeInt(128, 128);
+			request.SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8);
+			request.MapCalcSettings = new MapCalcSettings(maxIterations: 400, threshold: 4, iterationsPerStep: 100);
+
+			var response = new MapSectionGenerator().GenerateMapSection(request);
+
+			Console.WriteLine($"The response has {response.Counts.Length} count values.");
+		}
+
 		public static void BasicTest()
 		{
 			//var x = new QdTest();

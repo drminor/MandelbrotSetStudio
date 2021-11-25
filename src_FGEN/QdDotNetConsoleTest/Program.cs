@@ -6,7 +6,9 @@ namespace QdDotNetConsoleTest
 	{
 		static void Main(string[] args)
 		{
-			MapSectionGeneratorTester.BasicTest();
+			//MapSectionGeneratorTester.BasicTest();
+
+			MapSectionGeneratorTester.TestTheGenerator();
 		}
 
 	}

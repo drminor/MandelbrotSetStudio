@@ -37,6 +37,22 @@ typedef struct _MSETREQ
 
 extern "C"
 {
+    __declspec(dllexport) void GenerateMapSection(MSETREQ mapSectionRequest, unsigned int** ppArray, int size)
+    {
+        printf("Generating MapSection for subdivision:%s.\n", mapSectionRequest.subdivisionId);
+
+        qpMath* m = new qpMath();
+        qp result = m->fromLongRational(mapSectionRequest.positionX[0], mapSectionRequest.positionX[1], mapSectionRequest.positionExponent);
+        delete m;
+
+        for (int i = 0; i < size; i++)
+        {
+            (*ppArray)[i] = i;
+        }
+    }
+
+#pragma region Unused
+
     __declspec(dllexport) void DisplayHelloFromDLL()
     {
         printf("Hello from DLL !\n");
@@ -74,17 +90,7 @@ extern "C"
         }
     }
 
-    __declspec(dllexport) void GenerateMapSection(MSETREQ mapSectionRequest, unsigned int** ppArray, int size)
-    {
-        printf("Generating MapSection.\n");
 
-        qpMath* m = new qpMath();
-        qp result = m->fromLongRational(mapSectionRequest.positionX[0], mapSectionRequest.positionX[1], mapSectionRequest.positionExponent);
-        delete m;
+#pragma endregion
 
-        for (int i = 0; i < size; i++)
-        {
-            (*ppArray)[i] = i;
-        }
-    }
 }
