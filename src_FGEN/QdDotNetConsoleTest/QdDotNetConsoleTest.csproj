@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MEngineDataContracts\MEngineDataContracts.csproj" />
     <ProjectReference Include="..\..\src\MSS.Types\MSS.Types.csproj" />
+    <ProjectReference Include="..\MEngineService\MEngineService.csproj" />
   </ItemGroup>
 
 </Project>
