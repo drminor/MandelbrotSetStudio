@@ -42,7 +42,7 @@ extern "C"
         printf("Generating MapSection for subdivision:%s.\n", mapSectionRequest.subdivisionId);
 
         qpMath* m = new qpMath();
-        qp result = m->fromLongRational(mapSectionRequest.positionX[0], mapSectionRequest.positionX[1], mapSectionRequest.positionExponent);
+        //qp result = m->fromLongRational(mapSectionRequest.positionX[0], mapSectionRequest.positionX[1], mapSectionRequest.positionExponent);
         delete m;
 
         for (int i = 0; i < size; i++)

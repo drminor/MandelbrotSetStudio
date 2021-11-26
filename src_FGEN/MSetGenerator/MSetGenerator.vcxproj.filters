@@ -45,6 +45,18 @@
     <ClCompile Include="qpMathVec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PointDd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SizeInt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GenWorkVals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Generator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="MSetGenerator.def">
@@ -89,6 +101,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qpMathVec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointDd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SizeInt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GenWorkVals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Generator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

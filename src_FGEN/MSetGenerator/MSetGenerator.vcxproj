@@ -186,7 +186,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FGenMath.cpp" />
+    <ClCompile Include="Generator.cpp" />
     <ClCompile Include="GenPt.cpp" />
+    <ClCompile Include="GenWorkVals.cpp" />
     <ClCompile Include="MSetGenerator.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -194,11 +196,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PointDd.cpp" />
     <ClCompile Include="PointInt.cpp" />
     <ClCompile Include="qp.cpp" />
     <ClCompile Include="qpMath.cpp" />
     <ClCompile Include="qpMathVec.cpp" />
     <ClCompile Include="qpParser.cpp" />
+    <ClCompile Include="SizeInt.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -208,15 +212,19 @@
   <ItemGroup>
     <ClInclude Include="FGenMath.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Generator.h" />
     <ClInclude Include="GenPt.h" />
+    <ClInclude Include="GenWorkVals.h" />
     <ClInclude Include="MSetGenerator.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PointDd.h" />
     <ClInclude Include="PointInt.h" />
     <ClInclude Include="qp.h" />
     <ClInclude Include="qpMath.h" />
     <ClInclude Include="qpMathVec.h" />
     <ClInclude Include="qpParser.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SizeInt.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
