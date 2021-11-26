@@ -5,6 +5,8 @@
 #include "framework.h"
 #include "MSetGenerator.h"
 
+#include "qp.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -59,6 +61,8 @@ CMSetGeneratorApp theApp;
 BOOL CMSetGeneratorApp::InitInstance()
 {
 	CWinApp::InitInstance();
+
+	qp::initializeStaticMembers();
 
 	return TRUE;
 }

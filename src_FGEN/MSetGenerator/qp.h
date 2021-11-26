@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cmath>
+#include <stdexcept>
+
 class qp
 {
 
@@ -8,6 +11,8 @@ private:
 	double _lop;
 
 public:
+
+	static void initializeStaticMembers();
 
 	double _hi() const { return _hip; }
 	double _lo() const { return _lop; }
@@ -36,7 +41,7 @@ public:
 
 	qp(LONGLONG h)
 	{
-		_hip = static_cast<double>(h);
+		_hip = GetDouble(h);
 		_lop = 0.0;
 	}
 
@@ -48,8 +53,8 @@ public:
 
 	qp(LONGLONG hi, LONGLONG lo)
 	{
-		_hip = static_cast<double>(hi);
-		_lop = static_cast<double>(lo);
+		_hip = GetDouble(hi);
+		_lop = GetDouble(lo);
 	}
 
 	//qp(const qp &v)
@@ -76,6 +81,10 @@ public:
 	~qp()
 	{
 	}
+
+private:
+	double GetDouble(LONGLONG l);
+
 };
 
 
