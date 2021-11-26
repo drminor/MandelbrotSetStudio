@@ -1,12 +1,6 @@
 #pragma once
 
-#ifdef MSETGEN_EXPORTS
-#define MSETGEN_API __declspec(dllexport)
-#else
-#define MSETGEN_API __declspec(dllimport)
-#endif
-
-class MSETGEN_API qp
+class qp
 {
 
 private:

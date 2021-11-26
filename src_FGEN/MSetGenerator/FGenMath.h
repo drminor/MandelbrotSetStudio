@@ -5,8 +5,6 @@
 #include "GenPt.h"
 #include "qpMath.h"
 
-namespace FGen
-{
 	class qpMathVec;
 
 	class FGenMath
@@ -27,6 +25,5 @@ namespace FGen
 		qpMath* _qpCalcSingle;
 		double* _two;
 	};
-}
 
 

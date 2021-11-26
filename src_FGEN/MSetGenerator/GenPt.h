@@ -4,57 +4,53 @@
 #include "qp.h"
 #include "PointInt.h"
 
-namespace FGen
+class GenPt
 {
-	class GenPt
-	{
 
-	public:
-		GenPt(int blockWidth);
+public:
+	GenPt(int blockWidth);
 
-		~GenPt();
+	~GenPt();
 
-		void SetC(int index, PointInt resultIndex, qp cx, qp cy, qp zx, qp zy, unsigned int cnt);
-		void Clear(int index);
-		void SetEmpty(int index);
-		bool IsEmpty(int index);
+	void SetC(int index, PointInt resultIndex, qp cx, qp cy, qp zx, qp zy, unsigned int cnt);
+	void Clear(int index);
+	void SetEmpty(int index);
+	bool IsEmpty(int index);
 
-		bool IsEvIterationsRemainingZero(int index);
-		void SetEvIterationsRemaining(int index, int val);
-		int DecrementEvIterationsRemaining(int index);
+	bool IsEvIterationsRemainingZero(int index);
+	void SetEvIterationsRemaining(int index, int val);
+	int DecrementEvIterationsRemaining(int index);
 
-		int _blockWidth;
+	int _blockWidth;
 
-		PointInt* _resultIndexes;
+	PointInt* _resultIndexes;
 
-		double* _cxCordHis;
-		double* _cxCordLos;
-		double* _cyCordHis;
-		double* _cyCordLos;
+	double* _cxCordHis;
+	double* _cxCordLos;
+	double* _cyCordHis;
+	double* _cyCordLos;
 
-		double* _zxCordHis;
-		double* _zxCordLos;
-		double* _zyCordHis;
-		double* _zyCordLos;
+	double* _zxCordHis;
+	double* _zxCordLos;
+	double* _zyCordHis;
+	double* _zyCordLos;
 
-		double* _xsCordHis;
-		double* _xsCordLos;
-		double* _ysCordHis;
-		double* _ysCordLos;
+	double* _xsCordHis;
+	double* _xsCordLos;
+	double* _ysCordHis;
+	double* _ysCordLos;
 
-		double* _sumSqsHis;
-		double* _sumSqsLos;
+	double* _sumSqsHis;
+	double* _sumSqsLos;
 
-		int* _cnt;
+	int* _cnt;
 
-		double* _rCordHis;
-		double* _rCordLos;
+	double* _rCordHis;
+	double* _rCordLos;
 
-		int* _evIterationsRemaining;
+	int* _evIterationsRemaining;
 
-	};
+};
 
-
-}
 
 

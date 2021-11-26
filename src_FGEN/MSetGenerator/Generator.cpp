@@ -7,8 +7,6 @@
 #include "qpMathVec.h"
 #include "GenWorkVals.h"
 
-namespace FGen
-{
 	//Generator::Generator(Job job) : m_Job(job)
 	//{
 	//	m_targetIterationCount = m_Job.MaxIterations();
@@ -61,7 +59,7 @@ namespace FGen
 		double* zValsBuf = new double[4];
 		bool morePts = true;
 
-		for (int i = 0; i < FGen::BLOCK_WIDTH && morePts; i++) {
+		for (int i = 0; i < BLOCK_WIDTH && morePts; i++) {
 			morePts = workVals->GetNextWorkValues(curCoordIndex, count, zValsBuf);
 			if (morePts) {
 				qp cY = m_YPoints[startY + curCoordIndex.Y()];
@@ -246,7 +244,7 @@ namespace FGen
 
 		qp yCord = m_YPoints[startY + yPtr];
 
-		for (int i = 0; i < FGen::BLOCK_WIDTH; i++) {
+		for (int i = 0; i < BLOCK_WIDTH; i++) {
 			qp xCord = m_XPoints[startX + i];
 			PointDd c = PointDd(xCord, yCord);
 
@@ -599,6 +597,6 @@ namespace FGen
 	//	}
 	//}
 
-}
+
 
 
