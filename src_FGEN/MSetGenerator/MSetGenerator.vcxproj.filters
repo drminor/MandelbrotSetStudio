@@ -33,6 +33,18 @@
     <ClCompile Include="qpParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FGenMath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointInt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GenPt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qpMathVec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="MSetGenerator.def">
@@ -65,6 +77,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qpParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FGenMath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GenPt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointInt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qpMathVec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

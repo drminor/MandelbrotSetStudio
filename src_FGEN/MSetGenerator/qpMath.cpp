@@ -5,6 +5,7 @@
 #include <cmath>
 #include <corecrt_math.h>
 #include <float.h>
+#include "mkl.h"
 
 qpMath::qpMath()
 {
@@ -16,6 +17,8 @@ qpMath::~qpMath()
 
 qp qpMath::fromLongRational(LONGLONG hi, LONGLONG lo, int exponent)
 {
+	Test1();
+
 	qp nHRaw = qp(hi);
 	qp nL = qp(lo);
 	double e = std::ldexp(1, exponent);
@@ -25,6 +28,25 @@ qp qpMath::fromLongRational(LONGLONG hi, LONGLONG lo, int exponent)
 	qp n = add(nH, nL);
 	qp result = mulD(n, e);
 	return result;
+}
+
+void qpMath::Test1()
+{
+	//double s = a + b;
+
+	double* a = new double[2]{ 0 };
+	double* b = new double[2]{ 0 };
+	double* s = new double[2]{ 0 };
+
+	a[0] = 5;
+	a[1] = 10;
+	b[0] = 15;
+	b[1] = 20;
+
+	s[0] = 25;
+	s[1] = 30;
+
+	vdAdd(2, a, b, s);
 }
 
 qp qpMath::sub(qp a, qp b)

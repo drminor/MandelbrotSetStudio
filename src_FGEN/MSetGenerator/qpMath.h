@@ -49,6 +49,10 @@ public:
 	void split(double a, double &hi, double &lo);
 
 	~qpMath();
+
+private:
+	void Test1();
+
 };
 
 
