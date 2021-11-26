@@ -1,14 +1,8 @@
 #pragma once
 
-#ifdef MSETGEN_EXPORTS
-#define MSETGEN_API __declspec(dllexport)
-#else
-#define MSETGEN_API __declspec(dllimport)
-#endif
-
 #include "qp.h"
 
-class MSETGEN_API qpMath
+class qpMath
 {
 
 public:
@@ -51,7 +45,7 @@ public:
 	~qpMath();
 
 private:
-	void Test1();
+	//void Test1();
 
 };
 
