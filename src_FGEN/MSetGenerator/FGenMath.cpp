@@ -1,6 +1,5 @@
 
 #include "pch.h"
-#include "../QPVec/vHelper.h"
 #include "FGenMath.h"
 #include "qpMathVec.h"
 

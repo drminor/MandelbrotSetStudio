@@ -1,7 +1,8 @@
 #pragma once
 
 #include "qp.h"
-#include "../QPVec/qpvec.h"
+#include "twoSum.h"
+#include "twoProd.h"
 
 //using namespace qpvec;
 
@@ -39,8 +40,8 @@ public:
 
 private:
 	int _len;
-	qpvec::twoSum* _twoSum;
-	qpvec::twoProd* _twoProd;
+	twoSum* _twoSum;
+	twoProd* _twoProd;
 
 	double* _t1;
 

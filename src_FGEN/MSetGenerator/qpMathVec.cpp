@@ -2,9 +2,9 @@
 
 #include "pch.h"
 #include "qpMathVec.h"
-#include "../QPVec/qpvec.h"
-
-using namespace qpvec;
+#include "twoSum.h"
+#include "twoProd.h"
+#include "mkl.h"
 
 qpMathVec::qpMathVec(int len)
 {

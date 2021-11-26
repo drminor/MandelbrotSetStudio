@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../QPVec/vHelper.h"
+#include "vHelper.h"
 #include "qp.h"
 #include "GenPt.h"
 #include "qpMath.h"
@@ -20,7 +20,7 @@
 
 	private:
 		int _len;
-		qpvec::vHelper* _vhelper;
+		vHelper* _vhelper;
 		qpMathVec* _qpCalc;
 		qpMath* _qpCalcSingle;
 		double* _two;

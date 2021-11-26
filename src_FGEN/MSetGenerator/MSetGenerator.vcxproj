@@ -204,6 +204,9 @@
     <ClCompile Include="qpParser.cpp" />
     <ClCompile Include="SizeInt.cpp" />
     <ClCompile Include="Test.cpp" />
+    <ClCompile Include="twoProd.cpp" />
+    <ClCompile Include="twoSum.cpp" />
+    <ClCompile Include="vHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="MSetGenerator.def" />
@@ -226,6 +229,9 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SizeInt.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="twoProd.h" />
+    <ClInclude Include="twoSum.h" />
+    <ClInclude Include="vHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MSetGenerator.rc" />
