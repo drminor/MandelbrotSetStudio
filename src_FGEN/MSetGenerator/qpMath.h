@@ -45,7 +45,7 @@ public:
 	~qpMath();
 
 private:
-	//void Test1();
+	void Test1();
 
 };
 

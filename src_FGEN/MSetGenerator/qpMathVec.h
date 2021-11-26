@@ -3,7 +3,7 @@
 #include "qp.h"
 #include "../QPVec/qpvec.h"
 
-using namespace qpvec;
+//using namespace qpvec;
 
 class qpMathVec
 {
@@ -39,8 +39,8 @@ public:
 
 private:
 	int _len;
-	twoSum* _twoSum;
-	twoProd* _twoProd;
+	qpvec::twoSum* _twoSum;
+	qpvec::twoProd* _twoProd;
 
 	double* _t1;
 

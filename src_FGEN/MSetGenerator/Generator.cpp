@@ -17,7 +17,12 @@
 
 	Generator::Generator()
 	{
+		m_Name = "hi";
+		m_targetIterationCount = 100;
+		m_XPoints = new qp[2];
+		m_YPoints = new qp[2];
 
+		m_Log2 = std::log10(2);
 	}
 
 	Generator::~Generator()
