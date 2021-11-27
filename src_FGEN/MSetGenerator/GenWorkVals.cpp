@@ -27,7 +27,7 @@ bool GenWorkVals::GetNextWorkValues(PointInt& index, int& count, double* zValsBu
 	if (_completed) return false;
 
 	int vPtr = _curPos->Y() * _width + _curPos->X();
-	unsigned int cntVal = _counts[vPtr] / 10000;
+	int cntVal = _counts[vPtr] / 10000;
 	bool needsWork = !_doneFlags[vPtr] && cntVal < _targetIterationCnt;
 
 	while (!needsWork && !_completed) {

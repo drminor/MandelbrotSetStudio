@@ -143,10 +143,10 @@ namespace ImageBuilder
 			{
 				SubdivisionId = "TestId",
 				BlockPosition = new PointInt(0, 0),
-				Position = new RPointDto(new BigInteger[] { -1, 1 }, 0),
+				Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
 				BlockSize = RMapConstants.BLOCK_SIZE,
-				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -11),
-				MapCalcSettings = new MapCalcSettings(maxIterations: 300, threshold: 4, iterationsPerStep: 100)
+				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
+				MapCalcSettings = new MapCalcSettings(maxIterations: 100, threshold: 4, iterationsPerStep: 100)
 			};
 
 			//var tSize = new RSizeDto(new BigInteger[] { 11, 12 }, 3);

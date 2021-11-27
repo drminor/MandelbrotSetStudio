@@ -5,8 +5,6 @@
 #include "qp.h"
 #include "PointDd.h"
 #include "SizeDd.h"
-#include "GenPt.h"
-#include "FGenMath.h"
 
 class Generator
 {

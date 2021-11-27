@@ -5,6 +5,10 @@
 
 #include "qpMath.h"
 #include "qpMathVec.h"
+
+#include "GenPt.h"
+#include "FGenMath.h"
+
 #include "GenWorkVals.h"
 
 Generator::Generator()

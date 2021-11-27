@@ -6,7 +6,7 @@ class GenWorkVals
 	int _width;
 	int _height;
 	int _len;
-	unsigned int _targetIterationCnt;
+	int _targetIterationCnt;
 	int* _counts;
 	double* _zValues;
 	bool* _doneFlags;
