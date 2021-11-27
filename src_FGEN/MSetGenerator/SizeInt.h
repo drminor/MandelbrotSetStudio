@@ -5,22 +5,22 @@ struct SizeInt
 
 public:
 	SizeInt();
-	SizeInt(int w, int h);
+	SizeInt(int width, int height);
 
-	inline int W() const
+	inline int Width() const
 	{
-		return w;
+		return width;
 	};
 
-	inline int H() const
+	inline int Height() const
 	{
-		return h;
+		return height;
 	};
 
 	~SizeInt();
 
 private:
-	int w;
-	int h;
+	int width;
+	int height;
 };
 

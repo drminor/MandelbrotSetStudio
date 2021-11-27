@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "SizeInt.h"
 
-SizeInt::SizeInt(int w, int h) : w(w), h(h)
-{
-}
-
 SizeInt::SizeInt()
 {
-	w = 0;
-	h = 0;
+	width = 0;
+	height = 0;
+}
+
+SizeInt::SizeInt(int width, int height) : width(width), height(height)
+{
 }
 
 SizeInt::~SizeInt()

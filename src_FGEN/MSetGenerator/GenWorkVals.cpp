@@ -2,7 +2,7 @@
 #include "GenWorkVals.h"
 
 
-GenWorkVals::GenWorkVals(int width, int height, unsigned int targetIterationCnt, unsigned int* counts, bool* doneFlags, double* zValues)
+GenWorkVals::GenWorkVals(int width, int height, int targetIterationCnt, int* counts, bool* doneFlags, double* zValues)
 {
 	_width = width;
 	_height = height;
@@ -22,7 +22,7 @@ GenWorkVals::~GenWorkVals()
 	delete _curPos;
 }
 
-bool GenWorkVals::GetNextWorkValues(PointInt& index, unsigned int& count, double* zValsBuf)
+bool GenWorkVals::GetNextWorkValues(PointInt& index, int& count, double* zValsBuf)
 {
 	if (_completed) return false;
 
@@ -55,7 +55,7 @@ bool GenWorkVals::GetNextWorkValues(PointInt& index, unsigned int& count, double
 	}
 }
 
-void GenWorkVals::SaveWorkValues(PointInt index, unsigned int count, double* zValsBuf, bool doneFlag)
+void GenWorkVals::SaveWorkValues(PointInt index, int count, double* zValsBuf, bool doneFlag)
 {
 	int vPtr = index.Y() * _width + index.X();
 	_counts[vPtr] = 10000 * count;

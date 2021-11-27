@@ -202,6 +202,7 @@
     <ClCompile Include="qpMath.cpp" />
     <ClCompile Include="qpMathVec.cpp" />
     <ClCompile Include="qpParser.cpp" />
+    <ClCompile Include="SizeDd.cpp" />
     <ClCompile Include="SizeInt.cpp" />
     <ClCompile Include="Test.cpp" />
     <ClCompile Include="twoProd.cpp" />
@@ -227,6 +228,7 @@
     <ClInclude Include="qpMathVec.h" />
     <ClInclude Include="qpParser.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SizeDd.h" />
     <ClInclude Include="SizeInt.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="twoProd.h" />

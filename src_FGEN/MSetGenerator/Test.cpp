@@ -3,7 +3,10 @@
 #include <stdio.h>
 #include <cmath>
 
+#include "SizeInt.h"
+#include "SizeDd.h"
 #include "qpMath.h"
+#include "Generator.h"
 
 typedef struct _MSETREQ
 {
@@ -37,18 +40,47 @@ typedef struct _MSETREQ
 
 extern "C"
 {
-    __declspec(dllexport) void GenerateMapSection(MSETREQ mapSectionRequest, unsigned int** ppArray, int size)
+    __declspec(dllexport) void GenerateMapSection(MSETREQ mapSectionRequest, int* counts, bool* doneFlags, double* zValues)
     {
         printf("Generating MapSection for subdivision:%s.\n", mapSectionRequest.subdivisionId);
 
+        int cellCount = mapSectionRequest.blockSizeWidth * mapSectionRequest.blockSizeHeight;
+
+        for (int i = 0; i < cellCount; i++)
+        {
+            counts[i] = 0;
+            doneFlags[i] = false;
+        }
+
+        cellCount *= 4;
+
+        for (int i = 0; i < cellCount; i++)
+        {
+            zValues[i] = 0;
+        }
+
         qpMath* m = new qpMath();
-        qp result = m->fromLongRational(mapSectionRequest.positionX[0], mapSectionRequest.positionX[1], mapSectionRequest.positionExponent);
+        qp posX = m->fromLongRational(mapSectionRequest.positionX[0], mapSectionRequest.positionX[1], mapSectionRequest.positionExponent);
+        qp posY = m->fromLongRational(mapSectionRequest.positionY[0], mapSectionRequest.positionY[1], mapSectionRequest.positionExponent);
+
+        qp deltaWidth = m->fromLongRational(mapSectionRequest.samplePointDeltaWidth[0], mapSectionRequest.samplePointDeltaWidth[1], mapSectionRequest.samplePointDeltaExponent);
+        qp deltaHeight = m->fromLongRational(mapSectionRequest.samplePointDeltaHeight[0], mapSectionRequest.samplePointDeltaHeight[1], mapSectionRequest.samplePointDeltaExponent);
         delete m;
 
-        for (int i = 0; i < size; i++)
-        {
-            (*ppArray)[i] = i;
-        }
+        Generator* g = new Generator();
+
+        PointDd pos = PointDd(posX, posY);
+        SizeInt blockSize = SizeInt(mapSectionRequest.blockSizeWidth, mapSectionRequest.blockSizeHeight);
+        SizeDd sampleSize = SizeDd(deltaWidth, deltaHeight);
+
+        g->FillCountsVec(pos, blockSize, sampleSize, 100, counts, doneFlags, zValues);
+
+        delete g;
+
+        //for (int i = 0; i < size; i++)
+        //{
+        //    (*ppArray)[i] = i;
+        //}
     }
 
 #pragma region Unused
