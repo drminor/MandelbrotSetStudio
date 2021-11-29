@@ -1,0 +1,83 @@
+﻿<Window x:Class="MSetExplorer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MSetExplorer"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="650" Width="800">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="80"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!--<Image Grid.Column="0" Grid.Row="0" Source="WP_20131215_001.jpg"/>-->
+
+        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <!--<Grid Width="768" Height="512">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="128"/>
+                    <RowDefinition Height="128"/>
+                    <RowDefinition Height="128"/>
+                    <RowDefinition Height="128"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="128"/>
+                    <ColumnDefinition Width="128"/>
+                    <ColumnDefinition Width="128"/>
+                    <ColumnDefinition Width="128"/>
+                    <ColumnDefinition Width="128"/>
+                    <ColumnDefinition Width="128"/>
+                </Grid.ColumnDefinitions>
+            </Grid>-->
+
+            <Canvas Name="MainCanvas" Width="768" Height="512" Visibility="Visible">
+                <!--<Image Name="I00" Width="128" Height="128" Canvas.Bottom="0" Canvas.Left="0"/>
+                <Image Name="I10" Width="128" Height="128" Canvas.Bottom="0" Canvas.Left="128"/>
+                <Image Name="I20" Width="128" Height="128" Canvas.Bottom="0" Canvas.Left="256"/>
+                <Image Name="I30" Width="128" Height="128" Canvas.Bottom="0" Canvas.Left="384"/>
+                <Image Name="I40" Width="128" Height="128" Canvas.Bottom="0" Canvas.Left="512"/>
+                <Image Name="I50" Width="128" Height="128" Canvas.Bottom="0" Canvas.Left="640"/>
+
+                <Image Name="I01" Width="128" Height="128" Canvas.Bottom="128" Canvas.Left="0"/>
+                <Image Name="I11" Width="128" Height="128" Canvas.Bottom="128" Canvas.Left="128"/>
+                <Image Name="I21" Width="128" Height="128" Canvas.Bottom="128" Canvas.Left="256"/>
+                <Image Name="I31" Width="128" Height="128" Canvas.Bottom="128" Canvas.Left="384"/>
+                <Image Name="I41" Width="128" Height="128" Canvas.Bottom="128" Canvas.Left="512"/>
+                <Image Name="I51" Width="128" Height="128" Canvas.Bottom="128" Canvas.Left="640"/>
+
+                <Image Name="I02" Width="128" Height="128" Canvas.Bottom="256" Canvas.Left="0"/>
+                <Image Name="I12" Width="128" Height="128" Canvas.Bottom="256" Canvas.Left="128"/>
+                <Image Name="I22" Width="128" Height="128" Canvas.Bottom="256" Canvas.Left="256"/>
+                <Image Name="I32" Width="128" Height="128" Canvas.Bottom="256" Canvas.Left="384"/>
+                <Image Name="I42" Width="128" Height="128" Canvas.Bottom="256" Canvas.Left="512"/>
+                <Image Name="I52" Width="128" Height="128" Canvas.Bottom="256" Canvas.Left="640"/>
+
+                <Image Name="I03" Width="128" Height="128" Canvas.Bottom="384" Canvas.Left="0"/>
+                <Image Name="I13" Width="128" Height="128" Canvas.Bottom="384" Canvas.Left="128"/>
+                <Image Name="I23" Width="128" Height="128" Canvas.Bottom="384" Canvas.Left="256"/>
+                <Image Name="I33" Width="128" Height="128" Canvas.Bottom="384" Canvas.Left="384"/>
+                <Image Name="I43" Width="128" Height="128" Canvas.Bottom="384" Canvas.Left="512"/>
+                <Image Name="I53" Width="128" Height="128" Canvas.Bottom="384" Canvas.Left="640"/>-->
+
+
+            </Canvas>
+
+
+
+        </Border>
+
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel Grid.Row="1" HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button HorizontalAlignment="Center" Width="100" Margin="0,15,0,15" Click="Button_Click">Close</Button>
+            </StackPanel>
+        </Border>
+
+
+    </Grid>
+</Window>

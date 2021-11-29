@@ -4,7 +4,10 @@
 dotnet_diagnostic.CA1822.severity = none
 
 # Default severity for all analyzer diagnostics
-dotnet_analyzer_diagnostic.severity = silent
+#dotnet_analyzer_diagnostic.severity = silent
 
 # Default severity for analyzer diagnostics with category 'Performance'
-dotnet_analyzer_diagnostic.category-Performance.severity = silent
+#dotnet_analyzer_diagnostic.category-Performance.severity = silent
+
+# IDE0008: Use explicit type
+csharp_style_var_when_type_is_apparent = false

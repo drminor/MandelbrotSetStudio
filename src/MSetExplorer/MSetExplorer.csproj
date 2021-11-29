@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MapSectionRepo\MapSectionRepo.csproj" />
+    <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
+    <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
+    <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
+    <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
+  </ItemGroup>
+
+</Project>

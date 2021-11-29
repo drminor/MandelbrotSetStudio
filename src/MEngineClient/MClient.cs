@@ -18,28 +18,19 @@ namespace MEngineClient
 			_grpcChannel = null;
 		}
 
-		//public async Task<HelloReply1> SendHelloAsync()
-		//{
-		//	IMapSectionService mEngineService = GetMapSectionService();
-
-		//	var reply = await mEngineService.SayHelloAsync(new HelloRequest1 { Name = "GreeterClient" });
-		//	Debug.WriteLine($"Greeting: {reply.Message}");
-
-		//	return reply;
-		//}
-
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		{
 			IMapSectionService mEngineService = GetMapSectionService();
 
-			MapSectionResponse reply = null;
+			//MapSectionResponse reply = null;
 
-			for (int i = 1; i < 5; i++)
-			{
-				reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
-				Debug.WriteLine($"Call #{i} to Submit MapSectionRequest returned: {reply.Status}");
-			}
+			//for (int i = 1; i < 5; i++)
+			//{
+			//	reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
+			//	Debug.WriteLine($"Call #{i} to Submit MapSectionRequest returned: {reply.Status}");
+			//}
 
+			var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
 			return reply;
 		}
 

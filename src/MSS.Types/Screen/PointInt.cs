@@ -46,6 +46,11 @@ namespace MSS.Types
 			return HashCode.Combine(obj.X, obj.Y);
 		}
 
+		public override string? ToString()
+		{
+			return $"x:{X}, y:{Y}";
+		}
+
 		public static bool operator ==(PointInt left, PointInt right)
 		{
 			return left.Equals(right);
