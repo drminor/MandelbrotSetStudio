@@ -16,11 +16,13 @@ namespace MSetExplorer
 		private readonly string _mEngineEndPointAddress;
 		private Task _generateMapSectionsTask;
 
+		private IProgress<MapSection> _progress;
+		private ColorMap _colorMap;
+
 		public MainWindowViewModel(string mEngineEndPointAddress)
 		{
 			_mEngineEndPointAddress = mEngineEndPointAddress;
 			_generateMapSectionsTask = null;
-
 		}
 
 		public Subdivision Subdivision { get; private set; }
@@ -39,18 +41,20 @@ namespace MSetExplorer
 
 		public async Task GetSectionsAsync(MSetInfo mSetInfo, IProgress<MapSection> progress)
 		{
+			_progress = progress;
 			var dtoMapper = new DtoMapper();
 			var mClient = new MClient(_mEngineEndPointAddress);
 
+			var workQueue = new WorkQueue(mClient);
+
+			_colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
+
 			Subdivision = MSetInfoHelper.GetSubdivision(mSetInfo);
-
-			var colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss); 
-
-			var yCoordNumerartor = new BigInteger(-3);
 
 			var numVertBlocks = 6;
 			var numHoriBlocks = 6;
 
+			var yCoordNumerartor = new BigInteger(-3);
 			for (var yBlockPtr = 0; yBlockPtr < numVertBlocks; yBlockPtr++)
 			{
 				var xCoordNumerator = new BigInteger(-4);
@@ -67,17 +71,23 @@ namespace MSetExplorer
 						MapCalcSettings = mSetInfo.MapCalcSettings
 					};
 
+					//workQueue.AddWork(mapSectionRequest, HandleResponse);
 					var mapSectionResponse = await mClient.GenerateMapSectionAsync(mapSectionRequest);
-
-					var pixels1d = GetPixelArray(mapSectionResponse.Counts, Subdivision.BlockSize, colorMap);
-
-					var mapSection = new MapSection(Subdivision, mapSectionResponse.BlockPosition, pixels1d);
-					progress.Report(mapSection);
+					HandleResponse(mapSectionResponse);
 				}
 				yCoordNumerartor++;
 			}
 
+			workQueue.Stop();
+
 			_generateMapSectionsTask = null;
+		}
+
+		private void HandleResponse(MapSectionResponse mapSectionResponse)
+		{
+			var pixels1d = GetPixelArray(mapSectionResponse.Counts, Subdivision.BlockSize, _colorMap);
+			var mapSection = new MapSection(Subdivision, mapSectionResponse.BlockPosition, pixels1d);
+			_progress.Report(mapSection);
 		}
 
 		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap)
@@ -89,7 +99,6 @@ namespace MSetExplorer
 			{
 				var resultRowPtr = -1 + blockSize.Height - rowPtr;
 				var curResultPtr = resultRowPtr * blockSize.Width * 4;
-
 				var curSourcePtr = rowPtr * blockSize.Width;
 
 				for (var colPtr = 0; colPtr < blockSize.Width; colPtr++)
@@ -97,7 +106,6 @@ namespace MSetExplorer
 					var countVal = counts[curSourcePtr++];
 					countVal = Math.DivRem(countVal, 1000, out var ev);
 					var escapeVel = ev / 1000d;
-
 					var colorComps = colorMap.GetColor(countVal, escapeVel);
 
 					for (var j = 2; j > -1; j--)

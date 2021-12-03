@@ -68,12 +68,12 @@ extern "C"
         qp deltaHeight = m->fromLongRational(mapSectionRequest.samplePointDeltaHeight[0], mapSectionRequest.samplePointDeltaHeight[1], mapSectionRequest.samplePointDeltaExponent);
         delete m;
 
-        qpParser* p = new qpParser();
-        std::string px = p->ToStr(posX);
-        std::string dw = p->ToStr(deltaWidth);
-        delete p;
+        //qpParser* p = new qpParser();
+        //std::string px = p->ToStr(posX);
+        //std::string dw = p->ToStr(deltaWidth);
+        //delete p;
 
-        std::cout << "posX is " << px << " and deltaWidth is " << dw;
+        //std::cout << "posX is " << px << " and deltaWidth is " << dw;
         
         Generator* g = new Generator();
 

@@ -11,7 +11,7 @@ namespace MSetExplorer
 	{
 		public static MSetInfo BuildInitialMSetInfo()
 		{
-			var canvasSize = new SizeInt(768, 512);
+			var canvasSize = new SizeInt(768, 768);
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
 			var mapCalcSettings = new MapCalcSettings(maxIterations: 4000, threshold: 4, iterationsPerStep: 100);
 

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="MainWindow" Width="850" Height="850">
+        Title="MainWindow" Width="796" Height="920">
     
     <Grid>
         <Grid.RowDefinitions>
