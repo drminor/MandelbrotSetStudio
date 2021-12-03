@@ -7,21 +7,14 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class App : Application
 	{
+		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
+
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
 
 			MainWindow window = new MainWindow();
-
-			// Create the ViewModel to which the main window binds. 
-			//string path = "Data/customers.xml";
-			var viewModel = new MainWindowViewModel();
-
-			// When the ViewModel asks to be closed, close the window. 
-			//viewModel.RequestClose += delegate { window.Close(); };
-
-			// Allow all controls in the window to bind to the ViewModel by setting the 
-			// DataContext, which propagates down the element tree. 
+			var viewModel = new MainWindowViewModel(M_ENGINE_END_POINT_ADDRESS);
 			window.DataContext = viewModel;
 
 			window.Show();

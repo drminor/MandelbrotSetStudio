@@ -21,15 +21,6 @@ namespace MEngineClient
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		{
 			IMapSectionService mEngineService = GetMapSectionService();
-
-			//MapSectionResponse reply = null;
-
-			//for (int i = 1; i < 5; i++)
-			//{
-			//	reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
-			//	Debug.WriteLine($"Call #{i} to Submit MapSectionRequest returned: {reply.Status}");
-			//}
-
 			var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
 			return reply;
 		}

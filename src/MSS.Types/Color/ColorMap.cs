@@ -30,16 +30,16 @@ namespace MSS.Types
 
         public IList<ColorMapEntry> ColorMapEntries => _colorMapEntries.ToList();
 
-        public int[] GetColor(int countVal, double escapeVelocity)
+        public byte[] GetColor(int countVal, double escapeVelocity)
         {
             int colorMapIndex = GetColorMapIndex(countVal);
-            int[] result = GetBlendedColor(colorMapIndex, countVal, escapeVelocity);
+            byte[] result = GetBlendedColor(colorMapIndex, countVal, escapeVelocity);
             return result;
         }
          
-        private int[] GetBlendedColor(int colorMapIndex, int countVal, double escapeVelocity)
+        private byte[] GetBlendedColor(int colorMapIndex, int countVal, double escapeVelocity)
         {
-            int[] result;
+            byte[] result;
 
             ColorMapEntry cme = GetColorMapEntry(colorMapIndex);
 
@@ -76,7 +76,7 @@ namespace MSS.Types
 			return result;
         }
 
-        private int[] Interpolate(int[] cStart, int[] c1, int[] c2, double factor)
+        private byte[] Interpolate(byte[] cStart, byte[] c1, byte[] c2, double factor)
         {
             if(factor == 0)
             {
@@ -89,8 +89,8 @@ namespace MSS.Types
                 double bd = cStart[2] + (c2[2] - c1[2]) * factor;
 
                 int r = (int) Math.Round(rd);
-                int g = (int)Math.Round(gd);
-                int b = (int)Math.Round(bd);
+                int g = (int) Math.Round(gd);
+                int b = (int) Math.Round(bd);
 
                 if (r < 0 || r > 255)
                 {
@@ -107,10 +107,10 @@ namespace MSS.Types
                     //console.log('Bad blue value.');
                 }
 
-                int[] result = new int[3];
-                result[0] = r;
-                result[1] = g;
-                result[2] = b;
+                byte[] result = new byte[3];
+                result[0] = (byte) r;
+                result[1] = (byte) g;
+                result[2] = (byte) b;
 
                 return result;
             }

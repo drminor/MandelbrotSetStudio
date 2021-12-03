@@ -22,6 +22,12 @@ qpParser::~qpParser()
 	_qpCalc = 0;
 }
 
+std::string qpParser::ToStr(qp num)
+{
+	return qpParser::ToStr(num._hi(), num._lo());
+}
+
+
 std::string qpParser::ToStr(double hi, double lo)
 {
 	std::string result = to_string(hi, lo, 32, 1, 0, false, false, 'u');
@@ -1012,7 +1018,6 @@ void qpParser::append_expn(std::string& str, int expn) const
 
 int qpParser::Read(std::string const& s, double& hi, double& lo) const
 {
-
 	double* his = new double[50];
 	double* los = new double[50];
 

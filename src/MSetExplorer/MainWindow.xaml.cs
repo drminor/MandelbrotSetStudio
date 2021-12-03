@@ -1,6 +1,8 @@
 ﻿using MEngineDataContracts;
 using MSS.Types.MSet;
+using MSS.Types.Screen;
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -25,97 +27,46 @@ namespace MSetExplorer
 		{
 			_vm = (MainWindowViewModel)DataContext;
 
-            var progress = new Progress<MapSectionResponse>(HandleMapSectionReady);
+            var progress = new Progress<MapSection>(HandleMapSectionReady);
 
-            var mSetInfo = _vm.BuildInitialMSetInfo();
+            var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo();
             _vm.GenerateMapSections(mSetInfo, progress);
 		}
 
-		private void HandleMapSectionReady(MapSectionResponse mapSectionResponse)
+		private void HandleMapSectionReady(MapSection mapSection)
 		{
-			//var x = MainCanvas.Children[0];
-
-			//if (x is Image f)
-			//{
-			//}
-
 			var image = new Image
 			{
-				Width = 240,
-				Height = 240,
+				Width = _vm.Subdivision.BlockSize.Width,
+				Height = _vm.Subdivision.BlockSize.Height,
 				Stretch = Stretch.None,
 				Margin = new Thickness(0),
-				Source = GetBitMap()
-			};
+				Source = GetBitMap(mapSection, _vm.Subdivision)
+		};
 
-			MainCanvas.Children.Add(image);
-		}
+			var cIndex = MainCanvas.Children.Add(image);
 
-		private WriteableBitmap GetBitMap()
+            var left = (double)mapSection.BlockPosition.X * _vm.Subdivision.BlockSize.Width;
+            var bot = (double)mapSection.BlockPosition.Y * _vm.Subdivision.BlockSize.Height;
+
+			Debug.WriteLine($"Drawing a bit map at X: {left}, Y:{bot}.");
+
+            MainCanvas.Children[cIndex].SetValue(Canvas.LeftProperty, left);
+            MainCanvas.Children[cIndex].SetValue(Canvas.BottomProperty, bot);
+        }
+
+        private WriteableBitmap GetBitMap(MapSection mapSection, Subdivision subdivision)
 		{
-            const int width = 240;
-            const int height = 240;
+			var width = subdivision.BlockSize.Width;
+			var height = subdivision.BlockSize.Height;
 
-            var wbitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+			var result = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
 
-            byte[,,] pixels = new byte[height, width, 4];
+			var rect = new Int32Rect(0, 0, width, height);
+			var stride = 4 * width;
+			result.WritePixels(rect, mapSection.Pixels1d, stride, 0);
 
-            // Clear to black.
-            for (int row = 0; row < height; row++)
-            {
-                for (int col = 0; col < width; col++)
-                {
-                    for (int i = 0; i < 3; i++)
-                        pixels[row, col, i] = 0;
-                    pixels[row, col, 3] = 255;
-                }
-            }
-
-            // Blue.
-            for (int row = 0; row < 80; row++)
-            {
-                for (int col = 0; col <= row; col++)
-                {
-                    pixels[row, col, 0] = 255;
-                }
-            }
-
-            // Green.
-            for (int row = 80; row < 160; row++)
-            {
-                for (int col = 0; col < 80; col++)
-                {
-                    pixels[row, col, 1] = 255;
-                }
-            }
-
-            // Red.
-            for (int row = 160; row < 240; row++)
-            {
-                for (int col = 0; col < 80; col++)
-                {
-                    pixels[row, col, 2] = 255;
-                }
-            }
-
-            // Copy the data into a one-dimensional array.
-            byte[] pixels1d = new byte[height * width * 4];
-            int index = 0;
-            for (int row = 0; row < height; row++)
-            {
-                for (int col = 0; col < width; col++)
-                {
-                    for (int i = 0; i < 4; i++)
-                        pixels1d[index++] = pixels[row, col, i];
-                }
-            }
-
-            // Update writeable bitmap with the colorArray to the image.
-            Int32Rect rect = new Int32Rect(0, 0, width, height);
-            int stride = 4 * width;
-            wbitmap.WritePixels(rect, pixels1d, stride, 0);
-
-            return wbitmap;
+			return result;
         }
 
 		private void Button_Click(object sender, RoutedEventArgs e)

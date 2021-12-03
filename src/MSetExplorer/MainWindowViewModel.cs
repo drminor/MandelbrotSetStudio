@@ -4,8 +4,8 @@ using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
+using MSS.Types.Screen;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 
@@ -13,39 +13,21 @@ namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase
 	{
-		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
-
-		//private MSetInfo _mSetInfo;
-		//public event EventHandler<MapSectionReadyEventArgs> MapSectionReady;
-
+		private readonly string _mEngineEndPointAddress;
 		private Task _generateMapSectionsTask;
 
-
-		public MainWindowViewModel()
+		public MainWindowViewModel(string mEngineEndPointAddress)
 		{
-			//_mSetInfo = null;
+			_mEngineEndPointAddress = mEngineEndPointAddress;
 			_generateMapSectionsTask = null;
+
 		}
 
-		//public MSetInfo MSetInfo
-		//{
-		//	get => _mSetInfo;
-		//	set
-		//	{
-		//		if (_mSetInfo == null)
-		//		{
-		//			if (value != null)
-		//			{
-		//				_mSetInfo = value;
-		//				Task.Run(() => GetSectionsAsync(_mSetInfo));
-		//			}
-		//		}
-		//	}
-		//}
+		public Subdivision Subdivision { get; private set; }
 
 		public bool IsTaskComplete => _generateMapSectionsTask is null;
 
-		public void GenerateMapSections(MSetInfo mSetInfo, IProgress<MapSectionResponse> progress)
+		public void GenerateMapSections(MSetInfo mSetInfo, IProgress<MapSection> progress)
 		{
 			if (!IsTaskComplete)
 			{
@@ -55,65 +37,80 @@ namespace MSetExplorer
 			_generateMapSectionsTask = GetSectionsAsync(mSetInfo, progress);
 		}
 
-		public async Task GetSectionsAsync(MSetInfo mSetInfo, IProgress<MapSectionResponse> progress)
+		public async Task GetSectionsAsync(MSetInfo mSetInfo, IProgress<MapSection> progress)
 		{
 			var dtoMapper = new DtoMapper();
-			var mClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
+			var mClient = new MClient(_mEngineEndPointAddress);
 
-			var samplePointsDelta = dtoMapper.MapTo(new RSize(BigInteger.One, BigInteger.One, -8));
-			var xCoordNumerator = new BigInteger(-4);
-			var yCoordNumerartor = new BigInteger(-2);
+			Subdivision = MSetInfoHelper.GetSubdivision(mSetInfo);
 
-			int numVertBlocks = 1; // 4;
-			int numHoriBlocks = 1; // 6;
+			var colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss); 
 
-			for (int yBlockPtr = 0; yBlockPtr < numVertBlocks; yBlockPtr++)
+			var yCoordNumerartor = new BigInteger(-3);
+
+			var numVertBlocks = 6;
+			var numHoriBlocks = 6;
+
+			for (var yBlockPtr = 0; yBlockPtr < numVertBlocks; yBlockPtr++)
 			{
-				for (int xBlockPtr = 0; xBlockPtr < numHoriBlocks; xBlockPtr++)
+				var xCoordNumerator = new BigInteger(-4);
+				for (var xBlockPtr = 0; xBlockPtr < numHoriBlocks; xBlockPtr++)
 				{
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
 					var mapSectionRequest = new MapSectionRequest
 					{
-						SubdivisionId = blockPosition.ToString(),
+						SubdivisionId = Subdivision.Id.ToString(),
 						BlockPosition = blockPosition,
 						BlockSize = RMapConstants.BLOCK_SIZE,
-						Position = dtoMapper.MapTo(new RPoint(xCoordNumerator++, yCoordNumerartor++, 2)),
-						SamplePointsDelta = samplePointsDelta,
+						Position = dtoMapper.MapTo(new RPoint(xCoordNumerator++, yCoordNumerartor, -1)),
+						SamplePointsDelta = dtoMapper.MapTo(Subdivision.SamplePointDelta),
 						MapCalcSettings = mSetInfo.MapCalcSettings
 					};
 
 					var mapSectionResponse = await mClient.GenerateMapSectionAsync(mapSectionRequest);
-					progress.Report(mapSectionResponse);
+
+					var pixels1d = GetPixelArray(mapSectionResponse.Counts, Subdivision.BlockSize, colorMap);
+
+					var mapSection = new MapSection(Subdivision, mapSectionResponse.BlockPosition, pixels1d);
+					progress.Report(mapSection);
 				}
+				yCoordNumerartor++;
 			}
 
 			_generateMapSectionsTask = null;
 		}
 
-		public MSetInfo BuildInitialMSetInfo()
+		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap)
 		{
-			var canvasSize = new SizeInt(768, 512);
-			var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
-			var mapCalcSettings = new MapCalcSettings(maxIterations: 4000, threshold: 4, iterationsPerStep: 100);
+			var numberofCells = blockSize.NumberOfCells;
+			var result = new byte[4 * numberofCells];
 
-			IList<ColorMapEntry> colorMapEntries = new List<ColorMapEntry>
+			for(var rowPtr = 0; rowPtr < blockSize.Height; rowPtr++)
 			{
-				new ColorMapEntry(375, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(399, "#fafdf2", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(407, "#98e498", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(428, "#0000ff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(446, "#f09ee6", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(486, "#00ff00", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(500, "#0000ff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(523, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(560, "#3ee2e2", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(1011, "#e95ee8", ColorMapBlendStyle.End, "#758cb7")
-			};
+				var resultRowPtr = -1 + blockSize.Height - rowPtr;
+				var curResultPtr = resultRowPtr * blockSize.Width * 4;
 
-			string highColorCss = "#000000";
-			var result = new MSetInfo(canvasSize, coords, mapCalcSettings, colorMapEntries, highColorCss);
+				var curSourcePtr = rowPtr * blockSize.Width;
+
+				for (var colPtr = 0; colPtr < blockSize.Width; colPtr++)
+				{
+					var countVal = counts[curSourcePtr++];
+					countVal = Math.DivRem(countVal, 1000, out var ev);
+					var escapeVel = ev / 1000d;
+
+					var colorComps = colorMap.GetColor(countVal, escapeVel);
+
+					for (var j = 2; j > -1; j--)
+					{
+						result[curResultPtr++] = colorComps[j];
+					}
+					result[curResultPtr++] = 255;
+				}
+			}
 
 			return result;
 		}
+
+
 	}
 }

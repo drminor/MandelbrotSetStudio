@@ -71,7 +71,7 @@ namespace ImageBuilder
 			{
 				double escapeVelocity = GetEscVel(counts[xPtr], out int cnt);
 
-				int[] cComps;
+				byte[] cComps;
 				if (cnt == maxIterations)
 				{
 					cComps = colorMap.HighColorEntry.StartColor.ColorComps;

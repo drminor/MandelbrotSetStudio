@@ -12,9 +12,9 @@ namespace MSS.Types
             _cssColor = cssColor;
         }
 
-        public ColorMapColor(int[] colorComps)
+        public ColorMapColor(byte[] colorComps)
         {
-            ColorComps = new int[3];
+            ColorComps = new byte[3];
             ColorComps[0] = colorComps[0];
             ColorComps[1] = colorComps[1];
             ColorComps[2] = colorComps[2];
@@ -40,7 +40,7 @@ namespace MSS.Types
         }
 
         [BsonIgnore]
-        public int[] ColorComps { get; init; }
+        public byte[] ColorComps { get; init; }
 
         private int? _colorNum;
 
@@ -56,7 +56,7 @@ namespace MSS.Types
             }
         }
 
-        private static string GetCssColor(int[] cComps)
+        private static string GetCssColor(byte[] cComps)
         {
             string result = $"#{Get2CharHex(cComps[0])}{Get2CharHex(cComps[1])}{Get2CharHex(cComps[2])}";
             return result;
@@ -67,7 +67,7 @@ namespace MSS.Types
             return c.ToString("X").ToLower().PadLeft(2, '0');
         }
 
-        private static int GetColorNum(int[] cComps)
+        private static int GetColorNum(byte[] cComps)
         {
             int result = 255 << 24;
             result |= cComps[2] << 16;
@@ -77,12 +77,12 @@ namespace MSS.Types
             return result;
         }
 
-        private static int[] GetComps(string cssColor)
+        private static byte[] GetComps(string cssColor)
 		{
-            int[] colorComps = new int[3];
-            colorComps[0] = int.Parse(cssColor.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
-            colorComps[1] = int.Parse(cssColor.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
-            colorComps[2] = int.Parse(cssColor.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
+            byte[] colorComps = new byte[3];
+            colorComps[0] = byte.Parse(cssColor.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
+            colorComps[1] = byte.Parse(cssColor.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
+            colorComps[2] = byte.Parse(cssColor.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
 
             return colorComps;
         }

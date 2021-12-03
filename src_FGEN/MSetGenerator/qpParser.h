@@ -16,6 +16,8 @@ public:
 	qpParser();
 	~qpParser();
 
+	std::string ToStr(qp num);
+
 	std::string ToStr(double hi, double lo);
 	std::string to_string(double hi, double lo, std::streamsize precision, int width, std::ios_base::fmtflags fmt, bool showpos, bool uppercase, char fill) const;
 
