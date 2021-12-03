@@ -30,7 +30,7 @@ namespace MSetExplorer
             var progress = new Progress<MapSection>(HandleMapSectionReady);
 
             var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo();
-            _vm.GenerateMapSections(mSetInfo, progress);
+            _vm.CreateJob(mSetInfo, progress);
 		}
 
 		private void HandleMapSectionReady(MapSection mapSection)

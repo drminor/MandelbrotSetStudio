@@ -1,4 +1,4 @@
-﻿using MapSectionRepo;
+﻿//using MapSectionRepo;
 using MEngineClient;
 using MEngineDataContracts;
 using MongoDB.Bson;
@@ -55,9 +55,10 @@ namespace ImageBuilder
 
 						string fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
 						var mSetInfo = MSetInfoBuilder.Build(fileName);
-						IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfo.Name, mSetInfo.IsHighRes);
+						//IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfo.Name, mSetInfo.IsHighRes);
 
-						pngBuilder.Build(mSetInfo, mapSectionReader);
+						//pngBuilder.Build(mSetInfo, mapSectionReader);
+						pngBuilder.Build(mSetInfo, null);
 						break;
 					}
 				case 2:
@@ -68,13 +69,13 @@ namespace ImageBuilder
 
 						MSetInfo mSetInfo = new MSetInfo(new SizeInt(1280, 1280), RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor);
 
-						IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfoOld.Name, mSetInfoOld.IsHighRes);
+						//IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfoOld.Name, mSetInfoOld.IsHighRes);
 
 						var mapSectionAdapter = GetMapSectionAdapter();
 						var mongoDbImporter = new MongoDbImporter(mapSectionAdapter);
 
 						var project = BuildProject(mSetInfoOld.Name);
-						mongoDbImporter.Import(mapSectionReader, project, mSetInfo, overwrite: true);
+						mongoDbImporter.Import(/*mapSectionReader, */project, mSetInfo, overwrite: true);
 						break;
 					}
 				case 3:
@@ -157,17 +158,17 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private static IMapSectionReader GetMapSectionReader(string repoFilename, bool isHighRes)
-		{
-			if (isHighRes)
-			{
-				return new MapSectionRepoReaderHiRes(repoFilename, _legacyBlockSize);
-			}
-			else
-			{
-				return new MapSectionReader(repoFilename, _legacyBlockSize);
-			}
-		}
+		//private static IMapSectionReader GetMapSectionReader(string repoFilename, bool isHighRes)
+		//{
+		//	if (isHighRes)
+		//	{
+		//		return new MapSectionRepoReaderHiRes(repoFilename, _legacyBlockSize);
+		//	}
+		//	else
+		//	{
+		//		return new MapSectionReader(repoFilename, _legacyBlockSize);
+		//	}
+		//}
 
 		private static MapSectionAdapter GetMapSectionAdapter()
 		{

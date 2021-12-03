@@ -13,7 +13,7 @@ namespace MSetExplorer
 		{
 			base.OnStartup(e);
 
-			MainWindow window = new MainWindow();
+			var window = new MainWindow();
 			var viewModel = new MainWindowViewModel(M_ENGINE_END_POINT_ADDRESS);
 			window.DataContext = viewModel;
 

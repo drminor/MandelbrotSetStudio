@@ -1,11 +1,13 @@
 ﻿using MEngineClient;
 using MEngineDataContracts;
+using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Threading.Tasks;
 
@@ -14,29 +16,44 @@ namespace MSetExplorer
 	internal class MainWindowViewModel : ViewModelBase
 	{
 		private readonly string _mEngineEndPointAddress;
-		private Task _generateMapSectionsTask;
 
-		private IProgress<MapSection> _progress;
 		private ColorMap _colorMap;
+		private IProgress<MapSection> _progress;
+		private JobTask _jobTask;
 
 		public MainWindowViewModel(string mEngineEndPointAddress)
 		{
 			_mEngineEndPointAddress = mEngineEndPointAddress;
-			_generateMapSectionsTask = null;
+
+			Project = null;
+			Subdivision = null;
+			_jobTask = null;
 		}
 
+		public Project Project { get; private set; }
 		public Subdivision Subdivision { get; private set; }
 
-		public bool IsTaskComplete => _generateMapSectionsTask is null;
+		public Job Job => _jobTask?.Job;
+		public MSetInfo MSetInfo => _jobTask?.Job.MSetInfo;
+		public bool IsTaskComplete => _jobTask?.Task?.IsCompleted ?? true;
 
-		public void GenerateMapSections(MSetInfo mSetInfo, IProgress<MapSection> progress)
+		public void CreateJob(MSetInfo mSetInfo, IProgress<MapSection> progress)
 		{
-			if (!IsTaskComplete)
+			if (!(Job is null))
 			{
-				throw new InvalidOperationException("Cannot call GenerateMapSections until the current task is complete.");
+				Debug.WriteLine("Warning, not saving current job.");
+
+				if (!IsTaskComplete)
+				{
+					throw new InvalidOperationException("Cannot call GenerateMapSections until the current task is complete.");
+				}
 			}
 
-			_generateMapSectionsTask = GetSectionsAsync(mSetInfo, progress);
+			Project = new Project(ObjectId.GenerateNewId(), "un-named");
+			Subdivision = MSetInfoHelper.GetSubdivision(mSetInfo);
+			var job = new Job(ObjectId.GenerateNewId(), parentJobId: null, projectId: Project.Id, Subdivision.Id, "initial job", mSetInfo);
+			var task = GetSectionsAsync(mSetInfo, progress);
+			_jobTask = new JobTask(job, task);
 		}
 
 		public async Task GetSectionsAsync(MSetInfo mSetInfo, IProgress<MapSection> progress)
@@ -45,11 +62,9 @@ namespace MSetExplorer
 			var dtoMapper = new DtoMapper();
 			var mClient = new MClient(_mEngineEndPointAddress);
 
-			var workQueue = new WorkQueue(mClient);
+			//var workQueue = new WorkQueue(mClient);
 
 			_colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
-
-			Subdivision = MSetInfoHelper.GetSubdivision(mSetInfo);
 
 			var numVertBlocks = 6;
 			var numHoriBlocks = 6;
@@ -78,9 +93,7 @@ namespace MSetExplorer
 				yCoordNumerartor++;
 			}
 
-			workQueue.Stop();
-
-			_generateMapSectionsTask = null;
+			//workQueue.Stop();
 		}
 
 		private void HandleResponse(MapSectionResponse mapSectionResponse)
@@ -119,6 +132,18 @@ namespace MSetExplorer
 			return result;
 		}
 
+
+		class JobTask
+		{
+			public readonly Job Job;
+			public readonly Task Task;
+
+			public JobTask(Job job, Task task)
+			{
+				Job = job;
+				Task = task;
+			}
+		}
 
 	}
 }

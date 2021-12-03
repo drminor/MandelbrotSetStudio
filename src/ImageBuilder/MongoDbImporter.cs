@@ -1,9 +1,7 @@
 ﻿using MSetRepo;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
-using MSS.Types;
 using MSS.Types.MSet;
-using MSS.Types.MSetOld;
 using ProjectRepo;
 using System.Diagnostics;
 
@@ -18,7 +16,7 @@ namespace MSetDatabaseClient
 			_mapSectionAdapter = mapSectionAdapter;
 		}
 
-		public void Import(IMapSectionReader mapSectionReader, Project projectData, MSetInfo mSetInfo, bool overwrite)
+		public void Import(/*IMapSectionReader mapSectionReader, */Project projectData, MSetInfo mSetInfo, bool overwrite)
 		{
 			// Make sure the project record has been written.
 			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
@@ -27,12 +25,12 @@ namespace MSetDatabaseClient
 
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
 			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);
-			CopyBlocks(mapSectionReader, job);
+			CopyBlocks(/*mapSectionReader, */job);
 		}
 
-		private void CopyBlocks(IMapSectionReader mapSectionReader, Job job)
+		private void CopyBlocks(/*IMapSectionReader mapSectionReader, */Job job)
 		{
-			var imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
+			//var imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
 			var jobId = job.Id;
 
 			//int numHorizBlocks = imageSizeInBlocks.W;

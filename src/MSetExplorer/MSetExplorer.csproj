@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MapSectionRepo\MapSectionRepo.csproj" />
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
     <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
