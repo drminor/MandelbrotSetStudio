@@ -1,6 +1,8 @@
 ﻿using MEngineClient;
+using MEngineDataContracts;
 using MSS.Common;
 using System;
+using System.Threading.Tasks;
 
 namespace MapSectionProviderLib
 {
@@ -15,6 +17,10 @@ namespace MapSectionProviderLib
 			_mapSectionRepo = mapSectionRepo;
 		}
 
+		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
+		{
+			return await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
+		}
 
 	}
 }

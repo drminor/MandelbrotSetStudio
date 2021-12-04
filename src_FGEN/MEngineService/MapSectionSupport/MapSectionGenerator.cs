@@ -29,9 +29,9 @@ namespace MEngineService
 
 			var result = new MapSectionResponse
 			{
+				MapSectionId = mapSectionRequest.MapSectionId,
 				SubdivisionId = mapSectionRequest.SubdivisionId,
 				BlockPosition = mapSectionRequest.BlockPosition,
-				Status = 0,          // Ok
 				Counts = counts
 			};
 

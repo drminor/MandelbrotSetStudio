@@ -9,9 +9,9 @@ namespace MSetDatabaseClient
 {
 	public class MongoDbImporter
 	{
-		private readonly MapSectionAdapter _mapSectionAdapter;
+		private readonly ProjectAdapter _mapSectionAdapter;
 
-		public MongoDbImporter(MapSectionAdapter mapSectionAdapter)
+		public MongoDbImporter(ProjectAdapter mapSectionAdapter)
 		{
 			_mapSectionAdapter = mapSectionAdapter;
 		}

@@ -7,7 +7,7 @@ namespace MSetRepo
 	public static class MSetRepoHelper
 	{
 
-		public static MapSectionAdapter GetMapSectionAdapter(string dbProviderConnString, SizeInt blockSize)
+		public static ProjectAdapter GetMapSectionAdapter(string dbProviderConnString, SizeInt blockSize)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);
 
@@ -15,7 +15,7 @@ namespace MSetRepo
 			var coordsHelper = new CoordsHelper(dtoMapper);
 			var mSetRecordMapper = new MSetRecordMapper(dtoMapper, coordsHelper);
 
-			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper, blockSize);
+			var mapSectionAdapter = new ProjectAdapter(dbProvider, mSetRecordMapper, blockSize);
 
 			return mapSectionAdapter;
 		}

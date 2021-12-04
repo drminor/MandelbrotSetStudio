@@ -1,4 +1,5 @@
-﻿using MEngineClient;
+﻿using MapSectionProviderLib;
+using MEngineClient;
 using MEngineDataContracts;
 using MongoDB.Bson;
 using MSS.Common;
@@ -15,15 +16,15 @@ namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase
 	{
-		private readonly string _mEngineEndPointAddress;
+		private readonly MapSectionProvider _mapSectionProvider;
 
 		private ColorMap _colorMap;
 		private IProgress<MapSection> _progress;
 		private JobTask _jobTask;
 
-		public MainWindowViewModel(string mEngineEndPointAddress)
+		public MainWindowViewModel(MapSectionProvider mapSectionProvider)
 		{
-			_mEngineEndPointAddress = mEngineEndPointAddress;
+			_mapSectionProvider = mapSectionProvider;
 
 			Project = null;
 			Subdivision = null;
@@ -60,7 +61,6 @@ namespace MSetExplorer
 		{
 			_progress = progress;
 			var dtoMapper = new DtoMapper();
-			var mClient = new MClient(_mEngineEndPointAddress);
 
 			//var workQueue = new WorkQueue(mClient);
 
@@ -87,7 +87,7 @@ namespace MSetExplorer
 					};
 
 					//workQueue.AddWork(mapSectionRequest, HandleResponse);
-					var mapSectionResponse = await mClient.GenerateMapSectionAsync(mapSectionRequest);
+					var mapSectionResponse = await _mapSectionProvider.GenerateMapSectionAsync(mapSectionRequest);
 					HandleResponse(mapSectionResponse);
 				}
 				yCoordNumerartor++;

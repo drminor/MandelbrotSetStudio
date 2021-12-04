@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿using MSS.Common;
+using MSetRepo;
+using MEngineClient;
+using System.Windows;
+using MapSectionProviderLib;
 
 namespace MSetExplorer
 {
@@ -14,7 +18,14 @@ namespace MSetExplorer
 			base.OnStartup(e);
 
 			var window = new MainWindow();
-			var viewModel = new MainWindowViewModel(M_ENGINE_END_POINT_ADDRESS);
+
+			IMEngineClient mClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
+			IMapSectionRepo mapSectionRepo = new MapSectionAdapter();
+
+			var mapSectionProvider = new MapSectionProvider(mClient, mapSectionRepo);
+
+
+			var viewModel = new MainWindowViewModel(mapSectionProvider);
 			window.DataContext = viewModel;
 
 			window.Show();
