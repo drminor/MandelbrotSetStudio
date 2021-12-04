@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
-    <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
   </ItemGroup>
 
 </Project>

@@ -9,21 +9,24 @@ namespace MEngineDataContracts
 	public class MapSectionRequest
 	{
 		[DataMember(Order = 1)]
-		public string SubdivisionId { get; set; }
+		public string MapSectionId { get; set; }
 
 		[DataMember(Order = 2)]
-		public PointInt BlockPosition { get; set; }
+		public string SubdivisionId { get; set; }
 
 		[DataMember(Order = 3)]
-		public RPointDto Position { get; set; }
+		public PointInt BlockPosition { get; set; }
 
 		[DataMember(Order = 4)]
-		public SizeInt BlockSize { get; set; }
+		public RPointDto Position { get; set; }
 
 		[DataMember(Order = 5)]
-		public RSizeDto SamplePointsDelta { get; set; }
+		public SizeInt BlockSize { get; set; }
 
 		[DataMember(Order = 6)]
+		public RSizeDto SamplePointsDelta { get; set; }
+
+		[DataMember(Order = 7)]
 		public MapCalcSettings MapCalcSettings { get; set; }
 	}
 

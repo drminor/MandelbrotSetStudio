@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MEngineClient
 {
-	public class MClient
+	public class MClient : IMEngineClient
 	{
 		private readonly string _endPointAddress;
 		private GrpcChannel _grpcChannel;

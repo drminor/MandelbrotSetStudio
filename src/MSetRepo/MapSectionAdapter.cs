@@ -16,14 +16,12 @@ namespace MSetRepo
 
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
-		private readonly CoordsHelper _coordsHelper;
 		private readonly SizeInt _blockSize;
 
-		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper, CoordsHelper coordsHelper, SizeInt blockSize)
+		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper, SizeInt blockSize)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
-			_coordsHelper = coordsHelper;
 			_blockSize = blockSize;
 		}
 
@@ -96,7 +94,7 @@ namespace MSetRepo
 
 		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo, JobReaderWriter jobReaderWriter)
 		{
-			JobRecord jobRecord = CreateFirstJob(projectId, subdivisionId, mSetInfo);
+			JobRecord jobRecord = CreateJob(null, projectId, subdivisionId, ROOT_JOB_LABEL, mSetInfo);
 			var result = jobReaderWriter.Insert(jobRecord);
 
 			return result;
@@ -159,17 +157,15 @@ namespace MSetRepo
 			return project;
 		}
 
-		private JobRecord CreateFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo)
+		private JobRecord CreateJob(ObjectId? parentJobId, ObjectId projectId, ObjectId subdivisionId, string label, MSetInfo mSetInfo)
 		{
-			RRectangleRecord coordsDto = _coordsHelper.BuildCoords(mSetInfo.Coords);
-
-			var mSetInfoRecord = new MSetInfoRecord(mSetInfo.CanvasSize.Width, mSetInfo.CanvasSize.Height, coordsDto, mSetInfo.MapCalcSettings, mSetInfo.ColorMapEntries, mSetInfo.HighColorCss);
+			var mSetInfoRecord = _mSetRecordMapper.MapTo(mSetInfo);
 
 			JobRecord jobRecord = new JobRecord(
-				ParentJobId: null,
+				ParentJobId: parentJobId,
 				ProjectId: projectId,
 				SubDivisionId: subdivisionId,
-				Label: ROOT_JOB_LABEL,
+				Label: label,
 				MSetInfo: mSetInfoRecord
 				);
 

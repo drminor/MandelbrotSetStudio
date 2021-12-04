@@ -7,13 +7,13 @@ namespace MEngineDataContracts
 	public class MapSectionResponse
 	{
 		[DataMember(Order = 1)]
-		public string SubdivisionId { get; set; }
+		public string MapSectionId { get; set; }
 
 		[DataMember(Order = 2)]
-		public PointInt BlockPosition { get; set; }
+		public string SubdivisionId { get; set; }
 
 		[DataMember(Order = 3)]
-		public int Status { get; set; }
+		public PointInt BlockPosition { get; set; }
 
 		[DataMember(Order = 4)]
 		public int[] Counts { get; set; }
@@ -21,6 +21,7 @@ namespace MEngineDataContracts
 		//[DataMember(Order = 5)]
 		//public bool[] DoneFlags { get; set; }
 
-
+		//[DataMember(Order = 6)]
+		//public double[] ZValues { get; set; }
 	}
 }

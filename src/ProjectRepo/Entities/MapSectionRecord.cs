@@ -6,8 +6,7 @@ namespace ProjectRepo.Entities
 	public record MapSectionRecord(
 		ObjectId SubdivisionId,
 		PointInt BlockPosition,
-		RPointRecord Position
-		//int[] Counts,
+		int[] Counts
 		//bool[] DoneFlags,
 		//double[] ZValues
 	) : RecordBase();
