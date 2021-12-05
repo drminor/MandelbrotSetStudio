@@ -69,7 +69,7 @@ namespace ImageBuilder
 
 						//IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfoOld.Name, mSetInfoOld.IsHighRes);
 
-						var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_CONN_STRING, _blockSize);
+						var mapSectionAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
 						var mongoDbImporter = new MongoDbImporter(mapSectionAdapter);
 
 						var project = BuildProject(mSetInfoOld.Name);
@@ -82,7 +82,7 @@ namespace ImageBuilder
 						string fileName = MSetInfoBuilder.ZOOM_TEST_1;
 						var mSetInfoOld = MSetInfoBuilder.Build(fileName);
 
-						var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_CONN_STRING, _blockSize);
+						var mapSectionAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
 						var mongoDbImporter = new MongoDbImporter(mapSectionAdapter);
 
 						var project = BuildProject(mSetInfoOld.Name);

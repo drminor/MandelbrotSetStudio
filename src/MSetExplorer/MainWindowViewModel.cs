@@ -2,6 +2,7 @@
 using MEngineClient;
 using MEngineDataContracts;
 using MongoDB.Bson;
+using MSetRepo;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
@@ -16,14 +17,18 @@ namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase
 	{
+		private readonly SizeInt _blockSize;
 		private readonly MapSectionProvider _mapSectionProvider;
+		private readonly ProjectAdapter _projectAdapter;
 
 		private ColorMap _colorMap;
 		private IProgress<MapSection> _progress;
 		private JobTask _jobTask;
 
-		public MainWindowViewModel(MapSectionProvider mapSectionProvider)
+		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionProvider mapSectionProvider)
 		{
+			_blockSize = blockSize;
+			_projectAdapter = projectAdapter;
 			_mapSectionProvider = mapSectionProvider;
 
 			Project = null;
@@ -51,7 +56,9 @@ namespace MSetExplorer
 			}
 
 			Project = new Project(ObjectId.GenerateNewId(), "un-named");
-			Subdivision = MSetInfoHelper.GetSubdivision(mSetInfo);
+			Subdivision temp = MSetInfoHelper.GetSubdivision(mSetInfo, _blockSize);
+			Subdivision = _projectAdapter.GetOrCreateSubdivision(temp);
+
 			var job = new Job(ObjectId.GenerateNewId(), parentJobId: null, projectId: Project.Id, Subdivision.Id, "initial job", mSetInfo);
 			var task = GetSectionsAsync(mSetInfo, progress);
 			_jobTask = new JobTask(job, task);
@@ -60,40 +67,22 @@ namespace MSetExplorer
 		public async Task GetSectionsAsync(MSetInfo mSetInfo, IProgress<MapSection> progress)
 		{
 			_progress = progress;
-			var dtoMapper = new DtoMapper();
-
-			//var workQueue = new WorkQueue(mClient);
 
 			_colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
 
 			var numVertBlocks = 6;
 			var numHoriBlocks = 6;
 
-			var yCoordNumerartor = new BigInteger(-3);
-			for (var yBlockPtr = 0; yBlockPtr < numVertBlocks; yBlockPtr++)
+			for (var yBlockPtr = -3; yBlockPtr < numVertBlocks; yBlockPtr++)
 			{
-				var xCoordNumerator = new BigInteger(-4);
-				for (var xBlockPtr = 0; xBlockPtr < numHoriBlocks; xBlockPtr++)
+				for (var xBlockPtr = -4; xBlockPtr < numHoriBlocks; xBlockPtr++)
 				{
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var mapSectionRequest = new MapSectionRequest
-					{
-						SubdivisionId = Subdivision.Id.ToString(),
-						BlockPosition = blockPosition,
-						BlockSize = RMapConstants.BLOCK_SIZE,
-						Position = dtoMapper.MapTo(new RPoint(xCoordNumerator++, yCoordNumerartor, -1)),
-						SamplePointsDelta = dtoMapper.MapTo(Subdivision.SamplePointDelta),
-						MapCalcSettings = mSetInfo.MapCalcSettings
-					};
 
-					//workQueue.AddWork(mapSectionRequest, HandleResponse);
-					var mapSectionResponse = await _mapSectionProvider.GenerateMapSectionAsync(mapSectionRequest);
+					var mapSectionResponse = await _mapSectionProvider.GenerateMapSectionAsync(Subdivision, blockPosition, mSetInfo.MapCalcSettings);
 					HandleResponse(mapSectionResponse);
 				}
-				yCoordNumerartor++;
 			}
-
-			//workQueue.Stop();
 		}
 
 		private void HandleResponse(MapSectionResponse mapSectionResponse)
@@ -131,7 +120,6 @@ namespace MSetExplorer
 
 			return result;
 		}
-
 
 		class JobTask
 		{

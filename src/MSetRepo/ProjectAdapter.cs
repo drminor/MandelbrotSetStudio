@@ -16,13 +16,11 @@ namespace MSetRepo
 
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
-		private readonly SizeInt _blockSize;
 
-		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper, SizeInt blockSize)
+		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
-			_blockSize = blockSize;
 		}
 
 		public Job GetMapSectionWriter(ObjectId jobId)
@@ -36,7 +34,7 @@ namespace MSetRepo
 			return job;
 		}
 
-		public ObjectId CreateJob(Project project, MSetInfo mSetInfo, bool overwrite)
+		public ObjectId CreateJob(Project project, MSetInfo mSetInfo, SizeInt blockSize, bool overwrite)
 		{
 			ObjectId result;
 
@@ -46,7 +44,8 @@ namespace MSetRepo
 
 			if (!subdivisionId.HasValue)
 			{
-				subdivisionId = CreateAndInsertSubdivision(mSetInfo.CanvasSize, mSetInfo.Coords, subdivisionReaderWriter);
+				var subdivision = JobHelper.CreateSubdivision(mSetInfo.CanvasSize, blockSize, mSetInfo.Coords);
+				subdivisionId = InsertSubdivision(subdivision, subdivisionReaderWriter);
 			}
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobIds = jobReaderWriter.GetJobIds(project.Id);
@@ -76,6 +75,21 @@ namespace MSetRepo
 			return result;
 		}
 
+		public Subdivision GetOrCreateSubdivision(Subdivision subdivision)
+		{
+			ObjectId? subId;
+
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			subId = GetSubdivision(subdivision.SamplePointDelta.Exponent, subdivisionReaderWriter);
+
+			if (!subId.HasValue)
+			{
+				subId = InsertSubdivision(subdivision, subdivisionReaderWriter);
+			}
+
+			return new Subdivision(subId.Value, new RPoint(subdivision.Position.Values, subdivision.Position.Exponent), subdivision.BlockSize, new RSize(subdivision.SamplePointDelta.Values, subdivision.SamplePointDelta.Exponent));
+		}
+
 		private ObjectId? GetSubdivision(int scale, SubdivisonReaderWriter subdivisionReaderWriter)
 		{
 			var result = subdivisionReaderWriter.Get(scale);
@@ -83,9 +97,8 @@ namespace MSetRepo
 			return result.FirstOrDefault()?.Id;
 		}
 
-		private ObjectId CreateAndInsertSubdivision(SizeInt canvasSize, RRectangle coords, SubdivisonReaderWriter subdivisionReaderWriter)
+		private ObjectId InsertSubdivision(Subdivision subdivision, SubdivisonReaderWriter subdivisionReaderWriter)
 		{
-			var subdivision = JobHelper.CreateSubdivision(canvasSize, _blockSize, coords);
 			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);
 			var result = subdivisionReaderWriter.Insert(subdivisionRecord);
 

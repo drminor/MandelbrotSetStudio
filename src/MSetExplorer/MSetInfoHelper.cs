@@ -35,12 +35,10 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public static Subdivision GetSubdivision(MSetInfo mSetInfo)
+		public static Subdivision GetSubdivision(MSetInfo mSetInfo, SizeInt blockSize)
 		{
 			var id = ObjectId.GenerateNewId();
 			var origin = new RPoint();
-			var blockSize = RMapConstants.BLOCK_SIZE;
-
 
 			// TODO: Calculate the number of blocks to cover the canvas
 			//		then figure the difference in map coordinates from the beginning and end of a single block

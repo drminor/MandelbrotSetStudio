@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using ProjectRepo.Entities;
+using System.Threading.Tasks;
 
 namespace ProjectRepo
 {
@@ -25,6 +26,14 @@ namespace ProjectRepo
 			var projectRecord = Collection.Find(filter).FirstOrDefault();
 
 			return projectRecord;
+		}
+
+		public async Task<ProjectRecord> GetAsync(string name)
+		{
+			var filter = Builders<ProjectRecord>.Filter.Eq("Name", name);
+			var projectRecord = await Collection.FindAsync(filter);
+
+			return projectRecord.FirstOrDefault();
 		}
 
 		public ObjectId GetProjectId(string name)

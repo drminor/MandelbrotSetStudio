@@ -21,7 +21,7 @@ namespace MSetDatabaseClient
 			// Make sure the project record has been written.
 			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
 
-			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, overwrite);
+			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, RMapConstants.BLOCK_SIZE, overwrite);
 
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
 			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);
@@ -67,7 +67,7 @@ namespace MSetDatabaseClient
 			// Make sure the project record has been written.
 			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
 
-			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, overwrite);
+			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, RMapConstants.BLOCK_SIZE, overwrite);
 
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
 			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);

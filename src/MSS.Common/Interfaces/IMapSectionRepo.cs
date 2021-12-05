@@ -1,13 +1,13 @@
 ﻿using MEngineDataContracts;
 using MSS.Types;
-using MSS.Types.Screen;
+using System.Threading.Tasks;
 
 namespace MSS.Common
 {
 	public interface IMapSectionRepo
 	{
-		MapSection GetMapSection(string subdivisionId, SizeInt blockPosition);
-		MapSection GetMapSection(string mapSectionId);
+		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, PointInt blockPosition);
+		Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
 
 		void SaveMapSection(MapSectionResponse mapSectionResponse);
 	}
