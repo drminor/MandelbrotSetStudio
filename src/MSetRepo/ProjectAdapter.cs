@@ -75,7 +75,7 @@ namespace MSetRepo
 
 			var mSetInfo = _mSetRecordMapper.MapFrom(jobRecord.MSetInfo);
 
-			Job job = new Job(jobId, parentJob, project, subdivision, jobRecord.Label, mSetInfo);
+			Job job = new Job(jobId, parentJob, project, subdivision, jobRecord.Label, mSetInfo, jobRecord.CanvasOffset);
 
 			return job;
 		}
@@ -88,6 +88,9 @@ namespace MSetRepo
 
 			var subdivisionId = GetSubdivision(mSetInfo.Coords.Exponent, subdivisionReaderWriter);
 
+			// TODO: calculat the canvasOffset
+			var canvasOffset = new PointDbl(); 
+
 			if (!subdivisionId.HasValue)
 			{
 				var subdivision = JobHelper.CreateSubdivision(mSetInfo.CanvasSize, blockSize, mSetInfo.Coords);
@@ -98,7 +101,7 @@ namespace MSetRepo
 
 			if (jobIds.Length == 0)
 			{
-				result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, jobReaderWriter);
+				result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, canvasOffset, jobReaderWriter);
 			}
 			else
 			{
@@ -114,7 +117,7 @@ namespace MSetRepo
 						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
 					}
 
-					result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, jobReaderWriter);
+					result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, canvasOffset, jobReaderWriter);
 				}
 			}
 
@@ -151,9 +154,9 @@ namespace MSetRepo
 			return result;
 		}
 
-		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo, JobReaderWriter jobReaderWriter)
+		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo, PointDbl canvasOffset, JobReaderWriter jobReaderWriter)
 		{
-			JobRecord jobRecord = CreateJob(null, projectId, subdivisionId, ROOT_JOB_LABEL, mSetInfo);
+			JobRecord jobRecord = CreateJob(null, projectId, subdivisionId, ROOT_JOB_LABEL, mSetInfo, canvasOffset);
 			var result = jobReaderWriter.Insert(jobRecord);
 
 			return result;
@@ -216,7 +219,7 @@ namespace MSetRepo
 			return project;
 		}
 
-		private JobRecord CreateJob(ObjectId? parentJobId, ObjectId projectId, ObjectId subdivisionId, string label, MSetInfo mSetInfo)
+		private JobRecord CreateJob(ObjectId? parentJobId, ObjectId projectId, ObjectId subdivisionId, string label, MSetInfo mSetInfo, PointDbl canvasOffset)
 		{
 			var mSetInfoRecord = _mSetRecordMapper.MapTo(mSetInfo);
 
@@ -225,7 +228,8 @@ namespace MSetRepo
 				ProjectId: projectId,
 				SubDivisionId: subdivisionId,
 				Label: label,
-				MSetInfo: mSetInfoRecord
+				MSetInfo: mSetInfoRecord,
+				CanvasOffset: canvasOffset
 				);
 
 			return jobRecord;

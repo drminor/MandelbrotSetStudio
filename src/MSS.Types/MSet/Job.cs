@@ -11,6 +11,7 @@ namespace MSS.Types.MSet
 		public Subdivision Subdivision { get; init; }
 		public string? Label { get; init; }
 		public MSetInfo MSetInfo { get; init; }
+		public PointDbl CanvasOffset { get; init; }
 
 		public Job(
 			ObjectId id,
@@ -18,7 +19,8 @@ namespace MSS.Types.MSet
 			Project project,
 			Subdivision subdivision,
 			string? label,
-			MSetInfo mSetInfo
+			MSetInfo mSetInfo,
+			PointDbl canvasOffset
 			)
 		{
 			Id = id;
@@ -27,6 +29,7 @@ namespace MSS.Types.MSet
 			Subdivision = subdivision;
 			Label = label;
 			MSetInfo = mSetInfo;
+			CanvasOffset = canvasOffset;
 		}
 
 		public DateTime DateCreated => Id.CreationTime;

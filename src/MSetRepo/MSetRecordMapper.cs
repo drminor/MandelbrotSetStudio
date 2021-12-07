@@ -44,7 +44,8 @@ namespace MSetRepo
 				source.Project.Id,
 				source.Subdivision.Id,
 				source.Label,
-				MapTo(source.MSetInfo));
+				MapTo(source.MSetInfo),
+				source.CanvasOffset);
 
 			return result;
 		}

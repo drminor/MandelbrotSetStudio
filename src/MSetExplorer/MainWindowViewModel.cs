@@ -17,12 +17,9 @@ namespace MSetExplorer
 		private readonly MapSectionProvider _mapSectionProvider;
 
 		private Job _job;
-		private DPoint _canvasPosition;
 		private MapLoader _mapLoader;
 		private IProgress<MapSection> _progress;
 		private Task _mapLoaderTask;
-
-		//private JobInfo _currentJobInfo;
 
 		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionProvider mapSectionProvider)
 		{
@@ -45,23 +42,22 @@ namespace MSetExplorer
 
 			_progress = progress;
 
-			_job = BuildJob(mSetInfo, out DPoint canvasPosition);
-			_canvasPosition = canvasPosition;
+			_job = BuildJob(mSetInfo);
 
 			_mapLoader = new MapLoader(_mapSectionProvider);
 			_mapLoaderTask = _mapLoader.LoadMap(_job, HandleMapSection);
 			_mapLoaderTask.ContinueWith(OnTaskComplete);
 		}
 
-		private Job BuildJob(MSetInfo mSetInfo, out DPoint canvasPosition)
+		private Job BuildJob(MSetInfo mSetInfo)
 		{
 			var project = new Project(ObjectId.GenerateNewId(), "un-named");
 			Subdivision temp = MSetInfoHelper.GetSubdivision(mSetInfo, _blockSize);
 			Subdivision subdivision = _projectAdapter.GetOrCreateSubdivision(temp);
 
-			canvasPosition = new DPoint(384, 384);
+			var canvasOffset = new PointDbl(512, 384);
 
-			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", mSetInfo);
+			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", mSetInfo, canvasOffset);
 			return job;
 		}
 

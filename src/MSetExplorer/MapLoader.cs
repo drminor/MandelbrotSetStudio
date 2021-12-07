@@ -18,11 +18,11 @@ namespace MSetExplorer
 
 		public Task LoadMap(Job job, Action<MapSection> callback)
 		{
-			var task = GetSectionsAsync(job.MSetInfo, job.Subdivision, callback);
+			var task = GetSectionsAsync(job.MSetInfo, job.Subdivision, job.CanvasOffset, callback);
 			return task;
 		}
 
-		public async Task GetSectionsAsync(MSetInfo mSetInfo, Subdivision subdivision, Action<MapSection> callback)
+		public async Task GetSectionsAsync(MSetInfo mSetInfo, Subdivision subdivision, PointDbl canvasOffset, Action<MapSection> callback)
 		{
 			var colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
 
@@ -30,7 +30,7 @@ namespace MSetExplorer
 
 			for (var yBlockPtr = -3; yBlockPtr < 3; yBlockPtr++)
 			{
-				for (var xBlockPtr = -3; xBlockPtr < 3; xBlockPtr++)
+				for (var xBlockPtr = -4; xBlockPtr < 2; xBlockPtr++)
 				{
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
 
@@ -38,12 +38,11 @@ namespace MSetExplorer
 
 					var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, colorMap);
 
-					DPoint canvasPosition = new DPoint(
-						384 + mapSectionResponse.BlockPosition.X * blockSize.Width,
-						384 + mapSectionResponse.BlockPosition.Y * blockSize.Height
-						);
+					var position = new PointDbl(mapSectionResponse.BlockPosition).Scale(blockSize).Translate(canvasOffset);
+					//position = position.Scale(blockSize);
+					//position = position.Translate(canvasOffset);
 
-					var mapSection = new MapSection(subdivision, canvasPosition, pixels1d);
+					var mapSection = new MapSection(subdivision, position, pixels1d);
 					callback(mapSection);
 				}
 			}

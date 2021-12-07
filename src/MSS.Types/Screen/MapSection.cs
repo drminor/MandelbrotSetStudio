@@ -6,10 +6,10 @@ namespace MSS.Types.Screen
 	public class MapSection
 	{
 		public Subdivision Subdivision { get; init; }
-		public DPoint CanvasPosition { get; init; }
+		public PointDbl CanvasPosition { get; init; }
 		public byte[] Pixels1d { get; init; }
 
-		public MapSection(Subdivision subdivision, DPoint canvasPosition, byte[] pixels1d)
+		public MapSection(Subdivision subdivision, PointDbl canvasPosition, byte[] pixels1d)
 		{
 			Subdivision = subdivision ?? throw new ArgumentNullException(nameof(subdivision));
 			CanvasPosition = canvasPosition;

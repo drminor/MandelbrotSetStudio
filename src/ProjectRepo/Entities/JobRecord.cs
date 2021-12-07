@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSS.Types;
 
 namespace ProjectRepo.Entities
 {
@@ -7,7 +8,8 @@ namespace ProjectRepo.Entities
 		ObjectId ProjectId,
 		ObjectId SubDivisionId,
 		string? Label,
-		MSetInfoRecord MSetInfo
+		MSetInfoRecord MSetInfo,
+		PointDbl CanvasOffset
 		) : RecordBase()
 	{ }
 

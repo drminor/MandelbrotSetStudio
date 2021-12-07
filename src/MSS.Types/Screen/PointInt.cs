@@ -20,6 +20,8 @@ namespace MSS.Types
 		[DataMember(Order = 2)]
 		public int Y { get; set; }
 
+		#region IEquatable and IEqualityComparer Support
+
 		public override bool Equals(object? obj)
 		{
 			return obj is PointInt pi && Equals(pi);
@@ -46,11 +48,6 @@ namespace MSS.Types
 			return HashCode.Combine(obj.X, obj.Y);
 		}
 
-		public override string? ToString()
-		{
-			return $"x:{X}, y:{Y}";
-		}
-
 		public static bool operator ==(PointInt left, PointInt right)
 		{
 			return left.Equals(right);
@@ -59,6 +56,13 @@ namespace MSS.Types
 		public static bool operator !=(PointInt left, PointInt right)
 		{
 			return !(left == right);
+		}
+
+		#endregion
+
+		public override string? ToString()
+		{
+			return $"x:{X}, y:{Y}";
 		}
 	}
 }
