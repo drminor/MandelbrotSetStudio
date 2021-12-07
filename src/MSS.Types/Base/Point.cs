@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace MSS.Types.Base
 {
 	[Serializable]
-	public class Point<T> : IEquatable<Point<T>>, IEqualityComparer<Point<T>> where T: struct  // where T: notnull
+	public class Point<T> : IEquatable<Point<T>>, IEqualityComparer<Point<T>> where T: struct
 	{
 		[JsonIgnore]
 		[BsonIgnore]
@@ -68,6 +68,11 @@ namespace MSS.Types.Base
 		public int GetHashCode(Point<T> obj)
 		{
 			return obj.GetHashCode();
+		}
+
+		public override string? ToString()
+		{
+			return $"X: {X}, Y: {Y}";
 		}
 
 		public static bool operator ==(Point<T> p1, Point<T> p2)

@@ -38,11 +38,13 @@ namespace MSS.Common
 			// TODO: search for an existing SubDivision and use it.
 			var subdivisionId = ObjectId.GenerateNewId();
 
+			var subdivision = CreateSubdivision(job.MSetInfo.CanvasSize, job.Subdivision.BlockSize, job.MSetInfo.Coords);
+
 			var result = new Job(
 				id: ObjectId.GenerateNewId(),
-				parentJobId: job.Id, 
-				projectId: job.ProjectId,
-				subdivisionId: subdivisionId,
+				parentJob: job, 
+				project: job.Project,
+				subdivision: subdivision,
 				label: null,
 				new MSetInfo(job.MSetInfo.CanvasSize, rRectangleZoomed, job.MSetInfo.MapCalcSettings, job.MSetInfo.ColorMapEntries, job.MSetInfo.HighColorCss)
 				);

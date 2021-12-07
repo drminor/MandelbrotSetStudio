@@ -1,5 +1,4 @@
-﻿using MEngineDataContracts;
-using MSS.Types.MSet;
+﻿using MSS.Types;
 using MSS.Types.Screen;
 using System;
 using System.Diagnostics;
@@ -30,35 +29,37 @@ namespace MSetExplorer
             var progress = new Progress<MapSection>(HandleMapSectionReady);
 
             var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo();
-            _vm.CreateJob(mSetInfo, progress);
+            _vm.LoadMap(mSetInfo, progress);
 		}
 
 		private void HandleMapSectionReady(MapSection mapSection)
 		{
-			var image = new Image
-			{
-				Width = _vm.Subdivision.BlockSize.Width,
-				Height = _vm.Subdivision.BlockSize.Height,
-				Stretch = Stretch.None,
-				Margin = new Thickness(0),
-				Source = GetBitMap(mapSection, _vm.Subdivision)
-		};
+			var image = BuildImage(mapSection);
+			Debug.WriteLine($"Drawing a bit map at {mapSection.CanvasPosition}.");
 
 			var cIndex = MainCanvas.Children.Add(image);
-
-            var left = (double)mapSection.BlockPosition.X * _vm.Subdivision.BlockSize.Width;
-            var bot = (double)mapSection.BlockPosition.Y * _vm.Subdivision.BlockSize.Height;
-
-			Debug.WriteLine($"Drawing a bit map at X: {left}, Y:{bot}.");
-
-            MainCanvas.Children[cIndex].SetValue(Canvas.LeftProperty, left);
-            MainCanvas.Children[cIndex].SetValue(Canvas.BottomProperty, bot);
+            MainCanvas.Children[cIndex].SetValue(Canvas.LeftProperty, mapSection.CanvasPosition.X);
+            MainCanvas.Children[cIndex].SetValue(Canvas.BottomProperty, mapSection.CanvasPosition.Y);
         }
 
-        private WriteableBitmap GetBitMap(MapSection mapSection, Subdivision subdivision)
+		private Image BuildImage(MapSection mapSection)
 		{
-			var width = subdivision.BlockSize.Width;
-			var height = subdivision.BlockSize.Height;
+			var result = new Image
+			{
+				Width = mapSection.Subdivision.BlockSize.Width,
+				Height = mapSection.Subdivision.BlockSize.Height,
+				Stretch = Stretch.None,
+				Margin = new Thickness(0),
+				Source = GetBitMap(mapSection, mapSection.Subdivision.BlockSize)
+			};
+
+			return result;
+		}
+
+		private WriteableBitmap GetBitMap(MapSection mapSection, SizeInt blockSize)
+		{
+			var width = blockSize.Width;
+			var height = blockSize.Height;
 
 			var result = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
 

@@ -23,13 +23,59 @@ namespace MSetRepo
 			_mSetRecordMapper = mSetRecordMapper;
 		}
 
-		public Job GetMapSectionWriter(ObjectId jobId)
+		public Project GetOrCreateProject(string name)
 		{
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var jobRecord = jobReaderWriter.Get(jobId);
-			Debug.WriteLine($"The JobId is {jobRecord.Id}.");
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			var job = _mSetRecordMapper.MapFrom(jobRecord);
+			ProjectRecord projectRecord = projectReaderWriter.Get(name);
+			if (projectRecord is null)
+			{
+				ObjectId projectId = projectReaderWriter.Insert(new ProjectRecord(name));
+				projectRecord = projectReaderWriter.Get(projectId);
+			}
+
+			var result = _mSetRecordMapper.MapFrom(projectRecord);
+
+			return result;
+		}
+
+		public Job GetJob(ObjectId jobId)
+		{
+			Debug.WriteLine($"Retrieving Job object for JobId: {jobId}.");
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var subdivisonReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+			var job = GetJob(jobId, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter);
+
+			return job;
+		}
+
+		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, ProjectReaderWriter projectReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter)
+		{
+			var jobRecord = jobReaderWriter.Get(jobId);
+
+			Job? parentJob;
+
+			if (jobRecord.ParentJobId.HasValue)
+			{
+				Debug.WriteLine($"Retrieving Job object for parent JobId: {jobRecord.ParentJobId}.");
+				parentJob = GetJob(jobRecord.ParentJobId.Value, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter);
+			}
+			else
+			{
+				parentJob = null;
+			}
+
+			var projectRecord = projectReaderWriter.Get(jobRecord.ProjectId);
+			var project = _mSetRecordMapper.MapFrom(projectRecord);
+
+			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
+			var subdivision = _mSetRecordMapper.MapFrom(subdivisionRecord);
+
+			var mSetInfo = _mSetRecordMapper.MapFrom(jobRecord.MSetInfo);
+
+			Job job = new Job(jobId, parentJob, project, subdivision, jobRecord.Label, mSetInfo);
 
 			return job;
 		}

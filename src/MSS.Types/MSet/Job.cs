@@ -6,25 +6,25 @@ namespace MSS.Types.MSet
 	public class Job
 	{
 		public ObjectId Id { get; init; }
-		public ObjectId? ParentJobId { get; init; }
-		public ObjectId ProjectId { get; init; }
-		public ObjectId SubdivisionId { get; init; }
+		public Job? ParentJob { get; init; }
+		public Project Project { get; init; }
+		public Subdivision Subdivision { get; init; }
 		public string? Label { get; init; }
 		public MSetInfo MSetInfo { get; init; }
 
 		public Job(
 			ObjectId id,
-			ObjectId? parentJobId,
-			ObjectId projectId,
-			ObjectId subdivisionId,
+			Job? parentJob,
+			Project project,
+			Subdivision subdivision,
 			string? label,
 			MSetInfo mSetInfo
 			)
 		{
 			Id = id;
-			ParentJobId = parentJobId;
-			ProjectId = projectId;
-			SubdivisionId = subdivisionId;
+			ParentJob = parentJob;
+			Project = project;
+			Subdivision = subdivision;
 			Label = label;
 			MSetInfo = mSetInfo;
 		}

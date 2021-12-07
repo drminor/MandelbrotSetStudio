@@ -1,7 +1,6 @@
 ﻿using ProtoBuf;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.Serialization;
 
 namespace MSS.Types.DataTransferObjects
 {

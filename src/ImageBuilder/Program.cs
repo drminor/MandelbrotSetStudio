@@ -69,10 +69,10 @@ namespace ImageBuilder
 
 						//IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfoOld.Name, mSetInfoOld.IsHighRes);
 
-						var mapSectionAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-						var mongoDbImporter = new MongoDbImporter(mapSectionAdapter);
+						var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
+						var mongoDbImporter = new MongoDbImporter(projectAdapter);
 
-						var project = BuildProject(mSetInfoOld.Name);
+						var project = projectAdapter.GetOrCreateProject(mSetInfoOld.Name);
 						mongoDbImporter.Import(/*mapSectionReader, */project, mSetInfo, overwrite: true);
 						break;
 					}
@@ -82,10 +82,10 @@ namespace ImageBuilder
 						string fileName = MSetInfoBuilder.ZOOM_TEST_1;
 						var mSetInfoOld = MSetInfoBuilder.Build(fileName);
 
-						var mapSectionAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-						var mongoDbImporter = new MongoDbImporter(mapSectionAdapter);
+						var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
+						var mongoDbImporter = new MongoDbImporter(projectAdapter);
 
-						var project = BuildProject(mSetInfoOld.Name);
+						var project = projectAdapter.GetOrCreateProject(mSetInfoOld.Name);
 
 						MSetInfo mSetInfo = new MSetInfo(new SizeInt(1280, 1280), RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor);
 

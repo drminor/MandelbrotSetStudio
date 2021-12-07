@@ -3,28 +3,26 @@ using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo;
+using ProjectRepo.Entities;
 using System.Diagnostics;
 
 namespace MSetDatabaseClient
 {
 	public class MongoDbImporter
 	{
-		private readonly ProjectAdapter _mapSectionAdapter;
+		private readonly ProjectAdapter _projectAdapter;
 
-		public MongoDbImporter(ProjectAdapter mapSectionAdapter)
+		public MongoDbImporter(ProjectAdapter projectAdapter)
 		{
-			_mapSectionAdapter = mapSectionAdapter;
+			_projectAdapter = projectAdapter;
 		}
 
-		public void Import(/*IMapSectionReader mapSectionReader, */Project projectData, MSetInfo mSetInfo, bool overwrite)
+		public void Import(/*IMapSectionReader mapSectionReader, */Project project, MSetInfo mSetInfo, bool overwrite)
 		{
-			// Make sure the project record has been written.
-			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
-
-			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, RMapConstants.BLOCK_SIZE, overwrite);
+			var jobId = _projectAdapter.CreateJob(project, mSetInfo, RMapConstants.BLOCK_SIZE, overwrite);
 
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
-			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);
+			var job = _projectAdapter.GetJob(jobId);
 			CopyBlocks(/*mapSectionReader, */job);
 		}
 
@@ -62,15 +60,12 @@ namespace MSetDatabaseClient
 			//}
 		}
 
-		public void DoZoomTest1(Project projectData, MSetInfo mSetInfo, bool overwrite)
+		public void DoZoomTest1(Project project, MSetInfo mSetInfo, bool overwrite)
 		{
-			// Make sure the project record has been written.
-			var project = _mapSectionAdapter.InsertProject(projectData, overwrite);
-
-			var jobId = _mapSectionAdapter.CreateJob(project, mSetInfo, RMapConstants.BLOCK_SIZE, overwrite);
+			var jobId = _projectAdapter.CreateJob(project, mSetInfo, RMapConstants.BLOCK_SIZE, overwrite);
 
 			// TODO: using a job object, temporarily, update to a MapSectionReaderWriter.
-			var job = _mapSectionAdapter.GetMapSectionWriter(jobId);
+			var job = _projectAdapter.GetJob(jobId);
 
 			ZoomUntil(job, 100);
 		}

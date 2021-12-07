@@ -1,9 +1,11 @@
-﻿using MSS.Common;
+﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo;
 using ProjectRepo.Entities;
+using System;
 
 namespace MSetRepo
 {
@@ -32,23 +34,15 @@ namespace MSetRepo
 
 		public Job MapFrom(JobRecord target)
 		{
-			var result = new Job(
-				id: target.Id,
-				parentJobId: target.ParentJobId,
-				projectId: target.ProjectId,
-				subdivisionId: target.SubDivisionId,
-				label: target.Label,
-				mSetInfo: MapFrom(target.MSetInfo));
-
-			return result;
+			throw new NotImplementedException();
 		}
 
 		public JobRecord MapTo(Job source)
 		{
 			var result = new JobRecord(
-				source.ParentJobId,
-				source.ProjectId,
-				source.SubdivisionId,
+				source.ParentJob?.Id,
+				source.Project.Id,
+				source.Subdivision.Id,
 				source.Label,
 				MapTo(source.MSetInfo));
 
