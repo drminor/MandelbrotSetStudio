@@ -4,7 +4,6 @@ using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
-using ProjectRepo;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -26,8 +25,6 @@ namespace MapSectionProviderLib
 
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(Subdivision subdivision, PointInt blockPosition, MapCalcSettings mapCalcSettings)
 		{
-			//var x = _mapSectionRepo.GetMapSection("61b006afff54dd8025814e9b");
-
 			try
 			{
 				var mapSectionResponse = await _mapSectionRepo.GetMapSectionAsync(subdivision.Id.ToString(), blockPosition);
