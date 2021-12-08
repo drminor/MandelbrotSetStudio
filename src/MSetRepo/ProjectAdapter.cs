@@ -75,7 +75,7 @@ namespace MSetRepo
 
 			var mSetInfo = _mSetRecordMapper.MapFrom(jobRecord.MSetInfo);
 
-			Job job = new Job(jobId, parentJob, project, subdivision, jobRecord.Label, mSetInfo, jobRecord.CanvasOffset);
+			Job job = new Job(jobId, parentJob, project, subdivision, jobRecord.Label, mSetInfo, new PointDbl(jobRecord.CanvasOffsetX, jobRecord.CanvasOffsetY));
 
 			return job;
 		}
@@ -229,7 +229,8 @@ namespace MSetRepo
 				SubDivisionId: subdivisionId,
 				Label: label,
 				MSetInfo: mSetInfoRecord,
-				CanvasOffset: canvasOffset
+				CanvasOffsetX: canvasOffset.X,
+				CanvasOffsetY: canvasOffset.Y
 				);
 
 			return jobRecord;

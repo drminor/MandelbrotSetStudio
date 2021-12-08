@@ -1,11 +1,11 @@
-﻿using System;
+﻿using ProtoBuf;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
 
 namespace MSS.Types
 {
-	[DataContract]
+	[ProtoContract(SkipConstructor = true)]
 	public struct PointInt : IEquatable<PointInt>, IEqualityComparer<PointInt>
 	{
 		public PointInt(int x, int y)
@@ -14,10 +14,10 @@ namespace MSS.Types
 			Y = y;
 		}
 
-		[DataMember(Order = 1)]
+		[ProtoMember(1)]
 		public int X { get; set; }
 
-		[DataMember(Order = 2)]
+		[ProtoMember(2)]
 		public int Y { get; set; }
 
 		#region IEquatable and IEqualityComparer Support

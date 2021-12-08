@@ -37,12 +37,9 @@ namespace MSetExplorer
 					var mapSectionResponse = await _mapSectionProvider.GenerateMapSectionAsync(subdivision, blockPosition, mSetInfo.MapCalcSettings);
 
 					var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, colorMap);
-
 					var position = new PointDbl(mapSectionResponse.BlockPosition).Scale(blockSize).Translate(canvasOffset);
-					//position = position.Scale(blockSize);
-					//position = position.Translate(canvasOffset);
+					var mapSection = new MapSection(position, blockSize, pixels1d);
 
-					var mapSection = new MapSection(subdivision, position, pixels1d);
 					callback(mapSection);
 				}
 			}
@@ -55,6 +52,12 @@ namespace MSetExplorer
 
 			for (var rowPtr = 0; rowPtr < blockSize.Height; rowPtr++)
 			{
+				// Calculate the array index for the beginning of this 
+				// destination and source row.
+				// The Destination's origin is at the top, left.
+				// The Source's origin is at the bottom, left.
+
+
 				var resultRowPtr = -1 + blockSize.Height - rowPtr;
 				var curResultPtr = resultRowPtr * blockSize.Width * 4;
 				var curSourcePtr = rowPtr * blockSize.Width;

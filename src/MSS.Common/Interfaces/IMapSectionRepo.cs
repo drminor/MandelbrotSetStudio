@@ -6,9 +6,12 @@ namespace MSS.Common
 {
 	public interface IMapSectionRepo
 	{
+
+		MapSectionResponse? GetMapSection(string mapSectionId);
+
 		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, PointInt blockPosition);
 		Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
 
-		void SaveMapSection(MapSectionResponse mapSectionResponse);
+		Task<string> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 	}
 }

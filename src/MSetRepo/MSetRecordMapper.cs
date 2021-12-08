@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using MEngineDataContracts;
+using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
@@ -9,7 +10,8 @@ using System;
 
 namespace MSetRepo
 {
-	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>, IMapper<Subdivision, SubdivisionRecord>
+	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>, 
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>
 	{
 		private readonly DtoMapper _dtoMapper;
 		private readonly CoordsHelper _coordsHelper;
@@ -45,7 +47,8 @@ namespace MSetRepo
 				source.Subdivision.Id,
 				source.Label,
 				MapTo(source.MSetInfo),
-				source.CanvasOffset);
+				source.CanvasOffset.X,
+				source.CanvasOffset.Y);
 
 			return result;
 		}
@@ -89,5 +92,55 @@ namespace MSetRepo
 			var result = new SubdivisionRecord(position, source.BlockSize.Width, source.BlockSize.Height, samplePointDelta);
 			return result;
 		}
+
+		public MapSectionRecord? MapTo(MapSectionResponse? source)
+		{
+			if (source is null) return null;
+
+			var result = new MapSectionRecord
+				(
+				new ObjectId(source.SubdivisionId),
+				source.BlockPosition.X,
+				source.BlockPosition.Y,
+				//GetAbb(source.Counts)
+				source.Counts
+				);
+			return result;
+		}
+
+		public MapSectionResponse? MapFrom(MapSectionRecord? target)
+		{
+			if (target is null) return null;
+
+			var result = new MapSectionResponse
+			{
+				MapSectionId = target.Id.ToString(),
+				SubdivisionId = target.SubdivisionId.ToString(),
+				BlockPosition = new PointInt(target.BlockPositionX, target.BlockPositionY),
+				//Counts = GetAbb(target.Counts)
+				Counts = target.Counts
+			};
+
+			return result;
+		}
+
+		//private int[] GetAbb(int[] source)
+		//{
+		//	if (source is null) return new int[0];
+
+		//	if(source.Length > 100)
+		//	{
+		//		int[] result = new int[100];
+		//		Array.Copy(source, result, 100);
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		int[] result = new int[source.Length];
+		//		Array.Copy(source, result, source.Length);
+		//		return result;
+		//	}
+
+		//}
 	}
 }

@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
+    <ProjectReference Include="..\ProjectRepo\ProjectRepo.csproj" />
   </ItemGroup>
 
 </Project>

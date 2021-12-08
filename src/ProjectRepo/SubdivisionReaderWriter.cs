@@ -22,7 +22,7 @@ namespace ProjectRepo
 
 		public IList<SubdivisionRecord> Get(int scale)
 		{
-			var filter = Builders<SubdivisionRecord>.Filter.Eq("Position.PointDto.Exponent", scale);
+			var filter = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Exponent", scale);
 			var subdivisionRecords = Collection.Find(filter).ToList();
 
 			return subdivisionRecords;

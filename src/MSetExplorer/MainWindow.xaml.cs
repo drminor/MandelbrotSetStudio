@@ -46,11 +46,11 @@ namespace MSetExplorer
 		{
 			var result = new Image
 			{
-				Width = mapSection.Subdivision.BlockSize.Width,
-				Height = mapSection.Subdivision.BlockSize.Height,
+				Width = mapSection.Size.Width,
+				Height = mapSection.Size.Height,
 				Stretch = Stretch.None,
 				Margin = new Thickness(0),
-				Source = GetBitMap(mapSection, mapSection.Subdivision.BlockSize)
+				Source = GetBitMap(mapSection, mapSection.Size)
 			};
 
 			return result;

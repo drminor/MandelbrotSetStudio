@@ -4,6 +4,9 @@ using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
+using ProjectRepo;
+using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace MapSectionProviderLib
@@ -23,16 +26,29 @@ namespace MapSectionProviderLib
 
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(Subdivision subdivision, PointInt blockPosition, MapCalcSettings mapCalcSettings)
 		{
-			var mapSectionResponse = await _mapSectionRepo.GetMapSectionAsync(subdivision.Id.ToString(), blockPosition);
+			//var x = _mapSectionRepo.GetMapSection("61b006afff54dd8025814e9b");
 
-			if (mapSectionResponse is null)
+			try
 			{
-				var mapSectionRequest = CreateRequest(subdivision, blockPosition, mapCalcSettings);
-				mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
-				_mapSectionRepo.SaveMapSection(mapSectionResponse);
-			}
+				var mapSectionResponse = await _mapSectionRepo.GetMapSectionAsync(subdivision.Id.ToString(), blockPosition);
 
-			return mapSectionResponse;
+				if (mapSectionResponse is null)
+				{
+					Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+					var mapSectionRequest = CreateRequest(subdivision, blockPosition, mapCalcSettings);
+					mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
+					var mapSectionId = await _mapSectionRepo.SaveMapSectionAsync(mapSectionResponse);
+
+					mapSectionResponse.MapSectionId = mapSectionId;
+				}
+
+				return mapSectionResponse;
+			} 
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Got Exception: {e}.");
+				throw;
+			}
 		}
 
 		private MapSectionRequest CreateRequest(Subdivision subdivision, PointInt blockPosition, MapCalcSettings mapCalcSettings)

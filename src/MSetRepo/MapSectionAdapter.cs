@@ -1,8 +1,8 @@
 ﻿using MEngineDataContracts;
+using MongoDB.Bson;
 using MSS.Common;
 using MSS.Types;
 using ProjectRepo;
-using System;
 using System.Threading.Tasks;
 
 namespace MSetRepo
@@ -18,25 +18,43 @@ namespace MSetRepo
 			_mSetRecordMapper = mSetRecordMapper;
 		}
 
+		public MapSectionResponse? GetMapSection(string mapSectionId)
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var mapSectionRecord = mapSectionReaderWriter.Get(new ObjectId(mapSectionId));
+			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+
+			return mapSectionResponse;
+		}
+
 		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, PointInt blockPosition)
 		{
-			await Task.Delay(50);
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(subdivisionId), blockPosition);
+			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
 
-			return null;
-
-			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-
+			return mapSectionResponse;
 		}
 
-		public Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId)
 		{
-			throw new NotImplementedException();
-			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(mapSectionId));
+			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+
+			return mapSectionResponse;
 		}
 
-		public void SaveMapSection(MapSectionResponse mapSectionResponse)
+		public async Task<string> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
 		{
-			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
+
+			if (mapSectionRecord is null) return string.Empty;
+
+			var mapSectionId = await mapSectionReaderWriter.InsertAsync(mapSectionRecord);
+
+			return mapSectionId.ToString();
 		}
 	}
 }
