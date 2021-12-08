@@ -23,9 +23,9 @@ namespace MSetExplorer
 
 			IMEngineClient mClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
 			IMapSectionRepo mapSectionRepo = MSetRepoHelper.GetMapSectionRepo(MONGO_DB_CONN_STRING);
-			var mapSectionProvider = new MapSectionProvider(mClient, mapSectionRepo);
+			//var mapSectionProvider = new MapSectionProvider2(mClient, mapSectionRepo);
 
-			var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, mapSectionProvider);
+			var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, mapSectionRepo, mClient);
 			window.DataContext = viewModel;
 
 			window.Show();

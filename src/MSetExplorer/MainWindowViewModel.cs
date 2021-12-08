@@ -1,6 +1,8 @@
 ﻿using MapSectionProviderLib;
+using MEngineClient;
 using MongoDB.Bson;
 using MSetRepo;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
@@ -14,18 +16,21 @@ namespace MSetExplorer
 	{
 		private SizeInt _blockSize;
 		private readonly ProjectAdapter _projectAdapter;
-		private readonly MapSectionProvider _mapSectionProvider;
+		private readonly IMapSectionRepo _mapSectionRepo;
+		private readonly IMEngineClient _mEngineClient;
 
 		private Job _job;
-		private MapLoader _mapLoader;
+		//private MapLoader _mapLoader;
+		private MapLoader2 _mapLoader;
 		private IProgress<MapSection> _progress;
 		private Task _mapLoaderTask;
 
-		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionProvider mapSectionProvider)
+		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, IMapSectionRepo mapSectionRepo, IMEngineClient mEngineClient)
 		{
 			_blockSize = blockSize;
 			_projectAdapter = projectAdapter;
-			_mapSectionProvider = mapSectionProvider;
+			_mapSectionRepo = mapSectionRepo;
+			_mEngineClient = mEngineClient;
 		}
 
 		public void LoadMap(MSetInfo mSetInfo, IProgress<MapSection> progress)
@@ -44,8 +49,12 @@ namespace MSetExplorer
 
 			_job = BuildJob(mSetInfo);
 
-			_mapLoader = new MapLoader(_mapSectionProvider);
-			_mapLoaderTask = _mapLoader.LoadMap(_job, HandleMapSection);
+			//_mapLoader = new MapLoader(_mapSectionProvider);
+			//_mapLoaderTask = _mapLoader.LoadMap(_job, HandleMapSection);
+			//_mapLoaderTask.ContinueWith(OnTaskComplete);
+
+			_mapLoader = new MapLoader2(_mEngineClient, _mapSectionRepo);
+			_mapLoaderTask = Task.Run(() => _mapLoader.LoadMap(_job, HandleMapSection));
 			_mapLoaderTask.ContinueWith(OnTaskComplete);
 		}
 
@@ -61,13 +70,19 @@ namespace MSetExplorer
 			return job;
 		}
 
+		private object hmsLock = new object();
+
 		private void HandleMapSection(MapSection mapSection)
 		{
-			_progress.Report(mapSection);
+			lock (hmsLock)
+			{
+				_progress.Report(mapSection);
+			}
 		}
 
 		private void OnTaskComplete(Task t)
 		{
+			_mapLoader.Stop();
 			_mapLoader = null;
 			_mapLoaderTask = null;
 		}

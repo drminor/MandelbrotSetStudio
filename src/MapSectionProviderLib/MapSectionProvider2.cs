@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace MapSectionProviderLib
 {
-	public class MapSectionProvider : IMapSectionProvider
+	public class MapSectionProvider2 : IMapSectionProvider
 	{
 		private readonly IMEngineClient _mEngineClient;
 		private readonly IMapSectionRepo _mapSectionRepo;
 
-		public MapSectionProvider(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo)
+		public MapSectionProvider2(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo)
 		{
 			_mEngineClient = mEngineClient;
 			_mapSectionRepo = mapSectionRepo;
@@ -23,6 +23,7 @@ namespace MapSectionProviderLib
 
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(Subdivision subdivision, PointInt blockPosition, MapCalcSettings mapCalcSettings)
 		{
+
 			try
 			{
 				var mapSectionResponse = await _mapSectionRepo.GetMapSectionAsync(subdivision.Id.ToString(), blockPosition);
@@ -38,7 +39,7 @@ namespace MapSectionProviderLib
 				}
 
 				return mapSectionResponse;
-			}
+			} 
 			catch (Exception e)
 			{
 				Debug.WriteLine($"Got Exception: {e}.");

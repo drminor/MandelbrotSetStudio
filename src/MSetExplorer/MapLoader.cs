@@ -9,9 +9,9 @@ namespace MSetExplorer
 {
 	internal class MapLoader
 	{
-		private readonly MapSectionProvider _mapSectionProvider;
+		private readonly IMapSectionProvider _mapSectionProvider;
 
-		public MapLoader(MapSectionProvider mapSectionProvider)
+		public MapLoader(IMapSectionProvider mapSectionProvider)
 		{
 			_mapSectionProvider = mapSectionProvider;
 		}
@@ -56,7 +56,6 @@ namespace MSetExplorer
 				// destination and source row.
 				// The Destination's origin is at the top, left.
 				// The Source's origin is at the bottom, left.
-
 
 				var resultRowPtr = -1 + blockSize.Height - rowPtr;
 				var curResultPtr = resultRowPtr * blockSize.Width * 4;
