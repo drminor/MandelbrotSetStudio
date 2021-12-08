@@ -1,5 +1,4 @@
-﻿using MapSectionProviderLib;
-using MEngineClient;
+﻿using MEngineClient;
 using MongoDB.Bson;
 using MSetRepo;
 using MSS.Common;
@@ -20,8 +19,7 @@ namespace MSetExplorer
 		private readonly IMEngineClient _mEngineClient;
 
 		private Job _job;
-		//private MapLoader _mapLoader;
-		private MapLoader2 _mapLoader;
+		private MapLoader _mapLoader;
 		private IProgress<MapSection> _progress;
 		private Task _mapLoaderTask;
 
@@ -49,11 +47,7 @@ namespace MSetExplorer
 
 			_job = BuildJob(mSetInfo);
 
-			//_mapLoader = new MapLoader(_mapSectionProvider);
-			//_mapLoaderTask = _mapLoader.LoadMap(_job, HandleMapSection);
-			//_mapLoaderTask.ContinueWith(OnTaskComplete);
-
-			_mapLoader = new MapLoader2(_mEngineClient, _mapSectionRepo);
+			_mapLoader = new MapLoader(_mEngineClient, _mapSectionRepo);
 			_mapLoaderTask = Task.Run(() => _mapLoader.LoadMap(_job, HandleMapSection));
 			_mapLoaderTask.ContinueWith(OnTaskComplete);
 		}

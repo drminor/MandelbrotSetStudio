@@ -1,30 +1,47 @@
 ﻿using MapSectionProviderLib;
+using MEngineClient;
+using MEngineDataContracts;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
-using System.Threading.Tasks;
 
 namespace MSetExplorer
 {
 	internal class MapLoader
 	{
-		private readonly IMapSectionProvider _mapSectionProvider;
+		private WorkQueue _workQueue;
 
-		public MapLoader(IMapSectionProvider mapSectionProvider)
+		public MapLoader(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo)
 		{
-			_mapSectionProvider = mapSectionProvider;
+			_workQueue = new WorkQueue(mEngineClient, mapSectionRepo);
 		}
 
-		public Task LoadMap(Job job, Action<MapSection> callback)
+		public void LoadMap(Job job, Action<MapSection> callback)
 		{
-			var task = GetSectionsAsync(job.MSetInfo, job.Subdivision, job.CanvasOffset, callback);
-			return task;
+			GetSections(job.MSetInfo, job.Subdivision, job.CanvasOffset, callback);
 		}
 
-		public async Task GetSectionsAsync(MSetInfo mSetInfo, Subdivision subdivision, PointDbl canvasOffset, Action<MapSection> callback)
+		public void Stop()
 		{
-			var colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
+			if (!(_workQueue is null))
+			{
+				_workQueue.Stop();
+			}
+		}
+
+		private SizeInt _blockSize;
+		private ColorMap _colorMap;
+		private PointDbl _canvasOffset;
+		private Action<MapSection> _callback;
+
+		private void GetSections(MSetInfo mSetInfo, Subdivision subdivision, PointDbl canvasOffset, Action<MapSection> callback)
+		{
+			_blockSize = subdivision.BlockSize;
+			_colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
+			_canvasOffset = canvasOffset;
+			_callback = callback;
 
 			SizeInt blockSize = subdivision.BlockSize;
 
@@ -34,15 +51,20 @@ namespace MSetExplorer
 				{
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
 
-					var mapSectionResponse = await _mapSectionProvider.GenerateMapSectionAsync(subdivision, blockPosition, mSetInfo.MapCalcSettings);
+					var mapSectionRequest = MapSectionHelper.CreateRequest(subdivision, blockPosition, mSetInfo.MapCalcSettings);
 
-					var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, colorMap);
-					var position = new PointDbl(mapSectionResponse.BlockPosition).Scale(blockSize).Translate(canvasOffset);
-					var mapSection = new MapSection(position, blockSize, pixels1d);
-
-					callback(mapSection);
+					_workQueue.AddWork(mapSectionRequest, HandleResponse);
 				}
 			}
+		}
+
+		private void HandleResponse(MapSectionResponse mapSectionResponse)
+		{
+			var pixels1d = GetPixelArray(mapSectionResponse.Counts, _blockSize, _colorMap);
+			var position = new PointDbl(mapSectionResponse.BlockPosition).Scale(_blockSize).Translate(_canvasOffset);
+			var mapSection = new MapSection(position, _blockSize, pixels1d);
+
+			_callback(mapSection);
 		}
 
 		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap)
