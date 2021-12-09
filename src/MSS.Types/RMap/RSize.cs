@@ -1,4 +1,5 @@
 ﻿using MSS.Types.Base;
+using System;
 using System.Numerics;
 
 namespace MSS.Types
@@ -19,5 +20,26 @@ namespace MSS.Types
 		{
 			Exponent = exponent;
 		}
+
+		public RSize Scale(SizeInt factor)
+		{
+			return new RSize(Width * factor.Width, Height * factor.Height, Exponent);
+		}
+
+		public RSize Scale(PointInt factor)
+		{
+			return new RSize(Width * factor.X, Height * factor.Y, Exponent);
+		}
+
+		public RSize Translate(RPoint amount)
+		{
+			if (amount.Exponent != Exponent)
+			{
+				throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.");
+			}
+
+			return new RSize(Width + amount.X, Height + amount.Y, Exponent);
+		}
+
 	}
 }

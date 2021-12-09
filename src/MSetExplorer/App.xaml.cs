@@ -1,4 +1,5 @@
-﻿using MEngineClient;
+﻿using MapSectionProviderLib;
+using MEngineClient;
 using MSetRepo;
 using MSS.Common;
 using System.Windows;
@@ -20,10 +21,13 @@ namespace MSetExplorer
 			var window = new MainWindow();
 			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
 
-			var mClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
+			var mEngineClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
 			var mapSectionRepo = MSetRepoHelper.GetMapSectionRepo(MONGO_DB_CONN_STRING);
 
-			var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, mapSectionRepo, mClient);
+			var mapSectionPersistQueue = new MapSectionPersistQueue(mapSectionRepo);
+			var mapSectionRequestQueue = new MapSectionRequestQueue(mEngineClient, mapSectionRepo, mapSectionPersistQueue);
+
+			var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, mapSectionRequestQueue);
 			window.DataContext = viewModel;
 
 			window.Show();

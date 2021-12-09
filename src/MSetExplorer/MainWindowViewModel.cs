@@ -1,7 +1,6 @@
-﻿using MEngineClient;
+﻿using MapSectionProviderLib;
 using MongoDB.Bson;
 using MSetRepo;
-using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
@@ -15,20 +14,19 @@ namespace MSetExplorer
 	{
 		private SizeInt _blockSize;
 		private readonly ProjectAdapter _projectAdapter;
-		private readonly IMapSectionRepo _mapSectionRepo;
-		private readonly IMEngineClient _mEngineClient;
+		private readonly MapSectionRequestQueue _mapSectionRequestQueue;
 
 		private Job _job;
 		private MapLoader _mapLoader;
 		private IProgress<MapSection> _progress;
 		private Task _mapLoaderTask;
 
-		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, IMapSectionRepo mapSectionRepo, IMEngineClient mEngineClient)
+		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionRequestQueue mapSectionRequestQueue)
 		{
 			_blockSize = blockSize;
 			_projectAdapter = projectAdapter;
-			_mapSectionRepo = mapSectionRepo;
-			_mEngineClient = mEngineClient;
+			_mapSectionRequestQueue = mapSectionRequestQueue;
+
 		}
 
 		public void LoadMap(MSetInfo mSetInfo, IProgress<MapSection> progress)
@@ -47,7 +45,8 @@ namespace MSetExplorer
 
 			_job = BuildJob(mSetInfo);
 
-			_mapLoader = new MapLoader(_mEngineClient, _mapSectionRepo);
+
+			_mapLoader = new MapLoader(_mapSectionRequestQueue);
 			_mapLoaderTask = Task.Run(() => _mapLoader.LoadMap(_job, HandleMapSection));
 			_mapLoaderTask.ContinueWith(OnTaskComplete);
 		}

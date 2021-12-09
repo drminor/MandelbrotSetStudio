@@ -11,11 +11,11 @@ namespace MSetExplorer
 {
 	internal class MapLoader
 	{
-		private WorkQueue _workQueue;
+		private MapSectionRequestQueue _workQueue;
 
-		public MapLoader(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo)
+		public MapLoader(MapSectionRequestQueue workQueue)
 		{
-			_workQueue = new WorkQueue(mEngineClient, mapSectionRepo);
+			_workQueue = workQueue;
 		}
 
 		public void LoadMap(Job job, Action<MapSection> callback)
@@ -27,7 +27,7 @@ namespace MSetExplorer
 		{
 			if (!(_workQueue is null))
 			{
-				_workQueue.Stop();
+				_workQueue.Stop(immediately: false);
 			}
 		}
 

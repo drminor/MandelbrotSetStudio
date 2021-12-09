@@ -2,6 +2,7 @@
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 
 namespace MapSectionProviderLib
 {
@@ -18,17 +19,19 @@ namespace MapSectionProviderLib
 			}
 			else if (subdivision.Position.Exponent < subdivision.SamplePointDelta.Exponent)
 			{
-				subPosition = subdivision.Position;
+				throw new NotSupportedException("No support yet for adjusting exponents when the position's exponent is less than the sample size's.");
 			}
 			else
 			{
 				subPosition = subdivision.Position;
 			}
 
-			var position = new RPoint(
-				subPosition.X + blockPosition.X * subdivision.SamplePointDelta.Width * subdivision.BlockSize.Width,
-				subPosition.Y + blockPosition.Y * subdivision.SamplePointDelta.Height * subdivision.BlockSize.Height,
-				subdivision.SamplePointDelta.Exponent);
+			//var position = new RPoint(
+			//	subPosition.X + blockPosition.X * subdivision.BlockSize.Width * subdivision.SamplePointDelta.Width,
+			//	subPosition.Y + blockPosition.Y * subdivision.BlockSize.Height * subdivision.SamplePointDelta.Height,
+			//	subdivision.SamplePointDelta.Exponent);
+
+			var position = new RPoint(blockPosition, subPosition.Exponent).Scale(subdivision.BlockSize).Scale(subdivision.SamplePointDelta).Translate(subPosition);
 
 			var dtoMapper = new DtoMapper();
 
