@@ -32,8 +32,16 @@ namespace MapSectionProviderLib
 			_cts = new CancellationTokenSource();
 			_workQueue = new BlockingCollection<WorkItem<MapSectionRequest, MapSectionResponse>> (MAX_WORK_ITEMS);
 
-			_workQueueProcessor1 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistQueue, _cts.Token));
-			_workQueueProcessor2 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistQueue, _cts.Token));
+			if (mapSectionPersistQueue != null)
+			{
+				_workQueueProcessor1 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistQueue, _cts.Token));
+				_workQueueProcessor2 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistQueue, _cts.Token));
+			}
+			else
+			{
+				_workQueueProcessor1 = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
+				_workQueueProcessor2 = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
+			}
 		}
 
 		public void AddWork(MapSectionRequest mapSectionRequest, Action<MapSectionResponse> workAction)
@@ -56,7 +64,7 @@ namespace MapSectionProviderLib
 			_workQueueProcessor1.Wait(120 * 1000);
 			_workQueueProcessor2.Wait(120 * 1000);
 
-			_mapSectionPersistQueue.Stop(immediately);
+			_mapSectionPersistQueue?.Stop(immediately);
 		}
 
 		private async Task ProcessTheQueueAsync(MapSectionPersistQueue mapSectionPersistQueue, CancellationToken ct)

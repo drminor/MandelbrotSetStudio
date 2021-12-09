@@ -11,11 +11,11 @@ namespace MSetExplorer
 {
 	internal class MapLoader
 	{
-		private MapSectionRequestQueue _workQueue;
+		private MapSectionRequestQueue _mapSectionRequstQueue;
 
-		public MapLoader(MapSectionRequestQueue workQueue)
+		public MapLoader(MapSectionRequestQueue mapSectionRequestQueue)
 		{
-			_workQueue = workQueue;
+			_mapSectionRequstQueue = mapSectionRequestQueue;
 		}
 
 		public void LoadMap(Job job, Action<MapSection> callback)
@@ -25,9 +25,9 @@ namespace MSetExplorer
 
 		public void Stop()
 		{
-			if (!(_workQueue is null))
+			if (!(_mapSectionRequstQueue is null))
 			{
-				_workQueue.Stop(immediately: false);
+				_mapSectionRequstQueue.Stop(immediately: false);
 			}
 		}
 
@@ -53,7 +53,7 @@ namespace MSetExplorer
 
 					var mapSectionRequest = MapSectionHelper.CreateRequest(subdivision, blockPosition, mSetInfo.MapCalcSettings);
 
-					_workQueue.AddWork(mapSectionRequest, HandleResponse);
+					_mapSectionRequstQueue.AddWork(mapSectionRequest, HandleResponse);
 				}
 			}
 		}
