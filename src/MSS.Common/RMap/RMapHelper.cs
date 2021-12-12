@@ -17,8 +17,8 @@ namespace MSS.Common
 			//DIAG -- double x0n = GetVal(rRectangle.X1, rRectangle.Exponent);
 
 			// Here are the current values for the rectangle's Width and Height numerators
-			BigInteger curWidth = rRectangle.WidthNumerator;
-			BigInteger curHeight = rRectangle.HeigthNumerator;
+			var curWidth = rRectangle.WidthNumerator;
+			var curHeight = rRectangle.HeigthNumerator;
 
 			// Create a new rectangle with its exponent adjusted to support the new precision required in the numerators.
 			RRectangle rectangleWithNewExp;
@@ -29,8 +29,8 @@ namespace MSS.Common
 
 			// First see if both the width and height are even
 			// If even, but not integer multiple of 4 then these halves will become quarters
-			var halfOfXLen = BigInteger.DivRem(curWidth, 2, out BigInteger remainderX);
-			var halfOfYLen = BigInteger.DivRem(curHeight, 2, out BigInteger remainderY);
+			var halfOfXLen = BigInteger.DivRem(curWidth, 2, out var remainderX);
+			var halfOfYLen = BigInteger.DivRem(curHeight, 2, out var remainderY);
 
 			if (remainderX == 0 && remainderY == 0)
 			{
@@ -63,7 +63,7 @@ namespace MSS.Common
 
 			//DIAG double x1n = GetVal(rebased.X1, rebased.Exponent);
 
-			RRectangle result = new RRectangle(
+			var result = new RRectangle(
 				rectangleWithNewExp.X1 + adjustmentX,
 				rectangleWithNewExp.X2 - adjustmentX,
 				rectangleWithNewExp.Y1 + adjustmentY,
@@ -78,7 +78,7 @@ namespace MSS.Common
 		{
 			long result;
 
-			var half = Math.DivRem(n, 2, out long remainder);
+			var half = Math.DivRem(n, 2, out var remainder);
 
 			if (remainder == 0)
 			{
@@ -111,8 +111,8 @@ namespace MSS.Common
 				return vals;
 			}
 
-			long multplier = (long)Math.Pow(2, -1 * exponentDelta);
-			BigInteger[] result = vals.Select(v => v * multplier).ToArray();
+			var multplier = (long)Math.Pow(2, -1 * exponentDelta);
+			var result = vals.Select(v => v * multplier).ToArray();
 
 			return result;
 		}
@@ -126,15 +126,15 @@ namespace MSS.Common
 		public static int GetValueDepth(RRectangle _)
 		{
 			// TODO: Calculate the # of maximum binary bits of precision from sx, ex, sy and ey.
-			int binaryBitsOfPrecision = 10;
-			int valueDepth = CalculateValueDepth(binaryBitsOfPrecision);
+			var binaryBitsOfPrecision = 10;
+			var valueDepth = CalculateValueDepth(binaryBitsOfPrecision);
 
 			return valueDepth;
 		}
 
 		private static int CalculateValueDepth(int binaryBitsOfPrecision)
 		{
-			int result = Math.DivRem(binaryBitsOfPrecision, 53, out int remainder);
+			var result = Math.DivRem(binaryBitsOfPrecision, 53, out var remainder);
 
 			if (remainder > 0) result++;
 

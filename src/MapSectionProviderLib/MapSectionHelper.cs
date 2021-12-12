@@ -26,13 +26,7 @@ namespace MapSectionProviderLib
 				subPosition = subdivision.Position;
 			}
 
-			//var position = new RPoint(
-			//	subPosition.X + blockPosition.X * subdivision.BlockSize.Width * subdivision.SamplePointDelta.Width,
-			//	subPosition.Y + blockPosition.Y * subdivision.BlockSize.Height * subdivision.SamplePointDelta.Height,
-			//	subdivision.SamplePointDelta.Exponent);
-
 			var position = new RPoint(blockPosition, subPosition.Exponent).Scale(subdivision.BlockSize).Scale(subdivision.SamplePointDelta).Translate(subPosition);
-
 			var dtoMapper = new DtoMapper();
 
 			var mapSectionRequest = new MapSectionRequest

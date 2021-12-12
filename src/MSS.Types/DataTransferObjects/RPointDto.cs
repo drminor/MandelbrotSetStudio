@@ -4,6 +4,8 @@ using System.Numerics;
 
 namespace MSS.Types.DataTransferObjects
 {
+	using bh = BigIntegerHelper;
+
 	[ProtoContract(SkipConstructor = true)]
 	public class RPointDto
 	{
@@ -19,7 +21,7 @@ namespace MSS.Types.DataTransferObjects
 		public RPointDto() : this(new BigInteger[] { 0, 0 }, 0)
 		{ }
 
-		public RPointDto(BigInteger[] bigIntegers, int exponent) : this(bigIntegers.Select(v => v.ToLongs()).ToArray(), exponent)
+		public RPointDto(BigInteger[] bigIntegers, int exponent) : this(bigIntegers.Select(v => bh.ToLongs(v)).ToArray(), exponent)
 		{ }
 
 		public RPointDto(long[][] values, int exponent)

@@ -13,9 +13,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Numerics;
-
-using static MSS.Types.BigIntegerExtensions;
-
 namespace ImageBuilder
 {
 	class Program
@@ -123,15 +120,7 @@ namespace ImageBuilder
 
 						break;
 					}
-				case 6:
-					{
-						var n = new BigInteger(10);
-						int exponent = -4;
-						double result = GetDouble(n, exponent);
-						Debug.WriteLine($"The result is {result}.");
 
-						break;
-					}
 				default: throw new InvalidOperationException($"The value: {cmd} for cmd is not recognized or is not supported.");
 			}
 		}
@@ -183,25 +172,5 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private static double GetDouble(BigInteger n, int exponent)
-		{
-			if (!SafeCastToDouble(n))
-			{
-				throw new OverflowException($"It is not safe to cast BigInteger: {n} to a double.");
-			}
-
-			long[] hiAndLo = n.ToLongs();
-			double result = hiAndLo[0] + hiAndLo[1];
-			result = Math.ScaleB(result, exponent);
-
-			return result;
-		}
-
-		private static bool SafeCastToDouble(BigInteger n)
-		{
-			BigInteger s_bnDoubleMinValue = (BigInteger)double.MinValue;
-			BigInteger s_bnDoubleMaxValue = (BigInteger)double.MaxValue;
-			return s_bnDoubleMinValue <= n && n <= s_bnDoubleMaxValue;
-		}
 	}
 }

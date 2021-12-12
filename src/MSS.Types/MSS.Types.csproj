@@ -6,6 +6,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="BigIntegerExtensions.cs" />
+    <Compile Remove="z_NotUsed\BigIntegerSerializer.cs" />
+    <Compile Remove="z_NotUsed\BigRational.cs" />
+    <Compile Remove="z_NotUsed\DRectangle.cs" />
+    <Compile Remove="z_NotUsed\DSize.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="z_NotUsed\BigIntegerSerializer.cs" />
+    <None Include="z_NotUsed\BigRational.cs" />
+    <None Include="z_NotUsed\DRectangle.cs" />
+    <None Include="z_NotUsed\DSize.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MongoDB.Bson" Version="2.13.2" />
     <PackageReference Include="protobuf-net.Grpc" Version="1.0.152" />
   </ItemGroup>
