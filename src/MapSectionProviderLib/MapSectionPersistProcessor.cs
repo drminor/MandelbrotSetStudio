@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MapSectionProviderLib
 {
-	public class MapSectionPersistQueue
+	public class MapSectionPersistProcessor : IDisposable
 	{
 		private readonly IMapSectionRepo _mapSectionRepo;
 
@@ -17,8 +17,9 @@ namespace MapSectionProviderLib
 		private readonly BlockingCollection<MapSectionResponse> _workQueue;
 
 		private Task _workQueueProcessor;
+		private bool disposedValue;
 
-		public MapSectionPersistQueue(IMapSectionRepo mapSectionRepo)
+		public MapSectionPersistProcessor(IMapSectionRepo mapSectionRepo)
 		{
 			_mapSectionRepo = mapSectionRepo;
 			_cts = new CancellationTokenSource();
@@ -74,5 +75,40 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+					Stop(false);
+
+					if (_cts != null)
+					{
+						_cts.Dispose();
+					}
+
+					if (_workQueue != null)
+					{
+						_workQueue.Dispose();
+					}
+
+					if (_workQueueProcessor != null)
+					{
+						_workQueueProcessor.Dispose();
+					}
+				}
+
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
 	}
 }

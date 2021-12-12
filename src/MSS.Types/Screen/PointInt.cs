@@ -20,9 +20,14 @@ namespace MSS.Types
 		[ProtoMember(2)]
 		public int Y { get; set; }
 
-		public PointInt Scale(SizeInt s)
+		public PointInt Scale(SizeInt factor)
 		{
-			return new PointInt(X * s.Width, Y * s.Height);
+			return new PointInt(X * factor.Width, Y * factor.Height);
+		}
+
+		public PointInt Translate(PointInt amount)
+		{
+			return new PointInt(X + amount.X, Y + amount.Y);
 		}
 
 		#region IEquatable and IEqualityComparer Support

@@ -24,12 +24,12 @@ namespace MSetExplorer
 			var mEngineClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
 			var mapSectionRepo = MSetRepoHelper.GetMapSectionRepo(MONGO_DB_CONN_STRING);
 
-			MapSectionPersistQueue mapSectionPersistQueue = null;
-			//var mapSectionPersistQueue = new MapSectionPersistQueue(mapSectionRepo);
+			//MapSectionPersistProcessor mapSectionPersistProcessor = null;
+			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionRepo);
 
-			var mapSectionRequestQueue = new MapSectionRequestQueue(mEngineClient, mapSectionRepo, mapSectionPersistQueue);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, mapSectionPersistProcessor);
 
-			var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, mapSectionRequestQueue);
+			var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, mapSectionRequestProcessor);
 			window.DataContext = viewModel;
 
 			window.Show();

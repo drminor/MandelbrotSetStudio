@@ -4,11 +4,11 @@ namespace MSS.Types.Screen
 {
 	public class MapSection
 	{
-		public PointDbl CanvasPosition { get; init; }
+		public PointInt CanvasPosition { get; init; }
 		public SizeInt Size { get; init; }
 		public byte[] Pixels1d { get; init; }
 
-		public MapSection(PointDbl canvasPosition, SizeInt size, byte[] pixels1d)
+		public MapSection(PointInt canvasPosition, SizeInt size, byte[] pixels1d)
 		{	
 			CanvasPosition = canvasPosition;
 			Size = size;

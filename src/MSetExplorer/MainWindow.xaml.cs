@@ -26,17 +26,17 @@ namespace MSetExplorer
 		{
 			_vm = (MainWindowViewModel)DataContext;
 
-            var progress = new Progress<MapSection>(HandleMapSectionReady);
-
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo();
-            _vm.LoadMap(canvasSize, mSetInfo, progress);
+			var progress = new Progress<MapSection>(HandleMapSectionReady);
+			
+			_vm.LoadMap(canvasSize, mSetInfo, progress);
 		}
 
 		private SizeInt GetCanvasControlSize(Canvas canvas)
 		{
-			var width = (int) Math.Round(MainCanvas.Width);
-			var height = (int)Math.Round(MainCanvas.Height);
+			var width = (int) Math.Round(canvas.Width);
+			var height = (int)Math.Round(canvas.Height);
 			return new SizeInt(width, height);
 		}
 
@@ -46,8 +46,8 @@ namespace MSetExplorer
 			Debug.WriteLine($"Drawing a bit map at {mapSection.CanvasPosition}.");
 
 			var cIndex = MainCanvas.Children.Add(image);
-            MainCanvas.Children[cIndex].SetValue(Canvas.LeftProperty, mapSection.CanvasPosition.X);
-            MainCanvas.Children[cIndex].SetValue(Canvas.BottomProperty, mapSection.CanvasPosition.Y);
+            MainCanvas.Children[cIndex].SetValue(Canvas.LeftProperty, (double) mapSection.CanvasPosition.X);
+            MainCanvas.Children[cIndex].SetValue(Canvas.BottomProperty, (double) mapSection.CanvasPosition.Y);
         }
 
 		private Image BuildImage(MapSection mapSection)

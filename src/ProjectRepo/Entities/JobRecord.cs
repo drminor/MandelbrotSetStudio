@@ -8,8 +8,12 @@ namespace ProjectRepo.Entities
 		ObjectId SubDivisionId,
 		string? Label,
 		MSetInfoRecord MSetInfo,
-		double CanvasOffsetX,
-		double CanvasOffsetY
+		int CanvasSizeInBlocksWidth,
+		int CanvasSizeInBlocksHeight,
+		int CanvasBlockOffsetX,
+		int CanvasBlockOffsetY,
+		double CanvasControlOffsetX,
+		double CanvasControlOffsetY
 		) : RecordBase()
 	{ }
 

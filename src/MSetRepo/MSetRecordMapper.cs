@@ -47,8 +47,12 @@ namespace MSetRepo
 				source.Subdivision.Id,
 				source.Label,
 				MapTo(source.MSetInfo),
-				source.CanvasOffset.X,
-				source.CanvasOffset.Y);
+				source.CanvasSizeInBlocks.Width,
+				source.CanvasSizeInBlocks.Height,
+				source.CanvasBlockOffset.X,
+				source.CanvasBlockOffset.Y,
+				source.CanvasControlOffset.X,
+				source.CanvasControlOffset.Y);
 
 			return result;
 		}

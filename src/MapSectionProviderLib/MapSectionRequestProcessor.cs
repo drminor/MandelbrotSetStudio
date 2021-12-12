@@ -9,33 +9,34 @@ using System.Threading.Tasks;
 
 namespace MapSectionProviderLib
 {
-	public class MapSectionRequestQueue
+	public class MapSectionRequestProcessor : IDisposable
 	{
 		private const int MAX_WORK_ITEMS = 4;
 
 		private readonly IMEngineClient _mEngineClient;
 		private readonly IMapSectionRepo _mapSectionRepo;
 
-		private readonly MapSectionPersistQueue _mapSectionPersistQueue;
+		private readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<WorkItem<MapSectionRequest, MapSectionResponse>> _workQueue;
 
-		private Task _workQueueProcessor1;
-		private Task _workQueueProcessor2;
+		private readonly Task _workQueueProcessor1;
+		private readonly Task _workQueueProcessor2;
+		private bool disposedValue;
 
-		public MapSectionRequestQueue(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo, MapSectionPersistQueue mapSectionPersistQueue)
+		public MapSectionRequestProcessor(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
 			_mEngineClient = mEngineClient;
 			_mapSectionRepo = mapSectionRepo;
-			_mapSectionPersistQueue = mapSectionPersistQueue;
+			_mapSectionPersistProcessor = mapSectionPersistProcessor;
 
 			_cts = new CancellationTokenSource();
 			_workQueue = new BlockingCollection<WorkItem<MapSectionRequest, MapSectionResponse>> (MAX_WORK_ITEMS);
 
-			if (mapSectionPersistQueue != null)
+			if (mapSectionPersistProcessor != null)
 			{
-				_workQueueProcessor1 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistQueue, _cts.Token));
-				_workQueueProcessor2 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistQueue, _cts.Token));
+				_workQueueProcessor1 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistProcessor, _cts.Token));
+				_workQueueProcessor2 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistProcessor, _cts.Token));
 			}
 			else
 			{
@@ -64,10 +65,10 @@ namespace MapSectionProviderLib
 			_workQueueProcessor1.Wait(120 * 1000);
 			_workQueueProcessor2.Wait(120 * 1000);
 
-			_mapSectionPersistQueue?.Stop(immediately);
+			_mapSectionPersistProcessor?.Stop(immediately);
 		}
 
-		private async Task ProcessTheQueueAsync(MapSectionPersistQueue mapSectionPersistQueue, CancellationToken ct)
+		private async Task ProcessTheQueueAsync(MapSectionPersistProcessor mapSectionPersistProcessor, CancellationToken ct)
 		{
 			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
@@ -82,7 +83,7 @@ namespace MapSectionProviderLib
 						Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(workItem.Request);
 
-						mapSectionPersistQueue.AddWork(mapSectionResponse);
+						mapSectionPersistProcessor.AddWork(mapSectionResponse);
 					}
 
 					workItem.WorkAction(mapSectionResponse);
@@ -125,5 +126,49 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					Stop(false);
+					// Dispose managed state (managed objects)
+					if (_cts != null)
+					{
+						_cts.Dispose();
+					}
+
+					if (_workQueue != null)
+					{
+						_workQueue.Dispose();
+					}
+
+					if (_workQueueProcessor1 != null)
+					{
+						_workQueueProcessor1.Dispose();
+					}
+
+					if (_workQueueProcessor2 != null)
+					{
+						_workQueueProcessor2.Dispose();
+					}
+
+					if (_mapSectionPersistProcessor != null)
+					{
+						_mapSectionPersistProcessor.Dispose();
+					}
+				}
+
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
 	}
 }
