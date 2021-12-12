@@ -57,7 +57,6 @@ namespace MSetRepo
 		{
 			var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
 			var result = new MSetInfo(
-				canvasSize: new SizeInt(target.CanvasSizeWidth, target.CanvasSizeHeight),
 				coords: coords,
 				mapCalcSettings: target.MapCalcSettings,
 				target.ColorMapEntries,
@@ -70,7 +69,7 @@ namespace MSetRepo
 		{
 			var coords = _coordsHelper.BuildCoords(source.Coords);
 
-			var result = new MSetInfoRecord(source.CanvasSize.Width, source.CanvasSize.Height, coords, source.MapCalcSettings, source.ColorMapEntries, source.HighColorCss);
+			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorMapEntries, source.HighColorCss);
 
 			return result;
 		}

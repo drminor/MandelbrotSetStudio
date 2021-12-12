@@ -4,41 +4,70 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types
 {
-
-	//: IEqualityComparer<RectangleInt>, IEquatable<RectangleInt>
-
-
 	public struct RectangleInt : IEquatable<RectangleInt>, IEqualityComparer<RectangleInt>
 	{
 		public RectangleInt(PointInt point, SizeInt size)
 		{
-			Point = point;
-			Size = size;
+			X1 = point.X;
+			X2 = point.X + size.Width;
+			Y1 = point.Y;
+			Y2 = point.Y + size.Height;
 		}
 
-		public PointInt Point { get; set; }
-		public SizeInt Size { get; set; }
-
-		public int Width => Size.Width;
-		public int Height => Size.Height;
-
-		public RectangleInt Translate(PointInt amount)
+		public RectangleInt(int x1, int x2, int y1, int y2)
 		{
-			RectangleInt result = new(new PointInt(Point.X + amount.X, Point.Y + amount.Y), new SizeInt(Size.Width, Size.Height));
+			X1 = x1;
+			X2 = x2;
+			Y1 = y1;
+			Y2 = y2;
+		}
+
+		public int X1 { get; init; }
+		public int X2 { get; init; }
+		public int Y1 { get; init; }
+		public int Y2 { get; init; }
+
+		public int Width => X2 - X1;
+		public int Height => Y2 - Y1;
+
+		public PointInt Point => new PointInt(X1, Y1);
+		public SizeInt Size => new SizeInt(Width, Height);
+
+		public RectangleInt Scale(PointInt factor)
+		{
+			RectangleInt result = new(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y);
 			return result;
 		}
 
+		public RectangleInt Scale(SizeInt factor)
+		{
+			RectangleInt result = new(X1 * factor.Width, X2 * factor.Width, Y1 * factor.Height, Y2 * factor.Height);
+			return result;
+		}
 
+		public RectangleInt Translate(PointInt amount)
+		{
+			RectangleInt result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
+			return result;
+		}
+
+		public RectangleInt Translate(SizeInt amount)
+		{
+			RectangleInt result = new(X1 + amount.Width, X2 + amount.Width, Y1 + amount.Height, Y2 + amount.Height);
+			return result;
+		}
 
 		public override bool Equals(object? obj)
 		{
-			return obj is RectangleInt @int && Equals(@int);
+			return obj is RectangleInt r && Equals(r);
 		}
 
 		public bool Equals(RectangleInt other)
 		{
-			return Point.Equals(other.Point) &&
-				   Size.Equals(other.Size);
+			return X1.Equals(other.X1)
+				&& X2.Equals(other.X2)
+				&& Y1.Equals(other.Y1)
+				&& Y2.Equals(other.Y2);
 		}
 
 		public override int GetHashCode()
@@ -53,7 +82,7 @@ namespace MSS.Types
 
 		public int GetHashCode([DisallowNull] RectangleInt obj)
 		{
-			return HashCode.Combine(obj.Point, obj.Size);
+			return HashCode.Combine(obj.X1, obj.X2, obj.Y1, obj.Y2);
 		}
 
 		public static bool operator ==(RectangleInt left, RectangleInt right)

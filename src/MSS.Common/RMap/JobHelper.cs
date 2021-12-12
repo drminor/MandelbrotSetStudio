@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Numerics;
 
 namespace MSS.Common
 {
@@ -26,27 +27,7 @@ namespace MSS.Common
 			};
 		}
 
-		public static Job ZoomIn(Job job)
-		{
-			var rRectangleZoomed = RMapHelper.Zoom(job.MSetInfo.Coords);
-
-			// TODO: search for an existing SubDivision and use it.
-			var subdivision = CreateSubdivision(job.MSetInfo.CanvasSize, job.Subdivision.BlockSize, job.MSetInfo.Coords);
-
-			var result = new Job(
-				id: ObjectId.GenerateNewId(),
-				parentJob: job, 
-				project: job.Project,
-				subdivision: subdivision,
-				label: null,
-				new MSetInfo(job.MSetInfo.CanvasSize, rRectangleZoomed, job.MSetInfo.MapCalcSettings, job.MSetInfo.ColorMapEntries, job.MSetInfo.HighColorCss),
-				canvasOffset: new PointDbl()
-				);
-
-			return result;
-		}
-
-		public static Subdivision CreateSubdivision(SizeInt canvasSize, SizeInt blockSize, RRectangle coords)
+		public static Subdivision CreateSubdivision(SizeInt blockSize, RRectangle coords)
 		{
 			var position = coords.LeftBot;
 
@@ -61,28 +42,109 @@ namespace MSS.Common
 			return result;
 		}
 
-		///// <summary>
-		///// 
-		///// </summary>
-		///// <param name="canvasExtent"></param>
-		///// <param name="coordExtent"></param>
-		///// <param name="coordExp"></param>
-		///// <returns>Extent in X and SampleWidth in Y</returns>
-		//private static RPoint GetExtentAndSampleWidth(int canvasExtent, BigInteger coordExtent, int coordExp)
-		//{
-		//	RPoint result = new RPoint();
+		public static Subdivision GetSubdivision(MSetInfo mSetInfo, SizeInt blockSize)
+		{
+			var id = ObjectId.GenerateNewId();
+			var origin = new RPoint();
 
-		//	return result;
-		//}
+			// TODO: Calculate the number of blocks to cover the map area.
+			//		then figure the difference in map coordinates from the beginning and end of a single block
+			var samplePointDelta = new RSize(BigInteger.One, BigInteger.One, -8);
 
-		//private static BigInteger GetExtent(int canvasExtent, BigInteger coordExtent, int coordExp)
-		//{
-		//	BigInteger result = new BigInteger();
+			var result = new Subdivision(id, origin, blockSize, samplePointDelta);
 
-		//	return result;
-		//}
+			return result;
+		}
 
+		#region OLD STUFF -- for main program 
 
+		public static Job ZoomIn(Job job)
+		{
+			var rRectangleZoomed = GetMiddle4(job.MSetInfo.Coords);
 
+			// TODO: search for an existing SubDivision and use it.
+			var subdivision = CreateSubdivision(job.Subdivision.BlockSize, job.MSetInfo.Coords);
+
+			var result = new Job(
+				id: ObjectId.GenerateNewId(),
+				parentJob: job,
+				project: job.Project,
+				subdivision: subdivision,
+				label: null,
+				new MSetInfo(rRectangleZoomed, job.MSetInfo.MapCalcSettings, job.MSetInfo.ColorMapEntries, job.MSetInfo.HighColorCss),
+				canvasOffset: new PointDbl()
+				);
+
+			return result;
+		}
+
+		/// <summary>
+		/// Divide the given rectangle into 16 squares and then return the coordinates of the "middle" 4 squares.
+		/// </summary>
+		/// <param name="rRectangle"></param>
+		/// <returns>A new RRectangle</returns>
+		public static RRectangle GetMiddle4(RRectangle rRectangle)
+		{
+			//DIAG -- double x0n = GetVal(rRectangle.X1, rRectangle.Exponent);
+
+			// Here are the current values for the rectangle's Width and Height numerators
+			var curWidth = rRectangle.WidthNumerator;
+			var curHeight = rRectangle.HeigthNumerator;
+
+			// Create a new rectangle with its exponent adjusted to support the new precision required in the numerators.
+			RRectangle rectangleWithNewExp;
+
+			// And calculate the amount to adjust the x and y coordinates
+			BigInteger adjustmentX;
+			BigInteger adjustmentY;
+
+			// First see if both the width and height are even
+			// If even, but not integer multiple of 4 then these halves will become quarters
+			var halfOfXLen = BigInteger.DivRem(curWidth, 2, out var remainderX);
+			var halfOfYLen = BigInteger.DivRem(curHeight, 2, out var remainderY);
+
+			if (remainderX == 0 && remainderY == 0)
+			{
+				// Both are even, now let's try 4.
+				var quarterOfXLen = BigInteger.DivRem(curWidth, 4, out remainderX);
+				var quarterOfYLen = BigInteger.DivRem(curHeight, 4, out remainderY);
+
+				if (remainderX == 0 && remainderY == 0)
+				{
+					// The exponent does not need to be changed, the quarter values are naturaly whole numbers
+					rectangleWithNewExp = rRectangle;
+					adjustmentX = quarterOfXLen;
+					adjustmentY = quarterOfYLen;
+				}
+				else
+				{
+					// The exponent needs to be reduced by 1 (all values are halved)
+					rectangleWithNewExp = rRectangle.ScaleB(-1);
+					adjustmentX = halfOfXLen;
+					adjustmentY = halfOfYLen;
+				}
+			}
+			else
+			{
+				// The exponent needs to be reduced by 2 (all values are quartered)
+				rectangleWithNewExp = rRectangle.ScaleB(-2);
+				adjustmentX = curWidth;
+				adjustmentY = curHeight;
+			}
+
+			//DIAG double x1n = GetVal(rebased.X1, rebased.Exponent);
+
+			var result = new RRectangle(
+				rectangleWithNewExp.X1 + adjustmentX,
+				rectangleWithNewExp.X2 - adjustmentX,
+				rectangleWithNewExp.Y1 + adjustmentY,
+				rectangleWithNewExp.Y2 - adjustmentY,
+				rectangleWithNewExp.Exponent
+				);
+
+			return result;
+		}
+
+		#endregion
 	}
 }

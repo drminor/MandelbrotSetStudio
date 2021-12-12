@@ -20,6 +20,11 @@ namespace MSS.Types
 		[ProtoMember(2)]
 		public int Y { get; set; }
 
+		public PointInt Scale(SizeInt s)
+		{
+			return new PointInt(X * s.Width, Y * s.Height);
+		}
+
 		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)

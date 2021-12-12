@@ -28,8 +28,16 @@ namespace MSetExplorer
 
             var progress = new Progress<MapSection>(HandleMapSectionReady);
 
-            var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo();
-            _vm.LoadMap(mSetInfo, progress);
+			var canvasSize = GetCanvasControlSize(MainCanvas);
+			var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo();
+            _vm.LoadMap(canvasSize, mSetInfo, progress);
+		}
+
+		private SizeInt GetCanvasControlSize(Canvas canvas)
+		{
+			var width = (int) Math.Round(MainCanvas.Width);
+			var height = (int)Math.Round(MainCanvas.Height);
+			return new SizeInt(width, height);
 		}
 
 		private void HandleMapSectionReady(MapSection mapSection)

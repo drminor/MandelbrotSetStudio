@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 namespace MSS.Types.Base
 {
 	[Serializable]
-	public class Size<T> : IEquatable<Size<T>>, IEqualityComparer<Size<T>> where T : struct
+	public class Size<T> : IEquatable<Size<T>>, IEqualityComparer<Size<T>>, ICloneable where T : struct
 	{
 		[JsonIgnore]
 		[BsonIgnore]
@@ -28,13 +28,23 @@ namespace MSS.Types.Base
 		public T Width
 		{
 			get => Values[0];
-			init => Values[0] = value;
+			//init => Values[0] = value;
 		}
 
 		public T Height
 		{
 			get => Values[1];
-			init => Values[1] = value;
+			//init => Values[1] = value;
+		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public Size<T> Clone()
+		{
+			return new Size<T>(Values[0], Values[1]);
 		}
 
 		#region IEqualityComparer / IEquatable Support

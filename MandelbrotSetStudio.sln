@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\Formula.txt = Notes\Formula.txt
 		Notes\MapViewerMapInfoDivisionStrategy.txt = Notes\MapViewerMapInfoDivisionStrategy.txt
 		MongoDb_Schemas.txt = MongoDb_Schemas.txt
+		Notes\Normalize_Sample_Math.txt = Notes\Normalize_Sample_Math.txt
 		Notes\Printing Resolution and Sizes.txt = Notes\Printing Resolution and Sizes.txt
 		Notes\SpatialCoordsAndHashes_restored.txt = Notes\SpatialCoordsAndHashes_restored.txt
 		Notes\Top-level regions_restored.txt = Notes\Top-level regions_restored.txt

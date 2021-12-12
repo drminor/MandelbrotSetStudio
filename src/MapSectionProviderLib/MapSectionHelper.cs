@@ -1,8 +1,8 @@
 ﻿using MEngineDataContracts;
+using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
-using System;
 
 namespace MapSectionProviderLib
 {
@@ -10,23 +10,13 @@ namespace MapSectionProviderLib
 	{
 		public static MapSectionRequest CreateRequest(Subdivision subdivision, PointInt blockPosition, MapCalcSettings mapCalcSettings)
 		{
-			RPoint subPosition;
+			var subdivionsPosition = subdivision.Position;
+			var samplePointDelta = subdivision.SamplePointDelta;
 
-			if (subdivision.Position.Exponent > subdivision.SamplePointDelta.Exponent)
-			{
-				int diff = subdivision.Position.Exponent - subdivision.SamplePointDelta.Exponent;
-				subPosition = new RPoint(subdivision.Position.X * diff, subdivision.Position.Y * diff, subdivision.SamplePointDelta.Exponent);
-			}
-			else if (subdivision.Position.Exponent < subdivision.SamplePointDelta.Exponent)
-			{
-				throw new NotSupportedException("No support yet for adjusting exponents when the position's exponent is less than the sample size's.");
-			}
-			else
-			{
-				subPosition = subdivision.Position;
-			}
+			RMapHelper.NormalizeInPlace(ref subdivionsPosition, ref samplePointDelta);
 
-			var position = new RPoint(blockPosition, subPosition.Exponent).Scale(subdivision.BlockSize).Scale(subdivision.SamplePointDelta).Translate(subPosition);
+			var position = subdivionsPosition.Translate(samplePointDelta.Scale(blockPosition.Scale(subdivision.BlockSize)));
+
 			var dtoMapper = new DtoMapper();
 
 			var mapSectionRequest = new MapSectionRequest
@@ -40,7 +30,6 @@ namespace MapSectionProviderLib
 			};
 
 			return mapSectionRequest;
-
 		}
 
 	}

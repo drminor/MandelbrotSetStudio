@@ -1,0 +1,26 @@
+2^x
+	
+x	r
+-2	0.25
+-1	0.5
+0	1
+1	2
+2	4
+
+
+Value = 8
+Exponent Start	Exponent End	Numerator Start	Numerator End	R Start	R End
+-1		-2		4		8		2	2
+-1		-2		8		16		4	4
+
+Exp Diff = -1
+
+2		1		2		4		8	8
+2		1		4		8		16	16
+
+Exp Diff = -1 
+
+1		2		4		2		8	8
+1		2		8		4		16	16
+
+Exp Diff = 1 

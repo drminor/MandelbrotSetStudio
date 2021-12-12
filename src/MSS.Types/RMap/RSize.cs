@@ -1,10 +1,11 @@
 ﻿using MSS.Types.Base;
 using System;
+using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RSize : Size<BigInteger>
+	public class RSize : Size<BigInteger>, ICloneable
 	{
 		public int Exponent { get; init; }
 
@@ -21,6 +22,16 @@ namespace MSS.Types
 			Exponent = exponent;
 		}
 
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public new RSize Clone()
+		{
+			return new RSize(Values, Exponent);
+		}
+
 		public RSize Scale(SizeInt factor)
 		{
 			return new RSize(Width * factor.Width, Height * factor.Height, Exponent);
@@ -33,12 +44,22 @@ namespace MSS.Types
 
 		public RSize Translate(RPoint amount)
 		{
-			if (amount.Exponent != Exponent)
+			return amount.Exponent != Exponent
+                ?                throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.")
+				: new RSize(Width + amount.X, Height + amount.Y, Exponent);
+		}
+
+		public RSize ScaleB(int exponentDelta)
+		{
+			if (exponentDelta == 0)
 			{
-				throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.");
+				return this;
 			}
 
-			return new RSize(Width + amount.X, Height + amount.Y, Exponent);
+			var factor = (long)Math.Pow(2, -1 * exponentDelta);
+			var result = new RSize(Values.Select(v => v * factor).ToArray(), Exponent - exponentDelta);
+
+			return result;
 		}
 
 	}

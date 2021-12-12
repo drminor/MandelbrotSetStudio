@@ -76,7 +76,7 @@ namespace MSetDatabaseClient
 			var mSetRecordMapper = new MSetRecordMapper(dtoMapper, new CoordsHelper(dtoMapper));
 			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-			for (int zCntr = 0; zCntr < numZooms; zCntr++)
+			for (var zCntr = 0; zCntr < numZooms; zCntr++)
 			{
 				var zJob = JobHelper.ZoomIn(job);
 

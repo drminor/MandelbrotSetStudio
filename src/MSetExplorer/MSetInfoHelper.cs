@@ -11,7 +11,6 @@ namespace MSetExplorer
 	{
 		public static MSetInfo BuildInitialMSetInfo()
 		{
-			var canvasSize = new SizeInt(768, 768);
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
 			var mapCalcSettings = new MapCalcSettings(maxIterations: 4000, threshold: 4, iterationsPerStep: 100);
 
@@ -30,21 +29,7 @@ namespace MSetExplorer
 			};
 
 			string highColorCss = "#000000";
-			var result = new MSetInfo(canvasSize, coords, mapCalcSettings, colorMapEntries, highColorCss);
-
-			return result;
-		}
-
-		public static Subdivision GetSubdivision(MSetInfo mSetInfo, SizeInt blockSize)
-		{
-			var id = ObjectId.GenerateNewId();
-			var origin = new RPoint();
-
-			// TODO: Calculate the number of blocks to cover the canvas
-			//		then figure the difference in map coordinates from the beginning and end of a single block
-			var samplePointDelta = new RSize(BigInteger.One, BigInteger.One, -8);
-
-			var result = new Subdivision(id, origin, blockSize, samplePointDelta);
+			var result = new MSetInfo(coords, mapCalcSettings, colorMapEntries, highColorCss);
 
 			return result;
 		}

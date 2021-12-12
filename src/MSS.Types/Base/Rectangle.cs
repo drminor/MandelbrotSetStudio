@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 namespace MSS.Types.Base
 {
 	[Serializable]
-	public class Rectangle<T> : IEquatable<Rectangle<T>>, IEqualityComparer<Rectangle<T>> where T: struct
+	public class Rectangle<T> : IEquatable<Rectangle<T>>, IEqualityComparer<Rectangle<T>>, ICloneable where T: struct
 	{
 		[JsonIgnore]
 		[BsonIgnore]
@@ -56,6 +56,16 @@ namespace MSS.Types.Base
 
 		public Point<T> LeftBot => new Point<T>(Values[0], Values[2]);
 		public Point<T> RightTop => new Point<T>(Values[1], Values[3]);
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public Rectangle<T> Clone()
+		{
+			return new Rectangle<T>(Values[0], Values[1], Values[2], Values[3]);
+		}
 
 		public override string ToString()
 		{

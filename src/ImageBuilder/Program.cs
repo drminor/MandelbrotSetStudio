@@ -62,7 +62,7 @@ namespace ImageBuilder
 						string fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
 						var mSetInfoOld = MSetInfoBuilder.Build(fileName);
 
-						MSetInfo mSetInfo = new MSetInfo(new SizeInt(1280, 1280), RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor);
+						MSetInfo mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor);
 
 						//IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfoOld.Name, mSetInfoOld.IsHighRes);
 
@@ -84,7 +84,7 @@ namespace ImageBuilder
 
 						var project = projectAdapter.GetOrCreateProject(mSetInfoOld.Name);
 
-						MSetInfo mSetInfo = new MSetInfo(new SizeInt(1280, 1280), RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor);
+						MSetInfo mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor);
 
 						mongoDbImporter.DoZoomTest1(project, mSetInfo, overwrite: true);
 						break;

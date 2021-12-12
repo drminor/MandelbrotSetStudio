@@ -41,8 +41,6 @@ namespace MSetExplorer
 			_canvasOffset = canvasOffset;
 			_callback = callback;
 
-			SizeInt blockSize = subdivision.BlockSize;
-
 			for (var yBlockPtr = -3; yBlockPtr < 3; yBlockPtr++)
 			{
 				for (var xBlockPtr = -4; xBlockPtr < 2; xBlockPtr++)

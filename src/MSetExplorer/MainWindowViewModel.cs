@@ -1,6 +1,7 @@
 ﻿using MapSectionProviderLib;
 using MongoDB.Bson;
 using MSetRepo;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
@@ -29,7 +30,7 @@ namespace MSetExplorer
 
 		}
 
-		public void LoadMap(MSetInfo mSetInfo, IProgress<MapSection> progress)
+		public void LoadMap(SizeInt canvasControlSize, MSetInfo mSetInfo, IProgress<MapSection> progress)
 		{
 			if (!(_job is null))
 			{
@@ -48,14 +49,13 @@ namespace MSetExplorer
 
 			_mapLoader = new MapLoader(_mapSectionRequestQueue);
 			_mapLoaderTask = Task.Run(() => _mapLoader.LoadMap(_job, HandleMapSection));
-			_mapLoaderTask.ContinueWith(OnTaskComplete);
+			_ = _mapLoaderTask.ContinueWith(OnTaskComplete);
 		}
 
 		private Job BuildJob(MSetInfo mSetInfo)
 		{
 			var project = new Project(ObjectId.GenerateNewId(), "un-named");
-			Subdivision temp = MSetInfoHelper.GetSubdivision(mSetInfo, _blockSize);
-			Subdivision subdivision = _projectAdapter.GetOrCreateSubdivision(temp);
+			var subdivision = GetSubdivision(mSetInfo, _blockSize, _projectAdapter);
 
 			var canvasOffset = new PointDbl(512, 384);
 
@@ -63,7 +63,15 @@ namespace MSetExplorer
 			return job;
 		}
 
-		private object hmsLock = new object();
+		private Subdivision GetSubdivision(MSetInfo mSetInfo, SizeInt blockSize, ProjectAdapter projectAdapter)
+		{
+			var temp = JobHelper.GetSubdivision(mSetInfo, blockSize);
+			var result = projectAdapter.GetOrCreateSubdivision(temp);
+
+			return result;
+		}
+
+		private readonly object hmsLock = new();
 
 		private void HandleMapSection(MapSection mapSection)
 		{

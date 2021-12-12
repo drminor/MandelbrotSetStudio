@@ -5,11 +5,11 @@ using System.Text.Json.Serialization;
 namespace MSS.Types.Base
 {
 	[Serializable]
-	public class Point<T> : IEquatable<Point<T>>, IEqualityComparer<Point<T>> where T: struct
+	public class Point<T> : IEquatable<Point<T>>, IEqualityComparer<Point<T>>, ICloneable where T: struct
 	{
 		[JsonIgnore]
 		[BsonIgnore]
-		public T[] Values;
+		public T[] Values { get; init; }
 
 		public Point() : this(default, default) 
 		{ }
@@ -27,13 +27,23 @@ namespace MSS.Types.Base
 		public T X 
 		{
 			get => Values[0]; 
-			init => Values[0] = value;
+			//init => Values[0] = value;
 		}
 
 		public T Y
 		{
 			get => Values[1]; 
-			init => Values[1] = value;
+			//init => Values[1] = value;
+		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public Point<T> Clone()
+		{
+			return new Point<T>(Values[0], Values[1]);
 		}
 
 		#region IEqualityComparer / IEquatable Support

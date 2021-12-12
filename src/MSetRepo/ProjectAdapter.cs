@@ -27,10 +27,10 @@ namespace MSetRepo
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			ProjectRecord projectRecord = projectReaderWriter.Get(name);
+			var projectRecord = projectReaderWriter.Get(name);
 			if (projectRecord is null)
 			{
-				ObjectId projectId = projectReaderWriter.Insert(new ProjectRecord(name));
+				var projectId = projectReaderWriter.Insert(new ProjectRecord(name));
 				projectRecord = projectReaderWriter.Get(projectId);
 			}
 
@@ -75,7 +75,7 @@ namespace MSetRepo
 
 			var mSetInfo = _mSetRecordMapper.MapFrom(jobRecord.MSetInfo);
 
-			Job job = new Job(jobId, parentJob, project, subdivision, jobRecord.Label, mSetInfo, new PointDbl(jobRecord.CanvasOffsetX, jobRecord.CanvasOffsetY));
+			var job = new Job(jobId, parentJob, project, subdivision, jobRecord.Label, mSetInfo, new PointDbl(jobRecord.CanvasOffsetX, jobRecord.CanvasOffsetY));
 
 			return job;
 		}
@@ -93,9 +93,10 @@ namespace MSetRepo
 
 			if (!subdivisionId.HasValue)
 			{
-				var subdivision = JobHelper.CreateSubdivision(mSetInfo.CanvasSize, blockSize, mSetInfo.Coords);
+				var subdivision = JobHelper.CreateSubdivision(blockSize, mSetInfo.Coords);
 				subdivisionId = InsertSubdivision(subdivision, subdivisionReaderWriter);
 			}
+
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobIds = jobReaderWriter.GetJobIds(project.Id);
 
@@ -111,9 +112,9 @@ namespace MSetRepo
 				}
 				else
 				{
-					foreach (ObjectId jobId in jobIds)
+					foreach (var jobId in jobIds)
 					{
-						Tuple<long, long> dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
+						var dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
 						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
 					}
 
@@ -156,7 +157,7 @@ namespace MSetRepo
 
 		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo, PointDbl canvasOffset, JobReaderWriter jobReaderWriter)
 		{
-			JobRecord jobRecord = CreateJob(null, projectId, subdivisionId, ROOT_JOB_LABEL, mSetInfo, canvasOffset);
+			var jobRecord = CreateJob(null, projectId, subdivisionId, ROOT_JOB_LABEL, mSetInfo, canvasOffset);
 			var result = jobReaderWriter.Insert(jobRecord);
 
 			return result;
@@ -164,8 +165,8 @@ namespace MSetRepo
 
 		public Tuple<long, long> DeleteJobAndChildMapSections(ObjectId jobId, JobReaderWriter jobReaderWriter)
 		{
-			long? deleteCount = jobReaderWriter.Delete(jobId);
-			Tuple<long, long> result = new Tuple<long, long>(deleteCount ?? 0, 0);
+			var deleteCount = jobReaderWriter.Delete(jobId);
+			var result = new Tuple<long, long>(deleteCount ?? 0, 0);
 			return result;
 		}
 
@@ -177,7 +178,7 @@ namespace MSetRepo
 		{
 			ProjectRecord projectRecord;
 
-			string projectName = project.Name;
+			var projectName = project.Name;
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
 			projectRecord = projectReaderWriter.Get(projectName);
@@ -185,7 +186,7 @@ namespace MSetRepo
 			if (projectRecord == null)
 			{
 				projectRecord = _mSetRecordMapper.MapTo(project);
-				projectReaderWriter.Insert(projectRecord);
+				_ = projectReaderWriter.Insert(projectRecord);
 			}
 			else
 			{
@@ -199,18 +200,18 @@ namespace MSetRepo
 
 					var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-					ObjectId[] jobIds = jobReaderWriter.GetJobIds(projectId);
+					var jobIds = jobReaderWriter.GetJobIds(projectId);
 
-					foreach (ObjectId jobId in jobIds)
+					foreach (var jobId in jobIds)
 					{
-						Tuple<long, long> dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
+						var dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
 						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
 					}
 
-					projectReaderWriter.Delete(projectId);
+					_ = projectReaderWriter.Delete(projectId);
 
 					projectRecord = _mSetRecordMapper.MapTo(project);
-					projectReaderWriter.Insert(projectRecord);
+					_ = projectReaderWriter.Insert(projectRecord);
 				}
 			}
 
@@ -223,7 +224,7 @@ namespace MSetRepo
 		{
 			var mSetInfoRecord = _mSetRecordMapper.MapTo(mSetInfo);
 
-			JobRecord jobRecord = new JobRecord(
+			var jobRecord = new JobRecord(
 				ParentJobId: parentJobId,
 				ProjectId: projectId,
 				SubDivisionId: subdivisionId,
