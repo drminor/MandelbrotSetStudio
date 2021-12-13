@@ -57,21 +57,22 @@ namespace MSetExplorer
 		{
 			var project = new Project(ObjectId.GenerateNewId(), "un-named");
 
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(mSetInfo.Coords, canvasControlSize, _blockSize);
+			// Calculate approximate samplePointDelta
+			var samplePointDelta = GetSamplePointDelta(mSetInfo.Coords, canvasControlSize, _blockSize);
 
-			var samplePointDelta = GetSamplePointDelta(mSetInfo.Coords, canvasSizeInBlocks, _blockSize);
+			// Find an existing subdivision record that has a SamplePointDelta "close to" the given samplePointDelta.
 			var subdivision = GetSubdivision(samplePointDelta, _blockSize, _projectAdapter);
 
-			// The left-most, bottom-most block is 0, 0 in our cordinates
-			// The canvasBlockOffset is the amount added to our block position to address the block in subdivison coordinates.
-			var canvasBlockOffset = new PointInt(-4, -3);
-			var canvasControlOffset = new PointDbl(0, 0);
+			// Use the SamplePointDelta found to get the size of the canvas in blocks.
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(mSetInfo.Coords, subdivision.SamplePointDelta, canvasControlSize, _blockSize);
+			var canvasBlockOffset = GetCanvasBlockOffset(mSetInfo.Coords.LeftBot, subdivision.Position, subdivision.BlockSize);
+			var canvasControlOffset = GetCanvasControlOffset(mSetInfo.Coords, subdivision.SamplePointDelta, canvasSizeInBlocks);
 
 			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset);
 			return job;
 		}
 
-		private RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasSizeInBlocks, SizeInt blockSize)
+		private RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasControlSize, SizeInt blockSize)
 		{
 			var result = new RSize(1, 1, -8);
 
@@ -84,6 +85,26 @@ namespace MSetExplorer
 			var temp = new Subdivision(ObjectId.GenerateNewId(), new RPoint(), blockSize, samplePointDelta);
 			var result = projectAdapter.GetOrCreateSubdivision(temp);
 
+			return result;
+		}
+
+		private PointInt GetCanvasBlockOffset(RPoint mapOrigin, RPoint subdivisionOrigin, SizeInt blockSize)
+		{
+			// The left-most, bottom-most block is 0, 0 in our cordinates
+			// The canvasBlockOffset is the amount added to our block position to address the block in subdivison coordinates.
+
+			// TODO: Use the subdivision RPoint origin and our Map coordinates to calculate the Canvas Block Offset.
+
+			var result = new PointInt(-4, -3);
+
+			return result;
+		}
+
+		private PointDbl GetCanvasControlOffset(RRectangle coords, RSize samplePointDelta, SizeInt canvasSizeInBlocks)
+		{
+			// TODO: Use the size of the canvas in blocks, the SamplePointDelta and our Map coordinates to calculate the CanvasControlOffset
+
+			var result = new PointDbl(0, 0);
 			return result;
 		}
 

@@ -42,20 +42,6 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static Subdivision GetSubdivision(MSetInfo mSetInfo, SizeInt blockSize)
-		{
-			var id = ObjectId.GenerateNewId();
-			var origin = new RPoint();
-
-			// TODO: Calculate the number of blocks to cover the map area.
-			//		then figure the difference in map coordinates from the beginning and end of a single block
-			var samplePointDelta = new RSize(BigInteger.One, BigInteger.One, -8);
-
-			var result = new Subdivision(id, origin, blockSize, samplePointDelta);
-
-			return result;
-		}
-
 		#region OLD STUFF -- for main program 
 
 		public static Job ZoomIn(Job job)

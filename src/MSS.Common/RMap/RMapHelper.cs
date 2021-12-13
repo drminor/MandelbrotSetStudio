@@ -160,7 +160,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetCanvasSizeInBlocks(RRectangle coords, SizeInt maxCanvasSize, SizeInt blockSize)
+		public static SizeInt GetCanvasSizeInBlocks(RRectangle coords, RSize samplePointDelta, SizeInt maxCanvasSize, SizeInt blockSize)
 		{
 			var result = new SizeInt(6, 6);
 
