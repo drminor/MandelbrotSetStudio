@@ -41,8 +41,8 @@ namespace MSS.Types
 		public BigInteger[] YValues => new BigInteger[] { Y1, Y2 };
 
 		public BigInteger WidthNumerator => X2 - X1;
-		public BigInteger HeigthNumerator => Y2 - Y1; 
-		public RSize Size => new RSize(WidthNumerator, HeigthNumerator, Exponent);
+		public BigInteger HeightNumerator => Y2 - Y1; 
+		public RSize Size => new RSize(WidthNumerator, HeightNumerator, Exponent);
 
 		object ICloneable.Clone()
 		{
@@ -54,18 +54,32 @@ namespace MSS.Types
 			return new RRectangle(Values, Exponent);
 		}
 
+		public RRectangle Scale(RPoint factor)
+		{
+			return factor.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot scale a RRectangle with Exponent: {Exponent} using a RPoint with Exponent: {factor.Exponent}.")
+				: new RRectangle(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y, Exponent);
+		}
+		
+		public RRectangle Scale(RSize factor)
+		{
+			return factor.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot scale a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {factor.Exponent}.")
+				: new RRectangle(X1 * factor.Width, X2 * factor.Width, Y1 * factor.Height, Y2 * factor.Height, Exponent);
+		}
+
 		public RRectangle Translate(RPoint amount)
 		{
 			return amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RPoint with Exponent: {amount.Exponent}.")
-				: new RRectangle(X1 * amount.X, X2 * amount.X, Y1 * amount.Y, Y2 * amount.Y, Exponent);
+				: new RRectangle(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y, Exponent);
 		}
 
 		public RRectangle Translate(RSize amount)
 		{
 			return amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
-				: new RRectangle(X1 * amount.Width, X2 * amount.Width, Y1 * amount.Height, Y2 * amount.Height, Exponent);
+				: new RRectangle(X1 + amount.Width, X2 + amount.Width, Y1 + amount.Height, Y2 + amount.Height, Exponent);
 		}
 
 		public RRectangle ScaleB(int exponentDelta)

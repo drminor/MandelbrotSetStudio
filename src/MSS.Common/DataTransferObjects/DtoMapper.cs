@@ -1,7 +1,5 @@
 ﻿using MSS.Types;
 using MSS.Types.DataTransferObjects;
-using System;
-using System.Linq;
 using System.Numerics;
 
 namespace MSS.Common.DataTransferObjects
@@ -16,7 +14,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RPoint MapFrom(RPointDto target)
 		{
-			BigInteger[] bVals = GetFromLongs(target.GetValues());
+			var bVals = GetFromLongs(target.GetValues());
 			var result = new RPoint(bVals, target.Exponent);
 			return result;
 		}
@@ -29,7 +27,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RSize MapFrom(RSizeDto target)
 		{
-			BigInteger[] bVals = GetFromLongs(target.GetValues());
+			var bVals = GetFromLongs(target.GetValues());
 			var result = new RSize(bVals, target.Exponent);
 			return result;
 		}
@@ -42,21 +40,20 @@ namespace MSS.Common.DataTransferObjects
 
 		public RRectangle MapFrom(RRectangleDto target)
 		{
-			BigInteger[] bVals = GetFromLongs(target.GetValues());
+			var bVals = GetFromLongs(target.GetValues());
 			var result = new RRectangle(bVals, target.Exponent);
 			return result;
 		}
 
 		private BigInteger[] GetFromLongs(long[][] vals)
 		{
-			int cnt = vals.GetLength(1);
+			var cnt = vals.GetLength(0);
+			var bVals = new BigInteger[cnt];
 
-			BigInteger[] bVals = new BigInteger[cnt];
-
-			for (int i = 0; i < cnt; i++)
+			for (var i = 0; i < cnt; i++)
 			{
-				BigInteger t = new BigInteger(0);
-				foreach (long v in vals[i])
+				var t = new BigInteger(0);
+				foreach (var v in vals[i])
 				{
 					t += v;
 				}

@@ -37,7 +37,7 @@ namespace MSS.Common
 
 			// TODO: adjust coords to be expanded in proportion to the amount the canvasSize has been expanded.
 
-			var result = new Subdivision(ObjectId.GenerateNewId(), position, blockSize, samplePointDelta);
+			var result = new Subdivision(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize);
 
 			return result;
 		}
@@ -77,7 +77,7 @@ namespace MSS.Common
 
 			// Here are the current values for the rectangle's Width and Height numerators
 			var curWidth = rRectangle.WidthNumerator;
-			var curHeight = rRectangle.HeigthNumerator;
+			var curHeight = rRectangle.HeightNumerator;
 
 			// Create a new rectangle with its exponent adjusted to support the new precision required in the numerators.
 			RRectangle rectangleWithNewExp;

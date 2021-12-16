@@ -1,10 +1,12 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo;
 using ProjectRepo.Entities;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -17,10 +19,14 @@ namespace MSetRepo
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
 
+		private readonly DtoMapper _dtoMapper;
+
 		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
+
+			_dtoMapper = new DtoMapper();
 		}
 
 		public Project GetOrCreateProject(string name)
@@ -128,19 +134,29 @@ namespace MSetRepo
 			return result;
 		}
 
-		public Subdivision GetOrCreateSubdivision(Subdivision subdivision)
+		public Subdivision GetOrCreateSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize)
 		{
-			ObjectId? subId;
+			SubdivisionRecord subdivisionRecord;
 
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			subId = GetSubdivision(subdivision.SamplePointDelta.Exponent, subdivisionReaderWriter);
 
-			if (!subId.HasValue)
+			var posDto = _dtoMapper.MapTo(position);
+			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDelta);
+			IList<SubdivisionRecord> matches = subdivisionReaderWriter.Get(posDto, samplePointDeltaDto, blockSize);
+
+			if (matches.Count < 1)
 			{
-				subId = InsertSubdivision(subdivision, subdivisionReaderWriter);
+				var subdivision = new Subdivision(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize);
+				var subId = InsertSubdivision(subdivision, subdivisionReaderWriter);
+				subdivisionRecord = subdivisionReaderWriter.Get(subId);
+			}
+			else
+			{
+				subdivisionRecord = matches[0];
 			}
 
-			return new Subdivision(subId.Value, new RPoint(subdivision.Position.Values, subdivision.Position.Exponent), subdivision.BlockSize, new RSize(subdivision.SamplePointDelta.Values, subdivision.SamplePointDelta.Exponent));
+			var result = _mSetRecordMapper.MapFrom(subdivisionRecord);
+			return result;
 		}
 
 		private ObjectId? GetSubdivision(int scale, SubdivisonReaderWriter subdivisionReaderWriter)

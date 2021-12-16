@@ -1,5 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MSS.Types;
+using MSS.Types.DataTransferObjects;
 using ProjectRepo.Entities;
 using System.Collections.Generic;
 
@@ -24,6 +26,20 @@ namespace ProjectRepo
 		{
 			var filter = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Exponent", scale);
 			var subdivisionRecords = Collection.Find(filter).ToList();
+
+			return subdivisionRecords;
+		}
+
+		public IList<SubdivisionRecord> Get(RPointDto position, RSizeDto samplePointDelta, SizeInt blockSize)
+		{
+			var filter1 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Exponent", samplePointDelta.Exponent);
+			var filter2 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Width", samplePointDelta.Width);
+			var filter3 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Height", samplePointDelta.Height);
+
+			var filter4 = Builders<SubdivisionRecord>.Filter.Eq("BlockWidth", blockSize.Width);
+			var filter5 = Builders<SubdivisionRecord>.Filter.Eq("BlockHeight", blockSize.Height);
+
+			var subdivisionRecords = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5).ToList();
 
 			return subdivisionRecords;
 		}

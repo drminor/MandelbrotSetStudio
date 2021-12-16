@@ -72,7 +72,6 @@ namespace MSetRepo
 		public MSetInfoRecord MapTo(MSetInfo source)
 		{
 			var coords = _coordsHelper.BuildCoords(source.Coords);
-
 			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorMapEntries, source.HighColorCss);
 
 			return result;
@@ -82,8 +81,8 @@ namespace MSetRepo
 		{
 			var position = _dtoMapper.MapFrom(target.Position.PointDto);
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.SizeDto);
+			var result = new Subdivision(target.Id, position, samplePointDelta, new SizeInt(target.BlockWidth, target.BlockHeight));
 
-			var result = new Subdivision(target.Id, position, new SizeInt(target.BlockWidth, target.BlockHeight), samplePointDelta);
 			return result;
 		}
 
@@ -91,8 +90,8 @@ namespace MSetRepo
 		{
 			var position = _coordsHelper.BuildPointRecord(source.Position);
 			var samplePointDelta = _coordsHelper.BuildSizeRecord(source.SamplePointDelta);
+			var result = new SubdivisionRecord(position, samplePointDelta, source.BlockSize.Width, source.BlockSize.Height);
 
-			var result = new SubdivisionRecord(position, source.BlockSize.Width, source.BlockSize.Height, samplePointDelta);
 			return result;
 		}
 
@@ -105,9 +104,9 @@ namespace MSetRepo
 				new ObjectId(source.SubdivisionId),
 				source.BlockPosition.X,
 				source.BlockPosition.Y,
-				//GetAbb(source.Counts)
 				source.Counts
 				);
+
 			return result;
 		}
 
@@ -120,30 +119,11 @@ namespace MSetRepo
 				MapSectionId = target.Id.ToString(),
 				SubdivisionId = target.SubdivisionId.ToString(),
 				BlockPosition = new PointInt(target.BlockPositionX, target.BlockPositionY),
-				//Counts = GetAbb(target.Counts)
 				Counts = target.Counts
 			};
 
 			return result;
 		}
 
-		//private int[] GetAbb(int[] source)
-		//{
-		//	if (source is null) return new int[0];
-
-		//	if(source.Length > 100)
-		//	{
-		//		int[] result = new int[100];
-		//		Array.Copy(source, result, 100);
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		int[] result = new int[source.Length];
-		//		Array.Copy(source, result, source.Length);
-		//		return result;
-		//	}
-
-		//}
 	}
 }

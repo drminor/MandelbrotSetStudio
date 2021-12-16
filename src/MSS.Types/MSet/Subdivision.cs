@@ -10,7 +10,7 @@ namespace MSS.Types.MSet
 		public SizeInt BlockSize { get; init; }
 		public RSize SamplePointDelta { get; init; }
 
-		public Subdivision(ObjectId id, RPoint position, SizeInt blockSize, RSize samplePointDelta)
+		public Subdivision(ObjectId id, RPoint position, RSize samplePointDelta, SizeInt blockSize)
 		{
 			Id = id;
 			Position = position ?? throw new ArgumentNullException(nameof(position));

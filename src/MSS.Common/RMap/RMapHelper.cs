@@ -31,6 +31,28 @@ namespace MSS.Common
 			p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 		}
 
+		public static RRectangle Normalize(RRectangle r, RSize s, out RSize newS)
+		{
+			var rTemp = r.Clone();
+			var sTemp = s.Clone();
+
+			var newExp = Normalize(rTemp.Values, sTemp.Values, r.Exponent, s.Exponent);
+			var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
+			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
+
+			return result;
+		}
+
+		public static void NormalizeInPlace(ref RRectangle r, ref RSize s)
+		{
+			var rTemp = r.Clone();
+			var sTemp = s.Clone();
+
+			var newExp = Normalize(rTemp.Values, sTemp.Values, r.Exponent, s.Exponent);
+			r = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
+			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
+		}
+
 		public static RPoint Normalize(RPoint p, RSize s, out RSize newS)
 		{
 			var pTemp = p.Clone();
@@ -51,6 +73,28 @@ namespace MSS.Common
 			var newExp = Normalize(pTemp.Values, sTemp.Values, p.Exponent, s.Exponent);
 			p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
+		}
+
+		public static RPoint Normalize(RPoint p1, RPoint p2, out RPoint newP2)
+		{
+			var p1Temp = p1.Clone();
+			var p2Temp = p2.Clone();
+
+			var newExp = Normalize(p1Temp.Values, p2Temp.Values, p1.Exponent, p2.Exponent);
+			var result = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
+			newP2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
+
+			return result;
+		}
+
+		public static void NormalizeInPlace(ref RPoint p1, ref RPoint p2)
+		{
+			var p1Temp = p1.Clone();
+			var p2Temp = p2.Clone();
+
+			var newExp = Normalize(p1Temp.Values, p2Temp.Values, p1.Exponent, p2.Exponent);
+			p1 = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
+			p2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
 		}
 
 		public static int Normalize(BigInteger[] a, BigInteger[] b, int exponentA, int exponentB)
@@ -126,12 +170,17 @@ namespace MSS.Common
 
 		private static void ScaleBInPlace(BigInteger[] values, int exponentDelta)
 		{
+			if (exponentDelta < 0)
+			{
+				throw new InvalidOperationException($"Cannot ScaleBInPlace using an exponentDelta < 0. The exponentDelta is {exponentDelta}.");
+			}
+
 			if (exponentDelta == 0)
 			{
 				return;
 			}
 
-			var factor = (long)Math.Pow(2, -1 * exponentDelta);
+			var factor = (long)Math.Pow(2, exponentDelta);
 
 			for (var i = 0; i < values.Length; i++)
 			{
@@ -160,9 +209,97 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetCanvasSizeInBlocks(RRectangle coords, RSize samplePointDelta, SizeInt maxCanvasSize, SizeInt blockSize)
+		public static SizeInt GetCanvasSize(RRectangle coords, SizeInt canvasControlSize)
 		{
-			var result = new SizeInt(6, 6);
+			var wRatio = BigIntegerHelper.GetRatio(coords.WidthNumerator, canvasControlSize.Width);
+			var hRatio = BigIntegerHelper.GetRatio(coords.HeightNumerator, canvasControlSize.Height);
+
+			int w;
+			int h;
+
+			if (wRatio > hRatio)
+			{
+				// Width of image in pixels will take up the entire control.
+				w = canvasControlSize.Width;
+
+				// Height of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+				var hRatB = BigInteger.Divide(coords.HeightNumerator * 1000, coords.WidthNumerator * 1000);
+				var hRat = BigIntegerHelper.GetValue(hRatB);
+				h = (int) Math.Round(canvasControlSize.Width * hRat);
+			}
+			else
+			{
+				// Width of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+				var wRatB = BigInteger.Divide(coords.WidthNumerator * 1000, coords.HeightNumerator * 1000);
+				var wRat = BigIntegerHelper.GetValue(wRatB);
+				w = (int)Math.Round(canvasControlSize.Height * wRat);
+
+				// Height of image in pixels will take up the entire control.
+				h = canvasControlSize.Width;
+			}
+
+			var result = new SizeInt(w, h);
+
+			return result;
+		}
+
+		public static SizeInt GetCanvasSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
+		{
+			var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainder);
+
+			if (remainder > 0)
+			{
+				w++;
+			}
+
+			var h = Math.DivRem(canvasSize.Height, blockSize.Height, out remainder);
+
+			if (remainder > 0)
+			{
+				h++;
+			}
+
+			return new SizeInt(w, h);
+		}
+
+		public static PointInt GetCanvasBlockOffset(RPoint mapOrigin, RPoint subdivisionOrigin, SizeInt blockSize)
+		{
+			// The left-most, bottom-most block is 0, 0 in our cordinates
+			// The canvasBlockOffset is the amount added to our block position to address the block in subdivison coordinates.
+
+			var mapO = mapOrigin;
+			var subdivisionO = subdivisionOrigin;
+			NormalizeInPlace(ref mapO, ref subdivisionO);
+
+			var distance = subdivisionO.Translate(mapO);
+
+			var x = BigInteger.DivRem(BigInteger.Abs(distance.X), new BigInteger(blockSize.Width), out var remainder);
+
+			if (remainder > 0)
+			{
+				x++;
+			}
+
+			var y = BigInteger.DivRem(BigInteger.Abs(distance.Y), new BigInteger(blockSize.Height), out remainder);
+
+			if (remainder > 0)
+			{
+				y++;
+			}
+
+			if (distance.X < 0)
+			{
+				x = -1 * x;
+			}
+
+			if (distance.Y < 0)
+			{
+				y = -1 * y;
+			}
+
+			var result = new PointInt((int)x, (int)y);
+
+			//var result = new PointInt(-4, -3);
 
 			return result;
 		}

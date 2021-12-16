@@ -7,6 +7,7 @@ using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
 using System.Diagnostics;
+using System.Numerics;
 using System.Threading.Tasks;
 
 namespace MSetExplorer
@@ -45,8 +46,8 @@ namespace MSetExplorer
 
 			_progress = progress;
 
+			canvasControlSize = canvasControlSize.Scale(0.9);
 			_job = BuildJob(canvasControlSize, mSetInfo);
-
 
 			_mapLoader = new MapLoader(_mapSectionRequestProcessor);
 			_mapLoaderTask = Task.Run(() => _mapLoader.LoadMap(_job, HandleMapSection));
@@ -58,33 +59,42 @@ namespace MSetExplorer
 			var project = new Project(ObjectId.GenerateNewId(), "un-named");
 
 			// Calculate approximate samplePointDelta
-			var samplePointDelta = GetSamplePointDelta(mSetInfo.Coords, canvasControlSize, _blockSize);
+			var samplePointDelta = GetSamplePointDelta(mSetInfo.Coords, canvasControlSize);
+			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, _blockSize, _projectAdapter);
 
-			// Find an existing subdivision record that has a SamplePointDelta "close to" the given samplePointDelta.
-			var subdivision = GetSubdivision(samplePointDelta, _blockSize, _projectAdapter);
+			// Use the SamplePointDelta found to get the size of the canvas.
+			var canvasSize = RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize);
 
-			// Use the SamplePointDelta found to get the size of the canvas in blocks.
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(mSetInfo.Coords, subdivision.SamplePointDelta, canvasControlSize, _blockSize);
-			var canvasBlockOffset = GetCanvasBlockOffset(mSetInfo.Coords.LeftBot, subdivision.Position, subdivision.BlockSize);
+			// Get the number of blocks
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, _blockSize);
+			
+			var canvasBlockOffset = GetCanvasBlockOffset(mSetInfo.Coords.LeftBot, subdivision.Position, _blockSize);
 			var canvasControlOffset = GetCanvasControlOffset(mSetInfo.Coords, subdivision.SamplePointDelta, canvasSizeInBlocks);
 
 			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset);
 			return job;
 		}
 
-		private RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasControlSize, SizeInt blockSize)
+		private RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasControlSize)
 		{
-			var result = new RSize(1, 1, -8);
+			var wRatio = BigIntegerHelper.GetRatio(coords.WidthNumerator, canvasControlSize.Width);
+			var hRatio = BigIntegerHelper.GetRatio(coords.HeightNumerator, canvasControlSize.Height);
+
+			var newNumerator = wRatio > hRatio
+				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasControlSize.Width, out var newExponent)
+				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasControlSize.Height, out newExponent);
+
+			var result = new RSize(newNumerator, newNumerator, newExponent);
 
 			return result;
 		}
 
-		private Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
+		private Subdivision GetSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
-			//var temp = JobHelper.GetSubdivision(mSetInfo, blockSize);
-			var temp = new Subdivision(ObjectId.GenerateNewId(), new RPoint(), blockSize, samplePointDelta);
-			var result = projectAdapter.GetOrCreateSubdivision(temp);
+			// Find an existing subdivision record that has a SamplePointDelta "close to" the given samplePointDelta
+			// and that is "in the neighborhood of our Map Set.
 
+			var result = projectAdapter.GetOrCreateSubdivision(position, samplePointDelta, blockSize);
 			return result;
 		}
 

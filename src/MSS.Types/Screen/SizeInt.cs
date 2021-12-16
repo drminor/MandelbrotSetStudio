@@ -22,6 +22,11 @@ namespace MSS.Types
 
 		public int NumberOfCells => Width * Height;
 
+		public SizeInt Scale(double factor)
+		{
+			return new SizeInt((int)Math.Round(Width * factor), (int)Math.Round(Height * factor));
+		}
+
 		public override bool Equals(object? obj)
 		{
 			return obj is SizeInt si && Equals(si);
