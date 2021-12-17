@@ -10,10 +10,10 @@ namespace ProjectRepo.Entities
 		MSetInfoRecord MSetInfo,
 		int CanvasSizeInBlocksWidth,
 		int CanvasSizeInBlocksHeight,
-		int CanvasBlockOffsetX,
-		int CanvasBlockOffsetY,
-		double CanvasControlOffsetX,
-		double CanvasControlOffsetY
+		int MapBlockOffsetWidth,
+		int MapBlockOffsetHeight,
+		double CanvasControlOffsetWidth,
+		double CanvasControlOffsetHeight
 		) : RecordBase()
 	{ }
 

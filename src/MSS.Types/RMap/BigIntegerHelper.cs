@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types
@@ -61,18 +63,43 @@ namespace MSS.Types
 			return result;
 		}
 
+		private static BigInteger ScaleB(BigInteger n, int exponent)
+		{
+			if (exponent < 0)
+			{
+				throw new InvalidOperationException("Cannot use ScaleB on a BigInteger using a negative exponent.");
+			}
+
+			var result = n * new BigInteger(Math.Pow(2, exponent));
+			return result;
+		}
+
+		public static double GetRatio(BigInteger dividend, int divisor)
+		{
+			double result;
+
+			if (BigInteger.Abs(dividend) > FACTOR)
+			{
+				var hiAndLo = ToLongs(dividend);
+
+				result = hiAndLo[0] / divisor * Math.Pow(2, 53);
+				result += hiAndLo[1] / divisor;
+			}
+			else
+			{
+				var workingDividend = GetValue(dividend);
+				result = workingDividend / divisor;
+			}
+
+			return result;
+		}
 
 		private static void ReportDivideValues(BigInteger dividend, int dividendExponent, int divisor, BigInteger adjDividend, BigInteger result, BigInteger remainder, int exponentDelta)
 		{
 			var dividendD = GetValue(dividend, dividendExponent);
 			var trueResult = dividendD / divisor;
 
-			var adjDividendD = GetValue(adjDividend);
 			var remainderD = GetValue(remainder);
-
-			//var leftover = adjDividendD / remainderD;
-			//var leftOver2 = BigInteger.DivRem(adjDividend, remainder, out var loReminder);
-			//var diff = (1d / divisor) - leftover;
 
 			var res = GetValue(result, dividendExponent - exponentDelta);
 			var denominator = Math.Pow(2, -1 * (dividendExponent - exponentDelta));
@@ -83,7 +110,7 @@ namespace MSS.Types
 			var overallDif = dividendD - extent;
 
 			Debug.WriteLine($"Dividend: {dividendD}, Divisor: {divisor}, trueResult: {trueResult}, currentDividend: {adjDividend}, remainder: {remainder}");
-			Debug.WriteLine($"Result = {res} {result}/{denominator}, extent={extent}, overallDif={overallDif}, adjRem: {adjRemainder} ");
+			Debug.WriteLine($"Result = {res} ({result}/{denominator}), extent={extent}, overallDif={overallDif}, adjRem: {adjRemainder} ");
 		}
 
 		#endregion
@@ -100,9 +127,11 @@ namespace MSS.Types
 
 		private static int LogBase2(BigInteger n)
 		{
-			//logb(x) = logc(x) / logc(b)
-			double natLog = BigInteger.Log(n);
-			double base2Log = natLog / NAT_LOG_OF_2;
+			// Using formula: logb(x) = logc(x) / logc(b) 
+			// to change the base from e to 2.
+
+			var natLog = BigInteger.Log(n);
+			var base2Log = natLog / NAT_LOG_OF_2;
 
 			var result = (int)Math.Round(base2Log);
 
@@ -112,7 +141,7 @@ namespace MSS.Types
 		[Conditional("Debug")]
 		private static void CheckLogBase2Result(BigInteger n, int exponent, int ourResult)
 		{
-			if (TryGetValue(n, exponent, out double val))
+			if (TryGetValue(n, exponent, out var val))
 			{
 				var correctResult = (int) Math.Round(Math.Log2(val));
 
@@ -129,39 +158,24 @@ namespace MSS.Types
 
 		#endregion
 
-		public static BigInteger ScaleB(BigInteger n, int exponent)
+		public static string GetDisplay(BigInteger[] values, int exponent, IFormatProvider? formatProvider = null)
 		{
-			if (exponent < 0)
+			if (formatProvider is null)
 			{
-				throw new InvalidOperationException("Cannot use ScaleB on a BigInteger using a negative exponent.");
+				formatProvider = CultureInfo.InvariantCulture;
 			}
 
-			var result = n * new BigInteger(Math.Pow(2, exponent));
-			return result;
+			var strDenominator = Math.Pow(2, -1 * exponent).ToString(formatProvider);
+
+			var dVals = values.Select(v => GetValue(v, exponent)).ToArray();
+
+			var strVals = values.Select((x, i) => new string(x.ToString(formatProvider) + "/" + strDenominator + " (" + dVals[i].ToString(formatProvider) + ")")).ToArray();
+
+			var display = string.Join("; ", strVals);
+			return display;
 		}
 
-		public static double GetRatio(BigInteger dividend, int divisor)
-		{
-			if(divisor > 100000)
-			{
-				throw new NotSupportedException($"GetRatio expects the divisor to be fairly small. A divisor with value: {divisor} is not supported.");
-			}
-
-			double result;
-
-			if (BigInteger.Abs(dividend) > FACTOR)
-			{
-				var temp = dividend / divisor;
-				result = GetValue(temp);
-			}
-			else
-			{
-				var workingDividend = GetValue(dividend);
-				result = workingDividend / divisor;
-			}
-
-			return result;
-		}
+		#region Convert to Double
 
 		public static double GetValue(BigInteger n, int exponent)
 		{
@@ -206,7 +220,7 @@ namespace MSS.Types
 				throw new OverflowException($"It is not safe to cast BigInteger: {n} to a double.");
 			}
 
-			double result = (double)n;
+			var result = (double)n;
 			return result;
 		}
 
@@ -215,8 +229,6 @@ namespace MSS.Types
 			return DOUBLE_MIN_VALUE <= n && n <= DOUBLE_MAX_VALUE;
 		}
 
-
+		#endregion
 	}
-
-
 }

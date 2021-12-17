@@ -81,8 +81,17 @@ namespace MSetRepo
 
 			var mSetInfo = _mSetRecordMapper.MapFrom(jobRecord.MSetInfo);
 
-			var job = new Job(jobId, parentJob, project, subdivision, jobRecord.Label, mSetInfo, new SizeInt(jobRecord.CanvasSizeInBlocksWidth, jobRecord.CanvasSizeInBlocksHeight), 
-				new PointInt(jobRecord.CanvasBlockOffsetX, jobRecord.CanvasBlockOffsetY), new PointDbl(jobRecord.CanvasControlOffsetX, jobRecord.CanvasControlOffsetY));
+			var job = new Job(
+				id: jobId, 
+				parentJob: parentJob, 
+				project: project, 
+				subdivision: subdivision, 
+				label: jobRecord.Label, 
+				mSetInfo: mSetInfo, 
+				canvasSizeInBlocks: new SizeInt(jobRecord.CanvasSizeInBlocksWidth, jobRecord.CanvasSizeInBlocksHeight), 
+				mapBlockOffset: new SizeInt(jobRecord.MapBlockOffsetWidth, jobRecord.MapBlockOffsetHeight), 
+				canvasControlOffset: new SizeDbl(jobRecord.CanvasControlOffsetWidth, jobRecord.CanvasControlOffsetHeight)
+				);
 
 			return job;
 		}
@@ -251,10 +260,10 @@ namespace MSetRepo
 				MSetInfo: mSetInfoRecord,
 				CanvasSizeInBlocksWidth: canvasSizeInBlocks.Width,
 				CanvasSizeInBlocksHeight: canvasSizeInBlocks.Height,
-				CanvasBlockOffsetX: canvasBlockOffset.X,
-				CanvasBlockOffsetY: canvasBlockOffset.Y,
-				CanvasControlOffsetX: canvasControlOffset.X,
-				CanvasControlOffsetY: canvasControlOffset.Y
+				MapBlockOffsetWidth: canvasBlockOffset.X,
+				MapBlockOffsetHeight: canvasBlockOffset.Y,
+				CanvasControlOffsetWidth: canvasControlOffset.X,
+				CanvasControlOffsetHeight: canvasControlOffset.Y
 				);
 
 			return jobRecord;

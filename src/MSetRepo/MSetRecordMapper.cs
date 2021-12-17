@@ -49,10 +49,10 @@ namespace MSetRepo
 				MapTo(source.MSetInfo),
 				source.CanvasSizeInBlocks.Width,
 				source.CanvasSizeInBlocks.Height,
-				source.CanvasBlockOffset.X,
-				source.CanvasBlockOffset.Y,
-				source.CanvasControlOffset.X,
-				source.CanvasControlOffset.Y);
+				source.MapBlockOffset.Width,
+				source.MapBlockOffset.Height,
+				source.CanvasControlOffset.Width,
+				source.CanvasControlOffset.Height);
 
 			return result;
 		}

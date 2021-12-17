@@ -18,7 +18,7 @@ namespace MSetExplorer
 
 		public void LoadMap(Job job, Action<MapSection> callback)
 		{
-			GetSections(job.MSetInfo, job.Subdivision, job.CanvasSizeInBlocks, job.CanvasBlockOffset, callback);
+			GetSections(job.MSetInfo, job.Subdivision, job.CanvasSizeInBlocks, job.MapBlockOffset, callback);
 		}
 
 		public void Stop()
@@ -30,14 +30,14 @@ namespace MSetExplorer
 		}
 
 		private SizeInt _blockSize;
-		private PointInt _canvasBlockOffsetReverse;
+		private SizeInt _mapBlockOffset;
 		private Action<MapSection> _callback;
 		private ColorMap _colorMap;
 
-		private void GetSections(MSetInfo mSetInfo, Subdivision subdivision, SizeInt canvasSizeInBlocks, PointInt canvasBlockOffset, Action<MapSection> callback)
+		private void GetSections(MSetInfo mSetInfo, Subdivision subdivision, SizeInt canvasSizeInBlocks, SizeInt mapBlockOffset, Action<MapSection> callback)
 		{
 			_blockSize = subdivision.BlockSize;
-			_canvasBlockOffsetReverse = new PointInt(-1 * canvasBlockOffset.X, -1 * canvasBlockOffset.Y);
+			_mapBlockOffset = mapBlockOffset;
 			_callback = callback;
 
 			_colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
@@ -47,7 +47,7 @@ namespace MSetExplorer
 				for (var xBlockPtr = 0; xBlockPtr < canvasSizeInBlocks.Width ; xBlockPtr++)
 				{
 					// Translate to subdivision coordinates.
-					var blockPosition = new PointInt(xBlockPtr, yBlockPtr).Translate(canvasBlockOffset);
+					var blockPosition = new PointInt(xBlockPtr, yBlockPtr).Translate(mapBlockOffset);
 					var mapSectionRequest = MapSectionHelper.CreateRequest(subdivision, blockPosition, mSetInfo.MapCalcSettings);
 					_mapSectionRequstProcessor.AddWork(mapSectionRequest, HandleResponse);
 				}
@@ -58,8 +58,8 @@ namespace MSetExplorer
 		{
 			var pixels1d = GetPixelArray(mapSectionResponse.Counts, _blockSize, _colorMap);
 
-			// Translate from subdivision coordinates.
-			var position = mapSectionResponse.BlockPosition.Translate(_canvasBlockOffsetReverse).Scale(_blockSize);
+			// Translate subdivision coordinates to screen coordinates.
+			var position = mapSectionResponse.BlockPosition.Diff(_mapBlockOffset).Scale(_blockSize);
 			var mapSection = new MapSection(position, _blockSize, pixels1d);
 
 			_callback(mapSection);

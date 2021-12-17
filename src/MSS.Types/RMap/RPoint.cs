@@ -63,6 +63,18 @@ namespace MSS.Types
 				: new RPoint(X + amount.Width, Y + amount.Height, Exponent);
 		}
 
+		/// <summary>
+		/// Returns the distance from this point to the given point.
+		/// </summary>
+		/// <param name="amount"></param>
+		/// <returns></returns>
+		public RSize Diff(RPoint amount)
+		{
+			return amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot find the diff from a RPoint with Exponent: {Exponent} using a RPoint with Exponent: {amount.Exponent}.")
+				: new RSize(X - amount.X, Y - amount.Y, Exponent);
+		}
+
 		public RPoint ScaleB(int exponentDelta)
 		{
 			if (exponentDelta == 0)

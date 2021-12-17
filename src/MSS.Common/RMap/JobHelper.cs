@@ -59,8 +59,8 @@ namespace MSS.Common
 				label: null,
 				new MSetInfo(rRectangleZoomed, job.MSetInfo.MapCalcSettings, job.MSetInfo.ColorMapEntries, job.MSetInfo.HighColorCss),
 				canvasSizeInBlocks: new SizeInt(6,6),
-				canvasBlockOffset: new PointInt(-4, -3),
-				canvasControlOffset: new PointDbl()
+				mapBlockOffset: new SizeInt(-4, -3),
+				canvasControlOffset: new SizeDbl()
 				);
 
 			return result;

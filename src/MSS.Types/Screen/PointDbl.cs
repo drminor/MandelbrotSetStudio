@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
 
 namespace MSS.Types
 {
-	[DataContract]
 	public struct PointDbl : IEquatable<PointDbl>, IEqualityComparer<PointDbl>
 	{
 		public PointDbl(double x, double y)
@@ -14,10 +12,8 @@ namespace MSS.Types
 			Y = y;
 		}
 
-		[DataMember(Order = 1)]
 		public double X { get; set; }
 
-		[DataMember(Order = 2)]
 		public double Y { get; set; }
 
 		public PointDbl(PointInt pointInt) : this(pointInt.X, pointInt.Y)

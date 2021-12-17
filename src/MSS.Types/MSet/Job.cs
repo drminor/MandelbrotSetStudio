@@ -12,8 +12,8 @@ namespace MSS.Types.MSet
 		public string? Label { get; init; }
 		public MSetInfo MSetInfo { get; init; }
 		public SizeInt CanvasSizeInBlocks { get; init; }
-		public PointInt CanvasBlockOffset { get; init; }
-		public PointDbl CanvasControlOffset { get; init; }
+		public SizeInt MapBlockOffset { get; init; }
+		public SizeDbl CanvasControlOffset { get; init; }
 
 		public Job(
 			ObjectId id,
@@ -23,8 +23,8 @@ namespace MSS.Types.MSet
 			string? label,
 			MSetInfo mSetInfo,
 			SizeInt canvasSizeInBlocks,
-			PointInt canvasBlockOffset,
-			PointDbl canvasControlOffset
+			SizeInt mapBlockOffset,
+			SizeDbl canvasControlOffset
 			)
 		{
 			Id = id;
@@ -34,7 +34,7 @@ namespace MSS.Types.MSet
 			Label = label;
 			MSetInfo = mSetInfo;
 			CanvasSizeInBlocks = canvasSizeInBlocks;
-			CanvasBlockOffset = canvasBlockOffset;
+			MapBlockOffset = mapBlockOffset;
 			CanvasControlOffset = canvasControlOffset;
 		}
 

@@ -9,6 +9,7 @@ namespace MSS.Common
 	{
 		#region Normalize
 
+		// Rectangle & Point
 		public static RRectangle Normalize(RRectangle r, RPoint p, out RPoint newP)
 		{
 			var rTemp = r.Clone();
@@ -21,6 +22,7 @@ namespace MSS.Common
 			return result;
 		}
 
+		// Rectangle & Point
 		public static void NormalizeInPlace(ref RRectangle r, ref RPoint p)
 		{
 			var rTemp = r.Clone();
@@ -31,6 +33,7 @@ namespace MSS.Common
 			p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 		}
 
+		// Rectangle & Size
 		public static RRectangle Normalize(RRectangle r, RSize s, out RSize newS)
 		{
 			var rTemp = r.Clone();
@@ -43,6 +46,7 @@ namespace MSS.Common
 			return result;
 		}
 
+		// Rectangle & Size
 		public static void NormalizeInPlace(ref RRectangle r, ref RSize s)
 		{
 			var rTemp = r.Clone();
@@ -53,6 +57,7 @@ namespace MSS.Common
 			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 		}
 
+		// Point and Size
 		public static RPoint Normalize(RPoint p, RSize s, out RSize newS)
 		{
 			var pTemp = p.Clone();
@@ -65,6 +70,7 @@ namespace MSS.Common
 			return result;
 		}
 
+		// Point and Size
 		public static void NormalizeInPlace(ref RPoint p, ref RSize s)
 		{
 			var pTemp = p.Clone();
@@ -75,6 +81,7 @@ namespace MSS.Common
 			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 		}
 
+		// Two Points
 		public static RPoint Normalize(RPoint p1, RPoint p2, out RPoint newP2)
 		{
 			var p1Temp = p1.Clone();
@@ -87,6 +94,7 @@ namespace MSS.Common
 			return result;
 		}
 
+		// Two Points
 		public static void NormalizeInPlace(ref RPoint p1, ref RPoint p2)
 		{
 			var p1Temp = p1.Clone();
@@ -95,6 +103,30 @@ namespace MSS.Common
 			var newExp = Normalize(p1Temp.Values, p2Temp.Values, p1.Exponent, p2.Exponent);
 			p1 = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
 			p2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
+		}
+
+		// Two Sizes
+		public static RSize Normalize(RSize s1, RSize s2, out RSize news2)
+		{
+			var s1Temp = s1.Clone();
+			var s2Temp = s2.Clone();
+
+			var newExp = Normalize(s1Temp.Values, s2Temp.Values, s1.Exponent, s2.Exponent);
+			var result = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
+			news2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
+
+			return result;
+		}
+
+		// Two Sizes
+		public static void NormalizeInPlace(ref RSize s1, ref RSize s2)
+		{
+			var s1Temp = s1.Clone();
+			var s2Temp = s2.Clone();
+
+			var newExp = Normalize(s1Temp.Values, s2Temp.Values, s1.Exponent, s2.Exponent);
+			s1 = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
+			s2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
 		}
 
 		public static int Normalize(BigInteger[] a, BigInteger[] b, int exponentA, int exponentB)
@@ -146,7 +178,7 @@ namespace MSS.Common
 			for(var i = 0; i < dividends.Length; i++)
 			{
 				_ = BigInteger.DivRem(dividends[i], divisor, out var remainder);
-				if (remainder > 0)
+				if (remainder != 0)
 				{
 					return false;
 				}
@@ -157,12 +189,17 @@ namespace MSS.Common
 
 		public static BigInteger[] ScaleB(BigInteger[] vals, int exponentDelta)
 		{
+			if (exponentDelta < 0)
+			{
+				throw new InvalidOperationException($"Cannot ScaleBInPlace using an exponentDelta < 0. The exponentDelta is {exponentDelta}.");
+			}
+
 			if (exponentDelta == 0)
 			{
 				return vals;
 			}
 
-			var factor = (long)Math.Pow(2, -1 * exponentDelta);
+			var factor = (long)Math.Pow(2, exponentDelta);
 			var result = vals.Select(v => v * factor).ToArray();
 
 			return result;
@@ -262,117 +299,48 @@ namespace MSS.Common
 			return new SizeInt(w, h);
 		}
 
-		public static PointInt GetCanvasBlockOffset(RPoint mapOrigin, RPoint subdivisionOrigin, SizeInt blockSize)
+
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="mapOrigin">The coordinates on the complex plane for the block at screen position: x:0, y:0</param>
+		/// <param name="subdivisionOrigin">The coordinates on the complex plane for the block at position: x:0, y:0</param>
+		/// <param name="samplePointDelta">The width and height of the section of the complex plane, corresponding to 1 pixel</param>
+		/// <param name="blockSize">The width and height of a block in pixels.</param>
+		/// <returns></returns>
+		public static SizeInt GetMapBlockOffset(RPoint mapOrigin, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize)
 		{
-			// The left-most, bottom-most block is 0, 0 in our cordinates
-			// The canvasBlockOffset is the amount added to our block position to address the block in subdivison coordinates.
+			// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
+			// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
 
-			var mapO = mapOrigin;
-			var subdivisionO = subdivisionOrigin;
-			NormalizeInPlace(ref mapO, ref subdivisionO);
+			var sourceOrigin = mapOrigin;
+			var destinatinOrigin = subdivisionOrigin;
+			NormalizeInPlace(ref sourceOrigin, ref destinatinOrigin);
 
-			var distance = subdivisionO.Translate(mapO);
+			var mDistance = sourceOrigin.Diff(destinatinOrigin);
 
-			var x = BigInteger.DivRem(BigInteger.Abs(distance.X), new BigInteger(blockSize.Width), out var remainder);
+			// The width and height of the section of the complex plane, corresponding to 1 block.
+			var coordBlockSize = samplePointDelta.Scale(blockSize);
+			NormalizeInPlace(ref mDistance, ref coordBlockSize);
 
-			if (remainder > 0)
+			var width = BigInteger.DivRem(mDistance.Width, coordBlockSize.Width, out var remainder);
+
+			if (remainder != 0)
 			{
-				x++;
+				width++;
 			}
 
-			var y = BigInteger.DivRem(BigInteger.Abs(distance.Y), new BigInteger(blockSize.Height), out remainder);
+			var height = BigInteger.DivRem(mDistance.Height, coordBlockSize.Height, out remainder);
 
-			if (remainder > 0)
+			if (remainder != 0)
 			{
-				y++;
+				height++;
 			}
 
-			if (distance.X < 0)
-			{
-				x = -1 * x;
-			}
-
-			if (distance.Y < 0)
-			{
-				y = -1 * y;
-			}
-
-			var result = new PointInt((int)x, (int)y);
+			var result = new SizeInt((int)width, (int)height);
 
 			//var result = new PointInt(-4, -3);
-
-			return result;
-		}
-
-		///// <summary>
-		///// 
-		///// </summary>
-		///// <param name="canvasExtent"></param>
-		///// <param name="coordExtent"></param>
-		///// <param name="coordExp"></param>
-		///// <returns>Extent in X and SampleWidth in Y</returns>
-		//private static RPoint GetExtentAndSampleWidth(int canvasExtent, BigInteger coordExtent, int coordExp)
-		//{
-		//	RPoint result = new RPoint();
-
-		//	return result;
-		//}
-
-		//private static BigInteger GetExtent(int canvasExtent, BigInteger coordExtent, int coordExp)
-		//{
-		//	BigInteger result = new BigInteger();
-
-		//	return result;
-		//}
-
-		#endregion
-
-		#region NOT USED
-
-		public static long Divide4(long n, int exp, out int newExp)
-		{
-			long result;
-
-			var half = Math.DivRem(n, 2, out var remainder);
-
-			if (remainder == 0)
-			{
-				var quarter = Math.DivRem(n, 4, out remainder);
-
-				if (remainder == 0)
-				{
-					result = quarter;
-					newExp = exp;
-				}
-				else
-				{
-					result = half;
-					newExp = exp - 1;
-				}
-			}
-			else
-			{
-				result = n;
-				newExp = exp - 2;
-			}
-
-			return result;
-		}
-
-		public static int GetValueDepth(RRectangle _)
-		{
-			// TODO: Calculate the # of maximum binary bits of precision from sx, ex, sy and ey.
-			var binaryBitsOfPrecision = 10;
-			var valueDepth = CalculateValueDepth(binaryBitsOfPrecision);
-
-			return valueDepth;
-		}
-
-		private static int CalculateValueDepth(int binaryBitsOfPrecision)
-		{
-			var result = Math.DivRem(binaryBitsOfPrecision, 53, out var remainder);
-
-			if (remainder > 0) result++;
 
 			return result;
 		}

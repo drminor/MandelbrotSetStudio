@@ -58,31 +58,34 @@ namespace MSetExplorer
 		{
 			var project = new Project(ObjectId.GenerateNewId(), "un-named");
 
-			// Calculate approximate samplePointDelta
-			var samplePointDelta = GetSamplePointDelta(mSetInfo.Coords, canvasControlSize);
-			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, _blockSize, _projectAdapter);
-
-			// Use the SamplePointDelta found to get the size of the canvas.
+			// Determine how much of the canvas control can be covered by the new map.
 			var canvasSize = RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize);
+
+			// Using the size of the new map and the map coordinates, calculate the sample point size
+			var samplePointDelta = GetSamplePointDelta(mSetInfo.Coords, canvasSize);
+
+			// Get a subdivision record from the database.
+			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, _blockSize, _projectAdapter);
 
 			// Get the number of blocks
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, _blockSize);
 			
-			var canvasBlockOffset = GetCanvasBlockOffset(mSetInfo.Coords.LeftBot, subdivision.Position, _blockSize);
+			// Determine the amount to tranlate from our coordinates to the subdivision coordinates.
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(mSetInfo.Coords.LeftBot, subdivision.Position, samplePointDelta, _blockSize);
+			
+			// Since we can only fetch whole blocks, the image may not start at the bottom, right corner of the bottom, right block.
+			// Determine the amount to move the canvas down and to the right so that the bottom, right sample is displayed at the bottom, right of the canvas control.
 			var canvasControlOffset = GetCanvasControlOffset(mSetInfo.Coords, subdivision.SamplePointDelta, canvasSizeInBlocks);
 
-			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset);
+			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 			return job;
 		}
 
-		private RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasControlSize)
+		private RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasSize)
 		{
-			var wRatio = BigIntegerHelper.GetRatio(coords.WidthNumerator, canvasControlSize.Width);
-			var hRatio = BigIntegerHelper.GetRatio(coords.HeightNumerator, canvasControlSize.Height);
-
-			var newNumerator = wRatio > hRatio
-				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasControlSize.Width, out var newExponent)
-				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasControlSize.Height, out newExponent);
+			var newNumerator = canvasSize.Width > canvasSize.Height
+				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
+				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
 
 			var result = new RSize(newNumerator, newNumerator, newExponent);
 
@@ -98,23 +101,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private PointInt GetCanvasBlockOffset(RPoint mapOrigin, RPoint subdivisionOrigin, SizeInt blockSize)
+		private SizeDbl GetCanvasControlOffset(RRectangle coords, RSize samplePointDelta, SizeInt canvasSizeInBlocks)
 		{
-			// The left-most, bottom-most block is 0, 0 in our cordinates
-			// The canvasBlockOffset is the amount added to our block position to address the block in subdivison coordinates.
-
-			// TODO: Use the subdivision RPoint origin and our Map coordinates to calculate the Canvas Block Offset.
-
-			var result = new PointInt(-4, -3);
-
-			return result;
-		}
-
-		private PointDbl GetCanvasControlOffset(RRectangle coords, RSize samplePointDelta, SizeInt canvasSizeInBlocks)
-		{
-			// TODO: Use the size of the canvas in blocks, the SamplePointDelta and our Map coordinates to calculate the CanvasControlOffset
-
-			var result = new PointDbl(0, 0);
+			var result = new SizeDbl(0, 0);
 			return result;
 		}
 

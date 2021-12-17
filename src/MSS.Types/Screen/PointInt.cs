@@ -25,9 +25,14 @@ namespace MSS.Types
 			return new PointInt(X * factor.Width, Y * factor.Height);
 		}
 
-		public PointInt Translate(PointInt amount)
+		public PointInt Translate(SizeInt amount)
 		{
-			return new PointInt(X + amount.X, Y + amount.Y);
+			return new PointInt(X + amount.Width, Y + amount.Height);
+		}
+
+		public PointInt Diff(SizeInt amount)
+		{
+			return new PointInt(X - amount.Width, Y - amount.Height);
 		}
 
 		#region IEquatable and IEqualityComparer Support
