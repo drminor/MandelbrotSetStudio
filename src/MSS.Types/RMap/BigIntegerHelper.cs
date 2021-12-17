@@ -36,41 +36,27 @@ namespace MSS.Types
 		{
 			var exponentDelta = 0;
 			var tolerance = 1d / divisor;
-
 			var bDivisor = new BigInteger(divisor);
+
 			var result = BigInteger.DivRem(dividend, bDivisor, out var remainder);
-
-			ReportDivideValues(dividend, dividendExponent, divisor, dividend, result, remainder, exponentDelta);
-
-			var adjRem = GetValue(remainder, -1 * exponentDelta);
-			//var adjRemA1 = BigIntegerHelper.GetValue(remainder, dividendExponent - exponentDelta);
-			//var adjRemA2 = BigIntegerHelper.GetValue(remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
+			var adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+			//var adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
+			//var adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
+			//ReportDivideValues(dividend, dividendExponent, divisor, dividend, result, remainder, exponentDelta);
 
 			while (adjRem > tolerance)
 			{
 				exponentDelta++;
-				var adjDividend = ScaleB(dividend, exponentDelta);
+				var adjDividend = dividend * new BigInteger(Math.Pow(2, exponentDelta));
+
 				result = BigInteger.DivRem(adjDividend, bDivisor, out remainder);
-
-				adjRem = GetValue(remainder, -1 * exponentDelta);
-				//adjRemA1 = BigIntegerHelper.GetValue(remainder, dividendExponent - exponentDelta);
-				//adjRemA2 = BigIntegerHelper.GetValue(remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
-
-				//ReportDivyValues(dividend, dividendExponent, divisor, adjDividend, result, remainder, exponentDelta);
+				adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+				//adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
+				//adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
+				//ReportDivideValues(dividend, dividendExponent, divisor, adjDividend, result, remainder, exponentDelta);
 			}
 
 			newExponent = dividendExponent - exponentDelta;
-			return result;
-		}
-
-		private static BigInteger ScaleB(BigInteger n, int exponent)
-		{
-			if (exponent < 0)
-			{
-				throw new InvalidOperationException("Cannot use ScaleB on a BigInteger using a negative exponent.");
-			}
-
-			var result = n * new BigInteger(Math.Pow(2, exponent));
 			return result;
 		}
 
