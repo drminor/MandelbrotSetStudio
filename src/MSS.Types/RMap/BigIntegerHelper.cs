@@ -76,19 +76,32 @@ namespace MSS.Types
 
 		public static double GetRatio(BigInteger dividend, int divisor)
 		{
+			if (divisor == 0)
+			{
+				throw new DivideByZeroException();
+			}
+
+			if (dividend == 0)
+			{
+				return 0;
+			}
+
 			double result;
 
-			if (BigInteger.Abs(dividend) > FACTOR)
-			{
-				var hiAndLo = ToLongs(dividend);
-
-				result = hiAndLo[0] / divisor * Math.Pow(2, 53);
-				result += hiAndLo[1] / divisor;
-			}
-			else
+			if (SafeCastToDouble(dividend))
 			{
 				var workingDividend = GetValue(dividend);
 				result = workingDividend / divisor;
+			}
+			else
+			{
+				var hiAndLo = ToLongs(dividend);
+
+				checked
+				{
+					result = hiAndLo[0] / divisor * Math.Pow(2, 53);
+					result += hiAndLo[1] / divisor;
+				}
 			}
 
 			return result;
@@ -184,14 +197,26 @@ namespace MSS.Types
 				return 0;
 			}
 
-			if (!SafeCastToDouble(n))
-			{
-				throw new OverflowException($"It is not safe to cast BigInteger: {n} to a double.");
-			}
+			double result;
 
-			var hiAndLo = ToLongs(n);
-			double result = hiAndLo[0] + hiAndLo[1];
-			result = Math.ScaleB(result, exponent);
+			if (SafeCastToDouble(n))
+			{
+				checked
+				{
+					result = (double)n;
+					result *= Math.Pow(2, exponent);
+				}
+			}
+			else
+			{
+				var hiAndLo = ToLongs(n);
+
+				checked
+				{
+					result = hiAndLo[0] * Math.Pow(2, exponent + 53);
+					result += hiAndLo[1] * Math.Pow(2, exponent);
+				}
+			}
 
 			return !DoubleHelper.HasPrecision(result)
                 ?               throw new OverflowException($"When converting BigInteger: {n} to a double, precision was lost.")
@@ -200,15 +225,30 @@ namespace MSS.Types
 
 		public static bool TryGetValue(BigInteger n, int exponent, out double value)
 		{
-			if (!SafeCastToDouble(n))
+			if (n == 0)
 			{
-				value = double.NaN;
-				return false;
+				value = 0;
+				return true;
 			}
 
-			var hiAndLo = ToLongs(n);
-			var temp = hiAndLo[0] + hiAndLo[1];
-			value = Math.ScaleB(temp, exponent);
+			if (SafeCastToDouble(n))
+			{
+				checked
+				{
+					value = (double)n;
+					value *= Math.Pow(2, exponent);
+				}
+			}
+			else
+			{
+				var hiAndLo = ToLongs(n);
+
+				checked
+				{
+					value = hiAndLo[0] * Math.Pow(2, exponent + 53);
+					value += hiAndLo[1] * Math.Pow(2, exponent);
+				}
+			}
 
 			return DoubleHelper.HasPrecision(value);
 		}
