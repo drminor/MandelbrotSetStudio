@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 			_progress = progress;
 
-			canvasControlSize = canvasControlSize.Scale(0.9);
+			//canvasControlSize = canvasControlSize.Scale(0.9);
 			_job = BuildJob(canvasControlSize, mSetInfo);
 
 			_mapLoader = new MapLoader(_mapSectionRequestProcessor);

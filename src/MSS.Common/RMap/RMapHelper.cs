@@ -299,8 +299,6 @@ namespace MSS.Common
 			return new SizeInt(w, h);
 		}
 
-
-
 		/// <summary>
 		/// 
 		/// </summary>
