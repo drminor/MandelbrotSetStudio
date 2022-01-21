@@ -35,6 +35,11 @@ namespace MSS.Types
 			return new PointInt(X - amount.Width, Y - amount.Height);
 		}
 
+		public PointInt Abs()
+		{
+			return new PointInt(Math.Abs(X), Math.Abs(Y));
+		}
+
 		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)

@@ -75,17 +75,5 @@ namespace MSS.Types
 				: new RSize(X - amount.X, Y - amount.Y, Exponent);
 		}
 
-		public RPoint ScaleB(int exponentDelta)
-		{
-			if (exponentDelta == 0)
-			{
-				return this;
-			}
-
-			var factor = (long)Math.Pow(2, -1 * exponentDelta);
-			var result = new RPoint(Values.Select(v => v * factor).ToArray(), Exponent - exponentDelta);
-
-			return result;
-		}
 	}
 }

@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
 
 namespace MSS.Types
 {
-	[DataContract]
 	public struct SizeInt : IEquatable<SizeInt>, IEqualityComparer<SizeInt>
 	{
 		public SizeInt(int width, int heigth)
@@ -14,10 +12,8 @@ namespace MSS.Types
 			Height = heigth;
 		}
 
-		[DataMember(Order = 1)]
 		public int Width { get; set; }
 
-		[DataMember(Order = 2)]
 		public int Height { get; set; }
 
 		public int NumberOfCells => Width * Height;
@@ -51,6 +47,11 @@ namespace MSS.Types
 		public int GetHashCode([DisallowNull] SizeInt obj)
 		{
 			return HashCode.Combine(obj.Width, obj.Height);
+		}
+
+		public override string? ToString()
+		{
+			return $"w:{Width}, h:{Height}";
 		}
 
 		public static bool operator ==(SizeInt left, SizeInt right)

@@ -49,18 +49,5 @@ namespace MSS.Types
 				: new RSize(Width + amount.X, Height + amount.Y, Exponent);
 		}
 
-		public RSize ScaleB(int exponentDelta)
-		{
-			if (exponentDelta == 0)
-			{
-				return this;
-			}
-
-			var factor = (long)Math.Pow(2, -1 * exponentDelta);
-			var result = new RSize(Values.Select(v => v * factor).ToArray(), Exponent - exponentDelta);
-
-			return result;
-		}
-
 	}
 }

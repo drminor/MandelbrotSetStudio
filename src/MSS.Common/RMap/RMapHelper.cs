@@ -231,8 +231,15 @@ namespace MSS.Common
 
 		public static RRectangle GetMapCoords(RectangleInt area, RPoint position, RSize samplePointDelta)
 		{
+			// Create a rational rectangle on the complex plane
+			// that corresponds to the position and size of the area in pixels
+			// with origin = 0, 0.
 			var result = ScaleAreaInt(area, samplePointDelta);
+
+			// Prepare the position and scaled area for translation.
 			NormalizeInPlace(ref result, ref position);
+
+			// Use the position to move the scaled area.
 			result = result.Translate(position);
 
 			return result;
@@ -245,6 +252,10 @@ namespace MSS.Common
 
 			return result;
 		}
+
+		#endregion
+
+		#region Job Creation
 
 		public static SizeInt GetCanvasSize(RRectangle coords, SizeInt canvasControlSize)
 		{
@@ -276,6 +287,17 @@ namespace MSS.Common
 			}
 
 			var result = new SizeInt(w, h);
+
+			return result;
+		}
+
+		public static RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasSize)
+		{
+			var newNumerator = canvasSize.Width > canvasSize.Height
+				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
+				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
+
+			var result = new RSize(newNumerator, newNumerator, newExponent);
 
 			return result;
 		}

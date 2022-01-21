@@ -7,14 +7,13 @@ using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
 using System.Diagnostics;
-using System.Numerics;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase
 	{
-		private SizeInt _blockSize;
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
@@ -27,10 +26,52 @@ namespace MSetExplorer
 
 		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			_blockSize = blockSize;
+			BlockSize = blockSize;
 			_projectAdapter = projectAdapter;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 		}
+
+		public readonly SizeInt BlockSize;
+		public bool IsLoadingComplete => _mapLoaderTask == null;
+
+		public PointInt GetBlockPosition_Old(Point screenPos)
+		{
+			var x = (int)Math.Round(screenPos.X);
+			var l = Math.DivRem(x, BlockSize.Width, out var remainder);
+			if (remainder > 0)
+			{
+				l++;
+			}
+
+			var invertedY = _job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
+			var b = Math.DivRem(invertedY, BlockSize.Height, out remainder);
+			if (remainder > 0)
+			{
+				b++;
+			}
+
+			return new PointInt(l, b).Scale(BlockSize).Diff(BlockSize);
+		}
+
+		public PointInt GetBlockPosition(Point screenPos)
+		{
+			var x = (int)Math.Round(screenPos.X);
+			var l = Math.DivRem(x, BlockSize.Width, out var remainder);
+			if (remainder == 0)
+			{
+				l--;
+			}
+
+			var invertedY = _job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
+			var b = Math.DivRem(invertedY, BlockSize.Height, out remainder);
+			if (remainder == 0)
+			{
+				b--;
+			}
+
+			return new PointInt(l, b).Scale(BlockSize);
+		}
+
 
 		public void LoadMap(SizeInt canvasControlSize, MSetInfo mSetInfo, IProgress<MapSection> progress)
 		{
@@ -62,16 +103,16 @@ namespace MSetExplorer
 			var canvasSize = RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize);
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
-			var samplePointDelta = GetSamplePointDelta(mSetInfo.Coords, canvasSize);
+			var samplePointDelta = RMapHelper.GetSamplePointDelta(mSetInfo.Coords, canvasSize);
 
 			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, _blockSize, _projectAdapter);
+			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, BlockSize, _projectAdapter);
 
 			// Get the number of blocks
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, _blockSize);
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, BlockSize);
 			
 			// Determine the amount to tranlate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(mSetInfo.Coords.LeftBot, subdivision.Position, samplePointDelta, _blockSize);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(mSetInfo.Coords.LeftBot, subdivision.Position, samplePointDelta, BlockSize);
 			
 			// Since we can only fetch whole blocks, the image may not start at the bottom, right corner of the bottom, right block.
 			// Determine the amount to move the canvas down and to the right so that the bottom, right sample is displayed at the bottom, right of the canvas control.
@@ -79,17 +120,6 @@ namespace MSetExplorer
 
 			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 			return job;
-		}
-
-		private RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasSize)
-		{
-			var newNumerator = canvasSize.Width > canvasSize.Height
-				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
-				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
-
-			var result = new RSize(newNumerator, newNumerator, newExponent);
-
-			return result;
 		}
 
 		private Subdivision GetSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
