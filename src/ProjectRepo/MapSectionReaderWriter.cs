@@ -55,6 +55,14 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
+		public long? DeleteAllWithSubId(ObjectId subdivisionId)
+		{
+			var filter = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
+			var deleteResult = Collection.DeleteMany(filter);
+
+			return GetReturnCount(deleteResult);
+		}
+
 
 	}
 }

@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MEngineDataContracts\MEngineDataContracts.csproj" />
-    <ProjectReference Include="..\..\src\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

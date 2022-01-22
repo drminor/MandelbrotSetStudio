@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.Screen;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,7 +17,8 @@ namespace MSetExplorer
 	public partial class MainWindow : Window
 	{
 		private MainWindowViewModel _vm;
-		private Rectangle _selectedArea; 
+		private Rectangle _selectedArea;
+		private IDictionary<PointInt, ScreenSection> _screenSections;
 
 		public MainWindow()
 		{
@@ -28,13 +30,17 @@ namespace MSetExplorer
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			_vm = (MainWindowViewModel)DataContext;
+			_screenSections = new Dictionary<PointInt, ScreenSection>();
 
 			SetupSelectionRect();
 
+			var maxIterations = 700;
+			var refreshMapSections = false;
+
 			var canvasSize = GetCanvasControlSize(MainCanvas);
-			var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo();
+			var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo(maxIterations);
 			var progress = new Progress<MapSection>(HandleMapSectionReady);
-			_vm.LoadMap(canvasSize, mSetInfo, progress);
+			_vm.LoadMap(canvasSize, mSetInfo, refreshMapSections, progress);
 		}
 
 		private SizeInt GetCanvasControlSize(Canvas canvas)
@@ -46,42 +52,60 @@ namespace MSetExplorer
 
 		private void HandleMapSectionReady(MapSection mapSection)
 		{
-			var image = BuildImage(mapSection);
 			Debug.WriteLine($"Drawing a bit map at {mapSection.CanvasPosition}.");
 
-			var cIndex = MainCanvas.Children.Add(image);
-            MainCanvas.Children[cIndex].SetValue(Canvas.LeftProperty, (double) mapSection.CanvasPosition.X);
-            MainCanvas.Children[cIndex].SetValue(Canvas.BottomProperty, (double) mapSection.CanvasPosition.Y);
-			MainCanvas.Children[cIndex].SetValue(Panel.ZIndexProperty, 0);
+			var screenSection = GetScreenSection(mapSection);
+
+			var rect = new Int32Rect(0, 0, mapSection.Size.Width, mapSection.Size.Height);
+			var stride = 4 * mapSection.Size.Width;
+			var bitMap = (WriteableBitmap)screenSection.Image.Source;
+			bitMap.WritePixels(rect, mapSection.Pixels1d, stride, 0);
 		}
 
-		private Image BuildImage(MapSection mapSection)
+		private ScreenSection GetScreenSection(MapSection mapSection)
+		{
+			if (!_screenSections.TryGetValue(mapSection.CanvasPosition, out ScreenSection screenSection))
+			{
+				var image = CreateImage(mapSection.Size);
+				var cIndex = MainCanvas.Children.Add(image);
+				screenSection = new ScreenSection(image);
+
+				MainCanvas.Children[cIndex].SetValue(Canvas.LeftProperty, (double)mapSection.CanvasPosition.X);
+				MainCanvas.Children[cIndex].SetValue(Canvas.BottomProperty, (double)mapSection.CanvasPosition.Y);
+				MainCanvas.Children[cIndex].SetValue(Panel.ZIndexProperty, 0);
+			}
+
+			return screenSection;
+		}
+
+		private Image CreateImage(SizeInt size)
 		{
 			var result = new Image
 			{
-				Width = mapSection.Size.Width,
-				Height = mapSection.Size.Height,
+				Width = size.Width,
+				Height = size.Height,
 				Stretch = Stretch.None,
 				Margin = new Thickness(0),
-				Source = GetBitMap(mapSection, mapSection.Size)
-			};
+				//Source = GetBitMap(mapSection, mapSection.Size)
+				Source = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Bgra32, null)
+		};
 
 			return result;
 		}
 
-		private WriteableBitmap GetBitMap(MapSection mapSection, SizeInt blockSize)
-		{
-			var width = blockSize.Width;
-			var height = blockSize.Height;
+		//private WriteableBitmap GetBitMap(MapSection mapSection, SizeInt blockSize)
+		//{
+		//	var width = blockSize.Width;
+		//	var height = blockSize.Height;
 
-			var result = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+		//	var result = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
 
-			var rect = new Int32Rect(0, 0, width, height);
-			var stride = 4 * width;
-			result.WritePixels(rect, mapSection.Pixels1d, stride, 0);
+		//	var rect = new Int32Rect(0, 0, width, height);
+		//	var stride = 4 * width;
+		//	result.WritePixels(rect, mapSection.Pixels1d, stride, 0);
 
-			return result;
-        }
+		//	return result;
+  //      }
 
 		private void SetupSelectionRect()
 		{
@@ -186,5 +210,25 @@ namespace MSetExplorer
 				_selectedArea.StrokeThickness = 0;
 			}
 		}
+
+
+		class ScreenSection
+		{
+			public Image Image { get; init; }
+
+			public Histogram Histogram { get; init; }
+
+			public ScreenSection(Image image) : this(image, new Histogram())
+			{ }
+
+			public ScreenSection(Image image, Histogram histogram)
+			{
+				Image = image;
+				Histogram = histogram;
+			}
+
+		}
 	}
+
+
 }

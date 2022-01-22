@@ -56,5 +56,14 @@ namespace MSetRepo
 
 			return mapSectionId.ToString();
 		}
+
+
+		public long? ClearMapSections(string subdivisionId)
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var result = mapSectionReaderWriter.DeleteAllWithSubId(new ObjectId(subdivisionId));
+
+			return result;
+		}
 	}
 }

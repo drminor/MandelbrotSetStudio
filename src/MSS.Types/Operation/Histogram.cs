@@ -5,32 +5,24 @@ namespace MSS.Types
 {
 	public class Histogram
 	{
-		public readonly int JobId;
+		IDictionary<int, int> Entries;
 
-		public readonly int[] Values;
-
-		public readonly int[] Occurances;
-
-		public Histogram(int jobId, IDictionary<int, int> hDictionary)
+		public Histogram()
 		{
-			JobId = jobId;
-			if (hDictionary != null)
-			{
-				Values = hDictionary.Keys.ToArray();
-				Occurances = hDictionary.Values.ToArray();
-			}
-			else
-			{
-				Values = new int[0];
-				Occurances = new int[0];
-			}
+			Entries = new Dictionary<int, int>();
 		}
 
-		public Histogram(int jobId, int[] values, int[] occurances)
+		public Histogram(IDictionary<int, int> entries) : this(entries.Keys.ToArray(), entries.Values.ToArray())
 		{
-			JobId = jobId;
-			Values = values;
-			Occurances = occurances;
+		}
+
+		public Histogram(int[] values, int[] occurances)
+		{
+			Entries = new Dictionary<int, int>();
+			for (int i = 0; i < values.Length; i++)
+			{
+				Entries.Add(values[i], occurances[i]);
+			}
 		}
 	}
 

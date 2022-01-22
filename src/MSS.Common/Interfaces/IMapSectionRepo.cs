@@ -13,5 +13,7 @@ namespace MSS.Common
 		Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
 
 		Task<string> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
+
+		long? ClearMapSections(string subdivisionId);
 	}
 }

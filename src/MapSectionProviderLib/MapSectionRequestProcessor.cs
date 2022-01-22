@@ -68,6 +68,11 @@ namespace MapSectionProviderLib
 			_mapSectionPersistProcessor?.Stop(immediately);
 		}
 
+		public long? ClearMapSections(string subdivisionId)
+		{
+			return _mapSectionRepo.ClearMapSections(subdivisionId);
+		}
+
 		private async Task ProcessTheQueueAsync(MapSectionPersistProcessor mapSectionPersistProcessor, CancellationToken ct)
 		{
 			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)

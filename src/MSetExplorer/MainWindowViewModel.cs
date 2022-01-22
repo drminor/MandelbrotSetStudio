@@ -34,25 +34,6 @@ namespace MSetExplorer
 		public readonly SizeInt BlockSize;
 		public bool IsLoadingComplete => _mapLoaderTask == null;
 
-		public PointInt GetBlockPosition_Old(Point screenPos)
-		{
-			var x = (int)Math.Round(screenPos.X);
-			var l = Math.DivRem(x, BlockSize.Width, out var remainder);
-			if (remainder > 0)
-			{
-				l++;
-			}
-
-			var invertedY = _job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
-			var b = Math.DivRem(invertedY, BlockSize.Height, out remainder);
-			if (remainder > 0)
-			{
-				b++;
-			}
-
-			return new PointInt(l, b).Scale(BlockSize).Diff(BlockSize);
-		}
-
 		public PointInt GetBlockPosition(Point screenPos)
 		{
 			var x = (int)Math.Round(screenPos.X);
@@ -73,7 +54,7 @@ namespace MSetExplorer
 		}
 
 
-		public void LoadMap(SizeInt canvasControlSize, MSetInfo mSetInfo, IProgress<MapSection> progress)
+		public void LoadMap(SizeInt canvasControlSize, MSetInfo mSetInfo, bool refreshMapSections, IProgress<MapSection> progress)
 		{
 			if (!(_job is null))
 			{
@@ -91,7 +72,7 @@ namespace MSetExplorer
 			_job = BuildJob(canvasControlSize, mSetInfo);
 
 			_mapLoader = new MapLoader(_mapSectionRequestProcessor);
-			_mapLoaderTask = Task.Run(() => _mapLoader.LoadMap(_job, HandleMapSection));
+			_mapLoaderTask = Task.Run(() => _mapLoader.LoadMap(_job, refreshMapSections, HandleMapSection));
 			_ = _mapLoaderTask.ContinueWith(OnTaskComplete);
 		}
 
@@ -152,5 +133,27 @@ namespace MSetExplorer
 			_mapLoaderTask = null;
 		}
 
+		#region NOT USED
+
+		public PointInt GetBlockPosition_Old(Point screenPos)
+		{
+			var x = (int)Math.Round(screenPos.X);
+			var l = Math.DivRem(x, BlockSize.Width, out var remainder);
+			if (remainder > 0)
+			{
+				l++;
+			}
+
+			var invertedY = _job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
+			var b = Math.DivRem(invertedY, BlockSize.Height, out remainder);
+			if (remainder > 0)
+			{
+				b++;
+			}
+
+			return new PointInt(l, b).Scale(BlockSize).Diff(BlockSize);
+		}
+
+		#endregion
 	}
 }

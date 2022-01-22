@@ -1,5 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
@@ -9,23 +10,28 @@ namespace MSetExplorer
 {
 	internal class MapLoader
 	{
-		private MapSectionRequestProcessor _mapSectionRequstProcessor;
+		private MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		public MapLoader(MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			_mapSectionRequstProcessor = mapSectionRequestProcessor;
+			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 		}
 
-		public void LoadMap(Job job, Action<MapSection> callback)
+		public void LoadMap(Job job, bool refreshMapSections, Action<MapSection> callback)
 		{
+			if (refreshMapSections)
+			{
+				_mapSectionRequestProcessor.ClearMapSections(job.Subdivision.Id.ToString());
+			}
+
 			GetSections(job.MSetInfo, job.Subdivision, job.CanvasSizeInBlocks, job.MapBlockOffset, callback);
 		}
 
 		public void Stop()
 		{
-			if (!(_mapSectionRequstProcessor is null))
+			if (!(_mapSectionRequestProcessor is null))
 			{
-				_mapSectionRequstProcessor.Stop(immediately: false);
+				_mapSectionRequestProcessor.Stop(immediately: false);
 			}
 		}
 
@@ -49,7 +55,7 @@ namespace MSetExplorer
 					// Translate to subdivision coordinates.
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr).Translate(mapBlockOffset);
 					var mapSectionRequest = MapSectionHelper.CreateRequest(subdivision, blockPosition, mSetInfo.MapCalcSettings);
-					_mapSectionRequstProcessor.AddWork(mapSectionRequest, HandleResponse);
+					_mapSectionRequestProcessor.AddWork(mapSectionRequest, HandleResponse);
 				}
 			}
 		}

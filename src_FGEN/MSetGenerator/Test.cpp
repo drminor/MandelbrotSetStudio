@@ -81,7 +81,9 @@ extern "C"
         SizeInt blockSize = SizeInt(mapSectionRequest.blockSizeWidth, mapSectionRequest.blockSizeHeight);
         SizeDd sampleSize = SizeDd(deltaWidth, deltaHeight);
 
-        g->FillCountsVec(pos, blockSize, sampleSize, 100, counts, doneFlags, zValues);
+        int targetCount = mapSectionRequest.maxIterations;
+
+        g->FillCountsVec(pos, blockSize, sampleSize, targetCount, counts, doneFlags, zValues);
 
         delete g;
 

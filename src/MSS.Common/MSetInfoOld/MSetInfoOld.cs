@@ -1,7 +1,8 @@
 ﻿using MSS.Types.MSet;
+using MSS.Types.MSetOld;
 using System;
 
-namespace MSS.Types.MSetOld
+namespace MSS.Common
 {
 	public class MSetInfoOld
     {

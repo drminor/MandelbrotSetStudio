@@ -1,9 +1,11 @@
-﻿using System;
+﻿using ProtoBuf;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types
 {
+	[ProtoContract(SkipConstructor = true)]
 	public struct SizeInt : IEquatable<SizeInt>, IEqualityComparer<SizeInt>
 	{
 		public SizeInt(int width, int heigth)
@@ -12,8 +14,10 @@ namespace MSS.Types
 			Height = heigth;
 		}
 
+		[ProtoMember(1)]
 		public int Width { get; set; }
 
+		[ProtoMember(2)]
 		public int Height { get; set; }
 
 		public int NumberOfCells => Width * Height;
