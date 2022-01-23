@@ -6,6 +6,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,35 +18,55 @@ namespace MSetExplorer
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
-		private Job _job;
-		private MapLoader _mapLoader;
-		private IProgress<MapSection> _progress;
-		private Task _mapLoaderTask;
+		private readonly List<GenMapRequestInfo> _requestStack;
 
 		private readonly object hmsLock = new();
+
+		//private Job _job;
+		//private MapLoader _mapLoader;
+		//private Task _mapLoaderTask;
+
 
 		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			BlockSize = blockSize;
 			_projectAdapter = projectAdapter;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
+
+			_requestStack = new List<GenMapRequestInfo>();
+
+			Progress = null;
 		}
 
+		#region Public Properties
+
+		public IProgress<MapSection> Progress { get; set; }
+
 		public readonly SizeInt BlockSize;
-		public bool IsLoadingComplete => _mapLoaderTask == null;
+
+		private GenMapRequestInfo CurrentRequest => _requestStack.Count == 0 ? null : _requestStack[^1];
+		private int? CurrentGenMapRequestId => CurrentRequest?.GenMapRequestId;
+
+		public Job CurrentJob => CurrentRequest?.Job;
+
+		#endregion
+
+		#region Public Methods
 
 		public PointInt GetBlockPosition(Point screenPos)
 		{
 			var x = (int)Math.Round(screenPos.X);
 			var l = Math.DivRem(x, BlockSize.Width, out var remainder);
-			if (remainder == 0)
+			if (remainder == 0 && l > 0)
 			{
 				l--;
 			}
 
-			var invertedY = _job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
+			var job = CurrentRequest.Job;
+
+			var invertedY = job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
 			var b = Math.DivRem(invertedY, BlockSize.Height, out remainder);
-			if (remainder == 0)
+			if (remainder == 0 && b > 0)
 			{
 				b--;
 			}
@@ -53,27 +74,40 @@ namespace MSetExplorer
 			return new PointInt(l, b).Scale(BlockSize);
 		}
 
-
-		public void LoadMap(SizeInt canvasControlSize, MSetInfo mSetInfo, bool refreshMapSections, IProgress<MapSection> progress)
+		public long? ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
 		{
-			if (!(_job is null))
-			{
-				Debug.WriteLine("Warning, not saving current job.");
+			var job = BuildJob(canvasControlSize, mSetInfo);
 
-				if (!(_mapLoader is null))
+			var numberDeleted = _mapSectionRequestProcessor.ClearMapSections(job.Subdivision.Id.ToString());
+			return numberDeleted;
+		}
+
+		#endregion
+
+		#region Map Support
+
+		public void LoadMap(SizeInt canvasControlSize, MSetInfo mSetInfo)
+		{
+			var curReq = CurrentRequest;
+			curReq?.MapLoader?.Stop();
+
+			var job = BuildJob(canvasControlSize, mSetInfo);
+			var mapLoader = new MapLoader(job, HandleMapSection, _mapSectionRequestProcessor);
+			var genMapRequestInfo = new GenMapRequestInfo(job, mapLoader.GenMapRequestId, mapLoader);
+			_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
+
+			_requestStack.Add(genMapRequestInfo);
+		}
+
+		private void HandleMapSection(int jobId, MapSection mapSection)
+		{
+			lock (hmsLock)
+			{
+				if (jobId == CurrentGenMapRequestId)
 				{
-					throw new InvalidOperationException("Cannot call GenerateMapSections until the current task is complete.");
+					Progress.Report(mapSection);
 				}
 			}
-
-			_progress = progress;
-
-			//canvasControlSize = canvasControlSize.Scale(0.9);
-			_job = BuildJob(canvasControlSize, mSetInfo);
-
-			_mapLoader = new MapLoader(_mapSectionRequestProcessor);
-			_mapLoaderTask = Task.Run(() => _mapLoader.LoadMap(_job, refreshMapSections, HandleMapSection));
-			_ = _mapLoaderTask.ContinueWith(OnTaskComplete);
 		}
 
 		private Job BuildJob(SizeInt canvasControlSize, MSetInfo mSetInfo)
@@ -116,42 +150,6 @@ namespace MSetExplorer
 		{
 			var result = new SizeDbl(0, 0);
 			return result;
-		}
-
-		private void HandleMapSection(MapSection mapSection)
-		{
-			lock (hmsLock)
-			{
-				_progress.Report(mapSection);
-			}
-		}
-
-		private void OnTaskComplete(Task t)
-		{
-			_mapLoader.Stop();
-			_mapLoader = null;
-			_mapLoaderTask = null;
-		}
-
-		#region NOT USED
-
-		public PointInt GetBlockPosition_Old(Point screenPos)
-		{
-			var x = (int)Math.Round(screenPos.X);
-			var l = Math.DivRem(x, BlockSize.Width, out var remainder);
-			if (remainder > 0)
-			{
-				l++;
-			}
-
-			var invertedY = _job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
-			var b = Math.DivRem(invertedY, BlockSize.Height, out remainder);
-			if (remainder > 0)
-			{
-				b++;
-			}
-
-			return new PointInt(l, b).Scale(BlockSize).Diff(BlockSize);
 		}
 
 		#endregion

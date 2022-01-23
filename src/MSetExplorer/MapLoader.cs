@@ -5,70 +5,120 @@ using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MSetExplorer
 {
 	internal class MapLoader
 	{
-		private MapSectionRequestProcessor _mapSectionRequestProcessor;
+		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
+		private readonly Job _job;
+		private readonly SizeInt _blockSize;
+		private readonly SizeInt _mapBlockOffset;
+		private readonly Action<int, MapSection> _callback;
+		private readonly ColorMap _colorMap;
 
-		public MapLoader(MapSectionRequestProcessor mapSectionRequestProcessor)
+		private bool _isStopping;
+		private bool _hasStopped;
+		private int _sectionsRequested;
+		private int _sectionCompleted;
+
+		private TaskCompletionSource _tcs;
+
+		public MapLoader(Job job, Action<int, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			_mapSectionRequestProcessor = mapSectionRequestProcessor;
+			GenMapRequestId = mapSectionRequestProcessor.GetNextRequestId();
+
+			_job = job;
+			_callback = callback;
+			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
+
+			_blockSize = job.Subdivision.BlockSize;
+			_mapBlockOffset = job.MapBlockOffset;
+			var mSetInfo = job.MSetInfo;
+
+			_colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
+
+			_isStopping = false;
+			_hasStopped = false;
+			_sectionsRequested = 0;
+			_sectionCompleted = 0;
+
+			_tcs = null;
 		}
 
-		public void LoadMap(Job job, bool refreshMapSections, Action<MapSection> callback)
+		public int GenMapRequestId { get; }
+
+		public Task Start()
 		{
-			if (refreshMapSections)
+			if (_tcs != null)
 			{
-				_mapSectionRequestProcessor.ClearMapSections(job.Subdivision.Id.ToString());
+				throw new InvalidOperationException("This MapLoader has already been started.");
 			}
 
-			GetSections(job.MSetInfo, job.Subdivision, job.CanvasSizeInBlocks, job.MapBlockOffset, callback);
+			_tcs = new TaskCompletionSource();
+			_ = Task.Run(SubmitSectionRequests);
+			return _tcs.Task;
+		}
+
+		private void SubmitSectionRequests()
+		{
+			var canvasSize = _job.CanvasSizeInBlocks;
+			for (var yBlockPtr = 0; yBlockPtr < canvasSize.Height; yBlockPtr++)
+			{
+				for (var xBlockPtr = 0; xBlockPtr < canvasSize.Width; xBlockPtr++)
+				{
+					if (_isStopping)
+					{
+						if (_sectionCompleted == _sectionsRequested)
+						{
+							_hasStopped = true;
+							_tcs.SetResult();
+						}
+						break;
+					}
+
+					// Translate to subdivision coordinates.
+					var blockPosition = new PointInt(xBlockPtr, yBlockPtr).Translate(_mapBlockOffset);
+					var mapSectionRequest = MapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, _job.MSetInfo.MapCalcSettings);
+					_mapSectionRequestProcessor.AddWork(GenMapRequestId, mapSectionRequest, HandleResponse);
+					_ = Interlocked.Increment(ref _sectionsRequested);
+				}
+			}
 		}
 
 		public void Stop()
 		{
-			if (!(_mapSectionRequestProcessor is null))
+			if (_tcs == null)
 			{
-				_mapSectionRequestProcessor.Stop(immediately: false);
+				throw new InvalidOperationException("This MapLoader has not been started.");
 			}
-		}
 
-		private SizeInt _blockSize;
-		private SizeInt _mapBlockOffset;
-		private Action<MapSection> _callback;
-		private ColorMap _colorMap;
-
-		private void GetSections(MSetInfo mSetInfo, Subdivision subdivision, SizeInt canvasSizeInBlocks, SizeInt mapBlockOffset, Action<MapSection> callback)
-		{
-			_blockSize = subdivision.BlockSize;
-			_mapBlockOffset = mapBlockOffset;
-			_callback = callback;
-
-			_colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
-
-			for (var yBlockPtr = 0; yBlockPtr < canvasSizeInBlocks.Height; yBlockPtr++)
+			if (!_isStopping)
 			{
-				for (var xBlockPtr = 0; xBlockPtr < canvasSizeInBlocks.Width ; xBlockPtr++)
-				{
-					// Translate to subdivision coordinates.
-					var blockPosition = new PointInt(xBlockPtr, yBlockPtr).Translate(mapBlockOffset);
-					var mapSectionRequest = MapSectionHelper.CreateRequest(subdivision, blockPosition, mSetInfo.MapCalcSettings);
-					_mapSectionRequestProcessor.AddWork(mapSectionRequest, HandleResponse);
-				}
+				_mapSectionRequestProcessor.CancelJob(GenMapRequestId);
+				_isStopping = true;
 			}
 		}
 
 		private void HandleResponse(MapSectionResponse mapSectionResponse)
 		{
+			_ = Interlocked.Increment(ref _sectionCompleted);
 			var pixels1d = GetPixelArray(mapSectionResponse.Counts, _blockSize, _colorMap);
 
 			// Translate subdivision coordinates to screen coordinates.
 			var position = mapSectionResponse.BlockPosition.Diff(_mapBlockOffset).Scale(_blockSize);
 			var mapSection = new MapSection(position, _blockSize, pixels1d);
 
-			_callback(mapSection);
+			_callback(GenMapRequestId, mapSection);
+			
+			if (_sectionCompleted == _job.CanvasSizeInBlocks.NumberOfCells
+				|| (_isStopping && _sectionCompleted == _sectionsRequested))
+			{
+				_hasStopped = true;
+				_tcs.SetResult();
+			}
 		}
 
 		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap)
