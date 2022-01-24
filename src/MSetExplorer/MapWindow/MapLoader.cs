@@ -5,6 +5,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +21,6 @@ namespace MSetExplorer
 		private readonly ColorMap _colorMap;
 
 		private bool _isStopping;
-		private bool _hasStopped;
 		private int _sectionsRequested;
 		private int _sectionCompleted;
 
@@ -41,7 +41,6 @@ namespace MSetExplorer
 			_colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
 
 			_isStopping = false;
-			_hasStopped = false;
 			_sectionsRequested = 0;
 			_sectionCompleted = 0;
 
@@ -73,7 +72,6 @@ namespace MSetExplorer
 					{
 						if (_sectionCompleted == _sectionsRequested)
 						{
-							_hasStopped = true;
 							_tcs.SetResult();
 						}
 						break;
@@ -81,7 +79,10 @@ namespace MSetExplorer
 
 					// Translate to subdivision coordinates.
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr).Translate(_mapBlockOffset);
-					var mapSectionRequest = MapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, _job.MSetInfo.MapCalcSettings);
+					var mapSectionRequest = MapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, _job.MSetInfo.MapCalcSettings, out var mapPosition);
+
+					Debug.WriteLine($"Sending request for {blockPosition} with map position: {mapPosition}");
+
 					_mapSectionRequestProcessor.AddWork(GenMapRequestId, mapSectionRequest, HandleResponse);
 					_ = Interlocked.Increment(ref _sectionsRequested);
 				}
@@ -95,7 +96,7 @@ namespace MSetExplorer
 				throw new InvalidOperationException("This MapLoader has not been started.");
 			}
 
-			if (!_isStopping)
+			if (!_isStopping && _tcs.Task.Status != TaskStatus.RanToCompletion)
 			{
 				_mapSectionRequestProcessor.CancelJob(GenMapRequestId);
 				_isStopping = true;
@@ -116,7 +117,6 @@ namespace MSetExplorer
 			if (_sectionCompleted == _job.CanvasSizeInBlocks.NumberOfCells
 				|| (_isStopping && _sectionCompleted == _sectionsRequested))
 			{
-				_hasStopped = true;
 				_tcs.SetResult();
 			}
 		}

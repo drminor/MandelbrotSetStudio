@@ -75,5 +75,10 @@ namespace MSS.Types
 				: new RSize(X - amount.X, Y - amount.Y, Exponent);
 		}
 
+		public override string? ToString()
+		{
+			string result = BigIntegerHelper.GetDisplay(this.Values, this.Exponent);
+			return result;
+		}
 	}
 }

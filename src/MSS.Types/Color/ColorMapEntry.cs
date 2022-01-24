@@ -1,9 +1,10 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.Text.Json.Serialization;
 
 namespace MSS.Types
 {
-    public class ColorMapEntry
+    public class ColorMapEntry : ICloneable
     {
         public int CutOff { get; init; }
         public ColorMapColor StartColor { get; init; }
@@ -27,5 +28,14 @@ namespace MSS.Types
             EndColor = endColor;
         }
 
-    }
+        public ColorMapEntry Clone()
+		{
+            return new ColorMapEntry(CutOff, StartColor.CssColor, BlendStyle, EndColor.CssColor);
+		}
+
+		object ICloneable.Clone()
+		{
+            return Clone();
+		}
+	}
 }

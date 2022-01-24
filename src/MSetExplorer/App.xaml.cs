@@ -2,6 +2,7 @@
 using MEngineClient;
 using MSetRepo;
 using MSS.Common;
+using System.Diagnostics;
 using System.Windows;
 
 namespace MSetExplorer
@@ -14,6 +15,9 @@ namespace MSetExplorer
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
 
+		MapSectionPersistProcessor _mapSectionPersistProcessor;
+		MapSectionRequestProcessor _mapSectionRequestProcessor;
+
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
@@ -24,15 +28,34 @@ namespace MSetExplorer
 			var mEngineClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
 			var mapSectionRepo = MSetRepoHelper.GetMapSectionRepo(MONGO_DB_CONN_STRING);
 
-			MapSectionPersistProcessor mapSectionPersistProcessor = null;
-			//var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionRepo);
+			//_mapSectionPersistProcessor = null;
+			_mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionRepo);
 
-			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, mapSectionPersistProcessor);
+			_mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, _mapSectionPersistProcessor);
 
-			var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, mapSectionRequestProcessor);
+			var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor);
 			window.DataContext = viewModel;
 
 			window.Show();
 		}
+
+		protected override void OnExit(ExitEventArgs e)
+		{
+			base.OnExit(e);
+
+			if (_mapSectionRequestProcessor != null)
+			{
+				_mapSectionRequestProcessor.Dispose();
+			}
+
+			if (_mapSectionPersistProcessor != null)
+			{
+				_mapSectionPersistProcessor.Dispose();
+			}
+
+			Debug.WriteLine("The request and persist processors have been closed.");
+
+		}
+
 	}
 }

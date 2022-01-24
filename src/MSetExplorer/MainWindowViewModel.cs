@@ -22,11 +22,6 @@ namespace MSetExplorer
 
 		private readonly object hmsLock = new();
 
-		//private Job _job;
-		//private MapLoader _mapLoader;
-		//private Task _mapLoaderTask;
-
-
 		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			BlockSize = blockSize;
@@ -53,26 +48,26 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public PointInt GetBlockPosition(Point screenPos)
-		{
-			var x = (int)Math.Round(screenPos.X);
-			var l = Math.DivRem(x, BlockSize.Width, out var remainder);
-			if (remainder == 0 && l > 0)
-			{
-				l--;
-			}
+		//public PointInt GetBlockPosition(Point screenPos)
+		//{
+		//	var x = (int)Math.Round(screenPos.X);
+		//	var l = Math.DivRem(x, BlockSize.Width, out var remainder);
+		//	if (remainder == 0 && l > 0)
+		//	{
+		//		l--;
+		//	}
 
-			var job = CurrentRequest.Job;
+		//	var job = CurrentRequest.Job;
 
-			var invertedY = job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
-			var b = Math.DivRem(invertedY, BlockSize.Height, out remainder);
-			if (remainder == 0 && b > 0)
-			{
-				b--;
-			}
+		//	var invertedY = job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
+		//	var b = Math.DivRem(invertedY, BlockSize.Height, out remainder);
+		//	if (remainder == 0 && b > 0)
+		//	{
+		//		b--;
+		//	}
 
-			return new PointInt(l, b).Scale(BlockSize);
-		}
+		//	return new PointInt(l, b).Scale(BlockSize);
+		//}
 
 		public long? ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
 		{

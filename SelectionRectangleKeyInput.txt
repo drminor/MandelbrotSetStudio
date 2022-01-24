@@ -1,0 +1,13 @@
+
+Enter, Left Mouse Up = Show
+ESC = Hide
+Canvas Enter - Show if activated
+Canvas Leave - Hide
+
+H = ScrollWheel Adjusts Width, Mouse is not tracked
+V = ScrollWheel Adjusts Height
+
+M = Position of center tracks mouse, ScrollWheel adjust size, keeping aspect ratio
+	If mouse moves further left than 1/2 width of rectangle + left side of canvas, rectangle is positioned so it's left side is at positon 0.
+
+

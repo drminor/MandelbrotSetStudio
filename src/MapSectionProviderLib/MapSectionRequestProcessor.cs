@@ -55,15 +55,21 @@ namespace MapSectionProviderLib
 
 		public void AddWork(int jobId, MapSectionRequest mapSectionRequest, Action<MapSectionResponse> workAction)
 		{
-			var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(jobId, mapSectionRequest, workAction);
-			_workQueue.Add(mapSectionWorkItem);
+			if (!_workQueue.IsAddingCompleted)
+			{
+				var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(jobId, mapSectionRequest, workAction);
+				_workQueue.Add(mapSectionWorkItem);
+			}
 		}
 
 		public void CancelJob(int jobId)
 		{
 			lock(_lock)
 			{
-				_cancelledJobIds.Add(jobId);
+				if (!_cancelledJobIds.Contains(jobId))
+				{
+					_cancelledJobIds.Add(jobId);
+				}
 			}
 		}
 
@@ -75,11 +81,18 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				_workQueue.CompleteAdding();
+				if (!_workQueue.IsCompleted && !_workQueue.IsAddingCompleted)
+				{
+					_workQueue.CompleteAdding();
+				}
 			}
 
-			_ = _workQueueProcessor1.Wait(120 * 1000);
-			_ = _workQueueProcessor2.Wait(120 * 1000);
+			try
+			{
+				_ = _workQueueProcessor1.Wait(120 * 1000);
+				_ = _workQueueProcessor2.Wait(120 * 1000);
+			}
+			catch { }
 
 			_mapSectionPersistProcessor?.Stop(immediately);
 		}

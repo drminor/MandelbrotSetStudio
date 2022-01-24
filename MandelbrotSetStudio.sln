@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		MongoDb_Schemas.txt = MongoDb_Schemas.txt
 		Notes\Normalize_Sample_Math.txt = Notes\Normalize_Sample_Math.txt
 		Notes\Printing Resolution and Sizes.txt = Notes\Printing Resolution and Sizes.txt
+		SelectionRectangleKeyInput.txt = SelectionRectangleKeyInput.txt
 		Notes\SpatialCoordsAndHashes_restored.txt = Notes\SpatialCoordsAndHashes_restored.txt
 		Notes\Top-level regions_restored.txt = Notes\Top-level regions_restored.txt
 	EndProjectSection
@@ -50,7 +51,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MEngineClient", "src\MEngin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSetExplorer", "src\MSetExplorer\MSetExplorer.csproj", "{2077E638-438E-4FFD-B114-6E8B8235B2C9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapSectionProviderLib", "src\MapSectionProviderLib\MapSectionProviderLib.csproj", "{BBF430DC-B378-4F9A-95FB-06D4E7DE5864}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MapSectionProviderLib", "src\MapSectionProviderLib\MapSectionProviderLib.csproj", "{BBF430DC-B378-4F9A-95FB-06D4E7DE5864}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

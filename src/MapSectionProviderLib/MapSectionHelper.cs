@@ -8,14 +8,14 @@ namespace MapSectionProviderLib
 {
 	public static class MapSectionHelper
 	{
-		public static MapSectionRequest CreateRequest(Subdivision subdivision, PointInt blockPosition, MapCalcSettings mapCalcSettings)
+		public static MapSectionRequest CreateRequest(Subdivision subdivision, PointInt blockPosition, MapCalcSettings mapCalcSettings, out RPoint mapPosition)
 		{
 			var subdivionsPosition = subdivision.Position;
 			var samplePointDelta = subdivision.SamplePointDelta;
 
 			RMapHelper.NormalizeInPlace(ref subdivionsPosition, ref samplePointDelta);
 
-			var position = subdivionsPosition.Translate(samplePointDelta.Scale(blockPosition.Scale(subdivision.BlockSize)));
+			mapPosition = subdivionsPosition.Translate(samplePointDelta.Scale(blockPosition.Scale(subdivision.BlockSize)));
 
 			var dtoMapper = new DtoMapper();
 
@@ -24,7 +24,7 @@ namespace MapSectionProviderLib
 				SubdivisionId = subdivision.Id.ToString(),
 				BlockPosition = blockPosition,
 				BlockSize = subdivision.BlockSize,
-				Position = dtoMapper.MapTo(position),
+				Position = dtoMapper.MapTo(mapPosition),
 				SamplePointsDelta = dtoMapper.MapTo(subdivision.SamplePointDelta),
 				MapCalcSettings = mapCalcSettings
 			};
