@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
@@ -10,6 +11,10 @@ namespace MSetExplorer.MapWindow
 {
 	internal class SelectionRectangle
 	{
+
+		private const int PITCH = 16;
+
+
 		private readonly Canvas _canvas;
 		private readonly SizeInt _defaultSize;
 		private readonly Rectangle _selectedArea;
@@ -29,7 +34,7 @@ namespace MSetExplorer.MapWindow
 				Height = _defaultSize.Height,
 				Fill = Brushes.Transparent,
 				Stroke = BuildDrawingBrush(),
-				StrokeThickness = 1,
+				StrokeThickness = 4,
 				Visibility = Visibility.Hidden,
 				Focusable = true
 			};
@@ -39,7 +44,7 @@ namespace MSetExplorer.MapWindow
 			_ = _canvas.Children.Add(_selectedArea);
 			_selectedArea.SetValue(Panel.ZIndexProperty, 10);
 
-			Move(new Point(0, 0));
+			//Move(new Point(0, 0));
 
 			_selectedArea.KeyUp += SelectedArea_KeyUp;
 			canvas.MouseWheel += Canvas_MouseWheel;
@@ -57,6 +62,16 @@ namespace MSetExplorer.MapWindow
 
 		#region Public Properties
 
+		public Rect Area
+		{
+			get
+			{
+				var p = GetPosition();
+				var s = GetSize();
+				var result = new Rect(p, s);
+				return result;
+			}
+		}
 
 		public bool IsActive
 		{
@@ -113,7 +128,7 @@ namespace MSetExplorer.MapWindow
 
 		#region Event Handlers
 
-		private void Canvas_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+		private void Canvas_MouseWheel(object sender, MouseWheelEventArgs e)
 		{
 			//Debug.WriteLine("The canvas received a MouseWheel event.");
 
@@ -125,13 +140,13 @@ namespace MSetExplorer.MapWindow
 
 			if (e.Delta > 0)
 			{
-				newPos = new Point(cPos.X - 2, cPos.Y - 2);
-				newSize = new Size(cSize.Width + 4, cSize.Height + 4);
+				newPos = new Point(cPos.X - PITCH, cPos.Y - PITCH);
+				newSize = new Size(cSize.Width + PITCH * 2, cSize.Height + PITCH * 2);
 			}
-			else if (e.Delta < 0 && cSize.Width > 8 && cSize.Height > 8)
+			else if (e.Delta < 0 && cSize.Width >= PITCH * 4 && cSize.Height >= PITCH * 4)
 			{
-				newPos = new Point(cPos.X + 2, cPos.Y + 2);
-				newSize = new Size(cSize.Width - 4, cSize.Height - 4);
+				newPos = new Point(cPos.X + PITCH, cPos.Y + PITCH);
+				newSize = new Size(cSize.Width - PITCH * 2, cSize.Height - PITCH * 2);
 			}
 			else
 			{
@@ -144,23 +159,23 @@ namespace MSetExplorer.MapWindow
 			e.Handled = true;
 		}
 
-		private void SelectedArea_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
 		{
 			if (!IsActive)
 			{
-				Debug.WriteLine($"The {e.Key} was pressed, but we are not active, returning.");
+				//Debug.WriteLine($"The {e.Key} was pressed, but we are not active, returning.");
 				return;
 			}
 
-			Debug.WriteLine($"The {e.Key} was pressed.");
+			//Debug.WriteLine($"The {e.Key} was pressed.");
 
-			if (e.Key == System.Windows.Input.Key.Escape)
+			if (e.Key == Key.Escape)
 			{
 				IsActive = false;
 			}
 		}
 
-		private void Canvas_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+		private void Canvas_MouseMove(object sender, MouseEventArgs e)
 		{
 			if (_isActive)
 			{
@@ -172,7 +187,7 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
-		private void Canvas_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+		private void Canvas_MouseLeave(object sender, MouseEventArgs e)
 		{
 			if (_isActive)
 			{
@@ -180,7 +195,7 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
-		private void Canvas_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+		private void Canvas_MouseEnter(object sender, MouseEventArgs e)
 		{
 			if (_isActive)
 			{
@@ -193,16 +208,31 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
+		private bool IsShiftKey()
+		{
+			return Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+		}
+
+		private bool IsCtrlKey()
+		{
+			return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+		}
+
+		private bool IsAltKey()
+		{
+			return Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
+		}
+
 		// Just for Diagnostics
 
-		private void SelectedArea_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		private void SelectedArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
 			var position = e.GetPosition(relativeTo: _canvas);
 
 			Debug.WriteLine($"The SelectionRectangle is getting a Mouse Left Button Down at {position}.");
 		}
 
-		private void SelectedArea_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+		private void SelectedArea_MouseWheel(object sender, MouseWheelEventArgs e)
 		{
 			Debug.WriteLine("The SelectionRectangle received a MouseWheel event.");
 		}
@@ -215,7 +245,7 @@ namespace MSetExplorer.MapWindow
 		{
 			//Debug.WriteLine($"Moving the sel rec to {position}, free form.");
 
-			var x = position.X - _selectedArea.Width / 2;
+			var x = RoundOff(position.X - (_selectedArea.Width / 2), PITCH);
 			if (x < 0)
 			{
 				x = 0;
@@ -232,7 +262,7 @@ namespace MSetExplorer.MapWindow
 				_selectedArea.SetValue(Canvas.LeftProperty, x);
 			}
 
-			var y = position.Y - (_selectedArea.Height / 2);
+			var y = RoundOff(position.Y - (_selectedArea.Height / 2), PITCH);
 			if (y < 0)
 			{
 				y = 0;
@@ -288,7 +318,10 @@ namespace MSetExplorer.MapWindow
 
 		private Point GetPosition()
 		{
-			return new Point((double)_selectedArea.GetValue(Canvas.LeftProperty), (double)_selectedArea.GetValue(Canvas.BottomProperty));
+			var x = (double)_selectedArea.GetValue(Canvas.LeftProperty);
+			var y = (double)_selectedArea.GetValue(Canvas.BottomProperty);
+
+			return new Point(double.IsNaN(x) ? 0 : x, double.IsNaN(y) ? 0: y);
 		}
 
 		private Size GetSize()
@@ -296,63 +329,107 @@ namespace MSetExplorer.MapWindow
 			return new Size(_selectedArea.Width, _selectedArea.Height);
 		}
 
+		private double RoundOff(double number, int interval)
+		{
+			int remainder = (int) Math.IEEERemainder(number, interval);
+			number += (remainder < interval / 2) ? -remainder : (interval - remainder);
+			return number;
+		}
+
 		#endregion
 
 		#region Drawing Support
+
+		//private DrawingBrush BuildDrawingBrush()
+		//{
+		//	var aDrawingGroup = new DrawingGroup();
+
+		//	var inc = 16;
+		//	var x = 0;
+		//	var y = 0;
+
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White));
+
+		//	x = 0;
+		//	y += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black));
+
+		//	x = 0;
+		//	y += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White));
+
+		//	x = 0;
+		//	y += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black));
+
+
+		//	var result = new DrawingBrush(aDrawingGroup)
+		//	{
+		//		TileMode = TileMode.Tile,
+		//		//Stretch = Stretch.None,
+		//		ViewportUnits = BrushMappingMode.Absolute,
+		//		Viewport = new Rect(0, 0, inc, inc)
+
+		//	};
+
+		//	return result;
+		//}
+
+		//private GeometryDrawing BuildDot(Rect rect, SolidColorBrush fill, SolidColorBrush outline)
+		//{
+		//	var result = new GeometryDrawing(
+		//		fill,
+		//		new Pen(outline, 1),
+		//		new RectangleGeometry(rect)
+		//	);
+
+		//	return result;
+		//}
 
 		private DrawingBrush BuildDrawingBrush()
 		{
 			var aDrawingGroup = new DrawingGroup();
 
-			var inc = 16;
+			var inc = 2;
 			var x = 0;
 			var y = 0;
 
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.Black, Brushes.Black)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.White, Brushes.White)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.Black, Brushes.Black)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.White, Brushes.White));
+			aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black)); x += inc;
+			aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White));
 
 			x = 0;
 			y += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.White, Brushes.White)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.Black, Brushes.Black)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.White, Brushes.White)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.Black, Brushes.Black));
-
-			x = 0;
-			y += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.Black, Brushes.Black)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.White, Brushes.White)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.Black, Brushes.Black)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.White, Brushes.White));
-
-			x = 0;
-			y += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.White, Brushes.White)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.Black, Brushes.Black)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.White, Brushes.White)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(new Rect(x, y, inc, inc), Brushes.Black, Brushes.Black));
-
+			aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White)); x += inc;
+			aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black));
 
 			var result = new DrawingBrush(aDrawingGroup)
 			{
 				TileMode = TileMode.Tile,
-				//Stretch = Stretch.None,
 				ViewportUnits = BrushMappingMode.Absolute,
-				Viewport = new Rect(0, 0, inc, inc)
-				
+				Viewport = new Rect(0, 0, inc * 2, inc * 2)
 			};
 
 			return result;
 		}
 
-		private GeometryDrawing BuildDot(Rect rect, SolidColorBrush fill, SolidColorBrush outline)
+		private GeometryDrawing BuildDot(int x, int y, int size, SolidColorBrush brush)
 		{
 			var result = new GeometryDrawing(
-				fill,
-				new Pen(outline, 1),
-				new RectangleGeometry(rect)
+				brush,
+				new Pen(brush, 0),
+				new RectangleGeometry(new Rect(new Point(x, y), new Size(size, size)))
 			);
 
 			return result;

@@ -1,4 +1,5 @@
 ﻿using MSetExplorer.MapWindow;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
@@ -39,7 +40,7 @@ namespace MSetExplorer
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var maxIterations = 700;
 			var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.LoadMap(canvasSize, mSetInfo);
+			_vm.LoadMap(canvasSize, mSetInfo, clearExistingMapSections: false);
 		}
 
 		private SizeInt GetCanvasControlSize(Canvas canvas)
@@ -118,21 +119,39 @@ namespace MSetExplorer
 
 					Debug.WriteLine($"Will start job here with position: {position}.");
 
-					// BlockPosition = X:1, Y:2
-					// X: -1.5 to -1
-					// Y: -0.5 to 0
+					var area = _selectedArea.Area;
+					var coords = GetCoords(area);
 
-					//x4
-					//X: -6 to -4
-					//Y: -2 to 0
-
-					//var coords = new RRectangle(-6, -4, -2, 0, -2);
-					//LoadMap(coords);  
+					var disp = BigIntegerHelper.GetDisplay(coords.Values, coords.Exponent);
+					Debug.WriteLine($"Starting Job with new coords: {disp}.");
+					LoadMap(coords, clearExistingMapSections: true);
 				}
 			}
 		}
 
-		private void LoadMap(RRectangle coords)
+		private RRectangle GetCoords(Rect area)
+		{
+			var areaInt = new RectangleInt(
+				new PointInt((int)Math.Round(area.X), (int)Math.Round(area.Y)),
+				new SizeInt((int)Math.Round(area.Width), (int)Math.Round(area.Height))
+				);
+
+			var curJob = _vm.CurrentJob;
+
+			var curPos = curJob.MSetInfo.Coords.LeftBot;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			var offset = samplePointDelta.Scale(areaInt.Point);
+			RMapHelper.NormalizeInPlace(ref curPos, ref offset);
+
+			var newPos = curPos.Translate(offset);
+			var newSize = samplePointDelta.Scale(areaInt.Size);
+
+			var result = new RRectangle(newPos.X, newPos.X + newSize.Width, newPos.Y, newPos.Y + newSize.Height, curPos.Exponent);
+
+			return result;
+		}
+
+		private void LoadMap(RRectangle coords, bool clearExistingMapSections)
 		{
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var curMSetInfo = _vm.CurrentJob.MSetInfo;
@@ -147,7 +166,7 @@ namespace MSetExplorer
 				}
 			}
 
-			_vm.LoadMap(canvasSize, mSetInfo);
+			_vm.LoadMap(canvasSize, mSetInfo, clearExistingMapSections);
 		}
 
 		private class ScreenSection

@@ -143,7 +143,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public Subdivision GetOrCreateSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize)
+		public Subdivision GetOrCreateSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, out bool created)
 		{
 			SubdivisionRecord subdivisionRecord;
 
@@ -158,10 +158,12 @@ namespace MSetRepo
 				var subdivision = new Subdivision(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize);
 				var subId = InsertSubdivision(subdivision, subdivisionReaderWriter);
 				subdivisionRecord = subdivisionReaderWriter.Get(subId);
+				created = true;
 			}
 			else
 			{
 				subdivisionRecord = matches[0];
+				created = false;
 			}
 
 			var result = _mSetRecordMapper.MapFrom(subdivisionRecord);
@@ -181,6 +183,17 @@ namespace MSetRepo
 			var result = subdivisionReaderWriter.Insert(subdivisionRecord);
 
 			return result;
+		}
+
+		public bool DeleteSubdivision(Subdivision subdivision)
+		{
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			var subsDeleted = subdivisionReaderWriter.Delete(subdivision.Id);
+
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			_ = mapSectionReaderWriter.DeleteAllWithSubId(subdivision.Id);
+
+			return subsDeleted.HasValue && subsDeleted.Value > 0;
 		}
 
 		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo, SizeInt canvasSizeInBlocks, PointInt canvasBlockOffset, PointDbl canvasControlOffset, JobReaderWriter jobReaderWriter)

@@ -1,6 +1,7 @@
 ﻿using MEngineClient;
 using MEngineDataContracts;
 using MSS.Common;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -55,6 +56,7 @@ namespace MapSectionProviderLib
 
 		public void AddWork(int jobId, MapSectionRequest mapSectionRequest, Action<MapSectionResponse> workAction)
 		{
+			// TODO: Use a Lock to prevent update of IsAddingCompleted while we are in this method.
 			if (!_workQueue.IsAddingCompleted)
 			{
 				var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(jobId, mapSectionRequest, workAction);
@@ -97,9 +99,9 @@ namespace MapSectionProviderLib
 			_mapSectionPersistProcessor?.Stop(immediately);
 		}
 
-		public long? ClearMapSections(string subdivisionId)
+		public long? ClearMapSections(Subdivision subdivision)
 		{
-			return _mapSectionRepo.ClearMapSections(subdivisionId);
+			return _mapSectionRepo.ClearMapSections(subdivision.Id.ToString());
 		}
 
 		public int GetNextRequestId()

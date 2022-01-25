@@ -8,6 +8,7 @@ using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -48,51 +49,35 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		//public PointInt GetBlockPosition(Point screenPos)
-		//{
-		//	var x = (int)Math.Round(screenPos.X);
-		//	var l = Math.DivRem(x, BlockSize.Width, out var remainder);
-		//	if (remainder == 0 && l > 0)
-		//	{
-		//		l--;
-		//	}
-
-		//	var job = CurrentRequest.Job;
-
-		//	var invertedY = job.CanvasSizeInBlocks.Height * BlockSize.Height - ((int)Math.Round(screenPos.Y));
-		//	var b = Math.DivRem(invertedY, BlockSize.Height, out remainder);
-		//	if (remainder == 0 && b > 0)
-		//	{
-		//		b--;
-		//	}
-
-		//	return new PointInt(l, b).Scale(BlockSize);
-		//}
-
-		public long? ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
-		{
-			var job = BuildJob(canvasControlSize, mSetInfo);
-
-			var numberDeleted = _mapSectionRequestProcessor.ClearMapSections(job.Subdivision.Id.ToString());
-			return numberDeleted;
-		}
-
-		#endregion
-
-		#region Map Support
-
-		public void LoadMap(SizeInt canvasControlSize, MSetInfo mSetInfo)
+		public void LoadMap(SizeInt canvasControlSize, MSetInfo mSetInfo, bool clearExistingMapSections)
 		{
 			var curReq = CurrentRequest;
 			curReq?.MapLoader?.Stop();
 
-			var job = BuildJob(canvasControlSize, mSetInfo);
+			var job = BuildJob(canvasControlSize, mSetInfo, clearExistingMapSections);
+
+			var spd = job.Subdivision.SamplePointDelta;
+			var disp = BigIntegerHelper.GetDisplay(spd.Values, spd.Exponent);
+			Debug.WriteLine($"The new job has a SamplePointDelta of {disp}.");
+
 			var mapLoader = new MapLoader(job, HandleMapSection, _mapSectionRequestProcessor);
 			var genMapRequestInfo = new GenMapRequestInfo(job, mapLoader.GenMapRequestId, mapLoader);
-			_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
 
-			_requestStack.Add(genMapRequestInfo);
+			lock (hmsLock)
+			{
+				_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
+				_requestStack.Add(genMapRequestInfo);
+			}
 		}
+
+		public void ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
+		{
+			_ = BuildJob(canvasControlSize, mSetInfo, clearExistingMapSections: true);
+		}
+
+		#endregion
+
+		#region Private Methods 
 
 		private void HandleMapSection(int jobId, MapSection mapSection)
 		{
@@ -105,7 +90,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private Job BuildJob(SizeInt canvasControlSize, MSetInfo mSetInfo)
+		private Job BuildJob(SizeInt canvasControlSize, MSetInfo mSetInfo, bool clearExistingMapSections)
 		{
 			var project = new Project(ObjectId.GenerateNewId(), "un-named");
 
@@ -116,7 +101,7 @@ namespace MSetExplorer
 			var samplePointDelta = RMapHelper.GetSamplePointDelta(mSetInfo.Coords, canvasSize);
 
 			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, BlockSize, _projectAdapter);
+			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, BlockSize, _projectAdapter, deleteExisting: clearExistingMapSections);
 
 			// Get the number of blocks
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, BlockSize);
@@ -132,12 +117,19 @@ namespace MSetExplorer
 			return job;
 		}
 
-		private Subdivision GetSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
+		private Subdivision GetSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter, bool deleteExisting)
 		{
 			// Find an existing subdivision record that has a SamplePointDelta "close to" the given samplePointDelta
 			// and that is "in the neighborhood of our Map Set.
 
-			var result = projectAdapter.GetOrCreateSubdivision(position, samplePointDelta, blockSize);
+			var result = projectAdapter.GetOrCreateSubdivision(position, samplePointDelta, blockSize, out bool created);
+
+			if (deleteExisting && !created && result.DateCreated > DateTime.Parse("1/25/2022 22:00", CultureInfo.InvariantCulture))
+			{
+				_ = projectAdapter.DeleteSubdivision(result);
+				result = projectAdapter.GetOrCreateSubdivision(position, samplePointDelta, blockSize, out created);
+			}
+
 			return result;
 		}
 
