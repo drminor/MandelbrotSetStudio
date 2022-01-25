@@ -10,7 +10,7 @@ namespace MSS.Types.Base
 	{
 		[JsonIgnore]
 		[BsonIgnore]
-		public T[] Values;
+		public T[] Values { get; init; }
 
 		public Size() : this(default, default)
 		{ }

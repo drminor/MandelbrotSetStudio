@@ -131,7 +131,7 @@ namespace MSS.Common
 
 		public static int Normalize(BigInteger[] a, BigInteger[] b, int exponentA, int exponentB)
 		{
-			var reductionFactor = GetReductionFactor(a, b);
+			var reductionFactor = -1 * GetReductionFactor(a, b);
 
 			int result;
 
@@ -167,7 +167,7 @@ namespace MSS.Common
 			while(IsDivisibleBy(a, divisor) && IsDivisibleBy(b, divisor))
 			{
 				result++;
-				divisor += 2;
+				divisor *= 2;
 			}
 
 			return result;
@@ -209,20 +209,28 @@ namespace MSS.Common
 		{
 			if (exponentDelta < 0)
 			{
-				throw new InvalidOperationException($"Cannot ScaleBInPlace using an exponentDelta < 0. The exponentDelta is {exponentDelta}.");
-			}
+				//throw new InvalidOperationException($"Cannot ScaleBInPlace using an exponentDelta < 0. The exponentDelta is {exponentDelta}.");
 
-			if (exponentDelta == 0)
+				var factor = (long)Math.Pow(2, -1 * exponentDelta);
+				for (var i = 0; i < values.Length; i++)
+				{
+					values[i] /= factor;
+				}
+			}
+			else if (exponentDelta > 0)
 			{
+				var factor = (long)Math.Pow(2, exponentDelta);
+				for (var i = 0; i < values.Length; i++)
+				{
+					values[i] *= factor;
+				}
+			}
+			else
+			{
+				// Nothing to do, the delta is zero
 				return;
 			}
 
-			var factor = (long)Math.Pow(2, exponentDelta);
-
-			for (var i = 0; i < values.Length; i++)
-			{
-				values[i] *= factor;
-			}
 		}
 
 		#endregion
@@ -344,23 +352,26 @@ namespace MSS.Common
 			var coordBlockSize = samplePointDelta.Scale(blockSize);
 			NormalizeInPlace(ref mDistance, ref coordBlockSize);
 
-			var width = BigInteger.DivRem(mDistance.Width, coordBlockSize.Width, out var remainder);
-
-			if (remainder != 0)
-			{
-				width++;
-			}
-
-			var height = BigInteger.DivRem(mDistance.Height, coordBlockSize.Height, out remainder);
-
-			if (remainder != 0)
-			{
-				height++;
-			}
-
+			var width = RoundToBlock(mDistance.Width, coordBlockSize.Width);
+			var height = RoundToBlock(mDistance.Height, coordBlockSize.Height);
 			var result = new SizeInt((int)width, (int)height);
 
-			//var result = new PointInt(-4, -3);
+			return result;
+		}
+
+		private static BigInteger RoundToBlock(BigInteger x, BigInteger blockLength)
+		{
+			if (x == 0)
+			{
+				return 0;
+			}
+
+			var result = BigInteger.DivRem(x, blockLength, out var remainder);
+
+			if (remainder != 0)
+			{
+				result++;
+			}
 
 			return result;
 		}

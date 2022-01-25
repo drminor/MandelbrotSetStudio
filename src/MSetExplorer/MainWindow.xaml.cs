@@ -124,7 +124,7 @@ namespace MSetExplorer
 
 					var disp = BigIntegerHelper.GetDisplay(coords.Values, coords.Exponent);
 					Debug.WriteLine($"Starting Job with new coords: {disp}.");
-					LoadMap(coords, clearExistingMapSections: true);
+					LoadMap(coords, clearExistingMapSections: false);
 				}
 			}
 		}
@@ -146,7 +146,21 @@ namespace MSetExplorer
 			var newPos = curPos.Translate(offset);
 			var newSize = samplePointDelta.Scale(areaInt.Size);
 
-			var result = new RRectangle(newPos.X, newPos.X + newSize.Width, newPos.Y, newPos.Y + newSize.Height, curPos.Exponent);
+			//var dispP1 = BigIntegerHelper.GetDisplay(newPos);
+			//var dispS1 = BigIntegerHelper.GetDisplay(newSize);
+
+			//var newPos2 = newPos.Clone();
+			//var newSize2 = newSize.Clone();
+
+			//RMapHelper.NormalizeInPlace(ref newPos2, ref newSize2);
+			//var dispP2 = BigIntegerHelper.GetDisplay(newPos2);
+			//var dispS2 = BigIntegerHelper.GetDisplay(newSize2);
+
+			//Debug.WriteLine($"Before: {dispP1}, {dispS1} and After: {dispP2}, {dispS2}");
+			//var result = new RRectangle(newPos2.X, newPos2.X + newSize2.Width, newPos2.Y, newPos2.Y + newSize2.Height, newPos2.Exponent);
+
+			RMapHelper.NormalizeInPlace(ref newPos, ref newSize);
+			var result = new RRectangle(newPos.X, newPos.X + newSize.Width, newPos.Y, newPos.Y + newSize.Height, newPos.Exponent);
 
 			return result;
 		}

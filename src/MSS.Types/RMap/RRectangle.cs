@@ -6,7 +6,7 @@ using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RRectangle : Rectangle<BigInteger>, ICloneable
+	public class RRectangle : Rectangle<BigInteger>, IBigRatShape
 	{
 		public int Exponent { get; init; }
 
@@ -41,7 +41,7 @@ namespace MSS.Types
 		public BigInteger[] YValues => new BigInteger[] { Y1, Y2 };
 
 		public BigInteger WidthNumerator => X2 - X1;
-		public BigInteger HeightNumerator => Y2 - Y1; 
+		public BigInteger HeightNumerator => Y2 - Y1;
 		public RSize Size => new RSize(WidthNumerator, HeightNumerator, Exponent);
 
 		object ICloneable.Clone()
@@ -60,7 +60,7 @@ namespace MSS.Types
 				? throw new InvalidOperationException($"Cannot scale a RRectangle with Exponent: {Exponent} using a RPoint with Exponent: {factor.Exponent}.")
 				: new RRectangle(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y, Exponent);
 		}
-		
+
 		public RRectangle Scale(RSize factor)
 		{
 			return factor.Exponent != Exponent
@@ -102,9 +102,9 @@ namespace MSS.Types
 			{
 				throw new ArgumentException($"The beginning X must be less than or equal to the ending X.");
 			}
-			
+
 			if (Y1 > Y2)
-			{ 
+			{
 				throw new ArgumentException($"The beginning Y must be less than or equal to the ending Y.");
 			}
 		}

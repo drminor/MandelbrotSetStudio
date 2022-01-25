@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RSize : Size<BigInteger>, ICloneable
+	public class RSize : Size<BigInteger>, IBigRatShape
 	{
 		public int Exponent { get; init; }
 

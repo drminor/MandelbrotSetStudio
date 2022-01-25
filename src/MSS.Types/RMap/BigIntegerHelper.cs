@@ -157,6 +157,11 @@ namespace MSS.Types
 
 		#endregion
 
+		public static string GetDisplay(IBigRatShape bigRatShape)
+		{
+			return GetDisplay(bigRatShape.Values, bigRatShape.Exponent);
+		}
+
 		public static string GetDisplay(BigInteger[] values, int exponent, IFormatProvider? formatProvider = null)
 		{
 			if (formatProvider is null)

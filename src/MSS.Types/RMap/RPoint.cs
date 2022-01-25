@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RPoint : Point<BigInteger>, ICloneable
+	public class RPoint : Point<BigInteger>, IBigRatShape
 	{
 		public int Exponent { get; init; }
 
