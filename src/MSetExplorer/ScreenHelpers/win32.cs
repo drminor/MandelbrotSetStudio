@@ -29,6 +29,7 @@ namespace MSetExplorer.ScreenHelpers
 		{
             var p = GetScreenPoint(hWnd, pos);
             _ = SetCursorPos(p.x, p.y);
+
             var result = new Point(p.x, p.y);
             return result;
         }
@@ -36,6 +37,7 @@ namespace MSetExplorer.ScreenHelpers
         public static Point TranslateToScreen(IntPtr hWnd, Point pos)
         {
             var p = GetScreenPoint(hWnd, pos);
+
             var result = new Point(p.x, p.y);
             return result;
         }

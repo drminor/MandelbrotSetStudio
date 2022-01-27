@@ -32,6 +32,12 @@ namespace MSS.Types
 			return new RSize(Values, Exponent);
 		}
 
+		public override string? ToString()
+		{
+			var result = BigIntegerHelper.GetDisplay(this);
+			return result;
+		}
+
 		public RSize Scale(SizeInt factor)
 		{
 			return new RSize(Width * factor.Width, Height * factor.Height, Exponent);

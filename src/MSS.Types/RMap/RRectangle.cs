@@ -33,6 +33,17 @@ namespace MSS.Types
 			Validate();
 		}
 
+		public RRectangle(RPoint p, RSize s) : base(p.X, p.X + s.Width, p.Y, p.Y + s.Height)
+		{
+			if (p.Exponent != s.Exponent)
+			{
+				throw new ArgumentException($"Cannot create a RRectangle from a Point with Exponent: {p.Exponent} and a Size with Exponent: {s.Exponent}.");
+			}
+
+			Exponent = p.Exponent;
+			Validate();
+		}
+
 		public new RPoint LeftBot => new RPoint(X1, Y1, Exponent);
 
 		public new RPoint RightTop => new RPoint(X2, Y2, Exponent);
@@ -52,6 +63,12 @@ namespace MSS.Types
 		public new RRectangle Clone()
 		{
 			return new RRectangle(Values, Exponent);
+		}
+
+		public override string? ToString()
+		{
+			var result = BigIntegerHelper.GetDisplay(this);
+			return result;
 		}
 
 		// TODO: FIX BUG

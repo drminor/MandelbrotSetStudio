@@ -78,7 +78,7 @@ namespace MSS.Types
 
 		public override string? ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(Values, Exponent);
+			var result = BigIntegerHelper.GetDisplay(this);
 			return result;
 		}
 	}

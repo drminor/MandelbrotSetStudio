@@ -126,48 +126,39 @@ namespace MSetExplorer
 
 					Debug.WriteLine($"Will start job here with position: {position}.");
 
-					var area = _selectedArea.Area;
-					var coords = GetCoords(area);
+					var rect = _selectedArea.Area;
+					var coords = GetCoords(rect);
 
-					var disp = BigIntegerHelper.GetDisplay(coords.Values, coords.Exponent);
-					Debug.WriteLine($"Starting Job with new coords: {disp}.");
+					Debug.WriteLine($"Starting Job with new coords: {BigIntegerHelper.GetDisplay(coords)}.");
 					LoadMap(coords, clearExistingMapSections: false);
 				}
 			}
 		}
 
-		private RRectangle GetCoords(Rect area)
+		private RRectangle GetCoords(Rect rect)
 		{
-			var areaInt = new RectangleInt(
-				new PointInt((int)Math.Round(area.X), (int)Math.Round(area.Y)),
-				new SizeInt((int)Math.Round(area.Width), (int)Math.Round(area.Height))
+			var area = new RectangleInt(
+				new PointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y)),
+				new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
 				);
 
 			var curJob = _vm.CurrentJob;
-
-			var curPos = curJob.MSetInfo.Coords.LeftBot;
+			var position = curJob.MSetInfo.Coords.LeftBot;
+			var mapBlockOffset = curJob.MapBlockOffset;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-			var offset = samplePointDelta.Scale(areaInt.Point);
 
-			RMapHelper.NormalizeInPlace(ref curPos, ref offset);
-			var newPos = curPos.Translate(offset);
-			var newSize = samplePointDelta.Scale(areaInt.Size);
+			var result = RMapHelper.GetMapCoords(area, position, mapBlockOffset, samplePointDelta);
 
-			//var dispP1 = BigIntegerHelper.GetDisplay(newPos);
-			//var dispS1 = BigIntegerHelper.GetDisplay(newSize);
+			//var tPoint = areaInt.Point.Translate(curJob.MapBlockOffset);
+			//var offset = samplePointDelta.Scale(tPoint);
+			
+			//RMapHelper.NormalizeInPlace(ref curPos, ref offset);
+			//var newPos = curPos.Translate(offset);
 
-			//var newPos2 = newPos.Clone();
-			//var newSize2 = newSize.Clone();
+			//var newSize = samplePointDelta.Scale(areaInt.Size);
+			//RMapHelper.NormalizeInPlace(ref newPos, ref newSize);
 
-			//RMapHelper.NormalizeInPlace(ref newPos2, ref newSize2);
-			//var dispP2 = BigIntegerHelper.GetDisplay(newPos2);
-			//var dispS2 = BigIntegerHelper.GetDisplay(newSize2);
-
-			//Debug.WriteLine($"Before: {dispP1}, {dispS1} and After: {dispP2}, {dispS2}");
-			//var result = new RRectangle(newPos2.X, newPos2.X + newSize2.Width, newPos2.Y, newPos2.Y + newSize2.Height, newPos2.Exponent);
-
-			RMapHelper.NormalizeInPlace(ref newPos, ref newSize);
-			var result = new RRectangle(newPos.X, newPos.X + newSize.Width, newPos.Y, newPos.Y + newSize.Height, newPos.Exponent);
+			//var result = new RRectangle(newPos, newSize);
 
 			return result;
 		}

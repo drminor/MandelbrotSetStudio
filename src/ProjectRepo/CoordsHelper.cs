@@ -15,7 +15,7 @@ namespace ProjectRepo
 
 		public RPointRecord BuildPointRecord(RPoint rPoint)
 		{
-			var display = BigIntegerHelper.GetDisplay(rPoint.Values, rPoint.Exponent);
+			var display = BigIntegerHelper.GetDisplay(rPoint);
 
 			var rPointDto = _dtoMapper.MapTo(rPoint);
 			var result = new RPointRecord(display, rPointDto);
@@ -25,7 +25,7 @@ namespace ProjectRepo
 
 		public RSizeRecord BuildSizeRecord(RSize rSize)
 		{
-			var display = BigIntegerHelper.GetDisplay(rSize.Values, rSize.Exponent);
+			var display = BigIntegerHelper.GetDisplay(rSize);
 
 			var rRectangleDto = _dtoMapper.MapTo(rSize);
 			var result = new RSizeRecord(display, rRectangleDto);
@@ -35,7 +35,7 @@ namespace ProjectRepo
 
 		public RRectangleRecord BuildCoords(RRectangle rRectangle)
 		{
-			var display = BigIntegerHelper.GetDisplay(rRectangle.Values, rRectangle.Exponent);
+			var display = BigIntegerHelper.GetDisplay(rRectangle);
 
 			var rRectangleDto = _dtoMapper.MapTo(rRectangle);
 			var result = new RRectangleRecord(display, rRectangleDto);

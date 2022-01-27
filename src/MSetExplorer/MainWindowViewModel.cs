@@ -8,8 +8,6 @@ using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace MSetExplorer
@@ -67,31 +65,14 @@ namespace MSetExplorer
 			}
 		}
 
-		public Point GetBlockPositionOld(Point posYInverted)
-		{
-			var x = (int)Math.Round(posYInverted.X);
-			var l = Math.DivRem(x, BlockSize.Width, out var remainder);
-			if (remainder == 0 && l > 0)
-			{
-				l--;
-			}
-
-			var y = (int)Math.Round(posYInverted.Y);
-			var b = Math.DivRem(y, BlockSize.Height, out remainder);
-			if (remainder == 0 && b > 0)
-			{
-				b--;
-			}
-
-			var botRight = new PointInt(l, b).Scale(BlockSize);
-			var center = botRight.Translate(new SizeInt(-2 + BlockSize.Width / 2, 2 + BlockSize.Height / 2));
-			return new Point(center.X, center.Y);
-		}
-
 		public Point GetBlockPosition(Point posYInverted)
 		{
 			var pointInt = new PointInt((int)posYInverted.X, (int)posYInverted.Y);
-			var blockPosInt = RMapHelper.GetBlockPosition(pointInt, BlockSize);
+
+			var curReq = CurrentRequest;
+			var mapBlockOffset = curReq?.Job?.MapBlockOffset ?? new SizeInt();
+
+			var blockPosInt = RMapHelper.GetBlockPosition(pointInt, mapBlockOffset, BlockSize);
 
 			return new Point(blockPosInt.X, blockPosInt.Y);
 		}
@@ -129,15 +110,15 @@ namespace MSetExplorer
 			// Get a subdivision record from the database.
 			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, BlockSize, _projectAdapter, deleteExisting: clearExistingMapSections);
 
-			// Get the number of blocks
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, BlockSize);
-
 			// Determine the amount to tranlate from our coordinates to the subdivision coordinates.
 			var coords = mSetInfo.Coords;
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref coords, subdivision.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
 
 			//var updatedMSetInfo = new MSetInfo(mSetInfo, coords);
 			var updatedMSetInfo = mSetInfo;
+
+			// Get the number of blocks
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, mapBlockOffset, BlockSize);
 
 			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 			return job;

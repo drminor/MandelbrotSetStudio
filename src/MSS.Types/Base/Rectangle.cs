@@ -67,7 +67,7 @@ namespace MSS.Types.Base
 			return new Rectangle<T>(Values[0], Values[1], Values[2], Values[3]);
 		}
 
-		public override string ToString()
+		public override string? ToString()
 		{
 			string result = $"X1: {Values[0]}, X2: {Values[1]}, Y1: {Values[2]}, Y2: {Values[3]}";
 			return result;
