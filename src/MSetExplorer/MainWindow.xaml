@@ -25,7 +25,7 @@
         <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel Grid.Row="1" HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button HorizontalAlignment="Center" Width="100" Margin="0,15,0,15" Click="CloseButton_Click">Close</Button>
-                <Button HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="RefreshButton_Click">Refresh</Button>
+                <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoBackButton_Click">Go Back</Button>
             </StackPanel>
         </Border>
 

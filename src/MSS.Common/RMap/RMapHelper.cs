@@ -80,7 +80,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetCanvasSizeInBlocks(SizeInt canvasSize, SizeInt mapBlockOffset, SizeInt blockSize)
+		public static SizeInt GetCanvasSizeInBlocks(SizeInt canvasSize/*, SizeInt mapBlockOffset*/, SizeInt blockSize)
 		{
 			var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainder);
 
@@ -96,15 +96,15 @@ namespace MSS.Common
 				h++;
 			}
 
-			if (Math.Abs(mapBlockOffset.Width) > 0)
-			{
-				w++;
-			}
+			//if (Math.Abs(mapBlockOffset.Width) > 0)
+			//{
+			//	w++;
+			//}
 
-			if (Math.Abs(mapBlockOffset.Height) > 0)
-			{
-				h++;
-			}
+			//if (Math.Abs(mapBlockOffset.Height) > 0)
+			//{
+			//	h++;
+			//}
 
 			var result = new SizeInt(w, h);
 
@@ -145,6 +145,9 @@ namespace MSS.Common
 				Debug.WriteLine("Subdivision has a different Scale.");
 			}
 
+			Debug.WriteLine($"Our origin is {BigIntegerHelper.GetDisplay(coords.LeftBot)}");
+			Debug.WriteLine($"Destination origin is {BigIntegerHelper.GetDisplay(destinationOrigin)}");
+
 			NormalizeInPlace(ref coords, ref destinationOrigin);
 
 			var mDistance = coords.LeftBot.Diff(destinationOrigin);
@@ -156,11 +159,23 @@ namespace MSS.Common
 				return new SizeInt();
 			}
 
-			var offsetInSamplePointsDC = GetNumberOfSamplePointsDiag(mDistance, samplePointDelta);
+			// Determine # of sample points are in the mDistance extents.
+			var sx = BigIntegerHelper.ConvertToDouble(mapCoords.LeftBot.X, mapCoords.Exponent);
+			var sy = BigIntegerHelper.ConvertToDouble(mapCoords.LeftBot.Y, mapCoords.Exponent);
+			var dx = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.X, subdivisionOrigin.Exponent);
+			var dy = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.Y, subdivisionOrigin.Exponent);
+
+			var rawDistance = new SizeDbl(sx - dx, sy - dy);
+
+			Debug.WriteLine($"The raw offset from the subOrigin is {rawDistance}.");
+			var offsetInSamplePointsDC = GetNumberOfSamplePointsDiag(rawDistance, samplePointDelta);
+
 			var spd = samplePointDelta.Clone();
 			var offSetInSamplePoints = GetNumberOfSamplePoints(ref mDistance, ref spd);
+			
 			Debug.WriteLine($"The offset in samplePoints is {offSetInSamplePoints}. Compare: {offsetInSamplePointsDC}.");
 
+			// Adjust the coordinates to get a better samplePointDelta, etc.
 			mapCoords = GetNormCoords(coords, destinationOrigin, ref offSetInSamplePoints, spd);
 
 			// Get # of whole blocks and the # of pixels left over
@@ -168,16 +183,36 @@ namespace MSS.Common
 			Debug.WriteLine($"The offset in blocks is {offSetInBlocks}.");
 			Debug.WriteLine($"The offset in sample points before including BS is {offSetRemainderInSamplePoints}.");
 
-			var remainderW = offSetRemainderInSamplePoints.Width;
-			var remainderH = offSetRemainderInSamplePoints.Height;
-			samplesRemaining = new SizeDbl(
-				remainderW == 0 ? 0 : blockSize.Width - remainderW,
-				remainderH == 0 ? 0 : blockSize.Height - remainderH
-				);
+			samplesRemaining = GetSamplesRemaining(offSetRemainderInSamplePoints, blockSize);
 			Debug.WriteLine($"The remainder offset in sample points is {samplesRemaining}.");
 
-
 			return offSetInBlocks;
+		}
+
+		private static SizeDbl GetSamplesRemaining(SizeDbl offsetRemainder, SizeInt blockSize)
+		{
+			var samplesRemaining = new SizeDbl(
+				GetSampRem(offsetRemainder.Width, blockSize.Width),
+				GetSampRem(offsetRemainder.Height, blockSize.Height)
+				);
+
+			return samplesRemaining;
+		}
+
+		private static double GetSampRem(double extent, int blockLen)
+		{
+			if (extent < 0)
+			{
+				return -1 * (blockLen + extent);
+			}
+			else if (extent > 0)
+			{
+				return blockLen - extent;
+			}
+			else
+			{
+				return 0;
+			}
 		}
 
 		// Calculate the number of samplePoints in the given offset.
@@ -194,9 +229,8 @@ namespace MSS.Common
 			return offSetInSamplePoints;
 		}
 
-		private static SizeDbl GetNumberOfSamplePointsDiag(RSize offset, RSize samplePointDelta)
+		private static SizeDbl GetNumberOfSamplePointsDiag(SizeDbl offsetDC, RSize samplePointDelta)
 		{
-			var offsetDC = GetSizeDbl(offset);
 			var spdDC = GetSizeDbl(samplePointDelta);
 			var numSamplesHDC = offsetDC.Width / spdDC.Width;
 			var numSamplesVDC = offsetDC.Height / spdDC.Height;
@@ -256,12 +290,12 @@ namespace MSS.Common
 
 		private static SizeDbl GetSizeDbl(RSize rSize)
 		{
-			return new SizeDbl(BigIntegerHelper.GetValue(rSize.Width, rSize.Exponent), BigIntegerHelper.GetValue(rSize.Height, rSize.Exponent));
+			return new SizeDbl(BigIntegerHelper.ConvertToDouble(rSize.Width, rSize.Exponent), BigIntegerHelper.ConvertToDouble(rSize.Height, rSize.Exponent));
 		}
 
 		private static PointDbl GetPointDbl(RPoint rPoint)
 		{
-			return new PointDbl(BigIntegerHelper.GetValue(rPoint.X, rPoint.Exponent), BigIntegerHelper.GetValue(rPoint.Y, rPoint.Exponent));
+			return new PointDbl(BigIntegerHelper.ConvertToDouble(rPoint.X, rPoint.Exponent), BigIntegerHelper.ConvertToDouble(rPoint.Y, rPoint.Exponent));
 		}
 
 		private static PointInt GetPointInt(RPoint rPoint)

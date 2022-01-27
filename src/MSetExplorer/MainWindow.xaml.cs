@@ -39,6 +39,7 @@ namespace MSetExplorer
 			_vm.OnMapSectionReady = ((IProgress<MapSection>)_mapLoadingProgress).Report;
 			_screenSections = new Dictionary<PointInt, ScreenSection>();
 
+			btnGoBack.IsEnabled = _vm.CanGoBack;
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var maxIterations = 700;
 			var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo(maxIterations);
@@ -80,8 +81,20 @@ namespace MSetExplorer
 			Close();
 		}
 
-		private void RefreshButton_Click(object sender, RoutedEventArgs e)
+		private void GoBackButton_Click(object sender, RoutedEventArgs e)
 		{
+			foreach (UIElement c in MainCanvas.Children)
+			{
+				if (c is Image i)
+				{
+					i.Visibility = Visibility.Hidden;
+				}
+			}
+
+			var canvasSize = GetCanvasControlSize(MainCanvas);
+			_vm.GoBack(canvasSize, clearExistingMapSections: false);
+			btnGoBack.IsEnabled = _vm.CanGoBack;
+
 			//foreach(UIElement c in MainCanvas.Children)
 			//{
 			//	if(c is Image i)
@@ -149,17 +162,6 @@ namespace MSetExplorer
 
 			var result = RMapHelper.GetMapCoords(area, position, mapBlockOffset, samplePointDelta);
 
-			//var tPoint = areaInt.Point.Translate(curJob.MapBlockOffset);
-			//var offset = samplePointDelta.Scale(tPoint);
-			
-			//RMapHelper.NormalizeInPlace(ref curPos, ref offset);
-			//var newPos = curPos.Translate(offset);
-
-			//var newSize = samplePointDelta.Scale(areaInt.Size);
-			//RMapHelper.NormalizeInPlace(ref newPos, ref newSize);
-
-			//var result = new RRectangle(newPos, newSize);
-
 			return result;
 		}
 
@@ -179,6 +181,7 @@ namespace MSetExplorer
 			}
 
 			_vm.LoadMap(canvasSize, mSetInfo, clearExistingMapSections);
+			btnGoBack.IsEnabled = _vm.CanGoBack;
 		}
 
 		private class ScreenSection

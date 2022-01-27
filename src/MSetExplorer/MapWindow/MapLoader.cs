@@ -63,10 +63,10 @@ namespace MSetExplorer
 
 		private void SubmitSectionRequests()
 		{
-			var canvasSize = _job.CanvasSizeInBlocks;
-			for (var yBlockPtr = 0; yBlockPtr < canvasSize.Height; yBlockPtr++)
+			var mapExtentInBlocks = GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _mapBlockOffset);
+			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
 			{
-				for (var xBlockPtr = 0; xBlockPtr < canvasSize.Width; xBlockPtr++)
+				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
 				{
 					if (_isStopping)
 					{
@@ -88,6 +88,16 @@ namespace MSetExplorer
 					_ = Interlocked.Increment(ref _sectionsRequested);
 				}
 			}
+		}
+
+		private SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, SizeInt mapBlockOffset)
+		{
+			var result = new SizeInt(
+				canvasSizeInBlocks.Width + (Math.Abs(mapBlockOffset.Width) > 0 ? 1 : 0),
+				canvasSizeInBlocks.Height + (Math.Abs(mapBlockOffset.Height) > 0 ? 1 : 0)
+				);
+
+			return result;
 		}
 
 		public void Stop()

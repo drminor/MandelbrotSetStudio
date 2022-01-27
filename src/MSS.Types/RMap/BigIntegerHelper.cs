@@ -95,12 +95,12 @@ namespace MSS.Types
 
 		private static void ReportDivideValues(BigInteger dividend, int dividendExponent, int divisor, BigInteger adjDividend, BigInteger result, BigInteger remainder, int exponentDelta)
 		{
-			var dividendD = GetValue(dividend, dividendExponent);
+			var dividendD = ConvertToDouble(dividend, dividendExponent);
 			var trueResult = dividendD / divisor;
 
 			var remainderD = ConvertToDouble(remainder);
 
-			var res = GetValue(result, dividendExponent - exponentDelta);
+			var res = ConvertToDouble(result, dividendExponent - exponentDelta);
 			var denominator = Math.Pow(2, -1 * (dividendExponent - exponentDelta));
 
 			var adjRemainder = remainderD / denominator;
@@ -171,7 +171,7 @@ namespace MSS.Types
 
 			var strDenominator = Math.Pow(2, -1 * exponent).ToString(formatProvider);
 
-			var dVals = values.Select(v => GetValue(v, exponent)).ToArray();
+			var dVals = values.Select(v => ConvertToDouble(v, exponent)).ToArray();
 
 			var strVals = values.Select((x, i) => new string(x.ToString(formatProvider) + "/" + strDenominator + " (" + dVals[i].ToString(formatProvider) + ")")).ToArray();
 
@@ -181,7 +181,7 @@ namespace MSS.Types
 
 		#region Convert to Double
 
-		public static double GetValue(BigInteger n, int exponent)
+		public static double ConvertToDouble(BigInteger n, int exponent)
 		{
 			if(n == 0)
 			{

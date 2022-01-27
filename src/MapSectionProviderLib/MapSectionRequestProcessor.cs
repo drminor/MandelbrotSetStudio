@@ -25,6 +25,8 @@ namespace MapSectionProviderLib
 
 		private readonly Task _workQueueProcessor1;
 		private readonly Task _workQueueProcessor2;
+		private readonly Task _workQueueProcessor3;
+		private readonly Task _workQueueProcessor4;
 
 		private readonly List<int> _cancelledJobIds;
 
@@ -46,11 +48,15 @@ namespace MapSectionProviderLib
 			{
 				_workQueueProcessor1 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistProcessor, _cts.Token));
 				_workQueueProcessor2 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistProcessor, _cts.Token));
+				_workQueueProcessor3 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistProcessor, _cts.Token));
+				_workQueueProcessor4 = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistProcessor, _cts.Token));
 			}
 			else
 			{
 				_workQueueProcessor1 = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
 				_workQueueProcessor2 = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
+				_workQueueProcessor3 = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
+				_workQueueProcessor4 = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
 			}
 		}
 
@@ -93,6 +99,8 @@ namespace MapSectionProviderLib
 			{
 				_ = _workQueueProcessor1.Wait(120 * 1000);
 				_ = _workQueueProcessor2.Wait(120 * 1000);
+				_ = _workQueueProcessor3.Wait(120 * 1000);
+				_ = _workQueueProcessor4.Wait(120 * 1000);
 			}
 			catch { }
 
@@ -210,7 +218,8 @@ namespace MapSectionProviderLib
 			{
 				if (disposing)
 				{
-					Stop(false);
+					Stop(true);
+
 					// Dispose managed state (managed objects)
 					if (_cts != null)
 					{
@@ -230,6 +239,16 @@ namespace MapSectionProviderLib
 					if (_workQueueProcessor2 != null)
 					{
 						_workQueueProcessor2.Dispose();
+					}
+
+					if (_workQueueProcessor3 != null)
+					{
+						_workQueueProcessor3.Dispose();
+					}
+
+					if (_workQueueProcessor4 != null)
+					{
+						_workQueueProcessor4.Dispose();
 					}
 
 					if (_mapSectionPersistProcessor != null)

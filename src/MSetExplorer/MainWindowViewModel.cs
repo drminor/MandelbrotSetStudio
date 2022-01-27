@@ -43,6 +43,8 @@ namespace MSetExplorer
 
 		public Job CurrentJob => CurrentRequest?.Job;
 
+		public bool CanGoBack => _requestStack.Count > 1;
+
 		#endregion
 
 		#region Public Methods
@@ -65,6 +67,19 @@ namespace MSetExplorer
 			}
 		}
 
+		public void GoBack(SizeInt canvasControlSize, bool clearExistingMapSections)
+		{
+			// Remove the current request
+			_requestStack.RemoveAt(_requestStack.Count - 1);
+
+			// Remove and then reload the one prior to that
+			var prevRequest = _requestStack[^1];
+			_requestStack.RemoveAt(_requestStack.Count - 1);
+			var mSetInfo = prevRequest.Job.MSetInfo;
+
+			LoadMap(canvasControlSize, mSetInfo, clearExistingMapSections);
+		}
+
 		public Point GetBlockPosition(Point posYInverted)
 		{
 			var pointInt = new PointInt((int)posYInverted.X, (int)posYInverted.Y);
@@ -72,9 +87,9 @@ namespace MSetExplorer
 			var curReq = CurrentRequest;
 			var mapBlockOffset = curReq?.Job?.MapBlockOffset ?? new SizeInt();
 
-			var blockPosInt = RMapHelper.GetBlockPosition(pointInt, mapBlockOffset, BlockSize);
+			var blockPos = RMapHelper.GetBlockPosition(pointInt, mapBlockOffset, BlockSize);
 
-			return new Point(blockPosInt.X, blockPosInt.Y);
+			return new Point(blockPos.X, blockPos.Y);
 		}
 
 		public void ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
@@ -118,7 +133,7 @@ namespace MSetExplorer
 			var updatedMSetInfo = mSetInfo;
 
 			// Get the number of blocks
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, mapBlockOffset, BlockSize);
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize/*, mapBlockOffset*/, BlockSize);
 
 			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 			return job;
