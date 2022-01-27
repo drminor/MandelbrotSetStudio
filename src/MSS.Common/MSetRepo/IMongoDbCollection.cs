@@ -6,5 +6,7 @@ namespace MSS.Common.MSetRepo
 	{
 		IMongoDatabase Database { get; }
 		IMongoCollection<T> Collection { get; }
+
+		void CreateCollection();
 	}
 }

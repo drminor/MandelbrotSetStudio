@@ -54,6 +54,7 @@ namespace MSS.Types
 			return new RRectangle(Values, Exponent);
 		}
 
+		// TODO: FIX BUG
 		public RRectangle Scale(RPoint factor)
 		{
 			return factor.Exponent != Exponent
@@ -61,6 +62,7 @@ namespace MSS.Types
 				: new RRectangle(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y, Exponent);
 		}
 
+		// TODO: FIX BUG
 		public RRectangle Scale(RSize factor)
 		{
 			return factor.Exponent != Exponent

@@ -10,12 +10,12 @@ namespace MapSectionProviderLib
 	{
 		public static MapSectionRequest CreateRequest(Subdivision subdivision, PointInt blockPosition, MapCalcSettings mapCalcSettings, out RPoint mapPosition)
 		{
-			var subdivionsPosition = subdivision.Position;
+			var subdivionPosition = subdivision.Position;
 			var samplePointDelta = subdivision.SamplePointDelta;
 
-			RMapHelper.NormalizeInPlace(ref subdivionsPosition, ref samplePointDelta);
+			RMapHelper.NormalizeInPlace(ref subdivionPosition, ref samplePointDelta);
 
-			mapPosition = subdivionsPosition.Translate(samplePointDelta.Scale(blockPosition.Scale(subdivision.BlockSize)));
+			mapPosition = subdivionPosition.Translate(samplePointDelta.Scale(blockPosition.Scale(subdivision.BlockSize)));
 
 			var dtoMapper = new DtoMapper();
 

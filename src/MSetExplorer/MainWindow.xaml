@@ -19,7 +19,7 @@
         <!--<Image Grid.Column="0" Grid.Row="0" Source="WP_20131215_001.jpg"/>-->
 
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Canvas Name="MainCanvas" Width="768" Height="768" Background="Transparent" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown" />
+            <Canvas Name="MainCanvas" Width="768" Height="768" Background="Transparent" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown"  />
         </Border>
 
         <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">

@@ -42,6 +42,31 @@ namespace MSS.Types
 			return new RSize(Width * factor.X, Height * factor.Y, Exponent);
 		}
 
+		// TODO: FIX BUG
+		public RSize Scale(RSize factor)
+		{
+			return factor.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot InvScale a RSize with Exponent: {Exponent} using an RSize with Exponent: {factor.Exponent}.")
+				: new RSize(Width * factor.Width, Height * factor.Height, Exponent);
+		}
+
+		// TODO: FIX BUG
+		public RSize InvScale(RSize factor)
+		{
+			if (factor.Exponent != Exponent)
+			{
+				throw new InvalidOperationException($"Cannot InvScale a RSize with Exponent: {Exponent} using an RSize with Exponent: {factor.Exponent}.");
+			}
+
+			var w = Width * (BigInteger) Math.Pow(2, -1 * factor.Exponent);
+			w /= factor.Width;
+
+			var h = Height * (BigInteger)Math.Pow(2, -1 * factor.Exponent);
+			h /= factor.Height;
+
+			return new RSize(w, h, Exponent);
+		}
+
 		public RSize Translate(RPoint amount)
 		{
 			return amount.Exponent != Exponent

@@ -24,6 +24,7 @@ namespace MSetExplorer
 
 			var window = new MainWindow();
 			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
+			projectAdapter.CreateCollections();
 
 			var mEngineClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
 			var mapSectionRepo = MSetRepoHelper.GetMapSectionRepo(MONGO_DB_CONN_STRING);

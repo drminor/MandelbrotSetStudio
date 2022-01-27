@@ -21,6 +21,7 @@ namespace MSetExplorer
 	{
 		private MainWindowViewModel _vm;
 		private SelectionRectangle _selectedArea;
+		private Progress<MapSection> _mapLoadingProgress;
 		private IDictionary<PointInt, ScreenSection> _screenSections;
 
 		public MainWindow()
@@ -34,7 +35,8 @@ namespace MSetExplorer
 		{
 			_vm = (MainWindowViewModel)DataContext;
 			_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
-			_vm.Progress = new Progress<MapSection>(HandleMapSectionReady);
+			_mapLoadingProgress = new Progress<MapSection>(HandleMapSectionReady);
+			_vm.OnMapSectionReady = ((IProgress<MapSection>)_mapLoadingProgress).Report;
 			_screenSections = new Dictionary<PointInt, ScreenSection>();
 
 			var canvasSize = GetCanvasControlSize(MainCanvas);
@@ -102,10 +104,15 @@ namespace MSetExplorer
 		private void MainCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
 			// Get position of mouse relative to the main canvas and invert the y coordinate.
-			var position = e.GetPosition(relativeTo: MainCanvas);
-			position = new Point(position.X, MainCanvas.ActualHeight - position.Y);
+			var controlPos = e.GetPosition(relativeTo: MainCanvas);
 
-			Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {position}.");
+			// The canvas has coordinates where the y value increases from  bottom to top.
+			var posYInverted = new Point(controlPos.X, MainCanvas.ActualHeight - controlPos.Y);
+
+			// Get the center of the block on which the mouse is over.
+			var position = _vm.GetBlockPosition(posYInverted);
+
+			Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {controlPos}. ");
 
 			if (!_selectedArea.IsActive)
 			{
@@ -141,8 +148,8 @@ namespace MSetExplorer
 			var curPos = curJob.MSetInfo.Coords.LeftBot;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 			var offset = samplePointDelta.Scale(areaInt.Point);
-			RMapHelper.NormalizeInPlace(ref curPos, ref offset);
 
+			RMapHelper.NormalizeInPlace(ref curPos, ref offset);
 			var newPos = curPos.Translate(offset);
 			var newSize = samplePointDelta.Scale(areaInt.Size);
 

@@ -42,6 +42,7 @@ namespace MSS.Types
 			return new RPoint(X * factor.X, Y * factor.Y, Exponent);
 		}
 
+		// TODO: FIX BUG
 		public RPoint Scale(RSize factor)
 		{
 			return factor.Exponent != Exponent
@@ -77,7 +78,7 @@ namespace MSS.Types
 
 		public override string? ToString()
 		{
-			string result = BigIntegerHelper.GetDisplay(this.Values, this.Exponent);
+			var result = BigIntegerHelper.GetDisplay(Values, Exponent);
 			return result;
 		}
 	}

@@ -106,15 +106,17 @@ namespace MSetExplorer
 
 		private void HandleResponse(MapSectionResponse mapSectionResponse)
 		{
-			_ = Interlocked.Increment(ref _sectionCompleted);
 			var pixels1d = GetPixelArray(mapSectionResponse.Counts, _blockSize, _colorMap);
 
-			// Translate subdivision coordinates to screen coordinates.
+			// Translate subdivision coordinates to canvas coordinates.
 			var position = mapSectionResponse.BlockPosition.Diff(_mapBlockOffset).Scale(_blockSize);
+			var offset = new SizeInt((int)_job.CanvasControlOffset.Width, (int)_job.CanvasControlOffset.Height);
+			position = position.Diff(offset);
 			var mapSection = new MapSection(position, _blockSize, pixels1d);
 
 			_callback(GenMapRequestId, mapSection);
-			
+
+			_ = Interlocked.Increment(ref _sectionCompleted);
 			if (_sectionCompleted == _job.CanvasSizeInBlocks.NumberOfCells
 				|| (_isStopping && _sectionCompleted == _sectionsRequested))
 			{
@@ -127,6 +129,11 @@ namespace MSetExplorer
 
 		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap)
 		{
+			if (counts == null)
+			{
+				return null;
+			}
+
 			var numberofCells = blockSize.NumberOfCells;
 			var result = new byte[4 * numberofCells];
 

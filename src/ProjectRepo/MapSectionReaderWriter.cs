@@ -13,7 +13,6 @@ namespace ProjectRepo
 		public MapSectionReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
 
-
 		public MapSectionRecord Get(ObjectId mapSectionId)
 		{
 			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);

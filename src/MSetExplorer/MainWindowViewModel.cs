@@ -31,12 +31,12 @@ namespace MSetExplorer
 
 			_requestStack = new List<GenMapRequestInfo>();
 
-			Progress = null;
+			OnMapSectionReady = null;
 		}
 
 		#region Public Properties
 
-		public IProgress<MapSection> Progress { get; set; }
+		public Action<MapSection> OnMapSectionReady { get; set; }
 
 		public readonly SizeInt BlockSize;
 
@@ -55,10 +55,7 @@ namespace MSetExplorer
 			curReq?.MapLoader?.Stop();
 
 			var job = BuildJob(canvasControlSize, mSetInfo, clearExistingMapSections);
-
-			var spd = job.Subdivision.SamplePointDelta;
-			var disp = BigIntegerHelper.GetDisplay(spd.Values, spd.Exponent);
-			Debug.WriteLine($"The new job has a SamplePointDelta of {disp}.");
+			Debug.WriteLine($"The new job has a SamplePointDelta of {BigIntegerHelper.GetDisplay(job.Subdivision.SamplePointDelta)}.");
 
 			var mapLoader = new MapLoader(job, HandleMapSection, _mapSectionRequestProcessor);
 			var genMapRequestInfo = new GenMapRequestInfo(job, mapLoader.GenMapRequestId, mapLoader);
@@ -68,6 +65,35 @@ namespace MSetExplorer
 				_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
 				_requestStack.Add(genMapRequestInfo);
 			}
+		}
+
+		public Point GetBlockPositionOld(Point posYInverted)
+		{
+			var x = (int)Math.Round(posYInverted.X);
+			var l = Math.DivRem(x, BlockSize.Width, out var remainder);
+			if (remainder == 0 && l > 0)
+			{
+				l--;
+			}
+
+			var y = (int)Math.Round(posYInverted.Y);
+			var b = Math.DivRem(y, BlockSize.Height, out remainder);
+			if (remainder == 0 && b > 0)
+			{
+				b--;
+			}
+
+			var botRight = new PointInt(l, b).Scale(BlockSize);
+			var center = botRight.Translate(new SizeInt(-2 + BlockSize.Width / 2, 2 + BlockSize.Height / 2));
+			return new Point(center.X, center.Y);
+		}
+
+		public Point GetBlockPosition(Point posYInverted)
+		{
+			var pointInt = new PointInt((int)posYInverted.X, (int)posYInverted.Y);
+			var blockPosInt = RMapHelper.GetBlockPosition(pointInt, BlockSize);
+
+			return new Point(blockPosInt.X, blockPosInt.Y);
 		}
 
 		public void ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
@@ -85,7 +111,7 @@ namespace MSetExplorer
 			{
 				if (jobId == CurrentGenMapRequestId)
 				{
-					Progress.Report(mapSection);
+					OnMapSectionReady(mapSection);
 				}
 			}
 		}
@@ -105,15 +131,15 @@ namespace MSetExplorer
 
 			// Get the number of blocks
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, BlockSize);
-			
-			// Determine the amount to tranlate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(mSetInfo.Coords.LeftBot, subdivision.Position, samplePointDelta, BlockSize);
-			
-			// Since we can only fetch whole blocks, the image may not start at the bottom, right corner of the bottom, right block.
-			// Determine the amount to move the canvas down and to the right so that the bottom, right sample is displayed at the bottom, right of the canvas control.
-			var canvasControlOffset = GetCanvasControlOffset(mSetInfo.Coords, subdivision.SamplePointDelta, canvasSizeInBlocks);
 
-			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
+			// Determine the amount to tranlate from our coordinates to the subdivision coordinates.
+			var coords = mSetInfo.Coords;
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref coords, subdivision.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
+
+			//var updatedMSetInfo = new MSetInfo(mSetInfo, coords);
+			var updatedMSetInfo = mSetInfo;
+
+			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, "initial job", updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 			return job;
 		}
 
@@ -136,12 +162,6 @@ namespace MSetExplorer
 				result = projectAdapter.GetOrCreateSubdivision(position, samplePointDelta, blockSize, out created);
 			}
 
-			return result;
-		}
-
-		private SizeDbl GetCanvasControlOffset(RRectangle coords, RSize samplePointDelta, SizeInt canvasSizeInBlocks)
-		{
-			var result = new SizeDbl(0, 0);
 			return result;
 		}
 

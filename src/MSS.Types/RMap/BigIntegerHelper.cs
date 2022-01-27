@@ -76,7 +76,7 @@ namespace MSS.Types
 
 			if (SafeCastToDouble(dividend))
 			{
-				var workingDividend = GetValue(dividend);
+				var workingDividend = ConvertToDouble(dividend);
 				result = workingDividend / divisor;
 			}
 			else
@@ -98,7 +98,7 @@ namespace MSS.Types
 			var dividendD = GetValue(dividend, dividendExponent);
 			var trueResult = dividendD / divisor;
 
-			var remainderD = GetValue(remainder);
+			var remainderD = ConvertToDouble(remainder);
 
 			var res = GetValue(result, dividendExponent - exponentDelta);
 			var denominator = Math.Pow(2, -1 * (dividendExponent - exponentDelta));
@@ -140,7 +140,7 @@ namespace MSS.Types
 		[Conditional("Debug")]
 		private static void CheckLogBase2Result(BigInteger n, int exponent, int ourResult)
 		{
-			if (TryGetValue(n, exponent, out var val))
+			if (TryConvertToDouble(n, exponent, out var val))
 			{
 				var correctResult = (int) Math.Round(Math.Log2(val));
 
@@ -214,7 +214,7 @@ namespace MSS.Types
 				: result;
 		}
 
-		public static bool TryGetValue(BigInteger n, int exponent, out double value)
+		public static bool TryConvertToDouble(BigInteger n, int exponent, out double value)
 		{
 			if (n == 0)
 			{
@@ -244,7 +244,7 @@ namespace MSS.Types
 			return DoubleHelper.HasPrecision(value);
 		}
 
-		public static double GetValue(BigInteger n)
+		public static double ConvertToDouble(BigInteger n)
 		{
 			if (!SafeCastToDouble(n))
 			{

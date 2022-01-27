@@ -16,7 +16,7 @@ namespace MSS.Types
 
 		public double Height { get; set; }
 
-		public SizeDbl(PointInt pointInt) : this(pointInt.X, pointInt.Y)
+		public SizeDbl(SizeInt size) : this(size.Width, size.Height)
 		{ }
 
 		public SizeDbl Scale(PointDbl factor)

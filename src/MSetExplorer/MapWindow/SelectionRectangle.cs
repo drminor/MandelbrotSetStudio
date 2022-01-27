@@ -1,9 +1,12 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.ScreenHelpers;
+using MSS.Types;
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
@@ -100,10 +103,17 @@ namespace MSetExplorer.MapWindow
 
 		#region Public Methods
 
-		public void Activate(Point position)
+		public void Activate(Point position, bool updateCursorPosition = true)
 		{
 			IsActive = true;
+
+			if (updateCursorPosition)
+			{
+				SetMousePosition(position);
+			}
+
 			Move(position);
+
 			if (!_selectedArea.Focus())
 			{
 				Debug.WriteLine("Activate did not move the focus to the SelectedRectangle, free form.");
@@ -183,6 +193,7 @@ namespace MSetExplorer.MapWindow
 				var position = e.GetPosition(relativeTo: _canvas);
 				position = new Point(position.X, _canvas.ActualHeight - position.Y);
 
+				//ReportPosition(position);
 				Move(position);
 			}
 		}
@@ -334,6 +345,40 @@ namespace MSetExplorer.MapWindow
 			int remainder = (int) Math.IEEERemainder(number, interval);
 			number += (remainder < interval / 2) ? -remainder : (interval - remainder);
 			return number;
+		}
+
+		private void SetMousePosition(Point posYInverted)
+		{
+			var position = new Point(posYInverted.X, _canvas.ActualHeight - posYInverted.Y);
+			var canvasPos = GetCanvasPosition();
+			var pos = new Point(position.X + canvasPos.X, position.Y + canvasPos.Y);
+
+			HwndSource source = (HwndSource)PresentationSource.FromVisual(_canvas);
+			IntPtr hWnd = source.Handle; 
+			var _ = Win32.PositionCursor(hWnd, pos);
+
+			//Debug.WriteLine($"Activating to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
+		}
+
+		//private void ReportPosition(Point posYInverted)
+		//{
+		//	var position = new Point(posYInverted.X, _canvas.ActualHeight - posYInverted.Y);
+		//	var canvasPos = GetCanvasPosition();
+		//	var pos = new Point(position.X + canvasPos.X, position.Y + canvasPos.Y);
+
+		//	HwndSource source = (HwndSource)PresentationSource.FromVisual(_canvas);
+		//	IntPtr hWnd = source.Handle;
+		//	var screenPos = Win32.TranslateToScreen(hWnd, pos);
+
+		//	Debug.WriteLine($"Mouse moved to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
+		//}
+
+		private Point GetCanvasPosition()
+		{
+			var generalTransform = _canvas.TransformToAncestor(Application.Current.MainWindow);
+			Point relativePoint = generalTransform.Transform(new Point(0, 0));
+
+			return relativePoint;
 		}
 
 		#endregion
