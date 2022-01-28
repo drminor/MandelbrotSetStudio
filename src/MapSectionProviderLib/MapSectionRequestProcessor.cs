@@ -148,7 +148,7 @@ namespace MapSectionProviderLib
 
 						if (mapSectionResponse is null)
 						{
-							Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+							//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 							mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(workItem.Request);
 
 							mapSectionPersistProcessor.AddWork(mapSectionResponse);
@@ -184,7 +184,7 @@ namespace MapSectionProviderLib
 					}
 
 					var blockPosition = workItem.Request.BlockPosition;
-					Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+					//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 					var mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(workItem.Request);
 
 					workItem.WorkAction(mapSectionResponse);

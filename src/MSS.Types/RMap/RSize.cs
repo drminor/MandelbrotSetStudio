@@ -80,5 +80,13 @@ namespace MSS.Types
 				: new RSize(Width + amount.X, Height + amount.Y, Exponent);
 		}
 
+		public RSize Translate(RSize amount)
+		{
+			return amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
+				: new RSize(Width + amount.Width, Height + amount.Height, Exponent);
+		}
+
+
 	}
 }

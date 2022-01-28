@@ -96,16 +96,6 @@ namespace MSS.Common
 				h++;
 			}
 
-			//if (Math.Abs(mapBlockOffset.Width) > 0)
-			//{
-			//	w++;
-			//}
-
-			//if (Math.Abs(mapBlockOffset.Height) > 0)
-			//{
-			//	h++;
-			//}
-
 			var result = new SizeInt(w, h);
 
 			return result;
@@ -132,51 +122,48 @@ namespace MSS.Common
 			return center;
 		}
 
+		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
+		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
 		public static SizeInt GetMapBlockOffset(ref RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out SizeDbl samplesRemaining)
 		{
-			// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
-			// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
+			Debug.WriteLine($"Our origin is {BigIntegerHelper.GetDisplay(mapCoords.LeftBot)}");
+			Debug.WriteLine($"Destination origin is {BigIntegerHelper.GetDisplay(subdivisionOrigin)}");
 
-			var coords = mapCoords.Clone();
-			var destinationOrigin = subdivisionOrigin.Clone();
-
-			if (coords.Exponent != destinationOrigin.Exponent)
+			if (mapCoords.Exponent != subdivisionOrigin.Exponent)
 			{
-				Debug.WriteLine("Subdivision has a different Scale.");
+				throw new ArgumentException($"GetMapBlockOffset found that the map coordinates and the subdivision are on different scales.");
 			}
 
-			Debug.WriteLine($"Our origin is {BigIntegerHelper.GetDisplay(coords.LeftBot)}");
-			Debug.WriteLine($"Destination origin is {BigIntegerHelper.GetDisplay(destinationOrigin)}");
-
-			NormalizeInPlace(ref coords, ref destinationOrigin);
+			// Using normalize here to minimize the exponent value needed to express these values.
+			var coords = Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
 
 			var mDistance = coords.LeftBot.Diff(destinationOrigin);
-			Debug.WriteLine($"The offset from the subOrigin is {BigIntegerHelper.GetDisplay(mDistance)}.");
 
 			if (mDistance.Width == 0 && mDistance.Height == 0)
 			{
+				Debug.WriteLine($"The offset from the subOrigin is Zero.");
 				samplesRemaining = new SizeDbl();
 				return new SizeInt();
 			}
 
+			Debug.WriteLine($"The offset from the subOrigin is {BigIntegerHelper.GetDisplay(mDistance)}.");
+
 			// Determine # of sample points are in the mDistance extents.
-			var sx = BigIntegerHelper.ConvertToDouble(mapCoords.LeftBot.X, mapCoords.Exponent);
-			var sy = BigIntegerHelper.ConvertToDouble(mapCoords.LeftBot.Y, mapCoords.Exponent);
-			var dx = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.X, subdivisionOrigin.Exponent);
-			var dy = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.Y, subdivisionOrigin.Exponent);
+			var offsetInSamplePointsDC = GetNumberOfSamplePointsDiag(mapCoords.LeftBot, subdivisionOrigin, samplePointDelta, out var mDistanceDC);
+			Debug.WriteLine($"The raw offset from the subOrigin is {mDistanceDC}.");
 
-			var rawDistance = new SizeDbl(sx - dx, sy - dy);
-
-			Debug.WriteLine($"The raw offset from the subOrigin is {rawDistance}.");
-			var offsetInSamplePointsDC = GetNumberOfSamplePointsDiag(rawDistance, samplePointDelta);
-
-			var spd = samplePointDelta.Clone();
-			var offSetInSamplePoints = GetNumberOfSamplePoints(ref mDistance, ref spd);
+			var offset = Normalize(mDistance, samplePointDelta, out var spd);
+			var offSetInSamplePoints = GetNumberOfSamplePoints(offset, spd);
 			
 			Debug.WriteLine($"The offset in samplePoints is {offSetInSamplePoints}. Compare: {offsetInSamplePointsDC}.");
 
+			// Calculate the new coords using the calculated offset and the subdivision's origin
+			var newCoords = RecalculateCoords(coords, destinationOrigin, offSetInSamplePoints, spd);
+			Debug.WriteLine($"The new coords are : {BigIntegerHelper.GetDisplay(newCoords)},\n old = {BigIntegerHelper.GetDisplay(mapCoords)}. (While calculating the MapBlockOffset.");
+
 			// Adjust the coordinates to get a better samplePointDelta, etc.
-			mapCoords = GetNormCoords(coords, destinationOrigin, ref offSetInSamplePoints, spd);
+			//mapCoords = JiggerCoords(coords, newCoords, spd, ref offSetInSamplePoints);
+			mapCoords = newCoords;
 
 			// Get # of whole blocks and the # of pixels left over
 			var offSetInBlocks = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out var offSetRemainderInSamplePoints);
@@ -189,38 +176,10 @@ namespace MSS.Common
 			return offSetInBlocks;
 		}
 
-		private static SizeDbl GetSamplesRemaining(SizeDbl offsetRemainder, SizeInt blockSize)
-		{
-			var samplesRemaining = new SizeDbl(
-				GetSampRem(offsetRemainder.Width, blockSize.Width),
-				GetSampRem(offsetRemainder.Height, blockSize.Height)
-				);
-
-			return samplesRemaining;
-		}
-
-		private static double GetSampRem(double extent, int blockLen)
-		{
-			if (extent < 0)
-			{
-				return -1 * (blockLen + extent);
-			}
-			else if (extent > 0)
-			{
-				return blockLen - extent;
-			}
-			else
-			{
-				return 0;
-			}
-		}
-
 		// Calculate the number of samplePoints in the given offset.
 		// It is assumed that offset is < Integer.MAX * samplePointDelta
-		private static SizeInt GetNumberOfSamplePoints(ref RSize offset, ref RSize samplePointDelta)
+		private static SizeInt GetNumberOfSamplePoints(RSize offset, RSize samplePointDelta)
 		{
-			NormalizeInPlace(ref offset, ref samplePointDelta);
-
 			// # of whole sample points between the source and destination origins.
 			var numSamplesH = offset.Width / samplePointDelta.Width;
 			var numSamplesV = offset.Height / samplePointDelta.Height;
@@ -229,33 +188,65 @@ namespace MSS.Common
 			return offSetInSamplePoints;
 		}
 
-		private static SizeDbl GetNumberOfSamplePointsDiag(SizeDbl offsetDC, RSize samplePointDelta)
+		private static SizeDbl GetNumberOfSamplePointsDiag(RPoint mapOrigin, RPoint subdivisionOrigin, RSize samplePointDelta, out SizeDbl offset)
 		{
-			var spdDC = GetSizeDbl(samplePointDelta);
-			var numSamplesHDC = offsetDC.Width / spdDC.Width;
-			var numSamplesVDC = offsetDC.Height / spdDC.Height;
-			var offsetInSamplePointsDC = new SizeDbl(numSamplesHDC, numSamplesVDC);
+			var sx = BigIntegerHelper.ConvertToDouble(mapOrigin.X, mapOrigin.Exponent);
+			var sy = BigIntegerHelper.ConvertToDouble(mapOrigin.Y, mapOrigin.Exponent);
+			var dx = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.X, subdivisionOrigin.Exponent);
+			var dy = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.Y, subdivisionOrigin.Exponent);
 
-			return offsetInSamplePointsDC;
+			offset = new SizeDbl(sx - dx, sy - dy);
+
+			var spdDC = GetSizeDbl(samplePointDelta);
+			var numSamplesH = offset.Width / spdDC.Width;
+			var numSamplesV = offset.Height / spdDC.Height;
+			var offsetInSamplePoints = new SizeDbl(numSamplesH, numSamplesV);
+
+			return offsetInSamplePoints;
+		}
+
+		private static RRectangle RecalculateCoords(RRectangle coords, RPoint destinationOrigin, SizeInt offsetInSamplePoints, RSize samplePointDelta)
+		{
+			var normalizedOffset = samplePointDelta.Scale(offsetInSamplePoints);
+			NormalizeInPlace(ref destinationOrigin, ref normalizedOffset);
+			var newOrigin = destinationOrigin.Translate(normalizedOffset);
+
+			var newSize = coords.Size.Clone(); // new RSize(coords.WidthNumerator, coords.HeightNumerator, coords.Exponent);
+			NormalizeInPlace(ref newOrigin, ref newSize);
+			var result = new RRectangle(newOrigin, newSize);
+
+			return result;
 		}
 
 		// The coordinates previously calculated using the exact distance from a particular origin
 		// is used to calculate a new set of coordinates having an origin within 5 sample points of the original
 		// where the new origin has the smallest absolute value for the exponent.
-		private static RRectangle GetNormCoords(RRectangle coords, RPoint destinationOrigin, ref SizeInt offsetInSamplePoints, RSize samplePointDelta)
+		private static RRectangle JiggerCoords(RRectangle targetCoords, RRectangle calcCoords, RSize samplePointDelta, ref SizeInt offsetInSamplePoints)
 		{
-			// TODO: as the coords are adjusted, adjust the offset to match
+			Debug.WriteLine($"JiggerTarget x:{targetCoords.LeftBot.Values[0]}, y:{targetCoords.LeftBot.Values[1]}, exp:{targetCoords.Exponent}; " +
+				$"w:{targetCoords.Size.Values[0]}, h:{targetCoords.Size.Values[1]}.");
 
-			var normalizedDist = samplePointDelta.Scale(offsetInSamplePoints);
-			NormalizeInPlace(ref destinationOrigin, ref normalizedDist);
-			var newOrigin = destinationOrigin.Translate(normalizedDist);
+			//var cCoords = calcCoords.Clone();
+			//var cSpd = samplePointDelta.Clone();
+			//NormalizeInPlace(ref cCoords, ref cSpd);
 
-			var newSize = coords.Size.Clone(); // new RSize(coords.WidthNumerator, coords.HeightNumerator, coords.Exponent);
-			NormalizeInPlace(ref newOrigin, ref newSize);
-			var mapCoords = new RRectangle(newOrigin, newSize);
+			var cCoords = Normalize(calcCoords, samplePointDelta, out var cSpd);
 
-			Debug.WriteLine($"The new coords are : {BigIntegerHelper.GetDisplay(mapCoords)}.");
-			return mapCoords;
+			for(var pCntr = -2; pCntr < 4; pCntr++)
+			{
+				var pv = new SizeInt(pCntr, pCntr);
+				var p = cCoords.LeftBot.Translate(cSpd.Scale(pv));
+
+				for(var sCntr = -2; sCntr < 4; sCntr++)
+				{
+					var sv = new SizeInt(sCntr, sCntr);
+					var s = cCoords.Size.Translate(cSpd.Scale(sv));
+					NormalizeInPlace(ref p, ref s);
+					Debug.WriteLine($"{pCntr:D3},{sCntr:D3} :: x:{p.Values[0]}, y:{p.Values[1]}, exp:{p.Exponent}; w:{s.Values[0]}, h:{s.Values[1]}.");
+				}
+			}
+
+			return calcCoords;
 		}
 
 		private static SizeInt GetOffsetAndRemainder(SizeInt offSetInSamplePoints, SizeInt blockSize, out SizeDbl offSetRemainderInSamplePoints)
@@ -288,6 +279,28 @@ namespace MSS.Common
 			return  result;
 		}
 
+		private static SizeDbl GetSamplesRemaining(SizeDbl offsetRemainder, SizeInt blockSize)
+		{
+			var samplesRemaining = new SizeDbl(
+				GetSampRem(offsetRemainder.Width, blockSize.Width),
+				GetSampRem(offsetRemainder.Height, blockSize.Height)
+				);
+
+			return samplesRemaining;
+		}
+
+		private static double GetSampRem(double extent, int blockLen)
+		{
+			if (extent < 0)
+			{
+				return -1 * (blockLen + extent);
+			}
+			else
+			{
+				return extent > 0 ? blockLen - extent : 0;
+			}
+		}
+
 		private static SizeDbl GetSizeDbl(RSize rSize)
 		{
 			return new SizeDbl(BigIntegerHelper.ConvertToDouble(rSize.Width, rSize.Exponent), BigIntegerHelper.ConvertToDouble(rSize.Height, rSize.Exponent));
@@ -296,12 +309,6 @@ namespace MSS.Common
 		private static PointDbl GetPointDbl(RPoint rPoint)
 		{
 			return new PointDbl(BigIntegerHelper.ConvertToDouble(rPoint.X, rPoint.Exponent), BigIntegerHelper.ConvertToDouble(rPoint.Y, rPoint.Exponent));
-		}
-
-		private static PointInt GetPointInt(RPoint rPoint)
-		{
-			var pointDbl = GetPointDbl(rPoint);
-			return new PointInt((int)Math.Round(pointDbl.X), (int)Math.Round(pointDbl.Y));
 		}
 
 		#endregion

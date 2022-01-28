@@ -23,6 +23,8 @@ namespace MSetExplorer
 
 		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
+			Project = new Project(ObjectId.GenerateNewId(), "un-named");
+
 			BlockSize = blockSize;
 			_projectAdapter = projectAdapter;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
@@ -41,6 +43,8 @@ namespace MSetExplorer
 		private GenMapRequestInfo CurrentRequest => _requestStack.Count == 0 ? null : _requestStack[^1];
 		private int? CurrentGenMapRequestId => CurrentRequest?.GenMapRequestId;
 
+		public Project Project { get; private set; }
+
 		public Job CurrentJob => CurrentRequest?.Job;
 
 		public bool CanGoBack => _requestStack.Count > 1;
@@ -54,7 +58,7 @@ namespace MSetExplorer
 			var curReq = CurrentRequest;
 			curReq?.MapLoader?.Stop();
 
-			var job = BuildJob(canvasControlSize, mSetInfo, clearExistingMapSections);
+			var job = BuildJob(Project, canvasControlSize, mSetInfo, _projectAdapter, clearExistingMapSections);
 			Debug.WriteLine($"The new job has a SamplePointDelta of {BigIntegerHelper.GetDisplay(job.Subdivision.SamplePointDelta)}.");
 
 			var mapLoader = new MapLoader(job, HandleMapSection, _mapSectionRequestProcessor);
@@ -94,7 +98,7 @@ namespace MSetExplorer
 
 		public void ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
 		{
-			_ = BuildJob(canvasControlSize, mSetInfo, clearExistingMapSections: true);
+			_ = BuildJob(Project, canvasControlSize, mSetInfo, _projectAdapter, clearExistingMapSections: true);
 		}
 
 		#endregion
@@ -112,10 +116,8 @@ namespace MSetExplorer
 			}
 		}
 
-		private Job BuildJob(SizeInt canvasControlSize, MSetInfo mSetInfo, bool clearExistingMapSections)
+		private Job BuildJob(Project project, SizeInt canvasControlSize, MSetInfo mSetInfo, ProjectAdapter projectAdapter, bool clearExistingMapSections)
 		{
-			var project = new Project(ObjectId.GenerateNewId(), "un-named");
-
 			// Determine how much of the canvas control can be covered by the new map.
 			var canvasSize = RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize);
 
@@ -123,7 +125,7 @@ namespace MSetExplorer
 			var samplePointDelta = RMapHelper.GetSamplePointDelta(mSetInfo.Coords, canvasSize);
 
 			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, BlockSize, _projectAdapter, deleteExisting: clearExistingMapSections);
+			var subdivision = GetSubdivision(mSetInfo.Coords.LeftBot, samplePointDelta, BlockSize, projectAdapter, deleteExisting: clearExistingMapSections);
 
 			// Determine the amount to tranlate from our coordinates to the subdivision coordinates.
 			var coords = mSetInfo.Coords;

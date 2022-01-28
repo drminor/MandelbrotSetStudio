@@ -81,8 +81,7 @@ namespace MSetExplorer
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr).Translate(_mapBlockOffset);
 					var mapSectionRequest = MapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, _job.MSetInfo.MapCalcSettings, out var mapPosition);
 
-					var disp = BigIntegerHelper.GetDisplay(mapPosition);
-					Debug.WriteLine($"Sending request for {blockPosition} with map position: {disp}");
+					//Debug.WriteLine($"Sending request: {blockPosition}::{BigIntegerHelper.GetDisplay(mapPosition)}");
 
 					_mapSectionRequestProcessor.AddWork(GenMapRequestId, mapSectionRequest, HandleResponse);
 					_ = Interlocked.Increment(ref _sectionsRequested);
@@ -127,8 +126,7 @@ namespace MSetExplorer
 			_callback(GenMapRequestId, mapSection);
 
 			_ = Interlocked.Increment(ref _sectionCompleted);
-			if (_sectionCompleted == _job.CanvasSizeInBlocks.NumberOfCells
-				|| (_isStopping && _sectionCompleted == _sectionsRequested))
+			if (_sectionCompleted == _job.CanvasSizeInBlocks.NumberOfCells || (_isStopping && _sectionCompleted == _sectionsRequested))
 			{
 				if (!_tcs.Task.IsCompleted)
 				{
