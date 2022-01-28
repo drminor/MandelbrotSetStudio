@@ -24,6 +24,8 @@ namespace MSetExplorer
 		private Progress<MapSection> _mapLoadingProgress;
 		private IDictionary<PointInt, ScreenSection> _screenSections;
 
+		private int _jobNameCounter;
+
 		public MainWindow()
 		{
 			_selectedArea = null;
@@ -43,7 +45,7 @@ namespace MSetExplorer
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var maxIterations = 700;
 			var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.LoadMap(canvasSize, mSetInfo, clearExistingMapSections: false);
+			_vm.LoadMap("initial job", canvasSize, mSetInfo, clearExistingMapSections: false);
 		}
 
 		private SizeInt GetCanvasControlSize(Canvas canvas)
@@ -55,7 +57,7 @@ namespace MSetExplorer
 
 		private void HandleMapSectionReady(MapSection mapSection)
 		{
-			Debug.WriteLine($"Drawing a bit map at {mapSection.CanvasPosition}.");
+			//Debug.WriteLine($"Drawing a bit map at {mapSection.CanvasPosition}.");
 
 			var screenSection = GetScreenSection(mapSection);
 			screenSection.WritePixels(mapSection.Pixels1d);
@@ -83,35 +85,10 @@ namespace MSetExplorer
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
 		{
-			foreach (UIElement c in MainCanvas.Children)
-			{
-				if (c is Image i)
-				{
-					i.Visibility = Visibility.Hidden;
-				}
-			}
-
+			HideScreenSections();
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			_vm.GoBack(canvasSize, clearExistingMapSections: false);
 			btnGoBack.IsEnabled = _vm.CanGoBack;
-
-			//foreach(UIElement c in MainCanvas.Children)
-			//{
-			//	if(c is Image i)
-			//	{
-			//		i.Visibility = Visibility.Hidden;
-			//	}
-			//}
-
-			//var canvasSize = GetCanvasControlSize(MainCanvas);
-			//var mSetInfo = _vm.CurrentJob.MSetInfo;
-
-			//if (mSetInfo != null)
-			//{
-			//	var currentCmEntry6 = mSetInfo.ColorMapEntries[6];
-			//	mSetInfo.ColorMapEntries[6] = new ColorMapEntry(currentCmEntry6.CutOff, new ColorMapColor("#DD2050"), ColorMapBlendStyle.None, currentCmEntry6.EndColor);
-			//	_vm.LoadMap(canvasSize, mSetInfo);
-			//}
 		}
 
 		private void MainCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -172,6 +149,14 @@ namespace MSetExplorer
 
 			var mSetInfo = new MSetInfo(curMSetInfo, coords);
 
+			HideScreenSections();
+			var label = "Zoom:" + _jobNameCounter++.ToString();
+			_vm.LoadMap(label, canvasSize, mSetInfo, clearExistingMapSections);
+			btnGoBack.IsEnabled = _vm.CanGoBack;
+		}
+
+		private void HideScreenSections()
+		{
 			foreach (UIElement c in MainCanvas.Children)
 			{
 				if (c is Image i)
@@ -179,9 +164,6 @@ namespace MSetExplorer
 					i.Visibility = Visibility.Hidden;
 				}
 			}
-
-			_vm.LoadMap(canvasSize, mSetInfo, clearExistingMapSections);
-			btnGoBack.IsEnabled = _vm.CanGoBack;
 		}
 
 		private class ScreenSection

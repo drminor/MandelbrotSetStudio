@@ -10,7 +10,7 @@ namespace MapSectionProviderLib
 	{
 		public static MapSectionRequest CreateRequest(Subdivision subdivision, PointInt blockPosition, MapCalcSettings mapCalcSettings, out RPoint mapPosition)
 		{
-			var subPos = RMapHelper.Normalize(subdivision.Position, subdivision.SamplePointDelta, out var spd);
+			var subPos = RNormalizer.Normalize(subdivision.Position, subdivision.SamplePointDelta, out var spd);
 			mapPosition = subPos.Translate(spd.Scale(blockPosition.Scale(subdivision.BlockSize)));
 
 			var dtoMapper = new DtoMapper();

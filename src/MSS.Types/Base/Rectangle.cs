@@ -57,6 +57,8 @@ namespace MSS.Types.Base
 		public Point<T> LeftBot => new Point<T>(Values[0], Values[2]);
 		public Point<T> RightTop => new Point<T>(Values[1], Values[3]);
 
+		public Point<T> Position => LeftBot;
+
 		object ICloneable.Clone()
 		{
 			return Clone();

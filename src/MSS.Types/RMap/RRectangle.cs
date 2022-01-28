@@ -45,6 +45,7 @@ namespace MSS.Types
 		}
 
 		public new RPoint LeftBot => new RPoint(X1, Y1, Exponent);
+		public new RPoint Position => LeftBot; 
 
 		public new RPoint RightTop => new RPoint(X2, Y2, Exponent);
 

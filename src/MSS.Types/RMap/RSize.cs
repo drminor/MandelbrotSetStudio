@@ -48,6 +48,13 @@ namespace MSS.Types
 			return new RSize(Width * factor.X, Height * factor.Y, Exponent);
 		}
 
+		public RSize Scale(SizeDbl factor)
+		{
+			var nW = (long)((long)Width * factor.Width);
+			var nH = (long)((long)Height * factor.Height);
+			return new RSize(nW, nH, Exponent);
+		}
+
 		// TODO: FIX BUG
 		public RSize Scale(RSize factor)
 		{

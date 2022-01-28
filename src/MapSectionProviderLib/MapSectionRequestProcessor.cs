@@ -157,9 +157,9 @@ namespace MapSectionProviderLib
 
 					workItem.WorkAction(mapSectionResponse);
 				}
-				catch (TaskCanceledException)
+				catch (OperationCanceledException)
 				{
-					Debug.WriteLine("The work queue got a TCE.");
+					Debug.WriteLine("The work queue got a OCE.");
 				}
 				catch (Exception e)
 				{

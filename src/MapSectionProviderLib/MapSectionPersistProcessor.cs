@@ -63,9 +63,9 @@ namespace MapSectionProviderLib
 					var mapSectionResponse = _workQueue.Take(ct);
 					var mapSectionId = await _mapSectionRepo.SaveMapSectionAsync(mapSectionResponse);
 				}
-				catch (TaskCanceledException)
+				catch (OperationCanceledException)
 				{
-					Debug.WriteLine("The persist queue got a TCE.");
+					Debug.WriteLine("The persist queue got a OCE.");
 				}
 				catch (Exception e)
 				{
