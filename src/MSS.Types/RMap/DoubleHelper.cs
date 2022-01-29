@@ -6,22 +6,59 @@ namespace MSS.Types
 	{
 		private const long ExponentMask = 0x7FF0000000000000;
 
-		public static bool HasPrecision(double x)
+        public static string ToExactString(double d, out int exponent)
+        {
+            // Translate the double into sign, exponent and mantissa.
+            var bits = BitConverter.DoubleToInt64Bits(d);
+            // Note that the shift is sign-extended, hence the test against -1 not 1
+            var negative = (bits & (1L << 63)) != 0;
+            exponent = (int)((bits >> 52) & 0x7ffL);
+            var mantissa = bits & 0xfffffffffffffL;
+
+            // Subnormal numbers; exponent is effectively one higher,
+            // but there's no extra normalisation bit in the mantissa
+            if (exponent == 0)
+            {
+                exponent++;
+            }
+            // Normal numbers; leave exponent as it is but add extra
+            // bit to the front of the mantissa
+            else
+            {
+                mantissa = mantissa | (1L << 52);
+            }
+
+            // Bias the exponent. It's actually biased by 1023, but we're
+            // treating the mantissa as m.0 rather than 0.m, so we need
+            // to subtract another 52 from it.
+            exponent -= 1075;
+
+            if (mantissa == 0)
+            {
+                return negative ? "-0" : "0";
+            }
+
+            /* Normalize */
+            while ((mantissa & 1) == 0)
+            {    /*  i.e., Mantissa is even */
+                mantissa >>= 1;
+                exponent++;
+            }
+
+            return negative 
+                ? $"-{mantissa}e{exponent}" 
+                : $"{mantissa}e{exponent}";
+        }
+
+        public static bool HasPrecision(double x)
 		{
-			if (x == 0)
-				return false;
-
-			if (IsSubnormal(x))
-				return false;
-
-			return true;
+			return x != 0 && !IsSubnormal(x);
 		}
 
 		public static bool IsSubnormal(double v)
 		{
-			long bithack = BitConverter.DoubleToInt64Bits(v);
-			if (bithack == 0) return false;
-			return (bithack & ExponentMask) == 0;
+			var bithack = BitConverter.DoubleToInt64Bits(v);
+			return bithack != 0 && (bithack & ExponentMask) == 0;
 		}
 	}
 }

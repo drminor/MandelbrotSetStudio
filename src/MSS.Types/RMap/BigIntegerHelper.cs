@@ -35,7 +35,7 @@ namespace MSS.Types
 		public static BigInteger Divide(BigInteger dividend, int dividendExponent, int divisor, out int newExponent)
 		{
 			var exponentDelta = 0;
-			var tolerance = 1d / divisor;
+			var tolerance = 20d / divisor;
 			var bDivisor = new BigInteger(divisor);
 
 			var result = BigInteger.DivRem(dividend, bDivisor, out var remainder);

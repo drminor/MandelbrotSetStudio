@@ -6,6 +6,7 @@ using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -146,8 +147,7 @@ namespace MSetExplorer
 		{
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var curMSetInfo = _vm.CurrentJob.MSetInfo;
-
-			var mSetInfo = new MSetInfo(curMSetInfo, coords);
+			var mSetInfo = MSetInfo.UpdateWithNewCoords(coords, curMSetInfo);
 
 			HideScreenSections();
 			var label = "Zoom:" + _jobNameCounter++.ToString();
@@ -157,12 +157,9 @@ namespace MSetExplorer
 
 		private void HideScreenSections()
 		{
-			foreach (UIElement c in MainCanvas.Children)
+			foreach (UIElement c in MainCanvas.Children.OfType<Image>())
 			{
-				if (c is Image i)
-				{
-					i.Visibility = Visibility.Hidden;
-				}
+				c.Visibility = Visibility.Hidden;
 			}
 		}
 

@@ -22,12 +22,17 @@ namespace MSS.Types.MSet
 			HighColorCss = highColorCss;
 		}
 
-		public MSetInfo(MSetInfo currentInfo, RRectangle newCoords) : this(newCoords, currentInfo.MapCalcSettings, Clone(currentInfo.ColorMapEntries), currentInfo.HighColorCss)
-		{ }
+		public static MSetInfo UpdateWithNewCoords(RRectangle newCoords, MSetInfo source)
+		{
+			return new MSetInfo(newCoords, source.MapCalcSettings, Clone(source.ColorMapEntries), source.HighColorCss);
+		}
+
+		//public MSetInfo(MSetInfo currentInfo, RRectangle newCoords) : this(newCoords, currentInfo.MapCalcSettings, Clone(currentInfo.ColorMapEntries), currentInfo.HighColorCss)
+		//{ }
 
 		private static IList<ColorMapEntry> Clone(IList<ColorMapEntry> colorMapEntries)
 		{
-			List<ColorMapEntry> result = new List<ColorMapEntry>();
+			var result = new List<ColorMapEntry>();
 
 			foreach(var cme in colorMapEntries)
 			{

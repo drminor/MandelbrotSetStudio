@@ -12,7 +12,7 @@ using System.Windows;
 
 namespace MSetExplorer
 {
-	internal class MainWindowViewModel : ViewModelBase
+	internal class MapNavSimViewModel : ViewModelBase
 	{
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
@@ -20,7 +20,7 @@ namespace MSetExplorer
 
 		private readonly object hmsLock = new();
 
-		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapNavSimViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			BlockSize = blockSize;
 			_projectAdapter = projectAdapter;
