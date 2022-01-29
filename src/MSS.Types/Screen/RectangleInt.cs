@@ -31,6 +31,7 @@ namespace MSS.Types
 		public int Height => Y2 - Y1;
 
 		public PointInt Point => new PointInt(X1, Y1);
+		public PointInt Position => new PointInt(X1, Y1);
 		public SizeInt Size => new SizeInt(Width, Height);
 
 		public RectangleInt Scale(PointInt factor)

@@ -44,6 +44,12 @@ namespace MSS.Types
 			Validate();
 		}
 
+		public RRectangle(RectangleInt rect) : base(rect.X1, rect.X2, rect.Y1, rect.Y2)
+		{
+			Exponent = 0;
+			Validate();
+		}
+
 		public new RPoint LeftBot => new RPoint(X1, Y1, Exponent);
 		public new RPoint Position => LeftBot; 
 

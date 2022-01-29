@@ -53,7 +53,7 @@ namespace MSetExplorer
 			var curReq = CurrentRequest;
 			curReq?.MapLoader?.Stop();
 
-			var job = BuildJob(Project, jobName, canvasControlSize, mSetInfo, _projectAdapter, clearExistingMapSections);
+			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, BlockSize, _projectAdapter, clearExistingMapSections);
 			var t = BigIntegerHelper.ConvertToDouble(mSetInfo.Coords.X1);
 			var tes = DoubleHelper.ToExactString(t, out var tExp);
 			Debug.WriteLine($"The new job has a SamplePointDelta of {BigIntegerHelper.GetDisplay(job.Subdivision.SamplePointDelta)}. Coord exp: {mSetInfo.Coords.Exponent}. X1: {tes}");
@@ -95,7 +95,7 @@ namespace MSetExplorer
 
 		public void ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
 		{
-			_ = BuildJob(Project, "temp", canvasControlSize, mSetInfo, _projectAdapter, clearExistingMapSections: true);
+			_ = MapWindowHelper.BuildJob(Project, "temp", canvasControlSize, mSetInfo, BlockSize, _projectAdapter, clearExistingMapSections: true);
 		}
 
 		#endregion
@@ -111,51 +111,6 @@ namespace MSetExplorer
 					OnMapSectionReady(mapSection);
 				}
 			}
-		}
-
-		private Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, ProjectAdapter projectAdapter, bool clearExistingMapSections)
-		{
-			// Determine how much of the canvas control can be covered by the new map.
-			var canvasSize = RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize);
-
-			// Get the number of blocks
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, BlockSize);
-
-			// Using the size of the new map and the map coordinates, calculate the sample point size
-			var samplePointDelta = RMapHelper.GetSamplePointDelta(mSetInfo.Coords, canvasSize/*, out var coords*/);
-			//var updatedMSetInfo = new MSetInfo(mSetInfo, coords);
-
-			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(mSetInfo.Coords, samplePointDelta, BlockSize, projectAdapter, deleteExisting: clearExistingMapSections);
-
-			// Determine the amount to tranlate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(mSetInfo.Coords, subdivision.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
-			//var updatedMSetInfo = new MSetInfo(mSetInfo, coords);
-
-			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, jobName, mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
-			return job;
-		}
-
-		private Subdivision GetSubdivision(RRectangle coords, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter, bool deleteExisting)
-		{
-			// Find an existing subdivision record that has a SamplePointDelta "close to" the given samplePointDelta
-			// and that is "in the neighborhood of our Map Set.
-
-			var result = projectAdapter.GetOrCreateSubdivision(coords.Position, samplePointDelta, blockSize, out var created);
-
-			//while(deleteExisting && result.DateCreated < DateTime.Parse("1/25/2022 5:47", CultureInfo.InvariantCulture))
-			//{
-			//	_ = projectAdapter.DeleteSubdivision(result);
-			//	result = projectAdapter.GetOrCreateSubdivision(position, samplePointDelta, blockSize, out var _);
-			//}
-
-			while (deleteExisting && !created)
-			{
-				_ = projectAdapter.DeleteSubdivision(result);
-				result = projectAdapter.GetOrCreateSubdivision(coords.Position, samplePointDelta, blockSize, out created);
-			}
-
-			return result;
 		}
 
 		#endregion

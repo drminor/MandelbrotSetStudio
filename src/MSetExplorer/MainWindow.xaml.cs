@@ -45,7 +45,7 @@ namespace MSetExplorer
 			btnGoBack.IsEnabled = _vm.CanGoBack;
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var maxIterations = 700;
-			var mSetInfo = MSetInfoHelper.BuildInitialMSetInfo(maxIterations);
+			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
 			_vm.LoadMap("initial job", canvasSize, mSetInfo, clearExistingMapSections: false);
 		}
 
@@ -128,17 +128,18 @@ namespace MSetExplorer
 
 		private RRectangle GetCoords(Rect rect)
 		{
+			var curJob = _vm.CurrentJob;
+			var position = curJob.MSetInfo.Coords.LeftBot;
+			var canvasControlOffset = curJob.CanvasControlOffset;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+
+			// Adjust the selected area's origin to account for the portion of the start block that is off screen.
 			var area = new RectangleInt(
-				new PointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y)),
+				new PointInt((int)Math.Round(rect.X + canvasControlOffset.Width), (int)Math.Round(rect.Y + canvasControlOffset.Height)),
 				new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
 				);
 
-			var curJob = _vm.CurrentJob;
-			var position = curJob.MSetInfo.Coords.LeftBot;
-			var mapBlockOffset = curJob.MapBlockOffset;
-			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-
-			var result = RMapHelper.GetMapCoords(area, position, mapBlockOffset, samplePointDelta);
+			var result = RMapHelper.GetMapCoords(area, position, samplePointDelta);
 
 			return result;
 		}

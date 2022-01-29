@@ -14,15 +14,15 @@ namespace MSetExplorer
 	{
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
+		private MapSectionPersistProcessor _mapSectionPersistProcessor;
+		private MapSectionRequestProcessor _mapSectionRequestProcessor;
 
-		MapSectionPersistProcessor _mapSectionPersistProcessor;
-		MapSectionRequestProcessor _mapSectionRequestProcessor;
+		private static readonly bool USE_MAP_NAV_SIM = true;
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
 
-			var window = new MainWindow();
 			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
 			projectAdapter.CreateCollections();
 
@@ -31,13 +31,22 @@ namespace MSetExplorer
 
 			//_mapSectionPersistProcessor = null;
 			_mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionRepo);
-
 			_mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, _mapSectionPersistProcessor);
 
-			var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor);
-			window.DataContext = viewModel;
-
-			window.Show();
+			if (USE_MAP_NAV_SIM)
+			{
+				var viewModel = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor);
+				var window = new MapNavSim();
+				window.DataContext = viewModel;
+				window.Show();
+			}
+			else
+			{
+				var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor);
+				var window = new MainWindow();
+				window.DataContext = viewModel;
+				window.Show();
+			}
 		}
 
 		protected override void OnExit(ExitEventArgs e)

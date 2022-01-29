@@ -250,11 +250,6 @@ namespace MapSectionProviderLib
 					{
 						_workQueueProcessor4.Dispose();
 					}
-
-					if (_mapSectionPersistProcessor != null)
-					{
-						_mapSectionPersistProcessor.Dispose();
-					}
 				}
 
 				disposedValue = true;

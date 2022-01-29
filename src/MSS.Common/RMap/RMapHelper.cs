@@ -11,24 +11,21 @@ namespace MSS.Common
 	{
 		#region Map Area Support
 
-		public static RRectangle GetMapCoords(RectangleInt area, RPoint position, SizeInt mapBlockOffset, RSize samplePointDelta)
+		public static RRectangle GetMapCoords(RectangleInt area, RPoint position, RSize samplePointDelta)
 		{
-			// adjust the selected area's origin to account for the portion of the start block that is off screen.
-			var tPoint = area.Point.Translate(mapBlockOffset);
+			// Multiply the area by samplePointDelta to convert to map coordinates.
+			var rArea = ScaleByRsize(area, samplePointDelta);
 
-			// Multiply the position by samplePointDelta to convert to "map" coordinates.
-			var offset = samplePointDelta.Scale(tPoint);
-			var pos = position.Clone();
-			RN.NormalizeInPlace(ref pos, ref offset);
-			var newPos = pos.Translate(offset);
+			// Translate the area by the current map position
+			var nrmArea = RN.Normalize(rArea, position, out var nrmPos);
+			var result = nrmArea.Translate(nrmPos);
 
-			// Multiply the selected area by samplePointDelta to convert to "map" coordinates.
-			var newSize = samplePointDelta.Scale(area.Size);
-			RN.NormalizeInPlace(ref newPos, ref newSize);
+			return result;
+		}
 
-			// Create a new rectangle using the new position and size.
-			var result = new RRectangle(newPos, newSize);
-
+		private static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
+		{
+			var result = new RRectangle(area.X1 * factor.Width, area.X2 * factor.Width, area.Y1 * factor.Height, area.Y2 * factor.Height, factor.Exponent);
 			return result;
 		}
 
@@ -70,7 +67,53 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasSize)
+		public static RSize GetSamplePointDelta(ref RRectangle coords, SizeInt canvasSize)
+		{
+			//RSize spd;
+			//SizeInt expandedCanvasSize;
+			//RSize expandedMapSize;
+
+			double expansionRatio;
+
+			if (canvasSize.Width > canvasSize.Height)
+			{
+				var displayWidth = StepUpToNextPow(canvasSize.Width);
+				expansionRatio = (double)displayWidth / canvasSize.Width;
+				//expandedCanvasSize = canvasSize.Scale(expansionRatio);
+				//expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
+
+				//var newNumerator = BigIntegerHelper.Divide(expandedMapSize.Width, coords.Exponent, displayWidth, out var newExponent);
+
+				//spd = new RSize(newNumerator, newNumerator, newExponent);
+			}
+			else
+			{
+				var displayHeight = StepUpToNextPow(canvasSize.Height);
+				expansionRatio = displayHeight / canvasSize.Height;
+				//expandedCanvasSize = canvasSize.Scale(expansionRatio);
+				//expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
+
+				//var newNumerator = BigIntegerHelper.Divide(expandedMapSize.Height, coords.Exponent, displayHeight, out var newExponent);
+
+				//spd = new RSize(newNumerator, newNumerator, newExponent);
+			}
+
+			var expandedCanvasSize = canvasSize.Scale(expansionRatio);
+			var expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
+
+			var nrmPos = RN.Normalize(coords.Position, expandedMapSize, out var nrmExpandedSize);
+			var expCoords = new RRectangle(nrmPos, nrmExpandedSize);
+
+			var result = GetAdjustedSamplePointDelta(expCoords, expandedCanvasSize);
+
+			var adjMapSize = result.Scale(canvasSize);
+			nrmPos = RN.Normalize(coords.Position, adjMapSize, out var nrmAdjMapSize);
+			coords = new RRectangle(nrmPos, nrmAdjMapSize);
+
+			return result;
+		}
+
+		private static RSize GetAdjustedSamplePointDelta(RRectangle coords, SizeInt canvasSize)
 		{
 			var newNumerator = canvasSize.Width > canvasSize.Height
 				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
@@ -81,62 +124,32 @@ namespace MSS.Common
 			return result;
 		}
 
-		//public static RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasSize, out RRectangle newCoords)
-		//{
-		//	//RSize spd;
-		//	//SizeInt expandedCanvasSize;
-		//	//RSize expandedMapSize;
+		public static RSize GetSamplePointDeltaOld(RRectangle coords, SizeInt canvasSize)
+		{
+			var newNumerator = canvasSize.Width > canvasSize.Height
+				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
+				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
 
-		//	double expansionRatio;
+			var result = new RSize(newNumerator, newNumerator, newExponent);
 
-		//	if (canvasSize.Width > canvasSize.Height)
-		//	{
-		//		var displayWidth = StepUpToNextPow(canvasSize.Width);
-		//		 expansionRatio = (double) displayWidth / canvasSize.Width;
-		//		//expandedCanvasSize = canvasSize.Scale(expansionRatio);
-		//		//expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
+			return result;
+		}
 
-		//		//var newNumerator = BigIntegerHelper.Divide(expandedMapSize.Width, coords.Exponent, displayWidth, out var newExponent);
+		public static RRectangle CombinePosAndSize(RPoint pos, RSize size)
+		{
+			var nrmPos = RN.Normalize(pos, size, out var nrmSize);
+			var result = new RRectangle(nrmPos, nrmSize);
+			return result;
+		}
 
-		//		//spd = new RSize(newNumerator, newNumerator, newExponent);
-		//	}
-		//	else
-		//	{
-		//		var displayHeight = StepUpToNextPow(canvasSize.Height);
-		//		expansionRatio = displayHeight / canvasSize.Height;
-		//		//expandedCanvasSize = canvasSize.Scale(expansionRatio);
-		//		//expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
+		private static int GetClosestPow(int x)
+		{
+			var l = Math.Log2(x);
+			var lr = Math.Round(l);
 
-		//		//var newNumerator = BigIntegerHelper.Divide(expandedMapSize.Height, coords.Exponent, displayHeight, out var newExponent);
-
-		//		//spd = new RSize(newNumerator, newNumerator, newExponent);
-		//	}
-
-		//	var expandedCanvasSize = canvasSize.Scale(expansionRatio);
-		//	var expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
-
-		//	var nrmPos = RN.Normalize(coords.Position, expandedMapSize, out var nrmExpandedSize);
-		//	var expCoords = new RRectangle(nrmPos, nrmExpandedSize);
-
-		//	var result = GetAdjustedSamplePointDelta(expCoords, expandedCanvasSize);
-
-		//	var adjMapSize = result.Scale(canvasSize);
-		//	nrmPos = RN.Normalize(coords.Position, adjMapSize, out var nrmAdjMapSize);
-		//	newCoords = new RRectangle(nrmPos, nrmAdjMapSize);
-
-		//	return result;
-		//}
-
-		//private static RSize GetAdjustedSamplePointDelta(RRectangle coords, SizeInt canvasSize)
-		//{
-		//	var newNumerator = canvasSize.Width > canvasSize.Height
-		//		? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
-		//		: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
-
-		//	var result = new RSize(newNumerator, newNumerator, newExponent);
-
-		//	return result;
-		//}
+			var result = (int)Math.Pow(2, lr);
+			return result;
+		}
 
 		private static int StepUpToNextPow(int x)
 		{
