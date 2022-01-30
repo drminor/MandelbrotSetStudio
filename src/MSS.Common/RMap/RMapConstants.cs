@@ -7,6 +7,9 @@ namespace MSS.Common
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE;
 		public static readonly SizeInt BLOCK_SIZE;
 
+		public static readonly RRectangle TEST_RECTANGLE;
+
+
 		static RMapConstants()
 		{
 			// The set goes from x = -2 to 1 and from y = -1 to 1.
@@ -17,6 +20,8 @@ namespace MSS.Common
 			// x = -2/1 to 1/1 and y = -1/1 to 1/1
 
 			ENTIRE_SET_RECTANGLE = new RRectangle(-4, 2, -3, 3, -1);
+
+			TEST_RECTANGLE = new RRectangle(0, 1, 0, 1, 0);
 
 			BLOCK_SIZE = new SizeInt(128, 128);
 		}

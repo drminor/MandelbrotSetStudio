@@ -148,7 +148,7 @@ namespace MSetExplorer
 		{
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var curMSetInfo = _vm.CurrentJob.MSetInfo;
-			var mSetInfo = MSetInfo.UpdateWithNewCoords(coords, curMSetInfo);
+			var mSetInfo = MSetInfo.UpdateWithNewCoords(curMSetInfo, coords);
 
 			HideScreenSections();
 			var label = "Zoom:" + _jobNameCounter++.ToString();

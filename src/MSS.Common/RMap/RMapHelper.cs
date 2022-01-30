@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 
@@ -10,26 +11,6 @@ namespace MSS.Common
 	public static class RMapHelper
 	{
 		#region Map Area Support
-
-		public static RPoint GetNewMapPosition(PointInt screenPos, RPoint position, RSize samplePointDelta)
-		{
-			// Multiply the screen position to convert to map coordinates.
-			//var rsPos = ScaleByRsize(screenPos, samplePointDelta);
-			var rsPos = ScaleByRSize(screenPos, samplePointDelta);
-
-			// Translate the map position by the screen position.
-			var result = position.Translate(rsPos);
-
-			result = Reducer.Reduce(result);
-
-			return result;
-		}
-
-		private static RPoint ScaleByRSize(PointInt pos, RSize factor)
-		{
-			var result = new RPoint(pos.X * factor.Width, pos.Y * factor.Width, factor.Exponent);
-			return result;
-		}
 
 		public static RRectangle GetMapCoords(RectangleInt area, RPoint position, RSize samplePointDelta)
 		{
@@ -48,6 +29,25 @@ namespace MSS.Common
 			var result = new RRectangle(area.X1 * factor.Width, area.X2 * factor.Width, area.Y1 * factor.Height, area.Y2 * factor.Height, factor.Exponent);
 			return result;
 		}
+
+		//public static RPoint GetNewMapPosition(PointInt screenPos, RPoint position, RSize samplePointDelta)
+		//{
+		//	// Multiply the screen position to convert to map coordinates.
+		//	var rsPos = ScaleByRSize(screenPos, samplePointDelta);
+
+		//	// Translate the map position by the screen position.
+		//	var result = position.Translate(rsPos);
+
+		//	result = Reducer.Reduce(result);
+
+		//	return result;
+		//}
+
+		//private static RPoint ScaleByRSize(PointInt pos, RSize factor)
+		//{
+		//	var result = new RPoint(pos.X * factor.Width, pos.Y * factor.Width, factor.Exponent);
+		//	return result;
+		//}
 
 		#endregion
 
@@ -176,6 +176,26 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static RSize GetSamplePointDelta3(ref RRectangle coords, SizeInt canvasSize)
+		{
+			var newNumerator = canvasSize.Width > canvasSize.Height
+				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
+				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
+
+			var result = new RSize(newNumerator, newNumerator, newExponent);
+
+			// Use the original # of sample points and multiply by the new sample point size
+			// to get a new map size.
+			var adjMapSize = result.Scale(canvasSize);
+
+			// Create an updated coord value with the new size.
+			var newCoords = CombinePosAndSize(coords.Position, adjMapSize);
+			Debug.WriteLine($"The new coords are : {newCoords},\n old = {coords}. (While calculating SamplePointDelta3.)");
+			coords = newCoords;
+
+			return result;
+		}
+
 		public static RSize GetSamplePointDelta2(ref RRectangle coords, SizeInt newArea, RSize screenSizeToMapRat, SizeInt canvasSize)
 		{
 			double expansionRatio;
@@ -225,19 +245,32 @@ namespace MSS.Common
 				//var sW = GetClosestPow(screenSize.Width);
 				//var mW = sW * screenSizeToMapRat.Width;
 				//newNumerator = BigIntegerHelper.Divide(mW, mapSize.Exponent, canvasSize.Width, out newExponent);
+
 				newNumerator = BigIntegerHelper.Divide(mapSize.Width, mapSize.Exponent, canvasSize.Width, out newExponent);
+
+				Debug.WriteLine($"Adjusting SamplePointDelta. MapsW:{GetSingleDispValue(mapSize.Width, mapSize.Exponent)}, " +
+					$"ScreenW:{screenSize.Width}, csw: {canvasSize.Width}, SPD: {GetSingleDispValue(newNumerator, newExponent)}.");
 			}
 			else
 			{
 				//var sH = GetClosestPow(screenSize.Height);
 				//var mH = sH * screenSizeToMapRat.Height;
 				//newNumerator = BigIntegerHelper.Divide(mH, mapSize.Exponent, canvasSize.Height, out newExponent);
+
 				newNumerator = BigIntegerHelper.Divide(mapSize.Height, mapSize.Exponent, canvasSize.Height, out newExponent);
+
+				Debug.WriteLine($"Adjusting SamplePointDelta. MapsH:{GetSingleDispValue(mapSize.Height, mapSize.Exponent)}, " +
+					$"ScreenH:{screenSize.Height}, csh: {canvasSize.Height}, SPD: {GetSingleDispValue(newNumerator, newExponent)}.");
 			}
 
 			var result = new RSize(newNumerator, newNumerator, newExponent);
 
 			return result;
+		}
+
+		private static string GetSingleDispValue(BigInteger v, int exponent)
+		{
+			return $"{v}/{ Math.Pow(2, -1 * exponent).ToString(CultureInfo.InvariantCulture)}";
 		}
 
 		public static RRectangle CombinePosAndSize(RPoint pos, RSize size)
@@ -324,23 +357,6 @@ namespace MSS.Common
 			Debug.WriteLine($"Our origin is {mapCoords.LeftBot}");
 			Debug.WriteLine($"Destination origin is {subdivisionOrigin}");
 
-			//var ce = Math.Max(Math.Abs(mapCoords.Exponent), Math.Abs(subdivisionOrigin.Exponent));
-			//if (mapCoords.Exponent < 0)
-			//{
-			//	ce *= -1;
-			//}
-
-			//var n = new BigInteger(Math.Pow(2, ce));
-			//var t = new RSize(n, n, ce);
-
-			//var tmCoords = RN.Normalize(mapCoords, t, out var _);
-			//var tsCoords = RN.Normalize(subdivisionOrigin, t, out var _);
-
-			//if (tmCoords.Exponent != tsCoords.Exponent)
-			//{
-			//	throw new ArgumentException($"GetMapBlockOffset found that the map coordinates and the subdivision are on different scales.");
-			//}
-
 			// Using normalize here to minimize the exponent value needed to express these values.
 			var coords = RN.Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
 
@@ -360,15 +376,15 @@ namespace MSS.Common
 
 				// Determine # of sample points are in the mDistance extents.
 				var offsetInSamplePointsDC = GetNumberOfSamplePointsDiag(mapCoords.LeftBot, subdivisionOrigin, samplePointDelta, out var mDistanceDC);
-				Debug.WriteLine($"The raw offset from the subOrigin is {mDistanceDC}.");
+				//Debug.WriteLine($"The raw offset from the subOrigin is {mDistanceDC}.");
 
 				var offset = RN.Normalize(mDistance, samplePointDelta, out var spd);
 				var offSetInSamplePoints = GetNumberOfSamplePoints(offset, spd);
 
 				Debug.WriteLine($"The offset in samplePoints is {offSetInSamplePoints}. Compare: {offsetInSamplePointsDC}.");
 
-				// Calculate the new coords using the calculated offset and the subdivision's origin
-				newCoords = RecalculateCoords(coords, destinationOrigin, offSetInSamplePoints, spd);
+				//// Calculate the new coords using the calculated offset and the subdivision's origin
+				//newCoords = RecalculateCoords(coords, destinationOrigin, offSetInSamplePoints, spd);
 
 				// Adjust the coordinates to get a better samplePointDelta, etc.
 				//mapCoords = JiggerCoords(coords, newCoords, spd, ref offSetInSamplePoints);
@@ -377,7 +393,7 @@ namespace MSS.Common
 				// Get # of whole blocks and the # of pixels left over
 				var offSetInBlocks = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out var offSetRemainderInSamplePoints);
 				Debug.WriteLine($"The offset in blocks is {offSetInBlocks}.");
-				Debug.WriteLine($"The offset in sample points before including BS is {offSetRemainderInSamplePoints}.");
+				//Debug.WriteLine($"The offset in sample points before including BS is {offSetRemainderInSamplePoints}.");
 
 				samplesRemaining = GetSamplesRemaining(offSetRemainderInSamplePoints, blockSize);
 				Debug.WriteLine($"The remainder offset in sample points is {samplesRemaining}.");
@@ -385,14 +401,35 @@ namespace MSS.Common
 				result = offSetInBlocks;
 			}
 
-			Debug.WriteLine($"The new coords are : {newCoords},\n old = {mapCoords}. (While calculating the MapBlockOffset.)");
-			mapCoords = Reducer.Reduce(newCoords);
+			//Debug.WriteLine($"The new coords are : {newCoords},\n old = {mapCoords}. (While calculating the MapBlockOffset.)");
+			//mapCoords = Reducer.Reduce(newCoords);
 
 			return result;
 		}
 
+		//private static void CheckGetMapBlockOffsetParams(RRectangle mapCoords, RPoint subdivisionOrigin)
+		//{
+		//	var ce = Math.Max(Math.Abs(mapCoords.Exponent), Math.Abs(subdivisionOrigin.Exponent));
+		//	if (mapCoords.Exponent < 0)
+		//	{
+		//		ce *= -1;
+		//	}
+
+		//	var n = new BigInteger(Math.Pow(2, ce));
+		//	var t = new RSize(n, n, ce);
+
+		//	var tmCoords = RN.Normalize(mapCoords, t, out var _);
+		//	var tsCoords = RN.Normalize(subdivisionOrigin, t, out var _);
+
+		//	if (tmCoords.Exponent != tsCoords.Exponent)
+		//	{
+		//		throw new ArgumentException($"GetMapBlockOffset found that the map coordinates and the subdivision are on different scales.");
+		//	}
+		//}
+
 		// Calculate the number of samplePoints in the given offset.
 		// It is assumed that offset is < Integer.MAX * samplePointDelta
+		
 		private static SizeInt GetNumberOfSamplePoints(RSize offset, RSize samplePointDelta)
 		{
 			// # of whole sample points between the source and destination origins.

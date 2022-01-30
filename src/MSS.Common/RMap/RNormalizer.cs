@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -152,9 +153,10 @@ namespace MSS.Common
 			//Validate(s2);
 		}
 
+		// TODO: Implement using the IBigRat interface.
 		public static int Normalize(BigInteger[] a, BigInteger[] b, int exponentA, int exponentB)
 		{
-
+			Debug.Assert(exponentA < 0 && exponentB < 0);
 
 			var reductionFactor = -1 * GetReductionFactor(a, b);
 
@@ -183,6 +185,8 @@ namespace MSS.Common
 			return result;
 		}
 
+		
+		// TODO: handle the case where all elements of a and b are zero.
 		private static int GetReductionFactor(BigInteger[] a, BigInteger[] b)
 		{
 			var result = 0;

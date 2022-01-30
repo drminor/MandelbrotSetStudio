@@ -1,0 +1,31 @@
+-- 768
+
+Adjusting SamplePointDelta. MapsH:8/2, ScreenH:1024
+The new coords are : -4/2; 2/2; -3/2; 3/2 exp:-1,
+ old = -4/2; 2/2; -3/2; 3/2 exp:-1. (While calculating SamplePointDelta.)
+The thread 0x1738 has exited with code 0 (0x0).
+'MSetExplorer.exe' (CoreCLR: clrhost): Loaded 'C:\Users\david\source\repos\MandelbrotSetStudio\src\MSetExplorer\bin\Debug\net5.0-windows\protobuf-net.dll'. 
+'MSetExplorer.exe' (CoreCLR: clrhost): Loaded 'Anonymously Hosted DynamicMethods Assembly'. 
+Our origin is -4/2; -3/2 exp:-1
+Destination origin is -4/2; -3/2 exp:-1
+The offset from the subOrigin is Zero.
+The new job has a SamplePointDelta of 1/256; 1/256 exp:-8.
+
+Starting Job with new coords: -496/256; -368/256; -368/256; -240/256 exp:-8.
+Adjusting SamplePointDelta. MapsH:170/256, ScreenH:170.66666666666666
+The new coords are : -992/512; -737/512; -736/512; -481/512 exp:-9,
+ old = -31/16; -23/16; -23/16; -15/16 exp:-4. (While calculating SamplePointDelta.)
+Our origin is -31/16; -23/16 exp:-4
+Destination origin is -31/16; -23/16 exp:-4
+The offset from the subOrigin is Zero.
+The new job has a SamplePointDelta of 85/131072; 85/131072 exp:-17.
+
+
+Starting Job with new coords: -6576/131072; 4304/131072; -4528/131072; 6352/131072 exp:-17.
+Adjusting SamplePointDelta. MapsH:14506/131072, ScreenH:170.66666666666666
+The new coords are : -13152/262144; 8607/262144; -9056/262144; 12703/262144 exp:-18,
+ old = -411/8192; 269/8192; -283/8192; 397/8192 exp:-13. (While calculating SamplePointDelta.)
+Our origin is -411/8192; -283/8192 exp:-13
+Destination origin is -411/8192; -283/8192 exp:-13
+The offset from the subOrigin is Zero.
+The new job has a SamplePointDelta of 7253/67108864; 7253/67108864 exp:-26.

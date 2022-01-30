@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types
@@ -38,7 +34,7 @@ namespace MSS.Types
 			var reductionFactor = 0;
 			long divisor = 1;
 
-			while (IsDivisibleBy(vals, divisor * 2))
+			while (exponent + reductionFactor < 0 && IsDivisibleBy(vals, divisor * 2))
 			{
 				reductionFactor++;
 				divisor *= 2;

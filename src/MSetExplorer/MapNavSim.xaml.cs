@@ -31,14 +31,28 @@ namespace MSetExplorer
 			var canvasSize = GetCanvasControlSize();
 			var maxIterations = 700;
 			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-			var prevSamplePointDelta = new RSize(1, 1, -8);
 
-			_vm.LoadMap2("initial job", canvasSize, mSetInfo, canvasSize, prevSamplePointDelta, clearExistingMapSections: false);
+			// Use the TEST RECTANGLE instead (0,0 -> 1,1)
+			var testMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, RMapConstants.TEST_RECTANGLE);
+			RSize prevSamplePointDelta = null; // new RSize(1, 1, -8);
+
+			_vm.LoadMap2("initial job", canvasSize, testMSetInfo, canvasSize, prevSamplePointDelta, clearExistingMapSections: false);
+		}
+
+		private SizeInt GetCanvasControlSize()
+		{
+			//var width = 1024;
+			//var height = 1024;
+
+			var width = 768;
+			var height = 768;
+			return new SizeInt(width, height);
 		}
 
 		private void NavigateButton_Click(object sender, RoutedEventArgs e)
 		{
-			var rect = new Rect(new Point(16, 16), new Size(128, 128));
+			//var rect = new Rect(new Point(16, 16), new Size(128, 128));
+			var rect = new Rect(new Point(12, 12), new Size(96, 96));
 			var coords = GetCoords(rect);
 
 			Debug.WriteLine($"Starting Job with new coords: {BigIntegerHelper.GetDisplay(coords)}.");
@@ -80,7 +94,7 @@ namespace MSetExplorer
 		{
 			var canvasSize = GetCanvasControlSize();
 			var curMSetInfo = _vm.CurrentRequest.MSetInfo;
-			var mSetInfo = MSetInfo.UpdateWithNewCoords(coords, curMSetInfo);
+			var mSetInfo = MSetInfo.UpdateWithNewCoords(curMSetInfo, coords);
 
 			var label = "Zoom:" + _jobNameCounter++.ToString();
 			_vm.LoadMap(label, canvasSize, mSetInfo, clearExistingMapSections);
@@ -91,7 +105,7 @@ namespace MSetExplorer
 		{
 			var canvasSize = GetCanvasControlSize();
 			var curMSetInfo = _vm.CurrentRequest.MSetInfo;
-			var mSetInfo = MSetInfo.UpdateWithNewCoords(coords, curMSetInfo);
+			var mSetInfo = MSetInfo.UpdateWithNewCoords(curMSetInfo, coords);
 
 			var screenSizeToMapRat = _vm.CurrentRequest.Subdivision.SamplePointDelta;
 
@@ -99,18 +113,6 @@ namespace MSetExplorer
 			_vm.LoadMap2(label, canvasSize, mSetInfo, newArea, screenSizeToMapRat, clearExistingMapSections);
 			btnGoBack.IsEnabled = _vm.CanGoBack;
 		}
-
-		private SizeInt GetCanvasControlSize()
-		{
-			//var width = 1024;
-			//var height = 1024;
-
-			var width = 768;
-			var height = 768;
-			return new SizeInt(width, height);
-		}
-
-
 
 	}
 }

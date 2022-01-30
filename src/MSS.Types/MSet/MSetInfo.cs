@@ -22,7 +22,7 @@ namespace MSS.Types.MSet
 			HighColorCss = highColorCss;
 		}
 
-		public static MSetInfo UpdateWithNewCoords(RRectangle newCoords, MSetInfo source)
+		public static MSetInfo UpdateWithNewCoords(MSetInfo source, RRectangle newCoords)
 		{
 			return new MSetInfo(newCoords, source.MapCalcSettings, Clone(source.ColorMapEntries), source.HighColorCss);
 		}
