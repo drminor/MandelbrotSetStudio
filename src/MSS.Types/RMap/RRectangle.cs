@@ -69,12 +69,12 @@ namespace MSS.Types
 
 		public new RRectangle Clone()
 		{
-			return new RRectangle(Values, Exponent);
+			return Reducer.Reduce(this);
 		}
 
 		public override string? ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(this);
+			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
 			return result;
 		}
 

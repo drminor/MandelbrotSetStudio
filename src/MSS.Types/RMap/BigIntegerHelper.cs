@@ -157,12 +157,12 @@ namespace MSS.Types
 
 		#endregion
 
-		public static string GetDisplay(IBigRatShape bigRatShape)
+		public static string GetDisplay(IBigRatShape bigRatShape, bool includeDecimalOutput = false)
 		{
-			return GetDisplay(bigRatShape.Values, bigRatShape.Exponent);
+			return GetDisplay(bigRatShape.Values, bigRatShape.Exponent, includeDecimalOutput);
 		}
 
-		public static string GetDisplay(BigInteger[] values, int exponent, IFormatProvider? formatProvider = null)
+		public static string GetDisplay(BigInteger[] values, int exponent, bool includeDecimalOutput = false, IFormatProvider? formatProvider = null)
 		{
 			if (formatProvider is null)
 			{
@@ -171,11 +171,18 @@ namespace MSS.Types
 
 			var strDenominator = Math.Pow(2, -1 * exponent).ToString(formatProvider);
 
-			var dVals = values.Select(v => ConvertToDouble(v, exponent)).ToArray();
+			string[] strVals;
+			if (includeDecimalOutput)
+			{
+				var dVals = values.Select(v => ConvertToDouble(v, exponent)).ToArray();
+				strVals = values.Select((x, i) => new string(x.ToString(formatProvider) + "/" + strDenominator + " (" + dVals[i].ToString(formatProvider) + ")")).ToArray();
+			}
+			else
+			{
+				strVals = values.Select((x, i) => new string(x.ToString(formatProvider) + "/" + strDenominator)).ToArray();
+			}
 
-			var strVals = values.Select((x, i) => new string(x.ToString(formatProvider) + "/" + strDenominator + " (" + dVals[i].ToString(formatProvider) + ")")).ToArray();
-
-			var display = string.Join("; ", strVals);
+			var display = string.Join("; ", strVals) + " exp:" + exponent.ToString(formatProvider);
 			return display;
 		}
 

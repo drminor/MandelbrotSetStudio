@@ -46,12 +46,21 @@ namespace MSetExplorer
 			//var curReq = CurrentRequest;
 
 			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, BlockSize, _projectAdapter, clearExistingMapSections);
-			var t = BigIntegerHelper.ConvertToDouble(mSetInfo.Coords.X1);
-			var tes = DoubleHelper.ToExactString(t, out var tExp); 
-			Debug.WriteLine($"The new job has a SamplePointDelta of {BigIntegerHelper.GetDisplay(job.Subdivision.SamplePointDelta)}. Sample exp: {job.Subdivision.SamplePointDelta.Exponent},  Coord exp: {mSetInfo.Coords.Exponent}. X1: {tes}");
+			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
 
 			_requestStack.Add(job);
 		}
+
+		public void LoadMap2(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea, RSize screenSizeToMapRat, bool clearExistingMapSections)
+		{
+			//var curReq = CurrentRequest;
+
+			var job = MapWindowHelper.BuildJob2(Project, jobName, canvasControlSize, mSetInfo, newArea, screenSizeToMapRat, BlockSize, _projectAdapter, clearExistingMapSections);
+			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
+
+			_requestStack.Add(job);
+		}
+
 
 		public void GoBack(SizeInt canvasControlSize, bool clearExistingMapSections)
 		{

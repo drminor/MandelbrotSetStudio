@@ -29,7 +29,7 @@ namespace MSS.Types
 
 		public new RPoint Clone()
 		{
-			return new RPoint(Values, Exponent);
+			return Reducer.Reduce(this);
 		}
 
 		public RPoint Scale(SizeInt factor)
@@ -78,7 +78,7 @@ namespace MSS.Types
 
 		public override string? ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(this);
+			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this)); 
 			return result;
 		}
 	}

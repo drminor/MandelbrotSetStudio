@@ -11,6 +11,26 @@ namespace MSS.Common
 	{
 		#region Map Area Support
 
+		public static RPoint GetNewMapPosition(PointInt screenPos, RPoint position, RSize samplePointDelta)
+		{
+			// Multiply the screen position to convert to map coordinates.
+			//var rsPos = ScaleByRsize(screenPos, samplePointDelta);
+			var rsPos = ScaleByRSize(screenPos, samplePointDelta);
+
+			// Translate the map position by the screen position.
+			var result = position.Translate(rsPos);
+
+			result = Reducer.Reduce(result);
+
+			return result;
+		}
+
+		private static RPoint ScaleByRSize(PointInt pos, RSize factor)
+		{
+			var result = new RPoint(pos.X * factor.Width, pos.Y * factor.Width, factor.Exponent);
+			return result;
+		}
+
 		public static RRectangle GetMapCoords(RectangleInt area, RPoint position, RSize samplePointDelta)
 		{
 			// Multiply the area by samplePointDelta to convert to map coordinates.
@@ -31,7 +51,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Job Creation
+		#region Job Creation V1
 
 		public static SizeInt GetCanvasSize(RRectangle coords, SizeInt canvasControlSize)
 		{
@@ -67,53 +87,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RSize GetSamplePointDelta(ref RRectangle coords, SizeInt canvasSize)
-		{
-			//RSize spd;
-			//SizeInt expandedCanvasSize;
-			//RSize expandedMapSize;
-
-			double expansionRatio;
-
-			if (canvasSize.Width > canvasSize.Height)
-			{
-				var displayWidth = StepUpToNextPow(canvasSize.Width);
-				expansionRatio = (double)displayWidth / canvasSize.Width;
-				//expandedCanvasSize = canvasSize.Scale(expansionRatio);
-				//expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
-
-				//var newNumerator = BigIntegerHelper.Divide(expandedMapSize.Width, coords.Exponent, displayWidth, out var newExponent);
-
-				//spd = new RSize(newNumerator, newNumerator, newExponent);
-			}
-			else
-			{
-				var displayHeight = StepUpToNextPow(canvasSize.Height);
-				expansionRatio = displayHeight / canvasSize.Height;
-				//expandedCanvasSize = canvasSize.Scale(expansionRatio);
-				//expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
-
-				//var newNumerator = BigIntegerHelper.Divide(expandedMapSize.Height, coords.Exponent, displayHeight, out var newExponent);
-
-				//spd = new RSize(newNumerator, newNumerator, newExponent);
-			}
-
-			var expandedCanvasSize = canvasSize.Scale(expansionRatio);
-			var expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
-
-			var nrmPos = RN.Normalize(coords.Position, expandedMapSize, out var nrmExpandedSize);
-			var expCoords = new RRectangle(nrmPos, nrmExpandedSize);
-
-			var result = GetAdjustedSamplePointDelta(expCoords, expandedCanvasSize);
-
-			var adjMapSize = result.Scale(canvasSize);
-			nrmPos = RN.Normalize(coords.Position, adjMapSize, out var nrmAdjMapSize);
-			coords = new RRectangle(nrmPos, nrmAdjMapSize);
-
-			return result;
-		}
-
-		private static RSize GetAdjustedSamplePointDelta(RRectangle coords, SizeInt canvasSize)
+		public static RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasSize)
 		{
 			var newNumerator = canvasSize.Width > canvasSize.Height
 				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
@@ -124,11 +98,142 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RSize GetSamplePointDeltaOld(RRectangle coords, SizeInt canvasSize)
+		public static RSize GetSamplePointDeltaV1(ref RRectangle coords, SizeInt canvasSize)
+		{
+			double expansionRatio;
+
+			if (canvasSize.Width > canvasSize.Height)
+			{
+				var displayWidth = StepUpToNextPow(canvasSize.Width);
+				expansionRatio = (double)displayWidth / canvasSize.Width;
+			}
+			else
+			{
+				var displayHeight = StepUpToNextPow(canvasSize.Height);
+				expansionRatio = displayHeight / canvasSize.Height;
+			}
+
+			// Increase the canvas size to the next largest power of. 2 (for example: 768 => 1024)
+			var expandedCanvasSize = canvasSize.Scale(expansionRatio);
+
+			// Increase the width and height of the of map coordinates in the same proportion.
+			var expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
+
+			// Calculate a "nice" sample point size with these diminesions.
+			var result = GetAdjustedSamplePointDelta(expandedMapSize, expandedCanvasSize);
+
+			var adjMapSize = result.Scale(canvasSize);
+			var nrmPos = RN.Normalize(coords.Position, adjMapSize, out var nrmAdjMapSize);
+			coords = new RRectangle(nrmPos, nrmAdjMapSize);
+
+			return result;
+		}
+
+		public static RSize GetAdjustedSamplePointDelta(RSize mapSize, SizeInt canvasSize)
 		{
 			var newNumerator = canvasSize.Width > canvasSize.Height
-				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
-				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
+				? BigIntegerHelper.Divide(mapSize.Width, mapSize.Exponent, canvasSize.Width, out var newExponent)
+				: BigIntegerHelper.Divide(mapSize.Height, mapSize.Exponent, canvasSize.Height, out newExponent);
+
+			var result = new RSize(newNumerator, newNumerator, newExponent);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Job Creation V2
+
+		public static SizeInt GetCanvasSize2(SizeInt newArea, SizeInt canvasControlSize)
+		{
+			var wRatio = (double)newArea.Width / canvasControlSize.Width;
+			var hRatio = (double)newArea.Height / canvasControlSize.Height;
+
+			int w;
+			int h;
+
+			if (wRatio > hRatio)
+			{
+				// Width of image in pixels will take up the entire control.
+				w = canvasControlSize.Width;
+
+				// Height of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+				var hRat = (double)newArea.Height / newArea.Width;
+				h = (int)Math.Round(canvasControlSize.Width * hRat);
+			}
+			else
+			{
+				// Width of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+				var wRat = (double)newArea.Width / newArea.Height;
+				w = (int)Math.Round(canvasControlSize.Height * wRat);
+
+				// Height of image in pixels will take up the entire control.
+				h = canvasControlSize.Width;
+			}
+
+			var result = new SizeInt(w, h);
+
+			return result;
+		}
+
+		public static RSize GetSamplePointDelta2(ref RRectangle coords, SizeInt newArea, RSize screenSizeToMapRat, SizeInt canvasSize)
+		{
+			double expansionRatio;
+
+			if (canvasSize.Width > canvasSize.Height)
+			{
+				var displayWidth = StepUpToNextPow(canvasSize.Width);
+				expansionRatio = (double)displayWidth / canvasSize.Width;
+			}
+			else
+			{
+				var displayHeight = StepUpToNextPow(canvasSize.Height);
+				expansionRatio = (double)displayHeight / canvasSize.Height;
+			}
+
+			// Increase the canvas size to the next largest power of. 2 (for example: 768 => 1024)
+			var expandedCanvasSize = canvasSize.Scale(expansionRatio);
+
+			// Increase the width and height of the of map coordinates in the same proportion.
+			var expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
+
+			var expandedArea = new SizeDbl(newArea.Width * expansionRatio, newArea.Height * expansionRatio);
+
+			// Calculate a "nice" sample point size with these diminesions.
+			var result = GetAdjustedSamplePointDelta2(expandedMapSize, expandedArea, screenSizeToMapRat, expandedCanvasSize);
+
+			// Use the original # of sample points and multiply by the new sample point size
+			// to get a new map size.
+			var adjMapSize = result.Scale(canvasSize);
+
+			// Create an updated coord value with the new size.
+			var newCoords = CombinePosAndSize(coords.Position, adjMapSize);
+			Debug.WriteLine($"The new coords are : {newCoords},\n old = {coords}. (While calculating SamplePointDelta.)");
+			coords = newCoords;
+
+			return result;
+		}
+
+		private static RSize GetAdjustedSamplePointDelta2(RSize mapSize, SizeDbl screenSize, RSize screenSizeToMapRat, SizeInt canvasSize)
+		{
+			int newExponent;
+			BigInteger newNumerator;
+
+
+			if (canvasSize.Width > canvasSize.Height)
+			{
+				//var sW = GetClosestPow(screenSize.Width);
+				//var mW = sW * screenSizeToMapRat.Width;
+				//newNumerator = BigIntegerHelper.Divide(mW, mapSize.Exponent, canvasSize.Width, out newExponent);
+				newNumerator = BigIntegerHelper.Divide(mapSize.Width, mapSize.Exponent, canvasSize.Width, out newExponent);
+			}
+			else
+			{
+				//var sH = GetClosestPow(screenSize.Height);
+				//var mH = sH * screenSizeToMapRat.Height;
+				//newNumerator = BigIntegerHelper.Divide(mH, mapSize.Exponent, canvasSize.Height, out newExponent);
+				newNumerator = BigIntegerHelper.Divide(mapSize.Height, mapSize.Exponent, canvasSize.Height, out newExponent);
+			}
 
 			var result = new RSize(newNumerator, newNumerator, newExponent);
 
@@ -139,10 +244,13 @@ namespace MSS.Common
 		{
 			var nrmPos = RN.Normalize(pos, size, out var nrmSize);
 			var result = new RRectangle(nrmPos, nrmSize);
+
+			RN.Validate(result);
+
 			return result;
 		}
 
-		private static int GetClosestPow(int x)
+		private static int GetClosestPow(double x)
 		{
 			var l = Math.Log2(x);
 			var lr = Math.Round(l);
@@ -159,6 +267,10 @@ namespace MSS.Common
 			var result = (int) Math.Pow(2, lc);
 			return result;
 		}
+
+		#endregion
+
+		#region Job Block Support
 
 		public static SizeInt GetCanvasSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
 		{
@@ -204,10 +316,13 @@ namespace MSS.Common
 
 		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
-		public static SizeInt GetMapBlockOffset(RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out SizeDbl samplesRemaining)
+		public static SizeInt GetMapBlockOffset(ref RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out SizeDbl samplesRemaining)
 		{
-			Debug.WriteLine($"Our origin is {BigIntegerHelper.GetDisplay(mapCoords.LeftBot)}");
-			Debug.WriteLine($"Destination origin is {BigIntegerHelper.GetDisplay(subdivisionOrigin)}");
+			SizeInt result;
+			RRectangle newCoords;
+
+			Debug.WriteLine($"Our origin is {mapCoords.LeftBot}");
+			Debug.WriteLine($"Destination origin is {subdivisionOrigin}");
 
 			//var ce = Math.Max(Math.Abs(mapCoords.Exponent), Math.Abs(subdivisionOrigin.Exponent));
 			//if (mapCoords.Exponent < 0)
@@ -234,38 +349,46 @@ namespace MSS.Common
 			if (mDistance.Width == 0 && mDistance.Height == 0)
 			{
 				Debug.WriteLine($"The offset from the subOrigin is Zero.");
+
+				newCoords = mapCoords;
 				samplesRemaining = new SizeDbl();
-				return new SizeInt();
+				result = new SizeInt();
+			}
+			else
+			{
+				Debug.WriteLine($"The offset from the subOrigin is {mDistance}.");
+
+				// Determine # of sample points are in the mDistance extents.
+				var offsetInSamplePointsDC = GetNumberOfSamplePointsDiag(mapCoords.LeftBot, subdivisionOrigin, samplePointDelta, out var mDistanceDC);
+				Debug.WriteLine($"The raw offset from the subOrigin is {mDistanceDC}.");
+
+				var offset = RN.Normalize(mDistance, samplePointDelta, out var spd);
+				var offSetInSamplePoints = GetNumberOfSamplePoints(offset, spd);
+
+				Debug.WriteLine($"The offset in samplePoints is {offSetInSamplePoints}. Compare: {offsetInSamplePointsDC}.");
+
+				// Calculate the new coords using the calculated offset and the subdivision's origin
+				newCoords = RecalculateCoords(coords, destinationOrigin, offSetInSamplePoints, spd);
+
+				// Adjust the coordinates to get a better samplePointDelta, etc.
+				//mapCoords = JiggerCoords(coords, newCoords, spd, ref offSetInSamplePoints);
+				//mapCoords = newCoords;
+
+				// Get # of whole blocks and the # of pixels left over
+				var offSetInBlocks = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out var offSetRemainderInSamplePoints);
+				Debug.WriteLine($"The offset in blocks is {offSetInBlocks}.");
+				Debug.WriteLine($"The offset in sample points before including BS is {offSetRemainderInSamplePoints}.");
+
+				samplesRemaining = GetSamplesRemaining(offSetRemainderInSamplePoints, blockSize);
+				Debug.WriteLine($"The remainder offset in sample points is {samplesRemaining}.");
+
+				result = offSetInBlocks;
 			}
 
-			Debug.WriteLine($"The offset from the subOrigin is {BigIntegerHelper.GetDisplay(mDistance)}.");
+			Debug.WriteLine($"The new coords are : {newCoords},\n old = {mapCoords}. (While calculating the MapBlockOffset.)");
+			mapCoords = Reducer.Reduce(newCoords);
 
-			// Determine # of sample points are in the mDistance extents.
-			var offsetInSamplePointsDC = GetNumberOfSamplePointsDiag(mapCoords.LeftBot, subdivisionOrigin, samplePointDelta, out var mDistanceDC);
-			Debug.WriteLine($"The raw offset from the subOrigin is {mDistanceDC}.");
-
-			var offset = RN.Normalize(mDistance, samplePointDelta, out var spd);
-			var offSetInSamplePoints = GetNumberOfSamplePoints(offset, spd);
-			
-			Debug.WriteLine($"The offset in samplePoints is {offSetInSamplePoints}. Compare: {offsetInSamplePointsDC}.");
-
-			// Calculate the new coords using the calculated offset and the subdivision's origin
-			//var newCoords = RecalculateCoords(coords, destinationOrigin, offSetInSamplePoints, spd);
-			//Debug.WriteLine($"The new coords are : {BigIntegerHelper.GetDisplay(newCoords)},\n old = {BigIntegerHelper.GetDisplay(mapCoords)}. (While calculating the MapBlockOffset.");
-
-			// Adjust the coordinates to get a better samplePointDelta, etc.
-			//mapCoords = JiggerCoords(coords, newCoords, spd, ref offSetInSamplePoints);
-			//mapCoords = newCoords;
-
-			// Get # of whole blocks and the # of pixels left over
-			var offSetInBlocks = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out var offSetRemainderInSamplePoints);
-			Debug.WriteLine($"The offset in blocks is {offSetInBlocks}.");
-			Debug.WriteLine($"The offset in sample points before including BS is {offSetRemainderInSamplePoints}.");
-
-			samplesRemaining = GetSamplesRemaining(offSetRemainderInSamplePoints, blockSize);
-			Debug.WriteLine($"The remainder offset in sample points is {samplesRemaining}.");
-
-			return offSetInBlocks;
+			return result;
 		}
 
 		// Calculate the number of samplePoints in the given offset.
@@ -299,14 +422,24 @@ namespace MSS.Common
 
 		private static RRectangle RecalculateCoords(RRectangle coords, RPoint destinationOrigin, SizeInt offsetInSamplePoints, RSize samplePointDelta)
 		{
-			var normalizedOffset = samplePointDelta.Scale(offsetInSamplePoints);
-			RN.NormalizeInPlace(ref destinationOrigin, ref normalizedOffset);
-			var newOrigin = destinationOrigin.Translate(normalizedOffset);
+			RRectangle result;
 
-			var newSize = coords.Size.Clone(); // new RSize(coords.WidthNumerator, coords.HeightNumerator, coords.Exponent);
-			RN.NormalizeInPlace(ref newOrigin, ref newSize);
-			var result = new RRectangle(newOrigin, newSize);
+			if (offsetInSamplePoints.Width == 0 && offsetInSamplePoints.Height == 0)
+			{
+				result = new RRectangle(coords.Position, coords.Size);
+			}
+			else
+			{
+				var normalizedOffset = samplePointDelta.Scale(offsetInSamplePoints);
+				RN.NormalizeInPlace(ref destinationOrigin, ref normalizedOffset);
+				var newOrigin = destinationOrigin.Translate(normalizedOffset);
 
+				var newSize = coords.Size.Clone(); // new RSize(coords.WidthNumerator, coords.HeightNumerator, coords.Exponent);
+				RN.NormalizeInPlace(ref newOrigin, ref newSize);
+				result = new RRectangle(newOrigin, newSize);
+			}
+
+			result = Reducer.Reduce(result);
 			return result;
 		}
 
@@ -404,233 +537,5 @@ namespace MSS.Common
 		}
 
 		#endregion
-
-		//#region Normalize
-
-		//// Rectangle & Point
-		//public static RRectangle Normalize(RRectangle r, RPoint p, out RPoint newP)
-		//{
-		//	var rTemp = r.Clone();
-		//	var pTemp = p.Clone();
-
-		//	var newExp = Normalize(rTemp.Values, pTemp.Values, r.Exponent, p.Exponent);
-		//	var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
-		//	newP = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
-
-		//	return result;
-		//}
-
-		//// Rectangle & Point
-		//public static void NormalizeInPlace(ref RRectangle r, ref RPoint p)
-		//{
-		//	var rTemp = r.Clone();
-		//	var pTemp = p.Clone();
-
-		//	var newExp = Normalize(rTemp.Values, pTemp.Values, r.Exponent, p.Exponent);
-		//	r = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
-		//	p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
-		//}
-
-		//// Rectangle & Size
-		//public static RRectangle Normalize(RRectangle r, RSize s, out RSize newS)
-		//{
-		//	var rTemp = r.Clone();
-		//	var sTemp = s.Clone();
-
-		//	var newExp = Normalize(rTemp.Values, sTemp.Values, r.Exponent, s.Exponent);
-		//	var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
-		//	newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
-
-		//	return result;
-		//}
-
-		//// Rectangle & Size
-		//public static void NormalizeInPlace(ref RRectangle r, ref RSize s)
-		//{
-		//	var rTemp = r.Clone();
-		//	var sTemp = s.Clone();
-
-		//	var newExp = Normalize(rTemp.Values, sTemp.Values, r.Exponent, s.Exponent);
-		//	r = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
-		//	s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
-		//}
-
-		//// Point and Size
-		//public static RPoint Normalize(RPoint p, RSize s, out RSize newS)
-		//{
-		//	var pTemp = p.Clone();
-		//	var sTemp = s.Clone();
-
-		//	var newExp = Normalize(pTemp.Values, sTemp.Values, p.Exponent, s.Exponent);
-		//	var result = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
-		//	newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
-
-		//	return result;
-		//}
-
-		//// Point and Size
-		//public static void NormalizeInPlace(ref RPoint p, ref RSize s)
-		//{
-		//	var pTemp = p.Clone();
-		//	var sTemp = s.Clone();
-
-		//	var newExp = Normalize(pTemp.Values, sTemp.Values, p.Exponent, s.Exponent);
-		//	p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
-		//	s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
-		//}
-
-		//// Two Points
-		//public static RPoint Normalize(RPoint p1, RPoint p2, out RPoint newP2)
-		//{
-		//	var p1Temp = p1.Clone();
-		//	var p2Temp = p2.Clone();
-
-		//	var newExp = Normalize(p1Temp.Values, p2Temp.Values, p1.Exponent, p2.Exponent);
-		//	var result = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
-		//	newP2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
-
-		//	return result;
-		//}
-
-		//// Two Points
-		//public static void NormalizeInPlace(ref RPoint p1, ref RPoint p2)
-		//{
-		//	var p1Temp = p1.Clone();
-		//	var p2Temp = p2.Clone();
-
-		//	var newExp = Normalize(p1Temp.Values, p2Temp.Values, p1.Exponent, p2.Exponent);
-		//	p1 = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
-		//	p2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
-		//}
-
-		//// Two Sizes
-		//public static RSize Normalize(RSize s1, RSize s2, out RSize news2)
-		//{
-		//	var s1Temp = s1.Clone();
-		//	var s2Temp = s2.Clone();
-
-		//	var newExp = Normalize(s1Temp.Values, s2Temp.Values, s1.Exponent, s2.Exponent);
-		//	var result = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
-		//	news2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
-
-		//	return result;
-		//}
-
-		//// Two Sizes
-		//public static void NormalizeInPlace(ref RSize s1, ref RSize s2)
-		//{
-		//	var s1Temp = s1.Clone();
-		//	var s2Temp = s2.Clone();
-
-		//	var newExp = Normalize(s1Temp.Values, s2Temp.Values, s1.Exponent, s2.Exponent);
-		//	s1 = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
-		//	s2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
-		//}
-
-		//public static int Normalize(BigInteger[] a, BigInteger[] b, int exponentA, int exponentB)
-		//{
-		//	var reductionFactor = -1 * GetReductionFactor(a, b);
-
-		//	int result;
-
-		//	if (exponentA > exponentB)
-		//	{
-		//		result = exponentB - reductionFactor;
-		//		ScaleBInPlace(a, reductionFactor + (exponentA - exponentB));
-		//		ScaleBInPlace(b, reductionFactor);
-		//	}
-		//	else if (exponentB > exponentA)
-		//	{
-		//		result = exponentA - reductionFactor;
-		//		ScaleBInPlace(a, reductionFactor);
-		//		ScaleBInPlace(b, reductionFactor + (exponentB - exponentA));
-		//	}
-		//	else
-		//	{
-		//		ScaleBInPlace(a, reductionFactor);
-		//		ScaleBInPlace(b, reductionFactor);
-
-		//		result = exponentA - reductionFactor;
-		//	}
-
-		//	return result;
-		//}
-
-		//private static int GetReductionFactor(BigInteger[] a, BigInteger[] b)
-		//{
-		//	var result = 0;
-
-		//	long divisor = 2;
-
-		//	while (IsDivisibleBy(a, divisor) && IsDivisibleBy(b, divisor))
-		//	{
-		//		result++;
-		//		divisor *= 2;
-		//	}
-
-		//	return result;
-		//}
-
-		//private static bool IsDivisibleBy(BigInteger[] dividends, long divisor)
-		//{
-		//	for (var i = 0; i < dividends.Length; i++)
-		//	{
-		//		_ = BigInteger.DivRem(dividends[i], divisor, out var remainder);
-		//		if (remainder != 0)
-		//		{
-		//			return false;
-		//		}
-		//	}
-
-		//	return true;
-		//}
-
-		//public static BigInteger[] ScaleB(BigInteger[] vals, int exponentDelta)
-		//{
-		//	if (exponentDelta < 0)
-		//	{
-		//		throw new InvalidOperationException($"Cannot ScaleBInPlace using an exponentDelta < 0. The exponentDelta is {exponentDelta}.");
-		//	}
-
-		//	if (exponentDelta == 0)
-		//	{
-		//		return vals;
-		//	}
-
-		//	var factor = (long)Math.Pow(2, exponentDelta);
-		//	var result = vals.Select(v => v * factor).ToArray();
-
-		//	return result;
-		//}
-
-		//private static void ScaleBInPlace(BigInteger[] values, int exponentDelta)
-		//{
-		//	if (exponentDelta < 0)
-		//	{
-		//		//throw new InvalidOperationException($"Cannot ScaleBInPlace using an exponentDelta < 0. The exponentDelta is {exponentDelta}.");
-
-		//		var factor = (long)Math.Pow(2, -1 * exponentDelta);
-		//		for (var i = 0; i < values.Length; i++)
-		//		{
-		//			values[i] /= factor;
-		//		}
-		//	}
-		//	else if (exponentDelta > 0)
-		//	{
-		//		var factor = (long)Math.Pow(2, exponentDelta);
-		//		for (var i = 0; i < values.Length; i++)
-		//		{
-		//			values[i] *= factor;
-		//		}
-		//	}
-		//	else
-		//	{
-		//		// Nothing to do, the delta is zero
-		//		return;
-		//	}
-
-		//}
-
-		//#endregion
 	}
 }

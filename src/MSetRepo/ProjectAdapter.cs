@@ -259,10 +259,11 @@ namespace MSetRepo
 			SubdivisionRecord subdivisionRecord;
 
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			samplePointDelta = Reducer.Reduce(samplePointDelta);
 
 			var posDto = _dtoMapper.MapTo(position);
 			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDelta);
-			IList<SubdivisionRecord> matches = subdivisionReaderWriter.Get(posDto, samplePointDeltaDto, blockSize);
+			var matches = subdivisionReaderWriter.Get(posDto, samplePointDeltaDto, blockSize);
 
 			if (matches.Count < 1)
 			{
@@ -273,8 +274,9 @@ namespace MSetRepo
 			}
 			else if (matches.Count > 1)
 			{
-				subdivisionRecord = matches[0];
-				created = false;
+				//subdivisionRecord = matches[0];
+				//created = false;
+				throw new InvalidOperationException($"Found more than one subdivision was found matching: {samplePointDelta}.");
 			}
 			else
 			{

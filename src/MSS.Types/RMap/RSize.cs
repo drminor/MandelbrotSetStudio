@@ -29,12 +29,12 @@ namespace MSS.Types
 
 		public new RSize Clone()
 		{
-			return new RSize(Values, Exponent);
+			return Reducer.Reduce(this);
 		}
 
 		public override string? ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(this);
+			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
 			return result;
 		}
 
@@ -53,6 +53,13 @@ namespace MSS.Types
 			var nW = (long)((long)Width * factor.Width);
 			var nH = (long)((long)Height * factor.Height);
 			return new RSize(nW, nH, Exponent);
+		}
+
+		public RSize Scale(PointDbl factor)
+		{
+			var nX = (long)((long)Width * factor.X);
+			var nY = (long)((long)Height * factor.Y);
+			return new RSize(nX, nY, Exponent);
 		}
 
 		// TODO: FIX BUG

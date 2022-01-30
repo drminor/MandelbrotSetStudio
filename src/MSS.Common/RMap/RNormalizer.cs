@@ -1,6 +1,5 @@
 ﻿using MSS.Types;
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -18,6 +17,8 @@ namespace MSS.Common
 			var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			newP = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 
+			//Validate(result);
+			//Validate(newP);
 			return result;
 		}
 
@@ -30,6 +31,9 @@ namespace MSS.Common
 			var newExp = Normalize(rTemp.Values, pTemp.Values, r.Exponent, p.Exponent);
 			r = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
+
+			//Validate(r);
+			//Validate(p);
 		}
 
 		// Rectangle & Size
@@ -42,6 +46,8 @@ namespace MSS.Common
 			var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 
+			//Validate(result);
+			//Validate(newS);
 			return result;
 		}
 
@@ -54,6 +60,9 @@ namespace MSS.Common
 			var newExp = Normalize(rTemp.Values, sTemp.Values, r.Exponent, s.Exponent);
 			r = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
+
+			//Validate(r);
+			//Validate(s);
 		}
 
 		// Point and Size
@@ -62,10 +71,12 @@ namespace MSS.Common
 			var pTemp = p.Clone();
 			var sTemp = s.Clone();
 
-			var newExp = Normalize(pTemp.Values, sTemp.Values, p.Exponent, s.Exponent);
+			var newExp = Normalize(pTemp.Values, sTemp.Values, pTemp.Exponent, sTemp.Exponent);
 			var result = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 
+			//Validate(result);
+			//Validate(newS);
 			return result;
 		}
 
@@ -78,6 +89,9 @@ namespace MSS.Common
 			var newExp = Normalize(pTemp.Values, sTemp.Values, p.Exponent, s.Exponent);
 			p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
+
+			//Validate(p);
+			//Validate(s);
 		}
 
 		// Two Points
@@ -90,6 +104,8 @@ namespace MSS.Common
 			var result = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
 			newP2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
 
+			//Validate(result);
+			//Validate(newP2);
 			return result;
 		}
 
@@ -102,18 +118,23 @@ namespace MSS.Common
 			var newExp = Normalize(p1Temp.Values, p2Temp.Values, p1.Exponent, p2.Exponent);
 			p1 = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
 			p2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
+
+			//Validate(p1);
+			//Validate(p2);
 		}
 
 		// Two Sizes
-		public static RSize Normalize(RSize s1, RSize s2, out RSize news2)
+		public static RSize Normalize(RSize s1, RSize s2, out RSize newS2)
 		{
 			var s1Temp = s1.Clone();
 			var s2Temp = s2.Clone();
 
 			var newExp = Normalize(s1Temp.Values, s2Temp.Values, s1.Exponent, s2.Exponent);
 			var result = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
-			news2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
+			newS2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
 
+			//Validate(result);
+			//Validate(newS2);
 			return result;
 		}
 
@@ -126,10 +147,15 @@ namespace MSS.Common
 			var newExp = Normalize(s1Temp.Values, s2Temp.Values, s1.Exponent, s2.Exponent);
 			s1 = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
 			s2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
+
+			//Validate(s1);
+			//Validate(s2);
 		}
 
 		public static int Normalize(BigInteger[] a, BigInteger[] b, int exponentA, int exponentB)
 		{
+
+
 			var reductionFactor = -1 * GetReductionFactor(a, b);
 
 			int result;
@@ -176,8 +202,7 @@ namespace MSS.Common
 		{
 			for (var i = 0; i < dividends.Length; i++)
 			{
-				_ = BigInteger.DivRem(dividends[i], divisor, out var remainder);
-				if (remainder != 0)
+				if (BigInteger.Remainder(dividends[i], divisor) !=0) 
 				{
 					return false;
 				}
@@ -188,18 +213,21 @@ namespace MSS.Common
 
 		public static BigInteger[] ScaleB(BigInteger[] vals, int exponentDelta)
 		{
+			BigInteger[] result;
 			if (exponentDelta < 0)
 			{
-				throw new InvalidOperationException($"Cannot ScaleBInPlace using an exponentDelta < 0. The exponentDelta is {exponentDelta}.");
+				var factor = (long)Math.Pow(2, -1 * exponentDelta);
+				result = vals.Select(v => v / factor).ToArray();
 			}
-
-			if (exponentDelta == 0)
+			else if (exponentDelta > 0)
 			{
-				return vals;
+				var factor = (long)Math.Pow(2, exponentDelta);
+				result = vals.Select(v => v * factor).ToArray();
 			}
-
-			var factor = (long)Math.Pow(2, exponentDelta);
-			var result = vals.Select(v => v * factor).ToArray();
+			else
+			{
+				result = vals;
+			}
 
 			return result;
 		}
@@ -208,8 +236,6 @@ namespace MSS.Common
 		{
 			if (exponentDelta < 0)
 			{
-				//throw new InvalidOperationException($"Cannot ScaleBInPlace using an exponentDelta < 0. The exponentDelta is {exponentDelta}.");
-
 				var factor = (long)Math.Pow(2, -1 * exponentDelta);
 				for (var i = 0; i < values.Length; i++)
 				{
@@ -228,6 +254,24 @@ namespace MSS.Common
 			{
 				// Nothing to do, the delta is zero
 				return;
+			}
+		}
+
+		public static void Validate(IBigRatShape bigRatShape)
+		{
+			var vals = Reducer.Reduce(bigRatShape, out var exponent);
+
+			if (bigRatShape.Exponent != exponent)
+			{
+				throw new InvalidOperationException("Normalize did not reduce.");
+			}
+
+			for(var i = 0; i < vals.Length; i++)
+			{
+				if (vals[i] != bigRatShape.Values[i])
+				{
+					throw new InvalidOperationException("Normalize did not reduce -- val check.");
+				}
 			}
 
 		}

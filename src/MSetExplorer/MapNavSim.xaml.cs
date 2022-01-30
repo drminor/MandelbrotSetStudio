@@ -31,14 +31,31 @@ namespace MSetExplorer
 			var canvasSize = GetCanvasControlSize();
 			var maxIterations = 700;
 			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.LoadMap("initial job", canvasSize, mSetInfo, clearExistingMapSections: false);
+			var prevSamplePointDelta = new RSize(1, 1, -8);
+
+			_vm.LoadMap2("initial job", canvasSize, mSetInfo, canvasSize, prevSamplePointDelta, clearExistingMapSections: false);
 		}
 
-		private SizeInt GetCanvasControlSize()
+		private void NavigateButton_Click(object sender, RoutedEventArgs e)
 		{
-			var width = 1024;
-			var height = 1024;
-			return new SizeInt(width, height);
+			var rect = new Rect(new Point(16, 16), new Size(128, 128));
+			var coords = GetCoords(rect);
+
+			Debug.WriteLine($"Starting Job with new coords: {BigIntegerHelper.GetDisplay(coords)}.");
+			var newArea = new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height));
+			LoadMap2(coords, newArea, clearExistingMapSections: false);
+		}
+
+		private void GoBackButton_Click(object sender, RoutedEventArgs e)
+		{
+			var canvasSize = GetCanvasControlSize();
+			_vm.GoBack(canvasSize, clearExistingMapSections: false);
+			btnGoBack.IsEnabled = _vm.CanGoBack;
+		}
+
+		private void CloseButton_Click(object sender, RoutedEventArgs e)
+		{
+			Close();
 		}
 
 		private RRectangle GetCoords(Rect rect)
@@ -47,7 +64,7 @@ namespace MSetExplorer
 			var position = curJob.MSetInfo.Coords.LeftBot;
 			var canvasControlOffset = curJob.CanvasControlOffset;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-			
+
 			// Adjust the selected area's origin to account for the portion of the start block that is off screen.
 			var area = new RectangleInt(
 				new PointInt((int)Math.Round(rect.X + canvasControlOffset.Width), (int)Math.Round(rect.Y + canvasControlOffset.Height)),
@@ -70,26 +87,30 @@ namespace MSetExplorer
 			btnGoBack.IsEnabled = _vm.CanGoBack;
 		}
 
-		private void NavigateButton_Click(object sender, RoutedEventArgs e)
-		{
-			var rect = new Rect(new Point(16, 16), new Size(128, 128));
-			var coords = GetCoords(rect);
-
-			Debug.WriteLine($"Starting Job with new coords: {BigIntegerHelper.GetDisplay(coords)}.");
-			LoadMap(coords, clearExistingMapSections: false);
-		}
-
-		private void GoBackButton_Click(object sender, RoutedEventArgs e)
+		private void LoadMap2(RRectangle coords, SizeInt newArea, bool clearExistingMapSections)
 		{
 			var canvasSize = GetCanvasControlSize();
-			_vm.GoBack(canvasSize, clearExistingMapSections: false);
+			var curMSetInfo = _vm.CurrentRequest.MSetInfo;
+			var mSetInfo = MSetInfo.UpdateWithNewCoords(coords, curMSetInfo);
+
+			var screenSizeToMapRat = _vm.CurrentRequest.Subdivision.SamplePointDelta;
+
+			var label = "Zoom:" + _jobNameCounter++.ToString();
+			_vm.LoadMap2(label, canvasSize, mSetInfo, newArea, screenSizeToMapRat, clearExistingMapSections);
 			btnGoBack.IsEnabled = _vm.CanGoBack;
 		}
 
-		private void CloseButton_Click(object sender, RoutedEventArgs e)
+		private SizeInt GetCanvasControlSize()
 		{
-			Close();
+			//var width = 1024;
+			//var height = 1024;
+
+			var width = 768;
+			var height = 768;
+			return new SizeInt(width, height);
 		}
+
+
 
 	}
 }
