@@ -30,121 +30,11 @@ namespace MSS.Common
 			return result;
 		}
 
-		//public static RPoint GetNewMapPosition(PointInt screenPos, RPoint position, RSize samplePointDelta)
-		//{
-		//	// Multiply the screen position to convert to map coordinates.
-		//	var rsPos = ScaleByRSize(screenPos, samplePointDelta);
-
-		//	// Translate the map position by the screen position.
-		//	var result = position.Translate(rsPos);
-
-		//	result = Reducer.Reduce(result);
-
-		//	return result;
-		//}
-
-		//private static RPoint ScaleByRSize(PointInt pos, RSize factor)
-		//{
-		//	var result = new RPoint(pos.X * factor.Width, pos.Y * factor.Width, factor.Exponent);
-		//	return result;
-		//}
-
 		#endregion
 
-		#region Job Creation V1
+		#region Job Creation
 
-		public static SizeInt GetCanvasSize(RRectangle coords, SizeInt canvasControlSize)
-		{
-			var wRatio = BigIntegerHelper.GetRatio(coords.WidthNumerator, canvasControlSize.Width);
-			var hRatio = BigIntegerHelper.GetRatio(coords.HeightNumerator, canvasControlSize.Height);
-
-			int w;
-			int h;
-
-			if (wRatio > hRatio)
-			{
-				// Width of image in pixels will take up the entire control.
-				w = canvasControlSize.Width;
-
-				// Height of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
-				var hRatB = BigInteger.Divide(coords.HeightNumerator * 1000, coords.WidthNumerator * 1000);
-				var hRat = BigIntegerHelper.ConvertToDouble(hRatB);
-				h = (int) Math.Round(canvasControlSize.Width * hRat);
-			}
-			else
-			{
-				// Width of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
-				var wRatB = BigInteger.Divide(coords.WidthNumerator * 1000, coords.HeightNumerator * 1000);
-				var wRat = BigIntegerHelper.ConvertToDouble(wRatB);
-				w = (int)Math.Round(canvasControlSize.Height * wRat);
-
-				// Height of image in pixels will take up the entire control.
-				h = canvasControlSize.Width;
-			}
-
-			var result = new SizeInt(w, h);
-
-			return result;
-		}
-
-		public static RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasSize)
-		{
-			var newNumerator = canvasSize.Width > canvasSize.Height
-				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
-				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
-
-			var result = new RSize(newNumerator, newNumerator, newExponent);
-
-			return result;
-		}
-
-		public static RSize GetSamplePointDeltaV1(ref RRectangle coords, SizeInt canvasSize)
-		{
-			double expansionRatio;
-
-			if (canvasSize.Width > canvasSize.Height)
-			{
-				var displayWidth = StepUpToNextPow(canvasSize.Width);
-				expansionRatio = (double)displayWidth / canvasSize.Width;
-			}
-			else
-			{
-				var displayHeight = StepUpToNextPow(canvasSize.Height);
-				expansionRatio = displayHeight / canvasSize.Height;
-			}
-
-			// Increase the canvas size to the next largest power of. 2 (for example: 768 => 1024)
-			var expandedCanvasSize = canvasSize.Scale(expansionRatio);
-
-			// Increase the width and height of the of map coordinates in the same proportion.
-			var expandedMapSize = coords.Size.Scale(new SizeDbl(expansionRatio, expansionRatio));
-
-			// Calculate a "nice" sample point size with these diminesions.
-			var result = GetAdjustedSamplePointDelta(expandedMapSize, expandedCanvasSize);
-
-			var adjMapSize = result.Scale(canvasSize);
-			var nrmPos = RN.Normalize(coords.Position, adjMapSize, out var nrmAdjMapSize);
-			coords = new RRectangle(nrmPos, nrmAdjMapSize);
-
-			return result;
-		}
-
-		public static RSize GetAdjustedSamplePointDelta(RSize mapSize, SizeInt canvasSize)
-		{
-			var newNumerator = canvasSize.Width > canvasSize.Height
-				? BigIntegerHelper.Divide(mapSize.Width, mapSize.Exponent, canvasSize.Width, out var newExponent)
-				: BigIntegerHelper.Divide(mapSize.Height, mapSize.Exponent, canvasSize.Height, out newExponent);
-
-			var result = new RSize(newNumerator, newNumerator, newExponent);
-
-			return result;
-		}
-
-		#endregion
-
-		#region Job Creation V2
-
-		public static SizeInt GetCanvasSize2(SizeInt newArea, SizeInt canvasControlSize)
+		public static SizeInt GetCanvasSize(SizeInt newArea, SizeInt canvasControlSize)
 		{
 			var wRatio = (double)newArea.Width / canvasControlSize.Width;
 			var hRatio = (double)newArea.Height / canvasControlSize.Height;
@@ -176,7 +66,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RSize GetSamplePointDelta3(ref RRectangle coords, SizeInt canvasSize)
+		public static RSize GetSamplePointDelta(ref RRectangle coords, SizeInt canvasSize)
 		{
 			var newNumerator = canvasSize.Width > canvasSize.Height
 				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
@@ -196,7 +86,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RSize GetSamplePointDelta2(ref RRectangle coords, SizeInt newArea, RSize screenSizeToMapRat, SizeInt canvasSize)
+		public static RSize GetSamplePointDeltaOld(ref RRectangle coords, SizeInt newArea, RSize screenSizeToMapRat, SizeInt canvasSize)
 		{
 			double expansionRatio;
 
@@ -239,7 +129,6 @@ namespace MSS.Common
 			int newExponent;
 			BigInteger newNumerator;
 
-
 			if (canvasSize.Width > canvasSize.Height)
 			{
 				//var sW = GetClosestPow(screenSize.Width);
@@ -277,8 +166,6 @@ namespace MSS.Common
 		{
 			var nrmPos = RN.Normalize(pos, size, out var nrmSize);
 			var result = new RRectangle(nrmPos, nrmSize);
-
-			RN.Validate(result);
 
 			return result;
 		}

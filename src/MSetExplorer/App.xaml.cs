@@ -17,7 +17,7 @@ namespace MSetExplorer
 		private MapSectionPersistProcessor _mapSectionPersistProcessor;
 		private MapSectionRequestProcessor _mapSectionRequestProcessor;
 
-		private static readonly bool USE_MAP_NAV_SIM = true;
+		private static readonly bool USE_MAP_NAV_SIM = false;
 
 		protected override void OnStartup(StartupEventArgs e)
 		{

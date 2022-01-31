@@ -14,12 +14,10 @@ namespace MSS.Common
 			var rTemp = r.Clone();
 			var pTemp = p.Clone();
 
-			var newExp = Normalize(rTemp.Values, pTemp.Values, r.Exponent, p.Exponent);
+			var newExp = Normalize(rTemp, pTemp);
 			var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			newP = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 
-			//Validate(result);
-			//Validate(newP);
 			return result;
 		}
 
@@ -29,12 +27,9 @@ namespace MSS.Common
 			var rTemp = r.Clone();
 			var pTemp = p.Clone();
 
-			var newExp = Normalize(rTemp.Values, pTemp.Values, r.Exponent, p.Exponent);
+			var newExp = Normalize(rTemp, pTemp);
 			r = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
-
-			//Validate(r);
-			//Validate(p);
 		}
 
 		// Rectangle & Size
@@ -43,12 +38,10 @@ namespace MSS.Common
 			var rTemp = r.Clone();
 			var sTemp = s.Clone();
 
-			var newExp = Normalize(rTemp.Values, sTemp.Values, r.Exponent, s.Exponent);
+			var newExp = Normalize(rTemp, sTemp);
 			var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 
-			//Validate(result);
-			//Validate(newS);
 			return result;
 		}
 
@@ -58,12 +51,9 @@ namespace MSS.Common
 			var rTemp = r.Clone();
 			var sTemp = s.Clone();
 
-			var newExp = Normalize(rTemp.Values, sTemp.Values, r.Exponent, s.Exponent);
+			var newExp = Normalize(rTemp, sTemp);
 			r = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
-
-			//Validate(r);
-			//Validate(s);
 		}
 
 		// Point and Size
@@ -72,12 +62,10 @@ namespace MSS.Common
 			var pTemp = p.Clone();
 			var sTemp = s.Clone();
 
-			var newExp = Normalize(pTemp.Values, sTemp.Values, pTemp.Exponent, sTemp.Exponent);
+			var newExp = Normalize(pTemp, sTemp);
 			var result = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 
-			//Validate(result);
-			//Validate(newS);
 			return result;
 		}
 
@@ -87,12 +75,9 @@ namespace MSS.Common
 			var pTemp = p.Clone();
 			var sTemp = s.Clone();
 
-			var newExp = Normalize(pTemp.Values, sTemp.Values, p.Exponent, s.Exponent);
+			var newExp = Normalize(pTemp, sTemp);
 			p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
-
-			//Validate(p);
-			//Validate(s);
 		}
 
 		// Two Points
@@ -101,12 +86,10 @@ namespace MSS.Common
 			var p1Temp = p1.Clone();
 			var p2Temp = p2.Clone();
 
-			var newExp = Normalize(p1Temp.Values, p2Temp.Values, p1.Exponent, p2.Exponent);
+			var newExp = Normalize(p1Temp, p2Temp);
 			var result = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
 			newP2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
 
-			//Validate(result);
-			//Validate(newP2);
 			return result;
 		}
 
@@ -116,12 +99,9 @@ namespace MSS.Common
 			var p1Temp = p1.Clone();
 			var p2Temp = p2.Clone();
 
-			var newExp = Normalize(p1Temp.Values, p2Temp.Values, p1.Exponent, p2.Exponent);
+			var newExp = Normalize(p1Temp, p2Temp);
 			p1 = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
 			p2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
-
-			//Validate(p1);
-			//Validate(p2);
 		}
 
 		// Two Sizes
@@ -130,12 +110,10 @@ namespace MSS.Common
 			var s1Temp = s1.Clone();
 			var s2Temp = s2.Clone();
 
-			var newExp = Normalize(s1Temp.Values, s2Temp.Values, s1.Exponent, s2.Exponent);
+			var newExp = Normalize(s1Temp, s2Temp);
 			var result = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
 			newS2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
 
-			//Validate(result);
-			//Validate(newS2);
 			return result;
 		}
 
@@ -145,14 +123,57 @@ namespace MSS.Common
 			var s1Temp = s1.Clone();
 			var s2Temp = s2.Clone();
 
-			var newExp = Normalize(s1Temp.Values, s2Temp.Values, s1.Exponent, s2.Exponent);
+			var newExp = Normalize(s1Temp, s2Temp);
 			s1 = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
 			s2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
-
-			//Validate(s1);
-			//Validate(s2);
 		}
 
+		public static int Normalize(IBigRatShape a, IBigRatShape b)
+		{
+			var reductionFactor = -1 * GetReductionFactor(a, b);
+
+			int result;
+
+			if (a.Exponent > b.Exponent)
+			{
+				result = b.Exponent - reductionFactor;
+				ScaleBInPlace(a.Values, reductionFactor + (a.Exponent - b.Exponent));
+				ScaleBInPlace(b.Values, reductionFactor);
+			}
+			else if (b.Exponent > a.Exponent)
+			{
+				result = a.Exponent - reductionFactor;
+				ScaleBInPlace(a.Values, reductionFactor);
+				ScaleBInPlace(b.Values, reductionFactor + (b.Exponent - a.Exponent));
+			}
+			else
+			{
+				ScaleBInPlace(a.Values, reductionFactor);
+				ScaleBInPlace(b.Values, reductionFactor);
+
+				result = a.Exponent - reductionFactor;
+			}
+
+			return result;
+		}
+
+		private static int GetReductionFactor(IBigRatShape a, IBigRatShape b)
+		{
+			var result = 0;
+
+			long divisor = 2;
+
+			while (a.Exponent + result < 0 && IsDivisibleBy(a.Values, divisor) 
+				&& b.Exponent + result < 0 && IsDivisibleBy(b.Values, divisor))
+			{
+				result++;
+				divisor *= 2;
+			}
+
+			return result;
+		}
+
+/*
 		// TODO: Implement using the IBigRat interface.
 		public static int Normalize(BigInteger[] a, BigInteger[] b, int exponentA, int exponentB)
 		{
@@ -185,7 +206,6 @@ namespace MSS.Common
 			return result;
 		}
 
-		
 		// TODO: handle the case where all elements of a and b are zero.
 		private static int GetReductionFactor(BigInteger[] a, BigInteger[] b)
 		{
@@ -201,6 +221,7 @@ namespace MSS.Common
 
 			return result;
 		}
+*/
 
 		private static bool IsDivisibleBy(BigInteger[] dividends, long divisor)
 		{
@@ -261,23 +282,23 @@ namespace MSS.Common
 			}
 		}
 
-		public static void Validate(IBigRatShape bigRatShape)
-		{
-			var vals = Reducer.Reduce(bigRatShape, out var exponent);
+		//public static void Validate(IBigRatShape bigRatShape)
+		//{
+		//	var vals = Reducer.Reduce(bigRatShape, out var exponent);
 
-			if (bigRatShape.Exponent != exponent)
-			{
-				throw new InvalidOperationException("Normalize did not reduce.");
-			}
+		//	if (bigRatShape.Exponent != exponent)
+		//	{
+		//		throw new InvalidOperationException("Normalize did not reduce.");
+		//	}
 
-			for(var i = 0; i < vals.Length; i++)
-			{
-				if (vals[i] != bigRatShape.Values[i])
-				{
-					throw new InvalidOperationException("Normalize did not reduce -- val check.");
-				}
-			}
+		//	for(var i = 0; i < vals.Length; i++)
+		//	{
+		//		if (vals[i] != bigRatShape.Values[i])
+		//		{
+		//			throw new InvalidOperationException("Normalize did not reduce -- val check.");
+		//		}
+		//	}
+		//}
 
-		}
 	}
 }

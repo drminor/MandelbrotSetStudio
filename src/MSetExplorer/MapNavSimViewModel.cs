@@ -14,7 +14,7 @@ namespace MSetExplorer
 	{
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly List<Job> _requestStack;
+		private readonly List<GenMapRequestInfo> _requestStack;
 
 		private readonly object hmsLock = new();
 
@@ -24,7 +24,7 @@ namespace MSetExplorer
 			_projectAdapter = projectAdapter;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 
-			_requestStack = new List<Job>();
+			_requestStack = new List<GenMapRequestInfo>();
 
 			Project = new Project(ObjectId.GenerateNewId(), "uncommitted");
 		}
@@ -34,33 +34,35 @@ namespace MSetExplorer
 		public Project Project { get; private set; }
 		public readonly SizeInt BlockSize;
 
-		public Job CurrentRequest => _requestStack.Count == 0 ? null : _requestStack[^1];
+		private GenMapRequestInfo CurrentRequest => _requestStack.Count == 0 ? null : _requestStack[^1];
+		private int? CurrentGenMapRequestId => CurrentRequest?.GenMapRequestId;
+
+		public Job CurrentJob => CurrentRequest?.Job;
 		public bool CanGoBack => _requestStack.Count > 1;
+
 
 		#endregion
 
 		#region Public Methods
 
-		public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, bool clearExistingMapSections)
+		//public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, bool clearExistingMapSections)
+		//{
+		//	//var curReq = CurrentRequest;
+
+		//	var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, BlockSize, _projectAdapter, clearExistingMapSections);
+		//	Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
+
+		//	_requestStack.Add(job);
+		//}
+
+		public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea, bool clearExistingMapSections)
 		{
-			//var curReq = CurrentRequest;
-
-			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, BlockSize, _projectAdapter, clearExistingMapSections);
+			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, newArea, BlockSize, _projectAdapter, clearExistingMapSections);
 			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
+			var genMapRequestInfo = new GenMapRequestInfo(job, newArea, 0, null);
 
-			_requestStack.Add(job);
+			_requestStack.Add(genMapRequestInfo);
 		}
-
-		public void LoadMap2(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea, RSize screenSizeToMapRat, bool clearExistingMapSections)
-		{
-			//var curReq = CurrentRequest;
-
-			var job = MapWindowHelper.BuildJob2(Project, jobName, canvasControlSize, mSetInfo, newArea, screenSizeToMapRat, BlockSize, _projectAdapter, clearExistingMapSections);
-			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
-
-			_requestStack.Add(job);
-		}
-
 
 		public void GoBack(SizeInt canvasControlSize, bool clearExistingMapSections)
 		{
@@ -70,9 +72,10 @@ namespace MSetExplorer
 			// Remove and then reload the one prior to that
 			var prevRequest = _requestStack[^1];
 			_requestStack.RemoveAt(_requestStack.Count - 1);
-			var mSetInfo = prevRequest.MSetInfo;
+			var mSetInfo = prevRequest.Job.MSetInfo;
+			var newArea = prevRequest.NewArea;
 
-			LoadMap(prevRequest.Label, canvasControlSize, mSetInfo, clearExistingMapSections);
+			LoadMap(prevRequest.Job.Label, canvasControlSize, mSetInfo, newArea, clearExistingMapSections);
 		}
 
 		public Point GetBlockPosition(Point posYInverted)
@@ -80,7 +83,7 @@ namespace MSetExplorer
 			var pointInt = new PointInt((int)posYInverted.X, (int)posYInverted.Y);
 
 			var curReq = CurrentRequest;
-			var mapBlockOffset = curReq?.MapBlockOffset ?? new SizeInt();
+			var mapBlockOffset = curReq?.Job.MapBlockOffset ?? new SizeInt();
 
 			var blockPos = RMapHelper.GetBlockPosition(pointInt, mapBlockOffset, BlockSize);
 

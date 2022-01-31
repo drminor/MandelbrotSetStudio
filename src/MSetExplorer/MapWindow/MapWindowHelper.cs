@@ -9,49 +9,24 @@ namespace MSetExplorer
 {
 	internal static class MapWindowHelper
 	{
-		public static Job BuildJob2(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea, RSize screenSizeToMapRat, SizeInt blockSize, ProjectAdapter projectAdapter, bool clearExistingMapSections)
+		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter, bool clearExistingMapSections)
 		{
 			var coords = mSetInfo.Coords;
 
 			// Determine how much of the canvas control can be covered by the new map.
-			var canvasSize = RMapHelper.GetCanvasSize2(newArea, canvasControlSize);
+			var canvasSize = RMapHelper.GetCanvasSize(newArea, canvasControlSize);
 
 			// Get the number of blocks
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			//var samplePointDelta = RMapHelper.GetSamplePointDelta2(ref coords, newArea, screenSizeToMapRat, canvasSize);
-			var samplePointDelta = RMapHelper.GetSamplePointDelta3(ref coords, canvasSize);
+			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref coords, canvasSize);
 
 			// Get a subdivision record from the database.
 			var subdivision = GetSubdivision(coords, samplePointDelta, blockSize, projectAdapter, deleteExisting: clearExistingMapSections);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
-
-			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, jobName, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
-			return job;
-		}
-
-
-		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt blockSize, ProjectAdapter projectAdapter, bool clearExistingMapSections)
-		{
-			var coords = mSetInfo.Coords;
-
-			// Determine how much of the canvas control can be covered by the new map.
-			var canvasSize = RMapHelper.GetCanvasSize(coords, canvasControlSize);
-
-			// Get the number of blocks
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
-
-			// Using the size of the new map and the map coordinates, calculate the sample point size
-			var samplePointDelta = RMapHelper.GetSamplePointDelta(coords, canvasSize);
-
-			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(coords, samplePointDelta, blockSize, projectAdapter, deleteExisting: clearExistingMapSections);
-
-			// Determine the amount to tranlate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);

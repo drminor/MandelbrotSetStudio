@@ -48,18 +48,16 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, bool clearExistingMapSections)
+		public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea, bool clearExistingMapSections)
 		{
 			var curReq = CurrentRequest;
 			curReq?.MapLoader?.Stop();
 
-			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, BlockSize, _projectAdapter, clearExistingMapSections);
-			var t = BigIntegerHelper.ConvertToDouble(mSetInfo.Coords.X1);
-			var tes = DoubleHelper.ToExactString(t, out var tExp);
-			Debug.WriteLine($"The new job has a SamplePointDelta of {BigIntegerHelper.GetDisplay(job.Subdivision.SamplePointDelta)}. Coord exp: {mSetInfo.Coords.Exponent}. X1: {tes}");
+			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, newArea, BlockSize, _projectAdapter, clearExistingMapSections);
+			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
 
 			var mapLoader = new MapLoader(job, HandleMapSection, _mapSectionRequestProcessor);
-			var genMapRequestInfo = new GenMapRequestInfo(job, mapLoader.GenMapRequestId, mapLoader);
+			var genMapRequestInfo = new GenMapRequestInfo(job, newArea, mapLoader.GenMapRequestId, mapLoader);
 
 			lock (hmsLock)
 			{
@@ -77,8 +75,9 @@ namespace MSetExplorer
 			var prevRequest = _requestStack[^1];
 			_requestStack.RemoveAt(_requestStack.Count - 1);
 			var mSetInfo = prevRequest.Job.MSetInfo;
+			var newArea = prevRequest.NewArea;
 
-			LoadMap(prevRequest.Job.Label, canvasControlSize, mSetInfo, clearExistingMapSections);
+			LoadMap(prevRequest.Job.Label, canvasControlSize, mSetInfo, newArea, clearExistingMapSections);
 		}
 
 		public Point GetBlockPosition(Point posYInverted)
@@ -95,7 +94,7 @@ namespace MSetExplorer
 
 		public void ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
 		{
-			_ = MapWindowHelper.BuildJob(Project, "temp", canvasControlSize, mSetInfo, BlockSize, _projectAdapter, clearExistingMapSections: true);
+			_ = MapWindowHelper.BuildJob(Project, "temp", canvasControlSize, mSetInfo, canvasControlSize, BlockSize, _projectAdapter, clearExistingMapSections: true);
 		}
 
 		#endregion

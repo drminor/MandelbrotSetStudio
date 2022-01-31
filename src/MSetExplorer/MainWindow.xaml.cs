@@ -46,7 +46,7 @@ namespace MSetExplorer
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var maxIterations = 700;
 			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.LoadMap("initial job", canvasSize, mSetInfo, clearExistingMapSections: false);
+			_vm.LoadMap("initial job", canvasSize, mSetInfo, canvasSize, clearExistingMapSections: false);
 		}
 
 		private SizeInt GetCanvasControlSize(Canvas canvas)
@@ -101,50 +101,43 @@ namespace MSetExplorer
 			var posYInverted = new Point(controlPos.X, MainCanvas.ActualHeight - controlPos.Y);
 
 			// Get the center of the block on which the mouse is over.
-			var position = _vm.GetBlockPosition(posYInverted);
+			var blockPosition = _vm.GetBlockPosition(posYInverted);
 
 			Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {controlPos}. ");
 
 			if (!_selectedArea.IsActive)
 			{
-				_selectedArea.Activate(position);
+				_selectedArea.Activate(blockPosition);
 			}
 			else
 			{
-				if (_selectedArea.Contains(position))
+				if (_selectedArea.Contains(blockPosition))
 				{
+					Debug.WriteLine($"Will start job here with position: {blockPosition}.");
+
+					var curJob = _vm.CurrentJob;
+					var position = curJob.MSetInfo.Coords.LeftBot;
+					var canvasControlOffset = _vm.CurrentJob.CanvasControlOffset;
+					var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+
 					_selectedArea.IsActive = false;
-
-					Debug.WriteLine($"Will start job here with position: {position}.");
-
 					var rect = _selectedArea.Area;
-					var coords = GetCoords(rect);
 
-					Debug.WriteLine($"Starting Job with new coords: {BigIntegerHelper.GetDisplay(coords)}.");
-					LoadMap(coords, clearExistingMapSections: false);
+					// Adjust the selected area's origin to account for the portion of the start block that is off screen.
+					var area = new RectangleInt(
+						new PointInt((int)Math.Round(rect.X + canvasControlOffset.Width), (int)Math.Round(rect.Y + canvasControlOffset.Height)),
+						new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
+					);
+
+					var coords = RMapHelper.GetMapCoords(area, position, samplePointDelta);
+
+					Debug.WriteLine($"Starting Job with new coords: {coords}.");
+					LoadMap(coords, area.Size, clearExistingMapSections: false);
 				}
 			}
 		}
 
-		private RRectangle GetCoords(Rect rect)
-		{
-			var curJob = _vm.CurrentJob;
-			var position = curJob.MSetInfo.Coords.LeftBot;
-			var canvasControlOffset = curJob.CanvasControlOffset;
-			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-
-			// Adjust the selected area's origin to account for the portion of the start block that is off screen.
-			var area = new RectangleInt(
-				new PointInt((int)Math.Round(rect.X + canvasControlOffset.Width), (int)Math.Round(rect.Y + canvasControlOffset.Height)),
-				new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
-				);
-
-			var result = RMapHelper.GetMapCoords(area, position, samplePointDelta);
-
-			return result;
-		}
-
-		private void LoadMap(RRectangle coords, bool clearExistingMapSections)
+		private void LoadMap(RRectangle coords, SizeInt newArea, bool clearExistingMapSections)
 		{
 			var canvasSize = GetCanvasControlSize(MainCanvas);
 			var curMSetInfo = _vm.CurrentJob.MSetInfo;
@@ -152,7 +145,7 @@ namespace MSetExplorer
 
 			HideScreenSections();
 			var label = "Zoom:" + _jobNameCounter++.ToString();
-			_vm.LoadMap(label, canvasSize, mSetInfo, clearExistingMapSections);
+			_vm.LoadMap(label, canvasSize, mSetInfo, newArea, clearExistingMapSections);
 			btnGoBack.IsEnabled = _vm.CanGoBack;
 		}
 
