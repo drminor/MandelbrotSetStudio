@@ -1,17 +1,4 @@
-﻿using MSetExplorer.MapWindow;
-using MSS.Common;
-using MSS.Types;
-using MSS.Types.MSet;
-using MSS.Types.Screen;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using System.Windows;
 
 namespace MSetExplorer
 {
@@ -21,62 +8,39 @@ namespace MSetExplorer
 	public partial class MainWindow : Window
 	{
 		private MainWindowViewModel _vm;
-		private SelectionRectangle _selectedArea;
-		private Progress<MapSection> _mapLoadingProgress;
-		private IDictionary<PointInt, ScreenSection> _screenSections;
-
-		private int _jobNameCounter;
+		private MapDisplay _mapDisplay;
 
 		public MainWindow()
 		{
-			_selectedArea = null;
 			Loaded += MainWindow_Loaded;
 			InitializeComponent();
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			_vm = (MainWindowViewModel)DataContext;
-			_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
-			_mapLoadingProgress = new Progress<MapSection>(HandleMapSectionReady);
-			_vm.OnMapSectionReady = ((IProgress<MapSection>)_mapLoadingProgress).Report;
-			_screenSections = new Dictionary<PointInt, ScreenSection>();
-
-			btnGoBack.IsEnabled = _vm.CanGoBack;
-			var canvasSize = GetCanvasControlSize(MainCanvas);
-			var maxIterations = 700;
-			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.LoadMap("initial job", canvasSize, mSetInfo, canvasSize, clearExistingMapSections: false);
-		}
-
-		private SizeInt GetCanvasControlSize(Canvas canvas)
-		{
-			var width = (int)Math.Round(canvas.Width);
-			var height = (int)Math.Round(canvas.Height);
-			return new SizeInt(width, height);
-		}
-
-		private void HandleMapSectionReady(MapSection mapSection)
-		{
-			//Debug.WriteLine($"Drawing a bit map at {mapSection.CanvasPosition}.");
-
-			var screenSection = GetScreenSection(mapSection);
-			screenSection.WritePixels(mapSection.Pixels1d);
-		}
-
-		private ScreenSection GetScreenSection(MapSection mapSection)
-		{
-			if (!_screenSections.TryGetValue(mapSection.CanvasPosition, out var screenSection))
+			if (DataContext != null)
 			{
-				screenSection = new ScreenSection(mapSection.Size);
-				var cIndex = MainCanvas.Children.Add(screenSection.Image);
+				_vm = (MainWindowViewModel)DataContext;
+				_mapDisplay = mapDisplay1;
 
-				MainCanvas.Children[cIndex].SetValue(Canvas.LeftProperty, (double)mapSection.CanvasPosition.X);
-				MainCanvas.Children[cIndex].SetValue(Canvas.BottomProperty, (double)mapSection.CanvasPosition.Y);
-				MainCanvas.Children[cIndex].SetValue(Panel.ZIndexProperty, 0);
+				_vm.PropertyChanged += _vm_PropertyChanged;
+
+				btnGoBack.IsEnabled = _vm.CanGoBack;
+
+				//btnGoBack.IsEnabled = _vm.CanGoBack;
+				//var canvasSize = GetCanvasControlSize(MainCanvas);
+				//var maxIterations = 700;
+				//var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
+				//_vm.LoadMap("initial job", canvasSize, mSetInfo, canvasSize, clearExistingMapSections: false);
 			}
+		}
 
-			return screenSection;
+		private void _vm_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == "CanGoBack")
+			{
+				btnGoBack.IsEnabled = _vm.CanGoBack;
+			}
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -86,117 +50,13 @@ namespace MSetExplorer
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
 		{
-			HideScreenSections();
-			var canvasSize = GetCanvasControlSize(MainCanvas);
-			_vm.GoBack(canvasSize, clearExistingMapSections: false);
+			//HideScreenSections();
+			//var canvasSize = GetCanvasControlSize(MainCanvas);
+			//_vm.GoBack(canvasSize, clearExistingMapSections: false);
+
+			_mapDisplay.GoBack();
 			btnGoBack.IsEnabled = _vm.CanGoBack;
 		}
-
-		private void MainCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			// Get position of mouse relative to the main canvas and invert the y coordinate.
-			var controlPos = e.GetPosition(relativeTo: MainCanvas);
-
-			// The canvas has coordinates where the y value increases from  bottom to top.
-			var posYInverted = new Point(controlPos.X, MainCanvas.ActualHeight - controlPos.Y);
-
-			// Get the center of the block on which the mouse is over.
-			var blockPosition = _vm.GetBlockPosition(posYInverted);
-
-			Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {controlPos}. ");
-
-			if (!_selectedArea.IsActive)
-			{
-				_selectedArea.Activate(blockPosition);
-			}
-			else
-			{
-				if (_selectedArea.Contains(blockPosition))
-				{
-					Debug.WriteLine($"Will start job here with position: {blockPosition}.");
-
-					var curJob = _vm.CurrentJob;
-					var position = curJob.MSetInfo.Coords.LeftBot;
-					var canvasControlOffset = _vm.CurrentJob.CanvasControlOffset;
-					var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-
-					_selectedArea.IsActive = false;
-					var rect = _selectedArea.Area;
-
-					// Adjust the selected area's origin to account for the portion of the start block that is off screen.
-					var area = new RectangleInt(
-						new PointInt((int)Math.Round(rect.X + canvasControlOffset.Width), (int)Math.Round(rect.Y + canvasControlOffset.Height)),
-						new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
-					);
-
-					var coords = RMapHelper.GetMapCoords(area, position, samplePointDelta);
-
-					Debug.WriteLine($"Starting Job with new coords: {coords}.");
-					LoadMap(coords, area.Size, clearExistingMapSections: false);
-				}
-			}
-		}
-
-		private void LoadMap(RRectangle coords, SizeInt newArea, bool clearExistingMapSections)
-		{
-			var canvasSize = GetCanvasControlSize(MainCanvas);
-			var curMSetInfo = _vm.CurrentJob.MSetInfo;
-			var mSetInfo = MSetInfo.UpdateWithNewCoords(curMSetInfo, coords);
-
-			HideScreenSections();
-			var label = "Zoom:" + _jobNameCounter++.ToString();
-			_vm.LoadMap(label, canvasSize, mSetInfo, newArea, clearExistingMapSections);
-			btnGoBack.IsEnabled = _vm.CanGoBack;
-		}
-
-		private void HideScreenSections()
-		{
-			foreach (UIElement c in MainCanvas.Children.OfType<Image>())
-			{
-				c.Visibility = Visibility.Hidden;
-			}
-		}
-
-		private class ScreenSection
-		{
-			public Image Image { get; init; }
-			//public Histogram Histogram { get; init; }
-
-			public ScreenSection(SizeInt size)
-			{
-				Image = CreateImage(size);
-			}
-
-			public void WritePixels(byte[] pixels)
-			{
-				var bitmap = (WriteableBitmap)Image.Source;
-
-				var w = (int) Math.Round(Image.Width);
-				var h = (int) Math.Round(Image.Height);
-
-				var rect = new Int32Rect(0, 0, w, h);
-				var stride = 4 * w;
-				bitmap.WritePixels(rect, pixels, stride, 0);
-
-				Image.Visibility = Visibility.Visible;
-			}
-
-			private Image CreateImage(SizeInt size)
-			{
-				var result = new Image
-				{
-					Width = size.Width,
-					Height = size.Height,
-					Stretch = Stretch.None,
-					Margin = new Thickness(0),
-					Source = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Bgra32, null)
-				};
-
-				return result;
-			}
-
-		}
-
 
 	}
 }

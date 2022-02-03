@@ -8,19 +8,26 @@ namespace MSS.Common
     public class ColorMap
     {
         private ColorMapEntry[] _colorMapEntries { get; init; }
-        public ColorMapEntry HighColorEntry { get; init; }
 
         private readonly int[] _cutOffs;
         private readonly int[] _prevCutOffs;
         private readonly int[] _bucketWidths;
 
-        public ColorMap(IList<ColorMapEntry> colorMapEntries, int maxIterations, string highColor)
-        {
-			HighColorEntry = new ColorMapEntry(maxIterations, highColor, ColorMapBlendStyle.None, highColor);
+        public ColorMap(IList<ColorMapEntry> colorMapEntries)
+            : this(colorMapEntries.Take(colorMapEntries.Count - 1).ToArray(), colorMapEntries[colorMapEntries.Count - 1])
+        { }
 
-			_colorMapEntries = colorMapEntries.ToArray();
+        public ColorMap(IList<ColorMapEntry> colorMapEntries, int maxIterations, string highColor)
+            : this(colorMapEntries.ToArray(), new ColorMapEntry(maxIterations, highColor, ColorMapBlendStyle.None, highColor))
+        { }
+
+        private ColorMap(ColorMapEntry[] colorMapEntries, ColorMapEntry highColorEntry)
+        {
+            _colorMapEntries = colorMapEntries;
+            HighColorEntry = highColorEntry;
+
             _cutOffs = BuildCutOffs(_colorMapEntries);
-			var pOffsetsAndBucketWidths = BuildPrevCutOffsAndBucketWidths(_colorMapEntries, HighColorEntry);
+            var pOffsetsAndBucketWidths = BuildPrevCutOffsAndBucketWidths(_colorMapEntries, HighColorEntry);
 
             _prevCutOffs = pOffsetsAndBucketWidths.Select(x => x.Item1).ToArray();
             _bucketWidths = pOffsetsAndBucketWidths.Select(x => x.Item2).ToArray();
@@ -29,6 +36,18 @@ namespace MSS.Common
         }
 
         public IList<ColorMapEntry> ColorMapEntries => _colorMapEntries.ToList();
+        public ColorMapEntry HighColorEntry { get; init; }
+
+        public IList<ColorMapEntry> AllColorMapEntries
+		{
+            get
+			{
+                var t = _colorMapEntries.ToList();
+                t.Add(HighColorEntry);
+
+                return t;
+			}
+		}
 
         public byte[] GetColor(int countVal, double escapeVelocity)
         {

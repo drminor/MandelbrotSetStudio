@@ -4,17 +4,35 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MSetExplorer
 {
 	internal static class MapWindowHelper
 	{
+		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt blockSize, ProjectAdapter projectAdapter, bool clearExistingMapSections)
+		{
+			var job = BuildJob(project, jobName, canvasControlSize, mSetInfo, new SizeInt(), blockSize, projectAdapter, clearExistingMapSections);
+
+			return job;
+		}
+
 		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter, bool clearExistingMapSections)
 		{
-			var coords = mSetInfo.Coords;
-
 			// Determine how much of the canvas control can be covered by the new map.
-			var canvasSize = RMapHelper.GetCanvasSize(newArea, canvasControlSize);
+
+			SizeInt canvasSize;
+
+			if (newArea.Width == 0 && newArea.Height == 0)
+			{
+				canvasSize = RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize);
+			}
+			else
+			{
+				canvasSize = RMapHelper.GetCanvasSize(newArea, canvasControlSize);
+			}
+
+			var coords = mSetInfo.Coords;
 
 			// Get the number of blocks
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
@@ -77,17 +95,10 @@ namespace MSetExplorer
 				new ColorMapEntry(500, "#e95ee8", ColorMapBlendStyle.End, "#758cb7")
 			};
 
-			//IList<ColorMapEntry> colorMapEntries = new List<ColorMapEntry>
-			//{
-			//	new ColorMapEntry(1, "#ffffff", ColorMapBlendStyle.None, "#000000"),
-			//	new ColorMapEntry(2, "#0000FF", ColorMapBlendStyle.None, "#000000"),
-			//	new ColorMapEntry(3, "#00ff00", ColorMapBlendStyle.None, "#000000"),
-			//	new ColorMapEntry(5, "#0000ff", ColorMapBlendStyle.None, "#000000"),
-			//	new ColorMapEntry(40, "#00ff00", ColorMapBlendStyle.None, "#758cb7")
-			//};
-
 			var highColorCss = "#000000";
-			var result = new MSetInfo(coords, mapCalcSettings, colorMapEntries, highColorCss);
+			colorMapEntries.Add(new ColorMapEntry(maxIterations, highColorCss, ColorMapBlendStyle.None, highColorCss));
+
+			var result = new MSetInfo(coords, mapCalcSettings, colorMapEntries.ToArray());
 
 			return result;
 		}

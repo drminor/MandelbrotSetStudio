@@ -12,6 +12,7 @@ using MSS.Types.MSetOld;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 namespace ImageBuilder
 {
@@ -59,10 +60,11 @@ namespace ImageBuilder
 				case 2:
 					{
 						/* MongoDb Import */
-						string fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
+						var fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
 						var mSetInfoOld = MSetInfoBuilder.Build(fileName);
-
-						MSetInfo mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor);
+						var cmes = mSetInfoOld.ColorMap.ColorMapEntries;
+						cmes.Add(new ColorMapEntry(mSetInfoOld.MapCalcSettings.MaxIterations, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor, ColorMapBlendStyle.None, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor));
+						var mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, cmes.ToArray());
 
 						//IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfoOld.Name, mSetInfoOld.IsHighRes);
 
@@ -76,7 +78,7 @@ namespace ImageBuilder
 				case 3:
 					{
 						/* Zoom Test #1*/
-						string fileName = MSetInfoBuilder.ZOOM_TEST_1;
+						var fileName = MSetInfoBuilder.ZOOM_TEST_1;
 						var mSetInfoOld = MSetInfoBuilder.Build(fileName);
 
 						var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
@@ -84,7 +86,9 @@ namespace ImageBuilder
 
 						var project = projectAdapter.GetOrCreateProject(mSetInfoOld.Name);
 
-						MSetInfo mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor);
+						var cmes = mSetInfoOld.ColorMap.ColorMapEntries;
+						cmes.Add(new ColorMapEntry(mSetInfoOld.MapCalcSettings.MaxIterations, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor, ColorMapBlendStyle.None, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor));
+						var mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries.ToArray());
 
 						mongoDbImporter.DoZoomTest1(project, mSetInfo, overwrite: true);
 						break;

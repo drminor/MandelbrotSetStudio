@@ -57,7 +57,7 @@ namespace MSS.Common
 				project: job.Project,
 				subdivision: subdivision,
 				label: null,
-				new MSetInfo(rRectangleZoomed, job.MSetInfo.MapCalcSettings, job.MSetInfo.ColorMapEntries, job.MSetInfo.HighColorCss),
+				new MSetInfo(rRectangleZoomed, job.MSetInfo.MapCalcSettings, job.MSetInfo.ColorMapEntries),
 				canvasSizeInBlocks: new SizeInt(6,6),
 				mapBlockOffset: new SizeInt(-4, -3),
 				canvasControlOffset: new SizeDbl()

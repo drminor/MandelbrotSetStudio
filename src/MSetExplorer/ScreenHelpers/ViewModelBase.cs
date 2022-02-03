@@ -1,5 +1,5 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 
 namespace MSetExplorer
@@ -8,15 +8,14 @@ namespace MSetExplorer
 	{
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		protected virtual void OnPropertyChanged(string propertyName)
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			PropertyChangedEventHandler handler = PropertyChanged;
-			if (handler != null)
-			{
-				PropertyChangedEventArgs e = new PropertyChangedEventArgs(propertyName);
-				handler(this, e);
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
+
+		protected bool InDesignMode => DesignerProperties.GetIsInDesignMode(new DependencyObject());
+
+
 
 		//public event EventHandler RequestClose;
 

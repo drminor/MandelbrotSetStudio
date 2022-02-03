@@ -66,6 +66,40 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static SizeInt GetCanvasSize(RRectangle coords, SizeInt canvasControlSize)
+		{
+			var wRatio = BigIntegerHelper.GetRatio(coords.WidthNumerator, canvasControlSize.Width);
+			var hRatio = BigIntegerHelper.GetRatio(coords.HeightNumerator, canvasControlSize.Height);
+
+			int w;
+			int h;
+
+			if (wRatio > hRatio)
+			{
+				// Width of image in pixels will take up the entire control.
+				w = canvasControlSize.Width;
+
+				// Height of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+				var hRatB = BigInteger.Divide(coords.HeightNumerator * 1000, coords.WidthNumerator * 1000);
+				var hRat = BigIntegerHelper.ConvertToDouble(hRatB);
+				h = (int)Math.Round(canvasControlSize.Width * hRat);
+			}
+			else
+			{
+				// Width of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+				var wRatB = BigInteger.Divide(coords.WidthNumerator * 1000, coords.HeightNumerator * 1000);
+				var wRat = BigIntegerHelper.ConvertToDouble(wRatB);
+				w = (int)Math.Round(canvasControlSize.Height * wRat);
+
+				// Height of image in pixels will take up the entire control.
+				h = canvasControlSize.Width;
+			}
+
+			var result = new SizeInt(w, h);
+
+			return result;
+		}
+
 		public static RSize GetSamplePointDelta(ref RRectangle coords, SizeInt canvasSize)
 		{
 			var newNumerator = canvasSize.Width > canvasSize.Height
@@ -86,7 +120,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RSize GetSamplePointDeltaOld(ref RRectangle coords, SizeInt newArea, RSize screenSizeToMapRat, SizeInt canvasSize)
+		public static RSize GetSamplePointDelta(ref RRectangle coords, SizeInt newArea, RSize screenSizeToMapRat, SizeInt canvasSize)
 		{
 			double expansionRatio;
 
@@ -110,7 +144,7 @@ namespace MSS.Common
 			var expandedArea = new SizeDbl(newArea.Width * expansionRatio, newArea.Height * expansionRatio);
 
 			// Calculate a "nice" sample point size with these diminesions.
-			var result = GetAdjustedSamplePointDelta2(expandedMapSize, expandedArea, screenSizeToMapRat, expandedCanvasSize);
+			var result = GetAdjustedSamplePointDelta(expandedMapSize, expandedArea, screenSizeToMapRat, expandedCanvasSize);
 
 			// Use the original # of sample points and multiply by the new sample point size
 			// to get a new map size.
@@ -124,7 +158,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		private static RSize GetAdjustedSamplePointDelta2(RSize mapSize, SizeDbl screenSize, RSize screenSizeToMapRat, SizeInt canvasSize)
+		private static RSize GetAdjustedSamplePointDelta(RSize mapSize, SizeDbl screenSize, RSize screenSizeToMapRat, SizeInt canvasSize)
 		{
 			int newExponent;
 			BigInteger newNumerator;

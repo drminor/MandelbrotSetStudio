@@ -18,10 +18,14 @@
 
         <!--<Image Grid.Column="0" Grid.Row="0" Source="WP_20131215_001.jpg"/>-->
 
-        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!--<Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Canvas Name="MainCanvas" Width="768" Height="768" Background="Transparent" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown"  />
-        </Border>
+        </Border>-->
 
+        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <local:MapDisplay x:Name="mapDisplay1" Coords="{Binding Path=MapCoords}" MapCalcSettings="{Binding Path=MapCalcSettings}" ColorMapEntries="{Binding Path=ColorMapEntries}" ></local:MapDisplay>
+        </Border>        
+        
         <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel Grid.Row="1" HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button HorizontalAlignment="Center" Width="100" Margin="0,15,0,15" Click="CloseButton_Click">Close</Button>

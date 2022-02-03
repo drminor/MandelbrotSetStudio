@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace MEngineClient
+namespace MapSectionProviderLib
 {
-	public class WorkItem<T, U>
+	internal class WorkItem<T, U>
 	{
 		public int JobId { get; init; }
 		public T Request { get; init; }

@@ -63,8 +63,7 @@ namespace MSetRepo
 			var result = new MSetInfo(
 				coords: coords,
 				mapCalcSettings: target.MapCalcSettings,
-				target.ColorMapEntries,
-				target.HighColorCss);
+				target.ColorMapEntries);
 
 			return result;
 		}
@@ -72,7 +71,7 @@ namespace MSetRepo
 		public MSetInfoRecord MapTo(MSetInfo source)
 		{
 			var coords = _coordsHelper.BuildCoords(source.Coords);
-			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorMapEntries, source.HighColorCss);
+			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorMapEntries);
 
 			return result;
 		}

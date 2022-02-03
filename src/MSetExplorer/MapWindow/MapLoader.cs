@@ -36,9 +36,7 @@ namespace MSetExplorer
 
 			_blockSize = job.Subdivision.BlockSize;
 			_mapBlockOffset = job.MapBlockOffset;
-			var mSetInfo = job.MSetInfo;
-
-			_colorMap = new ColorMap(mSetInfo.ColorMapEntries, mSetInfo.MapCalcSettings.MaxIterations, mSetInfo.HighColorCss);
+			_colorMap = new ColorMap(job.MSetInfo.ColorMapEntries);
 
 			_isStopping = false;
 			_sectionsRequested = 0;

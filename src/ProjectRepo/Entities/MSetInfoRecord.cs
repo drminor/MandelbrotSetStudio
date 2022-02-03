@@ -7,8 +7,7 @@ namespace ProjectRepo.Entities
 	public record MSetInfoRecord(
 		RRectangleRecord CoordsRecord,
 		MapCalcSettings MapCalcSettings,
-		IList<ColorMapEntry> ColorMapEntries,
-		string HighColorCss
+		ColorMapEntry[] ColorMapEntries
 		) : RecordBase()
 	{ }
 

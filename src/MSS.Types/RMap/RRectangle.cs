@@ -1,12 +1,14 @@
 ﻿using MSS.Types.Base;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RRectangle : Rectangle<BigInteger>, IBigRatShape
+	public class RRectangle : Rectangle<BigInteger>, IBigRatShape, IEquatable<RRectangle>, IEqualityComparer<RRectangle>
 	{
 		public int Exponent { get; init; }
 
@@ -134,6 +136,38 @@ namespace MSS.Types
 				throw new ArgumentException($"The beginning Y must be less than or equal to the ending Y.");
 			}
 		}
+
+		public bool Equals(RRectangle? other)
+		{
+			return !(other is null)
+				&& X1.Equals(other.X1)
+				&& X2.Equals(other.X2)
+				&& Y1.Equals(other.Y1)
+				&& Y2.Equals(other.Y2)
+				&& Exponent.Equals(other.Exponent);
+		}
+
+		public bool Equals(RRectangle? x, RRectangle? y)
+		{
+			bool result = base.Equals(x, y) && x?.Exponent == y?.Exponent;
+			return result;
+		}
+
+		public int GetHashCode([DisallowNull] RRectangle obj)
+		{
+			return obj.GetHashCode();
+		}
+
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as RRectangle);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(X1, X2, Y1, Y2, Exponent);
+		}
+
 	}
 
 }

@@ -6,31 +6,25 @@ namespace MSS.Types.MSet
 	{
 		public RRectangle Coords { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
-		public IList<ColorMapEntry> ColorMapEntries { get; init; }
-		public string HighColorCss { get; init; }
+		public ColorMapEntry[] ColorMapEntries { get; init; }
 
 		public MSetInfo(
 			RRectangle coords,
 			MapCalcSettings mapCalcSettings,
-			IList<ColorMapEntry> colorMapEntries,
-			string highColorCss
+			ColorMapEntry[] colorMapEntries
 			)
 		{
 			Coords = coords;
 			MapCalcSettings = mapCalcSettings;
 			ColorMapEntries = colorMapEntries;
-			HighColorCss = highColorCss;
 		}
 
 		public static MSetInfo UpdateWithNewCoords(MSetInfo source, RRectangle newCoords)
 		{
-			return new MSetInfo(newCoords, source.MapCalcSettings, Clone(source.ColorMapEntries), source.HighColorCss);
+			return new MSetInfo(newCoords, source.MapCalcSettings, Clone(source.ColorMapEntries));
 		}
 
-		//public MSetInfo(MSetInfo currentInfo, RRectangle newCoords) : this(newCoords, currentInfo.MapCalcSettings, Clone(currentInfo.ColorMapEntries), currentInfo.HighColorCss)
-		//{ }
-
-		private static IList<ColorMapEntry> Clone(IList<ColorMapEntry> colorMapEntries)
+		private static ColorMapEntry[] Clone(ColorMapEntry[] colorMapEntries)
 		{
 			var result = new List<ColorMapEntry>();
 
@@ -39,7 +33,7 @@ namespace MSS.Types.MSet
 				result.Add(cme.Clone());
 			}
 
-			return result;
+			return result.ToArray();
 		}
 
 	}

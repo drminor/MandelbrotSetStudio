@@ -77,15 +77,15 @@ namespace MSS.Types.Base
 
 		#region IEqualityComparer / IEquatable Support
 
-		public bool Equals(Rectangle<T>? a, Rectangle<T>? b)
+		public bool Equals(Rectangle<T>? x, Rectangle<T>? y)
 		{
-			if (a is null)
+			if (x is null)
 			{
-				return b is null;
+				return y is null;
 			}
 			else
 			{
-				return a.Equals(b);
+				return x.Equals(y);
 			}
 		}
 
