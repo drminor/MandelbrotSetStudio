@@ -10,6 +10,11 @@ namespace MSS.Types.MSet
 		public Project Project { get; init; }
 		public Subdivision Subdivision { get; init; }
 		public string? Label { get; init; }
+
+		public TransformType TransformType { get; init; }
+		public SizeInt NewArea { get; init; }
+
+
 		public MSetInfo MSetInfo { get; init; }
 		public SizeInt CanvasSizeInBlocks { get; init; }
 		public SizeInt MapBlockOffset { get; init; }
@@ -21,6 +26,10 @@ namespace MSS.Types.MSet
 			Project project,
 			Subdivision subdivision,
 			string? label,
+
+			TransformType transformType,
+			SizeInt newArea,
+
 			MSetInfo mSetInfo,
 			SizeInt canvasSizeInBlocks,
 			SizeInt mapBlockOffset,
@@ -32,6 +41,11 @@ namespace MSS.Types.MSet
 			Project = project;
 			Subdivision = subdivision;
 			Label = label;
+
+			TransformType = transformType;
+			NewArea = newArea;
+
+
 			MSetInfo = mSetInfo;
 			CanvasSizeInBlocks = canvasSizeInBlocks;
 			MapBlockOffset = mapBlockOffset;

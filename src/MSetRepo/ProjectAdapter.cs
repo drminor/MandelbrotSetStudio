@@ -18,8 +18,9 @@ namespace MSetRepo
 
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
-
 		private readonly DtoMapper _dtoMapper;
+
+		#region Constructor
 
 		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 		{
@@ -28,6 +29,10 @@ namespace MSetRepo
 
 			_dtoMapper = new DtoMapper();
 		}
+
+		#endregion
+
+		#region Collections
 
 		public void CreateCollections()
 		{
@@ -43,6 +48,8 @@ namespace MSetRepo
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			mapSectionReaderWriter.CreateCollection();
 		}
+
+		#endregion
 
 		#region Project
 
@@ -157,7 +164,9 @@ namespace MSetRepo
 				parentJob: parentJob, 
 				project: project, 
 				subdivision: subdivision, 
-				label: jobRecord.Label, 
+				label: jobRecord.Label,
+				transformType: Enum.Parse<TransformType>(jobRecord.TransformType.ToString()),
+				newArea: new SizeInt(jobRecord.NewAreaWidth, jobRecord.NewAreaHeight),
 				mSetInfo: mSetInfo, 
 				canvasSizeInBlocks: new SizeInt(jobRecord.CanvasSizeInBlocksWidth, jobRecord.CanvasSizeInBlocksHeight), 
 				mapBlockOffset: new SizeInt(jobRecord.MapBlockOffsetWidth, jobRecord.MapBlockOffsetHeight), 
@@ -173,7 +182,7 @@ namespace MSetRepo
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 			var id = jobReaderWriter.Insert(jobRecord);
 
-			var updatedJob = new Job(id, job.ParentJob, job.Project, job.Subdivision, job.Label, job.MSetInfo, job.CanvasSizeInBlocks, job.MapBlockOffset, job.CanvasControlOffset);
+			var updatedJob = new Job(id, job.ParentJob, job.Project, job.Subdivision, job.Label, job.TransformType, job.NewArea, job.MSetInfo, job.CanvasSizeInBlocks, job.MapBlockOffset, job.CanvasControlOffset);
 
 			//jobRecord = jobReaderWriter.Get(id);
 			//job = _mSetRecordMapper.MapFrom(jobRecord);

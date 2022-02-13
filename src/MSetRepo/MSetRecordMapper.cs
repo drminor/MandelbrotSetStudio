@@ -46,6 +46,10 @@ namespace MSetRepo
 				source.Project.Id,
 				source.Subdivision.Id,
 				source.Label,
+
+				(int) source.TransformType,
+				source.NewArea.Width,
+				source.NewArea.Height,
 				MapTo(source.MSetInfo),
 				source.CanvasSizeInBlocks.Width,
 				source.CanvasSizeInBlocks.Height,

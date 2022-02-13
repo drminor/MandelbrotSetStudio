@@ -34,8 +34,6 @@ namespace MSetExplorer
 			_requestStack = new List<GenMapRequestInfo>();
 			_requestStackPointer = -1;
 
-			//Project = new Project(ObjectId.Empty, "uncommitted");
-
 			Project = _projectAdapter.GetOrCreateProject("Home");
 
 			_mapCoords = new RRectangle();
@@ -169,6 +167,11 @@ namespace MSetExplorer
 			}
 		}
 
+		public void Load()
+		{
+			//_projectAdapter.GetJob()
+		}
+
 		#endregion
 
 		#region Private Methods 
@@ -184,16 +187,16 @@ namespace MSetExplorer
 			var canvasSize = CanvasSize;
 			var mSetInfo = new MSetInfo(MapCoords, MapCalcSettings, ColorMapEntries);
 
-			var job = MapWindowHelper.BuildJob(Project, jobName, canvasSize, mSetInfo, newArea, BlockSize, _projectAdapter);
+			var job = MapWindowHelper.BuildJob(Project, jobName, canvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.");
 
 			var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
-			var genMapRequestInfo = new GenMapRequestInfo(job, jobNumber, transformType, newArea, mapLoader);
+			var genMapRequestInfo = new GenMapRequestInfo(job, mapLoader, jobNumber);
 
 			lock (hmsLock)
 			{
 				_requestStack.Add(genMapRequestInfo);
-				_requestStackPointer++;
+				_requestStackPointer = _requestStack.Count - 1;
 				_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
 
 				OnPropertyChanged("CanGoBack");
