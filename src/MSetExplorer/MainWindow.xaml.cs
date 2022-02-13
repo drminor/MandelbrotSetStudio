@@ -1,9 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Windows;
 
 namespace MSetExplorer
@@ -64,9 +62,6 @@ namespace MSetExplorer
 
 			var coords = RMapHelper.GetMapCoords(adjArea, position, samplePointDelta);
 
-			//var label = $"{e.TransformType}:{_jobNameCounter++.ToString(CultureInfo.InvariantCulture)}";
-			//var mSetInfo = new MSetInfo(coords, _vm.MapCalcSettings, _vm.ColorMapEntries);
-
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {e.TransformType}.");
 			_vm.UpdateMapView(e.TransformType, e.Area.Size, coords);
 		}
@@ -84,7 +79,6 @@ namespace MSetExplorer
 				Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
 				return;
 			}
-
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
