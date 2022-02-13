@@ -53,7 +53,9 @@ namespace MSetExplorer
 			// Find an existing subdivision record that has a SamplePointDelta "close to" the given samplePointDelta
 			// and that is "in the neighborhood of our Map Set.
 
-			var result = projectAdapter.GetOrCreateSubdivision(coords.Position, samplePointDelta, blockSize, out var created);
+			var pos = Reducer.Reduce(coords.Position);
+
+			var result = projectAdapter.GetOrCreateSubdivision(pos, samplePointDelta, blockSize, out var created);
 
 			//while(deleteExisting && result.DateCreated < DateTime.Parse("1/25/2022 5:47", CultureInfo.InvariantCulture))
 			//{
@@ -64,7 +66,7 @@ namespace MSetExplorer
 			while (deleteExisting && !created)
 			{
 				_ = projectAdapter.DeleteSubdivision(result);
-				result = projectAdapter.GetOrCreateSubdivision(coords.Position, samplePointDelta, blockSize, out created);
+				result = projectAdapter.GetOrCreateSubdivision(pos, samplePointDelta, blockSize, out created);
 			}
 
 			return result;

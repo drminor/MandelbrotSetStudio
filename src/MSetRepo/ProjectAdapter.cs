@@ -288,13 +288,6 @@ namespace MSetRepo
 			return result;
 		}
 
-		private ObjectId? GetSubdivision(int scale, SubdivisonReaderWriter subdivisionReaderWriter)
-		{
-			var result = subdivisionReaderWriter.Get(scale);
-
-			return result.FirstOrDefault()?.Id;
-		}
-
 		private ObjectId InsertSubdivision(Subdivision subdivision, SubdivisonReaderWriter subdivisionReaderWriter)
 		{
 			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);

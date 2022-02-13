@@ -22,14 +22,6 @@ namespace ProjectRepo
 			return subdivisionRecord;
 		}
 
-		public IList<SubdivisionRecord> Get(int scale)
-		{
-			var filter = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Exponent", scale);
-			var subdivisionRecords = Collection.Find(filter).ToList();
-
-			return subdivisionRecords;
-		}
-
 		public IList<SubdivisionRecord> Get(RPointDto _, RSizeDto samplePointDelta, SizeInt blockSize)
 		{
 			var filter1 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Exponent", samplePointDelta.Exponent);

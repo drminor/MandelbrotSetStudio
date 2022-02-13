@@ -173,56 +173,6 @@ namespace MSS.Common
 			return result;
 		}
 
-/*
-		// TODO: Implement using the IBigRat interface.
-		public static int Normalize(BigInteger[] a, BigInteger[] b, int exponentA, int exponentB)
-		{
-			Debug.Assert(exponentA < 0 && exponentB < 0);
-
-			var reductionFactor = -1 * GetReductionFactor(a, b);
-
-			int result;
-
-			if (exponentA > exponentB)
-			{
-				result = exponentB - reductionFactor;
-				ScaleBInPlace(a, reductionFactor + (exponentA - exponentB));
-				ScaleBInPlace(b, reductionFactor);
-			}
-			else if (exponentB > exponentA)
-			{
-				result = exponentA - reductionFactor;
-				ScaleBInPlace(a, reductionFactor);
-				ScaleBInPlace(b, reductionFactor + (exponentB - exponentA));
-			}
-			else
-			{
-				ScaleBInPlace(a, reductionFactor);
-				ScaleBInPlace(b, reductionFactor);
-
-				result = exponentA - reductionFactor;
-			}
-
-			return result;
-		}
-
-		// TODO: handle the case where all elements of a and b are zero.
-		private static int GetReductionFactor(BigInteger[] a, BigInteger[] b)
-		{
-			var result = 0;
-
-			long divisor = 2;
-
-			while (IsDivisibleBy(a, divisor) && IsDivisibleBy(b, divisor))
-			{
-				result++;
-				divisor *= 2;
-			}
-
-			return result;
-		}
-*/
-
 		private static bool IsDivisibleBy(BigInteger[] dividends, long divisor)
 		{
 			for (var i = 0; i < dividends.Length; i++)
