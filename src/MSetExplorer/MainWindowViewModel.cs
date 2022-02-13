@@ -138,11 +138,6 @@ namespace MSetExplorer
 			return new Point(blockPos.X, blockPos.Y);
 		}
 
-		public void ClearMapSections(SizeInt canvasControlSize, MSetInfo mSetInfo)
-		{
-			_ = MapWindowHelper.BuildJob(Project, "temp", canvasControlSize, mSetInfo, BlockSize, _projectAdapter, clearExistingMapSections: true);
-		}
-
 		#endregion
 
 		#region Private Methods 
@@ -158,7 +153,7 @@ namespace MSetExplorer
 			var canvasSize = CanvasSize;
 			var mSetInfo = new MSetInfo(MapCoords, MapCalcSettings, ColorMapEntries);
 
-			var job = MapWindowHelper.BuildJob(Project, jobName, canvasSize, mSetInfo, newArea, BlockSize, _projectAdapter, clearExistingMapSections: false);
+			var job = MapWindowHelper.BuildJob(Project, jobName, canvasSize, mSetInfo, newArea, BlockSize, _projectAdapter);
 			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and a Offset of {job.CanvasControlOffset}.");
 
 			var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);

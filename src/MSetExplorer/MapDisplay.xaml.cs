@@ -35,19 +35,22 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				throw new InvalidOperationException("The DataContext is null as the MapDisplay UserControl is being loaded.");
+				//throw new InvalidOperationException("The DataContext is null as the MapDisplay UserControl is being loaded.");
+				return;
 			}
+			else
+			{
+				_screenSections = new Dictionary<PointInt, ScreenSection>();
 
-			_screenSections = new Dictionary<PointInt, ScreenSection>();
+				MainCanvas.SizeChanged += MainCanvas_SizeChanged;
+				TriggerCanvasSizeUpdate();
 
-			MainCanvas.SizeChanged += MainCanvas_SizeChanged;
-			TriggerCanvasSizeUpdate();
+				_vm = (IMapJobViewModel)DataContext;
+				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
+				_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
 
-			_vm = (IMapJobViewModel)DataContext;
-			_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
-			_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
-
-			Debug.WriteLine("The MapDisplay is now loaded.");
+				Debug.WriteLine("The MapDisplay is now loaded.");
+			}
 		}
 
 		private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)

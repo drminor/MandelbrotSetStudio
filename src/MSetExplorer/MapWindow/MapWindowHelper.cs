@@ -10,14 +10,7 @@ namespace MSetExplorer
 {
 	internal static class MapWindowHelper
 	{
-		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt blockSize, ProjectAdapter projectAdapter, bool clearExistingMapSections)
-		{
-			var job = BuildJob(project, jobName, canvasControlSize, mSetInfo, new SizeInt(), blockSize, projectAdapter, clearExistingMapSections);
-
-			return job;
-		}
-
-		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter, bool clearExistingMapSections)
+		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter/*, bool clearExistingMapSections*/)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 
@@ -38,7 +31,8 @@ namespace MSetExplorer
 			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref coords, canvasSize);
 
 			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(coords, samplePointDelta, blockSize, projectAdapter, deleteExisting: clearExistingMapSections);
+			//var subdivision = GetSubdivision(coords, samplePointDelta, blockSize, projectAdapter, deleteExisting: false);
+			var subdivision = GetSubdivision(coords, samplePointDelta, blockSize, projectAdapter);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
@@ -48,26 +42,13 @@ namespace MSetExplorer
 			return job;
 		}
 
-		private static Subdivision GetSubdivision(RRectangle coords, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter, bool deleteExisting)
+		private static Subdivision GetSubdivision(RRectangle coords, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			// Find an existing subdivision record that has a SamplePointDelta "close to" the given samplePointDelta
 			// and that is "in the neighborhood of our Map Set.
 
 			var pos = Reducer.Reduce(coords.Position);
-
 			var result = projectAdapter.GetOrCreateSubdivision(pos, samplePointDelta, blockSize, out var created);
-
-			//while(deleteExisting && result.DateCreated < DateTime.Parse("1/25/2022 5:47", CultureInfo.InvariantCulture))
-			//{
-			//	_ = projectAdapter.DeleteSubdivision(result);
-			//	result = projectAdapter.GetOrCreateSubdivision(position, samplePointDelta, blockSize, out var _);
-			//}
-
-			while (deleteExisting && !created)
-			{
-				_ = projectAdapter.DeleteSubdivision(result);
-				result = projectAdapter.GetOrCreateSubdivision(pos, samplePointDelta, blockSize, out created);
-			}
 
 			return result;
 		}

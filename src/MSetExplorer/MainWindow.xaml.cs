@@ -35,19 +35,22 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				throw new InvalidOperationException("The DataContext is null as the Main Window is being loaded.");
+				//throw new InvalidOperationException("The DataContext is null as the Main Window is being loaded.");
+				return;
 			}
+			else
+			{
+				_vm = (MainWindowViewModel)DataContext;
+				_vm.PropertyChanged += VmPropertyChanged;
 
-			_vm = (MainWindowViewModel)DataContext;
-			_vm.PropertyChanged += VmPropertyChanged;
+				_mapDisplay = mapDisplay1;
+				_mapDisplay.DataContext = DataContext;
+				_mapDisplay.AreaSelected += MapDisplay_AreaSelected;
 
-			_mapDisplay = mapDisplay1;
-			_mapDisplay.DataContext = DataContext;
-			_mapDisplay.AreaSelected += MapDisplay_AreaSelected;
+				btnGoBack.IsEnabled = _vm.CanGoBack;
 
-			btnGoBack.IsEnabled = _vm.CanGoBack;
-
-			Debug.WriteLine("The MainWindow is now loaded");
+				Debug.WriteLine("The MainWindow is now loaded");
+			}
 		}
 
 		private void MapDisplay_AreaSelected(object sender, MapWindow.AreaSelectedEventArgs e)
@@ -95,5 +98,9 @@ namespace MSetExplorer
 			}
 		}
 
+		private void SaveButton_Click(object sender, RoutedEventArgs e)
+		{
+			//_vm.
+		}
 	}
 }

@@ -45,26 +45,16 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		//public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, bool clearExistingMapSections)
-		//{
-		//	//var curReq = CurrentRequest;
-
-		//	var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, BlockSize, _projectAdapter, clearExistingMapSections);
-		//	Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
-
-		//	_requestStack.Add(job);
-		//}
-
-		public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, TransformType transformType, SizeInt? newArea, bool clearExistingMapSections)
+		public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, TransformType transformType, SizeInt? newArea)
 		{
-			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, newArea, BlockSize, _projectAdapter, clearExistingMapSections);
+			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, newArea, BlockSize, _projectAdapter);
 			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
 			var genMapRequestInfo = new GenMapRequestInfo(job, 0, transformType, newArea, null);
 
 			_requestStack.Add(genMapRequestInfo);
 		}
 
-		public void GoBack(SizeInt canvasControlSize, bool clearExistingMapSections)
+		public void GoBack(SizeInt canvasControlSize)
 		{
 			// Remove the current request
 			_requestStack.RemoveAt(_requestStack.Count - 1);
@@ -77,7 +67,7 @@ namespace MSetExplorer
 			var newArea = prevRequest.NewArea;
 			var transformType = prevRequest.TransformType;
 
-			LoadMap(prevRequest.Job.Label, canvasControlSize, mSetInfo, transformType, newArea, clearExistingMapSections);
+			LoadMap(prevRequest.Job.Label, canvasControlSize, mSetInfo, transformType, newArea);
 		}
 
 		public Point GetBlockPosition(Point posYInverted)

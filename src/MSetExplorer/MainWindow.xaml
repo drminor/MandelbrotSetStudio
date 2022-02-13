@@ -33,6 +33,7 @@
             <StackPanel Grid.Row="1" HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button HorizontalAlignment="Center" Width="100" Margin="0,15,0,15" Click="CloseButton_Click">Close</Button>
                 <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoBackButton_Click">Go Back</Button>
+                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" Margin="45,15,0,15" Click="SaveButton_Click" >Save</Button>
             </StackPanel>
         </Border>
 
