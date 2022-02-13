@@ -4,6 +4,7 @@ using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -19,7 +20,6 @@ namespace MSetExplorer
 	{
 		private IMapJobViewModel _vm;
 		private SelectionRectangle _selectedArea;
-		private Progress<MapSection> _mapLoadingProgress;
 		private IDictionary<PointInt, ScreenSection> _screenSections;
 
 		public MapDisplay()
@@ -33,20 +33,21 @@ namespace MSetExplorer
 
 		private void MapDisplay_Loaded(object sender, RoutedEventArgs e)
 		{
-			if (DataContext != null)
+			if (DataContext is null)
 			{
-				_vm = (IMapJobViewModel)DataContext;
-
-				_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
-				_mapLoadingProgress = new Progress<MapSection>(HandleMapSectionReady);
-				_vm.OnMapSectionReady = ((IProgress<MapSection>)_mapLoadingProgress).Report;
-				_screenSections = new Dictionary<PointInt, ScreenSection>();
-
-				MainCanvas.SizeChanged += MainCanvas_SizeChanged;
-				TriggerCanvasSizeUpdate();
-
-				Debug.WriteLine("The MapDisplay is now loaded.");
+				throw new InvalidOperationException("The DataContext is null as the MapDisplay UserControl being loaded.");
 			}
+
+			_screenSections = new Dictionary<PointInt, ScreenSection>();
+
+			MainCanvas.SizeChanged += MainCanvas_SizeChanged;
+			TriggerCanvasSizeUpdate();
+
+			_vm = (IMapJobViewModel)DataContext;
+			_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
+			_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
+
+			Debug.WriteLine("The MapDisplay is now loaded.");
 		}
 
 		private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -54,12 +55,30 @@ namespace MSetExplorer
 			TriggerCanvasSizeUpdate();
 		}
 
-		private void HandleMapSectionReady(MapSection mapSection)
+		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		{
-			//Debug.WriteLine($"Drawing a bit map at {mapSection.CanvasPosition}.");
+			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+			{
+				HideScreenSections();
+			}
+			else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+			{
+				IList<MapSection> newItems = e.NewItems is null ? new List<MapSection>() : e.NewItems.Cast<MapSection>().ToList();
 
-			var screenSection = GetScreenSection(mapSection);
-			screenSection.WritePixels(mapSection.Pixels1d);
+				foreach(var mapSection in newItems)
+				{
+					var screenSection = GetScreenSection(mapSection);
+					screenSection.WritePixels(mapSection.Pixels1d);
+				}
+			}
+		}
+
+		private void HideScreenSections()
+		{
+			foreach (UIElement c in MainCanvas.Children.OfType<Image>())
+			{
+				c.Visibility = Visibility.Hidden;
+			}
 		}
 
 		private ScreenSection GetScreenSection(MapSection mapSection)
@@ -113,13 +132,7 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void HideScreenSections()
-		//{
-		//	foreach (UIElement c in MainCanvas.Children.OfType<Image>())
-		//	{
-		//		c.Visibility = Visibility.Hidden;
-		//	}
-		//}
+		#region Dependency Properties
 
 		public static readonly DependencyProperty CanvasSizeProperty = DependencyProperty.Register
 			(
@@ -164,6 +177,8 @@ namespace MSetExplorer
 				Debug.WriteLine($"CanvasSizeChanged was raised from sender: {sender}");
 			}
 		}
+
+		#endregion
 
 		private class ScreenSection
 		{

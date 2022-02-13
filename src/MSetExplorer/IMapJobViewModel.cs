@@ -1,7 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
-using System;
+using System.Collections.ObjectModel;
 using System.Windows;
 
 namespace MSetExplorer
@@ -10,13 +10,13 @@ namespace MSetExplorer
 	{
 		//bool InDesignMode { get; }
 
-		SizeInt BlockSize { get; init; }
+		SizeInt BlockSize { get; }
 		bool CanGoBack { get; }
 		Job CurrentJob { get; }
-		Action<MapSection> OnMapSectionReady { get; set; }
 
 		Point GetBlockPosition(Point posYInverted);
 		void GoBack();
-		//void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea);
+
+		ObservableCollection<MapSection> MapSections { get; }
 	}
 }

@@ -72,11 +72,12 @@ namespace MSetExplorer
 			// Remove and then reload the one prior to that
 			var prevRequest = _requestStack[^1];
 			_requestStack.RemoveAt(_requestStack.Count - 1);
+
 			var mSetInfo = prevRequest.Job.MSetInfo;
 			var newArea = prevRequest.NewArea;
-			var tt = prevRequest.TransformType;
+			var transformType = prevRequest.TransformType;
 
-			LoadMap(prevRequest.Job.Label, canvasControlSize, mSetInfo, tt, newArea, clearExistingMapSections);
+			LoadMap(prevRequest.Job.Label, canvasControlSize, mSetInfo, transformType, newArea, clearExistingMapSections);
 		}
 
 		public Point GetBlockPosition(Point posYInverted)

@@ -7,6 +7,7 @@ using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
@@ -18,6 +19,8 @@ namespace MSetExplorer
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly List<GenMapRequestInfo> _requestStack;
+		private readonly Action<MapSection> _onMapSectionReady;
+
 
 		private readonly object hmsLock = new();
 
@@ -36,7 +39,10 @@ namespace MSetExplorer
 			_colorMapEntries = Array.Empty<ColorMapEntry>();
 			_canvasSize = new SizeInt();
 
-			OnMapSectionReady = null;
+			MapSections = new ObservableCollection<MapSection>();
+
+			var mapLoadingProgress = new Progress<MapSection>(HandleMapSectionReady);
+			_onMapSectionReady = ((IProgress<MapSection>)mapLoadingProgress).Report;
 		}
 
 		#region Public Properties
@@ -76,13 +82,14 @@ namespace MSetExplorer
 
 		public Project Project { get; private set; }
 		public SizeInt BlockSize { get; init; }
-		public Action<MapSection> OnMapSectionReady { get; set; }
 
 		private GenMapRequestInfo CurrentRequest => _requestStack.Count == 0 ? null : _requestStack[^1];
 		private int? CurrentGenMapRequestId => CurrentRequest?.JobNumber;
 
 		public Job CurrentJob => CurrentRequest?.Job;
 		public bool CanGoBack => _requestStack.Count > 1;
+
+		public ObservableCollection<MapSection> MapSections { get; init; }
 
 		#endregion
 
@@ -115,7 +122,8 @@ namespace MSetExplorer
 			MapCoords = prevRequest.Job.MSetInfo.Coords;
 
 			var newArea = prevRequest.NewArea;
-			LoadMap(TransformType.Zoom, newArea);
+			var transformType = prevRequest.TransformType;
+			LoadMap(transformType, newArea);
 		}
 
 		public Point GetBlockPosition(Point posYInverted)
@@ -143,6 +151,7 @@ namespace MSetExplorer
 		{
 			var curReq = CurrentRequest;
 			curReq?.MapLoader?.Stop();
+			MapSections.Clear();
 
 			var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 			var jobName = GetJobName(jobNumber, transformType);
@@ -177,9 +186,14 @@ namespace MSetExplorer
 			{
 				if (genMapRequestId == CurrentGenMapRequestId)
 				{
-					OnMapSectionReady(mapSection);
+					_onMapSectionReady(mapSection);
 				}
 			}
+		}
+
+		private void HandleMapSectionReady(MapSection mapSection)
+		{
+			MapSections.Add(mapSection);
 		}
 
 		#endregion

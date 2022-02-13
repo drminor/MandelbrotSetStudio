@@ -25,14 +25,9 @@ namespace MSetExplorer
 
 			var selectedArea = newArea.HasValue ? newArea.Value : new SizeInt();
 
-			if (selectedArea.Width == 0 && selectedArea.Height == 0)
-			{
-				canvasSize = RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize);
-			}
-			else
-			{
-				canvasSize = RMapHelper.GetCanvasSize(selectedArea, canvasControlSize);
-			}
+			canvasSize = selectedArea.Width == 0 && selectedArea.Height == 0
+				? RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize)
+				: RMapHelper.GetCanvasSize(selectedArea, canvasControlSize);
 
 			var coords = mSetInfo.Coords;
 
