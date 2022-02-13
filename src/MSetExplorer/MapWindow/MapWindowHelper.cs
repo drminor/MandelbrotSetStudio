@@ -17,19 +17,21 @@ namespace MSetExplorer
 			return job;
 		}
 
-		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter, bool clearExistingMapSections)
+		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter, bool clearExistingMapSections)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 
 			SizeInt canvasSize;
 
-			if (newArea.Width == 0 && newArea.Height == 0)
+			var selectedArea = newArea.HasValue ? newArea.Value : new SizeInt();
+
+			if (selectedArea.Width == 0 && selectedArea.Height == 0)
 			{
 				canvasSize = RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize);
 			}
 			else
 			{
-				canvasSize = RMapHelper.GetCanvasSize(newArea, canvasControlSize);
+				canvasSize = RMapHelper.GetCanvasSize(selectedArea, canvasControlSize);
 			}
 
 			var coords = mSetInfo.Coords;

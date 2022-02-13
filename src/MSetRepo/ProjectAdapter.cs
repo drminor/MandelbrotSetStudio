@@ -167,52 +167,52 @@ namespace MSetRepo
 			return job;
 		}
 
-		public ObjectId CreateJob(Project project, MSetInfo mSetInfo, SizeInt blockSize, bool overwrite)
-		{
-			ObjectId result;
+		//public ObjectId CreateJob(Project project, MSetInfo mSetInfo, SizeInt blockSize, bool overwrite)
+		//{
+		//	ObjectId result;
 
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
-			var subdivisionId = GetSubdivision(mSetInfo.Coords.Exponent, subdivisionReaderWriter);
+		//	var subdivisionId = GetSubdivision(mSetInfo.Coords.Exponent, subdivisionReaderWriter);
 
-			// TODO: calculate the CanvasSize, CanvasBlockOffset and CanvasControlOffset
-			var canvasSizeInBlocks = new SizeInt(6, 6);
-			var canvasBlockOffset = new PointInt(-4, -3);
-			var canvasControlOffset = new PointDbl(); 
+		//	// TODO: calculate the CanvasSize, CanvasBlockOffset and CanvasControlOffset
+		//	var canvasSizeInBlocks = new SizeInt(6, 6);
+		//	var canvasBlockOffset = new PointInt(-4, -3);
+		//	var canvasControlOffset = new PointDbl(); 
 
-			if (!subdivisionId.HasValue)
-			{
-				var subdivision = JobHelper.CreateSubdivision(blockSize, mSetInfo.Coords);
-				subdivisionId = InsertSubdivision(subdivision, subdivisionReaderWriter);
-			}
+		//	if (!subdivisionId.HasValue)
+		//	{
+		//		var subdivision = JobHelperNotUsed.CreateSubdivision(blockSize, mSetInfo.Coords);
+		//		subdivisionId = InsertSubdivision(subdivision, subdivisionReaderWriter);
+		//	}
 
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var jobIds = jobReaderWriter.GetJobIds(project.Id);
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+		//	var jobIds = jobReaderWriter.GetJobIds(project.Id);
 
-			if (jobIds.Length == 0)
-			{
-				result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset, jobReaderWriter);
-			}
-			else
-			{
-				if (!overwrite)
-				{
-					throw new InvalidOperationException($"Overwrite is false and Project: {project.Name} already has at least one job.");
-				}
-				else
-				{
-					foreach (var jobId in jobIds)
-					{
-						var dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
-						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
-					}
+		//	if (jobIds.Length == 0)
+		//	{
+		//		result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset, jobReaderWriter);
+		//	}
+		//	else
+		//	{
+		//		if (!overwrite)
+		//		{
+		//			throw new InvalidOperationException($"Overwrite is false and Project: {project.Name} already has at least one job.");
+		//		}
+		//		else
+		//		{
+		//			foreach (var jobId in jobIds)
+		//			{
+		//				var dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
+		//				Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
+		//			}
 
-					result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset, jobReaderWriter);
-				}
-			}
+		//			result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset, jobReaderWriter);
+		//		}
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo, SizeInt canvasSizeInBlocks, PointInt canvasBlockOffset, PointDbl canvasControlOffset, JobReaderWriter jobReaderWriter)
 		{

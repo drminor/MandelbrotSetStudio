@@ -26,9 +26,9 @@ namespace MSetExplorer
 
 		private TaskCompletionSource _tcs;
 
-		public MapLoader(Job job, Action<int, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(Job job, int jobSequenceNumber, Action<int, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			GenMapRequestId = mapSectionRequestProcessor.GetNextRequestId();
+			GenMapRequestId = jobSequenceNumber;
 
 			_job = job;
 			_callback = callback;

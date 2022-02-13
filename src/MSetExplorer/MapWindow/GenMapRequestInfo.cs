@@ -7,15 +7,18 @@ namespace MSetExplorer
 	internal class GenMapRequestInfo
 	{
 		public Job Job { get; init; }
-		public SizeInt NewArea { get; set; }
-		public int GenMapRequestId { get; init; }
+		public int JobNumber { get; init; }
+
+		public TransformType TransformType { get; init; }
+		public SizeInt? NewArea { get; set; }
 		public MapLoader MapLoader { get; private set; }
 
-		public GenMapRequestInfo(Job job, SizeInt newArea, int genMapRequestId, MapLoader mapLoader)
+		public GenMapRequestInfo(Job job, int jobNumber, TransformType transformType, SizeInt? newArea, MapLoader mapLoader)
 		{
 			Job = job;
+			JobNumber = jobNumber;
+			TransformType = transformType;
 			NewArea = newArea;
-			GenMapRequestId = genMapRequestId;
 			MapLoader = mapLoader;
 		}
 

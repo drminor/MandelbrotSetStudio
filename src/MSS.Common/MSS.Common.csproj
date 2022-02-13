@@ -10,6 +10,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="RMap\JobHelperNotUsed.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="RMap\JobHelperNotUsed.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.13.2" />
   </ItemGroup>
 

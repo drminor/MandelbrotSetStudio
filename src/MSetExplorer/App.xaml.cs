@@ -33,20 +33,24 @@ namespace MSetExplorer
 			_mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionRepo);
 			_mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, _mapSectionPersistProcessor);
 
+			Window window1;
+
 			if (USE_MAP_NAV_SIM)
 			{
-				var viewModel = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor);
-				var window = new MapNavSim();
-				window.DataContext = viewModel;
-				window.Show();
+				window1 = new MapNavSim
+				{
+					DataContext = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
+				};
 			}
 			else
 			{
-				var viewModel = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor);
-				var window = new MainWindow();
-				window.DataContext = viewModel;
-				window.Show();
+				window1 = new MainWindow
+				{
+					DataContext = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
+				};
 			}
+
+			window1.Show();
 		}
 
 		protected override void OnExit(ExitEventArgs e)

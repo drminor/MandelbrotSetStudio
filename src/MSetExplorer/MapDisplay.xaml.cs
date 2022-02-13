@@ -1,12 +1,9 @@
 ﻿using MSetExplorer.MapWindow;
-using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -25,7 +22,7 @@ namespace MSetExplorer
 		private Progress<MapSection> _mapLoadingProgress;
 		private IDictionary<PointInt, ScreenSection> _screenSections;
 
-		private int _jobNameCounter;
+		//private int _jobNameCounter;
 
 		public MapDisplay()
 		{
@@ -33,6 +30,8 @@ namespace MSetExplorer
 			Loaded += MapDisplay_Loaded;
 			InitializeComponent();
 		}
+
+		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
 
 		private void MapDisplay_Loaded(object sender, RoutedEventArgs e)
 		{
@@ -45,31 +44,50 @@ namespace MSetExplorer
 				_vm.OnMapSectionReady = ((IProgress<MapSection>)_mapLoadingProgress).Report;
 				_screenSections = new Dictionary<PointInt, ScreenSection>();
 
-				//var canvasSize = GetCanvasControlSize(MainCanvas);
-				var maxIterations = 700;
-				var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-				
-				MapCalcSettings = mSetInfo.MapCalcSettings;
-				ColorMapEntries = mSetInfo.ColorMapEntries;
-				Coords = mSetInfo.Coords;
+				MainCanvas.SizeChanged += MainCanvas_SizeChanged;
+				TriggerCanvasSizeUpdate();
 
-				//_vm.LoadMap("initial job", canvasSize, mSetInfo, canvasSize);
+				//var ipc = InputBindings;
+				//var x = GetBindingExpression(CoordsProperty);
+
+				Debug.WriteLine("The MapDisplay is now loaded.");
+
+				//var mSetInfo = new MSetInfo(Coords, MapCalcSettings, ColorMapEntries);
+				//LoadMap(mSetInfo);
+				//LoadMap();
+
+				//Coords = _vm.
 			}
 		}
 
-		public void GoBack()
+		private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			HideScreenSections();
-			var canvasSize = GetCanvasControlSize(MainCanvas);
-			_vm.GoBack(canvasSize);
+			TriggerCanvasSizeUpdate();
 		}
 
-		private SizeInt GetCanvasControlSize(Canvas canvas)
-		{
-			var width = (int)Math.Round(canvas.Width);
-			var height = (int)Math.Round(canvas.Height);
-			return new SizeInt(width, height);
-		}
+		//public void GoBack()
+		//{
+		//	HideScreenSections();
+		//	var canvasSize = GetCanvasControlSize(MainCanvas);
+		//	_vm.GoBack(canvasSize);
+		//}
+
+		//public SizeInt CanvasSize
+		//{
+		//	get
+		//	{
+		//		var width = (int)Math.Round(MainCanvas.Width);
+		//		var height = (int)Math.Round(MainCanvas.Height);
+		//		return new SizeInt(width, height);
+		//	}
+		//}
+
+		//private SizeInt GetCanvasControlSize(Canvas canvas)
+		//{
+		//	var width = (int)Math.Round(canvas.Width);
+		//	var height = (int)Math.Round(canvas.Height);
+		//	return new SizeInt(width, height);
+		//}
 
 		private void HandleMapSectionReady(MapSection mapSection)
 		{
@@ -117,146 +135,256 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"Will start job here with position: {blockPosition}.");
 
-					var curJob = _vm.CurrentJob;
-					var position = curJob.MSetInfo.Coords.LeftBot;
-					var canvasControlOffset = curJob.CanvasControlOffset;
-					var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-
 					_selectedArea.IsActive = false;
 					var rect = _selectedArea.Area;
 
-					// Adjust the selected area's origin to account for the portion of the start block that is off screen.
+					//var curJob = _vm.CurrentJob;
+					//var position = curJob.MSetInfo.Coords.LeftBot;
+					//var canvasControlOffset = curJob.CanvasControlOffset;
+					//var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+
+					//// Adjust the selected area's origin to account for the portion of the start block that is off screen.
+					//var area = new RectangleInt(
+					//	new PointInt((int)Math.Round(rect.X + canvasControlOffset.Width), (int)Math.Round(rect.Y + canvasControlOffset.Height)),
+					//	new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
+					//);
+
+					//var coords = RMapHelper.GetMapCoords(area, position, samplePointDelta);
+
+					//Debug.WriteLine($"Starting Job with new coords: {coords}.");
+					////LoadMap(coords, area.Size);
+					//Coords = coords;
+
 					var area = new RectangleInt(
-						new PointInt((int)Math.Round(rect.X + canvasControlOffset.Width), (int)Math.Round(rect.Y + canvasControlOffset.Height)),
+						new PointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y)),
 						new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
 					);
 
-					var coords = RMapHelper.GetMapCoords(area, position, samplePointDelta);
-
-					Debug.WriteLine($"Starting Job with new coords: {coords}.");
-					//LoadMap(coords, area.Size);
-					Coords = coords;
+					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, area));
 				}
 			}
 		}
 
-		//private void LoadMap(RRectangle coords, SizeInt newArea)
+		//private void LoadMap(MSetInfo mSetInfo)
 		//{
+		//	if (_vm is null)
+		//	{
+		//		return;
+		//	}
+
 		//	HideScreenSections();
 
-		//	var canvasSize = GetCanvasControlSize(MainCanvas);
-		//	//var curMSetInfo = _vm.CurrentJob.MSetInfo;
-		//	//var mSetInfo = MSetInfo.UpdateWithNewCoords(curMSetInfo, coords);
+		//	var canvasSize = CanvasSize;
+		//	var label = "Zoom:" + _jobNameCounter++.ToString();
+		//	_vm.LoadMap(label, canvasSize, mSetInfo, new SizeInt());
+		//}
 
-		//	if (!(coords is null))
+		//private void LoadMap()
+		//{
+		//	if (_vm is null)
 		//	{
-		//		var label = "Zoom:" + _jobNameCounter++.ToString();
-		//		_vm.LoadMap(label, canvasSize, mSetInfo, newArea);
+		//		return;
+		//	}
+
+		//	var mSetInfo = new MSetInfo(Coords, MapCalcSettings, ColorMapEntries);
+
+		//	HideScreenSections();
+
+		//	var canvasSize = CanvasSize;
+		//	var label = "Zoom:" + _jobNameCounter++.ToString();
+		//	_vm.LoadMap(label, canvasSize, mSetInfo, new SizeInt());
+		//}
+
+		//private void HideScreenSections()
+		//{
+		//	foreach (UIElement c in MainCanvas.Children.OfType<Image>())
+		//	{
+		//		c.Visibility = Visibility.Hidden;
 		//	}
 		//}
 
-		private void LoadMap(MSetInfo mSetInfo)
-		{
-			HideScreenSections();
+		public static readonly DependencyProperty CanvasSizeProperty = DependencyProperty.Register
+			(
+			"CanvasSize",
+			typeof(SizeInt),
+			typeof(MapDisplay), 
+			new FrameworkPropertyMetadata(new SizeInt(), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, CanvasSizeChanged)
+			);
 
-			var canvasSize = GetCanvasControlSize(MainCanvas);
-			var label = "Zoom:" + _jobNameCounter++.ToString();
-			_vm.LoadMap(label, canvasSize, mSetInfo, new SizeInt());
-		}
-
-		private void HideScreenSections()
+		public SizeInt CanvasSize
 		{
-			foreach (UIElement c in MainCanvas.Children.OfType<Image>())
+			get
 			{
-				c.Visibility = Visibility.Hidden;
+				var result = new SizeInt(
+					(int)Math.Round(MainCanvas.ActualWidth),
+					(int)Math.Round(MainCanvas.ActualHeight));
+
+				return result;
+			}
+			
+			// This property is not updatable, but this is used to update any bindings that may have this as a target.
+			set
+			{
+				var curSize = CanvasSize;
+				SetValue(CanvasSizeProperty, curSize);
 			}
 		}
 
-		#region Dependency Properties
-
-		public static readonly DependencyProperty CoordsProperty = DependencyProperty.Register(
-			"Coords",
-			typeof(RRectangle),
-			typeof(MapDisplay), new FrameworkPropertyMetadata(
-				null,
-				FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-				CoordsChanged));
-
-		public RRectangle Coords
+		private void TriggerCanvasSizeUpdate()
 		{
-			get => (RRectangle)GetValue(CoordsProperty);
-			set => SetValue(CoordsProperty, value);
+			CanvasSize = new SizeInt();
 		}
 
-		private static void CoordsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+		// TODO: Watch the MainCanvas' ActualWidth and Height Properties and use these to set our DP.
+
+		private static void CanvasSizeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
 		{
-			Debug.WriteLine($"The Coords are being changed.");
-
-			if (sender is MapDisplay md)
+			if (sender is MapDisplay)
 			{
-				Debug.WriteLine("The CoordsDP is being set on the MapDisplay Control.");
-				var oldCoords = e.OldValue as RRectangle;
-				var newCoords = e.NewValue as RRectangle;
+				Debug.WriteLine("The CanvasSize is being set on the MapDisplay Control.");
+				//var oldCoords = e.OldValue as SizeInt?;
+				//var newCoords = e.NewValue as SizeInt?;
 
-				if (EqualityComparer<RRectangle>.Default.Equals(oldCoords, newCoords))
-				{
-					Debug.WriteLine("The old and new Coord values are the same.");
-				}
-				else
-				{
-					if (!(newCoords is null) && !(md.MapCalcSettings is null) && !(md.ColorMapEntries is null))
-					{
-						var mSetInfo = new MSetInfo(newCoords, md.MapCalcSettings, md.ColorMapEntries);
-						md.LoadMap(mSetInfo);
-					}
-				}
+				//if (EqualityComparer<SizeInt>.Default.Equals(oldCoords, newCoords))
+				//{
+				//	Debug.WriteLine("The old and new Coord values are the same.");
+				//}
+				//else
+				//{
+				//	if (!(newCoords is null) && !(md.MapCalcSettings is null) && !(md.ColorMapEntries is null))
+				//	{
+				//		//var mSetInfo = new MSetInfo(newCoords, md.MapCalcSettings, md.ColorMapEntries);
+				//		//md.LoadMap(mSetInfo);
+
+				//		md.LoadMap();
+				//	}
+				//}
 			}
 			else
 			{
-				Debug.WriteLine($"CoordsChanged was raised from sender: {sender}");
+				Debug.WriteLine($"CanvasSizeChanged was raised from sender: {sender}");
 			}
 		}
 
-		public static readonly DependencyProperty MapCalcSettingsProperty = DependencyProperty.Register(
-			"MapCalcSettings",
-			typeof(MapCalcSettings),
-			typeof(MapDisplay), new FrameworkPropertyMetadata(
-				null,
-				FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-				MapCalcSettingsChanged));
+		//#region Dependency Properties
 
-		public MapCalcSettings MapCalcSettings
-		{
-			get => (MapCalcSettings)GetValue(MapCalcSettingsProperty);
-			set => SetValue(MapCalcSettingsProperty, value);
-		}
+		//public static readonly DependencyProperty CoordsProperty = DependencyProperty.Register(
+		//	"Coords",
+		//	typeof(RRectangle),
+		//	typeof(MapDisplay), new FrameworkPropertyMetadata(
+		//		null,
+		//		FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+		//		CoordsChanged));
 
-		private static void MapCalcSettingsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
-		{
-			Debug.WriteLine($"The MapCalcSettings are being changed.");
-		}
+		//public RRectangle Coords
+		//{
+		//	get => (RRectangle)GetValue(CoordsProperty);
+		//	set => SetValue(CoordsProperty, value);
+		//}
 
-		public static readonly DependencyProperty ColorMapEntriesProperty = DependencyProperty.Register(
-			"ColorMapEntries",
-			typeof(ColorMapEntry[]),
-			typeof(MapDisplay), new FrameworkPropertyMetadata(
-				null,
-				FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-				ColorMapEntriesChanged));
+		//private static void CoordsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+		//{
+		//	Debug.WriteLine($"The Coords are being changed.");
 
-		public ColorMapEntry[] ColorMapEntries
-		{
-			get => (ColorMapEntry[])GetValue(ColorMapEntriesProperty);
-			set => SetValue(ColorMapEntriesProperty, value);
-		}
+		//	if (sender is MapDisplay md)
+		//	{
+		//		Debug.WriteLine("The CoordsDP is being set on the MapDisplay Control.");
+		//		var oldCoords = e.OldValue as RRectangle;
+		//		var newCoords = e.NewValue as RRectangle;
 
-		private static void ColorMapEntriesChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
-		{
-			Debug.WriteLine($"The ColorMapEntries are being changed.");
-		}
+		//		if (EqualityComparer<RRectangle>.Default.Equals(oldCoords, newCoords))
+		//		{
+		//			Debug.WriteLine("The old and new Coord values are the same.");
+		//		}
+		//		else
+		//		{
+		//			if (!(newCoords is null) && !(md.MapCalcSettings is null) && !(md.ColorMapEntries is null))
+		//			{
+		//				//var mSetInfo = new MSetInfo(newCoords, md.MapCalcSettings, md.ColorMapEntries);
+		//				//md.LoadMap(mSetInfo);
 
+		//				md.LoadMap();
+		//			}
+		//		}
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"CoordsChanged was raised from sender: {sender}");
+		//	}
+		//}
 
-		#endregion
+		//public static readonly DependencyProperty MapCalcSettingsProperty = DependencyProperty.Register(
+		//	"MapCalcSettings",
+		//	typeof(MapCalcSettings),
+		//	typeof(MapDisplay), new FrameworkPropertyMetadata(
+		//		null,
+		//		FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+		//		MapCalcSettingsChanged));
+
+		//public MapCalcSettings MapCalcSettings
+		//{
+		//	get => (MapCalcSettings)GetValue(MapCalcSettingsProperty);
+		//	set => SetValue(MapCalcSettingsProperty, value);
+		//}
+
+		//private static void MapCalcSettingsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+		//{
+		//	Debug.WriteLine($"The MapCalcSettings are being changed.");
+
+		//	if (sender is MapDisplay md)
+		//	{
+		//		Debug.WriteLine("The MapCalcSettingsDP is being set on the MapDisplay Control.");
+
+		//		if (!(md.Coords is null) && !(md.MapCalcSettings is null) && !(md.ColorMapEntries is null))
+		//		{
+		//			//var mSetInfo = new MSetInfo(md.Coords, md.MapCalcSettings, md.ColorMapEntries);
+		//			//md.LoadMap(mSetInfo);
+
+		//			md.LoadMap();
+		//		}
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"MapCalcSettingsChanged was raised from sender: {sender}");
+		//	}
+		//}
+
+		//public static readonly DependencyProperty ColorMapEntriesProperty = DependencyProperty.Register(
+		//	"ColorMapEntries",
+		//	typeof(ColorMapEntry[]),
+		//	typeof(MapDisplay), new FrameworkPropertyMetadata(
+		//		null,
+		//		FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+		//		ColorMapEntriesChanged));
+
+		//public ColorMapEntry[] ColorMapEntries
+		//{
+		//	get => (ColorMapEntry[])GetValue(ColorMapEntriesProperty);
+		//	set => SetValue(ColorMapEntriesProperty, value);
+		//}
+
+		//private static void ColorMapEntriesChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+		//{
+		//	Debug.WriteLine($"The ColorMapEntries are being changed.");
+
+		//	if (sender is MapDisplay md)
+		//	{
+		//		Debug.WriteLine("The ColorMapEntriesDP is being set on the MapDisplay Control.");
+
+		//		if (!(md.Coords is null) && !(md.MapCalcSettings is null) && !(md.ColorMapEntries is null))
+		//		{
+		//			//var mSetInfo = new MSetInfo(md.Coords, md.MapCalcSettings, md.ColorMapEntries);
+		//			//md.LoadMap(mSetInfo);
+		//			md.LoadMap();
+		//		}
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"ColorMapEntriesChanged was raised from sender: {sender}");
+		//	}
+		//}
+
+		//#endregion
 
 		private class ScreenSection
 		{

@@ -8,7 +8,10 @@
              d:DesignHeight="796" d:DesignWidth="840">
     <Grid>
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <!--<Canvas Name="MainCanvas" Background="Transparent" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown"  />-->
             <Canvas Name="MainCanvas" Width="768" Height="768" Background="Transparent" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown"  />
         </Border>
     </Grid>
 </UserControl>
+
+    

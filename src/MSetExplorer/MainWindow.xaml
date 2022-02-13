@@ -23,9 +23,12 @@
         </Border>-->
 
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <local:MapDisplay x:Name="mapDisplay1" Coords="{Binding Path=MapCoords}" MapCalcSettings="{Binding Path=MapCalcSettings}" ColorMapEntries="{Binding Path=ColorMapEntries}" ></local:MapDisplay>
-        </Border>        
-        
+            <local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}" ></local:MapDisplay>
+        </Border>
+
+        <!--<local:MapDisplay x:Name="mapDisplay1" Coords="{Binding Path=MapCoords}" MapCalcSettings="{Binding Path=MapCalcSettings}" ColorMapEntries="{Binding Path=ColorMapEntries}" ></local:MapDisplay>-->
+
+
         <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel Grid.Row="1" HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button HorizontalAlignment="Center" Width="100" Margin="0,15,0,15" Click="CloseButton_Click">Close</Button>

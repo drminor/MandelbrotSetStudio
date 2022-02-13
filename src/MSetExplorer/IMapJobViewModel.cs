@@ -16,7 +16,7 @@ namespace MSetExplorer
 		Action<MapSection> OnMapSectionReady { get; set; }
 
 		Point GetBlockPosition(Point posYInverted);
-		void GoBack(SizeInt canvasControlSize);
-		void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea);
+		void GoBack();
+		//void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea);
 	}
 }

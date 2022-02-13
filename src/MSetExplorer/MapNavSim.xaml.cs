@@ -34,7 +34,7 @@ namespace MSetExplorer
 
 			// Use the TEST RECTANGLE instead (0,0 -> 1,1)
 			var testMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, RMapConstants.TEST_RECTANGLE);
-			_vm.LoadMap("initial job", canvasSize, testMSetInfo, canvasSize, clearExistingMapSections: false);
+			_vm.LoadMap("initial job", canvasSize, testMSetInfo, TransformType.None, canvasSize, clearExistingMapSections: false);
 		}
 
 		private SizeInt GetCanvasControlSize()
@@ -55,7 +55,7 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}.");
 			var newArea = new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height));
-			LoadMap(coords, newArea, clearExistingMapSections: false);
+			LoadMap(coords, TransformType.Zoom, newArea, clearExistingMapSections: false);
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
@@ -88,14 +88,14 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void LoadMap(RRectangle coords, SizeInt newArea, bool clearExistingMapSections)
+		private void LoadMap(RRectangle coords, TransformType transformType, SizeInt newArea, bool clearExistingMapSections)
 		{
 			var canvasSize = GetCanvasControlSize();
 			var curMSetInfo = _vm.CurrentJob.MSetInfo;
 			var mSetInfo = MSetInfo.UpdateWithNewCoords(curMSetInfo, coords);
 
 			var label = "Zoom:" + _jobNameCounter++.ToString();
-			_vm.LoadMap(label, canvasSize, mSetInfo, newArea, clearExistingMapSections);
+			_vm.LoadMap(label, canvasSize, mSetInfo, transformType, newArea, clearExistingMapSections);
 			btnGoBack.IsEnabled = _vm.CanGoBack;
 		}
 

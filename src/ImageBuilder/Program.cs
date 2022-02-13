@@ -2,18 +2,15 @@
 using MEngineClient;
 using MEngineDataContracts;
 using MongoDB.Bson;
-using MSetDatabaseClient;
-using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
-using MSS.Types.MSetOld;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Numerics;
+
 namespace ImageBuilder
 {
 	class Program
@@ -60,37 +57,37 @@ namespace ImageBuilder
 				case 2:
 					{
 						/* MongoDb Import */
-						var fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
-						var mSetInfoOld = MSetInfoBuilder.Build(fileName);
-						var cmes = mSetInfoOld.ColorMap.ColorMapEntries;
-						cmes.Add(new ColorMapEntry(mSetInfoOld.MapCalcSettings.MaxIterations, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor, ColorMapBlendStyle.None, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor));
-						var mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, cmes.ToArray());
+						//var fileName = MSetInfoBuilder.CIRCUS1_PROJECT_NAME;
+						//var mSetInfoOld = MSetInfoBuilder.Build(fileName);
+						//var cmes = mSetInfoOld.ColorMap.ColorMapEntries;
+						//cmes.Add(new ColorMapEntry(mSetInfoOld.MapCalcSettings.MaxIterations, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor, ColorMapBlendStyle.None, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor));
+						//var mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, cmes.ToArray());
 
-						//IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfoOld.Name, mSetInfoOld.IsHighRes);
+						////IMapSectionReader mapSectionReader = GetMapSectionReader(mSetInfoOld.Name, mSetInfoOld.IsHighRes);
 
-						var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-						var mongoDbImporter = new MongoDbImporter(projectAdapter);
+						//var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
+						//var mongoDbImporter = new MongoDbImporterNotUsed(projectAdapter);
 
-						var project = projectAdapter.GetOrCreateProject(mSetInfoOld.Name);
-						mongoDbImporter.Import(/*mapSectionReader, */project, mSetInfo, overwrite: true);
+						//var project = projectAdapter.GetOrCreateProject(mSetInfoOld.Name);
+						//mongoDbImporter.Import(/*mapSectionReader, */project, mSetInfo, overwrite: true);
 						break;
 					}
 				case 3:
 					{
 						/* Zoom Test #1*/
-						var fileName = MSetInfoBuilder.ZOOM_TEST_1;
-						var mSetInfoOld = MSetInfoBuilder.Build(fileName);
+						//var fileName = MSetInfoBuilder.ZOOM_TEST_1;
+						//var mSetInfoOld = MSetInfoBuilder.Build(fileName);
 
-						var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-						var mongoDbImporter = new MongoDbImporter(projectAdapter);
+						//var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
+						//var mongoDbImporter = new MongoDbImporterNotUsed(projectAdapter);
 
-						var project = projectAdapter.GetOrCreateProject(mSetInfoOld.Name);
+						//var project = projectAdapter.GetOrCreateProject(mSetInfoOld.Name);
 
-						var cmes = mSetInfoOld.ColorMap.ColorMapEntries;
-						cmes.Add(new ColorMapEntry(mSetInfoOld.MapCalcSettings.MaxIterations, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor, ColorMapBlendStyle.None, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor));
-						var mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries.ToArray());
+						//var cmes = mSetInfoOld.ColorMap.ColorMapEntries;
+						//cmes.Add(new ColorMapEntry(mSetInfoOld.MapCalcSettings.MaxIterations, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor, ColorMapBlendStyle.None, mSetInfoOld.ColorMap.HighColorEntry.StartColor.CssColor));
+						//var mSetInfo = new MSetInfo(RMapConstants.ENTIRE_SET_RECTANGLE, mSetInfoOld.MapCalcSettings, mSetInfoOld.ColorMap.ColorMapEntries.ToArray());
 
-						mongoDbImporter.DoZoomTest1(project, mSetInfo, overwrite: true);
+						//mongoDbImporter.DoZoomTest1(project, mSetInfo, overwrite: true);
 						break;
 					}
 				case 4:

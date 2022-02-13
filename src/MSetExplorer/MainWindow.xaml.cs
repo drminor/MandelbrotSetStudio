@@ -1,4 +1,10 @@
-﻿using System.Windows;
+﻿using MSS.Common;
+using MSS.Types;
+using MSS.Types.MSet;
+using System;
+using System.Diagnostics;
+using System.Globalization;
+using System.Windows;
 
 namespace MSetExplorer
 {
@@ -13,7 +19,18 @@ namespace MSetExplorer
 		public MainWindow()
 		{
 			Loaded += MainWindow_Loaded;
+			ContentRendered += MainWindow_ContentRendered;
 			InitializeComponent();
+		}
+
+		private void MainWindow_ContentRendered(object sender, EventArgs e)
+		{
+			Debug.WriteLine("The MainWindow is handling ContentRendered");
+
+			var maxIterations = 700;
+			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
+
+			_vm.SetMapInfo(mSetInfo);
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -21,26 +38,53 @@ namespace MSetExplorer
 			if (DataContext != null)
 			{
 				_vm = (MainWindowViewModel)DataContext;
-				_mapDisplay = mapDisplay1;
+				_vm.PropertyChanged += VmPropertyChanged;
 
-				_vm.PropertyChanged += _vm_PropertyChanged;
+				_mapDisplay = mapDisplay1;
+				//_mapDisplay.DataContext = null;
+				_mapDisplay.DataContext = DataContext;
+				_mapDisplay.AreaSelected += MapDisplay_AreaSelected;
 
 				btnGoBack.IsEnabled = _vm.CanGoBack;
 
-				//btnGoBack.IsEnabled = _vm.CanGoBack;
-				//var canvasSize = GetCanvasControlSize(MainCanvas);
-				//var maxIterations = 700;
-				//var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-				//_vm.LoadMap("initial job", canvasSize, mSetInfo, canvasSize, clearExistingMapSections: false);
+				Debug.WriteLine("The MainWindow is now loaded");
 			}
 		}
 
-		private void _vm_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void MapDisplay_AreaSelected(object sender, MapWindow.AreaSelectedEventArgs e)
+		{
+			var curJob = _vm.CurrentJob;
+			var position = curJob.MSetInfo.Coords.LeftBot;
+			var canvasControlOffset = curJob.CanvasControlOffset;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+
+			// Adjust the selected area's origin to account for the portion of the start block that is off screen.
+			var canvasOffset = new SizeInt((int)Math.Round(canvasControlOffset.Width), (int)Math.Round(canvasControlOffset.Height));
+			var adjArea = e.Area.Translate(canvasOffset);
+
+			var coords = RMapHelper.GetMapCoords(adjArea, position, samplePointDelta);
+
+			//var label = $"{e.TransformType}:{_jobNameCounter++.ToString(CultureInfo.InvariantCulture)}";
+			//var mSetInfo = new MSetInfo(coords, _vm.MapCalcSettings, _vm.ColorMapEntries);
+
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {e.TransformType}.");
+			_vm.UpdateMapView(e.TransformType, e.Area.Size, coords);
+		}
+
+		private void VmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == "CanGoBack")
 			{
 				btnGoBack.IsEnabled = _vm.CanGoBack;
+				return;
 			}
+
+			if (e.PropertyName == "CanvasSize")
+			{
+				Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
+				return;
+			}
+
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -50,12 +94,10 @@ namespace MSetExplorer
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
 		{
-			//HideScreenSections();
-			//var canvasSize = GetCanvasControlSize(MainCanvas);
-			//_vm.GoBack(canvasSize, clearExistingMapSections: false);
-
-			_mapDisplay.GoBack();
-			btnGoBack.IsEnabled = _vm.CanGoBack;
+			if (_vm.CanGoBack)
+			{
+				_vm.GoBack();
+			}
 		}
 
 	}

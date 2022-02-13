@@ -12,6 +12,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="MongoDbImporterNotUsed.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="MongoDbImporterNotUsed.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.Text.Json" Version="5.0.2" />
   </ItemGroup>

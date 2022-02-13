@@ -8,11 +8,11 @@ using System.Diagnostics;
 
 namespace MSetDatabaseClient
 {
-	public class MongoDbImporter
+	public class MongoDbImporterNotUsed
 	{
 		private readonly ProjectAdapter _projectAdapter;
 
-		public MongoDbImporter(ProjectAdapter projectAdapter)
+		public MongoDbImporterNotUsed(ProjectAdapter projectAdapter)
 		{
 			_projectAdapter = projectAdapter;
 		}
@@ -78,7 +78,7 @@ namespace MSetDatabaseClient
 
 			for (var zCntr = 0; zCntr < numZooms; zCntr++)
 			{
-				var zJob = JobHelper.ZoomIn(job);
+				var zJob = JobHelperNotUsed.ZoomIn(job);
 
 				var jobRecord = mSetRecordMapper.MapTo(zJob);
 

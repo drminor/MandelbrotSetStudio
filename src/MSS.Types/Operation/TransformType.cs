@@ -3,7 +3,8 @@ namespace MSS.Types
 {
 	public enum TransformType
 	{
-		In,
+		None,
+		Zoom,
 		Out,
 		Left,
 		Right,

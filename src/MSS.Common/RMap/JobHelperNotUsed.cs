@@ -6,26 +6,26 @@ using System.Numerics;
 
 namespace MSS.Common
 {
-	public static class JobHelper
+	public static class JobHelperNotUsed
 	{
-		public static Job DoOperation(Job job, TransformType transformtype)
-		{
-			return transformtype switch
-			{
-				TransformType.In => ZoomIn(job),
-				//case TransformType.Out:
-				//	break;
-				//case TransformType.Left:
-				//	break;
-				//case TransformType.Right:
-				//	break;
-				//case TransformType.Up:
-				//	break;
-				//case TransformType.Down:
-				//	break;
-				_ => throw new InvalidOperationException($"TransformType: {transformtype} is not recognized or is not supported."),
-			};
-		}
+		//public static Job DoOperation(Job job, TransformType transformtype)
+		//{
+		//	return transformtype switch
+		//	{
+		//		TransformType.In => ZoomIn(job),
+		//		//case TransformType.Out:
+		//		//	break;
+		//		//case TransformType.Left:
+		//		//	break;
+		//		//case TransformType.Right:
+		//		//	break;
+		//		//case TransformType.Up:
+		//		//	break;
+		//		//case TransformType.Down:
+		//		//	break;
+		//		_ => throw new InvalidOperationException($"TransformType: {transformtype} is not recognized or is not supported."),
+		//	};
+		//}
 
 		public static Subdivision CreateSubdivision(SizeInt blockSize, RRectangle coords)
 		{
