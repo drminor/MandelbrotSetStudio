@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types;
 using System;
 using System.Diagnostics;
@@ -78,6 +79,12 @@ namespace MSetExplorer
 				return;
 			}
 
+			if (e.PropertyName == "CanGoForward")
+			{
+				btnGoForward.IsEnabled = _vm.CanGoForward;
+				return;
+			}
+
 			if (e.PropertyName == "CanvasSize")
 			{
 				Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
@@ -98,9 +105,17 @@ namespace MSetExplorer
 			}
 		}
 
+		private void GoForwardButton_Click(object sender, RoutedEventArgs e)
+		{
+			if (_vm.CanGoForward)
+			{
+				_vm.GoForward();
+			}
+		}
+
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			//_vm.
+			_vm.Save();
 		}
 	}
 }

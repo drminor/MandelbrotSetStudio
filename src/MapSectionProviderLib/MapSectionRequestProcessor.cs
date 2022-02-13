@@ -60,12 +60,12 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		public void AddWork(int jobId, MapSectionRequest mapSectionRequest, Action<MapSectionResponse> workAction)
+		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionResponse> workAction)
 		{
 			// TODO: Use a Lock to prevent update of IsAddingCompleted while we are in this method.
 			if (!_workQueue.IsAddingCompleted)
 			{
-				var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(jobId, mapSectionRequest, workAction);
+				var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(jobNumber, mapSectionRequest, workAction);
 				_workQueue.Add(mapSectionWorkItem);
 			}
 		}

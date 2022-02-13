@@ -167,80 +167,18 @@ namespace MSetRepo
 			return job;
 		}
 
-		//public ObjectId CreateJob(Project project, MSetInfo mSetInfo, SizeInt blockSize, bool overwrite)
-		//{
-		//	ObjectId result;
-
-		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-
-		//	var subdivisionId = GetSubdivision(mSetInfo.Coords.Exponent, subdivisionReaderWriter);
-
-		//	// TODO: calculate the CanvasSize, CanvasBlockOffset and CanvasControlOffset
-		//	var canvasSizeInBlocks = new SizeInt(6, 6);
-		//	var canvasBlockOffset = new PointInt(-4, -3);
-		//	var canvasControlOffset = new PointDbl(); 
-
-		//	if (!subdivisionId.HasValue)
-		//	{
-		//		var subdivision = JobHelperNotUsed.CreateSubdivision(blockSize, mSetInfo.Coords);
-		//		subdivisionId = InsertSubdivision(subdivision, subdivisionReaderWriter);
-		//	}
-
-		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
-		//	var jobIds = jobReaderWriter.GetJobIds(project.Id);
-
-		//	if (jobIds.Length == 0)
-		//	{
-		//		result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset, jobReaderWriter);
-		//	}
-		//	else
-		//	{
-		//		if (!overwrite)
-		//		{
-		//			throw new InvalidOperationException($"Overwrite is false and Project: {project.Name} already has at least one job.");
-		//		}
-		//		else
-		//		{
-		//			foreach (var jobId in jobIds)
-		//			{
-		//				var dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
-		//				Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
-		//			}
-
-		//			result = CreateAndInsertFirstJob(project.Id, subdivisionId.Value, mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset, jobReaderWriter);
-		//		}
-		//	}
-
-		//	return result;
-		//}
-
-		private ObjectId CreateAndInsertFirstJob(ObjectId projectId, ObjectId subdivisionId, MSetInfo mSetInfo, SizeInt canvasSizeInBlocks, PointInt canvasBlockOffset, PointDbl canvasControlOffset, JobReaderWriter jobReaderWriter)
+		public Job InsertJob(Job job)
 		{
-			var jobRecord = CreateJob(null, projectId, subdivisionId, ROOT_JOB_LABEL, mSetInfo, canvasSizeInBlocks, canvasBlockOffset, canvasControlOffset);
-			var result = jobReaderWriter.Insert(jobRecord);
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var jobRecord = _mSetRecordMapper.MapTo(job);
+			var id = jobReaderWriter.Insert(jobRecord);
 
-			return result;
-		}
+			var updatedJob = new Job(id, job.ParentJob, job.Project, job.Subdivision, job.Label, job.MSetInfo, job.CanvasSizeInBlocks, job.MapBlockOffset, job.CanvasControlOffset);
 
-		private JobRecord CreateJob(ObjectId? parentJobId, ObjectId projectId, ObjectId subdivisionId, string label, MSetInfo mSetInfo, SizeInt canvasSizeInBlocks, PointInt canvasBlockOffset, PointDbl canvasControlOffset)
-		{
-			var mSetInfoRecord = _mSetRecordMapper.MapTo(mSetInfo);
+			//jobRecord = jobReaderWriter.Get(id);
+			//job = _mSetRecordMapper.MapFrom(jobRecord);
 
-			var jobRecord = new JobRecord(
-				ParentJobId: parentJobId,
-				ProjectId: projectId,
-				SubDivisionId: subdivisionId,
-				Label: label,
-				MSetInfo: mSetInfoRecord,
-				CanvasSizeInBlocksWidth: canvasSizeInBlocks.Width,
-				CanvasSizeInBlocksHeight: canvasSizeInBlocks.Height,
-				MapBlockOffsetWidth: canvasBlockOffset.X,
-				MapBlockOffsetHeight: canvasBlockOffset.Y,
-				CanvasControlOffsetWidth: canvasControlOffset.X,
-				CanvasControlOffsetHeight: canvasControlOffset.Y
-				);
-
-			return jobRecord;
+			return updatedJob;
 		}
 
 		public Tuple<long, long> DeleteJobAndChildMapSections(ObjectId jobId, JobReaderWriter jobReaderWriter)

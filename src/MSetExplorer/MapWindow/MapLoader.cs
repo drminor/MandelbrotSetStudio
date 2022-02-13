@@ -26,9 +26,9 @@ namespace MSetExplorer
 
 		private TaskCompletionSource _tcs;
 
-		public MapLoader(Job job, int jobSequenceNumber, Action<int, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(Job job, int jobNumber, Action<int, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			GenMapRequestId = jobSequenceNumber;
+			JobNumber = jobNumber;
 
 			_job = job;
 			_callback = callback;
@@ -45,7 +45,7 @@ namespace MSetExplorer
 			_tcs = null;
 		}
 
-		public int GenMapRequestId { get; }
+		public int JobNumber { get; }
 
 		public Task Start()
 		{
@@ -81,7 +81,7 @@ namespace MSetExplorer
 
 					//Debug.WriteLine($"Sending request: {blockPosition}::{BigIntegerHelper.GetDisplay(mapPosition)}");
 
-					_mapSectionRequestProcessor.AddWork(GenMapRequestId, mapSectionRequest, HandleResponse);
+					_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
 					_ = Interlocked.Increment(ref _sectionsRequested);
 				}
 			}
@@ -106,7 +106,7 @@ namespace MSetExplorer
 
 			if (!_isStopping && _tcs.Task.Status != TaskStatus.RanToCompletion)
 			{
-				_mapSectionRequestProcessor.CancelJob(GenMapRequestId);
+				_mapSectionRequestProcessor.CancelJob(JobNumber);
 				_isStopping = true;
 			}
 		}
@@ -121,7 +121,7 @@ namespace MSetExplorer
 			position = position.Diff(offset);
 			var mapSection = new MapSection(position, _blockSize, pixels1d);
 
-			_callback(GenMapRequestId, mapSection);
+			_callback(JobNumber, mapSection);
 
 			_ = Interlocked.Increment(ref _sectionCompleted);
 			if (_sectionCompleted == _job.CanvasSizeInBlocks.NumberOfCells || (_isStopping && _sectionCompleted == _sectionsRequested))

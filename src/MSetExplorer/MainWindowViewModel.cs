@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.Windows;
 
 namespace MSetExplorer
@@ -19,10 +18,12 @@ namespace MSetExplorer
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly List<GenMapRequestInfo> _requestStack;
+		private int _requestStackPointer;
+
 		private readonly Action<MapSection> _onMapSectionReady;
-
-
 		private readonly object hmsLock = new();
+
+		#region Constructor
 
 		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
@@ -31,8 +32,11 @@ namespace MSetExplorer
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 
 			_requestStack = new List<GenMapRequestInfo>();
+			_requestStackPointer = -1;
 
-			Project = new Project(ObjectId.GenerateNewId(), "uncommitted");
+			//Project = new Project(ObjectId.Empty, "uncommitted");
+
+			Project = _projectAdapter.GetOrCreateProject("Home");
 
 			_mapCoords = new RRectangle();
 			_mapCalcSettings = new MapCalcSettings();
@@ -44,6 +48,8 @@ namespace MSetExplorer
 			var mapLoadingProgress = new Progress<MapSection>(HandleMapSectionReady);
 			_onMapSectionReady = ((IProgress<MapSection>)mapLoadingProgress).Report;
 		}
+
+		#endregion
 
 		#region Public Properties
 
@@ -79,17 +85,29 @@ namespace MSetExplorer
 			set { _canvasSize = value; OnPropertyChanged(); }
 		}
 
-
 		public Project Project { get; private set; }
 		public SizeInt BlockSize { get; init; }
 
-		private GenMapRequestInfo CurrentRequest => _requestStack.Count == 0 ? null : _requestStack[^1];
-		private int? CurrentGenMapRequestId => CurrentRequest?.JobNumber;
+		private GenMapRequestInfo CurrentRequest => _requestStackPointer == -1 ? null : _requestStack[_requestStackPointer];
+		private int? CurrentJobNumber => CurrentRequest?.JobNumber;
 
 		public Job CurrentJob => CurrentRequest?.Job;
-		public bool CanGoBack => _requestStack.Count > 1;
+		public bool CanGoBack => _requestStackPointer > 0;
+		public bool CanGoForward => _requestStackPointer < _requestStack.Count - 1;
 
 		public ObservableCollection<MapSection> MapSections { get; init; }
+
+		public IEnumerable<Job> GetJobs()
+		{
+			List<Job> result = new List<Job>();
+
+			foreach(var genMapRequestInfo in _requestStack)
+			{
+				result.Add(genMapRequestInfo.Job);
+			}
+
+			return result;
+		}
 
 		#endregion
 
@@ -112,18 +130,18 @@ namespace MSetExplorer
 
 		public void GoBack()
 		{
-			// Remove the current request
-			_requestStack.RemoveAt(_requestStack.Count - 1);
+			if (CanGoBack)
+			{
+				LoadMap(_requestStackPointer - 1);
+			}
+		}
 
-			// Remove and then reload the one prior to that
-			var prevRequest = _requestStack[^1];
-			_requestStack.RemoveAt(_requestStack.Count - 1);
-
-			MapCoords = prevRequest.Job.MSetInfo.Coords;
-
-			var newArea = prevRequest.NewArea;
-			var transformType = prevRequest.TransformType;
-			LoadMap(transformType, newArea);
+		public void GoForward()
+		{
+			if (CanGoForward)
+			{
+				LoadMap(_requestStackPointer + 1);
+			}
 		}
 
 		public Point GetBlockPosition(Point posYInverted)
@@ -138,50 +156,96 @@ namespace MSetExplorer
 			return new Point(blockPos.X, blockPos.Y);
 		}
 
+		public void Save()
+		{
+			foreach (var genMapRequestInfo in _requestStack)
+			{
+				var job = genMapRequestInfo.Job;
+				if (job.Id.Equals(ObjectId.Empty))
+				{
+					var updatedJob = _projectAdapter.InsertJob(job);
+					genMapRequestInfo.UpdateJob(updatedJob);
+				}
+			}
+		}
+
 		#endregion
 
 		#region Private Methods 
 
-		private void LoadMap(TransformType transformType, SizeInt? newArea)
+		private void LoadMap(TransformType transformType, SizeInt newArea)
 		{
 			var curReq = CurrentRequest;
 			curReq?.MapLoader?.Stop();
 			MapSections.Clear();
 
 			var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
-			var jobName = GetJobName(jobNumber, transformType);
+			var jobName = GetJobName(transformType);
 			var canvasSize = CanvasSize;
 			var mSetInfo = new MSetInfo(MapCoords, MapCalcSettings, ColorMapEntries);
 
 			var job = MapWindowHelper.BuildJob(Project, jobName, canvasSize, mSetInfo, newArea, BlockSize, _projectAdapter);
-			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and a Offset of {job.CanvasControlOffset}.");
+			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.");
 
 			var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
 			var genMapRequestInfo = new GenMapRequestInfo(job, jobNumber, transformType, newArea, mapLoader);
 
 			lock (hmsLock)
 			{
-				_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
 				_requestStack.Add(genMapRequestInfo);
+				_requestStackPointer++;
+				_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
+
 				OnPropertyChanged("CanGoBack");
+				OnPropertyChanged("CanGoForward");
 			}
 		}
 
-		private string GetJobName(int jobNumber, TransformType transformType)
+		private void LoadMap(int newRequestStackPointer)
 		{
-			var opName = transformType == TransformType.None ? "Home" : transformType.ToString();
-			var result = $"{opName}:{jobNumber.ToString(CultureInfo.InvariantCulture)}";
+			var curReq = CurrentRequest;
+			curReq?.MapLoader?.Stop();
+			MapSections.Clear();
 
+			_requestStackPointer = newRequestStackPointer;
+
+			var genMapRequestInfo = CurrentRequest;
+			var job = genMapRequestInfo.Job;
+
+			var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+			var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
+
+			genMapRequestInfo.Renew(jobNumber, mapLoader);
+
+			lock (hmsLock)
+			{
+				_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
+				OnPropertyChanged("CanGoBack");
+				OnPropertyChanged("CanGoForward");
+			}
+		}
+
+		private string GetJobName(TransformType transformType)
+		{
+			//var opName = transformType == TransformType.None ? "Home" : transformType.ToString();
+			//var result = $"{opName}:{jobNumber.ToString(CultureInfo.InvariantCulture)}";
+			//return result;
+
+			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
 			return result;
 		}
 
-		private void HandleMapSection(int genMapRequestId, MapSection mapSection)
+		private void HandleMapSection(int jobNumber, MapSection mapSection)
 		{
 			lock (hmsLock)
 			{
-				if (genMapRequestId == CurrentGenMapRequestId)
+				if (jobNumber == CurrentJobNumber)
 				{
 					_onMapSectionReady(mapSection);
+				}
+				else
+				{
+					Debug.WriteLine($"HandleMapSection is ignoring the new section. CurJobNum:{CurrentJobNumber}, Handling JobNum: {jobNumber}.");
 				}
 			}
 		}

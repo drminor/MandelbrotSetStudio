@@ -35,7 +35,7 @@ namespace MSetExplorer
 		public readonly SizeInt BlockSize;
 
 		private GenMapRequestInfo CurrentRequest => _requestStack.Count == 0 ? null : _requestStack[^1];
-		private int? CurrentGenMapRequestId => CurrentRequest?.JobNumber;
+		private int? CurrentJobNumber => CurrentRequest?.JobNumber;
 
 		public Job CurrentJob => CurrentRequest?.Job;
 		public bool CanGoBack => _requestStack.Count > 1;
@@ -45,7 +45,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, TransformType transformType, SizeInt? newArea)
+		public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, TransformType transformType, SizeInt newArea)
 		{
 			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, newArea, BlockSize, _projectAdapter);
 			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");

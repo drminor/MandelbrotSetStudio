@@ -1,6 +1,5 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
-using System.Collections.Generic;
 
 namespace ProjectRepo.Entities
 {
@@ -8,7 +7,7 @@ namespace ProjectRepo.Entities
 		RRectangleRecord CoordsRecord,
 		MapCalcSettings MapCalcSettings,
 		ColorMapEntry[] ColorMapEntries
-		) : RecordBase()
+		)/* : RecordBase()*/
 	{ }
 
 }

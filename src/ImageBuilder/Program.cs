@@ -17,7 +17,9 @@ namespace ImageBuilder
 	{
 		//private const string BASE_PATH = @"C:\_Mbrodts";
 		private const string IMAGE_OUTPUT_FOLDER = @"C:\_Mbrodts";
+
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
+
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
 		private static readonly SizeInt _legacyBlockSize = new SizeInt(100, 100);
 		private static readonly SizeInt _blockSize = RMapConstants.BLOCK_SIZE;

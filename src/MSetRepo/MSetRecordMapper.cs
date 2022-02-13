@@ -60,6 +60,7 @@ namespace MSetRepo
 		public MSetInfo MapFrom(MSetInfoRecord target)
 		{
 			var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
+
 			var result = new MSetInfo(
 				coords: coords,
 				mapCalcSettings: target.MapCalcSettings,

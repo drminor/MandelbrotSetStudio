@@ -10,17 +10,15 @@ namespace MSetExplorer
 {
 	internal static class MapWindowHelper
 	{
-		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter/*, bool clearExistingMapSections*/)
+		public static Job BuildJob(Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, SizeInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter/*, bool clearExistingMapSections*/)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 
 			SizeInt canvasSize;
 
-			var selectedArea = newArea.HasValue ? newArea.Value : new SizeInt();
-
-			canvasSize = selectedArea.Width == 0 && selectedArea.Height == 0
+			canvasSize = newArea.Width == 0 || newArea.Height == 0
 				? RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize)
-				: RMapHelper.GetCanvasSize(selectedArea, canvasControlSize);
+				: RMapHelper.GetCanvasSize(newArea, canvasControlSize);
 
 			// Get the number of blocks
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
@@ -38,7 +36,7 @@ namespace MSetExplorer
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, jobName, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
+			var job = new Job(ObjectId.Empty, parentJob: null, project, subdivision, jobName, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 			return job;
 		}
 
