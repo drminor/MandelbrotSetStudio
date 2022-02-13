@@ -33,20 +33,21 @@ namespace MSetExplorer
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			if (DataContext != null)
+			if (DataContext is null)
 			{
-				_vm = (MainWindowViewModel)DataContext;
-				_vm.PropertyChanged += VmPropertyChanged;
-
-				_mapDisplay = mapDisplay1;
-				//_mapDisplay.DataContext = null;
-				_mapDisplay.DataContext = DataContext;
-				_mapDisplay.AreaSelected += MapDisplay_AreaSelected;
-
-				btnGoBack.IsEnabled = _vm.CanGoBack;
-
-				Debug.WriteLine("The MainWindow is now loaded");
+				throw new InvalidOperationException("The DataContext is null as the Main Window is being loaded.");
 			}
+
+			_vm = (MainWindowViewModel)DataContext;
+			_vm.PropertyChanged += VmPropertyChanged;
+
+			_mapDisplay = mapDisplay1;
+			_mapDisplay.DataContext = DataContext;
+			_mapDisplay.AreaSelected += MapDisplay_AreaSelected;
+
+			btnGoBack.IsEnabled = _vm.CanGoBack;
+
+			Debug.WriteLine("The MainWindow is now loaded");
 		}
 
 		private void MapDisplay_AreaSelected(object sender, MapWindow.AreaSelectedEventArgs e)

@@ -29,20 +29,19 @@ namespace MSetExplorer
 				? RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize)
 				: RMapHelper.GetCanvasSize(selectedArea, canvasControlSize);
 
-			var coords = mSetInfo.Coords;
-
 			// Get the number of blocks
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			//var samplePointDelta = RMapHelper.GetSamplePointDelta2(ref coords, newArea, screenSizeToMapRat, canvasSize);
+			var coords = mSetInfo.Coords;
 			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref coords, canvasSize);
 
 			// Get a subdivision record from the database.
 			var subdivision = GetSubdivision(coords, samplePointDelta, blockSize, projectAdapter, deleteExisting: clearExistingMapSections);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
 			var job = new Job(ObjectId.GenerateNewId(), parentJob: null, project, subdivision, jobName, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);

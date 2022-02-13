@@ -35,7 +35,7 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				throw new InvalidOperationException("The DataContext is null as the MapDisplay UserControl being loaded.");
+				throw new InvalidOperationException("The DataContext is null as the MapDisplay UserControl is being loaded.");
 			}
 
 			_screenSections = new Dictionary<PointInt, ScreenSection>();
@@ -53,6 +53,11 @@ namespace MSetExplorer
 		private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
 			TriggerCanvasSizeUpdate();
+		}
+
+		private void TriggerCanvasSizeUpdate()
+		{
+			CanvasSize = new SizeInt();
 		}
 
 		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -159,11 +164,6 @@ namespace MSetExplorer
 				var curSize = CanvasSize;
 				SetValue(CanvasSizeProperty, curSize);
 			}
-		}
-
-		private void TriggerCanvasSizeUpdate()
-		{
-			CanvasSize = new SizeInt();
 		}
 
 		private static void CanvasSizeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
