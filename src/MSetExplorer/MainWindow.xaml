@@ -5,10 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="MainWindow" Width="796" Height="920">
+        Title="MainWindow" Width="796" Height="1010">
     
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="80"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="80"/>
         </Grid.RowDefinitions>
@@ -16,21 +17,27 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!--<Image Grid.Column="0" Grid.Row="0" Source="WP_20131215_001.jpg"/>-->
+        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoLeftButton_Click">Left</Button>
+                <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoUpButton_Click">Up</Button>
+                <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" Margin="45,15,0,15" Click="GoRightButton_Click" >Right</Button>
+                <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoDownButton_Click" >Down</Button>
+            </StackPanel>
+        </Border>
 
-        <!--<Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Canvas Name="MainCanvas" Width="768" Height="768" Background="Transparent" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown"  />
-        </Border>-->
-
-        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}" ></local:MapDisplay>
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Canvas Name="mdContainer">
+                <Rectangle HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Name="mdConBor" Width="1" Stroke="Black" StrokeThickness="2" Fill="LightBlue" Canvas.Left="0" Canvas.Bottom="0"></Rectangle>
+                <local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}" Canvas.Left="0" Canvas.Bottom="0" ></local:MapDisplay>
+            </Canvas>
         </Border>
 
         <!--<local:MapDisplay x:Name="mapDisplay1" Coords="{Binding Path=MapCoords}" MapCalcSettings="{Binding Path=MapCalcSettings}" ColorMapEntries="{Binding Path=ColorMapEntries}" ></local:MapDisplay>-->
 
 
-        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <StackPanel Grid.Row="1" HorizontalAlignment="Center" Orientation="Horizontal">
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button HorizontalAlignment="Center" Width="100" Margin="0,15,0,15" Click="CloseButton_Click">Close</Button>
                 <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoBackButton_Click">Go Back</Button>
                 <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoForwardButton_Click">Go Forward</Button>

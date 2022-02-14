@@ -115,7 +115,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void MainCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+		private void MainCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
 			// Get position of mouse relative to the main canvas and invert the y coordinate.
 			var controlPos = e.GetPosition(relativeTo: MainCanvas);
@@ -234,5 +234,6 @@ namespace MSetExplorer
 			}
 
 		}
+
 	}
 }

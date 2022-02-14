@@ -4,6 +4,7 @@ using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace MSetExplorer
 {
@@ -26,14 +27,14 @@ namespace MSetExplorer
 		{
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
 
-			//var maxIterations = 700;
-			//var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
+			var maxIterations = 700;
+			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
 
-			//_vm.SetMapInfo(mSetInfo);
+			_vm.SetMapInfo(mSetInfo);
 
-			_vm.LoadProject();
-			btnGoBack.IsEnabled = _vm.CanGoBack;
-			btnGoForward.IsEnabled = _vm.CanGoForward;
+			//_vm.LoadProject();
+			//btnGoBack.IsEnabled = _vm.CanGoBack;
+			//btnGoForward.IsEnabled = _vm.CanGoForward;
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -96,9 +97,32 @@ namespace MSetExplorer
 			}
 		}
 
-		private void CloseButton_Click(object sender, RoutedEventArgs e)
+		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
 		{
-			Close();
+			var l = (double)mapDisplay1.GetValue(Canvas.LeftProperty) - 25;
+			mapDisplay1.SetValue(Canvas.LeftProperty, l);
+			mdConBor.SetValue(Canvas.LeftProperty, l - 2);
+		}
+
+		private void GoUpButton_Click(object sender, RoutedEventArgs e)
+		{
+			var d = (double)mapDisplay1.GetValue(Canvas.BottomProperty) + 25;
+			mapDisplay1.SetValue(Canvas.BottomProperty, d);
+			mdConBor.SetValue(Canvas.BottomProperty, d - 2);
+		}
+
+		private void GoRightButton_Click(object sender, RoutedEventArgs e)
+		{
+			var l = (double)mapDisplay1.GetValue(Canvas.LeftProperty) + 25;
+			mapDisplay1.SetValue(Canvas.LeftProperty, l);
+			mdConBor.SetValue(Canvas.LeftProperty, l - 2);
+		}
+
+		private void GoDownButton_Click(object sender, RoutedEventArgs e)
+		{
+			var d = (double)mapDisplay1.GetValue(Canvas.BottomProperty) - 25;
+			mapDisplay1.SetValue(Canvas.BottomProperty, d);
+			mdConBor.SetValue(Canvas.BottomProperty, d - 2);
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
@@ -121,5 +145,11 @@ namespace MSetExplorer
 		{
 			_vm.SaveProject();
 		}
+
+		private void CloseButton_Click(object sender, RoutedEventArgs e)
+		{
+			Close();
+		}
+
 	}
 }

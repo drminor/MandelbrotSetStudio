@@ -9,7 +9,7 @@
     <Grid>
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <!--<Canvas Name="MainCanvas" Background="Transparent" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown"  />-->
-            <Canvas Name="MainCanvas" Width="768" Height="768" Background="Transparent" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown" ClipToBounds="True" />
+            <Canvas Name="MainCanvas" Width="768" Height="768" Background="Transparent" MouseLeftButtonUp="MainCanvas_MouseLeftButtonUp" ClipToBounds="True" />
         </Border>
     </Grid>
 </UserControl>
