@@ -6,7 +6,7 @@ namespace MSS.Types.MSet
 	public class Job
 	{
 		public ObjectId Id { get; init; }
-		public Job? ParentJob { get; init; }
+		public Job? ParentJob { get; set; }
 		public Project Project { get; init; }
 		public Subdivision Subdivision { get; init; }
 		public string? Label { get; init; }

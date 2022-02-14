@@ -137,10 +137,10 @@ namespace MSetExplorer
 			foreach (var genMapRequestInfo in _navStack.GenMapRequests)
 			{
 				var job = genMapRequestInfo.Job;
-				if (job.Id.CreationTime < lastSavedTime)
+				if (job.Id.CreationTime > lastSavedTime)
 				{
 					var updatedJob = _projectAdapter.InsertJob(job);
-					genMapRequestInfo.UpdateJob(updatedJob);
+					_navStack.UpdateJob(genMapRequestInfo, updatedJob);
 				}
 			}
 		}

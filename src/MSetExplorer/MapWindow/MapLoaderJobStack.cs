@@ -50,7 +50,7 @@ namespace MSetExplorer
 		public Job CurrentJob => CurrentRequest?.Job;
 		public int? CurrentJobNumber => CurrentRequest?.JobNumber;
 
-		public bool CanGoBack => _requestStackPointer > 0;
+		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
 
 		public bool CanGoForward
 		{
@@ -83,18 +83,39 @@ namespace MSetExplorer
 				_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
 			}
 		}
+
+		public void UpdateJob(GenMapRequestInfo genMapRequestInfo, Job job)
+		{
+			var idx = _requestStack.IndexOf(genMapRequestInfo);
+			var oldJobId = _requestStack[idx].Job.Id;
+
+			genMapRequestInfo.UpdateJob(job);
+
+			foreach(var req in _requestStack)
+			{
+				if(oldJobId == req.Job?.ParentJob?.Id)
+				{
+					req.Job.ParentJob = job;
+				}
+			}
+		}
 		
 		public bool GoBack()
 		{
-			if (CanGoBack)
+			var parentJob = CurrentJob?.ParentJob;
+
+			if (!(parentJob is null))
 			{
-				Rerun(_requestStackPointer - 1);
-				return true;
+				var genMapRequestInfo = _requestStack.FirstOrDefault(x => parentJob.Id == x.Job.Id);
+				if (!(genMapRequestInfo is null))
+				{
+					var idx = _requestStack.IndexOf(genMapRequestInfo);
+					Rerun(idx);
+					return true;
+				}
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		public bool GoForward()
