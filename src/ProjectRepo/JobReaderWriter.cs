@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using ProjectRepo.Entities;
+using System;
 using System.Linq;
 
 namespace ProjectRepo
@@ -29,6 +30,16 @@ namespace ProjectRepo
 			var ids = jobs.Select(d => d.Id).ToArray();
 
 			return ids;
+		}
+
+		public DateTime GetLastSaveTime(ObjectId projectId)
+		{
+			var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
+			var jobs = Collection.Find(filter).ToList();
+
+			var result = jobs.Max(x => x.Id.CreationTime);
+
+			return result;
 		}
 
 		public ObjectId Insert(JobRecord jobRecord)

@@ -53,6 +53,19 @@ namespace MSetRepo
 
 		#region Project
 
+		public Project GetProject(ObjectId projectId)
+		{
+			Debug.WriteLine($"Retrieving Project object for ProjectId: {projectId}.");
+
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+
+			var projectRecord = projectReaderWriter.Get(projectId);
+
+			var project = _mSetRecordMapper.MapFrom(projectRecord);
+
+			return project;
+		}
+
 		public Project GetOrCreateProject(string name)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
@@ -139,6 +152,11 @@ namespace MSetRepo
 		{
 			var jobRecord = jobReaderWriter.Get(jobId);
 
+			if (jobRecord is null)
+			{
+				throw new KeyNotFoundException($"Could not find a job with jobId = {jobId}.");
+			}
+
 			Job? parentJob;
 
 			if (jobRecord.ParentJobId.HasValue)
@@ -184,6 +202,7 @@ namespace MSetRepo
 
 			var updatedJob = new Job(id, job.ParentJob, job.Project, job.Subdivision, job.Label, job.TransformType, job.NewArea, job.MSetInfo, job.CanvasSizeInBlocks, job.MapBlockOffset, job.CanvasControlOffset);
 
+			// TODO: Implement loading a Job object from a JobRecord.
 			//jobRecord = jobReaderWriter.Get(id);
 			//job = _mSetRecordMapper.MapFrom(jobRecord);
 
@@ -194,6 +213,14 @@ namespace MSetRepo
 		{
 			var deleteCount = jobReaderWriter.Delete(jobId);
 			var result = new Tuple<long, long>(deleteCount ?? 0, 0);
+			return result;
+		}
+
+		public DateTime GetProjectLastSaveTime(ObjectId projectId)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = jobReaderWriter.GetLastSaveTime(projectId);
+
 			return result;
 		}
 

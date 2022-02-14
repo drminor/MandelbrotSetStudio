@@ -76,6 +76,9 @@ namespace MSetExplorer
 				foreach(var mapSection in newItems)
 				{
 					var screenSection = GetScreenSection(mapSection);
+
+					Debug.WriteLine($"Writing Pixels for section at {mapSection.CanvasPosition}.");
+
 					screenSection.WritePixels(mapSection.Pixels1d);
 				}
 			}
@@ -93,15 +96,23 @@ namespace MSetExplorer
 		{
 			if (!_screenSections.TryGetValue(mapSection.CanvasPosition, out var screenSection))
 			{
-				screenSection = new ScreenSection(mapSection.Size);
-				var cIndex = MainCanvas.Children.Add(screenSection.Image);
-
-				MainCanvas.Children[cIndex].SetValue(Canvas.LeftProperty, (double)mapSection.CanvasPosition.X);
-				MainCanvas.Children[cIndex].SetValue(Canvas.BottomProperty, (double)mapSection.CanvasPosition.Y);
-				MainCanvas.Children[cIndex].SetValue(Panel.ZIndexProperty, 0);
+				screenSection = CreateScreenSection(mapSection.CanvasPosition, mapSection.Size);
 			}
 
 			return screenSection;
+		}
+
+		private ScreenSection CreateScreenSection(PointInt canvasPosition, SizeInt size)
+		{
+			var result = new ScreenSection(size);
+			var cIndex = MainCanvas.Children.Add(result.Image);
+
+			var element = MainCanvas.Children[cIndex];
+			element.SetValue(Canvas.LeftProperty, (double)canvasPosition.X);
+			element.SetValue(Canvas.BottomProperty, (double)canvasPosition.Y);
+			element.SetValue(Panel.ZIndexProperty, 0);
+
+			return result;
 		}
 
 		private void MainCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -186,11 +197,12 @@ namespace MSetExplorer
 		private class ScreenSection
 		{
 			public Image Image { get; init; }
-			//public Histogram Histogram { get; init; }
+			public Histogram Histogram { get; init; }
 
 			public ScreenSection(SizeInt size)
 			{
-				Image = CreateImage(size);
+				Image = CreateImage(size.Width, size.Height);
+				Histogram = null;
 			}
 
 			public void WritePixels(byte[] pixels)
@@ -207,15 +219,15 @@ namespace MSetExplorer
 				Image.Visibility = Visibility.Visible;
 			}
 
-			private Image CreateImage(SizeInt size)
+			private Image CreateImage(int w, int h)
 			{
 				var result = new Image
 				{
-					Width = size.Width,
-					Height = size.Height,
+					Width = w,
+					Height = h,
 					Stretch = Stretch.None,
 					Margin = new Thickness(0),
-					Source = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Bgra32, null)
+					Source = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null)
 				};
 
 				return result;

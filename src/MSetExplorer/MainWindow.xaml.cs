@@ -115,7 +115,7 @@ namespace MSetExplorer
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.Save();
+			_vm.SaveProject();
 		}
 	}
 }

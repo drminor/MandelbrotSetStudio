@@ -171,19 +171,19 @@ namespace MSS.Common
 		{
 			var pos = posYInverted.Diff(mapBlockOffset);
 
-			var l = Math.DivRem(pos.X, blockSize.Width, out var remainder);
-			if (remainder == 0 && l > 0)
+			var left = Math.DivRem(pos.X, blockSize.Width, out var remainder);
+			if (remainder == 0 && left > 0)
 			{
-				l--;
+				left--;
 			}
 
-			var b = Math.DivRem(pos.Y, blockSize.Height, out remainder);
-			if (remainder == 0 && b > 0)
+			var bottom = Math.DivRem(pos.Y, blockSize.Height, out remainder);
+			if (remainder == 0 && bottom > 0)
 			{
-				b--;
+				bottom--;
 			}
 
-			var botRight = new PointInt(l, b).Scale(blockSize);
+			var botRight = new PointInt(left, bottom).Scale(blockSize);
 			var center = botRight.Translate(new SizeInt(blockSize.Width / 2, blockSize.Height / 2));
 			return center;
 		}
@@ -231,12 +231,6 @@ namespace MSS.Common
 				//mapCoords = newCoords;
 
 				// Get # of whole blocks and the # of pixels left over
-				//var offSetInBlocks = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out var offSetRemainderInSamplePoints);
-				//Debug.WriteLine($"The offset in blocks is {offSetInBlocks}.");
-
-				//samplesRemaining = GetSamplesRemaining(offSetRemainderInSamplePoints, blockSize);
-				//Debug.WriteLine($"The remainder offset in sample points is {samplesRemaining}. RawOffset: {offSetRemainderInSamplePoints}.");
-
 				var offSetInBlocks = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out canvasControlOffset);
 				Debug.WriteLine($"The offset in blocks is {offSetInBlocks}. The ");
 
@@ -263,10 +257,6 @@ namespace MSS.Common
 
 		private static SizeInt GetOffsetAndRemainder(SizeInt offSetInSamplePoints, SizeInt blockSize, out SizeDbl canvasControlOffset)
 		{
-			// Get # of whole blocks and the # of pixels left over
-			//var blocksH = RoundToInterval(offSetInSamplePoints.Width, blockSize.Width, out var remainderW);
-			//var blocksV = RoundToInterval(offSetInSamplePoints.Height, blockSize.Height, out var remainderH);
-
 			var blocksH = Math.DivRem(offSetInSamplePoints.Width, blockSize.Width, out var remainderW);
 			var blocksV = Math.DivRem(offSetInSamplePoints.Height, blockSize.Height, out var remainderH);
 
@@ -289,33 +279,6 @@ namespace MSS.Common
 
 			return offSetInBlocks;
 		}
-
-		//private static int RoundToInterval(int x, int interval, out int remainder)
-		//{
-		//	if (x == 0)
-		//	{
-		//		remainder = 0;
-		//		return 0;
-		//	}
-
-		//	var result = Math.DivRem(x, interval, out remainder);
-
-		//	//if (remainder != 0)
-		//	//{
-		//	//	result++;
-		//	//}
-
-		//	if (remainder < 0)
-		//	{
-		//		result--;
-		//	}
-		//	else if (remainder > 0)
-		//	{
-		//		result++;
-		//	}
-
-		//	return  result;
-		//}
 
 		private static SizeDbl GetSamplesRemaining(SizeDbl offsetRemainder, SizeInt blockSize)
 		{

@@ -20,7 +20,7 @@ namespace MEngineClient
 
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		{
-			IMapSectionService mEngineService = GetMapSectionService();
+			var mEngineService = GetMapSectionService();
 			var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
 			return reply;
 		}

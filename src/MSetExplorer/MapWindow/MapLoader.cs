@@ -115,11 +115,21 @@ namespace MSetExplorer
 		{
 			var pixels1d = GetPixelArray(mapSectionResponse.Counts, _blockSize, _colorMap);
 
-			// Translate subdivision coordinates to canvas coordinates.
-			var position = mapSectionResponse.BlockPosition.Diff(_mapBlockOffset).Scale(_blockSize);
+			// Translate subdivision coordinates to block coordinates.
+			var blockPosition = mapSectionResponse.BlockPosition.Diff(_mapBlockOffset);
+
+			// Scale block coordinates to canvas coordinates
+			var canvasPosition = blockPosition.Scale(_blockSize);
+
+			// Shift the position to the left and upwards so that
+			//		some of the pixels in the left-most block are off-canvas
+			//		and some of the pixels in the top-most block are off-canvas.
 			var offset = new SizeInt((int)_job.CanvasControlOffset.Width, (int)_job.CanvasControlOffset.Height);
-			position = position.Diff(offset);
-			var mapSection = new MapSection(position, _blockSize, pixels1d);
+			var canvasPositionWithOffset = canvasPosition.Diff(offset);
+
+			Debug.WriteLine($"MapLoader handling response. BlkPos: {blockPosition}, Offset: {offset}, CanvasPosWithOffset: {canvasPositionWithOffset}.");
+
+			var mapSection = new MapSection(canvasPositionWithOffset, _blockSize, pixels1d);
 
 			_callback(JobNumber, mapSection);
 

@@ -47,7 +47,7 @@ namespace MSetExplorer
 
 		public void LoadMap(string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, TransformType transformType, SizeInt newArea)
 		{
-			var job = MapWindowHelper.BuildJob(Project, jobName, canvasControlSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+			var job = MapWindowHelper.BuildJob(parentJob: null, Project, jobName, canvasControlSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
 			var genMapRequestInfo = new GenMapRequestInfo(job, null, 0);
 
