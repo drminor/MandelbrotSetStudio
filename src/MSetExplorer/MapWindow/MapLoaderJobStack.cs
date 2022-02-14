@@ -76,7 +76,7 @@ namespace MSetExplorer
 			{
 				var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 				var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
-				var genMapRequestInfo = new GenMapRequestInfo(job, mapLoader, jobNumber);
+				var genMapRequestInfo = new GenMapRequestInfo(job, jobNumber, mapLoader);
 
 				_requestStack.Add(genMapRequestInfo);
 				_requestStackPointer = _requestStack.Count - 1;
@@ -89,7 +89,7 @@ namespace MSetExplorer
 			var idx = _requestStack.IndexOf(genMapRequestInfo);
 			var oldJobId = _requestStack[idx].Job.Id;
 
-			genMapRequestInfo.UpdateJob(job);
+			genMapRequestInfo.Job = job;
 
 			foreach(var req in _requestStack)
 			{
@@ -158,6 +158,18 @@ namespace MSetExplorer
 		public void StopCurrentJob()
 		{
 			CurrentRequest?.MapLoader?.Stop();
+		}
+
+		public void LoadJobStack(IEnumerable<Job> jobs)
+		{
+			foreach(var job in jobs)
+			{
+				_requestStack.Add(new GenMapRequestInfo(job));
+			}
+
+			_requestStackPointer = _requestStack.Count - 1;
+
+			Rerun(_requestStackPointer);
 		}
 
 		#endregion

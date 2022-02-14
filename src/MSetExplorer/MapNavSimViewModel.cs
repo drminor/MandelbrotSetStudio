@@ -49,7 +49,7 @@ namespace MSetExplorer
 		{
 			var job = MapWindowHelper.BuildJob(parentJob: null, Project, jobName, canvasControlSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta}.");
-			var genMapRequestInfo = new GenMapRequestInfo(job, null, 0);
+			var genMapRequestInfo = new GenMapRequestInfo(job, 0, null);
 
 			_requestStack.Add(genMapRequestInfo);
 		}

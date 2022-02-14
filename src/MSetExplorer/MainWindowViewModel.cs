@@ -147,7 +147,14 @@ namespace MSetExplorer
 
 		public void LoadProject()
 		{
-			//_projectAdapter.GetJob()
+			var jobs = _projectAdapter.GetAllJobs(Project.Id);
+			_navStack.LoadJobStack(jobs);
+
+			var curJob = _navStack.CurrentJob;
+
+			MapCalcSettings = curJob.MSetInfo.MapCalcSettings;
+			ColorMapEntries = curJob.MSetInfo.ColorMapEntries;
+			MapCoords = curJob.MSetInfo.Coords;
 		}
 
 		#endregion

@@ -200,11 +200,7 @@ namespace MSetRepo
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 			var id = jobReaderWriter.Insert(jobRecord);
 
-			var updatedJob = new Job(id, job.ParentJob, job.Project, job.Subdivision, job.Label, job.TransformType, job.NewArea, job.MSetInfo, job.CanvasSizeInBlocks, job.MapBlockOffset, job.CanvasControlOffset);
-
-			// TODO: Implement loading a Job object from a JobRecord.
-			//jobRecord = jobReaderWriter.Get(id);
-			//job = _mSetRecordMapper.MapFrom(jobRecord);
+			var updatedJob = GetJob(id);
 
 			return updatedJob;
 		}
@@ -220,6 +216,22 @@ namespace MSetRepo
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var result = jobReaderWriter.GetLastSaveTime(projectId);
+
+			return result;
+		}
+
+		public IEnumerable<Job> GetAllJobs(ObjectId projectId)
+		{
+			var result = new List<Job>();
+
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var ids = jobReaderWriter.GetJobIds(projectId);
+
+			foreach(var id in ids)
+			{
+				var job = GetJob(id);
+				result.Add(job);
+			}
 
 			return result;
 		}
