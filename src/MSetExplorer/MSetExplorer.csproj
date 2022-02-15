@@ -7,6 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="MapWindow\ScreenSection.cs" />
+    <Compile Remove="MapWindow\ScreenSectionCollection.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="MapWindow\ScreenSection.cs" />
+    <None Include="MapWindow\ScreenSectionCollection.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MapSectionProviderLib\MapSectionProviderLib.csproj" />
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
     <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />

@@ -9,33 +9,31 @@ namespace MSetExplorer
 {
 	internal class ScreenSection2 : IScreenSection
 	{
-		private readonly Image _image;
+		public ImageDrawing ImageDrawing { get; }
+		//private readonly Image _image;
 
-		public ScreenSection2(Canvas canvas, SizeInt size)
+		public ScreenSection2(PointInt position, SizeInt size)
 		{
-			_image = CreateImage(size.Width, size.Height);
-			_ = canvas.Children.Add(_image);
-			_image.SetValue(Panel.ZIndexProperty, 0);
+			var image = CreateImage(size.Width, size.Height);
+			var screenPosition = position.Scale(size);
+			ImageDrawing = new ImageDrawing(image.Source, new Rect(screenPosition.X, screenPosition.Y, size.Width, size.Height));
 		}
 
 		public void Place(PointInt position)
 		{
-			_image.SetValue(Canvas.LeftProperty, (double)position.X);
-			_image.SetValue(Canvas.BottomProperty, (double)position.Y);
+			throw new NotImplementedException();
 		}
 
 		public void WritePixels(byte[] pixels)
 		{
-			var bitmap = (WriteableBitmap)_image.Source;
+			var bitmap = (WriteableBitmap) ImageDrawing.ImageSource;
 
-			var w = (int)Math.Round(_image.Width);
-			var h = (int)Math.Round(_image.Height);
+			var w = (int)Math.Round(bitmap.Width);
+			var h = (int)Math.Round(bitmap.Height);
 
 			var rect = new Int32Rect(0, 0, w, h);
 			var stride = 4 * w;
 			bitmap.WritePixels(rect, pixels, stride, 0);
-
-			_image.Visibility = Visibility.Visible;
 		}
 
 		private Image CreateImage(int w, int h)
