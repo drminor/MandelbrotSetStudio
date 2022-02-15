@@ -127,9 +127,9 @@ namespace MSetExplorer
 			var offset = new SizeInt((int)_job.CanvasControlOffset.Width, (int)_job.CanvasControlOffset.Height);
 			var canvasPositionWithOffset = canvasPosition.Diff(offset);
 
-			Debug.WriteLine($"MapLoader handling response. BlkPos: {blockPosition}, Offset: {offset}, CanvasPosWithOffset: {canvasPositionWithOffset}.");
+			//Debug.WriteLine($"MapLoader handling response. BlkPos: {blockPosition}, Offset: {offset}, CanvasPosWithOffset: {canvasPositionWithOffset}.");
 
-			var mapSection = new MapSection(canvasPositionWithOffset, _blockSize, pixels1d);
+			var mapSection = new MapSection(blockPosition, canvasPositionWithOffset, _blockSize, pixels1d);
 
 			_callback(JobNumber, mapSection);
 

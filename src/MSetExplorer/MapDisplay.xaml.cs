@@ -1,4 +1,5 @@
 ﻿using MSetExplorer.MapWindow;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.Screen;
 using System;
@@ -27,14 +28,16 @@ namespace MSetExplorer
 		private Point _dragAnchor;
 		private Line _dragLine;
 
+		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
+
+		#region Constructor
+
 		public MapDisplay()
 		{
 			_selectedArea = null;
 			Loaded += MapDisplay_Loaded;
 			InitializeComponent();
 		}
-
-		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
 
 		private void MapDisplay_Loaded(object sender, RoutedEventArgs e)
 		{
@@ -45,19 +48,40 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_screenSections = new Dictionary<PointInt, ScreenSection>();
-
-				MainCanvas.SizeChanged += MainCanvas_SizeChanged;
+				MainCanvas.SizeChanged += Canvas_SizeChanged;
 				TriggerCanvasSizeUpdate();
 
 				_vm = (IMapJobViewModel)DataContext;
 				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
+
+				_screenSections = BuildScreenSections(CanvasSize);
+
 				_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
 
 				_dragLine = AddDragLine();
 
 				Debug.WriteLine("The MapDisplay is now loaded.");
 			}
+		}
+
+		private Dictionary<PointInt, ScreenSection> BuildScreenSections(SizeInt canvasSize)
+		{
+			var result = new Dictionary<PointInt, ScreenSection>();
+
+			// Create the screen sections to cover the canvas
+			// Include an additional block to accomodate when the CanvasControlOffset is non-zero.
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, _vm.BlockSize);
+			for (var yBlockPtr = 0; yBlockPtr < canvasSizeInBlocks.Height + 1; yBlockPtr++)
+			{
+				for (var xBlockPtr = 0; xBlockPtr < canvasSizeInBlocks.Width + 1; xBlockPtr++)
+				{
+					var position = new PointInt(xBlockPtr, yBlockPtr);
+					var screenSection = CreateScreenSection(position, _vm.BlockSize);
+					result.Add(position, screenSection);
+				}
+			}
+
+			return result;
 		}
 
 		private Line AddDragLine()
@@ -79,15 +103,9 @@ namespace MSetExplorer
 			return dragLine;
 		}
 
-		private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			TriggerCanvasSizeUpdate();
-		}
+		#endregion
 
-		private void TriggerCanvasSizeUpdate()
-		{
-			CanvasSize = new SizeInt();
-		}
+		#region Map Sections
 
 		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		{
@@ -101,9 +119,12 @@ namespace MSetExplorer
 
 				foreach(var mapSection in newItems)
 				{
+					//Debug.WriteLine($"Writing Pixels for section at {mapSection.CanvasPosition}.");
 					var screenSection = GetScreenSection(mapSection);
+					var element = MainCanvas.Children[screenSection.ChildIndex];
 
-					Debug.WriteLine($"Writing Pixels for section at {mapSection.CanvasPosition}.");
+					element.SetValue(Canvas.LeftProperty, (double)mapSection.CanvasPosition.X);
+					element.SetValue(Canvas.BottomProperty, (double)mapSection.CanvasPosition.Y);
 
 					screenSection.WritePixels(mapSection.Pixels1d);
 				}
@@ -120,9 +141,10 @@ namespace MSetExplorer
 
 		private ScreenSection GetScreenSection(MapSection mapSection)
 		{
-			if (!_screenSections.TryGetValue(mapSection.CanvasPosition, out var screenSection))
+			if (!_screenSections.TryGetValue(mapSection.BlockPosition, out var screenSection))
 			{
 				screenSection = CreateScreenSection(mapSection.CanvasPosition, mapSection.Size);
+				_screenSections.Add(mapSection.BlockPosition, screenSection);
 			}
 
 			return screenSection;
@@ -132,6 +154,7 @@ namespace MSetExplorer
 		{
 			var result = new ScreenSection(size);
 			var cIndex = MainCanvas.Children.Add(result.Image);
+			result.ChildIndex = cIndex;
 
 			var element = MainCanvas.Children[cIndex];
 			element.SetValue(Canvas.LeftProperty, (double)canvasPosition.X);
@@ -140,6 +163,10 @@ namespace MSetExplorer
 
 			return result;
 		}
+
+		#endregion
+
+		#region Drag and Selection Logic
 
 		private void MseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
@@ -216,18 +243,22 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"Will start job here with position: {blockPosition}.");
 
-					//_selectedArea.IsActive = false;
-					//var rect = _selectedArea.Area;
+					var rect = _selectedArea.Area;
+					_selectedArea.Deactivate();
 
-					//var area = new RectangleInt(
-					//	new PointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y)),
-					//	new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
-					//);
+					var area = new RectangleInt(
+						new PointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y)),
+						new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
+					);
 
-					//AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, area));
+					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, area));
 				}
 			}
 		}
+
+		#endregion
+
+		#region Canvas Handlers
 
 		private void Canvas_MouseLeave(object sender, MouseEventArgs e)
 		{
@@ -244,6 +275,18 @@ namespace MSetExplorer
 				_dragLine.Visibility = Visibility.Visible;
 			}
 		}
+
+		private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			TriggerCanvasSizeUpdate();
+		}
+
+		private void TriggerCanvasSizeUpdate()
+		{
+			CanvasSize = new SizeInt();
+		}
+
+		#endregion
 
 		#region Dependency Properties
 
@@ -290,8 +333,12 @@ namespace MSetExplorer
 
 		private class ScreenSection
 		{
+			// TODO: Consider keeping a reference to the MainCanvas in the ScreenSection
+			// and implementing methods on the ScreenSection class to position it on the canvas.
+
 			public Image Image { get; init; }
 			public Histogram Histogram { get; init; }
+			public int ChildIndex { get; set; }
 
 			public ScreenSection(SizeInt size)
 			{

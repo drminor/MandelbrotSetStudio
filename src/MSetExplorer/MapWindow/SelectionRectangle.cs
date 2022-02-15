@@ -77,7 +77,8 @@ namespace MSetExplorer.MapWindow
 		public bool IsActive
 		{
 			get => _isActive;
-			set
+
+			private set
 			{
 				if (_isActive != value)
 				{
@@ -116,6 +117,11 @@ namespace MSetExplorer.MapWindow
 			{
 				Debug.WriteLine("Activate did not move the focus to the SelectedRectangle, free form.");
 			}
+		}
+
+		public void Deactivate()
+		{
+			IsActive = false;
 		}
 
 		public bool Contains(Point position)
@@ -340,7 +346,7 @@ namespace MSetExplorer.MapWindow
 
 		private double RoundOff(double number, int interval)
 		{
-			int remainder = (int) Math.IEEERemainder(number, interval);
+			var remainder = (int) Math.IEEERemainder(number, interval);
 			number += (remainder < interval / 2) ? -remainder : (interval - remainder);
 			return number;
 		}
@@ -351,8 +357,8 @@ namespace MSetExplorer.MapWindow
 			var canvasPos = GetCanvasPosition();
 			var pos = new Point(position.X + canvasPos.X, position.Y + canvasPos.Y);
 
-			HwndSource source = (HwndSource)PresentationSource.FromVisual(_canvas);
-			IntPtr hWnd = source.Handle; 
+			var source = (HwndSource)PresentationSource.FromVisual(_canvas);
+			var hWnd = source.Handle; 
 			var _ = Win32.PositionCursor(hWnd, pos);
 
 			//Debug.WriteLine($"Activating to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
@@ -374,7 +380,7 @@ namespace MSetExplorer.MapWindow
 		private Point GetCanvasPosition()
 		{
 			var generalTransform = _canvas.TransformToAncestor(Application.Current.MainWindow);
-			Point relativePoint = generalTransform.Transform(new Point(0, 0));
+			var relativePoint = generalTransform.Transform(new Point(0, 0));
 
 			return relativePoint;
 		}
