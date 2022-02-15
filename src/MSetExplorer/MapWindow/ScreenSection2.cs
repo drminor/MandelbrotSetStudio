@@ -10,13 +10,12 @@ namespace MSetExplorer
 	internal class ScreenSection2 : IScreenSection
 	{
 		public ImageDrawing ImageDrawing { get; }
-		//private readonly Image _image;
 
-		public ScreenSection2(PointInt position, SizeInt size)
+		public ScreenSection2(RectangleInt rectangle)
 		{
-			var image = CreateImage(size.Width, size.Height);
-			var screenPosition = position.Scale(size);
-			ImageDrawing = new ImageDrawing(image.Source, new Rect(screenPosition.X, screenPosition.Y, size.Width, size.Height));
+			var image = CreateImage(rectangle.Width, rectangle.Height);
+			var rect = new Rect(new Point(rectangle.X1, rectangle.Y1), new Size(rectangle.Width, rectangle.Height));
+			ImageDrawing = new ImageDrawing(image.Source, rect);
 		}
 
 		public void Place(PointInt position)

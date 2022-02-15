@@ -80,6 +80,12 @@ namespace MSetExplorer
 
 		#endregion
 
+		public PointDbl Position
+		{
+			get => _screenSections.Position;
+			set => _screenSections.Position = value;
+		}
+
 		#region Map Sections
 
 		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

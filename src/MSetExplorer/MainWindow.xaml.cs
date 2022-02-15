@@ -99,30 +99,22 @@ namespace MSetExplorer
 
 		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
 		{
-			var l = (double)mapDisplay1.GetValue(Canvas.LeftProperty) - 25;
-			mapDisplay1.SetValue(Canvas.LeftProperty, l);
-			mdConBor.SetValue(Canvas.LeftProperty, l - 2);
+			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X - 25d, mapDisplay1.Position.Y);
 		}
 
 		private void GoUpButton_Click(object sender, RoutedEventArgs e)
 		{
-			var d = (double)mapDisplay1.GetValue(Canvas.BottomProperty) + 25;
-			mapDisplay1.SetValue(Canvas.BottomProperty, d);
-			mdConBor.SetValue(Canvas.BottomProperty, d - 2);
+			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X, mapDisplay1.Position.Y - 25d);
 		}
 
 		private void GoRightButton_Click(object sender, RoutedEventArgs e)
 		{
-			var l = (double)mapDisplay1.GetValue(Canvas.LeftProperty) + 25;
-			mapDisplay1.SetValue(Canvas.LeftProperty, l);
-			mdConBor.SetValue(Canvas.LeftProperty, l - 2);
+			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X + 25d, mapDisplay1.Position.Y);
 		}
 
 		private void GoDownButton_Click(object sender, RoutedEventArgs e)
 		{
-			var d = (double)mapDisplay1.GetValue(Canvas.BottomProperty) - 25;
-			mapDisplay1.SetValue(Canvas.BottomProperty, d);
-			mdConBor.SetValue(Canvas.BottomProperty, d - 2);
+			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X, mapDisplay1.Position.Y + 25d);
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)

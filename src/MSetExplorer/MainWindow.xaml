@@ -26,15 +26,16 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!--<Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Canvas Name="mdContainer">
                 <Rectangle HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Name="mdConBor" Width="1" Stroke="Black" StrokeThickness="2" Fill="LightBlue" Canvas.Left="0" Canvas.Bottom="0"></Rectangle>
                 <local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}" Canvas.Left="0" Canvas.Bottom="0" ></local:MapDisplay>
             </Canvas>
+        </Border>-->
+
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}" Canvas.Left="0" Canvas.Bottom="0" ></local:MapDisplay>
         </Border>
-
-        <!--<local:MapDisplay x:Name="mapDisplay1" Coords="{Binding Path=MapCoords}" MapCalcSettings="{Binding Path=MapCalcSettings}" ColorMapEntries="{Binding Path=ColorMapEntries}" ></local:MapDisplay>-->
-
 
         <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
