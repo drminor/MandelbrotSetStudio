@@ -9,13 +9,13 @@ using System.Windows.Controls;
 
 namespace MSetExplorer
 {
-	internal class ScreenSectionCollection : IScreenSectionCollection
+	internal class ScreenSectionCollection2 : IScreenSectionCollection
 	{
 		private readonly Canvas _canvas;
 		private readonly SizeInt _blockSize;
 		private readonly IDictionary<PointInt, IScreenSection> _screenSections;
 
-		public ScreenSectionCollection(Canvas canvas, SizeInt blockSize)
+		public ScreenSectionCollection2(Canvas canvas, SizeInt blockSize)
 		{
 			_canvas = canvas;
 			_blockSize = blockSize;
@@ -37,7 +37,7 @@ namespace MSetExplorer
 				for (var xBlockPtr = 0; xBlockPtr < canvasSizeInBlocks.Width + 1; xBlockPtr++)
 				{
 					var position = new PointInt(xBlockPtr, yBlockPtr);
-					var screenSection = new ScreenSection(_canvas, _blockSize);
+					var screenSection = new ScreenSection2(_canvas, _blockSize);
 					result.Add(position, screenSection);
 				}
 			}
@@ -64,7 +64,7 @@ namespace MSetExplorer
 		{
 			if (!_screenSections.TryGetValue(blockPosition, out var screenSection))
 			{
-				screenSection = new ScreenSection(_canvas, blockSize);
+				screenSection = new ScreenSection2(_canvas, blockSize);
 				_screenSections.Add(blockPosition, screenSection);
 			}
 

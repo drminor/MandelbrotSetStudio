@@ -20,7 +20,7 @@ namespace MSetExplorer
 	{
 		private IMapJobViewModel _vm;
 		private SelectionRectangle _selectedArea;
-		private ScreenSectionCollection _screenSections;
+		private IScreenSectionCollection _screenSections;
 
 		private bool _inDrag;
 		private Point _dragAnchor;
@@ -51,7 +51,7 @@ namespace MSetExplorer
 
 				_vm = (IMapJobViewModel)DataContext;
 				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
-				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
+				_screenSections = new ScreenSectionCollection2(MainCanvas, _vm.BlockSize);
 				_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
 				_dragLine = AddDragLine();
 

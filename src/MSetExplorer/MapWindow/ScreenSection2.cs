@@ -7,11 +7,11 @@ using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
-	internal class ScreenSection : IScreenSection
+	internal class ScreenSection2 : IScreenSection
 	{
 		private readonly Image _image;
 
-		public ScreenSection(Canvas canvas, SizeInt size)
+		public ScreenSection2(Canvas canvas, SizeInt size)
 		{
 			_image = CreateImage(size.Width, size.Height);
 			_ = canvas.Children.Add(_image);
