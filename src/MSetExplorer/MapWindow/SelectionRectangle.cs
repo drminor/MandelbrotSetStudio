@@ -14,9 +14,7 @@ namespace MSetExplorer.MapWindow
 {
 	internal class SelectionRectangle
 	{
-
 		private const int PITCH = 16;
-
 
 		private readonly Canvas _canvas;
 		private readonly SizeInt _defaultSize;
@@ -42,10 +40,10 @@ namespace MSetExplorer.MapWindow
 				Focusable = true
 			};
 
-			_isActive = false;
-
 			_ = _canvas.Children.Add(_selectedArea);
 			_selectedArea.SetValue(Panel.ZIndexProperty, 10);
+
+			_isActive = false;
 
 			//Move(new Point(0, 0));
 
