@@ -1,5 +1,4 @@
 ﻿using MSetExplorer.MapWindow;
-using MSS.Common;
 using MSS.Types;
 using MSS.Types.Screen;
 using System;
@@ -10,7 +9,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace MSetExplorer
@@ -22,7 +20,7 @@ namespace MSetExplorer
 	{
 		private IMapJobViewModel _vm;
 		private SelectionRectangle _selectedArea;
-		private IDictionary<PointInt, ScreenSection> _screenSections;
+		private ScreenSectionCollection _screenSections;
 
 		private bool _inDrag;
 		private Point _dragAnchor;
@@ -53,35 +51,12 @@ namespace MSetExplorer
 
 				_vm = (IMapJobViewModel)DataContext;
 				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
-
-				_screenSections = BuildScreenSections(CanvasSize);
-
+				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
 				_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
-
 				_dragLine = AddDragLine();
 
 				Debug.WriteLine("The MapDisplay is now loaded.");
 			}
-		}
-
-		private Dictionary<PointInt, ScreenSection> BuildScreenSections(SizeInt canvasSize)
-		{
-			var result = new Dictionary<PointInt, ScreenSection>();
-
-			// Create the screen sections to cover the canvas
-			// Include an additional block to accomodate when the CanvasControlOffset is non-zero.
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, _vm.BlockSize);
-			for (var yBlockPtr = 0; yBlockPtr < canvasSizeInBlocks.Height + 1; yBlockPtr++)
-			{
-				for (var xBlockPtr = 0; xBlockPtr < canvasSizeInBlocks.Width + 1; xBlockPtr++)
-				{
-					var position = new PointInt(xBlockPtr, yBlockPtr);
-					var screenSection = new ScreenSection(MainCanvas, _vm.BlockSize);
-					result.Add(position, screenSection);
-				}
-			}
-
-			return result;
 		}
 
 		private Line AddDragLine()
@@ -111,7 +86,7 @@ namespace MSetExplorer
 		{
 			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
 			{
-				HideScreenSections(MainCanvas);
+				_screenSections.HideScreenSections();
 			}
 			else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
 			{
@@ -120,30 +95,9 @@ namespace MSetExplorer
 				foreach(var mapSection in newItems)
 				{
 					//Debug.WriteLine($"Writing Pixels for section at {mapSection.CanvasPosition}.");
-					var screenSection = GetScreenSection(MainCanvas, mapSection.BlockPosition, mapSection.Size);
-					screenSection.Place(mapSection.CanvasPosition);
-					screenSection.WritePixels(mapSection.Pixels1d);
+					_screenSections.Draw(mapSection);
 				}
 			}
-		}
-
-		private void HideScreenSections(Canvas canvas)
-		{
-			foreach (UIElement c in canvas.Children.OfType<Image>())
-			{
-				c.Visibility = Visibility.Hidden;
-			}
-		}
-
-		private ScreenSection GetScreenSection(Canvas canvas, PointInt blockPosition, SizeInt blockSize)
-		{
-			if (!_screenSections.TryGetValue(blockPosition, out var screenSection))
-			{
-				screenSection = new ScreenSection(canvas, blockSize);
-				_screenSections.Add(blockPosition, screenSection);
-			}
-
-			return screenSection;
 		}
 
 		#endregion
@@ -312,54 +266,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		private class ScreenSection
-		{
-			public Image Image { get; init; }
-			public Canvas Canvas { get; init; }
-			public int ChildIndex { get; init; }
-
-			public ScreenSection(Canvas canvas, SizeInt size)
-			{
-				Image = CreateImage(size.Width, size.Height);
-				ChildIndex = canvas.Children.Add(Image);
-				Image.SetValue(Panel.ZIndexProperty, 0);
-			}
-
-			public void Place(PointInt position)
-			{
-				Image.SetValue(Canvas.LeftProperty, (double)position.X);
-				Image.SetValue(Canvas.BottomProperty, (double)position.Y);
-			}
-
-			public void WritePixels(byte[] pixels)
-			{
-				var bitmap = (WriteableBitmap)Image.Source;
-
-				var w = (int)Math.Round(Image.Width);
-				var h = (int)Math.Round(Image.Height);
-
-				var rect = new Int32Rect(0, 0, w, h);
-				var stride = 4 * w;
-				bitmap.WritePixels(rect, pixels, stride, 0);
-
-				Image.Visibility = Visibility.Visible;
-			}
-
-			private Image CreateImage(int w, int h)
-			{
-				var result = new Image
-				{
-					Width = w,
-					Height = h,
-					Stretch = Stretch.None,
-					Margin = new Thickness(0),
-					Source = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null)
-				};
-
-				return result;
-			}
-
-		}
 	}
 }
