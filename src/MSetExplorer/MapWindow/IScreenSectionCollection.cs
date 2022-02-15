@@ -6,6 +6,7 @@ namespace MSetExplorer
 	internal interface IScreenSectionCollection
 	{
 		PointDbl Position { get; set; }
+
 		void Draw(MapSection mapSection);
 		void HideScreenSections();
 	}

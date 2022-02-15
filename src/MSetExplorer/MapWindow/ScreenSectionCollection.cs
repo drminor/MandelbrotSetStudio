@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
@@ -13,7 +15,9 @@ namespace MSetExplorer
 	{
 		private readonly Canvas _canvas;
 		private readonly SizeInt _blockSize;
-		private readonly IDictionary<PointInt, IScreenSection> _screenSections;
+		private readonly IDictionary<PointInt, ScreenSection> _screenSections;
+
+		#region Constructor
 
 		public ScreenSectionCollection(Canvas canvas, SizeInt blockSize)
 		{
@@ -22,9 +26,9 @@ namespace MSetExplorer
 			_screenSections = BuildScreenSections();
 		}
 
-		private Dictionary<PointInt, IScreenSection> BuildScreenSections()
+		private Dictionary<PointInt, ScreenSection> BuildScreenSections()
 		{
-			var result = new Dictionary<PointInt, IScreenSection>();
+			var result = new Dictionary<PointInt, ScreenSection>();
 
 			// Create the screen sections to cover the canvas
 			// Include an additional block to accommodate when the CanvasControlOffset is non-zero.
@@ -45,6 +49,14 @@ namespace MSetExplorer
 			return result;
 		}
 
+		#endregion
+
+		public PointDbl Position
+		{ 
+			get => throw new NotImplementedException(); 
+			set => throw new NotImplementedException();
+		}
+
 		public void HideScreenSections()
 		{
 			foreach (UIElement c in _canvas.Children.OfType<Image>())
@@ -60,7 +72,7 @@ namespace MSetExplorer
 			screenSection.WritePixels(mapSection.Pixels1d);
 		}
 
-		private IScreenSection GetScreenSection(PointInt blockPosition, SizeInt blockSize)
+		private ScreenSection GetScreenSection(PointInt blockPosition, SizeInt blockSize)
 		{
 			if (!_screenSections.TryGetValue(blockPosition, out var screenSection))
 			{
@@ -70,6 +82,54 @@ namespace MSetExplorer
 
 			return screenSection;
 		}
+
+		private class ScreenSection
+		{
+			private readonly Image _image;
+
+			public ScreenSection(Canvas canvas, SizeInt size)
+			{
+				_image = CreateImage(size.Width, size.Height);
+				_ = canvas.Children.Add(_image);
+				_image.SetValue(Panel.ZIndexProperty, 0);
+			}
+
+			public void Place(PointInt position)
+			{
+				_image.SetValue(Canvas.LeftProperty, (double)position.X);
+				_image.SetValue(Canvas.BottomProperty, (double)position.Y);
+			}
+
+			public void WritePixels(byte[] pixels)
+			{
+				var bitmap = (WriteableBitmap)_image.Source;
+
+				var w = (int)Math.Round(_image.Width);
+				var h = (int)Math.Round(_image.Height);
+
+				var rect = new Int32Rect(0, 0, w, h);
+				var stride = 4 * w;
+				bitmap.WritePixels(rect, pixels, stride, 0);
+
+				_image.Visibility = Visibility.Visible;
+			}
+
+			private Image CreateImage(int w, int h)
+			{
+				var result = new Image
+				{
+					Width = w,
+					Height = h,
+					Stretch = Stretch.None,
+					Margin = new Thickness(0),
+					Source = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null)
+				};
+
+				return result;
+			}
+
+		}
+
 
 	}
 }

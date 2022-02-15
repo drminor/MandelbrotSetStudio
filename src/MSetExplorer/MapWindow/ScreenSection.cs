@@ -7,7 +7,7 @@ using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
-	internal class ScreenSection : IScreenSection
+	internal class ScreenSection
 	{
 		private readonly Image _image;
 
