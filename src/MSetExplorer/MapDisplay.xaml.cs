@@ -76,7 +76,7 @@ namespace MSetExplorer
 				for (var xBlockPtr = 0; xBlockPtr < canvasSizeInBlocks.Width + 1; xBlockPtr++)
 				{
 					var position = new PointInt(xBlockPtr, yBlockPtr);
-					var screenSection = CreateScreenSection(position, _vm.BlockSize);
+					var screenSection = new ScreenSection(MainCanvas, _vm.BlockSize);
 					result.Add(position, screenSection);
 				}
 			}
@@ -111,7 +111,7 @@ namespace MSetExplorer
 		{
 			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
 			{
-				HideScreenSections();
+				HideScreenSections(MainCanvas);
 			}
 			else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
 			{
@@ -120,48 +120,30 @@ namespace MSetExplorer
 				foreach(var mapSection in newItems)
 				{
 					//Debug.WriteLine($"Writing Pixels for section at {mapSection.CanvasPosition}.");
-					var screenSection = GetScreenSection(mapSection);
-					var element = MainCanvas.Children[screenSection.ChildIndex];
-
-					element.SetValue(Canvas.LeftProperty, (double)mapSection.CanvasPosition.X);
-					element.SetValue(Canvas.BottomProperty, (double)mapSection.CanvasPosition.Y);
-
+					var screenSection = GetScreenSection(MainCanvas, mapSection.BlockPosition, mapSection.Size);
+					screenSection.Place(mapSection.CanvasPosition);
 					screenSection.WritePixels(mapSection.Pixels1d);
 				}
 			}
 		}
 
-		private void HideScreenSections()
+		private void HideScreenSections(Canvas canvas)
 		{
-			foreach (UIElement c in MainCanvas.Children.OfType<Image>())
+			foreach (UIElement c in canvas.Children.OfType<Image>())
 			{
 				c.Visibility = Visibility.Hidden;
 			}
 		}
 
-		private ScreenSection GetScreenSection(MapSection mapSection)
+		private ScreenSection GetScreenSection(Canvas canvas, PointInt blockPosition, SizeInt blockSize)
 		{
-			if (!_screenSections.TryGetValue(mapSection.BlockPosition, out var screenSection))
+			if (!_screenSections.TryGetValue(blockPosition, out var screenSection))
 			{
-				screenSection = CreateScreenSection(mapSection.CanvasPosition, mapSection.Size);
-				_screenSections.Add(mapSection.BlockPosition, screenSection);
+				screenSection = new ScreenSection(canvas, blockSize);
+				_screenSections.Add(blockPosition, screenSection);
 			}
 
 			return screenSection;
-		}
-
-		private ScreenSection CreateScreenSection(PointInt canvasPosition, SizeInt size)
-		{
-			var result = new ScreenSection(size);
-			var cIndex = MainCanvas.Children.Add(result.Image);
-			result.ChildIndex = cIndex;
-
-			var element = MainCanvas.Children[cIndex];
-			element.SetValue(Canvas.LeftProperty, (double)canvasPosition.X);
-			element.SetValue(Canvas.BottomProperty, (double)canvasPosition.Y);
-			element.SetValue(Panel.ZIndexProperty, 0);
-
-			return result;
 		}
 
 		#endregion
@@ -333,17 +315,21 @@ namespace MSetExplorer
 
 		private class ScreenSection
 		{
-			// TODO: Consider keeping a reference to the MainCanvas in the ScreenSection
-			// and implementing methods on the ScreenSection class to position it on the canvas.
-
 			public Image Image { get; init; }
-			public Histogram Histogram { get; init; }
-			public int ChildIndex { get; set; }
+			public Canvas Canvas { get; init; }
+			public int ChildIndex { get; init; }
 
-			public ScreenSection(SizeInt size)
+			public ScreenSection(Canvas canvas, SizeInt size)
 			{
 				Image = CreateImage(size.Width, size.Height);
-				Histogram = null;
+				ChildIndex = canvas.Children.Add(Image);
+				Image.SetValue(Panel.ZIndexProperty, 0);
+			}
+
+			public void Place(PointInt position)
+			{
+				Image.SetValue(Canvas.LeftProperty, (double)position.X);
+				Image.SetValue(Canvas.BottomProperty, (double)position.Y);
 			}
 
 			public void WritePixels(byte[] pixels)
