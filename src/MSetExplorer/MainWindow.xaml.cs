@@ -67,7 +67,7 @@ namespace MSetExplorer
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
 			// Adjust the selected area's origin to account for the portion of the start block that is off screen.
-			var canvasOffset = new SizeInt((int)Math.Round(canvasControlOffset.Width), (int)Math.Round(canvasControlOffset.Height));
+			var canvasOffset = new SizeInt(canvasControlOffset);
 			var adjArea = e.Area.Translate(canvasOffset);
 
 			var coords = RMapHelper.GetMapCoords(adjArea, position, samplePointDelta);

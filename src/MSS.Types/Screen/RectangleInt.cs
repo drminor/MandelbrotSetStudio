@@ -6,13 +6,11 @@ namespace MSS.Types
 {
 	public struct RectangleInt : IEquatable<RectangleInt>, IEqualityComparer<RectangleInt>
 	{
-		public RectangleInt(PointInt point, SizeInt size)
-		{
-			X1 = point.X;
-			X2 = point.X + size.Width;
-			Y1 = point.Y;
-			Y2 = point.Y + size.Height;
-		}
+		public RectangleInt(PointInt point, SizeInt size) : this(point.X, point.X + size.Width, point.Y, point.Y + size.Height)
+		{ }
+
+		public RectangleInt(RectangleDbl rectDbl) : this((int)Math.Round(rectDbl.X1), (int)Math.Round(rectDbl.X2), (int)Math.Round(rectDbl.Y1), (int)Math.Round(rectDbl.Y2))
+		{ }
 
 		public RectangleInt(int x1, int x2, int y1, int y2)
 		{
@@ -84,6 +82,11 @@ namespace MSS.Types
 		public int GetHashCode([DisallowNull] RectangleInt obj)
 		{
 			return HashCode.Combine(obj.X1, obj.X2, obj.Y1, obj.Y2);
+		}
+
+		public override string? ToString()
+		{
+			return $"pos:{Position}, size:{Size}";
 		}
 
 		public static bool operator ==(RectangleInt left, RectangleInt right)

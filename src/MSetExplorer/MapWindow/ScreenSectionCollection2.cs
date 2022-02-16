@@ -11,7 +11,8 @@ namespace MSetExplorer
 {
 	internal class ScreenSectionCollection2 : IScreenSectionCollection
 	{
-		private readonly Canvas _canvas;
+		//private readonly Canvas _canvas;
+
 		private readonly ScreenSection[,] _screenSections;
 		private readonly DrawingGroup _drawingGroup;
 		private readonly Image _image;
@@ -20,25 +21,34 @@ namespace MSetExplorer
 
 		public ScreenSectionCollection2(Canvas canvas, SizeInt blockSize)
 		{
-			_canvas = canvas;
-			_screenSections = BuildScreenSections(blockSize);
+			var canvasSize = new Size(canvas.Width, canvas.Height);
+			var sizeInBlocks = GetSizeInBlocks(canvasSize, blockSize);
+			_screenSections = BuildScreenSections(sizeInBlocks, blockSize);
+
 			_drawingGroup = new DrawingGroup();
+
+			//var drawingImage = new DrawingImage(_drawingGroup);
+			//_image = new Image { Source = drawingImage };
 			_image = new Image { Source = new DrawingImage(_drawingGroup) };
 			_ = canvas.Children.Add(_image);
+
+			//_drawingGroup.Transform = new TranslateTransform();
+
 			Position = new PointDbl();
 		}
 
-		private ScreenSection[,] BuildScreenSections(SizeInt blockSize)
+		private ScreenSection[,] BuildScreenSections(SizeInt sizeInBlocks, SizeInt blockSize)
 		{
 			// Create the screen sections to cover the canvas
-			var sizeInBlocks = GetSizeInBlocks(blockSize);
 			var result = new ScreenSection[sizeInBlocks.Height, sizeInBlocks.Width];
+
+			var maxYPtr = sizeInBlocks.Height - 1;
 
 			for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
 			{
 				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
 				{
-					var position = new PointInt(xBlockPtr, yBlockPtr);
+					var position = new PointInt(xBlockPtr, maxYPtr - yBlockPtr);
 					var screenSection = new ScreenSection(new RectangleInt(position.Scale(blockSize), blockSize));
 					result[yBlockPtr,xBlockPtr] = screenSection;
 				}
@@ -47,11 +57,11 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private SizeInt GetSizeInBlocks(SizeInt blockSize)
+		private SizeInt GetSizeInBlocks(Size canvasSize, SizeInt blockSize)
 		{
 			// Include an additional block to accommodate when the CanvasControlOffset is non-zero.
-			var canvasSize = new SizeInt((int)Math.Round(_canvas.Width), (int)Math.Round(_canvas.Height));
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
+			var canvasSizeInt = new SizeInt(canvasSize.Width, canvasSize.Height);
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSizeInt, blockSize);
 			var result = new SizeInt(canvasSizeInBlocks.Width + 1, canvasSizeInBlocks.Height + 1);
 
 			return result;
@@ -67,9 +77,14 @@ namespace MSetExplorer
 			{
 				_image.SetValue(Canvas.LeftProperty, value.X);
 				_image.SetValue(Canvas.BottomProperty, value.Y);
-
 			}
 		}
+
+		//public PointDbl Position
+		//{
+		//	get => new(_drawingGroup.Transform.Value.OffsetX, _drawingGroup.Transform.Value.OffsetY);
+		//	set => _drawingGroup.Transform = new TranslateTransform(value.X, value.Y);
+		//}
 
 		public void HideScreenSections()
 		{
@@ -78,8 +93,10 @@ namespace MSetExplorer
 
 		public void Draw(MapSection mapSection)
 		{
-			var maxYIndex = _screenSections.GetLength(1) - 1;
-			var screenSection = _screenSections[maxYIndex - mapSection.BlockPosition.Y, mapSection.BlockPosition.X];
+			//var maxYIndex = _screenSections.GetLength(1) - 1;
+			//var screenSection = _screenSections[maxYIndex - mapSection.BlockPosition.Y, mapSection.BlockPosition.X];
+
+			var screenSection = _screenSections[mapSection.BlockPosition.Y, mapSection.BlockPosition.X];
 			screenSection.WritePixels(mapSection.Pixels1d);
 			_drawingGroup.Children.Add(screenSection.ImageDrawing);
 		}

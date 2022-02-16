@@ -33,7 +33,8 @@ namespace MSetExplorer
 			// Create the screen sections to cover the canvas
 			// Include an additional block to accommodate when the CanvasControlOffset is non-zero.
 
-			var canvasSize = new SizeInt((int)Math.Round(_canvas.Width), (int)Math.Round(_canvas.Height));
+			//var canvasSize = new SizeInt((int)Math.Round(_canvas.Width), (int)Math.Round(_canvas.Height));
+			var canvasSize = new SizeInt(_canvas.Width, _canvas.Height);
 
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, _blockSize);
 			for (var yBlockPtr = 0; yBlockPtr < canvasSizeInBlocks.Height + 1; yBlockPtr++)

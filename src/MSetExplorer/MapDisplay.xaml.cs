@@ -185,14 +185,16 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"Will start job here with position: {blockPosition}.");
 
-					var rect = _selectedArea.Area;
+					//var rect = _selectedArea.Area;
+					//_selectedArea.Deactivate();
+
+					//var area = new RectangleInt(
+					//	new PointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y)),
+					//	new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
+					//);
+
+					var area = new RectangleInt(_selectedArea.Area);
 					_selectedArea.Deactivate();
-
-					var area = new RectangleInt(
-						new PointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y)),
-						new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
-					);
-
 					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, area));
 				}
 			}
@@ -244,10 +246,7 @@ namespace MSetExplorer
 		{
 			get
 			{
-				var result = new SizeInt(
-					(int)Math.Round(MainCanvas.ActualWidth),
-					(int)Math.Round(MainCanvas.ActualHeight));
-
+				var result = new SizeInt(MainCanvas.ActualWidth, MainCanvas.ActualHeight);
 				return result;
 			}
 			

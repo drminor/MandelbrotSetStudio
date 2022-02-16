@@ -63,13 +63,13 @@ namespace MSetExplorer.MapWindow
 
 		#region Public Properties
 
-		public Rect Area
+		public RectangleDbl Area
 		{
 			get
 			{
 				var p = GetPosition();
 				var s = GetSize();
-				var result = new Rect(p, s);
+				var result = new RectangleDbl(new PointDbl(p.X, p.Y), new SizeDbl(s.Width, s.Height));
 				return result;
 			}
 		}
