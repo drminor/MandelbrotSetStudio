@@ -93,6 +93,7 @@ namespace MSetExplorer
 			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
 			{
 				_screenSections.HideScreenSections();
+				_screenSections.Position = new PointDbl(_vm.CurrentJob.CanvasControlOffset);
 			}
 			else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
 			{

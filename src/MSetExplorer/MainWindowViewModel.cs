@@ -39,6 +39,15 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public SizeInt BlockSize { get; init; }
+		public Project Project { get; private set; }
+
+		public Job CurrentJob => _navStack.CurrentJob;
+		public bool CanGoBack => _navStack.CanGoBack;
+		public bool CanGoForward => _navStack.CanGoForward;
+
+		public ObservableCollection<MapSection> MapSections { get; init; }
+
 		private MapCalcSettings _mapCalcSettings;
 		public MapCalcSettings MapCalcSettings
 		{
@@ -70,15 +79,6 @@ namespace MSetExplorer
 			get => _canvasSize;
 			set { _canvasSize = value; OnPropertyChanged(); }
 		}
-
-		public Project Project { get; private set; }
-		public SizeInt BlockSize { get; init; }
-
-		public ObservableCollection<MapSection> MapSections { get; init; }
-
-		public Job CurrentJob => _navStack.CurrentJob;
-		public bool CanGoBack => _navStack.CanGoBack;
-		public bool CanGoForward => _navStack.CanGoForward;
 
 		#endregion
 
@@ -154,6 +154,8 @@ namespace MSetExplorer
 			MapCalcSettings = curJob.MSetInfo.MapCalcSettings;
 			ColorMapEntries = curJob.MSetInfo.ColorMapEntries;
 			MapCoords = curJob.MSetInfo.Coords;
+
+			//OnPropertyChanged(nameof(CurrentJob));
 		}
 
 		#endregion
@@ -168,11 +170,13 @@ namespace MSetExplorer
 
 			var parentJob = _navStack.CurrentRequest?.Job;
 			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, canvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
-			Debug.WriteLine($"The new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.");
+			Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
 			_navStack.Push(job);
 			OnPropertyChanged(nameof(CanGoBack));
 			OnPropertyChanged(nameof(CanGoForward));
+
+			//OnPropertyChanged(nameof(CurrentJob));
 		}
 
 		private string GetJobName(TransformType transformType)
@@ -189,6 +193,7 @@ namespace MSetExplorer
 		private void HandleMapNav()
 		{
 			MapSections.Clear();
+			
 		}
 
 		#endregion

@@ -21,8 +21,8 @@
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoLeftButton_Click">Left</Button>
                 <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoUpButton_Click">Up</Button>
-                <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" Margin="45,15,0,15" Click="GoRightButton_Click" >Right</Button>
-                <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoDownButton_Click" >Down</Button>
+                <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" Margin="45,15,0,15" Click="GoRightButton_Click">Right</Button>
+                <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" Margin="25,15,0,15" Click="GoDownButton_Click">Down</Button>
             </StackPanel>
         </Border>
 
@@ -34,7 +34,7 @@
         </Border>-->
 
         <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}" Canvas.Left="0" Canvas.Bottom="0" ></local:MapDisplay>
+            <local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}"></local:MapDisplay>
         </Border>
 
         <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">

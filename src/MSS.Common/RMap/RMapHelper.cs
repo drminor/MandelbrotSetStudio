@@ -114,7 +114,7 @@ namespace MSS.Common
 
 			// Create an updated coord value with the new size.
 			var newCoords = CombinePosAndSize(coords.Position, adjMapSize);
-			Debug.WriteLine($"The new coords are : {newCoords},\n old = {coords}. (While calculating SamplePointDelta3.)");
+			Debug.WriteLine($"\nThe new coords are : {newCoords},\n old = {coords}. (While calculating SamplePointDelta3.)\n");
 			coords = newCoords;
 
 			return result;
@@ -199,6 +199,74 @@ namespace MSS.Common
 
 			// Using normalize here to minimize the exponent value needed to express these values.
 			var coords = RN.Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
+			var mDistance = coords.LeftBot.Diff(destinationOrigin);
+
+			if (mDistance.Width == 0 && mDistance.Height == 0)
+			{
+				Debug.WriteLine($"The offset from the subOrigin is Zero.");
+
+				canvasControlOffset = new SizeDbl();
+				result = new SizeInt();
+			}
+			else
+			{
+				Debug.WriteLine($"The offset from the subOrigin is {mDistance}.");
+
+				var offset = RN.Normalize(mDistance, samplePointDelta, out var spd);
+				var offSetInSamplePoints = GetNumberOfSamplePoints(offset, spd);
+				Debug.WriteLine($"The offset in samplePoints is {offSetInSamplePoints}.");
+
+				// Get # of whole blocks and the # of pixels left over
+				var offSetInBlocks = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out canvasControlOffset);
+
+				result = offSetInBlocks;
+			}
+
+			return result;
+		}
+
+		// Calculate the number of samplePoints in the given offset.
+		// It is assumed that offset is < Integer.MAX * samplePointDelta
+		private static SizeInt GetNumberOfSamplePoints(RSize offset, RSize samplePointDelta)
+		{
+			// # of whole sample points between the source and destination origins.
+			var numSamplesH = offset.Width / samplePointDelta.Width;
+			var numSamplesV = offset.Height / samplePointDelta.Height;
+			var offSetInSamplePoints = new SizeInt((int)numSamplesH, (int)numSamplesV);
+
+			return offSetInSamplePoints;
+		}
+
+		private static SizeInt GetOffsetAndRemainder(SizeInt offSetInSamplePoints, SizeInt blockSize, out SizeDbl canvasControlOffset)
+		{
+			var offset = offSetInSamplePoints.Divide(blockSize);
+			var offsetInBlocks = offset.Abs().Ceiling().Scale(offset.GetSign());
+
+			var rem = offset.Diff(offsetInBlocks);
+			var remS = rem.Scale(blockSize);
+			var remT = remS.Translate(blockSize);
+			var remM = remT.Mod(blockSize);
+			canvasControlOffset = remM.Scale(-1d);
+			Debug.WriteLine($"Starting Block Pos: {offsetInBlocks}, Pixel Pos: {canvasControlOffset}.");
+
+			return offsetInBlocks;
+		}
+
+		#endregion
+
+		#region Old Get Offset
+
+		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
+		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
+		public static SizeInt GetMapBlockOffsetV1(RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out SizeDbl canvasControlOffset)
+		{
+			SizeInt result;
+
+			Debug.WriteLine($"Our origin is {mapCoords.LeftBot}");
+			Debug.WriteLine($"Destination origin is {subdivisionOrigin}");
+
+			// Using normalize here to minimize the exponent value needed to express these values.
+			var coords = RN.Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
 
 			var mDistance = coords.LeftBot.Diff(destinationOrigin);
 
@@ -231,8 +299,9 @@ namespace MSS.Common
 				//mapCoords = newCoords;
 
 				// Get # of whole blocks and the # of pixels left over
-				var offSetInBlocks = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out canvasControlOffset);
-				Debug.WriteLine($"The offset in blocks is {offSetInBlocks}. The ");
+				var offSetInBlocks = GetOffsetAndRemainderV1(offSetInSamplePoints, blockSize, out canvasControlOffset);
+
+				//var oibTest = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out var ccoTest);
 
 				result = offSetInBlocks;
 			}
@@ -243,74 +312,107 @@ namespace MSS.Common
 			return result;
 		}
 
-		// Calculate the number of samplePoints in the given offset.
-		// It is assumed that offset is < Integer.MAX * samplePointDelta
-		private static SizeInt GetNumberOfSamplePoints(RSize offset, RSize samplePointDelta)
+		private static SizeInt GetOffsetAndRemainderV1(SizeInt offSetInSamplePoints, SizeInt blockSize, out SizeDbl canvasControlOffset)
 		{
-			// # of whole sample points between the source and destination origins.
-			var numSamplesH = offset.Width / samplePointDelta.Width;
-			var numSamplesV = offset.Height / samplePointDelta.Height;
-			var offSetInSamplePoints = new SizeInt((int)numSamplesH, (int)numSamplesV);
+			var offset = offSetInSamplePoints.Divide(blockSize);
+			var offsetInBlocks = GetBlocksToCover(offset);
 
-			return offSetInSamplePoints;
+			var rem = offset.Diff(offsetInBlocks);
+			var remS = rem.Scale(blockSize);
+			var remT = remS.Translate(blockSize);
+			var remM = remT.Mod(blockSize);
+			canvasControlOffset = remM.Scale(-1d);
+			Debug.WriteLine($"Starting Block Pos: {offsetInBlocks}, Pixel Pos: {canvasControlOffset}.");
+
+			return offsetInBlocks;
 		}
 
-		private static SizeInt GetOffsetAndRemainder(SizeInt offSetInSamplePoints, SizeInt blockSize, out SizeDbl canvasControlOffset)
+		private static SizeInt GetBlocksToCover(SizeDbl offset)
 		{
-			var blocksH = Math.DivRem(offSetInSamplePoints.Width, blockSize.Width, out var remainderW);
-			var blocksV = Math.DivRem(offSetInSamplePoints.Height, blockSize.Height, out var remainderH);
+			var s = offset.GetSign();
+			var c = offset.Abs().Ceiling();
+			var b2c = c.Scale(s);
 
-			var offSetRemainderInSamplePoints = new SizeDbl(remainderW, remainderH);
+			var result = offset.Abs().Ceiling().Scale(offset.GetSign());
 
-			canvasControlOffset = GetSamplesRemaining(offSetRemainderInSamplePoints, blockSize);
-			Debug.WriteLine($"The remainder offset in sample points is {canvasControlOffset}. RawOffset: {offSetRemainderInSamplePoints}.");
+			return result;
+		}
 
-			if (remainderW < 0)
-			{
-				blocksH--;
-			}
+		private static SizeInt GetOffsetAndRemainderOld(SizeInt offSetInSamplePoints, SizeInt blockSize, out SizeDbl canvasControlOffset)
+		{
+			var blocksH = Math.DivRem(offSetInSamplePoints.Width, blockSize.Width, out var remainderH);
+			var blocksV = Math.DivRem(offSetInSamplePoints.Height, blockSize.Height, out var remainderV);
+
+			var wholeBlocks = offSetInSamplePoints.DivRem(blockSize, out var remainder);
+
+			//var offSetRemainderInSamplePoints = new SizeDbl(remainderW, remainderH);
+			//canvasControlOffset = GetSamplesRemaining(offSetRemainderInSamplePoints, blockSize);
+			//Debug.WriteLine($"The remainder offset in sample points is {canvasControlOffset}. RawOffset: {offSetRemainderInSamplePoints}.");
+
+			Debug.WriteLine($"Whole blocks: {wholeBlocks}, Remaining Pixels: {remainder}.");
 
 			if (remainderH < 0)
 			{
+				blocksH--;
+				remainderH = blockSize.Width + remainderH; // Want to display the last remainderH of the block, so we pull the display blkSize - remainderH to the left.
+			}
+			else if (remainderH > 0)
+			{
+				blocksH++;
+				//remainderH = blockSize.Width - remainderH; // Want to skip over the remainderH of the block, so we pull the display remainderH to the left.
+			}
+
+			if (remainderV < 0)
+			{
 				blocksV--;
+				remainderV = blockSize.Height + remainderV; // Want to display the last remainderV of the block, so we pull the display blkSize - remainderH down.
+			}
+			else if (remainderV > 0)
+			{
+				blocksV++;
+				//remainderV = blockSize.Height - remainderV;  // Want to skip over the remainderV of the block, so we pull the display remainderV down.
 			}
 
 			var offSetInBlocks = new SizeInt(blocksH, blocksV);
+			canvasControlOffset = new SizeDbl(remainderH, remainderV).Scale(-1d);
+
+			Debug.WriteLine($"Starting Block Pos: {offSetInBlocks}, Pixel Pos: {canvasControlOffset}.");
 
 			return offSetInBlocks;
 		}
 
-		private static SizeDbl GetSamplesRemaining(SizeDbl offsetRemainder, SizeInt blockSize)
-		{
-			var samplesRemaining = new SizeDbl(
-				GetSampRem(offsetRemainder.Width, blockSize.Width),
-				GetSampRem(offsetRemainder.Height, blockSize.Height)
-				);
+		//private static SizeDbl GetSamplesRemaining(SizeDbl offsetRemainder, SizeInt blockSize)
+		//{
+		//	var samplesRemaining = new SizeDbl(
+		//		GetSampRem(offsetRemainder.Width, blockSize.Width),
+		//		GetSampRem(offsetRemainder.Height, blockSize.Height)
+		//		);
 
-			return samplesRemaining;
-		}
+		//	return samplesRemaining;
+		//}
 
-		private static double GetSampRem(double extent, int blockLen)
-		{
-			double result;
+		//private static double GetSampRem(double extent, int blockLen)
+		//{
+		//	double result;
 
-			if (extent < 0)
-			{
-				//result = -1 * (blockLen + extent);
-				result = blockLen + extent;
-			}
-			else if (extent > 0)
-			{
-				//result = blockLen - extent;
-				result = extent;
-			}
-			else
-			{
-				result = 0;
-			}
+		//	if (extent < 0)
+		//	{
+		//		//result = -1 * (blockLen + extent);
+		//		result = blockLen + extent;
+		//	}
+		//	else if (extent > 0)
+		//	{
+		//		//result = blockLen - extent;
+		//		result = extent;
+		//	}
+		//	else
+		//	{
+		//		result = 0;
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
+
 
 		#endregion
 
@@ -496,7 +598,6 @@ namespace MSS.Common
 		//		throw new ArgumentException($"GetMapBlockOffset found that the map coordinates and the subdivision are on different scales.");
 		//	}
 		//}
-
 
 		#endregion
 	}

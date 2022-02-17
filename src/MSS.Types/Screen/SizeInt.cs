@@ -28,9 +28,55 @@ namespace MSS.Types
 
 		public int NumberOfCells => Width * Height;
 
+		public SizeInt Translate(SizeInt amount)
+		{
+			return new SizeInt(Width + amount.Width, Height + amount.Height);
+		}
+
+		public SizeInt Diff(SizeInt amount)
+		{
+			return new SizeInt(Width - amount.Width, Height - amount.Height);
+		}
+
+		public SizeInt Scale(SizeInt factor)
+		{
+			return new SizeInt(Width * factor.Width, Height * factor.Height);
+		}
+
 		public SizeInt Scale(double factor)
 		{
 			return new SizeInt((int)Math.Round(Width * factor), (int)Math.Round(Height * factor));
+		}
+
+		public SizeDbl Divide(SizeInt dividend)
+		{
+			var resultH = Width / (double)dividend.Width;
+			var resultV = Height / (double)dividend.Height;
+
+			var result = new SizeDbl(resultH, resultV);
+
+			return result;
+		}
+
+		public SizeInt DivRem(SizeInt dividend, out SizeInt remainder)
+		{
+			var blocksH = Math.DivRem(Width, dividend.Width, out var remainderH);
+			var blocksV = Math.DivRem(Height, dividend.Height, out var remainderV);
+
+			remainder = new SizeInt(remainderH, remainderV);
+			var result = new SizeInt(blocksH, blocksV);
+
+			return result;
+		}
+
+		public SizeInt Mod(SizeInt dividend)
+		{
+			return new SizeInt(Width % dividend.Width, Height % dividend.Height);
+		}
+
+		public SizeInt Abs()
+		{
+			return new SizeInt(Math.Abs(Width), Math.Abs(Height));
 		}
 
 		public override bool Equals(object? obj)

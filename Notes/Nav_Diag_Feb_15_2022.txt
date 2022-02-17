@@ -1,0 +1,47 @@
+The new coords are : -4/2; 2/2; -3/2; 3/2 exp:-1,
+ old = -4/2; 2/2; -3/2; 3/2 exp:-1. (While calculating SamplePointDelta3.)
+
+Our origin is -4/2; -3/2 exp:-1
+Destination origin is -4/2; -3/2 exp:-1
+The offset from the subOrigin is Zero.
+
+The new job has a SamplePointDelta of 1/256; 1/256 exp:-8 and an Offset of w:0, h:0.
+
+-----------
+The new coords are : 512/2048; 1535/2048; -1152/2048; -129/2048 exp:-11,
+ old = 4/16; 12/16; -9/16; -1/16 exp:-4. (While calculating SamplePointDelta3.)
+
+Our origin is 4/16; -9/16 exp:-4
+Destination origin is 5/16; 0/16 exp:-4
+The offset from the subOrigin is -1/16; -9/16 exp:-4.
+The offset in samplePoints is w:-96, h:-864.
+The remainder offset in sample points is w:-96, h:-96
+The offset in blocks is w:-1, h:-7. The 
+
+The new job has a SamplePointDelta of 341/524288; 341/524288 exp:-19 and an Offset of w:-96, h:-96.
+
+------
+The new coords are : 384/2048; 1407/2048; -1664/2048; -641/2048 exp:-11,
+ old = 3/16; 11/16; -13/16; -5/16 exp:-4. (While calculating SamplePointDelta3.)
+
+Our origin is 3/16; -13/16 exp:-4
+Destination origin is 5/16; 0/16 exp:-4
+The offset from the subOrigin is -2/16; -13/16 exp:-4.
+The offset in samplePoints is w:-192, h:-1249.
+The remainder offset in sample points is w:-64, h:-97
+The offset in blocks is w:-2, h:-10. The 
+
+The new job has a SamplePointDelta of 341/524288; 341/524288 exp:-19 and an Offset of w:-64, h:-97.
+
+----------
+The new coords are : -128/2048; 895/2048; 1408/2048; 2431/2048 exp:-11,
+ old = -1/16; 7/16; 11/16; 19/16 exp:-4. (While calculating SamplePointDelta3.)
+
+Our origin is -1/16; 11/16 exp:-4
+Destination origin is 5/16; 0/16 exp:-4
+The offset from the subOrigin is -6/16; 11/16 exp:-4.
+The offset in samplePoints is w:-576, h:1057.
+The remainder offset in sample points is w:-64, h:33
+The offset in blocks is w:-5, h:9. The 
+
+The new job has a SamplePointDelta of 341/524288; 341/524288 exp:-19 and an Offset of w:-64, h:33.

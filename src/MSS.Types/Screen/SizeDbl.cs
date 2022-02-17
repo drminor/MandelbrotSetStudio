@@ -24,6 +24,16 @@ namespace MSS.Types
 			return new SizeDbl(Width * factor.X, Height * factor.Y);
 		}
 
+		public SizeDbl Scale(SizeInt factor)
+		{
+			return new SizeDbl(Width * factor.Width, Height * factor.Height);
+		}
+
+		public SizeDbl Scale(double factor)
+		{
+			return new SizeDbl(Width * factor, Height * factor);
+		}
+
 		//public SizeDbl Translate(PointDbl offset)
 		//{
 		//	return new SizeDbl(Width + offset.X, Height + offset.Y);
@@ -37,6 +47,54 @@ namespace MSS.Types
 		public SizeDbl Translate(SizeInt offset)
 		{
 			return new SizeDbl(Width + offset.Width, Height + offset.Height);
+		}
+
+		public SizeDbl Mod(SizeInt dividend)
+		{
+			return new SizeDbl(Width % dividend.Width, Height % dividend.Height);
+		}
+
+		public SizeInt Round(MidpointRounding midpointRounding)
+		{
+
+			var resultT = new SizeDbl
+				(
+					Math.Round(Width, midpointRounding),
+					Math.Round(Height, midpointRounding)
+			);
+
+			var result = new SizeInt
+				(
+					Math.Round(Width, midpointRounding),
+					Math.Round(Height, midpointRounding)
+				);
+
+			return result;
+		}
+
+		public SizeDbl Diff(SizeInt offset)
+		{
+			return new SizeDbl(Width - offset.Width, Height - offset.Height);
+		}
+
+		public SizeDbl Abs()
+		{
+			return new SizeDbl(Math.Abs(Width), Math.Abs(Height));
+		}
+
+		public SizeInt Ceiling()
+		{
+			return new SizeInt(Math.Ceiling(Width), Math.Ceiling(Height));
+		}
+
+		public SizeInt Floor()
+		{
+			return new SizeInt(Math.Floor(Width), Math.Floor(Height));
+		}
+
+		public SizeInt GetSign()
+		{
+			return new SizeInt(Math.Sign(Width), Math.Sign(Height));
 		}
 
 		#region IEquatable and IEqualityComparer Support

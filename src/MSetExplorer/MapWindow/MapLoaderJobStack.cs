@@ -70,17 +70,36 @@ namespace MSetExplorer
 		public void Push(Job job)
 		{
 			StopCurrentJob();
-			_onMapNav();
+			
+			//_onMapNav();
+			//lock (_hmsLock)
+			//{
+			//	var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+			//	var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
+			//	var genMapRequestInfo = new GenMapRequestInfo(job, jobNumber, mapLoader);
 
+			//	_requestStack.Add(genMapRequestInfo);
+			//	_requestStackPointer = _requestStack.Count - 1;
+			//	_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
+			//}
+
+			var genMapRequestInfo = PushRequest(job);
+			_onMapNav();
+			genMapRequestInfo.StartLoading();
+		}
+
+		private GenMapRequestInfo PushRequest(Job job)
+		{
 			lock (_hmsLock)
 			{
 				var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 				var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
-				var genMapRequestInfo = new GenMapRequestInfo(job, jobNumber, mapLoader);
+				var result = new GenMapRequestInfo(job, jobNumber, mapLoader);
 
-				_requestStack.Add(genMapRequestInfo);
+				_requestStack.Add(result);
 				_requestStackPointer = _requestStack.Count - 1;
-				_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
+
+				return result;
 			}
 		}
 
@@ -139,19 +158,40 @@ namespace MSetExplorer
 			}
 
 			StopCurrentJob();
-			_onMapNav();
 
+			//_onMapNav();
+			//lock (_hmsLock)
+			//{
+			//	var genMapRequestInfo = _requestStack[newRequestStackPointer];
+			//	var job = genMapRequestInfo.Job;
+
+			//	var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+			//	var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
+			//	genMapRequestInfo.Renew(jobNumber, mapLoader);
+
+			//	_requestStackPointer = newRequestStackPointer;
+			//	_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
+			//}
+
+			var genMapRequestInfo = RerunRequest(newRequestStackPointer);
+			_onMapNav();
+			genMapRequestInfo.StartLoading();
+		}
+
+		private GenMapRequestInfo RerunRequest(int newRequestStackPointer)
+		{
 			lock (_hmsLock)
 			{
-				var genMapRequestInfo = _requestStack[newRequestStackPointer];
-				var job = genMapRequestInfo.Job;
+				var result = _requestStack[newRequestStackPointer];
+				var job = result.Job;
 
 				var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 				var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
-				genMapRequestInfo.Renew(jobNumber, mapLoader);
+				result.Renew(jobNumber, mapLoader);
 
 				_requestStackPointer = newRequestStackPointer;
-				_ = mapLoader.Start().ContinueWith(genMapRequestInfo.LoadingComplete);
+
+				return result;
 			}
 		}
 

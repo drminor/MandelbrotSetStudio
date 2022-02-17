@@ -31,6 +31,11 @@ namespace MSetExplorer
 			MapLoader = mapLoader;
 		}
 
+		public void StartLoading()
+		{
+			_ = MapLoader.Start().ContinueWith(LoadingComplete);
+		}
+
 		public void LoadingComplete(Task _)
 		{
 			MapLoader = null;

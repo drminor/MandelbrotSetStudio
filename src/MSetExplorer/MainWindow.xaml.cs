@@ -95,6 +95,11 @@ namespace MSetExplorer
 				Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
 				return;
 			}
+
+			//if (e.PropertyName == "CurrentJob")
+			//{
+			//	mapDisplay1.Position = new PointDbl(_vm.CurrentJob.CanvasControlOffset);
+			//}
 		}
 
 		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
@@ -104,7 +109,7 @@ namespace MSetExplorer
 
 		private void GoUpButton_Click(object sender, RoutedEventArgs e)
 		{
-			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X, mapDisplay1.Position.Y - 25d);
+			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X, mapDisplay1.Position.Y + 25d);
 		}
 
 		private void GoRightButton_Click(object sender, RoutedEventArgs e)
@@ -114,7 +119,7 @@ namespace MSetExplorer
 
 		private void GoDownButton_Click(object sender, RoutedEventArgs e)
 		{
-			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X, mapDisplay1.Position.Y + 25d);
+			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X, mapDisplay1.Position.Y - 25d);
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)

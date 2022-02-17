@@ -6,6 +6,12 @@ namespace MSS.Types
 {
 	public struct PointDbl : IEquatable<PointDbl>, IEqualityComparer<PointDbl>
 	{
+		public PointDbl(PointInt pointInt) : this(pointInt.X, pointInt.Y)
+		{ }
+
+		public PointDbl(SizeDbl size) : this(size.Width, size.Height)
+		{ }
+
 		public PointDbl(double x, double y)
 		{
 			X = x;
@@ -13,11 +19,7 @@ namespace MSS.Types
 		}
 
 		public double X { get; set; }
-
 		public double Y { get; set; }
-
-		public PointDbl(PointInt pointInt) : this(pointInt.X, pointInt.Y)
-		{ }
 
 		public PointDbl Scale(PointDbl factor)
 		{

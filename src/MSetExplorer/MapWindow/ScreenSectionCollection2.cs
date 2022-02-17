@@ -11,8 +11,6 @@ namespace MSetExplorer
 {
 	internal class ScreenSectionCollection2 : IScreenSectionCollection
 	{
-		//private readonly Canvas _canvas;
-
 		private readonly ScreenSection[,] _screenSections;
 		private readonly DrawingGroup _drawingGroup;
 		private readonly Image _image;
@@ -26,13 +24,8 @@ namespace MSetExplorer
 			_screenSections = BuildScreenSections(sizeInBlocks, blockSize);
 
 			_drawingGroup = new DrawingGroup();
-
-			//var drawingImage = new DrawingImage(_drawingGroup);
-			//_image = new Image { Source = drawingImage };
 			_image = new Image { Source = new DrawingImage(_drawingGroup) };
 			_ = canvas.Children.Add(_image);
-
-			//_drawingGroup.Transform = new TranslateTransform();
 
 			Position = new PointDbl();
 		}
@@ -49,7 +42,11 @@ namespace MSetExplorer
 				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
 				{
 					var position = new PointInt(xBlockPtr, maxYPtr - yBlockPtr);
-					var screenSection = new ScreenSection(new RectangleInt(position.Scale(blockSize), blockSize));
+
+					//var screenSection = new ScreenSection(new RectangleInt(position.Scale(blockSize), blockSize));
+					//var screenSection = new ScreenSection(position.Scale(blockSize), blockSize);
+					var screenSection = new ScreenSection(position, blockSize);
+
 					result[yBlockPtr,xBlockPtr] = screenSection;
 				}
 			}
@@ -80,12 +77,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//public PointDbl Position
-		//{
-		//	get => new(_drawingGroup.Transform.Value.OffsetX, _drawingGroup.Transform.Value.OffsetY);
-		//	set => _drawingGroup.Transform = new TranslateTransform(value.X, value.Y);
-		//}
-
 		public void HideScreenSections()
 		{
 			_drawingGroup.Children.Clear();
@@ -93,9 +84,6 @@ namespace MSetExplorer
 
 		public void Draw(MapSection mapSection)
 		{
-			//var maxYIndex = _screenSections.GetLength(1) - 1;
-			//var screenSection = _screenSections[maxYIndex - mapSection.BlockPosition.Y, mapSection.BlockPosition.X];
-
 			var screenSection = _screenSections[mapSection.BlockPosition.Y, mapSection.BlockPosition.X];
 			screenSection.WritePixels(mapSection.Pixels1d);
 			_drawingGroup.Children.Add(screenSection.ImageDrawing);
@@ -105,16 +93,20 @@ namespace MSetExplorer
 		{
 			public ImageDrawing ImageDrawing { get; }
 
-			public ScreenSection(RectangleInt rectangle)
-			{
-				var image = CreateImage(rectangle.Width, rectangle.Height);
-				var rect = new Rect(new Point(rectangle.X1, rectangle.Y1), new Size(rectangle.Width, rectangle.Height));
-				ImageDrawing = new ImageDrawing(image.Source, rect);
-			}
+			//public ScreenSection(RectangleInt rectangle)
+			//{
+			//	var image = CreateImage(rectangle.Width, rectangle.Height);
+			//	var rect = new Rect(new Point(rectangle.X1, rectangle.Y1), new Size(rectangle.Width, rectangle.Height));
+			//	ImageDrawing = new ImageDrawing(image.Source, rect);
+			//}
 
-			public void Place(PointInt position)
+			public ScreenSection(PointInt blockPosition, SizeInt blockSize)
 			{
-				throw new NotImplementedException();
+				var image = CreateImage(blockSize.Width, blockSize.Height);
+				var position = blockPosition.Scale(blockSize);
+				var rect = new Rect(new Point(position.X, position.Y), new Size(blockSize.Width, blockSize.Height));
+
+				ImageDrawing = new ImageDrawing(image.Source, rect);
 			}
 
 			public void WritePixels(byte[] pixels)
