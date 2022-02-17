@@ -41,7 +41,7 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				//throw new InvalidOperationException("The DataContext is null as the Main Window is being loaded.");
+				Debug.WriteLine("The DataContext is null as the Main Window is being loaded.");
 				return;
 			}
 			else
@@ -63,13 +63,7 @@ namespace MSetExplorer
 		{
 			var curJob = _vm.CurrentJob;
 			var position = curJob.MSetInfo.Coords.LeftBot;
-			//var canvasControlOffset = curJob.CanvasControlOffset;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-
-			//// Adjust the selected area's origin to account for the portion of the start block that is off screen.
-			//var canvasOffset = canvasControlOffset.Round();
-			//var adjArea = e.Area.Translate(canvasOffset);
-			//var coords = RMapHelper.GetMapCoords(adjArea, position, samplePointDelta);
 
 			var coords = RMapHelper.GetMapCoords(e.Area, position, samplePointDelta);
 
@@ -96,12 +90,9 @@ namespace MSetExplorer
 				Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
 				return;
 			}
-
-			//if (e.PropertyName == "CurrentJob")
-			//{
-			//	mapDisplay1.Position = new PointDbl(_vm.CurrentJob.CanvasControlOffset);
-			//}
 		}
+
+		#region Button Handlers
 
 		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -149,5 +140,6 @@ namespace MSetExplorer
 			Close();
 		}
 
+		#endregion
 	}
 }

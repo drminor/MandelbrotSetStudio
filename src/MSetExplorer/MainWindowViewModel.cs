@@ -25,9 +25,9 @@ namespace MSetExplorer
 
 			Project = _projectAdapter.GetOrCreateProject("Home");
 
-			_mapCoords = new RRectangle();
-			_mapCalcSettings = new MapCalcSettings();
-			_colorMapEntries = Array.Empty<ColorMapEntry>();
+			//_mapCoords = new RRectangle();
+			//_mapCalcSettings = new MapCalcSettings();
+			//_colorMapEntries = Array.Empty<ColorMapEntry>();
 			_canvasSize = new SizeInt();
 
 			MapSections = new ObservableCollection<MapSection>();
@@ -48,30 +48,30 @@ namespace MSetExplorer
 
 		public ObservableCollection<MapSection> MapSections { get; init; }
 
-		private MapCalcSettings _mapCalcSettings;
-		public MapCalcSettings MapCalcSettings
-		{
-			get => _mapCalcSettings;
-			set { _mapCalcSettings = value; OnPropertyChanged(); }
-		}
+		//private MapCalcSettings _mapCalcSettings;
+		//public MapCalcSettings MapCalcSettings
+		//{
+		//	get => _mapCalcSettings;
+		//	set { _mapCalcSettings = value; OnPropertyChanged(); }
+		//}
 
-		private ColorMapEntry[] _colorMapEntries;
-		public ColorMapEntry[] ColorMapEntries
-		{
-			get => _colorMapEntries;
-			set { _colorMapEntries = value; OnPropertyChanged(); }
-		}
+		//private ColorMapEntry[] _colorMapEntries;
+		//public ColorMapEntry[] ColorMapEntries
+		//{
+		//	get => _colorMapEntries;
+		//	set { _colorMapEntries = value; OnPropertyChanged(); }
+		//}
 
-		private RRectangle _mapCoords;
-		public RRectangle MapCoords
-		{
-			get => _mapCoords;
-			set
-			{
-				_mapCoords = value;
-				OnPropertyChanged();
-			}
-		}
+		//private RRectangle _mapCoords;
+		//public RRectangle MapCoords
+		//{
+		//	get => _mapCoords;
+		//	set
+		//	{
+		//		_mapCoords = value;
+		//		OnPropertyChanged();
+		//	}
+		//}
 
 		private SizeInt _canvasSize;
 		public SizeInt CanvasSize
@@ -86,17 +86,19 @@ namespace MSetExplorer
 
 		public void SetMapInfo(MSetInfo mSetInfo)
 		{
-			MapCalcSettings = mSetInfo.MapCalcSettings;
-			ColorMapEntries = mSetInfo.ColorMapEntries;
-			MapCoords = mSetInfo.Coords;
+			//MapCalcSettings = mSetInfo.MapCalcSettings;
+			//ColorMapEntries = mSetInfo.ColorMapEntries;
+			//MapCoords = mSetInfo.Coords;
 
-			LoadMap(transformType: TransformType.None, newArea: new SizeInt());
+			LoadMap(mSetInfo, TransformType.None, newArea: new SizeInt());
 		}
 
 		public void UpdateMapView(TransformType transformType, SizeInt newArea, RRectangle coords)
 		{
-			MapCoords = coords;
-			LoadMap(transformType, newArea);
+			//MapCoords = coords;
+			var mSetInfo = _navStack.CurrentJob.MSetInfo;
+			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
+			LoadMap(updatedInfo, transformType, newArea);
 		}
 
 		public void GoBack()
@@ -119,7 +121,7 @@ namespace MSetExplorer
 
 		public Point GetBlockPosition(Point posYInverted)
 		{
-			var pointInt = new PointInt((int)posYInverted.X, (int)posYInverted.Y);
+			var pointInt = new PointDbl(posYInverted.X, posYInverted.Y).Round();
 
 			var curReq = _navStack.CurrentRequest;
 			var mapBlockOffset = curReq?.Job?.MapBlockOffset ?? new SizeInt();
@@ -149,11 +151,11 @@ namespace MSetExplorer
 			var jobs = _projectAdapter.GetAllJobs(Project.Id);
 			_navStack.LoadJobStack(jobs);
 
-			var curJob = _navStack.CurrentJob;
+			//var curJob = _navStack.CurrentJob;
 
-			MapCalcSettings = curJob.MSetInfo.MapCalcSettings;
-			ColorMapEntries = curJob.MSetInfo.ColorMapEntries;
-			MapCoords = curJob.MSetInfo.Coords;
+			//MapCalcSettings = curJob.MSetInfo.MapCalcSettings;
+			//ColorMapEntries = curJob.MSetInfo.ColorMapEntries;
+			//MapCoords = curJob.MSetInfo.Coords;
 
 			//OnPropertyChanged(nameof(CurrentJob));
 		}
@@ -162,14 +164,11 @@ namespace MSetExplorer
 
 		#region Private Methods 
 
-		private void LoadMap(TransformType transformType, SizeInt newArea)
+		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, SizeInt newArea)
 		{
 			var jobName = GetJobName(transformType);
-			var canvasSize = CanvasSize;
-			var mSetInfo = new MSetInfo(MapCoords, MapCalcSettings, ColorMapEntries);
-
 			var parentJob = _navStack.CurrentRequest?.Job;
-			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, canvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 			Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
 			_navStack.Push(job);

@@ -67,6 +67,18 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public void LoadJobStack(IEnumerable<Job> jobs)
+		{
+			foreach (var job in jobs)
+			{
+				_requestStack.Add(new GenMapRequestInfo(job));
+			}
+
+			_requestStackPointer = _requestStack.Count - 1;
+
+			Rerun(_requestStackPointer);
+		}
+
 		public void Push(Job job)
 		{
 			StopCurrentJob();
@@ -76,21 +88,6 @@ namespace MSetExplorer
 			genMapRequestInfo.StartLoading();
 		}
 
-		private GenMapRequestInfo PushRequest(Job job)
-		{
-			lock (_hmsLock)
-			{
-				var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
-				var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
-				var result = new GenMapRequestInfo(job, jobNumber, mapLoader);
-
-				_requestStack.Add(result);
-				_requestStackPointer = _requestStack.Count - 1;
-
-				return result;
-			}
-		}
-
 		public void UpdateJob(GenMapRequestInfo genMapRequestInfo, Job job)
 		{
 			var idx = _requestStack.IndexOf(genMapRequestInfo);
@@ -98,9 +95,9 @@ namespace MSetExplorer
 
 			genMapRequestInfo.Job = job;
 
-			foreach(var req in _requestStack)
+			foreach (var req in _requestStack)
 			{
-				if(oldJobId == req.Job?.ParentJob?.Id)
+				if (oldJobId == req.Job?.ParentJob?.Id)
 				{
 					req.Job.ParentJob = job;
 				}
@@ -138,6 +135,30 @@ namespace MSetExplorer
 			}
 		}
 
+		public void StopCurrentJob()
+		{
+			CurrentRequest?.MapLoader?.Stop();
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private GenMapRequestInfo PushRequest(Job job)
+		{
+			lock (_hmsLock)
+			{
+				var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+				var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
+				var result = new GenMapRequestInfo(job, jobNumber, mapLoader);
+
+				_requestStack.Add(result);
+				_requestStackPointer = _requestStack.Count - 1;
+
+				return result;
+			}
+		}
+
 		private void Rerun(int newRequestStackPointer)
 		{
 			if (newRequestStackPointer < 0 || newRequestStackPointer > _requestStack.Count - 1)
@@ -168,27 +189,6 @@ namespace MSetExplorer
 				return result;
 			}
 		}
-
-		public void StopCurrentJob()
-		{
-			CurrentRequest?.MapLoader?.Stop();
-		}
-
-		public void LoadJobStack(IEnumerable<Job> jobs)
-		{
-			foreach(var job in jobs)
-			{
-				_requestStack.Add(new GenMapRequestInfo(job));
-			}
-
-			_requestStackPointer = _requestStack.Count - 1;
-
-			Rerun(_requestStackPointer);
-		}
-
-		#endregion
-
-		#region Private Methods
 
 		private bool TryGetNextJobInStack(int requestStackPointer, out int nextRequestStackPointer)
 		{
