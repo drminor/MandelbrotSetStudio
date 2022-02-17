@@ -54,19 +54,17 @@ namespace MSS.Types
 			return new SizeDbl(Width % dividend.Width, Height % dividend.Height);
 		}
 
+		public SizeInt Round()
+		{
+			return Round(MidpointRounding.ToEven);
+		}
+
 		public SizeInt Round(MidpointRounding midpointRounding)
 		{
-
-			var resultT = new SizeDbl
-				(
-					Math.Round(Width, midpointRounding),
-					Math.Round(Height, midpointRounding)
-			);
-
 			var result = new SizeInt
 				(
-					Math.Round(Width, midpointRounding),
-					Math.Round(Height, midpointRounding)
+					(int)Math.Round(Width, midpointRounding),
+					(int)Math.Round(Height, midpointRounding)
 				);
 
 			return result;
@@ -84,12 +82,12 @@ namespace MSS.Types
 
 		public SizeInt Ceiling()
 		{
-			return new SizeInt(Math.Ceiling(Width), Math.Ceiling(Height));
+			return new SizeInt((int)Math.Ceiling(Width), (int)Math.Ceiling(Height));
 		}
 
 		public SizeInt Floor()
 		{
-			return new SizeInt(Math.Floor(Width), Math.Floor(Height));
+			return new SizeInt((int)Math.Floor(Width), (int)Math.Floor(Height));
 		}
 
 		public SizeInt GetSign()

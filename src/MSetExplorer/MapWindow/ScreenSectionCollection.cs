@@ -2,8 +2,6 @@
 using MSS.Types;
 using MSS.Types.Screen;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,39 +11,55 @@ namespace MSetExplorer
 {
 	internal class ScreenSectionCollection : IScreenSectionCollection
 	{
-		private readonly Canvas _canvas;
-		private readonly SizeInt _blockSize;
-		private readonly IDictionary<PointInt, ScreenSection> _screenSections;
+		private readonly ScreenSection[,] _screenSections;
+		private readonly DrawingGroup _drawingGroup;
+		private readonly Image _image;
 
 		#region Constructor
 
 		public ScreenSectionCollection(Canvas canvas, SizeInt blockSize)
 		{
-			_canvas = canvas;
-			_blockSize = blockSize;
-			_screenSections = BuildScreenSections();
+			var canvasSize = new Size(canvas.Width, canvas.Height);
+			var sizeInBlocks = GetSizeInBlocks(canvasSize, blockSize);
+			_screenSections = BuildScreenSections(sizeInBlocks, blockSize);
+
+			_drawingGroup = new DrawingGroup();
+			_image = new Image { Source = new DrawingImage(_drawingGroup) };
+			_ = canvas.Children.Add(_image);
+
+			Position = new PointDbl();
 		}
 
-		private Dictionary<PointInt, ScreenSection> BuildScreenSections()
+		private ScreenSection[,] BuildScreenSections(SizeInt sizeInBlocks, SizeInt blockSize)
 		{
-			var result = new Dictionary<PointInt, ScreenSection>();
-
 			// Create the screen sections to cover the canvas
-			// Include an additional block to accommodate when the CanvasControlOffset is non-zero.
+			var result = new ScreenSection[sizeInBlocks.Height, sizeInBlocks.Width];
 
-			//var canvasSize = new SizeInt((int)Math.Round(_canvas.Width), (int)Math.Round(_canvas.Height));
-			var canvasSize = new SizeInt(_canvas.Width, _canvas.Height);
+			var maxYPtr = sizeInBlocks.Height - 1;
 
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, _blockSize);
-			for (var yBlockPtr = 0; yBlockPtr < canvasSizeInBlocks.Height + 1; yBlockPtr++)
+			for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
 			{
-				for (var xBlockPtr = 0; xBlockPtr < canvasSizeInBlocks.Width + 1; xBlockPtr++)
+				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
 				{
-					var position = new PointInt(xBlockPtr, yBlockPtr);
-					var screenSection = new ScreenSection(_canvas, _blockSize);
-					result.Add(position, screenSection);
+					var position = new PointInt(xBlockPtr, maxYPtr - yBlockPtr);
+
+					//var screenSection = new ScreenSection(new RectangleInt(position.Scale(blockSize), blockSize));
+					//var screenSection = new ScreenSection(position.Scale(blockSize), blockSize);
+					var screenSection = new ScreenSection(position, blockSize);
+
+					result[yBlockPtr,xBlockPtr] = screenSection;
 				}
 			}
+
+			return result;
+		}
+
+		private SizeInt GetSizeInBlocks(Size canvasSize, SizeInt blockSize)
+		{
+			// Include an additional block to accommodate when the CanvasControlOffset is non-zero.
+			var canvasSizeInt = new SizeDbl(canvasSize.Width, canvasSize.Height).Round();
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSizeInt, blockSize);
+			var result = new SizeInt(canvasSizeInBlocks.Width + 1, canvasSizeInBlocks.Height + 1);
 
 			return result;
 		}
@@ -53,66 +67,58 @@ namespace MSetExplorer
 		#endregion
 
 		public PointDbl Position
-		{ 
-			get => throw new NotImplementedException(); 
-			set => throw new NotImplementedException();
+		{
+			get => new((double)_image.GetValue(Canvas.LeftProperty), (double)_image.GetValue(Canvas.BottomProperty));
+
+			set
+			{
+				_image.SetValue(Canvas.LeftProperty, value.X);
+				_image.SetValue(Canvas.BottomProperty, value.Y);
+			}
 		}
 
 		public void HideScreenSections()
 		{
-			foreach (UIElement c in _canvas.Children.OfType<Image>())
-			{
-				c.Visibility = Visibility.Hidden;
-			}
+			_drawingGroup.Children.Clear();
 		}
 
 		public void Draw(MapSection mapSection)
 		{
-			var screenSection = GetScreenSection(mapSection.BlockPosition, mapSection.Size);
-			screenSection.Place(mapSection.CanvasPosition);
+			var screenSection = _screenSections[mapSection.BlockPosition.Y, mapSection.BlockPosition.X];
 			screenSection.WritePixels(mapSection.Pixels1d);
-		}
-
-		private ScreenSection GetScreenSection(PointInt blockPosition, SizeInt blockSize)
-		{
-			if (!_screenSections.TryGetValue(blockPosition, out var screenSection))
-			{
-				screenSection = new ScreenSection(_canvas, blockSize);
-				_screenSections.Add(blockPosition, screenSection);
-			}
-
-			return screenSection;
+			_drawingGroup.Children.Add(screenSection.ImageDrawing);
 		}
 
 		private class ScreenSection
 		{
-			private readonly Image _image;
+			public ImageDrawing ImageDrawing { get; }
 
-			public ScreenSection(Canvas canvas, SizeInt size)
-			{
-				_image = CreateImage(size.Width, size.Height);
-				_ = canvas.Children.Add(_image);
-				_image.SetValue(Panel.ZIndexProperty, 0);
-			}
+			//public ScreenSection(RectangleInt rectangle)
+			//{
+			//	var image = CreateImage(rectangle.Width, rectangle.Height);
+			//	var rect = new Rect(new Point(rectangle.X1, rectangle.Y1), new Size(rectangle.Width, rectangle.Height));
+			//	ImageDrawing = new ImageDrawing(image.Source, rect);
+			//}
 
-			public void Place(PointInt position)
+			public ScreenSection(PointInt blockPosition, SizeInt blockSize)
 			{
-				_image.SetValue(Canvas.LeftProperty, (double)position.X);
-				_image.SetValue(Canvas.BottomProperty, (double)position.Y);
+				var image = CreateImage(blockSize.Width, blockSize.Height);
+				var position = blockPosition.Scale(blockSize);
+				var rect = new Rect(new Point(position.X, position.Y), new Size(blockSize.Width, blockSize.Height));
+
+				ImageDrawing = new ImageDrawing(image.Source, rect);
 			}
 
 			public void WritePixels(byte[] pixels)
 			{
-				var bitmap = (WriteableBitmap)_image.Source;
+				var bitmap = (WriteableBitmap)ImageDrawing.ImageSource;
 
-				var w = (int)Math.Round(_image.Width);
-				var h = (int)Math.Round(_image.Height);
+				var w = (int)Math.Round(bitmap.Width);
+				var h = (int)Math.Round(bitmap.Height);
 
 				var rect = new Int32Rect(0, 0, w, h);
 				var stride = 4 * w;
 				bitmap.WritePixels(rect, pixels, stride, 0);
-
-				_image.Visibility = Visibility.Visible;
 			}
 
 			private Image CreateImage(int w, int h)
@@ -128,9 +134,7 @@ namespace MSetExplorer
 
 				return result;
 			}
-
 		}
 
-
+		}
 	}
-}

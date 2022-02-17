@@ -245,8 +245,12 @@ namespace MSS.Common
 			var rem = offset.Diff(offsetInBlocks);
 			var remS = rem.Scale(blockSize);
 			var remT = remS.Translate(blockSize);
-			var remM = remT.Mod(blockSize);
-			canvasControlOffset = remM.Scale(-1d);
+
+			//var remM = remT.Mod(blockSize);
+			//canvasControlOffset = remM.Scale(-1d);
+
+			canvasControlOffset = remT.Mod(blockSize);
+
 			Debug.WriteLine($"Starting Block Pos: {offsetInBlocks}, Pixel Pos: {canvasControlOffset}.");
 
 			return offsetInBlocks;

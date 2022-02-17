@@ -36,9 +36,30 @@ namespace MSS.Types
 			return new PointDbl(X * factor.Width, Y * factor.Height);
 		}
 
+		public PointDbl Scale(double factor)
+		{
+			return new PointDbl(X * factor, Y * factor);
+		}
+
 		public PointDbl Translate(SizeInt offset)
 		{
 			return new PointDbl(X + offset.Width, Y + offset.Height);
+		}
+
+		public PointInt Round()
+		{
+			return Round(MidpointRounding.ToEven);
+		}
+
+		public PointInt Round(MidpointRounding midpointRounding)
+		{
+			var result = new PointInt
+				(
+					(int)Math.Round(X, midpointRounding),
+					(int)Math.Round(Y, midpointRounding)
+				);
+
+			return result;
 		}
 
 		#region IEquatable and IEqualityComparer Support

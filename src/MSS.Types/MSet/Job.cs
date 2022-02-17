@@ -14,7 +14,6 @@ namespace MSS.Types.MSet
 		public TransformType TransformType { get; init; }
 		public SizeInt NewArea { get; init; }
 
-
 		public MSetInfo MSetInfo { get; init; }
 		public SizeInt CanvasSizeInBlocks { get; init; }
 		public SizeInt MapBlockOffset { get; init; }

@@ -389,64 +389,6 @@ namespace MSetExplorer.MapWindow
 
 		#region Drawing Support
 
-		//private DrawingBrush BuildDrawingBrush()
-		//{
-		//	var aDrawingGroup = new DrawingGroup();
-
-		//	var inc = 16;
-		//	var x = 0;
-		//	var y = 0;
-
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White));
-
-		//	x = 0;
-		//	y += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black));
-
-		//	x = 0;
-		//	y += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White));
-
-		//	x = 0;
-		//	y += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White, Brushes.White)); x += inc;
-		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black, Brushes.Black));
-
-
-		//	var result = new DrawingBrush(aDrawingGroup)
-		//	{
-		//		TileMode = TileMode.Tile,
-		//		//Stretch = Stretch.None,
-		//		ViewportUnits = BrushMappingMode.Absolute,
-		//		Viewport = new Rect(0, 0, inc, inc)
-
-		//	};
-
-		//	return result;
-		//}
-
-		//private GeometryDrawing BuildDot(Rect rect, SolidColorBrush fill, SolidColorBrush outline)
-		//{
-		//	var result = new GeometryDrawing(
-		//		fill,
-		//		new Pen(outline, 1),
-		//		new RectangleGeometry(rect)
-		//	);
-
-		//	return result;
-		//}
-
 		private DrawingBrush BuildDrawingBrush()
 		{
 			var aDrawingGroup = new DrawingGroup();

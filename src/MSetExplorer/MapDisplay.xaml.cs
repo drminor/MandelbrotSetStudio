@@ -51,7 +51,7 @@ namespace MSetExplorer
 
 				_vm = (IMapJobViewModel)DataContext;
 				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
-				_screenSections = new ScreenSectionCollection2(MainCanvas, _vm.BlockSize);
+				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
 				_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
 				_dragLine = AddDragLine();
 
@@ -80,10 +80,12 @@ namespace MSetExplorer
 
 		#endregion
 
+		// TODO: Bind the MapDisplay's Position the VM's CurrentJob's CanvasControlOffset.
+
 		public PointDbl Position
 		{
-			get => _screenSections.Position;
-			set => _screenSections.Position = value;
+			get => _screenSections.Position.Scale(-1d);
+			set => _screenSections.Position = value.Scale(-1d);
 		}
 
 		#region Map Sections
@@ -93,7 +95,7 @@ namespace MSetExplorer
 			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
 			{
 				_screenSections.HideScreenSections();
-				_screenSections.Position = new PointDbl(_vm.CurrentJob.CanvasControlOffset);
+				Position = new PointDbl(_vm.CurrentJob.CanvasControlOffset);
 			}
 			else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
 			{
@@ -186,17 +188,17 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"Will start job here with position: {blockPosition}.");
 
-					//var rect = _selectedArea.Area;
-					//_selectedArea.Deactivate();
+					var adjArea = _selectedArea.Area.Translate(Position);
+					var adjAreaInt = adjArea.Round();
 
-					//var area = new RectangleInt(
-					//	new PointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y)),
-					//	new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
-					//);
+					//var area = new RectangleInt(_selectedArea.Area);
 
-					var area = new RectangleInt(_selectedArea.Area);
+					//// Adjust the selected area's origin to account for the portion of the start block that is off screen.
+					//var canvasOffset = Position.Round();
+					//var adjArea = area.Translate(canvasOffset);
+
 					_selectedArea.Deactivate();
-					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, area));
+					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, adjAreaInt));
 				}
 			}
 		}
@@ -247,7 +249,7 @@ namespace MSetExplorer
 		{
 			get
 			{
-				var result = new SizeInt(MainCanvas.ActualWidth, MainCanvas.ActualHeight);
+				var result = new SizeDbl(MainCanvas.ActualWidth, MainCanvas.ActualHeight).Round();
 				return result;
 			}
 			

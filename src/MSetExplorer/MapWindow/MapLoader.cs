@@ -118,18 +118,19 @@ namespace MSetExplorer
 			// Translate subdivision coordinates to block coordinates.
 			var blockPosition = mapSectionResponse.BlockPosition.Diff(_mapBlockOffset);
 
-			// Scale block coordinates to canvas coordinates
-			var canvasPosition = blockPosition.Scale(_blockSize);
+			//// Scale block coordinates to canvas coordinates
+			//var canvasPosition = blockPosition.Scale(_blockSize);
 
-			// Shift the position to the left and upwards so that
-			//		some of the pixels in the left-most block are off-canvas
-			//		and some of the pixels in the top-most block are off-canvas.
-			var offset = new SizeInt((int)_job.CanvasControlOffset.Width, (int)_job.CanvasControlOffset.Height);
-			var canvasPositionWithOffset = canvasPosition.Diff(offset);
+			//// Shift the position to the left and upwards so that
+			////		some of the pixels in the left-most block are off-canvas
+			////		and some of the pixels in the top-most block are off-canvas.
+			//var offset = new SizeInt(_job.CanvasControlOffset);
+			//var canvasPositionWithOffset = canvasPosition.Diff(offset);
 
 			//Debug.WriteLine($"MapLoader handling response. BlkPos: {blockPosition}, Offset: {offset}, CanvasPosWithOffset: {canvasPositionWithOffset}.");
 
-			var mapSection = new MapSection(blockPosition, canvasPositionWithOffset, _blockSize, pixels1d);
+			//var mapSection = new MapSection(blockPosition, canvasPositionWithOffset, _blockSize, pixels1d);
+			var mapSection = new MapSection(blockPosition, _blockSize, pixels1d);
 
 			_callback(JobNumber, mapSection);
 

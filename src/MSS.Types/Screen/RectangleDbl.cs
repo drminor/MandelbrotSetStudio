@@ -62,6 +62,12 @@ namespace MSS.Types
 			return result;
 		}
 
+		public RectangleInt Round()
+		{
+			var result = new RectangleInt((int)Math.Round(X1), (int)Math.Round(X2), (int)Math.Round(Y1), (int)Math.Round(Y2));
+			return result;
+		}
+
 		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)

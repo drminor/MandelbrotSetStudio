@@ -9,9 +9,6 @@ namespace MSS.Types
 		public RectangleInt(PointInt point, SizeInt size) : this(point.X, point.X + size.Width, point.Y, point.Y + size.Height)
 		{ }
 
-		public RectangleInt(RectangleDbl rectDbl) : this((int)Math.Round(rectDbl.X1), (int)Math.Round(rectDbl.X2), (int)Math.Round(rectDbl.Y1), (int)Math.Round(rectDbl.Y2))
-		{ }
-
 		public RectangleInt(int x1, int x2, int y1, int y2)
 		{
 			X1 = x1;

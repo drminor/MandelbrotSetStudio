@@ -63,14 +63,15 @@ namespace MSetExplorer
 		{
 			var curJob = _vm.CurrentJob;
 			var position = curJob.MSetInfo.Coords.LeftBot;
-			var canvasControlOffset = curJob.CanvasControlOffset;
+			//var canvasControlOffset = curJob.CanvasControlOffset;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
-			// Adjust the selected area's origin to account for the portion of the start block that is off screen.
-			var canvasOffset = new SizeInt(canvasControlOffset);
-			var adjArea = e.Area.Translate(canvasOffset);
+			//// Adjust the selected area's origin to account for the portion of the start block that is off screen.
+			//var canvasOffset = canvasControlOffset.Round();
+			//var adjArea = e.Area.Translate(canvasOffset);
+			//var coords = RMapHelper.GetMapCoords(adjArea, position, samplePointDelta);
 
-			var coords = RMapHelper.GetMapCoords(adjArea, position, samplePointDelta);
+			var coords = RMapHelper.GetMapCoords(e.Area, position, samplePointDelta);
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {e.TransformType}.");
 			_vm.UpdateMapView(e.TransformType, e.Area.Size, coords);
