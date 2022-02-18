@@ -191,27 +191,6 @@ namespace MSS.Common
 			return result;
 		}
 
-		//public static PointInt GetBlockPosition(PointInt posYInverted, SizeInt mapBlockOffset, SizeInt blockSize)
-		//{
-		//	var pos = posYInverted.Diff(mapBlockOffset);
-
-		//	var left = Math.DivRem(pos.X, blockSize.Width, out var remainder);
-		//	if (remainder == 0 && left > 0)
-		//	{
-		//		left--;
-		//	}
-
-		//	var bottom = Math.DivRem(pos.Y, blockSize.Height, out remainder);
-		//	if (remainder == 0 && bottom > 0)
-		//	{
-		//		bottom--;
-		//	}
-
-		//	var botRight = new PointInt(left, bottom).Scale(blockSize);
-		//	var center = botRight.Translate(new SizeInt(blockSize.Width / 2, blockSize.Height / 2));
-		//	return center;
-		//}
-
 		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
 		public static SizeInt GetMapBlockOffset(RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out SizeDbl canvasControlOffset)

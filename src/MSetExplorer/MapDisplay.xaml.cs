@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace MSetExplorer
 {
@@ -41,7 +40,6 @@ namespace MSetExplorer
 			}
 			else
 			{
-				//MainCanvas.MouseLeftButtonUp += Canvas_MouseLeftButtonUp;
 				MainCanvas.SizeChanged += Canvas_SizeChanged;
 				TriggerCanvasSizeUpdate();
 
@@ -80,10 +78,8 @@ namespace MSetExplorer
 				_screenSections.HideScreenSections();
 
 				var offset = _vm.CurrentJob.CanvasControlOffset;
-
 				_screenSections.Position = new PointDbl(offset).Scale(-1d);
 				_selectedArea.CanvasControlOffset = offset;
-				//Position = new PointDbl(_vm.CurrentJob.CanvasControlOffset);
 			}
 			else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
 			{
@@ -96,69 +92,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		#endregion
-
-		#region Drag and Selection Logic
-
-		//private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-		//{
-		//	var controlPos = e.GetPosition(relativeTo: MainCanvas);
-
-		//	if (_selectedArea.InDrag)
-		//	{
-		//		_selectedArea.InDrag = false;
-		//		HandleDragComplete(controlPos);
-		//	}
-		//	else
-		//	{
-		//		HandleSelectionRect(controlPos);
-		//	}
-		//}
-
-		//private void HandleDragComplete(Point controlPos)
-		//{
-		//	var offset = _selectedArea.GetDragOffset(controlPos).Round();
-		//	Debug.WriteLine($"We are handling a DragComplete with offset:{offset}.");
-
-		//	ScreenPanned?.Invoke(this, new ScreenPannedEventArgs(TransformType.Pan, offset));
-		//}
-
-		//private void HandleSelectionRect(Point controlPos)
-		//{
-		//	// The canvas has coordinates where the y value increases from top to bottom.
-		//	var posYInverted = new Point(controlPos.X, MainCanvas.ActualHeight - controlPos.Y);
-
-		//	// Get the center of the block on which the mouse is over.
-		//	var blockPosition = _vm.GetBlockPosition(posYInverted);
-
-		//	Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {controlPos}. ");
-
-		//	if (!_selectedArea.IsActive)
-		//	{
-		//		_selectedArea.Activate(blockPosition);
-		//	}
-		//	else
-		//	{
-		//		if (_selectedArea.Contains(posYInverted))
-		//		{
-		//			Debug.WriteLine($"Will start job here with position: {blockPosition}.");
-
-		//			// Add the Canvas Control Offset to convert from canvas to screen coordinates.
-		//			var adjArea = _selectedArea.Area.Translate(Position);
-		//			var adjAreaInt = adjArea.Round();
-
-		//			_selectedArea.Deactivate();
-		//			AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, adjAreaInt));
-		//		}
-		//	}
-		//}
-
-		//private PointDbl Position
-		//{
-		//	get => _screenSections.Position.Scale(-1d);
-		//	set => _screenSections.Position = value.Scale(-1d);
-		//}
 
 		#endregion
 
