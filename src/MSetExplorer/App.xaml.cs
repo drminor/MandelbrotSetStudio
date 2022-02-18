@@ -16,9 +16,6 @@ namespace MSetExplorer
 		private const string SERVER_EXE_PATH = @"C:\Users\david\source\repos\MandelbrotSetStudio\src_FGEN\MEngineService\bin\x64\Debug\net5.0\MEngineService.exe";
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
-		
-		private static readonly bool USE_MAP_NAV_SIM;
-		private static readonly bool USE_MAP_SECTION_REPO = true;
 
 		private MapSectionPersistProcessor _mapSectionPersistProcessor;
 		private MapSectionRequestProcessor _mapSectionRequestProcessor;
@@ -26,6 +23,9 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
+			bool USE_MAP_NAV_SIM = false;
+			bool USE_MAP_SECTION_REPO = true;
+
 			base.OnStartup(e);
 
 			StartServer();

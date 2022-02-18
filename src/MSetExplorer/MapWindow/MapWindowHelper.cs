@@ -3,6 +3,7 @@ using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -49,6 +50,27 @@ namespace MSetExplorer
 			var result = projectAdapter.GetOrCreateSubdivision(pos, samplePointDelta, blockSize, out var created);
 
 			return result;
+		}
+
+		public static PointInt GetBlockPosition(PointDbl screenPosition, SizeInt blockSize)
+		{
+			var pos = screenPosition.Round();
+
+			var left = Math.DivRem(pos.X, blockSize.Width, out var remainder);
+			if (remainder == 0 && left > 0)
+			{
+				left--;
+			}
+
+			var bottom = Math.DivRem(pos.Y, blockSize.Height, out remainder);
+			if (remainder == 0 && bottom > 0)
+			{
+				bottom--;
+			}
+
+			var botRight = new PointInt(left, bottom).Scale(blockSize);
+			var center = botRight.Translate(new SizeInt(blockSize.Width / 2, blockSize.Height / 2));
+			return center;
 		}
 
 		public static MSetInfo BuildInitialMSetInfo(int maxIterations)

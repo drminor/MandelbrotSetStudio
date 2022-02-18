@@ -1,4 +1,5 @@
 ﻿using MSetExplorer.ScreenHelpers;
+using MSS.Common;
 using MSS.Types;
 using System;
 using System.Diagnostics;
@@ -16,26 +17,32 @@ namespace MSetExplorer.MapWindow
 		private const int PITCH = 16;
 
 		private readonly Canvas _canvas;
-		private readonly SizeInt _defaultSize;
+		private readonly SizeInt _blockSize; // Also used as the initial size of the selection rectangle.
 		private readonly Rectangle _selectedArea;
+		private readonly Line _dragLine;
 
 		private bool _isActive;
-
 		private bool _inDrag;
 		private Point _dragAnchor;
-		private Line _dragLine;
+
+		private bool _dragIsBeingCancelled;
+
+		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
+		internal event EventHandler<ScreenPannedEventArgs> ScreenPanned;
+
 
 		#region Constructor
 
-		public SelectionRectangle(Canvas canvas, SizeInt defaultSize)
+		public SelectionRectangle(Canvas canvas, SizeDbl canvasControlOffset, SizeInt blockSize)
 		{
 			_canvas = canvas;
-			_defaultSize = defaultSize;
+			CanvasControlOffset = canvasControlOffset;
+			_blockSize = blockSize;
 
 			_selectedArea = new Rectangle()
 			{
-				Width = _defaultSize.Width,
-				Height = _defaultSize.Height,
+				Width = _blockSize.Width,
+				Height = _blockSize.Height,
 				Fill = Brushes.Transparent,
 				Stroke = BuildDrawingBrush(),
 				StrokeThickness = 4,
@@ -59,10 +66,11 @@ namespace MSetExplorer.MapWindow
 			_ = _canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 20);
 
-			//Move(new Point(0, 0));
-
 			_selectedArea.KeyUp += SelectedArea_KeyUp;
 
+			canvas.PreviewKeyUp += Canvas_PreviewKeyUp;
+
+			canvas.MouseLeftButtonUp += Canvas_MouseLeftButtonUp;
 			canvas.MouseLeftButtonDown += Canvas_MouseLeftButtonDown;
 			canvas.MouseWheel += Canvas_MouseWheel;
 			canvas.MouseMove += Canvas_MouseMove;
@@ -70,14 +78,14 @@ namespace MSetExplorer.MapWindow
 			canvas.MouseEnter += Canvas_MouseEnter;
 			canvas.MouseLeave += Canvas_MouseLeave;
 
-			// Just for Diagnostics
-			_selectedArea.MouseWheel += SelectedArea_MouseWheel;
-			_selectedArea.MouseLeftButtonDown += SelectedArea_MouseLeftButtonDown;
+			canvas.Focusable = true;
 		}
 
 		#endregion
 
 		#region Public Properties
+
+		public SizeDbl CanvasControlOffset { get; set; }
 
 		public RectangleDbl Area
 		{
@@ -86,6 +94,7 @@ namespace MSetExplorer.MapWindow
 				var p = GetPosition();
 				var s = GetSize();
 				var result = new RectangleDbl(new PointDbl(p.X, p.Y), new SizeDbl(s.Width, s.Height));
+
 				return result;
 			}
 		}
@@ -94,28 +103,9 @@ namespace MSetExplorer.MapWindow
 		// Return the distance from the DragAnchor to the new mouse position.
 		public SizeDbl GetDragOffset(Point controlPos)
 		{
-			//var vector = _dragAnchor - controlPos;
-			//var vector = controlPos - _dragAnchor;
-			//var result = new SizeDbl(vector.X, vector.Y);
-
-			//var resultTest = new SizeDbl
-			//	(
-			//		width: controlPos.X - _dragAnchor.X,
-			//		height: _dragAnchor.Y - controlPos.Y
-			//	);
-
 			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
 			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
-
-			var result = endP.Diff(startP); //.Scale(-1d);
-
-			//var result = new SizeDbl
-			//	(
-			//		width: _dragAnchor.X - controlPos.X,
-			//		height: _canvas.ActualHeight - _dragAnchor.Y - (_canvas.ActualHeight - controlPos.Y)
-			//	)/*.Scale(-1d)*/;
-
-			//Debug.Assert(result == diff, "DragOffset test is different.");
+			var result = endP.Diff(startP);
 
 			return result;
 		}
@@ -135,8 +125,8 @@ namespace MSetExplorer.MapWindow
 					else
 					{
 						_selectedArea.Visibility = Visibility.Hidden;
-						_selectedArea.Width = _defaultSize.Width;
-						_selectedArea.Height = _defaultSize.Height;
+						_selectedArea.Width = _blockSize.Width;
+						_selectedArea.Height = _blockSize.Height;
 					}
 
 					_isActive = value;
@@ -154,11 +144,14 @@ namespace MSetExplorer.MapWindow
 				{
 					if (value)
 					{
+						Mouse.Capture(_canvas);
 						_dragLine.Visibility = Visibility.Visible;
+						_canvas.Focus();
 					}
 					else
 					{
 						_dragLine.Visibility = Visibility.Hidden;
+						Mouse.Capture(null);
 					}
 
 					_inDrag = value;
@@ -210,15 +203,30 @@ namespace MSetExplorer.MapWindow
 
 		#region Event Handlers
 
+		private void Canvas_PreviewKeyUp(object sender, KeyEventArgs e)
+		{
+			if (!InDrag)
+			{
+				Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- not in drag.");
+				return;
+			}
+
+			if (e.Key == Key.Escape)
+			{
+				Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
+				_dragIsBeingCancelled = true;
+			}
+		}
+
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
 		{
+			Debug.WriteLine($"The {e.Key} was pressed on the Selected Area.");
+
 			if (!IsActive)
 			{
 				//Debug.WriteLine($"The {e.Key} was pressed, but we are not active, returning.");
 				return;
 			}
-
-			//Debug.WriteLine($"The {e.Key} was pressed.");
 
 			if (e.Key == Key.Escape)
 			{
@@ -278,27 +286,88 @@ namespace MSetExplorer.MapWindow
 			{
 				if (e.LeftButton == MouseButtonState.Pressed)
 				{
-					if (!_inDrag)
+					if (!InDrag)
 					{
 						var dist = _dragAnchor - controlPos;
-						if (Math.Abs(dist.Length) > 5)
+						if (Math.Abs(dist.Length) > 3)
 						{
-							_inDrag = true;
-							_dragLine.Visibility = Visibility.Visible;
+							_dragLine.X1 = _dragAnchor.X;
+							_dragLine.Y1 = _dragAnchor.Y;
+							_dragLine.X2 = _dragAnchor.X;
+							_dragLine.Y2 = _dragAnchor.Y;
+
+							InDrag = true;
 						}
 					}
 
-					if (_inDrag)
+					if (InDrag)
 					{
-						_dragLine.X1 = _dragAnchor.X;
-						_dragLine.Y1 = _dragAnchor.Y;
-						_dragLine.X2 = controlPos.X;
-						_dragLine.Y2 = controlPos.Y;
+						SetDragPosition(controlPos);
 					}
 				}
 			}
 		}
 
+		private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+		{
+			if (_dragIsBeingCancelled)
+			{
+				_dragIsBeingCancelled = false;
+				InDrag = false;
+				return;
+			}
+
+			var controlPos = e.GetPosition(relativeTo: _canvas);
+
+			if (InDrag)
+			{
+				HandleDragComplete(controlPos);
+			}
+			else
+			{
+				HandleSelectionRect(controlPos);
+			}
+		}
+
+		private void HandleDragComplete(Point controlPos)
+		{
+			InDrag = false;
+			var offset = GetDragOffset(controlPos).Round();
+			Debug.WriteLine($"We are handling a DragComplete with offset:{offset}.");
+
+			ScreenPanned?.Invoke(this, new ScreenPannedEventArgs(TransformType.Pan, offset));
+		}
+
+		private void HandleSelectionRect(Point controlPos)
+		{
+			// The canvas has coordinates where the y value increases from top to bottom.
+			var posYInverted = new Point(controlPos.X, _canvas.ActualHeight - controlPos.Y);
+
+			// Get the center of the block on which the mouse is over.
+			var blockPosition = GetBlockPosition(posYInverted);
+
+			Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {controlPos}. The blockPosition is {blockPosition} ");
+
+			if (!IsActive)
+			{
+				Activate(blockPosition);
+			}
+			else
+			{
+				if (Contains(posYInverted))
+				{
+					// Substract the Canvas Control Offset to convert from canvas to screen coordinates.
+					var adjArea = Area.Translate(CanvasControlOffset.Scale(-1d));
+					var adjAreaInt = adjArea.Round();
+
+					Deactivate();
+
+					Debug.WriteLine($"Will start job here with position: {adjArea.Position}, The blockPos={blockPosition}, .");
+
+					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, adjAreaInt));
+				}
+			}
+		}
 		private void Canvas_MouseLeave(object sender, MouseEventArgs e)
 		{
 			if (_isActive)
@@ -367,6 +436,7 @@ namespace MSetExplorer.MapWindow
 
 		#region Private Methods
 
+		// Reposition the Selection Rectangle, keeping it's current size.
 		private void Move(Point position)
 		{
 			//Debug.WriteLine($"Moving the sel rec to {position}, free form.");
@@ -407,6 +477,7 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
+		// Reposition the Selection Rectangle and update its size.
 		private void Move(Point position, Size size)
 		{
 			//Debug.WriteLine($"Moving the sel rec to {position}, with size: {size}");
@@ -442,6 +513,54 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
+		// Position the current end of the drag line
+		private void SetDragPosition(Point controlPos)
+		{
+			var dist = controlPos - _dragAnchor;
+
+			// Horizontal
+			var x = RoundOff(dist.X, PITCH);
+
+			x = _dragAnchor.X + x;
+
+			if (x < 0)
+			{
+				x += PITCH;
+			}
+
+			if (x > _canvas.ActualWidth)
+			{
+				x -= PITCH;
+			}
+
+			if (Math.Abs(_dragLine.X2 - x) > 0.01)
+			{
+				_dragLine.X2 = x;
+			}
+
+			// Vertical
+			var y = RoundOff(dist.Y, PITCH);
+			y = _dragAnchor.Y + y;
+
+			if (y < 0)
+			{
+				y += PITCH;
+			}
+
+			if (y > _canvas.ActualWidth)
+			{
+				y -= PITCH;
+			}
+
+			if (Math.Abs(_dragLine.Y2 - y) > 0.01)
+			{
+				_dragLine.Y2 = y;
+			}
+
+			//_dragLine.X2 = controlPos.X;
+			//_dragLine.Y2 = controlPos.Y;
+		}
+
 		private Point GetPosition()
 		{
 			var x = (double)_selectedArea.GetValue(Canvas.LeftProperty);
@@ -475,6 +594,14 @@ namespace MSetExplorer.MapWindow
 			//Debug.WriteLine($"Activating to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
 		}
 
+		private Point GetCanvasPosition()
+		{
+			var generalTransform = _canvas.TransformToAncestor(Application.Current.MainWindow);
+			var relativePoint = generalTransform.Transform(new Point(0, 0));
+
+			return relativePoint;
+		}
+
 		//private void ReportPosition(Point posYInverted)
 		//{
 		//	var position = new Point(posYInverted.X, _canvas.ActualHeight - posYInverted.Y);
@@ -488,12 +615,14 @@ namespace MSetExplorer.MapWindow
 		//	Debug.WriteLine($"Mouse moved to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
 		//}
 
-		private Point GetCanvasPosition()
+		public Point GetBlockPosition(Point posYInverted)
 		{
-			var generalTransform = _canvas.TransformToAncestor(Application.Current.MainWindow);
-			var relativePoint = generalTransform.Transform(new Point(0, 0));
+			var pointDbl = new PointDbl(posYInverted.X, posYInverted.Y);
+			var screenPos = pointDbl.Translate(CanvasControlOffset);
 
-			return relativePoint;
+			var result = MapWindowHelper.GetBlockPosition(screenPos, _blockSize);
+
+			return new Point(result.X, result.Y);
 		}
 
 		#endregion

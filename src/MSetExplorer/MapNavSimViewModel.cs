@@ -70,17 +70,17 @@ namespace MSetExplorer
 			LoadMap(prevRequest.Job.Label, canvasControlSize, mSetInfo, transformType, newArea);
 		}
 
-		public Point GetBlockPosition(Point posYInverted)
-		{
-			var pointInt = new PointInt((int)posYInverted.X, (int)posYInverted.Y);
+		//public Point GetBlockPosition(Point posYInverted)
+		//{
+		//	var pointInt = new PointInt((int)posYInverted.X, (int)posYInverted.Y);
 
-			var curReq = CurrentRequest;
-			var mapBlockOffset = curReq?.Job.MapBlockOffset ?? new SizeInt();
+		//	var curReq = CurrentRequest;
+		//	var mapBlockOffset = curReq?.Job.MapBlockOffset ?? new SizeInt();
 
-			var blockPos = RMapHelper.GetBlockPosition(pointInt, mapBlockOffset, BlockSize);
+		//	var blockPos = RMapHelper.GetBlockPosition(pointInt, mapBlockOffset, BlockSize);
 
-			return new Point(blockPos.X, blockPos.Y);
-		}
+		//	return new Point(blockPos.X, blockPos.Y);
+		//}
 
 		#endregion
 	}

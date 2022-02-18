@@ -110,17 +110,17 @@ namespace MSetExplorer
 			}
 		}
 
-		public Point GetBlockPosition(Point posYInverted)
-		{
-			var pointInt = new PointDbl(posYInverted.X, posYInverted.Y).Round();
+		//public Point GetBlockPosition(Point posYInverted)
+		//{
+		//	var pointInt = new PointDbl(posYInverted.X, posYInverted.Y).Round();
 
-			var curJob = _navStack.CurrentJob;
-			var mapBlockOffset = curJob?.MapBlockOffset ?? new SizeInt();
+		//	var curJob = _navStack.CurrentJob;
+		//	var mapBlockOffset = curJob?.MapBlockOffset ?? new SizeInt();
 
-			var blockPos = RMapHelper.GetBlockPosition(pointInt, mapBlockOffset, BlockSize);
+		//	var blockPos = RMapHelper.GetBlockPosition(pointInt, mapBlockOffset, BlockSize);
 
-			return new Point(blockPos.X, blockPos.Y);
-		}
+		//	return new Point(blockPos.X, blockPos.Y);
+		//}
 
 		public void SaveProject()
 		{

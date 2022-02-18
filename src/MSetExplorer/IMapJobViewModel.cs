@@ -15,7 +15,7 @@ namespace MSetExplorer
 		bool CanGoForward { get; }
 		Job CurrentJob { get; }
 
-		Point GetBlockPosition(Point posYInverted);
+		//Point GetBlockPosition(Point posYInverted);
 		void GoBack();
 		void GoForward();
 

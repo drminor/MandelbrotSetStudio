@@ -9,18 +9,14 @@
     <Grid>
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
-            <Canvas Name="MainCanvas" Width="768" Height="768" 
-                        HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent" 
-                        
-                        ClipToBounds="True">
-                <!--MouseLeftButtonDown="MseLeftButtonDown" MouseLeftButtonUp="MseLeftButtonUp" MouseMove="MseMove"-->
+            <!--<Canvas Name="MainCanvas22" Width="768" Height="768" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent" ClipToBounds="True" />-->
 
-                <!--<Border Width="772" Height="772" HorizontalAlignment="Center" VerticalAlignment="Center" BorderThickness="1" BorderBrush="BlueViolet"
+            <Canvas Name="MainCanvas" Width="768" Height="768" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent" ClipToBounds="False">
+                <Border Width="772" Height="772" HorizontalAlignment="Center" VerticalAlignment="Center" BorderThickness="1" BorderBrush="BlueViolet"
                         Canvas.Left="-2" Canvas.Top="-2" Panel.ZIndex="100">
-                </Border>-->
-
+                </Border>
             </Canvas>
-            
+
         </Border>
     </Grid>
 </UserControl>
