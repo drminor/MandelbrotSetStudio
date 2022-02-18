@@ -24,11 +24,35 @@ namespace MSS.Common
 			return result;
 		}
 
+		// TODO: Consider adding a scale method to RSize that scales a RectangleInt.
 		private static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
 		{
 			var result = new RRectangle(area.X1 * factor.Width, area.X2 * factor.Width, area.Y1 * factor.Height, area.Y2 * factor.Height, factor.Exponent);
 			return result;
 		}
+
+		public static RRectangle GetMapCoords(SizeInt offset, RRectangle coords, RSize samplePointDelta)
+		{
+			// Multiply the area by samplePointDelta to convert to map coordinates.
+			var rOffset = ScaleByRsize(offset, samplePointDelta);
+
+			// Translate the area by the current map position
+			var nrmCoords = RN.Normalize(coords, rOffset, out var nrmOffset);
+			var result = nrmCoords.Translate(nrmOffset);
+
+			return result;
+		}
+
+		private static RSize ScaleByRsize(SizeInt offset, RSize factor)
+		{
+			var result = new RSize(offset.Width * factor.Width, offset.Height * factor.Height, factor.Exponent);
+
+			var rt = factor.Scale(offset);
+			Debug.Assert(result == rt, "ScaleByRSize-Size mismatch.");
+
+			return result;
+		}
+
 
 		#endregion
 
@@ -239,21 +263,29 @@ namespace MSS.Common
 
 		private static SizeInt GetOffsetAndRemainder(SizeInt offSetInSamplePoints, SizeInt blockSize, out SizeDbl canvasControlOffset)
 		{
-			var offset = offSetInSamplePoints.Divide(blockSize);
-			var offsetInBlocks = offset.Abs().Ceiling().Scale(offset.GetSign());
+			var blocksH = Math.DivRem(offSetInSamplePoints.Width, blockSize.Width, out var remainderH);
+			var blocksV = Math.DivRem(offSetInSamplePoints.Height, blockSize.Height, out var remainderV);
 
-			var rem = offset.Diff(offsetInBlocks);
-			var remS = rem.Scale(blockSize);
-			var remT = remS.Translate(blockSize);
+			var wholeBlocks = offSetInSamplePoints.DivRem(blockSize, out var remainder);
+			Debug.WriteLine($"Whole blocks: {wholeBlocks}, Remaining Pixels: {remainder}.");
 
-			//var remM = remT.Mod(blockSize);
-			//canvasControlOffset = remM.Scale(-1d);
+			if (remainderH < 0)
+			{
+				blocksH--;
+				remainderH = blockSize.Width + remainderH; // Want to display the last remainderH of the block, so we pull the display blkSize - remainderH to the left.
+			}
 
-			canvasControlOffset = remT.Mod(blockSize);
+			if (remainderV < 0)
+			{
+				blocksV--;
+				remainderV = blockSize.Height + remainderV; // Want to display the last remainderV of the block, so we pull the display blkSize - remainderH down.
+			}
 
-			Debug.WriteLine($"Starting Block Pos: {offsetInBlocks}, Pixel Pos: {canvasControlOffset}.");
+			var offSetInBlocks = new SizeInt(blocksH, blocksV);
+			canvasControlOffset = new SizeDbl(remainderH, remainderV);
 
-			return offsetInBlocks;
+			Debug.WriteLine($"Starting Block Pos: {offSetInBlocks}, Pixel Pos: {canvasControlOffset}.");
+			return offSetInBlocks;
 		}
 
 		#endregion
@@ -342,6 +374,25 @@ namespace MSS.Common
 			return result;
 		}
 
+		private static SizeInt GetOffsetAndRemainderV2(SizeInt offSetInSamplePoints, SizeInt blockSize, out SizeDbl canvasControlOffset)
+		{
+			var offset = offSetInSamplePoints.Divide(blockSize);
+			var offsetInBlocks = offset.Abs().Ceiling().Scale(offset.GetSign());
+
+			var rem = offset.Diff(offsetInBlocks);
+			var remS = rem.Scale(blockSize);
+			var remT = remS.Translate(blockSize);
+
+			//var remM = remT.Mod(blockSize);
+			//canvasControlOffset = remM.Scale(-1d);
+
+			canvasControlOffset = remT.Mod(blockSize);
+
+			Debug.WriteLine($"Starting Block Pos: {offsetInBlocks}, Pixel Pos: {canvasControlOffset}.");
+
+			return offsetInBlocks;
+		}
+
 		private static SizeInt GetOffsetAndRemainderOld(SizeInt offSetInSamplePoints, SizeInt blockSize, out SizeDbl canvasControlOffset)
 		{
 			var blocksH = Math.DivRem(offSetInSamplePoints.Width, blockSize.Width, out var remainderH);
@@ -362,7 +413,7 @@ namespace MSS.Common
 			}
 			else if (remainderH > 0)
 			{
-				blocksH++;
+				//blocksH++;
 				//remainderH = blockSize.Width - remainderH; // Want to skip over the remainderH of the block, so we pull the display remainderH to the left.
 			}
 
@@ -373,12 +424,12 @@ namespace MSS.Common
 			}
 			else if (remainderV > 0)
 			{
-				blocksV++;
+				//blocksV++;
 				//remainderV = blockSize.Height - remainderV;  // Want to skip over the remainderV of the block, so we pull the display remainderV down.
 			}
 
 			var offSetInBlocks = new SizeInt(blocksH, blocksV);
-			canvasControlOffset = new SizeDbl(remainderH, remainderV).Scale(-1d);
+			canvasControlOffset = new SizeDbl(remainderH, remainderV); //.Scale(-1d);
 
 			Debug.WriteLine($"Starting Block Pos: {offSetInBlocks}, Pixel Pos: {canvasControlOffset}.");
 

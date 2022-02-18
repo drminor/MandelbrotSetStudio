@@ -22,17 +22,11 @@ namespace MSetExplorer
 		{
 			BlockSize = blockSize;
 			_projectAdapter = projectAdapter;
-
-			Project = _projectAdapter.GetOrCreateProject("Home");
-
-			//_mapCoords = new RRectangle();
-			//_mapCalcSettings = new MapCalcSettings();
-			//_colorMapEntries = Array.Empty<ColorMapEntry>();
 			_canvasSize = new SizeInt();
+			_navStack = new MapLoaderJobStack(mapSectionRequestProcessor, HandleMapSectionReady, HandleMapNav);
 
 			MapSections = new ObservableCollection<MapSection>();
-
-			_navStack = new MapLoaderJobStack(mapSectionRequestProcessor, HandleMapSectionReady, HandleMapNav);
+			Project = _projectAdapter.GetOrCreateProject("Home");
 		}
 
 		#endregion
@@ -48,31 +42,6 @@ namespace MSetExplorer
 
 		public ObservableCollection<MapSection> MapSections { get; init; }
 
-		//private MapCalcSettings _mapCalcSettings;
-		//public MapCalcSettings MapCalcSettings
-		//{
-		//	get => _mapCalcSettings;
-		//	set { _mapCalcSettings = value; OnPropertyChanged(); }
-		//}
-
-		//private ColorMapEntry[] _colorMapEntries;
-		//public ColorMapEntry[] ColorMapEntries
-		//{
-		//	get => _colorMapEntries;
-		//	set { _colorMapEntries = value; OnPropertyChanged(); }
-		//}
-
-		//private RRectangle _mapCoords;
-		//public RRectangle MapCoords
-		//{
-		//	get => _mapCoords;
-		//	set
-		//	{
-		//		_mapCoords = value;
-		//		OnPropertyChanged();
-		//	}
-		//}
-
 		private SizeInt _canvasSize;
 		public SizeInt CanvasSize
 		{
@@ -86,19 +55,41 @@ namespace MSetExplorer
 
 		public void SetMapInfo(MSetInfo mSetInfo)
 		{
-			//MapCalcSettings = mSetInfo.MapCalcSettings;
-			//ColorMapEntries = mSetInfo.ColorMapEntries;
-			//MapCoords = mSetInfo.Coords;
-
 			LoadMap(mSetInfo, TransformType.None, newArea: new SizeInt());
 		}
 
-		public void UpdateMapView(TransformType transformType, SizeInt newArea, RRectangle coords)
+		public void UpdateMapViewZoom(RectangleInt newArea)
 		{
-			//MapCoords = coords;
+			var curJob = CurrentJob;
+			var position = curJob.MSetInfo.Coords.LeftBot;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+
+			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}.");
+			UpdateMapView(TransformType.Zoom, newArea.Size, coords);
+		}
+
+		public void UpdateMapViewPan(SizeInt offset)
+		{
+			var curJob = CurrentJob;
+			var coords = curJob.MSetInfo.Coords;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			var newSize = curJob.NewArea; // The new area is not changing
+
+			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
+			var invOffset = offset.Scale(-1d);
+			var updatedCoords = RMapHelper.GetMapCoords(invOffset, coords, samplePointDelta);
+
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Pan}. SamplePointDelta: {samplePointDelta}");
+			UpdateMapView(TransformType.Pan, newSize, updatedCoords);
+		}
+
+		private void UpdateMapView(TransformType transformType, SizeInt newSize, RRectangle coords)
+		{
 			var mSetInfo = _navStack.CurrentJob.MSetInfo;
 			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-			LoadMap(updatedInfo, transformType, newArea);
+			LoadMap(updatedInfo, transformType, newSize);
 		}
 
 		public void GoBack()
@@ -123,8 +114,8 @@ namespace MSetExplorer
 		{
 			var pointInt = new PointDbl(posYInverted.X, posYInverted.Y).Round();
 
-			var curReq = _navStack.CurrentRequest;
-			var mapBlockOffset = curReq?.Job?.MapBlockOffset ?? new SizeInt();
+			var curJob = _navStack.CurrentJob;
+			var mapBlockOffset = curJob?.MapBlockOffset ?? new SizeInt();
 
 			var blockPos = RMapHelper.GetBlockPosition(pointInt, mapBlockOffset, BlockSize);
 
@@ -150,14 +141,6 @@ namespace MSetExplorer
 		{
 			var jobs = _projectAdapter.GetAllJobs(Project.Id);
 			_navStack.LoadJobStack(jobs);
-
-			//var curJob = _navStack.CurrentJob;
-
-			//MapCalcSettings = curJob.MSetInfo.MapCalcSettings;
-			//ColorMapEntries = curJob.MSetInfo.ColorMapEntries;
-			//MapCoords = curJob.MSetInfo.Coords;
-
-			//OnPropertyChanged(nameof(CurrentJob));
 		}
 
 		#endregion
@@ -167,15 +150,13 @@ namespace MSetExplorer
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, SizeInt newArea)
 		{
 			var jobName = GetJobName(transformType);
-			var parentJob = _navStack.CurrentRequest?.Job;
+			var parentJob = _navStack.CurrentJob;
 			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 			Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
 			_navStack.Push(job);
 			OnPropertyChanged(nameof(CanGoBack));
 			OnPropertyChanged(nameof(CanGoForward));
-
-			//OnPropertyChanged(nameof(CurrentJob));
 		}
 
 		private string GetJobName(TransformType transformType)
@@ -192,7 +173,6 @@ namespace MSetExplorer
 		private void HandleMapNav()
 		{
 			MapSections.Clear();
-			
 		}
 
 		#endregion

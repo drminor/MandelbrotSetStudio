@@ -8,8 +8,6 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -22,11 +20,8 @@ namespace MSetExplorer
 		private SelectionRectangle _selectedArea;
 		private IScreenSectionCollection _screenSections;
 
-		private bool _inDrag;
-		private Point _dragAnchor;
-		private Line _dragLine;
-
 		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
+		internal event EventHandler<ScreenPannedEventArgs> ScreenPanned;
 
 		#region Constructor
 
@@ -46,6 +41,7 @@ namespace MSetExplorer
 			}
 			else
 			{
+				MainCanvas.MouseLeftButtonUp += Canvas_MouseLeftButtonUp;
 				MainCanvas.SizeChanged += Canvas_SizeChanged;
 				TriggerCanvasSizeUpdate();
 
@@ -53,40 +49,12 @@ namespace MSetExplorer
 				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
 				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
 				_selectedArea = new SelectionRectangle(MainCanvas, _vm.BlockSize);
-				_dragLine = AddDragLine();
 
 				Debug.WriteLine("The MapDisplay is now loaded.");
 			}
 		}
 
-		private Line AddDragLine()
-		{
-			var dragLine = new Line()
-			{
-				Fill = Brushes.DarkGray,
-				Stroke = Brushes.DarkGreen,
-				StrokeThickness = 2,
-				Visibility = Visibility.Hidden
-			};
-
-			_ = MainCanvas.Children.Add(dragLine);
-			dragLine.SetValue(Panel.ZIndexProperty, 20);
-
-			MainCanvas.MouseEnter += Canvas_MouseEnter;
-			MainCanvas.MouseLeave += Canvas_MouseLeave;
-
-			return dragLine;
-		}
-
 		#endregion
-
-		// TODO: Bind the MapDisplay's Position the VM's CurrentJob's CanvasControlOffset.
-
-		public PointDbl Position
-		{
-			get => _screenSections.Position.Scale(-1d);
-			set => _screenSections.Position = value.Scale(-1d);
-		}
 
 		#region Map Sections
 
@@ -113,45 +81,13 @@ namespace MSetExplorer
 
 		#region Drag and Selection Logic
 
-		private void MseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			_dragAnchor = e.GetPosition(relativeTo: MainCanvas);
-		}
-
-		private void MseMove(object sender, MouseEventArgs e)
-		{
-			if (e.LeftButton == MouseButtonState.Pressed)
-			{
-				var controlPos = e.GetPosition(relativeTo: MainCanvas);
-
-				if (!_inDrag)
-				{
-					var dist = _dragAnchor - controlPos;
-					if (Math.Abs(dist.Length) > 5)
-					{
-						_inDrag = true;
-						_dragLine.Visibility = Visibility.Visible;
-					}
-				}
-
-				if (_inDrag)
-				{
-					_dragLine.X1 = _dragAnchor.X;
-					_dragLine.Y1 = _dragAnchor.Y;
-					_dragLine.X2 = controlPos.X;
-					_dragLine.Y2 = controlPos.Y;
-				}
-			}
-		}
-
-		private void MseLeftButtonUp(object sender, MouseButtonEventArgs e)
+		private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
 			var controlPos = e.GetPosition(relativeTo: MainCanvas);
 
-			if (_inDrag)
+			if (_selectedArea.InDrag)
 			{
-				_inDrag = false;
-				_dragLine.Visibility = Visibility.Hidden;
+				_selectedArea.InDrag = false;
 				HandleDragComplete(controlPos);
 			}
 			else
@@ -162,10 +98,10 @@ namespace MSetExplorer
 
 		private void HandleDragComplete(Point controlPos)
 		{
-			// The canvas has coordinates where the y value increases from top to bottom.
-			var posYInverted = new Point(controlPos.X, MainCanvas.ActualHeight - controlPos.Y);
+			var offset = _selectedArea.GetDragOffset(controlPos).Round();
+			Debug.WriteLine($"We are handling a DragComplete with offset:{offset}.");
 
-			Debug.WriteLine($"We are handling a DragComplete at pos:{posYInverted}.");
+			ScreenPanned?.Invoke(this, new ScreenPannedEventArgs(TransformType.Pan, offset));
 		}
 
 		private void HandleSelectionRect(Point controlPos)
@@ -188,14 +124,9 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"Will start job here with position: {blockPosition}.");
 
+					// Add the Canvas Control Offset to convert from canvas to screen coordinates.
 					var adjArea = _selectedArea.Area.Translate(Position);
 					var adjAreaInt = adjArea.Round();
-
-					//var area = new RectangleInt(_selectedArea.Area);
-
-					//// Adjust the selected area's origin to account for the portion of the start block that is off screen.
-					//var canvasOffset = Position.Round();
-					//var adjArea = area.Translate(canvasOffset);
 
 					_selectedArea.Deactivate();
 					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, adjAreaInt));
@@ -203,25 +134,15 @@ namespace MSetExplorer
 			}
 		}
 
+		private PointDbl Position
+		{
+			get => _screenSections.Position.Scale(-1d);
+			set => _screenSections.Position = value.Scale(-1d);
+		}
+
 		#endregion
 
 		#region Canvas Handlers
-
-		private void Canvas_MouseLeave(object sender, MouseEventArgs e)
-		{
-			if (_inDrag)
-			{
-				_dragLine.Visibility = Visibility.Hidden;
-			}
-		}
-
-		private void Canvas_MouseEnter(object sender, MouseEventArgs e)
-		{
-			if (_inDrag)
-			{
-				_dragLine.Visibility = Visibility.Visible;
-			}
-		}
 
 		private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
 		{

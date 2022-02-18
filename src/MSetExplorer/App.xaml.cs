@@ -3,6 +3,7 @@ using MEngineClient;
 using MSetRepo;
 using MSS.Common;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 
 namespace MSetExplorer
@@ -12,16 +13,22 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class App : Application
 	{
+		private const string SERVER_EXE_PATH = @"C:\Users\david\source\repos\MandelbrotSetStudio\src_FGEN\MEngineService\bin\x64\Debug\net5.0\MEngineService.exe";
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
+		
+		private static readonly bool USE_MAP_NAV_SIM;
+		private static readonly bool USE_MAP_SECTION_REPO = true;
+
 		private MapSectionPersistProcessor _mapSectionPersistProcessor;
 		private MapSectionRequestProcessor _mapSectionRequestProcessor;
-
-		private static readonly bool USE_MAP_NAV_SIM = false;
+		private Process _serverProcess;
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
+
+			StartServer();
 
 			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
 			projectAdapter.CreateCollections();
@@ -29,26 +36,18 @@ namespace MSetExplorer
 			var mEngineClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
 			var mapSectionRepo = MSetRepoHelper.GetMapSectionRepo(MONGO_DB_CONN_STRING);
 
-			//_mapSectionPersistProcessor = null;
-			_mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionRepo);
+			_mapSectionPersistProcessor = USE_MAP_SECTION_REPO ? new MapSectionPersistProcessor(mapSectionRepo) : null;
 			_mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, _mapSectionPersistProcessor);
 
-			Window window1;
-
-			if (USE_MAP_NAV_SIM)
-			{
-				window1 = new MapNavSim
-				{
-					DataContext = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
-				};
-			}
-			else
-			{
-				window1 = new MainWindow
-				{
-					DataContext = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
-				};
-			}
+			var window1 = USE_MAP_NAV_SIM
+				? new MapNavSim
+                {
+                    DataContext = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
+                }
+				: (Window)new MainWindow
+                {
+                    DataContext = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
+                };
 
 			window1.Show();
 		}
@@ -69,7 +68,26 @@ namespace MSetExplorer
 
 			Debug.WriteLine("The request and persist processors have been closed.");
 
+			StopServer();
 		}
+		
+		private void StartServer()
+		{
+			var exists = Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(SERVER_EXE_PATH)).Length > 0;
+			if (!exists)
+			{
+				_serverProcess = Process.Start(SERVER_EXE_PATH);
+			}
+		}
+
+		private void StopServer()
+		{
+			if (!(_serverProcess is null))
+			{
+				_serverProcess.Kill();
+			}
+		}
+
 
 	}
 }

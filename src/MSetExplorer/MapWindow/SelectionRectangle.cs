@@ -2,7 +2,6 @@
 using MSS.Types;
 using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -21,6 +20,10 @@ namespace MSetExplorer.MapWindow
 		private readonly Rectangle _selectedArea;
 
 		private bool _isActive;
+
+		private bool _inDrag;
+		private Point _dragAnchor;
+		private Line _dragLine;
 
 		#region Constructor
 
@@ -45,9 +48,22 @@ namespace MSetExplorer.MapWindow
 
 			_isActive = false;
 
+			_dragLine = new Line()
+				{
+					Fill = Brushes.Transparent,
+					Stroke = BuildDrawingBrush(),
+					StrokeThickness = 4,
+					Visibility = Visibility.Hidden
+				};
+
+			_ = _canvas.Children.Add(_dragLine);
+			_dragLine.SetValue(Panel.ZIndexProperty, 20);
+
 			//Move(new Point(0, 0));
 
 			_selectedArea.KeyUp += SelectedArea_KeyUp;
+
+			canvas.MouseLeftButtonDown += Canvas_MouseLeftButtonDown;
 			canvas.MouseWheel += Canvas_MouseWheel;
 			canvas.MouseMove += Canvas_MouseMove;
 
@@ -74,6 +90,36 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
+
+		// Return the distance from the DragAnchor to the new mouse position.
+		public SizeDbl GetDragOffset(Point controlPos)
+		{
+			//var vector = _dragAnchor - controlPos;
+			//var vector = controlPos - _dragAnchor;
+			//var result = new SizeDbl(vector.X, vector.Y);
+
+			//var resultTest = new SizeDbl
+			//	(
+			//		width: controlPos.X - _dragAnchor.X,
+			//		height: _dragAnchor.Y - controlPos.Y
+			//	);
+
+			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
+			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
+
+			var result = endP.Diff(startP); //.Scale(-1d);
+
+			//var result = new SizeDbl
+			//	(
+			//		width: _dragAnchor.X - controlPos.X,
+			//		height: _canvas.ActualHeight - _dragAnchor.Y - (_canvas.ActualHeight - controlPos.Y)
+			//	)/*.Scale(-1d)*/;
+
+			//Debug.Assert(result == diff, "DragOffset test is different.");
+
+			return result;
+		}
+
 		public bool IsActive
 		{
 			get => _isActive;
@@ -94,6 +140,28 @@ namespace MSetExplorer.MapWindow
 					}
 
 					_isActive = value;
+				}
+			}
+		}
+
+		public bool InDrag
+		{
+			get => _inDrag;
+
+			set
+			{
+				if (_inDrag != value)
+				{
+					if (value)
+					{
+						_dragLine.Visibility = Visibility.Visible;
+					}
+					else
+					{
+						_dragLine.Visibility = Visibility.Hidden;
+					}
+
+					_inDrag = value;
 				}
 			}
 		}
@@ -126,9 +194,9 @@ namespace MSetExplorer.MapWindow
 
 		public bool Contains(Point position)
 		{
-			var rp = new Point((double)_selectedArea.GetValue(Canvas.LeftProperty), (double)_selectedArea.GetValue(Canvas.BottomProperty));
-			var rs = new Size(_selectedArea.Width, _selectedArea.Height);
-			var r = new Rect(rp, rs);
+			var p = GetPosition();
+			var s = GetSize();
+			var r = new Rect(p, s);
 
 			var result = r.Contains(position);
 
@@ -141,6 +209,22 @@ namespace MSetExplorer.MapWindow
 		#endregion
 
 		#region Event Handlers
+
+		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
+		{
+			if (!IsActive)
+			{
+				//Debug.WriteLine($"The {e.Key} was pressed, but we are not active, returning.");
+				return;
+			}
+
+			//Debug.WriteLine($"The {e.Key} was pressed.");
+
+			if (e.Key == Key.Escape)
+			{
+				IsActive = false;
+			}
+		}
 
 		private void Canvas_MouseWheel(object sender, MouseWheelEventArgs e)
 		{
@@ -173,32 +257,45 @@ namespace MSetExplorer.MapWindow
 			e.Handled = true;
 		}
 
-		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
+		private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
-			if (!IsActive)
-			{
-				//Debug.WriteLine($"The {e.Key} was pressed, but we are not active, returning.");
-				return;
-			}
-
-			//Debug.WriteLine($"The {e.Key} was pressed.");
-
-			if (e.Key == Key.Escape)
-			{
-				IsActive = false;
-			}
+			_dragAnchor = e.GetPosition(relativeTo: _canvas);
 		}
 
 		private void Canvas_MouseMove(object sender, MouseEventArgs e)
 		{
+			var controlPos = e.GetPosition(relativeTo: _canvas);
+
 			if (_isActive)
 			{
-				// Get position of mouse relative to the main canvas and invert the y coordinate.
-				var position = e.GetPosition(relativeTo: _canvas);
-				position = new Point(position.X, _canvas.ActualHeight - position.Y);
+				// Invert the y coordinate.
+				var posYInverted = new Point(controlPos.X, _canvas.ActualHeight - controlPos.Y);
 
 				//ReportPosition(position);
-				Move(position);
+				Move(posYInverted);
+			}
+			else
+			{
+				if (e.LeftButton == MouseButtonState.Pressed)
+				{
+					if (!_inDrag)
+					{
+						var dist = _dragAnchor - controlPos;
+						if (Math.Abs(dist.Length) > 5)
+						{
+							_inDrag = true;
+							_dragLine.Visibility = Visibility.Visible;
+						}
+					}
+
+					if (_inDrag)
+					{
+						_dragLine.X1 = _dragAnchor.X;
+						_dragLine.Y1 = _dragAnchor.Y;
+						_dragLine.X2 = controlPos.X;
+						_dragLine.Y2 = controlPos.Y;
+					}
+				}
 			}
 		}
 
@@ -207,6 +304,11 @@ namespace MSetExplorer.MapWindow
 			if (_isActive)
 			{
 				_selectedArea.Visibility = Visibility.Hidden;
+			}
+
+			if (_inDrag)
+			{
+				_dragLine.Visibility = Visibility.Hidden;
 			}
 		}
 
@@ -220,8 +322,19 @@ namespace MSetExplorer.MapWindow
 				{
 					Debug.WriteLine("Canvas Enter did not move the focus to the SelectedRectangle.");
 				}
+
+				if (_inDrag)
+				{
+					_dragLine.Visibility = Visibility.Visible;
+				}
 			}
 		}
+
+		#endregion
+
+		#region Diag
+
+		// Just for Diagnostics
 
 		private bool IsShiftKey()
 		{
@@ -237,8 +350,6 @@ namespace MSetExplorer.MapWindow
 		{
 			return Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
 		}
-
-		// Just for Diagnostics
 
 		private void SelectedArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{

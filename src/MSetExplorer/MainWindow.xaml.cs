@@ -52,6 +52,7 @@ namespace MSetExplorer
 				_mapDisplay = mapDisplay1;
 				_mapDisplay.DataContext = DataContext;
 				_mapDisplay.AreaSelected += MapDisplay_AreaSelected;
+				_mapDisplay.ScreenPanned += MapDisplay_ScreenPanned;
 
 				btnGoBack.IsEnabled = _vm.CanGoBack;
 
@@ -59,16 +60,38 @@ namespace MSetExplorer
 			}
 		}
 
+		//private void MapDisplay_AreaSelected(object sender, MapWindow.AreaSelectedEventArgs e)
+		//{
+		//	var curJob = _vm.CurrentJob;
+		//	var position = curJob.MSetInfo.Coords.LeftBot;
+		//	var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+
+		//	var coords = RMapHelper.GetMapCoords(e.Area, position, samplePointDelta);
+
+		//	Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {e.TransformType}.");
+		//	_vm.UpdateMapView(e.TransformType, e.Area.Size, coords);
+		//}
+
+		//private void MapDisplay_ScreenPanned(object sender, MapWindow.ScreenPannedEventArgs e)
+		//{
+		//	var curJob = _vm.CurrentJob;
+		//	var coords = curJob.MSetInfo.Coords;
+		//	var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+		//	var newSize = curJob.NewArea; // The new area is not changing
+		//	var updatedCoords = RMapHelper.GetMapCoords(e.Offset, coords, samplePointDelta);
+
+		//	Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {e.TransformType}.");
+		//	_vm.UpdateMapView(e.TransformType, newSize, updatedCoords);
+		//}
+
 		private void MapDisplay_AreaSelected(object sender, MapWindow.AreaSelectedEventArgs e)
 		{
-			var curJob = _vm.CurrentJob;
-			var position = curJob.MSetInfo.Coords.LeftBot;
-			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			_vm.UpdateMapViewZoom(e.Area);
+		}
 
-			var coords = RMapHelper.GetMapCoords(e.Area, position, samplePointDelta);
-
-			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {e.TransformType}.");
-			_vm.UpdateMapView(e.TransformType, e.Area.Size, coords);
+		private void MapDisplay_ScreenPanned(object sender, MapWindow.ScreenPannedEventArgs e)
+		{
+			_vm.UpdateMapViewPan(e.Offset);
 		}
 
 		private void VmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -96,22 +119,22 @@ namespace MSetExplorer
 
 		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
 		{
-			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X - 25d, mapDisplay1.Position.Y);
+			_vm.UpdateMapViewPan(new SizeInt(32, 0));
 		}
 
 		private void GoUpButton_Click(object sender, RoutedEventArgs e)
 		{
-			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X, mapDisplay1.Position.Y + 25d);
+			_vm.UpdateMapViewPan(new SizeInt(0, 32));
 		}
 
 		private void GoRightButton_Click(object sender, RoutedEventArgs e)
 		{
-			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X + 25d, mapDisplay1.Position.Y);
+			_vm.UpdateMapViewPan(new SizeInt(-32, 0));
 		}
 
 		private void GoDownButton_Click(object sender, RoutedEventArgs e)
 		{
-			mapDisplay1.Position = new PointDbl(mapDisplay1.Position.X, mapDisplay1.Position.Y - 25d);
+			_vm.UpdateMapViewPan(new SizeInt(0, -32));
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)

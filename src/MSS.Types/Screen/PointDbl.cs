@@ -46,6 +46,11 @@ namespace MSS.Types
 			return new PointDbl(X + offset.Width, Y + offset.Height);
 		}
 
+		public SizeDbl Diff(PointDbl amount)
+		{
+			return new SizeDbl(X - amount.X, Y - amount.Y);
+		}
+
 		public PointInt Round()
 		{
 			return Round(MidpointRounding.ToEven);

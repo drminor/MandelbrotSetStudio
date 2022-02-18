@@ -5,7 +5,9 @@ namespace MSS.Types
 	{
 		None,
 		Zoom,
-		Out,
+		Pan,
+		//Out,
+		
 		Left,
 		Right,
 		Up,
