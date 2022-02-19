@@ -28,6 +28,8 @@ namespace MEngineDataContracts
 
 		[DataMember(Order = 7)]
 		public MapCalcSettings MapCalcSettings { get; set; }
+
+		public bool Inverted { get; init; }
 	}
 
 }

@@ -240,44 +240,68 @@ namespace MSetRepo
 
 		#region Subdivision
 
-		public Subdivision GetOrCreateSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, out bool created)
+		public bool TryGetSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, out Subdivision? subdivision)
 		{
-			SubdivisionRecord subdivisionRecord;
-
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			samplePointDelta = Reducer.Reduce(samplePointDelta);
 
-			var posDto = _dtoMapper.MapTo(position);
-			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDelta);
+			var posReduced = Reducer.Reduce(position);
+			var posDto = _dtoMapper.MapTo(posReduced);
+
+			var samplePointDeltaReduced = Reducer.Reduce(samplePointDelta);
+			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDeltaReduced);
+
 			var matches = subdivisionReaderWriter.Get(posDto, samplePointDeltaDto, blockSize);
+
+			if (matches.Count > 1)
+			{
+				throw new InvalidOperationException($"Found more than one subdivision was found matching: {samplePointDelta}.");
+			}
+
+			bool result;
 
 			if (matches.Count < 1)
 			{
-				var subdivision = new Subdivision(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize);
-				var subId = InsertSubdivision(subdivision, subdivisionReaderWriter);
-				subdivisionRecord = subdivisionReaderWriter.Get(subId);
-				created = true;
-			}
-			else if (matches.Count > 1)
-			{
-				//subdivisionRecord = matches[0];
-				//created = false;
-				throw new InvalidOperationException($"Found more than one subdivision was found matching: {samplePointDelta}.");
+				subdivision = null;
+				result = false;
 			}
 			else
 			{
-				subdivisionRecord = matches[0];
-				created = false;
+				var subdivisionRecord = matches[0];
+				subdivision = _mSetRecordMapper.MapFrom(subdivisionRecord);
+				result = true;
 			}
 
-			var result = _mSetRecordMapper.MapFrom(subdivisionRecord);
 			return result;
 		}
 
-		private ObjectId InsertSubdivision(Subdivision subdivision, SubdivisonReaderWriter subdivisionReaderWriter)
+		//public Subdivision GetOrCreateSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, out bool created)
+		//{
+		//	if (TryGetSubdivision(position, samplePointDelta, blockSize, out var subdivision))
+		//	{
+		//		created = false;
+		//		return subdivision ?? throw new InvalidOperationException("Subdivision is null.");
+		//	}
+		//	else
+		//	{
+		//		var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+		//		var subdivisionNotSaved = new Subdivision(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize);
+		//		subdivision = InsertSubdivision(subdivisionNotSaved, subdivisionReaderWriter);
+
+		//		created = true;
+		//		return subdivision;
+		//	}
+		//}
+
+		public Subdivision InsertSubdivision(Subdivision subdivision)
 		{
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
 			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);
-			var result = subdivisionReaderWriter.Insert(subdivisionRecord);
+			var subId = subdivisionReaderWriter.Insert(subdivisionRecord);
+
+			subdivisionRecord = subdivisionReaderWriter.Get(subId);
+			var result = _mSetRecordMapper.MapFrom(subdivisionRecord);
 
 			return result;
 		}

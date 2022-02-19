@@ -27,7 +27,7 @@ namespace MSetExplorer
 			_image = new Image { Source = new DrawingImage(_drawingGroup) };
 			_ = canvas.Children.Add(_image);
 
-			Position = new PointDbl();
+			CanvasOffset = new SizeDbl();
 		}
 
 		private ScreenSection[,] BuildScreenSections(SizeInt sizeInBlocks, SizeInt blockSize)
@@ -66,14 +66,26 @@ namespace MSetExplorer
 
 		#endregion
 
-		public PointDbl Position
+		/// <summary>
+		/// The position of the canvas' origin relative to the Image Block Data
+		/// </summary>
+		public SizeDbl CanvasOffset
 		{
-			get => new((double)_image.GetValue(Canvas.LeftProperty), (double)_image.GetValue(Canvas.BottomProperty));
+			get
+			{
+				var result = new SizeDbl(
+					(double)_image.GetValue(Canvas.LeftProperty),
+					(double)_image.GetValue(Canvas.BottomProperty)
+					);
+
+				return result.Scale(-1d);
+			}
 
 			set
 			{
-				_image.SetValue(Canvas.LeftProperty, value.X);
-				_image.SetValue(Canvas.BottomProperty, value.Y);
+				var offset = new PointDbl(value).Scale(-1d);
+				_image.SetValue(Canvas.LeftProperty, offset.X);
+				_image.SetValue(Canvas.BottomProperty, offset.Y);
 			}
 		}
 

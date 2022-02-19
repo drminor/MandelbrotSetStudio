@@ -31,6 +31,9 @@ namespace MSS.Types.DataTransferObjects
 			Exponent = exponent;
 		}
 
-		public long[][] GetValues() => new long[][] { X, Y };
+		public long[][] GetValues()
+		{
+			return new long[][] { X, Y };
+		}
 	}
 }

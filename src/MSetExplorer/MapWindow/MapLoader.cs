@@ -111,25 +111,15 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleResponse(MapSectionResponse mapSectionResponse)
+		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			var pixels1d = GetPixelArray(mapSectionResponse.Counts, _blockSize, _colorMap);
+			var pixels1d = GetPixelArray(mapSectionResponse.Counts, _blockSize, _colorMap, !mapSectionRequest.Inverted);
 
 			// Translate subdivision coordinates to block coordinates.
 			var blockPosition = mapSectionResponse.BlockPosition.Diff(_mapBlockOffset);
 
-			//// Scale block coordinates to canvas coordinates
-			//var canvasPosition = blockPosition.Scale(_blockSize);
+			Debug.WriteLine($"MapLoader handling response. ScreenBlkPos: {blockPosition}, RepoBlkPos: {mapSectionResponse.BlockPosition}.");
 
-			//// Shift the position to the left and upwards so that
-			////		some of the pixels in the left-most block are off-canvas
-			////		and some of the pixels in the top-most block are off-canvas.
-			//var offset = new SizeInt(_job.CanvasControlOffset);
-			//var canvasPositionWithOffset = canvasPosition.Diff(offset);
-
-			//Debug.WriteLine($"MapLoader handling response. BlkPos: {blockPosition}, Offset: {offset}, CanvasPosWithOffset: {canvasPositionWithOffset}.");
-
-			//var mapSection = new MapSection(blockPosition, canvasPositionWithOffset, _blockSize, pixels1d);
 			var mapSection = new MapSection(blockPosition, _blockSize, pixels1d);
 
 			_callback(JobNumber, mapSection);
@@ -144,7 +134,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap)
+		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
 		{
 			if (counts == null)
 			{
@@ -161,7 +151,9 @@ namespace MSetExplorer
 				// The Destination's origin is at the top, left.
 				// The Source's origin is at the bottom, left.
 
-				var resultRowPtr = -1 + blockSize.Height - rowPtr;
+				//var resultRowPtr = -1 + blockSize.Height - rowPtr;
+				var resultRowPtr = GetResultRowPtr(blockSize.Height, rowPtr, invert);
+
 				var curResultPtr = resultRowPtr * blockSize.Width * 4;
 				var curSourcePtr = rowPtr * blockSize.Width;
 
@@ -180,6 +172,12 @@ namespace MSetExplorer
 				}
 			}
 
+			return result;
+		}
+
+		private int GetResultRowPtr(int blockHeight, int rowPtr, bool invert) 
+		{
+			var result = invert ? -1 + blockHeight - rowPtr : rowPtr;
 			return result;
 		}
 

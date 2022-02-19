@@ -60,7 +60,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionResponse> workAction)
+		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSectionResponse> workAction)
 		{
 			// TODO: Use a Lock to prevent update of IsAddingCompleted while we are in this method.
 			if (!_workQueue.IsAddingCompleted)
@@ -155,7 +155,7 @@ namespace MapSectionProviderLib
 						}
 					}
 
-					workItem.WorkAction(mapSectionResponse);
+					workItem.WorkAction(workItem.Request, mapSectionResponse);
 				}
 				catch (OperationCanceledException)
 				{
@@ -187,7 +187,7 @@ namespace MapSectionProviderLib
 					//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 					var mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(workItem.Request);
 
-					workItem.WorkAction(mapSectionResponse);
+					workItem.WorkAction(workItem.Request, mapSectionResponse);
 				}
 				catch (TaskCanceledException)
 				{

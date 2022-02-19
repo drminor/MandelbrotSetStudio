@@ -24,7 +24,8 @@ namespace MapSectionProviderLib
 				BlockSize = subdivision.BlockSize,
 				Position = posForDataTransfer,
 				SamplePointsDelta = spdForDataTransfer,
-				MapCalcSettings = mapCalcSettings
+				MapCalcSettings = mapCalcSettings,
+				Inverted = false
 			};
 
 			return mapSectionRequest;

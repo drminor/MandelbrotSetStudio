@@ -50,19 +50,19 @@ namespace MSetExplorer
 				var canvasControlOffset = _vm.CurrentJob?.CanvasControlOffset ?? new SizeDbl();
 
 				_selectedArea = new SelectionRectangle(MainCanvas, canvasControlOffset, _vm.BlockSize);
-				_selectedArea.AreaSelected += _selectedArea_AreaSelected;
-				_selectedArea.ScreenPanned += _selectedArea_ScreenPanned;
+				_selectedArea.AreaSelected += SelectedArea_AreaSelected;
+				_selectedArea.ScreenPanned += SelectedArea_ScreenPanned;
 
 				Debug.WriteLine("The MapDisplay is now loaded.");
 			}
 		}
 
-		private void _selectedArea_AreaSelected(object sender, AreaSelectedEventArgs e)
+		private void SelectedArea_AreaSelected(object sender, AreaSelectedEventArgs e)
 		{
 			AreaSelected?.Invoke(this, e);
 		}
 
-		private void _selectedArea_ScreenPanned(object sender, ScreenPannedEventArgs e)
+		private void SelectedArea_ScreenPanned(object sender, ScreenPannedEventArgs e)
 		{
 			ScreenPanned?.Invoke(this, e);
 		}
@@ -78,7 +78,7 @@ namespace MSetExplorer
 				_screenSections.HideScreenSections();
 
 				var offset = _vm.CurrentJob.CanvasControlOffset;
-				_screenSections.Position = new PointDbl(offset).Scale(-1d);
+				_screenSections.CanvasOffset = offset;
 				_selectedArea.CanvasControlOffset = offset;
 			}
 			else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
