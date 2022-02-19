@@ -118,7 +118,7 @@ namespace MSetExplorer
 			// Translate subdivision coordinates to block coordinates.
 			var blockPosition = mapSectionResponse.BlockPosition.Diff(_mapBlockOffset);
 
-			Debug.WriteLine($"MapLoader handling response. ScreenBlkPos: {blockPosition}, RepoBlkPos: {mapSectionResponse.BlockPosition}.");
+			//Debug.WriteLine($"MapLoader handling response. ScreenBlkPos: {blockPosition}, RepoBlkPos: {mapSectionResponse.BlockPosition}.");
 
 			var mapSection = new MapSection(blockPosition, _blockSize, pixels1d);
 

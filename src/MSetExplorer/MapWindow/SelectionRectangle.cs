@@ -33,6 +33,11 @@ namespace MSetExplorer.MapWindow
 
 		public SelectionRectangle(Canvas canvas, SizeDbl canvasControlOffset, SizeInt blockSize)
 		{
+			_selecting = false;
+			_dragging = false;
+			_dragAnchor = new Point();
+			_dragIsBeingCancelled = false;
+
 			_canvas = canvas;
 			CanvasControlOffset = canvasControlOffset;
 			_blockSize = blockSize;
@@ -87,8 +92,8 @@ namespace MSetExplorer.MapWindow
 		{
 			get
 			{
-				var p = GetPosition();
-				var s = GetSize();
+				var p = SelectedPosition;
+				var s = SelectedSize;
 				var result = new RectangleDbl(new PointDbl(p.X, p.Y), new SizeDbl(s.Width, s.Height));
 
 				return result;
@@ -158,20 +163,14 @@ namespace MSetExplorer.MapWindow
 
 		#region Public Methods
 
-		public void Activate(Point position, bool updateCursorPosition = true)
+		public void Activate(Point position)
 		{
 			Selecting = true;
-
-			if (updateCursorPosition)
-			{
-				SetMousePosition(position);
-			}
-
 			Move(position);
 
 			if (!_selectedArea.Focus())
 			{
-				Debug.WriteLine("Activate did not move the focus to the SelectedRectangle, free form.");
+				Debug.WriteLine("Activate did not move the focus to the SelectedRectangle");
 			}
 		}
 
@@ -182,8 +181,8 @@ namespace MSetExplorer.MapWindow
 
 		public bool Contains(Point position)
 		{
-			var p = GetPosition();
-			var s = GetSize();
+			var p = SelectedPosition;
+			var s = SelectedSize;
 			var r = new Rect(p, s);
 
 			var result = r.Contains(position);
@@ -233,8 +232,8 @@ namespace MSetExplorer.MapWindow
 		{
 			//Debug.WriteLine("The canvas received a MouseWheel event.");
 
-			var cPos = GetPosition();
-			var cSize = GetSize();
+			var cPos = SelectedPosition;
+			var cSize = SelectedSize;
 
 			Point newPos;
 			Size newSize;
@@ -338,26 +337,26 @@ namespace MSetExplorer.MapWindow
 			// The canvas has coordinates where the y value increases from top to bottom.
 			var posYInverted = new Point(controlPos.X, _canvas.ActualHeight - controlPos.Y);
 
-			// Get the center of the block on which the mouse is over.
-			var screenPos = ConvertToScreenCoords(posYInverted);
-			var blockPosition = MapWindowHelper.GetBlockPosition(screenPos, _blockSize);
-
-			Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {controlPos}. The blockPosition is {blockPosition} ");
-
 			if (!Selecting)
 			{
-				Activate(blockPosition);
+				Debug.WriteLine($"Activating Select at {posYInverted}.");
+				Activate(posYInverted);
 			}
 			else
 			{
 				if (Contains(posYInverted))
 				{
+					Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = True.");
 					Deactivate();
 
 					var adjArea = Area.Round();
 					Debug.WriteLine($"Will start job here with position: {adjArea.Position}");
 
 					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, adjArea));
+				}
+				else
+				{
+					Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = False.");
 				}
 			}
 		}
@@ -409,12 +408,23 @@ namespace MSetExplorer.MapWindow
 		#region Private Methods
 
 		// Reposition the Selection Rectangle, keeping it's current size.
-		private void Move(Point position)
+		private void Move(Point posYInverted)
 		{
 			//Debug.WriteLine($"Moving the sel rec to {position}, free form.");
 			//ReportPosition(position);
 
-			var x = RoundOff(position.X - (_selectedArea.Width / 2), PITCH);
+			var screenPos = ConvertToScreenCoords(posYInverted);
+
+			var nrmScreenPos = new PointDbl(
+				RoundOff(screenPos.X - (_selectedArea.Width / 2), PITCH),
+				RoundOff(screenPos.Y - (_selectedArea.Height / 2), PITCH)
+				);
+
+			var pos = ConvertToCanvasCoords(nrmScreenPos);
+
+			var x = pos.X;
+			var y = pos.Y;
+
 			if (x < 0)
 			{
 				x = 0;
@@ -425,13 +435,6 @@ namespace MSetExplorer.MapWindow
 				x = _canvas.ActualWidth - _selectedArea.Width;
 			}
 
-			var cLeft = (double)_selectedArea.GetValue(Canvas.LeftProperty);
-			if (double.IsNaN(cLeft) || Math.Abs(x - cLeft) > 0.01)
-			{
-				_selectedArea.SetValue(Canvas.LeftProperty, x);
-			}
-
-			var y = RoundOff(position.Y - (_selectedArea.Height / 2), PITCH);
 			if (y < 0)
 			{
 				y = 0;
@@ -442,46 +445,38 @@ namespace MSetExplorer.MapWindow
 				y = _canvas.ActualHeight - _selectedArea.Height;
 			}
 
+			var cLeft = (double)_selectedArea.GetValue(Canvas.LeftProperty);
 			var cBot = (double)_selectedArea.GetValue(Canvas.BottomProperty);
-			if (double.IsNaN(cBot) || Math.Abs(y - cBot) > 0.01)
+
+			if (double.IsNaN(cLeft) || Math.Abs(x - cLeft) > 0.01 || double.IsNaN(cBot) || Math.Abs(y - cBot) > 0.01)
 			{
-				_selectedArea.SetValue(Canvas.BottomProperty, y);
+				SelectedPosition = new Point(x, y);
 			}
 		}
 
 		// Reposition the Selection Rectangle and update its size.
-		private void Move(Point position, Size size)
+		private void Move(Point posYInverted, Size size)
 		{
 			//Debug.WriteLine($"Moving the sel rec to {position}, with size: {size}");
 
-			if (position.X < 0
-				|| position.Y < 0
-				|| position.X + size.Width > _canvas.ActualWidth
-				|| position.Y + size.Height > _canvas.ActualHeight)
+			if (posYInverted.X < 0
+				|| posYInverted.Y < 0
+				|| posYInverted.X + size.Width > _canvas.ActualWidth
+				|| posYInverted.Y + size.Height > _canvas.ActualHeight)
 			{
 				return;
 			}
 
-			var cPos = GetPosition();
-			if (position.X != cPos.X)
+			var cPos = SelectedPosition;
+			if (posYInverted.X != cPos.X || posYInverted.Y != cPos.Y)
 			{
-				_selectedArea.SetValue(Canvas.LeftProperty, (double)position.X);
+				SelectedPosition = posYInverted;
 			}
 
-			if (position.Y != cPos.Y)
+			var cSize = SelectedSize;
+			if (Math.Abs(size.Width - cSize.Width) > 0.01 || Math.Abs(size.Height - cSize.Height) > 0.01)
 			{
-				_selectedArea.SetValue(Canvas.BottomProperty, (double)position.Y);
-			}
-
-			var cSize = GetSize();
-			if (Math.Abs(size.Width - cSize.Width) > 0.01)
-			{
-				_selectedArea.Width = size.Width;
-			}
-
-			if (Math.Abs(size.Height - cSize.Height) > 0.01)
-			{
-				_selectedArea.Height = size.Height;
+				SelectedSize = size;
 			}
 		}
 
@@ -505,11 +500,6 @@ namespace MSetExplorer.MapWindow
 				x -= PITCH;
 			}
 
-			if (Math.Abs(_dragLine.X2 - x) > 0.01)
-			{
-				_dragLine.X2 = x;
-			}
-
 			// Vertical
 			var y = RoundOff(dist.Y, PITCH);
 			y = _dragAnchor.Y + y;
@@ -524,26 +514,50 @@ namespace MSetExplorer.MapWindow
 				y -= PITCH;
 			}
 
-			if (Math.Abs(_dragLine.Y2 - y) > 0.01)
+			var dragLineTerminus = DragLineTerminus;
+			var newDlt = new Point(x, y);
+
+			if ( (dragLineTerminus - newDlt).LengthSquared > 0.05 )
 			{
-				_dragLine.Y2 = y;
+				DragLineTerminus = newDlt;
+			}
+		}
+
+		private Point SelectedPosition
+		{
+			get
+			{
+				var x = (double)_selectedArea.GetValue(Canvas.LeftProperty);
+				var y = (double)_selectedArea.GetValue(Canvas.BottomProperty);
+
+				return new Point(double.IsNaN(x) ? 0 : x, double.IsNaN(y) ? 0 : y);
 			}
 
-			//_dragLine.X2 = controlPos.X;
-			//_dragLine.Y2 = controlPos.Y;
+			set
+			{
+				_selectedArea.SetValue(Canvas.LeftProperty, value.X);
+				_selectedArea.SetValue(Canvas.BottomProperty, value.Y);
+			}
 		}
 
-		private Point GetPosition()
+		private Size SelectedSize
 		{
-			var x = (double)_selectedArea.GetValue(Canvas.LeftProperty);
-			var y = (double)_selectedArea.GetValue(Canvas.BottomProperty);
-
-			return new Point(double.IsNaN(x) ? 0 : x, double.IsNaN(y) ? 0: y);
+			get => new(_selectedArea.Width, _selectedArea.Height);
+			set
+			{
+				_selectedArea.Width = value.Width;
+				_selectedArea.Height = value.Height;
+			}
 		}
 
-		private Size GetSize()
+		private Point DragLineTerminus
 		{
-			return new Size(_selectedArea.Width, _selectedArea.Height);
+			get => new(_dragLine.X2, _dragLine.Y2);
+			set
+			{
+				_dragLine.X2 = value.X;
+				_dragLine.Y2 = value.Y;
+			}
 		}
 
 		private double RoundOff(double number, int interval)
@@ -553,26 +567,26 @@ namespace MSetExplorer.MapWindow
 			return number;
 		}
 
-		private void SetMousePosition(Point posYInverted)
-		{
-			var position = new Point(posYInverted.X, _canvas.ActualHeight - posYInverted.Y);
-			var canvasPos = GetCanvasPosition();
-			var pos = new Point(position.X + canvasPos.X, position.Y + canvasPos.Y);
+		//private void SetMousePosition(Point posYInverted)
+		//{
+		//	var position = new Point(posYInverted.X, _canvas.ActualHeight - posYInverted.Y);
+		//	var canvasPos = GetCanvasPosition();
+		//	var pos = new Point(position.X + canvasPos.X, position.Y + canvasPos.Y);
 
-			var source = (HwndSource)PresentationSource.FromVisual(_canvas);
-			var hWnd = source.Handle; 
-			var _ = Win32.PositionCursor(hWnd, pos);
+		//	var source = (HwndSource)PresentationSource.FromVisual(_canvas);
+		//	var hWnd = source.Handle; 
+		//	var _ = Win32.PositionCursor(hWnd, pos);
 
-			//Debug.WriteLine($"Activating to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
-		}
+		//	//Debug.WriteLine($"Activating to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
+		//}
 
-		private Point GetCanvasPosition()
-		{
-			var generalTransform = _canvas.TransformToAncestor(Application.Current.MainWindow);
-			var relativePoint = generalTransform.Transform(new Point(0, 0));
+		//private Point GetCanvasPosition()
+		//{
+		//	var generalTransform = _canvas.TransformToAncestor(Application.Current.MainWindow);
+		//	var relativePoint = generalTransform.Transform(new Point(0, 0));
 
-			return relativePoint;
-		}
+		//	return relativePoint;
+		//}
 
 		// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
 		// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
@@ -594,14 +608,14 @@ namespace MSetExplorer.MapWindow
 			return result;
 		}
 
-		private Point ConvertToCanvasCoords(Point posYInverted)
-		{
-			var pointDbl = new PointDbl(posYInverted.X, posYInverted.Y);
-			var screenPos = ConvertToCanvasCoords(pointDbl);
-			var result = new Point(screenPos.X, screenPos.Y);
+		//private Point ConvertToCanvasCoords(Point posYInverted)
+		//{
+		//	var pointDbl = new PointDbl(posYInverted.X, posYInverted.Y);
+		//	var screenPos = ConvertToCanvasCoords(pointDbl);
+		//	var result = new Point(screenPos.X, screenPos.Y);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
 		// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
@@ -629,32 +643,32 @@ namespace MSetExplorer.MapWindow
 		//	Debug.WriteLine($"Mouse moved to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
 		//}
 
-		private bool IsShiftKey()
-		{
-			return Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
-		}
+		//private bool IsShiftKey()
+		//{
+		//	return Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+		//}
 
-		private bool IsCtrlKey()
-		{
-			return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
-		}
+		//private bool IsCtrlKey()
+		//{
+		//	return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+		//}
 
-		private bool IsAltKey()
-		{
-			return Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
-		}
+		//private bool IsAltKey()
+		//{
+		//	return Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
+		//}
 
-		private void SelectedArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			var position = e.GetPosition(relativeTo: _canvas);
+		//private void SelectedArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+		//{
+		//	var position = e.GetPosition(relativeTo: _canvas);
 
-			Debug.WriteLine($"The SelectionRectangle is getting a Mouse Left Button Down at {position}.");
-		}
+		//	Debug.WriteLine($"The SelectionRectangle is getting a Mouse Left Button Down at {position}.");
+		//}
 
-		private void SelectedArea_MouseWheel(object sender, MouseWheelEventArgs e)
-		{
-			Debug.WriteLine("The SelectionRectangle received a MouseWheel event.");
-		}
+		//private void SelectedArea_MouseWheel(object sender, MouseWheelEventArgs e)
+		//{
+		//	Debug.WriteLine("The SelectionRectangle received a MouseWheel event.");
+		//}
 
 		#endregion
 
