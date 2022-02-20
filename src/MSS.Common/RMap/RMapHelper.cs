@@ -1,7 +1,6 @@
 ﻿using MSS.Types;
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Numerics;
 
 namespace MSS.Common
@@ -123,27 +122,20 @@ namespace MSS.Common
 
 		public static RSize GetSamplePointDelta(ref RRectangle coords, SizeInt canvasSize)
 		{
-			//var newNumerator = canvasSize.Width > canvasSize.Height
-			//	? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
-			//	: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
-
-			//var result = new RSize(newNumerator, newNumerator, newExponent);
-
-			var extent = canvasSize.Width > canvasSize.Height
+			var samplePointDelta = canvasSize.Width > canvasSize.Height
 				? BigIntegerHelper.Divide(coords.Width, canvasSize.Width)
 				: BigIntegerHelper.Divide(coords.Height, canvasSize.Height);
 
-			var result = new RSize(extent);
+			var result = new RSize(samplePointDelta);
 
-			// Use the original # of sample points and multiply by the new sample point size
-			// to get a new map size.
+			// The size of the new map is equal to the product of the number of samples by the new samplePointDelta.
 			var adjMapSize = result.Scale(canvasSize);
 
-			// Create an updated coord value with the new size.
+			// Calculat the new map coordinates using the existing position and the new size..
 			var newCoords = CombinePosAndSize(coords.Position, adjMapSize);
 			Debug.WriteLine($"\nThe new coords are : {newCoords},\n old = {coords}. (While calculating SamplePointDelta3.)\n");
-			coords = newCoords;
 
+			coords = newCoords;
 			return result;
 		}
 
@@ -409,37 +401,37 @@ namespace MSS.Common
 			return offSetInBlocks;
 		}
 
-		//private static SizeDbl GetSamplesRemaining(SizeDbl offsetRemainder, SizeInt blockSize)
-		//{
-		//	var samplesRemaining = new SizeDbl(
-		//		GetSampRem(offsetRemainder.Width, blockSize.Width),
-		//		GetSampRem(offsetRemainder.Height, blockSize.Height)
-		//		);
+		private static SizeDbl GetSamplesRemaining(SizeDbl offsetRemainder, SizeInt blockSize)
+		{
+			var samplesRemaining = new SizeDbl(
+				GetSampRem(offsetRemainder.Width, blockSize.Width),
+				GetSampRem(offsetRemainder.Height, blockSize.Height)
+				);
 
-		//	return samplesRemaining;
-		//}
+			return samplesRemaining;
+		}
 
-		//private static double GetSampRem(double extent, int blockLen)
-		//{
-		//	double result;
+		private static double GetSampRem(double extent, int blockLen)
+		{
+			double result;
 
-		//	if (extent < 0)
-		//	{
-		//		//result = -1 * (blockLen + extent);
-		//		result = blockLen + extent;
-		//	}
-		//	else if (extent > 0)
-		//	{
-		//		//result = blockLen - extent;
-		//		result = extent;
-		//	}
-		//	else
-		//	{
-		//		result = 0;
-		//	}
+			if (extent < 0)
+			{
+				//result = -1 * (blockLen + extent);
+				result = blockLen + extent;
+			}
+			else if (extent > 0)
+			{
+				//result = blockLen - extent;
+				result = extent;
+			}
+			else
+			{
+				result = 0;
+			}
 
-		//	return result;
-		//}
+			return result;
+		}
 
 
 		#endregion

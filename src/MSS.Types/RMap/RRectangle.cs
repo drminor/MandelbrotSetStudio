@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types
@@ -83,7 +82,6 @@ namespace MSS.Types
 			return result;
 		}
 
-		//// TODO: FIX BUG
 		//public RRectangle Scale(RPoint factor)
 		//{
 		//	return factor.Exponent != Exponent
@@ -91,7 +89,6 @@ namespace MSS.Types
 		//		: new RRectangle(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y, Exponent);
 		//}
 
-		// TODO: FIX BUG
 		public RRectangle Scale(RSize factor)
 		{
 			return factor.Exponent != Exponent
@@ -111,19 +108,6 @@ namespace MSS.Types
 			return amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
 				: new RRectangle(X1 + amount.WidthNumerator , X2 + amount.WidthNumerator, Y1 + amount.HeightNumerator, Y2 + amount.HeightNumerator, Exponent);
-		}
-
-		public RRectangle ScaleB(int exponentDelta)
-		{
-			if (exponentDelta == 0)
-			{
-				return this;
-			}
-
-			var factor = (long)Math.Pow(2, -1 * exponentDelta);
-			var result = new RRectangle(Values.Select(v => v * factor).ToArray(), Exponent - exponentDelta);
-
-			return result;
 		}
 
 		[Conditional("Debug")]

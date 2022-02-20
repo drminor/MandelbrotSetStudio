@@ -1,6 +1,5 @@
 ﻿using MSS.Types.Base;
 using System;
-using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types
@@ -58,10 +57,6 @@ namespace MSS.Types
 
 		public RSize Scale(SizeDbl factor)
 		{
-			//var nW = (long)((long)WidthNumerator * factor.Width);
-			//var nH = (long)((long)HeightNumerator * factor.Height);
-			//return new RSize(nW, nH, Exponent);
-
 			var w = BigIntegerHelper.ConvertToDouble(Width);
 			var h = BigIntegerHelper.ConvertToDouble(Height);
 
@@ -75,13 +70,6 @@ namespace MSS.Types
 			return result;
 		}
 
-		//private static RRectangle Scale(RectangleInt factor)
-		//{
-		//	var result = new RRectangle(area.X1 * factor.Width, area.X2 * factor.Width, area.Y1 * factor.Height, area.Y2 * factor.Height, factor.Exponent);
-		//	return result;
-		//}
-
-		//// TODO: FIX BUG
 		//public RSize Scale(RSize factor)
 		//{
 		//	return factor.Exponent != Exponent
@@ -89,7 +77,6 @@ namespace MSS.Types
 		//		: new RSize(Width * factor.Width, Height * factor.Height, Exponent);
 		//}
 
-		//// TODO: FIX BUG
 		//public RSize InvScale(RSize factor)
 		//{
 		//	if (factor.Exponent != Exponent)

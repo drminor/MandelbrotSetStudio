@@ -1,6 +1,5 @@
 ﻿using MSS.Types.Base;
 using System;
-using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types
@@ -42,11 +41,10 @@ namespace MSS.Types
 			return new RPoint(X * factor.X, Y * factor.Y, Exponent);
 		}
 
-		//// TODO: FIX BUG
 		//public RPoint Scale(RSize factor)
 		//{
 		//	return factor.Exponent != Exponent
-  //              ?                throw new InvalidOperationException($"Cannot scale a RPoint with Exponent: {Exponent} using a RSize with Exponent: {factor.Exponent}.")
+		//      ? throw new InvalidOperationException($"Cannot scale a RPoint with Exponent: {Exponent} using a RSize with Exponent: {factor.Exponent}.")
 		//		: new RPoint(X * factor.Width, Y * factor.Height, Exponent);
 		//}
 
