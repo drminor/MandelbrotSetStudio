@@ -153,10 +153,10 @@ namespace MSetExplorer
 			canvasBorder.Width = value.Width - 4;
 			canvasBorder.Height = value.Height - 4;
 
-			if (!(_vm is null))
-			{
-				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
-			}
+			//if (!(_vm is null))
+			//{
+			//	_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
+			//}
 		}
 
 		#endregion

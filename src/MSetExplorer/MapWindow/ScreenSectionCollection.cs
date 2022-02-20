@@ -20,8 +20,10 @@ namespace MSetExplorer
 
 		public ScreenSectionCollection(Canvas canvas, SizeInt blockSize)
 		{
-			var canvasSize = new Size(canvas.Width, canvas.Height);
-			var sizeInBlocks = GetSizeInBlocks(canvasSize, blockSize);
+			//var canvasSize = new Size(canvas.Width, canvas.Height);
+			//var sizeInBlocks = GetSizeInBlocks(canvasSize, blockSize);
+			var sizeInBlocks = new SizeInt(20, 20);
+
 			_screenSections = BuildScreenSections(sizeInBlocks, blockSize);
 
 			_drawingGroup = new DrawingGroup();
@@ -147,5 +149,5 @@ namespace MSetExplorer
 			}
 		}
 
-		}
 	}
+}
