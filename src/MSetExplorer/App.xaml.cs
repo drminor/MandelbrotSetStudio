@@ -46,14 +46,17 @@ namespace MSetExplorer
 			_mapSectionPersistProcessor = USE_MAP_SECTION_REPO ? new MapSectionPersistProcessor(mapSectionRepo) : null;
 			_mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, _mapSectionPersistProcessor);
 
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(RMapConstants.BLOCK_SIZE);
+			IMapLoaderJobStack mapLoaderJobStack = new MapLoaderJobStack(_mapSectionRequestProcessor, mapDisplayViewModel.HandleMapSectionReady, onMapNav: mapDisplayViewModel.HandleMapNav);
+
 			var window1 = USE_MAP_NAV_SIM
 				? new MapNavSim
-                {
-                    DataContext = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
-                }
+				{
+					DataContext = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
+				}
 				: (Window)new MainWindow
-                {
-                    DataContext = new MainWindowViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
+				{
+					DataContext = new MainWindowViewModel(projectAdapter, mapDisplayViewModel, mapLoaderJobStack)
                 };
 
 			window1.Show();

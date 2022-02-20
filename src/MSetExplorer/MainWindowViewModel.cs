@@ -1,29 +1,24 @@
-﻿using MapSectionProviderLib;
-using MSetRepo;
+﻿using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
-using MSS.Types.Screen;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace MSetExplorer
 {
-	internal class MainWindowViewModel : ViewModelBase, IMapJobViewModel
+	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel
 	{
 		private readonly ProjectAdapter _projectAdapter;
-		private readonly MapLoaderJobStack _navStack;
 
 		#region Constructor
 
-		public MainWindowViewModel(SizeInt blockSize, ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MainWindowViewModel(ProjectAdapter projectAdapter, IMapDisplayViewModel mapDisplayViewModel, IMapLoaderJobStack mapLoaderJobStack)
 		{
-			BlockSize = blockSize;
 			_projectAdapter = projectAdapter;
-			_canvasSize = new SizeInt();
-			_navStack = new MapLoaderJobStack(mapSectionRequestProcessor, HandleMapSectionReady, HandleMapNav);
 
-			MapSections = new ObservableCollection<MapSection>();
+			MapDisplayViewModel = mapDisplayViewModel;
+			MapLoaderJobStack = mapLoaderJobStack;
+
 			Project = _projectAdapter.GetOrCreateProject("Home");
 		}
 
@@ -31,14 +26,15 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public SizeInt BlockSize { get; init; }
 		public Project Project { get; private set; }
 
-		public Job CurrentJob => _navStack.CurrentJob;
-		public bool CanGoBack => _navStack.CanGoBack;
-		public bool CanGoForward => _navStack.CanGoForward;
+		public IMapDisplayViewModel MapDisplayViewModel { get; }
+		public IMapLoaderJobStack MapLoaderJobStack { get; }
 
-		public ObservableCollection<MapSection> MapSections { get; init; }
+
+		public Job CurrentJob => MapLoaderJobStack.CurrentJob;
+		public bool CanGoBack => MapLoaderJobStack.CanGoBack;
+		public bool CanGoForward => MapLoaderJobStack.CanGoForward;
 
 		private SizeInt _canvasSize;
 		public SizeInt CanvasSize
@@ -85,14 +81,14 @@ namespace MSetExplorer
 
 		private void UpdateMapView(TransformType transformType, SizeInt newSize, RRectangle coords)
 		{
-			var mSetInfo = _navStack.CurrentJob.MSetInfo;
+			var mSetInfo = MapLoaderJobStack.CurrentJob.MSetInfo;
 			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
 			LoadMap(updatedInfo, transformType, newSize);
 		}
 
 		public void GoBack()
 		{
-			if (_navStack.GoBack())
+			if (MapLoaderJobStack.GoBack())
 			{
 				OnPropertyChanged(nameof(CanGoBack));
 				OnPropertyChanged(nameof(CanGoForward));
@@ -101,7 +97,7 @@ namespace MSetExplorer
 
 		public void GoForward()
 		{
-			if (_navStack.GoForward())
+			if (MapLoaderJobStack.GoForward())
 			{
 				OnPropertyChanged(nameof(CanGoBack));
 				OnPropertyChanged(nameof(CanGoForward));
@@ -112,13 +108,13 @@ namespace MSetExplorer
 		{
 			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
 
-			foreach (var genMapRequestInfo in _navStack.GenMapRequests)
+			foreach (var genMapRequestInfo in MapLoaderJobStack.GenMapRequests)
 			{
 				var job = genMapRequestInfo.Job;
 				if (job.Id.CreationTime > lastSavedTime)
 				{
 					var updatedJob = _projectAdapter.InsertJob(job);
-					_navStack.UpdateJob(genMapRequestInfo, updatedJob);
+					MapLoaderJobStack.UpdateJob(genMapRequestInfo, updatedJob);
 				}
 			}
 		}
@@ -126,7 +122,7 @@ namespace MSetExplorer
 		public void LoadProject()
 		{
 			var jobs = _projectAdapter.GetAllJobs(Project.Id);
-			_navStack.LoadJobStack(jobs);
+			MapLoaderJobStack.LoadJobStack(jobs);
 		}
 
 		#endregion
@@ -136,12 +132,13 @@ namespace MSetExplorer
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, SizeInt newArea)
 		{
 			var jobName = GetJobName(transformType);
-			var parentJob = _navStack.CurrentJob;
+			var parentJob = MapLoaderJobStack.CurrentJob;
+			var blockSize = MapDisplayViewModel.BlockSize;
 
-			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, blockSize, _projectAdapter);
 			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
-			_navStack.Push(job);
+			MapLoaderJobStack.Push(job);
 			OnPropertyChanged(nameof(CanGoBack));
 			OnPropertyChanged(nameof(CanGoForward));
 		}
@@ -150,16 +147,6 @@ namespace MSetExplorer
 		{
 			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
 			return result;
-		}
-
-		private void HandleMapSectionReady(MapSection mapSection)
-		{
-			MapSections.Add(mapSection);
-		}
-
-		private void HandleMapNav()
-		{
-			MapSections.Clear();
 		}
 
 		#endregion

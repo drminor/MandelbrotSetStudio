@@ -21,6 +21,7 @@ namespace MSetExplorer
 			InitializeComponent();
 		}
 
+
 		private void MainWindow_ContentRendered(object sender, EventArgs e)
 		{
 			//Debug.WriteLine("The MainWindow is handling ContentRendered");

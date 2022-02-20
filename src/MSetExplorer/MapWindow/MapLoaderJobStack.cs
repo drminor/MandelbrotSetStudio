@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace MSetExplorer
 {
-	internal class MapLoaderJobStack
+	internal class MapLoaderJobStack : IMapLoaderJobStack
 	{
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly Action<MapSection> _onMapSectionReady;
@@ -46,12 +46,11 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public GenMapRequestInfo CurrentRequest => _requestStackPointer == -1 ? null : _requestStack[_requestStackPointer];
+		private GenMapRequestInfo CurrentRequest => _requestStackPointer == -1 ? null : _requestStack[_requestStackPointer];
+		private int? CurrentJobNumber => CurrentRequest?.JobNumber;
+
 		public Job CurrentJob => CurrentRequest?.Job;
-		public int? CurrentJobNumber => CurrentRequest?.JobNumber;
-
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
-
 		public bool CanGoForward
 		{
 			get
@@ -103,7 +102,7 @@ namespace MSetExplorer
 				}
 			}
 		}
-		
+
 		public bool GoBack()
 		{
 			var parentJob = CurrentJob?.ParentJob;
@@ -133,11 +132,6 @@ namespace MSetExplorer
 			{
 				return false;
 			}
-		}
-
-		public void StopCurrentJob()
-		{
-			CurrentRequest?.MapLoader?.Stop();
 		}
 
 		#endregion
@@ -233,7 +227,7 @@ namespace MSetExplorer
 
 			lock (_hmsLock)
 			{
-				for(var i = 0; i < _requestStack.Count; i++)
+				for (var i = 0; i < _requestStack.Count; i++)
 				{
 					var genMapRequestInfo = _requestStack[i];
 					var thisParentJobId = genMapRequestInfo.Job?.ParentJob?.Id ?? ObjectId.Empty;
@@ -252,6 +246,11 @@ namespace MSetExplorer
 
 			var result = requestStackPointer != -1;
 			return result;
+		}
+
+		private void StopCurrentJob()
+		{
+			CurrentRequest?.MapLoader?.Stop();
 		}
 
 		private void HandleMapSection(int jobNumber, MapSection mapSection)

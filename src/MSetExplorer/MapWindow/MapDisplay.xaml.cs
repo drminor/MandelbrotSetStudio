@@ -1,6 +1,7 @@
 ﻿using MSetExplorer.MapWindow;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -16,9 +18,17 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapDisplay : UserControl
 	{
-		private IMapJobViewModel _vm;
+		private static readonly bool _showBorder = false;
+		private static readonly bool _clipImageBlocks = true;
+
+		private IMapDisplayViewModel _vm;
+		private IMapLoaderJobStack _mapLoaderJobStack;
+		private Job _currentJob => _mapLoaderJobStack.CurrentJob;
+
+
 		private SelectionRectangle _selectedArea;
 		private IScreenSectionCollection _screenSections;
+		private Border _border;
 
 		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
 		internal event EventHandler<ScreenPannedEventArgs> ScreenPanned;
@@ -27,7 +37,7 @@ namespace MSetExplorer
 
 		public MapDisplay()
 		{
-			_selectedArea = null;
+			//_selectedArea = null;
 			Loaded += MapDisplay_Loaded;
 			InitializeComponent();
 		}
@@ -41,22 +51,52 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (IMapJobViewModel)DataContext;
-				var canvasControlOffset = _vm.CurrentJob?.CanvasControlOffset ?? new SizeDbl();
+				var vmProvider = (IMainWindowViewModel)DataContext;
+				_vm = vmProvider.MapDisplayViewModel;
+				_mapLoaderJobStack = vmProvider.MapLoaderJobStack;
 
+				var canvasControlOffset = _currentJob?.CanvasControlOffset ?? new SizeDbl();
 				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight));
+
+				MainCanvas.ClipToBounds = _clipImageBlocks;
 				SizeChanged += MapDisplay_SizeChanged;
 
 				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
+
 				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
 
 				_selectedArea = new SelectionRectangle(MainCanvas, canvasControlOffset, _vm.BlockSize);
 				_selectedArea.AreaSelected += SelectedArea_AreaSelected;
 				_selectedArea.ScreenPanned += SelectedArea_ScreenPanned;
 
+				_border = _showBorder ? BuildBorder(MainCanvas) : null;
+
 				Debug.WriteLine("The MapDisplay is now loaded.");
 			}
 		}
+
+		private Border BuildBorder(Canvas canvas)
+		{
+			var result = new Border
+			{
+				HorizontalAlignment = HorizontalAlignment.Center,
+				VerticalAlignment = VerticalAlignment.Center,
+				BorderThickness = new Thickness(1),
+				BorderBrush = Brushes.BlueViolet,
+				Visibility = Visibility.Visible
+			};
+
+			_ = canvas.Children.Add(result);
+			result.SetValue(Canvas.LeftProperty, -2);
+			result.SetValue(Canvas.TopProperty, -2);
+			result.SetValue(Panel.ZIndexProperty, 100);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Event Handlers
 
 		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
@@ -88,17 +128,13 @@ namespace MSetExplorer
 			ScreenPanned?.Invoke(this, e);
 		}
 
-		#endregion
-
-		#region Map Sections
-
 		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		{
 			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
 			{
 				_screenSections.HideScreenSections();
 
-				var offset = _vm.CurrentJob.CanvasControlOffset;
+				var offset = _currentJob.CanvasControlOffset;
 				_screenSections.CanvasOffset = offset;
 				_selectedArea.CanvasControlOffset = offset;
 			}
@@ -150,13 +186,11 @@ namespace MSetExplorer
 			MainCanvas.Width = value.Width;
 			MainCanvas.Height = value.Height;
 
-			canvasBorder.Width = value.Width - 4;
-			canvasBorder.Height = value.Height - 4;
-
-			//if (!(_vm is null))
-			//{
-			//	_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
-			//}
+			if (_showBorder)
+			{
+				_border.Width = value.Width - 4;
+				_border.Height = value.Height - 4;
+			}
 		}
 
 		#endregion

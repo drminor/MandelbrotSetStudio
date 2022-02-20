@@ -8,12 +8,6 @@ namespace MSS.Types
 	[ProtoContract(SkipConstructor = true)]
 	public struct SizeInt : IEquatable<SizeInt>, IEqualityComparer<SizeInt>
 	{
-		//public SizeInt(SizeDbl size) : this(size.Width, size.Height)
-		//{ }
-
-		//public SizeInt(double width, double height) : this((int)Math.Round(width), (int)Math.Round(height))
-		//{ }
-
 		public SizeInt(int width, int heigth)
 		{
 			Width = width;
