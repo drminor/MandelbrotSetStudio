@@ -42,9 +42,6 @@ namespace MSetExplorer
 				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
 				{
 					var position = new PointInt(xBlockPtr, maxYPtr - yBlockPtr);
-
-					//var screenSection = new ScreenSection(new RectangleInt(position.Scale(blockSize), blockSize));
-					//var screenSection = new ScreenSection(position.Scale(blockSize), blockSize);
 					var screenSection = new ScreenSection(position, blockSize);
 
 					result[yBlockPtr,xBlockPtr] = screenSection;
@@ -96,9 +93,15 @@ namespace MSetExplorer
 
 		public void Draw(MapSection mapSection)
 		{
-			var screenSection = _screenSections[mapSection.BlockPosition.Y, mapSection.BlockPosition.X];
+			var screenSection = Get(mapSection.BlockPosition);
 			screenSection.WritePixels(mapSection.Pixels1d);
 			_drawingGroup.Children.Add(screenSection.ImageDrawing);
+		}
+
+		private ScreenSection Get(PointInt blockPosition)
+		{
+			var result = _screenSections[blockPosition.Y, blockPosition.X];
+			return result;
 		}
 
 		private class ScreenSection

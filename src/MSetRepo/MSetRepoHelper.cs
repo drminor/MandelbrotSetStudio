@@ -1,6 +1,5 @@
 ﻿using MSS.Common;
 using MSS.Common.DataTransferObjects;
-using MSS.Types;
 using ProjectRepo;
 
 namespace MSetRepo
@@ -10,12 +9,7 @@ namespace MSetRepo
 		public static ProjectAdapter GetProjectAdapter(string dbProviderConnString)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);
-
-			var dtoMapper = new DtoMapper();
-			var coordsHelper = new CoordsHelper(dtoMapper);
-			var mSetRecordMapper = new MSetRecordMapper(dtoMapper, coordsHelper);
-
-			var mapSectionAdapter = new ProjectAdapter(dbProvider, mSetRecordMapper);
+			var mapSectionAdapter = new ProjectAdapter(dbProvider, GetMSetRecordMapper());
 
 			return mapSectionAdapter;
 		}
@@ -23,17 +17,19 @@ namespace MSetRepo
 		public static IMapSectionRepo GetMapSectionRepo(string dbProviderConnString)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);
-
-			var dtoMapper = new DtoMapper();
-			var coordsHelper = new CoordsHelper(dtoMapper);
-			var mSetRecordMapper = new MSetRecordMapper(dtoMapper, coordsHelper);
-
-			var mapSectionRepo = new MapSectionRepo(dbProvider, mSetRecordMapper);
-
+			var mapSectionRepo = new MapSectionRepo(dbProvider, GetMSetRecordMapper());
 
 			return mapSectionRepo;
 		}
 
+		public static MSetRecordMapper GetMSetRecordMapper()
+		{
+			var dtoMapper = new DtoMapper();
+			var coordsHelper = new CoordsHelper(dtoMapper);
+			var result = new MSetRecordMapper(dtoMapper, coordsHelper);
+
+			return result;
+		}
 
 	}
 }

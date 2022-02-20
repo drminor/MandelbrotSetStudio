@@ -79,7 +79,7 @@ namespace MSetExplorer
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr).Translate(_mapBlockOffset);
 					var mapSectionRequest = MapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, _job.MSetInfo.MapCalcSettings, out var mapPosition);
 
-					//Debug.WriteLine($"Sending request: {blockPosition}::{BigIntegerHelper.GetDisplay(mapPosition)}");
+					//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition}");
 
 					_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
 					_ = Interlocked.Increment(ref _sectionsRequested);

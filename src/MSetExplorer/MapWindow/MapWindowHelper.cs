@@ -66,9 +66,9 @@ namespace MSetExplorer
 
 			//return new RPoint(x, y, exponent);
 
-			////return new RPoint();
+			return new RPoint();
 
-			return coords.Position;
+			//return coords.Position;
 		}
 
 		//public static Point GetBlockPosition(Point screenPosition, SizeInt blockSize)
