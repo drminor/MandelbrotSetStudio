@@ -15,8 +15,8 @@ namespace MSetExplorer
 	{
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly Job _job;
-		private readonly SizeInt _blockSize;
-		private readonly SizeInt _mapBlockOffset;
+		private readonly int _jobNumber;
+
 		private readonly Action<int, MapSection> _callback;
 		private readonly ColorMap _colorMap;
 
@@ -26,16 +26,14 @@ namespace MSetExplorer
 
 		private TaskCompletionSource _tcs;
 
+		#region Constructor
+
 		public MapLoader(Job job, int jobNumber, Action<int, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			JobNumber = jobNumber;
-
 			_job = job;
+			_jobNumber = jobNumber;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
-
-			_blockSize = job.Subdivision.BlockSize;
-			_mapBlockOffset = job.MapBlockOffset;
 			_colorMap = new ColorMap(job.MSetInfo.ColorMapEntries);
 
 			_isStopping = false;
@@ -45,7 +43,9 @@ namespace MSetExplorer
 			_tcs = null;
 		}
 
-		public int JobNumber { get; }
+		#endregion
+
+		#region Public Methods
 
 		public Task Start()
 		{
@@ -59,9 +59,29 @@ namespace MSetExplorer
 			return _tcs.Task;
 		}
 
+		public void Stop()
+		{
+			if (_tcs == null)
+			{
+				throw new InvalidOperationException("This MapLoader has not been started.");
+			}
+
+			if (!_isStopping && _tcs.Task.Status != TaskStatus.RanToCompletion)
+			{
+				_mapSectionRequestProcessor.CancelJob(_jobNumber);
+				_isStopping = true;
+			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
 		private void SubmitSectionRequests()
 		{
-			var mapExtentInBlocks = GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset.Round());
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset.Round());
+			var mapBlockOffset = _job.MapBlockOffset;
+
 			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
 			{
 				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
@@ -76,65 +96,28 @@ namespace MSetExplorer
 					}
 
 					// Translate to subdivision coordinates.
-					var blockPosition = new PointInt(xBlockPtr, yBlockPtr).Translate(_mapBlockOffset);
-					var mapSectionRequest = MapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, _job.MSetInfo.MapCalcSettings, out var mapPosition);
+					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
+					var blockPosition = ToSubdivisionCoords(screenPosition, _job, out var inverted);
+					var mapSectionRequest = MapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, inverted, _job.MSetInfo.MapCalcSettings, out var mapPosition);
 
-					//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition}");
-
-					_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
+					Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
+					_mapSectionRequestProcessor.AddWork(_jobNumber, mapSectionRequest, HandleResponse);
 					_ = Interlocked.Increment(ref _sectionsRequested);
 				}
 			}
 		}
 
-		private SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, SizeInt canvasControlOffset)
-		{
-			var result = new SizeInt(
-				canvasSizeInBlocks.Width + (Math.Abs(canvasControlOffset.Width) > 0 ? 1 : 0),
-				canvasSizeInBlocks.Height + (Math.Abs(canvasControlOffset.Height) > 0 ? 1 : 0)
-				);
-
-			return result;
-		}
-
-		public void Stop()
-		{
-			if (_tcs == null)
-			{
-				throw new InvalidOperationException("This MapLoader has not been started.");
-			}
-
-			if (!_isStopping && _tcs.Task.Status != TaskStatus.RanToCompletion)
-			{
-				_mapSectionRequestProcessor.CancelJob(JobNumber);
-				_isStopping = true;
-			}
-		}
-
-
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			var pixels1d = GetPixelArray(mapSectionResponse.Counts, _blockSize, _colorMap, !mapSectionRequest.Inverted);
+			var blockPosition = mapSectionResponse.BlockPosition;
+			var screenPosition = ToScreenCoords(blockPosition, mapSectionRequest.Inverted, _job);
+			Debug.WriteLine($"MapLoader handling response: {blockPosition} for ScreenBlkPos: {screenPosition}.");
 
-			PointInt respBlockPosition;
+			var blockSize = _job.Subdivision.BlockSize;
+			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, _colorMap, !mapSectionRequest.Inverted);
+			var mapSection = new MapSection(screenPosition, blockSize, pixels1d);
 
-			if (mapSectionRequest.Inverted)
-			{
-				respBlockPosition = new PointInt(mapSectionResponse.BlockPosition.X, -1 * (1 + mapSectionResponse.BlockPosition.Y));
-			}
-			else
-			{
-				respBlockPosition = mapSectionResponse.BlockPosition;
-			}
-
-			// Translate subdivision coordinates to block coordinates.
-			var blockPosition = respBlockPosition.Diff(_mapBlockOffset);
-
-			//Debug.WriteLine($"MapLoader handling response. ScreenBlkPos: {blockPosition}, RepoBlkPos: {mapSectionResponse.BlockPosition}.");
-
-			var mapSection = new MapSection(blockPosition, _blockSize, pixels1d);
-
-			_callback(JobNumber, mapSection);
+			_callback(_jobNumber, mapSection);
 
 			_ = Interlocked.Increment(ref _sectionCompleted);
 			if (_sectionCompleted == _job.CanvasSizeInBlocks.NumberOfCells || (_isStopping && _sectionCompleted == _sectionsRequested))
@@ -144,6 +127,49 @@ namespace MSetExplorer
 					_tcs.SetResult();
 				}
 			}
+		}
+
+		// TODO: ToSubdivisionCoords should take a vector and return a vector
+		private PointInt ToSubdivisionCoords(PointInt blockPosition, Job job, out bool inverted)
+		{
+			var repoPos = blockPosition.Translate(job.MapBlockOffset);
+
+			PointInt result;
+			if (repoPos.Y < 0)
+			{
+				inverted = true;
+				result = new PointInt(repoPos.X, (repoPos.Y * -1) - 1);
+			}
+			else
+			{
+				inverted = false;
+				result = repoPos;
+			}
+
+			return result;
+		}
+
+		// TODO: ToScreenCoords should take a vector and return a vector
+		private PointInt ToScreenCoords(PointInt blockPosition, bool inverted, Job job)
+		{
+			PointInt posT;
+
+			if (inverted)
+			{
+				posT = new PointInt(blockPosition.X, (blockPosition.Y + 1) * -1);
+			}
+			else
+			{
+				posT = blockPosition;
+			}
+
+			var result = posT.Diff(job.MapBlockOffset);
+			return result;
+		}
+
+		private bool JobCrossesZeroY(RRectangle mapCoords)
+		{
+			return mapCoords.Y1.Sign != mapCoords.Y2.Sign;
 		}
 
 		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
@@ -158,13 +184,11 @@ namespace MSetExplorer
 
 			for (var rowPtr = 0; rowPtr < blockSize.Height; rowPtr++)
 			{
-				// Calculate the array index for the beginning of this 
-				// destination and source row.
-				// The Destination's origin is at the top, left.
+				// Calculate the array index for the beginning of this destination and source row.
 				// The Source's origin is at the bottom, left.
+				// If inverted, the Destination's origin is at the top, left, otherwise bottom, left. 
 
-				//var resultRowPtr = -1 + blockSize.Height - rowPtr;
-				var resultRowPtr = GetResultRowPtr(blockSize.Height, rowPtr, invert);
+				var resultRowPtr = GetResultRowPtr(blockSize.Height - 1, rowPtr, invert);
 
 				var curResultPtr = resultRowPtr * blockSize.Width * 4;
 				var curSourcePtr = rowPtr * blockSize.Width;
@@ -187,11 +211,12 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private int GetResultRowPtr(int blockHeight, int rowPtr, bool invert) 
+		private int GetResultRowPtr(int maxRowIndex, int rowPtr, bool invert) 
 		{
-			var result = invert ? -1 + blockHeight - rowPtr : rowPtr;
+			var result = invert ? maxRowIndex - rowPtr : rowPtr;
 			return result;
 		}
 
+		#endregion
 	}
 }

@@ -23,7 +23,6 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-
 			var DROP_MAP_SECTIONS = true;
 
 			var USE_MAP_NAV_SIM = false;

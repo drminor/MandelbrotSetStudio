@@ -172,6 +172,16 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, SizeInt canvasControlOffset)
+		{
+			var result = new SizeInt(
+				canvasSizeInBlocks.Width + (Math.Abs(canvasControlOffset.Width) > 0 ? 1 : 0),
+				canvasSizeInBlocks.Height + (Math.Abs(canvasControlOffset.Height) > 0 ? 1 : 0)
+				);
+
+			return result;
+		}
+
 		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
 		public static SizeInt GetMapBlockOffset(RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out SizeDbl canvasControlOffset)
