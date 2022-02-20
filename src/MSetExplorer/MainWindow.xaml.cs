@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -82,6 +83,7 @@ namespace MSetExplorer
 			if (e.PropertyName == "CanvasSize")
 			{
 				Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
+				//_mapDisplay.SetCanvasSizeBackDoor(_vm.CanvasSize);
 				return;
 			}
 		}

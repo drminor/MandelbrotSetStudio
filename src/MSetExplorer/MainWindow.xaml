@@ -26,13 +26,6 @@
             </StackPanel>
         </Border>
 
-        <!--<Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Canvas Name="mdContainer">
-                <Rectangle HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Name="mdConBor" Width="1" Stroke="Black" StrokeThickness="2" Fill="LightBlue" Canvas.Left="0" Canvas.Bottom="0"></Rectangle>
-                <local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}" Canvas.Left="0" Canvas.Bottom="0" ></local:MapDisplay>
-            </Canvas>
-        </Border>-->
-
         <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}"></local:MapDisplay>
         </Border>
@@ -45,7 +38,6 @@
                 <Button Name="btnSave" HorizontalAlignment="Center" Width="100" Margin="45,15,0,15" Click="SaveButton_Click" >Save</Button>
             </StackPanel>
         </Border>
-
 
     </Grid>
 </Window>

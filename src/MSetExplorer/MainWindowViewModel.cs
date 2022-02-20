@@ -137,8 +137,9 @@ namespace MSetExplorer
 		{
 			var jobName = GetJobName(transformType);
 			var parentJob = _navStack.CurrentJob;
+
 			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
-			Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
+			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
 			_navStack.Push(job);
 			OnPropertyChanged(nameof(CanGoBack));

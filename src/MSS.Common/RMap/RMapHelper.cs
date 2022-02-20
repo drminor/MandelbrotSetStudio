@@ -172,6 +172,14 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static SizeInt GetCanvasSizeWholeBlocks(SizeDbl canvasSize, SizeInt blockSize)
+		{
+			var numBlocks = canvasSize.Divide(blockSize);
+			var result = numBlocks.Truncate();
+
+			return result;
+		}
+
 		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, SizeInt canvasControlOffset)
 		{
 			var result = new SizeInt(
@@ -192,25 +200,25 @@ namespace MSS.Common
 			var coords = RN.Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
 			var mapOrigin = coords.Position;
 
-			Debug.WriteLine($"Our origin is {mapCoords.Position}");
-			Debug.WriteLine($"Destination origin is {subdivisionOrigin}");
+			//Debug.WriteLine($"Our origin is {mapCoords.Position}");
+			//Debug.WriteLine($"Destination origin is {subdivisionOrigin}");
 
 			var mDistance = mapOrigin.Diff(destinationOrigin);
 
 			if (mDistance.Width == 0 && mDistance.Height == 0)
 			{
-				Debug.WriteLine($"The offset from the subOrigin is Zero.");
+				//Debug.WriteLine($"The offset from the subOrigin is Zero.");
 
 				canvasControlOffset = new SizeDbl();
 				result = new SizeInt();
 			}
 			else
 			{
-				Debug.WriteLine($"The offset from the subOrigin is {mDistance}.");
+				//Debug.WriteLine($"The offset from the subOrigin is {mDistance}.");
 
 				var offset = RN.Normalize(mDistance, samplePointDelta, out var spd);
 				var offSetInSamplePoints = GetNumberOfSamplePoints(offset, spd);
-				Debug.WriteLine($"The offset in samplePoints is {offSetInSamplePoints}.");
+				//Debug.WriteLine($"The offset in samplePoints is {offSetInSamplePoints}.");
 
 				// Get # of whole blocks and the # of pixels left over
 				var offSetInBlocks = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out canvasControlOffset);
@@ -241,7 +249,7 @@ namespace MSS.Common
 			var blocksV = Math.DivRem(offSetInSamplePoints.Height, blockSize.Height, out var remainderV);
 
 			var wholeBlocks = offSetInSamplePoints.DivRem(blockSize, out var remainder);
-			Debug.WriteLine($"Whole blocks: {wholeBlocks}, Remaining Pixels: {remainder}.");
+			//Debug.WriteLine($"Whole blocks: {wholeBlocks}, Remaining Pixels: {remainder}.");
 
 			if (remainderH < 0)
 			{
@@ -258,7 +266,7 @@ namespace MSS.Common
 			var offSetInBlocks = new SizeInt(blocksH, blocksV);
 			canvasControlOffset = new SizeDbl(remainderH, remainderV);
 
-			Debug.WriteLine($"Starting Block Pos: {offSetInBlocks}, Pixel Pos: {canvasControlOffset}.");
+			//Debug.WriteLine($"Starting Block Pos: {offSetInBlocks}, Pixel Pos: {canvasControlOffset}.");
 			return offSetInBlocks;
 		}
 

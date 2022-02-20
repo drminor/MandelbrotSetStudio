@@ -80,6 +80,9 @@ namespace MSetExplorer
 		private void SubmitSectionRequests()
 		{
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset.Round());
+
+			Debug.WriteLine($"Submitting section requests. The map extent is {mapExtentInBlocks}.");
+
 			var mapBlockOffset = _job.MapBlockOffset;
 
 			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
@@ -100,7 +103,7 @@ namespace MSetExplorer
 					var blockPosition = ToSubdivisionCoords(screenPosition, _job, out var inverted);
 					var mapSectionRequest = MapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, inverted, _job.MSetInfo.MapCalcSettings, out var mapPosition);
 
-					Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
+					//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
 					_mapSectionRequestProcessor.AddWork(_jobNumber, mapSectionRequest, HandleResponse);
 					_ = Interlocked.Increment(ref _sectionsRequested);
 				}
@@ -111,7 +114,7 @@ namespace MSetExplorer
 		{
 			var blockPosition = mapSectionResponse.BlockPosition;
 			var screenPosition = ToScreenCoords(blockPosition, mapSectionRequest.Inverted, _job);
-			Debug.WriteLine($"MapLoader handling response: {blockPosition} for ScreenBlkPos: {screenPosition}.");
+			//Debug.WriteLine($"MapLoader handling response: {blockPosition} for ScreenBlkPos: {screenPosition}.");
 
 			var blockSize = _job.Subdivision.BlockSize;
 			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, _colorMap, !mapSectionRequest.Inverted);

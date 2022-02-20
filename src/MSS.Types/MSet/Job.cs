@@ -44,7 +44,6 @@ namespace MSS.Types.MSet
 			TransformType = transformType;
 			NewArea = newArea;
 
-
 			MSetInfo = mSetInfo;
 			CanvasSizeInBlocks = canvasSizeInBlocks;
 			MapBlockOffset = mapBlockOffset;

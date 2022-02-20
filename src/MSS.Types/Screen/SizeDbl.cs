@@ -49,6 +49,16 @@ namespace MSS.Types
 			return new SizeDbl(Width + offset.Width, Height + offset.Height);
 		}
 
+		public SizeDbl Divide(SizeInt dividend)
+		{
+			var resultH = Width / dividend.Width;
+			var resultV = Height / dividend.Height;
+
+			var result = new SizeDbl(resultH, resultV);
+
+			return result;
+		}
+
 		public SizeDbl Mod(SizeInt dividend)
 		{
 			return new SizeDbl(Width % dividend.Width, Height % dividend.Height);
@@ -65,6 +75,17 @@ namespace MSS.Types
 				(
 					(int)Math.Round(Width, midpointRounding),
 					(int)Math.Round(Height, midpointRounding)
+				);
+
+			return result;
+		}
+
+		public SizeInt Truncate()
+		{
+			var result = new SizeInt
+				(
+					(int)Math.Truncate(Width),
+					(int)Math.Truncate(Height)
 				);
 
 			return result;

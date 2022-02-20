@@ -1,4 +1,5 @@
 ﻿using MSetExplorer.MapWindow;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.Screen;
 using System;
@@ -40,8 +41,8 @@ namespace MSetExplorer
 			}
 			else
 			{
-				MainCanvas.SizeChanged += Canvas_SizeChanged;
-				TriggerCanvasSizeUpdate();
+				CanvasSize = new SizeDbl(MainCanvas.Width, MainCanvas.Height).Round();
+				SizeChanged += MapDisplay_SizeChanged;
 
 				_vm = (IMapJobViewModel)DataContext;
 				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
@@ -54,6 +55,20 @@ namespace MSetExplorer
 				_selectedArea.ScreenPanned += SelectedArea_ScreenPanned;
 
 				Debug.WriteLine("The MapDisplay is now loaded.");
+			}
+		}
+
+		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			var sizeDbl = new SizeDbl(e.NewSize.Width, e.NewSize.Height);
+			var canvasSizeInWholeBlocks = RMapHelper.GetCanvasSizeWholeBlocks(sizeDbl, _vm.BlockSize);
+			var newCanvasSize = canvasSizeInWholeBlocks.Scale(_vm.BlockSize);
+
+			var diff = CanvasSize.Diff(newCanvasSize).Abs();
+
+			if (diff.Width > 0 || diff.Height > 0)
+			{
+				CanvasSize = newCanvasSize;
 			}
 		}
 
@@ -95,20 +110,6 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Canvas Handlers
-
-		private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			TriggerCanvasSizeUpdate();
-		}
-
-		private void TriggerCanvasSizeUpdate()
-		{
-			CanvasSize = new SizeInt();
-		}
-
-		#endregion
-
 		#region Dependency Properties
 
 		public static readonly DependencyProperty CanvasSizeProperty = DependencyProperty.Register
@@ -119,32 +120,46 @@ namespace MSetExplorer
 			new FrameworkPropertyMetadata(new SizeInt(), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, CanvasSizeChanged)
 			);
 
+		//public SizeInt CanvasSize
+		//{
+		//	get
+		//	{
+		//		//var result = new SizeDbl(MainCanvas.ActualWidth, MainCanvas.ActualHeight).Round();
+
+		//		//var result = (SizeInt)GetValue(CanvasSizeProperty);
+		//		//return result;
+		//		return (SizeInt)GetValue(CanvasSizeProperty);
+		//	}
+
+		//	set => SetValue(CanvasSizeProperty, value);
+		//}
+
 		public SizeInt CanvasSize
 		{
-			get
-			{
-				var result = new SizeDbl(MainCanvas.ActualWidth, MainCanvas.ActualHeight).Round();
-				return result;
-			}
-			
-			// This property is not updatable. This is used to update any bindings that may have this as a target.
-			set
-			{
-				var curSize = CanvasSize;
-				SetValue(CanvasSizeProperty, curSize);
-			}
+			get => (SizeInt)GetValue(CanvasSizeProperty);
+			set => SetValue(CanvasSizeProperty, value);
 		}
 
 		private static void CanvasSizeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
 		{
-			if (sender is MapDisplay)
+			if (sender is MapDisplay x)
 			{
 				Debug.WriteLine("The CanvasSize is being set on the MapDisplay Control.");
+				x.SetCanvasSizeBackDoor((SizeInt) e.NewValue);
 			}
 			else
 			{
 				Debug.WriteLine($"CanvasSizeChanged was raised from sender: {sender}");
 			}
+		}
+
+		private void SetCanvasSizeBackDoor(SizeInt value)
+		{
+			MainCanvas.Width = value.Width;
+			MainCanvas.Height = value.Height;
+
+			canvasBorder.Width = value.Width - 4;
+			canvasBorder.Height = value.Height - 4;
 		}
 
 		#endregion
