@@ -105,13 +105,6 @@ namespace MSetExplorer
 		{
 			public ImageDrawing ImageDrawing { get; }
 
-			//public ScreenSection(RectangleInt rectangle)
-			//{
-			//	var image = CreateImage(rectangle.Width, rectangle.Height);
-			//	var rect = new Rect(new Point(rectangle.X1, rectangle.Y1), new Size(rectangle.Width, rectangle.Height));
-			//	ImageDrawing = new ImageDrawing(image.Source, rect);
-			//}
-
 			public ScreenSection(PointInt blockPosition, SizeInt blockSize)
 			{
 				var image = CreateImage(blockSize.Width, blockSize.Height);

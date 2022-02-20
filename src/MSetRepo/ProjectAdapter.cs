@@ -34,6 +34,15 @@ namespace MSetRepo
 
 		#region Collections
 
+		public void DropCollections()
+		{
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			subdivisionReaderWriter.DropCollection();
+
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			mapSectionReaderWriter.DropCollection();
+		}
+
 		public void CreateCollections()
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);

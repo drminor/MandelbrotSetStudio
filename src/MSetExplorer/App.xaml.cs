@@ -23,14 +23,23 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			bool USE_MAP_NAV_SIM = false;
-			bool USE_MAP_SECTION_REPO = true;
+
+			var DROP_MAP_SECTIONS = true;
+
+			var USE_MAP_NAV_SIM = false;
+			var USE_MAP_SECTION_REPO = true;
 
 			base.OnStartup(e);
 
 			StartServer();
 
 			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
+
+			if (DROP_MAP_SECTIONS)
+			{
+				projectAdapter.DropCollections();
+			}
+
 			projectAdapter.CreateCollections();
 
 			var mEngineClient = new MClient(M_ENGINE_END_POINT_ADDRESS);

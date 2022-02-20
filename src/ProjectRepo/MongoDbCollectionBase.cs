@@ -35,6 +35,11 @@ namespace ProjectRepo
 			}
 		}
 
+		public void DropCollection()
+		{
+			_dbProvider.Database.DropCollection(_collectionName);
+		}
+
 		protected virtual long? GetReturnCount(DeleteResult deleteResult)
 		{
 			if (deleteResult.IsAcknowledged)

@@ -32,6 +32,13 @@ namespace MSS.Types
 
 		#region Division
 
+		public static RValue Divide(RValue dividend, int divisor)
+		{
+			var newNumerator = Divide(dividend.Value, dividend.Exponent, divisor, out var newExponent);
+			var result = new RValue(newNumerator, newExponent);
+			return result;
+		}
+
 		public static BigInteger Divide(BigInteger dividend, int dividendExponent, int divisor, out int newExponent)
 		{
 			var exponentDelta = 0;
@@ -157,6 +164,11 @@ namespace MSS.Types
 
 		#endregion
 
+		public static string GetDisplay(BigInteger v, int exponent)
+		{
+			return $"{v}/{ Math.Pow(2, -1 * exponent).ToString(CultureInfo.InvariantCulture)}";
+		}
+
 		public static string GetDisplay(IBigRatShape bigRatShape, bool includeDecimalOutput = false)
 		{
 			return GetDisplay(bigRatShape.Values, bigRatShape.Exponent, includeDecimalOutput);
@@ -187,6 +199,11 @@ namespace MSS.Types
 		}
 
 		#region Convert to Double
+
+		public static double ConvertToDouble(RValue n)
+		{
+			return ConvertToDouble(n.Value, n.Exponent);
+		}
 
 		public static double ConvertToDouble(BigInteger n, int exponent)
 		{
@@ -219,6 +236,11 @@ namespace MSS.Types
 			return !DoubleHelper.HasPrecision(result)
                 ?               throw new OverflowException($"When converting BigInteger: {n} to a double, precision was lost.")
 				: result;
+		}
+
+		public static bool TryConvertToDouble(RValue n, out double value)
+		{
+			return TryConvertToDouble(n.Value, n.Exponent, out value);
 		}
 
 		public static bool TryConvertToDouble(BigInteger n, int exponent, out double value)
@@ -264,7 +286,10 @@ namespace MSS.Types
 
 		private static bool SafeCastToDouble(BigInteger n)
 		{
-			return DOUBLE_MIN_VALUE <= n && n <= DOUBLE_MAX_VALUE;
+			//bool result = DOUBLE_MIN_VALUE <= n && n <= DOUBLE_MAX_VALUE;
+			bool result = BigInteger.Abs(n) > FACTOR;
+
+			return result;
 		}
 
 		#endregion

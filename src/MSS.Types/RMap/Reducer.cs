@@ -5,6 +5,12 @@ namespace MSS.Types
 {
 	public static class Reducer
 	{
+		public static RValue Reduce(RValue rValue)
+		{
+			var val = Reduce(rValue, out var exponent);
+			return new RValue(val, exponent);
+		}
+
 		public static RPoint Reduce(RPoint rPoint)
 		{
 			var vals = Reduce(rPoint, out var exponent);
@@ -45,6 +51,22 @@ namespace MSS.Types
 			return result;
 		}
 
+		public static BigInteger Reduce(BigInteger value, int exponent, out int newExponent)
+		{
+			var reductionFactor = 0;
+			long divisor = 1;
+
+			while (exponent + reductionFactor < 0 && BigInteger.Remainder(value, divisor * 2) == 0)
+			{
+				reductionFactor++;
+				divisor *= 2;
+			}
+
+			newExponent = exponent + reductionFactor;
+			var result = value / divisor;
+			return result;
+		}
+
 		private static bool IsDivisibleBy(BigInteger[] dividends, long divisor)
 		{
 			for (var i = 0; i < dividends.Length; i++)
@@ -57,5 +79,11 @@ namespace MSS.Types
 
 			return true;
 		}
+
+		private static bool IsDivisibleBy(BigInteger dividend, long divisor)
+		{
+			return BigInteger.Remainder(dividend, divisor) == 0;
+		}
+
 	}
 }

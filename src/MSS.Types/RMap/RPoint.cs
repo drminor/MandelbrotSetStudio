@@ -42,13 +42,13 @@ namespace MSS.Types
 			return new RPoint(X * factor.X, Y * factor.Y, Exponent);
 		}
 
-		// TODO: FIX BUG
-		public RPoint Scale(RSize factor)
-		{
-			return factor.Exponent != Exponent
-                ?                throw new InvalidOperationException($"Cannot scale a RPoint with Exponent: {Exponent} using a RSize with Exponent: {factor.Exponent}.")
-				: new RPoint(X * factor.Width, Y * factor.Height, Exponent);
-		}
+		//// TODO: FIX BUG
+		//public RPoint Scale(RSize factor)
+		//{
+		//	return factor.Exponent != Exponent
+  //              ?                throw new InvalidOperationException($"Cannot scale a RPoint with Exponent: {Exponent} using a RSize with Exponent: {factor.Exponent}.")
+		//		: new RPoint(X * factor.Width, Y * factor.Height, Exponent);
+		//}
 
 		public RPoint Translate(RPoint amount)
 		{
@@ -61,7 +61,7 @@ namespace MSS.Types
 		{
 			return amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RPoint with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
-				: new RPoint(X + amount.Width, Y + amount.Height, Exponent);
+				: new RPoint(X + amount.WidthNumerator, Y + amount.HeightNumerator, Exponent);
 		}
 
 		/// <summary>

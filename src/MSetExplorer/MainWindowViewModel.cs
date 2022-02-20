@@ -4,10 +4,8 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
-using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Windows;
 
 namespace MSetExplorer
 {
@@ -61,7 +59,7 @@ namespace MSetExplorer
 		public void UpdateMapViewZoom(RectangleInt newArea)
 		{
 			var curJob = CurrentJob;
-			var position = curJob.MSetInfo.Coords.LeftBot;
+			var position = curJob.MSetInfo.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
 			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);

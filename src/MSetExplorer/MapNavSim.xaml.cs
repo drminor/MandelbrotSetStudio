@@ -73,7 +73,7 @@ namespace MSetExplorer
 		private RRectangle GetCoords(Rect rect)
 		{
 			var curJob = _vm.CurrentJob;
-			var position = curJob.MSetInfo.Coords.LeftBot;
+			var position = curJob.MSetInfo.Coords.Position;
 			var canvasControlOffset = curJob.CanvasControlOffset;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 

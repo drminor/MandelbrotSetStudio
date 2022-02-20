@@ -1,11 +1,9 @@
-﻿using MSetExplorer.ScreenHelpers;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
@@ -33,10 +31,10 @@ namespace MSetExplorer.MapWindow
 
 		public SelectionRectangle(Canvas canvas, SizeDbl canvasControlOffset, SizeInt blockSize)
 		{
-			_selecting = false;
-			_dragging = false;
-			_dragAnchor = new Point();
-			_dragIsBeingCancelled = false;
+			//_selecting = false;
+			//_dragging = false;
+			//_dragAnchor = new Point();
+			//_dragIsBeingCancelled = false;
 
 			_canvas = canvas;
 			CanvasControlOffset = canvasControlOffset;
@@ -98,99 +96,6 @@ namespace MSetExplorer.MapWindow
 
 				return result;
 			}
-		}
-
-		// Return the distance from the DragAnchor to the new mouse position.
-		public SizeDbl GetDragOffset(Point controlPos)
-		{
-			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
-			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
-			var result = endP.Diff(startP);
-
-			return result;
-		}
-
-		public bool Selecting
-		{
-			get => _selecting;
-
-			private set
-			{
-				if (_selecting != value)
-				{
-					if (value)
-					{
-						_selectedArea.Visibility = Visibility.Visible;
-					}
-					else
-					{
-						_selectedArea.Visibility = Visibility.Hidden;
-						_selectedArea.Width = _blockSize.Width;
-						_selectedArea.Height = _blockSize.Height;
-					}
-
-					_selecting = value;
-				}
-			}
-		}
-
-		public bool Dragging
-		{
-			get => _dragging;
-
-			set
-			{
-				if (_dragging != value)
-				{
-					if (value)
-					{
-						Mouse.Capture(_canvas);
-						_dragLine.Visibility = Visibility.Visible;
-						_canvas.Focus();
-					}
-					else
-					{
-						_dragLine.Visibility = Visibility.Hidden;
-						Mouse.Capture(null);
-					}
-
-					_dragging = value;
-				}
-			}
-		}
-
-		#endregion
-
-		#region Public Methods
-
-		public void Activate(Point position)
-		{
-			Selecting = true;
-			Move(position);
-
-			if (!_selectedArea.Focus())
-			{
-				Debug.WriteLine("Activate did not move the focus to the SelectedRectangle");
-			}
-		}
-
-		public void Deactivate()
-		{
-			Selecting = false;
-		}
-
-		public bool Contains(Point position)
-		{
-			var p = SelectedPosition;
-			var s = SelectedSize;
-			var r = new Rect(p, s);
-
-			var result = r.Contains(position);
-
-			//var strResult = result ? "is contained" : "is not contained";
-			//Debug.WriteLine($"Checking {p} to see if it contained by {r} and it {strResult}.");
-
-			return result;
 		}
 
 		#endregion
@@ -403,6 +308,136 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
+		private void Activate(Point position)
+		{
+			Selecting = true;
+			Move(position);
+
+			if (!_selectedArea.Focus())
+			{
+				Debug.WriteLine("Activate did not move the focus to the SelectedRectangle");
+			}
+		}
+
+		private void Deactivate()
+		{
+			Selecting = false;
+		}
+
+		private bool Contains(Point position)
+		{
+			var p = SelectedPosition;
+			var s = SelectedSize;
+			var r = new Rect(p, s);
+
+			var result = r.Contains(position);
+
+			//var strResult = result ? "is contained" : "is not contained";
+			//Debug.WriteLine($"Checking {p} to see if it contained by {r} and it {strResult}.");
+
+			return result;
+		}
+
+		// Return the distance from the DragAnchor to the new mouse position.
+		private SizeDbl GetDragOffset(Point controlPos)
+		{
+			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
+			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
+			var result = endP.Diff(startP);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Private Properties
+
+		private bool Selecting
+		{
+			get => _selecting;
+
+			set
+			{
+				if (_selecting != value)
+				{
+					if (value)
+					{
+						_selectedArea.Visibility = Visibility.Visible;
+					}
+					else
+					{
+						_selectedArea.Visibility = Visibility.Hidden;
+						_selectedArea.Width = _blockSize.Width;
+						_selectedArea.Height = _blockSize.Height;
+					}
+
+					_selecting = value;
+				}
+			}
+		}
+
+		private bool Dragging
+		{
+			get => _dragging;
+
+			set
+			{
+				if (_dragging != value)
+				{
+					if (value)
+					{
+						Mouse.Capture(_canvas);
+						_dragLine.Visibility = Visibility.Visible;
+						_canvas.Focus();
+					}
+					else
+					{
+						_dragLine.Visibility = Visibility.Hidden;
+						Mouse.Capture(null);
+					}
+
+					_dragging = value;
+				}
+			}
+		}
+
+		private Point SelectedPosition
+		{
+			get
+			{
+				var x = (double)_selectedArea.GetValue(Canvas.LeftProperty);
+				var y = (double)_selectedArea.GetValue(Canvas.BottomProperty);
+
+				return new Point(double.IsNaN(x) ? 0 : x, double.IsNaN(y) ? 0 : y);
+			}
+
+			set
+			{
+				_selectedArea.SetValue(Canvas.LeftProperty, value.X);
+				_selectedArea.SetValue(Canvas.BottomProperty, value.Y);
+			}
+		}
+
+		private Size SelectedSize
+		{
+			get => new(_selectedArea.Width, _selectedArea.Height);
+			set
+			{
+				_selectedArea.Width = value.Width;
+				_selectedArea.Height = value.Height;
+			}
+		}
+
+		private Point DragLineTerminus
+		{
+			get => new(_dragLine.X2, _dragLine.Y2);
+			set
+			{
+				_dragLine.X2 = value.X;
+				_dragLine.Y2 = value.Y;
+			}
+		}
+		
 		#endregion
 
 		#region Private Methods
@@ -411,19 +446,10 @@ namespace MSetExplorer.MapWindow
 		private void Move(Point posYInverted)
 		{
 			//Debug.WriteLine($"Moving the sel rec to {position}, free form.");
-			//ReportPosition(position);
+			//ReportPosition(posYInverted);
 
-			var screenPos = ConvertToScreenCoords(posYInverted);
-
-			var nrmScreenPos = new PointDbl(
-				RoundOff(screenPos.X - (_selectedArea.Width / 2), PITCH),
-				RoundOff(screenPos.Y - (_selectedArea.Height / 2), PITCH)
-				);
-
-			var pos = ConvertToCanvasCoords(nrmScreenPos);
-
-			var x = pos.X;
-			var y = pos.Y;
+			var x = RoundOff(posYInverted.X - (_selectedArea.Width / 2), PITCH);
+			var y = RoundOff(posYInverted.Y - (_selectedArea.Height / 2), PITCH);
 
 			if (x < 0)
 			{
@@ -523,46 +549,9 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
-		private Point SelectedPosition
-		{
-			get
-			{
-				var x = (double)_selectedArea.GetValue(Canvas.LeftProperty);
-				var y = (double)_selectedArea.GetValue(Canvas.BottomProperty);
-
-				return new Point(double.IsNaN(x) ? 0 : x, double.IsNaN(y) ? 0 : y);
-			}
-
-			set
-			{
-				_selectedArea.SetValue(Canvas.LeftProperty, value.X);
-				_selectedArea.SetValue(Canvas.BottomProperty, value.Y);
-			}
-		}
-
-		private Size SelectedSize
-		{
-			get => new(_selectedArea.Width, _selectedArea.Height);
-			set
-			{
-				_selectedArea.Width = value.Width;
-				_selectedArea.Height = value.Height;
-			}
-		}
-
-		private Point DragLineTerminus
-		{
-			get => new(_dragLine.X2, _dragLine.Y2);
-			set
-			{
-				_dragLine.X2 = value.X;
-				_dragLine.Y2 = value.Y;
-			}
-		}
-
 		private double RoundOff(double number, int interval)
 		{
-			var remainder = (int) Math.IEEERemainder(number, interval);
+			var remainder = (int)Math.IEEERemainder(number, interval);
 			number += (remainder < interval / 2) ? -remainder : (interval - remainder);
 			return number;
 		}
@@ -588,25 +577,25 @@ namespace MSetExplorer.MapWindow
 		//	return relativePoint;
 		//}
 
-		// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
-		// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
-		private Point ConvertToScreenCoords(Point posYInverted)
-		{
-			var pointDbl = new PointDbl(posYInverted.X, posYInverted.Y);
-			var screenPos = ConvertToScreenCoords(pointDbl);
-			var result = new Point(screenPos.X, screenPos.Y);
+		//// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
+		//// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
+		//private Point ConvertToScreenCoords(Point posYInverted)
+		//{
+		//	var pointDbl = new PointDbl(posYInverted.X, posYInverted.Y);
+		//	var screenPos = ConvertToScreenCoords(pointDbl);
+		//	var result = new Point(screenPos.X, screenPos.Y);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
-		// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
-		private PointDbl ConvertToScreenCoords(PointDbl posYInverted)
-		{
-			var result = posYInverted.Translate(CanvasControlOffset);
+		//// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
+		//// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
+		//private PointDbl ConvertToScreenCoords(PointDbl posYInverted)
+		//{
+		//	var result = posYInverted.Translate(CanvasControlOffset);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		//private Point ConvertToCanvasCoords(Point posYInverted)
 		//{
@@ -617,14 +606,14 @@ namespace MSetExplorer.MapWindow
 		//	return result;
 		//}
 
-		// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
-		// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
-		private PointDbl ConvertToCanvasCoords(PointDbl posYInverted)
-		{
-			var result = posYInverted.Translate(CanvasControlOffset.Scale(-1d));
+		//// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
+		//// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
+		//private PointDbl ConvertToCanvasCoords(PointDbl posYInverted)
+		//{
+		//	var result = posYInverted.Translate(CanvasControlOffset.Scale(-1d));
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 

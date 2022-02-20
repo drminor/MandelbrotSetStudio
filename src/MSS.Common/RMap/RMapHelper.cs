@@ -24,10 +24,12 @@ namespace MSS.Common
 			return result;
 		}
 
-		// TODO: Consider adding a scale method to RSize that scales a RectangleInt.
+		// NOTE: This is using a buggy RRectangle.Scale Method.
 		private static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
 		{
-			var result = new RRectangle(area.X1 * factor.Width, area.X2 * factor.Width, area.Y1 * factor.Height, area.Y2 * factor.Height, factor.Exponent);
+			var rectangle = new RRectangle(area);
+			var result = rectangle.Scale(factor);
+
 			return result;
 		}
 
@@ -45,14 +47,9 @@ namespace MSS.Common
 
 		private static RSize ScaleByRsize(SizeInt offset, RSize factor)
 		{
-			var result = new RSize(offset.Width * factor.Width, offset.Height * factor.Height, factor.Exponent);
-
-			var rt = factor.Scale(offset);
-			Debug.Assert(result == rt, "ScaleByRSize-Size mismatch.");
-
+			var result = factor.Scale(offset);
 			return result;
 		}
-
 
 		#endregion
 
@@ -126,11 +123,17 @@ namespace MSS.Common
 
 		public static RSize GetSamplePointDelta(ref RRectangle coords, SizeInt canvasSize)
 		{
-			var newNumerator = canvasSize.Width > canvasSize.Height
-				? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
-				: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
+			//var newNumerator = canvasSize.Width > canvasSize.Height
+			//	? BigIntegerHelper.Divide(coords.WidthNumerator, coords.Exponent, canvasSize.Width, out var newExponent)
+			//	: BigIntegerHelper.Divide(coords.HeightNumerator, coords.Exponent, canvasSize.Height, out newExponent);
 
-			var result = new RSize(newNumerator, newNumerator, newExponent);
+			//var result = new RSize(newNumerator, newNumerator, newExponent);
+
+			var extent = canvasSize.Width > canvasSize.Height
+				? BigIntegerHelper.Divide(coords.Width, canvasSize.Width)
+				: BigIntegerHelper.Divide(coords.Height, canvasSize.Height);
+
+			var result = new RSize(extent);
 
 			// Use the original # of sample points and multiply by the new sample point size
 			// to get a new map size.
@@ -144,25 +147,11 @@ namespace MSS.Common
 			return result;
 		}
 
-		private static string GetSingleDispValue(BigInteger v, int exponent)
-		{
-			return $"{v}/{ Math.Pow(2, -1 * exponent).ToString(CultureInfo.InvariantCulture)}";
-		}
-
 		public static RRectangle CombinePosAndSize(RPoint pos, RSize size)
 		{
 			var nrmPos = RN.Normalize(pos, size, out var nrmSize);
 			var result = new RRectangle(nrmPos, nrmSize);
 
-			return result;
-		}
-
-		private static int StepUpToNextPow(int x)
-		{
-			var l = Math.Log2(x);
-			var lc = Math.Ceiling(l);
-
-			var result = (int) Math.Pow(2, lc);
 			return result;
 		}
 
@@ -197,12 +186,14 @@ namespace MSS.Common
 		{
 			SizeInt result;
 
-			Debug.WriteLine($"Our origin is {mapCoords.LeftBot}");
-			Debug.WriteLine($"Destination origin is {subdivisionOrigin}");
-
 			// Using normalize here to minimize the exponent value needed to express these values.
 			var coords = RN.Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
-			var mDistance = coords.LeftBot.Diff(destinationOrigin);
+			var mapOrigin = coords.Position;
+
+			Debug.WriteLine($"Our origin is {mapCoords.Position}");
+			Debug.WriteLine($"Destination origin is {subdivisionOrigin}");
+
+			var mDistance = mapOrigin.Diff(destinationOrigin);
 
 			if (mDistance.Width == 0 && mDistance.Height == 0)
 			{
@@ -228,13 +219,15 @@ namespace MSS.Common
 			return result;
 		}
 
+		// TODO: Check GetNumberOfSamplePoints uses the correct algorithm for division.
+
 		// Calculate the number of samplePoints in the given offset.
 		// It is assumed that offset is < Integer.MAX * samplePointDelta
 		private static SizeInt GetNumberOfSamplePoints(RSize offset, RSize samplePointDelta)
 		{
 			// # of whole sample points between the source and destination origins.
-			var numSamplesH = offset.Width / samplePointDelta.Width;
-			var numSamplesV = offset.Height / samplePointDelta.Height;
+			var numSamplesH = offset.WidthNumerator / samplePointDelta.WidthNumerator;
+			var numSamplesV = offset.HeightNumerator / samplePointDelta.HeightNumerator;
 			var offSetInSamplePoints = new SizeInt((int)numSamplesH, (int)numSamplesV);
 
 			return offSetInSamplePoints;
@@ -277,13 +270,14 @@ namespace MSS.Common
 		{
 			SizeInt result;
 
-			Debug.WriteLine($"Our origin is {mapCoords.LeftBot}");
-			Debug.WriteLine($"Destination origin is {subdivisionOrigin}");
-
 			// Using normalize here to minimize the exponent value needed to express these values.
 			var coords = RN.Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
+			var mapOrigin = coords.Position;
 
-			var mDistance = coords.LeftBot.Diff(destinationOrigin);
+			Debug.WriteLine($"Our origin is {mapCoords.Position}");
+			Debug.WriteLine($"Destination origin is {subdivisionOrigin}");
+
+			var mDistance = mapOrigin.Diff(destinationOrigin);
 
 			if (mDistance.Width == 0 && mDistance.Height == 0)
 			{
@@ -490,10 +484,18 @@ namespace MSS.Common
 			return result;
 		}
 
+		private static int StepUpToNextPow(int x)
+		{
+			var l = Math.Log2(x);
+			var lc = Math.Ceiling(l);
+
+			var result = (int)Math.Pow(2, lc);
+			return result;
+		}
+
 		private static RSize GetAdjustedSamplePointDelta(RSize mapSize, SizeDbl screenSize, RSize screenSizeToMapRat, SizeInt canvasSize)
 		{
-			int newExponent;
-			BigInteger newNumerator;
+			RValue extent;
 
 			if (canvasSize.Width > canvasSize.Height)
 			{
@@ -501,10 +503,8 @@ namespace MSS.Common
 				//var mW = sW * screenSizeToMapRat.Width;
 				//newNumerator = BigIntegerHelper.Divide(mW, mapSize.Exponent, canvasSize.Width, out newExponent);
 
-				newNumerator = BigIntegerHelper.Divide(mapSize.Width, mapSize.Exponent, canvasSize.Width, out newExponent);
-
-				Debug.WriteLine($"Adjusting SamplePointDelta. MapsW:{GetSingleDispValue(mapSize.Width, mapSize.Exponent)}, " +
-					$"ScreenW:{screenSize.Width}, csw: {canvasSize.Width}, SPD: {GetSingleDispValue(newNumerator, newExponent)}.");
+				extent = BigIntegerHelper.Divide(mapSize.Width, canvasSize.Width);
+				Debug.WriteLine($"Adjusting SamplePointDelta. MapsW:{mapSize.Width}, ScreenW:{screenSize.Width}, csw: {canvasSize.Width}, SPD: {extent}.");
 			}
 			else
 			{
@@ -512,13 +512,11 @@ namespace MSS.Common
 				//var mH = sH * screenSizeToMapRat.Height;
 				//newNumerator = BigIntegerHelper.Divide(mH, mapSize.Exponent, canvasSize.Height, out newExponent);
 
-				newNumerator = BigIntegerHelper.Divide(mapSize.Height, mapSize.Exponent, canvasSize.Height, out newExponent);
-
-				Debug.WriteLine($"Adjusting SamplePointDelta. MapsH:{GetSingleDispValue(mapSize.Height, mapSize.Exponent)}, " +
-					$"ScreenH:{screenSize.Height}, csh: {canvasSize.Height}, SPD: {GetSingleDispValue(newNumerator, newExponent)}.");
+				extent = BigIntegerHelper.Divide(mapSize.Height, canvasSize.Height);
+				Debug.WriteLine($"Adjusting SamplePointDelta. MapsH:{mapSize.Height}, ScreenH:{screenSize.Height}, csh: {canvasSize.Height}, SPD: {extent}.");
 			}
 
-			var result = new RSize(newNumerator, newNumerator, newExponent);
+			var result = new RSize(extent);
 
 			return result;
 		}
@@ -546,7 +544,7 @@ namespace MSS.Common
 				RN.NormalizeInPlace(ref destinationOrigin, ref normalizedOffset);
 				var newOrigin = destinationOrigin.Translate(normalizedOffset);
 
-				var newSize = coords.Size.Clone(); // new RSize(coords.WidthNumerator, coords.HeightNumerator, coords.Exponent);
+				var newSize = coords.Size.Clone();
 				RN.NormalizeInPlace(ref newOrigin, ref newSize);
 				result = new RRectangle(newOrigin, newSize);
 			}
@@ -560,7 +558,7 @@ namespace MSS.Common
 		// where the new origin has the smallest absolute value for the exponent.
 		private static RRectangle JiggerCoords(RRectangle targetCoords, RRectangle calcCoords, RSize samplePointDelta, ref SizeInt offsetInSamplePoints)
 		{
-			Debug.WriteLine($"JiggerTarget x:{targetCoords.LeftBot.Values[0]}, y:{targetCoords.LeftBot.Values[1]}, exp:{targetCoords.Exponent}; " +
+			Debug.WriteLine($"JiggerTarget x:{targetCoords.Position.Values[0]}, y:{targetCoords.Position.Values[1]}, exp:{targetCoords.Exponent}; " +
 				$"w:{targetCoords.Size.Values[0]}, h:{targetCoords.Size.Values[1]}.");
 
 			//var cCoords = calcCoords.Clone();
@@ -572,7 +570,7 @@ namespace MSS.Common
 			for (var pCntr = -2; pCntr < 4; pCntr++)
 			{
 				var pv = new SizeInt(pCntr, pCntr);
-				var p = cCoords.LeftBot.Translate(cSpd.Scale(pv));
+				var p = cCoords.Position.Translate(cSpd.Scale(pv));
 
 				for (var sCntr = -2; sCntr < 4; sCntr++)
 				{
@@ -605,7 +603,7 @@ namespace MSS.Common
 
 		private static SizeDbl GetSizeDbl(RSize rSize)
 		{
-			return new SizeDbl(BigIntegerHelper.ConvertToDouble(rSize.Width, rSize.Exponent), BigIntegerHelper.ConvertToDouble(rSize.Height, rSize.Exponent));
+			return new SizeDbl(BigIntegerHelper.ConvertToDouble(rSize.Width), BigIntegerHelper.ConvertToDouble(rSize.Height));
 		}
 
 		//private static PointDbl GetPointDbl(RPoint rPoint)

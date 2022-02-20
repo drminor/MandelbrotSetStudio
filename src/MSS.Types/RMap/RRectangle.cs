@@ -35,7 +35,7 @@ namespace MSS.Types
 			Validate();
 		}
 
-		public RRectangle(RPoint p, RSize s) : base(p.X, p.X + s.Width, p.Y, p.Y + s.Height)
+		public RRectangle(RPoint p, RSize s) : base(p.X, p.X + s.WidthNumerator, p.Y, p.Y + s.HeightNumerator)
 		{
 			if (p.Exponent != s.Exponent)
 			{
@@ -62,6 +62,9 @@ namespace MSS.Types
 
 		public BigInteger WidthNumerator => X2 - X1;
 		public BigInteger HeightNumerator => Y2 - Y1;
+
+		public RValue Width => new RValue(X2 - X1, Exponent);
+		public RValue Height => new RValue(Y2 - Y1, Exponent);
 		public RSize Size => new RSize(WidthNumerator, HeightNumerator, Exponent);
 
 		object ICloneable.Clone()
@@ -80,20 +83,20 @@ namespace MSS.Types
 			return result;
 		}
 
-		// TODO: FIX BUG
-		public RRectangle Scale(RPoint factor)
-		{
-			return factor.Exponent != Exponent
-				? throw new InvalidOperationException($"Cannot scale a RRectangle with Exponent: {Exponent} using a RPoint with Exponent: {factor.Exponent}.")
-				: new RRectangle(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y, Exponent);
-		}
+		//// TODO: FIX BUG
+		//public RRectangle Scale(RPoint factor)
+		//{
+		//	return factor.Exponent != Exponent
+		//		? throw new InvalidOperationException($"Cannot scale a RRectangle with Exponent: {Exponent} using a RPoint with Exponent: {factor.Exponent}.")
+		//		: new RRectangle(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y, Exponent);
+		//}
 
 		// TODO: FIX BUG
 		public RRectangle Scale(RSize factor)
 		{
 			return factor.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot scale a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {factor.Exponent}.")
-				: new RRectangle(X1 * factor.Width, X2 * factor.Width, Y1 * factor.Height, Y2 * factor.Height, Exponent);
+				: new RRectangle(X1 * factor.WidthNumerator, X2 * factor.WidthNumerator, Y1 * factor.HeightNumerator, Y2 * factor.HeightNumerator, Exponent);
 		}
 
 		public RRectangle Translate(RPoint amount)
@@ -107,7 +110,7 @@ namespace MSS.Types
 		{
 			return amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
-				: new RRectangle(X1 + amount.Width, X2 + amount.Width, Y1 + amount.Height, Y2 + amount.Height, Exponent);
+				: new RRectangle(X1 + amount.WidthNumerator , X2 + amount.WidthNumerator, Y1 + amount.HeightNumerator, Y2 + amount.HeightNumerator, Exponent);
 		}
 
 		public RRectangle ScaleB(int exponentDelta)
