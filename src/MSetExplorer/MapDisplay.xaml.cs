@@ -41,14 +41,14 @@ namespace MSetExplorer
 			}
 			else
 			{
-				CanvasSize = new SizeDbl(MainCanvas.Width, MainCanvas.Height).Round();
+				_vm = (IMapJobViewModel)DataContext;
+				var canvasControlOffset = _vm.CurrentJob?.CanvasControlOffset ?? new SizeDbl();
+
+				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight));
 				SizeChanged += MapDisplay_SizeChanged;
 
-				_vm = (IMapJobViewModel)DataContext;
 				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
 				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
-
-				var canvasControlOffset = _vm.CurrentJob?.CanvasControlOffset ?? new SizeDbl();
 
 				_selectedArea = new SelectionRectangle(MainCanvas, canvasControlOffset, _vm.BlockSize);
 				_selectedArea.AreaSelected += SelectedArea_AreaSelected;
@@ -60,16 +60,22 @@ namespace MSetExplorer
 
 		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			var sizeDbl = new SizeDbl(e.NewSize.Width, e.NewSize.Height);
-			var canvasSizeInWholeBlocks = RMapHelper.GetCanvasSizeWholeBlocks(sizeDbl, _vm.BlockSize);
-			var newCanvasSize = canvasSizeInWholeBlocks.Scale(_vm.BlockSize);
-
+			var newCanvasSize = GetCanvasSize(e.NewSize);
 			var diff = CanvasSize.Diff(newCanvasSize).Abs();
 
 			if (diff.Width > 0 || diff.Height > 0)
 			{
 				CanvasSize = newCanvasSize;
 			}
+		}
+
+		private SizeInt GetCanvasSize(Size size)
+		{
+			var sizeDbl = new SizeDbl(size.Width, size.Height);
+			var canvasSizeInWholeBlocks = RMapHelper.GetCanvasSizeWholeBlocks(sizeDbl, _vm.BlockSize);
+			var result = canvasSizeInWholeBlocks.Scale(_vm.BlockSize);
+
+			return result;
 		}
 
 		private void SelectedArea_AreaSelected(object sender, AreaSelectedEventArgs e)
@@ -120,20 +126,6 @@ namespace MSetExplorer
 			new FrameworkPropertyMetadata(new SizeInt(), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, CanvasSizeChanged)
 			);
 
-		//public SizeInt CanvasSize
-		//{
-		//	get
-		//	{
-		//		//var result = new SizeDbl(MainCanvas.ActualWidth, MainCanvas.ActualHeight).Round();
-
-		//		//var result = (SizeInt)GetValue(CanvasSizeProperty);
-		//		//return result;
-		//		return (SizeInt)GetValue(CanvasSizeProperty);
-		//	}
-
-		//	set => SetValue(CanvasSizeProperty, value);
-		//}
-
 		public SizeInt CanvasSize
 		{
 			get => (SizeInt)GetValue(CanvasSizeProperty);
@@ -160,6 +152,11 @@ namespace MSetExplorer
 
 			canvasBorder.Width = value.Width - 4;
 			canvasBorder.Height = value.Height - 4;
+
+			if (!(_vm is null))
+			{
+				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
+			}
 		}
 
 		#endregion

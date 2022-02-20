@@ -11,7 +11,7 @@ namespace MSetExplorer.MapWindow
 {
 	internal class SelectionRectangle
 	{
-		private const int PITCH = 16;
+		private const int PITCH_TARGET = 16;
 		private const int DRAG_TRIGGER_DIST = 3;
 
 		private readonly Canvas _canvas;
@@ -19,6 +19,7 @@ namespace MSetExplorer.MapWindow
 		private readonly Rectangle _selectedArea;
 		private readonly Line _dragLine;
 
+		private int _pitch;
 		private bool _selecting;
 		private bool _dragging;
 		private Point _dragAnchor;
@@ -31,11 +32,6 @@ namespace MSetExplorer.MapWindow
 
 		public SelectionRectangle(Canvas canvas, SizeDbl canvasControlOffset, SizeInt blockSize)
 		{
-			//_selecting = false;
-			//_dragging = false;
-			//_dragAnchor = new Point();
-			//_dragIsBeingCancelled = false;
-
 			_canvas = canvas;
 			CanvasControlOffset = canvasControlOffset;
 			_blockSize = blockSize;
@@ -65,6 +61,9 @@ namespace MSetExplorer.MapWindow
 			_ = _canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 20);
 
+			_pitch = CalculatePitch(_canvas);
+			canvas.SizeChanged += Canvas_SizeChanged;
+
 			_selectedArea.KeyUp += SelectedArea_KeyUp;
 			canvas.PreviewKeyUp += Canvas_PreviewKeyUp;
 
@@ -78,6 +77,29 @@ namespace MSetExplorer.MapWindow
 			canvas.MouseLeave += Canvas_MouseLeave;
 
 			canvas.Focusable = true;
+		}
+
+		private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			_pitch = CalculatePitch(_canvas);
+		}
+
+		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
+		private int CalculatePitch(Canvas canvas)
+		{
+			int result;
+
+			if (canvas.ActualWidth < canvas.ActualHeight)
+			{
+				result = (int) Math.Round(canvas.ActualWidth / Math.Pow(2, Math.Round(Math.Log2(canvas.ActualWidth / PITCH_TARGET))));
+			}
+			else
+			{
+				result = (int)Math.Round(canvas.ActualHeight / Math.Pow(2, Math.Round(Math.Log2(canvas.ActualHeight / PITCH_TARGET))));
+			}
+
+			Debug.WriteLine($"The new ScreenSelection Pitch is {result}.");
+			return result;
 		}
 
 		#endregion
@@ -145,13 +167,13 @@ namespace MSetExplorer.MapWindow
 
 			if (e.Delta > 0)
 			{
-				newPos = new Point(cPos.X - PITCH, cPos.Y - PITCH);
-				newSize = new Size(cSize.Width + PITCH * 2, cSize.Height + PITCH * 2);
+				newPos = new Point(cPos.X - _pitch, cPos.Y - _pitch);
+				newSize = new Size(cSize.Width + _pitch * 2, cSize.Height + _pitch * 2);
 			}
-			else if (e.Delta < 0 && cSize.Width >= PITCH * 4 && cSize.Height >= PITCH * 4)
+			else if (e.Delta < 0 && cSize.Width >= _pitch * 4 && cSize.Height >= _pitch * 4)
 			{
-				newPos = new Point(cPos.X + PITCH, cPos.Y + PITCH);
-				newSize = new Size(cSize.Width - PITCH * 2, cSize.Height - PITCH * 2);
+				newPos = new Point(cPos.X + _pitch, cPos.Y + _pitch);
+				newSize = new Size(cSize.Width - _pitch * 2, cSize.Height - _pitch * 2);
 			}
 			else
 			{
@@ -448,8 +470,8 @@ namespace MSetExplorer.MapWindow
 			//Debug.WriteLine($"Moving the sel rec to {position}, free form.");
 			//ReportPosition(posYInverted);
 
-			var x = RoundOff(posYInverted.X - (_selectedArea.Width / 2), PITCH);
-			var y = RoundOff(posYInverted.Y - (_selectedArea.Height / 2), PITCH);
+			var x = RoundOff(posYInverted.X - (_selectedArea.Width / 2), _pitch);
+			var y = RoundOff(posYInverted.Y - (_selectedArea.Height / 2), _pitch);
 
 			if (x < 0)
 			{
@@ -512,32 +534,32 @@ namespace MSetExplorer.MapWindow
 			var dist = controlPos - _dragAnchor;
 
 			// Horizontal
-			var x = RoundOff(dist.X, PITCH);
+			var x = RoundOff(dist.X, _pitch);
 
 			x = _dragAnchor.X + x;
 
 			if (x < 0)
 			{
-				x += PITCH;
+				x += _pitch;
 			}
 
 			if (x > _canvas.ActualWidth)
 			{
-				x -= PITCH;
+				x -= _pitch;
 			}
 
 			// Vertical
-			var y = RoundOff(dist.Y, PITCH);
+			var y = RoundOff(dist.Y, _pitch);
 			y = _dragAnchor.Y + y;
 
 			if (y < 0)
 			{
-				y += PITCH;
+				y += _pitch;
 			}
 
 			if (y > _canvas.ActualWidth)
 			{
-				y -= PITCH;
+				y -= _pitch;
 			}
 
 			var dragLineTerminus = DragLineTerminus;

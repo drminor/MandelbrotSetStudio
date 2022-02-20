@@ -23,12 +23,11 @@ namespace MSetExplorer
 
 		private void MainWindow_ContentRendered(object sender, EventArgs e)
 		{
-			Debug.WriteLine("The MainWindow is handling ContentRendered");
+			//Debug.WriteLine("The MainWindow is handling ContentRendered");
 
-			var maxIterations = 700;
-			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-
-			_vm.SetMapInfo(mSetInfo);
+			//var maxIterations = 700;
+			//var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
+			//_vm.SetMapInfo(mSetInfo);
 
 			//_vm.LoadProject();
 			//btnGoBack.IsEnabled = _vm.CanGoBack;
@@ -76,7 +75,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == "CanGoForward")
 			{
-				btnGoForward.IsEnabled = _vm.CanGoForward;
+				btnGoForward.IsEnabled = _vm.CurrentJob is null || _vm.CanGoForward;
 				return;
 			}
 
@@ -120,9 +119,19 @@ namespace MSetExplorer
 
 		private void GoForwardButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.CanGoForward)
+			if (_vm.CurrentJob is null)
 			{
-				_vm.GoForward();
+				var maxIterations = 700;
+				var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
+				_vm.SetMapInfo(mSetInfo);
+			}
+			else
+			{
+				if (_vm.CanGoForward)
+				{
+					_vm.GoForward();
+				}
+
 			}
 		}
 

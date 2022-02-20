@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.Screen;
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -32,6 +33,8 @@ namespace MSetExplorer
 
 		private ScreenSection[,] BuildScreenSections(SizeInt sizeInBlocks, SizeInt blockSize)
 		{
+			Debug.WriteLine($"Building {sizeInBlocks} Screen Sections.");
+
 			// Create the screen sections to cover the canvas
 			var result = new ScreenSection[sizeInBlocks.Height, sizeInBlocks.Width];
 
@@ -56,7 +59,7 @@ namespace MSetExplorer
 			// Include an additional block to accommodate when the CanvasControlOffset is non-zero.
 			var canvasSizeInt = new SizeDbl(canvasSize.Width, canvasSize.Height).Round();
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSizeInt, blockSize);
-			var result = new SizeInt(canvasSizeInBlocks.Width + 1, canvasSizeInBlocks.Height + 1);
+			var result = new SizeInt(canvasSizeInBlocks.Width + 2, canvasSizeInBlocks.Height + 2);
 
 			return result;
 		}
