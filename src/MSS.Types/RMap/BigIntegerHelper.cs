@@ -287,7 +287,7 @@ namespace MSS.Types
 		private static bool SafeCastToDouble(BigInteger n)
 		{
 			//bool result = DOUBLE_MIN_VALUE <= n && n <= DOUBLE_MAX_VALUE;
-			bool result = BigInteger.Abs(n) > FACTOR;
+			bool result = BigInteger.Abs(n) <= FACTOR;
 
 			return result;
 		}

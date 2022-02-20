@@ -3,10 +3,8 @@ using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows;
 
 namespace MSetExplorer
 {
@@ -51,8 +49,8 @@ namespace MSetExplorer
 
 			if (!projectAdapter.TryGetSubdivision(coords.Position, samplePointDelta, blockSize, out var subdivision))
 			{
-				var coordsForNewSubdivion = GetPositionForNewSubdivision(coords);
-				var subdivisionNotSaved = new Subdivision(ObjectId.GenerateNewId(), coordsForNewSubdivion, samplePointDelta, blockSize);
+				var position = GetPositionForNewSubdivision(coords);
+				var subdivisionNotSaved = new Subdivision(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize);
 				subdivision = projectAdapter.InsertSubdivision(subdivisionNotSaved);
 			}
 
@@ -61,33 +59,38 @@ namespace MSetExplorer
 
 		private static RPoint GetPositionForNewSubdivision(RRectangle coords)
 		{
-			var x = coords.X1.Sign != coords.X2.Sign ? 0 : coords.X1;
-			var y = coords.Y1.Sign != coords.Y2.Sign ? 0 : coords.Y1;
-			var exponent = x == 0 && y == 0 ? 0 : coords.Exponent;
+			//var x = coords.X1.Sign != coords.X2.Sign ? 0 : coords.X1;
+			////var y = coords.Y1.Sign != coords.Y2.Sign ? 0 : BigInteger.Abs(coords.Y1);
+			//var y = coords.Y1.Sign != coords.Y2.Sign ? 0 : coords.Y1;
+			//var exponent = x == 0 && y == 0 ? 0 : coords.Exponent;
 
-			return new RPoint(x, y, exponent);
+			//return new RPoint(x, y, exponent);
+
+			////return new RPoint();
+
+			return coords.Position;
 		}
 
-		public static Point GetBlockPosition(Point screenPosition, SizeInt blockSize)
-		{
-			var pos = new PointDbl(screenPosition.X, screenPosition.Y).Round();
+		//public static Point GetBlockPosition(Point screenPosition, SizeInt blockSize)
+		//{
+		//	var pos = new PointDbl(screenPosition.X, screenPosition.Y).Round();
 
-			var left = Math.DivRem(pos.X, blockSize.Width, out var remainder);
-			if (remainder == 0 && left > 0)
-			{
-				left--;
-			}
+		//	var left = Math.DivRem(pos.X, blockSize.Width, out var remainder);
+		//	if (remainder == 0 && left > 0)
+		//	{
+		//		left--;
+		//	}
 
-			var bottom = Math.DivRem(pos.Y, blockSize.Height, out remainder);
-			if (remainder == 0 && bottom > 0)
-			{
-				bottom--;
-			}
+		//	var bottom = Math.DivRem(pos.Y, blockSize.Height, out remainder);
+		//	if (remainder == 0 && bottom > 0)
+		//	{
+		//		bottom--;
+		//	}
 
-			var botRight = new PointInt(left, bottom).Scale(blockSize);
-			var center = botRight.Translate(new SizeInt(blockSize.Width / 2, blockSize.Height / 2));
-			return new Point(center.X, center.Y);
-		}
+		//	var botRight = new PointInt(left, bottom).Scale(blockSize);
+		//	var center = botRight.Translate(new SizeInt(blockSize.Width / 2, blockSize.Height / 2));
+		//	return new Point(center.X, center.Y);
+		//}
 
 		public static MSetInfo BuildInitialMSetInfo(int maxIterations)
 		{

@@ -86,28 +86,28 @@ namespace MSS.Types
 		//{
 		//	return factor.Exponent != Exponent
 		//		? throw new InvalidOperationException($"Cannot scale a RRectangle with Exponent: {Exponent} using a RPoint with Exponent: {factor.Exponent}.")
-		//		: new RRectangle(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y, Exponent);
+		//		: new RRectangle(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y, factor.Exponent);
 		//}
 
 		public RRectangle Scale(RSize factor)
 		{
-			return factor.Exponent != Exponent
+			return Exponent != 0 && factor.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot scale a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {factor.Exponent}.")
-				: new RRectangle(X1 * factor.WidthNumerator, X2 * factor.WidthNumerator, Y1 * factor.HeightNumerator, Y2 * factor.HeightNumerator, Exponent);
+				: new RRectangle(X1 * factor.WidthNumerator, X2 * factor.WidthNumerator, Y1 * factor.HeightNumerator, Y2 * factor.HeightNumerator, factor.Exponent);
 		}
 
 		public RRectangle Translate(RPoint amount)
 		{
-			return amount.Exponent != Exponent
+			return Exponent != 0 && amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RPoint with Exponent: {amount.Exponent}.")
-				: new RRectangle(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y, Exponent);
+				: new RRectangle(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y, amount.Exponent);
 		}
 
 		public RRectangle Translate(RSize amount)
 		{
-			return amount.Exponent != Exponent
+			return Exponent != 0 && amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
-				: new RRectangle(X1 + amount.WidthNumerator , X2 + amount.WidthNumerator, Y1 + amount.HeightNumerator, Y2 + amount.HeightNumerator, Exponent);
+				: new RRectangle(X1 + amount.WidthNumerator , X2 + amount.WidthNumerator, Y1 + amount.HeightNumerator, Y2 + amount.HeightNumerator, amount.Exponent);
 		}
 
 		[Conditional("Debug")]

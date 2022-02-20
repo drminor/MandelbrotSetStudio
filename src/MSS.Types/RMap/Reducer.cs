@@ -7,7 +7,7 @@ namespace MSS.Types
 	{
 		public static RValue Reduce(RValue rValue)
 		{
-			var val = Reduce(rValue, out var exponent);
+			var val = Reduce(rValue.Value, rValue.Exponent, out var exponent);
 			return new RValue(val, exponent);
 		}
 
@@ -56,7 +56,7 @@ namespace MSS.Types
 			var reductionFactor = 0;
 			long divisor = 1;
 
-			while (exponent + reductionFactor < 0 && BigInteger.Remainder(value, divisor * 2) == 0)
+			while (exponent + reductionFactor < 0 && BigInteger.Remainder(value, divisor) == 0)
 			{
 				reductionFactor++;
 				divisor *= 2;
@@ -78,11 +78,6 @@ namespace MSS.Types
 			}
 
 			return true;
-		}
-
-		private static bool IsDivisibleBy(BigInteger dividend, long divisor)
-		{
-			return BigInteger.Remainder(dividend, divisor) == 0;
 		}
 
 	}

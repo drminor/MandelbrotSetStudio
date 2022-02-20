@@ -61,7 +61,7 @@ namespace MSetExplorer
 
 		private void SubmitSectionRequests()
 		{
-			var mapExtentInBlocks = GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _mapBlockOffset);
+			var mapExtentInBlocks = GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset.Round());
 			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
 			{
 				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
@@ -87,11 +87,11 @@ namespace MSetExplorer
 			}
 		}
 
-		private SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, SizeInt mapBlockOffset)
+		private SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, SizeInt canvasControlOffset)
 		{
 			var result = new SizeInt(
-				canvasSizeInBlocks.Width + (Math.Abs(mapBlockOffset.Width) > 0 ? 1 : 0),
-				canvasSizeInBlocks.Height + (Math.Abs(mapBlockOffset.Height) > 0 ? 1 : 0)
+				canvasSizeInBlocks.Width + (Math.Abs(canvasControlOffset.Width) > 0 ? 1 : 0),
+				canvasSizeInBlocks.Height + (Math.Abs(canvasControlOffset.Height) > 0 ? 1 : 0)
 				);
 
 			return result;
@@ -111,12 +111,24 @@ namespace MSetExplorer
 			}
 		}
 
+
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
 			var pixels1d = GetPixelArray(mapSectionResponse.Counts, _blockSize, _colorMap, !mapSectionRequest.Inverted);
 
+			PointInt respBlockPosition;
+
+			if (mapSectionRequest.Inverted)
+			{
+				respBlockPosition = new PointInt(mapSectionResponse.BlockPosition.X, -1 * (1 + mapSectionResponse.BlockPosition.Y));
+			}
+			else
+			{
+				respBlockPosition = mapSectionResponse.BlockPosition;
+			}
+
 			// Translate subdivision coordinates to block coordinates.
-			var blockPosition = mapSectionResponse.BlockPosition.Diff(_mapBlockOffset);
+			var blockPosition = respBlockPosition.Diff(_mapBlockOffset);
 
 			//Debug.WriteLine($"MapLoader handling response. ScreenBlkPos: {blockPosition}, RepoBlkPos: {mapSectionResponse.BlockPosition}.");
 

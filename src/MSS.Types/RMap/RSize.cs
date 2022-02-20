@@ -70,11 +70,25 @@ namespace MSS.Types
 			return result;
 		}
 
+		public RSize Translate(RPoint amount)
+		{
+			return Exponent != 0 && amount.Exponent != Exponent
+                ? throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.")
+				: new RSize(WidthNumerator + amount.X, HeightNumerator + amount.Y, amount.Exponent);
+		}
+
+		public RSize Translate(RSize amount)
+		{
+			return Exponent != 0 && amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
+				: new RSize(base.Width + amount.WidthNumerator, HeightNumerator + amount.HeightNumerator, amount.Exponent);
+		}
+
 		//public RSize Scale(RSize factor)
 		//{
 		//	return factor.Exponent != Exponent
 		//		? throw new InvalidOperationException($"Cannot InvScale a RSize with Exponent: {Exponent} using an RSize with Exponent: {factor.Exponent}.")
-		//		: new RSize(Width * factor.Width, Height * factor.Height, Exponent);
+		//		: new RSize(Width * factor.Width, Height * factor.Height, factor.Exponent);
 		//}
 
 		//public RSize InvScale(RSize factor)
@@ -92,25 +106,6 @@ namespace MSS.Types
 
 		//	return new RSize(w, h, Exponent);
 		//}
-
-		public RSize Translate(RPoint amount)
-		{
-			return amount.Exponent != Exponent
-                ?                throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.")
-				: new RSize(WidthNumerator + amount.X, HeightNumerator + amount.Y, Exponent);
-		}
-
-		public RSize Translate(RSize amount)
-		{
-			return amount.Exponent != Exponent
-				? throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
-				: new RSize(base.Width + amount.WidthNumerator, HeightNumerator + amount.HeightNumerator, Exponent);
-		}
-
-		public static explicit operator RSize(int value)
-		{
-			return new RSize(value, value, 0);
-		}
 
 	}
 }

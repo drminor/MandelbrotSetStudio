@@ -24,11 +24,25 @@ namespace MSS.Common
 		}
 
 		// NOTE: This is using a buggy RRectangle.Scale Method.
-		private static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
+		private static RRectangle ScaleByRsizeV2(RectangleInt area, RSize factor)
 		{
 			var rectangle = new RRectangle(area);
 			var result = rectangle.Scale(factor);
 
+			return result;
+		}
+
+		// TODO: Consider adding a scale method to RSize that scales a RectangleInt.
+		private static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
+		{
+			var result = new RRectangle
+				(
+				area.X1 * factor.WidthNumerator,
+				area.X2 * factor.WidthNumerator,
+				area.Y1 * factor.HeightNumerator,
+				area.Y2 * factor.HeightNumerator,
+				factor.Exponent
+				);
 			return result;
 		}
 
@@ -44,13 +58,29 @@ namespace MSS.Common
 			return result;
 		}
 
-		private static RSize ScaleByRsize(SizeInt offset, RSize factor)
+		private static RSize ScaleByRsizeV2(SizeInt offset, RSize factor)
 		{
 			var result = factor.Scale(offset);
 			return result;
 		}
 
+		private static RSize ScaleByRsize(SizeInt offset, RSize factor)
+		{
+			var result = new RSize(offset.Width * factor.WidthNumerator, offset.Height * factor.HeightNumerator, factor.Exponent);
+
+			var rt = factor.Scale(offset);
+			Debug.Assert(result == rt, "ScaleByRSize-Size mismatch.");
+
+			return result;
+		}
+
 		#endregion
+
+		#region Map Area Support Old
+
+
+		#endregion
+
 
 		#region Job Creation
 

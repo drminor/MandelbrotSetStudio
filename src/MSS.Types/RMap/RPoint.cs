@@ -45,21 +45,21 @@ namespace MSS.Types
 		//{
 		//	return factor.Exponent != Exponent
 		//      ? throw new InvalidOperationException($"Cannot scale a RPoint with Exponent: {Exponent} using a RSize with Exponent: {factor.Exponent}.")
-		//		: new RPoint(X * factor.Width, Y * factor.Height, Exponent);
+		//		: new RPoint(X * factor.Width, Y * factor.Height, factor.Exponent);
 		//}
 
 		public RPoint Translate(RPoint amount)
 		{
-			return amount.Exponent != Exponent
+			return Exponent != 0 && amount.Exponent != Exponent
                 ?                throw new InvalidOperationException($"Cannot translate a RPoint with Exponent: {Exponent} using a RPoint with Exponent: {amount.Exponent}.")
-				: new RPoint(X + amount.X, Y + amount.Y, Exponent);
+				: new RPoint(X + amount.X, Y + amount.Y, amount.Exponent);
 		}
 
 		public RPoint Translate(RSize amount)
 		{
-			return amount.Exponent != Exponent
+			return Exponent != 0 && amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RPoint with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
-				: new RPoint(X + amount.WidthNumerator, Y + amount.HeightNumerator, Exponent);
+				: new RPoint(X + amount.WidthNumerator, Y + amount.HeightNumerator, amount.Exponent);
 		}
 
 		/// <summary>
@@ -69,9 +69,9 @@ namespace MSS.Types
 		/// <returns></returns>
 		public RSize Diff(RPoint amount)
 		{
-			return amount.Exponent != Exponent
+			return Exponent != 0 && amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot find the diff from a RPoint with Exponent: {Exponent} using a RPoint with Exponent: {amount.Exponent}.")
-				: new RSize(X - amount.X, Y - amount.Y, Exponent);
+				: new RSize(X - amount.X, Y - amount.Y, amount.Exponent);
 		}
 
 		public override string? ToString()
