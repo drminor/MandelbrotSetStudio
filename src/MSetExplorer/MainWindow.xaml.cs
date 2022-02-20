@@ -82,7 +82,6 @@ namespace MSetExplorer
 			if (e.PropertyName == "CanvasSize")
 			{
 				Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
-				//_mapDisplay.SetCanvasSizeBackDoor(_vm.CanvasSize);
 				return;
 			}
 		}

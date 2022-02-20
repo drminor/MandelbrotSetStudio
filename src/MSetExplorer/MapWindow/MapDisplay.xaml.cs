@@ -19,6 +19,7 @@ namespace MSetExplorer
 	{
 		private static readonly bool _showBorder = false;
 		private static readonly bool _clipImageBlocks = true;
+		private static readonly bool _keepDisplaySquare = true;
 
 		private IMapDisplayViewModel _vm;
 		//private IMapLoaderJobStack _mapLoaderJobStack;
@@ -55,7 +56,7 @@ namespace MSetExplorer
 				//_mapLoaderJobStack = vmProvider.MapLoaderJobStack;
 
 				var canvasControlOffset = _vm.CanvasControlOffset;
-				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight));
+				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight), _keepDisplaySquare);
 
 				MainCanvas.ClipToBounds = _clipImageBlocks;
 				SizeChanged += MapDisplay_SizeChanged;
@@ -99,7 +100,7 @@ namespace MSetExplorer
 
 		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			var newCanvasSize = GetCanvasSize(e.NewSize);
+			var newCanvasSize = GetCanvasSize(e.NewSize, _keepDisplaySquare);
 			var diff = CanvasSize.Diff(newCanvasSize).Abs();
 
 			if (diff.Width > 0 || diff.Height > 0)
@@ -108,10 +109,10 @@ namespace MSetExplorer
 			}
 		}
 
-		private SizeInt GetCanvasSize(Size size)
+		private SizeInt GetCanvasSize(Size size, bool makeSquare)
 		{
 			var sizeDbl = new SizeDbl(size.Width, size.Height);
-			var canvasSizeInWholeBlocks = RMapHelper.GetCanvasSizeWholeBlocks(sizeDbl, _vm.BlockSize);
+			var canvasSizeInWholeBlocks = RMapHelper.GetCanvasSizeWholeBlocks(sizeDbl, _vm.BlockSize, makeSquare);
 			var result = canvasSizeInWholeBlocks.Scale(_vm.BlockSize);
 
 			return result;

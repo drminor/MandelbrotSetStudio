@@ -8,11 +8,15 @@ namespace MSS.Types
 	[ProtoContract(SkipConstructor = true)]
 	public struct SizeInt : IEquatable<SizeInt>, IEqualityComparer<SizeInt>
 	{
-		public SizeInt(int width, int heigth)
+		public SizeInt(int width, int height)
 		{
 			Width = width;
-			Height = heigth;
+			Height = height;
 		}
+
+		// Square from single value
+		public SizeInt(int extent) : this(extent, extent)
+		{ }
 
 		[ProtoMember(1)]
 		public int Width { get; set; }
@@ -71,6 +75,12 @@ namespace MSS.Types
 		public SizeInt Abs()
 		{
 			return new SizeInt(Math.Abs(Width), Math.Abs(Height));
+		}
+
+		public SizeInt GetSquare()
+		{
+			var result = new SizeInt(Math.Min(Width, Height));
+			return result;
 		}
 
 		public override bool Equals(object? obj)

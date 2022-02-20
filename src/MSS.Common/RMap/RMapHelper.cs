@@ -153,16 +153,15 @@ namespace MSS.Common
 
 		public static SizeInt GetCanvasSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
 		{
-			var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainder);
+			var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainderW);
+			var h = Math.DivRem(canvasSize.Height, blockSize.Height, out var remainderH);
 
-			if (remainder > 0)
+			if (remainderW > 0)
 			{
 				w++;
 			}
 
-			var h = Math.DivRem(canvasSize.Height, blockSize.Height, out remainder);
-
-			if (remainder > 0)
+			if (remainderH> 0)
 			{
 				h++;
 			}
@@ -172,10 +171,15 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetCanvasSizeWholeBlocks(SizeDbl canvasSize, SizeInt blockSize)
+		public static SizeInt GetCanvasSizeWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)
 		{
 			var numBlocks = canvasSize.Divide(blockSize);
 			var result = numBlocks.Truncate();
+
+			if (keepSquare)
+			{
+				result = result.GetSquare();
+			}
 
 			return result;
 		}

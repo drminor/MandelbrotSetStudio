@@ -11,13 +11,15 @@ namespace MSS.Types
 			Width = width;
 			Height = height;
 		}
-
-		public double Width { get; set; }
-
-		public double Height { get; set; }
+		// Square from single value
+		public SizeDbl(double extent) : this(extent, extent)
+		{ }
 
 		public SizeDbl(SizeInt size) : this(size.Width, size.Height)
 		{ }
+
+		public double Width { get; set; }
+		public double Height { get; set; }
 
 		public SizeDbl Scale(PointDbl factor)
 		{

@@ -8,11 +8,12 @@ namespace MSetExplorer
 	internal interface IMapDisplayViewModel
 	{
 		bool InDesignMode { get; }
+
 		SizeInt BlockSize { get; }
-		ObservableCollection<MapSection> MapSections { get; }
 		SizeInt CanvasSize { get; set; }
 		SizeDbl CanvasControlOffset { get; set; }
 
+		ObservableCollection<MapSection> MapSections { get; }
 		Action<MapSection> HandleMapSectionReady { get; }
 		Action<SizeDbl> HandleMapNav { get; }
 	}

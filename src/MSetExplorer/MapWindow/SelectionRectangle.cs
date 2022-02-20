@@ -37,39 +37,13 @@ namespace MSetExplorer.MapWindow
 			CanvasControlOffset = canvasControlOffset;
 			_blockSize = blockSize;
 
-			_selectedArea = new Rectangle()
-			{
-				Width = _blockSize.Width,
-				Height = _blockSize.Height,
-				Fill = Brushes.Transparent,
-				Stroke = BuildDrawingBrush(),
-				StrokeThickness = 4,
-				Visibility = Visibility.Hidden,
-				Focusable = true
-			};
-
-			_ = _canvas.Children.Add(_selectedArea);
-			_selectedArea.SetValue(Panel.ZIndexProperty, 10);
-
-			_dragLine = new Line()
-			{
-				Fill = Brushes.Transparent,
-				Stroke = BuildDrawingBrush(),
-				StrokeThickness = 4,
-				Visibility = Visibility.Hidden,
-				Focusable = true
-				};
-
-			_ = _canvas.Children.Add(_dragLine);
-			_dragLine.SetValue(Panel.ZIndexProperty, 20);
-
+			_selectedArea = BuildSelectionRectangle(_canvas);
+			_dragLine = BuildDragLine(_canvas);
 			_pitch = CalculatePitch(_canvas);
 			canvas.SizeChanged += Canvas_SizeChanged;
 
 			_selectedArea.KeyUp += SelectedArea_KeyUp;
 			_dragLine.KeyUp += DragLine_KeyUp;
-			
-			//canvas.PreviewKeyUp += Canvas_PreviewKeyUp;
 
 			canvas.MouseLeftButtonUp += Canvas_MouseLeftButtonUp;
 			canvas.MouseLeftButtonDown += Canvas_MouseLeftButtonDown;
@@ -81,6 +55,42 @@ namespace MSetExplorer.MapWindow
 			canvas.MouseLeave += Canvas_MouseLeave;
 
 			canvas.Focusable = true;
+		}
+
+		private Rectangle BuildSelectionRectangle(Canvas canvas)
+		{
+			var result = new Rectangle()
+			{
+				Width = _blockSize.Width,
+				Height = _blockSize.Height,
+				Fill = Brushes.Transparent,
+				Stroke = BuildDrawingBrush(),
+				StrokeThickness = 4,
+				Visibility = Visibility.Hidden,
+				Focusable = true
+			};
+
+			_ = _canvas.Children.Add(result);
+			result.SetValue(Panel.ZIndexProperty, 10);
+
+			return result;
+		}
+
+		private Line BuildDragLine(Canvas canvas)
+		{
+			var result = new Line()
+			{
+				Fill = Brushes.Transparent,
+				Stroke = BuildDrawingBrush(),
+				StrokeThickness = 4,
+				Visibility = Visibility.Hidden,
+				Focusable = true
+			};
+
+			_ = _canvas.Children.Add(result);
+			result.SetValue(Panel.ZIndexProperty, 20);
+
+			return result;
 		}
 
 		private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -127,23 +137,6 @@ namespace MSetExplorer.MapWindow
 		#endregion
 
 		#region Event Handlers
-
-		//private void Canvas_PreviewKeyUp(object sender, KeyEventArgs e)
-		//{
-		//	if (!Dragging)
-		//	{
-		//		Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- not in drag.");
-		//		return;
-		//	}
-
-		//	if (e.Key == Key.Escape)
-		//	{
-		//		Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
-		//		//_dragIsBeingCancelled = true;
-		//		_dragHasBegun = false;
-		//		Dragging = false;
-		//	}
-		//}
 
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
 		{
@@ -271,13 +264,6 @@ namespace MSetExplorer.MapWindow
 
 		private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			//if (_dragIsBeingCancelled)
-			//{
-			//	_dragIsBeingCancelled = false;
-			//	Dragging = false;
-			//	return;
-			//}
-
 			if (Dragging)
 			{
 				HandleDragLine(e);
@@ -427,6 +413,7 @@ namespace MSetExplorer.MapWindow
 					if (value)
 					{
 						_selectedArea.Visibility = Visibility.Visible;
+						_selectedArea.Focus();
 					}
 					else
 					{
@@ -450,14 +437,12 @@ namespace MSetExplorer.MapWindow
 				{
 					if (value)
 					{
-						//Mouse.Capture(_canvas);
 						_dragLine.Visibility = Visibility.Visible;
-						_canvas.Focus();
+						_dragLine.Focus();
 					}
 					else
 					{
 						_dragLine.Visibility = Visibility.Hidden;
-						//Mouse.Capture(null);
 					}
 
 					_dragging = value;
