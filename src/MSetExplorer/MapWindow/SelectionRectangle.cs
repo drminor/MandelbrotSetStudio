@@ -23,7 +23,8 @@ namespace MSetExplorer.MapWindow
 		private bool _selecting;
 		private bool _dragging;
 		private Point _dragAnchor;
-		private bool _dragIsBeingCancelled;
+		//private bool _dragIsBeingCancelled;
+		private bool _dragHasBegun;
 
 		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
 		internal event EventHandler<ScreenPannedEventArgs> ScreenPanned;
@@ -51,11 +52,12 @@ namespace MSetExplorer.MapWindow
 			_selectedArea.SetValue(Panel.ZIndexProperty, 10);
 
 			_dragLine = new Line()
-				{
-					Fill = Brushes.Transparent,
-					Stroke = BuildDrawingBrush(),
-					StrokeThickness = 4,
-					Visibility = Visibility.Hidden
+			{
+				Fill = Brushes.Transparent,
+				Stroke = BuildDrawingBrush(),
+				StrokeThickness = 4,
+				Visibility = Visibility.Hidden,
+				Focusable = true
 				};
 
 			_ = _canvas.Children.Add(_dragLine);
@@ -65,7 +67,9 @@ namespace MSetExplorer.MapWindow
 			canvas.SizeChanged += Canvas_SizeChanged;
 
 			_selectedArea.KeyUp += SelectedArea_KeyUp;
-			canvas.PreviewKeyUp += Canvas_PreviewKeyUp;
+			_dragLine.KeyUp += DragLine_KeyUp;
+			
+			//canvas.PreviewKeyUp += Canvas_PreviewKeyUp;
 
 			canvas.MouseLeftButtonUp += Canvas_MouseLeftButtonUp;
 			canvas.MouseLeftButtonDown += Canvas_MouseLeftButtonDown;
@@ -124,20 +128,22 @@ namespace MSetExplorer.MapWindow
 
 		#region Event Handlers
 
-		private void Canvas_PreviewKeyUp(object sender, KeyEventArgs e)
-		{
-			if (!Dragging)
-			{
-				Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- not in drag.");
-				return;
-			}
+		//private void Canvas_PreviewKeyUp(object sender, KeyEventArgs e)
+		//{
+		//	if (!Dragging)
+		//	{
+		//		Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- not in drag.");
+		//		return;
+		//	}
 
-			if (e.Key == Key.Escape)
-			{
-				Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
-				_dragIsBeingCancelled = true;
-			}
-		}
+		//	if (e.Key == Key.Escape)
+		//	{
+		//		Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
+		//		//_dragIsBeingCancelled = true;
+		//		_dragHasBegun = false;
+		//		Dragging = false;
+		//	}
+		//}
 
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
 		{
@@ -155,8 +161,30 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
+		private void DragLine_KeyUp(object sender, KeyEventArgs e)
+		{
+			if (!Dragging)
+			{
+				Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- not in drag.");
+				return;
+			}
+
+			if (e.Key == Key.Escape)
+			{
+				Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
+				//_dragIsBeingCancelled = true;
+				_dragHasBegun = false;
+				Dragging = false;
+			}
+		}
+
 		private void Canvas_MouseWheel(object sender, MouseWheelEventArgs e)
 		{
+			if (!Selecting)
+			{
+				return;
+			}
+
 			//Debug.WriteLine("The canvas received a MouseWheel event.");
 
 			var cPos = SelectedPosition;
@@ -188,7 +216,10 @@ namespace MSetExplorer.MapWindow
 
 		private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
-			_dragAnchor = e.GetPosition(relativeTo: _canvas);
+			if (!Dragging)
+			{
+				_dragAnchor = e.GetPosition(relativeTo: _canvas);
+			}
 		}
 
 		private void Canvas_MouseMove(object sender, MouseEventArgs e)
@@ -214,42 +245,42 @@ namespace MSetExplorer.MapWindow
 
 		private void HandleDragMove(MouseEventArgs e)
 		{
-			var controlPos = e.GetPosition(relativeTo: _canvas);
-			if (e.LeftButton == MouseButtonState.Pressed)
+			if ((!Dragging) && e.LeftButton == MouseButtonState.Pressed)
 			{
-				if (!Dragging)
+				var controlPos = e.GetPosition(relativeTo: _canvas);
+				var dist = _dragAnchor - controlPos;
+				if (Math.Abs(dist.Length) > DRAG_TRIGGER_DIST)
 				{
-					var dist = _dragAnchor - controlPos;
-					if (Math.Abs(dist.Length) > DRAG_TRIGGER_DIST)
-					{
-						_dragLine.X1 = _dragAnchor.X;
-						_dragLine.Y1 = _dragAnchor.Y;
-						_dragLine.X2 = _dragAnchor.X;
-						_dragLine.Y2 = _dragAnchor.Y;
+					_dragLine.X1 = _dragAnchor.X;
+					_dragLine.Y1 = _dragAnchor.Y;
+					_dragLine.X2 = _dragAnchor.X;
+					_dragLine.Y2 = _dragAnchor.Y;
 
-						Dragging = true;
-					}
+					Dragging = true;
+					_dragHasBegun = true;
+					_dragLine.Focus();
 				}
+			}
 
-				if (Dragging)
-				{
-					SetDragPosition(controlPos);
-				}
+			if (Dragging)
+			{
+				var controlPos = e.GetPosition(relativeTo: _canvas);
+				SetDragPosition(controlPos);
 			}
 		}
 
 		private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			if (_dragIsBeingCancelled)
-			{
-				_dragIsBeingCancelled = false;
-				Dragging = false;
-				return;
-			}
+			//if (_dragIsBeingCancelled)
+			//{
+			//	_dragIsBeingCancelled = false;
+			//	Dragging = false;
+			//	return;
+			//}
 
 			if (Dragging)
 			{
-				HandleDragComplete(e);
+				HandleDragLine(e);
 			}
 			else
 			{
@@ -275,10 +306,9 @@ namespace MSetExplorer.MapWindow
 				{
 					Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = True.");
 					Deactivate();
-
 					var adjArea = Area.Round();
-					Debug.WriteLine($"Will start job here with position: {adjArea.Position}");
 
+					Debug.WriteLine($"Will start job here with position: {adjArea.Position}");
 					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, adjArea));
 				}
 				else
@@ -288,15 +318,22 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
-		private void HandleDragComplete(MouseButtonEventArgs e)
+		private void HandleDragLine(MouseButtonEventArgs e)
 		{
 			var controlPos = e.GetPosition(relativeTo: _canvas);
 
-			Dragging = false;
-			var offset = GetDragOffset(controlPos).Round();
-			Debug.WriteLine($"We are handling a DragComplete with offset:{offset}.");
+			if (_dragHasBegun)
+			{
+				_dragHasBegun = false;
+			}
+			else
+			{
+				Dragging = false;
+				var offset = GetDragOffset(controlPos).Round();
 
-			ScreenPanned?.Invoke(this, new ScreenPannedEventArgs(TransformType.Pan, offset));
+				Debug.WriteLine($"We are handling a DragComplete with offset:{offset}.");
+				ScreenPanned?.Invoke(this, new ScreenPannedEventArgs(TransformType.Pan, offset));
+			}
 		}
 
 		private void Canvas_MouseLeave(object sender, MouseEventArgs e)
@@ -327,6 +364,11 @@ namespace MSetExplorer.MapWindow
 			if (Dragging)
 			{
 				_dragLine.Visibility = Visibility.Visible;
+
+				if (!_dragLine.Focus())
+				{
+					Debug.WriteLine("Canvas Enter did not move the focus to the DragLine.");
+				}
 			}
 		}
 
@@ -408,14 +450,14 @@ namespace MSetExplorer.MapWindow
 				{
 					if (value)
 					{
-						Mouse.Capture(_canvas);
+						//Mouse.Capture(_canvas);
 						_dragLine.Visibility = Visibility.Visible;
 						_canvas.Focus();
 					}
 					else
 					{
 						_dragLine.Visibility = Visibility.Hidden;
-						Mouse.Capture(null);
+						//Mouse.Capture(null);
 					}
 
 					_dragging = value;
