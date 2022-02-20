@@ -1,11 +1,12 @@
 ﻿using MSS.Types;
+using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
 using System.Collections.ObjectModel;
 
 namespace MSetExplorer
 {
-	internal class MapDisplayViewModel : IMapDisplayViewModel
+	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
 		public MapDisplayViewModel(SizeInt blockSize)
 		{
@@ -13,21 +14,26 @@ namespace MSetExplorer
 			MapSections = new ObservableCollection<MapSection>();
 		}
 
+		public new bool InDesignMode => base.InDesignMode;
+
+		public Project Project {get; set; }
 		public SizeInt BlockSize { get; }
+		public SizeInt CanvasSize { get; set; }
+		public SizeDbl CanvasControlOffset { get; set; }
 
 		public ObservableCollection<MapSection> MapSections { get; }
 
 		public Action<MapSection> HandleMapSectionReady => OnMapSectionReady;
-
-		public Action HandleMapNav => OnMapNav;
+		public Action<SizeDbl> HandleMapNav => OnMapNav;
 
 		private void OnMapSectionReady(MapSection mapSection)
 		{
 			MapSections.Add(mapSection);
 		}
 
-		private void OnMapNav()
+		private void OnMapNav(SizeDbl canvasControOffset)
 		{
+			CanvasControlOffset = canvasControOffset;
 			MapSections.Clear();
 		}
 	}

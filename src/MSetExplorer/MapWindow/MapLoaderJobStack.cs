@@ -1,5 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
@@ -14,7 +15,7 @@ namespace MSetExplorer
 	{
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly Action<MapSection> _onMapSectionReady;
-		private readonly Action _onMapNav;
+		private readonly Action<SizeDbl> _onMapNav;
 
 		private readonly List<GenMapRequestInfo> _requestStack;
 		private int _requestStackPointer;
@@ -23,7 +24,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor, Action<MapSection> onMapSectionReady, Action onMapNav)
+		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor, Action<MapSection> onMapSectionReady, Action<SizeDbl> onMapNav)
 		{
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 			_onMapSectionReady = WrapActionWithIProgress(onMapSectionReady);
@@ -60,7 +61,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public IEnumerable<GenMapRequestInfo> GenMapRequests => new ReadOnlyCollection<GenMapRequestInfo>(_requestStack);
+		public IEnumerable<Job> Jobs => new ReadOnlyCollection<Job>(_requestStack.Select(x => x.Job).ToList());
 
 		#endregion
 
@@ -80,26 +81,32 @@ namespace MSetExplorer
 
 		public void Push(Job job)
 		{
+			CheckForDuplicateJob(job.Id);
 			StopCurrentJob();
 
 			var genMapRequestInfo = PushRequest(job);
-			_onMapNav();
+			_onMapNav(CurrentJob.CanvasControlOffset);
 			genMapRequestInfo.StartLoading();
 		}
 
-		public void UpdateJob(GenMapRequestInfo genMapRequestInfo, Job job)
+		public void UpdateJob(Job oldJob, Job newJob)
 		{
-			var idx = _requestStack.IndexOf(genMapRequestInfo);
-			var oldJobId = _requestStack[idx].Job.Id;
-
-			genMapRequestInfo.Job = job;
-
-			foreach (var req in _requestStack)
+			if (TryFindByJobId(oldJob.Id, out var genMapRequestInfo))
 			{
-				if (oldJobId == req.Job?.ParentJob?.Id)
+				genMapRequestInfo.Job = newJob;
+
+				var oldJobId = oldJob.Id;
+				foreach (var req in _requestStack)
 				{
-					req.Job.ParentJob = job;
+					if (req.Job?.ParentJob?.Id == oldJobId)
+					{
+						req.Job.ParentJob = newJob;
+					}
 				}
+			}
+			else
+			{
+				throw new KeyNotFoundException("The old job could not be found.");
 			}
 		}
 
@@ -163,7 +170,7 @@ namespace MSetExplorer
 			StopCurrentJob();
 
 			var genMapRequestInfo = RerunRequest(newRequestStackPointer);
-			_onMapNav();
+			_onMapNav(CurrentJob.CanvasControlOffset);
 			genMapRequestInfo.StartLoading();
 		}
 
@@ -246,6 +253,20 @@ namespace MSetExplorer
 
 			var result = requestStackPointer != -1;
 			return result;
+		}
+
+		private void CheckForDuplicateJob(ObjectId id)
+		{
+			if (TryFindByJobId(id, out _))
+			{
+				throw new InvalidOperationException($"A job with id: {id} has already been pushed.");
+			}
+		}
+
+		private bool TryFindByJobId(ObjectId id, out GenMapRequestInfo genMapRequestInfo)
+		{
+			genMapRequestInfo = _requestStack.FirstOrDefault(x => x.Job.Id == id);
+			return genMapRequestInfo != null;
 		}
 
 		private void StopCurrentJob()

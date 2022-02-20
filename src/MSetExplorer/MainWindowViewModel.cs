@@ -2,11 +2,16 @@
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Diagnostics;
 
 namespace MSetExplorer
 {
-	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel
+	// TODO: Consider adding a property to make a JobCreator delegate availble by use by the MapLoaderJobStack.
+	//public delegate Job JobCreator(MSetInfo mSetInfo, TransformType transformType, SizeInt newArea);
+	//JobCreator jobCreator = (m, t, a) => { return new Job(); };
+
+	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
 		private readonly ProjectAdapter _projectAdapter;
 
@@ -45,6 +50,7 @@ namespace MSetExplorer
 
 		#endregion
 
+
 		#region Public Methods
 
 		public void SetMapInfo(MSetInfo mSetInfo)
@@ -52,8 +58,9 @@ namespace MSetExplorer
 			LoadMap(mSetInfo, TransformType.None, newArea: new SizeInt());
 		}
 
-		public void UpdateMapViewZoom(RectangleInt newArea)
+		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
+			RectangleInt newArea = e.Area;
 			var curJob = CurrentJob;
 			var position = curJob.MSetInfo.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
@@ -64,8 +71,9 @@ namespace MSetExplorer
 			UpdateMapView(TransformType.Zoom, newArea.Size, coords);
 		}
 
-		public void UpdateMapViewPan(SizeInt offset)
+		public void UpdateMapViewPan(ScreenPannedEventArgs e)
 		{
+			SizeInt offset = e.Offset;
 			var curJob = CurrentJob;
 			var coords = curJob.MSetInfo.Coords;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
@@ -108,13 +116,12 @@ namespace MSetExplorer
 		{
 			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
 
-			foreach (var genMapRequestInfo in MapLoaderJobStack.GenMapRequests)
+			foreach (var job in MapLoaderJobStack.Jobs)
 			{
-				var job = genMapRequestInfo.Job;
 				if (job.Id.CreationTime > lastSavedTime)
 				{
 					var updatedJob = _projectAdapter.InsertJob(job);
-					MapLoaderJobStack.UpdateJob(genMapRequestInfo, updatedJob);
+					MapLoaderJobStack.UpdateJob(job, updatedJob);
 				}
 			}
 		}

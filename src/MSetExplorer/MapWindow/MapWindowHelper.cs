@@ -47,6 +47,8 @@ namespace MSetExplorer
 
 			//var result = projectAdapter.GetOrCreateSubdivision(coords.Position, samplePointDelta, blockSize, out var created);
 
+
+
 			if (!projectAdapter.TryGetSubdivision(coords.Position, samplePointDelta, blockSize, out var subdivision))
 			{
 				var position = GetPositionForNewSubdivision(coords);

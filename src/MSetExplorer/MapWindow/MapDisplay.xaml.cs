@@ -1,7 +1,6 @@
 ﻿using MSetExplorer.MapWindow;
 using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
@@ -22,8 +21,8 @@ namespace MSetExplorer
 		private static readonly bool _clipImageBlocks = true;
 
 		private IMapDisplayViewModel _vm;
-		private IMapLoaderJobStack _mapLoaderJobStack;
-		private Job _currentJob => _mapLoaderJobStack.CurrentJob;
+		//private IMapLoaderJobStack _mapLoaderJobStack;
+		//private Job _currentJob => _mapLoaderJobStack.CurrentJob;
 
 
 		private SelectionRectangle _selectedArea;
@@ -53,9 +52,9 @@ namespace MSetExplorer
 			{
 				var vmProvider = (IMainWindowViewModel)DataContext;
 				_vm = vmProvider.MapDisplayViewModel;
-				_mapLoaderJobStack = vmProvider.MapLoaderJobStack;
+				//_mapLoaderJobStack = vmProvider.MapLoaderJobStack;
 
-				var canvasControlOffset = _currentJob?.CanvasControlOffset ?? new SizeDbl();
+				var canvasControlOffset = _vm.CanvasControlOffset;
 				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight));
 
 				MainCanvas.ClipToBounds = _clipImageBlocks;
@@ -134,7 +133,7 @@ namespace MSetExplorer
 			{
 				_screenSections.HideScreenSections();
 
-				var offset = _currentJob.CanvasControlOffset;
+				var offset = _vm.CanvasControlOffset;
 				_screenSections.CanvasOffset = offset;
 				_selectedArea.CanvasControlOffset = offset;
 			}
@@ -183,6 +182,7 @@ namespace MSetExplorer
 
 		private void SetCanvasSizeBackDoor(SizeInt value)
 		{
+			_vm.CanvasSize = value;
 			MainCanvas.Width = value.Width;
 			MainCanvas.Height = value.Height;
 

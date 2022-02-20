@@ -8,7 +8,10 @@ namespace MSetExplorer
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
 		Job CurrentJob { get; }
-		IEnumerable<GenMapRequestInfo> GenMapRequests { get; }
+
+		//void UpdateJob(GenMapRequestInfo genMapRequestInfo, Job job);
+		//IEnumerable<GenMapRequestInfo> GenMapRequests { get; }
+		IEnumerable<Job> Jobs { get; }
 
 		bool GoBack();
 		bool GoForward();
@@ -16,6 +19,6 @@ namespace MSetExplorer
 		void Push(Job job);
 		void LoadJobStack(IEnumerable<Job> jobs);
 
-		void UpdateJob(GenMapRequestInfo genMapRequestInfo, Job job);
+		void UpdateJob(Job oldJob, Job newJob);
 	}
 }

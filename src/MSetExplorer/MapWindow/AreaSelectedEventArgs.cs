@@ -1,7 +1,7 @@
 ﻿using MSS.Types;
 using System;
 
-namespace MSetExplorer.MapWindow
+namespace MSetExplorer
 {
 	internal class AreaSelectedEventArgs : EventArgs
 	{
