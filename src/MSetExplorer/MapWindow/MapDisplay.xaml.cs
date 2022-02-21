@@ -17,7 +17,7 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapDisplay : UserControl
 	{
-		private static readonly bool _showBorder = false;
+		private static readonly bool _showBorder = true;
 		private static readonly bool _clipImageBlocks = true;
 		private static readonly bool _keepDisplaySquare = true;
 
@@ -53,7 +53,6 @@ namespace MSetExplorer
 			{
 				var vmProvider = (IMainWindowViewModel)DataContext;
 				_vm = vmProvider.MapDisplayViewModel;
-				//_mapLoaderJobStack = vmProvider.MapLoaderJobStack;
 
 				var canvasControlOffset = _vm.CanvasControlOffset;
 				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight), _keepDisplaySquare);
@@ -87,8 +86,8 @@ namespace MSetExplorer
 			};
 
 			_ = canvas.Children.Add(result);
-			result.SetValue(Canvas.LeftProperty, -2);
-			result.SetValue(Canvas.TopProperty, -2);
+			result.SetValue(Canvas.LeftProperty, 2d);
+			result.SetValue(Canvas.TopProperty, 2d);
 			result.SetValue(Panel.ZIndexProperty, 100);
 
 			return result;
@@ -187,7 +186,7 @@ namespace MSetExplorer
 			MainCanvas.Width = value.Width;
 			MainCanvas.Height = value.Height;
 
-			if (_showBorder)
+			if (_showBorder && !(_border is null))
 			{
 				_border.Width = value.Width - 4;
 				_border.Height = value.Height - 4;

@@ -20,9 +20,8 @@ namespace MSetExplorer
 
 		public ScreenSectionCollection(Canvas canvas, SizeInt blockSize)
 		{
-			//var canvasSize = new Size(canvas.Width, canvas.Height);
-			//var sizeInBlocks = GetSizeInBlocks(canvasSize, blockSize);
-			var sizeInBlocks = new SizeInt(20, 20);
+			var canvasSize = new Size(canvas.Width, canvas.Height);
+			var sizeInBlocks = GetSizeInBlocks(canvasSize, blockSize);
 
 			_screenSections = BuildScreenSections(sizeInBlocks, blockSize);
 
@@ -62,6 +61,12 @@ namespace MSetExplorer
 			var canvasSizeInt = new SizeDbl(canvasSize.Width, canvasSize.Height).Round();
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSizeInt, blockSize);
 			var result = new SizeInt(canvasSizeInBlocks.Width + 2, canvasSizeInBlocks.Height + 2);
+
+			// Always overide the above calculation and allocate 400 sections.
+			if (result.Width > 0)
+			{
+				result = new SizeInt(20, 20);
+			}
 
 			return result;
 		}
