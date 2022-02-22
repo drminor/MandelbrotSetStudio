@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace MSS.Common.DataTransferObjects
 {
-	public class DtoMapper : IMapper<RPoint, RPointDto>, IMapper<RSize, RSizeDto>, IMapper<RVector, RVectorDto>, IMapper<RRectangle, RRectangleDto>
+	public class DtoMapper : IMapper<RPoint, RPointDto>, IMapper<RSize, RSizeDto>, IMapper<RVector, RVectorDto>, IMapper<RRectangle, RRectangleDto>, IMapper<BigVector, BigVectorDto>
 	{
 		public RPointDto MapTo(RPoint source)
 		{
@@ -55,6 +55,19 @@ namespace MSS.Common.DataTransferObjects
 		{
 			var bVals = GetFromLongs(target.GetValues());
 			var result = new RRectangle(bVals, target.Exponent);
+			return result;
+		}
+
+		public BigVectorDto MapTo(BigVector source)
+		{
+			var result = new BigVectorDto(source.Values);
+			return result;
+		}
+
+		public BigVector MapFrom(BigVectorDto target)
+		{
+			var bVals = GetFromLongs(target.GetValues());
+			var result = new BigVector(bVals);
 			return result;
 		}
 

@@ -15,7 +15,7 @@ namespace MEngineDataContracts
 		public string SubdivisionId { get; set; }
 
 		[DataMember(Order = 3)]
-		public RVectorDto BlockPosition { get; set; }
+		public BigVectorDto BlockPosition { get; set; }
 
 		[DataMember(Order = 4)]
 		public RPointDto Position { get; set; }

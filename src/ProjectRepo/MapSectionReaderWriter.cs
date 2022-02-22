@@ -29,11 +29,11 @@ namespace ProjectRepo
 			return mapSectionRecord.FirstOrDefault();
 		}
 
-		public async Task<MapSectionRecord> GetAsync (ObjectId subdivisionId, RVectorRecord blockPosition)
+		public async Task<MapSectionRecord> GetAsync (ObjectId subdivisionId, BigVectorRecord blockPosition)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPositionX", blockPosition.VectorDto.X);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPositionY", blockPosition.VectorDto.Y);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPositionX", blockPosition.BigVectorDto.X);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPositionY", blockPosition.BigVectorDto.Y);
 
 			var mapSectionRecord = await Collection.FindAsync(filter1 & filter2 & filter3);
 

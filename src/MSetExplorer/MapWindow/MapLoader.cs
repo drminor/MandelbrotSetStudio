@@ -115,7 +115,7 @@ namespace MSetExplorer
 
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			var blockPositionDto = mapSectionResponse.BlockPosition;
+			var blockPositionDto = mapSectionRequest.BlockPosition;
 			var blockPosition = _dtoMapper.MapFrom(blockPositionDto);
 			var screenPosition = ToScreenCoords(blockPosition, mapSectionRequest.Inverted, _job);
 			//Debug.WriteLine($"MapLoader handling response: {blockPosition} for ScreenBlkPos: {screenPosition}.");

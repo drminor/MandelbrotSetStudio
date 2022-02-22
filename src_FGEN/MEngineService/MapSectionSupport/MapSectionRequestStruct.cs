@@ -7,12 +7,11 @@ namespace MEngineService
     {
         public string subdivisionId;
 
-        // RVectorDto BlockPosition
+        // BigVectorDto BlockPosition
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
         public long[] blockPositionX;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
         public long[] blockPositionY;
-        public int blockPositionExponent;
 
         // RPointDto Position
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]

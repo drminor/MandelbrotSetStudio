@@ -133,7 +133,7 @@ namespace ImageBuilder
 			var result = new MapSectionRequest
 			{
 				SubdivisionId = "TestId",
-				BlockPosition = new PointInt(0, 0),
+				BlockPosition = new BigVectorDto(new BigInteger[] { 0, 0 }),
 				Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
 				BlockSize = RMapConstants.BLOCK_SIZE,
 				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),

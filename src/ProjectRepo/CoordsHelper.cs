@@ -34,7 +34,7 @@ namespace ProjectRepo
 			return result;
 		}
 
-		public RVectorRecord BuildVectorRecord(RVectorDto rVectorDto)
+		public RVectorRecord BuildRVectorRecord(RVectorDto rVectorDto)
 		{
 			var rVector = _dtoMapper.MapFrom(rVectorDto);
 			var display = BigIntegerHelper.GetDisplay(rVector);
@@ -43,7 +43,7 @@ namespace ProjectRepo
 			return result;
 		}
 
-		public RVectorRecord BuildVectorRecord(RVector rVector)
+		public RVectorRecord BuildRVectorRecord(RVector rVector)
 		{
 			var display = BigIntegerHelper.GetDisplay(rVector);
 			var rVectorDto = _dtoMapper.MapTo(rVector);
@@ -51,6 +51,25 @@ namespace ProjectRepo
 
 			return result;
 		}
+
+		public BigVectorRecord BuildBigVectorRecord(BigVectorDto bigVectorDto)
+		{
+			var bigVector = _dtoMapper.MapFrom(bigVectorDto);
+			var display = BigIntegerHelper.GetDisplay(bigVector);
+			var result = new BigVectorRecord(display, bigVectorDto);
+
+			return result;
+		}
+
+		public BigVectorRecord BuildBigVectorRecord(BigVector bigVector)
+		{
+			var display = BigIntegerHelper.GetDisplay(bigVector);
+			var bigVectorDto = _dtoMapper.MapTo(bigVector);
+			var result = new BigVectorRecord(display, bigVectorDto);
+
+			return result;
+		}
+
 
 		public RRectangleRecord BuildCoords(RRectangle rRectangle)
 		{

@@ -15,7 +15,6 @@ namespace MEngineService
 			// BlockPosition
 			result.blockPositionX = mapSectionRequest.BlockPosition.X;
 			result.blockPositionY = mapSectionRequest.BlockPosition.Y;
-			result.blockPositionExponent = mapSectionRequest.BlockPosition.Exponent;
 
 			// RPointDto Position
 			result.positionX = mapSectionRequest.Position.X;

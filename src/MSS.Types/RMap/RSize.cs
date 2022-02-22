@@ -26,18 +26,12 @@ namespace MSS.Types
 			Exponent = exponent;
 		}
 
-		public BigInteger WidthNumerator
-		{
-			get => Values[0];
-		}
+		public BigInteger WidthNumerator => Values[0];
 
-		public BigInteger HeightNumerator
-		{
-			get => Values[1];
-		}
+		public BigInteger HeightNumerator => Values[1];
 
-		public RValue Width => new RValue(WidthNumerator, Exponent);
-		public RValue Height => new RValue(HeightNumerator, Exponent);
+		public RValue Width => new(WidthNumerator, Exponent);
+		public RValue Height => new(HeightNumerator, Exponent);
 
 		object ICloneable.Clone()
 		{

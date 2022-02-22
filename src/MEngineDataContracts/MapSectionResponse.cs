@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using MSS.Types.DataTransferObjects;
+﻿using MSS.Types.DataTransferObjects;
 using System.Runtime.Serialization;
 
 namespace MEngineDataContracts
@@ -18,7 +17,7 @@ namespace MEngineDataContracts
 		public string SubdivisionId { get; set; }
 
 		[DataMember(Order = 3)]
-		public RVectorDto BlockPosition { get; set; }
+		public BigVectorDto BlockPosition { get; set; }
 
 		[DataMember(Order = 4)]
 		public int[] Counts { get; set; }

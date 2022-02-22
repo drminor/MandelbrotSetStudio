@@ -9,7 +9,7 @@ namespace MSS.Common
 
 		MapSectionResponse? GetMapSection(string mapSectionId);
 
-		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, RVector blockPosition);
+		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVector blockPosition);
 		Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
 
 		Task<string> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);

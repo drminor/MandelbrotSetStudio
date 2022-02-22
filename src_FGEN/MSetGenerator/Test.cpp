@@ -12,12 +12,10 @@
 typedef struct _MSETREQ
 {
     char* subdivisionId;
-    
 
-    // Block Position -- RVectorDto
+    // Block Position -- BigVectorDto
     LONGLONG blockPositionX[2];
     LONGLONG blockPositionY[2];
-    int blockPositionExponent;
 
     // Position -- RPointDto
     LONGLONG positionX[2];
@@ -45,8 +43,9 @@ extern "C"
 {
     __declspec(dllexport) void GenerateMapSection(MSETREQ mapSectionRequest, int* counts, bool* doneFlags, double* zValues)
     {
-        
-        std::cout << "Generating MapSection for subdivision2: " << mapSectionRequest.subdivisionId << mapSectionRequest.maxIterations << "\n";
+        int targetCount = mapSectionRequest.maxIterations;
+
+        std::cout << "Generating MapSection for subdivision: " << mapSectionRequest.subdivisionId << " -- TargetCount:" << targetCount << "\n";
 
         int cellCount = mapSectionRequest.blockSizeWidth * mapSectionRequest.blockSizeHeight;
 
@@ -84,7 +83,7 @@ extern "C"
         SizeInt blockSize = SizeInt(mapSectionRequest.blockSizeWidth, mapSectionRequest.blockSizeHeight);
         SizeDd sampleSize = SizeDd(deltaWidth, deltaHeight);
 
-        int targetCount = mapSectionRequest.maxIterations;
+        //int targetCount = mapSectionRequest.maxIterations;
 
         g->FillCountsVec(pos, blockSize, sampleSize, targetCount, counts, doneFlags, zValues);
 

@@ -22,7 +22,7 @@ namespace MapSectionProviderLib
 		{
 			mapPosition = GetMapPosition(subdivision, blockPosition);
 
-			var uBlockPos = new RVector(blockPosition.X, blockPosition.Y, 0);
+			var uBlockPos = new BigVector(blockPosition.X, blockPosition.Y);
 
 			var dtoMapper = new DtoMapper();
 			var blockPosForDataTransfer = dtoMapper.MapTo(uBlockPos);

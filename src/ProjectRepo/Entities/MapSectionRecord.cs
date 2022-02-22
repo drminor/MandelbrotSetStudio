@@ -4,7 +4,7 @@ namespace ProjectRepo.Entities
 {
 	public record MapSectionRecord(
 		ObjectId SubdivisionId,
-		RVectorRecord BlockPosition,
+		BigVectorRecord BlockPosition,
 		int[] Counts
 		//bool[] DoneFlags,
 		//double[] ZValues

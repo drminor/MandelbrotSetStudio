@@ -104,9 +104,12 @@ namespace MSetRepo
 
 		public MapSectionRecord? MapTo(MapSectionResponse? source)
 		{
-			if (source is null) return null;
+			if (source is null)
+			{
+				return null;
+			}
 
-			var blockPositionRecord = _coordsHelper.BuildVectorRecord(source.BlockPosition);
+			var blockPositionRecord = _coordsHelper.BuildBigVectorRecord(source.BlockPosition);
 			var result = new MapSectionRecord
 				(
 				new ObjectId(source.SubdivisionId),
@@ -128,7 +131,7 @@ namespace MSetRepo
 			{
 				MapSectionId = target.Id.ToString(),
 				SubdivisionId = target.SubdivisionId.ToString(),
-				BlockPosition = target.BlockPosition.VectorDto,
+				BlockPosition = target.BlockPosition.BigVectorDto,
 				Counts = target.Counts
 			};
 
@@ -137,9 +140,16 @@ namespace MSetRepo
 
 		public RVectorRecord MapTo(RVector rVector)
 		{
-			var result = _coordsHelper.BuildVectorRecord(rVector);
+			var result = _coordsHelper.BuildRVectorRecord(rVector);
 			return result;
 		}
+
+		public BigVectorRecord MapTo(BigVector bigVector)
+		{
+			var result = _coordsHelper.BuildBigVectorRecord(bigVector);
+			return result;
+		}
+
 
 	}
 }

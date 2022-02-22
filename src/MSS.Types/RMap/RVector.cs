@@ -26,15 +26,9 @@ namespace MSS.Types
 			Exponent = exponent;
 		}
 
-		public BigInteger XNumerator
-		{
-			get => Values[0];
-		}
+		public BigInteger XNumerator => Values[0];
 
-		public BigInteger YNumerator
-		{
-			get => Values[1];
-		}
+		public BigInteger YNumerator => Values[1];
 
 		public RValue X => new RValue(XNumerator, Exponent);
 		public RValue Y => new RValue(YNumerator, Exponent);
@@ -77,7 +71,7 @@ namespace MSS.Types
 		public RVector Translate(RPoint amount)
 		{
 			return Exponent != 0 && amount.Exponent != Exponent
-                ? throw new InvalidOperationException($"Cannot translate an RVector with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.")
+				? throw new InvalidOperationException($"Cannot translate an RVector with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.")
 				: new RVector(XNumerator + amount.XNumerator, YNumerator + amount.YNumerator, amount.Exponent);
 		}
 

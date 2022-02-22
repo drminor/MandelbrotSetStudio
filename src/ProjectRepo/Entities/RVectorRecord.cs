@@ -4,7 +4,7 @@ using System;
 namespace ProjectRepo.Entities
 {
 	[Serializable]
-	public record RVectorRecord(string Display, RVectorDto VectorDto)
+	public record RVectorRecord(string Display, RVectorDto RVectorDto)
 	{
 		public RVectorRecord() : this(string.Empty, new RVectorDto())
 		{ }
