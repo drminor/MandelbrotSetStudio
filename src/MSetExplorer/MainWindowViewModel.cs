@@ -48,6 +48,20 @@ namespace MSetExplorer
 			set { _canvasSize = value; OnPropertyChanged(); }
 		}
 
+		private int _iterations;
+		public int Iterations
+		{
+			get => _iterations;
+			set { _iterations = value; OnPropertyChanged(); }
+		}
+
+		private int _steps;
+		public int Steps
+		{
+			get => _steps;
+			set { _steps = value; OnPropertyChanged(); }
+		}
+
 		#endregion
 
 
@@ -67,7 +81,7 @@ namespace MSetExplorer
 
 			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
 
-			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}.");
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
 			UpdateMapView(TransformType.Zoom, newArea.Size, coords);
 		}
 
@@ -90,7 +104,13 @@ namespace MSetExplorer
 		private void UpdateMapView(TransformType transformType, SizeInt newSize, RRectangle coords)
 		{
 			var mSetInfo = MapLoaderJobStack.CurrentJob.MSetInfo;
+			
 			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
+			if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
+			{
+				updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
+			}
+
 			LoadMap(updatedInfo, transformType, newSize);
 		}
 

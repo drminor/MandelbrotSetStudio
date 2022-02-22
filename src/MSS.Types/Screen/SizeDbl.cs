@@ -98,6 +98,11 @@ namespace MSS.Types
 			return new SizeDbl(Width - offset.Width, Height - offset.Height);
 		}
 
+		public SizeDbl Diff(SizeDbl offset)
+		{
+			return new SizeDbl(Width - offset.Width, Height - offset.Height);
+		}
+
 		public SizeDbl Abs()
 		{
 			return new SizeDbl(Math.Abs(Width), Math.Abs(Height));

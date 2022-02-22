@@ -47,6 +47,8 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public event EventHandler CurrentJobChanged;
+
 		private GenMapRequestInfo CurrentRequest => _requestStackPointer == -1 ? null : _requestStack[_requestStackPointer];
 		private int? CurrentJobNumber => CurrentRequest?.JobNumber;
 
@@ -85,7 +87,10 @@ namespace MSetExplorer
 			StopCurrentJob();
 
 			var genMapRequestInfo = PushRequest(job);
+
+			CurrentJobChanged?.Invoke(this, new EventArgs());
 			_onMapNav(CurrentJob.CanvasControlOffset);
+
 			genMapRequestInfo.StartLoading();
 		}
 
@@ -170,7 +175,10 @@ namespace MSetExplorer
 			StopCurrentJob();
 
 			var genMapRequestInfo = RerunRequest(newRequestStackPointer);
+
 			_onMapNav(CurrentJob.CanvasControlOffset);
+			CurrentJobChanged?.Invoke(this, new EventArgs());
+
 			genMapRequestInfo.StartLoading();
 		}
 

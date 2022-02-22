@@ -24,10 +24,10 @@
                 <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="GoRightButton_Click">Right</Button>
                 <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="GoDownButton_Click">Down</Button>
                 
-                <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" Margin="25,115,15,0" Click="GoBackButton_Click">Go Back</Button>
-                <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="GoForwardButton_Click">Go Forward</Button>
-                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" Margin="25,115,15,0" Click="SaveButton_Click" >Save</Button>
-                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="CloseButton_Click">Close</Button>
+                <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,115,15,0" Click="GoBackButton_Click">Go Back</Button>
+                <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,15,15,0" Click="GoForwardButton_Click">Go Forward</Button>
+                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,115,15,0" Click="SaveButton_Click" >Save</Button>
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,15,15,0" Click="CloseButton_Click">Close</Button>
             </StackPanel>
         </Border>
 
@@ -36,7 +36,19 @@
         </Border>
 
         <Border Grid.Column="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
+            <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                    <TextBlock Width="90" Margin="10, 10, 20, 0" FontSize="16" Text="Iterations:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtIterations" Text="700" Width="70"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                    <TextBlock Width="90" Margin="10, 10, 20, 0" FontSize="16" Text="Steps:" VerticalAlignment="Top"/>
+                    <TextBox Text="{Binding Path=Steps}" Width="70"/>
+                </StackPanel>
+
+
+
             </StackPanel>
         </Border>
 

@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 
 namespace MSetExplorer
 {
-	internal interface IMapDisplayViewModel
+	public interface IMapDisplayViewModel
 	{
 		bool InDesignMode { get; }
 

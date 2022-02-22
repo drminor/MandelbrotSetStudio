@@ -1,5 +1,4 @@
-﻿using MSS.Types.Base;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -7,54 +6,74 @@ using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RRectangle : Rectangle<BigInteger>, IBigRatShape, IEquatable<RRectangle>, IEqualityComparer<RRectangle>
+	public class RRectangle : IBigRatShape, IEquatable<RRectangle>, IEqualityComparer<RRectangle>
 	{
+		public BigInteger[] Values { get; init; }
+
 		public int Exponent { get; init; }
 
-		public RRectangle() : base()
-		{
-			Exponent = 0;
-		}
+		public RRectangle() : this(0, 0, 0, 0, 0)
+		{ }
 
-		public RRectangle(BigInteger[] values, int exponent) : base(values)
+		public RRectangle(BigInteger[] values, int exponent) : this(values[0], values[1], values[2], values[3], exponent)
 		{
-			Exponent = exponent;
 			Validate();
 		}
 
-		public RRectangle(BigInteger[] xValues, BigInteger[] yValues, int exponent) : base(xValues[0], xValues[1], yValues[0], yValues[1])
+		public RRectangle(BigInteger[] xValues, BigInteger[] yValues, int exponent) : this(xValues[0], xValues[1], yValues[0], yValues[1], exponent)
 		{
-			Exponent = exponent;
 			Validate();
 		}
 
-		public RRectangle(BigInteger x1, BigInteger x2, BigInteger y1, BigInteger y2, int exponent) : base(x1, x2, y1, y2)
-		{
-			Exponent = exponent;
-			Validate();
-		}
-
-		public RRectangle(RPoint p, RSize s) : base(p.X, p.X + s.WidthNumerator, p.Y, p.Y + s.HeightNumerator)
+		public RRectangle(RPoint p, RSize s) : this(p.XNumerator, p.XNumerator + s.WidthNumerator, p.YNumerator, p.YNumerator + s.HeightNumerator, p.Exponent)
 		{
 			if (p.Exponent != s.Exponent)
 			{
 				throw new ArgumentException($"Cannot create a RRectangle from a Point with Exponent: {p.Exponent} and a Size with Exponent: {s.Exponent}.");
 			}
-
-			Exponent = p.Exponent;
-			Validate();
 		}
 
-		public RRectangle(RectangleInt rect) : base(rect.X1, rect.X2, rect.Y1, rect.Y2)
+		public RRectangle(RectangleInt rect) : this(rect.X1, rect.X2, rect.Y1, rect.Y2, 0)
 		{
-			Exponent = 0;
 			Validate();
 		}
 
-		public new RPoint LeftBot => new RPoint(X1, Y1, Exponent);
-		public new RPoint Position => LeftBot; 
+		public RRectangle(BigInteger x1, BigInteger x2, BigInteger y1, BigInteger y2, int exponent)
+		{
+			Values = new BigInteger[] { x1, x2, y1, y2 };
+			Exponent = exponent;
+			Validate();
+		}
 
-		public new RPoint RightTop => new RPoint(X2, Y2, Exponent);
+		public BigInteger X1
+		{
+			get => Values[0];
+			init => Values[0] = value;
+		}
+
+		public BigInteger X2
+		{
+			get => Values[1];
+			init => Values[1] = value;
+		}
+
+		public BigInteger Y1
+		{
+			get => Values[2];
+			init => Values[2] = value;
+		}
+
+		public BigInteger Y2
+		{
+			get => Values[3];
+			init => Values[3] = value;
+		}
+
+
+		public RPoint LeftBot => new RPoint(X1, Y1, Exponent);
+		public RPoint Position => LeftBot; 
+
+		public RPoint RightTop => new RPoint(X2, Y2, Exponent);
 
 		public BigInteger[] XValues => new BigInteger[] { X1, X2 };
 		public BigInteger[] YValues => new BigInteger[] { Y1, Y2 };
@@ -71,7 +90,7 @@ namespace MSS.Types
 			return Clone();
 		}
 
-		public new RRectangle Clone()
+		public RRectangle Clone()
 		{
 			return Reducer.Reduce(this);
 		}
@@ -100,7 +119,7 @@ namespace MSS.Types
 		{
 			return Exponent != 0 && amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RPoint with Exponent: {amount.Exponent}.")
-				: new RRectangle(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y, amount.Exponent);
+				: new RRectangle(X1 + amount.XNumerator, X2 + amount.XNumerator, Y1 + amount.YNumerator, Y2 + amount.YNumerator, amount.Exponent);
 		}
 
 		public RRectangle Translate(RSize amount)
@@ -136,8 +155,14 @@ namespace MSS.Types
 
 		public bool Equals(RRectangle? x, RRectangle? y)
 		{
-			bool result = base.Equals(x, y) && x?.Exponent == y?.Exponent;
-			return result;
+			if (x is null)
+			{
+				return y is null;
+			}
+			else
+			{
+				return x.Equals(y);
+			}
 		}
 
 		public int GetHashCode([DisallowNull] RRectangle obj)

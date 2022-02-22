@@ -90,9 +90,16 @@ namespace MSetExplorer
 
 			set
 			{
-				var offset = new PointDbl(value).Scale(-1d);
-				_image.SetValue(Canvas.LeftProperty, offset.X);
-				_image.SetValue(Canvas.BottomProperty, offset.Y);
+				var curVal = CanvasOffset;
+				var diff = curVal.Diff(value).Abs();
+
+				if (double.IsNaN(diff.Width) || double.IsNaN(diff.Height) || diff.Width > 0.5 || diff.Height > 0.5)
+				{
+					Debug.WriteLine($"CanvasOffset is being set to {value}.");
+					var offset = new PointDbl(value).Scale(-1d);
+					_image.SetValue(Canvas.LeftProperty, offset.X);
+					_image.SetValue(Canvas.BottomProperty, offset.Y);
+				}
 			}
 		}
 
@@ -110,6 +117,7 @@ namespace MSetExplorer
 
 		private ScreenSection Get(PointInt blockPosition)
 		{
+			//Debug.WriteLine($"About to draw screen section at position: {blockPosition}. CanvasControlOff: {CanvasOffset}.");
 			var result = _screenSections[blockPosition.Y, blockPosition.X];
 			return result;
 		}

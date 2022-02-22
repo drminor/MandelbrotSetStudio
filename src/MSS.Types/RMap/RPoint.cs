@@ -1,44 +1,58 @@
-﻿using MSS.Types.Base;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RPoint : Point<BigInteger>, IBigRatShape
+	public class RPoint : IBigRatShape, IEquatable<RPoint>, IEqualityComparer<RPoint>
 	{
+		public BigInteger[] Values { get; init; }
+
 		public int Exponent { get; init; }
 
 		public RPoint() : this(0, 0, 0)
 		{ }
 
-		public RPoint(BigInteger[] values, int exponent) : base(values)
+		public RPoint(BigInteger[] values, int exponent) : this(values[0], values[1], exponent)
+		{ }
+
+		public RPoint(BigInteger x, BigInteger y, int exponent)
 		{
+			Values = new BigInteger[] { x, y };
 			Exponent = exponent;
 		}
 
-		public RPoint(BigInteger x, BigInteger y, int exponent) : base(x, y)
+		public BigInteger XNumerator
 		{
-			Exponent = exponent;
+			get => Values[0];
 		}
+
+		public BigInteger YNumerator
+		{
+			get => Values[1];
+		}
+
+		public RValue X => new RValue(XNumerator, Exponent);
+		public RValue Y => new RValue(YNumerator, Exponent);
 
 		object ICloneable.Clone()
 		{
 			return Clone();
 		}
 
-		public new RPoint Clone()
+		public RPoint Clone()
 		{
 			return Reducer.Reduce(this);
 		}
 
 		public RPoint Scale(SizeInt factor)
 		{
-			return new RPoint(X * factor.Width, Y * factor.Height, Exponent);
+			return new RPoint(XNumerator * factor.Width, YNumerator * factor.Height, Exponent);
 		}
 
 		public RPoint Scale(PointInt factor)
 		{
-			return new RPoint(X * factor.X, Y * factor.Y, Exponent);
+			return new RPoint(XNumerator * factor.X, YNumerator * factor.Y, Exponent);
 		}
 
 		//public RPoint Scale(RSize factor)
@@ -52,14 +66,14 @@ namespace MSS.Types
 		{
 			return Exponent != 0 && amount.Exponent != Exponent
                 ?                throw new InvalidOperationException($"Cannot translate a RPoint with Exponent: {Exponent} using a RPoint with Exponent: {amount.Exponent}.")
-				: new RPoint(X + amount.X, Y + amount.Y, amount.Exponent);
+				: new RPoint(XNumerator + amount.XNumerator, YNumerator + amount.YNumerator, amount.Exponent);
 		}
 
 		public RPoint Translate(RSize amount)
 		{
 			return Exponent != 0 && amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RPoint with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
-				: new RPoint(X + amount.WidthNumerator, Y + amount.HeightNumerator, amount.Exponent);
+				: new RPoint(XNumerator + amount.WidthNumerator, YNumerator + amount.HeightNumerator, amount.Exponent);
 		}
 
 		/// <summary>
@@ -71,7 +85,7 @@ namespace MSS.Types
 		{
 			return Exponent != 0 && amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot find the diff from a RPoint with Exponent: {Exponent} using a RPoint with Exponent: {amount.Exponent}.")
-				: new RSize(X - amount.X, Y - amount.Y, amount.Exponent);
+				: new RSize(XNumerator - amount.XNumerator, YNumerator - amount.YNumerator, amount.Exponent);
 		}
 
 		public override string? ToString()
@@ -79,5 +93,52 @@ namespace MSS.Types
 			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this)); 
 			return result;
 		}
+
+		#region IEqualityComparer / IEquatable Support
+
+		public bool Equals(RPoint? a, RPoint? b)
+		{
+			if (a is null)
+			{
+				return b is null;
+			}
+			else
+			{
+				return a.Equals(b);
+			}
+		}
+
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as RPoint);
+		}
+
+		public bool Equals(RPoint? other)
+		{
+			return !(other is null) && XNumerator.Equals(other.XNumerator) && YNumerator.Equals(other.YNumerator);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(XNumerator, YNumerator);
+		}
+
+		public int GetHashCode(RPoint obj)
+		{
+			return obj.GetHashCode();
+		}
+
+		public static bool operator ==(RPoint p1, RPoint p2)
+		{
+			return EqualityComparer<RPoint>.Default.Equals(p1, p2);
+		}
+
+		public static bool operator !=(RPoint p1, RPoint p2)
+		{
+			return !(p1 == p2);
+		}
+
+		#endregion
+
 	}
 }

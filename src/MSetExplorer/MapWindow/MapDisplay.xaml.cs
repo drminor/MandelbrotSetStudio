@@ -131,9 +131,9 @@ namespace MSetExplorer
 		{
 			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
 			{
-				_screenSections.HideScreenSections();
-
 				var offset = _vm.CanvasControlOffset;
+
+				_screenSections.HideScreenSections();
 				_screenSections.CanvasOffset = offset;
 				_selectedArea.CanvasControlOffset = offset;
 			}

@@ -1,16 +1,17 @@
 ﻿using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 
 namespace MSetExplorer
 {
-	internal interface IMapLoaderJobStack
+	public interface IMapLoaderJobStack
 	{
-		bool CanGoBack { get; }
-		bool CanGoForward { get; }
+		event EventHandler CurrentJobChanged;
 		Job CurrentJob { get; }
 
-		//void UpdateJob(GenMapRequestInfo genMapRequestInfo, Job job);
-		//IEnumerable<GenMapRequestInfo> GenMapRequests { get; }
+		bool CanGoBack { get; }
+		bool CanGoForward { get; }
+
 		IEnumerable<Job> Jobs { get; }
 
 		bool GoBack();

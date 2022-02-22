@@ -1,18 +1,14 @@
-﻿using MSS.Types.Base;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RSize : Size<BigInteger>, IBigRatShape
+	public class RSize : IBigRatShape, IEquatable<RSize>, IEqualityComparer<RSize>
 	{
+		public BigInteger[] Values { get; init; }
+
 		public int Exponent { get; init; }
-
-		public BigInteger WidthNumerator => base.Width;
-		public BigInteger HeightNumerator => base.Height;
-
-		public new RValue Width => new RValue(WidthNumerator, Exponent);
-		public new RValue Height => new RValue(HeightNumerator, Exponent);
 
 		public RSize() : this(0, 0, 0)
 		{ }
@@ -24,25 +20,33 @@ namespace MSS.Types
 		public RSize(RValue extent) : this(extent.Value, extent.Value, extent.Exponent)
 		{ }
 
-		public RSize(BigInteger width, BigInteger height, int exponent) : base(width, height)
+		public RSize(BigInteger width, BigInteger height, int exponent)
 		{
+			Values = new BigInteger[] { width, height };
 			Exponent = exponent;
 		}
+
+		public BigInteger WidthNumerator
+		{
+			get => Values[0];
+		}
+
+		public BigInteger HeightNumerator
+		{
+			get => Values[1];
+		}
+
+		public RValue Width => new RValue(WidthNumerator, Exponent);
+		public RValue Height => new RValue(HeightNumerator, Exponent);
 
 		object ICloneable.Clone()
 		{
 			return Clone();
 		}
 
-		public new RSize Clone()
+		public RSize Clone()
 		{
 			return Reducer.Reduce(this);
-		}
-
-		public override string? ToString()
-		{
-			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
-			return result;
 		}
 
 		public RSize Scale(SizeInt factor)
@@ -74,14 +78,14 @@ namespace MSS.Types
 		{
 			return Exponent != 0 && amount.Exponent != Exponent
                 ? throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.")
-				: new RSize(WidthNumerator + amount.X, HeightNumerator + amount.Y, amount.Exponent);
+				: new RSize(WidthNumerator + amount.XNumerator, HeightNumerator + amount.YNumerator, amount.Exponent);
 		}
 
 		public RSize Translate(RSize amount)
 		{
 			return Exponent != 0 && amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
-				: new RSize(base.Width + amount.WidthNumerator, HeightNumerator + amount.HeightNumerator, amount.Exponent);
+				: new RSize(WidthNumerator + amount.WidthNumerator, HeightNumerator + amount.HeightNumerator, amount.Exponent);
 		}
 
 		//public RSize Scale(RSize factor)
@@ -106,6 +110,58 @@ namespace MSS.Types
 
 		//	return new RSize(w, h, Exponent);
 		//}
+
+		public override string? ToString()
+		{
+			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
+			return result;
+		}
+
+		#region IEqualityComparer / IEquatable Support
+
+		public bool Equals(RSize? a, RSize? b)
+		{
+			if (a is null)
+			{
+				return b is null;
+			}
+			else
+			{
+				return a.Equals(b);
+			}
+		}
+
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as RSize);
+		}
+
+		public bool Equals(RSize? other)
+		{
+			return !(other is null) && WidthNumerator.Equals(other.WidthNumerator) && HeightNumerator.Equals(other.HeightNumerator);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(WidthNumerator, HeightNumerator);
+		}
+
+		public int GetHashCode(RSize obj)
+		{
+			return obj.GetHashCode();
+		}
+
+		public static bool operator ==(RSize p1, RSize p2)
+		{
+			return EqualityComparer<RSize>.Default.Equals(p1, p2);
+		}
+
+		public static bool operator !=(RSize p1, RSize p2)
+		{
+			return !(p1 == p2);
+		}
+
+		#endregion
 
 	}
 }

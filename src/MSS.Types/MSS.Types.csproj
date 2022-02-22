@@ -7,17 +7,6 @@
 
   <ItemGroup>
     <Compile Remove="BigIntegerExtensions.cs" />
-    <Compile Remove="z_NotUsed\BigIntegerSerializer.cs" />
-    <Compile Remove="z_NotUsed\BigRational.cs" />
-    <Compile Remove="z_NotUsed\DRectangle.cs" />
-    <Compile Remove="z_NotUsed\DSize.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="z_NotUsed\BigIntegerSerializer.cs" />
-    <None Include="z_NotUsed\BigRational.cs" />
-    <None Include="z_NotUsed\DRectangle.cs" />
-    <None Include="z_NotUsed\DSize.cs" />
   </ItemGroup>
 
   <ItemGroup>

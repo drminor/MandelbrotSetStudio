@@ -600,10 +600,10 @@ namespace MSS.Common
 
 		private static SizeDbl GetNumberOfSamplePointsDiag(RPoint mapOrigin, RPoint subdivisionOrigin, RSize samplePointDelta, out SizeDbl offset)
 		{
-			var sx = BigIntegerHelper.ConvertToDouble(mapOrigin.X, mapOrigin.Exponent);
-			var sy = BigIntegerHelper.ConvertToDouble(mapOrigin.Y, mapOrigin.Exponent);
-			var dx = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.X, subdivisionOrigin.Exponent);
-			var dy = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.Y, subdivisionOrigin.Exponent);
+			var sx = BigIntegerHelper.ConvertToDouble(mapOrigin.XNumerator, mapOrigin.Exponent);
+			var sy = BigIntegerHelper.ConvertToDouble(mapOrigin.YNumerator, mapOrigin.Exponent);
+			var dx = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.XNumerator, subdivisionOrigin.Exponent);
+			var dy = BigIntegerHelper.ConvertToDouble(subdivisionOrigin.YNumerator, subdivisionOrigin.Exponent);
 
 			offset = new SizeDbl(sx - dx, sy - dy);
 

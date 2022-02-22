@@ -43,7 +43,8 @@ extern "C"
 {
     __declspec(dllexport) void GenerateMapSection(MSETREQ mapSectionRequest, int* counts, bool* doneFlags, double* zValues)
     {
-        std::cout << "Generating MapSection for subdivision: " << mapSectionRequest.subdivisionId << "\n";
+        
+        std::cout << "Generating MapSection for subdivision2: " << mapSectionRequest.subdivisionId << mapSectionRequest.maxIterations << "\n";
 
         int cellCount = mapSectionRequest.blockSizeWidth * mapSectionRequest.blockSizeHeight;
 
