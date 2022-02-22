@@ -23,6 +23,12 @@ namespace MSS.Types
 			return new RSize(vals, exponent);
 		}
 
+		public static RVector Reduce(RVector rPoint)
+		{
+			var vals = Reduce(rPoint, out var exponent);
+			return new RVector(vals, exponent);
+		}
+
 		public static RRectangle Reduce(RRectangle rRectangle)
 		{
 			var vals = Reduce(rRectangle, out var exponent);

@@ -1,5 +1,6 @@
 ﻿using MSS.Common.DataTransferObjects;
 using MSS.Types;
+using MSS.Types.DataTransferObjects;
 using ProjectRepo.Entities;
 
 namespace ProjectRepo
@@ -27,8 +28,26 @@ namespace ProjectRepo
 		{
 			var display = BigIntegerHelper.GetDisplay(rSize);
 
-			var rRectangleDto = _dtoMapper.MapTo(rSize);
-			var result = new RSizeRecord(display, rRectangleDto);
+			var rSizeDto = _dtoMapper.MapTo(rSize);
+			var result = new RSizeRecord(display, rSizeDto);
+
+			return result;
+		}
+
+		public RVectorRecord BuildVectorRecord(RVectorDto rVectorDto)
+		{
+			var rVector = _dtoMapper.MapFrom(rVectorDto);
+			var display = BigIntegerHelper.GetDisplay(rVector);
+			var result = new RVectorRecord(display, rVectorDto);
+
+			return result;
+		}
+
+		public RVectorRecord BuildVectorRecord(RVector rVector)
+		{
+			var display = BigIntegerHelper.GetDisplay(rVector);
+			var rVectorDto = _dtoMapper.MapTo(rVector);
+			var result = new RVectorRecord(display, rVectorDto);
 
 			return result;
 		}

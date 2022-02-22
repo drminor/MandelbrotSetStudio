@@ -22,14 +22,17 @@ namespace MapSectionProviderLib
 		{
 			mapPosition = GetMapPosition(subdivision, blockPosition);
 
+			var uBlockPos = new RVector(blockPosition.X, blockPosition.Y, 0);
+
 			var dtoMapper = new DtoMapper();
+			var blockPosForDataTransfer = dtoMapper.MapTo(uBlockPos);
 			var posForDataTransfer = dtoMapper.MapTo(mapPosition);
 			var spdForDataTransfer = dtoMapper.MapTo(subdivision.SamplePointDelta);
 
 			var mapSectionRequest = new MapSectionRequest
 			{
 				SubdivisionId = subdivision.Id.ToString(),
-				BlockPosition = blockPosition,
+				BlockPosition = blockPosForDataTransfer,
 				BlockSize = subdivision.BlockSize,
 				Position = posForDataTransfer,
 				SamplePointsDelta = spdForDataTransfer,

@@ -17,7 +17,7 @@ namespace MEngineService
 		{
 			MapSectionRequest request = new MapSectionRequest();
 			request.SubdivisionId = "TestA";
-			request.BlockPosition = new PointInt(0, 0);
+			request.BlockPosition = new RVectorDto();
 			request.Position = new RPointDto(new BigInteger[] { 3, 1 }, -2);
 			request.BlockSize = new SizeInt(128, 128);
 			request.SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8);

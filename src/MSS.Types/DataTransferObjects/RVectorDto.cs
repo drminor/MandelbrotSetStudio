@@ -5,7 +5,7 @@ using System.Numerics;
 namespace MSS.Types.DataTransferObjects
 {
 	[ProtoContract(SkipConstructor = true)]
-	public class RPointDto
+	public class RVectorDto
 	{
 		[ProtoMember(1)]
 		public long[] X { get; init; }
@@ -16,13 +16,13 @@ namespace MSS.Types.DataTransferObjects
 		[ProtoMember(3)]
 		public int Exponent { get; init; }
 
-		public RPointDto() : this(new BigInteger[] { 0, 0 }, 0)
+		public RVectorDto() : this(new BigInteger[] { 0, 0 }, 0)
 		{ }
 
-		public RPointDto(BigInteger[] bigIntegers, int exponent) : this(bigIntegers.Select(v => BigIntegerHelper.ToLongs(v)).ToArray(), exponent)
+		public RVectorDto(BigInteger[] bigIntegers, int exponent) : this(bigIntegers.Select(v => BigIntegerHelper.ToLongs(v)).ToArray(), exponent)
 		{ }
 
-		public RPointDto(long[][] values, int exponent)
+		public RVectorDto(long[][] values, int exponent)
 		{
 			X = values[0];
 			Y = values[1];

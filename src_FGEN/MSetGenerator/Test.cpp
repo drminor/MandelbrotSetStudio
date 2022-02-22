@@ -13,11 +13,13 @@ typedef struct _MSETREQ
 {
     char* subdivisionId;
     
-    // Block Position
-    int blockPositionX;
-    int blockPositionY;
 
-    // RPointDto Position
+    // Block Position -- RVectorDto
+    LONGLONG blockPositionX[2];
+    LONGLONG blockPositionY[2];
+    int blockPositionExponent;
+
+    // Position -- RPointDto
     LONGLONG positionX[2];
     LONGLONG positionY[2];
     int positionExponent;
@@ -26,7 +28,7 @@ typedef struct _MSETREQ
     int blockSizeWidth;
     int blockSizeHeight;
 
-    // RSizeDto SamplePointsDelta;
+    // SamplePointsDelta -- RSizeDto
     LONGLONG samplePointDeltaWidth[2];
     LONGLONG samplePointDeltaHeight[2];
     int samplePointDeltaExponent;

@@ -2,7 +2,6 @@
 using MEngineClient;
 using MSetRepo;
 using MSS.Common;
-using MSS.Types.MSet;
 using System.Diagnostics;
 using System.Windows;
 
@@ -23,7 +22,7 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			var DROP_MAP_SECTIONS = false;
+			var DROP_MAP_SECTIONS = true;
 
 			var USE_MAP_NAV_SIM = false;
 			var USE_MAP_SECTION_REPO = true;

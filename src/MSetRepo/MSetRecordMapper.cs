@@ -3,6 +3,7 @@ using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
+using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo;
 using ProjectRepo.Entities;
@@ -105,11 +106,11 @@ namespace MSetRepo
 		{
 			if (source is null) return null;
 
+			var blockPositionRecord = _coordsHelper.BuildVectorRecord(source.BlockPosition);
 			var result = new MapSectionRecord
 				(
 				new ObjectId(source.SubdivisionId),
-				source.BlockPosition.X,
-				source.BlockPosition.Y,
+				blockPositionRecord,
 				source.Counts
 				);
 
@@ -118,16 +119,25 @@ namespace MSetRepo
 
 		public MapSectionResponse? MapFrom(MapSectionRecord? target)
 		{
-			if (target is null) return null;
+			if (target is null)
+			{
+				return null;
+			}
 
 			var result = new MapSectionResponse
 			{
 				MapSectionId = target.Id.ToString(),
 				SubdivisionId = target.SubdivisionId.ToString(),
-				BlockPosition = new PointInt(target.BlockPositionX, target.BlockPositionY),
+				BlockPosition = target.BlockPosition.VectorDto,
 				Counts = target.Counts
 			};
 
+			return result;
+		}
+
+		public RVectorRecord MapTo(RVector rVector)
+		{
+			var result = _coordsHelper.BuildVectorRecord(rVector);
 			return result;
 		}
 

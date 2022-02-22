@@ -1,6 +1,7 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
@@ -14,6 +15,7 @@ namespace MSetExplorer
 	internal class MapLoader
 	{
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
+		private readonly DtoMapper _dtoMapper;
 		private readonly Job _job;
 		private readonly int _jobNumber;
 
@@ -34,6 +36,7 @@ namespace MSetExplorer
 			_jobNumber = jobNumber;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
+			_dtoMapper = new DtoMapper();
 			_colorMap = new ColorMap(job.MSetInfo.ColorMapEntries);
 
 			_isStopping = false;
@@ -112,7 +115,8 @@ namespace MSetExplorer
 
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			var blockPosition = mapSectionResponse.BlockPosition;
+			var blockPositionDto = mapSectionResponse.BlockPosition;
+			var blockPosition = _dtoMapper.MapFrom(blockPositionDto);
 			var screenPosition = ToScreenCoords(blockPosition, mapSectionRequest.Inverted, _job);
 			//Debug.WriteLine($"MapLoader handling response: {blockPosition} for ScreenBlkPos: {screenPosition}.");
 
@@ -153,21 +157,24 @@ namespace MSetExplorer
 		}
 
 		// TODO: ToScreenCoords should take a vector and return a vector
-		private PointInt ToScreenCoords(PointInt blockPosition, bool inverted, Job job)
+		private PointInt ToScreenCoords(RVector blockPosition, bool inverted, Job job)
 		{
-			PointInt posT;
+			RVector posT;
 
 			if (inverted)
 			{
-				posT = new PointInt(blockPosition.X, (blockPosition.Y + 1) * -1);
+				posT = new RVector(blockPosition.XNumerator, (blockPosition.YNumerator + 1) * -1, blockPosition.Exponent);
 			}
 			else
 			{
 				posT = blockPosition;
 			}
 
-			var result = posT.Diff(job.MapBlockOffset);
-			return result;
+			var screenOffsetRat = posT.Diff(job.MapBlockOffset);
+			var reducedOffset = Reducer.Reduce(screenOffsetRat);
+			var result = new PointDbl(BigIntegerHelper.ConvertToDouble(reducedOffset.X), BigIntegerHelper.ConvertToDouble(reducedOffset.Y));
+
+			return result.Round();
 		}
 
 		private bool JobCrossesZeroY(RRectangle mapCoords)

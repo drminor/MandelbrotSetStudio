@@ -1,6 +1,7 @@
 ﻿using MEngineClient;
 using MEngineDataContracts;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
@@ -18,6 +19,7 @@ namespace MapSectionProviderLib
 		private readonly object _lock = new();
 		private readonly IMEngineClient _mEngineClient;
 		private readonly IMapSectionRepo _mapSectionRepo;
+		private readonly DtoMapper _dtoMapper;
 
 		private readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 		private readonly CancellationTokenSource _cts;
@@ -38,6 +40,7 @@ namespace MapSectionProviderLib
 			_nextJobId = 0;
 			_mEngineClient = mEngineClient;
 			_mapSectionRepo = mapSectionRepo;
+			_dtoMapper = new DtoMapper();
 			_mapSectionPersistProcessor = mapSectionPersistProcessor;
 
 			_cts = new CancellationTokenSource();
@@ -143,7 +146,8 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						var blockPosition = workItem.Request.BlockPosition;
+						var blockPositionDto = workItem.Request.BlockPosition;
+ 						var blockPosition = _dtoMapper.MapFrom(blockPositionDto);
 						mapSectionResponse = await _mapSectionRepo.GetMapSectionAsync(workItem.Request.SubdivisionId, blockPosition);
 
 						if (mapSectionResponse is null)
@@ -183,8 +187,7 @@ namespace MapSectionProviderLib
 						continue;
 					}
 
-					var blockPosition = workItem.Request.BlockPosition;
-					//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+					//Debug.WriteLine($"Generating MapSection for block: {workItem.Request.BlockPosition}.");
 					var mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(workItem.Request);
 
 					workItem.WorkAction(workItem.Request, mapSectionResponse);

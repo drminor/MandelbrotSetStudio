@@ -27,10 +27,11 @@ namespace MSetRepo
 			return mapSectionResponse;
 		}
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, PointInt blockPosition)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, RVector blockPosition)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(subdivisionId), blockPosition);
+			var blockPositionRecord = _mSetRecordMapper.MapTo(blockPosition);
+			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(subdivisionId), blockPositionRecord);
 			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
 
 			return mapSectionResponse;
