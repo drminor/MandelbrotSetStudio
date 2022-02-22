@@ -48,6 +48,8 @@ namespace MSetRepo
 				source.Label,
 
 				(int) source.TransformType,
+				source.NewArea.X1,
+				source.NewArea.Y1,
 				source.NewArea.Width,
 				source.NewArea.Height,
 				MapTo(source.MSetInfo),

@@ -79,7 +79,7 @@ namespace MSetExplorer
 
 		private void SubmitSectionRequests()
 		{
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset.Round());
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset);
 
 			Debug.WriteLine($"Submitting section requests. The map extent is {mapExtentInBlocks}.");
 

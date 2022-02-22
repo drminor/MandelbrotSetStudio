@@ -69,40 +69,36 @@ namespace MSetExplorer
 
 		public void SetMapInfo(MSetInfo mSetInfo)
 		{
-			LoadMap(mSetInfo, TransformType.None, newArea: new SizeInt());
+			var newArea = new RectangleInt(new PointInt(), MapDisplayViewModel.CanvasSize);
+			LoadMap(mSetInfo, TransformType.None, newArea);
 		}
 
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
-			RectangleInt newArea = e.Area;
-			var curJob = CurrentJob;
-			var position = curJob.MSetInfo.Coords.Position;
-			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-
-			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-
-			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
-			UpdateMapView(TransformType.Zoom, newArea.Size, coords);
+			var newArea = e.Area;
+			UpdateMapView(TransformType.Zoom, newArea);
 		}
 
 		public void UpdateMapViewPan(ScreenPannedEventArgs e)
 		{
 			SizeInt offset = e.Offset;
-			var curJob = CurrentJob;
-			var coords = curJob.MSetInfo.Coords;
-			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-			var newSize = curJob.NewArea; // The new area is not changing
 
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
-			var invOffset = offset.Scale(-1d);
-			var updatedCoords = RMapHelper.GetMapCoords(invOffset, coords, samplePointDelta);
+			var invOffset = offset.Scale(-1);
+			var newArea = new RectangleInt(new PointInt(invOffset.Width, invOffset.Height), MapDisplayViewModel.CanvasSize);
 
-			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Pan}. SamplePointDelta: {samplePointDelta}");
-			UpdateMapView(TransformType.Pan, newSize, updatedCoords);
+			UpdateMapView(TransformType.Pan, newArea);
 		}
 
-		private void UpdateMapView(TransformType transformType, SizeInt newSize, RRectangle coords)
+		private void UpdateMapView(TransformType transformType, RectangleInt newArea)
 		{
+			var curJob = CurrentJob;
+			var position = curJob.MSetInfo.Coords.Position;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
+
 			var mSetInfo = MapLoaderJobStack.CurrentJob.MSetInfo;
 			
 			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
@@ -111,7 +107,7 @@ namespace MSetExplorer
 				updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
 			}
 
-			LoadMap(updatedInfo, transformType, newSize);
+			LoadMap(updatedInfo, transformType, newArea);
 		}
 
 		public void GoBack()
@@ -156,7 +152,7 @@ namespace MSetExplorer
 
 		#region Private Methods 
 
-		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, SizeInt newArea)
+		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
 			var jobName = GetJobName(transformType);
 			var parentJob = MapLoaderJobStack.CurrentJob;

@@ -46,6 +46,11 @@ namespace MSS.Types
 			return new SizeInt((int)Math.Round(Width * factor), (int)Math.Round(Height * factor));
 		}
 
+		public SizeInt Scale(int factor)
+		{
+			return new SizeInt(Width * factor, Height * factor);
+		}
+
 		public SizeDbl Divide(SizeInt dividend)
 		{
 			var resultH = Width / (double)dividend.Width;

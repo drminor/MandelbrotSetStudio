@@ -17,19 +17,19 @@ namespace MSetExplorer
 
 		public SizeInt BlockSize { get; }
 		public SizeInt CanvasSize { get; set; }
-		public SizeDbl CanvasControlOffset { get; set; }
+		public SizeInt CanvasControlOffset { get; set; }
 
 		public ObservableCollection<MapSection> MapSections { get; }
 
 		public Action<MapSection> HandleMapSectionReady => OnMapSectionReady;
-		public Action<SizeDbl> HandleMapNav => OnMapNav;
+		public Action<SizeInt> HandleMapNav => OnMapNav;
 
 		private void OnMapSectionReady(MapSection mapSection)
 		{
 			MapSections.Add(mapSection);
 		}
 
-		private void OnMapNav(SizeDbl canvasControOffset)
+		private void OnMapNav(SizeInt canvasControOffset)
 		{
 			CanvasControlOffset = canvasControOffset;
 			MapSections.Clear();

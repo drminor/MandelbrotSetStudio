@@ -5,7 +5,7 @@ namespace MSetExplorer
 {
 	internal interface IScreenSectionCollection
 	{
-		SizeDbl CanvasOffset { get; set; }
+		SizeInt CanvasOffset { get; set; }
 
 		void Draw(MapSection mapSection);
 		void HideScreenSections();

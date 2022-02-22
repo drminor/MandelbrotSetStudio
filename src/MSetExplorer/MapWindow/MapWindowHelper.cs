@@ -3,6 +3,7 @@ using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,23 +11,30 @@ namespace MSetExplorer
 {
 	internal static class MapWindowHelper
 	{
-		public static Job BuildJob(Job parentJob, Project project, string jobName, SizeInt canvasControlSize, MSetInfo mSetInfo, TransformType transformType, SizeInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter/*, bool clearExistingMapSections*/)
+		public static Job BuildJob(Job parentJob, Project project, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter/*, bool clearExistingMapSections*/)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 
-			SizeInt canvasSize;
+			SizeInt displaySize;
 
-			canvasSize = newArea.Width == 0 || newArea.Height == 0
-				? RMapHelper.GetCanvasSize(mSetInfo.Coords, canvasControlSize)
-				: RMapHelper.GetCanvasSize(newArea, canvasControlSize);
+			//displaySize = newArea.Width == 0 || newArea.Height == 0
+			//	? RMapHelper.GetCanvasSize(mSetInfo.Coords.Size, canvasSize)
+			//	: RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
+
+			if (newArea.Width == 0 || newArea.Height == 0)
+			{
+				throw new ArgumentException("When building a job, the new area's size cannot have a width or height = 0.");
+			}
+
+			displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
 
 			// Get the number of blocks
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(displaySize, blockSize);
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			//var samplePointDelta = RMapHelper.GetSamplePointDelta2(ref coords, newArea, screenSizeToMapRat, canvasSize);
 			var coords = mSetInfo.Coords;
-			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref coords, canvasSize);
+			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref coords, displaySize);
 
 			// Get a subdivision record from the database.
 			//var subdivision = GetSubdivision(coords, samplePointDelta, blockSize, projectAdapter, deleteExisting: false);

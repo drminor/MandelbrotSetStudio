@@ -12,12 +12,12 @@ namespace MSS.Types.MSet
 		public string? Label { get; init; }
 
 		public TransformType TransformType { get; init; }
-		public SizeInt NewArea { get; init; }
+		public RectangleInt NewArea { get; init; }
 
 		public MSetInfo MSetInfo { get; init; }
 		public SizeInt CanvasSizeInBlocks { get; init; }
 		public SizeInt MapBlockOffset { get; init; }
-		public SizeDbl CanvasControlOffset { get; init; }
+		public SizeInt CanvasControlOffset { get; init; }
 
 		public Job(
 			ObjectId id,
@@ -27,12 +27,12 @@ namespace MSS.Types.MSet
 			string? label,
 
 			TransformType transformType,
-			SizeInt newArea,
+			RectangleInt newArea,
 
 			MSetInfo mSetInfo,
 			SizeInt canvasSizeInBlocks,
 			SizeInt mapBlockOffset,
-			SizeDbl canvasControlOffset
+			SizeInt canvasControlOffset
 			)
 		{
 			Id = id;

@@ -73,11 +73,10 @@ namespace MSS.Types
 
 		public SizeInt Round(MidpointRounding midpointRounding)
 		{
-			var result = new SizeInt
-				(
-					(int)Math.Round(Width, midpointRounding),
-					(int)Math.Round(Height, midpointRounding)
-				);
+			int w = double.IsNaN(Width) ? 0 : (int)Math.Round(Width, midpointRounding);
+			int h = double.IsNaN(Height) ? 0 : (int)Math.Round(Height, midpointRounding);
+
+			var result = new SizeInt(w, h);
 
 			return result;
 		}

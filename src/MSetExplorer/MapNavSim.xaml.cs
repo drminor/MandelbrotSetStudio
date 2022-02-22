@@ -34,7 +34,8 @@ namespace MSetExplorer
 
 			// Use the TEST RECTANGLE instead (0,0 -> 1,1)
 			var testMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, RMapConstants.TEST_RECTANGLE);
-			_vm.LoadMap("initial job", canvasSize, testMSetInfo, TransformType.None, canvasSize);
+			var newArea = new RectangleInt(new PointInt(), canvasSize);
+			_vm.LoadMap("initial job", canvasSize, testMSetInfo, TransformType.None, newArea);
 		}
 
 		private SizeInt GetCanvasControlSize()
@@ -49,12 +50,12 @@ namespace MSetExplorer
 
 		private void NavigateButton_Click(object sender, RoutedEventArgs e)
 		{
-			//var rect = new Rect(new Point(16, 16), new Size(128, 128));
-			var rect = new Rect(new Point(12, 12), new Size(96, 96));
-			var coords = GetCoords(rect);
+			//var newArea = new RectangleInt(new PointInt(16, 16), new SizeInt(128, 128));
+			var newArea = new RectangleInt(new PointInt(12, 12), new SizeInt(96, 96));
+
+			var coords = GetCoords(newArea);
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}.");
-			var newArea = new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height));
 			LoadMap(coords, TransformType.Zoom, newArea);
 		}
 
@@ -70,25 +71,19 @@ namespace MSetExplorer
 			Close();
 		}
 
-		private RRectangle GetCoords(Rect rect)
+		private RRectangle GetCoords(RectangleInt area)
 		{
 			var curJob = _vm.CurrentJob;
 			var position = curJob.MSetInfo.Coords.Position;
-			var canvasControlOffset = curJob.CanvasControlOffset;
+			//var canvasControlOffset = curJob.CanvasControlOffset;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-
-			// Adjust the selected area's origin to account for the portion of the start block that is off screen.
-			var area = new RectangleInt(
-				new PointInt((int)Math.Round(rect.X + canvasControlOffset.Width), (int)Math.Round(rect.Y + canvasControlOffset.Height)),
-				new SizeInt((int)Math.Round(rect.Width), (int)Math.Round(rect.Height))
-				);
 
 			var result = RMapHelper.GetMapCoords(area, position, samplePointDelta);
 
 			return result;
 		}
 
-		private void LoadMap(RRectangle coords, TransformType transformType, SizeInt newArea)
+		private void LoadMap(RRectangle coords, TransformType transformType, RectangleInt newArea)
 		{
 			var canvasSize = GetCanvasControlSize();
 			var curMSetInfo = _vm.CurrentJob.MSetInfo;

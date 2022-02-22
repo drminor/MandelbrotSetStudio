@@ -11,10 +11,10 @@ namespace MSetExplorer
 
 		SizeInt BlockSize { get; }
 		SizeInt CanvasSize { get; set; }
-		SizeDbl CanvasControlOffset { get; set; }
+		SizeInt CanvasControlOffset { get; set; }
 
 		ObservableCollection<MapSection> MapSections { get; }
 		Action<MapSection> HandleMapSectionReady { get; }
-		Action<SizeDbl> HandleMapNav { get; }
+		Action<SizeInt> HandleMapNav { get; }
 	}
 }

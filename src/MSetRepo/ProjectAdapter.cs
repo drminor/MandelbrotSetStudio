@@ -193,11 +193,11 @@ namespace MSetRepo
 				subdivision: subdivision, 
 				label: jobRecord.Label,
 				transformType: Enum.Parse<TransformType>(jobRecord.TransformType.ToString()),
-				newArea: new SizeInt(jobRecord.NewAreaWidth, jobRecord.NewAreaHeight),
+				newArea: new RectangleInt(new PointInt(jobRecord.NewAreaX, jobRecord.NewAreaY), new SizeInt(jobRecord.NewAreaWidth, jobRecord.NewAreaHeight)),
 				mSetInfo: mSetInfo, 
 				canvasSizeInBlocks: new SizeInt(jobRecord.CanvasSizeInBlocksWidth, jobRecord.CanvasSizeInBlocksHeight), 
 				mapBlockOffset: new SizeInt(jobRecord.MapBlockOffsetWidth, jobRecord.MapBlockOffsetHeight), 
-				canvasControlOffset: new SizeDbl(jobRecord.CanvasControlOffsetWidth, jobRecord.CanvasControlOffsetHeight)
+				canvasControlOffset: new SizeInt(jobRecord.CanvasControlOffsetWidth, jobRecord.CanvasControlOffsetHeight)
 				);
 
 			return job;
