@@ -18,14 +18,12 @@ namespace MapSectionProviderLib
 		/// <param name="mapCalcSettings"></param>
 		/// <param name="mapPosition"></param>
 		/// <returns></returns>
-		public static MapSectionRequest CreateRequest(Subdivision subdivision, PointInt blockPosition, bool inverted, MapCalcSettings mapCalcSettings, out RPoint mapPosition)
+		public static MapSectionRequest CreateRequest(Subdivision subdivision, BigVector blockPosition, bool inverted, MapCalcSettings mapCalcSettings, out RPoint mapPosition)
 		{
 			mapPosition = GetMapPosition(subdivision, blockPosition);
 
-			var uBlockPos = new BigVector(blockPosition.X, blockPosition.Y);
-
 			var dtoMapper = new DtoMapper();
-			var blockPosForDataTransfer = dtoMapper.MapTo(uBlockPos);
+			var blockPosForDataTransfer = dtoMapper.MapTo(blockPosition);
 			var posForDataTransfer = dtoMapper.MapTo(mapPosition);
 			var spdForDataTransfer = dtoMapper.MapTo(subdivision.SamplePointDelta);
 
@@ -43,7 +41,7 @@ namespace MapSectionProviderLib
 			return mapSectionRequest;
 		}
 
-		public static RPoint GetMapPosition(Subdivision subdivision, PointInt blockPosition)
+		public static RPoint GetMapPosition(Subdivision subdivision, BigVector blockPosition)
 		{
 			var nrmSubdivionPosition = RNormalizer.Normalize(subdivision.Position, subdivision.SamplePointDelta, out var nrmSamplePointDelta);
 

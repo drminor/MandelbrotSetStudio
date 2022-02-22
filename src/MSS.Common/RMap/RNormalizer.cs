@@ -128,6 +128,19 @@ namespace MSS.Common
 			s2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
 		}
 
+		// Point and Size
+		public static RVector Normalize(RVector v, RSize s, out RSize newS)
+		{
+			var pTemp = v.Clone();
+			var sTemp = s.Clone();
+
+			var newExp = Normalize(pTemp, sTemp);
+			var result = v.Exponent == newExp ? v : new RVector(pTemp.Values, newExp);
+			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
+
+			return result;
+		}
+
 		public static int Normalize(IBigRatShape a, IBigRatShape b)
 		{
 			var reductionFactor = -1 * GetReductionFactor(a, b);

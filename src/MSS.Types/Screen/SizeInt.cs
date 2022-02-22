@@ -2,21 +2,37 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace MSS.Types
 {
 	[ProtoContract(SkipConstructor = true)]
 	public struct SizeInt : IEquatable<SizeInt>, IEqualityComparer<SizeInt>
 	{
+		// Square from single value
+		public SizeInt(int extent) : this(extent, extent)
+		{ }
+
+		public SizeInt(BigInteger width, BigInteger height) : this(ConvertToInt(width), ConvertToInt(height))
+		{ }
+
 		public SizeInt(int width, int height)
 		{
 			Width = width;
 			Height = height;
 		}
 
-		// Square from single value
-		public SizeInt(int extent) : this(extent, extent)
-		{ }
+		private static int ConvertToInt(BigInteger n)
+		{
+			if (n < int.MaxValue && n > int.MinValue)
+			{
+				return (int)n;
+			}
+			else
+			{
+				throw new ArgumentException($"The BigInteger:{n} cannot be converted into an integer.");
+			}
+		}
 
 		[ProtoMember(1)]
 		public int Width { get; set; }

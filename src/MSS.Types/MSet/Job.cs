@@ -16,7 +16,7 @@ namespace MSS.Types.MSet
 
 		public MSetInfo MSetInfo { get; init; }
 		public SizeInt CanvasSizeInBlocks { get; init; }
-		public SizeInt MapBlockOffset { get; init; }
+		public BigVector MapBlockOffset { get; init; }
 		public SizeInt CanvasControlOffset { get; init; }
 
 		public Job(
@@ -31,7 +31,7 @@ namespace MSS.Types.MSet
 
 			MSetInfo mSetInfo,
 			SizeInt canvasSizeInBlocks,
-			SizeInt mapBlockOffset,
+			BigVector mapBlockOffset,
 			SizeInt canvasControlOffset
 			)
 		{

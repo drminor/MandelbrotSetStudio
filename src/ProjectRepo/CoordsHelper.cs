@@ -34,23 +34,23 @@ namespace ProjectRepo
 			return result;
 		}
 
-		public RVectorRecord BuildRVectorRecord(RVectorDto rVectorDto)
-		{
-			var rVector = _dtoMapper.MapFrom(rVectorDto);
-			var display = BigIntegerHelper.GetDisplay(rVector);
-			var result = new RVectorRecord(display, rVectorDto);
+		//public RVectorRecord BuildRVectorRecord(RVectorDto rVectorDto)
+		//{
+		//	var rVector = _dtoMapper.MapFrom(rVectorDto);
+		//	var display = BigIntegerHelper.GetDisplay(rVector);
+		//	var result = new RVectorRecord(display, rVectorDto);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public RVectorRecord BuildRVectorRecord(RVector rVector)
-		{
-			var display = BigIntegerHelper.GetDisplay(rVector);
-			var rVectorDto = _dtoMapper.MapTo(rVector);
-			var result = new RVectorRecord(display, rVectorDto);
+		//public RVectorRecord BuildRVectorRecord(RVector rVector)
+		//{
+		//	var display = BigIntegerHelper.GetDisplay(rVector);
+		//	var rVectorDto = _dtoMapper.MapTo(rVector);
+		//	var result = new RVectorRecord(display, rVectorDto);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public BigVectorRecord BuildBigVectorRecord(BigVectorDto bigVectorDto)
 		{

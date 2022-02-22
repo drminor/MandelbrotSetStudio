@@ -196,7 +196,7 @@ namespace MSetRepo
 				newArea: new RectangleInt(new PointInt(jobRecord.NewAreaX, jobRecord.NewAreaY), new SizeInt(jobRecord.NewAreaWidth, jobRecord.NewAreaHeight)),
 				mSetInfo: mSetInfo, 
 				canvasSizeInBlocks: new SizeInt(jobRecord.CanvasSizeInBlocksWidth, jobRecord.CanvasSizeInBlocksHeight), 
-				mapBlockOffset: new SizeInt(jobRecord.MapBlockOffsetWidth, jobRecord.MapBlockOffsetHeight), 
+				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset), 
 				canvasControlOffset: new SizeInt(jobRecord.CanvasControlOffsetWidth, jobRecord.CanvasControlOffsetHeight)
 				);
 

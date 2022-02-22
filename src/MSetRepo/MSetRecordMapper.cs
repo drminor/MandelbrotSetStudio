@@ -12,7 +12,7 @@ using System;
 namespace MSetRepo
 {
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>, IMapper<BigVector, BigVectorRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
 		private readonly CoordsHelper _coordsHelper;
@@ -56,8 +56,7 @@ namespace MSetRepo
 				MapTo(source.MSetInfo),
 				source.CanvasSizeInBlocks.Width,
 				source.CanvasSizeInBlocks.Height,
-				source.MapBlockOffset.Width,
-				source.MapBlockOffset.Height,
+				MapTo(source.MapBlockOffset),
 				source.CanvasControlOffset.Width,
 				source.CanvasControlOffset.Height);
 
@@ -138,18 +137,17 @@ namespace MSetRepo
 			return result;
 		}
 
-		public RVectorRecord MapTo(RVector rVector)
-		{
-			var result = _coordsHelper.BuildRVectorRecord(rVector);
-			return result;
-		}
-
 		public BigVectorRecord MapTo(BigVector bigVector)
 		{
 			var result = _coordsHelper.BuildBigVectorRecord(bigVector);
 			return result;
 		}
 
+		public BigVector MapFrom(BigVectorRecord target)
+		{
+			var result = _dtoMapper.MapFrom(target.BigVectorDto);
 
+			return result;
+		}
 	}
 }

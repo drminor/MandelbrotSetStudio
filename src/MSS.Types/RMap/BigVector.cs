@@ -16,6 +16,9 @@ namespace MSS.Types
 		public BigVector(BigInteger extent) : this(extent, extent)
 		{ }
 
+		public BigVector(RVector rVector) : this(ConvertToBigVector(rVector).Values)
+		{ }
+
 		public BigVector(BigInteger width, BigInteger height) : base(width, height, 0)
 		{ }
 
@@ -32,43 +35,67 @@ namespace MSS.Types
 			return (BigVector) base.Clone();
 		}
 
-		public new BigVector Scale(SizeInt factor)
+		public BigVector Scale(SizeInt factor)
 		{
 			return new BigVector(X * factor.Width, Y * factor.Height);
 		}
 
-		public new BigVector Scale(PointInt factor)
+		//public BigVector Scale(PointInt factor)
+		//{
+		//	return new BigVector(X * factor.X, Y * factor.Y);
+		//}
+
+		//public BigVector Scale(SizeDbl factor)
+		//{
+		//	var w = BigIntegerHelper.ConvertToDouble(X);
+		//	var h = BigIntegerHelper.ConvertToDouble(Y);
+
+		//	var result = new BigVector
+		//		(
+		//			new BigInteger(w * factor.Width),
+		//			new BigInteger(h * factor.Height)
+		//		);
+
+		//	return result;
+		//}
+
+		//public new BigVector Translate(RPoint amount)
+		//{
+		//	return new BigVector(X + amount.XNumerator, Y + amount.YNumerator);
+		//}
+
+		public BigVector Translate(BigVector amount)
 		{
-			return new BigVector(X * factor.X, Y * factor.Y);
+			return new BigVector(X + amount.XNumerator, Y + amount.YNumerator);
 		}
 
-		public new BigVector Scale(SizeDbl factor)
+		public BigVector Diff(BigVector vector)
 		{
-			var w = BigIntegerHelper.ConvertToDouble(X);
-			var h = BigIntegerHelper.ConvertToDouble(Y);
+			return new BigVector(X - vector.X, Y - vector.Y);
+		}
 
-			var result = new BigVector
-				(
-					new BigInteger(w * factor.Width),
-					new BigInteger(h * factor.Height)
-				);
+		public BigVector DivRem(SizeInt dividend, out SizeInt remainder)
+		{
+			var blocksH = BigInteger.DivRem(X, dividend.Width, out var remainderH);
+			var blocksV = BigInteger.DivRem(Y, dividend.Height, out var remainderV);
+
+			remainder = new SizeInt(remainderH, remainderV);
+			var result = new BigVector(blocksH, blocksV);
 
 			return result;
 		}
 
-		public new BigVector Translate(RPoint amount)
+		public static BigVector ConvertToBigVector(RVector rVector)
 		{
-			return new BigVector(X + amount.XNumerator, Y + amount.YNumerator);
-		}
+			var vector = Reducer.Reduce(rVector);
 
-		public new BigVector Translate(RVector amount)
-		{
-			return new BigVector(X + amount.XNumerator, Y + amount.YNumerator);
-		}
+			if (vector.Exponent > 1)
+			{
+				throw new InvalidOperationException($"Cannot convert the rVector: {rVector} to a BigVector. Its exponent is {rVector.Exponent}.");
+			}
 
-		public new BigVector Diff(SizeInt size)
-		{
-			return new BigVector(X - size.Width, Y - size.Height);
+			var factor = BigInteger.Pow(2, -1 * rVector.Exponent);
+			return new BigVector(rVector.XNumerator * factor, rVector.YNumerator * factor);
 		}
 
 		public override string? ToString()

@@ -136,16 +136,17 @@ namespace MSetExplorer
 			}
 		}
 
-		// TODO: ToSubdivisionCoords should take a vector and return a vector
-		private PointInt ToSubdivisionCoords(PointInt blockPosition, Job job, out bool inverted)
+		private BigVector ToSubdivisionCoords(PointInt blockPosition, Job job, out bool inverted)
 		{
-			var repoPos = blockPosition.Translate(job.MapBlockOffset);
+			var bigBlockPosition = new BigVector(blockPosition.X, blockPosition.Y);
 
-			PointInt result;
+			var repoPos = bigBlockPosition.Translate(job.MapBlockOffset);
+
+			BigVector result;
 			if (repoPos.Y < 0)
 			{
 				inverted = true;
-				result = new PointInt(repoPos.X, (repoPos.Y * -1) - 1);
+				result = new BigVector(repoPos.X, (repoPos.Y * -1) - 1);
 			}
 			else
 			{
@@ -157,13 +158,13 @@ namespace MSetExplorer
 		}
 
 		// TODO: ToScreenCoords should take a vector and return a vector
-		private PointInt ToScreenCoords(RVector blockPosition, bool inverted, Job job)
+		private PointInt ToScreenCoords(BigVector blockPosition, bool inverted, Job job)
 		{
-			RVector posT;
+			BigVector posT;
 
 			if (inverted)
 			{
-				posT = new RVector(blockPosition.XNumerator, (blockPosition.YNumerator + 1) * -1, blockPosition.Exponent);
+				posT = new BigVector(blockPosition.XNumerator, (blockPosition.YNumerator + 1) * -1);
 			}
 			else
 			{
@@ -175,11 +176,6 @@ namespace MSetExplorer
 			var result = new PointDbl(BigIntegerHelper.ConvertToDouble(reducedOffset.X), BigIntegerHelper.ConvertToDouble(reducedOffset.Y));
 
 			return result.Round();
-		}
-
-		private bool JobCrossesZeroY(RRectangle mapCoords)
-		{
-			return mapCoords.Y1.Sign != mapCoords.Y2.Sign;
 		}
 
 		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)

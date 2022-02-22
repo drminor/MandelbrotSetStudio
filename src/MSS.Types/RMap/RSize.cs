@@ -48,36 +48,42 @@ namespace MSS.Types
 			return new RSize(WidthNumerator * factor.Width, HeightNumerator * factor.Height, Exponent);
 		}
 
-		public RSize Scale(PointInt factor)
+		//public RSize Scale(PointInt factor)
+		//{
+		//	return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
+		//}
+
+		public RVector Scale(BigVector factor)
 		{
-			return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
+			return new RVector(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
 		}
 
-		public RSize Scale(SizeDbl factor)
-		{
-			var w = BigIntegerHelper.ConvertToDouble(Width);
-			var h = BigIntegerHelper.ConvertToDouble(Height);
+		//// TODO rewite RSize.Scale(SizeDbl)
+		//public RSize Scale(SizeDbl factor)
+		//{
+		//	var w = BigIntegerHelper.ConvertToDouble(Width);
+		//	var h = BigIntegerHelper.ConvertToDouble(Height);
 
-			var result = new RSize
-				(
-					new BigInteger(w * factor.Width),
-					new BigInteger(h * factor.Height),
-					Exponent
-				);
+		//	var result = new RSize
+		//		(
+		//			new BigInteger(w * factor.Width),
+		//			new BigInteger(h * factor.Height),
+		//			Exponent
+		//		);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public RSize Translate(RPoint amount)
-		{
-			return Exponent != 0 && amount.Exponent != Exponent
-                ? throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.")
-				: new RSize(WidthNumerator + amount.XNumerator, HeightNumerator + amount.YNumerator, amount.Exponent);
-		}
+		//public RSize Translate(RPoint amount)
+		//{
+		//	return amount.Exponent != Exponent
+		//		? throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.")
+		//		: new RSize(WidthNumerator + amount.XNumerator, HeightNumerator + amount.YNumerator, amount.Exponent);
+		//}
 
 		public RSize Translate(RSize amount)
 		{
-			return Exponent != 0 && amount.Exponent != Exponent
+			return amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate an RSize with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
 				: new RSize(WidthNumerator + amount.WidthNumerator, HeightNumerator + amount.HeightNumerator, amount.Exponent);
 		}

@@ -69,11 +69,10 @@ namespace MSS.Types
 			init => Values[3] = value;
 		}
 
-
-		public RPoint LeftBot => new RPoint(X1, Y1, Exponent);
+		public RPoint LeftBot => new(X1, Y1, Exponent);
 		public RPoint Position => LeftBot; 
 
-		public RPoint RightTop => new RPoint(X2, Y2, Exponent);
+		public RPoint RightTop => new(X2, Y2, Exponent);
 
 		public BigInteger[] XValues => new BigInteger[] { X1, X2 };
 		public BigInteger[] YValues => new BigInteger[] { Y1, Y2 };
@@ -81,9 +80,9 @@ namespace MSS.Types
 		public BigInteger WidthNumerator => X2 - X1;
 		public BigInteger HeightNumerator => Y2 - Y1;
 
-		public RValue Width => new RValue(X2 - X1, Exponent);
-		public RValue Height => new RValue(Y2 - Y1, Exponent);
-		public RSize Size => new RSize(WidthNumerator, HeightNumerator, Exponent);
+		public RValue Width => new(X2 - X1, Exponent);
+		public RValue Height => new(Y2 - Y1, Exponent);
+		public RSize Size => new(WidthNumerator, HeightNumerator, Exponent);
 
 		object ICloneable.Clone()
 		{
@@ -110,24 +109,22 @@ namespace MSS.Types
 
 		public RRectangle Scale(RSize factor)
 		{
-			return Exponent != 0 && factor.Exponent != Exponent
-				? throw new InvalidOperationException($"Cannot scale a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {factor.Exponent}.")
-				: new RRectangle(X1 * factor.WidthNumerator, X2 * factor.WidthNumerator, Y1 * factor.HeightNumerator, Y2 * factor.HeightNumerator, factor.Exponent);
+			return new RRectangle(X1 * factor.WidthNumerator, X2 * factor.WidthNumerator, Y1 * factor.HeightNumerator, Y2 * factor.HeightNumerator, Exponent + factor.Exponent);
 		}
 
 		public RRectangle Translate(RPoint amount)
 		{
-			return Exponent != 0 && amount.Exponent != Exponent
+			return amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RPoint with Exponent: {amount.Exponent}.")
 				: new RRectangle(X1 + amount.XNumerator, X2 + amount.XNumerator, Y1 + amount.YNumerator, Y2 + amount.YNumerator, amount.Exponent);
 		}
 
-		public RRectangle Translate(RSize amount)
-		{
-			return Exponent != 0 && amount.Exponent != Exponent
-				? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
-				: new RRectangle(X1 + amount.WidthNumerator , X2 + amount.WidthNumerator, Y1 + amount.HeightNumerator, Y2 + amount.HeightNumerator, amount.Exponent);
-		}
+		//public RRectangle Translate(RSize amount)
+		//{
+		//	return amount.Exponent != Exponent
+		//		? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
+		//		: new RRectangle(X1 + amount.WidthNumerator , X2 + amount.WidthNumerator, Y1 + amount.HeightNumerator, Y2 + amount.HeightNumerator, amount.Exponent);
+		//}
 
 		[Conditional("Debug")]
 		private void Validate()
