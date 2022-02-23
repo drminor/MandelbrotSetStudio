@@ -86,7 +86,7 @@ namespace MSetRepo
 		public Subdivision MapFrom(SubdivisionRecord target)
 		{
 			var position = _dtoMapper.MapFrom(target.Position.PointDto);
-			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.SizeDto);
+			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.Size);
 			var result = new Subdivision(target.Id, position, samplePointDelta, new SizeInt(target.BlockWidth, target.BlockHeight));
 
 			return result;
@@ -130,7 +130,7 @@ namespace MSetRepo
 			{
 				MapSectionId = target.Id.ToString(),
 				SubdivisionId = target.SubdivisionId.ToString(),
-				BlockPosition = target.BlockPosition.BigVectorDto,
+				BlockPosition = target.BlockPosition.BigVector,
 				Counts = target.Counts
 			};
 
@@ -145,7 +145,7 @@ namespace MSetRepo
 
 		public BigVector MapFrom(BigVectorRecord target)
 		{
-			var result = _dtoMapper.MapFrom(target.BigVectorDto);
+			var result = _dtoMapper.MapFrom(target.BigVector);
 
 			return result;
 		}

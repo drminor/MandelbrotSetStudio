@@ -24,9 +24,9 @@ namespace ProjectRepo
 
 		public IList<SubdivisionRecord> Get(RPointDto _, RSizeDto samplePointDelta, SizeInt blockSize)
 		{
-			var filter1 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Exponent", samplePointDelta.Exponent);
-			var filter2 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Width", samplePointDelta.Width);
-			var filter3 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Height", samplePointDelta.Height);
+			var filter1 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.Size.Width", samplePointDelta.Width);
+			var filter2 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.Size.Height", samplePointDelta.Height);
+			var filter3 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.Size.Exponent", samplePointDelta.Exponent);
 
 			var filter4 = Builders<SubdivisionRecord>.Filter.Eq("BlockWidth", blockSize.Width);
 			var filter5 = Builders<SubdivisionRecord>.Filter.Eq("BlockHeight", blockSize.Height);

@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using MSS.Types;
+using MSS.Types.DataTransferObjects;
 using ProjectRepo.Entities;
 using System.Threading.Tasks;
 
@@ -32,8 +33,12 @@ namespace ProjectRepo
 		public async Task<MapSectionRecord> GetAsync (ObjectId subdivisionId, BigVectorRecord blockPosition)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPositionX", blockPosition.BigVectorDto.X);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPositionY", blockPosition.BigVectorDto.Y);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosition.BigVector.X", blockPosition.BigVector.X);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosition.BigVector.Y", blockPosition.BigVector.Y);
+
+//			var filter1 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Width", samplePointDelta.Width);
+//			var filter2 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Height", samplePointDelta.Height);
+//			var filter3 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.SizeDto.Exponent", samplePointDelta.Exponent);
 
 			var mapSectionRecord = await Collection.FindAsync(filter1 & filter2 & filter3);
 
