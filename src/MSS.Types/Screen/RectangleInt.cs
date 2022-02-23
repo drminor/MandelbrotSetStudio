@@ -29,29 +29,29 @@ namespace MSS.Types
 		public PointInt Position => new PointInt(X1, Y1);
 		public SizeInt Size => new SizeInt(Width, Height);
 
-		public RectangleInt Scale(PointInt factor)
-		{
-			RectangleInt result = new(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y);
-			return result;
-		}
+		//public RectangleInt Scale(PointInt factor)
+		//{
+		//	RectangleInt result = new(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y);
+		//	return result;
+		//}
 
-		public RectangleInt Scale(SizeInt factor)
-		{
-			RectangleInt result = new(X1 * factor.Width, X2 * factor.Width, Y1 * factor.Height, Y2 * factor.Height);
-			return result;
-		}
+		//public RectangleInt Scale(SizeInt factor)
+		//{
+		//	RectangleInt result = new(X1 * factor.Width, X2 * factor.Width, Y1 * factor.Height, Y2 * factor.Height);
+		//	return result;
+		//}
 
-		public RectangleInt Translate(PointInt amount)
-		{
-			RectangleInt result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
-			return result;
-		}
+		//public RectangleInt Translate(PointInt amount)
+		//{
+		//	RectangleInt result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
+		//	return result;
+		//}
 
-		public RectangleInt Translate(SizeInt amount)
-		{
-			RectangleInt result = new(X1 + amount.Width, X2 + amount.Width, Y1 + amount.Height, Y2 + amount.Height);
-			return result;
-		}
+		//public RectangleInt Translate(SizeInt amount)
+		//{
+		//	RectangleInt result = new(X1 + amount.Width, X2 + amount.Width, Y1 + amount.Height, Y2 + amount.Height);
+		//	return result;
+		//}
 
 		public override bool Equals(object? obj)
 		{

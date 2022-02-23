@@ -2,7 +2,6 @@
 using MEngineDataContracts;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
-using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -35,6 +34,8 @@ namespace MapSectionProviderLib
 		private int _nextJobId;
 		private bool disposedValue;
 
+		#region Constructor
+
 		public MapSectionRequestProcessor(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
 			_nextJobId = 0;
@@ -62,6 +63,10 @@ namespace MapSectionProviderLib
 				_workQueueProcessor4 = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
 			}
 		}
+
+		#endregion
+
+		#region Public Methods
 
 		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSectionResponse> workAction)
 		{
@@ -110,11 +115,6 @@ namespace MapSectionProviderLib
 			_mapSectionPersistProcessor?.Stop(immediately);
 		}
 
-		public long? ClearMapSections(Subdivision subdivision)
-		{
-			return _mapSectionRepo.ClearMapSections(subdivision.Id.ToString());
-		}
-
 		public int GetNextRequestId()
 		{
 			lock(_lock)
@@ -124,6 +124,10 @@ namespace MapSectionProviderLib
 
 			return _nextJobId;
 		}
+
+		#endregion
+
+		#region Private Methods
 
 		private async Task ProcessTheQueueAsync(MapSectionPersistProcessor mapSectionPersistProcessor, CancellationToken ct)
 		{
@@ -136,13 +140,7 @@ namespace MapSectionProviderLib
 
 					if (IsJobCancelled(workItem.JobId))
 					{
-						mapSectionResponse = new MapSectionResponse
-						{
-							MapSectionId = workItem.Request.MapSectionId,
-							SubdivisionId = workItem.Request.SubdivisionId,
-							BlockPosition = workItem.Request.BlockPosition,
-							Counts = null
-						};
+						mapSectionResponse = BuildEmptyResponse(workItem.Request);
 					}
 					else
 					{
@@ -180,15 +178,18 @@ namespace MapSectionProviderLib
 			{
 				try
 				{
+					MapSectionResponse mapSectionResponse;
 					var workItem = _workQueue.Take(ct);
 
 					if (IsJobCancelled(workItem.JobId))
 					{
-						continue;
+						mapSectionResponse = BuildEmptyResponse(workItem.Request);
 					}
-
-					//Debug.WriteLine($"Generating MapSection for block: {workItem.Request.BlockPosition}.");
-					var mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(workItem.Request);
+					else
+					{
+						//Debug.WriteLine($"Generating MapSection for block: {workItem.Request.BlockPosition}.");
+						mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(workItem.Request);
+					}
 
 					workItem.WorkAction(workItem.Request, mapSectionResponse);
 				}
@@ -214,6 +215,23 @@ namespace MapSectionProviderLib
 
 			return result;
 		}
+
+		private MapSectionResponse BuildEmptyResponse(MapSectionRequest mapSectionRequest)
+		{
+			var result = new MapSectionResponse
+			{
+				MapSectionId = mapSectionRequest.MapSectionId,
+				SubdivisionId = mapSectionRequest.SubdivisionId,
+				BlockPosition = mapSectionRequest.BlockPosition,
+				Counts = null
+			};
+
+			return result;
+		}
+
+		#endregion
+
+		#region IDispoable Support
 
 		protected virtual void Dispose(bool disposing)
 		{
@@ -265,5 +283,7 @@ namespace MapSectionProviderLib
 			Dispose(disposing: true);
 			GC.SuppressFinalize(this);
 		}
+
+		#endregion
 	}
 }

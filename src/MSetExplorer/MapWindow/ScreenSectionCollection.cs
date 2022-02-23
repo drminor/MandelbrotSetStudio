@@ -85,7 +85,7 @@ namespace MSetExplorer
 					(double)_image.GetValue(Canvas.BottomProperty)
 					);
 
-				return new VectorInt(pointDbl.Round()).Scale(-1);
+				return new VectorInt(pointDbl.Round()).Invert();
 			}
 
 			set
@@ -94,7 +94,7 @@ namespace MSetExplorer
 				if (value != curVal)
 				{
 					Debug.WriteLine($"CanvasOffset is being set to {value}.");
-					var offset = value.Scale(-1);
+					var offset = value.Invert();
 					_image.SetValue(Canvas.LeftProperty, (double)offset.X);
 					_image.SetValue(Canvas.BottomProperty, (double)offset.Y);
 				}

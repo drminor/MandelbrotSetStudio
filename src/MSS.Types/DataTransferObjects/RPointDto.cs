@@ -19,7 +19,7 @@ namespace MSS.Types.DataTransferObjects
 		public RPointDto() : this(new BigInteger[] { 0, 0 }, 0)
 		{ }
 
-		public RPointDto(BigInteger[] bigIntegers, int exponent) : this(bigIntegers.Select(v => BigIntegerHelper.ToLongs(v)).ToArray(), exponent)
+		public RPointDto(BigInteger[] values, int exponent) : this(values.Select(v => BigIntegerHelper.ToLongs(v)).ToArray(), exponent)
 		{ }
 
 		public RPointDto(long[][] values, int exponent)

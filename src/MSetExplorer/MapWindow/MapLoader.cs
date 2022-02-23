@@ -15,6 +15,7 @@ namespace MSetExplorer
 	internal class MapLoader
 	{
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
+		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly DtoMapper _dtoMapper;
 		private readonly Job _job;
 		private readonly int _jobNumber;
@@ -36,7 +37,10 @@ namespace MSetExplorer
 			_jobNumber = jobNumber;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
+
 			_dtoMapper = new DtoMapper();
+			_mapSectionHelper = new MapSectionHelper(_dtoMapper);
+
 			_colorMap = new ColorMap(job.MSetInfo.ColorMapEntries);
 
 			_isStopping = false;
@@ -83,11 +87,9 @@ namespace MSetExplorer
 		private void SubmitSectionRequests()
 		{
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset);
-
 			Debug.WriteLine($"Submitting section requests. The map extent is {mapExtentInBlocks}.");
 
 			var mapBlockOffset = _job.MapBlockOffset;
-
 			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
 			{
 				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
@@ -103,8 +105,8 @@ namespace MSetExplorer
 
 					// Translate to subdivision coordinates.
 					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var blockPosition = ToSubdivisionCoords(screenPosition, _job, out var inverted);
-					var mapSectionRequest = MapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, inverted, _job.MSetInfo.MapCalcSettings, out var mapPosition);
+					var blockPosition = ToSubdivisionCoords(screenPosition, _job, out var isInverted);
+					var mapSectionRequest = _mapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, isInverted, _job.MSetInfo.MapCalcSettings, out var mapPosition);
 
 					//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
 					_mapSectionRequestProcessor.AddWork(_jobNumber, mapSectionRequest, HandleResponse);
@@ -116,13 +118,13 @@ namespace MSetExplorer
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
 			var blockPositionDto = mapSectionRequest.BlockPosition;
-			var blockPosition = _dtoMapper.MapFrom(blockPositionDto);
-			var screenPosition = ToScreenCoords(blockPosition, mapSectionRequest.Inverted, _job);
+			var repoBlockPosition = _dtoMapper.MapFrom(blockPositionDto);
+			var screenPosition = ToScreenCoords(repoBlockPosition, mapSectionRequest.IsInverted, _job);
 			//Debug.WriteLine($"MapLoader handling response: {blockPosition} for ScreenBlkPos: {screenPosition}.");
 
 			var blockSize = _job.Subdivision.BlockSize;
-			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, _colorMap, !mapSectionRequest.Inverted);
-			var mapSection = new MapSection(screenPosition, blockSize, pixels1d);
+			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, _colorMap, !mapSectionRequest.IsInverted);
+			var mapSection = new MapSection(screenPosition, blockSize, pixels1d, mapSectionRequest.SubdivisionId, repoBlockPosition);
 
 			_callback(_jobNumber, mapSection);
 
@@ -136,7 +138,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private BigVector ToSubdivisionCoords(PointInt blockPosition, Job job, out bool inverted)
+		private BigVector ToSubdivisionCoords(PointInt blockPosition, Job job, out bool isInverted)
 		{
 			var bigBlockPosition = new BigVector(blockPosition.X, blockPosition.Y);
 
@@ -145,12 +147,12 @@ namespace MSetExplorer
 			BigVector result;
 			if (repoPos.Y < 0)
 			{
-				inverted = true;
+				isInverted = true;
 				result = new BigVector(repoPos.X, (repoPos.Y * -1) - 1);
 			}
 			else
 			{
-				inverted = false;
+				isInverted = false;
 				result = repoPos;
 			}
 
@@ -173,9 +175,16 @@ namespace MSetExplorer
 
 			var screenOffsetRat = posT.Diff(job.MapBlockOffset);
 			var reducedOffset = Reducer.Reduce(screenOffsetRat);
-			var result = new PointDbl(BigIntegerHelper.ConvertToDouble(reducedOffset.X), BigIntegerHelper.ConvertToDouble(reducedOffset.Y));
 
-			return result.Round();
+			if (BigIntegerHelper.TryConvertToInt(reducedOffset, out var values))
+			{
+				var result = new PointInt(values);
+				return result;
+			}
+			else
+			{
+				throw new InvalidOperationException($"Cannot convert the ScreenCoords to integers.");
+			}
 		}
 
 		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)

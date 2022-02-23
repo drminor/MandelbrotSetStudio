@@ -81,11 +81,13 @@ namespace MSetExplorer
 
 		public void UpdateMapViewPan(ScreenPannedEventArgs e)
 		{
-			SizeInt offset = e.Offset;
+			var offset = e.Offset;
 
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
 			var invOffset = offset.Scale(-1);
 			var newArea = new RectangleInt(new PointInt(invOffset.Width, invOffset.Height), MapDisplayViewModel.CanvasSize);
+
+			//var existingMapSections = MapDisplayViewModel.MapSections;
 
 			UpdateMapView(TransformType.Pan, newArea);
 		}

@@ -38,29 +38,29 @@ namespace MSS.Types
 		public PointDbl Position => new PointDbl(X1, Y1);
 		public SizeDbl Size => new SizeDbl(Width, Height);
 
-		public RectangleDbl Scale(PointDbl factor)
-		{
-			RectangleDbl result = new(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y);
-			return result;
-		}
+		//public RectangleDbl Scale(PointDbl factor)
+		//{
+		//	RectangleDbl result = new(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y);
+		//	return result;
+		//}
 
-		public RectangleDbl Scale(SizeDbl factor)
-		{
-			RectangleDbl result = new(X1 * factor.Width, X2 * factor.Width, Y1 * factor.Height, Y2 * factor.Height);
-			return result;
-		}
+		//public RectangleDbl Scale(SizeDbl factor)
+		//{
+		//	RectangleDbl result = new(X1 * factor.Width, X2 * factor.Width, Y1 * factor.Height, Y2 * factor.Height);
+		//	return result;
+		//}
 
-		public RectangleDbl Translate(PointDbl amount)
-		{
-			RectangleDbl result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
-			return result;
-		}
+		//public RectangleDbl Translate(PointDbl amount)
+		//{
+		//	RectangleDbl result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
+		//	return result;
+		//}
 
-		public RectangleDbl Translate(SizeDbl amount)
-		{
-			RectangleDbl result = new(X1 + amount.Width, X2 + amount.Width, Y1 + amount.Height, Y2 + amount.Height);
-			return result;
-		}
+		//public RectangleDbl Translate(SizeDbl amount)
+		//{
+		//	RectangleDbl result = new(X1 + amount.Width, X2 + amount.Width, Y1 + amount.Height, Y2 + amount.Height);
+		//	return result;
+		//}
 
 		public RectangleInt Round()
 		{

@@ -42,10 +42,10 @@ namespace MSS.Types
 			}
 		}
 
-		public SizeInt Translate(SizeInt amount)
-		{
-			return new SizeInt(Width + amount.Width, Height + amount.Height);
-		}
+		//public SizeInt Translate(SizeInt amount)
+		//{
+		//	return new SizeInt(Width + amount.Width, Height + amount.Height);
+		//}
 
 		public SizeInt Diff(SizeInt amount)
 		{
@@ -57,10 +57,10 @@ namespace MSS.Types
 			return new SizeInt(Width * factor.Width, Height * factor.Height);
 		}
 
-		public SizeInt Scale(double factor)
-		{
-			return new SizeInt((int)Math.Round(Width * factor), (int)Math.Round(Height * factor));
-		}
+		//public SizeInt Scale(double factor)
+		//{
+		//	return new SizeInt((int)Math.Round(Width * factor), (int)Math.Round(Height * factor));
+		//}
 
 		public SizeInt Scale(int factor)
 		{
@@ -77,21 +77,21 @@ namespace MSS.Types
 			return result;
 		}
 
-		public SizeInt DivRem(SizeInt dividend, out SizeInt remainder)
-		{
-			var blocksH = Math.DivRem(Width, dividend.Width, out var remainderH);
-			var blocksV = Math.DivRem(Height, dividend.Height, out var remainderV);
+		//public SizeInt DivRem(SizeInt dividend, out SizeInt remainder)
+		//{
+		//	var blocksH = Math.DivRem(Width, dividend.Width, out var remainderH);
+		//	var blocksV = Math.DivRem(Height, dividend.Height, out var remainderV);
 
-			remainder = new SizeInt(remainderH, remainderV);
-			var result = new SizeInt(blocksH, blocksV);
+		//	remainder = new SizeInt(remainderH, remainderV);
+		//	var result = new SizeInt(blocksH, blocksV);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public SizeInt Mod(SizeInt dividend)
-		{
-			return new SizeInt(Width % dividend.Width, Height % dividend.Height);
-		}
+		//public SizeInt Mod(SizeInt dividend)
+		//{
+		//	return new SizeInt(Width % dividend.Width, Height % dividend.Height);
+		//}
 
 		public SizeInt Abs()
 		{
@@ -103,6 +103,13 @@ namespace MSS.Types
 			var result = new SizeInt(Math.Min(Width, Height));
 			return result;
 		}
+
+		public override string? ToString()
+		{
+			return $"w:{Width}, h:{Height}";
+		}
+
+		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)
 		{
@@ -130,11 +137,6 @@ namespace MSS.Types
 			return HashCode.Combine(obj.Width, obj.Height);
 		}
 
-		public override string? ToString()
-		{
-			return $"w:{Width}, h:{Height}";
-		}
-
 		public static bool operator ==(SizeInt left, SizeInt right)
 		{
 			return left.Equals(right);
@@ -145,6 +147,6 @@ namespace MSS.Types
 			return !(left == right);
 		}
 
-
+		#endregion
 	}
 }

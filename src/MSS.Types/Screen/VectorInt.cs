@@ -39,9 +39,9 @@ namespace MSS.Types
 			}
 		}
 
-		public VectorInt Scale(int factor)
+		public VectorInt Invert()
 		{
-			return new VectorInt(X * factor, Y * factor);
+			return new VectorInt(X * -1, Y * -1);
 		}
 
 		public override string? ToString()

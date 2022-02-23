@@ -21,20 +21,20 @@ namespace MSS.Types
 		public double Width { get; set; }
 		public double Height { get; set; }
 
-		public SizeDbl Scale(PointDbl factor)
-		{
-			return new SizeDbl(Width * factor.X, Height * factor.Y);
-		}
+		//public SizeDbl Scale(PointDbl factor)
+		//{
+		//	return new SizeDbl(Width * factor.X, Height * factor.Y);
+		//}
 
-		public SizeDbl Scale(SizeInt factor)
-		{
-			return new SizeDbl(Width * factor.Width, Height * factor.Height);
-		}
+		//public SizeDbl Scale(SizeInt factor)
+		//{
+		//	return new SizeDbl(Width * factor.Width, Height * factor.Height);
+		//}
 
-		public SizeDbl Scale(double factor)
-		{
-			return new SizeDbl(Width * factor, Height * factor);
-		}
+		//public SizeDbl Scale(double factor)
+		//{
+		//	return new SizeDbl(Width * factor, Height * factor);
+		//}
 
 		//public SizeDbl Translate(PointDbl offset)
 		//{
@@ -46,10 +46,10 @@ namespace MSS.Types
 		//	return new SizeDbl(Width * factor.Width, Height * factor.Height);
 		//}
 
-		public SizeDbl Translate(SizeInt offset)
-		{
-			return new SizeDbl(Width + offset.Width, Height + offset.Height);
-		}
+		//public SizeDbl Translate(SizeInt offset)
+		//{
+		//	return new SizeDbl(Width + offset.Width, Height + offset.Height);
+		//}
 
 		public SizeDbl Divide(SizeInt dividend)
 		{
@@ -61,10 +61,10 @@ namespace MSS.Types
 			return result;
 		}
 
-		public SizeDbl Mod(SizeInt dividend)
-		{
-			return new SizeDbl(Width % dividend.Width, Height % dividend.Height);
-		}
+		//public SizeDbl Mod(SizeInt dividend)
+		//{
+		//	return new SizeDbl(Width % dividend.Width, Height % dividend.Height);
+		//}
 
 		public SizeInt Round()
 		{
@@ -92,35 +92,35 @@ namespace MSS.Types
 			return result;
 		}
 
-		public SizeDbl Diff(SizeInt offset)
-		{
-			return new SizeDbl(Width - offset.Width, Height - offset.Height);
-		}
+		//public SizeDbl Diff(SizeInt offset)
+		//{
+		//	return new SizeDbl(Width - offset.Width, Height - offset.Height);
+		//}
 
-		public SizeDbl Diff(SizeDbl offset)
-		{
-			return new SizeDbl(Width - offset.Width, Height - offset.Height);
-		}
+		//public SizeDbl Diff(SizeDbl offset)
+		//{
+		//	return new SizeDbl(Width - offset.Width, Height - offset.Height);
+		//}
 
-		public SizeDbl Abs()
-		{
-			return new SizeDbl(Math.Abs(Width), Math.Abs(Height));
-		}
+		//public SizeDbl Abs()
+		//{
+		//	return new SizeDbl(Math.Abs(Width), Math.Abs(Height));
+		//}
 
-		public SizeInt Ceiling()
-		{
-			return new SizeInt((int)Math.Ceiling(Width), (int)Math.Ceiling(Height));
-		}
+		//public SizeInt Ceiling()
+		//{
+		//	return new SizeInt((int)Math.Ceiling(Width), (int)Math.Ceiling(Height));
+		//}
 
-		public SizeInt Floor()
-		{
-			return new SizeInt((int)Math.Floor(Width), (int)Math.Floor(Height));
-		}
+		//public SizeInt Floor()
+		//{
+		//	return new SizeInt((int)Math.Floor(Width), (int)Math.Floor(Height));
+		//}
 
-		public SizeInt GetSign()
-		{
-			return new SizeInt(Math.Sign(Width), Math.Sign(Height));
-		}
+		//public SizeInt GetSign()
+		//{
+		//	return new SizeInt(Math.Sign(Width), Math.Sign(Height));
+		//}
 
 		#region IEquatable and IEqualityComparer Support
 

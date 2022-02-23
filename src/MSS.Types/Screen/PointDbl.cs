@@ -21,35 +21,35 @@ namespace MSS.Types
 		public double X { get; set; }
 		public double Y { get; set; }
 
-		public PointDbl Scale(PointDbl factor)
-		{
-			return new PointDbl(X * factor.X, Y * factor.Y);
-		}
+		//public PointDbl Scale(PointDbl factor)
+		//{
+		//	return new PointDbl(X * factor.X, Y * factor.Y);
+		//}
 
-		public PointDbl Translate(PointDbl offset)
-		{
-			return new PointDbl(X + offset.X, Y + offset.Y);
-		}
+		//public PointDbl Translate(PointDbl offset)
+		//{
+		//	return new PointDbl(X + offset.X, Y + offset.Y);
+		//}
 
-		public PointDbl Translate(SizeDbl offset)
-		{
-			return new PointDbl(X + offset.Width, Y + offset.Height);
-		}
+		//public PointDbl Translate(SizeDbl offset)
+		//{
+		//	return new PointDbl(X + offset.Width, Y + offset.Height);
+		//}
 
-		public PointDbl Scale(SizeInt factor)
-		{
-			return new PointDbl(X * factor.Width, Y * factor.Height);
-		}
+		//public PointDbl Scale(SizeInt factor)
+		//{
+		//	return new PointDbl(X * factor.Width, Y * factor.Height);
+		//}
 
-		public PointDbl Scale(double factor)
-		{
-			return new PointDbl(X * factor, Y * factor);
-		}
+		//public PointDbl Scale(double factor)
+		//{
+		//	return new PointDbl(X * factor, Y * factor);
+		//}
 
-		public PointDbl Translate(SizeInt offset)
-		{
-			return new PointDbl(X + offset.Width, Y + offset.Height);
-		}
+		//public PointDbl Translate(SizeInt offset)
+		//{
+		//	return new PointDbl(X + offset.Width, Y + offset.Height);
+		//}
 
 		public SizeDbl Diff(PointDbl amount)
 		{

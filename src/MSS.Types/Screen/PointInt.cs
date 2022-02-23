@@ -8,6 +8,9 @@ namespace MSS.Types
 	[ProtoContract(SkipConstructor = true)]
 	public struct PointInt : IEquatable<PointInt>, IEqualityComparer<PointInt>
 	{
+		public PointInt(int[] values) : this(values[0], values[1])
+		{ }
+
 		public PointInt(int x, int y)
 		{
 			X = x;
@@ -25,25 +28,25 @@ namespace MSS.Types
 			return new PointInt(X * factor.Width, Y * factor.Height);
 		}
 
-		public PointInt Translate(SizeInt amount)
-		{
-			return new PointInt(X + amount.Width, Y + amount.Height);
-		}
+		//public PointInt Translate(SizeInt amount)
+		//{
+		//	return new PointInt(X + amount.Width, Y + amount.Height);
+		//}
 
-		public PointInt Translate(SizeDbl amount)
-		{
-			return new PointInt((int)Math.Round(X + amount.Width), (int)Math.Round(Y + amount.Height));
-		}
+		//public PointInt Translate(SizeDbl amount)
+		//{
+		//	return new PointInt((int)Math.Round(X + amount.Width), (int)Math.Round(Y + amount.Height));
+		//}
 
-		public PointInt Diff(SizeInt amount)
-		{
-			return new PointInt(X - amount.Width, Y - amount.Height);
-		}
+		//public PointInt Diff(SizeInt amount)
+		//{
+		//	return new PointInt(X - amount.Width, Y - amount.Height);
+		//}
 
-		public PointInt Abs()
-		{
-			return new PointInt(Math.Abs(X), Math.Abs(Y));
-		}
+		//public PointInt Abs()
+		//{
+		//	return new PointInt(Math.Abs(X), Math.Abs(Y));
+		//}
 
 		#region IEquatable and IEqualityComparer Support
 
