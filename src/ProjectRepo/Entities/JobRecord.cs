@@ -8,18 +8,15 @@ namespace ProjectRepo.Entities
 		ObjectId SubDivisionId,
 		string? Label,
 		int TransformType,
-		int NewAreaX,
-		int NewAreaY,
-		int NewAreaWidth,
-		int NewAreaHeight,
+
+		PointIntRecord NewAreaPosition,
+		SizeIntRecord NewAreaSize,
+
 		MSetInfoRecord MSetInfo,
-		int CanvasSizeInBlocksWidth,
-		int CanvasSizeInBlocksHeight,
 
+		SizeIntRecord CanvasSizeInBlocks,
 		BigVectorRecord MapBlockOffset,
-
-		int CanvasControlOffsetWidth,
-		int CanvasControlOffsetHeight
+		VectorIntRecord CanvasControlOffset
 		) : RecordBase()
 	{ }
 

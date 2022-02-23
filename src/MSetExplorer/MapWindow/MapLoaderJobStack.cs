@@ -15,7 +15,7 @@ namespace MSetExplorer
 	{
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly Action<MapSection> _onMapSectionReady;
-		private readonly Action<SizeInt> _onMapNav;
+		private readonly Action<VectorInt> _onMapNav;
 
 		private readonly List<GenMapRequestInfo> _requestStack;
 		private int _requestStackPointer;
@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor, Action<MapSection> onMapSectionReady, Action<SizeInt> onMapNav)
+		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor, Action<MapSection> onMapSectionReady, Action<VectorInt> onMapNav)
 		{
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 			_onMapSectionReady = WrapActionWithIProgress(onMapSectionReady);

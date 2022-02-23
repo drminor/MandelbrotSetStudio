@@ -121,11 +121,11 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, SizeInt canvasControlOffset)
+		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, VectorInt canvasControlOffset)
 		{
 			var result = new SizeInt(
-				canvasSizeInBlocks.Width + (Math.Abs(canvasControlOffset.Width) > 0 ? 1 : 0),
-				canvasSizeInBlocks.Height + (Math.Abs(canvasControlOffset.Height) > 0 ? 1 : 0)
+				canvasSizeInBlocks.Width + (Math.Abs(canvasControlOffset.X) > 0 ? 1 : 0),
+				canvasSizeInBlocks.Height + (Math.Abs(canvasControlOffset.Y) > 0 ? 1 : 0)
 				);
 
 			return result;
@@ -133,7 +133,7 @@ namespace MSS.Common
 
 		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
-		public static BigVector GetMapBlockOffset(RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out SizeInt canvasControlOffset)
+		public static BigVector GetMapBlockOffset(RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
 			var coords = RNormalizer.Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
 			var mapOrigin = coords.Position;
@@ -144,7 +144,7 @@ namespace MSS.Common
 			BigVector result;
 			if (distance.X == 0 && distance.Y == 0)
 			{
-				canvasControlOffset = new SizeInt();
+				canvasControlOffset = new VectorInt();
 				result = new BigVector();
 			}
 			else
@@ -174,7 +174,7 @@ namespace MSS.Common
 			return new BigVector(offSetInSamplePoints);
 		}
 
-		private static BigVector GetOffsetAndRemainder(BigVector offSetInSamplePoints, SizeInt blockSize, out SizeInt canvasControlOffset)
+		private static BigVector GetOffsetAndRemainder(BigVector offSetInSamplePoints, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
 			var blocksH = BigInteger.DivRem(offSetInSamplePoints.X, blockSize.Width, out var remainderH);
 			var blocksV = BigInteger.DivRem(offSetInSamplePoints.Y, blockSize.Height, out var remainderV);
@@ -195,7 +195,7 @@ namespace MSS.Common
 			}
 
 			var offSetInBlocks = new BigVector(blocksH, blocksV);
-			canvasControlOffset = new SizeInt(remainderH, remainderV);
+			canvasControlOffset = new VectorInt(remainderH, remainderV);
 
 			return offSetInBlocks;
 		}
@@ -206,7 +206,7 @@ namespace MSS.Common
 
 		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
-		public static BigVector GetMapBlockOffsetV1(RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out SizeInt canvasControlOffset)
+		public static BigVector GetMapBlockOffsetV1(RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
 			BigVector result;
 
@@ -223,7 +223,7 @@ namespace MSS.Common
 			{
 				Debug.WriteLine($"The offset from the subOrigin is Zero.");
 
-				canvasControlOffset = new SizeInt();
+				canvasControlOffset = new VectorInt();
 				result = new BigVector();
 			}
 			else

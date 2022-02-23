@@ -1,5 +1,5 @@
 ﻿
 namespace ProjectRepo.Entities
 {
-	public record SizeIntRecord(int Width, int Height) : RecordBase();
+	public record SizeIntRecord(int Width, int Height);
 }

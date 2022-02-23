@@ -22,6 +22,14 @@ namespace MSS.Types
 			Height = height;
 		}
 
+		[ProtoMember(1)]
+		public int Width { get; set; }
+
+		[ProtoMember(2)]
+		public int Height { get; set; }
+
+		public int NumberOfCells => Width * Height;
+
 		private static int ConvertToInt(BigInteger n)
 		{
 			if (n < int.MaxValue && n > int.MinValue)
@@ -33,14 +41,6 @@ namespace MSS.Types
 				throw new ArgumentException($"The BigInteger:{n} cannot be converted into an integer.");
 			}
 		}
-
-		[ProtoMember(1)]
-		public int Width { get; set; }
-
-		[ProtoMember(2)]
-		public int Height { get; set; }
-
-		public int NumberOfCells => Width * Height;
 
 		public SizeInt Translate(SizeInt amount)
 		{

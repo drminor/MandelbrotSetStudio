@@ -12,7 +12,8 @@ using System;
 namespace MSetRepo
 {
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>, IMapper<BigVector, BigVectorRecord>
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>, 
+		IMapper<BigVector, BigVectorRecord>, IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
 		private readonly CoordsHelper _coordsHelper;
@@ -49,16 +50,13 @@ namespace MSetRepo
 				source.Label,
 
 				(int) source.TransformType,
-				source.NewArea.X1,
-				source.NewArea.Y1,
-				source.NewArea.Width,
-				source.NewArea.Height,
+				MapTo(source.NewArea.Position),
+				MapTo(source.NewArea.Size),
 				MapTo(source.MSetInfo),
-				source.CanvasSizeInBlocks.Width,
-				source.CanvasSizeInBlocks.Height,
+				MapTo(source.CanvasSizeInBlocks),
 				MapTo(source.MapBlockOffset),
-				source.CanvasControlOffset.Width,
-				source.CanvasControlOffset.Height);
+				MapTo(source.CanvasControlOffset)
+				);
 
 			return result;
 		}
@@ -149,5 +147,37 @@ namespace MSetRepo
 
 			return result;
 		}
+
+		public PointIntRecord MapTo(PointInt source)
+		{
+			return new PointIntRecord(source.X, source.Y);
+		}
+
+		public PointInt MapFrom(PointIntRecord target)
+		{
+			return new PointInt(target.X, target.Y);
+		}
+
+		public SizeIntRecord MapTo(SizeInt source)
+		{
+			return new SizeIntRecord(source.Width, source.Height);
+		}
+
+		public SizeInt MapFrom(SizeIntRecord target)
+		{
+			return new SizeInt(target.Width, target.Height);
+		}
+
+		public VectorIntRecord MapTo(VectorInt source)
+		{
+			return new VectorIntRecord(source.X, source.Y);
+		}
+
+		public VectorInt MapFrom(VectorIntRecord target)
+		{
+			return new VectorInt(target.X, target.Y);
+		}
+
+
 	}
 }
