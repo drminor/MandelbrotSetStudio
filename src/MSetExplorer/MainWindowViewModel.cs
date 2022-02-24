@@ -9,8 +9,12 @@ namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
-		private readonly ProjectAdapter _projectAdapter;
 		private readonly SizeInt _blockSize;
+		private readonly ProjectAdapter _projectAdapter;
+
+		private SizeInt _canvasSize;
+		private int _iterations;
+		private int _steps;
 
 		#region Constructor
 
@@ -36,37 +40,33 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public Project Project { get; private set; }
-
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 		public IMapLoaderJobStack MapLoaderJobStack { get; }
 
+		public Project Project { get; private set; }
 
 		public Job CurrentJob => MapLoaderJobStack.CurrentJob;
-		public bool CanGoBack => MapLoaderJobStack.CanGoBack;
-		public bool CanGoForward => MapLoaderJobStack.CanGoForward;
 
-		private SizeInt _canvasSize;
 		public SizeInt CanvasSize
 		{
 			get => _canvasSize;
 			set { _canvasSize = value; OnPropertyChanged(); }
 		}
 
-		private int _iterations;
 		public int Iterations
 		{
 			get => _iterations;
 			set { _iterations = value; OnPropertyChanged(); }
 		}
 
-		private int _steps;
 		public int Steps
 		{
 			get => _steps;
 			set { _steps = value; OnPropertyChanged(); }
 		}
 
+		public bool CanGoBack => MapLoaderJobStack.CanGoBack;
+		public bool CanGoForward => MapLoaderJobStack.CanGoForward;
 		#endregion
 
 		#region Public Methods

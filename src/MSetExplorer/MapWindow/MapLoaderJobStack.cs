@@ -8,16 +8,16 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 
 namespace MSetExplorer
 {
 	internal class MapLoaderJobStack : IMapLoaderJobStack
 	{
+		private readonly SynchronizationContext _synchronizationContext;
+
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly IMapDisplayViewModel _mapDisplayViewModel;
-
-		private readonly Action<MapSection> _onMapSectionReady;
-		private readonly Action<VectorInt> _onMapNav;
 
 		private readonly List<GenMapRequestInfo> _requestStack;
 		private int _requestStackPointer;
@@ -28,35 +28,14 @@ namespace MSetExplorer
 
 		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor, IMapDisplayViewModel mapDisplayViewModel)
 		{
+			_synchronizationContext = SynchronizationContext.Current;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 			_mapDisplayViewModel = mapDisplayViewModel;
-
-			_onMapSectionReady = WrapActionWithIProgress(HandleMapSectionReady);
-			_onMapNav = WrapActionWithIProgress2(HandleMapNav);
 
 			_requestStack = new List<GenMapRequestInfo>();
 			_requestStackPointer = -1;
 			_hmsLock = new object();
 		}
-
-		// TODO use the WPF dispatcher instead of having the Progress class take care of this.
-		private Action<MapSection> WrapActionWithIProgress(Action<MapSection> rawAction)
-		{
-			var mapLoadingProgress = new Progress<MapSection>(rawAction);
-			Action<MapSection> result = ((IProgress<MapSection>)mapLoadingProgress).Report;
-
-			return result;
-		}
-
-		// TODO use the WPF dispatcher instead of having the Progress class take care of this.
-		private Action<VectorInt> WrapActionWithIProgress2(Action<VectorInt> rawAction)
-		{
-			var mapLoadingProgress = new Progress<VectorInt>(rawAction);
-			Action<VectorInt> result = ((IProgress<VectorInt>)mapLoadingProgress).Report;
-
-			return result;
-		}
-
 
 		#endregion
 
@@ -69,14 +48,7 @@ namespace MSetExplorer
 
 		public Job CurrentJob => CurrentRequest?.Job;
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
-		public bool CanGoForward
-		{
-			get
-			{
-				var result = TryGetNextJobInStack(_requestStackPointer, out var _);
-				return result;
-			}
-		}
+		public bool CanGoForward => TryGetNextJobInStack(_requestStackPointer, out var _);
 
 		public IEnumerable<Job> Jobs => new ReadOnlyCollection<Job>(_requestStack.Select(x => x.Job).ToList());
 
@@ -104,7 +76,7 @@ namespace MSetExplorer
 			var genMapRequestInfo = PushRequest(job);
 
 			CurrentJobChanged?.Invoke(this, new EventArgs());
-			_onMapNav(CurrentJob.CanvasControlOffset);
+			HandleMapNav(CurrentJob.CanvasControlOffset);
 
 			genMapRequestInfo.StartLoading();
 		}
@@ -172,7 +144,8 @@ namespace MSetExplorer
 				var curJobNumber = CurrentJobNumber;
 				if (jobNumber == curJobNumber)
 				{
-					_onMapSectionReady(mapSection);
+					//_onMapSectionReady(mapSection);
+					_synchronizationContext.Post(o => _mapDisplayViewModel.MapSections.Add(mapSection), null);
 				}
 				else
 				{
@@ -181,15 +154,17 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleMapSectionReady(MapSection mapSection)
-		{
-			_mapDisplayViewModel.MapSections.Add(mapSection);
-		}
+		//private void HandleMapSectionReady(MapSection mapSection)
+		//{
+		//	_mapDisplayViewModel.MapSections.Add(mapSection);
+		//}
 
 		private void HandleMapNav(VectorInt canvasControOffset)
 		{
-			_mapDisplayViewModel.CanvasControlOffset = canvasControOffset;
-			_mapDisplayViewModel.MapSections.Clear();
+			_synchronizationContext.Post(o => {
+				_mapDisplayViewModel.CanvasControlOffset = canvasControOffset;
+				_mapDisplayViewModel.MapSections.Clear();
+			}, null);
 		}
 
 		private GenMapRequestInfo PushRequest(Job job)
@@ -218,7 +193,7 @@ namespace MSetExplorer
 
 			var genMapRequestInfo = RerunRequest(newRequestStackPointer);
 
-			_onMapNav(CurrentJob.CanvasControlOffset);
+			HandleMapNav(CurrentJob.CanvasControlOffset);
 			CurrentJobChanged?.Invoke(this, new EventArgs());
 
 			genMapRequestInfo.StartLoading();
