@@ -16,10 +16,9 @@ namespace MSetExplorer
 		public new bool InDesignMode => base.InDesignMode;
 
 		public SizeInt BlockSize { get; }
-		public SizeInt CanvasSize { get; set; }
+		//public SizeInt CanvasSize { get; set; }
 
 		private VectorInt _canvasControlOffset;
-
 		public VectorInt CanvasControlOffset
 		{ 
 			get => _canvasControlOffset;
@@ -28,18 +27,5 @@ namespace MSetExplorer
 
 		public ObservableCollection<MapSection> MapSections { get; }
 
-		//public Action<MapSection> MapSectionReadyHandler => HandleMapSectionReady;
-		//public Action<VectorInt> MapNavHandler => HandleMapNav;
-
-		//private void HandleMapSectionReady(MapSection mapSection)
-		//{
-		//	MapSections.Add(mapSection);
-		//}
-
-		//private void HandleMapNav(VectorInt canvasControOffset)
-		//{
-		//	CanvasControlOffset = canvasControOffset;
-		//	MapSections.Clear();
-		//}
 	}
 }

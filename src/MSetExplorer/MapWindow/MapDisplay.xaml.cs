@@ -142,32 +142,6 @@ namespace MSetExplorer
 			ScreenPanned?.Invoke(this, e);
 		}
 
-		//private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-		//{
-		//	if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
-		//	{
-		//		//	Reset
-		//		//var offset = _vm.CanvasControlOffset;
-
-		//		_screenSections.HideScreenSections();
-		//		//_screenSections.CanvasOffset = offset;
-		//		//_selectedArea.CanvasControlOffset = offset;
-		//	}
-		//	else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-		//	{
-		//		// Adding new items
-		//		foreach(var mapSection in GetList(e.NewItems))
-		//		{
-		//			_screenSections.Draw(mapSection);
-		//		}
-		//	}
-		//}
-
-		//private IList<MapSection> GetList(IList lst)
-		//{
-		//	return lst?.Cast<MapSection>().ToList() ?? new List<MapSection>();
-		//}
-
 		#endregion
 
 		#region Dependency Properties
@@ -201,7 +175,7 @@ namespace MSetExplorer
 
 		private void SetCanvasSizeBackDoor(SizeInt value)
 		{
-			_vm.CanvasSize = value;
+			//_vm.CanvasSize = value;
 			MainCanvas.Width = value.Width;
 			MainCanvas.Height = value.Height;
 

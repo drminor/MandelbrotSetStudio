@@ -158,7 +158,7 @@ namespace MSetExplorer
 
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
-			CheckViewModel();
+			//CheckViewModel();
 			var jobName = GetJobName(transformType);
 			var parentJob = MapLoaderJobStack.CurrentJob;
 
@@ -176,11 +176,11 @@ namespace MSetExplorer
 			return result;
 		}
 
-		[Conditional("Debug")]
-		private void CheckViewModel()
-		{
-			Debug.Assert(MapDisplayViewModel.CanvasSize == CanvasSize, "Canvas Sizes don't match on CheckViewModel.");
-		}
+		//[Conditional("Debug")]
+		//private void CheckViewModel()
+		//{
+		//	Debug.Assert(MapDisplayViewModel.CanvasSize == CanvasSize, "Canvas Sizes don't match on CheckViewModel.");
+		//}
 
 		#endregion
 	}
