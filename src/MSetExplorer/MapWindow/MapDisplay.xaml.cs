@@ -49,7 +49,6 @@ namespace MSetExplorer
 				_vm = vmProvider.MapDisplayViewModel;
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
-				var canvasControlOffset = _vm.CanvasControlOffset;
 				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight), _keepDisplaySquare);
 
 				MainCanvas.ClipToBounds = _clipImageBlocks;
@@ -57,28 +56,14 @@ namespace MSetExplorer
 
 				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize, _vm.MapSections);
 
+				var canvasControlOffset = _vm.CanvasControlOffset;
 				_selectedArea = new SelectionRectangle(MainCanvas, canvasControlOffset, _vm.BlockSize);
 				_selectedArea.AreaSelected += SelectedArea_AreaSelected;
 				_selectedArea.ScreenPanned += SelectedArea_ScreenPanned;
 
 				_border = _showBorder ? BuildBorder(MainCanvas) : null;
 
-				//_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
-
 				Debug.WriteLine("The MapDisplay is now loaded.");
-			}
-		}
-
-		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == "CanvasControlOffset")
-			{
-				var offset = _vm.CanvasControlOffset;
-
-				_screenSections.CanvasOffset = offset;
-				_selectedArea.CanvasControlOffset = offset;
-
-				return;
 			}
 		}
 
@@ -105,24 +90,21 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
+		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			var newCanvasSize = GetCanvasSize(e.NewSize, _keepDisplaySquare);
-			var diff = CanvasSize.Diff(newCanvasSize).Abs();
-
-			if (diff.Width > 0 || diff.Height > 0)
+			if (e.PropertyName == "CanvasControlOffset")
 			{
-				CanvasSize = newCanvasSize;
+				var offset = _vm.CanvasControlOffset;
+				_screenSections.CanvasOffset = offset;
+				_selectedArea.CanvasControlOffset = offset;
+
+				return;
 			}
 		}
 
-		private SizeInt GetCanvasSize(Size size, bool makeSquare)
+		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			var sizeDbl = new SizeDbl(size.Width, size.Height);
-			var canvasSizeInWholeBlocks = RMapHelper.GetCanvasSizeWholeBlocks(sizeDbl, _vm.BlockSize, makeSquare);
-			var result = canvasSizeInWholeBlocks.Scale(_vm.BlockSize);
-
-			return result;
+			CanvasSize = GetCanvasSize(e.NewSize, _keepDisplaySquare);
 		}
 
 		private void SelectedArea_AreaSelected(object sender, AreaSelectedEventArgs e)
@@ -150,7 +132,15 @@ namespace MSetExplorer
 		public SizeInt CanvasSize
 		{
 			get => (SizeInt)GetValue(CanvasSizeProperty);
-			set => SetValue(CanvasSizeProperty, value);
+
+			set
+			{
+				var diff = CanvasSize.Diff(value).Abs();
+				if (diff.Width > 0 || diff.Height > 0)
+				{
+					SetValue(CanvasSizeProperty, value);
+				}
+			}
 		}
 
 		private static void CanvasSizeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
@@ -158,7 +148,7 @@ namespace MSetExplorer
 			if (sender is MapDisplay x)
 			{
 				Debug.WriteLine("The CanvasSize is being set on the MapDisplay Control.");
-				x.SetCanvasSizeBackDoor((SizeInt) e.NewValue);
+				x.SetCanvasSize((SizeInt) e.NewValue);
 			}
 			else
 			{
@@ -166,7 +156,16 @@ namespace MSetExplorer
 			}
 		}
 
-		private void SetCanvasSizeBackDoor(SizeInt value)
+		private SizeInt GetCanvasSize(Size size, bool makeSquare)
+		{
+			var sizeDbl = new SizeDbl(size.Width, size.Height);
+			var canvasSizeInWholeBlocks = RMapHelper.GetCanvasSizeWholeBlocks(sizeDbl, _vm.BlockSize, makeSquare);
+			var result = canvasSizeInWholeBlocks.Scale(_vm.BlockSize);
+
+			return result;
+		}
+
+		private void SetCanvasSize(SizeInt value)
 		{
 			MainCanvas.Width = value.Width;
 			MainCanvas.Height = value.Height;

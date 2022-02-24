@@ -18,6 +18,9 @@ namespace MSS.Types
 		public VectorInt(PointInt pointInt) : this(pointInt.X, pointInt.Y)
 		{ }
 
+		public VectorInt(SizeInt sizeInt) : this(sizeInt.Width, sizeInt.Height)
+		{ }
+
 		public VectorInt(BigInteger x, BigInteger y) : this(ConvertToInt(x), ConvertToInt(y))
 		{ }
 

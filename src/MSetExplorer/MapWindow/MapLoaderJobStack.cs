@@ -25,7 +25,7 @@ namespace MSetExplorer
 		private readonly object _hmsLock;
 
 		#region Constructor
-		//  Action<MapSection> onMapSectionReady, Action<VectorInt> onMapNav
+
 		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor, IMapDisplayViewModel mapDisplayViewModel)
 		{
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;

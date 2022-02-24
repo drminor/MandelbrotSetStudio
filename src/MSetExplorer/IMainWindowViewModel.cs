@@ -8,6 +8,9 @@ namespace MSetExplorer
 	{
 		event PropertyChangedEventHandler PropertyChanged;
 
+		IMapLoaderJobStack MapLoaderJobStack { get; }
+		IMapDisplayViewModel MapDisplayViewModel { get; }
+
 		Project Project { get; }
 		SizeInt CanvasSize { get; set; }
 
@@ -21,8 +24,5 @@ namespace MSetExplorer
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ScreenPannedEventArgs e);
 
-		IMapLoaderJobStack MapLoaderJobStack { get;}
-
-		IMapDisplayViewModel MapDisplayViewModel { get; }
 	}
 }

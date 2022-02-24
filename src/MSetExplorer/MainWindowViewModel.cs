@@ -7,10 +7,6 @@ using System.Diagnostics;
 
 namespace MSetExplorer
 {
-	// TODO: Consider adding a property to make a JobCreator delegate availble by use by the MapLoaderJobStack.
-	//public delegate Job JobCreator(MSetInfo mSetInfo, TransformType transformType, SizeInt newArea);
-	//JobCreator jobCreator = (m, t, a) => { return new Job(); };
-
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
 		private readonly ProjectAdapter _projectAdapter;
@@ -30,13 +26,13 @@ namespace MSetExplorer
 			Project = _projectAdapter.GetOrCreateProject("Home");
 		}
 
+		#endregion
+
 		private void MapLoaderJobStack_CurrentJobChanged(object sender, EventArgs e)
 		{
 			OnPropertyChanged("CanGoBack");
 			OnPropertyChanged("CanGoForward");
 		}
-
-		#endregion
 
 		#region Public Properties
 
@@ -73,7 +69,6 @@ namespace MSetExplorer
 
 		#endregion
 
-
 		#region Public Methods
 
 		public void SetMapInfo(MSetInfo mSetInfo)
@@ -93,50 +88,19 @@ namespace MSetExplorer
 			var offset = e.Offset;
 
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
-			var invOffset = offset.Scale(-1);
-			var newArea = new RectangleInt(new PointInt(invOffset.Width, invOffset.Height), CanvasSize);
-
-			//var existingMapSections = MapDisplayViewModel.MapSections;
-
+			var invOffset = offset.Invert();
+			var newArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
 			UpdateMapView(TransformType.Pan, newArea);
-		}
-
-		private void UpdateMapView(TransformType transformType, RectangleInt newArea)
-		{
-			var curJob = CurrentJob;
-			var position = curJob.MSetInfo.Coords.Position;
-			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-
-			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
-
-			var mSetInfo = MapLoaderJobStack.CurrentJob.MSetInfo;
-			
-			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-			if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
-			{
-				updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
-			}
-
-			LoadMap(updatedInfo, transformType, newArea);
 		}
 
 		public void GoBack()
 		{
-			if (MapLoaderJobStack.GoBack())
-			{
-				//OnPropertyChanged(nameof(CanGoBack));
-				//OnPropertyChanged(nameof(CanGoForward));
-			}
+			var _ = MapLoaderJobStack.GoBack();
 		}
 
 		public void GoForward()
 		{
-			if (MapLoaderJobStack.GoForward())
-			{
-				//OnPropertyChanged(nameof(CanGoBack));
-				//OnPropertyChanged(nameof(CanGoForward));
-			}
+			var _ = MapLoaderJobStack.GoForward();
 		}
 
 		public void SaveProject()
@@ -163,6 +127,26 @@ namespace MSetExplorer
 
 		#region Private Methods 
 
+		private void UpdateMapView(TransformType transformType, RectangleInt newArea)
+		{
+			var curJob = CurrentJob;
+			var position = curJob.MSetInfo.Coords.Position;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
+
+			var mSetInfo = MapLoaderJobStack.CurrentJob.MSetInfo;
+
+			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
+			if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
+			{
+				updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
+			}
+
+			LoadMap(updatedInfo, transformType, newArea);
+		}
+
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
 			//CheckViewModel();
@@ -173,8 +157,6 @@ namespace MSetExplorer
 			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
 			MapLoaderJobStack.Push(job);
-			//OnPropertyChanged(nameof(CanGoBack));
-			//OnPropertyChanged(nameof(CanGoForward));
 		}
 
 		private string GetJobName(TransformType transformType)

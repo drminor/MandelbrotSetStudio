@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 			if (DROP_MAP_SECTIONS)
 			{
-				projectAdapter.DropCollections();
+				projectAdapter.DropSubdivisionsAndMapSectionsCollections();
 			}
 
 			projectAdapter.CreateCollections();

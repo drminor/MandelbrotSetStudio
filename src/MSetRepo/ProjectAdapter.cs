@@ -34,7 +34,7 @@ namespace MSetRepo
 
 		#region Collections
 
-		public void DropCollections()
+		public void DropSubdivisionsAndMapSectionsCollections()
 		{
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 			subdivisionReaderWriter.DropCollection();
@@ -67,9 +67,7 @@ namespace MSetRepo
 			Debug.WriteLine($"Retrieving Project object for ProjectId: {projectId}.");
 
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-
 			var projectRecord = projectReaderWriter.Get(projectId);
-
 			var project = _mSetRecordMapper.MapFrom(projectRecord);
 
 			return project;
@@ -196,7 +194,7 @@ namespace MSetRepo
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 				mSetInfo: mSetInfo, 
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks), 
-				mapBlockOffset: _dtoMapper.MapFrom(jobRecord.MapBlockOffset.BigVector), //_mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset), 
+				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset), 
 				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset)
 				);
 
@@ -282,25 +280,6 @@ namespace MSetRepo
 
 			return result;
 		}
-
-		//public Subdivision GetOrCreateSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, out bool created)
-		//{
-		//	if (TryGetSubdivision(position, samplePointDelta, blockSize, out var subdivision))
-		//	{
-		//		created = false;
-		//		return subdivision ?? throw new InvalidOperationException("Subdivision is null.");
-		//	}
-		//	else
-		//	{
-		//		var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-
-		//		var subdivisionNotSaved = new Subdivision(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize);
-		//		subdivision = InsertSubdivision(subdivisionNotSaved, subdivisionReaderWriter);
-
-		//		created = true;
-		//		return subdivision;
-		//	}
-		//}
 
 		public Subdivision InsertSubdivision(Subdivision subdivision)
 		{

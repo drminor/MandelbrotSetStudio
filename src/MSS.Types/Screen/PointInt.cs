@@ -8,6 +8,9 @@ namespace MSS.Types
 	[ProtoContract(SkipConstructor = true)]
 	public struct PointInt : IEquatable<PointInt>, IEqualityComparer<PointInt>
 	{
+		public PointInt(VectorInt vectorInt) : this(vectorInt.X, vectorInt.Y)
+		{ }
+
 		public PointInt(int[] values) : this(values[0], values[1])
 		{ }
 

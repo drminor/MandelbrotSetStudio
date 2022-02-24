@@ -29,8 +29,6 @@ namespace MSetExplorer
 			_vm.SetMapInfo(mSetInfo);
 
 			//_vm.LoadProject();
-			//btnGoBack.IsEnabled = _vm.CanGoBack;
-			//btnGoForward.IsEnabled = _vm.CanGoForward;
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -112,22 +110,22 @@ namespace MSetExplorer
 
 		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new SizeInt(32, 0)));
+			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(32, 0)));
 		}
 
 		private void GoUpButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new SizeInt(0,32)));
+			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0,32)));
 		}
 
 		private void GoRightButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new SizeInt(-32, 0)));
+			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(-32, 0)));
 		}
 
 		private void GoDownButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new SizeInt(0, -32)));
+			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0, -32)));
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)

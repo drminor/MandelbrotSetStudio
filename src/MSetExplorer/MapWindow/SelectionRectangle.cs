@@ -315,7 +315,7 @@ namespace MSetExplorer.MapWindow
 			else
 			{
 				Dragging = false;
-				var offset = GetDragOffset(controlPos).Round();
+				var offset = GetDragOffset(controlPos);
 
 				Debug.WriteLine($"We are handling a DragComplete with offset:{offset}.");
 				ScreenPanned?.Invoke(this, new ScreenPannedEventArgs(TransformType.Pan, offset));
@@ -389,11 +389,13 @@ namespace MSetExplorer.MapWindow
 		}
 
 		// Return the distance from the DragAnchor to the new mouse position.
-		private SizeDbl GetDragOffset(Point controlPos)
+		private VectorInt GetDragOffset(Point controlPos)
 		{
 			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
 			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
-			var result = endP.Diff(startP);
+			var sizeDbl = endP.Diff(startP);
+
+			var result = new VectorInt(sizeDbl.Round());
 
 			return result;
 		}
