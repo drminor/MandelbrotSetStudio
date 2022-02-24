@@ -51,6 +51,11 @@ namespace MSS.Types
 		//	return new PointInt(Math.Abs(X), Math.Abs(Y));
 		//}
 
+		public override string? ToString()
+		{
+			return $"x:{X}, y:{Y}";
+		}
+
 		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)
@@ -91,9 +96,6 @@ namespace MSS.Types
 
 		#endregion
 
-		public override string? ToString()
-		{
-			return $"x:{X}, y:{Y}";
-		}
+
 	}
 }

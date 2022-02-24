@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types.Screen
 {
-	public class MapSection
+	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>
 	{
 		public PointInt BlockPosition { get; init; }
 		public SizeInt Size { get; init; }
@@ -20,6 +22,54 @@ namespace MSS.Types.Screen
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
 		}
+
+		#region IEqualityComparer / IEquatable Support
+
+		public override bool Equals(object? obj)
+		{
+			return obj is MapSection ms && Equals(ms);
+		}
+
+		public bool Equals(MapSection? other)
+		{
+			return other is MapSection ms &&
+				   SubdivisionId == ms.SubdivisionId &&
+				   EqualityComparer<BigVector>.Default.Equals(RepoBlockPosition, ms.RepoBlockPosition);
+		}
+
+		public bool Equals(MapSection? x, MapSection? y)
+		{
+			if (x is null)
+			{
+				return y is null;
+			}
+			else
+			{
+				return x.Equals(y);
+			}
+		}
+
+		public int GetHashCode([DisallowNull] MapSection obj)
+		{
+			return obj.GetHashCode();
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(SubdivisionId, RepoBlockPosition);
+		}
+
+		public static bool operator ==(MapSection? left, MapSection? right)
+		{
+			return EqualityComparer<MapSection>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(MapSection? left, MapSection? right)
+		{
+			return !(left == right);
+		}
+
+		#endregion
 	}
 }
 
