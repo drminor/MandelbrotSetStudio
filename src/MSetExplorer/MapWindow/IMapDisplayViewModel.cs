@@ -13,7 +13,6 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 
 		SizeInt BlockSize { get; }
-		//SizeInt CanvasSize { get; set; }
 		VectorInt CanvasControlOffset { get; set; }
 
 		ObservableCollection<MapSection> MapSections { get; }

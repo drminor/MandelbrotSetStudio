@@ -1,12 +1,8 @@
 ﻿using MSetExplorer.MapWindow;
 using MSS.Common;
 using MSS.Types;
-using MSS.Types.Screen;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -23,9 +19,6 @@ namespace MSetExplorer
 		private static readonly bool _keepDisplaySquare = true;
 
 		private IMapDisplayViewModel _vm;
-		//private IMapLoaderJobStack _mapLoaderJobStack;
-		//private Job _currentJob => _mapLoaderJobStack.CurrentJob;
-
 
 		private SelectionRectangle _selectedArea;
 		private IScreenSectionCollection _screenSections;
@@ -175,7 +168,6 @@ namespace MSetExplorer
 
 		private void SetCanvasSizeBackDoor(SizeInt value)
 		{
-			//_vm.CanvasSize = value;
 			MainCanvas.Width = value.Width;
 			MainCanvas.Height = value.Height;
 

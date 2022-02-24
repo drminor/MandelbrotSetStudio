@@ -16,7 +16,6 @@ namespace MSetExplorer
 		public new bool InDesignMode => base.InDesignMode;
 
 		public SizeInt BlockSize { get; }
-		//public SizeInt CanvasSize { get; set; }
 
 		private VectorInt _canvasControlOffset;
 		public VectorInt CanvasControlOffset

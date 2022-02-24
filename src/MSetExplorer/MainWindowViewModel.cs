@@ -25,8 +25,15 @@ namespace MSetExplorer
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapLoaderJobStack = mapLoaderJobStack;
+			MapLoaderJobStack.CurrentJobChanged += MapLoaderJobStack_CurrentJobChanged;
 
 			Project = _projectAdapter.GetOrCreateProject("Home");
+		}
+
+		private void MapLoaderJobStack_CurrentJobChanged(object sender, EventArgs e)
+		{
+			OnPropertyChanged("CanGoBack");
+			OnPropertyChanged("CanGoForward");
 		}
 
 		#endregion
@@ -118,8 +125,8 @@ namespace MSetExplorer
 		{
 			if (MapLoaderJobStack.GoBack())
 			{
-				OnPropertyChanged(nameof(CanGoBack));
-				OnPropertyChanged(nameof(CanGoForward));
+				//OnPropertyChanged(nameof(CanGoBack));
+				//OnPropertyChanged(nameof(CanGoForward));
 			}
 		}
 
@@ -127,8 +134,8 @@ namespace MSetExplorer
 		{
 			if (MapLoaderJobStack.GoForward())
 			{
-				OnPropertyChanged(nameof(CanGoBack));
-				OnPropertyChanged(nameof(CanGoForward));
+				//OnPropertyChanged(nameof(CanGoBack));
+				//OnPropertyChanged(nameof(CanGoForward));
 			}
 		}
 
@@ -166,8 +173,8 @@ namespace MSetExplorer
 			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
 			MapLoaderJobStack.Push(job);
-			OnPropertyChanged(nameof(CanGoBack));
-			OnPropertyChanged(nameof(CanGoForward));
+			//OnPropertyChanged(nameof(CanGoBack));
+			//OnPropertyChanged(nameof(CanGoForward));
 		}
 
 		private string GetJobName(TransformType transformType)
