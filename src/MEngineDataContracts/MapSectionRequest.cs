@@ -30,6 +30,11 @@ namespace MEngineDataContracts
 		public MapCalcSettings MapCalcSettings { get; set; }
 
 		public bool IsInverted { get; init; }
+
+		public bool Sent { get; set; }
+		public bool FoundInRepo { get; set; }
+		public bool Completed { get; set; }
+		public bool Handled { get; set; }
 	}
 
 }

@@ -3,6 +3,7 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.Screen;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -53,6 +54,7 @@ namespace MSetExplorer
 			{
 				var vmProvider = (IMainWindowViewModel)DataContext;
 				_vm = vmProvider.MapDisplayViewModel;
+				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
 				var canvasControlOffset = _vm.CanvasControlOffset;
 				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight), _keepDisplaySquare);
@@ -60,9 +62,7 @@ namespace MSetExplorer
 				MainCanvas.ClipToBounds = _clipImageBlocks;
 				SizeChanged += MapDisplay_SizeChanged;
 
-				_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
-
-				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize);
+				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize, _vm.MapSections);
 
 				_selectedArea = new SelectionRectangle(MainCanvas, canvasControlOffset, _vm.BlockSize);
 				_selectedArea.AreaSelected += SelectedArea_AreaSelected;
@@ -70,7 +70,22 @@ namespace MSetExplorer
 
 				_border = _showBorder ? BuildBorder(MainCanvas) : null;
 
+				//_vm.MapSections.CollectionChanged += MapSections_CollectionChanged;
+
 				Debug.WriteLine("The MapDisplay is now loaded.");
+			}
+		}
+
+		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == "CanvasControlOffset")
+			{
+				var offset = _vm.CanvasControlOffset;
+
+				_screenSections.CanvasOffset = offset;
+				_selectedArea.CanvasControlOffset = offset;
+
+				return;
 			}
 		}
 
@@ -127,27 +142,31 @@ namespace MSetExplorer
 			ScreenPanned?.Invoke(this, e);
 		}
 
-		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-		{
-			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
-			{
-				var offset = _vm.CanvasControlOffset;
+		//private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		//{
+		//	if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+		//	{
+		//		//	Reset
+		//		//var offset = _vm.CanvasControlOffset;
 
-				_screenSections.HideScreenSections();
-				_screenSections.CanvasOffset = offset;
-				_selectedArea.CanvasControlOffset = offset;
-			}
-			else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-			{
-				IList<MapSection> newItems = e.NewItems is null ? new List<MapSection>() : e.NewItems.Cast<MapSection>().ToList();
+		//		_screenSections.HideScreenSections();
+		//		//_screenSections.CanvasOffset = offset;
+		//		//_selectedArea.CanvasControlOffset = offset;
+		//	}
+		//	else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+		//	{
+		//		// Adding new items
+		//		foreach(var mapSection in GetList(e.NewItems))
+		//		{
+		//			_screenSections.Draw(mapSection);
+		//		}
+		//	}
+		//}
 
-				foreach(var mapSection in newItems)
-				{
-					//Debug.WriteLine($"Writing Pixels for section at {mapSection.CanvasPosition}.");
-					_screenSections.Draw(mapSection);
-				}
-			}
-		}
+		//private IList<MapSection> GetList(IList lst)
+		//{
+		//	return lst?.Cast<MapSection>().ToList() ?? new List<MapSection>();
+		//}
 
 		#endregion
 

@@ -27,5 +27,7 @@ namespace MEngineDataContracts
 
 		//[DataMember(Order = 6)]
 		//public double[] ZValues { get; set; }
+
+		public bool Saved { get; set; }
 	}
 }

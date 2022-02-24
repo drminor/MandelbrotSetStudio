@@ -14,6 +14,8 @@ namespace MSetExplorer
 	internal class MapLoaderJobStack : IMapLoaderJobStack
 	{
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
+		private readonly IMapDisplayViewModel _mapDisplayViewModel;
+
 		private readonly Action<MapSection> _onMapSectionReady;
 		private readonly Action<VectorInt> _onMapNav;
 
@@ -23,18 +25,21 @@ namespace MSetExplorer
 		private readonly object _hmsLock;
 
 		#region Constructor
-
-		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor, Action<MapSection> onMapSectionReady, Action<VectorInt> onMapNav)
+		//  Action<MapSection> onMapSectionReady, Action<VectorInt> onMapNav
+		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor, IMapDisplayViewModel mapDisplayViewModel)
 		{
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
-			_onMapSectionReady = WrapActionWithIProgress(onMapSectionReady);
-			_onMapNav = onMapNav;
+			_mapDisplayViewModel = mapDisplayViewModel;
+
+			_onMapSectionReady = WrapActionWithIProgress(HandleMapSectionReady);
+			_onMapNav = WrapActionWithIProgress2(HandleMapNav);
 
 			_requestStack = new List<GenMapRequestInfo>();
 			_requestStackPointer = -1;
 			_hmsLock = new object();
 		}
 
+		// TODO use the WPF dispatcher instead of having the Progress class take care of this.
 		private Action<MapSection> WrapActionWithIProgress(Action<MapSection> rawAction)
 		{
 			var mapLoadingProgress = new Progress<MapSection>(rawAction);
@@ -42,6 +47,16 @@ namespace MSetExplorer
 
 			return result;
 		}
+
+		// TODO use the WPF dispatcher instead of having the Progress class take care of this.
+		private Action<VectorInt> WrapActionWithIProgress2(Action<VectorInt> rawAction)
+		{
+			var mapLoadingProgress = new Progress<VectorInt>(rawAction);
+			Action<VectorInt> result = ((IProgress<VectorInt>)mapLoadingProgress).Report;
+
+			return result;
+		}
+
 
 		#endregion
 
@@ -149,6 +164,33 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		private void HandleMapSection(int jobNumber, MapSection mapSection)
+		{
+			lock (_hmsLock)
+			{
+				var curJobNumber = CurrentJobNumber;
+				if (jobNumber == curJobNumber)
+				{
+					_onMapSectionReady(mapSection);
+				}
+				else
+				{
+					Debug.WriteLine($"HandleMapSection is ignoring the new section. CurJobNum:{curJobNumber}, Handling JobNum: {jobNumber}.");
+				}
+			}
+		}
+
+		private void HandleMapSectionReady(MapSection mapSection)
+		{
+			_mapDisplayViewModel.MapSections.Add(mapSection);
+		}
+
+		private void HandleMapNav(VectorInt canvasControOffset)
+		{
+			_mapDisplayViewModel.CanvasControlOffset = canvasControOffset;
+			_mapDisplayViewModel.MapSections.Clear();
+		}
 
 		private GenMapRequestInfo PushRequest(Job job)
 		{
@@ -280,22 +322,6 @@ namespace MSetExplorer
 		private void StopCurrentJob()
 		{
 			CurrentRequest?.MapLoader?.Stop();
-		}
-
-		private void HandleMapSection(int jobNumber, MapSection mapSection)
-		{
-			lock (_hmsLock)
-			{
-				var curJobNumber = CurrentJobNumber;
-				if (jobNumber == curJobNumber)
-				{
-					_onMapSectionReady(mapSection);
-				}
-				else
-				{
-					Debug.WriteLine($"HandleMapSection is ignoring the new section. CurJobNum:{curJobNumber}, Handling JobNum: {jobNumber}.");
-				}
-			}
 		}
 
 		#endregion

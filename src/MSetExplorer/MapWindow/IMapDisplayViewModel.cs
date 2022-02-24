@@ -2,11 +2,14 @@
 using MSS.Types.Screen;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace MSetExplorer
 {
 	public interface IMapDisplayViewModel
 	{
+		public event PropertyChangedEventHandler PropertyChanged;
+
 		bool InDesignMode { get; }
 
 		SizeInt BlockSize { get; }
@@ -14,7 +17,8 @@ namespace MSetExplorer
 		VectorInt CanvasControlOffset { get; set; }
 
 		ObservableCollection<MapSection> MapSections { get; }
-		Action<MapSection> HandleMapSectionReady { get; }
-		Action<VectorInt> HandleMapNav { get; }
+
+		//Action<MapSection> MapSectionReadyHandler { get; }
+		//Action<VectorInt> MapNavHandler { get; }
 	}
 }

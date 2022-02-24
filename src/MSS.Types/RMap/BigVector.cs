@@ -45,20 +45,6 @@ namespace MSS.Types
 		//	return new BigVector(X * factor.X, Y * factor.Y);
 		//}
 
-		//public BigVector Scale(SizeDbl factor)
-		//{
-		//	var w = BigIntegerHelper.ConvertToDouble(X);
-		//	var h = BigIntegerHelper.ConvertToDouble(Y);
-
-		//	var result = new BigVector
-		//		(
-		//			new BigInteger(w * factor.Width),
-		//			new BigInteger(h * factor.Height)
-		//		);
-
-		//	return result;
-		//}
-
 		//public new BigVector Translate(RPoint amount)
 		//{
 		//	return new BigVector(X + amount.XNumerator, Y + amount.YNumerator);
@@ -72,6 +58,11 @@ namespace MSS.Types
 		public BigVector Diff(BigVector vector)
 		{
 			return new BigVector(X - vector.X, Y - vector.Y);
+		}
+
+		public BigVector Tranlate(PointInt factor)
+		{
+			return new BigVector(X + factor.X, Y + factor.Y);
 		}
 
 		public BigVector DivRem(SizeInt dividend, out SizeInt remainder)

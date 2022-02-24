@@ -152,11 +152,15 @@ namespace MapSectionProviderLib
 						{
 							//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 							mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(workItem.Request);
-
 							mapSectionPersistProcessor.AddWork(mapSectionResponse);
+						}
+						else
+						{
+							workItem.Request.FoundInRepo = true;
 						}
 					}
 
+					workItem.Request.Completed = true;
 					workItem.WorkAction(workItem.Request, mapSectionResponse);
 				}
 				catch (OperationCanceledException)

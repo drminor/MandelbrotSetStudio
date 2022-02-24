@@ -2,7 +2,11 @@
 using MSS.Types;
 using MSS.Types.Screen;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -12,14 +16,17 @@ namespace MSetExplorer
 {
 	internal class ScreenSectionCollection : IScreenSectionCollection
 	{
+		private readonly ObservableCollection<MapSection> _mapSections;
+
 		private readonly ScreenSection[,] _screenSections;
 		private readonly DrawingGroup _drawingGroup;
 		private readonly Image _image;
 
 		#region Constructor
 
-		public ScreenSectionCollection(Canvas canvas, SizeInt blockSize)
+		public ScreenSectionCollection(Canvas canvas, SizeInt blockSize, ObservableCollection<MapSection> mapSections)
 		{
+			_mapSections = mapSections;
 			var canvasSize = new Size(canvas.Width, canvas.Height);
 			var sizeInBlocks = GetSizeInBlocks(canvasSize, blockSize);
 
@@ -30,6 +37,8 @@ namespace MSetExplorer
 			_ = canvas.Children.Add(_image);
 
 			CanvasOffset = new VectorInt();
+
+			_mapSections.CollectionChanged += MapSections_CollectionChanged;
 		}
 
 		private ScreenSection[,] BuildScreenSections(SizeInt sizeInBlocks, SizeInt blockSize)
@@ -101,6 +110,28 @@ namespace MSetExplorer
 			}
 		}
 
+		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+			{
+				//	Reset
+				HideScreenSections();
+			}
+			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+			{
+				// Adding new items
+				foreach (var mapSection in GetList(e.NewItems))
+				{
+					Draw(mapSection);
+				}
+			}
+		}
+
+		private IList<MapSection> GetList(IList lst)
+		{
+			return lst?.Cast<MapSection>().ToList() ?? new List<MapSection>();
+		}
+
 		public void HideScreenSections()
 		{
 			_drawingGroup.Children.Clear();
@@ -108,6 +139,8 @@ namespace MSetExplorer
 
 		public void Draw(MapSection mapSection)
 		{
+			//Debug.WriteLine($"Writing Pixels for section at {mapSection.CanvasPosition}.");
+
 			var screenSection = Get(mapSection.BlockPosition);
 			screenSection.WritePixels(mapSection.Pixels1d);
 			_drawingGroup.Children.Add(screenSection.ImageDrawing);

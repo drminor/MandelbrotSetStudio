@@ -62,6 +62,7 @@ namespace MapSectionProviderLib
 				{
 					var mapSectionResponse = _workQueue.Take(ct);
 					var mapSectionId = await _mapSectionRepo.SaveMapSectionAsync(mapSectionResponse);
+					mapSectionResponse.Saved = true;
 				}
 				catch (OperationCanceledException)
 				{

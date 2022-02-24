@@ -17,22 +17,29 @@ namespace MSetExplorer
 
 		public SizeInt BlockSize { get; }
 		public SizeInt CanvasSize { get; set; }
-		public VectorInt CanvasControlOffset { get; set; }
+
+		private VectorInt _canvasControlOffset;
+
+		public VectorInt CanvasControlOffset
+		{ 
+			get => _canvasControlOffset;
+			set { _canvasControlOffset = value; OnPropertyChanged(); }
+		}
 
 		public ObservableCollection<MapSection> MapSections { get; }
 
-		public Action<MapSection> HandleMapSectionReady => OnMapSectionReady;
-		public Action<VectorInt> HandleMapNav => OnMapNav;
+		//public Action<MapSection> MapSectionReadyHandler => HandleMapSectionReady;
+		//public Action<VectorInt> MapNavHandler => HandleMapNav;
 
-		private void OnMapSectionReady(MapSection mapSection)
-		{
-			MapSections.Add(mapSection);
-		}
+		//private void HandleMapSectionReady(MapSection mapSection)
+		//{
+		//	MapSections.Add(mapSection);
+		//}
 
-		private void OnMapNav(VectorInt canvasControOffset)
-		{
-			CanvasControlOffset = canvasControOffset;
-			MapSections.Clear();
-		}
+		//private void HandleMapNav(VectorInt canvasControOffset)
+		//{
+		//	CanvasControlOffset = canvasControOffset;
+		//	MapSections.Clear();
+		//}
 	}
 }

@@ -48,7 +48,7 @@ namespace MSetExplorer
 
 
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(RMapConstants.BLOCK_SIZE);
-			IMapLoaderJobStack mapLoaderJobStack = new MapLoaderJobStack(_mapSectionRequestProcessor, mapDisplayViewModel.HandleMapSectionReady, mapDisplayViewModel.HandleMapNav);
+			IMapLoaderJobStack mapLoaderJobStack = new MapLoaderJobStack(_mapSectionRequestProcessor, mapDisplayViewModel);
 
 			var window1 = USE_MAP_NAV_SIM
 				? new MapNavSim

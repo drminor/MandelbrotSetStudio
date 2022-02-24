@@ -14,12 +14,14 @@ namespace MSetExplorer
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
 		private readonly ProjectAdapter _projectAdapter;
+		private readonly SizeInt _blockSize;
 
 		#region Constructor
 
 		public MainWindowViewModel(ProjectAdapter projectAdapter, IMapDisplayViewModel mapDisplayViewModel, IMapLoaderJobStack mapLoaderJobStack)
 		{
 			_projectAdapter = projectAdapter;
+			_blockSize = mapDisplayViewModel.BlockSize;
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapLoaderJobStack = mapLoaderJobStack;
@@ -69,7 +71,7 @@ namespace MSetExplorer
 
 		public void SetMapInfo(MSetInfo mSetInfo)
 		{
-			var newArea = new RectangleInt(new PointInt(), MapDisplayViewModel.CanvasSize);
+			var newArea = new RectangleInt(new PointInt(), CanvasSize);
 			LoadMap(mSetInfo, TransformType.None, newArea);
 		}
 
@@ -85,7 +87,7 @@ namespace MSetExplorer
 
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
 			var invOffset = offset.Scale(-1);
-			var newArea = new RectangleInt(new PointInt(invOffset.Width, invOffset.Height), MapDisplayViewModel.CanvasSize);
+			var newArea = new RectangleInt(new PointInt(invOffset.Width, invOffset.Height), CanvasSize);
 
 			//var existingMapSections = MapDisplayViewModel.MapSections;
 
@@ -156,11 +158,11 @@ namespace MSetExplorer
 
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
+			CheckViewModel();
 			var jobName = GetJobName(transformType);
 			var parentJob = MapLoaderJobStack.CurrentJob;
-			var blockSize = MapDisplayViewModel.BlockSize;
 
-			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, blockSize, _projectAdapter);
+			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, _blockSize, _projectAdapter);
 			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
 			MapLoaderJobStack.Push(job);
@@ -172,6 +174,12 @@ namespace MSetExplorer
 		{
 			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
 			return result;
+		}
+
+		[Conditional("Debug")]
+		private void CheckViewModel()
+		{
+			Debug.Assert(MapDisplayViewModel.CanvasSize == CanvasSize, "Canvas Sizes don't match on CheckViewModel.");
 		}
 
 		#endregion

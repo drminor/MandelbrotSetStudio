@@ -20,26 +20,21 @@ namespace MapSectionProviderLib
 		/// and prepare a MapSectionRequest
 		/// </summary>
 		/// <param name="subdivision"></param>
-		/// <param name="blockPosition"></param>
+		/// <param name="repokPosition"></param>
 		/// <param name="isInverted"></param>
 		/// <param name="mapCalcSettings"></param>
 		/// <param name="mapPosition"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(Subdivision subdivision, BigVector blockPosition, bool isInverted, MapCalcSettings mapCalcSettings, out RPoint mapPosition)
+		public MapSectionRequest CreateRequest(Subdivision subdivision, BigVector repokPosition, bool isInverted, MapCalcSettings mapCalcSettings)
 		{
-			mapPosition = GetMapPosition(subdivision, blockPosition);
-
-			var blockPosForDataTransfer = _dtoMapper.MapTo(blockPosition);
-			var posForDataTransfer = _dtoMapper.MapTo(mapPosition);
-			var spdForDataTransfer = _dtoMapper.MapTo(subdivision.SamplePointDelta);
-
+			var mapPosition = GetMapPosition(subdivision, repokPosition);
 			var mapSectionRequest = new MapSectionRequest
 			{
 				SubdivisionId = subdivision.Id.ToString(),
-				BlockPosition = blockPosForDataTransfer,
+				BlockPosition = _dtoMapper.MapTo(repokPosition),
 				BlockSize = subdivision.BlockSize,
-				Position = posForDataTransfer,
-				SamplePointsDelta = spdForDataTransfer,
+				Position = _dtoMapper.MapTo(mapPosition),
+				SamplePointsDelta = _dtoMapper.MapTo(subdivision.SamplePointDelta),
 				MapCalcSettings = mapCalcSettings,
 				IsInverted = isInverted
 			};

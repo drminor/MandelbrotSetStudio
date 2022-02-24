@@ -6,6 +6,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,11 +18,14 @@ namespace MSetExplorer
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly DtoMapper _dtoMapper;
+
 		private readonly Job _job;
 		private readonly int _jobNumber;
 
 		private readonly Action<int, MapSection> _callback;
 		private readonly ColorMap _colorMap;
+
+		private readonly IList<MapSectionRequest> _pendingRequests;
 
 		private bool _isStopping;
 		private int _sectionsRequested;
@@ -42,6 +46,7 @@ namespace MSetExplorer
 			_mapSectionHelper = new MapSectionHelper(_dtoMapper);
 
 			_colorMap = new ColorMap(job.MSetInfo.ColorMapEntries);
+			_pendingRequests = CreateSectionRequests();
 
 			_isStopping = false;
 			_sectionsRequested = 0;
@@ -84,12 +89,12 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void SubmitSectionRequests()
+		private IList<MapSectionRequest> CreateSectionRequests()
 		{
+			var result = new List<MapSectionRequest>();
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset);
-			Debug.WriteLine($"Submitting section requests. The map extent is {mapExtentInBlocks}.");
+			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
-			var mapBlockOffset = _job.MapBlockOffset;
 			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
 			{
 				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
@@ -105,28 +110,42 @@ namespace MSetExplorer
 
 					// Translate to subdivision coordinates.
 					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var blockPosition = ToSubdivisionCoords(screenPosition, _job, out var isInverted);
-					var mapSectionRequest = _mapSectionHelper.CreateRequest(_job.Subdivision, blockPosition, isInverted, _job.MSetInfo.MapCalcSettings, out var mapPosition);
+					var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, _job.MapBlockOffset, out var isInverted);
+					var mapSectionRequest = _mapSectionHelper.CreateRequest(_job.Subdivision, repoPosition, isInverted, _job.MSetInfo.MapCalcSettings);
 
-					//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
-					_mapSectionRequestProcessor.AddWork(_jobNumber, mapSectionRequest, HandleResponse);
-					_ = Interlocked.Increment(ref _sectionsRequested);
+					result.Add(mapSectionRequest);
 				}
+			}
+
+			return result;
+		}
+
+		private void SubmitSectionRequests()
+		{
+			foreach(var mapSectionRequest in _pendingRequests)
+			{ 
+				//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
+				_mapSectionRequestProcessor.AddWork(_jobNumber, mapSectionRequest, HandleResponse);
+				mapSectionRequest.Sent = true;
+				_ = Interlocked.Increment(ref _sectionsRequested);
 			}
 		}
 
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
+			var mapBlockOffset = _job.MapBlockOffset;
 			var blockPositionDto = mapSectionRequest.BlockPosition;
 			var repoBlockPosition = _dtoMapper.MapFrom(blockPositionDto);
-			var screenPosition = ToScreenCoords(repoBlockPosition, mapSectionRequest.IsInverted, _job);
+			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, mapSectionRequest.IsInverted, mapBlockOffset);
 			//Debug.WriteLine($"MapLoader handling response: {blockPosition} for ScreenBlkPos: {screenPosition}.");
 
 			var blockSize = _job.Subdivision.BlockSize;
 			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, _colorMap, !mapSectionRequest.IsInverted);
 			var mapSection = new MapSection(screenPosition, blockSize, pixels1d, mapSectionRequest.SubdivisionId, repoBlockPosition);
 
+			// TODO: Include the mapSectionRequest to the callback method.
 			_callback(_jobNumber, mapSection);
+			mapSectionRequest.Handled = true;
 
 			_ = Interlocked.Increment(ref _sectionCompleted);
 			if (_sectionCompleted == _job.CanvasSizeInBlocks.NumberOfCells || (_isStopping && _sectionCompleted == _sectionsRequested))
@@ -135,55 +154,6 @@ namespace MSetExplorer
 				{
 					_tcs.SetResult();
 				}
-			}
-		}
-
-		private BigVector ToSubdivisionCoords(PointInt blockPosition, Job job, out bool isInverted)
-		{
-			var bigBlockPosition = new BigVector(blockPosition.X, blockPosition.Y);
-
-			var repoPos = bigBlockPosition.Translate(job.MapBlockOffset);
-
-			BigVector result;
-			if (repoPos.Y < 0)
-			{
-				isInverted = true;
-				result = new BigVector(repoPos.X, (repoPos.Y * -1) - 1);
-			}
-			else
-			{
-				isInverted = false;
-				result = repoPos;
-			}
-
-			return result;
-		}
-
-		// TODO: ToScreenCoords should take a vector and return a vector
-		private PointInt ToScreenCoords(BigVector blockPosition, bool inverted, Job job)
-		{
-			BigVector posT;
-
-			if (inverted)
-			{
-				posT = new BigVector(blockPosition.XNumerator, (blockPosition.YNumerator + 1) * -1);
-			}
-			else
-			{
-				posT = blockPosition;
-			}
-
-			var screenOffsetRat = posT.Diff(job.MapBlockOffset);
-			var reducedOffset = Reducer.Reduce(screenOffsetRat);
-
-			if (BigIntegerHelper.TryConvertToInt(reducedOffset, out var values))
-			{
-				var result = new PointInt(values);
-				return result;
-			}
-			else
-			{
-				throw new InvalidOperationException($"Cannot convert the ScreenCoords to integers.");
 			}
 		}
 
@@ -200,9 +170,6 @@ namespace MSetExplorer
 			for (var rowPtr = 0; rowPtr < blockSize.Height; rowPtr++)
 			{
 				// Calculate the array index for the beginning of this destination and source row.
-				// The Source's origin is at the bottom, left.
-				// If inverted, the Destination's origin is at the top, left, otherwise bottom, left. 
-
 				var resultRowPtr = GetResultRowPtr(blockSize.Height - 1, rowPtr, invert);
 
 				var curResultPtr = resultRowPtr * blockSize.Width * 4;
@@ -228,6 +195,8 @@ namespace MSetExplorer
 
 		private int GetResultRowPtr(int maxRowIndex, int rowPtr, bool invert) 
 		{
+			// The Source's origin is at the bottom, left.
+			// If inverted, the Destination's origin is at the top, left, otherwise bottom, left. 
 			var result = invert ? maxRowIndex - rowPtr : rowPtr;
 			return result;
 		}
