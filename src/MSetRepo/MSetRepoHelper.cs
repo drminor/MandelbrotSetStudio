@@ -25,8 +25,7 @@ namespace MSetRepo
 		public static MSetRecordMapper GetMSetRecordMapper()
 		{
 			var dtoMapper = new DtoMapper();
-			var coordsHelper = new CoordsHelper(dtoMapper);
-			var result = new MSetRecordMapper(dtoMapper, coordsHelper);
+			var result = new MSetRecordMapper(dtoMapper);
 
 			return result;
 		}

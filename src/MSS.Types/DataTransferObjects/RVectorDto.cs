@@ -19,7 +19,7 @@ namespace MSS.Types.DataTransferObjects
 		public RVectorDto() : this(new BigInteger[] { 0, 0 }, 0)
 		{ }
 
-		public RVectorDto(BigInteger[] values, int exponent) : this(values.Select(v => BigIntegerHelper.ToLongs(v)).ToArray(), exponent)
+		public RVectorDto(BigInteger[] values, int exponent) : this(BigIntegerHelper.ToLongs(values), exponent)
 		{ }
 
 		public RVectorDto(long[][] values, int exponent)

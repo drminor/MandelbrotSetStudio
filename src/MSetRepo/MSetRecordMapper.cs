@@ -3,25 +3,26 @@ using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
-using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
-using ProjectRepo;
 using ProjectRepo.Entities;
 using System;
 
 namespace MSetRepo
 {
-	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>, 
-		IMapper<BigVector, BigVectorRecord>, IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>
+	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>,
+
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>,
+
+		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>,
+
+		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>
+
 	{
 		private readonly DtoMapper _dtoMapper;
-		private readonly CoordsHelper _coordsHelper;
 
-		public MSetRecordMapper(DtoMapper dtoMapper, CoordsHelper coordsHelper )
+		public MSetRecordMapper(DtoMapper dtoMapper)
 		{
 			_dtoMapper = dtoMapper;
-			_coordsHelper = coordsHelper;
 		}
 		
 		public Project MapFrom(ProjectRecord target)
@@ -75,7 +76,7 @@ namespace MSetRepo
 
 		public MSetInfoRecord MapTo(MSetInfo source)
 		{
-			var coords = _coordsHelper.BuildCoords(source.Coords);
+			var coords = MapTo(source.Coords);
 			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorMapEntries);
 
 			return result;
@@ -92,8 +93,8 @@ namespace MSetRepo
 
 		public SubdivisionRecord MapTo(Subdivision source)
 		{
-			var position = _coordsHelper.BuildPointRecord(source.Position);
-			var samplePointDelta = _coordsHelper.BuildSizeRecord(source.SamplePointDelta);
+			var position = MapTo(source.Position);
+			var samplePointDelta = MapTo(source.SamplePointDelta);
 			var result = new SubdivisionRecord(position, samplePointDelta, source.BlockSize.Width, source.BlockSize.Height);
 
 			return result;
@@ -106,7 +107,8 @@ namespace MSetRepo
 				return null;
 			}
 
-			var blockPositionRecord = _coordsHelper.BuildBigVectorRecord(source.BlockPosition);
+			var blockPosition = _dtoMapper.MapFrom(source.BlockPosition);
+			var blockPositionRecord = MapTo(blockPosition);
 			var result = new MapSectionRecord
 				(
 				new ObjectId(source.SubdivisionId),
@@ -135,18 +137,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public BigVectorRecord MapTo(BigVector bigVector)
-		{
-			var result = _coordsHelper.BuildBigVectorRecord(bigVector);
-			return result;
-		}
-
-		public BigVector MapFrom(BigVectorRecord target)
-		{
-			var result = _dtoMapper.MapFrom(target.BigVector);
-
-			return result;
-		}
+		#region IMapper<Shape, ShapeRecord> Support
 
 		public PointIntRecord MapTo(PointInt source)
 		{
@@ -178,6 +169,65 @@ namespace MSetRepo
 			return new VectorInt(target.X, target.Y);
 		}
 
+		public BigVectorRecord MapTo(BigVector bigVector)
+		{
+			var bigVectorDto = _dtoMapper.MapTo(bigVector);
+			var display = bigVector.ToString() ?? "0";
+			var result = new BigVectorRecord(display, bigVectorDto);
+
+			return result;
+		}
+
+		public BigVector MapFrom(BigVectorRecord target)
+		{
+			var result = _dtoMapper.MapFrom(target.BigVector);
+
+			return result;
+		}
+
+		public RPointRecord MapTo(RPoint rPoint)
+		{
+			var rPointDto = _dtoMapper.MapTo(rPoint);
+			var display = BigIntegerHelper.GetDisplay(rPoint);
+			var result = new RPointRecord(display, rPointDto);
+
+			return result;
+		}
+
+		public RPoint MapFrom(RPointRecord target)
+		{
+			return _dtoMapper.MapFrom(target.PointDto);
+		}
+
+		public RSizeRecord MapTo(RSize rSize)
+		{
+			var rSizeDto = _dtoMapper.MapTo(rSize);
+			var display = BigIntegerHelper.GetDisplay(rSize);
+			var result = new RSizeRecord(display, rSizeDto);
+
+			return result;
+		}
+
+		public RSize MapFrom(RSizeRecord target)
+		{
+			return _dtoMapper.MapFrom(target.Size);
+		}
+
+		public RRectangleRecord MapTo(RRectangle rRectangle)
+		{
+			var rRectangleDto = _dtoMapper.MapTo(rRectangle);
+			var display = BigIntegerHelper.GetDisplay(rRectangle);
+			var result = new RRectangleRecord(display, rRectangleDto);
+
+			return result;
+		}
+
+		public RRectangle MapFrom(RRectangleRecord target)
+		{
+			return _dtoMapper.MapFrom(target.CoordsDto);
+		}
+
+		#endregion
 
 	}
 }

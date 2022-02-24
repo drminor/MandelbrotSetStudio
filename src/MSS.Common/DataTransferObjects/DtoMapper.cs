@@ -14,7 +14,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RPoint MapFrom(RPointDto target)
 		{
-			var bVals = GetFromLongs(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new RPoint(bVals, target.Exponent);
 			return result;
 		}
@@ -27,7 +27,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RSize MapFrom(RSizeDto target)
 		{
-			var bVals = GetFromLongs(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new RSize(bVals, target.Exponent);
 			return result;
 		}
@@ -40,7 +40,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RVector MapFrom(RVectorDto target)
 		{
-			var bVals = GetFromLongs(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new RVector(bVals, target.Exponent);
 			return result;
 		}
@@ -53,7 +53,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RRectangle MapFrom(RRectangleDto target)
 		{
-			var bVals = GetFromLongs(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new RRectangle(bVals, target.Exponent);
 			return result;
 		}
@@ -66,27 +66,9 @@ namespace MSS.Common.DataTransferObjects
 
 		public BigVector MapFrom(BigVectorDto target)
 		{
-			var bVals = GetFromLongs(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new BigVector(bVals);
 			return result;
-		}
-
-		private BigInteger[] GetFromLongs(long[][] vals)
-		{
-			var cnt = vals.GetLength(0);
-			var bVals = new BigInteger[cnt];
-
-			for (var i = 0; i < cnt; i++)
-			{
-				var t = new BigInteger(0);
-				foreach (var v in vals[i])
-				{
-					t += v;
-				}
-				bVals[i] = t;
-			}
-
-			return bVals;
 		}
 
 	}

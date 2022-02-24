@@ -134,6 +134,12 @@ namespace MSS.Types
 
 		#region Convert to Integer Types
 
+		public static long[][] ToLongs(BigInteger[] values)
+		{
+			var result = values.Select(v => ToLongs(v)).ToArray();
+			return result;
+		}
+
 		public static long[] ToLongs(BigInteger bi)
 		{
 			var hi = BigInteger.DivRem(bi, FACTOR, out var lo);
@@ -144,6 +150,23 @@ namespace MSS.Types
 			}
 
 			var result = new long[] { (long)hi, (long)lo };
+
+			return result;
+		}
+
+		public static BigInteger[] FromLongs(long[][] values)
+		{
+			var result = values.Select(v => FromLongs(v)).ToArray();
+			return result;
+		}
+
+		public static BigInteger FromLongs(long[] values)
+		{
+			var result = new BigInteger(0);
+			foreach (var v in values)
+			{
+				result += v;
+			}
 
 			return result;
 		}
