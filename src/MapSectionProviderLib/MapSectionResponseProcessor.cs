@@ -1,41 +1,56 @@
 ﻿using MEngineDataContracts;
-using MSS.Common;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
+using MapSecWorkReqType = MapSectionProviderLib.WorkItem<MEngineDataContracts.MapSectionRequest, MEngineDataContracts.MapSectionResponse>;
+
 namespace MapSectionProviderLib
 {
-	public class MapSectionPersistProcessor : IDisposable
+	public class MapSectionResponseProcessor : IDisposable
 	{
-		private readonly IMapSectionRepo _mapSectionRepo;
-
 		private const int QUEUE_CAPACITY = 200;
+		private readonly object _lock = new();
+
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<MapSectionResponse> _workQueue;
+		private readonly BlockingCollection<MapSecWorkReqType> _workQueue;
+
+		private readonly List<int> _cancelledJobIds;
 
 		private Task _workQueueProcessor;
 		private bool disposedValue;
 
-		public MapSectionPersistProcessor(IMapSectionRepo mapSectionRepo)
+		public MapSectionResponseProcessor()
 		{
-			_mapSectionRepo = mapSectionRepo;
 			_cts = new CancellationTokenSource();
 
-			_workQueue = new BlockingCollection<MapSectionResponse>(QUEUE_CAPACITY);
-			_workQueueProcessor = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
+			_workQueue = new BlockingCollection<MapSecWorkReqType>(QUEUE_CAPACITY);
+			_cancelledJobIds = new List<int>();
+
+			_workQueueProcessor = Task.Run(ProcessTheQueue);
 		}
 
-		//public void AddWork(WorkItem<MapSectionResponse, string> mapSectionWorkItem)
-		//{
-		//	_workQueue.Add(mapSectionWorkItem);
-		//}
-
-		public void AddWork(MapSectionResponse mapSectionResponse)
+		public void AddWork(MapSecWorkReqType mapSectionWorkItem)
 		{
-			_workQueue.Add(mapSectionResponse);
+			// TODO: Use a Lock to prevent update of IsAddingCompleted while we are in this method.
+			if (!_workQueue.IsAddingCompleted)
+			{
+				_workQueue.Add(mapSectionWorkItem);
+			}
+		}
+
+		public void CancelJob(int jobId)
+		{
+			lock (_lock)
+			{
+				if (!_cancelledJobIds.Contains(jobId))
+				{
+					_cancelledJobIds.Add(jobId);
+				}
+			}
 		}
 
 		public void Stop(bool immediately)
@@ -59,28 +74,32 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task ProcessTheQueueAsync(CancellationToken ct)
+		private void ProcessTheQueue()
 		{
+			var ct = _cts.Token;
+
 			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
-					var mapSectionResponse = _workQueue.Take(ct);
-					var mapSectionId = await _mapSectionRepo.SaveMapSectionAsync(mapSectionResponse);
+					var mapSectionWorkItem = _workQueue.Take(ct);
+
+					mapSectionWorkItem.Request.Completed = true;
+					mapSectionWorkItem.RunWorkAction();
 				}
 				catch (OperationCanceledException)
 				{
-					Debug.WriteLine("The persist queue got a OCE.");
+					Debug.WriteLine("The response queue got a OCE.");
 				}
 				catch (Exception e)
 				{
-					Debug.WriteLine($"The persist queue got an exception: {e}.");
+					Debug.WriteLine($"The response queue got an exception: {e}.");
 					throw;
 				}
 			}
 		}
 
-		#region IDisposable Support
+		#region IDispoable Support
 
 		protected virtual void Dispose(bool disposing)
 		{

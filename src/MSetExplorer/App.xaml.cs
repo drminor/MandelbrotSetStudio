@@ -17,12 +17,14 @@ namespace MSetExplorer
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
 
 		private MapSectionPersistProcessor _mapSectionPersistProcessor;
+		private MapSectionResponseProcessor _mapSectionResponseProcessor;
 		private MapSectionRequestProcessor _mapSectionRequestProcessor;
+
 		private Process _serverProcess;
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			var DROP_MAP_SECTIONS = false;
+			var DROP_MAP_SECTIONS = true;
 
 			var USE_MAP_NAV_SIM = false;
 			var USE_MAP_SECTION_REPO = true;
@@ -44,8 +46,8 @@ namespace MSetExplorer
 			var mapSectionRepo = MSetRepoHelper.GetMapSectionRepo(MONGO_DB_CONN_STRING);
 
 			_mapSectionPersistProcessor = USE_MAP_SECTION_REPO ? new MapSectionPersistProcessor(mapSectionRepo) : null;
-			_mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, _mapSectionPersistProcessor);
-
+			_mapSectionResponseProcessor = new MapSectionResponseProcessor();
+			_mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, _mapSectionPersistProcessor, _mapSectionResponseProcessor);
 
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(RMapConstants.BLOCK_SIZE);
 			IMapLoaderJobStack mapLoaderJobStack = new MapLoaderJobStack(_mapSectionRequestProcessor, mapDisplayViewModel);

@@ -29,12 +29,26 @@ namespace MEngineDataContracts
 		[DataMember(Order = 7)]
 		public MapCalcSettings MapCalcSettings { get; set; }
 
+
+
 		public bool IsInverted { get; init; }
+
+		public bool Pending { get; set; }
 
 		public bool Sent { get; set; }
 		public bool FoundInRepo { get; set; }
 		public bool Completed { get; set; }
-		public bool Handled { get; set; }
+
+		public bool Saved { get; set; }
+
+		public bool Handled { get; set; } // I.e., Drawn
+
+		public override string ToString()
+		{
+			var bVals = BigIntegerHelper.FromLongs(BlockPosition.GetValues());
+			var bp = new BigVector(bVals);
+			return $"S:{SubdivisionId}, BPos:{bp}.";
+		}
 	}
 
 }
