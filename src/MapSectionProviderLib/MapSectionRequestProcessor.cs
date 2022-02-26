@@ -166,7 +166,7 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						Debug.WriteLine($"FetchOrQueueForGenerationAsync returned null.");
+						//Debug.WriteLine($"FetchOrQueueForGenerationAsync returned null.");
 					}
 				}
 				catch (OperationCanceledException)
@@ -224,7 +224,7 @@ namespace MapSectionProviderLib
 
 			if (pendingRequests.Count > 0)
 			{
-				Debug.WriteLine($"Found a dup request, marking this one as pending.");
+				//Debug.WriteLine($"Found a dup request, marking this one as pending.");
 
 				lock (_pendingRequestsLock)
 				{
@@ -271,7 +271,7 @@ namespace MapSectionProviderLib
 
 			if (pendingRequests.Count > 0)
 			{
-				Debug.WriteLine($"Handling found response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
+				//Debug.WriteLine($"Handling found response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
 			}
 
 			foreach (var workItem in pendingRequests)
@@ -294,7 +294,7 @@ namespace MapSectionProviderLib
 
 			var mapSectionRequest = mapSectionWorkItem.Request;
 			var pendingRequests = GetPendingRequests(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
-			Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
+			//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
 
 			foreach (var workItem in pendingRequests)
 			{

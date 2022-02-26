@@ -11,6 +11,8 @@ namespace MSS.Common
 
 		public static RRectangle GetMapCoords(RectangleInt area, RPoint position, RSize samplePointDelta)
 		{
+			//Debug.WriteLine($"GetMapCoords is receiving area: {area}.");
+
 			// Multiply the area by samplePointDelta to convert to map coordinates.
 			var rArea = ScaleByRsize(area, samplePointDelta);
 

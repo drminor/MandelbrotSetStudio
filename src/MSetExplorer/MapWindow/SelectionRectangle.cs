@@ -291,8 +291,8 @@ namespace MSetExplorer.MapWindow
 				if (Contains(posYInverted))
 				{
 					Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = True.");
-					Deactivate();
 					var adjArea = Area.Round();
+					Deactivate();
 
 					Debug.WriteLine($"Will start job here with position: {adjArea.Position}");
 					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, adjArea));
@@ -471,9 +471,16 @@ namespace MSetExplorer.MapWindow
 
 		private Size SelectedSize
 		{
-			get => new(_selectedArea.Width, _selectedArea.Height);
+			get
+			{
+				var result = new Size(_selectedArea.Width, _selectedArea.Height);
+				//Debug.WriteLine($"The selected size is {result}.");
+				return result;
+			}
+
 			set
 			{
+				//Debug.WriteLine($"The selected size is being updated to {value}.");
 				_selectedArea.Width = value.Width;
 				_selectedArea.Height = value.Height;
 			}
