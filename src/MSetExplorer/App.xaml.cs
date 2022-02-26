@@ -77,10 +77,10 @@ namespace MSetExplorer
 				_mapSectionRequestProcessor.Dispose();
 			}
 
-			if (_mapSectionPersistProcessor != null)
-			{
-				_mapSectionPersistProcessor.Dispose();
-			}
+			//if (_mapSectionPersistProcessor != null)
+			//{
+			//	_mapSectionPersistProcessor.Dispose();
+			//}
 
 			Debug.WriteLine("The request and persist processors have been closed.");
 

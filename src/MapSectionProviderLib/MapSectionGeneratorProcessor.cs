@@ -104,6 +104,9 @@ namespace MapSectionProviderLib
 				}
 			}
 			catch { }
+
+			_mapSectionPersistProcessor?.Stop(immediately);
+
 		}
 
 		#endregion
@@ -142,7 +145,7 @@ namespace MapSectionProviderLib
 				}
 				catch (OperationCanceledException)
 				{
-					Debug.WriteLine("The response queue got a OCE.");
+					//Debug.WriteLine("The response queue got a OCE.");
 				}
 				catch (Exception e)
 				{

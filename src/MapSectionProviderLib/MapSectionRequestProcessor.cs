@@ -157,7 +157,7 @@ namespace MapSectionProviderLib
 				try
 				{
 					var mapSectionWorkItem = _workQueue.Take(ct);
-					var mapSectionResponse = await FetchOrGenerateAsync(mapSectionWorkItem, mapSectionGeneratorProcessor, ct);
+					var mapSectionResponse = await FetchOrQueueForGenerationAsync(mapSectionWorkItem, mapSectionGeneratorProcessor, ct);
 
 					if (mapSectionResponse != null)
 					{
@@ -166,12 +166,12 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						Debug.WriteLine($"FetchOrGenerateAsync returned null.");
+						Debug.WriteLine($"FetchOrQueueForGenerationAsync returned null.");
 					}
 				}
 				catch (OperationCanceledException)
 				{
-					Debug.WriteLine("The work queue got a OCE.");
+					//Debug.WriteLine("The work queue got a OCE.");
 				}
 				catch (Exception e)
 				{
@@ -181,41 +181,41 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionResponse> FetchOrGenerateAsync(MapSecWorkReqType mapSectionWorkItem, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
+		private async Task<MapSectionResponse> FetchOrQueueForGenerationAsync(MapSecWorkReqType mapSectionWorkItem, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
 		{
+			MapSectionResponse result;
+
 			if (IsJobCancelled(mapSectionWorkItem.JobId))
 			{
-				return BuildEmptyResponse(mapSectionWorkItem.Request);
+				result = BuildEmptyResponse(mapSectionWorkItem.Request);
 			}
-
-			var mapSectionResponse = await FetchAsync(mapSectionWorkItem);
-			if (mapSectionResponse != null)
-			{
-				// Response was found in the repository.
-				mapSectionWorkItem.Request.FoundInRepo = true;
-				return mapSectionResponse;
-			}
-
-			if (mapSectionWorkItem.Request.Pending)
+			else if (CheckForMatchingAndAddToPending(mapSectionWorkItem))
 			{
 				// Don't have response now, but have added this request to another request that is in process.
-				return mapSectionResponse;
+				result = null;
+			}
+			else
+			{
+				var mapSectionResponse = await FetchAsync(mapSectionWorkItem);
+
+				if (!(mapSectionResponse is null))
+				{
+					result = mapSectionResponse;
+				}
+				else
+				{
+					var generatorWorkItem = new MapSecWorkGenType(mapSectionWorkItem.JobId, mapSectionWorkItem, HandleGeneratedResponse);
+					_mapSectionGeneratorProcessor.AddWork(generatorWorkItem);
+
+					// Don't have a response now, but will receive call back when generated.
+					result = null;
+				}
 			}
 
-			////Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
-			//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionWorkItem.Request);
-			//mapSectionPersistProcessor.AddWork(mapSectionResponse);
-
-			//var generatorWorkItem = new MapSecWorkReqType(mapSectionWorkItem.JobId, mapSectionWorkItem.Request, HandleGeneratedResponse);
-
-			var generatorWorkItem = new MapSecWorkGenType(mapSectionWorkItem.JobId, mapSectionWorkItem, HandleGeneratedResponse);
-
-			_mapSectionGeneratorProcessor.AddWork(generatorWorkItem);
-
-			return mapSectionResponse;
+			return result;
 		}
 
-		private async Task<MapSectionResponse> FetchAsync(MapSecWorkReqType mapSectionWorkItem)
+		private bool CheckForMatchingAndAddToPending(MapSecWorkReqType mapSectionWorkItem)
 		{
 			var mapSectionRequest = mapSectionWorkItem.Request;
 			var pendingRequests = GetMatchingRequests(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
@@ -233,22 +233,33 @@ namespace MapSectionProviderLib
 					_pendingRequests.Add(mapSectionWorkItem);
 				}
 
-				return null;
+				return true;
 			}
 			else
 			{
-				var mapSectionResponse = await _mapSectionRepo.GetMapSectionAsync(mapSectionRequest.SubdivisionId, _dtoMapper.MapFrom(mapSectionRequest.BlockPosition));
-
-				if (mapSectionResponse is null)
-				{
-					lock (_pendingRequestsLock)
-					{
-						_pendingRequests.Add(mapSectionWorkItem);
-					}
-				}
-
-				return mapSectionResponse;
+				return false;
 			}
+		}
+
+		private async Task<MapSectionResponse> FetchAsync(MapSecWorkReqType mapSectionWorkItem)
+		{
+			var mapSectionRequest = mapSectionWorkItem.Request;
+
+			var mapSectionResponse = await _mapSectionRepo.GetMapSectionAsync(mapSectionRequest.SubdivisionId, _dtoMapper.MapFrom(mapSectionRequest.BlockPosition));
+
+			if (!(mapSectionResponse is null))
+			{
+				mapSectionWorkItem.Request.FoundInRepo = true;
+			}
+			else
+			{
+				lock (_pendingRequestsLock)
+				{
+					_pendingRequests.Add(mapSectionWorkItem);
+				}
+			}
+
+			return mapSectionResponse;
 		}
 
 		private void HandleFoundResponse(MapSecWorkReqType mapSectionWorkItem)

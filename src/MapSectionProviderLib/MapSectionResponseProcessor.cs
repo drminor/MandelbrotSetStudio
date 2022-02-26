@@ -110,7 +110,7 @@ namespace MapSectionProviderLib
 				}
 				catch (OperationCanceledException)
 				{
-					Debug.WriteLine("The response queue got a OCE.");
+					//Debug.WriteLine("The response queue got a OCE.");
 				}
 				catch (Exception e)
 				{
@@ -142,7 +142,7 @@ namespace MapSectionProviderLib
 				if (disposing)
 				{
 					// Dispose managed state (managed objects)
-					Stop(false);
+					Stop(true);
 
 					if (_cts != null)
 					{
