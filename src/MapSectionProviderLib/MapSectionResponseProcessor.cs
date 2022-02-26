@@ -1,5 +1,4 @@
-﻿using MEngineDataContracts;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,7 +12,7 @@ namespace MapSectionProviderLib
 	public class MapSectionResponseProcessor : IDisposable
 	{
 		private const int QUEUE_CAPACITY = 200;
-		private readonly object _lock = new();
+		private readonly object _cancelledJobsLock = new();
 
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<MapSecWorkReqType> _workQueue;
@@ -35,16 +34,19 @@ namespace MapSectionProviderLib
 
 		public void AddWork(MapSecWorkReqType mapSectionWorkItem)
 		{
-			// TODO: Use a Lock to prevent update of IsAddingCompleted while we are in this method.
 			if (!_workQueue.IsAddingCompleted)
 			{
 				_workQueue.Add(mapSectionWorkItem);
+			}
+			else
+			{
+				Debug.WriteLine($"Not adding: {mapSectionWorkItem.Request}, Adding has been completed.");
 			}
 		}
 
 		public void CancelJob(int jobId)
 		{
-			lock (_lock)
+			lock (_cancelledJobsLock)
 			{
 				if (!_cancelledJobIds.Contains(jobId))
 				{
@@ -55,13 +57,19 @@ namespace MapSectionProviderLib
 
 		public void Stop(bool immediately)
 		{
-			if (immediately)
+			lock (_cancelledJobsLock)
 			{
-				_cts.Cancel();
-			}
-			else
-			{
-				_workQueue.CompleteAdding();
+				if (immediately)
+				{
+					_cts.Cancel();
+				}
+				else
+				{
+					if (!_workQueue.IsCompleted && !_workQueue.IsAddingCompleted)
+					{
+						_workQueue.CompleteAdding();
+					}
+				}
 			}
 
 			try
@@ -84,6 +92,11 @@ namespace MapSectionProviderLib
 				{
 					var mapSectionWorkItem = _workQueue.Take(ct);
 
+					if (IsJobCancelled(mapSectionWorkItem.JobId))
+					{
+						mapSectionWorkItem.Response.Counts = null;
+					}
+
 					mapSectionWorkItem.Request.Completed = true;
 					mapSectionWorkItem.RunWorkAction();
 				}
@@ -97,6 +110,17 @@ namespace MapSectionProviderLib
 					throw;
 				}
 			}
+		}
+
+		private bool IsJobCancelled(int jobId)
+		{
+			bool result;
+			lock (_cancelledJobsLock)
+			{
+				result = _cancelledJobIds.Contains(jobId);
+			}
+
+			return result;
 		}
 
 		#region IDispoable Support

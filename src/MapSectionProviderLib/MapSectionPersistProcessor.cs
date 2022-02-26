@@ -19,6 +19,8 @@ namespace MapSectionProviderLib
 		private Task _workQueueProcessor;
 		private bool disposedValue;
 
+		private readonly object _queueLock = new();
+
 		public MapSectionPersistProcessor(IMapSectionRepo mapSectionRepo)
 		{
 			_mapSectionRepo = mapSectionRepo;
@@ -28,25 +30,33 @@ namespace MapSectionProviderLib
 			_workQueueProcessor = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
 		}
 
-		//public void AddWork(WorkItem<MapSectionResponse, string> mapSectionWorkItem)
-		//{
-		//	_workQueue.Add(mapSectionWorkItem);
-		//}
-
 		public void AddWork(MapSectionResponse mapSectionResponse)
 		{
-			_workQueue.Add(mapSectionResponse);
+			if (!_workQueue.IsAddingCompleted)
+			{
+				_workQueue.Add(mapSectionResponse);
+			}
+			else
+			{
+				Debug.WriteLine($"Not adding: {mapSectionResponse}, Adding has been completed.");
+			}
 		}
 
 		public void Stop(bool immediately)
 		{
-			if (immediately)
+			lock (_queueLock)
 			{
-				_cts.Cancel();
-			}
-			else
-			{
-				_workQueue.CompleteAdding();
+				if (immediately)
+				{
+					_cts.Cancel();
+				}
+				else
+				{
+					if (!_workQueue.IsCompleted && !_workQueue.IsAddingCompleted)
+					{
+						_workQueue.CompleteAdding();
+					}
+				}
 			}
 
 			try

@@ -141,9 +141,12 @@ namespace MSetExplorer
 		{
 			//Debug.WriteLine($"Writing Pixels for section at {mapSection.CanvasPosition}.");
 
-			var screenSection = Get(mapSection.BlockPosition);
-			screenSection.WritePixels(mapSection.Pixels1d);
-			_drawingGroup.Children.Add(screenSection.ImageDrawing);
+			if (!(mapSection.Pixels1d is null))
+			{
+				var screenSection = Get(mapSection.BlockPosition);
+				screenSection.WritePixels(mapSection.Pixels1d);
+				_drawingGroup.Children.Add(screenSection.ImageDrawing);
+			}
 		}
 
 		private ScreenSection Get(PointInt blockPosition)
