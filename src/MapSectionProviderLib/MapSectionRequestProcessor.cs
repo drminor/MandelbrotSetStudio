@@ -10,20 +10,22 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+
 using MapSecWorkReqType = MapSectionProviderLib.WorkItem<MEngineDataContracts.MapSectionRequest, MEngineDataContracts.MapSectionResponse>;
+using MapSecWorkGenType = MapSectionProviderLib.WorkItem<MapSectionProviderLib.WorkItem<MEngineDataContracts.MapSectionRequest, MEngineDataContracts.MapSectionResponse>, MEngineDataContracts.MapSectionResponse>;
 
 namespace MapSectionProviderLib
 {
 	public class MapSectionRequestProcessor : IDisposable
 	{
-		private const int NUMBER_OF_CONSUMERS = 4;
-		private const int QUEUE_CAPACITY = 15;
+		private const int NUMBER_OF_CONSUMERS = 2;
+		private const int QUEUE_CAPACITY = 200;
 
-		private readonly IMEngineClient _mEngineClient;
 		private readonly IMapSectionRepo _mapSectionRepo;
 		private readonly DtoMapper _dtoMapper;
 
-		private readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
+		private readonly MapSectionGeneratorProcessor _mapSectionGeneratorProcessor;
 		private readonly MapSectionResponseProcessor _mapSectionResponseProcessor;
 
 		private readonly CancellationTokenSource _cts;
@@ -41,14 +43,13 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionRequestProcessor(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo, MapSectionPersistProcessor mapSectionPersistProcessor, 
+		public MapSectionRequestProcessor(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, 
 			MapSectionResponseProcessor mapSectionResponseProcessor)
 		{
 			_nextJobId = 0;
-			_mEngineClient = mEngineClient;
 			_mapSectionRepo = mapSectionRepo;
 			_dtoMapper = new DtoMapper();
-			_mapSectionPersistProcessor = mapSectionPersistProcessor;
+			_mapSectionGeneratorProcessor = mapSectionGeneratorProcessor;
 			_mapSectionResponseProcessor = mapSectionResponseProcessor;
 
 			_cts = new CancellationTokenSource();
@@ -58,37 +59,15 @@ namespace MapSectionProviderLib
 
 			_workQueueProcessors = new Task[NUMBER_OF_CONSUMERS];
 
-			if (mapSectionPersistProcessor != null)
+			for (var i = 0; i < _workQueueProcessors.Length; i++)
 			{
-				for (var i = 0; i < _workQueueProcessors.Length; i++)
-				{
-					_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistProcessor, _cts.Token));
-				}
-			}
-			else
-			{
-				for (var i = 0; i < _workQueueProcessors.Length; i++)
-				{
-					_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
-				}
+				_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionGeneratorProcessor, _cts.Token));
 			}
 		}
 
 		#endregion
 
 		#region Public Methods
-
-		public IList<MapSecWorkReqType> GetPendingRequests()
-		{
-			IList<MapSecWorkReqType> pendingRequestsCopy;
-
-			lock (_pendingRequestsLock)
-			{
-				pendingRequestsCopy = new List<MapSecWorkReqType>(_pendingRequests);
-			}
-
-			return pendingRequestsCopy;
-		}
 
 		public void AddWork(MapSecWorkReqType mapSectionWorkItem)
 		{
@@ -102,6 +81,18 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		public IList<MapSecWorkReqType> GetPendingRequests()
+		{
+			IList<MapSecWorkReqType> pendingRequestsCopy;
+
+			lock (_pendingRequestsLock)
+			{
+				pendingRequestsCopy = new List<MapSecWorkReqType>(_pendingRequests);
+			}
+
+			return pendingRequestsCopy;
+		}
+
 		public void CancelJob(int jobId)
 		{
 			lock (_cancelledJobsLock)
@@ -111,6 +102,7 @@ namespace MapSectionProviderLib
 					_cancelledJobIds.Add(jobId);
 				}
 
+				_mapSectionGeneratorProcessor.CancelJob(jobId);
 				_mapSectionResponseProcessor.CancelJob(jobId);
 			}
 		}
@@ -141,7 +133,7 @@ namespace MapSectionProviderLib
 			}
 			catch { }
 
-			_mapSectionPersistProcessor?.Stop(immediately);
+			_mapSectionGeneratorProcessor?.Stop(immediately);
 		}
 
 		public int GetNextRequestId()
@@ -158,14 +150,14 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private async Task ProcessTheQueueAsync(MapSectionPersistProcessor mapSectionPersistProcessor, CancellationToken ct)
+		private async Task ProcessTheQueueAsync(MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
 		{
 			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
 					var mapSectionWorkItem = _workQueue.Take(ct);
-					var mapSectionResponse = await FetchOrGenerateAsync(mapSectionWorkItem, mapSectionPersistProcessor, ct);
+					var mapSectionResponse = await FetchOrGenerateAsync(mapSectionWorkItem, mapSectionGeneratorProcessor, ct);
 
 					if (mapSectionResponse != null)
 					{
@@ -189,7 +181,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionResponse> FetchOrGenerateAsync(MapSecWorkReqType mapSectionWorkItem, MapSectionPersistProcessor mapSectionPersistProcessor, CancellationToken ct)
+		private async Task<MapSectionResponse> FetchOrGenerateAsync(MapSecWorkReqType mapSectionWorkItem, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
 		{
 			if (IsJobCancelled(mapSectionWorkItem.JobId))
 			{
@@ -210,9 +202,15 @@ namespace MapSectionProviderLib
 				return mapSectionResponse;
 			}
 
-			//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
-			mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionWorkItem.Request);
-			mapSectionPersistProcessor.AddWork(mapSectionResponse);
+			////Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+			//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionWorkItem.Request);
+			//mapSectionPersistProcessor.AddWork(mapSectionResponse);
+
+			//var generatorWorkItem = new MapSecWorkReqType(mapSectionWorkItem.JobId, mapSectionWorkItem.Request, HandleGeneratedResponse);
+
+			var generatorWorkItem = new MapSecWorkGenType(mapSectionWorkItem.JobId, mapSectionWorkItem, HandleGeneratedResponse);
+
+			_mapSectionGeneratorProcessor.AddWork(generatorWorkItem);
 
 			return mapSectionResponse;
 		}
@@ -255,12 +253,37 @@ namespace MapSectionProviderLib
 
 		private void HandleFoundResponse(MapSecWorkReqType mapSectionWorkItem)
 		{
+			_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
+
 			var mapSectionRequest = mapSectionWorkItem.Request;
 			var pendingRequests = GetPendingRequests(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
 
-			//Debug.WriteLine($"Handling response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
+			if (pendingRequests.Count > 0)
+			{
+				Debug.WriteLine($"Handling found response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
+			}
 
+			foreach (var workItem in pendingRequests)
+			{
+				if (workItem != mapSectionWorkItem && !IsJobCancelled(workItem.JobId))
+				{
+					workItem.Response = mapSectionWorkItem.Response;
+					_mapSectionResponseProcessor.AddWork(workItem);
+				}
+			}
+		}
+
+		private void HandleGeneratedResponse(MapSecWorkReqType mapSectionWorkItem, MapSectionResponse mapSectionResponse)
+		{
+			// Set the original request's repsonse to the generated response.
+			mapSectionWorkItem.Response = mapSectionResponse;
+
+			// Send the original request to the response processor.
 			_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
+
+			var mapSectionRequest = mapSectionWorkItem.Request;
+			var pendingRequests = GetPendingRequests(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
+			Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
 
 			foreach (var workItem in pendingRequests)
 			{
@@ -328,42 +351,6 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		private async Task ProcessTheQueueAsync(CancellationToken ct)
-		{
-			// Does not use a Persist Processor
-
-			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
-			{
-				try
-				{
-					MapSectionResponse mapSectionResponse;
-					var workItem = _workQueue.Take(ct);
-
-					if (IsJobCancelled(workItem.JobId))
-					{
-						mapSectionResponse = BuildEmptyResponse(workItem.Request);
-					}
-					else
-					{
-						//Debug.WriteLine($"Generating MapSection for block: {workItem.Request.BlockPosition}.");
-						mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(workItem.Request);
-					}
-
-					workItem.Response = mapSectionResponse;
-					_mapSectionResponseProcessor.AddWork(workItem);
-				}
-				catch (TaskCanceledException)
-				{
-					Debug.WriteLine("The work queue got a TCE.");
-				}
-				catch (Exception e)
-				{
-					Debug.WriteLine($"The work queue got an exception: {e}.");
-					throw;
-				}
-			}
-		}
-
 		private bool IsJobCancelled(int jobId)
 		{
 			bool result;
@@ -390,7 +377,7 @@ namespace MapSectionProviderLib
 
 		#endregion
 
-		#region IDispoable Support
+		#region IDisposable Support
 
 		protected virtual void Dispose(bool disposing)
 		{

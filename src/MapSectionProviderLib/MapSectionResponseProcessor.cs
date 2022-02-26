@@ -22,6 +22,8 @@ namespace MapSectionProviderLib
 		private Task _workQueueProcessor;
 		private bool disposedValue;
 
+		#region Constructor
+
 		public MapSectionResponseProcessor()
 		{
 			_cts = new CancellationTokenSource();
@@ -31,6 +33,10 @@ namespace MapSectionProviderLib
 
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
 		}
+
+		#endregion
+
+		#region Public Methods
 
 		public void AddWork(MapSecWorkReqType mapSectionWorkItem)
 		{
@@ -77,10 +83,12 @@ namespace MapSectionProviderLib
 				_workQueueProcessor.Wait(120 * 1000);
 			}
 			catch
-			{
-
-			}
+			{ }
 		}
+
+		#endregion
+
+		#region Private Methods
 
 		private void ProcessTheQueue()
 		{
@@ -122,6 +130,8 @@ namespace MapSectionProviderLib
 
 			return result;
 		}
+
+		#endregion
 
 		#region IDispoable Support
 

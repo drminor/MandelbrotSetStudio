@@ -21,6 +21,8 @@ namespace MapSectionProviderLib
 
 		private readonly object _queueLock = new();
 
+		#region Constructor
+
 		public MapSectionPersistProcessor(IMapSectionRepo mapSectionRepo)
 		{
 			_mapSectionRepo = mapSectionRepo;
@@ -29,6 +31,10 @@ namespace MapSectionProviderLib
 			_workQueue = new BlockingCollection<MapSectionResponse>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
 		}
+
+		#endregion
+
+		#region Public Methods
 
 		public void AddWork(MapSectionResponse mapSectionResponse)
 		{
@@ -69,6 +75,10 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		#endregion
+
+		#region Private Methods
+
 		private async Task ProcessTheQueueAsync(CancellationToken ct)
 		{
 			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
@@ -76,7 +86,7 @@ namespace MapSectionProviderLib
 				try
 				{
 					var mapSectionResponse = _workQueue.Take(ct);
-					var mapSectionId = await _mapSectionRepo.SaveMapSectionAsync(mapSectionResponse);
+					var _ = await _mapSectionRepo.SaveMapSectionAsync(mapSectionResponse);
 				}
 				catch (OperationCanceledException)
 				{
@@ -89,6 +99,8 @@ namespace MapSectionProviderLib
 				}
 			}
 		}
+
+		#endregion
 
 		#region IDisposable Support
 

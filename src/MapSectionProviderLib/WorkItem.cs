@@ -17,6 +17,12 @@ namespace MapSectionProviderLib
 			WorkAction = workAction ?? throw new ArgumentNullException(nameof(workAction));
 		}
 
+		public void RunWorkAction(U response)
+		{
+			Response = response;
+			RunWorkAction();
+		}
+
 		public void RunWorkAction()
 		{
 			WorkAction(Request, Response);
