@@ -15,7 +15,7 @@ namespace MSetExplorer
 	public partial class MapDisplay : UserControl
 	{
 		private static readonly bool _showBorder = true;
-		private static readonly bool _clipImageBlocks = true;
+		private static readonly bool _clipImageBlocks = false;
 		private static readonly bool _keepDisplaySquare = true;
 
 		private IMapDisplayViewModel _vm;
@@ -61,7 +61,7 @@ namespace MSetExplorer
 				_selectedArea.AreaSelected += SelectedArea_AreaSelected;
 				_selectedArea.ScreenPanned += SelectedArea_ScreenPanned;
 
-				_border = _showBorder ? BuildBorder(MainCanvas) : null;
+				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(MainCanvas) : null;
 
 				Debug.WriteLine("The MapDisplay is now loaded.");
 			}
@@ -79,8 +79,8 @@ namespace MSetExplorer
 			};
 
 			_ = canvas.Children.Add(result);
-			result.SetValue(Canvas.LeftProperty, 2d);
-			result.SetValue(Canvas.TopProperty, 2d);
+			result.SetValue(Canvas.LeftProperty, -2d);
+			result.SetValue(Canvas.TopProperty, -2d);
 			result.SetValue(Panel.ZIndexProperty, 100);
 
 			return result;
@@ -132,15 +132,7 @@ namespace MSetExplorer
 		public SizeInt CanvasSize
 		{
 			get => (SizeInt)GetValue(CanvasSizeProperty);
-
-			set
-			{
-				var diff = CanvasSize.Diff(value).Abs();
-				if (diff.Width > 0 || diff.Height > 0)
-				{
-					SetValue(CanvasSizeProperty, value);
-				}
-			}
+			set { if (value != CanvasSize) { SetValue(CanvasSizeProperty, value); } }
 		}
 
 		private static void CanvasSizeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
@@ -172,8 +164,8 @@ namespace MSetExplorer
 
 			if (_showBorder && !(_border is null))
 			{
-				_border.Width = value.Width - 4;
-				_border.Height = value.Height - 4;
+				_border.Width = value.Width + 4;
+				_border.Height = value.Height + 4;
 			}
 		}
 

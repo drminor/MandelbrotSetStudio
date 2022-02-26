@@ -42,30 +42,35 @@ namespace MSS.Types
 			}
 		}
 
-		//public SizeInt Translate(SizeInt amount)
-		//{
-		//	return new SizeInt(Width + amount.Width, Height + amount.Height);
-		//}
-
-		public SizeInt Diff(SizeInt amount)
+		public SizeInt Inflate(SizeInt amount)
 		{
-			return new SizeInt(Width - amount.Width, Height - amount.Height);
+			return new SizeInt(Width + amount.Width, Height + amount.Height);
 		}
+
+		//public SizeInt Deflate(SizeInt amount)
+		//{
+		//	return new SizeInt(Width - amount.Width, Height - amount.Height);
+		//}
 
 		public SizeInt Scale(SizeInt factor)
 		{
 			return new SizeInt(Width * factor.Width, Height * factor.Height);
 		}
 
-		//public SizeInt Scale(double factor)
-		//{
-		//	return new SizeInt((int)Math.Round(Width * factor), (int)Math.Round(Height * factor));
-		//}
+		public SizeInt Inflate(int amount)
+		{
+			return new SizeInt(Width + amount, Height + amount);
+		}
 
 		public SizeInt Scale(int factor)
 		{
 			return new SizeInt(Width * factor, Height * factor);
 		}
+
+		//public SizeInt Scale(double factor)
+		//{
+		//	return new SizeInt((int)Math.Round(Width * factor), (int)Math.Round(Height * factor));
+		//}
 
 		public SizeDbl Divide(SizeInt dividend)
 		{
@@ -93,10 +98,10 @@ namespace MSS.Types
 		//	return new SizeInt(Width % dividend.Width, Height % dividend.Height);
 		//}
 
-		public SizeInt Abs()
-		{
-			return new SizeInt(Math.Abs(Width), Math.Abs(Height));
-		}
+		//public SizeInt Abs()
+		//{
+		//	return new SizeInt(Math.Abs(Width), Math.Abs(Height));
+		//}
 
 		public SizeInt GetSquare()
 		{

@@ -12,6 +12,9 @@ using System.Threading;
 
 namespace MSetExplorer
 {
+
+	// TODO: Use the ReaderWriterLockSlim class, instead of a regular lock.
+
 	internal class MapLoaderJobStack : IMapLoaderJobStack
 	{
 		private readonly SynchronizationContext _synchronizationContext;
@@ -23,6 +26,7 @@ namespace MSetExplorer
 		private int _requestStackPointer;
 
 		private readonly object _hmsLock;
+		private readonly ReaderWriterLockSlim _stackLock;
 
 		#region Constructor
 
@@ -35,6 +39,7 @@ namespace MSetExplorer
 			_requestStack = new List<GenMapRequestInfo>();
 			_requestStackPointer = -1;
 			_hmsLock = new object();
+			_stackLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 		}
 
 		#endregion
@@ -154,11 +159,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void HandleMapSectionReady(MapSection mapSection)
-		//{
-		//	_mapDisplayViewModel.MapSections.Add(mapSection);
-		//}
-
 		private void HandleMapNav(VectorInt canvasControOffset)
 		{
 			_synchronizationContext.Post(o => {
@@ -219,23 +219,29 @@ namespace MSetExplorer
 		private bool TryGetNextJobInStack(int requestStackPointer, out int nextRequestStackPointer)
 		{
 			nextRequestStackPointer = -1;
+			bool result;
 
-			if (TryGetJobFromStack(requestStackPointer, out var job))
+			lock (_hmsLock)
 			{
-				if (TryGetLatestChildJobIndex(job, out var childJobRequestStackPointer))
+				if (TryGetJobFromStack(requestStackPointer, out var job))
 				{
-					nextRequestStackPointer = childJobRequestStackPointer;
-					return true;
+					if (TryGetLatestChildJobIndex(job, out var childJobRequestStackPointer))
+					{
+						nextRequestStackPointer = childJobRequestStackPointer;
+						result = true;
+					}
+					else
+					{
+						result = false;
+					}
 				}
 				else
 				{
-					return false;
+					result = false;
 				}
 			}
-			else
-			{
-				return false;
-			}
+
+			return result;
 		}
 
 		private bool TryGetJobFromStack(int requestStackPointer, out Job job)
@@ -257,21 +263,18 @@ namespace MSetExplorer
 			requestStackPointer = -1;
 			var lastestDtFound = DateTime.MinValue;
 
-			lock (_hmsLock)
+			for (var i = 0; i < _requestStack.Count; i++)
 			{
-				for (var i = 0; i < _requestStack.Count; i++)
-				{
-					var genMapRequestInfo = _requestStack[i];
-					var thisParentJobId = genMapRequestInfo.Job?.ParentJob?.Id ?? ObjectId.Empty;
+				var genMapRequestInfo = _requestStack[i];
+				var thisParentJobId = genMapRequestInfo.Job?.ParentJob?.Id ?? ObjectId.Empty;
 
-					if (thisParentJobId.Equals(parentJob.Id))
+				if (thisParentJobId.Equals(parentJob.Id))
+				{
+					var dt = thisParentJobId.CreationTime;
+					if (dt > lastestDtFound)
 					{
-						var dt = thisParentJobId.CreationTime;
-						if (dt > lastestDtFound)
-						{
-							requestStackPointer = i;
-							lastestDtFound = dt;
-						}
+						requestStackPointer = i;
+						lastestDtFound = dt;
 					}
 				}
 			}

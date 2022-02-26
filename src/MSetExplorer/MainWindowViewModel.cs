@@ -32,11 +32,15 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Event Handlers 
+
 		private void MapLoaderJobStack_CurrentJobChanged(object sender, EventArgs e)
 		{
 			OnPropertyChanged("CanGoBack");
 			OnPropertyChanged("CanGoForward");
 		}
+
+		#endregion
 
 		#region Public Properties
 

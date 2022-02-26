@@ -27,9 +27,8 @@ namespace MSetExplorer
 		public ScreenSectionCollection(Canvas canvas, SizeInt blockSize, ObservableCollection<MapSection> mapSections)
 		{
 			_mapSections = mapSections;
-			var canvasSize = new Size(canvas.Width, canvas.Height);
+			var canvasSize = new SizeDbl(canvas.Width, canvas.Height).Round();
 			var sizeInBlocks = GetSizeInBlocks(canvasSize, blockSize);
-
 			_screenSections = BuildScreenSections(sizeInBlocks, blockSize);
 
 			_drawingGroup = new DrawingGroup();
@@ -64,12 +63,11 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private SizeInt GetSizeInBlocks(Size canvasSize, SizeInt blockSize)
+		private SizeInt GetSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
 		{
 			// Include an additional block to accommodate when the CanvasControlOffset is non-zero.
-			var canvasSizeInt = new SizeDbl(canvasSize.Width, canvasSize.Height).Round();
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSizeInt, blockSize);
-			var result = new SizeInt(canvasSizeInBlocks.Width + 2, canvasSizeInBlocks.Height + 2);
+			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
+			var result = canvasSizeInBlocks.Inflate(2);
 
 			// Always overide the above calculation and allocate 400 sections.
 			if (result.Width > 0)
@@ -127,9 +125,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private IList<MapSection> GetList(IList lst)
+		private IEnumerable<MapSection> GetList(IList lst)
 		{
-			return lst?.Cast<MapSection>().ToList() ?? new List<MapSection>();
+			return lst?.Cast<MapSection>() ?? new List<MapSection>();
 		}
 
 		public void HideScreenSections()
@@ -146,6 +144,8 @@ namespace MSetExplorer
 				var screenSection = Get(mapSection.BlockPosition);
 				screenSection.WritePixels(mapSection.Pixels1d);
 				_drawingGroup.Children.Add(screenSection.ImageDrawing);
+
+
 			}
 		}
 
