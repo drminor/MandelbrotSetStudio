@@ -56,6 +56,11 @@ namespace MSS.Types
 		//	return new PointInt(Math.Abs(X), Math.Abs(Y));
 		//}
 
+		public PointInt Mod(SizeInt dividend)
+		{
+			return new PointInt(X % dividend.Width, Y % dividend.Height);
+		}
+
 		public override string? ToString()
 		{
 			return $"x:{X}, y:{Y}";

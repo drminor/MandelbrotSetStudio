@@ -93,10 +93,10 @@ namespace MSS.Types
 		//	return result;
 		//}
 
-		//public SizeInt Mod(SizeInt dividend)
-		//{
-		//	return new SizeInt(Width % dividend.Width, Height % dividend.Height);
-		//}
+		public SizeInt Mod(VectorInt dividend)
+		{
+			return new SizeInt(Width % dividend.X, Height % dividend.Y);
+		}
 
 		//public SizeInt Abs()
 		//{
