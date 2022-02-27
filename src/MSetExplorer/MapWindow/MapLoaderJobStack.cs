@@ -12,9 +12,6 @@ using System.Threading;
 
 namespace MSetExplorer
 {
-
-	// TODO: Use the ReaderWriterLockSlim class, instead of a regular lock.
-
 	internal class MapLoaderJobStack : IMapLoaderJobStack
 	{
 		private readonly SynchronizationContext _synchronizationContext;
@@ -25,7 +22,6 @@ namespace MSetExplorer
 		private readonly List<GenMapRequestInfo> _requestStack;
 		private int _requestStackPointer;
 
-		private readonly object _hmsLock;
 		private readonly ReaderWriterLockSlim _stackLock;
 
 		#region Constructor
@@ -38,8 +34,8 @@ namespace MSetExplorer
 
 			_requestStack = new List<GenMapRequestInfo>();
 			_requestStackPointer = -1;
-			_hmsLock = new object();
-			_stackLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
+			_stackLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 		}
 
 		#endregion
@@ -48,14 +44,16 @@ namespace MSetExplorer
 
 		public event EventHandler CurrentJobChanged;
 
-		private GenMapRequestInfo CurrentRequest => _requestStackPointer == -1 ? null : _requestStack[_requestStackPointer];
+		private GenMapRequestInfo CurrentRequest => DoWithReadLock(() => { return _requestStackPointer == -1 ? null : _requestStack[_requestStackPointer]; });
+
 		private int? CurrentJobNumber => CurrentRequest?.JobNumber;
 
 		public Job CurrentJob => CurrentRequest?.Job;
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
-		public bool CanGoForward => TryGetNextJobInStack(_requestStackPointer, out var _);
 
-		public IEnumerable<Job> Jobs => new ReadOnlyCollection<Job>(_requestStack.Select(x => x.Job).ToList());
+		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_requestStackPointer, out var _); });
+
+		public IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_requestStack.Select(x => x.Job).ToList()); });
 
 		#endregion
 
@@ -63,123 +61,153 @@ namespace MSetExplorer
 
 		public void LoadJobStack(IEnumerable<Job> jobs)
 		{
-			foreach (var job in jobs)
-			{
-				_requestStack.Add(new GenMapRequestInfo(job));
-			}
+			DoWithWriteLock(() => {
+				foreach (var job in jobs)
+				{
+					_requestStack.Add(new GenMapRequestInfo(job));
+				}
 
-			_requestStackPointer = _requestStack.Count - 1;
+				_requestStackPointer = _requestStack.Count - 1;
 
-			Rerun(_requestStackPointer);
+				Rerun(_requestStackPointer);
+			});
 		}
 
 		public void Push(Job job)
 		{
-			CheckForDuplicateJob(job.Id);
-			StopCurrentJob();
+			DoWithWriteLock(() =>
+			{
+				CheckForDuplicateJob(job.Id);
+				StopCurrentJob();
 
-			var genMapRequestInfo = PushRequest(job);
+				var genMapRequestInfo = PushRequest(job);
 
-			CurrentJobChanged?.Invoke(this, new EventArgs());
-			HandleMapNav(CurrentJob.CanvasControlOffset);
+				CurrentJobChanged?.Invoke(this, new EventArgs());
+				ResetMapDisplay(CurrentJob.CanvasControlOffset);
 
-			genMapRequestInfo.StartLoading();
+				genMapRequestInfo.StartLoading();
+			});
 		}
 
 		public void UpdateJob(Job oldJob, Job newJob)
 		{
-			if (TryFindByJobId(oldJob.Id, out var genMapRequestInfo))
-			{
-				genMapRequestInfo.Job = newJob;
-
-				var oldJobId = oldJob.Id;
-				foreach (var req in _requestStack)
+			DoWithWriteLock(() => {
+				if (TryFindByJobId(oldJob.Id, out var genMapRequestInfo))
 				{
-					if (req.Job?.ParentJob?.Id == oldJobId)
+					genMapRequestInfo.Job = newJob;
+
+					var oldJobId = oldJob.Id;
+					foreach (var req in _requestStack)
 					{
-						req.Job.ParentJob = newJob;
+						if (req.Job?.ParentJob?.Id == oldJobId)
+						{
+							req.Job.ParentJob = newJob;
+						}
 					}
 				}
-			}
-			else
-			{
-				throw new KeyNotFoundException("The old job could not be found.");
-			}
+				else
+				{
+					throw new KeyNotFoundException("The old job could not be found.");
+				}
+			});
 		}
 
 		public bool GoBack()
 		{
-			var parentJob = CurrentJob?.ParentJob;
-
-			if (!(parentJob is null))
+			_stackLock.EnterUpgradeableReadLock();
+			try
 			{
-				var genMapRequestInfo = _requestStack.FirstOrDefault(x => parentJob.Id == x.Job.Id);
-				if (!(genMapRequestInfo is null))
-				{
-					var idx = _requestStack.IndexOf(genMapRequestInfo);
-					Rerun(idx);
-					return true;
-				}
-			}
+				var parentJob = CurrentJob?.ParentJob;
 
-			return false;
+				if (!(parentJob is null))
+				{
+					_stackLock.EnterWriteLock();
+					try
+					{
+						var genMapRequestInfo = _requestStack.FirstOrDefault(x => parentJob.Id == x.Job.Id);
+						if (!(genMapRequestInfo is null))
+						{
+							var idx = _requestStack.IndexOf(genMapRequestInfo);
+							Rerun(idx);
+							return true;
+						}
+					}
+					finally
+					{
+						_stackLock.ExitWriteLock();
+					}
+				}
+
+				return false;
+			}
+			finally
+			{
+				_stackLock.ExitUpgradeableReadLock();
+			}
 		}
 
 		public bool GoForward()
 		{
-			if (TryGetNextJobInStack(_requestStackPointer, out var nextRequestStackPointer))
+			_stackLock.EnterUpgradeableReadLock();
+			try
 			{
-				Rerun(nextRequestStackPointer);
-				return true;
+				if (TryGetNextJobInStack(_requestStackPointer, out var nextRequestStackPointer))
+				{
+					_stackLock.EnterWriteLock();
+					try
+					{
+						Rerun(nextRequestStackPointer);
+						return true;
+					}
+					finally
+					{
+						_stackLock.ExitWriteLock();
+					}
+				}
+				else
+				{
+					return false;
+				}
 			}
-			else
+			finally
 			{
-				return false;
+				_stackLock.ExitUpgradeableReadLock();
 			}
 		}
 
 		#endregion
 
-		#region Private Methods
+		#region Event Handlers
 
 		private void HandleMapSection(int jobNumber, MapSection mapSection)
 		{
-			lock (_hmsLock)
-			{
-				var curJobNumber = CurrentJobNumber;
-				if (jobNumber == curJobNumber)
+			DoWithWriteLock(() => {
+				if (jobNumber == CurrentJobNumber)
 				{
 					//_onMapSectionReady(mapSection);
 					_synchronizationContext.Post(o => _mapDisplayViewModel.MapSections.Add(mapSection), null);
 				}
 				else
 				{
-					Debug.WriteLine($"HandleMapSection is ignoring the new section. CurJobNum:{curJobNumber}, Handling JobNum: {jobNumber}.");
+					Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}."); // . CurJobNum:{curJobNumber}, Handling
 				}
-			}
+			});
 		}
 
-		private void HandleMapNav(VectorInt canvasControOffset)
-		{
-			_synchronizationContext.Post(o => {
-				_mapDisplayViewModel.CanvasControlOffset = canvasControOffset;
-				_mapDisplayViewModel.MapSections.Clear();
-			}, null);
-		}
+		#endregion
+
+		#region Private Methods
 
 		private GenMapRequestInfo PushRequest(Job job)
 		{
-			lock (_hmsLock)
-			{
-				var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
-				var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
-				var result = new GenMapRequestInfo(job, jobNumber, mapLoader);
+			var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+			var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
+			var result = new GenMapRequestInfo(job, jobNumber, mapLoader);
 
-				_requestStack.Add(result);
-				_requestStackPointer = _requestStack.Count - 1;
+			_requestStack.Add(result);
+			_requestStackPointer = _requestStack.Count - 1;
 
-				return result;
-			}
+			return result;
 		}
 
 		private void Rerun(int newRequestStackPointer)
@@ -192,8 +220,7 @@ namespace MSetExplorer
 			StopCurrentJob();
 
 			var genMapRequestInfo = RerunRequest(newRequestStackPointer);
-
-			HandleMapNav(CurrentJob.CanvasControlOffset);
+			ResetMapDisplay(CurrentJob.CanvasControlOffset);
 			CurrentJobChanged?.Invoke(this, new EventArgs());
 
 			genMapRequestInfo.StartLoading();
@@ -201,47 +228,41 @@ namespace MSetExplorer
 
 		private GenMapRequestInfo RerunRequest(int newRequestStackPointer)
 		{
-			lock (_hmsLock)
+			var result = _requestStack[newRequestStackPointer];
+			var job = result.Job;
+
+			var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+			var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
+			result.Renew(jobNumber, mapLoader);
+
+			_requestStackPointer = newRequestStackPointer;
+
+			return result;
+		}
+
+		private void ResetMapDisplay(VectorInt canvasControOffset)
+		{
+			_synchronizationContext.Post(o =>
 			{
-				var result = _requestStack[newRequestStackPointer];
-				var job = result.Job;
-
-				var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
-				var mapLoader = new MapLoader(job, jobNumber, HandleMapSection, _mapSectionRequestProcessor);
-				result.Renew(jobNumber, mapLoader);
-
-				_requestStackPointer = newRequestStackPointer;
-
-				return result;
-			}
+				_mapDisplayViewModel.CanvasControlOffset = canvasControOffset;
+				_mapDisplayViewModel.MapSections.Clear();
+			}, null);
 		}
 
 		private bool TryGetNextJobInStack(int requestStackPointer, out int nextRequestStackPointer)
 		{
 			nextRequestStackPointer = -1;
-			bool result;
 
-			lock (_hmsLock)
+			if (TryGetJobFromStack(requestStackPointer, out var job))
 			{
-				if (TryGetJobFromStack(requestStackPointer, out var job))
+				if (TryGetLatestChildJobIndex(job, out var childJobRequestStackPointer))
 				{
-					if (TryGetLatestChildJobIndex(job, out var childJobRequestStackPointer))
-					{
-						nextRequestStackPointer = childJobRequestStackPointer;
-						result = true;
-					}
-					else
-					{
-						result = false;
-					}
-				}
-				else
-				{
-					result = false;
+					nextRequestStackPointer = childJobRequestStackPointer;
+					return true;
 				}
 			}
 
-			return result;
+			return false;
 		}
 
 		private bool TryGetJobFromStack(int requestStackPointer, out Job job)
@@ -251,11 +272,11 @@ namespace MSetExplorer
 				job = null;
 				return false;
 			}
-
-			var genMapRequestInfo = _requestStack[requestStackPointer];
-			job = genMapRequestInfo.Job;
-
-			return true;
+			else
+			{
+				job = _requestStack[requestStackPointer].Job;
+				return true;
+			}
 		}
 
 		private bool TryGetLatestChildJobIndex(Job parentJob, out int requestStackPointer)
@@ -285,7 +306,7 @@ namespace MSetExplorer
 
 		private void CheckForDuplicateJob(ObjectId id)
 		{
-			if (TryFindByJobId(id, out _))
+			if (_requestStack.Any(x => x.Job.Id == id))
 			{
 				throw new InvalidOperationException($"A job with id: {id} has already been pushed.");
 			}
@@ -300,6 +321,34 @@ namespace MSetExplorer
 		private void StopCurrentJob()
 		{
 			CurrentRequest?.MapLoader?.Stop();
+		}
+
+		private T DoWithReadLock<T>(Func<T> function)
+		{
+			_stackLock.EnterReadLock();
+
+			try
+			{
+				return function();
+			}
+			finally
+			{
+				_stackLock.ExitReadLock();
+			}
+		}
+
+		private void DoWithWriteLock(Action action)
+		{
+			_stackLock.EnterWriteLock();
+
+			try
+			{
+				action();
+			}
+			finally
+			{
+				_stackLock.ExitWriteLock();
+			}
 		}
 
 		#endregion

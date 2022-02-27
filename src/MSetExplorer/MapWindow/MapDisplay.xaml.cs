@@ -14,14 +14,14 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapDisplay : UserControl
 	{
-		private static readonly bool _showBorder = true;
-		private static readonly bool _clipImageBlocks = false;
+		private static readonly bool _showBorder = false;
+		private static readonly bool _clipImageBlocks = true;
 		private static readonly bool _keepDisplaySquare = true;
 
 		private IMapDisplayViewModel _vm;
 
 		private SelectionRectangle _selectedArea;
-		private IScreenSectionCollection _screenSections;
+		private IMapSectionCollectionBinder _mapSectionCollectionBinder;
 		private Border _border;
 
 		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
@@ -54,7 +54,7 @@ namespace MSetExplorer
 				MainCanvas.ClipToBounds = _clipImageBlocks;
 				SizeChanged += MapDisplay_SizeChanged;
 
-				_screenSections = new ScreenSectionCollection(MainCanvas, _vm.BlockSize, _vm.MapSections);
+				_mapSectionCollectionBinder = new MapSectionCollectionBinder(MainCanvas, _vm.BlockSize, _vm.MapSections);
 
 				var canvasControlOffset = _vm.CanvasControlOffset;
 				_selectedArea = new SelectionRectangle(MainCanvas, canvasControlOffset, _vm.BlockSize);
@@ -95,7 +95,7 @@ namespace MSetExplorer
 			if (e.PropertyName == "CanvasControlOffset")
 			{
 				var offset = _vm.CanvasControlOffset;
-				_screenSections.CanvasOffset = offset;
+				_mapSectionCollectionBinder.CanvasOffset = offset;
 				_selectedArea.CanvasControlOffset = offset;
 
 				return;

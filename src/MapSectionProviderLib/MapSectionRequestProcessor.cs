@@ -157,12 +157,22 @@ namespace MapSectionProviderLib
 				try
 				{
 					var mapSectionWorkItem = _workQueue.Take(ct);
-					var mapSectionResponse = await FetchOrQueueForGenerationAsync(mapSectionWorkItem, mapSectionGeneratorProcessor, ct);
+
+					MapSectionResponse mapSectionResponse;
+					if (IsJobCancelled(mapSectionWorkItem.JobId))
+					{
+						mapSectionResponse = BuildEmptyResponse(mapSectionWorkItem.Request);
+					}
+					else
+					{
+						mapSectionResponse = await FetchOrQueueForGenerationAsync(mapSectionWorkItem, mapSectionGeneratorProcessor, ct);
+					}
 
 					if (mapSectionResponse != null)
 					{
 						mapSectionWorkItem.Response = mapSectionResponse;
-						HandleFoundResponse(mapSectionWorkItem);
+						//HandleFoundResponse(mapSectionWorkItem);
+						_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
 					}
 					else
 					{
@@ -185,11 +195,7 @@ namespace MapSectionProviderLib
 		{
 			MapSectionResponse result;
 
-			if (IsJobCancelled(mapSectionWorkItem.JobId))
-			{
-				result = BuildEmptyResponse(mapSectionWorkItem.Request);
-			}
-			else if (CheckForMatchingAndAddToPending(mapSectionWorkItem))
+			if (CheckForMatchingAndAddToPending(mapSectionWorkItem))
 			{
 				// Don't have response now, but have added this request to another request that is in process.
 				result = null;
@@ -262,27 +268,27 @@ namespace MapSectionProviderLib
 			return mapSectionResponse;
 		}
 
-		private void HandleFoundResponse(MapSecWorkReqType mapSectionWorkItem)
-		{
-			_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
+		//private void HandleFoundResponse(MapSecWorkReqType mapSectionWorkItem)
+		//{
+		//	_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
 
-			var mapSectionRequest = mapSectionWorkItem.Request;
-			var pendingRequests = GetPendingRequests(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
+		//	var mapSectionRequest = mapSectionWorkItem.Request;
+		//	var pendingRequests = GetPendingRequests(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
 
-			if (pendingRequests.Count > 0)
-			{
-				//Debug.WriteLine($"Handling found response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
-			}
+		//	if (pendingRequests.Count > 0)
+		//	{
+		//		//Debug.WriteLine($"Handling found response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
+		//	}
 
-			foreach (var workItem in pendingRequests)
-			{
-				if (workItem != mapSectionWorkItem && !IsJobCancelled(workItem.JobId))
-				{
-					workItem.Response = mapSectionWorkItem.Response;
-					_mapSectionResponseProcessor.AddWork(workItem);
-				}
-			}
-		}
+		//	foreach (var workItem in pendingRequests)
+		//	{
+		//		if (workItem != mapSectionWorkItem && !IsJobCancelled(workItem.JobId))
+		//		{
+		//			workItem.Response = mapSectionWorkItem.Response;
+		//			_mapSectionResponseProcessor.AddWork(workItem);
+		//		}
+		//	}
+		//}
 
 		private void HandleGeneratedResponse(MapSecWorkReqType mapSectionWorkItem, MapSectionResponse mapSectionResponse)
 		{

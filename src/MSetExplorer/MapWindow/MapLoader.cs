@@ -66,8 +66,9 @@ namespace MSetExplorer
 				throw new InvalidOperationException("This MapLoader has already been started.");
 			}
 
-			_tcs = new TaskCompletionSource();
 			_ = Task.Run(SubmitSectionRequests);
+
+			_tcs = new TaskCompletionSource();
 			return _tcs.Task;
 		}
 
@@ -92,6 +93,7 @@ namespace MSetExplorer
 		private IList<MapSectionRequest> CreateSectionRequests()
 		{
 			var result = new List<MapSectionRequest>();
+
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset);
 			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
@@ -99,15 +101,6 @@ namespace MSetExplorer
 			{
 				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
 				{
-					//if (_isStopping)
-					//{
-					//	if (_sectionCompleted == _sectionsRequested)
-					//	{
-					//		_tcs.SetResult();
-					//	}
-					//	break;
-					//}
-
 					// Translate to subdivision coordinates.
 					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
 					var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, _job.MapBlockOffset, out var isInverted);
@@ -145,17 +138,14 @@ namespace MSetExplorer
 
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			var mapBlockOffset = _job.MapBlockOffset;
-			var blockPositionDto = mapSectionRequest.BlockPosition;
-			var repoBlockPosition = _dtoMapper.MapFrom(blockPositionDto);
-			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, mapSectionRequest.IsInverted, mapBlockOffset);
+			var repoBlockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, mapSectionRequest.IsInverted, _job.MapBlockOffset);
 			//Debug.WriteLine($"MapLoader handling response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {mapSectionRequest.IsInverted}.");
 
 			var blockSize = _job.Subdivision.BlockSize;
 			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, _colorMap, !mapSectionRequest.IsInverted);
 			var mapSection = new MapSection(screenPosition, blockSize, pixels1d, mapSectionRequest.SubdivisionId, repoBlockPosition);
 
-			// TODO: Include the mapSectionRequest to the callback method.
 			_callback(_jobNumber, mapSection);
 			mapSectionRequest.Handled = true;
 
@@ -169,7 +159,6 @@ namespace MSetExplorer
 
 				var pr = _mapSectionRequestProcessor.GetPendingRequests();
 				Debug.WriteLine($"MapLoader is done with Job: x, there are {pr.Count} requests still pending.");
-
 			}
 		}
 
