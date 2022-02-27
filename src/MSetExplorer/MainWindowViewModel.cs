@@ -71,6 +71,7 @@ namespace MSetExplorer
 
 		public bool CanGoBack => MapLoaderJobStack.CanGoBack;
 		public bool CanGoForward => MapLoaderJobStack.CanGoForward;
+
 		#endregion
 
 		#region Public Methods
@@ -105,6 +106,11 @@ namespace MSetExplorer
 		public void GoForward()
 		{
 			var _ = MapLoaderJobStack.GoForward();
+		}
+
+		public void Test()
+		{
+			OnPropertyChanged("TestingScreenSections");
 		}
 
 		public void SaveProject()

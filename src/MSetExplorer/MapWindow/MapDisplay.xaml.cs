@@ -49,6 +49,8 @@ namespace MSetExplorer
 				_vm = vmProvider.MapDisplayViewModel;
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
+				vmProvider.PropertyChanged += MainWindowTesting_PropertyChanged;
+
 				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight), _keepDisplaySquare);
 
 				MainCanvas.ClipToBounds = _clipImageBlocks;
@@ -99,6 +101,14 @@ namespace MSetExplorer
 				_selectedArea.CanvasControlOffset = offset;
 
 				return;
+			}
+		}
+
+		private void MainWindowTesting_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == "TestingScreenSections")
+			{
+				_mapSectionCollectionBinder.Test();
 			}
 		}
 

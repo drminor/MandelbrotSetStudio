@@ -36,6 +36,11 @@ namespace MSS.Types
 		//	return new PointInt(X + amount.Width, Y + amount.Height);
 		//}
 
+		public PointInt Translate(VectorInt amount)
+		{
+			return new PointInt(X + amount.X, Y + amount.Y);
+		}
+
 		//public PointInt Translate(SizeDbl amount)
 		//{
 		//	return new PointInt((int)Math.Round(X + amount.Width), (int)Math.Round(Y + amount.Height));

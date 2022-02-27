@@ -9,5 +9,7 @@ namespace MSetExplorer
 
 		void Draw(MapSection mapSection);
 		void HideScreenSections();
+
+		void Test();
 	}
 }

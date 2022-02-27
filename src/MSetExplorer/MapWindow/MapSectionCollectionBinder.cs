@@ -11,13 +11,20 @@ namespace MSetExplorer
 {
 	internal class MapSectionCollectionBinder : IMapSectionCollectionBinder
 	{
+		private readonly Canvas _canvas;
 		private readonly IScreenSectionCollection _screenSectionCollection;
 		private Image _mapDisplayImage => _screenSectionCollection.MapDisplayImage;
+
+		private SizeInt _lastKnownCanvasSize;
+
 
 		#region Constructor
 
 		public MapSectionCollectionBinder(Canvas canvas, SizeInt blockSize, ObservableCollection<MapSection> mapSections)
 		{
+			_canvas = canvas;
+			_lastKnownCanvasSize = new SizeDbl(canvas.ActualWidth, canvas.ActualHeight).Round();
+
 			var canvasSize = new SizeDbl(canvas.Width, canvas.Height).Round();
 			_screenSectionCollection = new ScreenSectionCollection(canvasSize, blockSize);
 			_ = canvas.Children.Add(_screenSectionCollection.MapDisplayImage);
@@ -61,6 +68,11 @@ namespace MSetExplorer
 
 		#endregion
 
+		public void Test()
+		{
+			_screenSectionCollection.Test();
+		}
+
 		#region Event Handlers
 
 		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -79,6 +91,13 @@ namespace MSetExplorer
 					_screenSectionCollection.Draw(mapSection);
 				}
 			}
+
+			var s1 = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight).Round();
+			if (s1 != _lastKnownCanvasSize)
+			{
+				_lastKnownCanvasSize = s1;
+			}
+
 		}
 
 		private IEnumerable<MapSection> GetList(IList lst)

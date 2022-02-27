@@ -24,5 +24,7 @@ namespace MSetExplorer
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ScreenPannedEventArgs e);
 
+		void Test();
+
 	}
 }
