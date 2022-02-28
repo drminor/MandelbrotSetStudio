@@ -28,6 +28,8 @@ namespace MSetExplorer
 			var canvasSize = new SizeDbl(canvas.Width, canvas.Height).Round();
 			_screenSectionCollection = new ScreenSectionCollection(canvasSize, blockSize);
 			_ = canvas.Children.Add(_screenSectionCollection.MapDisplayImage);
+			_screenSectionCollection.MapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
+
 
 			CanvasOffset = new VectorInt();
 

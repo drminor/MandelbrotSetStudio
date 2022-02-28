@@ -99,11 +99,11 @@ namespace MSetExplorer
 				return;
 			}
 
-			//if (e.PropertyName == "CanvasSize")
-			//{
-			//	Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
-			//	return;
-			//}
+			if (e.PropertyName == "CanvasSize")
+			{
+				Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
+				return;
+			}
 		}
 
 		#region Button Handlers

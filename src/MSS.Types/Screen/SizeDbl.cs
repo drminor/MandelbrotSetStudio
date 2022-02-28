@@ -21,6 +21,11 @@ namespace MSS.Types
 		public double Width { get; set; }
 		public double Height { get; set; }
 
+		public SizeDbl Inflate(int amount)
+		{
+			return new SizeDbl(Width + amount, Height + amount);
+		}
+
 		//public SizeDbl Scale(PointDbl factor)
 		//{
 		//	return new SizeDbl(Width * factor.X, Height * factor.Y);

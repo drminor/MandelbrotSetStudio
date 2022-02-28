@@ -14,8 +14,8 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapDisplay : UserControl
 	{
-		private static readonly bool _showBorder = false;
-		private static readonly bool _clipImageBlocks = true;
+		private static readonly bool _showBorder = true;
+		private static readonly bool _clipImageBlocks = false;
 		private static readonly bool _keepDisplaySquare = true;
 
 		private IMapDisplayViewModel _vm;
@@ -63,18 +63,20 @@ namespace MSetExplorer
 				_selectedArea.AreaSelected += SelectedArea_AreaSelected;
 				_selectedArea.ScreenPanned += SelectedArea_ScreenPanned;
 
-				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(MainCanvas) : null;
+				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(MainCanvas, CanvasSize) : null;
 
 				Debug.WriteLine("The MapDisplay is now loaded.");
 			}
 		}
 
-		private Border BuildBorder(Canvas canvas)
+		private Border BuildBorder(Canvas canvas, SizeInt canvasSize)
 		{
 			var result = new Border
 			{
-				HorizontalAlignment = HorizontalAlignment.Center,
-				VerticalAlignment = VerticalAlignment.Center,
+				Width = canvasSize.Width + 4,
+				Height = canvasSize.Width + 4,
+				HorizontalAlignment = HorizontalAlignment.Left,
+				VerticalAlignment = VerticalAlignment.Top,
 				BorderThickness = new Thickness(1),
 				BorderBrush = Brushes.BlueViolet,
 				Visibility = Visibility.Visible
@@ -161,6 +163,12 @@ namespace MSetExplorer
 		private SizeInt GetCanvasSize(Size size, bool makeSquare)
 		{
 			var sizeDbl = new SizeDbl(size.Width, size.Height);
+
+			if (!(_border is null))
+			{
+				sizeDbl = sizeDbl.Inflate(8);
+			}
+
 			var canvasSizeInWholeBlocks = RMapHelper.GetCanvasSizeWholeBlocks(sizeDbl, _vm.BlockSize, makeSquare);
 			var result = canvasSizeInWholeBlocks.Scale(_vm.BlockSize);
 
@@ -172,7 +180,7 @@ namespace MSetExplorer
 			MainCanvas.Width = value.Width;
 			MainCanvas.Height = value.Height;
 
-			if (_showBorder && !(_border is null))
+			if (!(_border is null))
 			{
 				_border.Width = value.Width + 4;
 				_border.Height = value.Height + 4;
