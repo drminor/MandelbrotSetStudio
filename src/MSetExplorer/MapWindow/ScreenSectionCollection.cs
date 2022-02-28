@@ -75,10 +75,10 @@ namespace MSetExplorer
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
 					var screenSection = GetScreenSection(blockPosition);
 
-					if (!screenSection.Active)
-					{
-						continue;
-					}
+					//if (!screenSection.Active)
+					//{
+					//	continue;
+					//}
 
 					if (xBlockPtr == 0)
 					{
@@ -86,10 +86,18 @@ namespace MSetExplorer
 					}
 					else
 					{
+						//var nPos = screenSection.BlockPosition.Translate(new VectorInt(-1, 0));
+						//if (screenSection.ScreenPosition.X >= 0)
+						//{
+						//	screenSection.BlockPosition = nPos;
+						//	screenSection.Active = true;
+						//}
+
 						var nPos = screenSection.BlockPosition.Translate(new VectorInt(-1, 0));
-						if (screenSection.ScreenPosition.X >= 0)
+						screenSection.BlockPosition = nPos;
+						if (xBlockPtr < 9 &&  screenSection.HasPixelData)
 						{
-							screenSection.BlockPosition = nPos;
+							screenSection.Active = true;
 						}
 					}
 
@@ -226,7 +234,13 @@ namespace MSetExplorer
 					{
 						if (value)
 						{
+							if (!IsOnScreen)
+							{
+								throw new InvalidOperationException("Cannot activate a screen section if it not wholly contained with in the DrawingGroup.");
+							}
+
 							_drawingGroup.Children.Add(_imageDrawing);
+							HasPixelData = true;
 						}
 						else
 						{
@@ -251,7 +265,11 @@ namespace MSetExplorer
 						{
 							_drawingGroup.Children.Remove(_imageDrawing);
 							_imageDrawing = CreateImageDrawing(_imageDrawing.ImageSource, _blockPosition, _blockSize);
-							_drawingGroup.Children.Add(_imageDrawing);
+
+							if (IsOnScreen)
+							{
+								_drawingGroup.Children.Add(_imageDrawing);
+							}
 						}
 						else
 						{
@@ -261,9 +279,32 @@ namespace MSetExplorer
 				}
 			}
 
+
+
 			public PointInt ScreenPosition => GetPointInt(_imageDrawing.Rect.Location);
 
-			private PointInt GetPointInt(Point p) => new PointDbl(p.X, p.Y).Round();
+			public bool IsOnScreen
+			{
+				get
+				{
+					bool result;
+					if (!double.IsInfinity(_drawingGroup.Bounds.Width) && _drawingGroup.Bounds.Width > 0)
+					{
+						//var sp = ScreenPosition;
+						//result = sp.X > 0 && sp.X + _blockSize.Width <= _drawingGroup.Bounds.Width;
+						//&& sp.Y > 0 && sp.Y + _blockSize.Height <= _drawingGroup.Bounds.Height;
+						result = true;
+					}
+					else
+					{
+						result = true;
+					}
+
+					return result;
+				}
+			}
+
+			public bool HasPixelData { get; private set; }
 
 			#endregion
 
@@ -316,6 +357,11 @@ namespace MSetExplorer
 				};
 
 				return result;
+			}
+
+			private PointInt GetPointInt(Point p)
+			{
+				return new PointDbl(p.X, p.Y).Round();
 			}
 
 			#endregion
