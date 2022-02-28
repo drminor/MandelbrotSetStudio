@@ -223,8 +223,7 @@ namespace MapSectionProviderLib
 
 		private bool CheckForMatchingAndAddToPending(MapSecWorkReqType mapSectionWorkItem)
 		{
-			var mapSectionRequest = mapSectionWorkItem.Request;
-			var pendingRequests = GetMatchingRequests(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
+			var pendingRequests = GetMatchingRequests(mapSectionWorkItem.Request);
 
 			//Debug.WriteLine($"Checking for dups, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}.");
 
@@ -235,7 +234,7 @@ namespace MapSectionProviderLib
 				lock (_pendingRequestsLock)
 				{
 					// There is already a request made for this same block, add our request to the queue
-					mapSectionRequest.Pending = true;
+					mapSectionWorkItem.Request.Pending = true;
 					_pendingRequests.Add(mapSectionWorkItem);
 				}
 
@@ -268,28 +267,6 @@ namespace MapSectionProviderLib
 			return mapSectionResponse;
 		}
 
-		//private void HandleFoundResponse(MapSecWorkReqType mapSectionWorkItem)
-		//{
-		//	_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
-
-		//	var mapSectionRequest = mapSectionWorkItem.Request;
-		//	var pendingRequests = GetPendingRequests(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
-
-		//	if (pendingRequests.Count > 0)
-		//	{
-		//		//Debug.WriteLine($"Handling found response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
-		//	}
-
-		//	foreach (var workItem in pendingRequests)
-		//	{
-		//		if (workItem != mapSectionWorkItem && !IsJobCancelled(workItem.JobId))
-		//		{
-		//			workItem.Response = mapSectionWorkItem.Response;
-		//			_mapSectionResponseProcessor.AddWork(workItem);
-		//		}
-		//	}
-		//}
-
 		private void HandleGeneratedResponse(MapSecWorkReqType mapSectionWorkItem, MapSectionResponse mapSectionResponse)
 		{
 			// Set the original request's repsonse to the generated response.
@@ -298,9 +275,15 @@ namespace MapSectionProviderLib
 			// Send the original request to the response processor.
 			_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
 
-			var mapSectionRequest = mapSectionWorkItem.Request;
-			var pendingRequests = GetPendingRequests(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
+			if (IsJobCancelled(mapSectionWorkItem.JobId))
+			{
+				_ = Task.Delay(100);
+			}
+
+			var pendingRequests = GetPendingRequests(mapSectionWorkItem.Request);
 			//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
+
+			Debug.Assert(RequestExists(mapSectionWorkItem.Request, pendingRequests), "The primary request was not included in the list of pending requests.");
 
 			foreach (var workItem in pendingRequests)
 			{
@@ -313,25 +296,15 @@ namespace MapSectionProviderLib
 		}
 
 		// Exclude requests that were added to "piggy back" onto a "real" request.
-		private List<MapSecWorkReqType> GetMatchingRequests(string subdivisionId, BigVectorDto blockPositionDto)
+		private List<MapSecWorkReqType> GetMatchingRequests(MapSectionRequest mapSectionRequest)
 		{
 			List<MapSecWorkReqType> result; // = new List<MapSecWorkReqType>();
 
-			var blockPosition = _dtoMapper.MapFrom(blockPositionDto);
+			var subdivisionId = mapSectionRequest.SubdivisionId;
+			var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+
 			lock (_pendingRequestsLock)
 			{
-				//foreach (var workItem in _pendingRequests)
-				//{
-				//	var bp = _dtoMapper.MapFrom(workItem.Request.BlockPosition);
-				//	if ((!workItem.Request.Pending)
-				//		&& bp.X == blockPosition.X 
-				//		&& bp.Y == blockPosition.Y 
-				//		&& workItem.Request.SubdivisionId == subdivisionId)
-				//	{
-				//		result.Add(workItem);
-				//	}
-				//}
-
 				result = _pendingRequests.Where(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition).ToList();
 			}
 
@@ -339,24 +312,14 @@ namespace MapSectionProviderLib
 		}
 
 		// Find and remove all matching requests.
-		private List<MapSecWorkReqType> GetPendingRequests(string subdivisionId, BigVectorDto blockPositionDto)
+		private List<MapSecWorkReqType> GetPendingRequests(MapSectionRequest mapSectionRequest)
 		{
 			List<MapSecWorkReqType> result; // = new List<MapSecWorkReqType>();
 
-			var blockPosition = _dtoMapper.MapFrom(blockPositionDto);
+			var subdivisionId = mapSectionRequest.SubdivisionId;
+			var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
 			lock (_pendingRequestsLock)
 			{
-				//foreach (var workItem in _pendingRequests)
-				//{
-				//	var bp = _dtoMapper.MapFrom(workItem.Request.BlockPosition);
-				//	if (bp.X == blockPosition.X 
-				//		&& bp.Y == blockPosition.Y 
-				//		&& workItem.Request.SubdivisionId == subdivisionId)
-				//	{
-				//		result.Add(workItem);
-				//	}
-				//}
-
 				result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition).ToList();
 
 				foreach (var workItem in result)
@@ -364,6 +327,16 @@ namespace MapSectionProviderLib
 					_pendingRequests.Remove(workItem);
 				}
 			}
+
+			return result;
+		}
+
+		private bool RequestExists(MapSectionRequest mapSectionRequest, IEnumerable<MapSecWorkReqType> workItems)
+		{
+			var subdivisionId = mapSectionRequest.SubdivisionId;
+			var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+
+			var result = workItems.Any(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition);
 
 			return result;
 		}

@@ -17,7 +17,6 @@ namespace MSetExplorer
 
 		private SizeInt _lastKnownCanvasSize;
 
-
 		#region Constructor
 
 		public MapSectionCollectionBinder(Canvas canvas, SizeInt blockSize, ObservableCollection<MapSection> mapSections)
@@ -29,7 +28,6 @@ namespace MSetExplorer
 			_screenSectionCollection = new ScreenSectionCollection(canvasSize, blockSize);
 			_ = canvas.Children.Add(_screenSectionCollection.MapDisplayImage);
 			_screenSectionCollection.MapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
-
 
 			CanvasOffset = new VectorInt();
 

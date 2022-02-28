@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.Screen;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -16,5 +17,7 @@ namespace MSetExplorer
 		VectorInt CanvasControlOffset { get; set; }
 
 		ObservableCollection<MapSection> MapSections { get; }
+
+		IReadOnlyList<MapSection> GetMapSectionsSnapShot();
 	}
 }

@@ -247,17 +247,14 @@ namespace MSetRepo
 
 		#region Subdivision
 
-		public bool TryGetSubdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize, out Subdivision? subdivision)
+		public bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, out Subdivision? subdivision)
 		{
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-
-			var posReduced = Reducer.Reduce(position);
-			var posDto = _dtoMapper.MapTo(posReduced);
 
 			var samplePointDeltaReduced = Reducer.Reduce(samplePointDelta);
 			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDeltaReduced);
 
-			var matches = subdivisionReaderWriter.Get(posDto, samplePointDeltaDto, blockSize);
+			var matches = subdivisionReaderWriter.Get(samplePointDeltaDto, blockSize);
 
 			if (matches.Count > 1)
 			{

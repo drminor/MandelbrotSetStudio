@@ -1,5 +1,4 @@
 ﻿using ProtoBuf;
-using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types.DataTransferObjects

@@ -1,7 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
 using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
@@ -16,8 +15,6 @@ namespace MSetExplorer
 	internal class MapLoader
 	{
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly MapSectionHelper _mapSectionHelper;
-		private readonly DtoMapper _dtoMapper;
 
 		private readonly Job _job;
 		private readonly int _jobNumber;
@@ -35,15 +32,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoader(Job job, int jobNumber, Action<int, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(Job job, int jobNumber, IReadOnlyList<MapSection> loadedMapSections, Action<int, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_job = job;
 			_jobNumber = jobNumber;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
-
-			_dtoMapper = new DtoMapper();
-			_mapSectionHelper = new MapSectionHelper(_dtoMapper);
 
 			_colorMap = new ColorMap(job.MSetInfo.ColorMapEntries);
 			_pendingRequests = CreateSectionRequests();
@@ -101,10 +95,8 @@ namespace MSetExplorer
 			{
 				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
 				{
-					// Translate to subdivision coordinates.
 					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, _job.MapBlockOffset, out var isInverted);
-					var mapSectionRequest = _mapSectionHelper.CreateRequest(_job.Subdivision, repoPosition, isInverted, _job.MSetInfo.MapCalcSettings);
+					var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, _job.MapBlockOffset, _job.Subdivision, _job.MSetInfo.MapCalcSettings);
 
 					result.Add(mapSectionRequest);
 				}
@@ -138,13 +130,7 @@ namespace MSetExplorer
 
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			var repoBlockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, mapSectionRequest.IsInverted, _job.MapBlockOffset);
-			//Debug.WriteLine($"MapLoader handling response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {mapSectionRequest.IsInverted}.");
-
-			var blockSize = _job.Subdivision.BlockSize;
-			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, _colorMap, !mapSectionRequest.IsInverted);
-			var mapSection = new MapSection(screenPosition, blockSize, pixels1d, mapSectionRequest.SubdivisionId, repoBlockPosition);
+			var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _job.MapBlockOffset, _colorMap);
 
 			_callback(_jobNumber, mapSection);
 			mapSectionRequest.Handled = true;
@@ -160,50 +146,6 @@ namespace MSetExplorer
 				var pr = _mapSectionRequestProcessor.GetPendingRequests();
 				Debug.WriteLine($"MapLoader is done with Job: x, there are {pr.Count} requests still pending.");
 			}
-		}
-
-		private byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
-		{
-			if (counts == null)
-			{
-				return null;
-			}
-
-			var numberofCells = blockSize.NumberOfCells;
-			var result = new byte[4 * numberofCells];
-
-			for (var rowPtr = 0; rowPtr < blockSize.Height; rowPtr++)
-			{
-				// Calculate the array index for the beginning of this destination and source row.
-				var resultRowPtr = GetResultRowPtr(blockSize.Height - 1, rowPtr, invert);
-
-				var curResultPtr = resultRowPtr * blockSize.Width * 4;
-				var curSourcePtr = rowPtr * blockSize.Width;
-
-				for (var colPtr = 0; colPtr < blockSize.Width; colPtr++)
-				{
-					var countVal = counts[curSourcePtr++];
-					countVal = Math.DivRem(countVal, 1000, out var ev);
-					var escapeVel = ev / 1000d;
-					var colorComps = colorMap.GetColor(countVal, escapeVel);
-
-					for (var j = 2; j > -1; j--)
-					{
-						result[curResultPtr++] = colorComps[j];
-					}
-					result[curResultPtr++] = 255;
-				}
-			}
-
-			return result;
-		}
-
-		private int GetResultRowPtr(int maxRowIndex, int rowPtr, bool invert) 
-		{
-			// The Source's origin is at the bottom, left.
-			// If inverted, the Destination's origin is at the top, left, otherwise bottom, left. 
-			var result = invert ? maxRowIndex - rowPtr : rowPtr;
-			return result;
 		}
 
 		#endregion

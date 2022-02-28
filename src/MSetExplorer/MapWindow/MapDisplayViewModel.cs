@@ -1,6 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.Screen;
-using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace MSetExplorer
@@ -26,5 +26,9 @@ namespace MSetExplorer
 
 		public ObservableCollection<MapSection> MapSections { get; }
 
+		public IReadOnlyList<MapSection> GetMapSectionsSnapShot()
+		{
+			return new ReadOnlyCollection<MapSection>(MapSections);
+		}
 	}
 }

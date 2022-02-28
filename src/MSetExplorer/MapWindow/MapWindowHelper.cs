@@ -42,8 +42,7 @@ namespace MSetExplorer
 		// Find an existing subdivision record that the same SamplePointDelta
 		private static Subdivision GetSubdivision(RRectangle coords, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
-
-			if (!projectAdapter.TryGetSubdivision(coords.Position, samplePointDelta, blockSize, out var subdivision))
+			if (!projectAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var subdivision))
 			{
 				var position = GetPositionForNewSubdivision(coords);
 				var subdivisionNotSaved = new Subdivision(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize);
