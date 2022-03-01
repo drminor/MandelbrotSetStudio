@@ -1,8 +1,6 @@
-﻿using MEngineClient;
-using MEngineDataContracts;
+﻿using MEngineDataContracts;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
-using MSS.Types.DataTransferObjects;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,10 +8,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-
-
-using MapSecWorkReqType = MapSectionProviderLib.WorkItem<MEngineDataContracts.MapSectionRequest, MEngineDataContracts.MapSectionResponse>;
 using MapSecWorkGenType = MapSectionProviderLib.WorkItem<MapSectionProviderLib.WorkItem<MEngineDataContracts.MapSectionRequest, MEngineDataContracts.MapSectionResponse>, MEngineDataContracts.MapSectionResponse>;
+using MapSecWorkReqType = MapSectionProviderLib.WorkItem<MEngineDataContracts.MapSectionRequest, MEngineDataContracts.MapSectionResponse>;
 
 namespace MapSectionProviderLib
 {
@@ -43,8 +39,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionRequestProcessor(IMEngineClient mEngineClient, IMapSectionRepo mapSectionRepo, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, 
-			MapSectionResponseProcessor mapSectionResponseProcessor)
+		public MapSectionRequestProcessor(IMapSectionRepo mapSectionRepo, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor)
 		{
 			_nextJobId = 0;
 			_mapSectionRepo = mapSectionRepo;
@@ -69,8 +64,10 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(MapSecWorkReqType mapSectionWorkItem)
+		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSectionResponse> responseHandler) 
 		{
+			var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(jobNumber, mapSectionRequest, responseHandler);
+
 			if (!_workQueue.IsAddingCompleted)
 			{
 				_workQueue.Add(mapSectionWorkItem);
@@ -81,17 +78,17 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		public IList<MapSecWorkReqType> GetPendingRequests()
-		{
-			IList<MapSecWorkReqType> pendingRequestsCopy;
+		//public IList<MapSecWorkReqType> GetPendingRequests()
+		//{
+		//	IList<MapSecWorkReqType> pendingRequestsCopy;
 
-			lock (_pendingRequestsLock)
-			{
-				pendingRequestsCopy = new List<MapSecWorkReqType>(_pendingRequests);
-			}
+		//	lock (_pendingRequestsLock)
+		//	{
+		//		pendingRequestsCopy = new List<MapSecWorkReqType>(_pendingRequests);
+		//	}
 
-			return pendingRequestsCopy;
-		}
+		//	return pendingRequestsCopy;
+		//}
 
 		public void CancelJob(int jobId)
 		{
@@ -270,14 +267,14 @@ namespace MapSectionProviderLib
 		private void HandleGeneratedResponse(MapSecWorkReqType mapSectionWorkItem, MapSectionResponse mapSectionResponse)
 		{
 			// Set the original request's repsonse to the generated response.
-			mapSectionWorkItem.Response = mapSectionResponse;
+			mapSectionWorkItem.Response = mapSectionResponse ?? BuildEmptyResponse(mapSectionWorkItem.Request);
 
 			// Send the original request to the response processor.
 			_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
 
 			if (IsJobCancelled(mapSectionWorkItem.JobId))
 			{
-				_ = Task.Delay(100);
+				Thread.Sleep(2 * 1000);
 			}
 
 			var pendingRequests = GetPendingRequests(mapSectionWorkItem.Request);

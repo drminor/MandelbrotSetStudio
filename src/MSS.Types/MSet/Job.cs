@@ -19,6 +19,12 @@ namespace MSS.Types.MSet
 		public BigVector MapBlockOffset { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
 
+		public Job(Job? parentJob, Project project, Subdivision subdivision, string? label, TransformType transformType, RectangleInt newArea, MSetInfo mSetInfo, 
+			SizeInt canvasSizeInBlocks, BigVector mapBlockOffset, VectorInt canvasControlOffset)
+			: this(ObjectId.GenerateNewId(), parentJob, project, subdivision, label, transformType, newArea, mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset)
+		{ }
+
+
 		public Job(
 			ObjectId id,
 			Job? parentJob,

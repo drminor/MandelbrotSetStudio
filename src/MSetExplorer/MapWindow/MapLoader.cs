@@ -17,9 +17,8 @@ namespace MSetExplorer
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private readonly Job _job;
-		private readonly int _jobNumber;
 
-		private readonly Action<int, MapSection> _callback;
+		private readonly Action<object, MapSection> _callback;
 		private readonly ColorMap _colorMap;
 
 		private readonly IList<MapSectionRequest> _pendingRequests;
@@ -32,12 +31,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoader(Job job, int jobNumber, IReadOnlyList<MapSection> loadedMapSections, Action<int, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(Job job, IReadOnlyList<MapSection> loadedMapSections, Action<object, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_job = job;
-			_jobNumber = jobNumber;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
+			JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 
 			_colorMap = new ColorMap(job.MSetInfo.ColorMapEntries);
 			_pendingRequests = CreateSectionRequests();
@@ -48,6 +47,12 @@ namespace MSetExplorer
 
 			_tcs = null;
 		}
+
+		#endregion
+
+		#region Public Properties
+
+		public int JobNumber { get; init; }
 
 		#endregion
 
@@ -75,7 +80,7 @@ namespace MSetExplorer
 
 			if (!_isStopping && _tcs.Task.Status != TaskStatus.RanToCompletion)
 			{
-				_mapSectionRequestProcessor.CancelJob(_jobNumber);
+				_mapSectionRequestProcessor.CancelJob(JobNumber);
 				_isStopping = true;
 			}
 		}
@@ -97,7 +102,6 @@ namespace MSetExplorer
 				{
 					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
 					var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, _job.MapBlockOffset, _job.Subdivision, _job.MSetInfo.MapCalcSettings);
-
 					result.Add(mapSectionRequest);
 				}
 			}
@@ -120,9 +124,8 @@ namespace MSetExplorer
 
 				//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
 
-				var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(_jobNumber, mapSectionRequest, HandleResponse);
-
-				_mapSectionRequestProcessor.AddWork(mapSectionWorkItem);
+				//var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(JobNumber, mapSectionRequest, HandleResponse);
+				_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
 				mapSectionRequest.Sent = true;
 				_ = Interlocked.Increment(ref _sectionsRequested);
 			}
@@ -132,7 +135,7 @@ namespace MSetExplorer
 		{
 			var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _job.MapBlockOffset, _colorMap);
 
-			_callback(_jobNumber, mapSection);
+			_callback(this, mapSection);
 			mapSectionRequest.Handled = true;
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
@@ -143,8 +146,8 @@ namespace MSetExplorer
 					_tcs.SetResult();
 				}
 
-				var pr = _mapSectionRequestProcessor.GetPendingRequests();
-				Debug.WriteLine($"MapLoader is done with Job: x, there are {pr.Count} requests still pending.");
+				//var pr = _mapSectionRequestProcessor.GetPendingRequests();
+				//Debug.WriteLine($"MapLoader is done with Job: x, there are {pr.Count} requests still pending.");
 			}
 		}
 

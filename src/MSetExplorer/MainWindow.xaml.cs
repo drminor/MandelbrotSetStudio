@@ -55,6 +55,8 @@ namespace MSetExplorer
 			}
 		}
 
+		#region EVENT Handlers
+
 		private void TxtIterations_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
 		{
 			try
@@ -99,12 +101,14 @@ namespace MSetExplorer
 				return;
 			}
 
-			if (e.PropertyName == "CanvasSize")
-			{
-				Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
-				return;
-			}
+			//if (e.PropertyName == "CanvasSize")
+			//{
+			//	Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
+			//	return;
+			//}
 		}
+
+		#endregion
 
 		#region Button Handlers
 

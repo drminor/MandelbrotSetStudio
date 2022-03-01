@@ -1,4 +1,4 @@
-﻿using MongoDB.Bson;
+﻿//using MongoDB.Bson;
 using MSetRepo;
 using MSS.Common;
 using MSS.Types;
@@ -33,8 +33,7 @@ namespace MSetExplorer
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-			var job = new Job(ObjectId.GenerateNewId(), parentJob, project, subdivision, jobName, transformType, 
-				newArea, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
+			var job = new Job(parentJob, project, subdivision, jobName, transformType, newArea, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 
 			return job;
 		}
@@ -45,7 +44,7 @@ namespace MSetExplorer
 			if (!projectAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var subdivision))
 			{
 				var position = GetPositionForNewSubdivision(coords);
-				var subdivisionNotSaved = new Subdivision(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize);
+				var subdivisionNotSaved = new Subdivision( position, samplePointDelta, blockSize);
 				subdivision = projectAdapter.InsertSubdivision(subdivisionNotSaved);
 			}
 

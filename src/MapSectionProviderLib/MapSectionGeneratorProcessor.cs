@@ -125,7 +125,7 @@ namespace MapSectionProviderLib
 
 					if (IsJobCancelled(mapSectionWorkItem.JobId))
 					{
-						mapSectionResponse = BuildEmptyResponse(mapSectionRequest);
+						mapSectionResponse = null;
 					}
 					else
 					{
@@ -163,22 +163,9 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		private MapSectionResponse BuildEmptyResponse(MapSectionRequest mapSectionRequest)
-		{
-			var result = new MapSectionResponse
-			{
-				MapSectionId = mapSectionRequest.MapSectionId,
-				SubdivisionId = mapSectionRequest.SubdivisionId,
-				BlockPosition = mapSectionRequest.BlockPosition,
-				Counts = null
-			};
-
-			return result;
-		}
-
 		#endregion
 
-		#region IDispoable Support
+		#region IDisposable Support
 
 		protected virtual void Dispose(bool disposing)
 		{

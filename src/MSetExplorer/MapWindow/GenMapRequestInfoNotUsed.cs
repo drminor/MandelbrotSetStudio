@@ -18,16 +18,16 @@ namespace MSetExplorer
 			MapLoader = null;
 		}
 
-		public GenMapRequestInfo(Job job, int jobNumber, MapLoader mapLoader)
+		public GenMapRequestInfo(Job job, MapLoader mapLoader)
 		{
 			Job = job ?? throw new ArgumentNullException(nameof(job));
-			JobNumber = jobNumber;
 			MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
+			JobNumber = mapLoader.JobNumber;
 		}
 
-		public void Renew(int jobNumber, MapLoader mapLoader)
+		public void Renew(MapLoader mapLoader)
 		{
-			JobNumber = jobNumber;
+			JobNumber = mapLoader.JobNumber;
 			MapLoader = mapLoader;
 		}
 

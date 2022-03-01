@@ -6,7 +6,7 @@ using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
 
-namespace MapSectionProviderLib
+namespace MSetExplorer
 {
 	public static class MapSectionHelper
 	{
@@ -48,7 +48,7 @@ namespace MapSectionProviderLib
 			return mapSectionRequest;
 		}
 
-		public static RPoint GetMapPosition(Subdivision subdivision, BigVector blockPosition)
+		private static RPoint GetMapPosition(Subdivision subdivision, BigVector blockPosition)
 		{
 			var nrmSubdivionPosition = RNormalizer.Normalize(subdivision.Position, subdivision.SamplePointDelta, out var nrmSamplePointDelta);
 
@@ -66,7 +66,7 @@ namespace MapSectionProviderLib
 
 		public static MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, BigVector mapBlockOffset, ColorMap colorMap)
 		{
-			var repoBlockPosition = GetRepoBlockPosition(mapSectionRequest);
+			var repoBlockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, mapSectionRequest.IsInverted, mapBlockOffset);
 			//Debug.WriteLine($"MapLoader handling response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {mapSectionRequest.IsInverted}.");
 
@@ -75,14 +75,6 @@ namespace MapSectionProviderLib
 			var mapSection = new MapSection(screenPosition, blockSize, pixels1d, mapSectionRequest.SubdivisionId, repoBlockPosition);
 
 			return mapSection;
-		}
-
-
-		public static BigVector GetRepoBlockPosition(MapSectionRequest mapSectionRequest)
-		{
-			var result = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-
-			return result;
 		}
 
 		private static byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)

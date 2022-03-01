@@ -12,7 +12,7 @@ namespace MSetExplorer
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		Project Project { get; }
-		SizeInt CanvasSize { get; set; }
+		//SizeInt CanvasSize { get; set; }
 
 		int Iterations { get; set; }
 		int Steps { get; set; }

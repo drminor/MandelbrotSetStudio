@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MSetExplorer
 {
@@ -46,8 +47,6 @@ namespace MSetExplorer
 
 		private GenMapRequestInfo CurrentRequest => DoWithReadLock(() => { return _requestStackPointer == -1 ? null : _requestStack[_requestStackPointer]; });
 
-		private int? CurrentJobNumber => CurrentRequest?.JobNumber;
-
 		public Job CurrentJob => CurrentRequest?.Job;
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
 
@@ -63,7 +62,8 @@ namespace MSetExplorer
 		{
 			ResetMapDisplay(new VectorInt());
 
-			DoWithWriteLock(() => {
+			DoWithWriteLock(() =>
+			{
 				foreach (var job in jobs)
 				{
 					_requestStack.Add(new GenMapRequestInfo(job));
@@ -83,7 +83,6 @@ namespace MSetExplorer
 				StopCurrentJob();
 
 				var loadedMapSections = _mapDisplayViewModel.GetMapSectionsSnapShot();
-
 				var genMapRequestInfo = PushRequest(job, loadedMapSections);
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
@@ -95,7 +94,8 @@ namespace MSetExplorer
 
 		public void UpdateJob(Job oldJob, Job newJob)
 		{
-			DoWithWriteLock(() => {
+			DoWithWriteLock(() =>
+			{
 				if (TryFindByJobId(oldJob.Id, out var genMapRequestInfo))
 				{
 					genMapRequestInfo.Job = newJob;
@@ -183,16 +183,17 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void HandleMapSection(int jobNumber, MapSection mapSection)
+		private void HandleMapSection(object sender, MapSection mapSection)
 		{
-			DoWithWriteLock(() => {
-				if (jobNumber == CurrentJobNumber)
+			DoWithWriteLock(() =>
+			{
+				if (sender == CurrentRequest.MapLoader)
 				{
-					//_onMapSectionReady(mapSection);
 					_synchronizationContext.Post(o => _mapDisplayViewModel.MapSections.Add(mapSection), null);
 				}
 				else
 				{
+					var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
 					Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}."); // . CurJobNum:{curJobNumber}, Handling
 				}
 			});
@@ -204,9 +205,8 @@ namespace MSetExplorer
 
 		private GenMapRequestInfo PushRequest(Job job, IReadOnlyList<MapSection> loadedMapSections)
 		{
-			var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
-			var mapLoader = new MapLoader(job, jobNumber, loadedMapSections, HandleMapSection, _mapSectionRequestProcessor);
-			var result = new GenMapRequestInfo(job, jobNumber, mapLoader);
+			var mapLoader = new MapLoader(job, loadedMapSections, HandleMapSection, _mapSectionRequestProcessor);
+			var result = new GenMapRequestInfo(job, mapLoader);
 
 			_requestStack.Add(result);
 			_requestStackPointer = _requestStack.Count - 1;
@@ -224,8 +224,8 @@ namespace MSetExplorer
 			StopCurrentJob();
 
 			var loadedMapSections = _mapDisplayViewModel.GetMapSectionsSnapShot();
-
 			var genMapRequestInfo = RenewRequest(newRequestStackPointer, loadedMapSections);
+
 			ResetMapDisplay(CurrentJob.CanvasControlOffset);
 			CurrentJobChanged?.Invoke(this, new EventArgs());
 
@@ -237,9 +237,8 @@ namespace MSetExplorer
 			var result = _requestStack[newRequestStackPointer];
 			var job = result.Job;
 
-			var jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
-			var mapLoader = new MapLoader(job, jobNumber, loadedMapSections, HandleMapSection, _mapSectionRequestProcessor);
-			result.Renew(jobNumber, mapLoader);
+			var mapLoader = new MapLoader(job, loadedMapSections, HandleMapSection, _mapSectionRequestProcessor);
+			result.Renew(mapLoader);
 
 			_requestStackPointer = newRequestStackPointer;
 
@@ -366,5 +365,47 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		private class GenMapRequestInfo
+		{
+			public Job Job { get; set; }
+
+			//public int JobNumber { get; private set; }
+			public MapLoader MapLoader { get; private set; }
+
+			public GenMapRequestInfo(Job job)
+			{
+				Job = job ?? throw new ArgumentNullException(nameof(job));
+				//JobNumber = -1;
+				MapLoader = null;
+			}
+
+			public GenMapRequestInfo(Job job, MapLoader mapLoader)
+			{
+				Job = job ?? throw new ArgumentNullException(nameof(job));
+				MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
+				//JobNumber = mapLoader.JobNumber;
+			}
+
+			public void Renew(MapLoader mapLoader)
+			{
+				//JobNumber = mapLoader.JobNumber;
+				MapLoader = mapLoader;
+			}
+
+			public void StartLoading()
+			{
+				var startTask = MapLoader.Start();
+
+				startTask.ContinueWith(LoadingComplete);
+			}
+
+			public void LoadingComplete(Task _)
+			{
+				// TODO: Use Dispatcher Invoke instead of Thread.Sleep.
+				Thread.Sleep(10 * 1000);
+				MapLoader = null;
+			}
+		}
 	}
 }

@@ -16,9 +16,6 @@ namespace MSetExplorer
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
 
-		private MapSectionPersistProcessor _mapSectionPersistProcessor;
-		private MapSectionGeneratorProcessor _mapSectionGeneratorProcessor;
-		private MapSectionResponseProcessor _mapSectionResponseProcessor;
 		private MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private Process _serverProcess;
@@ -27,7 +24,7 @@ namespace MSetExplorer
 		{
 			var DROP_MAP_SECTIONS = false;
 
-			var USE_MAP_NAV_SIM = false;
+			//var USE_MAP_NAV_SIM = false;
 			var USE_MAP_SECTION_REPO = true;
 
 			base.OnStartup(e);
@@ -43,27 +40,25 @@ namespace MSetExplorer
 
 			projectAdapter.CreateCollections();
 
-			var mEngineClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
-			var mapSectionRepo = MSetRepoHelper.GetMapSectionRepo(MONGO_DB_CONN_STRING);
-
-			_mapSectionPersistProcessor = USE_MAP_SECTION_REPO ? new MapSectionPersistProcessor(mapSectionRepo) : null;
-			_mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClient, _mapSectionPersistProcessor);
-
-			_mapSectionResponseProcessor = new MapSectionResponseProcessor();
-			_mapSectionRequestProcessor = new MapSectionRequestProcessor(mEngineClient, mapSectionRepo, _mapSectionGeneratorProcessor, _mapSectionResponseProcessor);
+			_mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
 
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(RMapConstants.BLOCK_SIZE);
 			IMapLoaderJobStack mapLoaderJobStack = new MapLoaderJobStack(_mapSectionRequestProcessor, mapDisplayViewModel);
 
-			var window1 = USE_MAP_NAV_SIM
-				? new MapNavSim
-				{
-					DataContext = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
-				}
-				: (Window)new MainWindow
-				{
-					DataContext = new MainWindowViewModel(projectAdapter, mapDisplayViewModel, mapLoaderJobStack)
-                };
+			//var window1 = USE_MAP_NAV_SIM
+			//	? new MapNavSim
+			//	{
+			//		DataContext = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
+			//	}
+			//	: (Window)new MainWindow
+			//	{
+			//		DataContext = new MainWindowViewModel(projectAdapter, mapDisplayViewModel, mapLoaderJobStack)
+			//  };
+
+			var window1 = new MainWindow
+			{
+				DataContext = new MainWindowViewModel(projectAdapter, mapDisplayViewModel, mapLoaderJobStack)
+			};
 
 			window1.Show();
 		}
@@ -77,12 +72,7 @@ namespace MSetExplorer
 				_mapSectionRequestProcessor.Dispose();
 			}
 
-			//if (_mapSectionPersistProcessor != null)
-			//{
-			//	_mapSectionPersistProcessor.Dispose();
-			//}
-
-			Debug.WriteLine("The request and persist processors have been closed.");
+			Debug.WriteLine("The request MapSectionRequestProcessor has been closed.");
 
 			StopServer();
 		}

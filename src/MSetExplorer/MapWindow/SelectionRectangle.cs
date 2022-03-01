@@ -31,10 +31,9 @@ namespace MSetExplorer.MapWindow
 
 		#region Constructor
 
-		public SelectionRectangle(Canvas canvas, VectorInt canvasControlOffset, SizeInt blockSize)
+		public SelectionRectangle(Canvas canvas, SizeInt blockSize)
 		{
 			_canvas = canvas;
-			CanvasControlOffset = canvasControlOffset;
 			_blockSize = blockSize;
 
 			_selectedArea = BuildSelectionRectangle(_canvas);
@@ -119,8 +118,6 @@ namespace MSetExplorer.MapWindow
 		#endregion
 
 		#region Public Properties
-
-		public VectorInt CanvasControlOffset { get; set; }
 
 		public RectangleDbl Area
 		{

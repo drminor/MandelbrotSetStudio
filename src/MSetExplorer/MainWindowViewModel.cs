@@ -12,7 +12,6 @@ namespace MSetExplorer
 		private readonly SizeInt _blockSize;
 		private readonly ProjectAdapter _projectAdapter;
 
-		private SizeInt _canvasSize;
 		private int _iterations;
 		private int _steps;
 
@@ -51,11 +50,11 @@ namespace MSetExplorer
 
 		public Job CurrentJob => MapLoaderJobStack.CurrentJob;
 
-		public SizeInt CanvasSize
-		{
-			get => _canvasSize;
-			set { _canvasSize = value; OnPropertyChanged(); }
-		}
+		//public SizeInt CanvasSize
+		//{
+		//	get => _canvasSize;
+		//	set { _canvasSize = value; OnPropertyChanged(); }
+		//}
 
 		public int Iterations
 		{
@@ -78,7 +77,8 @@ namespace MSetExplorer
 
 		public void SetMapInfo(MSetInfo mSetInfo)
 		{
-			var newArea = new RectangleInt(new PointInt(), CanvasSize);
+			var canvasSize = MapDisplayViewModel.CanvasSize;
+			var newArea = new RectangleInt(new PointInt(), canvasSize);
 			LoadMap(mSetInfo, TransformType.None, newArea);
 		}
 
@@ -94,7 +94,8 @@ namespace MSetExplorer
 
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
 			var invOffset = offset.Invert();
-			var newArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
+			var canvasSize = MapDisplayViewModel.CanvasSize;
+			var newArea = new RectangleInt(new PointInt(invOffset), canvasSize);
 			UpdateMapView(TransformType.Pan, newArea);
 		}
 
@@ -143,29 +144,27 @@ namespace MSetExplorer
 			var position = curJob.MSetInfo.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-
-			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
-
-			var mSetInfo = MapLoaderJobStack.CurrentJob.MSetInfo;
-
+			var mSetInfo = CurrentJob.MSetInfo;
 			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
+
 			if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
 			{
 				updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
 			}
 
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
 			LoadMap(updatedInfo, transformType, newArea);
 		}
 
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
 			//CheckViewModel();
+			var parentJob = CurrentJob;
 			var jobName = GetJobName(transformType);
-			var parentJob = MapLoaderJobStack.CurrentJob;
+			var canvasSize = MapDisplayViewModel.CanvasSize;
+			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, canvasSize, mSetInfo, transformType, newArea, _blockSize, _projectAdapter);
 
-			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, _blockSize, _projectAdapter);
 			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
-
 			MapLoaderJobStack.Push(job);
 		}
 

@@ -13,27 +13,25 @@ namespace MSetExplorer
 	internal class ScreenSectionCollection : IScreenSectionCollection
 	{
 		private readonly DrawingGroup _drawingGroup;
+
 		private readonly ScreenSection[,] _screenSections;
-		private readonly SizeInt _sizeInBlocks; // => new SizeInt(_screenSections.GetUpperBound(1), _screenSections.GetUpperBound(0)).Inflate(1);
 
 		private VectorInt _startIndex;
 
 		#region Constructor
 
-		public ScreenSectionCollection(SizeInt canvasSize, SizeInt blockSize)
+		public ScreenSectionCollection(SizeInt canvasSizeInBlocks, SizeInt blockSize, DrawingGroup drawingGroup)
 		{
-			_drawingGroup = new DrawingGroup();
-			MapDisplayImage = new Image { Source = new DrawingImage(_drawingGroup) };
-
-			_sizeInBlocks = GetSizeInBlocks(canvasSize, blockSize);
-			_screenSections = BuildScreenSections(_sizeInBlocks, blockSize, _drawingGroup);
+			CanvasSizeInBlocks = canvasSizeInBlocks;
+			_drawingGroup = drawingGroup;
+			_screenSections = BuildScreenSections(CanvasSizeInBlocks, blockSize, _drawingGroup);
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public Image MapDisplayImage { get; }
+		public SizeInt CanvasSizeInBlocks { get; init; }
 
 		#endregion
 
@@ -59,7 +57,7 @@ namespace MSetExplorer
 		public void Test()
 		{
 			var cnt = 0;
-			var sizeInBlocks = _sizeInBlocks;
+			var sizeInBlocks = CanvasSizeInBlocks;
 
 			for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
 			{
@@ -102,7 +100,7 @@ namespace MSetExplorer
 			}
 
 			_startIndex = new VectorInt(_startIndex.X + 1, _startIndex.Y);
-			_startIndex = _startIndex.Mod(_sizeInBlocks);
+			_startIndex = _startIndex.Mod(CanvasSizeInBlocks);
 
 			Debug.WriteLine($"The ScreenSectionCollection is being tested. There are {cnt} active blocks. StartIndex: {_startIndex}.");
 		}
@@ -115,7 +113,7 @@ namespace MSetExplorer
 		{
 			_drawingGroup.Children.Clear();
 
-			var sizeInBlocks = _sizeInBlocks;
+			var sizeInBlocks = CanvasSizeInBlocks;
 			for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
 			{
 				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
@@ -129,14 +127,14 @@ namespace MSetExplorer
 
 		private ScreenSection GetScreenSection(PointInt blockPosition)
 		{
-			var adjPos = blockPosition.Translate(_startIndex).Mod(_sizeInBlocks);
+			var adjPos = blockPosition.Translate(_startIndex).Mod(CanvasSizeInBlocks);
 			var result = _screenSections[adjPos.Y, adjPos.X];
 			return result;
 		}
 
 		private void PutScreenSection(PointInt blockPosition, ScreenSection screenSection)
 		{
-			var adjPos = blockPosition.Translate(_startIndex).Mod(_sizeInBlocks);
+			var adjPos = blockPosition.Translate(_startIndex).Mod(CanvasSizeInBlocks);
 			_screenSections[adjPos.Y, adjPos.X] = screenSection;
 		}
 
@@ -165,21 +163,6 @@ namespace MSetExplorer
 		{
 			var maxYPtr = screenSections.GetUpperBound(0);
 			var result = new PointInt(blockPosition.X, maxYPtr - blockPosition.Y);
-
-			return result;
-		}
-
-		private SizeInt GetSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
-		{
-			// Include an additional block to accommodate when the CanvasControlOffset is non-zero.
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
-			var result = canvasSizeInBlocks.Inflate(2);
-
-			// Always overide the above calculation and allocate 400 sections.
-			if (result.Width > 0)
-			{
-				result = new SizeInt(12, 12);
-			}
 
 			return result;
 		}
@@ -310,14 +293,6 @@ namespace MSetExplorer
 			#endregion
 
 			#region Private Methods
-
-			//private ImageDrawing CreateImageDrawing(PointInt blockPosition)
-			//{
-			//	var image = CreateImage(_blockSize.Width, _blockSize.Height);
-			//	var result = CreateImageDrawing(image.Source, blockPosition);
-
-			//	return result;
-			//}
 
 			private ImageDrawing CreateImageDrawing(PointInt blockPosition)
 			{

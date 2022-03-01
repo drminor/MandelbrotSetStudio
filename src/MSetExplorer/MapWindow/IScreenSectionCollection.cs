@@ -1,11 +1,12 @@
-﻿using MSS.Types.Screen;
-using System.Windows.Controls;
+﻿using MSS.Types;
+using MSS.Types.Screen;
+
 
 namespace MSetExplorer
 {
 	internal interface IScreenSectionCollection
 	{
-		Image MapDisplayImage { get; }
+		SizeInt CanvasSizeInBlocks { get; }
 
 		void Draw(MapSection mapSection);
 		void HideScreenSections();

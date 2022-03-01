@@ -133,7 +133,7 @@ namespace MapSectionProviderLib
 
 		#endregion
 
-		#region IDispoable Support
+		#region IDisposable Support
 
 		protected virtual void Dispose(bool disposing)
 		{

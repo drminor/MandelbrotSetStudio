@@ -7,12 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MapSectionProviderLib\MapSectionProviderLib.csproj" />
+    <Compile Remove="MapWindow\GenMapRequestInfoNotUsed.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="MapWindow\GenMapRequestInfoNotUsed.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
-    <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
-    <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
-    <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
-    <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
   </ItemGroup>
 
 </Project>

@@ -19,9 +19,9 @@ namespace MSetExplorer
 		private static readonly bool _keepDisplaySquare = true;
 
 		private IMapDisplayViewModel _vm;
-
+		private Canvas _canvas;
+		private Image _mapDisplayImage;
 		private SelectionRectangle _selectedArea;
-		private IMapSectionCollectionBinder _mapSectionCollectionBinder;
 		private Border _border;
 
 		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
@@ -31,7 +31,6 @@ namespace MSetExplorer
 
 		public MapDisplay()
 		{
-			//_selectedArea = null;
 			Loaded += MapDisplay_Loaded;
 			InitializeComponent();
 		}
@@ -45,25 +44,33 @@ namespace MSetExplorer
 			}
 			else
 			{
+				_canvas = MainCanvas;
 				var vmProvider = (IMainWindowViewModel)DataContext;
 				_vm = vmProvider.MapDisplayViewModel;
-				_vm.PropertyChanged += ViewModel_PropertyChanged;
+				//_vm.PropertyChanged += ViewModel_PropertyChanged;
 
 				vmProvider.PropertyChanged += MainWindowTesting_PropertyChanged;
 
-				CanvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight), _keepDisplaySquare);
+				var canvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight), _keepDisplaySquare);
+				_vm.CanvasSize = canvasSize;
+				SetCanvasSize(canvasSize);
 
-				MainCanvas.ClipToBounds = _clipImageBlocks;
+				_canvas.ClipToBounds = _clipImageBlocks;
 				SizeChanged += MapDisplay_SizeChanged;
 
-				_mapSectionCollectionBinder = new MapSectionCollectionBinder(MainCanvas, _vm.BlockSize, _vm.MapSections);
+				_mapDisplayImage = new Image { Source = _vm.ImageSource };
+				_ = _canvas.Children.Add(_mapDisplayImage);
+				_mapDisplayImage.SetValue(Canvas.LeftProperty, 0d);
+				_mapDisplayImage.SetValue(Canvas.BottomProperty, 0d);
+				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
 
-				var canvasControlOffset = _vm.CanvasControlOffset;
-				_selectedArea = new SelectionRectangle(MainCanvas, canvasControlOffset, _vm.BlockSize);
+				//CanvasOffset = _vm.CanvasControlOffset;
+
+				_selectedArea = new SelectionRectangle(_canvas, _vm.BlockSize);
 				_selectedArea.AreaSelected += SelectedArea_AreaSelected;
 				_selectedArea.ScreenPanned += SelectedArea_ScreenPanned;
 
-				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(MainCanvas, CanvasSize) : null;
+				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(_canvas, canvasSize) : null;
 
 				Debug.WriteLine("The MapDisplay is now loaded.");
 			}
@@ -94,29 +101,31 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == "CanvasControlOffset")
-			{
-				var offset = _vm.CanvasControlOffset;
-				_mapSectionCollectionBinder.CanvasOffset = offset;
-				_selectedArea.CanvasControlOffset = offset;
+		//private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		//{
+		//	if (e.PropertyName == "CanvasControlOffset")
+		//	{
+		//		var offset = _vm.CanvasControlOffset;
+		//		CanvasOffset = offset;
 
-				return;
-			}
-		}
+		//		return;
+		//	}
+		//}
 
 		private void MainWindowTesting_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "TestingScreenSections")
-			{
-				_mapSectionCollectionBinder.Test();
-			}
+			//if (e.PropertyName == "TestingScreenSections")
+			//{
+			//	_mapSectionCollectionBinder.Test();
+			//}
 		}
 
 		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			CanvasSize = GetCanvasSize(e.NewSize, _keepDisplaySquare);
+			var canvasSize = GetCanvasSize(e.NewSize, _keepDisplaySquare);
+			_vm.CanvasSize = canvasSize;
+			SetCanvasSize(canvasSize);
+			//CanvasSize = GetCanvasSize(e.NewSize, _keepDisplaySquare);
 		}
 
 		private void SelectedArea_AreaSelected(object sender, AreaSelectedEventArgs e)
@@ -131,34 +140,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Dependency Properties
-
-		public static readonly DependencyProperty CanvasSizeProperty = DependencyProperty.Register
-			(
-			"CanvasSize",
-			typeof(SizeInt),
-			typeof(MapDisplay), 
-			new FrameworkPropertyMetadata(new SizeInt(), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, CanvasSizeChanged)
-			);
-
-		public SizeInt CanvasSize
-		{
-			get => (SizeInt)GetValue(CanvasSizeProperty);
-			set { if (value != CanvasSize) { SetValue(CanvasSizeProperty, value); } }
-		}
-
-		private static void CanvasSizeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
-		{
-			if (sender is MapDisplay x)
-			{
-				Debug.WriteLine("The CanvasSize is being set on the MapDisplay Control.");
-				x.SetCanvasSize((SizeInt) e.NewValue);
-			}
-			else
-			{
-				Debug.WriteLine($"CanvasSizeChanged was raised from sender: {sender}");
-			}
-		}
+		#region Private Methods
 
 		private SizeInt GetCanvasSize(Size size, bool makeSquare)
 		{
@@ -177,8 +159,8 @@ namespace MSetExplorer
 
 		private void SetCanvasSize(SizeInt value)
 		{
-			MainCanvas.Width = value.Width;
-			MainCanvas.Height = value.Height;
+			_canvas.Width = value.Width;
+			_canvas.Height = value.Height;
 
 			if (!(_border is null))
 			{
@@ -186,6 +168,69 @@ namespace MSetExplorer
 				_border.Height = value.Height + 4;
 			}
 		}
+
+		#endregion
+
+		#region Private Properties
+
+		///// <summary>
+		///// The position of the canvas' origin relative to the Image Block Data
+		///// </summary>
+		//private VectorInt CanvasOffset
+		//{
+		//	get
+		//	{
+		//		var pointDbl = new PointDbl(
+		//			(double)_mapDisplayImage.GetValue(Canvas.LeftProperty),
+		//			(double)_mapDisplayImage.GetValue(Canvas.BottomProperty)
+		//			);
+
+		//		return new VectorInt(pointDbl.Round()).Invert();
+		//	}
+
+		//	set
+		//	{
+		//		var curVal = CanvasOffset;
+		//		if (value != curVal)
+		//		{
+		//			Debug.WriteLine($"CanvasOffset is being set to {value}.");
+		//			var offset = value.Invert();
+		//			_mapDisplayImage.SetValue(Canvas.LeftProperty, (double)offset.X);
+		//			_mapDisplayImage.SetValue(Canvas.BottomProperty, (double)offset.Y);
+		//		}
+		//	}
+		//}
+
+		#endregion
+
+		#region Dependency Properties
+
+		//public static readonly DependencyProperty CanvasSizeProperty = DependencyProperty.Register
+		//	(
+		//	"CanvasSize",
+		//	typeof(SizeInt),
+		//	typeof(MapDisplay), 
+		//	new FrameworkPropertyMetadata(new SizeInt(), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, CanvasSizeChanged)
+		//	);
+
+		//public SizeInt CanvasSize
+		//{
+		//	get => (SizeInt)GetValue(CanvasSizeProperty);
+		//	set { if (value != CanvasSize) { SetValue(CanvasSizeProperty, value); } }
+		//}
+
+		//private static void CanvasSizeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+		//{
+		//	if (sender is MapDisplay x)
+		//	{
+		//		Debug.WriteLine("The CanvasSize is being set on the MapDisplay Control.");
+		//		x.SetCanvasSize((SizeInt) e.NewValue);
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"CanvasSizeChanged was raised from sender: {sender}");
+		//	}
+		//}
 
 		#endregion
 	}
