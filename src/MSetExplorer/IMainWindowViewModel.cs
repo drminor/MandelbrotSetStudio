@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using MSS.Types.MSet;
+﻿using MSS.Types.MSet;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -8,11 +7,9 @@ namespace MSetExplorer
 	{
 		event PropertyChangedEventHandler PropertyChanged;
 
-		IMapLoaderJobStack MapLoaderJobStack { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
-		Project Project { get; }
-		//SizeInt CanvasSize { get; set; }
+		Project CurrentProject { get; }
 
 		int Iterations { get; set; }
 		int Steps { get; set; }
@@ -20,11 +17,16 @@ namespace MSetExplorer
 		void SaveProject();
 		void LoadProject();
 
+		public bool CanGoBack { get; }
+		public bool CanGoForward { get; }
+
+		public void GoBack();
+		public void GoForward();
+
 		void SetMapInfo(MSetInfo mSetInfo);
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ScreenPannedEventArgs e);
 
 		void Test();
-
 	}
 }

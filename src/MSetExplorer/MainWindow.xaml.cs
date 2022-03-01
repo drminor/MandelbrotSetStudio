@@ -42,12 +42,11 @@ namespace MSetExplorer
 			{
 				_vm = (IMainWindowViewModel)DataContext;
 				_vm.PropertyChanged += VmPropertyChanged;
-				_vm.MapLoaderJobStack.CurrentJobChanged += MapLoaderJobStack_CurrentJobChanged;
 
 				_mapDisplay = mapDisplay1;
 				_mapDisplay.DataContext = DataContext;
-				_mapDisplay.AreaSelected += MapDisplay_AreaSelected;
-				_mapDisplay.ScreenPanned += MapDisplay_ScreenPanned;
+				//_mapDisplay.AreaSelected += MapDisplay_AreaSelected;
+				//_mapDisplay.ScreenPanned += MapDisplay_ScreenPanned;
 
 				txtIterations.TextChanged += TxtIterations_TextChanged;
 
@@ -69,35 +68,27 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MapLoaderJobStack_CurrentJobChanged(object sender, EventArgs e)
-		{
-			//_vm.Iterations = _vm.MapLoaderJobStack.CurrentJob.MSetInfo.MapCalcSettings.MaxIterations;
-			//txtIterations.Text = _vm.Iterations.ToString();
+		//private void MapDisplay_AreaSelected(object sender, AreaSelectedEventArgs e)
+		//{
+		//	_vm.UpdateMapViewZoom(e);
+		//}
 
-			//_vm.Steps = _vm.MapLoaderJobStack.CurrentJob.MSetInfo.MapCalcSettings.IterationsPerStep;
-		}
-
-		private void MapDisplay_AreaSelected(object sender, AreaSelectedEventArgs e)
-		{
-			_vm.UpdateMapViewZoom(e);
-		}
-
-		private void MapDisplay_ScreenPanned(object sender, ScreenPannedEventArgs e)
-		{
-			_vm.UpdateMapViewPan(e);
-		}
+		//private void MapDisplay_ScreenPanned(object sender, ScreenPannedEventArgs e)
+		//{
+		//	_vm.UpdateMapViewPan(e);
+		//}
 
 		private void VmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == "CanGoBack")
 			{
-				btnGoBack.IsEnabled = _vm.MapLoaderJobStack.CanGoBack;
+				btnGoBack.IsEnabled = _vm.CanGoBack;
 				return;
 			}
 
 			if (e.PropertyName == "CanGoForward")
 			{
-				btnGoForward.IsEnabled = _vm.MapLoaderJobStack.CurrentJob is null || _vm.MapLoaderJobStack.CanGoForward;
+				btnGoForward.IsEnabled = _vm.CanGoForward;
 				return;
 			}
 
@@ -134,27 +125,17 @@ namespace MSetExplorer
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.MapLoaderJobStack.CanGoBack)
+			if (_vm.CanGoBack)
 			{
-				_vm.MapLoaderJobStack.GoBack();
+				_vm.GoBack();
 			}
 		}
 
 		private void GoForwardButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.MapLoaderJobStack.CurrentJob is null)
+			if (_vm.CanGoForward)
 			{
-				var maxIterations = 700;
-				var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-				_vm.SetMapInfo(mSetInfo);
-			}
-			else
-			{
-				if (_vm.MapLoaderJobStack.CanGoForward)
-				{
-					_vm.MapLoaderJobStack.GoForward();
-				}
-
+				_vm.GoForward();
 			}
 		}
 

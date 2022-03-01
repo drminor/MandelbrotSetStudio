@@ -1,6 +1,10 @@
-﻿using MSS.Common;
+﻿using MapSectionProviderLib;
+using MSetRepo;
+using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using MSS.Types.Screen;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -11,13 +15,20 @@ namespace MSetExplorer
 {
 	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
+		private readonly ProjectAdapter _projectAdapter;
+		private readonly DrawingGroup _drawingGroup;
+		private readonly IMapLoaderJobStack _mapLoaderJobStack;
+		private readonly IScreenSectionCollection _screenSectionCollection;
+
 		private SizeInt _canvasSize;
 		private VectorInt _canvasControlOffset;
-		private readonly DrawingGroup _drawingGroup;
-		private IScreenSectionCollection _screenSectionCollection;
 
-		public MapDisplayViewModel(SizeInt blockSize)
+		public MapDisplayViewModel(ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor, SizeInt blockSize)
 		{
+			_projectAdapter = projectAdapter;
+
+			_mapLoaderJobStack = new MapLoaderJobStack(mapSectionRequestProcessor, this);
+			_mapLoaderJobStack.CurrentJobChanged += MapLoaderJobStack_CurrentJobChanged;
 			_drawingGroup = new DrawingGroup();
 			ImageSource = new DrawingImage(_drawingGroup);
 
@@ -62,6 +73,63 @@ namespace MSetExplorer
 
 		public ObservableCollection<MapSection> MapSections { get; }
 
+		public Project CurrentProject { get; set; }
+
+		public Job CurrentJob => _mapLoaderJobStack.CurrentJob;
+
+		public IEnumerable<Job> Jobs => _mapLoaderJobStack.Jobs;
+
+		public bool CanGoBack => _mapLoaderJobStack.CanGoBack;
+		public bool CanGoForward => _mapLoaderJobStack.CanGoForward;
+
+		private void MapLoaderJobStack_CurrentJobChanged(object sender, EventArgs e)
+		{
+			OnPropertyChanged("CanGoBack");
+			OnPropertyChanged("CanGoForward");
+		}
+
+		public void GoBack()
+		{
+			var _ = _mapLoaderJobStack.GoBack();
+		}
+
+		public void GoForward()
+		{
+			var _ = _mapLoaderJobStack.GoForward();
+		}
+
+		public void LoadJobStack(IEnumerable<Job> jobs)
+		{
+			_mapLoaderJobStack.LoadJobStack(jobs);
+		}
+
+		public void UpdateJob(Job oldJob, Job newJob)
+		{
+			_mapLoaderJobStack.UpdateJob(oldJob, newJob);
+		}
+
+		public void SetMapInfo(MSetInfo mSetInfo)
+		{
+			var newArea = new RectangleInt(new PointInt(), CanvasSize);
+			LoadMap(mSetInfo, TransformType.None, newArea);
+		}
+
+		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
+		{
+			var newArea = e.Area;
+			UpdateMapView(TransformType.Zoom, newArea);
+		}
+
+		public void UpdateMapViewPan(ScreenPannedEventArgs e)
+		{
+			var offset = e.Offset;
+
+			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
+			var invOffset = offset.Invert();
+			var newArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
+			UpdateMapView(TransformType.Pan, newArea);
+		}
+
 		public IReadOnlyList<MapSection> GetMapSectionsSnapShot()
 		{
 			return new ReadOnlyCollection<MapSection>(MapSections);
@@ -73,6 +141,47 @@ namespace MSetExplorer
 		}
 
 		#region Private Methods
+
+		private void UpdateMapView(TransformType transformType, RectangleInt newArea)
+		{
+			var curJob = CurrentJob;
+			var position = curJob.MSetInfo.Coords.Position;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+			var mSetInfo = CurrentJob.MSetInfo;
+			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
+
+			//if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
+			//{
+			//	updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
+			//}
+
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
+			LoadMap(updatedInfo, transformType, newArea);
+		}
+
+		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
+		{
+			//CheckViewModel();
+			var parentJob = CurrentJob;
+			var jobName = GetJobName(transformType);
+			var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+
+			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
+			_mapLoaderJobStack.Push(job);
+		}
+
+		private string GetJobName(TransformType transformType)
+		{
+			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
+			return result;
+		}
+
+		//[Conditional("Debug")]
+		//private void CheckViewModel()
+		//{
+		//	Debug.Assert(MapDisplayViewModel.CanvasSize == CanvasSize, "Canvas Sizes don't match on CheckViewModel.");
+		//}
 
 		private SizeInt GetSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
 		{
@@ -94,7 +203,7 @@ namespace MSetExplorer
 			if (!(_screenSectionCollection is null))
 			{
 				var drawingGroupSize = _screenSectionCollection.CanvasSizeInBlocks.Scale(BlockSize);
-				Rect rect = new Rect(new Point(bottomLeft.X, (drawingGroupSize.Height - CanvasSize.Height) - bottomLeft.Y), new Point(CanvasSize.Width + bottomLeft.X, drawingGroupSize.Height - bottomLeft.Y));
+				Rect rect = new Rect(new Point(bottomLeft.X, drawingGroupSize.Height - CanvasSize.Height - bottomLeft.Y), new Point(CanvasSize.Width + bottomLeft.X, drawingGroupSize.Height - bottomLeft.Y));
 
 				//Debug.WriteLine($"The clip rect is {rect}.");
 				_drawingGroup.ClipGeometry = new RectangleGeometry(rect);

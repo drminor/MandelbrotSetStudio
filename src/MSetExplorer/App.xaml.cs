@@ -42,8 +42,7 @@ namespace MSetExplorer
 
 			_mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
 
-			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(RMapConstants.BLOCK_SIZE);
-			IMapLoaderJobStack mapLoaderJobStack = new MapLoaderJobStack(_mapSectionRequestProcessor, mapDisplayViewModel);
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(projectAdapter, _mapSectionRequestProcessor, RMapConstants.BLOCK_SIZE);
 
 			//var window1 = USE_MAP_NAV_SIM
 			//	? new MapNavSim
@@ -57,7 +56,7 @@ namespace MSetExplorer
 
 			var window1 = new MainWindow
 			{
-				DataContext = new MainWindowViewModel(projectAdapter, mapDisplayViewModel, mapLoaderJobStack)
+				DataContext = new MainWindowViewModel(projectAdapter, mapDisplayViewModel)
 			};
 
 			window1.Show();

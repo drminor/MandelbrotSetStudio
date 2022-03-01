@@ -49,7 +49,7 @@ namespace MSetExplorer
 				_vm = vmProvider.MapDisplayViewModel;
 				//_vm.PropertyChanged += ViewModel_PropertyChanged;
 
-				vmProvider.PropertyChanged += MainWindowTesting_PropertyChanged;
+				vmProvider.PropertyChanged += MainWindow_PropertyChanged;
 
 				var canvasSize = GetCanvasSize(new Size(ActualWidth, ActualHeight), _keepDisplaySquare);
 				_vm.CanvasSize = canvasSize;
@@ -112,12 +112,17 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		private void MainWindowTesting_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void MainWindow_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			//if (e.PropertyName == "TestingScreenSections")
 			//{
 			//	_mapSectionCollectionBinder.Test();
 			//}
+
+			if (e.PropertyName == "CurrentProject")
+			{
+				_vm.CurrentProject = ((IMainWindowViewModel)DataContext).CurrentProject;
+			}
 		}
 
 		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -130,12 +135,14 @@ namespace MSetExplorer
 
 		private void SelectedArea_AreaSelected(object sender, AreaSelectedEventArgs e)
 		{
-			AreaSelected?.Invoke(this, e);
+			_vm.UpdateMapViewZoom(e);
+			//AreaSelected?.Invoke(this, e);
 		}
 
 		private void SelectedArea_ScreenPanned(object sender, ScreenPannedEventArgs e)
 		{
-			ScreenPanned?.Invoke(this, e);
+			_vm.UpdateMapViewPan(e);
+			//ScreenPanned?.Invoke(this, e);
 		}
 
 		#endregion

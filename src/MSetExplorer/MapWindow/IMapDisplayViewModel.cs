@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -20,6 +21,27 @@ namespace MSetExplorer
 		ObservableCollection<MapSection> MapSections { get; }
 
 		IReadOnlyList<MapSection> GetMapSectionsSnapShot();
+
+		public Project CurrentProject { get; set; }
+
+		public IEnumerable<Job> Jobs { get; }
+		public Job CurrentJob { get; }
+
+		public bool CanGoBack { get; }
+		public bool CanGoForward { get; }
+
+		public void GoBack();
+		public void GoForward();
+
+		public void LoadJobStack(IEnumerable<Job> jobs);
+
+		public void UpdateJob(Job oldJob, Job newJob);
+
+		void SetMapInfo(MSetInfo mSetInfo);
+		void UpdateMapViewZoom(AreaSelectedEventArgs e);
+		void UpdateMapViewPan(ScreenPannedEventArgs e);
+
 		void ShiftMapSections(VectorInt amount);
+
 	}
 }
