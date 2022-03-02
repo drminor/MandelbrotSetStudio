@@ -22,6 +22,7 @@ namespace MSetExplorer
 		bool GoBack();
 		bool GoForward();
 
+		void Push(Job job);
 		void Push(Job job, IList<MapSection> emptyMapSections);
 		void LoadJobStack(IEnumerable<Job> jobs);
 

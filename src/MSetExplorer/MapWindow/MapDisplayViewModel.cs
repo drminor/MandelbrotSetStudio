@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 
@@ -194,12 +195,37 @@ namespace MSetExplorer
 
 			_mapLoaderJobStack.StopCurrentJob();
 
-			var sectionsRequired = MapLoader.CreateEmptyMapSections(job);
+			if (transformType == TransformType.Pan)
+			{
+				var sectionsRequired = MapLoader.CreateEmptyMapSections(job);
+				var loadedSections = GetMapSectionsSnapShot();
+				var sectionsToLoad = RemoveMapSectionsInPlay(sectionsRequired, loadedSections);
 
-			//var loadedSections = GetMapSectionsSnapShot();
+				var shiftAmount = new VectorInt(1, 0);
+				_screenSectionCollection.Shift(shiftAmount);
 
-			_mapLoaderJobStack.Push(job, sectionsRequired);
-			ResetMapDisplay(CurrentJob?.CanvasControlOffset ?? new VectorInt());
+				_mapLoaderJobStack.Push(job, sectionsToLoad);
+			}
+			else
+			{
+				_mapLoaderJobStack.Push(job);
+				ResetMapDisplay(CurrentJob?.CanvasControlOffset ?? new VectorInt());
+			}
+		}
+
+		private IList<MapSection> RemoveMapSectionsInPlay(IList<MapSection> source, IReadOnlyList<MapSection> current)
+		{
+			IList<MapSection> result = new List<MapSection>();
+
+			foreach(var mapSection in source)
+			{
+				if (!current.Any(x => x == mapSection))
+				{
+					result.Add(mapSection);
+				}
+			}
+
+			return result;
 		}
 
 		private string GetJobName(TransformType transformType)

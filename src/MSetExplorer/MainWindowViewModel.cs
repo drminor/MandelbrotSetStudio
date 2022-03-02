@@ -82,20 +82,20 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void SetMapInfo(MSetInfo mSetInfo)
-		{
-			MapDisplayViewModel.SetMapInfo(mSetInfo);
-		}
+		//public void SetMapInfo(MSetInfo mSetInfo)
+		//{
+		//	MapDisplayViewModel.SetMapInfo(mSetInfo);
+		//}
 
-		public void GoBack()
-		{
-			MapDisplayViewModel.GoBack();
-		}
+		//public void GoBack()
+		//{
+		//	MapDisplayViewModel.GoBack();
+		//}
 
-		public void GoForward()
-		{
-			MapDisplayViewModel.GoForward();
-		}
+		//public void GoForward()
+		//{
+		//	MapDisplayViewModel.GoForward();
+		//}
 
 		public void Test()
 		{

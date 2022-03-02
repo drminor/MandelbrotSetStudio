@@ -26,7 +26,7 @@ namespace MSetExplorer
 
 			var maxIterations = 700;
 			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.SetMapInfo(mSetInfo);
+			_vm.MapDisplayViewModel.SetMapInfo(mSetInfo);
 
 			//_vm.LoadProject();
 		}
@@ -70,13 +70,13 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == "CanGoBack")
 			{
-				btnGoBack.IsEnabled = _vm.CanGoBack;
+				btnGoBack.IsEnabled = _vm.MapDisplayViewModel.CanGoBack;
 				return;
 			}
 
 			if (e.PropertyName == "CanGoForward")
 			{
-				btnGoForward.IsEnabled = _vm.CanGoForward;
+				btnGoForward.IsEnabled = _vm.MapDisplayViewModel.CanGoForward;
 				return;
 			}
 		}
@@ -87,37 +87,37 @@ namespace MSetExplorer
 
 		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
 		{
-			//_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(32, 0)));
+			_vm.MapDisplayViewModel.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(32, 0)));
 		}
 
 		private void GoUpButton_Click(object sender, RoutedEventArgs e)
 		{
-			//_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0,32)));
+			_vm.MapDisplayViewModel.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0,32)));
 		}
 
 		private void GoRightButton_Click(object sender, RoutedEventArgs e)
 		{
-			//_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(-32, 0)));
+			_vm.MapDisplayViewModel.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(-32, 0)));
 		}
 
 		private void GoDownButton_Click(object sender, RoutedEventArgs e)
 		{
-			//_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0, -32)));
+			_vm.MapDisplayViewModel.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0, -32)));
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.CanGoBack)
+			if (_vm.MapDisplayViewModel.CanGoBack)
 			{
-				_vm.GoBack();
+				_vm.MapDisplayViewModel.GoBack();
 			}
 		}
 
 		private void GoForwardButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.CanGoForward)
+			if (_vm.MapDisplayViewModel.CanGoForward)
 			{
-				_vm.GoForward();
+				_vm.MapDisplayViewModel.GoForward();
 			}
 		}
 

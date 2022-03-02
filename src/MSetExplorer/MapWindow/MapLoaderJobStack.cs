@@ -69,6 +69,11 @@ namespace MSetExplorer
 			});
 		}
 
+		public void Push(Job job)
+		{
+			Push(job, null);
+		}
+
 		public void Push(Job job, IList<MapSection> emptyMapSections)
 		{
 			DoWithWriteLock(() =>
@@ -79,9 +84,15 @@ namespace MSetExplorer
 				var genMapRequestInfo = PushRequest(job);
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
-				//ResetMapDisplay(CurrentJob.CanvasControlOffset);
 
-				genMapRequestInfo.StartLoading(emptyMapSections);
+				if (emptyMapSections is null)
+				{
+					genMapRequestInfo.StartLoading();
+				}
+				else
+				{
+					genMapRequestInfo.StartLoading(emptyMapSections);
+				}
 			});
 		}
 
