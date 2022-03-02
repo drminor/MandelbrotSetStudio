@@ -42,6 +42,16 @@ namespace MSS.Types
 			}
 		}
 
+		public VectorInt Add(VectorInt amount)
+		{
+			return new VectorInt(X + amount.X, Y + amount.Y);
+		}
+
+		public VectorInt Sub(VectorInt amount)
+		{
+			return new VectorInt(X - amount.X, Y - amount.Y);
+		}
+
 		public VectorInt Invert()
 		{
 			return new VectorInt(X * -1, Y * -1);

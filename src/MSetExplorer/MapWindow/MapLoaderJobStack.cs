@@ -1,7 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
 using MongoDB.Bson;
-using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
@@ -70,7 +69,7 @@ namespace MSetExplorer
 			});
 		}
 
-		public void Push(Job job, IList<MapSectionRequest> requests)
+		public void Push(Job job, IList<MapSection> emptyMapSections)
 		{
 			DoWithWriteLock(() =>
 			{
@@ -82,7 +81,7 @@ namespace MSetExplorer
 				CurrentJobChanged?.Invoke(this, new EventArgs());
 				//ResetMapDisplay(CurrentJob.CanvasControlOffset);
 
-				genMapRequestInfo.StartLoading(requests);
+				genMapRequestInfo.StartLoading(emptyMapSections);
 			});
 		}
 
@@ -186,14 +185,15 @@ namespace MSetExplorer
 		{
 			DoWithWriteLock(() =>
 			{
-				if (sender == CurrentRequest.MapLoader)
+				var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
+
+				if (jobNumber == CurrentRequest.JobNumber)
 				{
 					_synchronizationContext.Post(o => MapSectionReady?.Invoke(this, mapSection), null);
 				}
 				else
 				{
-					var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
-					Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}."); // . CurJobNum:{curJobNumber}, Handling
+					Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}. CurJobNum: {CurrentRequest.JobNumber}"); 
 				}
 			});
 		}
@@ -359,13 +359,13 @@ namespace MSetExplorer
 		{
 			public Job Job { get; set; }
 
-			//public int JobNumber { get; private set; }
+			public int JobNumber { get; private set; }
 			public MapLoader MapLoader { get; private set; }
 
 			public GenMapRequestInfo(Job job)
 			{
 				Job = job ?? throw new ArgumentNullException(nameof(job));
-				//JobNumber = -1;
+				JobNumber = -1;
 				MapLoader = null;
 			}
 
@@ -373,13 +373,13 @@ namespace MSetExplorer
 			{
 				Job = job ?? throw new ArgumentNullException(nameof(job));
 				MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
-				//JobNumber = mapLoader.JobNumber;
+				JobNumber = mapLoader.JobNumber;
 			}
 
 			public void Renew(MapLoader mapLoader)
 			{
-				//JobNumber = mapLoader.JobNumber;
 				MapLoader = mapLoader;
+				JobNumber = mapLoader.JobNumber;
 			}
 
 			public void StartLoading()
@@ -388,16 +388,16 @@ namespace MSetExplorer
 				_ = startTask.ContinueWith(LoadingComplete);
 			}
 
-			public void StartLoading(IList<MapSectionRequest> requests)
+			public void StartLoading(IList<MapSection> emptyMapSections)
 			{
-				var startTask = MapLoader.Start(requests);
+				var startTask = MapLoader.Start(emptyMapSections);
 				_ = startTask.ContinueWith(LoadingComplete);
 			}
 
 			public void LoadingComplete(Task _)
 			{
-				// TODO: Use Dispatcher Invoke instead of Thread.Sleep.
-				Thread.Sleep(10 * 1000);
+				//// TODO: Use Dispatcher Invoke instead of Thread.Sleep.
+				//Thread.Sleep(10 * 1000);
 				MapLoader = null;
 			}
 		}

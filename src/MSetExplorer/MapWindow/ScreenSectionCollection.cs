@@ -12,10 +12,9 @@ namespace MSetExplorer
 {
 	internal class ScreenSectionCollection : IScreenSectionCollection
 	{
+		private readonly int _maxYPtr;
 		private readonly DrawingGroup _drawingGroup;
-
 		private readonly ScreenSection[,] _screenSections;
-
 		private VectorInt _startIndex;
 
 		#region Constructor
@@ -23,6 +22,7 @@ namespace MSetExplorer
 		public ScreenSectionCollection(SizeInt canvasSizeInBlocks, SizeInt blockSize, DrawingGroup drawingGroup)
 		{
 			CanvasSizeInBlocks = canvasSizeInBlocks;
+			_maxYPtr = CanvasSizeInBlocks.Height - 1;
 			_drawingGroup = drawingGroup;
 			_screenSections = BuildScreenSections(CanvasSizeInBlocks, blockSize, _drawingGroup);
 		}
@@ -55,6 +55,43 @@ namespace MSetExplorer
 			}
 
 			screenSection.WritePixels(mapSection.Pixels1d);
+		}
+
+		/// <summary>
+		/// Returns the number of sections that were removed from display.
+		/// </summary>
+		/// <param name="amount">The amount to shift each section.</param>
+		/// <returns></returns>
+		public int Shift(VectorInt amount)
+		{
+			var activeBefore = 0;
+			var activeNow = 0;
+
+			var sizeInBlocks = CanvasSizeInBlocks;
+
+			for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
+			{
+				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
+				{
+					var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
+					var screenSection = GetScreenSection(blockPosition);
+
+					activeBefore += screenSection.Active ? 1 : 0;
+
+					var nPos = screenSection.BlockPosition.Translate(amount);
+					var invertedPosition = GetInvertedBlockPos(nPos);
+					screenSection.BlockPosition = invertedPosition;
+
+					activeNow += screenSection.Active ? 1 : 0;
+				}
+			}
+
+			_startIndex = _startIndex.Sub(amount);
+			_startIndex = _startIndex.Mod(CanvasSizeInBlocks);
+
+			Debug.WriteLine($"The ScreenSectionCollection is was shifted by {amount}. Before: {activeBefore}, after: {activeNow}. New StartIndex: {_startIndex}.");
+
+			return activeBefore - activeNow;
 		}
 
 		public void Test()
@@ -152,7 +189,7 @@ namespace MSetExplorer
 				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
 				{
 					var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var invertedPosition = GetInvertedBlockPos(blockPosition, result);
+					var invertedPosition = GetInvertedBlockPos(blockPosition);
 					var screenSection = new ScreenSection(invertedPosition, blockSize, drawingGroup);
 
 					result[blockPosition.Y, blockPosition.X] = screenSection;
@@ -162,10 +199,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private PointInt GetInvertedBlockPos(PointInt blockPosition, ScreenSection[,] screenSections)
+		private PointInt GetInvertedBlockPos(PointInt blockPosition)
 		{
-			var maxYPtr = screenSections.GetUpperBound(0);
-			var result = new PointInt(blockPosition.X, maxYPtr - blockPosition.Y);
+			var result = new PointInt(blockPosition.X, _maxYPtr - blockPosition.Y);
 
 			return result;
 		}

@@ -67,6 +67,12 @@ namespace MSetExplorer
 			return Start(CreateSectionRequests(_job));
 		}
 
+		public Task Start(IList<MapSection> emptyMapSections)
+		{
+			var requests = CreateSectionRequests(_job, emptyMapSections);
+			return Start(requests);
+		}
+
 		public Task Start(IList<MapSectionRequest> requests)
 		{
 			if (_tcs != null)
@@ -145,11 +151,24 @@ namespace MSetExplorer
 			}
 		}
 
-		#endregion
+		private IList<MapSectionRequest> CreateSectionRequests(Job job, IList<MapSection> emptyMapSections)
+		{
+			var result = new List<MapSectionRequest>();
 
-		#region Static Methods
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
+			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
-		public static IList<MapSectionRequest> CreateSectionRequests(Job job)
+			foreach (var mapSection in emptyMapSections)
+			{
+				var screenPosition = mapSection.BlockPosition;
+				var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+				result.Add(mapSectionRequest);
+			}
+
+			return result;
+		}
+
+		private IList<MapSectionRequest> CreateSectionRequests(Job job)
 		{
 			var result = new List<MapSectionRequest>();
 
@@ -163,6 +182,32 @@ namespace MSetExplorer
 					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
 					var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
 					result.Add(mapSectionRequest);
+				}
+			}
+
+			return result;
+		}
+
+		#endregion
+
+		#region Static Methods
+
+		public static IList<MapSection> CreateEmptyMapSections(Job job)
+		{
+			var emptyPixelData = new byte[0];
+			var result = new List<MapSection>();
+
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
+			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
+
+			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			{
+				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
+				{
+					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
+					var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var _);
+					var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyPixelData, job.Subdivision.Id.ToString(), repoBlockPosition: repoPosition);
+					result.Add(mapSection);
 				}
 			}
 

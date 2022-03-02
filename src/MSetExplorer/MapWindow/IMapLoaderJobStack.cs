@@ -22,7 +22,7 @@ namespace MSetExplorer
 		bool GoBack();
 		bool GoForward();
 
-		void Push(Job job, IList<MapSectionRequest> requests);
+		void Push(Job job, IList<MapSection> emptyMapSections);
 		void LoadJobStack(IEnumerable<Job> jobs);
 
 		void UpdateJob(Job oldJob, Job newJob);

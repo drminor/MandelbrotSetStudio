@@ -18,8 +18,8 @@ namespace MSetExplorer
 		SizeInt BlockSize { get; }
 		SizeInt CanvasSize { get; set; }
 		VectorInt CanvasControlOffset { get; set; }
-		ObservableCollection<MapSection> MapSections { get; }
 
+		ObservableCollection<MapSection> MapSections { get; }
 		IReadOnlyList<MapSection> GetMapSectionsSnapShot();
 
 		public Project CurrentProject { get; set; }
@@ -35,13 +35,10 @@ namespace MSetExplorer
 
 		public void LoadJobStack(IEnumerable<Job> jobs);
 
-		public void UpdateJob(Job oldJob, Job newJob);
-
 		void SetMapInfo(MSetInfo mSetInfo);
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ScreenPannedEventArgs e);
 
-		void ShiftMapSections(VectorInt amount);
-
+		public void UpdateJob(Job oldJob, Job newJob);
 	}
 }

@@ -17,7 +17,7 @@ namespace MSS.Types.Screen
 		{
 			BlockPosition = blockPosition;
 			Size = size;
-			Pixels1d = pixels1d ?? throw new ArgumentNullException(nameof(pixels1d));
+			Pixels1d = pixels1d; // ?? throw new ArgumentNullException(nameof(pixels1d));
 
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;

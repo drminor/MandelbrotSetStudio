@@ -168,7 +168,6 @@ namespace MapSectionProviderLib
 					if (mapSectionResponse != null)
 					{
 						mapSectionWorkItem.Response = mapSectionResponse;
-						//HandleFoundResponse(mapSectionWorkItem);
 						_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
 					}
 					else

@@ -111,15 +111,15 @@ namespace MSetExplorer
 		public void GoBack()
 		{
 			_mapLoaderJobStack.StopCurrentJob();
-			ResetMapDisplay(CurrentJob.CanvasControlOffset);
 			_ = _mapLoaderJobStack.GoBack();
+			ResetMapDisplay(CurrentJob.CanvasControlOffset);
 		}
 
 		public void GoForward()
 		{
 			_mapLoaderJobStack.StopCurrentJob();
-			ResetMapDisplay(CurrentJob.CanvasControlOffset);
 			_ = _mapLoaderJobStack.GoForward();
+			ResetMapDisplay(CurrentJob.CanvasControlOffset);
 		}
 
 		public void LoadJobStack(IEnumerable<Job> jobs)
@@ -127,6 +127,7 @@ namespace MSetExplorer
 			_mapLoaderJobStack.StopCurrentJob();
 			ResetMapDisplay(new VectorInt());
 			_mapLoaderJobStack.LoadJobStack(jobs);
+			ResetMapDisplay(CurrentJob.CanvasControlOffset);
 		}
 
 		public void UpdateJob(Job oldJob, Job newJob)
@@ -161,11 +162,6 @@ namespace MSetExplorer
 			return new ReadOnlyCollection<MapSection>(MapSections);
 		}
 
-		public void ShiftMapSections(VectorInt amount)
-		{
-
-		}
-
 		#endregion
 
 		#region Private Methods
@@ -197,9 +193,13 @@ namespace MSetExplorer
 			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
 			_mapLoaderJobStack.StopCurrentJob();
+
+			var sectionsRequired = MapLoader.CreateEmptyMapSections(job);
+
+			//var loadedSections = GetMapSectionsSnapShot();
+
+			_mapLoaderJobStack.Push(job, sectionsRequired);
 			ResetMapDisplay(CurrentJob?.CanvasControlOffset ?? new VectorInt());
-			var requests = MapLoader.CreateSectionRequests(job);
-			_mapLoaderJobStack.Push(job, requests);
 		}
 
 		private string GetJobName(TransformType transformType)
@@ -239,6 +239,11 @@ namespace MSetExplorer
 		{
 			CanvasControlOffset = canvasControOffset;
 			MapSections.Clear();
+		}
+
+		private void ShiftMapSections(VectorInt amount)
+		{
+			
 		}
 
 
