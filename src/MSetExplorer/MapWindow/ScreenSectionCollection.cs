@@ -45,13 +45,16 @@ namespace MSetExplorer
 		public void Draw(MapSection mapSection)
 		{
 			var screenSection = GetScreenSection(mapSection.BlockPosition);
-			var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
-			Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
+			//var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
+			//Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
 
-			if (!(mapSection.Pixels1d is null))
+			if (mapSection.Pixels1d is null)
 			{
-				screenSection.WritePixels(mapSection.Pixels1d);
+				Debug.WriteLine($"Warning: ScreenSectionCollection is not drawing MapSection: {mapSection}. The Pixel Data is null.");
+				return;
 			}
+
+			screenSection.WritePixels(mapSection.Pixels1d);
 		}
 
 		public void Test()

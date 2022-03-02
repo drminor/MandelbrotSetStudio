@@ -66,7 +66,7 @@ namespace MapSectionProviderLib
 
 		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSectionResponse> responseHandler) 
 		{
-			var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(jobNumber, mapSectionRequest, responseHandler);
+			var mapSectionWorkItem = new MapSecWorkReqType(jobNumber, mapSectionRequest, responseHandler);
 
 			if (!_workQueue.IsAddingCompleted)
 			{
@@ -78,17 +78,17 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		//public IList<MapSecWorkReqType> GetPendingRequests()
-		//{
-		//	IList<MapSecWorkReqType> pendingRequestsCopy;
+		public IList<MapSectionRequest> GetPendingRequests(int jobNumber)
+		{
+			IList<MapSectionRequest> pendingRequestsCopy;
 
-		//	lock (_pendingRequestsLock)
-		//	{
-		//		pendingRequestsCopy = new List<MapSecWorkReqType>(_pendingRequests);
-		//	}
+			lock (_pendingRequestsLock)
+			{
+				pendingRequestsCopy = new List<MapSectionRequest>(_pendingRequests.Where(x => x.JobId == jobNumber).Select(x => x.Request));
+			}
 
-		//	return pendingRequestsCopy;
-		//}
+			return pendingRequestsCopy;
+		}
 
 		public void CancelJob(int jobId)
 		{

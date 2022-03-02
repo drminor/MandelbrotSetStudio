@@ -87,16 +87,6 @@ namespace MSetExplorer
 			MapDisplayViewModel.SetMapInfo(mSetInfo);
 		}
 
-		//public void UpdateMapViewZoom(AreaSelectedEventArgs e)
-		//{
-		//	MapDisplayViewModel.UpdateMapViewZoom(e);
-		//}
-
-		//public void UpdateMapViewPan(ScreenPannedEventArgs e)
-		//{
-		//	MapDisplayViewModel.UpdateMapViewPan(e);
-		//}
-
 		public void GoBack()
 		{
 			MapDisplayViewModel.GoBack();
@@ -133,51 +123,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		//#region Private Methods 
-
-		//private void UpdateMapView(TransformType transformType, RectangleInt newArea)
-		//{
-		//	var curJob = CurrentJob;
-		//	var position = curJob.MSetInfo.Coords.Position;
-		//	var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-		//	var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-		//	var mSetInfo = CurrentJob.MSetInfo;
-		//	var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-
-		//	if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
-		//	{
-		//		updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
-		//	}
-
-		//	Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
-		//	LoadMap(updatedInfo, transformType, newArea);
-		//}
-
-		//private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
-		//{
-		//	//CheckViewModel();
-		//	var parentJob = CurrentJob;
-		//	var jobName = GetJobName(transformType);
-		//	var canvasSize = MapDisplayViewModel.CanvasSize;
-		//	var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, canvasSize, mSetInfo, transformType, newArea, _blockSize, _projectAdapter);
-
-		//	//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
-		//	MapLoaderJobStack.Push(job);
-		//}
-
-		//private string GetJobName(TransformType transformType)
-		//{
-		//	var result = transformType == TransformType.None ? "Home" : transformType.ToString();
-		//	return result;
-		//}
-
-		////[Conditional("Debug")]
-		////private void CheckViewModel()
-		////{
-		////	Debug.Assert(MapDisplayViewModel.CanvasSize == CanvasSize, "Canvas Sizes don't match on CheckViewModel.");
-		////}
-
-		//#endregion
 	}
 }

@@ -23,6 +23,11 @@ namespace MSS.Types.Screen
 			RepoBlockPosition = repoBlockPosition;
 		}
 
+		public override string? ToString()
+		{
+			return $"MapSection: {SubdivisionId}::Pos: {RepoBlockPosition}.";
+		}
+
 		#region IEqualityComparer / IEquatable Support
 
 		public override bool Equals(object? obj)

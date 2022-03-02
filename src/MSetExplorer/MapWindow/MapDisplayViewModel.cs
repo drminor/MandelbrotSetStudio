@@ -23,12 +23,15 @@ namespace MSetExplorer
 		private SizeInt _canvasSize;
 		private VectorInt _canvasControlOffset;
 
+		#region Constructor
+
 		public MapDisplayViewModel(ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
 
-			_mapLoaderJobStack = new MapLoaderJobStack(mapSectionRequestProcessor, this);
+			_mapLoaderJobStack = new MapLoaderJobStack(mapSectionRequestProcessor);
 			_mapLoaderJobStack.CurrentJobChanged += MapLoaderJobStack_CurrentJobChanged;
+			_mapLoaderJobStack.MapSectionReady += MapLoaderJobStack_MapSectionReady;
 			_drawingGroup = new DrawingGroup();
 			ImageSource = new DrawingImage(_drawingGroup);
 
@@ -43,6 +46,25 @@ namespace MSetExplorer
 
 			CanvasControlOffset = new VectorInt();
 		}
+
+		private void MapLoaderJobStack_MapSectionReady(object sender, MapSection e)
+		{
+			MapSections.Add(e);
+		}
+
+		#endregion
+
+		#region Event Handlers
+
+		private void MapLoaderJobStack_CurrentJobChanged(object sender, EventArgs e)
+		{
+			OnPropertyChanged(nameof(CanGoBack));
+			OnPropertyChanged(nameof(CanGoForward));
+		}
+
+		#endregion
+
+		#region Public Properties
 
 		public new bool InDesignMode => base.InDesignMode;
 
@@ -82,24 +104,28 @@ namespace MSetExplorer
 		public bool CanGoBack => _mapLoaderJobStack.CanGoBack;
 		public bool CanGoForward => _mapLoaderJobStack.CanGoForward;
 
-		private void MapLoaderJobStack_CurrentJobChanged(object sender, EventArgs e)
-		{
-			OnPropertyChanged("CanGoBack");
-			OnPropertyChanged("CanGoForward");
-		}
+		#endregion
+
+		#region Public Methods
 
 		public void GoBack()
 		{
-			var _ = _mapLoaderJobStack.GoBack();
+			_mapLoaderJobStack.StopCurrentJob();
+			ResetMapDisplay(CurrentJob.CanvasControlOffset);
+			_ = _mapLoaderJobStack.GoBack();
 		}
 
 		public void GoForward()
 		{
-			var _ = _mapLoaderJobStack.GoForward();
+			_mapLoaderJobStack.StopCurrentJob();
+			ResetMapDisplay(CurrentJob.CanvasControlOffset);
+			_ = _mapLoaderJobStack.GoForward();
 		}
 
 		public void LoadJobStack(IEnumerable<Job> jobs)
 		{
+			_mapLoaderJobStack.StopCurrentJob();
+			ResetMapDisplay(new VectorInt());
 			_mapLoaderJobStack.LoadJobStack(jobs);
 		}
 
@@ -140,6 +166,8 @@ namespace MSetExplorer
 
 		}
 
+		#endregion
+
 		#region Private Methods
 
 		private void UpdateMapView(TransformType transformType, RectangleInt newArea)
@@ -162,13 +190,16 @@ namespace MSetExplorer
 
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
-			//CheckViewModel();
 			var parentJob = CurrentJob;
 			var jobName = GetJobName(transformType);
 			var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 
 			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
-			_mapLoaderJobStack.Push(job);
+
+			_mapLoaderJobStack.StopCurrentJob();
+			ResetMapDisplay(CurrentJob?.CanvasControlOffset ?? new VectorInt());
+			var requests = MapLoader.CreateSectionRequests(job);
+			_mapLoaderJobStack.Push(job, requests);
 		}
 
 		private string GetJobName(TransformType transformType)
@@ -176,12 +207,6 @@ namespace MSetExplorer
 			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
 			return result;
 		}
-
-		//[Conditional("Debug")]
-		//private void CheckViewModel()
-		//{
-		//	Debug.Assert(MapDisplayViewModel.CanvasSize == CanvasSize, "Canvas Sizes don't match on CheckViewModel.");
-		//}
 
 		private SizeInt GetSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
 		{
@@ -203,32 +228,19 @@ namespace MSetExplorer
 			if (!(_screenSectionCollection is null))
 			{
 				var drawingGroupSize = _screenSectionCollection.CanvasSizeInBlocks.Scale(BlockSize);
-				Rect rect = new Rect(new Point(bottomLeft.X, drawingGroupSize.Height - CanvasSize.Height - bottomLeft.Y), new Point(CanvasSize.Width + bottomLeft.X, drawingGroupSize.Height - bottomLeft.Y));
+				var rect = new Rect(new Point(bottomLeft.X, drawingGroupSize.Height - CanvasSize.Height - bottomLeft.Y), new Point(CanvasSize.Width + bottomLeft.X, drawingGroupSize.Height - bottomLeft.Y));
 
 				//Debug.WriteLine($"The clip rect is {rect}.");
 				_drawingGroup.ClipGeometry = new RectangleGeometry(rect);
 			}
 		}
 
-		//private PointInt GetPointInt(Point p)
-		//{
-		//	return new PointDbl(p.X, p.Y).Round();
-		//}
-
-		private Point GetPoint(PointInt p)
+		private void ResetMapDisplay(VectorInt canvasControOffset)
 		{
-			return new Point(p.X, p.Y);
+			CanvasControlOffset = canvasControOffset;
+			MapSections.Clear();
 		}
 
-		private Size GetSize(SizeInt s)
-		{
-			return new Size(s.Width, s.Height);
-		}
-
-		private Rect GetRect(PointInt p, SizeInt s)
-		{
-			return new Rect(GetPoint(p), GetSize(s));
-		}
 
 		#endregion
 	}

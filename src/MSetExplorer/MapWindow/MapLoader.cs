@@ -21,7 +21,7 @@ namespace MSetExplorer
 		private readonly Action<object, MapSection> _callback;
 		private readonly ColorMap _colorMap;
 
-		private readonly IList<MapSectionRequest> _pendingRequests;
+		private IList<MapSectionRequest> _pendingRequests;
 
 		private bool _isStopping;
 		private int _sectionsRequested;
@@ -31,7 +31,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoader(Job job, IReadOnlyList<MapSection> loadedMapSections, Action<object, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(Job job, Action<object, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_job = job;
 			_callback = callback;
@@ -39,7 +39,7 @@ namespace MSetExplorer
 			JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 
 			_colorMap = new ColorMap(job.MSetInfo.ColorMapEntries);
-			_pendingRequests = CreateSectionRequests();
+			_pendingRequests = null; // CreateSectionRequests();
 
 			_isStopping = false;
 			_sectionsRequested = 0;
@@ -58,12 +58,23 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		/// <summary>
+		/// Submits requests for all map sections for the job.
+		/// </summary>
+		/// <returns></returns>
 		public Task Start()
+		{
+			return Start(CreateSectionRequests(_job));
+		}
+
+		public Task Start(IList<MapSectionRequest> requests)
 		{
 			if (_tcs != null)
 			{
 				throw new InvalidOperationException("This MapLoader has already been started.");
 			}
+
+			_pendingRequests = requests;
 
 			_ = Task.Run(SubmitSectionRequests);
 
@@ -89,26 +100,6 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private IList<MapSectionRequest> CreateSectionRequests()
-		{
-			var result = new List<MapSectionRequest>();
-
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(_job.CanvasSizeInBlocks, _job.CanvasControlOffset);
-			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
-
-			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
-			{
-				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
-				{
-					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, _job.MapBlockOffset, _job.Subdivision, _job.MSetInfo.MapCalcSettings);
-					result.Add(mapSectionRequest);
-				}
-			}
-
-			return result;
-		}
-
 		private void SubmitSectionRequests()
 		{
 			foreach(var mapSectionRequest in _pendingRequests)
@@ -133,10 +124,13 @@ namespace MSetExplorer
 
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _job.MapBlockOffset, _colorMap);
+			if (!(mapSectionResponse.Counts is null))
+			{
+				var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _job.MapBlockOffset, _colorMap);
 
-			_callback(this, mapSection);
-			mapSectionRequest.Handled = true;
+				_callback(this, mapSection);
+				mapSectionRequest.Handled = true;
+			}
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
 			if (_sectionsCompleted == _job.CanvasSizeInBlocks.NumberOfCells || (_isStopping && _sectionsCompleted == _sectionsRequested))
@@ -146,11 +140,36 @@ namespace MSetExplorer
 					_tcs.SetResult();
 				}
 
-				//var pr = _mapSectionRequestProcessor.GetPendingRequests();
-				//Debug.WriteLine($"MapLoader is done with Job: x, there are {pr.Count} requests still pending.");
+				var pr = _mapSectionRequestProcessor.GetPendingRequests(JobNumber);
+				Debug.WriteLine($"MapLoader is done with Job: {JobNumber}, there are {pr.Count} requests still pending.");
 			}
 		}
 
 		#endregion
+
+		#region Static Methods
+
+		public static IList<MapSectionRequest> CreateSectionRequests(Job job)
+		{
+			var result = new List<MapSectionRequest>();
+
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
+			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
+
+			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			{
+				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
+				{
+					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
+					var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+					result.Add(mapSectionRequest);
+				}
+			}
+
+			return result;
+		}
+
+		#endregion
+
 	}
 }

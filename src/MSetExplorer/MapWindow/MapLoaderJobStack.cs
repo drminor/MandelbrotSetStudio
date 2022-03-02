@@ -1,4 +1,5 @@
 ﻿using MapSectionProviderLib;
+using MEngineDataContracts;
 using MongoDB.Bson;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -16,30 +17,26 @@ namespace MSetExplorer
 	internal class MapLoaderJobStack : IMapLoaderJobStack
 	{
 		private readonly SynchronizationContext _synchronizationContext;
-
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly IMapDisplayViewModel _mapDisplayViewModel;
-
 		private readonly List<GenMapRequestInfo> _requestStack;
-		private int _requestStackPointer;
 
+		private int _requestStackPointer;
 		private readonly ReaderWriterLockSlim _stackLock;
 
 		#region Constructor
 
-		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor, IMapDisplayViewModel mapDisplayViewModel)
+		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_synchronizationContext = SynchronizationContext.Current;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
-			_mapDisplayViewModel = mapDisplayViewModel;
-
 			_requestStack = new List<GenMapRequestInfo>();
 			_requestStackPointer = -1;
-
 			_stackLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 		}
 
 		#endregion
+
+		public event EventHandler<MapSection> MapSectionReady;
 
 		#region Public Properties
 
@@ -60,8 +57,6 @@ namespace MSetExplorer
 
 		public void LoadJobStack(IEnumerable<Job> jobs)
 		{
-			ResetMapDisplay(new VectorInt());
-
 			DoWithWriteLock(() =>
 			{
 				foreach (var job in jobs)
@@ -75,20 +70,19 @@ namespace MSetExplorer
 			});
 		}
 
-		public void Push(Job job)
+		public void Push(Job job, IList<MapSectionRequest> requests)
 		{
 			DoWithWriteLock(() =>
 			{
 				CheckForDuplicateJob(job.Id);
-				StopCurrentJob();
+				StopCurrentJobInternal();
 
-				var loadedMapSections = _mapDisplayViewModel.GetMapSectionsSnapShot();
-				var genMapRequestInfo = PushRequest(job, loadedMapSections);
+				var genMapRequestInfo = PushRequest(job);
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
-				ResetMapDisplay(CurrentJob.CanvasControlOffset);
+				//ResetMapDisplay(CurrentJob.CanvasControlOffset);
 
-				genMapRequestInfo.StartLoading();
+				genMapRequestInfo.StartLoading(requests);
 			});
 		}
 
@@ -179,6 +173,11 @@ namespace MSetExplorer
 			}
 		}
 
+		public void StopCurrentJob()
+		{
+			DoWithWriteLock(StopCurrentJobInternal);
+		}
+
 		#endregion
 
 		#region Event Handlers
@@ -189,7 +188,7 @@ namespace MSetExplorer
 			{
 				if (sender == CurrentRequest.MapLoader)
 				{
-					_synchronizationContext.Post(o => _mapDisplayViewModel.MapSections.Add(mapSection), null);
+					_synchronizationContext.Post(o => MapSectionReady?.Invoke(this, mapSection), null);
 				}
 				else
 				{
@@ -203,9 +202,9 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private GenMapRequestInfo PushRequest(Job job, IReadOnlyList<MapSection> loadedMapSections)
+		private GenMapRequestInfo PushRequest(Job job)
 		{
-			var mapLoader = new MapLoader(job, loadedMapSections, HandleMapSection, _mapSectionRequestProcessor);
+			var mapLoader = new MapLoader(job, HandleMapSection, _mapSectionRequestProcessor);
 			var result = new GenMapRequestInfo(job, mapLoader);
 
 			_requestStack.Add(result);
@@ -221,23 +220,22 @@ namespace MSetExplorer
 				throw new ArgumentException($"The newRequestStackPointer with value: {newRequestStackPointer} is not valid.", nameof(newRequestStackPointer));
 			}
 
-			StopCurrentJob();
+			StopCurrentJobInternal();
 
-			var loadedMapSections = _mapDisplayViewModel.GetMapSectionsSnapShot();
-			var genMapRequestInfo = RenewRequest(newRequestStackPointer, loadedMapSections);
+			var genMapRequestInfo = RenewRequest(newRequestStackPointer);
 
-			ResetMapDisplay(CurrentJob.CanvasControlOffset);
+			//ResetMapDisplay(CurrentJob.CanvasControlOffset);
 			CurrentJobChanged?.Invoke(this, new EventArgs());
 
 			genMapRequestInfo.StartLoading();
 		}
 
-		private GenMapRequestInfo RenewRequest(int newRequestStackPointer, IReadOnlyList<MapSection> loadedMapSections)
+		private GenMapRequestInfo RenewRequest(int newRequestStackPointer)
 		{
 			var result = _requestStack[newRequestStackPointer];
 			var job = result.Job;
 
-			var mapLoader = new MapLoader(job, loadedMapSections, HandleMapSection, _mapSectionRequestProcessor);
+			var mapLoader = new MapLoader(job, HandleMapSection, _mapSectionRequestProcessor);
 			result.Renew(mapLoader);
 
 			_requestStackPointer = newRequestStackPointer;
@@ -245,16 +243,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void ResetMapDisplay(VectorInt canvasControOffset)
-		{
-			_synchronizationContext.Post(o =>
-			{
-				_mapDisplayViewModel.CanvasControlOffset = canvasControOffset;
-				_mapDisplayViewModel.MapSections.Clear();
-			}, null);
-		}
-
-		private void StopCurrentJob()
+		private void StopCurrentJobInternal()
 		{
 			CurrentRequest?.MapLoader?.Stop();
 		}
@@ -396,8 +385,13 @@ namespace MSetExplorer
 			public void StartLoading()
 			{
 				var startTask = MapLoader.Start();
+				_ = startTask.ContinueWith(LoadingComplete);
+			}
 
-				startTask.ContinueWith(LoadingComplete);
+			public void StartLoading(IList<MapSectionRequest> requests)
+			{
+				var startTask = MapLoader.Start(requests);
+				_ = startTask.ContinueWith(LoadingComplete);
 			}
 
 			public void LoadingComplete(Task _)

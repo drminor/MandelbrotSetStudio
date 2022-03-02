@@ -24,8 +24,6 @@ namespace MSetExplorer
 		public void GoForward();
 
 		void SetMapInfo(MSetInfo mSetInfo);
-		void UpdateMapViewZoom(AreaSelectedEventArgs e);
-		void UpdateMapViewPan(ScreenPannedEventArgs e);
 
 		void Test();
 	}

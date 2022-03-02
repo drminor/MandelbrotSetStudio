@@ -45,8 +45,6 @@ namespace MSetExplorer
 
 				_mapDisplay = mapDisplay1;
 				_mapDisplay.DataContext = DataContext;
-				//_mapDisplay.AreaSelected += MapDisplay_AreaSelected;
-				//_mapDisplay.ScreenPanned += MapDisplay_ScreenPanned;
 
 				txtIterations.TextChanged += TxtIterations_TextChanged;
 
@@ -68,16 +66,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void MapDisplay_AreaSelected(object sender, AreaSelectedEventArgs e)
-		//{
-		//	_vm.UpdateMapViewZoom(e);
-		//}
-
-		//private void MapDisplay_ScreenPanned(object sender, ScreenPannedEventArgs e)
-		//{
-		//	_vm.UpdateMapViewPan(e);
-		//}
-
 		private void VmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == "CanGoBack")
@@ -91,12 +79,6 @@ namespace MSetExplorer
 				btnGoForward.IsEnabled = _vm.CanGoForward;
 				return;
 			}
-
-			//if (e.PropertyName == "CanvasSize")
-			//{
-			//	Debug.WriteLine($"The MapDisplay's canvas size is being updated. The new value is {_vm.CanvasSize}.");
-			//	return;
-			//}
 		}
 
 		#endregion
@@ -105,22 +87,22 @@ namespace MSetExplorer
 
 		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(32, 0)));
+			//_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(32, 0)));
 		}
 
 		private void GoUpButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0,32)));
+			//_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0,32)));
 		}
 
 		private void GoRightButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(-32, 0)));
+			//_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(-32, 0)));
 		}
 
 		private void GoDownButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0, -32)));
+			//_vm.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0, -32)));
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
