@@ -41,6 +41,11 @@ namespace MSS.Types
 			return new PointInt(X + amount.X, Y + amount.Y);
 		}
 
+		public VectorInt Sub(PointInt amount)
+		{
+			return new VectorInt(X - amount.X, Y - amount.Y);
+		}
+
 		//public PointInt Translate(SizeDbl amount)
 		//{
 		//	return new PointInt((int)Math.Round(X + amount.Width), (int)Math.Round(Y + amount.Height));
@@ -59,6 +64,11 @@ namespace MSS.Types
 		public PointInt Mod(SizeInt dividend)
 		{
 			return new PointInt(X % dividend.Width, Y % dividend.Height);
+		}
+
+		public PointInt Divide(SizeInt dividend)
+		{
+			return new PointInt(X / dividend.Width, Y / dividend.Height);
 		}
 
 		public override string? ToString()

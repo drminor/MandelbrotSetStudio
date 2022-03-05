@@ -45,105 +45,148 @@ namespace MSetExplorer
 		public void Draw(MapSection mapSection)
 		{
 			var screenSection = GetScreenSection(mapSection.BlockPosition);
-			//var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
-			//Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
+			var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
+			Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
 
 			if (mapSection.Pixels1d is null)
 			{
-				Debug.WriteLine($"Warning: ScreenSectionCollection is not drawing MapSection: {mapSection}. The Pixel Data is null.");
 				return;
 			}
 
-			screenSection.WritePixels(mapSection.Pixels1d);
+			var invertedPosition = GetInvertedBlockPos(mapSection.BlockPosition);
+			screenSection.WritePixels(invertedPosition, mapSection.Pixels1d);
 		}
+
+		public bool Hide(MapSection mapSection)
+		{
+			var screenSection = GetScreenSection(mapSection.BlockPosition);
+			var result = screenSection.Hide();
+			return result;
+		}
+
+		///// <summary>
+		///// Returns the number of sections that were removed from display.
+		///// </summary>
+		///// <param name="amount">The amount to shift each section.</param>
+		///// <returns></returns>
+		//public int Shift(VectorInt amount)
+		//{
+		//	var amountYInverted = new VectorInt(amount.X, amount.Y * -1);
+		//	var activeBefore = 0;
+		//	var activeNow = 0;
+
+		//	var sizeInBlocks = CanvasSizeInBlocks;
+
+		//	for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
+		//	{
+		//		for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
+		//		{
+		//			var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
+		//			var screenSection = GetScreenSection(blockPosition);
+
+		//			activeBefore += screenSection.Active ? 1 : 0;
+
+		//			var oldScreenPos = screenSection.ScreenPosition;
+		//			var oldScreenBp = screenSection.BlockPosition;
+
+		//			var ip = GetInvertedBlockPos(screenSection.BlockPosition);
+		//			var nPos = new PointInt(IndexAdd(new VectorInt(ip), amount));
+		//			var nip = GetInvertedBlockPos(nPos);
+		//			screenSection.BlockPosition = nip;
+
+		//			ReportShiftDetails(blockPosition, oldScreenBp, ip, oldScreenPos, screenSection.ScreenPosition, nPos, nip);
+
+		//			activeNow += screenSection.Active ? 1 : 0;
+		//		}
+		//	}
+
+		//	var oldStartIndex = _startIndex;
+		//	_startIndex = IndexAdd(_startIndex, amount.Invert());
+
+		//	Debug.WriteLine($"The ScreenSectionCollection is was shifted by {amount}. Before: {activeBefore}, after: {activeNow}. StartIndex old: {oldStartIndex}, new: {_startIndex}.");
+
+		//	return activeBefore - activeNow;
+		//}
+
+		//private void ReportShiftDetails(PointInt blockPosition, PointInt oldScreenBp, PointInt ip, PointInt oldScreenPos, PointInt newScreenPos, PointInt nPos, PointInt nip)
+		//{
+		//	//			if (blockPosition.X == 0 || blockPosition.X == CanvasSizeInBlocks.Width - 1 || blockPosition.Y == 0 || blockPosition.Y == CanvasSizeInBlocks.Height - 1)
+		//	if (  (blockPosition.X == 0 && blockPosition.Y == 0) || (blockPosition.X == CanvasSizeInBlocks.Width - 1 && blockPosition.Y == CanvasSizeInBlocks.Height - 1))
+		//	{
+		//		Debug.WriteLine($"Shifting section: {blockPosition} with old ssbp: {oldScreenBp} / {ip}, old screen pos: {oldScreenPos}, new screen pos: {newScreenPos}, new ssbp: {nPos}/{nip}.");
+		//	}
+		//}
 
 		/// <summary>
 		/// Returns the number of sections that were removed from display.
 		/// </summary>
 		/// <param name="amount">The amount to shift each section.</param>
-		/// <returns></returns>
-		public int Shift(VectorInt amount)
+		/// <returns>The number of sections drawn.</returns>
+		public void Shift(VectorInt amount)
 		{
-			var activeBefore = 0;
-			var activeNow = 0;
+			HideScreenSections();
 
-			var sizeInBlocks = CanvasSizeInBlocks;
+			var oldStartIndex = _startIndex;
+			_startIndex = IndexAdd(_startIndex, amount.Invert());
 
-			for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
-			{
-				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
-				{
-					var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var screenSection = GetScreenSection(blockPosition);
-
-					activeBefore += screenSection.Active ? 1 : 0;
-
-					var nPos = screenSection.BlockPosition.Translate(amount);
-					var invertedPosition = GetInvertedBlockPos(nPos);
-					screenSection.BlockPosition = invertedPosition;
-
-					activeNow += screenSection.Active ? 1 : 0;
-				}
-			}
-
-			_startIndex = _startIndex.Sub(amount);
-			_startIndex = _startIndex.Mod(CanvasSizeInBlocks);
-
-			Debug.WriteLine($"The ScreenSectionCollection is was shifted by {amount}. Before: {activeBefore}, after: {activeNow}. New StartIndex: {_startIndex}.");
-
-			return activeBefore - activeNow;
+			Debug.WriteLine($"The ScreenSectionCollection is was shifted by {amount}. StartIndex old: {oldStartIndex}, new: {_startIndex}.");
 		}
 
 		public void Test()
 		{
-			var cnt = 0;
-			var sizeInBlocks = CanvasSizeInBlocks;
 
-			for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
-			{
-				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
-				{
-					var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var screenSection = GetScreenSection(blockPosition);
-
-					//if (!screenSection.Active)
-					//{
-					//	continue;
-					//}
-
-					if (xBlockPtr == 0)
-					{
-						screenSection.Active = false;
-					}
-					else
-					{
-						//var nPos = screenSection.BlockPosition.Translate(new VectorInt(-1, 0));
-						//if (screenSection.ScreenPosition.X >= 0)
-						//{
-						//	screenSection.BlockPosition = nPos;
-						//	screenSection.Active = true;
-						//}
-
-						var nPos = screenSection.BlockPosition.Translate(new VectorInt(-1, 0));
-						screenSection.BlockPosition = nPos;
-						if (xBlockPtr < 9 &&  screenSection.HasPixelData)
-						{
-							screenSection.Active = true;
-						}
-					}
-
-					if (screenSection.Active)
-					{
-						cnt++;
-					}
-				}
-			}
-
-			_startIndex = new VectorInt(_startIndex.X + 1, _startIndex.Y);
-			_startIndex = _startIndex.Mod(CanvasSizeInBlocks);
-
-			Debug.WriteLine($"The ScreenSectionCollection is being tested. There are {cnt} active blocks. StartIndex: {_startIndex}.");
 		}
+
+		//public void Test()
+		//{
+		//	var cnt = 0;
+		//	var sizeInBlocks = CanvasSizeInBlocks;
+
+		//	for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
+		//	{
+		//		for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
+		//		{
+		//			var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
+		//			var screenSection = GetScreenSection(blockPosition);
+
+		//			//if (!screenSection.Active)
+		//			//{
+		//			//	continue;
+		//			//}
+
+		//			if (xBlockPtr == 0)
+		//			{
+		//				screenSection.Active = false;
+		//			}
+		//			else
+		//			{
+		//				//var nPos = screenSection.BlockPosition.Translate(new VectorInt(-1, 0));
+		//				//if (screenSection.ScreenPosition.X >= 0)
+		//				//{
+		//				//	screenSection.BlockPosition = nPos;
+		//				//	screenSection.Active = true;
+		//				//}
+
+		//				var nPos = screenSection.BlockPosition.Translate(new VectorInt(-1, 0));
+		//				screenSection.BlockPosition = nPos;
+		//				//if (xBlockPtr < 9 &&  screenSection.HasPixelData)
+		//				//{
+		//				//	screenSection.Active = true;
+		//				//}
+		//			}
+
+		//			if (screenSection.Active)
+		//			{
+		//				cnt++;
+		//			}
+		//		}
+		//	}
+
+		//	_startIndex = new VectorInt(_startIndex.X + 1, _startIndex.Y);
+		//	_startIndex = _startIndex.Mod(CanvasSizeInBlocks);
+
+		//	Debug.WriteLine($"The ScreenSectionCollection is being tested. There are {cnt} active blocks. StartIndex: {_startIndex}.");
+		//}
 
 		#endregion
 
@@ -151,7 +194,7 @@ namespace MSetExplorer
 
 		private void ClearDrawingGroup()
 		{
-			_drawingGroup.Children.Clear();
+			//_drawingGroup.Children.Clear();
 
 			var sizeInBlocks = CanvasSizeInBlocks;
 			for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
@@ -167,15 +210,32 @@ namespace MSetExplorer
 
 		private ScreenSection GetScreenSection(PointInt blockPosition)
 		{
-			var adjPos = blockPosition.Translate(_startIndex).Mod(CanvasSizeInBlocks);
+			//var adjPos = blockPosition.Translate(_startIndex).Mod(CanvasSizeInBlocks);
+			var adjPos = IndexAdd(_startIndex, new VectorInt(blockPosition));
+
 			var result = _screenSections[adjPos.Y, adjPos.X];
 			return result;
 		}
 
-		private void PutScreenSection(PointInt blockPosition, ScreenSection screenSection)
+		//private void PutScreenSection(PointInt blockPosition, ScreenSection screenSection)
+		//{
+		//	var adjPos = blockPosition.Translate(_startIndex).Mod(CanvasSizeInBlocks);
+		//  var adjPos = IndexAdd(_startIndex, new VectorInt(blockPosition));
+		//	_screenSections[adjPos.Y, adjPos.X] = screenSection;
+		//}
+
+		private VectorInt IndexAdd(VectorInt index, VectorInt amount)
 		{
-			var adjPos = blockPosition.Translate(_startIndex).Mod(CanvasSizeInBlocks);
-			_screenSections[adjPos.Y, adjPos.X] = screenSection;
+			index = index.Add(amount);
+			index = index.Mod(CanvasSizeInBlocks);
+
+			var result = new VectorInt
+				(
+					index.X += index.X < 0 ? CanvasSizeInBlocks.Width : 0,
+					index.Y += index.Y < 0 ? CanvasSizeInBlocks.Height : 0
+				);
+
+			return result;
 		}
 
 		private ScreenSection[,] BuildScreenSections(SizeInt sizeInBlocks, SizeInt blockSize, DrawingGroup drawingGroup)
@@ -242,17 +302,11 @@ namespace MSetExplorer
 					{
 						if (value)
 						{
-							if (!IsOnScreen)
-							{
-								throw new InvalidOperationException("Cannot activate a screen section if it not wholly contained with in the DrawingGroup.");
-							}
-
-							_drawingGroup.Children.Add(_imageDrawing);
-							HasPixelData = true;
+							AddToGroup("setting Active to true");
 						}
 						else
 						{
-							_drawingGroup.Children.Remove(_imageDrawing);
+							RemoveFromGroup("setting Active to false");
 						}
 
 						_active = value;
@@ -263,62 +317,66 @@ namespace MSetExplorer
 			public PointInt BlockPosition
 			{
 				get => _blockPosition;
-				set
+				private set
 				{
 					if (value != _blockPosition)
 					{
-						_blockPosition = value;
-
 						if (Active)
 						{
-							_drawingGroup.Children.Remove(_imageDrawing);
-							_imageDrawing = CreateImageDrawing(_blockPosition);
+							RemoveFromGroup("setting the BlockPosition");
+							
+							//_imageDrawing = CreateImageDrawing(_blockPosition);
+							//_imageDrawing = GetDiagnosticVersion(_imageDrawing);
 
-							if (IsOnScreen)
-							{
-								_drawingGroup.Children.Add(_imageDrawing);
-							}
+							//AddToGroup("setting the BlockPosition");
 						}
-						else
-						{
-							_imageDrawing = CreateImageDrawing(_blockPosition);
-						}
+						//else
+						//{
+						//	_imageDrawing = CreateImageDrawing(_blockPosition);
+						//}
+
+						_blockPosition = value;
 					}
 				}
 			}
 
-			public PointInt ScreenPosition => GetPointInt(_imageDrawing.Rect.Location);
-
-			public bool IsOnScreen => true;
-			//{
-				//get
-				//{
-					//bool result;
-					//if (!double.IsInfinity(_drawingGroup.Bounds.Width) && _drawingGroup.Bounds.Width > 0)
-					//{
-					//	//var sp = ScreenPosition;
-					//	result = sp.X > 0 && sp.X + _blockSize.Width <= _drawingGroup.Bounds.Width;
-					//	//&& sp.Y > 0 && sp.Y + _blockSize.Height <= _drawingGroup.Bounds.Height;
-					//}
-					//else
-					//{
-					//	result = true;
-					//}
-
-					//return result;
-				//}
-			//}
-
-			public bool HasPixelData { get; private set; }
+			public PointInt ScreenPosition => ConvertToPointInt(_imageDrawing.Rect.Location);
 
 			#endregion
 
 			#region Public Methods
 
-			public void WritePixels(byte[] pixels)
+			public bool Hide()
 			{
-				var bitmap = (WriteableBitmap)_imageDrawing.ImageSource;
+				if (Active)
+				{
+					Active = false;
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
 
+			public void WritePixels(PointInt position, byte[] pixels)
+			{
+				if (BlockPosition != position)
+				{
+					BlockPosition = position;
+					_imageDrawing = CreateImageDrawing(BlockPosition);
+				}
+
+				var bitmap = (WriteableBitmap)_imageDrawing.ImageSource;
+				WritePixels(pixels, bitmap);
+			}
+
+			#endregion
+
+			#region Private Methods
+
+			private void WritePixels(byte[] pixels, WriteableBitmap bitmap)
+			{
 				var w = (int)Math.Round(bitmap.Width);
 				var h = (int)Math.Round(bitmap.Height);
 
@@ -329,15 +387,34 @@ namespace MSetExplorer
 				Active = true;
 			}
 
-			#endregion
-
-			#region Private Methods
-
 			private ImageDrawing CreateImageDrawing(PointInt blockPosition)
 			{
 				var position = blockPosition.Scale(_blockSize);
-				var rect = new Rect(new Point(position.X, position.Y), GetSize(_blockSize));
+				var rect = new Rect(new Point(position.X, position.Y), ConvertToSize(_blockSize));
 				var result = new ImageDrawing(_image.Source, rect);
+
+				return result;
+			}
+
+			private ImageDrawing GetDiagnosticVersion(ImageDrawing original)
+			{
+				var result = original.CloneCurrentValue();
+				var bitmap = (WriteableBitmap)result.ImageSource;
+				var ar = new byte[_blockSize.NumberOfCells * 4];
+				bitmap.CopyPixels(ar, 4 * _blockSize.Width, 0);
+
+				for (var rowPtr = 0; rowPtr < _blockSize.Height; rowPtr++)
+				{
+					var curResultPtr = rowPtr * _blockSize.Width * 4;
+
+					for (var colPtr = 0; colPtr < _blockSize.Width; colPtr++)
+					{
+						ar[curResultPtr + 3] = 100; // Alpha is set to 100, instead of 255
+						curResultPtr += 4;
+					}
+				}
+
+				WritePixels(ar, bitmap);
 
 				return result;
 			}
@@ -356,14 +433,36 @@ namespace MSetExplorer
 				return result;
 			}
 
-			private PointInt GetPointInt(Point p)
+			private PointInt ConvertToPointInt(Point p)
 			{
 				return new PointDbl(p.X, p.Y).Round();
 			}
 
-			private Size GetSize(SizeInt size)
+			private Size ConvertToSize(SizeInt size)
 			{
 				return new Size(size.Width, size.Height);
+			}
+
+			private void AddToGroup(string opDesc)
+			{
+				if (_drawingGroup.Children.Contains(_drawingGroup))
+				{
+					Debug.WriteLine($"While {opDesc}, found that the section with BlockPosition: {_blockPosition} is already added.");
+				}
+				else
+				{
+					_drawingGroup.Children.Add(_imageDrawing);
+				}
+			}
+
+			private void RemoveFromGroup(string opDesc)
+			{
+				var result = _drawingGroup.Children.Remove(_imageDrawing);
+
+				if (!result)
+				{
+					Debug.WriteLine($"While {opDesc}, cannot remove section with BlockPosition: {_blockPosition}.");
+				}
 			}
 
 			#endregion

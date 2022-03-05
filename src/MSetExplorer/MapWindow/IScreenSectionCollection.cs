@@ -8,9 +8,9 @@ namespace MSetExplorer
 		SizeInt CanvasSizeInBlocks { get; }
 
 		void Draw(MapSection mapSection);
-		void HideScreenSections();
-		int Shift(VectorInt amount);
+		bool Hide(MapSection mapSection);
 
-		void Test();
+		void HideScreenSections();
+		void Shift(VectorInt amount);
 	}
 }

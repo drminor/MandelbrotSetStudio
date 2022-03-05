@@ -62,6 +62,11 @@ namespace MSS.Types
 			return new VectorInt(X % dividend.Width, Y % dividend.Height);
 		}
 
+		public VectorInt Divide(SizeInt dividend)
+		{
+			return new VectorInt(X / dividend.Width, Y / dividend.Height);
+		}
+
 		public override string? ToString()
 		{
 			return $"x:{X}, y:{Y}";

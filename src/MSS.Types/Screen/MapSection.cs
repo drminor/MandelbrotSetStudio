@@ -6,7 +6,7 @@ namespace MSS.Types.Screen
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>
 	{
-		public PointInt BlockPosition { get; init; }
+		public PointInt BlockPosition { get; set; }
 		public SizeInt Size { get; init; }
 		public byte[] Pixels1d { get; init; }
 

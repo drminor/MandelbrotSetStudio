@@ -2,11 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 
 namespace MSetExplorer
 {
-	internal class MapSectionCollectionBinder : IMapSectionCollectionBinder
+	internal class MapSectionCollectionBinder
 	{
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
@@ -20,11 +21,6 @@ namespace MSetExplorer
 
 		#endregion
 
-		public void Test()
-		{
-			_screenSectionCollection.Test();
-		}
-
 		#region Event Handlers
 
 		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -36,11 +32,22 @@ namespace MSetExplorer
 			}
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
 			{
-				// Adding new items
+				// Add items
 				foreach (var mapSection in GetList(e.NewItems))
 				{
 					//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
 					_screenSectionCollection.Draw(mapSection);
+				}
+			}
+			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
+			{
+				// Remove items
+				foreach (var mapSection in GetList(e.NewItems))
+				{
+					if (! _screenSectionCollection.Hide(mapSection))
+					{
+						Debug.WriteLine($" MapSecCollBindr cannot Hide the MapSection: {mapSection}.");
+					}
 				}
 			}
 		}

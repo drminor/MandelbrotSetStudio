@@ -85,24 +85,31 @@ namespace MSetExplorer
 
 		#region Button Handlers
 
+		private const int SHIFT_AMOUNT = 128;
+
 		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.MapDisplayViewModel.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(32, 0)));
+			Pan(new VectorInt(-1 * SHIFT_AMOUNT, 0));
 		}
 
 		private void GoUpButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.MapDisplayViewModel.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0,32)));
+			Pan(new VectorInt(0, -1 * SHIFT_AMOUNT));
 		}
 
 		private void GoRightButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.MapDisplayViewModel.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(-32, 0)));
+			Pan(new VectorInt(SHIFT_AMOUNT, 0));
 		}
 
 		private void GoDownButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.MapDisplayViewModel.UpdateMapViewPan(new ScreenPannedEventArgs(TransformType.Pan, new VectorInt(0, -32)));
+			Pan(new VectorInt(0, SHIFT_AMOUNT));
+		}
+
+		private void Pan(VectorInt amount)
+		{
+			_vm.MapDisplayViewModel.UpdateMapViewPan(new ImageDraggedEventArgs(TransformType.Pan, amount.Invert()));
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)

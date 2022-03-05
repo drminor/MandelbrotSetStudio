@@ -10,35 +10,36 @@ namespace MSetExplorer
 {
 	public interface IMapDisplayViewModel
 	{
-		public event PropertyChangedEventHandler PropertyChanged;
-
 		bool InDesignMode { get; }
+		event PropertyChangedEventHandler PropertyChanged;
 
-		ImageSource ImageSource { get; }
+		Project CurrentProject { get; set; }
+
 		SizeInt BlockSize { get; }
-		SizeInt CanvasSize { get; set; }
+		ImageSource ImageSource { get; }
 		VectorInt CanvasControlOffset { get; set; }
-
 		ObservableCollection<MapSection> MapSections { get; }
-		IReadOnlyList<MapSection> GetMapSectionsSnapShot();
 
-		public Project CurrentProject { get; set; }
+		//SizeInt CanvasSize { get; set; }
 
-		public IEnumerable<Job> Jobs { get; }
-		public Job CurrentJob { get; }
 
-		public bool CanGoBack { get; }
-		public bool CanGoForward { get; }
-
-		public void GoBack();
-		public void GoForward();
-
-		public void LoadJobStack(IEnumerable<Job> jobs);
-
+		// These will become ICommands
+		void SetCanvasSize(SizeInt canvasSize);
 		void SetMapInfo(MSetInfo mSetInfo);
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
-		void UpdateMapViewPan(ScreenPannedEventArgs e);
+		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
-		public void UpdateJob(Job oldJob, Job newJob);
+		// These will be part of the JobStack control
+		IEnumerable<Job> Jobs { get; }
+		Job CurrentJob { get; }
+
+		bool CanGoBack { get; }
+		bool CanGoForward { get; }
+
+		void GoBack();
+		void GoForward();
+
+		void LoadJobStack(IEnumerable<Job> jobs);
+		void UpdateJob(Job oldJob, Job newJob);
 	}
 }

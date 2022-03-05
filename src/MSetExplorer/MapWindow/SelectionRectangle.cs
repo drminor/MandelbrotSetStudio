@@ -27,7 +27,7 @@ namespace MSetExplorer.MapWindow
 		private bool _dragHasBegun;
 
 		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
-		internal event EventHandler<ScreenPannedEventArgs> ScreenPanned;
+		internal event EventHandler<ImageDraggedEventArgs> ImageDragged;
 
 		#region Constructor
 
@@ -312,10 +312,10 @@ namespace MSetExplorer.MapWindow
 			else
 			{
 				Dragging = false;
-				var offset = GetDragOffset(controlPos);
+				var offset = GetDragOffset(DragLineTerminus);
 
 				Debug.WriteLine($"We are handling a DragComplete with offset:{offset}.");
-				ScreenPanned?.Invoke(this, new ScreenPannedEventArgs(TransformType.Pan, offset));
+				ImageDragged?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset));
 			}
 		}
 
@@ -600,7 +600,7 @@ namespace MSetExplorer.MapWindow
 
 			if ( (dragLineTerminus - newDlt).LengthSquared > 0.05 )
 			{
-				DragLineTerminus = newDlt;
+					DragLineTerminus = newDlt;
 			}
 		}
 
