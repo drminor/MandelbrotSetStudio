@@ -5,12 +5,10 @@ using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -45,10 +43,7 @@ namespace MSetExplorer
 			var canvasSizeInBlocks = GetSizeInBlocks(_canvasSize, BlockSize);
 			_screenSectionCollection = new ScreenSectionCollection(canvasSizeInBlocks, BlockSize, _drawingGroup);
 
-			_ = new MapSectionCollectionBinder(_screenSectionCollection, MapSections);
-
 			MapSections.CollectionChanged += MapSections_CollectionChanged;
-
 
 			CanvasControlOffset = new VectorInt();
 		}
@@ -63,25 +58,10 @@ namespace MSetExplorer
 
 		public SizeInt BlockSize { get; }
 
-		//public SizeInt CanvasSize
-		//{
-		//	get => _canvasSize;
-		//	set
-		//	{
-		//		_canvasSize = value;
-		//		Clip(new PointInt(CanvasControlOffset));
-		//		OnPropertyChanged();
-		//	}
-		//}
-
 		public VectorInt CanvasControlOffset
 		{ 
 			get => _canvasControlOffset;
-			set
-			{
-				_canvasControlOffset = value;
-				//Clip(new PointInt(value));
-				OnPropertyChanged(); }
+			set { _canvasControlOffset = value; OnPropertyChanged(); }
 		}
 
 		public Project CurrentProject { get; set; }
@@ -189,7 +169,8 @@ namespace MSetExplorer
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
 			{
 				// Remove items
-				foreach (var mapSection in GetList(e.NewItems))
+				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
+				foreach (var mapSection in mapSections)
 				{
 					if (!_screenSectionCollection.Hide(mapSection))
 					{
@@ -198,12 +179,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		private IEnumerable<MapSection> GetList(IList lst)
-		{
-			return lst?.Cast<MapSection>() ?? new List<MapSection>();
-		}
-
 
 		#endregion
 
@@ -248,17 +223,12 @@ namespace MSetExplorer
 				// Remove from the screen sections that are not part of the updated view.
 				UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
 
-				//var shiftAmountPixels = new VectorInt(newArea.Position).Invert();
-				//var shiftAmountInBlocks = shiftAmountPixels.Divide(BlockSize); //new VectorInt(1, 0);
-				//_ = _screenSectionCollection.Shift(shiftAmountInBlocks);
-
 				_screenSectionCollection.Shift(shiftAmount);
 				RefreshScreenSections(MapSections);
 
 				var oldOffset = CanvasControlOffset;
 				_mapLoaderJobStack.Push(job, sectionsToLoad);
 
-				//Debug.WriteLine($"Pan completed. ShiftPix: {shiftAmountPixels}, ShiftBks: {shiftAmountInBlocks}. cco old: {oldOffset}, new: {CanvasControlOffset}.");
 				Debug.WriteLine($"Pan completed. ShiftBks: {shiftAmount}. CanvasOffset old: {oldOffset}, new: {CanvasControlOffset}.");
 			}
 			else
@@ -355,24 +325,6 @@ namespace MSetExplorer
 
 			return result;
 		}
-
-		private void Clip(PointInt bottomLeft)
-		{
-			if (!(_screenSectionCollection is null))
-			{
-				var drawingGroupSize = _screenSectionCollection.CanvasSizeInBlocks.Scale(BlockSize);
-				var rect = new Rect(new Point(bottomLeft.X, drawingGroupSize.Height - _canvasSize.Height - bottomLeft.Y), new Point(_canvasSize.Width + bottomLeft.X, drawingGroupSize.Height - bottomLeft.Y));
-
-				//Debug.WriteLine($"The clip rect is {rect}.");
-				_drawingGroup.ClipGeometry = new RectangleGeometry(rect);
-			}
-		}
-
-		//private void ResetMapDisplay(VectorInt canvasControOffset)
-		//{
-		//	CanvasControlOffset = canvasControOffset;
-		//	MapSections.Clear();
-		//}
 
 		private IReadOnlyList<MapSection> GetMapSectionsSnapShot()
 		{

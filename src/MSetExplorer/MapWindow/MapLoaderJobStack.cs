@@ -1,5 +1,4 @@
 ﻿using MapSectionProviderLib;
-using MEngineDataContracts;
 using MongoDB.Bson;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
@@ -235,7 +234,6 @@ namespace MSetExplorer
 
 			var genMapRequestInfo = RenewRequest(newRequestStackPointer);
 
-			//ResetMapDisplay(CurrentJob.CanvasControlOffset);
 			CurrentJobChanged?.Invoke(this, new EventArgs());
 
 			genMapRequestInfo.StartLoading();
@@ -407,8 +405,6 @@ namespace MSetExplorer
 
 			public void LoadingComplete(Task _)
 			{
-				//// TODO: Use Dispatcher Invoke instead of Thread.Sleep.
-				//Thread.Sleep(10 * 1000);
 				MapLoader = null;
 			}
 		}

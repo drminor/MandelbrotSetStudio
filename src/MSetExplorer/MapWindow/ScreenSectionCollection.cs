@@ -1,5 +1,4 @@
-﻿using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using MSS.Types.Screen;
 using System;
 using System.Diagnostics;
@@ -45,8 +44,8 @@ namespace MSetExplorer
 		public void Draw(MapSection mapSection)
 		{
 			var screenSection = GetScreenSection(mapSection.BlockPosition);
-			var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
-			Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
+			//var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
+			//Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
 
 			if (mapSection.Pixels1d is null)
 			{
@@ -64,59 +63,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		///// <summary>
-		///// Returns the number of sections that were removed from display.
-		///// </summary>
-		///// <param name="amount">The amount to shift each section.</param>
-		///// <returns></returns>
-		//public int Shift(VectorInt amount)
-		//{
-		//	var amountYInverted = new VectorInt(amount.X, amount.Y * -1);
-		//	var activeBefore = 0;
-		//	var activeNow = 0;
-
-		//	var sizeInBlocks = CanvasSizeInBlocks;
-
-		//	for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
-		//	{
-		//		for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
-		//		{
-		//			var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
-		//			var screenSection = GetScreenSection(blockPosition);
-
-		//			activeBefore += screenSection.Active ? 1 : 0;
-
-		//			var oldScreenPos = screenSection.ScreenPosition;
-		//			var oldScreenBp = screenSection.BlockPosition;
-
-		//			var ip = GetInvertedBlockPos(screenSection.BlockPosition);
-		//			var nPos = new PointInt(IndexAdd(new VectorInt(ip), amount));
-		//			var nip = GetInvertedBlockPos(nPos);
-		//			screenSection.BlockPosition = nip;
-
-		//			ReportShiftDetails(blockPosition, oldScreenBp, ip, oldScreenPos, screenSection.ScreenPosition, nPos, nip);
-
-		//			activeNow += screenSection.Active ? 1 : 0;
-		//		}
-		//	}
-
-		//	var oldStartIndex = _startIndex;
-		//	_startIndex = IndexAdd(_startIndex, amount.Invert());
-
-		//	Debug.WriteLine($"The ScreenSectionCollection is was shifted by {amount}. Before: {activeBefore}, after: {activeNow}. StartIndex old: {oldStartIndex}, new: {_startIndex}.");
-
-		//	return activeBefore - activeNow;
-		//}
-
-		//private void ReportShiftDetails(PointInt blockPosition, PointInt oldScreenBp, PointInt ip, PointInt oldScreenPos, PointInt newScreenPos, PointInt nPos, PointInt nip)
-		//{
-		//	//			if (blockPosition.X == 0 || blockPosition.X == CanvasSizeInBlocks.Width - 1 || blockPosition.Y == 0 || blockPosition.Y == CanvasSizeInBlocks.Height - 1)
-		//	if (  (blockPosition.X == 0 && blockPosition.Y == 0) || (blockPosition.X == CanvasSizeInBlocks.Width - 1 && blockPosition.Y == CanvasSizeInBlocks.Height - 1))
-		//	{
-		//		Debug.WriteLine($"Shifting section: {blockPosition} with old ssbp: {oldScreenBp} / {ip}, old screen pos: {oldScreenPos}, new screen pos: {newScreenPos}, new ssbp: {nPos}/{nip}.");
-		//	}
-		//}
-
 		/// <summary>
 		/// Returns the number of sections that were removed from display.
 		/// </summary>
@@ -131,62 +77,6 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"The ScreenSectionCollection is was shifted by {amount}. StartIndex old: {oldStartIndex}, new: {_startIndex}.");
 		}
-
-		public void Test()
-		{
-
-		}
-
-		//public void Test()
-		//{
-		//	var cnt = 0;
-		//	var sizeInBlocks = CanvasSizeInBlocks;
-
-		//	for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
-		//	{
-		//		for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
-		//		{
-		//			var blockPosition = new PointInt(xBlockPtr, yBlockPtr);
-		//			var screenSection = GetScreenSection(blockPosition);
-
-		//			//if (!screenSection.Active)
-		//			//{
-		//			//	continue;
-		//			//}
-
-		//			if (xBlockPtr == 0)
-		//			{
-		//				screenSection.Active = false;
-		//			}
-		//			else
-		//			{
-		//				//var nPos = screenSection.BlockPosition.Translate(new VectorInt(-1, 0));
-		//				//if (screenSection.ScreenPosition.X >= 0)
-		//				//{
-		//				//	screenSection.BlockPosition = nPos;
-		//				//	screenSection.Active = true;
-		//				//}
-
-		//				var nPos = screenSection.BlockPosition.Translate(new VectorInt(-1, 0));
-		//				screenSection.BlockPosition = nPos;
-		//				//if (xBlockPtr < 9 &&  screenSection.HasPixelData)
-		//				//{
-		//				//	screenSection.Active = true;
-		//				//}
-		//			}
-
-		//			if (screenSection.Active)
-		//			{
-		//				cnt++;
-		//			}
-		//		}
-		//	}
-
-		//	_startIndex = new VectorInt(_startIndex.X + 1, _startIndex.Y);
-		//	_startIndex = _startIndex.Mod(CanvasSizeInBlocks);
-
-		//	Debug.WriteLine($"The ScreenSectionCollection is being tested. There are {cnt} active blocks. StartIndex: {_startIndex}.");
-		//}
 
 		#endregion
 
@@ -210,7 +100,6 @@ namespace MSetExplorer
 
 		private ScreenSection GetScreenSection(PointInt blockPosition)
 		{
-			//var adjPos = blockPosition.Translate(_startIndex).Mod(CanvasSizeInBlocks);
 			var adjPos = IndexAdd(_startIndex, new VectorInt(blockPosition));
 
 			var result = _screenSections[adjPos.Y, adjPos.X];
@@ -324,16 +213,7 @@ namespace MSetExplorer
 						if (Active)
 						{
 							RemoveFromGroup("setting the BlockPosition");
-							
-							//_imageDrawing = CreateImageDrawing(_blockPosition);
-							//_imageDrawing = GetDiagnosticVersion(_imageDrawing);
-
-							//AddToGroup("setting the BlockPosition");
 						}
-						//else
-						//{
-						//	_imageDrawing = CreateImageDrawing(_blockPosition);
-						//}
 
 						_blockPosition = value;
 					}
