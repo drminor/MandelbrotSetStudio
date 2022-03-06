@@ -13,22 +13,23 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MainWindowViewModel(ProjectAdapter projectAdapter, IMapDisplayViewModel mapDisplayViewModel)
+		public MainWindowViewModel(ProjectAdapter projectAdapter, IJobStack jobStack, IMapDisplayViewModel mapDisplayViewModel)
 		{
 			_projectAdapter = projectAdapter;
-
 			CurrentProject = _projectAdapter.GetOrCreateProject("Home");
+
+			JobStack = jobStack;
+			JobStack.PropertyChanged += JobStack_PropertyChanged;
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.CurrentProject = CurrentProject;
-			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 		}
 
 		#endregion
 
 		#region Event Handlers 
 
-		private void MapDisplayViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void JobStack_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(CanGoBack))
 			{
@@ -64,9 +65,12 @@ namespace MSetExplorer
 		}
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
-		public Job CurrentJob => MapDisplayViewModel.CurrentJob;
-		public bool CanGoBack => MapDisplayViewModel.CanGoBack;
-		public bool CanGoForward => MapDisplayViewModel.CanGoForward;
+
+		public IJobStack JobStack { get; }
+
+		public Job CurrentJob => JobStack.CurrentJob;
+		public bool CanGoBack => JobStack.CanGoBack;
+		public bool CanGoForward => JobStack.CanGoForward;
 
 		#endregion
 
@@ -76,12 +80,12 @@ namespace MSetExplorer
 		{
 			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(CurrentProject.Id);
 
-			foreach (var job in MapDisplayViewModel.Jobs)
+			foreach (var job in JobStack.Jobs)
 			{
 				if (job.Id.CreationTime > lastSavedTime)
 				{
 					var updatedJob = _projectAdapter.InsertJob(job);
-					MapDisplayViewModel.UpdateJob(job, updatedJob);
+					JobStack.UpdateJob(job, updatedJob);
 				}
 			}
 		}
@@ -89,7 +93,7 @@ namespace MSetExplorer
 		public void LoadProject()
 		{
 			var jobs = _projectAdapter.GetAllJobs(CurrentProject.Id);
-			MapDisplayViewModel.LoadJobStack(jobs);
+			JobStack.LoadJobStack(jobs);
 		}
 
 		#endregion

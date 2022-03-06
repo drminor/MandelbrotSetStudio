@@ -70,13 +70,13 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == "CanGoBack")
 			{
-				btnGoBack.IsEnabled = _vm.MapDisplayViewModel.CanGoBack;
+				btnGoBack.IsEnabled = _vm.JobStack.CanGoBack;
 				return;
 			}
 
 			if (e.PropertyName == "CanGoForward")
 			{
-				btnGoForward.IsEnabled = _vm.MapDisplayViewModel.CanGoForward;
+				btnGoForward.IsEnabled = _vm.JobStack.CanGoForward;
 				return;
 			}
 		}
@@ -114,17 +114,17 @@ namespace MSetExplorer
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.MapDisplayViewModel.CanGoBack)
+			if (_vm.JobStack.CanGoBack)
 			{
-				_vm.MapDisplayViewModel.GoBack();
+				_vm.JobStack.GoBack();
 			}
 		}
 
 		private void GoForwardButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.MapDisplayViewModel.CanGoForward)
+			if (_vm.JobStack.CanGoForward)
 			{
-				_vm.MapDisplayViewModel.GoForward();
+				_vm.JobStack.GoForward();
 			}
 		}
 

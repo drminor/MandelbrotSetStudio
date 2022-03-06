@@ -1,7 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Media;
@@ -28,17 +27,17 @@ namespace MSetExplorer
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
-		// These will be part of the JobStack control
-		IEnumerable<Job> Jobs { get; }
-		Job CurrentJob { get; }
+		//// These will be part of the JobStack control
+		//IEnumerable<Job> Jobs { get; }
+		//Job CurrentJob { get; }
 
-		bool CanGoBack { get; }
-		bool CanGoForward { get; }
+		//bool CanGoBack { get; }
+		//bool CanGoForward { get; }
 
-		void GoBack();
-		void GoForward();
+		//void GoBack();
+		//void GoForward();
 
-		void LoadJobStack(IEnumerable<Job> jobs);
-		void UpdateJob(Job oldJob, Job newJob);
+		//void LoadJobStack(IEnumerable<Job> jobs);
+		//void UpdateJob(Job oldJob, Job newJob);
 	}
 }

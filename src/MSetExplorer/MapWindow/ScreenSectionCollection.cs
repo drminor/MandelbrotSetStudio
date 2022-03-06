@@ -71,7 +71,7 @@ namespace MSetExplorer
 			var oldStartIndex = _startIndex;
 			_startIndex = IndexAdd(_startIndex, amount.Invert());
 
-			Debug.WriteLine($"The ScreenSectionCollection is was shifted by {amount}. StartIndex old: {oldStartIndex}, new: {_startIndex}.");
+			Debug.WriteLine($"The ScreenSectionCollection was shifted by {amount}. StartIndex old: {oldStartIndex}, new: {_startIndex}.");
 		}
 
 		#endregion

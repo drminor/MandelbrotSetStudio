@@ -1,19 +1,22 @@
 ﻿using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace MSetExplorer
 {
 	public interface IJobStack
 	{
+		bool InDesignMode { get; }
+		event PropertyChangedEventHandler PropertyChanged;
+
 		event EventHandler CurrentJobChanged;
 
+		IEnumerable<Job> Jobs { get; }
 		Job CurrentJob { get; }
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
-
-		IEnumerable<Job> Jobs { get; }
 
 		bool GoBack();
 		bool GoForward();

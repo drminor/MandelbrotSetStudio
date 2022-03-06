@@ -79,15 +79,24 @@ namespace MSetExplorer
 		{
 			DoWithWriteLock(() =>
 			{
-				var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
+				var currentRequest = CurrentRequest;
 
-				if (jobNumber == CurrentRequest.JobNumber)
+				if (currentRequest == null)
 				{
-					_synchronizationContext.Post(o => MapSectionReady?.Invoke(this, mapSection), null);
+					Debug.WriteLine($"HandleMapSection cannot handle the new section there is no current request.");
 				}
 				else
 				{
-					Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}. CurJobNum: {CurrentRequest.JobNumber}");
+					var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
+
+					if (jobNumber == currentRequest.JobNumber)
+					{
+						_synchronizationContext.Post(o => MapSectionReady?.Invoke(this, mapSection), null);
+					}
+					else
+					{
+						Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}. CurJobNum: {currentRequest.JobNumber}");
+					}
 				}
 			});
 		}

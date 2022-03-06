@@ -9,39 +9,26 @@ using System.Threading;
 
 namespace MSetExplorer
 {
-	internal class JobStack : IJobStack, IDisposable
+	internal class JobStack : ViewModelBase, IJobStack, IDisposable
 	{
-		//private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		//private readonly MapLoaderManager _mapLoaderManager;
-
 		private readonly ObservableCollection<Job> _jobsCollection;
 		private int _jobsPointer;
-
 		private readonly ReaderWriterLockSlim _jobsLock;
 
 		#region Constructor
 
 		public JobStack()
 		{
-			//_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
-			//_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
-
 			_jobsCollection = new ObservableCollection<Job>();
 			_jobsPointer = -1;
-
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 		}
 
-		//private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
-		//{
-		//	MapSectionReady?.Invoke(this, e);
-		//}
-
 		#endregion
 
-		//public event EventHandler<MapSection> MapSectionReady;
-
 		#region Public Properties
+
+		public new bool InDesignMode => base.InDesignMode;
 
 		public event EventHandler CurrentJobChanged;
 
@@ -74,12 +61,13 @@ namespace MSetExplorer
 			DoWithWriteLock(() =>
 			{
 				CheckForDuplicateJob(job.Id);
-				//_mapLoaderManager.StopCurrentJob();
 
 				_jobsCollection.Add(job);
 				_jobsPointer = _jobsCollection.Count - 1;
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
+				OnPropertyChanged(nameof(CanGoBack));
+				OnPropertyChanged(nameof(CanGoForward));
 			});
 		}
 
@@ -184,6 +172,8 @@ namespace MSetExplorer
 			var job = _jobsCollection[newJobsCollectionPointer];
 			_jobsPointer = newJobsCollectionPointer;
 			CurrentJobChanged?.Invoke(this, new EventArgs());
+			OnPropertyChanged(nameof(CanGoBack));
+			OnPropertyChanged(nameof(CanGoForward));
 		}
 
 		#endregion
@@ -325,32 +315,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		//private class GenMapRequestInfo
-		//{
-		//	public Job Job { get; set; }
-
-		//	public int JobNumber { get; private set; }
-		//	public MapLoader MapLoader { get; private set; }
-
-		//	public GenMapRequestInfo(Job job, MapLoader mapLoader)
-		//	{
-		//		Job = job ?? throw new ArgumentNullException(nameof(job));
-		//		MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
-		//		JobNumber = mapLoader.JobNumber;
-		//	}
-
-		//	public void StartLoading(IList<MapSection> emptyMapSections)
-		//	{
-		//		var mapSectionRequests = MapWindowHelper.CreateSectionRequests(Job, emptyMapSections);
-		//		var startTask = MapLoader.Start(mapSectionRequests);
-		//		_ = startTask.ContinueWith(LoadingComplete);
-		//	}
-
-		//	public void LoadingComplete(Task _)
-		//	{
-		//		MapLoader = null;
-		//	}
-		//}
 	}
 }

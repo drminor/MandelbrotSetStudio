@@ -61,7 +61,7 @@ namespace MSetExplorer
 
 			var window1 = new MainWindow
 			{
-				DataContext = new MainWindowViewModel(projectAdapter, mapDisplayViewModel)
+				DataContext = new MainWindowViewModel(projectAdapter, _jobStack, mapDisplayViewModel)
 			};
 
 			window1.Show();
