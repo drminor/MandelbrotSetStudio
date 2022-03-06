@@ -20,6 +20,7 @@ namespace MSetExplorer
 			CurrentProject = _projectAdapter.GetOrCreateProject("Home");
 
 			MapDisplayViewModel = mapDisplayViewModel;
+			MapDisplayViewModel.CurrentProject = CurrentProject;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 		}
 

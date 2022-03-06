@@ -17,13 +17,14 @@ namespace MSetExplorer
 
 		SizeInt BlockSize { get; }
 		ImageSource ImageSource { get; }
-		VectorInt CanvasControlOffset { get; set; }
 		ObservableCollection<MapSection> MapSections { get; }
 
-
-		// These will become ICommands
+		// These may need to be dependency properties
+		VectorInt CanvasControlOffset { get; set; }
 		void SetCanvasSize(SizeInt canvasSize);
 		void SetMapInfo(MSetInfo mSetInfo);
+
+		// These will become ICommands
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 

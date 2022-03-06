@@ -1,7 +1,7 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
 using MSS.Common;
-using MSS.Types.MSet;
+using MSS.Types;
 using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
@@ -13,12 +13,12 @@ namespace MSetExplorer
 {
 	internal class MapLoader
 	{
-		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly Job _job;
-		private readonly Action<object, MapSection> _callback;
+		private readonly BigVector _mapBlockOffset;
 		private readonly ColorMap _colorMap;
+		private readonly Action<object, MapSection> _callback;
+		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
-		private IList<MapSectionRequest> _pendingRequests;
+		private IList<MapSectionRequest> _mapSectionRequests;
 		private bool _isStopping;
 		private int _sectionsRequested;
 		private int _sectionsCompleted;
@@ -26,20 +26,18 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoader(Job job, Action<object, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(BigVector mapBlockOffset, ColorMap colorMap, Action<object, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			_job = job;
+			_mapBlockOffset = mapBlockOffset;
+			_colorMap = colorMap;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
 			JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 
-			_colorMap = new ColorMap(job.MSetInfo.ColorMapEntries);
-			_pendingRequests = null; // CreateSectionRequests();
-
+			_mapSectionRequests = null;
 			_isStopping = false;
 			_sectionsRequested = 0;
 			_sectionsCompleted = 0;
-
 			_tcs = null;
 		}
 
@@ -53,14 +51,14 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public Task Start(IList<MapSection> emptyMapSections)
+		public Task Start(IList<MapSectionRequest> mapSectionRequests)
 		{
 			if (_tcs != null)
 			{
 				throw new InvalidOperationException("This MapLoader has already been started.");
 			}
 
-			_pendingRequests = MapWindowHelper.CreateSectionRequests(_job, emptyMapSections);
+			_mapSectionRequests = mapSectionRequests;
 
 			_ = Task.Run(SubmitSectionRequests);
 
@@ -88,7 +86,7 @@ namespace MSetExplorer
 
 		private void SubmitSectionRequests()
 		{
-			foreach(var mapSectionRequest in _pendingRequests)
+			foreach(var mapSectionRequest in _mapSectionRequests)
 			{
 				if (_isStopping)
 				{
@@ -111,14 +109,14 @@ namespace MSetExplorer
 		{
 			if (!(mapSectionResponse.Counts is null))
 			{
-				var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _job.MapBlockOffset, _colorMap);
+				var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset, _colorMap);
 
 				_callback(this, mapSection);
 				mapSectionRequest.Handled = true;
 			}
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
-			if (_sectionsCompleted == _job.CanvasSizeInBlocks.NumberOfCells || (_isStopping && _sectionsCompleted == _sectionsRequested))
+			if (_sectionsCompleted == _mapSectionRequests.Count || (_isStopping && _sectionsCompleted == _sectionsRequested))
 			{
 				if (!_tcs.Task.IsCompleted)
 				{

@@ -14,7 +14,7 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapDisplay : UserControl
 	{
-		private static readonly bool _showBorder;
+		private static readonly bool _showBorder = false;
 		private static readonly bool _clipImageBlocks = true;
 		private static readonly bool _keepDisplaySquare = true;
 

@@ -43,7 +43,7 @@ namespace MSS.Types.MSet
 		{
 			Id = id;
 			ParentJob = parentJob;
-			Project = project;
+			Project = project ?? throw new ArgumentNullException(nameof(project));
 			Subdivision = subdivision;
 			Label = label;
 

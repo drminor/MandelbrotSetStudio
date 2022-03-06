@@ -1,5 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
@@ -207,7 +208,7 @@ namespace MSetExplorer
 
 		private GenMapRequestInfo PushRequest(Job job)
 		{
-			var mapLoader = new MapLoader(job, HandleMapSection, _mapSectionRequestProcessor);
+			var mapLoader = new MapLoader(job.MapBlockOffset, new ColorMap(job.MSetInfo.ColorMapEntries), HandleMapSection, _mapSectionRequestProcessor);
 			var result = new GenMapRequestInfo(job, mapLoader);
 
 			_requestStack.Add(result);
@@ -237,7 +238,7 @@ namespace MSetExplorer
 			var result = _requestStack[newRequestStackPointer];
 			var job = result.Job;
 
-			var mapLoader = new MapLoader(job, HandleMapSection, _mapSectionRequestProcessor);
+			var mapLoader = new MapLoader(job.MapBlockOffset, new ColorMap(job.MSetInfo.ColorMapEntries), HandleMapSection, _mapSectionRequestProcessor);
 			result.Renew(mapLoader);
 
 			_requestStackPointer = newRequestStackPointer;
@@ -392,7 +393,8 @@ namespace MSetExplorer
 
 			public void StartLoading(IList<MapSection> emptyMapSections)
 			{
-				var startTask = MapLoader.Start(emptyMapSections);
+				var mapSectionRequests = MapWindowHelper.CreateSectionRequests(Job, emptyMapSections);
+				var startTask = MapLoader.Start(mapSectionRequests);
 				_ = startTask.ContinueWith(LoadingComplete);
 			}
 
