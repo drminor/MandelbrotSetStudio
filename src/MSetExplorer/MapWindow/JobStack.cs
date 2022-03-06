@@ -1,5 +1,4 @@
-﻿using MapSectionProviderLib;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
@@ -10,10 +9,10 @@ using System.Threading;
 
 namespace MSetExplorer
 {
-	internal class MapLoaderJobStack : IMapLoaderJobStack, IDisposable
+	internal class JobStack : IJobStack, IDisposable
 	{
 		//private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly MapLoaderManager _mapLoaderManager;
+		//private readonly MapLoaderManager _mapLoaderManager;
 
 		private readonly ObservableCollection<Job> _jobsCollection;
 		private int _jobsPointer;
@@ -22,10 +21,10 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor)
+		public JobStack()
 		{
-			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
-			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
+			//_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
+			//_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
 			_jobsCollection = new ObservableCollection<Job>();
 			_jobsPointer = -1;
@@ -33,14 +32,14 @@ namespace MSetExplorer
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 		}
 
-		private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
-		{
-			MapSectionReady?.Invoke(this, e);
-		}
+		//private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
+		//{
+		//	MapSectionReady?.Invoke(this, e);
+		//}
 
 		#endregion
 
-		public event EventHandler<MapSection> MapSectionReady;
+		//public event EventHandler<MapSection> MapSectionReady;
 
 		#region Public Properties
 
@@ -72,22 +71,15 @@ namespace MSetExplorer
 
 		public void Push(Job job)
 		{
-			Push(job, null);
-		}
-
-		public void Push(Job job, IList<MapSection> emptyMapSections)
-		{
 			DoWithWriteLock(() =>
 			{
 				CheckForDuplicateJob(job.Id);
-				_mapLoaderManager.StopCurrentJob();
+				//_mapLoaderManager.StopCurrentJob();
 
 				_jobsCollection.Add(job);
 				_jobsPointer = _jobsCollection.Count - 1;
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
-
-				_mapLoaderManager.Push(job, emptyMapSections);
 			});
 		}
 
@@ -178,11 +170,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public void StopCurrentJob()
-		{
-			DoWithWriteLock(() => _mapLoaderManager.StopCurrentJob());
-		}
-
 		#endregion
 
 		#region Private Methods
@@ -194,12 +181,9 @@ namespace MSetExplorer
 				throw new ArgumentException($"The newJobsCollectionPointer with value: {newJobsCollectionPointer} is not valid.", nameof(newJobsCollectionPointer));
 			}
 
-			_mapLoaderManager.StopCurrentJob();
-
 			var job = _jobsCollection[newJobsCollectionPointer];
 			_jobsPointer = newJobsCollectionPointer;
 			CurrentJobChanged?.Invoke(this, new EventArgs());
-			_mapLoaderManager.Push(job);
 		}
 
 		#endregion

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace MSetExplorer
 {
-	internal class MapLoaderManager : IDisposable
+	internal class MapLoaderManager : IMapLoaderManager, IDisposable
 	{
 		private readonly SynchronizationContext _synchronizationContext;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
@@ -104,7 +104,7 @@ namespace MSetExplorer
 		private void MapLoaderComplete(Task task)
 		{
 			var genMapRequestInfo = _requests.FirstOrDefault(x => x.Task == task);
-			if (! _requests.Remove(genMapRequestInfo))
+			if (!_requests.Remove(genMapRequestInfo))
 			{
 				Debug.WriteLine($"The MapLoaderManager could not remove the request in the MapLoaderComplete action.");
 			}

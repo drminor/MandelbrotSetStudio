@@ -1,16 +1,12 @@
-﻿using MEngineDataContracts;
-using MSS.Types.MSet;
-using MSS.Types.Screen;
+﻿using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 
 namespace MSetExplorer
 {
-	public interface IMapLoaderJobStack
+	public interface IJobStack
 	{
 		event EventHandler CurrentJobChanged;
-
-		event EventHandler<MapSection> MapSectionReady;
 
 		Job CurrentJob { get; }
 
@@ -23,11 +19,8 @@ namespace MSetExplorer
 		bool GoForward();
 
 		void Push(Job job);
-		void Push(Job job, IList<MapSection> emptyMapSections);
+
 		void LoadJobStack(IEnumerable<Job> jobs);
-
 		void UpdateJob(Job oldJob, Job newJob);
-
-		void StopCurrentJob();
 	}
 }

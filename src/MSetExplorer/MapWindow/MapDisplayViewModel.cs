@@ -1,5 +1,4 @@
-﻿using MapSectionProviderLib;
-using MSetRepo;
+﻿using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -16,8 +15,10 @@ namespace MSetExplorer
 	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
 		private readonly ProjectAdapter _projectAdapter;
+		private readonly IJobStack _jobsStack;
+		private readonly IMapLoaderManager _mapLoaderManager;
+
 		private readonly DrawingGroup _drawingGroup;
-		private readonly IMapLoaderJobStack _mapLoaderJobStack;
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
 		private SizeInt _canvasSize;
@@ -25,13 +26,15 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapDisplayViewModel(ProjectAdapter projectAdapter, MapSectionRequestProcessor mapSectionRequestProcessor, SizeInt blockSize)
+		public MapDisplayViewModel(ProjectAdapter projectAdapter, IJobStack jobsStack, IMapLoaderManager mapLoaderManager, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
 
-			_mapLoaderJobStack = new MapLoaderJobStack(mapSectionRequestProcessor);
-			_mapLoaderJobStack.CurrentJobChanged += MapLoaderJobStack_CurrentJobChanged;
-			_mapLoaderJobStack.MapSectionReady += MapLoaderJobStack_MapSectionReady;
+			_jobsStack = jobsStack;
+			_jobsStack.CurrentJobChanged += JobStack_CurrentJobChanged;
+
+			_mapLoaderManager = mapLoaderManager;
+			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
 			_drawingGroup = new DrawingGroup();
 			ImageSource = new DrawingImage(_drawingGroup);
@@ -73,12 +76,12 @@ namespace MSetExplorer
 
 		#region MapLoaderJobStack Properties
 
-		public Job CurrentJob => _mapLoaderJobStack.CurrentJob;
+		public Job CurrentJob => _jobsStack.CurrentJob;
 
-		public IEnumerable<Job> Jobs => _mapLoaderJobStack.Jobs;
+		public IEnumerable<Job> Jobs => _jobsStack.Jobs;
 
-		public bool CanGoBack => _mapLoaderJobStack.CanGoBack;
-		public bool CanGoForward => _mapLoaderJobStack.CanGoForward;
+		public bool CanGoBack => _jobsStack.CanGoBack;
+		public bool CanGoForward => _jobsStack.CanGoForward;
 
 		#endregion
 
@@ -118,42 +121,45 @@ namespace MSetExplorer
 
 		public void GoBack()
 		{
-			_mapLoaderJobStack.StopCurrentJob();
+			_mapLoaderManager.StopCurrentJob();
 			MapSections.Clear();
-			_ = _mapLoaderJobStack.GoBack();
+			_ = _jobsStack.GoBack();
+			_mapLoaderManager.Push(_jobsStack.CurrentJob);
 		}
 
 		public void GoForward()
 		{
-			_mapLoaderJobStack.StopCurrentJob();
+			_mapLoaderManager.StopCurrentJob();
 			MapSections.Clear();
-			_ = _mapLoaderJobStack.GoForward();
+			_ = _jobsStack.GoForward();
+			_mapLoaderManager.Push(_jobsStack.CurrentJob);
 		}
 
 		public void LoadJobStack(IEnumerable<Job> jobs)
 		{
-			_mapLoaderJobStack.StopCurrentJob();
+			_mapLoaderManager.StopCurrentJob();
 			MapSections.Clear();
-			_mapLoaderJobStack.LoadJobStack(jobs);
+			_jobsStack.LoadJobStack(jobs);
+			_mapLoaderManager.Push(_jobsStack.CurrentJob);
 		}
 
 		public void UpdateJob(Job oldJob, Job newJob)
 		{
-			_mapLoaderJobStack.UpdateJob(oldJob, newJob);
+			_jobsStack.UpdateJob(oldJob, newJob);
 		}
 
 		#endregion
 
 		#region Event Handlers
 
-		private void MapLoaderJobStack_CurrentJobChanged(object sender, EventArgs e)
+		private void JobStack_CurrentJobChanged(object sender, EventArgs e)
 		{
 			OnPropertyChanged(nameof(CanGoBack));
 			OnPropertyChanged(nameof(CanGoForward));
 			CanvasControlOffset = CurrentJob.CanvasControlOffset;
 		}
 
-		private void MapLoaderJobStack_MapSectionReady(object sender, MapSection e)
+		private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
 		{
 			MapSections.Add(e);
 		}
@@ -215,7 +221,7 @@ namespace MSetExplorer
 
 			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
 
-			_mapLoaderJobStack.StopCurrentJob();
+			_mapLoaderManager.StopCurrentJob();
 
 			if (transformType == TransformType.Pan)
 			{
@@ -232,14 +238,16 @@ namespace MSetExplorer
 				RefreshScreenSections(MapSections);
 
 				var oldOffset = CanvasControlOffset;
-				_mapLoaderJobStack.Push(job, sectionsToLoad);
+				_jobsStack.Push(job);
+				_mapLoaderManager.Push(job, sectionsToLoad);
 
 				Debug.WriteLine($"Pan completed. ShiftBks: {shiftAmount}. CanvasOffset old: {oldOffset}, new: {CanvasControlOffset}.");
 			}
 			else
 			{
 				MapSections.Clear();
-				_mapLoaderJobStack.Push(job);
+				_jobsStack.Push(job);
+				_mapLoaderManager.Push(job);
 			}
 		}
 

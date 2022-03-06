@@ -16,7 +16,8 @@ namespace MSetExplorer
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
 
-		private MapSectionRequestProcessor _mapSectionRequestProcessor;
+		private JobStack _jobStack;
+		private MapLoaderManager _mapLoaderManager;
 
 		private Process _serverProcess;
 
@@ -40,9 +41,13 @@ namespace MSetExplorer
 
 			projectAdapter.CreateCollections();
 
-			_mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
 
-			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(projectAdapter, _mapSectionRequestProcessor, RMapConstants.BLOCK_SIZE);
+			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
+
+			_jobStack = new JobStack();
+			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
+
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(projectAdapter, _jobStack, _mapLoaderManager, RMapConstants.BLOCK_SIZE);
 
 			//var window1 = USE_MAP_NAV_SIM
 			//	? new MapNavSim
@@ -66,9 +71,14 @@ namespace MSetExplorer
 		{
 			base.OnExit(e);
 
-			if (_mapSectionRequestProcessor != null)
+			if (_jobStack != null)
 			{
-				_mapSectionRequestProcessor.Dispose();
+				_jobStack.Dispose();
+			}
+
+			if (_mapLoaderManager != null)
+			{
+				_mapLoaderManager.Dispose();
 			}
 
 			Debug.WriteLine("The request MapSectionRequestProcessor has been closed.");
