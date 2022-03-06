@@ -107,7 +107,7 @@ namespace MSetExplorer
 
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			if (!(mapSectionResponse.Counts is null))
+			if (mapSectionResponse.Counts != null && !mapSectionResponse.RequestCancelled)
 			{
 				var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset, _colorMap);
 

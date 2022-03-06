@@ -6,22 +6,22 @@ namespace MSS.Types.MSet
 	public class Subdivision
 	{
 		public ObjectId Id { get; init; }
-		public RPoint Position { get; init; }
 		public SizeInt BlockSize { get; init; }
 		public RSize SamplePointDelta { get; init; }
 
-		public Subdivision(RPoint position, RSize samplePointDelta, SizeInt blockSize) : this(ObjectId.GenerateNewId(), position, samplePointDelta, blockSize)
+		public Subdivision(RSize samplePointDelta, SizeInt blockSize) : this(ObjectId.GenerateNewId(), samplePointDelta, blockSize)
 		{ }
 
-		public Subdivision(ObjectId id, RPoint position, RSize samplePointDelta, SizeInt blockSize)
+		public Subdivision(ObjectId id, RSize samplePointDelta, SizeInt blockSize)
 		{
 			Id = id;
-			Position = position ?? throw new ArgumentNullException(nameof(position));
 			BlockSize = blockSize;
 			SamplePointDelta = samplePointDelta ?? throw new ArgumentNullException(nameof(samplePointDelta));
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
+
+		public RPoint Position => RPoint.Zero;
 
 	}
 }

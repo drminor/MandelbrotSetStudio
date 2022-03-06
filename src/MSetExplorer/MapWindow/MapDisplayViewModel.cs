@@ -15,13 +15,12 @@ namespace MSetExplorer
 	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
 		private readonly ProjectAdapter _projectAdapter;
-		private readonly IJobStack _jobsStack;
+		private readonly IJobStack _jobStack;
 		private readonly IMapLoaderManager _mapLoaderManager;
 
 		private readonly DrawingGroup _drawingGroup;
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
-		private SizeInt _canvasSize;
 		private VectorInt _canvasControlOffset;
 
 		#region Constructor
@@ -30,8 +29,8 @@ namespace MSetExplorer
 		{
 			_projectAdapter = projectAdapter;
 
-			_jobsStack = jobsStack;
-			_jobsStack.CurrentJobChanged += JobStack_CurrentJobChanged;
+			_jobStack = jobsStack;
+			_jobStack.CurrentJobChanged += JobStack_CurrentJobChanged;
 
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
@@ -43,8 +42,8 @@ namespace MSetExplorer
 			MapSections = new ObservableCollection<MapSection>();
 
 			// TODO: Update the ScreenSectionCollection in the SetCanvasSize method.
-			_canvasSize = new SizeInt(1024, 1024);
-			var canvasSizeInBlocks = GetSizeInBlocks(_canvasSize, BlockSize);
+			CanvasSize = new SizeInt(1024, 1024);
+			var canvasSizeInBlocks = GetSizeInBlocks(CanvasSize, BlockSize);
 			_screenSectionCollection = new ScreenSectionCollection(canvasSizeInBlocks, BlockSize, _drawingGroup);
 
 			MapSections.CollectionChanged += MapSections_CollectionChanged;
@@ -62,6 +61,8 @@ namespace MSetExplorer
 
 		public SizeInt BlockSize { get; }
 
+		public SizeInt CanvasSize { get; private set; }
+
 		public VectorInt CanvasControlOffset
 		{ 
 			get => _canvasControlOffset;
@@ -74,29 +75,12 @@ namespace MSetExplorer
 
 		#endregion
 
-		//#region MapLoaderJobStack Properties
-
-		//public Job CurrentJob => _jobsStack.CurrentJob;
-
-		//public IEnumerable<Job> Jobs => _jobsStack.Jobs;
-
-		//public bool CanGoBack => _jobsStack.CanGoBack;
-		//public bool CanGoForward => _jobsStack.CanGoForward;
-
-		//#endregion
-
 		#region Public Methods
 
 		public void SetCanvasSize(SizeInt size)
 		{
-			_canvasSize = size;
+			CanvasSize = size;
 			// TODO: Update the ScreenSectionCollection
-		}
-
-		public void SetMapInfo(MSetInfo mSetInfo)
-		{
-			var newArea = new RectangleInt(new PointInt(), _canvasSize);
-			LoadMap(mSetInfo, TransformType.None, newArea);
 		}
 
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
@@ -111,63 +95,30 @@ namespace MSetExplorer
 
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
 			var invOffset = offset.Invert();
-			var newArea = new RectangleInt(new PointInt(invOffset), _canvasSize);
+			var newArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
 			UpdateMapView(TransformType.Pan, newArea);
 		}
 
 		#endregion
 
-		//#region MapLoaderJobStack Methods
-
-		//public void GoBack()
-		//{
-		//	_mapLoaderManager.StopCurrentJob();
-		//	MapSections.Clear();
-		//	_ = _jobsStack.GoBack();
-		//	_mapLoaderManager.Push(_jobsStack.CurrentJob);
-		//}
-
-		//public void GoForward()
-		//{
-		//	_mapLoaderManager.StopCurrentJob();
-		//	MapSections.Clear();
-		//	_ = _jobsStack.GoForward();
-		//	_mapLoaderManager.Push(_jobsStack.CurrentJob);
-		//}
-
-		//public void LoadJobStack(IEnumerable<Job> jobs)
-		//{
-		//	_mapLoaderManager.StopCurrentJob();
-		//	MapSections.Clear();
-		//	_jobsStack.LoadJobStack(jobs);
-		//	_mapLoaderManager.Push(_jobsStack.CurrentJob);
-		//}
-
-		//public void UpdateJob(Job oldJob, Job newJob)
-		//{
-		//	_jobsStack.UpdateJob(oldJob, newJob);
-		//}
-
-		//#endregion
-
 		#region Event Handlers
 
 		private void JobStack_CurrentJobChanged(object sender, EventArgs e)
 		{
-			var curJob = _jobsStack.CurrentJob;
+			var curJob = _jobStack.CurrentJob;
 
 			_mapLoaderManager.StopCurrentJob();
 
 			if (curJob.TransformType == TransformType.Pan)
 			{
-				var sectionsRequired = MapWindowHelper.CreateEmptyMapSections(curJob);
+				var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
 				var loadedSections = GetMapSectionsSnapShot();
 
 				// Avoid requesting sections already drawn
 				var sectionsToLoad = RemoveMapSectionsInPlay(sectionsRequired, loadedSections);
 
 				// Remove from the screen sections that are not part of the updated view.
-				UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
+				var _ = UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
 
 				_screenSectionCollection.Shift(shiftAmount);
 				RefreshScreenSections(MapSections);
@@ -221,60 +172,26 @@ namespace MSetExplorer
 
 		private void UpdateMapView(TransformType transformType, RectangleInt newArea)
 		{
-			var curJob = _jobsStack.CurrentJob;
+			var curJob = _jobStack.CurrentJob;
 			var position = curJob.MSetInfo.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-			var mSetInfo = curJob.MSetInfo;
-			var updatedInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
+
+			var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
 
 			//if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
 			//{
 			//	updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
 			//}
 
-			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {TransformType.Zoom}. SamplePointDelta: {samplePointDelta}");
-			LoadMap(updatedInfo, transformType, newArea);
-		}
-
-		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
-		{
-			var parentJob = _jobsStack.CurrentJob;
+			var parentJob = _jobStack.CurrentJob;
 			var jobName = GetJobName(transformType);
-			var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, _canvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+			var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, CanvasSize, updatedInfo, transformType, newArea, BlockSize, _projectAdapter);
 
-			//Debug.WriteLine($"\nThe new job has a SamplePointDelta of {job.Subdivision.SamplePointDelta} and an Offset of {job.CanvasControlOffset}.\n");
+			Debug.WriteLine($"Starting Job with new coords: {updatedInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			_jobsStack.Push(job);
+			_jobStack.Push(job);
 
-			//_mapLoaderManager.StopCurrentJob();
-
-			//if (transformType == TransformType.Pan)
-			//{
-			//	var sectionsRequired = MapWindowHelper.CreateEmptyMapSections(job);
-			//	var loadedSections = GetMapSectionsSnapShot();
-
-			//	// Avoid requesting sections already drawn
-			//	var sectionsToLoad = RemoveMapSectionsInPlay(sectionsRequired, loadedSections);
-
-			//	// Remove from the screen sections that are not part of the updated view.
-			//	UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
-
-			//	_screenSectionCollection.Shift(shiftAmount);
-			//	RefreshScreenSections(MapSections);
-
-			//	var oldOffset = CanvasControlOffset;
-			//	_jobsStack.Push(job);
-			//	_mapLoaderManager.Push(job, sectionsToLoad);
-
-			//	Debug.WriteLine($"Pan completed. ShiftBks: {shiftAmount}. CanvasOffset old: {oldOffset}, new: {CanvasControlOffset}.");
-			//}
-			//else
-			//{
-			//	//MapSections.Clear();
-			//	_jobsStack.Push(job);
-			//	//_mapLoaderManager.Push(job);
-			//}
 		}
 
 		private void RefreshScreenSections(IEnumerable<MapSection> source)
@@ -301,12 +218,12 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void UpdateMapSectionCollection(ObservableCollection<MapSection> source, IList<MapSection> newSet, out VectorInt shiftAmount)
+		private int UpdateMapSectionCollection(ObservableCollection<MapSection> source, IList<MapSection> newSet, out VectorInt shiftAmount)
 		{
+			var cntUpdated = 0;
 			IList<MapSection> toBeRemoved = new List<MapSection>();
 
 			shiftAmount = new VectorInt();
-			var foundAMatch = false;
 
 			foreach (var mapSection in source)
 			{
@@ -319,19 +236,22 @@ namespace MSetExplorer
 				{
 					var diff = matchingNewSection.BlockPosition.Sub(mapSection.BlockPosition);
 
-					if (!foundAMatch)
+					if (cntUpdated == 0)
 					{
 						shiftAmount = diff;
 					}
 					else
 					{
 						if (shiftAmount != diff)
+						//if (shiftAmount.X != diff.X || Math.Abs(shiftAmount.Y) != Math.Abs(diff.Y))
 						{
-							throw new InvalidOperationException("The MapSection Collection contains inconsistent block positions.");
+							//throw new InvalidOperationException("The MapSection Collection contains inconsistent block positions.");
+							Debug.WriteLine("The MapSection Collection contains inconsistent block positions.");
 						}
 					}
 
 					mapSection.BlockPosition = matchingNewSection.BlockPosition;
+					cntUpdated++;
 				}
 			}
 
@@ -342,6 +262,8 @@ namespace MSetExplorer
 					Debug.WriteLine($"Could not remove MapSection: {mapSection}.");
 				}
 			}
+
+			return cntUpdated;
 		}
 
 		private string GetJobName(TransformType transformType)

@@ -15,6 +15,8 @@ namespace MSetExplorer
 		int Iterations { get; set; }
 		int Steps { get; set; }
 
+		void SetMapInfo(MSetInfo mSetInfo);
+
 		void SaveProject();
 		void LoadProject();
 	}

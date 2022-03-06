@@ -80,18 +80,16 @@ namespace MSetRepo
 
 		public Subdivision MapFrom(SubdivisionRecord target)
 		{
-			var position = _dtoMapper.MapFrom(target.Position.PointDto);
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.Size);
-			var result = new Subdivision(target.Id, position, samplePointDelta, new SizeInt(target.BlockWidth, target.BlockHeight));
+			var result = new Subdivision(target.Id, samplePointDelta, new SizeInt(target.BlockWidth, target.BlockHeight));
 
 			return result;
 		}
 
 		public SubdivisionRecord MapTo(Subdivision source)
 		{
-			var position = MapTo(source.Position);
 			var samplePointDelta = MapTo(source.SamplePointDelta);
-			var result = new SubdivisionRecord(position, samplePointDelta, source.BlockSize.Width, source.BlockSize.Height);
+			var result = new SubdivisionRecord(samplePointDelta, source.BlockSize.Width, source.BlockSize.Height);
 
 			return result;
 		}

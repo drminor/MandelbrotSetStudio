@@ -1,5 +1,7 @@
 ﻿using MSetRepo;
+using MSS.Types;
 using MSS.Types.MSet;
+using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -76,6 +78,12 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public void SetMapInfo(MSetInfo mSetInfo)
+		{
+			var newArea = new RectangleInt(new PointInt(), MapDisplayViewModel.CanvasSize);
+			LoadMap(mSetInfo, TransformType.None, newArea);
+		}
+
 		public void SaveProject()
 		{
 			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(CurrentProject.Id);
@@ -97,5 +105,22 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
+		{
+			var parentJob = JobStack.CurrentJob;
+			var jobName = GetJobName(transformType);
+			var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, MapDisplayViewModel.CanvasSize, mSetInfo, transformType, newArea, MapDisplayViewModel.BlockSize, _projectAdapter);
+
+			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+			JobStack.Push(job);
+		}
+
+		private string GetJobName(TransformType transformType)
+		{
+			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
+			return result;
+		}
 	}
 }

@@ -5,6 +5,8 @@ using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -12,7 +14,76 @@ namespace MSetExplorer
 	{
 		private static readonly DtoMapper _dtoMapper = new DtoMapper();
 
-		//var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, _job.MapBlockOffset, out var isInverted);
+		#region Create MapSectionRequests
+
+		public static IList<MapSectionRequest> CreateSectionRequests(Job job, IList<MapSection> emptyMapSections)
+		{
+			if (emptyMapSections == null)
+			{
+				return CreateSectionRequests(job);
+			}
+			else
+			{
+				var result = new List<MapSectionRequest>();
+
+				Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
+
+				foreach (var mapSection in emptyMapSections)
+				{
+					var screenPosition = mapSection.BlockPosition;
+					var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+					result.Add(mapSectionRequest);
+				}
+				return result;
+			}
+		}
+
+		public static IList<MapSectionRequest> CreateSectionRequests(Job job)
+		{
+			var result = new List<MapSectionRequest>();
+
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
+			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
+
+			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			{
+				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
+				{
+					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
+					var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+					result.Add(mapSectionRequest);
+				}
+			}
+
+			return result;
+		}
+
+		public static IList<MapSection> CreateEmptyMapSections(Job job)
+		{
+			var emptyPixelData = new byte[0];
+			var result = new List<MapSection>();
+
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
+			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
+
+			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			{
+				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
+				{
+					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
+					var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var isInverted);
+					var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyPixelData, job.Subdivision.Id.ToString(), repoPosition, isInverted);
+					result.Add(mapSection);
+				}
+			}
+
+			return result;
+		}
+
+		#endregion
+
+		#region Create Single MapSectionRequest
+
 		public static MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
@@ -64,15 +135,20 @@ namespace MSetExplorer
 			return mapPosition;
 		}
 
+		#endregion
+
+		#region Create MapSection
+
 		public static MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, BigVector mapBlockOffset, ColorMap colorMap)
 		{
 			var repoBlockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, mapSectionRequest.IsInverted, mapBlockOffset);
-			//Debug.WriteLine($"MapLoader handling response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {mapSectionRequest.IsInverted}.");
+			var isInverted = mapSectionRequest.IsInverted;
+			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
+			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var blockSize = mapSectionRequest.BlockSize;
-			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, colorMap, !mapSectionRequest.IsInverted);
-			var mapSection = new MapSection(screenPosition, blockSize, pixels1d, mapSectionRequest.SubdivisionId, repoBlockPosition);
+			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, colorMap, !isInverted);
+			var mapSection = new MapSection(screenPosition, blockSize, pixels1d, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted);
 
 			return mapSection;
 		}
@@ -121,7 +197,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-
-
+		#endregion
 	}
 }

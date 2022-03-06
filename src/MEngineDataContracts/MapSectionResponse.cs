@@ -18,6 +18,8 @@ namespace MEngineDataContracts
 		[DataMember(Order = 4)]
 		public int[] Counts { get; set; }
 
+		public bool RequestCancelled { get; set; }
+
 		//[DataMember(Order = 5)]
 		//public bool[] DoneFlags { get; set; }
 

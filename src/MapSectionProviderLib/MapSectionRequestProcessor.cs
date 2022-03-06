@@ -271,15 +271,19 @@ namespace MapSectionProviderLib
 			// Send the original request to the response processor.
 			_mapSectionResponseProcessor.AddWork(mapSectionWorkItem);
 
-			if (IsJobCancelled(mapSectionWorkItem.JobId))
-			{
-				Thread.Sleep(2 * 1000);
-			}
+			//if (IsJobCancelled(mapSectionWorkItem.JobId))
+			//{
+			//	Thread.Sleep(2 * 1000);
+			//}
 
 			var pendingRequests = GetPendingRequests(mapSectionWorkItem.Request);
 			//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
 
-			Debug.Assert(RequestExists(mapSectionWorkItem.Request, pendingRequests), "The primary request was not included in the list of pending requests.");
+			//Debug.Assert(RequestExists(mapSectionWorkItem.Request, pendingRequests), "The primary request was not included in the list of pending requests.");
+			if (!RequestExists(mapSectionWorkItem.Request, pendingRequests))
+			{
+				Debug.WriteLine("The primary request was not included in the list of pending requests.");
+			}
 
 			foreach (var workItem in pendingRequests)
 			{

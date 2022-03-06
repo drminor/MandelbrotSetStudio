@@ -86,7 +86,11 @@ namespace MapSectionProviderLib
 				try
 				{
 					var mapSectionResponse = _workQueue.Take(ct);
-					var _ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+
+					if (mapSectionResponse.Counts != null)
+					{
+						var _ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+					}
 				}
 				catch (OperationCanceledException)
 				{

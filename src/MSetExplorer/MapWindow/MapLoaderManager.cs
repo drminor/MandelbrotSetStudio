@@ -57,7 +57,7 @@ namespace MSetExplorer
 				StopCurrentJobInternal();
 
 				var request = new MapLoader(job.MapBlockOffset, new ColorMap(job.MSetInfo.ColorMapEntries), HandleMapSection, _mapSectionRequestProcessor);
-				var mapSectionRequests = MapWindowHelper.CreateSectionRequests(job, emptyMapSections);
+				var mapSectionRequests = MapSectionHelper.CreateSectionRequests(job, emptyMapSections);
 				var startTask = request.Start(mapSectionRequests);
 
 				_requests.Add(new GenMapRequestInfo(request, startTask));
@@ -112,11 +112,16 @@ namespace MSetExplorer
 
 		private void MapLoaderComplete(Task task)
 		{
-			var genMapRequestInfo = _requests.FirstOrDefault(x => x.Task == task);
-			if (!_requests.Remove(genMapRequestInfo))
-			{
-				Debug.WriteLine($"The MapLoaderManager could not remove the request in the MapLoaderComplete action.");
-			}
+		//	Thread.Sleep(5 * 1000);
+
+		//	DoWithWriteLock(() =>
+		//	{
+		//		var genMapRequestInfo = _requests.FirstOrDefault(x => x.Task == task);
+		//		if (!_requests.Remove(genMapRequestInfo))
+		//		{
+		//			Debug.WriteLine($"The MapLoaderManager could not remove the request in the MapLoaderComplete action.");
+		//		}
+		//	});
 		}
 
 		#endregion

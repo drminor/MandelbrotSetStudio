@@ -26,7 +26,7 @@ namespace MSetExplorer
 
 			var maxIterations = 700;
 			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.MapDisplayViewModel.SetMapInfo(mSetInfo);
+			_vm.SetMapInfo(mSetInfo);
 
 			//_vm.LoadProject();
 		}
@@ -85,7 +85,7 @@ namespace MSetExplorer
 
 		#region Button Handlers
 
-		private const int SHIFT_AMOUNT = 128;
+		private const int SHIFT_AMOUNT = 16;
 
 		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
 		{

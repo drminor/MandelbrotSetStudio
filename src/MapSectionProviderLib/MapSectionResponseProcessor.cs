@@ -102,7 +102,7 @@ namespace MapSectionProviderLib
 
 					if (IsJobCancelled(mapSectionWorkItem.JobId))
 					{
-						mapSectionWorkItem.Response.Counts = null;
+						mapSectionWorkItem.Response.RequestCancelled = true;
 					}
 
 					mapSectionWorkItem.Request.Completed = true;

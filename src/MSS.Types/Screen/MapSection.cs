@@ -12,8 +12,9 @@ namespace MSS.Types.Screen
 
 		public string SubdivisionId { get; init; }
 		public BigVector RepoBlockPosition { get; init; }
+		public bool IsInverted { get; init; }
 
-		public MapSection(PointInt blockPosition, SizeInt size, byte[] pixels1d, string subdivisionId, BigVector repoBlockPosition)
+		public MapSection(PointInt blockPosition, SizeInt size, byte[] pixels1d, string subdivisionId, BigVector repoBlockPosition, bool isInverted)
 		{
 			BlockPosition = blockPosition;
 			Size = size;
@@ -21,6 +22,7 @@ namespace MSS.Types.Screen
 
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
+			IsInverted = isInverted;
 		}
 
 		public override string? ToString()
@@ -39,6 +41,7 @@ namespace MSS.Types.Screen
 		{
 			return other is MapSection ms &&
 				   SubdivisionId == ms.SubdivisionId &&
+				   IsInverted == ms.IsInverted &&
 				   EqualityComparer<BigVector>.Default.Equals(RepoBlockPosition, ms.RepoBlockPosition);
 		}
 
@@ -61,7 +64,7 @@ namespace MSS.Types.Screen
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(SubdivisionId, RepoBlockPosition);
+			return HashCode.Combine(SubdivisionId, IsInverted, RepoBlockPosition);
 		}
 
 		public static bool operator ==(MapSection? left, MapSection? right)

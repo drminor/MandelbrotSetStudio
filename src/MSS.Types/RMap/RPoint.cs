@@ -6,6 +6,8 @@ namespace MSS.Types
 {
 	public class RPoint : IBigRatShape, IEquatable<RPoint>, IEqualityComparer<RPoint>
 	{
+		public static RPoint Zero = new RPoint();
+
 		public BigInteger[] Values { get; init; }
 
 		public int Exponent { get; init; }

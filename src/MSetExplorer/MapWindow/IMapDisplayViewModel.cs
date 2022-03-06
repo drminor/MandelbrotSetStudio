@@ -15,29 +15,17 @@ namespace MSetExplorer
 		Project CurrentProject { get; set; }
 
 		SizeInt BlockSize { get; }
+		SizeInt CanvasSize { get; }
 		ImageSource ImageSource { get; }
 		ObservableCollection<MapSection> MapSections { get; }
 
 		// These may need to be dependency properties
 		VectorInt CanvasControlOffset { get; set; }
 		void SetCanvasSize(SizeInt canvasSize);
-		void SetMapInfo(MSetInfo mSetInfo);
 
 		// These will become ICommands
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
-		//// These will be part of the JobStack control
-		//IEnumerable<Job> Jobs { get; }
-		//Job CurrentJob { get; }
-
-		//bool CanGoBack { get; }
-		//bool CanGoForward { get; }
-
-		//void GoBack();
-		//void GoForward();
-
-		//void LoadJobStack(IEnumerable<Job> jobs);
-		//void UpdateJob(Job oldJob, Job newJob);
 	}
 }
