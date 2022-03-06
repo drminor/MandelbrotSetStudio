@@ -16,15 +16,5 @@ namespace MSetExplorer
 
 		void SaveProject();
 		void LoadProject();
-
-		//public bool CanGoBack { get; }
-		//public bool CanGoForward { get; }
-
-		//public void GoBack();
-		//public void GoForward();
-
-		//void SetMapInfo(MSetInfo mSetInfo);
-
-		void Test();
 	}
 }

@@ -14,12 +14,12 @@ namespace MSetRepo
 			return mapSectionAdapter;
 		}
 
-		public static IMapSectionRepo GetMapSectionRepo(string dbProviderConnString)
+		public static IMapSectionAdapter GetMapSectionAdapter(string dbProviderConnString)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);
-			var mapSectionRepo = new MapSectionRepo(dbProvider, GetMSetRecordMapper());
+			var mapSectionAdapter = new MapSectionAdapter(dbProvider, GetMSetRecordMapper());
 
-			return mapSectionRepo;
+			return mapSectionAdapter;
 		}
 
 		public static MSetRecordMapper GetMSetRecordMapper()

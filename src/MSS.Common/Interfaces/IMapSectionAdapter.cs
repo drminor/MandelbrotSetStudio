@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace MSS.Common
 {
-	public interface IMapSectionRepo
+	public interface IMapSectionAdapter
 	{
 
 		MapSectionResponse? GetMapSection(string mapSectionId);

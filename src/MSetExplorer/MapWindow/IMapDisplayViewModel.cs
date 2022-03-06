@@ -20,8 +20,6 @@ namespace MSetExplorer
 		VectorInt CanvasControlOffset { get; set; }
 		ObservableCollection<MapSection> MapSections { get; }
 
-		//SizeInt CanvasSize { get; set; }
-
 
 		// These will become ICommands
 		void SetCanvasSize(SizeInt canvasSize);

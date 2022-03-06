@@ -13,8 +13,8 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="140"/>
-            <ColumnDefinition Width="1100"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="210"/>
         </Grid.ColumnDefinitions>
 
         <Border Grid.Column="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">

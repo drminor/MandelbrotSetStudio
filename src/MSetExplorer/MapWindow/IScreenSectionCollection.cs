@@ -5,8 +5,6 @@ namespace MSetExplorer
 {
 	internal interface IScreenSectionCollection
 	{
-		SizeInt CanvasSizeInBlocks { get; }
-
 		void Draw(MapSection mapSection);
 		bool Hide(MapSection mapSection);
 

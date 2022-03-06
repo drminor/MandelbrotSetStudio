@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace MSetRepo
 {
-	public class MapSectionRepo : IMapSectionRepo
+	public class MapSectionAdapter : IMapSectionAdapter
 	{
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
 
-		public MapSectionRepo(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
+		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;

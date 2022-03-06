@@ -130,8 +130,7 @@ namespace MSetExplorer
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			//_vm.SaveProject();
-			_vm.Test();
+			_vm.SaveProject();
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)

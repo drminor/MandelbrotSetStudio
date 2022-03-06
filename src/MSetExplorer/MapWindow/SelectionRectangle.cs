@@ -366,37 +366,6 @@ namespace MSetExplorer.MapWindow
 			}
 		}
 
-		private void Deactivate()
-		{
-			Selecting = false;
-		}
-
-		private bool Contains(Point position)
-		{
-			var p = SelectedPosition;
-			var s = SelectedSize;
-			var r = new Rect(p, s);
-
-			var result = r.Contains(position);
-
-			//var strResult = result ? "is contained" : "is not contained";
-			//Debug.WriteLine($"Checking {p} to see if it contained by {r} and it {strResult}.");
-
-			return result;
-		}
-
-		// Return the distance from the DragAnchor to the new mouse position.
-		private VectorInt GetDragOffset(Point controlPos)
-		{
-			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
-			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
-			var sizeDbl = endP.Diff(startP);
-
-			var result = new VectorInt(sizeDbl.Round());
-
-			return result;
-		}
-
 		#endregion
 
 		#region Private Properties
@@ -492,11 +461,42 @@ namespace MSetExplorer.MapWindow
 				_dragLine.Y2 = value.Y;
 			}
 		}
-		
+
 		#endregion
 
 		#region Private Methods
 
+		private void Deactivate()
+		{
+			Selecting = false;
+		}
+
+		private bool Contains(Point position)
+		{
+			var p = SelectedPosition;
+			var s = SelectedSize;
+			var r = new Rect(p, s);
+
+			var result = r.Contains(position);
+
+			//var strResult = result ? "is contained" : "is not contained";
+			//Debug.WriteLine($"Checking {p} to see if it contained by {r} and it {strResult}.");
+
+			return result;
+		}
+
+		// Return the distance from the DragAnchor to the new mouse position.
+		private VectorInt GetDragOffset(Point controlPos)
+		{
+			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
+			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
+			var sizeDbl = endP.Diff(startP);
+
+			var result = new VectorInt(sizeDbl.Round());
+
+			return result;
+		}
+		
 		// Reposition the Selection Rectangle, keeping it's current size.
 		private void Move(Point posYInverted)
 		{

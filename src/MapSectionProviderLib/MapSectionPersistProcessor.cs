@@ -10,7 +10,7 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionPersistProcessor : IDisposable
 	{
-		private readonly IMapSectionRepo _mapSectionRepo;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
 
 		private const int QUEUE_CAPACITY = 200;
 		private readonly CancellationTokenSource _cts;
@@ -23,9 +23,9 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionPersistProcessor(IMapSectionRepo mapSectionRepo)
+		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter)
 		{
-			_mapSectionRepo = mapSectionRepo;
+			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
 			_workQueue = new BlockingCollection<MapSectionResponse>(QUEUE_CAPACITY);
@@ -86,7 +86,7 @@ namespace MapSectionProviderLib
 				try
 				{
 					var mapSectionResponse = _workQueue.Take(ct);
-					var _ = await _mapSectionRepo.SaveMapSectionAsync(mapSectionResponse);
+					var _ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
 				}
 				catch (OperationCanceledException)
 				{

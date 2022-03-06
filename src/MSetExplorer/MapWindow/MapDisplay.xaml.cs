@@ -14,14 +14,14 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapDisplay : UserControl
 	{
-		private static readonly bool _showBorder = false;
+		private static readonly bool _showBorder;
 		private static readonly bool _clipImageBlocks = true;
 		private static readonly bool _keepDisplaySquare = true;
 
 		private IMapDisplayViewModel _vm;
 		private Canvas _canvas;
 		private Image _mapDisplayImage;
-		private SelectionRectangle _selectedArea;
+		private SelectionRectangle _selectionRectangle;
 		private Border _border;
 
 		#region Constructor
@@ -59,9 +59,9 @@ namespace MSetExplorer
 				_mapDisplayImage.SetValue(Canvas.BottomProperty, 0d);
 				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
 
-				_selectedArea = new SelectionRectangle(_canvas, _vm.BlockSize);
-				_selectedArea.AreaSelected += SelectedArea_AreaSelected;
-				_selectedArea.ImageDragged += SelectedArea_ImageDragged;
+				_selectionRectangle = new SelectionRectangle(_canvas, _vm.BlockSize);
+				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
+				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
 
 				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(_canvas) : null;
 
@@ -107,12 +107,12 @@ namespace MSetExplorer
 			SetCanvasSize(e.NewSize);
 		}
 
-		private void SelectedArea_AreaSelected(object sender, AreaSelectedEventArgs e)
+		private void SelectionRectangle_AreaSelected(object sender, AreaSelectedEventArgs e)
 		{
 			_vm.UpdateMapViewZoom(e);
 		}
 
-		private void SelectedArea_ImageDragged(object sender, ImageDraggedEventArgs e)
+		private void SelectionRectangle_ImageDragged(object sender, ImageDraggedEventArgs e)
 		{
 			_vm.UpdateMapViewPan(e);
 		}
@@ -133,6 +133,8 @@ namespace MSetExplorer
 		private void SetCanvasSize(Size controlSize)
 		{
 			var size = GetCanvasSize(controlSize, _keepDisplaySquare);
+
+			Debug.WriteLine($"The MapDisplay size is now {controlSize}. Setting the canvas size to {size}.");
 
 			_canvas.Width = size.Width;
 			_canvas.Height = size.Height;

@@ -84,14 +84,7 @@ namespace MSetExplorer
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
 
-				if (emptyMapSections is null)
-				{
-					genMapRequestInfo.StartLoading();
-				}
-				else
-				{
-					genMapRequestInfo.StartLoading(emptyMapSections);
-				}
+				genMapRequestInfo.StartLoading(emptyMapSections);
 			});
 		}
 
@@ -236,7 +229,7 @@ namespace MSetExplorer
 
 			CurrentJobChanged?.Invoke(this, new EventArgs());
 
-			genMapRequestInfo.StartLoading();
+			genMapRequestInfo.StartLoading(emptyMapSections: null);
 		}
 
 		private GenMapRequestInfo RenewRequest(int newRequestStackPointer)
@@ -291,6 +284,12 @@ namespace MSetExplorer
 			}
 		}
 
+		/// <summary>
+		/// Finds the most recently ran child job of the given parentJob.
+		/// </summary>
+		/// <param name="parentJob"></param>
+		/// <param name="requestStackPointer">If successful, the index of the most recent child job of the given parentJob</param>
+		/// <returns>True if there is any child of the specified job.</returns>
 		private bool TryGetLatestChildJobIndex(Job parentJob, out int requestStackPointer)
 		{
 			requestStackPointer = -1;
@@ -389,12 +388,6 @@ namespace MSetExplorer
 			{
 				MapLoader = mapLoader;
 				JobNumber = mapLoader.JobNumber;
-			}
-
-			public void StartLoading()
-			{
-				var startTask = MapLoader.Start();
-				_ = startTask.ContinueWith(LoadingComplete);
 			}
 
 			public void StartLoading(IList<MapSection> emptyMapSections)

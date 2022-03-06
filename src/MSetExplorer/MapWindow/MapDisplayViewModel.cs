@@ -32,6 +32,7 @@ namespace MSetExplorer
 			_mapLoaderJobStack = new MapLoaderJobStack(mapSectionRequestProcessor);
 			_mapLoaderJobStack.CurrentJobChanged += MapLoaderJobStack_CurrentJobChanged;
 			_mapLoaderJobStack.MapSectionReady += MapLoaderJobStack_MapSectionReady;
+
 			_drawingGroup = new DrawingGroup();
 			ImageSource = new DrawingImage(_drawingGroup);
 
@@ -67,6 +68,10 @@ namespace MSetExplorer
 		public Project CurrentProject { get; set; }
 
 		public ObservableCollection<MapSection> MapSections { get; }
+
+		#endregion
+
+		#region MapLoaderJobStack Properties
 
 		public Job CurrentJob => _mapLoaderJobStack.CurrentJob;
 
@@ -214,7 +219,7 @@ namespace MSetExplorer
 
 			if (transformType == TransformType.Pan)
 			{
-				var sectionsRequired = MapLoader.CreateEmptyMapSections(job);
+				var sectionsRequired = MapWindowHelper.CreateEmptyMapSections(job);
 				var loadedSections = GetMapSectionsSnapShot();
 
 				// Avoid requesting sections already drawn

@@ -8,13 +8,13 @@ namespace MEngineClient
 		public static MapSectionRequestProcessor CreateMapSectionRequestProcessor(string clientAddress, string mongoDbConnectionString, bool useMapSectionRepository)
 		{
 			var mEngineClient = new MClient(clientAddress);
-			var mapSectionRepo = MSetRepoHelper.GetMapSectionRepo(mongoDbConnectionString);
+			var mapSectionRepo = MSetRepoHelper.GetMapSectionAdapter(mongoDbConnectionString);
 
-			MapSectionPersistProcessor _mapSectionPersistProcessor = useMapSectionRepository ? new MapSectionPersistProcessor(mapSectionRepo) : null;
-			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClient, _mapSectionPersistProcessor);
+			var mapSectionPersistProcessor = useMapSectionRepository ? new MapSectionPersistProcessor(mapSectionRepo) : null;
+			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClient, mapSectionPersistProcessor);
 
-			MapSectionResponseProcessor mapSectionResponseProcessor = new MapSectionResponseProcessor();
-			MapSectionRequestProcessor mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionRepo, mapSectionGeneratorProcessor, mapSectionResponseProcessor);
+			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionRepo, mapSectionGeneratorProcessor, mapSectionResponseProcessor);
 
 			return mapSectionRequestProcessor;
 		}

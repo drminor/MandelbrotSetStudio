@@ -11,26 +11,22 @@ namespace MSetExplorer
 {
 	internal class ScreenSectionCollection : IScreenSectionCollection
 	{
+		private readonly SizeInt _canvasSizeInBlocks;
 		private readonly int _maxYPtr;
 		private readonly DrawingGroup _drawingGroup;
 		private readonly ScreenSection[,] _screenSections;
+
 		private VectorInt _startIndex;
 
 		#region Constructor
 
 		public ScreenSectionCollection(SizeInt canvasSizeInBlocks, SizeInt blockSize, DrawingGroup drawingGroup)
 		{
-			CanvasSizeInBlocks = canvasSizeInBlocks;
-			_maxYPtr = CanvasSizeInBlocks.Height - 1;
+			_canvasSizeInBlocks = canvasSizeInBlocks;
+			_maxYPtr = _canvasSizeInBlocks.Height - 1;
 			_drawingGroup = drawingGroup;
-			_screenSections = BuildScreenSections(CanvasSizeInBlocks, blockSize, _drawingGroup);
+			_screenSections = BuildScreenSections(_canvasSizeInBlocks, blockSize, _drawingGroup);
 		}
-
-		#endregion
-
-		#region Public Properties
-
-		public SizeInt CanvasSizeInBlocks { get; init; }
 
 		#endregion
 
@@ -86,7 +82,7 @@ namespace MSetExplorer
 		{
 			//_drawingGroup.Children.Clear();
 
-			var sizeInBlocks = CanvasSizeInBlocks;
+			var sizeInBlocks = _canvasSizeInBlocks;
 			for (var yBlockPtr = 0; yBlockPtr < sizeInBlocks.Height; yBlockPtr++)
 			{
 				for (var xBlockPtr = 0; xBlockPtr < sizeInBlocks.Width; xBlockPtr++)
@@ -116,12 +112,12 @@ namespace MSetExplorer
 		private VectorInt IndexAdd(VectorInt index, VectorInt amount)
 		{
 			index = index.Add(amount);
-			index = index.Mod(CanvasSizeInBlocks);
+			index = index.Mod(_canvasSizeInBlocks);
 
 			var result = new VectorInt
 				(
-					index.X += index.X < 0 ? CanvasSizeInBlocks.Width : 0,
-					index.Y += index.Y < 0 ? CanvasSizeInBlocks.Height : 0
+					index.X += index.X < 0 ? _canvasSizeInBlocks.Width : 0,
+					index.Y += index.Y < 0 ? _canvasSizeInBlocks.Height : 0
 				);
 
 			return result;

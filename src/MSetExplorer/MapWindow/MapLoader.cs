@@ -1,7 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
 using MSS.Common;
-using MSS.Types;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
@@ -15,18 +14,14 @@ namespace MSetExplorer
 	internal class MapLoader
 	{
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-
 		private readonly Job _job;
-
 		private readonly Action<object, MapSection> _callback;
 		private readonly ColorMap _colorMap;
 
 		private IList<MapSectionRequest> _pendingRequests;
-
 		private bool _isStopping;
 		private int _sectionsRequested;
 		private int _sectionsCompleted;
-
 		private TaskCompletionSource _tcs;
 
 		#region Constructor
@@ -58,29 +53,14 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		/// <summary>
-		/// Submits requests for all map sections for the job.
-		/// </summary>
-		/// <returns></returns>
-		public Task Start()
-		{
-			return Start(CreateSectionRequests(_job));
-		}
-
 		public Task Start(IList<MapSection> emptyMapSections)
-		{
-			var requests = CreateSectionRequests(_job, emptyMapSections);
-			return Start(requests);
-		}
-
-		public Task Start(IList<MapSectionRequest> requests)
 		{
 			if (_tcs != null)
 			{
 				throw new InvalidOperationException("This MapLoader has already been started.");
 			}
 
-			_pendingRequests = requests;
+			_pendingRequests = MapWindowHelper.CreateSectionRequests(_job, emptyMapSections);
 
 			_ = Task.Run(SubmitSectionRequests);
 
@@ -121,7 +101,6 @@ namespace MSetExplorer
 
 				//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
 
-				//var mapSectionWorkItem = new WorkItem<MapSectionRequest, MapSectionResponse>(JobNumber, mapSectionRequest, HandleResponse);
 				_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
 				mapSectionRequest.Sent = true;
 				_ = Interlocked.Increment(ref _sectionsRequested);
@@ -151,70 +130,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private IList<MapSectionRequest> CreateSectionRequests(Job job, IList<MapSection> emptyMapSections)
-		{
-			var result = new List<MapSectionRequest>();
-
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
-			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
-
-			foreach (var mapSection in emptyMapSections)
-			{
-				var screenPosition = mapSection.BlockPosition;
-				var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
-				result.Add(mapSectionRequest);
-			}
-
-			return result;
-		}
-
-		private IList<MapSectionRequest> CreateSectionRequests(Job job)
-		{
-			var result = new List<MapSectionRequest>();
-
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
-			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
-
-			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
-			{
-				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
-				{
-					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
-					result.Add(mapSectionRequest);
-				}
-			}
-
-			return result;
-		}
-
 		#endregion
-
-		#region Static Methods
-
-		public static IList<MapSection> CreateEmptyMapSections(Job job)
-		{
-			var emptyPixelData = new byte[0];
-			var result = new List<MapSection>();
-
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
-			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
-
-			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
-			{
-				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
-				{
-					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var _);
-					var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyPixelData, job.Subdivision.Id.ToString(), repoBlockPosition: repoPosition);
-					result.Add(mapSection);
-				}
-			}
-
-			return result;
-		}
-
-		#endregion
-
 	}
 }

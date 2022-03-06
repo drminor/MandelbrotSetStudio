@@ -1,12 +1,10 @@
 ﻿using MSetRepo;
-using MSS.Types;
 using MSS.Types.MSet;
 
 namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
-		private readonly SizeInt _blockSize;
 		private readonly ProjectAdapter _projectAdapter;
 
 		private Project _currentProject;
@@ -18,12 +16,11 @@ namespace MSetExplorer
 		public MainWindowViewModel(ProjectAdapter projectAdapter, IMapDisplayViewModel mapDisplayViewModel)
 		{
 			_projectAdapter = projectAdapter;
-			_blockSize = mapDisplayViewModel.BlockSize;
+
+			CurrentProject = _projectAdapter.GetOrCreateProject("Home");
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
-
-			CurrentProject = _projectAdapter.GetOrCreateProject("Home");
 		}
 
 		#endregion
@@ -47,21 +44,11 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public IMapDisplayViewModel MapDisplayViewModel { get; }
-
 		public Project CurrentProject
 		{
-			get => _currentProject; 
+			get => _currentProject;
 			set { _currentProject = value; OnPropertyChanged(); }
 		}
-
-		public Job CurrentJob => MapDisplayViewModel.CurrentJob;
-
-		//public SizeInt CanvasSize
-		//{
-		//	get => _canvasSize;
-		//	set { _canvasSize = value; OnPropertyChanged(); }
-		//}
 
 		public int Iterations
 		{
@@ -75,32 +62,14 @@ namespace MSetExplorer
 			set { _steps = value; OnPropertyChanged(); }
 		}
 
+		public IMapDisplayViewModel MapDisplayViewModel { get; }
+		public Job CurrentJob => MapDisplayViewModel.CurrentJob;
 		public bool CanGoBack => MapDisplayViewModel.CanGoBack;
 		public bool CanGoForward => MapDisplayViewModel.CanGoForward;
 
 		#endregion
 
 		#region Public Methods
-
-		//public void SetMapInfo(MSetInfo mSetInfo)
-		//{
-		//	MapDisplayViewModel.SetMapInfo(mSetInfo);
-		//}
-
-		//public void GoBack()
-		//{
-		//	MapDisplayViewModel.GoBack();
-		//}
-
-		//public void GoForward()
-		//{
-		//	MapDisplayViewModel.GoForward();
-		//}
-
-		public void Test()
-		{
-			OnPropertyChanged("TestingScreenSections");
-		}
 
 		public void SaveProject()
 		{

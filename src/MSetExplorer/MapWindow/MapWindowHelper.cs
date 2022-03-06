@@ -1,16 +1,20 @@
-﻿//using MongoDB.Bson;
+﻿using MEngineDataContracts;
 using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace MSetExplorer
 {
 	internal static class MapWindowHelper
 	{
+		#region Build Job
+
 		public static Job BuildJob(Job parentJob, Project project, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter/*, bool clearExistingMapSections*/)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
@@ -61,26 +65,77 @@ namespace MSetExplorer
 			return new RPoint();
 		}
 
-		//public static Point GetBlockPosition(Point screenPosition, SizeInt blockSize)
-		//{
-		//	var pos = new PointDbl(screenPosition.X, screenPosition.Y).Round();
+		#endregion
 
-		//	var left = Math.DivRem(pos.X, blockSize.Width, out var remainder);
-		//	if (remainder == 0 && left > 0)
-		//	{
-		//		left--;
-		//	}
+		#region Map Loader Support
 
-		//	var bottom = Math.DivRem(pos.Y, blockSize.Height, out remainder);
-		//	if (remainder == 0 && bottom > 0)
-		//	{
-		//		bottom--;
-		//	}
+		public static IList<MapSectionRequest> CreateSectionRequests(Job job, IList<MapSection> emptyMapSections)
+		{
+			if (emptyMapSections == null)
+			{
+				return CreateSectionRequests(job);
+			}
+			else
+			{
+				var result = new List<MapSectionRequest>();
 
-		//	var botRight = new PointInt(left, bottom).Scale(blockSize);
-		//	var center = botRight.Translate(new SizeInt(blockSize.Width / 2, blockSize.Height / 2));
-		//	return new Point(center.X, center.Y);
-		//}
+				Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
+
+				foreach (var mapSection in emptyMapSections)
+				{
+					var screenPosition = mapSection.BlockPosition;
+					var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+					result.Add(mapSectionRequest);
+				}
+				return result;
+			}
+		}
+
+		public static IList<MapSectionRequest> CreateSectionRequests(Job job)
+		{
+			var result = new List<MapSectionRequest>();
+
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
+			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
+
+			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			{
+				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
+				{
+					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
+					var mapSectionRequest = MapSectionHelper.CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+					result.Add(mapSectionRequest);
+				}
+			}
+
+			return result;
+		}
+
+		public static IList<MapSection> CreateEmptyMapSections(Job job)
+		{
+			var emptyPixelData = new byte[0];
+			var result = new List<MapSection>();
+
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
+			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
+
+			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			{
+				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
+				{
+					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
+					var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var _);
+					var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyPixelData, job.Subdivision.Id.ToString(), repoBlockPosition: repoPosition);
+					result.Add(mapSection);
+				}
+			}
+
+			return result;
+		}
+
+		#endregion
+
+		#region Build Initial MSetInfo
 
 		public static MSetInfo BuildInitialMSetInfo(int maxIterations)
 		{
@@ -111,5 +166,6 @@ namespace MSetExplorer
 			return result;
 		}
 
+		#endregion
 	}
 }

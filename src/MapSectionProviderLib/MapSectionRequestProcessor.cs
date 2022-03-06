@@ -18,7 +18,7 @@ namespace MapSectionProviderLib
 		private const int NUMBER_OF_CONSUMERS = 2;
 		private const int QUEUE_CAPACITY = 200;
 
-		private readonly IMapSectionRepo _mapSectionRepo;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly DtoMapper _dtoMapper;
 
 		private readonly MapSectionGeneratorProcessor _mapSectionGeneratorProcessor;
@@ -39,10 +39,10 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionRequestProcessor(IMapSectionRepo mapSectionRepo, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor)
+		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor)
 		{
 			_nextJobId = 0;
-			_mapSectionRepo = mapSectionRepo;
+			_mapSectionAdapter = mapSectionAdapter;
 			_dtoMapper = new DtoMapper();
 			_mapSectionGeneratorProcessor = mapSectionGeneratorProcessor;
 			_mapSectionResponseProcessor = mapSectionResponseProcessor;
@@ -246,7 +246,7 @@ namespace MapSectionProviderLib
 		{
 			var mapSectionRequest = mapSectionWorkItem.Request;
 
-			var mapSectionResponse = await _mapSectionRepo.GetMapSectionAsync(mapSectionRequest.SubdivisionId, _dtoMapper.MapFrom(mapSectionRequest.BlockPosition));
+			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, _dtoMapper.MapFrom(mapSectionRequest.BlockPosition));
 
 			if (!(mapSectionResponse is null))
 			{
