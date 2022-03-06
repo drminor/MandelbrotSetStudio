@@ -179,7 +179,7 @@ namespace MSetExplorer
 				{
 					if (!_screenSectionCollection.Hide(mapSection))
 					{
-						Debug.WriteLine($" MapSecCollBindr cannot Hide the MapSection: {mapSection}.");
+						Debug.WriteLine($"While handling the MapSections_CollectionChanged:Remove, the MapDisplayViewModel cannot Hide the MapSection: {mapSection}.");
 					}
 				}
 			}

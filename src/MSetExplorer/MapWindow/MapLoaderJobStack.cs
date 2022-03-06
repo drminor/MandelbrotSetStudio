@@ -1,36 +1,41 @@
 ﻿using MapSectionProviderLib;
 using MongoDB.Bson;
-using MSS.Common;
 using MSS.Types.MSet;
 using MSS.Types.Screen;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace MSetExplorer
 {
-	internal class MapLoaderJobStack : IMapLoaderJobStack
+	internal class MapLoaderJobStack : IMapLoaderJobStack, IDisposable
 	{
-		private readonly SynchronizationContext _synchronizationContext;
-		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly List<GenMapRequestInfo> _requestStack;
+		//private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
+		private readonly MapLoaderManager _mapLoaderManager;
 
-		private int _requestStackPointer;
-		private readonly ReaderWriterLockSlim _stackLock;
+		private readonly ObservableCollection<Job> _jobsCollection;
+		private int _jobsPointer;
+
+		private readonly ReaderWriterLockSlim _jobsLock;
 
 		#region Constructor
 
 		public MapLoaderJobStack(MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			_synchronizationContext = SynchronizationContext.Current;
-			_mapSectionRequestProcessor = mapSectionRequestProcessor;
-			_requestStack = new List<GenMapRequestInfo>();
-			_requestStackPointer = -1;
-			_stackLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
+			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
+
+			_jobsCollection = new ObservableCollection<Job>();
+			_jobsPointer = -1;
+
+			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+		}
+
+		private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
+		{
+			MapSectionReady?.Invoke(this, e);
 		}
 
 		#endregion
@@ -41,14 +46,10 @@ namespace MSetExplorer
 
 		public event EventHandler CurrentJobChanged;
 
-		private GenMapRequestInfo CurrentRequest => DoWithReadLock(() => { return _requestStackPointer == -1 ? null : _requestStack[_requestStackPointer]; });
-
-		public Job CurrentJob => CurrentRequest?.Job;
+		public Job CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
-
-		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_requestStackPointer, out var _); });
-
-		public IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_requestStack.Select(x => x.Job).ToList()); });
+		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_jobsPointer, out var _); });
+		public IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
 
 		#endregion
 
@@ -60,12 +61,12 @@ namespace MSetExplorer
 			{
 				foreach (var job in jobs)
 				{
-					_requestStack.Add(new GenMapRequestInfo(job));
+					_jobsCollection.Add(job);
 				}
 
-				_requestStackPointer = _requestStack.Count - 1;
+				_jobsPointer = _jobsCollection.Count - 1;
 
-				Rerun(_requestStackPointer);
+				Rerun(_jobsPointer);
 			});
 		}
 
@@ -79,13 +80,14 @@ namespace MSetExplorer
 			DoWithWriteLock(() =>
 			{
 				CheckForDuplicateJob(job.Id);
-				StopCurrentJobInternal();
+				_mapLoaderManager.StopCurrentJob();
 
-				var genMapRequestInfo = PushRequest(job);
+				_jobsCollection.Add(job);
+				_jobsPointer = _jobsCollection.Count - 1;
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
 
-				genMapRequestInfo.StartLoading(emptyMapSections);
+				_mapLoaderManager.Push(job, emptyMapSections);
 			});
 		}
 
@@ -93,16 +95,16 @@ namespace MSetExplorer
 		{
 			DoWithWriteLock(() =>
 			{
-				if (TryFindByJobId(oldJob.Id, out var genMapRequestInfo))
+				if (TryFindByJobId(oldJob.Id, out var foundJob))
 				{
-					genMapRequestInfo.Job = newJob;
+					var idx = _jobsCollection.IndexOf(foundJob);
+					_jobsCollection[idx] = newJob;
 
-					var oldJobId = oldJob.Id;
-					foreach (var req in _requestStack)
+					foreach (var job in _jobsCollection)
 					{
-						if (req.Job?.ParentJob?.Id == oldJobId)
+						if (job?.ParentJob?.Id == oldJob.Id)
 						{
-							req.Job.ParentJob = newJob;
+							job.ParentJob = newJob;
 						}
 					}
 				}
@@ -115,27 +117,27 @@ namespace MSetExplorer
 
 		public bool GoBack()
 		{
-			_stackLock.EnterUpgradeableReadLock();
+			_jobsLock.EnterUpgradeableReadLock();
 			try
 			{
 				var parentJob = CurrentJob?.ParentJob;
 
 				if (!(parentJob is null))
 				{
-					_stackLock.EnterWriteLock();
+					_jobsLock.EnterWriteLock();
 					try
 					{
-						var genMapRequestInfo = _requestStack.FirstOrDefault(x => parentJob.Id == x.Job.Id);
-						if (!(genMapRequestInfo is null))
+						var job = _jobsCollection.FirstOrDefault(x => parentJob.Id == x.Id);
+						if (!(job is null))
 						{
-							var idx = _requestStack.IndexOf(genMapRequestInfo);
+							var idx = _jobsCollection.IndexOf(job);
 							Rerun(idx);
 							return true;
 						}
 					}
 					finally
 					{
-						_stackLock.ExitWriteLock();
+						_jobsLock.ExitWriteLock();
 					}
 				}
 
@@ -143,18 +145,18 @@ namespace MSetExplorer
 			}
 			finally
 			{
-				_stackLock.ExitUpgradeableReadLock();
+				_jobsLock.ExitUpgradeableReadLock();
 			}
 		}
 
 		public bool GoForward()
 		{
-			_stackLock.EnterUpgradeableReadLock();
+			_jobsLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (TryGetNextJobInStack(_requestStackPointer, out var nextRequestStackPointer))
+				if (TryGetNextJobInStack(_jobsPointer, out var nextRequestStackPointer))
 				{
-					_stackLock.EnterWriteLock();
+					_jobsLock.EnterWriteLock();
 					try
 					{
 						Rerun(nextRequestStackPointer);
@@ -162,7 +164,7 @@ namespace MSetExplorer
 					}
 					finally
 					{
-						_stackLock.ExitWriteLock();
+						_jobsLock.ExitWriteLock();
 					}
 				}
 				else
@@ -172,88 +174,37 @@ namespace MSetExplorer
 			}
 			finally
 			{
-				_stackLock.ExitUpgradeableReadLock();
+				_jobsLock.ExitUpgradeableReadLock();
 			}
 		}
 
 		public void StopCurrentJob()
 		{
-			DoWithWriteLock(StopCurrentJobInternal);
-		}
-
-		#endregion
-
-		#region Event Handlers
-
-		private void HandleMapSection(object sender, MapSection mapSection)
-		{
-			DoWithWriteLock(() =>
-			{
-				var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
-
-				if (jobNumber == CurrentRequest.JobNumber)
-				{
-					_synchronizationContext.Post(o => MapSectionReady?.Invoke(this, mapSection), null);
-				}
-				else
-				{
-					Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}. CurJobNum: {CurrentRequest.JobNumber}"); 
-				}
-			});
+			DoWithWriteLock(() => _mapLoaderManager.StopCurrentJob());
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private GenMapRequestInfo PushRequest(Job job)
+		private void Rerun(int newJobsCollectionPointer)
 		{
-			var mapLoader = new MapLoader(job.MapBlockOffset, new ColorMap(job.MSetInfo.ColorMapEntries), HandleMapSection, _mapSectionRequestProcessor);
-			var result = new GenMapRequestInfo(job, mapLoader);
-
-			_requestStack.Add(result);
-			_requestStackPointer = _requestStack.Count - 1;
-
-			return result;
-		}
-
-		private void Rerun(int newRequestStackPointer)
-		{
-			if (newRequestStackPointer < 0 || newRequestStackPointer > _requestStack.Count - 1)
+			if (newJobsCollectionPointer < 0 || newJobsCollectionPointer > _jobsCollection.Count - 1)
 			{
-				throw new ArgumentException($"The newRequestStackPointer with value: {newRequestStackPointer} is not valid.", nameof(newRequestStackPointer));
+				throw new ArgumentException($"The newJobsCollectionPointer with value: {newJobsCollectionPointer} is not valid.", nameof(newJobsCollectionPointer));
 			}
 
-			StopCurrentJobInternal();
+			_mapLoaderManager.StopCurrentJob();
 
-			var genMapRequestInfo = RenewRequest(newRequestStackPointer);
-
+			var job = _jobsCollection[newJobsCollectionPointer];
+			_jobsPointer = newJobsCollectionPointer;
 			CurrentJobChanged?.Invoke(this, new EventArgs());
-
-			genMapRequestInfo.StartLoading(emptyMapSections: null);
-		}
-
-		private GenMapRequestInfo RenewRequest(int newRequestStackPointer)
-		{
-			var result = _requestStack[newRequestStackPointer];
-			var job = result.Job;
-
-			var mapLoader = new MapLoader(job.MapBlockOffset, new ColorMap(job.MSetInfo.ColorMapEntries), HandleMapSection, _mapSectionRequestProcessor);
-			result.Renew(mapLoader);
-
-			_requestStackPointer = newRequestStackPointer;
-
-			return result;
-		}
-
-		private void StopCurrentJobInternal()
-		{
-			CurrentRequest?.MapLoader?.Stop();
+			_mapLoaderManager.Push(job);
 		}
 
 		#endregion
 
-		#region Request Stack Management 
+		#region Job Collection Management 
 
 		private bool TryGetNextJobInStack(int requestStackPointer, out int nextRequestStackPointer)
 		{
@@ -273,14 +224,14 @@ namespace MSetExplorer
 
 		private bool TryGetJobFromStack(int requestStackPointer, out Job job)
 		{
-			if (requestStackPointer < 0 || requestStackPointer > _requestStack.Count - 1)
+			if (requestStackPointer < 0 || requestStackPointer > _jobsCollection.Count - 1)
 			{
 				job = null;
 				return false;
 			}
 			else
 			{
-				job = _requestStack[requestStackPointer].Job;
+				job = _jobsCollection[requestStackPointer];
 				return true;
 			}
 		}
@@ -296,10 +247,10 @@ namespace MSetExplorer
 			requestStackPointer = -1;
 			var lastestDtFound = DateTime.MinValue;
 
-			for (var i = 0; i < _requestStack.Count; i++)
+			for (var i = 0; i < _jobsCollection.Count; i++)
 			{
-				var genMapRequestInfo = _requestStack[i];
-				var thisParentJobId = genMapRequestInfo.Job?.ParentJob?.Id ?? ObjectId.Empty;
+				var job = _jobsCollection[i];
+				var thisParentJobId = job.ParentJob?.Id ?? ObjectId.Empty;
 
 				if (thisParentJobId.Equals(parentJob.Id))
 				{
@@ -318,25 +269,25 @@ namespace MSetExplorer
 
 		private void CheckForDuplicateJob(ObjectId id)
 		{
-			if (_requestStack.Any(x => x.Job.Id == id))
+			if (_jobsCollection.Any(x => x.Id == id))
 			{
 				throw new InvalidOperationException($"A job with id: {id} has already been pushed.");
 			}
 		}
 
-		private bool TryFindByJobId(ObjectId id, out GenMapRequestInfo genMapRequestInfo)
+		private bool TryFindByJobId(ObjectId id, out Job job)
 		{
-			genMapRequestInfo = _requestStack.FirstOrDefault(x => x.Job.Id == id);
-			return genMapRequestInfo != null;
+			job = _jobsCollection.FirstOrDefault(x => x.Id == id);
+			return job != null;
 		}
 
 		#endregion
 
-		#region Stack Lock Helpers
+		#region Lock Helpers
 
 		private T DoWithReadLock<T>(Func<T> function)
 		{
-			_stackLock.EnterReadLock();
+			_jobsLock.EnterReadLock();
 
 			try
 			{
@@ -344,13 +295,13 @@ namespace MSetExplorer
 			}
 			finally
 			{
-				_stackLock.ExitReadLock();
+				_jobsLock.ExitReadLock();
 			}
 		}
 
 		private void DoWithWriteLock(Action action)
 		{
-			_stackLock.EnterWriteLock();
+			_jobsLock.EnterWriteLock();
 
 			try
 			{
@@ -358,50 +309,64 @@ namespace MSetExplorer
 			}
 			finally
 			{
-				_stackLock.ExitWriteLock();
+				_jobsLock.ExitWriteLock();
 			}
 		}
 
 		#endregion
 
-		private class GenMapRequestInfo
+		#region IDisposable Support
+
+		private bool _disposedValue;
+
+		protected virtual void Dispose(bool disposing)
 		{
-			public Job Job { get; set; }
-
-			public int JobNumber { get; private set; }
-			public MapLoader MapLoader { get; private set; }
-
-			public GenMapRequestInfo(Job job)
+			if (!_disposedValue)
 			{
-				Job = job ?? throw new ArgumentNullException(nameof(job));
-				JobNumber = -1;
-				MapLoader = null;
-			}
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+					_jobsLock.Dispose();
+				}
 
-			public GenMapRequestInfo(Job job, MapLoader mapLoader)
-			{
-				Job = job ?? throw new ArgumentNullException(nameof(job));
-				MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
-				JobNumber = mapLoader.JobNumber;
-			}
-
-			public void Renew(MapLoader mapLoader)
-			{
-				MapLoader = mapLoader;
-				JobNumber = mapLoader.JobNumber;
-			}
-
-			public void StartLoading(IList<MapSection> emptyMapSections)
-			{
-				var mapSectionRequests = MapWindowHelper.CreateSectionRequests(Job, emptyMapSections);
-				var startTask = MapLoader.Start(mapSectionRequests);
-				_ = startTask.ContinueWith(LoadingComplete);
-			}
-
-			public void LoadingComplete(Task _)
-			{
-				MapLoader = null;
+				_disposedValue = true;
 			}
 		}
+
+
+		public void Dispose()
+		{
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
+
+		//private class GenMapRequestInfo
+		//{
+		//	public Job Job { get; set; }
+
+		//	public int JobNumber { get; private set; }
+		//	public MapLoader MapLoader { get; private set; }
+
+		//	public GenMapRequestInfo(Job job, MapLoader mapLoader)
+		//	{
+		//		Job = job ?? throw new ArgumentNullException(nameof(job));
+		//		MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
+		//		JobNumber = mapLoader.JobNumber;
+		//	}
+
+		//	public void StartLoading(IList<MapSection> emptyMapSections)
+		//	{
+		//		var mapSectionRequests = MapWindowHelper.CreateSectionRequests(Job, emptyMapSections);
+		//		var startTask = MapLoader.Start(mapSectionRequests);
+		//		_ = startTask.ContinueWith(LoadingComplete);
+		//	}
+
+		//	public void LoadingComplete(Task _)
+		//	{
+		//		MapLoader = null;
+		//	}
+		//}
 	}
 }
