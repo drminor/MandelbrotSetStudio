@@ -26,13 +26,7 @@ namespace MSetExplorer
 
 			var maxIterations = 700;
 			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-
 			_vm.JobStack.LoadNewProject("Home", mSetInfo);
-
-
-			//_vm.SetMapInfo(mSetInfo);
-
-			//_vm.LoadProject();
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -72,13 +66,13 @@ namespace MSetExplorer
 
 		private void VmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "CanGoBack")
+			if (e.PropertyName == nameof(IJobStack.CanGoBack))
 			{
 				btnGoBack.IsEnabled = _vm.JobStack.CanGoBack;
 				return;
 			}
 
-			if (e.PropertyName == "CanGoForward")
+			if (e.PropertyName == nameof(IJobStack.CanGoForward))
 			{
 				btnGoForward.IsEnabled = _vm.JobStack.CanGoForward;
 				return;

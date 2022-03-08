@@ -26,10 +26,7 @@ namespace MSetExplorer
 		SizeInt CanvasSize { get; set; }
 		VectorInt CanvasControlOffset { get; set; }
 
-
-		// These will become ICommands
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
-
 	}
 }

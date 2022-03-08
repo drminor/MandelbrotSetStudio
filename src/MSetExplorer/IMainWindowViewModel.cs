@@ -1,5 +1,4 @@
-﻿using MSS.Types.MSet;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace MSetExplorer
 {
@@ -10,14 +9,8 @@ namespace MSetExplorer
 		IJobStack JobStack { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
-		//Project CurrentProject { get; }
-
 		int Iterations { get; set; }
 		int Steps { get; set; }
 
-		//void SetMapInfo(MSetInfo mSetInfo);
-
-		//void SaveProject();
-		//void LoadProject();
 	}
 }

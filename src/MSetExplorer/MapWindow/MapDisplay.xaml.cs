@@ -42,13 +42,11 @@ namespace MSetExplorer
 				_clipImageBlocks = true;
 
 				_canvas = MainCanvas;
-				//var vmProvider = (IMainWindowViewModel)DataContext;
 				_vm = (IMapDisplayViewModel) DataContext;
 
 				UpdateTheVmWithOurSize(new SizeDbl(ActualWidth, ActualHeight));
 
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
-				//vmProvider.PropertyChanged += MainWindow_PropertyChanged;
 				SizeChanged += MapDisplay_SizeChanged;
 
 				_canvas.ClipToBounds = _clipImageBlocks;
@@ -119,15 +117,6 @@ namespace MSetExplorer
 		{
 			_vm.UpdateMapViewPan(e);
 		}
-
-		//// TODO: Use Dependency Property to Bind to the CurrentProject
-		//private void MainWindow_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-		//{
-		//	if (e.PropertyName == nameof(IMainWindowViewModel.CurrentProject))
-		//	{
-		//		_vm.CurrentProject = ((IMainWindowViewModel)DataContext).CurrentProject;
-		//	}
-		//}
 
 		#endregion
 

@@ -1,5 +1,4 @@
-﻿using MSetRepo;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -15,7 +14,6 @@ namespace MSetExplorer
 	{
 		private static readonly bool _keepDisplaySquare = true;
 
-		//private readonly ProjectAdapter _projectAdapter;
 		private readonly IJobStack _jobStack;
 		private readonly IMapLoaderManager _mapLoaderManager;
 
@@ -109,8 +107,6 @@ namespace MSetExplorer
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
 			var newArea = e.Area;
-			//UpdateMapView(TransformType.Zoom, newArea);
-
 			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Zoom, newArea));
 		}
 
@@ -121,8 +117,6 @@ namespace MSetExplorer
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
 			var invOffset = offset.Invert();
 			var newArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
-			//UpdateMapView(TransformType.Pan, newArea);
-
 			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, newArea));
 		}
 
@@ -153,7 +147,6 @@ namespace MSetExplorer
 				var cntUpdated = uResults.Item3;
 
 				Debug.WriteLine($"Panning: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
-
 
 				_screenSectionCollection.Shift(shiftAmount);
 				CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
@@ -214,31 +207,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
-
-		//private void UpdateMapView(TransformType transformType, RectangleInt newArea)
-		//{
-		//	var curJob = _jobStack.CurrentJob;
-		//	var position = curJob.MSetInfo.Coords.Position;
-		//	var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-		//	var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-
-		//	var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
-
-		//	//if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
-		//	//{
-		//	//	updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
-		//	//}
-
-		//	var parentJob = _jobStack.CurrentJob;
-		//	var jobName = MapWindowHelper.GetJobName(transformType);
-		//	//var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, CanvasSize, updatedInfo, transformType, newArea, BlockSize, _projectAdapter);
-
-		//	Job job = null;
-
-		//	Debug.WriteLine($"Starting Job with new coords: {updatedInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
-
-		//	_jobStack.Push(job);
-		//}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> source, IReadOnlyList<MapSection> current)
 		{
