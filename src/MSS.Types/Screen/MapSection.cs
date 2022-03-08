@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MSS.Types.Screen
+namespace MSS.Types
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>
 	{

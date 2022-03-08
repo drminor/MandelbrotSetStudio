@@ -89,7 +89,7 @@ namespace MSS.Types
 			return new BigVector(rVector.XNumerator * factor, rVector.YNumerator * factor);
 		}
 
-		public override string? ToString()
+		public override string ToString()
 		{
 			var result = $"{X}, {Y}";
 			return result;

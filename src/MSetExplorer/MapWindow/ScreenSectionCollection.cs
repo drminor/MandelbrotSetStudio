@@ -1,5 +1,4 @@
 ﻿using MSS.Types;
-using MSS.Types.Screen;
 using System;
 using System.Diagnostics;
 using System.Windows;

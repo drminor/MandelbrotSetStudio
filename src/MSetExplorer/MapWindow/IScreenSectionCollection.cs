@@ -1,5 +1,4 @@
 ﻿using MSS.Types;
-using MSS.Types.Screen;
 using System.Windows.Media;
 
 namespace MSetExplorer
