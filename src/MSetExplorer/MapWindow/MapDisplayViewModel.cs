@@ -247,8 +247,6 @@ namespace MSetExplorer
 			var cntUpdated = 0;
 
 			IList<MapSection> toBeRemoved = new List<MapSection>();
-			//IList<Tuple<MapSection, PointInt>> toBeUpdated = new List<Tuple<MapSection, PointInt>>();
-
 			shiftAmount = new VectorInt();
 
 			foreach (var mapSection in source)
@@ -280,7 +278,6 @@ namespace MSetExplorer
 
 					if (mapSection.BlockPosition != matchingNewSection.BlockPosition)
 					{
-						//toBeUpdated.Add(new Tuple<MapSection, PointInt>(mapSection, matchingNewSection.BlockPosition));
 						mapSection.BlockPosition = matchingNewSection.BlockPosition;
 						cntUpdated++;
 					}
@@ -294,11 +291,6 @@ namespace MSetExplorer
 					Debug.WriteLine($"Could not remove MapSection: {mapSection}.");
 				}
 			}
-
-			//foreach(var upTup in toBeUpdated)
-			//{
-			//	upTup.Item1.BlockPosition = upTup.Item2.Translate(shiftAmount);
-			//}
 
 			return new Tuple<int, int, int>(cntRemoved, cntRetained, cntUpdated);
 		}

@@ -116,7 +116,6 @@ namespace MSetExplorer
 
 			var oldStartIndex = _startIndex;
 			_startIndex = IndexAdd(_startIndex, amount.Invert());
-			//_startIndex = IndexAdd(_startIndex, amount);
 
 			Debug.WriteLine($"The ScreenSectionCollection was shifted by {amount}. StartIndex old: {oldStartIndex}, new: {_startIndex}.");
 		}
@@ -127,13 +126,7 @@ namespace MSetExplorer
 
 		private ScreenSection GetScreenSection(PointInt blockPosition, out VectorInt screenIndex)
 		{
-			//// If the offset is zero, then the first block is completely off-screen. The MapDisplay code-behind sets the drawing group's position to be -1 * blocksize when the offset is zero.
-			//var posX = CanvasControlOffset.X == 0 ? blockPosition.X + 1 : blockPosition.X;
-			////var posY = CanvasControlOffset.Y == 0 ? blockPosition.Y + 1 : blockPosition.Y;
-			//var posY = blockPosition.Y;
-
 			var pos = new VectorInt(blockPosition);
-			//var pos = new VectorInt(posX, posY);
 
 			// Use the start index to find the "current" cell in the 2-D Ring Buffer
 			var adjPos = IndexAdd(_startIndex, pos);

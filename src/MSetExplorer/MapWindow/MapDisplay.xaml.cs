@@ -1,7 +1,5 @@
 ﻿using MSetExplorer.MapWindow;
-using MSS.Common;
 using MSS.Types;
-using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -170,18 +168,8 @@ namespace MSetExplorer
 			{
 				var l = (double)_mapDisplayImage.GetValue(Canvas.LeftProperty);
 				var b = (double)_mapDisplayImage.GetValue(Canvas.BottomProperty);
-
-				//if (l == _vm.BlockSize.Width * -1)
-				//{
-				//	l = 0;
-				//}
-
-				////if (b == _vm.BlockSize.Height * -1)
-				////{
-				////	b = 0;
-				////}
-
 				var pointDbl = new PointDbl(l, b);
+
 				return new VectorInt(pointDbl.Round()).Invert();
 			}
 
@@ -191,17 +179,11 @@ namespace MSetExplorer
 				if (value != curVal)
 				{
 					Debug.WriteLine($"CanvasOffset is being set to {value}.");
+					Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
 
-					var l = value.X;
-					//var l = value.X == 0 ? _vm.BlockSize.Width : value.X;
-
-					var b = value.Y;
-					//var b = value.Y == 0 ? _vm.BlockSize.Height : value.Y;
-
-					Debug.Assert(l >= 0 && b >= 0, "Setting offset to negative value.");
-
-					_mapDisplayImage.SetValue(Canvas.LeftProperty, (double) l * -1);
-					_mapDisplayImage.SetValue(Canvas.BottomProperty, (double) b * -1);
+					var inverted = value.Invert();
+					_mapDisplayImage.SetValue(Canvas.LeftProperty, (double) inverted.X);
+					_mapDisplayImage.SetValue(Canvas.BottomProperty, (double) inverted.Y);
 				}
 			}
 		}
