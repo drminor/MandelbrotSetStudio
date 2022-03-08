@@ -6,19 +6,25 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
+using MSetRepo;
+using System.Diagnostics;
+using MSS.Common;
 
 namespace MSetExplorer
 {
 	internal class JobStack : ViewModelBase, IJobStack, IDisposable
 	{
+		private readonly ProjectAdapter _projectAdapter;
 		private readonly ObservableCollection<Job> _jobsCollection;
 		private int _jobsPointer;
 		private readonly ReaderWriterLockSlim _jobsLock;
 
 		#region Constructor
 
-		public JobStack()
+		public JobStack(ProjectAdapter projectAdapter, SizeInt blockSize)
 		{
+			_projectAdapter = projectAdapter;
+			BlockSize = blockSize;
 			_jobsCollection = new ObservableCollection<Job>();
 			_jobsPointer = -1;
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
@@ -32,17 +38,32 @@ namespace MSetExplorer
 
 		public event EventHandler CurrentJobChanged;
 
+		public SizeInt BlockSize { get; }
+		public SizeInt CanvasSize { get; set; }
+		public Project Project { get; private set; }
+
 		public Job CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
 		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_jobsPointer, out var _); });
+
 		public IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
 
 		#endregion
 
 		#region Public Methods
 
-		public void LoadJobStack(IEnumerable<Job> jobs)
+		public void LoadNewProject(string projectName, MSetInfo mSetInfo)
 		{
+			Project = _projectAdapter.GetOrCreateProject(projectName);
+
+			var newArea = new RectangleInt(new PointInt(), CanvasSize);
+			LoadMap(mSetInfo, TransformType.None, newArea);
+		}
+
+		public void LoadProject(string projectName)
+		{
+			var jobs = _projectAdapter.GetAllJobs(Project.Id);
+
 			DoWithWriteLock(() =>
 			{
 				foreach (var job in jobs)
@@ -56,19 +77,18 @@ namespace MSetExplorer
 			});
 		}
 
-		public void Push(Job job)
+		public void SaveProject()
 		{
-			DoWithWriteLock(() =>
+			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
+
+			foreach (var job in Jobs)
 			{
-				CheckForDuplicateJob(job.Id);
-
-				_jobsCollection.Add(job);
-				_jobsPointer = _jobsCollection.Count - 1;
-
-				CurrentJobChanged?.Invoke(this, new EventArgs());
-				OnPropertyChanged(nameof(CanGoBack));
-				OnPropertyChanged(nameof(CanGoForward));
-			});
+				if (job.Id.CreationTime > lastSavedTime)
+				{
+					var updatedJob = _projectAdapter.InsertJob(job);
+					UpdateJob(job, updatedJob);
+				}
+			}
 		}
 
 		public void UpdateJob(Job oldJob, Job newJob)
@@ -161,6 +181,51 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
+		{
+			var curJob = CurrentJob;
+			var position = curJob.MSetInfo.Coords.Position;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+
+			var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
+
+			//if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
+			//{
+			//	updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
+			//}
+
+			LoadMap(updatedInfo, transformType, newArea);
+		}
+
+		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
+		{
+			var parentJob = CurrentJob;
+			var jobName = MapWindowHelper.GetJobName(transformType);
+			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+
+			//Job job = null;
+
+			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+			Push(job);
+		}
+
+		private void Push(Job job)
+		{
+			DoWithWriteLock(() =>
+			{
+				CheckForDuplicateJob(job.Id);
+
+				_jobsCollection.Add(job);
+				_jobsPointer = _jobsCollection.Count - 1;
+
+				CurrentJobChanged?.Invoke(this, new EventArgs());
+				OnPropertyChanged(nameof(CanGoBack));
+				OnPropertyChanged(nameof(CanGoForward));
+			});
+		}
 
 		private void Rerun(int newJobsCollectionPointer)
 		{

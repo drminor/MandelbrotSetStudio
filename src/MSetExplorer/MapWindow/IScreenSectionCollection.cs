@@ -7,7 +7,6 @@ namespace MSetExplorer
 	{
 		DrawingGroup DrawingGroup { get; }
 		SizeInt CanvasSizeInWholeBlocks { get; set; }
-		VectorInt CanvasControlOffset { get; set; }
 
 		void Draw(MapSection mapSection);
 		void Redraw(MapSection mapSection);

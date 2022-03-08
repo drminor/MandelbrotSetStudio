@@ -15,7 +15,7 @@ namespace MSetExplorer
 	{
 		private static readonly bool _keepDisplaySquare = true;
 
-		private readonly ProjectAdapter _projectAdapter;
+		//private readonly ProjectAdapter _projectAdapter;
 		private readonly IJobStack _jobStack;
 		private readonly IMapLoaderManager _mapLoaderManager;
 
@@ -26,9 +26,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapDisplayViewModel(ProjectAdapter projectAdapter, IJobStack jobsStack, IMapLoaderManager mapLoaderManager, SizeInt blockSize)
+		public MapDisplayViewModel(IJobStack jobsStack, IMapLoaderManager mapLoaderManager)
 		{
-			_projectAdapter = projectAdapter;
+			//_projectAdapter = projectAdapter;
 
 			_jobStack = jobsStack;
 			_jobStack.CurrentJobChanged += JobStack_CurrentJobChanged;
@@ -36,7 +36,7 @@ namespace MSetExplorer
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
-			BlockSize = blockSize;
+			BlockSize = jobsStack.BlockSize;
 			MapSections = new ObservableCollection<MapSection>();
 
 			_screenSectionCollection = new ScreenSectionCollection(BlockSize);
@@ -56,6 +56,8 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
+
+		public event EventHandler<MapViewUpdateRequestedEventArgs> MapViewUpdateRequested;
 
 		public new bool InDesignMode => base.InDesignMode;
 
@@ -93,12 +95,7 @@ namespace MSetExplorer
 		public VectorInt CanvasControlOffset
 		{ 
 			get => _canvasControlOffset;
-			set
-			{
-				_canvasControlOffset = value;
-				_screenSectionCollection.CanvasControlOffset = value;
-				OnPropertyChanged();
-			}
+			set { _canvasControlOffset = value; OnPropertyChanged(); }
 		}
 
 		public Project CurrentProject { get; set; }
@@ -112,7 +109,9 @@ namespace MSetExplorer
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
 			var newArea = e.Area;
-			UpdateMapView(TransformType.Zoom, newArea);
+			//UpdateMapView(TransformType.Zoom, newArea);
+
+			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Zoom, newArea));
 		}
 
 		public void UpdateMapViewPan(ImageDraggedEventArgs e)
@@ -122,7 +121,9 @@ namespace MSetExplorer
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
 			var invOffset = offset.Invert();
 			var newArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
-			UpdateMapView(TransformType.Pan, newArea);
+			//UpdateMapView(TransformType.Pan, newArea);
+
+			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, newArea));
 		}
 
 		#endregion
@@ -214,28 +215,30 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void UpdateMapView(TransformType transformType, RectangleInt newArea)
-		{
-			var curJob = _jobStack.CurrentJob;
-			var position = curJob.MSetInfo.Coords.Position;
-			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+		//private void UpdateMapView(TransformType transformType, RectangleInt newArea)
+		//{
+		//	var curJob = _jobStack.CurrentJob;
+		//	var position = curJob.MSetInfo.Coords.Position;
+		//	var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+		//	var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
 
-			var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
+		//	var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
 
-			//if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
-			//{
-			//	updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
-			//}
+		//	//if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
+		//	//{
+		//	//	updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
+		//	//}
 
-			var parentJob = _jobStack.CurrentJob;
-			var jobName = MapWindowHelper.GetJobName(transformType);
-			var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, CanvasSize, updatedInfo, transformType, newArea, BlockSize, _projectAdapter);
+		//	var parentJob = _jobStack.CurrentJob;
+		//	var jobName = MapWindowHelper.GetJobName(transformType);
+		//	//var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, CanvasSize, updatedInfo, transformType, newArea, BlockSize, _projectAdapter);
 
-			Debug.WriteLine($"Starting Job with new coords: {updatedInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+		//	Job job = null;
 
-			_jobStack.Push(job);
-		}
+		//	Debug.WriteLine($"Starting Job with new coords: {updatedInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+		//	_jobStack.Push(job);
+		//}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> source, IReadOnlyList<MapSection> current)
 		{

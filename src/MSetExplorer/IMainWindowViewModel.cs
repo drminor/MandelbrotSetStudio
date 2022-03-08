@@ -10,14 +10,14 @@ namespace MSetExplorer
 		IJobStack JobStack { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
-		Project CurrentProject { get; }
+		//Project CurrentProject { get; }
 
 		int Iterations { get; set; }
 		int Steps { get; set; }
 
-		void SetMapInfo(MSetInfo mSetInfo);
+		//void SetMapInfo(MSetInfo mSetInfo);
 
-		void SaveProject();
-		void LoadProject();
+		//void SaveProject();
+		//void LoadProject();
 	}
 }

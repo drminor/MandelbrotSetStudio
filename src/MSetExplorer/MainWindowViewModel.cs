@@ -7,24 +7,39 @@ namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
-		private readonly ProjectAdapter _projectAdapter;
-
-		private Project _currentProject;
+		//private Project _currentProject;
 		private int _iterations;
 		private int _steps;
 
 		#region Constructor
 
-		public MainWindowViewModel(ProjectAdapter projectAdapter, IJobStack jobStack, IMapDisplayViewModel mapDisplayViewModel)
+		public MainWindowViewModel(IJobStack jobStack, IMapDisplayViewModel mapDisplayViewModel)
 		{
-			_projectAdapter = projectAdapter;
-			CurrentProject = _projectAdapter.GetOrCreateProject("Home");
+			//CurrentProject = _projectAdapter.GetOrCreateProject("Home");
 
 			JobStack = jobStack;
 			JobStack.PropertyChanged += JobStack_PropertyChanged;
 
 			MapDisplayViewModel = mapDisplayViewModel;
-			MapDisplayViewModel.CurrentProject = CurrentProject;
+			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
+			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapVewUpdateRequested;
+
+			JobStack.CanvasSize = MapDisplayViewModel.CanvasSize;
+
+			//MapDisplayViewModel.CurrentProject = CurrentProject;
+		}
+
+		private void MapDisplayViewModel_MapVewUpdateRequested(object sender, MapViewUpdateRequestedEventArgs e)
+		{
+			JobStack.UpdateMapView(e.TransformType, e.NewArea);
+		}
+
+		private void MapDisplayViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			{
+				JobStack.CanvasSize = MapDisplayViewModel.CanvasSize;
+			}
 		}
 
 		#endregion
@@ -33,12 +48,12 @@ namespace MSetExplorer
 
 		private void JobStack_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(CanGoBack))
+			if (e.PropertyName == nameof(IJobStack.CanGoBack))
 			{
 				OnPropertyChanged(nameof(CanGoBack));
 			}
 
-			if (e.PropertyName == nameof(CanGoForward))
+			if (e.PropertyName == nameof(IJobStack.CanGoForward))
 			{
 				OnPropertyChanged(nameof(CanGoForward));
 			}
@@ -48,11 +63,11 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public Project CurrentProject
-		{
-			get => _currentProject;
-			set { _currentProject = value; OnPropertyChanged(); }
-		}
+		//public Project CurrentProject
+		//{
+		//	get => _currentProject;
+		//	set { _currentProject = value; OnPropertyChanged(); }
+		//}
 
 		public int Iterations
 		{
@@ -76,46 +91,48 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Methods
+		//#region Public Methods
 
-		public void SetMapInfo(MSetInfo mSetInfo)
-		{
-			var newArea = new RectangleInt(new PointInt(), MapDisplayViewModel.CanvasSize);
-			LoadMap(mSetInfo, TransformType.None, newArea);
-		}
+		//public void SetMapInfo(MSetInfo mSetInfo)
+		//{
+		//	var newArea = new RectangleInt(new PointInt(), MapDisplayViewModel.CanvasSize);
+		//	LoadMap(mSetInfo, TransformType.None, newArea);
+		//}
 
-		public void SaveProject()
-		{
-			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(CurrentProject.Id);
+		//public void SaveProject()
+		//{
+		//	//var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(CurrentProject.Id);
 
-			foreach (var job in JobStack.Jobs)
-			{
-				if (job.Id.CreationTime > lastSavedTime)
-				{
-					var updatedJob = _projectAdapter.InsertJob(job);
-					JobStack.UpdateJob(job, updatedJob);
-				}
-			}
-		}
+		//	//foreach (var job in JobStack.Jobs)
+		//	//{
+		//	//	if (job.Id.CreationTime > lastSavedTime)
+		//	//	{
+		//	//		var updatedJob = _projectAdapter.InsertJob(job);
+		//	//		JobStack.UpdateJob(job, updatedJob);
+		//	//	}
+		//	//}
+		//}
 
-		public void LoadProject()
-		{
-			var jobs = _projectAdapter.GetAllJobs(CurrentProject.Id);
-			JobStack.LoadJobStack(jobs);
-		}
+		//public void LoadProject()
+		//{
+		//	//var jobs = _projectAdapter.GetAllJobs(CurrentProject.Id);
+		//	//JobStack.LoadJobStack(jobs);
+		//}
 
-		#endregion
+		//#endregion
 
-		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
-		{
-			var parentJob = JobStack.CurrentJob;
-			var jobName = MapWindowHelper.GetJobName(transformType);
-			var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, MapDisplayViewModel.CanvasSize, mSetInfo, transformType, newArea, MapDisplayViewModel.BlockSize, _projectAdapter);
+		//private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
+		//{
+		//	var parentJob = JobStack.CurrentJob;
+		//	var jobName = MapWindowHelper.GetJobName(transformType);
+		//	//var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, MapDisplayViewModel.CanvasSize, mSetInfo, transformType, newArea, MapDisplayViewModel.BlockSize, _projectAdapter);
 
-			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+		//	Job job = null;
 
-			JobStack.Push(job);
-		}
+		//	Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+		//	JobStack.Push(job);
+		//}
 
 	}
 }

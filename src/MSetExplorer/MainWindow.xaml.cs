@@ -26,7 +26,11 @@ namespace MSetExplorer
 
 			var maxIterations = 700;
 			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.SetMapInfo(mSetInfo);
+
+			_vm.JobStack.LoadNewProject("Home", mSetInfo);
+
+
+			//_vm.SetMapInfo(mSetInfo);
 
 			//_vm.LoadProject();
 		}
@@ -44,7 +48,7 @@ namespace MSetExplorer
 				_vm.PropertyChanged += VmPropertyChanged;
 
 				_mapDisplay = mapDisplay1;
-				_mapDisplay.DataContext = DataContext;
+				_mapDisplay.DataContext = _vm.MapDisplayViewModel;
 
 				txtIterations.TextChanged += TxtIterations_TextChanged;
 
@@ -130,7 +134,7 @@ namespace MSetExplorer
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.SaveProject();
+			_vm.JobStack.SaveProject();
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)

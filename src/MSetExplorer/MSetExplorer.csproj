@@ -7,14 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="MapWindow\GenMapRequestInfoNotUsed.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="MapWindow\GenMapRequestInfoNotUsed.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
   </ItemGroup>
 

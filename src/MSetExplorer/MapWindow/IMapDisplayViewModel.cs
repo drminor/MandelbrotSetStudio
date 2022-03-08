@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Media;
@@ -11,6 +12,8 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler PropertyChanged;
 
+		event EventHandler<MapViewUpdateRequestedEventArgs> MapViewUpdateRequested;
+
 		// This will be removed.
 		Project CurrentProject { get; set; }
 
@@ -20,11 +23,9 @@ namespace MSetExplorer
 
 		// These may need to be dependency properties
 		SizeDbl ContainerSize { get; set; }
-
 		SizeInt CanvasSize { get; set; }
 		VectorInt CanvasControlOffset { get; set; }
 
-		//void SetCanvasSize(SizeInt canvasSize);
 
 		// These will become ICommands
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);

@@ -58,8 +58,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorInt CanvasControlOffset { get; set; }
-
 		#endregion
 
 		#region Public Methods
