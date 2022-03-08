@@ -11,26 +11,28 @@ namespace MSetExplorer
 {
 	internal class ScreenSectionCollection : IScreenSectionCollection
 	{
+		private readonly SizeInt _blockSize;
 		private readonly DrawingGroup _drawingGroup;
-		private readonly ScreenSection[,] _screenSections;
 
 		private SizeInt _canvasSizeInBlocks;
 		private int _maxYPtr;
-
+		private GeometryDrawing _foundationRectangle;
+		private ScreenSection[,] _screenSections;
 		private VectorInt _startIndex;
 
 		#region Constructor
 
-		public ScreenSectionCollection(SizeInt canvasSizeInBlocks, SizeInt blockSize)
+		public ScreenSectionCollection(SizeInt blockSize)
 		{
-			_canvasSizeInBlocks = canvasSizeInBlocks;
+			_canvasSizeInBlocks = new SizeInt(14, 14);
 			_maxYPtr = _canvasSizeInBlocks.Height - 1;
+			_blockSize = blockSize;
 			_drawingGroup = new DrawingGroup();
 
-			var foundationRectangle = BuildFoundationRectangle(_canvasSizeInBlocks, blockSize);
-			_drawingGroup.Children.Add(foundationRectangle);
+			_foundationRectangle = BuildFoundationRectangle(_canvasSizeInBlocks, _blockSize);
+			_drawingGroup.Children.Add(_foundationRectangle);
 
-			_screenSections = BuildScreenSections(_canvasSizeInBlocks, blockSize, _drawingGroup);
+			_screenSections = BuildScreenSections(_canvasSizeInBlocks, _blockSize, _drawingGroup);
 		}
 
 		#endregion
@@ -44,8 +46,16 @@ namespace MSetExplorer
 			get => _canvasSizeInBlocks;
 			set
 			{
-				// TODO: Rebuild the _screenSections and the _foundationRectangle
-				//_canvasSizeInBlocks = value;
+				if (_canvasSizeInBlocks != value)
+				{
+					_canvasSizeInBlocks = value;
+					_maxYPtr = _canvasSizeInBlocks.Height - 1;
+					_drawingGroup.Children.Remove(_foundationRectangle);
+					_foundationRectangle = BuildFoundationRectangle(_canvasSizeInBlocks, _blockSize);
+					_drawingGroup.Children.Add(_foundationRectangle);
+
+					_screenSections = RebuildScreenSections(_screenSections, _canvasSizeInBlocks, _blockSize, _drawingGroup);
+				}
 			}
 		}
 
@@ -126,21 +136,16 @@ namespace MSetExplorer
 
 		private ScreenSection GetScreenSection(PointInt blockPosition, out VectorInt screenIndex)
 		{
-			var pos = new VectorInt(blockPosition);
-
 			// Use the start index to find the "current" cell in the 2-D Ring Buffer
-			var adjPos = IndexAdd(_startIndex, pos);
-			var result = _screenSections[adjPos.Y, adjPos.X];
-
-			screenIndex = adjPos;
+			screenIndex = IndexAdd(_startIndex, new VectorInt(blockPosition));
+			var result = _screenSections[screenIndex.Y, screenIndex.X];
 
 			return result;
 		}
 
 		private VectorInt IndexAdd(VectorInt index, VectorInt amount)
 		{
-			index = index.Add(amount);
-			index = index.Mod(_canvasSizeInBlocks);
+			index = index.Add(amount).Mod(_canvasSizeInBlocks);
 
 			var result = new VectorInt
 				(
@@ -167,15 +172,33 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Drawing BuildFoundationRectangle(SizeInt sizeInBlocks, SizeInt blockSize)
+		private ScreenSection[,] RebuildScreenSections(ScreenSection[,] currentSections, SizeInt sizeInBlocks, SizeInt blockSize, DrawingGroup drawingGroup)
 		{
-			var size = sizeInBlocks.Scale(blockSize);
+			var oldSizeInBlocks = new SizeInt(currentSections.GetUpperBound(1) + 1, currentSections.GetUpperBound(0) + 1);
+			Debug.WriteLine($"Rebuilding the Screen Sections. Old size: {oldSizeInBlocks}, new size: {sizeInBlocks}.");
+
+			//var result = new ScreenSection[sizeInBlocks.Height, sizeInBlocks.Width];
+
+			//foreach (var blockPosition in ScreenTypeHelper.Points(sizeInBlocks))
+			//{
+			//	var invertedPosition = GetInvertedBlockPos(blockPosition);
+			//	var screenSection = new ScreenSection(invertedPosition, blockSize, drawingGroup);
+			//	result[blockPosition.Y, blockPosition.X] = screenSection;
+			//}
+
+			var result = currentSections;
+
+			return result;
+		}
+
+		private GeometryDrawing BuildFoundationRectangle(SizeInt sizeInBlocks, SizeInt blockSize)
+		{
 			var rectangle = new RectangleGeometry()
 			{
-				Rect = new Rect(new Point(), ScreenTypeHelper.ConvertToSize(size))
+				Rect = ScreenTypeHelper.CreateRect(new PointInt(), sizeInBlocks.Scale(blockSize))
 			};
 
-			var result = new GeometryDrawing(Brushes.Transparent, new Pen(Brushes.Black, 1), rectangle);
+			var result = new GeometryDrawing(Brushes.Transparent, new Pen(Brushes.Transparent, 1), rectangle);
 
 			return result;
 		}

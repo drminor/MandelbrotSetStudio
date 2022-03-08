@@ -40,17 +40,16 @@ namespace MSetExplorer
 			BlockSize = blockSize;
 			MapSections = new ObservableCollection<MapSection>();
 
-			// For now, hard set the canvas size to 1024 x 1024
-			// and use 12 x 12 for the number of Screen Sections
-
-			_containerSize = new SizeDbl(1050, 1050);
-			CanvasSize = new SizeInt(1024, 1024);
-			var screenSectionExtent = new SizeInt(12, 12);
-
-			_screenSectionCollection = new ScreenSectionCollection(screenSectionExtent, BlockSize);
+			_screenSectionCollection = new ScreenSectionCollection(BlockSize);
 			ImageSource = new DrawingImage(_screenSectionCollection.DrawingGroup);
 
 			MapSections.CollectionChanged += MapSections_CollectionChanged;
+
+			ContainerSize = new SizeDbl(1050, 1050);
+
+			//_containerSize = new SizeDbl(1050, 1050);
+			//CanvasSize = new SizeInt(1024, 1024);
+			//var screenSectionExtent = new SizeInt(12, 12);
 
 			CanvasControlOffset = new VectorInt();
 		}
@@ -72,19 +71,24 @@ namespace MSetExplorer
 			set
 			{
 				_containerSize = value;
+				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, BlockSize, _keepDisplaySquare);
+				_screenSectionCollection.CanvasSizeInWholeBlocks = sizeInWholeBlocks.Inflate(2);
 
-				// For now, do not update the size of the working map display area.
-
-				//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, BlockSize, _keepDisplaySquare);
-				//_screenSectionCollection.CanvasSizeInWholeBlocks = sizeInWholeBlocks.Inflate(2);
-				//CanvasSize = sizeInWholeBlocks.Scale(BlockSize);
+				CanvasSize = sizeInWholeBlocks.Scale(BlockSize);
 			}
 		}
 
 		public SizeInt CanvasSize
 		{
 			get => _canvasSize;
-			set { _canvasSize = value; OnPropertyChanged(); }
+			set
+			{
+				if (value != _canvasSize)
+				{
+					_canvasSize = value;
+					OnPropertyChanged();
+				}
+			}
 		}
 
 		public VectorInt CanvasControlOffset
@@ -135,6 +139,8 @@ namespace MSetExplorer
 			if (curJob.TransformType == TransformType.Pan)
 			{
 				var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
+
+				// X: Consider not using the ObservableCollection<MapSection>, instead have the ScreenSectionCollection maintain a simple list of MapSections
 				var loadedSections = GetMapSectionsSnapShot();
 
 				// Avoid requesting sections already drawn
@@ -156,6 +162,9 @@ namespace MSetExplorer
 			}
 			else
 			{
+				// X:
+				//_screenSectionCollection.HideScreenSections();
+
 				MapSections.Clear();
 				CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
 				_mapLoaderManager.Push(curJob);
@@ -164,6 +173,10 @@ namespace MSetExplorer
 
 		private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
 		{
+			// X:
+			////Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+			//_screenSectionCollection.Draw(mapSection);
+
 			MapSections.Add(e);
 		}
 
@@ -286,6 +299,12 @@ namespace MSetExplorer
 
 			foreach(var mapSection in toBeRemoved)
 			{
+				// X: 
+				//if (!_screenSectionCollection.Hide(mapSection))
+				//{
+				//	Debug.WriteLine($"While handling the MapSections_CollectionChanged:Remove, the MapDisplayViewModel cannot Hide the MapSection: {mapSection}.");
+				//}
+
 				if (!source.Remove(mapSection))
 				{
 					Debug.WriteLine($"Could not remove MapSection: {mapSection}.");
@@ -307,21 +326,6 @@ namespace MSetExplorer
 				//Debug.WriteLine($"About to redraw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
 				_screenSectionCollection.Redraw(mapSection);
 			}
-		}
-
-		private SizeInt GetSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
-		{
-			// Include an additional block to accommodate when the CanvasControlOffset is non-zero.
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(canvasSize, blockSize);
-			var result = canvasSizeInBlocks.Inflate(2);
-
-			// Always overide the above calculation and allocate 144 sections.
-			if (result.Width > 0)
-			{
-				result = new SizeInt(12, 12);
-			}
-
-			return result;
 		}
 
 		#endregion
