@@ -14,13 +14,15 @@ namespace MSetExplorer
 {
 	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
+		private static readonly bool _keepDisplaySquare = true;
+
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly IJobStack _jobStack;
 		private readonly IMapLoaderManager _mapLoaderManager;
 
-		private readonly DrawingGroup _drawingGroup;
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
+		private SizeInt _canvasSize;
 		private VectorInt _canvasControlOffset;
 
 		#region Constructor
@@ -35,16 +37,18 @@ namespace MSetExplorer
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
-			_drawingGroup = new DrawingGroup();
-			ImageSource = new DrawingImage(_drawingGroup);
-
 			BlockSize = blockSize;
 			MapSections = new ObservableCollection<MapSection>();
 
-			// TODO: Update the ScreenSectionCollection in the SetCanvasSize method.
+			// For now, hard set the canvas size to 1024 x 1024
+			// and use 12 x 12 for the number of Screen Sections
+
+			_containerSize = new SizeDbl(1050, 1050);
 			CanvasSize = new SizeInt(1024, 1024);
-			var canvasSizeInBlocks = GetSizeInBlocks(CanvasSize, BlockSize);
-			_screenSectionCollection = new ScreenSectionCollection(canvasSizeInBlocks, BlockSize, _drawingGroup);
+			var screenSectionExtent = new SizeInt(12, 12);
+
+			_screenSectionCollection = new ScreenSectionCollection(screenSectionExtent, BlockSize);
+			ImageSource = new DrawingImage(_screenSectionCollection.DrawingGroup);
 
 			MapSections.CollectionChanged += MapSections_CollectionChanged;
 
@@ -61,12 +65,37 @@ namespace MSetExplorer
 
 		public SizeInt BlockSize { get; }
 
-		public SizeInt CanvasSize { get; private set; }
+		private SizeDbl _containerSize;
+		public SizeDbl ContainerSize
+		{
+			get => _containerSize;
+			set
+			{
+				_containerSize = value;
+
+				// For now, do not update the size of the working map display area.
+
+				//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, BlockSize, _keepDisplaySquare);
+				//_screenSectionCollection.CanvasSizeInWholeBlocks = sizeInWholeBlocks.Inflate(2);
+				//CanvasSize = sizeInWholeBlocks.Scale(BlockSize);
+			}
+		}
+
+		public SizeInt CanvasSize
+		{
+			get => _canvasSize;
+			set { _canvasSize = value; OnPropertyChanged(); }
+		}
 
 		public VectorInt CanvasControlOffset
 		{ 
 			get => _canvasControlOffset;
-			set { _canvasControlOffset = value; OnPropertyChanged(); }
+			set
+			{
+				_canvasControlOffset = value;
+				_screenSectionCollection.CanvasControlOffset = value;
+				OnPropertyChanged();
+			}
 		}
 
 		public Project CurrentProject { get; set; }
@@ -76,12 +105,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
-
-		public void SetCanvasSize(SizeInt size)
-		{
-			CanvasSize = size;
-			// TODO: Update the ScreenSectionCollection
-		}
 
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
@@ -115,15 +138,20 @@ namespace MSetExplorer
 				var loadedSections = GetMapSectionsSnapShot();
 
 				// Avoid requesting sections already drawn
-				var sectionsToLoad = RemoveMapSectionsInPlay(sectionsRequired, loadedSections);
+				var sectionsToLoad = GetNotYetLoaded(sectionsRequired, loadedSections);
 
 				// Remove from the screen sections that are not part of the updated view.
-				var _ = UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
+				var uResults = UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
+				var cntRemoved = uResults.Item1;
+				var cntRetained = uResults.Item2;
+				var cntUpdated = uResults.Item3;
+
+				Debug.WriteLine($"Panning: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
+
 
 				_screenSectionCollection.Shift(shiftAmount);
-				RefreshScreenSections(MapSections);
-
 				CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
+				RedrawSections(MapSections);
 				_mapLoaderManager.Push(curJob, sectionsToLoad);
 			}
 			else
@@ -150,7 +178,11 @@ namespace MSetExplorer
 			{
 				// Add items
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
-				RefreshScreenSections(mapSections);
+				foreach (var mapSection in mapSections)
+				{
+					//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+					_screenSectionCollection.Draw(mapSection);
+				}
 			}
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
 			{
@@ -185,25 +217,15 @@ namespace MSetExplorer
 			//}
 
 			var parentJob = _jobStack.CurrentJob;
-			var jobName = GetJobName(transformType);
+			var jobName = MapWindowHelper.GetJobName(transformType);
 			var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, CanvasSize, updatedInfo, transformType, newArea, BlockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {updatedInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			_jobStack.Push(job);
-
 		}
 
-		private void RefreshScreenSections(IEnumerable<MapSection> source)
-		{
-			foreach(var mapSection in source)
-			{
-				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-				_screenSectionCollection.Draw(mapSection);
-			}
-		}
-
-		private IList<MapSection> RemoveMapSectionsInPlay(IList<MapSection> source, IReadOnlyList<MapSection> current)
+		private IList<MapSection> GetNotYetLoaded(IList<MapSection> source, IReadOnlyList<MapSection> current)
 		{
 			IList<MapSection> result = new List<MapSection>();
 
@@ -218,10 +240,14 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private int UpdateMapSectionCollection(ObservableCollection<MapSection> source, IList<MapSection> newSet, out VectorInt shiftAmount)
+		private Tuple<int, int, int> UpdateMapSectionCollection(ObservableCollection<MapSection> source, IList<MapSection> newSet, out VectorInt shiftAmount)
 		{
+			var cntRemoved = 0;
+			var cntRetained = 0;
 			var cntUpdated = 0;
+
 			IList<MapSection> toBeRemoved = new List<MapSection>();
+			//IList<Tuple<MapSection, PointInt>> toBeUpdated = new List<Tuple<MapSection, PointInt>>();
 
 			shiftAmount = new VectorInt();
 
@@ -231,27 +257,33 @@ namespace MSetExplorer
 				if(matchingNewSection == null)
 				{
 					toBeRemoved.Add(mapSection);
+					cntRemoved++;
 				}
 				else
 				{
 					var diff = matchingNewSection.BlockPosition.Sub(mapSection.BlockPosition);
 
-					if (cntUpdated == 0)
+					if (cntRetained == 0)
 					{
 						shiftAmount = diff;
 					}
 					else
 					{
 						if (shiftAmount != diff)
-						//if (shiftAmount.X != diff.X || Math.Abs(shiftAmount.Y) != Math.Abs(diff.Y))
 						{
-							//throw new InvalidOperationException("The MapSection Collection contains inconsistent block positions.");
-							Debug.WriteLine("The MapSection Collection contains inconsistent block positions.");
+							throw new InvalidOperationException($"The MapSection Collection contains inconsistent block positions. Compare: {diff} and {shiftAmount}.");
+							//Debug.WriteLine("The MapSection Collection contains inconsistent block positions.");
 						}
 					}
 
-					mapSection.BlockPosition = matchingNewSection.BlockPosition;
-					cntUpdated++;
+					cntRetained++;
+
+					if (mapSection.BlockPosition != matchingNewSection.BlockPosition)
+					{
+						//toBeUpdated.Add(new Tuple<MapSection, PointInt>(mapSection, matchingNewSection.BlockPosition));
+						mapSection.BlockPosition = matchingNewSection.BlockPosition;
+						cntUpdated++;
+					}
 				}
 			}
 
@@ -263,13 +295,26 @@ namespace MSetExplorer
 				}
 			}
 
-			return cntUpdated;
+			//foreach(var upTup in toBeUpdated)
+			//{
+			//	upTup.Item1.BlockPosition = upTup.Item2.Translate(shiftAmount);
+			//}
+
+			return new Tuple<int, int, int>(cntRemoved, cntRetained, cntUpdated);
 		}
 
-		private string GetJobName(TransformType transformType)
+		private IReadOnlyList<MapSection> GetMapSectionsSnapShot()
 		{
-			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
-			return result;
+			return new ReadOnlyCollection<MapSection>(MapSections);
+		}
+
+		private void RedrawSections(IEnumerable<MapSection> source)
+		{
+			foreach (var mapSection in source)
+			{
+				//Debug.WriteLine($"About to redraw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+				_screenSectionCollection.Redraw(mapSection);
+			}
 		}
 
 		private SizeInt GetSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
@@ -285,11 +330,6 @@ namespace MSetExplorer
 			}
 
 			return result;
-		}
-
-		private IReadOnlyList<MapSection> GetMapSectionsSnapShot()
-		{
-			return new ReadOnlyCollection<MapSection>(MapSections);
 		}
 
 		#endregion

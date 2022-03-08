@@ -23,7 +23,6 @@ namespace MSetExplorer.MapWindow
 		private bool _selecting;
 		private bool _dragging;
 		private Point _dragAnchor;
-		//private bool _dragIsBeingCancelled;
 		private bool _dragHasBegun;
 
 		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
@@ -162,7 +161,6 @@ namespace MSetExplorer.MapWindow
 			if (e.Key == Key.Escape)
 			{
 				Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
-				//_dragIsBeingCancelled = true;
 				_dragHasBegun = false;
 				Dragging = false;
 			}

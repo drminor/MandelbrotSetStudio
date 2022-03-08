@@ -34,7 +34,7 @@ namespace MSS.Types
 			return Reducer.Reduce(this);
 		}
 
-		public override string? ToString()
+		public override string ToString()
 		{
 			var reducedVal = Reducer.Reduce(this);
 			var result = BigIntegerHelper.GetDisplay(reducedVal.Value, reducedVal.Exponent);

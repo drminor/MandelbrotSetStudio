@@ -12,16 +12,20 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler PropertyChanged;
 
+		// This will be removed.
 		Project CurrentProject { get; set; }
 
 		SizeInt BlockSize { get; }
-		SizeInt CanvasSize { get; }
 		ImageSource ImageSource { get; }
 		ObservableCollection<MapSection> MapSections { get; }
 
 		// These may need to be dependency properties
+		SizeDbl ContainerSize { get; set; }
+
+		SizeInt CanvasSize { get; set; }
 		VectorInt CanvasControlOffset { get; set; }
-		void SetCanvasSize(SizeInt canvasSize);
+
+		//void SetCanvasSize(SizeInt canvasSize);
 
 		// These will become ICommands
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);

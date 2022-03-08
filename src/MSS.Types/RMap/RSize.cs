@@ -111,7 +111,7 @@ namespace MSS.Types
 		//	return new RSize(w, h, Exponent);
 		//}
 
-		public override string? ToString()
+		public override string ToString()
 		{
 			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
 			return result;

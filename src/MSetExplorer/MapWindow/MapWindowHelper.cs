@@ -51,8 +51,13 @@ namespace MSetExplorer
 			return subdivision;
 		}
 
-		#endregion
+		public static string GetJobName(TransformType transformType)
+		{
+			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
+			return result;
+		}
 
+		#endregion
 
 		#region Build Initial MSetInfo
 

@@ -98,7 +98,7 @@ namespace MSS.Types
 				: new RVector(XNumerator - amount.XNumerator, YNumerator - amount.YNumerator, amount.Exponent);
 		}
 
-		public override string? ToString()
+		public override string ToString()
 		{
 			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this)); 
 			return result;

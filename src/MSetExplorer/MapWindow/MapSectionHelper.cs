@@ -34,6 +34,7 @@ namespace MSetExplorer
 					var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
 					result.Add(mapSectionRequest);
 				}
+
 				return result;
 			}
 		}
@@ -45,14 +46,20 @@ namespace MSetExplorer
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
 			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
-			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			//for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			//{
+			//	for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
+			//	{
+			//		var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
+			//		var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+			//		result.Add(mapSectionRequest);
+			//	}
+			//}
+
+			foreach (var screenPosition in ScreenTypeHelper.Points(mapExtentInBlocks))
 			{
-				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
-				{
-					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
-					result.Add(mapSectionRequest);
-				}
+				var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+				result.Add(mapSectionRequest);
 			}
 
 			return result;
@@ -66,15 +73,22 @@ namespace MSetExplorer
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
 			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
 
-			for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			//for (var yBlockPtr = 0; yBlockPtr < mapExtentInBlocks.Height; yBlockPtr++)
+			//{
+			//	for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
+			//	{
+			//		var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
+			//		var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var isInverted);
+			//		var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyPixelData, job.Subdivision.Id.ToString(), repoPosition, isInverted);
+			//		result.Add(mapSection);
+			//	}
+			//}
+
+			foreach (var screenPosition in ScreenTypeHelper.Points(mapExtentInBlocks))
 			{
-				for (var xBlockPtr = 0; xBlockPtr < mapExtentInBlocks.Width; xBlockPtr++)
-				{
-					var screenPosition = new PointInt(xBlockPtr, yBlockPtr);
-					var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var isInverted);
-					var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyPixelData, job.Subdivision.Id.ToString(), repoPosition, isInverted);
-					result.Add(mapSection);
-				}
+				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var isInverted);
+				var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyPixelData, job.Subdivision.Id.ToString(), repoPosition, isInverted);
+				result.Add(mapSection);
 			}
 
 			return result;

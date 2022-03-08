@@ -109,7 +109,7 @@ namespace MSetExplorer
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
 			var parentJob = JobStack.CurrentJob;
-			var jobName = GetJobName(transformType);
+			var jobName = MapWindowHelper.GetJobName(transformType);
 			var job = MapWindowHelper.BuildJob(parentJob, CurrentProject, jobName, MapDisplayViewModel.CanvasSize, mSetInfo, transformType, newArea, MapDisplayViewModel.BlockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
@@ -117,10 +117,5 @@ namespace MSetExplorer
 			JobStack.Push(job);
 		}
 
-		private string GetJobName(TransformType transformType)
-		{
-			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
-			return result;
-		}
 	}
 }

@@ -27,7 +27,9 @@ namespace MSS.Types.Screen
 
 		public override string? ToString()
 		{
-			return $"MapSection: {SubdivisionId}::Pos: {RepoBlockPosition}.";
+			return IsInverted
+				? $"MapSection:{SubdivisionId}:Pos:{RepoBlockPosition} (Inverted)."
+				: $"MapSection:{SubdivisionId}:Pos:{RepoBlockPosition}.";
 		}
 
 		#region IEqualityComparer / IEquatable Support

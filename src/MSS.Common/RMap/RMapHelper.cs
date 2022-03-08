@@ -110,7 +110,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetCanvasSizeWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)
+		public static SizeInt GetCanvasSizeInWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)
 		{
 			var numBlocks = canvasSize.Divide(blockSize);
 			var result = numBlocks.Truncate();

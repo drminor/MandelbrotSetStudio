@@ -28,10 +28,10 @@ namespace ProjectRepo
 			var filter2 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.Size.Height", samplePointDelta.Height);
 			var filter3 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.Size.Exponent", samplePointDelta.Exponent);
 
-			var filter4 = Builders<SubdivisionRecord>.Filter.Eq("BlockWidth", blockSize.Width);
-			var filter5 = Builders<SubdivisionRecord>.Filter.Eq("BlockHeight", blockSize.Height);
+			//var filter4 = Builders<SubdivisionRecord>.Filter.Eq("BlockWidth", blockSize.Width);
+			//var filter5 = Builders<SubdivisionRecord>.Filter.Eq("BlockHeight", blockSize.Height);
 
-			var subdivisionRecords = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5).ToList();
+			var subdivisionRecords = Collection.Find(filter1 & filter2 & filter3 /*& filter4 & filter5*/).ToList();
 
 			return subdivisionRecords;
 		}

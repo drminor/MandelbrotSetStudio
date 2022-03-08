@@ -94,9 +94,11 @@ namespace MSS.Types
 			return Reducer.Reduce(this);
 		}
 
-		public override string? ToString()
+		public override string ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
+			var reduced = Reducer.Reduce(this);
+
+			var result = $"P1: {reduced.LeftBot}, P2: {reduced.RightTop}";
 			return result;
 		}
 

@@ -14,9 +14,8 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapDisplay : UserControl
 	{
-		private static readonly bool _showBorder = false;
-		private static readonly bool _clipImageBlocks = true;
-		private static readonly bool _keepDisplaySquare = true;
+		private bool _showBorder;
+		private bool _clipImageBlocks;
 
 		private IMapDisplayViewModel _vm;
 		private Canvas _canvas;
@@ -41,22 +40,23 @@ namespace MSetExplorer
 			}
 			else
 			{
+				_showBorder = false;
+				_clipImageBlocks = true;
+
 				_canvas = MainCanvas;
 				var vmProvider = (IMainWindowViewModel)DataContext;
 				_vm = vmProvider.MapDisplayViewModel;
+
+				UpdateTheVmWithOurSize(new SizeDbl(ActualWidth, ActualHeight));
+
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
-
 				vmProvider.PropertyChanged += MainWindow_PropertyChanged;
-
-				SetCanvasSize(new Size(ActualWidth, ActualHeight));
-
-				_canvas.ClipToBounds = _clipImageBlocks;
 				SizeChanged += MapDisplay_SizeChanged;
 
+				_canvas.ClipToBounds = _clipImageBlocks;
 				_mapDisplayImage = new Image { Source = _vm.ImageSource };
 				_ = _canvas.Children.Add(_mapDisplayImage);
-				_mapDisplayImage.SetValue(Canvas.LeftProperty, 0d);
-				_mapDisplayImage.SetValue(Canvas.BottomProperty, 0d);
+				CanvasOffset = new VectorInt();
 				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm.BlockSize);
@@ -100,11 +100,16 @@ namespace MSetExplorer
 			{
 				CanvasOffset = _vm.CanvasControlOffset;
 			}
+
+			if (e.PropertyName == nameof(_vm.CanvasSize))
+			{
+				UpdateTheCanvasSize(_vm.CanvasSize);
+			}
 		}
 
 		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			SetCanvasSize(e.NewSize);
+			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize));
 		}
 
 		private void SelectionRectangle_AreaSelected(object sender, AreaSelectedEventArgs e)
@@ -120,7 +125,7 @@ namespace MSetExplorer
 		// TODO: Use Dependency Property to Bind to the CurrentProject
 		private void MainWindow_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "CurrentProject")
+			if (e.PropertyName == nameof(IMainWindowViewModel.CurrentProject))
 			{
 				_vm.CurrentProject = ((IMainWindowViewModel)DataContext).CurrentProject;
 			}
@@ -130,12 +135,18 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void SetCanvasSize(Size controlSize)
+		private void UpdateTheVmWithOurSize(SizeDbl size)
 		{
-			var size = GetCanvasSize(controlSize, _keepDisplaySquare);
+			if (!(_border is null))
+			{
+				size = size.Inflate(8);
+			}
 
-			Debug.WriteLine($"The MapDisplay size is now {controlSize}. Setting the canvas size to {size}.");
+			_vm.ContainerSize = size;
+		}
 
+		private void UpdateTheCanvasSize(SizeInt size)
+		{
 			_canvas.Width = size.Width;
 			_canvas.Height = size.Height;
 
@@ -144,23 +155,6 @@ namespace MSetExplorer
 				_border.Width = size.Width + 4;
 				_border.Height = size.Height + 4;
 			}
-
-			_vm.SetCanvasSize(size);
-		}
-
-		private SizeInt GetCanvasSize(Size size, bool makeSquare)
-		{
-			var sizeDbl = new SizeDbl(size.Width, size.Height);
-
-			if (!(_border is null))
-			{
-				sizeDbl = sizeDbl.Inflate(8);
-			}
-
-			var canvasSizeInWholeBlocks = RMapHelper.GetCanvasSizeWholeBlocks(sizeDbl, _vm.BlockSize, makeSquare);
-			var result = canvasSizeInWholeBlocks.Scale(_vm.BlockSize);
-
-			return result;
 		}
 
 		#endregion
@@ -174,11 +168,20 @@ namespace MSetExplorer
 		{
 			get
 			{
-				var pointDbl = new PointDbl(
-					(double)_mapDisplayImage.GetValue(Canvas.LeftProperty),
-					(double)_mapDisplayImage.GetValue(Canvas.BottomProperty)
-					);
+				var l = (double)_mapDisplayImage.GetValue(Canvas.LeftProperty);
+				var b = (double)_mapDisplayImage.GetValue(Canvas.BottomProperty);
 
+				//if (l == _vm.BlockSize.Width * -1)
+				//{
+				//	l = 0;
+				//}
+
+				////if (b == _vm.BlockSize.Height * -1)
+				////{
+				////	b = 0;
+				////}
+
+				var pointDbl = new PointDbl(l, b);
 				return new VectorInt(pointDbl.Round()).Invert();
 			}
 
@@ -188,9 +191,17 @@ namespace MSetExplorer
 				if (value != curVal)
 				{
 					Debug.WriteLine($"CanvasOffset is being set to {value}.");
-					var offset = value.Invert();
-					_mapDisplayImage.SetValue(Canvas.LeftProperty, (double)offset.X);
-					_mapDisplayImage.SetValue(Canvas.BottomProperty, (double)offset.Y);
+
+					var l = value.X;
+					//var l = value.X == 0 ? _vm.BlockSize.Width : value.X;
+
+					var b = value.Y;
+					//var b = value.Y == 0 ? _vm.BlockSize.Height : value.Y;
+
+					Debug.Assert(l >= 0 && b >= 0, "Setting offset to negative value.");
+
+					_mapDisplayImage.SetValue(Canvas.LeftProperty, (double) l * -1);
+					_mapDisplayImage.SetValue(Canvas.BottomProperty, (double) b * -1);
 				}
 			}
 		}
