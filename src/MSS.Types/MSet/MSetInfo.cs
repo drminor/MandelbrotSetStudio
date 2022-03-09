@@ -7,41 +7,41 @@ namespace MSS.Types.MSet
 	{
 		public RRectangle Coords { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
-		public ColorMapEntry[] ColorMapEntries { get; init; }
+		public ColorBand[] ColorBands { get; init; }
 
-		public MSetInfo(RRectangle coords, MapCalcSettings mapCalcSettings, ColorMapEntry[] colorMapEntries)
+		public MSetInfo(RRectangle coords, MapCalcSettings mapCalcSettings, ColorBand[] colorBands)
 		{
 			Coords = coords;
 			MapCalcSettings = mapCalcSettings;
-			ColorMapEntries = colorMapEntries;
+			ColorBands = colorBands;
 		}
 
 		public static MSetInfo UpdateWithNewCoords(MSetInfo source, RRectangle newCoords)
 		{
-			return new MSetInfo(newCoords, source.MapCalcSettings, Clone(source.ColorMapEntries));
+			return new MSetInfo(newCoords, source.MapCalcSettings, Clone(source.ColorBands));
 		}
 
 		public static MSetInfo UpdateWithNewIterations(MSetInfo source, int targetIterations, int iterationsPerRequest)
 		{
-			var colorMapEntries = Clone(source.ColorMapEntries);
-			var lastEntry = colorMapEntries[^1];
-			colorMapEntries[^1] = ColorMapEntry.UpdateCutOff(lastEntry, targetIterations);
+			var colorBands = Clone(source.ColorBands);
+			var lastEntry = colorBands[^1];
+			colorBands[^1] = ColorBand.UpdateCutOff(lastEntry, targetIterations);
 			
-			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(targetIterations, 4, iterationsPerRequest), colorMapEntries);
+			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(targetIterations, 4, iterationsPerRequest), colorBands);
 		}
 
-		public static MSetInfo UpdateWithNewColorMapEntries(MSetInfo source, ColorMapEntry[] colorMapEntries)
+		public static MSetInfo UpdateWithNewColorMapEntries(MSetInfo source, ColorBand[] colorBands)
 		{
-			var lastEntry = colorMapEntries[^1];
+			var lastEntry = colorBands[^1];
 			Debug.Assert(lastEntry.CutOff == source.MapCalcSettings.TargetIterations, "TargetIteration / ColorMapEntries-HighEntry MisMatch.");
-			return new MSetInfo(source.Coords.Clone(), source.MapCalcSettings, Clone(colorMapEntries));
+			return new MSetInfo(source.Coords.Clone(), source.MapCalcSettings, Clone(colorBands));
 		}
 
-		private static ColorMapEntry[] Clone(ColorMapEntry[] colorMapEntries)
+		private static ColorBand[] Clone(ColorBand[] colorBands)
 		{
-			var result = new List<ColorMapEntry>();
+			var result = new List<ColorBand>();
 
-			foreach(var cme in colorMapEntries)
+			foreach(var cme in colorBands)
 			{
 				result.Add(cme.Clone());
 			}

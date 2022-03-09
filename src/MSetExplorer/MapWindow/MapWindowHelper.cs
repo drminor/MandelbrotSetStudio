@@ -66,26 +66,26 @@ namespace MSetExplorer
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
 			var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, threshold: 4, iterationsPerRequest: 100);
 
-			IList<ColorMapEntry> colorMapEntries = new List<ColorMapEntry>
+			IList<ColorBand> colorBands = new List<ColorBand>
 			{
-				new ColorMapEntry(1, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(2, "#ff0033", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(3, "#ffffcc", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(5, "#ccccff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(10, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(25, "#ff0033", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(50, "#ffffcc", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(60, "#ccccff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(70, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(120, "#ff0033", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(300, "#ffffcc", ColorMapBlendStyle.Next, "#000000"),
-				new ColorMapEntry(500, "#e95ee8", ColorMapBlendStyle.End, "#758cb7")
+				new ColorBand(1, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(2, "#ff0033", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(3, "#ffffcc", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(5, "#ccccff", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(10, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(25, "#ff0033", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(50, "#ffffcc", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(60, "#ccccff", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(70, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(120, "#ff0033", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(300, "#ffffcc", ColorMapBlendStyle.Next, "#000000"),
+				new ColorBand(500, "#e95ee8", ColorMapBlendStyle.End, "#758cb7")
 			};
 
 			var highColorCss = "#000000";
-			colorMapEntries.Add(new ColorMapEntry(maxIterations, highColorCss, ColorMapBlendStyle.None, highColorCss));
+			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorMapBlendStyle.None, highColorCss));
 
-			var result = new MSetInfo(coords, mapCalcSettings, colorMapEntries.ToArray());
+			var result = new MSetInfo(coords, mapCalcSettings, colorBands.ToArray());
 
 			return result;
 		}

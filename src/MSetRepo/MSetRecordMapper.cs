@@ -70,7 +70,7 @@ namespace MSetRepo
 		public MSetInfo MapFrom(MSetInfoRecord target)
 		{
 			var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
-			var result = new MSetInfo(coords, target.MapCalcSettings, target.ColorMapEntries);
+			var result = new MSetInfo(coords, target.MapCalcSettings, target.ColorBands);
 
 			return result;
 		}
@@ -78,7 +78,7 @@ namespace MSetRepo
 		public MSetInfoRecord MapTo(MSetInfo source)
 		{
 			var coords = MapTo(source.Coords);
-			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorMapEntries);
+			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorBands);
 
 			return result;
 		}

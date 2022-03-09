@@ -194,11 +194,11 @@ namespace MSetExplorer
 			LoadMap(updatedInfo, TransformType.IterationUpdate);
 		}
 
-		public void UpdateColorMapEntries(ColorMapEntry[] colorMapEntries)
+		public void UpdateColorMapEntries(ColorBand[] colorBands)
 		{
 			var curJob = CurrentJob;
 			var mSetInfo = curJob.MSetInfo;
-			var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorMapEntries);
+			var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorBands);
 
 			LoadMap(updatedInfo, TransformType.ColorMapUpdate);
 		}

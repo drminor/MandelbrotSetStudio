@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace MSS.Types
 {
-    public class ColorMapEntry : ICloneable
+    public class ColorBand : ICloneable
     {
         public int CutOff { get; init; }
         public ColorMapColor StartColor { get; init; }
@@ -14,13 +14,13 @@ namespace MSS.Types
         //public ColorMapEntry(int cutOff, string startCssColor) : this(cutOff, startCssColor, ColorMapBlendStyle.None, startCssColor)
         //{ }
 
-        public ColorMapEntry(int cutOff, string startCssColor, ColorMapBlendStyle blendStyle, string endCssColor) : this(cutOff, new ColorMapColor(startCssColor), blendStyle, new ColorMapColor(endCssColor))
+        public ColorBand(int cutOff, string startCssColor, ColorMapBlendStyle blendStyle, string endCssColor) : this(cutOff, new ColorMapColor(startCssColor), blendStyle, new ColorMapColor(endCssColor))
         {
         }
 
         [JsonConstructor]
         [BsonConstructor]
-        public ColorMapEntry(int cutOff, ColorMapColor startColor, ColorMapBlendStyle blendStyle, ColorMapColor endColor)
+        public ColorBand(int cutOff, ColorMapColor startColor, ColorMapBlendStyle blendStyle, ColorMapColor endColor)
         {
             CutOff = cutOff;
             StartColor = startColor;
@@ -28,9 +28,9 @@ namespace MSS.Types
             EndColor = endColor;
         }
 
-        public ColorMapEntry Clone()
+        public ColorBand Clone()
 		{
-            return new ColorMapEntry(CutOff, StartColor.CssColor, BlendStyle, EndColor.CssColor);
+            return new ColorBand(CutOff, StartColor.CssColor, BlendStyle, EndColor.CssColor);
 		}
 
 		object ICloneable.Clone()
@@ -39,9 +39,9 @@ namespace MSS.Types
 		}
 
 
-        public static ColorMapEntry UpdateCutOff(ColorMapEntry source, int cutOff)
+        public static ColorBand UpdateCutOff(ColorBand source, int cutOff)
         {
-            return new ColorMapEntry(cutOff, source.StartColor, source.BlendStyle, source.EndColor);
+            return new ColorBand(cutOff, source.StartColor, source.BlendStyle, source.EndColor);
         }
 
     }

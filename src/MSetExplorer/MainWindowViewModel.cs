@@ -7,7 +7,7 @@ namespace MSetExplorer
 	{
 		private int _targetIterations;
 		private int _steps;
-		private ColorMapEntry[] _colorMapEntries;
+		private ColorBand[] _colorBands;
 
 		#region Constructor
 
@@ -36,7 +36,7 @@ namespace MSetExplorer
 				_steps = mapCalcSettings.IterationsPerRequest;
 				OnPropertyChanged(nameof(Steps));
 
-				_colorMapEntries = curJob.MSetInfo.ColorMapEntries;
+				_colorBands = curJob.MSetInfo.ColorBands;
 				OnPropertyChanged(nameof(ColorMapEntries));
 			}
 
@@ -84,13 +84,13 @@ namespace MSetExplorer
 			set { _steps = value; OnPropertyChanged(); }
 		}
 
-		public ColorMapEntry[] ColorMapEntries
+		public ColorBand[] ColorMapEntries
 		{
-			get => _colorMapEntries;
+			get => _colorBands;
 			set
 			{
 				// TODO: Compare the new value of ColorMapEntries with the current value.
-				_colorMapEntries = value;
+				_colorBands = value;
 				OnPropertyChanged();
 			}
 		}

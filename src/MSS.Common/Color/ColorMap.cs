@@ -7,42 +7,42 @@ namespace MSS.Common
 {
     public class ColorMap
     {
-        private ColorMapEntry[] _colorMapEntries { get; init; }
+        private ColorBand[] _colorBands { get; init; }
 
         private readonly int[] _cutOffs;
         private readonly int[] _prevCutOffs;
         private readonly int[] _bucketWidths;
 
-        public ColorMap(IList<ColorMapEntry> colorMapEntries)
-            : this(colorMapEntries.Take(colorMapEntries.Count - 1).ToArray(), colorMapEntries[colorMapEntries.Count - 1])
+        public ColorMap(IList<ColorBand> colorBands)
+            : this(colorBands.Take(colorBands.Count - 1).ToArray(), colorBands[colorBands.Count - 1])
         { }
 
-        public ColorMap(IList<ColorMapEntry> colorMapEntries, int maxIterations, string highColor)
-            : this(colorMapEntries.ToArray(), new ColorMapEntry(maxIterations, highColor, ColorMapBlendStyle.None, highColor))
+        public ColorMap(IList<ColorBand> colorBands, int maxIterations, string highColor)
+            : this(colorBands.ToArray(), new ColorBand(maxIterations, highColor, ColorMapBlendStyle.None, highColor))
         { }
 
-        private ColorMap(ColorMapEntry[] colorMapEntries, ColorMapEntry highColorEntry)
+        private ColorMap(ColorBand[] colorBands, ColorBand highColorEntry)
         {
-            _colorMapEntries = colorMapEntries;
+            _colorBands = colorBands;
             HighColorEntry = highColorEntry;
 
-            _cutOffs = BuildCutOffs(_colorMapEntries);
-            var pOffsetsAndBucketWidths = BuildPrevCutOffsAndBucketWidths(_colorMapEntries, HighColorEntry);
+            _cutOffs = BuildCutOffs(_colorBands);
+            var pOffsetsAndBucketWidths = BuildPrevCutOffsAndBucketWidths(_colorBands, HighColorEntry);
 
             _prevCutOffs = pOffsetsAndBucketWidths.Select(x => x.Item1).ToArray();
             _bucketWidths = pOffsetsAndBucketWidths.Select(x => x.Item2).ToArray();
 
-            SetEndColors(_colorMapEntries);
+            SetEndColors(_colorBands);
         }
 
-        public IList<ColorMapEntry> ColorMapEntries => _colorMapEntries.ToList();
-        public ColorMapEntry HighColorEntry { get; init; }
+        public IList<ColorBand> ColorBands => _colorBands.ToList();
+        public ColorBand HighColorEntry { get; init; }
 
-        public IList<ColorMapEntry> AllColorMapEntries
+        public IList<ColorBand> AllcolorBands
 		{
             get
 			{
-                var t = _colorMapEntries.ToList();
+                var t = _colorBands.ToList();
                 t.Add(HighColorEntry);
 
                 return t;
@@ -140,9 +140,9 @@ namespace MSS.Common
             }
         }
 
-        private ColorMapEntry GetColorMapEntry(int colorMapIndex)
+        private ColorBand GetColorMapEntry(int colorMapIndex)
         {
-            var result = colorMapIndex < _cutOffs.Length ? _colorMapEntries[colorMapIndex] : HighColorEntry;
+            var result = colorMapIndex < _cutOffs.Length ? _colorBands[colorMapIndex] : HighColorEntry;
 			return result;
         }
 
@@ -162,27 +162,27 @@ namespace MSS.Common
             return newIndex;
         }
 
-        private int[] BuildCutOffs(ColorMapEntry[] colorMapEntries)
+        private int[] BuildCutOffs(ColorBand[] colorBands)
         {
-            var result = new int[colorMapEntries.Length];
+            var result = new int[colorBands.Length];
 
-            for (var ptr = 0; ptr < colorMapEntries.Length; ptr++)
+            for (var ptr = 0; ptr < colorBands.Length; ptr++)
             {
-                result[ptr] = colorMapEntries[ptr].CutOff;
+                result[ptr] = colorBands[ptr].CutOff;
             }
 
             return result;
         }
 
-        private IList<Tuple<int, int>> BuildPrevCutOffsAndBucketWidths(ColorMapEntry[] colorMapEntries, ColorMapEntry highColorEntry)
+        private IList<Tuple<int, int>> BuildPrevCutOffsAndBucketWidths(ColorBand[] colorBands, ColorBand highColorEntry)
         {
             var result = new List<Tuple<int, int>>();
 
             var prevCutOff = 0;
 
-            for (var ptr = 0; ptr < colorMapEntries.Length; ptr++)
+            for (var ptr = 0; ptr < colorBands.Length; ptr++)
             {
-                var cutOff = colorMapEntries[ptr].CutOff;
+                var cutOff = colorBands[ptr].CutOff;
                 result.Add(new Tuple<int, int>(prevCutOff, cutOff - prevCutOff));
 
                 prevCutOff = cutOff;
@@ -193,19 +193,19 @@ namespace MSS.Common
             return result;
         }
 
-        private void SetEndColors(ColorMapEntry[] colorMapEntries)
+        private void SetEndColors(ColorBand[] colorBands)
         {
-            for (var ptr = 0; ptr < colorMapEntries.Length; ptr++)
+            for (var ptr = 0; ptr < colorBands.Length; ptr++)
             {
-                var cmd = colorMapEntries[ptr];
+                var cmd = colorBands[ptr];
 
                 if (cmd.BlendStyle == ColorMapBlendStyle.Next)
                 {
-                    var endColor = ptr == colorMapEntries.Length - 1
+                    var endColor = ptr == colorBands.Length - 1
 						? new ColorMapColor(HighColorEntry.StartColor.ColorComps)
-						: new ColorMapColor(colorMapEntries[ptr + 1].StartColor.ColorComps);
+						: new ColorMapColor(colorBands[ptr + 1].StartColor.ColorComps);
 
-					colorMapEntries[ptr] = new ColorMapEntry(cmd.CutOff, cmd.StartColor, cmd.BlendStyle, endColor);
+					colorBands[ptr] = new ColorBand(cmd.CutOff, cmd.StartColor, cmd.BlendStyle, endColor);
                 }
             }
         }

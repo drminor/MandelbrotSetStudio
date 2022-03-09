@@ -6,7 +6,7 @@ namespace ProjectRepo.Entities
 	public record MSetInfoRecord(
 		RRectangleRecord CoordsRecord,
 		MapCalcSettings MapCalcSettings,
-		ColorMapEntry[] ColorMapEntries
+		ColorBand[] ColorBands
 		)/* : RecordBase()*/
 	{ }
 
