@@ -26,7 +26,7 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
-		void UpdateColorMapEntries(ColorBand[] colorBands);
+		void UpdateColorMapEntries(ColorBandSet colorBands);
 
 		void LoadNewProject(string projectName, MSetInfo mSetInfo);
 		void LoadProject(string projectName);

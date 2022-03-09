@@ -13,7 +13,7 @@ namespace MSetExplorer
 		int TargetIterations { get; set; }
 		int Steps { get; set; }
 
-		ColorBand[] ColorMapEntries { get; set; }
+		ColorBandSet ColorMapEntries { get; set; }
 
 	}
 }

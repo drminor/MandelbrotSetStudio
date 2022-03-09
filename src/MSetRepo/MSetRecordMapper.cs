@@ -7,6 +7,7 @@ using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Globalization;
+using System.Linq;
 
 namespace MSetRepo
 {
@@ -70,7 +71,7 @@ namespace MSetRepo
 		public MSetInfo MapFrom(MSetInfoRecord target)
 		{
 			var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
-			var result = new MSetInfo(coords, target.MapCalcSettings, target.ColorBands);
+			var result = new MSetInfo(coords, target.MapCalcSettings, new ColorBandSet(new Guid(target.ColorBandsSerialNumber), target.ColorBands));
 
 			return result;
 		}
@@ -78,7 +79,7 @@ namespace MSetRepo
 		public MSetInfoRecord MapTo(MSetInfo source)
 		{
 			var coords = MapTo(source.Coords);
-			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorBands);
+			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorBands.ToArray(), source.ColorBands.SerialNumber.ToByteArray());
 
 			return result;
 		}

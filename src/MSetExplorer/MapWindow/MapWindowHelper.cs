@@ -85,7 +85,7 @@ namespace MSetExplorer
 			var highColorCss = "#000000";
 			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
 
-			var result = new MSetInfo(coords, mapCalcSettings, colorBands.ToArray());
+			var result = new MSetInfo(coords, mapCalcSettings, new ColorBandSet(colorBands));
 
 			return result;
 		}

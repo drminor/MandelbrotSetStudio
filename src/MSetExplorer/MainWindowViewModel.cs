@@ -7,7 +7,7 @@ namespace MSetExplorer
 	{
 		private int _targetIterations;
 		private int _steps;
-		private ColorBand[] _colorBands;
+		private ColorBandSet _colorBands;
 
 		#region Constructor
 
@@ -84,7 +84,7 @@ namespace MSetExplorer
 			set { _steps = value; OnPropertyChanged(); }
 		}
 
-		public ColorBand[] ColorMapEntries
+		public ColorBandSet ColorMapEntries
 		{
 			get => _colorBands;
 			set
