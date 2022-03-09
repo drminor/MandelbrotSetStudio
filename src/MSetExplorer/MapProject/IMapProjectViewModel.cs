@@ -5,7 +5,7 @@ using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	public interface IMapProject
+	public interface IMapProjectViewModel
 	{
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler PropertyChanged;

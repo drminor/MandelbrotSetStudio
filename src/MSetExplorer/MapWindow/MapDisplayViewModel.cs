@@ -14,7 +14,7 @@ namespace MSetExplorer
 	{
 		private static readonly bool _keepDisplaySquare = true;
 
-		private readonly IMapProject _jobStack;
+		private readonly IMapProjectViewModel _jobStack;
 		private readonly IMapLoaderManager _mapLoaderManager;
 
 		private readonly IScreenSectionCollection _screenSectionCollection;
@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapDisplayViewModel(IMapProject jobsStack, IMapLoaderManager mapLoaderManager)
+		public MapDisplayViewModel(IMapProjectViewModel jobsStack, IMapLoaderManager mapLoaderManager)
 		{
 			//_projectAdapter = projectAdapter;
 

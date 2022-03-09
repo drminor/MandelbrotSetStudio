@@ -26,8 +26,8 @@ namespace MSetExplorer
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
 
 			var maxIterations = 700;
-			var mSetInfo = MapWindowHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.JobStack.LoadNewProject("Home", mSetInfo);
+			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations);
+			_vm.MapProject.LoadNewProject("Home", mSetInfo);
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -65,15 +65,15 @@ namespace MSetExplorer
 
 		private void VmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapProject.CanGoBack))
+			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoBack))
 			{
-				btnGoBack.IsEnabled = _vm.JobStack.CanGoBack;
+				btnGoBack.IsEnabled = _vm.MapProject.CanGoBack;
 				return;
 			}
 
-			if (e.PropertyName == nameof(IMapProject.CanGoForward))
+			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoForward))
 			{
-				btnGoForward.IsEnabled = _vm.JobStack.CanGoForward;
+				btnGoForward.IsEnabled = _vm.MapProject.CanGoForward;
 				return;
 			}
 
@@ -116,29 +116,34 @@ namespace MSetExplorer
 
 		private void Pan(VectorInt amount)
 		{
-			var newArea = new RectangleInt(new PointInt(amount), _vm.JobStack.CanvasSize);
-			_vm.JobStack.UpdateMapView(TransformType.Pan, newArea);
+			var newArea = new RectangleInt(new PointInt(amount), _vm.MapProject.CanvasSize);
+			_vm.MapProject.UpdateMapView(TransformType.Pan, newArea);
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.JobStack.CanGoBack)
+			if (_vm.MapProject.CanGoBack)
 			{
-				_vm.JobStack.GoBack();
+				_vm.MapProject.GoBack();
 			}
 		}
 
 		private void GoForwardButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.JobStack.CanGoForward)
+			if (_vm.MapProject.CanGoForward)
 			{
-				_vm.JobStack.GoForward();
+				_vm.MapProject.GoForward();
 			}
+		}
+
+		private void OpenButton_Click(object sender, RoutedEventArgs e)
+		{
+			MessageBox.Show("Will prompt for Project Name here.");
 		}
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.JobStack.SaveProject();
+			_vm.MapProject.SaveProject();
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)

@@ -9,6 +9,7 @@
     
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -17,7 +18,22 @@
             <ColumnDefinition Width="210"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Menu Grid.Row="0" Grid.ColumnSpan="3" Height="25">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" Click="OpenButton_Click"/>
+                <MenuItem Header="_Save" Click="SaveButton_Click" />
+                <Separator/>
+                <MenuItem Header="_Exit" Click="CloseButton_Click" />
+            </MenuItem>
+            <MenuItem Header="_Windows">
+                <MenuItem Header="Color Band Editor" IsCheckable="True"/>
+                <MenuItem Header="Calculation Parameters" IsCheckable="True"/>
+                <MenuItem Header="Coordinates" IsCheckable="True"/>
+            </MenuItem>
+        </Menu>
+        
+        
+        <Border Grid.Row="1" Grid.Column="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
                 <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="GoLeftButton_Click">Left</Button>
                 <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="GoUpButton_Click">Up</Button>
@@ -33,11 +49,11 @@
 
         <!--<local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}"></local:MapDisplay>-->
 
-        <Border Grid.Column="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <local:MapDisplay x:Name="mapDisplay1"></local:MapDisplay>
         </Border>
 
-        <Border Grid.Column="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="1" Grid.Column="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                     <TextBlock Width="90" Margin="10, 10, 20, 0" FontSize="16" Text="Iterations:" VerticalAlignment="Top"/>

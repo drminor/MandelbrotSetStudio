@@ -16,7 +16,7 @@ namespace MSetExplorer
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
 
-		private MapProject _jobStack;
+		private MapProjectViewModel _jobStack;
 		private MapLoaderManager _mapLoaderManager;
 
 		private Process _serverProcess;
@@ -44,7 +44,7 @@ namespace MSetExplorer
 
 			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
 
-			_jobStack = new MapProject(projectAdapter, RMapConstants.BLOCK_SIZE);
+			_jobStack = new MapProjectViewModel(projectAdapter, RMapConstants.BLOCK_SIZE);
 			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
 
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_jobStack, _mapLoaderManager);

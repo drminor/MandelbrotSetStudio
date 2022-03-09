@@ -17,15 +17,13 @@ namespace MSS.Types.MSet
 
 		public static MSetInfo UpdateWithNewCoords(MSetInfo source, RRectangle newCoords)
 		{
-			return new MSetInfo(newCoords, source.MapCalcSettings, source.ColorBands.Clone());
+			return new MSetInfo(newCoords.Clone(), source.MapCalcSettings, source.ColorBands.Clone());
 		}
 
 		public static MSetInfo UpdateWithNewIterations(MSetInfo source, int targetIterations, int iterationsPerRequest)
 		{
 			var colorBands = source.ColorBands.Clone();
-			var lastEntry = colorBands[^1];
-			colorBands[^1] = ColorBand.UpdateCutOff(lastEntry, targetIterations);
-			
+			_ =colorBands.TrySetHighCutOff(targetIterations);
 			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(targetIterations, 4, iterationsPerRequest), colorBands);
 		}
 

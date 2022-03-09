@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types
 {
-	public class ColorBandSet : Collection<ColorBand>, IEquatable<ColorBandSet?>, ICloneable
+	public class ColorBandSet : Collection<ColorBand>, IEquatable<ColorBandSet?>, IEqualityComparer<ColorBandSet>, ICloneable
 	{
 		public ColorBandSet() : this(Guid.NewGuid())
 		{ }
@@ -103,7 +104,24 @@ namespace MSS.Types
 
 		public override int GetHashCode()
 		{
-			return base.GetHashCode();
+			return SerialNumber.GetHashCode();
+		}
+
+		public bool Equals(ColorBandSet? x, ColorBandSet? y)
+		{
+			if (x is null)
+			{
+				return y is null;
+			}
+			else
+			{
+				return x.Equals(y);
+			}
+		}
+
+		public int GetHashCode([DisallowNull] ColorBandSet obj)
+		{
+			return GetHashCode(obj);
 		}
 
 		public static bool operator ==(ColorBandSet? left, ColorBandSet? right)

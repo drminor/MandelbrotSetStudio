@@ -4,11 +4,10 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace MSetExplorer
 {
-	internal static class MapWindowHelper
+	internal static class MapJobHelper
 	{
 		#region Build Job
 

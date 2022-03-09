@@ -12,7 +12,7 @@ using MSS.Common;
 
 namespace MSetExplorer
 {
-	internal class MapProject : ViewModelBase, IMapProject, IDisposable
+	internal class MapProjectViewModel : ViewModelBase, IMapProjectViewModel, IDisposable
 	{
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly ObservableCollection<Job> _jobsCollection;
@@ -23,7 +23,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapProject(ProjectAdapter projectAdapter, SizeInt blockSize)
+		public MapProjectViewModel(ProjectAdapter projectAdapter, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
 			BlockSize = blockSize;
@@ -94,8 +94,11 @@ namespace MSetExplorer
 		{
 			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
 
-			foreach (var job in Jobs)
+			var jobsList = Jobs.ToList();
+
+			for(var i = 0; i < jobsList.Count; i++ )
 			{
+				var job = jobsList[i];
 				if (job.Id.CreationTime > lastSavedTime)
 				{
 					var updatedJob = _projectAdapter.InsertJob(job);
@@ -216,8 +219,8 @@ namespace MSetExplorer
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
 			var parentJob = CurrentJob;
-			var jobName = MapWindowHelper.GetJobName(transformType);
-			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+			var jobName = MapJobHelper.GetJobName(transformType);
+			var job = MapJobHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -227,8 +230,8 @@ namespace MSetExplorer
 				_jobsPointer = _jobsCollection.Count - 1;
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
-				OnPropertyChanged(nameof(IMapProject.CanGoBack));
-				OnPropertyChanged(nameof(IMapProject.CanGoForward));
+				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 			});
 		}
 
@@ -265,8 +268,8 @@ namespace MSetExplorer
 				var job = _jobsCollection[newJobIndex];
 				_jobsPointer = newJobIndex;
 				CurrentJobChanged?.Invoke(this, new EventArgs());
-				OnPropertyChanged(nameof(IMapProject.CanGoBack));
-				OnPropertyChanged(nameof(IMapProject.CanGoForward));
+				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 			}
 		}
 

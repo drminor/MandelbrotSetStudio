@@ -11,21 +11,21 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MainWindowViewModel(IMapProject jobStack, IMapDisplayViewModel mapDisplayViewModel)
+		public MainWindowViewModel(IMapProjectViewModel jobStack, IMapDisplayViewModel mapDisplayViewModel)
 		{
-			JobStack = jobStack;
-			JobStack.CurrentJobChanged += JobStack_CurrentJobChanged;
+			MapProject = jobStack;
+			MapProject.CurrentJobChanged += JobStack_CurrentJobChanged;
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
-			JobStack.CanvasSize = MapDisplayViewModel.CanvasSize;
+			MapProject.CanvasSize = MapDisplayViewModel.CanvasSize;
 		}
 
 		private void JobStack_CurrentJobChanged(object sender, System.EventArgs e)
 		{
-			var curJob = JobStack.CurrentJob;
+			var curJob = MapProject.CurrentJob;
 
 			if (curJob != null)
 			{
@@ -40,20 +40,20 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(ColorMapEntries));
 			}
 
-			OnPropertyChanged(nameof(IMapProject.CanGoBack));
-			OnPropertyChanged(nameof(IMapProject.CanGoForward));
+			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 		}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object sender, MapViewUpdateRequestedEventArgs e)
 		{
-			JobStack.UpdateMapView(e.TransformType, e.NewArea);
+			MapProject.UpdateMapView(e.TransformType, e.NewArea);
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
-				JobStack.CanvasSize = MapDisplayViewModel.CanvasSize;
+				MapProject.CanvasSize = MapDisplayViewModel.CanvasSize;
 			}
 		}
 
@@ -62,7 +62,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
-		public IMapProject JobStack { get; }
+		public IMapProjectViewModel MapProject { get; }
 
 		public int TargetIterations
 		{
@@ -72,7 +72,7 @@ namespace MSetExplorer
 				if (value != _targetIterations)
 				{
 					_targetIterations = value;
-					JobStack.UpdateTargetInterations(value, Steps);
+					MapProject.UpdateTargetInterations(value, Steps);
 					OnPropertyChanged();
 				}
 			}
@@ -89,9 +89,11 @@ namespace MSetExplorer
 			get => _colorBands;
 			set
 			{
-				// TODO: Compare the new value of ColorMapEntries with the current value.
-				_colorBands = value;
-				OnPropertyChanged();
+				if(value != _colorBands)
+				{
+					_colorBands = value;
+					OnPropertyChanged();
+				}
 			}
 		}
 
