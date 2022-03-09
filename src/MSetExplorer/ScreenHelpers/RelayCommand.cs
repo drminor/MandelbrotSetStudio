@@ -40,7 +40,10 @@ namespace MSetExplorer
 			remove { CommandManager.RequerySuggested -= value; }
 		}
 
-		public void Execute(object parameter) => _execute(parameter);
+		public void Execute(object parameter)
+		{
+			_execute(parameter);
+		}
 
 		#endregion
 	}

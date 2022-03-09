@@ -107,7 +107,7 @@ namespace MSetExplorer
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
 			var newArea = e.Area;
-			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Zoom, newArea));
+			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, newArea));
 		}
 
 		public void UpdateMapViewPan(ImageDraggedEventArgs e)
@@ -130,7 +130,7 @@ namespace MSetExplorer
 
 			_mapLoaderManager.StopCurrentJob();
 
-			if (curJob.TransformType == TransformType.Pan)
+			if (ShouldAttemptToReuseLoadedSections(curJob))
 			{
 				var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
 
@@ -157,11 +157,21 @@ namespace MSetExplorer
 			{
 				// X:
 				//_screenSectionCollection.HideScreenSections();
-
+				Debug.WriteLine($"Clearing Display. TransformType: {curJob.TransformType}.");
 				MapSections.Clear();
 				CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
 				_mapLoaderManager.Push(curJob);
 			}
+		}
+
+		private bool ShouldAttemptToReuseLoadedSections(Job job)
+		{
+			if(MapSections.Count == 0 || job.ParentJob is null || job.TransformType == TransformType.IterationUpdate)
+			{
+				return false;
+			}
+
+			return job.Subdivision.SamplePointDelta == job.ParentJob.Subdivision.SamplePointDelta;
 		}
 
 		private void MapLoaderManager_MapSectionReady(object sender, MapSection e)

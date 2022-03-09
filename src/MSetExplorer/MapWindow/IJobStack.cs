@@ -1,7 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -17,7 +16,6 @@ namespace MSetExplorer
 		SizeInt CanvasSize { get; set; }
 		Project Project { get; }
 
-		IEnumerable<Job> Jobs { get; }
 		Job CurrentJob { get; }
 
 		bool CanGoBack { get; }
@@ -27,6 +25,7 @@ namespace MSetExplorer
 		bool GoForward();
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
+		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
 
 		void LoadNewProject(string projectName, MSetInfo mSetInfo);
 		void LoadProject(string projectName);

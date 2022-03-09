@@ -44,7 +44,7 @@ namespace MSetExplorer
 				_mapDisplay = mapDisplay1;
 				_mapDisplay.DataContext = _vm.MapDisplayViewModel;
 
-				txtIterations.TextChanged += TxtIterations_TextChanged;
+				txtIterations.LostFocus += TxtIterations_LostFocus;
 
 				Debug.WriteLine("The MainWindow is now loaded");
 			}
@@ -52,15 +52,11 @@ namespace MSetExplorer
 
 		#region EVENT Handlers
 
-		private void TxtIterations_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+		private void TxtIterations_LostFocus(object sender, RoutedEventArgs e)
 		{
-			try
+			if (int.TryParse(txtIterations.Text, out var newValue))
 			{
-				_vm.Iterations = int.Parse(txtIterations.Text);
-			}
-			catch
-			{
-
+				_vm.TargetIterations = newValue;
 			}
 		}
 
@@ -77,6 +73,11 @@ namespace MSetExplorer
 				btnGoForward.IsEnabled = _vm.JobStack.CanGoForward;
 				return;
 			}
+
+			if (e.PropertyName == nameof(IMainWindowViewModel.TargetIterations))
+			{
+				txtIterations.Text = _vm.TargetIterations.ToString();
+			}
 		}
 
 		#endregion
@@ -92,7 +93,7 @@ namespace MSetExplorer
 
 		private void GoUpButton_Click(object sender, RoutedEventArgs e)
 		{
-			Pan(new VectorInt(0, -1 * SHIFT_AMOUNT));
+			Pan(new VectorInt(0, SHIFT_AMOUNT));
 		}
 
 		private void GoRightButton_Click(object sender, RoutedEventArgs e)
@@ -102,12 +103,13 @@ namespace MSetExplorer
 
 		private void GoDownButton_Click(object sender, RoutedEventArgs e)
 		{
-			Pan(new VectorInt(0, SHIFT_AMOUNT));
+			Pan(new VectorInt(0, -1 * SHIFT_AMOUNT));
 		}
 
 		private void Pan(VectorInt amount)
 		{
-			_vm.MapDisplayViewModel.UpdateMapViewPan(new ImageDraggedEventArgs(TransformType.Pan, amount.Invert()));
+			var newArea = new RectangleInt(new PointInt(amount), _vm.JobStack.CanvasSize);
+			_vm.JobStack.UpdateMapView(TransformType.Pan, newArea);
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)

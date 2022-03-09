@@ -1,46 +1,80 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 
 namespace MSS.Types.MSet
 {
 	[DataContract]
-	public class MapCalcSettings
+	public class MapCalcSettings : IEquatable<MapCalcSettings>, IEqualityComparer<MapCalcSettings?>
 	{
 		[DataMember(Order = 1)]
-		public int MaxIterations { get; init; }
+		public int TargetIterations { get; init; }
 
 		[DataMember(Order = 2)]
 		public int Threshold { get; init; }
 
 		[DataMember(Order = 3)]
-		public int IterationsPerStep { get; init; }
+		public int IterationsPerRequest { get; init; }
 
 		public MapCalcSettings()
 		{
-			MaxIterations = 0;
+			TargetIterations = 0;
 			Threshold = 0;
-			IterationsPerStep = 0;
+			IterationsPerRequest = 0;
 		}
 
-		public MapCalcSettings(int maxIterations, int threshold, int iterationsPerStep)
+		public MapCalcSettings(int targetIterations, int threshold, int iterationsPerRequest)
 		{
-			MaxIterations = maxIterations;
+			TargetIterations = targetIterations;
 			Threshold = threshold;
-			IterationsPerStep = iterationsPerStep;
+			IterationsPerRequest = iterationsPerRequest;
+		}
+
+
+		public override string ToString()
+		{
+			return $"TargetIterations: {TargetIterations}";
 		}
 
 		public override bool Equals(object? obj)
 		{
-			return base.Equals(obj);
+			return obj is MapCalcSettings mcs && Equals(mcs);
+		}
+
+		public bool Equals(MapCalcSettings? other)
+		{
+			return !(other is null)
+				&& TargetIterations == other.TargetIterations
+				&& Threshold == other.Threshold
+				&& IterationsPerRequest == other.IterationsPerRequest;
+		}
+
+		public bool Equals(MapCalcSettings? x, MapCalcSettings? y)
+		{
+			if(x is null)
+			{
+				return y is null;
+			}
+			else
+			{
+				return x.Equals(y);
+			}
+		}
+
+		public int GetHashCode([DisallowNull] MapCalcSettings obj)
+		{
+			return obj.GetHashCode();
+		}
+
+		public bool Equals(RectangleInt x, RectangleInt y)
+		{
+			return x.Equals(y);
 		}
 
 		public override int GetHashCode()
 		{
-			return base.GetHashCode();
-		}
-
-		public override string? ToString()
-		{
-			return base.ToString();
+			return HashCode.Combine(TargetIterations, Threshold, IterationsPerRequest);
 		}
 
 		public static bool operator ==(MapCalcSettings left, MapCalcSettings right)

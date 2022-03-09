@@ -290,7 +290,7 @@ namespace MSetExplorer.MapWindow
 					Deactivate();
 
 					Debug.WriteLine($"Will start job here with position: {adjArea.Position}");
-					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.Zoom, adjArea));
+					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, adjArea));
 				}
 				else
 				{

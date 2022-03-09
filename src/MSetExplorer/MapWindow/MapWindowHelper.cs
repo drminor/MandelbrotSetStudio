@@ -64,7 +64,7 @@ namespace MSetExplorer
 		public static MSetInfo BuildInitialMSetInfo(int maxIterations)
 		{
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
-			var mapCalcSettings = new MapCalcSettings(maxIterations: maxIterations, threshold: 4, iterationsPerStep: 100);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, threshold: 4, iterationsPerRequest: 100);
 
 			IList<ColorMapEntry> colorMapEntries = new List<ColorMapEntry>
 			{

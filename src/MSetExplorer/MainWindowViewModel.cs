@@ -3,7 +3,7 @@ namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
-		private int _iterations;
+		private int _targetIterations;
 		private int _steps;
 
 		#region Constructor
@@ -11,13 +11,31 @@ namespace MSetExplorer
 		public MainWindowViewModel(IJobStack jobStack, IMapDisplayViewModel mapDisplayViewModel)
 		{
 			JobStack = jobStack;
-			//JobStack.PropertyChanged += JobStack_PropertyChanged;
+			JobStack.CurrentJobChanged += JobStack_CurrentJobChanged;
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
 			JobStack.CanvasSize = MapDisplayViewModel.CanvasSize;
+		}
+
+		private void JobStack_CurrentJobChanged(object sender, System.EventArgs e)
+		{
+			var curJob = JobStack.CurrentJob;
+
+			if (curJob != null)
+			{
+				var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
+				_targetIterations = mapCalcSettings.TargetIterations;
+				OnPropertyChanged(nameof(TargetIterations));
+
+				_steps = mapCalcSettings.IterationsPerRequest;
+				OnPropertyChanged(nameof(Steps));
+			}
+
+			OnPropertyChanged(nameof(IJobStack.CanGoBack));
+			OnPropertyChanged(nameof(IJobStack.CanGoForward));
 		}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object sender, MapViewUpdateRequestedEventArgs e)
@@ -40,10 +58,18 @@ namespace MSetExplorer
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 		public IJobStack JobStack { get; }
 
-		public int Iterations
+		public int TargetIterations
 		{
-			get => _iterations;
-			set { _iterations = value; OnPropertyChanged(); }
+			get => _targetIterations;
+			set
+			{
+				if (value != _targetIterations)
+				{
+					_targetIterations = value;
+					JobStack.UpdateTargetInterations(value, Steps);
+					OnPropertyChanged();
+				}
+			}
 		}
 
 		public int Steps

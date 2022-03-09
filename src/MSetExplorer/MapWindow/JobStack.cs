@@ -16,8 +16,10 @@ namespace MSetExplorer
 	{
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly ObservableCollection<Job> _jobsCollection;
-		private int _jobsPointer;
 		private readonly ReaderWriterLockSlim _jobsLock;
+
+		private int _jobsPointer;
+		private SizeInt _canvasSize = new SizeInt();
 
 		#region Constructor
 
@@ -39,14 +41,25 @@ namespace MSetExplorer
 		public event EventHandler CurrentJobChanged;
 
 		public SizeInt BlockSize { get; }
-		public SizeInt CanvasSize { get; set; }
+
+		public SizeInt CanvasSize
+		{
+			get => _canvasSize;
+			set
+			{
+				if(value != _canvasSize)
+				{
+					_canvasSize = value;
+					Reload();
+				}
+			}
+		}
+
 		public Project Project { get; private set; }
 
 		public Job CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
 		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_jobsPointer, out var _); });
-
-		public IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
 
 		#endregion
 
@@ -55,9 +68,7 @@ namespace MSetExplorer
 		public void LoadNewProject(string projectName, MSetInfo mSetInfo)
 		{
 			Project = _projectAdapter.GetOrCreateProject(projectName);
-
-			var newArea = new RectangleInt(new PointInt(), CanvasSize);
-			LoadMap(mSetInfo, TransformType.None, newArea);
+			LoadMap(mSetInfo, TransformType.None);
 		}
 
 		public void LoadProject(string projectName)
@@ -66,6 +77,8 @@ namespace MSetExplorer
 
 			DoWithWriteLock(() =>
 			{
+				_jobsCollection.Clear();
+
 				foreach (var job in jobs)
 				{
 					_jobsCollection.Add(job);
@@ -124,20 +137,11 @@ namespace MSetExplorer
 
 				if (!(parentJob is null))
 				{
-					_jobsLock.EnterWriteLock();
-					try
+					if (TryFindByJobId(parentJob.Id, out var job))
 					{
-						var job = _jobsCollection.FirstOrDefault(x => parentJob.Id == x.Id);
-						if (!(job is null))
-						{
-							var idx = _jobsCollection.IndexOf(job);
-							Rerun(idx);
-							return true;
-						}
-					}
-					finally
-					{
-						_jobsLock.ExitWriteLock();
+						var jobIndex = _jobsCollection.IndexOf(job);
+						DoWithWriteLock(() => Rerun(jobIndex));
+						return true;
 					}
 				}
 
@@ -154,18 +158,10 @@ namespace MSetExplorer
 			_jobsLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (TryGetNextJobInStack(_jobsPointer, out var nextRequestStackPointer))
+				if (TryGetNextJobInStack(_jobsPointer, out var nextJobIndex))
 				{
-					_jobsLock.EnterWriteLock();
-					try
-					{
-						Rerun(nextRequestStackPointer);
-						return true;
-					}
-					finally
-					{
-						_jobsLock.ExitWriteLock();
-					}
+					DoWithWriteLock(() => Rerun(nextJobIndex));
+					return true;
 				}
 				else
 				{
@@ -178,25 +174,34 @@ namespace MSetExplorer
 			}
 		}
 
-		#endregion
-
-		#region Private Methods
-
 		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
 		{
 			var curJob = CurrentJob;
 			var position = curJob.MSetInfo.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-
 			var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
 
-			//if (Iterations > 0 && Iterations != updatedInfo.MapCalcSettings.MaxIterations)
-			//{
-			//	updatedInfo = MSetInfo.UpdateWithNewIterations(updatedInfo, Iterations, Steps);
-			//}
-
 			LoadMap(updatedInfo, transformType, newArea);
+		}
+
+		public void UpdateTargetInterations(int targetIterations, int iterationsPerRequest)
+		{
+			var curJob = CurrentJob;
+			var mSetInfo = curJob.MSetInfo;
+			var updatedInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations, iterationsPerRequest);
+
+			LoadMap(updatedInfo, TransformType.IterationUpdate);
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void LoadMap(MSetInfo mSetInfo, TransformType transformType)
+		{
+			var newArea = new RectangleInt(new PointInt(), CanvasSize);
+			LoadMap(mSetInfo, transformType, newArea);
 		}
 
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
@@ -205,55 +210,70 @@ namespace MSetExplorer
 			var jobName = MapWindowHelper.GetJobName(transformType);
 			var job = MapWindowHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 
-			//Job job = null;
-
 			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			Push(job);
-		}
-
-		private void Push(Job job)
-		{
 			DoWithWriteLock(() =>
 			{
-				CheckForDuplicateJob(job.Id);
-
 				_jobsCollection.Add(job);
 				_jobsPointer = _jobsCollection.Count - 1;
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
-				OnPropertyChanged(nameof(CanGoBack));
-				OnPropertyChanged(nameof(CanGoForward));
+				OnPropertyChanged(nameof(IJobStack.CanGoBack));
+				OnPropertyChanged(nameof(IJobStack.CanGoForward));
 			});
 		}
 
-		private void Rerun(int newJobsCollectionPointer)
+		private void Reload()
 		{
-			if (newJobsCollectionPointer < 0 || newJobsCollectionPointer > _jobsCollection.Count - 1)
+			_jobsLock.EnterUpgradeableReadLock();
+			try
 			{
-				throw new ArgumentException($"The newJobsCollectionPointer with value: {newJobsCollectionPointer} is not valid.", nameof(newJobsCollectionPointer));
+				if (!(_jobsPointer < 0 || _jobsPointer > _jobsCollection.Count - 1))
+				{
+					DoWithWriteLock(() => Rerun(_jobsPointer));
+				}
+			}
+			finally
+			{
+				_jobsLock.ExitUpgradeableReadLock();
+			}
+		}
+
+		private void Rerun(int newJobIndex)
+		{
+			if (newJobIndex < 0 || newJobIndex > _jobsCollection.Count - 1)
+			{
+				throw new ArgumentException($"The newJobIndex with value: {newJobIndex} is not valid.", nameof(newJobIndex));
 			}
 
-			var job = _jobsCollection[newJobsCollectionPointer];
-			_jobsPointer = newJobsCollectionPointer;
-			CurrentJobChanged?.Invoke(this, new EventArgs());
-			OnPropertyChanged(nameof(CanGoBack));
-			OnPropertyChanged(nameof(CanGoForward));
+			if (_jobsPointer == newJobIndex)
+			{
+				// Forced a redraw
+				CurrentJobChanged?.Invoke(this, new EventArgs());
+			}
+			else
+			{
+				var job = _jobsCollection[newJobIndex];
+				_jobsPointer = newJobIndex;
+				CurrentJobChanged?.Invoke(this, new EventArgs());
+				OnPropertyChanged(nameof(IJobStack.CanGoBack));
+				OnPropertyChanged(nameof(IJobStack.CanGoForward));
+			}
 		}
 
 		#endregion
 
 		#region Job Collection Management 
 
-		private bool TryGetNextJobInStack(int requestStackPointer, out int nextRequestStackPointer)
+		private bool TryGetNextJobInStack(int jobIndex, out int nextJobIndex)
 		{
-			nextRequestStackPointer = -1;
+			nextJobIndex = -1;
 
-			if (TryGetJobFromStack(requestStackPointer, out var job))
+			if (TryGetJobFromStack(jobIndex, out var job))
 			{
-				if (TryGetLatestChildJobIndex(job, out var childJobRequestStackPointer))
+				if (TryGetLatestChildJobIndex(job, out var childJobIndex))
 				{
-					nextRequestStackPointer = childJobRequestStackPointer;
+					nextJobIndex = childJobIndex;
 					return true;
 				}
 			}
@@ -261,16 +281,16 @@ namespace MSetExplorer
 			return false;
 		}
 
-		private bool TryGetJobFromStack(int requestStackPointer, out Job job)
+		private bool TryGetJobFromStack(int jobIndex, out Job job)
 		{
-			if (requestStackPointer < 0 || requestStackPointer > _jobsCollection.Count - 1)
+			if (jobIndex < 0 || jobIndex > _jobsCollection.Count - 1)
 			{
 				job = null;
 				return false;
 			}
 			else
 			{
-				job = _jobsCollection[requestStackPointer];
+				job = _jobsCollection[jobIndex];
 				return true;
 			}
 		}
@@ -279,11 +299,11 @@ namespace MSetExplorer
 		/// Finds the most recently ran child job of the given parentJob.
 		/// </summary>
 		/// <param name="parentJob"></param>
-		/// <param name="requestStackPointer">If successful, the index of the most recent child job of the given parentJob</param>
+		/// <param name="childJobIndex">If successful, the index of the most recent child job of the given parentJob</param>
 		/// <returns>True if there is any child of the specified job.</returns>
-		private bool TryGetLatestChildJobIndex(Job parentJob, out int requestStackPointer)
+		private bool TryGetLatestChildJobIndex(Job parentJob, out int childJobIndex)
 		{
-			requestStackPointer = -1;
+			childJobIndex = -1;
 			var lastestDtFound = DateTime.MinValue;
 
 			for (var i = 0; i < _jobsCollection.Count; i++)
@@ -296,22 +316,14 @@ namespace MSetExplorer
 					var dt = thisParentJobId.CreationTime;
 					if (dt > lastestDtFound)
 					{
-						requestStackPointer = i;
+						childJobIndex = i;
 						lastestDtFound = dt;
 					}
 				}
 			}
 
-			var result = requestStackPointer != -1;
+			var result = childJobIndex != -1;
 			return result;
-		}
-
-		private void CheckForDuplicateJob(ObjectId id)
-		{
-			if (_jobsCollection.Any(x => x.Id == id))
-			{
-				throw new InvalidOperationException($"A job with id: {id} has already been pushed.");
-			}
 		}
 
 		private bool TryFindByJobId(ObjectId id, out Job job)
@@ -319,6 +331,8 @@ namespace MSetExplorer
 			job = _jobsCollection.FirstOrDefault(x => x.Id == id);
 			return job != null;
 		}
+
+		private IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
 
 		#endregion
 

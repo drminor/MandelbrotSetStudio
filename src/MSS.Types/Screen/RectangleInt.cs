@@ -53,6 +53,13 @@ namespace MSS.Types
 		//	return result;
 		//}
 
+		public override string? ToString()
+		{
+			return $"pos:{Position}, size:{Size}";
+		}
+
+		#region IEquality and IEqualityComparer Implementation
+
 		public override bool Equals(object? obj)
 		{
 			return obj is RectangleInt r && Equals(r);
@@ -68,7 +75,7 @@ namespace MSS.Types
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(Point, Size);
+			return HashCode.Combine(X1, X2, Y1, Y2);
 		}
 
 		public bool Equals(RectangleInt x, RectangleInt y)
@@ -78,12 +85,7 @@ namespace MSS.Types
 
 		public int GetHashCode([DisallowNull] RectangleInt obj)
 		{
-			return HashCode.Combine(obj.X1, obj.X2, obj.Y1, obj.Y2);
-		}
-
-		public override string? ToString()
-		{
-			return $"pos:{Position}, size:{Size}";
+			return obj.GetHashCode();
 		}
 
 		public static bool operator ==(RectangleInt left, RectangleInt right)
@@ -95,5 +97,7 @@ namespace MSS.Types
 		{
 			return !(left == right);
 		}
+
+		#endregion
 	}
 }

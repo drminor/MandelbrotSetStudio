@@ -9,7 +9,7 @@ namespace MSetExplorer
 		IJobStack JobStack { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
-		int Iterations { get; set; }
+		int TargetIterations { get; set; }
 		int Steps { get; set; }
 
 	}

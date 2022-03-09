@@ -4,13 +4,9 @@ namespace MSS.Types
 	public enum TransformType
 	{
 		None,
-		Zoom,
+		IterationUpdate,
+		ZoomIn,
 		Pan,
-		//Out,
-		
-		Left,
-		Right,
-		Up,
-		Down
+		ZoomOut
 	}
 }

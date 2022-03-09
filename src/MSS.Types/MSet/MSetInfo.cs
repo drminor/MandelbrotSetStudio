@@ -23,14 +23,14 @@ namespace MSS.Types.MSet
 		{
 			return new MSetInfo(newCoords, source.MapCalcSettings, Clone(source.ColorMapEntries));
 		}
-
-		public static MSetInfo UpdateWithNewIterations(MSetInfo source, int iterations, int steps)
+		//int targetIterations, int iterationsPerRequest
+		public static MSetInfo UpdateWithNewIterations(MSetInfo source, int targetIterations, int iterationsPerRequest)
 		{
 			ColorMapEntry[] cmes = Clone(source.ColorMapEntries);
 			var he = cmes[cmes.Length - 1];
-			cmes[cmes.Length - 1] = new ColorMapEntry(iterations, he.StartColor, he.BlendStyle, he.EndColor);
+			cmes[cmes.Length - 1] = new ColorMapEntry(targetIterations, he.StartColor, he.BlendStyle, he.EndColor);
 			
-			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(iterations, 4, steps), cmes);
+			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(targetIterations, 4, iterationsPerRequest), cmes);
 		}
 
 		private static ColorMapEntry[] Clone(ColorMapEntry[] colorMapEntries)

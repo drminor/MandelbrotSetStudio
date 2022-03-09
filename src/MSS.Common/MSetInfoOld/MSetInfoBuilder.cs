@@ -69,9 +69,9 @@ namespace MSS.Common
 
 			string highColorCss = "#000000";
 
-			MapCalcSettings mapCalcSettings = new MapCalcSettings(maxIterations: 4000, threshold: 4, iterationsPerStep: 100);
+			MapCalcSettings mapCalcSettings = new MapCalcSettings(targetIterations: 4000, threshold: 4, iterationsPerRequest: 100);
 
-			var colorMap = new ColorMap(entries, mapCalcSettings.MaxIterations, highColorCss);
+			var colorMap = new ColorMap(entries, mapCalcSettings.TargetIterations, highColorCss);
 
 			MSetInfoOld result = new MSetInfoOld("Circus1", apCoords, isHighRes, mapCalcSettings, colorMap);
 
@@ -97,9 +97,9 @@ namespace MSS.Common
 
 			string highColorCss = "#000000";
 
-			MapCalcSettings mapCalcSettings = new MapCalcSettings(maxIterations: 400, threshold: 4, iterationsPerStep: 100);
+			MapCalcSettings mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, iterationsPerRequest: 100);
 
-			var colorMap = new ColorMap(entries, mapCalcSettings.MaxIterations, highColorCss);
+			var colorMap = new ColorMap(entries, mapCalcSettings.TargetIterations, highColorCss);
 
 			MSetInfoOld result = new MSetInfoOld(projectName, apCoords, isHighRes, mapCalcSettings, colorMap);
 
