@@ -62,13 +62,13 @@ namespace MSetExplorer
 
 		private void VmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IJobStack.CanGoBack))
+			if (e.PropertyName == nameof(IMapProject.CanGoBack))
 			{
 				btnGoBack.IsEnabled = _vm.JobStack.CanGoBack;
 				return;
 			}
 
-			if (e.PropertyName == nameof(IJobStack.CanGoForward))
+			if (e.PropertyName == nameof(IMapProject.CanGoForward))
 			{
 				btnGoForward.IsEnabled = _vm.JobStack.CanGoForward;
 				return;

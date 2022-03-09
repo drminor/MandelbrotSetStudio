@@ -6,7 +6,7 @@ namespace MSetExplorer
 	{
 		event PropertyChangedEventHandler PropertyChanged;
 
-		IJobStack JobStack { get; }
+		IMapProject JobStack { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		int TargetIterations { get; set; }

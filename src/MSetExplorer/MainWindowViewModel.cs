@@ -8,7 +8,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MainWindowViewModel(IJobStack jobStack, IMapDisplayViewModel mapDisplayViewModel)
+		public MainWindowViewModel(IMapProject jobStack, IMapDisplayViewModel mapDisplayViewModel)
 		{
 			JobStack = jobStack;
 			JobStack.CurrentJobChanged += JobStack_CurrentJobChanged;
@@ -34,8 +34,8 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(Steps));
 			}
 
-			OnPropertyChanged(nameof(IJobStack.CanGoBack));
-			OnPropertyChanged(nameof(IJobStack.CanGoForward));
+			OnPropertyChanged(nameof(IMapProject.CanGoBack));
+			OnPropertyChanged(nameof(IMapProject.CanGoForward));
 		}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object sender, MapViewUpdateRequestedEventArgs e)
@@ -56,7 +56,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
-		public IJobStack JobStack { get; }
+		public IMapProject JobStack { get; }
 
 		public int TargetIterations
 		{

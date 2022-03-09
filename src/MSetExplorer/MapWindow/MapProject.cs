@@ -12,7 +12,7 @@ using MSS.Common;
 
 namespace MSetExplorer
 {
-	internal class JobStack : ViewModelBase, IJobStack, IDisposable
+	internal class MapProject : ViewModelBase, IMapProject, IDisposable
 	{
 		private readonly ProjectAdapter _projectAdapter;
 		private readonly ObservableCollection<Job> _jobsCollection;
@@ -23,7 +23,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public JobStack(ProjectAdapter projectAdapter, SizeInt blockSize)
+		public MapProject(ProjectAdapter projectAdapter, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
 			BlockSize = blockSize;
@@ -194,6 +194,15 @@ namespace MSetExplorer
 			LoadMap(updatedInfo, TransformType.IterationUpdate);
 		}
 
+		public void UpdateColorMapEntries(ColorMapEntry[] colorMapEntries)
+		{
+			var curJob = CurrentJob;
+			var mSetInfo = curJob.MSetInfo;
+			var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorMapEntries);
+
+			LoadMap(updatedInfo, TransformType.ColorMapUpdate);
+		}
+
 		#endregion
 
 		#region Private Methods
@@ -218,8 +227,8 @@ namespace MSetExplorer
 				_jobsPointer = _jobsCollection.Count - 1;
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
-				OnPropertyChanged(nameof(IJobStack.CanGoBack));
-				OnPropertyChanged(nameof(IJobStack.CanGoForward));
+				OnPropertyChanged(nameof(IMapProject.CanGoBack));
+				OnPropertyChanged(nameof(IMapProject.CanGoForward));
 			});
 		}
 
@@ -256,8 +265,8 @@ namespace MSetExplorer
 				var job = _jobsCollection[newJobIndex];
 				_jobsPointer = newJobIndex;
 				CurrentJobChanged?.Invoke(this, new EventArgs());
-				OnPropertyChanged(nameof(IJobStack.CanGoBack));
-				OnPropertyChanged(nameof(IJobStack.CanGoForward));
+				OnPropertyChanged(nameof(IMapProject.CanGoBack));
+				OnPropertyChanged(nameof(IMapProject.CanGoForward));
 			}
 		}
 

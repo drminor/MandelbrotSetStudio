@@ -5,6 +5,7 @@ namespace MSS.Types
 	{
 		None,
 		IterationUpdate,
+		ColorMapUpdate,
 		ZoomIn,
 		Pan,
 		ZoomOut

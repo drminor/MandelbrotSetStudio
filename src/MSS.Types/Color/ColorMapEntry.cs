@@ -37,5 +37,12 @@ namespace MSS.Types
 		{
             return Clone();
 		}
-	}
+
+
+        public static ColorMapEntry UpdateCutOff(ColorMapEntry source, int cutOff)
+        {
+            return new ColorMapEntry(cutOff, source.StartColor, source.BlendStyle, source.EndColor);
+        }
+
+    }
 }

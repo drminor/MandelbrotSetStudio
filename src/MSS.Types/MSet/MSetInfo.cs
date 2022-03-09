@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace MSS.Types.MSet
 {
@@ -8,11 +9,7 @@ namespace MSS.Types.MSet
 		public MapCalcSettings MapCalcSettings { get; init; }
 		public ColorMapEntry[] ColorMapEntries { get; init; }
 
-		public MSetInfo(
-			RRectangle coords,
-			MapCalcSettings mapCalcSettings,
-			ColorMapEntry[] colorMapEntries
-			)
+		public MSetInfo(RRectangle coords, MapCalcSettings mapCalcSettings, ColorMapEntry[] colorMapEntries)
 		{
 			Coords = coords;
 			MapCalcSettings = mapCalcSettings;
@@ -23,14 +20,21 @@ namespace MSS.Types.MSet
 		{
 			return new MSetInfo(newCoords, source.MapCalcSettings, Clone(source.ColorMapEntries));
 		}
-		//int targetIterations, int iterationsPerRequest
+
 		public static MSetInfo UpdateWithNewIterations(MSetInfo source, int targetIterations, int iterationsPerRequest)
 		{
-			ColorMapEntry[] cmes = Clone(source.ColorMapEntries);
-			var he = cmes[cmes.Length - 1];
-			cmes[cmes.Length - 1] = new ColorMapEntry(targetIterations, he.StartColor, he.BlendStyle, he.EndColor);
+			var colorMapEntries = Clone(source.ColorMapEntries);
+			var lastEntry = colorMapEntries[^1];
+			colorMapEntries[^1] = ColorMapEntry.UpdateCutOff(lastEntry, targetIterations);
 			
-			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(targetIterations, 4, iterationsPerRequest), cmes);
+			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(targetIterations, 4, iterationsPerRequest), colorMapEntries);
+		}
+
+		public static MSetInfo UpdateWithNewColorMapEntries(MSetInfo source, ColorMapEntry[] colorMapEntries)
+		{
+			var lastEntry = colorMapEntries[^1];
+			Debug.Assert(lastEntry.CutOff == source.MapCalcSettings.TargetIterations, "TargetIteration / ColorMapEntries-HighEntry MisMatch.");
+			return new MSetInfo(source.Coords.Clone(), source.MapCalcSettings, Clone(colorMapEntries));
 		}
 
 		private static ColorMapEntry[] Clone(ColorMapEntry[] colorMapEntries)

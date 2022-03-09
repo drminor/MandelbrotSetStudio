@@ -5,7 +5,7 @@ using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	public interface IJobStack
+	public interface IMapProject
 	{
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler PropertyChanged;
@@ -26,6 +26,7 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
+		void UpdateColorMapEntries(ColorMapEntry[] colorMapEntries);
 
 		void LoadNewProject(string projectName, MSetInfo mSetInfo);
 		void LoadProject(string projectName);

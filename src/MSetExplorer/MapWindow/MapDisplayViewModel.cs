@@ -14,7 +14,7 @@ namespace MSetExplorer
 	{
 		private static readonly bool _keepDisplaySquare = true;
 
-		private readonly IJobStack _jobStack;
+		private readonly IMapProject _jobStack;
 		private readonly IMapLoaderManager _mapLoaderManager;
 
 		private readonly IScreenSectionCollection _screenSectionCollection;
@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapDisplayViewModel(IJobStack jobsStack, IMapLoaderManager mapLoaderManager)
+		public MapDisplayViewModel(IMapProject jobsStack, IMapLoaderManager mapLoaderManager)
 		{
 			//_projectAdapter = projectAdapter;
 
@@ -166,7 +166,7 @@ namespace MSetExplorer
 
 		private bool ShouldAttemptToReuseLoadedSections(Job job)
 		{
-			if(MapSections.Count == 0 || job.ParentJob is null || job.TransformType == TransformType.IterationUpdate)
+			if(MapSections.Count == 0 || job.ParentJob is null || job.TransformType == TransformType.IterationUpdate || job.TransformType == TransformType.ColorMapUpdate)
 			{
 				return false;
 			}
