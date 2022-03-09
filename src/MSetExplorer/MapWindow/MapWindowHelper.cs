@@ -68,22 +68,22 @@ namespace MSetExplorer
 
 			IList<ColorBand> colorBands = new List<ColorBand>
 			{
-				new ColorBand(1, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(2, "#ff0033", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(3, "#ffffcc", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(5, "#ccccff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(10, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(25, "#ff0033", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(50, "#ffffcc", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(60, "#ccccff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(70, "#ffffff", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(120, "#ff0033", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(300, "#ffffcc", ColorMapBlendStyle.Next, "#000000"),
-				new ColorBand(500, "#e95ee8", ColorMapBlendStyle.End, "#758cb7")
+				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(50, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(70, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
 			};
 
 			var highColorCss = "#000000";
-			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorMapBlendStyle.None, highColorCss));
+			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
 
 			var result = new MSetInfo(coords, mapCalcSettings, colorBands.ToArray());
 

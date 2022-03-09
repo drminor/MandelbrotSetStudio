@@ -1,6 +1,6 @@
 ﻿namespace MSS.Types
 {
-    public enum ColorMapBlendStyle
+    public enum ColorBandBlendStyle
     {
         None = 0,
         Next = 1,

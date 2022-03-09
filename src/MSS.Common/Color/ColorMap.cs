@@ -18,7 +18,7 @@ namespace MSS.Common
         { }
 
         public ColorMap(IList<ColorBand> colorBands, int maxIterations, string highColor)
-            : this(colorBands.ToArray(), new ColorBand(maxIterations, highColor, ColorMapBlendStyle.None, highColor))
+            : this(colorBands.ToArray(), new ColorBand(maxIterations, highColor, ColorBandBlendStyle.None, highColor))
         { }
 
         private ColorMap(ColorBand[] colorBands, ColorBand highColorEntry)
@@ -67,7 +67,7 @@ namespace MSS.Common
 
             var cme = GetColorMapEntry(colorMapIndex);
 
-            if (cme.BlendStyle == ColorMapBlendStyle.None)
+            if (cme.BlendStyle == ColorBandBlendStyle.None)
             {
                 result = cme.StartColor.ColorComps;
                 return result;
@@ -199,11 +199,11 @@ namespace MSS.Common
             {
                 var cmd = colorBands[ptr];
 
-                if (cmd.BlendStyle == ColorMapBlendStyle.Next)
+                if (cmd.BlendStyle == ColorBandBlendStyle.Next)
                 {
                     var endColor = ptr == colorBands.Length - 1
-						? new ColorMapColor(HighColorEntry.StartColor.ColorComps)
-						: new ColorMapColor(colorBands[ptr + 1].StartColor.ColorComps);
+						? new ColorBandColor(HighColorEntry.StartColor.ColorComps)
+						: new ColorBandColor(colorBands[ptr + 1].StartColor.ColorComps);
 
 					colorBands[ptr] = new ColorBand(cmd.CutOff, cmd.StartColor, cmd.BlendStyle, endColor);
                 }

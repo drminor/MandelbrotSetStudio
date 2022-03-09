@@ -56,16 +56,16 @@ namespace MSS.Common
 			bool isHighRes = false;
 			IList<ColorBand> entries = new List<ColorBand>();
 
-			entries.Add(new ColorBand(375, "#ffffff", ColorMapBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(399, "#fafdf2", ColorMapBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(407, "#98e498", ColorMapBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(428, "#0000ff", ColorMapBlendStyle.Next, "#000000"));
-            entries.Add(new ColorBand(446, "#f09ee6", ColorMapBlendStyle.Next, "#000000"));
-            entries.Add(new ColorBand(486, "#00ff00", ColorMapBlendStyle.Next, "#000000"));
-            entries.Add(new ColorBand(500, "#0000ff", ColorMapBlendStyle.Next, "#000000"));
-            entries.Add(new ColorBand(523, "#ffffff", ColorMapBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(560, "#3ee2e2", ColorMapBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(1011, "#e95ee8", ColorMapBlendStyle.End, "#758cb7"));
+			entries.Add(new ColorBand(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"));
+			entries.Add(new ColorBand(399, "#fafdf2", ColorBandBlendStyle.Next, "#000000"));
+			entries.Add(new ColorBand(407, "#98e498", ColorBandBlendStyle.Next, "#000000"));
+			entries.Add(new ColorBand(428, "#0000ff", ColorBandBlendStyle.Next, "#000000"));
+            entries.Add(new ColorBand(446, "#f09ee6", ColorBandBlendStyle.Next, "#000000"));
+            entries.Add(new ColorBand(486, "#00ff00", ColorBandBlendStyle.Next, "#000000"));
+            entries.Add(new ColorBand(500, "#0000ff", ColorBandBlendStyle.Next, "#000000"));
+            entries.Add(new ColorBand(523, "#ffffff", ColorBandBlendStyle.Next, "#000000"));
+			entries.Add(new ColorBand(560, "#3ee2e2", ColorBandBlendStyle.Next, "#000000"));
+			entries.Add(new ColorBand(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7"));
 
 			string highColorCss = "#000000";
 
@@ -92,8 +92,8 @@ namespace MSS.Common
 			bool isHighRes = false;
 			IList<ColorBand> entries = new List<ColorBand>();
 
-			entries.Add(new ColorBand(375, "#ffffff", ColorMapBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(1011, "#e95ee8", ColorMapBlendStyle.End, "#758cb7"));
+			entries.Add(new ColorBand(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"));
+			entries.Add(new ColorBand(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7"));
 
 			string highColorCss = "#000000";
 

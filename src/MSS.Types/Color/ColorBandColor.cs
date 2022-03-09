@@ -3,16 +3,16 @@ using System.Text.Json.Serialization;
 
 namespace MSS.Types
 {
-    public class ColorMapColor
+    public class ColorBandColor
     {
         [JsonConstructor]
         [BsonConstructor]
-        public ColorMapColor(string cssColor) : this(GetComps(cssColor))
+        public ColorBandColor(string cssColor) : this(GetComps(cssColor))
         {
             _cssColor = cssColor;
         }
 
-        public ColorMapColor(byte[] colorComps)
+        public ColorBandColor(byte[] colorComps)
         {
             ColorComps = new byte[3];
             ColorComps[0] = colorComps[0];
