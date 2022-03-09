@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using MSS.Types;
+using System.ComponentModel;
 
 namespace MSetExplorer
 {
@@ -11,6 +12,8 @@ namespace MSetExplorer
 
 		int TargetIterations { get; set; }
 		int Steps { get; set; }
+
+		ColorMapEntry[] ColorMapEntries { get; set; }
 
 	}
 }

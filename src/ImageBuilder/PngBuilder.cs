@@ -25,31 +25,30 @@ namespace ImageBuilder
 			var maxIterations = mSetInfo.MapCalcSettings.TargetIterations;
 			var colorMap = mSetInfo.ColorMap;
 
-			SizeInt imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
+			var imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
 
-			int w = imageSizeInBlocks.Width;
-			int h = imageSizeInBlocks.Height;
+			var w = imageSizeInBlocks.Width;
+			var h = imageSizeInBlocks.Height;
 
-			// TODO: Define * operator for SizeInt
-			var imageSize = new SizeInt(w * _blockSize.Width, h * _blockSize.Height);
+			var imageSize = imageSizeInBlocks.Scale(_blockSize);
 
-			string imagePath = GetImageFilename(projectName, imageSize.Width, isHighRes, _imageOutputFolder);
+			var imagePath = GetImageFilename(projectName, imageSize.Width, isHighRes, _imageOutputFolder);
 
 			var key = new KPoint(0, 0);
 
-			using PngImage pngImage = new PngImage(imagePath, imageSize.Width, imageSize.Height);
-			for (int vBPtr = 0; vBPtr < h; vBPtr++)
+			using var pngImage = new PngImage(imagePath, imageSize.Width, imageSize.Height);
+			for (var vBPtr = 0; vBPtr < h; vBPtr++)
 			{
 				key.Y = vBPtr;
-				for (int lPtr = 0; lPtr < 100; lPtr++)
+				for (var lPtr = 0; lPtr < 100; lPtr++)
 				{
-					ImageLine iLine = pngImage.ImageLine;
+					var iLine = pngImage.ImageLine;
 
-					for (int hBPtr = 0; hBPtr < w; hBPtr++)
+					for (var hBPtr = 0; hBPtr < w; hBPtr++)
 					{
 						key.X = hBPtr;
 
-						int[] countsForThisLine = mapSectionReader.GetCounts(key, lPtr);
+						var countsForThisLine = mapSectionReader.GetCounts(key, lPtr);
 						if (countsForThisLine != null)
 						{
 							BuildPngImageLineSegment(hBPtr * _blockSize.Width, countsForThisLine, iLine, maxIterations, colorMap);
@@ -67,9 +66,9 @@ namespace ImageBuilder
 
 		public static void BuildPngImageLineSegment(int pixPtr, int[] counts, ImageLine iLine, int maxIterations, ColorMap colorMap)
 		{
-			for (int xPtr = 0; xPtr < counts.Length; xPtr++)
+			for (var xPtr = 0; xPtr < counts.Length; xPtr++)
 			{
-				double escapeVelocity = GetEscVel(counts[xPtr], out int cnt);
+				var escapeVelocity = GetEscVel(counts[xPtr], out var cnt);
 
 				byte[] cComps;
 				if (cnt == maxIterations)
@@ -87,7 +86,7 @@ namespace ImageBuilder
 
 		public static void BuildBlankPngImageLineSegment(int pixPtr, int len, ImageLine iLine)
 		{
-			for (int xPtr = 0; xPtr < len; xPtr++)
+			for (var xPtr = 0; xPtr < len; xPtr++)
 			{
 				ImageLineHelper.SetPixel(iLine, pixPtr++, 255, 255, 255);
 			}
@@ -95,7 +94,7 @@ namespace ImageBuilder
 
 		private static double GetEscVel(int rawCount, out int count)
 		{
-			double result = rawCount / 10000d;
+			var result = rawCount / 10000d;
 			count = (int)Math.Truncate(result);
 			result -= count;
 			return result;

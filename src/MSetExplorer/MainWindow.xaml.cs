@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 
 namespace MSetExplorer
@@ -58,6 +59,8 @@ namespace MSetExplorer
 			{
 				_vm.TargetIterations = newValue;
 			}
+
+			// TODO: Respond to changes in the CME View and update the MainWindowViewModel
 		}
 
 		private void VmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -76,7 +79,12 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMainWindowViewModel.TargetIterations))
 			{
-				txtIterations.Text = _vm.TargetIterations.ToString();
+				txtIterations.Text = _vm.TargetIterations.ToString(CultureInfo.InvariantCulture);
+			}
+
+			if (e.PropertyName == nameof(IMainWindowViewModel.ColorMapEntries))
+			{
+				//TODO: Update the CME View.
 			}
 		}
 

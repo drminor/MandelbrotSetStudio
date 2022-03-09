@@ -43,51 +43,6 @@ namespace MSS.Types
 			return Reducer.Reduce(this);
 		}
 
-		//public RVector Scale(SizeInt factor)
-		//{
-		//	return new RVector(XNumerator * factor.Width, YNumerator * factor.Height, Exponent);
-		//}
-
-		//public RVector Scale(PointInt factor)
-		//{
-		//	return new RVector(XNumerator * factor.X, YNumerator * factor.Y, Exponent);
-		//}
-
-		//// TODO: Rewrite RVector.Scale(SizeDbl factor)
-		//public RVector Scale(SizeDbl factor)
-		//{
-		//	var w = BigIntegerHelper.ConvertToDouble(X);
-		//	var h = BigIntegerHelper.ConvertToDouble(Y);
-
-		//	var result = new RVector
-		//		(
-		//			new BigInteger(w * factor.Width),
-		//			new BigInteger(h * factor.Height),
-		//			Exponent
-		//		);
-
-		//	return result;
-		//}
-
-		//public RVector Translate(RPoint amount)
-		//{
-		//	return amount.Exponent != Exponent
-		//		? throw new InvalidOperationException($"Cannot translate an RVector with Exponent: {Exponent} using an RPoint with Exponent: {amount.Exponent}.")
-		//		: new RVector(XNumerator + amount.XNumerator, YNumerator + amount.YNumerator, amount.Exponent);
-		//}
-
-		//public RVector Translate(RVector amount)
-		//{
-		//	return amount.Exponent != Exponent
-		//		? throw new InvalidOperationException($"Cannot translate an RVector with Exponent: {Exponent} using an RVector with Exponent: {amount.Exponent}.")
-		//		: new RVector(XNumerator + amount.XNumerator, YNumerator + amount.YNumerator, amount.Exponent);
-		//}
-
-		//public RVector Diff(SizeInt size)
-		//{
-		//	return new RVector(XNumerator - size.Width, YNumerator - size.Height, Exponent);
-		//}
-
 		public RVector Divide(RSize amount)
 		{
 			return new RVector(XNumerator / amount.WidthNumerator, YNumerator / amount.HeightNumerator, Exponent - amount.Exponent);

@@ -1,10 +1,13 @@
 ﻿
+using MSS.Types;
+
 namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
 		private int _targetIterations;
 		private int _steps;
+		private ColorMapEntry[] _colorMapEntries;
 
 		#region Constructor
 
@@ -32,6 +35,9 @@ namespace MSetExplorer
 
 				_steps = mapCalcSettings.IterationsPerRequest;
 				OnPropertyChanged(nameof(Steps));
+
+				_colorMapEntries = curJob.MSetInfo.ColorMapEntries;
+				OnPropertyChanged(nameof(ColorMapEntries));
 			}
 
 			OnPropertyChanged(nameof(IMapProject.CanGoBack));
@@ -76,6 +82,17 @@ namespace MSetExplorer
 		{
 			get => _steps;
 			set { _steps = value; OnPropertyChanged(); }
+		}
+
+		public ColorMapEntry[] ColorMapEntries
+		{
+			get => _colorMapEntries;
+			set
+			{
+				// TODO: Compare the new value of ColorMapEntries with the current value.
+				_colorMapEntries = value;
+				OnPropertyChanged();
+			}
 		}
 
 		#endregion
