@@ -19,7 +19,9 @@ namespace MSetExplorer
 		private readonly ReaderWriterLockSlim _jobsLock;
 
 		private int _jobsPointer;
-		private SizeInt _canvasSize = new SizeInt();
+		private SizeInt _canvasSize;
+
+		private Project _currentProject;
 
 		#region Constructor
 
@@ -29,6 +31,10 @@ namespace MSetExplorer
 			BlockSize = blockSize;
 			_jobsCollection = new ObservableCollection<Job>();
 			_jobsPointer = -1;
+
+			_canvasSize = new SizeInt();
+			_currentProject = null;
+
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 		}
 
@@ -55,7 +61,18 @@ namespace MSetExplorer
 			}
 		}
 
-		public Project Project { get; private set; }
+		public Project Project
+		{
+			get => _currentProject;
+			private set
+			{
+				if(value != _currentProject)
+				{
+					_currentProject = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public Job CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
@@ -65,6 +82,12 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public void StartNewProject(MSetInfo mSetInfo)
+		{
+			Project = new Project(ObjectId.Empty, "Home");
+			LoadMap(mSetInfo, TransformType.None);
+		}
+
 		public void LoadNewProject(string projectName, MSetInfo mSetInfo)
 		{
 			Project = _projectAdapter.GetOrCreateProject(projectName);
@@ -73,6 +96,7 @@ namespace MSetExplorer
 
 		public void LoadProject(string projectName)
 		{
+			Project = _projectAdapter.GetOrCreateProject(projectName);
 			var jobs = _projectAdapter.GetAllJobs(Project.Id);
 
 			DoWithWriteLock(() =>
@@ -90,8 +114,39 @@ namespace MSetExplorer
 			});
 		}
 
-		public void SaveProject()
+		public void SaveProject(string projectName)
 		{
+			if (Project.Id != ObjectId.Empty)
+			{
+				throw new InvalidOperationException("Cannot change the name of a project already loaded, use SaveLoadedProject instead.");
+			}
+
+			// TODO: Update this to be just Create, throw error if there is a project with this name.
+			Project = _projectAdapter.GetOrCreateProject(projectName);
+
+			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
+
+			var jobsList = Jobs.ToList();
+
+			for (var i = 0; i < jobsList.Count; i++)
+			{
+				var job = jobsList[i];
+				if (job.Id.CreationTime > lastSavedTime)
+				{
+					job.Project = Project;
+					var updatedJob = _projectAdapter.InsertJob(job);
+					UpdateJob(job, updatedJob);
+				}
+			}
+		}
+
+		public void SaveLoadedProject()
+		{
+			if (Project.Id == ObjectId.Empty)
+			{
+				throw new InvalidOperationException("Cannot save an unloaded project, use SaveProject instead.");
+			}
+
 			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
 
 			var jobsList = Jobs.ToList();
@@ -230,6 +285,7 @@ namespace MSetExplorer
 				_jobsPointer = _jobsCollection.Count - 1;
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 			});
@@ -262,12 +318,14 @@ namespace MSetExplorer
 			{
 				// Forced a redraw
 				CurrentJobChanged?.Invoke(this, new EventArgs());
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			}
 			else
 			{
 				var job = _jobsCollection[newJobIndex];
 				_jobsPointer = newJobIndex;
 				CurrentJobChanged?.Invoke(this, new EventArgs());
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 			}

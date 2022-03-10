@@ -1,7 +1,8 @@
-﻿using MapSectionProviderLib;
-using MEngineClient;
+﻿using MEngineClient;
 using MSetRepo;
 using MSS.Common;
+using MSS.Types.MSet;
+using System;
 using System.Diagnostics;
 using System.Windows;
 
@@ -32,7 +33,7 @@ namespace MSetExplorer
 
 			StartServer();
 
-			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
+			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING, CreateProjectInfo);
 
 			if (DROP_MAP_SECTIONS)
 			{
@@ -101,6 +102,11 @@ namespace MSetExplorer
 			{
 				_serverProcess.Kill();
 			}
+		}
+
+		private IProjectInfo CreateProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int zoomLevel)
+		{
+			return new ProjectInfo(project, lastSaved, numberOfJobs, zoomLevel);
 		}
 
 

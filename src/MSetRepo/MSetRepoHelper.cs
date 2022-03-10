@@ -6,10 +6,10 @@ namespace MSetRepo
 {
 	public static class MSetRepoHelper
 	{
-		public static ProjectAdapter GetProjectAdapter(string dbProviderConnString)
+		public static ProjectAdapter GetProjectAdapter(string dbProviderConnString, ProjectInfoCreator projectInfoCreator)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);
-			var mapSectionAdapter = new ProjectAdapter(dbProvider, GetMSetRecordMapper());
+			var mapSectionAdapter = new ProjectAdapter(dbProvider, GetMSetRecordMapper(), projectInfoCreator);
 
 			return mapSectionAdapter;
 		}

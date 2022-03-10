@@ -1,5 +1,4 @@
-﻿using MSetExplorer.MapWindow;
-using MSS.Types;
+﻿using MSS.Types;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;

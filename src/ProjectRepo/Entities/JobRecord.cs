@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using System;
 
 namespace ProjectRepo.Entities
 {
@@ -18,6 +19,14 @@ namespace ProjectRepo.Entities
 		BigVectorRecord MapBlockOffset,
 		VectorIntRecord CanvasControlOffset
 		) : RecordBase()
+	{ }
+
+	public record JobModel1
+	(
+		DateTime DateCreated,
+		int TransformType,
+		int Exponent
+	)
 	{ }
 
 }

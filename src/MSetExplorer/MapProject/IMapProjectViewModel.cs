@@ -28,9 +28,12 @@ namespace MSetExplorer
 		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
 		void UpdateColorMapEntries(ColorBandSet colorBands);
 
+		void StartNewProject(MSetInfo mSetInfo);
+		void SaveProject(string projectName);
+
 		void LoadNewProject(string projectName, MSetInfo mSetInfo);
 		void LoadProject(string projectName);
-		void SaveProject();
+		void SaveLoadedProject();
 
 		void UpdateJob(Job oldJob, Job newJob);
 	}

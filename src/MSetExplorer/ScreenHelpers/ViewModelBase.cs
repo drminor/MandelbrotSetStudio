@@ -15,23 +15,5 @@ namespace MSetExplorer
 
 		protected bool InDesignMode => DesignerProperties.GetIsInDesignMode(new DependencyObject());
 
-
-
-		//public event EventHandler RequestClose;
-
-		//public RelayCommand CloseWindowCommand { get; private set; }
-
-		//public ViewModelBase()
-		//{
-		//	CloseWindowCommand = new RelayCommand(CloseAWindow);
-		//}
-
-		//private void CloseAWindow(object obj)
-		//{
-		//	var window = obj as Window;
-		//	if (window != null)
-		//		window.Close();
-		//}
-
 	}
 }

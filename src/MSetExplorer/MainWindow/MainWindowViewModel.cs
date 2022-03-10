@@ -1,5 +1,4 @@
-﻿
-using MSS.Types;
+﻿using MSS.Types;
 
 namespace MSetExplorer
 {
@@ -11,21 +10,21 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MainWindowViewModel(IMapProjectViewModel jobStack, IMapDisplayViewModel mapDisplayViewModel)
+		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel)
 		{
-			MapProject = jobStack;
-			MapProject.CurrentJobChanged += JobStack_CurrentJobChanged;
+			MapProjectViewModel = mapProjectViewModel;
+			MapProjectViewModel.CurrentJobChanged += MapProjectViewModel_CurrentJobChanged;
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
-			MapProject.CanvasSize = MapDisplayViewModel.CanvasSize;
+			MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 		}
 
-		private void JobStack_CurrentJobChanged(object sender, System.EventArgs e)
+		private void MapProjectViewModel_CurrentJobChanged(object sender, System.EventArgs e)
 		{
-			var curJob = MapProject.CurrentJob;
+			var curJob = MapProjectViewModel.CurrentJob;
 
 			if (curJob != null)
 			{
@@ -39,21 +38,18 @@ namespace MSetExplorer
 				_colorBands = curJob.MSetInfo.ColorBands;
 				OnPropertyChanged(nameof(ColorMapEntries));
 			}
-
-			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 		}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object sender, MapViewUpdateRequestedEventArgs e)
 		{
-			MapProject.UpdateMapView(e.TransformType, e.NewArea);
+			MapProjectViewModel.UpdateMapView(e.TransformType, e.NewArea);
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
-				MapProject.CanvasSize = MapDisplayViewModel.CanvasSize;
+				MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 			}
 		}
 
@@ -62,7 +58,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
-		public IMapProjectViewModel MapProject { get; }
+		public IMapProjectViewModel MapProjectViewModel { get; }
 
 		public int TargetIterations
 		{
@@ -72,7 +68,7 @@ namespace MSetExplorer
 				if (value != _targetIterations)
 				{
 					_targetIterations = value;
-					MapProject.UpdateTargetInterations(value, Steps);
+					MapProjectViewModel.UpdateTargetInterations(value, Steps);
 					OnPropertyChanged();
 				}
 			}

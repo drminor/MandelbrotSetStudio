@@ -12,7 +12,8 @@ namespace MSetExplorer
 	public partial class MainWindow : Window
 	{
 		private IMainWindowViewModel _vm;
-		private MapDisplay _mapDisplay;
+
+		#region Constructor
 
 		public MainWindow()
 		{
@@ -25,9 +26,9 @@ namespace MSetExplorer
 		{
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
 
-			var maxIterations = 700;
-			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations);
-			_vm.MapProject.LoadNewProject("Home", mSetInfo);
+			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations: 700);
+			//_vm.MapProjectViewModel.LoadNewProject("Home", mSetInfo);
+			_vm.MapProjectViewModel.StartNewProject(mSetInfo);
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -40,10 +41,11 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IMainWindowViewModel)DataContext;
-				_vm.PropertyChanged += VmPropertyChanged;
+				_vm.PropertyChanged += MainWindowViewModel_PropertyChanged;
 
-				_mapDisplay = mapDisplay1;
-				_mapDisplay.DataContext = _vm.MapDisplayViewModel;
+				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
+
+				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
 				txtIterations.LostFocus += TxtIterations_LostFocus;
 
@@ -51,7 +53,29 @@ namespace MSetExplorer
 			}
 		}
 
-		#region EVENT Handlers
+		#endregion
+
+		#region Event Handlers
+
+		private void MapProjectViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoBack))
+			{
+				btnGoBack.IsEnabled = _vm.MapProjectViewModel.CanGoBack;
+				return;
+			}
+
+			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoForward))
+			{
+				btnGoForward.IsEnabled = _vm.MapProjectViewModel.CanGoForward;
+				return;
+			}
+
+			if (e.PropertyName == nameof(IMapProjectViewModel.Project))
+			{
+				Title = $"MainWindow \u2014 {_vm.MapProjectViewModel.Project.Name}";
+			}
+		}
 
 		private void TxtIterations_LostFocus(object sender, RoutedEventArgs e)
 		{
@@ -63,20 +87,8 @@ namespace MSetExplorer
 			// TODO: Respond to changes in the CME View and update the MainWindowViewModel
 		}
 
-		private void VmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void MainWindowViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoBack))
-			{
-				btnGoBack.IsEnabled = _vm.MapProject.CanGoBack;
-				return;
-			}
-
-			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoForward))
-			{
-				btnGoForward.IsEnabled = _vm.MapProject.CanGoForward;
-				return;
-			}
-
 			if (e.PropertyName == nameof(IMainWindowViewModel.TargetIterations))
 			{
 				txtIterations.Text = _vm.TargetIterations.ToString(CultureInfo.InvariantCulture);
@@ -90,7 +102,60 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Button Handlers
+		#region Project Button Handers
+
+		private void OpenButton_Click(object sender, RoutedEventArgs e)
+		{
+			var initialName = "Test3";
+			if (ShowOpenSaveProjectWindow(initialName, out var selectedName))
+			{
+				Debug.WriteLine($"Opening project with name: {selectedName}.");
+				_vm.MapProjectViewModel.LoadProject(selectedName);
+			}
+		}
+
+		private void SaveButton_Click(object sender, RoutedEventArgs e)
+		{
+			var initialName = "Test3";
+			if (ShowOpenSaveProjectWindow(initialName, out var selectedName))
+			{
+				Debug.WriteLine($"Saving project with name: {selectedName}.");
+				_vm.MapProjectViewModel.SaveProject(selectedName);
+			}
+		}
+
+		private void CloseButton_Click(object sender, RoutedEventArgs e)
+		{
+			Close();
+		}
+
+		#endregion
+
+		#region Project Open/Save Window Support
+
+		private bool ShowOpenSaveProjectWindow(string initialName, out string selectedName)
+		{
+			var showOpenSaveVm = new ProjectOpenSaveViewModel(initialName);
+			var showOpenSaveWindow = new ProjectOpenSaveWindow
+			{
+				DataContext = showOpenSaveVm
+			};
+
+			if (showOpenSaveWindow.ShowDialog() == true)
+			{
+				selectedName = showOpenSaveWindow.ProjectName;
+				return true;
+			}
+			else
+			{
+				selectedName = null;
+				return false;
+			}
+		}
+
+		#endregion
+
+		#region Pan Button Handlers
 
 		private const int SHIFT_AMOUNT = 16;
 
@@ -116,39 +181,24 @@ namespace MSetExplorer
 
 		private void Pan(VectorInt amount)
 		{
-			var newArea = new RectangleInt(new PointInt(amount), _vm.MapProject.CanvasSize);
-			_vm.MapProject.UpdateMapView(TransformType.Pan, newArea);
+			var newArea = new RectangleInt(new PointInt(amount), _vm.MapProjectViewModel.CanvasSize);
+			_vm.MapProjectViewModel.UpdateMapView(TransformType.Pan, newArea);
 		}
 
 		private void GoBackButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.MapProject.CanGoBack)
+			if (_vm.MapProjectViewModel.CanGoBack)
 			{
-				_vm.MapProject.GoBack();
+				_vm.MapProjectViewModel.GoBack();
 			}
 		}
 
 		private void GoForwardButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (_vm.MapProject.CanGoForward)
+			if (_vm.MapProjectViewModel.CanGoForward)
 			{
-				_vm.MapProject.GoForward();
+				_vm.MapProjectViewModel.GoForward();
 			}
-		}
-
-		private void OpenButton_Click(object sender, RoutedEventArgs e)
-		{
-			MessageBox.Show("Will prompt for Project Name here.");
-		}
-
-		private void SaveButton_Click(object sender, RoutedEventArgs e)
-		{
-			_vm.MapProject.SaveProject();
-		}
-
-		private void CloseButton_Click(object sender, RoutedEventArgs e)
-		{
-			Close();
 		}
 
 		#endregion

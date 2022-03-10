@@ -14,7 +14,7 @@ namespace MSetExplorer
 	{
 		private static readonly bool _keepDisplaySquare = true;
 
-		private readonly IMapProjectViewModel _jobStack;
+		private readonly IMapProjectViewModel _mapProjectViewModel;
 		private readonly IMapLoaderManager _mapLoaderManager;
 
 		private readonly IScreenSectionCollection _screenSectionCollection;
@@ -24,17 +24,17 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapDisplayViewModel(IMapProjectViewModel jobsStack, IMapLoaderManager mapLoaderManager)
+		public MapDisplayViewModel(IMapProjectViewModel mapProjectViewModel, IMapLoaderManager mapLoaderManager)
 		{
 			//_projectAdapter = projectAdapter;
 
-			_jobStack = jobsStack;
-			_jobStack.CurrentJobChanged += JobStack_CurrentJobChanged;
+			_mapProjectViewModel = mapProjectViewModel;
+			_mapProjectViewModel.CurrentJobChanged += MapProjectViewModel_CurrentJobChanged;
 
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
-			BlockSize = jobsStack.BlockSize;
+			BlockSize = mapProjectViewModel.BlockSize;
 			MapSections = new ObservableCollection<MapSection>();
 
 			_screenSectionCollection = new ScreenSectionCollection(BlockSize);
@@ -124,9 +124,9 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void JobStack_CurrentJobChanged(object sender, EventArgs e)
+		private void MapProjectViewModel_CurrentJobChanged(object sender, EventArgs e)
 		{
-			var curJob = _jobStack.CurrentJob;
+			var curJob = _mapProjectViewModel.CurrentJob;
 
 			_mapLoaderManager.StopCurrentJob();
 

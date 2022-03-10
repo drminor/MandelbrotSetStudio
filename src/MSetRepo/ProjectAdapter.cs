@@ -7,23 +7,28 @@ using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace MSetRepo
 {
+	public delegate IProjectInfo ProjectInfoCreator(Project project, DateTime lastSaved, int numberOfJobs, int zoomLevel);
+
 	public class ProjectAdapter
 	{
 		public const string ROOT_JOB_LABEL = "Root";
 
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
+		private readonly ProjectInfoCreator _projectInfoCreator;
 		private readonly DtoMapper _dtoMapper;
 
 		#region Constructor
 
-		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
+		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper, ProjectInfoCreator projectInfoCreator)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
+			_projectInfoCreator = projectInfoCreator;
 
 			_dtoMapper = new DtoMapper();
 		}
@@ -135,6 +140,38 @@ namespace MSetRepo
 			project = _mSetRecordMapper.MapFrom(projectRecord);
 
 			return project;
+		}
+
+		#endregion
+
+		#region ProjectInfo
+
+		public IEnumerable<IProjectInfo> GetAllProjectInfos()
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+			var allProjectRecords = projectReaderWriter.GetAll();
+			var result = allProjectRecords.Select(x => GetProjectInfoInternal(_mSetRecordMapper.MapFrom(x), jobReaderWriter));
+
+			return result;
+		}
+
+		public IProjectInfo GetProjectInfo(Project project)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			return GetProjectInfoInternal(project, jobReaderWriter);
+		}
+
+		private IProjectInfo GetProjectInfoInternal(Project project, JobReaderWriter jobReaderWriter)
+		{
+			var jobInfos = jobReaderWriter.GetJobInfos(project.Id);
+
+			var lastSaved = jobInfos.Max(x => x.DateCreated);
+			var maxExponent = jobInfos.Max(x => x.Exponent);
+
+			var result = _projectInfoCreator(project, lastSaved, jobInfos.Count(), maxExponent);
+			return result;
 		}
 
 		#endregion

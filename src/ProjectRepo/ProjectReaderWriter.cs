@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using ProjectRepo.Entities;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ProjectRepo
@@ -11,6 +12,12 @@ namespace ProjectRepo
 
 		public ProjectReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
+
+		public IEnumerable<ProjectRecord> GetAll()
+		{
+			var projectRecords = Collection.Find(_ => true).ToEnumerable();
+			return projectRecords;
+		}
 
 		public ProjectRecord Get(ObjectId projectId)
 		{

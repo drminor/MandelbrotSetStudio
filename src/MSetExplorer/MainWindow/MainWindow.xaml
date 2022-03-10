@@ -42,8 +42,6 @@
                 
                 <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,115,15,0" Click="GoBackButton_Click">Go Back</Button>
                 <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,15,15,0" Click="GoForwardButton_Click">Go Forward</Button>
-                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,115,15,0" Click="SaveButton_Click" >Save</Button>
-                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,15,15,0" Click="CloseButton_Click">Close</Button>
             </StackPanel>
         </Border>
 
