@@ -33,13 +33,13 @@ namespace MSetRepo
 		
 		public Project MapFrom(ProjectRecord target)
 		{
-			var result = new Project(target.Id, target.Name);
+			var result = new Project(target.Id, target.Name, target.Description);
 			return result;
 		}
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name);
+			var result = new ProjectRecord(source.Name, source.Description);
 			return result;
 		}
 

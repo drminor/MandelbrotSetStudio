@@ -84,19 +84,19 @@ namespace MSetExplorer
 
 		public void StartNewProject(MSetInfo mSetInfo)
 		{
-			Project = new Project(ObjectId.Empty, "Home");
+			Project = new Project(ObjectId.Empty, "Home", description: null);
 			LoadMap(mSetInfo, TransformType.None);
 		}
 
-		public void LoadNewProject(string projectName, MSetInfo mSetInfo)
+		public void LoadNewProject(string projectName, string projectDescription, MSetInfo mSetInfo)
 		{
-			Project = _projectAdapter.GetOrCreateProject(projectName);
+			Project = _projectAdapter.CreateProject(projectName, projectDescription);
 			LoadMap(mSetInfo, TransformType.None);
 		}
 
 		public void LoadProject(string projectName)
 		{
-			Project = _projectAdapter.GetOrCreateProject(projectName);
+			Project = _projectAdapter.GetProject(projectName);
 			var jobs = _projectAdapter.GetAllJobs(Project.Id);
 
 			DoWithWriteLock(() =>
@@ -122,7 +122,7 @@ namespace MSetExplorer
 			}
 
 			// TODO: Update this to be just Create, throw error if there is a project with this name.
-			Project = _projectAdapter.GetOrCreateProject(projectName);
+			Project = _projectAdapter.GetProject(projectName);
 
 			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
 

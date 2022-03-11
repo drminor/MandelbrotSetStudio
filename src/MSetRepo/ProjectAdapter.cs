@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace MSetRepo
 {
-	public delegate IProjectInfo ProjectInfoCreator(Project project, DateTime lastSaved, int numberOfJobs, int zoomLevel);
+	public delegate IProjectInfo ProjectInfoCreator(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent);
 
 	public class ProjectAdapter
 	{
@@ -76,14 +76,45 @@ namespace MSetRepo
 			return project;
 		}
 
-		public Project GetOrCreateProject(string name)
+		public Project GetProject(string name)
+		{
+			Debug.WriteLine($"Retrieving Project object for Project with namne: {name}.");
+
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var projectRecord = projectReaderWriter.Get(name);
+			var project = _mSetRecordMapper.MapFrom(projectRecord);
+
+			return project;
+		}
+
+		public Project CreateProject(string name, string? description)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
 			var projectRecord = projectReaderWriter.Get(name);
 			if (projectRecord is null)
 			{
-				var projectId = projectReaderWriter.Insert(new ProjectRecord(name));
+				var projectId = projectReaderWriter.Insert(new ProjectRecord(name, description));
+				projectRecord = projectReaderWriter.Get(projectId);
+			}
+			else
+			{
+				throw new InvalidOperationException($"Cannot create project with name: {name}, a project with that name already exists.");
+			}
+
+			var result = _mSetRecordMapper.MapFrom(projectRecord);
+
+			return result;
+		}
+
+		public Project GetOrCreateProject(string name, string description)
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+
+			var projectRecord = projectReaderWriter.Get(name);
+			if (projectRecord is null)
+			{
+				var projectId = projectReaderWriter.Insert(new ProjectRecord(name, description));
 				projectRecord = projectReaderWriter.Get(projectId);
 			}
 
@@ -98,17 +129,13 @@ namespace MSetRepo
 		/// <param name="project"></param>
 		public Project InsertProject(Project project, bool overwrite)
 		{
-			ProjectRecord projectRecord;
-
-			var projectName = project.Name;
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			projectRecord = projectReaderWriter.Get(projectName);
+			var projectRecord = projectReaderWriter.Get(project.Name);
 
 			if (projectRecord == null)
 			{
 				projectRecord = _mSetRecordMapper.MapTo(project);
-				_ = projectReaderWriter.Insert(projectRecord);
 			}
 			else
 			{
@@ -118,28 +145,31 @@ namespace MSetRepo
 				}
 				else
 				{
-					var projectId = projectRecord.Id;
-
-					var jobReaderWriter = new JobReaderWriter(_dbProvider);
-
-					var jobIds = jobReaderWriter.GetJobIds(projectId);
-
-					foreach (var jobId in jobIds)
-					{
-						var dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
-						Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
-					}
-
-					_ = projectReaderWriter.Delete(projectId);
-
+					DeleteProject(project.Id);
 					projectRecord = _mSetRecordMapper.MapTo(project);
-					_ = projectReaderWriter.Insert(projectRecord);
 				}
 			}
 
+			_ = projectReaderWriter.Insert(projectRecord);
 			project = _mSetRecordMapper.MapFrom(projectRecord);
 
 			return project;
+		}
+
+		public void DeleteProject(ObjectId projectId)
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+			var jobIds = jobReaderWriter.GetJobIds(projectId);
+
+			foreach (var jobId in jobIds)
+			{
+				var dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
+				Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
+			}
+
+			_ = projectReaderWriter.Delete(projectId);
 		}
 
 		#endregion
@@ -150,9 +180,10 @@ namespace MSetRepo
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			var allProjectRecords = projectReaderWriter.GetAll();
-			var result = allProjectRecords.Select(x => GetProjectInfoInternal(_mSetRecordMapper.MapFrom(x), jobReaderWriter));
+			var result = allProjectRecords.Select(x => GetProjectInfoInternal(_mSetRecordMapper.MapFrom(x), jobReaderWriter, subdivisionReaderWriter));
 
 			return result;
 		}
@@ -160,17 +191,20 @@ namespace MSetRepo
 		public IProjectInfo GetProjectInfo(Project project)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			return GetProjectInfoInternal(project, jobReaderWriter);
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			return GetProjectInfoInternal(project, jobReaderWriter, subdivisionReaderWriter);
 		}
 
-		private IProjectInfo GetProjectInfoInternal(Project project, JobReaderWriter jobReaderWriter)
+		private IProjectInfo GetProjectInfoInternal(Project project, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter)
 		{
 			var jobInfos = jobReaderWriter.GetJobInfos(project.Id);
 
+			var subdivisionIds = jobInfos.Select(j => j.SubDivisionId).Distinct();
 			var lastSaved = jobInfos.Max(x => x.DateCreated);
-			var maxExponent = jobInfos.Max(x => x.Exponent);
+			var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
+			var minSamplePointDeltaExponent = subdivisonReaderWriter.GetMinExponent(subdivisionIds);
 
-			var result = _projectInfoCreator(project, lastSaved, jobInfos.Count(), maxExponent);
+			var result = _projectInfoCreator(project, lastSaved, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
 			return result;
 		}
 

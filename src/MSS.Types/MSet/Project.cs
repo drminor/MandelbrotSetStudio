@@ -7,11 +7,13 @@ namespace MSS.Types.MSet
 	{
 		public ObjectId Id { get; init; }
 		public string Name { get; init; }
+		public string? Description { get; init; }
 
-		public Project(ObjectId id, string name)
+		public Project(ObjectId id, string name, string? description)
 		{
 			Id = id;
 			Name = name ?? throw new ArgumentNullException(nameof(name));
+			Description = description;
 		}
 
 		public DateTime DateCreated => Id.CreationTime;

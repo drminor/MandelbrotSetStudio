@@ -162,7 +162,7 @@ namespace ImageBuilder
 
 		private static Project BuildProject(string projectName)
 		{
-			var result = new Project(ObjectId.GenerateNewId(), projectName);
+			var result = new Project(ObjectId.GenerateNewId(), projectName, description: null);
 
 			return result;
 		}

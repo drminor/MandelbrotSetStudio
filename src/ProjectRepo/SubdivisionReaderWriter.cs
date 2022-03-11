@@ -4,6 +4,7 @@ using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using ProjectRepo.Entities;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ProjectRepo
 {
@@ -49,5 +50,17 @@ namespace ProjectRepo
 
 			return GetReturnCount(deleteResult);
 		}
+
+		public int GetMinExponent(IEnumerable<ObjectId> subdivisionIds)
+		{
+			var result = Collection.AsQueryable()
+				.Where(c => subdivisionIds.Contains(c.Id))
+				.Min(x => x.SamplePointDelta.Size.Exponent);
+
+			return result;
+		}
+
+
+		//var queryable = collection.AsQueryable();
 	}
 }

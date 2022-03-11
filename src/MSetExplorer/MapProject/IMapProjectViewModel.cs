@@ -31,7 +31,7 @@ namespace MSetExplorer
 		void StartNewProject(MSetInfo mSetInfo);
 		void SaveProject(string projectName);
 
-		void LoadNewProject(string projectName, MSetInfo mSetInfo);
+		void LoadNewProject(string projectName, string description, MSetInfo mSetInfo);
 		void LoadProject(string projectName);
 		void SaveLoadedProject();
 

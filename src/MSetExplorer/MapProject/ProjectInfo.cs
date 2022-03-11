@@ -9,14 +9,16 @@ namespace MSetExplorer
 	{
 		private DateTime _lastSaved;
 		private int _numberOfJobs;
-		private int _zoomLevel;
+		private int _minMapCoordsExponent;
+		private int _minSamplePointDeltaExponent;
 
-		public ProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int zoomLevel)
+		public ProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
 		{
 			Project = project;
 			LastSaved = lastSaved;
 			NumberOfJobs = numberOfJobs;
-			ZoomLevel = zoomLevel;
+			MinMapCoordsExponent = minMapCoordsExponent;
+			MinSamplePointDeltaExponent = minSamplePointDeltaExponent;
 		}
 
 		public Project Project { get; init; }
@@ -37,10 +39,16 @@ namespace MSetExplorer
 			set { _numberOfJobs = value; OnPropertyChanged(); }
 		}
 
-		public int ZoomLevel
+		public int MinMapCoordsExponent
 		{
-			get => _zoomLevel;
-			set { _zoomLevel = value; OnPropertyChanged(); }
+			get => _minMapCoordsExponent;
+			set { _minMapCoordsExponent = value; OnPropertyChanged(); }
+		}
+
+		public int MinSamplePointDeltaExponent
+		{
+			get => _minSamplePointDeltaExponent;
+			set { _minSamplePointDeltaExponent = value; OnPropertyChanged(); }
 		}
 
 

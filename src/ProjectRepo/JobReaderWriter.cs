@@ -67,8 +67,10 @@ namespace ProjectRepo
 
 		public IEnumerable<JobModel1> GetJobInfos(ObjectId projectId)
 		{
-			ProjectionDefinition<JobRecord, JobModel1> projection1 = Builders<JobRecord>.Projection.Expression
-				(p => new JobModel1(p.Id.CreationTime, p.TransformType, p.MSetInfo.CoordsRecord.CoordsDto.Exponent));
+			var projection1 = Builders<JobRecord>.Projection.Expression
+				(
+					p => new JobModel1(p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MSetInfo.CoordsRecord.CoordsDto.Exponent)
+				);
 
 			//List models = collection.Find(_ => true).Project(projection1).ToList();
 

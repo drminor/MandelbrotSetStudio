@@ -25,7 +25,8 @@ namespace ProjectRepo.Entities
 	(
 		DateTime DateCreated,
 		int TransformType,
-		int Exponent
+		ObjectId SubDivisionId,
+		int MapCoordExponent
 	)
 	{ }
 

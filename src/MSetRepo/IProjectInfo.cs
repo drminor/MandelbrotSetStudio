@@ -10,6 +10,6 @@ namespace MSetRepo
 		string Name { get; }
 		int NumberOfJobs { get; set; }
 		Project Project { get; init; }
-		int ZoomLevel { get; set; }
+		int MinSamplePointDeltaExponent { get; set; }
 	}
 }

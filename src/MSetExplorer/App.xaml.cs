@@ -104,9 +104,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private IProjectInfo CreateProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int zoomLevel)
+		private IProjectInfo CreateProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
 		{
-			return new ProjectInfo(project, lastSaved, numberOfJobs, zoomLevel);
+			return new ProjectInfo(project, lastSaved, numberOfJobs, minMapCoordsExponent, minSamplePointDeltaExponent);
 		}
 
 
