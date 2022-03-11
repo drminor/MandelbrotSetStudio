@@ -114,15 +114,14 @@ namespace MSetExplorer
 			});
 		}
 
-		public void SaveProject(string projectName)
+		public void SaveProject(string projectName, string description)
 		{
 			if (Project.Id != ObjectId.Empty)
 			{
 				throw new InvalidOperationException("Cannot change the name of a project already loaded, use SaveLoadedProject instead.");
 			}
 
-			// TODO: Update this to be just Create, throw error if there is a project with this name.
-			Project = _projectAdapter.GetProject(projectName);
+			Project = _projectAdapter.CreateProject(projectName, description);
 
 			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
 

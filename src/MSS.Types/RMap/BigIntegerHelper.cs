@@ -245,9 +245,9 @@ namespace MSS.Types
 				}
 			}
 
-			return !DoubleHelper.HasPrecision(result)
-                ?               throw new OverflowException($"When converting BigInteger: {n} to a double, precision was lost.")
-				: result;
+			return DoubleHelper.HasPrecision(result)
+                ? result
+				: throw new OverflowException($"When converting BigInteger: {n} to a double, precision was lost.");
 		}
 
 		private static double ConvertToDouble(BigInteger n)

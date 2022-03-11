@@ -29,7 +29,7 @@ namespace MSetExplorer
 		void UpdateColorMapEntries(ColorBandSet colorBands);
 
 		void StartNewProject(MSetInfo mSetInfo);
-		void SaveProject(string projectName);
+		void SaveProject(string projectName, string description);
 
 		void LoadNewProject(string projectName, string description, MSetInfo mSetInfo);
 		void LoadProject(string projectName);

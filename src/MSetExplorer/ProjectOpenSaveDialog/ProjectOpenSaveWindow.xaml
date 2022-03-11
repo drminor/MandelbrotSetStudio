@@ -5,21 +5,58 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Project Open" Height="250" Width="400">
+        Title="Project Open" Height="450" Width="800">
+    
     <Grid>
+        
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+        <!--SelectedItem="{Binding SelectedProject}"-->
 
-                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="15,15,15,15" Click="SaveButton_Click" >Save</Button>
-                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="45,15,15,15" Click="CloseButton_Click">Close</Button>
-            </StackPanel>
+        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
+
+            <ListView Margin="10" Name="lvProjects" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedProject}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Name" Width="250" DisplayMemberBinding="{Binding Name}" />
+                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreated}" />
+                        <GridViewColumn Header="Job Count" Width="80" DisplayMemberBinding="{Binding NumberOfJobs}" />
+                        <GridViewColumn Header="Zoom" Width="70" DisplayMemberBinding="{Binding MinMapCoordsExponent}" />
+                        <GridViewColumn Header="Updated" Width="160" DisplayMemberBinding="{Binding LastSaved}" />
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
         </Border>
 
+        <Border x:Name="borderTop" Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
+            <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Name:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="170" Height="22"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                    <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Description:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtDescription" Text="{Binding SelectedDescription}" Width="500" Height="22"/>
+                </StackPanel>
+
+            </StackPanel>            
+        </Border>
+
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" >Save</Button>
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Cancel</Button>
+            </StackPanel>
+
+        </Border>
 
     </Grid>
 

@@ -12,6 +12,9 @@ namespace MSetExplorer
 		private int _minMapCoordsExponent;
 		private int _minSamplePointDeltaExponent;
 
+		private string _name;
+		private string _description;
+
 		public ProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
 		{
 			Project = project;
@@ -19,13 +22,28 @@ namespace MSetExplorer
 			NumberOfJobs = numberOfJobs;
 			MinMapCoordsExponent = minMapCoordsExponent;
 			MinSamplePointDeltaExponent = minSamplePointDeltaExponent;
+
+			_name = project.Name;
+			_description = project.Description;
 		}
 
 		public Project Project { get; init; }
 
 		public ObjectId Id => Project.Id;
-		public string Name => Project.Name;
+
 		public DateTime DateCreated => Project.DateCreated;
+
+		public string Name
+		{
+			get => _name;
+			set { _name = value; OnPropertyChanged(); }
+		}
+
+		public string Description
+		{
+			get => _description;
+			set { _description = value; OnPropertyChanged(); }
+		}
 
 		public DateTime LastSaved
 		{
@@ -41,7 +59,7 @@ namespace MSetExplorer
 
 		public int MinMapCoordsExponent
 		{
-			get => _minMapCoordsExponent;
+			get => _minMapCoordsExponent * -1;
 			set { _minMapCoordsExponent = value; OnPropertyChanged(); }
 		}
 

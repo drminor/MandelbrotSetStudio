@@ -4,7 +4,7 @@ using System.Windows;
 
 namespace MSetExplorer
 {
-	public class ViewModelBase
+	public class ViewModelBase : INotifyPropertyChanged
 	{
 		public event PropertyChangedEventHandler PropertyChanged;
 

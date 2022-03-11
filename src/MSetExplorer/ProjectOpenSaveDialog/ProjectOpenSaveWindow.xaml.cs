@@ -8,8 +8,7 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class ProjectOpenSaveWindow : Window
 	{
-		private IProjectOpenSaveViewModel _vm;
-
+		private ProjectOpenSaveViewModel _vm;
 
 		#region Constructor 
 
@@ -28,17 +27,58 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (IProjectOpenSaveViewModel)DataContext;
+				_vm = (ProjectOpenSaveViewModel)DataContext;
+				borderTop.DataContext = DataContext;
+
+				btnSave.Content = _vm.IsOpenDialog ? "Open" : "Save";
+				Title = _vm.IsOpenDialog ? "Open Project" : "Save Project";
+
+				lvProjects.ItemsSource = _vm.ProjectInfos;
+				lvProjects.SelectionChanged += LvProjects_SelectionChanged;
+				txtName.LostFocus += TxtName_LostFocus;
+
+				_ = txtName.Focus();
+				btnSave.IsEnabled = _vm.SelectedName != null;
 
 				Debug.WriteLine("The ProjectOpenSaveWindow is now loaded");
 			}
+		}
+
+		private void TxtName_LostFocus(object sender, RoutedEventArgs e)
+		{
+			if (string.IsNullOrWhiteSpace(txtName.Text))
+			{
+				_vm.SelectedName = _vm.SelectedProject.Name;
+				_vm.UserIsSettingTheName = false;
+			}
+			else
+			{
+				if (txtName.Text == _vm.SelectedProject?.Name)
+				{
+					_vm.UserIsSettingTheName = false;
+					_vm.SelectedName = _vm.SelectedProject?.Name;
+				}
+				else
+				{
+					_vm.UserIsSettingTheName = true;
+				}
+			}
+
+			btnSave.IsEnabled = _vm.SelectedName != null;
+		}
+
+
+		private void LvProjects_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+		{
+			btnSave.IsEnabled = _vm.SelectedName != null;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public string ProjectName { get; private set; }
+		public string ProjectName => _vm.SelectedName;
+		public string ProjectDescription => _vm.SelectedDescription;
 
 		#endregion
 
@@ -46,7 +86,6 @@ namespace MSetExplorer
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			ProjectName = _vm.SelectedName;
 			DialogResult = true;
 			Close();
 		}

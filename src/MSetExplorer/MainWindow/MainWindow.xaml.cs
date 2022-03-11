@@ -106,8 +106,8 @@ namespace MSetExplorer
 
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
 		{
-			var initialName = "Test3";
-			if (ShowOpenSaveProjectWindow(initialName, out var selectedName))
+			var initialName = "BlueBerry";
+			if (ShowOpenSaveProjectWindow(isOpenDialog: true, initialName, out var selectedName, out var description))
 			{
 				Debug.WriteLine($"Opening project with name: {selectedName}.");
 				_vm.MapProjectViewModel.LoadProject(selectedName);
@@ -117,10 +117,10 @@ namespace MSetExplorer
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
 			var initialName = "Test3";
-			if (ShowOpenSaveProjectWindow(initialName, out var selectedName))
+			if (ShowOpenSaveProjectWindow(isOpenDialog: false, initialName, out var selectedName, out var description))
 			{
 				Debug.WriteLine($"Saving project with name: {selectedName}.");
-				_vm.MapProjectViewModel.SaveProject(selectedName);
+				_vm.MapProjectViewModel.SaveProject(selectedName, description);
 			}
 		}
 
@@ -133,9 +133,9 @@ namespace MSetExplorer
 
 		#region Project Open/Save Window Support
 
-		private bool ShowOpenSaveProjectWindow(string initialName, out string selectedName)
+		private bool ShowOpenSaveProjectWindow(bool isOpenDialog, string initialName, out string selectedName, out string description)
 		{
-			var showOpenSaveVm = new ProjectOpenSaveViewModel(initialName);
+			ProjectOpenSaveViewModel showOpenSaveVm = new ProjectOpenSaveViewModel(initialName, isOpenDialog);
 			var showOpenSaveWindow = new ProjectOpenSaveWindow
 			{
 				DataContext = showOpenSaveVm
@@ -144,11 +144,13 @@ namespace MSetExplorer
 			if (showOpenSaveWindow.ShowDialog() == true)
 			{
 				selectedName = showOpenSaveWindow.ProjectName;
+				description = showOpenSaveWindow.ProjectDescription;
 				return true;
 			}
 			else
 			{
 				selectedName = null;
+				description = null;
 				return false;
 			}
 		}
