@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
+using System.Windows.Input;
 
 namespace MSetExplorer
 {
@@ -20,15 +21,6 @@ namespace MSetExplorer
 			Loaded += MainWindow_Loaded;
 			ContentRendered += MainWindow_ContentRendered;
 			InitializeComponent();
-		}
-
-		private void MainWindow_ContentRendered(object sender, EventArgs e)
-		{
-			Debug.WriteLine("The MainWindow is handling ContentRendered");
-
-			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations: 700);
-			//_vm.MapProjectViewModel.LoadNewProject("Home", mSetInfo);
-			_vm.MapProjectViewModel.StartNewProject(mSetInfo);
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -53,6 +45,12 @@ namespace MSetExplorer
 			}
 		}
 
+		private void MainWindow_ContentRendered(object sender, EventArgs e)
+		{
+			Debug.WriteLine("The MainWindow is handling ContentRendered");
+			LoadNewProject();
+		}
+
 		#endregion
 
 		#region Event Handlers
@@ -71,9 +69,9 @@ namespace MSetExplorer
 				return;
 			}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.Project))
+			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
-				Title = $"MainWindow \u2014 {_vm.MapProjectViewModel.Project.Name}";
+				Title = $"MainWindow \u2014 {_vm.MapProjectViewModel.CurrentProject.Name}";
 			}
 		}
 
@@ -102,8 +100,64 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Window Buttons
+
+		private void CloseButton_Click(object sender, RoutedEventArgs e)
+		{
+			Close();
+		}
+
+		#endregion
+
+		#region Map Nav Buttons
+
+		//private void GoBackButton_Click(object sender, RoutedEventArgs e)
+		//{
+		//	if (_vm.MapProjectViewModel.CanGoBack)
+		//	{
+		//		_ =_vm.MapProjectViewModel.GoBack();
+		//	}
+		//}
+
+		private void GoBack_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.MapProjectViewModel?.CanGoBack ?? false;
+		}
+
+		private void GoBack_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			_ = _vm.MapProjectViewModel.GoBack();
+		}
+
+		//private void GoForwardButton_Click(object sender, RoutedEventArgs e)
+		//{
+		//	if (_vm.MapProjectViewModel.CanGoForward)
+		//	{
+		//		_ =_vm.MapProjectViewModel.GoForward();
+		//	}
+		//}
+
+		private void GoForward_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.MapProjectViewModel?.CanGoForward ?? false;
+		}
+
+		private void GoForward_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			_ = _vm.MapProjectViewModel.GoForward();
+		}
+
+		#endregion
+
 		#region Project Button Handers
 
+		// New
+		private void NewButton_Click(object sender, RoutedEventArgs e)
+		{
+			LoadNewProject();
+		}
+
+		// Open
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
 		{
 			var initialName = "BlueBerry";
@@ -113,45 +167,26 @@ namespace MSetExplorer
 				_vm.MapProjectViewModel.LoadProject(selectedName);
 			}
 		}
+		
+		// Save
+		private void SaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm.MapProjectViewModel.CanSaveProject;
+		}
 
-		private void SaveButton_Click(object sender, RoutedEventArgs e)
+		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			_vm.MapProjectViewModel.SaveLoadedProject();
+		}
+
+		// Save As
+		private void SaveAsButton_Click(object sender, RoutedEventArgs e)
 		{
 			var initialName = "Test3";
 			if (ShowOpenSaveProjectWindow(isOpenDialog: false, initialName, out var selectedName, out var description))
 			{
 				Debug.WriteLine($"Saving project with name: {selectedName}.");
 				_vm.MapProjectViewModel.SaveProject(selectedName, description);
-			}
-		}
-
-		private void CloseButton_Click(object sender, RoutedEventArgs e)
-		{
-			Close();
-		}
-
-		#endregion
-
-		#region Project Open/Save Window Support
-
-		private bool ShowOpenSaveProjectWindow(bool isOpenDialog, string initialName, out string selectedName, out string description)
-		{
-			ProjectOpenSaveViewModel showOpenSaveVm = new ProjectOpenSaveViewModel(initialName, isOpenDialog);
-			var showOpenSaveWindow = new ProjectOpenSaveWindow
-			{
-				DataContext = showOpenSaveVm
-			};
-
-			if (showOpenSaveWindow.ShowDialog() == true)
-			{
-				selectedName = showOpenSaveWindow.ProjectName;
-				description = showOpenSaveWindow.ProjectDescription;
-				return true;
-			}
-			else
-			{
-				selectedName = null;
-				description = null;
-				return false;
 			}
 		}
 
@@ -187,22 +222,38 @@ namespace MSetExplorer
 			_vm.MapProjectViewModel.UpdateMapView(TransformType.Pan, newArea);
 		}
 
-		private void GoBackButton_Click(object sender, RoutedEventArgs e)
-		{
-			if (_vm.MapProjectViewModel.CanGoBack)
-			{
-				_vm.MapProjectViewModel.GoBack();
-			}
-		}
-
-		private void GoForwardButton_Click(object sender, RoutedEventArgs e)
-		{
-			if (_vm.MapProjectViewModel.CanGoForward)
-			{
-				_vm.MapProjectViewModel.GoForward();
-			}
-		}
-
 		#endregion
+
+		#region Private Methods
+
+		private void LoadNewProject()
+		{
+			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations: 700);
+			_vm.MapProjectViewModel.StartNewProject(mSetInfo);
+		}
+
+		private bool ShowOpenSaveProjectWindow(bool isOpenDialog, string initialName, out string selectedName, out string description)
+		{
+			var showOpenSaveVm = new ProjectOpenSaveViewModel(initialName, isOpenDialog);
+			var showOpenSaveWindow = new ProjectOpenSaveWindow
+			{
+				DataContext = showOpenSaveVm
+			};
+
+			if (showOpenSaveWindow.ShowDialog() == true)
+			{
+				selectedName = showOpenSaveWindow.ProjectName;
+				description = showOpenSaveWindow.ProjectDescription;
+				return true;
+			}
+			else
+			{
+				selectedName = null;
+				description = null;
+				return false;
+			}
+		}
+
+		#endregion`
 	}
 }

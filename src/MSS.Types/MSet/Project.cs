@@ -17,5 +17,7 @@ namespace MSS.Types.MSet
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
+
+		public bool OnFile => Id != ObjectId.Empty;
 	}
 }

@@ -22,6 +22,7 @@ namespace MSetExplorer
 		private SizeInt _canvasSize;
 
 		private Project _currentProject;
+		private bool _currentProjectIsDirty;
 
 		#region Constructor
 
@@ -34,6 +35,7 @@ namespace MSetExplorer
 
 			_canvasSize = new SizeInt();
 			_currentProject = null;
+			_currentProjectIsDirty = false;
 
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 		}
@@ -44,7 +46,9 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
+		public event EventHandler CurrentProjectChanged;
 		public event EventHandler CurrentJobChanged;
+
 
 		public SizeInt BlockSize { get; }
 
@@ -61,7 +65,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public Project Project
+		public Project CurrentProject
 		{
 			get => _currentProject;
 			private set
@@ -69,6 +73,26 @@ namespace MSetExplorer
 				if(value != _currentProject)
 				{
 					_currentProject = value;
+
+					CurrentProjectChanged?.Invoke(this, new EventArgs());
+					OnPropertyChanged();
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
+				}
+			}
+		}
+
+		public bool ProjectOnFile => CurrentProject?.OnFile ?? false;
+		public bool CanSaveProject => ProjectOnFile;
+
+		public bool CurrentProjectIsDirty
+		{
+			get => _currentProjectIsDirty;
+			private set
+			{
+				if (value != _currentProjectIsDirty)
+				{
+					_currentProjectIsDirty = value;
 					OnPropertyChanged();
 				}
 			}
@@ -84,20 +108,24 @@ namespace MSetExplorer
 
 		public void StartNewProject(MSetInfo mSetInfo)
 		{
-			Project = new Project(ObjectId.Empty, "Home", description: null);
+			CurrentProject = new Project(ObjectId.Empty, "Home", description: null);
 			LoadMap(mSetInfo, TransformType.None);
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
 		}
 
 		public void LoadNewProject(string projectName, string projectDescription, MSetInfo mSetInfo)
 		{
-			Project = _projectAdapter.CreateProject(projectName, projectDescription);
+			CurrentProject = _projectAdapter.CreateProject(projectName, projectDescription);
 			LoadMap(mSetInfo, TransformType.None);
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
 		}
 
 		public void LoadProject(string projectName)
 		{
-			Project = _projectAdapter.GetProject(projectName);
-			var jobs = _projectAdapter.GetAllJobs(Project.Id);
+			CurrentProject = _projectAdapter.GetProject(projectName);
+			var jobs = _projectAdapter.GetAllJobs(CurrentProject.Id);
 
 			DoWithWriteLock(() =>
 			{
@@ -112,18 +140,20 @@ namespace MSetExplorer
 
 				Rerun(_jobsPointer);
 			});
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
 		}
 
 		public void SaveProject(string projectName, string description)
 		{
-			if (Project.Id != ObjectId.Empty)
+			if (ProjectOnFile)
 			{
 				throw new InvalidOperationException("Cannot change the name of a project already loaded, use SaveLoadedProject instead.");
 			}
 
-			Project = _projectAdapter.CreateProject(projectName, description);
+			CurrentProject = _projectAdapter.CreateProject(projectName, description);
 
-			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
+			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(CurrentProject.Id);
 
 			var jobsList = Jobs.ToList();
 
@@ -132,21 +162,24 @@ namespace MSetExplorer
 				var job = jobsList[i];
 				if (job.Id.CreationTime > lastSavedTime)
 				{
-					job.Project = Project;
+					job.Project = CurrentProject;
 					var updatedJob = _projectAdapter.InsertJob(job);
 					UpdateJob(job, updatedJob);
 				}
 			}
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
+			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 		}
 
 		public void SaveLoadedProject()
 		{
-			if (Project.Id == ObjectId.Empty)
+			if (!ProjectOnFile)
 			{
 				throw new InvalidOperationException("Cannot save an unloaded project, use SaveProject instead.");
 			}
 
-			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(Project.Id);
+			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(CurrentProject.Id);
 
 			var jobsList = Jobs.ToList();
 
@@ -159,6 +192,8 @@ namespace MSetExplorer
 					UpdateJob(job, updatedJob);
 				}
 			}
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 		}
 
 		public void UpdateJob(Job oldJob, Job newJob)
@@ -274,7 +309,7 @@ namespace MSetExplorer
 		{
 			var parentJob = CurrentJob;
 			var jobName = MapJobHelper.GetJobName(transformType);
-			var job = MapJobHelper.BuildJob(parentJob, Project, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+			var job = MapJobHelper.BuildJob(parentJob, CurrentProject, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -287,6 +322,7 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 			});
 		}
 
@@ -315,7 +351,7 @@ namespace MSetExplorer
 
 			if (_jobsPointer == newJobIndex)
 			{
-				// Forced a redraw
+				// Force a redraw
 				CurrentJobChanged?.Invoke(this, new EventArgs());
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			}

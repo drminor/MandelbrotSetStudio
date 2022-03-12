@@ -10,12 +10,15 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler PropertyChanged;
 
-		event EventHandler CurrentJobChanged;
-
 		SizeInt BlockSize { get; }
 		SizeInt CanvasSize { get; set; }
-		Project Project { get; }
 
+		event EventHandler CurrentProjectChanged;
+		Project CurrentProject { get; }
+		bool CanSaveProject { get; }
+		bool CurrentProjectIsDirty { get; }
+
+		event EventHandler CurrentJobChanged;
 		Job CurrentJob { get; }
 
 		bool CanGoBack { get; }
