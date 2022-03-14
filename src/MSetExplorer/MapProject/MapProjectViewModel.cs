@@ -285,6 +285,7 @@ namespace MSetExplorer
 			var curJob = CurrentJob;
 			var position = curJob.MSetInfo.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+
 			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
 			var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
 

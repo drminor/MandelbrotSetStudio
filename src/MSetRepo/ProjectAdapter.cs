@@ -209,14 +209,25 @@ namespace MSetRepo
 
 		private IProjectInfo GetProjectInfoInternal(Project project, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter)
 		{
+			IProjectInfo result;
+
 			var jobInfos = jobReaderWriter.GetJobInfos(project.Id);
 
-			var subdivisionIds = jobInfos.Select(j => j.SubDivisionId).Distinct();
-			var lastSaved = jobInfos.Max(x => x.DateCreated);
-			var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
-			var minSamplePointDeltaExponent = subdivisonReaderWriter.GetMinExponent(subdivisionIds);
+			if (jobInfos.Count() > 0)
+			{
 
-			var result = _projectInfoCreator(project, lastSaved, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
+				var subdivisionIds = jobInfos.Select(j => j.SubDivisionId).Distinct();
+				var lastSaved = jobInfos.Max(x => x.DateCreated);
+				var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
+				var minSamplePointDeltaExponent = subdivisonReaderWriter.GetMinExponent(subdivisionIds);
+
+				result = _projectInfoCreator(project, lastSaved, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
+			}
+			else
+			{
+				result = _projectInfoCreator(project, DateTime.MinValue, 0, 0, 0);
+			}
+
 			return result;
 		}
 

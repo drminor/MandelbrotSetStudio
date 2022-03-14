@@ -4,19 +4,6 @@ namespace MSetExplorer
 {
 	public static class CustomCommands
 	{
-
-		public static readonly RoutedUICommand Exit = new RoutedUICommand(
-			text: "Exit",
-			name: "Exit",
-			ownerType: typeof(CustomCommands),
-			inputGestures: new InputGestureCollection() {
-				new KeyGesture(
-					Key.F4, 
-					ModifierKeys.Alt
-				)
-			}
-		);
-
 		public static readonly RoutedUICommand JobGoBack = new RoutedUICommand(
 			text: "Go Back",
 			name: "JobGoBack",
@@ -41,6 +28,54 @@ namespace MSetExplorer
 			}
 		);
 
+		public static readonly RoutedUICommand PanLeft = new RoutedUICommand(
+			text: "Pan Left",
+			name: "PanLeft",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.L,
+					ModifierKeys.Alt
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand PanUp = new RoutedUICommand(
+			text: "Pan Up",
+			name: "PanUp",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.U,
+					ModifierKeys.Alt
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand PanRight = new RoutedUICommand(
+			text: "Pan Right",
+			name: "PanRight",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.R,
+					ModifierKeys.Alt
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand PanDown = new RoutedUICommand(
+			text: "Pan Down",
+			name: "PanDown",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.D,
+					ModifierKeys.Alt
+				)
+			}
+		);
+
 		public static readonly RoutedUICommand ProjectSave = new RoutedUICommand(
 			text: "Save",
 			name: "ProjectSave",
@@ -49,6 +84,30 @@ namespace MSetExplorer
 				new KeyGesture(
 					Key.S,
 					ModifierKeys.Control
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand ProjectSaveAs = new RoutedUICommand(
+			text: "SaveAs",
+			name: "ProjectSaveAs",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.A,
+					ModifierKeys.Control
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand Exit = new RoutedUICommand(
+			text: "Exit",
+			name: "Exit",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.F4,
+					ModifierKeys.Alt
 				)
 			}
 		);

@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -46,7 +45,7 @@ namespace MSetExplorer
 		private void MainWindow_ContentRendered(object sender, EventArgs e)
 		{
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
-			LoadNewProject();
+			//LoadNewProject();
 		}
 
 		#endregion
@@ -167,7 +166,12 @@ namespace MSetExplorer
 		}
 
 		// Save As
-		private void SaveAsButton_Click(object sender, RoutedEventArgs e)
+		private void SaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.MapProjectViewModel?.CurrentJob != null;
+		}
+
+		private void SaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			var initialName = _vm.MapProjectViewModel.CurrentProjectName;
 			if (ShowOpenSaveProjectWindow(DialogType.Save, initialName, out var selectedName, out var description))
@@ -183,22 +187,27 @@ namespace MSetExplorer
 
 		private const int SHIFT_AMOUNT = 16;
 
-		private void GoLeftButton_Click(object sender, RoutedEventArgs e)
+		private void Pan_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.MapProjectViewModel?.CurrentJob != null;
+		}
+
+		private void PanLeft_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			Pan(new VectorInt(-1 * SHIFT_AMOUNT, 0));
 		}
 
-		private void GoUpButton_Click(object sender, RoutedEventArgs e)
+		private void PanUp_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			Pan(new VectorInt(0, SHIFT_AMOUNT));
 		}
 
-		private void GoRightButton_Click(object sender, RoutedEventArgs e)
+		private void PanRight_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			Pan(new VectorInt(SHIFT_AMOUNT, 0));
 		}
 
-		private void GoDownButton_Click(object sender, RoutedEventArgs e)
+		private void PanDown_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			Pan(new VectorInt(0, -1 * SHIFT_AMOUNT));
 		}

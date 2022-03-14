@@ -9,8 +9,14 @@
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.ProjectSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.JobGoBack" CanExecute="GoBack_CanExecute" Executed="GoBack_Executed" />
         <CommandBinding Command="local:CustomCommands.JobGoForward" CanExecute="GoForward_CanExecute" Executed="GoForward_Executed" />
+        
+        <CommandBinding Command="local:CustomCommands.PanLeft" CanExecute="Pan_CanExecute" Executed="PanLeft_Executed" />
+        <CommandBinding Command="local:CustomCommands.PanUp" CanExecute="Pan_CanExecute" Executed="PanUp_Executed" />
+        <CommandBinding Command="local:CustomCommands.PanRight" CanExecute="Pan_CanExecute" Executed="PanRight_Executed" />
+        <CommandBinding Command="local:CustomCommands.PanDown" CanExecute="Pan_CanExecute" Executed="PanDown_Executed" />
     </Window.CommandBindings>
 
     <Grid>
@@ -30,7 +36,7 @@
                 <MenuItem Header="_New" Click="NewButton_Click"/>
                 <MenuItem Header="_Open" Click="OpenButton_Click"/>
                 <MenuItem Header="_Save" Command="local:CustomCommands.ProjectSave" />
-                <MenuItem Header="Save_As" Click="SaveAsButton_Click" />
+                <MenuItem Header="Save_As" Command="local:CustomCommands.ProjectSaveAs" />
                 <Separator/>
                 <MenuItem Header="_Exit" Click="CloseButton_Click" />
             </MenuItem>
@@ -42,8 +48,13 @@
             </MenuItem>
             
             <MenuItem Header="_Map">
-                <MenuItem Header="Move Back" Command="local:CustomCommands.JobGoBack" />
-                <MenuItem Header="Move Forward" Command="local:CustomCommands.JobGoForward" />
+                <MenuItem Header="Move _Back" Command="local:CustomCommands.JobGoBack" />
+                <MenuItem Header="Move _Forward" Command="local:CustomCommands.JobGoForward" />
+                <Separator/>
+                <MenuItem Header="Pan _Left" Command="local:CustomCommands.PanLeft" />
+                <MenuItem Header="Pan _Up" Command="local:CustomCommands.PanUp" />
+                <MenuItem Header="Pan _Right" Command="local:CustomCommands.PanRight" />
+                <MenuItem Header="Pan _Down" Command="local:CustomCommands.PanDown" />
             </MenuItem>
 
         </Menu>
@@ -51,10 +62,10 @@
         
         <Border Grid.Row="1" Grid.Column="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
-                <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="GoLeftButton_Click">Left</Button>
-                <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="GoUpButton_Click">Up</Button>
-                <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="GoRightButton_Click">Right</Button>
-                <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Click="GoDownButton_Click">Down</Button>
+                <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Command="local:CustomCommands.PanLeft">Left</Button>
+                <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Command="local:CustomCommands.PanUp">Up</Button>
+                <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Command="local:CustomCommands.PanRight">Right</Button>
+                <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Command="local:CustomCommands.PanDown">Down</Button>
                 
                 <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,115,15,0" Command="local:CustomCommands.JobGoBack">Go Back</Button>
                 <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,15,15,0" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
@@ -69,7 +80,7 @@
 
         <Border Grid.Row="1" Grid.Column="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal" Margin="0,20,0,20">
                     <TextBlock Width="90" Margin="10, 10, 20, 0" FontSize="16" Text="Iterations:" VerticalAlignment="Top"/>
                     <TextBox x:Name="txtIterations" Text="700" Width="70"/>
                 </StackPanel>
