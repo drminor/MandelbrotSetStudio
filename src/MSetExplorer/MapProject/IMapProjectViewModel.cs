@@ -13,31 +13,31 @@ namespace MSetExplorer
 		SizeInt BlockSize { get; }
 		SizeInt CanvasSize { get; set; }
 
-		event EventHandler CurrentProjectChanged;
 		Project CurrentProject { get; }
+		string CurrentProjectName { get; }
 		bool CanSaveProject { get; }
 		bool CurrentProjectIsDirty { get; }
 
 		event EventHandler CurrentJobChanged;
 		Job CurrentJob { get; }
-
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
-
 		bool GoBack();
 		bool GoForward();
+		void UpdateJob(Job oldJob, Job newJob);
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
 		void UpdateColorMapEntries(ColorBandSet colorBands);
 
-		void StartNewProject(MSetInfo mSetInfo);
-		void SaveProject(string projectName, string description);
+		void ProjectStartNew(MSetInfo mSetInfo);
+		void ProjectCreate(string projectName, string description, MSetInfo mSetInfo);
+		bool ProjectOpen(string projectName);
+		void ProjectSave();
+		void ProjectSaveAs(string projectName, string description);
 
-		void LoadNewProject(string projectName, string description, MSetInfo mSetInfo);
-		void LoadProject(string projectName);
-		void SaveLoadedProject();
+		void ProjectUpdateName(string name);
+		void ProjectUpdateDescription(string description);
 
-		void UpdateJob(Job oldJob, Job newJob);
 	}
 }

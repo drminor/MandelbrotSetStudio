@@ -76,15 +76,22 @@ namespace MSetRepo
 			return project;
 		}
 
-		public Project GetProject(string name)
+		public bool TryGetProject(string name, out Project? project)
 		{
 			Debug.WriteLine($"Retrieving Project object for Project with namne: {name}.");
 
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			var projectRecord = projectReaderWriter.Get(name);
-			var project = _mSetRecordMapper.MapFrom(projectRecord);
 
-			return project;
+			if (projectReaderWriter.TryGet(name, out var projectRecord))
+			{
+				project = _mSetRecordMapper.MapFrom(projectRecord);
+				return true;
+			}
+			else
+			{
+				project = null;
+				return false;
+			}
 		}
 
 		public Project CreateProject(string name, string? description)
@@ -107,21 +114,21 @@ namespace MSetRepo
 			return result;
 		}
 
-		public Project GetOrCreateProject(string name, string description)
-		{
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//public Project GetOrCreateProject(string name, string description)
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			var projectRecord = projectReaderWriter.Get(name);
-			if (projectRecord is null)
-			{
-				var projectId = projectReaderWriter.Insert(new ProjectRecord(name, description));
-				projectRecord = projectReaderWriter.Get(projectId);
-			}
+		//	var projectRecord = projectReaderWriter.Get(name);
+		//	if (projectRecord is null)
+		//	{
+		//		var projectId = projectReaderWriter.Insert(new ProjectRecord(name, description));
+		//		projectRecord = projectReaderWriter.Get(projectId);
+		//	}
 
-			var result = _mSetRecordMapper.MapFrom(projectRecord);
+		//	var result = _mSetRecordMapper.MapFrom(projectRecord);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		/// <summary>
 		/// Inserts the project record if it does not exist on the database.
@@ -156,6 +163,12 @@ namespace MSetRepo
 			return project;
 		}
 
+		public void UpdateProject(ObjectId projectId, string name, string? description)
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			projectReaderWriter.Update(projectId, name, description);
+		}
+
 		public void DeleteProject(ObjectId projectId)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
@@ -165,8 +178,7 @@ namespace MSetRepo
 
 			foreach (var jobId in jobIds)
 			{
-				var dResult = DeleteJobAndChildMapSections(jobId, jobReaderWriter);
-				Debug.WriteLine($"Deleted {dResult.Item1} jobs, {dResult.Item2} map sections.");
+				_ = DeleteJob(jobId, jobReaderWriter);
 			}
 
 			_ = projectReaderWriter.Delete(projectId);
@@ -281,11 +293,17 @@ namespace MSetRepo
 			return updatedJob;
 		}
 
-		public Tuple<long, long> DeleteJobAndChildMapSections(ObjectId jobId, JobReaderWriter jobReaderWriter)
+		public void UpdateJob(Job job, Job? parentJob)
 		{
-			var deleteCount = jobReaderWriter.Delete(jobId);
-			var result = new Tuple<long, long>(deleteCount ?? 0, 0);
-			return result;
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var jobRecord = _mSetRecordMapper.MapTo(job);
+			jobReaderWriter.UpdateJob(jobRecord, parentJob?.Id);
+		}
+
+		public long DeleteJob(ObjectId jobId, JobReaderWriter jobReaderWriter)
+		{
+			var result = jobReaderWriter.Delete(jobId);
+			return result ?? 0;
 		}
 
 		public DateTime GetProjectLastSaveTime(ObjectId projectId)

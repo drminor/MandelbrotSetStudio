@@ -6,7 +6,7 @@ namespace MSS.Types.MSet
 	public class Project
 	{
 		public ObjectId Id { get; init; }
-		public string Name { get; init; }
+		public string Name { get; set; }
 		public string? Description { get; set; }
 
 		public Project(ObjectId id, string name, string? description)

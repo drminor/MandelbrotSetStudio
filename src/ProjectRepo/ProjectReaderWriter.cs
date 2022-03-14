@@ -35,6 +35,14 @@ namespace ProjectRepo
 			return projectRecord;
 		}
 
+		public bool TryGet(string name, out ProjectRecord projectRecord)
+		{
+			var filter = Builders<ProjectRecord>.Filter.Eq("Name", name);
+			projectRecord = Collection.Find(filter).FirstOrDefault();
+
+			return projectRecord != null;
+		}
+
 		public async Task<ProjectRecord> GetAsync(string name)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("Name", name);
@@ -54,6 +62,17 @@ namespace ProjectRepo
 		{
 			Collection.InsertOne(projectRecord);
 			return projectRecord.Id;
+		}
+
+		public void Update(ObjectId projectId, string name, string? description)
+		{
+			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
+
+			var updateDefinition = Builders<ProjectRecord>.Update
+				.Set(u => u.Name, name)
+				.Set(u => u.Description, description);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
 		public long? Delete(ObjectId projectId)

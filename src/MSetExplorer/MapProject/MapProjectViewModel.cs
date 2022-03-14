@@ -46,9 +46,7 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public event EventHandler CurrentProjectChanged;
 		public event EventHandler CurrentJobChanged;
-
 
 		public SizeInt BlockSize { get; }
 
@@ -60,6 +58,7 @@ namespace MSetExplorer
 				if(value != _canvasSize)
 				{
 					_canvasSize = value;
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanvasSize));
 					Reload();
 				}
 			}
@@ -74,7 +73,6 @@ namespace MSetExplorer
 				{
 					_currentProject = value;
 
-					CurrentProjectChanged?.Invoke(this, new EventArgs());
 					OnPropertyChanged();
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
@@ -82,8 +80,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool ProjectOnFile => CurrentProject?.OnFile ?? false;
-		public bool CanSaveProject => ProjectOnFile;
+		public string CurrentProjectName => CurrentProject?.Name;
+		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
+		public bool CanSaveProject => CurrentProjectOnFile;
 
 		public bool CurrentProjectIsDirty
 		{
@@ -106,25 +105,69 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void StartNewProject(MSetInfo mSetInfo)
+		public void ProjectStartNew(MSetInfo mSetInfo)
 		{
-			CurrentProject = new Project(ObjectId.Empty, "Home", description: null);
-			LoadMap(mSetInfo, TransformType.None);
+			CurrentProject = new Project(ObjectId.Empty, "New", description: null);
 
-			OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
+			DoWithWriteLock(() =>
+			{
+				_jobsCollection.Clear();
+				_jobsPointer = -1;
+			});
+
+			LoadMap(mSetInfo, TransformType.None);
 		}
 
-		public void LoadNewProject(string projectName, string projectDescription, MSetInfo mSetInfo)
+		public void ProjectCreate(string projectName, string projectDescription, MSetInfo mSetInfo)
 		{
-			CurrentProject = _projectAdapter.CreateProject(projectName, projectDescription);
-			LoadMap(mSetInfo, TransformType.None);
+			if (_projectAdapter.TryGetProject(projectName, out var _))
+			{
+				throw new InvalidOperationException($"Cannot create project with name: {projectName}, a project with that name already exists.");
+			}
 
-			OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
+			var project = _projectAdapter.CreateProject(projectName, projectDescription);
+			LoadProject(project);
 		}
 
-		public void LoadProject(string projectName)
+		public bool ProjectOpen(string projectName)
 		{
-			CurrentProject = _projectAdapter.GetProject(projectName);
+			var result = _projectAdapter.TryGetProject(projectName, out var project);
+			if (result)
+			{
+				LoadProject(project);
+			}
+
+			return result;
+		}
+
+		public void ProjectSaveAs(string projectName, string description)
+		{
+			if( _projectAdapter.TryGetProject(projectName, out var existingProject))
+			{
+				if (existingProject != null)
+				{
+					_projectAdapter.DeleteProject(existingProject.Id);
+				}
+			}
+
+			var project = _projectAdapter.CreateProject(projectName, description);
+
+			var jobsList = Jobs.ToList();
+
+			for (var i = 0; i < jobsList.Count; i++)
+			{
+				var job = jobsList[i];
+				job.Project = project;
+				var updatedJob = _projectAdapter.InsertJob(job);
+				UpdateJob(job, updatedJob);
+			}
+
+			CurrentProject = project;
+		}
+
+		private void LoadProject(Project project)
+		{
+			CurrentProject = project;
 			var jobs = _projectAdapter.GetAllJobs(CurrentProject.Id);
 
 			DoWithWriteLock(() =>
@@ -136,45 +179,15 @@ namespace MSetExplorer
 					_jobsCollection.Add(job);
 				}
 
-				_jobsPointer = _jobsCollection.Count - 1;
+				_jobsPointer = - 1;
 
-				Rerun(_jobsPointer);
+				Rerun(_jobsCollection.Count - 1);
 			});
-
-			OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
 		}
 
-		public void SaveProject(string projectName, string description)
+		public void ProjectSave()
 		{
-			if (ProjectOnFile)
-			{
-				throw new InvalidOperationException("Cannot change the name of a project already loaded, use SaveLoadedProject instead.");
-			}
-
-			CurrentProject = _projectAdapter.CreateProject(projectName, description);
-
-			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(CurrentProject.Id);
-
-			var jobsList = Jobs.ToList();
-
-			for (var i = 0; i < jobsList.Count; i++)
-			{
-				var job = jobsList[i];
-				if (job.Id.CreationTime > lastSavedTime)
-				{
-					job.Project = CurrentProject;
-					var updatedJob = _projectAdapter.InsertJob(job);
-					UpdateJob(job, updatedJob);
-				}
-			}
-
-			OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
-			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
-		}
-
-		public void SaveLoadedProject()
-		{
-			if (!ProjectOnFile)
+			if (!CurrentProjectOnFile)
 			{
 				throw new InvalidOperationException("Cannot save an unloaded project, use SaveProject instead.");
 			}
@@ -210,6 +223,7 @@ namespace MSetExplorer
 						if (job?.ParentJob?.Id == oldJob.Id)
 						{
 							job.ParentJob = newJob;
+							_projectAdapter.UpdateJob(job, newJob);
 						}
 					}
 				}
@@ -293,6 +307,39 @@ namespace MSetExplorer
 			var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorBands);
 
 			LoadMap(updatedInfo, TransformType.ColorMapUpdate);
+		}
+
+		public void ProjectUpdateName(string name)
+		{
+			var project = CurrentProject;
+
+			if (project != null) 
+			{
+				if (project.OnFile)
+				{
+					var description = project.Description;
+					_projectAdapter.UpdateProject(project.Id, name, description);
+				}
+
+				project.Name = name;
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectName));
+			}
+		}
+
+		public void ProjectUpdateDescription(string description)
+		{
+			var project = CurrentProject;
+
+			if (project != null)
+			{
+				if (project.OnFile)
+				{
+					var name = project.Name;
+					_projectAdapter.UpdateProject(project.Id, name, description);
+				}
+
+				project.Description = description;
+			}
 		}
 
 		#endregion

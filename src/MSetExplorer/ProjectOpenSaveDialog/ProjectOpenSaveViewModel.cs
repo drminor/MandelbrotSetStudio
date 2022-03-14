@@ -23,22 +23,24 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ProjectOpenSaveViewModel(string selectedName, bool isOpenDialog)
+		public ProjectOpenSaveViewModel(string initialName, DialogType dialogType)
 		{
-			IsOpenDialog = isOpenDialog;
+			DialogType = dialogType;
 			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING, CreateProjectInfo);
 			ProjectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
 
-			var selectedProject = ProjectInfos.FirstOrDefault(x => x.Name == selectedName);
+			SelectedProject = ProjectInfos.FirstOrDefault(x => x.Name == initialName);
+
 			var view = CollectionViewSource.GetDefaultView(ProjectInfos);
-			_ = view.MoveCurrentTo(selectedProject);
+			_ = view.MoveCurrentTo(SelectedProject);
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public bool IsOpenDialog { get; }
+		public DialogType DialogType { get; }
+
 		public ObservableCollection<IProjectInfo> ProjectInfos { get; init; }
 
 		public string SelectedName
@@ -65,10 +67,10 @@ namespace MSetExplorer
 			{
 				_selectedDescription = value;
 
-				if (SelectedProject.Project.Id != ObjectId.Empty)
+				if (SelectedProject != null && SelectedProject.Project.Id != ObjectId.Empty && SelectedProject.Description != value)
 				{
-					Debug.WriteLine($"Will update project with id: {SelectedProject.Project.Id} with the new description: {SelectedDescription}.");
-					//_projectAdapter.
+					_projectAdapter.UpdateProject(SelectedProject.Project.Id, SelectedProject.Name, SelectedDescription);
+					SelectedProject.Project.Description = value;
 				}
 
 				OnPropertyChanged();
@@ -102,6 +104,12 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		public bool IsNameTaken(string name)
+		{
+			var result = _projectAdapter.TryGetProject(name, out var _);
+			return result;
+		}
 
 		#region CreateProjectInfo Delegate
 

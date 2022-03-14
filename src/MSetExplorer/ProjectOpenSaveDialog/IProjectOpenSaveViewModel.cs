@@ -6,9 +6,9 @@ namespace MSetExplorer
 {
 	public interface IProjectOpenSaveViewModel
 	{
-		//public event PropertyChangedEventHandler PropertyChanged;
-
 		bool IsOpenDialog { get; }
+
+		DialogType DialogType { get; }
 
 		ObservableCollection<IProjectInfo> ProjectInfos { get; }
 		IProjectInfo SelectedProject { get; set; }
@@ -17,5 +17,12 @@ namespace MSetExplorer
 		string SelectedDescription { get; set; }
 
 		bool UserIsSettingTheName { get; set; }
+
+	}
+
+	public enum DialogType
+	{
+		Open,
+		Save
 	}
 }

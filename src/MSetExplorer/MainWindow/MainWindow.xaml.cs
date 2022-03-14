@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -34,11 +35,8 @@ namespace MSetExplorer
 			{
 				_vm = (IMainWindowViewModel)DataContext;
 				_vm.PropertyChanged += MainWindowViewModel_PropertyChanged;
-
 				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
-
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
-
 				txtIterations.LostFocus += TxtIterations_LostFocus;
 
 				Debug.WriteLine("The MainWindow is now loaded");
@@ -69,9 +67,10 @@ namespace MSetExplorer
 				return;
 			}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
+			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectName) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
-				Title = $"MainWindow \u2014 {_vm.MapProjectViewModel.CurrentProject.Name}";
+				SetWindowTitle(_vm.MapProjectViewModel.CurrentProject.Name);
+				CommandManager.InvalidateRequerySuggested();
 			}
 		}
 
@@ -100,24 +99,17 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Window Buttons
+		#region Window Button Handlers
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
 		{
+			_ = SaveChanges();
 			Close();
 		}
 
 		#endregion
 
-		#region Map Nav Buttons
-
-		//private void GoBackButton_Click(object sender, RoutedEventArgs e)
-		//{
-		//	if (_vm.MapProjectViewModel.CanGoBack)
-		//	{
-		//		_ =_vm.MapProjectViewModel.GoBack();
-		//	}
-		//}
+		#region Map Nav Button Handlers
 
 		private void GoBack_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
@@ -128,14 +120,6 @@ namespace MSetExplorer
 		{
 			_ = _vm.MapProjectViewModel.GoBack();
 		}
-
-		//private void GoForwardButton_Click(object sender, RoutedEventArgs e)
-		//{
-		//	if (_vm.MapProjectViewModel.CanGoForward)
-		//	{
-		//		_ =_vm.MapProjectViewModel.GoForward();
-		//	}
-		//}
 
 		private void GoForward_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
@@ -149,22 +133,25 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Project Button Handers
+		#region Project Button Handlers
 
 		// New
 		private void NewButton_Click(object sender, RoutedEventArgs e)
 		{
+			_ = SaveChanges();
 			LoadNewProject();
 		}
 
 		// Open
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
 		{
-			var initialName = "BlueBerry";
-			if (ShowOpenSaveProjectWindow(isOpenDialog: true, initialName, out var selectedName, out var description))
+			_ = SaveChanges();
+
+			var initialName = _vm.MapProjectViewModel.CurrentProjectName;
+			if (ShowOpenSaveProjectWindow(DialogType.Open, initialName, out var selectedName, out var _))
 			{
 				Debug.WriteLine($"Opening project with name: {selectedName}.");
-				_vm.MapProjectViewModel.LoadProject(selectedName);
+				_vm.MapProjectViewModel.ProjectOpen(selectedName);
 			}
 		}
 		
@@ -176,17 +163,17 @@ namespace MSetExplorer
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.MapProjectViewModel.SaveLoadedProject();
+			_vm.MapProjectViewModel.ProjectSave();
 		}
 
 		// Save As
 		private void SaveAsButton_Click(object sender, RoutedEventArgs e)
 		{
-			var initialName = "Test3";
-			if (ShowOpenSaveProjectWindow(isOpenDialog: false, initialName, out var selectedName, out var description))
+			var initialName = _vm.MapProjectViewModel.CurrentProjectName;
+			if (ShowOpenSaveProjectWindow(DialogType.Save, initialName, out var selectedName, out var description))
 			{
 				Debug.WriteLine($"Saving project with name: {selectedName}.");
-				_vm.MapProjectViewModel.SaveProject(selectedName, description);
+				_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description);
 			}
 		}
 
@@ -216,12 +203,6 @@ namespace MSetExplorer
 			Pan(new VectorInt(0, -1 * SHIFT_AMOUNT));
 		}
 
-		private void Pan(VectorInt amount)
-		{
-			var newArea = new RectangleInt(new PointInt(amount), _vm.MapProjectViewModel.CanvasSize);
-			_vm.MapProjectViewModel.UpdateMapView(TransformType.Pan, newArea);
-		}
-
 		#endregion
 
 		#region Private Methods
@@ -229,12 +210,54 @@ namespace MSetExplorer
 		private void LoadNewProject()
 		{
 			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations: 700);
-			_vm.MapProjectViewModel.StartNewProject(mSetInfo);
+			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo);
 		}
 
-		private bool ShowOpenSaveProjectWindow(bool isOpenDialog, string initialName, out string selectedName, out string description)
+		private bool SaveChanges()
 		{
-			var showOpenSaveVm = new ProjectOpenSaveViewModel(initialName, isOpenDialog);
+			bool result;
+
+			if (_vm.MapProjectViewModel.CurrentProjectIsDirty)
+			{
+				if (UserSaysSaveChanges())
+				{
+					if (_vm.MapProjectViewModel.CanSaveProject)
+					{
+						_vm.MapProjectViewModel.ProjectSave();
+						result = true;
+					}
+					else
+					{
+						_ = MessageBox.Show("Will Show SaveAs dialog here.");
+						result = false;
+					}
+				}
+				else
+				{
+					result = false;
+				}
+			}
+			else
+			{
+				result = false;
+			}
+
+			return result;
+		}
+
+		private bool UserSaysSaveChanges()
+		{
+			var defaultResult = _vm.MapProjectViewModel.CanSaveProject ? MessageBoxResult.Yes : MessageBoxResult.No;
+			var res = MessageBox.Show("Save Changes?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
+
+			var result = res == MessageBoxResult.Yes;
+
+			return result;
+		}
+
+		private bool ShowOpenSaveProjectWindow(DialogType dialogType, string initalName, out string selectedName, out string description)
+		{
+			var showOpenSaveVm = new ProjectOpenSaveViewModel(initalName, dialogType);
 			var showOpenSaveWindow = new ProjectOpenSaveWindow
 			{
 				DataContext = showOpenSaveVm
@@ -251,6 +274,24 @@ namespace MSetExplorer
 				selectedName = null;
 				description = null;
 				return false;
+			}
+		}
+
+		private void Pan(VectorInt amount)
+		{
+			var newArea = new RectangleInt(new PointInt(amount), _vm.MapProjectViewModel.CanvasSize);
+			_vm.MapProjectViewModel.UpdateMapView(TransformType.Pan, newArea);
+		}
+
+		private void SetWindowTitle(string projectName)
+		{
+			if (string.IsNullOrWhiteSpace(projectName))
+			{
+				Title = $"MainWindow \u2014 {projectName}";
+			}
+			else
+			{
+				Title = "MainWindow";
 			}
 		}
 
