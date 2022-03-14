@@ -66,7 +66,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectName) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
+			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
 				SetWindowTitle(_vm.MapProjectViewModel.CurrentProject.Name);
 				CommandManager.InvalidateRequerySuggested();
@@ -294,7 +294,7 @@ namespace MSetExplorer
 
 		private void SetWindowTitle(string projectName)
 		{
-			if (string.IsNullOrWhiteSpace(projectName))
+			if (!string.IsNullOrWhiteSpace(projectName))
 			{
 				Title = $"MainWindow \u2014 {projectName}";
 			}

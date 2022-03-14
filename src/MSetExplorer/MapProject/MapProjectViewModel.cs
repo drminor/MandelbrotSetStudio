@@ -59,6 +59,8 @@ namespace MSetExplorer
 				{
 					_canvasSize = value;
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanvasSize));
+
+					// TODO: Update the Job's CanvasSizeInBlocks (and NewArea? property.
 					Reload();
 				}
 			}
@@ -73,7 +75,7 @@ namespace MSetExplorer
 				{
 					_currentProject = value;
 
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProject));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 				}
@@ -92,7 +94,7 @@ namespace MSetExplorer
 				if (value != _currentProjectIsDirty)
 				{
 					_currentProjectIsDirty = value;
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 				}
 			}
 		}
@@ -116,6 +118,7 @@ namespace MSetExplorer
 			});
 
 			LoadMap(mSetInfo, TransformType.None);
+			CurrentProjectIsDirty = false;
 		}
 
 		public void ProjectCreate(string projectName, string projectDescription, MSetInfo mSetInfo)
@@ -163,6 +166,8 @@ namespace MSetExplorer
 			}
 
 			CurrentProject = project;
+
+			CurrentProjectIsDirty = false;
 		}
 
 		private void LoadProject(Project project)
@@ -183,6 +188,8 @@ namespace MSetExplorer
 
 				Rerun(_jobsCollection.Count - 1);
 			});
+
+			CurrentProjectIsDirty = false;
 		}
 
 		public void ProjectSave()
@@ -365,6 +372,7 @@ namespace MSetExplorer
 			{
 				_jobsCollection.Add(job);
 				_jobsPointer = _jobsCollection.Count - 1;
+				_currentProjectIsDirty = true;
 
 				CurrentJobChanged?.Invoke(this, new EventArgs());
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
@@ -382,12 +390,14 @@ namespace MSetExplorer
 				if (!(_jobsPointer < 0 || _jobsPointer > _jobsCollection.Count - 1))
 				{
 					DoWithWriteLock(() => Rerun(_jobsPointer));
+					CurrentProjectIsDirty = true;
 				}
 			}
 			finally
 			{
 				_jobsLock.ExitUpgradeableReadLock();
 			}
+
 		}
 
 		private void Rerun(int newJobIndex)
@@ -407,6 +417,7 @@ namespace MSetExplorer
 			{
 				var job = _jobsCollection[newJobIndex];
 				_jobsPointer = newJobIndex;
+
 				CurrentJobChanged?.Invoke(this, new EventArgs());
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
