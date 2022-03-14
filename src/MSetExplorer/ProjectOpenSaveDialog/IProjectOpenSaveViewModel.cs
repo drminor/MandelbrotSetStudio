@@ -1,13 +1,10 @@
 ﻿using MSetRepo;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 
 namespace MSetExplorer
 {
 	public interface IProjectOpenSaveViewModel
 	{
-		bool IsOpenDialog { get; }
-
 		DialogType DialogType { get; }
 
 		ObservableCollection<IProjectInfo> ProjectInfos { get; }
@@ -18,6 +15,7 @@ namespace MSetExplorer
 
 		bool UserIsSettingTheName { get; set; }
 
+		bool IsNameTaken(string name);
 	}
 
 	public enum DialogType

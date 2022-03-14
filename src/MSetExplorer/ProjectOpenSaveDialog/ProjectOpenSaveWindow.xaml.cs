@@ -8,7 +8,7 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class ProjectOpenSaveWindow : Window
 	{
-		private ProjectOpenSaveViewModel _vm;
+		private IProjectOpenSaveViewModel _vm;
 
 		#region Constructor 
 
@@ -27,7 +27,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (ProjectOpenSaveViewModel)DataContext;
+				_vm = (IProjectOpenSaveViewModel)DataContext;
 				borderTop.DataContext = DataContext;
 
 				btnSave.Content = _vm.DialogType == DialogType.Open ? "Open" : "Save";

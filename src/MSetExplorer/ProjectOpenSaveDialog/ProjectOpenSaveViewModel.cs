@@ -3,13 +3,12 @@ using MSetRepo;
 using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public class ProjectOpenSaveViewModel : ViewModelBase //, IProjectOpenSaveViewModel
+	public class ProjectOpenSaveViewModel : ViewModelBase, IProjectOpenSaveViewModel
 	{
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 
@@ -70,7 +69,7 @@ namespace MSetExplorer
 				if (SelectedProject != null && SelectedProject.Project.Id != ObjectId.Empty && SelectedProject.Description != value)
 				{
 					_projectAdapter.UpdateProject(SelectedProject.Project.Id, SelectedProject.Name, SelectedDescription);
-					SelectedProject.Project.Description = value;
+					SelectedProject.Description = value;
 				}
 
 				OnPropertyChanged();
