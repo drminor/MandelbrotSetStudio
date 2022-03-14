@@ -21,7 +21,7 @@ namespace MSS.Common
 
 		public static MSetInfoOld Build(string name)
 		{
-			MSetInfoOld info = GetMFileInfo(name);
+			var info = GetMFileInfo(name);
 			return info;
 		}
 
@@ -53,27 +53,28 @@ namespace MSS.Common
 				);
 
 
-			bool isHighRes = false;
-			IList<ColorBand> entries = new List<ColorBand>();
+			var isHighRes = false;
+			var targetIterations = 4000;
+			var mapCalcSettings = new MapCalcSettings(targetIterations, threshold: 4, iterationsPerRequest: 1000);
 
-			entries.Add(new ColorBand(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(399, "#fafdf2", ColorBandBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(407, "#98e498", ColorBandBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(428, "#0000ff", ColorBandBlendStyle.Next, "#000000"));
-            entries.Add(new ColorBand(446, "#f09ee6", ColorBandBlendStyle.Next, "#000000"));
-            entries.Add(new ColorBand(486, "#00ff00", ColorBandBlendStyle.Next, "#000000"));
-            entries.Add(new ColorBand(500, "#0000ff", ColorBandBlendStyle.Next, "#000000"));
-            entries.Add(new ColorBand(523, "#ffffff", ColorBandBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(560, "#3ee2e2", ColorBandBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7"));
+			var colorBands = new ColorBandSet
+			{
+				new ColorBand(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(399, "#fafdf2", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(407, "#98e498", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(428, "#0000ff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(446, "#f09ee6", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(486, "#00ff00", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(500, "#0000ff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(523, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(560, "#3ee2e2", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
+			};
 
-			string highColorCss = "#000000";
-
-			MapCalcSettings mapCalcSettings = new MapCalcSettings(targetIterations: 4000, threshold: 4, iterationsPerRequest: 100);
-
-			var colorMap = new ColorMap(entries, mapCalcSettings.TargetIterations, highColorCss);
-
-			MSetInfoOld result = new MSetInfoOld("Circus1", apCoords, isHighRes, mapCalcSettings, colorMap);
+			var highColorCss = "#000000";
+			colorBands.Add(new ColorBand(targetIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
+			var colorMap = new ColorMap(colorBands);
+			var result = new MSetInfoOld("Circus1", apCoords, isHighRes, mapCalcSettings, colorMap);
 
 			return result;
 		}
@@ -89,19 +90,20 @@ namespace MSS.Common
 				);
 
 
-			bool isHighRes = false;
-			IList<ColorBand> entries = new List<ColorBand>();
+			var isHighRes = false;
+			var targetIterations = 400;
+			var mapCalcSettings = new MapCalcSettings(targetIterations, threshold: 4, iterationsPerRequest: 100);
+			var colorBands = new ColorBandSet
+			{
+				new ColorBand(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
+			};
 
-			entries.Add(new ColorBand(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"));
-			entries.Add(new ColorBand(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7"));
+			var highColorCss = "#000000";
+			colorBands.Add(new ColorBand(targetIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
+			var colorMap = new ColorMap(colorBands);
 
-			string highColorCss = "#000000";
-
-			MapCalcSettings mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, iterationsPerRequest: 100);
-
-			var colorMap = new ColorMap(entries, mapCalcSettings.TargetIterations, highColorCss);
-
-			MSetInfoOld result = new MSetInfoOld(projectName, apCoords, isHighRes, mapCalcSettings, colorMap);
+			var result = new MSetInfoOld(projectName, apCoords, isHighRes, mapCalcSettings, colorMap);
 
 			return result;
 		}

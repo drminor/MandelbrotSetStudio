@@ -24,8 +24,13 @@ namespace MSS.Types
 		}
 
 		public Guid SerialNumber { get; set; }
-		public int? HighCutOff => base[^1]?.CutOff;
-		public ColorBandColor? HighColor => base[^1]?.StartColor;
+
+		public bool IsEmpty => Count > 0;
+
+		public ColorBand? HighColorBand => IsEmpty ? null : base[^1];
+
+		public int? HighCutOff => HighColorBand?.CutOff;
+		public ColorBandColor? HighColor => HighColorBand?.StartColor;
 
 		public bool TrySetHighColor(ColorBandColor highColor)
 		{

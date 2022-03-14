@@ -7,18 +7,14 @@ namespace MSS.Common
 {
     public class ColorMap
     {
-        private ColorBand[] _colorBands { get; init; }
+        private readonly ColorBand[] _colorBands;
 
         private readonly int[] _cutOffs;
         private readonly int[] _prevCutOffs;
         private readonly int[] _bucketWidths;
 
-        public ColorMap(IList<ColorBand> colorBands)
-            : this(colorBands.Take(colorBands.Count - 1).ToArray(), colorBands[colorBands.Count - 1])
-        { }
-
-        public ColorMap(IList<ColorBand> colorBands, int maxIterations, string highColor)
-            : this(colorBands.ToArray(), new ColorBand(maxIterations, highColor, ColorBandBlendStyle.None, highColor))
+        public ColorMap(ColorBandSet colorBandSet)
+            : this(colorBandSet.Take(colorBandSet.Count - 1).ToArray(), colorBandSet[^1])
         { }
 
         private ColorMap(ColorBand[] colorBands, ColorBand highColorEntry)
