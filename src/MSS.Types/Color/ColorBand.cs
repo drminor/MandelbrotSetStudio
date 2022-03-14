@@ -11,10 +11,9 @@ namespace MSS.Types
         public ColorBandBlendStyle BlendStyle { get; init; }
         public ColorBandColor EndColor { get; init; }
 
-        //public ColorMapEntry(int cutOff, string startCssColor) : this(cutOff, startCssColor, ColorMapBlendStyle.None, startCssColor)
-        //{ }
+		#region Constructor
 
-        public ColorBand(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor) : this(cutOff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
+		public ColorBand(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor) : this(cutOff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
         {
         }
 
@@ -28,7 +27,23 @@ namespace MSS.Types
             EndColor = endColor;
         }
 
-        public ColorBand Clone()
+		#endregion
+
+		#region Public Properties
+
+		public string BlendStyleAsString => BlendStyle switch
+		{
+			ColorBandBlendStyle.Next => "Next",
+			ColorBandBlendStyle.None => "None",
+			ColorBandBlendStyle.End => "End",
+			_ => "None",
+		};
+
+		#endregion
+
+		#region Public Methods
+
+		public ColorBand Clone()
 		{
             return new ColorBand(CutOff, StartColor.CssColor, BlendStyle, EndColor.CssColor);
 		}
@@ -38,11 +53,15 @@ namespace MSS.Types
             return Clone();
 		}
 
+		#endregion
 
-        public static ColorBand UpdateCutOff(ColorBand source, int cutOff)
+		#region Static Methods
+
+		public static ColorBand UpdateCutOff(ColorBand source, int cutOff)
         {
             return new ColorBand(cutOff, source.StartColor, source.BlendStyle, source.EndColor);
         }
 
-    }
+		#endregion
+	}
 }

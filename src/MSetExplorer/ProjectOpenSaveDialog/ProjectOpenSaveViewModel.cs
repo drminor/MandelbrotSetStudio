@@ -10,8 +10,6 @@ namespace MSetExplorer
 {
 	public class ProjectOpenSaveViewModel : ViewModelBase, IProjectOpenSaveViewModel
 	{
-		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
-
 		private readonly ProjectAdapter _projectAdapter;
 		private IProjectInfo _selectedProject;
 
@@ -22,12 +20,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ProjectOpenSaveViewModel(string initialName, DialogType dialogType)
+		public ProjectOpenSaveViewModel(ProjectAdapter projectAdapter, string initialName, DialogType dialogType)
 		{
+			_projectAdapter = projectAdapter;
 			DialogType = dialogType;
-			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING, CreateProjectInfo);
-			ProjectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
 
+			ProjectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
 			SelectedProject = ProjectInfos.FirstOrDefault(x => x.Name == initialName);
 
 			var view = CollectionViewSource.GetDefaultView(ProjectInfos);

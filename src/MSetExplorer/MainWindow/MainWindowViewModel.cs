@@ -6,11 +6,13 @@ namespace MSetExplorer
 	{
 		private int _targetIterations;
 		private int _steps;
-		private ColorBandSet _colorBands;
+		//private ColorBandSet _colorBands;
+
+		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 
 		#region Constructor
 
-		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel)
+		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, IColorBandViewModel colorBandViewModel)
 		{
 			MapProjectViewModel = mapProjectViewModel;
 			MapProjectViewModel.CurrentJobChanged += MapProjectViewModel_CurrentJobChanged;
@@ -20,6 +22,10 @@ namespace MSetExplorer
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
 			MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+
+			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
+
+			ColorBandViewModel = colorBandViewModel;
 		}
 
 		private void MapProjectViewModel_CurrentJobChanged(object sender, System.EventArgs e)
@@ -35,9 +41,11 @@ namespace MSetExplorer
 				_steps = mapCalcSettings.IterationsPerRequest;
 				OnPropertyChanged(nameof(Steps));
 
-				_colorBands = curJob.MSetInfo.ColorBands;
-				OnPropertyChanged(nameof(ColorMapEntries));
+				//_colorBands = curJob.MSetInfo.ColorBands;
+				//OnPropertyChanged(nameof(ColorMapEntries));
 			}
+
+			ColorBandViewModel.CurrentJob = curJob;
 		}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object sender, MapViewUpdateRequestedEventArgs e)
@@ -59,6 +67,7 @@ namespace MSetExplorer
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 		public IMapProjectViewModel MapProjectViewModel { get; }
+		public IColorBandViewModel ColorBandViewModel { get; }
 
 		public int TargetIterations
 		{
@@ -80,17 +89,27 @@ namespace MSetExplorer
 			set { _steps = value; OnPropertyChanged(); }
 		}
 
-		public ColorBandSet ColorMapEntries
+		//public ColorBandSet ColorMapEntries
+		//{
+		//	get => _colorBands;
+		//	set
+		//	{
+		//		if(value != _colorBands)
+		//		{
+		//			_colorBands = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
+
+		#endregion
+
+		#region Public Methods
+
+		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType)
 		{
-			get => _colorBands;
-			set
-			{
-				if(value != _colorBands)
-				{
-					_colorBands = value;
-					OnPropertyChanged();
-				}
-			}
+			var result = _projectOpenSaveViewModelCreator(initalName, dialogType);
+			return result;
 		}
 
 		#endregion

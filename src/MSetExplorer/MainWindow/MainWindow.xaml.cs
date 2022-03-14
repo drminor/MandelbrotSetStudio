@@ -36,6 +36,8 @@ namespace MSetExplorer
 				_vm.PropertyChanged += MainWindowViewModel_PropertyChanged;
 				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+
+				colorBandView1.DataContext = _vm.ColorBandViewModel;
 				txtIterations.LostFocus += TxtIterations_LostFocus;
 
 				Debug.WriteLine("The MainWindow is now loaded");
@@ -90,10 +92,10 @@ namespace MSetExplorer
 				txtIterations.Text = _vm.TargetIterations.ToString(CultureInfo.InvariantCulture);
 			}
 
-			if (e.PropertyName == nameof(IMainWindowViewModel.ColorMapEntries))
-			{
-				//TODO: Update the CME View.
-			}
+			//if (e.PropertyName == nameof(IMainWindowViewModel.ColorMapEntries))
+			//{
+			//	//TODO: Update the CME View.
+			//}
 		}
 
 		#endregion
@@ -266,7 +268,7 @@ namespace MSetExplorer
 
 		private bool ShowOpenSaveProjectWindow(DialogType dialogType, string initalName, out string selectedName, out string description)
 		{
-			var showOpenSaveVm = new ProjectOpenSaveViewModel(initalName, dialogType);
+			var showOpenSaveVm = _vm.CreateAProjectOpenSaveViewModel(initalName, dialogType);
 			var showOpenSaveWindow = new ProjectOpenSaveWindow
 			{
 				DataContext = showOpenSaveVm

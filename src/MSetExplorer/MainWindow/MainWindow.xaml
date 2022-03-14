@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="MainWindow" Width="1420" Height="1105">
+        Title="MainWindow" Width="1620" Height="1105">
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
@@ -27,7 +27,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="140"/>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="210"/>
+            <ColumnDefinition Width="410"/>
         </Grid.ColumnDefinitions>
 
         <Menu Grid.Row="0" Grid.ColumnSpan="3" Height="25">
@@ -78,22 +78,37 @@
             <local:MapDisplay x:Name="mapDisplay1"></local:MapDisplay>
         </Border>
 
-        <Border Grid.Row="1" Grid.Column="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
-                <StackPanel Orientation="Horizontal" Margin="0,20,0,20">
-                    <TextBlock Width="90" Margin="10, 10, 20, 0" FontSize="16" Text="Iterations:" VerticalAlignment="Top"/>
-                    <TextBox x:Name="txtIterations" Text="700" Width="70"/>
+        <Grid Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
+
+                    <StackPanel Orientation="Horizontal" Margin="0,20,0,20">
+                        <TextBlock Width="90" Margin="10, 10, 20, 0" FontSize="16" Text="Iterations:" VerticalAlignment="Top"/>
+                        <TextBox x:Name="txtIterations" Text="700" Width="70"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                        <TextBlock Width="90" Margin="10, 10, 20, 0" FontSize="16" Text="Steps:" VerticalAlignment="Top"/>
+                        <TextBox Text="{Binding Path=Steps}" Width="70"/>
+                    </StackPanel>
+
                 </StackPanel>
+            </Border>
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                    <TextBlock Width="90" Margin="10, 10, 20, 0" FontSize="16" Text="Steps:" VerticalAlignment="Top"/>
-                    <TextBox Text="{Binding Path=Steps}" Width="70"/>
-                </StackPanel>
+            <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+                <local:ColorBandView x:Name="colorBandView1"></local:ColorBandView>
+            </Border>
 
-
-
-            </StackPanel>
-        </Border>
-
+        </Grid>
+        
     </Grid>
 </Window>

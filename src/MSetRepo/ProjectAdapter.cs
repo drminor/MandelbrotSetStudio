@@ -401,5 +401,14 @@ namespace MSetRepo
 		}
 
 		#endregion
+
+		#region Color Bands 
+
+		public ColorBandSet? GetColorBands(Job job)
+		{
+			return job?.MSetInfo.ColorBands;
+		}
+
+		#endregion
 	}
 }

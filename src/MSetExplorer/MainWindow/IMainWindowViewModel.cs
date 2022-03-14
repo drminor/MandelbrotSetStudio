@@ -9,11 +9,13 @@ namespace MSetExplorer
 
 		IMapProjectViewModel MapProjectViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
+		IColorBandViewModel ColorBandViewModel { get; }
 
 		int TargetIterations { get; set; }
 		int Steps { get; set; }
 
-		ColorBandSet ColorMapEntries { get; set; }
+		//ColorBandSet ColorMapEntries { get; set; }
 
+		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType);
 	}
 }

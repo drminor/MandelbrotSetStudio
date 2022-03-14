@@ -15,8 +15,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!--SelectedItem="{Binding SelectedProject}"-->
-
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
 
             <ListView Margin="10" Name="lvProjects" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedProject}">
