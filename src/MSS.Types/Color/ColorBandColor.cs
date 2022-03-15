@@ -1,9 +1,10 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.Text.Json.Serialization;
 
 namespace MSS.Types
 {
-    public class ColorBandColor
+    public class ColorBandColor : ICloneable 
     {
         [JsonConstructor]
         [BsonConstructor]
@@ -14,11 +15,7 @@ namespace MSS.Types
 
         public ColorBandColor(byte[] colorComps)
         {
-            ColorComps = new byte[3];
-            ColorComps[0] = colorComps[0];
-            ColorComps[1] = colorComps[1];
-            ColorComps[2] = colorComps[2];
-
+            ColorComps = colorComps;
             _cssColor = null;
         }
 
@@ -87,5 +84,17 @@ namespace MSS.Types
             return colorComps;
         }
 
-    }
+		object ICloneable.Clone()
+		{
+            return Clone();
+		}
+
+        public ColorBandColor Clone()
+		{
+            var colorComps = new byte[3];
+            Array.Copy(ColorComps, colorComps, 3);
+            return new ColorBandColor(colorComps);
+		}
+
+	}
 }

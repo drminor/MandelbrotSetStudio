@@ -1,64 +1,207 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace MSS.Types
 {
 	public class ColorBandSet : Collection<ColorBand>, IEquatable<ColorBandSet?>, IEqualityComparer<ColorBandSet>, ICloneable
 	{
-		public ColorBandSet() : this(Guid.NewGuid())
+		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
+
+		#region Constructor
+
+		public ColorBandSet() : this(Guid.NewGuid(), new List<ColorBand>())
 		{ }
 
-		public ColorBandSet(Guid serialNumber) : base()
-		{
-			SerialNumber = serialNumber;
-		}
+		public ColorBandSet(Guid serialNumber) : this(serialNumber, new List<ColorBand>())
+		{ }
 
 		public ColorBandSet(IList<ColorBand> list) : this(Guid.NewGuid(), list)
 		{ }
 
-		public ColorBandSet(Guid serialNumber, IList<ColorBand> colorBands) : base(colorBands)
+		public ColorBandSet(Guid serialNumber, IList<ColorBand> colorBands) : base(FixBands(colorBands))
 		{
 			SerialNumber = serialNumber;
 		}
 
+		public static IList<ColorBand> FixBands(IList<ColorBand> colorBands)
+		{
+			if (colorBands == null || colorBands.Count == 0)
+			{
+				return new List<ColorBand> { DEFAULT_HIGH_COLOR_BAND };
+			}
+
+			var result = new List<ColorBand>(colorBands);
+
+			if (colorBands.Count > 1)
+			{
+				var prevCutOff = 0;
+				for(var i = 0; i < colorBands.Count - 1; i++)
+				{
+					var cb = colorBands[i];
+					cb.PreviousCutOff = prevCutOff;
+					cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? colorBands[i + 1].StartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
+
+					prevCutOff = cb.CutOff;
+				}
+
+				var lastCb = colorBands[colorBands.Count - 1];
+
+				Debug.Assert(lastCb.BlendStyle != ColorBandBlendStyle.Next, "The last item in the list of ColorBands being used to construct a ColorBandSet has its BlendStyle set to 'Next.'");
+
+				lastCb.PreviousCutOff = prevCutOff;
+				lastCb.ActualEndColor = lastCb.BlendStyle == ColorBandBlendStyle.None ? lastCb.StartColor : lastCb.EndColor;
+			}
+
+			return result;
+		}
+
+		#endregion
+
+		#region Public Properties
+
 		public Guid SerialNumber { get; set; }
 
-		public bool IsEmpty => Count > 0;
-
-		public ColorBand? HighColorBand => IsEmpty ? null : base[^1];
-
-		public int? HighCutOff => HighColorBand?.CutOff;
-		public ColorBandColor? HighColor => HighColorBand?.StartColor;
-
-		public bool TrySetHighColor(ColorBandColor highColor)
+		public ColorBand HighColorBand
 		{
-			if (Count > 0)
+			get => base[^1];
+			set { base[^1] = value; }
+		}
+
+		public int HighCutOff
+		{
+			get => HighColorBand.CutOff;
+			set
 			{
 				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, highColor, ColorBandBlendStyle.None, highColor);
-				return true;
-			}
-			else
-			{
-				return false;
+				base[^1] = new ColorBand(value, currentBand.StartColor, currentBand.BlendStyle, currentBand.EndColor);
 			}
 		}
 
-		public bool TrySetHighCutOff(int cutOff)
+		public ColorBandColor HighStartColor
 		{
-			if (Count > 0)
+			get => HighColorBand.StartColor;
+			set
 			{
 				var currentBand = base[^1];
-				base[^1] = new ColorBand(cutOff, currentBand.StartColor, currentBand.BlendStyle, currentBand.EndColor);
-				return true;
+				base[^1] = new ColorBand(currentBand.CutOff, value, currentBand.BlendStyle, currentBand.EndColor);
+			}
+		}
+
+		public ColorBandBlendStyle HighColorBlendStyle
+		{
+			get => HighColorBand.BlendStyle;
+			set
+			{
+				if (value == ColorBandBlendStyle.Next)
+				{
+					throw new InvalidOperationException("The HighColorBand cannot have a BlendStyle of Next.");
+				}
+				var currentBand = base[^1];
+				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, value, currentBand.EndColor);
+			}
+		}
+
+		public ColorBandColor HighEndColor
+		{
+			get => HighColorBand.EndColor;
+			set
+			{
+				var currentBand = base[^1];
+				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, currentBand.BlendStyle, value);
+			}
+		}
+
+		#endregion
+
+		#region Collection Methods
+
+		protected override void ClearItems()
+		{
+			base.ClearItems();
+			Add(DEFAULT_HIGH_COLOR_BAND);
+		}
+
+		protected override void InsertItem(int index, ColorBand item)
+		{
+			base.InsertItem(index, item);
+			UpdateItemAndNeighbors(index, item);
+		}
+
+		protected override void RemoveItem(int index)
+		{
+			base.RemoveItem(index);
+			if (Count == 0)
+			{
+				Add(DEFAULT_HIGH_COLOR_BAND);
 			}
 			else
 			{
-				return false;
+				if (index > Count - 1)
+				{
+					index = Count - 1;
+				}
+
+				UpdateItemAndNeighbors(index, Items[index]);
 			}
 		}
+
+		protected override void SetItem(int index, ColorBand item)
+		{
+			base.SetItem(index, item);
+			UpdateItemAndNeighbors(index, item);
+		}
+
+		private void UpdateItemAndNeighbors(int index, ColorBand item)
+		{
+			IList<ColorBand> colorBands = GetItemAndNeighbors(index, item);
+
+			for(var i = 0; i < colorBands.Count; i++)
+			{
+				var cb = colorBands[i];
+				cb.UpdateWithNeighbors(GetPreviousItem(i - 1), GetNextItem(i + 1));
+			}
+		}
+
+		private IList<ColorBand> GetItemAndNeighbors(int index, ColorBand item)
+		{
+			var result = new List<ColorBand>();
+
+			var prev = GetPreviousItem(index);
+
+			if (prev != null)
+			{
+				result.Add(prev);
+			}
+
+			result.Add(item);
+
+			var next = GetNextItem(index);
+
+			if (next != null)
+			{
+				result.Add(next);
+			}
+
+			return result;
+		}
+
+		private ColorBand? GetPreviousItem(int index)
+		{
+			return index <= 0 ? null : Items[index - 1];
+		}
+
+		private ColorBand? GetNextItem(int index)
+		{
+			return index >= Count - 1 ? null : Items[index + 1];
+		}
+
+		#endregion
+
+		#region Clone Support
 
 		public ColorBandSet CreateNewCopy()
 		{
@@ -77,15 +220,11 @@ namespace MSS.Types
 
 		private IList<ColorBand> CreateCopy()
 		{
-			var result = new List<ColorBand>();
-
-			foreach (var cme in Items)
-			{
-				result.Add(cme.Clone());
-			}
-
+			var result = Items.Select(x => x.Clone()).ToList();
 			return result;
 		}
+
+		#endregion
 
 		public override string? ToString()
 		{

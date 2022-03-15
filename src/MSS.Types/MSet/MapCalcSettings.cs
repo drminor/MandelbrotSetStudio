@@ -8,6 +8,8 @@ namespace MSS.Types.MSet
 	[DataContract]
 	public class MapCalcSettings : IEquatable<MapCalcSettings>, IEqualityComparer<MapCalcSettings?>
 	{
+		public const int DEFAULT_THRESHOLD = 4;
+
 		[DataMember(Order = 1)]
 		public int TargetIterations { get; init; }
 
@@ -23,6 +25,9 @@ namespace MSS.Types.MSet
 			Threshold = 0;
 			IterationsPerRequest = 0;
 		}
+
+		public MapCalcSettings(int targetIterations, int iterationsPerRequest) : this(targetIterations, DEFAULT_THRESHOLD, iterationsPerRequest)
+		{ }
 
 		public MapCalcSettings(int targetIterations, int threshold, int iterationsPerRequest)
 		{

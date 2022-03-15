@@ -104,7 +104,7 @@
                 </StackPanel>
             </Border>
 
-            <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
                 <local:ColorBandView x:Name="colorBandView1"></local:ColorBandView>
             </Border>
 

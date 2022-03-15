@@ -1,67 +1,68 @@
 ﻿using MSS.Types;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace MSS.Common
 {
-    public class ColorMap
+	public class ColorMap
     {
-        private readonly ColorBand[] _colorBands;
+        //private readonly ColorBand[] _colorBands;
+        //private readonly ColorBand _highColorEntry;
 
         private readonly int[] _cutOffs;
-        private readonly int[] _prevCutOffs;
-        private readonly int[] _bucketWidths;
+        //private readonly int[] _prevCutOffs;
+        //private readonly int[] _bucketWidths;
 
-        public ColorMap(ColorBandSet colorBandSet)
-            : this(colorBandSet.Take(colorBandSet.Count - 1).ToArray(), colorBandSet[^1])
-        { }
+        private readonly int _lastCutOff;
 
-        private ColorMap(ColorBand[] colorBands, ColorBand highColorEntry)
-        {
-            _colorBands = colorBands;
-            HighColorEntry = highColorEntry;
+		#region Constructor
 
-            _cutOffs = BuildCutOffs(_colorBands);
-            var pOffsetsAndBucketWidths = BuildPrevCutOffsAndBucketWidths(_colorBands, HighColorEntry);
+		public ColorMap(ColorBandSet colorBandSet)
+		{
+            if (colorBandSet == null)
+			{
+                throw new ArgumentNullException(nameof(colorBandSet));
+            }
 
-            _prevCutOffs = pOffsetsAndBucketWidths.Select(x => x.Item1).ToArray();
-            _bucketWidths = pOffsetsAndBucketWidths.Select(x => x.Item2).ToArray();
+            ColorBandSet = colorBandSet;
+            _lastCutOff = colorBandSet.HighColorBand.PreviousCutOff;
 
-            SetEndColors(_colorBands);
+            //_colorBands = colorBandSet.Take(colorBandSet.Count - 1).ToArray();
+            //_highColorEntry = colorBandSet[^1];
+
+            //_cutOffs = BuildCutOffs(_colorBands);
+
+            _cutOffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.CutOff).ToArray();
+
+            //var pOffsetsAndBucketWidths = BuildPrevCutOffsAndBucketWidths(_colorBands, _highColorEntry);
+
+            //_prevCutOffs = pOffsetsAndBucketWidths.Select(x => x.Item1).ToArray();
+            //_bucketWidths = pOffsetsAndBucketWidths.Select(x => x.Item2).ToArray();
+
+            //SetEndColors(_colorBands);
         }
 
-        public IList<ColorBand> ColorBands => _colorBands.ToList();
-        public ColorBand HighColorEntry { get; init; }
+		#endregion
 
-        public IList<ColorBand> AllcolorBands
-		{
-            get
-			{
-                var t = _colorBands.ToList();
-                t.Add(HighColorEntry);
+		#region Public Properties
 
-                return t;
-			}
-		}
+		public ColorBandSet ColorBandSet { get; }
+        public Guid SerialNumber => ColorBandSet.SerialNumber;
+
+        #endregion
+
+        #region Public Methods
 
         public byte[] GetColor(int countVal, double escapeVelocity)
         {
-            if (countVal > 500)
-			{
-                countVal = 500;
-			}
+   //         if (countVal > 500)
+			//{
+   //             countVal = 500;
+			//}
 
-            var colorMapIndex = GetColorMapIndex(countVal);
-            var result = GetBlendedColor(colorMapIndex, countVal, escapeVelocity);
-            return result;
-        }
-         
-        private byte[] GetBlendedColor(int colorMapIndex, int countVal, double escapeVelocity)
-        {
             byte[] result;
 
-            var cme = GetColorMapEntry(colorMapIndex);
+            var cme = GetColorBand(countVal);
 
             if (cme.BlendStyle == ColorBandBlendStyle.None)
             {
@@ -69,36 +70,54 @@ namespace MSS.Common
                 return result;
             }
 
-            var botBucketVal = _prevCutOffs[colorMapIndex];
+            var botBucketVal = cme.PreviousCutOff; 
 
-            //int[] cStart;
+            var bucketWidth = cme.BucketWidth;
+            var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
+            result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.ActualEndColor.ColorComps, stepFactor);
 
-            //if (countVal == botBucketVal)
-            //{
-            //	cStart = cme.StartColor.ColorComps;
-            //}
-            //else
-            //{
-            //	double stepFactor = (-1 + countVal - botBucketVal) / (double)cme.BucketWidth;
-            //	cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
-            //}
-
-            ////double stepFactor = (countVal - botBucketVal) / (double)cme.BucketWidth;
-            ////cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
-
-            //double intraStepFactor = escapeVelocity / cme.BucketWidth;
-            //result = Interpolate(cStart, cme.StartColor.ColorComps, cme.EndColor.ColorComps, intraStepFactor);
-
-            var bucketWidth = _bucketWidths[colorMapIndex];
-			var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
-			result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
-
-			return result;
+            return result;
         }
+
+		#endregion
+
+		#region Private Methods
+
+        private ColorBand GetColorBand(int countVal)
+		{
+            ColorBand result;
+
+            if (countVal >= _lastCutOff)
+			{
+                result = ColorBandSet.HighColorBand;
+			}
+            else
+			{
+                result = ColorBandSet[GetColorMapIndex(countVal)];
+			}
+
+            return result;
+		}
+
+		private int GetColorMapIndex(int countVal)
+		{
+			var newIndex = Array.BinarySearch(_cutOffs, countVal);
+
+			if (newIndex < 0)
+			{
+				newIndex = ~newIndex;
+			}
+			else
+			{
+				newIndex++;
+			}
+
+			return newIndex;
+		}
 
         private byte[] Interpolate(byte[] cStart, byte[] c1, byte[] c2, double factor)
         {
-            if(factor == 0)
+            if (factor == 0)
             {
                 return cStart;
             }
@@ -108,9 +127,9 @@ namespace MSS.Common
                 var gd = cStart[1] + (c2[1] - c1[1]) * factor;
                 var bd = cStart[2] + (c2[2] - c1[2]) * factor;
 
-                var r = (int) Math.Round(rd);
-                var g = (int) Math.Round(gd);
-                var b = (int) Math.Round(bd);
+                var r = (int)Math.Round(rd);
+                var g = (int)Math.Round(gd);
+                var b = (int)Math.Round(bd);
 
                 if (r < 0 || r > 255)
                 {
@@ -128,83 +147,113 @@ namespace MSS.Common
                 }
 
                 var result = new byte[3];
-                result[0] = (byte) r;
-                result[1] = (byte) g;
-                result[2] = (byte) b;
+                result[0] = (byte)r;
+                result[1] = (byte)g;
+                result[2] = (byte)b;
 
                 return result;
             }
         }
 
-        private ColorBand GetColorMapEntry(int colorMapIndex)
-        {
-            var result = colorMapIndex < _cutOffs.Length ? _colorBands[colorMapIndex] : HighColorEntry;
-			return result;
-        }
+        #endregion
 
-        private int GetColorMapIndex(int countVal)
-        {
-            var newIndex = Array.BinarySearch(_cutOffs, countVal);
+        #region Old Not Used
 
-            if (newIndex < 0)
-            {
-                newIndex = ~newIndex;
-            }
-            else
-            {
-                newIndex++;
-            }
+        //private int[] BuildCutOffs(ColorBand[] colorBands)
+        //{
+        //    var result = new int[colorBands.Length];
 
-            return newIndex;
-        }
+        //    for (var ptr = 0; ptr < colorBands.Length; ptr++)
+        //    {
+        //        result[ptr] = colorBands[ptr].CutOff;
+        //    }
 
-        private int[] BuildCutOffs(ColorBand[] colorBands)
-        {
-            var result = new int[colorBands.Length];
+        //    return result;
+        //}
 
-            for (var ptr = 0; ptr < colorBands.Length; ptr++)
-            {
-                result[ptr] = colorBands[ptr].CutOff;
-            }
+        //private IList<Tuple<int, int>> BuildPrevCutOffsAndBucketWidths(ColorBand[] colorBands, ColorBand highColorEntry)
+        //{
+        //    var result = new List<Tuple<int, int>>();
 
-            return result;
-        }
+        //    var prevCutOff = 0;
 
-        private IList<Tuple<int, int>> BuildPrevCutOffsAndBucketWidths(ColorBand[] colorBands, ColorBand highColorEntry)
-        {
-            var result = new List<Tuple<int, int>>();
+        //    for (var ptr = 0; ptr < colorBands.Length; ptr++)
+        //    {
+        //        var cutOff = colorBands[ptr].CutOff;
+        //        result.Add(new Tuple<int, int>(prevCutOff, cutOff - prevCutOff));
 
-            var prevCutOff = 0;
+        //        prevCutOff = cutOff;
+        //    }
 
-            for (var ptr = 0; ptr < colorBands.Length; ptr++)
-            {
-                var cutOff = colorBands[ptr].CutOff;
-                result.Add(new Tuple<int, int>(prevCutOff, cutOff - prevCutOff));
+        //    result.Add(new Tuple<int, int>(prevCutOff, highColorEntry.CutOff - prevCutOff));
 
-                prevCutOff = cutOff;
-            }
+        //    return result;
+        //}
 
-            result.Add(new Tuple<int, int>(prevCutOff, highColorEntry.CutOff - prevCutOff));
+        //   private void SetEndColors(ColorBand[] colorBands)
+        //   {
+        //       for (var ptr = 0; ptr < colorBands.Length; ptr++)
+        //       {
+        //           var cmd = colorBands[ptr];
 
-            return result;
-        }
+        //           if (cmd.BlendStyle == ColorBandBlendStyle.Next)
+        //           {
+        //               var endColor = ptr == colorBands.Length - 1
+        //	? _highColorEntry.StartColor.Clone()
+        //	: colorBands[ptr + 1].StartColor.Clone();
 
-        private void SetEndColors(ColorBand[] colorBands)
-        {
-            for (var ptr = 0; ptr < colorBands.Length; ptr++)
-            {
-                var cmd = colorBands[ptr];
+        //colorBands[ptr] = new ColorBand(cmd.CutOff, cmd.StartColor, cmd.BlendStyle, endColor);
+        //           }
+        //       }
+        //   }
 
-                if (cmd.BlendStyle == ColorBandBlendStyle.Next)
-                {
-                    var endColor = ptr == colorBands.Length - 1
-						? new ColorBandColor(HighColorEntry.StartColor.ColorComps)
-						: new ColorBandColor(colorBands[ptr + 1].StartColor.ColorComps);
 
-					colorBands[ptr] = new ColorBand(cmd.CutOff, cmd.StartColor, cmd.BlendStyle, endColor);
-                }
-            }
-        }
+        //     private ColorBand GetColorMapEntry(int colorMapIndex)
+        //     {
+        //         var result = colorMapIndex < _cutOffs.Length ? _colorBands[colorMapIndex] : _highColorEntry;
+        //return result;
+        //     }
 
+        //     private byte[] GetBlendedColor(ColorBand cme, int countVal, double escapeVelocity)
+        //     {
+        //         byte[] result;
+
+        //         //var cme = GetColorMapEntry(colorMapIndex);
+
+        //         if (cme.BlendStyle == ColorBandBlendStyle.None)
+        //         {
+        //             result = cme.StartColor.ColorComps;
+        //             return result;
+        //         }
+
+        //         var botBucketVal = _prevCutOffs[colorMapIndex];
+
+        //         //int[] cStart;
+
+        //         //if (countVal == botBucketVal)
+        //         //{
+        //         //	cStart = cme.StartColor.ColorComps;
+        //         //}
+        //         //else
+        //         //{
+        //         //	double stepFactor = (-1 + countVal - botBucketVal) / (double)cme.BucketWidth;
+        //         //	cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+        //         //}
+
+        //         ////double stepFactor = (countVal - botBucketVal) / (double)cme.BucketWidth;
+        //         ////cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+
+        //         //double intraStepFactor = escapeVelocity / cme.BucketWidth;
+        //         //result = Interpolate(cStart, cme.StartColor.ColorComps, cme.EndColor.ColorComps, intraStepFactor);
+
+        //         var bucketWidth = _bucketWidths[colorMapIndex];
+        //         var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
+        //         result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+
+        //         return result;
+        //
+        //     }
+
+        #endregion
     }
 }

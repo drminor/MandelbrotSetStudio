@@ -63,9 +63,9 @@ namespace MSetExplorer
 		public static MSetInfo BuildInitialMSetInfo(int maxIterations)
 		{
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
-			var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, threshold: 4, iterationsPerRequest: 100);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, iterationsPerRequest: 100);
 
-			IList<ColorBand> colorBands = new List<ColorBand>
+			var colorBands = new List<ColorBand>
 			{
 				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
@@ -84,7 +84,9 @@ namespace MSetExplorer
 			var highColorCss = "#000000";
 			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
 
-			var result = new MSetInfo(coords, mapCalcSettings, new ColorBandSet(colorBands));
+			var colorBandSet = new ColorBandSet(colorBands);
+
+			var result = new MSetInfo(coords, mapCalcSettings, colorBandSet);
 
 			return result;
 		}

@@ -1,12 +1,10 @@
-﻿using MSS.Types;
-
+﻿
 namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
 		private int _targetIterations;
 		private int _steps;
-		//private ColorBandSet _colorBands;
 
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 
@@ -26,6 +24,7 @@ namespace MSetExplorer
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
 
 			ColorBandViewModel = colorBandViewModel;
+			ColorBandViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 		}
 
 		private void MapProjectViewModel_CurrentJobChanged(object sender, System.EventArgs e)
@@ -40,9 +39,6 @@ namespace MSetExplorer
 
 				_steps = mapCalcSettings.IterationsPerRequest;
 				OnPropertyChanged(nameof(Steps));
-
-				//_colorBands = curJob.MSetInfo.ColorBands;
-				//OnPropertyChanged(nameof(ColorMapEntries));
 			}
 
 			ColorBandViewModel.CurrentJob = curJob;
@@ -58,6 +54,20 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
 				MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+			}
+		}
+
+		private void ColorBandViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(IColorBandViewModel.ColorBandSet))
+			{
+				var curJob = MapProjectViewModel.CurrentJob;
+				var colorBandSet = ColorBandViewModel.ColorBandSet;
+
+				if (curJob != null && colorBandSet != curJob.MSetInfo.ColorBands)
+				{
+					MapProjectViewModel.UpdateColorBands(colorBandSet);
+				}
 			}
 		}
 
@@ -78,6 +88,7 @@ namespace MSetExplorer
 				{
 					_targetIterations = value;
 					MapProjectViewModel.UpdateTargetInterations(value, Steps);
+					ColorBandViewModel.HighCutOff = value;
 					OnPropertyChanged();
 				}
 			}

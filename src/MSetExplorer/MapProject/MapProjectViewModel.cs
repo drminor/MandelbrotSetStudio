@@ -105,7 +105,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Methods
+		#region Public Methods -- Project
 
 		public void ProjectStartNew(MSetInfo mSetInfo)
 		{
@@ -216,29 +216,74 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 		}
 
-		public void UpdateJob(Job oldJob, Job newJob)
+		public void ProjectUpdateName(string name)
 		{
-			DoWithWriteLock(() =>
-			{
-				if (TryFindByJobId(oldJob.Id, out var foundJob))
-				{
-					var idx = _jobsCollection.IndexOf(foundJob);
-					_jobsCollection[idx] = newJob;
+			var project = CurrentProject;
 
-					foreach (var job in _jobsCollection)
-					{
-						if (job?.ParentJob?.Id == oldJob.Id)
-						{
-							job.ParentJob = newJob;
-							_projectAdapter.UpdateJob(job, newJob);
-						}
-					}
-				}
-				else
+			if (project != null)
+			{
+				if (project.OnFile)
 				{
-					throw new KeyNotFoundException("The old job could not be found.");
+					var description = project.Description;
+					_projectAdapter.UpdateProject(project.Id, name, description);
 				}
-			});
+
+				project.Name = name;
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectName));
+			}
+		}
+
+		public void ProjectUpdateDescription(string description)
+		{
+			var project = CurrentProject;
+
+			if (project != null)
+			{
+				if (project.OnFile)
+				{
+					var name = project.Name;
+					_projectAdapter.UpdateProject(project.Id, name, description);
+				}
+
+				project.Description = description;
+			}
+		}
+
+		#endregion
+
+		#region Public Methods - Job
+
+		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
+		{
+			var curJob = CurrentJob;
+			var position = curJob.MSetInfo.Coords.Position;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+
+			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+			var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
+
+			LoadMap(updatedInfo, transformType, newArea);
+		}
+
+		public void UpdateTargetInterations(int targetIterations, int iterationsPerRequest)
+		{
+			var curJob = CurrentJob;
+			var mSetInfo = curJob.MSetInfo;
+			var updatedInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations, iterationsPerRequest);
+
+			LoadMap(updatedInfo, TransformType.IterationUpdate);
+		}
+
+		public void UpdateColorBands(ColorBandSet colorBands)
+		{
+			var curJob = CurrentJob;
+			var mSetInfo = curJob.MSetInfo;
+
+			if (mSetInfo.ColorBands != colorBands)
+			{
+				var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorBands);
+				LoadMap(updatedInfo, TransformType.ColorMapUpdate);
+			}
 		}
 
 		public bool GoBack()
@@ -284,69 +329,6 @@ namespace MSetExplorer
 			finally
 			{
 				_jobsLock.ExitUpgradeableReadLock();
-			}
-		}
-
-		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
-		{
-			var curJob = CurrentJob;
-			var position = curJob.MSetInfo.Coords.Position;
-			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-
-			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-			var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
-
-			LoadMap(updatedInfo, transformType, newArea);
-		}
-
-		public void UpdateTargetInterations(int targetIterations, int iterationsPerRequest)
-		{
-			var curJob = CurrentJob;
-			var mSetInfo = curJob.MSetInfo;
-			var updatedInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations, iterationsPerRequest);
-
-			LoadMap(updatedInfo, TransformType.IterationUpdate);
-		}
-
-		public void UpdateColorMapEntries(ColorBandSet colorBands)
-		{
-			var curJob = CurrentJob;
-			var mSetInfo = curJob.MSetInfo;
-			var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorBands);
-
-			LoadMap(updatedInfo, TransformType.ColorMapUpdate);
-		}
-
-		public void ProjectUpdateName(string name)
-		{
-			var project = CurrentProject;
-
-			if (project != null) 
-			{
-				if (project.OnFile)
-				{
-					var description = project.Description;
-					_projectAdapter.UpdateProject(project.Id, name, description);
-				}
-
-				project.Name = name;
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectName));
-			}
-		}
-
-		public void ProjectUpdateDescription(string description)
-		{
-			var project = CurrentProject;
-
-			if (project != null)
-			{
-				if (project.OnFile)
-				{
-					var name = project.Name;
-					_projectAdapter.UpdateProject(project.Id, name, description);
-				}
-
-				project.Description = description;
 			}
 		}
 
@@ -423,6 +405,31 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 			}
+		}
+
+		private void UpdateJob(Job oldJob, Job newJob)
+		{
+			DoWithWriteLock(() =>
+			{
+				if (TryFindByJobId(oldJob.Id, out var foundJob))
+				{
+					var idx = _jobsCollection.IndexOf(foundJob);
+					_jobsCollection[idx] = newJob;
+
+					foreach (var job in _jobsCollection)
+					{
+						if (job?.ParentJob?.Id == oldJob.Id)
+						{
+							job.ParentJob = newJob;
+							_projectAdapter.UpdateJob(job, newJob);
+						}
+					}
+				}
+				else
+				{
+					throw new KeyNotFoundException("The old job could not be found.");
+				}
+			});
 		}
 
 		#endregion

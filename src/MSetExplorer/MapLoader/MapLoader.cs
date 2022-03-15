@@ -108,6 +108,8 @@ namespace MSetExplorer
 		{
 			if (mapSectionResponse.Counts != null && !mapSectionResponse.RequestCancelled)
 			{
+				Debug.WriteLine($"About to draw screen section at position: {mapSectionRequest.BlockPosition}, with ColorMap: {_colorMap.SerialNumber}.");
+
 				var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset, _colorMap);
 
 				_callback(this, mapSection);

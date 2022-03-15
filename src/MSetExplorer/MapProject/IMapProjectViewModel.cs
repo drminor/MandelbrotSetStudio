@@ -24,11 +24,10 @@ namespace MSetExplorer
 		bool CanGoForward { get; }
 		bool GoBack();
 		bool GoForward();
-		void UpdateJob(Job oldJob, Job newJob);
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
-		void UpdateColorMapEntries(ColorBandSet colorBands);
+		void UpdateColorBands(ColorBandSet colorBandSet);
 
 		void ProjectStartNew(MSetInfo mSetInfo);
 		void ProjectCreate(string projectName, string description, MSetInfo mSetInfo);

@@ -11,7 +11,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
@@ -27,8 +26,16 @@
                 </ListView.View>
             </ListView>
 
-        </Border>        
-        
+        </Border>
+
+        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnTest" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="TestButton_Click">Test</Button>
+            </StackPanel>
+
+        </Border>
+
     </Grid>
     
 </UserControl>

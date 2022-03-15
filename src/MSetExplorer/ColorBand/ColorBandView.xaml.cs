@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -30,7 +31,6 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IColorBandViewModel)DataContext;
-				//borderTop.DataContext = DataContext;
 
 				lvColorBands.ItemsSource = _vm.ColorBands;
 				lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;
@@ -41,7 +41,16 @@ namespace MSetExplorer
 
 		private void LvColorBands_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			Debug.WriteLine($"The current cutoff is {_vm.SelectedColorBand.CutOff}.");
+			Debug.WriteLine($"The current cutoff is {_vm.SelectedColorBand?.CutOff}.");
+		}
+
+		#endregion
+
+		#region Button Handlers
+
+		private void TestButton_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.Test();
 		}
 
 		#endregion
