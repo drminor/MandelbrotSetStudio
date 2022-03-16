@@ -279,7 +279,7 @@ namespace MSetExplorer
 			var curJob = CurrentJob;
 			var mSetInfo = curJob.MSetInfo;
 
-			if (mSetInfo.ColorBands != colorBands)
+			if (mSetInfo.ColorBandSet != colorBands)
 			{
 				var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorBands);
 				LoadMap(updatedInfo, TransformType.ColorMapUpdate);

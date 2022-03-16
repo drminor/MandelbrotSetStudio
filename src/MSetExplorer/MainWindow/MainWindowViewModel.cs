@@ -64,7 +64,7 @@ namespace MSetExplorer
 				var curJob = MapProjectViewModel.CurrentJob;
 				var colorBandSet = ColorBandViewModel.ColorBandSet;
 
-				if (curJob != null && colorBandSet != curJob.MSetInfo.ColorBands)
+				if (curJob != null && colorBandSet != curJob.MSetInfo.ColorBandSet)
 				{
 					MapProjectViewModel.UpdateColorBands(colorBandSet);
 				}

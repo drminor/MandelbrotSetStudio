@@ -17,7 +17,9 @@ namespace MSetExplorer
 		ObservableCollection<ColorBand> ColorBands { get; }
 		ColorBand SelectedColorBand { get; set; }
 
-		void Test();
-		//void RaiseColorBandSetChanged();
+		void Test1();
+		void Test2();
+		void Test3();
+		void Test4();
 	}
 }

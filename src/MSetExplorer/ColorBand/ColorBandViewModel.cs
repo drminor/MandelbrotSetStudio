@@ -73,6 +73,7 @@ namespace MSetExplorer
 					if (_colorBandSet != null)
 					{
 						ColorBands.Clear();
+						//ClearBands();
 						_colorBandSet = value;
 						Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
 						OnPropertyChanged(nameof(IColorBandViewModel.ColorBandSet));
@@ -83,6 +84,7 @@ namespace MSetExplorer
 					if (_colorBandSet == null || _colorBandSet != value)
 					{
 						ColorBands.Clear();
+						//ClearBands();
 
 						foreach (var c in value)
 						{
@@ -109,6 +111,14 @@ namespace MSetExplorer
 			}
 		}
 
+		//private void ClearBands()
+		//{
+		//	while(ColorBands.Count > 0)
+		//	{
+		//		ColorBands.RemoveAt(0);
+		//	}
+		//}
+
 		public int? HighCutOff
 		{
 			get => _colorBandSet?.HighCutOff;
@@ -129,7 +139,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Test()
+		public void Test1()
 		{
 			var newColorBandSet = ColorBandSet.CreateNewCopy();
 			var len = newColorBandSet.Count;
@@ -143,10 +153,31 @@ namespace MSetExplorer
 			ColorBandSet = newColorBandSet;
 		}
 
-		//public void RaiseColorBandSetChanged()
-		//{
-		//	OnPropertyChanged(nameof(IColorBandViewModel.ColorBandSet));
-		//}
+		public void Test2()
+		{
+			var newColorBandSet = new ColorBandSet();
+			ColorBandSet = newColorBandSet;
+		}
+
+		public void Test3()
+		{
+			var newColorBandSet = new ColorBandSet();
+
+			newColorBandSet.Insert(0, new ColorBand(300, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
+
+			ColorBandSet = newColorBandSet;
+		}
+
+		public void Test4()
+		{
+			var newColorBandSet = new ColorBandSet();
+
+			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
+			newColorBandSet.Insert(0, new ColorBand(300, new ColorBandColor("#00FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
+
+			ColorBandSet = newColorBandSet;
+
+		}
 
 		#endregion
 

@@ -406,7 +406,7 @@ namespace MSetRepo
 
 		public ColorBandSet? GetColorBands(Job job)
 		{
-			return job?.MSetInfo.ColorBands;
+			return job?.MSetInfo.ColorBandSet;
 		}
 
 		#endregion

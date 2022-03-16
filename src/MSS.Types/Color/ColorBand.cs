@@ -32,14 +32,7 @@ namespace MSS.Types
 		public ColorBandBlendStyle BlendStyle { get; init; }
 		public ColorBandColor EndColor { get; init; }
 
-
-		public string BlendStyleAsString => BlendStyle switch
-		{
-			ColorBandBlendStyle.Next => "Next",
-			ColorBandBlendStyle.None => "None",
-			ColorBandBlendStyle.End => "End",
-			_ => "None",
-		};
+		public string BlendStyleAsString => GetBlendStyleAsString(BlendStyle);
 
 		public int PreviousCutOff { get; set; }
 
@@ -78,13 +71,24 @@ namespace MSS.Types
 
 		#endregion
 
-		//#region Static Methods
+		#region Static Methods
+
+		public string GetBlendStyleAsString(ColorBandBlendStyle blendStyle)
+		{
+			return blendStyle switch
+			{
+				ColorBandBlendStyle.Next => "Next",
+				ColorBandBlendStyle.None => "None",
+				ColorBandBlendStyle.End => "End",
+				_ => "None",
+			};
+		}
 
 		//public static ColorBand UpdateCutOff(ColorBand source, int cutOff)
-  //      {
-  //          return new ColorBand(cutOff, source.StartColor, source.BlendStyle, source.EndColor);
-  //      }
+		//{
+		//	return new ColorBand(cutOff, source.StartColor, source.BlendStyle, source.EndColor);
+		//}
 
-		//#endregion
+		#endregion
 	}
 }

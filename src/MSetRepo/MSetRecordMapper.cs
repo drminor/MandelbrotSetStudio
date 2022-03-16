@@ -79,7 +79,7 @@ namespace MSetRepo
 		public MSetInfoRecord MapTo(MSetInfo source)
 		{
 			var coords = MapTo(source.Coords);
-			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorBands.ToArray(), source.ColorBands.SerialNumber.ToByteArray());
+			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorBandSet.ToArray(), source.ColorBandSet.SerialNumber.ToByteArray());
 
 			return result;
 		}

@@ -6,13 +6,7 @@ namespace MSS.Common
 {
 	public class ColorMap
     {
-        //private readonly ColorBand[] _colorBands;
-        //private readonly ColorBand _highColorEntry;
-
         private readonly int[] _cutOffs;
-        //private readonly int[] _prevCutOffs;
-        //private readonly int[] _bucketWidths;
-
         private readonly int _lastCutOff;
 
 		#region Constructor
@@ -26,20 +20,7 @@ namespace MSS.Common
 
             ColorBandSet = colorBandSet;
             _lastCutOff = colorBandSet.HighColorBand.PreviousCutOff;
-
-            //_colorBands = colorBandSet.Take(colorBandSet.Count - 1).ToArray();
-            //_highColorEntry = colorBandSet[^1];
-
-            //_cutOffs = BuildCutOffs(_colorBands);
-
             _cutOffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.CutOff).ToArray();
-
-            //var pOffsetsAndBucketWidths = BuildPrevCutOffsAndBucketWidths(_colorBands, _highColorEntry);
-
-            //_prevCutOffs = pOffsetsAndBucketWidths.Select(x => x.Item1).ToArray();
-            //_bucketWidths = pOffsetsAndBucketWidths.Select(x => x.Item2).ToArray();
-
-            //SetEndColors(_colorBands);
         }
 
 		#endregion
@@ -55,12 +36,12 @@ namespace MSS.Common
 
         public byte[] GetColor(int countVal, double escapeVelocity)
         {
-   //         if (countVal > 500)
+			//if (countVal > 500)
 			//{
-   //             countVal = 500;
+			//	countVal = 500;
 			//}
 
-            byte[] result;
+			byte[] result;
 
             var cme = GetColorBand(countVal);
 
@@ -158,61 +139,6 @@ namespace MSS.Common
         #endregion
 
         #region Old Not Used
-
-        //private int[] BuildCutOffs(ColorBand[] colorBands)
-        //{
-        //    var result = new int[colorBands.Length];
-
-        //    for (var ptr = 0; ptr < colorBands.Length; ptr++)
-        //    {
-        //        result[ptr] = colorBands[ptr].CutOff;
-        //    }
-
-        //    return result;
-        //}
-
-        //private IList<Tuple<int, int>> BuildPrevCutOffsAndBucketWidths(ColorBand[] colorBands, ColorBand highColorEntry)
-        //{
-        //    var result = new List<Tuple<int, int>>();
-
-        //    var prevCutOff = 0;
-
-        //    for (var ptr = 0; ptr < colorBands.Length; ptr++)
-        //    {
-        //        var cutOff = colorBands[ptr].CutOff;
-        //        result.Add(new Tuple<int, int>(prevCutOff, cutOff - prevCutOff));
-
-        //        prevCutOff = cutOff;
-        //    }
-
-        //    result.Add(new Tuple<int, int>(prevCutOff, highColorEntry.CutOff - prevCutOff));
-
-        //    return result;
-        //}
-
-        //   private void SetEndColors(ColorBand[] colorBands)
-        //   {
-        //       for (var ptr = 0; ptr < colorBands.Length; ptr++)
-        //       {
-        //           var cmd = colorBands[ptr];
-
-        //           if (cmd.BlendStyle == ColorBandBlendStyle.Next)
-        //           {
-        //               var endColor = ptr == colorBands.Length - 1
-        //	? _highColorEntry.StartColor.Clone()
-        //	: colorBands[ptr + 1].StartColor.Clone();
-
-        //colorBands[ptr] = new ColorBand(cmd.CutOff, cmd.StartColor, cmd.BlendStyle, endColor);
-        //           }
-        //       }
-        //   }
-
-
-        //     private ColorBand GetColorMapEntry(int colorMapIndex)
-        //     {
-        //         var result = colorMapIndex < _cutOffs.Length ? _colorBands[colorMapIndex] : _highColorEntry;
-        //return result;
-        //     }
 
         //     private byte[] GetBlendedColor(ColorBand cme, int countVal, double escapeVelocity)
         //     {

@@ -1,6 +1,4 @@
-﻿using MSS.Types;
-using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -48,9 +46,24 @@ namespace MSetExplorer
 
 		#region Button Handlers
 
-		private void TestButton_Click(object sender, RoutedEventArgs e)
+		private void Test1Button_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.Test();
+			_vm.Test1();
+		}
+
+		private void Test2Button_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.Test2();
+		}
+
+		private void Test3Button_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.Test3();
+		}
+
+		private void Test4Button_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.Test4();
 		}
 
 		#endregion
