@@ -162,7 +162,7 @@ namespace MSS.Types
 			for(var i = 0; i < colorBands.Count; i++)
 			{
 				var cb = colorBands[i];
-				cb.UpdateWithNeighbors(GetPreviousItem(i - 1), GetNextItem(i + 1));
+				cb.UpdateWithNeighbors(GetPreviousItem(i), GetNextItem(i));
 			}
 		}
 

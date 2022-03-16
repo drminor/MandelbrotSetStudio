@@ -8,17 +8,20 @@ namespace MSS.Types
 	{
 		public PointInt BlockPosition { get; set; }
 		public SizeInt Size { get; init; }
-		public byte[] Pixels1d { get; init; }
+
+		public int[] Counts { get; set; }
+		//public byte[] Pixels1d { get; init; }
 
 		public string SubdivisionId { get; init; }
 		public BigVector RepoBlockPosition { get; init; }
 		public bool IsInverted { get; init; }
 
-		public MapSection(PointInt blockPosition, SizeInt size, byte[] pixels1d, string subdivisionId, BigVector repoBlockPosition, bool isInverted)
+		public MapSection(PointInt blockPosition, SizeInt size, int[] counts, string subdivisionId, BigVector repoBlockPosition, bool isInverted)
 		{
 			BlockPosition = blockPosition;
 			Size = size;
-			Pixels1d = pixels1d; // ?? throw new ArgumentNullException(nameof(pixels1d));
+			Counts = counts ?? throw new ArgumentNullException(nameof(counts));
+			//Pixels1d = pixels1d; // ?? throw new ArgumentNullException(nameof(pixels1d));
 
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;

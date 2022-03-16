@@ -8,6 +8,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
+using MSS.Common.DataTransferObjects;
+
 namespace MSetExplorer
 {
 	internal class MapLoader
@@ -108,9 +110,8 @@ namespace MSetExplorer
 		{
 			if (mapSectionResponse.Counts != null && !mapSectionResponse.RequestCancelled)
 			{
-				Debug.WriteLine($"About to draw screen section at position: {mapSectionRequest.BlockPosition}, with ColorMap: {_colorMap.SerialNumber}.");
-
 				var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset, _colorMap);
+				Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}, with ColorMap: {_colorMap.SerialNumber}.");
 
 				_callback(this, mapSection);
 				mapSectionRequest.Handled = true;

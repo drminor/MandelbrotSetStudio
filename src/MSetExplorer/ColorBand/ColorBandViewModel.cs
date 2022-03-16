@@ -163,7 +163,7 @@ namespace MSetExplorer
 		{
 			var newColorBandSet = new ColorBandSet();
 
-			newColorBandSet.Insert(0, new ColorBand(300, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
+			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
 
 			ColorBandSet = newColorBandSet;
 		}
@@ -172,8 +172,8 @@ namespace MSetExplorer
 		{
 			var newColorBandSet = new ColorBandSet();
 
-			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
-			newColorBandSet.Insert(0, new ColorBand(300, new ColorBandColor("#00FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
+			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
+			newColorBandSet.Insert(0, new ColorBand(50, new ColorBandColor("#880000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
 
 			ColorBandSet = newColorBandSet;
 
@@ -185,7 +185,7 @@ namespace MSetExplorer
 
 		private ColorBandSet GetColorBands(Job job)
 		{
-			var result = job == null ? null : _projectAdapter.GetColorBands(job);
+			var result = job == null ? null : job.MSetInfo.ColorBandSet; // _projectAdapter.GetColorBands(job);
 			return result;
 		}
 

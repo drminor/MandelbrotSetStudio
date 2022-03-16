@@ -56,7 +56,9 @@ namespace MSetExplorer
 
 		public static IList<MapSection> CreateEmptyMapSections(Job job)
 		{
-			var emptyPixelData = new byte[0];
+			//var emptyPixelData = new byte[0];
+			var emptyCountsData = new int[0];
+
 			var result = new List<MapSection>();
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
@@ -65,7 +67,7 @@ namespace MSetExplorer
 			foreach (var screenPosition in ScreenTypeHelper.Points(mapExtentInBlocks))
 			{
 				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var isInverted);
-				var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyPixelData, job.Subdivision.Id.ToString(), repoPosition, isInverted);
+				var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyCountsData, job.Subdivision.Id.ToString(), repoPosition, isInverted);
 				result.Add(mapSection);
 			}
 
@@ -139,13 +141,13 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var blockSize = mapSectionRequest.BlockSize;
-			var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, colorMap, !isInverted);
-			var mapSection = new MapSection(screenPosition, blockSize, pixels1d, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted);
+			//var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, colorMap, !isInverted);
+			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted);
 
 			return mapSection;
 		}
 
-		private static byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
+		public static byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
 		{
 			if (counts == null)
 			{

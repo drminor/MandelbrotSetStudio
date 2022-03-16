@@ -52,7 +52,7 @@ namespace MSetExplorer
 			_jobStack = new MapProjectViewModel(_projectAdapter, RMapConstants.BLOCK_SIZE);
 			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
 
-			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_jobStack, _mapLoaderManager);
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, RMapConstants.BLOCK_SIZE);
 
 			IColorBandViewModel colorBandViewModel = new ColorBandViewModel(_projectAdapter);
 

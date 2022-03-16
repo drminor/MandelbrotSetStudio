@@ -73,33 +73,28 @@ namespace MSetExplorer
 			}
 		}
 
-		public void Draw(MapSection mapSection)
+		public void Draw(PointInt position, byte[] pixels)
 		{
-			var screenSection = GetScreenSection(mapSection.BlockPosition, out var screenIndex);
+			var screenSection = GetScreenSection(position, out var screenIndex);
 			//var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
 			//Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
 
-			if (mapSection.Pixels1d is null)
+			if (pixels is null)
 			{
 				return;
 			}
 
-			var invertedPosition = GetInvertedBlockPos(mapSection.BlockPosition);
-			screenSection.Draw(invertedPosition, mapSection.Pixels1d, screenIndex);
+			var invertedPosition = GetInvertedBlockPos(position);
+			screenSection.Draw(invertedPosition, pixels, screenIndex);
 		}
 
-		public void Redraw(MapSection mapSection)
+		public void Redraw(PointInt position)
 		{
-			var screenSection = GetScreenSection(mapSection.BlockPosition, out var screenIndex);
+			var screenSection = GetScreenSection(position, out var screenIndex);
 			//var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
 			//Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
 
-			if (mapSection.Pixels1d is null)
-			{
-				return;
-			}
-
-			var invertedPosition = GetInvertedBlockPos(mapSection.BlockPosition);
+			var invertedPosition = GetInvertedBlockPos(position);
 			screenSection.ReDraw(invertedPosition, screenIndex);
 		}
 

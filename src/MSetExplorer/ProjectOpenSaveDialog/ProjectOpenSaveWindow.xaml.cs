@@ -35,6 +35,9 @@ namespace MSetExplorer
 
 				lvProjects.ItemsSource = _vm.ProjectInfos;
 				lvProjects.SelectionChanged += LvProjects_SelectionChanged;
+
+				lvProjects.MouseDoubleClick += LvProjects_MouseDoubleClick;
+
 				txtName.LostFocus += TxtName_LostFocus;
 
 				_ = txtName.Focus();
@@ -42,6 +45,11 @@ namespace MSetExplorer
 
 				Debug.WriteLine("The ProjectOpenSaveWindow is now loaded");
 			}
+		}
+
+		private void LvProjects_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			TakeSelection();
 		}
 
 		private void TxtName_LostFocus(object sender, RoutedEventArgs e)
@@ -86,12 +94,23 @@ namespace MSetExplorer
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
+			TakeSelection();
+		}
+
+		private void CloseButton_Click(object sender, RoutedEventArgs e)
+		{
+			DialogResult = false;
+			Close();
+		}
+
+		private void TakeSelection()
+		{
 			if (_vm.DialogType == DialogType.Save)
 			{
 				if (_vm.IsNameTaken(ProjectName))
 				{
 					var res = MessageBox.Show("A project already exists with this name. Do you want to overwrite?", "Overwrite Existing Project", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
-					
+
 					if (res == MessageBoxResult.No)
 					{
 						return;
@@ -100,12 +119,6 @@ namespace MSetExplorer
 			}
 
 			DialogResult = true;
-			Close();
-		}
-
-		private void CloseButton_Click(object sender, RoutedEventArgs e)
-		{
-			DialogResult = false;
 			Close();
 		}
 

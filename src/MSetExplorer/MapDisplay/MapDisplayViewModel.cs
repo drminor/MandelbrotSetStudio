@@ -14,7 +14,7 @@ namespace MSetExplorer
 	{
 		private static readonly bool _keepDisplaySquare = true;
 
-		private readonly IMapProjectViewModel _mapProjectViewModel;
+		//private readonly IMapProjectViewModel _mapProjectViewModel;
 		private readonly IMapLoaderManager _mapLoaderManager;
 
 		private readonly IScreenSectionCollection _screenSectionCollection;
@@ -22,19 +22,20 @@ namespace MSetExplorer
 		private SizeInt _canvasSize;
 		private VectorInt _canvasControlOffset;
 
+		private Job _currentJob;
+		private ColorMap _colorMap;
+
 		#region Constructor
 
-		public MapDisplayViewModel(IMapProjectViewModel mapProjectViewModel, IMapLoaderManager mapLoaderManager)
+		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, SizeInt blockSize)
 		{
-			//_projectAdapter = projectAdapter;
-
-			_mapProjectViewModel = mapProjectViewModel;
-			_mapProjectViewModel.CurrentJobChanged += MapProjectViewModel_CurrentJobChanged;
-
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
-			BlockSize = mapProjectViewModel.BlockSize;
+			//BlockSize = mapProjectViewModel.BlockSize;
+
+			BlockSize = blockSize;
+
 			MapSections = new ObservableCollection<MapSection>();
 
 			_screenSectionCollection = new ScreenSectionCollection(BlockSize);
@@ -60,6 +61,32 @@ namespace MSetExplorer
 		public new bool InDesignMode => base.InDesignMode;
 
 		public ImageSource ImageSource { get; init; }
+
+		public Job CurrentJob
+		{
+			get => _currentJob;
+			set
+			{
+				if (value != _currentJob)
+				{
+					_currentJob = value;
+					HandleCurrentJobChanged(_currentJob);
+				}
+			}
+		}
+
+		public ColorMap ColorMap
+		{
+			get => _colorMap;
+			set
+			{
+				if (value != _colorMap)
+				{
+					_colorMap = value;
+					HandleColorMapChanged(_colorMap);
+				}
+			}
+		}
 
 		public SizeInt BlockSize { get; }
 
@@ -96,8 +123,6 @@ namespace MSetExplorer
 			set { _canvasControlOffset = value; OnPropertyChanged(); }
 		}
 
-		public Project CurrentProject { get; set; }
-
 		public ObservableCollection<MapSection> MapSections { get; }
 
 		#endregion
@@ -124,10 +149,104 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapProjectViewModel_CurrentJobChanged(object sender, EventArgs e)
-		{
-			var curJob = _mapProjectViewModel.CurrentJob;
+		//private void MapProjectViewModel_CurrentJobChanged(object sender, EventArgs e)
+		//{
+		//	var curJob = _mapProjectViewModel.CurrentJob;
 
+		//	_mapLoaderManager.StopCurrentJob();
+
+		//	if (ShouldAttemptToReuseLoadedSections(curJob))
+		//	{
+		//		var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
+
+		//		// X: Consider not using the ObservableCollection<MapSection>, instead have the ScreenSectionCollection maintain a simple list of MapSections
+		//		var loadedSections = GetMapSectionsSnapShot();
+
+		//		// Avoid requesting sections already drawn
+		//		var sectionsToLoad = GetNotYetLoaded(sectionsRequired, loadedSections);
+
+		//		// Remove from the screen sections that are not part of the updated view.
+		//		var uResults = UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
+		//		var cntRemoved = uResults.Item1;
+		//		var cntRetained = uResults.Item2;
+		//		var cntUpdated = uResults.Item3;
+
+		//		Debug.WriteLine($"Panning: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
+
+		//		_screenSectionCollection.Shift(shiftAmount);
+		//		CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
+		//		RedrawSections(MapSections);
+		//		_mapLoaderManager.Push(curJob, sectionsToLoad);
+		//	}
+		//	else
+		//	{
+		//		// X:
+		//		//_screenSectionCollection.HideScreenSections();
+		//		Debug.WriteLine($"Clearing Display. TransformType: {curJob.TransformType}.");
+		//		MapSections.Clear();
+		//		CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
+		//		_mapLoaderManager.Push(curJob);
+		//	}
+		//}
+
+		private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
+		{
+			// X:
+			////Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+			//_screenSectionCollection.Draw(mapSection);
+
+			MapSections.Add(e);
+		}
+
+		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+			{
+				//	Reset
+				_screenSectionCollection.HideScreenSections();
+			}
+			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+			{
+				// Add items
+				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
+				foreach (var mapSection in mapSections)
+				{
+					//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+					var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, _colorMap, !mapSection.IsInverted);
+					_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
+				}
+			}
+			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
+			{
+				// Remove items
+				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
+				foreach (var mapSection in mapSections)
+				{
+					if (!_screenSectionCollection.Hide(mapSection))
+					{
+						Debug.WriteLine($"While handling the MapSections_CollectionChanged:Remove, the MapDisplayViewModel cannot Hide the MapSection: {mapSection}.");
+					}
+				}
+			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void HandleColorMapChanged(ColorMap colorMap)
+		{
+			var loadedSections = GetMapSectionsSnapShot();
+			foreach (var mapSection in loadedSections)
+			{
+				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+				var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted);
+				_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
+			}
+		}
+
+		private void HandleCurrentJobChanged(Job curJob)
+		{
 			_mapLoaderManager.StopCurrentJob();
 
 			if (ShouldAttemptToReuseLoadedSections(curJob))
@@ -166,57 +285,13 @@ namespace MSetExplorer
 
 		private bool ShouldAttemptToReuseLoadedSections(Job job)
 		{
-			if(MapSections.Count == 0 || job.ParentJob is null || job.TransformType == TransformType.IterationUpdate || job.TransformType == TransformType.ColorMapUpdate)
+			if (MapSections.Count == 0 || job.ParentJob is null || job.TransformType == TransformType.IterationUpdate || job.TransformType == TransformType.ColorMapUpdate)
 			{
 				return false;
 			}
 
 			return job.Subdivision.SamplePointDelta == job.ParentJob.Subdivision.SamplePointDelta;
 		}
-
-		private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
-		{
-			// X:
-			////Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-			//_screenSectionCollection.Draw(mapSection);
-
-			MapSections.Add(e);
-		}
-
-		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-		{
-			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
-			{
-				//	Reset
-				_screenSectionCollection.HideScreenSections();
-			}
-			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-			{
-				// Add items
-				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
-				foreach (var mapSection in mapSections)
-				{
-					//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-					_screenSectionCollection.Draw(mapSection);
-				}
-			}
-			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
-			{
-				// Remove items
-				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
-				foreach (var mapSection in mapSections)
-				{
-					if (!_screenSectionCollection.Hide(mapSection))
-					{
-						Debug.WriteLine($"While handling the MapSections_CollectionChanged:Remove, the MapDisplayViewModel cannot Hide the MapSection: {mapSection}.");
-					}
-				}
-			}
-		}
-
-		#endregion
-
-		#region Private Methods
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> source, IReadOnlyList<MapSection> current)
 		{
@@ -304,7 +379,7 @@ namespace MSetExplorer
 			foreach (var mapSection in source)
 			{
 				//Debug.WriteLine($"About to redraw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-				_screenSectionCollection.Redraw(mapSection);
+				_screenSectionCollection.Redraw(mapSection.BlockPosition);
 			}
 		}
 

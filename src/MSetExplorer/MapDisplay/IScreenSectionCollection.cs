@@ -8,8 +8,8 @@ namespace MSetExplorer
 		DrawingGroup DrawingGroup { get; }
 		SizeInt CanvasSizeInWholeBlocks { get; set; }
 
-		void Draw(MapSection mapSection);
-		void Redraw(MapSection mapSection);
+		void Draw(PointInt position, byte[] pixels);
+		void Redraw(PointInt position);
 		bool Hide(MapSection mapSection);
 
 		void HideScreenSections();

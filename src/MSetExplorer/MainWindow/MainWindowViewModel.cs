@@ -1,4 +1,6 @@
 ﻿
+using MSS.Common;
+
 namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
@@ -33,6 +35,8 @@ namespace MSetExplorer
 
 			if (curJob != null)
 			{
+				MapDisplayViewModel.CurrentJob = curJob;
+
 				var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
 				_targetIterations = mapCalcSettings.TargetIterations;
 				OnPropertyChanged(nameof(TargetIterations));
@@ -61,13 +65,14 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IColorBandViewModel.ColorBandSet))
 			{
-				var curJob = MapProjectViewModel.CurrentJob;
-				var colorBandSet = ColorBandViewModel.ColorBandSet;
+				MapDisplayViewModel.ColorMap = new ColorMap(ColorBandViewModel.ColorBandSet);
+				//var curJob = MapProjectViewModel.CurrentJob;
+				//var colorBandSet = ColorBandViewModel.ColorBandSet;
 
-				if (curJob != null && colorBandSet != curJob.MSetInfo.ColorBandSet)
-				{
-					MapProjectViewModel.UpdateColorBands(colorBandSet);
-				}
+				//if (curJob != null && colorBandSet != curJob.MSetInfo.ColorBandSet)
+				//{
+				//	MapProjectViewModel.UpdateColorBands(colorBandSet);
+				//}
 			}
 		}
 
