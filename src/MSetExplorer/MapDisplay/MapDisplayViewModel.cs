@@ -146,52 +146,9 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//private void MapProjectViewModel_CurrentJobChanged(object sender, EventArgs e)
-		//{
-		//	var curJob = _mapProjectViewModel.CurrentJob;
-
-		//	_mapLoaderManager.StopCurrentJob();
-
-		//	if (ShouldAttemptToReuseLoadedSections(curJob))
-		//	{
-		//		var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
-
-		//		// X: Consider not using the ObservableCollection<MapSection>, instead have the ScreenSectionCollection maintain a simple list of MapSections
-		//		var loadedSections = GetMapSectionsSnapShot();
-
-		//		// Avoid requesting sections already drawn
-		//		var sectionsToLoad = GetNotYetLoaded(sectionsRequired, loadedSections);
-
-		//		// Remove from the screen sections that are not part of the updated view.
-		//		var uResults = UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
-		//		var cntRemoved = uResults.Item1;
-		//		var cntRetained = uResults.Item2;
-		//		var cntUpdated = uResults.Item3;
-
-		//		Debug.WriteLine($"Panning: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
-
-		//		_screenSectionCollection.Shift(shiftAmount);
-		//		CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
-		//		RedrawSections(MapSections);
-		//		_mapLoaderManager.Push(curJob, sectionsToLoad);
-		//	}
-		//	else
-		//	{
-		//		// X:
-		//		//_screenSectionCollection.HideScreenSections();
-		//		Debug.WriteLine($"Clearing Display. TransformType: {curJob.TransformType}.");
-		//		MapSections.Clear();
-		//		CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
-		//		_mapLoaderManager.Push(curJob);
-		//	}
-		//}
-
 		private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
 		{
-			// X:
-			////Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-			//_screenSectionCollection.Draw(mapSection);
-
+			// TODO: Use a lock on MapSectionReady to avoid race conditions as the ColorMap is applied.
 			MapSections.Add(e);
 		}
 
@@ -249,8 +206,6 @@ namespace MSetExplorer
 			if (ShouldAttemptToReuseLoadedSections(curJob))
 			{
 				var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
-
-				// X: Consider not using the ObservableCollection<MapSection>, instead have the ScreenSectionCollection maintain a simple list of MapSections
 				var loadedSections = GetMapSectionsSnapShot();
 
 				// Avoid requesting sections already drawn
@@ -271,8 +226,6 @@ namespace MSetExplorer
 			}
 			else
 			{
-				// X:
-				//_screenSectionCollection.HideScreenSections();
 				Debug.WriteLine($"Clearing Display. TransformType: {curJob.TransformType}.");
 				MapSections.Clear();
 				CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
@@ -351,12 +304,6 @@ namespace MSetExplorer
 
 			foreach(var mapSection in toBeRemoved)
 			{
-				// X: 
-				//if (!_screenSectionCollection.Hide(mapSection))
-				//{
-				//	Debug.WriteLine($"While handling the MapSections_CollectionChanged:Remove, the MapDisplayViewModel cannot Hide the MapSection: {mapSection}.");
-				//}
-
 				if (!source.Remove(mapSection))
 				{
 					Debug.WriteLine($"Could not remove MapSection: {mapSection}.");

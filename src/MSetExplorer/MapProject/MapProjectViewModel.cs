@@ -46,8 +46,6 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		//public event EventHandler CurrentJobChanged;
-
 		public SizeInt BlockSize { get; }
 
 		public SizeInt CanvasSize
@@ -60,7 +58,7 @@ namespace MSetExplorer
 					_canvasSize = value;
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanvasSize));
 
-					// TODO: Update the Job's CanvasSizeInBlocks (and NewArea? property.
+					// TODO: Update the Job's CanvasSizeInBlocks (and NewArea?) property.
 					Reload();
 				}
 			}
@@ -274,18 +272,6 @@ namespace MSetExplorer
 			LoadMap(updatedInfo, TransformType.IterationUpdate);
 		}
 
-		//public void UpdateColorBands(ColorBandSet colorBands)
-		//{
-		//	var curJob = CurrentJob;
-		//	var mSetInfo = curJob.MSetInfo;
-
-		//	if (mSetInfo.ColorBandSet != colorBands)
-		//	{
-		//		var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorBands);
-		//		LoadMap(updatedInfo, TransformType.ColorMapUpdate);
-		//	}
-		//}
-
 		public bool GoBack()
 		{
 			_jobsLock.EnterUpgradeableReadLock();
@@ -356,7 +342,6 @@ namespace MSetExplorer
 				_jobsPointer = _jobsCollection.Count - 1;
 				_currentProjectIsDirty = true;
 
-				//CurrentJobChanged?.Invoke(this, new EventArgs());
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
@@ -392,12 +377,10 @@ namespace MSetExplorer
 			if (_jobsPointer == newJobIndex)
 			{
 				// Force a redraw
-				//CurrentJobChanged?.Invoke(this, new EventArgs());
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			}
 			else
 			{
-				var job = _jobsCollection[newJobIndex];
 				_jobsPointer = newJobIndex;
 
 				//CurrentJobChanged?.Invoke(this, new EventArgs());

@@ -55,24 +55,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void MapProjectViewModel_CurrentJobChanged(object sender, System.EventArgs e)
-		//{
-		//	var curJob = MapProjectViewModel.CurrentJob;
-
-		//	if (curJob != null)
-		//	{
-		//		MapDisplayViewModel.CurrentJob = curJob;
-
-		//		var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
-		//		_targetIterations = mapCalcSettings.TargetIterations;
-		//		OnPropertyChanged(nameof(TargetIterations));
-
-		//		_steps = mapCalcSettings.IterationsPerRequest;
-		//		OnPropertyChanged(nameof(Steps));
-		//	}
-
-		//}
-
 		private void MapDisplayViewModel_MapViewUpdateRequested(object sender, MapViewUpdateRequestedEventArgs e)
 		{
 			MapProjectViewModel.UpdateMapView(e.TransformType, e.NewArea);
@@ -91,13 +73,6 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(IColorBandViewModel.ColorBandSet))
 			{
 				MapDisplayViewModel.ColorMap = new ColorMap(ColorBandViewModel.ColorBandSet);
-				//var curJob = MapProjectViewModel.CurrentJob;
-				//var colorBandSet = ColorBandViewModel.ColorBandSet;
-
-				//if (curJob != null && colorBandSet != curJob.MSetInfo.ColorBandSet)
-				//{
-				//	MapProjectViewModel.UpdateColorBands(colorBandSet);
-				//}
 			}
 		}
 
@@ -129,19 +104,6 @@ namespace MSetExplorer
 			get => _steps;
 			set { _steps = value; OnPropertyChanged(); }
 		}
-
-		//public ColorBandSet ColorMapEntries
-		//{
-		//	get => _colorBands;
-		//	set
-		//	{
-		//		if(value != _colorBands)
-		//		{
-		//			_colorBands = value;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
 
 		#endregion
 

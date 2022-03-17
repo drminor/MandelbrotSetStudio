@@ -14,8 +14,6 @@ namespace MSetExplorer
 		int TargetIterations { get; set; }
 		int Steps { get; set; }
 
-		//ColorBandSet ColorMapEntries { get; set; }
-
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType);
 	}
 }
