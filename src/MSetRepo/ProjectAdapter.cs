@@ -3,6 +3,7 @@ using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo;
+using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -101,8 +102,10 @@ namespace MSetRepo
 			var projectRecord = projectReaderWriter.Get(name);
 			if (projectRecord is null)
 			{
+				var colorBandSetRecord = GetOrCreateColorBandSetRecord(currentColorBandSet);
+
 				var project = new Project(name, description, colorBandSetIds.ToList(), currentColorBandSet);
-				projectRecord = _mSetRecordMapper.MapTo(project);
+				projectRecord = new ProjectRecord(name, description, colorBandSetIds.Select(x => x.ToByteArray()).ToArray(), colorBandSetRecord);
 
 				var projectId = projectReaderWriter.Insert(projectRecord);
 				projectRecord = projectReaderWriter.Get(projectId);
@@ -117,38 +120,38 @@ namespace MSetRepo
 			return result;
 		}
 
-		/// <summary>
-		/// Inserts the project record if it does not exist on the database.
-		/// </summary>
-		/// <param name="project"></param>
-		public Project InsertProject(Project project, bool overwrite)
-		{
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		///// <summary>
+		///// Inserts the project record if it does not exist on the database.
+		///// </summary>
+		///// <param name="project"></param>
+		//public Project InsertProject(Project project, bool overwrite)
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			var projectRecord = projectReaderWriter.Get(project.Name);
+		//	var projectRecord = projectReaderWriter.Get(project.Name);
 
-			if (projectRecord == null)
-			{
-				projectRecord = _mSetRecordMapper.MapTo(project);
-			}
-			else
-			{
-				if (!overwrite)
-				{
-					throw new InvalidOperationException($"Overwrite is false and Project: {project.Name} already exists.");
-				}
-				else
-				{
-					DeleteProject(project.Id);
-					projectRecord = _mSetRecordMapper.MapTo(project);
-				}
-			}
+		//	if (projectRecord == null)
+		//	{
+		//		projectRecord = _mSetRecordMapper.MapTo(project);
+		//	}
+		//	else
+		//	{
+		//		if (!overwrite)
+		//		{
+		//			throw new InvalidOperationException($"Overwrite is false and Project: {project.Name} already exists.");
+		//		}
+		//		else
+		//		{
+		//			DeleteProject(project.Id);
+		//			projectRecord = _mSetRecordMapper.MapTo(project);
+		//		}
+		//	}
 
-			_ = projectReaderWriter.Insert(projectRecord);
-			project = _mSetRecordMapper.MapFrom(projectRecord);
+		//	_ = projectReaderWriter.Insert(projectRecord);
+		//	project = _mSetRecordMapper.MapFrom(projectRecord);
 
-			return project;
-		}
+		//	return project;
+		//}
 
 		public void UpdateProject(ObjectId projectId, string name, string? description)
 		{
@@ -220,9 +223,57 @@ namespace MSetRepo
 
 		#endregion
 
+		#region ColorBandSet 
+
+		public ColorBandSetRecord GetOrCreateColorBandSetRecord(ColorBandSet currentColorBandSet)
+		{
+			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {currentColorBandSet.SerialNumber}.");
+
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			if (!colorBandSetReaderWriter.TryGet(currentColorBandSet.SerialNumber, out var colorBandSetRecord))
+			{
+				colorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
+				var id = colorBandSetReaderWriter.Insert(colorBandSetRecord);
+				colorBandSetRecord = colorBandSetReaderWriter.Get(id);
+			}
+
+			return colorBandSetRecord;
+		}
+
+		public ColorBandSet GetColorBandSet(Guid colorBandSetSerialNumber)
+		{
+			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {colorBandSetSerialNumber}.");
+
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var colorBandSetRecord = colorBandSetReaderWriter.Get(colorBandSetSerialNumber);
+			var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+
+			return colorBandSet;
+		}
+
+		public bool TryGetColorBandSet(Guid colorBandSetSerialNumber, out ColorBandSetRecord? colorBandSetRecord)
+		{
+			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {colorBandSetSerialNumber}.");
+
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var result = colorBandSetReaderWriter.TryGet(colorBandSetSerialNumber, out colorBandSetRecord);
+
+			return result;
+		}
+
+		public ColorBandSetRecord CreateColorBandSetRecord(ColorBandSet currentColorBandSet)
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+
+			return new ColorBandSetRecord(new ColorBand[0], new byte[0]);
+
+		}
+
+		#endregion
+
 		#region Job
 
-		public Job GetJob(ObjectId jobId)
+			public Job GetJob(ObjectId jobId)
 		{
 			Debug.WriteLine($"Retrieving Job object for JobId: {jobId}.");
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);

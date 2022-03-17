@@ -2,6 +2,7 @@
 using MongoDB.Driver;
 using MSS.Types;
 using ProjectRepo.Entities;
+using System;
 using System.Collections.Generic;
 
 namespace ProjectRepo
@@ -27,9 +28,25 @@ namespace ProjectRepo
 			return colorBandSetRecord;
 		}
 
+		public ColorBandSetRecord Get(Guid colorBandSetSerialNumber)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("SerialNumber", colorBandSetSerialNumber);
+			var colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
+
+			return colorBandSetRecord;
+		}
+
 		public bool TryGet(ObjectId colorBandSetId, out ColorBandSetRecord colorBandSetRecord)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+			colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
+
+			return colorBandSetRecord != null;
+		}
+
+		public bool TryGet(Guid colorBandSetSerialNumber, out ColorBandSetRecord colorBandSetRecord)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("SerialNumber", colorBandSetSerialNumber);
 			colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
 
 			return colorBandSetRecord != null;

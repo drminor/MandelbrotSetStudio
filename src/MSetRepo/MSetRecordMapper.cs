@@ -37,7 +37,7 @@ namespace MSetRepo
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name, source.Description, source.ColorBandSetIds.Select(x => x.ToByteArray()).ToArray(), MapTo(source.CurrentColorBandSet));
+			var result = new ProjectRecord(source.Name, source.Description, source.ColorBandSetSNs.Select(x => x.ToByteArray()).ToArray(), MapTo(source.CurrentColorBandSet));
 			return result;
 		}
 

@@ -178,7 +178,7 @@ namespace MSetExplorer
 			var curProject = _vm.MapProjectViewModel.CurrentProject;
 
 			var initialName = curProject.Name;
-			var curColorBandSetIds = curProject.ColorBandSetIds;
+			var curColorBandSetIds = curProject.ColorBandSetSNs;
 			var curColorBandSet = curProject.CurrentColorBandSet;
 
 			if (ShowOpenSaveProjectWindow(DialogType.Save, initialName, out var selectedName, out var description))

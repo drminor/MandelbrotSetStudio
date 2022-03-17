@@ -11,7 +11,7 @@ namespace MSS.Types.MSet
 		public ObjectId Id { get; init; }
 		public string Name { get; set; }
 		public string? Description { get; set; }
-		public Collection<Guid> ColorBandSetIds { get; init; }
+		public Collection<Guid> ColorBandSetSNs { get; init; }
 		public ColorBandSet CurrentColorBandSet { get; set; }
 
 		public Project(string name, string? description, ColorBandSet currentColorBandSet) 
@@ -22,12 +22,12 @@ namespace MSS.Types.MSet
 			: this(ObjectId.Empty, name, description, colorBandSetIds, currentColorBandSet)
 		{ }
 
-		public Project(ObjectId id, string name, string? description, IList<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		public Project(ObjectId id, string name, string? description, IList<Guid> colorBandSetSNs, ColorBandSet currentColorBandSet)
 		{
 			Id = id;
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			Description = description;
-			ColorBandSetIds = CloneSetIds(colorBandSetIds);
+			ColorBandSetSNs = CloneSetIds(colorBandSetSNs);
 			CurrentColorBandSet = currentColorBandSet.Clone();
 		}
 
@@ -35,17 +35,17 @@ namespace MSS.Types.MSet
 
 		public bool OnFile => Id != ObjectId.Empty;
 
-		private Collection<Guid> CloneSetIds(IList<Guid> setIds)
+		private Collection<Guid> CloneSetIds(IList<Guid> setSNs)
 		{
 			Collection<Guid> result;
 
-			if (setIds == null || setIds.Count == 0)
+			if (setSNs == null || setSNs.Count == 0)
 			{
 				result = new Collection<Guid>();
 			}
 			else
 			{
-				result = new Collection<Guid>(setIds.Select(x => new Guid(x.ToByteArray())).ToList());
+				result = new Collection<Guid>(setSNs.Select(x => new Guid(x.ToByteArray())).ToList());
 			}
 
 			return result;
