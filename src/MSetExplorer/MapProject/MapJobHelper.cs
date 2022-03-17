@@ -4,6 +4,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -21,6 +22,8 @@ namespace MSetExplorer
 
 			var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(displaySize, blockSize);
+
+			CheckCanvasSize(displaySize, blockSize);
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var coords = mSetInfo.Coords;
@@ -56,6 +59,17 @@ namespace MSetExplorer
 			return result;
 		}
 
+		[Conditional("Debug")]
+		private static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)
+		{
+			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(new SizeDbl(canvasSize), blockSize, keepSquare: true);
+
+			if (sizeInWholeBlocks != (new SizeInt(8)))
+			{
+				throw new InvalidOperationException("For testing we need the canvas size to be 1024 x 1024.");
+			}
+		}
+
 		#endregion
 
 		#region Build Initial MSetInfo
@@ -65,6 +79,14 @@ namespace MSetExplorer
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
 			var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, iterationsPerRequest: 100);
 
+			//var colorBandSet = BuildInitialColorBandSet(maxIterations);
+			var result = new MSetInfo(coords, mapCalcSettings/*, colorBandSet*/);
+
+			return result;
+		}
+
+		public static ColorBandSet BuildInitialColorBandSet(int maxIterations)
+		{
 			var colorBands = new List<ColorBand>
 			{
 				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
@@ -84,9 +106,7 @@ namespace MSetExplorer
 			var highColorCss = "#000000";
 			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
 
-			var colorBandSet = new ColorBandSet(colorBands);
-
-			var result = new MSetInfo(coords, mapCalcSettings, colorBandSet);
+			var result = new ColorBandSet(colorBands);
 
 			return result;
 		}

@@ -15,7 +15,6 @@ namespace MSetExplorer
 	internal class MapLoader
 	{
 		private readonly BigVector _mapBlockOffset;
-		private readonly ColorMap _colorMap;
 		private readonly Action<object, MapSection> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
@@ -27,10 +26,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoader(BigVector mapBlockOffset, ColorMap colorMap, Action<object, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(BigVector mapBlockOffset, Action<object, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_mapBlockOffset = mapBlockOffset;
-			_colorMap = colorMap;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
 			JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
@@ -110,8 +108,7 @@ namespace MSetExplorer
 		{
 			if (mapSectionResponse.Counts != null && !mapSectionResponse.RequestCancelled)
 			{
-				var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset, _colorMap);
-				Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}, with ColorMap: {_colorMap.SerialNumber}.");
+				var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
 
 				_callback(this, mapSection);
 				mapSectionRequest.Handled = true;

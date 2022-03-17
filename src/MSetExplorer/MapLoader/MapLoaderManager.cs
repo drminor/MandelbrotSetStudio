@@ -55,7 +55,7 @@ namespace MSetExplorer
 			{
 				StopCurrentJobInternal();
 
-				var request = new MapLoader(job.MapBlockOffset, new ColorMap(job.MSetInfo.ColorBandSet), HandleMapSection, _mapSectionRequestProcessor);
+				var request = new MapLoader(job.MapBlockOffset, HandleMapSection, _mapSectionRequestProcessor);
 				var mapSectionRequests = MapSectionHelper.CreateSectionRequests(job, emptyMapSections);
 				var startTask = request.Start(mapSectionRequests);
 

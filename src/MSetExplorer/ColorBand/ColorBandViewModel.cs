@@ -11,18 +11,15 @@ namespace MSetExplorer
 {
 	public class ColorBandViewModel : ViewModelBase, IColorBandViewModel
 	{
-		private readonly ProjectAdapter _projectAdapter;
-
-		private Job _currentJob;
+		private Project _currentProject;
 		private ColorBandSet _colorBandSet;
 		private ColorBand _selectedColorBand;
 
 		#region Constructor
 
-		public ColorBandViewModel(ProjectAdapter projectAdapter)
+		public ColorBandViewModel()
 		{
-			_projectAdapter = projectAdapter;
-			CurrentJob = null;
+			CurrentProject = null;
 			_colorBandSet = null;
 			ColorBands = new ObservableCollection<ColorBand>();
 			SelectedColorBand = null;
@@ -36,16 +33,16 @@ namespace MSetExplorer
 
 		public ObservableCollection<ColorBand> ColorBands { get; private set; }
 
-		public Job CurrentJob
+		public Project CurrentProject
 		{
-			get => _currentJob;
+			get => _currentProject;
 			set
 			{
-				if (value != _currentJob)
+				if (value != _currentProject)
 				{
-					_currentJob = value;
-					ColorBandSet = GetColorBands(value);
-					OnPropertyChanged(nameof(IColorBandViewModel.CurrentJob));
+					_currentProject = value;
+					ColorBandSet = value.CurrentColorBandSet;
+					OnPropertyChanged(nameof(IColorBandViewModel.CurrentProject));
 				}
 			}
 		}
@@ -67,13 +64,12 @@ namespace MSetExplorer
 
 			private set
 			{
-				Debug.WriteLine($"ColorBandViewModel is having is CBSet updated. Current = {_colorBandSet?.SerialNumber}, New = {value?.SerialNumber}");
+				Debug.WriteLine($"ColorBandViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.SerialNumber}, New = {value?.SerialNumber}");
 				if (value == null)
 				{
 					if (_colorBandSet != null)
 					{
 						ColorBands.Clear();
-						//ClearBands();
 						_colorBandSet = value;
 						Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
 						OnPropertyChanged(nameof(IColorBandViewModel.ColorBandSet));
@@ -84,7 +80,6 @@ namespace MSetExplorer
 					if (_colorBandSet == null || _colorBandSet != value)
 					{
 						ColorBands.Clear();
-						//ClearBands();
 
 						foreach (var c in value)
 						{
@@ -110,14 +105,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//private void ClearBands()
-		//{
-		//	while(ColorBands.Count > 0)
-		//	{
-		//		ColorBands.RemoveAt(0);
-		//	}
-		//}
 
 		public int? HighCutOff
 		{
@@ -177,16 +164,6 @@ namespace MSetExplorer
 
 			ColorBandSet = newColorBandSet;
 
-		}
-
-		#endregion
-
-		#region Private Methods
-
-		private ColorBandSet GetColorBands(Job job)
-		{
-			var result = job == null ? null : job.MSetInfo.ColorBandSet; // _projectAdapter.GetColorBands(job);
-			return result;
 		}
 
 		#endregion

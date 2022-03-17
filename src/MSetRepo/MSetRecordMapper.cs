@@ -13,33 +13,44 @@ namespace MSetRepo
 {
 	/// <summary>
 	/// Maps 
-	///		Project, Job, MSetInfo, Subdivision, MapSectionResponse
+	///		Project, ColorBandSet, Job, MSetInfo, 
+	///		Subdivision, MapSectionResponse
 	///		RPoint, RSize, RRectangle,
 	///		PointInt, SizeInt, VectorInt, BigVector
 	/// </summary>
-	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>,
+	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>,
 		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
-		private readonly IFormatProvider _formatProvider;
 
 		public MSetRecordMapper(DtoMapper dtoMapper)
 		{
 			_dtoMapper = dtoMapper;
-			_formatProvider = CultureInfo.InvariantCulture;
 		}
 		
 		public Project MapFrom(ProjectRecord target)
 		{
-			var result = new Project(target.Id, target.Name, target.Description);
+			var result = new Project(target.Id, target.Name, target.Description, target.ColorBandSetIds.Select(x => new Guid(x)).ToList(), MapFrom(target.CurrentColorBandSetRecord));
 			return result;
 		}
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name, source.Description);
+			var result = new ProjectRecord(source.Name, source.Description, source.ColorBandSetIds.Select(x => x.ToByteArray()).ToArray(), MapTo(source.CurrentColorBandSet));
+			return result;
+		}
+
+		public ColorBandSetRecord MapTo(ColorBandSet source)
+		{
+			var result = new ColorBandSetRecord(source.ToArray(), source.SerialNumber.ToByteArray());
+			return result;
+		}
+
+		public ColorBandSet MapFrom(ColorBandSetRecord target)
+		{
+			var result = new ColorBandSet(new Guid(target.SerialNumber), target.ColorBands);
 			return result;
 		}
 
@@ -71,7 +82,7 @@ namespace MSetRepo
 		public MSetInfo MapFrom(MSetInfoRecord target)
 		{
 			var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
-			var result = new MSetInfo(coords, target.MapCalcSettings, new ColorBandSet(new Guid(target.ColorBandsSerialNumber), target.ColorBands));
+			var result = new MSetInfo(coords, target.MapCalcSettings/*, new ColorBandSet(new Guid(target.ColorBandsSerialNumber), target.ColorBands)*/);
 
 			return result;
 		}
@@ -79,7 +90,7 @@ namespace MSetRepo
 		public MSetInfoRecord MapTo(MSetInfo source)
 		{
 			var coords = MapTo(source.Coords);
-			var result = new MSetInfoRecord(coords, source.MapCalcSettings, source.ColorBandSet.ToArray(), source.ColorBandSet.SerialNumber.ToByteArray());
+			var result = new MSetInfoRecord(coords, source.MapCalcSettings/*, source.ColorBandSet.ToArray(), source.ColorBandSet.SerialNumber.ToByteArray()*/);
 
 			return result;
 		}
@@ -228,6 +239,5 @@ namespace MSetRepo
 		}
 
 		#endregion
-
 	}
 }

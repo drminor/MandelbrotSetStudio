@@ -175,11 +175,16 @@ namespace MSetExplorer
 
 		private void SaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var initialName = _vm.MapProjectViewModel.CurrentProjectName;
+			var curProject = _vm.MapProjectViewModel.CurrentProject;
+
+			var initialName = curProject.Name;
+			var curColorBandSetIds = curProject.ColorBandSetIds;
+			var curColorBandSet = curProject.CurrentColorBandSet;
+
 			if (ShowOpenSaveProjectWindow(DialogType.Save, initialName, out var selectedName, out var description))
 			{
 				Debug.WriteLine($"Saving project with name: {selectedName}.");
-				_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description);
+				_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curColorBandSetIds, curColorBandSet);
 			}
 		}
 
@@ -220,8 +225,11 @@ namespace MSetExplorer
 
 		private void LoadNewProject()
 		{
-			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations: 700);
-			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo);
+			var maxIterations = 700;
+			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations);
+			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(maxIterations);
+
+			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo, colorBandSet);
 		}
 
 		private bool SaveChanges()

@@ -1,0 +1,62 @@
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
+using MSS.Types;
+using ProjectRepo.Entities;
+using System.Collections.Generic;
+
+namespace ProjectRepo
+{
+	public class ColorBandSetReaderWriter : MongoDbCollectionBase<ColorBandSetRecord>
+	{
+		private const string COLLECTION_NAME = "ColorBandSets";
+
+		public ColorBandSetReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
+		{ }
+
+		public IEnumerable<ColorBandSetRecord> GetAll()
+		{
+			var colorBandSetRecords = Collection.Find(_ => true).ToEnumerable();
+			return colorBandSetRecords;
+		}
+
+		public ColorBandSetRecord Get(ObjectId colorBandSetId)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+			var colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
+
+			return colorBandSetRecord;
+		}
+
+		public bool TryGet(ObjectId colorBandSetId, out ColorBandSetRecord colorBandSetRecord)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+			colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
+
+			return colorBandSetRecord != null;
+		}
+
+		public ObjectId Insert(ColorBandSetRecord colorBandSetRecord)
+		{
+			Collection.InsertOne(colorBandSetRecord);
+			return colorBandSetRecord.Id;
+		}
+
+		public void Update(ObjectId colorBandSetId, ColorBand[] colorBands)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+
+			var updateDefinition = Builders<ColorBandSetRecord>.Update
+				.Set(u => u.ColorBands, colorBands);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public long? Delete(ObjectId colorBandSetId)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+			var deleteResult = Collection.DeleteOne(filter);
+
+			return GetReturnCount(deleteResult);
+		}
+	}
+}

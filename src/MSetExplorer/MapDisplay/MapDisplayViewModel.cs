@@ -14,7 +14,6 @@ namespace MSetExplorer
 	{
 		private static readonly bool _keepDisplaySquare = true;
 
-		//private readonly IMapProjectViewModel _mapProjectViewModel;
 		private readonly IMapLoaderManager _mapLoaderManager;
 
 		private readonly IScreenSectionCollection _screenSectionCollection;
@@ -31,8 +30,6 @@ namespace MSetExplorer
 		{
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
-
-			//BlockSize = mapProjectViewModel.BlockSize;
 
 			BlockSize = blockSize;
 

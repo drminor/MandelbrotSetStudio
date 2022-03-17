@@ -15,7 +15,8 @@ namespace MSetExplorer
 		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, IColorBandViewModel colorBandViewModel)
 		{
 			MapProjectViewModel = mapProjectViewModel;
-			MapProjectViewModel.CurrentJobChanged += MapProjectViewModel_CurrentJobChanged;
+			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
+			//MapProjectViewModel.CurrentJobChanged += MapProjectViewModel_CurrentJobChanged;
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
@@ -29,24 +30,48 @@ namespace MSetExplorer
 			ColorBandViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 		}
 
-		private void MapProjectViewModel_CurrentJobChanged(object sender, System.EventArgs e)
+		private void MapProjectViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			var curJob = MapProjectViewModel.CurrentJob;
-
-			if (curJob != null)
+			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
-				MapDisplayViewModel.CurrentJob = curJob;
-
-				var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
-				_targetIterations = mapCalcSettings.TargetIterations;
-				OnPropertyChanged(nameof(TargetIterations));
-
-				_steps = mapCalcSettings.IterationsPerRequest;
-				OnPropertyChanged(nameof(Steps));
+				ColorBandViewModel.CurrentProject = MapProjectViewModel.CurrentProject;
 			}
 
-			ColorBandViewModel.CurrentJob = curJob;
+			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
+			{
+				var curJob = MapProjectViewModel.CurrentJob;
+
+				if (curJob != null)
+				{
+					MapDisplayViewModel.CurrentJob = curJob;
+
+					var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
+					_targetIterations = mapCalcSettings.TargetIterations;
+					OnPropertyChanged(nameof(TargetIterations));
+
+					_steps = mapCalcSettings.IterationsPerRequest;
+					OnPropertyChanged(nameof(Steps));
+				}
+			}
 		}
+
+		//private void MapProjectViewModel_CurrentJobChanged(object sender, System.EventArgs e)
+		//{
+		//	var curJob = MapProjectViewModel.CurrentJob;
+
+		//	if (curJob != null)
+		//	{
+		//		MapDisplayViewModel.CurrentJob = curJob;
+
+		//		var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
+		//		_targetIterations = mapCalcSettings.TargetIterations;
+		//		OnPropertyChanged(nameof(TargetIterations));
+
+		//		_steps = mapCalcSettings.IterationsPerRequest;
+		//		OnPropertyChanged(nameof(Steps));
+		//	}
+
+		//}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object sender, MapViewUpdateRequestedEventArgs e)
 		{

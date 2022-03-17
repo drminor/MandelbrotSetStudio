@@ -133,7 +133,7 @@ namespace MSetExplorer
 
 		#region Create MapSection
 
-		public static MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, BigVector mapBlockOffset, ColorMap colorMap)
+		public static MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, BigVector mapBlockOffset)
 		{
 			var repoBlockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
 			var isInverted = mapSectionRequest.IsInverted;

@@ -15,8 +15,6 @@ namespace MSetRepo
 
 	public class ProjectAdapter
 	{
-		public const string ROOT_JOB_LABEL = "Root";
-
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
 		private readonly ProjectInfoCreator _projectInfoCreator;
@@ -50,6 +48,9 @@ namespace MSetRepo
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			projectReaderWriter.CreateCollection();
+
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			colorBandSetReaderWriter.CreateCollection();
 
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			jobReaderWriter.CreateCollection();
@@ -94,14 +95,17 @@ namespace MSetRepo
 			}
 		}
 
-		public Project CreateProject(string name, string? description)
+		public Project CreateProject(string name, string? description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
 			var projectRecord = projectReaderWriter.Get(name);
 			if (projectRecord is null)
 			{
-				var projectId = projectReaderWriter.Insert(new ProjectRecord(name, description));
+				var project = new Project(name, description, colorBandSetIds.ToList(), currentColorBandSet);
+				projectRecord = _mSetRecordMapper.MapTo(project);
+
+				var projectId = projectReaderWriter.Insert(projectRecord);
 				projectRecord = projectReaderWriter.Get(projectId);
 			}
 			else
@@ -113,22 +117,6 @@ namespace MSetRepo
 
 			return result;
 		}
-
-		//public Project GetOrCreateProject(string name, string description)
-		//{
-		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-
-		//	var projectRecord = projectReaderWriter.Get(name);
-		//	if (projectRecord is null)
-		//	{
-		//		var projectId = projectReaderWriter.Insert(new ProjectRecord(name, description));
-		//		projectRecord = projectReaderWriter.Get(projectId);
-		//	}
-
-		//	var result = _mSetRecordMapper.MapFrom(projectRecord);
-
-		//	return result;
-		//}
 
 		/// <summary>
 		/// Inserts the project record if it does not exist on the database.
@@ -398,15 +386,6 @@ namespace MSetRepo
 			_ = mapSectionReaderWriter.DeleteAllWithSubId(subdivision.Id);
 
 			return subsDeleted.HasValue && subsDeleted.Value > 0;
-		}
-
-		#endregion
-
-		#region Color Bands 
-
-		public ColorBandSet? GetColorBands(Job job)
-		{
-			return job?.MSetInfo.ColorBandSet;
 		}
 
 		#endregion

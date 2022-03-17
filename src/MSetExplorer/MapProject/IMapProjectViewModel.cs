@@ -1,6 +1,8 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -18,7 +20,7 @@ namespace MSetExplorer
 		bool CanSaveProject { get; }
 		bool CurrentProjectIsDirty { get; }
 
-		event EventHandler CurrentJobChanged;
+		//event EventHandler CurrentJobChanged;
 		Job CurrentJob { get; }
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
@@ -27,13 +29,17 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
-		void UpdateColorBands(ColorBandSet colorBandSet);
+		//void UpdateColorBands(ColorBandSet colorBandSet);
 
-		void ProjectStartNew(MSetInfo mSetInfo);
-		void ProjectCreate(string projectName, string description, MSetInfo mSetInfo);
-		bool ProjectOpen(string projectName);
+		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);
+
+		//void ProjectCreate(string projectName, string description, MSetInfo mSetInfo);
+		void ProjectCreate(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
+
+		bool ProjectOpen(string name);
 		void ProjectSave();
-		void ProjectSaveAs(string projectName, string description);
+		
+		void ProjectSaveAs(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
 
 		void ProjectUpdateName(string name);
 		void ProjectUpdateDescription(string description);

@@ -22,7 +22,7 @@ namespace MSetExplorer
 
 		private ProjectAdapter _projectAdapter;
 
-		private MapProjectViewModel _jobStack;
+		private IMapProjectViewModel _mapProjectViewModel;
 		private MapLoaderManager _mapLoaderManager;
 
 		private Process _serverProcess;
@@ -30,45 +30,35 @@ namespace MSetExplorer
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			var DROP_MAP_SECTIONS = false;
-
-			//var USE_MAP_NAV_SIM = false;
 			var USE_MAP_SECTION_REPO = true;
 
 			base.OnStartup(e);
 
 			StartServer();
 
+			// Project Repository Adapter
 			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING, CreateProjectInfo);
-
 			if (DROP_MAP_SECTIONS)
 			{
 				_projectAdapter.DropSubdivisionsAndMapSectionsCollections();
 			}
-
 			_projectAdapter.CreateCollections();
 
+			// Map Project ViewModel
+			_mapProjectViewModel = new MapProjectViewModel(_projectAdapter, RMapConstants.BLOCK_SIZE);
+
+			// Map Display View Model
 			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
-
-			_jobStack = new MapProjectViewModel(_projectAdapter, RMapConstants.BLOCK_SIZE);
 			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
-
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, RMapConstants.BLOCK_SIZE);
 
-			IColorBandViewModel colorBandViewModel = new ColorBandViewModel(_projectAdapter);
+			// ColorBand ViewModel
+			IColorBandViewModel colorBandViewModel = new ColorBandViewModel();
 
-			//var window1 = USE_MAP_NAV_SIM
-			//	? new MapNavSim
-			//	{
-			//		DataContext = new MapNavSimViewModel(RMapConstants.BLOCK_SIZE, projectAdapter, _mapSectionRequestProcessor)
-			//	}
-			//	: (Window)new MainWindow
-			//	{
-			//		DataContext = new MainWindowViewModel(projectAdapter, mapDisplayViewModel, mapLoaderJobStack)
-			//  };
-
+			// Main Window
 			var window1 = new MainWindow
 			{
-				DataContext = new MainWindowViewModel(_jobStack, mapDisplayViewModel, CreateAProjectOpenSaveViewModel, colorBandViewModel)
+				DataContext = new MainWindowViewModel(_mapProjectViewModel, mapDisplayViewModel, CreateAProjectOpenSaveViewModel, colorBandViewModel)
 			};
 
 			window1.Show();
@@ -78,9 +68,9 @@ namespace MSetExplorer
 		{
 			base.OnExit(e);
 
-			if (_jobStack != null)
+			if (_mapProjectViewModel != null)
 			{
-				_jobStack.Dispose();
+				((MapProjectViewModel) _mapProjectViewModel).Dispose();
 			}
 
 			if (_mapLoaderManager != null)

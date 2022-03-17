@@ -10,7 +10,7 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler PropertyChanged;
 
-		Job CurrentJob { get; set; }
+		Project CurrentProject { get; set; }
 		ColorBandSet ColorBandSet { get; }
 		int? HighCutOff { get; set; }
 

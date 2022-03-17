@@ -6,9 +6,7 @@ namespace MSS.Common
 	{
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE;
 		public static readonly SizeInt BLOCK_SIZE;
-
 		public static readonly RRectangle TEST_RECTANGLE;
-
 
 		static RMapConstants()
 		{

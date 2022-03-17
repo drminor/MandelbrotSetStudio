@@ -160,12 +160,12 @@ namespace ImageBuilder
 		//	}
 		//}
 
-		private static Project BuildProject(string projectName)
-		{
-			var result = new Project(ObjectId.GenerateNewId(), projectName, description: null);
+		//private static Project BuildProject(string projectName)
+		//{
+		//	var result = new Project(projectName, description: null);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private static string GetFullPath(string basePath, string fileName)
 		{

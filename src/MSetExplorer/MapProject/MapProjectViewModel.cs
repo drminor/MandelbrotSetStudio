@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public event EventHandler CurrentJobChanged;
+		//public event EventHandler CurrentJobChanged;
 
 		public SizeInt BlockSize { get; }
 
@@ -107,9 +107,9 @@ namespace MSetExplorer
 
 		#region Public Methods -- Project
 
-		public void ProjectStartNew(MSetInfo mSetInfo)
+		public void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet)
 		{
-			CurrentProject = new Project(ObjectId.Empty, "New", description: null);
+			CurrentProject = new Project("New", description: null, colorBandSet);
 
 			DoWithWriteLock(() =>
 			{
@@ -121,14 +121,14 @@ namespace MSetExplorer
 			CurrentProjectIsDirty = false;
 		}
 
-		public void ProjectCreate(string projectName, string projectDescription, MSetInfo mSetInfo)
+		public void ProjectCreate(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
 		{
-			if (_projectAdapter.TryGetProject(projectName, out var _))
+			if (_projectAdapter.TryGetProject(name, out var _))
 			{
-				throw new InvalidOperationException($"Cannot create project with name: {projectName}, a project with that name already exists.");
+				throw new InvalidOperationException($"Cannot create project with name: {name}, a project with that name already exists.");
 			}
 
-			var project = _projectAdapter.CreateProject(projectName, projectDescription);
+			var project = _projectAdapter.CreateProject(name, description, colorBandSetIds, currentColorBandSet);
 			LoadProject(project);
 		}
 
@@ -143,9 +143,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public void ProjectSaveAs(string projectName, string description)
+		public void ProjectSaveAs(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
 		{
-			if( _projectAdapter.TryGetProject(projectName, out var existingProject))
+			if( _projectAdapter.TryGetProject(name, out var existingProject))
 			{
 				if (existingProject != null)
 				{
@@ -153,7 +153,7 @@ namespace MSetExplorer
 				}
 			}
 
-			var project = _projectAdapter.CreateProject(projectName, description);
+			var project = _projectAdapter.CreateProject(name, description, colorBandSetIds, currentColorBandSet);
 
 			var jobsList = Jobs.ToList();
 
@@ -274,17 +274,17 @@ namespace MSetExplorer
 			LoadMap(updatedInfo, TransformType.IterationUpdate);
 		}
 
-		public void UpdateColorBands(ColorBandSet colorBands)
-		{
-			var curJob = CurrentJob;
-			var mSetInfo = curJob.MSetInfo;
+		//public void UpdateColorBands(ColorBandSet colorBands)
+		//{
+		//	var curJob = CurrentJob;
+		//	var mSetInfo = curJob.MSetInfo;
 
-			if (mSetInfo.ColorBandSet != colorBands)
-			{
-				var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorBands);
-				LoadMap(updatedInfo, TransformType.ColorMapUpdate);
-			}
-		}
+		//	if (mSetInfo.ColorBandSet != colorBands)
+		//	{
+		//		var updatedInfo = MSetInfo.UpdateWithNewColorMapEntries(mSetInfo, colorBands);
+		//		LoadMap(updatedInfo, TransformType.ColorMapUpdate);
+		//	}
+		//}
 
 		public bool GoBack()
 		{
@@ -356,7 +356,7 @@ namespace MSetExplorer
 				_jobsPointer = _jobsCollection.Count - 1;
 				_currentProjectIsDirty = true;
 
-				CurrentJobChanged?.Invoke(this, new EventArgs());
+				//CurrentJobChanged?.Invoke(this, new EventArgs());
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
@@ -392,7 +392,7 @@ namespace MSetExplorer
 			if (_jobsPointer == newJobIndex)
 			{
 				// Force a redraw
-				CurrentJobChanged?.Invoke(this, new EventArgs());
+				//CurrentJobChanged?.Invoke(this, new EventArgs());
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			}
 			else
@@ -400,7 +400,7 @@ namespace MSetExplorer
 				var job = _jobsCollection[newJobIndex];
 				_jobsPointer = newJobIndex;
 
-				CurrentJobChanged?.Invoke(this, new EventArgs());
+				//CurrentJobChanged?.Invoke(this, new EventArgs());
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
