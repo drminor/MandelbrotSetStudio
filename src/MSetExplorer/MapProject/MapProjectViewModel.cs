@@ -97,6 +97,20 @@ namespace MSetExplorer
 			}
 		}
 
+		public ColorBandSet CurrentColorBandSet
+		{
+			get => CurrentProject?.CurrentColorBandSet;
+			set
+			{
+				var project = CurrentProject;
+				if (project != null)
+				{
+					project.CurrentColorBandSet = value;
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+				}
+			}
+		}
+
 		public Job CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
 		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_jobsPointer, out var _); });
@@ -245,6 +259,16 @@ namespace MSetExplorer
 
 				project.Description = description;
 			}
+		}
+
+		#endregion
+
+		#region Public Methods ColorBand
+
+		public ColorBandSet GetColorBandSet(Guid serialNumber)
+		{
+			var result = _projectAdapter.GetColorBandSet(serialNumber);
+			return result;
 		}
 
 		#endregion

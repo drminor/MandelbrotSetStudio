@@ -17,10 +17,11 @@ namespace MSetExplorer
 
 		Project CurrentProject { get; }
 		string CurrentProjectName { get; }
+		ColorBandSet CurrentColorBandSet { get; set; }
 		bool CanSaveProject { get; }
 		bool CurrentProjectIsDirty { get; }
 
-		//event EventHandler CurrentJobChanged;
+		// Job Methods
 		Job CurrentJob { get; }
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
@@ -29,11 +30,10 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
-		//void UpdateColorBands(ColorBandSet colorBandSet);
 
+		// Project Methods
 		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);
 
-		//void ProjectCreate(string projectName, string description, MSetInfo mSetInfo);
 		void ProjectCreate(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
 
 		bool ProjectOpen(string name);
@@ -43,6 +43,9 @@ namespace MSetExplorer
 
 		void ProjectUpdateName(string name);
 		void ProjectUpdateDescription(string description);
+
+		// ColorBand Methods
+		ColorBandSet GetColorBandSet(Guid serialNumber);
 
 	}
 }

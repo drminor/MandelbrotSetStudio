@@ -30,7 +30,7 @@ namespace ProjectRepo
 
 		public ColorBandSetRecord Get(Guid colorBandSetSerialNumber)
 		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("SerialNumber", colorBandSetSerialNumber);
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("SerialNumber", colorBandSetSerialNumber.ToByteArray());
 			var colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
 
 			return colorBandSetRecord;
@@ -46,7 +46,7 @@ namespace ProjectRepo
 
 		public bool TryGet(Guid colorBandSetSerialNumber, out ColorBandSetRecord colorBandSetRecord)
 		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("SerialNumber", colorBandSetSerialNumber);
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("SerialNumber", colorBandSetSerialNumber.ToByteArray());
 			colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
 
 			return colorBandSetRecord != null;

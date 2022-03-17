@@ -240,15 +240,22 @@ namespace MSetRepo
 			return colorBandSetRecord;
 		}
 
-		public ColorBandSet GetColorBandSet(Guid colorBandSetSerialNumber)
+		public ColorBandSet? GetColorBandSet(Guid colorBandSetSerialNumber)
 		{
 			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {colorBandSetSerialNumber}.");
 
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			var colorBandSetRecord = colorBandSetReaderWriter.Get(colorBandSetSerialNumber);
-			var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
 
-			return colorBandSet;
+			if (colorBandSetRecord == null)
+			{
+				return null;
+			}
+			else
+			{
+				var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+				return colorBandSet;
+			}
 		}
 
 		public bool TryGetColorBandSet(Guid colorBandSetSerialNumber, out ColorBandSetRecord? colorBandSetRecord)

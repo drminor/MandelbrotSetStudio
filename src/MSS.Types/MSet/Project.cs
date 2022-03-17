@@ -12,7 +12,8 @@ namespace MSS.Types.MSet
 		public string Name { get; set; }
 		public string? Description { get; set; }
 		public Collection<Guid> ColorBandSetSNs { get; init; }
-		public ColorBandSet CurrentColorBandSet { get; set; }
+
+		private ColorBandSet _currentColorBandSet;
 
 		public Project(string name, string? description, ColorBandSet currentColorBandSet) 
 			: this(ObjectId.Empty, name, description, new List<Guid> { currentColorBandSet.SerialNumber }, currentColorBandSet)
@@ -28,12 +29,32 @@ namespace MSS.Types.MSet
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			Description = description;
 			ColorBandSetSNs = CloneSetIds(colorBandSetSNs);
-			CurrentColorBandSet = currentColorBandSet.Clone();
+
+			_currentColorBandSet = currentColorBandSet.Clone();
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
 
 		public bool OnFile => Id != ObjectId.Empty;
+
+
+		public ColorBandSet CurrentColorBandSet
+		{
+			get => _currentColorBandSet;
+			set
+			{
+				if (value != _currentColorBandSet)
+				{
+					if (!ColorBandSetSNs.Contains(value.SerialNumber))
+					{
+						ColorBandSetSNs.Add(value.SerialNumber);
+					}
+
+					_currentColorBandSet = value;
+				}
+			}
+		}
+
 
 		private Collection<Guid> CloneSetIds(IList<Guid> setSNs)
 		{
