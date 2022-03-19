@@ -1,14 +1,11 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
-using MSS.Common;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-
-using MSS.Common.DataTransferObjects;
 
 namespace MSetExplorer
 {

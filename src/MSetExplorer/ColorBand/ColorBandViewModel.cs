@@ -19,6 +19,8 @@ namespace MSetExplorer
 
 		private readonly ObservableCollection<MapSection> _mapSections;
 
+		private readonly MapSectionHistogramProcessor _mapSectionHistogramProcessor;
+
 		#region Constructor
 
 		public ColorBandViewModel(ObservableCollection<MapSection> mapSections)
@@ -34,6 +36,8 @@ namespace MSetExplorer
 
 			_mapSections = mapSections;
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
+
+			_mapSectionHistogramProcessor = new MapSectionHistogramProcessor(Histogram);
 		}
 
 		#endregion
@@ -172,7 +176,8 @@ namespace MSetExplorer
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
-					Histogram.Add(mapSection.Histogram);
+					_mapSectionHistogramProcessor.AddWork(isAddOperation: true, mapSection, HandleHistogramUpdate);
+					//Histogram.Add(mapSection.Histogram);
 				}
 			}
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
@@ -181,11 +186,12 @@ namespace MSetExplorer
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
-					Histogram.Remove(mapSection.Histogram);
+					//Histogram.Remove(mapSection.Histogram);
+					_mapSectionHistogramProcessor.AddWork(isAddOperation: false, mapSection, HandleHistogramUpdate);
 				}
 			}
 
-			Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
+			//Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
 		}
 
 		#endregion
@@ -245,6 +251,11 @@ namespace MSetExplorer
 			{
 				histogram.Add(ms.Histogram);
 			}
+		}
+
+		private void HandleHistogramUpdate(MapSection mapSection, IList<double> newPercentages)
+		{
+
 		}
 
 		#endregion
