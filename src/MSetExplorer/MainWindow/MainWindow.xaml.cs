@@ -228,11 +228,13 @@ namespace MSetExplorer
 			var maxIterations = 700;
 			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations);
 
-			var colorBandSet = _vm.MapProjectViewModel.GetColorBandSet(new Guid("{187b379d-1515-479e-b928-b64728315b15}"));
+			var cbsId = new Guid("{187b379d-1515-479e-b928-b64728315b15}");
+			var colorBandSet = _vm.MapProjectViewModel.GetColorBandSet(cbsId);
 
 			if (colorBandSet == null)
 			{
 				colorBandSet = MapJobHelper.BuildInitialColorBandSet(maxIterations);
+				colorBandSet = new ColorBandSet(cbsId, colorBandSet);
 			}
 
 			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo, colorBandSet);

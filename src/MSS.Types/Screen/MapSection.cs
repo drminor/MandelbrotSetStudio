@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace MSS.Types
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>
 	{
+
+		private Lazy<IHistogram> _histogram;
+
 		public PointInt BlockPosition { get; set; }
 		public SizeInt Size { get; init; }
 
 		public int[] Counts { get; set; }
-		//public byte[] Pixels1d { get; init; }
 
 		public string SubdivisionId { get; init; }
 		public BigVector RepoBlockPosition { get; init; }
@@ -21,12 +24,15 @@ namespace MSS.Types
 			BlockPosition = blockPosition;
 			Size = size;
 			Counts = counts ?? throw new ArgumentNullException(nameof(counts));
-			//Pixels1d = pixels1d; // ?? throw new ArgumentNullException(nameof(pixels1d));
 
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
 			IsInverted = isInverted;
+
+			_histogram = new Lazy<IHistogram>(() => new HistogramALow(counts.Select(x => (int)Math.Round(x / 10000d))), System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		}
+
+		public IHistogram Histogram => _histogram.Value;
 
 		public override string? ToString()
 		{

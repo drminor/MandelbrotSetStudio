@@ -43,7 +43,7 @@
 
                                         </DockPanel>
 
-                                        <Grid Grid.Column="1" Width="190" x:Name="cDisplay" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                                        <Grid Grid.Column="1" Width="155" x:Name="cDisplay" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
                                             <local:ColorPanelControl StartColor="{Binding StartColor}" EndColor="{Binding ActualEndColor}"/>
                                         </Grid>
 

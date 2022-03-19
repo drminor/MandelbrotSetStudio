@@ -238,9 +238,11 @@ namespace MSetRepo
 		public ColorBandSetRecord CreateColorBandSetRecord(ColorBandSet currentColorBandSet)
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var colorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
+			var id = colorBandSetReaderWriter.Insert(colorBandSetRecord);
+			colorBandSetRecord = colorBandSetReaderWriter.Get(id);
 
-			return new ColorBandSetRecord(new ColorBand[0], new byte[0]);
-
+			return colorBandSetRecord;
 		}
 
 		#endregion

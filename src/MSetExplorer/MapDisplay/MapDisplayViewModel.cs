@@ -163,12 +163,7 @@ namespace MSetExplorer
 			{
 				// Add items
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
-				foreach (var mapSection in mapSections)
-				{
-					//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-					var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, _colorMap, !mapSection.IsInverted);
-					_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
-				}
+				DrawSections(mapSections, _colorMap);
 			}
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
 			{
@@ -191,7 +186,12 @@ namespace MSetExplorer
 		private void HandleColorMapChanged(ColorMap colorMap)
 		{
 			var loadedSections = GetMapSectionsSnapShot();
-			foreach (var mapSection in loadedSections)
+			DrawSections(loadedSections, colorMap);
+		}
+
+		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap colorMap)
+		{
+			foreach (var mapSection in mapSections)
 			{
 				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
 				var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted);

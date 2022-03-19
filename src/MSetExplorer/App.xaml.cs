@@ -53,7 +53,7 @@ namespace MSetExplorer
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
-			IColorBandViewModel colorBandViewModel = new ColorBandViewModel();
+			IColorBandViewModel colorBandViewModel = new ColorBandViewModel(mapDisplayViewModel.MapSections);
 
 			// Main Window
 			var window1 = new MainWindow

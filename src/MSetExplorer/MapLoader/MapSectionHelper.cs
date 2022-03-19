@@ -141,7 +141,6 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var blockSize = mapSectionRequest.BlockSize;
-			//var pixels1d = GetPixelArray(mapSectionResponse.Counts, blockSize, colorMap, !isInverted);
 			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted);
 
 			return mapSection;
@@ -170,15 +169,22 @@ namespace MSetExplorer
 					var countVal = counts[curSourcePtr++];
 					countVal = Math.DivRem(countVal, 1000, out var ev);
 					var escapeVel = ev / 1000d;
-					var colorComps = colorMap.GetColor(countVal, escapeVel);
 
-					for (var j = 2; j > -1; j--)
-					{
-						result[curResultPtr++] = colorComps[j];
-					}
-					result[curResultPtr++] = 255;
+					colorMap.PlaceColor(countVal, escapeVel, new Span<byte>(result, curResultPtr, 4));
+					curResultPtr += 4;
+
+					//var colorComps = colorMap.GetColor(countVal, escapeVel);
+
+					//for (var j = 2; j > -1; j--)
+					//{
+					//	result[curResultPtr++] = colorComps[j];
+					//}
+					//result[curResultPtr++] = 255;
 				}
 			}
+
+			//byte[] result = new byte[intArray.Length * sizeof(int)];
+			//Buffer.BlockCopy(intArray, 0, result, 0, result.Length);
 
 			return result;
 		}

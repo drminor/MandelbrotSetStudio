@@ -5,7 +5,8 @@ using System.Text.Json.Serialization;
 
 namespace MSS.Types
 {
-    public class ColorBandColor : ICloneable 
+    // Uses Byte Array to store color value. The alpha value is always fully opaque, i.e., set to 255.
+    public struct ColorBandColor // : ICloneable 
     {
         public static ColorBandColor Black = new ColorBandColor("#000000");
         public static ColorBandColor White = new ColorBandColor("#FFFFFF");
@@ -14,51 +15,60 @@ namespace MSS.Types
         [BsonConstructor]
         public ColorBandColor(string cssColor) : this(GetComps(cssColor))
         {
-            _cssColor = cssColor;
+            //_cssColor = cssColor;
         }
 
         public ColorBandColor(byte[] colorComps)
         {
             ColorComps = colorComps;
-            _cssColor = null;
+            //_cssColor = null;
         }
 
-        private string? _cssColor;
-        public string CssColor
-        {
-            get
-            {
-                if (_cssColor == null)
-                {
-                    _cssColor = GetCssColor(ColorComps);
-                }
-                return _cssColor;
-            }
-            init
-			{
-                _cssColor = null;
-			}
-        }
+   //     private string? _cssColor;
+   //     public string CssColor
+   //     {
+   //         get
+   //         {
+   //             if (_cssColor == null)
+   //             {
+   //                 _cssColor = GetCssColor(ColorComps);
+   //             }
+   //             return _cssColor;
+   //         }
+   //         init
+			//{
+   //             _cssColor = null;
+			//}
+   //     }
 
+        public string GetCssColor()
+		{
+            return GetCssColor(ColorComps);
+		}
+
+        /// <summary>
+        /// Array of 3 bytes in RGB order
+        /// </summary>
         [BsonIgnore]
         public byte[] ColorComps { get; init; }
 
-        private int? _colorNum;
+        //private int? _colorNum;
 
-        public int ColorNum
-        {
-            get
-            {
-                if(!_colorNum.HasValue)
-                {
-                    _colorNum = GetColorNum(ColorComps);
-                }
-                return _colorNum.Value;
-            }
-        }
+        //public int ColorNum
+        //{
+        //    get
+        //    {
+        //        if(!_colorNum.HasValue)
+        //        {
+        //            _colorNum = GetColorNum(ColorComps);
+        //        }
+        //        return _colorNum.Value;
+        //    }
+        //}
 
         private static string GetCssColor(byte[] cComps)
         {
+            // #RRGGBB
             var result = $"#{Get2CharHex(cComps[0])}{Get2CharHex(cComps[1])}{Get2CharHex(cComps[2])}";
             return result;
         }
@@ -70,10 +80,10 @@ namespace MSS.Types
 
         private static int GetColorNum(byte[] cComps)
         {
-            var result = 255 << 24;
-            result |= cComps[2] << 16;
-            result |= cComps[1] << 8;
-            result |= cComps[0];
+            var result = 255 << 24;         // Alpha
+            result |= cComps[2] << 16;      // Blue
+            result |= cComps[1] << 8;       // Green
+            result |= cComps[0];            // Red
 
             return result;
         }
@@ -88,17 +98,17 @@ namespace MSS.Types
             return colorComps;
         }
 
-		object ICloneable.Clone()
-		{
-            return Clone();
-		}
+		//object ICloneable.Clone()
+		//{
+  //          return Clone();
+		//}
 
-        public ColorBandColor Clone()
-		{
-            var colorComps = new byte[3];
-            Array.Copy(ColorComps, colorComps, 3);
-            return new ColorBandColor(colorComps);
-		}
+  //      public ColorBandColor Clone()
+		//{
+  //          var colorComps = new byte[3];
+  //          Array.Copy(ColorComps, colorComps, 3);
+  //          return new ColorBandColor(colorComps);
+		//}
 
 	}
 }

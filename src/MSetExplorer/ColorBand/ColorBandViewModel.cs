@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -16,9 +17,11 @@ namespace MSetExplorer
 		private ColorBandSet _colorBandSet;
 		private ColorBand _selectedColorBand;
 
+		private readonly ObservableCollection<MapSection> _mapSections;
+
 		#region Constructor
 
-		public ColorBandViewModel()
+		public ColorBandViewModel(ObservableCollection<MapSection> mapSections)
 		{
 			_rowHeight = 60;
 			_itemWidth = 180;
@@ -26,6 +29,11 @@ namespace MSetExplorer
 			_colorBandSet = null;
 			ColorBands = new ObservableCollection<ColorBand>();
 			SelectedColorBand = null;
+
+			Histogram = new HistogramA(0);
+
+			_mapSections = mapSections;
+			_mapSections.CollectionChanged += MapSections_CollectionChanged;
 		}
 
 		#endregion
@@ -86,6 +94,7 @@ namespace MSetExplorer
 					{
 						ColorBands.Clear();
 						_colorBandSet = value;
+						Histogram.Reset();
 						Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
 						OnPropertyChanged(nameof(IColorBandViewModel.ColorBandSet));
 					}
@@ -95,6 +104,8 @@ namespace MSetExplorer
 					if (_colorBandSet == null || _colorBandSet != value)
 					{
 						ColorBands.Clear();
+						Histogram.Reset(value.HighCutOff + 1);
+						PopulateHistorgram(_mapSections, Histogram);
 
 						foreach (var c in value)
 						{
@@ -137,22 +148,65 @@ namespace MSetExplorer
 			}
 		}
 
+		public IHistogram Histogram { get; private set; }
+
+		#endregion
+
+		#region Event Handlers
+
+		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			if (ColorBands.Count == 0)
+			{
+				return;
+			}
+
+			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+			{
+				//	Reset
+				Histogram.Reset();
+			}
+			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+			{
+				// Add items
+				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
+				foreach (var mapSection in mapSections)
+				{
+					Histogram.Add(mapSection.Histogram);
+				}
+			}
+			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
+			{
+				// Remove items
+				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
+				foreach (var mapSection in mapSections)
+				{
+					Histogram.Remove(mapSection.Histogram);
+				}
+			}
+
+			Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
+		}
+
 		#endregion
 
 		#region Public Methods
 
 		public void Test1()
 		{
-			var newColorBandSet = ColorBandSet.CreateNewCopy();
-			var len = newColorBandSet.Count;
+			//var newColorBandSet = ColorBandSet.CreateNewCopy();
+			//var len = newColorBandSet.Count;
 
-			var ocb = newColorBandSet[len - 3];
-			var ocb1 = newColorBandSet[1];
-			var ncb = new ColorBand(ocb.CutOff + 50, ocb1.StartColor, ocb1.BlendStyle, ocb1.EndColor);
+			//var ocb = newColorBandSet[len - 3];
+			//var ocb1 = newColorBandSet[1];
+			//var ncb = new ColorBand(ocb.CutOff + 50, ocb1.StartColor, ocb1.BlendStyle, ocb1.EndColor);
 
-			newColorBandSet.Insert(len - 2, ncb);
+			//newColorBandSet.Insert(len - 2, ncb);
 
-			ColorBandSet = newColorBandSet;
+			//ColorBandSet = newColorBandSet;
+
+			Debug.WriteLine($"There are {Histogram[Histogram.UpperBound]} points that reached the target iterations.");
+
 		}
 
 		public void Test2()
@@ -179,6 +233,18 @@ namespace MSetExplorer
 
 			ColorBandSet = newColorBandSet;
 
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
+		{
+			foreach(var ms in mapSections)
+			{
+				histogram.Add(ms.Histogram);
+			}
 		}
 
 		#endregion

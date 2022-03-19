@@ -1,8 +1,7 @@
-﻿using MSS.Types;
-
+﻿
 namespace ProjectRepo.Entities
 {
-	public record ColorBandSetRecord(ColorBand[] ColorBands, byte[] SerialNumber) : RecordBase()
+	public record ColorBandSetRecord(ColorBandRecord[] ColorBandRecords, byte[] SerialNumber) : RecordBase()
 	{ }
 
 }

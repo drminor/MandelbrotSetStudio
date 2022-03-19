@@ -13,12 +13,16 @@ namespace MSetRepo
 {
 	/// <summary>
 	/// Maps 
-	///		Project, ColorBandSet, Job, MSetInfo, 
+	///		Project, 
+	///		ColorBandSet, ColorBand
+	///		Job, MSetInfo, 
 	///		Subdivision, MapSectionResponse
 	///		RPoint, RSize, RRectangle,
 	///		PointInt, SizeInt, VectorInt, BigVector
 	/// </summary>
-	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>,
+	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
+		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
+		IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>,
 		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
@@ -46,7 +50,7 @@ namespace MSetRepo
 
 		public ColorBandSetRecord MapTo(ColorBandSet source)
 		{
-			var result = new ColorBandSetRecord(source.ToArray(), source.SerialNumber.ToByteArray());
+			var result = new ColorBandSetRecord(source.Select(x => MapTo(x)).ToArray(), source.SerialNumber.ToByteArray());
 			return result;
 		}
 
@@ -60,11 +64,21 @@ namespace MSetRepo
 			}
 			else
 			{
-				var result = new ColorBandSet(serialNumber, target.ColorBands);
+				var result = new ColorBandSet(serialNumber, target.ColorBandRecords.Select(x => MapFrom(x)).ToArray());
 				_colorBandSetCache.Add(result.SerialNumber, result);
 
 				return result;
 			}
+		}
+
+		public ColorBandRecord MapTo(ColorBand source)
+		{
+			return new ColorBandRecord(source.CutOff, source.StartColor.GetCssColor(), source.BlendStyleAsString, source.EndColor.GetCssColor());
+		}
+
+		public ColorBand MapFrom(ColorBandRecord target)
+		{
+			return new ColorBand(target.CutOff, new ColorBandColor(target.StartCssColor), Enum.Parse<ColorBandBlendStyle>(target.BlendStyle), new ColorBandColor(target.EndCssColor));
 		}
 
 		public Job MapFrom(JobRecord target)

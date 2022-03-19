@@ -9,7 +9,8 @@ namespace MSS.Types
     {
 		#region Constructor
 
-		public ColorBand(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor) : this(cutOff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
+		public ColorBand(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor) 
+			: this(cutOff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
         {
         }
 
@@ -35,25 +36,10 @@ namespace MSS.Types
 
 		public string BlendStyleAsString => GetBlendStyleAsString(BlendStyle);
 
-		//private int _previousCutOff;
-		//public int PreviousCutOff
-		//{
-		//	get => _previousCutOff;
-		//	set
-		//	{
-		//		if(value == 100)
-		//		{
-		//			Debug.WriteLine("Here.");
-		//		}
-		//		_previousCutOff = value;
-		//	}
-		//}
-
 		public int PreviousCutOff { get; set; }
-
+		public ColorBandColor ActualEndColor { get; set; }
 		public int BucketWidth => CutOff - PreviousCutOff;
 
-		public ColorBandColor ActualEndColor { get; set; }
 
 		#endregion
 
@@ -76,9 +62,9 @@ namespace MSS.Types
 
 		public ColorBand Clone()
 		{
-			var result = new ColorBand(CutOff, StartColor.Clone(), BlendStyle, EndColor.Clone());
+			var result = new ColorBand(CutOff, StartColor, BlendStyle, EndColor);
 			result.PreviousCutOff = PreviousCutOff;
-			result.ActualEndColor = ActualEndColor.Clone();
+			result.ActualEndColor = ActualEndColor;
 
 			return result;
 		}

@@ -34,13 +34,24 @@ namespace MSS.Common
 
         #region Public Methods
 
+        public void PlaceColor(int countVal, double escapeVelocity, Span<byte> destination)
+		{
+            var cme = GetColorBand(countVal);
+
+            if (cme.BlendStyle == ColorBandBlendStyle.None)
+            {
+                PutColor(cme.StartColor.ColorComps, destination);
+            }
+
+            var botBucketVal = cme.PreviousCutOff;
+
+            var bucketWidth = cme.BucketWidth;
+            var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
+            InterpolateAndPlace(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.ActualEndColor.ColorComps, stepFactor, destination);
+        }
+
         public byte[] GetColor(int countVal, double escapeVelocity)
         {
-			//if (countVal > 500)
-			//{
-			//	countVal = 500;
-			//}
-
 			byte[] result;
 
             var cme = GetColorBand(countVal);
@@ -134,6 +145,42 @@ namespace MSS.Common
 
                 return result;
             }
+        }
+
+        private void InterpolateAndPlace(byte[] cStart, byte[] c1, byte[] c2, double factor, Span<byte> destination)
+        {
+            if (factor == 0)
+            {
+                PutColor(cStart, destination);
+            }
+            else
+            {
+                var rd = cStart[0] + (c2[0] - c1[0]) * factor;
+                var gd = cStart[1] + (c2[1] - c1[1]) * factor;
+                var bd = cStart[2] + (c2[2] - c1[2]) * factor;
+
+                var r = Math.Round(rd);
+                var g = Math.Round(gd);
+                var b = Math.Round(bd);
+
+                destination[0] = (byte)b;
+                destination[1] = (byte)g;
+                destination[2] = (byte)r;
+                destination[3] = 255;
+            }
+        }
+
+        /// <summary>
+        /// Fills the destination with the Blue, Green, Red and Alpha values.
+        /// </summary>
+        /// <param name="comps"></param>
+        /// <param name="destination"></param>
+        private void PutColor(byte[] comps, Span<byte> destination)
+        {
+            destination[0] = comps[2];
+            destination[1] = comps[1];
+            destination[2] = comps[0];
+            destination[3] = 255;
         }
 
         #endregion
