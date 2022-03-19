@@ -9,7 +9,7 @@ namespace MSetExplorer
 	/// <summary>
 	/// Interaction logic for MapDisplay.xaml
 	/// </summary>
-	public partial class MapDisplay : UserControl
+	public partial class MapDisplayControl : UserControl
 	{
 		private bool _showBorder;
 		private bool _clipImageBlocks;
@@ -22,7 +22,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapDisplay()
+		public MapDisplayControl()
 		{
 			Loaded += MapDisplay_Loaded;
 			InitializeComponent();

@@ -43,10 +43,21 @@ namespace MSetExplorer
 			return new Size(size.Width, size.Height);
 		}
 
+		public static Size ConvertToSize(SizeDbl size)
+		{
+			return new Size(size.Width, size.Height);
+		}
+
 		public static Rect CreateRect(PointInt pointInt, SizeInt sizeInt)
 		{
 			return new Rect(ConvertToPoint(pointInt), ConvertToSize(sizeInt));
 		}
+
+		public static Rect CreateRect(SizeDbl size)
+		{
+			return new Rect(new Point(), ConvertToSize(size));
+		}
+
 
 		#endregion
 	}

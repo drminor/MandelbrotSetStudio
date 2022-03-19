@@ -24,6 +24,7 @@ namespace MSS.Types
 
 		public ColorBandSet(Guid serialNumber, IList<ColorBand> colorBands) : base(FixBands(colorBands))
 		{
+			Debug.WriteLine($"Constructing ColorBandSet with SerialNumber: {serialNumber}.");
 			SerialNumber = serialNumber;
 		}
 
@@ -31,7 +32,7 @@ namespace MSS.Types
 		{
 			if (colorBands == null || colorBands.Count == 0)
 			{
-				return new List<ColorBand> { DEFAULT_HIGH_COLOR_BAND };
+				return new List<ColorBand> { DEFAULT_HIGH_COLOR_BAND.Clone() };
 			}
 
 			var result = new List<ColorBand>(colorBands);
@@ -77,7 +78,10 @@ namespace MSS.Types
 			set
 			{
 				var currentBand = base[^1];
-				base[^1] = new ColorBand(value, currentBand.StartColor, currentBand.BlendStyle, currentBand.EndColor);
+				base[^1] = new ColorBand(value, currentBand.StartColor, currentBand.BlendStyle, currentBand.EndColor)
+				{
+					PreviousCutOff = currentBand.PreviousCutOff
+				};
 			}
 		}
 
@@ -87,7 +91,11 @@ namespace MSS.Types
 			set
 			{
 				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, value, currentBand.BlendStyle, currentBand.EndColor);
+				base[^1] = new ColorBand(currentBand.CutOff, value, currentBand.BlendStyle, currentBand.EndColor)
+				{
+					PreviousCutOff = currentBand.PreviousCutOff
+				};
+
 			}
 		}
 
@@ -101,7 +109,11 @@ namespace MSS.Types
 					throw new InvalidOperationException("The HighColorBand cannot have a BlendStyle of Next.");
 				}
 				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, value, currentBand.EndColor);
+				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, value, currentBand.EndColor)
+				{
+					PreviousCutOff = currentBand.PreviousCutOff
+				};
+
 			}
 		}
 
@@ -111,7 +123,11 @@ namespace MSS.Types
 			set
 			{
 				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, currentBand.BlendStyle, value);
+				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, currentBand.BlendStyle, value)
+				{
+					PreviousCutOff = currentBand.PreviousCutOff
+				};
+
 			}
 		}
 
@@ -122,7 +138,7 @@ namespace MSS.Types
 		protected override void ClearItems()
 		{
 			base.ClearItems();
-			Add(DEFAULT_HIGH_COLOR_BAND);
+			Add(DEFAULT_HIGH_COLOR_BAND.Clone());
 		}
 
 		protected override void InsertItem(int index, ColorBand item)
@@ -136,7 +152,7 @@ namespace MSS.Types
 			base.RemoveItem(index);
 			if (Count == 0)
 			{
-				Add(DEFAULT_HIGH_COLOR_BAND);
+				Add(DEFAULT_HIGH_COLOR_BAND.Clone());
 			}
 			else
 			{
@@ -157,7 +173,7 @@ namespace MSS.Types
 
 		private void UpdateItemAndNeighbors(int index, ColorBand item)
 		{
-			IList<ColorBand> colorBands = GetItemAndNeighbors(index, item);
+			var colorBands = GetItemAndNeighbors(index, item);
 
 			for(var i = 0; i < colorBands.Count; i++)
 			{
@@ -215,6 +231,8 @@ namespace MSS.Types
 
 		public ColorBandSet Clone()
 		{
+			Debug.WriteLine($"Cloning ColorBandSet with SerialNumber: {SerialNumber}.");
+
 			return new ColorBandSet(SerialNumber, CreateCopy());
 		}
 

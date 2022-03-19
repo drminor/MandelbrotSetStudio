@@ -47,7 +47,7 @@ namespace MSetExplorer
 		private void MainWindow_ContentRendered(object sender, EventArgs e)
 		{
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
-			//LoadNewProject();
+			LoadNewProject();
 		}
 
 		#endregion
@@ -234,8 +234,6 @@ namespace MSetExplorer
 			{
 				colorBandSet = MapJobHelper.BuildInitialColorBandSet(maxIterations);
 			}
-
-			//var colorBandSet = MapJobHelper.BuildInitialColorBandSet(maxIterations);
 
 			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo, colorBandSet);
 		}

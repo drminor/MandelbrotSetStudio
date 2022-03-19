@@ -30,7 +30,7 @@ namespace MSS.Types.MSet
 			Description = description;
 			ColorBandSetSNs = CloneSetIds(colorBandSetSNs);
 
-			_currentColorBandSet = currentColorBandSet.Clone();
+			_currentColorBandSet = currentColorBandSet;  //.Clone();
 		}
 
 		public DateTime DateCreated => Id.CreationTime;

@@ -8,14 +8,18 @@ namespace MSetExplorer
 	public interface IColorBandViewModel
 	{
 		bool InDesignMode { get; }
+
 		event PropertyChangedEventHandler PropertyChanged;
 
+		double RowHeight { get; set; }
+		double ItemWidth { get; set; }
+
 		Project CurrentProject { get; set; }
-		ColorBandSet ColorBandSet { get; }
-		int? HighCutOff { get; set; }
 
 		ObservableCollection<ColorBand> ColorBands { get; }
 		ColorBand SelectedColorBand { get; set; }
+		int? HighCutOff { get; set; }
+		ColorBandSet ColorBandSet { get; }
 
 		void Test1();
 		void Test2();

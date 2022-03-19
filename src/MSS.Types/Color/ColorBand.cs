@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace MSS.Types
@@ -34,6 +35,20 @@ namespace MSS.Types
 
 		public string BlendStyleAsString => GetBlendStyleAsString(BlendStyle);
 
+		//private int _previousCutOff;
+		//public int PreviousCutOff
+		//{
+		//	get => _previousCutOff;
+		//	set
+		//	{
+		//		if(value == 100)
+		//		{
+		//			Debug.WriteLine("Here.");
+		//		}
+		//		_previousCutOff = value;
+		//	}
+		//}
+
 		public int PreviousCutOff { get; set; }
 
 		public int BucketWidth => CutOff - PreviousCutOff;
@@ -44,14 +59,14 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		public void UpdateWithNeighbors(ColorBand? predecssor, ColorBand? sucessor)
+		public void UpdateWithNeighbors(ColorBand? predecessor, ColorBand? successor)
 		{
-			PreviousCutOff = predecssor == null ? 0 : predecssor.CutOff;
+			PreviousCutOff = predecessor == null ? 0 : predecessor.CutOff;
 
 			if (BlendStyle == ColorBandBlendStyle.Next)
 			{
-				var preceedingStartColor = sucessor?.StartColor ?? throw new InvalidOperationException("Must have a successor if the blend style is set to Next.");
-				ActualEndColor = preceedingStartColor;
+				var followingStartColor = successor?.StartColor ?? throw new InvalidOperationException("Must have a successor if the blend style is set to Next.");
+				ActualEndColor = followingStartColor;
 			}
 			else
 			{
@@ -61,7 +76,11 @@ namespace MSS.Types
 
 		public ColorBand Clone()
 		{
-            return new ColorBand(CutOff, StartColor.Clone(), BlendStyle, EndColor.Clone());
+			var result = new ColorBand(CutOff, StartColor.Clone(), BlendStyle, EndColor.Clone());
+			result.PreviousCutOff = PreviousCutOff;
+			result.ActualEndColor = ActualEndColor.Clone();
+
+			return result;
 		}
 
 		object ICloneable.Clone()

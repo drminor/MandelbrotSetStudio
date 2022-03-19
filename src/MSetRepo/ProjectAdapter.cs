@@ -120,39 +120,6 @@ namespace MSetRepo
 			return result;
 		}
 
-		///// <summary>
-		///// Inserts the project record if it does not exist on the database.
-		///// </summary>
-		///// <param name="project"></param>
-		//public Project InsertProject(Project project, bool overwrite)
-		//{
-		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-
-		//	var projectRecord = projectReaderWriter.Get(project.Name);
-
-		//	if (projectRecord == null)
-		//	{
-		//		projectRecord = _mSetRecordMapper.MapTo(project);
-		//	}
-		//	else
-		//	{
-		//		if (!overwrite)
-		//		{
-		//			throw new InvalidOperationException($"Overwrite is false and Project: {project.Name} already exists.");
-		//		}
-		//		else
-		//		{
-		//			DeleteProject(project.Id);
-		//			projectRecord = _mSetRecordMapper.MapTo(project);
-		//		}
-		//	}
-
-		//	_ = projectReaderWriter.Insert(projectRecord);
-		//	project = _mSetRecordMapper.MapFrom(projectRecord);
-
-		//	return project;
-		//}
-
 		public void UpdateProject(ObjectId projectId, string name, string? description)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
@@ -280,20 +247,28 @@ namespace MSetRepo
 
 		#region Job
 
-			public Job GetJob(ObjectId jobId)
+		public Job GetJob(ObjectId jobId)
 		{
-			Debug.WriteLine($"Retrieving Job object for JobId: {jobId}.");
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var subdivisonReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			var jobCache = new Dictionary<ObjectId, Job>();
 
-			var job = GetJob(jobId, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter);
+			var job = GetJob(jobId, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter, jobCache: null);
 
 			return job;
 		}
 
-		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, ProjectReaderWriter projectReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter)
+		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, ProjectReaderWriter projectReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter, 
+			IDictionary<ObjectId, Job>? jobCache)
 		{
+			if (jobCache != null && jobCache.TryGetValue(jobId, out var qJob))
+			{
+				Debug.WriteLine($"Retrieving Job object for JobId: {jobId} from the cache.");
+				return qJob;
+			}
+
+			Debug.WriteLine($"Retrieving Job object for JobId: {jobId} from the data base.");
 			var jobRecord = jobReaderWriter.Get(jobId);
 
 			if (jobRecord is null)
@@ -306,7 +281,7 @@ namespace MSetRepo
 			if (jobRecord.ParentJobId.HasValue)
 			{
 				Debug.WriteLine($"Retrieving Job object for parent JobId: {jobRecord.ParentJobId}.");
-				parentJob = GetJob(jobRecord.ParentJobId.Value, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter);
+				parentJob = GetJob(jobRecord.ParentJobId.Value, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter, jobCache);
 			}
 			else
 			{
@@ -335,6 +310,7 @@ namespace MSetRepo
 				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset)
 				);
 
+			jobCache?.Add(job.Id, job);
 			return job;
 		}
 
@@ -377,9 +353,14 @@ namespace MSetRepo
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var ids = jobReaderWriter.GetJobIds(projectId);
 
-			foreach(var id in ids)
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var subdivisonReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			var jobCache = new Dictionary<ObjectId, Job>();
+
+			foreach (var jobId in ids)
 			{
-				var job = GetJob(id);
+				//var job = GetJob(id);
+				var job = GetJob(jobId, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter, jobCache);
 				result.Add(job);
 			}
 

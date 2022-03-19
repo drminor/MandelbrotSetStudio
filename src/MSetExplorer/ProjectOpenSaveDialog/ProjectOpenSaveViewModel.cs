@@ -108,13 +108,5 @@ namespace MSetExplorer
 			return result;
 		}
 
-		#region CreateProjectInfo Delegate
-
-		private IProjectInfo CreateProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
-		{
-			return new ProjectInfo(project, lastSaved, numberOfJobs, minMapCoordsExponent, minSamplePointDeltaExponent);
-		}
-
-		#endregion
 	}
 }

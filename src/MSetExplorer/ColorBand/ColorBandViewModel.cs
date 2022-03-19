@@ -9,6 +9,9 @@ namespace MSetExplorer
 {
 	public class ColorBandViewModel : ViewModelBase, IColorBandViewModel
 	{
+		private double _rowHeight;
+		private double _itemWidth;
+
 		private Project _currentProject;
 		private ColorBandSet _colorBandSet;
 		private ColorBand _selectedColorBand;
@@ -17,6 +20,8 @@ namespace MSetExplorer
 
 		public ColorBandViewModel()
 		{
+			_rowHeight = 60;
+			_itemWidth = 180;
 			CurrentProject = null;
 			_colorBandSet = null;
 			ColorBands = new ObservableCollection<ColorBand>();
@@ -28,6 +33,18 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public new bool InDesignMode => base.InDesignMode;
+
+		public double RowHeight
+		{
+			get => _rowHeight;
+			set { _rowHeight = value; OnPropertyChanged(nameof(IColorBandViewModel.RowHeight)); }
+		}
+
+		public double ItemWidth
+		{
+			get => _itemWidth;
+			set { _itemWidth = value; OnPropertyChanged(nameof(IColorBandViewModel.ItemWidth)); }
+		}
 
 		public ObservableCollection<ColorBand> ColorBands { get; private set; }
 

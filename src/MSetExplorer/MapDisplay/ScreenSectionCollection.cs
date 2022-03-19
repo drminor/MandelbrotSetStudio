@@ -331,6 +331,7 @@ namespace MSetExplorer
 				bitmap.WritePixels(rect, pixels, stride, 0);
 
 				Active = true;
+
 			}
 
 			private ImageDrawing CreateImageDrawing(PointInt blockPosition)
@@ -381,7 +382,7 @@ namespace MSetExplorer
 
 			private void AddToGroup(string opDesc)
 			{
-				if (_drawingGroup.Children.Contains(_drawingGroup))
+				if (_drawingGroup.Children.Contains(_imageDrawing))
 				{
 					Debug.WriteLine($"While {opDesc}, found that the section with BlockPosition: {_blockPosition} is already added.");
 				}

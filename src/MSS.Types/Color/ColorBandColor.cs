@@ -1,11 +1,15 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System;
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace MSS.Types
 {
     public class ColorBandColor : ICloneable 
     {
+        public static ColorBandColor Black = new ColorBandColor("#000000");
+        public static ColorBandColor White = new ColorBandColor("#FFFFFF");
+
         [JsonConstructor]
         [BsonConstructor]
         public ColorBandColor(string cssColor) : this(GetComps(cssColor))
@@ -55,18 +59,18 @@ namespace MSS.Types
 
         private static string GetCssColor(byte[] cComps)
         {
-            string result = $"#{Get2CharHex(cComps[0])}{Get2CharHex(cComps[1])}{Get2CharHex(cComps[2])}";
+            var result = $"#{Get2CharHex(cComps[0])}{Get2CharHex(cComps[1])}{Get2CharHex(cComps[2])}";
             return result;
         }
 
         private static string Get2CharHex(int c)
         {
-            return c.ToString("X").ToLower().PadLeft(2, '0');
+            return c.ToString("X", CultureInfo.InvariantCulture).ToLower(CultureInfo.InvariantCulture).PadLeft(2, '0');
         }
 
         private static int GetColorNum(byte[] cComps)
         {
-            int result = 255 << 24;
+            var result = 255 << 24;
             result |= cComps[2] << 16;
             result |= cComps[1] << 8;
             result |= cComps[0];
@@ -76,10 +80,10 @@ namespace MSS.Types
 
         private static byte[] GetComps(string cssColor)
 		{
-            byte[] colorComps = new byte[3];
-            colorComps[0] = byte.Parse(cssColor.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
-            colorComps[1] = byte.Parse(cssColor.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
-            colorComps[2] = byte.Parse(cssColor.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
+            var colorComps = new byte[3];
+            colorComps[0] = byte.Parse(cssColor.Substring(1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            colorComps[1] = byte.Parse(cssColor.Substring(3, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            colorComps[2] = byte.Parse(cssColor.Substring(5, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
 
             return colorComps;
         }

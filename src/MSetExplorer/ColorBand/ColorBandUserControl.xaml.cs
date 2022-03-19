@@ -28,7 +28,11 @@ namespace MSetExplorer
 			}
 			else
 			{
+				//lvColorBandsHdr.Width = lvColorBands.ActualWidth - 25;
+
 				_vm = (IColorBandViewModel)DataContext;
+
+				//_vm.ItemWidth = lvColorBands.ActualWidth - 5;
 
 				lvColorBands.ItemsSource = _vm.ColorBands;
 				lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;

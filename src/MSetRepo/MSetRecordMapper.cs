@@ -6,6 +6,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MSetRepo
@@ -23,9 +24,11 @@ namespace MSetRepo
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
+		private readonly IDictionary<Guid, ColorBandSet> _colorBandSetCache;
 
-		public MSetRecordMapper(DtoMapper dtoMapper)
+		public MSetRecordMapper(DtoMapper dtoMapper, IDictionary<Guid, ColorBandSet> colorBandSetCache)
 		{
+			_colorBandSetCache = colorBandSetCache;
 			_dtoMapper = dtoMapper;
 		}
 		
@@ -49,8 +52,19 @@ namespace MSetRepo
 
 		public ColorBandSet MapFrom(ColorBandSetRecord target)
 		{
-			var result = new ColorBandSet(new Guid(target.SerialNumber), target.ColorBands);
-			return result;
+			var serialNumber = new Guid(target.SerialNumber);
+
+			if (_colorBandSetCache.TryGetValue(serialNumber, out var colorBandSet))
+			{
+				return colorBandSet;
+			}
+			else
+			{
+				var result = new ColorBandSet(serialNumber, target.ColorBands);
+				_colorBandSetCache.Add(result.SerialNumber, result);
+
+				return result;
+			}
 		}
 
 		public Job MapFrom(JobRecord target)

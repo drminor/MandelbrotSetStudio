@@ -1,6 +1,9 @@
 ﻿using MSS.Common;
 using MSS.Common.DataTransferObjects;
+using MSS.Types;
 using ProjectRepo;
+using System;
+using System.Collections.Generic;
 
 namespace MSetRepo
 {
@@ -25,7 +28,8 @@ namespace MSetRepo
 		public static MSetRecordMapper GetMSetRecordMapper()
 		{
 			var dtoMapper = new DtoMapper();
-			var result = new MSetRecordMapper(dtoMapper);
+			var colorBandSetCache = new Dictionary<Guid, ColorBandSet>(); 
+			var result = new MSetRecordMapper(dtoMapper, colorBandSetCache);
 
 			return result;
 		}
