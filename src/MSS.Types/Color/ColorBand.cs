@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace MSS.Types
 {
-    public class ColorBand : ICloneable
+    public class ColorBand : IColorBand, ICloneable
     {
 		#region Constructor
 
@@ -29,10 +29,10 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public int CutOff { get; init; }
-		public ColorBandColor StartColor { get; init; }
-		public ColorBandBlendStyle BlendStyle { get; init; }
-		public ColorBandColor EndColor { get; init; }
+		public int CutOff { get; set; }
+		public ColorBandColor StartColor { get; set; }
+		public ColorBandBlendStyle BlendStyle { get; set; }
+		public ColorBandColor EndColor { get; set; }
 
 		public string BlendStyleAsString => GetBlendStyleAsString(BlendStyle);
 
@@ -40,12 +40,13 @@ namespace MSS.Types
 		public ColorBandColor ActualEndColor { get; set; }
 		public int BucketWidth => CutOff - PreviousCutOff;
 
+		public double Percentage { get; set; }
 
 		#endregion
 
 		#region Public Methods
 
-		public void UpdateWithNeighbors(ColorBand? predecessor, ColorBand? successor)
+		public void UpdateWithNeighbors(IColorBand? predecessor, IColorBand? successor)
 		{
 			PreviousCutOff = predecessor == null ? 0 : predecessor.CutOff;
 
@@ -60,7 +61,7 @@ namespace MSS.Types
 			}
 		}
 
-		public ColorBand Clone()
+		public IColorBand Clone()
 		{
 			var result = new ColorBand(CutOff, StartColor, BlendStyle, EndColor);
 			result.PreviousCutOff = PreviousCutOff;
@@ -78,7 +79,7 @@ namespace MSS.Types
 
 		#region Static Methods
 
-		public string GetBlendStyleAsString(ColorBandBlendStyle blendStyle)
+		private static string GetBlendStyleAsString(ColorBandBlendStyle blendStyle)
 		{
 			return blendStyle switch
 			{
@@ -88,11 +89,6 @@ namespace MSS.Types
 				_ => "None",
 			};
 		}
-
-		//public static ColorBand UpdateCutOff(ColorBand source, int cutOff)
-		//{
-		//	return new ColorBand(cutOff, source.StartColor, source.BlendStyle, source.EndColor);
-		//}
 
 		#endregion
 	}

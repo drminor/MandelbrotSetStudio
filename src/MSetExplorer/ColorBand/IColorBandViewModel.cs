@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using MSS.Types.MSet;
+﻿using MSS.Types.MSet;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -16,10 +15,10 @@ namespace MSetExplorer
 
 		Project CurrentProject { get; set; }
 
-		ObservableCollection<ColorBand> ColorBands { get; }
-		ColorBand SelectedColorBand { get; set; }
+		ObservableCollection<ColorBandW> ColorBands { get; }
+		ColorBandW SelectedColorBand { get; set; }
 		int? HighCutOff { get; set; }
-		ColorBandSet ColorBandSet { get; }
+		ColorBandSetW ColorBandSet { get; }
 
 		void Test1();
 		void Test2();

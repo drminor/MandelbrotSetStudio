@@ -83,28 +83,28 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public static ColorBandSet BuildInitialColorBandSet(int maxIterations)
+		public static ColorBandSetW BuildInitialColorBandSet(int maxIterations)
 		{
-			var colorBands = new List<ColorBand>
+			var colorBands = new List<IColorBand>
 			{
-				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(50, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(70, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
+				new ColorBandW(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(2, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(5, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(10, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(25, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(50, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(70, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(300, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
 			};
 
 			var highColorCss = "#000000";
-			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
+			colorBands.Add(new ColorBandW(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
 
-			var result = new ColorBandSet(colorBands);
+			var result = new ColorBandSetW(colorBands);
 
 			return result;
 		}

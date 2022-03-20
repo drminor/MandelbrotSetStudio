@@ -81,8 +81,6 @@ namespace MSetExplorer
 			{
 				_vm.TargetIterations = newValue;
 			}
-
-			// TODO: Respond to changes in the CME View and update the MainWindowViewModel
 		}
 
 		private void MainWindowViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -91,11 +89,6 @@ namespace MSetExplorer
 			{
 				txtIterations.Text = _vm.TargetIterations.ToString(CultureInfo.InvariantCulture);
 			}
-
-			//if (e.PropertyName == nameof(IMainWindowViewModel.ColorMapEntries))
-			//{
-			//	//TODO: Update the CME View.
-			//}
 		}
 
 		#endregion
@@ -234,7 +227,8 @@ namespace MSetExplorer
 			if (colorBandSet == null)
 			{
 				colorBandSet = MapJobHelper.BuildInitialColorBandSet(maxIterations);
-				colorBandSet = new ColorBandSet(cbsId, colorBandSet);
+
+				colorBandSet = new ColorBandSetW(cbsId, colorBandSet.ColorBands);
 			}
 
 			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo, colorBandSet);

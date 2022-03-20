@@ -22,7 +22,7 @@ namespace MSS.Common
 		public MapCalcSettings MapCalcSettings { get; init; }
         public ColorMap ColorMap { get; init; }
 
-		public string HighColorCss => ColorMap.ColorBandSet?.HighStartColor.GetCssColor() ?? "#000000";
+		public string HighColorCss => ColorMap.ColorBandSet?.ColorBands[^1].ActualEndColor.GetCssColor() ?? "#000000";
 
     }
 }

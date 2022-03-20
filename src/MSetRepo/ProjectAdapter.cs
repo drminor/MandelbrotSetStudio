@@ -95,7 +95,7 @@ namespace MSetRepo
 			}
 		}
 
-		public Project CreateProject(string name, string? description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		public Project CreateProject(string name, string? description, IEnumerable<Guid> colorBandSetIds, IColorBandSet currentColorBandSet)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
@@ -192,7 +192,7 @@ namespace MSetRepo
 
 		#region ColorBandSet 
 
-		public ColorBandSetRecord GetOrCreateColorBandSetRecord(ColorBandSet currentColorBandSet)
+		public ColorBandSetRecord GetOrCreateColorBandSetRecord(IColorBandSet currentColorBandSet)
 		{
 			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {currentColorBandSet.SerialNumber}.");
 
@@ -207,7 +207,7 @@ namespace MSetRepo
 			return colorBandSetRecord;
 		}
 
-		public ColorBandSet? GetColorBandSet(Guid colorBandSetSerialNumber)
+		public IColorBandSet? GetColorBandSet(Guid colorBandSetSerialNumber)
 		{
 			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {colorBandSetSerialNumber}.");
 
@@ -235,7 +235,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public ColorBandSetRecord CreateColorBandSetRecord(ColorBandSet currentColorBandSet)
+		public ColorBandSetRecord CreateColorBandSetRecord(IColorBandSet currentColorBandSet)
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			var colorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);

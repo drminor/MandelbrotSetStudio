@@ -34,6 +34,7 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
                                         <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
@@ -43,9 +44,11 @@
 
                                         </DockPanel>
 
-                                        <Grid Grid.Column="1" Width="155" x:Name="cDisplay" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                                        <Grid Grid.Column="1" Width="110" x:Name="cDisplay" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
                                             <local:ColorPanelControl StartColor="{Binding StartColor}" EndColor="{Binding ActualEndColor}"/>
                                         </Grid>
+
+                                        <TextBlock Grid.Column="2" Width="45" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
 
                                     </Grid>
                                 </DataTemplate>

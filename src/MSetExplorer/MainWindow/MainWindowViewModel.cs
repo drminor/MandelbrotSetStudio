@@ -120,7 +120,6 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(IColorBandViewModel.ColorBandSet))
 			{
 				MapProjectViewModel.CurrentColorBandSet = ColorBandViewModel.ColorBandSet;
-				//MapDisplayViewModel.ColorMap = new ColorMap(ColorBandViewModel.ColorBandSet);
 			}
 		}
 

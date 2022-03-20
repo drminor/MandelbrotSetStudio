@@ -11,7 +11,7 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public ColorMap(ColorBandSet colorBandSet)
+		public ColorMap(IColorBandSet colorBandSet)
 		{
             if (colorBandSet == null)
 			{
@@ -19,7 +19,7 @@ namespace MSS.Common
             }
 
             ColorBandSet = colorBandSet;
-            _lastCutOff = colorBandSet.HighColorBand.PreviousCutOff;
+            _lastCutOff = colorBandSet.ColorBands[^1].CutOff;
             _cutOffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.CutOff).ToArray();
         }
 
@@ -27,7 +27,7 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		public ColorBandSet ColorBandSet { get; }
+		public IColorBandSet ColorBandSet { get; }
         public Guid SerialNumber => ColorBandSet.SerialNumber;
 
         #endregion
@@ -75,17 +75,17 @@ namespace MSS.Common
 
 		#region Private Methods
 
-        private ColorBand GetColorBand(int countVal)
+        private IColorBand GetColorBand(int countVal)
 		{
-            ColorBand result;
+            IColorBand result;
 
             if (countVal >= _lastCutOff)
 			{
-                result = ColorBandSet.HighColorBand;
+                result = ColorBandSet.ColorBands[^1];
 			}
             else
 			{
-                result = ColorBandSet[GetColorMapIndex(countVal)];
+                result = ColorBandSet.ColorBands[GetColorMapIndex(countVal)];
 			}
 
             return result;

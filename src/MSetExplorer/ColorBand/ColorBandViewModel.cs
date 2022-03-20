@@ -1,43 +1,45 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Windows.Data;
 
 namespace MSetExplorer
 {
 	public class ColorBandViewModel : ViewModelBase, IColorBandViewModel
 	{
+		private readonly ObservableCollection<MapSection> _mapSections;
+		private readonly SynchronizationContext _synchronizationContext;
+		private readonly MapSectionHistogramProcessor _mapSectionHistogramProcessor;
+
 		private double _rowHeight;
 		private double _itemWidth;
 
 		private Project _currentProject;
-		private ColorBandSet _colorBandSet;
-		private ColorBand _selectedColorBand;
-
-		private readonly ObservableCollection<MapSection> _mapSections;
-
-		private readonly MapSectionHistogramProcessor _mapSectionHistogramProcessor;
+		private ColorBandSetW _colorBandSet;
+		private ColorBandW _selectedColorBand;
 
 		#region Constructor
 
 		public ColorBandViewModel(ObservableCollection<MapSection> mapSections)
 		{
+			_mapSections = mapSections;
+			_synchronizationContext = SynchronizationContext.Current;
+			Histogram = new HistogramA(0);
+			_mapSectionHistogramProcessor = new MapSectionHistogramProcessor(Histogram);
+
 			_rowHeight = 60;
 			_itemWidth = 180;
 			CurrentProject = null;
 			_colorBandSet = null;
-			ColorBands = new ObservableCollection<ColorBand>();
+			ColorBands = new ObservableCollection<ColorBandW>();
 			SelectedColorBand = null;
 
-			Histogram = new HistogramA(0);
-
-			_mapSections = mapSections;
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
-
-			_mapSectionHistogramProcessor = new MapSectionHistogramProcessor(Histogram);
 		}
 
 		#endregion
@@ -58,7 +60,7 @@ namespace MSetExplorer
 			set { _itemWidth = value; OnPropertyChanged(nameof(IColorBandViewModel.ItemWidth)); }
 		}
 
-		public ObservableCollection<ColorBand> ColorBands { get; private set; }
+		public ObservableCollection<ColorBandW> ColorBands { get; private set; }
 
 		public Project CurrentProject
 		{
@@ -68,13 +70,13 @@ namespace MSetExplorer
 				if (value != _currentProject)
 				{
 					_currentProject = value;
-					ColorBandSet = value.CurrentColorBandSet;
+					ColorBandSet = value.CurrentColorBandSet as ColorBandSetW;
 					OnPropertyChanged(nameof(IColorBandViewModel.CurrentProject));
 				}
 			}
 		}
 
-		public ColorBand SelectedColorBand
+		public ColorBandW SelectedColorBand
 		{
 			get => _selectedColorBand;
 
@@ -85,7 +87,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSet ColorBandSet
+		public ColorBandSetW ColorBandSet
 		{
 			get => _colorBandSet;
 
@@ -113,7 +115,7 @@ namespace MSetExplorer
 
 						foreach (var c in value)
 						{
-							ColorBands.Add(c);
+							ColorBands.Add(c as ColorBandW);
 						}
 
 						var view = CollectionViewSource.GetDefaultView(ColorBands);
@@ -177,7 +179,6 @@ namespace MSetExplorer
 				foreach (var mapSection in mapSections)
 				{
 					_mapSectionHistogramProcessor.AddWork(isAddOperation: true, mapSection, HandleHistogramUpdate);
-					//Histogram.Add(mapSection.Histogram);
 				}
 			}
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
@@ -186,12 +187,21 @@ namespace MSetExplorer
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
-					//Histogram.Remove(mapSection.Histogram);
 					_mapSectionHistogramProcessor.AddWork(isAddOperation: false, mapSection, HandleHistogramUpdate);
 				}
 			}
 
 			//Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
+		}
+
+		private void HistogramChanged(object state)
+		{
+			double t = 0;
+			foreach(var cb in ColorBands)
+			{
+				cb.Percentage = Math.Round(t, 4);
+				t += 3.9;
+			}
 		}
 
 		#endregion
@@ -217,25 +227,25 @@ namespace MSetExplorer
 
 		public void Test2()
 		{
-			var newColorBandSet = new ColorBandSet();
+			var newColorBandSet = new ColorBandSetW();
 			ColorBandSet = newColorBandSet;
 		}
 
 		public void Test3()
 		{
-			var newColorBandSet = new ColorBandSet();
+			var newColorBandSet = new ColorBandSetW();
 
-			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
+			newColorBandSet.Insert(0, new ColorBandW(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
 
 			ColorBandSet = newColorBandSet;
 		}
 
 		public void Test4()
 		{
-			var newColorBandSet = new ColorBandSet();
+			var newColorBandSet = new ColorBandSetW();
 
-			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
-			newColorBandSet.Insert(0, new ColorBand(50, new ColorBandColor("#880000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
+			newColorBandSet.Insert(0, new ColorBandW(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
+			newColorBandSet.Insert(0, new ColorBandW(50, new ColorBandColor("#880000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
 
 			ColorBandSet = newColorBandSet;
 
@@ -255,7 +265,7 @@ namespace MSetExplorer
 
 		private void HandleHistogramUpdate(MapSection mapSection, IList<double> newPercentages)
 		{
-
+			_synchronizationContext.Post(o => HistogramChanged(o), null);
 		}
 
 		#endregion

@@ -73,7 +73,7 @@ namespace ImageBuilder
 				byte[] cComps;
 				if (cnt == maxIterations)
 				{
-					cComps = colorMap.ColorBandSet.HighColorBand?.StartColor.ColorComps ?? new byte[] { 000000 };
+					cComps = colorMap.ColorBandSet.ColorBands[^1].StartColor.ColorComps ?? new byte[] { 000000 };
 				}
 				else
 				{

@@ -15,31 +15,31 @@ namespace MSS.Types
         [BsonConstructor]
         public ColorBandColor(string cssColor) : this(GetComps(cssColor))
         {
-            //_cssColor = cssColor;
+            _cssColor = cssColor;
         }
 
         public ColorBandColor(byte[] colorComps)
         {
             ColorComps = colorComps;
-            //_cssColor = null;
+            _cssColor = null;
         }
 
-   //     private string? _cssColor;
-   //     public string CssColor
-   //     {
-   //         get
-   //         {
-   //             if (_cssColor == null)
-   //             {
-   //                 _cssColor = GetCssColor(ColorComps);
-   //             }
-   //             return _cssColor;
-   //         }
-   //         init
-			//{
-   //             _cssColor = null;
-			//}
-   //     }
+		private string? _cssColor;
+		public string CssColor
+		{
+			get
+			{
+				if (_cssColor == null)
+				{
+					_cssColor = GetCssColor(ColorComps);
+				}
+				return _cssColor;
+			}
+			init
+			{
+				_cssColor = null;
+			}
+		}
 
         public string GetCssColor()
 		{
@@ -97,18 +97,5 @@ namespace MSS.Types
 
             return colorComps;
         }
-
-		//object ICloneable.Clone()
-		//{
-  //          return Clone();
-		//}
-
-  //      public ColorBandColor Clone()
-		//{
-  //          var colorComps = new byte[3];
-  //          Array.Copy(ColorComps, colorComps, 3);
-  //          return new ColorBandColor(colorComps);
-		//}
-
 	}
 }

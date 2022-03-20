@@ -13,17 +13,17 @@ namespace MSS.Types.MSet
 		public string? Description { get; set; }
 		public Collection<Guid> ColorBandSetSNs { get; init; }
 
-		private ColorBandSet _currentColorBandSet;
+		private IColorBandSet _currentColorBandSet;
 
-		public Project(string name, string? description, ColorBandSet currentColorBandSet) 
+		public Project(string name, string? description, IColorBandSet currentColorBandSet) 
 			: this(ObjectId.Empty, name, description, new List<Guid> { currentColorBandSet.SerialNumber }, currentColorBandSet)
 		{ }
 
-		public Project(string name, string? description, IList<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		public Project(string name, string? description, IList<Guid> colorBandSetIds, IColorBandSet currentColorBandSet)
 			: this(ObjectId.Empty, name, description, colorBandSetIds, currentColorBandSet)
 		{ }
 
-		public Project(ObjectId id, string name, string? description, IList<Guid> colorBandSetSNs, ColorBandSet currentColorBandSet)
+		public Project(ObjectId id, string name, string? description, IList<Guid> colorBandSetSNs, IColorBandSet currentColorBandSet)
 		{
 			Id = id;
 			Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -38,7 +38,7 @@ namespace MSS.Types.MSet
 		public bool OnFile => Id != ObjectId.Empty;
 
 
-		public ColorBandSet CurrentColorBandSet
+		public IColorBandSet CurrentColorBandSet
 		{
 			get => _currentColorBandSet;
 			set

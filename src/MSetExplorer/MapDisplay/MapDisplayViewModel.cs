@@ -161,6 +161,11 @@ namespace MSetExplorer
 			}
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
 			{
+				if (_colorMap == null)
+				{
+					return;
+				}
+
 				// Add items
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
 				DrawSections(mapSections, _colorMap);

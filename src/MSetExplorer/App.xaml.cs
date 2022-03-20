@@ -4,6 +4,7 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 
@@ -37,7 +38,7 @@ namespace MSetExplorer
 			StartServer();
 
 			// Project Repository Adapter
-			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING, CreateProjectInfo);
+			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING, CreateProjectInfo, CreateAColorBandSet, CreateAColorBand);
 			if (DROP_MAP_SECTIONS)
 			{
 				_projectAdapter.DropSubdivisionsAndMapSectionsCollections();
@@ -108,6 +109,16 @@ namespace MSetExplorer
 		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType)
 		{
 			return new ProjectOpenSaveViewModel(_projectAdapter, initalName, dialogType);
+		}
+
+		private IColorBandSet CreateAColorBandSet(Guid serialNumber, IList<IColorBand> colorBands)
+		{
+			return new ColorBandSetW(serialNumber, colorBands);
+		}
+
+		private IColorBand CreateAColorBand(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
+		{
+			return new ColorBandW(cutOff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor));
 		}
 
 

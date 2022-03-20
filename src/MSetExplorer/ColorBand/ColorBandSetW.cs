@@ -1,28 +1,29 @@
-﻿using System;
+﻿using MSS.Types;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace MSS.Types
+namespace MSetExplorer
 {
-	public class ColorBandSet : ObservableCollection<IColorBand>, IEquatable<ColorBandSet?>, IEqualityComparer<ColorBandSet>, IColorBandSet, ICloneable
+	public class ColorBandSetW : ObservableCollection<IColorBand>, IEquatable<IColorBandSet>, IEqualityComparer<IColorBandSet>, IColorBandSet, ICloneable
 	{
-		private static readonly IColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
+		private static readonly ColorBandW DEFAULT_HIGH_COLOR_BAND = new ColorBandW(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
 		#region Constructor
 
-		public ColorBandSet() : this(Guid.NewGuid(), new List<IColorBand>())
+		public ColorBandSetW() : this(Guid.NewGuid(), new List<IColorBand>())
 		{ }
 
-		public ColorBandSet(Guid serialNumber) : this(serialNumber, new List<IColorBand>())
+		public ColorBandSetW(Guid serialNumber) : this(serialNumber, new List<IColorBand>())
 		{ }
 
-		public ColorBandSet(IList<IColorBand> list) : this(Guid.NewGuid(), list)
+		public ColorBandSetW(IList<IColorBand> list) : this(Guid.NewGuid(), list)
 		{ }
 
-		public ColorBandSet(Guid serialNumber, IList<IColorBand> colorBands) : base(FixBands(colorBands))
+		public ColorBandSetW(Guid serialNumber, IList<IColorBand> colorBands) : base(FixBands(colorBands))
 		{
 			Debug.WriteLine($"Constructing ColorBandSet with SerialNumber: {serialNumber}.");
 			SerialNumber = serialNumber;
@@ -68,37 +69,24 @@ namespace MSS.Types
 
 		public ObservableCollection<IColorBand> ColorBands => this;
 
+		public bool IsReadOnly => false;
+
 		public IColorBand HighColorBand
 		{
 			get => base[^1];
-			set { base[^1] = value; }
+			set => base[^1] = value;
 		}
 
 		public int HighCutOff
 		{
 			get => HighColorBand.CutOff;
-			set
-			{
-				var currentBand = base[^1];
-				base[^1] = new ColorBand(value, currentBand.StartColor, currentBand.BlendStyle, currentBand.EndColor)
-				{
-					PreviousCutOff = currentBand.PreviousCutOff
-				};
-			}
+			set => base[^1].CutOff = value;
 		}
 
 		public ColorBandColor HighStartColor
 		{
 			get => HighColorBand.StartColor;
-			set
-			{
-				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, value, currentBand.BlendStyle, currentBand.EndColor)
-				{
-					PreviousCutOff = currentBand.PreviousCutOff
-				};
-
-			}
+			set => base[^1].StartColor = value;
 		}
 
 		public ColorBandBlendStyle HighColorBlendStyle
@@ -110,11 +98,7 @@ namespace MSS.Types
 				{
 					throw new InvalidOperationException("The HighColorBand cannot have a BlendStyle of Next.");
 				}
-				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, value, currentBand.EndColor)
-				{
-					PreviousCutOff = currentBand.PreviousCutOff
-				};
+				base[^1].BlendStyle = value;
 
 			}
 		}
@@ -122,15 +106,7 @@ namespace MSS.Types
 		public ColorBandColor HighEndColor
 		{
 			get => HighColorBand.EndColor;
-			set
-			{
-				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, currentBand.BlendStyle, value)
-				{
-					PreviousCutOff = currentBand.PreviousCutOff
-				};
-
-			}
+			set => base[^1].EndColor = value;
 		}
 
 		#endregion
@@ -207,12 +183,12 @@ namespace MSS.Types
 			return result;
 		}
 
-		private IColorBand? GetPreviousItem(int index)
+		private IColorBand GetPreviousItem(int index)
 		{
 			return index <= 0 ? null : Items[index - 1];
 		}
 
-		private IColorBand? GetNextItem(int index)
+		private IColorBand GetNextItem(int index)
 		{
 			return index >= Count - 1 ? null : Items[index + 1];
 		}
@@ -223,7 +199,7 @@ namespace MSS.Types
 
 		public IColorBandSet CreateNewCopy()
 		{
-			return new ColorBandSet(CreateCopy());
+			return new ColorBandSetW(CreateCopy());
 		}
 
 		object ICloneable.Clone()
@@ -235,7 +211,7 @@ namespace MSS.Types
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with SerialNumber: {SerialNumber}.");
 
-			return new ColorBandSet(SerialNumber, CreateCopy());
+			return new ColorBandSetW(SerialNumber, CreateCopy());
 		}
 
 		private IList<IColorBand> CreateCopy()
@@ -246,19 +222,19 @@ namespace MSS.Types
 
 		#endregion
 
-		public override string? ToString()
+		public override string ToString()
 		{
 			return $"{SerialNumber}:{base.ToString()}";
 		}
 
 		#region IEquatable Support
 
-		public override bool Equals(object? obj)
+		public override bool Equals(object obj)
 		{
-			return Equals(obj as ColorBandSet);
+			return Equals(obj as IColorBandSet);
 		}
 
-		public bool Equals(ColorBandSet? other)
+		public bool Equals(IColorBandSet other)
 		{
 			return other != null &&
 				   //Count == other.Count &&
@@ -271,7 +247,7 @@ namespace MSS.Types
 			return SerialNumber.GetHashCode();
 		}
 
-		public bool Equals(ColorBandSet? x, ColorBandSet? y)
+		public bool Equals(IColorBandSet x, IColorBandSet y)
 		{
 			if (x is null)
 			{
@@ -283,17 +259,17 @@ namespace MSS.Types
 			}
 		}
 
-		public int GetHashCode([DisallowNull] ColorBandSet obj)
+		public int GetHashCode([DisallowNull] IColorBandSet obj)
 		{
 			return GetHashCode(obj);
 		}
 
-		public static bool operator ==(ColorBandSet? left, ColorBandSet? right)
+		public static bool operator ==(ColorBandSetW left, ColorBandSetW right)
 		{
-			return EqualityComparer<ColorBandSet>.Default.Equals(left, right);
+			return EqualityComparer<ColorBandSetW>.Default.Equals(left, right);
 		}
 
-		public static bool operator !=(ColorBandSet? left, ColorBandSet? right)
+		public static bool operator !=(ColorBandSetW left, ColorBandSetW right)
 		{
 			return !(left == right);
 		}
