@@ -5,7 +5,7 @@ using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	public interface IColorBandViewModel
+	public interface IColorBandSetViewModel
 	{
 		bool InDesignMode { get; }
 

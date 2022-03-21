@@ -10,7 +10,7 @@ using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public class ColorBandViewModel : ViewModelBase, IColorBandViewModel
+	public class ColorBandSetViewModel : ViewModelBase, IColorBandSetViewModel
 	{
 		private readonly ObservableCollection<MapSection> _mapSections;
 		private readonly SynchronizationContext _synchronizationContext;
@@ -25,7 +25,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandViewModel(ObservableCollection<MapSection> mapSections)
+		public ColorBandSetViewModel(ObservableCollection<MapSection> mapSections)
 		{
 			_mapSections = mapSections;
 			_synchronizationContext = SynchronizationContext.Current;
@@ -51,13 +51,13 @@ namespace MSetExplorer
 		public double RowHeight
 		{
 			get => _rowHeight;
-			set { _rowHeight = value; OnPropertyChanged(nameof(IColorBandViewModel.RowHeight)); }
+			set { _rowHeight = value; OnPropertyChanged(nameof(IColorBandSetViewModel.RowHeight)); }
 		}
 
 		public double ItemWidth
 		{
 			get => _itemWidth;
-			set { _itemWidth = value; OnPropertyChanged(nameof(IColorBandViewModel.ItemWidth)); }
+			set { _itemWidth = value; OnPropertyChanged(nameof(IColorBandSetViewModel.ItemWidth)); }
 		}
 
 		public ObservableCollection<ColorBand> ColorBands { get; private set; }
@@ -71,7 +71,7 @@ namespace MSetExplorer
 				{
 					_currentProject = value;
 					ColorBandSet = value.CurrentColorBandSet as ColorBandSet;
-					OnPropertyChanged(nameof(IColorBandViewModel.CurrentProject));
+					OnPropertyChanged(nameof(IColorBandSetViewModel.CurrentProject));
 				}
 			}
 		}
@@ -83,7 +83,7 @@ namespace MSetExplorer
 			set
 			{
 				_selectedColorBand = value;
-				OnPropertyChanged(nameof(IColorBandViewModel.SelectedColorBand));
+				OnPropertyChanged(nameof(IColorBandSetViewModel.SelectedColorBand));
 			}
 		}
 
@@ -98,24 +98,25 @@ namespace MSetExplorer
 				{
 					if (_colorBandSet != null)
 					{
-						ColorBands.Clear();
+						ClearTheCollection(ColorBands);
 						_colorBandSet = value;
 						Histogram.Reset();
 						Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
-						OnPropertyChanged(nameof(IColorBandViewModel.ColorBandSet));
+						OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBandSet));
 					}
 				}
 				else
 				{
 					if (_colorBandSet == null || _colorBandSet != value)
 					{
-						ColorBands.Clear();
+						ClearTheCollection(ColorBands);
 						Histogram.Reset(value.HighCutOff + 1);
 						PopulateHistorgram(_mapSections, Histogram);
 
 						foreach (var c in value)
 						{
-							ColorBands.Add(c as ColorBand);
+							c.PropertyChanged += ColorBand_PropertyChanged;
+							ColorBands.Add(c);
 						}
 
 						var view = CollectionViewSource.GetDefaultView(ColorBands);
@@ -132,7 +133,7 @@ namespace MSetExplorer
 						}
 						_colorBandSet = value;
 
-						OnPropertyChanged(nameof(IColorBandViewModel.ColorBandSet));
+						OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBandSet));
 					}
 				}
 			}
@@ -148,7 +149,7 @@ namespace MSetExplorer
 					if (_colorBandSet != null)
 					{
 						_colorBandSet.HighCutOff = value.Value;
-						OnPropertyChanged(nameof(IColorBandViewModel.HighCutOff));
+						OnPropertyChanged(nameof(IColorBandSetViewModel.HighCutOff));
 					}
 				}
 			}
@@ -194,13 +195,33 @@ namespace MSetExplorer
 			//Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
 		}
 
-		private void HistogramChanged(object state)
+		private void HistogramChanged(object _)
 		{
 			double t = 0;
 			foreach(var cb in ColorBands)
 			{
 				cb.Percentage = Math.Round(t, 4);
 				t += 3.9;
+			}
+		}
+
+		private void ColorBand_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (sender is ColorBand cb &&  e.PropertyName == nameof(ColorBand.BlendStyle))
+			{
+				if (cb.BlendStyle == ColorBandBlendStyle.Next)
+				{
+					var idx = ColorBands.IndexOf(cb);
+
+					if (idx != ColorBands.Count - 1)
+					{
+						cb.ActualEndColor = ColorBands[idx + 1].StartColor;
+					}
+				}
+				else
+				{
+					cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.End ? cb.EndColor : cb.StartColor;
+				}
 			}
 		}
 
@@ -254,6 +275,14 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		private void ClearTheCollection(ObservableCollection<ColorBand> colorBands)
+		{
+			foreach(var c in colorBands)
+			{
+				c.PropertyChanged -= ColorBand_PropertyChanged;
+			}
+		}
 
 		private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
 		{

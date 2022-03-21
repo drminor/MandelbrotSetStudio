@@ -50,12 +50,14 @@ namespace MSetExplorer
 			_mapProjectViewModel = new MapProjectViewModel(_projectAdapter, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
+			var mEngineClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
+			var mapSectionRepo = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_CONN_STRING);
+			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClient, mapSectionRepo, USE_MAP_SECTION_REPO);
 			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
-			IColorBandViewModel colorBandViewModel = new ColorBandViewModel(mapDisplayViewModel.MapSections);
+			IColorBandSetViewModel colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
 			// Main Window
 			var window1 = new MainWindow

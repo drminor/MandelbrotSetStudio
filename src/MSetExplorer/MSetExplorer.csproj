@@ -6,6 +6,10 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="PixiEditor.ColorPicker" Version="3.2.0" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />

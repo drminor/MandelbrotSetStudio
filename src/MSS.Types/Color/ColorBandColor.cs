@@ -1,13 +1,15 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace MSS.Types
 {
     // Uses Byte Array to store color value. The alpha value is always fully opaque, i.e., set to 255.
-    public struct ColorBandColor // : ICloneable 
-    {
+    public struct ColorBandColor : IEquatable<ColorBandColor>,  IEqualityComparer<ColorBandColor>
+	{
         public static ColorBandColor Black = new ColorBandColor("#000000");
         public static ColorBandColor White = new ColorBandColor("#FFFFFF");
 
@@ -15,35 +17,40 @@ namespace MSS.Types
         [BsonConstructor]
         public ColorBandColor(string cssColor) : this(GetComps(cssColor))
         {
-            _cssColor = cssColor;
+            //_cssColor = cssColor;
         }
 
         public ColorBandColor(byte[] colorComps)
         {
             ColorComps = colorComps;
-            _cssColor = null;
+            //_cssColor = null;
         }
 
-		private string? _cssColor;
-		public string CssColor
-		{
-			get
-			{
-				if (_cssColor == null)
-				{
-					_cssColor = GetCssColor(ColorComps);
-				}
-				return _cssColor;
-			}
-			init
-			{
-				_cssColor = null;
-			}
-		}
+		//private string? _cssColor;
+		//public string CssColor
+		//{
+		//	get
+		//	{
+		//		if (_cssColor == null)
+		//		{
+		//			_cssColor = GetCssColor(ColorComps);
+		//		}
+		//		return _cssColor;
+		//	}
+		//	init
+		//	{
+		//		_cssColor = null;
+		//	}
+		//}
 
         public string GetCssColor()
 		{
             return GetCssColor(ColorComps);
+		}
+
+        public int GetColorNum()
+		{
+            return GetColorNum(ColorComps);
 		}
 
         /// <summary>
@@ -51,20 +58,6 @@ namespace MSS.Types
         /// </summary>
         [BsonIgnore]
         public byte[] ColorComps { get; init; }
-
-        //private int? _colorNum;
-
-        //public int ColorNum
-        //{
-        //    get
-        //    {
-        //        if(!_colorNum.HasValue)
-        //        {
-        //            _colorNum = GetColorNum(ColorComps);
-        //        }
-        //        return _colorNum.Value;
-        //    }
-        //}
 
         private static string GetCssColor(byte[] cComps)
         {
@@ -97,5 +90,49 @@ namespace MSS.Types
 
             return colorComps;
         }
+
+        public override string? ToString()
+        {
+            return GetCssColor(ColorComps);
+        }
+
+        #region IEquatable and IEqualityComparer Support
+
+        public override bool Equals(object? obj)
+		{
+			return obj is ColorBandColor color && Equals(color);
+		}
+
+		public bool Equals(ColorBandColor other)
+		{
+			return EqualityComparer<byte[]>.Default.Equals(ColorComps, other.ColorComps);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(ColorComps);
+		}
+
+		public bool Equals(ColorBandColor x, ColorBandColor y)
+		{
+            return x == y;
+		}
+
+		public int GetHashCode([DisallowNull] ColorBandColor obj)
+		{
+            return obj.GetHashCode();
+		}
+
+		public static bool operator ==(ColorBandColor left, ColorBandColor right)
+		{
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(ColorBandColor left, ColorBandColor right)
+		{
+			return !(left == right);
+		}
+
+		#endregion
 	}
 }

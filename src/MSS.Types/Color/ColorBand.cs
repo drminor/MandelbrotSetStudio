@@ -1,7 +1,5 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace MSS.Types
@@ -58,8 +56,11 @@ namespace MSS.Types
 			get => _startColor;
 			set
 			{
-				_startColor = value;
-				OnPropertyChanged();
+				if (value != _startColor)
+				{
+					_startColor = value;
+					OnPropertyChanged();
+				}
 			}
 		}
 
@@ -81,12 +82,15 @@ namespace MSS.Types
 			get => _endColor;
 			set
 			{
-				_endColor = value;
-				OnPropertyChanged();
+				if (value != _endColor)
+				{
+					_endColor = value;
+					OnPropertyChanged();
+				}
 			}
 		}
 
-		public string BlendStyleAsString => GetBlendStyleAsString(BlendStyle);
+		//public string BlendStyleAsString => GetBlendStyleAsString(BlendStyle);
 
 		public int PreviousCutOff
 		{
@@ -106,8 +110,11 @@ namespace MSS.Types
 			get => _actualEndColor;
 			set
 			{
-				_actualEndColor = value;
-				OnPropertyChanged();
+				if (value != _actualEndColor)
+				{
+					_actualEndColor = value;
+					OnPropertyChanged();
+				}
 			}
 		}
 
@@ -164,21 +171,20 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Static Methods
+		//#region Static Methods
 
-		private static string GetBlendStyleAsString(ColorBandBlendStyle blendStyle)
-		{
-			return blendStyle switch
-			{
-				ColorBandBlendStyle.Next => "Next",
-				ColorBandBlendStyle.None => "None",
-				ColorBandBlendStyle.End => "End",
-				_ => "None",
-			};
-		}
+		//private static string GetBlendStyleAsString(ColorBandBlendStyle blendStyle)
+		//{
+		//	return blendStyle switch
+		//	{
+		//		ColorBandBlendStyle.Next => "Next",
+		//		ColorBandBlendStyle.None => "None",
+		//		ColorBandBlendStyle.End => "End",
+		//		_ => "None",
+		//	};
+		//}
 
-		#endregion
-
+		//#endregion
 
 		public event PropertyChangedEventHandler? PropertyChanged;
 

@@ -1,15 +1,13 @@
 ﻿using MapSectionProviderLib;
 using MSetRepo;
+using MSS.Common;
 
 namespace MEngineClient
 {
 	public static class MapSectionRequestProcessorProvider
 	{
-		public static MapSectionRequestProcessor CreateMapSectionRequestProcessor(string clientAddress, string mongoDbConnectionString, bool useMapSectionRepository)
+		public static MapSectionRequestProcessor CreateMapSectionRequestProcessor(MClient mEngineClient, IMapSectionAdapter mapSectionRepo, bool useMapSectionRepository)
 		{
-			var mEngineClient = new MClient(clientAddress);
-			var mapSectionRepo = MSetRepoHelper.GetMapSectionAdapter(mongoDbConnectionString);
-
 			var mapSectionPersistProcessor = useMapSectionRepository ? new MapSectionPersistProcessor(mapSectionRepo) : null;
 			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClient, mapSectionPersistProcessor);
 

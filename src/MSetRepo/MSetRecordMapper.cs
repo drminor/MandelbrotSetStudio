@@ -73,7 +73,7 @@ namespace MSetRepo
 
 		public ColorBandRecord MapTo(ColorBand source)
 		{
-			return new ColorBandRecord(source.CutOff, source.StartColor.GetCssColor(), source.BlendStyleAsString, source.EndColor.GetCssColor());
+			return new ColorBandRecord(source.CutOff, source.StartColor.GetCssColor(), source.BlendStyle.ToString(), source.EndColor.GetCssColor());
 		}
 
 		public ColorBand MapFrom(ColorBandRecord target)
