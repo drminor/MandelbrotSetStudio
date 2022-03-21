@@ -11,7 +11,6 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class ColorBandUserControl : UserControl
 	{
-		//private IColorBandViewModel _vm;
 		private Canvas _canvas;
 		private readonly DrawingGroup _drawingGroup;
 		private GeometryDrawing _rectangle;
@@ -21,7 +20,7 @@ namespace MSetExplorer
 		public ColorBandUserControl()
 		{
 			_drawingGroup = new DrawingGroup();
-			_rectangle = BuildRectangle(new SizeDbl(), new byte[] { 0, 0, 0 }, new byte[] { 0, 0, 0 });
+			_rectangle = BuildRectangle(new SizeDbl(), ColorBandColor.White, ColorBandColor.White);
 			_drawingGroup.Children.Add(_rectangle);
 
 			Loaded += ColorPanelControl_Loaded;
@@ -41,7 +40,7 @@ namespace MSetExplorer
 
 				var rectImage = new Image { Source = new DrawingImage(_drawingGroup) };
 				_ = _canvas.Children.Add(rectImage);
-				RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), StartColor.ColorComps, EndColor.ColorComps);
+				RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), StartColor, EndColor);
 				SizeChanged += ColorPanelControl_SizeChanged;
 
 				Debug.WriteLine("The ColorBandUserControl is now loaded.");
@@ -54,7 +53,7 @@ namespace MSetExplorer
 
 		private void ColorPanelControl_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			RefreshTheView(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize), StartColor.ColorComps, EndColor.ColorComps);
+			RefreshTheView(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize), StartColor, EndColor);
 		}
 
 		#endregion
@@ -87,10 +86,7 @@ namespace MSetExplorer
 			{
 				if (d is ColorBandUserControl uc)
 				{
-					var startColor = Color.FromRgb(newValue.ColorComps[0], newValue.ColorComps[1], newValue.ColorComps[2]);
-					var endColor = Color.FromRgb(uc.EndColor.ColorComps[0], uc.EndColor.ColorComps[1], uc.EndColor.ColorComps[2]);
-
-					uc._rectangle.Brush = uc.BuildBrush(startColor, endColor);
+					uc._rectangle.Brush = uc.BuildBrush(uc.StartColor, uc.EndColor);
 				}
 			}
 		}
@@ -121,10 +117,7 @@ namespace MSetExplorer
 			{
 				if (d is ColorBandUserControl uc)
 				{
-					var startColor = Color.FromRgb(uc.StartColor.ColorComps[0], uc.StartColor.ColorComps[1], uc.StartColor.ColorComps[2]);
-					var endColor = Color.FromRgb(newValue.ColorComps[0], newValue.ColorComps[1], newValue.ColorComps[2]);
-
-					uc._rectangle.Brush = uc.BuildBrush(startColor, endColor);
+					uc._rectangle.Brush = uc.BuildBrush(uc.StartColor, uc.EndColor);
 				}
 			}
 		}
@@ -132,22 +125,14 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void RefreshTheView(SizeDbl size, byte[] startColorComps, byte[] endColorComps)
+		private void RefreshTheView(SizeDbl size, ColorBandColor startColor, ColorBandColor endColor)
 		{
-			//_drawingGroup.Children.Clear();
-
 			if (size.Width > 5 && size.Height > 5)
 			{
 				size = size.Deflate(4);
 				
 				_canvas.Width = size.Width;
 				_canvas.Height = size.Height;
-
-				//var rectangleDrawing = BuildRectangle(size, startColorRgbComps, endColorRgbComps);
-				//_drawingGroup.Children.Add(rectangleDrawing);
-
-				var startColor = Color.FromRgb(startColorComps[0], startColorComps[1], startColorComps[2]);
-				var endColor = Color.FromRgb(endColorComps[0], endColorComps[1], endColorComps[2]);
 
 				_rectangle.Brush = BuildBrush(startColor, endColor);
 				_rectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.CreateRect(size));
@@ -158,11 +143,8 @@ namespace MSetExplorer
 			}
 		}
 
-		private GeometryDrawing BuildRectangle(SizeDbl size, byte[] startColorComps, byte[] endColorComps)
+		private GeometryDrawing BuildRectangle(SizeDbl size, ColorBandColor startColor, ColorBandColor endColor)
 		{
-			var startColor = Color.FromRgb(startColorComps[0], startColorComps[1], startColorComps[2]);
-			var endColor = Color.FromRgb(endColorComps[0], endColorComps[1], endColorComps[2]);
-
 			var result = new GeometryDrawing
 				(
 				BuildBrush(startColor, endColor),
@@ -173,16 +155,19 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Brush BuildBrush(Color startColor, Color endColor)
+		private Brush BuildBrush(ColorBandColor startColor, ColorBandColor endColor)
 		{
+			var startC = Color.FromRgb(startColor.ColorComps[0], startColor.ColorComps[1], startColor.ColorComps[2]);
+			var endC = Color.FromRgb(endColor.ColorComps[0], endColor.ColorComps[1], endColor.ColorComps[2]);
+
 			var result = new LinearGradientBrush
 				(
 				new GradientStopCollection
 				{
-					new GradientStop(startColor, 0.0),
-					new GradientStop(startColor, 0.15),
-					new GradientStop(endColor, 0.85),
-					new GradientStop(endColor, 1.0),
+					new GradientStop(startC, 0.0),
+					new GradientStop(startC, 0.15),
+					new GradientStop(endC, 0.85),
+					new GradientStop(endC, 1.0),
 
 				},
 				new Point(0.5, 0),

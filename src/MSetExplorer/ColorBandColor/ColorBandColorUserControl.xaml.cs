@@ -20,7 +20,7 @@ namespace MSetExplorer
 		public ColorBandColorUserControl()
 		{
 			_drawingGroup = new DrawingGroup();
-			_rectangle = BuildRectangle(new SizeDbl(), new byte[] { 0, 0, 0 });
+			_rectangle = BuildRectangle(new SizeDbl(), ColorBandColor.White);
 			_drawingGroup.Children.Add(_rectangle);
 
 			Loaded += ColorPanelControl_Loaded;
@@ -42,7 +42,7 @@ namespace MSetExplorer
 				_ = _canvas.Children.Add(rectImage);
 				rectImage.Focusable = true;
 
-				RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), ColorBandColor.ColorComps);
+				RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), ColorBandColor);
 
 				SizeChanged += ColorPanelControl_SizeChanged;
 				rectImage.MouseUp += RectImage_MouseUp;
@@ -57,7 +57,7 @@ namespace MSetExplorer
 
 		private void ColorPanelControl_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			RefreshTheView(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize), ColorBandColor.ColorComps);
+			RefreshTheView(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize), ColorBandColor);
 		}
 
 		private void RectImage_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -104,7 +104,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void RefreshTheView(SizeDbl size, byte[] colorComps)
+		private void RefreshTheView(SizeDbl size, ColorBandColor color)
 		{
 			if (size.Width > 5 && size.Height > 5)
 			{
@@ -113,10 +113,7 @@ namespace MSetExplorer
 				_canvas.Width = size.Width;
 				_canvas.Height = size.Height;
 
-				//var rectangleDrawing = BuildRectangle(size, startColorRgbComps);
-				//_drawingGroup.Children.Add(rectangleDrawing);
-
-				_rectangle.Brush = new SolidColorBrush(Color.FromRgb(colorComps[0], colorComps[1], colorComps[2]));
+				_rectangle.Brush = BuildBrush(color);
 				_rectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.CreateRect(size));
 			}
 			else
@@ -125,16 +122,22 @@ namespace MSetExplorer
 			}
 		}
 
-		private GeometryDrawing BuildRectangle(SizeDbl size, byte[] startColorRgbComps)
+		private GeometryDrawing BuildRectangle(SizeDbl size, ColorBandColor color)
 		{
-			var startColor = Color.FromRgb(startColorRgbComps[0], startColorRgbComps[1], startColorRgbComps[2]);
-
 			var result = new GeometryDrawing
 				(
-				new SolidColorBrush(startColor),
+				BuildBrush(color),
 				new Pen(Brushes.Transparent, 0),
 				new RectangleGeometry(ScreenTypeHelper.CreateRect(size))
 				);
+
+			return result;
+		}
+
+		private Brush BuildBrush(ColorBandColor color)
+		{
+			var c = Color.FromRgb(color.ColorComps[0], color.ColorComps[1], color.ColorComps[2]);
+			var result = new SolidColorBrush(c);
 
 			return result;
 		}
