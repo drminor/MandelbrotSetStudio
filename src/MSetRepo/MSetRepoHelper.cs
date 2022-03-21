@@ -9,16 +9,15 @@ namespace MSetRepo
 {
 	public static class MSetRepoHelper
 	{
-		public static ProjectAdapter GetProjectAdapter(string dbProviderConnString, ProjectInfoCreator projectInfoCreator)
+		public static ProjectAdapter GetProjectAdapter(string dbProviderConnString)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);
 			var mSetRecordMapper = GetMSetRecordMapper();
-			var projectAdapter = new ProjectAdapter(dbProvider, mSetRecordMapper, projectInfoCreator);
+			var projectAdapter = new ProjectAdapter(dbProvider, mSetRecordMapper);
 
 			return projectAdapter;
 		}
 
-		// TODO: Create a separate IMapper Implementation just for the MapSectionAdapter.
 		public static IMapSectionAdapter GetMapSectionAdapter(string dbProviderConnString)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);

@@ -6,12 +6,6 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="ColorBand\ColorBandSetW.cs" />
-    <Compile Remove="ColorBand\ColorBandW.cs" />
-    <Compile Remove="ColorBand\IColorBandSetWithPropChanged.cs" />
-    <Compile Remove="ColorBand\IColorBandWithPropChanged.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />

@@ -39,7 +39,7 @@ namespace MSetExplorer
 			StartServer();
 
 			// Project Repository Adapter
-			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING, CreateProjectInfo);
+			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
 			if (DROP_MAP_SECTIONS)
 			{
 				_projectAdapter.DropSubdivisionsAndMapSectionsCollections();
@@ -100,11 +100,6 @@ namespace MSetExplorer
 			{
 				_serverProcess.Kill();
 			}
-		}
-
-		private IProjectInfo CreateProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
-		{
-			return new ProjectInfo(project, lastSaved, numberOfJobs, minMapCoordsExponent, minSamplePointDeltaExponent);
 		}
 
 		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType)

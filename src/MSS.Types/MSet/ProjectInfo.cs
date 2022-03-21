@@ -1,11 +1,11 @@
 ﻿using MongoDB.Bson;
-using MSetRepo;
-using MSS.Types.MSet;
 using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
-namespace MSetExplorer
+namespace MSS.Types.MSet
 {
-	internal class ProjectInfo : ViewModelBase, IProjectInfo
+	public class ProjectInfo : IProjectInfo
 	{
 		private DateTime _lastSaved;
 		private int _numberOfJobs;
@@ -13,7 +13,7 @@ namespace MSetExplorer
 		private int _minSamplePointDeltaExponent;
 
 		private string _name;
-		private string _description;
+		private string? _description;
 
 		public ProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
 		{
@@ -39,7 +39,7 @@ namespace MSetExplorer
 			set { _name = value; OnPropertyChanged(); }
 		}
 
-		public string Description
+		public string? Description
 		{
 			get => _description;
 			set { _description = value; OnPropertyChanged(); }
@@ -69,6 +69,13 @@ namespace MSetExplorer
 			set { _minSamplePointDeltaExponent = value; OnPropertyChanged(); }
 		}
 
+
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
 
 	}

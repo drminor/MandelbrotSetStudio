@@ -227,7 +227,6 @@ namespace MSetExplorer
 			if (colorBandSet == null)
 			{
 				colorBandSet = MapJobHelper.BuildInitialColorBandSet(maxIterations);
-
 				colorBandSet = new ColorBandSet(cbsId, colorBandSet.ColorBands);
 			}
 

@@ -1,8 +1,7 @@
-﻿using MSS.Types.MSet;
-using System;
+﻿using System;
 using System.ComponentModel;
 
-namespace MSetRepo
+namespace MSS.Types.MSet
 {
 	public interface IProjectInfo
 	{
@@ -11,7 +10,7 @@ namespace MSetRepo
 		Project Project { get; }
 		DateTime DateCreated { get; }
 		string Name { get; set; }
-		string Description { get; set; }
+		string? Description { get; set; }
 		int NumberOfJobs { get; }
 		int MinSamplePointDeltaExponent { get; }
 		DateTime LastSaved { get; }

@@ -11,23 +11,18 @@ using System.Linq;
 
 namespace MSetRepo
 {
-	public delegate IProjectInfo ProjectInfoCreator(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent);
-
 	public class ProjectAdapter
 	{
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
-		private readonly ProjectInfoCreator _projectInfoCreator;
 		private readonly DtoMapper _dtoMapper;
 
 		#region Constructor
 
-		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper, ProjectInfoCreator projectInfoCreator)
+		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
-			_projectInfoCreator = projectInfoCreator;
-
 			_dtoMapper = new DtoMapper();
 		}
 
@@ -178,11 +173,11 @@ namespace MSetRepo
 				var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
 				var minSamplePointDeltaExponent = subdivisonReaderWriter.GetMinExponent(subdivisionIds);
 
-				result = _projectInfoCreator(project, lastSaved, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
+				result = new ProjectInfo(project, lastSaved, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
 			else
 			{
-				result = _projectInfoCreator(project, DateTime.MinValue, 0, 0, 0);
+				result = new ProjectInfo(project, DateTime.MinValue, 0, 0, 0);
 			}
 
 			return result;
