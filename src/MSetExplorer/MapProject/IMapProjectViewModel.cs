@@ -17,7 +17,7 @@ namespace MSetExplorer
 
 		Project CurrentProject { get; }
 		string CurrentProjectName { get; }
-		ColorBandSetW CurrentColorBandSet { get; set; }
+		ColorBandSet CurrentColorBandSet { get; set; }
 		bool CanSaveProject { get; }
 		bool CurrentProjectIsDirty { get; }
 
@@ -32,20 +32,20 @@ namespace MSetExplorer
 		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
 
 		// Project Methods
-		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSetW colorBandSet);
+		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);
 
-		void ProjectCreate(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSetW currentColorBandSet);
+		void ProjectCreate(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
 
 		bool ProjectOpen(string name);
 		void ProjectSave();
 		
-		void ProjectSaveAs(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSetW currentColorBandSet);
+		void ProjectSaveAs(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
 
 		void ProjectUpdateName(string name);
 		void ProjectUpdateDescription(string description);
 
 		// ColorBand Methods
-		ColorBandSetW GetColorBandSet(Guid serialNumber);
+		ColorBandSet GetColorBandSet(Guid serialNumber);
 
 	}
 }

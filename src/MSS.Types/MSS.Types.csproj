@@ -7,8 +7,6 @@
 
   <ItemGroup>
     <Compile Remove="BigIntegerExtensions.cs" />
-    <Compile Remove="Color\ColorBand.cs" />
-    <Compile Remove="Color\ColorBandSet.cs" />
   </ItemGroup>
 
   <ItemGroup>

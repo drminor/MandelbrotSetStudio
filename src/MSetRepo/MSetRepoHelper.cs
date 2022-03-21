@@ -31,7 +31,7 @@ namespace MSetRepo
 		public static MSetRecordMapper GetMSetRecordMapper()
 		{
 			var dtoMapper = new DtoMapper();
-			var colorBandSetCache = new Dictionary<Guid, ColorBandSetW>(); 
+			var colorBandSetCache = new Dictionary<Guid, ColorBandSet>(); 
 			var result = new MSetRecordMapper(dtoMapper, colorBandSetCache);
 
 			return result;

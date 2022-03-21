@@ -1,46 +1,130 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using MSS.Types;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
-using System.Text.Json.Serialization;
+using System.Runtime.CompilerServices;
 
 namespace MSS.Types
 {
-    public class ColorBand : IColorBand, ICloneable
-    {
+	public class ColorBand : IColorBand, ICloneable
+	{
 		#region Constructor
 
-		public ColorBand(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor) 
-			: this(cutOff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
-        {
-        }
+		private int _cutOff;
+		private ColorBandColor _startColor;
+		private ColorBandBlendStyle _blendStyle;
+		private ColorBandColor _endColor;
 
-        [JsonConstructor]
-        [BsonConstructor]
-        public ColorBand(int cutOff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
-        {
-            CutOff = cutOff;
-            StartColor = startColor;
-            BlendStyle = blendStyle;
-            EndColor = endColor;
+		private int _previousCutOff;
+		private ColorBandColor _actualEndColor;
+
+		private double _percentage;
+
+		public ColorBand(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
+			: this(cutOff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
+		{
+		}
+
+		public ColorBand(int cutOff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
+		{
+			CutOff = cutOff;
+			StartColor = startColor;
+			BlendStyle = blendStyle;
+			EndColor = endColor;
 			ActualEndColor = BlendStyle == ColorBandBlendStyle.None ? StartColor : EndColor;
-        }
+
+			Percentage = 0;
+		}
 
 		#endregion
 
 		#region Public Properties
 
-		public int CutOff { get; set; }
-		public ColorBandColor StartColor { get; set; }
-		public ColorBandBlendStyle BlendStyle { get; set; }
-		public ColorBandColor EndColor { get; set; }
+		public int CutOff
+		{
+			get => _cutOff;
+			set
+			{
+				if (value != _cutOff)
+				{
+					_cutOff = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public ColorBandColor StartColor
+		{
+			get => _startColor;
+			set
+			{
+				_startColor = value;
+				OnPropertyChanged();
+			}
+		}
+
+		public ColorBandBlendStyle BlendStyle
+		{
+			get => _blendStyle;
+			set
+			{
+				if (value != _blendStyle)
+				{
+					_blendStyle = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public ColorBandColor EndColor
+		{
+			get => _endColor;
+			set
+			{
+				_endColor = value;
+				OnPropertyChanged();
+			}
+		}
 
 		public string BlendStyleAsString => GetBlendStyleAsString(BlendStyle);
 
-		public int PreviousCutOff { get; set; }
-		public ColorBandColor ActualEndColor { get; set; }
-		public int BucketWidth => CutOff - PreviousCutOff;
+		public int PreviousCutOff
+		{
+			get => _previousCutOff;
+			set
+			{
+				if (value != _previousCutOff)
+				{
+					_previousCutOff = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
-		public double Percentage { get; set; }
+		public ColorBandColor ActualEndColor
+		{
+			get => _actualEndColor;
+			set
+			{
+				_actualEndColor = value;
+				OnPropertyChanged();
+			}
+		}
+
+		public double Percentage
+		{
+			get => _percentage;
+			set
+			{
+				if (value != _percentage)
+				{
+					_percentage = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int BucketWidth => CutOff - PreviousCutOff;
 
 		#endregion
 
@@ -61,7 +145,6 @@ namespace MSS.Types
 			}
 		}
 
-
 		object ICloneable.Clone()
 		{
 			return Clone();
@@ -75,8 +158,6 @@ namespace MSS.Types
 		public ColorBand Clone()
 		{
 			var result = new ColorBand(CutOff, StartColor, BlendStyle, EndColor);
-			result.PreviousCutOff = PreviousCutOff;
-			result.ActualEndColor = ActualEndColor;
 
 			return result;
 		}
@@ -97,5 +178,14 @@ namespace MSS.Types
 		}
 
 		#endregion
+
+
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
 	}
 }

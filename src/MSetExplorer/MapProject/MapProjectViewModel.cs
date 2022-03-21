@@ -97,7 +97,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSetW CurrentColorBandSet
+		public ColorBandSet CurrentColorBandSet
 		{
 			get => CurrentProject?.CurrentColorBandSet;
 			set
@@ -119,7 +119,7 @@ namespace MSetExplorer
 
 		#region Public Methods -- Project
 
-		public void ProjectStartNew(MSetInfo mSetInfo, ColorBandSetW colorBandSet)
+		public void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet)
 		{
 			CurrentProject = new Project("New", description: null, colorBandSet);
 
@@ -133,7 +133,7 @@ namespace MSetExplorer
 			CurrentProjectIsDirty = false;
 		}
 
-		public void ProjectCreate(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSetW currentColorBandSet)
+		public void ProjectCreate(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
 		{
 			if (_projectAdapter.TryGetProject(name, out var _))
 			{
@@ -155,7 +155,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public void ProjectSaveAs(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSetW currentColorBandSet)
+		public void ProjectSaveAs(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
 		{
 			if( _projectAdapter.TryGetProject(name, out var existingProject))
 			{
@@ -265,7 +265,7 @@ namespace MSetExplorer
 
 		#region Public Methods ColorBand
 
-		public ColorBandSetW GetColorBandSet(Guid serialNumber)
+		public ColorBandSet GetColorBandSet(Guid serialNumber)
 		{
 			var result = _projectAdapter.GetColorBandSet(serialNumber);
 			return result;

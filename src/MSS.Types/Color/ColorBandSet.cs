@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace MSS.Types
 {
-	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet?>, IEqualityComparer<ColorBandSet>, IColorBandSet<ColorBand>, ICloneable
+	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet>, IColorBandSet<ColorBand>, ICloneable
 	{
 		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
@@ -68,37 +68,24 @@ namespace MSS.Types
 
 		public ObservableCollection<ColorBand> ColorBands => this;
 
+		public bool IsReadOnly => false;
+
 		public ColorBand HighColorBand
 		{
 			get => base[^1];
-			set { base[^1] = value; }
+			set => base[^1] = value;
 		}
 
 		public int HighCutOff
 		{
 			get => HighColorBand.CutOff;
-			set
-			{
-				var currentBand = base[^1];
-				base[^1] = new ColorBand(value, currentBand.StartColor, currentBand.BlendStyle, currentBand.EndColor)
-				{
-					PreviousCutOff = currentBand.PreviousCutOff
-				};
-			}
+			set => base[^1].CutOff = value;
 		}
 
 		public ColorBandColor HighStartColor
 		{
 			get => HighColorBand.StartColor;
-			set
-			{
-				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, value, currentBand.BlendStyle, currentBand.EndColor)
-				{
-					PreviousCutOff = currentBand.PreviousCutOff
-				};
-
-			}
+			set => base[^1].StartColor = value;
 		}
 
 		public ColorBandBlendStyle HighColorBlendStyle
@@ -110,11 +97,7 @@ namespace MSS.Types
 				{
 					throw new InvalidOperationException("The HighColorBand cannot have a BlendStyle of Next.");
 				}
-				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, value, currentBand.EndColor)
-				{
-					PreviousCutOff = currentBand.PreviousCutOff
-				};
+				base[^1].BlendStyle = value;
 
 			}
 		}
@@ -122,15 +105,7 @@ namespace MSS.Types
 		public ColorBandColor HighEndColor
 		{
 			get => HighColorBand.EndColor;
-			set
-			{
-				var currentBand = base[^1];
-				base[^1] = new ColorBand(currentBand.CutOff, currentBand.StartColor, currentBand.BlendStyle, value)
-				{
-					PreviousCutOff = currentBand.PreviousCutOff
-				};
-
-			}
+			set => base[^1].EndColor = value;
 		}
 
 		#endregion
@@ -246,7 +221,7 @@ namespace MSS.Types
 
 		#endregion
 
-		public override string? ToString()
+		public override string ToString()
 		{
 			return $"{SerialNumber}:{base.ToString()}";
 		}

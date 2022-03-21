@@ -20,8 +20,8 @@ namespace MSetExplorer
 		private double _itemWidth;
 
 		private Project _currentProject;
-		private ColorBandSetW _colorBandSet;
-		private ColorBandW _selectedColorBand;
+		private ColorBandSet _colorBandSet;
+		private ColorBand _selectedColorBand;
 
 		#region Constructor
 
@@ -36,7 +36,7 @@ namespace MSetExplorer
 			_itemWidth = 180;
 			CurrentProject = null;
 			_colorBandSet = null;
-			ColorBands = new ObservableCollection<ColorBandW>();
+			ColorBands = new ObservableCollection<ColorBand>();
 			SelectedColorBand = null;
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
@@ -60,7 +60,7 @@ namespace MSetExplorer
 			set { _itemWidth = value; OnPropertyChanged(nameof(IColorBandViewModel.ItemWidth)); }
 		}
 
-		public ObservableCollection<ColorBandW> ColorBands { get; private set; }
+		public ObservableCollection<ColorBand> ColorBands { get; private set; }
 
 		public Project CurrentProject
 		{
@@ -70,13 +70,13 @@ namespace MSetExplorer
 				if (value != _currentProject)
 				{
 					_currentProject = value;
-					ColorBandSet = value.CurrentColorBandSet as ColorBandSetW;
+					ColorBandSet = value.CurrentColorBandSet as ColorBandSet;
 					OnPropertyChanged(nameof(IColorBandViewModel.CurrentProject));
 				}
 			}
 		}
 
-		public ColorBandW SelectedColorBand
+		public ColorBand SelectedColorBand
 		{
 			get => _selectedColorBand;
 
@@ -87,7 +87,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSetW ColorBandSet
+		public ColorBandSet ColorBandSet
 		{
 			get => _colorBandSet;
 
@@ -115,7 +115,7 @@ namespace MSetExplorer
 
 						foreach (var c in value)
 						{
-							ColorBands.Add(c as ColorBandW);
+							ColorBands.Add(c as ColorBand);
 						}
 
 						var view = CollectionViewSource.GetDefaultView(ColorBands);
@@ -227,25 +227,25 @@ namespace MSetExplorer
 
 		public void Test2()
 		{
-			var newColorBandSet = new ColorBandSetW();
+			var newColorBandSet = new ColorBandSet();
 			ColorBandSet = newColorBandSet;
 		}
 
 		public void Test3()
 		{
-			var newColorBandSet = new ColorBandSetW();
+			var newColorBandSet = new ColorBandSet();
 
-			newColorBandSet.Insert(0, new ColorBandW(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
+			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
 
 			ColorBandSet = newColorBandSet;
 		}
 
 		public void Test4()
 		{
-			var newColorBandSet = new ColorBandSetW();
+			var newColorBandSet = new ColorBandSet();
 
-			newColorBandSet.Insert(0, new ColorBandW(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
-			newColorBandSet.Insert(0, new ColorBandW(50, new ColorBandColor("#880000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
+			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
+			newColorBandSet.Insert(0, new ColorBand(50, new ColorBandColor("#880000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
 
 			ColorBandSet = newColorBandSet;
 

@@ -16,10 +16,10 @@ namespace MSetExplorer
 
 		Project CurrentProject { get; set; }
 
-		ObservableCollection<ColorBandW> ColorBands { get; }
-		ColorBandW SelectedColorBand { get; set; }
+		ObservableCollection<ColorBand> ColorBands { get; }
+		ColorBand SelectedColorBand { get; set; }
 		int? HighCutOff { get; set; }
-		ColorBandSetW ColorBandSet { get; }
+		ColorBandSet ColorBandSet { get; }
 
 		void Test1();
 		void Test2();

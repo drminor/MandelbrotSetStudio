@@ -11,11 +11,6 @@ using System.Linq;
 
 namespace MSetRepo
 {
-
-	public delegate IColorBand ColorBandCreator(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor);
-	public delegate IColorBandSet<IColorBand> ColorBandSetCreator(Guid serialNumber, IList<IColorBand> colorBands);
-
-
 	/// <summary>
 	/// Maps 
 	///		Project, 
@@ -26,16 +21,16 @@ namespace MSetRepo
 	///		PointInt, SizeInt, VectorInt, BigVector
 	/// </summary>
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
-		IMapper<ColorBandSetW, ColorBandSetRecord>, IMapper<ColorBandW, ColorBandRecord>,
+		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>,
 		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
-		private readonly IDictionary<Guid, ColorBandSetW> _colorBandSetCache;
+		private readonly IDictionary<Guid, ColorBandSet> _colorBandSetCache;
 
-		public MSetRecordMapper(DtoMapper dtoMapper, IDictionary<Guid, ColorBandSetW> colorBandSetCache)
+		public MSetRecordMapper(DtoMapper dtoMapper, IDictionary<Guid, ColorBandSet> colorBandSetCache)
 		{
 			_colorBandSetCache = colorBandSetCache;
 			_dtoMapper = dtoMapper;
@@ -53,13 +48,13 @@ namespace MSetRepo
 			return result;
 		}
 
-		public ColorBandSetRecord MapTo(ColorBandSetW source)
+		public ColorBandSetRecord MapTo(ColorBandSet source)
 		{
 			var result = new ColorBandSetRecord(source.Select(x => MapTo(x)).ToArray(), source.SerialNumber.ToByteArray());
 			return result;
 		}
 
-		public ColorBandSetW MapFrom(ColorBandSetRecord target)
+		public ColorBandSet MapFrom(ColorBandSetRecord target)
 		{
 			var serialNumber = new Guid(target.SerialNumber);
 
@@ -69,21 +64,21 @@ namespace MSetRepo
 			}
 			else
 			{
-				var result = new ColorBandSetW(serialNumber, target.ColorBandRecords.Select(x => MapFrom(x)).ToList());
+				var result = new ColorBandSet(serialNumber, target.ColorBandRecords.Select(x => MapFrom(x)).ToList());
 				_colorBandSetCache.Add(result.SerialNumber, result);
 
 				return result;
 			}
 		}
 
-		public ColorBandRecord MapTo(ColorBandW source)
+		public ColorBandRecord MapTo(ColorBand source)
 		{
 			return new ColorBandRecord(source.CutOff, source.StartColor.GetCssColor(), source.BlendStyleAsString, source.EndColor.GetCssColor());
 		}
 
-		public ColorBandW MapFrom(ColorBandRecord target)
+		public ColorBand MapFrom(ColorBandRecord target)
 		{
-			return new ColorBandW(target.CutOff, target.StartCssColor, Enum.Parse<ColorBandBlendStyle>(target.BlendStyle), target.EndCssColor);
+			return new ColorBand(target.CutOff, target.StartCssColor, Enum.Parse<ColorBandBlendStyle>(target.BlendStyle), target.EndCssColor);
 		}
 
 		public Job MapFrom(JobRecord target)
