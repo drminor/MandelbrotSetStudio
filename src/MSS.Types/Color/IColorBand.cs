@@ -1,6 +1,8 @@
-﻿namespace MSS.Types
+﻿using System.ComponentModel;
+
+namespace MSS.Types
 {
-	public interface IColorBand
+	public interface IColorBand : INotifyPropertyChanged
 	{
 		int CutOff { get; set; }
 		ColorBandColor StartColor { get; set; }

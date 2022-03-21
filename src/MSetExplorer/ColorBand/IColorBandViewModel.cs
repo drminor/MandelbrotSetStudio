@@ -1,4 +1,5 @@
-﻿using MSS.Types.MSet;
+﻿using MSS.Types;
+using MSS.Types.MSet;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 

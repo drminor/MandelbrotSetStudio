@@ -61,18 +61,24 @@ namespace MSS.Types
 			}
 		}
 
-		public IColorBand Clone()
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		IColorBand IColorBand.Clone()
+		{
+			return Clone();
+		}
+
+		public ColorBand Clone()
 		{
 			var result = new ColorBand(CutOff, StartColor, BlendStyle, EndColor);
 			result.PreviousCutOff = PreviousCutOff;
 			result.ActualEndColor = ActualEndColor;
 
 			return result;
-		}
-
-		object ICloneable.Clone()
-		{
-            return Clone();
 		}
 
 		#endregion

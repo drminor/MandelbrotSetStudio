@@ -7,35 +7,35 @@ using System.Linq;
 
 namespace MSS.Types
 {
-	public class ColorBandSet : ObservableCollection<IColorBand>, IEquatable<ColorBandSet?>, IEqualityComparer<ColorBandSet>, IColorBandSet, ICloneable
+	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet?>, IEqualityComparer<ColorBandSet>, IColorBandSet<ColorBand>, ICloneable
 	{
-		private static readonly IColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
+		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
 		#region Constructor
 
-		public ColorBandSet() : this(Guid.NewGuid(), new List<IColorBand>())
+		public ColorBandSet() : this(Guid.NewGuid(), new List<ColorBand>())
 		{ }
 
-		public ColorBandSet(Guid serialNumber) : this(serialNumber, new List<IColorBand>())
+		public ColorBandSet(Guid serialNumber) : this(serialNumber, new List<ColorBand>())
 		{ }
 
-		public ColorBandSet(IList<IColorBand> list) : this(Guid.NewGuid(), list)
+		public ColorBandSet(IList<ColorBand> list) : this(Guid.NewGuid(), list)
 		{ }
 
-		public ColorBandSet(Guid serialNumber, IList<IColorBand> colorBands) : base(FixBands(colorBands))
+		public ColorBandSet(Guid serialNumber, IList<ColorBand> colorBands) : base(FixBands(colorBands))
 		{
 			Debug.WriteLine($"Constructing ColorBandSet with SerialNumber: {serialNumber}.");
 			SerialNumber = serialNumber;
 		}
 
-		public static IList<IColorBand> FixBands(IList<IColorBand> colorBands)
+		public static IList<ColorBand> FixBands(IList<ColorBand> colorBands)
 		{
 			if (colorBands == null || colorBands.Count == 0)
 			{
-				return new List<IColorBand> { DEFAULT_HIGH_COLOR_BAND.Clone() };
+				return new List<ColorBand> { DEFAULT_HIGH_COLOR_BAND.Clone() };
 			}
 
-			var result = new List<IColorBand>(colorBands);
+			var result = new List<ColorBand>(colorBands);
 
 			if (colorBands.Count > 1)
 			{
@@ -66,9 +66,9 @@ namespace MSS.Types
 
 		public Guid SerialNumber { get; set; }
 
-		public ObservableCollection<IColorBand> ColorBands => this;
+		public ObservableCollection<ColorBand> ColorBands => this;
 
-		public IColorBand HighColorBand
+		public ColorBand HighColorBand
 		{
 			get => base[^1];
 			set { base[^1] = value; }
@@ -143,7 +143,7 @@ namespace MSS.Types
 			Add(DEFAULT_HIGH_COLOR_BAND.Clone());
 		}
 
-		protected override void InsertItem(int index, IColorBand item)
+		protected override void InsertItem(int index, ColorBand item)
 		{
 			base.InsertItem(index, item);
 			UpdateItemAndNeighbors(index, item);
@@ -167,13 +167,13 @@ namespace MSS.Types
 			}
 		}
 
-		protected override void SetItem(int index, IColorBand item)
+		protected override void SetItem(int index, ColorBand item)
 		{
 			base.SetItem(index, item);
 			UpdateItemAndNeighbors(index, item);
 		}
 
-		private void UpdateItemAndNeighbors(int index, IColorBand item)
+		private void UpdateItemAndNeighbors(int index, ColorBand item)
 		{
 			var colorBands = GetItemAndNeighbors(index, item);
 
@@ -184,9 +184,9 @@ namespace MSS.Types
 			}
 		}
 
-		private IList<IColorBand> GetItemAndNeighbors(int index, IColorBand item)
+		private IList<ColorBand> GetItemAndNeighbors(int index, ColorBand item)
 		{
-			var result = new List<IColorBand>();
+			var result = new List<ColorBand>();
 
 			var prev = GetPreviousItem(index);
 
@@ -207,12 +207,12 @@ namespace MSS.Types
 			return result;
 		}
 
-		private IColorBand? GetPreviousItem(int index)
+		private ColorBand? GetPreviousItem(int index)
 		{
 			return index <= 0 ? null : Items[index - 1];
 		}
 
-		private IColorBand? GetNextItem(int index)
+		private ColorBand? GetNextItem(int index)
 		{
 			return index >= Count - 1 ? null : Items[index + 1];
 		}
@@ -221,7 +221,7 @@ namespace MSS.Types
 
 		#region Clone Support
 
-		public IColorBandSet CreateNewCopy()
+		public IColorBandSet<ColorBand> CreateNewCopy()
 		{
 			return new ColorBandSet(CreateCopy());
 		}
@@ -231,14 +231,14 @@ namespace MSS.Types
 			return Clone();
 		}
 
-		public IColorBandSet Clone()
+		public IColorBandSet<ColorBand> Clone()
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with SerialNumber: {SerialNumber}.");
 
 			return new ColorBandSet(SerialNumber, CreateCopy());
 		}
 
-		private IList<IColorBand> CreateCopy()
+		private IList<ColorBand> CreateCopy()
 		{
 			var result = Items.Select(x => x.Clone()).ToList();
 			return result;

@@ -57,23 +57,24 @@ namespace MSS.Common
 			var targetIterations = 4000;
 			var mapCalcSettings = new MapCalcSettings(targetIterations, iterationsPerRequest: 1000);
 
-			var colorBands = new List<IColorBand>
+			var colorBands = new List<ColorBandW>
 			{
-				new ColorBand(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(399, "#fafdf2", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(407, "#98e498", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(428, "#0000ff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(446, "#f09ee6", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(486, "#00ff00", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(500, "#0000ff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(523, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(560, "#3ee2e2", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
+				new ColorBandW(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(399, "#fafdf2", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(407, "#98e498", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(428, "#0000ff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(446, "#f09ee6", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(486, "#00ff00", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(500, "#0000ff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(523, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(560, "#3ee2e2", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
 			};
 
 			var highColorCss = "#000000";
-			colorBands.Add(new ColorBand(targetIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
-			var colorMap = new ColorMap(new ColorBandSet(colorBands));
+			colorBands.Add(new ColorBandW(targetIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
+			var colorBandSet = new ColorBandSetW(colorBands);
+			var colorMap = new ColorMap(colorBandSet);
 			var result = new MSetInfoOld("Circus1", apCoords, isHighRes, mapCalcSettings, colorMap);
 
 			return result;
@@ -93,16 +94,16 @@ namespace MSS.Common
 			var isHighRes = false;
 			var targetIterations = 400;
 			var mapCalcSettings = new MapCalcSettings(targetIterations, iterationsPerRequest: 100);
-			var colorBands = new List<IColorBand>
+			var colorBands = new List<ColorBandW>
 			{
-				new ColorBand(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
+				new ColorBandW(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBandW(1011, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
 			};
 
 			var highColorCss = "#000000";
-			colorBands.Add(new ColorBand(targetIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
-			var colorMap = new ColorMap(new ColorBandSet(colorBands));
-
+			colorBands.Add(new ColorBandW(targetIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
+			var colorBandSet = new ColorBandSetW(colorBands);
+			var colorMap = new ColorMap(colorBandSet);
 			var result = new MSetInfoOld(projectName, apCoords, isHighRes, mapCalcSettings, colorMap);
 
 			return result;

@@ -85,7 +85,7 @@ namespace MSetExplorer
 
 		public static ColorBandSetW BuildInitialColorBandSet(int maxIterations)
 		{
-			var colorBands = new List<IColorBand>
+			var colorBands = new List<ColorBandW>
 			{
 				new ColorBandW(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBandW(2, "#ff0033", ColorBandBlendStyle.Next, "#000000"),

@@ -11,7 +11,7 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public ColorMap(IColorBandSet colorBandSet)
+		public ColorMap(ColorBandSetW colorBandSet)
 		{
             if (colorBandSet == null)
 			{
@@ -27,7 +27,7 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		public IColorBandSet ColorBandSet { get; }
+		public ColorBandSetW ColorBandSet { get; }
         public Guid SerialNumber => ColorBandSet.SerialNumber;
 
         #endregion

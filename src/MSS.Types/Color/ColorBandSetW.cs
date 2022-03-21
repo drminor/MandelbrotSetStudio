@@ -1,12 +1,11 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace MSetExplorer
+namespace MSS.Types
 {
 	public class ColorBandSetW : ObservableCollection<ColorBandW>, IEquatable<ColorBandSetW>, IEqualityComparer<ColorBandSetW>, IColorBandSet<ColorBandW>, ICloneable
 	{
@@ -183,12 +182,12 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private ColorBandW GetPreviousItem(int index)
+		private ColorBandW? GetPreviousItem(int index)
 		{
 			return index <= 0 ? null : Items[index - 1];
 		}
 
-		private ColorBandW GetNextItem(int index)
+		private ColorBandW? GetNextItem(int index)
 		{
 			return index >= Count - 1 ? null : Items[index + 1];
 		}
@@ -229,12 +228,12 @@ namespace MSetExplorer
 
 		#region IEquatable Support
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return Equals(obj as ColorBandSetW);
 		}
 
-		public bool Equals(ColorBandSetW other)
+		public bool Equals(ColorBandSetW? other)
 		{
 			return other != null &&
 				   //Count == other.Count &&
@@ -247,7 +246,7 @@ namespace MSetExplorer
 			return SerialNumber.GetHashCode();
 		}
 
-		public bool Equals(ColorBandSetW x, ColorBandSetW y)
+		public bool Equals(ColorBandSetW? x, ColorBandSetW? y)
 		{
 			if (x is null)
 			{
@@ -264,12 +263,12 @@ namespace MSetExplorer
 			return GetHashCode(obj);
 		}
 
-		public static bool operator ==(ColorBandSetW left, ColorBandSetW right)
+		public static bool operator ==(ColorBandSetW? left, ColorBandSetW? right)
 		{
 			return EqualityComparer<ColorBandSetW>.Default.Equals(left, right);
 		}
 
-		public static bool operator !=(ColorBandSetW left, ColorBandSetW right)
+		public static bool operator !=(ColorBandSetW? left, ColorBandSetW? right)
 		{
 			return !(left == right);
 		}

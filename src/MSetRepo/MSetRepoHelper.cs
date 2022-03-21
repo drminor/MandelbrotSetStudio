@@ -9,10 +9,10 @@ namespace MSetRepo
 {
 	public static class MSetRepoHelper
 	{
-		public static ProjectAdapter GetProjectAdapter(string dbProviderConnString, ProjectInfoCreator projectInfoCreator, ColorBandSetCreator colorBandSetCreator, ColorBandCreator colorBandCreator)
+		public static ProjectAdapter GetProjectAdapter(string dbProviderConnString, ProjectInfoCreator projectInfoCreator)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);
-			var mSetRecordMapper = GetMSetRecordMapper(colorBandSetCreator, colorBandCreator);
+			var mSetRecordMapper = GetMSetRecordMapper();
 			var projectAdapter = new ProjectAdapter(dbProvider, mSetRecordMapper, projectInfoCreator);
 
 			return projectAdapter;
@@ -22,17 +22,17 @@ namespace MSetRepo
 		public static IMapSectionAdapter GetMapSectionAdapter(string dbProviderConnString)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);
-			var mSetRecordMapper = GetMSetRecordMapper(null, null);
+			var mSetRecordMapper = GetMSetRecordMapper();
 			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
 
 			return mapSectionAdapter;
 		}
 
-		public static MSetRecordMapper GetMSetRecordMapper(ColorBandSetCreator? colorBandSetCreator, ColorBandCreator? colorBandCreator)
+		public static MSetRecordMapper GetMSetRecordMapper()
 		{
 			var dtoMapper = new DtoMapper();
-			var colorBandSetCache = new Dictionary<Guid, IColorBandSet>(); 
-			var result = new MSetRecordMapper(dtoMapper, colorBandSetCache, colorBandSetCreator, colorBandCreator);
+			var colorBandSetCache = new Dictionary<Guid, ColorBandSetW>(); 
+			var result = new MSetRecordMapper(dtoMapper, colorBandSetCache);
 
 			return result;
 		}
