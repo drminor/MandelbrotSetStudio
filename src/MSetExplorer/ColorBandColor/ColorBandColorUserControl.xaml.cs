@@ -62,7 +62,10 @@ namespace MSetExplorer
 
 		private void RectImage_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
 		{
-			MessageBox.Show("Hi");
+			if (ShowColorPicker(ColorBandColor, out var selectedColor))
+			{
+				ColorBandColor = selectedColor;
+			}
 		}
 
 		#endregion
@@ -95,7 +98,7 @@ namespace MSetExplorer
 			{
 				if (d is ColorBandColorUserControl uc)
 				{
-					uc._rectangle.Brush = new SolidColorBrush(Color.FromRgb(newValue.ColorComps[0], newValue.ColorComps[1], newValue.ColorComps[2]));
+					uc._rectangle.Brush = uc.BuildBrush(newValue);
 				}
 			}
 		}
@@ -103,6 +106,22 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		private bool ShowColorPicker(ColorBandColor initalColor, out ColorBandColor selectedColor)
+		{
+			var colorPickerDialalog = new ColorPickerDialog(initalColor);
+
+			if (colorPickerDialalog.ShowDialog() == true)
+			{
+				selectedColor = colorPickerDialalog.SelectedColorBandColor;
+				return true;
+			}
+			else
+			{
+				selectedColor = ColorBandColor.Black;
+				return false;
+			}
+		}
 
 		private void RefreshTheView(SizeDbl size, ColorBandColor color)
 		{
@@ -136,8 +155,7 @@ namespace MSetExplorer
 
 		private Brush BuildBrush(ColorBandColor color)
 		{
-			var c = Color.FromRgb(color.ColorComps[0], color.ColorComps[1], color.ColorComps[2]);
-			var result = new SolidColorBrush(c);
+			var result = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(color));
 
 			return result;
 		}

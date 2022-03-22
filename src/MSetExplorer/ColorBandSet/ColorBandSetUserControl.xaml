@@ -6,6 +6,13 @@
              xmlns:local="clr-namespace:MSetExplorer"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="290">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <local:BlendStyleToIntConverter x:Key="BlendStyleToIntConverter"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid>
 
         <Grid.RowDefinitions>
@@ -61,38 +68,51 @@
 
         </Border>
 
-        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
 
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Width="65" Margin="5,1,5,1" FontSize="14" Text="Cut Off:" />
-                    <TextBox Text="{Binding Path=SelectedColorBand.CutOff}"  Width="50" VerticalAlignment="Center"/>
+                    <TextBlock Width="65" Margin="5,5,11,3" FontSize="14" Text="Cut Off:" />
+                    <TextBox Text="{Binding Path=SelectedColorBand.CutOff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>
 
-                    <TextBlock Width="77" Margin="12,1,5,1" FontSize="14" Text="Blend Style:" />
-                    <TextBox Text="{Binding Path=SelectedColorBand.BlendStyle}"  Width="67" VerticalAlignment="Center"/>
+                    <TextBlock Width="77" Margin="8,3,5,3" FontSize="14" Text="Blend Style:" />
+                    
+                    
+                    <!--<TextBox Text="{Binding Path=SelectedColorBand.BlendStyle}"  Width="67" VerticalAlignment="Center"/>-->
+
+                    <ComboBox Width="64" Height="21" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,2,0,2"
+                              SelectedIndex="{Binding Path=SelectedColorBand.BlendStyle, Converter={StaticResource BlendStyleToIntConverter}}">
+                        <ComboBoxItem IsSelected="True">None</ComboBoxItem>
+                        <ComboBoxItem>End</ComboBoxItem>
+                        <ComboBoxItem>Next</ComboBoxItem>
+                    </ComboBox>
 
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Width="65" Margin="5,1,5,1" FontSize="14" Text="Start Color"/>
-                    <local:ColorBandColorUserControl ColorBandColor="{Binding Path=SelectedColorBand.StartColor}" Width="65" Height="17"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                    <TextBlock Width="69" Margin="5,2,5,5" FontSize="14" Text="Start Color:" />
+                    <local:ColorBandColorUserControl ColorBandColor="{Binding Path=SelectedColorBand.StartColor}" Width="63" Height="21" Margin="2,0,3,5"/>
                     <!--<TextBox Text="{Binding Path=SelectedColorBand.StartColor.CssColor}" Width="65" VerticalAlignment="Center"/>-->
 
-                    <TextBlock Width="65" Margin="10,1,5,1" FontSize="14" Text="End Color:" />
+                    <TextBlock Width="65" Margin="5,2,5,5" FontSize="14" Text="End Color:" />
                     <!--<TextBox Text="{Binding Path=SelectedColorBand.ActualEndColor.CssColor}"  Width="65" VerticalAlignment="Center"/>-->
-                    <local:ColorBandColorUserControl ColorBandColor="{Binding Path=SelectedColorBand.EndColor}" Width="65" Height="17"/>
+                    <local:ColorBandColorUserControl ColorBandColor="{Binding Path=SelectedColorBand.ActualEndColor}" Width="63" Height="21" Margin="0,0,0,5"/>
                 </StackPanel>
 
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,9,0,9">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnTest1" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,5,3" Click="Test1Button_Click">Test1</Button>
+                <Button Name="btnInsert" HorizontalAlignment="Center" Width="60" FontSize="14" Height="23" Margin="0,0,5,0" Click="InsertButton_Click">Insert</Button>
+                <Button Name="btnDelete" HorizontalAlignment="Center" Width="60" FontSize="14" Height="23" Margin="20,0,5,0" Click="DeleteButton_Click">Delete</Button>
+                <Button Name="btnApply" HorizontalAlignment="Center" Width="70" FontSize="14" Height="23" Margin="30,0,5,0" Click="ApplyButton_Click">Apply</Button>
+
+                <!--<Button Name="btnTest1" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,5,3" Click="Test1Button_Click">Test1</Button>
                 <Button Name="btnTest2" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,5,3" Click="Test2Button_Click">Test2</Button>
                 <Button Name="btnTest3" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,5,3" Click="Test3Button_Click">Test3</Button>
-                <Button Name="btnTest4" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,0,3" Click="Test4Button_Click">Test4</Button>
+                <Button Name="btnTest4" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,0,3" Click="Test4Button_Click">Test4</Button>-->
             </StackPanel>
 
         </Border>

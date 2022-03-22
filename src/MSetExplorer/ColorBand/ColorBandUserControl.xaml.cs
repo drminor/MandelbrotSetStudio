@@ -66,7 +66,7 @@ namespace MSetExplorer
 			typeof(ColorBandUserControl),
 			new FrameworkPropertyMetadata()
 			{
-				PropertyChangedCallback = OnStartColorChanged,
+				PropertyChangedCallback = OnColorChanged,
 				BindsTwoWayByDefault = true,
 				DefaultValue = ColorBandColor.White
 			});
@@ -77,27 +77,13 @@ namespace MSetExplorer
 			set => SetValue(StartColorProperty, value);
 		}
 
-		private static void OnStartColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-		{
-			var oldValue = (ColorBandColor)e.OldValue;
-			var newValue = (ColorBandColor)e.NewValue;
-
-			if (oldValue != newValue)
-			{
-				if (d is ColorBandUserControl uc)
-				{
-					uc._rectangle.Brush = uc.BuildBrush(uc.StartColor, uc.EndColor);
-				}
-			}
-		}
-
 		public static readonly DependencyProperty EndColorProperty = DependencyProperty.Register(
 			"EndColor",
 			typeof(ColorBandColor),
 			typeof(ColorBandUserControl),
 			new FrameworkPropertyMetadata()
 			{
-				PropertyChangedCallback = OnEndColorChanged,
+				PropertyChangedCallback = OnColorChanged,
 				BindsTwoWayByDefault = true,
 				DefaultValue = ColorBandColor.Black
 			});
@@ -108,7 +94,7 @@ namespace MSetExplorer
 			set => SetValue(EndColorProperty, value);
 		}
 
-		private static void OnEndColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		private static void OnColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
 			var oldValue = (ColorBandColor)e.OldValue;
 			var newValue = (ColorBandColor)e.NewValue;
@@ -121,6 +107,7 @@ namespace MSetExplorer
 				}
 			}
 		}
+
 		#endregion
 
 		#region Private Methods
@@ -157,8 +144,8 @@ namespace MSetExplorer
 
 		private Brush BuildBrush(ColorBandColor startColor, ColorBandColor endColor)
 		{
-			var startC = Color.FromRgb(startColor.ColorComps[0], startColor.ColorComps[1], startColor.ColorComps[2]);
-			var endC = Color.FromRgb(endColor.ColorComps[0], endColor.ColorComps[1], endColor.ColorComps[2]);
+			var startC = ScreenTypeHelper.ConvertToColor(startColor);
+			var endC = ScreenTypeHelper.ConvertToColor(endColor);
 
 			var result = new LinearGradientBrush
 				(

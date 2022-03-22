@@ -21,9 +21,14 @@ namespace MSetExplorer
 		int? HighCutOff { get; set; }
 		ColorBandSet ColorBandSet { get; }
 
-		void Test1();
-		void Test2();
-		void Test3();
-		void Test4();
+		void DeleteSelectedItem();
+		void InsertItem();
+
+		void ApplyChanges();
+
+		//void Test1();
+		//void Test2();
+		//void Test3();
+		//void Test4();
 	}
 }

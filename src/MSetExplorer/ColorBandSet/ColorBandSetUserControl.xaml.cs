@@ -31,13 +31,25 @@ namespace MSetExplorer
 				//lvColorBandsHdr.Width = lvColorBands.ActualWidth - 25;
 
 				_vm = (IColorBandSetViewModel)DataContext;
+				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
 				//_vm.ItemWidth = lvColorBands.ActualWidth - 5;
 
 				lvColorBands.ItemsSource = _vm.ColorBands;
 				lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;
 
+				//lvColorBands
+
 				Debug.WriteLine("The ColorBandSetUserControl is now loaded");
+			}
+		}
+
+		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(IColorBandSetViewModel.ColorBands))
+			{
+				lvColorBands.ItemsSource = null;
+				lvColorBands.ItemsSource = _vm.ColorBands;
 			}
 		}
 
@@ -50,25 +62,40 @@ namespace MSetExplorer
 
 		#region Button Handlers
 
-		private void Test1Button_Click(object sender, RoutedEventArgs e)
+		private void InsertButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.Test1();
+			_vm.InsertItem();
 		}
 
-		private void Test2Button_Click(object sender, RoutedEventArgs e)
+		private void DeleteButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.Test2();
+			_vm.DeleteSelectedItem();
 		}
 
-		private void Test3Button_Click(object sender, RoutedEventArgs e)
+		private void ApplyButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.Test3();
+			_vm.ApplyChanges();
 		}
 
-		private void Test4Button_Click(object sender, RoutedEventArgs e)
-		{
-			_vm.Test4();
-		}
+		//private void Test1Button_Click(object sender, RoutedEventArgs e)
+		//{
+		//	_vm.Test1();
+		//}
+
+		//private void Test2Button_Click(object sender, RoutedEventArgs e)
+		//{
+		//	_vm.Test2();
+		//}
+
+		//private void Test3Button_Click(object sender, RoutedEventArgs e)
+		//{
+		//	_vm.Test3();
+		//}
+
+		//private void Test4Button_Click(object sender, RoutedEventArgs e)
+		//{
+		//	_vm.Test4();
+		//}
 
 		#endregion
 	}

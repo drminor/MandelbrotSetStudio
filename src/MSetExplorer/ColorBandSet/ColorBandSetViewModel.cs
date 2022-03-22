@@ -36,7 +36,7 @@ namespace MSetExplorer
 			_itemWidth = 180;
 			CurrentProject = null;
 			_colorBandSet = null;
-			ColorBands = new ObservableCollection<ColorBand>();
+			//ColorBands = new ObservableCollection<ColorBand>();
 			SelectedColorBand = null;
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
@@ -60,7 +60,7 @@ namespace MSetExplorer
 			set { _itemWidth = value; OnPropertyChanged(nameof(IColorBandSetViewModel.ItemWidth)); }
 		}
 
-		public ObservableCollection<ColorBand> ColorBands { get; private set; }
+		public ObservableCollection<ColorBand> ColorBands => _colorBandSet ?? new ObservableCollection<ColorBand>(); // { get; private set; }
 
 		public Project CurrentProject
 		{
@@ -70,7 +70,7 @@ namespace MSetExplorer
 				if (value != _currentProject)
 				{
 					_currentProject = value;
-					ColorBandSet = value.CurrentColorBandSet as ColorBandSet;
+					ColorBandSet = value.CurrentColorBandSet;
 					OnPropertyChanged(nameof(IColorBandSetViewModel.CurrentProject));
 				}
 			}
@@ -91,6 +91,55 @@ namespace MSetExplorer
 		{
 			get => _colorBandSet;
 
+			//private set
+			//{
+			//	if (value != _colorBandSet)
+			//	{
+			//		_colorBandSet = value;
+			//		OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBandSet));
+			//	}
+			//}
+
+			//private set
+			//{
+			//	Debug.WriteLine($"ColorBandViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.SerialNumber}, New = {value?.SerialNumber}");
+			//	if (value == null)
+			//	{
+			//		if (_colorBandSet != null)
+			//		{
+			//			ClearTheCollection(ColorBands);
+			//			_colorBandSet = value;
+			//			Histogram.Reset();
+			//			Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
+			//			OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBandSet));
+			//		}
+			//	}
+			//	else
+			//	{
+			//		if (_colorBandSet == null || _colorBandSet != value)
+			//		{
+			//			ClearTheCollection(ColorBands);
+			//			Histogram.Reset(value.HighCutOff + 1);
+			//			PopulateHistorgram(_mapSections, Histogram);
+
+			//			foreach (var c in value)
+			//			{
+			//				c.PropertyChanged += ColorBand_PropertyChanged;
+			//				ColorBands.Add(c);
+			//			}
+
+			//			var view = CollectionViewSource.GetDefaultView(ColorBands);
+			//			_ = view.MoveCurrentTo(ColorBands.FirstOrDefault());
+
+			//			var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
+			//			Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}");
+			//			_colorBandSet = value;
+
+			//			OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBandSet));
+			//		}
+			//	}
+			//}
+
 			private set
 			{
 				Debug.WriteLine($"ColorBandViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.SerialNumber}, New = {value?.SerialNumber}");
@@ -98,42 +147,34 @@ namespace MSetExplorer
 				{
 					if (_colorBandSet != null)
 					{
-						ClearTheCollection(ColorBands);
+						Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
+
+						_mapSectionHistogramProcessor.ProcessingEnabled = false;
 						_colorBandSet = value;
 						Histogram.Reset();
-						Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
 						OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBandSet));
+						OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBands));
 					}
 				}
 				else
 				{
 					if (_colorBandSet == null || _colorBandSet != value)
 					{
-						ClearTheCollection(ColorBands);
+						var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
+						Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}");
+
+						_mapSectionHistogramProcessor.ProcessingEnabled = false;
 						Histogram.Reset(value.HighCutOff + 1);
 						PopulateHistorgram(_mapSections, Histogram);
+						_mapSectionHistogramProcessor.ProcessingEnabled = true;
 
-						foreach (var c in value)
-						{
-							c.PropertyChanged += ColorBand_PropertyChanged;
-							ColorBands.Add(c);
-						}
+						_colorBandSet = value;
 
 						var view = CollectionViewSource.GetDefaultView(ColorBands);
 						_ = view.MoveCurrentTo(ColorBands.FirstOrDefault());
 
-
-						if (_colorBandSet == null)
-						{
-							Debug.WriteLine("ColorBandViewModel is updating its collection. (null => non-null.)");
-						}
-						else
-						{
-							Debug.WriteLine("ColorBandViewModel is updating its collection. (non-null => non-null.)");
-						}
-						_colorBandSet = value;
-
 						OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBandSet));
+						OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBands));
 					}
 				}
 			}
@@ -207,20 +248,30 @@ namespace MSetExplorer
 
 		private void ColorBand_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (sender is ColorBand cb &&  e.PropertyName == nameof(ColorBand.BlendStyle))
+			if (sender is ColorBand cb)
 			{
-				if (cb.BlendStyle == ColorBandBlendStyle.Next)
+				if (e.PropertyName == nameof(ColorBand.BlendStyle))
 				{
-					var idx = ColorBands.IndexOf(cb);
-
-					if (idx != ColorBands.Count - 1)
+					if (cb.BlendStyle == ColorBandBlendStyle.Next)
 					{
-						cb.ActualEndColor = ColorBands[idx + 1].StartColor;
+						var idx = ColorBands.IndexOf(cb);
+
+						if (idx != ColorBands.Count - 1)
+						{
+							cb.ActualEndColor = ColorBands[idx + 1].StartColor;
+						}
+					}
+					else
+					{
+						cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.End ? cb.EndColor : cb.StartColor;
 					}
 				}
-				else
+				else if (e.PropertyName == nameof(ColorBand.ActualEndColor))
 				{
-					cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.End ? cb.EndColor : cb.StartColor;
+					if (cb.BlendStyle == ColorBandBlendStyle.End)
+					{
+						cb.EndColor = cb.ActualEndColor;
+					}
 				}
 			}
 		}
@@ -229,48 +280,75 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Test1()
+		public void DeleteSelectedItem()
 		{
-			//var newColorBandSet = ColorBandSet.CreateNewCopy();
-			//var len = newColorBandSet.Count;
-
-			//var ocb = newColorBandSet[len - 3];
-			//var ocb1 = newColorBandSet[1];
-			//var ncb = new ColorBand(ocb.CutOff + 50, ocb1.StartColor, ocb1.BlendStyle, ocb1.EndColor);
-
-			//newColorBandSet.Insert(len - 2, ncb);
-
-			//ColorBandSet = newColorBandSet;
-
-			Debug.WriteLine($"There are {Histogram[Histogram.UpperBound]} points that reached the target iterations.");
-
+			_colorBandSet.Remove(SelectedColorBand);
 		}
 
-		public void Test2()
+		public void InsertItem()
 		{
-			var newColorBandSet = new ColorBandSet();
-			ColorBandSet = newColorBandSet;
+			var prevCutOff = SelectedColorBand.PreviousCutOff;
+			var cutOff = SelectedColorBand.CutOff;
+
+			if (cutOff - prevCutOff > 1)
+			{
+				var idx = ColorBands.IndexOf(SelectedColorBand);
+
+				var newCutoff = prevCutOff + (cutOff - prevCutOff) / 2;
+				var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.End, ColorBandColor.Black);
+
+				_colorBandSet.Insert(idx, newItem);
+			}
 		}
 
-		public void Test3()
+		public void ApplyChanges()
 		{
-			var newColorBandSet = new ColorBandSet();
-
-			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
-
-			ColorBandSet = newColorBandSet;
+			_colorBandSet = new ColorBandSet(ColorBands);
+			OnPropertyChanged(nameof(IColorBandSetViewModel.ColorBandSet));
 		}
 
-		public void Test4()
-		{
-			var newColorBandSet = new ColorBandSet();
+		//public void Test1()
+		//{
+		//	//var newColorBandSet = ColorBandSet.CreateNewCopy();
+		//	//var len = newColorBandSet.Count;
 
-			newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
-			newColorBandSet.Insert(0, new ColorBand(50, new ColorBandColor("#880000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
+		//	//var ocb = newColorBandSet[len - 3];
+		//	//var ocb1 = newColorBandSet[1];
+		//	//var ncb = new ColorBand(ocb.CutOff + 50, ocb1.StartColor, ocb1.BlendStyle, ocb1.EndColor);
 
-			ColorBandSet = newColorBandSet;
+		//	//newColorBandSet.Insert(len - 2, ncb);
 
-		}
+		//	//ColorBandSet = newColorBandSet;
+
+		//	Debug.WriteLine($"There are {Histogram[Histogram.UpperBound]} points that reached the target iterations.");
+
+		//}
+
+		//public void Test2()
+		//{
+		//	var newColorBandSet = new ColorBandSet();
+		//	ColorBandSet = newColorBandSet;
+		//}
+
+		//public void Test3()
+		//{
+		//	var newColorBandSet = new ColorBandSet();
+
+		//	newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#00FF00")));
+
+		//	ColorBandSet = newColorBandSet;
+		//}
+
+		//public void Test4()
+		//{
+		//	var newColorBandSet = new ColorBandSet();
+
+		//	newColorBandSet.Insert(0, new ColorBand(100, new ColorBandColor("#FF0000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
+		//	newColorBandSet.Insert(0, new ColorBand(50, new ColorBandColor("#880000"), ColorBandBlendStyle.Next, new ColorBandColor("#000000")));
+
+		//	ColorBandSet = newColorBandSet;
+
+		//}
 
 		#endregion
 

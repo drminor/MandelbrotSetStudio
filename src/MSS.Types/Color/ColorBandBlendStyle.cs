@@ -3,7 +3,7 @@
     public enum ColorBandBlendStyle
     {
         None = 0,
-        Next = 1,
-        End = 2
+        End = 1,
+        Next = 2
     }
 }

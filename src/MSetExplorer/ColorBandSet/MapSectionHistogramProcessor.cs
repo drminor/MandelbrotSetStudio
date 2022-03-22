@@ -15,7 +15,9 @@ namespace MSetExplorer
 		private readonly IHistogram _histogram;
 
 		private const int QUEUE_CAPACITY = 200;
-		private readonly object _cancelledJobsLock = new();
+
+		private bool _processingEnabled;
+		private readonly object _processingEnabledLock = new();
 
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<HistogramWorkReqType> _workQueue;
@@ -31,6 +33,30 @@ namespace MSetExplorer
 			_cts = new CancellationTokenSource();
 			_workQueue = new BlockingCollection<HistogramWorkReqType>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
+		}
+
+		#endregion
+
+		#region Public Properties
+
+		public bool ProcessingEnabled
+		{
+			get
+			{
+				lock(_processingEnabledLock)
+				{
+					return _processingEnabled;
+				}
+			}
+
+			set
+			{
+				lock (_processingEnabledLock)
+				{
+					_processingEnabled = value;
+				}
+
+			}
 		}
 
 		#endregion
@@ -54,7 +80,7 @@ namespace MSetExplorer
 
 		public void Stop(bool immediately)
 		{
-			lock (_cancelledJobsLock)
+			lock (_processingEnabledLock)
 			{
 				if (immediately)
 				{
@@ -91,18 +117,24 @@ namespace MSetExplorer
 				{
 					var mapSectionWorkItem = _workQueue.Take(ct);
 
-					if (mapSectionWorkItem.JobId == 1)
+					lock(_processingEnabledLock)
 					{
-						_histogram.Add(mapSectionWorkItem.Request.Histogram);
-					}
-					else
-					{
-						_histogram.Remove(mapSectionWorkItem.Request.Histogram);
-					}
+						if (_processingEnabled)
+						{
+							if (mapSectionWorkItem.JobId == 1)
+							{
+								_histogram.Add(mapSectionWorkItem.Request.Histogram);
+							}
+							else
+							{
+								_histogram.Remove(mapSectionWorkItem.Request.Histogram);
+							}
 
-					var response = new List<double> { 0.1, 0.2 };
+							var response = new List<double> { 0.1, 0.2 };
 
-					mapSectionWorkItem.RunWorkAction(response);
+							mapSectionWorkItem.RunWorkAction(response);
+						}
+					}
 				}
 				catch (OperationCanceledException)
 				{

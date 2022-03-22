@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -56,6 +57,13 @@ namespace MSetExplorer
 		public static Rect CreateRect(SizeDbl size)
 		{
 			return new Rect(new Point(), ConvertToSize(size));
+		}
+
+		public static Color ConvertToColor(ColorBandColor colorBandColor)
+		{
+			var result = Color.FromRgb(colorBandColor.ColorComps[0], colorBandColor.ColorComps[1], colorBandColor.ColorComps[2]);
+
+			return result;
 		}
 
 
