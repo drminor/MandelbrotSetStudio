@@ -25,8 +25,8 @@ namespace MSetExplorer
 
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
 
-			ColorBandViewModel = colorBandViewModel;
-			ColorBandViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
+			ColorBandSetViewModel = colorBandViewModel;
+			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 		}
 
 		#endregion
@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 		public IMapProjectViewModel MapProjectViewModel { get; }
-		public IColorBandSetViewModel ColorBandViewModel { get; }
+		public IColorBandSetViewModel ColorBandSetViewModel { get; }
 
 		public int TargetIterations
 		{
@@ -45,8 +45,8 @@ namespace MSetExplorer
 				if (value != _targetIterations)
 				{
 					_targetIterations = value;
+					ColorBandSetViewModel.HighCutOff = value;
 					MapProjectViewModel.UpdateTargetInterations(value, Steps);
-					ColorBandViewModel.HighCutOff = value;
 					OnPropertyChanged();
 				}
 			}
@@ -76,7 +76,7 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
-				ColorBandViewModel.CurrentProject = MapProjectViewModel.CurrentProject;
+				ColorBandSetViewModel.CurrentProject = MapProjectViewModel.CurrentProject;
 			}
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
@@ -88,11 +88,21 @@ namespace MSetExplorer
 					MapDisplayViewModel.CurrentJob = curJob;
 
 					var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
-					_targetIterations = mapCalcSettings.TargetIterations;
-					OnPropertyChanged(nameof(TargetIterations));
 
-					_steps = mapCalcSettings.IterationsPerRequest;
-					OnPropertyChanged(nameof(Steps));
+					if (mapCalcSettings.TargetIterations != _targetIterations)
+					{
+						_targetIterations = mapCalcSettings.TargetIterations;
+
+						// TODO: Update the HighCutOff for the current ColorBandSet property of the ColorBandSetViewModel
+
+						OnPropertyChanged(nameof(TargetIterations));
+					}
+
+					if (mapCalcSettings.IterationsPerRequest != _steps)
+					{
+						_steps = mapCalcSettings.IterationsPerRequest;
+						OnPropertyChanged(nameof(Steps));
+					}
 				}
 			}
 
@@ -117,9 +127,9 @@ namespace MSetExplorer
 
 		private void ColorBandViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IColorBandSetViewModel.ColorBandSet))
+			if (e.PropertyName == "ColorBandSet")
 			{
-				MapProjectViewModel.CurrentColorBandSet = ColorBandViewModel.ColorBandSet;
+				MapProjectViewModel.CurrentColorBandSet = ColorBandSetViewModel.ColorBandSet;
 			}
 		}
 

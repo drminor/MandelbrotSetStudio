@@ -1,13 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace MSS.Types
 {
-	public class ColorBand : IColorBand, ICloneable
+	public class ColorBand : IColorBand, ICloneable, IEquatable<ColorBand?>
 	{
-		#region Constructor
-
 		private int _cutOff;
 		private ColorBandColor _startColor;
 		private ColorBandBlendStyle _blendStyle;
@@ -17,6 +17,8 @@ namespace MSS.Types
 		private ColorBandColor _actualEndColor;
 
 		private double _percentage;
+
+		#region Constructor
 
 		public ColorBand(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
 			: this(cutOff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
@@ -171,20 +173,51 @@ namespace MSS.Types
 
 		#endregion
 
-		//#region Static Methods
+		public override string? ToString()
+		{
+			return $"CutOff: {_cutOff}, Start: {_startColor.GetCssColor()}, End: {_endColor.GetCssColor()}, Blend: {_blendStyle}, Previous CutOff: {_previousCutOff}, Actual End: {_actualEndColor}";
+		}
 
-		//private static string GetBlendStyleAsString(ColorBandBlendStyle blendStyle)
-		//{
-		//	return blendStyle switch
-		//	{
-		//		ColorBandBlendStyle.Next => "Next",
-		//		ColorBandBlendStyle.None => "None",
-		//		ColorBandBlendStyle.End => "End",
-		//		_ => "None",
-		//	};
-		//}
+		#region IEquatable and IEqualityComparer Support
 
-		//#endregion
+
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as ColorBand);
+		}
+
+		public bool Equals(ColorBand? other)
+		{
+			bool result = other != null
+				&& _cutOff == other._cutOff
+				&& _startColor.Equals(other._startColor)
+				&& _blendStyle == other._blendStyle
+				&& _endColor.Equals(other._endColor)
+				&& _previousCutOff == other._previousCutOff
+				&& _actualEndColor.Equals(other._actualEndColor)
+				;//&& _percentage == other._percentage;
+
+			return result;
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(_cutOff, _startColor, _blendStyle, _endColor, _previousCutOff, _actualEndColor, _percentage);
+		}
+
+		public static bool operator ==(ColorBand? left, ColorBand? right)
+		{
+			return EqualityComparer<ColorBand>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(ColorBand? left, ColorBand? right)
+		{
+			return !(left == right);
+		}
+
+		#endregion
+
+		#region NotifyPropertyChanged Support
 
 		public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -193,5 +226,6 @@ namespace MSS.Types
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
+		#endregion
 	}
 }

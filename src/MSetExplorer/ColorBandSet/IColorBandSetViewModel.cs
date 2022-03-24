@@ -1,23 +1,22 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	public interface IColorBandSetViewModel
+	public interface IColorBandSetViewModel : INotifyPropertyChanged
 	{
-		bool InDesignMode { get; }
+		//bool InDesignMode { get; }
 
-		event PropertyChangedEventHandler PropertyChanged;
+		//event PropertyChangedEventHandler PropertyChanged;
 
 		double RowHeight { get; set; }
 		double ItemWidth { get; set; }
 
 		Project CurrentProject { get; set; }
 
-		ObservableCollection<ColorBand> ColorBands { get; }
-		ColorBand SelectedColorBand { get; set; }
+		//ObservableCollection<ColorBand> ColorBands { get; }
+		//ColorBand SelectedColorBand { get; set; }
 		int? HighCutOff { get; set; }
 		ColorBandSet ColorBandSet { get; }
 

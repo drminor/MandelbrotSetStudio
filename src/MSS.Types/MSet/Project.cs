@@ -37,7 +37,6 @@ namespace MSS.Types.MSet
 
 		public bool OnFile => Id != ObjectId.Empty;
 
-
 		public ColorBandSet CurrentColorBandSet
 		{
 			get => _currentColorBandSet;
@@ -54,7 +53,6 @@ namespace MSS.Types.MSet
 				}
 			}
 		}
-
 
 		private Collection<Guid> CloneSetIds(IList<Guid> setSNs)
 		{

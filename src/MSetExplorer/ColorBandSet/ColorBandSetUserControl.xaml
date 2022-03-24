@@ -23,7 +23,8 @@
 
         <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
 
-            <ListView Name="lvColorBands" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedColorBand}">
+            <ListView Name="lvColorBands" ItemsSource="{Binding ColorBandSet}" IsSynchronizedWithCurrentItem="True">
+                <!--  SelectedItem="{Binding SelectedColorBand, Mode=TwoWay}"-->
                 <ListView.View>
                     <GridView>
 
@@ -73,7 +74,7 @@
 
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Width="65" Margin="5,5,11,3" FontSize="14" Text="Cut Off:" />
-                    <TextBox Text="{Binding Path=SelectedColorBand.CutOff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>
+                    <TextBox Text="{Binding Path=ColorBandSet/CutOff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>
 
                     <TextBlock Width="77" Margin="8,3,5,3" FontSize="14" Text="Blend Style:" />
                     
@@ -81,7 +82,7 @@
                     <!--<TextBox Text="{Binding Path=SelectedColorBand.BlendStyle}"  Width="67" VerticalAlignment="Center"/>-->
 
                     <ComboBox Width="64" Height="21" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,2,0,2"
-                              SelectedIndex="{Binding Path=SelectedColorBand.BlendStyle, Converter={StaticResource BlendStyleToIntConverter}}">
+                              SelectedIndex="{Binding Path=ColorBandSet/BlendStyle, Converter={StaticResource BlendStyleToIntConverter}}">
                         <ComboBoxItem IsSelected="True">None</ComboBoxItem>
                         <ComboBoxItem>End</ComboBoxItem>
                         <ComboBoxItem>Next</ComboBoxItem>
@@ -91,12 +92,12 @@
 
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                     <TextBlock Width="69" Margin="5,2,5,5" FontSize="14" Text="Start Color:" />
-                    <local:ColorBandColorUserControl ColorBandColor="{Binding Path=SelectedColorBand.StartColor}" Width="63" Height="21" Margin="2,0,3,5"/>
+                    <local:ColorBandColorUserControl ColorBandColor="{Binding Path=ColorBandSet/StartColor}" Width="63" Height="21" Margin="2,0,3,5"/>
                     <!--<TextBox Text="{Binding Path=SelectedColorBand.StartColor.CssColor}" Width="65" VerticalAlignment="Center"/>-->
 
                     <TextBlock Width="65" Margin="5,2,5,5" FontSize="14" Text="End Color:" />
                     <!--<TextBox Text="{Binding Path=SelectedColorBand.ActualEndColor.CssColor}"  Width="65" VerticalAlignment="Center"/>-->
-                    <local:ColorBandColorUserControl ColorBandColor="{Binding Path=SelectedColorBand.ActualEndColor}" Width="63" Height="21" Margin="0,0,0,5"/>
+                    <local:ColorBandColorUserControl ColorBandColor="{Binding Path=ColorBandSet/ActualEndColor}" Width="63" Height="21" Margin="0,0,0,5"/>
                 </StackPanel>
 
             </StackPanel>

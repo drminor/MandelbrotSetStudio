@@ -19,7 +19,7 @@ namespace MSS.Types
 		ObservableCollection<T> ColorBands { get; }
 
 		/// <summary>
-		/// Preservers the value of SerialNumber
+		/// Preserves the value of SerialNumber
 		/// </summary>
 		/// <returns></returns>
 		IColorBandSet<T> Clone();

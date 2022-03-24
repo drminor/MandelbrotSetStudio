@@ -50,7 +50,7 @@ namespace MSetRepo
 
 		public ColorBandSetRecord MapTo(ColorBandSet source)
 		{
-			var result = new ColorBandSetRecord(source.Select(x => MapTo(x)).ToArray(), source.SerialNumber.ToByteArray());
+			var result = new ColorBandSetRecord(source.SerialNumber.ToByteArray(), source.Select(x => MapTo(x)).ToArray());
 			return result;
 		}
 

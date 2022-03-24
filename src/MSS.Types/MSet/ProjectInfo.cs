@@ -15,6 +15,8 @@ namespace MSS.Types.MSet
 		private string _name;
 		private string? _description;
 
+		#region Constructor
+
 		public ProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
 		{
 			Project = project;
@@ -26,6 +28,10 @@ namespace MSS.Types.MSet
 			_name = project.Name;
 			_description = project.Description;
 		}
+
+		#endregion
+
+		#region Public Properties
 
 		public Project Project { get; init; }
 
@@ -69,6 +75,9 @@ namespace MSS.Types.MSet
 			set { _minSamplePointDeltaExponent = value; OnPropertyChanged(); }
 		}
 
+		#endregion
+
+		#region NotifyPropertyChanged Support
 
 		public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -77,6 +86,7 @@ namespace MSS.Types.MSet
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
+		#endregion
 
 	}
 }

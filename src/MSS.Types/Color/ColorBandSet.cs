@@ -4,10 +4,11 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text;
 
 namespace MSS.Types
 {
-	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet>, IColorBandSet<ColorBand>, ICloneable
+	public class ColorBandSet : ObservableCollection<ColorBand>, IColorBandSet<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet>, ICloneable
 	{
 		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
@@ -151,11 +152,15 @@ namespace MSS.Types
 		private void UpdateItemAndNeighbors(int index, ColorBand item)
 		{
 			var colorBands = GetItemAndNeighbors(index, item);
+			var prev = GetPreviousItem(index);
+			var idx = prev == null ? index : index - 1;
 
-			for (var i = 0; i < colorBands.Count; i++)
+			for (var ptr = 0; ptr < colorBands.Count; ptr++)
 			{
-				var cb = colorBands[i];
-				cb.UpdateWithNeighbors(GetPreviousItem(i), GetNextItem(i));
+				var cb = colorBands[ptr];
+				cb.UpdateWithNeighbors(GetPreviousItem(idx), GetNextItem(idx));
+
+				idx++;
 			}
 		}
 
@@ -196,7 +201,16 @@ namespace MSS.Types
 
 		#region Clone Support
 
-		public IColorBandSet<ColorBand> CreateNewCopy()
+		IColorBandSet<ColorBand> IColorBandSet<ColorBand>.CreateNewCopy()
+		{
+			return CreateNewCopy();
+		}
+
+		/// <summary>
+		/// Receives a new SerialNumber
+		/// </summary>
+		/// <returns></returns>
+		public ColorBandSet CreateNewCopy()
 		{
 			return new ColorBandSet(CreateCopy());
 		}
@@ -206,7 +220,16 @@ namespace MSS.Types
 			return Clone();
 		}
 
-		public IColorBandSet<ColorBand> Clone()
+		IColorBandSet<ColorBand> IColorBandSet<ColorBand>.Clone()
+		{
+			return Clone();
+		}
+
+		/// <summary>
+		/// Preserves the value of SerialNumber
+		/// </summary>
+		/// <returns></returns>
+		public ColorBandSet Clone()
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with SerialNumber: {SerialNumber}.");
 
@@ -223,7 +246,15 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			return $"{SerialNumber}:{base.ToString()}";
+			var sb = new StringBuilder();
+
+			sb.AppendLine($"ColorBandSet: {SerialNumber}");
+			foreach(var cb in this)
+			{
+				sb.AppendLine(cb.ToString());
+			}
+
+			return sb.ToString();
 		}
 
 		#region IEquatable Support

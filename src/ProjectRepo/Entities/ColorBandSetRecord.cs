@@ -1,7 +1,7 @@
 ﻿
 namespace ProjectRepo.Entities
 {
-	public record ColorBandSetRecord(ColorBandRecord[] ColorBandRecords, byte[] SerialNumber) : RecordBase()
+	public record ColorBandSetRecord(byte[] SerialNumber, ColorBandRecord[] ColorBandRecords) : RecordBase()
 	{ }
 
 }

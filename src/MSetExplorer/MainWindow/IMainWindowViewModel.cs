@@ -9,7 +9,7 @@ namespace MSetExplorer
 
 		IMapProjectViewModel MapProjectViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
-		IColorBandSetViewModel ColorBandViewModel { get; }
+		IColorBandSetViewModel ColorBandSetViewModel { get; }
 
 		int TargetIterations { get; set; }
 		int Steps { get; set; }

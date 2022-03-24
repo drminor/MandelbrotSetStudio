@@ -105,8 +105,16 @@ namespace MSetExplorer
 				var project = CurrentProject;
 				if (project != null)
 				{
+					//if (value != project.CurrentColorBandSet)
+					//{
+					//	project.CurrentColorBandSet = value;
+					//	OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+					//}
+
+					// TODO: Why do we have to raise this change - when there is no change.
 					project.CurrentColorBandSet = value;
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+
 				}
 			}
 		}

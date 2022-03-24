@@ -37,7 +37,7 @@ namespace MSetExplorer
 				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
-				colorBandView1.DataContext = _vm.ColorBandViewModel;
+				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 				txtIterations.LostFocus += TxtIterations_LostFocus;
 
 				Debug.WriteLine("The MainWindow is now loaded");

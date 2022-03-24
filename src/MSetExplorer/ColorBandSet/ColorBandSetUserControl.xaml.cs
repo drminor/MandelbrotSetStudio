@@ -16,10 +16,10 @@ namespace MSetExplorer
 		public ColorBandSetUserControl()
 		{
 			InitializeComponent();
-			Loaded += ColorBandView_Loaded;
+			Loaded += ColorBandSetUserControl_Loaded;
 		}
 
-		private void ColorBandView_Loaded(object sender, RoutedEventArgs e)
+		private void ColorBandSetUserControl_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
@@ -35,8 +35,8 @@ namespace MSetExplorer
 
 				//_vm.ItemWidth = lvColorBands.ActualWidth - 5;
 
-				lvColorBands.ItemsSource = _vm.ColorBands;
-				lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;
+				//lvColorBands.ItemsSource = _vm.ColorBands;
+				//lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;
 
 				//lvColorBands
 
@@ -46,17 +46,19 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IColorBandSetViewModel.ColorBands))
+			if (e.PropertyName == nameof(_vm.ColorBandSet))
 			{
-				lvColorBands.ItemsSource = null;
-				lvColorBands.ItemsSource = _vm.ColorBands;
+				//Debug.WriteLine("Refreshing the ColorBandSet UserControl's ListView's ItemSource.");
+				//lvColorBands.ItemsSource = null;
+				//lvColorBands.ItemsSource = _vm.ColorBands;
+
 			}
 		}
 
-		private void LvColorBands_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			Debug.WriteLine($"The current cutoff is {_vm.SelectedColorBand?.CutOff}.");
-		}
+		//private void LvColorBands_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		//{
+		//	Debug.WriteLine($"The current cutoff is {_vm.SelectedColorBand?.CutOff}.");
+		//}
 
 		#endregion
 
@@ -64,6 +66,13 @@ namespace MSetExplorer
 
 		private void InsertButton_Click(object sender, RoutedEventArgs e)
 		{
+			foreach(var x in lvColorBands.Items)
+			{
+				if(x is ListViewItem lvi)
+				{
+					lvi.IsSelected = false;
+				}
+			}
 			_vm.InsertItem();
 		}
 

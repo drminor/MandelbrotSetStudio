@@ -3,10 +3,8 @@ using System.ComponentModel;
 
 namespace MSS.Types.MSet
 {
-	public interface IProjectInfo
+	public interface IProjectInfo : INotifyPropertyChanged
 	{
-		public event PropertyChangedEventHandler PropertyChanged;
-
 		Project Project { get; }
 		DateTime DateCreated { get; }
 		string Name { get; set; }
