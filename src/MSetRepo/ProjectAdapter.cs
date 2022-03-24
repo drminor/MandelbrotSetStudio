@@ -63,7 +63,7 @@ namespace MSetRepo
 
 		public Project GetProject(ObjectId projectId)
 		{
-			Debug.WriteLine($"Retrieving Project object for ProjectId: {projectId}.");
+			//Debug.WriteLine($"Retrieving Project object for ProjectId: {projectId}.");
 
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var projectRecord = projectReaderWriter.Get(projectId);
@@ -74,7 +74,7 @@ namespace MSetRepo
 
 		public bool TryGetProject(string name, out Project? project)
 		{
-			Debug.WriteLine($"Retrieving Project object for Project with namne: {name}.");
+			//Debug.WriteLine($"Retrieving Project object for Project with name: {name}.");
 
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
@@ -261,11 +261,11 @@ namespace MSetRepo
 		{
 			if (jobCache != null && jobCache.TryGetValue(jobId, out var qJob))
 			{
-				Debug.WriteLine($"Retrieving Job object for JobId: {jobId} from the cache.");
+				//Debug.WriteLine($"Retrieving Job object for JobId: {jobId} from the cache.");
 				return qJob;
 			}
 
-			Debug.WriteLine($"Retrieving Job object for JobId: {jobId} from the data base.");
+			//Debug.WriteLine($"Retrieving Job object for JobId: {jobId} from the data base.");
 			var jobRecord = jobReaderWriter.Get(jobId);
 
 			if (jobRecord is null)

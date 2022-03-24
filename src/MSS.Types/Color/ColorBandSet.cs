@@ -29,38 +29,6 @@ namespace MSS.Types
 			SerialNumber = serialNumber;
 		}
 
-		public static IList<ColorBand> FixBands(IList<ColorBand> colorBands)
-		{
-			if (colorBands == null || colorBands.Count == 0)
-			{
-				return new List<ColorBand> { DEFAULT_HIGH_COLOR_BAND.Clone() };
-			}
-
-			var result = new List<ColorBand>(colorBands);
-
-			if (colorBands.Count > 1)
-			{
-				var prevCutOff = 0;
-				for (var i = 0; i < colorBands.Count - 1; i++)
-				{
-					var cb = colorBands[i];
-					cb.PreviousCutOff = prevCutOff;
-					cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? colorBands[i + 1].StartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
-
-					prevCutOff = cb.CutOff;
-				}
-
-				var lastCb = colorBands[colorBands.Count - 1];
-
-				Debug.Assert(lastCb.BlendStyle != ColorBandBlendStyle.Next, "The last item in the list of ColorBands being used to construct a ColorBandSet has its BlendStyle set to 'Next.'");
-
-				lastCb.PreviousCutOff = prevCutOff;
-				lastCb.ActualEndColor = lastCb.BlendStyle == ColorBandBlendStyle.None ? lastCb.StartColor : lastCb.EndColor;
-			}
-
-			return result;
-		}
-
 		#endregion
 
 		#region Public Properties
@@ -128,19 +96,20 @@ namespace MSS.Types
 		protected override void RemoveItem(int index)
 		{
 			base.RemoveItem(index);
-			if (Count == 0)
-			{
-				Add(DEFAULT_HIGH_COLOR_BAND.Clone());
-			}
-			else
-			{
-				if (index > Count - 1)
-				{
-					index = Count - 1;
-				}
 
-				UpdateItemAndNeighbors(index, Items[index]);
-			}
+			//if (Count == 0)
+			//{
+			//	Add(DEFAULT_HIGH_COLOR_BAND.Clone());
+			//}
+			//else
+			//{
+			//	if (index > Count - 1)
+			//	{
+			//		index = Count - 1;
+			//	}
+
+			//	UpdateItemAndNeighbors(index, Items[index]);
+			//}
 		}
 
 		protected override void SetItem(int index, ColorBand item)
@@ -148,6 +117,10 @@ namespace MSS.Types
 			base.SetItem(index, item);
 			UpdateItemAndNeighbors(index, item);
 		}
+
+		#endregion
+
+		#region Private Methods
 
 		private void UpdateItemAndNeighbors(int index, ColorBand item)
 		{
@@ -195,6 +168,38 @@ namespace MSS.Types
 		private ColorBand? GetNextItem(int index)
 		{
 			return index >= Count - 1 ? null : Items[index + 1];
+		}
+
+		private static IList<ColorBand> FixBands(IList<ColorBand> colorBands)
+		{
+			if (colorBands == null || colorBands.Count == 0)
+			{
+				return new List<ColorBand> { DEFAULT_HIGH_COLOR_BAND.Clone() };
+			}
+
+			var result = new List<ColorBand>(colorBands);
+
+			if (colorBands.Count > 1)
+			{
+				var prevCutOff = 0;
+				for (var i = 0; i < colorBands.Count - 1; i++)
+				{
+					var cb = colorBands[i];
+					cb.PreviousCutOff = prevCutOff;
+					cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? colorBands[i + 1].StartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
+
+					prevCutOff = cb.CutOff;
+				}
+
+				var lastCb = colorBands[colorBands.Count - 1];
+
+				Debug.Assert(lastCb.BlendStyle != ColorBandBlendStyle.Next, "The last item in the list of ColorBands being used to construct a ColorBandSet has its BlendStyle set to 'Next.'");
+
+				lastCb.PreviousCutOff = prevCutOff;
+				lastCb.ActualEndColor = lastCb.BlendStyle == ColorBandBlendStyle.None ? lastCb.StartColor : lastCb.EndColor;
+			}
+
+			return result;
 		}
 
 		#endregion
@@ -257,7 +262,7 @@ namespace MSS.Types
 			return sb.ToString();
 		}
 
-		#region IEquatable Support
+		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)
 		{

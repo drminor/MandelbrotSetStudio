@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace MSS.Types
@@ -179,7 +178,6 @@ namespace MSS.Types
 		}
 
 		#region IEquatable and IEqualityComparer Support
-
 
 		public override bool Equals(object? obj)
 		{

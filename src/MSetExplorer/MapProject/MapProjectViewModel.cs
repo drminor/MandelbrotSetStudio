@@ -72,10 +72,11 @@ namespace MSetExplorer
 				if(value != _currentProject)
 				{
 					_currentProject = value;
+					CurrentProjectIsDirty = false;
 
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProject));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
-					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
+					//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 				}
 			}
 		}
@@ -105,16 +106,26 @@ namespace MSetExplorer
 				var project = CurrentProject;
 				if (project != null)
 				{
-					//if (value != project.CurrentColorBandSet)
-					//{
-					//	project.CurrentColorBandSet = value;
-					//	OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
-					//}
+					if (value != project.CurrentColorBandSet)
+					{
+						Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {project.CurrentColorBandSet.SerialNumber}, New = {value.SerialNumber}.");
+						project.CurrentColorBandSet = value;
+						CurrentProjectIsDirty = true;
+						OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+					}
+					else
+					{
+						Debug.WriteLine($"MapProjectViewModel is ignoring the ColorBandSet value update. The Current value is already: {project.CurrentColorBandSet.SerialNumber}.");
+					}
 
-					// TODO: Why do we have to raise this change - when there is no change.
-					project.CurrentColorBandSet = value;
-					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+					//// TODO: Why do we have to raise this change - when there is no change.
+					//project.CurrentColorBandSet = value;
+					//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
+				}
+				else
+				{
+					Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Its CurrentProject is null so no update is being made.");
 				}
 			}
 		}
@@ -233,7 +244,8 @@ namespace MSetExplorer
 				}
 			}
 
-			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
+			CurrentProjectIsDirty = false;
+			//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 		}
 
 		public void ProjectUpdateName(string name)
@@ -372,12 +384,14 @@ namespace MSetExplorer
 			{
 				_jobsCollection.Add(job);
 				_jobsPointer = _jobsCollection.Count - 1;
-				_currentProjectIsDirty = true;
+
+				CurrentProjectIsDirty = true;
+				//_currentProjectIsDirty = true;
 
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
+				//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 			});
 		}
 

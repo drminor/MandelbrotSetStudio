@@ -1,10 +1,13 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace MSS.Common
 {
-	public class ColorMap
+	public class ColorMap : IEquatable<ColorMap?>, IEqualityComparer<ColorMap>
     {
         private readonly int[] _cutOffs;
         private readonly int _lastCutOff;
@@ -17,6 +20,8 @@ namespace MSS.Common
 			{
                 throw new ArgumentNullException(nameof(colorBandSet));
             }
+
+            Debug.WriteLine($"A new Color Map is being constructed with SerialNumber: {colorBandSet.SerialNumber}.");
 
             ColorBandSet = colorBandSet;
             _lastCutOff = colorBandSet.ColorBands[^1].CutOff;
@@ -185,48 +190,95 @@ namespace MSS.Common
 
         #endregion
 
-        #region Old Not Used
+        #region IEquatable and IEqualityComparer Support
 
-        //     private byte[] GetBlendedColor(ColorBand cme, int countVal, double escapeVelocity)
-        //     {
-        //         byte[] result;
+        public override bool Equals(object? obj)
+        {
+            return Equals(obj as ColorMap);
+        }
 
-        //         //var cme = GetColorMapEntry(colorMapIndex);
+        public bool Equals(ColorMap? other)
+        {
+            return other != null &&
+                   EqualityComparer<ColorBandSet>.Default.Equals(ColorBandSet, other.ColorBandSet);
+        }
 
-        //         if (cme.BlendStyle == ColorBandBlendStyle.None)
-        //         {
-        //             result = cme.StartColor.ColorComps;
-        //             return result;
-        //         }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(ColorBandSet);
+        }
 
-        //         var botBucketVal = _prevCutOffs[colorMapIndex];
+		public bool Equals(ColorMap? x, ColorMap? y)
+		{
+            if (x is null)
+            {
+                return y is null;
+            }
+            else
+            {
+                return x.Equals(y);
+            }
+        }
 
-        //         //int[] cStart;
+		public int GetHashCode([DisallowNull] ColorMap obj)
+		{
+            return GetHashCode(obj);
+        }
 
-        //         //if (countVal == botBucketVal)
-        //         //{
-        //         //	cStart = cme.StartColor.ColorComps;
-        //         //}
-        //         //else
-        //         //{
-        //         //	double stepFactor = (-1 + countVal - botBucketVal) / (double)cme.BucketWidth;
-        //         //	cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
-        //         //}
+        public static bool operator ==(ColorMap? left, ColorMap? right)
+        {
+            return EqualityComparer<ColorMap>.Default.Equals(left, right);
+        }
 
-        //         ////double stepFactor = (countVal - botBucketVal) / (double)cme.BucketWidth;
-        //         ////cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+        public static bool operator !=(ColorMap? left, ColorMap? right)
+        {
+            return !(left == right);
+        }
 
-        //         //double intraStepFactor = escapeVelocity / cme.BucketWidth;
-        //         //result = Interpolate(cStart, cme.StartColor.ColorComps, cme.EndColor.ColorComps, intraStepFactor);
+		#endregion
 
-        //         var bucketWidth = _bucketWidths[colorMapIndex];
-        //         var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
-        //         result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+		#region Old Not Used
 
-        //         return result;
-        //
-        //     }
+		//     private byte[] GetBlendedColor(ColorBand cme, int countVal, double escapeVelocity)
+		//     {
+		//         byte[] result;
 
-        #endregion
-    }
+		//         //var cme = GetColorMapEntry(colorMapIndex);
+
+		//         if (cme.BlendStyle == ColorBandBlendStyle.None)
+		//         {
+		//             result = cme.StartColor.ColorComps;
+		//             return result;
+		//         }
+
+		//         var botBucketVal = _prevCutOffs[colorMapIndex];
+
+		//         //int[] cStart;
+
+		//         //if (countVal == botBucketVal)
+		//         //{
+		//         //	cStart = cme.StartColor.ColorComps;
+		//         //}
+		//         //else
+		//         //{
+		//         //	double stepFactor = (-1 + countVal - botBucketVal) / (double)cme.BucketWidth;
+		//         //	cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+		//         //}
+
+		//         ////double stepFactor = (countVal - botBucketVal) / (double)cme.BucketWidth;
+		//         ////cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+
+		//         //double intraStepFactor = escapeVelocity / cme.BucketWidth;
+		//         //result = Interpolate(cStart, cme.StartColor.ColorComps, cme.EndColor.ColorComps, intraStepFactor);
+
+		//         var bucketWidth = _bucketWidths[colorMapIndex];
+		//         var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
+		//         result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+
+		//         return result;
+		//
+		//     }
+
+		#endregion
+	}
 }

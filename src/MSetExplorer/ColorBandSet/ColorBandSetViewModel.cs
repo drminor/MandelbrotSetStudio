@@ -319,44 +319,37 @@ namespace MSetExplorer
 
 		public void DeleteSelectedItem()
 		{
-			Debug.WriteLine($"Getting ready to remove an item. The list is: {_colorBandSet}.");
+			//Debug.WriteLine($"Getting ready to remove an item. The list is: {_colorBandSet}.");
 
 			var view = CollectionViewSource.GetDefaultView(ColorBandSet);
 
 			if (view != null)
 			{
-				var x = view.CurrentItem as ColorBand;
+				var curItem = view.CurrentItem as ColorBand;
 
-				if (x != null)
+				if (curItem != null)
 				{
-					//var idx = _colorBandSet.IndexOf(x);
+					var idx = _colorBandSet.IndexOf(curItem);
 
-					//if (!view.MoveCurrentToLast())
-					//{
-					//	Debug.WriteLine("Could not position view to next item.");
-					//}
+					if (idx >= _colorBandSet.Count - 1)
+					{
+						idx = _colorBandSet.Count - 1;
+					}
 
-					//if (idx >= _colorBandSet.Count - 1)
-					//{
-					//	idx = _colorBandSet.Count - 1;
-					//}
+					if (!view.MoveCurrentToPosition(idx))
+					{
+						Debug.WriteLine("Could not position view to next item.");
+					}
 
-					//view.MoveCurrentToPosition(idx + 2);
-
-					view.MoveCurrentToLast();
-
-					var s = _colorBandSet.Remove(x);
-
-					if (!s)
+					if (!_colorBandSet.Remove(curItem))
 					{
 						Debug.WriteLine("Could not remove the item.");
 					}
 
-					//var idx1 = _colorBandSet.IndexOf((ColorBand)view.CurrentItem);
+					var idx1 = _colorBandSet.IndexOf((ColorBand)view.CurrentItem);
 
 					//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {idx1}. The new list is: {_colorBandSet}.");
-
-
+					Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {idx1}.");
 
 					//view.Refresh();
 				}
@@ -386,32 +379,10 @@ namespace MSetExplorer
 
 		public void ApplyChanges()
 		{
-			//_colorBandSet = new ColorBandSet(ColorBands);
-
 			// Create a new copy with a new serial number to load a new ColorMap.
-			//var newSet = _colorBandSet.CreateNewCopy();
+			var newSet = _colorBandSet.CreateNewCopy();
 
-			//if (new ColorBandSetComparer().Equals(_colorBandSet, newSet))
-			//{
-			//	Debug.WriteLine("The new ColorBandSet is sound.");
-			//} 
-			//else
-			//{
-			//	throw new InvalidOperationException("Creating a new copy of the ColorBands produces a result different that the current collection of ColorBands.");
-			//}
-
-			//Debug.Assert(new ColorBandSetComparer().Equals(_colorBandSet, newSet), "Creating a new copy of the ColorBands produces a result different that the current collection of ColorBands.");
-
-			if (ColorBandsWereUpdatedProperly(_colorBandSet, out var newSet, out var mismatchedLines))
-			{
-				Debug.WriteLine("The new ColorBandSet is sound.");
-			}
-			else
-			{
-				Debug.WriteLine("Creating a new copy of the ColorBands produces a result different that the current collection of ColorBands.");
-				Debug.WriteLine($"Updated: {_colorBandSet}, new: {newSet}");
-				Debug.WriteLine($"The mismatched lines are: {string.Join(", ", mismatchedLines.Select(x => x.ToString()).ToArray())}");
-			}
+			CheckThatColorBandsWereUpdatedProperly(_colorBandSet, newSet, throwOnMismatch: false);
 
 			_colorBandSet = newSet;
 			//var view = CollectionViewSource.GetDefaultView(ColorBandSet);
@@ -420,11 +391,25 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(ColorBandSet));
 		}
 
-		private bool ColorBandsWereUpdatedProperly(ColorBandSet colorBandSet, out ColorBandSet pVersion, out IList<int> mismatchedLines)
+		private void CheckThatColorBandsWereUpdatedProperly(ColorBandSet colorBandSet, ColorBandSet goodCopy, bool throwOnMismatch)
 		{
-			pVersion = colorBandSet.CreateNewCopy();
-			var result = new ColorBandSetComparer().EqualsExt(colorBandSet, pVersion, out mismatchedLines);
-			return result;
+			var theyMatch = new ColorBandSetComparer().EqualsExt(colorBandSet, goodCopy, out var mismatchedLines);
+
+			if (theyMatch)
+			{
+				Debug.WriteLine("The new ColorBandSet is sound.");
+			}
+			else
+			{
+				Debug.WriteLine("Creating a new copy of the ColorBands produces a result different that the current collection of ColorBands.");
+				Debug.WriteLine($"Updated: {_colorBandSet}, new: {goodCopy}");
+				Debug.WriteLine($"The mismatched lines are: {string.Join(", ", mismatchedLines.Select(x => x.ToString()).ToArray())}");
+
+				if (throwOnMismatch)
+				{
+					throw new InvalidOperationException("ColorBandSet update mismatch.");
+				}
+			}
 		}
 
 		//public void Test1()

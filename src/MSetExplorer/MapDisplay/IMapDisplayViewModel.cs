@@ -20,7 +20,7 @@ namespace MSetExplorer
 		ObservableCollection<MapSection> MapSections { get; }
 
 		Job CurrentJob { get; set; }
-		ColorMap ColorMap { get; set; }
+		ColorBandSet ColorBandSet { get; set; }
 
 		// These may need to be dependency properties
 		SizeDbl ContainerSize { get; set; }

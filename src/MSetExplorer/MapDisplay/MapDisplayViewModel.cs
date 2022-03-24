@@ -22,7 +22,11 @@ namespace MSetExplorer
 		private VectorInt _canvasControlOffset;
 
 		private Job _currentJob;
+
+		private ColorBandSet _colorBandSet;
 		private ColorMap _colorMap;
+
+		private SizeDbl _containerSize;
 
 		#region Constructor
 
@@ -33,20 +37,20 @@ namespace MSetExplorer
 
 			BlockSize = blockSize;
 
-			MapSections = new ObservableCollection<MapSection>();
-
 			_screenSectionCollection = new ScreenSectionCollection(BlockSize);
 			ImageSource = new DrawingImage(_screenSectionCollection.DrawingGroup);
-
-			MapSections.CollectionChanged += MapSections_CollectionChanged;
-
-			ContainerSize = new SizeDbl(1050, 1050);
+			_currentJob = null;
+			_colorBandSet = null;
+			_colorMap = null;
 
 			//_containerSize = new SizeDbl(1050, 1050);
 			//CanvasSize = new SizeInt(1024, 1024);
 			//var screenSectionExtent = new SizeInt(12, 12);
-
+			ContainerSize = new SizeDbl(1050, 1050);
 			CanvasControlOffset = new VectorInt();
+
+			MapSections = new ObservableCollection<MapSection>();
+			MapSections.CollectionChanged += MapSections_CollectionChanged;
 		}
 
 		#endregion
@@ -56,6 +60,8 @@ namespace MSetExplorer
 		public event EventHandler<MapViewUpdateRequestedEventArgs> MapViewUpdateRequested;
 
 		public new bool InDesignMode => base.InDesignMode;
+
+		public SizeInt BlockSize { get; }
 
 		public ImageSource ImageSource { get; init; }
 
@@ -72,22 +78,32 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorMap ColorMap
+		//new ColorMap(MapProjectViewModel.CurrentColorBandSet)
+
+		public ColorBandSet ColorBandSet
 		{
-			get => _colorMap;
+			get => _colorBandSet;
 			set
 			{
-				if (value != _colorMap)
+				if (value != _colorBandSet)
 				{
-					_colorMap = value;
-					HandleColorMapChanged(_colorMap);
+					if (value != null)
+					{
+						Debug.WriteLine($"The MapDisplay is processing a new ColorMap. SerialNumber = {value.SerialNumber}.");
+						_colorBandSet = value;
+						_colorMap = new ColorMap(value);
+						HandleColorMapChanged(_colorMap);
+					}
+					else
+					{
+						Debug.WriteLine($"The MapDisplay is having its ColorMap set to null. The MapDisplay is not updating the screen.");
+						_colorBandSet = value;
+						_colorMap = null;
+					}
 				}
 			}
 		}
 
-		public SizeInt BlockSize { get; }
-
-		private SizeDbl _containerSize;
 		public SizeDbl ContainerSize
 		{
 			get => _containerSize;
@@ -161,11 +177,6 @@ namespace MSetExplorer
 			}
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
 			{
-				if (_colorMap == null)
-				{
-					return;
-				}
-
 				// Add items
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
 				DrawSections(mapSections, _colorMap);
@@ -196,11 +207,21 @@ namespace MSetExplorer
 
 		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap colorMap)
 		{
-			foreach (var mapSection in mapSections)
+			if (colorMap != null)
 			{
-				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-				var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted);
-				_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
+				foreach (var mapSection in mapSections)
+				{
+					//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+					var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted);
+					_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
+				}
+			}
+			else
+			{
+				foreach (var mapSection in mapSections)
+				{
+					Debug.WriteLine($"Not drawing screen section at position: {mapSection.BlockPosition}, the color map is null.");
+				}
 			}
 		}
 

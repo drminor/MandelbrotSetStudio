@@ -43,7 +43,7 @@ namespace MSetExplorer
 				RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), StartColor, EndColor);
 				SizeChanged += ColorPanelControl_SizeChanged;
 
-				Debug.WriteLine("The ColorBandUserControl is now loaded.");
+				//Debug.WriteLine("The ColorBandUserControl is now loaded.");
 			}
 		}
 

@@ -77,6 +77,9 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
 				ColorBandSetViewModel.CurrentProject = MapProjectViewModel.CurrentProject;
+
+				// TODO: Use the ColorBandSet from the MapProjectViewModel or use the ColorBandSet from the ColorBandSetViewModel.
+				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 			}
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
@@ -108,7 +111,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
-				MapDisplayViewModel.ColorMap = new ColorMap(MapProjectViewModel.CurrentColorBandSet);
+				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 			}
 		}
 
