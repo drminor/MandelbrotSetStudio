@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace MSS.Types
 {
-	public class ColorBand : IColorBand, ICloneable, IEquatable<ColorBand?>
+	public class ColorBand : IColorBand, INotifyPropertyChanged/*, IEquatable<ColorBand?>*/, ICloneable
 	{
 		private int _cutOff;
 		private ColorBandColor _startColor;

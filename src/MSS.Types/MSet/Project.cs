@@ -30,7 +30,8 @@ namespace MSS.Types.MSet
 			Description = description;
 			ColorBandSetSNs = CloneSetIds(colorBandSetSNs);
 
-			_currentColorBandSet = currentColorBandSet;  //.Clone();
+			_currentColorBandSet = currentColorBandSet;
+			ColorBandSetIsDirty = false;
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
@@ -50,9 +51,13 @@ namespace MSS.Types.MSet
 					}
 
 					_currentColorBandSet = value;
+
+					ColorBandSetIsDirty = true;
 				}
 			}
 		}
+
+		public bool ColorBandSetIsDirty { get; set; }
 
 		private Collection<Guid> CloneSetIds(IList<Guid> setSNs)
 		{
@@ -64,7 +69,8 @@ namespace MSS.Types.MSet
 			}
 			else
 			{
-				result = new Collection<Guid>(setSNs.Select(x => new Guid(x.ToByteArray())).ToList());
+				var temp = new List<Guid>(setSNs); // Creates a copy
+				result = new Collection<Guid>(temp); // Wraps the given list
 			}
 
 			return result;

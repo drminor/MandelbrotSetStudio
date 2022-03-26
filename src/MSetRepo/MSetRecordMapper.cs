@@ -50,6 +50,11 @@ namespace MSetRepo
 
 		public ColorBandSetRecord MapTo(ColorBandSet source)
 		{
+			if (!_colorBandSetCache.ContainsKey(source.SerialNumber))
+			{
+				_colorBandSetCache.Add(source.SerialNumber, source);
+			}
+
 			var result = new ColorBandSetRecord(source.SerialNumber.ToByteArray(), source.Select(x => MapTo(x)).ToArray());
 			return result;
 		}

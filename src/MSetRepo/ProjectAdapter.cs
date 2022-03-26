@@ -115,10 +115,24 @@ namespace MSetRepo
 			return result;
 		}
 
-		public void UpdateProject(ObjectId projectId, string name, string? description)
+		public void UpdateProjectName(ObjectId projectId, string name)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			projectReaderWriter.Update(projectId, name, description);
+			projectReaderWriter.UpdateName(projectId, name);
+		}
+
+		public void UpdateProjectDescription(ObjectId projectId, string? description)
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			projectReaderWriter.UpdateDescription(projectId, description);
+		}
+
+		public void UpdateProjectColorBands(ObjectId projectId, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var colorBandSetIdsRaw = colorBandSetIds.Select(x => x.ToByteArray()).ToArray();
+			var currentColorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
+			projectReaderWriter.UpdateColorBands(projectId, colorBandSetIdsRaw, currentColorBandSetRecord);
 		}
 
 		public void DeleteProject(ObjectId projectId)

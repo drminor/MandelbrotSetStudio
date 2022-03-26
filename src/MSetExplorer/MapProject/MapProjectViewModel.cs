@@ -76,7 +76,6 @@ namespace MSetExplorer
 
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProject));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanSaveProject));
-					//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 				}
 			}
 		}
@@ -117,11 +116,6 @@ namespace MSetExplorer
 					{
 						Debug.WriteLine($"MapProjectViewModel is ignoring the ColorBandSet value update. The Current value is already: {project.CurrentColorBandSet.SerialNumber}.");
 					}
-
-					//// TODO: Why do we have to raise this change - when there is no change.
-					//project.CurrentColorBandSet = value;
-					//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
-
 				}
 				else
 				{
@@ -230,6 +224,12 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot save an unloaded project, use SaveProject instead.");
 			}
 
+			if (CurrentProject.ColorBandSetIsDirty)
+			{
+				_projectAdapter.UpdateProjectColorBands(CurrentProject.Id, CurrentProject.ColorBandSetSNs, CurrentProject.CurrentColorBandSet);
+				CurrentProject.ColorBandSetIsDirty = false;
+			}
+
 			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(CurrentProject.Id);
 
 			var jobsList = Jobs.ToList();
@@ -245,7 +245,6 @@ namespace MSetExplorer
 			}
 
 			CurrentProjectIsDirty = false;
-			//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 		}
 
 		public void ProjectUpdateName(string name)
@@ -256,8 +255,7 @@ namespace MSetExplorer
 			{
 				if (project.OnFile)
 				{
-					var description = project.Description;
-					_projectAdapter.UpdateProject(project.Id, name, description);
+					_projectAdapter.UpdateProjectName(project.Id, name);
 				}
 
 				project.Name = name;
@@ -273,8 +271,7 @@ namespace MSetExplorer
 			{
 				if (project.OnFile)
 				{
-					var name = project.Name;
-					_projectAdapter.UpdateProject(project.Id, name, description);
+					_projectAdapter.UpdateProjectDescription(project.Id, description);
 				}
 
 				project.Description = description;
@@ -386,12 +383,10 @@ namespace MSetExplorer
 				_jobsPointer = _jobsCollection.Count - 1;
 
 				CurrentProjectIsDirty = true;
-				//_currentProjectIsDirty = true;
 
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
-				//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 			});
 		}
 
@@ -429,7 +424,6 @@ namespace MSetExplorer
 			{
 				_jobsPointer = newJobIndex;
 
-				//CurrentJobChanged?.Invoke(this, new EventArgs());
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));

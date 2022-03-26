@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MSS.Types;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -31,34 +32,23 @@ namespace MSetExplorer
 				//lvColorBandsHdr.Width = lvColorBands.ActualWidth - 25;
 
 				_vm = (IColorBandSetViewModel)DataContext;
-				_vm.PropertyChanged += ViewModel_PropertyChanged;
+				clrBandDetail.DataContext = _vm;
 
 				//_vm.ItemWidth = lvColorBands.ActualWidth - 5;
 
 				//lvColorBands.ItemsSource = _vm.ColorBands;
-				//lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;
+				lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;
 
 				//lvColorBands
 
-				Debug.WriteLine("The ColorBandSetUserControl is now loaded");
+				//Debug.WriteLine("The ColorBandSetUserControl is now loaded");
 			}
 		}
 
-		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void LvColorBands_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(_vm.ColorBandSet))
-			{
-				//Debug.WriteLine("Refreshing the ColorBandSet UserControl's ListView's ItemSource.");
-				//lvColorBands.ItemsSource = null;
-				//lvColorBands.ItemsSource = _vm.ColorBands;
-
-			}
+			_vm.SelectedColorBand = lvColorBands.SelectedItem as ColorBand;
 		}
-
-		//private void LvColorBands_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		//{
-		//	Debug.WriteLine($"The current cutoff is {_vm.SelectedColorBand?.CutOff}.");
-		//}
 
 		#endregion
 
@@ -66,13 +56,13 @@ namespace MSetExplorer
 
 		private void InsertButton_Click(object sender, RoutedEventArgs e)
 		{
-			foreach(var x in lvColorBands.Items)
-			{
-				if(x is ListViewItem lvi)
-				{
-					lvi.IsSelected = false;
-				}
-			}
+			//foreach(var x in lvColorBands.Items)
+			//{
+			//	if(x is ListViewItem lvi)
+			//	{
+			//		lvi.IsSelected = false;
+			//	}
+			//}
 			_vm.InsertItem();
 		}
 

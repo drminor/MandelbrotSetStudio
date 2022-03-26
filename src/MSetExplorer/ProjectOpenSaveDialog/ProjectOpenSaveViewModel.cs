@@ -66,7 +66,7 @@ namespace MSetExplorer
 
 				if (SelectedProject != null && SelectedProject.Project.Id != ObjectId.Empty && SelectedProject.Description != value)
 				{
-					_projectAdapter.UpdateProject(SelectedProject.Project.Id, SelectedProject.Name, SelectedDescription);
+					_projectAdapter.UpdateProjectDescription(SelectedProject.Project.Id, SelectedDescription);
 					SelectedProject.Description = value;
 				}
 

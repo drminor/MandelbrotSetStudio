@@ -6,7 +6,7 @@ using System.ComponentModel;
 
 namespace MSS.Types
 {
-	public interface IColorBandSet<T> : ICollection<T>, INotifyCollectionChanged, INotifyPropertyChanged where T: IColorBand
+	public interface IColorBandSet<T> : INotifyCollectionChanged, INotifyPropertyChanged where T: IColorBand
 	{
 		Guid SerialNumber { get; set; }
 

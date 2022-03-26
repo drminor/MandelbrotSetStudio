@@ -64,13 +64,33 @@ namespace ProjectRepo
 			return projectRecord.Id;
 		}
 
-		public void Update(ObjectId projectId, string name, string? description)
+		public void UpdateName(ObjectId projectId, string name)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
 
 			var updateDefinition = Builders<ProjectRecord>.Update
-				.Set(u => u.Name, name)
+				.Set(u => u.Name, name);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void UpdateDescription(ObjectId projectId, string? description)
+		{
+			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
+
+			var updateDefinition = Builders<ProjectRecord>.Update
 				.Set(u => u.Description, description);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void UpdateColorBands(ObjectId projectId, byte[][] colorBandSetIds, ColorBandSetRecord currentColorBandSetRecord)
+		{
+			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
+
+			var updateDefinition = Builders<ProjectRecord>.Update
+				.Set(u => u.ColorBandSetIds, colorBandSetIds)
+				.Set(u => u.CurrentColorBandSetRecord, currentColorBandSetRecord);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}

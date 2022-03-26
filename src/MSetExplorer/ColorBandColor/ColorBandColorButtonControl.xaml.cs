@@ -9,7 +9,7 @@ namespace MSetExplorer
 	/// <summary>
 	/// Interaction logic for ColorBandColorUserControl.xaml
 	/// </summary>
-	public partial class ColorBandColorUserControl : UserControl
+	public partial class ColorBandColorButtonControl : UserControl
 	{
 		private Canvas _canvas;
 		private readonly DrawingGroup _drawingGroup;
@@ -17,7 +17,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandColorUserControl()
+		public ColorBandColorButtonControl()
 		{
 			_drawingGroup = new DrawingGroup();
 			_rectangle = BuildRectangle(new SizeDbl(), ColorBandColor.White);
@@ -29,26 +29,18 @@ namespace MSetExplorer
 
 		private void ColorPanelControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			if (DataContext is null)
-			{
-				//throw new InvalidOperationException("The DataContext is null as the ColorBandColorUserControl is being loaded.");
-				return;
-			}
-			else
-			{
-				_canvas = MainCanvas;
+			_canvas = MainCanvas;
 
-				var rectImage = new Image { Source = new DrawingImage(_drawingGroup) };
-				_ = _canvas.Children.Add(rectImage);
-				rectImage.Focusable = true;
+			var rectImage = new Image { Source = new DrawingImage(_drawingGroup) };
+			_ = _canvas.Children.Add(rectImage);
+			rectImage.Focusable = true;
 
-				RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), ColorBandColor);
+			RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), ColorBandColor);
 
-				SizeChanged += ColorPanelControl_SizeChanged;
-				rectImage.MouseUp += RectImage_MouseUp;
+			SizeChanged += ColorPanelControl_SizeChanged;
+			rectImage.MouseUp += RectImage_MouseUp;
 
-				Debug.WriteLine("The ColorBandColorUserControl is now loaded.");
-			}
+			Debug.WriteLine("The ColorBandColorUserControl is now loaded.");
 		}
 
 		#endregion
@@ -75,7 +67,7 @@ namespace MSetExplorer
 		public static readonly DependencyProperty ColorBandColorProperty = DependencyProperty.Register(
 			"ColorBandColor",
 			typeof(ColorBandColor),
-			typeof(ColorBandColorUserControl),
+			typeof(ColorBandColorButtonControl),
 			new FrameworkPropertyMetadata()
 			{
 				PropertyChangedCallback = OnColorChanged,
@@ -96,7 +88,7 @@ namespace MSetExplorer
 
 			if (oldValue != newValue)
 			{
-				if (d is ColorBandColorUserControl uc)
+				if (d is ColorBandColorButtonControl uc)
 				{
 					uc._rectangle.Brush = uc.BuildBrush(newValue);
 				}

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Text;
 
 namespace MSS.Types
 {
-	public class ColorBandSet : ObservableCollection<ColorBand>, IColorBandSet<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet>, ICloneable
+	public class ColorBandSet : ObservableCollection<ColorBand>, IColorBandSet<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet>, ICloneable, INotifyPropertyChanged
 	{
 		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
@@ -81,6 +82,31 @@ namespace MSS.Types
 
 		#region Collection Methods
 
+		public void Fix()
+		{
+			if (Items == null || Count == 0)
+			{
+				Insert(0, DEFAULT_HIGH_COLOR_BAND.Clone());
+			}
+			else
+			{
+				var prevCutOff = 0;
+
+				for (var i = 0; i < Count - 1; i++)
+				{
+					var cb = Items[i];
+					cb.PreviousCutOff = prevCutOff;
+					cb.ActualEndColor = GetActualEndColor(cb, Items[i + 1].StartColor);
+					prevCutOff = cb.CutOff;
+				}
+
+				var lastCb = Items[Count - 1];
+
+				lastCb.PreviousCutOff = prevCutOff;
+				lastCb.ActualEndColor = GetActualEndColor(lastCb, null);
+			}
+		}
+
 		protected override void ClearItems()
 		{
 			base.ClearItems();
@@ -90,7 +116,7 @@ namespace MSS.Types
 		protected override void InsertItem(int index, ColorBand item)
 		{
 			base.InsertItem(index, item);
-			UpdateItemAndNeighbors(index, item);
+			//UpdateItemAndNeighbors(index, item);
 		}
 
 		protected override void RemoveItem(int index)
@@ -115,7 +141,7 @@ namespace MSS.Types
 		protected override void SetItem(int index, ColorBand item)
 		{
 			base.SetItem(index, item);
-			UpdateItemAndNeighbors(index, item);
+			//UpdateItemAndNeighbors(index, item);
 		}
 
 		#endregion
@@ -186,7 +212,7 @@ namespace MSS.Types
 				{
 					var cb = colorBands[i];
 					cb.PreviousCutOff = prevCutOff;
-					cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? colorBands[i + 1].StartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
+					cb.ActualEndColor = GetActualEndColor(cb, colorBands[i + 1].StartColor);
 
 					prevCutOff = cb.CutOff;
 				}
@@ -196,13 +222,29 @@ namespace MSS.Types
 				Debug.Assert(lastCb.BlendStyle != ColorBandBlendStyle.Next, "The last item in the list of ColorBands being used to construct a ColorBandSet has its BlendStyle set to 'Next.'");
 
 				lastCb.PreviousCutOff = prevCutOff;
-				lastCb.ActualEndColor = lastCb.BlendStyle == ColorBandBlendStyle.None ? lastCb.StartColor : lastCb.EndColor;
+				lastCb.ActualEndColor = GetActualEndColor(lastCb, null);
 			}
 
 			return result;
 		}
 
 		#endregion
+
+		private static ColorBandColor GetActualEndColor(ColorBand colorBand, ColorBandColor? nextStartColor)
+		{
+			if (colorBand.BlendStyle == ColorBandBlendStyle.Next)
+			{
+				if (nextStartColor == null)
+				{
+					throw new InvalidOperationException("The last ColorBand in the set has a BlendStyle of Next.");
+				}
+				return nextStartColor.Value;
+			}
+			else
+			{
+				return colorBand.BlendStyle == ColorBandBlendStyle.None ? colorBand.StartColor : colorBand.EndColor;
+			}
+		}
 
 		#region Clone Support
 
@@ -251,10 +293,15 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
+			var result = $"ColorBandSet: {SerialNumber}\n{GetString(this)}";
+			return result;
+		}
+
+		public static string GetString(ICollection<ColorBand> colorBands)
+		{
 			var sb = new StringBuilder();
 
-			sb.AppendLine($"ColorBandSet: {SerialNumber}");
-			foreach(var cb in this)
+			foreach (var cb in colorBands)
 			{
 				sb.AppendLine(cb.ToString());
 			}
