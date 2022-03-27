@@ -8,82 +8,146 @@
              d:DesignHeight="700" d:DesignWidth="290">
 
     <UserControl.Resources>
-        <ResourceDictionary>
+
+        <!--<local:ColorBandCollection x:Key="ColorBands" x:Name="CB">
+            <local:ColorBandJr CutOffA="0"  />
+        </local:ColorBandCollection>
+
+        <CollectionViewSource x:Key="ColorBandsCollectionView" 
+        Source="{Binding Source={StaticResource ColorBands}}">
+        </CollectionViewSource>-->
+
+        <DataTemplate x:Key="ColorBandViewTemplate">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="60"/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
+
+                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding PreviousCutOff}"/>
+                    <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding CutOff}"/>
+
+                </DockPanel>
+
+                <!--<Grid Grid.Column="1" Width="110" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                    <local:TwoColorPanelControl StartColor="{Binding StartColor}" EndColor="{Binding ActualEndColor}"/>
+                 </Grid>
+                 
+                <TextBlock Grid.Column="2" Width="45" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
+                -->
+
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type local:ColorBandJr}">
+            <ContentControl x:Name="CbListItemHost" Focusable="False" Content="{Binding}"
+          ContentTemplate="{StaticResource ColorBandViewTemplate}" />
+        </DataTemplate>
+
+        <Style x:Key="CbContainerStyle" TargetType="{x:Type ListBoxItem}">
+            <EventSetter Event="Control.MouseDoubleClick" Handler="CharacterDoubleClick" />
+            <!--<Setter Property="Canvas.Left" Value="{Binding Location.X}" />
+            <Setter Property="Canvas.Top" Value="{Binding Location.Y}" />-->
+            <Setter Property="Background" Value="#FF3B0031" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Width" Value="150" />
+            <Setter Property="Height" Value="60" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Margin" Value="5,2" />
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Grid>
+                            <Rectangle StrokeThickness="1" Stroke="Transparent" RadiusX="5" RadiusY="5" Fill="White"  />
+                            
+                            <Grid>
+                                <!--<Rectangle x:Name="BackgroundRect" Opacity="0.5" StrokeThickness="1" 
+                                           Stroke="Transparent" RadiusX="5" RadiusY="5" Fill="{TemplateBinding Background}" />
+                                
+                                <Rectangle StrokeThickness="1" Stroke="#FF000000" RadiusX="3" RadiusY="3" >
+                                    <Rectangle.Fill>
+                                        <LinearGradientBrush StartPoint="-0.513721,0.412914" EndPoint="1.43072,0.412914">
+                                            <LinearGradientBrush.GradientStops>
+                                                <GradientStop Color="Transparent" Offset="0"/>
+                                                <GradientStop Color="#60FFFFFF" Offset="1"/>
+                                            </LinearGradientBrush.GradientStops>
+                                        </LinearGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="0.6*"/>
+                                        <RowDefinition Height="0.4*"/>
+                                    </Grid.RowDefinitions>
+                                    <Rectangle RadiusX="3" RadiusY="3"  Margin="3" Grid.RowSpan="1" Grid.Row="0"  >
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush  EndPoint="0,0" StartPoint="0,1">
+                                                <GradientStop Color="#44FFFFFF" Offset="0"/>
+                                                <GradientStop Color="#66FFFFFF" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                </Grid>-->
+                                
+                                <ContentPresenter x:Name="ContentHost" Margin="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                
+                                <!--<Rectangle Fill="{x:Null}" Stroke="#FFFFFFFF" RadiusX="3" RadiusY="3" Margin="1" />-->
+                                
+                            </Grid>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ItemsPanelTemplate x:Key="ItemsPanelA">
+            <StackPanel Orientation="Vertical" />
+        </ItemsPanelTemplate>
+
+        <ResourceDictionary x:Key="ResourceDict">
             <local:BlendStyleToIntConverter x:Key="BlendStyleToIntConverter"/>
         </ResourceDictionary>
+
     </UserControl.Resources>
 
     <Grid>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <!--<RowDefinition Height="Auto"/>-->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
+        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
 
-            <ListView Name="lvColorBands" ItemsSource="{Binding ColorBandSet}" IsSynchronizedWithCurrentItem="True" SelectionMode="Single">
-                <!--  SelectedItem="{Binding SelectedColorBand, Mode=TwoWay}"-->
-                <ListView.View>
-                    <GridView>
-
-                        <!--<GridViewColumn Header="ColorBand" Width="{Binding ItemWidth}">-->
-
-                        <GridViewColumn x:Name="lvColorBandsHdr" Header="ColorBand" Width="270">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="60"/>
-                                        </Grid.RowDefinitions>
-                                        
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
-
-                                            <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding PreviousCutOff}"/>
-                                            <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding CutOff}"/>
-
-                                        </DockPanel>
-
-                                        <Grid Grid.Column="1" Width="110" x:Name="cDisplay" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-                                            <local:TwoColorPanelControl StartColor="{Binding StartColor}" EndColor="{Binding ActualEndColor}"/>
-                                        </Grid>
-
-                                        <TextBlock Grid.Column="2" Width="45" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
-
-                                    </Grid>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-
-                    </GridView>
-                </ListView.View>
-            </ListView>
+            <ListBox Name="lvColorBands" ItemsSource="{Binding ColorBandsView}"  IsSynchronizedWithCurrentItem="True"
+                     ItemsPanel="{StaticResource ItemsPanelA}" ItemContainerStyle="{StaticResource CbContainerStyle}">                     
+            </ListBox>
 
         </Border>
 
-        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!--<Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <local:ColorBandUserControl x:Name="clrBandDetail" />
-        </Border>
+        </Border>-->
 
-        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,9,0,9">
+        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,9,0,9">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnInsert" HorizontalAlignment="Center" Width="60" FontSize="14" Height="23" Margin="0,0,5,0" Click="InsertButton_Click">Insert</Button>
-                <Button Name="btnDelete" HorizontalAlignment="Center" Width="60" FontSize="14" Height="23" Margin="20,0,5,0" Click="DeleteButton_Click">Delete</Button>
-                <Button Name="btnApply" HorizontalAlignment="Center" Width="70" FontSize="14" Height="23" Margin="30,0,5,0" Click="ApplyButton_Click">Apply</Button>
-
-                <!--<Button Name="btnTest1" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,5,3" Click="Test1Button_Click">Test1</Button>
-                <Button Name="btnTest2" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,5,3" Click="Test2Button_Click">Test2</Button>
-                <Button Name="btnTest3" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,5,3" Click="Test3Button_Click">Test3</Button>
-                <Button Name="btnTest4" HorizontalAlignment="Center" Width="60" FontSize="14" Height="20" Margin="0,3,0,3" Click="Test4Button_Click">Test4</Button>-->
+                <Button Name="btnEdit" HorizontalAlignment="Center" Width="45" FontSize="14" Height="23" Margin="0,0,10,0" Click="EditButton_Click">Edit</Button>
+                <Button Name="btnInsert" HorizontalAlignment="Center" Width="60" FontSize="14" Height="23" Margin="5,0,0,0" Click="InsertButton_Click">Insert</Button>
+                <Button Name="btnDelete" HorizontalAlignment="Center" Width="60" FontSize="14" Height="23" Margin="5,0,0,0" Click="DeleteButton_Click">Delete</Button>
+                <Button Name="btnApply" HorizontalAlignment="Center" Width="70" FontSize="14" Height="23" Margin="5,0,0,0" Click="ApplyButton_Click">Apply</Button>
             </StackPanel>
 
         </Border>
@@ -91,12 +155,3 @@
     </Grid>
     
 </UserControl>
-
-<!--<GridViewColumn Header="From" Width="50" DisplayMemberBinding="{Binding PreviousCutOff}" />
-                        <GridViewColumn Header="To" Width="50" DisplayMemberBinding="{Binding CutOff}" />
-                        <GridViewColumn Header="StartColor" Width="90" DisplayMemberBinding="{Binding StartColor.CssColor}" />
-                        <GridViewColumn Header="EndColor" Width="90" DisplayMemberBinding="{Binding ActualEndColor.CssColor}" />-->
-
-<!--<GridViewColumn Header="EndColor" Width="90" DisplayMemberBinding="{Binding EndColor.CssColor}" />
-<GridViewColumn Header="BlendStyle" Width="80" DisplayMemberBinding="{Binding BlendStyleAsString}" />
-<GridViewColumn Header="AEndColor" Width="90" DisplayMemberBinding="{Binding ActualEndColor.CssColor}" />-->

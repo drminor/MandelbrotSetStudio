@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace MSetExplorer
 {
@@ -9,7 +8,7 @@ namespace MSetExplorer
 
 		IMapProjectViewModel MapProjectViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
-		IColorBandSetViewModel ColorBandSetViewModel { get; }
+		ColorBandSetViewModel ColorBandSetViewModel { get; }
 
 		int TargetIterations { get; set; }
 		int Steps { get; set; }

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace MSS.Types
 {
-	public class ColorBand : IColorBand, INotifyPropertyChanged/*, IEquatable<ColorBand?>*/, ICloneable
+	public class ColorBand : IColorBand, INotifyPropertyChanged/*, IEquatable<ColorBand?>*/, ICloneable, IEditableObject
 	{
 		private int _cutOff;
 		private ColorBandColor _startColor;
@@ -17,6 +17,8 @@ namespace MSS.Types
 
 		private double _percentage;
 
+		private ColorBand? _copy;
+
 		#region Constructor
 
 		public ColorBand(int cutOff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
@@ -26,11 +28,11 @@ namespace MSS.Types
 
 		public ColorBand(int cutOff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
 		{
-			CutOff = cutOff;
-			StartColor = startColor;
-			BlendStyle = blendStyle;
-			EndColor = endColor;
-			ActualEndColor = BlendStyle == ColorBandBlendStyle.None ? StartColor : EndColor;
+			_cutOff= cutOff;
+			_startColor = startColor;
+			_blendStyle = blendStyle;
+			_endColor = endColor;
+			_actualEndColor = BlendStyle == ColorBandBlendStyle.None ? StartColor : EndColor;
 
 			Percentage = 0;
 		}
@@ -171,6 +173,44 @@ namespace MSS.Types
 		}
 
 		#endregion
+
+		#region IEditable Object Support
+
+		public void BeginEdit()
+		{
+			if (_copy == null)
+			{ 
+				_copy = new ColorBand(CutOff, StartColor, BlendStyle, EndColor);
+				_copy.PreviousCutOff = PreviousCutOff;
+				_copy.ActualEndColor = ActualEndColor;
+				_copy.Percentage = Percentage;
+			}
+		}
+
+		public void CancelEdit()
+		{
+			if (_copy != null)
+			{
+				CutOff = _copy.CutOff;
+				StartColor = _copy.StartColor;
+				BlendStyle = _copy.BlendStyle;
+				EndColor = _copy.EndColor;
+				PreviousCutOff = _copy.PreviousCutOff;
+				ActualEndColor = _copy.ActualEndColor;
+				Percentage = _copy.Percentage;
+			}
+			else
+			{
+				throw new InvalidOperationException("_copy is null on Cancel Edit.");
+			}
+		}
+
+		public void EndEdit()
+		{
+			_copy = null;
+		}
+
+		#endregion IEditableObject Members
 
 		public override string? ToString()
 		{

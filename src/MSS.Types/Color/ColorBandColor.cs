@@ -105,8 +105,16 @@ namespace MSS.Types
 
 		public bool Equals(ColorBandColor other)
 		{
-			return EqualityComparer<byte[]>.Default.Equals(ColorComps, other.ColorComps);
-		}
+            for(var i = 0; i < 3; i++)
+			{
+                if (ColorComps[i] != other.ColorComps[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
 		public override int GetHashCode()
 		{

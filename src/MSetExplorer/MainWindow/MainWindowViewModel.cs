@@ -12,7 +12,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, IColorBandSetViewModel colorBandViewModel)
+		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, ColorBandSetViewModel colorBandViewModel)
 		{
 			MapProjectViewModel = mapProjectViewModel;
 			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 		public IMapProjectViewModel MapProjectViewModel { get; }
-		public IColorBandSetViewModel ColorBandSetViewModel { get; }
+		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 
 		public int TargetIterations
 		{

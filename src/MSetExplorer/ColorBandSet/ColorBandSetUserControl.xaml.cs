@@ -1,7 +1,12 @@
 ﻿using MSS.Types;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace MSetExplorer
 {
@@ -10,7 +15,7 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class ColorBandSetUserControl : UserControl
 	{
-		private IColorBandSetViewModel _vm;
+		private ColorBandSetViewModel _vm;
 
 		#region Constructor 
 
@@ -31,13 +36,17 @@ namespace MSetExplorer
 			{
 				//lvColorBandsHdr.Width = lvColorBands.ActualWidth - 25;
 
-				_vm = (IColorBandSetViewModel)DataContext;
-				clrBandDetail.DataContext = _vm;
+				_vm = (ColorBandSetViewModel)DataContext;
+
+				
+
+				//clrBandDetail.DataContext = _vm;
 
 				//_vm.ItemWidth = lvColorBands.ActualWidth - 5;
 
 				//lvColorBands.ItemsSource = _vm.ColorBands;
-				lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;
+
+				//lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;
 
 				//lvColorBands
 
@@ -47,15 +56,83 @@ namespace MSetExplorer
 
 		private void LvColorBands_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			_vm.SelectedColorBand = lvColorBands.SelectedItem as ColorBand;
+			//if (lvColorBands.SelectionMode != SelectionMode.Single)
+			//{
+			//	if (lvColorBands.SelectedItems.Count > 1)
+			//	{
+			//		//lvColorBands.SelectedItems.RemoveAt(0);
+			//	}
+			//}
+
+			//_vm.SelectedColorBand = lvColorBands.SelectedItem as ColorBand;
 		}
 
 		#endregion
 
 		#region Button Handlers
 
+		private void CharacterDoubleClick(object sender, RoutedEventArgs e)
+		{
+			EditColorBand();
+		}
+
+		private void EditButton_Click(object sender, RoutedEventArgs e)
+		{
+			EditColorBand();
+		}
+
+		private void EditColorBand()
+		{
+			//var editableCollectionView = lvColorBands.Items as IEditableCollectionView;
+
+			var editableCollectionView = _vm.ColorBandsView as IEditableCollectionView;
+
+			if (!editableCollectionView.IsEditingItem && lvColorBands.Items.CurrentItem is ColorBandJr selItem)
+			{
+				editableCollectionView.EditItem(selItem);
+
+				// invoke focus update at loaded priority so that template swap has time to complete
+				_ = Dispatcher.Invoke(DispatcherPriority.Loaded, (ThreadStart)delegate ()
+				{
+					if (lvColorBands.ItemContainerGenerator.ContainerFromItem(selItem) is UIElement container)
+					{
+						_ = container.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+						Debug.WriteLine("The focus was moved.");
+					}
+				});
+
+				var colorBandEditorDialog = new ColorBandEditorDialog
+				{
+					DataContext = selItem
+				};
+
+				var res = colorBandEditorDialog.ShowDialog();
+
+				if (res == true)
+				{
+					editableCollectionView.CommitEdit();
+				}
+				else
+				{
+					editableCollectionView.CancelEdit();
+				}
+
+				var didMove = lvColorBands.Items.MoveCurrentTo(selItem);
+
+				Debug.WriteLine("Did move the Current Item.");
+
+				lvColorBands.Items.Refresh();
+
+			}
+
+		}
+
 		private void InsertButton_Click(object sender, RoutedEventArgs e)
 		{
+			Debug.WriteLine($"There are {lvColorBands.SelectedItems.Count} selected items. The current pos is {lvColorBands.SelectedIndex}.");
+
+			lvColorBands.SelectedItems.Clear();
+
 			//foreach(var x in lvColorBands.Items)
 			//{
 			//	if(x is ListViewItem lvi)
