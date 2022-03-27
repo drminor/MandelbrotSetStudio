@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace MSetExplorer
@@ -13,6 +11,7 @@ namespace MSetExplorer
 		private double _percentage;
 
 		private ColorBandJr _copy;
+		private bool _isInEditMode;
 
 		#region Constructor
 
@@ -21,6 +20,9 @@ namespace MSetExplorer
 			_cutOff = 0;
 			_previousCutOff = 0;
 			_percentage = 0;
+
+			_copy = null;
+			_isInEditMode = false;
 		}
 
 		public ColorBandJr(int cutOff, int previousCutOff, double percentage)
@@ -109,6 +111,8 @@ namespace MSetExplorer
 			{ 
 				_copy = new ColorBandJr(CutOff, PreviousCutOff, Percentage);
 			}
+
+			IsInEditMode = true;
 		}
 
 		public void CancelEdit()
@@ -123,11 +127,27 @@ namespace MSetExplorer
 			{
 				throw new InvalidOperationException("_copy is null on Cancel Edit.");
 			}
+
+			IsInEditMode = false;
 		}
 
 		public void EndEdit()
 		{
 			_copy = null;
+			IsInEditMode = false;
+		}
+
+		public bool IsInEditMode
+		{
+			get { return _isInEditMode; }
+			private set
+			{
+				if (_isInEditMode != value)
+				{
+					_isInEditMode = value;
+					OnPropertyChanged();
+				}
+			}
 		}
 
 		#endregion

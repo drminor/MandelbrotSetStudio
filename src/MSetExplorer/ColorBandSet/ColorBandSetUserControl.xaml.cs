@@ -71,7 +71,16 @@ namespace MSetExplorer
 
 		#region Button Handlers
 
-		private void CharacterDoubleClick(object sender, RoutedEventArgs e)
+		private void CommitEditOnLostFocus(object sender, DependencyPropertyChangedEventArgs e)
+		{
+			//// if the root element of the edit mode template loses focus, commit the edit
+			//if ((bool)e.NewValue == false)
+			//{
+			//	CommitCharacterChanges(null, null);
+			//}
+		}
+
+		private void ColorBandDoubleClick(object sender, RoutedEventArgs e)
 		{
 			EditColorBand();
 		}
@@ -103,7 +112,7 @@ namespace MSetExplorer
 
 				var colorBandEditorDialog = new ColorBandEditorDialog
 				{
-					DataContext = selItem
+					DataContext = selItem,
 				};
 
 				var res = colorBandEditorDialog.ShowDialog();
@@ -117,14 +126,14 @@ namespace MSetExplorer
 					editableCollectionView.CancelEdit();
 				}
 
+				//lvColorBands.Items.Refresh();
 				var didMove = lvColorBands.Items.MoveCurrentTo(selItem);
 
-				Debug.WriteLine("Did move the Current Item.");
-
-				lvColorBands.Items.Refresh();
-
+				if (!lvColorBands.Focus())
+				{
+					Debug.WriteLine("Could not return focus to the ListBox.");
+				}
 			}
-
 		}
 
 		private void InsertButton_Click(object sender, RoutedEventArgs e)

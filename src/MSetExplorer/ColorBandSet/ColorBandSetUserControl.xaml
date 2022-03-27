@@ -18,9 +18,43 @@
         </CollectionViewSource>-->
 
         <DataTemplate x:Key="ColorBandViewTemplate">
-            <Grid>
+            <Grid Margin="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="55"/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
+
+                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding PreviousCutOff}"/>
+                    <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding CutOff}"/>
+
+                </DockPanel>
+
+                <!--<Grid Grid.Column="1" Width="110" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                    <local:TwoColorPanelControl StartColor="{Binding StartColor}" EndColor="{Binding ActualEndColor}"/>
+                 </Grid>
+                 
+                <TextBlock Grid.Column="2" Width="45" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
+                -->
+
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ColorBandEditTemplate">
+            <Grid Margin="2"
+                  IsKeyboardFocusWithinChanged="CommitEditOnLostFocus"
+                  KeyboardNavigation.TabNavigation="Cycle"
+                  KeyboardNavigation.DirectionalNavigation="Cycle"
+                  Background="BlanchedAlmond">
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="55"/>
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -48,17 +82,23 @@
 
         <DataTemplate DataType="{x:Type local:ColorBandJr}">
             <ContentControl x:Name="CbListItemHost" Focusable="False" Content="{Binding}"
-          ContentTemplate="{StaticResource ColorBandViewTemplate}" />
+                            ContentTemplate="{StaticResource ColorBandViewTemplate}" />
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsInEditMode}" Value="True">
+                    <Setter TargetName="CbListItemHost" Property="ContentTemplate"
+                            Value="{StaticResource ColorBandEditTemplate}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
 
         <Style x:Key="CbContainerStyle" TargetType="{x:Type ListBoxItem}">
-            <EventSetter Event="Control.MouseDoubleClick" Handler="CharacterDoubleClick" />
+            <EventSetter Event="Control.MouseDoubleClick" Handler="ColorBandDoubleClick" />
             <!--<Setter Property="Canvas.Left" Value="{Binding Location.X}" />
             <Setter Property="Canvas.Top" Value="{Binding Location.Y}" />-->
-            <Setter Property="Background" Value="#FF3B0031" />
+            <Setter Property="Background" Value="Khaki"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Width" Value="150" />
-            <Setter Property="Height" Value="60" />
+            <Setter Property="Height" Value="61" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Margin" Value="5,2" />
             <Setter Property="Padding" Value="3" />
@@ -69,10 +109,10 @@
                             <Rectangle StrokeThickness="1" Stroke="Transparent" RadiusX="5" RadiusY="5" Fill="White"  />
                             
                             <Grid>
-                                <!--<Rectangle x:Name="BackgroundRect" Opacity="0.5" StrokeThickness="1" 
+                                <Rectangle x:Name="BackgroundRect" Opacity="0.1" StrokeThickness="1" 
                                            Stroke="Transparent" RadiusX="5" RadiusY="5" Fill="{TemplateBinding Background}" />
                                 
-                                <Rectangle StrokeThickness="1" Stroke="#FF000000" RadiusX="3" RadiusY="3" >
+                                <!--<Rectangle StrokeThickness="1" Stroke="#FF000000" RadiusX="3" RadiusY="3" >
                                     <Rectangle.Fill>
                                         <LinearGradientBrush StartPoint="-0.513721,0.412914" EndPoint="1.43072,0.412914">
                                             <LinearGradientBrush.GradientStops>
@@ -106,14 +146,27 @@
                                 
                             </Grid>
                         </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Selector.IsSelected" Value="True">
+                                <Setter TargetName="BackgroundRect" Property="Opacity" Value="0.5" />
+                                <!--<Setter TargetName="ContentHost" Property="BitmapEffect">
+                                    <Setter.Value>
+                                        <OuterGlowBitmapEffect GlowColor="White" GlowSize="9" />
+                                    </Setter.Value>
+                                </Setter>-->
+                                <Setter TargetName="BackgroundRect" Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                        
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <ItemsPanelTemplate x:Key="ItemsPanelA">
+        <!--<ItemsPanelTemplate x:Key="ItemsPanelA">
             <StackPanel Orientation="Vertical" />
-        </ItemsPanelTemplate>
+        </ItemsPanelTemplate>-->
 
         <ResourceDictionary x:Key="ResourceDict">
             <local:BlendStyleToIntConverter x:Key="BlendStyleToIntConverter"/>
@@ -131,10 +184,20 @@
 
         <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
 
-            <ListBox Name="lvColorBands" ItemsSource="{Binding ColorBandsView}"  IsSynchronizedWithCurrentItem="True"
-                     ItemsPanel="{StaticResource ItemsPanelA}" ItemContainerStyle="{StaticResource CbContainerStyle}">                     
+            <ListBox Name="lvColorBands" ItemsSource="{Binding ColorBandsView}"
+                     ItemContainerStyle="{StaticResource CbContainerStyle}"
+                     IsSynchronizedWithCurrentItem="True" Focusable="True">
+                <ListBox.InputBindings>
+                    <KeyBinding Command="local:TransactionCommands.Edit" Key="F2" />
+                    <!--<KeyBinding Command="local:TransactionCommands.Commit" Key="Enter" />
+                    <KeyBinding Command="local:TransactionCommands.Cancel" Key="Esc"/>-->
+                </ListBox.InputBindings>
+                <ListBox.CommandBindings>
+                    <CommandBinding Command="local:TransactionCommands.Edit" Executed="EditButton_Click" />
+                    <!--<CommandBinding Command="local:TransactionCommands.Commit" Executed="CommitCharacterChanges" />
+                    <CommandBinding Command="local:TransactionCommands.Cancel" Executed="CancelCharacterChanges" />-->
+                </ListBox.CommandBindings>
             </ListBox>
-
         </Border>
 
         <!--<Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
