@@ -24,9 +24,6 @@ namespace MSetExplorer
 		private double _itemWidth;
 
 		private Project _currentProject;
-
-		//private ObservableCollection<ColorBand> _colorBands;
-
 		private ColorBandSet _colorBandSet;
 
 		#region Constructor
@@ -42,9 +39,7 @@ namespace MSetExplorer
 			_itemWidth = 180;
 			CurrentProject = null;
 			_colorBandSet = new ColorBandSet();
-
-			//_colorBands = null;
-			//ColorBands = new ObservableCollection<ColorBand>();
+			_colorBandsView = null;
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
 		}
@@ -81,46 +76,25 @@ namespace MSetExplorer
 			}
 		}
 
-		//public ObservableCollection<ColorBand> ColorBands
-		//{
-		//	get => _colorBands;
-		//	private set
-		//	{
-		//		//if (_colorBands != null)
-		//		//{
-		//		//	var view = CollectionViewSource.GetDefaultView(_colorBands);
-		//		//	view.CurrentChanged -= View_CurrentChanged;
-		//		//}
-
-		//		_colorBands = value;
-				
-		//		//if (_colorBands != null)
-		//		//{
-		//		//	var view = CollectionViewSource.GetDefaultView(_colorBands);
-		//		//	view.CurrentChanged += View_CurrentChanged;
-		//		//	view.MoveCurrentToFirst();
-		//		//}
-
-		//		OnPropertyChanged();
-		//	}
-		//}
-
-		//public ObservableCollection<ColorBand> ColorBands
-		//{
-		//	get => _colorBands;
-		//	private set
-		//	{
-		//		_colorBands = value;
-		//		OnPropertyChanged();
-		//	}
-		//}
+		private ListCollectionView _colorBandsView;
 
 		public ListCollectionView ColorBandsView
 		{
-			get => (ListCollectionView) CollectionViewSource.GetDefaultView(_colorBandSet.ColorBands);
+			get
+			{
+				if (_colorBandsView == null)
+				{
+					_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet.ColorBands);
+					_colorBandsView.SortDescriptions.Add(new SortDescription("CutOff", ListSortDirection.Ascending));
+				}
+
+				return _colorBandsView;
+			}
+
 			set
 			{
-
+				_colorBandsView = value;
+				OnPropertyChanged();
 			}
 		}
 
@@ -139,17 +113,13 @@ namespace MSetExplorer
 
 						_mapSectionHistogramProcessor.ProcessingEnabled = false;
 
-						//UnWatchTheCollection(_colorBandSet);
-
 						_colorBandSet = value;
 						Histogram.Reset();
 
-						//SelectedColorBand = null;
-						//_colorBands.Clear();
+						_colorBandsView = null;
 
 						OnPropertyChanged(nameof(ColorBandSet));
 						OnPropertyChanged(nameof(ColorBandsView));
-						//OnPropertyChanged(nameof(ColorBands));
 					}
 				}
 				else
@@ -159,29 +129,15 @@ namespace MSetExplorer
 						var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
 						Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has SerialNumber: {value.SerialNumber}.");
 
-						//if (_colorBandSet != null)
-						//{
-						//	UnWatchTheCollection(_colorBandSet);
-						//}
-
 						_mapSectionHistogramProcessor.ProcessingEnabled = false;
 						_colorBandSet = value;
 						Histogram.Reset(value.HighCutOff + 1);
 						PopulateHistorgram(_mapSections, Histogram);
 						_mapSectionHistogramProcessor.ProcessingEnabled = true;
 
-						//WatchTheCollection(_colorBandSet);
-
-						//_colorBands.Clear();
-						//foreach(var cc in _colorBandSet)
-						//{
-						//	_colorBands.Add(cc);
-						//}
-
+						_colorBandsView = null;
 						var view = ColorBandsView;
 						_ = view.MoveCurrentTo(_colorBandSet.FirstOrDefault());
-
-						//SelectedColorBand = ((ColorBand)view.CurrentItem).Clone();
 
 						OnPropertyChanged(nameof(ColorBandSet));
 						OnPropertyChanged(nameof(ColorBandsView));
@@ -256,75 +212,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void SelectedColorBand_PropertyChanged(object sender, PropertyChangedEventArgs e)
-		//{
-		//	var editableView = GetEditableView();
-		//	var view = (ICollectionView)editableView;
-
-		//	view.CurrentChanged -= View_CurrentChanged;
-		//	var cb = (ColorBand)view.CurrentItem;
-
-
-		//	if (e.PropertyName == nameof(ColorBand.CutOff))
-		//	{
-		//		HandleUpdatedCutOff(SelectedColorBand, cb, editableView);
-		//	}
-		//	else if (e.PropertyName == nameof(ColorBand.StartColor))
-		//	{
-		//		HandleUpdatedStartColor(SelectedColorBand, cb, editableView);
-		//	}
-		//	else if (e.PropertyName == nameof(ColorBand.BlendStyle))
-		//	{
-		//		HandleUpdatedBlendStyle(SelectedColorBand, cb, editableView);
-		//	}
-		//	else if (e.PropertyName == nameof(ColorBand.ActualEndColor))
-		//	{
-		//		HandleUpdatedEndColor(SelectedColorBand, cb, editableView);
-		//	}
-
-		//	var wasMoved = view.MoveCurrentTo(cb);
-
-		//	view =  CollectionViewSource.GetDefaultView(ColorBands);
-
-		//	view.CurrentChanged += View_CurrentChanged;
-		//}
-
-		//private void HandleUpdatedCutOff(ColorBand source, ColorBand target, IEditableCollectionView editableView)
-		//{
-
-		//}
-
-		//private void HandleUpdatedStartColor(ColorBand source, ColorBand target, IEditableCollectionView editableView)
-		//{
-		//	editableView.EditItem(target);
-		//	target.StartColor = source.StartColor;
-		//	editableView.CommitEdit();
-
-		//}
-
-		//private void HandleUpdatedBlendStyle(ColorBand source, ColorBand target, IEditableCollectionView editableView)
-		//{
-		//	//if (updatedCb.BlendStyle == ColorBandBlendStyle.End)
-		//	//{
-		//	//	updatedCb.EndColor = updatedCb.ActualEndColor;
-		//	//}
-
-		//}
-
-		//private void HandleUpdatedEndColor(ColorBand source, ColorBand target, IEditableCollectionView editableView)
-		//{
-		//	////view.MoveCurrentToLast();
-
-		//	//var idx = ColorBandSet.IndexOf(cb);
-
-		//	//var cbToUpdate = _colorBandSet[idx];
-
-		//	//cbToUpdate.EndColor = updatedCb.EndColor;
-		//	//cbToUpdate.ActualEndColor = updatedCb.ActualEndColor;
-		//	//cbToUpdate.PreviousCutOff = updatedCb.PreviousCutOff;
-
-		//}
-
 		#endregion
 
 		#region Public Methods
@@ -366,28 +253,11 @@ namespace MSetExplorer
 			}
 		}
 
-		public void InsertItem()
+		public void InsertItem(int index, ColorBand newItem) 
 		{
 			Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 
-			//_colorBandSet.Fix();
-
-			//view.Refresh();
-			//view.MoveCurrentToFirst();
-
-
-			//var prevCutOff = SelectedColorBand.PreviousCutOff;
-			//var cutOff = SelectedColorBand.CutOff;
-
-			//if (cutOff - prevCutOff > 1)
-			//{
-			//	var idx = ColorBandSet.IndexOf(SelectedColorBand);
-
-			//	var newCutoff = prevCutOff + (cutOff - prevCutOff) / 2;
-			//	var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.End, ColorBandColor.Black);
-
-			//	_colorBandSet.Insert(idx, newItem);
-			//}
+			_colorBandSet.Insert(index, newItem);
 		}
 
 		public void ApplyChanges()
@@ -410,22 +280,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
-
-		private void WatchTheCollection(IList<ColorBand> colorBands)
-		{
-			foreach (var c in colorBands)
-			{
-				//c.PropertyChanged += ColorBand_PropertyChanged;
-			}
-		}
-
-		private void UnWatchTheCollection(IList<ColorBand> colorBands)
-		{
-			foreach(var c in colorBands)
-			{
-				//c.PropertyChanged -= ColorBand_PropertyChanged;
-			}
-		}
 
 		private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
 		{
@@ -472,7 +326,7 @@ namespace MSetExplorer
 
 		private string GetModelAsString()
 		{
-			var result = GetString(_colorBandSet.ColorBands);
+			var result = GetString(_colorBandSet);
 
 			return result;
 		}

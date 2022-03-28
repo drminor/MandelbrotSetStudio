@@ -329,14 +329,7 @@ namespace MSS.Types
 
 		public bool Equals(ColorBandSet? x, ColorBandSet? y)
 		{
-			if (x is null)
-			{
-				return y is null;
-			}
-			else
-			{
-				return x.Equals(y);
-			}
+			return x is null ? y is null : x.Equals(y);
 		}
 
 		public int GetHashCode([DisallowNull] ColorBandSet obj)

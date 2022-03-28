@@ -10,14 +10,6 @@
 
     <UserControl.Resources>
 
-        <!--<local:ColorBandCollection x:Key="ColorBands" x:Name="CB">
-            <local:ColorBandJr CutOffA="0"  />
-        </local:ColorBandCollection>
-
-        <CollectionViewSource x:Key="ColorBandsCollectionView" 
-        Source="{Binding Source={StaticResource ColorBands}}">
-        </CollectionViewSource>-->
-
         <DataTemplate x:Key="ColorBandViewTemplate">
             <Grid Margin="2">
                 <Grid.RowDefinitions>
@@ -52,7 +44,7 @@
                   IsKeyboardFocusWithinChanged="CommitEditOnLostFocus"
                   KeyboardNavigation.TabNavigation="Cycle"
                   KeyboardNavigation.DirectionalNavigation="Cycle"
-                  Background="BlanchedAlmond">
+                  Background="Tan">
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="55"/>

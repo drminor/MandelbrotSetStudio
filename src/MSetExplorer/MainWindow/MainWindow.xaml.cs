@@ -248,8 +248,21 @@ namespace MSetExplorer
 					}
 					else
 					{
-						_ = MessageBox.Show("Will Show SaveAs dialog here.");
-						result = false;
+						var curProject = _vm.MapProjectViewModel.CurrentProject;
+						var initialName = curProject.Name;
+						var curColorBandSetIds = curProject.ColorBandSetSNs;
+						var curColorBandSet = curProject.CurrentColorBandSet;
+
+						if (ShowOpenSaveProjectWindow(DialogType.Save, initialName, out var selectedName, out var description))
+						{
+							Debug.WriteLine($"Saving project with name: {selectedName}.");
+							_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curColorBandSetIds, curColorBandSet);
+							result = true;
+						}
+						else
+						{
+							result = false;
+						}
 					}
 				}
 				else
