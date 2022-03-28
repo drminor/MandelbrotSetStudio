@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace MSS.Types
 {
-	public class ColorBand : IColorBand, INotifyPropertyChanged/*, IEquatable<ColorBand?>*/, ICloneable, IEditableObject
+	public class ColorBand : INotifyPropertyChanged/*, IEquatable<ColorBand?>*/, IEditableObject
 	{
 		private int _cutOff;
 		private ColorBandColor _startColor;
@@ -18,6 +18,7 @@ namespace MSS.Types
 		private double _percentage;
 
 		private ColorBand? _copy;
+		private bool _isInEditMode;
 
 		#region Constructor
 
@@ -93,8 +94,6 @@ namespace MSS.Types
 			}
 		}
 
-		//public string BlendStyleAsString => GetBlendStyleAsString(BlendStyle);
-
 		public int PreviousCutOff
 		{
 			get => _previousCutOff;
@@ -140,7 +139,7 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		public void UpdateWithNeighbors(IColorBand? predecessor, IColorBand? successor)
+		public void UpdateWithNeighbors(ColorBand? predecessor, ColorBand? successor)
 		{
 			PreviousCutOff = predecessor == null ? 0 : predecessor.CutOff;
 
@@ -153,21 +152,31 @@ namespace MSS.Types
 			{
 				ActualEndColor = BlendStyle == ColorBandBlendStyle.End ? EndColor : StartColor;
 			}
+
+			if (predecessor != null && predecessor.BlendStyle == ColorBandBlendStyle.Next)
+			{
+				predecessor.ActualEndColor = StartColor;
+			}
 		}
 
-		object ICloneable.Clone()
-		{
-			return Clone();
-		}
+		//object ICloneable.Clone()
+		//{
+		//	return Clone();
+		//}
 
-		IColorBand IColorBand.Clone()
-		{
-			return Clone();
-		}
+		//IColorBand IColorBand.Clone()
+		//{
+		//	return Clone();
+		//}
 
 		public ColorBand Clone()
 		{
-			var result = new ColorBand(CutOff, StartColor, BlendStyle, EndColor);
+			var result = new ColorBand(CutOff, StartColor, BlendStyle, EndColor)
+			{
+				PreviousCutOff = PreviousCutOff,
+				ActualEndColor = ActualEndColor,
+				Percentage = Percentage
+			};
 
 			return result;
 		}
@@ -176,15 +185,20 @@ namespace MSS.Types
 
 		#region IEditable Object Support
 
+		public bool BlendStyleUpdated => _copy != null && _copy.BlendStyle != BlendStyle;
+		public bool CutOffUpdated => _copy != null && _copy.CutOff != CutOff;
+		public bool StartColorUpdated => _copy != null && _copy.StartColor != StartColor;
+
 		public void BeginEdit()
 		{
-			if (_copy == null)
-			{ 
-				_copy = new ColorBand(CutOff, StartColor, BlendStyle, EndColor);
-				_copy.PreviousCutOff = PreviousCutOff;
-				_copy.ActualEndColor = ActualEndColor;
-				_copy.Percentage = Percentage;
-			}
+			_copy = new ColorBand(CutOff, StartColor, BlendStyle, EndColor)
+			{
+				PreviousCutOff = PreviousCutOff,
+				ActualEndColor = ActualEndColor,
+				Percentage = Percentage
+			};
+
+			IsInEditMode = true;
 		}
 
 		public void CancelEdit()
@@ -203,14 +217,29 @@ namespace MSS.Types
 			{
 				throw new InvalidOperationException("_copy is null on Cancel Edit.");
 			}
+
+			IsInEditMode = false;
 		}
 
 		public void EndEdit()
 		{
-			_copy = null;
+			IsInEditMode = false;
 		}
 
-		#endregion IEditableObject Members
+		public bool IsInEditMode
+		{
+			get => _isInEditMode;
+			private set
+			{
+				if (_isInEditMode != value)
+				{
+					_isInEditMode = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		#endregion
 
 		public override string? ToString()
 		{
@@ -219,39 +248,39 @@ namespace MSS.Types
 
 		#region IEquatable and IEqualityComparer Support
 
-		public override bool Equals(object? obj)
-		{
-			return Equals(obj as ColorBand);
-		}
+		//public override bool Equals(object? obj)
+		//{
+		//	return Equals(obj as ColorBand);
+		//}
 
-		public bool Equals(ColorBand? other)
-		{
-			bool result = other != null
-				&& _cutOff == other._cutOff
-				&& _startColor.Equals(other._startColor)
-				&& _blendStyle == other._blendStyle
-				&& _endColor.Equals(other._endColor)
-				&& _previousCutOff == other._previousCutOff
-				&& _actualEndColor.Equals(other._actualEndColor)
-				;//&& _percentage == other._percentage;
+		//public bool Equals(ColorBand? other)
+		//{
+		//	bool result = other != null
+		//		&& _cutOff == other._cutOff
+		//		&& _startColor.Equals(other._startColor)
+		//		&& _blendStyle == other._blendStyle
+		//		&& _endColor.Equals(other._endColor)
+		//		&& _previousCutOff == other._previousCutOff
+		//		&& _actualEndColor.Equals(other._actualEndColor)
+		//		;//&& _percentage == other._percentage;
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(_cutOff, _startColor, _blendStyle, _endColor, _previousCutOff, _actualEndColor, _percentage);
-		}
+		//public override int GetHashCode()
+		//{
+		//	return HashCode.Combine(_cutOff, _startColor, _blendStyle, _endColor, _previousCutOff, _actualEndColor, _percentage);
+		//}
 
-		public static bool operator ==(ColorBand? left, ColorBand? right)
-		{
-			return EqualityComparer<ColorBand>.Default.Equals(left, right);
-		}
+		//public static bool operator ==(ColorBand? left, ColorBand? right)
+		//{
+		//	return EqualityComparer<ColorBand>.Default.Equals(left, right);
+		//}
 
-		public static bool operator !=(ColorBand? left, ColorBand? right)
-		{
-			return !(left == right);
-		}
+		//public static bool operator !=(ColorBand? left, ColorBand? right)
+		//{
+		//	return !(left == right);
+		//}
 
 		#endregion
 

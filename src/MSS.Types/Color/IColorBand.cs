@@ -13,7 +13,6 @@ namespace MSS.Types
 		double Percentage { get; set; }
 
 		int BucketWidth { get; }
-		//string BlendStyleAsString { get; }
 
 		IColorBand Clone();
 

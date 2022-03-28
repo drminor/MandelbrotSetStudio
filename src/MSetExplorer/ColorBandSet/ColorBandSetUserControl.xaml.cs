@@ -35,36 +35,11 @@ namespace MSetExplorer
 			else
 			{
 				//lvColorBandsHdr.Width = lvColorBands.ActualWidth - 25;
-
 				_vm = (ColorBandSetViewModel)DataContext;
-
-				
-
-				//clrBandDetail.DataContext = _vm;
-
 				//_vm.ItemWidth = lvColorBands.ActualWidth - 5;
-
-				//lvColorBands.ItemsSource = _vm.ColorBands;
-
-				//lvColorBands.SelectionChanged += LvColorBands_SelectionChanged;
-
-				//lvColorBands
 
 				//Debug.WriteLine("The ColorBandSetUserControl is now loaded");
 			}
-		}
-
-		private void LvColorBands_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			//if (lvColorBands.SelectionMode != SelectionMode.Single)
-			//{
-			//	if (lvColorBands.SelectedItems.Count > 1)
-			//	{
-			//		//lvColorBands.SelectedItems.RemoveAt(0);
-			//	}
-			//}
-
-			//_vm.SelectedColorBand = lvColorBands.SelectedItem as ColorBand;
 		}
 
 		#endregion
@@ -92,12 +67,13 @@ namespace MSetExplorer
 
 		private void EditColorBand()
 		{
-			//var editableCollectionView = lvColorBands.Items as IEditableCollectionView;
-
 			var editableCollectionView = _vm.ColorBandsView as IEditableCollectionView;
 
-			if (!editableCollectionView.IsEditingItem && lvColorBands.Items.CurrentItem is ColorBandJr selItem)
+			if (!editableCollectionView.IsEditingItem && lvColorBands.Items.CurrentItem is ColorBand selItem)
 			{
+				var index = lvColorBands.Items.IndexOf(selItem);
+				var sucesssor = GetSuccessor(index);
+
 				editableCollectionView.EditItem(selItem);
 
 				// invoke focus update at loaded priority so that template swap has time to complete
@@ -113,26 +89,105 @@ namespace MSetExplorer
 				var colorBandEditorDialog = new ColorBandEditorDialog
 				{
 					DataContext = selItem,
+					Sucessor = GetSuccessor(index)
 				};
 
 				var res = colorBandEditorDialog.ShowDialog();
 
 				if (res == true)
 				{
+					if (selItem.BlendStyleUpdated)
+					{
+						selItem.ActualEndColor = ColorBandSet.GetActualEndColor(selItem, sucesssor?.StartColor);
+					}
+
 					editableCollectionView.CommitEdit();
+					UpdateNeighbors(selItem, index);
 				}
 				else
 				{
 					editableCollectionView.CancelEdit();
 				}
 
-				//lvColorBands.Items.Refresh();
+				lvColorBands.Items.Refresh();
 				var didMove = lvColorBands.Items.MoveCurrentTo(selItem);
 
 				if (!lvColorBands.Focus())
 				{
 					Debug.WriteLine("Could not return focus to the ListBox.");
 				}
+				else
+				{
+					FocusListBoxItem(index);
+				}
+			}
+		}
+
+		private void UpdateNeighbors(ColorBand selItem, int index)
+		{
+			if (TryGetPredeccessor(index, out var predecessor))
+			{
+				if (selItem.StartColorUpdated && predecessor.BlendStyle == ColorBandBlendStyle.Next)
+				{
+					predecessor.ActualEndColor = selItem.StartColor;
+				}
+			}
+
+			if (TryGetSuccessor(index, out var sucessor))
+			{
+				if (selItem.CutOffUpdated)
+				{
+					sucessor.PreviousCutOff = selItem.CutOff;
+				}
+			}
+		}
+
+		private bool TryGetPredeccessor(int index, out ColorBand colorBand)
+		{
+			if (index < 1)
+			{
+				colorBand = null;
+				return false;
+			}
+			else
+			{
+				colorBand = (ColorBand)lvColorBands.Items[index - 1];
+				return true;
+			}
+		}
+
+		private bool TryGetSuccessor(int index, out ColorBand colorBand)
+		{
+			if (index > lvColorBands.Items.Count - 2)
+			{
+				colorBand = null;
+				return false;
+			}
+			else
+			{
+				colorBand = (ColorBand)lvColorBands.Items[index + 1];
+				return true;
+			}
+		}
+
+		private ColorBand GetSuccessor(int index)
+		{
+			_ = TryGetSuccessor(index, out var successor);
+			return successor;
+		}
+
+		private void FocusListBoxItem(int index)
+		{
+			if (index != -1)
+			{
+				_ = Dispatcher.Invoke(DispatcherPriority.Loaded, (ThreadStart)delegate ()
+				{
+					var wasFocused = false;
+					if (lvColorBands.ItemContainerGenerator.ContainerFromIndex(index) is IInputElement container)
+					{
+						wasFocused = container.Focus();
+					}
+				});
 			}
 		}
 

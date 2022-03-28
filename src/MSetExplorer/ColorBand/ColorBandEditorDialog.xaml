@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="ColorBandEditorDialog" Height="130" Width="300">
+        Title="ColorBandEditorDialog" Height="150" Width="320">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -26,30 +26,28 @@
                     <TextBlock Width="65" Margin="5,5,11,3" FontSize="14" Text="Cut Off:" />
                     <TextBox Text="{Binding Path=CutOff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>
 
-                    <!--<TextBlock Width="77" Margin="8,3,5,3" FontSize="14" Text="Blend Style:" />
+                    <TextBlock Width="77" Margin="8,3,5,3" FontSize="14" Text="Blend Style:" />
 
-                    <ComboBox Width="64" Height="21" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,2,0,2"
+                    <ComboBox x:Name="cmbBlendStyle" Width="64" Height="21" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,2,0,2"
                             SelectedIndex="{Binding Path=BlendStyle, Converter={StaticResource BlendStyleToIntConverter}}">
                         <ComboBoxItem IsSelected="True">None</ComboBoxItem>
                         <ComboBoxItem>End</ComboBoxItem>
                         <ComboBoxItem>Next</ComboBoxItem>
-                    </ComboBox>-->
+                    </ComboBox>
 
-                    <TextBlock Width="65" Margin="5,5,11,3" FontSize="14" Text="Prev Cut:" />
-                    <TextBox Text="{Binding Path=PreviousCutOff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>
+                    <!--<TextBlock Width="65" Margin="5,5,11,3" FontSize="14" Text="Prev Cut:" />
+                    <TextBox Text="{Binding Path=PreviousCutOff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>-->
 
 
                 </StackPanel>
 
-                <!--<StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                     <TextBlock Width="69" Margin="5,2,5,5" FontSize="14" Text="Start Color:" />
                     <local:ColorBandColorButtonControl ColorBandColor="{Binding Path=StartColor}" Width="63" Height="21" Margin="2,0,3,5"/>
-                    --><!--<TextBox Text="{Binding Path=SelectedColorBand.StartColor.CssColor}" Width="65" VerticalAlignment="Center"/>--><!--
 
                     <TextBlock Width="65" Margin="5,2,5,5" FontSize="14" Text="End Color:" />
-                    --><!--<TextBox Text="{Binding Path=SelectedColorBand.ActualEndColor.CssColor}"  Width="65" VerticalAlignment="Center"/>--><!--
-                    <local:ColorBandColorButtonControl ColorBandColor="{Binding Path=ActualEndColor}" Width="63" Height="21" Margin="0,0,0,5"/>
-                </StackPanel>-->
+                    <local:ColorBandColorButtonControl x:Name="cbcBtnCtlEndColor" ColorBandColor="{Binding Path=ActualEndColor}" Width="63" Height="21" Margin="0,0,0,5"/>
+                </StackPanel>
 
             </StackPanel>
 

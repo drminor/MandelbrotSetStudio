@@ -80,9 +80,9 @@ namespace MSS.Common
 
 		#region Private Methods
 
-        private IColorBand GetColorBand(int countVal)
+        private ColorBand GetColorBand(int countVal)
 		{
-            IColorBand result;
+            ColorBand result;
 
             if (countVal >= _lastCutOff)
 			{

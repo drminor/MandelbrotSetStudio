@@ -40,7 +40,14 @@ namespace MSetExplorer
 			SizeChanged += ColorPanelControl_SizeChanged;
 			rectImage.MouseUp += RectImage_MouseUp;
 
+			IsEnabledChanged += ColorBandColorButtonControl_IsEnabledChanged;
+
 			Debug.WriteLine("The ColorBandColorUserControl is now loaded.");
+		}
+
+		private void ColorBandColorButtonControl_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
+		{
+			_rectangle.Brush.Opacity = IsEnabled ? 1.0 : 0.3;
 		}
 
 		#endregion
@@ -148,6 +155,7 @@ namespace MSetExplorer
 		private Brush BuildBrush(ColorBandColor color)
 		{
 			var result = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(color));
+			result.Opacity = IsEnabled ? 1.0 : 0.3;
 
 			return result;
 		}

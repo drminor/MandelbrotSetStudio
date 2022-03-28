@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MSS.Types;
+using System.Diagnostics;
 using System.Windows;
 
 namespace MSetExplorer
@@ -8,6 +9,8 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class ColorBandEditorDialog : Window
 	{
+		private ColorBand _vm;
+
 		#region Constructor
 
 		public ColorBandEditorDialog()
@@ -19,11 +22,41 @@ namespace MSetExplorer
 
 		#endregion
 
+		public ColorBand Sucessor { get; set; }
+		public bool IsLastColorBand => Sucessor == null;
+
 		#region Event Handlers
 
 		private void ColorBandEditorDialog_Loaded(object sender, RoutedEventArgs e)
 		{
+			_vm = (ColorBand)DataContext;
+			_vm.PropertyChanged += ViewModel_PropertyChanged;
+
+			cbcBtnCtlEndColor.IsEnabled = _vm.BlendStyle == ColorBandBlendStyle.End;
+
+			if (IsLastColorBand)
+			{
+				cmbBlendStyle.Items.RemoveAt(2);
+			}
+
 			Debug.WriteLine("The ColorBandEditorDialog is now loaded");
+		}
+
+		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ColorBand.BlendStyle))
+			{
+				_vm.ActualEndColor = ColorBandSet.GetActualEndColor(_vm, Sucessor?.StartColor);
+				cbcBtnCtlEndColor.IsEnabled = _vm.BlendStyle == ColorBandBlendStyle.End;
+			}
+
+			if (e.PropertyName == nameof(ColorBand.ActualEndColor))
+			{
+				if (_vm.BlendStyle == ColorBandBlendStyle.End)
+				{
+					_vm.EndColor = _vm.ActualEndColor;
+				}
+			}
 		}
 
 		#endregion
@@ -43,6 +76,12 @@ namespace MSetExplorer
 
 		private void TakeSelection()
 		{
+			//var selItem = (ColorBand)DataContext;
+			//if (selItem.BlendStyleUpdated && selItem.BlendStyle == ColorBandBlendStyle.End)
+			//{
+			//	selItem.ActualEndColor = selItem.EndColor;
+			//}
+
 			DialogResult = true;
 			Close();
 		}

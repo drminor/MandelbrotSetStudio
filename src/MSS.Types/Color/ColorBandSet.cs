@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MSS.Types
 {
-	public class ColorBandSet : ObservableCollection<ColorBand>, IColorBandSet<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet>, ICloneable, INotifyPropertyChanged
+	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet>, ICloneable, INotifyPropertyChanged
 	{
 		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
@@ -80,7 +80,7 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Collection Methods
+		#region Public Methods
 
 		public void Fix()
 		{
@@ -107,6 +107,26 @@ namespace MSS.Types
 			}
 		}
 
+		public static ColorBandColor GetActualEndColor(ColorBand colorBand, ColorBandColor? nextStartColor)
+		{
+			if (colorBand.BlendStyle == ColorBandBlendStyle.Next)
+			{
+				if (nextStartColor == null)
+				{
+					throw new InvalidOperationException("The last ColorBand in the set has a BlendStyle of Next.");
+				}
+				return nextStartColor.Value;
+			}
+			else
+			{
+				return colorBand.BlendStyle == ColorBandBlendStyle.None ? colorBand.StartColor : colorBand.EndColor;
+			}
+		}
+
+		#endregion
+
+		#region Collection Methods
+
 		protected override void ClearItems()
 		{
 			base.ClearItems();
@@ -116,32 +136,32 @@ namespace MSS.Types
 		protected override void InsertItem(int index, ColorBand item)
 		{
 			base.InsertItem(index, item);
-			//UpdateItemAndNeighbors(index, item);
+			UpdateItemAndNeighbors(index, item);
 		}
 
 		protected override void RemoveItem(int index)
 		{
 			base.RemoveItem(index);
 
-			//if (Count == 0)
-			//{
-			//	Add(DEFAULT_HIGH_COLOR_BAND.Clone());
-			//}
-			//else
-			//{
-			//	if (index > Count - 1)
-			//	{
-			//		index = Count - 1;
-			//	}
+			if (Count == 0)
+			{
+				Add(DEFAULT_HIGH_COLOR_BAND.Clone());
+			}
+			else
+			{
+				if (index > Count - 1)
+				{
+					index = Count - 1;
+				}
 
-			//	UpdateItemAndNeighbors(index, Items[index]);
-			//}
+				UpdateItemAndNeighbors(index, Items[index]);
+			}
 		}
 
 		protected override void SetItem(int index, ColorBand item)
 		{
 			base.SetItem(index, item);
-			//UpdateItemAndNeighbors(index, item);
+			UpdateItemAndNeighbors(index, item);
 		}
 
 		#endregion
@@ -230,28 +250,7 @@ namespace MSS.Types
 
 		#endregion
 
-		private static ColorBandColor GetActualEndColor(ColorBand colorBand, ColorBandColor? nextStartColor)
-		{
-			if (colorBand.BlendStyle == ColorBandBlendStyle.Next)
-			{
-				if (nextStartColor == null)
-				{
-					throw new InvalidOperationException("The last ColorBand in the set has a BlendStyle of Next.");
-				}
-				return nextStartColor.Value;
-			}
-			else
-			{
-				return colorBand.BlendStyle == ColorBandBlendStyle.None ? colorBand.StartColor : colorBand.EndColor;
-			}
-		}
-
 		#region Clone Support
-
-		IColorBandSet<ColorBand> IColorBandSet<ColorBand>.CreateNewCopy()
-		{
-			return CreateNewCopy();
-		}
 
 		/// <summary>
 		/// Receives a new SerialNumber
@@ -263,11 +262,6 @@ namespace MSS.Types
 		}
 
 		object ICloneable.Clone()
-		{
-			return Clone();
-		}
-
-		IColorBandSet<ColorBand> IColorBandSet<ColorBand>.Clone()
 		{
 			return Clone();
 		}
@@ -291,6 +285,8 @@ namespace MSS.Types
 
 		#endregion
 
+		#region ToString Support
+
 		public override string ToString()
 		{
 			var result = $"ColorBandSet: {SerialNumber}\n{GetString(this)}";
@@ -308,6 +304,8 @@ namespace MSS.Types
 
 			return sb.ToString();
 		}
+
+		#endregion
 
 		#region IEquatable and IEqualityComparer Support
 

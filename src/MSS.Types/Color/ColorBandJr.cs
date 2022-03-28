@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace MSetExplorer
+namespace MSS.Types
 {
 	public class ColorBandJr : INotifyPropertyChanged/*, IEquatable<ColorBandJr?>, IEqualityComparer<ColorBandJr>, ICloneable*/, IEditableObject
 	{
@@ -10,7 +10,7 @@ namespace MSetExplorer
 		private int _previousCutOff;
 		private double _percentage;
 
-		private ColorBandJr _copy;
+		private ColorBandJr? _copy;
 		private bool _isInEditMode;
 
 		#region Constructor
@@ -210,9 +210,9 @@ namespace MSetExplorer
 
 		#region NotifyPropertyChanged Support
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}

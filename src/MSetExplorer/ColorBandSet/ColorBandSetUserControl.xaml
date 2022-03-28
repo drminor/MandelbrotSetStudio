@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
+             xmlns:lt="clr-namespace:MSS.Types;assembly=MSS.Types"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="290">
 
@@ -36,12 +37,12 @@
 
                 </DockPanel>
 
-                <!--<Grid Grid.Column="1" Width="110" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                <Grid Grid.Column="1" Width="93" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
                     <local:TwoColorPanelControl StartColor="{Binding StartColor}" EndColor="{Binding ActualEndColor}"/>
                  </Grid>
                  
-                <TextBlock Grid.Column="2" Width="45" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
-                -->
+                <TextBlock Grid.Column="2" Width="38" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
+                
 
             </Grid>
         </DataTemplate>
@@ -70,17 +71,17 @@
 
                 </DockPanel>
 
-                <!--<Grid Grid.Column="1" Width="110" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                <Grid Grid.Column="1" Width="93" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
                     <local:TwoColorPanelControl StartColor="{Binding StartColor}" EndColor="{Binding ActualEndColor}"/>
                  </Grid>
                  
-                <TextBlock Grid.Column="2" Width="45" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
-                -->
+                <TextBlock Grid.Column="2" Width="38" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
+                
 
             </Grid>
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type local:ColorBandJr}">
+        <DataTemplate DataType="{x:Type lt:ColorBand}">
             <ContentControl x:Name="CbListItemHost" Focusable="False" Content="{Binding}"
                             ContentTemplate="{StaticResource ColorBandViewTemplate}" />
             <DataTemplate.Triggers>
@@ -97,8 +98,8 @@
             <Setter Property="Canvas.Top" Value="{Binding Location.Y}" />-->
             <Setter Property="Background" Value="Khaki"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-            <Setter Property="Width" Value="150" />
-            <Setter Property="Height" Value="61" />
+            <Setter Property="Width" Value="246" />
+            <Setter Property="Height" Value="65" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Margin" Value="5,2" />
             <Setter Property="Padding" Value="3" />
