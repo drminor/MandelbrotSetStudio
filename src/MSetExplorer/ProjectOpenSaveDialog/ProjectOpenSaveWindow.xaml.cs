@@ -47,6 +47,10 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Event Handlers
+
 		private void LvProjects_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
 		{
 			TakeSelection();
@@ -74,7 +78,6 @@ namespace MSetExplorer
 
 			btnSave.IsEnabled = _vm.SelectedName != null;
 		}
-
 
 		private void LvProjects_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
 		{

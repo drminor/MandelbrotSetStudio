@@ -57,6 +57,14 @@ namespace MSetExplorer
 					_vm.EndColor = _vm.ActualEndColor;
 				}
 			}
+
+			if (e.PropertyName == nameof(ColorBand.StartColor))
+			{
+				if (_vm.BlendStyle == ColorBandBlendStyle.None)
+				{
+					_vm.ActualEndColor = _vm.StartColor;
+				}
+			}
 		}
 
 		#endregion

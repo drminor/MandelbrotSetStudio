@@ -55,7 +55,7 @@ namespace MSetRepo
 				_colorBandSetCache.Add(source.SerialNumber, source);
 			}
 
-			var result = new ColorBandSetRecord(source.SerialNumber.ToByteArray(), source.Select(x => MapTo(x)).ToArray());
+			var result = new ColorBandSetRecord(source.Name, source.Description, source.VersionNumber, source.SerialNumber.ToByteArray(), source.Select(x => MapTo(x)).ToArray());
 			return result;
 		}
 
@@ -70,6 +70,9 @@ namespace MSetRepo
 			else
 			{
 				var result = new ColorBandSet(serialNumber, target.ColorBandRecords.Select(x => MapFrom(x)).ToList());
+				result.Name = target.Name;
+				result.Description = target.Description;
+				result.VersionNumber = target.VersionNumber;
 				_colorBandSetCache.Add(result.SerialNumber, result);
 
 				return result;

@@ -290,16 +290,16 @@ namespace MSetExplorer
 
 		private bool ShowOpenSaveProjectWindow(DialogType dialogType, string initalName, out string selectedName, out string description)
 		{
-			var showOpenSaveVm = _vm.CreateAProjectOpenSaveViewModel(initalName, dialogType);
-			var showOpenSaveWindow = new ProjectOpenSaveWindow
+			var projectOpenSaveVm = _vm.CreateAProjectOpenSaveViewModel(initalName, dialogType);
+			var projectOpenSaveWindow = new ProjectOpenSaveWindow
 			{
-				DataContext = showOpenSaveVm
+				DataContext = projectOpenSaveVm
 			};
 
-			if (showOpenSaveWindow.ShowDialog() == true)
+			if (projectOpenSaveWindow.ShowDialog() == true)
 			{
-				selectedName = showOpenSaveWindow.ProjectName;
-				description = showOpenSaveWindow.ProjectDescription;
+				selectedName = projectOpenSaveWindow.ProjectName;
+				description = projectOpenSaveWindow.ProjectDescription;
 				return true;
 			}
 			else
@@ -309,6 +309,32 @@ namespace MSetExplorer
 				return false;
 			}
 		}
+
+		private bool ShowOpenSaveColorBandSetWindow(DialogType dialogType, string initalName, out string selectedName, out string description, out int versionNumber)
+		{
+			var colorBandSetOpenSaveVm = _vm.CreateAProjectOpenSaveViewModel(initalName, dialogType);
+			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
+			{
+				DataContext = colorBandSetOpenSaveVm
+			};
+
+			if (colorBandSetOpenSaveWindow.ShowDialog() == true)
+			{
+				selectedName = colorBandSetOpenSaveWindow.ColorBandSetName;
+				description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
+				versionNumber = colorBandSetOpenSaveWindow.ColorBandSetVersionNumber;
+				return true;
+			}
+			else
+			{
+				selectedName = null;
+				description = null;
+				versionNumber = 0;
+				return false;
+			}
+		}
+
+
 
 		private void Pan(VectorInt amount)
 		{

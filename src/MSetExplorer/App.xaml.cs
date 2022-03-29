@@ -13,6 +13,8 @@ namespace MSetExplorer
 {
 	public delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string initialName, DialogType dialogType);
 
+	public delegate IColorBandSetOpenSaveViewModel ColorBandSetOpenSaveViewModelCreator(string initialName, DialogType dialogType);
+
 	/// <summary>
 	/// Interaction logic for App.xaml
 	/// </summary>
@@ -62,7 +64,7 @@ namespace MSetExplorer
 			// Main Window
 			var window1 = new MainWindow
 			{
-				DataContext = new MainWindowViewModel(_mapProjectViewModel, mapDisplayViewModel, CreateAProjectOpenSaveViewModel, colorBandViewModel)
+				DataContext = new MainWindowViewModel(_mapProjectViewModel, mapDisplayViewModel, CreateAProjectOpenSaveViewModel, CreateAColorBandSetOpenSaveViewModel, colorBandViewModel)
 			};
 
 			window1.Show();
@@ -108,6 +110,12 @@ namespace MSetExplorer
 		{
 			return new ProjectOpenSaveViewModel(_projectAdapter, initalName, dialogType);
 		}
+
+		private IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string initalName, DialogType dialogType)
+		{
+			return new ColorBandSetOpenSaveViewModel(_projectAdapter, initalName, dialogType);
+		}
+
 
 	}
 }

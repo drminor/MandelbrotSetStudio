@@ -256,6 +256,30 @@ namespace MSetRepo
 
 		#endregion
 
+		#region ColorBandSetInfo
+
+		public IEnumerable<ColorBandSetInfo> GetAllColorBandSetInfos()
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+
+			var allColorBandSetRecords = colorBandSetReaderWriter.GetAll();
+			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.DateCreated, x.ColorBandRecords.Count(), new Guid(x.SerialNumber), x.Name, x.Description, x.VersionNumber));
+
+			return result;
+		}
+
+		public ColorBandSetInfo GetColorBandSetInfo(Guid colorBandSetSerialNumber)
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var cbsRecord = colorBandSetReaderWriter.Get(colorBandSetSerialNumber);
+
+			var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.DateCreated, cbsRecord.ColorBandRecords.Count(), new Guid(cbsRecord.SerialNumber), cbsRecord.Name, cbsRecord.Description, cbsRecord.VersionNumber);
+
+			return result;
+		}
+
+		#endregion
+
 		#region Job
 
 		public Job GetJob(ObjectId jobId)

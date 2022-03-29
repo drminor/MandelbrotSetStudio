@@ -1,20 +1,23 @@
-﻿using MSS.Types.MSet;
+﻿using MSS.Types;
 using System.Collections.ObjectModel;
 
 namespace MSetExplorer
 {
-	public interface IProjectOpenSaveViewModel
+	public interface IColorBandSetOpenSaveViewModel
 	{
 		DialogType DialogType { get; }
 
-		ObservableCollection<IProjectInfo> ProjectInfos { get; }
-		IProjectInfo SelectedProject { get; set; }
+		ObservableCollection<ColorBandSetInfo> ColorBandSetInfos { get; }
+		ColorBandSetInfo SelectedColorBandSetInfo { get; set; }
 
 		string SelectedName { get; set; }
 		string SelectedDescription { get; set; }
+		int SelectedVersionNumber { get; set; }
 
 		bool UserIsSettingTheName { get; set; }
 
 		bool IsNameTaken(string name);
 	}
+
+
 }

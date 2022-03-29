@@ -58,7 +58,37 @@ namespace ProjectRepo
 			return colorBandSetRecord.Id;
 		}
 
-		public void Update(ObjectId colorBandSetId, ColorBandRecord[] colorBandsRecords)
+		public void UpdateName(ObjectId colorBandSetId, string name)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+
+			var updateDefinition = Builders<ColorBandSetRecord>.Update
+				.Set(u => u.Name, name);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void UpdateDescription(ObjectId colorBandSetId, string description)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+
+			var updateDefinition = Builders<ColorBandSetRecord>.Update
+				.Set(u => u.Description, description);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void UpdateVersionNumber(ObjectId colorBandSetId, int versionNumber)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+
+			var updateDefinition = Builders<ColorBandSetRecord>.Update
+				.Set(u => u.VersionNumber, versionNumber);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void UpdateColorBands(ObjectId colorBandSetId, ColorBandRecord[] colorBandsRecords)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
 

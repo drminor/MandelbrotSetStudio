@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace MSS.Types
@@ -28,13 +29,61 @@ namespace MSS.Types
 		{
 			Debug.WriteLine($"Constructing ColorBandSet with SerialNumber: {serialNumber}.");
 			SerialNumber = serialNumber;
+			_name = serialNumber.ToString();
+			_description = null;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public Guid SerialNumber { get; set; }
+		public Guid SerialNumber { get; init; }
+
+		private string _name;
+		public string Name
+		{
+			get => _name;
+			set
+			{
+				if (value != _name)
+				{
+					_name = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		private string? _description;
+		public string? Description
+		{
+			get => _description;
+			set
+			{
+				if (value != _description)
+				{
+					_description = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		private int _versionNumber;
+		public int VersionNumber
+		{
+			get => _versionNumber;
+			set
+			{
+				if (value != _versionNumber)
+				{
+					_versionNumber = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		#endregion
+
+		#region Public Properties - Derived
 
 		public ObservableCollection<ColorBand> ColorBands => this;
 
@@ -348,5 +397,10 @@ namespace MSS.Types
 		}
 
 		#endregion
+
+		protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			base.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+		}
 	}
 }

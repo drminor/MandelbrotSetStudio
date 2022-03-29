@@ -9,10 +9,13 @@ namespace MSetExplorer
 		private int _steps;
 
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
+		private readonly ColorBandSetOpenSaveViewModelCreator _colorBandSetOpenSaveViewModelCreator;
 
 		#region Constructor
 
-		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, ColorBandSetViewModel colorBandViewModel)
+		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, 
+			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, ColorBandSetOpenSaveViewModelCreator colorBandSetOpenSaveViewModelCreator, 
+			ColorBandSetViewModel colorBandViewModel)
 		{
 			MapProjectViewModel = mapProjectViewModel;
 			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
@@ -24,6 +27,7 @@ namespace MSetExplorer
 			MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
+			_colorBandSetOpenSaveViewModelCreator = colorBandSetOpenSaveViewModelCreator;
 
 			ColorBandSetViewModel = colorBandViewModel;
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
@@ -65,6 +69,12 @@ namespace MSetExplorer
 		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType)
 		{
 			var result = _projectOpenSaveViewModelCreator(initalName, dialogType);
+			return result;
+		}
+
+		public IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string initalName, DialogType dialogType)
+		{
+			var result = _colorBandSetOpenSaveViewModelCreator(initalName, dialogType);
 			return result;
 		}
 
