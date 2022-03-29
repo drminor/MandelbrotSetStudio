@@ -17,9 +17,12 @@ namespace MSetExplorer
 
 		Project CurrentProject { get; }
 		string CurrentProjectName { get; }
-		ColorBandSet CurrentColorBandSet { get; set; }
 		bool CanSaveProject { get; }
 		bool CurrentProjectIsDirty { get; }
+
+		ColorBandSet CurrentColorBandSet { get; set; }
+		bool CanSaveColorBandSet { get; }
+		bool CurrentColorBandSetIsDirty { get; }
 
 		// Job Methods
 		Job CurrentJob { get; }
@@ -45,7 +48,11 @@ namespace MSetExplorer
 		void ProjectUpdateDescription(string description);
 
 		// ColorBand Methods
-		ColorBandSet GetColorBandSet(Guid serialNumber);
+		bool ColorBandSetOpen(Guid serialNumber);
 
+		void ColorBandSetSave();
+		void ColorBandSetSaveAs(string name, string description, int versionNumber, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
+
+		ColorBandSet GetColorBandSet(Guid serialNumber);
 	}
 }

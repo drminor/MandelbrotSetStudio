@@ -4,6 +4,8 @@ namespace MSetExplorer
 {
 	public static class CustomCommands
 	{
+		#region Job
+
 		public static readonly RoutedUICommand JobGoBack = new RoutedUICommand(
 			text: "Go Back",
 			name: "JobGoBack",
@@ -76,6 +78,10 @@ namespace MSetExplorer
 			}
 		);
 
+		#endregion
+
+		#region Project
+
 		public static readonly RoutedUICommand ProjectSave = new RoutedUICommand(
 			text: "Save",
 			name: "ProjectSave",
@@ -100,6 +106,50 @@ namespace MSetExplorer
 			}
 		);
 
+		#endregion
+
+		#region Colors
+
+		public static readonly RoutedUICommand ColorsOpen = new RoutedUICommand(
+			text: "Open",
+			name: "ColorsOpen",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.O,
+					ModifierKeys.Control | ModifierKeys.Alt
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand ColorsSave = new RoutedUICommand(
+			text: "Save",
+			name: "ColorsSave",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.S,
+					ModifierKeys.Control | ModifierKeys.Alt
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand ColorsSaveAs = new RoutedUICommand(
+			text: "SaveAs",
+			name: "ColorsSaveAs",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.A,
+					ModifierKeys.Control | ModifierKeys.Alt
+				)
+			}
+		);
+
+		#endregion
+
+		#region Application
+
 		public static readonly RoutedUICommand Exit = new RoutedUICommand(
 			text: "Exit",
 			name: "Exit",
@@ -112,5 +162,6 @@ namespace MSetExplorer
 			}
 		);
 
+		#endregion
 	}
 }

@@ -133,6 +133,12 @@ namespace MSetRepo
 			var colorBandSetIdsRaw = colorBandSetIds.Select(x => x.ToByteArray()).ToArray();
 			var currentColorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
 			projectReaderWriter.UpdateColorBands(projectId, colorBandSetIdsRaw, currentColorBandSetRecord);
+
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			colorBandSetReaderWriter.UpdateName(currentColorBandSetRecord.Id, currentColorBandSetRecord.Name);
+			colorBandSetReaderWriter.UpdateDescription(currentColorBandSetRecord.Id, currentColorBandSetRecord.Description);
+			colorBandSetReaderWriter.UpdateVersionNumber(currentColorBandSetRecord.Id, currentColorBandSetRecord.VersionNumber);
+			colorBandSetReaderWriter.UpdateColorBands(currentColorBandSetRecord.Id, currentColorBandSetRecord.ColorBandRecords);
 		}
 
 		public void DeleteProject(ObjectId projectId)
@@ -252,6 +258,18 @@ namespace MSetRepo
 			colorBandSetRecord = colorBandSetReaderWriter.Get(id);
 
 			return colorBandSetRecord;
+		}
+
+		public void UpdateColorBandSet(ColorBandSet colorBandSet)
+		{
+			var colorBandSetRecord = _mSetRecordMapper.MapTo(colorBandSet);
+			var id = colorBandSetRecord.Id;
+
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			colorBandSetReaderWriter.UpdateName(id, colorBandSetRecord.Name);
+			colorBandSetReaderWriter.UpdateDescription(id, colorBandSetRecord.Description);
+			colorBandSetReaderWriter.UpdateVersionNumber(id, colorBandSetRecord.VersionNumber);
+			colorBandSetReaderWriter.UpdateColorBands(id, colorBandSetRecord.ColorBandRecords);
 		}
 
 		#endregion

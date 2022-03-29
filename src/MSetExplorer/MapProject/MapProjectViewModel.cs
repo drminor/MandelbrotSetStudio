@@ -82,7 +82,10 @@ namespace MSetExplorer
 
 		public string CurrentProjectName => CurrentProject?.Name;
 		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
-		public bool CanSaveProject => CurrentProjectOnFile;
+		public bool CanSaveProject => CurrentProjectOnFile && CurrentProjectIsDirty;
+
+		public bool CurrentColorBandSetIsDirty => CurrentProject?.ColorBandSetIsDirty ?? false;
+		public bool CanSaveColorBandSet => CurrentColorBandSetIsDirty;
 
 		public bool CurrentProjectIsDirty
 		{
@@ -280,7 +283,28 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Methods ColorBand
+		#region Public Methods -- Colors
+
+		public bool ColorBandSetOpen(Guid serialNumber)
+		{
+			var colorBandSet = GetColorBandSet(serialNumber);
+			CurrentColorBandSet = colorBandSet;
+			return true;
+		}
+
+		public void ColorBandSetSave()
+		{
+			if (CurrentProject.ColorBandSetIsDirty)
+			{
+				_projectAdapter.UpdateColorBandSet(CurrentProject.CurrentColorBandSet);
+				CurrentProject.ColorBandSetIsDirty = false;
+			}
+		}
+		
+		public void ColorBandSetSaveAs(string name, string description, int versionNumber, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		{
+
+		}
 
 		public ColorBandSet GetColorBandSet(Guid serialNumber)
 		{

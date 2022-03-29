@@ -14,5 +14,7 @@ namespace MSetExplorer
 		int Steps { get; set; }
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType);
+
+		IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string initalName, DialogType dialogType);
 	}
 }

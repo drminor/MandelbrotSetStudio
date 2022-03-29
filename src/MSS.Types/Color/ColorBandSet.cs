@@ -31,6 +31,7 @@ namespace MSS.Types
 			SerialNumber = serialNumber;
 			_name = serialNumber.ToString();
 			_description = null;
+			_versionNumber = 0;
 		}
 
 		#endregion
@@ -307,7 +308,12 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			return new ColorBandSet(CreateCopy());
+			var result = new ColorBandSet(CreateCopy())
+			{
+				VersionNumber = VersionNumber + 1
+			};
+
+			return result;
 		}
 
 		object ICloneable.Clone()
@@ -323,7 +329,14 @@ namespace MSS.Types
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with SerialNumber: {SerialNumber}.");
 
-			return new ColorBandSet(SerialNumber, CreateCopy());
+			var result = new ColorBandSet(SerialNumber, CreateCopy())
+			{
+				Name = Name,
+				Description = Description,
+				VersionNumber = VersionNumber
+			};
+
+			return result;
 		}
 
 		private IList<ColorBand> CreateCopy()

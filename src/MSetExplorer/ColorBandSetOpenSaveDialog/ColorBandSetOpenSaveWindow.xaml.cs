@@ -1,17 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -40,68 +31,68 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IColorBandSetOpenSaveViewModel)DataContext;
-				//borderTop.DataContext = DataContext;
+				borderTop.DataContext = DataContext;
 
-				//btnSave.Content = _vm.DialogType == DialogType.Open ? "Open" : "Save";
-				//Title = _vm.DialogType == DialogType.Open ? "Open Project" : "Save Project";
+				btnSave.Content = _vm.DialogType == DialogType.Open ? "Open" : "Save";
+				Title = _vm.DialogType == DialogType.Open ? "Open ColorBandSet" : "Save ColorBandSet";
 
-				//lvProjects.ItemsSource = _vm.ProjectInfos;
-				//lvProjects.SelectionChanged += LvProjects_SelectionChanged;
+				lvColorBandSets.ItemsSource = _vm.ColorBandSetInfos;
+				lvColorBandSets.SelectionChanged += LvColorBandSets_SelectionChanged;
 
-				//lvProjects.MouseDoubleClick += LvProjects_MouseDoubleClick;
+				lvColorBandSets.MouseDoubleClick += LvColorBandSets_MouseDoubleClick;
 
-				//txtName.LostFocus += TxtName_LostFocus;
+				txtName.LostFocus += TxtName_LostFocus;
 
-				//_ = txtName.Focus();
-				//btnSave.IsEnabled = _vm.SelectedName != null;
+				_ = txtName.Focus();
+				btnSave.IsEnabled = _vm.SelectedName != null;
 
-				Debug.WriteLine("The ProjectOpenSaveWindow is now loaded");
+				Debug.WriteLine("The ColorBandSetOpenSaveWindow is now loaded");
 			}
 		}
 
 		#endregion
 
-
 		#region Event Handlers
 
-		//private void LvProjects_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
-		//{
-		//	TakeSelection();
-		//}
+		private void LvColorBandSets_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			TakeSelection();
+		}
 
-		//private void TxtName_LostFocus(object sender, RoutedEventArgs e)
-		//{
-		//	if (string.IsNullOrWhiteSpace(txtName.Text))
-		//	{
-		//		_vm.SelectedName = _vm.SelectedProject?.Name;
-		//		_vm.UserIsSettingTheName = false;
-		//	}
-		//	else
-		//	{
-		//		if (txtName.Text == _vm.SelectedProject?.Name)
-		//		{
-		//			_vm.UserIsSettingTheName = false;
-		//			_vm.SelectedName = _vm.SelectedProject?.Name;
-		//		}
-		//		else
-		//		{
-		//			_vm.UserIsSettingTheName = true;
-		//		}
-		//	}
+		private void TxtName_LostFocus(object sender, RoutedEventArgs e)
+		{
+			if (string.IsNullOrWhiteSpace(txtName.Text))
+			{
+				_vm.SelectedName = _vm.SelectedColorBandSetInfo?.Name;
+				_vm.UserIsSettingTheName = false;
+			}
+			else
+			{
+				if (txtName.Text == _vm.SelectedColorBandSetInfo?.Name)
+				{
+					_vm.UserIsSettingTheName = false;
+					_vm.SelectedName = _vm.SelectedColorBandSetInfo?.Name;
+				}
+				else
+				{
+					_vm.UserIsSettingTheName = true;
+				}
+			}
 
-		//	btnSave.IsEnabled = _vm.SelectedName != null;
-		//}
+			btnSave.IsEnabled = _vm.SelectedName != null;
+		}
 
 
-		//private void LvProjects_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-		//{
-		//	btnSave.IsEnabled = _vm.SelectedName != null;
-		//}
+		private void LvColorBandSets_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			btnSave.IsEnabled = _vm.SelectedName != null;
+		}
 
 		#endregion
 
 		#region Public Properties
 
+		public Guid ColorBandSetSerialNumber => _vm.SelectedColorBandSetInfo.SerialNumber;
 		public string ColorBandSetName => _vm.SelectedName;
 		public string ColorBandSetDescription => _vm.SelectedDescription;
 		public int ColorBandSetVersionNumber => _vm.SelectedVersionNumber;

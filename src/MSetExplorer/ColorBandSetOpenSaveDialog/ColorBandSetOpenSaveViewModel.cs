@@ -1,8 +1,5 @@
-﻿using MongoDB.Bson;
-using MSetRepo;
+﻿using MSetRepo;
 using MSS.Types;
-using MSS.Types.MSet;
-using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Data;
