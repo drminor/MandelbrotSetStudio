@@ -4,7 +4,7 @@ namespace MSetExplorer
 {
 	public interface IMainWindowViewModel
 	{
-		event PropertyChangedEventHandler PropertyChanged;
+		event PropertyChangedEventHandler? PropertyChanged;
 
 		IMapProjectViewModel MapProjectViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
@@ -13,8 +13,8 @@ namespace MSetExplorer
 		int TargetIterations { get; set; }
 		int Steps { get; set; }
 
-		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType);
+		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 
-		IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string initalName, DialogType dialogType);
+		IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string? initalName, DialogType dialogType);
 	}
 }

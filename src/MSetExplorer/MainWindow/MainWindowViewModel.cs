@@ -1,5 +1,4 @@
-﻿
-using MSS.Common;
+﻿using System.ComponentModel;
 
 namespace MSetExplorer
 {
@@ -66,13 +65,13 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType)
+		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
 			var result = _projectOpenSaveViewModelCreator(initalName, dialogType);
 			return result;
 		}
 
-		public IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string initalName, DialogType dialogType)
+		public IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
 			var result = _colorBandSetOpenSaveViewModelCreator(initalName, dialogType);
 			return result;
@@ -82,7 +81,7 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapProjectViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
@@ -125,12 +124,12 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MapDisplayViewModel_MapViewUpdateRequested(object sender, MapViewUpdateRequestedEventArgs e)
+		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
 			MapProjectViewModel.UpdateMapView(e.TransformType, e.NewArea);
 		}
 
-		private void MapDisplayViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
@@ -138,7 +137,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ColorBandViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void ColorBandViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == "ColorBandSet")
 			{

@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using MSS.Types;
+﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -10,22 +9,22 @@ namespace MSetExplorer
 	public interface IMapProjectViewModel
 	{
 		bool InDesignMode { get; }
-		event PropertyChangedEventHandler PropertyChanged;
+		event PropertyChangedEventHandler? PropertyChanged;
 
 		SizeInt BlockSize { get; }
 		SizeInt CanvasSize { get; set; }
 
-		Project CurrentProject { get; }
-		string CurrentProjectName { get; }
+		Project? CurrentProject { get; }
+		string? CurrentProjectName { get; }
 		bool CanSaveProject { get; }
 		bool CurrentProjectIsDirty { get; }
 
-		ColorBandSet CurrentColorBandSet { get; set; }
+		ColorBandSet? CurrentColorBandSet { get; set; }
 		bool CanSaveColorBandSet { get; }
 		bool CurrentColorBandSetIsDirty { get; }
 
 		// Job Methods
-		Job CurrentJob { get; }
+		Job? CurrentJob { get; }
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
 		bool GoBack();
@@ -41,8 +40,8 @@ namespace MSetExplorer
 
 		bool ProjectOpen(string name);
 		void ProjectSave();
-		
-		void ProjectSaveAs(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
+
+		void ProjectSaveAs(string name, string? description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
 
 		void ProjectUpdateName(string name);
 		void ProjectUpdateDescription(string description);
@@ -51,8 +50,8 @@ namespace MSetExplorer
 		bool ColorBandSetOpen(Guid serialNumber);
 
 		void ColorBandSetSave();
-		void ColorBandSetSaveAs(string name, string description, int versionNumber, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
+		void ColorBandSetSaveAs(string name, string? description, int? versionNumber);
 
-		ColorBandSet GetColorBandSet(Guid serialNumber);
+		ColorBandSet? GetColorBandSet(Guid serialNumber);
 	}
 }

@@ -10,7 +10,7 @@ namespace MSetExplorer
 	public interface IMapDisplayViewModel
 	{
 		bool InDesignMode { get; }
-		event PropertyChangedEventHandler PropertyChanged;
+		event PropertyChangedEventHandler? PropertyChanged;
 
 		event EventHandler<MapViewUpdateRequestedEventArgs> MapViewUpdateRequested;
 
@@ -19,7 +19,7 @@ namespace MSetExplorer
 		ObservableCollection<MapSection> MapSections { get; }
 
 		Job CurrentJob { get; set; }
-		ColorBandSet ColorBandSet { get; set; }
+		ColorBandSet? ColorBandSet { get; set; }
 
 		// These may need to be dependency properties
 		SizeDbl ContainerSize { get; set; }

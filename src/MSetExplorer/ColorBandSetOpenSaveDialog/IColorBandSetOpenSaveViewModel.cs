@@ -8,15 +8,15 @@ namespace MSetExplorer
 		DialogType DialogType { get; }
 
 		ObservableCollection<ColorBandSetInfo> ColorBandSetInfos { get; }
-		ColorBandSetInfo SelectedColorBandSetInfo { get; set; }
+		ColorBandSetInfo? SelectedColorBandSetInfo { get; set; }
 
-		string SelectedName { get; set; }
-		string SelectedDescription { get; set; }
-		int SelectedVersionNumber { get; set; }
+		string? SelectedName { get; set; }
+		string? SelectedDescription { get; set; }
+		int? SelectedVersionNumber { get; set; }
 
 		bool UserIsSettingTheName { get; set; }
 
-		bool IsNameTaken(string name);
+		bool IsNameTaken(string? name);
 	}
 
 

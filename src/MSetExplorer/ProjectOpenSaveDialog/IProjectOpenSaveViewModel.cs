@@ -8,10 +8,10 @@ namespace MSetExplorer
 		DialogType DialogType { get; }
 
 		ObservableCollection<IProjectInfo> ProjectInfos { get; }
-		IProjectInfo SelectedProject { get; set; }
+		IProjectInfo? SelectedProject { get; set; }
 
-		string SelectedName { get; set; }
-		string SelectedDescription { get; set; }
+		string? SelectedName { get; set; }
+		string? SelectedDescription { get; set; }
 
 		bool UserIsSettingTheName { get; set; }
 

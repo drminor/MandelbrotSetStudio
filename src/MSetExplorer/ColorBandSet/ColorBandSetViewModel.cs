@@ -17,14 +17,17 @@ namespace MSetExplorer
 	public class ColorBandSetViewModel : INotifyPropertyChanged
 	{
 		private readonly ObservableCollection<MapSection> _mapSections;
-		private readonly SynchronizationContext _synchronizationContext;
+		private readonly SynchronizationContext? _synchronizationContext;
 		private readonly MapSectionHistogramProcessor _mapSectionHistogramProcessor;
 
 		private double _rowHeight;
 		private double _itemWidth;
 
-		private Project _currentProject;
-		private ColorBandSet _colorBandSet;
+		private Project? _currentProject;
+		private ColorBandSet? _colorBandSet;
+		private ListCollectionView? _colorBandsView;
+
+		private bool _isDirty;
 
 		#region Constructor
 
@@ -40,6 +43,7 @@ namespace MSetExplorer
 			CurrentProject = null;
 			_colorBandSet = new ColorBandSet();
 			_colorBandsView = null;
+			_isDirty = false;
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
 		}
@@ -60,7 +64,7 @@ namespace MSetExplorer
 			set { _itemWidth = value; OnPropertyChanged(nameof(ItemWidth)); }
 		}
 
-		public Project CurrentProject
+		public Project? CurrentProject
 		{
 			get => _currentProject;
 			set
@@ -70,13 +74,15 @@ namespace MSetExplorer
 					_currentProject = value;
 
 					// Clone this to keep changes made here from updating the Project's copy.
-					ColorBandSet = value.CurrentColorBandSet.Clone();
+					if (value != null)
+					{
+						ColorBandSet = value.CurrentColorBandSet.Clone();
+					}
+
 					OnPropertyChanged(nameof(CurrentProject));
 				}
 			}
 		}
-
-		private ListCollectionView _colorBandsView;
 
 		public ListCollectionView ColorBandsView
 		{
@@ -84,7 +90,7 @@ namespace MSetExplorer
 			{
 				if (_colorBandsView == null)
 				{
-					_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet.ColorBands);
+					_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet?.ColorBands);
 					_colorBandsView.SortDescriptions.Add(new SortDescription("CutOff", ListSortDirection.Ascending));
 				}
 
@@ -98,7 +104,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSet ColorBandSet
+		public ColorBandSet? ColorBandSet
 		{
 			get => _colorBandSet;
 
@@ -117,6 +123,7 @@ namespace MSetExplorer
 						Histogram.Reset();
 
 						_colorBandsView = null;
+						IsDirty = false;
 
 						OnPropertyChanged(nameof(ColorBandSet));
 						OnPropertyChanged(nameof(ColorBandsView));
@@ -139,6 +146,7 @@ namespace MSetExplorer
 						var view = ColorBandsView;
 						_ = view.MoveCurrentTo(_colorBandSet.FirstOrDefault());
 
+						IsDirty = false;
 						OnPropertyChanged(nameof(ColorBandSet));
 						OnPropertyChanged(nameof(ColorBandsView));
 					}
@@ -164,13 +172,27 @@ namespace MSetExplorer
 
 		public IHistogram Histogram { get; private set; }
 
+		public bool IsDirty
+		{
+			get => _isDirty;
+
+			private set
+			{
+				if (value != _isDirty)
+				{
+					_isDirty = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#endregion
 
 		#region Event Handlers
 
-		private void MapSections_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		private void MapSections_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
-			if (_colorBandSet.Count == 0)
+			if (_colorBandSet != null && _colorBandSet.Count == 0)
 			{
 				return;
 			}
@@ -202,13 +224,16 @@ namespace MSetExplorer
 			//Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
 		}
 
-		private void HistogramChanged(object _)
+		private void HistogramChanged(object? _)
 		{
-			double t = 0;
-			foreach (var cb in _colorBandSet.ColorBands)
+			if (_colorBandSet != null)
 			{
-				cb.Percentage = Math.Round(t, 4);
-				t += 3.9;
+				double t = 0;
+				foreach (var cb in _colorBandSet.ColorBands)
+				{
+					cb.Percentage = Math.Round(t, 4);
+					t += 3.9;
+				}
 			}
 		}
 
@@ -216,13 +241,27 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public void InsertItem(int index, ColorBand newItem)
+		{
+			//Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
+
+			_colorBandSet?.Insert(index, newItem);
+
+			IsDirty = true;
+		}
+
+		public void ItemWasUpdated()
+		{
+			IsDirty = true;
+		}
+
 		public void DeleteSelectedItem()
 		{
 			var view = ColorBandsView;
 
-			Debug.WriteLine($"Getting ready to remove an item. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
+			//Debug.WriteLine($"Getting ready to remove an item. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 
-			if (view != null)
+			if (view != null && _colorBandSet != null)
 			{
 				if (view.CurrentItem is ColorBand curItem)
 				{
@@ -245,36 +284,27 @@ namespace MSetExplorer
 
 					var idx1 = _colorBandSet.ColorBands.IndexOf((ColorBand)view.CurrentItem);
 
-					//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {idx1}. The new list is: {_colorBandSet}.");
 					Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {idx1}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 
-					//view.Refresh();
+					IsDirty = true;
 				}
 			}
 		}
 
-		public void InsertItem(int index, ColorBand newItem) 
-		{
-			Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-
-			_colorBandSet.Insert(index, newItem);
-		}
-
 		public void ApplyChanges()
 		{
-			if (_colorBandSet == null)
+			if (ColorBandSet != null)
 			{
-				return;
+				//Debug.WriteLine($"Applying changes, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
+
+				// Create a new copy with a new serial number to load a new ColorMap.
+				var newSet = ColorBandSet.CreateNewCopy();
+				//CheckThatColorBandsWereUpdatedProperly(_colorBandSet, newSet, throwOnMismatch: false);
+
+				Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new SerialNumber is {newSet.SerialNumber}, name: {newSet.Name}, version: {newSet.VersionNumber}.");
+
+				ColorBandSet = newSet;
 			}
-
-			//Debug.WriteLine($"Applying changes, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-
-			// Create a new copy with a new serial number to load a new ColorMap.
-			var newSet = new ColorBandSet(ColorBandSet);
-
-			CheckThatColorBandsWereUpdatedProperly(_colorBandSet, newSet, throwOnMismatch: false);
-
-			ColorBandSet = newSet;
 		}
 
 		#endregion
@@ -291,29 +321,29 @@ namespace MSetExplorer
 
 		private void HandleHistogramUpdate(MapSection mapSection, IList<double> newPercentages)
 		{
-			_synchronizationContext.Post(o => HistogramChanged(o), null);
+			_synchronizationContext?.Post(o => HistogramChanged(o), null);
 		}
 
-		private void CheckThatColorBandsWereUpdatedProperly(ColorBandSet colorBandSet, ColorBandSet goodCopy, bool throwOnMismatch)
-		{
-			var theyMatch = new ColorBandSetComparer().EqualsExt(colorBandSet, goodCopy, out var mismatchedLines);
+		//private void CheckThatColorBandsWereUpdatedProperly(ColorBandSet colorBandSet, ColorBandSet goodCopy, bool throwOnMismatch)
+		//{
+		//	var theyMatch = new ColorBandSetComparer().EqualsExt(colorBandSet, goodCopy, out var mismatchedLines);
 
-			if (theyMatch)
-			{
-				Debug.WriteLine("The new ColorBandSet is sound.");
-			}
-			else
-			{
-				Debug.WriteLine("Creating a new copy of the ColorBands produces a result different that the current collection of ColorBands.");
-				Debug.WriteLine($"Updated: {_colorBandSet}, new: {goodCopy}");
-				Debug.WriteLine($"The mismatched lines are: {string.Join(", ", mismatchedLines.Select(x => x.ToString()).ToArray())}");
+		//	if (theyMatch)
+		//	{
+		//		Debug.WriteLine("The new ColorBandSet is sound.");
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine("Creating a new copy of the ColorBands produces a result different that the current collection of ColorBands.");
+		//		Debug.WriteLine($"Updated: {_colorBandSet}, new: {goodCopy}");
+		//		Debug.WriteLine($"The mismatched lines are: {string.Join(", ", mismatchedLines.Select(x => x.ToString()).ToArray())}");
 
-				if (throwOnMismatch)
-				{
-					throw new InvalidOperationException("ColorBandSet update mismatch.");
-				}
-			}
-		}
+		//		if (throwOnMismatch)
+		//		{
+		//			throw new InvalidOperationException("ColorBandSet update mismatch.");
+		//		}
+		//	}
+		//}
 
 		private string GetViewAsString()
 		{
@@ -326,30 +356,37 @@ namespace MSetExplorer
 
 		private string GetModelAsString()
 		{
-			var result = GetString(_colorBandSet);
+			var result = GetString(_colorBandSet?.ColorBands);
 
 			return result;
 		}
 
-		private string GetString(ICollection<ColorBand> colorBands)
+		private string GetString(ICollection<ColorBand>? colorBands)
 		{
-			var sb = new StringBuilder();
-
-			foreach (var cb in colorBands)
+			if (colorBands != null)
 			{
-				_ = sb.AppendLine(cb.ToString());
-			}
+				var sb = new StringBuilder();
 
-			return sb.ToString();
+				foreach (var cb in colorBands)
+				{
+					_ = sb.AppendLine(cb.ToString());
+				}
+
+				return sb.ToString();
+			}
+			else
+			{
+				return "Empty";
+			}
 		}
 
 		#endregion
 
 		#region Property Changed Support
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}

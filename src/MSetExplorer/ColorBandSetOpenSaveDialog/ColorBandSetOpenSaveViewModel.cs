@@ -1,25 +1,28 @@
-﻿using MSetRepo;
+﻿using MongoDB.Bson;
+using MSetRepo;
 using MSS.Types;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public class ColorBandSetOpenSaveViewModel : ViewModelBase, IColorBandSetOpenSaveViewModel
+	public class ColorBandSetOpenSaveViewModel : IColorBandSetOpenSaveViewModel, INotifyPropertyChanged
 	{
 		private readonly ProjectAdapter _projectAdapter;
-		private ColorBandSetInfo _selectedColorBandSetInfo;
+		private ColorBandSetInfo? _selectedColorBandSetInfo;
 
-		private string _selectedName;
-		private string _selectedDescription;
-		private int _selectedVersionNumber;
+		private string? _selectedName;
+		private string? _selectedDescription;
+		private int? _selectedVersionNumber;
 
 		private bool _userIsSettingTheName;
 
 		#region Constructor
 
-		public ColorBandSetOpenSaveViewModel(ProjectAdapter projectAdapter, string initialName, DialogType dialogType)
+		public ColorBandSetOpenSaveViewModel(ProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
 		{
 			_projectAdapter = projectAdapter;
 			DialogType = dialogType;
@@ -39,7 +42,7 @@ namespace MSetExplorer
 
 		public ObservableCollection<ColorBandSetInfo> ColorBandSetInfos { get; init; }
 
-		public string SelectedName
+		public string? SelectedName
 		{
 			get => _selectedName;
 			set
@@ -56,24 +59,24 @@ namespace MSetExplorer
 		}
 
 
-		public string SelectedDescription
+		public string? SelectedDescription
 		{
 			get => _selectedDescription;
 			set
 			{
 				_selectedDescription = value;
 
-				//if (SelectedColorBandSet != null && SelectedColorBandSet.Project.Id != ObjectId.Empty && SelectedColorBandSet.Description != value)
-				//{
-				//	_projectAdapter.UpdateProjectDescription(SelectedColorBandSet.Project.Id, SelectedDescription);
-				//	SelectedColorBandSet.Description = value;
-				//}
+				if (SelectedColorBandSetInfo != null && SelectedColorBandSetInfo.Id != ObjectId.Empty && SelectedColorBandSetInfo.Description != value)
+				{
+					_projectAdapter.UpdateProjectDescription(SelectedColorBandSetInfo.Id, SelectedDescription);
+					SelectedColorBandSetInfo.Description = value;
+				}
 
 				OnPropertyChanged();
 			}
 		}
 
-		public int SelectedVersionNumber
+		public int? SelectedVersionNumber
 		{
 			get => _selectedVersionNumber;
 			set
@@ -83,24 +86,52 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSetInfo SelectedColorBandSetInfo
+		public ColorBandSetInfo? SelectedColorBandSetInfo
 		{
 			get => _selectedColorBandSetInfo;
 
 			set
 			{
 				_selectedColorBandSetInfo = value;
+
+				if (value != null)
+				{
+					if (!_userIsSettingTheName)
+					{
+						SelectedName = _selectedColorBandSetInfo?.Name;
+					}
+
+					SelectedDescription = _selectedColorBandSetInfo?.Description;
+					SelectedVersionNumber = _selectedColorBandSetInfo?.VersionNumber;
+				}
+				else
+				{
+					SelectedName = null;
+					SelectedDescription = null;
+					SelectedVersionNumber = null;
+				}
+
 				OnPropertyChanged();
 			}
 		}
 
-		#endregion
-
-		public bool IsNameTaken(string name)
+		public bool IsNameTaken(string? name)
 		{
-			var result = _projectAdapter.TryGetProject(name, out var _);
+			var result = name == null ? false : _projectAdapter.TryGetProject(name, out var _);
 			return result;
 		}
 
+		#endregion
+
+		#region INotifyPropertyChanged Support
+
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		#endregion
 	}
 }

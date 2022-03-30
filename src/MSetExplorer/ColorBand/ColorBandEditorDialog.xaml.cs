@@ -15,14 +15,14 @@ namespace MSetExplorer
 
 		public ColorBandEditorDialog()
 		{
+			_vm = (ColorBand)DataContext;
 			InitializeComponent();
-
 			Loaded += ColorBandEditorDialog_Loaded;
 		}
 
 		#endregion
 
-		public ColorBand Sucessor { get; set; }
+		public ColorBand? Sucessor { get; set; }
 		public bool IsLastColorBand => Sucessor == null;
 
 		#region Event Handlers
@@ -42,7 +42,7 @@ namespace MSetExplorer
 			Debug.WriteLine("The ColorBandEditorDialog is now loaded");
 		}
 
-		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(ColorBand.BlendStyle))
 			{

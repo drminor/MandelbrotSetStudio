@@ -92,10 +92,10 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public Guid ColorBandSetSerialNumber => _vm.SelectedColorBandSetInfo.SerialNumber;
-		public string ColorBandSetName => _vm.SelectedName;
-		public string ColorBandSetDescription => _vm.SelectedDescription;
-		public int ColorBandSetVersionNumber => _vm.SelectedVersionNumber;
+		public Guid? ColorBandSetSerialNumber => _vm.SelectedColorBandSetInfo?.SerialNumber;
+		public string? ColorBandSetName => _vm.SelectedName;
+		public string? ColorBandSetDescription => _vm.SelectedDescription;
+		public int? ColorBandSetVersionNumber => _vm.SelectedVersionNumber;
 
 		#endregion
 

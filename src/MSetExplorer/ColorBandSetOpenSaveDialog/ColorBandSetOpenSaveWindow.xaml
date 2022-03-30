@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Open ColorBandSet" Height="450" Width="800">
+        Title="Open ColorBandSet" Height="450" Width="625">
     
     <Grid>
 
@@ -17,13 +17,14 @@
 
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
 
-            <ListView Margin="10" Name="lvColorBandSets" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedColorBandSet}">
+            <ListView Margin="10" Name="lvColorBandSets" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedColorBandSetInfo}">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Id" Width="250" DisplayMemberBinding="{Binding SerialNumber}" />
+                        <!--<GridViewColumn Header="Id" Width="250" DisplayMemberBinding="{Binding SerialNumber}" />-->
                         <GridViewColumn Header="Name" Width="250" DisplayMemberBinding="{Binding Name}" />
                         <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreated}" />
-                        <GridViewColumn Header="Band Count" Width="80" DisplayMemberBinding="{Binding NumberOfJobs}" />
+                        <GridViewColumn Header="Band Count" Width="110" DisplayMemberBinding="{Binding NumberOfBands}" />
+                        <GridViewColumn Header="Version" Width="50" DisplayMemberBinding="{Binding VersionNumber}" />
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -35,12 +36,12 @@
 
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                     <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Name:" VerticalAlignment="Top"/>
-                    <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="170" Height="22"/>
+                    <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="460" Height="22"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                     <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Description:" VerticalAlignment="Top"/>
-                    <TextBox x:Name="txtDescription" Text="{Binding SelectedDescription}" Width="500" Height="22"/>
+                    <TextBox x:Name="txtDescription" Text="{Binding SelectedDescription}" Width="460" Height="22"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">

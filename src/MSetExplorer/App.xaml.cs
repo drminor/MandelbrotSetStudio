@@ -11,9 +11,9 @@ using System.Windows;
 
 namespace MSetExplorer
 {
-	public delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string initialName, DialogType dialogType);
+	public delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
-	public delegate IColorBandSetOpenSaveViewModel ColorBandSetOpenSaveViewModelCreator(string initialName, DialogType dialogType);
+	public delegate IColorBandSetOpenSaveViewModel ColorBandSetOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
 	/// <summary>
 	/// Interaction logic for App.xaml
@@ -24,12 +24,20 @@ namespace MSetExplorer
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
 
-		private ProjectAdapter _projectAdapter;
+		private ProjectAdapter? _projectAdapter;
 
-		private IMapProjectViewModel _mapProjectViewModel;
-		private MapLoaderManager _mapLoaderManager;
+		private IMapProjectViewModel? _mapProjectViewModel;
+		private MapLoaderManager? _mapLoaderManager;
 
-		private Process _serverProcess;
+		private Process? _serverProcess;
+
+		public App()
+		{
+			_projectAdapter = null;
+			_mapProjectViewModel = null;
+			_mapLoaderManager = null;
+			_serverProcess = null;
+		}
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
@@ -88,7 +96,7 @@ namespace MSetExplorer
 
 			StopServer();
 		}
-		
+
 		private void StartServer()
 		{
 			var exists = Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(SERVER_EXE_PATH)).Length > 0;
@@ -106,14 +114,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string initalName, DialogType dialogType)
+		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return new ProjectOpenSaveViewModel(_projectAdapter, initalName, dialogType);
+			return _projectAdapter == null
+                ? throw new InvalidOperationException("Cannot create a ProjectOpenSaveViewModel, the ProjectAdapter is null.")
+				: new ProjectOpenSaveViewModel(_projectAdapter, initalName, dialogType);
 		}
 
-		private IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string initalName, DialogType dialogType)
+		private IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return new ColorBandSetOpenSaveViewModel(_projectAdapter, initalName, dialogType);
+			return _projectAdapter == null
+				? throw new InvalidOperationException("Cannot create a ProjectOpenSaveViewModel, the ProjectAdapter is null.")
+				: new ColorBandSetOpenSaveViewModel(_projectAdapter, initalName, dialogType);
 		}
 
 

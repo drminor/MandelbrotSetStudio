@@ -7,6 +7,7 @@ using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace MSetRepo
@@ -185,9 +186,8 @@ namespace MSetRepo
 
 			var jobInfos = jobReaderWriter.GetJobInfos(project.Id);
 
-			if (jobInfos.Count() > 0)
+			if (jobInfos.Any())
 			{
-
 				var subdivisionIds = jobInfos.Select(j => j.SubDivisionId).Distinct();
 				var lastSaved = jobInfos.Max(x => x.DateCreated);
 				var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
@@ -229,35 +229,32 @@ namespace MSetRepo
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			var colorBandSetRecord = colorBandSetReaderWriter.Get(colorBandSetSerialNumber);
 
-			if (colorBandSetRecord == null)
-			{
-				return null;
-			}
-			else
-			{
-				var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
-				return colorBandSet;
-			}
+			var result = colorBandSetRecord == null ? null : _mSetRecordMapper.MapFrom(colorBandSetRecord);
+			return result;
 		}
 
-		public bool TryGetColorBandSet(Guid colorBandSetSerialNumber, out ColorBandSetRecord? colorBandSetRecord)
+		public bool TryGetColorBandSet(Guid colorBandSetSerialNumber, out ColorBandSet? colorBandSet)
 		{
 			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {colorBandSetSerialNumber}.");
 
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			var result = colorBandSetReaderWriter.TryGet(colorBandSetSerialNumber, out colorBandSetRecord);
+			var result = colorBandSetReaderWriter.TryGet(colorBandSetSerialNumber, out var colorBandSetRecord);
+
+			colorBandSet = result ? _mSetRecordMapper.MapFrom(colorBandSetRecord) : null;
 
 			return result;
 		}
 
-		public ColorBandSetRecord CreateColorBandSetRecord(ColorBandSet currentColorBandSet)
+		public ColorBandSet CreateColorBandSet(ColorBandSet currentColorBandSet)
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			var colorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
 			var id = colorBandSetReaderWriter.Insert(colorBandSetRecord);
 			colorBandSetRecord = colorBandSetReaderWriter.Get(id);
 
-			return colorBandSetRecord;
+			var result = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+
+			return result;
 		}
 
 		public void UpdateColorBandSet(ColorBandSet colorBandSet)
@@ -424,7 +421,7 @@ namespace MSetRepo
 
 		#region Subdivision
 
-		public bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, out Subdivision? subdivision)
+		public bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision)
 		{
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 

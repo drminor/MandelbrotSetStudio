@@ -9,6 +9,7 @@ using System.Threading;
 using MSetRepo;
 using System.Diagnostics;
 using MSS.Common;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
@@ -21,7 +22,7 @@ namespace MSetExplorer
 		private int _jobsPointer;
 		private SizeInt _canvasSize;
 
-		private Project _currentProject;
+		private Project? _currentProject;
 		private bool _currentProjectIsDirty;
 
 		#region Constructor
@@ -64,7 +65,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public Project CurrentProject
+		public Project? CurrentProject
 		{
 			get => _currentProject;
 			private set
@@ -80,12 +81,13 @@ namespace MSetExplorer
 			}
 		}
 
-		public string CurrentProjectName => CurrentProject?.Name;
+		public string? CurrentProjectName => CurrentProject?.Name;
 		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
 		public bool CanSaveProject => CurrentProjectOnFile && CurrentProjectIsDirty;
 
+		public bool CurrentColorBandSetOnFile => CurrentColorBandSet?.OnFile ?? false;
 		public bool CurrentColorBandSetIsDirty => CurrentProject?.ColorBandSetIsDirty ?? false;
-		public bool CanSaveColorBandSet => CurrentColorBandSetIsDirty;
+		public bool CanSaveColorBandSet => CurrentColorBandSetOnFile && CurrentColorBandSetIsDirty;
 
 		public bool CurrentProjectIsDirty
 		{
@@ -100,7 +102,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSet CurrentColorBandSet
+		public ColorBandSet? CurrentColorBandSet
 		{
 			get => CurrentProject?.CurrentColorBandSet;
 			set
@@ -110,7 +112,7 @@ namespace MSetExplorer
 				{
 					if (value != project.CurrentColorBandSet)
 					{
-						Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {project.CurrentColorBandSet.SerialNumber}, New = {value.SerialNumber}.");
+						Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {project.CurrentColorBandSet.SerialNumber}, New = {value?.SerialNumber ?? Guid.Empty}.");
 						project.CurrentColorBandSet = value;
 						CurrentProjectIsDirty = true;
 						OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
@@ -127,7 +129,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public Job CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
+		public Job? CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
 		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
 		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_jobsPointer, out var _); });
 
@@ -163,7 +165,7 @@ namespace MSetExplorer
 		public bool ProjectOpen(string projectName)
 		{
 			var result = _projectAdapter.TryGetProject(projectName, out var project);
-			if (result)
+			if (result && project != null)
 			{
 				LoadProject(project);
 			}
@@ -171,7 +173,8 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public void ProjectSaveAs(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		// TODO: Check how the ColorBandSet is being handled upon ProjectSaveAs
+		public void ProjectSaveAs(string name, string? description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
 		{
 			if( _projectAdapter.TryGetProject(name, out var existingProject))
 			{
@@ -222,32 +225,51 @@ namespace MSetExplorer
 
 		public void ProjectSave()
 		{
-			if (!CurrentProjectOnFile)
+			var project = CurrentProject;
+
+			if (project != null)
 			{
-				throw new InvalidOperationException("Cannot save an unloaded project, use SaveProject instead.");
-			}
-
-			if (CurrentProject.ColorBandSetIsDirty)
-			{
-				_projectAdapter.UpdateProjectColorBands(CurrentProject.Id, CurrentProject.ColorBandSetSNs, CurrentProject.CurrentColorBandSet);
-				CurrentProject.ColorBandSetIsDirty = false;
-			}
-
-			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(CurrentProject.Id);
-
-			var jobsList = Jobs.ToList();
-
-			for(var i = 0; i < jobsList.Count; i++ )
-			{
-				var job = jobsList[i];
-				if (job.Id.CreationTime > lastSavedTime)
+				if (!CurrentProjectOnFile)
 				{
-					var updatedJob = _projectAdapter.InsertJob(job);
-					UpdateJob(job, updatedJob);
+					throw new InvalidOperationException("Cannot save an unloaded project, use SaveProject instead.");
 				}
-			}
 
-			CurrentProjectIsDirty = false;
+				var colorBandSet = project.CurrentColorBandSet;
+
+				if (colorBandSet != null)
+				{
+					if (project.ColorBandSetIsDirty)
+					{
+						_projectAdapter.UpdateProjectColorBands(project.Id, project.ColorBandSetSNs, colorBandSet);
+						project.ColorBandSetIsDirty = false;
+					}
+					else
+					{
+						colorBandSet.Name = project.Name;
+						var updatedColorBandSet = _projectAdapter.CreateColorBandSet(colorBandSet);
+						project.CurrentColorBandSet = updatedColorBandSet;
+
+						_projectAdapter.UpdateProjectColorBands(project.Id, project.ColorBandSetSNs, project.CurrentColorBandSet);
+						project.ColorBandSetIsDirty = false;
+					}
+				}
+
+				var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(project.Id);
+
+				var jobsList = Jobs.ToList();
+
+				for (var i = 0; i < jobsList.Count; i++)
+				{
+					var job = jobsList[i];
+					if (job.Id.CreationTime > lastSavedTime)
+					{
+						var updatedJob = _projectAdapter.InsertJob(job);
+						UpdateJob(job, updatedJob);
+					}
+				}
+
+				CurrentProjectIsDirty = false;
+			}
 		}
 
 		public void ProjectUpdateName(string name)
@@ -288,25 +310,60 @@ namespace MSetExplorer
 		public bool ColorBandSetOpen(Guid serialNumber)
 		{
 			var colorBandSet = GetColorBandSet(serialNumber);
-			CurrentColorBandSet = colorBandSet;
-			return true;
+
+			if (colorBandSet != null)
+			{
+				CurrentColorBandSet = colorBandSet;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		public void ColorBandSetSave()
 		{
-			if (CurrentProject.ColorBandSetIsDirty)
+			var curProject = CurrentProject;
+
+			if (curProject != null)
 			{
-				_projectAdapter.UpdateColorBandSet(CurrentProject.CurrentColorBandSet);
-				CurrentProject.ColorBandSetIsDirty = false;
+				var colorBandSet = curProject.CurrentColorBandSet;
+				if (colorBandSet != null)
+				{
+					if (colorBandSet.OnFile)
+					{
+						_projectAdapter.UpdateColorBandSet(colorBandSet);
+						curProject.ColorBandSetIsDirty = false;
+					}
+					else
+					{
+						var updatedColorBandSet = _projectAdapter.CreateColorBandSet(colorBandSet);
+						curProject.CurrentColorBandSet = updatedColorBandSet;
+					}
+				}
 			}
 		}
 		
-		public void ColorBandSetSaveAs(string name, string description, int versionNumber, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		public void ColorBandSetSaveAs(string name, string? description, int? versionNumber)
 		{
+			var curProject = CurrentProject;
 
+			if (curProject != null && curProject.CurrentColorBandSet != null)
+			{
+				var colorBandSet = curProject.CurrentColorBandSet.CreateNewCopy();
+
+				colorBandSet.Name = name;
+				colorBandSet.Description = description;
+				colorBandSet.VersionNumber = versionNumber ?? 0;
+
+				var updatedcolorBandSet = _projectAdapter.CreateColorBandSet(colorBandSet);
+
+				curProject.CurrentColorBandSet = updatedcolorBandSet;
+			}
 		}
 
-		public ColorBandSet GetColorBandSet(Guid serialNumber)
+		public ColorBandSet? GetColorBandSet(Guid serialNumber)
 		{
 			var result = _projectAdapter.GetColorBandSet(serialNumber);
 			return result;
@@ -499,7 +556,7 @@ namespace MSetExplorer
 			return false;
 		}
 
-		private bool TryGetJobFromStack(int jobIndex, out Job job)
+		private bool TryGetJobFromStack(int jobIndex, [MaybeNullWhen(false)] out Job job)
 		{
 			if (jobIndex < 0 || jobIndex > _jobsCollection.Count - 1)
 			{
@@ -544,7 +601,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool TryFindByJobId(ObjectId id, out Job job)
+		private bool TryFindByJobId(ObjectId id, out Job? job)
 		{
 			job = _jobsCollection.FirstOrDefault(x => x.Id == id);
 			return job != null;

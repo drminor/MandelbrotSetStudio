@@ -3,24 +3,26 @@ using MSetRepo;
 using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public class ProjectOpenSaveViewModel : ViewModelBase, IProjectOpenSaveViewModel
+	public class ProjectOpenSaveViewModel : IProjectOpenSaveViewModel, INotifyPropertyChanged
 	{
 		private readonly ProjectAdapter _projectAdapter;
-		private IProjectInfo _selectedProject;
+		private IProjectInfo? _selectedProject;
 
-		private string _selectedName;
-		private string _selectedDescription;
+		private string? _selectedName;
+		private string? _selectedDescription;
 
 		private bool _userIsSettingTheName;
 
 		#region Constructor
 
-		public ProjectOpenSaveViewModel(ProjectAdapter projectAdapter, string initialName, DialogType dialogType)
+		public ProjectOpenSaveViewModel(ProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
 		{
 			_projectAdapter = projectAdapter;
 			DialogType = dialogType;
@@ -40,7 +42,7 @@ namespace MSetExplorer
 
 		public ObservableCollection<IProjectInfo> ProjectInfos { get; init; }
 
-		public string SelectedName
+		public string? SelectedName
 		{
 			get => _selectedName;
 			set
@@ -57,7 +59,7 @@ namespace MSetExplorer
 		}
 
 
-		public string SelectedDescription
+		public string? SelectedDescription
 		{
 			get => _selectedDescription;
 			set
@@ -74,7 +76,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public IProjectInfo SelectedProject
+		public IProjectInfo? SelectedProject
 		{
 			get => _selectedProject;
 
@@ -85,10 +87,10 @@ namespace MSetExplorer
 				{
 					if (!_userIsSettingTheName)
 					{
-						SelectedName = _selectedProject.Name;
+						SelectedName = _selectedProject?.Name;
 					}
 
-					SelectedDescription = _selectedProject.Description;
+					SelectedDescription = _selectedProject?.Description;
 				}
 				else
 				{
@@ -100,13 +102,25 @@ namespace MSetExplorer
 			}
 		}
 
-		#endregion
-
 		public bool IsNameTaken(string name)
 		{
 			var result = _projectAdapter.TryGetProject(name, out var _);
 			return result;
 		}
+
+		#endregion
+
+		#region INotifyPropertyChanged Support
+
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		#endregion
+
 
 	}
 }

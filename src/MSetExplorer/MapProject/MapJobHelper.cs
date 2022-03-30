@@ -44,13 +44,19 @@ namespace MSetExplorer
 		// Find an existing subdivision record that the same SamplePointDelta
 		private static Subdivision GetSubdivision(RRectangle coords, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
-			if (!projectAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var subdivision))
+			Subdivision result;
+
+			if (projectAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var subdivision))
+			{
+				result = subdivision;
+			}
+			else
 			{
 				var subdivisionNotSaved = new Subdivision(samplePointDelta, blockSize);
-				subdivision = projectAdapter.InsertSubdivision(subdivisionNotSaved);
+				result = projectAdapter.InsertSubdivision(subdivisionNotSaved);
 			}
 
-			return subdivision;
+			return result;
 		}
 
 		public static string GetJobName(TransformType transformType)

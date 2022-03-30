@@ -13,7 +13,7 @@ namespace MSS.Types.MSet
 		public string? Description { get; set; }
 		public Collection<Guid> ColorBandSetSNs { get; init; }
 
-		private ColorBandSet _currentColorBandSet;
+		private ColorBandSet? _currentColorBandSet;
 
 		public Project(string name, string? description, ColorBandSet currentColorBandSet) 
 			: this(ObjectId.Empty, name, description, new List<Guid> { currentColorBandSet.SerialNumber }, currentColorBandSet)
@@ -38,14 +38,14 @@ namespace MSS.Types.MSet
 
 		public bool OnFile => Id != ObjectId.Empty;
 
-		public ColorBandSet CurrentColorBandSet
+		public ColorBandSet? CurrentColorBandSet
 		{
 			get => _currentColorBandSet;
 			set
 			{
 				if (value != _currentColorBandSet)
 				{
-					if (!ColorBandSetSNs.Contains(value.SerialNumber))
+					if (value != null && !ColorBandSetSNs.Contains(value.SerialNumber))
 					{
 						ColorBandSetSNs.Add(value.SerialNumber);
 					}

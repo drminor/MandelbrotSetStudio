@@ -20,6 +20,7 @@ namespace MSetExplorer
 
 		public ColorBandSetUserControl()
 		{
+			_vm = (ColorBandSetViewModel)DataContext;
 			InitializeComponent();
 			Loaded += ColorBandSetUserControl_Loaded;
 		}
@@ -82,7 +83,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Metghods
+		#region Private Methods
 
 		private void InsertColorBand()
 		{
@@ -97,13 +98,6 @@ namespace MSetExplorer
 					_ = MessageBox.Show("No Room to insert here.");
 					return;
 				}
-
-				//view.NewItemPlaceholderPosition = NewItemPlaceholderPosition.AtEnd;
-				//var newItem = (ColorBand) view.AddNew();
-				//var newCutoff = selItem.PreviousCutOff + (selItem.CutOff - selItem.PreviousCutOff) / 2;
-				//newItem.CutOff = newCutoff;
-				//newItem.PreviousCutOff = selItem.PreviousCutOff;
-				//view.CommitNew();
 
 				var index = lvColorBands.Items.IndexOf(selItem);
 				var newCutoff = selItem.PreviousCutOff + (selItem.CutOff - selItem.PreviousCutOff) / 2;
@@ -159,6 +153,7 @@ namespace MSetExplorer
 
 					view.CommitEdit();
 					UpdateNeighbors(selItem, index);
+					_vm.ItemWasUpdated();
 				}
 				else
 				{
@@ -183,7 +178,7 @@ namespace MSetExplorer
 		{
 			if (TryGetPredeccessor(index, out var predecessor))
 			{
-				if (selItem.StartColorUpdated && predecessor.BlendStyle == ColorBandBlendStyle.Next)
+				if (selItem.StartColorUpdated && predecessor != null && predecessor.BlendStyle == ColorBandBlendStyle.Next)
 				{
 					predecessor.ActualEndColor = selItem.StartColor;
 				}
@@ -191,14 +186,14 @@ namespace MSetExplorer
 
 			if (TryGetSuccessor(index, out var sucessor))
 			{
-				if (selItem.CutOffUpdated)
+				if (selItem.CutOffUpdated && sucessor != null)
 				{
 					sucessor.PreviousCutOff = selItem.CutOff;
 				}
 			}
 		}
 
-		private bool TryGetPredeccessor(int index, out ColorBand colorBand)
+		private bool TryGetPredeccessor(int index, out ColorBand? colorBand)
 		{
 			if (index < 1)
 			{
@@ -212,7 +207,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool TryGetSuccessor(int index, out ColorBand colorBand)
+		private bool TryGetSuccessor(int index, out ColorBand? colorBand)
 		{
 			if (index > lvColorBands.Items.Count - 2)
 			{
@@ -226,7 +221,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private ColorBand GetSuccessor(int index)
+		private ColorBand? GetSuccessor(int index)
 		{
 			_ = TryGetSuccessor(index, out var successor);
 			return successor;

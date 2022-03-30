@@ -14,24 +14,31 @@ namespace MSS.Types
 	{
 		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
+		private string? _name;
+		private string? _description;
+		private int _versionNumber;
+
+		private bool _onFile;
+
 		#region Constructor
 
-		public ColorBandSet() : this(Guid.NewGuid(), new List<ColorBand>())
+		public ColorBandSet() : this(Guid.NewGuid(), new List<ColorBand>(), onFile: false)
 		{ }
 
-		public ColorBandSet(Guid serialNumber) : this(serialNumber, new List<ColorBand>())
+		public ColorBandSet(Guid serialNumber) : this(serialNumber, new List<ColorBand>(), onFile: false)
 		{ }
 
-		public ColorBandSet(IList<ColorBand> list) : this(Guid.NewGuid(), list)
+		public ColorBandSet(IList<ColorBand> list) : this(Guid.NewGuid(), list, onFile: false)
 		{ }
 
-		public ColorBandSet(Guid serialNumber, IList<ColorBand> colorBands) : base(FixBands(colorBands))
+		public ColorBandSet(Guid serialNumber, IList<ColorBand> colorBands, bool onFile) : base(FixBands(colorBands))
 		{
 			Debug.WriteLine($"Constructing ColorBandSet with SerialNumber: {serialNumber}.");
 			SerialNumber = serialNumber;
-			_name = serialNumber.ToString();
+			_name = null;
 			_description = null;
 			_versionNumber = 0;
+			_onFile = onFile;
 		}
 
 		#endregion
@@ -40,8 +47,7 @@ namespace MSS.Types
 
 		public Guid SerialNumber { get; init; }
 
-		private string _name;
-		public string Name
+		public string? Name
 		{
 			get => _name;
 			set
@@ -54,7 +60,6 @@ namespace MSS.Types
 			}
 		}
 
-		private string? _description;
 		public string? Description
 		{
 			get => _description;
@@ -68,7 +73,6 @@ namespace MSS.Types
 			}
 		}
 
-		private int _versionNumber;
 		public int VersionNumber
 		{
 			get => _versionNumber;
@@ -87,6 +91,20 @@ namespace MSS.Types
 		#region Public Properties - Derived
 
 		public ObservableCollection<ColorBand> ColorBands => this;
+
+		public bool OnFile
+		{
+			get => _onFile;
+
+			set
+			{
+				if (value != _onFile)
+				{
+					_onFile = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public bool IsReadOnly => false;
 
@@ -310,6 +328,8 @@ namespace MSS.Types
 		{
 			var result = new ColorBandSet(CreateCopy())
 			{
+				Name = Name,
+				Description = Description,
 				VersionNumber = VersionNumber + 1
 			};
 
@@ -329,7 +349,7 @@ namespace MSS.Types
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with SerialNumber: {SerialNumber}.");
 
-			var result = new ColorBandSet(SerialNumber, CreateCopy())
+			var result = new ColorBandSet(SerialNumber, CreateCopy(), onFile: OnFile)
 			{
 				Name = Name,
 				Description = Description,

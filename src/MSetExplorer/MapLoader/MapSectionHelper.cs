@@ -146,7 +146,7 @@ namespace MSetExplorer
 			return mapSection;
 		}
 
-		public static byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
+		public static byte[]? GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
 		{
 			if (counts == null)
 			{
