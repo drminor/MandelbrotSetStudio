@@ -98,6 +98,11 @@ namespace MSetRepo
 			var projectRecord = projectReaderWriter.Get(name);
 			if (projectRecord is null)
 			{
+				if (!currentColorBandSet.OnFile)
+				{
+					// Use the project name to name the new ColorBandSet.
+					currentColorBandSet.Name = name;
+				}
 				var colorBandSetRecord = GetOrCreateColorBandSetRecord(currentColorBandSet);
 
 				var project = new Project(name, description, colorBandSetIds.ToList(), currentColorBandSet);

@@ -76,7 +76,7 @@ namespace MSetExplorer
 					// Clone this to keep changes made here from updating the Project's copy.
 					if (value != null)
 					{
-						ColorBandSet = value.CurrentColorBandSet.Clone();
+						ColorBandSet = value.CurrentColorBandSet?.Clone();
 					}
 
 					OnPropertyChanged(nameof(CurrentProject));

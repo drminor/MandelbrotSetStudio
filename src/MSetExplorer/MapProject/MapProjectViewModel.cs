@@ -236,9 +236,9 @@ namespace MSetExplorer
 
 				var colorBandSet = project.CurrentColorBandSet;
 
-				if (colorBandSet != null)
+				if (colorBandSet != null && project.ColorBandSetIsDirty)
 				{
-					if (project.ColorBandSetIsDirty)
+					if (colorBandSet.OnFile)
 					{
 						_projectAdapter.UpdateProjectColorBands(project.Id, project.ColorBandSetSNs, colorBandSet);
 						project.ColorBandSetIsDirty = false;

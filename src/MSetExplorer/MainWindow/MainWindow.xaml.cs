@@ -262,7 +262,15 @@ namespace MSetExplorer
 		{
 			_ = ColorsCommitUpdates();
 
-			_vm.MapProjectViewModel.ColorBandSetSave();
+			if (_vm.MapProjectViewModel.CanSaveColorBandSet)
+			{
+				// The ColorBandSet is on-file, just save the pending changes.
+				_vm.MapProjectViewModel.ColorBandSetSave();
+			}
+			else
+			{
+				SaveColors();
+			}
 		}
 
 		// Colors SaveAs
@@ -274,9 +282,13 @@ namespace MSetExplorer
 		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			_ = ColorsCommitUpdates();
+			SaveColors();
+		}
 
+		private void SaveColors()
+		{
 			var curProject = _vm.MapProjectViewModel.CurrentProject;
-			var initialName = curProject?.CurrentColorBandSet.Name;
+			var initialName = curProject?.CurrentColorBandSet?.Name;
 
 			if (ColorsShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description, out var versionNumber, out var serialNumber))
 			{
