@@ -117,7 +117,7 @@ namespace MSetExplorer
 
 		public bool IsNameTaken(string? name)
 		{
-			var result = name == null ? false : _projectAdapter.TryGetProject(name, out var _);
+			var result = name != null && _projectAdapter.TryGetProject(name, out var _);
 			return result;
 		}
 

@@ -18,6 +18,7 @@ namespace MSetExplorer
 
 		public TwoColorPanelControl()
 		{
+			_canvas = new Canvas();
 			_drawingGroup = new DrawingGroup();
 			_rectangle = BuildRectangle(new SizeDbl(), ColorBandColor.White, ColorBandColor.White);
 			_drawingGroup.Children.Add(_rectangle);

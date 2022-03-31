@@ -90,8 +90,8 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public string ProjectName => _vm.SelectedName;
-		public string ProjectDescription => _vm.SelectedDescription;
+		public string? ProjectName => _vm.SelectedName;
+		public string? ProjectDescription => _vm.SelectedDescription;
 
 		#endregion
 

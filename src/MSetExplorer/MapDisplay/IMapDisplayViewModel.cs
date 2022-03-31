@@ -12,13 +12,13 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler? PropertyChanged;
 
-		event EventHandler<MapViewUpdateRequestedEventArgs> MapViewUpdateRequested;
+		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 
 		SizeInt BlockSize { get; }
 		ImageSource ImageSource { get; }
 		ObservableCollection<MapSection> MapSections { get; }
 
-		Job CurrentJob { get; set; }
+		Job? CurrentJob { get; set; }
 		ColorBandSet? ColorBandSet { get; set; }
 
 		// These may need to be dependency properties

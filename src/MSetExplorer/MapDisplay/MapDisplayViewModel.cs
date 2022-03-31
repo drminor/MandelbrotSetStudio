@@ -21,10 +21,10 @@ namespace MSetExplorer
 		private SizeInt _canvasSize;
 		private VectorInt _canvasControlOffset;
 
-		private Job _currentJob;
+		private Job? _currentJob;
 
-		private ColorBandSet _colorBandSet;
-		private ColorMap _colorMap;
+		private ColorBandSet? _colorBandSet;
+		private ColorMap? _colorMap;
 
 		private SizeDbl _containerSize;
 
@@ -57,7 +57,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public event EventHandler<MapViewUpdateRequestedEventArgs> MapViewUpdateRequested;
+		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 
 		public new bool InDesignMode => base.InDesignMode;
 
@@ -65,7 +65,7 @@ namespace MSetExplorer
 
 		public ImageSource ImageSource { get; init; }
 
-		public Job CurrentJob
+		public Job? CurrentJob
 		{
 			get => _currentJob;
 			set
@@ -73,14 +73,15 @@ namespace MSetExplorer
 				if (value != _currentJob)
 				{
 					_currentJob = value;
-					HandleCurrentJobChanged(_currentJob);
+					if (_currentJob != null)
+					{
+						HandleCurrentJobChanged(_currentJob);
+					}
 				}
 			}
 		}
 
-		//new ColorMap(MapProjectViewModel.CurrentColorBandSet)
-
-		public ColorBandSet ColorBandSet
+		public ColorBandSet? ColorBandSet
 		{
 			get => _colorBandSet;
 			set
@@ -162,13 +163,13 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapLoaderManager_MapSectionReady(object sender, MapSection e)
+		private void MapLoaderManager_MapSectionReady(object? sender, MapSection e)
 		{
 			// TODO: Use a lock on MapSectionReady to avoid race conditions as the ColorMap is applied.
 			MapSections.Add(e);
 		}
 
-		private void MapSections_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		private void MapSections_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		{
 			if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
 			{
@@ -205,15 +206,18 @@ namespace MSetExplorer
 			DrawSections(loadedSections, colorMap);
 		}
 
-		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap colorMap)
+		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap? colorMap)
 		{
 			if (colorMap != null)
 			{
 				foreach (var mapSection in mapSections)
 				{
+					if (mapSection.Counts != null)
+					{
 					//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
 					var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted);
 					_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
+					}
 				}
 			}
 			else
@@ -227,9 +231,11 @@ namespace MSetExplorer
 
 		private void HandleCurrentJobChanged(Job curJob)
 		{
+			var job = curJob;
+
 			_mapLoaderManager.StopCurrentJob();
 
-			if (ShouldAttemptToReuseLoadedSections(curJob))
+			if (ShouldAttemptToReuseLoadedSections(job))
 			{
 				var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
 				var loadedSections = GetMapSectionsSnapShot();
@@ -248,14 +254,14 @@ namespace MSetExplorer
 				_screenSectionCollection.Shift(shiftAmount);
 				CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
 				RedrawSections(MapSections);
-				_mapLoaderManager.Push(curJob, sectionsToLoad);
+				_mapLoaderManager.Push(job, sectionsToLoad);
 			}
 			else
 			{
 				Debug.WriteLine($"Clearing Display. TransformType: {curJob.TransformType}.");
 				MapSections.Clear();
 				CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
-				_mapLoaderManager.Push(curJob);
+				_mapLoaderManager.Push(job);
 			}
 		}
 

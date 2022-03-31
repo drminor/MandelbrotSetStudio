@@ -112,14 +112,14 @@ namespace MSetExplorer
 				{
 					if (value != project.CurrentColorBandSet)
 					{
-						Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {project.CurrentColorBandSet.SerialNumber}, New = {value?.SerialNumber ?? Guid.Empty}.");
+						Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {project.CurrentColorBandSet?.SerialNumber}, New = {value?.SerialNumber ?? Guid.Empty}.");
 						project.CurrentColorBandSet = value;
 						CurrentProjectIsDirty = true;
 						OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 					}
 					else
 					{
-						Debug.WriteLine($"MapProjectViewModel is ignoring the ColorBandSet value update. The Current value is already: {project.CurrentColorBandSet.SerialNumber}.");
+						Debug.WriteLine($"MapProjectViewModel is ignoring the ColorBandSet value update. The Current value is already: {project.CurrentColorBandSet?.SerialNumber}.");
 					}
 				}
 				else
@@ -164,24 +164,23 @@ namespace MSetExplorer
 
 		public bool ProjectOpen(string projectName)
 		{
-			var result = _projectAdapter.TryGetProject(projectName, out var project);
-			if (result && project != null)
+			if (_projectAdapter.TryGetProject(projectName, out var project))
 			{
 				LoadProject(project);
+				return true;
 			}
-
-			return result;
+			else
+			{
+				return false;
+			}
 		}
 
 		// TODO: Check how the ColorBandSet is being handled upon ProjectSaveAs
 		public void ProjectSaveAs(string name, string? description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
 		{
-			if( _projectAdapter.TryGetProject(name, out var existingProject))
+			if (_projectAdapter.TryGetProject(name, out var existingProject))
 			{
-				if (existingProject != null)
-				{
-					_projectAdapter.DeleteProject(existingProject.Id);
-				}
+				_projectAdapter.DeleteProject(existingProject.Id);
 			}
 
 			var project = _projectAdapter.CreateProject(name, description, colorBandSetIds, currentColorBandSet);
@@ -376,6 +375,11 @@ namespace MSetExplorer
 		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
 		{
 			var curJob = CurrentJob;
+			if (curJob == null)
+			{
+				return;
+			}
+
 			var position = curJob.MSetInfo.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
@@ -388,6 +392,11 @@ namespace MSetExplorer
 		public void UpdateTargetInterations(int targetIterations, int iterationsPerRequest)
 		{
 			var curJob = CurrentJob;
+			if (curJob == null)
+			{
+				return;
+			}
+
 			var mSetInfo = curJob.MSetInfo;
 			var updatedInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations, iterationsPerRequest);
 
@@ -452,9 +461,16 @@ namespace MSetExplorer
 
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
+			var curProject = CurrentProject;
+
+			if (curProject == null)
+			{
+				return;
+			}
+
 			var parentJob = CurrentJob;
 			var jobName = MapJobHelper.GetJobName(transformType);
-			var job = MapJobHelper.BuildJob(parentJob, CurrentProject, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+			var job = MapJobHelper.BuildJob(parentJob, curProject, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -601,7 +617,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool TryFindByJobId(ObjectId id, out Job? job)
+		private bool TryFindByJobId(ObjectId id, [MaybeNullWhen(false)] out Job job)
 		{
 			job = _jobsCollection.FirstOrDefault(x => x.Id == id);
 			return job != null;

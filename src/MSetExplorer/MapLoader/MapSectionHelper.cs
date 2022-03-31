@@ -15,7 +15,7 @@ namespace MSetExplorer
 
 		#region Create MapSectionRequests
 
-		public static IList<MapSectionRequest> CreateSectionRequests(Job job, IList<MapSection> emptyMapSections)
+		public static IList<MapSectionRequest> CreateSectionRequests(Job job, IList<MapSection>? emptyMapSections)
 		{
 			if (emptyMapSections == null)
 			{
@@ -146,13 +146,8 @@ namespace MSetExplorer
 			return mapSection;
 		}
 
-		public static byte[]? GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
+		public static byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
 		{
-			if (counts == null)
-			{
-				return null;
-			}
-
 			var numberofCells = blockSize.NumberOfCells;
 			var result = new byte[4 * numberofCells];
 

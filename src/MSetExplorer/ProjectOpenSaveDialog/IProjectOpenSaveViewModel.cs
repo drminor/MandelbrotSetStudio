@@ -15,6 +15,6 @@ namespace MSetExplorer
 
 		bool UserIsSettingTheName { get; set; }
 
-		bool IsNameTaken(string name);
+		bool IsNameTaken(string? name);
 	}
 }

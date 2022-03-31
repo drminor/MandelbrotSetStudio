@@ -17,6 +17,7 @@ namespace MSetExplorer
 
 		public ColorBandSetOpenSaveWindow()
 		{
+			_vm = (IColorBandSetOpenSaveViewModel)DataContext;
 			InitializeComponent();
 			Loaded += ColorBandSetOpenSaveWindow_Loaded;
 		}

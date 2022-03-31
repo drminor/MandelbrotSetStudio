@@ -2,6 +2,7 @@
 using MongoDB.Driver;
 using ProjectRepo.Entities;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace ProjectRepo
@@ -35,7 +36,7 @@ namespace ProjectRepo
 			return projectRecord;
 		}
 
-		public bool TryGet(string name, out ProjectRecord projectRecord)
+		public bool TryGet(string name, [MaybeNullWhen(false)] out ProjectRecord projectRecord)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("Name", name);
 			projectRecord = Collection.Find(filter).FirstOrDefault();

@@ -44,6 +44,11 @@ namespace MSetRepo
 
 		public ProjectRecord MapTo(Project source)
 		{
+			if (source.CurrentColorBandSet == null)
+			{
+				throw new ArgumentNullException(nameof(source.CurrentColorBandSet), "When Mapping from a Project to a ProjectRecord, the project must have a non-null CurrentColorBandSet.");
+			}
+
 			var result = new ProjectRecord(source.Name, source.Description, source.ColorBandSetSNs.Select(x => x.ToByteArray()).ToArray(), MapTo(source.CurrentColorBandSet));
 			return result;
 		}

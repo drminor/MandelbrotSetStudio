@@ -73,7 +73,7 @@ namespace MSetRepo
 			return project;
 		}
 
-		public bool TryGetProject(string name, out Project? project)
+		public bool TryGetProject(string name, [MaybeNullWhen(false)] out Project project)
 		{
 			//Debug.WriteLine($"Retrieving Project object for Project with name: {name}.");
 
@@ -238,7 +238,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public bool TryGetColorBandSet(Guid colorBandSetSerialNumber, out ColorBandSet? colorBandSet)
+		public bool TryGetColorBandSet(Guid colorBandSetSerialNumber, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
 			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {colorBandSetSerialNumber}.");
 

@@ -12,7 +12,7 @@ namespace MSetExplorer
 {
 	internal class MapLoaderManager : IMapLoaderManager, IDisposable
 	{
-		private readonly SynchronizationContext _synchronizationContext;
+		private readonly SynchronizationContext? _synchronizationContext;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private readonly List<GenMapRequestInfo> _requests;
@@ -34,11 +34,11 @@ namespace MSetExplorer
 
 		#endregion
 
-		public event EventHandler<MapSection> MapSectionReady;
+		public event EventHandler<MapSection>? MapSectionReady;
 
 		#region Public Properties
 
-		private GenMapRequestInfo CurrentRequest => DoWithReadLock(() => { return (_requestsPointer == -1 || _requestsPointer > _requests.Count - 1) ? null : _requests[_requestsPointer]; });
+		private GenMapRequestInfo? CurrentRequest => DoWithReadLock(() => { return (_requestsPointer == -1 || _requestsPointer > _requests.Count - 1) ? null : _requests[_requestsPointer]; });
 
 		#endregion
 
@@ -49,7 +49,7 @@ namespace MSetExplorer
 			Push(job, null);
 		}
 
-		public void Push(Job job, IList<MapSection> emptyMapSections)
+		public void Push(Job job, IList<MapSection>? emptyMapSections)
 		{
 			DoWithWriteLock(() =>
 			{
@@ -90,7 +90,7 @@ namespace MSetExplorer
 
 					if (jobNumber == currentRequest.JobNumber)
 					{
-						_synchronizationContext.Post(o => MapSectionReady?.Invoke(this, mapSection), null);
+						_synchronizationContext?.Post(o => MapSectionReady?.Invoke(this, mapSection), null);
 					}
 					else
 					{

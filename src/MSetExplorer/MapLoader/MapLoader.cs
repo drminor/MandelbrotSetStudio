@@ -15,11 +15,11 @@ namespace MSetExplorer
 		private readonly Action<object, MapSection> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
-		private IList<MapSectionRequest> _mapSectionRequests;
+		private IList<MapSectionRequest>? _mapSectionRequests;
 		private bool _isStopping;
 		private int _sectionsRequested;
 		private int _sectionsCompleted;
-		private TaskCompletionSource _tcs;
+		private TaskCompletionSource? _tcs;
 
 		#region Constructor
 
@@ -82,13 +82,18 @@ namespace MSetExplorer
 
 		private void SubmitSectionRequests()
 		{
+			if (_mapSectionRequests == null)
+			{
+				return;
+			}
+
 			foreach(var mapSectionRequest in _mapSectionRequests)
 			{
 				if (_isStopping)
 				{
 					if (_sectionsCompleted == _sectionsRequested)
 					{
-						_tcs.SetResult();
+						_tcs?.SetResult();
 					}
 					break;
 				}
@@ -112,9 +117,9 @@ namespace MSetExplorer
 			}
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
-			if (_sectionsCompleted == _mapSectionRequests.Count || (_isStopping && _sectionsCompleted == _sectionsRequested))
+			if (_sectionsCompleted == _mapSectionRequests?.Count || (_isStopping && _sectionsCompleted == _sectionsRequested))
 			{
-				if (!_tcs.Task.IsCompleted)
+				if (_tcs?.Task.IsCompleted == false)
 				{
 					_tcs.SetResult();
 				}

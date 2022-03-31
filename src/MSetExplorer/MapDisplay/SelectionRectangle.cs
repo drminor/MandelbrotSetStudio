@@ -25,8 +25,8 @@ namespace MSetExplorer
 		private Point _dragAnchor;
 		private bool _dragHasBegun;
 
-		internal event EventHandler<AreaSelectedEventArgs> AreaSelected;
-		internal event EventHandler<ImageDraggedEventArgs> ImageDragged;
+		internal event EventHandler<AreaSelectedEventArgs>? AreaSelected;
+		internal event EventHandler<ImageDraggedEventArgs>? ImageDragged;
 
 		#region Constructor
 
@@ -68,7 +68,7 @@ namespace MSetExplorer
 				Focusable = true
 			};
 
-			_ = _canvas.Children.Add(result);
+			_ = canvas.Children.Add(result);
 			result.SetValue(Panel.ZIndexProperty, 10);
 
 			return result;
@@ -85,7 +85,7 @@ namespace MSetExplorer
 				Focusable = true
 			};
 
-			_ = _canvas.Children.Add(result);
+			_ = canvas.Children.Add(result);
 			result.SetValue(Panel.ZIndexProperty, 20);
 
 			return result;

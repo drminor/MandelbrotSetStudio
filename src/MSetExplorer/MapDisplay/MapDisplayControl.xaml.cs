@@ -17,13 +17,18 @@ namespace MSetExplorer
 		private IMapDisplayViewModel _vm;
 		private Canvas _canvas;
 		private Image _mapDisplayImage;
-		private SelectionRectangle _selectionRectangle;
-		private Border _border;
+		private SelectionRectangle? _selectionRectangle;
+		private Border? _border;
 
 		#region Constructor
 
 		public MapDisplayControl()
 		{
+			_canvas = new Canvas();
+			_mapDisplayImage = new Image();
+
+			_vm = (IMapDisplayViewModel)DataContext;
+
 			Loaded += MapDisplay_Loaded;
 			InitializeComponent();
 		}
@@ -89,7 +94,7 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(_vm.CanvasControlOffset))
 			{
@@ -102,17 +107,17 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MapDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
+		private void MapDisplay_SizeChanged(object? sender, SizeChangedEventArgs e)
 		{
 			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize));
 		}
 
-		private void SelectionRectangle_AreaSelected(object sender, AreaSelectedEventArgs e)
+		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{
 			_vm.UpdateMapViewZoom(e);
 		}
 
-		private void SelectionRectangle_ImageDragged(object sender, ImageDraggedEventArgs e)
+		private void SelectionRectangle_ImageDragged(object? sender, ImageDraggedEventArgs e)
 		{
 			_vm.UpdateMapViewPan(e);
 		}
