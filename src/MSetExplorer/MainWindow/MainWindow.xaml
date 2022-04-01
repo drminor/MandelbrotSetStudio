@@ -100,7 +100,7 @@
             </Grid.ColumnDefinitions>
 
             <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical" Margin="0,5,0,5">
+                <!--<StackPanel HorizontalAlignment="Stretch" Orientation="Vertical" Margin="0,5,0,5">
 
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Width="90" Margin="5" FontSize="14" Text="Iterations:"/>
@@ -112,7 +112,9 @@
                         <TextBox Text="{Binding Path=Steps}" Width="70" VerticalAlignment="Center"/>
                     </StackPanel>
 
-                </StackPanel>
+                </StackPanel>-->
+                <!--<local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" MSetInfo="{Binding MapProjectViewModel.CurrentJob.MSetInfo}" Focusable="True"/>-->
+                <local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" Focusable="True"/>
             </Border>
 
             <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">

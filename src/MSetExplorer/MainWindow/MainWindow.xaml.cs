@@ -35,14 +35,15 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IMainWindowViewModel)DataContext;
-				_vm.PropertyChanged += MainWindowViewModel_PropertyChanged;
+				////_vm.PropertyChanged += MainWindowViewModel_PropertyChanged;
 				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 
-				txtIterations.LostFocus += TxtIterations_LostFocus;
+				////txtIterations.LostFocus += TxtIterations_LostFocus;
+				mapCalcSettingsView1.DataContext = _vm.MSetInfoViewModel;
 
 				Debug.WriteLine("The MainWindow is now loaded");
 			}
@@ -87,21 +88,21 @@ namespace MSetExplorer
 			}
 		}
 
-		private void TxtIterations_LostFocus(object sender, RoutedEventArgs e)
-		{
-			if (int.TryParse(txtIterations.Text, out var newValue))
-			{
-				_vm.TargetIterations = newValue;
-			}
-		}
+		////private void TxtIterations_LostFocus(object sender, RoutedEventArgs e)
+		////{
+		////	if (int.TryParse(txtIterations.Text, out var newValue))
+		////	{
+		////		_vm.TargetIterations = newValue;
+		////	}
+		////}
 
-		private void MainWindowViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(IMainWindowViewModel.TargetIterations))
-			{
-				txtIterations.Text = _vm.TargetIterations.ToString(CultureInfo.InvariantCulture);
-			}
-		}
+		////private void MainWindowViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		////{
+		////	if (e.PropertyName == nameof(IMainWindowViewModel.TargetIterations))
+		////	{
+		////		txtIterations.Text = _vm.TargetIterations.ToString(CultureInfo.InvariantCulture);
+		////	}
+		////}
 
 		#endregion
 

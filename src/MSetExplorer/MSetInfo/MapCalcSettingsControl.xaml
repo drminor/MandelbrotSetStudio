@@ -5,8 +5,39 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
              mc:Ignorable="d" 
-             d:DesignHeight="200" d:DesignWidth="200">
+             d:DesignHeight="90" d:DesignWidth="200">
     <Grid>
-            
+        <Grid Margin="10" x:Name="grdTop">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <!--<RowDefinition Height="*" />-->
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Target Iterations:" Grid.Row="0" Margin="0,7,0,3" Height="21" />
+            <TextBox x:Name="txtTargetInterations" Grid.Row="0" Grid.Column="1" Margin="3" Text="{Binding TargetIterations}"/>
+
+            <TextBlock Text="Iterations Per Request:" Grid.Row="1" Margin="0,7,0,3" Height="21" />
+            <TextBox x:Name="txtIterationsPerRequest" Grid.Row="1" Grid.Column="1" Margin="3" Text="{Binding IterationsPerRequest}" />
+
+            <!--<TextBlock Text="Start Y:" Grid.Row="2" Margin="0,7,0,3" Height="21" />
+            <TextBox x:Name="tbStartY" Grid.Row="2" Grid.Column="1" Margin="3" />
+
+            <TextBlock Text="End Y:" Grid.Row="3" Margin="0,7,0,3" Height="21" />
+            <TextBox x:Name="tbEndY" Grid.Row="3" Grid.Column="1" Margin="3" />-->
+
+            <!--<Button x:Name="Save" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top" Margin="3"
+                    Width="80" Height="25"
+                    Content="Save" />-->
+        </Grid>            
     </Grid>
 </UserControl>

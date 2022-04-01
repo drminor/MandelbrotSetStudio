@@ -4,8 +4,8 @@ namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
-		private int _targetIterations;
-		private int _steps;
+		//private int _targetIterations;
+		//private int _steps;
 
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 		private readonly ColorBandSetOpenSaveViewModelCreator _colorBandSetOpenSaveViewModelCreator;
@@ -30,6 +30,19 @@ namespace MSetExplorer
 
 			ColorBandSetViewModel = colorBandViewModel;
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
+
+			MSetInfoViewModel = new MSetInfoViewModel();
+			//MSetInfoViewModel.SetMSetInfo(MapProjectViewModel.CurrentJob?.MSetInfo);
+			MSetInfoViewModel.MapSettingsUpdateRequested += MSetInfoViewModel_MapSettingsUpdateRequested;
+		}
+
+		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
+		{
+			if (e.MapSettingsUpdateType == MSS.Types.MapSettingsUpdateType.TargetIterations)
+			{
+				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
+				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations, 0);
+			}
 		}
 
 		#endregion
@@ -42,26 +55,29 @@ namespace MSetExplorer
 		public IMapProjectViewModel MapProjectViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 
-		public int TargetIterations
-		{
-			get => _targetIterations;
-			set
-			{
-				if (value != _targetIterations)
-				{
-					_targetIterations = value;
-					ColorBandSetViewModel.HighCutOff = value;
-					MapProjectViewModel.UpdateTargetInterations(value, Steps);
-					OnPropertyChanged();
-				}
-			}
-		}
+		public MSetInfoViewModel MSetInfoViewModel { get; }
 
-		public int Steps
-		{
-			get => _steps;
-			set { _steps = value; OnPropertyChanged(); }
-		}
+
+		//public int TargetIterations
+		//{
+		//	get => _targetIterations;
+		//	set
+		//	{
+		//		if (value != _targetIterations)
+		//		{
+		//			_targetIterations = value;
+		//			ColorBandSetViewModel.HighCutOff = value;
+		//			MapProjectViewModel.UpdateTargetInterations(value, Steps);
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
+
+		//public int Steps
+		//{
+		//	get => _steps;
+		//	set { _steps = value; OnPropertyChanged(); }
+		//}
 
 		#endregion
 
@@ -94,25 +110,27 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
 			{
+				MSetInfoViewModel.SetMSetInfo(MapProjectViewModel.CurrentJob?.MSetInfo);
+
 				var curJob = MapProjectViewModel.CurrentJob;
 
 				if (curJob != null)
 				{
 					MapDisplayViewModel.CurrentJob = curJob;
 
-					var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
+					//var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
 
-					if (mapCalcSettings.TargetIterations != _targetIterations)
-					{
-						_targetIterations = mapCalcSettings.TargetIterations;
-						OnPropertyChanged(nameof(TargetIterations));
-					}
+					//if (mapCalcSettings.TargetIterations != _targetIterations)
+					//{
+					//	_targetIterations = mapCalcSettings.TargetIterations;
+					//	OnPropertyChanged(nameof(TargetIterations));
+					//}
 
-					if (mapCalcSettings.IterationsPerRequest != _steps)
-					{
-						_steps = mapCalcSettings.IterationsPerRequest;
-						OnPropertyChanged(nameof(Steps));
-					}
+					//if (mapCalcSettings.IterationsPerRequest != _steps)
+					//{
+					//	_steps = mapCalcSettings.IterationsPerRequest;
+					//	OnPropertyChanged(nameof(Steps));
+					//}
 				}
 			}
 

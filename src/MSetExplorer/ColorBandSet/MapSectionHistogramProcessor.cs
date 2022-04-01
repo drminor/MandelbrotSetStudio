@@ -23,7 +23,6 @@ namespace MSetExplorer
 		private readonly Task _workQueueProcessor;
 
 		private readonly TimeSpan _waitDuration;
-		private HistogramWorkRequest? _lastWorkRequest;
 
 		private bool disposedValue;
 
@@ -36,7 +35,6 @@ namespace MSetExplorer
 			_workQueue = new BlockingCollection<HistogramWorkRequest>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
 			_waitDuration = TimeSpan.FromMilliseconds(100);
-			_lastWorkRequest = null;
 		}
 
 		#endregion
