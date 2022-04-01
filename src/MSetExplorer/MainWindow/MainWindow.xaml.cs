@@ -41,6 +41,7 @@ namespace MSetExplorer
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
+
 				txtIterations.LostFocus += TxtIterations_LostFocus;
 
 				Debug.WriteLine("The MainWindow is now loaded");

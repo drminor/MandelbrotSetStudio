@@ -34,6 +34,8 @@ namespace MSetExplorer
 
 		#endregion
 
+		// TODO: Create a UserControl to display / edit the MapCalcSettings
+
 		#region Public Properties
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
@@ -87,7 +89,6 @@ namespace MSetExplorer
 			{
 				ColorBandSetViewModel.CurrentProject = MapProjectViewModel.CurrentProject;
 
-				// TODO: Use the ColorBandSet from the MapProjectViewModel or use the ColorBandSet from the ColorBandSetViewModel.
 				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 			}
 
@@ -104,9 +105,6 @@ namespace MSetExplorer
 					if (mapCalcSettings.TargetIterations != _targetIterations)
 					{
 						_targetIterations = mapCalcSettings.TargetIterations;
-
-						// TODO: Update the HighCutOff for the current ColorBandSet property of the ColorBandSetViewModel
-
 						OnPropertyChanged(nameof(TargetIterations));
 					}
 

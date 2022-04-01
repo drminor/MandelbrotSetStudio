@@ -31,7 +31,6 @@ namespace MSS.Types
 			_histogram = new Lazy<IHistogram>(() => new HistogramALow(counts.Select(x => (int)Math.Round(x / 1000d))), System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		}
 
-		//public IHistogram Histogram => new HistogramA(Counts.Select(x => (int)Math.Round(x / 1000d)).ToArray()); // _histogram.Value;
 		public IHistogram Histogram => _histogram.Value;
 
 		public override string? ToString()
