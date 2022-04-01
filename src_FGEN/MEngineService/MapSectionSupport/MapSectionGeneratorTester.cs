@@ -21,7 +21,7 @@ namespace MEngineService
 			request.Position = new RPointDto(new BigInteger[] { 3, 1 }, -2);
 			request.BlockSize = new SizeInt(128, 128);
 			request.SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8);
-			request.MapCalcSettings = new MapCalcSettings(maxIterations: 400, threshold: 4, iterationsPerStep: 100);
+			request.MapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, iterationsPerRequest: 100);
 
 			var response = new MapSectionGenerator().GenerateMapSection(request);
 

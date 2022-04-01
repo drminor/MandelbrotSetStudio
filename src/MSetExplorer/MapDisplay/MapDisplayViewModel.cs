@@ -185,7 +185,7 @@ namespace MSetExplorer
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
 			{
 				// Remove items
-				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
+				var mapSections = e.OldItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
 					if (!_screenSectionCollection.Hide(mapSection))
@@ -214,9 +214,9 @@ namespace MSetExplorer
 				{
 					if (mapSection.Counts != null)
 					{
-					//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-					var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted);
-					_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
+						//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+						var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted);
+						_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
 					}
 				}
 			}
@@ -272,7 +272,9 @@ namespace MSetExplorer
 				return false;
 			}
 
-			return job.Subdivision.SamplePointDelta == job.ParentJob.Subdivision.SamplePointDelta;
+			var jobSpd = RNormalizer.Normalize(job.Subdivision.SamplePointDelta, job.ParentJob.Subdivision.SamplePointDelta, out var parentSpd);
+
+			return jobSpd == parentSpd;
 		}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> source, IReadOnlyList<MapSection> current)

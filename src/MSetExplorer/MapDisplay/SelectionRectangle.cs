@@ -181,12 +181,12 @@ namespace MSetExplorer
 			Point newPos;
 			Size newSize;
 
-			if (e.Delta > 0)
+			if (e.Delta < 0)
 			{
 				newPos = new Point(cPos.X - _pitch, cPos.Y - _pitch);
 				newSize = new Size(cSize.Width + _pitch * 2, cSize.Height + _pitch * 2);
 			}
-			else if (e.Delta < 0 && cSize.Width >= _pitch * 4 && cSize.Height >= _pitch * 4)
+			else if (e.Delta > 0 && cSize.Width >= _pitch * 4 && cSize.Height >= _pitch * 4)
 			{
 				newPos = new Point(cPos.X + _pitch, cPos.Y + _pitch);
 				newSize = new Size(cSize.Width - _pitch * 2, cSize.Height - _pitch * 2);

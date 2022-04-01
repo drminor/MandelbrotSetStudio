@@ -8,6 +8,7 @@ namespace MSS.Types
 		int[] Values { get; }
 		int LowerBound { get; }
 		int UpperBound { get; }
+		int Length { get; }
 
 		KeyValuePair<int, int>[] GetKeyValuePairs();
 

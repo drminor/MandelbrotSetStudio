@@ -29,6 +29,8 @@ namespace MSetExplorer
 
 		private bool _isDirty;
 
+		private readonly object _histLock;
+
 		#region Constructor
 
 		public ColorBandSetViewModel(ObservableCollection<MapSection> mapSections)
@@ -44,6 +46,7 @@ namespace MSetExplorer
 			_colorBandSet = new ColorBandSet();
 			_colorBandsView = null;
 			_isDirty = false;
+			_histLock = new object();
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
 		}
@@ -117,10 +120,12 @@ namespace MSetExplorer
 					{
 						Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
 
-						_mapSectionHistogramProcessor.ProcessingEnabled = false;
-
-						_colorBandSet = value;
-						Histogram.Reset();
+						lock (_histLock)
+						{
+							_mapSectionHistogramProcessor.ProcessingEnabled = false;
+							_colorBandSet = value;
+							Histogram.Reset();
+						}
 
 						_colorBandsView = null;
 						IsDirty = false;
@@ -136,11 +141,15 @@ namespace MSetExplorer
 						var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
 						Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has SerialNumber: {value.SerialNumber}.");
 
-						_mapSectionHistogramProcessor.ProcessingEnabled = false;
-						_colorBandSet = value;
-						Histogram.Reset(value.HighCutOff + 1);
-						PopulateHistorgram(_mapSections, Histogram);
-						_mapSectionHistogramProcessor.ProcessingEnabled = true;
+						lock (_histLock)
+						{
+							_mapSectionHistogramProcessor.ProcessingEnabled = false;
+							_colorBandSet = value;
+
+							Histogram.Reset(value.HighCutOff + 1);
+							PopulateHistorgram(_mapSections, Histogram);
+							_mapSectionHistogramProcessor.ProcessingEnabled = true;
+						}
 
 						_colorBandsView = null;
 						var view = ColorBandsView;
@@ -163,6 +172,11 @@ namespace MSetExplorer
 				{
 					if (_colorBandSet != null)
 					{
+						lock (_histLock)
+						{
+							Histogram.Reset(value.Value + 1);
+						}
+
 						_colorBandSet.HighCutOff = value.Value;
 						OnPropertyChanged(nameof(HighCutOff));
 					}
@@ -205,36 +219,37 @@ namespace MSetExplorer
 			else if (e.Action == NotifyCollectionChangedAction.Add)
 			{
 				// Add items
+				var cutOffs = GetCutOffs();
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
-					_mapSectionHistogramProcessor.AddWork(isAddOperation: true, mapSection, HandleHistogramUpdate);
+					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Add, cutOffs, mapSection.Histogram, HandleHistogramUpdate));
 				}
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
 			{
 				// Remove items
-				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
+				var cutOffs = GetCutOffs();
+				var mapSections = e.OldItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
-					_mapSectionHistogramProcessor.AddWork(isAddOperation: false, mapSection, HandleHistogramUpdate);
+					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Remove, cutOffs, mapSection.Histogram, HandleHistogramUpdate));
 				}
 			}
 
 			//Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
 		}
 
-		private void HistogramChanged(object? _)
+		private int[] GetCutOffs()
 		{
-			if (_colorBandSet != null)
+			IEnumerable<int>? t;
+
+			lock (_histLock)
 			{
-				double t = 0;
-				foreach (var cb in _colorBandSet.ColorBands)
-				{
-					cb.Percentage = Math.Round(t, 4);
-					t += 3.9;
-				}
+				t = _colorBandSet?.Select(x => x.CutOff);
 			}
+
+			return t?.ToArray() ?? Array.Empty<int>();
 		}
 
 		#endregion
@@ -246,12 +261,17 @@ namespace MSetExplorer
 			//Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 
 			_colorBandSet?.Insert(index, newItem);
+			var cutOffs = GetCutOffs();
+			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
 
 			IsDirty = true;
 		}
 
 		public void ItemWasUpdated()
 		{
+			var cutOffs = GetCutOffs();
+			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
+
 			IsDirty = true;
 		}
 
@@ -286,6 +306,9 @@ namespace MSetExplorer
 
 					Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {idx1}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 
+					var cutOffs = GetCutOffs();
+					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
+
 					IsDirty = true;
 				}
 			}
@@ -317,33 +340,39 @@ namespace MSetExplorer
 			{
 				histogram.Add(ms.Histogram);
 			}
+
+			var cutOffs = GetCutOffs();
+			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
 		}
 
-		private void HandleHistogramUpdate(MapSection mapSection, IList<double> newPercentages)
+		private void HandleHistogramUpdate(ValueTuple<int, double>[] newPercentages)
 		{
-			_synchronizationContext?.Post(o => HistogramChanged(o), null);
+			_synchronizationContext?.Post(o => HistogramChanged(o), newPercentages);
 		}
 
-		//private void CheckThatColorBandsWereUpdatedProperly(ColorBandSet colorBandSet, ColorBandSet goodCopy, bool throwOnMismatch)
-		//{
-		//	var theyMatch = new ColorBandSetComparer().EqualsExt(colorBandSet, goodCopy, out var mismatchedLines);
+		private void HistogramChanged(object? hwr)
+		{
+			if (hwr is ValueTuple<int, double>[] newPercentages)
+			{
+				lock (_histLock)
+				{
+					var colorBands = _colorBandSet?.ColorBands.ToArray() ?? Array.Empty<ColorBand>();
 
-		//	if (theyMatch)
-		//	{
-		//		Debug.WriteLine("The new ColorBandSet is sound.");
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLine("Creating a new copy of the ColorBands produces a result different that the current collection of ColorBands.");
-		//		Debug.WriteLine($"Updated: {_colorBandSet}, new: {goodCopy}");
-		//		Debug.WriteLine($"The mismatched lines are: {string.Join(", ", mismatchedLines.Select(x => x.ToString()).ToArray())}");
+					var len = Math.Min(newPercentages.Length, colorBands.Length);
 
-		//		if (throwOnMismatch)
-		//		{
-		//			throw new InvalidOperationException("ColorBandSet update mismatch.");
-		//		}
-		//	}
-		//}
+					var total = 0d;
+
+					for(var i = 0; i < len; i++)
+					{
+						var cb = colorBands[i];
+						cb.Percentage = newPercentages[i].Item2;
+						total += newPercentages[i].Item2;
+					}
+
+					Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");
+				}
+			}
+		}
 
 		private string GetViewAsString()
 		{

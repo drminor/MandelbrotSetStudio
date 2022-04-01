@@ -200,12 +200,17 @@ namespace MapSectionProviderLib
 			{
 				var mapSectionResponse = await FetchAsync(mapSectionWorkItem);
 
-				if (!(mapSectionResponse is null))
+				if (!(mapSectionResponse is null) && mapSectionResponse.MapCalcSettings.TargetIterations >= mapSectionWorkItem.Request.MapCalcSettings.TargetIterations)
 				{
 					result = mapSectionResponse;
+					mapSectionWorkItem.Request.FoundInRepo = true;
 				}
 				else
 				{
+					lock (_pendingRequestsLock)
+					{
+						_pendingRequests.Add(mapSectionWorkItem);
+					}
 					var generatorWorkItem = new MapSecWorkGenType(mapSectionWorkItem.JobId, mapSectionWorkItem, HandleGeneratedResponse);
 					_mapSectionGeneratorProcessor.AddWork(generatorWorkItem);
 
@@ -245,20 +250,7 @@ namespace MapSectionProviderLib
 		private async Task<MapSectionResponse> FetchAsync(MapSecWorkReqType mapSectionWorkItem)
 		{
 			var mapSectionRequest = mapSectionWorkItem.Request;
-
 			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, _dtoMapper.MapFrom(mapSectionRequest.BlockPosition));
-
-			if (!(mapSectionResponse is null))
-			{
-				mapSectionWorkItem.Request.FoundInRepo = true;
-			}
-			else
-			{
-				lock (_pendingRequestsLock)
-				{
-					_pendingRequests.Add(mapSectionWorkItem);
-				}
-			}
 
 			return mapSectionResponse;
 		}
@@ -337,6 +329,11 @@ namespace MapSectionProviderLib
 			var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
 
 			var result = workItems.Any(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition);
+
+			if (!result)
+			{
+				Debug.WriteLine("Here.");
+			}
 
 			return result;
 		}

@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSS.Types.MSet;
 
 namespace ProjectRepo.Entities
 {
@@ -8,6 +9,7 @@ namespace ProjectRepo.Entities
 	public record MapSectionRecord(
 		ObjectId SubdivisionId,
 		BigVectorRecord BlockPosition,
+		MapCalcSettings MapCalcSettings,
 		int[] Counts
 		//bool[] DoneFlags,
 		//double[] ZValues

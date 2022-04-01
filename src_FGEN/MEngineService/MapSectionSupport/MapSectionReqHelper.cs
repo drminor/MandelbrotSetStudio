@@ -31,9 +31,9 @@ namespace MEngineService
 			result.samplePointDeltaExponent = mapSectionRequest.SamplePointsDelta.Exponent;
 
 			// MapCalcSettings
-			result.maxIterations = mapSectionRequest.MapCalcSettings.MaxIterations;
+			result.maxIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 			result.threshold = mapSectionRequest.MapCalcSettings.Threshold;
-			result.iterationsPerStep = mapSectionRequest.MapCalcSettings.IterationsPerStep;
+			result.iterationsPerStep = mapSectionRequest.MapCalcSettings.IterationsPerRequest;
 
 			return result;
 		}

@@ -73,6 +73,7 @@ namespace MSS.Types
 		public int[] Values => _values;
 		public int LowerBound => _lowBound;
 		public int UpperBound => _values.Length - 1 + _lowBound;
+		public int Length => _values.Length;
 
 
 		public int this[int index]
@@ -243,6 +244,11 @@ namespace MSS.Types
 
 		public void Add(IHistogram histogram)
 		{
+			if (histogram == null)
+			{
+				return;
+			}
+
 			var kvps = histogram.GetKeyValuePairs();
 
 			var keys = kvps.Select(x => x.Key).ToList();
@@ -253,6 +259,11 @@ namespace MSS.Types
 
 		public void Remove(IHistogram histogram)
 		{
+			if (histogram == null)
+			{
+				return;
+			}
+
 			var kvps = histogram.GetKeyValuePairs();
 
 			var keys = kvps.Select(x => x.Key).ToList();

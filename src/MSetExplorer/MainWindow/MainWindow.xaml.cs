@@ -47,14 +47,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ColorBandSetViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
-			{
-				CommandManager.InvalidateRequerySuggested();
-			}
-		}
-
 		private void MainWindow_ContentRendered(object? sender, EventArgs e)
 		{
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
@@ -86,6 +78,14 @@ namespace MSetExplorer
 			}
 		}
 
+		private void ColorBandSetViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
+			{
+				CommandManager.InvalidateRequerySuggested();
+			}
+		}
+
 		private void TxtIterations_LostFocus(object sender, RoutedEventArgs e)
 		{
 			if (int.TryParse(txtIterations.Text, out var newValue))
@@ -94,7 +94,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MainWindowViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void MainWindowViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(IMainWindowViewModel.TargetIterations))
 			{

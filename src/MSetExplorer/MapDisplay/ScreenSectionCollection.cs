@@ -302,7 +302,7 @@ namespace MSetExplorer
 			{
 				if (BlockPosition != position)
 				{
-					//Debug.WriteLine($"Redrawing image for {position}, the previous value is {BlockPosition}. SI = {screenIndex}.");
+					Debug.WriteLine($"Redrawing image for {position}, the previous value is {BlockPosition}. SI = {screenIndex}.");
 
 					BlockPosition = position;
 					Active = false;
@@ -313,8 +313,17 @@ namespace MSetExplorer
 					//Debug.WriteLine($"Redrawing image for {position}. SI = {screenIndex}.");
 				}
 
-				Debug.Assert(!Active, "Attempting to refresh a screen section that is already active.");
-				Active = true;
+				//Debug.Assert(!Active, "Attempting to refresh a screen section that is already active.");
+				//Active = true;
+
+				if (Active)
+				{
+					Debug.WriteLine("Attempting to refresh a screen section that is already active.");
+				}
+				else
+				{
+					Active = true;
+				}
 			}
 
 			#endregion

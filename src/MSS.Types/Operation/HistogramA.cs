@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MSS.Types
@@ -50,6 +51,7 @@ namespace MSS.Types
 		public int[] Values => _values;
 		public int LowerBound => 0;
 		public int UpperBound => _values.Length - 1;
+		public int Length => _values.Length;
 
 		public int this[int index]
 		{
@@ -191,28 +193,6 @@ namespace MSS.Types
 			}
 		}
 
-		public void Add(ICollection<int> indexes, ICollection<int> amounts)
-		{
-			var aEnumerator = amounts.GetEnumerator();
-
-			foreach (var i in indexes)
-			{
-				_ = aEnumerator.MoveNext();
-				_values[i] = _values[i] + aEnumerator.Current;
-			}
-		}
-
-		public void Remove(ICollection<int> indexes, ICollection<int> amounts)
-		{
-			var aEnumerator = amounts.GetEnumerator();
-
-			foreach (var i in indexes)
-			{
-				_ = aEnumerator.MoveNext();
-				_values[i] = _values[i] - aEnumerator.Current;
-			}
-		}
-
 		public void Add(IHistogram histogram)
 		{
 			var kvps = histogram.GetKeyValuePairs();
@@ -223,6 +203,19 @@ namespace MSS.Types
 			Add(keys, values);
 		}
 
+		public void Add(ICollection<int> indexes, ICollection<int> amounts)
+		{
+			var aEnumerator = amounts.GetEnumerator();
+			var n = 0;
+
+			foreach (var i in indexes)
+			{
+				n = Math.Min(i, Length - 1);
+				_ = aEnumerator.MoveNext();
+				_values[n] = _values[n] + aEnumerator.Current;
+			}
+		}
+
 		public void Remove(IHistogram histogram)
 		{
 			var kvps = histogram.GetKeyValuePairs();
@@ -231,6 +224,19 @@ namespace MSS.Types
 			var values = kvps.Select(x => x.Value).ToList();
 
 			Remove(keys, values);
+		}
+
+		public void Remove(ICollection<int> indexes, ICollection<int> amounts)
+		{
+			var aEnumerator = amounts.GetEnumerator();
+			var n = 0;
+
+			foreach (var i in indexes)
+			{
+				n = Math.Min(i, Length - 1);
+				_ = aEnumerator.MoveNext();
+				_values[n] = _values[n] - aEnumerator.Current;
+			}
 		}
 
 		#endregion

@@ -24,15 +24,9 @@ namespace MSS.Types
 			Exponent = exponent;
 		}
 
-		public BigInteger XNumerator
-		{
-			get => Values[0];
-		}
+		public BigInteger XNumerator => Values[0];
 
-		public BigInteger YNumerator
-		{
-			get => Values[1];
-		}
+		public BigInteger YNumerator => Values[1];
 
 		public RValue X => new RValue(XNumerator, Exponent);
 		public RValue Y => new RValue(YNumerator, Exponent);

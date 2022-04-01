@@ -32,6 +32,7 @@ namespace MEngineService
 				MapSectionId = mapSectionRequest.MapSectionId,
 				SubdivisionId = mapSectionRequest.SubdivisionId,
 				BlockPosition = mapSectionRequest.BlockPosition,
+				MapCalcSettings = mapSectionRequest.MapCalcSettings,
 				Counts = counts
 			};
 

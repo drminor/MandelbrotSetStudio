@@ -1,12 +1,8 @@
 ﻿using MEngineClient;
 using MSetRepo;
 using MSS.Common;
-using MSS.Types;
-using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows;
 
 namespace MSetExplorer
@@ -60,10 +56,7 @@ namespace MSetExplorer
 			_mapProjectViewModel = new MapProjectViewModel(_projectAdapter, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			var mEngineClient = new MClient(M_ENGINE_END_POINT_ADDRESS);
-			var mapSectionRepo = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_CONN_STRING);
-			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClient, mapSectionRepo, USE_MAP_SECTION_REPO);
-			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
+			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
@@ -76,6 +69,17 @@ namespace MSetExplorer
 			};
 
 			window1.Show();
+		}
+
+		private MapLoaderManager BuildMapLoaderManager(string mEngineEndPointAddress, string dbProviderConnectionString, bool useTheMapSectionRepo)
+		{
+			var mEngineClient = new MClient(mEngineEndPointAddress);
+			var mapSectionRepo = MSetRepoHelper.GetMapSectionAdapter(dbProviderConnectionString);
+			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClient, mapSectionRepo, useTheMapSectionRepo);
+
+			var result = new MapLoaderManager(mapSectionRequestProcessor);
+
+			return result;
 		}
 
 		protected override void OnExit(ExitEventArgs e)

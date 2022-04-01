@@ -1,4 +1,5 @@
 ﻿using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 using System.Runtime.Serialization;
 
 namespace MEngineDataContracts
@@ -16,6 +17,9 @@ namespace MEngineDataContracts
 		public BigVectorDto BlockPosition { get; set; }
 
 		[DataMember(Order = 4)]
+		public MapCalcSettings MapCalcSettings { get; set; }
+
+		[DataMember(Order = 5)]
 		public int[] Counts { get; set; }
 
 		public bool RequestCancelled { get; set; }

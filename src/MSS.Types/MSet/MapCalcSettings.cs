@@ -8,7 +8,7 @@ namespace MSS.Types.MSet
 	[DataContract]
 	public class MapCalcSettings : IEquatable<MapCalcSettings>, IEqualityComparer<MapCalcSettings?>
 	{
-		public const int DEFAULT_THRESHOLD = 4;
+		private static readonly int DEFAULT_THRESHOLD = 4;
 
 		[DataMember(Order = 1)]
 		public int TargetIterations { get; init; }
@@ -18,6 +18,8 @@ namespace MSS.Types.MSet
 
 		[DataMember(Order = 3)]
 		public int IterationsPerRequest { get; init; }
+
+		#region Constructor
 
 		public MapCalcSettings()
 		{
@@ -36,11 +38,14 @@ namespace MSS.Types.MSet
 			IterationsPerRequest = iterationsPerRequest;
 		}
 
+		#endregion
 
 		public override string ToString()
 		{
 			return $"TargetIterations: {TargetIterations}";
 		}
+
+		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)
 		{
@@ -91,6 +96,8 @@ namespace MSS.Types.MSet
 		{
 			return !(left == right);
 		}
+
+		#endregion
 	}
 
 }

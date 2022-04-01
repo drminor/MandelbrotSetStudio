@@ -1,16 +1,14 @@
 ﻿using MSS.Types;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using HistogramWorkReqType = MapSectionProviderLib.WorkItem<MSS.Types.MapSection, System.Collections.Generic.IList<double>>;
-
 namespace MSetExplorer
 {
-	public class MapSectionHistogramProcessor : IDisposable
+	internal class MapSectionHistogramProcessor : IDisposable
 	{
 		private readonly IHistogram _histogram;
 
@@ -20,9 +18,13 @@ namespace MSetExplorer
 		private readonly object _processingEnabledLock = new();
 
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<HistogramWorkReqType> _workQueue;
+		private readonly BlockingCollection<HistogramWorkRequest> _workQueue;
 
-		private Task _workQueueProcessor;
+		private readonly Task _workQueueProcessor;
+
+		private readonly TimeSpan _waitDuration;
+		private HistogramWorkRequest? _lastWorkRequest;
+
 		private bool disposedValue;
 
 		#region Constructor
@@ -31,8 +33,10 @@ namespace MSetExplorer
 		{
 			_histogram = histogram;
 			_cts = new CancellationTokenSource();
-			_workQueue = new BlockingCollection<HistogramWorkReqType>(QUEUE_CAPACITY);
+			_workQueue = new BlockingCollection<HistogramWorkRequest>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
+			_waitDuration = TimeSpan.FromMilliseconds(100);
+			_lastWorkRequest = null;
 		}
 
 		#endregion
@@ -63,18 +67,15 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void AddWork(bool isAddOperation, MapSection mapSection, Action<MapSection, IList<double>> responseHandler)
+		public void AddWork(HistogramWorkRequest histogramWorkRequest)
 		{
-			var jb = isAddOperation ? 1 : 0;
-			var mapSectionWorkItem = new HistogramWorkReqType(jb, mapSection, responseHandler);
-			
 			if (!_workQueue.IsAddingCompleted)
 			{
-				_workQueue.Add(mapSectionWorkItem);
+				_workQueue.Add(histogramWorkRequest);
 			}
 			else
 			{
-				Debug.WriteLine($"Not adding: {mapSectionWorkItem.Request}, Adding has been completed.");
+				Debug.WriteLine($"Not adding: {histogramWorkRequest}, Adding has been completed.");
 			}
 		}
 
@@ -115,26 +116,21 @@ namespace MSetExplorer
 			{
 				try
 				{
-					var mapSectionWorkItem = _workQueue.Take(ct);
+					HistogramWorkRequest? currentWorkRequest = null;
+					HistogramWorkRequest? lastWorkRequest = null;
 
-					lock(_processingEnabledLock)
+					while(_workQueue.TryTake(out currentWorkRequest, _waitDuration.Milliseconds, ct))
 					{
-						if (_processingEnabled)
-						{
-							if (mapSectionWorkItem.JobId == 1)
-							{
-								_histogram.Add(mapSectionWorkItem.Request.Histogram);
-							}
-							else
-							{
-								_histogram.Remove(mapSectionWorkItem.Request.Histogram);
-							}
-
-							var response = new List<double> { 0.1, 0.2 };
-
-							mapSectionWorkItem.RunWorkAction(response);
-						}
+						lastWorkRequest = DoWorkRequest(currentWorkRequest);
 					}
+
+					if (lastWorkRequest != null)
+					{
+						CalculateAndPostPercentages(lastWorkRequest);
+					}
+
+					currentWorkRequest = _workQueue.Take(ct);
+					lastWorkRequest = DoWorkRequest(currentWorkRequest);
 				}
 				catch (OperationCanceledException)
 				{
@@ -147,6 +143,105 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		private HistogramWorkRequest? DoWorkRequest(HistogramWorkRequest histogramWorkRequest)
+		{
+			HistogramWorkRequest? result;
+
+			lock (_processingEnabledLock)
+			{
+				if (_processingEnabled && histogramWorkRequest.Histogram != null)
+				{
+					if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Add)
+					{
+						_histogram.Add(histogramWorkRequest.Histogram);
+					}
+					else if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Remove)
+					{
+						_histogram.Remove(histogramWorkRequest.Histogram);
+					}
+
+					result = histogramWorkRequest;
+				}
+				else
+				{
+					result = null;
+				}
+			}
+
+			return result;
+		}
+
+		private void CalculateAndPostPercentages(HistogramWorkRequest histogramWorkRequest)
+		{
+			lock (_processingEnabledLock)
+			{
+				if (_processingEnabled)
+				{
+					var newPercentages = BuildNewPercentages(histogramWorkRequest.CutOffs, _histogram);
+					histogramWorkRequest.RunWorkAction(newPercentages);
+				}
+			}
+		}
+
+		private ValueTuple<int, double>[] BuildNewPercentages(int[] cutOffs, IHistogram histogram)
+		{
+			var bucketCnts = new long[cutOffs.Length];
+			var curBucketPtr = 0;
+			var curBucketCut = cutOffs[curBucketPtr];
+
+			var kvps = histogram.GetKeyValuePairs();
+			for (var i = 0; i < kvps.Length; i++)
+			{
+				var idx = kvps[i].Key;
+				var amount = kvps[i].Value;
+
+				while (curBucketPtr < cutOffs.Length - 1 && idx >= curBucketCut)
+				{
+					curBucketPtr++;
+					curBucketCut = cutOffs[curBucketPtr];
+				}
+
+				bucketCnts[curBucketPtr] += amount;
+			}
+
+			var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
+			var newPercentages = bucketCnts.Select((x, i) => new ValueTuple<int, double>(cutOffs[i], Math.Round(100 * (x / total), 2))).ToArray();
+
+			return newPercentages;
+		}
+
+		//private ValueTuple<int, double>[] BuildNewPercentagesOld(int[] cutOffs, IHistogram histogram)
+		//{
+		//	int[] cuts = new int[cutOffs.Length + 1];
+
+		//	Array.Copy(cutOffs, cuts, cutOffs.Length);
+		//	cuts[cuts.Length - 1] = int.MaxValue;
+
+		//	var bucketCnts = new long[cutOffs.Length + 1];
+		//	var curBucketPtr = 0;
+		//	var curBucketCut = cuts[curBucketPtr];
+
+		//	var kvps = histogram.GetKeyValuePairs();
+		//	for (var i = 0; i < kvps.Length; i++)
+		//	{
+		//		var idx = kvps[i].Key;
+		//		var amount = kvps[i].Value;
+
+		//		while (curBucketPtr < cuts.Length && idx >= curBucketCut)
+		//		{
+		//			curBucketPtr++;
+		//			curBucketCut = cuts[curBucketPtr];
+		//		}
+
+		//		bucketCnts[curBucketPtr] += amount;
+		//	}
+
+		//	var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
+		//	var newPercentages = bucketCnts.Select((x, i) => new ValueTuple<int, double>(cuts[i], Math.Round(100 * (x / total), 2))).ToArray();
+
+		//	return newPercentages;
+		//}
 
 		#endregion
 
