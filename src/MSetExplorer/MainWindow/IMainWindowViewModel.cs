@@ -11,11 +11,7 @@ namespace MSetExplorer
 		ColorBandSetViewModel ColorBandSetViewModel { get; }
 		MSetInfoViewModel MSetInfoViewModel { get; }
 
-		//int TargetIterations { get; set; }
-		//int Steps { get; set; }
-
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
-
 		IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string? initalName, DialogType dialogType);
 	}
 }

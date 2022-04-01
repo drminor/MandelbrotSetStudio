@@ -4,9 +4,6 @@ namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
-		//private int _targetIterations;
-		//private int _steps;
-
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 		private readonly ColorBandSetOpenSaveViewModelCreator _colorBandSetOpenSaveViewModelCreator;
 
@@ -32,7 +29,6 @@ namespace MSetExplorer
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 
 			MSetInfoViewModel = new MSetInfoViewModel();
-			//MSetInfoViewModel.SetMSetInfo(MapProjectViewModel.CurrentJob?.MSetInfo);
 			MSetInfoViewModel.MapSettingsUpdateRequested += MSetInfoViewModel_MapSettingsUpdateRequested;
 		}
 
@@ -47,37 +43,12 @@ namespace MSetExplorer
 
 		#endregion
 
-		// TODO: Create a UserControl to display / edit the MapCalcSettings
-
 		#region Public Properties
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 		public IMapProjectViewModel MapProjectViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
-
 		public MSetInfoViewModel MSetInfoViewModel { get; }
-
-
-		//public int TargetIterations
-		//{
-		//	get => _targetIterations;
-		//	set
-		//	{
-		//		if (value != _targetIterations)
-		//		{
-		//			_targetIterations = value;
-		//			ColorBandSetViewModel.HighCutOff = value;
-		//			MapProjectViewModel.UpdateTargetInterations(value, Steps);
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
-
-		//public int Steps
-		//{
-		//	get => _steps;
-		//	set { _steps = value; OnPropertyChanged(); }
-		//}
 
 		#endregion
 
@@ -117,20 +88,6 @@ namespace MSetExplorer
 				if (curJob != null)
 				{
 					MapDisplayViewModel.CurrentJob = curJob;
-
-					//var mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
-
-					//if (mapCalcSettings.TargetIterations != _targetIterations)
-					//{
-					//	_targetIterations = mapCalcSettings.TargetIterations;
-					//	OnPropertyChanged(nameof(TargetIterations));
-					//}
-
-					//if (mapCalcSettings.IterationsPerRequest != _steps)
-					//{
-					//	_steps = mapCalcSettings.IterationsPerRequest;
-					//	OnPropertyChanged(nameof(Steps));
-					//}
 				}
 			}
 
