@@ -133,17 +133,17 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <!--<RowDefinition Height="Auto"/>-->
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
+        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <ListBox Name="lvColorBands" ItemsSource="{Binding ColorBandsView}"
                      ItemContainerStyle="{StaticResource CbContainerStyle}"
                      IsSynchronizedWithCurrentItem="True" Focusable="True">
                 
                 <ListBox.InputBindings>
-                    <KeyBinding Command="local:ColorBandSetCommands.Edit" Key="F2" />
+                    <!--<KeyBinding Command="local:ColorBandSetCommands.Edit" Key="F2" />-->
                     <KeyBinding Command="local:ColorBandSetCommands.Delete" Key="Delete" />
                     <KeyBinding Command="local:ColorBandSetCommands.Insert" Key="Insert" />
                     
@@ -152,7 +152,7 @@
                 </ListBox.InputBindings>
                 
                 <ListBox.CommandBindings>
-                    <CommandBinding Command="local:ColorBandSetCommands.Edit" Executed="EditButton_Click" />
+                    <!--<CommandBinding Command="local:ColorBandSetCommands.Edit" Executed="EditButton_Click" />-->
                     <CommandBinding Command="local:ColorBandSetCommands.Delete" Executed="DeleteButton_Click" />
                     <CommandBinding Command="local:ColorBandSetCommands.Insert" Executed="InsertButton_Click" />
 
@@ -162,7 +162,7 @@
 
                 <ListBox.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="_Edit" Command="local:ColorBandSetCommands.Edit"/>
+                        <!--<MenuItem Header="_Edit" Command="local:ColorBandSetCommands.Edit"/>-->
                         <MenuItem Header="_Delete" Command="local:ColorBandSetCommands.Delete"/>
                         <MenuItem Header="_Insert" Command="local:ColorBandSetCommands.Insert"/>
                         <Separator/>
@@ -177,11 +177,11 @@
             </ListBox>
         </Border>
 
-        <!--<Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,5">
             <local:ColorBandUserControl x:Name="clrBandDetail" />
-        </Border>-->
+        </Border>
 
-        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,9,0,9">
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,4,0,9">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnEdit" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Click="EditButton_Click">Edit</Button>

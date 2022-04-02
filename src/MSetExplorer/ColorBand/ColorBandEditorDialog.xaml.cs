@@ -20,13 +20,6 @@ namespace MSetExplorer
 			Loaded += ColorBandEditorDialog_Loaded;
 		}
 
-		#endregion
-
-		public ColorBand? Sucessor { get; set; }
-		public bool IsLastColorBand => Sucessor == null;
-
-		#region Event Handlers
-
 		private void ColorBandEditorDialog_Loaded(object sender, RoutedEventArgs e)
 		{
 			_vm = (ColorBand)DataContext;
@@ -41,6 +34,17 @@ namespace MSetExplorer
 
 			Debug.WriteLine("The ColorBandEditorDialog is now loaded");
 		}
+
+		#endregion
+
+		#region Public Properties
+
+		public ColorBand? Sucessor { get; set; }
+		public bool IsLastColorBand => Sucessor == null;
+
+		#endregion
+
+		#region Event Handlers
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
@@ -67,30 +71,15 @@ namespace MSetExplorer
 			}
 		}
 
-		#endregion
-
-		#region Button Handlers
-
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			TakeSelection();
+			DialogResult = true;
+			Close();
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
 		{
 			DialogResult = false;
-			Close();
-		}
-
-		private void TakeSelection()
-		{
-			//var selItem = (ColorBand)DataContext;
-			//if (selItem.BlendStyleUpdated && selItem.BlendStyle == ColorBandBlendStyle.End)
-			//{
-			//	selItem.ActualEndColor = selItem.EndColor;
-			//}
-
-			DialogResult = true;
 			Close();
 		}
 

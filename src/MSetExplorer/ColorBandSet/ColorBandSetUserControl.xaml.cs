@@ -49,12 +49,12 @@ namespace MSetExplorer
 
 		private void ColorBandDoubleClick(object sender, RoutedEventArgs e)
 		{
-			EditColorBand();
+			//EditColorBand();
 		}
 
 		private void EditButton_Click(object sender, RoutedEventArgs e)
 		{
-			EditColorBand();
+			//EditColorBand();
 		}
 
 		private void InsertButton_Click(object sender, RoutedEventArgs e)
@@ -115,117 +115,117 @@ namespace MSetExplorer
 			}
 		}
 
-		private void EditColorBand()
-		{
-			var view = _vm.ColorBandsView;
+		//private void EditColorBand()
+		//{
+		//	var view = _vm.ColorBandsView;
 
-			if (!view.IsEditingItem && lvColorBands.Items.CurrentItem is ColorBand selItem)
-			{
-				var index = lvColorBands.Items.IndexOf(selItem);
-				var sucesssor = GetSuccessor(index);
+		//	if (!view.IsEditingItem && lvColorBands.Items.CurrentItem is ColorBand selItem)
+		//	{
+		//		var index = lvColorBands.Items.IndexOf(selItem);
+		//		var sucesssor = GetSuccessor(index);
 
-				view.EditItem(selItem);
+		//		view.EditItem(selItem);
 
-				// invoke focus update at loaded priority so that template swap has time to complete
-				_ = Dispatcher.Invoke(DispatcherPriority.Loaded, (ThreadStart)delegate ()
-				{
-					if (lvColorBands.ItemContainerGenerator.ContainerFromItem(selItem) is UIElement container)
-					{
-						_ = container.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-						Debug.WriteLine("The focus was moved.");
-					}
-				});
+		//		// invoke focus update at loaded priority so that template swap has time to complete
+		//		_ = Dispatcher.Invoke(DispatcherPriority.Loaded, (ThreadStart)delegate ()
+		//		{
+		//			if (lvColorBands.ItemContainerGenerator.ContainerFromItem(selItem) is UIElement container)
+		//			{
+		//				_ = container.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+		//				Debug.WriteLine("The focus was moved.");
+		//			}
+		//		});
 
-				var colorBandEditorDialog = new ColorBandEditorDialog
-				{
-					DataContext = selItem,
-					Sucessor = GetSuccessor(index)
-				};
+		//		var colorBandEditorDialog = new ColorBandEditorDialog
+		//		{
+		//			DataContext = selItem,
+		//			Sucessor = GetSuccessor(index)
+		//		};
 
-				var res = colorBandEditorDialog.ShowDialog();
+		//		var res = colorBandEditorDialog.ShowDialog();
 
-				if (res == true)
-				{
-					if (selItem.BlendStyleUpdated)
-					{
-						selItem.ActualEndColor = ColorBandSet.GetActualEndColor(selItem, sucesssor?.StartColor);
-					}
+		//		if (res == true)
+		//		{
+		//			if (selItem.BlendStyleUpdated)
+		//			{
+		//				selItem.ActualEndColor = ColorBandSet.GetActualEndColor(selItem, sucesssor?.StartColor);
+		//			}
 
-					view.CommitEdit();
-					UpdateNeighbors(selItem, index);
-					_vm.ItemWasUpdated();
-				}
-				else
-				{
-					view.CancelEdit();
-				}
+		//			view.CommitEdit();
+		//			UpdateNeighbors(selItem, index);
+		//			_vm.ItemWasUpdated();
+		//		}
+		//		else
+		//		{
+		//			view.CancelEdit();
+		//		}
 
-				lvColorBands.Items.Refresh();
-				_ = lvColorBands.Items.MoveCurrentTo(selItem);
+		//		lvColorBands.Items.Refresh();
+		//		_ = lvColorBands.Items.MoveCurrentTo(selItem);
 
-				if (!lvColorBands.Focus())
-				{
-					Debug.WriteLine("Could not return focus to the ListBox.");
-				}
-				else
-				{
-					FocusListBoxItem(index);
-				}
-			}
-		}
+		//		if (!lvColorBands.Focus())
+		//		{
+		//			Debug.WriteLine("Could not return focus to the ListBox.");
+		//		}
+		//		else
+		//		{
+		//			FocusListBoxItem(index);
+		//		}
+		//	}
+		//}
 
-		private void UpdateNeighbors(ColorBand selItem, int index)
-		{
-			if (TryGetPredeccessor(index, out var predecessor))
-			{
-				if (selItem.StartColorUpdated && predecessor != null && predecessor.BlendStyle == ColorBandBlendStyle.Next)
-				{
-					predecessor.ActualEndColor = selItem.StartColor;
-				}
-			}
+		//private void UpdateNeighbors(ColorBand selItem, int index)
+		//{
+		//	if (TryGetPredeccessor(index, out var predecessor))
+		//	{
+		//		if (selItem.StartColorUpdated && predecessor != null && predecessor.BlendStyle == ColorBandBlendStyle.Next)
+		//		{
+		//			predecessor.ActualEndColor = selItem.StartColor;
+		//		}
+		//	}
 
-			if (TryGetSuccessor(index, out var sucessor))
-			{
-				if (selItem.CutOffUpdated && sucessor != null)
-				{
-					sucessor.PreviousCutOff = selItem.CutOff;
-				}
-			}
-		}
+		//	if (TryGetSuccessor(index, out var sucessor))
+		//	{
+		//		if (selItem.CutOffUpdated && sucessor != null)
+		//		{
+		//			sucessor.PreviousCutOff = selItem.CutOff;
+		//		}
+		//	}
+		//}
 
-		private bool TryGetPredeccessor(int index, out ColorBand? colorBand)
-		{
-			if (index < 1)
-			{
-				colorBand = null;
-				return false;
-			}
-			else
-			{
-				colorBand = (ColorBand)lvColorBands.Items[index - 1];
-				return true;
-			}
-		}
+		//private bool TryGetPredeccessor(int index, out ColorBand? colorBand)
+		//{
+		//	if (index < 1)
+		//	{
+		//		colorBand = null;
+		//		return false;
+		//	}
+		//	else
+		//	{
+		//		colorBand = (ColorBand)lvColorBands.Items[index - 1];
+		//		return true;
+		//	}
+		//}
 
-		private bool TryGetSuccessor(int index, out ColorBand? colorBand)
-		{
-			if (index > lvColorBands.Items.Count - 2)
-			{
-				colorBand = null;
-				return false;
-			}
-			else
-			{
-				colorBand = (ColorBand)lvColorBands.Items[index + 1];
-				return true;
-			}
-		}
+		//private bool TryGetSuccessor(int index, out ColorBand? colorBand)
+		//{
+		//	if (index > lvColorBands.Items.Count - 2)
+		//	{
+		//		colorBand = null;
+		//		return false;
+		//	}
+		//	else
+		//	{
+		//		colorBand = (ColorBand)lvColorBands.Items[index + 1];
+		//		return true;
+		//	}
+		//}
 
-		private ColorBand? GetSuccessor(int index)
-		{
-			_ = TryGetSuccessor(index, out var successor);
-			return successor;
-		}
+		//private ColorBand? GetSuccessor(int index)
+		//{
+		//	_ = TryGetSuccessor(index, out var successor);
+		//	return successor;
+		//}
 
 		private void FocusListBoxItem(int index)
 		{

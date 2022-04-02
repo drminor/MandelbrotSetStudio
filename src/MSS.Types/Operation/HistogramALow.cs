@@ -113,7 +113,7 @@ namespace MSS.Types
 
 		public void Reset(int newSize)
 		{
-			_values = new int[newSize];
+			_values = new int[newSize + 1];
 		}
 
 		public void Set(int[] indexes, int[] amounts)

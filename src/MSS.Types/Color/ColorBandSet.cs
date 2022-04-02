@@ -381,7 +381,7 @@ namespace MSS.Types
 
 			foreach (var cb in colorBands)
 			{
-				sb.AppendLine(cb.ToString());
+				_ = sb.AppendLine(cb.ToString());
 			}
 
 			return sb.ToString();

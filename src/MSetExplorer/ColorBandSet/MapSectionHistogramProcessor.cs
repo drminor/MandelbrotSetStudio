@@ -110,14 +110,13 @@ namespace MSetExplorer
 		{
 			var ct = _cts.Token;
 
-			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+			HistogramWorkRequest? lastWorkRequest = null;
+
+			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
-					HistogramWorkRequest? currentWorkRequest = null;
-					HistogramWorkRequest? lastWorkRequest = null;
-
-					while(_workQueue.TryTake(out currentWorkRequest, _waitDuration.Milliseconds, ct))
+					while(_workQueue.TryTake(out var currentWorkRequest, _waitDuration.Milliseconds, ct))
 					{
 						lastWorkRequest = DoWorkRequest(currentWorkRequest);
 					}
@@ -127,8 +126,8 @@ namespace MSetExplorer
 						CalculateAndPostPercentages(lastWorkRequest);
 					}
 
-					currentWorkRequest = _workQueue.Take(ct);
-					lastWorkRequest = DoWorkRequest(currentWorkRequest);
+					var currentWorkRequest1 = _workQueue.Take(ct);
+					lastWorkRequest = DoWorkRequest(currentWorkRequest1);
 				}
 				catch (OperationCanceledException)
 				{
@@ -148,15 +147,18 @@ namespace MSetExplorer
 
 			lock (_processingEnabledLock)
 			{
-				if (_processingEnabled && histogramWorkRequest.Histogram != null)
+				if (_processingEnabled)
 				{
-					if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Add)
+					if (histogramWorkRequest.Histogram != null)
 					{
-						_histogram.Add(histogramWorkRequest.Histogram);
-					}
-					else if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Remove)
-					{
-						_histogram.Remove(histogramWorkRequest.Histogram);
+						if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Add)
+						{
+							_histogram.Add(histogramWorkRequest.Histogram);
+						}
+						else if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Remove)
+						{
+							_histogram.Remove(histogramWorkRequest.Histogram);
+						}
 					}
 
 					result = histogramWorkRequest;

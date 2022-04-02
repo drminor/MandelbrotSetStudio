@@ -63,7 +63,9 @@ namespace MSetExplorer
 
 		private void RectImage_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
 		{
-			if (ShowColorPicker(ColorBandColor, out var selectedColor))
+			var pos =  e.GetPosition(relativeTo: _canvas);
+
+			if (ShowColorPicker(pos, ColorBandColor, out var selectedColor))
 			{
 				ColorBandColor = selectedColor;
 			}
@@ -108,9 +110,14 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private bool ShowColorPicker(ColorBandColor initalColor, out ColorBandColor selectedColor)
+		private bool ShowColorPicker(Point pos, ColorBandColor initalColor, out ColorBandColor selectedColor)
 		{
 			var colorPickerDialalog = new ColorPickerDialog(initalColor);
+
+			var sp = PointToScreen(pos);
+
+			colorPickerDialalog.Left = sp.X - colorPickerDialalog.Width - 225;
+			colorPickerDialalog.Top = sp.Y - colorPickerDialalog.Height - 25;
 
 			if (colorPickerDialalog.ShowDialog() == true)
 			{
@@ -119,7 +126,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				selectedColor = ColorBandColor.Black;
+				selectedColor = initalColor;
 				return false;
 			}
 		}

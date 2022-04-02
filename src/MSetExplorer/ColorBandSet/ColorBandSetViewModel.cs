@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -25,7 +26,9 @@ namespace MSetExplorer
 
 		private Project? _currentProject;
 		private ColorBandSet? _colorBandSet;
-		private ListCollectionView? _colorBandsView;
+		private ListCollectionView _colorBandsView;
+
+		private ColorBand? _currentColorBand;
 
 		private bool _isDirty;
 
@@ -44,7 +47,9 @@ namespace MSetExplorer
 			_itemWidth = 180;
 			CurrentProject = null;
 			_colorBandSet = new ColorBandSet();
-			_colorBandsView = null;
+			_colorBandsView = BuildColorBandsView(null);
+			_currentColorBand = null;
+
 			_isDirty = false;
 			_histLock = new object();
 
@@ -87,26 +92,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public ListCollectionView ColorBandsView
-		{
-			get
-			{
-				if (_colorBandsView == null)
-				{
-					_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet?.ColorBands);
-					_colorBandsView.SortDescriptions.Add(new SortDescription("CutOff", ListSortDirection.Ascending));
-				}
-
-				return _colorBandsView;
-			}
-
-			set
-			{
-				_colorBandsView = value;
-				OnPropertyChanged();
-			}
-		}
-
 		public ColorBandSet? ColorBandSet
 		{
 			get => _colorBandSet;
@@ -127,9 +112,8 @@ namespace MSetExplorer
 							Histogram.Reset();
 						}
 
-						_colorBandsView = null;
+						ColorBandsView = BuildColorBandsView(null);
 						IsDirty = false;
-
 						OnPropertyChanged(nameof(ColorBandSet));
 						OnPropertyChanged(nameof(ColorBandsView));
 					}
@@ -146,20 +130,62 @@ namespace MSetExplorer
 							_mapSectionHistogramProcessor.ProcessingEnabled = false;
 							_colorBandSet = value;
 
-							Histogram.Reset(value.HighCutOff + 1);
+							Histogram.Reset(value.HighCutOff);
 							PopulateHistorgram(_mapSections, Histogram);
 							_mapSectionHistogramProcessor.ProcessingEnabled = true;
 						}
 
-						_colorBandsView = null;
-						var view = ColorBandsView;
-						_ = view.MoveCurrentTo(_colorBandSet.FirstOrDefault());
+						ColorBandsView = BuildColorBandsView(_colorBandSet);
+						ColorBandsView.MoveCurrentToFirst();
 
 						IsDirty = false;
 						OnPropertyChanged(nameof(ColorBandSet));
 						OnPropertyChanged(nameof(ColorBandsView));
 					}
 				}
+			}
+		}
+
+		public ListCollectionView ColorBandsView
+		{
+			get => _colorBandsView;
+
+			set
+			{
+				if (_colorBandsView != null)
+				{
+					_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
+				}
+
+				_colorBandsView = value;
+
+				if (_colorBandsView != null)
+				{
+					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
+				}
+
+				OnPropertyChanged();
+			}
+		}
+
+		public ColorBand? CurrentColorBand
+		{
+			get => _currentColorBand;
+			set
+			{
+				if (_currentColorBand != null)
+				{
+					_currentColorBand.PropertyChanged -= CurrentColorBand_PropertyChanged;
+				}
+
+				_currentColorBand = value;
+
+				if (_currentColorBand != null)
+				{
+					_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
+				}
+
+				OnPropertyChanged();
 			}
 		}
 
@@ -174,7 +200,7 @@ namespace MSetExplorer
 					{
 						lock (_histLock)
 						{
-							Histogram.Reset(value.Value + 1);
+							Histogram.Reset(value.Value);
 						}
 
 						_colorBandSet.HighCutOff = value.Value;
@@ -203,6 +229,107 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (sender is ColorBand cb && _colorBandSet != null)
+			{
+				Debug.WriteLine($"Prop: {e.PropertyName} is changing.");
+
+				if (e.PropertyName == nameof(ColorBand.ActualEndColor))
+				{
+					if (cb.BlendStyle == ColorBandBlendStyle.End)
+					{
+						cb.EndColor = cb.ActualEndColor;
+					}
+				}
+				else if (e.PropertyName == nameof(ColorBand.StartColor))
+				{
+					if (cb.BlendStyle == ColorBandBlendStyle.None)
+					{
+						cb.ActualEndColor = cb.StartColor;
+					}
+
+					var index = _colorBandSet.IndexOf(cb);
+					if (TryGetPredeccessor(_colorBandSet, index, out var colorBand))
+					{
+						if (colorBand.BlendStyle == ColorBandBlendStyle.Next)
+						{
+							colorBand.ActualEndColor = cb.StartColor;
+						}
+					}
+				}
+				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
+				{
+					if (cb.BlendStyle == ColorBandBlendStyle.Next)
+					{
+						var index = _colorBandSet.IndexOf(cb);
+						if (TryGetSuccessor(_colorBandSet, index, out var colorBand))
+						{
+							cb.ActualEndColor = colorBand.StartColor;
+						}
+					}
+					else
+					{
+						cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
+					}
+				}
+				else if (e.PropertyName == nameof(ColorBand.CutOff))
+				{
+					var index = _colorBandSet.IndexOf(cb);
+					if (TryGetSuccessor(_colorBandSet, index, out var colorBand))
+					{
+						colorBand.PreviousCutOff = cb.CutOff;
+					}
+
+					UpdatePercentages();
+				}
+			}
+			else
+			{
+				if (sender is ColorBand)
+				{
+					Debug.WriteLine($"The ColorBandSet is null while handling a CurrentColorBand_PropertyChanged event.");
+				}
+				else
+				{
+					Debug.WriteLine($"A sender of type {sender?.GetType()} is sending is raising the CurrentColorBand_PropertyChanged event.");
+				}
+			}
+		}
+
+		private bool TryGetPredeccessor(IList<ColorBand> colorBands, int index, [MaybeNullWhen(false)] out ColorBand colorBand)
+		{
+			if (index < 1)
+			{
+				colorBand = null;
+				return false;
+			}
+			else
+			{
+				colorBand = colorBands[index - 1];
+				return true;
+			}
+		}
+
+		private bool TryGetSuccessor(IList<ColorBand> colorBands, int index, [MaybeNullWhen(false)] out ColorBand colorBand)
+		{
+			if (index > colorBands.Count - 2)
+			{
+				colorBand = null;
+				return false;
+			}
+			else
+			{
+				colorBand = colorBands[index + 1];
+				return true;
+			}
+		}
+
+		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
+		{
+			CurrentColorBand = (ColorBand) ColorBandsView.CurrentItem;
+		}
 
 		private void MapSections_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
@@ -240,18 +367,6 @@ namespace MSetExplorer
 			//Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
 		}
 
-		private int[] GetCutOffs()
-		{
-			IEnumerable<int>? t;
-
-			lock (_histLock)
-			{
-				t = _colorBandSet?.Select(x => x.CutOff);
-			}
-
-			return t?.ToArray() ?? Array.Empty<int>();
-		}
-
 		#endregion
 
 		#region Public Methods
@@ -259,20 +374,13 @@ namespace MSetExplorer
 		public void InsertItem(int index, ColorBand newItem)
 		{
 			//Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-
 			_colorBandSet?.Insert(index, newItem);
-			var cutOffs = GetCutOffs();
-			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
-
-			IsDirty = true;
+			UpdatePercentages();
 		}
 
 		public void ItemWasUpdated()
 		{
-			var cutOffs = GetCutOffs();
-			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
-
-			IsDirty = true;
+			UpdatePercentages();
 		}
 
 		public void DeleteSelectedItem()
@@ -306,10 +414,7 @@ namespace MSetExplorer
 
 					Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {idx1}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 
-					var cutOffs = GetCutOffs();
-					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
-
-					IsDirty = true;
+					UpdatePercentages();
 				}
 			}
 		}
@@ -334,6 +439,13 @@ namespace MSetExplorer
 
 		#region Private Methods
 
+		private void UpdatePercentages()
+		{
+			var cutOffs = GetCutOffs();
+			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
+			IsDirty = true;
+		}
+
 		private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
 		{
 			foreach(var ms in mapSections)
@@ -341,8 +453,8 @@ namespace MSetExplorer
 				histogram.Add(ms.Histogram);
 			}
 
-			var cutOffs = GetCutOffs();
-			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
+			//var cutOffs = GetCutOffs();
+			//_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
 		}
 
 		private void HandleHistogramUpdate(ValueTuple<int, double>[] newPercentages)
@@ -360,18 +472,43 @@ namespace MSetExplorer
 
 					var len = Math.Min(newPercentages.Length, colorBands.Length);
 
-					var total = 0d;
+					//var total = 0d;
 
 					for(var i = 0; i < len; i++)
 					{
 						var cb = colorBands[i];
 						cb.Percentage = newPercentages[i].Item2;
-						total += newPercentages[i].Item2;
+						//total += newPercentages[i].Item2;
 					}
 
-					Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");
+					//Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");
 				}
 			}
+		}
+
+		private int[] GetCutOffs()
+		{
+			IEnumerable<int>? t;
+
+			lock (_histLock)
+			{
+				t = _colorBandSet?.Select(x => x.CutOff);
+			}
+
+			return t?.ToArray() ?? Array.Empty<int>();
+		}
+
+		private ListCollectionView BuildColorBandsView(ObservableCollection<ColorBand>? colorBands)
+		{
+			if (colorBands == null)
+			{
+				colorBands = new ObservableCollection<ColorBand>();
+			}
+
+			var result = (ListCollectionView)CollectionViewSource.GetDefaultView(colorBands);
+			//result.SortDescriptions.Add(new SortDescription("CutOff", ListSortDirection.Ascending));
+
+			return result;
 		}
 
 		private string GetViewAsString()

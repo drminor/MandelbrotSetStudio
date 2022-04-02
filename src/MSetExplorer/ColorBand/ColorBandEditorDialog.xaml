@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="ColorBandEditor" Height="150" Width="320">
+        Title="ColorBandEditor" Height="120" Width="290">
 
     <Window.Resources>
         <ResourceDictionary>
