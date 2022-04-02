@@ -167,7 +167,9 @@ namespace MSetRepo
 				new ObjectId(source.SubdivisionId),
 				blockPositionRecord,
 				source.MapCalcSettings,
-				source.Counts
+				source.Counts,
+				source.DoneFlags,
+				source.ZValues
 				);
 
 			return result;
@@ -186,7 +188,9 @@ namespace MSetRepo
 				SubdivisionId = target.SubdivisionId.ToString(),
 				BlockPosition = target.BlockPosition.BigVector,
 				MapCalcSettings = target.MapCalcSettings,
-				Counts = target.Counts
+				Counts = target.Counts,
+				DoneFlags = target.DoneFlags,
+				ZValues = target.ZValues
 			};
 
 			return result;

@@ -1,10 +1,8 @@
 ﻿using MSS.Types;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace MSetExplorer
@@ -108,7 +106,7 @@ namespace MSetExplorer
 
 				_vm.InsertItem(index, newItem);
 
-				lvColorBands.Items.Refresh();
+				//lvColorBands.Items.Refresh();
 				_ = lvColorBands.Items.MoveCurrentToPosition(index);
 
 				FocusListBoxItem(index);

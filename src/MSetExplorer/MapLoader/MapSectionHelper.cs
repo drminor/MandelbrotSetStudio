@@ -64,10 +64,13 @@ namespace MSetExplorer
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
 			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
 
+			var subdivisionId = job.Subdivision.Id.ToString();
+			var targetIterations = job.MSetInfo.MapCalcSettings.TargetIterations;
+
 			foreach (var screenPosition in ScreenTypeHelper.Points(mapExtentInBlocks))
 			{
 				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var isInverted);
-				var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyCountsData, job.Subdivision.Id.ToString(), repoPosition, isInverted);
+				var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyCountsData, targetIterations, subdivisionId, repoPosition, isInverted);
 				result.Add(mapSection);
 			}
 
@@ -107,6 +110,9 @@ namespace MSetExplorer
 				Position = _dtoMapper.MapTo(mapPosition),
 				SamplePointsDelta = _dtoMapper.MapTo(subdivision.SamplePointDelta),
 				MapCalcSettings = mapCalcSettings,
+				Counts = null,
+				DoneFlags = null,
+				ZValues = null,
 				IsInverted = isInverted
 			};
 
@@ -141,7 +147,7 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var blockSize = mapSectionRequest.BlockSize;
-			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted);
+			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionResponse.MapCalcSettings.TargetIterations, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted);
 
 			return mapSection;
 		}

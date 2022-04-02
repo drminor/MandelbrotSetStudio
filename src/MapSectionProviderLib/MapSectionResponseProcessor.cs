@@ -100,7 +100,7 @@ namespace MapSectionProviderLib
 				{
 					var mapSectionWorkItem = _workQueue.Take(ct);
 
-					if (IsJobCancelled(mapSectionWorkItem.JobId))
+					if (!mapSectionWorkItem.Response.RequestCancelled && IsJobCancelled(mapSectionWorkItem.JobId))
 					{
 						mapSectionWorkItem.Response.RequestCancelled = true;
 					}

@@ -277,22 +277,29 @@ namespace MSetExplorer
 			return jobSpd == parentSpd;
 		}
 
-		private IList<MapSection> GetNotYetLoaded(IList<MapSection> source, IReadOnlyList<MapSection> current)
+		private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)
 		{
-			IList<MapSection> result = new List<MapSection>();
+			//IList<MapSection> result = new List<MapSection>();
 
-			foreach(var mapSection in source)
-			{
-				if (!current.Any(x => x == mapSection))
-				{
-					result.Add(mapSection);
-				}
-			}
+			//foreach(var mapSection in sectionsNeeded)
+			//{
+			//	if (!sectionsPresent.Any(x => x == mapSection))
+			//	{
+			//		result.Add(mapSection);
+			//	}
+			//}
+
+			var result = sectionsNeeded.Where(
+				neededSection => !sectionsPresent.Any(
+					presentSection => presentSection == neededSection 
+					&& presentSection.TargetIterations == neededSection.TargetIterations
+					)
+				).ToList();
 
 			return result;
 		}
 
-		private Tuple<int, int, int> UpdateMapSectionCollection(ObservableCollection<MapSection> source, IList<MapSection> newSet, out VectorInt shiftAmount)
+		private Tuple<int, int, int> UpdateMapSectionCollection(ObservableCollection<MapSection> sectionsPresent, IList<MapSection> newSet, out VectorInt shiftAmount)
 		{
 			var cntRemoved = 0;
 			var cntRetained = 0;
@@ -301,7 +308,7 @@ namespace MSetExplorer
 			IList<MapSection> toBeRemoved = new List<MapSection>();
 			shiftAmount = new VectorInt();
 
-			foreach (var mapSection in source)
+			foreach (var mapSection in sectionsPresent)
 			{
 				var matchingNewSection = newSet.FirstOrDefault(x => x == mapSection);
 				if(matchingNewSection == null)
@@ -338,7 +345,7 @@ namespace MSetExplorer
 
 			foreach(var mapSection in toBeRemoved)
 			{
-				if (!source.Remove(mapSection))
+				if (!sectionsPresent.Remove(mapSection))
 				{
 					Debug.WriteLine($"Could not remove MapSection: {mapSection}.");
 				}

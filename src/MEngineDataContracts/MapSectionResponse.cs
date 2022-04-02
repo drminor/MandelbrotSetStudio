@@ -22,12 +22,12 @@ namespace MEngineDataContracts
 		[DataMember(Order = 5)]
 		public int[] Counts { get; set; }
 
+		[DataMember(Order = 6)]
+		public bool[] DoneFlags { get; set; }
+
+		[DataMember(Order = 7)]
+		public double[] ZValues { get; set; }
+
 		public bool RequestCancelled { get; set; }
-
-		//[DataMember(Order = 5)]
-		//public bool[] DoneFlags { get; set; }
-
-		//[DataMember(Order = 6)]
-		//public double[] ZValues { get; set; }
 	}
 }

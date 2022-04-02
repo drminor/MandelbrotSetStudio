@@ -13,16 +13,18 @@ namespace MSS.Types
 		public SizeInt Size { get; init; }
 
 		public int[] Counts { get; set; }
+		public int TargetIterations { get; set; }
 
 		public string SubdivisionId { get; init; }
 		public BigVector RepoBlockPosition { get; init; }
 		public bool IsInverted { get; init; }
 
-		public MapSection(PointInt blockPosition, SizeInt size, int[] counts, string subdivisionId, BigVector repoBlockPosition, bool isInverted)
+		public MapSection(PointInt blockPosition, SizeInt size, int[] counts, int targetIterations, string subdivisionId, BigVector repoBlockPosition, bool isInverted)
 		{
 			BlockPosition = blockPosition;
 			Size = size;
 			Counts = counts ?? throw new ArgumentNullException(nameof(counts));
+			TargetIterations = targetIterations;
 
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
@@ -49,10 +51,11 @@ namespace MSS.Types
 
 		public bool Equals(MapSection? other)
 		{
-			return other is MapSection ms &&
-				   SubdivisionId == ms.SubdivisionId &&
-				   IsInverted == ms.IsInverted &&
-				   EqualityComparer<BigVector>.Default.Equals(RepoBlockPosition, ms.RepoBlockPosition);
+			return other is MapSection ms
+				&& SubdivisionId == ms.SubdivisionId
+				&& IsInverted == ms.IsInverted
+				&& EqualityComparer<BigVector>.Default.Equals(RepoBlockPosition, ms.RepoBlockPosition);
+				//&& TargetIterations == ms.TargetIterations;
 		}
 
 		public bool Equals(MapSection? x, MapSection? y)

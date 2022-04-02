@@ -70,9 +70,7 @@ namespace MapSectionProviderLib
 				_workQueueProcessor.Wait(120 * 1000);
 			}
 			catch
-			{
-
-			}
+			{ }
 		}
 
 		#endregion

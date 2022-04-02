@@ -137,7 +137,10 @@ namespace ImageBuilder
 				Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
 				BlockSize = RMapConstants.BLOCK_SIZE,
 				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
-				MapCalcSettings = new MapCalcSettings(targetIterations: 100, iterationsPerRequest: 100)
+				MapCalcSettings = new MapCalcSettings(targetIterations: 100, iterationsPerRequest: 100),
+				Counts = null,
+				DoneFlags = null,
+				ZValues = null
 			};
 
 			//var tSize = new RSizeDto(new BigInteger[] { 11, 12 }, 3);

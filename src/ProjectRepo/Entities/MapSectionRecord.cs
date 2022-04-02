@@ -10,9 +10,9 @@ namespace ProjectRepo.Entities
 		ObjectId SubdivisionId,
 		BigVectorRecord BlockPosition,
 		MapCalcSettings MapCalcSettings,
-		int[] Counts
-		//bool[] DoneFlags,
-		//double[] ZValues
+		int[] Counts,
+		bool[] DoneFlags,
+		double[] ZValues
 	) : RecordBase();
 
 }
