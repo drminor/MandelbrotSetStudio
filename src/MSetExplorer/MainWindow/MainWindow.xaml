@@ -30,7 +30,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="140"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="300"/>
         </Grid.ColumnDefinitions>
@@ -70,16 +70,15 @@
 
         </Menu>
         
-        
         <Border Grid.Row="1" Grid.Column="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
-                <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Command="local:CustomCommands.PanLeft">Left</Button>
-                <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Command="local:CustomCommands.PanUp">Up</Button>
-                <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Command="local:CustomCommands.PanRight">Right</Button>
-                <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" Margin="25,15,15,0" Command="local:CustomCommands.PanDown">Down</Button>
+                <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,50,10,5" Command="local:CustomCommands.PanLeft">Left</Button>
+                <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanUp">Up</Button>
+                <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanRight">Right</Button>
+                <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanDown">Down</Button>
                 
-                <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,115,15,0" Command="local:CustomCommands.JobGoBack">Go Back</Button>
-                <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="25,15,15,0" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
+                <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,115,10,5" Command="local:CustomCommands.JobGoBack">Go Back</Button>
+                <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
             </StackPanel>
         </Border>
 
@@ -100,19 +99,7 @@
             </Grid.ColumnDefinitions>
 
             <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <!--<StackPanel HorizontalAlignment="Stretch" Orientation="Vertical" Margin="0,5,0,5">
 
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Width="90" Margin="5" FontSize="14" Text="Iterations:"/>
-                        <TextBox x:Name="txtIterations" Text="700" Width="70"  VerticalAlignment="Center"/>
-                    </StackPanel>
-
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Width="90" Margin="5" FontSize="14" Text="Steps:"/>
-                        <TextBox Text="{Binding Path=Steps}" Width="70" VerticalAlignment="Center"/>
-                    </StackPanel>
-
-                </StackPanel>-->
                 <!--<local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" MSetInfo="{Binding MapProjectViewModel.CurrentJob.MSetInfo}" Focusable="True"/>-->
                 <local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" Focusable="True"/>
             </Border>

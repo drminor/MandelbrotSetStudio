@@ -23,18 +23,15 @@
                 </Grid.ColumnDefinitions>
 
                 <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
-
                     <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding PreviousCutOff}"/>
                     <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding CutOff}"/>
-
                 </DockPanel>
 
                 <Grid Grid.Column="1" Width="93" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
                     <local:TwoColorPanelControl StartColor="{Binding StartColor}" EndColor="{Binding ActualEndColor}"/>
-                 </Grid>
+                </Grid>
                  
-                <TextBlock Grid.Column="2" Width="38" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
-                
+                <TextBlock Grid.Column="2" Width="38" Margin="2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
 
             </Grid>
         </DataTemplate>
@@ -57,19 +54,16 @@
                 </Grid.ColumnDefinitions>
 
                 <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
-
                     <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding PreviousCutOff}"/>
                     <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding CutOff}"/>
-
                 </DockPanel>
 
                 <Grid Grid.Column="1" Width="93" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
                     <local:TwoColorPanelControl StartColor="{Binding StartColor}" EndColor="{Binding ActualEndColor}"/>
-                 </Grid>
+                </Grid>
                  
-                <TextBlock Grid.Column="2" Width="38" Margin="2,20,2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
-                
-
+                <TextBlock Grid.Column="2" Width="38" Margin="2,20" TextAlignment="Right" Text="{Binding Percentage}"/>
+ 
             </Grid>
         </DataTemplate>
 
@@ -105,49 +99,17 @@
                                 <Rectangle x:Name="BackgroundRect" Opacity="0.1" StrokeThickness="1" 
                                            Stroke="Transparent" RadiusX="5" RadiusY="5" Fill="{TemplateBinding Background}" />
                                 
-                                <!--<Rectangle StrokeThickness="1" Stroke="#FF000000" RadiusX="3" RadiusY="3" >
-                                    <Rectangle.Fill>
-                                        <LinearGradientBrush StartPoint="-0.513721,0.412914" EndPoint="1.43072,0.412914">
-                                            <LinearGradientBrush.GradientStops>
-                                                <GradientStop Color="Transparent" Offset="0"/>
-                                                <GradientStop Color="#60FFFFFF" Offset="1"/>
-                                            </LinearGradientBrush.GradientStops>
-                                        </LinearGradientBrush>
-                                    </Rectangle.Fill>
-                                </Rectangle>
-                                
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="0.6*"/>
-                                        <RowDefinition Height="0.4*"/>
-                                    </Grid.RowDefinitions>
-                                    <Rectangle RadiusX="3" RadiusY="3"  Margin="3" Grid.RowSpan="1" Grid.Row="0"  >
-                                        <Rectangle.Fill>
-                                            <LinearGradientBrush  EndPoint="0,0" StartPoint="0,1">
-                                                <GradientStop Color="#44FFFFFF" Offset="0"/>
-                                                <GradientStop Color="#66FFFFFF" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Rectangle.Fill>
-                                    </Rectangle>
-                                </Grid>-->
-                                
+                               
                                 <ContentPresenter x:Name="ContentHost" Margin="{TemplateBinding Padding}"
                                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                                 
-                                <!--<Rectangle Fill="{x:Null}" Stroke="#FFFFFFFF" RadiusX="3" RadiusY="3" Margin="1" />-->
                                 
                             </Grid>
                         </Grid>
 
                         <ControlTemplate.Triggers>
                             <Trigger Property="Selector.IsSelected" Value="True">
-                                <Setter TargetName="BackgroundRect" Property="Opacity" Value="0.5" />
-                                <!--<Setter TargetName="ContentHost" Property="BitmapEffect">
-                                    <Setter.Value>
-                                        <OuterGlowBitmapEffect GlowColor="White" GlowSize="9" />
-                                    </Setter.Value>
-                                </Setter>-->
                                 <Setter TargetName="BackgroundRect" Property="Opacity" Value="0.5" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -176,20 +138,42 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
-
             <ListBox Name="lvColorBands" ItemsSource="{Binding ColorBandsView}"
                      ItemContainerStyle="{StaticResource CbContainerStyle}"
                      IsSynchronizedWithCurrentItem="True" Focusable="True">
+                
                 <ListBox.InputBindings>
-                    <KeyBinding Command="local:TransactionCommands.Edit" Key="F2" />
+                    <KeyBinding Command="local:ColorBandSetCommands.Edit" Key="F2" />
+                    <KeyBinding Command="local:ColorBandSetCommands.Delete" Key="Delete" />
+                    <KeyBinding Command="local:ColorBandSetCommands.Insert" Key="Insert" />
+                    
                     <!--<KeyBinding Command="local:TransactionCommands.Commit" Key="Enter" />
                     <KeyBinding Command="local:TransactionCommands.Cancel" Key="Esc"/>-->
                 </ListBox.InputBindings>
+                
                 <ListBox.CommandBindings>
-                    <CommandBinding Command="local:TransactionCommands.Edit" Executed="EditButton_Click" />
+                    <CommandBinding Command="local:ColorBandSetCommands.Edit" Executed="EditButton_Click" />
+                    <CommandBinding Command="local:ColorBandSetCommands.Delete" Executed="DeleteButton_Click" />
+                    <CommandBinding Command="local:ColorBandSetCommands.Insert" Executed="InsertButton_Click" />
+
                     <!--<CommandBinding Command="local:TransactionCommands.Commit" Executed="CommitCharacterChanges" />
                     <CommandBinding Command="local:TransactionCommands.Cancel" Executed="CancelCharacterChanges" />-->
                 </ListBox.CommandBindings>
+
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="_Edit" Command="local:ColorBandSetCommands.Edit"/>
+                        <MenuItem Header="_Delete" Command="local:ColorBandSetCommands.Delete"/>
+                        <MenuItem Header="_Insert" Command="local:ColorBandSetCommands.Insert"/>
+                        <Separator/>
+                        <MenuItem Header="_Apply" Command="local:ColorBandSetCommands.Apply"/>
+                        <Separator/>
+                        <MenuItem Header="_Open" Command="local:CustomCommands.ColorsOpen" />
+                        <MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />
+                        <MenuItem Header="Save_As" Command="local:CustomCommands.ColorsSaveAs" />
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+                
             </ListBox>
         </Border>
 
@@ -200,10 +184,10 @@
         <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,9,0,9">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnEdit" HorizontalAlignment="Center" Width="45" FontSize="14" Height="23" Margin="0,0,10,0" Click="EditButton_Click">Edit</Button>
-                <Button Name="btnInsert" HorizontalAlignment="Center" Width="60" FontSize="14" Height="23" Margin="5,0,0,0" Click="InsertButton_Click">Insert</Button>
-                <Button Name="btnDelete" HorizontalAlignment="Center" Width="60" FontSize="14" Height="23" Margin="5,0,0,0" Click="DeleteButton_Click">Delete</Button>
-                <Button Name="btnApply" HorizontalAlignment="Center" Width="70" FontSize="14" Height="23" Margin="5,0,0,0" Click="ApplyButton_Click">Apply</Button>
+                <Button Name="btnEdit" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Click="EditButton_Click">Edit</Button>
+                <Button Name="btnInsert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Click="InsertButton_Click">Insert</Button>
+                <Button Name="btnDelete" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Click="DeleteButton_Click">Delete</Button>
+                <Button Name="btnApply" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Click="ApplyButton_Click">Apply</Button>
             </StackPanel>
 
         </Border>
