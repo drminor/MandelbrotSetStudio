@@ -31,7 +31,7 @@ namespace MSetExplorer
 		bool GoForward();
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
-		void UpdateTargetInterations(int targetIterations, int iterationsPerRequest);
+		void UpdateTargetInterations(int targetIterations);
 
 		// Project Methods
 		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);

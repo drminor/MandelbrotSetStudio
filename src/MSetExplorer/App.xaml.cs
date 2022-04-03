@@ -37,7 +37,7 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			var DROP_ALL_SECTIONS = false;
+			var DROP_ALL_SECTIONS = true;
 			var DROP_MAP_SECTIONS = false;
 			var USE_MAP_SECTION_REPO = true;
 

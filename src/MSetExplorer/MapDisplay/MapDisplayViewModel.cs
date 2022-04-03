@@ -71,36 +71,35 @@ namespace MSetExplorer
 			get => _currentJob;
 			set
 			{
-				if (value != _currentJob)
+				if (IsJobChanged(_currentJob, value))
 				{
+					var previousJob = _currentJob;
 					_currentJob = value;
-					if (_currentJob != null)
-					{
-						HandleCurrentJobChanged(_currentJob);
-					}
+					HandleCurrentJobChanged(previousJob, _currentJob);
 				}
-				else
-				{
-					if (IsCanvasSizeChanged(_currentJob, value))
-					{
-						HandleDisplaySizeChanged(_currentJob);
-					}
-				}
+				//else
+				//{
+				//	if (IsCanvasSizeChanged(_currentJob, value))
+				//	{
+				//		_currentJob = value;
+				//		HandleDisplaySizeChanged(_currentJob);
+				//	}
+				//}
 			}
 		}
 
-		private bool IsCanvasSizeChanged(Job? currentJob, Job? newJob)
+		private bool IsJobChanged(Job? previousJob, Job? newJob)
 		{
-			if (!(currentJob is null) && !(newJob is null))
+			if (!(previousJob is null) && !(newJob is null))
 			{
-				var curSize = currentJob.CanvasSizeInBlocks;
-				var newSize = newJob.CanvasSizeInBlocks;
+				var idDiff = newJob.Id != previousJob.Id;
+				var csDiff = newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks;
 
-				return curSize == newSize;
+				return idDiff || csDiff;
 			}
 			else
 			{
-				var result = currentJob is null && newJob is null;
+				var result = !(previousJob is null && newJob is null);
 				return result;
 			}
 		}
@@ -253,65 +252,126 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleDisplaySizeChanged(Job? curJob)
+		//private void HandleDisplaySizeChanged(Job? curJob)
+		//{
+		//	Debug.WriteLine($"MapDisplay is handling DisplaySizeChanged.");
+		//	_mapLoaderManager.StopCurrentJob();
+
+		//	if (curJob != null)
+		//	{
+		//		MapSections.Clear();
+		//		CanvasControlOffset = curJob.CanvasControlOffset;
+		//		_mapLoaderManager.Push(curJob);
+
+		//		//ReuseLoadedSections(curJob);
+		//	}
+		//	else
+		//	{
+		//		MapSections.Clear();
+		//	}
+		//}
+
+		private void HandleCurrentJobChanged(Job? previousJob, Job? newJob)
 		{
+			Debug.WriteLine($"MapDisplay is handling JobChanged.");
 			_mapLoaderManager.StopCurrentJob();
 
-			Debug.WriteLine($"Handling DisplaySizeChanged. Clearing Display.");
-			MapSections.Clear();
-
-			if (curJob != null)
+			if (newJob != null)
 			{
-				CanvasControlOffset = curJob.CanvasControlOffset;
-				_mapLoaderManager.Push(curJob);
-			}
-		}
-
-		private void HandleCurrentJobChanged(Job curJob)
-		{
-			_mapLoaderManager.StopCurrentJob();
-
-			if (ShouldAttemptToReuseLoadedSections(curJob))
-			{
-				var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
-				var loadedSections = GetMapSectionsSnapShot();
-
-				// Avoid requesting sections already drawn
-				var sectionsToLoad = GetNotYetLoaded(sectionsRequired, loadedSections);
-
-				// Remove from the screen sections that are not part of the updated view.
-				var uResults = UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
-				var cntRemoved = uResults.Item1;
-				var cntRetained = uResults.Item2;
-				var cntUpdated = uResults.Item3;
-
-				Debug.WriteLine($"Panning: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
-
-				_screenSectionCollection.Shift(shiftAmount);
-				CanvasControlOffset = curJob.CanvasControlOffset;
-				RedrawSections(MapSections);
-				_mapLoaderManager.Push(curJob, sectionsToLoad);
+				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
+				{
+					ReuseLoadedSections(newJob);
+				}
+				else
+				{
+					Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
+					MapSections.Clear();
+					CanvasControlOffset = newJob.CanvasControlOffset;
+					_mapLoaderManager.Push(newJob);
+				}
 			}
 			else
 			{
-				Debug.WriteLine($"Clearing Display. TransformType: {curJob.TransformType}.");
 				MapSections.Clear();
-				CanvasControlOffset = curJob.CanvasControlOffset;
-				_mapLoaderManager.Push(curJob);
 			}
 		}
 
-		private bool ShouldAttemptToReuseLoadedSections(Job job)
+		private void ReuseLoadedSections(Job curJob)
 		{
-			if (MapSections.Count == 0 || job.ParentJob is null || job.TransformType == TransformType.IterationUpdate || job.TransformType == TransformType.ColorMapUpdate)
+			var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
+			var loadedSections = GetMapSectionsSnapShot();
+
+			// Avoid requesting sections already drawn
+			var sectionsToLoad = GetNotYetLoaded(sectionsRequired, loadedSections);
+
+			// Remove from the screen sections that are not part of the updated view.
+			var uResults = UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
+			var cntRemoved = uResults.Item1;
+			var cntRetained = uResults.Item2;
+			var cntUpdated = uResults.Item3;
+
+			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
+
+			_screenSectionCollection.Shift(shiftAmount);
+			CanvasControlOffset = curJob.CanvasControlOffset;
+			RedrawSections(MapSections);
+			_mapLoaderManager.Push(curJob, sectionsToLoad);
+		}
+
+		private bool ShouldAttemptToReuseLoadedSections(Job? previousJob, Job newJob)
+		{
+			if (MapSections.Count == 0 || newJob.ParentJob is null || newJob.TransformType == TransformType.ColorMapUpdate)
 			{
 				return false;
 			}
 
-			var jobSpd = RNormalizer.Normalize(job.Subdivision.SamplePointDelta, job.ParentJob.Subdivision.SamplePointDelta, out var parentSpd);
+			if (previousJob is null)
+			{
+				return false;
+			}
+			else if(newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
+			{
+				return false;
+			}
+			else
+			{
+				var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
+				return jobSpd == previousSpd;
+			}
 
-			return jobSpd == parentSpd;
+
+			////if (MapSections.Count == 0 || job.ParentJob is null || job.TransformType == TransformType.IterationUpdate || job.TransformType == TransformType.ColorMapUpdate)
+			//if (MapSections.Count == 0 || job.TransformType == TransformType.ColorMapUpdate)
+			//{
+			//	return false;
+			//}
+
+			//if (job.ParentJob is null)
+			//{
+			//	return true;
+			//}
+			//else
+			//{
+			//	var jobSpd = RNormalizer.Normalize(job.Subdivision.SamplePointDelta, job.ParentJob.Subdivision.SamplePointDelta, out var parentSpd);
+			//	return jobSpd == parentSpd;
+			//}
 		}
+
+		//private bool IsCanvasSizeChanged(Job currentJob, Job newJob)
+		//{
+		//	if (!(currentJob is null) && !(newJob is null))
+		//	{
+		//		var curSize = currentJob.CanvasSizeInBlocks;
+		//		var newSize = newJob.CanvasSizeInBlocks;
+
+		//		return curSize == newSize;
+		//	}
+		//	else
+		//	{
+		//		var result = currentJob is null && newJob is null;
+		//		return result;
+		//	}
+		//}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)
 		{

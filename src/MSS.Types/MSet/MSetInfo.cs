@@ -21,10 +21,21 @@ namespace MSS.Types.MSet
 			return new MSetInfo(newCoords.Clone(), source.MapCalcSettings);
 		}
 
-		public static MSetInfo UpdateWithNewIterations(MSetInfo source, int targetIterations, int requestsPerJob)
+		public static MSetInfo UpdateWithNewIterations(MSetInfo source, int targetIterations)
 		{
-			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(targetIterations, requestsPerJob));
+			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(targetIterations, source.MapCalcSettings.Threshold, source.MapCalcSettings.RequestsPerJob));
 		}
+
+		public static MSetInfo UpdateWithNewRequestsPerJob(MSetInfo source, int requestsPerJob)
+		{
+			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(source.MapCalcSettings.TargetIterations, source.MapCalcSettings.Threshold, requestsPerJob));
+		}
+
+		public static MSetInfo UpdateWithNewThreshold(MSetInfo source, int threshold)
+		{
+			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(source.MapCalcSettings.TargetIterations, threshold, source.MapCalcSettings.RequestsPerJob));
+		}
+
 
 		public override string ToString()
 		{

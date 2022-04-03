@@ -37,7 +37,7 @@ namespace MSetExplorer
 			if (e.MapSettingsUpdateType == MSS.Types.MapSettingsUpdateType.TargetIterations)
 			{
 				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
-				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations, e.RequestsPerJob);
+				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
 			}
 		}
 

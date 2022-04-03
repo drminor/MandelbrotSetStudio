@@ -54,11 +54,11 @@ namespace MSetExplorer
 			{
 				StopCurrentJobInternal();
 
-				var request = new MapLoader(job.MapBlockOffset, HandleMapSection, _mapSectionRequestProcessor);
+				var mapLoader = new MapLoader(job.MapBlockOffset, HandleMapSection, _mapSectionRequestProcessor);
 				var mapSectionRequests = MapSectionHelper.CreateSectionRequests(job, emptyMapSections);
-				var startTask = request.Start(mapSectionRequests);
+				var startTask = mapLoader.Start(mapSectionRequests);
 
-				_requests.Add(new GenMapRequestInfo(request, startTask));
+				_requests.Add(new GenMapRequestInfo(mapLoader, startTask));
 				_requestsPointer = _requests.Count - 1;
 				_ = startTask?.ContinueWith(MapLoaderComplete);
 			});

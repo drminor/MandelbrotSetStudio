@@ -6,15 +6,16 @@ namespace MSetExplorer
 {
 	public class MSetInfoViewModel : ViewModelBase
 	{
-		//private RRectangle _coords;
-		//private int _targetIterations;
-		//private int _requestsPerJob;
+		private RRectangle _coords;
+		private int _targetIterations;
+		private int _requestsPerJob;
 
 		private MSetInfo _currentMSetInfo;
 
 		public MSetInfoViewModel()
 		{
 			_currentMSetInfo = new MSetInfo(new RRectangle(), new MapCalcSettings());
+			_coords = _currentMSetInfo.Coords;
 		}
 
 		#region Public Properties
@@ -23,11 +24,12 @@ namespace MSetExplorer
 
 		public RRectangle Coords
 		{
-			get => _currentMSetInfo.Coords;
+			get => _coords;
 			set
 			{
-				if (value != _currentMSetInfo.Coords)
+				if (value != _coords)
 				{
+					_coords = value;
 					_currentMSetInfo = MSetInfo.UpdateWithNewCoords(_currentMSetInfo, value);
 					OnPropertyChanged();
 				}
@@ -36,12 +38,13 @@ namespace MSetExplorer
 		
 		public int TargetIterations
 		{
-			get => _currentMSetInfo.MapCalcSettings.TargetIterations;
+			get => _targetIterations;
 			set
 			{
-				if (value != _currentMSetInfo.MapCalcSettings.TargetIterations)
+				if (value != _targetIterations)
 				{
-					_currentMSetInfo = MSetInfo.UpdateWithNewIterations(_currentMSetInfo, value, RequestsPerJob);
+					_targetIterations = value;
+					_currentMSetInfo = MSetInfo.UpdateWithNewIterations(_currentMSetInfo, value);
 					OnPropertyChanged();
 				}
 			}
@@ -49,12 +52,13 @@ namespace MSetExplorer
 
 		public int RequestsPerJob
 		{
-			get => _currentMSetInfo.MapCalcSettings.RequestsPerJob;
+			get => _requestsPerJob;
 			set
 			{
-				if (value != _currentMSetInfo.MapCalcSettings.RequestsPerJob)
+				if (value != _requestsPerJob)
 				{
-					_currentMSetInfo = MSetInfo.UpdateWithNewIterations(_currentMSetInfo, TargetIterations, value);
+					_requestsPerJob = value;
+					_currentMSetInfo = MSetInfo.UpdateWithNewRequestsPerJob(_currentMSetInfo, value);
 					OnPropertyChanged();
 				}
 			}
@@ -69,7 +73,12 @@ namespace MSetExplorer
 				{
 					_currentMSetInfo = value ?? new MSetInfo(new RRectangle(), new MapCalcSettings());
 					OnPropertyChanged();
-					MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, TargetIterations, RequestsPerJob));
+
+					Coords = _currentMSetInfo.Coords;
+					TargetIterations = _currentMSetInfo.MapCalcSettings.TargetIterations;
+					RequestsPerJob = _currentMSetInfo.MapCalcSettings.RequestsPerJob;
+
+					//MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, TargetIterations, RequestsPerJob));
 				}
 			}
 		}

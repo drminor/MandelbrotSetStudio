@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types.MSet
 {
-	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>
+	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>, ICloneable
 	{
 		public ObjectId Id { get; init; }
 		public Job? ParentJob { get; set; }
@@ -59,6 +59,17 @@ namespace MSS.Types.MSet
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public Job Clone()
+		{
+			var result = new Job(Id, ParentJob, Project, Subdivision, Label, TransformType, NewArea, MSetInfo, CanvasSizeInBlocks, MapBlockOffset, CanvasControlOffset);
+			return result;
+		}
 
 		#region IEqualityComparer / IEquatable Support
 

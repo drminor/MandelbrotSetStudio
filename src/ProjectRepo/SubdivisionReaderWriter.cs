@@ -53,11 +53,18 @@ namespace ProjectRepo
 
 		public int GetMinExponent(IEnumerable<ObjectId> subdivisionIds)
 		{
-			var result = Collection.AsQueryable()
-				.Where(c => subdivisionIds.Contains(c.Id))
-				.Min(x => x.SamplePointDelta.Size.Exponent);
+			var items = Collection.AsQueryable()
+				.Where(c => subdivisionIds.Contains(c.Id)).ToList();
 
-			return result;
+			if (items.Count > 0)
+			{
+				var result = items.Min(x => x.SamplePointDelta.Size.Exponent);
+				return result;
+			}
+			else
+			{
+				return 0;
+			}	
 		}
 
 

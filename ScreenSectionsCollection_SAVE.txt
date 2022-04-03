@@ -1,4 +1,4 @@
-﻿using MSS.Types;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -10,7 +10,7 @@ namespace MSetExplorer
 {
 	internal class ScreenSectionCollection : IScreenSectionCollection
 	{
-		private static readonly SizeInt INITIAL_SCREEN_SECTION_ALLOCATION = new(14);
+		private static readonly SizeInt INITIAL_SCREEN_SECTION_ALLOCATION = new (14);
 		private readonly SizeInt _blockSize;
 		private readonly int _maxYPtr;
 		private readonly GeometryDrawing _foundationRectangle;
@@ -58,8 +58,8 @@ namespace MSetExplorer
 			set
 			{
 				var newVal = new SizeInt(
-					width: Math.Min(value.Width, 30),
-					height: Math.Min(value.Height, 30)
+					width:Math.Min(value.Width, 30), 
+					height:Math.Min(value.Height, 30)
 					);
 
 				if (_canvasSizeInBlocks != newVal)

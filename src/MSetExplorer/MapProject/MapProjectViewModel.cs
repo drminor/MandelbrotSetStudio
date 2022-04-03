@@ -390,7 +390,7 @@ namespace MSetExplorer
 			LoadMap(updatedInfo, transformType, newArea);
 		}
 
-		public void UpdateTargetInterations(int targetIterations, int requestsPerJob)
+		public void UpdateTargetInterations(int targetIterations)
 		{
 			var curJob = CurrentJob;
 			if (curJob == null)
@@ -400,9 +400,9 @@ namespace MSetExplorer
 
 			var mSetInfo = curJob.MSetInfo;
 
-			if (mSetInfo.MapCalcSettings.TargetIterations != targetIterations || mSetInfo.MapCalcSettings.RequestsPerJob != requestsPerJob)
+			if (mSetInfo.MapCalcSettings.TargetIterations != targetIterations)
 			{
-				var updatedInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations, requestsPerJob);
+				var updatedInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations);
 
 				var newArea = new RectangleInt(new PointInt(), CanvasSize);
 				LoadMap(updatedInfo, TransformType.IterationUpdate, newArea);
@@ -512,11 +512,17 @@ namespace MSetExplorer
 			}
 
 			var curJob = _jobsCollection[newJobIndex];
-			UpdateTheJobsCanvasSize(curJob);
+
+			if (curJob != null)
+			{
+				if (UpdateTheJobsCanvasSize(curJob, out var updatedJob))
+				{
+					_jobsCollection[newJobIndex] = updatedJob;
+				}
+			}
 
 			if (_jobsPointer == newJobIndex)
 			{
-				// TODO: Currently the only circumstance where Rerun is called with no change in the job index is due to the MapDisplayControl's size changing.
 				// Force a redraw
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			}
@@ -530,46 +536,52 @@ namespace MSetExplorer
 			}
 		}
 		
-		private void UpdateTheJobsCanvasSize(Job? job)
+		private bool UpdateTheJobsCanvasSize(Job job, out Job newJob)
 		{
-			if (job != null)
+			var newCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
+
+			MapJobHelper.CheckCanvasSize(CanvasSize, BlockSize);
+
+			if (newCanvasSizeInBlocks != job.CanvasSizeInBlocks)
 			{
-				var newCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
+				var diff = newCanvasSizeInBlocks.Sub(job.CanvasSizeInBlocks);
 
-				MapJobHelper.CheckCanvasSize(CanvasSize, BlockSize);
+				diff = diff.Scale(BlockSize);
+				diff = diff.DivInt(new SizeInt(2));
 
-				if (newCanvasSizeInBlocks != job.CanvasSizeInBlocks)
-				{
-					var diff = newCanvasSizeInBlocks.Sub(job.CanvasSizeInBlocks);
+				var rDiff = job.Subdivision.SamplePointDelta.Scale(diff);
+				var coords = job.MSetInfo.Coords;
 
-					diff = diff.Scale(BlockSize);
-					diff = diff.DivInt(new SizeInt(2));
+				var nrmArea = RNormalizer.Normalize(coords, rDiff, out var nrmDiff);
 
-					var rDiff = job.Subdivision.SamplePointDelta.Scale(diff);
-					var coords = job.MSetInfo.Coords;
+				var x1 = nrmArea.X1 - nrmDiff.Width.Value;
+				var x2 = nrmArea.X2 + nrmDiff.Width.Value;
 
-					var nrmArea = RNormalizer.Normalize(coords, rDiff, out var nrmDiff);
+				var y1 = nrmArea.Y1 - nrmDiff.Height.Value;
+				var y2 = nrmArea.Y2 + nrmDiff.Height.Value;
 
-					var x1 = nrmArea.X1 - nrmDiff.Width.Value;
-					var x2 = nrmArea.X2 + nrmDiff.Width.Value;
+				var newCoords = new RRectangle(x1, x2, y1, y2, nrmArea.Exponent);
 
-					var y1 = nrmArea.Y1 - nrmDiff.Height.Value;
-					var y2 = nrmArea.Y2 + nrmDiff.Height.Value;
+				var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords, job.Subdivision.Position, job.Subdivision.SamplePointDelta, BlockSize, out var canvasControlOffset);
 
-					var newCoords = new RRectangle(x1, x2, y1, y2, nrmArea.Exponent);
+				var newMsetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
 
-					var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords, job.Subdivision.Position, job.Subdivision.SamplePointDelta, BlockSize, out var canvasControlOffset);
+				// TODO: Adjust the Job's MapBlockOffset
+				Debug.WriteLine($"Reruning job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
 
-					var newMsetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
+				newJob = job.Clone();
 
-					// TODO: Adjust the Job's MapBlockOffset
-					Debug.WriteLine($"Reruning job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+				newJob.MSetInfo = newMsetInfo;
+				newJob.MapBlockOffset = mapBlockOffset;
+				newJob.CanvasControlOffset = canvasControlOffset;
+				newJob.CanvasSizeInBlocks = newCanvasSizeInBlocks;
 
-					job.MSetInfo = newMsetInfo;
-					job.MapBlockOffset = mapBlockOffset;
-					job.CanvasControlOffset = canvasControlOffset;
-					job.CanvasSizeInBlocks = newCanvasSizeInBlocks;
-				}
+				return true;
+			}
+			else
+			{
+				newJob = job;
+				return false;
 			}
 		}
 
