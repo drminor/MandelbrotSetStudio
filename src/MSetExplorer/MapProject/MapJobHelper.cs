@@ -65,7 +65,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		[Conditional("Debug")]
+		[Conditional("DEBUG")]
 		public static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)
 		{
 			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(new SizeDbl(canvasSize), blockSize, keepSquare: true);

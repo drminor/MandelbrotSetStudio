@@ -10,6 +10,7 @@ using MSetRepo;
 using System.Diagnostics;
 using MSS.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace MSetExplorer
 {
@@ -458,12 +459,6 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		//private void LoadMap(MSetInfo mSetInfo, TransformType transformType)
-		//{
-		//	var newArea = new RectangleInt(new PointInt(), CanvasSize);
-		//	LoadMap(mSetInfo, transformType, newArea);
-		//}
-
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
 			var curProject = CurrentProject;
@@ -521,6 +516,7 @@ namespace MSetExplorer
 
 			if (_jobsPointer == newJobIndex)
 			{
+				// TODO: Currently the only circumstance where Rerun is called with no change in the job index is due to the MapDisplayControl's size changing.
 				// Force a redraw
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			}
@@ -544,7 +540,34 @@ namespace MSetExplorer
 
 				if (newCanvasSizeInBlocks != job.CanvasSizeInBlocks)
 				{
+					var diff = newCanvasSizeInBlocks.Sub(job.CanvasSizeInBlocks);
+
+					diff = diff.Scale(BlockSize);
+					diff = diff.DivInt(new SizeInt(2));
+
+					var rDiff = job.Subdivision.SamplePointDelta.Scale(diff);
+					var coords = job.MSetInfo.Coords;
+
+					var nrmArea = RNormalizer.Normalize(coords, rDiff, out var nrmDiff);
+
+					var x1 = nrmArea.X1 - nrmDiff.Width.Value;
+					var x2 = nrmArea.X2 + nrmDiff.Width.Value;
+
+					var y1 = nrmArea.Y1 - nrmDiff.Height.Value;
+					var y2 = nrmArea.Y2 + nrmDiff.Height.Value;
+
+					var newCoords = new RRectangle(x1, x2, y1, y2, nrmArea.Exponent);
+
+					var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords, job.Subdivision.Position, job.Subdivision.SamplePointDelta, BlockSize, out var canvasControlOffset);
+
+					var newMsetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
+
+					// TODO: Adjust the Job's MapBlockOffset
 					Debug.WriteLine($"Reruning job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+
+					job.MSetInfo = newMsetInfo;
+					job.MapBlockOffset = mapBlockOffset;
+					job.CanvasControlOffset = canvasControlOffset;
 					job.CanvasSizeInBlocks = newCanvasSizeInBlocks;
 				}
 			}

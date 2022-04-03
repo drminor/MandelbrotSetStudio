@@ -60,5 +60,12 @@ namespace MSS.Types
 			var bithack = BitConverter.DoubleToInt64Bits(v);
 			return bithack != 0 && (bithack & ExponentMask) == 0;
 		}
-	}
+
+        public static double RoundOff(double number, int interval)
+        {
+            var remainder = (int)Math.IEEERemainder(number, interval);
+            number += (remainder < interval / 2) ? -remainder : (interval - remainder);
+            return number;
+        }
+    }
 }

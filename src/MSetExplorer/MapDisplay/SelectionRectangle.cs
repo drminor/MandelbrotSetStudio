@@ -501,8 +501,8 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Moving the sel rec to {position}, free form.");
 			//ReportPosition(posYInverted);
 
-			var x = RoundOff(posYInverted.X - (_selectedArea.Width / 2), _pitch);
-			var y = RoundOff(posYInverted.Y - (_selectedArea.Height / 2), _pitch);
+			var x = DoubleHelper.RoundOff(posYInverted.X - (_selectedArea.Width / 2), _pitch);
+			var y = DoubleHelper.RoundOff(posYInverted.Y - (_selectedArea.Height / 2), _pitch);
 
 			if (x < 0)
 			{
@@ -565,7 +565,7 @@ namespace MSetExplorer
 			var dist = controlPos - _dragAnchor;
 
 			// Horizontal
-			var x = RoundOff(dist.X, _pitch);
+			var x = DoubleHelper.RoundOff(dist.X, _pitch);
 
 			x = _dragAnchor.X + x;
 
@@ -580,7 +580,7 @@ namespace MSetExplorer
 			}
 
 			// Vertical
-			var y = RoundOff(dist.Y, _pitch);
+			var y = DoubleHelper.RoundOff(dist.Y, _pitch);
 			y = _dragAnchor.Y + y;
 
 			if (y < 0)
@@ -602,12 +602,12 @@ namespace MSetExplorer
 			}
 		}
 
-		private double RoundOff(double number, int interval)
-		{
-			var remainder = (int)Math.IEEERemainder(number, interval);
-			number += (remainder < interval / 2) ? -remainder : (interval - remainder);
-			return number;
-		}
+		//private double RoundOff(double number, int interval)
+		//{
+		//	var remainder = (int)Math.IEEERemainder(number, interval);
+		//	number += (remainder < interval / 2) ? -remainder : (interval - remainder);
+		//	return number;
+		//}
 
 		//private void SetMousePosition(Point posYInverted)
 		//{

@@ -16,10 +16,10 @@ namespace MSS.Types.MSet
 		public TransformType TransformType { get; init; }
 		public RectangleInt NewArea { get; init; }
 
-		public MSetInfo MSetInfo { get; init; }
+		public MSetInfo MSetInfo { get; set; }
 		public SizeInt CanvasSizeInBlocks { get; set; }
-		public BigVector MapBlockOffset { get; init; }
-		public VectorInt CanvasControlOffset { get; init; }
+		public BigVector MapBlockOffset { get; set; }
+		public VectorInt CanvasControlOffset { get; set; }
 
 		public Job(Job? parentJob, Project project, Subdivision subdivision, string? label, TransformType transformType, RectangleInt newArea, MSetInfo mSetInfo, 
 			SizeInt canvasSizeInBlocks, BigVector mapBlockOffset, VectorInt canvasControlOffset)

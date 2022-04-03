@@ -83,7 +83,7 @@ namespace MSetExplorer
 			{
 				var curJob = MapProjectViewModel.CurrentJob;
 
-				MSetInfoViewModel.SetMSetInfo(curJob?.MSetInfo);
+				MSetInfoViewModel.MSetInfo = curJob?.MSetInfo;
 				MapDisplayViewModel.CurrentJob = curJob;
 			}
 

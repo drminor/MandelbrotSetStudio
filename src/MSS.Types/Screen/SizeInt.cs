@@ -82,6 +82,16 @@ namespace MSS.Types
 			return result;
 		}
 
+		public SizeInt DivInt(SizeInt dividend)
+		{
+			var resultH = Width / dividend.Width;
+			var resultV = Height / dividend.Height;
+
+			var result = new SizeInt(resultH, resultV);
+
+			return result;
+		}
+
 		//public SizeInt DivRem(SizeInt dividend, out SizeInt remainder)
 		//{
 		//	var blocksH = Math.DivRem(Width, dividend.Width, out var remainderH);
@@ -106,6 +116,12 @@ namespace MSS.Types
 		public SizeInt GetSquare()
 		{
 			var result = new SizeInt(Math.Min(Width, Height));
+			return result;
+		}
+
+		public SizeInt Sub(SizeInt amount)
+		{
+			var result = new SizeInt(Width - amount.Width, Height - amount.Height);
 			return result;
 		}
 

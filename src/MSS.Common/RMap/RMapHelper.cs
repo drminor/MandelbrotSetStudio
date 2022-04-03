@@ -31,6 +31,27 @@ namespace MSS.Common
 			return result;
 		}
 
+		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
+		public static int CalculatePitch(SizeDbl displaySize, int pitchTarget)
+		{
+			int result;
+
+			var width = displaySize.Width;
+			var height = displaySize.Height;
+
+			if (width < height)
+			{
+				result = (int)Math.Round(width / Math.Pow(2, Math.Round(Math.Log2(width / pitchTarget))));
+			}
+			else
+			{
+				result = (int)Math.Round(height / Math.Pow(2, Math.Round(Math.Log2(height / pitchTarget))));
+			}
+
+			Debug.WriteLine($"The new ScreenSelection Pitch is {result}.");
+			return result;
+		}
+
 		#endregion
 
 		#region Job Creation
@@ -151,11 +172,11 @@ namespace MSS.Common
 			}
 			else
 			{
-				var offSetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta);
-				//Debug.WriteLine($"The offset in samplePoints is {offSetInSamplePoints}.");
+				var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta);
+				//Debug.WriteLine($"The offset in samplePoints is {offsetInSamplePoints}.");
 
-				result = GetOffsetAndRemainder(offSetInSamplePoints, blockSize, out canvasControlOffset);
-				//Debug.WriteLine($"Starting Block Pos: {offSetInBlocks}, Pixel Pos: {canvasControlOffset}.");
+				result = GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
+				//Debug.WriteLine($"Starting Block Pos: {result}, Pixel Pos: {canvasControlOffset}.");
 			}
 
 			return result;
@@ -167,17 +188,17 @@ namespace MSS.Common
 			var nrmDistance = RNormalizer.Normalize(distance, samplePointDelta, out var nrmSamplePointDelta);
 
 			// # of whole sample points between the source and destination origins.
-			var offSetInSamplePoints = nrmDistance.Divide(nrmSamplePointDelta);
+			var offsetInSamplePoints = nrmDistance.Divide(nrmSamplePointDelta);
 
-			return new BigVector(offSetInSamplePoints);
+			return new BigVector(offsetInSamplePoints);
 		}
 
-		private static BigVector GetOffsetAndRemainder(BigVector offSetInSamplePoints, SizeInt blockSize, out VectorInt canvasControlOffset)
+		private static BigVector GetOffsetAndRemainder(BigVector offsetInSamplePoints, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
-			var blocksH = BigInteger.DivRem(offSetInSamplePoints.X, blockSize.Width, out var remainderH);
-			var blocksV = BigInteger.DivRem(offSetInSamplePoints.Y, blockSize.Height, out var remainderV);
+			var blocksH = BigInteger.DivRem(offsetInSamplePoints.X, blockSize.Width, out var remainderH);
+			var blocksV = BigInteger.DivRem(offsetInSamplePoints.Y, blockSize.Height, out var remainderV);
 
-			var wholeBlocks = offSetInSamplePoints.DivRem(blockSize, out var remainder);
+			var wholeBlocks = offsetInSamplePoints.DivRem(blockSize, out var remainder);
 			Debug.WriteLine($"Whole blocks: {wholeBlocks}, Remaining Pixels: {remainder}.");
 
 			if (remainderH < 0)
@@ -192,10 +213,10 @@ namespace MSS.Common
 				remainderV = blockSize.Height + remainderV; // Want to display the last remainderV of the block, so we pull the display blkSize - remainderH down.
 			}
 
-			var offSetInBlocks = new BigVector(blocksH, blocksV);
+			var offsetInBlocks = new BigVector(blocksH, blocksV);
 			canvasControlOffset = new VectorInt(remainderH, remainderV);
 
-			return offSetInBlocks;
+			return offsetInBlocks;
 		}
 
 		#endregion

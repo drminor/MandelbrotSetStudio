@@ -32,7 +32,7 @@ namespace MSetExplorer
 
 		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, SizeInt blockSize)
 		{
-			_keepDisplaySquare = true;
+			_keepDisplaySquare = false;
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
@@ -260,11 +260,11 @@ namespace MSetExplorer
 			Debug.WriteLine($"Handling DisplaySizeChanged. Clearing Display.");
 			MapSections.Clear();
 
-			//if (curJob != null)
-			//{
-			//	CanvasControlOffset = curJob.CanvasControlOffset;
-			//	_mapLoaderManager.Push(curJob);
-			//}
+			if (curJob != null)
+			{
+				CanvasControlOffset = curJob.CanvasControlOffset;
+				_mapLoaderManager.Push(curJob);
+			}
 		}
 
 		private void HandleCurrentJobChanged(Job curJob)

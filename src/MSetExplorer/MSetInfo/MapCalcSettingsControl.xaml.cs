@@ -14,7 +14,7 @@ namespace MSetExplorer
 
 		public MapCalcSettingsControl()
 		{
-			_vm = new MSetInfoViewModel();
+			_vm = (MSetInfoViewModel)DataContext;
 			InitializeComponent();
 			Loaded += MapCalcSettingsControl_Loaded;
 		}
@@ -79,7 +79,7 @@ namespace MSetExplorer
 		{
 			if (_vm != null)
 			{
-				_vm.SetMSetInfo(mSetInfo);
+				_vm.MSetInfo = mSetInfo;
 			}
 		}
 
