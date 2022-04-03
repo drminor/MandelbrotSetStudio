@@ -1,9 +1,11 @@
 ﻿using MongoDB.Bson;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types.MSet
 {
-	public class Job
+	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>
 	{
 		public ObjectId Id { get; init; }
 		public Job? ParentJob { get; set; }
@@ -15,7 +17,7 @@ namespace MSS.Types.MSet
 		public RectangleInt NewArea { get; init; }
 
 		public MSetInfo MSetInfo { get; init; }
-		public SizeInt CanvasSizeInBlocks { get; init; }
+		public SizeInt CanvasSizeInBlocks { get; set; }
 		public BigVector MapBlockOffset { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
 
@@ -58,6 +60,58 @@ namespace MSS.Types.MSet
 
 		public DateTime DateCreated => Id.CreationTime;
 
-	}
+		#region IEqualityComparer / IEquatable Support
 
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as Job);
+		}
+
+		public bool Equals(Job? other)
+		{
+			return other != null
+				&& Id.Equals(other.Id);
+		}
+
+		public bool Equals(Job? x, Job? y)
+		{
+			if (x == null)
+			{
+				return y == null;
+			}
+			else
+			{
+				return x.Equals(y);
+			}
+		}
+
+		public int GetHashCode([DisallowNull] Job? obj)
+		{
+			return obj.GetHashCode();
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(Id);
+		}
+
+		public static bool operator ==(Job? left, Job? right)
+		{
+			if (left is null)
+			{
+				return right is null;
+			}
+			else
+			{
+				return left.Equals(right);
+			}
+		}
+
+		public static bool operator !=(Job? left, Job? right)
+		{
+			return !(left == right);
+		}
+
+		#endregion
+	}
 }

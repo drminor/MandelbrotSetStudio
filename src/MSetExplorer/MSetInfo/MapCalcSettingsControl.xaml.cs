@@ -30,7 +30,7 @@ namespace MSetExplorer
 			{
 				_vm = (MSetInfoViewModel)DataContext;
 
-				txtTargetInterations.LostFocus += TxtTargetInterations_LostFocus;
+				txtTargetIterations.LostFocus += TxtTargetInterations_LostFocus;
 
 				//Debug.WriteLine("The MapCalcSettingsControl is now loaded");
 			}
@@ -38,9 +38,10 @@ namespace MSetExplorer
 
 		private void TxtTargetInterations_LostFocus(object sender, RoutedEventArgs e)
 		{
-			if (int.TryParse(txtTargetInterations.Text, out var newValue))
+			if (int.TryParse(txtTargetIterations.Text, out var newValue))
 			{
 				_vm.TargetIterations = newValue;
+				_vm.TriggerIterationUpdate();
 			}
 		}
 

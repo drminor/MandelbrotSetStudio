@@ -37,6 +37,7 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
+			var DROP_ALL_SECTIONS = false;
 			var DROP_MAP_SECTIONS = false;
 			var USE_MAP_SECTION_REPO = true;
 
@@ -46,10 +47,16 @@ namespace MSetExplorer
 
 			// Project Repository Adapter
 			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-			if (DROP_MAP_SECTIONS)
+
+			if (DROP_ALL_SECTIONS)
+			{
+				_projectAdapter.DropCollections();
+			}
+			else if (DROP_MAP_SECTIONS)
 			{
 				_projectAdapter.DropSubdivisionsAndMapSectionsCollections();
 			}
+
 			_projectAdapter.CreateCollections();
 
 			// Map Project ViewModel

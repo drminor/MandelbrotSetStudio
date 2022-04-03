@@ -59,8 +59,7 @@ namespace MSetExplorer
 					_canvasSize = value;
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanvasSize));
 
-					// TODO: Update the Job's CanvasSizeInBlocks (and NewArea?) property.
-					Reload();
+					RerunWithNewDisplaySize();
 				}
 			}
 		}
@@ -147,7 +146,8 @@ namespace MSetExplorer
 				_jobsPointer = -1;
 			});
 
-			LoadMap(mSetInfo, TransformType.None);
+			var newArea = new RectangleInt(new PointInt(), CanvasSize);
+			LoadMap(mSetInfo, TransformType.None, newArea);
 			CurrentProjectIsDirty = false;
 		}
 
@@ -389,7 +389,7 @@ namespace MSetExplorer
 			LoadMap(updatedInfo, transformType, newArea);
 		}
 
-		public void UpdateTargetInterations(int targetIterations, int iterationsPerRequest)
+		public void UpdateTargetInterations(int targetIterations, int requestsPerJob)
 		{
 			var curJob = CurrentJob;
 			if (curJob == null)
@@ -398,9 +398,14 @@ namespace MSetExplorer
 			}
 
 			var mSetInfo = curJob.MSetInfo;
-			var updatedInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations, iterationsPerRequest);
 
-			LoadMap(updatedInfo, TransformType.IterationUpdate);
+			if (mSetInfo.MapCalcSettings.TargetIterations != targetIterations || mSetInfo.MapCalcSettings.RequestsPerJob != requestsPerJob)
+			{
+				var updatedInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations, requestsPerJob);
+
+				var newArea = new RectangleInt(new PointInt(), CanvasSize);
+				LoadMap(updatedInfo, TransformType.IterationUpdate, newArea);
+			}
 		}
 
 		public bool GoBack()
@@ -453,11 +458,11 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void LoadMap(MSetInfo mSetInfo, TransformType transformType)
-		{
-			var newArea = new RectangleInt(new PointInt(), CanvasSize);
-			LoadMap(mSetInfo, transformType, newArea);
-		}
+		//private void LoadMap(MSetInfo mSetInfo, TransformType transformType)
+		//{
+		//	var newArea = new RectangleInt(new PointInt(), CanvasSize);
+		//	LoadMap(mSetInfo, transformType, newArea);
+		//}
 
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
 		{
@@ -487,7 +492,7 @@ namespace MSetExplorer
 			});
 		}
 
-		private void Reload()
+		private void RerunWithNewDisplaySize()
 		{
 			_jobsLock.EnterUpgradeableReadLock();
 			try
@@ -502,7 +507,6 @@ namespace MSetExplorer
 			{
 				_jobsLock.ExitUpgradeableReadLock();
 			}
-
 		}
 
 		private void Rerun(int newJobIndex)
@@ -511,6 +515,9 @@ namespace MSetExplorer
 			{
 				throw new ArgumentException($"The newJobIndex with value: {newJobIndex} is not valid.", nameof(newJobIndex));
 			}
+
+			var curJob = _jobsCollection[newJobIndex];
+			UpdateTheJobsCanvasSize(curJob);
 
 			if (_jobsPointer == newJobIndex)
 			{
@@ -524,6 +531,22 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+			}
+		}
+		
+		private void UpdateTheJobsCanvasSize(Job? job)
+		{
+			if (job != null)
+			{
+				var newCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
+
+				MapJobHelper.CheckCanvasSize(CanvasSize, BlockSize);
+
+				if (newCanvasSizeInBlocks != job.CanvasSizeInBlocks)
+				{
+					Debug.WriteLine($"Reruning job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+					job.CanvasSizeInBlocks = newCanvasSizeInBlocks;
+				}
 			}
 		}
 

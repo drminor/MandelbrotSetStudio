@@ -7,13 +7,14 @@ namespace MSetExplorer
 	{
 		public MapSettingsUpdateType MapSettingsUpdateType { get; init; }
 		public int TargetIterations { get; init; }
-		public int IterationsPerRequest { get; init; }
+		public int RequestsPerJob { get; init; }
 		public RRectangle? Coords { get; init; }
 
-		public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, int targetIterations)
+		public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, int targetIterations, int requestsPerJob)
 		{
 			MapSettingsUpdateType = mapSettingsUpdateType;
 			TargetIterations = targetIterations;
+			RequestsPerJob = requestsPerJob;
 		}
 
 		public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, RRectangle coords)

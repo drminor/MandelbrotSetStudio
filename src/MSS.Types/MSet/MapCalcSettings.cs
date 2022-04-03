@@ -17,7 +17,7 @@ namespace MSS.Types.MSet
 		public int Threshold { get; init; }
 
 		[DataMember(Order = 3)]
-		public int IterationsPerRequest { get; init; }
+		public int RequestsPerJob { get; init; }
 
 		#region Constructor
 
@@ -25,24 +25,24 @@ namespace MSS.Types.MSet
 		{
 			TargetIterations = 0;
 			Threshold = 0;
-			IterationsPerRequest = 0;
+			RequestsPerJob = 0;
 		}
 
-		public MapCalcSettings(int targetIterations, int iterationsPerRequest) : this(targetIterations, DEFAULT_THRESHOLD, iterationsPerRequest)
+		public MapCalcSettings(int targetIterations, int requestsPerJob) : this(targetIterations, DEFAULT_THRESHOLD, requestsPerJob)
 		{ }
 
-		public MapCalcSettings(int targetIterations, int threshold, int iterationsPerRequest)
+		public MapCalcSettings(int targetIterations, int threshold, int requestsPerJob)
 		{
 			TargetIterations = targetIterations;
 			Threshold = threshold;
-			IterationsPerRequest = iterationsPerRequest;
+			RequestsPerJob = requestsPerJob;
 		}
 
 		#endregion
 
 		public override string ToString()
 		{
-			return $"TargetIterations: {TargetIterations}";
+			return $"TargetIterations: {TargetIterations}, RequestsPerJob: {RequestsPerJob}, Threshold: {Threshold}";
 		}
 
 		#region IEquatable and IEqualityComparer Support
@@ -57,7 +57,7 @@ namespace MSS.Types.MSet
 			return !(other is null)
 				&& TargetIterations == other.TargetIterations
 				&& Threshold == other.Threshold
-				&& IterationsPerRequest == other.IterationsPerRequest;
+				&& RequestsPerJob == other.RequestsPerJob;
 		}
 
 		public bool Equals(MapCalcSettings? x, MapCalcSettings? y)
@@ -84,7 +84,7 @@ namespace MSS.Types.MSet
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(TargetIterations, Threshold, IterationsPerRequest);
+			return HashCode.Combine(TargetIterations, Threshold, RequestsPerJob);
 		}
 
 		public static bool operator ==(MapCalcSettings left, MapCalcSettings right)

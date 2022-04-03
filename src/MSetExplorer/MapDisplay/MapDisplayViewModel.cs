@@ -12,7 +12,7 @@ namespace MSetExplorer
 {
 	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
-		private static readonly bool _keepDisplaySquare = true;
+		private static bool _keepDisplaySquare;
 
 		private readonly IMapLoaderManager _mapLoaderManager;
 
@@ -32,6 +32,7 @@ namespace MSetExplorer
 
 		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, SizeInt blockSize)
 		{
+			_keepDisplaySquare = true;
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
@@ -78,6 +79,29 @@ namespace MSetExplorer
 						HandleCurrentJobChanged(_currentJob);
 					}
 				}
+				else
+				{
+					if (IsCanvasSizeChanged(_currentJob, value))
+					{
+						HandleDisplaySizeChanged(_currentJob);
+					}
+				}
+			}
+		}
+
+		private bool IsCanvasSizeChanged(Job? currentJob, Job? newJob)
+		{
+			if (!(currentJob is null) && !(newJob is null))
+			{
+				var curSize = currentJob.CanvasSizeInBlocks;
+				var newSize = newJob.CanvasSizeInBlocks;
+
+				return curSize == newSize;
+			}
+			else
+			{
+				var result = currentJob is null && newJob is null;
+				return result;
 			}
 		}
 
@@ -229,13 +253,25 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleCurrentJobChanged(Job curJob)
+		private void HandleDisplaySizeChanged(Job? curJob)
 		{
-			var job = curJob;
-
 			_mapLoaderManager.StopCurrentJob();
 
-			if (ShouldAttemptToReuseLoadedSections(job))
+			Debug.WriteLine($"Handling DisplaySizeChanged. Clearing Display.");
+			MapSections.Clear();
+
+			//if (curJob != null)
+			//{
+			//	CanvasControlOffset = curJob.CanvasControlOffset;
+			//	_mapLoaderManager.Push(curJob);
+			//}
+		}
+
+		private void HandleCurrentJobChanged(Job curJob)
+		{
+			_mapLoaderManager.StopCurrentJob();
+
+			if (ShouldAttemptToReuseLoadedSections(curJob))
 			{
 				var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
 				var loadedSections = GetMapSectionsSnapShot();
@@ -252,16 +288,16 @@ namespace MSetExplorer
 				Debug.WriteLine($"Panning: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 
 				_screenSectionCollection.Shift(shiftAmount);
-				CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
+				CanvasControlOffset = curJob.CanvasControlOffset;
 				RedrawSections(MapSections);
-				_mapLoaderManager.Push(job, sectionsToLoad);
+				_mapLoaderManager.Push(curJob, sectionsToLoad);
 			}
 			else
 			{
 				Debug.WriteLine($"Clearing Display. TransformType: {curJob.TransformType}.");
 				MapSections.Clear();
-				CanvasControlOffset = curJob?.CanvasControlOffset ?? new VectorInt();
-				_mapLoaderManager.Push(job);
+				CanvasControlOffset = curJob.CanvasControlOffset;
+				_mapLoaderManager.Push(curJob);
 			}
 		}
 

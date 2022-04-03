@@ -37,7 +37,7 @@ namespace MSetExplorer
 			if (e.MapSettingsUpdateType == MSS.Types.MapSettingsUpdateType.TargetIterations)
 			{
 				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
-				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations, 0);
+				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations, e.RequestsPerJob);
 			}
 		}
 
@@ -81,14 +81,10 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
 			{
-				MSetInfoViewModel.SetMSetInfo(MapProjectViewModel.CurrentJob?.MSetInfo);
-
 				var curJob = MapProjectViewModel.CurrentJob;
 
-				if (curJob != null)
-				{
-					MapDisplayViewModel.CurrentJob = curJob;
-				}
+				MSetInfoViewModel.SetMSetInfo(curJob?.MSetInfo);
+				MapDisplayViewModel.CurrentJob = curJob;
 			}
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
@@ -112,7 +108,7 @@ namespace MSetExplorer
 
 		private void ColorBandViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "ColorBandSet")
+			if (e.PropertyName == nameof(ColorBandSetViewModel.ColorBandSet))
 			{
 				MapProjectViewModel.CurrentColorBandSet = ColorBandSetViewModel.ColorBandSet;
 			}

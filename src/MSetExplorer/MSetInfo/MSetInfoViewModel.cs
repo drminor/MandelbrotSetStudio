@@ -6,17 +6,32 @@ namespace MSetExplorer
 {
 	public class MSetInfoViewModel : ViewModelBase
 	{
+		private RRectangle _coords;
 		private int _targetIterations;
-		private int _iterationsPerRequest;
+		private int _requestsPerJob;
 
 		public MSetInfoViewModel()
 		{
+			_coords = new RRectangle();
 		}
 
 		#region Public Properties
 
 		public event EventHandler<MapSettingsUpdateRequestedEventArgs>? MapSettingsUpdateRequested;
 
+		public RRectangle Coords
+		{
+			get => _coords;
+			set
+			{
+				if (value != _coords)
+				{
+					_coords = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+		
 		public int TargetIterations
 		{
 			get => _targetIterations;
@@ -26,19 +41,18 @@ namespace MSetExplorer
 				{
 					_targetIterations = value;
 					OnPropertyChanged();
-					MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, value));
 				}
 			}
 		}
 
-		public int IterationsPerRequest
+		public int RequestsPerJob
 		{
-			get => _iterationsPerRequest;
+			get => _requestsPerJob;
 			set
 			{
-				if (value != _iterationsPerRequest)
+				if (value != _requestsPerJob)
 				{
-					_iterationsPerRequest = value;
+					_requestsPerJob = value;
 					OnPropertyChanged();
 				}
 			}
@@ -50,7 +64,7 @@ namespace MSetExplorer
 
 		public MSetInfo GetMSetInfo()
 		{
-			var result = new MSetInfo(new RRectangle(), new MapCalcSettings(_targetIterations, _targetIterations));
+			var result = new MSetInfo(_coords, new MapCalcSettings(_targetIterations, _requestsPerJob));
 			return result;
 		}
 
@@ -58,14 +72,24 @@ namespace MSetExplorer
 		{
 			if (value == null)
 			{
+				_coords = new RRectangle();
 				_targetIterations = 0;
-				_iterationsPerRequest = 0;
+				_requestsPerJob = 0;
 			}
 			else
 			{
+				Coords = value.Coords;
 				TargetIterations = value.MapCalcSettings.TargetIterations;
-				IterationsPerRequest = value.MapCalcSettings.IterationsPerRequest;
+				RequestsPerJob = value.MapCalcSettings.RequestsPerJob;
+
+				MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, TargetIterations, RequestsPerJob));
+
 			}
+		}
+
+		public void TriggerIterationUpdate()
+		{
+			MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, TargetIterations, RequestsPerJob));
 		}
 
 		#endregion

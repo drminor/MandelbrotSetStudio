@@ -66,13 +66,14 @@ namespace MSetExplorer
 		}
 
 		[Conditional("Debug")]
-		private static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)
+		public static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)
 		{
 			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(new SizeDbl(canvasSize), blockSize, keepSquare: true);
 
-			if (sizeInWholeBlocks != (new SizeInt(8)))
+			if (sizeInWholeBlocks != new SizeInt(8))
 			{
-				throw new InvalidOperationException("For testing we need the canvas size to be 1024 x 1024.");
+				Debug.WriteLine($"The canvas size is not 1024 x 1024.");
+				//throw new InvalidOperationException("For testing we need the canvas size to be 1024 x 1024.");
 			}
 		}
 
@@ -83,7 +84,7 @@ namespace MSetExplorer
 		public static MSetInfo BuildInitialMSetInfo(int maxIterations)
 		{
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
-			var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, iterationsPerRequest: 100);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, requestsPerJob: 100);
 			var result = new MSetInfo(coords, mapCalcSettings);
 
 			return result;

@@ -31,31 +31,49 @@ namespace MSetRepo
 
 		#region Collections
 
-		public void DropSubdivisionsAndMapSectionsCollections()
-		{
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			subdivisionReaderWriter.DropCollection();
-
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			mapSectionReaderWriter.DropCollection();
-		}
-
 		public void CreateCollections()
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			projectReaderWriter.CreateCollection();
 
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			colorBandSetReaderWriter.CreateCollection();
-
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			jobReaderWriter.CreateCollection();
+
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			colorBandSetReaderWriter.CreateCollection();
 
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 			subdivisionReaderWriter.CreateCollection();
 
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			mapSectionReaderWriter.CreateCollection();
+		}
+
+		public void DropCollections()
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			mapSectionReaderWriter.DropCollection();
+
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			subdivisionReaderWriter.DropCollection();
+
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			colorBandSetReaderWriter.DropCollection();
+
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			jobReaderWriter.DropCollection();
+
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			projectReaderWriter.DropCollection();
+		}
+
+		public void DropSubdivisionsAndMapSectionsCollections()
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			mapSectionReaderWriter.DropCollection();
+
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			subdivisionReaderWriter.DropCollection();
 		}
 
 		#endregion
@@ -307,7 +325,6 @@ namespace MSetRepo
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var subdivisonReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			var jobCache = new Dictionary<ObjectId, Job>();
 
 			var job = GetJob(jobId, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter, jobCache: null);
 
@@ -414,7 +431,6 @@ namespace MSetRepo
 
 			foreach (var jobId in ids)
 			{
-				//var job = GetJob(id);
 				var job = GetJob(jobId, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter, jobCache);
 				result.Add(job);
 			}

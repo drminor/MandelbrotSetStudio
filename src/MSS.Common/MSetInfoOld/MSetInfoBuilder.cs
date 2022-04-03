@@ -55,7 +55,7 @@ namespace MSS.Common
 
 			var isHighRes = false;
 			var targetIterations = 4000;
-			var mapCalcSettings = new MapCalcSettings(targetIterations, iterationsPerRequest: 1000);
+			var mapCalcSettings = new MapCalcSettings(targetIterations, requestsPerJob: 1000);
 
 			var colorBands = new List<ColorBand>
 			{
@@ -93,7 +93,7 @@ namespace MSS.Common
 
 			var isHighRes = false;
 			var targetIterations = 400;
-			var mapCalcSettings = new MapCalcSettings(targetIterations, iterationsPerRequest: 100);
+			var mapCalcSettings = new MapCalcSettings(targetIterations, requestsPerJob: 100);
 			var colorBands = new List<ColorBand>
 			{
 				new ColorBand(375, "#ffffff", ColorBandBlendStyle.Next, "#000000"),

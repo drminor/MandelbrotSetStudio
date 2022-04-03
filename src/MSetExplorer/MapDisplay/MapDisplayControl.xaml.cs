@@ -96,12 +96,12 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(_vm.CanvasControlOffset))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasControlOffset))
 			{
 				CanvasOffset = _vm.CanvasControlOffset;
 			}
 
-			if (e.PropertyName == nameof(_vm.CanvasSize))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
 				UpdateTheCanvasSize(_vm.CanvasSize);
 			}

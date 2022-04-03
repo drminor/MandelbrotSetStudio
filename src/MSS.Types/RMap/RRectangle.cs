@@ -142,6 +142,13 @@ namespace MSS.Types
 			}
 		}
 
+		#region IEqualityComparer / IEquatable Support
+
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as RRectangle);
+		}
+
 		public bool Equals(RRectangle? other)
 		{
 			return !(other is null)
@@ -169,16 +176,21 @@ namespace MSS.Types
 			return obj.GetHashCode();
 		}
 
-		public override bool Equals(object? obj)
-		{
-			return Equals(obj as RRectangle);
-		}
-
 		public override int GetHashCode()
 		{
 			return HashCode.Combine(X1, X2, Y1, Y2, Exponent);
 		}
 
-	}
+		public static bool operator ==(RRectangle p1, RRectangle p2)
+		{
+			return p1.Equals(p2); // EqualityComparer<RRectangle>.Default.Equals(p1, p2);
+		}
 
+		public static bool operator !=(RRectangle p1, RRectangle p2)
+		{
+			return !(p1 == p2);
+		}
+
+		#endregion
+	}
 }

@@ -49,7 +49,7 @@ namespace MSetExplorer
 		private void MainWindow_ContentRendered(object? sender, EventArgs e)
 		{
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
-			LoadNewProject();
+			//LoadNewProject();
 		}
 
 		#endregion

@@ -35,10 +35,10 @@ namespace MSS.Common
 
 		#region Job Creation
 
-		public static SizeInt GetCanvasSize(SizeInt newArea, SizeInt canvasControlSize)
+		public static SizeInt GetCanvasSize(SizeInt newArea, SizeInt displaySize)
 		{
-			var wRatio = (double)newArea.Width / canvasControlSize.Width;
-			var hRatio = (double)newArea.Height / canvasControlSize.Height;
+			var wRatio = (double)newArea.Width / displaySize.Width;
+			var hRatio = (double)newArea.Height / displaySize.Height;
 
 			int w;
 			int h;
@@ -46,20 +46,20 @@ namespace MSS.Common
 			if (wRatio > hRatio)
 			{
 				// Width of image in pixels will take up the entire control.
-				w = canvasControlSize.Width;
+				w = displaySize.Width;
 
 				// Height of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
 				var hRat = (double)newArea.Height / newArea.Width;
-				h = (int)Math.Round(canvasControlSize.Width * hRat);
+				h = (int)Math.Round(displaySize.Width * hRat);
 			}
 			else
 			{
 				// Width of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
 				var wRat = (double)newArea.Width / newArea.Height;
-				w = (int)Math.Round(canvasControlSize.Height * wRat);
+				w = (int)Math.Round(displaySize.Height * wRat);
 
 				// Height of image in pixels will take up the entire control.
-				h = canvasControlSize.Width;
+				h = displaySize.Width;
 			}
 
 			var result = new SizeInt(w, h);

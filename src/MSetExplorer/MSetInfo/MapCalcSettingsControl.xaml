@@ -22,10 +22,10 @@
             </Grid.RowDefinitions>
 
             <TextBlock Text="Target Iterations:" Grid.Row="0" Margin="0,7,0,3" Height="21" />
-            <TextBox x:Name="txtTargetInterations" Grid.Row="0" Grid.Column="1" Margin="3" Text="{Binding TargetIterations}"/>
+            <TextBox x:Name="txtTargetIterations" Grid.Row="0" Grid.Column="1" Margin="3" Text="{Binding TargetIterations}"/>
 
-            <TextBlock Text="Iterations Per Request:" Grid.Row="1" Margin="0,7,0,3" Height="21" />
-            <TextBox x:Name="txtIterationsPerRequest" Grid.Row="1" Grid.Column="1" Margin="3" Text="{Binding IterationsPerRequest}" />
+            <TextBlock Text="Requests Per Job:" Grid.Row="1" Margin="0,7,0,3" Height="21" />
+            <TextBox x:Name="txtRequestsPerJob" Grid.Row="1" Grid.Column="1" Margin="3" Text="{Binding RequestsPerJob}" />
 
             <!--<TextBlock Text="Start Y:" Grid.Row="2" Margin="0,7,0,3" Height="21" />
             <TextBox x:Name="tbStartY" Grid.Row="2" Grid.Column="1" Margin="3" />
