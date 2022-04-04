@@ -123,7 +123,7 @@ namespace MSetExplorer
 					if (_colorBandSet == null || _colorBandSet != value)
 					{
 						var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
-						Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has SerialNumber: {value.SerialNumber}.");
+						Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
 
 						lock (_histLock)
 						{
@@ -429,7 +429,7 @@ namespace MSetExplorer
 				var newSet = ColorBandSet.CreateNewCopy();
 				//CheckThatColorBandsWereUpdatedProperly(_colorBandSet, newSet, throwOnMismatch: false);
 
-				Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new SerialNumber is {newSet.SerialNumber}, name: {newSet.Name}, version: {newSet.VersionNumber}.");
+				Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}, name: {newSet.Name}.");
 
 				ColorBandSet = newSet;
 			}

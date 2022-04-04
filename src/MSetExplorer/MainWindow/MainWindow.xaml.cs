@@ -184,15 +184,14 @@ namespace MSetExplorer
 			var curProject = _vm.MapProjectViewModel.CurrentProject;
 
 			var initialName = curProject?.Name;
-			var curColorBandSetIds = curProject?.ColorBandSetSNs;
 			var curColorBandSet = curProject?.CurrentColorBandSet;
 
 			if (ProjectShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
 			{
-				if (selectedName != null && curColorBandSetIds != null && curColorBandSet != null)
+				if (selectedName != null && curColorBandSet != null)
 				{
 					Debug.WriteLine($"Saving project with name: {selectedName}.");
-					_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curColorBandSetIds, curColorBandSet);
+					_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description,  curColorBandSet);
 				}
 				else
 				{
@@ -219,7 +218,7 @@ namespace MSetExplorer
 			}
 
 			var initialName = _vm.MapProjectViewModel.CurrentColorBandSet?.Name;
-			if (ColorsShowOpenSaveWindow(DialogType.Open, initialName, out var selectedName, out _, out _, out var serialNumber))
+			if (ColorsShowOpenSaveWindow(DialogType.Open, initialName, out var selectedName, out _, out _, out var id))
 			{
 				//	if (serialNumber == null)
 				//	{
@@ -234,10 +233,10 @@ namespace MSetExplorer
 				//		}
 				//	}
 
-				Debug.WriteLine($"Opening ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-				if (!_vm.MapProjectViewModel.ColorBandSetOpen(serialNumber))
+				Debug.WriteLine($"Opening ColorBandSet with Id: {id}, name: {selectedName}.");
+				if (!_vm.MapProjectViewModel.ColorBandSetOpen(id))
 				{
-					_ = MessageBox.Show($"Could not open a ColorBandSet with {serialNumber}.");
+					_ = MessageBox.Show($"Could not open a ColorBandSet with Id: {id}.");
 				}
 			}
 		}
@@ -386,15 +385,14 @@ namespace MSetExplorer
 						var curProject = _vm.MapProjectViewModel.CurrentProject;
 
 						var initialName = curProject?.Name;
-						var curColorBandSetIds = curProject?.ColorBandSetSNs;
 						var curColorBandSet = curProject?.CurrentColorBandSet;
 
 						if (ProjectShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
 						{
-							if (selectedName != null && curColorBandSetIds != null && curColorBandSet != null)
+							if (selectedName != null && curColorBandSet != null)
 							{
 								Debug.WriteLine($"Saving project with name: {selectedName}.");
-								_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curColorBandSetIds, curColorBandSet);
+								_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curColorBandSet);
 								result = true;
 							}
 							else
@@ -486,58 +484,61 @@ namespace MSetExplorer
 			_ = ColorsCommitUpdates();
 			bool result;
 
-			if (_vm.MapProjectViewModel.CurrentColorBandSetIsDirty)
+			if (_vm.MapProjectViewModel.CurrentColorBandSet?.OnFile != true)
 			{
 				if (ColorsUserSaysSaveChanges())
 				{
-					if (_vm.MapProjectViewModel.CanSaveColorBandSet)
-					{
-						// The ColorBandSet is on-file, just save the pending changes.
-						_vm.MapProjectViewModel.ColorBandSetSave();
-						result = true;
-					}
-					else
-					{
-						// The ColorBandSet is not on-file, must ask user for the name and optional description.
-						var initialName = _vm.MapProjectViewModel.CurrentColorBandSet?.Name;
-						if (ColorsShowOpenSaveWindow(DialogType.Open, initialName, out var selectedName, out _, out _, out var serialNumber))
-						{
-							//if (serialNumber != null)
-							//{
-							//	Debug.WriteLine($"Opening ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-							//	if (_vm.MapProjectViewModel.ColorBandSetOpen(serialNumber.Value))
-							//	{
-							//		result = true;
-							//	}
-							//	else
-							//	{
-							//		result = false;
-							//		_ = MessageBox.Show($"Could not open a ColorBandSet with {serialNumber.Value}.");
-							//	}
-							//}
-							//else
-							//{
-							//	Debug.WriteLine($"WARNING: Cannot open a ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-							//	result = false;
-							//}
+					//if (_vm.MapProjectViewModel.CanSaveColorBandSet)
+					//{
+					//	// The ColorBandSet is on-file, just save the pending changes.
+					//	_vm.MapProjectViewModel.ColorBandSetSave();
+					//	result = true;
+					//}
+					//else
+					//{
+					//	// The ColorBandSet is not on-file, must ask user for the name and optional description.
+					//	var initialName = _vm.MapProjectViewModel.CurrentColorBandSet?.Name;
+					//	if (ColorsShowOpenSaveWindow(DialogType.Open, initialName, out var selectedName, out _, out _, out var serialNumber))
+					//	{
+					//		//if (serialNumber != null)
+					//		//{
+					//		//	Debug.WriteLine($"Opening ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
+					//		//	if (_vm.MapProjectViewModel.ColorBandSetOpen(serialNumber.Value))
+					//		//	{
+					//		//		result = true;
+					//		//	}
+					//		//	else
+					//		//	{
+					//		//		result = false;
+					//		//		_ = MessageBox.Show($"Could not open a ColorBandSet with {serialNumber.Value}.");
+					//		//	}
+					//		//}
+					//		//else
+					//		//{
+					//		//	Debug.WriteLine($"WARNING: Cannot open a ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
+					//		//	result = false;
+					//		//}
 
-							Debug.WriteLine($"Opening ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-							if (_vm.MapProjectViewModel.ColorBandSetOpen(serialNumber))
-							{
-								result = true;
-							}
-							else
-							{
-								result = false;
-								_ = MessageBox.Show($"Could not open a ColorBandSet with {serialNumber}.");
-							}
-						}
-						else
-						{
-							// User declined to save the ColorBandSet
-							result = false;
-						}
-					}
+					//		Debug.WriteLine($"Opening ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
+					//		if (_vm.MapProjectViewModel.ColorBandSetOpen(serialNumber))
+					//		{
+					//			result = true;
+					//		}
+					//		else
+					//		{
+					//			result = false;
+					//			_ = MessageBox.Show($"Could not open a ColorBandSet with {serialNumber}.");
+					//		}
+					//	}
+					//	else
+					//	{
+					//		// User declined to save the ColorBandSet
+					//		result = false;
+					//	}
+					//}
+
+					_vm.MapProjectViewModel.ColorBandSetSave();
+					result = true;
 				}
 				else
 				{
@@ -562,7 +563,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ColorsShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description, out int? versionNumber, [MaybeNullWhen(false)] out Guid serialNumber)
+		private bool ColorsShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description, out int? versionNumber, [MaybeNullWhen(false)] out string id)
 		{
 			var colorBandSetOpenSaveVm = _vm.CreateAColorBandSetOpenSaveViewModel(initalName, dialogType);
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
@@ -575,7 +576,7 @@ namespace MSetExplorer
 				selectedName = colorBandSetOpenSaveWindow.ColorBandSetName;
 				description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
 				versionNumber = colorBandSetOpenSaveWindow.ColorBandSetVersionNumber;
-				serialNumber = colorBandSetOpenSaveWindow.ColorBandSetSerialNumber ?? Guid.Empty;
+				id = colorBandSetOpenSaveWindow.ColorBandSetId.ToString() ?? "";
 				return true;
 			}
 			else
@@ -583,7 +584,7 @@ namespace MSetExplorer
 				selectedName = null;
 				description = null;
 				versionNumber = 0;
-				serialNumber = Guid.Empty;
+				id = "";
 				return false;
 			}
 		}

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -93,7 +94,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public Guid? ColorBandSetSerialNumber => _vm.SelectedColorBandSetInfo?.SerialNumber;
+		public ObjectId? ColorBandSetId => _vm.SelectedColorBandSetInfo?.Id;
 		public string? ColorBandSetName => _vm.SelectedName;
 		public string? ColorBandSetDescription => _vm.SelectedDescription;
 		public int? ColorBandSetVersionNumber => _vm.SelectedVersionNumber;

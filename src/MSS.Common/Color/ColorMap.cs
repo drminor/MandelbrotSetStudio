@@ -21,7 +21,7 @@ namespace MSS.Common
                 throw new ArgumentNullException(nameof(colorBandSet));
             }
 
-            Debug.WriteLine($"A new Color Map is being constructed with SerialNumber: {colorBandSet.SerialNumber}.");
+            Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
 
             ColorBandSet = colorBandSet;
             _lastCutOff = colorBandSet.ColorBands[^1].CutOff;
@@ -33,7 +33,7 @@ namespace MSS.Common
 		#region Public Properties
 
 		public ColorBandSet ColorBandSet { get; }
-        public Guid SerialNumber => ColorBandSet.SerialNumber;
+        public string Id => ColorBandSet.Id.ToString();
 
         #endregion
 

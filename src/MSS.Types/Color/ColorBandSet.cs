@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -14,40 +15,45 @@ namespace MSS.Types
 	{
 		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
-		private string? _name;
+		private string _name;
 		private string? _description;
-		private int _versionNumber;
-
-		private bool _onFile;
 
 		#region Constructor
 
-		public ColorBandSet() : this(Guid.NewGuid(), new List<ColorBand>(), onFile: false)
+		public ColorBandSet() : this(null)
 		{ }
 
-		public ColorBandSet(Guid serialNumber) : this(serialNumber, new List<ColorBand>(), onFile: false)
+		//public ColorBandSet(Guid serialNumber, IList<ColorBand> colorBands, bool onFile) : base(FixBands(colorBands))
+		//{
+		//	Debug.WriteLine($"Constructing ColorBandSet with SerialNumber: {serialNumber}.");
+		//	SerialNumber = serialNumber;
+		//	_name = null;
+		//	_description = null;
+		//	_versionNumber = 0;
+		//	_onFile = onFile;
+		//}
+
+		public ColorBandSet(IList<ColorBand>? colorBands)
+			: this(ObjectId.Empty, null, Guid.NewGuid().ToString(), null, colorBands)
 		{ }
 
-		public ColorBandSet(IList<ColorBand> list) : this(Guid.NewGuid(), list, onFile: false)
-		{ }
-
-		public ColorBandSet(Guid serialNumber, IList<ColorBand> colorBands, bool onFile) : base(FixBands(colorBands))
+		public ColorBandSet(ObjectId id, ObjectId? parentId, string name, string? description, IList<ColorBand>? colorBands) : base(FixBands(colorBands))
 		{
-			Debug.WriteLine($"Constructing ColorBandSet with SerialNumber: {serialNumber}.");
-			SerialNumber = serialNumber;
-			_name = null;
-			_description = null;
-			_versionNumber = 0;
-			_onFile = onFile;
+			Debug.WriteLine($"Constructing ColorBandSet with id: {id}.");
+			Id = id;
+			ParentId = parentId;
+			_name = name;
+			_description = description;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public Guid SerialNumber { get; init; }
+		public ObjectId Id { get; init; }
+		public ObjectId? ParentId { get; init; }
 
-		public string? Name
+		public string Name
 		{
 			get => _name;
 			set
@@ -73,38 +79,13 @@ namespace MSS.Types
 			}
 		}
 
-		public int VersionNumber
-		{
-			get => _versionNumber;
-			set
-			{
-				if (value != _versionNumber)
-				{
-					_versionNumber = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
 		#endregion
 
 		#region Public Properties - Derived
 
 		public ObservableCollection<ColorBand> ColorBands => this;
 
-		public bool OnFile
-		{
-			get => _onFile;
-
-			set
-			{
-				if (value != _onFile)
-				{
-					_onFile = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		public bool OnFile => Id != ObjectId.Empty;
 
 		public bool IsReadOnly => false;
 
@@ -284,7 +265,7 @@ namespace MSS.Types
 			return index >= Count - 1 ? null : Items[index + 1];
 		}
 
-		private static IList<ColorBand> FixBands(IList<ColorBand> colorBands)
+		private static IList<ColorBand> FixBands(IList<ColorBand>? colorBands)
 		{
 			if (colorBands == null || colorBands.Count == 0)
 			{
@@ -326,13 +307,7 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			var result = new ColorBandSet(CreateCopy())
-			{
-				Name = Name,
-				Description = Description,
-				VersionNumber = VersionNumber + 1
-			};
-
+			var result = new ColorBandSet(ObjectId.Empty, ParentId, Name, Description, CreateCopy());
 			return result;
 		}
 
@@ -347,14 +322,9 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet Clone()
 		{
-			Debug.WriteLine($"Cloning ColorBandSet with SerialNumber: {SerialNumber}.");
+			Debug.WriteLine($"Cloning ColorBandSet with Id: {Id}.");
 
-			var result = new ColorBandSet(SerialNumber, CreateCopy(), onFile: OnFile)
-			{
-				Name = Name,
-				Description = Description,
-				VersionNumber = VersionNumber
-			};
+			var result = new ColorBandSet(Id, ParentId, Name, Description, CreateCopy());
 
 			return result;
 		}
@@ -371,7 +341,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			var result = $"ColorBandSet: {SerialNumber}\n{GetString(this)}";
+			var result = $"ColorBandSet: {Id}\n{GetString(this)}";
 			return result;
 		}
 
@@ -401,12 +371,12 @@ namespace MSS.Types
 			return other != null &&
 				   //Count == other.Count &&
 				   //EqualityComparer<IList<ColorBand>>.Default.Equals(Items, other.Items) &&
-				   SerialNumber.Equals(other.SerialNumber);
+				   Id.Equals(other.Id);
 		}
 
 		public override int GetHashCode()
 		{
-			return SerialNumber.GetHashCode();
+			return Id.GetHashCode();
 		}
 
 		public bool Equals(ColorBandSet? x, ColorBandSet? y)

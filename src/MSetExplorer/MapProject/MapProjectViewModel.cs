@@ -111,14 +111,14 @@ namespace MSetExplorer
 				{
 					if (value != project.CurrentColorBandSet)
 					{
-						Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {project.CurrentColorBandSet?.SerialNumber}, New = {value?.SerialNumber ?? Guid.Empty}.");
+						Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {project.CurrentColorBandSet?.Id}, New = {value?.Id ?? ObjectId.Empty}.");
 						project.CurrentColorBandSet = value;
 						CurrentProjectIsDirty = true;
 						OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 					}
 					else
 					{
-						Debug.WriteLine($"MapProjectViewModel is ignoring the ColorBandSet value update. The Current value is already: {project.CurrentColorBandSet?.SerialNumber}.");
+						Debug.WriteLine($"MapProjectViewModel is ignoring the ColorBandSet value update. The Current value is already: {project.CurrentColorBandSet?.Id}.");
 					}
 				}
 				else
@@ -151,14 +151,14 @@ namespace MSetExplorer
 			CurrentProjectIsDirty = false;
 		}
 
-		public void ProjectCreate(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		public void ProjectCreate(string name, string description, ColorBandSet currentColorBandSet)
 		{
 			if (_projectAdapter.TryGetProject(name, out var _))
 			{
 				throw new InvalidOperationException($"Cannot create project with name: {name}, a project with that name already exists.");
 			}
 
-			var project = _projectAdapter.CreateProject(name, description, colorBandSetIds, currentColorBandSet);
+			var project = _projectAdapter.CreateProject(name, description, currentColorBandSet);
 			LoadProject(project);
 		}
 
@@ -176,14 +176,14 @@ namespace MSetExplorer
 		}
 
 		// TODO: Check how the ColorBandSet is being handled upon ProjectSaveAs
-		public void ProjectSaveAs(string name, string? description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		public void ProjectSaveAs(string name, string? description, ColorBandSet currentColorBandSet)
 		{
 			if (_projectAdapter.TryGetProject(name, out var existingProject))
 			{
 				_projectAdapter.DeleteProject(existingProject.Id);
 			}
 
-			var project = _projectAdapter.CreateProject(name, description, colorBandSetIds, currentColorBandSet);
+			var project = _projectAdapter.CreateProject(name, description, currentColorBandSet);
 
 			var jobsList = Jobs.ToList();
 
@@ -235,23 +235,23 @@ namespace MSetExplorer
 
 				var colorBandSet = project.CurrentColorBandSet;
 
-				if (colorBandSet != null && project.ColorBandSetIsDirty)
-				{
-					if (colorBandSet.OnFile)
-					{
-						_projectAdapter.UpdateProjectColorBands(project.Id, project.ColorBandSetSNs, colorBandSet);
-						project.ColorBandSetIsDirty = false;
-					}
-					else
-					{
-						colorBandSet.Name = project.Name;
-						var updatedColorBandSet = _projectAdapter.CreateColorBandSet(colorBandSet);
-						project.CurrentColorBandSet = updatedColorBandSet;
+				//if (colorBandSet != null && project.ColorBandSetIsDirty)
+				//{
+				//	if (colorBandSet.OnFile)
+				//	{
+				//		_projectAdapter.UpdateProjectColorBands(project.Id, colorBandSet);
+				//		project.ColorBandSetIsDirty = false;
+				//	}
+				//	else
+				//	{
+				//		colorBandSet.Name = project.Name;
+				//		var updatedColorBandSet = _projectAdapter.CreateColorBandSet(colorBandSet);
+				//		project.CurrentColorBandSet = updatedColorBandSet;
 
-						_projectAdapter.UpdateProjectColorBands(project.Id, project.ColorBandSetSNs, project.CurrentColorBandSet);
-						project.ColorBandSetIsDirty = false;
-					}
-				}
+				//		_projectAdapter.UpdateProjectColorBands(project.Id, project.CurrentColorBandSet);
+				//		project.ColorBandSetIsDirty = false;
+				//	}
+				//}
 
 				var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(project.Id);
 
@@ -306,9 +306,9 @@ namespace MSetExplorer
 
 		#region Public Methods -- Colors
 
-		public bool ColorBandSetOpen(Guid serialNumber)
+		public bool ColorBandSetOpen(string id)
 		{
-			var colorBandSet = GetColorBandSet(serialNumber);
+			var colorBandSet = GetColorBandSet(id);
 
 			if (colorBandSet != null)
 			{
@@ -352,20 +352,15 @@ namespace MSetExplorer
 			if (curProject != null && curProject.CurrentColorBandSet != null)
 			{
 				var colorBandSet = curProject.CurrentColorBandSet.CreateNewCopy();
-
-				colorBandSet.Name = name;
-				colorBandSet.Description = description;
-				colorBandSet.VersionNumber = versionNumber ?? 0;
-
 				var updatedcolorBandSet = _projectAdapter.CreateColorBandSet(colorBandSet);
 
 				curProject.CurrentColorBandSet = updatedcolorBandSet;
 			}
 		}
 
-		public ColorBandSet? GetColorBandSet(Guid serialNumber)
+		public ColorBandSet? GetColorBandSet(string id)
 		{
-			var result = _projectAdapter.GetColorBandSet(serialNumber);
+			var result = _projectAdapter.GetColorBandSet(id);
 			return result;
 		}
 

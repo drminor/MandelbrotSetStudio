@@ -36,22 +36,22 @@ namespace MSetExplorer
 		// Project Methods
 		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);
 
-		void ProjectCreate(string name, string description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
+		void ProjectCreate(string name, string description, ColorBandSet currentColorBandSet);
 
 		bool ProjectOpen(string name);
 		void ProjectSave();
 
-		void ProjectSaveAs(string name, string? description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet);
+		void ProjectSaveAs(string name, string? description, ColorBandSet currentColorBandSet);
 
 		void ProjectUpdateName(string name);
 		void ProjectUpdateDescription(string description);
 
 		// ColorBand Methods
-		bool ColorBandSetOpen(Guid serialNumber);
+		bool ColorBandSetOpen(string id);
 
 		void ColorBandSetSave();
 		void ColorBandSetSaveAs(string name, string? description, int? versionNumber);
 
-		ColorBandSet? GetColorBandSet(Guid serialNumber);
+		ColorBandSet? GetColorBandSet(string id);
 	}
 }

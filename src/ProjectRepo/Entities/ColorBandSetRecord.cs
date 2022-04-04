@@ -1,7 +1,9 @@
 ﻿
+using MongoDB.Bson;
+
 namespace ProjectRepo.Entities
 {
-	public record ColorBandSetRecord(string Name, string? Description, int VersionNumber, byte[] SerialNumber, ColorBandRecord[] ColorBandRecords) : RecordBase()
+	public record ColorBandSetRecord(ObjectId? ParentId, string Name, string? Description, ColorBandRecord[] ColorBandRecords) : RecordBase()
 	{ }
 
 }

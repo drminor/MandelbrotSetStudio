@@ -105,7 +105,7 @@ namespace MSetExplorer
 				{
 					if (value != null)
 					{
-						Debug.WriteLine($"The MapDisplay is processing a new ColorMap. SerialNumber = {value.SerialNumber}.");
+						Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
 						_colorBandSet = value;
 						_colorMap = new ColorMap(value);
 						HandleColorMapChanged(_colorMap);

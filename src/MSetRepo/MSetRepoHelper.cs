@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using ProjectRepo;
@@ -30,7 +31,7 @@ namespace MSetRepo
 		private static MSetRecordMapper GetMSetRecordMapper()
 		{
 			var dtoMapper = new DtoMapper();
-			var colorBandSetCache = new Dictionary<Guid, ColorBandSet>(); 
+			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(); 
 			var result = new MSetRecordMapper(dtoMapper, colorBandSetCache);
 
 			return result;

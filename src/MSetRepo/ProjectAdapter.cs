@@ -111,7 +111,7 @@ namespace MSetRepo
 			}
 		}
 
-		public Project CreateProject(string name, string? description, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		public Project CreateProject(string name, string? description, ColorBandSet currentColorBandSet)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
@@ -125,8 +125,8 @@ namespace MSetRepo
 				}
 				var colorBandSetRecord = GetOrCreateColorBandSetRecord(currentColorBandSet);
 
-				var project = new Project(name, description, colorBandSetIds.ToList(), currentColorBandSet);
-				projectRecord = new ProjectRecord(name, description, colorBandSetIds.Select(x => x.ToByteArray()).ToArray(), colorBandSetRecord);
+				var project = new Project(name, description, currentColorBandSet);
+				projectRecord = new ProjectRecord(name, description, colorBandSetRecord);
 
 				var projectId = projectReaderWriter.Insert(projectRecord);
 				projectRecord = projectReaderWriter.Get(projectId);
@@ -153,19 +153,19 @@ namespace MSetRepo
 			projectReaderWriter.UpdateDescription(projectId, description);
 		}
 
-		public void UpdateProjectColorBands(ObjectId projectId, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
-		{
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			var colorBandSetIdsRaw = colorBandSetIds.Select(x => x.ToByteArray()).ToArray();
-			var currentColorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
-			projectReaderWriter.UpdateColorBands(projectId, colorBandSetIdsRaw, currentColorBandSetRecord);
+		//public void UpdateProjectColorBands(ObjectId projectId, IEnumerable<Guid> colorBandSetIds, ColorBandSet currentColorBandSet)
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	var colorBandSetIdsRaw = colorBandSetIds.Select(x => x.ToByteArray()).ToArray();
+		//	var currentColorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
+		//	projectReaderWriter.UpdateColorBands(projectId, colorBandSetIdsRaw, currentColorBandSetRecord);
 
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			colorBandSetReaderWriter.UpdateName(currentColorBandSetRecord.Id, currentColorBandSetRecord.Name);
-			colorBandSetReaderWriter.UpdateDescription(currentColorBandSetRecord.Id, currentColorBandSetRecord.Description);
-			colorBandSetReaderWriter.UpdateVersionNumber(currentColorBandSetRecord.Id, currentColorBandSetRecord.VersionNumber);
-			colorBandSetReaderWriter.UpdateColorBands(currentColorBandSetRecord.Id, currentColorBandSetRecord.ColorBandRecords);
-		}
+		//	var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+		//	colorBandSetReaderWriter.UpdateName(currentColorBandSetRecord.Id, currentColorBandSetRecord.Name);
+		//	colorBandSetReaderWriter.UpdateDescription(currentColorBandSetRecord.Id, currentColorBandSetRecord.Description);
+		//	colorBandSetReaderWriter.UpdateVersionNumber(currentColorBandSetRecord.Id, currentColorBandSetRecord.VersionNumber);
+		//	colorBandSetReaderWriter.UpdateColorBands(currentColorBandSetRecord.Id, currentColorBandSetRecord.ColorBandRecords);
+		//}
 
 		public void DeleteProject(ObjectId projectId)
 		{
@@ -234,10 +234,10 @@ namespace MSetRepo
 
 		public ColorBandSetRecord GetOrCreateColorBandSetRecord(ColorBandSet currentColorBandSet)
 		{
-			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {currentColorBandSet.SerialNumber}.");
+			Debug.WriteLine($"Retrieving ColorBandSet with Id: {currentColorBandSet.Id}.");
 
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			if (!colorBandSetReaderWriter.TryGet(currentColorBandSet.SerialNumber, out var colorBandSetRecord))
+			if (!colorBandSetReaderWriter.TryGet(currentColorBandSet.Id, out var colorBandSetRecord))
 			{
 				colorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
 				var id = colorBandSetReaderWriter.Insert(colorBandSetRecord);
@@ -247,12 +247,12 @@ namespace MSetRepo
 			return colorBandSetRecord;
 		}
 
-		public ColorBandSet? GetColorBandSet(Guid colorBandSetSerialNumber)
+		public ColorBandSet? GetColorBandSet(string id)
 		{
-			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {colorBandSetSerialNumber}.");
+			Debug.WriteLine($"Retrieving ColorBandSet with Id: {id}.");
 
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			var colorBandSetRecord = colorBandSetReaderWriter.Get(colorBandSetSerialNumber);
+			var colorBandSetRecord = colorBandSetReaderWriter.Get(new ObjectId(id));
 
 			var result = colorBandSetRecord == null ? null : _mSetRecordMapper.MapFrom(colorBandSetRecord);
 			return result;
@@ -290,7 +290,6 @@ namespace MSetRepo
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			colorBandSetReaderWriter.UpdateName(id, colorBandSetRecord.Name);
 			colorBandSetReaderWriter.UpdateDescription(id, colorBandSetRecord.Description);
-			colorBandSetReaderWriter.UpdateVersionNumber(id, colorBandSetRecord.VersionNumber);
 			colorBandSetReaderWriter.UpdateColorBands(id, colorBandSetRecord.ColorBandRecords);
 		}
 
@@ -303,7 +302,8 @@ namespace MSetRepo
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 
 			var allColorBandSetRecords = colorBandSetReaderWriter.GetAll();
-			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.DateCreated, x.ColorBandRecords.Count(), new Guid(x.SerialNumber), x.Name, x.Description, x.VersionNumber));
+
+			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.ParentId, x.DateCreated, x.ColorBandRecords.Length, x.Name, x.Description));
 
 			return result;
 		}
@@ -313,7 +313,7 @@ namespace MSetRepo
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			var cbsRecord = colorBandSetReaderWriter.Get(colorBandSetSerialNumber);
 
-			var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.DateCreated, cbsRecord.ColorBandRecords.Count(), new Guid(cbsRecord.SerialNumber), cbsRecord.Name, cbsRecord.Description, cbsRecord.VersionNumber);
+			var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.ParentId, cbsRecord.DateCreated, cbsRecord.ColorBandRecords.Length, cbsRecord.Name, cbsRecord.Description);
 
 			return result;
 		}

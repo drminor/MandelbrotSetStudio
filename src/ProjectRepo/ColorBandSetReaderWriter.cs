@@ -78,16 +78,6 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
-		public void UpdateVersionNumber(ObjectId colorBandSetId, int versionNumber)
-		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
-
-			var updateDefinition = Builders<ColorBandSetRecord>.Update
-				.Set(u => u.VersionNumber, versionNumber);
-
-			_ = Collection.UpdateOne(filter, updateDefinition);
-		}
-
 		public void UpdateColorBands(ObjectId colorBandSetId, ColorBandRecord[] colorBandsRecords)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);

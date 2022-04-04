@@ -10,18 +10,16 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		public ColorBandSetInfo(ObjectId id, DateTime dateCreated, int numberOfBands, Guid serialNumber,
-			string name, string? description, int versionNumber)
+		public ColorBandSetInfo(ObjectId id, ObjectId? parentId, DateTime dateCreated, int numberOfBands, string name, string? description)
 		{
-			Debug.WriteLine($"Constructing ColorBandSetInfo with SerialNumber: {serialNumber}.");
+			Debug.WriteLine($"Constructing ColorBandSetInfo with Id: {id}.");
 			Id = id;
+			ParentId = parentId;
 			DateCreated = dateCreated;
 			NumberOfBands = numberOfBands;
-			SerialNumber = serialNumber;
 
 			_name = name;
 			_description = description;
-			_versionNumber = versionNumber;
 		}
 
 		#endregion
@@ -30,11 +28,11 @@ namespace MSS.Types
 
 		public ObjectId Id { get; init; }
 
+		public ObjectId? ParentId { get; init; }
+
 		public DateTime DateCreated { get; init; }
 
 		public int NumberOfBands { get; init; }
-
-		public Guid SerialNumber { get; init; }
 
 		private string _name;
 		public string Name
@@ -84,7 +82,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			var result = $"ColorBandSetInfo: {SerialNumber}";
+			var result = $"ColorBandSetInfo: {Id}";
 			return result;
 		}
 
