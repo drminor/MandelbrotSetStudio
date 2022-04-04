@@ -37,7 +37,7 @@ namespace MSetExplorer
 
 		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
 		{
-			if (e.MapSettingsUpdateType == MSS.Types.MapSettingsUpdateType.TargetIterations)
+			if (e.MapSettingsUpdateType == MapSettingsUpdateType.TargetIterations)
 			{
 				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
 				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
@@ -147,6 +147,7 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
 				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
+				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 			}
 		}
 

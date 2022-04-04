@@ -96,7 +96,7 @@ namespace MSetExplorer
 		{
 			get => _colorBandSet;
 
-			private set
+			set
 			{
 				//Debug.WriteLine($"ColorBandViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.SerialNumber}, New = {value?.SerialNumber}");
 				if (value == null)

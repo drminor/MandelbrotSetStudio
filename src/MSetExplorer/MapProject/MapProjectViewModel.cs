@@ -10,7 +10,6 @@ using MSetRepo;
 using System.Diagnostics;
 using MSS.Common;
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 
 namespace MSetExplorer
 {
@@ -314,6 +313,7 @@ namespace MSetExplorer
 			if (colorBandSet != null)
 			{
 				CurrentColorBandSet = colorBandSet;
+				// TODO: Distinguish between ProjectIsDirty and Project.ColorBandSetIsDirty.
 				return true;
 			}
 			else
@@ -548,25 +548,15 @@ namespace MSetExplorer
 
 				diff = diff.Scale(BlockSize);
 				diff = diff.DivInt(new SizeInt(2));
-
 				var rDiff = job.Subdivision.SamplePointDelta.Scale(diff);
+
 				var coords = job.MSetInfo.Coords;
-
-				var nrmArea = RNormalizer.Normalize(coords, rDiff, out var nrmDiff);
-
-				var x1 = nrmArea.X1 - nrmDiff.Width.Value;
-				var x2 = nrmArea.X2 + nrmDiff.Width.Value;
-
-				var y1 = nrmArea.Y1 - nrmDiff.Height.Value;
-				var y2 = nrmArea.Y2 + nrmDiff.Height.Value;
-
-				var newCoords = new RRectangle(x1, x2, y1, y2, nrmArea.Exponent);
+				var newCoords = AdjustCoords(coords, rDiff);
 
 				var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords, job.Subdivision.Position, job.Subdivision.SamplePointDelta, BlockSize, out var canvasControlOffset);
 
 				var newMsetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
 
-				// TODO: Adjust the Job's MapBlockOffset
 				Debug.WriteLine($"Reruning job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
 
 				newJob = job.Clone();
@@ -583,6 +573,21 @@ namespace MSetExplorer
 				newJob = job;
 				return false;
 			}
+		}
+
+		private RRectangle AdjustCoords(RRectangle coords, RSize rDiff)
+		{
+			var nrmArea = RNormalizer.Normalize(coords, rDiff, out var nrmDiff);
+
+			var x1 = nrmArea.X1 - nrmDiff.Width.Value;
+			var x2 = nrmArea.X2 + nrmDiff.Width.Value;
+
+			var y1 = nrmArea.Y1 - nrmDiff.Height.Value;
+			var y2 = nrmArea.Y2 + nrmDiff.Height.Value;
+
+			var result = new RRectangle(x1, x2, y1, y2, nrmArea.Exponent);
+
+			return result;
 		}
 
 		private void UpdateJob(Job oldJob, Job newJob)

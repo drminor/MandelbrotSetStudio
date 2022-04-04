@@ -77,14 +77,6 @@ namespace MSetExplorer
 					_currentJob = value;
 					HandleCurrentJobChanged(previousJob, _currentJob);
 				}
-				//else
-				//{
-				//	if (IsCanvasSizeChanged(_currentJob, value))
-				//	{
-				//		_currentJob = value;
-				//		HandleDisplaySizeChanged(_currentJob);
-				//	}
-				//}
 			}
 		}
 
@@ -252,25 +244,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void HandleDisplaySizeChanged(Job? curJob)
-		//{
-		//	Debug.WriteLine($"MapDisplay is handling DisplaySizeChanged.");
-		//	_mapLoaderManager.StopCurrentJob();
-
-		//	if (curJob != null)
-		//	{
-		//		MapSections.Clear();
-		//		CanvasControlOffset = curJob.CanvasControlOffset;
-		//		_mapLoaderManager.Push(curJob);
-
-		//		//ReuseLoadedSections(curJob);
-		//	}
-		//	else
-		//	{
-		//		MapSections.Clear();
-		//	}
-		//}
-
 		private void HandleCurrentJobChanged(Job? previousJob, Job? newJob)
 		{
 			Debug.WriteLine($"MapDisplay is handling JobChanged.");
@@ -346,53 +319,10 @@ namespace MSetExplorer
 				var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
 				return jobSpd == previousSpd;
 			}
-
-
-			////if (MapSections.Count == 0 || job.ParentJob is null || job.TransformType == TransformType.IterationUpdate || job.TransformType == TransformType.ColorMapUpdate)
-			//if (MapSections.Count == 0 || job.TransformType == TransformType.ColorMapUpdate)
-			//{
-			//	return false;
-			//}
-
-			//if (job.ParentJob is null)
-			//{
-			//	return true;
-			//}
-			//else
-			//{
-			//	var jobSpd = RNormalizer.Normalize(job.Subdivision.SamplePointDelta, job.ParentJob.Subdivision.SamplePointDelta, out var parentSpd);
-			//	return jobSpd == parentSpd;
-			//}
 		}
-
-		//private bool IsCanvasSizeChanged(Job currentJob, Job newJob)
-		//{
-		//	if (!(currentJob is null) && !(newJob is null))
-		//	{
-		//		var curSize = currentJob.CanvasSizeInBlocks;
-		//		var newSize = newJob.CanvasSizeInBlocks;
-
-		//		return curSize == newSize;
-		//	}
-		//	else
-		//	{
-		//		var result = currentJob is null && newJob is null;
-		//		return result;
-		//	}
-		//}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)
 		{
-			//IList<MapSection> result = new List<MapSection>();
-
-			//foreach(var mapSection in sectionsNeeded)
-			//{
-			//	if (!sectionsPresent.Any(x => x == mapSection))
-			//	{
-			//		result.Add(mapSection);
-			//	}
-			//}
-
 			var result = sectionsNeeded.Where(
 				neededSection => !sectionsPresent.Any(
 					presentSection => presentSection == neededSection 
