@@ -13,5 +13,8 @@ namespace MSetExplorer
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string? initalName, DialogType dialogType);
+
+		//void BumpDispWidth(bool increase);
+		//void BumpDispHeight(bool increase);
 	}
 }

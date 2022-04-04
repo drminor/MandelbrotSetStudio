@@ -313,9 +313,17 @@ namespace MSetExplorer
 			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 
 			_screenSectionCollection.Shift(shiftAmount);
-			CanvasControlOffset = curJob.CanvasControlOffset;
-			RedrawSections(MapSections);
-			_mapLoaderManager.Push(curJob, sectionsToLoad);
+
+			if (CanvasControlOffset != curJob.CanvasControlOffset)
+			{
+				CanvasControlOffset = curJob.CanvasControlOffset;
+				RedrawSections(MapSections);
+			}
+
+			if (sectionsToLoad.Count > 0)
+			{
+				_mapLoaderManager.Push(curJob, sectionsToLoad);
+			}
 		}
 
 		private bool ShouldAttemptToReuseLoadedSections(Job? previousJob, Job newJob)

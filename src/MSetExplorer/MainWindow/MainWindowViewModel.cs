@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using MSS.Types;
+using System.ComponentModel;
 
 namespace MSetExplorer
 {
@@ -21,6 +22,8 @@ namespace MSetExplorer
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
 			MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+			DispWidth = MapDisplayViewModel.CanvasSize.Width;
+			DispHeight = MapDisplayViewModel.CanvasSize.Height;
 
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
 			_colorBandSetOpenSaveViewModelCreator = colorBandSetOpenSaveViewModelCreator;
@@ -50,6 +53,36 @@ namespace MSetExplorer
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 		public MSetInfoViewModel MSetInfoViewModel { get; }
 
+		private int _dispWidth;
+
+		public int DispWidth
+		{
+			get => _dispWidth;
+			set
+			{
+				if (value != _dispWidth)
+				{
+					_dispWidth = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		private int _dispHeight;
+
+		public int DispHeight
+		{
+			get => _dispHeight;
+			set
+			{
+				if (value != _dispHeight)
+				{
+					_dispHeight = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#endregion
 
 		#region Public Methods
@@ -65,6 +98,30 @@ namespace MSetExplorer
 			var result = _colorBandSetOpenSaveViewModelCreator(initalName, dialogType);
 			return result;
 		}
+
+		//public void BumpDispWidth(bool increase)
+		//{
+		//	if (increase)
+		//	{
+		//		MapDisplayViewModel.CanvasSize = new SizeInt(MapDisplayViewModel.CanvasSize.Width + 128, MapDisplayViewModel.CanvasSize.Height);
+		//	}
+		//	else
+		//	{
+		//		MapDisplayViewModel.CanvasSize = new SizeInt(MapDisplayViewModel.CanvasSize.Width - 128, MapDisplayViewModel.CanvasSize.Height);
+		//	}
+		//}
+
+		//public void BumpDispHeight(bool increase)
+		//{
+		//	if (increase)
+		//	{
+		//		MapDisplayViewModel.CanvasSize = new SizeInt(MapDisplayViewModel.CanvasSize.Width, MapDisplayViewModel.CanvasSize.Height + 128);
+		//	}
+		//	else
+		//	{
+		//		MapDisplayViewModel.CanvasSize = new SizeInt(MapDisplayViewModel.CanvasSize.Width, MapDisplayViewModel.CanvasSize.Height - 128);
+		//	}
+		//}
 
 		#endregion
 
@@ -102,6 +159,8 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
+				DispWidth = MapDisplayViewModel.CanvasSize.Width;
+				DispHeight = MapDisplayViewModel.CanvasSize.Height;
 				MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 			}
 		}

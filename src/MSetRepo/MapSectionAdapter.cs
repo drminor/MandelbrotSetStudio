@@ -1,7 +1,9 @@
 ﻿using MEngineDataContracts;
 using MongoDB.Bson;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
+using MSS.Types.DataTransferObjects;
 using ProjectRepo;
 using System.Threading.Tasks;
 
@@ -27,11 +29,10 @@ namespace MSetRepo
 			return mapSectionResponse;
 		}
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVector blockPosition)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var blockPositionRecord = _mSetRecordMapper.MapTo(blockPosition);
-			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(subdivisionId), blockPositionRecord);
+			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(subdivisionId), blockPosition);
 			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
 
 			return mapSectionResponse;
@@ -58,6 +59,13 @@ namespace MSetRepo
 			return mapSectionId.ToString();
 		}
 
+		public async Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse)
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var result = await mapSectionReaderWriter.UpdateZValuesAync(new ObjectId(mapSectionResponse.MapSectionId), mapSectionResponse.MapCalcSettings.TargetIterations, mapSectionResponse.Counts, mapSectionResponse.DoneFlags, mapSectionResponse.ZValues);
+
+			return result;
+		}
 
 		public long? ClearMapSections(string subdivisionId)
 		{
@@ -66,5 +74,14 @@ namespace MSetRepo
 
 			return result;
 		}
+
+		#region Tests
+
+		public void CanInsertAndGet()
+		{
+
+		}
+
+		#endregion
 	}
 }

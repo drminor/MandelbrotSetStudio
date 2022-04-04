@@ -47,6 +47,8 @@ namespace MSetRepo
 
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			mapSectionReaderWriter.CreateCollection();
+
+			mapSectionReaderWriter.CreateSubAndPosIndex();
 		}
 
 		public void DropCollections()

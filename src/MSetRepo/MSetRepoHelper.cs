@@ -27,7 +27,7 @@ namespace MSetRepo
 			return mapSectionAdapter;
 		}
 
-		public static MSetRecordMapper GetMSetRecordMapper()
+		private static MSetRecordMapper GetMSetRecordMapper()
 		{
 			var dtoMapper = new DtoMapper();
 			var colorBandSetCache = new Dictionary<Guid, ColorBandSet>(); 

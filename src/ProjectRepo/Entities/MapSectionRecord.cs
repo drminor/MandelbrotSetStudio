@@ -8,7 +8,10 @@ namespace ProjectRepo.Entities
 	/// </summary>
 	public record MapSectionRecord(
 		ObjectId SubdivisionId,
-		BigVectorRecord BlockPosition,
+		long BlockPosXHi,
+		long BlockPosXLo,
+		long BlockPosYHi,
+		long BlockPosYLo,
 		MapCalcSettings MapCalcSettings,
 		int[] Counts,
 		bool[] DoneFlags,

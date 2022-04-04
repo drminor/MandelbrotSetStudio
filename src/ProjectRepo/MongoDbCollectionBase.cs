@@ -25,13 +25,18 @@ namespace ProjectRepo
 		public IMongoDatabase Database => _dbProvider.Database;
         public IMongoCollection<T> Collection => _collectionLazy.Value;
 
-		public void CreateCollection()
+		public virtual bool CreateCollection()
 		{
 			var cNames = _dbProvider.Database.ListCollectionNames().ToList();
 
 			if (!cNames.Contains(_collectionName))
 			{
 				_dbProvider.Database.CreateCollection(_collectionName);
+				return true;
+			}
+			else
+			{
+				return false;
 			}
 		}
 

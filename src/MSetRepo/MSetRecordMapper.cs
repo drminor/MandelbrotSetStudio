@@ -3,6 +3,7 @@ using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
+using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
@@ -160,12 +161,13 @@ namespace MSetRepo
 				return null;
 			}
 
-			var blockPosition = _dtoMapper.MapFrom(source.BlockPosition);
-			var blockPositionRecord = MapTo(blockPosition);
 			var result = new MapSectionRecord
 				(
 				new ObjectId(source.SubdivisionId),
-				blockPositionRecord,
+				BlockPosXHi: source.BlockPosition.X[0],
+				BlockPosXLo: source.BlockPosition.X[1],
+				BlockPosYHi: source.BlockPosition.Y[0],
+				BlockPosYLo: source.BlockPosition.Y[1],
 				source.MapCalcSettings,
 				source.Counts,
 				source.DoneFlags,
@@ -182,11 +184,15 @@ namespace MSetRepo
 				return null;
 			}
 
+			var x = new long[][] { new long[] { 0, 0 }, new long[]{ 0, 0 } };
+
+			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
+
 			var result = new MapSectionResponse
 			{
 				MapSectionId = target.Id.ToString(),
 				SubdivisionId = target.SubdivisionId.ToString(),
-				BlockPosition = target.BlockPosition.BigVector,
+				BlockPosition = blockPosition,
 				MapCalcSettings = target.MapCalcSettings,
 				Counts = target.Counts,
 				DoneFlags = target.DoneFlags,

@@ -37,7 +37,7 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			var DROP_ALL_SECTIONS = true;
+			var DROP_ALL_COLLECTIONS = false;
 			var DROP_MAP_SECTIONS = false;
 			var USE_MAP_SECTION_REPO = true;
 
@@ -48,7 +48,7 @@ namespace MSetExplorer
 			// Project Repository Adapter
 			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
 
-			if (DROP_ALL_SECTIONS)
+			if (DROP_ALL_COLLECTIONS)
 			{
 				_projectAdapter.DropCollections();
 			}
@@ -81,8 +81,10 @@ namespace MSetExplorer
 		private MapLoaderManager BuildMapLoaderManager(string mEngineEndPointAddress, string dbProviderConnectionString, bool useTheMapSectionRepo)
 		{
 			var mEngineClient = new MClient(mEngineEndPointAddress);
-			var mapSectionRepo = MSetRepoHelper.GetMapSectionAdapter(dbProviderConnectionString);
-			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClient, mapSectionRepo, useTheMapSectionRepo);
+			var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(dbProviderConnectionString);
+
+
+			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClient, mapSectionAdapter, useTheMapSectionRepo);
 
 			var result = new MapLoaderManager(mapSectionRequestProcessor);
 

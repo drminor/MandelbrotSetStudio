@@ -49,6 +49,8 @@ namespace MEngineDataContracts
 		public bool Saved { get; set; }
 		public bool Handled { get; set; }
 
+		public bool IncreasingIterations { get; set; }
+
 		public bool GetIsDone()
 		{
 			if (DoneFlags == null)

@@ -69,18 +69,59 @@
             </MenuItem>
 
         </Menu>
-        
-        <Border Grid.Row="1" Grid.Column="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
-                <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,50,10,5" Command="local:CustomCommands.PanLeft">Left</Button>
+
+        <Grid Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50">
+                <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanLeft">Left</Button>
                 <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanUp">Up</Button>
                 <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanRight">Right</Button>
                 <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanDown">Down</Button>
-                
-                <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,115,10,5" Command="local:CustomCommands.JobGoBack">Go Back</Button>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50">
+                <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoBack">Go Back</Button>
                 <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
             </StackPanel>
-        </Border>
+
+            <StackPanel Grid.Row="2" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50">
+                <Grid Margin="5,0" x:Name="grdTop">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="30" />
+                        <ColumnDefinition Width="40" />
+                        <ColumnDefinition Width="40" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <!--<RowDefinition Height="*" />-->
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="W:" Grid.Row="0" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
+                    <TextBox x:Name="txtW" Grid.Row="0" Grid.Column="1"  Grid.RowSpan="2" Margin="3,10" Text="{Binding DispWidth}"/>
+                    <Button Grid.Row="0" Grid.Column="2" Margin="2" Click="W_Up_Button_Click">U</Button>
+                    <Button Grid.Row="1" Grid.Column="2" Margin="2" Click="W_Down_Button_Click">D</Button>
+
+                    <TextBlock Text="H:" Grid.Row="2" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
+                    <TextBox x:Name="txtH" Grid.Row="2" Grid.RowSpan="2" Grid.Column="1" Margin="3,10" Text="{Binding DispHeight}" />
+                    <Button Grid.Row="2" Grid.Column="2" Margin="2" Click="H_Up_Button_Click">U</Button>
+                    <Button Grid.Row="3" Grid.Column="2" Margin="2" Click="H_Down_Button_Click">D</Button>
+
+                </Grid>
+            </StackPanel>
+
+        </Grid>
 
         <!--<local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}"></local:MapDisplay>-->
 

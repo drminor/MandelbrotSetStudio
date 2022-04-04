@@ -212,7 +212,10 @@ namespace MapSectionProviderLib
 					if (mapSectionResponse != null && mapSectionResponse.Counts != null)
 					{
 						// Requesting the MapSectionGenerator to do more calculations.
+
 						var request = mapSectionWorkItem.Request;
+						request.MapSectionId = mapSectionResponse.MapSectionId;
+						request.IncreasingIterations = true;
 						request.Counts = mapSectionResponse.Counts;
 						request.DoneFlags = mapSectionResponse.DoneFlags;
 						request.ZValues = mapSectionResponse.ZValues;
@@ -267,7 +270,7 @@ namespace MapSectionProviderLib
 		private async Task<MapSectionResponse> FetchAsync(MapSecWorkReqType mapSectionWorkItem)
 		{
 			var mapSectionRequest = mapSectionWorkItem.Request;
-			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, _dtoMapper.MapFrom(mapSectionRequest.BlockPosition));
+			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
 
 			return mapSectionResponse;
 		}

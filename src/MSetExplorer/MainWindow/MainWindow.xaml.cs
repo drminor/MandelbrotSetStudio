@@ -320,6 +320,34 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Disp Size Button Handlers
+
+		private void W_Up_Button_Click(object sender, RoutedEventArgs e)
+		{
+			Width += 128;
+			//_vm.BumpDispWidth(increase: true);
+		}
+
+		private void W_Down_Button_Click(object sender, RoutedEventArgs e)
+		{
+			Width -= 128;
+			//_vm.BumpDispWidth(increase: false);
+		}
+
+		private void H_Up_Button_Click(object sender, RoutedEventArgs e)
+		{
+			Height += 128;
+			//_vm.BumpDispHeight(increase: true);
+		}
+
+		private void H_Down_Button_Click(object sender, RoutedEventArgs e)
+		{
+			Height -= 128;
+			//_vm.BumpDispHeight(increase: false);
+		}
+
+		#endregion
+
 		#region Private Methods
 
 		private void LoadNewProject()

@@ -87,7 +87,14 @@ namespace MapSectionProviderLib
 
 					if (mapSectionResponse.Counts != null)
 					{
-						var _ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+						if (mapSectionResponse.MapSectionId != null)
+						{
+							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
+						}
+						else
+						{
+							_ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+						}
 					}
 				}
 				catch (OperationCanceledException)
@@ -97,7 +104,7 @@ namespace MapSectionProviderLib
 				catch (Exception e)
 				{
 					Debug.WriteLine($"The persist queue got an exception: {e}.");
-					throw;
+					//throw;
 				}
 			}
 		}
