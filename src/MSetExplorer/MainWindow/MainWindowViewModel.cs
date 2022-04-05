@@ -145,7 +145,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
-				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
+				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet?.Clone();
 				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 			}
 		}
@@ -169,7 +169,11 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(ColorBandSetViewModel.ColorBandSet))
 			{
-				MapProjectViewModel.CurrentColorBandSet = ColorBandSetViewModel.ColorBandSet;
+				var cbs = ColorBandSetViewModel.ColorBandSet;
+				if (cbs != null)
+				{
+					MapProjectViewModel.CurrentColorBandSet = cbs;
+				}
 			}
 		}
 

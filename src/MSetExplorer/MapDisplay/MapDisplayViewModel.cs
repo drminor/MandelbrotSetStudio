@@ -101,7 +101,7 @@ namespace MSetExplorer
 			get => _colorBandSet;
 			set
 			{
-				if (!Equals(value, _colorBandSet))
+				if (value != _colorBandSet)
 				{
 					if (value != null)
 					{

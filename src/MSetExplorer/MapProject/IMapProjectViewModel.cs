@@ -20,7 +20,7 @@ namespace MSetExplorer
 		bool CanSaveProject { get; }
 		bool CurrentProjectIsDirty { get; }
 
-		ColorBandSet? CurrentColorBandSet { get; set; }
+		ColorBandSet CurrentColorBandSet { get; set; }
 		bool CanSaveColorBandSet { get; }
 
 		// Job Methods

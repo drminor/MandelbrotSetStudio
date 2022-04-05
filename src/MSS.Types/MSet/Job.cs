@@ -21,11 +21,12 @@ namespace MSS.Types.MSet
 		public BigVector MapBlockOffset { get; set; }
 		public VectorInt CanvasControlOffset { get; set; }
 
+		public bool IsDirty { get; set; }
+
 		public Job(Job? parentJob, Project project, Subdivision subdivision, string? label, TransformType transformType, RectangleInt newArea, MSetInfo mSetInfo, 
 			SizeInt canvasSizeInBlocks, BigVector mapBlockOffset, VectorInt canvasControlOffset)
 			: this(ObjectId.GenerateNewId(), parentJob, project, subdivision, label, transformType, newArea, mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset)
 		{ }
-
 
 		public Job(
 			ObjectId id,

@@ -39,12 +39,25 @@ namespace ProjectRepo
 			return jobRecord.Id;
 		}
 
-		public void UpdateJob(JobRecord jobRecord, ObjectId? parentJobId)
+		public void UpdateJobsParent(ObjectId jobId, ObjectId? parentId)
+		{
+			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
+
+			var updateDefinition = Builders<JobRecord>.Update
+				.Set(u => u.ParentJobId, parentId);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void UpdateJobDetails(JobRecord jobRecord)
 		{
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobRecord.Id);
 
 			var updateDefinition = Builders<JobRecord>.Update
-				.Set(u => u.ParentJobId, parentJobId);
+				.Set(u => u.MSetInfo, jobRecord.MSetInfo)
+				.Set(u => u.CanvasSizeInBlocks, jobRecord.CanvasSizeInBlocks)
+				.Set(u => u.MapBlockOffset, jobRecord.MapBlockOffset)
+				.Set(u => u.CanvasControlOffset, jobRecord.CanvasControlOffset);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}

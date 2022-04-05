@@ -1,48 +1,42 @@
 ﻿using MongoDB.Bson;
-using MSS.Types.MSet;
-using MSS.Types;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading;
 using MSetRepo;
-using System.Diagnostics;
 using MSS.Common;
-using System.Diagnostics.CodeAnalysis;
+using MSS.Types;
+using MSS.Types.MSet;
+using System;
+using System.Diagnostics;
+using System.Threading;
 
 namespace MSetExplorer
 {
 	internal class MapProjectViewModel : ViewModelBase, IMapProjectViewModel, IDisposable
 	{
 		private readonly ProjectAdapter _projectAdapter;
+		private readonly JobCollection _jobsCollection;
 		private readonly ColorBandSetCollection _colorBandSetCollection;
-		private readonly ObservableCollection<Job> _jobsCollection;
-		private readonly ReaderWriterLockSlim _jobsLock;
 
-		private int _jobsPointer;
+		private readonly ReaderWriterLockSlim _stateLock;
+
 		private SizeInt _canvasSize;
 
 		private Project? _currentProject;
 		private bool _currentProjectIsDirty;
-
 
 		#region Constructor
 
 		public MapProjectViewModel(ProjectAdapter projectAdapter, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
+
+			_jobsCollection = new JobCollection(projectAdapter);
 			_colorBandSetCollection = new ColorBandSetCollection(projectAdapter);
 			BlockSize = blockSize;
 
-			_jobsCollection = new ObservableCollection<Job>();
-			_jobsPointer = -1;
+			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 			_canvasSize = new SizeInt();
 			_currentProject = null;
 			_currentProjectIsDirty = false;
-
-			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 		}
 
 		#endregion
@@ -84,13 +78,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public string? CurrentProjectName => CurrentProject?.Name;
-		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
-		public bool CanSaveProject => CurrentProjectOnFile && CurrentProjectIsDirty;
-
-		public bool CurrentColorBandSetOnFile => CurrentColorBandSet?.OnFile ?? false;
-		public bool CanSaveColorBandSet => CurrentColorBandSetOnFile;
-
 		public bool CurrentProjectIsDirty
 		{
 			get => _currentProjectIsDirty;
@@ -104,14 +91,36 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSet? CurrentColorBandSet
+		public string? CurrentProjectName => CurrentProject?.Name;
+		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
+		public bool CanSaveProject => CurrentProjectOnFile && CurrentProjectIsDirty;
+
+		public Job? CurrentJob
+		{
+			get => _jobsCollection.CurrentJob;
+			set
+			{
+				if (value != _jobsCollection.CurrentJob)
+				{
+					Debug.WriteLine($"MapProjectViewModel is having its CurrentJob value updated. Old = {_jobsCollection.CurrentJob?.Id}, New = {value?.Id ?? ObjectId.Empty}.");
+					_jobsCollection.Push(value);
+					CurrentProjectIsDirty = true;
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+				}
+			}
+		}
+
+		public bool CanGoBack => _jobsCollection.CanGoBack;
+		public bool CanGoForward => _jobsCollection.CanGoForward;
+
+		public ColorBandSet CurrentColorBandSet
 		{
 			get => _colorBandSetCollection.CurrentColorBandSet;
 			set
 			{
 				if (value != _colorBandSetCollection.CurrentColorBandSet)
 				{
-					Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {_colorBandSetCollection.CurrentColorBandSet?.Id}, New = {value?.Id ?? ObjectId.Empty}.");
+					Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {_colorBandSetCollection.CurrentColorBandSet?.Id}, New = {value.Id}.");
 					_colorBandSetCollection.Push(value);
 					CurrentProjectIsDirty = true;
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
@@ -119,9 +128,8 @@ namespace MSetExplorer
 			}
 		}
 
-		public Job? CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
-		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
-		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_jobsPointer, out var _); });
+		public bool CurrentColorBandSetOnFile => CurrentColorBandSet.OnFile;
+		public bool CanSaveColorBandSet => CurrentColorBandSetOnFile;
 
 		#endregion
 
@@ -131,11 +139,7 @@ namespace MSetExplorer
 		{
 			CurrentProject = new Project("New", description: null, colorBandSet.Id);
 
-			DoWithWriteLock(() =>
-			{
-				_jobsCollection.Clear();
-				_jobsPointer = -1;
-			});
+			_jobsCollection.Clear();
 
 			_colorBandSetCollection.Clear();
 			_colorBandSetCollection.Push(colorBandSet);
@@ -179,22 +183,22 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
 			var jobs = _projectAdapter.GetAllJobs(CurrentProject.Id);
+			_jobsCollection.Load(jobs, currentId: null);
 
-			DoWithWriteLock(() =>
+			var curJob = CurrentJob;
+			if (curJob != null)
 			{
-				_jobsCollection.Clear();
-
-				foreach (var job in jobs)
+				DoWithWriteLock(() => 
 				{
-					_jobsCollection.Add(job);
-				}
-
-				_jobsPointer = -1;
-
-				Rerun(_jobsCollection.Count - 1);
-			});
+					UpdateTheJobsCanvasSize(curJob);
+				});
+			}
 
 			CurrentProjectIsDirty = false;
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 		}
 
 		public void ProjectSaveAs(string name, string? description, ObjectId currentColorBandSetId)
@@ -217,14 +221,7 @@ namespace MSetExplorer
 					_projectAdapter.UpdateProjectColorBandSetId(project.Id, curCbsId.Value);
 				}
 
-				for (var i = 0; i < _jobsCollection.Count; i++)
-				{
-					var job = _jobsCollection[i];
-					job.Project = project;
-					var updatedJob = _projectAdapter.InsertJob(job);
-					_jobsCollection[i] = updatedJob;
-					UpdateJob(job, updatedJob);
-				}
+				_jobsCollection.Save(project);
 
 				CurrentProject = project;
 
@@ -253,18 +250,7 @@ namespace MSetExplorer
 						_projectAdapter.UpdateProjectColorBandSetId(project.Id, project.CurrentColorBandSetId);
 					}
 
-					var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(project.Id);
-
-					for (var i = 0; i < _jobsCollection.Count; i++)
-					{
-						var job = _jobsCollection[i];
-						if (job.Id.CreationTime > lastSavedTime)
-						{
-							var updatedJob = _projectAdapter.InsertJob(job);
-							_jobsCollection[i] = updatedJob;
-							UpdateJob(job, updatedJob);
-						}
-					}
+					_jobsCollection.Save(project);
 
 					CurrentProjectIsDirty = false;
 				}
@@ -406,47 +392,55 @@ namespace MSetExplorer
 
 		public bool GoBack()
 		{
-			_jobsLock.EnterUpgradeableReadLock();
-			try
+			if (_jobsCollection.GoBack())
 			{
-				var parentJob = CurrentJob?.ParentJob;
-
-				if (!(parentJob is null))
+				var curJob = CurrentJob;
+				if (curJob != null)
 				{
-					if (TryFindByJobId(parentJob.Id, out var job))
+					DoWithWriteLock(() =>
 					{
-						var jobIndex = _jobsCollection.IndexOf(job);
-						DoWithWriteLock(() => Rerun(jobIndex));
-						return true;
-					}
+						UpdateTheJobsCanvasSize(curJob);
+					});
 				}
 
-				return false;
+				CurrentProjectIsDirty = false;
+
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+
+				return true;
 			}
-			finally
+			else
 			{
-				_jobsLock.ExitUpgradeableReadLock();
+				return false;
 			}
 		}
 
 		public bool GoForward()
 		{
-			_jobsLock.EnterUpgradeableReadLock();
-			try
+			if (_jobsCollection.GoForward())
 			{
-				if (TryGetNextJobInStack(_jobsPointer, out var nextJobIndex))
+				var curJob = CurrentJob;
+				if (curJob != null)
 				{
-					DoWithWriteLock(() => Rerun(nextJobIndex));
-					return true;
+					DoWithWriteLock(() =>
+					{
+						UpdateTheJobsCanvasSize(curJob);
+					});
 				}
-				else
-				{
-					return false;
-				}
+
+				CurrentProjectIsDirty = false;
+
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+
+				return true;
 			}
-			finally
+			else
 			{
-				_jobsLock.ExitUpgradeableReadLock();
+				return false;
 			}
 		}
 
@@ -471,8 +465,7 @@ namespace MSetExplorer
 
 			DoWithWriteLock(() =>
 			{
-				_jobsCollection.Add(job);
-				_jobsPointer = _jobsCollection.Count - 1;
+				_jobsCollection.Push(job);
 
 				CurrentProjectIsDirty = true;
 
@@ -484,58 +477,33 @@ namespace MSetExplorer
 
 		private void RerunWithNewDisplaySize()
 		{
-			_jobsLock.EnterUpgradeableReadLock();
+			_stateLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (!(_jobsPointer < 0 || _jobsPointer > _jobsCollection.Count - 1))
+				var curJob = CurrentJob;
+				if (curJob != null)
 				{
-					DoWithWriteLock(() => Rerun(_jobsPointer));
-					CurrentProjectIsDirty = true;
+					DoWithWriteLock(() =>
+					{
+						if (UpdateTheJobsCanvasSize(curJob))
+						{
+							CurrentProjectIsDirty = true;
+						}
+					});
+
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				}
 			}
 			finally
 			{
-				_jobsLock.ExitUpgradeableReadLock();
+				_stateLock.ExitUpgradeableReadLock();
 			}
 		}
 
-		private void Rerun(int newJobIndex)
-		{
-			if (newJobIndex < 0 || newJobIndex > _jobsCollection.Count - 1)
-			{
-				throw new ArgumentException($"The newJobIndex with value: {newJobIndex} is not valid.", nameof(newJobIndex));
-			}
-
-			var curJob = _jobsCollection[newJobIndex];
-
-			if (curJob != null)
-			{
-				if (UpdateTheJobsCanvasSize(curJob, out var updatedJob))
-				{
-					_jobsCollection[newJobIndex] = updatedJob;
-				}
-			}
-
-			if (_jobsPointer == newJobIndex)
-			{
-				// Force a redraw
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-			}
-			else
-			{
-				_jobsPointer = newJobIndex;
-
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
-			}
-		}
-		
-		private bool UpdateTheJobsCanvasSize(Job job, out Job newJob)
+	
+		private bool UpdateTheJobsCanvasSize(Job job)
 		{
 			var newCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
-
-			MapJobHelper.CheckCanvasSize(CanvasSize, BlockSize);
 
 			if (newCanvasSizeInBlocks != job.CanvasSizeInBlocks)
 			{
@@ -554,18 +522,16 @@ namespace MSetExplorer
 
 				Debug.WriteLine($"Reruning job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
 
-				newJob = job.Clone();
-
-				newJob.MSetInfo = newMsetInfo;
-				newJob.MapBlockOffset = mapBlockOffset;
-				newJob.CanvasControlOffset = canvasControlOffset;
-				newJob.CanvasSizeInBlocks = newCanvasSizeInBlocks;
+				job.MSetInfo = newMsetInfo;
+				job.MapBlockOffset = mapBlockOffset;
+				job.CanvasControlOffset = canvasControlOffset;
+				job.CanvasSizeInBlocks = newCanvasSizeInBlocks;
 
 				return true;
 			}
 			else
 			{
-				newJob = job;
+				//newJob = job;
 				return false;
 			}
 		}
@@ -585,112 +551,27 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void UpdateJob(Job oldJob, Job newJob)
-		{
-			foreach (var job in _jobsCollection)
-			{
-				if (job?.ParentJob?.Id == oldJob.Id)
-				{
-					job.ParentJob = newJob;
-					_projectAdapter.UpdateJob(job, newJob);
-				}
-			}
-		}
-
-		#endregion
-
-		#region Job Collection Management 
-
-		private bool TryGetNextJobInStack(int jobIndex, out int nextJobIndex)
-		{
-			nextJobIndex = -1;
-
-			if (TryGetJobFromStack(jobIndex, out var job))
-			{
-				if (TryGetLatestChildJobIndex(job, out var childJobIndex))
-				{
-					nextJobIndex = childJobIndex;
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		private bool TryGetJobFromStack(int jobIndex, [MaybeNullWhen(false)] out Job job)
-		{
-			if (jobIndex < 0 || jobIndex > _jobsCollection.Count - 1)
-			{
-				job = null;
-				return false;
-			}
-			else
-			{
-				job = _jobsCollection[jobIndex];
-				return true;
-			}
-		}
-
-		/// <summary>
-		/// Finds the most recently ran child job of the given parentJob.
-		/// </summary>
-		/// <param name="parentJob"></param>
-		/// <param name="childJobIndex">If successful, the index of the most recent child job of the given parentJob</param>
-		/// <returns>True if there is any child of the specified job.</returns>
-		private bool TryGetLatestChildJobIndex(Job parentJob, out int childJobIndex)
-		{
-			childJobIndex = -1;
-			var lastestDtFound = DateTime.MinValue;
-
-			for (var i = 0; i < _jobsCollection.Count; i++)
-			{
-				var job = _jobsCollection[i];
-				var thisParentJobId = job.ParentJob?.Id ?? ObjectId.Empty;
-
-				if (thisParentJobId.Equals(parentJob.Id))
-				{
-					var dt = thisParentJobId.CreationTime;
-					if (dt > lastestDtFound)
-					{
-						childJobIndex = i;
-						lastestDtFound = dt;
-					}
-				}
-			}
-
-			var result = childJobIndex != -1;
-			return result;
-		}
-
-		private bool TryFindByJobId(ObjectId id, [MaybeNullWhen(false)] out Job job)
-		{
-			job = _jobsCollection.FirstOrDefault(x => x.Id == id);
-			return job != null;
-		}
-
-		private IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
-
 		#endregion
 
 		#region Lock Helpers
 
-		private T DoWithReadLock<T>(Func<T> function)
-		{
-			_jobsLock.EnterReadLock();
+		//private T DoWithReadLock<T>(Func<T> function)
+		//{
+		//	_stateLock.EnterReadLock();
 
-			try
-			{
-				return function();
-			}
-			finally
-			{
-				_jobsLock.ExitReadLock();
-			}
-		}
+		//	try
+		//	{
+		//		return function();
+		//	}
+		//	finally
+		//	{
+		//		_stateLock.ExitReadLock();
+		//	}
+		//}
 
 		private void DoWithWriteLock(Action action)
 		{
-			_jobsLock.EnterWriteLock();
+			_stateLock.EnterWriteLock();
 
 			try
 			{
@@ -698,7 +579,7 @@ namespace MSetExplorer
 			}
 			finally
 			{
-				_jobsLock.ExitWriteLock();
+				_stateLock.ExitWriteLock();
 			}
 		}
 
@@ -715,13 +596,24 @@ namespace MSetExplorer
 				if (disposing)
 				{
 					// Dispose managed state (managed objects)
-					_jobsLock.Dispose();
+
+					if (_jobsCollection != null)
+					{
+						_jobsCollection.Dispose();
+					}
+
+					if (_colorBandSetCollection != null)
+					{
+						_colorBandSetCollection.Dispose();
+						//_colorBandSetCollection = null;
+					}
+
+					_stateLock.Dispose();
 				}
 
 				_disposedValue = true;
 			}
 		}
-
 
 		public void Dispose()
 		{

@@ -427,11 +427,17 @@ namespace MSetRepo
 			return updatedJob;
 		}
 
-		public void UpdateJob(Job job, Job? parentJob)
+		public void UpdateJobsParent(Job job)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJob?.Id);
+		}
+
+		public void UpdateJobDetalis(Job job)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
-			jobReaderWriter.UpdateJob(jobRecord, parentJob?.Id);
+			jobReaderWriter.UpdateJobDetails(jobRecord);
 		}
 
 		public long DeleteJob(ObjectId jobId, JobReaderWriter jobReaderWriter)

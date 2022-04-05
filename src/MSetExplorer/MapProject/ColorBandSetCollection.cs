@@ -23,27 +23,56 @@ namespace MSetExplorer
 		public ColorBandSetCollection(ProjectAdapter projectAdapter)
 		{
 			_projectAdapter = projectAdapter;
-			_colorsCollection = new Collection<ColorBandSet>();
+			_colorsCollection = new Collection<ColorBandSet>() { new ColorBandSet() };
 			_colorsLock = new ReaderWriterLockSlim();
-			_colorsPointer = -1;
+			_colorsPointer = 0;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public ColorBandSet? CurrentColorBandSet => DoWithReadLock(() => { return _colorsPointer == -1 ? null : _colorsCollection[_colorsPointer]; });
+		public ColorBandSet CurrentColorBandSet => DoWithReadLock(() => { return _colorsCollection[_colorsPointer]; });
 		public bool CanGoBack => !(CurrentColorBandSet?.ParentId is null);
 		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextCBSInStack(_colorsPointer, out var _); });
 
-		public IEnumerable<ColorBandSet> ColorBandSets => DoWithReadLock(() => { return new ReadOnlyCollection<ColorBandSet>(_colorsCollection); });
+		public int CurrentIndex => DoWithReadLock(() =>  { return _colorsPointer; });
+
+		//public IEnumerable<ColorBandSet> ColorBandSets => DoWithReadLock(() => { return new ReadOnlyCollection<ColorBandSet>(_colorsCollection); });
 
 		public bool IsDirty => _colorsCollection.Any(x => !x.OnFile);
 
 		#endregion
 
 		#region Public Methods
+		
+		public void UpdateItem(int index, ColorBandSet job)
+		{
+			DoWithWriteLock(() => { _colorsCollection[index] = job; });
+		}
 
+		public bool MoveCurrentTo(int index)
+		{
+			_colorsLock.EnterUpgradeableReadLock();
+
+			try
+			{
+				if (index < 0 || index > _colorsCollection.Count - 1)
+				{
+					return false;
+				}
+				else
+				{
+					DoWithWriteLock(() => { _colorsPointer = index; });
+					return true;
+				}
+			}
+			finally
+			{
+				_colorsLock.ExitUpgradeableReadLock();
+			}
+		}
+		
 		public void Load(IEnumerable<ColorBandSet> colorBandSets, ObjectId? currentId)
 		{
 			DoWithWriteLock(() =>
@@ -75,23 +104,12 @@ namespace MSetExplorer
 			});
 		}
 
-		public void Push(ColorBandSet? colorBandSet)
+		public void Push(ColorBandSet colorBandSet)
 		{
 			DoWithWriteLock(() =>
 			{
-				if (colorBandSet == null)
-				{
-					_colorsPointer = -1;
-				}
-				else
-				{
-					_colorsCollection.Add(colorBandSet);
-					_colorsPointer = _colorsCollection.Count - 1;
-				}
-
-				//OnPropertyChanged(nameof(ColorBandSetCollection.CurrentColorBandSet));
-				//OnPropertyChanged(nameof(ColorBandSetCollection.CanGoBack));
-				//OnPropertyChanged(nameof(ColorBandSetCollection.CanGoForward));
+				_colorsCollection.Add(colorBandSet);
+				_colorsPointer = _colorsCollection.Count - 1;
 			});
 		}
 
@@ -118,7 +136,8 @@ namespace MSetExplorer
 			DoWithWriteLock(() =>
 			{
 				_colorsCollection.Clear();
-				_colorsPointer = -1;
+				_colorsCollection.Add(new ColorBandSet());
+				_colorsPointer = 0;
 			});
 		}
 
@@ -168,6 +187,10 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Private Methods
+
 		private void UpdateColorsPtr(int newCbsIndex)
 		{
 			if (newCbsIndex < 0 || newCbsIndex > _colorsCollection.Count - 1)
@@ -176,10 +199,6 @@ namespace MSetExplorer
 			}
 
 			_colorsPointer = newCbsIndex;
-
-			//OnPropertyChanged(nameof(ColorBandSetCollection.CurrentColorBandSet));
-			//OnPropertyChanged(nameof(ColorBandSetCollection.CanGoBack));
-			//OnPropertyChanged(nameof(ColorBandSetCollection.CanGoForward));
 		}
 
 		private void UpdateColorBandSet(ColorBandSet oldCbs, ColorBandSet newCbs)
@@ -200,8 +219,6 @@ namespace MSetExplorer
 
 		private bool TryGetNextCBSInStack(int cbsIndex, out int nextCbsIndex)
 		{
-			nextCbsIndex = -1;
-
 			if (TryGetCbsFromStack(cbsIndex, out var colorBandSet))
 			{
 				if (TryGetLatestChildCbsIndex(colorBandSet, out var childCbsIndex))
@@ -211,6 +228,7 @@ namespace MSetExplorer
 				}
 			}
 
+			nextCbsIndex = -1;
 			return false;
 		}
 

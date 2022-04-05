@@ -98,7 +98,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					if (_colorBandSet == null || !Equals(value, _colorBandSet))
+					if (_colorBandSet == null || value != _colorBandSet)
 					{
 						var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
 						Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
@@ -405,6 +405,10 @@ namespace MSetExplorer
 
 				// Create a new copy with a new serial number to load a new ColorMap.
 				var newSet = ColorBandSet.CreateNewCopy();
+
+				Debug.Assert(newSet != ColorBandSet, "The new one is == to the old one.");
+
+
 				//CheckThatColorBandsWereUpdatedProperly(_colorBandSet, newSet, throwOnMismatch: false);
 
 				Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}, name: {newSet.Name}.");

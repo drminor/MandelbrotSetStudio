@@ -38,6 +38,8 @@ namespace MSS.Types
 			ProjectId = projectId;
 			_name = name;
 			_description = description;
+
+			DateCreated = id == ObjectId.Empty ? DateTime.UtcNow : id.CreationTime;
 		}
 
 		#endregion
@@ -47,6 +49,9 @@ namespace MSS.Types
 		public ObjectId Id { get; set; }
 		public ObjectId? ParentId { get; set; }
 		public ObjectId ProjectId { get; set; }
+
+		public DateTime DateCreated { get; private set; }
+
 
 		public string? Name
 		{
@@ -298,12 +303,12 @@ namespace MSS.Types
 		#region Clone Support
 
 		/// <summary>
-		/// Receives a new SerialNumber
+		/// Receives a new ObjectId and becomes a child of this ColorBandSet.
 		/// </summary>
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			var result = new ColorBandSet(ObjectId.Empty, ParentId, ProjectId, Name, Description, CreateCopy());
+			var result = new ColorBandSet(ObjectId.Empty, Id, ProjectId, Name, Description, CreateCopy());
 			return result;
 		}
 
@@ -321,7 +326,7 @@ namespace MSS.Types
 			Debug.WriteLine($"Cloning ColorBandSet with Id: {Id}.");
 
 			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateCopy());
-
+			result.DateCreated = DateCreated;
 			return result;
 		}
 
@@ -364,10 +369,22 @@ namespace MSS.Types
 
 		public bool Equals(ColorBandSet? other)
 		{
-			return other != null &&
-				   //Count == other.Count &&
-				   //EqualityComparer<IList<ColorBand>>.Default.Equals(Items, other.Items) &&
-				   Id.Equals(other.Id);
+			if (other is null || Id != other.Id)
+			{
+				return false;
+			}
+
+			if (Id.Equals(ObjectId.Empty))
+			{
+				var result = other.DateCreated == DateCreated;
+				return result;
+			}
+			else
+			{
+				return true;
+			}
+
+			//return other != null && Id == other.Id && (other.Id != ObjectId.Empty || DateCreated == other.DateCreated);
 		}
 
 		public override int GetHashCode()
