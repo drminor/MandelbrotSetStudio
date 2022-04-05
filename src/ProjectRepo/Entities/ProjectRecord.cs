@@ -1,4 +1,6 @@
-﻿namespace ProjectRepo.Entities
+﻿using MongoDB.Bson;
+
+namespace ProjectRepo.Entities
 {
-	public record ProjectRecord(string Name, string? Description, ColorBandSetRecord CurrentColorBandSetRecord) : RecordBase();
+	public record ProjectRecord(string Name, string? Description, ObjectId CurrentColorBandSetId) : RecordBase();
 }

@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,6 @@ namespace MSetExplorer
 
 		ColorBandSet? CurrentColorBandSet { get; set; }
 		bool CanSaveColorBandSet { get; }
-		bool CurrentColorBandSetIsDirty { get; }
 
 		// Job Methods
 		Job? CurrentJob { get; }
@@ -36,12 +36,12 @@ namespace MSetExplorer
 		// Project Methods
 		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);
 
-		void ProjectCreate(string name, string description, ColorBandSet currentColorBandSet);
+		void ProjectCreate(string name, string description, ObjectId currentColorBandSetId);
 
 		bool ProjectOpen(string name);
 		void ProjectSave();
 
-		void ProjectSaveAs(string name, string? description, ColorBandSet currentColorBandSet);
+		void ProjectSaveAs(string name, string? description, ObjectId currentColorBandSetId);
 
 		void ProjectUpdateName(string name);
 		void ProjectUpdateDescription(string description);

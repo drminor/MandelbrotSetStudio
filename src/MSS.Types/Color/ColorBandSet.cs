@@ -13,35 +13,29 @@ namespace MSS.Types
 {
 	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet>, ICloneable, INotifyPropertyChanged
 	{
-		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new ColorBand(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
+		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
-		private string _name;
+		private string? _name;
 		private string? _description;
 
 		#region Constructor
 
-		public ColorBandSet() : this(null)
+		public ColorBandSet() : this(ObjectId.Empty, null)
 		{ }
 
-		//public ColorBandSet(Guid serialNumber, IList<ColorBand> colorBands, bool onFile) : base(FixBands(colorBands))
-		//{
-		//	Debug.WriteLine($"Constructing ColorBandSet with SerialNumber: {serialNumber}.");
-		//	SerialNumber = serialNumber;
-		//	_name = null;
-		//	_description = null;
-		//	_versionNumber = 0;
-		//	_onFile = onFile;
-		//}
-
-		public ColorBandSet(IList<ColorBand>? colorBands)
-			: this(ObjectId.Empty, null, Guid.NewGuid().ToString(), null, colorBands)
+		public ColorBandSet(IList<ColorBand>? colorBands) : this(ObjectId.Empty, colorBands)
 		{ }
 
-		public ColorBandSet(ObjectId id, ObjectId? parentId, string name, string? description, IList<ColorBand>? colorBands) : base(FixBands(colorBands))
+		public ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands)
+			: this(ObjectId.Empty, null, projectId, null, null, colorBands)
+		{ }
+
+		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands) : base(FixBands(colorBands))
 		{
 			Debug.WriteLine($"Constructing ColorBandSet with id: {id}.");
 			Id = id;
 			ParentId = parentId;
+			ProjectId = projectId;
 			_name = name;
 			_description = description;
 		}
@@ -50,10 +44,11 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public ObjectId Id { get; init; }
-		public ObjectId? ParentId { get; init; }
+		public ObjectId Id { get; set; }
+		public ObjectId? ParentId { get; set; }
+		public ObjectId ProjectId { get; set; }
 
-		public string Name
+		public string? Name
 		{
 			get => _name;
 			set
@@ -85,6 +80,7 @@ namespace MSS.Types
 
 		public ObservableCollection<ColorBand> ColorBands => this;
 
+		public bool AssignedToProject => ProjectId != ObjectId.Empty;
 		public bool OnFile => Id != ObjectId.Empty;
 
 		public bool IsReadOnly => false;
@@ -131,7 +127,7 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		public void Fix()
+		public void FixNotUsed()
 		{
 			if (Items == null || Count == 0)
 			{
@@ -307,7 +303,7 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			var result = new ColorBandSet(ObjectId.Empty, ParentId, Name, Description, CreateCopy());
+			var result = new ColorBandSet(ObjectId.Empty, ParentId, ProjectId, Name, Description, CreateCopy());
 			return result;
 		}
 
@@ -324,7 +320,7 @@ namespace MSS.Types
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with Id: {Id}.");
 
-			var result = new ColorBandSet(Id, ParentId, Name, Description, CreateCopy());
+			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateCopy());
 
 			return result;
 		}

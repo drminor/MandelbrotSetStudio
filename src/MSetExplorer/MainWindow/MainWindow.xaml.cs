@@ -184,14 +184,14 @@ namespace MSetExplorer
 			var curProject = _vm.MapProjectViewModel.CurrentProject;
 
 			var initialName = curProject?.Name;
-			var curColorBandSet = curProject?.CurrentColorBandSet;
+			var curColorBandSetId = curProject?.CurrentColorBandSetId;
 
 			if (ProjectShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
 			{
-				if (selectedName != null && curColorBandSet != null)
+				if (selectedName != null && curColorBandSetId != null)
 				{
 					Debug.WriteLine($"Saving project with name: {selectedName}.");
-					_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description,  curColorBandSet);
+					_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curColorBandSetId.Value);
 				}
 				else
 				{
@@ -276,21 +276,23 @@ namespace MSetExplorer
 
 		private void SaveColors()
 		{
-			var curProject = _vm.MapProjectViewModel.CurrentProject;
-			var initialName = curProject?.CurrentColorBandSet?.Name;
 
-			if (ColorsShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description, out var versionNumber, out var serialNumber))
-			{
-				if (selectedName == null)
-				{
-					Debug.WriteLine($"WARNING: Cannot save a ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-				}
-				else
-				{
-					Debug.WriteLine($"Saving ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-					_vm.MapProjectViewModel.ColorBandSetSaveAs(selectedName, description, versionNumber);
-				}
-			}
+			// TODO: Fix Me
+			//var curProject = _vm.MapProjectViewModel.CurrentProject;
+			//var initialName = curProject?.CurrentColorBandSet?.Name;
+
+			//if (ColorsShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description, out var versionNumber, out var serialNumber))
+			//{
+			//	if (selectedName == null)
+			//	{
+			//		Debug.WriteLine($"WARNING: Cannot save a ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
+			//	}
+			//	else
+			//	{
+			//		Debug.WriteLine($"Saving ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
+			//		_vm.MapProjectViewModel.ColorBandSetSaveAs(selectedName, description, versionNumber);
+			//	}
+			//}
 		}
 
 		#endregion
@@ -385,14 +387,14 @@ namespace MSetExplorer
 						var curProject = _vm.MapProjectViewModel.CurrentProject;
 
 						var initialName = curProject?.Name;
-						var curColorBandSet = curProject?.CurrentColorBandSet;
+						var curColorBandSetId = curProject?.CurrentColorBandSetId;
 
 						if (ProjectShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
 						{
-							if (selectedName != null && curColorBandSet != null)
+							if (selectedName != null && curColorBandSetId != null)
 							{
 								Debug.WriteLine($"Saving project with name: {selectedName}.");
-								_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curColorBandSet);
+								_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curColorBandSetId.Value);
 								result = true;
 							}
 							else

@@ -1,8 +1,5 @@
 ﻿using MongoDB.Bson;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace MSS.Types.MSet
 {
@@ -12,56 +9,36 @@ namespace MSS.Types.MSet
 		public string Name { get; set; }
 		public string? Description { get; set; }
 
-		private ColorBandSet? _currentColorBandSet;
+		private ObjectId _currentColorBandSetId;
 
-		public Project(string name, string? description, ColorBandSet currentColorBandSet) 
-			: this(ObjectId.Empty, name, description, currentColorBandSet)
+		public Project(string name, string? description, ObjectId currentColorBandSetId) 
+			: this(ObjectId.Empty, name, description, currentColorBandSetId)
 		{ }
 
-		public Project(ObjectId id, string name, string? description, ColorBandSet currentColorBandSet)
+		public Project(ObjectId id, string name, string? description, ObjectId currentColorBandSetId)
 		{
 			Id = id;
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			Description = description;
 
-			_currentColorBandSet = currentColorBandSet;
-			ColorBandSetIsDirty = false;
+			_currentColorBandSetId = currentColorBandSetId;
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
 
 		public bool OnFile => Id != ObjectId.Empty;
 
-		public ColorBandSet? CurrentColorBandSet
+		public ObjectId CurrentColorBandSetId
 		{
-			get => _currentColorBandSet;
+			get => _currentColorBandSetId;
 			set
 			{
-				if (value != _currentColorBandSet)
+				if (value != _currentColorBandSetId)
 				{
-					_currentColorBandSet = value;
-					ColorBandSetIsDirty = true;
+					_currentColorBandSetId = value;
 				}
 			}
 		}
 
-		public bool ColorBandSetIsDirty { get; set; }
-
-		private Collection<Guid> CloneSetIds(IList<Guid> setSNs)
-		{
-			Collection<Guid> result;
-
-			if (setSNs == null || setSNs.Count == 0)
-			{
-				result = new Collection<Guid>();
-			}
-			else
-			{
-				var temp = new List<Guid>(setSNs); // Creates a copy
-				result = new Collection<Guid>(temp); // Wraps the given list
-			}
-
-			return result;
-		}
 	}
 }

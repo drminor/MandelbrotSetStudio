@@ -29,52 +29,47 @@ namespace MSetRepo
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
-		private readonly IDictionary<ObjectId, ColorBandSet> _colorBandSetCache;
+		public IDictionary<ObjectId, ColorBandSet> ColorBandSetCache { get; init; }
 
 		public MSetRecordMapper(DtoMapper dtoMapper, IDictionary<ObjectId, ColorBandSet> colorBandSetCache)
 		{
-			_colorBandSetCache = colorBandSetCache;
+			ColorBandSetCache = colorBandSetCache;
 			_dtoMapper = dtoMapper;
 		}
 		
 		public Project MapFrom(ProjectRecord target)
 		{
-			var result = new Project(target.Id, target.Name, target.Description, MapFrom(target.CurrentColorBandSetRecord));
+			var result = new Project(target.Id, target.Name, target.Description, target.CurrentColorBandSetId);
 			return result;
 		}
 
 		public ProjectRecord MapTo(Project source)
 		{
-			if (source.CurrentColorBandSet == null)
-			{
-				throw new ArgumentNullException(nameof(source.CurrentColorBandSet), "When Mapping from a Project to a ProjectRecord, the project must have a non-null CurrentColorBandSet.");
-			}
-
-			var result = new ProjectRecord(source.Name, source.Description, MapTo(source.CurrentColorBandSet));
+			var result = new ProjectRecord(source.Name, source.Description, source.CurrentColorBandSetId);
 			return result;
 		}
 
 		public ColorBandSetRecord MapTo(ColorBandSet source)
 		{
-			if (!_colorBandSetCache.ContainsKey(source.Id))
+			if (!ColorBandSetCache.ContainsKey(source.Id))
 			{
-				_colorBandSetCache.Add(source.Id, source);
+				ColorBandSetCache.Add(source.Id, source);
 			}
 
-			var result = new ColorBandSetRecord(source.ParentId, source.Name, source.Description, source.Select(x => MapTo(x)).ToArray());
+			var result = new ColorBandSetRecord(source.ParentId, source.ProjectId, source.Name, source.Description, source.Select(x => MapTo(x)).ToArray());
 			return result;
 		}
 
 		public ColorBandSet MapFrom(ColorBandSetRecord target)
 		{
-			if (_colorBandSetCache.TryGetValue(target.Id, out var colorBandSet))
+			if (ColorBandSetCache.TryGetValue(target.Id, out var colorBandSet))
 			{
 				return colorBandSet;
 			}
 			else
 			{
-				var result = new ColorBandSet(target.Id, target.ParentId, target.Name, target.Description, target.ColorBandRecords.Select(x => MapFrom(x)).ToList());
-				_colorBandSetCache.Add(result.Id, result);
+				var result = new ColorBandSet(target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, target.ColorBandRecords.Select(x => MapFrom(x)).ToList());
+				ColorBandSetCache.Add(result.Id, result);
 
 				return result;
 			}

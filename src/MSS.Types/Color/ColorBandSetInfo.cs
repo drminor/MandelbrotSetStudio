@@ -10,7 +10,7 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		public ColorBandSetInfo(ObjectId id, ObjectId? parentId, DateTime dateCreated, int numberOfBands, string name, string? description)
+		public ColorBandSetInfo(ObjectId id, ObjectId? parentId, DateTime dateCreated, int numberOfBands, string? name, string? description)
 		{
 			Debug.WriteLine($"Constructing ColorBandSetInfo with Id: {id}.");
 			Id = id;
@@ -34,8 +34,8 @@ namespace MSS.Types
 
 		public int NumberOfBands { get; init; }
 
-		private string _name;
-		public string Name
+		private string? _name;
+		public string? Name
 		{
 			get => _name;
 			set

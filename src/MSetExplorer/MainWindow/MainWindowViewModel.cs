@@ -129,12 +129,11 @@ namespace MSetExplorer
 
 		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
-			{
-				ColorBandSetViewModel.CurrentProject = MapProjectViewModel.CurrentProject;
-
-				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
-			}
+			//if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
+			//{
+			//	ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
+			//	MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
+			//}
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
 			{
@@ -146,8 +145,8 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
-				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
+				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 			}
 		}
 

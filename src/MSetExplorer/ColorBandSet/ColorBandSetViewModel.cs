@@ -24,7 +24,6 @@ namespace MSetExplorer
 		private double _rowHeight;
 		private double _itemWidth;
 
-		private Project? _currentProject;
 		private ColorBandSet? _colorBandSet;
 		private ListCollectionView _colorBandsView;
 
@@ -45,7 +44,6 @@ namespace MSetExplorer
 
 			_rowHeight = 60;
 			_itemWidth = 180;
-			CurrentProject = null;
 			_colorBandSet = new ColorBandSet();
 			_colorBandsView = BuildColorBandsView(null);
 			_currentColorBand = null;
@@ -70,26 +68,6 @@ namespace MSetExplorer
 		{
 			get => _itemWidth;
 			set { _itemWidth = value; OnPropertyChanged(nameof(ItemWidth)); }
-		}
-
-		public Project? CurrentProject
-		{
-			get => _currentProject;
-			set
-			{
-				if (value != _currentProject)
-				{
-					_currentProject = value;
-
-					// Clone this to keep changes made here from updating the Project's copy.
-					if (value != null)
-					{
-						ColorBandSet = value.CurrentColorBandSet?.Clone();
-					}
-
-					OnPropertyChanged(nameof(CurrentProject));
-				}
-			}
 		}
 
 		public ColorBandSet? ColorBandSet
@@ -120,7 +98,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					if (_colorBandSet == null || _colorBandSet != value)
+					if (_colorBandSet == null || !Equals(value, _colorBandSet))
 					{
 						var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
 						Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");

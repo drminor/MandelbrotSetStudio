@@ -4,6 +4,7 @@ using MSS.Types;
 using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ProjectRepo
 {
@@ -58,6 +59,16 @@ namespace ProjectRepo
 			return colorBandSetRecord.Id;
 		}
 
+		public void UpdateParentId(ObjectId colorBandSetId, ObjectId? parentId)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+
+			var updateDefinition = Builders<ColorBandSetRecord>.Update
+				.Set(u => u.ParentId, parentId);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
 		public void UpdateName(ObjectId colorBandSetId, string name)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
@@ -95,5 +106,18 @@ namespace ProjectRepo
 
 			return GetReturnCount(deleteResult);
 		}
+
+		public IEnumerable<ObjectId> GetColorBandSetIds(ObjectId projectId)
+		{
+			// TODO: Use Projection
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+			var colorBandSets = Collection.Find(filter).ToList();
+
+			// Get the _id values of the found documents
+			var ids = colorBandSets.Select(d => d.Id);
+
+			return ids;
+		}
+
 	}
 }
