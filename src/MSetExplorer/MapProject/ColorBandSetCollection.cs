@@ -125,7 +125,7 @@ namespace MSetExplorer
 						cbs.ProjectId = projectId;
 						var updatedCbs = _projectAdapter.CreateColorBandSet(cbs);
 						_colorsCollection[i] = updatedCbs;
-						UpdateColorBandSet(cbs, updatedCbs);
+						UpdateColorBandSetParents(cbs.Id, updatedCbs.Id);
 					}
 				}
 			});
@@ -201,13 +201,13 @@ namespace MSetExplorer
 			_colorsPointer = newCbsIndex;
 		}
 
-		private void UpdateColorBandSet(ColorBandSet oldCbs, ColorBandSet newCbs)
+		private void UpdateColorBandSetParents(ObjectId oldParentId, ObjectId newParentId)
 		{
 			foreach (var cbs in _colorsCollection)
 			{
-				if (cbs?.ParentId == oldCbs.Id)
+				if (oldParentId == cbs.ParentId)
 				{
-					cbs.ParentId = newCbs.Id;
+					cbs.ParentId = newParentId;
 					_projectAdapter.UpdateColorBandSetParentId(cbs.Id, cbs.ParentId);
 				}
 			}

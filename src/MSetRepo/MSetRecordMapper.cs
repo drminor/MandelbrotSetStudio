@@ -51,7 +51,7 @@ namespace MSetRepo
 
 		public ColorBandSetRecord MapTo(ColorBandSet source)
 		{
-			if (!ColorBandSetCache.ContainsKey(source.Id))
+			if (source.Id != ObjectId.Empty && !ColorBandSetCache.ContainsKey(source.Id))
 			{
 				ColorBandSetCache.Add(source.Id, source);
 			}
