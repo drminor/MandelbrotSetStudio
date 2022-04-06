@@ -1,4 +1,5 @@
-﻿using MSetRepo;
+﻿using MongoDB.Bson;
+using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -12,7 +13,7 @@ namespace MSetExplorer
 	{
 		#region Build Job
 
-		public static Job BuildJob(Job? parentJob, Project project, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
+		public static Job BuildJob(ObjectId? parentJobId, Project project, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			if (newArea.Width == 0 || newArea.Height == 0)
@@ -36,7 +37,7 @@ namespace MSetExplorer
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-			var job = new Job(parentJob, project, subdivision, jobName, transformType, newArea, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
+			var job = new Job(parentJobId, project, subdivision, jobName, transformType, newArea, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 
 			return job;
 		}

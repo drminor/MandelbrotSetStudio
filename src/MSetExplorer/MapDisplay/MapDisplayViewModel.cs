@@ -301,7 +301,7 @@ namespace MSetExplorer
 
 		private bool ShouldAttemptToReuseLoadedSections(Job? previousJob, Job newJob)
 		{
-			if (MapSections.Count == 0 || newJob.ParentJob is null || newJob.TransformType == TransformType.ColorMapUpdate)
+			if (MapSections.Count == 0 || newJob.ParentJobId is null || newJob.TransformType == TransformType.ColorMapUpdate)
 			{
 				return false;
 			}

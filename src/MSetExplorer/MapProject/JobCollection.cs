@@ -33,7 +33,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public Job? CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
-		public bool CanGoBack => !(CurrentJob?.ParentJob is null);
+		public bool CanGoBack => !(CurrentJob?.ParentJobId is null);
 		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_jobsPointer, out var _); });
 
 		public int? CurrentIndex => DoWithReadLock<int?>(() => { return _jobsPointer == -1 ? null : _jobsPointer; });
@@ -119,7 +119,7 @@ namespace MSetExplorer
 
 		public void Save(Project project)
 		{
-			var lastSavedTime = _projectAdapter.GetProjectLastSaveTime(project.Id);
+			var lastSavedTime = _projectAdapter.GetProjectJobsLastSaveTime(project.Id);
 
 			DoWithWriteLock(() =>
 			{
@@ -131,7 +131,7 @@ namespace MSetExplorer
 						job.Project = project;
 						var updatedJob = _projectAdapter.InsertJob(job);
 						_jobsCollection[i] = updatedJob;
-						UpdateJobParents(job.Id, updatedJob);
+						UpdateJobParents(job.Id, updatedJob.Id);
 					}
 					else
 					{
@@ -159,11 +159,11 @@ namespace MSetExplorer
 			_jobsLock.EnterUpgradeableReadLock();
 			try
 			{
-				var parentJob = CurrentJob?.ParentJob;
+				var parentJobId = CurrentJob?.ParentJobId;
 
-				if (!(parentJob is null))
+				if (!(parentJobId is null))
 				{
-					if (TryFindByJobId(parentJob.Id, out var job))
+					if (TryFindByJobId(parentJobId.Value, out var job))
 					{
 						var jobIndex = _jobsCollection.IndexOf(job);
 						DoWithWriteLock(() => UpdateJobsPtr(jobIndex));
@@ -214,13 +214,13 @@ namespace MSetExplorer
 			_jobsPointer = newJobIndex;
 		}
 
-		private void UpdateJobParents(ObjectId oldParentId, Job newParentJob)
+		private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId)
 		{
 			foreach (var job in _jobsCollection)
 			{
-				if (job?.ParentJob?.Id == oldParentId)
+				if (oldParentId == job.ParentJobId)
 				{
-					job.ParentJob = newParentJob;
+					job.ParentJobId = newParentId;
 					_projectAdapter.UpdateJobsParent(job);
 				}
 			}
@@ -274,7 +274,7 @@ namespace MSetExplorer
 			for (var i = 0; i < _jobsCollection.Count; i++)
 			{
 				var job = _jobsCollection[i];
-				var thisParentJobId = job.ParentJob?.Id ?? ObjectId.Empty;
+				var thisParentJobId = job.ParentJobId ?? ObjectId.Empty;
 
 				if (thisParentJobId.Equals(parentJob.Id))
 				{

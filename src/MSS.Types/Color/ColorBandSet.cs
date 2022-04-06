@@ -27,7 +27,7 @@ namespace MSS.Types
 		{ }
 
 		public ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands)
-			: this(ObjectId.Empty, null, projectId, null, null, colorBands)
+			: this(ObjectId.GenerateNewId(), null, projectId, null, null, colorBands)
 		{ }
 
 		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands) : base(FixBands(colorBands))
@@ -39,7 +39,7 @@ namespace MSS.Types
 			_name = name;
 			_description = description;
 
-			DateCreated = id == ObjectId.Empty ? DateTime.UtcNow : id.CreationTime;
+			//DateCreated = id == ObjectId.Empty ? DateTime.UtcNow : id.CreationTime;
 		}
 
 		#endregion
@@ -50,7 +50,8 @@ namespace MSS.Types
 		public ObjectId? ParentId { get; set; }
 		public ObjectId ProjectId { get; set; }
 
-		public DateTime DateCreated { get; private set; }
+		//public DateTime DateCreated { get; private set; }
+		public DateTime DateCreated => Id.CreationTime; //{ get; private set; }
 
 
 		public string? Name
@@ -308,7 +309,7 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			var result = new ColorBandSet(ObjectId.Empty, Id, ProjectId, Name, Description, CreateCopy());
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateCopy());
 			return result;
 		}
 
@@ -326,7 +327,7 @@ namespace MSS.Types
 			Debug.WriteLine($"Cloning ColorBandSet with Id: {Id}.");
 
 			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateCopy());
-			result.DateCreated = DateCreated;
+			//result.DateCreated = DateCreated;
 			return result;
 		}
 
@@ -369,22 +370,25 @@ namespace MSS.Types
 
 		public bool Equals(ColorBandSet? other)
 		{
-			if (other is null || Id != other.Id)
-			{
-				return false;
-			}
-
-			if (Id.Equals(ObjectId.Empty))
-			{
-				var result = other.DateCreated == DateCreated;
-				return result;
-			}
-			else
-			{
-				return true;
-			}
-
 			//return other != null && Id == other.Id && (other.Id != ObjectId.Empty || DateCreated == other.DateCreated);
+
+			//if (other is null || Id != other.Id)
+			//{
+			//	return false;
+			//}
+
+			//if (Id.Equals(ObjectId.Empty))
+			//{
+			//	var result = other.DateCreated == DateCreated;
+			//	return result;
+			//}
+			//else
+			//{
+			//	return true;
+			//}
+
+			return other != null
+				&& Id.Equals(other.Id);
 		}
 
 		public override int GetHashCode()

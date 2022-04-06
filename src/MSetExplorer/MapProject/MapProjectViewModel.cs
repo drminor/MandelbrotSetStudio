@@ -457,9 +457,9 @@ namespace MSetExplorer
 				return;
 			}
 
-			var parentJob = CurrentJob;
+			var parentJobId = CurrentJob?.Id;
 			var jobName = MapJobHelper.GetJobName(transformType);
-			var job = MapJobHelper.BuildJob(parentJob, curProject, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
+			var job = MapJobHelper.BuildJob(parentJobId, curProject, jobName, CanvasSize, mSetInfo, transformType, newArea, BlockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 

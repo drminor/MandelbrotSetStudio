@@ -115,12 +115,14 @@ namespace MSetExplorer
 
 		public void Save(ObjectId projectId)
 		{
+			var lastSavedTime = _projectAdapter.GetProjectCbSetsLastSaveTime(projectId);
+
 			DoWithWriteLock(() =>
 			{
 				for (var i = 0; i < _colorsCollection.Count; i++)
 				{
 					var cbs = _colorsCollection[i];
-					if (!cbs.OnFile)
+					if (cbs.Id.CreationTime > lastSavedTime) 
 					{
 						cbs.ProjectId = projectId;
 						var updatedCbs = _projectAdapter.CreateColorBandSet(cbs);

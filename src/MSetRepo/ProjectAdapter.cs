@@ -285,10 +285,10 @@ namespace MSetRepo
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			colorBandSetReaderWriter.UpdateParentId(colorBandSetId, parentId);
 
-			if (!_mSetRecordMapper.ColorBandSetCache.ContainsKey(colorBandSetId))
-			{
-				_mSetRecordMapper.ColorBandSetCache.Remove(colorBandSetId);
-			}
+			//if (!_mSetRecordMapper.ColorBandSetCache.ContainsKey(colorBandSetId))
+			//{
+			//	_mSetRecordMapper.ColorBandSetCache.Remove(colorBandSetId);
+			//}
 		}
 
 		public void UpdateColorBandSet(ColorBandSet colorBandSet)
@@ -301,14 +301,14 @@ namespace MSetRepo
 			colorBandSetReaderWriter.UpdateDescription(id, colorBandSetRecord.Description);
 			colorBandSetReaderWriter.UpdateColorBands(id, colorBandSetRecord.ColorBandRecords);
 
-			if (!_mSetRecordMapper.ColorBandSetCache.ContainsKey(id))
-			{
-				_mSetRecordMapper.ColorBandSetCache.Add(id, colorBandSet);
-			}
-			else
-			{
-				_mSetRecordMapper.ColorBandSetCache[id] = colorBandSet;
-			}
+			//if (!_mSetRecordMapper.ColorBandSetCache.ContainsKey(id))
+			//{
+			//	_mSetRecordMapper.ColorBandSetCache.Add(id, colorBandSet);
+			//}
+			//else
+			//{
+			//	_mSetRecordMapper.ColorBandSetCache[id] = colorBandSet;
+			//}
 		}
 
 		public IEnumerable<ColorBandSet> GetColorBandSetsForProject(ObjectId projectId)
@@ -320,17 +320,18 @@ namespace MSetRepo
 
 			foreach (var colorBandSetId in ids)
 			{
-				if (_mSetRecordMapper.ColorBandSetCache.TryGetValue(colorBandSetId, out var colorBandSet))
-				{
-					result.Add(colorBandSet);
-				}
-				else
-				{
-					var colorBandSetRecord = colorBandSetReaderWriter.Get(colorBandSetId);
-					colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
-					result.Add(colorBandSet);
-				}
+				var colorBandSetRecord = colorBandSetReaderWriter.Get(colorBandSetId);
+				var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+				result.Add(colorBandSet);
 			}
+
+			return result;
+		}
+
+		public DateTime GetProjectCbSetsLastSaveTime(ObjectId projectId)
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var result = colorBandSetReaderWriter.GetLastSaveTime(projectId);
 
 			return result;
 		}
@@ -394,17 +395,17 @@ namespace MSetRepo
 				throw new KeyNotFoundException($"Could not find a job with jobId = {jobId}.");
 			}
 
-			Job? parentJob;
+			//Job? parentJob;
 
-			if (jobRecord.ParentJobId.HasValue)
-			{
-				Debug.WriteLine($"Retrieving Job object for parent JobId: {jobRecord.ParentJobId}.");
-				parentJob = GetJob(jobRecord.ParentJobId.Value, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter, jobCache);
-			}
-			else
-			{
-				parentJob = null;
-			}
+			//if (jobRecord.ParentJobId.HasValue)
+			//{
+			//	Debug.WriteLine($"Retrieving Job object for parent JobId: {jobRecord.ParentJobId}.");
+			//	parentJob = GetJob(jobRecord.ParentJobId.Value, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter, jobCache);
+			//}
+			//else
+			//{
+			//	parentJob = null;
+			//}
 
 			var projectRecord = projectReaderWriter.Get(jobRecord.ProjectId);
 			var project = _mSetRecordMapper.MapFrom(projectRecord);
@@ -415,8 +416,8 @@ namespace MSetRepo
 			var mSetInfo = _mSetRecordMapper.MapFrom(jobRecord.MSetInfo);
 
 			var job = new Job(
-				id: jobId, 
-				parentJob: parentJob, 
+				id: jobId,
+				parentJobId: jobRecord.ParentJobId, 
 				project: project, 
 				subdivision: subdivision, 
 				label: jobRecord.Label,
@@ -446,7 +447,7 @@ namespace MSetRepo
 		public void UpdateJobsParent(Job job)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJob?.Id);
+			jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJobId);
 		}
 
 		public void UpdateJobDetalis(Job job)
@@ -462,7 +463,7 @@ namespace MSetRepo
 			return result ?? 0;
 		}
 
-		public DateTime GetProjectLastSaveTime(ObjectId projectId)
+		public DateTime GetProjectJobsLastSaveTime(ObjectId projectId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var result = jobReaderWriter.GetLastSaveTime(projectId);

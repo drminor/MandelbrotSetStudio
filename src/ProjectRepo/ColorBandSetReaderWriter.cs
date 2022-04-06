@@ -119,5 +119,21 @@ namespace ProjectRepo
 			return ids;
 		}
 
+		public DateTime GetLastSaveTime(ObjectId projectId)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+			var cbSetRecs = Collection.Find(filter).ToList();
+
+			if (cbSetRecs.Count < 1)
+			{
+				return DateTime.MinValue;
+			}
+			else
+			{
+				var result = cbSetRecs.Max(x => x.Id.CreationTime);
+				return result;
+			}
+		}
+
 	}
 }
