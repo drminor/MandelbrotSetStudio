@@ -558,15 +558,15 @@ namespace MSetExplorer
 		//	return result;
 		//}
 
-		private bool ColorsUserSaysSaveChanges()
-		{
-			var defaultResult = MessageBoxResult.Yes;
-			var res = MessageBox.Show("The current ColorBandSet has pending changes. Save Changes?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
+		//private bool ColorsUserSaysSaveChanges()
+		//{
+		//	var defaultResult = MessageBoxResult.Yes;
+		//	var res = MessageBox.Show("The current ColorBandSet has pending changes. Save Changes?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
 
-			var result = res == MessageBoxResult.Yes;
+		//	var result = res == MessageBoxResult.Yes;
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private bool ColorsShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description, out int? versionNumber, [MaybeNullWhen(false)] out string id)
 		{

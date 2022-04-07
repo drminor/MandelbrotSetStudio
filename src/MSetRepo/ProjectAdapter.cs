@@ -145,10 +145,16 @@ namespace MSetRepo
 			projectReaderWriter.UpdateDescription(projectId, description);
 		}
 
-		public void UpdateProjectColorBandSetId(ObjectId projectId, ObjectId currentColorBandSetId)
+		public void UpdateProjectCurrentCbsId(ObjectId projectId, ObjectId currentColorBandSetId)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			projectReaderWriter.UpdateColorBandSetId(projectId, currentColorBandSetId);
+			projectReaderWriter.UpdateCurrentCbsId(projectId, currentColorBandSetId);
+		}
+
+		public void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId currentJobId)
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			projectReaderWriter.UpdateCurrentJobId(projectId, currentJobId);
 		}
 
 		public void DeleteProject(ObjectId projectId)
@@ -277,24 +283,11 @@ namespace MSetRepo
 			//}
 		}
 
-		public void UpdateColorBandSet(ColorBandSet colorBandSet)
+
+		public void UpdateColorBandSetProjectId(ObjectId colorBandSetId, ObjectId projectId)
 		{
-			var colorBandSetRecord = _mSetRecordMapper.MapTo(colorBandSet);
-			var id = colorBandSetRecord.Id;
-
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			//colorBandSetReaderWriter.UpdateName(id, colorBandSetRecord.Name);
-			colorBandSetReaderWriter.UpdateDescription(id, colorBandSetRecord.Description);
-			colorBandSetReaderWriter.UpdateColorBands(id, colorBandSetRecord.ColorBandRecords);
-
-			//if (!_mSetRecordMapper.ColorBandSetCache.ContainsKey(id))
-			//{
-			//	_mSetRecordMapper.ColorBandSetCache.Add(id, colorBandSet);
-			//}
-			//else
-			//{
-			//	_mSetRecordMapper.ColorBandSetCache[id] = colorBandSet;
-			//}
+			colorBandSetReaderWriter.UpdateProjectId(colorBandSetId, projectId);
 		}
 
 		public void UpdateColorBandSetName(ObjectId colorBandSetId, string? name)
@@ -452,6 +445,12 @@ namespace MSetRepo
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 			jobReaderWriter.UpdateJobDetails(jobRecord);
+		}
+
+		public void UpdateJobsProject(ObjectId jobId, ObjectId projectId)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			jobReaderWriter.UpdateJobsProject(jobId, projectId);
 		}
 
 		public long DeleteJob(ObjectId jobId, JobReaderWriter jobReaderWriter)

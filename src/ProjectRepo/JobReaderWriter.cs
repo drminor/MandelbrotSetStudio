@@ -62,6 +62,16 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
+		public void UpdateJobsProject(ObjectId jobId, ObjectId projectId)
+		{
+			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
+
+			var updateDefinition = Builders<JobRecord>.Update
+				.Set(u => u.ProjectId, projectId);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
 		public long? Delete(ObjectId jobId)
 		{
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);

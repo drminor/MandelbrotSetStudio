@@ -286,7 +286,7 @@ namespace MSetExplorer
 
 				if (thisParentJobId.Equals(parentJob.Id))
 				{
-					var dt = thisParentJobId.CreationTime;
+					var dt = job.DateCreated;
 					if (dt > lastestDtFound)
 					{
 						childJobIndex = i;

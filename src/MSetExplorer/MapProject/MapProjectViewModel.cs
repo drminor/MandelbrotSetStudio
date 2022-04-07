@@ -190,7 +190,7 @@ namespace MSetExplorer
 			{
 				DoWithWriteLock(() => 
 				{
-					UpdateTheJobsCanvasSize(curJob);
+					_ = UpdateTheJobsCanvasSize(curJob);
 				});
 			}
 
@@ -212,17 +212,22 @@ namespace MSetExplorer
 
 				var project = _projectAdapter.CreateProject(name, description, currentJobId, currentColorBandSetId);
 
-				SaveColorBandSetsForProject(project.Id);
+				SaveColorBandSetsForProject(project.Id, updateAll: true);
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
 				var curCbsId = _colorBandSetCollection.CurrentColorBandSet?.Id;
-
 				if (curCbsId != null)
 				{
-					_projectAdapter.UpdateProjectColorBandSetId(project.Id, curCbsId.Value);
+					_projectAdapter.UpdateProjectCurrentCbsId(project.Id, curCbsId.Value);
 				}
 
-				SaveJobs(project.Id);
+				SaveJobs(project.Id, updateAll: true);
+
+				var curJobId = _jobsCollection.CurrentJob?.Id;
+				if (curJobId != null)
+				{
+					_projectAdapter.UpdateProjectCurrentJobId(project.Id, curJobId.Value);
+				}
 
 				CurrentProject = project;
 
@@ -244,27 +249,34 @@ namespace MSetExplorer
 					}
 
 					var curCbsId = project.CurrentColorBandSetId;
-					SaveColorBandSetsForProject(project.Id);
+					SaveColorBandSetsForProject(project.Id, updateAll: false);
 
-					if (curCbsId == ObjectId.Empty)
+					if (curCbsId != project.CurrentColorBandSetId)
 					{
-						_projectAdapter.UpdateProjectColorBandSetId(project.Id, project.CurrentColorBandSetId);
+						_projectAdapter.UpdateProjectCurrentCbsId(project.Id, project.CurrentColorBandSetId);
 					}
 
-					SaveJobs(project.Id);
+					SaveJobs(project.Id, updateAll: false);
+
+					var curJobId = _jobsCollection.CurrentJob?.Id;
+					if (curJobId != null)
+					{
+						_projectAdapter.UpdateProjectCurrentJobId(project.Id, curJobId.Value);
+					}
 
 					CurrentProjectIsDirty = false;
 				}
 			});
 		}
 
-		public void SaveJobs(ObjectId projectId)
+		public void SaveJobs(ObjectId projectId, bool updateAll)
 		{
 			var lastSavedTime = _projectAdapter.GetProjectJobsLastSaveTime(projectId);
 
 			for (var i = 0; i < _jobsCollection.Count; i++)
 			{
 				var job = _jobsCollection[i];
+
 				if (job.Id.CreationTime > lastSavedTime)
 				{
 					job.ProjectId = projectId;
@@ -274,6 +286,12 @@ namespace MSetExplorer
 				}
 				else
 				{
+					if (updateAll)
+					{
+						job.ProjectId = projectId;
+						_projectAdapter.UpdateJobsProject(job.Id, projectId);
+					}
+
 					if (job.IsDirty)
 					{
 						_projectAdapter.UpdateJobDetalis(job);
@@ -296,7 +314,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void SaveColorBandSetsForProject(ObjectId projectId) 
+		private void SaveColorBandSetsForProject(ObjectId projectId, bool updateAll) 
 		{
 			var lastSavedTime = _projectAdapter.GetProjectCbSetsLastSaveTime(projectId);
 
@@ -309,6 +327,14 @@ namespace MSetExplorer
 					var updatedCbs = _projectAdapter.CreateColorBandSet(cbs);
 					_colorBandSetCollection[i] = updatedCbs;
 					UpdateCbsParentIds(cbs.Id, updatedCbs.Id);
+				}
+				else
+				{
+					if (updateAll)
+					{
+						cbs.ProjectId = projectId;
+						_projectAdapter.UpdateColorBandSetProjectId(cbs.Id, cbs.ProjectId);
+					}
 				}
 			}
 		}

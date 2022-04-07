@@ -99,6 +99,17 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
+
+		public void UpdateProjectId(ObjectId colorBandSetId, ObjectId projectId)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+
+			var updateDefinition = Builders<ColorBandSetRecord>.Update
+				.Set(u => u.ProjectId, projectId);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
 		public long? Delete(ObjectId colorBandSetId)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);

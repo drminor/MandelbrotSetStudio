@@ -83,17 +83,7 @@ namespace MSetExplorer
 					{
 						Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
 
-						lock (_histLock)
-						{
-							_mapSectionHistogramProcessor.ProcessingEnabled = false;
-							_colorBandSet = value;
-							Histogram.Reset();
-						}
-
-						ColorBandsView = BuildColorBandsView(null);
-						IsDirty = false;
-						OnPropertyChanged(nameof(ColorBandSet));
-						OnPropertyChanged(nameof(ColorBandsView));
+						UpdateColorBandSet(value);
 					}
 				}
 				else
@@ -103,26 +93,38 @@ namespace MSetExplorer
 						var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
 						Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
 
-						lock (_histLock)
-						{
-							_mapSectionHistogramProcessor.ProcessingEnabled = false;
-							_colorBandSet = value;
-
-							Histogram.Reset(value.HighCutOff);
-							PopulateHistorgram(_mapSections, Histogram);
-							_mapSectionHistogramProcessor.ProcessingEnabled = true;
-						}
-
-						ColorBandsView = BuildColorBandsView(_colorBandSet);
-						ColorBandsView.MoveCurrentToFirst();
-
-						IsDirty = false;
-						OnPropertyChanged(nameof(ColorBandSet));
-						OnPropertyChanged(nameof(ColorBandsView));
+						UpdateColorBandSet(value);
 					}
 				}
 			}
 		}
+
+		private void UpdateColorBandSet(ColorBandSet? value)
+		{
+			lock (_histLock)
+			{
+				_mapSectionHistogramProcessor.ProcessingEnabled = false;
+				_colorBandSet = value;
+
+				if (value != null)
+				{
+					Histogram.Reset(value.HighCutOff);
+					PopulateHistorgram(_mapSections, Histogram);
+					_mapSectionHistogramProcessor.ProcessingEnabled = true;
+				}
+				else
+				{
+					Histogram.Reset();
+				}
+			}
+
+			ColorBandsView = BuildColorBandsView(_colorBandSet);
+			_ = ColorBandsView.MoveCurrentToFirst();
+			IsDirty = false;
+			OnPropertyChanged(nameof(ColorBandSet));
+			OnPropertyChanged(nameof(ColorBandsView));
+		}
+
 
 		public ListCollectionView ColorBandsView
 		{

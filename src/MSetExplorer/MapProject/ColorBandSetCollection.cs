@@ -273,7 +273,7 @@ namespace MSetExplorer
 
 				if (thisParentCbsId.Equals(parentCbs.Id))
 				{
-					var dt = thisParentCbsId.CreationTime;
+					var dt = colorBandSet.DateCreated;
 					if (dt > lastestDtFound)
 					{
 						childCbsIndex = i;
