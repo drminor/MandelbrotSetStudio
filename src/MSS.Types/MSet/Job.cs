@@ -10,7 +10,7 @@ namespace MSS.Types.MSet
 		public ObjectId Id { get; init; }
 		//public Job? ParentJob { get; set; }
 		public ObjectId? ParentJobId { get; set; }
-		public Project Project { get; set; }
+		public ObjectId ProjectId { get; set; }
 		public Subdivision Subdivision { get; init; }
 		public string? Label { get; init; }
 
@@ -24,15 +24,15 @@ namespace MSS.Types.MSet
 
 		public bool IsDirty { get; set; }
 
-		public Job(ObjectId? parentJobId, Project project, Subdivision subdivision, string? label, TransformType transformType, RectangleInt newArea, MSetInfo mSetInfo, 
+		public Job(ObjectId? parentJobId, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt newArea, MSetInfo mSetInfo, 
 			SizeInt canvasSizeInBlocks, BigVector mapBlockOffset, VectorInt canvasControlOffset)
-			: this(ObjectId.GenerateNewId(), parentJobId, project, subdivision, label, transformType, newArea, mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset)
+			: this(ObjectId.GenerateNewId(), parentJobId, projectId, subdivision, label, transformType, newArea, mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset)
 		{ }
 
 		public Job(
 			ObjectId id,
 			ObjectId? parentJobId,
-			Project project,
+			ObjectId projectId,
 			Subdivision subdivision,
 			string? label,
 
@@ -47,7 +47,7 @@ namespace MSS.Types.MSet
 		{
 			Id = id;
 			ParentJobId = parentJobId;
-			Project = project ?? throw new ArgumentNullException(nameof(project));
+			ProjectId = projectId;
 			Subdivision = subdivision;
 			Label = label;
 
@@ -69,7 +69,7 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, Project, Subdivision, Label, TransformType, NewArea, MSetInfo, CanvasSizeInBlocks, MapBlockOffset, CanvasControlOffset);
+			var result = new Job(Id, ParentJobId, ProjectId, Subdivision, Label, TransformType, NewArea, MSetInfo, CanvasSizeInBlocks, MapBlockOffset, CanvasControlOffset);
 			return result;
 		}
 

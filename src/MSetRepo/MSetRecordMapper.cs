@@ -40,13 +40,13 @@ namespace MSetRepo
 		
 		public Project MapFrom(ProjectRecord target)
 		{
-			var result = new Project(target.Id, target.Name, target.Description, target.CurrentColorBandSetId);
+			var result = new Project(target.Id, target.Name, target.Description, target.CurrentJobId, target.CurrentColorBandSetId);
 			return result;
 		}
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name, source.Description, source.CurrentColorBandSetId);
+			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.CurrentColorBandSetId);
 			return result;
 		}
 
@@ -98,7 +98,7 @@ namespace MSetRepo
 		{
 			var result = new JobRecord(
 				source.ParentJobId,
-				source.Project.Id,
+				source.ProjectId,
 				source.Subdivision.Id,
 				source.Label,
 

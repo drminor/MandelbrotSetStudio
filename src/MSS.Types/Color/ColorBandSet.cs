@@ -87,7 +87,6 @@ namespace MSS.Types
 		public ObservableCollection<ColorBand> ColorBands => this;
 
 		public bool AssignedToProject => ProjectId != ObjectId.Empty;
-		public bool OnFile => Id != ObjectId.Empty;
 
 		public bool IsReadOnly => false;
 

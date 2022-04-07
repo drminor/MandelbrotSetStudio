@@ -13,7 +13,7 @@ namespace MSetExplorer
 	{
 		#region Build Job
 
-		public static Job BuildJob(ObjectId? parentJobId, Project project, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
+		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			if (newArea.Width == 0 || newArea.Height == 0)
@@ -31,19 +31,19 @@ namespace MSetExplorer
 			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref coords, displaySize);
 
 			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(coords, samplePointDelta, blockSize, projectAdapter);
+			var subdivision = GetSubdivision(samplePointDelta, blockSize, projectAdapter);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-			var job = new Job(parentJobId, project, subdivision, jobName, transformType, newArea, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
+			var job = new Job(parentJobId, projectId, subdivision, jobName, transformType, newArea, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 
 			return job;
 		}
 
 		// Find an existing subdivision record that the same SamplePointDelta
-		private static Subdivision GetSubdivision(RRectangle coords, RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
+		private static Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			Subdivision result;
 

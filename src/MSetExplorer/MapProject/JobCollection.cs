@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSetRepo;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -12,7 +11,7 @@ namespace MSetExplorer
 {
 	public class JobCollection
 	{
-		private readonly ProjectAdapter _projectAdapter;
+		//private readonly ProjectAdapter _projectAdapter;
 		private readonly Collection<Job> _jobsCollection;
 		private readonly ReaderWriterLockSlim _jobsLock;
 
@@ -20,9 +19,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public JobCollection(ProjectAdapter projectAdapter)
+		public JobCollection(/*ProjectAdapter projectAdapter*/)
 		{
-			_projectAdapter = projectAdapter;
+			//_projectAdapter = projectAdapter;
 			_jobsCollection = new ObservableCollection<Job>();
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 			_jobsPointer = -1;
@@ -46,6 +45,14 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public int Count => DoWithReadLock(() => { return _jobsCollection.Count; });
+
+		public Job this[int index]
+		{
+			get => DoWithReadLock(() => { return _jobsCollection[index]; });
+			set => DoWithWriteLock(() => { _jobsCollection[index] = value; });
+		}
 
 		public void UpdateItem(int index, Job job)
 		{
@@ -113,37 +120,38 @@ namespace MSetExplorer
 				{
 					_jobsCollection.Add(job);
 				}
+
 				_jobsPointer = _jobsCollection.Count - 1;
 			});
 		}
 
-		public void Save(Project project)
-		{
-			var lastSavedTime = _projectAdapter.GetProjectJobsLastSaveTime(project.Id);
+		//public void Save(ObjectId projectId)
+		//{
+		//	var lastSavedTime = _projectAdapter.GetProjectJobsLastSaveTime(projectId);
 
-			DoWithWriteLock(() =>
-			{
-				for (var i = 0; i < _jobsCollection.Count; i++)
-				{
-					var job = _jobsCollection[i];
-					if (job.Id.CreationTime > lastSavedTime)
-					{
-						job.Project = project;
-						var updatedJob = _projectAdapter.InsertJob(job);
-						_jobsCollection[i] = updatedJob;
-						UpdateJobParents(job.Id, updatedJob.Id);
-					}
-					else
-					{
-						if (job.IsDirty)
-						{
-							_projectAdapter.UpdateJobDetalis(job);
-							job.IsDirty = false;
-						}
-					}
-				}
-			});
-		}
+		//	DoWithWriteLock(() =>
+		//	{
+		//		for (var i = 0; i < _jobsCollection.Count; i++)
+		//		{
+		//			var job = _jobsCollection[i];
+		//			if (job.Id.CreationTime > lastSavedTime)
+		//			{
+		//				job.ProjectId = projectId;
+		//				var updatedJob = _projectAdapter.InsertJob(job);
+		//				_jobsCollection[i] = updatedJob;
+		//				UpdateParents(job.Id, updatedJob.Id);
+		//			}
+		//			else
+		//			{
+		//				if (job.IsDirty)
+		//				{
+		//					_projectAdapter.UpdateJobDetalis(job);
+		//					job.IsDirty = false;
+		//				}
+		//			}
+		//		}
+		//	});
+		//}
 
 		public void Clear()
 		{
@@ -200,6 +208,18 @@ namespace MSetExplorer
 			}
 		}
 
+		//public void UpdateParents(ObjectId oldParentId, ObjectId newParentId)
+		//{
+		//	foreach (var job in _jobsCollection)
+		//	{
+		//		if (oldParentId == job.ParentJobId)
+		//		{
+		//			job.ParentJobId = newParentId;
+		//			_projectAdapter.UpdateJobsParent(job);
+		//		}
+		//	}
+		//}
+
 		#endregion
 
 		#region Private Methods
@@ -212,18 +232,6 @@ namespace MSetExplorer
 			}
 
 			_jobsPointer = newJobIndex;
-		}
-
-		private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId)
-		{
-			foreach (var job in _jobsCollection)
-			{
-				if (oldParentId == job.ParentJobId)
-				{
-					job.ParentJobId = newParentId;
-					_projectAdapter.UpdateJobsParent(job);
-				}
-			}
 		}
 
 		#endregion

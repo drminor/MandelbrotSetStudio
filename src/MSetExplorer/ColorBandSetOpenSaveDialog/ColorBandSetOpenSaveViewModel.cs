@@ -66,9 +66,9 @@ namespace MSetExplorer
 			{
 				_selectedDescription = value;
 
-				if (SelectedColorBandSetInfo != null && SelectedColorBandSetInfo.Id != ObjectId.Empty && SelectedColorBandSetInfo.Description != value)
+				if (SelectedColorBandSetInfo != null && SelectedColorBandSetInfo.Description != value)
 				{
-					_projectAdapter.UpdateProjectDescription(SelectedColorBandSetInfo.Id, SelectedDescription);
+					_projectAdapter.UpdateColorBandSetDescription(SelectedColorBandSetInfo.Id, SelectedDescription);
 					SelectedColorBandSetInfo.Description = value;
 				}
 

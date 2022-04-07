@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSetRepo;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
@@ -12,7 +11,7 @@ namespace MSetExplorer
 {
 	public class ColorBandSetCollection : IDisposable
 	{
-		private readonly ProjectAdapter _projectAdapter;
+		//private readonly ProjectAdapter _projectAdapter;
 		private readonly Collection<ColorBandSet> _colorsCollection;
 		private readonly ReaderWriterLockSlim _colorsLock;
 
@@ -20,9 +19,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandSetCollection(ProjectAdapter projectAdapter)
+		public ColorBandSetCollection(/*ProjectAdapter projectAdapter*/)
 		{
-			_projectAdapter = projectAdapter;
+			//_projectAdapter = projectAdapter;
 			_colorsCollection = new Collection<ColorBandSet>() { new ColorBandSet() };
 			_colorsLock = new ReaderWriterLockSlim();
 			_colorsPointer = 0;
@@ -40,12 +39,20 @@ namespace MSetExplorer
 
 		//public IEnumerable<ColorBandSet> ColorBandSets => DoWithReadLock(() => { return new ReadOnlyCollection<ColorBandSet>(_colorsCollection); });
 
-		public bool IsDirty => _colorsCollection.Any(x => !x.OnFile);
+		//public bool IsDirty => _colorsCollection.Any(x => !x.OnFile);
 
 		#endregion
 
 		#region Public Methods
-		
+
+		public int Count => DoWithReadLock(() => { return _colorsCollection.Count; });
+
+		public ColorBandSet this[int index]
+		{
+			get => DoWithReadLock(() => { return _colorsCollection[index]; });
+			set => DoWithWriteLock(() => { _colorsCollection[index] = value; });
+		}
+
 		public void UpdateItem(int index, ColorBandSet job)
 		{
 			DoWithWriteLock(() => { _colorsCollection[index] = job; });
@@ -113,25 +120,25 @@ namespace MSetExplorer
 			});
 		}
 
-		public void Save(ObjectId projectId)
-		{
-			var lastSavedTime = _projectAdapter.GetProjectCbSetsLastSaveTime(projectId);
+		//public void Save(ObjectId projectId)
+		//{
+		//	var lastSavedTime = _projectAdapter.GetProjectCbSetsLastSaveTime(projectId);
 
-			DoWithWriteLock(() =>
-			{
-				for (var i = 0; i < _colorsCollection.Count; i++)
-				{
-					var cbs = _colorsCollection[i];
-					if (cbs.Id.CreationTime > lastSavedTime) 
-					{
-						cbs.ProjectId = projectId;
-						var updatedCbs = _projectAdapter.CreateColorBandSet(cbs);
-						_colorsCollection[i] = updatedCbs;
-						UpdateColorBandSetParents(cbs.Id, updatedCbs.Id);
-					}
-				}
-			});
-		}
+		//	DoWithWriteLock(() =>
+		//	{
+		//		for (var i = 0; i < _colorsCollection.Count; i++)
+		//		{
+		//			var cbs = _colorsCollection[i];
+		//			if (cbs.Id.CreationTime > lastSavedTime) 
+		//			{
+		//				cbs.ProjectId = projectId;
+		//				var updatedCbs = _projectAdapter.CreateColorBandSet(cbs);
+		//				_colorsCollection[i] = updatedCbs;
+		//				UpdateParentIds(cbs.Id, updatedCbs.Id);
+		//			}
+		//		}
+		//	});
+		//}
 
 		public void Clear()
 		{
@@ -189,6 +196,18 @@ namespace MSetExplorer
 			}
 		}
 
+		//public void UpdateParentIds(ObjectId oldParentId, ObjectId newParentId)
+		//{
+		//	foreach (var cbs in _colorsCollection)
+		//	{
+		//		if (oldParentId == cbs.ParentId)
+		//		{
+		//			cbs.ParentId = newParentId;
+		//			_projectAdapter.UpdateColorBandSetParentId(cbs.Id, cbs.ParentId);
+		//		}
+		//	}
+		//}
+
 		#endregion
 
 		#region Private Methods
@@ -201,18 +220,6 @@ namespace MSetExplorer
 			}
 
 			_colorsPointer = newCbsIndex;
-		}
-
-		private void UpdateColorBandSetParents(ObjectId oldParentId, ObjectId newParentId)
-		{
-			foreach (var cbs in _colorsCollection)
-			{
-				if (oldParentId == cbs.ParentId)
-				{
-					cbs.ParentId = newParentId;
-					_projectAdapter.UpdateColorBandSetParentId(cbs.Id, cbs.ParentId);
-				}
-			}
 		}
 
 		#endregion

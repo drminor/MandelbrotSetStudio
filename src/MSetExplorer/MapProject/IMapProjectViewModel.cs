@@ -21,12 +21,14 @@ namespace MSetExplorer
 		bool CurrentProjectIsDirty { get; }
 
 		ColorBandSet CurrentColorBandSet { get; set; }
-		bool CanSaveColorBandSet { get; }
+		//bool CanSaveColorBandSet { get; }
 
-		// Job Methods
+
 		Job? CurrentJob { get; }
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
+
+		// Job Methods
 		bool GoBack();
 		bool GoForward();
 
@@ -36,15 +38,14 @@ namespace MSetExplorer
 		// Project Methods
 		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);
 
-		void ProjectCreate(string name, string description, ObjectId currentColorBandSetId);
+		//void ProjectCreate(string name, string description, ObjectId currentColorBandSetId);
 
 		bool ProjectOpen(string name);
 		void ProjectSave();
+		void ProjectSaveAs(string name, string? description, ObjectId? currentJobId, ObjectId currentColorBandSetId);
 
-		void ProjectSaveAs(string name, string? description, ObjectId currentColorBandSetId);
-
-		void ProjectUpdateName(string name);
-		void ProjectUpdateDescription(string description);
+		//void ProjectUpdateName(string name);
+		//void ProjectUpdateDescription(string description);
 
 		// ColorBand Methods
 		bool ColorBandSetOpen(string id);
@@ -52,6 +53,6 @@ namespace MSetExplorer
 		void ColorBandSetSave();
 		void ColorBandSetSaveAs(string name, string? description, int? versionNumber);
 
-		ColorBandSet? GetColorBandSet(string id);
+		//ColorBandSet? GetColorBandSet(string id);
 	}
 }
