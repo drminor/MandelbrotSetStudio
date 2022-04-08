@@ -40,13 +40,13 @@ namespace MSetRepo
 		
 		public Project MapFrom(ProjectRecord target)
 		{
-			var result = new Project(target.Id, target.Name, target.Description, target.CurrentJobId, target.CurrentColorBandSetId);
+			var result = new Project(target.Id, target.Name, target.Description, target.LastSavedUtc, target.CurrentJobId, target.CurrentColorBandSetId);
 			return result;
 		}
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.CurrentColorBandSetId);
+			var result = new ProjectRecord(source.Name, source.Description, source.LastSavedUtc, source.CurrentJobId, source.CurrentColorBandSetId);
 			return result;
 		}
 
@@ -108,7 +108,8 @@ namespace MSetRepo
 				MapTo(source.MSetInfo),
 				MapTo(source.CanvasSizeInBlocks),
 				MapTo(source.MapBlockOffset),
-				MapTo(source.CanvasControlOffset)
+				MapTo(source.CanvasControlOffset),
+				source.LastSaved
 				);
 
 			return result;

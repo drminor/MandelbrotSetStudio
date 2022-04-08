@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using ProjectRepo.Entities;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
@@ -70,7 +71,8 @@ namespace ProjectRepo
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
 
 			var updateDefinition = Builders<ProjectRecord>.Update
-				.Set(u => u.Name, name);
+				.Set(u => u.Name, name)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -80,7 +82,8 @@ namespace ProjectRepo
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
 
 			var updateDefinition = Builders<ProjectRecord>.Update
-				.Set(u => u.Description, description);
+				.Set(u => u.Description, description)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -90,7 +93,8 @@ namespace ProjectRepo
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
 
 			var updateDefinition = Builders<ProjectRecord>.Update
-				.Set(u => u.CurrentColorBandSetId, currentColorBandSetId);
+				.Set(u => u.CurrentColorBandSetId, currentColorBandSetId)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -100,7 +104,8 @@ namespace ProjectRepo
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
 
 			var updateDefinition = Builders<ProjectRecord>.Update
-				.Set(u => u.CurrentJobId, currentJobId);
+				.Set(u => u.CurrentJobId, currentJobId)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}

@@ -44,7 +44,8 @@ namespace ProjectRepo
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
 
 			var updateDefinition = Builders<JobRecord>.Update
-				.Set(u => u.ParentJobId, parentId);
+				.Set(u => u.ParentJobId, parentId)
+				.Set(u => u.LastSaved, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -57,7 +58,8 @@ namespace ProjectRepo
 				.Set(u => u.MSetInfo, jobRecord.MSetInfo)
 				.Set(u => u.CanvasSizeInBlocks, jobRecord.CanvasSizeInBlocks)
 				.Set(u => u.MapBlockOffset, jobRecord.MapBlockOffset)
-				.Set(u => u.CanvasControlOffset, jobRecord.CanvasControlOffset);
+				.Set(u => u.CanvasControlOffset, jobRecord.CanvasControlOffset)
+				.Set(u => u.LastSaved, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -67,7 +69,8 @@ namespace ProjectRepo
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
 
 			var updateDefinition = Builders<JobRecord>.Update
-				.Set(u => u.ProjectId, projectId);
+				.Set(u => u.ProjectId, projectId)
+				.Set(u => u.LastSaved, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}

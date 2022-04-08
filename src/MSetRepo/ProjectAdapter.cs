@@ -204,11 +204,18 @@ namespace MSetRepo
 			if (jobInfos.Any())
 			{
 				var subdivisionIds = jobInfos.Select(j => j.SubDivisionId).Distinct();
-				var lastSaved = jobInfos.Max(x => x.DateCreated);
 				var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
 				var minSamplePointDeltaExponent = subdivisonReaderWriter.GetMinExponent(subdivisionIds);
 
-				result = new ProjectInfo(project, lastSaved, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
+				// Greater of the date of the last updated job and the date when the project was last updated.
+				var lastSaved = jobInfos.Max(x => x.DateCreated);
+				var lastUpdated = project.LastSavedUtc;
+				if (lastSaved > lastUpdated)
+				{
+					lastUpdated = lastSaved;
+				}
+
+				result = new ProjectInfo(project, lastUpdated, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
 			else
 			{
@@ -222,20 +229,20 @@ namespace MSetRepo
 
 		#region ColorBandSet 
 
-		public ColorBandSetRecord GetOrCreateColorBandSetRecord(ColorBandSet currentColorBandSet)
-		{
-			Debug.WriteLine($"Retrieving ColorBandSet with Id: {currentColorBandSet.Id}.");
+		//public ColorBandSetRecord GetOrCreateColorBandSetRecord(ColorBandSet currentColorBandSet)
+		//{
+		//	Debug.WriteLine($"Retrieving ColorBandSet with Id: {currentColorBandSet.Id}.");
 
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			if (!colorBandSetReaderWriter.TryGet(currentColorBandSet.Id, out var colorBandSetRecord))
-			{
-				colorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
-				var id = colorBandSetReaderWriter.Insert(colorBandSetRecord);
-				colorBandSetRecord = colorBandSetReaderWriter.Get(id);
-			}
+		//	var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+		//	if (!colorBandSetReaderWriter.TryGet(currentColorBandSet.Id, out var colorBandSetRecord))
+		//	{
+		//		colorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
+		//		var id = colorBandSetReaderWriter.Insert(colorBandSetRecord);
+		//		colorBandSetRecord = colorBandSetReaderWriter.Get(id);
+		//	}
 
-			return colorBandSetRecord;
-		}
+		//	return colorBandSetRecord;
+		//}
 
 		public ColorBandSet? GetColorBandSet(string id)
 		{
@@ -248,18 +255,6 @@ namespace MSetRepo
 			return result;
 		}
 
-		public bool TryGetColorBandSet(Guid colorBandSetSerialNumber, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
-		{
-			Debug.WriteLine($"Retrieving ColorBandSet object for Guid: {colorBandSetSerialNumber}.");
-
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			var result = colorBandSetReaderWriter.TryGet(colorBandSetSerialNumber, out var colorBandSetRecord);
-
-			colorBandSet = result ? _mSetRecordMapper.MapFrom(colorBandSetRecord) : null;
-
-			return result;
-		}
-
 		public ColorBandSet CreateColorBandSet(ColorBandSet colorBandSet)
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
@@ -268,6 +263,8 @@ namespace MSetRepo
 			colorBandSetRecord = colorBandSetReaderWriter.Get(id);
 
 			var result = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+
+			Debug.Assert(id == result.Id, "ColorBandSet result has Id different from the one on file.");
 
 			return result;
 		}
@@ -323,33 +320,6 @@ namespace MSetRepo
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			var result = colorBandSetReaderWriter.GetLastSaveTime(projectId);
-
-			return result;
-		}
-
-		#endregion
-
-		#region ColorBandSetInfo
-
-		// TODO: Use Projection to reduce data retrieved when calling GetAllColorBandSetInfos.
-
-		public IEnumerable<ColorBandSetInfo> GetAllColorBandSetInfos()
-		{
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-
-			var allColorBandSetRecords = colorBandSetReaderWriter.GetAll();
-
-			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.ParentId, x.DateCreated, x.ColorBandRecords.Length, x.Name, x.Description));
-
-			return result;
-		}
-
-		public ColorBandSetInfo GetColorBandSetInfo(ObjectId id)
-		{
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			var cbsRecord = colorBandSetReaderWriter.Get(id);
-
-			var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.ParentId, cbsRecord.DateCreated, cbsRecord.ColorBandRecords.Length, cbsRecord.Name, cbsRecord.Description);
 
 			return result;
 		}
@@ -416,7 +386,8 @@ namespace MSetRepo
 				mSetInfo: _mSetRecordMapper.MapFrom(jobRecord.MSetInfo), 
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks), 
 				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset), 
-				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset)
+				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset),
+				jobRecord.LastSaved
 				);
 
 			jobCache?.Add(job.Id, job);
@@ -425,8 +396,11 @@ namespace MSetRepo
 
 		public Job InsertJob(Job job)
 		{
+			job.LastSaved = DateTime.UtcNow;
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
+
+			//jobRecord.LastSaved = DateTime.UtcNow;
 			var id = jobReaderWriter.Insert(jobRecord);
 
 			var updatedJob = GetJob(id);
@@ -438,6 +412,7 @@ namespace MSetRepo
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJobId);
+			job.LastSaved = DateTime.UtcNow;
 		}
 
 		public void UpdateJobDetalis(Job job)
@@ -445,6 +420,7 @@ namespace MSetRepo
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 			jobReaderWriter.UpdateJobDetails(jobRecord);
+			job.LastSaved = DateTime.UtcNow;
 		}
 
 		public void UpdateJobsProject(ObjectId jobId, ObjectId projectId)

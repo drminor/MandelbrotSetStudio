@@ -10,15 +10,12 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		public ColorBandSetInfo(ObjectId id, ObjectId? parentId, DateTime dateCreated, int numberOfBands, string? name, string? description)
+		public ColorBandSetInfo(ObjectId id, int numberOfBands, string? name, string? description)
 		{
 			Debug.WriteLine($"Constructing ColorBandSetInfo with Id: {id}.");
 			Id = id;
-			ParentId = parentId;
-			DateCreated = dateCreated;
 			NumberOfBands = numberOfBands;
-
-			_name = name;
+			_name = name ?? throw new ArgumentNullException("When creating a ColorBandSetInfo, the name cannot be null.");
 			_description = description;
 		}
 
@@ -27,15 +24,11 @@ namespace MSS.Types
 		#region Public Properties
 
 		public ObjectId Id { get; init; }
-
-		public ObjectId? ParentId { get; init; }
-
-		public DateTime DateCreated { get; init; }
-
+		public DateTime DateCreated => Id.CreationTime;
 		public int NumberOfBands { get; init; }
 
-		private string? _name;
-		public string? Name
+		private string _name;
+		public string Name
 		{
 			get => _name;
 			set
@@ -57,20 +50,6 @@ namespace MSS.Types
 				if (value != _description)
 				{
 					_description = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		private int _versionNumber;
-		public int VersionNumber
-		{
-			get => _versionNumber;
-			set
-			{
-				if (value != _versionNumber)
-				{
-					_versionNumber = value;
 					OnPropertyChanged();
 				}
 			}

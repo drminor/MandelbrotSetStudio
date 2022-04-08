@@ -32,7 +32,7 @@ namespace MSetExplorer
 
 		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, SizeInt blockSize)
 		{
-			_keepDisplaySquare = false;
+			_keepDisplaySquare = true;
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
@@ -74,7 +74,7 @@ namespace MSetExplorer
 				if (IsJobChanged(_currentJob, value))
 				{
 					var previousJob = _currentJob;
-					_currentJob = value;
+					_currentJob = value?.Clone();
 					HandleCurrentJobChanged(previousJob, _currentJob);
 				}
 			}
@@ -310,7 +310,7 @@ namespace MSetExplorer
 			{
 				return false;
 			}
-			else if(newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
+			else if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
 			{
 				return false;
 			}

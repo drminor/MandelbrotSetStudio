@@ -7,20 +7,22 @@ namespace MSS.Types.MSet
 {
 	public class ProjectInfo : IProjectInfo
 	{
-		private DateTime _lastSaved;
-		private int _numberOfJobs;
-		private int _minMapCoordsExponent;
-		private int _minSamplePointDeltaExponent;
+		//private int _numberOfJobs;
+		//private int _minMapCoordsExponent;
+		//private int _minSamplePointDeltaExponent;
 
 		private string _name;
 		private string? _description;
+		private DateTime _lastSavedUtc;
 
 		#region Constructor
 
-		public ProjectInfo(Project project, DateTime lastSaved, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
+		public ProjectInfo(Project project, DateTime lastSavedUtc, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
 		{
 			Project = project;
-			LastSaved = lastSaved;
+			DateCreated = project.DateCreated.ToLocalTime();
+
+			_lastSavedUtc = lastSavedUtc;
 			NumberOfJobs = numberOfJobs;
 			MinMapCoordsExponent = minMapCoordsExponent;
 			MinSamplePointDeltaExponent = minSamplePointDeltaExponent;
@@ -37,7 +39,10 @@ namespace MSS.Types.MSet
 
 		public ObjectId Id => Project.Id;
 
-		public DateTime DateCreated => Project.DateCreated;
+		public DateTime DateCreated { get; init; }
+		public int NumberOfJobs { get; init; }
+		public int MinMapCoordsExponent { get; init; }
+		public int MinSamplePointDeltaExponent { get; init; }
 
 		public string Name
 		{
@@ -51,29 +56,31 @@ namespace MSS.Types.MSet
 			set { _description = value; OnPropertyChanged(); }
 		}
 
-		public DateTime LastSaved
+		public DateTime LastSavedUtc
 		{
-			get => _lastSaved;
-			set { _lastSaved = value; OnPropertyChanged(); }
+			get => _lastSavedUtc;
+			set { _lastSavedUtc = value; OnPropertyChanged(); }
 		}
 
-		public int NumberOfJobs
-		{
-			get => _numberOfJobs;
-			set { _numberOfJobs = value; OnPropertyChanged(); }
-		}
+		public DateTime LastSaved => LastSavedUtc.ToLocalTime();
 
-		public int MinMapCoordsExponent
-		{
-			get => _minMapCoordsExponent * -1;
-			set { _minMapCoordsExponent = value; OnPropertyChanged(); }
-		}
+		//public int NumberOfJobs
+		//{
+		//	get => _numberOfJobs;
+		//	set { _numberOfJobs = value; OnPropertyChanged(); }
+		//}
 
-		public int MinSamplePointDeltaExponent
-		{
-			get => _minSamplePointDeltaExponent;
-			set { _minSamplePointDeltaExponent = value; OnPropertyChanged(); }
-		}
+		//public int MinMapCoordsExponent
+		//{
+		//	get => _minMapCoordsExponent * -1;
+		//	set { _minMapCoordsExponent = value; OnPropertyChanged(); }
+		//}
+
+		//public int MinSamplePointDeltaExponent
+		//{
+		//	get => _minSamplePointDeltaExponent;
+		//	set { _minSamplePointDeltaExponent = value; OnPropertyChanged(); }
+		//}
 
 		#endregion
 

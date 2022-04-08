@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Open ColorBandSet" Height="1100" Width="700">
+        Title="Open ColorBandSet" Height="1000" Width="700">
     
     <Grid>
 
@@ -44,10 +44,10 @@
                     <TextBox x:Name="txtDescription" Text="{Binding SelectedDescription}" Width="460" Height="22"/>
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                <!--<StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                     <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Version:" VerticalAlignment="Top"/>
                     <TextBox x:Name="txtVersionNumber" Text="{Binding SelectedVersionNumber}" Width="50" Height="22"/>
-                </StackPanel>                
+                </StackPanel>-->                
                 
             </StackPanel>
         </Border>

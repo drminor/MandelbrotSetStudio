@@ -168,9 +168,9 @@
                         <Separator/>
                         <MenuItem Header="_Apply" Command="local:ColorBandSetCommands.Apply"/>
                         <Separator/>
-                        <MenuItem Header="_Open" Command="local:CustomCommands.ColorsOpen" />
-                        <MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />
-                        <MenuItem Header="Save_As" Command="local:CustomCommands.ColorsSaveAs" />
+                        <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
+                        <!--<MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />-->
+                        <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
                     </ContextMenu>
                 </ListBox.ContextMenu>
                 

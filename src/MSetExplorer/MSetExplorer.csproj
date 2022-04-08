@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
+    <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
   </ItemGroup>
 
 </Project>

@@ -17,7 +17,8 @@ namespace ProjectRepo.Entities
 
 		SizeIntRecord CanvasSizeInBlocks,
 		BigVectorRecord MapBlockOffset,
-		VectorIntRecord CanvasControlOffset
+		VectorIntRecord CanvasControlOffset,
+		DateTime LastSaved
 		) : RecordBase()
 	{ }
 

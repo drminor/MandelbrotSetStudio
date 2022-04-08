@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetRepo;
+using MSS.Types;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -6,13 +7,12 @@ namespace MSetExplorer
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
-		private readonly ColorBandSetOpenSaveViewModelCreator _colorBandSetOpenSaveViewModelCreator;
+		private readonly CbsOpenSaveViewModelCreator _cbsOpenViewModelCreator;
 
 		#region Constructor
 
-		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, 
-			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, ColorBandSetOpenSaveViewModelCreator colorBandSetOpenSaveViewModelCreator, 
-			ColorBandSetViewModel colorBandViewModel)
+		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel, 
+			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
 		{
 			MapProjectViewModel = mapProjectViewModel;
 			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
@@ -26,7 +26,7 @@ namespace MSetExplorer
 			DispHeight = MapDisplayViewModel.CanvasSize.Height;
 
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
-			_colorBandSetOpenSaveViewModelCreator = colorBandSetOpenSaveViewModelCreator;
+			_cbsOpenViewModelCreator = cbsOpenSaveViewModelCreator;
 
 			ColorBandSetViewModel = colorBandViewModel;
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
@@ -87,15 +87,25 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		//public void ExportColorBandSet(string id)
+		//{
+		//	//_sharedColorBandSetAdapter.CreateColorBandSet();
+		//}
+
+		//public void ImportColorBandSet(string id)
+		//{
+		//}
+
+
 		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
 			var result = _projectOpenSaveViewModelCreator(initalName, dialogType);
 			return result;
 		}
 
-		public IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string? initalName, DialogType dialogType)
+		public IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType)
 		{
-			var result = _colorBandSetOpenSaveViewModelCreator(initalName, dialogType);
+			var result = _cbsOpenViewModelCreator(initalName, dialogType);
 			return result;
 		}
 

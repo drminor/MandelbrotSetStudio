@@ -1,5 +1,7 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
@@ -12,12 +14,13 @@ namespace MSetExplorer
 
 		string? SelectedName { get; set; }
 		string? SelectedDescription { get; set; }
-		int? SelectedVersionNumber { get; set; }
-
 		bool UserIsSettingTheName { get; set; }
 
-		bool IsNameTaken(string? name);
-	}
+		bool ExportColorBandSet(ColorBandSet colorBandSet);
 
+		bool TryImportColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet);
+
+		bool IsNameTaken(string name);
+	}
 
 }

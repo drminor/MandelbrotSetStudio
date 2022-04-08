@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using MSS.Types;
+using System.ComponentModel;
 
 namespace MSetExplorer
 {
@@ -12,9 +13,6 @@ namespace MSetExplorer
 		MSetInfoViewModel MSetInfoViewModel { get; }
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
-		IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string? initalName, DialogType dialogType);
-
-		//void BumpDispWidth(bool increase);
-		//void BumpDispHeight(bool increase);
+		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
 	}
 }

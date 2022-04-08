@@ -1,6 +1,7 @@
 ﻿using MEngineClient;
 using MSetRepo;
 using MSS.Common;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -9,7 +10,8 @@ namespace MSetExplorer
 {
 	public delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
-	public delegate IColorBandSetOpenSaveViewModel ColorBandSetOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	//public delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(ColorBandSet colorBandSet);
+	public delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
 	/// <summary>
 	/// Interaction logic for App.xaml
@@ -21,6 +23,7 @@ namespace MSetExplorer
 		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
 
 		private ProjectAdapter? _projectAdapter;
+		private SharedColorBandSetAdapter? _sharedColorBandSetAdapter;
 
 		private IMapProjectViewModel? _mapProjectViewModel;
 		private MapLoaderManager? _mapLoaderManager;
@@ -59,6 +62,9 @@ namespace MSetExplorer
 
 			_projectAdapter.CreateCollections();
 
+			_sharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(MONGO_DB_CONN_STRING);
+			_sharedColorBandSetAdapter.CreateCollections();
+
 			// Map Project ViewModel
 			_mapProjectViewModel = new MapProjectViewModel(_projectAdapter, RMapConstants.BLOCK_SIZE);
 
@@ -72,7 +78,7 @@ namespace MSetExplorer
 			// Main Window
 			var window1 = new MainWindow
 			{
-				DataContext = new MainWindowViewModel(_mapProjectViewModel, mapDisplayViewModel, CreateAProjectOpenSaveViewModel, CreateAColorBandSetOpenSaveViewModel, colorBandViewModel)
+				DataContext = new MainWindowViewModel(_mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel)
 			};
 
 			window1.Show();
@@ -134,11 +140,11 @@ namespace MSetExplorer
 				: new ProjectOpenSaveViewModel(_projectAdapter, initalName, dialogType);
 		}
 
-		private IColorBandSetOpenSaveViewModel CreateAColorBandSetOpenSaveViewModel(string? initalName, DialogType dialogType)
+		private IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return _projectAdapter == null
+			return _sharedColorBandSetAdapter == null
 				? throw new InvalidOperationException("Cannot create a ProjectOpenSaveViewModel, the ProjectAdapter is null.")
-				: new ColorBandSetOpenSaveViewModel(_projectAdapter, initalName, dialogType);
+				: new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
 		}
 
 

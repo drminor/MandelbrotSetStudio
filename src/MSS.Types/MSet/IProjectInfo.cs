@@ -11,6 +11,8 @@ namespace MSS.Types.MSet
 		string? Description { get; set; }
 		int NumberOfJobs { get; }
 		int MinSamplePointDeltaExponent { get; }
+
+		DateTime LastSavedUtc { get; set; }
 		DateTime LastSaved { get; }
 	}
 }

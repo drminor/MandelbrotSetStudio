@@ -1,10 +1,6 @@
-﻿using MongoDB.Bson;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Common.DataTransferObjects;
-using MSS.Types;
 using ProjectRepo;
-using System;
-using System.Collections.Generic;
 
 namespace MSetRepo
 {
@@ -26,6 +22,15 @@ namespace MSetRepo
 			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
 
 			return mapSectionAdapter;
+		}
+
+		public static SharedColorBandSetAdapter GetSharedColorBandSetAdapter(string dbProviderConnString)
+		{
+			var dbProvider = new DbProvider(dbProviderConnString);
+			var mSetRecordMapper = GetMSetRecordMapper();
+			var sharedColorBandSetAdapter = new SharedColorBandSetAdapter(dbProvider, mSetRecordMapper);
+
+			return sharedColorBandSetAdapter;
 		}
 
 		private static MSetRecordMapper GetMSetRecordMapper()

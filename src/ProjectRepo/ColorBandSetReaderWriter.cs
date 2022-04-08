@@ -29,25 +29,9 @@ namespace ProjectRepo
 			return colorBandSetRecord;
 		}
 
-		public ColorBandSetRecord Get(Guid colorBandSetSerialNumber)
-		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("SerialNumber", colorBandSetSerialNumber.ToByteArray());
-			var colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
-
-			return colorBandSetRecord;
-		}
-
 		public bool TryGet(ObjectId colorBandSetId, out ColorBandSetRecord colorBandSetRecord)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
-			colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
-
-			return colorBandSetRecord != null;
-		}
-
-		public bool TryGet(Guid colorBandSetSerialNumber, out ColorBandSetRecord colorBandSetRecord)
-		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("SerialNumber", colorBandSetSerialNumber.ToByteArray());
 			colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
 
 			return colorBandSetRecord != null;

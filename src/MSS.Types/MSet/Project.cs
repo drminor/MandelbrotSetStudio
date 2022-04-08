@@ -9,37 +9,39 @@ namespace MSS.Types.MSet
 		public string Name { get; set; }
 		public string? Description { get; set; }
 
+		public DateTime LastUpdated { get; private set; }
+		private DateTime _lastSavedUtc;
+
 		public ObjectId? CurrentJobId { get; set; }
-		private ObjectId _currentColorBandSetId;
+		public ObjectId CurrentColorBandSetId { get; set; }
 
 		public Project(string name, string? description, ObjectId? currentJobId, ObjectId currentColorBandSetId) 
-			: this(ObjectId.Empty, name, description, currentJobId, currentColorBandSetId)
+			: this(ObjectId.Empty, name, description, DateTime.UtcNow, currentJobId, currentColorBandSetId)
 		{ }
 
-		public Project(ObjectId id, string name, string? description, ObjectId? currentJobId, ObjectId currentColorBandSetId)
+		public Project(ObjectId id, string name, string? description, DateTime lastSavedUtc, ObjectId? currentJobId, ObjectId currentColorBandSetId)
 		{
 			Id = id;
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			Description = description;
+
+			LastSavedUtc = lastSavedUtc;
 			CurrentJobId = currentJobId;
-			_currentColorBandSetId = currentColorBandSetId;
+			CurrentColorBandSetId = currentColorBandSetId;
 		}
 
-		public DateTime DateCreated => Id.CreationTime;
+		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
 		public bool OnFile => Id != ObjectId.Empty;
 
-		public ObjectId CurrentColorBandSetId
+		public DateTime LastSavedUtc
 		{
-			get => _currentColorBandSetId;
+			get => _lastSavedUtc;
 			set
 			{
-				if (value != _currentColorBandSetId)
-				{
-					_currentColorBandSetId = value;
-				}
+				_lastSavedUtc = value;
+				LastUpdated = value;
 			}
 		}
-
 	}
 }

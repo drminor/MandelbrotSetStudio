@@ -19,7 +19,7 @@
         <CommandBinding Command="local:CustomCommands.PanDown" CanExecute="Pan_CanExecute" Executed="PanDown_Executed" />
 
         <CommandBinding Command="local:CustomCommands.ColorsOpen" CanExecute="ColorsOpenCommand_CanExecute" Executed="ColorsOpenCommand_Executed" />
-        <CommandBinding Command="local:CustomCommands.ColorsSave" CanExecute="ColorsSaveCommand_CanExecute" Executed="ColorsSaveCommand_Executed" />
+        <!--<CommandBinding Command="local:CustomCommands.ColorsSave" CanExecute="ColorsSaveCommand_CanExecute" Executed="ColorsSaveCommand_Executed" />-->
         <CommandBinding Command="local:CustomCommands.ColorsSaveAs" CanExecute="ColorsSaveAsCommand_CanExecute" Executed="ColorsSaveAsCommand_Executed" />
 
     </Window.CommandBindings>
@@ -47,9 +47,9 @@
             </MenuItem>
 
             <MenuItem Header="_Colors">
-                <MenuItem Header="_Open" Command="local:CustomCommands.ColorsOpen" />
-                <MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />
-                <MenuItem Header="Save_As" Command="local:CustomCommands.ColorsSaveAs" />
+                <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
+                <!--<MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />-->
+                <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
             </MenuItem>
             
             <MenuItem Header="_Windows">

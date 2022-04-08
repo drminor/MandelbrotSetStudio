@@ -84,7 +84,6 @@ namespace MSetExplorer
 			btnSave.IsEnabled = _vm.SelectedName != null;
 		}
 
-
 		private void LvColorBandSets_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			btnSave.IsEnabled = _vm.SelectedName != null;
@@ -97,7 +96,6 @@ namespace MSetExplorer
 		public ObjectId? ColorBandSetId => _vm.SelectedColorBandSetInfo?.Id;
 		public string? ColorBandSetName => _vm.SelectedName;
 		public string? ColorBandSetDescription => _vm.SelectedDescription;
-		public int? ColorBandSetVersionNumber => _vm.SelectedVersionNumber;
 
 		#endregion
 
@@ -118,7 +116,7 @@ namespace MSetExplorer
 		{
 			if (_vm.DialogType == DialogType.Save)
 			{
-				if (_vm.IsNameTaken(ColorBandSetName))
+				if (ColorBandSetName != null && _vm.IsNameTaken(ColorBandSetName))
 				{
 					var res = MessageBox.Show("A ColorBandSet already exists with this name. Do you want to overwrite?", "Overwrite Existing Project", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
 

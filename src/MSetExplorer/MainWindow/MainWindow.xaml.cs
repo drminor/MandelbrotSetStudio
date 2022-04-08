@@ -181,6 +181,11 @@ namespace MSetExplorer
 
 		private void SaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
+
 			var curProject = _vm.MapProjectViewModel.CurrentProject;
 
 			var initialName = curProject?.Name;
@@ -213,56 +218,37 @@ namespace MSetExplorer
 
 		private void ColorsOpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			//if (ColorsSaveChanges())
-			//{
-			//	_ = MessageBox.Show("Changes Saved");
-			//}
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
 
 			var initialName = _vm.MapProjectViewModel.CurrentColorBandSet?.Name;
-			if (ColorsShowOpenSaveWindow(DialogType.Open, initialName, out var selectedName, out _, out _, out var id))
+			if (ColorsShowOpenWindow(initialName, out var colorBandSet))
 			{
-				//	if (serialNumber == null)
-				//	{
-				//		Debug.WriteLine($"WARNING: Cannot open a ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-				//	}
-				//	else
-				//	{
-				//		Debug.WriteLine($"Opening ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-				//		if (!_vm.MapProjectViewModel.ColorBandSetOpen(serialNumber.Value))
-				//		{
-				//			_ = MessageBox.Show($"Could not open a ColorBandSet with {serialNumber.Value}.");
-				//		}
-				//	}
-
-				Debug.WriteLine($"Opening ColorBandSet with Id: {id}, name: {selectedName}.");
-				if (!_vm.MapProjectViewModel.ColorBandSetOpen(id))
-				{
-					_ = MessageBox.Show($"Could not open a ColorBandSet with Id: {id}.");
-				}
+				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
+				_vm.MapProjectViewModel.CurrentColorBandSet = colorBandSet;
+			}
+			else
+			{
+				Debug.WriteLine($"WARNING: Could not import any ColorBandSet.");
 			}
 		}
 
-			// Colors Save
-		private void ColorsSaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-		{
-			//e.CanExecute = _vm.MapProjectViewModel.CanSaveColorBandSet || _vm.ColorBandSetViewModel.IsDirty;
-			e.CanExecute = false;
-		}
+		//	// Colors Save
+		//private void ColorsSaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		//{
+		//	//e.CanExecute = _vm.MapProjectViewModel.CanSaveColorBandSet || _vm.ColorBandSetViewModel.IsDirty;
+		//	e.CanExecute = true;
+		//}
 
-		private void ColorsSaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
-		{
-			//_ = ColorsCommitUpdates();
+		//private void ColorsSaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		//{
+		//	_ = ColorsCommitUpdates();
 
-			//if (_vm.MapProjectViewModel.CanSaveColorBandSet)
-			//{
-			//	// The ColorBandSet is on-file, just save the pending changes.
-			//	_vm.MapProjectViewModel.ColorBandSetSave();
-			//}
-			//else
-			//{
-			//	SaveColors();
-			//}
-		}
+		//	SaveColors(_vm.MapProjectViewModel.CurrentColorBandSet);
+		//		//_vm.MapProjectViewModel.ColorBandSetSave();
+		//}
 
 		// Colors SaveAs
 		private void ColorsSaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -272,29 +258,14 @@ namespace MSetExplorer
 
 		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_ = ColorsCommitUpdates();
-			SaveColors();
-		}
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
 
-		private void SaveColors()
-		{
+			var curColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
 
-			// TODO: Fix Me
-			//var curProject = _vm.MapProjectViewModel.CurrentProject;
-			//var initialName = curProject?.CurrentColorBandSet?.Name;
-
-			//if (ColorsShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description, out var versionNumber, out var serialNumber))
-			//{
-			//	if (selectedName == null)
-			//	{
-			//		Debug.WriteLine($"WARNING: Cannot save a ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-			//	}
-			//	else
-			//	{
-			//		Debug.WriteLine($"Saving ColorBandSet with serial: {serialNumber}, name: {selectedName}.");
-			//		_vm.MapProjectViewModel.ColorBandSetSaveAs(selectedName, description, versionNumber);
-			//	}
-			//}
+			ColorsShowSaveWindow(curColorBandSet);
 		}
 
 		#endregion
@@ -370,51 +341,53 @@ namespace MSetExplorer
 
 		private bool ProjectSaveChanges()
 		{
-			_ = ColorsCommitUpdates();
+			if (!_vm.MapProjectViewModel.CurrentProjectIsDirty)
+			{
+				return false;
+			}
+
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return false;
+			}
+
 			bool result;
 
-			if (_vm.MapProjectViewModel.CurrentProjectIsDirty)
+			if (ProjectUserSaysSaveChanges() == true)
 			{
-				if (ProjectUserSaysSaveChanges())
+				if (_vm.MapProjectViewModel.CanSaveProject)
 				{
-					if (_vm.MapProjectViewModel.CanSaveProject)
-					{
-						// The Project is on-file, just save the pending changes.
-						_vm.MapProjectViewModel.ProjectSave();
-						result = true;
-					}
-					else
-					{
-						// The Project is not on-file, must ask user for the name and optional description.
-						var curProject = _vm.MapProjectViewModel.CurrentProject;
-
-						var initialName = curProject?.Name;
-						var curJobId = curProject?.CurrentJobId;
-						var curColorBandSetId = curProject?.CurrentColorBandSetId;
-
-						if (ProjectShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
-						{
-							if (selectedName != null && curColorBandSetId != null)
-							{
-								Debug.WriteLine($"Saving project with name: {selectedName}.");
-								_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curJobId, curColorBandSetId.Value);
-								result = true;
-							}
-							else
-							{
-								Debug.WriteLine($"Cannot save project with name: {selectedName}.");
-								result = false;
-							}
-						}
-						else
-						{
-							result = false;
-						}
-					}
+					// The Project is on-file, just save the pending changes.
+					_vm.MapProjectViewModel.ProjectSave();
+					result = true;
 				}
 				else
 				{
-					result = false;
+					// The Project is not on-file, must ask user for the name and optional description.
+					var curProject = _vm.MapProjectViewModel.CurrentProject;
+
+					var initialName = curProject?.Name;
+					var curJobId = curProject?.CurrentJobId;
+					var curColorBandSetId = curProject?.CurrentColorBandSetId;
+
+					if (ProjectShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
+					{
+						if (selectedName != null && curColorBandSetId != null)
+						{
+							Debug.WriteLine($"Saving project with name: {selectedName}.");
+							_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description, curJobId, curColorBandSetId.Value);
+							result = true;
+						}
+						else
+						{
+							Debug.WriteLine($"Cannot save project with name: {selectedName}.");
+							result = false;
+						}
+					}
+					else
+					{
+						result = false;
+					}
 				}
 			}
 			else
@@ -425,12 +398,12 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ProjectUserSaysSaveChanges()
+		private bool? ProjectUserSaysSaveChanges()
 		{
 			var defaultResult = _vm.MapProjectViewModel.CanSaveProject ? MessageBoxResult.Yes : MessageBoxResult.No;
 			var res = MessageBox.Show("The current project has pending changes. Save Changes?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
 
-			var result = res == MessageBoxResult.Yes;
+			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?) null;
 
 			return result;
 		}
@@ -457,9 +430,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ColorsCommitUpdates()
+		private bool? ColorsCommitUpdates()
 		{
-			bool result;
+			bool? result;
 
 			if (_vm.ColorBandSetViewModel.IsDirty)
 			{
@@ -470,6 +443,10 @@ namespace MSetExplorer
 				{
 					_vm.ColorBandSetViewModel.ApplyChanges();
 					result = true;
+				}
+				else if (res == MessageBoxResult.Cancel)
+				{
+					result = null;
 				}
 				else
 				{
@@ -568,9 +545,9 @@ namespace MSetExplorer
 		//	return result;
 		//}
 
-		private bool ColorsShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description, out int? versionNumber, [MaybeNullWhen(false)] out string id)
+		private bool ColorsShowOpenWindow(string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.CreateAColorBandSetOpenSaveViewModel(initalName, dialogType);
+			var colorBandSetOpenSaveVm = _vm.CreateACbsOpenViewModel(initalName, DialogType.Open);
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm
@@ -578,18 +555,43 @@ namespace MSetExplorer
 
 			if (colorBandSetOpenSaveWindow.ShowDialog() == true)
 			{
-				selectedName = colorBandSetOpenSaveWindow.ColorBandSetName;
-				description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
-				versionNumber = colorBandSetOpenSaveWindow.ColorBandSetVersionNumber;
-				id = colorBandSetOpenSaveWindow.ColorBandSetId.ToString() ?? "";
-				return true;
+				var id = colorBandSetOpenSaveWindow.ColorBandSetId;
+				if (id != null && colorBandSetOpenSaveVm.TryImportColorBandSet(id.Value, out colorBandSet))
+				{
+					return true;
+				}
+				else
+				{
+					colorBandSet = null;
+					return false;
+				}
 			}
 			else
 			{
-				selectedName = null;
-				description = null;
-				versionNumber = 0;
-				id = "";
+				colorBandSet = null;
+				return false;
+			}
+		}
+
+		private bool ColorsShowSaveWindow(ColorBandSet colorBandSet)
+		{
+			var colorBandSetOpenSaveVm = _vm.CreateACbsOpenViewModel(colorBandSet.Name, DialogType.Save);
+			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
+			{
+				DataContext = colorBandSetOpenSaveVm
+			};
+
+			if (colorBandSetOpenSaveWindow.ShowDialog() == true)
+			{
+				var cpy = colorBandSet.CreateNewCopy();
+				cpy.Name = colorBandSetOpenSaveWindow.ColorBandSetName;
+				cpy.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
+
+				colorBandSetOpenSaveVm.ExportColorBandSet(cpy);
+				return true;
+			}
+			else
+			{ 
 				return false;
 			}
 		}

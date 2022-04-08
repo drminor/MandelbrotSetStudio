@@ -405,7 +405,7 @@ namespace MSetExplorer
 			{
 				//Debug.WriteLine($"Applying changes, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 
-				// Create a new copy with a new serial number to load a new ColorMap.
+				// Create a new ColorBandSet with a new id, having the same values of this instance.
 				var newSet = ColorBandSet.CreateNewCopy();
 
 				Debug.Assert(newSet != ColorBandSet, "The new one is == to the old one.");
