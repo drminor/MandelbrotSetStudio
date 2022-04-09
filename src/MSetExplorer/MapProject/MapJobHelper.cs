@@ -16,19 +16,8 @@ namespace MSetExplorer
 		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
-			if (newArea.Width == 0 || newArea.Height == 0)
-			{
-				throw new ArgumentException("When building a job, the new area's size cannot have a width or height = 0.");
-			}
-
 			var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(displaySize, blockSize);
-
-			//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(new SizeDbl(displaySize), blockSize, keepSquare: false);
-			//var canvasSizeInBlocks = sizeInWholeBlocks.Inflate(2);
-
-
-			CheckCanvasSize(displaySize, blockSize);
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var coords = mSetInfo.Coords;

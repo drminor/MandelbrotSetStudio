@@ -56,7 +56,6 @@ namespace MSetExplorer
 
 		public static IList<MapSection> CreateEmptyMapSections(Job job)
 		{
-			//var emptyPixelData = new byte[0];
 			var emptyCountsData = new int[0];
 
 			var result = new List<MapSection>();
@@ -173,19 +172,8 @@ namespace MSetExplorer
 
 					colorMap.PlaceColor(countVal, escapeVel, new Span<byte>(result, curResultPtr, 4));
 					curResultPtr += 4;
-
-					//var colorComps = colorMap.GetColor(countVal, escapeVel);
-
-					//for (var j = 2; j > -1; j--)
-					//{
-					//	result[curResultPtr++] = colorComps[j];
-					//}
-					//result[curResultPtr++] = 255;
 				}
 			}
-
-			//byte[] result = new byte[intArray.Length * sizeof(int)];
-			//Buffer.BlockCopy(intArray, 0, result, 0, result.Length);
 
 			return result;
 		}

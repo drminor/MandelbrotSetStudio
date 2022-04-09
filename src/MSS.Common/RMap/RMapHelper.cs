@@ -73,6 +73,11 @@ namespace MSS.Common
 
 		public static SizeInt GetCanvasSize(SizeInt newArea, SizeInt displaySize)
 		{
+			if (newArea.Width == 0 || newArea.Height == 0)
+			{
+				throw new ArgumentException("New area cannot have zero width or height upon call to GetCanvasSize.");
+			}
+
 			var wRatio = (double)newArea.Width / displaySize.Width;
 			var hRatio = (double)newArea.Height / displaySize.Height;
 

@@ -24,7 +24,10 @@ namespace MSetExplorer
 		private int _pitch;
 		private bool _selecting;
 		private bool _dragging;
-		private Point? _dragAnchor;
+
+		private Point _dragAnchor;
+		private bool _haveMouseDown;
+
 		private bool _dragHasBegun;
 
 		internal event EventHandler<AreaSelectedEventArgs>? AreaSelected;
@@ -105,10 +108,8 @@ namespace MSetExplorer
 			{
 				var p = SelectedPosition;
 				var s = SelectedSize;
-
 				var x = new Rect(p, s);
 				var result = ScreenTypeHelper.ConvertToRectangleDbl(x);
-				var result2 = new RectangleDbl(new PointDbl(p.X, p.Y), new SizeDbl(s.Width, s.Height));
 
 				return result;
 			}
@@ -205,6 +206,7 @@ namespace MSetExplorer
 
 		private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
+			_haveMouseDown = true;
 			if (!Dragging)
 			{
 				_dragAnchor = e.GetPosition(relativeTo: _canvas);
@@ -234,16 +236,16 @@ namespace MSetExplorer
 
 		private void HandleDragMove(MouseEventArgs e)
 		{
-			if (Enabled && (!Dragging) && _dragAnchor != null && e.LeftButton == MouseButtonState.Pressed)
+			if (Enabled && _haveMouseDown && (!Dragging) && e.LeftButton == MouseButtonState.Pressed)
 			{
 				var controlPos = e.GetPosition(relativeTo: _canvas);
-				var dist = _dragAnchor.Value - controlPos;
+				var dist = _dragAnchor - controlPos;
 				if (Math.Abs(dist.Length) > DRAG_TRIGGER_DIST)
 				{
-					_dragLine.X1 = _dragAnchor.Value.X;
-					_dragLine.Y1 = _dragAnchor.Value.Y;
-					_dragLine.X2 = _dragAnchor.Value.X;
-					_dragLine.Y2 = _dragAnchor.Value.Y;
+					_dragLine.X1 = _dragAnchor.X;
+					_dragLine.Y1 = _dragAnchor.Y;
+					_dragLine.X2 = _dragAnchor.X;
+					_dragLine.Y2 = _dragAnchor.Y;
 
 					Dragging = true;
 					_dragHasBegun = true;
@@ -266,7 +268,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event. IsFocused = {_canvas.IsFocused}. Have a drag anchor = {_dragAnchor != null}, IsDragging = {Dragging}, Selecting = {Selecting}");
+			Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event. IsFocused = {_canvas.IsFocused}. Have a mouse down event = {_haveMouseDown}, have a drag anchor = {_dragAnchor != null}, IsDragging = {Dragging}, Selecting = {Selecting}");
 
 			if (Dragging)
 			{
@@ -274,8 +276,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				//HandleSelectionRect(e);
-				if (_dragAnchor != null)
+				if (_haveMouseDown)
 				{
 					HandleSelectionRect(e);
 				}
@@ -338,6 +339,7 @@ namespace MSetExplorer
 
 		private void Canvas_MouseLeave(object sender, MouseEventArgs e)
 		{
+			_haveMouseDown = false;
 			if (Selecting)
 			{
 				_selectedArea.Visibility = Visibility.Hidden;
@@ -346,10 +348,6 @@ namespace MSetExplorer
 			if (Dragging)
 			{
 				_dragLine.Visibility = Visibility.Hidden;
-			}
-			else
-			{
-				_dragAnchor = null;
 			}
 		}
 
@@ -377,6 +375,7 @@ namespace MSetExplorer
 			else
 			{
 				_dragAnchor = e.GetPosition(relativeTo: _canvas);
+				_haveMouseDown = true;
 			}
 		}
 
@@ -513,20 +512,13 @@ namespace MSetExplorer
 		// Return the distance from the DragAnchor to the new mouse position.
 		private VectorInt? GetDragOffset(Point controlPos)
 		{
-			if (_dragAnchor == null)
-			{
-				return null;
-			}
-			else
-			{
-				var startP = new PointDbl(_dragAnchor.Value.X, _canvas.ActualHeight - _dragAnchor.Value.Y);
-				var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
-				var sizeDbl = endP.Diff(startP);
+			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
+			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
+			var sizeDbl = endP.Diff(startP);
 
-				var result = new VectorInt(sizeDbl.Round());
+			var result = new VectorInt(sizeDbl.Round());
 
-				return result;
-			}
+			return result;
 		}
 		
 		// Reposition the Selection Rectangle, keeping it's current size.
@@ -596,17 +588,17 @@ namespace MSetExplorer
 		// Position the current end of the drag line
 		private void SetDragPosition(Point controlPos)
 		{
-			if (_dragAnchor == null)
+			if (!_haveMouseDown)
 			{
 				return;
 			}
 
-			var dist = controlPos - _dragAnchor.Value;
+			var dist = controlPos - _dragAnchor;
 
 			// Horizontal
 			var x = DoubleHelper.RoundOff(dist.X, _pitch);
 
-			x = _dragAnchor.Value.X + x;
+			x = _dragAnchor.X + x;
 
 			if (x < 0)
 			{
@@ -620,7 +612,7 @@ namespace MSetExplorer
 
 			// Vertical
 			var y = DoubleHelper.RoundOff(dist.Y, _pitch);
-			y = _dragAnchor.Value.Y + y;
+			y = _dragAnchor.Y + y;
 
 			if (y < 0)
 			{
