@@ -162,8 +162,8 @@ namespace MSS.Common
 		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, VectorInt canvasControlOffset)
 		{
 			var result = new SizeInt(
-				canvasSizeInBlocks.Width + (Math.Abs(canvasControlOffset.X) > 0 ? 1 : 0),
-				canvasSizeInBlocks.Height + (Math.Abs(canvasControlOffset.Y) > 0 ? 1 : 0)
+				canvasSizeInBlocks.Width + (Math.Abs(canvasControlOffset.X) > 0 ? 2 : 0),
+				canvasSizeInBlocks.Height + (Math.Abs(canvasControlOffset.Y) > 0 ? 2 : 0)
 				);
 
 			return result;

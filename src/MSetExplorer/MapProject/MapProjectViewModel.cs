@@ -501,6 +501,9 @@ namespace MSetExplorer
 		private bool UpdateTheJobsCanvasSize(Job job)
 		{
 			var newCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
+			//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(new SizeDbl(CanvasSize), BlockSize, keepSquare: false);
+			//var newCanvasSizeInBlocks = sizeInWholeBlocks.Inflate(2);
+
 
 			if (newCanvasSizeInBlocks != job.CanvasSizeInBlocks)
 			{

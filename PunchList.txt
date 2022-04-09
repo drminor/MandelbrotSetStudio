@@ -1,12 +1,26 @@
-Iterations	Maps should be calculated incrementally according to the Steps / Job setting.	
-Navigate	Show Job Stack as tree and allow trimming and selecting of current
+Done
+
 Size		Replaying existing jobs with a different display size should not require creating a new Job Record.
 Display		Support non-square display and redraw as screen size changes. Center of current display should remain constant.
 Select		Support non-square selections -- contrain sizes to minimize exponent growth.
-Options		allow selections to not avoid exponent growth
+
+In Progress
+
+
+To Do
+Tune		Auto select # of cores
+Install		build installer to install core, MKL and gRPC server(s)
+
 Poster		add new window and project type to support the specification of display size. Use scroll bars to position current view.
 Image		add support to create .png and .tiff files
-Install		build installer to install core, MKL and gRPC server(s)
+
 Parallel	support using more that one gRPC server
+
+Navigate	Show Job Stack as tree and allow trimming and selecting of current
+
+Iterations	Maps should be calculated incrementally according to the Steps / Job setting.	
+Options		allow selections to not avoid exponent growth
+
+
 Market		make Windows Universall APP and put in MS Store.
 Manage		Edit Project, Trim Jobs and Map Sections

@@ -24,6 +24,10 @@ namespace MSetExplorer
 			var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(displaySize, blockSize);
 
+			//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(new SizeDbl(displaySize), blockSize, keepSquare: false);
+			//var canvasSizeInBlocks = sizeInWholeBlocks.Inflate(2);
+
+
 			CheckCanvasSize(displaySize, blockSize);
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
