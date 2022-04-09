@@ -48,10 +48,10 @@ namespace MSetExplorer
 		//void ProjectUpdateDescription(string description);
 
 		// ColorBand Methods
-		bool ColorBandSetOpen(string id);
+		//bool ColorBandSetOpen(string id);
 
-		void ColorBandSetSave();
-		void ColorBandSetSaveAs(string name, string? description, int? versionNumber);
+		//void ColorBandSetSave();
+		//void ColorBandSetSaveAs(string name, string? description, int? versionNumber);
 
 		//ColorBandSet? GetColorBandSet(string id);
 	}

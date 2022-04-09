@@ -20,7 +20,22 @@ namespace MSS.Common
 			var nrmArea = RNormalizer.Normalize(rArea, position, out var nrmPos);
 			var result = nrmArea.Translate(nrmPos);
 
+			Debug.WriteLine($"Calc Map Coords: Trans: {result}, Pos: {nrmPos}, Area: {nrmArea}, area rat: {GetAspectRatio(nrmArea)}, result rat: {GetAspectRatio(result)}");
+
 			return result;
+		}
+
+		private static double GetAspectRatio(RRectangle rRectangle)
+		{
+			if (BigIntegerHelper.TryConvertToDouble(rRectangle.WidthNumerator, out var w) && BigIntegerHelper.TryConvertToDouble(rRectangle.HeightNumerator, out var h))
+			{
+				var result = w / h;
+				return result;
+			}
+			else
+			{
+				return double.NaN;
+			}
 		}
 
 		private static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
@@ -39,7 +54,7 @@ namespace MSS.Common
 			var width = displaySize.Width;
 			var height = displaySize.Height;
 
-			if (width < height)
+			if (width >= height)
 			{
 				result = (int)Math.Round(width / Math.Pow(2, Math.Round(Math.Log2(width / pitchTarget))));
 			}
@@ -64,7 +79,7 @@ namespace MSS.Common
 			int w;
 			int h;
 
-			if (wRatio > hRatio)
+			if (wRatio >= hRatio)
 			{
 				// Width of image in pixels will take up the entire control.
 				w = displaySize.Width;
@@ -80,7 +95,7 @@ namespace MSS.Common
 				w = (int)Math.Round(displaySize.Height * wRat);
 
 				// Height of image in pixels will take up the entire control.
-				h = displaySize.Width;
+				h = displaySize.Height;
 			}
 
 			var result = new SizeInt(w, h);
@@ -101,7 +116,7 @@ namespace MSS.Common
 
 			// Calculate the new map coordinates using the existing position and the new size..
 			var newCoords = CombinePosAndSize(coords.Position, adjMapSize);
-			Debug.WriteLine($"\nThe new coords are : {newCoords},\n old = {coords}. (While calculating SamplePointDelta3.)\n");
+			//Debug.WriteLine($"\nThe new coords are : {newCoords},\n old = {coords}. (While calculating SamplePointDelta3.)\n");
 
 			coords = newCoords;
 			return result;
@@ -162,7 +177,7 @@ namespace MSS.Common
 			var mapOrigin = coords.Position;
 
 			var distance = mapOrigin.Diff(destinationOrigin);
-			Debug.WriteLine($"Our origin is {mapCoords.Position}, repo origin is {destinationOrigin}, for a distance of {distance}.");
+			//Debug.WriteLine($"Our origin is {mapCoords.Position}, repo origin is {destinationOrigin}, for a distance of {distance}.");
 
 			BigVector result;
 			if (distance.X == 0 && distance.Y == 0)
@@ -199,7 +214,7 @@ namespace MSS.Common
 			var blocksV = BigInteger.DivRem(offsetInSamplePoints.Y, blockSize.Height, out var remainderV);
 
 			var wholeBlocks = offsetInSamplePoints.DivRem(blockSize, out var remainder);
-			Debug.WriteLine($"Whole blocks: {wholeBlocks}, Remaining Pixels: {remainder}.");
+			//Debug.WriteLine($"Whole blocks: {wholeBlocks}, Remaining Pixels: {remainder}.");
 
 			if (remainderH < 0)
 			{

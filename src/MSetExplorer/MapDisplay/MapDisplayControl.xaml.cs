@@ -62,6 +62,7 @@ namespace MSetExplorer
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
+				//_selectionRectangle.Enabled = true;
 
 				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(_canvas) : null;
 
@@ -104,6 +105,11 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
 				UpdateTheCanvasSize(_vm.CanvasSize);
+			}
+
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJob) && _selectionRectangle != null)
+			{
+				_selectionRectangle.Enabled = _vm.CurrentJob != null;
 			}
 		}
 

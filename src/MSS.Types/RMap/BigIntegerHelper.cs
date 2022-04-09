@@ -250,6 +250,20 @@ namespace MSS.Types
 				: throw new OverflowException($"When converting BigInteger: {n} to a double, precision was lost.");
 		}
 
+		public static bool TryConvertToDouble(BigInteger n, out double r)
+		{
+			if (!SafeCastToDouble(n))
+			{
+				r = double.NaN;
+				return false;
+			}
+			else
+			{
+				r = (double)n;
+				return true;
+			}
+		}
+
 		private static double ConvertToDouble(BigInteger n)
 		{
 			if (!SafeCastToDouble(n))

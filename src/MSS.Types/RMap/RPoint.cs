@@ -98,6 +98,18 @@ namespace MSS.Types
 			return result;
 		}
 
+		public string ToString(bool reduce)
+		{
+			if (reduce)
+			{
+				return BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
+			}
+			else
+			{
+				return BigIntegerHelper.GetDisplay(this);
+			}
+		}
+
 		#region IEqualityComparer / IEquatable Support
 
 		public bool Equals(RPoint? a, RPoint? b)

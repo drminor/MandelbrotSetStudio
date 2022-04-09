@@ -17,6 +17,9 @@ namespace MSS.Types
 			Y2 = y2;
 		}
 
+		public RectangleInt(int[] vals) : this(vals[0], vals[1], vals[2], vals[3])
+		{ }
+
 		public int X1 { get; init; }
 		public int X2 { get; init; }
 		public int Y1 { get; init; }

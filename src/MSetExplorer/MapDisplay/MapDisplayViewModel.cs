@@ -15,7 +15,6 @@ namespace MSetExplorer
 		private static bool _keepDisplaySquare;
 
 		private readonly IMapLoaderManager _mapLoaderManager;
-
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
 		private SizeInt _canvasSize;
@@ -32,7 +31,7 @@ namespace MSetExplorer
 
 		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, SizeInt blockSize)
 		{
-			_keepDisplaySquare = true;
+			_keepDisplaySquare = false;
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
@@ -76,6 +75,7 @@ namespace MSetExplorer
 					var previousJob = _currentJob;
 					_currentJob = value?.Clone();
 					HandleCurrentJobChanged(previousJob, _currentJob);
+					OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentJob));
 				}
 			}
 		}

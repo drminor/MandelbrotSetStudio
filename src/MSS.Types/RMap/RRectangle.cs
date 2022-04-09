@@ -98,7 +98,7 @@ namespace MSS.Types
 		{
 			var reduced = Reducer.Reduce(this);
 
-			var result = $"P1: {reduced.LeftBot}, P2: {reduced.RightTop}";
+			var result = $"P1: {reduced.LeftBot.ToString(reduce: false)}, P2: {reduced.RightTop.ToString(reduce: false)}";
 			return result;
 		}
 

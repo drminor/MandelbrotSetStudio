@@ -356,43 +356,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public void ColorBandSetSave()
-		{
-			// TODO: Fix Me
-			//var curProject = CurrentProject;
-
-			//if (curProject != null)
-			//{
-			//	var colorBandSet = curProject.CurrentColorBandSet;
-			//	if (colorBandSet != null)
-			//	{
-			//		if (colorBandSet.OnFile)
-			//		{
-			//			_projectAdapter.UpdateColorBandSet(colorBandSet);
-			//		}
-			//		else
-			//		{
-			//			var updatedColorBandSet = _projectAdapter.CreateColorBandSet(colorBandSet);
-			//			curProject.CurrentColorBandSet = updatedColorBandSet;
-			//		}
-			//	}
-			//}
-		}
-		
-		public void ColorBandSetSaveAs(string name, string? description, int? versionNumber)
-		{
-			// TODO: Fix Me
-			//var curProject = CurrentProject;
-
-			//if (curProject != null && curProject.CurrentColorBandSet != null)
-			//{
-			//	var colorBandSet = curProject.CurrentColorBandSet.CreateNewCopy();
-			//	var updatedcolorBandSet = _projectAdapter.CreateColorBandSet(colorBandSet);
-
-			//	curProject.CurrentColorBandSet = updatedcolorBandSet;
-			//}
-		}
-
 		#endregion
 
 		#region Public Methods - Job

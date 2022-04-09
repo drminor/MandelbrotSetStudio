@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -17,12 +18,13 @@ namespace MSetExplorer
 		private readonly Canvas _canvas;
 		private readonly SizeInt _blockSize; // Also used as the initial size of the selection rectangle.
 		private readonly Rectangle _selectedArea;
+		private Size _defaultSelectionSize;
 		private readonly Line _dragLine;
 
 		private int _pitch;
 		private bool _selecting;
 		private bool _dragging;
-		private Point _dragAnchor;
+		private Point? _dragAnchor;
 		private bool _dragHasBegun;
 
 		internal event EventHandler<AreaSelectedEventArgs>? AreaSelected;
@@ -57,10 +59,12 @@ namespace MSetExplorer
 
 		private Rectangle BuildSelectionRectangle(Canvas canvas)
 		{
+			_defaultSelectionSize = GetDefaultSelectionSize(canvas, _blockSize.Width);
+
 			var result = new Rectangle()
 			{
-				Width = _blockSize.Width,
-				Height = _blockSize.Height,
+				Width = _defaultSelectionSize.Width,
+				Height = _defaultSelectionSize.Height,
 				Fill = Brushes.Transparent,
 				Stroke = BuildDrawingBrush(),
 				StrokeThickness = 4,
@@ -91,29 +95,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			_pitch = CalculatePitch(_canvas);
-		}
-
-		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
-		private int CalculatePitch(Canvas canvas)
-		{
-			int result;
-
-			if (canvas.ActualWidth < canvas.ActualHeight)
-			{
-				result = (int) Math.Round(canvas.ActualWidth / Math.Pow(2, Math.Round(Math.Log2(canvas.ActualWidth / PITCH_TARGET))));
-			}
-			else
-			{
-				result = (int)Math.Round(canvas.ActualHeight / Math.Pow(2, Math.Round(Math.Log2(canvas.ActualHeight / PITCH_TARGET))));
-			}
-
-			Debug.WriteLine($"The new ScreenSelection Pitch is {result}.");
-			return result;
-		}
-
 		#endregion
 
 		#region Public Properties
@@ -124,15 +105,29 @@ namespace MSetExplorer
 			{
 				var p = SelectedPosition;
 				var s = SelectedSize;
-				var result = new RectangleDbl(new PointDbl(p.X, p.Y), new SizeDbl(s.Width, s.Height));
+
+				var x = new Rect(p, s);
+				var result = ScreenTypeHelper.ConvertToRectangleDbl(x);
+				var result2 = new RectangleDbl(new PointDbl(p.X, p.Y), new SizeDbl(s.Width, s.Height));
 
 				return result;
 			}
 		}
 
+		public bool Enabled { get; set; }
+
 		#endregion
 
 		#region Event Handlers
+
+		private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			_pitch = CalculatePitch(_canvas);
+			_defaultSelectionSize = GetDefaultSelectionSize(_canvas, _blockSize.Width);
+
+			_selectedArea.Width = _defaultSelectionSize.Width;
+			_selectedArea.Height = _defaultSelectionSize.Height;
+		}
 
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
 		{
@@ -175,21 +170,27 @@ namespace MSetExplorer
 
 			//Debug.WriteLine("The canvas received a MouseWheel event.");
 
-			var cPos = SelectedPosition;
+			//var cPos = SelectedPosition;
 			var cSize = SelectedSize;
 
-			Point newPos;
-			Size newSize;
+			//Point newPos;
+			//Size newSize;
+
+			Rect selection;
 
 			if (e.Delta < 0)
 			{
-				newPos = new Point(cPos.X - _pitch, cPos.Y - _pitch);
-				newSize = new Size(cSize.Width + _pitch * 2, cSize.Height + _pitch * 2);
+				// Reverse roll, zooms out.
+				//newPos = new Point(cPos.X - _pitch, cPos.Y - _pitch);
+				//newSize = new Size(cSize.Width + _pitch * 2, cSize.Height + _pitch * 2);
+				selection = Expand(SelectedPosition, SelectedSize, PITCH_TARGET);
 			}
 			else if (e.Delta > 0 && cSize.Width >= _pitch * 4 && cSize.Height >= _pitch * 4)
 			{
-				newPos = new Point(cPos.X + _pitch, cPos.Y + _pitch);
-				newSize = new Size(cSize.Width - _pitch * 2, cSize.Height - _pitch * 2);
+				// Forward roll, zooms in.
+				//newPos = new Point(cPos.X + _pitch, cPos.Y + _pitch);
+				//newSize = new Size(cSize.Width - _pitch * 2, cSize.Height - _pitch * 2);
+				selection = Expand(SelectedPosition, SelectedSize, -1 * PITCH_TARGET);
 			}
 			else
 			{
@@ -197,7 +198,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			Move(newPos, newSize);
+			Move(selection.Location, selection.Size);
 
 			e.Handled = true;
 		}
@@ -233,16 +234,16 @@ namespace MSetExplorer
 
 		private void HandleDragMove(MouseEventArgs e)
 		{
-			if ((!Dragging) && e.LeftButton == MouseButtonState.Pressed)
+			if (Enabled && (!Dragging) && _dragAnchor != null && e.LeftButton == MouseButtonState.Pressed)
 			{
 				var controlPos = e.GetPosition(relativeTo: _canvas);
-				var dist = _dragAnchor - controlPos;
+				var dist = _dragAnchor.Value - controlPos;
 				if (Math.Abs(dist.Length) > DRAG_TRIGGER_DIST)
 				{
-					_dragLine.X1 = _dragAnchor.X;
-					_dragLine.Y1 = _dragAnchor.Y;
-					_dragLine.X2 = _dragAnchor.X;
-					_dragLine.Y2 = _dragAnchor.Y;
+					_dragLine.X1 = _dragAnchor.Value.X;
+					_dragLine.Y1 = _dragAnchor.Value.Y;
+					_dragLine.X2 = _dragAnchor.Value.X;
+					_dragLine.Y2 = _dragAnchor.Value.Y;
 
 					Dragging = true;
 					_dragHasBegun = true;
@@ -259,13 +260,25 @@ namespace MSetExplorer
 
 		private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
+			if (!Enabled)
+			{
+				Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event -- we are disabled.");
+				return;
+			}
+
+			Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event. IsFocused = {_canvas.IsFocused}. Have a drag anchor = {_dragAnchor != null}, IsDragging = {Dragging}, Selecting = {Selecting}");
+
 			if (Dragging)
 			{
 				HandleDragLine(e);
 			}
 			else
 			{
-				HandleSelectionRect(e);
+				//HandleSelectionRect(e);
+				if (_dragAnchor != null)
+				{
+					HandleSelectionRect(e);
+				}
 			}
 		}
 
@@ -312,8 +325,14 @@ namespace MSetExplorer
 				Dragging = false;
 				var offset = GetDragOffset(DragLineTerminus);
 
-				Debug.WriteLine($"We are handling a DragComplete with offset:{offset}.");
-				ImageDragged?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset));
+				if (offset == null)
+				{
+					Debug.WriteLine($"DragOffset is null, cannot process the DragComplete event:{offset}.");
+				}
+				else
+				{
+					ImageDragged?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset.Value));
+				}
 			}
 		}
 
@@ -327,6 +346,10 @@ namespace MSetExplorer
 			if (Dragging)
 			{
 				_dragLine.Visibility = Visibility.Hidden;
+			}
+			else
+			{
+				_dragAnchor = null;
 			}
 		}
 
@@ -350,6 +373,10 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine("Canvas Enter did not move the focus to the DragLine.");
 				}
+			}
+			else
+			{
+				_dragAnchor = e.GetPosition(relativeTo: _canvas);
 			}
 		}
 
@@ -384,8 +411,8 @@ namespace MSetExplorer
 					else
 					{
 						_selectedArea.Visibility = Visibility.Hidden;
-						_selectedArea.Width = _blockSize.Width;
-						_selectedArea.Height = _blockSize.Height;
+						_selectedArea.Width = _defaultSelectionSize.Width;
+						_selectedArea.Height = _defaultSelectionSize.Height;
 					}
 
 					_selecting = value;
@@ -484,15 +511,22 @@ namespace MSetExplorer
 		}
 
 		// Return the distance from the DragAnchor to the new mouse position.
-		private VectorInt GetDragOffset(Point controlPos)
+		private VectorInt? GetDragOffset(Point controlPos)
 		{
-			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
-			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
-			var sizeDbl = endP.Diff(startP);
+			if (_dragAnchor == null)
+			{
+				return null;
+			}
+			else
+			{
+				var startP = new PointDbl(_dragAnchor.Value.X, _canvas.ActualHeight - _dragAnchor.Value.Y);
+				var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
+				var sizeDbl = endP.Diff(startP);
 
-			var result = new VectorInt(sizeDbl.Round());
+				var result = new VectorInt(sizeDbl.Round());
 
-			return result;
+				return result;
+			}
 		}
 		
 		// Reposition the Selection Rectangle, keeping it's current size.
@@ -562,12 +596,17 @@ namespace MSetExplorer
 		// Position the current end of the drag line
 		private void SetDragPosition(Point controlPos)
 		{
-			var dist = controlPos - _dragAnchor;
+			if (_dragAnchor == null)
+			{
+				return;
+			}
+
+			var dist = controlPos - _dragAnchor.Value;
 
 			// Horizontal
 			var x = DoubleHelper.RoundOff(dist.X, _pitch);
 
-			x = _dragAnchor.X + x;
+			x = _dragAnchor.Value.X + x;
 
 			if (x < 0)
 			{
@@ -581,7 +620,7 @@ namespace MSetExplorer
 
 			// Vertical
 			var y = DoubleHelper.RoundOff(dist.Y, _pitch);
-			y = _dragAnchor.Y + y;
+			y = _dragAnchor.Value.Y + y;
 
 			if (y < 0)
 			{
@@ -600,6 +639,64 @@ namespace MSetExplorer
 			{
 					DragLineTerminus = newDlt;
 			}
+		}
+
+		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
+		private int CalculatePitch(Canvas canvas)
+		{
+			int result;
+
+			if (canvas.ActualWidth >= canvas.ActualHeight)
+			{
+				result = (int)Math.Round(canvas.ActualWidth / Math.Pow(2, Math.Round(Math.Log2(canvas.ActualWidth / PITCH_TARGET))));
+			}
+			else
+			{
+				result = (int)Math.Round(canvas.ActualHeight / Math.Pow(2, Math.Round(Math.Log2(canvas.ActualHeight / PITCH_TARGET))));
+			}
+
+			Debug.WriteLine($"The new ScreenSelection Pitch is {result}.");
+			return result;
+		}
+
+		private Rect Expand(Point p, Size s, double amount)
+		{
+			Size newSize;
+			if (_canvas.Width >= _canvas.Height)
+			{
+				var w = s.Width + amount * 2;
+				var h = w * (_canvas.ActualHeight / _canvas.ActualWidth);
+				newSize = new Size(w, h);
+			}
+			else
+			{
+				var h = s.Height + amount * 2;
+				var w = h * (_canvas.ActualWidth / _canvas.ActualHeight);
+				newSize = new Size(w, h);
+			}
+
+			var pos = new Point(p.X - newSize.Width / 2, p.Y - newSize.Height / 2);
+
+			return new Rect(pos, newSize);
+		}
+
+		private Size GetDefaultSelectionSize(Canvas canvas, double defaultSideLength)
+		{
+			Size result;
+
+			var w = canvas.ActualWidth;
+			var h = canvas.ActualHeight;
+
+			if (w >= h)
+			{
+				result = new Size(defaultSideLength, defaultSideLength * (h / w));
+			}
+			else
+			{
+				result = new Size(defaultSideLength * (w / h), defaultSideLength);
+			}
+
+			return result;
 		}
 
 		//private double RoundOff(double number, int interval)

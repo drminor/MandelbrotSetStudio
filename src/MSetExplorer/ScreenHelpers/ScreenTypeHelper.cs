@@ -30,6 +30,11 @@ namespace MSetExplorer
 			return new SizeDbl(size.Width, size.Height);
 		}
 
+		public static RectangleDbl ConvertToRectangleDbl(Rect rect)
+		{
+			return new RectangleDbl(rect.Left, rect.Right, rect.Top, rect.Bottom);
+		}
+
 		#endregion
 
 		#region Convert To Widows 

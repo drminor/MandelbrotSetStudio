@@ -369,23 +369,6 @@ namespace MSS.Types
 
 		public bool Equals(ColorBandSet? other)
 		{
-			//return other != null && Id == other.Id && (other.Id != ObjectId.Empty || DateCreated == other.DateCreated);
-
-			//if (other is null || Id != other.Id)
-			//{
-			//	return false;
-			//}
-
-			//if (Id.Equals(ObjectId.Empty))
-			//{
-			//	var result = other.DateCreated == DateCreated;
-			//	return result;
-			//}
-			//else
-			//{
-			//	return true;
-			//}
-
 			return other != null
 				&& Id.Equals(other.Id);
 		}

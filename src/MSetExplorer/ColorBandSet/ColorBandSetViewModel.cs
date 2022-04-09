@@ -111,6 +111,8 @@ namespace MSetExplorer
 					Histogram.Reset(value.HighCutOff);
 					PopulateHistorgram(_mapSections, Histogram);
 					_mapSectionHistogramProcessor.ProcessingEnabled = true;
+
+					UpdatePercentages();
 				}
 				else
 				{
@@ -409,8 +411,6 @@ namespace MSetExplorer
 				var newSet = ColorBandSet.CreateNewCopy();
 
 				Debug.Assert(newSet != ColorBandSet, "The new one is == to the old one.");
-
-
 				//CheckThatColorBandsWereUpdatedProperly(_colorBandSet, newSet, throwOnMismatch: false);
 
 				Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}, name: {newSet.Name}.");

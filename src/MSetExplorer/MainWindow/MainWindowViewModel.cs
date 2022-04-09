@@ -155,7 +155,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
-				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet?.Clone();
+				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet.Clone();
 				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 			}
 		}
