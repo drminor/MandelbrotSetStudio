@@ -268,7 +268,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event. IsFocused = {_canvas.IsFocused}. Have a mouse down event = {_haveMouseDown}, have a drag anchor = {_dragAnchor != null}, IsDragging = {Dragging}, Selecting = {Selecting}");
+			Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event. IsFocused = {_canvas.IsFocused}. Have a mouse down event = {_haveMouseDown}, IsDragging = {Dragging}, Selecting = {Selecting}");
 
 			if (Dragging)
 			{

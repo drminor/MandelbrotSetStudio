@@ -110,18 +110,23 @@ namespace MSS.Common
 
 		public static RSize GetSamplePointDelta(ref RRectangle coords, SizeInt canvasSize)
 		{
-			var samplePointDelta = canvasSize.Width > canvasSize.Height
-				? BigIntegerHelper.Divide(coords.Width, canvasSize.Width)
-				: BigIntegerHelper.Divide(coords.Height, canvasSize.Height);
+			//var samplePointDelta = canvasSize.Width > canvasSize.Height
+			//	? BigIntegerHelper.Divide(coords.Width, canvasSize.Width)
+			//	: BigIntegerHelper.Divide(coords.Height, canvasSize.Height);
 
-			var result = new RSize(samplePointDelta);
+			var spdH = BigIntegerHelper.Divide(coords.Width, canvasSize.Width);
+			var spdV = BigIntegerHelper.Divide(coords.Height, canvasSize.Height);
+
+			// Take the smallest value
+			RSize result = spdH.Value >= spdV.Value
+				? new RSize(spdV)
+				: new RSize(spdH);
 
 			// The size of the new map is equal to the product of the number of samples by the new samplePointDelta.
 			var adjMapSize = result.Scale(canvasSize);
 
 			// Calculate the new map coordinates using the existing position and the new size..
 			var newCoords = CombinePosAndSize(coords.Position, adjMapSize);
-			//Debug.WriteLine($"\nThe new coords are : {newCoords},\n old = {coords}. (While calculating SamplePointDelta3.)\n");
 
 			coords = newCoords;
 			return result;
@@ -134,6 +139,65 @@ namespace MSS.Common
 
 			return result;
 		}
+
+		// --- Diagnostics ----
+
+		public static SizeDbl GetSamplePointDiag(RRectangle coords, SizeInt canvasSize, out RectangleDbl newCoords)
+		{
+			var rectangleDbl = ConvertToRectangleDbl(coords);
+
+			var spdH = rectangleDbl.Width / canvasSize.Width;
+			var spdV = rectangleDbl.Height / canvasSize.Height;
+
+			var result = new SizeDbl(Math.Min(spdH, spdV));
+			var adjMapSize = result.Scale(canvasSize);
+
+			newCoords = new RectangleDbl(rectangleDbl.Position, adjMapSize);
+
+			return result;
+		}
+
+		public static void ReportSamplePointDiff(RSize spd, SizeDbl spdD, RRectangle origCoords, RRectangle coords, RectangleDbl coordsD)
+		{
+			var origCoordsD = ConvertToRectangleDbl(origCoords);
+
+			var realCoordsD = ConvertToRectangleDbl(coords);
+			var coordsDiff = realCoordsD.Diff(coordsD).Abs();
+
+			var realSpdD = ConvertToSizeDbl(spd);
+			var spdDiff = realSpdD.Diff(spdD).Abs();
+
+			Debug.WriteLine($"\nThe new coords are : {coords}, old = {origCoords}. Using SamplePointDelta: {spd}\n");
+
+			if (coordsDiff.Width > 0 || coordsDiff.Height > 0)
+			{
+				var perWDiff = 100 * coordsDiff.Width / realCoordsD.Width;
+				var perHDiff = 100 * coordsDiff.Height / realCoordsD.Height;
+				Debug.WriteLine($"Compare to double math: Coords Size differs by w:{perWDiff}, h:{perHDiff} percentage.");
+			}
+
+			//Debug.WriteLine($"\nThe new coords are: {realCoordsD},\n old = {origCoordsD}, Compare: {coordsD}. Diff: {coordsDiff}, Exp: {coords.Exponent}");
+			//Debug.WriteLine($"\nThe new SamplePointDelta is: {realSpdD}, Compare: {spdD}. Diff: {spdDiff}, Exp: {spd.Exponent}.");
+		}
+
+		private static RectangleDbl ConvertToRectangleDbl(RRectangle rRectangle)
+		{
+			return new RectangleDbl(
+				BigIntegerHelper.ConvertToDouble(rRectangle.Left),
+				BigIntegerHelper.ConvertToDouble(rRectangle.Right),
+				BigIntegerHelper.ConvertToDouble(rRectangle.Bottom),
+				BigIntegerHelper.ConvertToDouble(rRectangle.Top)
+				);
+		}
+
+		private static SizeDbl ConvertToSizeDbl(RSize rSize)
+		{
+			return new SizeDbl(
+				BigIntegerHelper.ConvertToDouble(rSize.Width), 
+				BigIntegerHelper.ConvertToDouble(rSize.Height)
+				);
+		}
+
 
 		#endregion
 
@@ -210,7 +274,7 @@ namespace MSS.Common
 			// # of whole sample points between the source and destination origins.
 			var offsetInSamplePoints = nrmDistance.Divide(nrmSamplePointDelta);
 
-			return new BigVector(offsetInSamplePoints);
+			return offsetInSamplePoints;
 		}
 
 		private static BigVector GetOffsetAndRemainder(BigVector offsetInSamplePoints, SizeInt blockSize, out VectorInt canvasControlOffset)
@@ -218,7 +282,7 @@ namespace MSS.Common
 			var blocksH = BigInteger.DivRem(offsetInSamplePoints.X, blockSize.Width, out var remainderH);
 			var blocksV = BigInteger.DivRem(offsetInSamplePoints.Y, blockSize.Height, out var remainderV);
 
-			var wholeBlocks = offsetInSamplePoints.DivRem(blockSize, out var remainder);
+			//var wholeBlocks = offsetInSamplePoints.DivRem(blockSize, out var remainder);
 			//Debug.WriteLine($"Whole blocks: {wholeBlocks}, Remaining Pixels: {remainder}.");
 
 			if (remainderH < 0)
@@ -268,7 +332,7 @@ namespace MSS.Common
 
 			if (inverted)
 			{
-				posT = new BigVector(repoPosition.XNumerator, (repoPosition.YNumerator + 1) * -1);
+				posT = new BigVector(repoPosition.X, (repoPosition.Y + 1) * -1);
 			}
 			else
 			{
@@ -276,9 +340,9 @@ namespace MSS.Common
 			}
 
 			var screenOffsetRat = posT.Diff(mapBlockOffset);
-			var reducedOffset = Reducer.Reduce(screenOffsetRat);
+			//var reducedOffset = Reducer.Reduce(screenOffsetRat);
 
-			if (BigIntegerHelper.TryConvertToInt(reducedOffset, out var values))
+			if (BigIntegerHelper.TryConvertToInt(screenOffsetRat.Values, out var values))
 			{
 				var result = new PointInt(values);
 				return result;

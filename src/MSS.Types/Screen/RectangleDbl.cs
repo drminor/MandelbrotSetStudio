@@ -68,6 +68,18 @@ namespace MSS.Types
 			return result;
 		}
 
+		public RectangleDbl Diff(RectangleDbl other)
+		{
+			var result = new RectangleDbl(X1 - other.X1, X2 - other.X2, Y1 - other.Y1, Y2 - other.Y2);
+
+			return result;
+		}
+
+		public RectangleDbl Abs()
+		{
+			return new RectangleDbl(Math.Abs(X1), Math.Abs(X2), Math.Abs(Y1), Math.Abs(Y2));
+		}
+
 		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)

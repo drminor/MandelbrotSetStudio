@@ -16,12 +16,21 @@ namespace MSetExplorer
 		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
-			var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
+			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
+
+			// Use the exact canvas size -- do not adjust based on aspect ration of the newArea.
+			var displaySize = canvasSize;
+
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(displaySize, blockSize);
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var coords = mSetInfo.Coords;
 			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref coords, displaySize);
+			//Debug.WriteLine($"\nThe new coords are : {coords},\n old = {mSetInfo.Coords}. (While calculating SamplePointDelta.)\n");
+
+			var samplePointDeltaD = RMapHelper.GetSamplePointDiag(mSetInfo.Coords, displaySize, out var newDCoords);
+			RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, mSetInfo.Coords, coords, newDCoords);
+
 
 			// Get a subdivision record from the database.
 			var subdivision = GetSubdivision(samplePointDelta, blockSize, projectAdapter);
@@ -77,7 +86,9 @@ namespace MSetExplorer
 
 		public static MSetInfo BuildInitialMSetInfo(int maxIterations)
 		{
-			var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
+			//var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
+			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
+
 			var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, requestsPerJob: 100);
 			var result = new MSetInfo(coords, mapCalcSettings);
 

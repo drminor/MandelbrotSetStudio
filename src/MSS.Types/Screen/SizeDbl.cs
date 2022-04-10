@@ -46,15 +46,15 @@ namespace MSS.Types
 		//	return new SizeDbl(Width * factor, Height * factor);
 		//}
 
-		//public SizeDbl Translate(PointDbl offset)
-		//{
-		//	return new SizeDbl(Width + offset.X, Height + offset.Y);
-		//}
+		public SizeDbl Translate(PointDbl offset)
+		{
+			return new SizeDbl(Width + offset.X, Height + offset.Y);
+		}
 
-		//public SizeDbl Scale(SizeInt factor)
-		//{
-		//	return new SizeDbl(Width * factor.Width, Height * factor.Height);
-		//}
+		public SizeDbl Scale(SizeInt factor)
+		{
+			return new SizeDbl(Width * factor.Width, Height * factor.Height);
+		}
 
 		//public SizeDbl Translate(SizeInt offset)
 		//{
@@ -107,15 +107,15 @@ namespace MSS.Types
 		//	return new SizeDbl(Width - offset.Width, Height - offset.Height);
 		//}
 
-		//public SizeDbl Diff(SizeDbl offset)
-		//{
-		//	return new SizeDbl(Width - offset.Width, Height - offset.Height);
-		//}
+		public SizeDbl Diff(SizeDbl offset)
+		{
+			return new SizeDbl(Width - offset.Width, Height - offset.Height);
+		}
 
-		//public SizeDbl Abs()
-		//{
-		//	return new SizeDbl(Math.Abs(Width), Math.Abs(Height));
-		//}
+		public SizeDbl Abs()
+		{
+			return new SizeDbl(Math.Abs(Width), Math.Abs(Height));
+		}
 
 		//public SizeInt Ceiling()
 		//{

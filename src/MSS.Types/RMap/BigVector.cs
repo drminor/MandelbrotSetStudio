@@ -4,8 +4,10 @@ using System.Numerics;
 
 namespace MSS.Types
 {
-	public class BigVector : RVector, IEquatable<BigVector>, IEqualityComparer<BigVector>, ICloneable
+	public class BigVector : IEquatable<BigVector>, IEqualityComparer<BigVector>, ICloneable
 	{
+		public BigInteger[] Values { get; init; }
+
 		public BigVector() : this(0, 0)
 		{ }
 
@@ -16,23 +18,25 @@ namespace MSS.Types
 		public BigVector(BigInteger extent) : this(extent, extent)
 		{ }
 
-		public BigVector(RVector rVector) : this(ConvertToBigVector(rVector).Values)
-		{ }
+		//public BigVector(RVector rVector) : this(ConvertToBigVector(rVector).Values)
+		//{ }
 
-		public BigVector(BigInteger width, BigInteger height) : base(width, height, 0)
-		{ }
+		public BigVector(BigInteger x, BigInteger y)
+		{
+			Values = new BigInteger[] { x, y };
+		}
 
-		public new BigInteger X => XNumerator;
-		public new BigInteger Y => YNumerator;
+		public BigInteger X => Values[0];
+		public BigInteger Y => Values[1];
 
 		object ICloneable.Clone()
 		{
 			return Clone();
 		}
 
-		public new BigVector Clone()
+		public BigVector Clone()
 		{
-			return (BigVector) base.Clone();
+			return new BigVector(X, Y);
 		}
 
 		public BigVector Scale(SizeInt factor)
@@ -52,7 +56,7 @@ namespace MSS.Types
 
 		public BigVector Translate(BigVector amount)
 		{
-			return new BigVector(X + amount.XNumerator, Y + amount.YNumerator);
+			return new BigVector(X + amount.X, Y + amount.Y);
 		}
 
 		public BigVector Diff(BigVector vector)
@@ -121,7 +125,7 @@ namespace MSS.Types
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(XNumerator, YNumerator);
+			return HashCode.Combine(X, Y);
 		}
 
 		public int GetHashCode(BigVector obj)

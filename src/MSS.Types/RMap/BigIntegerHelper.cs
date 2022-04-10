@@ -16,6 +16,58 @@ namespace MSS.Types
 
 		#region Division
 
+		public static RValue DivideNew(RValue dividend, int divisor)
+		{
+			var exp = dividend.Exponent;
+
+			if (exp > 0)
+			{
+				throw new InvalidOperationException("When calling Divide, the dividend's exponent must be 0 or negative.");
+			}
+
+			var bDivisor = new BigInteger(divisor * Math.Pow(2, -1 * dividend.Exponent));
+			var rDivisor = new RValue(bDivisor, dividend.Exponent);
+
+			var newNumerator = DivideNew(dividend.Value, rDivisor.Value, out var newExponent);
+
+			 var result = new RValue(newNumerator, -1 * newExponent);
+			return result;
+		}
+
+		public static BigInteger DivideNew(BigInteger dividend, BigInteger divisor, out int newExponent)
+		{
+			newExponent = 0;
+			//var tolerance = divisor;
+
+			var tolerance = divisor / 100;
+			
+			var result = BigInteger.DivRem(dividend, divisor, out var remainder);
+			//var adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+			//var adjRem = remainder;
+
+
+			//var adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
+			//var adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
+			//ReportDivideValues(dividend, dividendExponent, divisor, dividend, result, remainder, exponentDelta);
+
+			while (result == 0 || remainder > tolerance)
+			{
+				newExponent++;
+				var adjDividend = dividend * new BigInteger(Math.Pow(2, newExponent));
+
+				result = BigInteger.DivRem(adjDividend, divisor, out remainder);
+				//adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+				//adjRem = ((double)remainder);
+
+
+				//adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
+				//adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
+				//ReportDivideValues(dividend, dividendExponent, divisor, adjDividend, result, remainder, exponentDelta);
+			}
+
+			return result;
+		}
+
 		public static RValue Divide(RValue dividend, int divisor)
 		{
 			var newNumerator = Divide(dividend.Value, dividend.Exponent, divisor, out var newExponent);
@@ -25,50 +77,66 @@ namespace MSS.Types
 
 		public static BigInteger Divide(BigInteger dividend, int dividendExponent, int divisor, out int newExponent)
 		{
+			var resCounter = 0;
 			var exponentDelta = 0;
-			var tolerance = 20d / divisor;
+			var tolerance = 0.005 * divisor;
+			//var tolerance = 20d;
+
 			var bDivisor = new BigInteger(divisor);
 
 			var result = BigInteger.DivRem(dividend, bDivisor, out var remainder);
 			var adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+			//var adjRem = ((double)remainder);
+
+
 			//var adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
 			//var adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
 			//ReportDivideValues(dividend, dividendExponent, divisor, dividend, result, remainder, exponentDelta);
 
-			while (adjRem > tolerance)
+			while (result == 0 || adjRem > tolerance)
 			{
+				if (result != 0)
+				{
+					resCounter++;
+				}
+
 				exponentDelta++;
 				var adjDividend = dividend * new BigInteger(Math.Pow(2, exponentDelta));
 
 				result = BigInteger.DivRem(adjDividend, bDivisor, out remainder);
 				adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+				//adjRem = ((double)remainder);
+
+
 				//adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
 				//adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
 				//ReportDivideValues(dividend, dividendExponent, divisor, adjDividend, result, remainder, exponentDelta);
 			}
 
+			Debug.WriteLine($"Divide continued {resCounter} times after getting first non-zero result.");
+
 			newExponent = dividendExponent - exponentDelta;
 			return result;
 		}
 
-		private static void ReportDivideValues(BigInteger dividend, int dividendExponent, int divisor, BigInteger adjDividend, BigInteger result, BigInteger remainder, int exponentDelta)
-		{
-			var dividendD = ConvertToDouble(dividend, dividendExponent);
-			var trueResult = dividendD / divisor;
+		//private static void ReportDivideValues(BigInteger dividend, int dividendExponent, int divisor, BigInteger adjDividend, BigInteger result, BigInteger remainder, int exponentDelta)
+		//{
+		//	var dividendD = ConvertToDouble(dividend, dividendExponent);
+		//	var trueResult = dividendD / divisor;
 
-			var remainderD = ConvertToDouble(remainder);
+		//	var remainderD = ConvertToDouble(remainder);
 
-			var res = ConvertToDouble(result, dividendExponent - exponentDelta);
-			var denominator = Math.Pow(2, -1 * (dividendExponent - exponentDelta));
+		//	var res = ConvertToDouble(result, dividendExponent - exponentDelta);
+		//	var denominator = Math.Pow(2, -1 * (dividendExponent - exponentDelta));
 
-			var adjRemainder = remainderD / denominator;
+		//	var adjRemainder = remainderD / denominator;
 
-			var extent = res * divisor;
-			var overallDif = dividendD - extent;
+		//	var extent = res * divisor;
+		//	var overallDif = dividendD - extent;
 
-			Debug.WriteLine($"Dividend: {dividendD}, Divisor: {divisor}, trueResult: {trueResult}, currentDividend: {adjDividend}, remainder: {remainder}");
-			Debug.WriteLine($"Result = {res} ({result}/{denominator}), extent={extent}, overallDif={overallDif}, adjRem: {adjRemainder} ");
-		}
+		//	Debug.WriteLine($"Dividend: {dividendD}, Divisor: {divisor}, trueResult: {trueResult}, currentDividend: {adjDividend}, remainder: {remainder}");
+		//	Debug.WriteLine($"Result = {res} ({result}/{denominator}), extent={extent}, overallDif={overallDif}, adjRem: {adjRemainder} ");
+		//}
 
 		#endregion
 
@@ -162,11 +230,11 @@ namespace MSS.Types
 
 		public static BigInteger FromLongs(long[] values)
 		{
-			var result = new BigInteger(0);
-			foreach (var v in values)
-			{
-				result += v;
-			}
+			Debug.Assert(values.Length == 2, "FromLongs received array of values whose length is not 2.");
+
+			//var result = FACTOR;
+			var result = FACTOR * values[0];
+			result += values[1];
 
 			return result;
 		}
@@ -175,28 +243,33 @@ namespace MSS.Types
 		{
 			if (bigRatShape.Exponent == 0)
 			{
-				var tResult = new List<int>();
-				foreach(var val in bigRatShape.Values)
-				{
-					if (TryConvertToInt(val, out int value))
-					{
-						tResult.Add(value);
-					}
-					else
-					{
-						values = new int[0];
-						return false;
-					}
-				}
-
-				values = tResult.ToArray();
-				return true;
+				return TryConvertToInt(bigRatShape.Values, out values);
 			}
 			else
 			{
 				values = new int[0];
 				return false;
 			}
+		}
+
+		public static bool TryConvertToInt(BigInteger[] bValues, out int[] values)
+		{
+			var tResult = new List<int>();
+			foreach (var val in bValues)
+			{
+				if (TryConvertToInt(val, out int value))
+				{
+					tResult.Add(value);
+				}
+				else
+				{
+					values = new int[0];
+					return false;
+				}
+			}
+
+			values = tResult.ToArray();
+			return true;
 		}
 
 		private static bool TryConvertToInt(BigInteger n, out int value)
@@ -217,7 +290,12 @@ namespace MSS.Types
 
 		#region Convert to Double
 
-		private static double ConvertToDouble(BigInteger n, int exponent)
+		public static double ConvertToDouble(RValue r)
+		{
+			return ConvertToDouble(r.Value, r.Exponent);
+		}
+
+		public static double ConvertToDouble(BigInteger n, int exponent)
 		{
 			if(n == 0)
 			{

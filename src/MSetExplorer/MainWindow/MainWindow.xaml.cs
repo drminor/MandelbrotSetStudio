@@ -43,6 +43,8 @@ namespace MSetExplorer
 
 				mapCalcSettingsView1.DataContext = _vm.MSetInfoViewModel;
 
+				((MainWindowViewModel)_vm).TestDiv();
+
 				Debug.WriteLine("The MainWindow is now loaded");
 			}
 		}

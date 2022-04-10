@@ -1,4 +1,5 @@
 ﻿using MSetRepo;
+using MSS.Common;
 using MSS.Types;
 using System.ComponentModel;
 
@@ -109,29 +110,48 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//public void BumpDispWidth(bool increase)
-		//{
-		//	if (increase)
-		//	{
-		//		MapDisplayViewModel.CanvasSize = new SizeInt(MapDisplayViewModel.CanvasSize.Width + 128, MapDisplayViewModel.CanvasSize.Height);
-		//	}
-		//	else
-		//	{
-		//		MapDisplayViewModel.CanvasSize = new SizeInt(MapDisplayViewModel.CanvasSize.Width - 128, MapDisplayViewModel.CanvasSize.Height);
-		//	}
-		//}
+		public void TestDiv()
+		{
+			var rectDividen = RMapConstants.TEST_RECTANGLE_HALF;
 
-		//public void BumpDispHeight(bool increase)
-		//{
-		//	if (increase)
-		//	{
-		//		MapDisplayViewModel.CanvasSize = new SizeInt(MapDisplayViewModel.CanvasSize.Width, MapDisplayViewModel.CanvasSize.Height + 128);
-		//	}
-		//	else
-		//	{
-		//		MapDisplayViewModel.CanvasSize = new SizeInt(MapDisplayViewModel.CanvasSize.Width, MapDisplayViewModel.CanvasSize.Height - 128);
-		//	}
-		//}
+			var x1 = rectDividen.LeftBot.X;  // 1/2 -- 0.5
+			var x2 = rectDividen.RightTop.X; // 2/2 -- 1.0
+
+			var v1 = new RValue(x2.Value - x1.Value, x2.Exponent); // 1/2
+
+			var divisorTarget = 128 * 10; // Not an integer power of 2
+			var divisorUsed = 128 * 16; // 2 ^ 7 + 4
+
+			var ratFromUsedToTarget = divisorTarget / (double) divisorUsed;
+
+			var divisorUsedRRecprical = new RValue(1, 11);
+			var spdUsed = new RValue(1, 12);
+			var spdTarget = new RValue(5, 20); // 1 / 2 ^ 11 * 5 / 8
+
+			// new X2 = X1 + rat * width / divisorUsed == 5/8 * (0.5 / (128 * 16))
+
+			//var newX2 = new RValue
+
+			// 1280 * 5 / ( 1 / 2^20)
+
+
+			// 1/2 divided into 1280 parts
+			// vs
+
+			// 1/2 * 8/5 / 128 * 10 * 8/5
+			// 1/2 / 128 * 16
+
+
+			// X2 = 1/2 + 1/2
+			// == 1/2 + 128 * 16 * (1/2 / (128 * 16))
+
+			// == 1/2 + 
+
+
+			// 1/12 = 2/24 / 4/48 / 8/96 / 16/192
+
+
+		}
 
 		#endregion
 

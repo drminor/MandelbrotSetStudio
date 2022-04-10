@@ -43,9 +43,11 @@ namespace MSS.Types
 			return Reducer.Reduce(this);
 		}
 
-		public RVector Divide(RSize amount)
+		public BigVector Divide(RSize amount)
 		{
-			return new RVector(XNumerator / amount.WidthNumerator, YNumerator / amount.HeightNumerator, Exponent - amount.Exponent);
+			return amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot InvScale a RSize with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
+				: new BigVector(XNumerator / amount.WidthNumerator, YNumerator / amount.HeightNumerator);
 		}
 
 		public override string ToString()

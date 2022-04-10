@@ -69,6 +69,11 @@ namespace MSS.Types
 			init => Values[3] = value;
 		}
 
+		public RValue Left => new RValue(X1, Exponent);
+		public RValue Right => new RValue(X2, Exponent);
+		public RValue Bottom => new RValue(Y1, Exponent);
+		public RValue Top => new RValue(Y2, Exponent);
+
 		public RPoint LeftBot => new(X1, Y1, Exponent);
 		public RPoint Position => LeftBot; 
 
@@ -80,8 +85,8 @@ namespace MSS.Types
 		public BigInteger WidthNumerator => X2 - X1;
 		public BigInteger HeightNumerator => Y2 - Y1;
 
-		public RValue Width => new(X2 - X1, Exponent);
-		public RValue Height => new(Y2 - Y1, Exponent);
+		public RValue Width => new(WidthNumerator, Exponent);
+		public RValue Height => new(HeightNumerator, Exponent);
 		public RSize Size => new(WidthNumerator, HeightNumerator, Exponent);
 
 		object ICloneable.Clone()
