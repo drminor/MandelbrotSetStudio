@@ -2,13 +2,14 @@
 using MSS.Common;
 using MSS.Types;
 using System.ComponentModel;
+using System.Diagnostics;
 
 namespace MSetExplorer
 {
 	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
 	{
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
-		private readonly CbsOpenSaveViewModelCreator _cbsOpenViewModelCreator;
+		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
 
 		#region Constructor
 
@@ -27,7 +28,7 @@ namespace MSetExplorer
 			DispHeight = MapDisplayViewModel.CanvasSize.Height;
 
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
-			_cbsOpenViewModelCreator = cbsOpenSaveViewModelCreator;
+			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
 
 			ColorBandSetViewModel = colorBandViewModel;
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
@@ -42,6 +43,10 @@ namespace MSetExplorer
 			{
 				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
 				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
+			}
+			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.Coordinates)
+			{
+				Debug.WriteLine($"MainWindow ViewModel received request to update the coords.");
 			}
 		}
 
@@ -106,7 +111,7 @@ namespace MSetExplorer
 
 		public IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType)
 		{
-			var result = _cbsOpenViewModelCreator(initalName, dialogType);
+			var result = _cbsOpenSaveViewModelCreator(initalName, dialogType);
 			return result;
 		}
 

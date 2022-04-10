@@ -3,12 +3,12 @@ Done
 Size		Replaying existing jobs with a different display size should not require creating a new Job Record.
 Display		Support non-square display and redraw as screen size changes. Center of current display should remain constant.
 Select		Support non-square selections -- contrain sizes to minimize exponent growth.
+Tune		Auto select # of cores
 
 In Progress
 
-
 To Do
-Tune		Auto select # of cores
+
 Install		build installer to install core, MKL and gRPC server(s)
 
 Poster		add new window and project type to support the specification of display size. Use scroll bars to position current view.

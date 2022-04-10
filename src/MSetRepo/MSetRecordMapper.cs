@@ -24,7 +24,7 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>,
-		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse?, MapSectionRecord?>,
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse, MapSectionRecord>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
@@ -147,12 +147,12 @@ namespace MSetRepo
 			return result;
 		}
 
-		public MapSectionRecord? MapTo(MapSectionResponse? source)
+		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
-			if (source is null)
-			{
-				return null;
-			}
+			//if (source is null)
+			//{
+			//	return null;
+			//}
 
 			var result = new MapSectionRecord
 				(
@@ -170,12 +170,12 @@ namespace MSetRepo
 			return result;
 		}
 
-		public MapSectionResponse? MapFrom(MapSectionRecord? target)
+		public MapSectionResponse MapFrom(MapSectionRecord target)
 		{
-			if (target is null)
-			{
-				return null;
-			}
+			//if (target is null)
+			//{
+			//	return null;
+			//}
 
 			var x = new long[][] { new long[] { 0, 0 }, new long[]{ 0, 0 } };
 

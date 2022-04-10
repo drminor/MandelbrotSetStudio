@@ -10,12 +10,17 @@ namespace MSetExplorer
 		public int RequestsPerJob { get; init; }
 		public RRectangle? Coords { get; init; }
 
-		public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, int targetIterations, int requestsPerJob)
+		public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, int targetIterations)
 		{
 			MapSettingsUpdateType = mapSettingsUpdateType;
 			TargetIterations = targetIterations;
-			RequestsPerJob = requestsPerJob;
 		}
+
+		//public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, int requestsPerJob)
+		//{
+		//	MapSettingsUpdateType = mapSettingsUpdateType;
+		//	RequestsPerJob = requestsPerJob;
+		//}
 
 		public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, RRectangle coords)
 		{

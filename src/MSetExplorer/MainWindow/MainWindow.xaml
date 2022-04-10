@@ -53,6 +53,10 @@
             </MenuItem>
             
             <MenuItem Header="_Windows">
+                <MenuItem Header="Pan Buttons" IsCheckable="True"/>
+                <MenuItem Header="Nav Buttons" IsCheckable="True"/>
+                <MenuItem Header="Screen Size Buttons" IsCheckable="True"/>
+                <Separator/>
                 <MenuItem Header="Coordinates" IsCheckable="True"/>
                 <MenuItem Header="Calculation Parameters" IsCheckable="True"/>
                 <MenuItem Header="Color Band Editor" IsCheckable="True"/>
@@ -70,7 +74,7 @@
 
         </Menu>
 
-        <Grid Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="colLeft">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -80,19 +84,19 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50">
+            <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecPanButtons">
                 <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanLeft">Left</Button>
                 <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanUp">Up</Button>
                 <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanRight">Right</Button>
                 <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanDown">Down</Button>
             </StackPanel>
 
-            <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50">
+            <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecNavButtons">
                 <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoBack">Go Back</Button>
                 <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
             </StackPanel>
 
-            <StackPanel Grid.Row="2" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50">
+            <StackPanel Grid.Row="2" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecScreenSizeButtons">
                 <Grid Margin="5,0" x:Name="grdTop">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="30" />
@@ -123,15 +127,14 @@
 
         </Grid>
 
-        <!--<local:MapDisplay x:Name="mapDisplay1" CanvasSize="{Binding Path=CanvasSize}"></local:MapDisplay>-->
-
-        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="colCenter">
             <local:MapDisplayControl x:Name="mapDisplay1"></local:MapDisplayControl>
         </Border>
 
-        <Grid Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="colRight">
 
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
@@ -139,13 +142,15 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="dispSecMapCoords">
+                <local:MapCoordsControl x:Name="mapCoordsView1" Focusable="True"/>
+            </Border>
 
-                <!--<local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" MSetInfo="{Binding MapProjectViewModel.CurrentJob.MSetInfo}" Focusable="True"/>-->
+            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="dispSecMapCalcSettings">
                 <local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" Focusable="True"/>
             </Border>
 
-            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+            <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" x:Name="dispSecColorBandSets">
                 <local:ColorBandSetUserControl x:Name="colorBandView1" Focusable="True" ></local:ColorBandSetUserControl>
             </Border>
 

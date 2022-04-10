@@ -42,6 +42,7 @@ namespace MSetExplorer
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 
 				mapCalcSettingsView1.DataContext = _vm.MSetInfoViewModel;
+				mapCoordsView1.DataContext = _vm.MSetInfoViewModel;
 
 				((MainWindowViewModel)_vm).TestDiv();
 
@@ -212,7 +213,7 @@ namespace MSetExplorer
 
 		#region Colors Button Handlers
 
-		// Colors Open
+		// Colors Import
 		private void ColorsOpenCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.CanExecute = _vm.MapProjectViewModel.CurrentProject != null;
@@ -233,26 +234,15 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLine($"WARNING: Could not import any ColorBandSet.");
+				Debug.WriteLine($"User decliend to import a ColorBandSet.");
+				if (_vm.MapDisplayViewModel.ColorBandSet != _vm.MapProjectViewModel.CurrentColorBandSet)
+				{
+					_vm.MapDisplayViewModel.ColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
+				}
 			}
 		}
 
-		//	// Colors Save
-		//private void ColorsSaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-		//{
-		//	//e.CanExecute = _vm.MapProjectViewModel.CanSaveColorBandSet || _vm.ColorBandSetViewModel.IsDirty;
-		//	e.CanExecute = true;
-		//}
-
-		//private void ColorsSaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
-		//{
-		//	_ = ColorsCommitUpdates();
-
-		//	SaveColors(_vm.MapProjectViewModel.CurrentColorBandSet);
-		//		//_vm.MapProjectViewModel.ColorBandSetSave();
-		//}
-
-		// Colors SaveAs
+		// Colors Export
 		private void ColorsSaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.CanExecute = _vm.MapProjectViewModel.CurrentProject != null;
@@ -555,12 +545,21 @@ namespace MSetExplorer
 				DataContext = colorBandSetOpenSaveVm
 			};
 
-			if (colorBandSetOpenSaveWindow.ShowDialog() == true)
+			try
 			{
-				var id = colorBandSetOpenSaveWindow.ColorBandSetId;
-				if (id != null && colorBandSetOpenSaveVm.TryImportColorBandSet(id.Value, out colorBandSet))
+				colorBandSetOpenSaveVm.PropertyChanged += ColorBandSetOpenSaveVm_PropertyChanged;
+				if (colorBandSetOpenSaveWindow.ShowDialog() == true)
 				{
-					return true;
+					var id = colorBandSetOpenSaveWindow.ColorBandSetId;
+					if (id != null && colorBandSetOpenSaveVm.TryImportColorBandSet(id.Value, out colorBandSet))
+					{
+						return true;
+					}
+					else
+					{
+						colorBandSet = null;
+						return false;
+					}
 				}
 				else
 				{
@@ -568,10 +567,21 @@ namespace MSetExplorer
 					return false;
 				}
 			}
-			else
+			finally
 			{
-				colorBandSet = null;
-				return false;
+				colorBandSetOpenSaveVm.PropertyChanged -= ColorBandSetOpenSaveVm_PropertyChanged;
+			}
+		}
+
+		private void ColorBandSetOpenSaveVm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (sender is IColorBandSetOpenSaveViewModel vm)
+			{
+				var id = vm.SelectedColorBandSetInfo?.Id;
+				if (id != null && vm.TryImportColorBandSet(id.Value, out var colorBandSet))
+				{
+					_vm.MapDisplayViewModel.ColorBandSet = colorBandSet;
+				}
 			}
 		}
 

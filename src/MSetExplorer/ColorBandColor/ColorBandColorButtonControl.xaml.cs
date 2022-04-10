@@ -44,7 +44,7 @@ namespace MSetExplorer
 
 			IsEnabledChanged += ColorBandColorButtonControl_IsEnabledChanged;
 
-			Debug.WriteLine("The ColorBandColorUserControl is now loaded.");
+			//Debug.WriteLine("The ColorBandColorUserControl is now loaded.");
 		}
 
 		private void ColorBandColorButtonControl_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)

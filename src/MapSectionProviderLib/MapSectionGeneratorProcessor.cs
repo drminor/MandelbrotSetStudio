@@ -13,7 +13,7 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionGeneratorProcessor : IDisposable
 	{
-		private const int NUMBER_OF_CONSUMERS = 4;
+		//private const int NUMBER_OF_CONSUMERS = 4;
 		private const int QUEUE_CAPACITY = 200;
 
 		private readonly IMEngineClient _mEngineClient;
@@ -41,7 +41,9 @@ namespace MapSectionProviderLib
 			_workQueue = new BlockingCollection<MapSecWorkGenType>(QUEUE_CAPACITY);
 			_cancelledJobIds = new List<int>();
 
-			_workQueueProcessors = new Task[NUMBER_OF_CONSUMERS];
+			var numberOfLogicalProc = Environment.ProcessorCount;
+
+			_workQueueProcessors = new Task[numberOfLogicalProc - 1];
 
 			for (var i = 0; i < _workQueueProcessors.Length; i++)
 			{

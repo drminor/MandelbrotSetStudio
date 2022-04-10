@@ -1,4 +1,5 @@
 ﻿using MEngineDataContracts;
+using MongoDB.Bson;
 using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace MSS.Common
 		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition);
 		Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
 
-		Task<string> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
+		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
 

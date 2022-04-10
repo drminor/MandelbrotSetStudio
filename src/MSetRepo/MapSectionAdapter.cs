@@ -1,8 +1,6 @@
 ﻿using MEngineDataContracts;
 using MongoDB.Bson;
 using MSS.Common;
-using MSS.Common.DataTransferObjects;
-using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using ProjectRepo;
 using System.Threading.Tasks;
@@ -33,9 +31,16 @@ namespace MSetRepo
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(subdivisionId), blockPosition);
-			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
 
-			return mapSectionResponse;
+			if (mapSectionRecord == null)
+			{
+				return null;
+			}
+			else
+			{
+				var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+				return mapSectionResponse;
+			}
 		}
 
 		public async Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId)
@@ -47,16 +52,14 @@ namespace MSetRepo
 			return mapSectionResponse;
 		}
 
-		public async Task<string> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
+		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
 
-			if (mapSectionRecord is null) return string.Empty;
-
 			var mapSectionId = await mapSectionReaderWriter.InsertAsync(mapSectionRecord);
 
-			return mapSectionId.ToString();
+			return mapSectionId;
 		}
 
 		public async Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse)

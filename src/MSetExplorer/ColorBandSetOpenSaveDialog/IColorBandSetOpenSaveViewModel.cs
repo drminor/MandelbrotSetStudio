@@ -1,12 +1,15 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
 	public interface IColorBandSetOpenSaveViewModel
 	{
+		event PropertyChangedEventHandler? PropertyChanged;
+
 		DialogType DialogType { get; }
 
 		ObservableCollection<ColorBandSetInfo> ColorBandSetInfos { get; }

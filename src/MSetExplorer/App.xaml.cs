@@ -9,8 +9,6 @@ using System.Windows;
 namespace MSetExplorer
 {
 	public delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
-
-	//public delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(ColorBandSet colorBandSet);
 	public delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
 	/// <summary>
@@ -88,10 +86,7 @@ namespace MSetExplorer
 		{
 			var mEngineClient = new MClient(mEngineEndPointAddress);
 			var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(dbProviderConnectionString);
-
-
 			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClient, mapSectionAdapter, useTheMapSectionRepo);
-
 			var result = new MapLoaderManager(mapSectionRequestProcessor);
 
 			return result;
@@ -136,14 +131,14 @@ namespace MSetExplorer
 		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
 			return _projectAdapter == null
-                ? throw new InvalidOperationException("Cannot create a ProjectOpenSaveViewModel, the ProjectAdapter is null.")
+                ? throw new InvalidOperationException("Cannot create a Project OpenSave ViewModel, the ProjectAdapter is null.")
 				: new ProjectOpenSaveViewModel(_projectAdapter, initalName, dialogType);
 		}
 
 		private IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
 			return _sharedColorBandSetAdapter == null
-				? throw new InvalidOperationException("Cannot create a ProjectOpenSaveViewModel, the ProjectAdapter is null.")
+				? throw new InvalidOperationException("Cannot create a ColorBandSet OpenSave ViewModel, the Shared ColorBandSet Adapter is null.")
 				: new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
 		}
 

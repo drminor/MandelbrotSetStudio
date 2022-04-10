@@ -10,9 +10,9 @@
     <!--d:DesignHeight="250" d:DesignWidth="250"-->
     <Grid>
         
-        <Grid Margin="10">
+        <Grid Margin="5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="45" />
+                <ColumnDefinition Width="42" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -24,17 +24,17 @@
                 <!--<RowDefinition Height="*" />-->
             </Grid.RowDefinitions>
 
-            <TextBlock Text="Start X:" Grid.Row="0" Margin="0,7,0,3" Height="21" />
-            <TextBox x:Name="tbStartX" Grid.Row="0" Grid.Column="1" Margin="3" Text="{Binding CurJob.MSetInfo.Coords.X1}"/>
+            <TextBlock Text="Start X:" Grid.Row="0" Margin="0,5" Height="18" />
+            <TextBox x:Name="txtStartX" Grid.Row="0" Grid.Column="1" Margin="3" Text="{Binding StartingX}"/>
 
-            <TextBlock Text="End X:" Grid.Row="1" Margin="0,7,0,3" Height="21" />
-            <TextBox x:Name="tbEndX" Grid.Row="1" Grid.Column="1" Margin="3" />
+            <TextBlock Text="End X:" Grid.Row="1" Margin="0,5" Height="18" />
+            <TextBox x:Name="txtEndX" Grid.Row="1" Grid.Column="1" Margin="3" />
 
-            <TextBlock Text="Start Y:" Grid.Row="2" Margin="0,7,0,3" Height="21" />
-            <TextBox x:Name="tbStartY" Grid.Row="2" Grid.Column="1" Margin="3" />
+            <TextBlock Text="Start Y:" Grid.Row="2" Margin="0,5" Height="18" />
+            <TextBox x:Name="txtStartY" Grid.Row="2" Grid.Column="1" Margin="3" />
 
-            <TextBlock Text="End Y:" Grid.Row="3" Margin="0,7,0,3" Height="21" />
-            <TextBox x:Name="tbEndY" Grid.Row="3" Grid.Column="1" Margin="3" />
+            <TextBlock Text="End Y:" Grid.Row="3" Margin="0,5" Height="18" />
+            <TextBox x:Name="txtEndY" Grid.Row="3" Grid.Column="1" Margin="3" />
 
             <!--<Button x:Name="Save" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
                     HorizontalAlignment="Center"
