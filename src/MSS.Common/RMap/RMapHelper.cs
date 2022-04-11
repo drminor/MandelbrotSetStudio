@@ -20,28 +20,7 @@ namespace MSS.Common
 			var nrmArea = RNormalizer.Normalize(rArea, position, out var nrmPos);
 			var result = nrmArea.Translate(nrmPos);
 
-			Debug.WriteLine($"Calc Map Coords: Trans: {result}, Pos: {nrmPos}, Area: {nrmArea}, area rat: {GetAspectRatio(nrmArea)}, result rat: {GetAspectRatio(result)}");
-
-			return result;
-		}
-
-		private static double GetAspectRatio(RRectangle rRectangle)
-		{
-			if (BigIntegerHelper.TryConvertToDouble(rRectangle.WidthNumerator, out var w) && BigIntegerHelper.TryConvertToDouble(rRectangle.HeightNumerator, out var h))
-			{
-				var result = w / h;
-				return result;
-			}
-			else
-			{
-				return double.NaN;
-			}
-		}
-
-		private static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
-		{
-			var rectangle = new RRectangle(area);
-			var result = rectangle.Scale(factor);
+			//Debug.WriteLine($"Calc Map Coords: Trans: {result}, Pos: {nrmPos}, Area: {nrmArea}, area rat: {GetAspectRatio(nrmArea)}, result rat: {GetAspectRatio(result)}");
 
 			return result;
 		}
@@ -132,14 +111,6 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RRectangle CombinePosAndSize(RPoint pos, RSize size)
-		{
-			var nrmPos = RNormalizer.Normalize(pos, size, out var nrmSize);
-			var result = new RRectangle(nrmPos, nrmSize);
-
-			return result;
-		}
-
 		// --- Diagnostics ----
 
 		public static SizeDbl GetSamplePointDiag(RRectangle coords, SizeInt canvasSize, out RectangleDbl newCoords)
@@ -179,25 +150,6 @@ namespace MSS.Common
 			//Debug.WriteLine($"\nThe new coords are: {realCoordsD},\n old = {origCoordsD}, Compare: {coordsD}. Diff: {coordsDiff}, Exp: {coords.Exponent}");
 			//Debug.WriteLine($"\nThe new SamplePointDelta is: {realSpdD}, Compare: {spdD}. Diff: {spdDiff}, Exp: {spd.Exponent}.");
 		}
-
-		private static RectangleDbl ConvertToRectangleDbl(RRectangle rRectangle)
-		{
-			return new RectangleDbl(
-				BigIntegerHelper.ConvertToDouble(rRectangle.Left),
-				BigIntegerHelper.ConvertToDouble(rRectangle.Right),
-				BigIntegerHelper.ConvertToDouble(rRectangle.Bottom),
-				BigIntegerHelper.ConvertToDouble(rRectangle.Top)
-				);
-		}
-
-		private static SizeDbl ConvertToSizeDbl(RSize rSize)
-		{
-			return new SizeDbl(
-				BigIntegerHelper.ConvertToDouble(rSize.Width), 
-				BigIntegerHelper.ConvertToDouble(rSize.Height)
-				);
-		}
-
 
 		#endregion
 
@@ -350,6 +302,85 @@ namespace MSS.Common
 			else
 			{
 				throw new InvalidOperationException($"Cannot convert the ScreenCoords to integers.");
+			}
+		}
+
+		#endregion
+
+		#region Type Helpers
+
+		/// <summary>
+		/// Creates a new RRectangle with the new coordinate value, all other values remain the same.
+		/// </summary>
+		/// <param name="source"></param>
+		/// <param name="index">0 = X1; 1 = X2; 2 = Y1; 3 = Y2</param>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public static RRectangle UpdatePointValue(RRectangle source, int index, RValue value)
+		{
+			var nrmRect = RNormalizer.Normalize(source, value, out var nrmValue);
+			nrmRect.Values[index] = nrmValue.Value;
+			return nrmRect;
+		}
+
+		private static RRectangle CombinePosAndSize(RPoint pos, RSize size)
+		{
+			var nrmPos = RNormalizer.Normalize(pos, size, out var nrmSize);
+			var result = new RRectangle(nrmPos, nrmSize);
+
+			return result;
+		}
+
+		private static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
+		{
+			var rectangle = new RRectangle(area);
+			var result = rectangle.Scale(factor);
+
+			return result;
+		}
+
+		private static RectangleDbl ConvertToRectangleDbl(RRectangle rRectangle)
+		{
+			try
+			{
+				return new RectangleDbl(
+					BigIntegerHelper.ConvertToDouble(rRectangle.Left),
+					BigIntegerHelper.ConvertToDouble(rRectangle.Right),
+					BigIntegerHelper.ConvertToDouble(rRectangle.Bottom),
+					BigIntegerHelper.ConvertToDouble(rRectangle.Top)
+					);
+			}
+			catch
+			{
+				return new RectangleDbl(double.NaN, double.NaN, double.NaN, double.NaN);
+			}
+		}
+
+		private static SizeDbl ConvertToSizeDbl(RSize rSize)
+		{
+			try
+			{
+				return new SizeDbl(
+					BigIntegerHelper.ConvertToDouble(rSize.Width),
+					BigIntegerHelper.ConvertToDouble(rSize.Height)
+					);
+			}
+			catch
+			{
+				return new SizeDbl(double.NaN, double.NaN);
+			}
+		}
+
+		public static double GetAspectRatio(RRectangle rRectangle)
+		{
+			if (BigIntegerHelper.TryConvertToDouble(rRectangle.WidthNumerator, out var w) && BigIntegerHelper.TryConvertToDouble(rRectangle.HeightNumerator, out var h))
+			{
+				var result = w / h;
+				return result;
+			}
+			else
+			{
+				return double.NaN;
 			}
 		}
 

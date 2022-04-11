@@ -290,6 +290,21 @@ namespace MSS.Types
 
 		#region Convert to Double
 
+		public static bool TryConvertToDouble(RValue r, out double dValue)
+		{
+			if (!SafeCastToDouble(r.Value))
+			{
+				dValue = double.NaN;
+				return false;
+			}
+			else
+			{
+				dValue = (double)r.Value;
+				dValue *= Math.Pow(2, r.Exponent);
+				return true;
+			}
+		}
+
 		public static double ConvertToDouble(RValue r)
 		{
 			return ConvertToDouble(r.Value, r.Exponent);

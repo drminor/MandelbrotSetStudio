@@ -14,22 +14,11 @@ namespace MSS.Common
 			var rTemp = r.Clone();
 			var pTemp = p.Clone();
 
-			var newExp = Normalize(rTemp, pTemp);
+			var newExp = NormalizeInPlace(rTemp, pTemp);
 			var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			newP = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 
 			return result;
-		}
-
-		// Rectangle & Point
-		public static void NormalizeInPlace(ref RRectangle r, ref RPoint p)
-		{
-			var rTemp = r.Clone();
-			var pTemp = p.Clone();
-
-			var newExp = Normalize(rTemp, pTemp);
-			r = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
-			p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 		}
 
 		// Rectangle & Size
@@ -38,7 +27,7 @@ namespace MSS.Common
 			var rTemp = r.Clone();
 			var sTemp = s.Clone();
 
-			var newExp = Normalize(rTemp, sTemp);
+			var newExp = NormalizeInPlace(rTemp, sTemp);
 			var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
 			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 
@@ -46,14 +35,16 @@ namespace MSS.Common
 		}
 
 		// Rectangle & Size
-		public static void NormalizeInPlace(ref RRectangle r, ref RSize s)
+		public static RRectangle Normalize(RRectangle r, RValue s, out RValue newV)
 		{
 			var rTemp = r.Clone();
-			var sTemp = s.Clone();
+			var vTemp = s.Clone();
 
-			var newExp = Normalize(rTemp, sTemp);
-			r = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
-			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
+			var newExp = NormalizeInPlace(rTemp, vTemp);
+			var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
+			newV = s.Exponent == newExp ? s : new RValue(vTemp.Values, newExp);
+
+			return result;
 		}
 
 		// Point and Size
@@ -62,22 +53,11 @@ namespace MSS.Common
 			var pTemp = p.Clone();
 			var sTemp = s.Clone();
 
-			var newExp = Normalize(pTemp, sTemp);
+			var newExp = NormalizeInPlace(pTemp, sTemp);
 			var result = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
 			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 
 			return result;
-		}
-
-		// Point and Size
-		public static void NormalizeInPlace(ref RPoint p, ref RSize s)
-		{
-			var pTemp = p.Clone();
-			var sTemp = s.Clone();
-
-			var newExp = Normalize(pTemp, sTemp);
-			p = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
-			s = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 		}
 
 		// Two Points
@@ -86,22 +66,11 @@ namespace MSS.Common
 			var p1Temp = p1.Clone();
 			var p2Temp = p2.Clone();
 
-			var newExp = Normalize(p1Temp, p2Temp);
+			var newExp = NormalizeInPlace(p1Temp, p2Temp);
 			var result = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
 			newP2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
 
 			return result;
-		}
-
-		// Two Points
-		public static void NormalizeInPlace(ref RPoint p1, ref RPoint p2)
-		{
-			var p1Temp = p1.Clone();
-			var p2Temp = p2.Clone();
-
-			var newExp = Normalize(p1Temp, p2Temp);
-			p1 = p1.Exponent == newExp ? p1 : new RPoint(p1Temp.Values, newExp);
-			p2 = p2.Exponent == newExp ? p2 : new RPoint(p2Temp.Values, newExp);
 		}
 
 		// Two Sizes
@@ -110,22 +79,11 @@ namespace MSS.Common
 			var s1Temp = s1.Clone();
 			var s2Temp = s2.Clone();
 
-			var newExp = Normalize(s1Temp, s2Temp);
+			var newExp = NormalizeInPlace(s1Temp, s2Temp);
 			var result = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
 			newS2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
 
 			return result;
-		}
-
-		// Two Sizes
-		public static void NormalizeInPlace(ref RSize s1, ref RSize s2)
-		{
-			var s1Temp = s1.Clone();
-			var s2Temp = s2.Clone();
-
-			var newExp = Normalize(s1Temp, s2Temp);
-			s1 = s1.Exponent == newExp ? s1 : new RSize(s1Temp.Values, newExp);
-			s2 = s2.Exponent == newExp ? s2 : new RSize(s2Temp.Values, newExp);
 		}
 
 		// Point and Size
@@ -134,14 +92,14 @@ namespace MSS.Common
 			var pTemp = v.Clone();
 			var sTemp = s.Clone();
 
-			var newExp = Normalize(pTemp, sTemp);
+			var newExp = NormalizeInPlace(pTemp, sTemp);
 			var result = v.Exponent == newExp ? v : new RVector(pTemp.Values, newExp);
 			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
 
 			return result;
 		}
 
-		public static int Normalize(IBigRatShape a, IBigRatShape b)
+		public static int NormalizeInPlace(IBigRatShape a, IBigRatShape b)
 		{
 			var reductionFactor = -1 * GetReductionFactor(a, b);
 

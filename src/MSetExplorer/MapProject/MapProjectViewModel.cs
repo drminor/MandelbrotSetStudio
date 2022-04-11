@@ -128,8 +128,7 @@ namespace MSetExplorer
 			_colorBandSetCollection.Load(new List<ColorBandSet>() { colorBandSet }, null);
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
-			var newArea = new RectangleInt(new PointInt(), CanvasSize);
-			LoadMap(mSetInfo, TransformType.None, newArea);
+			LoadMap(mSetInfo, TransformType.None);
 
 			CurrentProjectIsDirty = false;
 		}
@@ -372,9 +371,25 @@ namespace MSetExplorer
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
 			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-			var updatedInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
+			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
+			LoadMap(updatedMSetInfo, transformType, newArea);
+		}
 
-			LoadMap(updatedInfo, transformType, newArea);
+		public void UpdateMapCoordinates(RRectangle coords)
+		{
+			var curJob = CurrentJob;
+			if (curJob == null)
+			{
+				return;
+			}
+
+			var mSetInfo = curJob.MSetInfo;
+
+			if (mSetInfo.Coords != coords)
+			{
+				var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
+				LoadMap(updatedMSetInfo, TransformType.CoordinatesUpdate);
+			}
 		}
 
 		public void UpdateTargetInterations(int targetIterations)
@@ -389,10 +404,8 @@ namespace MSetExplorer
 
 			if (mSetInfo.MapCalcSettings.TargetIterations != targetIterations)
 			{
-				var updatedInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations);
-
-				var newArea = new RectangleInt(new PointInt(), CanvasSize);
-				LoadMap(updatedInfo, TransformType.IterationUpdate, newArea);
+				var updatedMSetInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations);
+				LoadMap(updatedMSetInfo, TransformType.IterationUpdate);
 			}
 		}
 
@@ -450,7 +463,12 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea)
+		private void LoadMap(MSetInfo mSetInfo, TransformType transformType)
+		{
+			LoadMap(mSetInfo, transformType, null);
+		}
+
+		private void LoadMap(MSetInfo mSetInfo, TransformType transformType, RectangleInt? newArea)
 		{
 			var curProject = CurrentProject;
 

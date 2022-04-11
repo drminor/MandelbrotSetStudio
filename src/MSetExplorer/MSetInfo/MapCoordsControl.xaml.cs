@@ -1,18 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -41,7 +29,10 @@ namespace MSetExplorer
 			{
 				_vm = (MSetInfoViewModel)DataContext;
 
-				txtStartX.LostFocus += TxtStartX_LostFocus;
+				//txtStartX.LostFocus += TxtStartX_LostFocus;
+				//txtEndX.LostFocus += TxtEndX_LostFocus;
+				//txtStartY.LostFocus += TxtStartY_LostFocus;
+				//txtEndY.LostFocus += TxtEndY_LostFocus;
 
 				//Debug.WriteLine("The MapCoordsControl is now loaded");
 			}
@@ -49,11 +40,34 @@ namespace MSetExplorer
 
 		private void TxtStartX_LostFocus(object sender, RoutedEventArgs e)
 		{
-			if (int.TryParse(txtStartX.Text, out var newValue))
-			{
-				_vm.StartingX = newValue.ToString();
-				_vm.TriggerCoordsUpdate();
-			}
+			//_vm.StartingX = txtStartX.Text;
+
+			dispSecMapCoordsCommit.Visibility = Visibility.Visible;
+		}
+
+		private void TxtEndX_LostFocus(object sender, RoutedEventArgs e)
+		{
+			dispSecMapCoordsCommit.Visibility = Visibility.Visible;
+		}
+
+		private void TxtStartY_LostFocus(object sender, RoutedEventArgs e)
+		{
+			dispSecMapCoordsCommit.Visibility = Visibility.Visible;
+		}
+
+		private void TxtEndY_LostFocus(object sender, RoutedEventArgs e)
+		{
+			dispSecMapCoordsCommit.Visibility = Visibility.Visible;
+		}
+
+		private void SaveButton_Click(object sender, RoutedEventArgs e)
+		{
+			//txtEndY.Text = _vm.Test(txtStartY.Text);
+
+			//_  = _vm.Test(txtStartY.Text);
+
+			_vm.SaveCoords();
+
 		}
 	}
 }

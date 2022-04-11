@@ -13,7 +13,7 @@ namespace MSetExplorer
 	{
 		#region Build Job
 
-		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
+		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);

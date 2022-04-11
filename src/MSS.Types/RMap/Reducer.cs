@@ -59,10 +59,16 @@ namespace MSS.Types
 
 		public static BigInteger Reduce(BigInteger value, int exponent, out int newExponent)
 		{
+			if (value == 0)
+			{
+				newExponent = exponent;
+				return value;
+			}
+
 			var reductionFactor = 0;
 			long divisor = 1;
 
-			while (exponent + reductionFactor < 0 && BigInteger.Remainder(value, divisor) == 0)
+			while (exponent + reductionFactor < 0 && BigInteger.Remainder(value, divisor + 1) == 0)
 			{
 				reductionFactor++;
 				divisor *= 2;

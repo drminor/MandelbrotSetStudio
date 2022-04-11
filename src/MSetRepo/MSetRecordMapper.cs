@@ -103,8 +103,8 @@ namespace MSetRepo
 				source.Label,
 
 				(int) source.TransformType,
-				MapTo(source.NewArea.Position),
-				MapTo(source.NewArea.Size),
+				MapTo(source.NewArea?.Position ?? new PointInt()),
+				MapTo(source.NewArea?.Size ?? new SizeInt()),
 				MapTo(source.MSetInfo),
 				MapTo(source.CanvasSizeInBlocks),
 				MapTo(source.MapBlockOffset),

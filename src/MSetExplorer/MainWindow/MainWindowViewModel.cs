@@ -37,19 +37,6 @@ namespace MSetExplorer
 			MSetInfoViewModel.MapSettingsUpdateRequested += MSetInfoViewModel_MapSettingsUpdateRequested;
 		}
 
-		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
-		{
-			if (e.MapSettingsUpdateType == MapSettingsUpdateType.TargetIterations)
-			{
-				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
-				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
-			}
-			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.Coordinates)
-			{
-				Debug.WriteLine($"MainWindow ViewModel received request to update the coords.");
-			}
-		}
-
 		#endregion
 
 		#region Public Properties
@@ -92,16 +79,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
-
-		//public void ExportColorBandSet(string id)
-		//{
-		//	//_sharedColorBandSetAdapter.CreateColorBandSet();
-		//}
-
-		//public void ImportColorBandSet(string id)
-		//{
-		//}
-
 
 		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
@@ -164,17 +141,11 @@ namespace MSetExplorer
 
 		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			//if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
-			//{
-			//	ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
-			//	MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
-			//}
-
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
 			{
 				var curJob = MapProjectViewModel.CurrentJob;
 
-				MSetInfoViewModel.MSetInfo = curJob?.MSetInfo;
+				MSetInfoViewModel.CurrentJob = curJob;
 				MapDisplayViewModel.CurrentJob = curJob;
 			}
 
@@ -211,6 +182,20 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
+		{
+			if (e.MapSettingsUpdateType == MapSettingsUpdateType.TargetIterations)
+			{
+				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
+				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
+			}
+			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.Coordinates)
+			{
+				Debug.WriteLine($"MainWindow ViewModel received request to update the coords.");
+			}
+		}
+
 
 		#endregion
 	}

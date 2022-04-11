@@ -14,7 +14,7 @@ namespace MSS.Types.MSet
 		public string? Label { get; init; }
 
 		public TransformType TransformType { get; init; }
-		public RectangleInt NewArea { get; init; }
+		public RectangleInt? NewArea { get; init; }
 
 		//public MSetInfo MSetInfo { get; set; }
 		//public SizeInt CanvasSizeInBlocks { get; set; }
@@ -31,7 +31,7 @@ namespace MSS.Types.MSet
 
 		public bool IsDirty { get; set; }
 
-		public Job(ObjectId? parentJobId, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt newArea, MSetInfo mSetInfo, 
+		public Job(ObjectId? parentJobId, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt? newArea, MSetInfo mSetInfo, 
 			SizeInt canvasSizeInBlocks, BigVector mapBlockOffset, VectorInt canvasControlOffset)
 			: this(ObjectId.GenerateNewId(), parentJobId, projectId, subdivision, label, transformType, newArea, mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset, DateTime.MinValue)
 		{ }
@@ -44,7 +44,7 @@ namespace MSS.Types.MSet
 			string? label,
 
 			TransformType transformType,
-			RectangleInt newArea,
+			RectangleInt? newArea,
 
 			MSetInfo mSetInfo,
 			SizeInt canvasSizeInBlocks,
@@ -171,14 +171,15 @@ namespace MSS.Types.MSet
 
 		public static bool operator ==(Job? left, Job? right)
 		{
-			if (left is null)
-			{
-				return right is null;
-			}
-			else
-			{
-				return left.Equals(right);
-			}
+			//if (left is null)
+			//{
+			//	return right is null;
+			//}
+			//else
+			//{
+			//	return left.Equals(right);
+			//}
+			return EqualityComparer<Job?>.Default.Equals(left, right);
 		}
 
 		public static bool operator !=(Job? left, Job? right)

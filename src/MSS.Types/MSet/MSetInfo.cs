@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types.MSet
 {
-	public class MSetInfo : IEquatable<MSetInfo?>, IEqualityComparer<MSetInfo>
+	public class MSetInfo : IEquatable<MSetInfo?>, IEqualityComparer<MSetInfo>, ICloneable
 	{
 		public RRectangle Coords { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
@@ -36,6 +36,16 @@ namespace MSS.Types.MSet
 			return new MSetInfo(source.Coords.Clone(), new MapCalcSettings(source.MapCalcSettings.TargetIterations, threshold, source.MapCalcSettings.RequestsPerJob));
 		}
 
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public MSetInfo Clone()
+		{
+			var result = new MSetInfo(Coords.Clone(), new MapCalcSettings(MapCalcSettings.TargetIterations, MapCalcSettings.Threshold, MapCalcSettings.RequestsPerJob));
+			return result;
+		}
 
 		public override string ToString()
 		{
