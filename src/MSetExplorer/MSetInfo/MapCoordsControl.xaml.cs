@@ -62,11 +62,18 @@ namespace MSetExplorer
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
+			if (!int.TryParse(txtStartX.Text, out var exp))
+			{
+				exp = 0;
+			}
+
+			txtStartY.Text = _vm.Test(txtEndX.Text, exp);
+
 			//txtEndY.Text = _vm.Test(txtStartY.Text);
 
 			//_  = _vm.Test(txtStartY.Text);
 
-			_vm.SaveCoords();
+			//_vm.SaveCoords();
 
 		}
 	}

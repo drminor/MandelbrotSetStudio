@@ -2,8 +2,10 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
 
 namespace MSetExplorer
@@ -76,11 +78,11 @@ namespace MSetExplorer
 				if (value != _startingX)
 				{
 					_startingX = value;
-					var rValue = ConvertToRValue(value, 0);
-					if (rValue != _coords.Left)
-					{
-						Coords = RMapHelper.UpdatePointValue(_coords, 0, rValue);
-					}
+					//var rValue = ConvertToRValue(value, 0);
+					//if (rValue != _coords.Left)
+					//{
+					//	Coords = RMapHelper.UpdatePointValue(_coords, 0, rValue);
+					//}
 
 					OnPropertyChanged();
 				}
@@ -101,13 +103,13 @@ namespace MSetExplorer
 				if (value != _endingX)
 				{
 					_endingX = value;
-					var rValue = ConvertToRValue(value, 0);
-					if (rValue != _coords.Right)
-					{
-						Coords = RMapHelper.UpdatePointValue(_coords, 1, rValue);
-					}
+					//var rValue = ConvertToRValue(value, 0);
+					//if (rValue != _coords.Right)
+					//{
+					//	Coords = RMapHelper.UpdatePointValue(_coords, 1, rValue);
+					//}
 
-					OnPropertyChanged();
+					//OnPropertyChanged();
 				}
 			}
 		}
@@ -120,13 +122,13 @@ namespace MSetExplorer
 				if (value != _startingY)
 				{
 					_startingY = value;
-					var rValue = ConvertToRValue(value, 0);
-					if (rValue != _coords.Bottom)
-					{
-						Coords = RMapHelper.UpdatePointValue(_coords, 2, rValue);
-					}
+					//var rValue = ConvertToRValue(value, 0);
+					//if (rValue != _coords.Bottom)
+					//{
+					//	Coords = RMapHelper.UpdatePointValue(_coords, 2, rValue);
+					//}
 
-					OnPropertyChanged();
+					//OnPropertyChanged();
 				}
 			}
 		}
@@ -139,13 +141,13 @@ namespace MSetExplorer
 				if (value != _endingY)
 				{
 					_endingY = value;
-					var rValue = ConvertToRValue(value, 0);
-					if (rValue != _coords.Top)
-					{
-						Coords = RMapHelper.UpdatePointValue(_coords, 3, rValue);
-					}
+					//var rValue = ConvertToRValue(value, 0);
+					//if (rValue != _coords.Top)
+					//{
+					//	Coords = RMapHelper.UpdatePointValue(_coords, 3, rValue);
+					//}
 
-					OnPropertyChanged();
+					//OnPropertyChanged();
 				}
 			}
 		}
@@ -227,18 +229,58 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public string Test(string s)
+		public string Test(string s, int exp)
 		{
-			if (TryConvertToRValue(s, 0, out var rValue))
+			if (TryConvertToRValue(s, exp, out var rValue))
 			{
 				//var s3 = rValue.ToString();
-				var s2 = ConvertToString(rValue);
+				var s2 = ConvertToString2(rValue);
 				return s2;
 			}
 			else
 			{
-				return "error";
+				return "bad RVal";
 			}
+		}
+
+		private string ConvertToString2(RValue rValue)
+		{
+			string result;
+
+			var dVals = BigIntegerHelper.ConvertToDoubles(rValue.Value, rValue.Exponent);
+
+			var isNegative = dVals.Any(x => x < 0);
+
+			var sVals = dVals.Select(x => x.ToString("G20", CultureInfo.InvariantCulture)).ToArray();
+
+			result = Collaspe(sVals);
+
+			if (isNegative)
+			{
+				result = "-" + result;
+			}
+
+			//result = dVals[0].ToString("G20", CultureInfo.InvariantCulture);
+
+			return result;
+		}
+
+		private string Collaspe(string[] comps)
+		{
+			var nsis = comps.Select(x => new NumericStringInfo(x)).ToArray();
+
+			var stage = nsis[0];
+
+			for(var i = 1; i < nsis.Length; i++)
+			{
+				var t = stage.Add(nsis[i]);
+				var st = t.GetString();
+				stage = t;
+			}
+
+			var result = stage.GetString();
+
+			return result;
 		}
 
 		public void SaveCoords() 
@@ -276,9 +318,18 @@ namespace MSetExplorer
 
 		private string ConvertToString(RValue rValue)
 		{
-			return BigIntegerHelper.TryConvertToDouble(rValue, out var dValue) 
-				? dValue.ToString("G12", CultureInfo.InvariantCulture) 
-				: "error";
+			string result;
+
+			if (BigIntegerHelper.TryConvertToDouble(rValue, out var dValue))
+			{
+				result = dValue.ToString("G20", CultureInfo.InvariantCulture);
+			}
+			else
+			{
+				result = "error";
+			}
+
+			return result;
 		}
 
 		private bool TryConvertToRValue(string s, int exponent, out RValue value)
@@ -308,7 +359,7 @@ namespace MSetExplorer
 
 			while (Math.Abs(d - Math.Truncate(d)) > 0.000001)
 			{
-				var t = Math.Abs(d - Math.Truncate(d));
+				//var t = Math.Abs(d - Math.Truncate(d));
 
 				//var ds = d.ToString("G12");
 

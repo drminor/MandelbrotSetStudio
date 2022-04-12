@@ -288,10 +288,78 @@ namespace MSS.Types
 
 		#endregion
 
+		#region Convert to IList<Double>
+
+		public static IList<double> ConvertToDoubles(RValue rValue)
+		{
+			return ConvertToDoubles(rValue.Value, rValue.Exponent);
+		}
+
+		public static IList<double> ConvertToDoubles(BigInteger n, int exponent)
+		{
+			BigInteger DIVISOR = new BigInteger(Math.Pow(2, 3));
+
+			var result = new List<double>();
+
+			if (n == 0)
+			{
+				result.Add(0);
+			}
+			//else if (SafeCastToDouble(n))
+			//{
+			//	result.Add((double)n);
+			//	checked
+			//	{
+			//		result[0] *= Math.Pow(2, exponent);
+			//	}
+			//}
+			else
+			{
+				var hi = BigInteger.DivRem(n, DIVISOR, out var lo);
+
+				while (hi != 0)
+				{
+					result.Add((double)lo);
+					hi = BigInteger.DivRem(hi, DIVISOR, out lo);
+				}
+
+				result.Add((double)lo);
+
+				for(var i = 0; i < result.Count; i++)
+				{
+					checked
+					{
+						result[i] *= Math.Pow(2, exponent + i * 3);
+					}
+				}
+				result.Reverse();
+			}
+
+			return result;
+		}
+
+//865 
+///10 give 86, remainder 5
+
+//86
+///10 gives 8, remainder 6
+
+//8
+/// 10 gives 0, reminder 8
+
+
+		#endregion
+
 		#region Convert to Double
 
 		public static bool TryConvertToDouble(RValue r, out double dValue)
 		{
+			if (r.Value == 0)
+			{
+				dValue = 0;
+				return true;
+			}
+
 			if (!SafeCastToDouble(r.Value))
 			{
 				dValue = double.NaN;
@@ -299,9 +367,20 @@ namespace MSS.Types
 			}
 			else
 			{
-				dValue = (double)r.Value;
-				dValue *= Math.Pow(2, r.Exponent);
-				return true;
+				try
+				{
+					checked
+					{
+						dValue = (double)r.Value;
+						dValue *= Math.Pow(2, r.Exponent);
+					}
+					return true;
+				}
+				catch
+				{
+					dValue = double.NaN;
+					return false;
+				}
 			}
 		}
 
@@ -321,26 +400,24 @@ namespace MSS.Types
 
 			if (SafeCastToDouble(n))
 			{
-				checked
+				try
 				{
-					result = (double)n;
-					result *= Math.Pow(2, exponent);
+					checked
+					{
+						result = (double)n;
+						result *= Math.Pow(2, exponent);
+					}
+					return result;
+				}
+				catch
+				{
+					return double.NaN;
 				}
 			}
 			else
 			{
-				var hiAndLo = ToLongs(n);
-
-				checked
-				{
-					result = hiAndLo[0] * Math.Pow(2, exponent + 53);
-					result += hiAndLo[1] * Math.Pow(2, exponent);
-				}
+				return double.NaN;
 			}
-
-			return DoubleHelper.HasPrecision(result)
-                ? result
-				: throw new OverflowException($"When converting BigInteger: {n} to a double, precision was lost.");
 		}
 
 		public static bool TryConvertToDouble(BigInteger n, out double r)
@@ -357,21 +434,10 @@ namespace MSS.Types
 			}
 		}
 
-		private static double ConvertToDouble(BigInteger n)
-		{
-			if (!SafeCastToDouble(n))
-			{
-				throw new OverflowException($"It is not safe to cast BigInteger: {n} to a double.");
-			}
-
-			var result = (double)n;
-			return result;
-		}
-
 		private static bool SafeCastToDouble(BigInteger n)
 		{
 			//bool result = DOUBLE_MIN_VALUE <= n && n <= DOUBLE_MAX_VALUE;
-			bool result = BigInteger.Abs(n) <= FACTOR;
+			var result = BigInteger.Abs(n) <= FACTOR;
 
 			return result;
 		}
