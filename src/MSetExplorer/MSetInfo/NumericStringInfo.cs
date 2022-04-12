@@ -36,9 +36,31 @@ namespace MSetExplorer
                 }
             }
 
+            int dpPos;
+            var exponent = 0;
+            var ePos = s.IndexOf("E", StringComparison.InvariantCultureIgnoreCase);
+
+            if (ePos != -1)
+			{
+                exponent = (int) double.Parse(s[(ePos + 1)..], CultureInfo.InvariantCulture);
+                s = s.Substring(0, ePos);
+                dpPos = s.IndexOf(".", StringComparison.InvariantCultureIgnoreCase);
+                s = s.Remove(dpPos, 1);
+
+                if (exponent < 0)
+				{
+                    s = "0." + new string('0', -1 * exponent - 1) + s;
+				}
+                else
+				{
+                    s = s.Substring(0, exponent + 1) + "." + s.Substring(exponent + 2, s.Length - exponent + 2);
+				}
+
+			}
+
             var sCa = s.ToCharArray();
 
-            var dpPos = s.IndexOf(".", StringComparison.InvariantCultureIgnoreCase);
+            dpPos = s.IndexOf(".", StringComparison.InvariantCultureIgnoreCase);
 
             if (dpPos == -1)
             {
@@ -50,10 +72,16 @@ namespace MSetExplorer
                 _before = sCa.Take(dpPos).Select(x => CharUnicodeInfo.GetDecimalDigitValue(x)).ToArray();
                 _after = sCa.Skip(dpPos + 1).Select(x => CharUnicodeInfo.GetDecimalDigitValue(x)).ToArray();
             }
+
+
+
+
         }
 
         public int PlacesBeforeDp => _before.Length;
         public int PlacesAfterDp => _after.Length;
+
+        public string SValue => GetString();
 
         public NumericStringInfo Add(NumericStringInfo source)
         {

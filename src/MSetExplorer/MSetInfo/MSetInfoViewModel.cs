@@ -251,7 +251,9 @@ namespace MSetExplorer
 
 			var isNegative = dVals.Any(x => x < 0);
 
-			var sVals = dVals.Select(x => x.ToString("G20", CultureInfo.InvariantCulture)).ToArray();
+			var sVals = dVals.Select(x => x.ToString("G25", CultureInfo.InvariantCulture)).ToArray();
+
+			//var chkForE = sVals.Any(x => x.Contains("E") || x.Contains("e"));
 
 			result = Collaspe(sVals);
 
