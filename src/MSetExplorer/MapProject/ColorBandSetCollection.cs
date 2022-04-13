@@ -3,6 +3,7 @@ using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
@@ -11,7 +12,6 @@ namespace MSetExplorer
 {
 	public class ColorBandSetCollection : IDisposable
 	{
-		//private readonly ProjectAdapter _projectAdapter;
 		private readonly Collection<ColorBandSet> _colorsCollection;
 		private readonly ReaderWriterLockSlim _colorsLock;
 
@@ -19,9 +19,8 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandSetCollection(/*ProjectAdapter projectAdapter*/)
+		public ColorBandSetCollection()
 		{
-			//_projectAdapter = projectAdapter;
 			_colorsCollection = new Collection<ColorBandSet>() { new ColorBandSet() };
 			_colorsLock = new ReaderWriterLockSlim();
 			_colorsPointer = 0;
@@ -93,8 +92,7 @@ namespace MSetExplorer
 
 				if (currentId.HasValue)
 				{
-					var cbs = _colorsCollection.FirstOrDefault(x => x.Id == currentId.Value);
-					if (cbs != null)
+					if (TryFindByCbsId(currentId.Value, out var cbs)) 
 					{
 						var idx = _colorsCollection.IndexOf(cbs);
 						_colorsPointer = idx;
@@ -109,6 +107,11 @@ namespace MSetExplorer
 					_colorsPointer = _colorsCollection.Count - 1;
 				}
 			});
+
+			if (!CheckJobStackIntegrity())
+			{
+				Debug.WriteLine("Job Collection is not integeral.");
+			}
 		}
 
 		public void Push(ColorBandSet colorBandSet)
@@ -119,26 +122,6 @@ namespace MSetExplorer
 				_colorsPointer = _colorsCollection.Count - 1;
 			});
 		}
-
-		//public void Save(ObjectId projectId)
-		//{
-		//	var lastSavedTime = _projectAdapter.GetProjectCbSetsLastSaveTime(projectId);
-
-		//	DoWithWriteLock(() =>
-		//	{
-		//		for (var i = 0; i < _colorsCollection.Count; i++)
-		//		{
-		//			var cbs = _colorsCollection[i];
-		//			if (cbs.Id.CreationTime > lastSavedTime) 
-		//			{
-		//				cbs.ProjectId = projectId;
-		//				var updatedCbs = _projectAdapter.CreateColorBandSet(cbs);
-		//				_colorsCollection[i] = updatedCbs;
-		//				UpdateParentIds(cbs.Id, updatedCbs.Id);
-		//			}
-		//		}
-		//	});
-		//}
 
 		public void Clear()
 		{
@@ -195,18 +178,6 @@ namespace MSetExplorer
 				_colorsLock.ExitUpgradeableReadLock();
 			}
 		}
-
-		//public void UpdateParentIds(ObjectId oldParentId, ObjectId newParentId)
-		//{
-		//	foreach (var cbs in _colorsCollection)
-		//	{
-		//		if (oldParentId == cbs.ParentId)
-		//		{
-		//			cbs.ParentId = newParentId;
-		//			_projectAdapter.UpdateColorBandSetParentId(cbs.Id, cbs.ParentId);
-		//		}
-		//	}
-		//}
 
 		#endregion
 
@@ -290,6 +261,26 @@ namespace MSetExplorer
 		{
 			colorBandSet = _colorsCollection.FirstOrDefault(x => x.Id == id);
 			return colorBandSet != null;
+		}
+
+		private bool CheckJobStackIntegrity()
+		{
+			var result = DoWithReadLock(() => {
+				foreach (var cbs in _colorsCollection)
+				{
+					if (cbs.ParentId.HasValue)
+					{
+						if (!TryFindByCbsId(cbs.ParentId.Value, out var _))
+						{
+							return false;
+						}
+					}
+				}
+
+				return true;
+			});
+
+			return result;
 		}
 
 		#endregion

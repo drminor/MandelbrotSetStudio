@@ -28,6 +28,7 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (MSetInfoViewModel)DataContext;
+				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
 				//txtStartX.LostFocus += TxtStartX_LostFocus;
 				//txtEndX.LostFocus += TxtEndX_LostFocus;
@@ -38,27 +39,35 @@ namespace MSetExplorer
 			}
 		}
 
-		private void TxtStartX_LostFocus(object sender, RoutedEventArgs e)
+		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			//_vm.StartingX = txtStartX.Text;
-
-			dispSecMapCoordsCommit.Visibility = Visibility.Visible;
+			if (e.PropertyName == nameof(MSetInfoViewModel.CoordsAreDirty))
+			{
+				dispSecMapCoordsCommit.Visibility = _vm.CoordsAreDirty ? Visibility.Visible : Visibility.Collapsed;
+			}
 		}
 
-		private void TxtEndX_LostFocus(object sender, RoutedEventArgs e)
-		{
-			dispSecMapCoordsCommit.Visibility = Visibility.Visible;
-		}
+		//private void TxtStartX_LostFocus(object sender, RoutedEventArgs e)
+		//{
+		//	//_vm.StartingX = txtStartX.Text;
 
-		private void TxtStartY_LostFocus(object sender, RoutedEventArgs e)
-		{
-			dispSecMapCoordsCommit.Visibility = Visibility.Visible;
-		}
+		//	dispSecMapCoordsCommit.Visibility = Visibility.Visible;
+		//}
 
-		private void TxtEndY_LostFocus(object sender, RoutedEventArgs e)
-		{
-			dispSecMapCoordsCommit.Visibility = Visibility.Visible;
-		}
+		//private void TxtEndX_LostFocus(object sender, RoutedEventArgs e)
+		//{
+		//	dispSecMapCoordsCommit.Visibility = Visibility.Visible;
+		//}
+
+		//private void TxtStartY_LostFocus(object sender, RoutedEventArgs e)
+		//{
+		//	dispSecMapCoordsCommit.Visibility = Visibility.Visible;
+		//}
+
+		//private void TxtEndY_LostFocus(object sender, RoutedEventArgs e)
+		//{
+		//	dispSecMapCoordsCommit.Visibility = Visibility.Visible;
+		//}
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{

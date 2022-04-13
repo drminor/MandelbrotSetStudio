@@ -318,7 +318,7 @@ namespace MSS.Common
 		/// <returns></returns>
 		public static RRectangle UpdatePointValue(RRectangle source, int index, RValue value)
 		{
-			var nrmRect = RNormalizer.Normalize(source, value, out var nrmValue);
+			var nrmRect = RNormalizer.Normalize(source.Clone(), value, out var nrmValue);
 			nrmRect.Values[index] = nrmValue.Value;
 			return nrmRect;
 		}

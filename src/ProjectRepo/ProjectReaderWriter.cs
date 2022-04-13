@@ -99,7 +99,7 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
-		public void UpdateCurrentJobId(ObjectId projectId, ObjectId currentJobId)
+		public void UpdateCurrentJobId(ObjectId projectId, ObjectId? currentJobId)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
 

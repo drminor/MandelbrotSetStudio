@@ -7,10 +7,11 @@ namespace MSS.Types
 {
 	public class RValue : IBigRatShape, ICloneable, IEquatable<RValue?>, IEqualityComparer<RValue>
 	{
-		public BigInteger Value;
+		public BigInteger[] Values { get; init; }
+
 		public int Exponent { get; init; }
 
-		public BigInteger[] Values => new BigInteger[] { Value };
+		//public BigInteger[] Values => new BigInteger[] { Value };
 
 		public RValue() : this(0,0)
 		{ }
@@ -20,9 +21,11 @@ namespace MSS.Types
 
 		public RValue(BigInteger value, int exponent)
 		{
-			Value = value;
+			Values = new BigInteger[] { value };
 			Exponent = exponent;
 		}
+
+		public BigInteger Value => Values[0];
 
 		object ICloneable.Clone()
 		{

@@ -9,7 +9,6 @@ namespace MSS.Types.MSet
 		public string Name { get; set; }
 		public string? Description { get; set; }
 
-		public DateTime LastUpdated { get; private set; }
 		private DateTime _lastSavedUtc;
 
 		public ObjectId? CurrentJobId { get; set; }
@@ -31,6 +30,7 @@ namespace MSS.Types.MSet
 		}
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
+		public DateTime LastUpdated { get; private set; }
 
 		public bool OnFile => Id != ObjectId.Empty;
 

@@ -3,6 +3,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
@@ -11,7 +12,6 @@ namespace MSetExplorer
 {
 	public class JobCollection
 	{
-		//private readonly ProjectAdapter _projectAdapter;
 		private readonly Collection<Job> _jobsCollection;
 		private readonly ReaderWriterLockSlim _jobsLock;
 
@@ -19,9 +19,8 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public JobCollection(/*ProjectAdapter projectAdapter*/)
+		public JobCollection()
 		{
-			//_projectAdapter = projectAdapter;
 			_jobsCollection = new ObservableCollection<Job>();
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 			_jobsPointer = -1;
@@ -39,7 +38,6 @@ namespace MSetExplorer
 
 		//public IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
 
-		// TODO: Use the Last Saved Time to determine
 		//public bool IsDirty => _colorsCollection.Any(x => !x.OnFile);
 
 		#endregion
@@ -94,8 +92,7 @@ namespace MSetExplorer
 
 				if (currentId.HasValue)
 				{
-					var job = _jobsCollection.FirstOrDefault(x => x.Id == currentId.Value);
-					if (job != null)
+					if (TryFindByJobId(currentId.Value, out var job))
 					{
 						var idx = _jobsCollection.IndexOf(job);
 						_jobsPointer = idx;
@@ -110,6 +107,11 @@ namespace MSetExplorer
 					_jobsPointer = _jobsCollection.Count - 1;
 				}
 			});
+
+			if (!CheckJobStackIntegrity())
+			{
+				Debug.WriteLine("Job Collection is not integeral.");
+			}
 		}
 
 		public void Push(Job? job)
@@ -124,34 +126,6 @@ namespace MSetExplorer
 				_jobsPointer = _jobsCollection.Count - 1;
 			});
 		}
-
-		//public void Save(ObjectId projectId)
-		//{
-		//	var lastSavedTime = _projectAdapter.GetProjectJobsLastSaveTime(projectId);
-
-		//	DoWithWriteLock(() =>
-		//	{
-		//		for (var i = 0; i < _jobsCollection.Count; i++)
-		//		{
-		//			var job = _jobsCollection[i];
-		//			if (job.Id.CreationTime > lastSavedTime)
-		//			{
-		//				job.ProjectId = projectId;
-		//				var updatedJob = _projectAdapter.InsertJob(job);
-		//				_jobsCollection[i] = updatedJob;
-		//				UpdateParents(job.Id, updatedJob.Id);
-		//			}
-		//			else
-		//			{
-		//				if (job.IsDirty)
-		//				{
-		//					_projectAdapter.UpdateJobDetalis(job);
-		//					job.IsDirty = false;
-		//				}
-		//			}
-		//		}
-		//	});
-		//}
 
 		public void Clear()
 		{
@@ -207,18 +181,6 @@ namespace MSetExplorer
 				_jobsLock.ExitUpgradeableReadLock();
 			}
 		}
-
-		//public void UpdateParents(ObjectId oldParentId, ObjectId newParentId)
-		//{
-		//	foreach (var job in _jobsCollection)
-		//	{
-		//		if (oldParentId == job.ParentJobId)
-		//		{
-		//			job.ParentJobId = newParentId;
-		//			_projectAdapter.UpdateJobsParent(job);
-		//		}
-		//	}
-		//}
 
 		#endregion
 
@@ -303,6 +265,26 @@ namespace MSetExplorer
 		{
 			job = _jobsCollection.FirstOrDefault(x => x.Id == id);
 			return job != null;
+		}
+
+		private bool CheckJobStackIntegrity()
+		{
+			var result = DoWithReadLock(() => {
+				foreach(var job in _jobsCollection)
+				{
+					if (job.ParentJobId.HasValue)
+					{
+						if (!TryFindByJobId(job.ParentJobId.Value, out var _))
+						{
+							return false;
+						}
+					}
+				}
+
+				return true;
+			});
+
+			return result;
 		}
 
 		#endregion

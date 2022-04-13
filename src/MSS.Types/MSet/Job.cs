@@ -26,7 +26,6 @@ namespace MSS.Types.MSet
 		private BigVector _mapBlockOffset;
 		private VectorInt _canvasControlOffset;
 
-		public DateTime LastUpdated { get; private set; }
 		private DateTime _lastSaved;
 
 		public bool IsDirty { get; set; }
@@ -66,11 +65,11 @@ namespace MSS.Types.MSet
 			_canvasSizeInBlocks = canvasSizeInBlocks;
 			_mapBlockOffset = mapBlockOffset;
 			_canvasControlOffset = canvasControlOffset;
-
 			LastSaved = lastSaved;
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
+		public DateTime LastUpdated { get; private set; }
 
 		public MSetInfo MSetInfo
 		{

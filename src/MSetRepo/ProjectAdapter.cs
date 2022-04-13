@@ -151,7 +151,7 @@ namespace MSetRepo
 			projectReaderWriter.UpdateCurrentCbsId(projectId, currentColorBandSetId);
 		}
 
-		public void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId currentJobId)
+		public void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			projectReaderWriter.UpdateCurrentJobId(projectId, currentJobId);
@@ -338,8 +338,7 @@ namespace MSetRepo
 			return job;
 		}
 
-		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter, 
-			IDictionary<ObjectId, Job>? jobCache)
+		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter, IDictionary<ObjectId, Job>? jobCache)
 		{
 			if (jobCache != null && jobCache.TryGetValue(jobId, out var qJob))
 			{

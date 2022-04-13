@@ -29,8 +29,8 @@ namespace MSetExplorer
 		{
 			_projectAdapter = projectAdapter;
 
-			_jobsCollection = new JobCollection(/*projectAdapter*/);
-			_colorBandSetCollection = new ColorBandSetCollection(/*projectAdapter*/);
+			_jobsCollection = new JobCollection();
+			_colorBandSetCollection = new ColorBandSetCollection();
 			BlockSize = blockSize;
 
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
@@ -197,21 +197,13 @@ namespace MSetExplorer
 				var project = _projectAdapter.CreateProject(name, description, currentJobId, currentColorBandSetId);
 
 				SaveColorBandSetsForProject(project.Id, updateAll: true);
+				project.CurrentColorBandSetId = _colorBandSetCollection.CurrentColorBandSet.Id;
+				_projectAdapter.UpdateProjectCurrentCbsId(project.Id, project.CurrentColorBandSetId);
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
-				var curCbsId = _colorBandSetCollection.CurrentColorBandSet?.Id;
-				if (curCbsId != null)
-				{
-					_projectAdapter.UpdateProjectCurrentCbsId(project.Id, curCbsId.Value);
-				}
-
 				SaveJobs(project.Id, updateAll: true);
-
-				var curJobId = _jobsCollection.CurrentJob?.Id;
-				if (curJobId != null)
-				{
-					_projectAdapter.UpdateProjectCurrentJobId(project.Id, curJobId.Value);
-				}
+				project.CurrentJobId = _jobsCollection.CurrentJob?.Id;
+				_projectAdapter.UpdateProjectCurrentJobId(project.Id, project.CurrentJobId);
 
 				CurrentProject = project;
 
@@ -232,20 +224,15 @@ namespace MSetExplorer
 						throw new InvalidOperationException("Cannot save an unloaded project, use SaveProject instead.");
 					}
 
-					var curCbsIndex = _colorBandSetCollection.CurrentIndex;
 					SaveColorBandSetsForProject(project.Id, updateAll: false);
-
-					project.CurrentColorBandSetId = _colorBandSetCollection[curCbsIndex].Id;
-
+					project.CurrentColorBandSetId = _colorBandSetCollection.CurrentColorBandSet.Id;
 					_projectAdapter.UpdateProjectCurrentCbsId(project.Id, project.CurrentColorBandSetId);
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
 					SaveJobs(project.Id, updateAll: false);
-
-					var curJobId = _jobsCollection.CurrentJob?.Id;
-					if (curJobId != null)
-					{
-						_projectAdapter.UpdateProjectCurrentJobId(project.Id, curJobId.Value);
-					}
+					project.CurrentJobId = _jobsCollection.CurrentJob?.Id;
+					_projectAdapter.UpdateProjectCurrentJobId(project.Id, project.CurrentJobId);
+					OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentJob));
 
 					CurrentProjectIsDirty = false;
 				}
