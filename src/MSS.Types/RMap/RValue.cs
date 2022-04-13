@@ -27,6 +27,16 @@ namespace MSS.Types
 
 		public BigInteger Value => Values[0];
 
+		public RValue Add(RValue rValue)
+		{
+			if (Exponent != rValue.Exponent)
+			{
+				throw new InvalidOperationException("Cannot add two RValues if there Exponents do not agree.");
+			}
+
+			return new RValue(Value + rValue.Value, Exponent);
+		}
+
 		object ICloneable.Clone()
 		{
 			return Clone();

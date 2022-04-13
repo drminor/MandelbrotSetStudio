@@ -9,7 +9,6 @@ namespace MSetExplorer
 	{
 		private static readonly MSetInfo NULL_MSET_INFO = new(new RRectangle(), new MapCalcSettings());
 
-
 		private Job? _currentJob;
 
 		private string _startingX;
@@ -35,10 +34,10 @@ namespace MSetExplorer
 
 			_coords = _currentMSetInfo.Coords;
 
-			_startingX = BigIntegerHelper.ConvertToString(_coords.Left);
-			_endingX = BigIntegerHelper.ConvertToString(_coords.Right);
-			_startingY = BigIntegerHelper.ConvertToString(_coords.Bottom);
-			_endingY = BigIntegerHelper.ConvertToString(_coords.Top);
+			_startingX = RValueHelper.ConvertToString(_coords.Left);
+			_endingX = RValueHelper.ConvertToString(_coords.Right);
+			_startingY = RValueHelper.ConvertToString(_coords.Bottom);
+			_endingY = RValueHelper.ConvertToString(_coords.Top);
 		}
 
 		#region Public Properties
@@ -76,50 +75,27 @@ namespace MSetExplorer
 			get => _startingX;
 			set
 			{
-				var cItems = new string[0];
+				//var cItems = Array.Empty<string>();
 				if (!string.IsNullOrEmpty(value))
 				{
-					cItems = value.Split('\n');
+					var cItems = value.Split('\n');
 					if (cItems.Length > 0)
 					{
-						value = cItems[0];
+						SetMulti(cItems);
 					}
-				}
-
-				if (value != _startingX)
-				{
-					_startingX = value;
-					var rValue = BigIntegerHelper.ConvertToRValue(value, 0);
-					if (rValue != _coords.Left)
+					else
 					{
-						Coords = RMapHelper.UpdatePointValue(_coords, 0, rValue);
-					}
+						if (value != _startingX)
+						{
+							_startingX = value;
+							var rValue = RValueHelper.ConvertToRValue(value, 0);
+							if (rValue != _coords.Left)
+							{
+								Coords = RMapHelper.UpdatePointValue(_coords, 0, rValue);
+							}
 
-					OnPropertyChanged();
-				}
-
-				if (cItems.Length > 1)
-				{
-					EndingX = cItems[1];
-				}
-
-				if (cItems.Length > 2)
-				{
-					StartingY = cItems[2];
-				}
-
-				if (cItems.Length > 3)
-				{
-					EndingY = cItems[3];
-
-					if (TargetIterations == 0)
-					{
-						TargetIterations = 700;
-					}
-
-					if (RequestsPerJob == 0)
-					{
-						RequestsPerJob = 100;
+							OnPropertyChanged();
+						}
 					}
 				}
 			}
@@ -133,7 +109,7 @@ namespace MSetExplorer
 				if (value != _endingX)
 				{
 					_endingX = value;
-					var rValue = BigIntegerHelper.ConvertToRValue(value, 0);
+					var rValue = RValueHelper.ConvertToRValue(value, 0);
 					if (rValue != _coords.Right)
 					{
 						Coords = RMapHelper.UpdatePointValue(_coords, 1, rValue);
@@ -152,7 +128,7 @@ namespace MSetExplorer
 				if (value != _startingY)
 				{
 					_startingY = value;
-					var rValue = BigIntegerHelper.ConvertToRValue(value, 0);
+					var rValue = RValueHelper.ConvertToRValue(value, 0);
 					if (rValue != _coords.Bottom)
 					{
 						Coords = RMapHelper.UpdatePointValue(_coords, 2, rValue);
@@ -171,7 +147,7 @@ namespace MSetExplorer
 				if (value != _endingY)
 				{
 					_endingY = value;
-					var rValue = BigIntegerHelper.ConvertToRValue(value, 0);
+					var rValue = RValueHelper.ConvertToRValue(value, 0);
 					if (rValue != _coords.Top)
 					{
 						Coords = RMapHelper.UpdatePointValue(_coords, 3, rValue);
@@ -190,10 +166,10 @@ namespace MSetExplorer
 				if (value != _coords)
 				{
 					_coords = value;
-					StartingX = BigIntegerHelper.ConvertToString(_coords.Left);
-					EndingX = BigIntegerHelper.ConvertToString(_coords.Right);
-					StartingY = BigIntegerHelper.ConvertToString(_coords.Bottom);
-					EndingY = BigIntegerHelper.ConvertToString(_coords.Top);
+					StartingX = RValueHelper.ConvertToString(_coords.Left);
+					EndingX = RValueHelper.ConvertToString(_coords.Right);
+					StartingY = RValueHelper.ConvertToString(_coords.Bottom);
+					EndingY = RValueHelper.ConvertToString(_coords.Top);
 
 					CoordsAreDirty = value != (_currentJob?.MSetInfo ?? NULL_MSET_INFO).Coords;
 
@@ -278,10 +254,10 @@ namespace MSetExplorer
 
 		public string Test(string s, int exp)
 		{
-			if (BigIntegerHelper.TryConvertToRValue(s, exp, out var rValue))
+			if (RValueHelper.TryConvertToRValue(s, exp, out var rValue))
 			{
 				//var s3 = rValue.ToString();
-				var s2 = BigIntegerHelper.ConvertToString(rValue);
+				var s2 = RValueHelper.ConvertToString(rValue);
 				return s2;
 			}
 			else
@@ -317,6 +293,84 @@ namespace MSetExplorer
 		public void TriggerIterationUpdate()
 		{
 			MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, TargetIterations));
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void SetMulti(string[] mVals)
+		{
+			var work = _coords;
+
+			var nValue = mVals[0];
+			if (nValue != _startingX)
+			{
+				_startingX = nValue;
+				var rValue = RValueHelper.ConvertToRValue(nValue, 0);
+				if (rValue != _coords.Left)
+				{
+					work = RMapHelper.UpdatePointValue(work, 0, rValue);
+				}
+			}
+
+			if (mVals.Length > 1)
+			{
+				nValue = mVals[1];
+				if (nValue != _endingX)
+				{
+					_endingX = nValue;
+					var rValue = RValueHelper.ConvertToRValue(nValue, 0);
+					if (rValue != _coords.Right)
+					{
+						work = RMapHelper.UpdatePointValue(work, 1, rValue);
+					}
+				}
+			}
+
+			if (mVals.Length > 2)
+			{
+				nValue = mVals[2];
+				if (nValue != _startingY)
+				{
+					_startingY = nValue;
+					var rValue = RValueHelper.ConvertToRValue(nValue, 0);
+					if (rValue != _coords.Bottom)
+					{
+						work = RMapHelper.UpdatePointValue(work, 2, rValue);
+					}
+				}
+			}
+
+			if (mVals.Length > 3)
+			{
+				nValue = mVals[3];
+				if (nValue != _endingY)
+				{
+					_endingY = nValue;
+					var rValue = RValueHelper.ConvertToRValue(nValue, 0);
+					if (rValue != _coords.Top)
+					{
+						work = RMapHelper.UpdatePointValue(work, 3, rValue);
+					}
+				}
+			}
+
+			Coords = work;
+			OnPropertyChanged(nameof(StartingX));
+			OnPropertyChanged(nameof(EndingX));
+			OnPropertyChanged(nameof(StartingY));
+			OnPropertyChanged(nameof(EndingY));
+
+			if (TargetIterations == 0)
+			{
+				TargetIterations = 700;
+			}
+
+			if (RequestsPerJob == 0)
+			{
+				RequestsPerJob = 100;
+			}
 		}
 
 		#endregion

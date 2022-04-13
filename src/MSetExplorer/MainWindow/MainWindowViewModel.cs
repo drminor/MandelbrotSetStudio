@@ -91,7 +91,16 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public void TestDiv()
+		public void TestSum()
+		{
+			var s = "0.3323822021484375";
+
+			var rVal = RValueHelper.ConvertToRValue(s, 0);
+
+			RValueHelper.Test(rVal);
+		}
+
+		public void TestDivOld()
 		{
 			var rectDividen = RMapConstants.TEST_RECTANGLE_HALF;
 

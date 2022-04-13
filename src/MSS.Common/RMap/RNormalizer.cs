@@ -1,6 +1,5 @@
 ﻿using MSS.Types;
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -34,7 +33,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		// Rectangle & Size
+		// Rectangle & RValue
 		public static RRectangle Normalize(RRectangle r, RValue s, out RValue newV)
 		{
 			var rTemp = r.Clone();
@@ -95,6 +94,19 @@ namespace MSS.Common
 			var newExp = NormalizeInPlace(pTemp, sTemp);
 			var result = v.Exponent == newExp ? v : new RVector(pTemp.Values, newExp);
 			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
+
+			return result;
+		}
+
+		// Two RValues
+		public static RValue Normalize(RValue r, RValue s, out RValue newV)
+		{
+			var rTemp = r.Clone();
+			var vTemp = s.Clone();
+
+			var newExp = NormalizeInPlace(rTemp, vTemp);
+			var result = r.Exponent == newExp ? r : new RValue(rTemp.Values, newExp);
+			newV = s.Exponent == newExp ? s : new RValue(vTemp.Values, newExp);
 
 			return result;
 		}

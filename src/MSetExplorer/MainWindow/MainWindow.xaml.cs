@@ -49,6 +49,8 @@ namespace MSetExplorer
 
 				//((MainWindowViewModel)_vm).TestDiv();
 
+				((MainWindowViewModel)_vm).TestSum();
+
 				Debug.WriteLine("The MainWindow is now loaded");
 			}
 		}

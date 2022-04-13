@@ -3,7 +3,7 @@ using System.Linq;
 using System.Globalization;
 using System.Text;
 
-namespace MSS.Types
+namespace MSS.Common
 {
     internal class NumericStringInfo
     {
