@@ -200,6 +200,72 @@ namespace MSS.Types
 
 		#endregion
 
+		#region RValue Parsing
+
+		public static string ConvertToString(RValue rValue)
+		{
+			var dVals = ConvertToDoubles(rValue.Value, rValue.Exponent);
+			var nsis = dVals.Select(x => new NumericStringInfo(x)).ToArray();
+
+			var stage = nsis[0];
+
+			for (var i = 1; i < nsis.Length; i++)
+			{
+				var t = stage.Add(nsis[i]);
+				var st = t.GetString();
+				stage = t;
+			}
+
+			var result = stage.GetString();
+
+			return result;
+		}
+
+		public static RValue ConvertToRValue(string s, int exponent)
+		{
+			if (double.TryParse(s, out var dValue))
+			{
+				return ConvertToRValue(dValue, exponent);
+			}
+			else
+			{
+				return new RValue();
+			}
+		}
+
+		public static bool TryConvertToRValue(string s, int exponent, out RValue value)
+		{
+			if (double.TryParse(s, out var dValue))
+			{
+				value = ConvertToRValue(dValue, exponent);
+				return true;
+			}
+			else
+			{
+				value = new RValue();
+				return false;
+			}
+		}
+
+		public static RValue ConvertToRValue(double d, int exponent)
+		{
+			var origD = d;
+
+			while (Math.Abs(d - Math.Truncate(d)) > 0.000001)
+			{
+				//var t = Math.Abs(d - Math.Truncate(d));
+				Debug.WriteLine($"Still multiplying. NewD: {d:G12}, StartD: {origD:G12}.");
+
+				d *= 2;
+				exponent--;
+			}
+
+			var result = new RValue((BigInteger)d, exponent);
+			return result;
+		}
+
+		#endregion
+
 		#region Convert to Integer Types
 
 		public static long[][] ToLongs(BigInteger[] values)

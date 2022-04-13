@@ -2,9 +2,8 @@
 using System.Linq;
 using System.Globalization;
 using System.Text;
-using System.Diagnostics;
 
-namespace MSetExplorer
+namespace MSS.Types
 {
     internal class NumericStringInfo
     {

@@ -5,6 +5,7 @@ namespace MSS.Types
 	{
 		TargetIterations,
 		IterationsPerRequest,
-		Coordinates
+		Coordinates,
+		NewProject
 	}
 }

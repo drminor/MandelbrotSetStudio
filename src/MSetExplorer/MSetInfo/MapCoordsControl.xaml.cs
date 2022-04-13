@@ -29,11 +29,7 @@ namespace MSetExplorer
 			{
 				_vm = (MSetInfoViewModel)DataContext;
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
-
-				//txtStartX.LostFocus += TxtStartX_LostFocus;
-				//txtEndX.LostFocus += TxtEndX_LostFocus;
-				//txtStartY.LostFocus += TxtStartY_LostFocus;
-				//txtEndY.LostFocus += TxtEndY_LostFocus;
+				txtStartX.AcceptsReturn = true;
 
 				//Debug.WriteLine("The MapCoordsControl is now loaded");
 			}
@@ -47,42 +43,20 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void TxtStartX_LostFocus(object sender, RoutedEventArgs e)
-		//{
-		//	//_vm.StartingX = txtStartX.Text;
-
-		//	dispSecMapCoordsCommit.Visibility = Visibility.Visible;
-		//}
-
-		//private void TxtEndX_LostFocus(object sender, RoutedEventArgs e)
-		//{
-		//	dispSecMapCoordsCommit.Visibility = Visibility.Visible;
-		//}
-
-		//private void TxtStartY_LostFocus(object sender, RoutedEventArgs e)
-		//{
-		//	dispSecMapCoordsCommit.Visibility = Visibility.Visible;
-		//}
-
-		//private void TxtEndY_LostFocus(object sender, RoutedEventArgs e)
-		//{
-		//	dispSecMapCoordsCommit.Visibility = Visibility.Visible;
-		//}
-
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (!int.TryParse(txtStartX.Text, out var exp))
-			{
-				exp = 0;
-			}
+			//if (!int.TryParse(txtStartX.Text, out var exp))
+			//{
+			//	exp = 0;
+			//}
 
-			txtStartY.Text = _vm.Test(txtEndX.Text, exp);
+			//txtStartY.Text = _vm.Test(txtEndX.Text, exp);
 
-			//txtEndY.Text = _vm.Test(txtStartY.Text);
+			////txtEndY.Text = _vm.Test(txtStartY.Text);
 
-			//_  = _vm.Test(txtStartY.Text);
+			////_  = _vm.Test(txtStartY.Text);
 
-			//_vm.SaveCoords();
+			_vm.SaveCoords();
 
 		}
 	}

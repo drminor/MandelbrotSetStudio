@@ -1,5 +1,4 @@
-﻿using MSetRepo;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -149,7 +148,7 @@ namespace MSetExplorer
 				MapDisplayViewModel.CurrentJob = curJob;
 			}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
+			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet.Clone();
 				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
@@ -190,9 +189,11 @@ namespace MSetExplorer
 				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
 				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
 			}
+
 			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.Coordinates)
 			{
 				Debug.WriteLine($"MainWindow ViewModel received request to update the coords.");
+				MapProjectViewModel.UpdateMapCoordinates(e.Coords);
 			}
 		}
 

@@ -34,6 +34,7 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateTargetInterations(int targetIterations);
+		void UpdateMapCoordinates(RRectangle coords);
 
 		// Project Methods
 		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);

@@ -45,9 +45,21 @@ namespace MSetExplorer
 				mapCalcSettingsView1.DataContext = _vm.MSetInfoViewModel;
 				mapCoordsView1.DataContext = _vm.MSetInfoViewModel;
 
-				((MainWindowViewModel)_vm).TestDiv();
+				_vm.MSetInfoViewModel.MapSettingsUpdateRequested += MSetInfoViewModel_MapSettingsUpdateRequested;
+
+				//((MainWindowViewModel)_vm).TestDiv();
 
 				Debug.WriteLine("The MainWindow is now loaded");
+			}
+		}
+
+		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
+		{
+			if (e.MapSettingsUpdateType == MapSettingsUpdateType.NewProject)
+			{
+				Debug.WriteLine($"MainWindow ViewModel received request to start a new project.");
+				var mSetInfo = new MSetInfo(e.Coords, new MapCalcSettings(e.TargetIterations, e.RequestsPerJob));
+				LoadNewProject(mSetInfo);
 			}
 		}
 
@@ -340,6 +352,12 @@ namespace MSetExplorer
 			var maxIterations = 700;
 			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations);
 			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(maxIterations);
+			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo, colorBandSet);
+		}
+
+		private void LoadNewProject(MSetInfo mSetInfo)
+		{
+			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(mSetInfo.MapCalcSettings.TargetIterations);
 			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo, colorBandSet);
 		}
 
