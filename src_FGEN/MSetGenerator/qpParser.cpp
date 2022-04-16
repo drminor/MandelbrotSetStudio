@@ -227,38 +227,37 @@ void qpParser::Pown(double hi, int n, double& rHi, double& rLo) const
 		break;
 
 	default:							/* Use binary exponentiation */
-	{
-		//dd_real r = a;
-		double tHi = hi;
-		double tLo = 0;
-		double tHi2;
-		double tLo2;
-
-		//s = 1.0;
-		sHi = 1.0;
-		sLo = 0.0;
-
-		while (N > 0)
 		{
-			if (N % 2 == 1)
+			//dd_real r = a;
+			double tHi = hi;
+			double tLo = 0;
+			double tHi2;
+			double tLo2;
+
+			//s = 1.0;
+			sHi = 1.0;
+			sLo = 0.0;
+
+			while (N > 0)
 			{
-				//s *= r;
-				_qpCalc->mulQpByQp(sHi, sLo, tHi, tLo, sHi2, sLo2);
-				sHi = sHi2;
-				sLo = sLo2;
-			}
-			N /= 2;
-			if (N > 0)
-			{
-				//r = sqr(r);
-				_qpCalc->sqrQp(tHi, tLo, tHi2, tLo2);
-				tHi = tHi2;
-				tLo = tLo2;
+				if (N % 2 == 1)
+				{
+					//s *= r;
+					_qpCalc->mulQpByQp(sHi, sLo, tHi, tLo, sHi2, sLo2);
+					sHi = sHi2;
+					sLo = sLo2;
+				}
+				N /= 2;
+				if (N > 0)
+				{
+					//r = sqr(r);
+					_qpCalc->sqrQp(tHi, tLo, tHi2, tLo2);
+					tHi = tHi2;
+					tLo = tLo2;
+				}
 			}
 		}
-	}
-
-	break;
+		break;
 	}
 
 	/* Compute the reciprocal if n is negative. */

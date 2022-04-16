@@ -63,7 +63,7 @@ namespace MSS.Common
         public bool IsNegative => _isNegative;
         public bool IsZero => _isZero;
 
-        public string SValue => GetString();
+        public string SValue => GetString(precision: null);
 
         #endregion
 
@@ -72,7 +72,6 @@ namespace MSS.Common
         public NumericStringInfo Add(NumericStringInfo source)
         {
             if (IsNegative != source.IsNegative && !(IsZero || source.IsZero)) 
-            //if ((IsZero || IsNegative) != (source.IsZero || source.IsNegative))
 			{
                 throw new InvalidOperationException("Can only Add two NumericStrings if they have the same sign.");
 			}
@@ -95,7 +94,7 @@ namespace MSS.Common
             return result;
         }
 
-        public string GetString()
+        public string GetString(int? precision)
         {
             var sb = new StringBuilder();
 
@@ -115,20 +114,33 @@ namespace MSS.Common
 
             _ = sb.Append(_before.Select(x => (char)(x + 48)).ToArray());
 
-            _ = sb.Append('.');
+            var cntDigitsRemaining = precision.HasValue ? precision.Value - _before.Length : int.MaxValue;
 
-            if (_after.Length > 0)
+            cntDigitsRemaining = Math.Min(cntDigitsRemaining, _after.Length);
+
+            if (cntDigitsRemaining > 0)
 			{
-                _ = sb.Append(_after.Select(x => (char)(x + 48)).ToArray());
+                _ = sb.Append('.');
+                _ = sb.Append(_after.Take(cntDigitsRemaining).Select(x => (char)(x + 48)).ToArray());
             }
 
             return sb.ToString();
         }
 
+        public static NumericStringInfo Sum(params NumericStringInfo[] numericStringInfos)
+        {
+            var stage = numericStringInfos[0];
+
+            for (var i = 1; i < numericStringInfos.Length; i++)
+            {
+                stage = stage.Add(numericStringInfos[i]);
+            }
+
+            return stage;
+        }
+
         public static string ConvertToFixedPoint(string s)
         {
-            int dpPos;
-            var exponent = 0;
             var ePos = s.IndexOf("E", StringComparison.InvariantCultureIgnoreCase);
 
             if (ePos != -1)
@@ -136,9 +148,9 @@ namespace MSS.Common
                 var eStr = s[(ePos + 1)..];
                 s = s[0..ePos];
 
-                exponent = (int)double.Parse(eStr, CultureInfo.InvariantCulture);
+                var exponent = (int)double.Parse(eStr, CultureInfo.InvariantCulture);
 
-                dpPos = s.IndexOf(".", StringComparison.InvariantCultureIgnoreCase);
+                var dpPos = s.IndexOf(".", StringComparison.InvariantCultureIgnoreCase);
                 s = s.Remove(dpPos, 1);
 
                 if (exponent < 0)
@@ -160,11 +172,11 @@ namespace MSS.Common
             return s;
         }
 
-		#endregion
+        #endregion
 
-		#region Private Methods
+        #region Private Methods
 
-		private int[] Add(int[] a, int[] b, ref int carry)
+        private int[] Add(int[] a, int[] b, ref int carry)
         {
             var result = new int[Math.Max(a.Length, b.Length)];
 
@@ -212,9 +224,9 @@ namespace MSS.Common
             return d;
         }
 
-        private string ConditionForParse(string s)
+        private static string ConditionForParse(string s)
 		{
-            s = s.Trim();
+            s = s ?? string.Empty.Trim();
 
             if (s.StartsWith('.'))
             {
@@ -223,7 +235,7 @@ namespace MSS.Common
 
             if (s.EndsWith('.'))
             {
-                s = s + "0";
+                s = s[0..^1];
             }
 
             return s;

@@ -96,10 +96,10 @@ namespace MSS.Common
 			var spdH = BigIntegerHelper.Divide(coords.Width, canvasSize.Width);
 			var spdV = BigIntegerHelper.Divide(coords.Height, canvasSize.Height);
 
+			var nH = RNormalizer.Normalize(spdH, spdV, out var nV);
+
 			// Take the smallest value
-			RSize result = spdH.Value >= spdV.Value
-				? new RSize(spdV)
-				: new RSize(spdH);
+			var result = new RSize(RValue.Min(nH, nV));
 
 			// The size of the new map is equal to the product of the number of samples by the new samplePointDelta.
 			var adjMapSize = result.Scale(canvasSize);

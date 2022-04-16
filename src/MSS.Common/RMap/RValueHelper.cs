@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Globalization;
 using System.Numerics;
 
 namespace MSS.Common
@@ -13,19 +14,22 @@ namespace MSS.Common
 
 		public static string ConvertToString(RValue rValue)
 		{
-			var dVals =  ConvertToDoubles(rValue.Value, rValue.Exponent);
-			var nsis = dVals.Select(x => new NumericStringInfo(x)).ToArray();
+			var dVals = ConvertToDoubles(rValue);
+			var numericStringInfos = dVals.Select(x => new NumericStringInfo(x)).ToArray();
+			var total = NumericStringInfo.Sum(numericStringInfos);
 
-			var stage = nsis[0];
+			var result = total.GetString(rValue.Precision);
 
-			for (var i = 1; i < nsis.Length; i++)
+			//var t = BigInteger.Parse(result, CultureInfo.InvariantCulture);
+			//t = AdjustWithPrecision(t, rValue.Precision, CultureInfo.InvariantCulture);
+			//result = t.ToString(CultureInfo.InvariantCulture);
+
+			if (result.Length > 8)
 			{
-				var t = stage.Add(nsis[i]);
-				var st = t.GetString();
-				stage = t;
+				result = SignManExp.ConvertToScientificNotation(result);
 			}
 
-			var result = stage.GetString();
+			Debug.WriteLine($"RValue: {rValue}, produced: {result}.");
 
 			return result;
 		}
@@ -34,101 +38,254 @@ namespace MSS.Common
 
 		#region From String
 
-		public static RValue ConvertToRValue(string s, int exponent)
+		//public static RValue ConvertToRValue(string s)
+		//{
+		//	if (double.TryParse(s, out var dValue))
+		//	{
+		//		return ConvertToRValue(dValue, exponent);
+		//	}
+		//	else
+		//	{
+		//		return new RValue();
+		//	}
+		//}
+
+		public static bool TryConvertToRValue(string s, out RValue value)
 		{
-			if (double.TryParse(s, out var dValue))
-			{
-				return ConvertToRValue(dValue, exponent);
-			}
-			else
-			{
-				return new RValue();
-			}
+			//if (double.TryParse(s, out var dValue))
+			//{
+			//	value = ConvertToRValue(dValue, exponent);
+			//	return true;
+			//}
+			//else
+			//{
+			//	value = new RValue();
+			//	return false;
+			//}
+
+			value = ConvertToRValue(s);
+			return true;
 		}
 
-		public static bool TryConvertToRValue(string s, int exponent, out RValue value)
+		public static RValue ConvertToRValue(string s)
 		{
-			if (double.TryParse(s, out var dValue))
+			// Supports arbitray string lengths.
+
+			var formatProvider = CultureInfo.InvariantCulture;
+
+			var sme = new SignManExp(s);
+			var pow = (int)Math.Round(3.3 * sme.NumberOfDigitsAfterDecimalPoint);
+			var bigInt = BigInteger.Parse(sme.Mantissa, formatProvider);
+			bigInt *= BigInteger.Pow(new BigInteger(2), pow);
+			bigInt = AdjustWithPrecision(bigInt, sme.Precision, formatProvider);
+
+			if (sme.IsNegative)
 			{
-				value = ConvertToRValue(dValue, exponent);
-				return true;
-			}
-			else
-			{
-				value = new RValue();
-				return false;
-			}
-		}
-
-		public static RValue ConvertToRValue(double d, int exponent)
-		{
-			var origD = d;
-
-
-			//var wp = Math.Truncate(d);
-			//d = d - wp;
-			//var l2 = Math.Log2(d);
-			//var l2a = (int) Math.Round(l2, MidpointRounding.AwayFromZero);
-			//var newD = d * Math.Pow(2, -1 * l2a);
-			//newD += wp;
-
-
-			var l2 = Math.Log2(d);
-			var l2a = (int)Math.Round(l2, MidpointRounding.ToZero);
-
-			if (l2 < 0)
-			{
-				d = d * Math.Pow(2, -1 * l2a);
-				exponent -= l2a;
+				bigInt *= -1;
 			}
 
-			//var newD = d * Math.Pow(2, -1 * l2a);
+			var result = new RValue(bigInt, -1 * pow, sme.Precision);
 
+			result = Reducer.Reduce(result);
 
-			while (Math.Abs(d - Math.Truncate(d)) > 0.000001)
-			{
-				//var t = Math.Abs(d - Math.Truncate(d));
-				Debug.WriteLine($"Still multiplying. NewD: {d:G12}, StartD: {origD:G12}.");
+			Debug.WriteLine($"s: {s}, produced: {result}.");
 
-				d *= 2;
-				exponent--;
-			}
-
-			var result = new RValue((BigInteger)d, exponent);
 			return result;
 		}
 
-		public static RValue Sum(params RValue[] rValues)
+		private static BigInteger AdjustWithPrecision(BigInteger b, int precision, IFormatProvider formatProvider)
 		{
-			var stage = rValues[0];
+			var allDigits = b.ToString(formatProvider);
+			var requiredDigits = allDigits.Length > precision ? allDigits[0..precision] : allDigits;
 
-			for (var i = 1; i < rValues.Length; i++)
+			var result = BigInteger.Parse(requiredDigits, formatProvider);
+
+			if (allDigits.Length > precision + 1)
 			{
-				var rVal = rValues[i];
-				var nrmStage = RNormalizer.Normalize(stage, rVal, out var nrmRVal);
+				var followingDigit = allDigits[precision + 1].ToString(formatProvider);
+				var followingDigitValue = int.Parse(followingDigit, formatProvider);
 
-				var t = nrmStage.Add(nrmRVal);
-				
-				var st = BigIntegerHelper.GetDisplay(t);
-				Debug.WriteLine($"Still summing, st is {st}.");
-
-				stage = t;
+				if (followingDigitValue > 4)
+				{
+					result += 1;
+				}
 			}
 
-			return stage;
+			return result;
 		}
 
+		//public static RValue ConvertToRValueOLD(string s)
+		//{
+		//	// Supports arbitray string lengths.
+
+		//	var dValComps = GetDValComps(s);
+
+		//	//var rVals = dValComps.Select(x => ConvertToRValue(x, 0)).ToArray();
+		//	var tt = new List<RValue>();
+		//	for (var i = 0; i < dValComps.Count; i++)
+		//	{
+		//		var rValComp = ConvertToRValue(dValComps[i], 0);
+		//		tt.Add(rValComp);
+		//	}
+
+		//	var rVals = tt.ToArray();
+
+		//	var result = Sum(rVals);
+
+		//	return result;
+		//}
+
+		//private static RValue ConvertToRValue(double d, int exponent)
+		//{
+		//	//Debug.WriteLine($"Beginning to Convert {d:G12} to an RValue.");
+		//	var origD = d;
+
+		//	var n = d.ToString("G17");
+		//	var p = n.IndexOf('.');
+
+		//	var nl = n.Length - p;
+		//	d = d * Math.Pow(2, nl);
+		//	exponent -= nl;
+
+		//	var err = Math.Abs(d - Math.Truncate(d));
+
+		//	var cnt = 0;
+		//	while (err > Math.Abs(0.000001))
+		//	{
+		//		//Debug.WriteLine($"Still multiplying. NewD: {d:G12},  Err: {err:G12}.");
+
+		//		d *= 2;
+		//		exponent--;
+		//		cnt++;
+
+		//		err = Math.Abs(d - Math.Truncate(d));
+		//	}
+
+		//	d = Math.Round(d);
+
+		//	var result = new RValue((BigInteger)d, exponent);
+		//	Debug.WriteLine($"\nThe final RValue computed from: {origD:G12} is {result} Took {cnt} ops, Err: {err:G12}.");
+
+		//	return result;
+		//}
+
+		//public static RValue Sum(params RValue[] rValues)
+		//{
+		//	var stage = rValues[0];
+
+		//	for (var i = 1; i < rValues.Length; i++)
+		//	{
+		//		var rVal = rValues[i];
+		//		var nrmStage = RNormalizer.Normalize(stage, rVal, out var nrmRVal);
+		//		stage = nrmStage.Add(nrmRVal);
+
+		//		//var st = BigIntegerHelper.GetDisplay(stage);
+		//		//Debug.WriteLine($"Still summing, st is {st}.");
+		//	}
+
+		//	return stage;
+		//}
 
 		public static void Test(RValue rValue)
 		{
-			var dVals = ConvertToDoubles(rValue.Value, rValue.Exponent).ToArray();
 
-			var rVals = dVals.Select(x => ConvertToRValue(x, 0)).ToArray();
+			// "0.535575821681765930306959274776606";
+			// "0.535575821681765
+			//	0.000000000000000930306959274776606
 
-			var c = Sum(rVals);
+			// "0.000000000000000000930306959274776606
+			// "0000000000000000306959274776606";
+			// "00000000000000000306959274776606
+			// "0.0000000000000000306959274776606"
 
-			Debug.WriteLine($"C = {c}.");
+			//0.00000000000000930306959274776606
+
+			// "5355758216817659000000000000000";
+
+			//var dVals = ConvertToDoubles(rValue.Value, rValue.Exponent).ToArray();
+
+			//var rVals = dVals.Select(x => ConvertToRValue(x, 0)).ToArray();
+
+			//var c = Sum(rVals);
+
+			//Debug.WriteLine($"C = {c}.");
 		}
+
+		public static RValue Test2(string s)
+		{
+			var result = ConvertToRValue(s);
+			Debug.WriteLine($"The final result from Test2 is {result}.");
+
+			return result;
+		}
+
+		//public static IList<double> GetDValComps(string s)
+		//{
+		//	s = SignManExp.ConvertToScientificNotation(s);
+		//	var smeValue = new SignManExp(s);
+
+		//	var result = new List<double>();
+		//	var diag = new List<string>();
+
+		//	while (TryGetNumericChunk(ref smeValue, out var chunk, out var strChunk))
+		//	{
+		//		result.Add(chunk);
+
+		//		var ff = NumericStringInfo.ConvertToFixedPoint(strChunk);
+		//		diag.Add(ff);
+		//	}
+
+		//	Debug.WriteLine("The DComps are:\n");
+		//	for(var i = 0; i < result.Count; i++)
+		//	{
+		//		Debug.WriteLine($"{result[i]}\t\t{diag[i]}\n");
+		//	}
+
+		//	return result;
+		//}
+
+		//private static bool TryGetNumericChunk(ref SignManExp? smeValue, out double chunk, out string strChunk)
+		//{
+		//	var CHUNK_LENGTH = 13;
+
+		//	if (smeValue == null)
+		//	{
+		//		chunk = double.NaN;
+		//		strChunk = string.Empty;
+		//		return false;
+		//	}
+		//	else
+		//	{
+		//		if (smeValue.Mantissa.Length > CHUNK_LENGTH)
+		//		{
+		//			var t = new SignManExp(smeValue.IsNegative, smeValue.Mantissa[0..CHUNK_LENGTH], smeValue.Exponent);
+		//			strChunk = t.GetValueAsString();
+
+		//			chunk = t.GetValueAsDouble();
+
+		//			var newMantissa = smeValue.Mantissa[CHUNK_LENGTH..^0];
+
+		//			if (smeValue.Exponent < 0)
+		//			{
+		//				newMantissa = "0." + newMantissa;
+		//			}
+		//			else
+		//			{
+		//				newMantissa = newMantissa[0..1] + '.' + newMantissa[1..];
+		//			}
+
+		//			smeValue = new SignManExp(smeValue.IsNegative, newMantissa, smeValue.Exponent - (CHUNK_LENGTH - 2));
+		//		}
+		//		else
+		//		{
+		//			chunk = smeValue.GetValueAsDouble();
+		//			strChunk = smeValue.GetValueAsString();
+		//			smeValue = null;
+		//		}
+
+		//		return true;
+		//	}
+		//}
 
 		#endregion
 
@@ -141,7 +298,8 @@ namespace MSS.Common
 
 		public static IList<double> ConvertToDoubles(BigInteger n, int exponent)
 		{
-			BigInteger DIVISOR = new BigInteger(Math.Pow(2, 3));
+			var DIVISOR_LOG = 3;
+			var DIVISOR = new BigInteger(Math.Pow(2, DIVISOR_LOG));
 
 			var result = new List<double>();
 
@@ -149,7 +307,7 @@ namespace MSS.Common
 			{
 				result.Add(0);
 			}
-			//else if (SafeCastToDouble(n))
+			//else if (BigIntegerHelper.SafeCastToDouble(n))
 			//{
 			//	result.Add((double)n);
 			//	checked
@@ -173,7 +331,7 @@ namespace MSS.Common
 				{
 					checked
 					{
-						result[i] *= Math.Pow(2, exponent + i * 3);
+						result[i] *= Math.Pow(2, exponent + i * DIVISOR_LOG);
 					}
 				}
 				result.Reverse();
@@ -181,16 +339,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-		//865 
-		///10 give 86, remainder 5
-
-		//86
-		///10 gives 8, remainder 6
-
-		//8
-		/// 10 gives 0, reminder 8
-
 
 		#endregion
 	}

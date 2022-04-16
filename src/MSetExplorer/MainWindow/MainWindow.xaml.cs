@@ -44,14 +44,35 @@ namespace MSetExplorer
 
 				mapCalcSettingsView1.DataContext = _vm.MSetInfoViewModel;
 				mapCoordsView1.DataContext = _vm.MSetInfoViewModel;
+				mapCoordsView1.KeyDown += MapCoordsView1_KeyDown;
+				mapCoordsView1.PreviewKeyDown += MapCoordsView1_PreviewKeyDown;
 
 				_vm.MSetInfoViewModel.MapSettingsUpdateRequested += MSetInfoViewModel_MapSettingsUpdateRequested;
 
 				//((MainWindowViewModel)_vm).TestDiv();
 
-				((MainWindowViewModel)_vm).TestSum();
+				//((MainWindowViewModel)_vm).TestSum();
 
 				Debug.WriteLine("The MainWindow is now loaded");
+			}
+		}
+
+		private void MapCoordsView1_PreviewKeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
+			{
+				var coords = _vm.MSetInfoViewModel.Coords;
+				Clipboard.SetText(coords.ToString());
+				e.Handled = true;
+			}
+		}
+
+		private void MapCoordsView1_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
+			{
+				var coords = _vm.MSetInfoViewModel.Coords;
+				Clipboard.SetText(coords.ToString());
 			}
 		}
 

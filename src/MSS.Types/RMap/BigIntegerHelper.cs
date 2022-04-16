@@ -164,9 +164,25 @@ namespace MSS.Types
 
 		#region ToString support
 
-		public static string GetDisplay(BigInteger v, int exponent)
+		public static string GetDisplay(RValue rValue, bool includeDecimalOutput = false, IFormatProvider? formatProvider = null)
 		{
-			return $"{v}/{ Math.Pow(2, -1 * exponent).ToString(CultureInfo.InvariantCulture)}";
+			if (formatProvider is null)
+			{
+				formatProvider = CultureInfo.InvariantCulture;
+			}
+
+			var result = $"{rValue.Value}/{ Math.Pow(2, -1 * rValue.Exponent).ToString(formatProvider)}";
+
+			// TODO: Use Convert RValue To String insted of ConvertToDouble.
+			// TODO: Use the RValue's precision to inform the ConvertToDouble method
+			if (includeDecimalOutput)
+			{
+				result += $"({ConvertToDouble(rValue)})";
+			}
+
+			result += $" exp: {rValue.Exponent.ToString(formatProvider)}";
+
+			return result;
 		}
 
 		public static string GetDisplay(IBigRatShape bigRatShape, bool includeDecimalOutput = false)
@@ -215,6 +231,11 @@ namespace MSS.Types
 			if (hi > FACTOR)
 			{
 				throw new ArgumentOutOfRangeException(nameof(bi));
+			}
+
+			if (hi > 0)
+			{
+				Debug.WriteLine($"Got a Hi value when converting a IBigRatShape value.");
 			}
 
 			var result = new long[] { (long)hi, (long)lo };
@@ -372,7 +393,7 @@ namespace MSS.Types
 			}
 		}
 
-		private static bool SafeCastToDouble(BigInteger n)
+		public static bool SafeCastToDouble(BigInteger n)
 		{
 			//bool result = DOUBLE_MIN_VALUE <= n && n <= DOUBLE_MAX_VALUE;
 			var result = BigInteger.Abs(n) <= FACTOR;

@@ -91,14 +91,21 @@ namespace MSetExplorer
 			return result;
 		}
 
+		//public void TestSumOld()
+		//{
+		//	var s = "0.3323822021484375";
+		//	var rVal = RValueHelper.ConvertToRValue(s, 0);
+		//	RValueHelper.Test(rVal);
+		//}
+
 		public void TestSum()
 		{
-			var s = "0.3323822021484375";
+			//var s = "0.152816772460937588";
+			var s = "0.53557582168176593030695927477";
 
-			var rVal = RValueHelper.ConvertToRValue(s, 0);
-
-			RValueHelper.Test(rVal);
+			var rVal = RValueHelper.Test2(s);
 		}
+
 
 		public void TestDivOld()
 		{

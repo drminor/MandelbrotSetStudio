@@ -68,7 +68,7 @@ namespace MSS.Types
 			var reductionFactor = 0;
 			long divisor = 1;
 
-			while (exponent + reductionFactor < 0 && BigInteger.Remainder(value, divisor + 1) == 0)
+			while (exponent + reductionFactor < 0 && BigInteger.Remainder(value, divisor * 2) == 0)
 			{
 				reductionFactor++;
 				divisor *= 2;

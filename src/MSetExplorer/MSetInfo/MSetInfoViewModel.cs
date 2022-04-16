@@ -75,11 +75,10 @@ namespace MSetExplorer
 			get => _startingX;
 			set
 			{
-				//var cItems = Array.Empty<string>();
 				if (!string.IsNullOrEmpty(value))
 				{
 					var cItems = value.Split('\n');
-					if (cItems.Length > 0)
+					if (cItems.Length == 4)
 					{
 						SetMulti(cItems);
 					}
@@ -88,7 +87,7 @@ namespace MSetExplorer
 						if (value != _startingX)
 						{
 							_startingX = value;
-							var rValue = RValueHelper.ConvertToRValue(value, 0);
+							var rValue = RValueHelper.ConvertToRValue(value);
 							if (rValue != _coords.Left)
 							{
 								Coords = RMapHelper.UpdatePointValue(_coords, 0, rValue);
@@ -109,7 +108,7 @@ namespace MSetExplorer
 				if (value != _endingX)
 				{
 					_endingX = value;
-					var rValue = RValueHelper.ConvertToRValue(value, 0);
+					var rValue = RValueHelper.ConvertToRValue(value);
 					if (rValue != _coords.Right)
 					{
 						Coords = RMapHelper.UpdatePointValue(_coords, 1, rValue);
@@ -128,7 +127,7 @@ namespace MSetExplorer
 				if (value != _startingY)
 				{
 					_startingY = value;
-					var rValue = RValueHelper.ConvertToRValue(value, 0);
+					var rValue = RValueHelper.ConvertToRValue(value);
 					if (rValue != _coords.Bottom)
 					{
 						Coords = RMapHelper.UpdatePointValue(_coords, 2, rValue);
@@ -147,7 +146,7 @@ namespace MSetExplorer
 				if (value != _endingY)
 				{
 					_endingY = value;
-					var rValue = RValueHelper.ConvertToRValue(value, 0);
+					var rValue = RValueHelper.ConvertToRValue(value);
 					if (rValue != _coords.Top)
 					{
 						Coords = RMapHelper.UpdatePointValue(_coords, 3, rValue);
@@ -252,9 +251,9 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public string Test(string s, int exp)
+		public string Test(string s)
 		{
-			if (RValueHelper.TryConvertToRValue(s, exp, out var rValue))
+			if (RValueHelper.TryConvertToRValue(s, out var rValue))
 			{
 				//var s3 = rValue.ToString();
 				var s2 = RValueHelper.ConvertToString(rValue);
@@ -303,12 +302,18 @@ namespace MSetExplorer
 		{
 			var work = _coords;
 
+			var x1Updated = false;
+			var x2Updated = false;
+			var y1Updated = false;
+			var y2Updated = false;
+
 			var nValue = mVals[0];
 			if (nValue != _startingX)
 			{
 				_startingX = nValue;
-				var rValue = RValueHelper.ConvertToRValue(nValue, 0);
-				if (rValue != _coords.Left)
+				var rValue = RValueHelper.ConvertToRValue(nValue);
+				x1Updated = rValue != _coords.Left;
+				if (x1Updated)
 				{
 					work = RMapHelper.UpdatePointValue(work, 0, rValue);
 				}
@@ -320,8 +325,9 @@ namespace MSetExplorer
 				if (nValue != _endingX)
 				{
 					_endingX = nValue;
-					var rValue = RValueHelper.ConvertToRValue(nValue, 0);
-					if (rValue != _coords.Right)
+					var rValue = RValueHelper.ConvertToRValue(nValue);
+					x2Updated = rValue != _coords.Right;
+					if (x2Updated)
 					{
 						work = RMapHelper.UpdatePointValue(work, 1, rValue);
 					}
@@ -334,8 +340,9 @@ namespace MSetExplorer
 				if (nValue != _startingY)
 				{
 					_startingY = nValue;
-					var rValue = RValueHelper.ConvertToRValue(nValue, 0);
-					if (rValue != _coords.Bottom)
+					var rValue = RValueHelper.ConvertToRValue(nValue);
+					y1Updated = rValue != _coords.Bottom;
+					if (y1Updated)
 					{
 						work = RMapHelper.UpdatePointValue(work, 2, rValue);
 					}
@@ -348,8 +355,9 @@ namespace MSetExplorer
 				if (nValue != _endingY)
 				{
 					_endingY = nValue;
-					var rValue = RValueHelper.ConvertToRValue(nValue, 0);
-					if (rValue != _coords.Top)
+					var rValue = RValueHelper.ConvertToRValue(nValue);
+					y2Updated = rValue != _coords.Top;
+					if (y2Updated)
 					{
 						work = RMapHelper.UpdatePointValue(work, 3, rValue);
 					}
@@ -357,10 +365,26 @@ namespace MSetExplorer
 			}
 
 			Coords = work;
-			OnPropertyChanged(nameof(StartingX));
-			OnPropertyChanged(nameof(EndingX));
-			OnPropertyChanged(nameof(StartingY));
-			OnPropertyChanged(nameof(EndingY));
+
+			if (x1Updated)
+			{
+				OnPropertyChanged(nameof(StartingX));
+			}
+
+			if (x2Updated)
+			{
+				OnPropertyChanged(nameof(EndingX));
+			}
+
+			if (y1Updated)
+			{
+				OnPropertyChanged(nameof(StartingY));
+			}
+
+			if (y2Updated)
+			{
+				OnPropertyChanged(nameof(EndingY));
+			}
 
 			if (TargetIterations == 0)
 			{

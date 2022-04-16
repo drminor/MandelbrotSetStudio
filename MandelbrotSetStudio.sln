@@ -11,11 +11,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\MapViewerMapInfoDivisionStrategy.txt = Notes\MapViewerMapInfoDivisionStrategy.txt
 		MongoDb_Schemas.txt = MongoDb_Schemas.txt
 		Notes\Normalize_Sample_Math.txt = Notes\Normalize_Sample_Math.txt
+		ParseStringToRValue.txt = ParseStringToRValue.txt
 		Notes\Printing Resolution and Sizes.txt = Notes\Printing Resolution and Sizes.txt
 		PunchList.txt = PunchList.txt
+		Notes\SampleCoordValues.txt = Notes\SampleCoordValues.txt
 		SelectionRectangleKeyInput.txt = SelectionRectangleKeyInput.txt
-		Notes\SpatialCoordsAndHashes_restored.txt = Notes\SpatialCoordsAndHashes_restored.txt
-		Notes\Top-level regions_restored.txt = Notes\Top-level regions_restored.txt
+		Notes\SpatialCoordsAndHashes.txt = Notes\SpatialCoordsAndHashes.txt
+		Notes\Top-level regions.txt = Notes\Top-level regions.txt
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8D960C02-80E3-48F0-9A6A-241B384D90B0}"

@@ -38,13 +38,17 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
+			var DO_START_SERVER = true;
 			var DROP_ALL_COLLECTIONS = false;
 			var DROP_MAP_SECTIONS = false;
 			var USE_MAP_SECTION_REPO = true;
 
 			base.OnStartup(e);
 
-			StartServer();
+			if (DO_START_SERVER)
+			{
+				StartServer();
+			}
 
 			// Project Repository Adapter
 			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);

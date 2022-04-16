@@ -1,41 +1,89 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Numerics;
 
 namespace MSS.Types
 {
 	public class RValue : IBigRatShape, ICloneable, IEquatable<RValue?>, IEqualityComparer<RValue>
 	{
-		public BigInteger[] Values { get; init; }
+		#region Contructors
 
-		public int Exponent { get; init; }
-
-		//public BigInteger[] Values => new BigInteger[] { Value };
-
-		public RValue() : this(0,0)
+		public RValue() : this(0, 0, null)
 		{ }
 
-		public RValue(BigInteger[] values, int exponent) : this(values[0], exponent)
+		public RValue(BigInteger[] values, int exponent) : this(values[0], exponent, null)
 		{ }
 
-		public RValue(BigInteger value, int exponent)
+		public RValue(BigInteger value, int exponent) : this(value, exponent, null)
+		{ }
+
+		public RValue(BigInteger value, int exponent, int? precision)
 		{
+			if (!precision.HasValue)
+			{
+				precision = GetPrecision(value, exponent);
+			}
+
 			Values = new BigInteger[] { value };
 			Exponent = exponent;
+			Precision = precision ?? value.GetByteCount();
 		}
 
+		private int GetPrecision(BigInteger value, int exponent)
+		{
+			var precision = BigInteger.Abs(value).ToString(CultureInfo.InvariantCulture).Length;
+
+			var be = BigInteger.Pow(2, Math.Abs(exponent));
+			var ePrecision = BigInteger.Abs(be).ToString(CultureInfo.InvariantCulture).Length;
+
+			precision = Math.Max(precision, ePrecision);
+			precision += 5;
+
+			return precision;
+		}
+
+		#endregion
+
+		#region Public Properties
+
+		public BigInteger[] Values { get; init; }
+		public int Exponent { get; init; }
+
+		public int Precision { get; init; }
+
 		public BigInteger Value => Values[0];
+
+		#endregion
+
+		#region Public Methods
 
 		public RValue Add(RValue rValue)
 		{
 			if (Exponent != rValue.Exponent)
 			{
-				throw new InvalidOperationException("Cannot add two RValues if there Exponents do not agree.");
+				throw new InvalidOperationException("Cannot add two RValues if their Exponents do not agree.");
 			}
 
 			return new RValue(Value + rValue.Value, Exponent);
 		}
+
+		public static RValue Min(RValue a, RValue b)
+		{
+			if (a.Exponent != b.Exponent)
+			{
+				throw new InvalidOperationException("Cannot take the Minimum of two RValues if their Exponents do not agree.");
+			}
+
+			return a.Value <= b.Value ? a : b;
+		}
+
+
+		#endregion
+
+		#region Clone and To String
 
 		object ICloneable.Clone()
 		{
@@ -50,10 +98,12 @@ namespace MSS.Types
 		public override string ToString()
 		{
 			var reducedVal = Reducer.Reduce(this);
-			var result = BigIntegerHelper.GetDisplay(reducedVal.Value, reducedVal.Exponent);
+			var result = BigIntegerHelper.GetDisplay(reducedVal);
 			
 			return result;
 		}
+
+		#endregion
 
 		#region IEqualityComparer / IEquatable Support
 
