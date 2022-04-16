@@ -228,14 +228,19 @@ namespace MSS.Types
 		{
 			var hi = BigInteger.DivRem(bi, FACTOR, out var lo);
 
-			if (hi > FACTOR)
-			{
-				throw new ArgumentOutOfRangeException(nameof(bi));
-			}
-
 			if (hi > 0)
 			{
 				Debug.WriteLine($"Got a Hi value when converting a IBigRatShape value.");
+			}
+
+			if (BigInteger.Abs(hi) > long.MaxValue)
+			{
+				throw new ArgumentOutOfRangeException(nameof(bi), "The hi value is larger than an Int64.");
+			}
+
+			if (BigInteger.Abs(lo) > long.MaxValue)
+			{
+				throw new ArgumentOutOfRangeException(nameof(bi), "The lo value is larger than an Int64.");
 			}
 
 			var result = new long[] { (long)hi, (long)lo };

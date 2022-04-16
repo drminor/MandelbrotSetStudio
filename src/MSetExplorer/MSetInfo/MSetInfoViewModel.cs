@@ -87,11 +87,11 @@ namespace MSetExplorer
 						if (value != _startingX)
 						{
 							_startingX = value;
-							var rValue = RValueHelper.ConvertToRValue(value);
-							if (rValue != _coords.Left)
-							{
-								Coords = RMapHelper.UpdatePointValue(_coords, 0, rValue);
-							}
+							//var rValue = RValueHelper.ConvertToRValue(value);
+							//if (rValue != _coords.Left)
+							//{
+							//	Coords = RMapHelper.UpdatePointValue(_coords, 0, rValue);
+							//}
 
 							OnPropertyChanged();
 						}
@@ -108,11 +108,11 @@ namespace MSetExplorer
 				if (value != _endingX)
 				{
 					_endingX = value;
-					var rValue = RValueHelper.ConvertToRValue(value);
-					if (rValue != _coords.Right)
-					{
-						Coords = RMapHelper.UpdatePointValue(_coords, 1, rValue);
-					}
+					//var rValue = RValueHelper.ConvertToRValue(value);
+					//if (rValue != _coords.Right)
+					//{
+					//	Coords = RMapHelper.UpdatePointValue(_coords, 1, rValue);
+					//}
 
 					OnPropertyChanged();
 				}
@@ -127,11 +127,11 @@ namespace MSetExplorer
 				if (value != _startingY)
 				{
 					_startingY = value;
-					var rValue = RValueHelper.ConvertToRValue(value);
-					if (rValue != _coords.Bottom)
-					{
-						Coords = RMapHelper.UpdatePointValue(_coords, 2, rValue);
-					}
+					//var rValue = RValueHelper.ConvertToRValue(value);
+					//if (rValue != _coords.Bottom)
+					//{
+					//	Coords = RMapHelper.UpdatePointValue(_coords, 2, rValue);
+					//}
 
 					OnPropertyChanged();
 				}
@@ -146,11 +146,11 @@ namespace MSetExplorer
 				if (value != _endingY)
 				{
 					_endingY = value;
-					var rValue = RValueHelper.ConvertToRValue(value);
-					if (rValue != _coords.Top)
-					{
-						Coords = RMapHelper.UpdatePointValue(_coords, 3, rValue);
-					}
+					//var rValue = RValueHelper.ConvertToRValue(value);
+					//if (rValue != _coords.Top)
+					//{
+					//	Coords = RMapHelper.UpdatePointValue(_coords, 3, rValue);
+					//}
 
 					OnPropertyChanged();
 				}

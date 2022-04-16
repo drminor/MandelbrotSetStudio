@@ -76,7 +76,17 @@ namespace MSS.Common
 			var sme = new SignManExp(s);
 			var pow = (int)Math.Round(3.3 * sme.NumberOfDigitsAfterDecimalPoint);
 			var bigInt = BigInteger.Parse(sme.Mantissa, formatProvider);
-			bigInt *= BigInteger.Pow(new BigInteger(2), pow);
+
+			var factor = BigInteger.Pow(2, pow);
+
+			var gcDivisor = BigInteger.GreatestCommonDivisor(bigInt, factor);
+
+
+			bigInt *= factor;
+
+
+
+
 			bigInt = AdjustWithPrecision(bigInt, sme.Precision, formatProvider);
 
 			if (sme.IsNegative)
