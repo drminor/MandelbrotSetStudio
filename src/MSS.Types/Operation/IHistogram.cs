@@ -33,8 +33,8 @@ namespace MSS.Types
 		void Decrement(int[] indexes);
 		void Decrement(ICollection<int> indexes);
 
-		void Set(ICollection<int> indexes, ICollection<int> amounts);
-		void Set(int[] indexes, int[] amounts);
+		//void Set(ICollection<int> indexes, ICollection<int> amounts);
+		//void Set(int[] indexes, int[] amounts);
 
 	}
 }

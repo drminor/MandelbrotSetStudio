@@ -12,11 +12,15 @@ namespace MSetExplorer
 {
 	internal class SelectionRectangle
 	{
+		// TODO: Make the PITCH_TARGET proportional to the map view size.
 		private const int PITCH_TARGET = 16;
 		private const int DRAG_TRIGGER_DIST = 3;
+		private const int DEFAULT_SELECTION_SIZE_FACTOR = 8; // Amount to multiply actual pitch by to get the default side length of the selection rectangle.
 
 		private readonly Canvas _canvas;
-		private readonly SizeInt _blockSize; // Also used as the initial size of the selection rectangle.
+		private readonly IMapDisplayViewModel _mapDisplayViewModel;
+		private readonly SizeInt _blockSize;
+
 		private readonly Rectangle _selectedArea;
 		private Size _defaultSelectionSize;
 		private readonly Line _dragLine;
@@ -35,15 +39,19 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public SelectionRectangle(Canvas canvas, SizeInt blockSize)
+		public SelectionRectangle(Canvas canvas, IMapDisplayViewModel mapDisplayViewModel, SizeInt blockSize)
 		{
 			_canvas = canvas;
+			_mapDisplayViewModel = mapDisplayViewModel;
 			_blockSize = blockSize;
 
+			CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+
 			_selectedArea = BuildSelectionRectangle(_canvas);
+			SelectedPosition = new Point();
 			_dragLine = BuildDragLine(_canvas);
-			_pitch = CalculatePitch(_canvas);
-			canvas.SizeChanged += Canvas_SizeChanged;
+
+			_mapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
 			_selectedArea.KeyUp += SelectedArea_KeyUp;
 			_dragLine.KeyUp += DragLine_KeyUp;
@@ -119,15 +127,41 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Public Methods
+
+		public void TearDown()
+		{
+			try
+			{
+				_mapDisplayViewModel.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
+
+				_canvas.MouseLeftButtonUp -= Canvas_MouseLeftButtonUp;
+				_canvas.MouseLeftButtonDown -= Canvas_MouseLeftButtonDown;
+
+				_canvas.MouseWheel -= Canvas_MouseWheel;
+				_canvas.MouseMove -= Canvas_MouseMove;
+
+				_canvas.MouseEnter -= Canvas_MouseEnter;
+				_canvas.MouseLeave -= Canvas_MouseLeave;
+			}
+			catch
+			{
+				Debug.WriteLine("SelectionRectangle encountered an exception in TearDown.");
+			}
+		}
+
+		#endregion
+
 		#region Event Handlers
 
-		private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
+		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			_pitch = CalculatePitch(_canvas);
-			_defaultSelectionSize = GetDefaultSelectionSize(_canvas, _blockSize.Width);
-
-			_selectedArea.Width = _defaultSelectionSize.Width;
-			_selectedArea.Height = _defaultSelectionSize.Height;
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			{
+				CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+				_selectedArea.Width = _defaultSelectionSize.Width;
+				_selectedArea.Height = _defaultSelectionSize.Height;
+			}
 		}
 
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
@@ -412,6 +446,9 @@ namespace MSetExplorer
 						_selectedArea.Visibility = Visibility.Hidden;
 						_selectedArea.Width = _defaultSelectionSize.Width;
 						_selectedArea.Height = _defaultSelectionSize.Height;
+
+						var noSelectionRect = new RectangleInt();
+						AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, noSelectionRect, isPreview: true));
 					}
 
 					_selecting = value;
@@ -556,6 +593,7 @@ namespace MSetExplorer
 			if (double.IsNaN(cLeft) || Math.Abs(x - cLeft) > 0.01 || double.IsNaN(cBot) || Math.Abs(y - cBot) > 0.01)
 			{
 				SelectedPosition = new Point(x, y);
+				AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
 			}
 		}
 
@@ -573,15 +611,25 @@ namespace MSetExplorer
 			}
 
 			var cPos = SelectedPosition;
-			if (posYInverted.X != cPos.X || posYInverted.Y != cPos.Y)
+
+			var wasUpdated = false;
+
+			if (double.IsNaN(cPos.X) || Math.Abs(posYInverted.X - cPos.X) > 0.01 || double.IsNaN(cPos.Y) || Math.Abs(posYInverted.Y - cPos.Y) > 0.01)
 			{
 				SelectedPosition = posYInverted;
+				wasUpdated = true;
 			}
 
 			var cSize = SelectedSize;
 			if (Math.Abs(size.Width - cSize.Width) > 0.01 || Math.Abs(size.Height - cSize.Height) > 0.01)
 			{
 				SelectedSize = size;
+				wasUpdated = true;
+			}
+
+			if (wasUpdated)
+			{
+				AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
 			}
 		}
 
@@ -633,24 +681,6 @@ namespace MSetExplorer
 			}
 		}
 
-		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
-		private int CalculatePitch(Canvas canvas)
-		{
-			int result;
-
-			if (canvas.ActualWidth >= canvas.ActualHeight)
-			{
-				result = (int)Math.Round(canvas.ActualWidth / Math.Pow(2, Math.Round(Math.Log2(canvas.ActualWidth / PITCH_TARGET))));
-			}
-			else
-			{
-				result = (int)Math.Round(canvas.ActualHeight / Math.Pow(2, Math.Round(Math.Log2(canvas.ActualHeight / PITCH_TARGET))));
-			}
-
-			Debug.WriteLine($"The new ScreenSelection Pitch is {result}.");
-			return result;
-		}
-
 		private Rect Expand(Point p, Size s, double amount)
 		{
 			Size newSize;
@@ -672,6 +702,14 @@ namespace MSetExplorer
 			return new Rect(pos, newSize);
 		}
 
+		private void CalculatePitchAndDefaultSelectionSize(SizeInt displaySize, int pitchTarget)
+		{
+			_pitch = RMapHelper.CalculatePitch(displaySize, pitchTarget);
+			var defaultSideLength = RMapHelper.CalculatePitch(displaySize, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
+
+			_defaultSelectionSize = GetDefaultSelectionSize(_canvas, defaultSideLength);
+		}
+
 		private Size GetDefaultSelectionSize(Canvas canvas, double defaultSideLength)
 		{
 			Size result;
@@ -690,13 +728,6 @@ namespace MSetExplorer
 
 			return result;
 		}
-
-		//private double RoundOff(double number, int interval)
-		//{
-		//	var remainder = (int)Math.IEEERemainder(number, interval);
-		//	number += (remainder < interval / 2) ? -remainder : (interval - remainder);
-		//	return number;
-		//}
 
 		//private void SetMousePosition(Point posYInverted)
 		//{

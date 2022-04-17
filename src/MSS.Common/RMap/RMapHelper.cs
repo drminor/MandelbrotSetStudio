@@ -26,7 +26,7 @@ namespace MSS.Common
 		}
 
 		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
-		public static int CalculatePitch(SizeDbl displaySize, int pitchTarget)
+		public static int CalculatePitch(SizeInt displaySize, int pitchTarget)
 		{
 			int result;
 

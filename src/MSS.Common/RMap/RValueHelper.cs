@@ -306,6 +306,7 @@ namespace MSS.Common
 			return ConvertToDoubles(rValue.Value, rValue.Exponent);
 		}
 
+		// TODO: Move this to the BigIntegerHelper class and increase the "chunk" size.
 		public static IList<double> ConvertToDoubles(BigInteger n, int exponent)
 		{
 			var DIVISOR_LOG = 3;
@@ -348,6 +349,28 @@ namespace MSS.Common
 			}
 
 			return result;
+		}
+
+		#endregion
+
+		#region Precision
+
+		public static int GetResolution(RValue rValue)
+		{
+			var reducedR = Reducer.Reduce(rValue);
+
+			var reciprocalOfTheDenominator = BigInteger.Pow(2, -1 * reducedR.Exponent);
+			var result = BigInteger.Divide(reciprocalOfTheDenominator, reducedR.Value);
+
+			//var gCD = BigInteger.GreatestCommonDivisor(rValue.Value, BigInteger.Pow(2, -1 * rValue.Exponent));
+			//var log2 = BigIntegerHelper.LogBase2(gCD, 0);
+
+			//4 * 2^-3 -> 1/4
+			//4 * 2^3 -> 32
+
+			//return log2;
+
+			return (int) result;
 		}
 
 		#endregion

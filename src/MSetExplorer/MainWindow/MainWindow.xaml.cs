@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Diagnostics.CodeAnalysis;
 using MSS.Types.MSet;
+using MSS.Common;
 
 namespace MSetExplorer
 {
@@ -273,7 +274,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			var initialName = _vm.MapProjectViewModel.CurrentColorBandSet?.Name;
+			var initialName = _vm.MapProjectViewModel.CurrentColorBandSet.Name;
 			if (ColorsShowOpenWindow(initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
@@ -282,9 +283,11 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"User decliend to import a ColorBandSet.");
-				if (_vm.MapDisplayViewModel.ColorBandSet != _vm.MapProjectViewModel.CurrentColorBandSet)
+				var projectsColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
+
+				if (_vm.MapDisplayViewModel.ColorBandSet != projectsColorBandSet)
 				{
-					_vm.MapDisplayViewModel.ColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
+					_vm.MapDisplayViewModel.ColorBandSet = projectsColorBandSet;
 				}
 			}
 		}
@@ -311,6 +314,7 @@ namespace MSetExplorer
 
 		#region Pan Button Handlers
 
+		// TODO: Make the base shift amount proportional to the map view size.
 		private const int SHIFT_AMOUNT = 16;
 
 		private void Pan_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -320,22 +324,22 @@ namespace MSetExplorer
 
 		private void PanLeft_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			Pan(new VectorInt(-1 * SHIFT_AMOUNT, 0));
+			Pan(PanDirection.Left, GetPanAmountQualifer(), SHIFT_AMOUNT);
 		}
 
 		private void PanUp_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			Pan(new VectorInt(0, SHIFT_AMOUNT));
+			Pan(PanDirection.Up, GetPanAmountQualifer(), SHIFT_AMOUNT);
 		}
 
 		private void PanRight_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			Pan(new VectorInt(SHIFT_AMOUNT, 0));
+			Pan(PanDirection.Right, GetPanAmountQualifer(), SHIFT_AMOUNT);
 		}
 
 		private void PanDown_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			Pan(new VectorInt(0, -1 * SHIFT_AMOUNT));
+			Pan(PanDirection.Down, GetPanAmountQualifer(), SHIFT_AMOUNT);
 		}
 
 		#endregion
@@ -368,7 +372,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods
+		#region Private Methods - Project
 
 		private void LoadNewProject()
 		{
@@ -485,6 +489,16 @@ namespace MSetExplorer
 			}
 		}
 
+		private void SetWindowTitle(string? projectName)
+		{
+			const string dash = "\u2014";
+			Title = projectName == null ? $"MainWindow {dash} {projectName}" : "MainWindow";
+		}
+
+		#endregion
+
+		#region Private Methods -- Colors
+
 		private bool? ColorsCommitUpdates()
 		{
 			bool? result;
@@ -499,13 +513,9 @@ namespace MSetExplorer
 					_vm.ColorBandSetViewModel.ApplyChanges();
 					result = true;
 				}
-				else if (res == MessageBoxResult.Cancel)
-				{
-					result = null;
-				}
 				else
 				{
-					result = false;
+					result = res == MessageBoxResult.Cancel ? null : false;
 				}
 			}
 			else
@@ -587,16 +597,52 @@ namespace MSetExplorer
 			}
 		}
 
-		private void Pan(VectorInt amount)
+		#endregion
+
+		#region Private Methods -- Pan
+
+		private void Pan(PanDirection direction, PanAmountQualifer qualifer, int amount)
 		{
-			var newArea = new RectangleInt(new PointInt(amount), _vm.MapProjectViewModel.CanvasSize);
+			var qualifiedAmount = GetPanAmount(amount, qualifer);
+			var panVector = GetPanVector(direction, qualifiedAmount);
+			var newArea = new RectangleInt(new PointInt(panVector), _vm.MapProjectViewModel.CanvasSize);
 			_vm.MapProjectViewModel.UpdateMapView(TransformType.Pan, newArea);
 		}
 
-		private void SetWindowTitle(string? projectName)
+		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)
 		{
-			const string dash = "\u2014";
-			Title = projectName == null ? $"MainWindow {dash} {projectName}" : "MainWindow";
+			var targetAmount = qualifer switch
+			{
+				PanAmountQualifer.Fine => baseAmount,
+				PanAmountQualifer.Regular => baseAmount * 8,
+				PanAmountQualifer.Course => baseAmount * 64,
+				_ => baseAmount * 8,
+			};
+
+			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize, targetAmount);
+
+			return result;
+		}
+
+		private VectorInt GetPanVector(PanDirection direction, int amount)
+		{
+			return direction switch
+			{
+				PanDirection.Left => new VectorInt(-1 * amount, 0),
+				PanDirection.Up => new VectorInt(0, amount),
+				PanDirection.Right => new VectorInt(amount, 0),
+				PanDirection.Down => new VectorInt(0, -1 * amount),
+				_ => new VectorInt(),
+			};
+		}
+
+		private PanAmountQualifer GetPanAmountQualifer()
+		{
+			return Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)
+				? PanAmountQualifer.Course
+				: Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)
+				? PanAmountQualifer.Fine 
+				: PanAmountQualifer.Regular;
 		}
 
 		#endregion

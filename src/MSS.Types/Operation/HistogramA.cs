@@ -22,27 +22,27 @@ namespace MSS.Types
 
 			for(var ptr = 0; ptr < values.Length; ptr++)
 			{
-				Increment(values[ptr]);
+				_ = Increment(values[ptr]);
 			}
 		}
 
-		public HistogramA(IDictionary<int, int> entries)
-		{
-			var m = entries.Max(x => x.Key);
+		//public HistogramA(IDictionary<int, int> entries)
+		//{
+		//	var m = entries.Max(x => x.Key);
 
-			_values = new int[m];
+		//	_values = new int[m];
 
-			Set(entries.Keys, entries.Values);
-		}
+		//	Set(entries.Keys, entries.Values);
+		//}
 
-		public HistogramA(int[] values, int[] occurances)
-		{
-			var m = values.Max();
+		//public HistogramA(int[] values, int[] occurances)
+		//{
+		//	var m = values.Max();
 
-			_values = new int[m];
+		//	_values = new int[m];
 
-			Set(values, occurances);
-		}
+		//	Set(values, occurances);
+		//}
 
 		#endregion
 

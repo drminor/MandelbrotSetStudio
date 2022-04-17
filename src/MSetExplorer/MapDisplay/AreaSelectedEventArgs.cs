@@ -8,10 +8,13 @@ namespace MSetExplorer
 		public TransformType TransformType { get; init; }
 		public RectangleInt Area { get; init; }
 
-		public AreaSelectedEventArgs(TransformType transformType, RectangleInt area)
+		public bool IsPreview { get; init; }
+
+		public AreaSelectedEventArgs(TransformType transformType, RectangleInt area, bool isPreview = false)
 		{
 			TransformType = transformType;
 			Area = area;
+			IsPreview = isPreview;
 		}
 	}
 

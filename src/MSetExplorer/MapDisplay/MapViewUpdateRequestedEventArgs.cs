@@ -7,11 +7,13 @@ namespace MSetExplorer
 	{
 		public TransformType TransformType { get; init; }
 		public RectangleInt NewArea { get; init; }
+		public bool IsPreview { get; init; }
 
-		public MapViewUpdateRequestedEventArgs(TransformType transformType, RectangleInt newArea)
+		public MapViewUpdateRequestedEventArgs(TransformType transformType, RectangleInt newArea, bool isPreview = false)
 		{
 			TransformType = transformType;
 			NewArea = newArea;
+			IsPreview = isPreview;
 		}
 	}
 

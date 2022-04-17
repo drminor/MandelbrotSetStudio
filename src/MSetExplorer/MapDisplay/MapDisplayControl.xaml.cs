@@ -30,6 +30,7 @@ namespace MSetExplorer
 			_vm = (IMapDisplayViewModel)DataContext;
 
 			Loaded += MapDisplay_Loaded;
+			Unloaded += MapDisplayControl_Unloaded;
 			InitializeComponent();
 		}
 
@@ -59,7 +60,7 @@ namespace MSetExplorer
 				CanvasOffset = new VectorInt();
 				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
 
-				_selectionRectangle = new SelectionRectangle(_canvas, _vm.BlockSize);
+				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
 				//_selectionRectangle.Enabled = true;
@@ -90,6 +91,25 @@ namespace MSetExplorer
 
 			return result;
 		}
+
+		private void MapDisplayControl_Unloaded(object sender, RoutedEventArgs e)
+		{
+			SizeChanged -= MapDisplay_SizeChanged;
+
+			if (!(_selectionRectangle is null))
+			{
+				_selectionRectangle.AreaSelected -= SelectionRectangle_AreaSelected;
+				_selectionRectangle.ImageDragged -= SelectionRectangle_ImageDragged;
+				_selectionRectangle.TearDown();
+			}
+
+			if (!(_vm is null))
+			{
+				_vm.PropertyChanged -= ViewModel_PropertyChanged;
+				_vm.TearDown();
+			}
+		}
+
 
 		#endregion
 

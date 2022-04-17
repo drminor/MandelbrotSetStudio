@@ -45,44 +45,44 @@ namespace MSetExplorer
 			}
 		}
 
-		#region Dependency Properties
+		//#region Dependency Properties
 
-		public static readonly DependencyProperty MSetInfoProperty = DependencyProperty.Register(
-			"MSetInfo",
-			typeof(MSetInfo),
-			typeof(MapCalcSettingsControl),
-			new FrameworkPropertyMetadata()
-			{
-				PropertyChangedCallback = OnMSetInfoChanged,
-				BindsTwoWayByDefault = true,
-				DefaultValue = null
-			});
+		//public static readonly DependencyProperty MSetInfoProperty = DependencyProperty.Register(
+		//	"MSetInfo",
+		//	typeof(MSetInfo),
+		//	typeof(MapCalcSettingsControl),
+		//	new FrameworkPropertyMetadata()
+		//	{
+		//		PropertyChangedCallback = OnMSetInfoChanged,
+		//		BindsTwoWayByDefault = true,
+		//		DefaultValue = null
+		//	});
 
-		public MSetInfo MSetInfo
-		{
-			get => (MSetInfo)GetValue(MSetInfoProperty);
-			set => SetValue(MSetInfoProperty, value);
-		}
+		//public MSetInfo MSetInfo
+		//{
+		//	get => (MSetInfo)GetValue(MSetInfoProperty);
+		//	set => SetValue(MSetInfoProperty, value);
+		//}
 
-		private static void OnMSetInfoChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-		{
-			var oldValue = (MSetInfo)e.OldValue;
-			var newValue = (MSetInfo)e.NewValue;
+		//private static void OnMSetInfoChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		//{
+		//	var oldValue = (MSetInfo)e.OldValue;
+		//	var newValue = (MSetInfo)e.NewValue;
 
-			if (oldValue != newValue)
-			{
-				((MapCalcSettingsControl)d).UpdateOurDataContext(newValue);
-			}
-		}
+		//	if (oldValue != newValue)
+		//	{
+		//		((MapCalcSettingsControl)d).UpdateOurDataContext(newValue);
+		//	}
+		//}
 
-		private void UpdateOurDataContext(MSetInfo mSetInfo)
-		{
-			if (_vm != null)
-			{
-				_vm.MSetInfo = mSetInfo;
-			}
-		}
+		//private void UpdateOurDataContext(MSetInfo mSetInfo)
+		//{
+		//	if (_vm != null)
+		//	{
+		//		_vm.MSetInfo = mSetInfo;
+		//	}
+		//}
 
-		#endregion
+		//#endregion
 	}
 }

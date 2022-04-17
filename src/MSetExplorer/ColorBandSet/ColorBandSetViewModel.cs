@@ -15,6 +15,7 @@ using System.Windows.Data;
 
 namespace MSetExplorer
 {
+	// TODO: Have the ColorBandSetViewModel implement IDisposable.
 	public class ColorBandSetViewModel : INotifyPropertyChanged
 	{
 		private readonly ObservableCollection<MapSection> _mapSections;
@@ -126,7 +127,6 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(ColorBandSet));
 			OnPropertyChanged(nameof(ColorBandsView));
 		}
-
 
 		public ListCollectionView ColorBandsView
 		{
@@ -356,12 +356,12 @@ namespace MSetExplorer
 		public void InsertItem(int index, ColorBand newItem)
 		{
 			//Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-			_colorBandSet?.Insert(index, newItem);
-			UpdatePercentages();
-		}
 
-		public void ItemWasUpdated()
-		{
+			lock (_histLock)
+			{
+				_colorBandSet?.Insert(index, newItem);
+			}
+
 			UpdatePercentages();
 		}
 
@@ -387,7 +387,13 @@ namespace MSetExplorer
 						Debug.WriteLine("Could not position view to next item.");
 					}
 
-					if (!_colorBandSet.Remove(curItem))
+					bool colorBandWasRemoved;
+					lock (_histLock)
+					{
+						colorBandWasRemoved = _colorBandSet.Remove(curItem);
+					}
+
+					if (!colorBandWasRemoved)
 					{
 						Debug.WriteLine("Could not remove the item.");
 					}

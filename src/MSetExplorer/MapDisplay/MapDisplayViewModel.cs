@@ -22,7 +22,7 @@ namespace MSetExplorer
 
 		private Job? _currentJob;
 
-		private ColorBandSet? _colorBandSet;
+		private ColorBandSet _colorBandSet;
 		private ColorMap? _colorMap;
 
 		private SizeDbl _containerSize;
@@ -40,7 +40,7 @@ namespace MSetExplorer
 			_screenSectionCollection = new ScreenSectionCollection(BlockSize);
 			ImageSource = new DrawingImage(_screenSectionCollection.DrawingGroup);
 			_currentJob = null;
-			_colorBandSet = null;
+			_colorBandSet = new ColorBandSet();
 			_colorMap = null;
 
 			//_containerSize = new SizeDbl(1050, 1050);
@@ -96,26 +96,17 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSet? ColorBandSet
+		public ColorBandSet ColorBandSet
 		{
 			get => _colorBandSet;
 			set
 			{
 				if (value != _colorBandSet)
 				{
-					if (value != null)
-					{
-						Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
-						_colorBandSet = value;
-						_colorMap = new ColorMap(value);
-						HandleColorMapChanged(_colorMap);
-					}
-					else
-					{
-						Debug.WriteLine($"The MapDisplay is having its ColorMap set to null. The MapDisplay is not updating the screen.");
-						_colorBandSet = value;
-						_colorMap = null;
-					}
+					Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
+					_colorBandSet = value;
+					_colorMap = new ColorMap(value);
+					HandleColorMapChanged(_colorMap);
 				}
 			}
 		}
@@ -161,7 +152,7 @@ namespace MSetExplorer
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
 			var newArea = e.Area;
-			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, newArea));
+			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, newArea, e.IsPreview));
 		}
 
 		public void UpdateMapViewPan(ImageDraggedEventArgs e)
@@ -172,6 +163,11 @@ namespace MSetExplorer
 			var invOffset = offset.Invert();
 			var newArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
 			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, newArea));
+		}
+
+		public void TearDown()
+		{
+			// TODO: Unsubscribe our Event Handlers in MapDisplayViewModel::TearDown
 		}
 
 		#endregion
@@ -301,24 +297,26 @@ namespace MSetExplorer
 
 		private bool ShouldAttemptToReuseLoadedSections(Job? previousJob, Job newJob)
 		{
-			if (MapSections.Count == 0 || newJob.ParentJobId is null || newJob.TransformType == TransformType.ColorMapUpdate)
-			{
-				return false;
-			}
+			// TODO: ShouldAttemptToReuseLoadedSections is always returning false -- restore previous functionality.
+			return false;
+			//if (MapSections.Count == 0 || newJob.ParentJobId is null || newJob.TransformType == TransformType.ColorMapUpdate)
+			//{
+			//	return false;
+			//}
 
-			if (previousJob is null)
-			{
-				return false;
-			}
-			else if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
-			{
-				return false;
-			}
-			else
-			{
-				var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
-				return jobSpd == previousSpd;
-			}
+			//if (previousJob is null)
+			//{
+			//	return false;
+			//}
+			//else if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
+			//{
+			//	return false;
+			//}
+			//else
+			//{
+			//	var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
+			//	return jobSpd == previousSpd;
+			//}
 		}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)

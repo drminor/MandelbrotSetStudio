@@ -44,27 +44,27 @@ namespace MSS.Types
 			}
 		}
 
-		public HistogramALow(IDictionary<int, int> entries)
-		{
-			var low = entries.Min(x => x.Key);
-			var high = entries.Max(x => x.Key);
+		//public HistogramALow(IDictionary<int, int> entries)
+		//{
+		//	var low = entries.Min(x => x.Key);
+		//	var high = entries.Max(x => x.Key);
 
-			_values = new int[1 + high - low];
-			_lowBound = low;
+		//	_values = new int[1 + high - low];
+		//	_lowBound = low;
 
-			Set(entries.Keys, entries.Values);
-		}
+		//	Set(entries.Keys, entries.Values);
+		//}
 
-		public HistogramALow(int[] values, int[] occurances)
-		{
-			var low = values.Min();
-			var high = values.Max();
+		//public HistogramALow(int[] values, int[] occurances)
+		//{
+		//	var low = values.Min();
+		//	var high = values.Max();
 
-			_values = new int[1 + high - low];
-			_lowBound = low;
+		//	_values = new int[1 + high - low];
+		//	_lowBound = low;
 
-			Set(values, occurances);
-		}
+		//	Set(values, occurances);
+		//}
 
 		#endregion
 

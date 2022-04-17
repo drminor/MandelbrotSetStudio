@@ -173,7 +173,18 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
-			MapProjectViewModel.UpdateMapView(e.TransformType, e.NewArea);
+			if (e.IsPreview)
+			{
+				var newCoords = MapProjectViewModel.GetUpdateCoords(e.TransformType, e.NewArea);
+				if (!(newCoords is null))
+				{
+					MSetInfoViewModel.Coords = newCoords;
+				}
+			}
+			else
+			{
+				MapProjectViewModel.UpdateMapView(e.TransformType, e.NewArea);
+			}
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -203,6 +214,7 @@ namespace MSetExplorer
 			if (e.MapSettingsUpdateType == MapSettingsUpdateType.TargetIterations)
 			{
 				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
+				MapDisplayViewModel.ColorBandSet.HighCutOff = e.TargetIterations;
 				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
 			}
 

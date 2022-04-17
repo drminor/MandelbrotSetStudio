@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Globalization;
 
 namespace MSetExplorer
 {
@@ -15,6 +16,8 @@ namespace MSetExplorer
 		private string _endingX;
 		private string _startingY;
 		private string _endingY;
+
+		private int _zoom;
 
 		private RRectangle _coords;
 		private bool _coordsAreDirty;
@@ -67,6 +70,16 @@ namespace MSetExplorer
 						CoordsAreDirty = false;
 					}
 				}
+			}
+		}
+
+		public int Zoom
+		{
+			get => _zoom;
+			set
+			{
+				_zoom = value;
+				OnPropertyChanged();
 			}
 		}
 
@@ -171,6 +184,8 @@ namespace MSetExplorer
 					EndingY = RValueHelper.ConvertToString(_coords.Top);
 
 					CoordsAreDirty = value != (_currentJob?.MSetInfo ?? NULL_MSET_INFO).Coords;
+
+					Zoom = RValueHelper.GetResolution(_coords.Width);
 
 					if (value != _currentMSetInfo.Coords)
 					{

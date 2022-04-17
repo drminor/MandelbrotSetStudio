@@ -166,10 +166,16 @@ namespace MSetExplorer
 
 			var colorBandSets = _projectAdapter.GetColorBandSetsForProject(CurrentProject.Id);
 			_colorBandSetCollection.Load(colorBandSets, project.CurrentColorBandSetId);
-			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
 			var jobs = _projectAdapter.GetAllJobs(CurrentProject.Id);
 			_jobsCollection.Load(jobs, currentId: project.CurrentJobId);
+
+			if (_jobsCollection.CurrentJob != null)
+			{
+				_colorBandSetCollection.CurrentColorBandSet.HighCutOff = _jobsCollection.CurrentJob.MSetInfo.MapCalcSettings.TargetIterations;
+			}
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
 			var curJob = CurrentJob;
 			if (curJob != null)
@@ -381,6 +387,8 @@ namespace MSetExplorer
 
 		public void UpdateTargetInterations(int targetIterations)
 		{
+			CurrentColorBandSet.HighCutOff = targetIterations;
+
 			var curJob = CurrentJob;
 			if (curJob == null)
 			{
@@ -393,6 +401,28 @@ namespace MSetExplorer
 			{
 				var updatedMSetInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations);
 				LoadMap(updatedMSetInfo, TransformType.IterationUpdate);
+			}
+		}
+
+		public RRectangle? GetUpdateCoords(TransformType transformType, RectangleInt newArea)
+		{
+			var curJob = CurrentJob;
+			if (curJob == null)
+			{
+				return null;
+			}
+
+			if (newArea == new RectangleInt())
+			{
+				return curJob.MSetInfo.Coords;
+			}
+			else
+			{
+				var position = curJob.MSetInfo.Coords.Position;
+				var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+				var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+
+				return coords;
 			}
 		}
 
