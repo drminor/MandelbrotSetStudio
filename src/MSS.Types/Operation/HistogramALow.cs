@@ -10,25 +10,25 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public HistogramALow(int low, int high)
-		{
-			_values = new int[1 + high - low];
-			_lowBound = low;
-		}
+		//public HistogramALow(int low, int high)
+		//{
+		//	_values = new int[1 + high - low];
+		//	_lowBound = low;
+		//}
 
-		public HistogramALow(int[] values)
-		{
-			var low = values.Min();
-			var high = values.Max();
+		//public HistogramALow(int[] values)
+		//{
+		//	var low = values.Min();
+		//	var high = values.Max();
 
-			_values = new int[1 + high - low];
-			_lowBound = low;
+		//	_values = new int[1 + high - low];
+		//	_lowBound = low;
 
-			for (var ptr = 0; ptr < values.Length; ptr++)
-			{
-				_ = Increment(values[ptr]);
-			}
-		}
+		//	for (var ptr = 0; ptr < values.Length; ptr++)
+		//	{
+		//		_ = Increment(values[ptr]);
+		//	}
+		//}
 
 		public HistogramALow(IEnumerable<int> values)
 		{
@@ -75,6 +75,7 @@ namespace MSS.Types
 		public int UpperBound => _values.Length - 1 + _lowBound;
 		public int Length => _values.Length;
 
+		public long UpperCatchAllValue { get; set; }
 
 		public int this[int index]
 		{
@@ -116,25 +117,25 @@ namespace MSS.Types
 			_values = new int[newSize + 1];
 		}
 
-		public void Set(int[] indexes, int[] amounts)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var i = indexes[ptr];
-				_values[i - _lowBound] = amounts[ptr];
-			}
-		}
+		//public void Set(int[] indexes, int[] amounts)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var i = indexes[ptr];
+		//		_values[i - _lowBound] = amounts[ptr];
+		//	}
+		//}
 
-		public void Set(ICollection<int> indexes, ICollection<int> amounts)
-		{
-			var aEnumerator = amounts.GetEnumerator();
+		//public void Set(ICollection<int> indexes, ICollection<int> amounts)
+		//{
+		//	var aEnumerator = amounts.GetEnumerator();
 
-			foreach (var i in indexes)
-			{
-				_ = aEnumerator.MoveNext();
-				_values[i - _lowBound] = aEnumerator.Current;
-			}
-		}
+		//	foreach (var i in indexes)
+		//	{
+		//		_ = aEnumerator.MoveNext();
+		//		_values[i - _lowBound] = aEnumerator.Current;
+		//	}
+		//}
 
 		public int Increment(int index)
 		{
@@ -144,103 +145,81 @@ namespace MSS.Types
 			return _values[aI];
 		}
 
-		public int Decrement(int index)
-		{
-			var aI = index - _lowBound;
-			_values[aI] = _values[aI] - 1;
+		//public int Decrement(int index)
+		//{
+		//	var aI = index - _lowBound;
+		//	_values[aI] = _values[aI] - 1;
 
-			return _values[aI];
-		}
+		//	return _values[aI];
+		//}
 
-		public void Increment(int[] indexes)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var i = indexes[ptr] - _lowBound;
-				_values[i] = _values[i] + 1;
-			}
-		}
+		//public void Increment(int[] indexes)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var i = indexes[ptr] - _lowBound;
+		//		_values[i] = _values[i] + 1;
+		//	}
+		//}
 
-		public void Decrement(int[] indexes)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var i = indexes[ptr] - _lowBound;
-				_values[i] = _values[i] - 1;
-			}
-		}
+		//public void Decrement(int[] indexes)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var i = indexes[ptr] - _lowBound;
+		//		_values[i] = _values[i] - 1;
+		//	}
+		//}
 
-		public void Increment(ICollection<int> indexes)
-		{
-			foreach (var i in indexes)
-			{
-				_values[i - _lowBound] = _values[i - _lowBound] + 1;
-			}
-		}
+		//public void Increment(ICollection<int> indexes)
+		//{
+		//	foreach (var i in indexes)
+		//	{
+		//		_values[i - _lowBound] = _values[i - _lowBound] + 1;
+		//	}
+		//}
 
-		public void Decrement(ICollection<int> indexes)
-		{
-			foreach (var i in indexes)
-			{
-				_values[i - _lowBound] = _values[i - _lowBound] - 1;
-			}
-		}
+		//public void Decrement(ICollection<int> indexes)
+		//{
+		//	foreach (var i in indexes)
+		//	{
+		//		_values[i - _lowBound] = _values[i - _lowBound] - 1;
+		//	}
+		//}
 
-		public int Add(int index, int amount)
-		{
-			var aI = index - _lowBound;
-			_values[aI] = _values[aI] + amount;
+		//public int Add(int index, int amount)
+		//{
+		//	var aI = index - _lowBound;
+		//	_values[aI] = _values[aI] + amount;
 
-			return _values[aI];
-		}
+		//	return _values[aI];
+		//}
 
-		public int Remove(int index, int amount)
-		{
-			var aI = index - _lowBound;
-			_values[aI] = _values[aI] - amount;
+		//public int Remove(int index, int amount)
+		//{
+		//	var aI = index - _lowBound;
+		//	_values[aI] = _values[aI] - amount;
 
-			return _values[aI];
-		}
+		//	return _values[aI];
+		//}
 
-		public void Add(int[] indexes, int[] amounts)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var aI = indexes[ptr] - _lowBound;
-				_values[aI] = _values[aI] += amounts[ptr];
-			}
-		}
+		//public void Add(int[] indexes, int[] amounts)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var aI = indexes[ptr] - _lowBound;
+		//		_values[aI] = _values[aI] += amounts[ptr];
+		//	}
+		//}
 
-		public void Remove(int[] indexes, int[] amounts)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var aI = indexes[ptr] - _lowBound;
-				_values[aI] = _values[aI] -= amounts[ptr];
-			}
-		}
-
-		public void Add(ICollection<int> indexes, ICollection<int> amounts)
-		{
-			var aEnumerator = amounts.GetEnumerator();
-
-			foreach (var i in indexes)
-			{
-				_ = aEnumerator.MoveNext();
-				_values[i - _lowBound] = _values[i - _lowBound] + aEnumerator.Current;
-			}
-		}
-
-		public void Remove(ICollection<int> indexes, ICollection<int> amounts)
-		{
-			var aEnumerator = amounts.GetEnumerator();
-
-			foreach (var i in indexes)
-			{
-				_ = aEnumerator.MoveNext();
-				_values[i - _lowBound] = _values[i - _lowBound] - aEnumerator.Current;
-			}
-		}
+		//public void Remove(int[] indexes, int[] amounts)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var aI = indexes[ptr] - _lowBound;
+		//		_values[aI] = _values[aI] -= amounts[ptr];
+		//	}
+		//}
 
 		public void Add(IHistogram histogram)
 		{
@@ -257,6 +236,17 @@ namespace MSS.Types
 			Add(keys, values);
 		}
 
+		private void Add(ICollection<int> indexes, ICollection<int> amounts)
+		{
+			var aEnumerator = amounts.GetEnumerator();
+
+			foreach (var i in indexes)
+			{
+				_ = aEnumerator.MoveNext();
+				_values[i - _lowBound] = _values[i - _lowBound] + aEnumerator.Current;
+			}
+		}
+
 		public void Remove(IHistogram histogram)
 		{
 			if (histogram == null)
@@ -270,6 +260,17 @@ namespace MSS.Types
 			var values = kvps.Select(x => x.Value).ToList();
 
 			Remove(keys, values);
+		}
+
+		private void Remove(ICollection<int> indexes, ICollection<int> amounts)
+		{
+			var aEnumerator = amounts.GetEnumerator();
+
+			foreach (var i in indexes)
+			{
+				_ = aEnumerator.MoveNext();
+				_values[i - _lowBound] = _values[i - _lowBound] - aEnumerator.Current;
+			}
 		}
 
 		#endregion

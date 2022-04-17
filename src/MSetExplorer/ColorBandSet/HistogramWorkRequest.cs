@@ -8,9 +8,9 @@ namespace MSetExplorer
 		public HistogramWorkRequestType RequestType { get; init; }
 		public int[] CutOffs { get; init; }
 		public IHistogram? Histogram { get; init; }
-		public Action<ValueTuple<int, double>[]> WorkAction { get; init; }
+		public Action<PercentageBand[]> WorkAction { get; init; }
 
-		public HistogramWorkRequest(HistogramWorkRequestType requestType, int[] cutOffs, IHistogram? histogram, Action<ValueTuple<int, double>[]> workAction)
+		public HistogramWorkRequest(HistogramWorkRequestType requestType, int[] cutOffs, IHistogram? histogram, Action<PercentageBand[]> workAction)
 		{
 			RequestType = requestType;
 			CutOffs = cutOffs;
@@ -23,7 +23,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void RunWorkAction(ValueTuple<int, double>[] newPercentages)
+		public void RunWorkAction(PercentageBand[] newPercentages)
 		{
 			WorkAction(newPercentages);
 		}

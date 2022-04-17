@@ -23,17 +23,20 @@ namespace MSS.Common
 
             Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
 
-            ColorBandSet = colorBandSet;
+            _colorBandSet = colorBandSet;
             _lastCutOff = colorBandSet.ColorBands[^1].CutOff;
             _cutOffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.CutOff).ToArray();
         }
 
-		#endregion
+        #endregion
 
-		#region Public Properties
+        #region Public Properties
 
-		public ColorBandSet ColorBandSet { get; }
-        public string Id => ColorBandSet.Id.ToString();
+        private ColorBandSet _colorBandSet;
+
+        public ColorBand HighColorBand => _colorBandSet[^1];
+
+        //public string Id => ColorBandSet.Id.ToString();
 
         #endregion
 
@@ -86,11 +89,11 @@ namespace MSS.Common
 
             if (countVal >= _lastCutOff)
 			{
-                result = ColorBandSet.ColorBands[^1];
+                result = HighColorBand;
 			}
             else
 			{
-                result = ColorBandSet.ColorBands[GetColorMapIndex(countVal)];
+                result = _colorBandSet.ColorBands[GetColorMapIndex(countVal)];
 			}
 
             return result;
@@ -200,12 +203,12 @@ namespace MSS.Common
         public bool Equals(ColorMap? other)
         {
             return other != null &&
-                   EqualityComparer<ColorBandSet>.Default.Equals(ColorBandSet, other.ColorBandSet);
+                   EqualityComparer<ColorBandSet>.Default.Equals(_colorBandSet, other._colorBandSet);
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(ColorBandSet);
+            return HashCode.Combine(_colorBandSet);
         }
 
 		public bool Equals(ColorMap? x, ColorMap? y)

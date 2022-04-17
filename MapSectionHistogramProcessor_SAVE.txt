@@ -1,4 +1,4 @@
-﻿using MSS.Types;
+using MSS.Types;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -186,10 +186,9 @@ namespace MSetExplorer
 
 		private PercentageBand[] BuildNewPercentages(int[] cutOffs, IHistogram histogram)
 		{
-			var pbList = cutOffs.Select(x => new PercentageBand(x)).ToList();
-			pbList.Add(new PercentageBand(int.MaxValue));
+			var bucketCnts = cutOffs.Select(x => new PercentageBand(x)).ToArray();
 
-			var bucketCnts = pbList.ToArray();
+			//var result = new PercentageBand[cutOffs.Length];
 
 			var curBucketPtr = 0;
 			var curBucketCut = cutOffs[curBucketPtr];
@@ -197,15 +196,12 @@ namespace MSetExplorer
 			long runningSum = 0;
 
 			var kvps = histogram.GetKeyValuePairs();
-
-			var i = 0;
-
-			for (; i < kvps.Length && curBucketPtr < bucketCnts.Length; i++)
+			for (var i = 0; i < kvps.Length; i++)
 			{
 				var idx = kvps[i].Key;
 				var amount = kvps[i].Value;
 
-				while (curBucketPtr < bucketCnts.Length && idx >= curBucketCut)
+				while (curBucketPtr < cutOffs.Length - 1 && idx >= curBucketCut)
 				{
 					if (idx == curBucketCut)
 					{
@@ -213,38 +209,88 @@ namespace MSetExplorer
 					}
 					
 					curBucketPtr++;
-					curBucketCut = bucketCnts[curBucketPtr].CutOff;
+					curBucketCut = cutOffs[curBucketPtr];
 				}
 
 				runningSum += amount;
 
 				bucketCnts[curBucketPtr].Count += amount;
 				bucketCnts[curBucketPtr].RunningSum = runningSum;
+
+
+				//if (idx == curBucketCut)
+				//{
+				//	bucketCnts[curBucketPtr] = new PercentageBand(curBucketCut, amount, runningSum); 
+				//}
+				//else
+				//{
+				//	bucketCnts[curBucketPtr].Count += amount;
+				//	bucketCnts[curBucketPtr].RunningSum = runningSum;
+				//}
 			}
 
-			for(; i < kvps.Length; i++)
-			{
-				var amount = kvps[i].Value;
-				runningSum += amount;
-
-				bucketCnts[^1].Count += amount;
-				bucketCnts[^1].RunningSum = runningSum;
-			}
-
-			runningSum += histogram.UpperCatchAllValue;
-			bucketCnts[^1].Count += histogram.UpperCatchAllValue;
-			bucketCnts[^1].RunningSum = runningSum;
-
-			//var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
-			var total = (double)runningSum;
+			var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
 
 			foreach(var pb in bucketCnts)
 			{
 				pb.Percentage = Math.Round(100 * (pb.Count / total), 2);
 			}
 
+
+			////var newPercentages = result.Select((x, i) => new PercentageBand(cutOffs[i], Math.Round(100 * (x.Count / total), 2), 0, 0)).ToArray();
+			//var newPercentages = bucketCnts.Select((x, i) => new PercentageBand(
+			//	cutOff: cutOffs[i],
+			//	exactCount: x.ExactCount,
+			//	runningSum: x.RunningSum,
+			//	count: x.Count,
+			//	percentage: Math.Round(100 * (x.Count / total), 2)
+			//	)
+			//).Reverse();
+
+			//runningSum = 0;
+			//foreach(var pb in newPercentages)
+			//{
+			//	pb.RunningSumReverse = runningSum;
+			//}
+
+			//var result = newPercentages.Reverse().ToArray();
+
+			//return result;
+
 			return bucketCnts;
 		}
+
+		//private ValueTuple<int, double>[] BuildNewPercentagesOld(int[] cutOffs, IHistogram histogram)
+		//{
+		//	int[] cuts = new int[cutOffs.Length + 1];
+
+		//	Array.Copy(cutOffs, cuts, cutOffs.Length);
+		//	cuts[cuts.Length - 1] = int.MaxValue;
+
+		//	var bucketCnts = new long[cutOffs.Length + 1];
+		//	var curBucketPtr = 0;
+		//	var curBucketCut = cuts[curBucketPtr];
+
+		//	var kvps = histogram.GetKeyValuePairs();
+		//	for (var i = 0; i < kvps.Length; i++)
+		//	{
+		//		var idx = kvps[i].Key;
+		//		var amount = kvps[i].Value;
+
+		//		while (curBucketPtr < cuts.Length && idx >= curBucketCut)
+		//		{
+		//			curBucketPtr++;
+		//			curBucketCut = cuts[curBucketPtr];
+		//		}
+
+		//		bucketCnts[curBucketPtr] += amount;
+		//	}
+
+		//	var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
+		//	var newPercentages = bucketCnts.Select((x, i) => new ValueTuple<int, double>(cuts[i], Math.Round(100 * (x / total), 2))).ToArray();
+
+		//	return newPercentages;
+		//}
 
 		#endregion
 

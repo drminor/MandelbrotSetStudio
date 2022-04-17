@@ -53,6 +53,8 @@ namespace MSS.Types
 		public int UpperBound => _values.Length - 1;
 		public int Length => _values.Length;
 
+		public long UpperCatchAllValue { get; set; }
+
 		public int this[int index]
 		{
 			get => _values[index];
@@ -93,25 +95,25 @@ namespace MSS.Types
 			_values = new int[newSize + 1];
 		}
 
-		public void Set(int[] indexes, int[] amounts)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var i = indexes[ptr];
-				_values[i] = amounts[ptr];
-			}
-		}
+		//public void Set(int[] indexes, int[] amounts)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var i = indexes[ptr];
+		//		_values[i] = amounts[ptr];
+		//	}
+		//}
 
-		public void Set(ICollection<int> indexes, ICollection<int> amounts)
-		{
-			var aEnumerator = amounts.GetEnumerator();
+		//public void Set(ICollection<int> indexes, ICollection<int> amounts)
+		//{
+		//	var aEnumerator = amounts.GetEnumerator();
 
-			foreach (var i in indexes)
-			{
-				_ = aEnumerator.MoveNext();
-				_values[i] = aEnumerator.Current;
-			}
-		}
+		//	foreach (var i in indexes)
+		//	{
+		//		_ = aEnumerator.MoveNext();
+		//		_values[i] = aEnumerator.Current;
+		//	}
+		//}
 
 		public int Increment(int index)
 		{
@@ -120,78 +122,78 @@ namespace MSS.Types
 			return _values[index];
 		}
 
-		public int Decrement(int index)
-		{
-			_values[index] = _values[index] - 1;
+		//public int Decrement(int index)
+		//{
+		//	_values[index] = _values[index] - 1;
 
-			return _values[index];
-		}
+		//	return _values[index];
+		//}
 
-		public void Increment(int[] indexes)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var i = indexes[ptr];
-				_values[i] = _values[i] + 1;
-			}
-		}
+		//public void Increment(int[] indexes)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var i = indexes[ptr];
+		//		_values[i] = _values[i] + 1;
+		//	}
+		//}
 
-		public void Decrement(int[] indexes)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var i = indexes[ptr];
-				_values[i] = _values[i] - 1;
-			}
-		}
+		//public void Decrement(int[] indexes)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var i = indexes[ptr];
+		//		_values[i] = _values[i] - 1;
+		//	}
+		//}
 
-		public void Increment(ICollection<int> indexes)
-		{
-			foreach (var i in indexes)
-			{
-				_values[i] = _values[i] + 1;
-			}
-		}
+		//public void Increment(ICollection<int> indexes)
+		//{
+		//	foreach (var i in indexes)
+		//	{
+		//		_values[i] = _values[i] + 1;
+		//	}
+		//}
 
-		public void Decrement(ICollection<int> indexes)
-		{
-			foreach (var i in indexes)
-			{
-				_values[i] = _values[i] - 1;
-			}
-		}
+		//public void Decrement(ICollection<int> indexes)
+		//{
+		//	foreach (var i in indexes)
+		//	{
+		//		_values[i] = _values[i] - 1;
+		//	}
+		//}
 
-		public int Add(int index, int amount)
-		{
-			_values[index] = _values[index] + amount;
+		//public int Add(int index, int amount)
+		//{
+		//	_values[index] = _values[index] + amount;
 
-			return _values[index];
-		}
+		//	return _values[index];
+		//}
 
-		public int Remove(int index, int amount)
-		{
-			_values[index] = _values[index] - amount;
+		//public int Remove(int index, int amount)
+		//{
+		//	_values[index] = _values[index] - amount;
 
-			return _values[index];
-		}
+		//	return _values[index];
+		//}
 
-		public void Add(int[] indexes, int[] amounts)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var i = indexes[ptr];
-				_values[i] = _values[i] += amounts[ptr];
-			}
-		}
+		//public void Add(int[] indexes, int[] amounts)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var i = indexes[ptr];
+		//		_values[i] = _values[i] += amounts[ptr];
+		//	}
+		//}
 
-		public void Remove(int[] indexes, int[] amounts)
-		{
-			for (var ptr = 0; ptr < indexes.Length; ptr++)
-			{
-				var i = indexes[ptr];
-				_values[i] = _values[i] -= amounts[ptr];
-			}
-		}
+		//public void Remove(int[] indexes, int[] amounts)
+		//{
+		//	for (var ptr = 0; ptr < indexes.Length; ptr++)
+		//	{
+		//		var i = indexes[ptr];
+		//		_values[i] = _values[i] -= amounts[ptr];
+		//	}
+		//}
 
 		public void Add(IHistogram histogram)
 		{
@@ -203,16 +205,22 @@ namespace MSS.Types
 			Add(keys, values);
 		}
 
-		public void Add(ICollection<int> indexes, ICollection<int> amounts)
+		private void Add(ICollection<int> indexes, ICollection<int> amounts)
 		{
 			var aEnumerator = amounts.GetEnumerator();
-			var n = 0;
 
 			foreach (var i in indexes)
 			{
-				n = Math.Min(i, Length - 1);
 				_ = aEnumerator.MoveNext();
-				_values[n] = _values[n] + aEnumerator.Current;
+				if (i > Length - 1)
+				{
+					UpperCatchAllValue += aEnumerator.Current;
+				}
+				else
+				{
+					_values[i] = _values[i] + aEnumerator.Current;
+				}
+
 			}
 		}
 
@@ -226,16 +234,21 @@ namespace MSS.Types
 			Remove(keys, values);
 		}
 
-		public void Remove(ICollection<int> indexes, ICollection<int> amounts)
+		private void Remove(ICollection<int> indexes, ICollection<int> amounts)
 		{
 			var aEnumerator = amounts.GetEnumerator();
-			var n = 0;
 
 			foreach (var i in indexes)
 			{
-				n = Math.Min(i, Length - 1);
 				_ = aEnumerator.MoveNext();
-				_values[n] = _values[n] - aEnumerator.Current;
+				if (i > Length - 1)
+				{
+					UpperCatchAllValue -= aEnumerator.Current;
+				}
+				else
+				{
+					_values[i] = _values[i] - aEnumerator.Current;
+				}
 			}
 		}
 

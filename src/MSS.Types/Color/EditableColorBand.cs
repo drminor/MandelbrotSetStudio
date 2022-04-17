@@ -4,18 +4,18 @@ using System.Runtime.CompilerServices;
 
 namespace MSS.Types
 {
-	public class ColorBandJr : INotifyPropertyChanged/*, IEquatable<ColorBandJr?>, IEqualityComparer<ColorBandJr>, ICloneable*/, IEditableObject
+	public class EditableColorBand : INotifyPropertyChanged/*, IEquatable<ColorBandJr?>, IEqualityComparer<ColorBandJr>, ICloneable*/, IEditableObject
 	{
 		private int _cutOff;
 		private int _previousCutOff;
 		private double _percentage;
 
-		private ColorBandJr? _copy;
+		private EditableColorBand? _copy;
 		private bool _isInEditMode;
 
 		#region Constructor
 
-		public ColorBandJr()
+		public EditableColorBand()
 		{
 			_cutOff = 0;
 			_previousCutOff = 0;
@@ -25,7 +25,7 @@ namespace MSS.Types
 			_isInEditMode = false;
 		}
 
-		public ColorBandJr(int cutOff, int previousCutOff, double percentage)
+		public EditableColorBand(int cutOff, int previousCutOff, double percentage)
 		{
 			_cutOff= cutOff;
 			_previousCutOff = previousCutOff;
@@ -94,9 +94,9 @@ namespace MSS.Types
 		//	return Clone();
 		//}
 
-		public ColorBandJr Clone()
+		public EditableColorBand Clone()
 		{
-			var result = new ColorBandJr(CutOff, PreviousCutOff, Percentage);
+			var result = new EditableColorBand(CutOff, PreviousCutOff, Percentage);
 
 			return result;
 		}
@@ -109,7 +109,7 @@ namespace MSS.Types
 		{
 			if (_copy == null)
 			{ 
-				_copy = new ColorBandJr(CutOff, PreviousCutOff, Percentage);
+				_copy = new EditableColorBand(CutOff, PreviousCutOff, Percentage);
 			}
 
 			IsInEditMode = true;

@@ -1,4 +1,4 @@
-﻿namespace MSetExplorer
+﻿namespace MSS.Types
 {
 	public enum PanAmountQualifer
 	{

@@ -447,14 +447,14 @@ namespace MSetExplorer
 			//_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
 		}
 
-		private void HandleHistogramUpdate(ValueTuple<int, double>[] newPercentages)
+		private void HandleHistogramUpdate(PercentageBand[] newPercentages)
 		{
 			_synchronizationContext?.Post(o => HistogramChanged(o), newPercentages);
 		}
 
 		private void HistogramChanged(object? hwr)
 		{
-			if (hwr is ValueTuple<int, double>[] newPercentages)
+			if (hwr is PercentageBand[] newPercentages)
 			{
 				lock (_histLock)
 				{
@@ -467,7 +467,7 @@ namespace MSetExplorer
 					for(var i = 0; i < len; i++)
 					{
 						var cb = colorBands[i];
-						cb.Percentage = newPercentages[i].Item2;
+						cb.Percentage = newPercentages[i].Percentage;
 						//total += newPercentages[i].Item2;
 					}
 
