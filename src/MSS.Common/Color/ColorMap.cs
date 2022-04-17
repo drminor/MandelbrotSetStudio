@@ -50,12 +50,11 @@ namespace MSS.Common
             {
                 PutColor(cme.StartColor.ColorComps, destination);
             }
-
-            var botBucketVal = cme.PreviousCutOff;
-
-            var bucketWidth = cme.BucketWidth;
-            var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
-            InterpolateAndPlace(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.ActualEndColor.ColorComps, stepFactor, destination);
+            else
+            {
+                var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
+                InterpolateAndPlace(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.ActualEndColor.ColorComps, stepFactor, destination);
+            }
         }
 
         public byte[] GetColor(int countVal, double escapeVelocity)
@@ -70,10 +69,7 @@ namespace MSS.Common
                 return result;
             }
 
-            var botBucketVal = cme.PreviousCutOff; 
-
-            var bucketWidth = cme.BucketWidth;
-            var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
+            var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
             result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.ActualEndColor.ColorComps, stepFactor);
 
             return result;
@@ -82,6 +78,17 @@ namespace MSS.Common
 		#endregion
 
 		#region Private Methods
+
+        private double GetStepFactor(int countVal, double escapeVelocity, ColorBand cme)
+		{
+            var topBucketVal = Math.Min(countVal, cme.CutOff) + escapeVelocity;
+            var botBucketVal = cme.PreviousCutOff;
+            var bucketWidth = cme.BucketWidth;
+
+            var stepFactor = (topBucketVal - botBucketVal) / bucketWidth;
+
+            return stepFactor;
+        }
 
         private ColorBand GetColorBand(int countVal)
 		{
