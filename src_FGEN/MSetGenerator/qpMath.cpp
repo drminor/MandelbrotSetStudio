@@ -48,9 +48,9 @@ void qpMath::Test1()
 
 	vdAdd(2, a, b, s);
 
-	delete a;
-	delete b;
-	delete s;
+	delete[] a;
+	delete[] b;
+	delete[] s;
 }
 
 qp qpMath::sub(qp a, qp b)

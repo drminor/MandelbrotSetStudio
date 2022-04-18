@@ -77,6 +77,35 @@ namespace MSS.Types
 
 		public static BigInteger Divide(BigInteger dividend, int dividendExponent, int divisor, out int newExponent)
 		{
+			var exponentDelta = 0;
+			var tolerance = 20d / divisor;
+			var bDivisor = new BigInteger(divisor);
+
+			var result = BigInteger.DivRem(dividend, bDivisor, out var remainder);
+			var adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+			//var adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
+			//var adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
+			//ReportDivideValues(dividend, dividendExponent, divisor, dividend, result, remainder, exponentDelta);
+
+			while (adjRem > tolerance)
+			{
+				exponentDelta++;
+				var adjDividend = dividend * new BigInteger(Math.Pow(2, exponentDelta));
+
+				result = BigInteger.DivRem(adjDividend, bDivisor, out remainder);
+				adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+				//adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
+				//adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
+				//ReportDivideValues(dividend, dividendExponent, divisor, adjDividend, result, remainder, exponentDelta);
+			}
+
+			newExponent = dividendExponent - exponentDelta;
+			return result;
+		}
+
+
+		public static BigInteger DivideTest(BigInteger dividend, int dividendExponent, int divisor, out int newExponent)
+		{
 			var resCounter = 0;
 			var exponentDelta = 0;
 			var tolerance = 0.005 * divisor;

@@ -33,7 +33,7 @@ namespace MEngineService
 			// MapCalcSettings
 			result.maxIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 			result.threshold = mapSectionRequest.MapCalcSettings.Threshold;
-			result.iterationsPerStep = mapSectionRequest.MapCalcSettings.IterationsPerRequest;
+			result.iterationsPerStep = mapSectionRequest.MapCalcSettings.RequestsPerJob;
 
 			return result;
 		}

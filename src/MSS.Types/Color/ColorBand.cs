@@ -17,8 +17,8 @@ namespace MSS.Types
 
 		private double _percentage;
 
-		//private ColorBand? _copy;
-		//private bool _isInEditMode;
+		private ColorBand? _copy;
+		private bool _isInEditMode;
 
 		#region Constructor
 
@@ -185,63 +185,63 @@ namespace MSS.Types
 
 		#endregion
 
-		//#region IEditable Object Support
+		#region IEditable Object Support
 
-		//public bool BlendStyleUpdated => _copy != null && _copy.BlendStyle != BlendStyle;
-		//public bool CutOffUpdated => _copy != null && _copy.CutOff != CutOff;
-		//public bool StartColorUpdated => _copy != null && _copy.StartColor != StartColor;
+		public bool BlendStyleUpdated => _copy != null && _copy.BlendStyle != BlendStyle;
+		public bool CutOffUpdated => _copy != null && _copy.CutOff != CutOff;
+		public bool StartColorUpdated => _copy != null && _copy.StartColor != StartColor;
 
-		//public void BeginEdit()
-		//{
-		//	_copy = new ColorBand(CutOff, StartColor, BlendStyle, EndColor)
-		//	{
-		//		PreviousCutOff = PreviousCutOff,
-		//		ActualEndColor = ActualEndColor,
-		//		Percentage = Percentage
-		//	};
+		public void BeginEdit()
+		{
+			_copy = new ColorBand(CutOff, StartColor, BlendStyle, EndColor)
+			{
+				PreviousCutOff = PreviousCutOff,
+				ActualEndColor = ActualEndColor,
+				Percentage = Percentage
+			};
 
-		//	IsInEditMode = true;
-		//}
+			IsInEditMode = true;
+		}
 
-		//public void CancelEdit()
-		//{
-		//	if (_copy != null)
-		//	{
-		//		CutOff = _copy.CutOff;
-		//		StartColor = _copy.StartColor;
-		//		BlendStyle = _copy.BlendStyle;
-		//		EndColor = _copy.EndColor;
-		//		PreviousCutOff = _copy.PreviousCutOff;
-		//		ActualEndColor = _copy.ActualEndColor;
-		//		Percentage = _copy.Percentage;
-		//	}
-		//	else
-		//	{
-		//		throw new InvalidOperationException("_copy is null on Cancel Edit.");
-		//	}
+		public void CancelEdit()
+		{
+			if (_copy != null)
+			{
+				CutOff = _copy.CutOff;
+				StartColor = _copy.StartColor;
+				BlendStyle = _copy.BlendStyle;
+				EndColor = _copy.EndColor;
+				PreviousCutOff = _copy.PreviousCutOff;
+				ActualEndColor = _copy.ActualEndColor;
+				Percentage = _copy.Percentage;
+			}
+			else
+			{
+				throw new InvalidOperationException("_copy is null on Cancel Edit.");
+			}
 
-		//	IsInEditMode = false;
-		//}
+			IsInEditMode = false;
+		}
 
-		//public void EndEdit()
-		//{
-		//	IsInEditMode = false;
-		//}
+		public void EndEdit()
+		{
+			IsInEditMode = false;
+		}
 
-		//public bool IsInEditMode
-		//{
-		//	get => _isInEditMode;
-		//	private set
-		//	{
-		//		if (_isInEditMode != value)
-		//		{
-		//			_isInEditMode = value;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
+		public bool IsInEditMode
+		{
+			get => _isInEditMode;
+			private set
+			{
+				if (_isInEditMode != value)
+				{
+					_isInEditMode = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
-		//#endregion
+		#endregion
 
 		public override string? ToString()
 		{
