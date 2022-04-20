@@ -25,6 +25,7 @@ namespace MSetExplorer
 
 		private IMapProjectViewModel? _mapProjectViewModel;
 		private MapLoaderManager? _mapLoaderManager;
+		private ColorBandSetViewModel? _colorBandViewModel;
 
 		private Process? _serverProcess;
 
@@ -75,12 +76,12 @@ namespace MSetExplorer
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
-			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
+			_colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
 			// Main Window
 			var window1 = new MainWindow
 			{
-				DataContext = new MainWindowViewModel(_mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel)
+				DataContext = new MainWindowViewModel(_mapProjectViewModel, mapDisplayViewModel, _colorBandViewModel, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel)
 			};
 
 			window1.Show();
@@ -108,6 +109,13 @@ namespace MSetExplorer
 			if (_mapLoaderManager != null)
 			{
 				_mapLoaderManager.Dispose();
+				_mapLoaderManager = null;
+			}
+
+			if (_colorBandViewModel != null)
+			{
+				_colorBandViewModel.Dispose();
+				_colorBandViewModel = null;
 			}
 
 			Debug.WriteLine("The request MapSectionRequestProcessor has been closed.");

@@ -23,7 +23,7 @@
                 </Grid.ColumnDefinitions>
 
                 <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
-                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding PreviousCutOff}"/>
+                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding StartingCutOff}"/>
                     <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding CutOff}"/>
                 </DockPanel>
 
@@ -54,7 +54,7 @@
                 </Grid.ColumnDefinitions>
 
                 <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
-                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding PreviousCutOff}"/>
+                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding StartingCutOff}"/>
                     <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding CutOff}"/>
                 </DockPanel>
 
@@ -146,7 +146,8 @@
                     <!--<KeyBinding Command="local:ColorBandSetCommands.Edit" Key="F2" />-->
                     <KeyBinding Command="local:ColorBandSetCommands.Delete" Key="Delete" />
                     <KeyBinding Command="local:ColorBandSetCommands.Insert" Key="Insert" />
-                    
+                    <KeyBinding Command="local:ColorBandSetCommands.ShowDetails" Key="F3" />
+
                     <!--<KeyBinding Command="local:TransactionCommands.Commit" Key="Enter" />
                     <KeyBinding Command="local:TransactionCommands.Cancel" Key="Esc"/>-->
                 </ListBox.InputBindings>
@@ -155,6 +156,9 @@
                     <!--<CommandBinding Command="local:ColorBandSetCommands.Edit" Executed="EditButton_Click" />-->
                     <CommandBinding Command="local:ColorBandSetCommands.Delete" Executed="DeleteButton_Click" />
                     <CommandBinding Command="local:ColorBandSetCommands.Insert" Executed="InsertButton_Click" />
+                    <CommandBinding Command="local:ColorBandSetCommands.ShowDetails" Executed="ShowDetails_Click" />
+
+
 
                     <!--<CommandBinding Command="local:TransactionCommands.Commit" Executed="CommitCharacterChanges" />
                     <CommandBinding Command="local:TransactionCommands.Cancel" Executed="CancelCharacterChanges" />-->
@@ -171,6 +175,9 @@
                         <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
                         <!--<MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />-->
                         <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
+                        <Separator/>
+                        <MenuItem Header="_Details" Command="local:ColorBandSetCommands.ShowDetails" />
+
                     </ContextMenu>
                 </ListBox.ContextMenu>
                 

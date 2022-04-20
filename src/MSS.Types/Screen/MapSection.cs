@@ -7,19 +7,11 @@ namespace MSS.Types
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>
 	{
-		private Lazy<IHistogram> _histogram;
+		private readonly Lazy<IHistogram> _histogram;
+		//private readonly Func<int[], IHistogram> _histogramBuilder;
 
-		public PointInt BlockPosition { get; set; }
-		public SizeInt Size { get; init; }
-
-		public int[] Counts { get; set; }
-		public int TargetIterations { get; set; }
-
-		public string SubdivisionId { get; init; }
-		public BigVector RepoBlockPosition { get; init; }
-		public bool IsInverted { get; init; }
-
-		public MapSection(PointInt blockPosition, SizeInt size, int[] counts, int targetIterations, string subdivisionId, BigVector repoBlockPosition, bool isInverted)
+		public MapSection(PointInt blockPosition, SizeInt size, int[] counts, int targetIterations, string subdivisionId
+			, BigVector repoBlockPosition, bool isInverted, Func<int[], IHistogram> histogramBuilder)
 		{
 			BlockPosition = blockPosition;
 			Size = size;
@@ -30,8 +22,19 @@ namespace MSS.Types
 			RepoBlockPosition = repoBlockPosition;
 			IsInverted = isInverted;
 
-			_histogram = new Lazy<IHistogram>(() => new HistogramALow(counts.Select(x => (int)Math.Round(x / 1000d))), System.Threading.LazyThreadSafetyMode.PublicationOnly);
+			_histogram = new Lazy<IHistogram>(() => histogramBuilder(Counts), System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		}
+
+		public PointInt BlockPosition { get; set; }
+		public SizeInt Size { get; init; }
+
+		public int[] Counts { get; init; }
+		public int TargetIterations { get; init; }
+
+		public string SubdivisionId { get; init; }
+		public BigVector RepoBlockPosition { get; init; }
+		public bool IsInverted { get; init; }
+
 
 		public IHistogram Histogram => _histogram.Value;
 

@@ -1,5 +1,4 @@
 ﻿using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -15,8 +14,7 @@ using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	// TODO: Have the ColorBandSetViewModel implement IDisposable.
-	public class ColorBandSetViewModel : INotifyPropertyChanged
+	public class ColorBandSetViewModel : INotifyPropertyChanged, IDisposable
 	{
 		private readonly ObservableCollection<MapSection> _mapSections;
 		private readonly SynchronizationContext? _synchronizationContext;
@@ -33,6 +31,8 @@ namespace MSetExplorer
 		private bool _isDirty;
 
 		private readonly object _histLock;
+
+		private PercentageBand? _beyondTargetSpecs;
 
 		#region Constructor
 
@@ -51,6 +51,7 @@ namespace MSetExplorer
 
 			_isDirty = false;
 			_histLock = new object();
+			_beyondTargetSpecs = null;
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
 		}
@@ -194,6 +195,8 @@ namespace MSetExplorer
 
 		public IHistogram Histogram { get; private set; }
 
+		public PercentageBand? BeyondTargetSpecs => _beyondTargetSpecs;
+
 		public bool IsDirty
 		{
 			get => _isDirty;
@@ -218,54 +221,24 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Prop: {e.PropertyName} is changing.");
 
-				if (e.PropertyName == nameof(ColorBand.ActualEndColor))
+				if (e.PropertyName == nameof(ColorBand.StartColor))
 				{
-					if (cb.BlendStyle == ColorBandBlendStyle.End)
+					if (TryGetPredeccessor(_colorBandSet, cb, out var colorBand))
 					{
-						cb.EndColor = cb.ActualEndColor;
-					}
-				}
-				else if (e.PropertyName == nameof(ColorBand.StartColor))
-				{
-					if (cb.BlendStyle == ColorBandBlendStyle.None)
-					{
-						cb.ActualEndColor = cb.StartColor;
-					}
-
-					var index = _colorBandSet.IndexOf(cb);
-					if (TryGetPredeccessor(_colorBandSet, index, out var colorBand))
-					{
-						if (colorBand.BlendStyle == ColorBandBlendStyle.Next)
-						{
-							colorBand.ActualEndColor = cb.StartColor;
-						}
-					}
-				}
-				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
-				{
-					if (cb.BlendStyle == ColorBandBlendStyle.Next)
-					{
-						var index = _colorBandSet.IndexOf(cb);
-						if (TryGetSuccessor(_colorBandSet, index, out var colorBand))
-						{
-							cb.ActualEndColor = colorBand.StartColor;
-						}
-					}
-					else
-					{
-						cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
+						colorBand.SuccessorStartColor = cb.StartColor;
 					}
 				}
 				else if (e.PropertyName == nameof(ColorBand.CutOff))
 				{
-					var index = _colorBandSet.IndexOf(cb);
-					if (TryGetSuccessor(_colorBandSet, index, out var colorBand))
+					if (TryGetSuccessor(_colorBandSet, cb, out var colorBand))
 					{
 						colorBand.PreviousCutOff = cb.CutOff;
 					}
 
 					UpdatePercentages();
 				}
+
+				IsDirty = true;
 			}
 			else
 			{
@@ -277,34 +250,6 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"A sender of type {sender?.GetType()} is sending is raising the CurrentColorBand_PropertyChanged event.");
 				}
-			}
-		}
-
-		private bool TryGetPredeccessor(IList<ColorBand> colorBands, int index, [MaybeNullWhen(false)] out ColorBand colorBand)
-		{
-			if (index < 1)
-			{
-				colorBand = null;
-				return false;
-			}
-			else
-			{
-				colorBand = colorBands[index - 1];
-				return true;
-			}
-		}
-
-		private bool TryGetSuccessor(IList<ColorBand> colorBands, int index, [MaybeNullWhen(false)] out ColorBand colorBand)
-		{
-			if (index > colorBands.Count - 2)
-			{
-				colorBand = null;
-				return false;
-			}
-			else
-			{
-				colorBand = colorBands[index + 1];
-				return true;
 			}
 		}
 
@@ -362,6 +307,8 @@ namespace MSetExplorer
 				_colorBandSet?.Insert(index, newItem);
 			}
 
+			IsDirty = true;
+
 			UpdatePercentages();
 		}
 
@@ -402,6 +349,8 @@ namespace MSetExplorer
 
 					Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {idx1}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 
+					IsDirty = true;
+
 					UpdatePercentages();
 				}
 			}
@@ -433,7 +382,6 @@ namespace MSetExplorer
 		{
 			var cutOffs = GetCutOffs();
 			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
-			IsDirty = true;
 		}
 
 		private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
@@ -464,12 +412,29 @@ namespace MSetExplorer
 
 					//var total = 0d;
 
+					var allMatched = true;
+					for (var i = 0; i < len; i++)
+					{
+						if (colorBands[i].CutOff != newPercentages[i].CutOff)
+						{
+							allMatched = false;
+							break;
+						}
+					}
+
+					if (!allMatched)
+					{
+						return;
+					}
+
 					for(var i = 0; i < len; i++)
 					{
 						var cb = colorBands[i];
 						cb.Percentage = newPercentages[i].Percentage;
 						//total += newPercentages[i].Item2;
 					}
+
+					_beyondTargetSpecs = newPercentages[^1];
 
 					//Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");
 				}
@@ -498,6 +463,32 @@ namespace MSetExplorer
 			var result = (ListCollectionView)CollectionViewSource.GetDefaultView(colorBands);
 			//result.SortDescriptions.Add(new SortDescription("CutOff", ListSortDirection.Ascending));
 
+			return result;
+		}
+
+		private bool TryGetPredeccessor(IList<ColorBand> colorBands, ColorBand cb, [MaybeNullWhen(false)] out ColorBand colorBand)
+		{
+			colorBand = GetPredeccessor(colorBands, cb);
+			return !(colorBand is null);
+		}
+
+		private ColorBand? GetPredeccessor(IList<ColorBand> colorBands, ColorBand cb)
+		{
+			var index = colorBands.IndexOf(cb);
+			var result = index < 1 ? null : colorBands[index - 1];
+			return result;
+		}
+
+		private bool TryGetSuccessor(IList<ColorBand> colorBands, ColorBand cb, [MaybeNullWhen(false)] out ColorBand colorBand)
+		{
+			colorBand = GetSuccessor(colorBands, cb);
+			return !(colorBand is null);
+		}
+
+		private ColorBand? GetSuccessor(IList<ColorBand> colorBands, ColorBand cb)
+		{
+			var index = colorBands.IndexOf(cb);
+			var result = index > colorBands.Count - 2 ? null : colorBands[index + 1];
 			return result;
 		}
 
@@ -545,6 +536,15 @@ namespace MSetExplorer
 		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		#endregion
+
+		#region IDisposable Support
+
+		public void Dispose()
+		{
+			((IDisposable)_mapSectionHistogramProcessor).Dispose();
 		}
 
 		#endregion

@@ -113,7 +113,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
-				SetWindowTitle(_vm.MapProjectViewModel.CurrentProject?.Name);
+				Title = GetWindowTitle(_vm.MapProjectViewModel.CurrentProject?.Name, _vm.MapProjectViewModel.CurrentColorBandSet.Name);
 				CommandManager.InvalidateRequerySuggested();
 			}
 		}
@@ -282,7 +282,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLine($"User decliend to import a ColorBandSet.");
+				Debug.WriteLine($"User declined to import a ColorBandSet.");
 				var projectsColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
 
 				if (_vm.MapDisplayViewModel.ColorBandSet != projectsColorBandSet)
@@ -489,11 +489,19 @@ namespace MSetExplorer
 			}
 		}
 
-		private void SetWindowTitle(string? projectName)
+		private string GetWindowTitle(string? projectName, string? colorBandSetName)
 		{
 			const string dash = "\u2014";
-			Title = projectName == null ? $"MainWindow {dash} {projectName}" : "MainWindow";
+
+			var result = projectName != null
+				? colorBandSetName != null 
+					? $"Main Window {dash} {projectName} {dash} {colorBandSetName}" 
+					: $"Main Window {dash} {projectName}"
+				: "MainWindow";
+
+			return result;
 		}
+
 
 		#endregion
 

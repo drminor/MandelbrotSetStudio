@@ -70,6 +70,16 @@ namespace MSS.Types
 			return new RValue(Value + rValue.Value, Exponent);
 		}
 
+		public RValue Sub(RValue rValue)
+		{
+			if (Exponent != rValue.Exponent)
+			{
+				throw new InvalidOperationException("Cannot add two RValues if their Exponents do not agree.");
+			}
+
+			return new RValue(Value - rValue.Value, Exponent);
+		}
+
 		public static RValue Min(RValue a, RValue b)
 		{
 			if (a.Exponent != b.Exponent)

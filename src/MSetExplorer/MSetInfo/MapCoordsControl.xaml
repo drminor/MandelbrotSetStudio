@@ -42,10 +42,13 @@
                 <TextBlock Text="End Y:" Grid.Row="3" Margin="0,5" Height="18" />
                 <TextBox x:Name="txtEndY" Grid.Row="3" Grid.Column="1" Margin="3" Text="{Binding EndingY}"/>
 
-                <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5">
-                    <TextBlock Text="Zoom:" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0" Height="18" />
+                <TextBlock Text="Zoom:" Grid.Row="4" Margin="0,5" Height="18" />
+                <TextBlock x:Name="txtResolution" Grid.Row="4" Grid.Column="1" Margin="3" Text="{Binding Zoom, StringFormat={}{0:n0}}"/>
+
+                <!--<StackPanel Orientation="Horizontal" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5">
+                    <TextBlock Text="Zoom:" Margin="0" Height="18" />
                     <TextBlock x:Name="txtResolution" Text="{Binding Zoom}" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,0" Height="18" />
-                </StackPanel>
+                </StackPanel>-->
 
             </Grid>
         </Border>

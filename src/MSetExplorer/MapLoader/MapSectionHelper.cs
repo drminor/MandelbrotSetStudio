@@ -6,11 +6,14 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace MSetExplorer
 {
 	public static class MapSectionHelper
 	{
+		private const int VALUE_FACTOR = 10000;
+
 		private static readonly DtoMapper _dtoMapper = new DtoMapper();
 
 		#region Create MapSectionRequests
@@ -69,7 +72,8 @@ namespace MSetExplorer
 			foreach (var screenPosition in ScreenTypeHelper.Points(mapExtentInBlocks))
 			{
 				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var isInverted);
-				var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyCountsData, targetIterations, subdivisionId, repoPosition, isInverted);
+				var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyCountsData, targetIterations, 
+					subdivisionId, repoPosition, isInverted, BuildHistogram);
 				result.Add(mapSection);
 			}
 
@@ -146,7 +150,8 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var blockSize = mapSectionRequest.BlockSize;
-			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionResponse.MapCalcSettings.TargetIterations, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted);
+			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionResponse.MapCalcSettings.TargetIterations, 
+				mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted, BuildHistogram);
 
 			return mapSection;
 		}
@@ -167,8 +172,8 @@ namespace MSetExplorer
 				for (var colPtr = 0; colPtr < blockSize.Width; colPtr++)
 				{
 					var countVal = counts[curSourcePtr++];
-					countVal = Math.DivRem(countVal, 1000, out var ev);
-					var escapeVel = ev / 1000d;
+					countVal = Math.DivRem(countVal, VALUE_FACTOR, out var ev);
+					var escapeVel = ev / (double)VALUE_FACTOR;
 
 					colorMap.PlaceColor(countVal, escapeVel, new Span<byte>(result, curResultPtr, 4));
 					curResultPtr += 4;
@@ -184,6 +189,11 @@ namespace MSetExplorer
 			// If inverted, the Destination's origin is at the top, left, otherwise bottom, left. 
 			var result = invert ? maxRowIndex - rowPtr : rowPtr;
 			return result;
+		}
+
+		private static IHistogram BuildHistogram(int[] counts)
+		{
+			return new HistogramALow(counts.Select(x => (int)Math.Round(x / (double)VALUE_FACTOR)));
 		}
 
 		#endregion

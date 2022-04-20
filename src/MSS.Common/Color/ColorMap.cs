@@ -9,8 +9,8 @@ namespace MSS.Common
 {
 	public class ColorMap : IEquatable<ColorMap?>, IEqualityComparer<ColorMap>
     {
+        private readonly ColorBandSet _colorBandSet;
         private readonly int[] _cutOffs;
-        private readonly int _lastCutOff;
 
 		#region Constructor
 
@@ -24,7 +24,6 @@ namespace MSS.Common
             Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
 
             _colorBandSet = colorBandSet;
-            _lastCutOff = colorBandSet.ColorBands[^1].CutOff;
             _cutOffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.CutOff).ToArray();
         }
 
@@ -32,11 +31,7 @@ namespace MSS.Common
 
         #region Public Properties
 
-        private ColorBandSet _colorBandSet;
-
         public ColorBand HighColorBand => _colorBandSet[^1];
-
-        //public string Id => ColorBandSet.Id.ToString();
 
         #endregion
 
@@ -82,7 +77,7 @@ namespace MSS.Common
         private double GetStepFactor(int countVal, double escapeVelocity, ColorBand cme)
 		{
             var topBucketVal = Math.Min(countVal, cme.CutOff) + escapeVelocity;
-            var botBucketVal = cme.PreviousCutOff;
+            var botBucketVal = cme.PreviousCutOff ?? 0;
             var bucketWidth = cme.BucketWidth;
 
             var stepFactor = (topBucketVal - botBucketVal) / bucketWidth;
@@ -94,7 +89,7 @@ namespace MSS.Common
 		{
             ColorBand result;
 
-            if (countVal >= _lastCutOff)
+            if (countVal >= HighColorBand.CutOff)
 			{
                 result = HighColorBand;
 			}

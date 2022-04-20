@@ -10,6 +10,9 @@ namespace MSetExplorer
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
 
+		private int _dispWidth;
+		private int _dispHeight;
+
 		#region Constructor
 
 		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel, 
@@ -45,8 +48,6 @@ namespace MSetExplorer
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 		public MSetInfoViewModel MSetInfoViewModel { get; }
 
-		private int _dispWidth;
-
 		public int DispWidth
 		{
 			get => _dispWidth;
@@ -59,8 +60,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		private int _dispHeight;
 
 		public int DispHeight
 		{
@@ -156,6 +155,7 @@ namespace MSetExplorer
 
 		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
+			// Update the MSet Info and Map Display with the new Job
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
 			{
 				var curJob = MapProjectViewModel.CurrentJob;
@@ -164,41 +164,17 @@ namespace MSetExplorer
 				MapDisplayViewModel.CurrentJob = curJob;
 			}
 
+			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
 			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet.Clone();
-				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
-			}
-		}
-
-		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
-		{
-			if (e.IsPreview)
-			{
-				var newCoords = MapProjectViewModel.GetUpdateCoords(e.TransformType, e.NewArea);
-				if (!(newCoords is null))
-				{
-					MSetInfoViewModel.Coords = newCoords;
-				}
-			}
-			else
-			{
-				MapProjectViewModel.UpdateMapView(e.TransformType, e.NewArea);
-			}
-		}
-
-		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
-			{
-				DispWidth = MapDisplayViewModel.CanvasSize.Width;
-				DispHeight = MapDisplayViewModel.CanvasSize.Height;
-				MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet.CreateNewCopy();
 			}
 		}
 
 		private void ColorBandViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
+			// Update the Map Project as ColorBandSet is created.
 			if (e.PropertyName == nameof(ColorBandSetViewModel.ColorBandSet))
 			{
 				var cbs = ColorBandSetViewModel.ColorBandSet;
@@ -209,22 +185,59 @@ namespace MSetExplorer
 			}
 		}
 
+		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			// Let the Map Project know about Map Display size changes
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			{
+				DispWidth = MapDisplayViewModel.CanvasSize.Width;
+				DispHeight = MapDisplayViewModel.CanvasSize.Height;
+				MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+			}
+		}
+
+		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
+		{
+			if (e.IsPreview)
+			{
+				// Calculate new Coords for preview
+				var newCoords = MapProjectViewModel.GetUpdateCoords(e.TransformType, e.NewArea);
+				if (!(newCoords is null))
+				{
+					MSetInfoViewModel.Coords = newCoords;
+				}
+			}
+			else
+			{
+				// Zoom or Pan Map Coordinates
+				MapProjectViewModel.UpdateMapView(e.TransformType, e.NewArea);
+			}
+		}
+
 		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
 		{
+			// Update the Target Iterations
 			if (e.MapSettingsUpdateType == MapSettingsUpdateType.TargetIterations)
 			{
-				ColorBandSetViewModel.HighCutOff = e.TargetIterations;
-				MapDisplayViewModel.ColorBandSet.HighCutOff = e.TargetIterations;
-				MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
+				var cbs = ColorBandSetViewModel.ColorBandSet;
+				if (cbs != null)
+				{
+					cbs.HighCutOff = e.TargetIterations;
+					//MapDisplayViewModel.ColorBandSet = cbs.CreateNewCopy();
+					ColorBandSetViewModel.ApplyChanges();
+				}
+
+				//MapDisplayViewModel.ColorBandSet.HighCutOff = e.TargetIterations;
+				//MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
 			}
 
+			// Jump to new Coordinates
 			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.Coordinates)
 			{
 				Debug.WriteLine($"MainWindow ViewModel received request to update the coords.");
 				MapProjectViewModel.UpdateMapCoordinates(e.Coords);
 			}
 		}
-
 
 		#endregion
 	}

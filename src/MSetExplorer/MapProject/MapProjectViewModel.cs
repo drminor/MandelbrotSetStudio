@@ -107,10 +107,17 @@ namespace MSetExplorer
 			{
 				if (value != _colorBandSetCollection.CurrentColorBandSet)
 				{
-					Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {_colorBandSetCollection.CurrentColorBandSet?.Id}, New = {value.Id}.");
+					var targetIterationsBeingUpdated = value.HighColorBand.CutOff != _colorBandSetCollection.CurrentColorBandSet.HighColorBand.CutOff;
+
+					Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {_colorBandSetCollection.CurrentColorBandSet?.Id}, New = {value.Id} Iterations Updated = {targetIterationsBeingUpdated}.");
 					_colorBandSetCollection.Push(value);
 					CurrentProjectIsDirty = true;
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+
+					if (targetIterationsBeingUpdated)
+					{
+						UpdateTargetInterations(value.HighColorBand.CutOff);
+					}
 				}
 			}
 		}
@@ -387,7 +394,7 @@ namespace MSetExplorer
 
 		public void UpdateTargetInterations(int targetIterations)
 		{
-			CurrentColorBandSet.HighCutOff = targetIterations;
+			//CurrentColorBandSet.HighCutOff = targetIterations;
 
 			var curJob = CurrentJob;
 			if (curJob == null)

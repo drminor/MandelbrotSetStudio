@@ -48,27 +48,27 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(ColorBand.BlendStyle))
-			{
-				_vm.ActualEndColor = ColorBandSet.GetActualEndColor(_vm, Sucessor?.StartColor);
-				cbcBtnCtlEndColor.IsEnabled = _vm.BlendStyle == ColorBandBlendStyle.End;
-			}
+			//if (e.PropertyName == nameof(ColorBand.BlendStyle))
+			//{
+			//	_vm.ActualEndColor = ColorBandSet.GetActualEndColor(_vm, Sucessor?.StartColor);
+			//	cbcBtnCtlEndColor.IsEnabled = _vm.BlendStyle == ColorBandBlendStyle.End;
+			//}
 
-			if (e.PropertyName == nameof(ColorBand.ActualEndColor))
-			{
-				if (_vm.BlendStyle == ColorBandBlendStyle.End)
-				{
-					_vm.EndColor = _vm.ActualEndColor;
-				}
-			}
+			//if (e.PropertyName == nameof(ColorBand.ActualEndColor))
+			//{
+			//	if (_vm.BlendStyle == ColorBandBlendStyle.End)
+			//	{
+			//		_vm.EndColor = _vm.ActualEndColor;
+			//	}
+			//}
 
-			if (e.PropertyName == nameof(ColorBand.StartColor))
-			{
-				if (_vm.BlendStyle == ColorBandBlendStyle.None)
-				{
-					_vm.ActualEndColor = _vm.StartColor;
-				}
-			}
+			//if (e.PropertyName == nameof(ColorBand.StartColor))
+			//{
+			//	if (_vm.BlendStyle == ColorBandBlendStyle.None)
+			//	{
+			//		_vm.ActualEndColor = _vm.StartColor;
+			//	}
+			//}
 		}
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)

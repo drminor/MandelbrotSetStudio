@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 
 namespace MSetExplorer
@@ -93,10 +94,12 @@ namespace MSetExplorer
 					var cItems = value.Split('\n');
 					if (cItems.Length == 4)
 					{
-						SetMulti(cItems);
+						//SetMulti(cItems);
+						TestMulti(cItems);
 					}
 					else
 					{
+						value = cItems[0];
 						if (value != _startingX)
 						{
 							_startingX = value;
@@ -312,6 +315,13 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		private void TestMulti(string[] mVals)
+		{
+			var rt = RValueHelper.BuildRRectangleFromStrings(mVals);
+
+			Debug.WriteLine($"The rr result is {rt}");
+		}
 
 		private void SetMulti(string[] mVals)
 		{

@@ -67,6 +67,23 @@ namespace MSS.Common
 			return true;
 		}
 
+		public static RRectangle BuildRRectangleFromStrings(string[] vals)
+		{
+			var x1 = ConvertToRValue(vals[0]);
+			var x2 = ConvertToRValue(vals[1]);
+			var y1 = ConvertToRValue(vals[2]);
+			var y2= ConvertToRValue(vals[3]);
+
+			var nX1 = RNormalizer.Normalize(x1, x2, out var nX2);
+			var nY1 = RNormalizer.Normalize(y1, y2, out var nY2);
+
+			var w = nX2.Sub(nX1);
+
+			var h = nY2.Sub(nY1);
+
+			return new RRectangle();
+		}
+
 		public static RValue ConvertToRValue(string s)
 		{
 			// Supports arbitray string lengths.
@@ -81,11 +98,7 @@ namespace MSS.Common
 
 			var gcDivisor = BigInteger.GreatestCommonDivisor(bigInt, factor);
 
-
 			bigInt *= factor;
-
-
-
 
 			bigInt = AdjustWithPrecision(bigInt, sme.Precision, formatProvider);
 

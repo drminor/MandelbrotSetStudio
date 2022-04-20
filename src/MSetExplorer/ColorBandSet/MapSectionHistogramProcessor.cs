@@ -205,18 +205,18 @@ namespace MSetExplorer
 				var idx = kvps[i].Key;
 				var amount = kvps[i].Value;
 
-				while (curBucketPtr < bucketCnts.Length && idx >= curBucketCut)
+				while (curBucketPtr < bucketCnts.Length && idx > curBucketCut)
 				{
-					if (idx == curBucketCut)
-					{
-						bucketCnts[curBucketPtr].ExactCount = amount;
-					}
-					
 					curBucketPtr++;
 					curBucketCut = bucketCnts[curBucketPtr].CutOff;
 				}
 
 				runningSum += amount;
+
+				if (idx == curBucketCut)
+				{
+					bucketCnts[curBucketPtr].ExactCount = amount;
+				}
 
 				bucketCnts[curBucketPtr].Count += amount;
 				bucketCnts[curBucketPtr].RunningSum = runningSum;
@@ -234,6 +234,9 @@ namespace MSetExplorer
 			runningSum += histogram.UpperCatchAllValue;
 			bucketCnts[^1].Count += histogram.UpperCatchAllValue;
 			bucketCnts[^1].RunningSum = runningSum;
+
+			// For now, include all of the cnts above the target in the last bucket.
+			bucketCnts[^2].Count += bucketCnts[^1].Count;
 
 			//var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
 			var total = (double)runningSum;

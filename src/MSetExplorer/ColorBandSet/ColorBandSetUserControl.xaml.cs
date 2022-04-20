@@ -70,6 +70,24 @@ namespace MSetExplorer
 			_vm.ApplyChanges();
 		}
 
+		private void ShowDetails_Click(object sender, RoutedEventArgs e)
+		{
+			string msg;
+
+			var specs = _vm.BeyondTargetSpecs;
+
+			if (specs != null)
+			{
+				msg = $"Percentage: {specs.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
+			}
+			else
+			{
+				msg = "No Details Available.";
+			}
+
+			_ = MessageBox.Show(msg);
+		}
+
 		private void CommitEditOnLostFocus(object sender, DependencyPropertyChangedEventArgs e)
 		{
 			//// if the root element of the edit mode template loses focus, commit the edit
@@ -98,10 +116,13 @@ namespace MSetExplorer
 				}
 
 				var index = lvColorBands.Items.IndexOf(selItem);
-				var newCutoff = selItem.PreviousCutOff + (selItem.CutOff - selItem.PreviousCutOff) / 2;
-				var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.None, new ColorBandColor("#010101"))
+				var prevCutOff = selItem.PreviousCutOff ?? 0;
+				var newCutoff = prevCutOff + (selItem.CutOff - prevCutOff) / 2;
+				var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, selItem.StartColor)
 				{
-					PreviousCutOff = selItem.PreviousCutOff
+					//StartingCutOff = selItem.PreviousCutOff == 0 ? selItem.PreviousCutOff : selItem.PreviousCutOff + 1,
+					PreviousCutOff = selItem.PreviousCutOff,
+					SuccessorStartColor = selItem.StartColor
 				};
 
 				_vm.InsertItem(index, newItem);
