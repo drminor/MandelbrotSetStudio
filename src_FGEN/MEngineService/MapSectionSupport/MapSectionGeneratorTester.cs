@@ -23,7 +23,7 @@ namespace MEngineService
 			request.SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8);
 			request.MapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 100);
 
-			var response = new MapSectionGenerator().GenerateMapSection(request);
+			var response = MapSectionGenerator.GenerateMapSection(request);
 
 			Console.WriteLine($"The response has {response.Counts.Length} count values.");
 		}

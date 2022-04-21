@@ -25,6 +25,14 @@ namespace MEngineClient
 			return reply;
 		}
 
+
+		public async ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest)
+		{
+			var mEngineService = GetMapSectionService();
+			var reply = await mEngineService.GenerateMapSectionAsyncR(mapSectionRequest);
+			return reply;
+		}
+
 		private IMapSectionService GetMapSectionService()
 		{
 			try

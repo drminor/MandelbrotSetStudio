@@ -132,7 +132,9 @@ namespace MapSectionProviderLib
 					else
 					{
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
-						mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
+						//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
+						mapSectionResponse = await _mEngineClient.GenerateMapSectionAsyncR(mapSectionRequest);
+
 						mapSectionResponse.MapSectionId = mapSectionWorkItem.Request.Request.MapSectionId;
 
 						if (mapSectionPersistProcessor != null)
