@@ -368,22 +368,15 @@ namespace MSS.Common
 
 		#region Precision
 
-		public static int GetResolution(RValue rValue)
+		public static long GetResolution(RValue rValue, out int precision)
 		{
 			var reducedR = Reducer.Reduce(rValue);
+			precision = -1 * reducedR.Exponent;
 
-			var reciprocalOfTheDenominator = BigInteger.Pow(2, -1 * reducedR.Exponent);
+			var reciprocalOfTheDenominator = BigInteger.Pow(2, precision);
 			var result = BigInteger.Divide(reciprocalOfTheDenominator, reducedR.Value);
 
-			//var gCD = BigInteger.GreatestCommonDivisor(rValue.Value, BigInteger.Pow(2, -1 * rValue.Exponent));
-			//var log2 = BigIntegerHelper.LogBase2(gCD, 0);
-
-			//4 * 2^-3 -> 1/4
-			//4 * 2^3 -> 32
-
-			//return log2;
-
-			return (int) result;
+			return (long) result;
 		}
 
 		#endregion

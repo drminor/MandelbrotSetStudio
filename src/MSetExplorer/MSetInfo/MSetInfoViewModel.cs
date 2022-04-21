@@ -18,7 +18,7 @@ namespace MSetExplorer
 		private string _startingY;
 		private string _endingY;
 
-		private int _zoom;
+		private long _zoom;
 
 		private RRectangle _coords;
 		private bool _coordsAreDirty;
@@ -74,14 +74,21 @@ namespace MSetExplorer
 			}
 		}
 
-		public int Zoom
+		public long Zoom
 		{
 			get => _zoom;
 			set
 			{
 				_zoom = value;
 				OnPropertyChanged();
+				OnPropertyChanged(nameof(Precision));
 			}
+		}
+
+		public int Precision
+		{
+			get => -1 * _currentJob?.Subdivision.SamplePointDelta.Exponent ?? 0;
+			set => OnPropertyChanged();
 		}
 
 		public string StartingX
@@ -188,7 +195,9 @@ namespace MSetExplorer
 
 					CoordsAreDirty = value != (_currentJob?.MSetInfo ?? NULL_MSET_INFO).Coords;
 
-					Zoom = RValueHelper.GetResolution(_coords.Width);
+					Zoom = RValueHelper.GetResolution(_coords.Width, out var precision);
+					Precision = precision;
+
 
 					if (value != _currentMSetInfo.Coords)
 					{

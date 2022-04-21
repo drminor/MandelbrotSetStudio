@@ -259,7 +259,7 @@ namespace MSS.Types
 
 			if (hi > 0)
 			{
-				Debug.WriteLine($"Got a Hi value when converting a IBigRatShape value.");
+				Debug.WriteLine($"Got a Hi value when converting a IBigRatShape value. The value is {hi}");
 			}
 
 			if (BigInteger.Abs(hi) > long.MaxValue)

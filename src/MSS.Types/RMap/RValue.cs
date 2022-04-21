@@ -22,14 +22,9 @@ namespace MSS.Types
 
 		public RValue(BigInteger value, int exponent, int? precision)
 		{
-			if (!precision.HasValue)
-			{
-				precision = GetPrecision(value, exponent);
-			}
-
 			Values = new BigInteger[] { value };
 			Exponent = exponent;
-			Precision = precision ?? value.GetByteCount();
+			Precision = precision ?? GetPrecision(value, exponent);
 		}
 
 		private int GetPrecision(BigInteger value, int exponent)
