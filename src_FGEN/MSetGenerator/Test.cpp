@@ -49,18 +49,18 @@ extern "C"
 
         int cellCount = mapSectionRequest.blockSizeWidth * mapSectionRequest.blockSizeHeight;
 
-        for (int i = 0; i < cellCount; i++)
-        {
-            counts[i] = 0;
-            doneFlags[i] = false;
-        }
+        //for (int i = 0; i < cellCount; i++)
+        //{
+        //    counts[i] = 0;
+        //    doneFlags[i] = false;
+        //}
 
-        cellCount *= 4;
+        //cellCount *= 4;
 
-        for (int i = 0; i < cellCount; i++)
-        {
-            zValues[i] = 0;
-        }
+        //for (int i = 0; i < cellCount; i++)
+        //{
+        //    zValues[i] = 0;
+        //}
 
         qpMath* m = new qpMath();
         qp posX = m->fromLongRational(mapSectionRequest.positionX[0], mapSectionRequest.positionX[1], mapSectionRequest.positionExponent);
@@ -82,8 +82,6 @@ extern "C"
         PointDd pos = PointDd(posX, posY);
         SizeInt blockSize = SizeInt(mapSectionRequest.blockSizeWidth, mapSectionRequest.blockSizeHeight);
         SizeDd sampleSize = SizeDd(deltaWidth, deltaHeight);
-
-        //int targetCount = mapSectionRequest.maxIterations;
 
         g->FillCountsVec(pos, blockSize, sampleSize, targetCount, counts, doneFlags, zValues);
 

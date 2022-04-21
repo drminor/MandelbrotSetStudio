@@ -5,24 +5,33 @@ using System.Runtime.InteropServices;
 
 namespace MEngineService
 {
-	public class MapSectionGenerator
+	public static class MapSectionGenerator
 	{
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public static MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
-			MapSectionRequestStruct requestStruct = new MapSectionReqHelper().GetRequestStruct(mapSectionRequest);
-
+			// Counts
 			int[] counts = GetAndFillCountsBuffer(mapSectionRequest, out var countsBuffer);
-			bool[] doneFlags = GetAndFillDoneFlagsBuffer(mapSectionRequest, out var doneFlagsBuffer);
+
+			// Done Flags
+			byte[] doneFlagsAsBArray = ConvertDoneFlags(mapSectionRequest);
+			var doneFlagsBuffer = GetDoneFlagsBuffer(doneFlagsAsBArray);
+			
+			// ZValues
 			double[] zValues = GetAndFillZValuesBuffer(mapSectionRequest, out var zValuesBuffer);
 
+			var requestStruct = new MapSectionReqHelper().GetRequestStruct(mapSectionRequest);
 			NativeMethods.GenerateMapSection(requestStruct, countsBuffer, doneFlagsBuffer, zValuesBuffer);
 
+			// Counts
 			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
 			Marshal.FreeCoTaskMem(countsBuffer);
 
-			//Marshal.Copy(doneFlagsBuffer,  doneFlags, 0, length);
+			// Done Flags
+			Marshal.Copy(doneFlagsBuffer, doneFlagsAsBArray, 0, doneFlagsAsBArray.Length);
 			Marshal.FreeCoTaskMem(doneFlagsBuffer);
+			var doneFlags = doneFlagsAsBArray.Select(x => x == 1 ? true : false).ToArray();
 
+			// ZValues
 			Marshal.Copy(zValuesBuffer, zValues, 0, zValues.Length);
 			Marshal.FreeCoTaskMem(zValuesBuffer);
 
@@ -40,7 +49,7 @@ namespace MEngineService
 			return result;
 		}
 
-		private int[] GetAndFillCountsBuffer(MapSectionRequest mapSectionRequest, out IntPtr countsBuffer)
+		private static int[] GetAndFillCountsBuffer(MapSectionRequest mapSectionRequest, out IntPtr countsBuffer)
 		{
 			int[] counts;
 			
@@ -59,29 +68,31 @@ namespace MEngineService
 			return counts;
 		}
 
-		private bool[] GetAndFillDoneFlagsBuffer(MapSectionRequest mapSectionRequest, out IntPtr countsBuffer)
+		private static byte[] ConvertDoneFlags(MapSectionRequest mapSectionRequest)
 		{
-			bool[] doneFlags;
+			byte[] doneFlagsAsBArray;
 
 			if (mapSectionRequest.DoneFlags != null)
 			{
-				doneFlags = mapSectionRequest.DoneFlags;
+				doneFlagsAsBArray = mapSectionRequest.DoneFlags.Select(x => x ? (byte)1 : (byte)0).ToArray();
 			}
 			else
 			{
-				doneFlags = new bool[mapSectionRequest.BlockSize.NumberOfCells];
+				doneFlagsAsBArray = new byte[mapSectionRequest.BlockSize.NumberOfCells];
 			}
 
-			countsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(byte)) * doneFlags.Length);
-
-			var bArray = doneFlags.Select(x => x ? (byte)1 : (byte)0).ToArray();
-
-			Marshal.Copy(bArray, 0, countsBuffer, doneFlags.Length);
-
-			return doneFlags;
+			return doneFlagsAsBArray;
 		}
 
-		private double[] GetAndFillZValuesBuffer(MapSectionRequest mapSectionRequest, out IntPtr countsBuffer)
+		private static IntPtr GetDoneFlagsBuffer(byte[] doneFlagsAsBArray)
+		{
+			IntPtr doneFlagsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(byte)) * doneFlagsAsBArray.Length);
+			Marshal.Copy(doneFlagsAsBArray, 0, doneFlagsBuffer, doneFlagsAsBArray.Length);
+
+			return doneFlagsBuffer;
+		}
+
+		private static double[] GetAndFillZValuesBuffer(MapSectionRequest mapSectionRequest, out IntPtr zValuesBuffer)
 		{
 			double[] zValues;
 
@@ -94,8 +105,8 @@ namespace MEngineService
 				zValues = new double[mapSectionRequest.BlockSize.NumberOfCells * 4];
 			}
 
-			countsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(double)) * zValues.Length);
-			Marshal.Copy(zValues, 0, countsBuffer, zValues.Length);
+			zValuesBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(double)) * zValues.Length);
+			Marshal.Copy(zValues, 0, zValuesBuffer, zValues.Length);
 
 			return zValues;
 		}

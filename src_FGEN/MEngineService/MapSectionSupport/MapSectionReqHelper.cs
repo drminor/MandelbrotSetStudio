@@ -38,21 +38,5 @@ namespace MEngineService
 			return result;
 		}
 
-
-		public void PrepareResultArray(int[] array2, int size)
-		{
-			IntPtr buffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(size) * array2.Length);
-			Marshal.Copy(array2, 0, buffer, array2.Length);
-
-			//int sum2 = NativeMethods.TestRefArrayOfInts(ref buffer, ref size);
-			//Console.WriteLine("\nSum of elements:" + sum2);
-			if (size > 0)
-			{
-				int[] arrayRes = new int[size];
-				Marshal.Copy(buffer, arrayRes, 0, size);
-				Marshal.FreeCoTaskMem(buffer);
-			}
-		}
-
 	}
 }

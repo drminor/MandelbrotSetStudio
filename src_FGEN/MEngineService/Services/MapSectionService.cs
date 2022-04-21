@@ -8,9 +8,18 @@ namespace MEngineService.Services
     {
 		public Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default)
 		{
-            var mapSectionGenerator = new MapSectionGenerator();
-            var mapSectionResponse = mapSectionGenerator.GenerateMapSection(mapSectionRequest);
+            var mapSectionResponse = MapSectionGenerator.GenerateMapSection(mapSectionRequest);
+
             return Task.FromResult(mapSectionResponse);
         }
+
+		public ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest, CallContext context = default)
+		{
+			var mapSectionResponse = MapSectionGenerator.GenerateMapSection(mapSectionRequest);
+
+			return new ValueTask<MapSectionResponse>(mapSectionResponse);
+		}
+
+		//ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest, CallContext context = default);
 	}
 }
