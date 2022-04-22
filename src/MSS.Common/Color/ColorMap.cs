@@ -7,24 +7,33 @@ using System.Linq;
 
 namespace MSS.Common
 {
-	public class ColorMap : IEquatable<ColorMap?>, IEqualityComparer<ColorMap>
+    public class ColorMap : IEquatable<ColorMap?>, IEqualityComparer<ColorMap>
     {
         private readonly ColorBandSet _colorBandSet;
         private readonly int[] _cutOffs;
 
-		#region Constructor
+        #region Constructor
 
-		public ColorMap(ColorBandSet colorBandSet)
-		{
+        public ColorMap(ColorBandSet colorBandSet)
+        {
             if (colorBandSet == null)
-			{
+            {
                 throw new ArgumentNullException(nameof(colorBandSet));
             }
 
             Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
 
             _colorBandSet = colorBandSet;
+            //_colorBandSet.Fix();
             _cutOffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.CutOff).ToArray();
+
+            foreach(var colorBand in _colorBandSet)
+			{
+                if (colorBand.BlendStyle != ColorBandBlendStyle.None)
+				{
+                    colorBand.BlendVals = new BlendVals(colorBand.StartColor.ColorComps, colorBand.ActualEndColor.ColorComps, opacity: 255);
+				}
+			}
         }
 
         #endregion
@@ -33,13 +42,16 @@ namespace MSS.Common
 
         public ColorBand HighColorBand => _colorBandSet[^1];
 
+        public bool UseEscapeVelocities { get; set; }
+
         #endregion
 
         #region Public Methods
 
         public void PlaceColor(int countVal, double escapeVelocity, Span<byte> destination)
-		{
-            var cme = GetColorBand(countVal);
+        {
+            var idx = GetColorMapIndex(countVal);
+            var cme = _colorBandSet[idx];
 
             if (cme.BlendStyle == ColorBandBlendStyle.None)
             {
@@ -48,136 +60,109 @@ namespace MSS.Common
             else
             {
                 var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
-                InterpolateAndPlace(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.ActualEndColor.ColorComps, stepFactor, destination);
+
+                if (cme.BlendVals != null)
+				{
+                    cme.BlendVals.Value.Blend(stepFactor, destination);
+				}
+                else
+				{
+                    throw new InvalidOperationException("BlendVals is null for a CME with BlendStyle != none.");
+				}
             }
         }
 
         public byte[] GetColor(int countVal, double escapeVelocity)
         {
-			byte[] result;
+            byte[] result;
 
-            var cme = GetColorBand(countVal);
+            var idx = GetColorMapIndex(countVal);
+            var cme = _colorBandSet[idx];
 
             if (cme.BlendStyle == ColorBandBlendStyle.None)
             {
                 result = cme.StartColor.ColorComps;
-                return result;
             }
-
-            var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
-            result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.ActualEndColor.ColorComps, stepFactor);
+            else
+			{
+                if (cme.BlendVals != null)
+                {
+                    result = new byte[3];
+                    var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
+                    cme.BlendVals.Value.Blend(stepFactor, result);
+                }
+                else
+                {
+                    throw new InvalidOperationException("BlendVals is null for a CME with BlendStyle != none.");
+                }
+            }
 
             return result;
         }
 
-		#endregion
+        #endregion
 
-		#region Private Methods
+        #region Private Methods
 
         private double GetStepFactor(int countVal, double escapeVelocity, ColorBand cme)
-		{
-            var topBucketVal = Math.Min(countVal, cme.CutOff) + escapeVelocity;
-            var botBucketVal = cme.PreviousCutOff ?? 0;
-            var bucketWidth = cme.BucketWidth;
+        {
+			var botBucketVal = 1 + cme.PreviousCutOff ?? 0;
+            var bucketDistance = countVal - botBucketVal;
+            var bucketWidth = UseEscapeVelocities ? 1 + cme.BucketWidth : cme.BucketWidth;
 
-            var stepFactor = (topBucketVal - botBucketVal) / bucketWidth;
+			var stepFactor = (bucketDistance + escapeVelocity) / bucketWidth;
 
-            return stepFactor;
+            CheckStepFactor(countVal, cme.CutOff, botBucketVal, bucketWidth, stepFactor);
+
+			return stepFactor;
         }
 
-        private ColorBand GetColorBand(int countVal)
+        [Conditional("DEBUG")]
+        private void CheckStepFactor(int countVal, int cutOff, int botBucketVal, int bucketWidth, double stepFactor)
 		{
-            ColorBand result;
+            if (countVal > 5 && countVal == cutOff)
+            {
+                //Debug.WriteLine("HereA");
+            }
 
-            if (countVal >= HighColorBand.CutOff)
-			{
-                result = HighColorBand;
-			}
-            else
-			{
-                result = _colorBandSet.ColorBands[GetColorMapIndex(countVal)];
-			}
+            if (countVal > 5 && countVal == botBucketVal)
+            {
+                //Debug.WriteLine("HereB");
+            }
 
-            return result;
-		}
+            var bucketDistance = countVal - botBucketVal;
+
+            if (bucketDistance < 0 || bucketDistance > bucketWidth || stepFactor > 1.0)
+            {
+                Debug.WriteLine($"Step Distance is out of range: val: {countVal}, bot: {botBucketVal}, top: {cutOff}, width: {bucketWidth}, stepFactor: {stepFactor}.");
+            }
+        }
 
 		private int GetColorMapIndex(int countVal)
-		{
-			var newIndex = Array.BinarySearch(_cutOffs, countVal);
-
-			if (newIndex < 0)
-			{
-				newIndex = ~newIndex;
-			}
-			else
-			{
-				newIndex++;
-			}
-
-			return newIndex;
-		}
-
-        private byte[] Interpolate(byte[] cStart, byte[] c1, byte[] c2, double factor)
         {
-            if (factor == 0)
+            int result;
+
+            if (countVal >= HighColorBand.CutOff)
             {
-                return cStart;
+                result = _colorBandSet.Count - 1;
             }
             else
             {
-                var rd = cStart[0] + (c2[0] - c1[0]) * factor;
-                var gd = cStart[1] + (c2[1] - c1[1]) * factor;
-                var bd = cStart[2] + (c2[2] - c1[2]) * factor;
+                var newIndex = Array.BinarySearch(_cutOffs, countVal);
 
-                var r = (int)Math.Round(rd);
-                var g = (int)Math.Round(gd);
-                var b = (int)Math.Round(bd);
+                if (newIndex < 0)
+				{
+                    result = ~newIndex;
+				}
+                else
+				{
+                    result = newIndex;
+				}
 
-                if (r < 0 || r > 255)
-                {
-                    //console.log('Bad red value.');
-                }
-
-                if (g < 0 || g > 255)
-                {
-                    //console.log('Bad green value.');
-                }
-
-                if (b < 0 || b > 255)
-                {
-                    //console.log('Bad blue value.');
-                }
-
-                var result = new byte[3];
-                result[0] = (byte)r;
-                result[1] = (byte)g;
-                result[2] = (byte)b;
-
-                return result;
+                //result = newIndex < 0 ? ~newIndex : newIndex + 1;
             }
-        }
 
-        private void InterpolateAndPlace(byte[] cStart, byte[] c1, byte[] c2, double factor, Span<byte> destination)
-        {
-            if (factor == 0)
-            {
-                PutColor(cStart, destination);
-            }
-            else
-            {
-                var rd = cStart[0] + (c2[0] - c1[0]) * factor;
-                var gd = cStart[1] + (c2[1] - c1[1]) * factor;
-                var bd = cStart[2] + (c2[2] - c1[2]) * factor;
-
-                var r = Math.Round(rd);
-                var g = Math.Round(gd);
-                var b = Math.Round(bd);
-
-                destination[0] = (byte)b;
-                destination[1] = (byte)g;
-                destination[2] = (byte)r;
-                destination[3] = 255;
-            }
+            return result;
         }
 
         /// <summary>
@@ -208,13 +193,8 @@ namespace MSS.Common
                    EqualityComparer<ColorBandSet>.Default.Equals(_colorBandSet, other._colorBandSet);
         }
 
-        public override int GetHashCode()
+        public bool Equals(ColorMap? x, ColorMap? y)
         {
-            return HashCode.Combine(_colorBandSet);
-        }
-
-		public bool Equals(ColorMap? x, ColorMap? y)
-		{
             if (x is null)
             {
                 return y is null;
@@ -225,9 +205,14 @@ namespace MSS.Common
             }
         }
 
-		public int GetHashCode([DisallowNull] ColorMap obj)
-		{
-            return GetHashCode(obj);
+        public int GetHashCode([DisallowNull] ColorMap obj)
+        {
+            return GetHashCode();
+        }
+
+        public override int GetHashCode()
+        {
+            return _colorBandSet.GetHashCode();
         }
 
         public static bool operator ==(ColorMap? left, ColorMap? right)
@@ -240,50 +225,50 @@ namespace MSS.Common
             return !(left == right);
         }
 
-		#endregion
+        #endregion
 
-		#region Old Not Used
+        #region Old Not Used
 
-		//     private byte[] GetBlendedColor(ColorBand cme, int countVal, double escapeVelocity)
-		//     {
-		//         byte[] result;
+        //     private byte[] GetBlendedColor(ColorBand cme, int countVal, double escapeVelocity)
+        //     {
+        //         byte[] result;
 
-		//         //var cme = GetColorMapEntry(colorMapIndex);
+        //         //var cme = GetColorMapEntry(colorMapIndex);
 
-		//         if (cme.BlendStyle == ColorBandBlendStyle.None)
-		//         {
-		//             result = cme.StartColor.ColorComps;
-		//             return result;
-		//         }
+        //         if (cme.BlendStyle == ColorBandBlendStyle.None)
+        //         {
+        //             result = cme.StartColor.ColorComps;
+        //             return result;
+        //         }
 
-		//         var botBucketVal = _prevCutOffs[colorMapIndex];
+        //         var botBucketVal = _prevCutOffs[colorMapIndex];
 
-		//         //int[] cStart;
+        //         //int[] cStart;
 
-		//         //if (countVal == botBucketVal)
-		//         //{
-		//         //	cStart = cme.StartColor.ColorComps;
-		//         //}
-		//         //else
-		//         //{
-		//         //	double stepFactor = (-1 + countVal - botBucketVal) / (double)cme.BucketWidth;
-		//         //	cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
-		//         //}
+        //         //if (countVal == botBucketVal)
+        //         //{
+        //         //	cStart = cme.StartColor.ColorComps;
+        //         //}
+        //         //else
+        //         //{
+        //         //	double stepFactor = (-1 + countVal - botBucketVal) / (double)cme.BucketWidth;
+        //         //	cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+        //         //}
 
-		//         ////double stepFactor = (countVal - botBucketVal) / (double)cme.BucketWidth;
-		//         ////cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+        //         ////double stepFactor = (countVal - botBucketVal) / (double)cme.BucketWidth;
+        //         ////cStart = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
 
-		//         //double intraStepFactor = escapeVelocity / cme.BucketWidth;
-		//         //result = Interpolate(cStart, cme.StartColor.ColorComps, cme.EndColor.ColorComps, intraStepFactor);
+        //         //double intraStepFactor = escapeVelocity / cme.BucketWidth;
+        //         //result = Interpolate(cStart, cme.StartColor.ColorComps, cme.EndColor.ColorComps, intraStepFactor);
 
-		//         var bucketWidth = _bucketWidths[colorMapIndex];
-		//         var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
-		//         result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
+        //         var bucketWidth = _bucketWidths[colorMapIndex];
+        //         var stepFactor = (countVal + escapeVelocity - botBucketVal) / bucketWidth;
+        //         result = Interpolate(cme.StartColor.ColorComps, cme.StartColor.ColorComps, cme.EndColor.ColorComps, stepFactor);
 
-		//         return result;
-		//
-		//     }
+        //         return result;
+        //
+        //     }
 
-		#endregion
-	}
+        #endregion
+    }
 }

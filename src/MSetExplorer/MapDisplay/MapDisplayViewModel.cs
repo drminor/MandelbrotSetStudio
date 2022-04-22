@@ -24,6 +24,7 @@ namespace MSetExplorer
 
 		private ColorBandSet _colorBandSet;
 		private ColorMap? _colorMap;
+		private bool _useEscapeVelocities;
 
 		private SizeDbl _containerSize;
 
@@ -31,6 +32,7 @@ namespace MSetExplorer
 
 		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, SizeInt blockSize)
 		{
+			_useEscapeVelocities = true;
 			_keepDisplaySquare = false;
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
@@ -106,7 +108,28 @@ namespace MSetExplorer
 					Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
 					_colorBandSet = value;
 					_colorMap = new ColorMap(value);
-					HandleColorMapChanged(_colorMap);
+					_colorMap.UseEscapeVelocities = _useEscapeVelocities;
+					HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+				}
+			}
+		}
+
+		public bool UseEscapeVelocities
+		{
+			get => _useEscapeVelocities;
+			set
+			{
+				if (value != _useEscapeVelocities)
+				{
+					var strState = value ? "On" : "Off";
+					Debug.WriteLine($"The MapDisplay is turning {strState} the use of EscapeVelocities.");
+					_useEscapeVelocities = value;
+
+					if (!(_colorMap is null))
+					{
+						_colorMap.UseEscapeVelocities = value;
+						HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+					}
 				}
 			}
 		}
@@ -191,7 +214,7 @@ namespace MSetExplorer
 			{
 				// Add items
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
-				DrawSections(mapSections, _colorMap);
+				DrawSections(mapSections, _colorMap, _useEscapeVelocities);
 			}
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
 			{
@@ -211,13 +234,13 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void HandleColorMapChanged(ColorMap colorMap)
+		private void HandleColorMapChanged(ColorMap colorMap, bool useEscapeVelocities)
 		{
 			var loadedSections = GetMapSectionsSnapShot();
-			DrawSections(loadedSections, colorMap);
+			DrawSections(loadedSections, colorMap, useEscapeVelocities);
 		}
 
-		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap? colorMap)
+		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap? colorMap, bool useEscapVelocities)
 		{
 			if (colorMap != null)
 			{
@@ -226,7 +249,7 @@ namespace MSetExplorer
 					if (mapSection.Counts != null)
 					{
 						//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-						var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted);
+						var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
 						_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
 					}
 				}

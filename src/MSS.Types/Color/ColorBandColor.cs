@@ -10,8 +10,8 @@ namespace MSS.Types
     // Uses Byte Array to store color value. The alpha value is always fully opaque, i.e., set to 255.
     public struct ColorBandColor : IEquatable<ColorBandColor>,  IEqualityComparer<ColorBandColor>
 	{
-        public static ColorBandColor Black = new ColorBandColor("#000000");
-        public static ColorBandColor White = new ColorBandColor("#FFFFFF");
+        public static readonly ColorBandColor Black = new("#000000");
+        public static readonly ColorBandColor White = new("#FFFFFF");
 
         [JsonConstructor]
         [BsonConstructor]

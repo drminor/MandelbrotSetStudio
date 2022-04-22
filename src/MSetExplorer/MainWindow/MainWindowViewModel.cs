@@ -183,6 +183,11 @@ namespace MSetExplorer
 					MapProjectViewModel.CurrentColorBandSet = cbs;
 				}
 			}
+
+			else if (e.PropertyName == nameof(ColorBandSetViewModel.UseEscapeVelocities))
+			{
+				MapDisplayViewModel.UseEscapeVelocities = ColorBandSetViewModel.UseEscapeVelocities;
+			}
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)

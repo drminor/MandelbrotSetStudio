@@ -174,7 +174,7 @@ namespace MSS.Types
 
 		public bool IsFirst => !_previousCutOff.HasValue;
 		public bool IsLast => !_successorStartColor.HasValue;
-		public int BucketWidth => CutOff - (PreviousCutOff ?? 0);
+		public int BucketWidth => CutOff - StartingCutOff;
 
 		public ColorBandColor ActualEndColor
 		{
@@ -207,6 +207,7 @@ namespace MSS.Types
 			}
 		}
 
+		public BlendVals? BlendVals { get; set; }
 
 		#endregion
 
@@ -216,24 +217,6 @@ namespace MSS.Types
 		{
 			PreviousCutOff = predecessor?.CutOff;
 			SuccessorStartColor = successor?.StartColor;
-
-			//StartingCutOff = predecessor == null ? 0 : predecessor.CutOff + 1;
-			//PreviousCutOff = predecessor == null ? 0 : predecessor.CutOff;
-
-			//if (BlendStyle == ColorBandBlendStyle.Next)
-			//{
-			//	var followingStartColor = successor?.StartColor ?? throw new InvalidOperationException("Must have a successor if the blend style is set to Next.");
-			//	ActualEndColor = followingStartColor;
-			//}
-			//else
-			//{
-			//	ActualEndColor = BlendStyle == ColorBandBlendStyle.End ? EndColor : StartColor;
-			//}
-
-			//if (predecessor != null && predecessor.BlendStyle == ColorBandBlendStyle.Next)
-			//{
-			//	predecessor.ActualEndColor = StartColor;
-			//}
 		}
 
 		object ICloneable.Clone()
@@ -352,4 +335,5 @@ namespace MSS.Types
 
 		#endregion
 	}
+
 }

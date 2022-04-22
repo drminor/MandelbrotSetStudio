@@ -310,6 +310,25 @@ namespace MSetExplorer
 			ColorsShowSaveWindow(curColorBandSet);
 		}
 
+		// Use Escape Velocities
+		private void UseEscapeVelocities_Checked(object sender, RoutedEventArgs e)
+		{
+			var useEscVelocities = mnuItem_UseEscapeVelocities.IsChecked;
+			if (_vm != null)
+			{
+				_vm.ColorBandSetViewModel.UseEscapeVelocities = useEscVelocities;
+			}
+		}
+
+		private void UseEscapeVelocities_Unchecked(object sender, RoutedEventArgs e)
+		{
+			var useEscVelocities = mnuItem_UseEscapeVelocities.IsChecked;
+			if (_vm != null)
+			{
+				_vm.ColorBandSetViewModel.UseEscapeVelocities = useEscVelocities;
+			}
+		}
+
 		#endregion
 
 		#region Pan Button Handlers

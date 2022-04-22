@@ -132,7 +132,7 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		public void FixNotUsed()
+		public void Fix()
 		{
 			if (Items == null || Count == 0)
 			{
@@ -140,7 +140,7 @@ namespace MSS.Types
 			}
 			else
 			{
-				var prevCutOff = 0;
+				int? prevCutOff = null;
 
 				for (var i = 0; i < Count - 1; i++)
 				{
@@ -151,7 +151,6 @@ namespace MSS.Types
 				}
 
 				var lastCb = Items[Count - 1];
-
 				lastCb.PreviousCutOff = prevCutOff;
 			}
 		}

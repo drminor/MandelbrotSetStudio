@@ -50,6 +50,8 @@
                 <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
                 <!--<MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />-->
                 <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
+                <Separator/>
+                <MenuItem Header="_Use EscapeVelocities" IsCheckable="True" x:Name="mnuItem_UseEscapeVelocities" Checked="UseEscapeVelocities_Checked" Unchecked="UseEscapeVelocities_Unchecked" IsChecked="True"/>
             </MenuItem>
             
             <MenuItem Header="_Windows">

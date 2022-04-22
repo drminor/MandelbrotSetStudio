@@ -24,6 +24,8 @@ namespace MSetExplorer
 		private double _itemWidth;
 
 		private ColorBandSet? _colorBandSet;
+		private bool _useEscapeVelocities;
+
 		private ListCollectionView _colorBandsView;
 
 		private ColorBand? _currentColorBand;
@@ -38,6 +40,7 @@ namespace MSetExplorer
 
 		public ColorBandSetViewModel(ObservableCollection<MapSection> mapSections)
 		{
+			_useEscapeVelocities = true;
 			_mapSections = mapSections;
 			_synchronizationContext = SynchronizationContext.Current;
 			Histogram = new HistogramA(0);
@@ -127,6 +130,21 @@ namespace MSetExplorer
 			IsDirty = false;
 			OnPropertyChanged(nameof(ColorBandSet));
 			OnPropertyChanged(nameof(ColorBandsView));
+		}
+
+		public bool UseEscapeVelocities
+		{
+			get => _useEscapeVelocities;
+			set
+			{
+				if (value != _useEscapeVelocities)
+				{
+					var strState = value ? "On" : "Off";
+					Debug.WriteLine($"The ColorBandSetViewModel is turning {strState} the use of EscapeVelocities.");
+					_useEscapeVelocities = value;
+					OnPropertyChanged(nameof(UseEscapeVelocities));
+				}
+			}
 		}
 
 		public ListCollectionView ColorBandsView
@@ -236,6 +254,10 @@ namespace MSetExplorer
 					}
 
 					UpdatePercentages();
+				}
+				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
+				{
+					//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
 				}
 
 				IsDirty = true;

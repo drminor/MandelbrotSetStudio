@@ -156,7 +156,7 @@ namespace MSetExplorer
 			return mapSection;
 		}
 
-		public static byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert)
+		public static byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
 			var numberofCells = blockSize.NumberOfCells;
 			var result = new byte[4 * numberofCells];
@@ -173,7 +173,14 @@ namespace MSetExplorer
 				{
 					var countVal = counts[curSourcePtr++];
 					countVal = Math.DivRem(countVal, VALUE_FACTOR, out var ev);
-					var escapeVel = ev / (double)VALUE_FACTOR;
+
+					//var escapeVel = useEscapeVelocities ? Math.Max(1, ev / (double)VALUE_FACTOR) : 0;
+					var escapeVel = useEscapeVelocities ? ev / (double)VALUE_FACTOR : 0;
+
+					if (escapeVel > 1.0)
+					{
+						Debug.WriteLine($"The Escape Velocity is greater that 1.0");
+					}
 
 					colorMap.PlaceColor(countVal, escapeVel, new Span<byte>(result, curResultPtr, 4));
 					curResultPtr += 4;

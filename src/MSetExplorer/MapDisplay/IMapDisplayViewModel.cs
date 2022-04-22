@@ -20,6 +20,7 @@ namespace MSetExplorer
 
 		Job? CurrentJob { get; set; }
 		ColorBandSet ColorBandSet { get; set; }
+		bool UseEscapeVelocities { get; set; }
 
 		// These may need to be dependency properties
 		SizeDbl ContainerSize { get; set; }
