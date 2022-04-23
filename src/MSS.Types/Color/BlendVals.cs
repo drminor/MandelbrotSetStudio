@@ -38,7 +38,7 @@ namespace MSS.Types
 			EBlue = endColor[2];
 		}
 
-		public void Blend(double factor, Span<byte> destination)
+		public void BlendAndPlace(double factor, Span<byte> destination)
 		{
 			var rd = factor * DiffRed + SRed;
 			var gd = factor * DiffGreen + SGreen;

@@ -63,7 +63,7 @@ namespace MSS.Common
 
                 if (cme.BlendVals != null)
 				{
-                    cme.BlendVals.Value.Blend(stepFactor, destination);
+                    cme.BlendVals.Value.BlendAndPlace(stepFactor, destination);
 				}
                 else
 				{
@@ -89,7 +89,7 @@ namespace MSS.Common
                 {
                     result = new byte[3];
                     var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
-                    cme.BlendVals.Value.Blend(stepFactor, result);
+                    cme.BlendVals.Value.BlendAndPlace(stepFactor, result);
                 }
                 else
                 {
@@ -108,7 +108,8 @@ namespace MSS.Common
         {
 			var botBucketVal = 1 + cme.PreviousCutOff ?? 0;
             var bucketDistance = countVal - botBucketVal;
-            var bucketWidth = UseEscapeVelocities ? 1 + cme.BucketWidth : cme.BucketWidth;
+            var bucketWidth = cme.BucketWidth;
+            bucketWidth += UseEscapeVelocities ? 1 : 0;
 
 			var stepFactor = (bucketDistance + escapeVelocity) / bucketWidth;
 
@@ -138,6 +139,12 @@ namespace MSS.Common
             }
         }
 
+        /// <summary>
+        /// Returns the ColorBand with the specified Cutoff or if not found,
+        /// the ColorBand having a StartingCutoff > value and a Cutoff < value.
+        /// </summary>
+        /// <param name="countVal"></param>
+        /// <returns></returns>
 		private int GetColorMapIndex(int countVal)
         {
             int result;
@@ -148,19 +155,12 @@ namespace MSS.Common
             }
             else
             {
+                // Returns the index to the item with the matched cutoff value
+                // or the index of the item with the smallest cutoff larger than the sought value
                 var newIndex = Array.BinarySearch(_cutOffs, countVal);
 
-                if (newIndex < 0)
-				{
-                    result = ~newIndex;
-				}
-                else
-				{
-                    result = newIndex;
-				}
-
-                //result = newIndex < 0 ? ~newIndex : newIndex + 1;
-            }
+                result = newIndex < 0 ? ~newIndex : newIndex;
+			}
 
             return result;
         }

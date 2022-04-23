@@ -168,7 +168,7 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet.Clone();
-				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet.CreateNewCopy();
+				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet; //.CreateNewCopy();
 			}
 		}
 
@@ -181,6 +181,21 @@ namespace MSetExplorer
 				if (cbs != null)
 				{
 					MapProjectViewModel.CurrentColorBandSet = cbs;
+				}
+			}
+
+			else if (e.PropertyName == nameof(ColorBandSetViewModel.ColorBandSetPreview))
+			{
+				var pCbs = ColorBandSetViewModel.ColorBandSetPreview;
+				if (pCbs != null)
+				{
+					Debug.WriteLine($"MainWindow got a CBS Preview with Id = {pCbs.Id}");
+					MapDisplayViewModel.ColorBandSet = pCbs;
+				}
+				else
+				{
+					Debug.WriteLine($"MainWindow got a CBS Preview of null");
+					MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet; //.CreateNewCopy();
 				}
 			}
 

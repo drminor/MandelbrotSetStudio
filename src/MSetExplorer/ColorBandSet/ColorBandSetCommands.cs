@@ -13,11 +13,15 @@ namespace MSetExplorer
         //public static readonly RoutedUICommand Commit
         //    = new("Commit", "Commit", typeof(ColorBandSetCommands));
 
-        public static readonly RoutedUICommand Delete
-            = new("Delete", "Delete", typeof(ColorBandSetCommands));
+        public static readonly RoutedUICommand Revert
+            = new("Revert", "Revert", typeof(ColorBandSetCommands));
 
         public static readonly RoutedUICommand Insert
             = new("Insert", "Insert", typeof(ColorBandSetCommands));
+
+        public static readonly RoutedUICommand Delete
+            = new("Delete", "Delete", typeof(ColorBandSetCommands));
+
 
         public static readonly RoutedUICommand Apply
             = new("Apply", "Apply", typeof(ColorBandSetCommands));

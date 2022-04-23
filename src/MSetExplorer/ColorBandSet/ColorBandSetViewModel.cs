@@ -14,7 +14,7 @@ using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public class ColorBandSetViewModel : INotifyPropertyChanged, IDisposable
+	public class ColorBandSetViewModel : INotifyPropertyChanged, IDisposable, IUndoRedoViewModel
 	{
 		private readonly ObservableCollection<MapSection> _mapSections;
 		private readonly SynchronizationContext? _synchronizationContext;
@@ -23,8 +23,10 @@ namespace MSetExplorer
 		private double _rowHeight;
 		private double _itemWidth;
 
+		private ColorBandSet? _colorBandSetPreview;
 		private ColorBandSet? _colorBandSet;
 		private bool _useEscapeVelocities;
+		private bool _useRealTimePreview;
 
 		private ListCollectionView _colorBandsView;
 
@@ -35,6 +37,9 @@ namespace MSetExplorer
 		private readonly object _histLock;
 
 		private PercentageBand? _beyondTargetSpecs;
+
+		private readonly ColorBandSetCollection _colorBandSetCollection;
+
 
 		#region Constructor
 
@@ -48,6 +53,9 @@ namespace MSetExplorer
 
 			_rowHeight = 60;
 			_itemWidth = 180;
+
+			_colorBandSetCollection = new ColorBandSetCollection();
+			_colorBandSetPreview = null;
 			_colorBandSet = new ColorBandSet();
 			_colorBandsView = BuildColorBandsView(null);
 			_currentColorBand = null;
@@ -75,37 +83,45 @@ namespace MSetExplorer
 			set { _itemWidth = value; OnPropertyChanged(nameof(ItemWidth)); }
 		}
 
+		public ColorBandSet? ColorBandSetPreview
+		{
+			get => _colorBandSetPreview;
+
+			set
+			{
+				if (value != _colorBandSetPreview)
+				{
+					OnPropertyChanged(nameof(ColorBandSetPreview));
+				}
+			}
+		}
+
 		public ColorBandSet? ColorBandSet
 		{
 			get => _colorBandSet;
 
 			set
 			{
-				//Debug.WriteLine($"ColorBandViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.SerialNumber}, New = {value?.SerialNumber}");
-				if (value == null)
+				if (value != _colorBandSet)
 				{
-					if (_colorBandSet != null)
-					{
-						Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
-
-						UpdateColorBandSet(value);
-					}
-				}
-				else
-				{
-					if (_colorBandSet == null || value != _colorBandSet)
-					{
-						var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
-						Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
-
-						UpdateColorBandSet(value);
-					}
+					UpdateColorBandSet(value);
 				}
 			}
 		}
 
 		private void UpdateColorBandSet(ColorBandSet? value)
 		{
+			//Debug.WriteLine($"ColorBandViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.Id}, New = {value?.Id}");
+			if (value == null)
+			{
+				Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
+			}
+			else
+			{
+				var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
+				Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
+			}
+
 			lock (_histLock)
 			{
 				_mapSectionHistogramProcessor.ProcessingEnabled = false;
@@ -143,6 +159,21 @@ namespace MSetExplorer
 					Debug.WriteLine($"The ColorBandSetViewModel is turning {strState} the use of EscapeVelocities.");
 					_useEscapeVelocities = value;
 					OnPropertyChanged(nameof(UseEscapeVelocities));
+				}
+			}
+		}
+
+		public bool UseRealTimePreview
+		{
+			get => _useRealTimePreview;
+			set
+			{
+				if (value != _useRealTimePreview)
+				{
+					var strState = value ? "On" : "Off";
+					Debug.WriteLine($"The ColorBandSetViewModel is turning {strState} the use of RealTimePreview.");
+					_useRealTimePreview = value;
+					OnPropertyChanged(nameof(UseRealTimePreview));
 				}
 			}
 		}
@@ -231,6 +262,52 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region UndoRedoPile Properties / Methods
+
+		public int CurrentIndex
+		{
+			get => _colorBandSetCollection.CurrentIndex;
+			set => OnPropertyChanged();
+		}
+
+
+		public bool CanGoBack => _colorBandSetCollection.CanGoBack;
+		public bool CanGoForward => _colorBandSetCollection.CanGoForward;
+
+		public bool GoBack()
+		{
+			if (_colorBandSetCollection.GoBack())
+			{
+				OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
+				OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
+				OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
+
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public bool GoForward()
+		{
+			if (_colorBandSetCollection.GoForward())
+			{
+				OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
+				OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
+				OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
+
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		#endregion
+
 		#region Event Handlers
 
 		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -277,7 +354,7 @@ namespace MSetExplorer
 
 		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
 		{
-			CurrentColorBand = (ColorBand) ColorBandsView.CurrentItem;
+			CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
 		}
 
 		private void MapSections_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -396,6 +473,11 @@ namespace MSetExplorer
 			}
 		}
 
+		public void RevertChanges()
+		{
+
+		}
+
 		#endregion
 
 		#region Private Methods
@@ -408,7 +490,7 @@ namespace MSetExplorer
 
 		private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
 		{
-			foreach(var ms in mapSections)
+			foreach (var ms in mapSections)
 			{
 				histogram.Add(ms.Histogram);
 			}
@@ -449,7 +531,7 @@ namespace MSetExplorer
 						return;
 					}
 
-					for(var i = 0; i < len; i++)
+					for (var i = 0; i < len; i++)
 					{
 						var cb = colorBands[i];
 						cb.Percentage = newPercentages[i].Percentage;

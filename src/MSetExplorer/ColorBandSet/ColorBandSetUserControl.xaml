@@ -8,7 +8,14 @@
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="290">
 
+    <UserControl.CommandBindings>
+        <CommandBinding Command="local:ColorBandSetCommands.Revert" CanExecute="RevertCommand_CanExecute" Executed="RevertCommand_Executed" />
+        <CommandBinding Command="local:ColorBandSetCommands.Apply" CanExecute="ApplyCommand_CanExecute" Executed="ApplyCommand_Executed" />
+    </UserControl.CommandBindings>
+    
     <UserControl.Resources>
+
+
 
         <DataTemplate x:Key="ColorBandViewTemplate">
             <Grid Margin="2">
@@ -135,6 +142,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -144,8 +152,8 @@
                 
                 <ListBox.InputBindings>
                     <!--<KeyBinding Command="local:ColorBandSetCommands.Edit" Key="F2" />-->
-                    <KeyBinding Command="local:ColorBandSetCommands.Delete" Key="Delete" />
                     <KeyBinding Command="local:ColorBandSetCommands.Insert" Key="Insert" />
+                    <KeyBinding Command="local:ColorBandSetCommands.Delete" Key="Delete" />
                     <KeyBinding Command="local:ColorBandSetCommands.ShowDetails" Key="F3" />
 
                     <!--<KeyBinding Command="local:TransactionCommands.Commit" Key="Enter" />
@@ -154,11 +162,13 @@
                 
                 <ListBox.CommandBindings>
                     <!--<CommandBinding Command="local:ColorBandSetCommands.Edit" Executed="EditButton_Click" />-->
-                    <CommandBinding Command="local:ColorBandSetCommands.Delete" Executed="DeleteButton_Click" />
                     <CommandBinding Command="local:ColorBandSetCommands.Insert" Executed="InsertButton_Click" />
+                    <CommandBinding Command="local:ColorBandSetCommands.Delete" Executed="DeleteButton_Click" />
+
+                    <CommandBinding Command="local:ColorBandSetCommands.Revert" CanExecute="RevertCommand_CanExecute" Executed="RevertCommand_Executed" />
+                    <CommandBinding Command="local:ColorBandSetCommands.Apply" CanExecute="ApplyCommand_CanExecute" Executed="ApplyCommand_Executed" />
+
                     <CommandBinding Command="local:ColorBandSetCommands.ShowDetails" Executed="ShowDetails_Click" />
-
-
 
                     <!--<CommandBinding Command="local:TransactionCommands.Commit" Executed="CommitCharacterChanges" />
                     <CommandBinding Command="local:TransactionCommands.Cancel" Executed="CancelCharacterChanges" />-->
@@ -166,14 +176,13 @@
 
                 <ListBox.ContextMenu>
                     <ContextMenu>
-                        <!--<MenuItem Header="_Edit" Command="local:ColorBandSetCommands.Edit"/>-->
-                        <MenuItem Header="_Delete" Command="local:ColorBandSetCommands.Delete"/>
                         <MenuItem Header="_Insert" Command="local:ColorBandSetCommands.Insert"/>
+                        <MenuItem Header="_Delete" Command="local:ColorBandSetCommands.Delete"/>
                         <Separator/>
+                        <MenuItem Header="_Revert" Command="local:ColorBandSetCommands.Revert"/>
                         <MenuItem Header="_Apply" Command="local:ColorBandSetCommands.Apply"/>
                         <Separator/>
                         <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
-                        <!--<MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />-->
                         <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
                         <Separator/>
                         <MenuItem Header="_Details" Command="local:ColorBandSetCommands.ShowDetails" />
@@ -191,12 +200,16 @@
         <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,4,0,9">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnEdit" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Click="EditButton_Click">Edit</Button>
-                <Button Name="btnInsert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Click="InsertButton_Click">Insert</Button>
-                <Button Name="btnDelete" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Click="DeleteButton_Click">Delete</Button>
-                <Button Name="btnApply" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Click="ApplyButton_Click">Apply</Button>
+                <Button Name="btnRevert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Revert">Revert</Button>
+                <Button Name="btnInsert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Insert">Insert</Button>
+                <Button Name="btnDelete" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Delete">Delete</Button>
+                <Button Name="btnApply" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Apply">Apply</Button>
             </StackPanel>
 
+        </Border>
+
+        <Border Grid.Row="3" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,5">
+            <local:UndoPileControl x:Name="undoRedo1" />
         </Border>
 
     </Grid>

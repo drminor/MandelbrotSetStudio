@@ -195,7 +195,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Job Collection Management 
+		#region Collection Management 
 
 		private bool TryGetNextCBSInStack(int cbsIndex, out int nextCbsIndex)
 		{

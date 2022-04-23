@@ -329,6 +329,25 @@ namespace MSetExplorer
 			}
 		}
 
+		// Use Escape Velocities
+		private void UseRealTimePreview_Checked(object sender, RoutedEventArgs e)
+		{
+			var useEscVelocities = mnuItem_UseEscapeVelocities.IsChecked;
+			if (_vm != null)
+			{
+				_vm.ColorBandSetViewModel.UseEscapeVelocities = useEscVelocities;
+			}
+		}
+
+		private void UseRealTimePreview_Unchecked(object sender, RoutedEventArgs e)
+		{
+			var useRealTimePreview = mnuItem_UseRealTimePreview.IsChecked;
+			if (_vm != null)
+			{
+				_vm.ColorBandSetViewModel.UseRealTimePreview = useRealTimePreview;
+			}
+		}
+
 		#endregion
 
 		#region Pan Button Handlers

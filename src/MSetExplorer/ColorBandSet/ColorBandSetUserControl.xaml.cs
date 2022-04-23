@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace MSetExplorer
@@ -35,9 +36,19 @@ namespace MSetExplorer
 			{
 				//lvColorBandsHdr.Width = lvColorBands.ActualWidth - 25;
 				_vm = (ColorBandSetViewModel)DataContext;
+				_vm.PropertyChanged += ViewModel_PropertyChanged;
+				//undoRedo1.DataContext = _vm.
 				//_vm.ItemWidth = lvColorBands.ActualWidth - 5;
 
 				//Debug.WriteLine("The ColorBandSetUserControl is now loaded");
+			}
+		}
+
+		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
+			{
+				CommandManager.InvalidateRequerySuggested();
 			}
 		}
 
@@ -50,10 +61,10 @@ namespace MSetExplorer
 			//EditColorBand();
 		}
 
-		private void EditButton_Click(object sender, RoutedEventArgs e)
-		{
-			//EditColorBand();
-		}
+		//private void RevertButton_Click(object sender, RoutedEventArgs e)
+		//{
+		//	_vm.RevertChanges();
+		//}
 
 		private void InsertButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -65,10 +76,10 @@ namespace MSetExplorer
 			_vm.DeleteSelectedItem();
 		}
 
-		private void ApplyButton_Click(object sender, RoutedEventArgs e)
-		{
-			_vm.ApplyChanges();
-		}
+		//private void ApplyButton_Click(object sender, RoutedEventArgs e)
+		//{
+		//	_vm.ApplyChanges();
+		//}
 
 		private void ShowDetails_Click(object sender, RoutedEventArgs e)
 		{
@@ -95,6 +106,30 @@ namespace MSetExplorer
 			//{
 			//	CommitCharacterChanges(null, null);
 			//}
+		}
+
+		// Revert CanExecute
+		private void RevertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.IsDirty ?? false;
+		}
+
+		// Revert
+		private void RevertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			_vm.RevertChanges();
+		}
+
+		// Apply CanExecute
+		private void ApplyCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.IsDirty ?? false;
+		}
+
+		// Apply
+		private void ApplyCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			_vm.ApplyChanges();
 		}
 
 		#endregion

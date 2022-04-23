@@ -165,7 +165,7 @@ namespace MSS.Types
 				if (value != _percentage)
 				{
 					_percentage = value;
-					OnPropertyChanged();
+					//OnPropertyChanged();
 				}
 			}
 		}
@@ -178,25 +178,11 @@ namespace MSS.Types
 
 		public ColorBandColor ActualEndColor
 		{
-			get
-			{
-				if (_successorStartColor != null)
-				{
-					return BlendStyle == ColorBandBlendStyle.Next
-					   ?					_successorStartColor.Value
-					   : BlendStyle == ColorBandBlendStyle.None
-						   ? StartColor
-						   : EndColor;
-				}
-				else
-				{
-					return BlendStyle == ColorBandBlendStyle.Next
-                        ?                     throw new InvalidProgramException("BlendStyle is Next, but SuccessorStartColor is null.")
-						: BlendStyle == ColorBandBlendStyle.None
-                        ? StartColor
-                        : EndColor;
-				}
-			}
+			get => BlendStyle == ColorBandBlendStyle.Next
+				? GetSuccessorStartColor()
+				: BlendStyle == ColorBandBlendStyle.End
+					? EndColor
+					: StartColor;
 			set
 			{
 				if (BlendStyle == ColorBandBlendStyle.End)
@@ -204,6 +190,18 @@ namespace MSS.Types
 					// Must use backing to avoid loops.
 					_endColor = value;
 				}
+			}
+		}
+
+		private ColorBandColor GetSuccessorStartColor()
+		{
+			if (SuccessorStartColor.HasValue)
+			{
+				return SuccessorStartColor.Value;
+			}
+			else
+			{
+				throw new InvalidProgramException("BlendStyle is Next, but SuccessorStartColor is null.");
 			}
 		}
 

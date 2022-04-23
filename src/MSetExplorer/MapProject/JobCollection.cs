@@ -21,7 +21,7 @@ namespace MSetExplorer
 
 		public JobCollection()
 		{
-			_jobsCollection = new ObservableCollection<Job>();
+			_jobsCollection = new Collection<Job>();
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 			_jobsPointer = -1;
 		}
@@ -198,7 +198,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Job Collection Management 
+		#region Collection Management 
 
 		private bool TryGetNextJobInStack(int jobIndex, out int nextJobIndex)
 		{
