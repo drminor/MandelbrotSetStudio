@@ -170,14 +170,6 @@ namespace MSS.Types.MSet
 
 		public static bool operator ==(Job? left, Job? right)
 		{
-			//if (left is null)
-			//{
-			//	return right is null;
-			//}
-			//else
-			//{
-			//	return left.Equals(right);
-			//}
 			return EqualityComparer<Job?>.Default.Equals(left, right);
 		}
 

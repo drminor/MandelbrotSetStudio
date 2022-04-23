@@ -52,9 +52,9 @@ namespace MSetExplorer
 			set => DoWithWriteLock(() => { _colorsCollection[index] = value; });
 		}
 
-		public void UpdateItem(int index, ColorBandSet job)
+		public void UpdateItem(int index, ColorBandSet colorBandSet)
 		{
-			DoWithWriteLock(() => { _colorsCollection[index] = job; });
+			DoWithWriteLock(() => { _colorsCollection[index] = colorBandSet; });
 		}
 
 		public bool MoveCurrentTo(int index)
@@ -78,6 +78,18 @@ namespace MSetExplorer
 				_colorsLock.ExitUpgradeableReadLock();
 			}
 		}
+
+		public void Load(ColorBandSet? colorBandSet)
+		{
+			var colorBandSets = new List<ColorBandSet>();
+
+			if (colorBandSet != null)
+			{
+				colorBandSets.Add(colorBandSet);
+			}
+
+			Load(colorBandSets, null);
+		}
 		
 		public void Load(IEnumerable<ColorBandSet> colorBandSets, ObjectId? currentId)
 		{
@@ -90,6 +102,11 @@ namespace MSetExplorer
 					_colorsCollection.Add(cbs);
 				}
 
+				if (_colorsCollection.Count == 0)
+				{
+					_colorsCollection.Add(new ColorBandSet());
+				}
+
 				if (currentId.HasValue)
 				{
 					if (TryFindByCbsId(currentId.Value, out var cbs)) 
@@ -99,6 +116,7 @@ namespace MSetExplorer
 					}
 					else
 					{
+						Debug.WriteLine($"WARNING: There is no ColorBandSet with Id: {currentId} in the list of ColorBandSets being loaded into the ColorBandSetCollection.");
 						_colorsPointer = _colorsCollection.Count - 1;
 					}
 				}
@@ -110,7 +128,7 @@ namespace MSetExplorer
 
 			if (!CheckJobStackIntegrity())
 			{
-				Debug.WriteLine("Job Collection is not integeral.");
+				Debug.WriteLine("The ColorBandSet Collection is not integral.");
 			}
 		}
 
@@ -123,6 +141,25 @@ namespace MSetExplorer
 			});
 		}
 
+		public void PushCopyOfCurrent()
+		{
+			DoWithWriteLock(() =>
+			{
+				if (_colorsPointer != _colorsCollection.Count - 1)
+				{
+					for (var i = _colorsCollection.Count - 1; i > _colorsPointer; i--)
+					{
+						_colorsCollection.RemoveAt(i);
+					}
+				}
+
+				var currentSet = _colorsCollection[_colorsPointer];
+
+				_colorsCollection.Insert(_colorsCollection.Count - 1, currentSet.CreateNewCopy());
+				_colorsPointer = _colorsCollection.Count - 1;
+			});
+		}
+
 		public void Clear()
 		{
 			DoWithWriteLock(() =>
@@ -131,6 +168,37 @@ namespace MSetExplorer
 				_colorsCollection.Add(new ColorBandSet());
 				_colorsPointer = 0;
 			});
+		}
+
+		public void Trim(int index) 
+		{
+			_colorsLock.EnterUpgradeableReadLock();
+
+			try
+			{
+				if (index < 0 || index > _colorsCollection.Count - 2)
+				{
+					return;
+				}
+				else
+				{
+					DoWithWriteLock(() =>
+					{
+						var indexOfLastItem = _colorsCollection.Count - 1;
+						while(index < _colorsCollection.Count - 1)
+						{
+							_colorsCollection.RemoveAt(indexOfLastItem);
+							indexOfLastItem = _colorsCollection.Count - 1;
+						}
+
+						_colorsPointer = _colorsCollection.Count - 1;
+					});
+				}
+			}
+			finally
+			{
+				_colorsLock.ExitUpgradeableReadLock();
+			}
 		}
 
 		public bool GoBack()

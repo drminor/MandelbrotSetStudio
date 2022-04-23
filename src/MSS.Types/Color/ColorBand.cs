@@ -165,7 +165,7 @@ namespace MSS.Types
 				if (value != _percentage)
 				{
 					_percentage = value;
-					//OnPropertyChanged();
+					OnPropertyChanged();
 				}
 			}
 		}

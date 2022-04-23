@@ -61,26 +61,6 @@ namespace MSetExplorer
 			//EditColorBand();
 		}
 
-		//private void RevertButton_Click(object sender, RoutedEventArgs e)
-		//{
-		//	_vm.RevertChanges();
-		//}
-
-		private void InsertButton_Click(object sender, RoutedEventArgs e)
-		{
-			InsertColorBand();
-		}
-
-		private void DeleteButton_Click(object sender, RoutedEventArgs e)
-		{
-			_vm.DeleteSelectedItem();
-		}
-
-		//private void ApplyButton_Click(object sender, RoutedEventArgs e)
-		//{
-		//	_vm.ApplyChanges();
-		//}
-
 		private void ShowDetails_Click(object sender, RoutedEventArgs e)
 		{
 			string msg;
@@ -107,6 +87,35 @@ namespace MSetExplorer
 			//	CommitCharacterChanges(null, null);
 			//}
 		}
+
+		#endregion
+
+		#region Command Binding Handlers
+
+		// Insert CanExecute
+		private void InsertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = true;
+		}
+
+		// Insert
+		private void InsertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			InsertColorBand();
+		}
+
+		// Delete CanExecute
+		private void DeleteCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.ColorBandsView.CurrentPosition < _vm?.ColorBandsView.Count - 1;
+		}
+
+		// Delete
+		private void DeleteCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			_vm.DeleteSelectedItem();
+		}
+
 
 		// Revert CanExecute
 		private void RevertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -144,7 +153,7 @@ namespace MSetExplorer
 
 			if (!view.IsAddingNew && lvColorBands.Items.CurrentItem is ColorBand selItem)
 			{
-				if (selItem.CutOff - selItem.PreviousCutOff < 2)
+				if (selItem.CutOff - selItem.StartingCutOff < 1)
 				{
 					_ = MessageBox.Show("No Room to insert here.");
 					return;
@@ -153,19 +162,28 @@ namespace MSetExplorer
 				var index = lvColorBands.Items.IndexOf(selItem);
 				var prevCutOff = selItem.PreviousCutOff ?? 0;
 				var newCutoff = prevCutOff + (selItem.CutOff - prevCutOff) / 2;
-				var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, selItem.StartColor)
-				{
-					//StartingCutOff = selItem.PreviousCutOff == 0 ? selItem.PreviousCutOff : selItem.PreviousCutOff + 1,
-					PreviousCutOff = selItem.PreviousCutOff,
-					SuccessorStartColor = selItem.StartColor
-				};
-
+				var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, selItem.StartColor, selItem.PreviousCutOff, selItem.StartColor, double.NaN);
 				_vm.InsertItem(index, newItem);
 
 				//lvColorBands.Items.Refresh();
 				_ = lvColorBands.Items.MoveCurrentToPosition(index);
 
 				FocusListBoxItem(index);
+			}
+		}
+
+		private void FocusListBoxItem(int index)
+		{
+			if (index != -1)
+			{
+				_ = Dispatcher.Invoke(DispatcherPriority.Loaded, (ThreadStart)delegate ()
+				{
+					var wasFocused = false;
+					if (lvColorBands.ItemContainerGenerator.ContainerFromIndex(index) is IInputElement container)
+					{
+						wasFocused = container.Focus();
+					}
+				});
 			}
 		}
 
@@ -280,21 +298,6 @@ namespace MSetExplorer
 		//	_ = TryGetSuccessor(index, out var successor);
 		//	return successor;
 		//}
-
-		private void FocusListBoxItem(int index)
-		{
-			if (index != -1)
-			{
-				_ = Dispatcher.Invoke(DispatcherPriority.Loaded, (ThreadStart)delegate ()
-				{
-					var wasFocused = false;
-					if (lvColorBands.ItemContainerGenerator.ContainerFromIndex(index) is IInputElement container)
-					{
-						wasFocused = container.Focus();
-					}
-				});
-			}
-		}
 
 		#endregion
 	}

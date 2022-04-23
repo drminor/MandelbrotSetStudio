@@ -99,6 +99,7 @@ namespace MSetExplorer
 					}
 					else
 					{
+						Debug.WriteLine($"WARNING: There is no Job with Id: {currentId} in the list of Jobs being loaded into the JobCollection.");
 						_jobsPointer = _jobsCollection.Count - 1;
 					}
 				}
@@ -110,7 +111,7 @@ namespace MSetExplorer
 
 			if (!CheckJobStackIntegrity())
 			{
-				Debug.WriteLine("Job Collection is not integeral.");
+				Debug.WriteLine("Job Collection is not integral.");
 			}
 		}
 

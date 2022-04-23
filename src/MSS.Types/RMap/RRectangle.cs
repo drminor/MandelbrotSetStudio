@@ -6,7 +6,7 @@ using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RRectangle : IBigRatShape, IEquatable<RRectangle>, IEqualityComparer<RRectangle>
+	public class RRectangle : IBigRatShape, IEquatable<RRectangle>, IEqualityComparer<RRectangle?>
 	{
 		public BigInteger[] Values { get; init; }
 
@@ -186,12 +186,12 @@ namespace MSS.Types
 			return HashCode.Combine(X1, X2, Y1, Y2, Exponent);
 		}
 
-		public static bool operator ==(RRectangle p1, RRectangle p2)
+		public static bool operator ==(RRectangle? p1, RRectangle? p2)
 		{
-			return p1.Equals(p2); // EqualityComparer<RRectangle>.Default.Equals(p1, p2);
+			return EqualityComparer<RRectangle?>.Default.Equals(p1, p2);
 		}
 
-		public static bool operator !=(RRectangle p1, RRectangle p2)
+		public static bool operator !=(RRectangle? p1, RRectangle? p2)
 		{
 			return !(p1 == p2);
 		}

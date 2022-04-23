@@ -34,6 +34,7 @@ namespace MSetExplorer
 
 			ColorBandSetViewModel = colorBandViewModel;
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
+			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
 			MSetInfoViewModel = new MSetInfoViewModel();
 			MSetInfoViewModel.MapSettingsUpdateRequested += MSetInfoViewModel_MapSettingsUpdateRequested;
@@ -167,41 +168,21 @@ namespace MSetExplorer
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
 			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
-				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet.Clone();
+				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 				MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet; //.CreateNewCopy();
 			}
 		}
 
 		private void ColorBandViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			// Update the Map Project as ColorBandSet is created.
-			if (e.PropertyName == nameof(ColorBandSetViewModel.ColorBandSet))
-			{
-				var cbs = ColorBandSetViewModel.ColorBandSet;
-				if (cbs != null)
-				{
-					MapProjectViewModel.CurrentColorBandSet = cbs;
-				}
-			}
-
-			else if (e.PropertyName == nameof(ColorBandSetViewModel.ColorBandSetPreview))
-			{
-				var pCbs = ColorBandSetViewModel.ColorBandSetPreview;
-				if (pCbs != null)
-				{
-					Debug.WriteLine($"MainWindow got a CBS Preview with Id = {pCbs.Id}");
-					MapDisplayViewModel.ColorBandSet = pCbs;
-				}
-				else
-				{
-					Debug.WriteLine($"MainWindow got a CBS Preview of null");
-					MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet; //.CreateNewCopy();
-				}
-			}
-
-			else if (e.PropertyName == nameof(ColorBandSetViewModel.UseEscapeVelocities))
+			if (e.PropertyName == nameof(ColorBandSetViewModel.UseEscapeVelocities))
 			{
 				MapDisplayViewModel.UseEscapeVelocities = ColorBandSetViewModel.UseEscapeVelocities;
+			}
+
+			else if (e.PropertyName == nameof(ColorBandSetViewModel.UseRealTimePreview))
+			{
+				Debug.WriteLine($"MainWindow is handling UseRealTimePreview update.");
 			}
 		}
 
@@ -222,7 +203,7 @@ namespace MSetExplorer
 			{
 				// Calculate new Coords for preview
 				var newCoords = MapProjectViewModel.GetUpdateCoords(e.TransformType, e.NewArea);
-				if (!(newCoords is null))
+				if (newCoords != null)
 				{
 					MSetInfoViewModel.Coords = newCoords;
 				}
@@ -239,16 +220,7 @@ namespace MSetExplorer
 			// Update the Target Iterations
 			if (e.MapSettingsUpdateType == MapSettingsUpdateType.TargetIterations)
 			{
-				var cbs = ColorBandSetViewModel.ColorBandSet;
-				if (cbs != null)
-				{
-					cbs.HighCutOff = e.TargetIterations;
-					//MapDisplayViewModel.ColorBandSet = cbs.CreateNewCopy();
-					ColorBandSetViewModel.ApplyChanges();
-				}
-
-				//MapDisplayViewModel.ColorBandSet.HighCutOff = e.TargetIterations;
-				//MapProjectViewModel.UpdateTargetInterations(e.TargetIterations);
+				ColorBandSetViewModel.ApplyChanges(e.TargetIterations);
 			}
 
 			// Jump to new Coordinates
@@ -256,6 +228,22 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"MainWindow ViewModel received request to update the coords.");
 				MapProjectViewModel.UpdateMapCoordinates(e.Coords);
+			}
+		}
+
+		private void ColorBandSetViewModel_ColorBandSetUpdateRequested(object? sender, ColorBandSetUpdateRequestedEventArgs e)
+		{
+			var cbs = e.ColorBandSet;
+
+			if (e.IsPreview)
+			{
+				Debug.WriteLine($"MainWindow got a CBS preview with Id = {cbs.Id}");
+				MapDisplayViewModel.ColorBandSet = cbs;
+			}
+			else
+			{
+				Debug.WriteLine($"MainWindow got a CBS update with Id = {cbs.Id}");
+				MapProjectViewModel.CurrentColorBandSet = cbs;
 			}
 		}
 

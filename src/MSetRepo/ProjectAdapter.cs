@@ -229,21 +229,6 @@ namespace MSetRepo
 
 		#region ColorBandSet 
 
-		//public ColorBandSetRecord GetOrCreateColorBandSetRecord(ColorBandSet currentColorBandSet)
-		//{
-		//	Debug.WriteLine($"Retrieving ColorBandSet with Id: {currentColorBandSet.Id}.");
-
-		//	var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-		//	if (!colorBandSetReaderWriter.TryGet(currentColorBandSet.Id, out var colorBandSetRecord))
-		//	{
-		//		colorBandSetRecord = _mSetRecordMapper.MapTo(currentColorBandSet);
-		//		var id = colorBandSetReaderWriter.Insert(colorBandSetRecord);
-		//		colorBandSetRecord = colorBandSetReaderWriter.Get(id);
-		//	}
-
-		//	return colorBandSetRecord;
-		//}
-
 		public ColorBandSet? GetColorBandSet(string id)
 		{
 			Debug.WriteLine($"Retrieving ColorBandSet with Id: {id}.");

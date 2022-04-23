@@ -162,8 +162,8 @@
                 
                 <ListBox.CommandBindings>
                     <!--<CommandBinding Command="local:ColorBandSetCommands.Edit" Executed="EditButton_Click" />-->
-                    <CommandBinding Command="local:ColorBandSetCommands.Insert" Executed="InsertButton_Click" />
-                    <CommandBinding Command="local:ColorBandSetCommands.Delete" Executed="DeleteButton_Click" />
+                    <CommandBinding Command="local:ColorBandSetCommands.Insert" CanExecute="InsertCommand_CanExecute" Executed="InsertCommand_Executed" />
+                    <CommandBinding Command="local:ColorBandSetCommands.Delete" CanExecute="DeleteCommand_CanExecute" Executed="DeleteCommand_Executed" />
 
                     <CommandBinding Command="local:ColorBandSetCommands.Revert" CanExecute="RevertCommand_CanExecute" Executed="RevertCommand_Executed" />
                     <CommandBinding Command="local:ColorBandSetCommands.Apply" CanExecute="ApplyCommand_CanExecute" Executed="ApplyCommand_Executed" />

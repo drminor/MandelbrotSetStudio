@@ -53,23 +53,11 @@ namespace MSetExplorer
 			get => _currentJob;
 			set
 			{
-				if (value is null)
+				if (value != _currentJob)
 				{
-					if (_currentJob != null)
-					{
-						_currentJob = value;
-						MSetInfo = null;
-						CoordsAreDirty = false;
-					}
-				}
-				else
-				{
-					if (value != _currentJob)
-					{
-						_currentJob = value;
-						MSetInfo = value.MSetInfo.Clone();
-						CoordsAreDirty = false;
-					}
+					_currentJob = value;
+					MSetInfo = value?.MSetInfo.Clone();
+					CoordsAreDirty = false;
 				}
 			}
 		}
