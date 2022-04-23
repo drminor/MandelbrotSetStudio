@@ -116,7 +116,7 @@ namespace MSetExplorer
 			{
 				_mapSectionHistogramProcessor.ProcessingEnabled = false;
 				_colorBandSet = value;
-				_colorBandSetCollection.Load(value?.Clone());
+				_colorBandSetCollection.Load(value?.CreateNewCopy());
 
 				if (value != null)
 				{
@@ -481,6 +481,8 @@ namespace MSetExplorer
 			BuildViewAndRaisePropertyChangeEvents(curPos);
 			IsDirty = false;
 
+			UpdatePercentages();
+
 			if (UseRealTimePreview)
 			{
 				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
@@ -493,7 +495,7 @@ namespace MSetExplorer
 
 		private void BuildViewAndRaisePropertyChangeEvents(int? selectedIndex = null)
 		{
-			_currentColorBandSet = _colorBandSetCollection.CurrentColorBandSet.Clone();
+			_currentColorBandSet = _colorBandSetCollection.CurrentColorBandSet.CreateNewCopy();
 
 			ColorBandsView = BuildColorBandsView(_currentColorBandSet);
 
@@ -553,37 +555,15 @@ namespace MSetExplorer
 			{
 				lock (_histLock)
 				{
-					var colorBands = _currentColorBandSet.ToArray();
-
-					var len = Math.Min(newPercentages.Length, colorBands.Length);
-
-					//var total = 0d;
-
-					var allMatched = true;
-					for (var i = 0; i < len; i++)
+					if (_currentColorBandSet.UpdatePercentages(newPercentages))
 					{
-						if (colorBands[i].CutOff != newPercentages[i].CutOff)
-						{
-							allMatched = false;
-							break;
-						}
+						_beyondTargetSpecs = newPercentages[^1];
+						//Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");
 					}
-
-					if (!allMatched)
+					else
 					{
-						return;
+						_beyondTargetSpecs = null;
 					}
-
-					for (var i = 0; i < len; i++)
-					{
-						var cb = colorBands[i];
-						cb.Percentage = newPercentages[i].Percentage;
-						//total += newPercentages[i].Item2;
-					}
-
-					_beyondTargetSpecs = newPercentages[^1];
-
-					//Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");
 				}
 			}
 		}

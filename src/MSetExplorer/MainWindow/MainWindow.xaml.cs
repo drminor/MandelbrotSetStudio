@@ -307,7 +307,7 @@ namespace MSetExplorer
 
 			var curColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
 
-			ColorsShowSaveWindow(curColorBandSet);
+			_ = ColorsShowSaveWindow(curColorBandSet);
 		}
 
 		// Use Escape Velocities
@@ -329,13 +329,13 @@ namespace MSetExplorer
 			}
 		}
 
-		// Use Escape Velocities
+		// Use RealTime Updates
 		private void UseRealTimePreview_Checked(object sender, RoutedEventArgs e)
 		{
-			var useEscVelocities = mnuItem_UseEscapeVelocities.IsChecked;
+			var useRealTimePreview = mnuItem_UseRealTimePreview.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.UseEscapeVelocities = useEscVelocities;
+				_vm.ColorBandSetViewModel.UseRealTimePreview = useRealTimePreview;
 			}
 		}
 

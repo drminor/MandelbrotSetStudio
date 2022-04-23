@@ -118,7 +118,6 @@ namespace MSS.Types
 					throw new InvalidOperationException("The HighColorBand cannot have a BlendStyle of Next.");
 				}
 				base[^1].BlendStyle = value;
-
 			}
 		}
 
@@ -155,21 +154,36 @@ namespace MSS.Types
 			}
 		}
 
-		//public static ColorBandColor GetActualEndColor(ColorBand colorBand, ColorBandColor? nextStartColor)
-		//{
-		//	if (colorBand.BlendStyle == ColorBandBlendStyle.Next)
-		//	{
-		//		if (nextStartColor == null)
-		//		{
-		//			throw new InvalidOperationException("The last ColorBand in the set has a BlendStyle of Next.");
-		//		}
-		//		return nextStartColor.Value;
-		//	}
-		//	else
-		//	{
-		//		return colorBand.BlendStyle == ColorBandBlendStyle.None ? colorBand.StartColor : colorBand.EndColor;
-		//	}
-		//}
+		public bool UpdatePercentages(PercentageBand[] newPercentages)
+		{
+			var len = Math.Min(newPercentages.Length, Count);
+
+			//var total = 0d;
+
+			var allMatched = true;
+			for (var i = 0; i < len; i++)
+			{
+				if (Items[i].CutOff != newPercentages[i].CutOff)
+				{
+					allMatched = false;
+					break;
+				}
+			}
+
+			if (!allMatched)
+			{
+				return false;
+			}
+
+			for (var i = 0; i < len; i++)
+			{
+				var cb = Items[i];
+				cb.Percentage = newPercentages[i].Percentage;
+				//total += newPercentages[i].Item2;
+			}
+
+			return true;
+		}
 
 		#endregion
 
