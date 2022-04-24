@@ -14,6 +14,8 @@ namespace MSS.Types
 		private int? _previousCutOff;
 		private ColorBandColor? _successorStartColor;
 
+		private ColorBandColor _actualEndColor;
+
 		private double _percentage;
 
 		private ColorBand? _copy;
@@ -40,8 +42,9 @@ namespace MSS.Types
 			_previousCutOff = previousCutoff;
 			_successorStartColor = successorStartColor;
 			_percentage = percentage;
-		}
 
+			_actualEndColor = GetActualEndColor();
+		}
 
 		#endregion
 
@@ -69,6 +72,8 @@ namespace MSS.Types
 				{
 					_startColor = value;
 					OnPropertyChanged();
+
+					ActualEndColor = GetActualEndColor();
 				}
 			}
 		}
@@ -84,10 +89,7 @@ namespace MSS.Types
 					_blendStyle = value;
 					OnPropertyChanged();
 
-					if (origVal == ColorBandBlendStyle.Next || value == ColorBandBlendStyle.Next)
-					{
-						OnPropertyChanged(nameof(ActualEndColor));
-					}
+					ActualEndColor = GetActualEndColor();
 				}
 			}
 		}
@@ -102,12 +104,8 @@ namespace MSS.Types
 					_endColor = value;
 					OnPropertyChanged();
 
-					if (BlendStyle == ColorBandBlendStyle.End)
-					{
-						OnPropertyChanged(nameof(ActualEndColor));
-					}
+					ActualEndColor = GetActualEndColor();
 				}
-
 			}
 		}
 
@@ -127,7 +125,6 @@ namespace MSS.Types
 					{
 						OnPropertyChanged(nameof(IsFirst));
 					}
-
 				}
 			}
 		}
@@ -143,16 +140,12 @@ namespace MSS.Types
 					_successorStartColor = value;
 					OnPropertyChanged();
 
-					if (BlendStyle == ColorBandBlendStyle.Next)
-					{
-						OnPropertyChanged(nameof(ActualEndColor));
-					}
-
 					if (origVal.HasValue != value.HasValue)
 					{
 						OnPropertyChanged(nameof(IsLast));
 					}
 
+					ActualEndColor = GetActualEndColor();
 				}
 			}
 		}
@@ -178,31 +171,32 @@ namespace MSS.Types
 
 		public ColorBandColor ActualEndColor
 		{
-			get => BlendStyle == ColorBandBlendStyle.Next
-				? GetSuccessorStartColor()
-				: BlendStyle == ColorBandBlendStyle.End
-					? EndColor
-					: StartColor;
+			get => _actualEndColor;
 			set
 			{
-				if (BlendStyle == ColorBandBlendStyle.End)
+				if (value != _actualEndColor)
 				{
-					// Must use backing to avoid loops.
-					_endColor = value;
+					_actualEndColor = value;
+					OnPropertyChanged();
 				}
 			}
 		}
 
+		private ColorBandColor GetActualEndColor()
+		{
+			var result = BlendStyle == ColorBandBlendStyle.Next
+				? GetSuccessorStartColor()
+				: BlendStyle == ColorBandBlendStyle.End
+					? EndColor
+					: StartColor;
+
+			return result;
+		}
+
 		private ColorBandColor GetSuccessorStartColor()
 		{
-			if (SuccessorStartColor.HasValue)
-			{
-				return SuccessorStartColor.Value;
-			}
-			else
-			{
-				throw new InvalidProgramException("BlendStyle is Next, but SuccessorStartColor is null.");
-			}
+			var result = SuccessorStartColor ?? EndColor; // throw new InvalidOperationException("BlendStyle is Next, but SuccessorStartColor is null.");
+			return result;
 		}
 
 		public BlendVals? BlendVals { get; set; }

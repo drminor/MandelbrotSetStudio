@@ -37,20 +37,20 @@ namespace MSetExplorer
 			_ = _canvas.Children.Add(rectImage);
 			rectImage.Focusable = true;
 
-			RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), ColorBandColor);
+			RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), ColorBandColor, IsEnabled);
 
 			SizeChanged += ColorPanelControl_SizeChanged;
 			rectImage.MouseUp += RectImage_MouseUp;
 
-			IsEnabledChanged += ColorBandColorButtonControl_IsEnabledChanged;
+			//IsEnabledChanged += ColorBandColorButtonControl_IsEnabledChanged;
 
 			//Debug.WriteLine("The ColorBandColorUserControl is now loaded.");
 		}
 
-		private void ColorBandColorButtonControl_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
-		{
-			_rectangle.Brush.Opacity = IsEnabled ? 1.0 : 0.3;
-		}
+		//private void ColorBandColorButtonControl_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
+		//{
+		//	_rectangle.Brush.Opacity = IsEnabled ? 1.0 : 0.3;
+		//}
 
 		#endregion
 
@@ -58,7 +58,7 @@ namespace MSetExplorer
 
 		private void ColorPanelControl_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			RefreshTheView(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize), ColorBandColor);
+			RefreshTheView(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize), ColorBandColor, IsEnabled);
 		}
 
 		private void RectImage_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -101,7 +101,39 @@ namespace MSetExplorer
 			{
 				if (d is ColorBandColorButtonControl uc)
 				{
-					uc._rectangle.Brush = uc.BuildBrush(newValue);
+					uc._rectangle.Brush = uc.BuildBrush(newValue, uc.IsEnabled);
+				}
+			}
+		}
+
+		public static readonly DependencyProperty BlendStyleProperty = DependencyProperty.Register(
+			"BlendStyle",
+			typeof(ColorBandBlendStyle),
+			typeof(ColorBandColorButtonControl),
+			new FrameworkPropertyMetadata()
+			{
+				PropertyChangedCallback = OnBlendStyleChanged,
+				BindsTwoWayByDefault = true,
+				DefaultValue = ColorBandBlendStyle.End
+			});
+
+		public ColorBandBlendStyle BlendStyle
+		{
+			get => (ColorBandBlendStyle)GetValue(BlendStyleProperty);
+			set => SetValue(BlendStyleProperty, value);
+		}
+
+		private static void OnBlendStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		{
+			var oldValue = (ColorBandBlendStyle)e.OldValue;
+			var newValue = (ColorBandBlendStyle)e.NewValue;
+
+			if (oldValue != newValue)
+			{
+				if (d is ColorBandColorButtonControl uc)
+				{
+					uc.IsEnabled = newValue == ColorBandBlendStyle.End;
+					uc._rectangle.Brush = uc.BuildBrush(uc.ColorBandColor, uc.IsEnabled);
 				}
 			}
 		}
@@ -131,7 +163,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void RefreshTheView(SizeDbl size, ColorBandColor color)
+		private void RefreshTheView(SizeDbl size, ColorBandColor color, bool isEnabled)
 		{
 			if (size.Width > 5 && size.Height > 5)
 			{
@@ -140,7 +172,7 @@ namespace MSetExplorer
 				_canvas.Width = size.Width;
 				_canvas.Height = size.Height;
 
-				_rectangle.Brush = BuildBrush(color);
+				_rectangle.Brush = BuildBrush(color, isEnabled);
 				_rectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.CreateRect(size));
 			}
 			else
@@ -153,7 +185,7 @@ namespace MSetExplorer
 		{
 			var result = new GeometryDrawing
 				(
-				BuildBrush(color),
+				BuildBrush(color, isEnabled: true),
 				new Pen(Brushes.Transparent, 0),
 				new RectangleGeometry(ScreenTypeHelper.CreateRect(size))
 				);
@@ -161,13 +193,31 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Brush BuildBrush(ColorBandColor color)
+		private Brush BuildBrush(ColorBandColor color, bool isEnabled)
 		{
-			var result = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(color));
-			result.Opacity = IsEnabled ? 1.0 : 0.3;
+			var opacity = GetOpacity(isEnabled);
+			var result = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(color, opacity));
 
 			return result;
 		}
+
+		private double GetOpacity(bool isEnabled)
+		{
+			return isEnabled ? 1.0 : 0.3;
+		}
+
+		//private double GetOpacity(ColorBandBlendStyle blendStyle)
+		//{
+		//	var result = blendStyle switch
+		//	{
+		//		ColorBandBlendStyle.None => 0.3,
+		//		ColorBandBlendStyle.End => 1.0,
+		//		ColorBandBlendStyle.Next => 0.3,
+		//		_ => 1.0,
+		//	};
+
+		//	return result;
+		//}
 
 		#endregion
 	}

@@ -308,8 +308,16 @@ namespace MSetExplorer
 				}
 				else
 				{
-					if (e.PropertyName == nameof(ColorBand.ActualEndColor))
+					if (e.PropertyName == nameof(ColorBand.EndColor))
 					{
+						if (cb.BlendStyle == ColorBandBlendStyle.Next)
+						{
+							if (TryGetSuccessor(_currentColorBandSet, cb, out var colorBand))
+							{
+								colorBand.StartColor = cb.EndColor;
+							}
+						}
+
 						foundUpdate = true;
 					}
 				}

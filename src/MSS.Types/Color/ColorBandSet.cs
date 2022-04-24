@@ -147,10 +147,24 @@ namespace MSS.Types
 					cb.PreviousCutOff = prevCutOff;
 					cb.SuccessorStartColor = Items[i + 1].StartColor;
 					prevCutOff = cb.CutOff;
+
+					if (cb.BlendStyle == ColorBandBlendStyle.None)
+					{
+						cb.EndColor = cb.StartColor;
+					}
+					else if (cb.BlendStyle == ColorBandBlendStyle.Next)
+					{
+						cb.EndColor = Items[i + 1].StartColor;
+					}
+
 				}
 
 				var lastCb = Items[Count - 1];
 				lastCb.PreviousCutOff = prevCutOff;
+				if (lastCb.BlendStyle == ColorBandBlendStyle.None)
+				{
+					lastCb.EndColor = lastCb.StartColor;
+				}
 			}
 		}
 
@@ -291,12 +305,22 @@ namespace MSS.Types
 				result = new List<ColorBand>(colorBands);
 
 				int? prevCutOff = null;
+
 				for (var i = 0; i < colorBands.Count - 1; i++)
 				{
 					var cb = colorBands[i];
 					cb.PreviousCutOff = prevCutOff;
 					cb.SuccessorStartColor = colorBands[i + 1].StartColor;
 					prevCutOff = cb.CutOff;
+
+					if (cb.BlendStyle == ColorBandBlendStyle.None)
+					{
+						cb.EndColor = cb.StartColor;
+					}
+					else if (cb.BlendStyle == ColorBandBlendStyle.Next)
+					{
+						cb.EndColor = colorBands[i + 1].StartColor;
+					}
 				}
 
 				var lastCb = colorBands[colorBands.Count - 1];
@@ -304,6 +328,12 @@ namespace MSS.Types
 				Debug.Assert(lastCb.BlendStyle != ColorBandBlendStyle.Next, "The last item in the list of ColorBands being used to construct a ColorBandSet has its BlendStyle set to 'Next.'");
 
 				lastCb.PreviousCutOff = prevCutOff;
+
+				if (lastCb.BlendStyle == ColorBandBlendStyle.None)
+				{
+					lastCb.EndColor = lastCb.StartColor;
+				}
+
 			}
 
 			return result;

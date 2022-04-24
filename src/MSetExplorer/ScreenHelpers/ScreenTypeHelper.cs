@@ -71,6 +71,15 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public static Color ConvertToColor(ColorBandColor colorBandColor, double opacity)
+		{
+			var alpha = 255 * opacity;
+			var alphaAsByte = (byte)alpha;
+			var result = Color.FromArgb(alphaAsByte, colorBandColor.ColorComps[0], colorBandColor.ColorComps[1], colorBandColor.ColorComps[2]);
+
+			return result;
+		}
+
 
 		#endregion
 	}

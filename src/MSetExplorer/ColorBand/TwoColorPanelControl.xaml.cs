@@ -77,23 +77,6 @@ namespace MSetExplorer
 			set => SetValue(StartColorProperty, value);
 		}
 
-		//public static readonly DependencyProperty BlendStyleProperty = DependencyProperty.Register(
-		//	"BlendStyle",
-		//	typeof(ColorBandBlendStyle),
-		//	typeof(TwoColorPanelControl),
-		//	new FrameworkPropertyMetadata()
-		//	{
-		//		PropertyChangedCallback = OnColorChanged,
-		//		BindsTwoWayByDefault = true,
-		//		DefaultValue = ColorBandBlendStyle.None
-		//	});
-
-		//public ColorBandBlendStyle BlendStyle
-		//{
-		//	get => (ColorBandBlendStyle)GetValue(BlendStyleProperty);
-		//	set => SetValue(BlendStyleProperty, value);
-		//}
-
 		public static readonly DependencyProperty EndColorProperty = DependencyProperty.Register(
 			"EndColor",
 			typeof(ColorBandColor),

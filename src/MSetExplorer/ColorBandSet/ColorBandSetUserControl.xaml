@@ -15,8 +15,6 @@
     
     <UserControl.Resources>
 
-
-
         <DataTemplate x:Key="ColorBandViewTemplate">
             <Grid Margin="2">
                 <Grid.RowDefinitions>
