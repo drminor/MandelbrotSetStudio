@@ -58,13 +58,13 @@ namespace MSetExplorer
 			DoWithWriteLock(() => { _colorsCollection[index] = colorBandSet; });
 		}
 
-		public bool MoveCurrentTo(ObjectId colorBandSetId)
+		public bool MoveCurrentTo(ColorBandSet colorBandSet)
 		{
 			_colorsLock.EnterUpgradeableReadLock();
 
 			try
 			{
-				if (TryGetIndexFromId(colorBandSetId, out var index))
+				if (TryGetIndexFromId(colorBandSet.Id, out var index))
 				{ 
 					DoWithWriteLock(() => { _colorsPointer = index; });
 					return true;
@@ -332,9 +332,13 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public bool Contains(ObjectId id)
+		public bool Contains(ColorBandSet colorBandSet)
 		{
-			var result = _colorsCollection.Any(x => x.Id == id);
+			var x = _colorsCollection.Contains(colorBandSet);
+			var result = _colorsCollection.Any(x => x.Id == colorBandSet.Id);
+
+			Debug.Assert(x == result, "The colorsCollection is not using the correct IEqualityComparer.");
+
 			return result;
 		}
 
@@ -367,6 +371,12 @@ namespace MSetExplorer
 				return true;
 			});
 
+			return result;
+		}
+
+		private bool Contains(ObjectId cbsId)
+		{
+			var result = _colorsCollection.Any(x => x.Id == cbsId);
 			return result;
 		}
 

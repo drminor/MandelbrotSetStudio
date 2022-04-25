@@ -85,7 +85,7 @@ namespace MSetRepo
 				MapTo(source.NewArea?.Position ?? new PointInt()),
 				MapTo(source.NewArea?.Size ?? new SizeInt()),
 				MapTo(source.MSetInfo),
-				source.ColorBandSetId,
+				source.ColorBandSet.Id,
 				MapTo(source.CanvasSizeInBlocks),
 				MapTo(source.MapBlockOffset),
 				MapTo(source.CanvasControlOffset),

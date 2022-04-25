@@ -11,7 +11,7 @@ namespace MSetExplorer
 	{
 		private static readonly MSetInfo NULL_MSET_INFO = new();
 
-		private Job? _currentJob;
+		private Job _currentJob;
 
 		private string _startingX;
 		private string _endingX;
@@ -30,6 +30,8 @@ namespace MSetExplorer
 
 		public MSetInfoViewModel()
 		{
+			_currentJob = new Job();
+
 			_currentMSetInfo = new MSetInfo
 				(
 				new RRectangle(), 
@@ -48,7 +50,7 @@ namespace MSetExplorer
 
 		public event EventHandler<MapSettingsUpdateRequestedEventArgs>? MapSettingsUpdateRequested;
 
-		public Job? CurrentJob
+		public Job CurrentJob
 		{
 			get => _currentJob;
 			set
@@ -56,7 +58,7 @@ namespace MSetExplorer
 				if (value != _currentJob)
 				{
 					_currentJob = value;
-					MSetInfo = value?.MSetInfo.Clone();
+					MSetInfo = value.MSetInfo.Clone();
 					CoordsAreDirty = false;
 				}
 			}

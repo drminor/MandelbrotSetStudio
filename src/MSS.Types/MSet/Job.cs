@@ -19,7 +19,7 @@ namespace MSS.Types.MSet
 		public RectangleInt? NewArea { get; init; }
 
 		private MSetInfo _mSetInfo;
-		private ObjectId _colorBandSetId;
+		private ColorBandSet _colorBandSet;
 		private SizeInt _canvasSizeInBlocks;
 		private BigVector _mapBlockOffset;
 		private VectorInt _canvasControlOffset;
@@ -38,12 +38,13 @@ namespace MSS.Types.MSet
 		{
 			Subdivision = new Subdivision();
 			_mSetInfo = new MSetInfo();
+			_colorBandSet = new ColorBandSet();
 			_mapBlockOffset = new BigVector();
 		}
 
-		public Job(ObjectId? parentJobId, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt? newArea, MSetInfo mSetInfo, ObjectId colorBandSetId,
+		public Job(ObjectId? parentJobId, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt? newArea, MSetInfo mSetInfo, ColorBandSet colorBandSet,
 			SizeInt canvasSizeInBlocks, BigVector mapBlockOffset, VectorInt canvasControlOffset)
-			: this(ObjectId.GenerateNewId(), parentJobId, projectId, subdivision, label, transformType, newArea, mSetInfo, colorBandSetId, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset, DateTime.UtcNow)
+			: this(ObjectId.GenerateNewId(), parentJobId, projectId, subdivision, label, transformType, newArea, mSetInfo, colorBandSet, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset, DateTime.UtcNow)
 		{ }
 
 		public Job(
@@ -57,7 +58,7 @@ namespace MSS.Types.MSet
 			RectangleInt? newArea,
 
 			MSetInfo mSetInfo,
-			ObjectId colorBandSetId,
+			ColorBandSet colorBandSet,
 			SizeInt canvasSizeInBlocks,
 			BigVector mapBlockOffset,
 			VectorInt canvasControlOffset,
@@ -74,7 +75,7 @@ namespace MSS.Types.MSet
 			NewArea = newArea;
 
 			_mSetInfo = mSetInfo;
-			_colorBandSetId = colorBandSetId;
+			_colorBandSet = colorBandSet;
 			_canvasSizeInBlocks = canvasSizeInBlocks;
 			_mapBlockOffset = mapBlockOffset;
 			_canvasControlOffset = canvasControlOffset;
@@ -114,12 +115,12 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public ObjectId ColorBandSetId
+		public ColorBandSet ColorBandSet
 		{
-			get => _colorBandSetId;
+			get => _colorBandSet;
 			set
 			{
-				_colorBandSetId = value;
+				_colorBandSet = value;
 				LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
@@ -171,7 +172,7 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, ProjectId, Subdivision, Label, TransformType, NewArea, MSetInfo, ColorBandSetId, CanvasSizeInBlocks, MapBlockOffset, CanvasControlOffset, LastSavedUtc);
+			var result = new Job(Id, ParentJobId, ProjectId, Subdivision, Label, TransformType, NewArea, MSetInfo.Clone(), ColorBandSet.Clone(), CanvasSizeInBlocks, MapBlockOffset.Clone(), CanvasControlOffset, LastSavedUtc);
 			return result;
 		}
 

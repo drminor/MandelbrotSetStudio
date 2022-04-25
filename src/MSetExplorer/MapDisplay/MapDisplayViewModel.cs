@@ -88,8 +88,9 @@ namespace MSetExplorer
 			{
 				var idDiff = newJob.Id != previousJob.Id;
 				var csDiff = newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks;
+				var cmDiff = newJob.ColorBandSet != previousJob.ColorBandSet;
 
-				return idDiff || csDiff;
+				return idDiff || csDiff || cmDiff;
 			}
 			else
 			{
@@ -103,12 +104,20 @@ namespace MSetExplorer
 			get => _colorBandSet;
 			set
 			{
-				if (value != _colorBandSet)
+				SetColorBandSet(value, refresh: true);
+			}
+		}
+
+		private void SetColorBandSet(ColorBandSet value, bool refresh)
+		{
+			if (value != _colorBandSet)
+			{
+				Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
+				_colorBandSet = value;
+				_colorMap = new ColorMap(value);
+				_colorMap.UseEscapeVelocities = _useEscapeVelocities;
+				if (refresh)
 				{
-					Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
-					_colorBandSet = value;
-					_colorMap = new ColorMap(value);
-					_colorMap.UseEscapeVelocities = _useEscapeVelocities;
 					HandleColorMapChanged(_colorMap, _useEscapeVelocities);
 				}
 			}
@@ -272,6 +281,8 @@ namespace MSetExplorer
 
 			if (newJob != null)
 			{
+				SetColorBandSet(newJob.ColorBandSet, refresh: false);
+
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
 					ReuseLoadedSections(newJob);
@@ -281,6 +292,7 @@ namespace MSetExplorer
 					Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
 					MapSections.Clear();
 					CanvasControlOffset = newJob.CanvasControlOffset;
+
 					_mapLoaderManager.Push(newJob);
 				}
 			}

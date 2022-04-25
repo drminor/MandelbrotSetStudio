@@ -324,13 +324,14 @@ namespace MSetRepo
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var subdivisonReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 
-			var job = GetJob(jobId, jobReaderWriter, subdivisonReaderWriter, jobCache: null);
+			var job = GetJob(jobId, jobReaderWriter, subdivisonReaderWriter, colorBandSetReaderWriter, jobCache: null);
 
 			return job;
 		}
 
-		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter, IDictionary<ObjectId, Job>? jobCache)
+		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter, ColorBandSetReaderWriter colorBandSetReaderWriter, IDictionary<ObjectId, Job>? jobCache)
 		{
 			if (jobCache != null && jobCache.TryGetValue(jobId, out var qJob))
 			{
@@ -347,6 +348,7 @@ namespace MSetRepo
 			}
 
 			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
+			var colorBandSetRecord = colorBandSetReaderWriter.Get(jobRecord.ColorBandSetId);
 
 			var job = new Job(
 				id: jobId,
@@ -357,7 +359,7 @@ namespace MSetRepo
 				transformType: Enum.Parse<TransformType>(jobRecord.TransformType.ToString()),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 				mSetInfo: _mSetRecordMapper.MapFrom(jobRecord.MSetInfo),
-				colorBandSetId: jobRecord.ColorBandSetId,
+				colorBandSet: _mSetRecordMapper.MapFrom(colorBandSetRecord),
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks), 
 				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset), 
 				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset),
@@ -425,11 +427,12 @@ namespace MSetRepo
 			var ids = jobReaderWriter.GetJobIds(projectId);
 
 			var subdivisonReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			var jobCache = new Dictionary<ObjectId, Job>();
 
 			foreach (var jobId in ids)
 			{
-				var job = GetJob(jobId, jobReaderWriter, subdivisonReaderWriter, jobCache);
+				var job = GetJob(jobId, jobReaderWriter, subdivisonReaderWriter, colorBandSetReaderWriter, jobCache);
 				result.Add(job);
 			}
 
