@@ -111,14 +111,14 @@ namespace MSetRepo
 			}
 		}
 
-		public Project CreateProject(string name, string? description, ObjectId? currentJobId, ObjectId currentColorBandSetId)
+		public Project CreateProject(string name, string? description, ObjectId currentJobId)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
 			var projectRecord = projectReaderWriter.Get(name);
 			if (projectRecord is null)
 			{
-				var project = new Project(name, description, currentJobId, currentColorBandSetId);
+				var project = new Project(name, description, currentJobId);
 				projectRecord = _mSetRecordMapper.MapTo(project);
 				var projectId = projectReaderWriter.Insert(projectRecord);
 				projectRecord = projectReaderWriter.Get(projectId);
@@ -143,12 +143,6 @@ namespace MSetRepo
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			projectReaderWriter.UpdateDescription(projectId, description);
-		}
-
-		public void UpdateProjectCurrentCbsId(ObjectId projectId, ObjectId currentColorBandSetId)
-		{
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			projectReaderWriter.UpdateCurrentCbsId(projectId, currentColorBandSetId);
 		}
 
 		public void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId)
@@ -228,6 +222,19 @@ namespace MSetRepo
 		#endregion
 
 		#region ColorBandSet 
+
+		//public void AddColorBandSetIdToAllJobs()
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+		//	var allProjectRecs = projectReaderWriter.GetAll();
+
+		//	foreach(var projectRecord in allProjectRecs)
+		//	{
+		//		jobReaderWriter.AddColorBandSetIdByProject(projectRecord.Id, projectRecord.CurrentColorBandSetId);
+		//	}
+		//}
 
 		public ColorBandSet? GetColorBandSet(string id)
 		{
@@ -339,25 +346,7 @@ namespace MSetRepo
 				throw new KeyNotFoundException($"Could not find a job with jobId = {jobId}.");
 			}
 
-			//Job? parentJob;
-
-			//if (jobRecord.ParentJobId.HasValue)
-			//{
-			//	Debug.WriteLine($"Retrieving Job object for parent JobId: {jobRecord.ParentJobId}.");
-			//	parentJob = GetJob(jobRecord.ParentJobId.Value, jobReaderWriter, projectReaderWriter, subdivisonReaderWriter, jobCache);
-			//}
-			//else
-			//{
-			//	parentJob = null;
-			//}
-
-			//var projectRecord = projectReaderWriter.Get(jobRecord.ProjectId);
-			//var project = _mSetRecordMapper.MapFrom(projectRecord);
-
 			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
-			//var subdivision = _mSetRecordMapper.MapFrom(subdivisionRecord);
-
-			//var mSetInfo = _mSetRecordMapper.MapFrom(jobRecord.MSetInfo);
 
 			var job = new Job(
 				id: jobId,
@@ -367,7 +356,8 @@ namespace MSetRepo
 				label: jobRecord.Label,
 				transformType: Enum.Parse<TransformType>(jobRecord.TransformType.ToString()),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
-				mSetInfo: _mSetRecordMapper.MapFrom(jobRecord.MSetInfo), 
+				mSetInfo: _mSetRecordMapper.MapFrom(jobRecord.MSetInfo),
+				colorBandSetId: jobRecord.ColorBandSetId,
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks), 
 				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset), 
 				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset),
@@ -380,7 +370,7 @@ namespace MSetRepo
 
 		public Job InsertJob(Job job)
 		{
-			job.LastSaved = DateTime.UtcNow;
+			job.LastSavedUtc = DateTime.UtcNow;
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 
@@ -396,15 +386,15 @@ namespace MSetRepo
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJobId);
-			job.LastSaved = DateTime.UtcNow;
+			job.LastSavedUtc = DateTime.UtcNow;
 		}
 
-		public void UpdateJobDetalis(Job job)
+		public void UpdateJobDetails(Job job)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 			jobReaderWriter.UpdateJobDetails(jobRecord);
-			job.LastSaved = DateTime.UtcNow;
+			job.LastSavedUtc = DateTime.UtcNow;
 		}
 
 		public void UpdateJobsProject(ObjectId jobId, ObjectId projectId)

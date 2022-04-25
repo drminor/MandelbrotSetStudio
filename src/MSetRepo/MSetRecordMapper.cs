@@ -7,7 +7,6 @@ using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace MSetRepo
@@ -30,51 +29,31 @@ namespace MSetRepo
 	{
 		private readonly DtoMapper _dtoMapper;
 
-		//public IDictionary<ObjectId, ColorBandSet> ColorBandSetCache { get; init; }
-
-		public MSetRecordMapper(DtoMapper dtoMapper/*, IDictionary<ObjectId, ColorBandSet> colorBandSetCache*/)
+		public MSetRecordMapper(DtoMapper dtoMapper)
 		{
-			//ColorBandSetCache = colorBandSetCache;
 			_dtoMapper = dtoMapper;
 		}
 		
 		public Project MapFrom(ProjectRecord target)
 		{
-			var result = new Project(target.Id, target.Name, target.Description, target.LastSavedUtc, target.CurrentJobId, target.CurrentColorBandSetId);
+			var result = new Project(target.Id, target.Name, target.Description, target.CurrentJobId, target.LastSavedUtc);
 			return result;
 		}
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name, source.Description, source.LastSavedUtc, source.CurrentJobId, source.CurrentColorBandSetId);
+			var result = new ProjectRecord(source.Name, source.Description, source.LastSavedUtc, source.CurrentJobId, ObjectId.Empty);
 			return result;
 		}
 
 		public ColorBandSetRecord MapTo(ColorBandSet source)
 		{
-			//if (source.Id != ObjectId.Empty && !ColorBandSetCache.ContainsKey(source.Id))
-			//{
-			//	ColorBandSetCache.Add(source.Id, source);
-			//}
-
 			var result = new ColorBandSetRecord(source.ParentId, source.ProjectId, source.Name, source.Description, source.Select(x => MapTo(x)).ToArray());
 			return result;
 		}
 
 		public ColorBandSet MapFrom(ColorBandSetRecord target)
 		{
-			//if (ColorBandSetCache.TryGetValue(target.Id, out var colorBandSet))
-			//{
-			//	return colorBandSet;
-			//}
-			//else
-			//{
-			//	var result = new ColorBandSet(target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, target.ColorBandRecords.Select(x => MapFrom(x)).ToList());
-			//	ColorBandSetCache.Add(result.Id, result);
-
-			//	return result;
-			//}
-
 			var result = new ColorBandSet(target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, target.ColorBandRecords.Select(x => MapFrom(x)).ToList());
 			return result;
 		}
@@ -106,10 +85,11 @@ namespace MSetRepo
 				MapTo(source.NewArea?.Position ?? new PointInt()),
 				MapTo(source.NewArea?.Size ?? new SizeInt()),
 				MapTo(source.MSetInfo),
+				source.ColorBandSetId,
 				MapTo(source.CanvasSizeInBlocks),
 				MapTo(source.MapBlockOffset),
 				MapTo(source.CanvasControlOffset),
-				source.LastSaved
+				source.LastSavedUtc
 				);
 
 			return result;
@@ -149,11 +129,6 @@ namespace MSetRepo
 
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
-			//if (source is null)
-			//{
-			//	return null;
-			//}
-
 			var result = new MapSectionRecord
 				(
 				new ObjectId(source.SubdivisionId),
@@ -172,11 +147,6 @@ namespace MSetRepo
 
 		public MapSectionResponse MapFrom(MapSectionRecord target)
 		{
-			//if (target is null)
-			//{
-			//	return null;
-			//}
-
 			var x = new long[][] { new long[] { 0, 0 }, new long[]{ 0, 0 } };
 
 			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });

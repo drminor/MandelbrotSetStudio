@@ -233,17 +233,17 @@ namespace MSetExplorer
 
 		private void ColorBandSetViewModel_ColorBandSetUpdateRequested(object? sender, ColorBandSetUpdateRequestedEventArgs e)
 		{
-			var cbs = e.ColorBandSet;
+			var colorBandSet = e.ColorBandSet;
 
 			if (e.IsPreview)
 			{
-				Debug.WriteLine($"MainWindow got a CBS preview with Id = {cbs.Id}");
-				MapDisplayViewModel.ColorBandSet = cbs;
+				Debug.WriteLine($"MainWindow got a CBS preview with Id = {colorBandSet.Id}");
+				MapDisplayViewModel.ColorBandSet = colorBandSet;
 			}
 			else
 			{
-				Debug.WriteLine($"MainWindow got a CBS update with Id = {cbs.Id}");
-				MapProjectViewModel.CurrentColorBandSet = cbs;
+				Debug.WriteLine($"MainWindow got a CBS update with Id = {colorBandSet.Id}");
+				MapProjectViewModel.UpdateColors(colorBandSet);
 			}
 		}
 

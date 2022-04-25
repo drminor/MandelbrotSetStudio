@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types.MSet
@@ -10,29 +11,39 @@ namespace MSS.Types.MSet
 		public ObjectId Id { get; init; }
 		public ObjectId? ParentJobId { get; set; }
 		public ObjectId ProjectId { get; set; }
+
 		public Subdivision Subdivision { get; init; }
 		public string? Label { get; init; }
 
 		public TransformType TransformType { get; init; }
 		public RectangleInt? NewArea { get; init; }
 
-		//public MSetInfo MSetInfo { get; set; }
-		//public SizeInt CanvasSizeInBlocks { get; set; }
-		//public BigVector MapBlockOffset { get; set; }
-		//public VectorInt CanvasControlOffset { get; set; }
-
 		private MSetInfo _mSetInfo;
+		private ObjectId _colorBandSetId;
 		private SizeInt _canvasSizeInBlocks;
 		private BigVector _mapBlockOffset;
 		private VectorInt _canvasControlOffset;
 
-		private DateTime _lastSaved;
+		private bool _isDirty;
 
-		public bool IsDirty { get; set; }
+		private DateTime _lastSavedUtc;
 
-		public Job(ObjectId? parentJobId, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt? newArea, MSetInfo mSetInfo, 
+		private static Lazy<Job> _lazyJob = new Lazy<Job>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+
+		public static Job Empty = _lazyJob.Value;
+
+		public bool IsEmpty => MSetInfo.Coords.WidthNumerator == 0;
+
+		public Job()
+		{
+			Subdivision = new Subdivision();
+			_mSetInfo = new MSetInfo();
+			_mapBlockOffset = new BigVector();
+		}
+
+		public Job(ObjectId? parentJobId, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt? newArea, MSetInfo mSetInfo, ObjectId colorBandSetId,
 			SizeInt canvasSizeInBlocks, BigVector mapBlockOffset, VectorInt canvasControlOffset)
-			: this(ObjectId.GenerateNewId(), parentJobId, projectId, subdivision, label, transformType, newArea, mSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset, DateTime.MinValue)
+			: this(ObjectId.GenerateNewId(), parentJobId, projectId, subdivision, label, transformType, newArea, mSetInfo, colorBandSetId, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset, DateTime.UtcNow)
 		{ }
 
 		public Job(
@@ -46,6 +57,7 @@ namespace MSS.Types.MSet
 			RectangleInt? newArea,
 
 			MSetInfo mSetInfo,
+			ObjectId colorBandSetId,
 			SizeInt canvasSizeInBlocks,
 			BigVector mapBlockOffset,
 			VectorInt canvasControlOffset,
@@ -62,14 +74,35 @@ namespace MSS.Types.MSet
 			NewArea = newArea;
 
 			_mSetInfo = mSetInfo;
+			_colorBandSetId = colorBandSetId;
 			_canvasSizeInBlocks = canvasSizeInBlocks;
 			_mapBlockOffset = mapBlockOffset;
 			_canvasControlOffset = canvasControlOffset;
-			LastSaved = lastSaved;
+			LastSavedUtc = lastSaved;
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
-		public DateTime LastUpdated { get; private set; }
+		public DateTime LastUpdatedUtc { get; private set; }
+
+		public bool IsDirty
+		{ 
+			get
+			{
+				if (LastUpdatedUtc > DateCreated && !_isDirty)
+				{
+					Debug.WriteLine($"WARNING: IsDirty = false, but DateCreated is less than LastUpdated.");
+				}
+				if (LastUpdatedUtc > LastSavedUtc && !_isDirty)
+				{
+					Debug.WriteLine($"WARNING: IsDirty = false, but LastSaved is less than LastUpdated.");
+				}
+				return _isDirty;
+			}
+			set
+			{
+				_isDirty = value;
+			}
+		}
 
 		public MSetInfo MSetInfo
 		{
@@ -77,7 +110,17 @@ namespace MSS.Types.MSet
 			set
 			{
 				_mSetInfo = value;
-				LastUpdated = DateTime.UtcNow;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
+
+		public ObjectId ColorBandSetId
+		{
+			get => _colorBandSetId;
+			set
+			{
+				_colorBandSetId = value;
+				LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
 
@@ -87,7 +130,7 @@ namespace MSS.Types.MSet
 			set
 			{
 				_canvasSizeInBlocks = value;
-				LastUpdated = DateTime.UtcNow;
+				LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
 
@@ -97,7 +140,7 @@ namespace MSS.Types.MSet
 			set
 			{
 				_mapBlockOffset = value;
-				LastUpdated = DateTime.UtcNow;
+				LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
 
@@ -107,17 +150,17 @@ namespace MSS.Types.MSet
 			set
 			{
 				_canvasControlOffset = value;
-				LastUpdated = DateTime.UtcNow;
+				LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
 
-		public DateTime LastSaved
+		public DateTime LastSavedUtc
 		{
-			get => _lastSaved;
+			get => _lastSavedUtc;
 			set
 			{
-				_lastSaved = value;
-				LastUpdated = value;
+				_lastSavedUtc = value;
+				LastUpdatedUtc = value;
 			}
 		}
 
@@ -128,7 +171,7 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, ProjectId, Subdivision, Label, TransformType, NewArea, MSetInfo, CanvasSizeInBlocks, MapBlockOffset, CanvasControlOffset, LastSaved);
+			var result = new Job(Id, ParentJobId, ProjectId, Subdivision, Label, TransformType, NewArea, MSetInfo, ColorBandSetId, CanvasSizeInBlocks, MapBlockOffset, CanvasControlOffset, LastSavedUtc);
 			return result;
 		}
 
@@ -143,7 +186,7 @@ namespace MSS.Types.MSet
 		{
 			return other != null
 				&& Id.Equals(other.Id)
-				&& LastSaved == other.LastSaved;
+				&& LastSavedUtc == other.LastSavedUtc;
 		}
 
 		public bool Equals(Job? x, Job? y)

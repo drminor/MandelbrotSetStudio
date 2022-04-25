@@ -36,6 +36,8 @@ namespace MSetExplorer
 
 		public int CurrentIndex => DoWithReadLock(() =>  { return _colorsPointer; });
 
+		public int Count => DoWithReadLock(() => { return _colorsCollection.Count; });
+
 		//public IEnumerable<ColorBandSet> ColorBandSets => DoWithReadLock(() => { return new ReadOnlyCollection<ColorBandSet>(_colorsCollection); });
 
 		//public bool IsDirty => _colorsCollection.Any(x => !x.OnFile);
@@ -44,7 +46,6 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public int Count => DoWithReadLock(() => { return _colorsCollection.Count; });
 
 		public ColorBandSet this[int index]
 		{
@@ -55,6 +56,28 @@ namespace MSetExplorer
 		public void UpdateItem(int index, ColorBandSet colorBandSet)
 		{
 			DoWithWriteLock(() => { _colorsCollection[index] = colorBandSet; });
+		}
+
+		public bool MoveCurrentTo(ObjectId colorBandSetId)
+		{
+			_colorsLock.EnterUpgradeableReadLock();
+
+			try
+			{
+				if (TryGetIndexFromId(colorBandSetId, out var index))
+				{ 
+					DoWithWriteLock(() => { _colorsPointer = index; });
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			finally
+			{
+				_colorsLock.ExitUpgradeableReadLock();
+			}
 		}
 
 		public bool MoveCurrentTo(int index)
@@ -91,8 +114,10 @@ namespace MSetExplorer
 			Load(colorBandSets, null);
 		}
 		
-		public void Load(IEnumerable<ColorBandSet> colorBandSets, ObjectId? currentId)
+		public bool Load(IEnumerable<ColorBandSet> colorBandSets, ObjectId? currentId)
 		{
+			var result = true;
+
 			DoWithWriteLock(() =>
 			{
 				_colorsCollection.Clear();
@@ -109,15 +134,15 @@ namespace MSetExplorer
 
 				if (currentId.HasValue)
 				{
-					if (TryFindByCbsId(currentId.Value, out var cbs)) 
+					if (TryGetIndexFromId(currentId.Value, out var idx)) 
 					{
-						var idx = _colorsCollection.IndexOf(cbs);
 						_colorsPointer = idx;
 					}
 					else
 					{
 						Debug.WriteLine($"WARNING: There is no ColorBandSet with Id: {currentId} in the list of ColorBandSets being loaded into the ColorBandSetCollection.");
 						_colorsPointer = _colorsCollection.Count - 1;
+						result = false;
 					}
 				}
 				else
@@ -130,6 +155,8 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine("The ColorBandSet Collection is not integral.");
 			}
+
+			return result;
 		}
 
 		public void Push(ColorBandSet colorBandSet)
@@ -137,25 +164,6 @@ namespace MSetExplorer
 			DoWithWriteLock(() =>
 			{
 				_colorsCollection.Add(colorBandSet);
-				_colorsPointer = _colorsCollection.Count - 1;
-			});
-		}
-
-		public void PushCopyOfCurrent()
-		{
-			DoWithWriteLock(() =>
-			{
-				if (_colorsPointer != _colorsCollection.Count - 1)
-				{
-					for (var i = _colorsCollection.Count - 1; i > _colorsPointer; i--)
-					{
-						_colorsCollection.RemoveAt(i);
-					}
-				}
-
-				var currentSet = _colorsCollection[_colorsPointer];
-
-				_colorsCollection.Insert(_colorsCollection.Count - 1, currentSet.CreateNewCopy());
 				_colorsPointer = _colorsCollection.Count - 1;
 			});
 		}
@@ -210,9 +218,8 @@ namespace MSetExplorer
 
 				if (!(parentCbsId is null))
 				{
-					if (TryFindByCbsId(parentCbsId.Value, out var colorBandSet))
+					if (TryGetIndexFromId(parentCbsId.Value, out var cbsIndex))
 					{
-						var cbsIndex = _colorsCollection.IndexOf(colorBandSet);
 						DoWithWriteLock(() => UpdateColorsPtr(cbsIndex));
 						return true;
 					}
@@ -325,9 +332,24 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool TryFindByCbsId(ObjectId id, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		public bool Contains(ObjectId id)
 		{
-			colorBandSet = _colorsCollection.FirstOrDefault(x => x.Id == id);
+			var result = _colorsCollection.Any(x => x.Id == id);
+			return result;
+		}
+
+		private bool TryGetIndexFromId(ObjectId id, out int index)
+		{
+			var colorBandSet = _colorsCollection.FirstOrDefault(x => x.Id == id);
+			if (colorBandSet != null)
+			{
+				index = _colorsCollection.IndexOf(colorBandSet);
+			}
+			else
+			{
+				index = -1;
+			}
+
 			return colorBandSet != null;
 		}
 
@@ -336,12 +358,9 @@ namespace MSetExplorer
 			var result = DoWithReadLock(() => {
 				foreach (var cbs in _colorsCollection)
 				{
-					if (cbs.ParentId.HasValue)
+					if (cbs.ParentId.HasValue && !Contains(cbs.ParentId.Value))
 					{
-						if (!TryFindByCbsId(cbs.ParentId.Value, out var _))
-						{
-							return false;
-						}
+						return false;
 					}
 				}
 

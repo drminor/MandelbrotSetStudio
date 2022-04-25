@@ -31,7 +31,6 @@ namespace MSetExplorer
 		private readonly ColorBandSetCollection _colorBandSetCollection;
 
 		private ColorBandSet _currentColorBandSet; // => _colorBandSetCollection.CurrentColorBandSet; // The value which is currently being edited.
-		//private ColorBandSet _currentBeforeEdits;
 
 		private ListCollectionView _colorBandsView;
 		private ColorBand? _currentColorBand;
@@ -467,6 +466,10 @@ namespace MSetExplorer
 			{
 				newSet.HighCutOff = newTargetIterations.Value;
 			}
+			else
+			{
+				Debug.Assert(IsDirty, "ApplyChanges is being called, but we are not dirty.");
+			}
 
 			Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}, name: {newSet.Name}. The old Id is {ColorBandSet?.Id ?? ObjectId.Empty}");
 
@@ -529,7 +532,7 @@ namespace MSetExplorer
 
 		private void PushCopyOfCurrent()
 		{
-			_colorBandSetCollection.Push(_currentColorBandSet);
+			_colorBandSetCollection.Push(_currentColorBandSet.CreateNewCopy());
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));

@@ -65,6 +65,8 @@ namespace MSetExplorer
 
 			_projectAdapter.CreateCollections();
 
+			//_projectAdapter.AddColorBandSetIdToAllJobs();
+
 			_sharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(MONGO_DB_CONN_STRING);
 			_sharedColorBandSetAdapter.CreateCollections();
 

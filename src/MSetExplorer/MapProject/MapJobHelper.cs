@@ -13,7 +13,8 @@ namespace MSetExplorer
 	{
 		#region Build Job
 
-		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, TransformType transformType, RectangleInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
+		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, ObjectId colorBandSetId,
+			TransformType transformType, RectangleInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
@@ -39,7 +40,7 @@ namespace MSetExplorer
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-			var job = new Job(parentJobId, projectId, subdivision, jobName, transformType, newArea, updatedMSetInfo, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
+			var job = new Job(parentJobId, projectId, subdivision, jobName, transformType, newArea, updatedMSetInfo, colorBandSetId, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 
 			return job;
 		}

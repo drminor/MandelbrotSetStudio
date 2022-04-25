@@ -9,7 +9,7 @@ namespace MSetExplorer
 {
 	public class MSetInfoViewModel : ViewModelBase
 	{
-		private static readonly MSetInfo NULL_MSET_INFO = new(new RRectangle(), new MapCalcSettings());
+		private static readonly MSetInfo NULL_MSET_INFO = new();
 
 		private Job? _currentJob;
 

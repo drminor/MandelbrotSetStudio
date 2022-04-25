@@ -20,11 +20,10 @@ namespace MSetExplorer
 		bool CanSaveProject { get; }
 		bool CurrentProjectIsDirty { get; }
 
-		ColorBandSet CurrentColorBandSet { get; set; }
-		//bool CanSaveColorBandSet { get; }
+		ColorBandSet CurrentColorBandSet { get; }
 
 
-		Job? CurrentJob { get; }
+		Job CurrentJob { get; }
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
 
@@ -33,6 +32,7 @@ namespace MSetExplorer
 		bool GoForward();
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
+		void UpdateColors(ColorBandSet colorBandSet);
 		void UpdateTargetInterations(int targetIterations);
 		void UpdateMapCoordinates(RRectangle coords);
 		RRectangle? GetUpdateCoords(TransformType transformType, RectangleInt newArea);
@@ -44,17 +44,9 @@ namespace MSetExplorer
 
 		bool ProjectOpen(string name);
 		void ProjectSave();
-		void ProjectSaveAs(string name, string? description, ObjectId? currentJobId, ObjectId currentColorBandSetId);
+		void ProjectSaveAs(string name, string? description);
 
 		//void ProjectUpdateName(string name);
 		//void ProjectUpdateDescription(string description);
-
-		// ColorBand Methods
-		//bool ColorBandSetOpen(string id);
-
-		//void ColorBandSetSave();
-		//void ColorBandSetSaveAs(string name, string? description, int? versionNumber);
-
-		//ColorBandSet? GetColorBandSet(string id);
 	}
 }

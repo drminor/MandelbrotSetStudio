@@ -9,6 +9,11 @@ namespace MSS.Types.MSet
 		public SizeInt BlockSize { get; init; }
 		public RSize SamplePointDelta { get; init; }
 
+		public Subdivision()
+		{
+			SamplePointDelta = new RSize();
+		}
+
 		public Subdivision(RSize samplePointDelta, SizeInt blockSize) : this(ObjectId.GenerateNewId(), samplePointDelta, blockSize)
 		{ }
 

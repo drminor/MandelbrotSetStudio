@@ -244,6 +244,8 @@ namespace MSetExplorer
 		{
 			if (colorMap != null)
 			{
+				Debug.Assert(colorMap.UseEscapeVelocities == useEscapVelocities, "UseEscapeVelocities MisMatch on DrawSections.");
+
 				foreach (var mapSection in mapSections)
 				{
 					if (mapSection.Counts != null)

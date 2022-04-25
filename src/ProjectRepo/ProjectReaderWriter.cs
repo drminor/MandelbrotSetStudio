@@ -88,17 +88,6 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
-		public void UpdateCurrentCbsId(ObjectId projectId, ObjectId currentColorBandSetId)
-		{
-			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
-
-			var updateDefinition = Builders<ProjectRecord>.Update
-				.Set(u => u.CurrentColorBandSetId, currentColorBandSetId)
-				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
-
-			_ = Collection.UpdateOne(filter, updateDefinition);
-		}
-
 		public void UpdateCurrentJobId(ObjectId projectId, ObjectId? currentJobId)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);

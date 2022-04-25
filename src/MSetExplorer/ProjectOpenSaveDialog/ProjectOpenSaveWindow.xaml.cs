@@ -108,6 +108,11 @@ namespace MSetExplorer
 			Close();
 		}
 
+		private void DeleteButton_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.DeleteSelected();
+		}
+
 		private void TakeSelection()
 		{
 			if (_vm.DialogType == DialogType.Save)

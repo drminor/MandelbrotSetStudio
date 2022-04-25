@@ -1,5 +1,4 @@
 ﻿using MSS.Types;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -41,16 +40,7 @@ namespace MSetExplorer
 
 			SizeChanged += ColorPanelControl_SizeChanged;
 			rectImage.MouseUp += RectImage_MouseUp;
-
-			//IsEnabledChanged += ColorBandColorButtonControl_IsEnabledChanged;
-
-			//Debug.WriteLine("The ColorBandColorUserControl is now loaded.");
 		}
-
-		//private void ColorBandColorButtonControl_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
-		//{
-		//	_rectangle.Brush.Opacity = IsEnabled ? 1.0 : 0.3;
-		//}
 
 		#endregion
 
@@ -205,19 +195,6 @@ namespace MSetExplorer
 		{
 			return isEnabled ? 1.0 : 0.3;
 		}
-
-		//private double GetOpacity(ColorBandBlendStyle blendStyle)
-		//{
-		//	var result = blendStyle switch
-		//	{
-		//		ColorBandBlendStyle.None => 0.3,
-		//		ColorBandBlendStyle.End => 1.0,
-		//		ColorBandBlendStyle.Next => 0.3,
-		//		_ => 1.0,
-		//	};
-
-		//	return result;
-		//}
 
 		#endregion
 	}

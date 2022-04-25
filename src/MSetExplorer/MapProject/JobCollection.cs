@@ -21,20 +21,21 @@ namespace MSetExplorer
 
 		public JobCollection()
 		{
-			_jobsCollection = new Collection<Job>();
+			_jobsCollection = new Collection<Job>() {Job.Empty };
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
-			_jobsPointer = -1;
+			_jobsPointer = 0;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public Job? CurrentJob => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
+		public Job CurrentJob => DoWithReadLock(() => { return  _jobsCollection[_jobsPointer]; });
 		public bool CanGoBack => !(CurrentJob?.ParentJobId is null);
 		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_jobsPointer, out var _); });
 
-		public int? CurrentIndex => DoWithReadLock<int?>(() => { return _jobsPointer == -1 ? null : _jobsPointer; });
+		public int CurrentIndex => DoWithReadLock(() => { return _jobsPointer; });
+		public int Count => DoWithReadLock(() => { return _jobsCollection.Count; });
 
 		//public IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
 
@@ -43,8 +44,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
-
-		public int Count => DoWithReadLock(() => { return _jobsCollection.Count; });
 
 		public Job this[int index]
 		{
@@ -79,8 +78,16 @@ namespace MSetExplorer
 			}
 		}
 
-		public void Load(IEnumerable<Job> jobs, ObjectId? currentId)
+		public void Load(Job job)
 		{
+			var jobs = new List<Job>() { job };
+			Load(jobs, null);
+		}
+
+		public bool Load(IEnumerable<Job> jobs, ObjectId? currentId)
+		{
+			var result = true;
+
 			DoWithWriteLock(() =>
 			{
 				_jobsCollection.Clear();
@@ -101,6 +108,7 @@ namespace MSetExplorer
 					{
 						Debug.WriteLine($"WARNING: There is no Job with Id: {currentId} in the list of Jobs being loaded into the JobCollection.");
 						_jobsPointer = _jobsCollection.Count - 1;
+						result = false;
 					}
 				}
 				else
@@ -113,6 +121,8 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine("Job Collection is not integral.");
 			}
+
+			return result;
 		}
 
 		public void Push(Job? job)
@@ -133,7 +143,8 @@ namespace MSetExplorer
 			DoWithWriteLock(() =>
 			{
 				_jobsCollection.Clear();
-				_jobsPointer = -1;
+				_jobsCollection.Add(new Job());
+				_jobsPointer = 0;
 			});
 		}
 

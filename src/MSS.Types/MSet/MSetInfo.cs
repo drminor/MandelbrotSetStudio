@@ -10,6 +10,12 @@ namespace MSS.Types.MSet
 		public RRectangle Coords { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
 
+		public MSetInfo()
+		{
+			Coords = new RRectangle();
+			MapCalcSettings = new MapCalcSettings();
+		}
+
 		public MSetInfo(RRectangle coords, MapCalcSettings mapCalcSettings)
 		{
 			Coords = coords;

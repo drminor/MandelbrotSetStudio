@@ -14,6 +14,7 @@ namespace ProjectRepo.Entities
 		SizeIntRecord NewAreaSize,
 
 		MSetInfoRecord MSetInfo,
+		ObjectId ColorBandSetId,
 
 		SizeIntRecord CanvasSizeInBlocks,
 		BigVectorRecord MapBlockOffset,

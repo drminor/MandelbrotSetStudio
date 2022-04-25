@@ -56,6 +56,7 @@ namespace ProjectRepo
 
 			var updateDefinition = Builders<JobRecord>.Update
 				.Set(u => u.MSetInfo, jobRecord.MSetInfo)
+				.Set(u => u.ColorBandSetId, jobRecord.ColorBandSetId)
 				.Set(u => u.CanvasSizeInBlocks, jobRecord.CanvasSizeInBlocks)
 				.Set(u => u.MapBlockOffset, jobRecord.MapBlockOffset)
 				.Set(u => u.CanvasControlOffset, jobRecord.CanvasControlOffset)
@@ -73,6 +74,15 @@ namespace ProjectRepo
 				.Set(u => u.LastSaved, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void AddColorBandSetIdByProject(ObjectId projectId, ObjectId colorBandSetId)
+		{
+			var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
+			var updateDefinition = Builders<JobRecord>.Update.Set("ColorBandSetId", colorBandSetId);
+			var options = new UpdateOptions { IsUpsert = false };
+
+			_ = Collection.UpdateMany(filter, updateDefinition, options);
 		}
 
 		public long? Delete(ObjectId jobId)

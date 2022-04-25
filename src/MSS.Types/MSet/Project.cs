@@ -5,34 +5,61 @@ namespace MSS.Types.MSet
 {
 	public class Project
 	{
-		public ObjectId Id { get; init; }
-		public string Name { get; set; }
-		public string? Description { get; set; }
-
+		private string _name;
+		private string? _description;
+		private ObjectId _currentJobId;
 		private DateTime _lastSavedUtc;
 
-		public ObjectId? CurrentJobId { get; set; }
-		public ObjectId CurrentColorBandSetId { get; set; }
-
-		public Project(string name, string? description, ObjectId? currentJobId, ObjectId currentColorBandSetId) 
-			: this(ObjectId.Empty, name, description, DateTime.UtcNow, currentJobId, currentColorBandSetId)
+		public Project(string name, string? description, ObjectId currentJobId) 
+			: this(ObjectId.Empty, name, description, currentJobId, DateTime.MinValue)
 		{ }
 
-		public Project(ObjectId id, string name, string? description, DateTime lastSavedUtc, ObjectId? currentJobId, ObjectId currentColorBandSetId)
+		public Project(ObjectId id, string name, string? description, ObjectId currentJobId, DateTime lastSavedUtc)
 		{
 			Id = id;
-			Name = name ?? throw new ArgumentNullException(nameof(name));
-			Description = description;
+
+ 			_name = name ?? throw new ArgumentNullException(nameof(name));
+			_description = description;
+			_currentJobId = currentJobId;
 
 			LastSavedUtc = lastSavedUtc;
-			CurrentJobId = currentJobId;
-			CurrentColorBandSetId = currentColorBandSetId;
 		}
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
-		public DateTime LastUpdated { get; private set; }
-
+		public DateTime LastUpdatedUtc { get; private set; }
 		public bool OnFile => Id != ObjectId.Empty;
+
+		public ObjectId Id { get; init; }
+
+		public string Name
+		{
+			get => _name;
+			set
+			{
+				_name = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
+
+		public string? Description
+		{
+			get => _description;
+			set
+			{
+				_description = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
+
+		public ObjectId CurrentJobId
+		{
+			get => _currentJobId;
+			set
+			{
+				_currentJobId = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
 
 		public DateTime LastSavedUtc
 		{
@@ -40,7 +67,7 @@ namespace MSS.Types.MSet
 			set
 			{
 				_lastSavedUtc = value;
-				LastUpdated = value;
+				LastUpdatedUtc = value;
 			}
 		}
 	}

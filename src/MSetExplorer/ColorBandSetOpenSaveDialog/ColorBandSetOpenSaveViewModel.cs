@@ -40,7 +40,7 @@ namespace MSetExplorer
 
 		public bool ExportColorBandSet(ColorBandSet colorBandSet)
 		{
-			_sharedColorBandSetAdapter.CreateColorBandSet(colorBandSet);
+			_ = _sharedColorBandSetAdapter.CreateColorBandSet(colorBandSet);
 			return true;
 		}
 

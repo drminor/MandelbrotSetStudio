@@ -101,10 +101,25 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Public Methods
+
 		public bool IsNameTaken(string? name)
 		{
 			var result = name != null && _projectAdapter.TryGetProject(name, out var _);
 			return result;
+		}
+
+		public void DeleteSelected()
+		{
+			var projectInfo = SelectedProject;
+
+			if (projectInfo != null)
+			{
+				_projectAdapter.DeleteProject(projectInfo.Project.Id);
+				_ = ProjectInfos.Remove(projectInfo);
+			}
 		}
 
 		#endregion
