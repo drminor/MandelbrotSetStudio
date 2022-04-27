@@ -38,18 +38,13 @@ namespace MSetExplorer
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
-		{
+	{
 			var DO_START_SERVER = true;
 			var DROP_ALL_COLLECTIONS = false;
 			var DROP_MAP_SECTIONS = false;
 			var USE_MAP_SECTION_REPO = true;
 
 			base.OnStartup(e);
-
-			if (DO_START_SERVER)
-			{
-				StartServer();
-			}
 
 			// Project Repository Adapter
 			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
@@ -66,6 +61,22 @@ namespace MSetExplorer
 			_projectAdapter.CreateCollections();
 
 			//_projectAdapter.AddColorBandSetIdToAllJobs();
+			//_projectAdapter.AddIsPreferredChildToAllJobs();
+
+			//var report = _projectAdapter.FixAllJobRels();
+			//Debug.WriteLine(report);
+
+			//var res = MessageBox.Show("FixAll complete, stop application?", "done", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+			//if (res == MessageBoxResult.Yes)
+			//{
+			//	Current.Shutdown();
+			//	return;
+			//}
+
+			if (DO_START_SERVER)
+			{
+				StartServer();
+			}
 
 			_sharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(MONGO_DB_CONN_STRING);
 			_sharedColorBandSetAdapter.CreateCollections();

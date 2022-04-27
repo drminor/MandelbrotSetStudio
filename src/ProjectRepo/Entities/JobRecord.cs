@@ -5,6 +5,7 @@ namespace ProjectRepo.Entities
 {
 	public record JobRecord(
 		ObjectId? ParentJobId,
+		bool IsPreferredChild,
 		ObjectId ProjectId,
 		ObjectId SubDivisionId,
 		string? Label,
@@ -18,10 +19,11 @@ namespace ProjectRepo.Entities
 
 		SizeIntRecord CanvasSizeInBlocks,
 		BigVectorRecord MapBlockOffset,
-		VectorIntRecord CanvasControlOffset,
-		DateTime LastSaved
+		VectorIntRecord CanvasControlOffset
 		) : RecordBase()
-	{ }
+	{
+		public DateTime LastSaved { get; set; }
+	}
 
 	public record JobModel1
 	(
@@ -31,5 +33,7 @@ namespace ProjectRepo.Entities
 		int MapCoordExponent
 	)
 	{ }
+
+
 
 }

@@ -21,7 +21,7 @@ namespace ProjectRepo
 			return colorBandSetRecords;
 		}
 
-		public ColorBandSetRecord Get(ObjectId colorBandSetId)
+		public ColorBandSetRecord? Get(ObjectId colorBandSetId)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
 			var colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
@@ -102,7 +102,7 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public IEnumerable<ObjectId> GetColorBandSetIds(ObjectId projectId)
+		public IEnumerable<ObjectId> GetColorBandSetIdsForProject(ObjectId projectId)
 		{
 			// TODO: Use Projection
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
@@ -112,6 +112,14 @@ namespace ProjectRepo
 			var ids = colorBandSets.Select(d => d.Id);
 
 			return ids;
+		}
+
+		public IEnumerable<ColorBandSetRecord> GetColorBandSetsForProject(ObjectId projectId)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+			var colorBandSets = Collection.Find(filter).ToList();
+
+			return colorBandSets;
 		}
 
 		public DateTime GetLastSaveTime(ObjectId projectId)

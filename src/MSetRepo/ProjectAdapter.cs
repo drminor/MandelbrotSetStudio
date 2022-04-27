@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text;
 
 namespace MSetRepo
 {
@@ -223,19 +224,6 @@ namespace MSetRepo
 
 		#region ColorBandSet 
 
-		//public void AddColorBandSetIdToAllJobs()
-		//{
-		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
-
-		//	var allProjectRecs = projectReaderWriter.GetAll();
-
-		//	foreach(var projectRecord in allProjectRecs)
-		//	{
-		//		jobReaderWriter.AddColorBandSetIdByProject(projectRecord.Id, projectRecord.CurrentColorBandSetId);
-		//	}
-		//}
-
 		public ColorBandSet? GetColorBandSet(string id)
 		{
 			Debug.WriteLine($"Retrieving ColorBandSet with Id: {id}.");
@@ -254,9 +242,9 @@ namespace MSetRepo
 			var id = colorBandSetReaderWriter.Insert(colorBandSetRecord);
 			colorBandSetRecord = colorBandSetReaderWriter.Get(id);
 
-			var result = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+			var result = colorBandSetRecord == null ? null : _mSetRecordMapper.MapFrom(colorBandSetRecord);
 
-			Debug.Assert(id == result.Id, "ColorBandSet result has Id different from the one on file.");
+			Debug.Assert(id == result?.Id, "ColorBandSet result has Id different from the one on file.");
 
 			return result;
 		}
@@ -265,13 +253,7 @@ namespace MSetRepo
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			colorBandSetReaderWriter.UpdateParentId(colorBandSetId, parentId);
-
-			//if (!_mSetRecordMapper.ColorBandSetCache.ContainsKey(colorBandSetId))
-			//{
-			//	_mSetRecordMapper.ColorBandSetCache.Remove(colorBandSetId);
-			//}
 		}
-
 
 		public void UpdateColorBandSetProjectId(ObjectId colorBandSetId, ObjectId projectId)
 		{
@@ -296,11 +278,10 @@ namespace MSetRepo
 			var result = new List<ColorBandSet>();
 
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			var ids = colorBandSetReaderWriter.GetColorBandSetIds(projectId);
+			var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectId);
 
-			foreach (var colorBandSetId in ids)
+			foreach (var colorBandSetRecord in colorBandSetRecords)
 			{
-				var colorBandSetRecord = colorBandSetReaderWriter.Get(colorBandSetId);
 				var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
 				result.Add(colorBandSet);
 			}
@@ -326,12 +307,13 @@ namespace MSetRepo
 			var subdivisonReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 
-			var job = GetJob(jobId, jobReaderWriter, subdivisonReaderWriter, colorBandSetReaderWriter, jobCache: null);
+			var job = GetJob(jobId, jobReaderWriter, subdivisonReaderWriter, colorBandSetReaderWriter, jobCache: null, colorBandSetCache: null);
 
 			return job;
 		}
 
-		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter, ColorBandSetReaderWriter colorBandSetReaderWriter, IDictionary<ObjectId, Job>? jobCache)
+		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter, ColorBandSetReaderWriter colorBandSetReaderWriter, 
+			IDictionary<ObjectId, Job>? jobCache, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
 		{
 			if (jobCache != null && jobCache.TryGetValue(jobId, out var qJob))
 			{
@@ -348,18 +330,19 @@ namespace MSetRepo
 			}
 
 			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
-			var colorBandSetRecord = colorBandSetReaderWriter.Get(jobRecord.ColorBandSetId);
+			var colorBandSet = GetColorBandSet(jobRecord, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
 
 			var job = new Job(
 				id: jobId,
-				parentJobId: jobRecord.ParentJobId, 
+				parentJobId: jobRecord.ParentJobId,
+				isPreferredChild: jobRecord.IsPreferredChild,
 				projectId: jobRecord.ProjectId, 
 				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord), 
 				label: jobRecord.Label,
 				transformType: Enum.Parse<TransformType>(jobRecord.TransformType.ToString()),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 				mSetInfo: _mSetRecordMapper.MapFrom(jobRecord.MSetInfo),
-				colorBandSet: _mSetRecordMapper.MapFrom(colorBandSetRecord),
+				colorBandSet: colorBandSet,
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks), 
 				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset), 
 				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset),
@@ -367,7 +350,33 @@ namespace MSetRepo
 				);
 
 			jobCache?.Add(job.Id, job);
+
+			if (!isCacheHit)
+			{
+				colorBandSetCache?.Add(colorBandSet.Id, colorBandSet);
+			}
+
 			return job;
+		}
+
+		private ColorBandSet GetColorBandSet(JobRecord jobRecord, ColorBandSetReaderWriter colorBandSetReaderWriter, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache, out bool isCacheHit)
+		{
+			if (colorBandSetCache != null && colorBandSetCache.TryGetValue(jobRecord.ColorBandSetId, out var colorBandSet))
+			{
+				isCacheHit = true;
+				return colorBandSet;
+			}
+
+			isCacheHit = false;
+			var colorBandSetRecord = colorBandSetReaderWriter.Get(jobRecord.ColorBandSetId);
+			if (colorBandSetRecord == null)
+			{
+				Debug.WriteLine($"The colorBandSetRecord is null for the CbsId: {jobRecord.ColorBandSetId}, job : {jobRecord.Id}, of Project: {jobRecord.ProjectId} .");
+			}
+
+			colorBandSet = colorBandSetRecord == null ? new ColorBandSet() : _mSetRecordMapper.MapFrom(colorBandSetRecord);
+
+			return colorBandSet;
 		}
 
 		public Job InsertJob(Job job)
@@ -376,7 +385,7 @@ namespace MSetRepo
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 
-			//jobRecord.LastSaved = DateTime.UtcNow;
+			jobRecord.LastSaved = DateTime.UtcNow;
 			var id = jobReaderWriter.Insert(jobRecord);
 
 			var updatedJob = GetJob(id);
@@ -387,7 +396,7 @@ namespace MSetRepo
 		public void UpdateJobsParent(Job job)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJobId);
+			jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJobId, job.IsPreferredChild);
 			job.LastSavedUtc = DateTime.UtcNow;
 		}
 
@@ -419,7 +428,20 @@ namespace MSetRepo
 			return result;
 		}
 
-		public IEnumerable<Job> GetAllJobs(ObjectId projectId)
+		public IEnumerable<Job> GetAllJobsForProject(ObjectId projectId)
+		{
+			return GetAllJobsForProject(projectId, colorBandSetCache: null);
+		}
+
+		public IEnumerable<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets)
+		{
+			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
+			var result = GetAllJobsForProject(projectId, colorBandSetCache);
+
+			return result;
+		}
+
+		public IEnumerable<Job> GetAllJobsForProject(ObjectId projectId, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
 		{
 			var result = new List<Job>();
 
@@ -428,16 +450,185 @@ namespace MSetRepo
 
 			var subdivisonReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+
 			var jobCache = new Dictionary<ObjectId, Job>();
 
 			foreach (var jobId in ids)
 			{
-				var job = GetJob(jobId, jobReaderWriter, subdivisonReaderWriter, colorBandSetReaderWriter, jobCache);
+				var job = GetJob(jobId, jobReaderWriter, subdivisonReaderWriter, colorBandSetReaderWriter, jobCache, colorBandSetCache);
 				result.Add(job);
 			}
 
 			return result;
 		}
+
+		#endregion
+
+		#region Active Job Schema Updates
+
+		public int[] FixAllJobRels()
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var allProjectRecs = projectReaderWriter.GetAll();
+
+			var result = new int[allProjectRecs.Count()];
+
+			var ptr = 0;
+			foreach (var projectRecord in allProjectRecs)
+			{
+				result[ptr++] = FixJobRels(projectRecord.Id);
+			}
+
+			return result;
+		}
+
+		public int FixJobRels(ObjectId projectId)
+		{
+			var result = 0;
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+			var lastId = ObjectId.GenerateNewId();
+
+			var jobs = GetAllJobsForProject(projectId);
+			var jobsWithAParent = jobs.Where(x => x.ParentJobId != null).OrderBy(f => f.ParentJobId).ThenByDescending(f => f.Id);
+
+			foreach (var job in jobsWithAParent)
+			{
+				if (job.ParentJobId == lastId)
+				{
+					job.IsPreferredChild = false;
+					jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJobId, job.IsPreferredChild);
+					result++;
+				}
+				else
+				{
+					job.IsPreferredChild = true;
+#pragma warning disable CS8629 // Nullable value type may be null.
+					lastId = (ObjectId)job.ParentJobId;
+#pragma warning restore CS8629 // Nullable value type may be null.
+				}
+			}
+
+			return result;
+		}
+
+		#endregion
+
+		#region Archived Job Schema Updates
+
+		public string FixAllJobRels2()
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var allProjectRecs = projectReaderWriter.GetAll();
+
+			var sb = new StringBuilder();
+
+			foreach (var projectRecord in allProjectRecs)
+			{
+				sb.AppendLine($"Project: {projectRecord.Id}, {projectRecord.DateCreated}");
+
+				var ts = FixJobRels2(projectRecord.Id);
+
+				foreach (var t in ts)
+				{
+					var t1 = t.Item1;
+					var t2 = t.Item2;
+
+					var s1 = $"{t1.Id}\t {t1.DateCreated}\t{t1.TransformType}\t\t{t1.Subdivision.SamplePointDelta.Exponent}\t{t1.ParentJobId}";
+					var s2 = $"{t2?.Id}\t {t2?.DateCreated}\t {t2?.TransformType}\t\t{t2?.Subdivision.SamplePointDelta.Exponent}\t{t2?.ParentJobId}";
+
+					sb.Append(s1).Append("\t\t").AppendLine(s2);
+				}
+			}
+
+			return sb.ToString();
+		}
+
+		//public int FixAllJobRels3()
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+		//	var allProjectRecs = projectReaderWriter.GetAll();
+
+		//	var result = 0;
+
+		//	foreach (var projectRecord in allProjectRecs)
+		//	{
+		//		var ts = FixJobRels2(projectRecord.Id);
+
+		//		foreach (var t in ts)
+		//		{
+		//			jobReaderWriter.UpdateJobsParent(t.Item1.Id, t.Item2.Id, t.Item1.IsPreferredChild);
+		//		}
+		//	}
+
+		//	return result;
+		//}
+
+		public IList<Tuple<Job, Job>> FixJobRels2(ObjectId projectId)
+		{
+			var result = new List<Tuple<Job, Job>>();
+
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+			var lastId = ObjectId.GenerateNewId();
+
+
+			var jobs = GetAllJobsForProject(projectId);
+			var jobsWithAParent = jobs.Where(x => x.ParentJobId != null).OrderBy(f => f.ParentJobId).ThenBy(f => f.Id);
+
+			var lookupList = jobs.OrderByDescending(f => f.Id).Select(x => new ValueTuple<string, Job>(x.Id.ToString(), x));
+
+
+			foreach (var job in jobsWithAParent)
+			{
+				var parentJob = jobs.FirstOrDefault(x => x.Id == job.ParentJobId);
+
+				if (parentJob == null)
+				{
+					ValueTuple<string, Job> newParentIdAndJob;
+					//parentJob = jobs.FirstOrDefault(x => x.DateCreated <= job.DateCreated && x.Id.Increment < job.Id.Increment);
+					if (job.TransformType == TransformType.ZoomIn)
+					{
+						newParentIdAndJob = lookupList.FirstOrDefault(x => string.Compare(x.Item1, job.Id.ToString()) < 0 && x.Item2.Subdivision.SamplePointDelta.Exponent > job.Subdivision.SamplePointDelta.Exponent);
+					}
+					else
+					{
+						newParentIdAndJob = lookupList.FirstOrDefault(x => string.Compare(x.Item1, job.Id.ToString()) < 0);
+					}
+
+					if (newParentIdAndJob != default(ValueTuple<string, Job>))
+					{
+						var jobAndNewParent = new Tuple<Job, Job>(job, newParentIdAndJob.Item2);
+						result.Add(jobAndNewParent);
+					}
+
+				}
+			}
+
+			return result;
+		}
+
+		//public void AddColorBandSetIdToAllJobs()
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+		//	var allProjectRecs = projectReaderWriter.GetAll();
+
+		//	foreach (var projectRecord in allProjectRecs)
+		//	{
+		//		jobReaderWriter.AddColorBandSetIdByProject(projectRecord.Id, projectRecord.CurrentColorBandSetId);
+		//	}
+		//}
+
+		//public void AddIsPreferredChildToAllJobs()
+		//{
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+		//	jobReaderWriter.AddIsPreferredChildToAllJobs();
+		//}
 
 		#endregion
 

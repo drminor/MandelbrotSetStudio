@@ -158,11 +158,14 @@ namespace MSetExplorer
 				if (value != _useRealTimePreview)
 				{
 					var strState = value ? "On" : "Off";
-					Debug.WriteLine($"The ColorBandSetViewModel is turning {strState} the use of RealTimePreview.");
+					Debug.WriteLine($"The ColorBandSetViewModel is turning {strState} the use of RealTimePreview. IsDirty = {IsDirty}.");
 					_useRealTimePreview = value;
 
-					var colorBandSet = _useRealTimePreview ? _currentColorBandSet : _colorBandSetCollection[0];
-					ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(colorBandSet, isPreview: true));
+					if (IsDirty)
+					{
+						var colorBandSet = _useRealTimePreview ? _currentColorBandSet : _colorBandSetCollection[0];
+						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(colorBandSet, isPreview: true));
+					}
 
 					OnPropertyChanged(nameof(UseRealTimePreview));
 				}

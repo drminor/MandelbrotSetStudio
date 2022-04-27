@@ -38,7 +38,7 @@ namespace MSetExplorer
 
 		public int Count => DoWithReadLock(() => { return _colorsCollection.Count; });
 
-		//public IEnumerable<ColorBandSet> ColorBandSets => DoWithReadLock(() => { return new ReadOnlyCollection<ColorBandSet>(_colorsCollection); });
+		public IEnumerable<ColorBandSet> GetColorBandSets() => DoWithReadLock(() => { return new ReadOnlyCollection<ColorBandSet>(_colorsCollection); });
 
 		//public bool IsDirty => _colorsCollection.Any(x => !x.OnFile);
 

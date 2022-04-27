@@ -6,6 +6,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 
 namespace MSetExplorer
@@ -143,13 +144,15 @@ namespace MSetExplorer
 			CurrentProject = project;
 			CurrentProjectIsDirty = false;
 
-			var jobs = _projectAdapter.GetAllJobs(CurrentProject.Id);
+			var colorBandSets = _projectAdapter.GetColorBandSetsForProject(CurrentProject.Id);
+			_ = _colorBandSetCollection.Load(colorBandSets, null);
+
+			var jobs = _projectAdapter.GetAllJobsForProject(CurrentProject.Id, _colorBandSetCollection.GetColorBandSets());
 			_ = _jobsCollection.Load(jobs, currentId: project.CurrentJobId);
 
-			var colorBandSets = _projectAdapter.GetColorBandSetsForProject(CurrentProject.Id);
-			_ = _colorBandSetCollection.Load(colorBandSets, CurrentJob.ColorBandSet.Id);
+			CurrentJob.ColorBandSet.HighCutOff = CurrentJob.MSetInfo.MapCalcSettings.TargetIterations;
 
-			CurrentColorBandSet.HighCutOff = CurrentJob.MSetInfo.MapCalcSettings.TargetIterations;
+			_ = _colorBandSetCollection.MoveCurrentTo(CurrentJob.ColorBandSet);
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
@@ -282,7 +285,7 @@ namespace MSetExplorer
 					var updatedCbs = _projectAdapter.CreateColorBandSet(cbs);
 					_colorBandSetCollection[i] = updatedCbs;
 					UpdateCbsParentIds(cbs.Id, updatedCbs.Id);
-					UpdateJobCbsIds(cbs.Id, updatedCbs.Id);
+					UpdateJobCbsIds(cbs, updatedCbs);
 				}
 				else
 				{
@@ -310,14 +313,14 @@ namespace MSetExplorer
 		}
 
 
-		public void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId)
+		public void UpdateJobCbsIds(ColorBandSet oldCbs, ColorBandSet newCbs)
 		{
 			for (var i = 0; i < _jobsCollection.Count; i++)
 			{
 				var job = _jobsCollection[i];
-				if (oldCbsId == job.ColorBandSet.Id)
+				if (oldCbs == job.ColorBandSet)
 				{
-					job.ColorBandSet.Id = newCbsId;
+					job.ColorBandSet = newCbs;
 				}
 			}
 		}
@@ -584,7 +587,7 @@ namespace MSetExplorer
 
 				var newMsetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
 
-				Debug.WriteLine($"Reruning job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+				Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
 
 				job.MSetInfo = newMsetInfo;
 				job.MapBlockOffset = mapBlockOffset;

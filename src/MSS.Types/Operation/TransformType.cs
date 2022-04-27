@@ -8,6 +8,7 @@ namespace MSS.Types
 		IterationUpdate,
 		ColorMapUpdate,
 		ZoomIn,
-		Pan
+		Pan,
+		CanvasSizeUpdate
 	}
 }

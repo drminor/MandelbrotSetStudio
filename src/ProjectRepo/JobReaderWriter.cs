@@ -39,12 +39,13 @@ namespace ProjectRepo
 			return jobRecord.Id;
 		}
 
-		public void UpdateJobsParent(ObjectId jobId, ObjectId? parentId)
+		public void UpdateJobsParent(ObjectId jobId, ObjectId? parentId, bool isPreferredChild)
 		{
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
 
 			var updateDefinition = Builders<JobRecord>.Update
 				.Set(u => u.ParentJobId, parentId)
+				.Set(u => u.IsPreferredChild, isPreferredChild)
 				.Set(u => u.LastSaved, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
@@ -74,15 +75,6 @@ namespace ProjectRepo
 				.Set(u => u.LastSaved, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
-		}
-
-		public void AddColorBandSetIdByProject(ObjectId projectId, ObjectId colorBandSetId)
-		{
-			var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
-			var updateDefinition = Builders<JobRecord>.Update.Set("ColorBandSetId", colorBandSetId);
-			var options = new UpdateOptions { IsUpsert = false };
-
-			_ = Collection.UpdateMany(filter, updateDefinition, options);
 		}
 
 		public long? Delete(ObjectId jobId)
@@ -140,6 +132,24 @@ namespace ProjectRepo
 				var result = jobs.Max(x => x.Id.CreationTime);
 				return result;
 			}
+		}
+
+		public void AddColorBandSetIdByProject(ObjectId projectId, ObjectId colorBandSetId)
+		{
+			var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
+			var updateDefinition = Builders<JobRecord>.Update.Set("ColorBandSetId", colorBandSetId);
+			var options = new UpdateOptions { IsUpsert = false };
+
+			_ = Collection.UpdateMany(filter, updateDefinition, options);
+		}
+
+		public void AddIsPreferredChildToAllJobs()
+		{
+			var filter = Builders<JobRecord>.Filter.Empty;
+			var updateDefinition = Builders<JobRecord>.Update.Set("IsPreferredChild", true);
+			var options = new UpdateOptions { IsUpsert = false };
+
+			_ = Collection.UpdateMany(filter, updateDefinition, options);
 		}
 
 		#endregion

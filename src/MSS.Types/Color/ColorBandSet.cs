@@ -38,21 +38,17 @@ namespace MSS.Types
 			ProjectId = projectId;
 			_name = name;
 			_description = description;
-
-			//DateCreated = id == ObjectId.Empty ? DateTime.UtcNow : id.CreationTime;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public ObjectId Id { get; set; }
+		public ObjectId Id { get; init; }
 		public ObjectId? ParentId { get; set; }
 		public ObjectId ProjectId { get; set; }
 
-		//public DateTime DateCreated { get; private set; }
-		public DateTime DateCreated => Id.CreationTime; //{ get; private set; }
-
+		public DateTime DateCreated => Id.CreationTime;
 
 		public string? Name
 		{

@@ -179,11 +179,6 @@ namespace MSetExplorer
 			{
 				MapDisplayViewModel.UseEscapeVelocities = ColorBandSetViewModel.UseEscapeVelocities;
 			}
-
-			else if (e.PropertyName == nameof(ColorBandSetViewModel.UseRealTimePreview))
-			{
-				Debug.WriteLine($"MainWindow is handling UseRealTimePreview update.");
-			}
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)

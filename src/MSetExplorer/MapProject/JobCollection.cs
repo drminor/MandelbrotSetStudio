@@ -97,6 +97,11 @@ namespace MSetExplorer
 					_jobsCollection.Add(job);
 				}
 
+				if (_jobsCollection.Count == 0)
+				{
+					_jobsCollection.Add(new Job());
+				}
+
 				if (currentId.HasValue)
 				{
 					if (TryFindByJobId(currentId.Value, out var job))

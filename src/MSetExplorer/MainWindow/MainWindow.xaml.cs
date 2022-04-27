@@ -59,34 +59,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MapCoordsView1_PreviewKeyDown(object sender, KeyEventArgs e)
-		{
-			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
-			{
-				var coords = _vm.MSetInfoViewModel.Coords;
-				Clipboard.SetText(coords.ToString());
-				e.Handled = true;
-			}
-		}
-
-		private void MapCoordsView1_KeyDown(object sender, KeyEventArgs e)
-		{
-			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
-			{
-				var coords = _vm.MSetInfoViewModel.Coords;
-				Clipboard.SetText(coords.ToString());
-			}
-		}
-
-		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
-		{
-			if (e.MapSettingsUpdateType == MapSettingsUpdateType.NewProject)
-			{
-				Debug.WriteLine($"MainWindow ViewModel received request to start a new project.");
-				var mSetInfo = new MSetInfo(e.Coords, new MapCalcSettings(e.TargetIterations, e.RequestsPerJob));
-				LoadNewProject(mSetInfo);
-			}
-		}
 
 		private void MainWindow_ContentRendered(object? sender, EventArgs e)
 		{
@@ -97,6 +69,16 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
+		{
+			if (e.MapSettingsUpdateType == MapSettingsUpdateType.NewProject)
+			{
+				Debug.WriteLine($"MainWindow ViewModel received request to start a new project.");
+				var mSetInfo = new MSetInfo(e.Coords, new MapCalcSettings(e.TargetIterations, e.RequestsPerJob));
+				LoadNewProject(mSetInfo);
+			}
+		}
 
 		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
@@ -126,6 +108,27 @@ namespace MSetExplorer
 				CommandManager.InvalidateRequerySuggested();
 			}
 		}
+
+		private void MapCoordsView1_PreviewKeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
+			{
+				var coords = _vm.MSetInfoViewModel.Coords;
+				Clipboard.SetText(coords.ToString());
+				e.Handled = true;
+			}
+		}
+
+		private void MapCoordsView1_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
+			{
+				var coords = _vm.MSetInfoViewModel.Coords;
+				Clipboard.SetText(coords.ToString());
+			}
+		}
+
+
 
 		#endregion
 
@@ -458,8 +461,7 @@ namespace MSetExplorer
 		{
 			var maxIterations = 700;
 			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations);
-			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(maxIterations);
-			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo, colorBandSet);
+			LoadNewProject(mSetInfo);
 		}
 
 		private void LoadNewProject(MSetInfo mSetInfo)

@@ -77,20 +77,23 @@ namespace MSetRepo
 		{
 			var result = new JobRecord(
 				source.ParentJobId,
+				source.IsPreferredChild,
 				source.ProjectId,
 				source.Subdivision.Id,
 				source.Label,
 
-				(int) source.TransformType,
+				(int)source.TransformType,
 				MapTo(source.NewArea?.Position ?? new PointInt()),
 				MapTo(source.NewArea?.Size ?? new SizeInt()),
 				MapTo(source.MSetInfo),
 				source.ColorBandSet.Id,
 				MapTo(source.CanvasSizeInBlocks),
 				MapTo(source.MapBlockOffset),
-				MapTo(source.CanvasControlOffset),
-				source.LastSavedUtc
-				);
+				MapTo(source.CanvasControlOffset)
+				)
+			{
+				LastSaved = source.LastSavedUtc
+			};
 
 			return result;
 		}

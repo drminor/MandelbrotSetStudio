@@ -82,6 +82,7 @@ namespace MSetExplorer
 			}
 		}
 
+		// TODO: Need a better way to determine if the current job has a different canvas size than the original.
 		private bool IsJobChanged(Job? previousJob, Job? newJob)
 		{
 			if (!(previousJob is null) && !(newJob is null))
