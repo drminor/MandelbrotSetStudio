@@ -85,8 +85,6 @@ namespace MSS.Types.MSet
 			_mapBlockOffset = mapBlockOffset;
 			_canvasControlOffset = canvasControlOffset;
 
-			_isPreferredChild = true;
-
 			LastSavedUtc = lastSaved;
 		}
 

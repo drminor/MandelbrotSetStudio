@@ -122,9 +122,9 @@ namespace MSetExplorer
 				}
 			});
 
-			if (!CheckJobStackIntegrity())
+			if (!CheckJobStackIntegrity(out var reason))
 			{
-				Debug.WriteLine("Job Collection is not integral.");
+				Debug.WriteLine($"Job Collection is not integral. Reason: {reason}");
 			}
 
 			return result;
@@ -284,23 +284,68 @@ namespace MSetExplorer
 			return job != null;
 		}
 
-		private bool CheckJobStackIntegrity()
+		private bool CheckJobStackIntegrity(out List<string> reasons)
 		{
-			var result = DoWithReadLock(() => {
-				foreach(var job in _jobsCollection)
+			reasons = new List<string>();
+
+			var allFoundParentIds = new List<ObjectId>();
+
+			_jobsLock.EnterReadLock();
+
+			try
+			{
+				foreach (var job in _jobsCollection)
 				{
 					if (job.ParentJobId.HasValue)
 					{
-						if (!TryFindByJobId(job.ParentJobId.Value, out var _))
+						var parentId = job.ParentJobId.Value;
+						if (!TryFindByJobId(parentId, out var _))
 						{
-							return false;
+							reasons.Add($"Job with Id: {job.Id}, ParentId: {job.ParentJobId} exists, but there is no Job with Id: {job.ParentJobId}.");
+						}
+						else
+						{
+							if (job.IsPreferredChild)
+							{
+								if (!allFoundParentIds.Contains(parentId))
+								{
+									allFoundParentIds.Add(parentId);
+								}
+								else
+								{
+									reasons.Add($"Parent Job with Id: {parentId} has more than one child whose IsPreferredChild is true. {job.Id}, being one of them.");
+									//return false;
+								}
+							}
 						}
 					}
 				}
 
-				return true;
-			});
+				var allParentIds = GetUniqueJobParentIds(_jobsCollection);
 
+				var allUnmatched = allParentIds.Except(allFoundParentIds);
+
+				//foreach(var t in allFoundParentIds)
+				//{
+				//	allParentIds.Remove(t);
+				//}
+
+				foreach(var s in allUnmatched)
+				{
+					reasons.Add($"Parent Job with Id: {s} has no preferred child.");
+				}
+
+				return reasons.Count == 0;
+			}
+			finally
+			{
+				_jobsLock.ExitReadLock();
+			}
+		}
+
+		private IEnumerable<ObjectId> GetUniqueJobParentIds(IEnumerable<Job> jobs)
+		{
+			var result = jobs.Select(x => x.ParentJobId).Where(x => x.HasValue).Cast<ObjectId>(); //.Distinct();
 			return result;
 		}
 

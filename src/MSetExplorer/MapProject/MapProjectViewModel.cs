@@ -4,9 +4,7 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 
 namespace MSetExplorer

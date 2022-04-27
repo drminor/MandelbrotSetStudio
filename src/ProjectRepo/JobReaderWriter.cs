@@ -103,6 +103,22 @@ namespace ProjectRepo
 
 		#region Aggregate Results
 
+		public IEnumerable<ObjectId> GetAllReferencedColorBandSetIds()
+		{
+			var projection1 = Builders<JobRecord>.Projection.Expression
+				(
+					p => p.ColorBandSetId
+				);
+
+			//List models = collection.Find(_ => true).Project(projection1).ToList();
+
+			var filter = Builders<JobRecord>.Filter.Empty;
+			var colorBandSetIds = Collection.Find(filter).Project(projection1).ToEnumerable().Distinct();
+
+			return colorBandSetIds;
+		}
+
+
 		public IEnumerable<JobModel1> GetJobInfos(ObjectId projectId)
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression

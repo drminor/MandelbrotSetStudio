@@ -151,10 +151,10 @@ namespace MSetExplorer
 				}
 			});
 
-			if (!CheckJobStackIntegrity())
-			{
-				Debug.WriteLine("The ColorBandSet Collection is not integral.");
-			}
+			//if (!CheckJobStackIntegrity())
+			//{
+			//	Debug.WriteLine("The ColorBandSet Collection is not integral.");
+			//}
 
 			return result;
 		}

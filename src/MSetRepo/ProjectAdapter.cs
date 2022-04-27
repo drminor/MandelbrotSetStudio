@@ -164,6 +164,15 @@ namespace MSetRepo
 				_ = DeleteJob(jobId, jobReaderWriter);
 			}
 
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+
+			var cbsIds = colorBandSetReaderWriter.GetColorBandSetIdsForProject(projectId);
+
+			foreach (var colorBandSetId in cbsIds)
+			{
+				_ = colorBandSetReaderWriter.Delete(colorBandSetId);
+			}
+
 			_ = projectReaderWriter.Delete(projectId);
 		}
 
@@ -465,6 +474,74 @@ namespace MSetRepo
 		#endregion
 
 		#region Active Job Schema Updates
+
+		public int DeleteUnusedColorBandSets()
+		{
+			var result = 0;
+
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+			var colorBandSetIdsRefByJob = jobReaderWriter.GetAllReferencedColorBandSetIds().ToList();
+
+			Debug.WriteLine($"\nRef by a Job\n");
+			foreach (var x in colorBandSetIdsRefByJob)
+			{
+				Debug.WriteLine($"{x}");
+			}
+
+			var colorBandSetIds = new List<ObjectId>(colorBandSetIdsRefByJob);
+
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+
+			//var referencedByProjectNotByJob = 0;
+
+			var referencedByProjectNotByJob = new List<ObjectId>();
+
+			var projectRecords = projectReaderWriter.GetAll();
+			foreach(var projectRec in projectRecords)
+			{
+				var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectRec.Id);
+				foreach (var colorBandSetRec in colorBandSetRecords)
+				{
+					if (!colorBandSetIds.Contains(colorBandSetRec.Id))
+					{
+						colorBandSetIds.Add(colorBandSetRec.Id);
+						referencedByProjectNotByJob.Add(colorBandSetRec.Id);
+					}
+				}
+			}
+
+			referencedByProjectNotByJob = referencedByProjectNotByJob.Distinct().ToList();
+
+			Debug.WriteLine($"\nRef by Project, but not by job\n");
+			foreach (var x in referencedByProjectNotByJob)
+			{
+				Debug.WriteLine($"{x}");
+			}
+
+			var allCbsIds = colorBandSetReaderWriter.GetAll().Select(x => x.Id);
+
+			var unReferenced = new List<ObjectId>();
+
+			foreach (var cbsId in allCbsIds)
+			{
+				if (!colorBandSetIds.Contains(cbsId))
+				{
+					unReferenced.Add(cbsId);
+				}
+			}
+
+			Debug.WriteLine($"\nUnreferenced\n");
+			foreach (var x in unReferenced)
+			{
+				Debug.WriteLine($"{x}");
+				//_ = colorBandSetReaderWriter.Delete(x);
+			}
+
+
+			return result;
+		}
 
 		public int[] FixAllJobRels()
 		{

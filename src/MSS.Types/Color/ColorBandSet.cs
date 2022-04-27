@@ -32,7 +32,7 @@ namespace MSS.Types
 
 		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands) : base(FixBands(colorBands))
 		{
-			Debug.WriteLine($"Constructing ColorBandSet with id: {id}.");
+			//Debug.WriteLine($"Constructing ColorBandSet with id: {id}.");
 			Id = id;
 			ParentId = parentId;
 			ProjectId = projectId;

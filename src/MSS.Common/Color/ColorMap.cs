@@ -21,7 +21,7 @@ namespace MSS.Common
                 throw new ArgumentNullException(nameof(colorBandSet));
             }
 
-            Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
+            //Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
 
             _colorBandSet = colorBandSet;
             //_colorBandSet.Fix();
