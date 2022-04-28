@@ -79,6 +79,29 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool MoveCurrentTo(ObjectId jobId)
+		{
+			_jobsLock.EnterUpgradeableReadLock();
+
+			try
+			{
+				if (TryFindByJobId(jobId, out var job))
+				{
+					var index = _jobsCollection.IndexOf(job);
+					DoWithWriteLock(() => { _jobsPointer = index; });
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			finally
+			{
+				_jobsLock.ExitUpgradeableReadLock();
+			}
+		}
+
 		public bool MoveCurrentTo(int index)
 		{
 			_jobsLock.EnterUpgradeableReadLock();
@@ -104,10 +127,10 @@ namespace MSetExplorer
 		public void Load(Job job)
 		{
 			var jobs = new List<Job>() { job };
-			Load(jobs, null);
+			Load(jobs);
 		}
 
-		public bool Load(IEnumerable<Job> jobs, ObjectId? currentId)
+		public bool Load(IEnumerable<Job> jobs)
 		{
 			var result = true;
 
@@ -125,24 +148,7 @@ namespace MSetExplorer
 					_jobsCollection.Add(new Job());
 				}
 
-				if (currentId.HasValue)
-				{
-					if (TryFindByJobId(currentId.Value, out var job))
-					{
-						var idx = _jobsCollection.IndexOf(job);
-						_jobsPointer = idx;
-					}
-					else
-					{
-						Debug.WriteLine($"WARNING: There is no Job with Id: {currentId} in the list of Jobs being loaded into the JobCollection.");
-						_jobsPointer = _jobsCollection.Count - 1;
-						result = false;
-					}
-				}
-				else
-				{
-					_jobsPointer = _jobsCollection.Count - 1;
-				}
+				_jobsPointer = _jobsCollection.Count - 1;
 			});
 
 			if (!CheckCollectionIntegrity(out var reason))

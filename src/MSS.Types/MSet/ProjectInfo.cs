@@ -7,37 +7,31 @@ namespace MSS.Types.MSet
 {
 	public class ProjectInfo : IProjectInfo
 	{
-		//private int _numberOfJobs;
-		//private int _minMapCoordsExponent;
-		//private int _minSamplePointDeltaExponent;
-
 		private string _name;
 		private string? _description;
 		private DateTime _lastSavedUtc;
 
 		#region Constructor
 
-		public ProjectInfo(Project project, DateTime lastSavedUtc, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
+		public ProjectInfo(ObjectId projectId, DateTime dateCreated, string name, string? description, DateTime lastSavedUtc, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
 		{
-			Project = project;
-			DateCreated = project.DateCreated.ToLocalTime();
+			ProjectId = projectId;
+			DateCreated = dateCreated;
 
 			_lastSavedUtc = lastSavedUtc;
 			NumberOfJobs = numberOfJobs;
 			MinMapCoordsExponent = minMapCoordsExponent;
 			MinSamplePointDeltaExponent = minSamplePointDeltaExponent;
 
-			_name = project.Name;
-			_description = project.Description;
+			_name = name;
+			_description = description;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public Project Project { get; init; }
-
-		public ObjectId Id => Project.Id;
+		public ObjectId ProjectId { get; init; }
 
 		public DateTime DateCreated { get; init; }
 		public int NumberOfJobs { get; init; }

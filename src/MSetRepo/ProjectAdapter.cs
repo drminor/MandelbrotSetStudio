@@ -219,11 +219,13 @@ namespace MSetRepo
 					lastUpdated = lastSaved;
 				}
 
-				result = new ProjectInfo(project, lastUpdated, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
+				var dateCreated = project.DateCreated.ToLocalTime();
+
+				result = new ProjectInfo(project.Id, dateCreated, project.Name, project.Description, lastUpdated, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
 			else
 			{
-				result = new ProjectInfo(project, DateTime.MinValue, 0, 0, 0);
+				result = new ProjectInfo(ObjectId.Empty, DateTime.MinValue, "name", null, DateTime.MinValue, 0, 0, 0);
 			}
 
 			return result;
@@ -340,6 +342,11 @@ namespace MSetRepo
 
 			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
 			var colorBandSet = GetColorBandSet(jobRecord, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
+
+			if (jobRecord.MSetInfo.MapCalcSettings.TargetIterations != colorBandSet.HighCutOff)
+			{
+				Debug.WriteLine($"WARNING: Job's ColorMap HighCutOff doesn't match the TargetIterations.");
+			}
 
 			var job = new Job(
 				id: jobId,

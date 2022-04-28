@@ -46,7 +46,6 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-
 		public ColorBandSet this[int index]
 		{
 			get => DoWithReadLock(() => { return _colorsCollection[index]; });
@@ -111,10 +110,10 @@ namespace MSetExplorer
 				colorBandSets.Add(colorBandSet);
 			}
 
-			Load(colorBandSets, null);
+			Load(colorBandSets);
 		}
 		
-		public bool Load(IEnumerable<ColorBandSet> colorBandSets, ObjectId? currentId)
+		public bool Load(IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var result = true;
 
@@ -132,23 +131,7 @@ namespace MSetExplorer
 					_colorsCollection.Add(new ColorBandSet());
 				}
 
-				if (currentId.HasValue)
-				{
-					if (TryGetIndexFromId(currentId.Value, out var idx)) 
-					{
-						_colorsPointer = idx;
-					}
-					else
-					{
-						Debug.WriteLine($"WARNING: There is no ColorBandSet with Id: {currentId} in the list of ColorBandSets being loaded into the ColorBandSetCollection.");
-						_colorsPointer = _colorsCollection.Count - 1;
-						result = false;
-					}
-				}
-				else
-				{
-					_colorsPointer = _colorsCollection.Count - 1;
-				}
+				_colorsPointer = _colorsCollection.Count - 1;
 			});
 
 			//if (!CheckJobStackIntegrity())

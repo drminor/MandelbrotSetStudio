@@ -12,6 +12,7 @@ namespace MSetExplorer
 	internal class MapProjectViewModel : ViewModelBase, IMapProjectViewModel, IDisposable
 	{
 		private readonly ProjectAdapter _projectAdapter;
+
 		private readonly JobCollection _jobsCollection;
 		private readonly ColorBandSetCollection _colorBandSetCollection;
 
@@ -143,13 +144,20 @@ namespace MSetExplorer
 			CurrentProjectIsDirty = false;
 
 			var colorBandSets = _projectAdapter.GetColorBandSetsForProject(CurrentProject.Id);
-			_ = _colorBandSetCollection.Load(colorBandSets, null);
+			_ = _colorBandSetCollection.Load(colorBandSets);
 
 			var jobs = _projectAdapter.GetAllJobsForProject(CurrentProject.Id, _colorBandSetCollection.GetColorBandSets());
-			_ = _jobsCollection.Load(jobs, currentId: project.CurrentJobId);
+			_ = _jobsCollection.Load(jobs);
+
+			if (!_jobsCollection.MoveCurrentTo(project.CurrentJobId))
+			{
+				Debug.WriteLine($"Warning the Project a CurrentJobId of {project.CurrentJobId}, but this job cannot be found. Setting the current job to be the last job.");
+				project.CurrentJobId = CurrentJob.Id;
+			}
 
 			CurrentJob.ColorBandSet.HighCutOff = CurrentJob.MSetInfo.MapCalcSettings.TargetIterations;
 
+			// TODO:xx Make sure this set exists in the collection.
 			_ = _colorBandSetCollection.MoveCurrentTo(CurrentJob.ColorBandSet);
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
@@ -376,6 +384,8 @@ namespace MSetExplorer
 				_colorBandSetCollection.Push(colorBandSet);
 			}
 
+			CurrentJob.ColorBandSet = colorBandSet;
+
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
 			if (isTargetIterationsBeingUpdated)
@@ -385,7 +395,7 @@ namespace MSetExplorer
 			else
 			{
 				// No new job is being created, instead this job is being updated.
-				CurrentJob.ColorBandSet = colorBandSet;
+				Debug.Assert(CurrentJob.MSetInfo.MapCalcSettings.TargetIterations == colorBandSet.HighCutOff, "HighCutOff mismatch on UpdateColors.");
 			}
 
 			CurrentProjectIsDirty = true;
@@ -446,11 +456,7 @@ namespace MSetExplorer
 					{
 						if (CurrentJob.ColorBandSet != CurrentColorBandSet)
 						{
-							if (! _colorBandSetCollection.MoveCurrentTo(CurrentJob.ColorBandSet))
-							{
-								throw new InvalidOperationException("The MapProjectViewModel cannot find a ColorBandSet for the job we are moving back to.");
-							}
-							OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+							LoadColorBandSetForJob(CurrentJob.ColorBandSet);
 						}
 
 						var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
@@ -494,11 +500,7 @@ namespace MSetExplorer
 					{
 						if (CurrentJob.ColorBandSet != CurrentColorBandSet)
 						{
-							if (!_colorBandSetCollection.MoveCurrentTo(CurrentJob.ColorBandSet))
-							{
-								throw new InvalidOperationException("The MapProjectViewModel cannot find a ColorBandSet for the job we are moving forward to.");
-							}
-							OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+							LoadColorBandSetForJob(CurrentJob.ColorBandSet);
 						}
 
 						var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
@@ -579,6 +581,11 @@ namespace MSetExplorer
 				return;
 			}
 
+			if (mSetInfo.MapCalcSettings.TargetIterations != CurrentColorBandSet.HighCutOff)
+			{
+				Debug.WriteLine($"WARNING: Job's ColorMap HighCutOff doesn't match the TargetIterations.");
+			}
+
 			var jobName = MapJobHelper.GetJobName(transformType);
 			var job = MapJobHelper.BuildJob(CurrentJob.Id, curProject.Id, jobName, CanvasSize, mSetInfo, CurrentColorBandSet, transformType, newArea, BlockSize, _projectAdapter);
 
@@ -600,7 +607,12 @@ namespace MSetExplorer
 			// Note if this job is itself a CanvasSizeUpdate Proxy Job, then its parent is used to conduct the search.
 			if (_jobsCollection.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out var matchingProxy))
 			{
-				_ =_jobsCollection.MoveCurrentTo(matchingProxy);
+				_ = _jobsCollection.MoveCurrentTo(matchingProxy);
+				if (CurrentJob.ColorBandSet != CurrentColorBandSet)
+				{
+					LoadColorBandSetForJob(CurrentJob.ColorBandSet);
+				}
+
 				return;
 			}
 
@@ -610,6 +622,11 @@ namespace MSetExplorer
 			if (origJob.CanvasSizeInBlocks == newCanvasSizeInBlocks)
 			{
 				_jobsCollection.MoveCurrentTo(origJob);
+				if (CurrentJob.ColorBandSet != CurrentColorBandSet)
+				{
+					LoadColorBandSetForJob(CurrentJob.ColorBandSet);
+				}
+
 				return;
 			}
 
@@ -629,6 +646,16 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {newMSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			_jobsCollection.Push(newJob);
+		}
+
+		private void LoadColorBandSetForJob(ColorBandSet colorBandSet)
+		{
+			if (!_colorBandSetCollection.MoveCurrentTo(colorBandSet))
+			{
+				throw new InvalidOperationException("The MapProjectViewModel cannot find a ColorBandSet for the job we are moving forward to.");
+			}
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 		}
 
 		#endregion

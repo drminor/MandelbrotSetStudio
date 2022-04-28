@@ -65,9 +65,9 @@ namespace MSetExplorer
 			{
 				_selectedDescription = value;
 
-				if (SelectedProject != null && SelectedProject.Project.Id != ObjectId.Empty && SelectedProject.Description != value)
+				if (SelectedProject != null && SelectedProject.ProjectId != ObjectId.Empty && SelectedProject.Description != value)
 				{
-					_projectAdapter.UpdateProjectDescription(SelectedProject.Project.Id, SelectedDescription);
+					_projectAdapter.UpdateProjectDescription(SelectedProject.ProjectId, SelectedDescription);
 					SelectedProject.Description = value;
 				}
 
@@ -117,7 +117,7 @@ namespace MSetExplorer
 
 			if (projectInfo != null)
 			{
-				_projectAdapter.DeleteProject(projectInfo.Project.Id);
+				_projectAdapter.DeleteProject(projectInfo.ProjectId);
 				_ = ProjectInfos.Remove(projectInfo);
 			}
 		}
