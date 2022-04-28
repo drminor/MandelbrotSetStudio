@@ -32,7 +32,7 @@ namespace MSetExplorer
 
 		public ColorBandSet CurrentColorBandSet => DoWithReadLock(() => { return _colorsCollection[_colorsPointer]; });
 		public bool CanGoBack => !(CurrentColorBandSet?.ParentId is null);
-		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextCBSInStack(_colorsPointer, out var _); });
+		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextCBSIndexInStack(_colorsPointer, out var _); });
 
 		public int CurrentIndex => DoWithReadLock(() =>  { return _colorsPointer; });
 
@@ -238,7 +238,7 @@ namespace MSetExplorer
 			_colorsLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (TryGetNextCBSInStack(_colorsPointer, out var nextCbsIndex))
+				if (TryGetNextCBSIndexInStack(_colorsPointer, out var nextCbsIndex))
 				{
 					DoWithWriteLock(() => UpdateColorsPtr(nextCbsIndex));
 					return true;
@@ -272,7 +272,7 @@ namespace MSetExplorer
 
 		#region Collection Management 
 
-		private bool TryGetNextCBSInStack(int cbsIndex, out int nextCbsIndex)
+		private bool TryGetNextCBSIndexInStack(int cbsIndex, out int nextCbsIndex)
 		{
 			if (TryGetCbsFromStack(cbsIndex, out var colorBandSet))
 			{
@@ -357,7 +357,7 @@ namespace MSetExplorer
 			return colorBandSet != null;
 		}
 
-		private bool CheckJobStackIntegrity()
+		private bool CheckCollectionIntegrity()
 		{
 			var result = DoWithReadLock(() => {
 				foreach (var cbs in _colorsCollection)

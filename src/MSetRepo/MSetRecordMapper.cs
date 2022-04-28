@@ -18,7 +18,9 @@ namespace MSetRepo
 	///		Job, MSetInfo, 
 	///		Subdivision, MapSectionResponse
 	///		RPoint, RSize, RRectangle,
-	///		PointInt, SizeInt, VectorInt, BigVector
+	///		PointInt, SizeInt, VectorInt, BigVector,
+	///		ColorBandBlendStyle,
+	///		TransformType,
 	/// </summary>
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
@@ -42,7 +44,7 @@ namespace MSetRepo
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name, source.Description, source.LastSavedUtc, source.CurrentJobId, ObjectId.Empty);
+			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc, ObjectId.Empty);
 			return result;
 		}
 
@@ -65,13 +67,19 @@ namespace MSetRepo
 
 		public ColorBand MapFrom(ColorBandRecord target)
 		{
-			return new ColorBand(target.CutOff, target.StartCssColor, Enum.Parse<ColorBandBlendStyle>(target.BlendStyle), target.EndCssColor);
+			return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), target.EndCssColor);
 		}
 
-		public Job MapFrom(JobRecord target)
+		public ColorBandBlendStyle MapFromBlendStyle(string blendStyle)
 		{
-			throw new NotImplementedException();
+			return Enum.Parse<ColorBandBlendStyle>(blendStyle);
 		}
+
+		public TransformType MapFromTransformType(int transformType)
+		{
+			return Enum.Parse<TransformType>(transformType.ToString(System.Globalization.CultureInfo.InvariantCulture));
+		}
+
 
 		public JobRecord MapTo(Job source)
 		{
@@ -96,6 +104,11 @@ namespace MSetRepo
 			};
 
 			return result;
+		}
+
+		public Job MapFrom(JobRecord target)
+		{
+			throw new NotImplementedException();
 		}
 
 		public MSetInfo MapFrom(MSetInfoRecord target)

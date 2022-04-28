@@ -154,10 +154,12 @@ namespace MSetExplorer
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
-			DoWithWriteLock(() => 
+			var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
+			if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 			{
-				_ = UpdateTheJobsCanvasSize(CurrentJob);
-			});
+				FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
+				CurrentProjectIsDirty = true;
+			}
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
@@ -372,7 +374,6 @@ namespace MSetExplorer
 			else
 			{
 				_colorBandSetCollection.Push(colorBandSet);
-				CurrentProjectIsDirty = true;
 			}
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
@@ -386,6 +387,8 @@ namespace MSetExplorer
 				// No new job is being created, instead this job is being updated.
 				CurrentJob.ColorBandSet = colorBandSet;
 			}
+
+			CurrentProjectIsDirty = true;
 		}
 
 		public void UpdateTargetInterations(int targetIterations)
@@ -429,75 +432,138 @@ namespace MSetExplorer
 
 		public bool GoBack()
 		{
-			if (CurrentProject == null)
+			_stateLock.EnterUpgradeableReadLock();
+			try
 			{
-				return false;
-			}
-
-			if (_jobsCollection.GoBack())
-			{
-				DoWithWriteLock(() =>
+				if (CurrentProject == null)
 				{
-					if (CurrentJob.ColorBandSet != CurrentColorBandSet)
+					return false;
+				}
+
+				if (_jobsCollection.GoBack())
+				{
+					DoWithWriteLock(() =>
 					{
-						if (! _colorBandSetCollection.MoveCurrentTo(CurrentJob.ColorBandSet))
+						if (CurrentJob.ColorBandSet != CurrentColorBandSet)
 						{
-							throw new InvalidOperationException("The MapProjectViewModel cannot find a ColorBandSet for the job we are moving back to.");
+							if (! _colorBandSetCollection.MoveCurrentTo(CurrentJob.ColorBandSet))
+							{
+								throw new InvalidOperationException("The MapProjectViewModel cannot find a ColorBandSet for the job we are moving back to.");
+							}
+							OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 						}
-						OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
-					}
-					_ = UpdateTheJobsCanvasSize(CurrentJob);
-				});
 
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+						var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
+						if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+						{
+							FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
+						}
+					});
 
-				return true;
+					CurrentProjectIsDirty = true;
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+
+					return true;
+				}
+				else
+				{
+					return false;
+				}
 			}
-			else
+			finally
 			{
-				return false;
+				_stateLock.ExitUpgradeableReadLock();
 			}
 		}
 
 		public bool GoForward()
 		{
-			if (CurrentProject == null)
+			_stateLock.EnterUpgradeableReadLock();
+			try
 			{
-				return false;
-			}
-
-			if (_jobsCollection.GoForward())
-			{
-				DoWithWriteLock(() =>
+				if (CurrentProject == null)
 				{
-					if (CurrentJob.ColorBandSet != CurrentColorBandSet)
+					return false;
+				}
+
+				if (_jobsCollection.GoForward())
+				{
+					DoWithWriteLock(() =>
 					{
-						if (!_colorBandSetCollection.MoveCurrentTo(CurrentJob.ColorBandSet))
+						if (CurrentJob.ColorBandSet != CurrentColorBandSet)
 						{
-							throw new InvalidOperationException("The MapProjectViewModel cannot find a ColorBandSet for the job we are moving forward to.");
+							if (!_colorBandSetCollection.MoveCurrentTo(CurrentJob.ColorBandSet))
+							{
+								throw new InvalidOperationException("The MapProjectViewModel cannot find a ColorBandSet for the job we are moving forward to.");
+							}
+							OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 						}
-						OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
-					}
-					_ = UpdateTheJobsCanvasSize(CurrentJob);
-				});
 
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+						var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
+						if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+						{
+							FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
+						}
+					});
 
-				return true;
+					CurrentProjectIsDirty = true;
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+
+					return true;
+				}
+				else
+				{
+					return false;
+				}
 			}
-			else
+			finally
 			{
-				return false;
+				_stateLock.ExitUpgradeableReadLock();
 			}
+
 		}
 
 		#endregion
 
 		#region Private Methods
+
+		private void RerunWithNewDisplaySize()
+		{
+			var wasUpdated = false;
+
+			_stateLock.EnterUpgradeableReadLock();
+			try
+			{
+				if (CurrentProject == null)
+				{
+					return;
+				}
+
+				DoWithWriteLock(() =>
+				{
+					var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
+					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+					{
+						FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
+						wasUpdated = true;
+					}
+				});
+			}
+			finally
+			{
+				_stateLock.ExitUpgradeableReadLock();
+			}
+
+			if (wasUpdated)
+			{
+				CurrentProjectIsDirty = true;
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+			}
+		}
 
 		private void LoadMap(MSetInfo mSetInfo, TransformType transformType)
 		{
@@ -513,107 +579,56 @@ namespace MSetExplorer
 				return;
 			}
 
-			var parentJobId = GetParentJobId(CurrentJob);
 			var jobName = MapJobHelper.GetJobName(transformType);
-			var job = MapJobHelper.BuildJob(parentJobId, curProject.Id, jobName, CanvasSize, mSetInfo, CurrentColorBandSet, transformType, newArea, BlockSize, _projectAdapter);
+			var job = MapJobHelper.BuildJob(CurrentJob.Id, curProject.Id, jobName, CanvasSize, mSetInfo, CurrentColorBandSet, transformType, newArea, BlockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			DoWithWriteLock(() =>
 			{
 				_jobsCollection.Push(job);
-				CurrentProjectIsDirty = true;
 
+				CurrentProjectIsDirty = true;
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 			});
 		}
 
-		private ObjectId? GetParentJobId(Job curentJob)
+		private void FindOrCreateJobForNewCanvasSize(Project project, Job job, SizeInt newCanvasSizeInBlocks)
 		{
-			ObjectId? result = curentJob.Id == ObjectId.Empty ? null : curentJob.Id;
-			return result;
-		}
-
-		private void RerunWithNewDisplaySize()
-		{
-			_stateLock.EnterUpgradeableReadLock();
-			try
+			// Note if this job is itself a CanvasSizeUpdate Proxy Job, then its parent is used to conduct the search.
+			if (_jobsCollection.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out var matchingProxy))
 			{
-				if (CurrentProject == null)
-				{
-					return;
-				}
-
-				var curJob = CurrentJob;
-				var wasUpdated = false;
-				DoWithWriteLock(() =>
-				{
-					wasUpdated = UpdateTheJobsCanvasSize(curJob);
-				});
-
-				if (wasUpdated)
-				{
-					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-				}
+				_ =_jobsCollection.MoveCurrentTo(matchingProxy);
+				return;
 			}
-			finally
+
+			// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
+			var origJob = _jobsCollection.GetOriginalJob(job);
+
+			if (origJob.CanvasSizeInBlocks == newCanvasSizeInBlocks)
 			{
-				_stateLock.ExitUpgradeableReadLock();
+				_jobsCollection.MoveCurrentTo(origJob);
+				return;
 			}
-		}
-	
-		private bool UpdateTheJobsCanvasSize(Job job)
-		{
-			var newCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
-			//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(new SizeDbl(CanvasSize), BlockSize, keepSquare: false);
-			//var newCanvasSizeInBlocks = sizeInWholeBlocks.Inflate(2);
 
-			if (newCanvasSizeInBlocks != job.CanvasSizeInBlocks)
-			{
-				var diff = newCanvasSizeInBlocks.Sub(job.CanvasSizeInBlocks);
+			// Create a new job
+			job = origJob;
 
-				diff = diff.Scale(BlockSize);
-				diff = diff.DivInt(new SizeInt(2));
-				var rDiff = job.Subdivision.SamplePointDelta.Scale(diff);
+			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.MSetInfo.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision.SamplePointDelta, BlockSize);
+			var newMSetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
 
-				var coords = job.MSetInfo.Coords;
-				var newCoords = AdjustCoords(coords, rDiff);
+			var transformType = TransformType.CanvasSizeUpdate;
+			RectangleInt? newArea = null;
 
-				var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords, job.Subdivision.Position, job.Subdivision.SamplePointDelta, BlockSize, out var canvasControlOffset);
+			var jobName = MapJobHelper.GetJobName(transformType);
+			var newJob = MapJobHelper.BuildJob(job.Id, project.Id, jobName, CanvasSize, newMSetInfo, CurrentColorBandSet, transformType, newArea, BlockSize, _projectAdapter);
 
-				var newMsetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
+			Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+			Debug.WriteLine($"Starting Job with new coords: {newMSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-				Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
-
-				job.MSetInfo = newMsetInfo;
-				job.MapBlockOffset = mapBlockOffset;
-				job.CanvasControlOffset = canvasControlOffset;
-				job.CanvasSizeInBlocks = newCanvasSizeInBlocks;
-				CurrentProjectIsDirty = true;
-
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		private RRectangle AdjustCoords(RRectangle coords, RSize rDiff)
-		{
-			var nrmArea = RNormalizer.Normalize(coords, rDiff, out var nrmDiff);
-
-			var x1 = nrmArea.X1 - nrmDiff.Width.Value;
-			var x2 = nrmArea.X2 + nrmDiff.Width.Value;
-
-			var y1 = nrmArea.Y1 - nrmDiff.Height.Value;
-			var y2 = nrmArea.Y2 + nrmDiff.Height.Value;
-
-			var result = new RRectangle(x1, x2, y1, y2, nrmArea.Exponent);
-
-			return result;
+			_jobsCollection.Push(newJob);
 		}
 
 		#endregion

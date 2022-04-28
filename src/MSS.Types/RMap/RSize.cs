@@ -58,6 +58,11 @@ namespace MSS.Types
 			return new RVector(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
 		}
 
+		public RSize DivideBy2()
+		{
+			return new RSize(Values[0], Values[1], Exponent - 1);
+		}
+
 		//// TODO rewite RSize.Scale(SizeDbl)
 		//public RSize Scale(SizeDbl factor)
 		//{

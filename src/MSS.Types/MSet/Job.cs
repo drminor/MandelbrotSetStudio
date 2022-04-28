@@ -8,16 +8,10 @@ namespace MSS.Types.MSet
 {
 	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>, ICloneable
 	{
-		public ObjectId Id { get; init; }
-		public ObjectId? ParentJobId { get; set; }
-		public ObjectId ProjectId { get; set; }
+		private static Lazy<Job> _lazyJob = new Lazy<Job>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+		public static readonly Job Empty = _lazyJob.Value;
 
-		public Subdivision Subdivision { get; init; }
-		public string? Label { get; init; }
-
-		public TransformType TransformType { get; init; }
-		public RectangleInt? NewArea { get; init; }
-
+		private ObjectId? _parentJobId;
 		private MSetInfo _mSetInfo;
 		private ColorBandSet _colorBandSet;
 		private SizeInt _canvasSizeInBlocks;
@@ -27,14 +21,9 @@ namespace MSS.Types.MSet
 		private bool _isPreferredChild;
 
 		private bool _isDirty;
-
 		private DateTime _lastSavedUtc;
 
-		private static Lazy<Job> _lazyJob = new Lazy<Job>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
-
-		public static Job Empty = _lazyJob.Value;
-
-		public bool IsEmpty => MSetInfo.Coords.WidthNumerator == 0;
+		#region Constructor
 
 		public Job()
 		{
@@ -44,9 +33,9 @@ namespace MSS.Types.MSet
 			_mapBlockOffset = new BigVector();
 		}
 
-		public Job(ObjectId? parentJobId, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt? newArea, MSetInfo mSetInfo, ColorBandSet colorBandSet,
+		public Job(ObjectId? parentJobId, bool isPreferredChild, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt? newArea, MSetInfo mSetInfo, ColorBandSet colorBandSet,
 			SizeInt canvasSizeInBlocks, BigVector mapBlockOffset, VectorInt canvasControlOffset)
-			: this(ObjectId.GenerateNewId(), parentJobId, isPreferredChild: true, projectId, subdivision, label, transformType, newArea, mSetInfo, colorBandSet, 
+			: this(ObjectId.GenerateNewId(), parentJobId, isPreferredChild, projectId, subdivision, label, transformType, newArea, mSetInfo, colorBandSet, 
 				  canvasSizeInBlocks, mapBlockOffset, canvasControlOffset, DateTime.UtcNow)
 		{ }
 
@@ -70,7 +59,7 @@ namespace MSS.Types.MSet
 			)
 		{
 			Id = id;
-			ParentJobId = parentJobId;
+			_parentJobId = parentJobId;
 			_isPreferredChild = isPreferredChild;
 			ProjectId = projectId;
 			Subdivision = subdivision;
@@ -88,28 +77,47 @@ namespace MSS.Types.MSet
 			LastSavedUtc = lastSaved;
 		}
 
-		public DateTime DateCreated => Id.CreationTime;
-		public DateTime LastUpdatedUtc { get; private set; }
+		#endregion
 
-		public bool IsDirty
-		{ 
-			get
-			{
-				if (LastUpdatedUtc > DateCreated && !_isDirty)
-				{
-					Debug.WriteLine($"WARNING: IsDirty = false, but DateCreated is less than LastUpdated.");
-				}
-				if (LastUpdatedUtc > LastSavedUtc && !_isDirty)
-				{
-					Debug.WriteLine($"WARNING: IsDirty = false, but LastSaved is less than LastUpdated.");
-				}
-				return _isDirty;
-			}
+		#region Public Properties
+
+		public bool IsEmpty => MSetInfo.Coords.WidthNumerator == 0;
+		public DateTime DateCreated => Id.CreationTime;
+
+		public ObjectId Id { get; init; }
+
+		public ObjectId? ParentJobId
+		{
+			get => _parentJobId;
 			set
 			{
-				_isDirty = value;
+				if (value == ObjectId.Empty)
+				{
+					_parentJobId = null;
+				}
+				else
+				{
+					_parentJobId = value;
+				}
 			}
 		}
+
+		public bool IsPreferredChild
+		{
+			get => _isPreferredChild;
+			set
+			{
+				_isPreferredChild = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
+
+
+		public ObjectId ProjectId { get; set; }
+		public Subdivision Subdivision { get; init; }
+		public string? Label { get; init; }
+		public TransformType TransformType { get; init; }
+		public RectangleInt? NewArea { get; init; }
 
 		public MSetInfo MSetInfo
 		{
@@ -161,15 +169,6 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public bool IsPreferredChild
-		{
-			get => _isPreferredChild;
-			set
-			{
-				_isPreferredChild = value;
-				LastUpdatedUtc = DateTime.UtcNow;
-			}
-		}
 
 		public DateTime LastSavedUtc
 		{
@@ -180,6 +179,27 @@ namespace MSS.Types.MSet
 				LastUpdatedUtc = value;
 			}
 		}
+
+		public DateTime LastUpdatedUtc { get; private set; }
+
+		public bool IsDirty
+		{
+			get
+			{
+				if (LastUpdatedUtc > DateCreated && !_isDirty)
+				{
+					Debug.WriteLine($"WARNING: IsDirty = false, but DateCreated is less than LastUpdated.");
+				}
+				if (LastUpdatedUtc > LastSavedUtc && !_isDirty)
+				{
+					Debug.WriteLine($"WARNING: IsDirty = false, but LastSaved is less than LastUpdated.");
+				}
+				return _isDirty;
+			}
+			set => _isDirty = value;
+		}
+
+		#endregion
 
 		object ICloneable.Clone()
 		{

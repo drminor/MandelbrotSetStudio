@@ -16,6 +16,11 @@ namespace MSetExplorer
 		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, ColorBandSet colorBandSet,
 			TransformType transformType, RectangleInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
+			if (!parentJobId.HasValue && transformType != TransformType.None)
+			{
+				throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {transformType}. Only jobs with TransformType = 'none' be parentless.");
+			}
+
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
 
@@ -32,7 +37,6 @@ namespace MSetExplorer
 			var samplePointDeltaD = RMapHelper.GetSamplePointDiag(mSetInfo.Coords, displaySize, out var newDCoords);
 			RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, mSetInfo.Coords, coords, newDCoords);
 
-
 			// Get a subdivision record from the database.
 			var subdivision = GetSubdivision(samplePointDelta, blockSize, projectAdapter);
 
@@ -40,7 +44,9 @@ namespace MSetExplorer
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-			var job = new Job(parentJobId, projectId, subdivision, jobName, transformType, newArea, updatedMSetInfo, colorBandSet, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
+			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
+
+			var job = new Job(parentJobId, isPreferredChild, projectId, subdivision, jobName, transformType, newArea, updatedMSetInfo, colorBandSet, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 
 			return job;
 		}

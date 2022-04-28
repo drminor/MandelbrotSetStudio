@@ -53,13 +53,6 @@ namespace ProjectRepo
 			return projectRecord.FirstOrDefault();
 		}
 
-		public ObjectId GetProjectId(string name)
-		{
-			var projectRecord = Get(name);
-
-			return projectRecord?.Id ?? ObjectId.Empty;
-		}
-
 		public ObjectId Insert(ProjectRecord projectRecord)
 		{
 			Collection.InsertOne(projectRecord);

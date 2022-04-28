@@ -42,6 +42,8 @@ namespace MSS.Types
 			}
 		}
 
+		#region Public Methods
+
 		public SizeInt Inflate(SizeInt amount)
 		{
 			return new SizeInt(Width + amount.Width, Height + amount.Height);
@@ -129,6 +131,8 @@ namespace MSS.Types
 		{
 			return $"w:{Width}, h:{Height}";
 		}
+
+		#endregion
 
 		#region IEquatable and IEqualityComparer Support
 

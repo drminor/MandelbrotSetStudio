@@ -20,14 +20,14 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public ColorBandSet() : this(ObjectId.Empty, null)
+		public ColorBandSet() : this(projectId: ObjectId.Empty, colorBands: null)
 		{ }
 
-		public ColorBandSet(IList<ColorBand>? colorBands) : this(ObjectId.Empty, colorBands)
+		public ColorBandSet(IList<ColorBand>? colorBands) : this(projectId: ObjectId.Empty, colorBands)
 		{ }
 
 		public ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands)
-			: this(ObjectId.GenerateNewId(), null, projectId, null, null, colorBands)
+			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands)
 		{ }
 
 		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands) : base(FixBands(colorBands))

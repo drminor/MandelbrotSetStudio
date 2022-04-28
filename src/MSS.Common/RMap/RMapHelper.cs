@@ -46,6 +46,33 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static RRectangle GetNewCoordsForNewCanvasSize(RRectangle currentCoords, SizeInt currentSizeInBlocks, SizeInt newSizeInBlocks, RSize samplePointDelta, SizeInt blockSize)
+		{
+			var diff = newSizeInBlocks.Sub(currentSizeInBlocks);
+
+			diff = diff.Scale(blockSize);
+			var rDiff = samplePointDelta.Scale(diff);
+			rDiff = rDiff.DivideBy2();
+
+			var result = AdjustCoords(currentCoords, rDiff);
+			return result;
+		}
+
+		private static RRectangle AdjustCoords(RRectangle coords, RSize rDiff)
+		{
+			var nrmArea = RNormalizer.Normalize(coords, rDiff, out var nrmDiff);
+
+			var x1 = nrmArea.X1 - nrmDiff.Width.Value;
+			var x2 = nrmArea.X2 + nrmDiff.Width.Value;
+
+			var y1 = nrmArea.Y1 - nrmDiff.Height.Value;
+			var y2 = nrmArea.Y2 + nrmDiff.Height.Value;
+
+			var result = new RRectangle(x1, x2, y1, y2, nrmArea.Exponent);
+
+			return result;
+		}
+
 		#endregion
 
 		#region Job Creation

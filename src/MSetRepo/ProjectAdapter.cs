@@ -348,7 +348,7 @@ namespace MSetRepo
 				projectId: jobRecord.ProjectId, 
 				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord), 
 				label: jobRecord.Label,
-				transformType: Enum.Parse<TransformType>(jobRecord.TransformType.ToString()),
+				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 				mSetInfo: _mSetRecordMapper.MapFrom(jobRecord.MSetInfo),
 				colorBandSet: colorBandSet,
@@ -475,217 +475,217 @@ namespace MSetRepo
 
 		#region Active Job Schema Updates
 
-		public int DeleteUnusedColorBandSets()
-		{
-			var result = 0;
+//		public int DeleteUnusedColorBandSets()
+//		{
+//			var result = 0;
 
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+//			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-			var colorBandSetIdsRefByJob = jobReaderWriter.GetAllReferencedColorBandSetIds().ToList();
+//			var colorBandSetIdsRefByJob = jobReaderWriter.GetAllReferencedColorBandSetIds().ToList();
 
-			Debug.WriteLine($"\nRef by a Job\n");
-			foreach (var x in colorBandSetIdsRefByJob)
-			{
-				Debug.WriteLine($"{x}");
-			}
+//			Debug.WriteLine($"\nRef by a Job\n");
+//			foreach (var x in colorBandSetIdsRefByJob)
+//			{
+//				Debug.WriteLine($"{x}");
+//			}
 
-			var colorBandSetIds = new List<ObjectId>(colorBandSetIdsRefByJob);
+//			var colorBandSetIds = new List<ObjectId>(colorBandSetIdsRefByJob);
 
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+//			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+//			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 
-			//var referencedByProjectNotByJob = 0;
+//			//var referencedByProjectNotByJob = 0;
 
-			var referencedByProjectNotByJob = new List<ObjectId>();
+//			var referencedByProjectNotByJob = new List<ObjectId>();
 
-			var projectRecords = projectReaderWriter.GetAll();
-			foreach(var projectRec in projectRecords)
-			{
-				var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectRec.Id);
-				foreach (var colorBandSetRec in colorBandSetRecords)
-				{
-					if (!colorBandSetIds.Contains(colorBandSetRec.Id))
-					{
-						colorBandSetIds.Add(colorBandSetRec.Id);
-						referencedByProjectNotByJob.Add(colorBandSetRec.Id);
-					}
-				}
-			}
+//			var projectRecords = projectReaderWriter.GetAll();
+//			foreach(var projectRec in projectRecords)
+//			{
+//				var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectRec.Id);
+//				foreach (var colorBandSetRec in colorBandSetRecords)
+//				{
+//					if (!colorBandSetIds.Contains(colorBandSetRec.Id))
+//					{
+//						colorBandSetIds.Add(colorBandSetRec.Id);
+//						referencedByProjectNotByJob.Add(colorBandSetRec.Id);
+//					}
+//				}
+//			}
 
-			referencedByProjectNotByJob = referencedByProjectNotByJob.Distinct().ToList();
+//			referencedByProjectNotByJob = referencedByProjectNotByJob.Distinct().ToList();
 
-			Debug.WriteLine($"\nRef by Project, but not by job\n");
-			foreach (var x in referencedByProjectNotByJob)
-			{
-				Debug.WriteLine($"{x}");
-			}
+//			Debug.WriteLine($"\nRef by Project, but not by job\n");
+//			foreach (var x in referencedByProjectNotByJob)
+//			{
+//				Debug.WriteLine($"{x}");
+//			}
 
-			var allCbsIds = colorBandSetReaderWriter.GetAll().Select(x => x.Id);
+//			var allCbsIds = colorBandSetReaderWriter.GetAll().Select(x => x.Id);
 
-			var unReferenced = new List<ObjectId>();
+//			var unReferenced = new List<ObjectId>();
 
-			foreach (var cbsId in allCbsIds)
-			{
-				if (!colorBandSetIds.Contains(cbsId))
-				{
-					unReferenced.Add(cbsId);
-				}
-			}
+//			foreach (var cbsId in allCbsIds)
+//			{
+//				if (!colorBandSetIds.Contains(cbsId))
+//				{
+//					unReferenced.Add(cbsId);
+//				}
+//			}
 
-			Debug.WriteLine($"\nUnreferenced\n");
-			foreach (var x in unReferenced)
-			{
-				Debug.WriteLine($"{x}");
-				//_ = colorBandSetReaderWriter.Delete(x);
-			}
-
-
-			return result;
-		}
-
-		public int[] FixAllJobRels()
-		{
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			var allProjectRecs = projectReaderWriter.GetAll();
-
-			var result = new int[allProjectRecs.Count()];
-
-			var ptr = 0;
-			foreach (var projectRecord in allProjectRecs)
-			{
-				result[ptr++] = FixJobRels(projectRecord.Id);
-			}
-
-			return result;
-		}
-
-		public int FixJobRels(ObjectId projectId)
-		{
-			var result = 0;
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-
-			var lastId = ObjectId.GenerateNewId();
-
-			var jobs = GetAllJobsForProject(projectId);
-			var jobsWithAParent = jobs.Where(x => x.ParentJobId != null).OrderBy(f => f.ParentJobId).ThenByDescending(f => f.Id);
-
-			foreach (var job in jobsWithAParent)
-			{
-				if (job.ParentJobId == lastId)
-				{
-					job.IsPreferredChild = false;
-					jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJobId, job.IsPreferredChild);
-					result++;
-				}
-				else
-				{
-					job.IsPreferredChild = true;
-#pragma warning disable CS8629 // Nullable value type may be null.
-					lastId = (ObjectId)job.ParentJobId;
-#pragma warning restore CS8629 // Nullable value type may be null.
-				}
-			}
-
-			return result;
-		}
-
-		#endregion
-
-		#region Archived Job Schema Updates
-
-		public string FixAllJobRels2()
-		{
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			var allProjectRecs = projectReaderWriter.GetAll();
-
-			var sb = new StringBuilder();
-
-			foreach (var projectRecord in allProjectRecs)
-			{
-				sb.AppendLine($"Project: {projectRecord.Id}, {projectRecord.DateCreated}");
-
-				var ts = FixJobRels2(projectRecord.Id);
-
-				foreach (var t in ts)
-				{
-					var t1 = t.Item1;
-					var t2 = t.Item2;
-
-					var s1 = $"{t1.Id}\t {t1.DateCreated}\t{t1.TransformType}\t\t{t1.Subdivision.SamplePointDelta.Exponent}\t{t1.ParentJobId}";
-					var s2 = $"{t2?.Id}\t {t2?.DateCreated}\t {t2?.TransformType}\t\t{t2?.Subdivision.SamplePointDelta.Exponent}\t{t2?.ParentJobId}";
-
-					sb.Append(s1).Append("\t\t").AppendLine(s2);
-				}
-			}
-
-			return sb.ToString();
-		}
-
-		//public int FixAllJobRels3()
-		//{
-		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
-
-		//	var allProjectRecs = projectReaderWriter.GetAll();
-
-		//	var result = 0;
-
-		//	foreach (var projectRecord in allProjectRecs)
-		//	{
-		//		var ts = FixJobRels2(projectRecord.Id);
-
-		//		foreach (var t in ts)
-		//		{
-		//			jobReaderWriter.UpdateJobsParent(t.Item1.Id, t.Item2.Id, t.Item1.IsPreferredChild);
-		//		}
-		//	}
-
-		//	return result;
-		//}
-
-		public IList<Tuple<Job, Job>> FixJobRels2(ObjectId projectId)
-		{
-			var result = new List<Tuple<Job, Job>>();
-
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-
-			var lastId = ObjectId.GenerateNewId();
+//			Debug.WriteLine($"\nUnreferenced\n");
+//			foreach (var x in unReferenced)
+//			{
+//				Debug.WriteLine($"{x}");
+//				//_ = colorBandSetReaderWriter.Delete(x);
+//			}
 
 
-			var jobs = GetAllJobsForProject(projectId);
-			var jobsWithAParent = jobs.Where(x => x.ParentJobId != null).OrderBy(f => f.ParentJobId).ThenBy(f => f.Id);
+//			return result;
+//		}
 
-			var lookupList = jobs.OrderByDescending(f => f.Id).Select(x => new ValueTuple<string, Job>(x.Id.ToString(), x));
+//		public int[] FixAllJobRels()
+//		{
+//			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+//			var allProjectRecs = projectReaderWriter.GetAll();
+
+//			var result = new int[allProjectRecs.Count()];
+
+//			var ptr = 0;
+//			foreach (var projectRecord in allProjectRecs)
+//			{
+//				result[ptr++] = FixJobRels(projectRecord.Id);
+//			}
+
+//			return result;
+//		}
+
+//		public int FixJobRels(ObjectId projectId)
+//		{
+//			var result = 0;
+//			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+//			var lastId = ObjectId.GenerateNewId();
+
+//			var jobs = GetAllJobsForProject(projectId);
+//			var jobsWithAParent = jobs.Where(x => x.ParentJobId != null).OrderBy(f => f.ParentJobId).ThenByDescending(f => f.Id);
+
+//			foreach (var job in jobsWithAParent)
+//			{
+//				if (job.ParentJobId == lastId)
+//				{
+//					job.IsPreferredChild = false;
+//					jobReaderWriter.UpdateJobsParent(job.Id, job.ParentJobId, job.IsPreferredChild);
+//					result++;
+//				}
+//				else
+//				{
+//					job.IsPreferredChild = true;
+//#pragma warning disable CS8629 // Nullable value type may be null.
+//					lastId = (ObjectId)job.ParentJobId;
+//#pragma warning restore CS8629 // Nullable value type may be null.
+//				}
+//			}
+
+//			return result;
+//		}
+
+//		#endregion
+
+//		#region Archived Job Schema Updates
+
+//		public string FixAllJobRels2()
+//		{
+//			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+//			var allProjectRecs = projectReaderWriter.GetAll();
+
+//			var sb = new StringBuilder();
+
+//			foreach (var projectRecord in allProjectRecs)
+//			{
+//				sb.AppendLine($"Project: {projectRecord.Id}, {projectRecord.DateCreated}");
+
+//				var ts = FixJobRels2(projectRecord.Id);
+
+//				foreach (var t in ts)
+//				{
+//					var t1 = t.Item1;
+//					var t2 = t.Item2;
+
+//					var s1 = $"{t1.Id}\t {t1.DateCreated}\t{t1.TransformType}\t\t{t1.Subdivision.SamplePointDelta.Exponent}\t{t1.ParentJobId}";
+//					var s2 = $"{t2?.Id}\t {t2?.DateCreated}\t {t2?.TransformType}\t\t{t2?.Subdivision.SamplePointDelta.Exponent}\t{t2?.ParentJobId}";
+
+//					sb.Append(s1).Append("\t\t").AppendLine(s2);
+//				}
+//			}
+
+//			return sb.ToString();
+//		}
+
+//		//public int FixAllJobRels3()
+//		//{
+//		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+//		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+//		//	var allProjectRecs = projectReaderWriter.GetAll();
+
+//		//	var result = 0;
+
+//		//	foreach (var projectRecord in allProjectRecs)
+//		//	{
+//		//		var ts = FixJobRels2(projectRecord.Id);
+
+//		//		foreach (var t in ts)
+//		//		{
+//		//			jobReaderWriter.UpdateJobsParent(t.Item1.Id, t.Item2.Id, t.Item1.IsPreferredChild);
+//		//		}
+//		//	}
+
+//		//	return result;
+//		//}
+
+//		public IList<Tuple<Job, Job>> FixJobRels2(ObjectId projectId)
+//		{
+//			var result = new List<Tuple<Job, Job>>();
+
+//			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+//			var lastId = ObjectId.GenerateNewId();
 
 
-			foreach (var job in jobsWithAParent)
-			{
-				var parentJob = jobs.FirstOrDefault(x => x.Id == job.ParentJobId);
+//			var jobs = GetAllJobsForProject(projectId);
+//			var jobsWithAParent = jobs.Where(x => x.ParentJobId != null).OrderBy(f => f.ParentJobId).ThenBy(f => f.Id);
 
-				if (parentJob == null)
-				{
-					ValueTuple<string, Job> newParentIdAndJob;
-					//parentJob = jobs.FirstOrDefault(x => x.DateCreated <= job.DateCreated && x.Id.Increment < job.Id.Increment);
-					if (job.TransformType == TransformType.ZoomIn)
-					{
-						newParentIdAndJob = lookupList.FirstOrDefault(x => string.Compare(x.Item1, job.Id.ToString()) < 0 && x.Item2.Subdivision.SamplePointDelta.Exponent > job.Subdivision.SamplePointDelta.Exponent);
-					}
-					else
-					{
-						newParentIdAndJob = lookupList.FirstOrDefault(x => string.Compare(x.Item1, job.Id.ToString()) < 0);
-					}
+//			var lookupList = jobs.OrderByDescending(f => f.Id).Select(x => new ValueTuple<string, Job>(x.Id.ToString(), x));
 
-					if (newParentIdAndJob != default(ValueTuple<string, Job>))
-					{
-						var jobAndNewParent = new Tuple<Job, Job>(job, newParentIdAndJob.Item2);
-						result.Add(jobAndNewParent);
-					}
 
-				}
-			}
+//			foreach (var job in jobsWithAParent)
+//			{
+//				var parentJob = jobs.FirstOrDefault(x => x.Id == job.ParentJobId);
 
-			return result;
-		}
+//				if (parentJob == null)
+//				{
+//					ValueTuple<string, Job> newParentIdAndJob;
+//					//parentJob = jobs.FirstOrDefault(x => x.DateCreated <= job.DateCreated && x.Id.Increment < job.Id.Increment);
+//					if (job.TransformType == TransformType.ZoomIn)
+//					{
+//						newParentIdAndJob = lookupList.FirstOrDefault(x => string.Compare(x.Item1, job.Id.ToString()) < 0 && x.Item2.Subdivision.SamplePointDelta.Exponent > job.Subdivision.SamplePointDelta.Exponent);
+//					}
+//					else
+//					{
+//						newParentIdAndJob = lookupList.FirstOrDefault(x => string.Compare(x.Item1, job.Id.ToString()) < 0);
+//					}
+
+//					if (newParentIdAndJob != default(ValueTuple<string, Job>))
+//					{
+//						var jobAndNewParent = new Tuple<Job, Job>(job, newParentIdAndJob.Item2);
+//						result.Add(jobAndNewParent);
+//					}
+
+//				}
+//			}
+
+//			return result;
+//		}
 
 		//public void AddColorBandSetIdToAllJobs()
 		//{

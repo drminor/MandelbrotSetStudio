@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace MSetExplorer
 
 		public Job CurrentJob => DoWithReadLock(() => { return  _jobsCollection[_jobsPointer]; });
 		public bool CanGoBack => !(CurrentJob?.ParentJobId is null);
-		public bool CanGoForward => DoWithReadLock(() => { return TryGetNextJobInStack(_jobsPointer, out var _); });
+		public bool CanGoForward => DoWithReadLock(() => { return HaveNextJobInStack(_jobsPointer); });
 
 		public int CurrentIndex => DoWithReadLock(() => { return _jobsPointer; });
 		public int Count => DoWithReadLock(() => { return _jobsCollection.Count; });
@@ -54,6 +55,28 @@ namespace MSetExplorer
 		public void UpdateItem(int index, Job job)
 		{
 			DoWithWriteLock(() => { _jobsCollection[index] = job; });
+		}
+
+		public bool MoveCurrentTo(Job job)
+		{
+			_jobsLock.EnterUpgradeableReadLock();
+
+			try
+			{
+				if (TryGetIndexFromId(job.Id, out var index))
+				{
+					DoWithWriteLock(() => { _jobsPointer = index; });
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			finally
+			{
+				_jobsLock.ExitUpgradeableReadLock();
+			}
 		}
 
 		public bool MoveCurrentTo(int index)
@@ -122,7 +145,7 @@ namespace MSetExplorer
 				}
 			});
 
-			if (!CheckJobStackIntegrity(out var reason))
+			if (!CheckCollectionIntegrity(out var reason))
 			{
 				Debug.WriteLine($"Job Collection is not integral. Reason: {reason}");
 			}
@@ -136,11 +159,26 @@ namespace MSetExplorer
 			{
 				if (job != null)
 				{
+					if (job.IsPreferredChild)
+					{
+						ResetSiblings(job);
+					}
+
 					_jobsCollection.Add(job);
 				}
 
 				_jobsPointer = _jobsCollection.Count - 1;
 			});
+		}
+
+		private void ResetSiblings(Job newSibling)
+		{
+			var siblings = _jobsCollection.Where(x => x.ParentJobId == newSibling.ParentJobId);
+
+			foreach(var job in siblings)
+			{
+				job.IsPreferredChild = false;
+			}
 		}
 
 		public void Clear()
@@ -183,7 +221,7 @@ namespace MSetExplorer
 			_jobsLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (TryGetNextJobInStack(_jobsPointer, out var nextJobIndex))
+				if (TryGetNextJobIndexInStack(_jobsPointer, out var nextJobIndex))
 				{
 					DoWithWriteLock(() => UpdateJobsPtr(nextJobIndex));
 					return true;
@@ -192,6 +230,19 @@ namespace MSetExplorer
 				{
 					return false;
 				}
+			}
+			finally
+			{
+				_jobsLock.ExitUpgradeableReadLock();
+			}
+		}
+
+		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy)
+		{
+			_jobsLock.EnterUpgradeableReadLock();
+			try
+			{
+				return TryGetCanvasSizeUpdateChildJob(job, canvasSizeInBlocks, out proxy);
 			}
 			finally
 			{
@@ -217,13 +268,13 @@ namespace MSetExplorer
 
 		#region Collection Management 
 
-		private bool TryGetNextJobInStack(int jobIndex, out int nextJobIndex)
+		private bool TryGetNextJobIndexInStack(int jobIndex, out int nextJobIndex)
 		{
 			nextJobIndex = -1;
 
 			if (TryGetJobFromStack(jobIndex, out var job))
 			{
-				if (TryGetLatestChildJobIndex(job, out var childJobIndex))
+				if (TryGetPreferredChildJobIndex(job, out var childJobIndex))
 				{
 					nextJobIndex = childJobIndex;
 					return true;
@@ -247,34 +298,81 @@ namespace MSetExplorer
 			}
 		}
 
+		private bool TryGetPreferredChildJob(Job job, [MaybeNullWhen(false)] out Job childJob)
+		{
+			var startingJob = GetOriginalJob(job);
+			childJob = _jobsCollection.FirstOrDefault(x => x.ParentJobId == startingJob.Id && x.IsPreferredChild);
+
+			var result = childJob != null;
+			return result;
+		}
+
 		/// <summary>
-		/// Finds the most recently ran child job of the given parentJob.
+		/// Finds the child job of the given parentJob that is marked as IsPreferred.
+		/// If the current node has a TransformType of CanvasSizeUpdate, then it's parent is used as the current node instead.
 		/// </summary>
-		/// <param name="parentJob"></param>
+		/// <param name="job"></param>
 		/// <param name="childJobIndex">If successful, the index of the most recent child job of the given parentJob</param>
 		/// <returns>True if there is any child of the specified job.</returns>
-		private bool TryGetLatestChildJobIndex(Job parentJob, out int childJobIndex)
+		private bool TryGetPreferredChildJobIndex(Job job, out int childJobIndex)
 		{
-			childJobIndex = -1;
-			var lastestDtFound = DateTime.MinValue;
+			var startingJob = GetOriginalJob(job);
 
-			for (var i = 0; i < _jobsCollection.Count; i++)
-			{
-				var job = _jobsCollection[i];
-				var thisParentJobId = job.ParentJobId ?? ObjectId.Empty;
-
-				if (thisParentJobId.Equals(parentJob.Id))
-				{
-					var dt = job.DateCreated;
-					if (dt > lastestDtFound)
-					{
-						childJobIndex = i;
-						lastestDtFound = dt;
-					}
-				}
-			}
+			childJobIndex = _jobsCollection.Select((value, index) => new { value, index })
+				.Where(pair => pair.value.ParentJobId == startingJob.Id && pair.value.IsPreferredChild)
+				.Select(pair => pair.index).DefaultIfEmpty(-1)
+				.FirstOrDefault();
 
 			var result = childJobIndex != -1;
+			return result;
+		}
+
+		/// <summary>
+		/// Finds the child job of the given parentJob that has a TransformType of CanvasSizeUpdate.
+		/// If the current node has a TransformType of CanvasSizeUpdate, then it's parent is used as the current node instead.
+		/// </summary>
+		/// <param name="job"></param>
+		/// <param name="childJob">If successful, the preferred child job of the given job</param>
+		/// <returns>True if there is any child of the specified job.</returns>
+		private bool TryGetCanvasSizeUpdateChildJob(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job childJob)
+		{
+			var startingJob = GetOriginalJob(job);
+			childJob = _jobsCollection.FirstOrDefault(x => x.ParentJobId == startingJob.Id && x.TransformType == TransformType.CanvasSizeUpdate && x.CanvasSizeInBlocks == canvasSizeInBlocks);
+			var result = childJob != null;
+
+			return result;
+		}
+
+		private bool HaveNextJobInStack(int jobIndex)
+		{
+			if (TryGetJobFromStack(jobIndex, out var job))
+			{
+				var result = HasLatestChildJob(job);
+				return result;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Finds the child job of the given parentJob that is marked as IsPreferred.
+		/// </summary>
+		/// <param name="job"></param>
+		/// <param name="childJobIndex">If successful, the index of the most recent child job of the given parentJob</param>
+		/// <returns>True if there is any child of the specified job.</returns>
+		private bool HasLatestChildJob(Job job)
+		{
+			bool result;
+
+			if (job.TransformType == TransformType.CanvasSizeUpdate)
+			{
+				result = _jobsCollection.Any(x => x.ParentJobId == job.ParentJobId && x.IsPreferredChild);
+			}
+			else
+			{
+				result = _jobsCollection.Any(x => x.ParentJobId == job.Id && x.IsPreferredChild);
+			}
+
 			return result;
 		}
 
@@ -284,7 +382,46 @@ namespace MSetExplorer
 			return job != null;
 		}
 
-		private bool CheckJobStackIntegrity(out List<string> reasons)
+		/// <summary>
+		/// If the job given has a transform type of CanvasSizeUpdate, return the job's parent, otherwise returns the given job.
+		/// </summary>
+		/// <param name="job"></param>
+		/// <returns></returns>
+		public Job GetOriginalJob(Job job) => job.TransformType == TransformType.CanvasSizeUpdate ? GetParentJob(job) : job;
+
+		private Job GetParentJob(Job job)
+		{
+			if (!job.ParentJobId.HasValue)
+			{
+				throw new InvalidOperationException($"Attempting to retreive the parent job for job: {job.Id}, but this job's ParentJobId is null.");
+			}
+
+			if (TryFindByJobId(job.ParentJobId.Value, out var parentJob))
+			{
+				return parentJob;
+			}
+			else
+			{
+				throw new InvalidOperationException($"Attempting to retreive the parent job for job: {job.Id}, but no job with this job's ParentJobId of {job.ParentJobId.Value} exists in the JobCollection.");
+			}
+		}
+
+		private bool TryGetIndexFromId(ObjectId id, out int index)
+		{
+			var job = _jobsCollection.FirstOrDefault(x => x.Id == id);
+			if (job != null)
+			{
+				index = _jobsCollection.IndexOf(job);
+			}
+			else
+			{
+				index = -1;
+			}
+
+			return job != null;
+		}
+
+		private bool CheckCollectionIntegrity(out List<string> reasons)
 		{
 			reasons = new List<string>();
 
@@ -314,25 +451,29 @@ namespace MSetExplorer
 								else
 								{
 									reasons.Add($"Parent Job with Id: {parentId} has more than one child whose IsPreferredChild is true. {job.Id}, being one of them.");
-									//return false;
 								}
 							}
 						}
 					}
 				}
 
-				var allParentIds = GetUniqueJobParentIds(_jobsCollection);
-
+				var allParentIds = GetAllParentIds(_jobsCollection);
 				var allUnmatched = allParentIds.Except(allFoundParentIds);
-
-				//foreach(var t in allFoundParentIds)
-				//{
-				//	allParentIds.Remove(t);
-				//}
 
 				foreach(var s in allUnmatched)
 				{
 					reasons.Add($"Parent Job with Id: {s} has no preferred child.");
+				}
+
+				var homeCnt = _jobsCollection.Count(x => !x.ParentJobId.HasValue);
+				if (homeCnt == 0)
+				{
+					reasons.Add("Collection has no home job.");
+				}
+
+				if (homeCnt > 1)
+				{
+					reasons.Add("Collection has more than one home job.");
 				}
 
 				return reasons.Count == 0;
@@ -343,9 +484,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private IEnumerable<ObjectId> GetUniqueJobParentIds(IEnumerable<Job> jobs)
+		private IEnumerable<ObjectId> GetAllParentIds(IEnumerable<Job> jobs)
 		{
-			var result = jobs.Select(x => x.ParentJobId).Where(x => x.HasValue).Cast<ObjectId>(); //.Distinct();
+			var result = jobs.Select(x => x.ParentJobId).Where(x => x.HasValue).Cast<ObjectId>();
 			return result;
 		}
 

@@ -9,7 +9,8 @@ namespace ProjectRepo.Entities
 		ObjectId ProjectId,
 		ObjectId SubDivisionId,
 		string? Label,
-		int TransformType,
+		int TransformType,			// TODO: Change the JobRecord's TransformType (enum) from an int to a string.
+
 
 		PointIntRecord NewAreaPosition,
 		SizeIntRecord NewAreaSize,
