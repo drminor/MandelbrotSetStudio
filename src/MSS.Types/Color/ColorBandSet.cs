@@ -15,6 +15,8 @@ namespace MSS.Types
 	{
 		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
+		private ObjectId? _parentId;
+		private ObjectId _projectId;
 		private string? _name;
 		private string? _description;
 
@@ -33,9 +35,10 @@ namespace MSS.Types
 		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands) : base(FixBands(colorBands))
 		{
 			//Debug.WriteLine($"Constructing ColorBandSet with id: {id}.");
+
 			Id = id;
-			ParentId = parentId;
-			ProjectId = projectId;
+			_parentId = parentId;
+			_projectId = projectId;
 			_name = name;
 			_description = description;
 		}
@@ -45,10 +48,34 @@ namespace MSS.Types
 		#region Public Properties
 
 		public ObjectId Id { get; init; }
-		public ObjectId? ParentId { get; set; }
-		public ObjectId ProjectId { get; set; }
 
 		public DateTime DateCreated => Id.CreationTime;
+
+		public ObjectId? ParentId
+		{
+			get => _parentId;
+			set
+			{
+				if (value != _parentId)
+				{
+					_parentId = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public ObjectId ProjectId
+		{
+			get => _projectId;
+			set
+			{
+				if (value != _projectId)
+				{
+					_projectId = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public string? Name
 		{
@@ -80,47 +107,16 @@ namespace MSS.Types
 
 		#region Public Properties - Derived
 
-		public ObservableCollection<ColorBand> ColorBands => this;
+		//public ObservableCollection<ColorBand> ColorBands => this;
 
 		public bool AssignedToProject => ProjectId != ObjectId.Empty;
 
 		public bool IsReadOnly => false;
 
-		public ColorBand HighColorBand
-		{
-			get => base[^1];
-			set => base[^1] = value;
-		}
-
 		public int HighCutOff
 		{
-			get => HighColorBand.CutOff;
+			get => base[^1].CutOff;
 			set => base[^1].CutOff = value;
-		}
-
-		public ColorBandColor HighStartColor
-		{
-			get => HighColorBand.StartColor;
-			set => base[^1].StartColor = value;
-		}
-
-		public ColorBandBlendStyle HighColorBlendStyle
-		{
-			get => HighColorBand.BlendStyle;
-			set
-			{
-				if (value == ColorBandBlendStyle.Next)
-				{
-					throw new InvalidOperationException("The HighColorBand cannot have a BlendStyle of Next.");
-				}
-				base[^1].BlendStyle = value;
-			}
-		}
-
-		public ColorBandColor HighEndColor
-		{
-			get => HighColorBand.EndColor;
-			set => base[^1].EndColor = value;
 		}
 
 		#endregion

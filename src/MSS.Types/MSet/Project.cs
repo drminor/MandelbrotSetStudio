@@ -26,7 +26,6 @@ namespace MSS.Types.MSet
 		}
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
-		public DateTime LastUpdatedUtc { get; private set; }
 		public bool OnFile => Id != ObjectId.Empty;
 
 		public ObjectId Id { get; init; }
@@ -70,5 +69,8 @@ namespace MSS.Types.MSet
 				LastUpdatedUtc = value;
 			}
 		}
+
+		public DateTime LastUpdatedUtc { get; private set; }
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
 	}
 }

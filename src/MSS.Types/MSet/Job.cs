@@ -20,7 +20,6 @@ namespace MSS.Types.MSet
 
 		private bool _isPreferredChild;
 
-		private bool _isDirty;
 		private DateTime _lastSavedUtc;
 
 		#region Constructor
@@ -182,22 +181,7 @@ namespace MSS.Types.MSet
 
 		public DateTime LastUpdatedUtc { get; private set; }
 
-		public bool IsDirty
-		{
-			get
-			{
-				if (LastUpdatedUtc > DateCreated && !_isDirty)
-				{
-					Debug.WriteLine($"WARNING: IsDirty = false, but DateCreated is less than LastUpdated.");
-				}
-				if (LastUpdatedUtc > LastSavedUtc && !_isDirty)
-				{
-					Debug.WriteLine($"WARNING: IsDirty = false, but LastSaved is less than LastUpdated.");
-				}
-				return _isDirty;
-			}
-			set => _isDirty = value;
-		}
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
 
 		#endregion
 

@@ -631,7 +631,7 @@ namespace MSetExplorer
 
 		private string GetModelAsString()
 		{
-			var result = GetString(_colorBandSet?.ColorBands);
+			var result = GetString(_colorBandSet);
 
 			return result;
 		}

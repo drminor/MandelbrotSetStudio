@@ -315,6 +315,32 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public bool TryGetCbsSmallestCutOffGtrThan(int cutOff, [MaybeNullWhen(false)] out int index)
+		{
+			var t = _colorsCollection.OrderByDescending(f => f.HighCutOff);
+
+			index = _colorsCollection.Select((value, index) => new { value.HighCutOff, index })
+				.OrderByDescending(f => f.HighCutOff)
+				.Where(pair => pair.HighCutOff <= cutOff)
+				.Select(pair => pair.index).DefaultIfEmpty(-1)
+				.FirstOrDefault();
+
+			return index != -1;
+		}
+
+		public bool TryGetCbsLargestCutOffLessThan(int cutOff, [MaybeNullWhen(false)] out int index)
+		{
+			var t = _colorsCollection.OrderByDescending(f => f.HighCutOff);
+
+			index = _colorsCollection.Select((value, index) => new { value.HighCutOff, index })
+				.OrderBy(f => f.HighCutOff)
+				.Where(pair => pair.HighCutOff > cutOff)
+				.Select(pair => pair.index).DefaultIfEmpty(-1)
+				.FirstOrDefault();
+
+			return index != -1;
+		}
+
 		public bool Contains(ColorBandSet colorBandSet)
 		{
 			var x = _colorsCollection.Contains(colorBandSet);

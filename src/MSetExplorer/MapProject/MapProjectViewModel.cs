@@ -155,12 +155,7 @@ namespace MSetExplorer
 				project.CurrentJobId = CurrentJob.Id;
 			}
 
-			CurrentJob.ColorBandSet.HighCutOff = CurrentJob.MSetInfo.MapCalcSettings.TargetIterations;
-
-			// TODO:xx Make sure this set exists in the collection.
-			_ = _colorBandSetCollection.MoveCurrentTo(CurrentJob.ColorBandSet);
-
-			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+			CurrentJob.ColorBandSet = LoadColorBandSetForJob(CurrentJob.ColorBandSet);
 
 			var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
 			if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
@@ -242,7 +237,6 @@ namespace MSetExplorer
 			{
 				var job = _jobsCollection[i];
 
-				//if (job.IsDirty || job.Id.CreationTime > lastSavedTime || job.LastUpdatedUtc > lastSavedTime)
 				if (job.DateCreated > lastSavedTime)
 				{
 					job.ProjectId = projectId;
@@ -258,10 +252,9 @@ namespace MSetExplorer
 						_projectAdapter.UpdateJobsProject(job.Id, projectId);
 					}
 
-					if (job.IsDirty || job.Id.CreationTime > lastSavedTime || job.LastUpdatedUtc > lastSavedTime)
+					if (job.IsDirty)
 					{
 						_projectAdapter.UpdateJobDetails(job);
-						job.IsDirty = false;
 					}
 				}
 			}
@@ -372,7 +365,7 @@ namespace MSetExplorer
 
 		public void UpdateColors(ColorBandSet colorBandSet)
 		{
-			var isTargetIterationsBeingUpdated = colorBandSet.HighColorBand.CutOff != _colorBandSetCollection.CurrentColorBandSet.HighColorBand.CutOff;
+			var isTargetIterationsBeingUpdated = colorBandSet.HighCutOff != _colorBandSetCollection.CurrentColorBandSet.HighCutOff;
 			Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {_colorBandSetCollection.CurrentColorBandSet?.Id}, New = {colorBandSet.Id} Iterations Updated = {isTargetIterationsBeingUpdated}.");
 
 			if (_colorBandSetCollection.Contains(colorBandSet))
@@ -390,7 +383,7 @@ namespace MSetExplorer
 
 			if (isTargetIterationsBeingUpdated)
 			{
-				UpdateTargetInterations(colorBandSet.HighColorBand.CutOff);
+				UpdateTargetInterations(colorBandSet.HighCutOff);
 			}
 			else
 			{
@@ -456,7 +449,7 @@ namespace MSetExplorer
 					{
 						if (CurrentJob.ColorBandSet != CurrentColorBandSet)
 						{
-							LoadColorBandSetForJob(CurrentJob.ColorBandSet);
+							CurrentJob.ColorBandSet = LoadColorBandSetForJob(CurrentJob.ColorBandSet);
 						}
 
 						var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
@@ -500,7 +493,7 @@ namespace MSetExplorer
 					{
 						if (CurrentJob.ColorBandSet != CurrentColorBandSet)
 						{
-							LoadColorBandSetForJob(CurrentJob.ColorBandSet);
+							CurrentJob.ColorBandSet = LoadColorBandSetForJob(CurrentJob.ColorBandSet);
 						}
 
 						var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, BlockSize);
@@ -610,7 +603,7 @@ namespace MSetExplorer
 				_ = _jobsCollection.MoveCurrentTo(matchingProxy);
 				if (CurrentJob.ColorBandSet != CurrentColorBandSet)
 				{
-					LoadColorBandSetForJob(CurrentJob.ColorBandSet);
+					CurrentJob.ColorBandSet = LoadColorBandSetForJob(CurrentJob.ColorBandSet);
 				}
 
 				return;
@@ -624,7 +617,7 @@ namespace MSetExplorer
 				_jobsCollection.MoveCurrentTo(origJob);
 				if (CurrentJob.ColorBandSet != CurrentColorBandSet)
 				{
-					LoadColorBandSetForJob(CurrentJob.ColorBandSet);
+					CurrentJob.ColorBandSet = LoadColorBandSetForJob(CurrentJob.ColorBandSet);
 				}
 
 				return;
@@ -648,14 +641,57 @@ namespace MSetExplorer
 			_jobsCollection.Push(newJob);
 		}
 
-		private void LoadColorBandSetForJob(ColorBandSet colorBandSet)
+		private ColorBandSet LoadColorBandSetForJob(ColorBandSet colorBandSet)
 		{
-			if (!_colorBandSetCollection.MoveCurrentTo(colorBandSet))
+			if (CurrentProject == null)
 			{
-				throw new InvalidOperationException("The MapProjectViewModel cannot find a ColorBandSet for the job we are moving forward to.");
+				return colorBandSet;
+			}
+
+			var targetIterations = CurrentJob.MSetInfo.MapCalcSettings.TargetIterations;
+
+			if (targetIterations < colorBandSet.HighCutOff)
+			{
+				if (_colorBandSetCollection.TryGetCbsSmallestCutOffGtrThan(targetIterations, out var index))
+				{
+					_colorBandSetCollection.MoveCurrentTo(index);
+				}
+				else
+				{
+					Debug.WriteLine("No Matching ColorBandSet found.");
+
+					//if (_colorBandSetCollection.TryGetCbsLargestCutOffLessThan(targetIterations, out var index2))
+					//{
+					//	_colorBandSetCollection.MoveCurrentTo(index2);
+					//}
+					//else
+					//{
+					//	Debug.WriteLine("HUH?");
+					//}
+				}
+			}
+			else
+			{
+				if (!_colorBandSetCollection.MoveCurrentTo(colorBandSet))
+				{
+					Debug.WriteLine($"Warning: the MapProjectViewModel found a ColorBandSet for Job: {CurrentJob.Id} that was not associated with the project: {CurrentProject.Id}.");
+					colorBandSet = colorBandSet.CreateNewCopy();
+					colorBandSet.ProjectId = CurrentProject.Id;
+					_colorBandSetCollection.Push(colorBandSet);
+				}
+			}
+
+			colorBandSet = _colorBandSetCollection.CurrentColorBandSet;
+			if (colorBandSet.HighCutOff != targetIterations)
+			{
+				colorBandSet = colorBandSet.CreateNewCopy();
+				colorBandSet.HighCutOff = targetIterations;
+				_colorBandSetCollection.Push(colorBandSet);
 			}
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+
+			return colorBandSet;
 		}
 
 		#endregion
