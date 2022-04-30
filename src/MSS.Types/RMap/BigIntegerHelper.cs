@@ -257,10 +257,10 @@ namespace MSS.Types
 		{
 			var hi = BigInteger.DivRem(bi, FACTOR, out var lo);
 
-			if (hi > 0)
-			{
-				Debug.WriteLine($"Got a Hi value when converting a IBigRatShape value. The value is {hi}");
-			}
+			//if (hi > 0)
+			//{
+			//	Debug.WriteLine($"Got a Hi value when converting a IBigRatShape value. The value is {hi}");
+			//}
 
 			if (BigInteger.Abs(hi) > long.MaxValue)
 			{

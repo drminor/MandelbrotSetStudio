@@ -395,10 +395,10 @@ namespace MSetRepo
 			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
 			var colorBandSet = GetColorBandSet(jobRecord, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
 
-			if (jobRecord.MSetInfo.MapCalcSettings.TargetIterations != colorBandSet.HighCutOff)
-			{
-				Debug.WriteLine($"WARNING: Job's ColorMap HighCutOff doesn't match the TargetIterations.");
-			}
+			//if (jobRecord.MSetInfo.MapCalcSettings.TargetIterations != colorBandSet.HighCutOff)
+			//{
+			//	Debug.WriteLine($"WARNING: Job's ColorMap HighCutOff doesn't match the TargetIterations. At GetJob from Store.");
+			//}
 
 			var job = new Job(
 				id: jobId,

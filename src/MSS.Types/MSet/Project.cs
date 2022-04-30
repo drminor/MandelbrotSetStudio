@@ -173,7 +173,7 @@ namespace MSS.Types.MSet
 
 					if (_jobsCollection.CurrentJob.ColorBandSet != value)
 					{
-						LoadColorBandSetForJob(_jobsCollection.CurrentJob.ColorBandSet);
+						LoadColorBandSetForJob(value);
 						_jobsCollection.CurrentJob.ColorBandSet = _colorBandSetCollection.CurrentColorBandSet;
 					}
 

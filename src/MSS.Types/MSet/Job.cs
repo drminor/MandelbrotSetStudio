@@ -75,6 +75,12 @@ namespace MSS.Types.MSet
 			_canvasControlOffset = canvasControlOffset;
 
 			LastSavedUtc = lastSaved;
+
+			//if (ColorBandSet.HighCutOff != MSetInfo.MapCalcSettings.TargetIterations)
+			//{
+			//	Debug.WriteLine($"Creating new Job with mismatched HighCutOff.");
+			//}
+
 		}
 
 		#endregion

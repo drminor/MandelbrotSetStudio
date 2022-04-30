@@ -108,7 +108,7 @@ namespace MSetExplorer
 		{
 			if (mSetInfo.MapCalcSettings.TargetIterations != colorBandSet.HighCutOff)
 			{
-				Debug.WriteLine($"WARNING: Job's ColorMap HighCutOff doesn't match the TargetIterations.");
+				Debug.WriteLine($"WARNING: Job's ColorMap HighCutOff doesn't match the TargetIterations. At ProjectStartNew.");
 			}
 
 			var projectId = ObjectId.Empty;
@@ -142,6 +142,8 @@ namespace MSetExplorer
 
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectOnFile));
+
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
@@ -248,32 +250,29 @@ namespace MSetExplorer
 			var isTargetIterationsBeingUpdated = colorBandSet.HighCutOff != CurrentProject.CurrentColorBandSet.HighCutOff;
 			Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {CurrentProject.CurrentColorBandSet.Id}, New = {colorBandSet.Id} Iterations Updated = {isTargetIterationsBeingUpdated}.");
 
-			CurrentProject.CurrentColorBandSet = colorBandSet;
-
-			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
-
 			if (isTargetIterationsBeingUpdated)
 			{
-				UpdateTargetInterations(colorBandSet.HighCutOff);
+				//UpdateTargetInterations(colorBandSet.HighCutOff);
+
+				var targetIterations = colorBandSet.HighCutOff;
+				var mSetInfo = CurrentJob.MSetInfo;
+
+				if (mSetInfo.MapCalcSettings.TargetIterations != targetIterations)
+				{
+					var updatedMSetInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations);
+
+					CurrentProject.CurrentJob.ColorBandSet = colorBandSet;
+					CurrentProject.CurrentColorBandSet = colorBandSet;
+
+					LoadMap(CurrentProject, CurrentJob, updatedMSetInfo, TransformType.IterationUpdate, null);
+				}
 			}
-
-			//CurrentProjectIsDirty = true;
-		}
-
-		public void UpdateTargetInterations(int targetIterations)
-		{
-			if (CurrentProject == null)
+			else
 			{
-				return;
+				CurrentProject.CurrentColorBandSet = colorBandSet;
 			}
-			
-			var mSetInfo = CurrentJob.MSetInfo;
 
-			if (mSetInfo.MapCalcSettings.TargetIterations != targetIterations)
-			{
-				var updatedMSetInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations);
-				LoadMap(CurrentProject, CurrentJob, updatedMSetInfo, TransformType.IterationUpdate, null);
-			}
+			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 		}
 
 		public RRectangle? GetUpdateCoords(TransformType transformType, RectangleInt newArea)
@@ -378,7 +377,7 @@ namespace MSetExplorer
 		{
 			if (mSetInfo.MapCalcSettings.TargetIterations != CurrentColorBandSet.HighCutOff)
 			{
-				Debug.WriteLine($"WARNING: Job's ColorMap HighCutOff doesn't match the TargetIterations.");
+				Debug.WriteLine($"WARNING: Job's ColorMap HighCutOff doesn't match the TargetIterations. At LoadMap.");
 			}
 
 			var job = MapJobHelper.BuildJob(currentJob?.Id, project.Id, CanvasSize, mSetInfo, CurrentColorBandSet, transformType, newArea, _blockSize, _projectAdapter);

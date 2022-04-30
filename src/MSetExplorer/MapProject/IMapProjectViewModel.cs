@@ -30,7 +30,7 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
-		void UpdateTargetInterations(int targetIterations);
+		//void UpdateTargetInterations(int targetIterations);
 		void UpdateMapCoordinates(RRectangle coords);
 		RRectangle? GetUpdateCoords(TransformType transformType, RectangleInt newArea);
 
