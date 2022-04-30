@@ -13,7 +13,7 @@ namespace MSetExplorer
 	{
 		#region Build Job
 
-		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, string jobName, SizeInt canvasSize, MSetInfo mSetInfo, ColorBandSet colorBandSet,
+		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, MSetInfo mSetInfo, ColorBandSet colorBandSet,
 			TransformType transformType, RectangleInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			if (!parentJobId.HasValue && transformType != TransformType.None)
@@ -45,6 +45,7 @@ namespace MSetExplorer
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
 			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
+			var jobName = GetJobName(transformType);
 
 			var job = new Job(parentJobId, isPreferredChild, projectId, subdivision, jobName, transformType, newArea, updatedMSetInfo, colorBandSet, canvasSizeInBlocks, mapBlockOffset, canvasControlOffset);
 

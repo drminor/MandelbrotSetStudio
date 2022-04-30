@@ -56,6 +56,9 @@ namespace ProjectRepo
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobRecord.Id);
 
 			var updateDefinition = Builders<JobRecord>.Update
+				.Set(u => u.ProjectId, jobRecord.ProjectId)
+				.Set(u => u.ParentJobId, jobRecord.ParentJobId)
+				.Set(u => u.IsPreferredChild, jobRecord.IsPreferredChild)
 				.Set(u => u.MSetInfo, jobRecord.MSetInfo)
 				.Set(u => u.ColorBandSetId, jobRecord.ColorBandSetId)
 				.Set(u => u.CanvasSizeInBlocks, jobRecord.CanvasSizeInBlocks)

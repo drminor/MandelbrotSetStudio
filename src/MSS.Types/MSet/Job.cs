@@ -11,6 +11,7 @@ namespace MSS.Types.MSet
 		private static Lazy<Job> _lazyJob = new Lazy<Job>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static readonly Job Empty = _lazyJob.Value;
 
+		private ObjectId _projectId;
 		private ObjectId? _parentJobId;
 		private MSetInfo _mSetInfo;
 		private ColorBandSet _colorBandSet;
@@ -60,7 +61,7 @@ namespace MSS.Types.MSet
 			Id = id;
 			_parentJobId = parentJobId;
 			_isPreferredChild = isPreferredChild;
-			ProjectId = projectId;
+			_projectId = projectId;
 			Subdivision = subdivision;
 			Label = label;
 
@@ -82,8 +83,19 @@ namespace MSS.Types.MSet
 
 		public bool IsEmpty => MSetInfo.Coords.WidthNumerator == 0;
 		public DateTime DateCreated => Id.CreationTime;
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
 
 		public ObjectId Id { get; init; }
+
+		public ObjectId ProjectId
+		{
+			get => _projectId;
+			set
+			{
+				_projectId = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
 
 		public ObjectId? ParentJobId
 		{
@@ -98,6 +110,7 @@ namespace MSS.Types.MSet
 				{
 					_parentJobId = value;
 				}
+				LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
 
@@ -111,8 +124,6 @@ namespace MSS.Types.MSet
 			}
 		}
 
-
-		public ObjectId ProjectId { get; set; }
 		public Subdivision Subdivision { get; init; }
 		public string? Label { get; init; }
 		public TransformType TransformType { get; init; }
@@ -168,7 +179,6 @@ namespace MSS.Types.MSet
 			}
 		}
 
-
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;
@@ -180,8 +190,6 @@ namespace MSS.Types.MSet
 		}
 
 		public DateTime LastUpdatedUtc { get; private set; }
-
-		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
 
 		#endregion
 

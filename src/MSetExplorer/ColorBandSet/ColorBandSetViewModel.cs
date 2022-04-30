@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -56,7 +57,7 @@ namespace MSetExplorer
 
 			_colorBandSet = null;
 
-			_colorBandSetCollection = new ColorBandSetCollection();
+			_colorBandSetCollection = new ColorBandSetCollection(new List<ColorBandSet> { new ColorBandSet() } );
 			_currentColorBandSet = _colorBandSetCollection.CurrentColorBandSet.Clone();
 			_colorBandsView = BuildColorBandsView(null);
 
@@ -278,7 +279,7 @@ namespace MSetExplorer
 
 		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (sender is ColorBand cb && _currentColorBandSet != null)
+			if (sender is ColorBand cb)
 			{
 				Debug.WriteLine($"Prop: {e.PropertyName} is changing.");
 
@@ -463,15 +464,20 @@ namespace MSetExplorer
 		public void ApplyChanges(int? newTargetIterations = null)
 		{
 			// Create a new ColorBandSet with a new id, having the same values of this instance.
-			var newSet = _currentColorBandSet.CreateNewCopy();
+
+
+			//var newSet = _currentColorBandSet.CreateNewCopy();
+
+			ColorBandSet newSet;
 
 			if (newTargetIterations.HasValue)
 			{
-				newSet.HighCutOff = newTargetIterations.Value;
+				newSet = _currentColorBandSet.CreateNewCopy(newTargetIterations.Value);
 			}
 			else
 			{
 				Debug.Assert(IsDirty, "ApplyChanges is being called, but we are not dirty.");
+				newSet = _currentColorBandSet.CreateNewCopy();
 			}
 
 			Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}, name: {newSet.Name}. The old Id is {ColorBandSet?.Id ?? ObjectId.Empty}");

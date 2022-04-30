@@ -20,6 +20,8 @@ namespace MSS.Types
 		private string? _name;
 		private string? _description;
 
+		private DateTime _lastSavedUtc;
+
 		#region Constructor
 
 		public ColorBandSet() : this(projectId: ObjectId.Empty, colorBands: null)
@@ -41,6 +43,8 @@ namespace MSS.Types
 			_projectId = projectId;
 			_name = name;
 			_description = description;
+
+			_lastSavedUtc = DateTime.UtcNow;
 		}
 
 		#endregion
@@ -59,6 +63,7 @@ namespace MSS.Types
 				if (value != _parentId)
 				{
 					_parentId = value;
+					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}
 			}
@@ -72,6 +77,7 @@ namespace MSS.Types
 				if (value != _projectId)
 				{
 					_projectId = value;
+					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}
 			}
@@ -85,6 +91,7 @@ namespace MSS.Types
 				if (value != _name)
 				{
 					_name = value;
+					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}
 			}
@@ -98,26 +105,34 @@ namespace MSS.Types
 				if (value != _description)
 				{
 					_description = value;
+					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}
 			}
 		}
 
+
+		public DateTime LastSavedUtc
+		{
+			get => _lastSavedUtc;
+			private set
+			{
+				_lastSavedUtc = value;
+				LastUpdatedUtc = value;
+			}
+		}
+
+		public DateTime LastUpdatedUtc { get; private set; }
+
 		#endregion
 
 		#region Public Properties - Derived
 
-		//public ObservableCollection<ColorBand> ColorBands => this;
+		public int HighCutOff => base[^1].CutOff;
 
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
 		public bool AssignedToProject => ProjectId != ObjectId.Empty;
-
 		public bool IsReadOnly => false;
-
-		public int HighCutOff
-		{
-			get => base[^1].CutOff;
-			set => base[^1].CutOff = value;
-		}
 
 		#endregion
 
@@ -341,7 +356,19 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateCopy());
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy());
+			return result;
+		}
+
+		/// <summary>
+		/// Receives a new ObjectId and becomes a child of this ColorBandSet.
+		/// </summary>
+		/// <returns></returns>
+		public ColorBandSet CreateNewCopy(int targetIterations)
+		{
+			var bandsCopy = CreateBandsCopy();
+			bandsCopy[^1].CutOff = targetIterations;
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, bandsCopy);
 			return result;
 		}
 
@@ -358,12 +385,12 @@ namespace MSS.Types
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with Id: {Id}.");
 
-			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateCopy());
+			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy());
 			//result.DateCreated = DateCreated;
 			return result;
 		}
 
-		private IList<ColorBand> CreateCopy()
+		private IList<ColorBand> CreateBandsCopy()
 		{
 			var result = Items.Select(x => x.Clone()).ToList();
 			return result;

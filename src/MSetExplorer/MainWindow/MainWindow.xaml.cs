@@ -128,8 +128,6 @@ namespace MSetExplorer
 			}
 		}
 
-
-
 		#endregion
 
 		#region Window Button Handlers
@@ -210,16 +208,17 @@ namespace MSetExplorer
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
 		{
 			var triResult = ProjectSaveChanges();
-			if (triResult == true)
-			{
-				_ = MessageBox.Show("Changes Saved");
-			}
 
 			if (!triResult.HasValue)
 			{
 				// user cancelled.
 				return;
-			} 
+			}
+
+			if (triResult == true)
+			{
+				_ = MessageBox.Show("Changes Saved");
+			}
 
 			var initialName = _vm.MapProjectViewModel.CurrentProjectName;
 			if (ProjectShowOpenSaveWindow(DialogType.Open, initialName, out var selectedName, out _))
@@ -239,7 +238,7 @@ namespace MSetExplorer
 		// Save
 		private void SaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm.MapProjectViewModel.CanSaveProject;
+			e.CanExecute = _vm.MapProjectViewModel.CurrentProjectOnFile;
 		}
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -293,8 +292,7 @@ namespace MSetExplorer
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
 				var adjustedCbs = AdjustTargetIterations(colorBandSet, _vm.MapProjectViewModel.CurrentJob.MSetInfo.MapCalcSettings.TargetIterations);
-
-				_vm.MapProjectViewModel.UpdateColors(adjustedCbs);
+				_vm.MapProjectViewModel.UpdateColorBandSet(adjustedCbs);
 			}
 			else
 			{
@@ -306,35 +304,6 @@ namespace MSetExplorer
 					_vm.MapDisplayViewModel.ColorBandSet = projectsColorBandSet;
 				}
 			}
-		}
-
-		private ColorBandSet AdjustTargetIterations(ColorBandSet colorBandSet, int targetIterations)
-		{
-			if (colorBandSet.HighCutOff == targetIterations)
-			{
-				return colorBandSet;
-			}
-
-			colorBandSet = colorBandSet.CreateNewCopy();
-
-			if (colorBandSet.HighCutOff > targetIterations)
-			{
-				var x = colorBandSet.Take(colorBandSet.Count - 1).FirstOrDefault(x => x.CutOff > targetIterations - 2);
-
-				while(x != null)
-				{
-					colorBandSet.Remove(x);
-					x = colorBandSet.Take(colorBandSet.Count - 1).FirstOrDefault(x => x.CutOff > targetIterations - 2);
-				}
-
-				colorBandSet.HighCutOff = targetIterations;
-			}
-			else if (colorBandSet.HighCutOff < targetIterations)
-			{
-				colorBandSet.HighCutOff = targetIterations;
-			}
-
-			return colorBandSet;
 		}
 
 		// Colors Export
@@ -481,6 +450,16 @@ namespace MSetExplorer
 
 			if (!_vm.MapProjectViewModel.CurrentProjectIsDirty)
 			{
+				if (_vm.MapProjectViewModel.IsCurrentJobIdChanged)
+				{
+					if (_vm.MapProjectViewModel.CurrentProjectOnFile)
+					{
+						// Silently record the new CurrentJob selection
+						_vm.MapProjectViewModel.ProjectSave();
+
+					}
+				}
+
 				return false;
 			}
 
@@ -493,7 +472,7 @@ namespace MSetExplorer
 
 			if (triResult == true)
 			{
-				if (_vm.MapProjectViewModel.CanSaveProject)
+				if (_vm.MapProjectViewModel.CurrentProjectOnFile)
 				{
 					// The Project is on-file, just save the pending changes.
 					_vm.MapProjectViewModel.ProjectSave();
@@ -539,7 +518,7 @@ namespace MSetExplorer
 
 		private bool? ProjectUserSaysSaveChanges()
 		{
-			var defaultResult = _vm.MapProjectViewModel.CanSaveProject ? MessageBoxResult.Yes : MessageBoxResult.No;
+			var defaultResult = _vm.MapProjectViewModel.CurrentProjectOnFile ? MessageBoxResult.Yes : MessageBoxResult.No;
 			var res = MessageBox.Show("The current project has pending changes. Save Changes?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
 
 			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?) null;
@@ -684,6 +663,29 @@ namespace MSetExplorer
 			{ 
 				return false;
 			}
+		}
+
+		private ColorBandSet AdjustTargetIterations(ColorBandSet colorBandSet, int targetIterations)
+		{
+			if (colorBandSet.HighCutOff == targetIterations)
+			{
+				return colorBandSet;
+			}
+
+			colorBandSet = colorBandSet.CreateNewCopy(targetIterations);
+
+			if (colorBandSet.HighCutOff > targetIterations)
+			{
+				var x = colorBandSet.Take(colorBandSet.Count - 1).FirstOrDefault(x => x.CutOff > targetIterations - 2);
+
+				while (x != null)
+				{
+					colorBandSet.Remove(x);
+					x = colorBandSet.Take(colorBandSet.Count - 1).FirstOrDefault(x => x.CutOff > targetIterations - 2);
+				}
+			}
+
+			return colorBandSet;
 		}
 
 		#endregion

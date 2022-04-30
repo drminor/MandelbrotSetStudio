@@ -43,16 +43,6 @@ namespace ProjectRepo
 			return colorBandSetRecord.Id;
 		}
 
-		public void UpdateParentId(ObjectId colorBandSetId, ObjectId? parentId)
-		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
-
-			var updateDefinition = Builders<ColorBandSetRecord>.Update
-				.Set(u => u.ParentId, parentId);
-
-			_ = Collection.UpdateOne(filter, updateDefinition);
-		}
-
 		public void UpdateName(ObjectId colorBandSetId, string? name)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
@@ -73,26 +63,46 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
-		public void UpdateColorBands(ObjectId colorBandSetId, ColorBandRecord[] colorBandsRecords)
+		public void UpdateDetails(ColorBandSet colorBandSet)
 		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSet.Id);
 
 			var updateDefinition = Builders<ColorBandSetRecord>.Update
-				.Set(u => u.ColorBandRecords, colorBandsRecords);
+				.Set(u => u.ProjectId, colorBandSet.ProjectId)
+				.Set(u => u.ParentId, colorBandSet.ParentId);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
+		//public void UpdateProjectId(ObjectId colorBandSetId, ObjectId projectId)
+		//{
+		//	var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
 
-		public void UpdateProjectId(ObjectId colorBandSetId, ObjectId projectId)
-		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+		//	var updateDefinition = Builders<ColorBandSetRecord>.Update
+		//		.Set(u => u.ProjectId, projectId);
 
-			var updateDefinition = Builders<ColorBandSetRecord>.Update
-				.Set(u => u.ProjectId, projectId);
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
 
-			_ = Collection.UpdateOne(filter, updateDefinition);
-		}
+		//public void UpdateParentId(ObjectId colorBandSetId, ObjectId? parentId)
+		//{
+		//	var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+
+		//	var updateDefinition = Builders<ColorBandSetRecord>.Update
+		//		.Set(u => u.ParentId, parentId);
+
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
+
+		//public void UpdateColorBands(ObjectId colorBandSetId, ColorBandRecord[] colorBandsRecords)
+		//{
+		//	var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
+
+		//	var updateDefinition = Builders<ColorBandSetRecord>.Update
+		//		.Set(u => u.ColorBandRecords, colorBandsRecords);
+
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
 
 		public long? Delete(ObjectId colorBandSetId)
 		{
@@ -122,21 +132,21 @@ namespace ProjectRepo
 			return colorBandSets;
 		}
 
-		public DateTime GetLastSaveTime(ObjectId projectId)
-		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
-			var cbSetRecs = Collection.Find(filter).ToList();
+		//public DateTime GetLastSaveTime(ObjectId projectId)
+		//{
+		//	var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+		//	var cbSetRecs = Collection.Find(filter).ToList();
 
-			if (cbSetRecs.Count < 1)
-			{
-				return DateTime.MinValue;
-			}
-			else
-			{
-				var result = cbSetRecs.Max(x => x.Id.CreationTime);
-				return result;
-			}
-		}
+		//	if (cbSetRecs.Count < 1)
+		//	{
+		//		return DateTime.MinValue;
+		//	}
+		//	else
+		//	{
+		//		var result = cbSetRecs.Max(x => x.Id.CreationTime);
+		//		return result;
+		//	}
+		//}
 
 	}
 }

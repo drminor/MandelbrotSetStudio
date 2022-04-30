@@ -38,13 +38,15 @@ namespace MSetRepo
 		
 		public Project MapFrom(ProjectRecord target)
 		{
-			var result = new Project(target.Id, target.Name, target.Description, target.CurrentJobId, target.LastSavedUtc);
-			return result;
+			//var result = new Project(target.Id, target.Name, target.Description, target.CurrentJobId, target.LastSavedUtc);
+			//return result;
+
+			throw new NotImplementedException();
 		}
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc, ObjectId.Empty);
+			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc);
 			return result;
 		}
 

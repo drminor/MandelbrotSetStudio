@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
-using MSS.Types;
-using MSS.Types.MSet;
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,7 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
-namespace MSetExplorer
+namespace MSS.Types.MSet
 {
 	public class JobCollection
 	{
@@ -20,11 +19,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public JobCollection()
+		public JobCollection(IEnumerable<Job> jobs)
 		{
-			_jobsCollection = new Collection<Job>() {Job.Empty };
+			_jobsCollection = new Collection<Job>(jobs.ToList());
+			_jobsPointer = _jobsCollection.Count - 1;
+
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
-			_jobsPointer = 0;
 		}
 
 		#endregion
@@ -38,9 +38,7 @@ namespace MSetExplorer
 		public int CurrentIndex => DoWithReadLock(() => { return _jobsPointer; });
 		public int Count => DoWithReadLock(() => { return _jobsCollection.Count; });
 
-		//public IEnumerable<Job> Jobs => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
-
-		//public bool IsDirty => _colorsCollection.Any(x => !x.OnFile);
+		public IEnumerable<Job> GetJobs() => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
 
 		#endregion
 

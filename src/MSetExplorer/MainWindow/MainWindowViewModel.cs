@@ -242,7 +242,7 @@ namespace MSetExplorer
 				// This will allow the MapDisplayViewModel to handle Color changes as the Job is changed.
 				//MapDisplayViewModel.ColorBandSet = colorBandSet;
 
-				MapProjectViewModel.UpdateColors(colorBandSet);
+				MapProjectViewModel.UpdateColorBandSet(colorBandSet);
 			}
 		}
 

@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
-namespace MSetExplorer
+namespace MSS.Types.MSet
 {
 	public class ColorBandSetCollection : IDisposable
 	{
@@ -19,11 +18,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandSetCollection()
+		public ColorBandSetCollection(IEnumerable<ColorBandSet> colorBandSets)
 		{
-			_colorsCollection = new Collection<ColorBandSet>() { new ColorBandSet() };
+			_colorsCollection = new Collection<ColorBandSet>(colorBandSets.ToList());
+			_colorsPointer = _colorsCollection.Count - 1;
+
 			_colorsLock = new ReaderWriterLockSlim();
-			_colorsPointer = 0;
 		}
 
 		#endregion
@@ -39,8 +39,6 @@ namespace MSetExplorer
 		public int Count => DoWithReadLock(() => { return _colorsCollection.Count; });
 
 		public IEnumerable<ColorBandSet> GetColorBandSets() => DoWithReadLock(() => { return new ReadOnlyCollection<ColorBandSet>(_colorsCollection); });
-
-		//public bool IsDirty => _colorsCollection.Any(x => !x.OnFile);
 
 		#endregion
 
