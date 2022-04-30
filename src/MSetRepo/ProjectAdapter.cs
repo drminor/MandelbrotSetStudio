@@ -104,7 +104,7 @@ namespace MSetRepo
 				var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
 				var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
 
-				project = AssembleProject(projectRecord, jobs, colorBandSets);
+				project = AssembleProject(projectRecord, jobs, colorBandSets, projectRecord.LastSavedUtc);
 				return true;
 			}
 			else
@@ -131,7 +131,7 @@ namespace MSetRepo
 
 				var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
 				var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
-				var result = AssembleProject(projectRecord, jobs, colorBandSets);
+				var result = AssembleProject(projectRecord, jobs, colorBandSets, DateTime.MinValue);
 
 				return result;
 			}
@@ -163,7 +163,7 @@ namespace MSetRepo
 					cbs.ProjectId = projectId;
 				}
 
-				var result = AssembleProject(projectRecord, jobs, colorBandSets);
+				var result = AssembleProject(projectRecord, jobs, colorBandSets, DateTime.MinValue);
 
 				return result;
 			}
@@ -173,9 +173,9 @@ namespace MSetRepo
 			}
 		}
 
-		private Project AssembleProject(ProjectRecord projectRecord, IEnumerable<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
+		private Project AssembleProject(ProjectRecord projectRecord, IEnumerable<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
 		{
-			var result = new Project(projectRecord.Id, projectRecord.Name, projectRecord.Description, jobs, colorBandSets, projectRecord.CurrentJobId, projectRecord.LastSavedUtc);
+			var result = new Project(projectRecord.Id, projectRecord.Name, projectRecord.Description, jobs, colorBandSets, projectRecord.CurrentJobId, lastSavedUtc);
 			return result;
 		}
 

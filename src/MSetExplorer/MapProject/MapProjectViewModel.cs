@@ -82,6 +82,16 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectOnFile));
 			}
+
+			if (e.PropertyName == nameof(Project.CurrentColorBandSet))
+			{
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+			}
+
+			if (e.PropertyName == nameof(Project.CurrentJob))
+			{
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+			}
 		}
 
 		public bool CurrentProjectIsDirty => CurrentProject?.IsDirty ?? false;

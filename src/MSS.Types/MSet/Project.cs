@@ -65,7 +65,7 @@ namespace MSS.Types.MSet
 
 		public bool CanGoBack => _jobsCollection.CanGoBack;
 		public bool CanGoForward => _jobsCollection.CanGoForward;
-		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || DateCreated > LastSavedUtc;
 
 		public bool IsCurrentJobIdChanged
 		{
@@ -175,9 +175,10 @@ namespace MSS.Types.MSet
 					{
 						LoadColorBandSetForJob(value);
 						_jobsCollection.CurrentJob.ColorBandSet = _colorBandSetCollection.CurrentColorBandSet;
+						OnPropertyChanged(nameof(CurrentJob));
 					}
 
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(CurrentColorBandSet));
 
 					if (IsDirty != isDirtyBefore)
 					{
