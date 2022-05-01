@@ -218,7 +218,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public bool TryGetPreviousJob([MaybeNullWhen(false)] out int index)
+		public bool TryGetPreviousJob([MaybeNullWhen(false)] out Job job)
 		{
 			_jobsLock.EnterUpgradeableReadLock();
 			try
@@ -227,12 +227,12 @@ namespace MSS.Types.MSet
 
 				if (!(parentJobId is null))
 				{
-					var result = TryGetIndexFromId(parentJobId.Value, out index);
+					var result = TryFindByJobId(parentJobId.Value, out job);
 					return result;
 				}
 				else
 				{
-					index = -1;
+					job = null;
 					return false;
 				}
 			}
@@ -263,12 +263,12 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public bool TryGetNextJob([MaybeNullWhen(false)] out int index)
+		public bool TryGetNextJob([MaybeNullWhen(false)] out Job job)
 		{
 			_jobsLock.EnterUpgradeableReadLock();
 			try
 			{
-				var result = TryGetNextJobIndexInStack(_jobsPointer, out index);
+				var result = TryGetNextJobInStack(_jobsPointer, out job);
 				return result;
 			}
 			finally
@@ -307,6 +307,22 @@ namespace MSS.Types.MSet
 		#endregion
 
 		#region Collection Management 
+
+		private bool TryGetNextJobInStack(int jobIndex, [MaybeNullWhen(false)] out Job nextJob)
+		{
+			if (TryGetJobFromStack(jobIndex, out var job))
+			{
+				if (TryGetPreferredChildJob(job, out var childJob))
+				{
+					nextJob = childJob;
+					return true;
+				}
+			}
+
+			nextJob = null;
+			return false;
+		}
+
 
 		private bool TryGetNextJobIndexInStack(int jobIndex, out int nextJobIndex)
 		{

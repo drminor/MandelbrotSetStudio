@@ -229,11 +229,12 @@ namespace MSS.Types.MSet
 			_stateLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (_jobsCollection.TryGetPreviousJob(out var index))
+				if (_jobsCollection.TryGetPreviousJob(out var job))
 				{
+					//int idx = index;
 					DoWithWriteLock(() =>
 					{
-						_jobsCollection.MoveCurrentTo(index);
+						CurrentJob = job;
 					});
 
 					return true;
@@ -254,11 +255,11 @@ namespace MSS.Types.MSet
 			_stateLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (_jobsCollection.TryGetNextJob(out var index))
+				if (_jobsCollection.TryGetNextJob(out var job))
 				{
 					DoWithWriteLock(() =>
 					{
-						_jobsCollection.MoveCurrentTo(index);
+						CurrentJob = job;
 					});
 
 					return true;
