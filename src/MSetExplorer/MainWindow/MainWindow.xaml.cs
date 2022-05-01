@@ -99,6 +99,11 @@ namespace MSetExplorer
 				Title = GetWindowTitle(_vm.MapProjectViewModel.CurrentProject?.Name, _vm.MapProjectViewModel.CurrentColorBandSet.Name);
 				CommandManager.InvalidateRequerySuggested();
 			}
+
+			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectOnFile) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectIsDirty))
+			{
+				CommandManager.InvalidateRequerySuggested();
+			}
 		}
 
 		private void ColorBandSetViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -291,7 +296,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
-				var adjustedCbs = AdjustTargetIterations(colorBandSet, _vm.MapProjectViewModel.CurrentJob.MSetInfo.MapCalcSettings.TargetIterations);
+				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.MapProjectViewModel.CurrentJob.MSetInfo.MapCalcSettings.TargetIterations);
 				_vm.MapProjectViewModel.UpdateColorBandSet(adjustedCbs);
 			}
 			else
@@ -301,7 +306,7 @@ namespace MSetExplorer
 
 				if (_vm.MapDisplayViewModel.ColorBandSet != projectsColorBandSet)
 				{
-					_vm.MapDisplayViewModel.ColorBandSet = projectsColorBandSet;
+					_vm.MapDisplayViewModel.SetColorBandSet(projectsColorBandSet, isPreview: true);
 				}
 			}
 		}
@@ -436,6 +441,7 @@ namespace MSetExplorer
 		private void LoadNewProject(MSetInfo mSetInfo)
 		{
 			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(mSetInfo.MapCalcSettings.TargetIterations);
+			//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, isPreview: false);
 			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo, colorBandSet);
 		}
 
@@ -499,8 +505,8 @@ namespace MSetExplorer
 				if (selectedName != null)
 				{
 					Debug.WriteLine($"Saving project with name: {selectedName}.");
-					_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description);
-					result = true;
+					// TODO: Handle cases where ProjectSaveAs fails.
+					result = _vm.MapProjectViewModel.ProjectSaveAs(selectedName, description);
 				}
 				else
 				{
@@ -636,8 +642,7 @@ namespace MSetExplorer
 				var id = vm.SelectedColorBandSetInfo?.Id;
 				if (id != null && vm.TryImportColorBandSet(id.Value, out var colorBandSet))
 				{
-					var adjustedCbs = AdjustTargetIterations(colorBandSet, _vm.MapProjectViewModel.CurrentJob.MSetInfo.MapCalcSettings.TargetIterations);
-					_vm.MapDisplayViewModel.ColorBandSet = adjustedCbs;
+					_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, isPreview: true);
 				}
 			}
 		}
@@ -663,29 +668,6 @@ namespace MSetExplorer
 			{ 
 				return false;
 			}
-		}
-
-		private ColorBandSet AdjustTargetIterations(ColorBandSet colorBandSet, int targetIterations)
-		{
-			if (colorBandSet.HighCutOff == targetIterations)
-			{
-				return colorBandSet;
-			}
-
-			colorBandSet = colorBandSet.CreateNewCopy(targetIterations);
-
-			if (colorBandSet.HighCutOff > targetIterations)
-			{
-				var x = colorBandSet.Take(colorBandSet.Count - 1).FirstOrDefault(x => x.CutOff > targetIterations - 2);
-
-				while (x != null)
-				{
-					colorBandSet.Remove(x);
-					x = colorBandSet.Take(colorBandSet.Count - 1).FirstOrDefault(x => x.CutOff > targetIterations - 2);
-				}
-			}
-
-			return colorBandSet;
 		}
 
 		#endregion

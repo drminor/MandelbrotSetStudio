@@ -153,16 +153,16 @@ namespace MSetExplorer
 
 			if (!view.IsAddingNew && lvColorBands.Items.CurrentItem is ColorBand selItem)
 			{
-				if (selItem.CutOff - selItem.StartingCutOff < 1)
+				if (selItem.Cutoff - selItem.StartingCutoff < 1)
 				{
 					_ = MessageBox.Show("No Room to insert here.");
 					return;
 				}
 
 				var index = lvColorBands.Items.IndexOf(selItem);
-				var prevCutOff = selItem.PreviousCutOff ?? 0;
-				var newCutoff = prevCutOff + (selItem.CutOff - prevCutOff) / 2;
-				var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, selItem.StartColor, selItem.PreviousCutOff, selItem.StartColor, double.NaN);
+				var prevCutoff = selItem.PreviousCutoff ?? 0;
+				var newCutoff = prevCutoff + (selItem.Cutoff - prevCutoff) / 2;
+				var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, selItem.StartColor, selItem.PreviousCutoff, selItem.StartColor, double.NaN);
 				_vm.InsertItem(index, newItem);
 
 				//lvColorBands.Items.Refresh();
@@ -258,9 +258,9 @@ namespace MSetExplorer
 
 		//	if (TryGetSuccessor(index, out var sucessor))
 		//	{
-		//		if (selItem.CutOffUpdated && sucessor != null)
+		//		if (selItem.CutoffUpdated && sucessor != null)
 		//		{
-		//			sucessor.PreviousCutOff = selItem.CutOff;
+		//			sucessor.PreviousCutoff = selItem.Cutoff;
 		//		}
 		//	}
 		//}

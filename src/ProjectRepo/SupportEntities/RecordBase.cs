@@ -37,7 +37,7 @@ namespace ProjectRepo.Entities
 	{
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
-		public ObjectId Id { get; init; } = ObjectId.Empty;
+		public ObjectId Id { get; set; } = ObjectId.Empty;
 
 		public DateTime DateCreated => Id.CreationTime;
 

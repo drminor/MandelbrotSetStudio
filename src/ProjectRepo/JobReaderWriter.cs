@@ -22,33 +22,23 @@ namespace ProjectRepo
 			return jobRecord;
 		}
 
-		public ObjectId[] GetJobIds(ObjectId projectId)
+		public IEnumerable<ObjectId> GetJobIds(ObjectId projectId)
 		{
+			var projection1 = Builders<JobRecord>.Projection.Expression
+				(
+					p => p.Id
+				);
+
 			var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
-			var jobs = Collection.Find(filter).ToList();
+			var result = Collection.Find(filter).Project(projection1).ToEnumerable();
 
-			// Get the _id values of the found documents
-			var ids = jobs.Select(d => d.Id).ToArray();
-
-			return ids;
+			return result;
 		}
 
 		public ObjectId Insert(JobRecord jobRecord)
 		{
 			Collection.InsertOne(jobRecord);
 			return jobRecord.Id;
-		}
-
-		public void UpdateJobsParent(ObjectId jobId, ObjectId? parentId, bool isPreferredChild)
-		{
-			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
-
-			var updateDefinition = Builders<JobRecord>.Update
-				.Set(u => u.ParentJobId, parentId)
-				.Set(u => u.IsPreferredChild, isPreferredChild)
-				.Set(u => u.LastSaved, DateTime.UtcNow);
-
-			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
 		public void UpdateJobDetails(JobRecord jobRecord)
@@ -69,16 +59,41 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
-		public void UpdateJobsProject(ObjectId jobId, ObjectId projectId)
+		public void UpdateJobsColorBandSet(ObjectId jobId, int targetIterations, ObjectId colorBandSetId)
 		{
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
 
 			var updateDefinition = Builders<JobRecord>.Update
-				.Set(u => u.ProjectId, projectId)
+				.Set(u => u.MSetInfo.MapCalcSettings.TargetIterations, targetIterations)
+				.Set(u => u.ColorBandSetId, colorBandSetId)
 				.Set(u => u.LastSaved, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
+
+
+		//public void UpdateJobsProject(ObjectId jobId, ObjectId projectId)
+		//{
+		//	var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
+
+		//	var updateDefinition = Builders<JobRecord>.Update
+		//		.Set(u => u.ProjectId, projectId)
+		//		.Set(u => u.LastSaved, DateTime.UtcNow);
+
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
+
+		//public void UpdateJobsParent(ObjectId jobId, ObjectId? parentId, bool isPreferredChild)
+		//{
+		//	var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
+
+		//	var updateDefinition = Builders<JobRecord>.Update
+		//		.Set(u => u.ParentJobId, parentId)
+		//		.Set(u => u.IsPreferredChild, isPreferredChild)
+		//		.Set(u => u.LastSaved, DateTime.UtcNow);
+
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
 
 		public long? Delete(ObjectId jobId)
 		{
@@ -90,11 +105,7 @@ namespace ProjectRepo
 
 		public long? DeleteAllForProject(ObjectId projectId)
 		{
-			var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
-			var jobs = Collection.Find(filter).ToList();
-
-			// Get the _id values of the found documents
-			var ids = jobs.Select(d => d.Id);
+			var ids = GetJobIds(projectId);
 
 			// Create an $in filter for those ids
 			var idsFilter = Builders<JobRecord>.Filter.In(d => d.Id, ids);
@@ -120,7 +131,6 @@ namespace ProjectRepo
 
 			return colorBandSetIds;
 		}
-
 
 		public IEnumerable<JobModel1> GetJobInfos(ObjectId projectId)
 		{

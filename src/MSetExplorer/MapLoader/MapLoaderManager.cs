@@ -1,4 +1,5 @@
 ﻿using MapSectionProviderLib;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -55,7 +56,7 @@ namespace MSetExplorer
 				StopCurrentJobInternal();
 
 				var mapLoader = new MapLoader(job.MapBlockOffset, HandleMapSection, _mapSectionRequestProcessor);
-				var mapSectionRequests = MapSectionHelper.CreateSectionRequests(job, emptyMapSections);
+				var mapSectionRequests = new JobHelper().CreateSectionRequests(job, emptyMapSections);
 				var startTask = mapLoader.Start(mapSectionRequests);
 
 				_requests.Add(new GenMapRequestInfo(mapLoader, startTask));

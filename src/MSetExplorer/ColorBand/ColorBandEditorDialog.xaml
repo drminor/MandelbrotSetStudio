@@ -24,7 +24,7 @@
 
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Width="65" Margin="5,5,11,3" FontSize="14" Text="Cut Off:" />
-                    <TextBox Text="{Binding Path=CutOff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>
+                    <TextBox Text="{Binding Path=Cutoff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>
 
                     <TextBlock Width="77" Margin="8,3,5,3" FontSize="14" Text="Blend Style:" />
 
@@ -36,7 +36,7 @@
                     </ComboBox>
 
                     <!--<TextBlock Width="65" Margin="5,5,11,3" FontSize="14" Text="Prev Cut:" />
-                    <TextBox Text="{Binding Path=PreviousCutOff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>-->
+                    <TextBox Text="{Binding Path=PreviousCutoff}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,5,0,3"/>-->
 
 
                 </StackPanel>

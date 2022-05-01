@@ -38,21 +38,27 @@ namespace MSetRepo
 		
 		public Project MapFrom(ProjectRecord target)
 		{
-			//var result = new Project(target.Id, target.Name, target.Description, target.CurrentJobId, target.LastSavedUtc);
-			//return result;
-
 			throw new NotImplementedException();
 		}
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc);
+			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc)
+			{
+				Id = source.Id
+			};
+
 			return result;
 		}
 
 		public ColorBandSetRecord MapTo(ColorBandSet source)
 		{
-			var result = new ColorBandSetRecord(source.ParentId, source.ProjectId, source.Name, source.Description, source.Select(x => MapTo(x)).ToArray());
+			var result = new ColorBandSetRecord(source.ParentId, source.ProjectId, source.Name, source.Description, source.Select(x => MapTo(x)).ToArray())
+			{ 
+				Id = source.Id, 
+				//LastSaved = source.LastSavedUtc
+			};
+
 			return result;
 		}
 
@@ -64,7 +70,7 @@ namespace MSetRepo
 
 		public ColorBandRecord MapTo(ColorBand source)
 		{
-			return new ColorBandRecord(source.CutOff, source.StartColor.GetCssColor(), source.BlendStyle.ToString(), source.EndColor.GetCssColor());
+			return new ColorBandRecord(source.Cutoff, source.StartColor.GetCssColor(), source.BlendStyle.ToString(), source.EndColor.GetCssColor());
 		}
 
 		public ColorBand MapFrom(ColorBandRecord target)
@@ -96,12 +102,13 @@ namespace MSetRepo
 				MapTo(source.NewArea?.Position ?? new PointInt()),
 				MapTo(source.NewArea?.Size ?? new SizeInt()),
 				MapTo(source.MSetInfo),
-				source.ColorBandSet.Id,
+				source.ColorBandSetId,
 				MapTo(source.CanvasSizeInBlocks),
 				MapTo(source.MapBlockOffset),
 				MapTo(source.CanvasControlOffset)
 				)
 			{
+				Id = source.Id,
 				LastSaved = source.LastSavedUtc
 			};
 

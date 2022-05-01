@@ -7,7 +7,7 @@ namespace MSS.Types
 	public class EditableColorBand : INotifyPropertyChanged/*, IEquatable<ColorBandJr?>, IEqualityComparer<ColorBandJr>, ICloneable*/, IEditableObject
 	{
 		private int _cutOff;
-		private int _previousCutOff;
+		private int _previousCutoff;
 		private double _percentage;
 
 		private EditableColorBand? _copy;
@@ -18,17 +18,17 @@ namespace MSS.Types
 		public EditableColorBand()
 		{
 			_cutOff = 0;
-			_previousCutOff = 0;
+			_previousCutoff = 0;
 			_percentage = 0;
 
 			_copy = null;
 			_isInEditMode = false;
 		}
 
-		public EditableColorBand(int cutOff, int previousCutOff, double percentage)
+		public EditableColorBand(int cutOff, int previousCutoff, double percentage)
 		{
 			_cutOff= cutOff;
-			_previousCutOff = previousCutOff;
+			_previousCutoff = previousCutoff;
 			_percentage = percentage;
 		}
 
@@ -36,7 +36,7 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public int CutOff
+		public int Cutoff
 		{
 			get => _cutOff;
 			set
@@ -49,7 +49,7 @@ namespace MSS.Types
 			}
 		}
 
-		public string CutOffA
+		public string CutoffA
 		{
 			get => "hi";
 			set
@@ -57,14 +57,14 @@ namespace MSS.Types
 			}
 		}
 
-		public int PreviousCutOff
+		public int PreviousCutoff
 		{
-			get => _previousCutOff;
+			get => _previousCutoff;
 			set
 			{
-				if (value != _previousCutOff)
+				if (value != _previousCutoff)
 				{
-					_previousCutOff = value;
+					_previousCutoff = value;
 					OnPropertyChanged();
 				}
 			}
@@ -83,7 +83,7 @@ namespace MSS.Types
 			}
 		}
 
-		public int BucketWidth => CutOff - PreviousCutOff;
+		public int BucketWidth => Cutoff - PreviousCutoff;
 
 		#endregion
 
@@ -96,7 +96,7 @@ namespace MSS.Types
 
 		public EditableColorBand Clone()
 		{
-			var result = new EditableColorBand(CutOff, PreviousCutOff, Percentage);
+			var result = new EditableColorBand(Cutoff, PreviousCutoff, Percentage);
 
 			return result;
 		}
@@ -109,7 +109,7 @@ namespace MSS.Types
 		{
 			if (_copy == null)
 			{ 
-				_copy = new EditableColorBand(CutOff, PreviousCutOff, Percentage);
+				_copy = new EditableColorBand(Cutoff, PreviousCutoff, Percentage);
 			}
 
 			IsInEditMode = true;
@@ -119,8 +119,8 @@ namespace MSS.Types
 		{
 			if (_copy != null)
 			{
-				CutOff = _copy.CutOff;
-				PreviousCutOff = _copy.PreviousCutOff;
+				Cutoff = _copy.Cutoff;
+				PreviousCutoff = _copy.PreviousCutoff;
 				Percentage = _copy.Percentage;
 			}
 			else
@@ -154,7 +154,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			return $"CutOff: {_cutOff}, Prev: {_previousCutOff}, Percentage: {_percentage}";
+			return $"Cutoff: {_cutOff}, Prev: {_previousCutoff}, Percentage: {_percentage}";
 		}
 
 		#region IEquatable and IEqualityComparer Support
@@ -167,8 +167,8 @@ namespace MSS.Types
 		//public bool Equals(ColorBandJr? other)
 		//{
 		//	var result = other != null
-		//		&& _cutOff == other.CutOff
-		//		&& _previousCutOff == other.PreviousCutOff
+		//		&& _cutOff == other.Cutoff
+		//		&& _previousCutoff == other.PreviousCutoff
 		//		&& _percentage == other.Percentage;
 
 		//	return result;
@@ -176,7 +176,7 @@ namespace MSS.Types
 
 		//public override int GetHashCode()
 		//{
-		//	return HashCode.Combine(_cutOff, _previousCutOff, _percentage);
+		//	return HashCode.Combine(_cutOff, _previousCutoff, _percentage);
 		//}
 
 		//public bool Equals(ColorBandJr? x, ColorBandJr? y)

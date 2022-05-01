@@ -55,19 +55,23 @@ namespace MSS.Types
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		public ObjectId? ParentId
-		{
-			get => _parentId;
-			set
-			{
-				if (value != _parentId)
-				{
-					_parentId = value;
-					LastUpdatedUtc = DateTime.UtcNow;
-					OnPropertyChanged();
-				}
-			}
-		}
+		public ObjectId? ParentId { get; init; }
+
+		//public ObjectId? ParentId
+		//{
+		//	get => _parentId;
+		//	set
+		//	{
+		//		if (value != _parentId)
+		//		{
+		//			_parentId = value;
+		//			LastUpdatedUtc = DateTime.UtcNow;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
+
+		//public ObjectId ProjectId { get; init; }
 
 		public ObjectId ProjectId
 		{
@@ -128,7 +132,7 @@ namespace MSS.Types
 
 		#region Public Properties - Derived
 
-		public int HighCutOff => base[^1].CutOff;
+		public int HighCutoff => base[^1].Cutoff;
 
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
 		public bool AssignedToProject => ProjectId != ObjectId.Empty;
@@ -146,14 +150,14 @@ namespace MSS.Types
 			}
 			else
 			{
-				int? prevCutOff = null;
+				int? prevCutoff = null;
 
 				for (var i = 0; i < Count - 1; i++)
 				{
 					var cb = Items[i];
-					cb.PreviousCutOff = prevCutOff;
+					cb.PreviousCutoff = prevCutoff;
 					cb.SuccessorStartColor = Items[i + 1].StartColor;
-					prevCutOff = cb.CutOff;
+					prevCutoff = cb.Cutoff;
 
 					if (cb.BlendStyle == ColorBandBlendStyle.None)
 					{
@@ -167,7 +171,7 @@ namespace MSS.Types
 				}
 
 				var lastCb = Items[Count - 1];
-				lastCb.PreviousCutOff = prevCutOff;
+				lastCb.PreviousCutoff = prevCutoff;
 				if (lastCb.BlendStyle == ColorBandBlendStyle.None)
 				{
 					lastCb.EndColor = lastCb.StartColor;
@@ -184,7 +188,7 @@ namespace MSS.Types
 			var allMatched = true;
 			for (var i = 0; i < len; i++)
 			{
-				if (Items[i].CutOff != newPercentages[i].CutOff)
+				if (Items[i].Cutoff != newPercentages[i].Cutoff)
 				{
 					allMatched = false;
 					break;
@@ -311,14 +315,14 @@ namespace MSS.Types
 			{
 				result = new List<ColorBand>(colorBands);
 
-				int? prevCutOff = null;
+				int? prevCutoff = null;
 
 				for (var i = 0; i < colorBands.Count - 1; i++)
 				{
 					var cb = colorBands[i];
-					cb.PreviousCutOff = prevCutOff;
+					cb.PreviousCutoff = prevCutoff;
 					cb.SuccessorStartColor = colorBands[i + 1].StartColor;
-					prevCutOff = cb.CutOff;
+					prevCutoff = cb.Cutoff;
 
 					if (cb.BlendStyle == ColorBandBlendStyle.None)
 					{
@@ -334,7 +338,7 @@ namespace MSS.Types
 
 				Debug.Assert(lastCb.BlendStyle != ColorBandBlendStyle.Next, "The last item in the list of ColorBands being used to construct a ColorBandSet has its BlendStyle set to 'Next.'");
 
-				lastCb.PreviousCutOff = prevCutOff;
+				lastCb.PreviousCutoff = prevCutoff;
 
 				if (lastCb.BlendStyle == ColorBandBlendStyle.None)
 				{
@@ -367,7 +371,7 @@ namespace MSS.Types
 		public ColorBandSet CreateNewCopy(int targetIterations)
 		{
 			var bandsCopy = CreateBandsCopy();
-			bandsCopy[^1].CutOff = targetIterations;
+			bandsCopy[^1].Cutoff = targetIterations;
 			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, bandsCopy);
 			return result;
 		}

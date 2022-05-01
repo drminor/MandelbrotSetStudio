@@ -25,7 +25,7 @@ namespace MSS.Common
 
             _colorBandSet = colorBandSet;
             //_colorBandSet.Fix();
-            _cutOffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.CutOff).ToArray();
+            _cutOffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.Cutoff).ToArray();
 
             foreach(var colorBand in _colorBandSet)
 			{
@@ -106,14 +106,14 @@ namespace MSS.Common
 
         private double GetStepFactor(int countVal, double escapeVelocity, ColorBand cme)
         {
-			var botBucketVal = 1 + cme.PreviousCutOff ?? 0;
+			var botBucketVal = 1 + cme.PreviousCutoff ?? 0;
             var bucketDistance = countVal - botBucketVal;
             var bucketWidth = cme.BucketWidth;
             bucketWidth += UseEscapeVelocities ? 1 : 0;
 
 			var stepFactor = (bucketDistance + escapeVelocity) / bucketWidth;
 
-            CheckStepFactor(countVal, cme.CutOff, botBucketVal, bucketWidth, stepFactor);
+            CheckStepFactor(countVal, cme.Cutoff, botBucketVal, bucketWidth, stepFactor);
 
 			return stepFactor;
         }
@@ -149,7 +149,7 @@ namespace MSS.Common
         {
             int result;
 
-            if (countVal >= HighColorBand.CutOff)
+            if (countVal >= HighColorBand.Cutoff)
             {
                 result = _colorBandSet.Count - 1;
             }
@@ -241,7 +241,7 @@ namespace MSS.Common
         //             return result;
         //         }
 
-        //         var botBucketVal = _prevCutOffs[colorMapIndex];
+        //         var botBucketVal = _prevCutoffs[colorMapIndex];
 
         //         //int[] cStart;
 

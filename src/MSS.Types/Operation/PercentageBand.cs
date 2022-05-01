@@ -2,7 +2,7 @@
 {
 	public class PercentageBand
 	{
-		public int CutOff { get; set; }
+		public int Cutoff { get; set; }
 		public long Count { get; set; }
 		public double Percentage { get; set; }
 
@@ -17,12 +17,12 @@
 
 		public PercentageBand(int cutOff)
 		{
-			CutOff = cutOff;
+			Cutoff = cutOff;
 		}
 
 		//public PercentageBand(int cutOff, long exactCount, long runningSum)
 		//{
-		//	CutOff = cutOff;
+		//	Cutoff = cutOff;
 		//	ExactCount = exactCount;
 		//	RunningSum = runningSum;
 
@@ -31,7 +31,7 @@
 
 		//public PercentageBand(int cutOff, long exactCount, long runningSum, long count, double percentage)
 		//{
-		//	CutOff = cutOff;
+		//	Cutoff = cutOff;
 		//	ExactCount = exactCount;
 		//	RunningSum = runningSum;
 

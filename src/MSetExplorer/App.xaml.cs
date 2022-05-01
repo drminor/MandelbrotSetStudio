@@ -66,7 +66,12 @@ namespace MSetExplorer
 			//var report = _projectAdapter.FixAllJobRels();
 			//Debug.WriteLine(report);
 
+			//var report1 = _projectAdapter.OpenAllJobs();
+			//Debug.WriteLine($"Could not open these projects:\n {string.Join("; ", report1)}");
+
+			//Debug.WriteLine("About to call DeleteUnusedColorBandSets.");
 			//var report = _projectAdapter.DeleteUnusedColorBandSets();
+			//Debug.WriteLine(report);
 
 			//var res = MessageBox.Show("FixAll complete, stop application?", "done", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
 			//if (res == MessageBoxResult.Yes)

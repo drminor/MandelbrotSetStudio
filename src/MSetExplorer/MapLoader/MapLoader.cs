@@ -1,5 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
+using MSS.Common;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace MSetExplorer
 		private readonly BigVector _mapBlockOffset;
 		private readonly Action<object, MapSection> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
+		private readonly JobHelper _jobHelper;
 
 		private IList<MapSectionRequest>? _mapSectionRequests;
 		private bool _isStopping;
@@ -28,6 +30,7 @@ namespace MSetExplorer
 			_mapBlockOffset = mapBlockOffset;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
+			_jobHelper = new JobHelper();
 			JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 
 			_mapSectionRequests = null;
@@ -110,7 +113,7 @@ namespace MSetExplorer
 		{
 			if (mapSectionResponse.Counts != null && !mapSectionResponse.RequestCancelled)
 			{
-				var mapSection = MapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
+				var mapSection = _jobHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
 
 				_callback(this, mapSection);
 				mapSectionRequest.Handled = true;

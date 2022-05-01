@@ -6,14 +6,14 @@ namespace MSetExplorer
 	internal class HistogramWorkRequest
 	{
 		public HistogramWorkRequestType RequestType { get; init; }
-		public int[] CutOffs { get; init; }
+		public int[] Cutoffs { get; init; }
 		public IHistogram? Histogram { get; init; }
 		public Action<PercentageBand[]> WorkAction { get; init; }
 
 		public HistogramWorkRequest(HistogramWorkRequestType requestType, int[] cutOffs, IHistogram? histogram, Action<PercentageBand[]> workAction)
 		{
 			RequestType = requestType;
-			CutOffs = cutOffs;
+			Cutoffs = cutOffs;
 			Histogram = histogram;
 			WorkAction = workAction ?? throw new ArgumentNullException(nameof(workAction));
 

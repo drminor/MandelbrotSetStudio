@@ -3,7 +3,7 @@
 ColorMap consists of a list of targetPercentages and color values.
 
 The targetPercentages are used to determine cut off values.
-CutOff values determine how each sample is colored. Samples that reach an iteration count of x get colored with color value y.
+Cutoff values determine how each sample is colored. Samples that reach an iteration count of x get colored with color value y.
 
 When the color map form is updated, the map display is requested to update it's canvas using the new cutoffs.
 

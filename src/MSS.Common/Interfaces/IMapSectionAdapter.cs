@@ -8,11 +8,10 @@ namespace MSS.Common
 {
 	public interface IMapSectionAdapter
 	{
-
-		MapSectionResponse? GetMapSection(string mapSectionId);
+		//MapSectionResponse? GetMapSection(string mapSectionId);
+		//Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
 
 		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition);
-		Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
 
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 

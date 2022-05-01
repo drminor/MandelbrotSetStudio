@@ -83,9 +83,8 @@ namespace MSS.Types.MSet
 
 			try
 			{
-				if (TryFindByJobId(jobId, out var job))
+				if (TryGetIndexFromId(jobId, out var index))
 				{
-					var index = _jobsCollection.IndexOf(job);
 					DoWithWriteLock(() => { _jobsPointer = index; });
 					return true;
 				}
@@ -204,15 +203,38 @@ namespace MSS.Types.MSet
 
 				if (!(parentJobId is null))
 				{
-					if (TryFindByJobId(parentJobId.Value, out var job))
+					if (TryGetIndexFromId(parentJobId.Value, out var index))
 					{
-						var jobIndex = _jobsCollection.IndexOf(job);
-						DoWithWriteLock(() => UpdateJobsPtr(jobIndex));
+						DoWithWriteLock(() => UpdateJobsPtr(index));
 						return true;
 					}
 				}
 
 				return false;
+			}
+			finally
+			{
+				_jobsLock.ExitUpgradeableReadLock();
+			}
+		}
+
+		public bool TryGetPreviousJob([MaybeNullWhen(false)] out int index)
+		{
+			_jobsLock.EnterUpgradeableReadLock();
+			try
+			{
+				var parentJobId = CurrentJob?.ParentJobId;
+
+				if (!(parentJobId is null))
+				{
+					var result = TryGetIndexFromId(parentJobId.Value, out index);
+					return result;
+				}
+				else
+				{
+					index = -1;
+					return false;
+				}
 			}
 			finally
 			{
@@ -234,6 +256,20 @@ namespace MSS.Types.MSet
 				{
 					return false;
 				}
+			}
+			finally
+			{
+				_jobsLock.ExitUpgradeableReadLock();
+			}
+		}
+
+		public bool TryGetNextJob([MaybeNullWhen(false)] out int index)
+		{
+			_jobsLock.EnterUpgradeableReadLock();
+			try
+			{
+				var result = TryGetNextJobIndexInStack(_jobsPointer, out index);
+				return result;
 			}
 			finally
 			{

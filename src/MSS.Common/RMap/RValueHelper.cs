@@ -374,9 +374,16 @@ namespace MSS.Common
 			precision = -1 * reducedR.Exponent;
 
 			var reciprocalOfTheDenominator = BigInteger.Pow(2, precision);
-			var result = BigInteger.Divide(reciprocalOfTheDenominator, reducedR.Value);
 
-			return (long) result;
+			if (reducedR.Value == 0)
+			{
+				return 0;
+			}
+			else
+			{
+				var result = BigInteger.Divide(reciprocalOfTheDenominator, reducedR.Value);
+				return (long)result;
+			}
 		}
 
 		#endregion

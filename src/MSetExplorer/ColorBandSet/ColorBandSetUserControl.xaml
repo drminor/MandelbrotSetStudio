@@ -28,8 +28,8 @@
                 </Grid.ColumnDefinitions>
 
                 <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
-                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding StartingCutOff}"/>
-                    <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding CutOff}"/>
+                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding StartingCutoff}"/>
+                    <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding Cutoff}"/>
                 </DockPanel>
 
                 <Grid Grid.Column="1" Width="93" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
@@ -59,8 +59,8 @@
                 </Grid.ColumnDefinitions>
 
                 <DockPanel Grid.Column="0" LastChildFill="False" VerticalAlignment="Stretch">
-                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding StartingCutOff}"/>
-                    <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding CutOff}"/>
+                    <TextBlock DockPanel.Dock="Top" Width="45" Margin="10,2,10,1" TextAlignment="Right" Text="{Binding StartingCutoff}"/>
+                    <TextBlock DockPanel.Dock="Bottom" Width="45" Margin="10,1,10,2" TextAlignment="Right" Text="{Binding Cutoff}"/>
                 </DockPanel>
 
                 <Grid Grid.Column="1" Width="93" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">

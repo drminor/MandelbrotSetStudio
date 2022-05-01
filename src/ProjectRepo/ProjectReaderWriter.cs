@@ -17,8 +17,23 @@ namespace ProjectRepo
 
 		public IEnumerable<ProjectRecord> GetAll()
 		{
-			var projectRecords = Collection.Find(_ => true).ToEnumerable();
+			var filter = Builders<ProjectRecord>.Filter.Empty;
+
+			var projectRecords = Collection.Find(filter).ToEnumerable();
 			return projectRecords;
+		}
+
+		public IEnumerable<ObjectId> GetAllIds()
+		{
+			var projection1 = Builders<ProjectRecord>.Projection.Expression
+				(
+					p => p.Id
+				);
+
+			var filter = Builders<ProjectRecord>.Filter.Empty;
+			var result = Collection.Find(filter).Project(projection1).ToEnumerable();
+
+			return result;
 		}
 
 		public ProjectRecord Get(ObjectId projectId)
@@ -29,12 +44,12 @@ namespace ProjectRepo
 			return projectRecord;
 		}
 
-		public ProjectRecord Get(string name)
+		public bool TryGet(ObjectId projectId, [MaybeNullWhen(false)] out ProjectRecord projectRecord)
 		{
-			var filter = Builders<ProjectRecord>.Filter.Eq("Name", name);
-			var projectRecord = Collection.Find(filter).FirstOrDefault();
+			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
+			projectRecord = Collection.Find(filter).FirstOrDefault();
 
-			return projectRecord;
+			return projectRecord != null;
 		}
 
 		public bool TryGet(string name, [MaybeNullWhen(false)] out ProjectRecord projectRecord)
@@ -43,6 +58,14 @@ namespace ProjectRepo
 			projectRecord = Collection.Find(filter).FirstOrDefault();
 
 			return projectRecord != null;
+		}
+
+		public bool ExistsWithName(string name)
+		{
+			var filter = Builders<ProjectRecord>.Filter.Eq("Name", name);
+			var result = Collection.Find(filter).Any();
+
+			return result;
 		}
 
 		public async Task<ProjectRecord> GetAsync(string name)

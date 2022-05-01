@@ -178,7 +178,7 @@ namespace MSetExplorer
 			{
 				if (_processingEnabled)
 				{
-					var newPercentages = BuildNewPercentages(histogramWorkRequest.CutOffs, _histogram);
+					var newPercentages = BuildNewPercentages(histogramWorkRequest.Cutoffs, _histogram);
 					histogramWorkRequest.RunWorkAction(newPercentages);
 				}
 			}
@@ -208,7 +208,7 @@ namespace MSetExplorer
 				while (curBucketPtr < bucketCnts.Length && idx > curBucketCut)
 				{
 					curBucketPtr++;
-					curBucketCut = bucketCnts[curBucketPtr].CutOff;
+					curBucketCut = bucketCnts[curBucketPtr].Cutoff;
 				}
 
 				runningSum += amount;

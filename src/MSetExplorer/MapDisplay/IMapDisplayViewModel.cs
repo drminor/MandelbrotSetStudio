@@ -19,7 +19,11 @@ namespace MSetExplorer
 		ObservableCollection<MapSection> MapSections { get; }
 
 		Job? CurrentJob { get; set; }
-		ColorBandSet ColorBandSet { get; set; }
+
+		ColorBandSet ColorBandSet { get; }
+
+		void SetColorBandSet(ColorBandSet value, bool isPreview);
+
 		bool UseEscapeVelocities { get; set; }
 
 		// These may need to be dependency properties

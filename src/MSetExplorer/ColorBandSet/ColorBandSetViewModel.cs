@@ -120,7 +120,7 @@ namespace MSetExplorer
 
 				if (value != null)
 				{
-					Histogram.Reset(value.HighCutOff);
+					Histogram.Reset(value.HighCutoff);
 					PopulateHistorgram(_mapSections, Histogram);
 					_mapSectionHistogramProcessor.ProcessingEnabled = true;
 
@@ -294,11 +294,11 @@ namespace MSetExplorer
 
 					foundUpdate = true;
 				}
-				else if (e.PropertyName == nameof(ColorBand.CutOff))
+				else if (e.PropertyName == nameof(ColorBand.Cutoff))
 				{
 					if (TryGetSuccessor(_currentColorBandSet, cb, out var colorBand))
 					{
-						colorBand.PreviousCutOff = cb.CutOff;
+						colorBand.PreviousCutoff = cb.Cutoff;
 					}
 
 					foundUpdate = true;
@@ -369,7 +369,7 @@ namespace MSetExplorer
 			else if (e.Action == NotifyCollectionChangedAction.Add)
 			{
 				// Add items
-				var cutOffs = GetCutOffs();
+				var cutOffs = GetCutoffs();
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
@@ -379,7 +379,7 @@ namespace MSetExplorer
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
 			{
 				// Remove items
-				var cutOffs = GetCutOffs();
+				var cutOffs = GetCutoffs();
 				var mapSections = e.OldItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
@@ -534,7 +534,7 @@ namespace MSetExplorer
 			}
 
 			var result = (ListCollectionView)CollectionViewSource.GetDefaultView(colorBands);
-			//result.SortDescriptions.Add(new SortDescription("CutOff", ListSortDirection.Ascending));
+			//result.SortDescriptions.Add(new SortDescription("Cutoff", ListSortDirection.Ascending));
 
 			return result;
 		}
@@ -549,7 +549,7 @@ namespace MSetExplorer
 
 		private void UpdatePercentages()
 		{
-			var cutOffs = GetCutOffs();
+			var cutOffs = GetCutoffs();
 			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
 		}
 
@@ -560,7 +560,7 @@ namespace MSetExplorer
 				histogram.Add(ms.Histogram);
 			}
 
-			//var cutOffs = GetCutOffs();
+			//var cutOffs = GetCutoffs();
 			//_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
 		}
 
@@ -588,13 +588,13 @@ namespace MSetExplorer
 			}
 		}
 
-		private int[] GetCutOffs()
+		private int[] GetCutoffs()
 		{
 			IEnumerable<int>? t;
 
 			lock (_histLock)
 			{
-				t = _currentColorBandSet.Select(x => x.CutOff);
+				t = _currentColorBandSet.Select(x => x.Cutoff);
 			}
 
 			return t.ToArray();

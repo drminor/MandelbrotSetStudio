@@ -38,7 +38,7 @@ namespace MSetExplorer
 		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);
 		bool ProjectOpen(string name);
 		void ProjectSave();
-		void ProjectSaveAs(string name, string? description);
+		bool ProjectSaveAs(string name, string? description);
 
 }
 }

@@ -15,6 +15,14 @@ namespace ProjectRepo
 		public SubdivisonReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
 
+		public IEnumerable<SubdivisionRecord> GetAll()
+		{
+			var filter = Builders<SubdivisionRecord>.Filter.Empty;
+			var result = Collection.Find(filter).ToEnumerable();
+
+			return result;
+		}
+
 		public SubdivisionRecord Get(ObjectId subdivisionId)
 		{
 			var filter = Builders<SubdivisionRecord>.Filter.Eq("_id", subdivisionId);
@@ -67,7 +75,5 @@ namespace ProjectRepo
 			}	
 		}
 
-
-		//var queryable = collection.AsQueryable();
 	}
 }

@@ -77,6 +77,29 @@ namespace MSS.Types.MSet
 			}
 		}
 
+		public bool MoveCurrentTo(ObjectId colorBandSetId)
+		{
+			_colorsLock.EnterUpgradeableReadLock();
+
+			try
+			{
+				if (TryGetIndexFromId(colorBandSetId, out var index))
+				{
+					DoWithWriteLock(() => { _colorsPointer = index; });
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			finally
+			{
+				_colorsLock.ExitUpgradeableReadLock();
+			}
+		}
+
+
 		public bool MoveCurrentTo(int index)
 		{
 			_colorsLock.EnterUpgradeableReadLock();
@@ -313,26 +336,26 @@ namespace MSS.Types.MSet
 			return result;
 		}
 
-		public bool TryGetCbsSmallestCutOffGtrThan(int cutOff, [MaybeNullWhen(false)] out int index)
+		public bool TryGetCbsSmallestCutoffGtrThan(int cutoff, [MaybeNullWhen(false)] out int index)
 		{
-			var t = _colorsCollection.OrderByDescending(f => f.HighCutOff);
+			var t = _colorsCollection.OrderByDescending(f => f.HighCutoff);
 
-			index = _colorsCollection.Select((value, index) => new { value.HighCutOff, index })
-				.OrderByDescending(f => f.HighCutOff)
-				.Where(pair => pair.HighCutOff <= cutOff)
+			index = _colorsCollection.Select((value, index) => new { value.HighCutoff, index })
+				.OrderByDescending(f => f.HighCutoff)
+				.Where(pair => pair.HighCutoff <= cutoff)
 				.Select(pair => pair.index).DefaultIfEmpty(-1)
 				.FirstOrDefault();
 
 			return index != -1;
 		}
 
-		public bool TryGetCbsLargestCutOffLessThan(int cutOff, [MaybeNullWhen(false)] out int index)
+		public bool TryGetCbsLargestCutoffLessThan(int cutoff, [MaybeNullWhen(false)] out int index)
 		{
-			var t = _colorsCollection.OrderByDescending(f => f.HighCutOff);
+			var t = _colorsCollection.OrderByDescending(f => f.HighCutoff);
 
-			index = _colorsCollection.Select((value, index) => new { value.HighCutOff, index })
-				.OrderBy(f => f.HighCutOff)
-				.Where(pair => pair.HighCutOff > cutOff)
+			index = _colorsCollection.Select((value, index) => new { value.HighCutoff, index })
+				.OrderBy(f => f.HighCutoff)
+				.Where(pair => pair.HighCutoff > cutoff)
 				.Select(pair => pair.index).DefaultIfEmpty(-1)
 				.FirstOrDefault();
 

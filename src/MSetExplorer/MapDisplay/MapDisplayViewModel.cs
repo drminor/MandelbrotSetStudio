@@ -14,6 +14,7 @@ namespace MSetExplorer
 	{
 		private static bool _keepDisplaySquare;
 
+		private readonly JobHelper _jobHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
@@ -34,6 +35,7 @@ namespace MSetExplorer
 		{
 			_useEscapeVelocities = true;
 			_keepDisplaySquare = false;
+			_jobHelper = new JobHelper();
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
@@ -72,7 +74,7 @@ namespace MSetExplorer
 			get => _currentJob;
 			set
 			{
-				if (IsJobChanged(_currentJob, value))
+				if (value != _currentJob)
 				{
 					var previousJob = _currentJob;
 					_currentJob = value?.Clone();
@@ -82,44 +84,29 @@ namespace MSetExplorer
 			}
 		}
 
-		// TODO: Need a better way to determine if the current job has a different canvas size than the original.
-		private bool IsJobChanged(Job? previousJob, Job? newJob)
-		{
-			if (!(previousJob is null) && !(newJob is null))
-			{
-				var idDiff = newJob.Id != previousJob.Id;
-				var csDiff = newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks;
-				var cmDiff = newJob.ColorBandSet != previousJob.ColorBandSet;
+		public ColorBandSet ColorBandSet => _colorBandSet;
 
-				return idDiff || csDiff || cmDiff;
-			}
-			else
-			{
-				var result = !(previousJob is null && newJob is null);
-				return result;
-			}
-		}
-
-		public ColorBandSet ColorBandSet
-		{
-			get => _colorBandSet;
-			set
-			{
-				SetColorBandSet(value, refresh: true);
-			}
-		}
-
-		private void SetColorBandSet(ColorBandSet value, bool refresh)
+		public void SetColorBandSet(ColorBandSet value, bool isPreview)
 		{
 			if (value != _colorBandSet)
 			{
-				Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
-				_colorBandSet = value;
-				_colorMap = new ColorMap(value);
-				_colorMap.UseEscapeVelocities = _useEscapeVelocities;
-				if (refresh)
+				Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}. IsPreview = {isPreview}");
+
+				if (isPreview && CurrentJob != null)
 				{
+					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MSetInfo.MapCalcSettings.TargetIterations);
+
+					_colorBandSet = adjustedColorBandSet;
+					_colorMap = new ColorMap(adjustedColorBandSet);
+					_colorMap.UseEscapeVelocities = _useEscapeVelocities;
+
 					HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+				}
+				else
+				{
+					_colorBandSet = value;
+					_colorMap = new ColorMap(value);
+					_colorMap.UseEscapeVelocities = _useEscapeVelocities;
 				}
 			}
 		}
@@ -261,7 +248,7 @@ namespace MSetExplorer
 					if (mapSection.Counts != null)
 					{
 						//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-						var pixels = MapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
+						var pixels = _jobHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
 						_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
 					}
 				}
@@ -282,7 +269,7 @@ namespace MSetExplorer
 
 			if (newJob != null)
 			{
-				SetColorBandSet(newJob.ColorBandSet, refresh: false);
+				//SetColorBandSet(newJob.ColorBandSetId, refresh: false);
 
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
@@ -305,7 +292,7 @@ namespace MSetExplorer
 
 		private void ReuseLoadedSections(Job curJob)
 		{
-			var sectionsRequired = MapSectionHelper.CreateEmptyMapSections(curJob);
+			var sectionsRequired = _jobHelper.CreateEmptyMapSections(curJob);
 			var loadedSections = GetMapSectionsSnapShot();
 
 			// Avoid requesting sections already drawn

@@ -18,14 +18,6 @@ namespace MSetRepo
 			_mSetRecordMapper = mSetRecordMapper;
 		}
 
-		public MapSectionResponse? GetMapSection(string mapSectionId)
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var mapSectionRecord = mapSectionReaderWriter.Get(new ObjectId(mapSectionId));
-			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
-
-			return mapSectionResponse;
-		}
 
 		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition)
 		{
@@ -43,14 +35,23 @@ namespace MSetRepo
 			}
 		}
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId)
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(mapSectionId));
-			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+		//public async Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId)
+		//{
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(mapSectionId));
+		//	var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
 
-			return mapSectionResponse;
-		}
+		//	return mapSectionResponse;
+		//}
+
+		//public MapSectionResponse? GetMapSection(string mapSectionId)
+		//{
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	var mapSectionRecord = mapSectionReaderWriter.Get(new ObjectId(mapSectionId));
+		//	var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+
+		//	return mapSectionResponse;
+		//}
 
 		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
 		{
@@ -78,13 +79,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		#region Tests
 
-		public void CanInsertAndGet()
-		{
 
-		}
-
-		#endregion
 	}
 }

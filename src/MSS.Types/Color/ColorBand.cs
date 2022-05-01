@@ -6,12 +6,12 @@ namespace MSS.Types
 {
 	public class ColorBand : INotifyPropertyChanged/*, IEquatable<ColorBand?>*/ ,IEditableObject, ICloneable
 	{
-		private int _cutOff;
+		private int _cutoff;
 		private ColorBandColor _startColor;
 		private ColorBandBlendStyle _blendStyle;
 		private ColorBandColor _endColor;
 
-		private int? _previousCutOff;
+		private int? _previousCutoff;
 		private ColorBandColor? _successorStartColor;
 
 		private ColorBandColor _actualEndColor;
@@ -35,11 +35,11 @@ namespace MSS.Types
 
 		public ColorBand(int cutOff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, int? previousCutoff, ColorBandColor? successorStartColor, double percentage)
 		{
-			_cutOff = cutOff;
+			_cutoff = cutOff;
 			_startColor = startColor;
 			_blendStyle = blendStyle;
 			_endColor = endColor;
-			_previousCutOff = previousCutoff;
+			_previousCutoff = previousCutoff;
 			_successorStartColor = successorStartColor;
 			_percentage = percentage;
 
@@ -50,14 +50,14 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public int CutOff
+		public int Cutoff
 		{
-			get => _cutOff;
+			get => _cutoff;
 			set
 			{
-				if (value != _cutOff)
+				if (value != _cutoff)
 				{
-					_cutOff = value;
+					_cutoff = value;
 					OnPropertyChanged();
 				}
 			}
@@ -109,17 +109,17 @@ namespace MSS.Types
 			}
 		}
 
-		public int? PreviousCutOff
+		public int? PreviousCutoff
 		{
-			get => _previousCutOff;
+			get => _previousCutoff;
 			set
 			{
-				if (value != _previousCutOff)
+				if (value != _previousCutoff)
 				{
-					var origVal = _previousCutOff;
-					_previousCutOff = value;
+					var origVal = _previousCutoff;
+					_previousCutoff = value;
 					OnPropertyChanged();
-					OnPropertyChanged(nameof(StartingCutOff));
+					OnPropertyChanged(nameof(StartingCutoff));
 
 					if (origVal.HasValue != value.HasValue)
 					{
@@ -163,11 +163,11 @@ namespace MSS.Types
 			}
 		}
 
-		public int StartingCutOff => (_previousCutOff ?? -1) + 1;
+		public int StartingCutoff => (_previousCutoff ?? -1) + 1;
 
-		public bool IsFirst => !_previousCutOff.HasValue;
+		public bool IsFirst => !_previousCutoff.HasValue;
 		public bool IsLast => !_successorStartColor.HasValue;
-		public int BucketWidth => CutOff - StartingCutOff;
+		public int BucketWidth => Cutoff - StartingCutoff;
 
 		public ColorBandColor ActualEndColor
 		{
@@ -207,7 +207,7 @@ namespace MSS.Types
 
 		public void UpdateWithNeighbors(ColorBand? predecessor, ColorBand? successor)
 		{
-			PreviousCutOff = predecessor?.CutOff;
+			PreviousCutoff = predecessor?.Cutoff;
 			SuccessorStartColor = successor?.StartColor;
 		}
 
@@ -218,7 +218,7 @@ namespace MSS.Types
 
 		public ColorBand Clone()
 		{
-			var result = new ColorBand(CutOff, StartColor, BlendStyle, EndColor, _previousCutOff, _successorStartColor, Percentage);
+			var result = new ColorBand(Cutoff, StartColor, BlendStyle, EndColor, _previousCutoff, _successorStartColor, Percentage);
 
 			return result;
 		}
@@ -237,11 +237,11 @@ namespace MSS.Types
 		{
 			if (_copy != null)
 			{
-				CutOff = _copy.CutOff;
+				Cutoff = _copy.Cutoff;
 				StartColor = _copy.StartColor;
 				BlendStyle = _copy.BlendStyle;
 				EndColor = _copy.EndColor;
-				PreviousCutOff = _copy.PreviousCutOff;
+				PreviousCutoff = _copy.PreviousCutoff;
 				_successorStartColor = _copy._successorStartColor;
 				Percentage = _copy.Percentage;
 			}
@@ -275,7 +275,7 @@ namespace MSS.Types
 
 		public override string? ToString()
 		{
-			return $"Starting CutOff: {StartingCutOff}, Ending CutOff: {CutOff}, Start: {StartColor.GetCssColor()}, End: {EndColor.GetCssColor()}, Blend: {BlendStyle}, Actual End: {ActualEndColor}";
+			return $"Starting Cutoff: {StartingCutoff}, Ending Cutoff: {Cutoff}, Start: {StartColor.GetCssColor()}, End: {EndColor.GetCssColor()}, Blend: {BlendStyle}, Actual End: {ActualEndColor}";
 		}
 
 		#region IEquatable and IEqualityComparer Support
@@ -292,7 +292,7 @@ namespace MSS.Types
 		//		&& _startColor.Equals(other._startColor)
 		//		&& _blendStyle == other._blendStyle
 		//		&& _endColor.Equals(other._endColor)
-		//		&& _previousCutOff == other._previousCutOff
+		//		&& _previousCutoff == other._previousCutoff
 		//		&& _actualEndColor.Equals(other._actualEndColor)
 		//		;//&& _percentage == other._percentage;
 
@@ -301,7 +301,7 @@ namespace MSS.Types
 
 		//public override int GetHashCode()
 		//{
-		//	return HashCode.Combine(_cutOff, _startColor, _blendStyle, _endColor, _previousCutOff, _actualEndColor, _percentage);
+		//	return HashCode.Combine(_cutOff, _startColor, _blendStyle, _endColor, _previousCutoff, _actualEndColor, _percentage);
 		//}
 
 		//public static bool operator ==(ColorBand? left, ColorBand? right)

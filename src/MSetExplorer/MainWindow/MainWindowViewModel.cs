@@ -169,7 +169,7 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
-				//MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet; //.CreateNewCopy();
+				MapDisplayViewModel.SetColorBandSet(MapProjectViewModel.CurrentColorBandSet, isPreview: false);
 			}
 		}
 
@@ -233,15 +233,11 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				Debug.WriteLine($"MainWindow got a CBS preview with Id = {colorBandSet.Id}");
-				MapDisplayViewModel.ColorBandSet = colorBandSet;
+				MapDisplayViewModel.SetColorBandSet(colorBandSet, isPreview: true);
 			}
 			else
 			{
 				Debug.WriteLine($"MainWindow got a CBS update with Id = {colorBandSet.Id}");
-				// TODO: Include the ColorBandSet in the Job class, instead of just the ColorBandSetId.
-				// This will allow the MapDisplayViewModel to handle Color changes as the Job is changed.
-				//MapDisplayViewModel.ColorBandSet = colorBandSet;
-
 				MapProjectViewModel.UpdateColorBandSet(colorBandSet);
 			}
 		}

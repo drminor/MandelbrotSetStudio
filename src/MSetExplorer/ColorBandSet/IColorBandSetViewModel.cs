@@ -17,7 +17,7 @@ namespace MSetExplorer
 
 		//ObservableCollection<ColorBand> ColorBands { get; }
 		ColorBand SelectedColorBand { get; set; }
-		int? HighCutOff { get; set; }
+		int? HighCutoff { get; set; }
 		ColorBandSet ColorBandSet { get; }
 
 		void DeleteSelectedItem();
