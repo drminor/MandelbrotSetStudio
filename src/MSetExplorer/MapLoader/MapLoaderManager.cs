@@ -13,6 +13,7 @@ namespace MSetExplorer
 	internal class MapLoaderManager : IMapLoaderManager, IDisposable
 	{
 		private readonly SynchronizationContext? _synchronizationContext;
+		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private readonly List<GenMapRequestInfo> _requests;
@@ -21,9 +22,10 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoaderManager(MapSectionHelper mapSectionHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_synchronizationContext = SynchronizationContext.Current;
+			_mapSectionHelper = mapSectionHelper;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 
 			_requests = new List<GenMapRequestInfo>();
@@ -55,8 +57,8 @@ namespace MSetExplorer
 			{
 				StopCurrentJobInternal();
 
-				var mapLoader = new MapLoader(job.MapBlockOffset, HandleMapSection, _mapSectionRequestProcessor);
-				var mapSectionRequests = new JobHelper().CreateSectionRequests(job, emptyMapSections);
+				var mapLoader = new MapLoader(job.MapBlockOffset, HandleMapSection, _mapSectionHelper, _mapSectionRequestProcessor);
+				var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(job, emptyMapSections);
 				var startTask = mapLoader.Start(mapSectionRequests);
 
 				_requests.Add(new GenMapRequestInfo(mapLoader, startTask));

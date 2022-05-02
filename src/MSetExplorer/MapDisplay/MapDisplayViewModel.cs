@@ -14,7 +14,7 @@ namespace MSetExplorer
 	{
 		private static bool _keepDisplaySquare;
 
-		private readonly JobHelper _jobHelper;
+		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
@@ -31,11 +31,11 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, SizeInt blockSize)
+		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
 			_useEscapeVelocities = true;
 			_keepDisplaySquare = false;
-			_jobHelper = new JobHelper();
+			_mapSectionHelper = mapSectionHelper;
 			_mapLoaderManager = mapLoaderManager;
 			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
 
@@ -248,7 +248,7 @@ namespace MSetExplorer
 					if (mapSection.Counts != null)
 					{
 						//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-						var pixels = _jobHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
+						var pixels = _mapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
 						_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
 					}
 				}
@@ -292,7 +292,7 @@ namespace MSetExplorer
 
 		private void ReuseLoadedSections(Job curJob)
 		{
-			var sectionsRequired = _jobHelper.CreateEmptyMapSections(curJob);
+			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(curJob);
 			var loadedSections = GetMapSectionsSnapShot();
 
 			// Avoid requesting sections already drawn
@@ -323,25 +323,26 @@ namespace MSetExplorer
 		private bool ShouldAttemptToReuseLoadedSections(Job? previousJob, Job newJob)
 		{
 			// TODO: ShouldAttemptToReuseLoadedSections is always returning false -- restore previous functionality.
-			return false;
-			//if (MapSections.Count == 0 || newJob.ParentJobId is null || newJob.TransformType == TransformType.ColorMapUpdate)
-			//{
-			//	return false;
-			//}
+			//return false;
 
-			//if (previousJob is null)
-			//{
-			//	return false;
-			//}
+			if (MapSections.Count == 0 /*|| newJob.ParentJobId is null*/ || newJob.TransformType == TransformType.CanvasSizeUpdate || newJob.TransformType == TransformType.ColorMapUpdate)
+			{
+				return false;
+			}
+
+			if (previousJob is null)
+			{
+				return false;
+			}
 			//else if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
 			//{
 			//	return false;
 			//}
-			//else
-			//{
-			//	var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
-			//	return jobSpd == previousSpd;
-			//}
+			else
+			{
+				var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
+				return jobSpd == previousSpd;
+			}
 		}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)

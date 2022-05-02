@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace MSS.Common
 {
-	public class JobHelper
+	public class MapSectionHelper
 	{
 		private const int VALUE_FACTOR = 10000;
 		private readonly DtoMapper _dtoMapper = new DtoMapper();

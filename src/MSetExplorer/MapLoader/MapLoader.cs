@@ -15,7 +15,7 @@ namespace MSetExplorer
 		private readonly BigVector _mapBlockOffset;
 		private readonly Action<object, MapSection> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly JobHelper _jobHelper;
+		private readonly MapSectionHelper _mapSectionHelper;
 
 		private IList<MapSectionRequest>? _mapSectionRequests;
 		private bool _isStopping;
@@ -25,12 +25,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoader(BigVector mapBlockOffset, Action<object, MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(BigVector mapBlockOffset, Action<object, MapSection> callback, MapSectionHelper mapSectionHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_mapBlockOffset = mapBlockOffset;
 			_callback = callback;
+			_mapSectionHelper = mapSectionHelper;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
-			_jobHelper = new JobHelper();
 			JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 
 			_mapSectionRequests = null;
@@ -113,7 +113,7 @@ namespace MSetExplorer
 		{
 			if (mapSectionResponse.Counts != null && !mapSectionResponse.RequestCancelled)
 			{
-				var mapSection = _jobHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
+				var mapSection = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
 
 				_callback(this, mapSection);
 				mapSectionRequest.Handled = true;

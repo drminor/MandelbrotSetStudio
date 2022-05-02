@@ -541,7 +541,7 @@ namespace MSetRepo
 
 			if (result != null && highCutoff != targetIterations && colorBandSetCache != null)
 			{
-				var jobHelper = new JobHelper();
+				var jobHelper = new MapSectionHelper();
 				var mapSectionRequests = jobHelper.CreateSectionRequests(job);
 				var avgTargetIterations = mapSectionRequests.Average(x => x.MapCalcSettings.TargetIterations);
 

@@ -92,8 +92,9 @@ namespace MSetExplorer
 			_mapProjectViewModel = new MapProjectViewModel(_projectAdapter, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
-			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, RMapConstants.BLOCK_SIZE);
+			var mapSectionHelper = new MapSectionHelper();
+			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO, mapSectionHelper);
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
 			_colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
@@ -107,12 +108,13 @@ namespace MSetExplorer
 			window1.Show();
 		}
 
-		private MapLoaderManager BuildMapLoaderManager(string mEngineEndPointAddress, string dbProviderConnectionString, bool useTheMapSectionRepo)
+		private MapLoaderManager BuildMapLoaderManager(string mEngineEndPointAddress, string dbProviderConnectionString, bool useTheMapSectionRepo, MapSectionHelper mapSectionHelper)
 		{
+
 			var mEngineClient = new MClient(mEngineEndPointAddress);
 			var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(dbProviderConnectionString);
 			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClient, mapSectionAdapter, useTheMapSectionRepo);
-			var result = new MapLoaderManager(mapSectionRequestProcessor);
+			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
 
 			return result;
 		}
