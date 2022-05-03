@@ -31,7 +31,7 @@ namespace MSS.Common
 
 			TEST_RECTANGLE = new RRectangle(0, 1, 0, 1, 0);
 
-			TEST_RECTANGLE_HALF = new RRectangle(1, 2, 1, 2, 1);
+			TEST_RECTANGLE_HALF = new RRectangle(1, 2, 1, 2, -2);
 
 		}
 	}

@@ -20,8 +20,8 @@ namespace MSetExplorer
 		public ColorBandSetUserControl()
 		{
 			_vm = (ColorBandSetViewModel)DataContext;
-			InitializeComponent();
 			Loaded += ColorBandSetUserControl_Loaded;
+			InitializeComponent();
 		}
 
 		private void ColorBandSetUserControl_Loaded(object sender, RoutedEventArgs e)

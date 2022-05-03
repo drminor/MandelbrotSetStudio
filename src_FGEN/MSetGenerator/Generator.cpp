@@ -272,7 +272,13 @@ void Generator::PointDdToDoubleArray(PointDd z, double* zValues) {
 
 double Generator::GetEscapeVelocity(qp sumSqs)
 {
-	double evd = sumSqs.toDouble();
+	// TODO: Consider providing this method a qpMath object.
+	qpMath* qpCalc = new qpMath();
+
+	qp sumSqsHi = qp(sumSqs._hi());
+	qp sumSqsTotal = qpCalc->addD(sumSqsHi, sumSqs._lo());
+
+	double evd = sumSqsTotal.toDouble();
 
 	double modulus = std::log10(evd) / 2;
 	double nu = std::log10(modulus / m_Log2) / m_Log2;
@@ -285,6 +291,9 @@ double Generator::GetEscapeVelocity(qp sumSqs)
 
 	double result = 1 - nu;
 	//double result = 0.0;
+
+	delete qpCalc;
+
 	return result;
 }
 

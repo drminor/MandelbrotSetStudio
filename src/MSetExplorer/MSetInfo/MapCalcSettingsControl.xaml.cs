@@ -15,8 +15,8 @@ namespace MSetExplorer
 		public MapCalcSettingsControl()
 		{
 			_vm = (MSetInfoViewModel)DataContext;
-			InitializeComponent();
 			Loaded += MapCalcSettingsControl_Loaded;
+			InitializeComponent();
 		}
 
 		private void MapCalcSettingsControl_Loaded(object sender, RoutedEventArgs e)

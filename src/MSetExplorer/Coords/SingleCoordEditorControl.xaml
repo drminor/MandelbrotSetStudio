@@ -1,0 +1,43 @@
+﻿<UserControl x:Class="MSetExplorer.SingleCoordEditorControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MSetExplorer"
+             mc:Ignorable="d" 
+             d:DesignHeight="55" d:DesignWidth="1000">
+    <Grid>
+        <Border>
+            <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical" Margin="0, 0, 0, 5">
+
+                <StackPanel Orientation="Horizontal" Margin="0,1">
+                    <TextBlock Width="20" Margin="5,3" FontSize="14" Text="{Binding ValueName}" />
+                    <TextBox x:Name="txtString" Width="230" Margin="3" VerticalAlignment="Center" Text="{Binding StringVal}"/>
+
+                    <TextBlock Width="45" Margin="138,3,3,3" FontSize="14" Text="Long1:" />
+                    <TextBox x:Name="txtLong1" Width="230" Margin="3" VerticalAlignment="Center" Text="{Binding Long1}"/>
+
+                    <TextBlock Width="45" Margin="5,3" FontSize="14" Text="Long2:" />
+                    <TextBox x:Name="txtLong2" Width="230" Margin="3" VerticalAlignment="Center" Text="{Binding Long2}"/>
+
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,1">
+                    <TextBlock Width="45" Margin="85,3,3,3" FontSize="14" Text="Actual:" />
+                    <TextBox x:Name="txtStringOut" Width="230" Margin="3" VerticalAlignment="Center" Text="{Binding StringValOut}"/>
+
+                    <TextBlock Width="75" Margin="5,3,3,3" FontSize="14" Text="Numerator:" />
+                    <TextBox x:Name="txtNumerator" Width="230" Margin="3,3,9,3" VerticalAlignment="Center" Text="{Binding Numerator}"/>
+                    
+                    <TextBlock Width="25" Margin="15,3,9,3" FontSize="14" Text="Exp:" />
+                    <TextBox x:Name="txtExponent" Width="30" Margin="3,3" VerticalAlignment="Center" Text="{Binding Exponent}"/>
+
+
+
+                </StackPanel>
+
+            </StackPanel>
+
+        </Border>
+    </Grid>
+</UserControl>

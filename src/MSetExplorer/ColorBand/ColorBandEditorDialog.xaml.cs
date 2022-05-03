@@ -16,8 +16,8 @@ namespace MSetExplorer
 		public ColorBandEditorDialog()
 		{
 			_vm = (ColorBand)DataContext;
-			InitializeComponent();
 			Loaded += ColorBandEditorDialog_Loaded;
+			InitializeComponent();
 		}
 
 		private void ColorBandEditorDialog_Loaded(object sender, RoutedEventArgs e)

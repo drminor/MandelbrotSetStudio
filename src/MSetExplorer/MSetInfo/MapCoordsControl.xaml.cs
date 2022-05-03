@@ -14,8 +14,8 @@ namespace MSetExplorer
 		public MapCoordsControl()
 		{
 			_vm = (MSetInfoViewModel)DataContext;
-			InitializeComponent();
 			Loaded += MapCoordsControl_Loaded;
+			InitializeComponent();
 		}
 
 		private void MapCoordsControl_Loaded(object sender, RoutedEventArgs e)

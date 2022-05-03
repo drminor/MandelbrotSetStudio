@@ -43,6 +43,8 @@
                 <MenuItem Header="_Save" Command="local:CustomCommands.ProjectSave" />
                 <MenuItem Header="Save_As" Command="local:CustomCommands.ProjectSaveAs" />
                 <Separator/>
+                <MenuItem Header="Edit Coords" Click="EditCoords_Click"/>
+                <Separator/>
                 <MenuItem Header="_Exit" Click="CloseButton_Click" />
             </MenuItem>
 

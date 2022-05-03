@@ -62,7 +62,7 @@ BOOL CMSetGeneratorApp::InitInstance()
 {
 	CWinApp::InitInstance();
 
-	qp::initializeStaticMembers();
+	//qp::initializeStaticMembers();
 
 	return TRUE;
 }

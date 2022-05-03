@@ -323,26 +323,26 @@ namespace MSetExplorer
 		private bool ShouldAttemptToReuseLoadedSections(Job? previousJob, Job newJob)
 		{
 			// TODO: ShouldAttemptToReuseLoadedSections is always returning false -- restore previous functionality.
-			//return false;
+			return false;
 
-			if (MapSections.Count == 0 /*|| newJob.ParentJobId is null*/ || newJob.TransformType == TransformType.CanvasSizeUpdate || newJob.TransformType == TransformType.ColorMapUpdate)
-			{
-				return false;
-			}
+			//if (MapSections.Count == 0 /*|| newJob.ParentJobId is null*/ || newJob.TransformType == TransformType.CanvasSizeUpdate || newJob.TransformType == TransformType.ColorMapUpdate)
+			//{
+			//	return false;
+			//}
 
-			if (previousJob is null)
-			{
-				return false;
-			}
+			//if (previousJob is null)
+			//{
+			//	return false;
+			//}
 			//else if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
 			//{
 			//	return false;
 			//}
-			else
-			{
-				var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
-				return jobSpd == previousSpd;
-			}
+			//else
+			//{
+			//	var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
+			//	return jobSpd == previousSpd;
+			//}
 		}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)

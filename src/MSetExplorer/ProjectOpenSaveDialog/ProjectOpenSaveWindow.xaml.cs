@@ -16,8 +16,8 @@ namespace MSetExplorer
 		{
 			_vm = (IProjectOpenSaveViewModel)DataContext;
 
-			InitializeComponent();
 			Loaded += ProjectOpenSaveWindow_Loaded;
+			InitializeComponent();
 		}
 
 		private void ProjectOpenSaveWindow_Loaded(object sender, RoutedEventArgs e)

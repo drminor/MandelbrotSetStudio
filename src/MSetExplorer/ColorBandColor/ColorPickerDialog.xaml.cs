@@ -16,8 +16,8 @@ namespace MSetExplorer
 		public ColorPickerDialog(ColorBandColor colorBandColor)
 		{
 			_colorBandColor = colorBandColor;
-			InitializeComponent();
 			Loaded += ColorPickerDialog_Loaded;
+			InitializeComponent();
 		}
 
 		#endregion

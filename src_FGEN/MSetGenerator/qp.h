@@ -12,7 +12,7 @@ private:
 
 public:
 
-	static void initializeStaticMembers();
+	//static void initializeStaticMembers();
 
 	double _hi() const { return _hip; }
 	double _lo() const { return _lop; }
@@ -83,7 +83,10 @@ public:
 	}
 
 private:
-	double GetDouble(LONGLONG l);
+	//double GetDouble(LONGLONG l);
+	double GetDouble(LONGLONG l) {
+		return static_cast<double>(l);
+	}
 
 };
 

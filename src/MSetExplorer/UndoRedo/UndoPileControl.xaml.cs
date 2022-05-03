@@ -14,8 +14,8 @@ namespace MSetExplorer
 		public UndoPileControl()
 		{
 			_vm = (IUndoRedoViewModel)DataContext;
-			InitializeComponent();
 			Loaded += UndoPileControl_Loaded;
+			InitializeComponent();
 		}
 
 		private void UndoPileControl_Loaded(object sender, System.Windows.RoutedEventArgs e)

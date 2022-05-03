@@ -3,9 +3,12 @@ using System.Globalization;
 
 namespace MSS.Common
 {
-	internal class SignManExp
+	public class SignManExp
     {
         #region Constructors
+
+        public SignManExp() : this("0.05") // TODO: Update SignManExp to handle decimal value 0.
+		{ }
 
         public SignManExp(bool isNegative, string mantissa, int exponent)
 		{
@@ -46,7 +49,7 @@ namespace MSS.Common
         public int Exponent { get; }
 
         public int Precision => Mantissa.Length;
-        public int NumberOfDigitsAfterDecimalPoint => -1 + Mantissa.Length - Exponent;
+        public int NumberOfDigitsAfterDecimalPoint => Mantissa.Length - (Exponent + 1);
 
         public IFormatProvider FormatProvider { get; }
 
@@ -57,9 +60,11 @@ namespace MSS.Common
         public string GetValueAsString()
 		{
             var sign = IsNegative ? "-" : string.Empty;
-            var strExp = (Exponent < 0 ? "-" : string.Empty) + Math.Abs(Exponent).ToString(FormatProvider).PadLeft(3, '0');
             var digits = BuildDigits(Mantissa, Exponent);
-            var result = sign + digits + "E" + strExp;
+            var expSign = Exponent < 0 ? "-" : string.Empty;
+            var strExp = Math.Abs(Exponent).ToString(CultureInfo.InvariantCulture); // .PadLeft(3, '0');
+
+            var result = sign + digits + "e" + expSign + strExp;
 
             return result;
         }
@@ -81,79 +86,10 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Static Helpers
-
-		public static string ConvertToScientificNotation(string s)
-        {
-            if (!IsFixed(s))
-            {
-                return s;
-            }
-
-            s = ConditionForParse(s);
-
-            var isNegative = s.StartsWith('-');
-            if (isNegative)
-            {
-                s = s[1..];
-            }
-
-            var exp = 0;
-
-            if (s.Length == 0)
-            {
-                exp = 0;
-                s = "0.0";
-            }
-            else
-            {
-                var dpPos = s.IndexOf(".", StringComparison.InvariantCultureIgnoreCase);
-
-                s = StripLeadingZeroes(s, ref dpPos);
-
-                if (dpPos == 1 && !s.StartsWith('0'))
-                {
-                    exp = 0;
-                }
-                else if (dpPos == -1)
-                {
-                    exp = s.Length - 1;
-                    s = s[0..1] + '.' + s[1..];
-                }
-                else
-                {
-                    if (s.StartsWith('0'))
-                    {
-                        s = RemoveAndCountLeadingZeroes(s, out exp);
-                        exp *= -1;
-                    }
-                    else
-                    {
-                        exp = dpPos - 1;
-                    }
-                    s = s[0..1] + '.' + s[1..];
-                }
-            }
-
-            var sign = isNegative ? "-" : string.Empty;
-            //var strExp = (exp < 0 ? "-" : string.Empty) + exp.ToString().PadLeft(3, '0');
-            var strExp = (exp < 0 ? "-" : string.Empty) + Math.Abs(exp).ToString(CultureInfo.InvariantCulture).PadLeft(3, '0');
-
-            s = sign + s + "E" + strExp;
-
-            return s;
-        }
-
-        #endregion
-
         #region Private Methods
 
         private static string BuildDigits(string mantissa, int exponent)
 		{
-            //var result = exponent < 0
-            //    ? "0." + mantissa
-            //    : mantissa[0..1] + '.' + mantissa[1..];
-
             var numZerosToPrfix = Math.Min(exponent, 0) * -1;
             var dpIndex = Math.Max(exponent, 0) + 1;
             var result = numZerosToPrfix > 0 ? new string('0', numZerosToPrfix) + mantissa : mantissa;
@@ -233,5 +169,71 @@ namespace MSS.Common
         }
 
         #endregion
+
+        #region Static Helpers
+
+        public static string ConvertToScientificNotation(string s)
+        {
+            if (!IsFixed(s))
+            {
+                return s;
+            }
+
+            s = ConditionForParse(s);
+
+            var isNegative = s.StartsWith('-');
+            if (isNegative)
+            {
+                s = s[1..];
+            }
+
+            var exp = 0;
+
+            if (s.Length == 0)
+            {
+                exp = 0;
+                s = "0.0";
+            }
+            else
+            {
+                var dpPos = s.IndexOf(".", StringComparison.InvariantCultureIgnoreCase);
+
+                s = StripLeadingZeroes(s, ref dpPos);
+
+                if (dpPos == 1 && !s.StartsWith('0'))
+                {
+                    exp = 0;
+                }
+                else if (dpPos == -1)
+                {
+                    exp = s.Length - 1;
+                    s = s[0..1] + '.' + s[1..];
+                }
+                else
+                {
+                    if (s.StartsWith('0'))
+                    {
+                        s = RemoveAndCountLeadingZeroes(s, out exp);
+                        exp *= -1;
+                    }
+                    else
+                    {
+                        exp = dpPos - 1;
+                    }
+                    s = s[0..1] + '.' + s[1..];
+                }
+            }
+
+            var sign = isNegative ? "-" : string.Empty;
+            var expSign = exp < 0 ? "-" : string.Empty;
+            var strExp = Math.Abs(exp).ToString(CultureInfo.InvariantCulture); // .PadLeft(3, '0');
+
+            var result = sign + s + "e" + expSign + strExp;
+
+            return result;
+        }
+
+        #endregion
+
     }
 }

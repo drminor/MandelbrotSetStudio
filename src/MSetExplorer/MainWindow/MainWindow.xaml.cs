@@ -23,6 +23,7 @@ namespace MSetExplorer
 		public MainWindow()
 		{
 			_vm = (IMainWindowViewModel)DataContext;
+
 			Loaded += MainWindow_Loaded;
 			ContentRendered += MainWindow_ContentRendered;
 			InitializeComponent();
@@ -51,22 +52,72 @@ namespace MSetExplorer
 
 				_vm.MSetInfoViewModel.MapSettingsUpdateRequested += MSetInfoViewModel_MapSettingsUpdateRequested;
 
-				//((MainWindowViewModel)_vm).TestDiv();
-
-				//((MainWindowViewModel)_vm).TestSum();
-
 				Debug.WriteLine("The MainWindow is now loaded");
 			}
 		}
-
 
 		private void MainWindow_ContentRendered(object? sender, EventArgs e)
 		{
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
 			//LoadNewProject();
+			//ShowMapCoordsEditor();
+			ShowCoordsEditor();
 		}
 
 		#endregion
+
+		// New
+		private void EditCoords_Click(object sender, RoutedEventArgs e)
+		{
+			ShowCoordsEditor();
+		}
+
+		private void ShowCoordsEditor()
+		{
+			var x1 = "-0.477036968733327014028268226139546";
+			var x2 = "-0.477036964892343354414420540166062";
+			var y1 = "0.535575821681765930306959274776606";
+			var y2 = "0.535575824239325800205884281044245";
+
+			//var x1 = "-0.4770369687333";
+			//var x2 = "-0.4770369648923";
+			//var y1 = "0.5355758216817";
+			//var y2 = "0.5355758242393";
+
+			var coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2);
+			var coordsEditorWindow = new CoordsEditorWindow()
+			{
+				DataContext = coordsEditorViewModel
+			};
+
+			if (coordsEditorWindow.ShowDialog() == true)
+			{
+				_ = MessageBox.Show("Saved.");
+			}
+			//else
+			//{
+			//	_ = MessageBox.Show("Cancelled.");
+			//}
+		}
+
+		private void ShowMapCoordsEdTest()
+		{
+			var mapCoordsEditorViewModel = new MapCoordsEdTestViewModel();
+			var mapCoordsEditorWindow = new MapCoordsEdTestWindow()
+			{
+				DataContext = mapCoordsEditorViewModel
+			};
+
+			if (mapCoordsEditorWindow.ShowDialog() == true)
+			{
+				_ = MessageBox.Show("Saved.");
+			}
+			//else
+			//{
+			//	_ = MessageBox.Show("Cancelled.");
+			//}
+		}
+
 
 		#region Event Handlers
 

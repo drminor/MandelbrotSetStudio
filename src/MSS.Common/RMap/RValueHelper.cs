@@ -38,35 +38,6 @@ namespace MSS.Common
 
 		#region From String
 
-		//public static RValue ConvertToRValue(string s)
-		//{
-		//	if (double.TryParse(s, out var dValue))
-		//	{
-		//		return ConvertToRValue(dValue, exponent);
-		//	}
-		//	else
-		//	{
-		//		return new RValue();
-		//	}
-		//}
-
-		public static bool TryConvertToRValue(string s, out RValue value)
-		{
-			//if (double.TryParse(s, out var dValue))
-			//{
-			//	value = ConvertToRValue(dValue, exponent);
-			//	return true;
-			//}
-			//else
-			//{
-			//	value = new RValue();
-			//	return false;
-			//}
-
-			value = ConvertToRValue(s);
-			return true;
-		}
-
 		public static RRectangle BuildRRectangleFromStrings(string[] vals)
 		{
 			var x1 = ConvertToRValue(vals[0]);
@@ -84,23 +55,36 @@ namespace MSS.Common
 			return new RRectangle();
 		}
 
+		public static bool TryConvertToRValue(string s, out RValue value)
+		{
+			value = ConvertToRValue(s);
+			return true;
+		}
+
 		public static RValue ConvertToRValue(string s)
+		{
+			var sme = new SignManExp(s);
+			var result = ConvertToRValue(sme);
+
+			Debug.WriteLine($"String: {s}, produced RValue: {result}.");
+
+			return result;
+		}
+
+		public static RValue ConvertToRValue(SignManExp sme)
 		{
 			// Supports arbitray string lengths.
 
 			var formatProvider = CultureInfo.InvariantCulture;
 
-			var sme = new SignManExp(s);
-			var pow = (int)Math.Round(3.3 * sme.NumberOfDigitsAfterDecimalPoint);
+			var pow = (int)Math.Round(3.3333 * (1 + sme.NumberOfDigitsAfterDecimalPoint));
 			var bigInt = BigInteger.Parse(sme.Mantissa, formatProvider);
 
 			var factor = BigInteger.Pow(2, pow);
-
-			var gcDivisor = BigInteger.GreatestCommonDivisor(bigInt, factor);
-
 			bigInt *= factor;
+			bigInt = BigInteger.DivRem(bigInt, BigInteger.Pow(10, sme.NumberOfDigitsAfterDecimalPoint), out var _);
 
-			bigInt = AdjustWithPrecision(bigInt, sme.Precision, formatProvider);
+			//bigInt = AdjustWithPrecision(bigInt, pow, formatProvider);
 
 			if (sme.IsNegative)
 			{
@@ -110,8 +94,6 @@ namespace MSS.Common
 			var result = new RValue(bigInt, -1 * pow, sme.Precision);
 
 			result = Reducer.Reduce(result);
-
-			Debug.WriteLine($"s: {s}, produced: {result}.");
 
 			return result;
 		}
@@ -136,179 +118,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-		//public static RValue ConvertToRValueOLD(string s)
-		//{
-		//	// Supports arbitray string lengths.
-
-		//	var dValComps = GetDValComps(s);
-
-		//	//var rVals = dValComps.Select(x => ConvertToRValue(x, 0)).ToArray();
-		//	var tt = new List<RValue>();
-		//	for (var i = 0; i < dValComps.Count; i++)
-		//	{
-		//		var rValComp = ConvertToRValue(dValComps[i], 0);
-		//		tt.Add(rValComp);
-		//	}
-
-		//	var rVals = tt.ToArray();
-
-		//	var result = Sum(rVals);
-
-		//	return result;
-		//}
-
-		//private static RValue ConvertToRValue(double d, int exponent)
-		//{
-		//	//Debug.WriteLine($"Beginning to Convert {d:G12} to an RValue.");
-		//	var origD = d;
-
-		//	var n = d.ToString("G17");
-		//	var p = n.IndexOf('.');
-
-		//	var nl = n.Length - p;
-		//	d = d * Math.Pow(2, nl);
-		//	exponent -= nl;
-
-		//	var err = Math.Abs(d - Math.Truncate(d));
-
-		//	var cnt = 0;
-		//	while (err > Math.Abs(0.000001))
-		//	{
-		//		//Debug.WriteLine($"Still multiplying. NewD: {d:G12},  Err: {err:G12}.");
-
-		//		d *= 2;
-		//		exponent--;
-		//		cnt++;
-
-		//		err = Math.Abs(d - Math.Truncate(d));
-		//	}
-
-		//	d = Math.Round(d);
-
-		//	var result = new RValue((BigInteger)d, exponent);
-		//	Debug.WriteLine($"\nThe final RValue computed from: {origD:G12} is {result} Took {cnt} ops, Err: {err:G12}.");
-
-		//	return result;
-		//}
-
-		//public static RValue Sum(params RValue[] rValues)
-		//{
-		//	var stage = rValues[0];
-
-		//	for (var i = 1; i < rValues.Length; i++)
-		//	{
-		//		var rVal = rValues[i];
-		//		var nrmStage = RNormalizer.Normalize(stage, rVal, out var nrmRVal);
-		//		stage = nrmStage.Add(nrmRVal);
-
-		//		//var st = BigIntegerHelper.GetDisplay(stage);
-		//		//Debug.WriteLine($"Still summing, st is {st}.");
-		//	}
-
-		//	return stage;
-		//}
-
-		public static void Test(RValue rValue)
-		{
-
-			// "0.535575821681765930306959274776606";
-			// "0.535575821681765
-			//	0.000000000000000930306959274776606
-
-			// "0.000000000000000000930306959274776606
-			// "0000000000000000306959274776606";
-			// "00000000000000000306959274776606
-			// "0.0000000000000000306959274776606"
-
-			//0.00000000000000930306959274776606
-
-			// "5355758216817659000000000000000";
-
-			//var dVals = ConvertToDoubles(rValue.Value, rValue.Exponent).ToArray();
-
-			//var rVals = dVals.Select(x => ConvertToRValue(x, 0)).ToArray();
-
-			//var c = Sum(rVals);
-
-			//Debug.WriteLine($"C = {c}.");
-		}
-
-		public static RValue Test2(string s)
-		{
-			var result = ConvertToRValue(s);
-			Debug.WriteLine($"The final result from Test2 is {result}.");
-
-			return result;
-		}
-
-		//public static IList<double> GetDValComps(string s)
-		//{
-		//	s = SignManExp.ConvertToScientificNotation(s);
-		//	var smeValue = new SignManExp(s);
-
-		//	var result = new List<double>();
-		//	var diag = new List<string>();
-
-		//	while (TryGetNumericChunk(ref smeValue, out var chunk, out var strChunk))
-		//	{
-		//		result.Add(chunk);
-
-		//		var ff = NumericStringInfo.ConvertToFixedPoint(strChunk);
-		//		diag.Add(ff);
-		//	}
-
-		//	Debug.WriteLine("The DComps are:\n");
-		//	for(var i = 0; i < result.Count; i++)
-		//	{
-		//		Debug.WriteLine($"{result[i]}\t\t{diag[i]}\n");
-		//	}
-
-		//	return result;
-		//}
-
-		//private static bool TryGetNumericChunk(ref SignManExp? smeValue, out double chunk, out string strChunk)
-		//{
-		//	var CHUNK_LENGTH = 13;
-
-		//	if (smeValue == null)
-		//	{
-		//		chunk = double.NaN;
-		//		strChunk = string.Empty;
-		//		return false;
-		//	}
-		//	else
-		//	{
-		//		if (smeValue.Mantissa.Length > CHUNK_LENGTH)
-		//		{
-		//			var t = new SignManExp(smeValue.IsNegative, smeValue.Mantissa[0..CHUNK_LENGTH], smeValue.Exponent);
-		//			strChunk = t.GetValueAsString();
-
-		//			chunk = t.GetValueAsDouble();
-
-		//			var newMantissa = smeValue.Mantissa[CHUNK_LENGTH..^0];
-
-		//			if (smeValue.Exponent < 0)
-		//			{
-		//				newMantissa = "0." + newMantissa;
-		//			}
-		//			else
-		//			{
-		//				newMantissa = newMantissa[0..1] + '.' + newMantissa[1..];
-		//			}
-
-		//			smeValue = new SignManExp(smeValue.IsNegative, newMantissa, smeValue.Exponent - (CHUNK_LENGTH - 2));
-		//		}
-		//		else
-		//		{
-		//			chunk = smeValue.GetValueAsDouble();
-		//			strChunk = smeValue.GetValueAsString();
-		//			smeValue = null;
-		//		}
-
-		//		return true;
-		//	}
-		//}
 
 		#endregion
 

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
@@ -9,6 +8,8 @@ namespace MSS.Types
 {
 	public class RValue : IBigRatShape, ICloneable, IEquatable<RValue?>, IEqualityComparer<RValue>
 	{
+		public static readonly RValue Zero = new RValue();
+
 		#region Contructors
 
 		public RValue() : this(0, 0, null)
