@@ -37,10 +37,10 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			//if (e.PropertyName == nameof(MSetInfoViewModel.CoordsAreDirty))
-			//{
-			//	dispSecMapCoordsCommit.Visibility = _vm.CoordsAreDirty ? Visibility.Visible : Visibility.Collapsed;
-			//}
+			if (e.PropertyName == nameof(MSetInfoViewModel.CoordsAreDirty))
+			{
+				dispSecMapCoordsCommit.Visibility = _vm.CoordsAreDirty ? Visibility.Visible : Visibility.Collapsed;
+			}
 		}
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)

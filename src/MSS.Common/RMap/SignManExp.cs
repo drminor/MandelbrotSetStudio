@@ -69,6 +69,17 @@ namespace MSS.Common
             return result;
         }
 
+        // TODO: Implement a Scientific to Fixed Notation converter.
+
+        //public string GetValueAsFixedString()
+        //{
+        //    var sciNot = GetValueAsString();
+
+        //    var result = sign + digits + "e" + expSign + strExp;
+
+        //    return result;
+        //}
+
         public double GetValueAsDouble()
 		{
             if (Mantissa.Length < 10)
@@ -82,6 +93,14 @@ namespace MSS.Common
 			{
                 return double.NaN;
 			}
+		}
+
+        public SignManExp ReducePrecisionTo(int precision)
+		{
+            var newMantissa = Mantissa.Length > precision ? Mantissa[0..precision] : Mantissa;
+            var result = new SignManExp(IsNegative, newMantissa, Exponent);
+
+            return result;
 		}
 
 		#endregion

@@ -23,9 +23,9 @@ namespace MSS.Types
 			return new RSize(vals, exponent);
 		}
 
-		public static RVector Reduce(RVector rPoint)
+		public static RVector Reduce(RVector rVector)
 		{
-			var vals = Reduce(rPoint, out var exponent);
+			var vals = Reduce(rVector, out var exponent);
 			return new RVector(vals, exponent);
 		}
 
@@ -79,6 +79,7 @@ namespace MSS.Types
 			return result;
 		}
 
+		// TODO: Use BigInteger instead of long for the divisor
 		private static bool IsDivisibleBy(BigInteger[] dividends, long divisor)
 		{
 			for (var i = 0; i < dividends.Length; i++)

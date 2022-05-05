@@ -61,7 +61,7 @@ namespace MSetExplorer
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
 			//LoadNewProject();
 			//ShowMapCoordsEditor();
-			ShowCoordsEditor();
+			//ShowCoordsEditor();
 		}
 
 		#endregion

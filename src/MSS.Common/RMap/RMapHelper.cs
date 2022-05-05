@@ -219,7 +219,7 @@ namespace MSS.Common
 
 		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
-		public static BigVector GetMapBlockOffset(RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
+		public static BigVector GetMapBlockOffset(ref RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
 			var coords = RNormalizer.Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
 			var mapOrigin = coords.Position;
@@ -235,8 +235,14 @@ namespace MSS.Common
 			}
 			else
 			{
-				var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta);
+				var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta, out var newDistance);
 				//Debug.WriteLine($"The offset in samplePoints is {offsetInSamplePoints}.");
+
+				var nrmDestOrigin = RNormalizer.Normalize(destinationOrigin, newDistance, out var nrmNewDistance);
+
+				var newMapOrigin = nrmDestOrigin.Translate(nrmNewDistance);
+
+				mapCoords = CombinePosAndSize(newMapOrigin, mapCoords.Size);
 
 				result = GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
 				//Debug.WriteLine($"Starting Block Pos: {result}, Pixel Pos: {canvasControlOffset}.");
@@ -246,12 +252,18 @@ namespace MSS.Common
 		}
 
 		// Calculate the number of samplePoints in the given offset.
-		private static BigVector GetNumberOfSamplePoints(RVector distance, RSize samplePointDelta)
+		private static BigVector GetNumberOfSamplePoints(RVector distance, RSize samplePointDelta, out RVector newDistance)
 		{
 			var nrmDistance = RNormalizer.Normalize(distance, samplePointDelta, out var nrmSamplePointDelta);
 
 			// # of whole sample points between the source and destination origins.
 			var offsetInSamplePoints = nrmDistance.Divide(nrmSamplePointDelta);
+
+			var rOffset = new RVector(offsetInSamplePoints);
+
+			newDistance = rOffset.Scale(nrmSamplePointDelta);
+
+			newDistance = Reducer.Reduce(newDistance);
 
 			return offsetInSamplePoints;
 		}

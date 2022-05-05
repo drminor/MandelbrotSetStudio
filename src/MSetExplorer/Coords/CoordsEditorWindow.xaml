@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="CoordsEditorWindow"  Width="1000">
+        Title="CoordsEditorWindow"  Width="1070">
     <Grid>
 
         <Grid.RowDefinitions>

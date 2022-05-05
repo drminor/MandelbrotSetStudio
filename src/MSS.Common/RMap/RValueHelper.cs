@@ -12,7 +12,7 @@ namespace MSS.Common
 	{
 		#region To String
 
-		public static string ConvertToString(RValue rValue)
+		public static string ConvertToString(RValue rValue, int useSciNotAfter = 100)
 		{
 			var dVals = ConvertToDoubles(rValue);
 			var numericStringInfos = dVals.Select(x => new NumericStringInfo(x)).ToArray();
@@ -24,7 +24,7 @@ namespace MSS.Common
 			//t = AdjustWithPrecision(t, rValue.Precision, CultureInfo.InvariantCulture);
 			//result = t.ToString(CultureInfo.InvariantCulture);
 
-			if (result.Length > 8)
+			if (result.Length >= useSciNotAfter)
 			{
 				result = SignManExp.ConvertToScientificNotation(result);
 			}
@@ -123,15 +123,15 @@ namespace MSS.Common
 
 		#region Convert to IList<Double>
 
-		public static IList<double> ConvertToDoubles(RValue rValue)
+		public static IList<double> ConvertToDoubles(RValue rValue, int chunkSize = 53)
 		{
-			return ConvertToDoubles(rValue.Value, rValue.Exponent);
+			return ConvertToDoubles(rValue.Value, rValue.Exponent, chunkSize);
 		}
 
 		// TODO: Move this to the BigIntegerHelper class and increase the "chunk" size.
-		public static IList<double> ConvertToDoubles(BigInteger n, int exponent)
+		public static IList<double> ConvertToDoubles(BigInteger n, int exponent, int chunkSize)
 		{
-			var DIVISOR_LOG = 3;
+			var DIVISOR_LOG = chunkSize;
 			var DIVISOR = new BigInteger(Math.Pow(2, DIVISOR_LOG));
 
 			var result = new List<double>();
@@ -167,6 +167,7 @@ namespace MSS.Common
 						result[i] *= Math.Pow(2, exponent + i * DIVISOR_LOG);
 					}
 				}
+
 				result.Reverse();
 			}
 
@@ -176,6 +177,19 @@ namespace MSS.Common
 		#endregion
 
 		#region Precision
+
+		public static int GetPrecision(RValue rValue1, RValue rValue2)
+		{
+			var nr1 = RNormalizer.Normalize(rValue1, rValue2, out var nr2);
+			var diff = nr1.Sub(nr2).Abs();
+
+			var doubles = ConvertToDoubles(diff);
+			var msd = doubles[0];
+			var l10 = Math.Abs(Math.Log10(msd));
+			var result = 4 + (int)l10;
+
+			return result;
+		}
 
 		public static long GetResolution(RValue rValue, out int precision)
 		{

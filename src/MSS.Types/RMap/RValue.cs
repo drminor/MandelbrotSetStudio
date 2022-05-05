@@ -86,6 +86,17 @@ namespace MSS.Types
 			return a.Value <= b.Value ? a : b;
 		}
 
+		public RValue Abs()
+		{
+			if (Value < 0)
+			{
+				return new RValue(Value * -1, Exponent);
+			}
+			else
+			{
+				return this;
+			}
+		}
 
 		#endregion
 

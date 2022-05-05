@@ -92,28 +92,24 @@ namespace MSetExplorer
 				return;
 			}
 
-			//var mx1 = _vm.StartingX.SignManExp.Mantissa;
-			//var mx2 = _vm.EndingX.SignManExp.Mantissa;
-			//var my1 = _vm.StartingY.SignManExp.Mantissa;
-			//var my2 = _vm.EndingY.SignManExp.Mantissa;
+			var precisionX = RValueHelper.GetPrecision(_vm.StartingX.RValue, _vm.EndingX.RValue);
+			var newX1Sme = _vm.StartingX.SignManExp.ReducePrecisionTo(precisionX);
+			var newX2Sme = _vm.EndingX.SignManExp.ReducePrecisionTo(precisionX);
 
-			//var nix = 4 + GetNumOfIdenticalDigits(mx1, mx2);
-			//_vm.StartingX.StringVal = _vm.StartingX.StringVal[0..Math.Min(nix, _vm.StartingX.StringVal.Length)];
-			//_vm.EndingX.StringVal = _vm.EndingX.StringVal[0..Math.Min(nix, _vm.EndingX.StringVal.Length)];
+			var xTest = newX1Sme.GetValueAsString();
 
-			//var niy = 4 + GetNumOfIdenticalDigits(my1, my2);
-			//_vm.StartingY.StringVal = _vm.StartingY.StringVal[0..Math.Min(niy, _vm.StartingY.StringVal.Length)];
-			//_vm.EndingY.StringVal = _vm.EndingY.StringVal[0..Math.Min(niy, _vm.EndingY.StringVal.Length)];
+			_vm.StartingX.StringVal = newX1Sme.GetValueAsString();
+			_vm.EndingX.StringVal = newX2Sme.GetValueAsString();
 
-			//var rx1 = _vm.StartingX.RValue;
-			//var rx2 = _vm.EndingX.RValue;
+			var precisionY = RValueHelper.GetPrecision(_vm.StartingX.RValue, _vm.EndingX.RValue);
+			var newY1Sme = _vm.StartingY.SignManExp.ReducePrecisionTo(precisionY);
+			var newY2Sme = _vm.EndingY.SignManExp.ReducePrecisionTo(precisionY);
+
+			_vm.StartingY.StringVal = newY1Sme.GetValueAsString();
+			_vm.EndingY.StringVal = newY2Sme.GetValueAsString();
 
 			var rx1 = RNormalizer.Normalize(_vm.StartingX.RValue, _vm.StartingY.RValue, out var ry1);
-
 			var p1 = new RPoint(rx1.Value, ry1.Value, rx1.Exponent);
-
-			//var ry1 = _vm.StartingY.RValue;
-			//var ry2 = _vm.EndingY.RValue;
 
 			var rx2 = RNormalizer.Normalize(_vm.EndingX.RValue, _vm.EndingY.RValue, out var ry2);
 			var p2 = new RPoint(rx2.Value, ry2.Value, rx2.Exponent);
@@ -122,22 +118,6 @@ namespace MSetExplorer
 
 			Debug.Print($"{rRectangle}");
 		}
-
-		private int GetNumOfIdenticalDigits(string s1, string s2)
-		{
-			var cnt = Math.Min(s1.Length, s2.Length);
-
-			var i = 0;
-			for(; i < cnt; i++)
-			{
-				if (s1[i] != s2[i]) {
-					break;
-				}
-			}
-
-			return i;
-		}
-
 
 		#endregion
 

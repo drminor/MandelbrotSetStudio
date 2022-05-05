@@ -85,7 +85,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		// Point and Size
+		// RVector and Size
 		public static RVector Normalize(RVector v, RSize s, out RSize newS)
 		{
 			var pTemp = v.Clone();
@@ -94,6 +94,19 @@ namespace MSS.Common
 			var newExp = NormalizeInPlace(pTemp, sTemp);
 			var result = v.Exponent == newExp ? v : new RVector(pTemp.Values, newExp);
 			newS = s.Exponent == newExp ? s : new RSize(sTemp.Values, newExp);
+
+			return result;
+		}
+
+		// Point and Vector
+		public static RPoint Normalize(RPoint p, RVector v, out RVector newV)
+		{
+			var pTemp = p.Clone();
+			var vTemp = v.Clone();
+
+			var newExp = NormalizeInPlace(pTemp, vTemp);
+			var result = p.Exponent == newExp ? p : new RPoint(pTemp.Values, newExp);
+			newV = v.Exponent == newExp ? v : new RVector(vTemp.Values, newExp);
 
 			return result;
 		}

@@ -41,7 +41,7 @@ namespace MSetExplorer
 			var subdivision = GetSubdivision(samplePointDelta, blockSize, projectAdapter);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref coords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
 			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;

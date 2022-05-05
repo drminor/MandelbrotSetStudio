@@ -163,7 +163,7 @@ namespace MSetExplorer
 			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.Coordinates)
 			{
 				Debug.WriteLine($"MainWindow ViewModel received request to update the coords.");
-				MapProjectViewModel.UpdateMapCoordinates(e.Coords);
+				//MapProjectViewModel.UpdateMapCoordinates(e.Coords);
 			}
 		}
 

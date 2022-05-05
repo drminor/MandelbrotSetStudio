@@ -13,6 +13,9 @@ namespace MSS.Types
 		public RVector() : this(0, 0, 0)
 		{ }
 
+		public RVector(BigVector bigVector) : this(bigVector.Values, 0)
+		{ }
+
 		public RVector(BigInteger[] values, int exponent) : this(values[0], values[1], exponent)
 		{ }
 
@@ -48,6 +51,12 @@ namespace MSS.Types
 			return amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot InvScale a RSize with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
 				: new BigVector(XNumerator / amount.WidthNumerator, YNumerator / amount.HeightNumerator);
+		}
+
+		public RVector Scale(RSize amount)
+		{
+			var result = new RVector(XNumerator * amount.WidthNumerator, YNumerator * amount.HeightNumerator, Exponent + amount.Exponent);
+			return result;
 		}
 
 		public override string ToString()

@@ -91,8 +91,8 @@ namespace MSetExplorer
 					var cItems = value.Split('\n');
 					if (cItems.Length == 4)
 					{
-						//SetMulti(cItems);
-						TestMulti(cItems);
+						SetMulti(cItems);
+						//TestMulti(cItems);
 					}
 					else
 					{
@@ -268,25 +268,11 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public string Test(string s)
-		{
-			if (RValueHelper.TryConvertToRValue(s, out var rValue))
-			{
-				//var s3 = rValue.ToString();
-				var s2 = RValueHelper.ConvertToString(rValue);
-				return s2;
-			}
-			else
-			{
-				return "bad RVal";
-			}
-		}
-
 		public void SaveCoords() 
 		{
 			// TODO: Validate new values
 
-			if (CurrentJob is null)
+			if (CurrentJob.IsEmpty)
 			{
 				if (TargetIterations == 0)
 				{
@@ -315,12 +301,12 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void TestMulti(string[] mVals)
-		{
-			var rt = RValueHelper.BuildRRectangleFromStrings(mVals);
+		//private void TestMulti(string[] mVals)
+		//{
+		//	var rt = RValueHelper.BuildRRectangleFromStrings(mVals);
 
-			Debug.WriteLine($"The rr result is {rt}");
-		}
+		//	Debug.WriteLine($"The rr result is {rt}");
+		//}
 
 		private void SetMulti(string[] mVals)
 		{
