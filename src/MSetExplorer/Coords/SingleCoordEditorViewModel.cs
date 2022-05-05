@@ -21,6 +21,10 @@ namespace MSetExplorer
 
 		private string _valueName;
 
+
+		public SingleCoordEditorViewModel(RValue rValue) : this(RValueHelper.ConvertToString(rValue))
+		{ }
+
 		public SingleCoordEditorViewModel(string stringVal)
 		{
 			_stringVal = stringVal;
@@ -51,6 +55,7 @@ namespace MSetExplorer
 					UpdateOurValues(value);
 
 					OnPropertyChanged();
+					OnPropertyChanged(nameof(RValue));
 					OnPropertyChanged(nameof(Numerator));
 					OnPropertyChanged(nameof(Exponent));
 					OnPropertyChanged(nameof(StringValOut));
@@ -98,6 +103,7 @@ namespace MSetExplorer
 					_stringValOut = RValueHelper.ConvertToString(_rValue);
 
 					OnPropertyChanged();
+					OnPropertyChanged(nameof(RValue));
 					OnPropertyChanged(nameof(StringValOut));
 				}
 			}
@@ -116,6 +122,7 @@ namespace MSetExplorer
 					_stringValOut = RValueHelper.ConvertToString(_rValue);
 
 					OnPropertyChanged();
+					OnPropertyChanged(nameof(RValue));
 					OnPropertyChanged(nameof(StringValOut));
 				}
 			}

@@ -197,9 +197,9 @@ namespace MSS.Types.MSet
 
 		public bool Save(IProjectAdapter projectAdapter)
 		{
-			if (AnyJobIsDirty)
+			if (AnyJobIsDirty && !IsDirty && !(DateCreated > LastSavedUtc))
 			{
-				Debug.Assert(IsDirty, "Warning: Project is not marked as 'IsDirty', but one or more of the jobs are dirty.");
+				Debug.WriteLine("Warning: Project is not marked as 'IsDirty', but one or more of the jobs are dirty.");
 			}
 
 			projectAdapter.UpdateProjectCurrentJobId(Id, CurrentJobId);

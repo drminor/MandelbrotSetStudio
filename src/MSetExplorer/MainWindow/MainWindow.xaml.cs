@@ -61,7 +61,7 @@ namespace MSetExplorer
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
 			//LoadNewProject();
 			//ShowMapCoordsEditor();
-			//ShowCoordsEditor();
+			ShowCoordsEditor();
 		}
 
 		#endregion
@@ -74,17 +74,30 @@ namespace MSetExplorer
 
 		private void ShowCoordsEditor()
 		{
-			var x1 = "-0.477036968733327014028268226139546";
-			var x2 = "-0.477036964892343354414420540166062";
-			var y1 = "0.535575821681765930306959274776606";
-			var y2 = "0.535575824239325800205884281044245";
+			CoordsEditorViewModel coordsEditorViewModel;
+			MapCalcSettings mapCalcSettings;
 
-			//var x1 = "-0.4770369687333";
-			//var x2 = "-0.4770369648923";
-			//var y1 = "0.5355758216817";
-			//var y2 = "0.5355758242393";
+			var curJob = _vm.MapProjectViewModel.CurrentJob;
+			if (!curJob.IsEmpty)
+			{
+				coordsEditorViewModel = new CoordsEditorViewModel(curJob.MSetInfo.Coords);
+				mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
+			}
+			else
+			{
+				var x1 = "-0.477036968733327014028268226139546";
+				var x2 = "-0.477036964892343354414420540166062";
+				var y1 = "0.535575821681765930306959274776606";
+				var y2 = "0.535575824239325800205884281044245";
 
-			var coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2);
+				//var x1 = "-0.4770369687333";
+				//var x2 = "-0.4770369648923";
+				//var y1 = "0.5355758216817";
+				//var y2 = "0.5355758242393";
+				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2);
+				mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+			}
+
 			var coordsEditorWindow = new CoordsEditorWindow()
 			{
 				DataContext = coordsEditorViewModel
@@ -92,12 +105,23 @@ namespace MSetExplorer
 
 			if (coordsEditorWindow.ShowDialog() == true)
 			{
-				_ = MessageBox.Show("Saved.");
+				var triResult = ProjectSaveChanges();
+				if (triResult == true)
+				{
+					_ = MessageBox.Show("Changes Saved");
+				}
+
+				if (!triResult.HasValue)
+				{
+					// user cancelled.
+					return;
+				}
+
+				var newCoords = coordsEditorViewModel.GetCoords();
+				var mSetInfo = new MSetInfo(newCoords, mapCalcSettings);
+
+				LoadNewProject(mSetInfo);
 			}
-			//else
-			//{
-			//	_ = MessageBox.Show("Cancelled.");
-			//}
 		}
 
 		private void ShowMapCoordsEdTest()
@@ -117,7 +141,6 @@ namespace MSetExplorer
 			//	_ = MessageBox.Show("Cancelled.");
 			//}
 		}
-
 
 		#region Event Handlers
 

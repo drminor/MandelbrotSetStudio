@@ -12,7 +12,7 @@ namespace MSS.Common
 	{
 		#region To String
 
-		public static string ConvertToString(RValue rValue, int useSciNotAfter = 100)
+		public static string ConvertToString(RValue rValue, int useSciNotationForLengthsGe = 100)
 		{
 			var dVals = ConvertToDoubles(rValue);
 			var numericStringInfos = dVals.Select(x => new NumericStringInfo(x)).ToArray();
@@ -24,7 +24,7 @@ namespace MSS.Common
 			//t = AdjustWithPrecision(t, rValue.Precision, CultureInfo.InvariantCulture);
 			//result = t.ToString(CultureInfo.InvariantCulture);
 
-			if (result.Length >= useSciNotAfter)
+			if (result.Length >= useSciNotationForLengthsGe)
 			{
 				result = SignManExp.ConvertToScientificNotation(result);
 			}
@@ -37,23 +37,6 @@ namespace MSS.Common
 		#endregion
 
 		#region From String
-
-		public static RRectangle BuildRRectangleFromStrings(string[] vals)
-		{
-			var x1 = ConvertToRValue(vals[0]);
-			var x2 = ConvertToRValue(vals[1]);
-			var y1 = ConvertToRValue(vals[2]);
-			var y2= ConvertToRValue(vals[3]);
-
-			var nX1 = RNormalizer.Normalize(x1, x2, out var nX2);
-			var nY1 = RNormalizer.Normalize(y1, y2, out var nY2);
-
-			var w = nX2.Sub(nX1);
-
-			var h = nY2.Sub(nY1);
-
-			return new RRectangle();
-		}
 
 		public static bool TryConvertToRValue(string s, out RValue value)
 		{
@@ -119,6 +102,31 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static RRectangle BuildRRectangleFromStrings(string[] vals)
+		{
+			var x1 = ConvertToRValue(vals[0]);
+			var x2 = ConvertToRValue(vals[1]);
+			var y1 = ConvertToRValue(vals[2]);
+			var y2 = ConvertToRValue(vals[3]);
+			var result = BuildRRectangleFromRVals(x1, x2, y1, y2);
+
+			return result;
+		}
+
+		public static RRectangle BuildRRectangleFromRVals(RValue x1, RValue x2, RValue y1, RValue y2)
+		{
+			var nx1 = RNormalizer.Normalize(x1, y1, out var ny1);
+			var p1 = new RPoint(nx1.Value, ny1.Value, nx1.Exponent);
+
+			var nx2 = RNormalizer.Normalize(x2, y2, out var ny2);
+			var p2 = new RPoint(nx2.Value, ny2.Value, nx2.Exponent);
+
+			var np1 = RNormalizer.Normalize(p1, p2, out var np2);
+			var result = new RRectangle(np1, np2);
+
+			return result;
+		}
+
 		#endregion
 
 		#region Convert to IList<Double>
@@ -128,7 +136,7 @@ namespace MSS.Common
 			return ConvertToDoubles(rValue.Value, rValue.Exponent, chunkSize);
 		}
 
-		// TODO: Move this to the BigIntegerHelper class and increase the "chunk" size.
+		// TODO: Move this to the BigIntegerHelper class.
 		public static IList<double> ConvertToDoubles(BigInteger n, int exponent, int chunkSize)
 		{
 			var DIVISOR_LOG = chunkSize;
@@ -178,15 +186,17 @@ namespace MSS.Common
 
 		#region Precision
 
-		public static int GetPrecision(RValue rValue1, RValue rValue2)
+		public static int GetPrecision(RValue rValue1, RValue rValue2, out RValue diff)
 		{
 			var nr1 = RNormalizer.Normalize(rValue1, rValue2, out var nr2);
-			var diff = nr1.Sub(nr2).Abs();
+			var diffNoPrecision = nr1.Sub(nr2).Abs();
 
-			var doubles = ConvertToDoubles(diff);
+			var doubles = ConvertToDoubles(diffNoPrecision);
 			var msd = doubles[0];
 			var l10 = Math.Abs(Math.Log10(msd));
-			var result = 4 + (int)l10;
+			var result = (int) Math.Round(l10, MidpointRounding.AwayFromZero);
+
+			diff = new RValue(diffNoPrecision.Value, diffNoPrecision.Exponent, result);
 
 			return result;
 		}

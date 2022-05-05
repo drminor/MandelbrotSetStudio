@@ -11,6 +11,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" BorderThickness="0.5" BorderBrush="Black" Margin="5,5,5,0">
@@ -41,7 +42,7 @@
 
             </Grid>
         </Border>
-
+        
         <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
@@ -49,6 +50,46 @@
                 <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
 
                 <Button Name="btnTest" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="30,10,10,10" Click="TestButton_Click">_Test</Button>
+            </StackPanel>
+
+        </Border>
+
+        <Border Grid.Row="2" BorderThickness="0.5" BorderBrush="Black" Margin="5,15">
+            <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical">
+
+                <StackPanel Orientation="Horizontal" Margin="0,1">
+                    <TextBlock Width="20" Margin="5,3" FontSize="14" Text="X1" />
+                    <TextBox x:Name="txtX1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding X1}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,1">
+                    <TextBlock Width="20" Margin="5,3" FontSize="14" Text="X2" />
+                    <TextBox x:Name="txtX2" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding X2}"/>
+
+                    <TextBlock Width="45" Margin="5,3" FontSize="14" Text="Width:" />
+                    <TextBox x:Name="txtWidth" Width="230" Margin="3" VerticalAlignment="Center" Text="{Binding Width}"/>
+                    <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Precision:" />
+                    <TextBox x:Name="txtPrecisionX" Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding PrecisionX}"/>
+
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,1">
+                    <TextBlock Width="20" Margin="5,3" FontSize="14" Text="Y1" />
+                    <TextBox x:Name="txtY1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Y1}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,1">
+                    <TextBlock Width="20" Margin="5,3" FontSize="14" Text="Y2" />
+                    <TextBox x:Name="txtY2" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Y2}"/>
+
+                    <TextBlock Width="45" Margin="5,3" FontSize="14" Text="Height:" />
+                    <TextBox x:Name="txtHeight" Width="230" Margin="3" VerticalAlignment="Center" Text="{Binding Height}"/>
+                    
+                    <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Precision:" />
+                    <TextBox x:Name="txtPrecisionY" Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding PrecisionY}"/>
+                </StackPanel>                
+
+
             </StackPanel>
 
         </Border>

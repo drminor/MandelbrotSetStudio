@@ -39,7 +39,7 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			var DO_START_SERVER = true;
+			var DO_START_SERVER = false;
 
 			var DROP_ALL_COLLECTIONS = false;
 			var DROP_MAP_SECTIONS = false;

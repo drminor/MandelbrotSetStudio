@@ -33,6 +33,15 @@ namespace MSS.Types
 			}
 		}
 
+		public RRectangle(RPoint p1, RPoint p2) : this(p1.XNumerator, p2.XNumerator, p1.YNumerator, p2.YNumerator, p1.Exponent)
+		{
+			if (p1.Exponent != p2.Exponent)
+			{
+				throw new ArgumentException($"Cannot create a RRectangle from a Point with Exponent: {p1.Exponent} and a second Point with Exponent: {p2.Exponent}.");
+			}
+		}
+
+
 		public RRectangle(RectangleInt rect) : this(rect.X1, rect.X2, rect.Y1, rect.Y2, 0)
 		{
 			Validate();

@@ -1,85 +1,218 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
-using System;
-using System.Diagnostics;
-using System.Globalization;
 
 namespace MSetExplorer
 {
 	public class CoordsEditorViewModel : ViewModelBase
 	{
-		private SingleCoordEditorViewModel _startingX;
-		private SingleCoordEditorViewModel _endingX;
-		private SingleCoordEditorViewModel _startingY;
-		private SingleCoordEditorViewModel _endingY;
+		private const int _numDigitsForDisplayExtent = 4;
+
+		private string _x1;
+		private string _x2;
+		private string _y1;
+		private string _y2;
+
+		private string _width;
+
+		private string _height;
+
+		private int _precisionX;
+		private int _precisionY;
 
 		private long _zoom;
 
 		//private RRectangle _coords;
 		//private bool _coordsAreDirty;
 
+		#region Constructor
+
+		public CoordsEditorViewModel(RRectangle coords)
+		{
+			StartingX = new SingleCoordEditorViewModel(coords.Left);
+			EndingX = new SingleCoordEditorViewModel(coords.Right);
+			StartingY = new SingleCoordEditorViewModel(coords.Bottom);
+			EndingY = new SingleCoordEditorViewModel(coords.Top);
+
+			_x1 = string.Empty;
+			_x2 = string.Empty;
+			_y1 = string.Empty;
+			_y2 = string.Empty;
+			_width = string.Empty;
+			_height = string.Empty;
+
+			GetCoords();
+
+			AddEventHandlers();
+		}
+
 		public CoordsEditorViewModel(string x1, string x2, string y1, string y2)
 		{
-			//_coords = RMapConstants.TEST_RECTANGLE_HALF;
+			StartingX = new SingleCoordEditorViewModel(x1);
+			EndingX = new SingleCoordEditorViewModel(x2);
+			StartingY = new SingleCoordEditorViewModel(y1);
+			EndingY = new SingleCoordEditorViewModel(y2);
 
-			_startingX = new SingleCoordEditorViewModel(x1);
-			_endingX = new SingleCoordEditorViewModel(x2);
-			_startingY = new SingleCoordEditorViewModel(y1);
-			_endingY = new SingleCoordEditorViewModel(y2);
+			_x1 = string.Empty;
+			_x2 = string.Empty;
+			_y1 = string.Empty;
+			_y2 = string.Empty;
+			_width = string.Empty;
+			_height = string.Empty;
+
+			GetCoords();
+			
+			AddEventHandlers();
 		}
+
+		private void AddEventHandlers()
+		{
+			StartingX.PropertyChanged += StartingX_PropertyChanged;
+			EndingX.PropertyChanged += EndingX_PropertyChanged;
+			StartingY.PropertyChanged += StartingY_PropertyChanged;
+			EndingY.PropertyChanged += EndingY_PropertyChanged;
+		}
+
+		#endregion
+
+		#region Event Handlers
+
+		private void StartingX_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+		}
+
+		private void EndingX_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+		}
+
+		private void StartingY_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+		}
+
+		private void EndingY_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+		}
+
+		#endregion
 
 		#region Public Properties
 
-		//public event EventHandler<MapSettingsUpdateRequestedEventArgs>? MapSettingsUpdateRequested;
+		public SingleCoordEditorViewModel StartingX { get; init; }
+		public SingleCoordEditorViewModel EndingX { get; init; }
+		public SingleCoordEditorViewModel StartingY { get; init; }
+		public SingleCoordEditorViewModel EndingY { get; init; }
 
-		public SingleCoordEditorViewModel StartingX
+		public string X1
 		{
-			get => _startingX;
+			get => _x1;
 			set
 			{
-				if (value != _startingX)
+				if (value != _x1)
 				{
-					_startingX = value;
+					_x1 = value;
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public SingleCoordEditorViewModel EndingX
+		public string X2
 		{
-			get => _endingX;
+			get => _x2;
 			set
 			{
-				if (value != _endingX)
+				if (value != _x2)
 				{
-					_endingX = value;
+					_x2 = value;
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public SingleCoordEditorViewModel StartingY
+		public string Y1
 		{
-			get => _startingY;
+			get => _y1;
 			set
 			{
-				if (value != _startingY)
+				if (value != _y1)
 				{
-					_startingY = value;
+					_y1 = value;
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public SingleCoordEditorViewModel EndingY
+		public string Y2
 		{
-			get => _endingY;
+			get => _y2;
 			set
 			{
-				if (value != _endingY)
+				if (value != _y2)
 				{
-					_endingY = value;
+					_y2 = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+
+		public string Width
+		{
+			get => _width;
+			set
+			{
+				if (value != _width)
+				{
+					_width = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public string Height
+		{
+			get => _height;
+			set
+			{
+				if (value != _height)
+				{
+					_height = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+
+		public long Zoom
+		{
+			get => _zoom;
+			set
+			{
+				_zoom = value;
+				OnPropertyChanged();
+			}
+		}
+
+		public int PrecisionX
+		{
+			get => _precisionX;
+			set
+			{
+				if (value != _precisionX)
+				{
+					_precisionX = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+
+		public int PrecisionY
+		{
+			get => _precisionY;
+			set
+			{
+				if (value != _precisionY)
+				{
+					_precisionY = value;
 					OnPropertyChanged();
 				}
 			}
@@ -122,43 +255,43 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		public long Zoom
-		{
-			get => _zoom;
-			set
-			{
-				_zoom = value;
-				OnPropertyChanged();
-				OnPropertyChanged(nameof(Precision));
-			}
-		}
-
-		public int Precision
-		{
-			get => -1;
-			set => OnPropertyChanged();
-		}
-
 		#endregion
 
 		#region Public Methods
 
-		public void SaveCoords() 
+		public RRectangle GetCoords()
 		{
-			//// TODO: Validate new values
+			_precisionX = RValueHelper.GetPrecision(StartingX.RValue, EndingX.RValue, out var diffX);
+			_width = RValueHelper.ConvertToString(diffX, useSciNotationForLengthsGe: 6);
 
-			//	MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.NewProject, Coords, TargetIterations, RequestsPerJob));
-			//}
-			//else
-			//{
-			//	MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.Coordinates, Coords));
-			//}
+			_precisionX += _numDigitsForDisplayExtent;
+			var newX1Sme = StartingX.SignManExp.ReducePrecisionTo(_precisionX);
+			var newX2Sme = EndingX.SignManExp.ReducePrecisionTo(_precisionX);
+			_x1 = newX1Sme.GetValueAsString();
+			_x2 = newX2Sme.GetValueAsString();
+
+			_precisionY = RValueHelper.GetPrecision(StartingX.RValue, EndingX.RValue, out var diffY);
+			_height = RValueHelper.ConvertToString(diffY, useSciNotationForLengthsGe: 6);
+
+			_precisionY += _numDigitsForDisplayExtent;
+			var newY1Sme = StartingY.SignManExp.ReducePrecisionTo(_precisionY);
+			var newY2Sme = EndingY.SignManExp.ReducePrecisionTo(_precisionY);
+			_y1 = newY1Sme.GetValueAsString();
+			_y2 = newY2Sme.GetValueAsString();
+
+			var result = RValueHelper.BuildRRectangleFromStrings(new string[] { _x1, _x2, _y1, _y2 });
+
+			OnPropertyChanged(nameof(X1));
+			OnPropertyChanged(nameof(X2));
+			OnPropertyChanged(nameof(Y1));
+			OnPropertyChanged(nameof(Y2));
+			OnPropertyChanged(nameof(Width));
+			OnPropertyChanged(nameof(Height));
+			OnPropertyChanged(nameof(PrecisionX));
+			OnPropertyChanged(nameof(PrecisionY));
+
+			return result;
 		}
-
-		//public void TriggerIterationUpdate()
-		//{
-		//	MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, TargetIterations));
-		//}
 
 		#endregion
 
