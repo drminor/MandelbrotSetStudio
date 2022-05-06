@@ -20,10 +20,6 @@ namespace MSS.Common
 
 			var result = total.GetString(rValue.Precision);
 
-			//var t = BigInteger.Parse(result, CultureInfo.InvariantCulture);
-			//t = AdjustWithPrecision(t, rValue.Precision, CultureInfo.InvariantCulture);
-			//result = t.ToString(CultureInfo.InvariantCulture);
-
 			if (result.Length >= useSciNotationForLengthsGe)
 			{
 				result = SignManExp.ConvertToScientificNotation(result);

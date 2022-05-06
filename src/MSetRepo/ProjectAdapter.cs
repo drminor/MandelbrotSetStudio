@@ -240,6 +240,14 @@ namespace MSetRepo
 			_ = projectReaderWriter.Delete(projectId);
 		}
 
+		public bool ProjectExists(string name)
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var result = projectReaderWriter.ExistsWithName(name);
+
+			return result;
+		}
+
 		#endregion
 
 		#region ProjectInfo

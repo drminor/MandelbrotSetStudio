@@ -271,7 +271,7 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 		}
 
-		public RRectangle? GetUpdateCoords(TransformType transformType, RectangleInt newArea)
+		public RRectangle? GetUpdatedCoords(TransformType transformType, RectangleInt newArea)
 		{
 			if (CurrentProject == null)
 			{

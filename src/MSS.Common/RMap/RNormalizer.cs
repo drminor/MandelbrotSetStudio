@@ -34,14 +34,14 @@ namespace MSS.Common
 		}
 
 		// Rectangle & RValue
-		public static RRectangle Normalize(RRectangle r, RValue s, out RValue newV)
+		public static RRectangle Normalize(RRectangle r, RValue v, out RValue newV)
 		{
 			var rTemp = r.Clone();
-			var vTemp = s.Clone();
+			var vTemp = v.Clone();
 
 			var newExp = NormalizeInPlace(rTemp, vTemp);
 			var result = r.Exponent == newExp ? r : new RRectangle(rTemp.Values, newExp);
-			newV = s.Exponent == newExp ? s : new RValue(vTemp.Values, newExp);
+			newV = v.Exponent == newExp ? v : new RValue(vTemp.Value, newExp, vTemp.Precision);
 
 			return result;
 		}
@@ -112,14 +112,14 @@ namespace MSS.Common
 		}
 
 		// Two RValues
-		public static RValue Normalize(RValue r, RValue s, out RValue newV)
+		public static RValue Normalize(RValue r, RValue v, out RValue newV)
 		{
 			var rTemp = r.Clone();
-			var vTemp = s.Clone();
+			var vTemp = v.Clone();
 
 			var newExp = NormalizeInPlace(rTemp, vTemp);
-			var result = r.Exponent == newExp ? r : new RValue(rTemp.Values, newExp);
-			newV = s.Exponent == newExp ? s : new RValue(vTemp.Values, newExp);
+			var result = r.Exponent == newExp ? r : new RValue(rTemp.Value, newExp, rTemp.Precision);
+			newV = v.Exponent == newExp ? v : new RValue(vTemp.Value, newExp, vTemp.Precision);
 
 			return result;
 		}

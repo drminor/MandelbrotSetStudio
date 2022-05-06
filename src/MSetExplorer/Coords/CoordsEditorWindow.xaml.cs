@@ -43,6 +43,9 @@ namespace MSetExplorer
 				_vm.EndingY.ValueName = "Y2:";
 				y2.DataContext = _vm.EndingY;
 
+				mapCoordsNormalized.DataContext = _vm.MapCoordsDetail1;
+				mapCoordsAdjusted.DataContext = _vm.MapCoordsDetail2;
+
 				Debug.WriteLine("The CoordsEditor Window is now loaded");
 			}
 		}

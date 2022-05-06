@@ -8,7 +8,7 @@ namespace MSS.Types
 		public static RValue Reduce(RValue rValue)
 		{
 			var val = Reduce(rValue.Value, rValue.Exponent, out var exponent);
-			return new RValue(val, exponent);
+			return new RValue(val, exponent, rValue.Precision);
 		}
 
 		public static RPoint Reduce(RPoint rPoint)

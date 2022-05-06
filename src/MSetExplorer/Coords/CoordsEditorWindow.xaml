@@ -12,6 +12,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" BorderThickness="0.5" BorderBrush="Black" Margin="5,5,5,0">
@@ -55,7 +56,8 @@
         </Border>
 
         <Border Grid.Row="2" BorderThickness="0.5" BorderBrush="Black" Margin="5,15">
-            <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical">
+            <local:MapCoordsDetailControl x:Name="mapCoordsNormalized"/>
+            <!--<StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical">
 
                 <StackPanel Orientation="Horizontal" Margin="0,1">
                     <TextBlock Width="20" Margin="5,3" FontSize="14" Text="X1" />
@@ -90,8 +92,12 @@
                 </StackPanel>                
 
 
-            </StackPanel>
+            </StackPanel>-->
 
+        </Border>
+
+        <Border Grid.Row="3" BorderThickness="0.5" BorderBrush="Black" Margin="5,15">
+            <local:MapCoordsDetailControl x:Name="mapCoordsAdjusted"/>
         </Border>
 
     </Grid>

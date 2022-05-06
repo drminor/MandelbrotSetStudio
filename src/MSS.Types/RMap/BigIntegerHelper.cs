@@ -26,11 +26,11 @@ namespace MSS.Types
 			}
 
 			var bDivisor = new BigInteger(divisor * Math.Pow(2, -1 * dividend.Exponent));
-			var rDivisor = new RValue(bDivisor, dividend.Exponent);
+			var rDivisor = new RValue(bDivisor, dividend.Exponent, dividend.Precision); // TODO:Px -- Check RValue Precision
 
 			var newNumerator = DivideNew(dividend.Value, rDivisor.Value, out var newExponent);
 
-			 var result = new RValue(newNumerator, -1 * newExponent);
+			 var result = new RValue(newNumerator, -1 * newExponent, dividend.Precision); // TODO:Px -- Check RValue Precision
 			return result;
 		}
 
@@ -71,7 +71,7 @@ namespace MSS.Types
 		public static RValue Divide(RValue dividend, int divisor)
 		{
 			var newNumerator = Divide(dividend.Value, dividend.Exponent, divisor, out var newExponent);
-			var result = new RValue(newNumerator, newExponent);
+			var result = new RValue(newNumerator, newExponent, dividend.Precision); // TODO:Px -- Check RValue Precision
 			return result;
 		}
 

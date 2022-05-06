@@ -138,7 +138,7 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				// Calculate new Coords for preview
-				var newCoords = MapProjectViewModel.GetUpdateCoords(e.TransformType, e.NewArea);
+				var newCoords = MapProjectViewModel.GetUpdatedCoords(e.TransformType, e.NewArea);
 				if (newCoords != null)
 				{
 					MSetInfoViewModel.Coords = newCoords;

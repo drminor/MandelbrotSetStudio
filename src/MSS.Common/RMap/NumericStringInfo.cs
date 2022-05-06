@@ -63,8 +63,6 @@ namespace MSS.Common
         public bool IsNegative => _isNegative;
         public bool IsZero => _isZero;
 
-        public string SValue => GetString(precision: null);
-
         #endregion
 
         #region Public Methods
@@ -96,16 +94,12 @@ namespace MSS.Common
 
         public string GetString(int? precision)
         {
-            var sb = new StringBuilder();
+            if (IsZero)
+			{
+                return IsNegative ? "-0" : "0";
+			}
 
-    //        if (_before.Length < 1)
-    //        {
-				//_ = sb.Append('0');
-    //        }
-    //        else
-    //        {
-    //            _ = sb.Append(_before.Select(x => (char)(x + 48)).ToArray());
-    //        }
+            var sb = new StringBuilder();
 
             if (_isNegative)
 			{
@@ -114,14 +108,45 @@ namespace MSS.Common
 
             _ = sb.Append(_before.Select(x => (char)(x + 48)).ToArray());
 
-            var cntDigitsRemaining = precision.HasValue ? precision.Value - _before.Length : int.MaxValue;
+            int cntDigitsRemaining;
+            int skipDigits = 0;
 
-            cntDigitsRemaining = Math.Min(cntDigitsRemaining, _after.Length);
+            if (precision.HasValue)
+			{
+                if (_before.Length == 1 && _before[0] == 0)
+				{
+                    var zeroesBehindDp = _after.TakeWhile(x => x == 0).Select(x => '0').ToArray();
+
+                    cntDigitsRemaining = precision.Value;
+                    skipDigits = zeroesBehindDp.Length;
+
+                    if (skipDigits > 0)
+					{
+                        _ = sb.Append('.');
+                        sb.Append(zeroesBehindDp);
+                    }
+                }
+                else
+				{
+                    cntDigitsRemaining = precision.Value - _before.Length;
+                }
+            }
+            else
+			{
+                cntDigitsRemaining = _after.Length;
+			}
+
+            //var cntDigitsRemaining = precision.HasValue ? precision.Value - _before.Length : int.MaxValue;
+
+            //cntDigitsRemaining = Math.Min(cntDigitsRemaining, _after.Length);
 
             if (cntDigitsRemaining > 0)
-			{
-                _ = sb.Append('.');
-                _ = sb.Append(_after.Take(cntDigitsRemaining).Select(x => (char)(x + 48)).ToArray());
+            {
+                if (skipDigits == 0)
+                {
+                    _ = sb.Append('.');
+                }
+                _ = sb.Append(_after.Skip(skipDigits).Take(cntDigitsRemaining).Select(x => (char)(x + 48)).ToArray());
             }
 
             return sb.ToString();
@@ -218,7 +243,7 @@ namespace MSS.Common
 
             if (d > 9)
             {
-                throw new InvalidOperationException("While AddDigitsWithCarry, the sum is > 19.");
+                throw new InvalidOperationException("AddDigitsWithCarry, found a sum > 19.");
             }
 
             return d;
@@ -226,11 +251,28 @@ namespace MSS.Common
 
         private static string ConditionForParse(string s)
 		{
-            s = s ?? string.Empty.Trim();
+            s = (s ?? string.Empty).Trim();
 
             if (s.StartsWith('.'))
             {
                 s = "0" + s;
+            }
+            else
+			{
+                var indexOfDp = s.IndexOf('.');
+                var indexOfFirstNonZeroChar = 0;
+                for(; indexOfFirstNonZeroChar < indexOfDp - 1; indexOfFirstNonZeroChar++)
+				{
+                    if(s[indexOfFirstNonZeroChar] != '0')
+					{
+                        break;
+					}
+				}
+
+                if (indexOfFirstNonZeroChar > 0)
+				{
+                    s = s[indexOfFirstNonZeroChar..];
+                }
             }
 
             if (s.EndsWith('.'))
@@ -242,7 +284,6 @@ namespace MSS.Common
         }
 
 		#endregion
-
 
 	}
 }

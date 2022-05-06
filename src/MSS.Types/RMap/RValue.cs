@@ -36,7 +36,8 @@ namespace MSS.Types
 			var ePrecision = BigInteger.Abs(be).ToString(CultureInfo.InvariantCulture).Length;
 
 			precision = Math.Max(precision, ePrecision);
-			precision += 5;
+			//precision += 5;
+			precision += 1;
 
 			return precision;
 		}
@@ -63,7 +64,7 @@ namespace MSS.Types
 				throw new InvalidOperationException("Cannot add two RValues if their Exponents do not agree.");
 			}
 
-			return new RValue(Value + rValue.Value, Exponent);
+			return new RValue(Value + rValue.Value, Exponent, Math.Min(Precision, rValue.Precision));
 		}
 
 		public RValue Sub(RValue rValue)
@@ -73,7 +74,7 @@ namespace MSS.Types
 				throw new InvalidOperationException("Cannot add two RValues if their Exponents do not agree.");
 			}
 
-			return new RValue(Value - rValue.Value, Exponent);
+			return new RValue(Value - rValue.Value, Exponent, Math.Min(Precision, rValue.Precision));
 		}
 
 		public static RValue Min(RValue a, RValue b)
@@ -90,7 +91,7 @@ namespace MSS.Types
 		{
 			if (Value < 0)
 			{
-				return new RValue(Value * -1, Exponent);
+				return new RValue(Value * -1, Exponent, Precision);
 			}
 			else
 			{
