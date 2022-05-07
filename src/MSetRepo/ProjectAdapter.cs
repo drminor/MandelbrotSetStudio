@@ -461,16 +461,16 @@ namespace MSetRepo
 				parentJobId: jobRecord.ParentJobId,
 				isPreferredChild: jobRecord.IsPreferredChild,
 				projectId: jobRecord.ProjectId,
-				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord),
 				label: jobRecord.Label,
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
-				mSetInfo: _mSetRecordMapper.MapFrom(jobRecord.MSetInfo),
 				colorBandSetId: jobRecord.ColorBandSetId,
-				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
+				mSetInfo: _mSetRecordMapper.MapFrom(jobRecord.MSetInfo),
+				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord),
 				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset),
 				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset),
-				jobRecord.LastSaved
+				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
+				lastSaved: jobRecord.LastSaved
 				);
 
 			var colorBandSet = GetColorBandSet(job, jobReaderWriter, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);

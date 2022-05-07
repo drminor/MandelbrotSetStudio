@@ -91,6 +91,8 @@ namespace MSS.Types
 		public BigInteger[] XValues => new BigInteger[] { X1, X2 };
 		public BigInteger[] YValues => new BigInteger[] { Y1, Y2 };
 
+		public RValue[] RValues => new RValue[] { Left, Right, Bottom, Top };
+
 		public BigInteger WidthNumerator => X2 - X1;
 		public BigInteger HeightNumerator => Y2 - Y1;
 

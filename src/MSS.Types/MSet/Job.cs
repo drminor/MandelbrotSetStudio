@@ -29,10 +29,9 @@ namespace MSS.Types.MSet
 			MapBlockOffset = new BigVector();
 		}
 
-		public Job(ObjectId? parentJobId, bool isPreferredChild, ObjectId projectId, Subdivision subdivision, string? label, TransformType transformType, RectangleInt? newArea, MSetInfo mSetInfo, ObjectId colorBandSetId,
-			SizeInt canvasSizeInBlocks, BigVector mapBlockOffset, VectorInt canvasControlOffset)
-			: this(ObjectId.GenerateNewId(), parentJobId, isPreferredChild, projectId, subdivision, label, transformType, newArea, mSetInfo, colorBandSetId, 
-				  canvasSizeInBlocks, mapBlockOffset, canvasControlOffset, DateTime.UtcNow)
+		public Job(ObjectId? parentJobId, bool isPreferredChild, ObjectId projectId, string? label, TransformType transformType, RectangleInt? newArea, ObjectId colorBandSetId, JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings)
+			: this(ObjectId.GenerateNewId(), parentJobId, isPreferredChild, projectId, label, transformType, newArea, colorBandSetId, new MSetInfo(jobAreaInfo.Coords, mapCalcSettings), jobAreaInfo.Subdivision,
+				  jobAreaInfo.MapBlockOffset, jobAreaInfo.CanvasControlOffset, jobAreaInfo.CanvasSizeInBlocks, DateTime.UtcNow)
 		{ }
 
 		public Job(
@@ -40,17 +39,17 @@ namespace MSS.Types.MSet
 			ObjectId? parentJobId,
 			bool isPreferredChild,
 			ObjectId projectId,
-			Subdivision subdivision,
 			string? label,
 
 			TransformType transformType,
 			RectangleInt? newArea,
+			ObjectId colorBandSetId,
 
 			MSetInfo mSetInfo,
-			ObjectId colorBandSetId,
-			SizeInt canvasSizeInBlocks,
+			Subdivision subdivision,
 			BigVector mapBlockOffset,
 			VectorInt canvasControlOffset,
+			SizeInt canvasSizeInBlocks,
 			DateTime lastSaved
 			)
 		{
@@ -184,7 +183,7 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Subdivision, Label, TransformType, NewArea, MSetInfo.Clone(), ColorBandSetId, CanvasSizeInBlocks, MapBlockOffset.Clone(), CanvasControlOffset, LastSavedUtc);
+			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, ColorBandSetId, MSetInfo.Clone(), Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, LastSavedUtc);
 			return result;
 		}
 

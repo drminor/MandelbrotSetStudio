@@ -117,7 +117,7 @@ namespace MSetExplorer
 					return;
 				}
 
-				var newCoords = coordsEditorViewModel.GetCoords();
+				var newCoords = coordsEditorViewModel.Coords;
 				var mSetInfo = new MSetInfo(newCoords, mapCalcSettings);
 
 				LoadNewProject(mSetInfo);

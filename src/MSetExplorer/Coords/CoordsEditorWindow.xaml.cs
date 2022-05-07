@@ -73,7 +73,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			var rRectangle = _vm.GetCoords();
+			var rRectangle = _vm.Coords;
 			Debug.Print($"{rRectangle}");
 		}
 

@@ -185,8 +185,8 @@ namespace MSetExplorer
 
 					CoordsAreDirty = value != (_currentJob?.MSetInfo ?? NULL_MSET_INFO).Coords;
 
-					Zoom = RValueHelper.GetResolution(_coords.Width, out var precision);
-					Precision = precision;
+					Zoom = RValueHelper.GetResolution(_coords.Width);
+					//Precision = precision;
 
 
 					if (value != _currentMSetInfo.Coords)

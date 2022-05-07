@@ -8,6 +8,8 @@ namespace MSetExplorer
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
+		private RRectangle _coords;
+
 		private string _x1;
 		private string _x2;
 		private string _y1;
@@ -30,6 +32,10 @@ namespace MSetExplorer
 
 		#region Constructor
 
+		public MapCoordsDetailViewModel(RRectangle coords) : this (coords.RValues)
+		{ }
+
+
 		public MapCoordsDetailViewModel(RValue[] values)
 		{
 			_xR1 = values[0];
@@ -42,10 +48,10 @@ namespace MSetExplorer
 			_y1 = RValueHelper.ConvertToString(_yR1);
 			_y2 = RValueHelper.ConvertToString(_yR2);
 
-			var coords = GetCoords();
+			_coords = GetCoords();
 
-			_width = RValueHelper.ConvertToString(coords.Width);
-			_height = RValueHelper.ConvertToString(coords.Height);
+			_width = RValueHelper.ConvertToString(_coords.Width);
+			_height = RValueHelper.ConvertToString(_coords.Height);
 		}
 
 		#endregion
@@ -64,7 +70,10 @@ namespace MSetExplorer
 				if (value != _xR1)
 				{
 					_xR1 = value;
+					_x1 = RValueHelper.ConvertToString(value);
+
 					OnPropertyChanged();
+					OnPropertyChanged(nameof(X1));
 				}
 			}
 		}
@@ -77,11 +86,13 @@ namespace MSetExplorer
 				if (value != _xR2)
 				{
 					_xR2 = value;
+					_x2 = RValueHelper.ConvertToString(value);
+
 					OnPropertyChanged();
+					OnPropertyChanged(nameof(X2));
 				}
 			}
 		}
-
 
 		public RValue StartingY
 		{
@@ -91,7 +102,10 @@ namespace MSetExplorer
 				if (value != _yR1)
 				{
 					_yR1 = value;
+					_y1 = RValueHelper.ConvertToString(value);
+
 					OnPropertyChanged();
+					OnPropertyChanged(nameof(Y1));
 				}
 			}
 		}
@@ -105,7 +119,10 @@ namespace MSetExplorer
 				if (value != _yR2)
 				{
 					_yR2 = value;
+					_y2 = RValueHelper.ConvertToString(value);
+
 					OnPropertyChanged();
+					OnPropertyChanged(nameof(Y2));
 				}
 			}
 		}
@@ -220,6 +237,24 @@ namespace MSetExplorer
 				{
 					_precisionY = value;
 					OnPropertyChanged();
+				}
+			}
+		}
+
+		public RRectangle Coords
+		{
+			get => _coords;
+			set
+			{
+				if (value != _coords)
+				{
+					_coords = value;
+					OnPropertyChanged();
+
+					StartingX = _coords.Left;
+					EndingX = _coords.Right;
+					StartingY = _coords.Bottom;
+					EndingY = _coords.Top;
 				}
 			}
 		}

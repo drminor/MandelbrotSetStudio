@@ -197,12 +197,11 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static long GetResolution(RValue rValue, out int precision)
+		public static long GetResolution(RValue rValue)
 		{
 			var reducedR = Reducer.Reduce(rValue);
-			precision = -1 * reducedR.Exponent;
 
-			var reciprocalOfTheDenominator = BigInteger.Pow(2, precision);
+			var reciprocalOfTheDenominator = BigInteger.Pow(2, -1 * reducedR.Exponent);
 
 			if (reducedR.Value == 0)
 			{
