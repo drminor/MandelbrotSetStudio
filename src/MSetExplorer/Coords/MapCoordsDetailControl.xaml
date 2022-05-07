@@ -11,9 +11,14 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical">
+        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <TextBlock Margin="5,3" FontSize="14" Text="{Binding HeaderName}" />
+        </Border>
+
+        <StackPanel Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical">
 
             <StackPanel Orientation="Horizontal" Margin="0,1">
                 <TextBlock Width="20" Margin="5,3" FontSize="14" Text="X1" />

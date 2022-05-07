@@ -18,7 +18,6 @@ namespace MSetExplorer
 		private bool _coordsAreDirty;
 		private long _zoom;
 
-
 		#region Constructor
 
 		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize) : this(new SingleCoordEditorViewModel[] {
@@ -41,11 +40,14 @@ namespace MSetExplorer
 			_displaySize = displaySize;
 			_blockSize = RMapConstants.BLOCK_SIZE;
 
-			MapCoordsDetail1 = new MapCoordsDetailViewModel(new RValue[] { StartingX.RValue, EndingX.RValue, StartingY.RValue, EndingY.RValue });
-			MapCoordsDetail2 = new MapCoordsDetailViewModel(new RValue[] { MapCoordsDetail1.StartingX, MapCoordsDetail1.EndingX, MapCoordsDetail1.StartingY, MapCoordsDetail1.EndingY});
+			_coords = GetCoords(vms);
+			MapCoordsDetail1 = new MapCoordsDetailViewModel(_coords);
 
-			_coords = GetCoords();
 			_zoom = RValueHelper.GetResolution(_coords.Width);
+
+			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
+			var adjustedCoords = GetAdjustedCoords(_coords, _displaySize, _blockSize, projectAdapter);
+			MapCoordsDetail2 = new MapCoordsDetailViewModel(adjustedCoords);
 		}
 
 		#endregion
@@ -131,64 +133,50 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		private RRectangle GetCoords()
+		#endregion
+
+		#region Private Methods
+
+		private RRectangle GetCoords(SingleCoordEditorViewModel[] vms)
 		{
-			var precisionX = RValueHelper.GetPrecision(StartingX.RValue, EndingX.RValue, out var diffX);
+			var startingX = vms[0];
+			var endingX = vms[1];
+			var startingY = vms[2];
+			var endingY = vms[3];
+
+			var precisionX = RValueHelper.GetPrecision(startingX.RValue, endingX.RValue, out var _);
 			//var width = RValueHelper.ConvertToString(diffX, useSciNotationForLengthsGe: 6);
 
 			precisionX += _numDigitsForDisplayExtent;
-			var newX1Sme = StartingX.SignManExp.ReducePrecisionTo(precisionX);
-			var newX2Sme = EndingX.SignManExp.ReducePrecisionTo(precisionX);
+			var newX1Sme = startingX.SignManExp.ReducePrecisionTo(precisionX);
+			var newX2Sme = endingX.SignManExp.ReducePrecisionTo(precisionX);
 
-			//MapCoordsDetail1.PrecisionX = precisionX;
-			//MapCoordsDetail1.Width = width;
-
-			//MapCoordsDetail1.X1 = newX1Sme.GetValueAsString();
-			//MapCoordsDetail1.X2 = newX2Sme.GetValueAsString();
-
-			var precisionY = RValueHelper.GetPrecision(StartingX.RValue, EndingX.RValue, out var diffY);
+			var precisionY = RValueHelper.GetPrecision(startingY.RValue, endingY.RValue, out var _);
 			//var height = RValueHelper.ConvertToString(diffY, useSciNotationForLengthsGe: 6);
 
 			precisionY += _numDigitsForDisplayExtent;
 			var newY1Sme = StartingY.SignManExp.ReducePrecisionTo(precisionY);
 			var newY2Sme = EndingY.SignManExp.ReducePrecisionTo(precisionY);
 
-			//MapCoordsDetail1.PrecisionY = precisionY;
-			//MapCoordsDetail1.Height = height;
-
-			//MapCoordsDetail1.Y1 = newY1Sme.GetValueAsString();
-			//MapCoordsDetail1.Y2 = newY2Sme.GetValueAsString();
-
-			var result = RValueHelper.BuildRRectangleFromRVals(
-				RValueHelper.ConvertToRValue(newX1Sme),
-				RValueHelper.ConvertToRValue(newX2Sme),
-				RValueHelper.ConvertToRValue(newY1Sme),
-				RValueHelper.ConvertToRValue(newY2Sme)
+			var result = RValueHelper.BuildRRectangleFromStrings( new string[] {
+				newX1Sme.GetValueAsString(),
+				newX2Sme.GetValueAsString(),
+				newY1Sme.GetValueAsString(),
+				newY2Sme.GetValueAsString() }
 				);
-
-			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(result, _displaySize, _blockSize, projectAdapter);
-
-			MapCoordsDetail2.Coords = jobAreaInfo.Coords;
-
-			//if (raisePropertyChangedEvents)
-			//{
-			//	OnPropertyChanged(nameof(X1));
-			//	OnPropertyChanged(nameof(X2));
-			//	OnPropertyChanged(nameof(Y1));
-			//	OnPropertyChanged(nameof(Y2));
-			//	OnPropertyChanged(nameof(Width));
-			//	OnPropertyChanged(nameof(Height));
-			//	OnPropertyChanged(nameof(PrecisionX));
-			//	OnPropertyChanged(nameof(PrecisionY));
-			//}
 
 			return result;
 		}
 
-		#endregion
+		private RRectangle GetAdjustedCoords(RRectangle coords, SizeInt displaySize, SizeInt blockSize, ProjectAdapter projectAdapter)
+		{
+			//var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
+			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, displaySize, blockSize, projectAdapter);
 
-		#region Private Methods
+			var result = jobAreaInfo.Coords;
+
+			return result;
+		}
 
 		#endregion
 	}

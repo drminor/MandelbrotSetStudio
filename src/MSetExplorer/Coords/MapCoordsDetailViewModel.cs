@@ -10,6 +10,7 @@ namespace MSetExplorer
 
 		private RRectangle _coords;
 
+		private string _headerName;
 		private string _x1;
 		private string _x2;
 		private string _y1;
@@ -32,26 +33,29 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapCoordsDetailViewModel(RRectangle coords) : this (coords.RValues)
-		{ }
-
-
-		public MapCoordsDetailViewModel(RValue[] values)
+		public MapCoordsDetailViewModel(RRectangle coords)
 		{
-			_xR1 = values[0];
-			_xR2 = values[1];
-			_yR1 = values[2];
-			_yR2 = values[3];
+			_coords = coords;
+			_headerName = "Coordinates";
+			var rValues = coords.GetRValues();
+
+			_xR1 = rValues[0];
+			_xR2 = rValues[1];
+			_yR1 = rValues[2];
+			_yR2 = rValues[3];
 
 			_x1 = RValueHelper.ConvertToString(_xR1);
 			_x2 = RValueHelper.ConvertToString(_xR2);
 			_y1 = RValueHelper.ConvertToString(_yR1);
 			_y2 = RValueHelper.ConvertToString(_yR2);
 
-			_coords = GetCoords();
+			_precisionX = RValueHelper.GetPrecision(StartingX, EndingX, out var diffX);
+			_precisionX += _numDigitsForDisplayExtent;
+			_width = RValueHelper.ConvertToString(diffX, useSciNotationForLengthsGe: 6);
 
-			_width = RValueHelper.ConvertToString(_coords.Width);
-			_height = RValueHelper.ConvertToString(_coords.Height);
+			_precisionY = RValueHelper.GetPrecision(StartingY, EndingY, out var diffY);
+			_precisionY += _numDigitsForDisplayExtent;
+			_height = RValueHelper.ConvertToString(diffY, useSciNotationForLengthsGe: 6);
 		}
 
 		#endregion
@@ -61,6 +65,20 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
+
+		public string HeaderName
+		{
+			get => _headerName;
+			set
+			{
+				if (value != _headerName)
+				{
+					_headerName = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 
 		public RValue StartingX
 		{
@@ -109,7 +127,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
 
 		public RValue EndingY
 		{
@@ -263,11 +280,12 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public RRectangle GetCoords()
-		{
-			var result = new RRectangle(StartingX.Value, EndingX.Value, StartingY.Value, EndingY.Value, StartingX.Exponent);
-			return result;
-		}
+		//public RRectangle GetCoords()
+		//{
+		//	// TODO: Do these need to be normalized?
+		//	var result = new RRectangle(StartingX.Value, EndingX.Value, StartingY.Value, EndingY.Value, StartingX.Exponent);
+		//	return result;
+		//}
 
 		#endregion
 

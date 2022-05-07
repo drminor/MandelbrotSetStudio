@@ -131,7 +131,7 @@ namespace MSS.Common
 			// The size of the new map is equal to the product of the number of samples by the new samplePointDelta.
 			var adjMapSize = result.Scale(canvasSize);
 
-			// Calculate the new map coordinates using the existing position and the new size..
+			// Calculate the new map coordinates using the existing position and the new size.
 			var newCoords = CombinePosAndSize(coords.Position, adjMapSize);
 
 			coords = newCoords;
