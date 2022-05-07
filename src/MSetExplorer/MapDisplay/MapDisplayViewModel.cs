@@ -94,7 +94,7 @@ namespace MSetExplorer
 
 				if (isPreview && CurrentJob != null)
 				{
-					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MSetInfo.MapCalcSettings.TargetIterations);
+					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MapCalcSettings.TargetIterations);
 
 					_colorBandSet = adjustedColorBandSet;
 					_colorMap = new ColorMap(adjustedColorBandSet);

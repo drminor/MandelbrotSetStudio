@@ -31,7 +31,7 @@ namespace MSS.Common
 				foreach (var mapSection in emptyMapSections)
 				{
 					var screenPosition = mapSection.BlockPosition;
-					var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+					var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MapCalcSettings);
 					result.Add(mapSectionRequest);
 				}
 
@@ -48,7 +48,7 @@ namespace MSS.Common
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MSetInfo.MapCalcSettings);
+				var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MapCalcSettings);
 				result.Add(mapSectionRequest);
 			}
 
@@ -65,7 +65,7 @@ namespace MSS.Common
 			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
 
 			var subdivisionId = job.Subdivision.Id.ToString();
-			var targetIterations = job.MSetInfo.MapCalcSettings.TargetIterations;
+			var targetIterations = job.MapCalcSettings.TargetIterations;
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{

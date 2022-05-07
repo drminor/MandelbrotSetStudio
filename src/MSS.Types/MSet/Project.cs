@@ -295,7 +295,7 @@ namespace MSS.Types.MSet
 
 			var colorBandSet = CurrentColorBandSet;
 
-			var targetIterations = CurrentJob.MSetInfo.MapCalcSettings.TargetIterations;
+			var targetIterations = CurrentJob.MapCalcSettings.TargetIterations;
 
 			if (targetIterations < colorBandSet.HighCutoff)
 			{

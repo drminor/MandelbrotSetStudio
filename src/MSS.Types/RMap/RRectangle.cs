@@ -8,6 +8,9 @@ namespace MSS.Types
 {
 	public class RRectangle : IBigRatShape, IEquatable<RRectangle>, IEqualityComparer<RRectangle?>
 	{
+		public static readonly RRectangle Zero = new RRectangle();
+
+
 		public BigInteger[] Values { get; init; }
 
 		public int Exponent { get; init; }

@@ -24,7 +24,8 @@ namespace MSetRepo
 	/// </summary>
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
-		IMapper<Job, JobRecord>, IMapper<MSetInfo, MSetInfoRecord>,
+		IMapper<Job, JobRecord>, 
+		//IMapper<MSetInfo, MSetInfoRecord>,
 		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse, MapSectionRecord>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
@@ -91,6 +92,11 @@ namespace MSetRepo
 
 		public JobRecord MapTo(Job source)
 		{
+
+			var coords = MapTo(source.Coords);
+			var mSetInfoRecord = new MSetInfoRecord(coords, source.MapCalcSettings);
+
+
 			var result = new JobRecord(
 				source.ParentJobId,
 				source.IsPreferredChild,
@@ -100,8 +106,8 @@ namespace MSetRepo
 
 				(int)source.TransformType,
 				MapTo(source.NewArea?.Position ?? new PointInt()),
-				MapTo(source.NewArea?.Size ?? new SizeInt()),
-				MapTo(source.MSetInfo),
+				MapTo(source.NewArea?.Size ?? new SizeInt()), 
+				mSetInfoRecord,
 				source.ColorBandSetId,
 				MapTo(source.CanvasSizeInBlocks),
 				MapTo(source.MapBlockOffset),
@@ -120,21 +126,21 @@ namespace MSetRepo
 			throw new NotImplementedException();
 		}
 
-		public MSetInfo MapFrom(MSetInfoRecord target)
-		{
-			var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
-			var result = new MSetInfo(coords, target.MapCalcSettings);
+		//public MSetInfo MapFrom(MSetInfoRecord target)
+		//{
+		//	var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
+		//	var result = new MSetInfo(coords, target.MapCalcSettings);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public MSetInfoRecord MapTo(MSetInfo source)
-		{
-			var coords = MapTo(source.Coords);
-			var result = new MSetInfoRecord(coords, source.MapCalcSettings);
+		//public MSetInfoRecord MapTo(MSetInfo source)
+		//{
+		//	var coords = MapTo(source.Coords);
+		//	var result = new MSetInfoRecord(coords, source.MapCalcSettings);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public Subdivision MapFrom(SubdivisionRecord target)
 		{

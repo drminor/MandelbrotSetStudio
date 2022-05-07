@@ -9,8 +9,6 @@ namespace MSetExplorer
 {
 	public class MSetInfoViewModel : ViewModelBase
 	{
-		private static readonly MSetInfo NULL_MSET_INFO = new();
-
 		private Job _currentJob;
 
 		private string _startingX;
@@ -26,19 +24,13 @@ namespace MSetExplorer
 		private int _targetIterations;
 		private int _requestsPerJob;
 
-		private MSetInfo _currentMSetInfo;
-
 		public MSetInfoViewModel()
 		{
 			_currentJob = new Job();
 
-			_currentMSetInfo = new MSetInfo
-				(
-				new RRectangle(), 
-				new MapCalcSettings()
-				);
-
-			_coords = _currentMSetInfo.Coords;
+			_coords = _currentJob.Coords;
+			_targetIterations = _currentJob.MapCalcSettings.TargetIterations;
+			_requestsPerJob = _currentJob.MapCalcSettings.RequestsPerJob;
 
 			_startingX = RValueHelper.ConvertToString(_coords.Left);
 			_endingX = RValueHelper.ConvertToString(_coords.Right);
@@ -58,7 +50,11 @@ namespace MSetExplorer
 				if (value != _currentJob)
 				{
 					_currentJob = value;
-					MSetInfo = value.MSetInfo.Clone();
+					Coords = value.Coords.Clone();
+					TargetIterations = value.MapCalcSettings.TargetIterations;
+					RequestsPerJob = value.MapCalcSettings.RequestsPerJob;
+					
+
 					CoordsAreDirty = false;
 				}
 			}
@@ -183,16 +179,10 @@ namespace MSetExplorer
 					StartingY = RValueHelper.ConvertToString(_coords.Bottom);
 					EndingY = RValueHelper.ConvertToString(_coords.Top);
 
-					CoordsAreDirty = value != (_currentJob?.MSetInfo ?? NULL_MSET_INFO).Coords;
+					CoordsAreDirty = _currentJob == null ? false : value == _currentJob.Coords;
 
 					Zoom = RValueHelper.GetResolution(_coords.Width);
 					//Precision = precision;
-
-
-					if (value != _currentMSetInfo.Coords)
-					{
-						MSetInfo = MSetInfo.UpdateWithNewCoords(_currentMSetInfo, value);
-					}
 
 					OnPropertyChanged();
 				}
@@ -221,10 +211,6 @@ namespace MSetExplorer
 				if (value != _targetIterations)
 				{
 					_targetIterations = value;
-					if (value != _currentMSetInfo.MapCalcSettings.TargetIterations)
-					{
-						MSetInfo = MSetInfo.UpdateWithNewIterations(_currentMSetInfo, value);
-					}
 					OnPropertyChanged();
 				}
 			}
@@ -238,31 +224,27 @@ namespace MSetExplorer
 				if (value != _requestsPerJob)
 				{
 					_requestsPerJob = value;
-					if (value != _currentMSetInfo.MapCalcSettings.RequestsPerJob)
-					{
-						MSetInfo = MSetInfo.UpdateWithNewRequestsPerJob(_currentMSetInfo, value);
-					}
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public MSetInfo? MSetInfo
-		{
-			get => _currentMSetInfo;
-			set
-			{
-				if (value != _currentMSetInfo)
-				{
-					_currentMSetInfo = value ?? NULL_MSET_INFO;
+		//public MSetInfo? MSetInfo
+		//{
+		//	get => _currentMSetInfo;
+		//	set
+		//	{
+		//		if (value != _currentMSetInfo)
+		//		{
+		//			_currentMSetInfo = value ?? NULL_MSET_INFO;
 
-					Coords = _currentMSetInfo.Coords;
-					TargetIterations = _currentMSetInfo.MapCalcSettings.TargetIterations;
-					RequestsPerJob = _currentMSetInfo.MapCalcSettings.RequestsPerJob;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//			Coords = _currentMSetInfo.Coords;
+		//			TargetIterations = _currentMSetInfo.MapCalcSettings.TargetIterations;
+		//			RequestsPerJob = _currentMSetInfo.MapCalcSettings.RequestsPerJob;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		#endregion
 

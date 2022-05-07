@@ -80,8 +80,8 @@ namespace MSetExplorer
 			var curJob = _vm.MapProjectViewModel.CurrentJob;
 			if (!curJob.IsEmpty)
 			{
-				coordsEditorViewModel = new CoordsEditorViewModel(curJob.MSetInfo.Coords, _vm.MapProjectViewModel.CanvasSize);
-				mapCalcSettings = curJob.MSetInfo.MapCalcSettings;
+				coordsEditorViewModel = new CoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize);
+				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else
 			{
@@ -118,9 +118,8 @@ namespace MSetExplorer
 				}
 
 				var newCoords = coordsEditorViewModel.Coords;
-				var mSetInfo = new MSetInfo(newCoords, mapCalcSettings);
 
-				LoadNewProject(mSetInfo);
+				LoadNewProject(newCoords, mapCalcSettings);
 			}
 		}
 
@@ -149,8 +148,7 @@ namespace MSetExplorer
 			if (e.MapSettingsUpdateType == MapSettingsUpdateType.NewProject)
 			{
 				Debug.WriteLine($"MainWindow ViewModel received request to start a new project.");
-				var mSetInfo = new MSetInfo(e.Coords, new MapCalcSettings(e.TargetIterations, e.RequestsPerJob));
-				LoadNewProject(mSetInfo);
+				LoadNewProject(e.Coords, new MapCalcSettings(e.TargetIterations, e.RequestsPerJob));
 			}
 		}
 
@@ -370,7 +368,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
-				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.MapProjectViewModel.CurrentJob.MSetInfo.MapCalcSettings.TargetIterations);
+				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.MapProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
 				_vm.MapProjectViewModel.UpdateColorBandSet(adjustedCbs);
 			}
 			else
@@ -507,16 +505,17 @@ namespace MSetExplorer
 
 		private void LoadNewProject()
 		{
-			var maxIterations = 700;
-			var mSetInfo = MapJobHelper.BuildInitialMSetInfo(maxIterations);
-			LoadNewProject(mSetInfo);
+			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+
+			LoadNewProject(coords, mapCalcSettings);
 		}
 
-		private void LoadNewProject(MSetInfo mSetInfo)
+		private void LoadNewProject(RRectangle coords, MapCalcSettings mapCalcSettings)
 		{
-			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(mSetInfo.MapCalcSettings.TargetIterations);
+			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, isPreview: false);
-			_vm.MapProjectViewModel.ProjectStartNew(mSetInfo, colorBandSet);
+			_vm.MapProjectViewModel.ProjectStartNew(coords, colorBandSet, mapCalcSettings);
 		}
 
 		private bool? ProjectSaveChanges()

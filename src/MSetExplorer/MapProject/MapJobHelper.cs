@@ -13,7 +13,7 @@ namespace MSetExplorer
 	{
 		#region Build Job
 
-		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, MSetInfo mSetInfo, ObjectId colorBandSetId,
+		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
 			if (!parentJobId.HasValue && transformType != TransformType.None)
@@ -21,12 +21,12 @@ namespace MSetExplorer
 				throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {transformType}. Only jobs with TransformType = 'none' be parentless.");
 			}
 
-			var jobAreaInfo = GetJobAreaInfo(mSetInfo.Coords, canvasSize, blockSize, projectAdapter);
+			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, blockSize, projectAdapter);
 
 			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
 			var jobName = GetJobName(transformType);
 
-			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, colorBandSetId, jobAreaInfo, mSetInfo.MapCalcSettings);
+			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, colorBandSetId, jobAreaInfo, mapCalcSettings);
 
 			return job;
 		}
@@ -100,16 +100,16 @@ namespace MSetExplorer
 
 		#region Build Initial MSetInfo
 
-		public static MSetInfo BuildInitialMSetInfo(int maxIterations)
-		{
-			//var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
-			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
+		//public static MSetInfo BuildInitialMSetInfo(int maxIterations)
+		//{
+		//	//var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
+		//	var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, requestsPerJob: 100);
-			var result = new MSetInfo(coords, mapCalcSettings);
+		//	var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, requestsPerJob: 100);
+		//	var result = new MSetInfo(coords, mapCalcSettings);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public static ColorBandSet BuildInitialColorBandSet(int maxIterations)
 		{

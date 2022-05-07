@@ -126,17 +126,17 @@ namespace MSetExplorer
 
 		#region Public Methods -- Project
 
-		public void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet)
+		public void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
-			if (mSetInfo.MapCalcSettings.TargetIterations != colorBandSet.HighCutoff)
+			if (mapCalcSettings.TargetIterations != colorBandSet.HighCutoff)
 			{
 				Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At ProjectStartNew.");
 			}
 
 			var projectId = ObjectId.Empty;
 
-			var job = MapJobHelper.BuildJob(null, projectId, CanvasSize, mSetInfo, colorBandSet.Id, TransformType.None, null, _blockSize, _projectAdapter);
-			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			var job = MapJobHelper.BuildJob(null, projectId, CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.None, null, _blockSize, _projectAdapter);
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
 		}
@@ -220,12 +220,11 @@ namespace MSetExplorer
 
 			var curJob = CurrentJob;
 
-			var position = curJob.MSetInfo.Coords.Position;
+			var position = curJob.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
 			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-			var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(curJob.MSetInfo, coords);
-			LoadMap(CurrentProject, curJob, updatedMSetInfo, transformType, newArea);
+			LoadMap(CurrentProject, curJob, coords, curJob.MapCalcSettings, transformType, newArea);
 		}
 
 		public void UpdateMapCoordinates(RRectangle coords)
@@ -235,12 +234,9 @@ namespace MSetExplorer
 				return;
 			}
 
-			var mSetInfo = CurrentJob.MSetInfo;
-
-			if (mSetInfo.Coords != coords)
+			if (CurrentJob.Coords != coords)
 			{
-				var updatedMSetInfo = MSetInfo.UpdateWithNewCoords(mSetInfo, coords);
-				LoadMap(CurrentProject, CurrentJob, updatedMSetInfo, TransformType.CoordinatesUpdate, null);
+				LoadMap(CurrentProject, CurrentJob, coords, CurrentJob.MapCalcSettings, TransformType.CoordinatesUpdate, null);
 			}
 		}
 
@@ -259,12 +255,11 @@ namespace MSetExplorer
 			if (isTargetIterationsBeingUpdated)
 			{
 				var targetIterations = colorBandSet.HighCutoff;
-				var mSetInfo = CurrentJob.MSetInfo;
 
-				if (mSetInfo.MapCalcSettings.TargetIterations != targetIterations)
+				if (CurrentJob.MapCalcSettings.TargetIterations != targetIterations)
 				{
-					var updatedMSetInfo = MSetInfo.UpdateWithNewIterations(mSetInfo, targetIterations);
-					LoadMap(CurrentProject, CurrentJob, updatedMSetInfo, TransformType.IterationUpdate, null);
+					var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentJob.MapCalcSettings.RequestsPerJob);
+					LoadMap(CurrentProject, CurrentJob, CurrentJob.Coords, mapCalcSettings, TransformType.IterationUpdate, null);
 				}
 			}
 
@@ -282,11 +277,11 @@ namespace MSetExplorer
 
 			if (newArea == new RectangleInt())
 			{
-				return curJob.MSetInfo.Coords;
+				return curJob.Coords;
 			}
 			else
 			{
-				var position = curJob.MSetInfo.Coords.Position;
+				var position = curJob.Coords.Position;
 				var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 				var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
 
@@ -383,16 +378,16 @@ namespace MSetExplorer
 			}
 		}
 
-		private void LoadMap(Project project, Job? currentJob, MSetInfo mSetInfo, TransformType transformType, RectangleInt? newArea)
+		private void LoadMap(Project project, Job? currentJob, RRectangle coords, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
-			if (mSetInfo.MapCalcSettings.TargetIterations != CurrentColorBandSet.HighCutoff)
+			if (mapCalcSettings.TargetIterations != CurrentColorBandSet.HighCutoff)
 			{
 				Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At LoadMap.");
 			}
 
-			var job = MapJobHelper.BuildJob(currentJob?.Id, project.Id, CanvasSize, mSetInfo, CurrentColorBandSet.Id, transformType, newArea, _blockSize, _projectAdapter);
+			var job = MapJobHelper.BuildJob(currentJob?.Id, project.Id, CanvasSize, coords, CurrentColorBandSet.Id, mapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
 
-			Debug.WriteLine($"Starting Job with new coords: {mSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(job);
 
@@ -424,16 +419,16 @@ namespace MSetExplorer
 			// Create a new job
 			job = origJob;
 
-			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.MSetInfo.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision.SamplePointDelta, _blockSize);
-			var newMSetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
+			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision.SamplePointDelta, _blockSize);
+			//var newMSetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
 
 			var transformType = TransformType.CanvasSizeUpdate;
 			RectangleInt? newArea = null;
 
-			var newJob = MapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newMSetInfo, CurrentColorBandSet.Id, transformType, newArea, _blockSize, _projectAdapter);
+			var newJob = MapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, CurrentColorBandSet.Id, job.MapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
 
 			Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
-			Debug.WriteLine($"Starting Job with new coords: {newMSetInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(newJob);
 		}

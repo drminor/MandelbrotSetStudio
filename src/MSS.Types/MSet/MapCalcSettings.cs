@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 namespace MSS.Types.MSet
 {
 	[DataContract]
-	public class MapCalcSettings : IEquatable<MapCalcSettings>, IEqualityComparer<MapCalcSettings?>
+	public class MapCalcSettings : IEquatable<MapCalcSettings>, IEqualityComparer<MapCalcSettings?>, ICloneable
 	{
 		private static readonly int DEFAULT_THRESHOLD = 4;
 
@@ -39,6 +39,17 @@ namespace MSS.Types.MSet
 		}
 
 		#endregion
+
+		object ICloneable.Clone()
+		{
+			throw new NotImplementedException();
+		}
+
+		public MapCalcSettings Clone()
+		{
+			return new MapCalcSettings(TargetIterations, RequestsPerJob, Threshold);
+		}
+
 
 		public override string ToString()
 		{

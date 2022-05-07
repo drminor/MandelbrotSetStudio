@@ -456,6 +456,8 @@ namespace MSetRepo
 
 			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
 
+			var coords = _dtoMapper.MapFrom(jobRecord.MSetInfo.CoordsRecord.CoordsDto);
+
 			var job = new Job(
 				id: jobId,
 				parentJobId: jobRecord.ParentJobId,
@@ -465,11 +467,12 @@ namespace MSetRepo
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 				colorBandSetId: jobRecord.ColorBandSetId,
-				mSetInfo: _mSetRecordMapper.MapFrom(jobRecord.MSetInfo),
+				coords: coords,
 				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord),
 				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset),
 				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset),
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
+				mapCalcSettings: jobRecord.MSetInfo.MapCalcSettings,
 				lastSaved: jobRecord.LastSaved
 				);
 
@@ -544,7 +547,7 @@ namespace MSetRepo
 				}
 			}
 
-			var targetIterations = job.MSetInfo.MapCalcSettings.TargetIterations;
+			var targetIterations = job.MapCalcSettings.TargetIterations;
 			var highCutoff = result?.HighCutoff;
 
 			if (result != null && highCutoff != targetIterations && colorBandSetCache != null)

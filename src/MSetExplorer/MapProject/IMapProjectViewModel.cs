@@ -35,10 +35,10 @@ namespace MSetExplorer
 		RRectangle? GetUpdatedCoords(TransformType transformType, RectangleInt newArea);
 
 		// Project Methods
-		void ProjectStartNew(MSetInfo mSetInfo, ColorBandSet colorBandSet);
+		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
 		bool ProjectOpen(string name);
 		void ProjectSave();
 		bool ProjectSaveAs(string name, string? description);
 
-}
+	}
 }
