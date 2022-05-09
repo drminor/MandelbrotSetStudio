@@ -59,6 +59,14 @@ namespace MSS.Types.MSet
 				Debug.WriteLine($"Warning the Project a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
 			}
 
+			Debug.WriteLine($"Loading ColorBandSet: {CurrentJob.ColorBandSetId} as projects is being constructed.");
+			var colorBandSetId = LoadColorBandSetForJob(CurrentJob.ColorBandSetId);
+			if (CurrentJob.ColorBandSetId != colorBandSetId)
+			{
+				CurrentJob.ColorBandSetId = colorBandSetId;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+
 			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobsCollection.CurrentJob.Id}, Current ColorBandSetId: {_colorBandSetCollection.CurrentColorBandSet.Id}. IsDirty = {IsDirty}");
 		}
 
@@ -157,6 +165,7 @@ namespace MSS.Types.MSet
 					_ = _jobsCollection.MoveCurrentTo(value);
 					if (CurrentColorBandSet.Id != CurrentJob.ColorBandSetId)
 					{
+						Debug.WriteLine($"Loading ColorBandSet: {CurrentJob.ColorBandSetId} as the Current Job is being updated.");
 						var colorBandSetId = LoadColorBandSetForJob(CurrentJob.ColorBandSetId);
 						if (CurrentJob.ColorBandSetId != colorBandSetId)
 						{
@@ -181,10 +190,13 @@ namespace MSS.Types.MSet
 				{
 					if (!_colorBandSetCollection.MoveCurrentTo(value))
 					{
+						// Set the incoming ColorBandSet's ProjectId to this Project's Id.
 						value.ProjectId = Id;
 						_colorBandSetCollection.Push(value);
-						LastUpdatedUtc = DateTime.UtcNow;
 					}
+
+					CurrentJob.ColorBandSetId = value.Id;
+					LastUpdatedUtc = DateTime.UtcNow;
 
 					OnPropertyChanged(nameof(CurrentColorBandSet));
 				}
@@ -288,16 +300,23 @@ namespace MSS.Types.MSet
 
 		private ObjectId LoadColorBandSetForJob(ObjectId colorBandSetId)
 		{
-			if (CurrentColorBandSet.Id != colorBandSetId)
-			{
-				_colorBandSetCollection.MoveCurrentTo(colorBandSetId);
-			}
-
-			var colorBandSet = CurrentColorBandSet;
+			ColorBandSet? colorBandSet;
 
 			var targetIterations = CurrentJob.MapCalcSettings.TargetIterations;
 
-			if (targetIterations < colorBandSet.HighCutoff)
+			if (CurrentColorBandSet.Id == colorBandSetId)
+			{
+				colorBandSet = CurrentColorBandSet;
+			}
+			else
+			{
+				if (_colorBandSetCollection.TryFindByColorBandSetId(colorBandSetId, out colorBandSet))
+				{
+					_colorBandSetCollection.MoveCurrentTo(colorBandSet);
+				}
+			}
+
+			if (colorBandSet == null || colorBandSet.HighCutoff > targetIterations)
 			{
 				if (_colorBandSetCollection.TryGetCbsSmallestCutoffGtrThan(targetIterations, out var index))
 				{
@@ -319,9 +338,16 @@ namespace MSS.Types.MSet
 				}
 			}
 
+			if (colorBandSet == null)
+			{
+				throw new InvalidOperationException("Unexpected error. The colorBandSet should have a value at this point.");
+			}
+
 			if (colorBandSet.HighCutoff != targetIterations)
 			{
 				var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+				Debug.WriteLine($"Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id} for job: {CurrentJobId}.");
+
 				_colorBandSetCollection.Push(adjustedColorBandSet);
 			}
 

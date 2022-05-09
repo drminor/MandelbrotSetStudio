@@ -25,8 +25,27 @@ namespace MSetExplorer
 			_vm = (IMainWindowViewModel)DataContext;
 
 			Loaded += MainWindow_Loaded;
+			Closing += MainWindow_Closing;
 			ContentRendered += MainWindow_ContentRendered;
 			InitializeComponent();
+		}
+
+		private void MainWindow_Closing(object sender, CancelEventArgs e)
+		{
+			var triResult = ProjectSaveChanges();
+			if (triResult == true)
+			{
+				_ = MessageBox.Show("Changes Saved");
+			}
+			else if (triResult == false)
+			{
+				// Delete the MapSections created since the last save.
+			}
+			else
+			{
+				// user cancelled.
+				e.Cancel = true;
+			}
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -61,85 +80,10 @@ namespace MSetExplorer
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
 			//LoadNewProject();
 			//ShowMapCoordsEditor();
-			ShowCoordsEditor();
+			//ShowCoordsEditor();
 		}
 
 		#endregion
-
-		// New
-		private void EditCoords_Click(object sender, RoutedEventArgs e)
-		{
-			ShowCoordsEditor();
-		}
-
-		private void ShowCoordsEditor()
-		{
-			CoordsEditorViewModel coordsEditorViewModel;
-			MapCalcSettings mapCalcSettings;
-
-			var curJob = _vm.MapProjectViewModel.CurrentJob;
-			if (!curJob.IsEmpty)
-			{
-				coordsEditorViewModel = new CoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize);
-				mapCalcSettings = curJob.MapCalcSettings;
-			}
-			else
-			{
-				var x1 = "-0.477036968733327014028268226139546";
-				var x2 = "-0.477036964892343354414420540166062";
-				var y1 = "0.535575821681765930306959274776606";
-				var y2 = "0.535575824239325800205884281044245";
-
-				//var x1 = "-0.4770369687333";
-				//var x2 = "-0.4770369648923";
-				//var y1 = "0.5355758216817";
-				//var y2 = "0.5355758242393";
-				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.MapProjectViewModel.CanvasSize);
-				mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
-			}
-
-			var coordsEditorWindow = new CoordsEditorWindow()
-			{
-				DataContext = coordsEditorViewModel
-			};
-
-			if (coordsEditorWindow.ShowDialog() == true)
-			{
-				var triResult = ProjectSaveChanges();
-				if (triResult == true)
-				{
-					_ = MessageBox.Show("Changes Saved");
-				}
-
-				if (!triResult.HasValue)
-				{
-					// user cancelled.
-					return;
-				}
-
-				var newCoords = coordsEditorViewModel.Coords;
-
-				LoadNewProject(newCoords, mapCalcSettings);
-			}
-		}
-
-		private void ShowMapCoordsEdTest()
-		{
-			var mapCoordsEditorViewModel = new MapCoordsEdTestViewModel();
-			var mapCoordsEditorWindow = new MapCoordsEdTestWindow()
-			{
-				DataContext = mapCoordsEditorViewModel
-			};
-
-			if (mapCoordsEditorWindow.ShowDialog() == true)
-			{
-				_ = MessageBox.Show("Saved.");
-			}
-			//else
-			//{
-			//	_ = MessageBox.Show("Cancelled.");
-			//}
-		}
 
 		#region Event Handlers
 
@@ -212,12 +156,16 @@ namespace MSetExplorer
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
 		{
 			var triResult = ProjectSaveChanges();
+
 			if (triResult == true)
 			{
 				_ = MessageBox.Show("Changes Saved");
 			}
-
-			if (!triResult.HasValue)
+			else if (triResult == false)
+			{
+				// Delete the MapSections created since the last save.
+			}
+			else
 			{
 				// user cancelled.
 				return;
@@ -271,8 +219,11 @@ namespace MSetExplorer
 			{
 				_ = MessageBox.Show("Changes Saved");
 			}
-
-			if (!triResult.HasValue)
+			else if (triResult == false)
+			{
+				// Delete the MapSections created since the last save.
+			}
+			else
 			{
 				// user cancelled.
 				return;
@@ -286,15 +237,18 @@ namespace MSetExplorer
 		{
 			var triResult = ProjectSaveChanges();
 
-			if (!triResult.HasValue)
-			{
-				// user cancelled.
-				return;
-			}
-
 			if (triResult == true)
 			{
 				_ = MessageBox.Show("Changes Saved");
+			}
+			else if (triResult == false)
+			{
+				// Delete the MapSections created since the last save.
+			}
+			else
+			{
+				// user cancelled.
+				return;
 			}
 
 			var initialName = _vm.MapProjectViewModel.CurrentProjectName;
@@ -312,7 +266,7 @@ namespace MSetExplorer
 			}
 		}
 		
-		// Save
+		// Project Save
 		private void SaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.CanExecute = _vm.MapProjectViewModel.CurrentProjectOnFile;
@@ -323,7 +277,7 @@ namespace MSetExplorer
 			_vm.MapProjectViewModel.ProjectSave();
 		}
 
-		// Save As
+		// Project Save As
 		private void SaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.CanExecute = _vm?.MapProjectViewModel != null;
@@ -344,6 +298,17 @@ namespace MSetExplorer
 			}
 
 			_ = SaveProjectInteractive(curProject);
+		}
+
+		// Project Edit Coords
+		private void EditCoordsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = true;
+		}
+
+		private void EditCoordsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			ShowCoordsEditor();
 		}
 
 		#endregion
@@ -639,6 +604,79 @@ namespace MSetExplorer
 
 			return result;
 		}
+
+		private void ShowCoordsEditor()
+		{
+			CoordsEditorViewModel coordsEditorViewModel;
+			MapCalcSettings mapCalcSettings;
+
+			var curJob = _vm.MapProjectViewModel.CurrentJob;
+			if (!curJob.IsEmpty)
+			{
+				coordsEditorViewModel = new CoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize, allowEdits: true);
+				mapCalcSettings = curJob.MapCalcSettings;
+			}
+			else
+			{
+				var x1 = "-0.477036968733327014028268226139546";
+				var x2 = "-0.477036964892343354414420540166062";
+				var y1 = "0.535575821681765930306959274776606";
+				var y2 = "0.535575824239325800205884281044245";
+
+				//var x1 = "-0.4770369687333";
+				//var x2 = "-0.4770369648923";
+				//var y1 = "0.5355758216817";
+				//var y2 = "0.5355758242393";
+				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.MapProjectViewModel.CanvasSize, allowEdits: false);
+				mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+			}
+
+			var coordsEditorWindow = new CoordsEditorWindow()
+			{
+				DataContext = coordsEditorViewModel
+			};
+
+			if (coordsEditorWindow.ShowDialog() == true)
+			{
+				if (!curJob.IsEmpty)
+				{
+					//var triResult = ProjectSaveChanges();
+					//if (triResult == true)
+					//{
+					//	_ = MessageBox.Show("Changes Saved");
+					//}
+
+					//if (!triResult.HasValue)
+					//{
+					//	// user cancelled.
+					//	return;
+					//}
+
+					return;
+				}
+
+				var newCoords = coordsEditorViewModel.Coords;
+				LoadNewProject(newCoords, mapCalcSettings);
+			}
+		}
+
+		//private void ShowMapCoordsEdTest()
+		//{
+		//	var mapCoordsEditorViewModel = new MapCoordsEdTestViewModel();
+		//	var mapCoordsEditorWindow = new MapCoordsEdTestWindow()
+		//	{
+		//		DataContext = mapCoordsEditorViewModel
+		//	};
+
+		//	if (mapCoordsEditorWindow.ShowDialog() == true)
+		//	{
+		//		_ = MessageBox.Show("Saved.");
+		//	}
+		//	//else
+		//	//{
+		//	//	_ = MessageBox.Show("Cancelled.");
+		//	//}
+		//}
 
 
 		#endregion

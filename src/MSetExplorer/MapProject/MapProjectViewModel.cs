@@ -97,6 +97,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(Project.CurrentColorBandSet))
 			{
+				Debug.WriteLine("The MapProjectViewModel is raising PropertyChanged: IMapProjectViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
 				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 			}
 
@@ -224,7 +225,7 @@ namespace MSetExplorer
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
 			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-			LoadMap(CurrentProject, curJob, coords, curJob.MapCalcSettings, transformType, newArea);
+			LoadMap(CurrentProject, curJob, curJob.ColorBandSetId, coords, curJob.MapCalcSettings, transformType, newArea);
 		}
 
 		public void UpdateMapCoordinates(RRectangle coords)
@@ -236,7 +237,7 @@ namespace MSetExplorer
 
 			if (CurrentJob.Coords != coords)
 			{
-				LoadMap(CurrentProject, CurrentJob, coords, CurrentJob.MapCalcSettings, TransformType.CoordinatesUpdate, null);
+				LoadMap(CurrentProject, CurrentJob, CurrentJob.ColorBandSetId, coords, CurrentJob.MapCalcSettings, TransformType.CoordinatesUpdate, null);
 			}
 		}
 
@@ -247,10 +248,16 @@ namespace MSetExplorer
 				return;
 			}
 
+			Debug.Assert(CurrentColorBandSet.Id == CurrentJob.ColorBandSetId, "The project's CurrentColorBandSet and CurrentJob's ColorBandSet is out of sync.");
+
+			if (CurrentColorBandSet != colorBandSet)
+			{
+				Debug.WriteLine($"MapProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
+				return;
+			}
+
 			var isTargetIterationsBeingUpdated = colorBandSet.HighCutoff != CurrentProject.CurrentColorBandSet.HighCutoff;
 			Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {CurrentProject.CurrentColorBandSet.Id}, New = {colorBandSet.Id} Iterations Updated = {isTargetIterationsBeingUpdated}.");
-
-			CurrentProject.CurrentColorBandSet = colorBandSet;
 
 			if (isTargetIterationsBeingUpdated)
 			{
@@ -259,8 +266,12 @@ namespace MSetExplorer
 				if (CurrentJob.MapCalcSettings.TargetIterations != targetIterations)
 				{
 					var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentJob.MapCalcSettings.RequestsPerJob);
-					LoadMap(CurrentProject, CurrentJob, CurrentJob.Coords, mapCalcSettings, TransformType.IterationUpdate, null);
+					LoadMap(CurrentProject, CurrentJob, colorBandSet.Id, CurrentJob.Coords, mapCalcSettings, TransformType.IterationUpdate, null);
 				}
+			}
+			else
+			{
+				CurrentProject.CurrentColorBandSet = colorBandSet;
 			}
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
@@ -378,14 +389,14 @@ namespace MSetExplorer
 			}
 		}
 
-		private void LoadMap(Project project, Job? currentJob, RRectangle coords, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		private void LoadMap(Project project, Job? currentJob, ObjectId colorBandSetId, RRectangle coords, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
-			if (mapCalcSettings.TargetIterations != CurrentColorBandSet.HighCutoff)
-			{
-				Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At LoadMap.");
-			}
+			//if (mapCalcSettings.TargetIterations != CurrentColorBandSet.HighCutoff)
+			//{
+			//	Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At LoadMap.");
+			//}
 
-			var job = MapJobHelper.BuildJob(currentJob?.Id, project.Id, CanvasSize, coords, CurrentColorBandSet.Id, mapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
+			var job = MapJobHelper.BuildJob(currentJob?.Id, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 

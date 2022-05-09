@@ -98,18 +98,35 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RRectangle BuildRRectangleFromStrings(string[] vals)
+		public static RRectangle BuildRRectangle(string[] vals)
 		{
-			var x1 = ConvertToRValue(vals[0]);
-			var x2 = ConvertToRValue(vals[1]);
-			var y1 = ConvertToRValue(vals[2]);
-			var y2 = ConvertToRValue(vals[3]);
-			var result = BuildRRectangleFromRVals(x1, x2, y1, y2);
+			var result = BuildRRectangle(vals.Select(x => new SignManExp(x)).ToArray());
+			return result;
+		}
+
+		public static RRectangle BuildRRectangle(SignManExp[] vals)
+		{
+			var result = BuildRRectangle(vals.Select(x => ConvertToRValue(x)).ToArray());
+			return result;
+		}
+
+		public static RRectangle BuildRRectangle(RValue[] vals)
+		{
+			var result = BuildRRectangle(vals[0], vals[1], vals[2], vals[3]);
+
+			//var nx1 = RNormalizer.Normalize(vals[0], vals[2], out var ny1);
+			//var p1 = new RPoint(nx1.Value, ny1.Value, nx1.Exponent);
+
+			//var nx2 = RNormalizer.Normalize(vals[1], vals[3], out var ny2);
+			//var p2 = new RPoint(nx2.Value, ny2.Value, nx2.Exponent);
+
+			//var np1 = RNormalizer.Normalize(p1, p2, out var np2);
+			//var result = new RRectangle(np1, np2);
 
 			return result;
 		}
 
-		public static RRectangle BuildRRectangleFromRVals(RValue x1, RValue x2, RValue y1, RValue y2)
+		public static RRectangle BuildRRectangle(RValue x1, RValue x2, RValue y1, RValue y2)
 		{
 			var nx1 = RNormalizer.Normalize(x1, y1, out var ny1);
 			var p1 = new RPoint(nx1.Value, ny1.Value, nx1.Exponent);
@@ -189,8 +206,9 @@ namespace MSS.Common
 
 			var doubles = ConvertToDoubles(diffNoPrecision);
 			var msd = doubles[0];
-			var l10 = Math.Abs(Math.Log10(msd));
-			var result = (int) Math.Round(l10, MidpointRounding.AwayFromZero);
+			var l10 = Math.Log10(msd);
+
+			var result = (int)Math.Ceiling(Math.Abs(l10));
 
 			diff = new RValue(diffNoPrecision.Value, diffNoPrecision.Exponent, result);
 

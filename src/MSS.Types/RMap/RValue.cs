@@ -25,22 +25,22 @@ namespace MSS.Types
 		{
 			Values = new BigInteger[] { value };
 			Exponent = exponent;
-			Precision = precision ?? GetPrecision(value, exponent);
+			Precision = precision ?? int.MaxValue; // GetPrecision(value, exponent);
 		}
 
-		private int GetPrecision(BigInteger value, int exponent)
-		{
-			var precision = BigInteger.Abs(value).ToString(CultureInfo.InvariantCulture).Length;
+		//private int GetPrecision(BigInteger value, int exponent)
+		//{
+		//	var precision = BigInteger.Abs(value).ToString(CultureInfo.InvariantCulture).Length;
 
-			var be = BigInteger.Pow(2, Math.Abs(exponent));
-			var ePrecision = BigInteger.Abs(be).ToString(CultureInfo.InvariantCulture).Length;
+		//	var be = BigInteger.Pow(2, Math.Abs(exponent));
+		//	var ePrecision = BigInteger.Abs(be).ToString(CultureInfo.InvariantCulture).Length;
 
-			precision = Math.Max(precision, ePrecision);
-			//precision += 5;
-			precision += 1;
+		//	precision = Math.Max(precision, ePrecision);
+		//	//precision += 5;
+		//	precision += 1;
 
-			return precision;
-		}
+		//	return precision;
+		//}
 
 		#endregion
 

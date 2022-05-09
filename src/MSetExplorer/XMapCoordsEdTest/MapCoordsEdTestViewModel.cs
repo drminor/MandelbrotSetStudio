@@ -256,7 +256,7 @@ namespace MSetExplorer
 
 		private void TestMulti(string[] mVals)
 		{
-			var rt = RValueHelper.BuildRRectangleFromStrings(mVals);
+			var rt = RValueHelper.BuildRRectangle(mVals);
 
 			Debug.WriteLine($"The rr result is {rt}");
 		}

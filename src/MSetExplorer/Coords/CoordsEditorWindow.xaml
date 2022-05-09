@@ -47,15 +47,15 @@
         <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" >Save</Button>
-                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
+                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" Visibility="Collapsed" >Save</Button>
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True" >_Close</Button>
 
-                <Button Name="btnTest" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="30,10,10,10" Click="TestButton_Click">_Test</Button>
+                <!--<Button Name="btnTest" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="30,10,10,10" Click="TestButton_Click">_Test</Button>-->
             </StackPanel>
 
         </Border>
 
-        <Border Grid.Row="2" BorderThickness="0.5" BorderBrush="Black" Margin="5,15">
+        <Border Grid.Row="2" BorderThickness="0.5" BorderBrush="Black" Margin="5">
             <local:MapCoordsDetailControl x:Name="mapCoordsNormalized"/>
             <!--<StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical">
 
@@ -96,7 +96,7 @@
 
         </Border>
 
-        <Border Grid.Row="3" BorderThickness="0.5" BorderBrush="Black" Margin="5,15">
+        <Border Grid.Row="3" BorderThickness="0.5" BorderBrush="Black" Margin="5,5,5,10">
             <local:MapCoordsDetailControl x:Name="mapCoordsAdjusted"/>
         </Border>
 

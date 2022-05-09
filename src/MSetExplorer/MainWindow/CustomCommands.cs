@@ -106,6 +106,17 @@ namespace MSetExplorer
 			}
 		);
 
+		public static readonly RoutedUICommand ProjectEditCoords = new RoutedUICommand(
+			text: "EditCoords",
+			name: "ProjectEditCoords",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.F4
+				)
+			}
+		);
+
 		#endregion
 
 		#region Colors

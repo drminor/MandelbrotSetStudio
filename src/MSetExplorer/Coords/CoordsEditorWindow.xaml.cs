@@ -49,6 +49,8 @@ namespace MSetExplorer
 				mapCoordsAdjusted.DataContext = _vm.MapCoordsDetail2;
 				_vm.MapCoordsDetail2.HeaderName = "Adjusted Coordinates";
 
+				btnSave.Visibility = _vm.EditsAllowed ? Visibility.Visible : Visibility.Collapsed;
+
 				Debug.WriteLine("The CoordsEditor Window is now loaded");
 			}
 		}

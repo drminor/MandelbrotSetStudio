@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -264,7 +265,7 @@ namespace MSetExplorer
 
 		private void HandleCurrentJobChanged(Job? previousJob, Job? newJob)
 		{
-			Debug.WriteLine($"MapDisplay is handling JobChanged.");
+			Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
 			_mapLoaderManager.StopCurrentJob();
 
 			if (newJob != null)

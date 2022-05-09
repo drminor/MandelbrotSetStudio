@@ -18,19 +18,21 @@ namespace MSetExplorer
 		private bool _coordsAreDirty;
 		private long _zoom;
 
+
+
 		#region Constructor
 
-		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize) : this(new SingleCoordEditorViewModel[] {
+		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize, bool allowEdits) : this(new SingleCoordEditorViewModel[] {
 			new SingleCoordEditorViewModel(coords.Left), new SingleCoordEditorViewModel(coords.Right),
-			new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, displaySize)
+			new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, displaySize, allowEdits)
 		{ }
 
-		public CoordsEditorViewModel(string x1, string x2, string y1, string y2, SizeInt displaySize) : this(new SingleCoordEditorViewModel[] { 
+		public CoordsEditorViewModel(string x1, string x2, string y1, string y2, SizeInt displaySize, bool allowEdits) : this(new SingleCoordEditorViewModel[] { 
 			new SingleCoordEditorViewModel(x1), new SingleCoordEditorViewModel(x2),
-			new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, displaySize)
+			new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, displaySize, allowEdits)
 		{ }
 
-		private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, SizeInt displaySize)
+		private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, SizeInt displaySize, bool allowEdits)
 		{
 			StartingX = vms[0];
 			EndingX = vms[1];
@@ -38,6 +40,7 @@ namespace MSetExplorer
 			EndingY = vms[3];
 
 			_displaySize = displaySize;
+			EditsAllowed = allowEdits;
 			_blockSize = RMapConstants.BLOCK_SIZE;
 
 			_coords = GetCoords(vms);
@@ -46,8 +49,9 @@ namespace MSetExplorer
 			_zoom = RValueHelper.GetResolution(_coords.Width);
 
 			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-			var adjustedCoords = GetAdjustedCoords(_coords, _displaySize, _blockSize, projectAdapter);
-			MapCoordsDetail2 = new MapCoordsDetailViewModel(adjustedCoords);
+
+			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(_coords, _displaySize, _blockSize, projectAdapter);
+			MapCoordsDetail2 = new MapCoordsDetailViewModel(jobAreaInfo);
 		}
 
 		#endregion
@@ -73,6 +77,8 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
+
+		public bool EditsAllowed { get; init; }
 
 		public SingleCoordEditorViewModel StartingX { get; init; }
 		public SingleCoordEditorViewModel EndingX { get; init; }
@@ -158,22 +164,7 @@ namespace MSetExplorer
 			var newY1Sme = StartingY.SignManExp.ReducePrecisionTo(precisionY);
 			var newY2Sme = EndingY.SignManExp.ReducePrecisionTo(precisionY);
 
-			var result = RValueHelper.BuildRRectangleFromStrings( new string[] {
-				newX1Sme.GetValueAsString(),
-				newX2Sme.GetValueAsString(),
-				newY1Sme.GetValueAsString(),
-				newY2Sme.GetValueAsString() }
-				);
-
-			return result;
-		}
-
-		private RRectangle GetAdjustedCoords(RRectangle coords, SizeInt displaySize, SizeInt blockSize, ProjectAdapter projectAdapter)
-		{
-			//var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, displaySize, blockSize, projectAdapter);
-
-			var result = jobAreaInfo.Coords;
+			var result = RValueHelper.BuildRRectangle(new SignManExp[] { newX1Sme, newX2Sme,	newY1Sme, newY2Sme });
 
 			return result;
 		}

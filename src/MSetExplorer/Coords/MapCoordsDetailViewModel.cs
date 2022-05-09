@@ -1,6 +1,7 @@
-﻿using MSetRepo;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
+using System.Globalization;
 
 namespace MSetExplorer
 {
@@ -23,15 +24,35 @@ namespace MSetExplorer
 		private RValue _yR2;
 
 		private string _width;
-
 		private string _height;
 
 		private int _precisionX;
 		private int _precisionY;
 
+		private string _blockOffsetX;
+		private string _blockOffsetY;
+
+		private string _samplePointDelta;
+		private int _samplePointDeltaExp;
+
 		private long _zoom;
 
+		public bool HaveJobAreaInfo { get; init; }
+
 		#region Constructor
+
+		public MapCoordsDetailViewModel(JobAreaInfo jobAreaInfo) : this(jobAreaInfo.Coords)
+		{
+			_blockOffsetX = jobAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
+			_blockOffsetY = jobAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);
+
+			_samplePointDelta = jobAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
+			_samplePointDeltaExp = jobAreaInfo.Subdivision.SamplePointDelta.Exponent;
+
+			_zoom = RValueHelper.GetResolution(jobAreaInfo.Coords.Width);
+
+			HaveJobAreaInfo = true;
+		}
 
 		public MapCoordsDetailViewModel(RRectangle coords)
 		{
@@ -56,6 +77,13 @@ namespace MSetExplorer
 			_precisionY = RValueHelper.GetPrecision(StartingY, EndingY, out var diffY);
 			_precisionY += _numDigitsForDisplayExtent;
 			_height = RValueHelper.ConvertToString(diffY, useSciNotationForLengthsGe: 6);
+
+			_blockOffsetX = string.Empty;
+			_blockOffsetY = string.Empty;
+
+			_samplePointDelta = string.Empty;
+			_samplePointDeltaExp = 0;
+			HaveJobAreaInfo = false;
 		}
 
 		#endregion
@@ -79,6 +107,23 @@ namespace MSetExplorer
 			}
 		}
 
+		public RRectangle Coords
+		{
+			get => _coords;
+			set
+			{
+				if (value != _coords)
+				{
+					_coords = value;
+					OnPropertyChanged();
+
+					StartingX = _coords.Left;
+					EndingX = _coords.Right;
+					StartingY = _coords.Bottom;
+					EndingY = _coords.Top;
+				}
+			}
+		}
 
 		public RValue StartingX
 		{
@@ -258,23 +303,59 @@ namespace MSetExplorer
 			}
 		}
 
-		public RRectangle Coords
+
+		public string BlockOffsetX
 		{
-			get => _coords;
+			get => _blockOffsetX;
 			set
 			{
-				if (value != _coords)
+				if (value != _blockOffsetX)
 				{
-					_coords = value;
+					_blockOffsetX = value;
 					OnPropertyChanged();
-
-					StartingX = _coords.Left;
-					EndingX = _coords.Right;
-					StartingY = _coords.Bottom;
-					EndingY = _coords.Top;
 				}
 			}
 		}
+
+		public string BlockOffsetY
+		{
+			get => _blockOffsetY;
+			set
+			{
+				if (value != _blockOffsetY)
+				{
+					_blockOffsetY = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public string SamplePointDelta
+		{
+			get => _samplePointDelta;
+			set
+			{
+				if (value != _samplePointDelta)
+				{
+					_samplePointDelta = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int SamplePointDeltaExp
+		{
+			get => _samplePointDeltaExp;
+			set
+			{
+				if (value != _samplePointDeltaExp)
+				{
+					_samplePointDeltaExp = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 
 		#endregion
 

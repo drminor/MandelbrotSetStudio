@@ -138,7 +138,7 @@ namespace MSS.Common
 
             //var cntDigitsRemaining = precision.HasValue ? precision.Value - _before.Length : int.MaxValue;
 
-            //cntDigitsRemaining = Math.Min(cntDigitsRemaining, _after.Length);
+            cntDigitsRemaining = Math.Min(cntDigitsRemaining, _after.Length - skipDigits);
 
             if (cntDigitsRemaining > 0)
             {

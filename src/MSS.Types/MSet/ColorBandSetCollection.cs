@@ -99,7 +99,6 @@ namespace MSS.Types.MSet
 			}
 		}
 
-
 		public bool MoveCurrentTo(int index)
 		{
 			_colorsLock.EnterUpgradeableReadLock();
@@ -384,6 +383,12 @@ namespace MSS.Types.MSet
 				index = -1;
 			}
 
+			return colorBandSet != null;
+		}
+
+		public bool TryFindByColorBandSetId(ObjectId id, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		{
+			colorBandSet = _colorsCollection.FirstOrDefault(x => x.Id == id);
 			return colorBandSet != null;
 		}
 

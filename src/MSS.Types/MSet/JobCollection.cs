@@ -432,7 +432,7 @@ namespace MSS.Types.MSet
 			return result;
 		}
 
-		private bool TryFindByJobId(ObjectId id, [MaybeNullWhen(false)] out Job job)
+		public bool TryFindByJobId(ObjectId id, [MaybeNullWhen(false)] out Job job)
 		{
 			job = _jobsCollection.FirstOrDefault(x => x.Id == id);
 			return job != null;

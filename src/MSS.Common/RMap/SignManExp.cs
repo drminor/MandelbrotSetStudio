@@ -57,43 +57,29 @@ namespace MSS.Common
 
         #region Public Methods
 
-        public string GetValueAsString()
+        // TODO: Check this logic
+        public string GetValueAsString(bool useFixedPointNotation)
 		{
-            var sign = IsNegative ? "-" : string.Empty;
-            var digits = BuildDigits(Mantissa, Exponent);
-            var expSign = Exponent < 0 ? "-" : string.Empty;
-            var strExp = Math.Abs(Exponent).ToString(CultureInfo.InvariantCulture); // .PadLeft(3, '0');
+            string result;
 
-            var result = sign + digits + "e" + expSign + strExp;
+            if (useFixedPointNotation)
+			{
+                var sign = IsNegative ? "-" : string.Empty;
+                var digits = BuildDigits(Mantissa, Exponent);
+                result = sign + digits;
+            }
+            else
+			{
+                var sign = IsNegative ? "-" : string.Empty;
+                var digits = Exponent < 0 ? "0." + Mantissa : (Mantissa[0..1] + "." + Mantissa[2..]);
+                var expSign = Exponent < 0 ? "-" : string.Empty;
+                var strExp = Math.Abs(Exponent).ToString(CultureInfo.InvariantCulture); // .PadLeft(3, '0');
+
+                result = sign + digits + "e" + expSign + strExp;
+            }
 
             return result;
         }
-
-        // TODO: Implement a Scientific to Fixed Notation converter.
-
-        //public string GetValueAsFixedString()
-        //{
-        //    var sciNot = GetValueAsString();
-
-        //    var result = sign + digits + "e" + expSign + strExp;
-
-        //    return result;
-        //}
-
-        public double GetValueAsDouble()
-		{
-            if (Mantissa.Length < 10)
-			{
-                var s = GetValueAsString();
-                var result = double.Parse(s, FormatProvider);
-
-                return result;
-			}
-            else
-			{
-                return double.NaN;
-			}
-		}
 
         public SignManExp ReducePrecisionTo(int precision)
 		{
@@ -190,6 +176,8 @@ namespace MSS.Common
         #endregion
 
         #region Static Helpers
+
+        // TODO: Implement a Scientific to Fixed Notation converter.
 
         public static string ConvertToScientificNotation(string s)
         {
