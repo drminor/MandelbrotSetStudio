@@ -65,6 +65,8 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public double GetAverageTopValue() => _histogram.GetAverageMaxIndex();
+
 		public void AddWork(HistogramWorkRequest histogramWorkRequest)
 		{
 			if (!_workQueue.IsAddingCompleted)

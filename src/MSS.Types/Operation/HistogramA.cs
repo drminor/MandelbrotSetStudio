@@ -7,12 +7,15 @@ namespace MSS.Types
 	public class HistogramA : IHistogram
 	{
 		private int[] _values;
+		private HistogramD _topValues;
 
 		#region Constructor
 
 		public HistogramA(int size)
 		{
 			_values = new int[size];
+
+			_topValues = new HistogramD();
 		}
 
 		public HistogramA(int[] values)
@@ -24,6 +27,9 @@ namespace MSS.Types
 			{
 				_ = Increment(values[ptr]);
 			}
+
+			_topValues = new HistogramD();
+			_topValues.Increment(m);
 		}
 
 		//public HistogramA(IDictionary<int, int> entries)
@@ -65,6 +71,12 @@ namespace MSS.Types
 
 		#region Public Methods
 
+		public double GetAverageMaxIndex()
+		{
+			var result =_topValues.GetAverage();
+			return result;
+		}
+
 		public KeyValuePair<int, int>[] GetKeyValuePairs()
 		{
 			var cnt = _values.Count(x => x != 0);
@@ -88,11 +100,14 @@ namespace MSS.Types
 			{
 				_values[ptr] = 0;
 			}
+
+			_topValues.Clear();
 		}
 
 		public void Reset(int newSize)
 		{
 			_values = new int[newSize + 1];
+			_topValues.Clear();
 		}
 
 		//public void Set(int[] indexes, int[] amounts)
@@ -115,7 +130,7 @@ namespace MSS.Types
 		//	}
 		//}
 
-		public int Increment(int index)
+		private int Increment(int index)
 		{
 			_values[index] = _values[index] + 1;
 
@@ -222,6 +237,8 @@ namespace MSS.Types
 				}
 
 			}
+
+			_topValues.Increment(indexes.Max());
 		}
 
 		public void Remove(IHistogram histogram)
@@ -250,6 +267,8 @@ namespace MSS.Types
 					_values[i] = _values[i] - aEnumerator.Current;
 				}
 			}
+
+			_topValues.Decrement(indexes.Max());
 		}
 
 		#endregion

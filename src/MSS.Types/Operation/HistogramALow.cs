@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MSS.Types
@@ -87,6 +88,9 @@ namespace MSS.Types
 
 		#region Public Methods
 
+		public double GetAverageMaxIndex() => throw new NotImplementedException();
+
+
 		public KeyValuePair<int, int>[] GetKeyValuePairs()
 		{
 			var cnt = _values.Count(x => x != 0);
@@ -137,7 +141,7 @@ namespace MSS.Types
 		//	}
 		//}
 
-		public int Increment(int index)
+		private int Increment(int index)
 		{
 			var aI = index - _lowBound;
 			_values[aI] = _values[aI] + 1;

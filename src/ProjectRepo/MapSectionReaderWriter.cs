@@ -114,10 +114,12 @@ namespace ProjectRepo
 
 		public long? DeleteMapSectionsSince(DateTime lastSaved)
 		{
-			var filter = Builders<MapSectionRecord>.Filter.Gt("_id.CreationTime", lastSaved);
-			var deleteResult = Collection.DeleteMany(filter);
+			//var filter = Builders<MapSectionRecord>.Filter.Gt("_id.CreationTime", lastSaved);
+			//var deleteResult = Collection.DeleteMany(filter);
 
-			return GetReturnCount(deleteResult);
+			//return GetReturnCount(deleteResult);
+
+			return 0;
 		}
 
 	}

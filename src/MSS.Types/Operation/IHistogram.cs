@@ -13,6 +13,7 @@ namespace MSS.Types
 
 		long UpperCatchAllValue { get; set; }
 
+		double GetAverageMaxIndex();
 		KeyValuePair<int, int>[] GetKeyValuePairs();
 
 		void Reset();
@@ -28,7 +29,7 @@ namespace MSS.Types
 		//void Remove(ICollection<int> indexes, ICollection<int> amounts);
 		void Remove(IHistogram histogram);
 
-		int Increment(int index);
+		//int Increment(int index);
 
 		//void Increment(int[] indexes);
 		//void Increment(ICollection<int> indexes);

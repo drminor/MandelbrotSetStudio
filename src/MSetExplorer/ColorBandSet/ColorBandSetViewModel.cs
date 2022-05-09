@@ -21,6 +21,8 @@ namespace MSetExplorer
 		private readonly ObservableCollection<MapSection> _mapSections;
 		private readonly SynchronizationContext? _synchronizationContext;
 		private readonly MapSectionHistogramProcessor _mapSectionHistogramProcessor;
+		private readonly HistogramD _topValues;
+		private double _averageMapSectionTargetIteration;
 
 		private double _rowHeight;
 		private double _itemWidth;
@@ -40,8 +42,6 @@ namespace MSetExplorer
 
 		private readonly object _histLock;
 
-		private PercentageBand? _beyondTargetSpecs;
-
 		#region Constructor
 
 		public ColorBandSetViewModel(ObservableCollection<MapSection> mapSections)
@@ -51,6 +51,7 @@ namespace MSetExplorer
 			_synchronizationContext = SynchronizationContext.Current;
 			Histogram = new HistogramA(0);
 			_mapSectionHistogramProcessor = new MapSectionHistogramProcessor(Histogram);
+			_topValues = new HistogramD();
 
 			_rowHeight = 60;
 			_itemWidth = 180;
@@ -63,7 +64,8 @@ namespace MSetExplorer
 
 			_isDirty = false;
 			_histLock = new object();
-			_beyondTargetSpecs = null;
+			BeyondTargetSpecs = null;
+			//_averageMapSectionTargetIteration = 0;
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
 		}
@@ -121,6 +123,7 @@ namespace MSetExplorer
 				if (value != null)
 				{
 					Histogram.Reset(value.HighCutoff);
+					_topValues.Clear();
 					PopulateHistorgram(_mapSections, Histogram);
 					_mapSectionHistogramProcessor.ProcessingEnabled = true;
 
@@ -129,6 +132,8 @@ namespace MSetExplorer
 				else
 				{
 					Histogram.Reset();
+					_topValues.Clear();
+					AverageMapSectionTargetIteration = 0;
 				}
 			}
 
@@ -216,9 +221,22 @@ namespace MSetExplorer
 			}
 		}
 
-		public IHistogram Histogram { get; private set; }
+		public IHistogram Histogram { get; init; }
 
-		public PercentageBand? BeyondTargetSpecs => _beyondTargetSpecs;
+		public PercentageBand? BeyondTargetSpecs { get; private set; }
+
+		public double AverageMapSectionTargetIteration
+		{
+			get => _averageMapSectionTargetIteration;
+			private set
+			{
+				if (value != _averageMapSectionTargetIteration)
+				{
+					_averageMapSectionTargetIteration = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public bool IsDirty
 		{
@@ -365,6 +383,7 @@ namespace MSetExplorer
 			{
 				//	Reset
 				Histogram.Reset();
+				_topValues.Clear();
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Add)
 			{
@@ -374,6 +393,7 @@ namespace MSetExplorer
 				foreach (var mapSection in mapSections)
 				{
 					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Add, cutOffs, mapSection.Histogram, HandleHistogramUpdate));
+					_topValues.Increment(mapSection.TargetIterations);
 				}
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
@@ -384,6 +404,7 @@ namespace MSetExplorer
 				foreach (var mapSection in mapSections)
 				{
 					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Remove, cutOffs, mapSection.Histogram, HandleHistogramUpdate));
+					_topValues.Decrement(mapSection.TargetIterations);
 				}
 			}
 
@@ -577,12 +598,14 @@ namespace MSetExplorer
 				{
 					if (_currentColorBandSet.UpdatePercentages(newPercentages))
 					{
-						_beyondTargetSpecs = newPercentages[^1];
+						BeyondTargetSpecs = newPercentages[^1];
+						AverageMapSectionTargetIteration = _topValues.GetAverage();
 						//Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");
 					}
 					else
 					{
-						_beyondTargetSpecs = null;
+						BeyondTargetSpecs = null;
+						AverageMapSectionTargetIteration = 0;
 					}
 				}
 			}

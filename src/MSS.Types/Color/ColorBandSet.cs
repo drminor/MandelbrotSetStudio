@@ -183,8 +183,6 @@ namespace MSS.Types
 		{
 			var len = Math.Min(newPercentages.Length, Count);
 
-			//var total = 0d;
-
 			var allMatched = true;
 			for (var i = 0; i < len; i++)
 			{
@@ -204,7 +202,6 @@ namespace MSS.Types
 			{
 				var cb = Items[i];
 				cb.Percentage = newPercentages[i].Percentage;
-				//total += newPercentages[i].Item2;
 			}
 
 			return true;

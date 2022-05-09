@@ -22,6 +22,7 @@ namespace MSetExplorer
 		private bool _coordsAreDirty;
 
 		private int _targetIterations;
+		private double _targetIterationsAvailable;
 		private int _requestsPerJob;
 
 		public MSetInfoViewModel()
@@ -229,22 +230,18 @@ namespace MSetExplorer
 			}
 		}
 
-		//public MSetInfo? MSetInfo
-		//{
-		//	get => _currentMSetInfo;
-		//	set
-		//	{
-		//		if (value != _currentMSetInfo)
-		//		{
-		//			_currentMSetInfo = value ?? NULL_MSET_INFO;
-
-		//			Coords = _currentMSetInfo.Coords;
-		//			TargetIterations = _currentMSetInfo.MapCalcSettings.TargetIterations;
-		//			RequestsPerJob = _currentMSetInfo.MapCalcSettings.RequestsPerJob;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
+		public double TargetIterationsAvailable
+		{
+			get => _targetIterationsAvailable;
+			set
+			{
+				if (value != _targetIterationsAvailable)
+				{
+					_targetIterationsAvailable = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		#endregion
 
@@ -282,13 +279,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
-
-		//private void TestMulti(string[] mVals)
-		//{
-		//	var rt = RValueHelper.BuildRRectangleFromStrings(mVals);
-
-		//	Debug.WriteLine($"The rr result is {rt}");
-		//}
 
 		private void SetMulti(string[] mVals)
 		{

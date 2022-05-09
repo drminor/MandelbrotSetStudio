@@ -562,6 +562,9 @@ namespace MSetRepo
 			{
 				var jobHelper = new MapSectionHelper();
 				var mapSectionRequests = jobHelper.CreateSectionRequests(job);
+
+				// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.
+
 				var avgTargetIterations = mapSectionRequests.Average(x => x.MapCalcSettings.TargetIterations);
 
 				var newTargetIterations = (int) Math.Round(avgTargetIterations);
