@@ -235,6 +235,7 @@ namespace MSetExplorer
 
 		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
 		{
+			Debug.Assert(transformType == TransformType.ZoomIn || transformType == TransformType.Pan, "UpdateMapView received a TransformType other than ZoomIn or Pan.");
 			if (CurrentProject == null)
 			{
 				return;
@@ -249,6 +250,7 @@ namespace MSetExplorer
 			LoadMap(CurrentProject, curJob, curJob.ColorBandSetId, coords, curJob.MapCalcSettings, transformType, newArea);
 		}
 
+		// Currently Not Used.
 		public void UpdateMapCoordinates(RRectangle coords)
 		{
 			if (CurrentProject == null)
@@ -412,11 +414,6 @@ namespace MSetExplorer
 
 		private void LoadMap(Project project, Job? currentJob, ObjectId colorBandSetId, RRectangle coords, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
-			//if (mapCalcSettings.TargetIterations != CurrentColorBandSet.HighCutoff)
-			//{
-			//	Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At LoadMap.");
-			//}
-
 			var job = MapJobHelper.BuildJob(currentJob?.Id, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");

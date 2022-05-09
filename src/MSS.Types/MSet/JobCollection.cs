@@ -156,19 +156,39 @@ namespace MSS.Types.MSet
 			return result;
 		}
 
-		public void Push(Job? job)
+		public void InsertAfter(Job job)
 		{
 			DoWithWriteLock(() =>
 			{
-				if (job != null)
-				{
-					if (job.IsPreferredChild)
-					{
-						ResetSiblings(job);
-					}
+				job.IsPreferredChild = true;
+				UpdateSiblings(job);
 
-					_jobsCollection.Add(job);
+				_jobsCollection.Add(job);
+
+				_jobsPointer = _jobsCollection.Count - 1;
+			});
+		}
+
+		private void UpdateSiblings(Job newParent)
+		{
+			var siblings = _jobsCollection.Where(x => x.ParentJobId == newParent.ParentJobId);
+
+			foreach (var job in siblings)
+			{
+				job.ParentJobId = newParent.Id;
+			}
+		}
+
+		public void Push(Job job)
+		{
+			DoWithWriteLock(() =>
+			{
+				if (job.IsPreferredChild)
+				{
+					ResetSiblings(job);
 				}
+
+				_jobsCollection.Add(job);
 
 				_jobsPointer = _jobsCollection.Count - 1;
 			});

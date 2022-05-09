@@ -233,7 +233,15 @@ namespace MSS.Types.MSet
 
 		public void Add(Job job)
 		{
-			_jobsCollection.Push(job);
+			if (job.TransformType == TransformType.IterationUpdate)
+			{
+				_jobsCollection.InsertAfter(job);
+			}
+			else
+			{
+				_jobsCollection.Push(job);
+			}
+
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
 

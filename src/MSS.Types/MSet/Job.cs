@@ -12,6 +12,7 @@ namespace MSS.Types.MSet
 		public static readonly Job Empty = _lazyJob.Value;
 
 		private ObjectId _projectId;
+		private ObjectId? _parentJobId;
 		private ObjectId _colorBandSetId;
 
 		private bool _isPreferredChild;
@@ -59,7 +60,7 @@ namespace MSS.Types.MSet
 			)
 		{
 			Id = id;
-			ParentJobId = parentJobId;
+			_parentJobId = parentJobId;
 			_isPreferredChild = isPreferredChild;
 			_projectId = projectId;
 			Subdivision = subdivision;
@@ -99,7 +100,15 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public ObjectId? ParentJobId { get; init; }
+		public ObjectId? ParentJobId
+		{
+			get => _parentJobId;
+			set
+			{
+				_parentJobId = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
 
 		public bool IsPreferredChild
 		{
