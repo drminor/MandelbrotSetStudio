@@ -271,7 +271,7 @@ namespace MSetExplorer
 
 			Debug.Assert(CurrentColorBandSet.Id == CurrentJob.ColorBandSetId, "The project's CurrentColorBandSet and CurrentJob's ColorBandSet is out of sync.");
 
-			if (CurrentColorBandSet != colorBandSet)
+			if (CurrentColorBandSet == colorBandSet)
 			{
 				Debug.WriteLine($"MapProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
 				return;

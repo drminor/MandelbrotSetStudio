@@ -67,16 +67,16 @@ namespace MSetExplorer
 
 		private void MainWindow_Closing(object sender, CancelEventArgs e)
 		{
-			var triResult = ProjectSaveChanges();
-			if (triResult == true)
+			var saveResult = ProjectSaveChanges();
+			if (saveResult == SaveResult.ChangesSaved)
 			{
 				_ = MessageBox.Show("Changes Saved");
 			}
-			else if (triResult == false)
+			else if (saveResult == SaveResult.NotSavingChanges)
 			{
 				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
 			}
-			else
+			else if (saveResult == SaveResult.SaveCancelled)
 			{
 				// user cancelled.
 				e.Cancel = true;
@@ -160,17 +160,16 @@ namespace MSetExplorer
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
 		{
-			var triResult = ProjectSaveChanges();
-
-			if (triResult == true)
+			var saveResult = ProjectSaveChanges();
+			if (saveResult == SaveResult.ChangesSaved)
 			{
 				_ = MessageBox.Show("Changes Saved");
 			}
-			else if (triResult == false)
+			else if (saveResult == SaveResult.NotSavingChanges)
 			{
 				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
 			}
-			else
+			else if (saveResult == SaveResult.SaveCancelled)
 			{
 				// user cancelled.
 				return;
@@ -219,20 +218,21 @@ namespace MSetExplorer
 		// New
 		private void NewButton_Click(object sender, RoutedEventArgs e)
 		{
-			var triResult = ProjectSaveChanges();
-			if (triResult == true)
+			var saveResult = ProjectSaveChanges();
+			if (saveResult == SaveResult.ChangesSaved)
 			{
 				_ = MessageBox.Show("Changes Saved");
 			}
-			else if (triResult == false)
+			else if (saveResult == SaveResult.NotSavingChanges)
 			{
 				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
 			}
-			else
+			else if (saveResult == SaveResult.SaveCancelled)
 			{
 				// user cancelled.
 				return;
 			}
+
 
 			LoadNewProject();
 		}
@@ -240,17 +240,16 @@ namespace MSetExplorer
 		// Open
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
 		{
-			var triResult = ProjectSaveChanges();
-
-			if (triResult == true)
+			var saveResult = ProjectSaveChanges();
+			if (saveResult == SaveResult.ChangesSaved)
 			{
 				_ = MessageBox.Show("Changes Saved");
 			}
-			else if (triResult == false)
+			else if (saveResult == SaveResult.NotSavingChanges)
 			{
 				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
 			}
-			else
+			else if (saveResult == SaveResult.SaveCancelled)
 			{
 				// user cancelled.
 				return;
@@ -488,13 +487,13 @@ namespace MSetExplorer
 			_vm.MapProjectViewModel.ProjectStartNew(coords, colorBandSet, mapCalcSettings);
 		}
 
-		private bool? ProjectSaveChanges()
+		private SaveResult ProjectSaveChanges()
 		{
 			var curProject = _vm.MapProjectViewModel.CurrentProject;
 
 			if (curProject == null)
 			{
-				return false;
+				return SaveResult.NoChangesToSave;
 			}
 
 			if (!_vm.MapProjectViewModel.CurrentProjectIsDirty)
@@ -505,16 +504,16 @@ namespace MSetExplorer
 					{
 						// Silently record the new CurrentJob selection
 						_vm.MapProjectViewModel.ProjectSave();
-
+						return SaveResult.CurrentJobAutoSaved;
 					}
 				}
 
-				return true;
+				return SaveResult.NoChangesToSave;
 			}
 
 			if (!ColorsCommitUpdates().HasValue)
 			{
-				return null;
+				return SaveResult.SaveCancelled;
 			}
 
 			var triResult = ProjectUserSaysSaveChanges();
@@ -525,16 +524,30 @@ namespace MSetExplorer
 				{
 					// The Project is on-file, just save the pending changes.
 					_vm.MapProjectViewModel.ProjectSave();
-					triResult = true;
+					return SaveResult.ChangesSaved;
 				}
 				else
 				{
 					// The Project is not on-file, must ask user for the name and optional description.
 					triResult = SaveProjectInteractive(curProject);
+					if (triResult == true)
+					{
+						return SaveResult.ChangesSaved;
+					}
+					else
+					{
+						return SaveResult.SaveCancelled;
+					}
 				}
 			}
-
-			return triResult;
+			else if (triResult == false)
+			{
+				return SaveResult.NotSavingChanges;
+			}
+			else
+			{
+				return SaveResult.SaveCancelled;
+			}
 		}
 
 		private bool? SaveProjectInteractive(Project curProject)
@@ -645,16 +658,16 @@ namespace MSetExplorer
 			{
 				if (!curJob.IsEmpty)
 				{
-					//var triResult = ProjectSaveChanges();
-					//if (triResult == true)
+					//var saveResult = ProjectSaveChanges();
+					//if (saveResult == SaveResult.ChangesSaved)
 					//{
 					//	_ = MessageBox.Show("Changes Saved");
 					//}
-					//else if (triResult == false)
+					//else if (saveResult == SaveResult.NotSavingChanges)
 					//{
 					//	_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
 					//}
-					//else
+					//else if (saveResult == SaveResult.SaveCancelled)
 					//{
 					//	// user cancelled.
 					//	return;
@@ -838,5 +851,14 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		private enum SaveResult
+		{
+			NoChangesToSave,
+			CurrentJobAutoSaved,
+			ChangesSaved,
+			NotSavingChanges,
+			SaveCancelled,
+		}
 	}
 }

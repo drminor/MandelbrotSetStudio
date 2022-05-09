@@ -23,7 +23,7 @@ namespace MSS.Types.MSet
 		private DateTime _lastUpdatedUtc;
 		private DateTime _lastSavedUtc;
 
-		private readonly ObjectId _originalCurrentJobId;
+		private ObjectId _originalCurrentJobId;
 
 		#region Constructor
 
@@ -221,6 +221,7 @@ namespace MSS.Types.MSet
 				SaveJobs(Id, projectAdapter);
 
 				LastSavedUtc = DateTime.UtcNow;
+				_originalCurrentJobId = CurrentJobId;
 				return true;
 			}
 			else
