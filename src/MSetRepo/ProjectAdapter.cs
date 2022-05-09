@@ -248,6 +248,14 @@ namespace MSetRepo
 			return result;
 		}
 
+		public long? DeleteMapSectionsSince(DateTime lastSaved)
+		{
+			var mapSectionReaderWriter  = new MapSectionReaderWriter(_dbProvider);
+			var deleteCnt = mapSectionReaderWriter.DeleteMapSectionsSince(lastSaved);
+
+			return deleteCnt;
+		}
+
 		#endregion
 
 		#region ProjectInfo

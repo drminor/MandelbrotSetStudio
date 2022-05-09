@@ -30,24 +30,6 @@ namespace MSetExplorer
 			InitializeComponent();
 		}
 
-		private void MainWindow_Closing(object sender, CancelEventArgs e)
-		{
-			var triResult = ProjectSaveChanges();
-			if (triResult == true)
-			{
-				_ = MessageBox.Show("Changes Saved");
-			}
-			else if (triResult == false)
-			{
-				// Delete the MapSections created since the last save.
-			}
-			else
-			{
-				// user cancelled.
-				e.Cancel = true;
-			}
-		}
-
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
@@ -81,6 +63,24 @@ namespace MSetExplorer
 			//LoadNewProject();
 			//ShowMapCoordsEditor();
 			//ShowCoordsEditor();
+		}
+
+		private void MainWindow_Closing(object sender, CancelEventArgs e)
+		{
+			var triResult = ProjectSaveChanges();
+			if (triResult == true)
+			{
+				_ = MessageBox.Show("Changes Saved");
+			}
+			else if (triResult == false)
+			{
+				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+			}
+			else
+			{
+				// user cancelled.
+				e.Cancel = true;
+			}
 		}
 
 		#endregion
@@ -163,7 +163,7 @@ namespace MSetExplorer
 			}
 			else if (triResult == false)
 			{
-				// Delete the MapSections created since the last save.
+				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
 			}
 			else
 			{
@@ -221,7 +221,7 @@ namespace MSetExplorer
 			}
 			else if (triResult == false)
 			{
-				// Delete the MapSections created since the last save.
+				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
 			}
 			else
 			{
@@ -243,7 +243,7 @@ namespace MSetExplorer
 			}
 			else if (triResult == false)
 			{
-				// Delete the MapSections created since the last save.
+				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
 			}
 			else
 			{
@@ -548,7 +548,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"Cannot save project with name: {selectedName}.");
+					Debug.WriteLine($"No name was provided. Cancelling the Save operation.");
 					result = null;
 				}
 			}
@@ -645,8 +645,11 @@ namespace MSetExplorer
 					//{
 					//	_ = MessageBox.Show("Changes Saved");
 					//}
-
-					//if (!triResult.HasValue)
+					//else if (triResult == false)
+					//{
+					//	_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+					//}
+					//else
 					//{
 					//	// user cancelled.
 					//	return;

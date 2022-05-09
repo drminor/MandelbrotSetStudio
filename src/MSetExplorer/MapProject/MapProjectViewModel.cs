@@ -201,11 +201,32 @@ namespace MSetExplorer
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
 			var project = _projectAdapter.CreateNewProject(name, description, currentProject.GetJobs(), currentProject.GetColorBandSets());
-			project?.Save(_projectAdapter);
 
-			CurrentProject = project;
+			if (project is null)
+			{
+				return false;
+			}
+			else
+			{
+				project.CurrentJob = currentProject.CurrentJob;
+				project.Save(_projectAdapter);
+				CurrentProject = project;
 
-			return project != null;
+				return true;
+			}
+		}
+
+		public long? DeleteMapSectionsSinceLastSave()
+		{
+			if (CurrentProject is null)
+			{
+				return 0;
+			}
+
+			var lastSaved = CurrentProject.LastSavedUtc;
+			var deleteCnt = _projectAdapter.DeleteMapSectionsSince(lastSaved);
+
+			return deleteCnt;
 		}
 
 		#endregion
