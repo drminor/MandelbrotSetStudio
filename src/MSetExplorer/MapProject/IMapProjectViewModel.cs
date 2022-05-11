@@ -39,6 +39,7 @@ namespace MSetExplorer
 		bool ProjectOpen(string name);
 		void ProjectSave();
 		bool ProjectSaveAs(string name, string? description);
+		void ProjectClose();
 
 		long? DeleteMapSectionsSinceLastSave();
 

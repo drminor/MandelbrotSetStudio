@@ -177,6 +177,7 @@ namespace MSetExplorer
 				return;
 			}
 
+			_vm.MapProjectViewModel.ProjectClose();
 			Close();
 		}
 

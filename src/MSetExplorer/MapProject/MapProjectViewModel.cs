@@ -71,11 +71,7 @@ namespace MSetExplorer
 					}
 
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProject));
-					//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
-					//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectOnFile));
-
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
-
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
@@ -215,6 +211,11 @@ namespace MSetExplorer
 
 				return true;
 			}
+		}
+
+		public void ProjectClose()
+		{
+			CurrentProject = null;
 		}
 
 		public long? DeleteMapSectionsSinceLastSave()
@@ -427,11 +428,12 @@ namespace MSetExplorer
 			ObjectId? parentJobId;
 			if (transformType == TransformType.IterationUpdate)
 			{
-				// Make the new job be a sibling of the current job, instead of a child
+				// Make the new job a sibling of the current job, instead of a child
 				parentJobId = currentJob.ParentJobId ?? currentJob?.Id;
 			}
 			else
 			{
+				// The new job will be a child of the current job.
 				parentJobId = currentJob.Id;
 			}
 
@@ -452,22 +454,11 @@ namespace MSetExplorer
 			if (project.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out var matchingProxy))
 			{
 				project.CurrentJob = matchingProxy;
-
 				return;
 			}
 
 			// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
-			var origJob = project.GetPreferredSibling(job);
-
-			if (origJob.CanvasSizeInBlocks == newCanvasSizeInBlocks)
-			{
-				project.CurrentJob = origJob;
-
-				return;
-			}
-
-			// Create a new job
-			job = origJob;
+			job = project.GetPreferredSibling(job);
 
 			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision.SamplePointDelta, _blockSize);
 			//var newMSetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
@@ -475,7 +466,7 @@ namespace MSetExplorer
 			var transformType = TransformType.CanvasSizeUpdate;
 			RectangleInt? newArea = null;
 
-			var newJob = MapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, CurrentColorBandSet.Id, job.MapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
+			var newJob = MapJobHelper.BuildJob(job.ParentJobId, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
 
 			Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
 			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");

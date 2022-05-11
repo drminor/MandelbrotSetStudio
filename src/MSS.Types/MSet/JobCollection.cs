@@ -312,7 +312,7 @@ namespace MSS.Types.MSet
 			_jobsLock.EnterUpgradeableReadLock();
 			try
 			{
-				return TryGetCanvasSizeUpdateChildJob(job, canvasSizeInBlocks, out proxy);
+				return TryGetCanvasSizeUpdateSiblingJob(job, canvasSizeInBlocks, out proxy);
 			}
 			finally
 			{
@@ -414,16 +414,14 @@ namespace MSS.Types.MSet
 		}
 
 		/// <summary>
-		/// Finds the child job of the given parentJob that has a TransformType of CanvasSizeUpdate.
-		/// If the current node is not the preferred child, then the preferred sibling is used as the current node instead.
+		/// Finds the sibling job of the given job that has a TransformType of CanvasSizeUpdate.
 		/// </summary>
 		/// <param name="job"></param>
 		/// <param name="childJob">If successful, the preferred child job of the given job</param>
 		/// <returns>True if there is any child of the specified job.</returns>
-		private bool TryGetCanvasSizeUpdateChildJob(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job childJob)
+		private bool TryGetCanvasSizeUpdateSiblingJob(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job childJob)
 		{
-			var startingJob = GetPreferredSibling(job);
-			childJob = _jobsCollection.FirstOrDefault(x => x.ParentJobId == startingJob.Id && x.TransformType == TransformType.CanvasSizeUpdate && x.CanvasSizeInBlocks == canvasSizeInBlocks);
+			childJob = _jobsCollection.FirstOrDefault(x => x.ParentJobId == job.ParentJobId && x.TransformType == TransformType.CanvasSizeUpdate && x.CanvasSizeInBlocks == canvasSizeInBlocks);
 			var result = childJob != null;
 
 			return result;
