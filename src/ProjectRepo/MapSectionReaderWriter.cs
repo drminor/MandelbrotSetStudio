@@ -35,20 +35,34 @@ namespace ProjectRepo
 			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<MapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "SubAndPos" }));
 		}
 
-		public MapSectionRecord Get(ObjectId mapSectionId)
+		public MapSectionRecord? Get(ObjectId mapSectionId)
 		{
 			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
 			var mapSectionRecord = Collection.Find(filter);
 
-			return mapSectionRecord.FirstOrDefault();
+			var result = mapSectionRecord.FirstOrDefault();
+
+			if (result != null)
+			{
+				result.LastAccessed = DateTime.UtcNow;
+			}
+
+			return result;
 		}
 
-		public async Task<MapSectionRecord> GetAsync(ObjectId mapSectionId)
+		public async Task<MapSectionRecord?> GetAsync(ObjectId mapSectionId)
 		{
 			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
 			var mapSectionRecord = await Collection.FindAsync(filter);
 
-			return mapSectionRecord.FirstOrDefault();
+			var result = mapSectionRecord.FirstOrDefault();
+
+			if (result != null)
+			{
+				result.LastAccessed = DateTime.UtcNow;
+			}
+
+			return result;
 		}
 
 		public async Task<MapSectionRecord?> GetAsync (ObjectId subdivisionId, BigVectorDto blockPosition)
@@ -66,6 +80,7 @@ namespace ProjectRepo
 			if (itemsFound.Count > 0)
 			{
 				var result = itemsFound[0];
+				result.LastAccessed = DateTime.UtcNow;
 				return result;
 			}
 			else
@@ -77,6 +92,7 @@ namespace ProjectRepo
 
 		public async Task<ObjectId> InsertAsync(MapSectionRecord mapSectionRecord)
 		{
+			mapSectionRecord.LastSavedUtc = DateTime.UtcNow;
 			await Collection.InsertOneAsync(mapSectionRecord);
 			return mapSectionRecord.Id;
 		}
@@ -89,7 +105,8 @@ namespace ProjectRepo
 				.Set(u => u.MapCalcSettings.TargetIterations, targetIterations)
 				.Set(u => u.Counts, counts)
 				.Set(u => u.DoneFlags, doneFlags)
-				.Set(u => u.ZValues, zValues);
+				.Set(u => u.ZValues, zValues)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			UpdateResult? result = await Collection.UpdateOneAsync(filter, updateDefinition);
 
@@ -114,13 +131,29 @@ namespace ProjectRepo
 
 		public long? DeleteMapSectionsSince(DateTime lastSaved)
 		{
-			//var filter = Builders<MapSectionRecord>.Filter.Gt("_id.CreationTime", lastSaved);
-			//var deleteResult = Collection.DeleteMany(filter);
+			if (DateTime.UtcNow - lastSaved > TimeSpan.FromHours(3))
+			{
+				Debug.WriteLine($"Warning: Not deleting MapSections created since: {lastSaved}, {lastSaved} is too more than 3 hours ago.");
+				return 0;
+			}
 
-			//return GetReturnCount(deleteResult);
+			var filter = Builders<MapSectionRecord>.Filter.Gt("DateCreatedUtc", lastSaved);
+			var deleteResult = Collection.DeleteMany(filter);
 
-			return 0;
+			return GetReturnCount(deleteResult);
 		}
+
+		//public void AddCreatedDateToAllRecords()
+		//{
+		//	var filter = Builders<MapSectionRecord>.Filter.Empty;
+		//	var updateDefinition = Builders<MapSectionRecord>.Update
+		//		.Set("DateCreatedUtc", DateTime.UtcNow)
+		//		.Set("LastSavedUtc", DateTime.MinValue)
+		//		.Set("LastAccessed", DateTime.MinValue);
+		//	var options = new UpdateOptions { IsUpsert = false };
+
+		//	_ = Collection.UpdateMany(filter, updateDefinition, options);
+		//}
 
 	}
 }

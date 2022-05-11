@@ -25,7 +25,7 @@ namespace MSS.Common
 				result = SignManExp.ConvertToScientificNotation(result);
 			}
 
-			Debug.WriteLine($"RValue: {rValue}, produced: {result}.");
+			//Debug.WriteLine($"RValue: {rValue}, produced: {result}.");
 
 			return result;
 		}

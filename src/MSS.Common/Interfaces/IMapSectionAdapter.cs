@@ -18,5 +18,7 @@ namespace MSS.Common
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
 
 		long? ClearMapSections(string subdivisionId);
+
+		//void AddCreatedDateToAllMapSections();
 	}
 }

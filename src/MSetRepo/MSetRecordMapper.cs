@@ -162,7 +162,8 @@ namespace MSetRepo
 		{
 			var result = new MapSectionRecord
 				(
-				new ObjectId(source.SubdivisionId),
+				DateCreatedUtc: DateTime.UtcNow,
+				SubdivisionId: new ObjectId(source.SubdivisionId),
 				BlockPosXHi: source.BlockPosition.X[0],
 				BlockPosXLo: source.BlockPosition.X[1],
 				BlockPosYHi: source.BlockPosition.Y[0],
@@ -171,7 +172,10 @@ namespace MSetRepo
 				source.Counts,
 				source.DoneFlags,
 				source.ZValues
-				);
+				)
+			{
+				LastAccessed = DateTime.UtcNow,
+			};
 
 			return result;
 		}

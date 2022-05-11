@@ -74,6 +74,9 @@ namespace MSetExplorer
 			//var report = _projectAdapter.DeleteUnusedColorBandSets();
 			//Debug.WriteLine(report);
 
+			//var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_CONN_STRING);
+			//mapSectionAdapter.AddCreatedDateToAllMapSections();
+
 			//var res = MessageBox.Show("FixAll complete, stop application?", "done", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
 			//if (res == MessageBoxResult.Yes)
 			//{

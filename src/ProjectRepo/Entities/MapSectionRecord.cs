@@ -1,5 +1,7 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MSS.Types.MSet;
+using System;
 
 namespace ProjectRepo.Entities
 {
@@ -7,6 +9,7 @@ namespace ProjectRepo.Entities
 	/// Record used to store the data found in a MapSectionResponse
 	/// </summary>
 	public record MapSectionRecord(
+		DateTime DateCreatedUtc,
 		ObjectId SubdivisionId,
 		long BlockPosXHi,
 		long BlockPosXLo,
@@ -16,6 +19,13 @@ namespace ProjectRepo.Entities
 		int[] Counts,
 		bool[] DoneFlags,
 		double[] ZValues
-	) : RecordBase();
+		)
+	{
+		[BsonId]
+		[BsonRepresentation(BsonType.ObjectId)]
+		public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
 
+		public DateTime LastSavedUtc { get; set; }
+		public DateTime LastAccessed { get; set; }
+	}
 }

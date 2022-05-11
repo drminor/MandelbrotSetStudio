@@ -87,13 +87,20 @@ namespace MSetExplorer
 
 		public ColorBandSet ColorBandSet => _colorBandSet;
 
-		public void SetColorBandSet(ColorBandSet value, bool isPreview)
+		public void SetColorBandSet(ColorBandSet value, bool updateDisplay)
 		{
 			if (value != _colorBandSet)
 			{
-				Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}. IsPreview = {isPreview}");
+				Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
 
-				if (isPreview && CurrentJob != null)
+				if (CurrentJob is null)
+				{
+					// Take the value given, as is. Without a current job, we cannot adjust the iterations.
+					_colorBandSet = value;
+					_colorMap = new ColorMap(value);
+					_colorMap.UseEscapeVelocities = _useEscapeVelocities;
+				}
+				else
 				{
 					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MapCalcSettings.TargetIterations);
 
@@ -101,14 +108,15 @@ namespace MSetExplorer
 					_colorMap = new ColorMap(adjustedColorBandSet);
 					_colorMap.UseEscapeVelocities = _useEscapeVelocities;
 
-					HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+					if (updateDisplay)
+					{
+						HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+					}	
 				}
-				else
-				{
-					_colorBandSet = value;
-					_colorMap = new ColorMap(value);
-					_colorMap.UseEscapeVelocities = _useEscapeVelocities;
-				}
+			}
+			else
+			{
+				Debug.WriteLine($"The MapDisplay is NOT processing a new ColorMap, the new value is the same as the existing value. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
 			}
 		}
 

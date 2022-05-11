@@ -156,28 +156,28 @@ namespace MSS.Types.MSet
 			return result;
 		}
 
-		public void InsertAfter(Job job)
-		{
-			DoWithWriteLock(() =>
-			{
-				job.IsPreferredChild = true;
-				UpdateSiblings(job);
+		//public void InsertAfter(Job job)
+		//{
+		//	DoWithWriteLock(() =>
+		//	{
+		//		job.IsPreferredChild = true;
+		//		UpdateSiblings(job);
 
-				_jobsCollection.Add(job);
+		//		_jobsCollection.Add(job);
 
-				_jobsPointer = _jobsCollection.Count - 1;
-			});
-		}
+		//		_jobsPointer = _jobsCollection.Count - 1;
+		//	});
+		//}
 
-		private void UpdateSiblings(Job newParent)
-		{
-			var siblings = _jobsCollection.Where(x => x.ParentJobId == newParent.ParentJobId);
+		//private void UpdateSiblings(Job newParent)
+		//{
+		//	var siblings = _jobsCollection.Where(x => x.ParentJobId == newParent.ParentJobId);
 
-			foreach (var job in siblings)
-			{
-				job.ParentJobId = newParent.Id;
-			}
-		}
+		//	foreach (var job in siblings)
+		//	{
+		//		job.ParentJobId = newParent.Id;
+		//	}
+		//}
 
 		public void Push(Job job)
 		{
@@ -201,6 +201,12 @@ namespace MSS.Types.MSet
 			foreach(var job in siblings)
 			{
 				job.IsPreferredChild = false;
+
+				var childJobs = _jobsCollection.Where(c => c.ParentJobId == job.Id);
+				foreach(var childJob in childJobs)
+				{
+					childJob.ParentJobId = newSibling.Id;
+				}
 			}
 		}
 
@@ -248,6 +254,10 @@ namespace MSS.Types.MSet
 				if (!(parentJobId is null))
 				{
 					var result = TryFindByJobId(parentJobId.Value, out job);
+					if (job != null && !job.IsPreferredChild)
+					{
+						job = GetPreferredSibling(job);
+					}
 					return result;
 				}
 				else
@@ -376,7 +386,7 @@ namespace MSS.Types.MSet
 
 		private bool TryGetPreferredChildJob(Job job, [MaybeNullWhen(false)] out Job childJob)
 		{
-			var startingJob = GetOriginalJob(job);
+			var startingJob = GetPreferredSibling(job);
 			childJob = _jobsCollection.FirstOrDefault(x => x.ParentJobId == startingJob.Id && x.IsPreferredChild);
 
 			var result = childJob != null;
@@ -385,14 +395,14 @@ namespace MSS.Types.MSet
 
 		/// <summary>
 		/// Finds the child job of the given parentJob that is marked as IsPreferred.
-		/// If the current node has a TransformType of CanvasSizeUpdate, then it's parent is used as the current node instead.
+		/// If the current node is not the preferred child, then the preferred sibling is used as the current node instead.
 		/// </summary>
 		/// <param name="job"></param>
 		/// <param name="childJobIndex">If successful, the index of the most recent child job of the given parentJob</param>
 		/// <returns>True if there is any child of the specified job.</returns>
 		private bool TryGetPreferredChildJobIndex(Job job, out int childJobIndex)
 		{
-			var startingJob = GetOriginalJob(job);
+			var startingJob = GetPreferredSibling(job);
 
 			childJobIndex = _jobsCollection.Select((value, index) => new { value, index })
 				.Where(pair => pair.value.ParentJobId == startingJob.Id && pair.value.IsPreferredChild)
@@ -405,14 +415,14 @@ namespace MSS.Types.MSet
 
 		/// <summary>
 		/// Finds the child job of the given parentJob that has a TransformType of CanvasSizeUpdate.
-		/// If the current node has a TransformType of CanvasSizeUpdate, then it's parent is used as the current node instead.
+		/// If the current node is not the preferred child, then the preferred sibling is used as the current node instead.
 		/// </summary>
 		/// <param name="job"></param>
 		/// <param name="childJob">If successful, the preferred child job of the given job</param>
 		/// <returns>True if there is any child of the specified job.</returns>
 		private bool TryGetCanvasSizeUpdateChildJob(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job childJob)
 		{
-			var startingJob = GetOriginalJob(job);
+			var startingJob = GetPreferredSibling(job);
 			childJob = _jobsCollection.FirstOrDefault(x => x.ParentJobId == startingJob.Id && x.TransformType == TransformType.CanvasSizeUpdate && x.CanvasSizeInBlocks == canvasSizeInBlocks);
 			var result = childJob != null;
 
@@ -438,16 +448,8 @@ namespace MSS.Types.MSet
 		/// <returns>True if there is any child of the specified job.</returns>
 		private bool HasLatestChildJob(Job job)
 		{
-			bool result;
-
-			if (job.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				result = _jobsCollection.Any(x => x.ParentJobId == job.ParentJobId && x.IsPreferredChild);
-			}
-			else
-			{
-				result = _jobsCollection.Any(x => x.ParentJobId == job.Id && x.IsPreferredChild);
-			}
+			var startingJob = GetPreferredSibling(job);
+			var result = _jobsCollection.Any(x => x.ParentJobId == startingJob.Id && x.IsPreferredChild);
 
 			return result;
 		}
@@ -459,11 +461,25 @@ namespace MSS.Types.MSet
 		}
 
 		/// <summary>
-		/// If the job given has a transform type of CanvasSizeUpdate, return the job's parent, otherwise returns the given job.
+		/// If the job given has is not the preferred child, return child of the job's parent this is the preferred child.
 		/// </summary>
 		/// <param name="job"></param>
 		/// <returns></returns>
-		public Job GetOriginalJob(Job job) => job.TransformType == TransformType.CanvasSizeUpdate ? GetParentJob(job) : job;
+		public Job GetPreferredSibling(Job job)
+		{
+			Job preferredChild;
+
+			if (!job.IsPreferredChild /*&& job.ParentJobId.HasValue*/)
+			{
+				preferredChild = _jobsCollection.FirstOrDefault(x => x.ParentJobId == job.ParentJobId && x.IsPreferredChild) ?? job;
+			}
+			else
+			{
+				preferredChild = job;
+			}
+
+			return preferredChild;
+		}
 
 		private Job GetParentJob(Job job)
 		{

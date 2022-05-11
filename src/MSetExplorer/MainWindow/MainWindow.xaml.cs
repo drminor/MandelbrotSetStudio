@@ -63,6 +63,8 @@ namespace MSetExplorer
 			//LoadNewProject();
 			//ShowMapCoordsEditor();
 			//ShowCoordsEditor();
+
+			//SpIdxTest();
 		}
 
 		private void MainWindow_Closing(object sender, CancelEventArgs e)
@@ -347,7 +349,7 @@ namespace MSetExplorer
 
 				if (_vm.MapDisplayViewModel.ColorBandSet != projectsColorBandSet)
 				{
-					_vm.MapDisplayViewModel.SetColorBandSet(projectsColorBandSet, isPreview: true);
+					_vm.MapDisplayViewModel.SetColorBandSet(projectsColorBandSet, updateDisplay: true);
 				}
 			}
 		}
@@ -699,6 +701,23 @@ namespace MSetExplorer
 		//	//}
 		//}
 
+		private void SpIdxTest()
+		{
+			var sPoint = new RPoint(-5, -4, -1);
+			var l1 = new MapSectionSpIdxItem(sPoint);
+			Debug.WriteLine(l1);
+
+
+			var nPoint = new RPoint(l1.XValues[6].Value * 8, l1.YValues[6].Value * 8, sPoint.Exponent - 3); ;
+			var l2 = new MapSectionSpIdxItem(nPoint);
+			Debug.WriteLine(l2);
+
+			nPoint = new RPoint(l2.XValues[6].Value * 8, l2.YValues[2].Value * 8, nPoint.Exponent - 3);
+
+			var l3 = new MapSectionSpIdxItem(nPoint);
+			Debug.WriteLine(l3);
+		}
+
 
 		#endregion
 
@@ -774,7 +793,7 @@ namespace MSetExplorer
 				var id = vm.SelectedColorBandSetInfo?.Id;
 				if (id != null && vm.TryImportColorBandSet(id.Value, out var colorBandSet))
 				{
-					_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, isPreview: true);
+					_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
 				}
 			}
 		}

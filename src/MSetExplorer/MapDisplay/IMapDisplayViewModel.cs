@@ -22,7 +22,7 @@ namespace MSetExplorer
 
 		ColorBandSet ColorBandSet { get; }
 
-		void SetColorBandSet(ColorBandSet value, bool isPreview);
+		void SetColorBandSet(ColorBandSet value, bool updateDisplay);
 
 		bool UseEscapeVelocities { get; set; }
 

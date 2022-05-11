@@ -110,7 +110,7 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
-				MapDisplayViewModel.SetColorBandSet(MapProjectViewModel.CurrentColorBandSet, isPreview: false);
+				MapDisplayViewModel.SetColorBandSet(MapProjectViewModel.CurrentColorBandSet, updateDisplay: true);
 			}
 		}
 
@@ -174,7 +174,7 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				Debug.WriteLine($"MainWindow got a CBS preview with Id = {colorBandSet.Id}");
-				MapDisplayViewModel.SetColorBandSet(colorBandSet, isPreview: true);
+				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
 			}
 			else
 			{

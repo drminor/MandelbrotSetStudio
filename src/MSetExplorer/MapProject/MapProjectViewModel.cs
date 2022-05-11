@@ -140,6 +140,7 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
+			job.ProjectId = CurrentProject.Id;
 		}
 
 		public bool ProjectOpen(string projectName)
@@ -224,9 +225,21 @@ namespace MSetExplorer
 			}
 
 			var lastSaved = CurrentProject.LastSavedUtc;
-			var deleteCnt = _projectAdapter.DeleteMapSectionsSince(lastSaved);
+			if (! _projectAdapter.TryGetProject(CurrentProject.Id, out var _))
+			{
+				lastSaved = CurrentProject.DateCreated;
+			}
 
-			return deleteCnt;
+			if (lastSaved - DateTime.MinValue < TimeSpan.FromDays(5))
+			{
+				return 0;
+			}
+			else
+			{
+				var deleteCnt = _projectAdapter.DeleteMapSectionsSince(lastSaved);
+
+				return deleteCnt;
+			}
 		}
 
 		#endregion
@@ -271,7 +284,10 @@ namespace MSetExplorer
 				return;
 			}
 
-			Debug.Assert(CurrentColorBandSet.Id == CurrentJob.ColorBandSetId, "The project's CurrentColorBandSet and CurrentJob's ColorBandSet is out of sync.");
+			if (CurrentColorBandSet.Id != CurrentJob.ColorBandSetId)
+			{
+				Debug.WriteLine($"The project's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands. The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
+			}
 
 			if (CurrentColorBandSet == colorBandSet)
 			{
@@ -279,25 +295,19 @@ namespace MSetExplorer
 				return;
 			}
 
-			var isTargetIterationsBeingUpdated = colorBandSet.HighCutoff != CurrentProject.CurrentColorBandSet.HighCutoff;
-			Debug.WriteLine($"MapProjectViewModel is having its ColorBandSet value updated. Old = {CurrentProject.CurrentColorBandSet.Id}, New = {colorBandSet.Id} Iterations Updated = {isTargetIterationsBeingUpdated}.");
+			var targetIterations = colorBandSet.HighCutoff;
 
-			if (isTargetIterationsBeingUpdated)
+			if (targetIterations != CurrentJob.MapCalcSettings.TargetIterations)
 			{
-				var targetIterations = colorBandSet.HighCutoff;
-
-				if (CurrentJob.MapCalcSettings.TargetIterations != targetIterations)
-				{
-					var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentJob.MapCalcSettings.RequestsPerJob);
-					LoadMap(CurrentProject, CurrentJob, colorBandSet.Id, CurrentJob.Coords, mapCalcSettings, TransformType.IterationUpdate, null);
-				}
+				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
+				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentJob.MapCalcSettings.RequestsPerJob);
+				LoadMap(CurrentProject, CurrentJob, colorBandSet.Id, CurrentJob.Coords, mapCalcSettings, TransformType.IterationUpdate, null);
 			}
 			else
 			{
+				Debug.WriteLine($"MapProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {CurrentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				CurrentProject.CurrentColorBandSet = colorBandSet;
 			}
-
-			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 		}
 
 		public RRectangle? GetUpdatedCoords(TransformType transformType, RectangleInt newArea)
@@ -412,9 +422,20 @@ namespace MSetExplorer
 			}
 		}
 
-		private void LoadMap(Project project, Job? currentJob, ObjectId colorBandSetId, RRectangle coords, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		private void LoadMap(Project project, Job currentJob, ObjectId colorBandSetId, RRectangle coords, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
-			var job = MapJobHelper.BuildJob(currentJob?.Id, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
+			ObjectId? parentJobId;
+			if (transformType == TransformType.IterationUpdate)
+			{
+				// Make the new job be a sibling of the current job, instead of a child
+				parentJobId = currentJob.ParentJobId ?? currentJob?.Id;
+			}
+			else
+			{
+				parentJobId = currentJob.Id;
+			}
+
+			var job = MapJobHelper.BuildJob(parentJobId, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -436,7 +457,7 @@ namespace MSetExplorer
 			}
 
 			// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
-			var origJob = project.GetOriginalJob(job);
+			var origJob = project.GetPreferredSibling(job);
 
 			if (origJob.CanvasSizeInBlocks == newCanvasSizeInBlocks)
 			{

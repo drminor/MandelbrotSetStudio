@@ -79,7 +79,12 @@ namespace MSetRepo
 			return result;
 		}
 
+		//public void AddCreatedDateToAllMapSections()
+		//{
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
+		//	mapSectionReaderWriter.AddCreatedDateToAllRecords();
+		//}
 
 	}
 }

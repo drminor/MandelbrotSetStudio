@@ -233,15 +233,16 @@ namespace MSS.Types.MSet
 
 		public void Add(Job job)
 		{
-			if (job.TransformType == TransformType.IterationUpdate)
-			{
-				_jobsCollection.InsertAfter(job);
-			}
-			else
-			{
-				_jobsCollection.Push(job);
-			}
+			//if (job.TransformType == TransformType.IterationUpdate)
+			//{
+			//	_jobsCollection.InsertAfter(job);
+			//}
+			//else
+			//{
+			//	_jobsCollection.Push(job);
+			//}
 
+			_jobsCollection.Push(job);
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
@@ -301,7 +302,7 @@ namespace MSS.Types.MSet
 			return _jobsCollection.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out matchingProxy);
 		}
 
-		public Job GetOriginalJob(Job job) => _jobsCollection.GetOriginalJob(job);
+		public Job GetPreferredSibling(Job job) => _jobsCollection.GetPreferredSibling(job);
 
 		#endregion
 
