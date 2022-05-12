@@ -62,23 +62,6 @@ namespace MEngineDataContracts
 			return result;
 		}
 
-		public void UpdateDoneFlags()
-		{
-			if (Counts == null)
-			{
-				throw new InvalidOperationException("Cannot UpdateDoneFlags if the Counts is null.");
-			}
-
-			if (Counts.Length != BlockSize.NumberOfCells)
-			{
-				throw new InvalidOperationException("Error while UpdateDoneFlags. The size of the Counts array does not match the BlockSize.");
-			}
-
-			int target = MapCalcSettings.TargetIterations;
-
-			DoneFlags = Counts.Select(x => x >= target).ToArray();
-		}
-
 		public override string ToString()
 		{
 			var bVals = BigIntegerHelper.FromLongs(BlockPosition.GetValues());

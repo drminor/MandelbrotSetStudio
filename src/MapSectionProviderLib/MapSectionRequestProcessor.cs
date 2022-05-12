@@ -191,55 +191,77 @@ namespace MapSectionProviderLib
 
 		private async Task<MapSectionResponse> FetchOrQueueForGenerationAsync(MapSecWorkReqType mapSectionWorkItem, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
 		{
-			MapSectionResponse result;
-
 			if (CheckForMatchingAndAddToPending(mapSectionWorkItem))
 			{
 				// Don't have response now, but have added this request to another request that is in process.
-				result = null;
+				return null;
 			}
-			else
-			{
-				var mapSectionResponse = await FetchAsync(mapSectionWorkItem);
 
-				if (mapSectionResponse != null && mapSectionResponse.MapCalcSettings.TargetIterations >= mapSectionWorkItem.Request.MapCalcSettings.TargetIterations)
+			var mapSectionResponse = await FetchAsync(mapSectionWorkItem);
+
+			if (mapSectionResponse == null)
+			{
+				QueueForGeneration(mapSectionWorkItem, mapSectionGeneratorProcessor);
+				return null;
+			}
+
+			var requestedIterations = mapSectionWorkItem.Request.MapCalcSettings.TargetIterations;
+			if (mapSectionResponse.MapCalcSettings.TargetIterations >= requestedIterations)
+			{
+				mapSectionWorkItem.Request.FoundInRepo = true;
+				return mapSectionResponse;
+			}
+
+			if (mapSectionResponse.Counts != null)
+			{
+				if (IsResponseComplete(mapSectionResponse, requestedIterations))
 				{
-					result = mapSectionResponse;
 					mapSectionWorkItem.Request.FoundInRepo = true;
+					return mapSectionResponse;
 				}
 				else
 				{
-					if (mapSectionResponse != null && mapSectionResponse.Counts != null)
-					{
-						// Requesting the MapSectionGenerator to do more calculations.
+					// Update the request with the values (in progress) retreived from the repository.
+					var request = mapSectionWorkItem.Request;
+					request.MapSectionId = mapSectionResponse.MapSectionId;
+					request.IncreasingIterations = true;
+					request.Counts = mapSectionResponse.Counts;
+					request.DoneFlags = mapSectionResponse.DoneFlags;
+					request.ZValues = mapSectionResponse.ZValues;
 
-						var request = mapSectionWorkItem.Request;
-						request.MapSectionId = mapSectionResponse.MapSectionId;
-						request.IncreasingIterations = true;
-						request.Counts = mapSectionResponse.Counts;
-						request.DoneFlags = mapSectionResponse.DoneFlags;
-						request.ZValues = mapSectionResponse.ZValues;
-						mapSectionWorkItem.Request.UpdateDoneFlags();
-					}
-					else
-					{
-						// Sending initial request, as is.
-					}
+					QueueForGeneration(mapSectionWorkItem, mapSectionGeneratorProcessor);
+					return null;
+				}
+			}
+			else
+			{
+				QueueForGeneration(mapSectionWorkItem, mapSectionGeneratorProcessor);
+				return null;
+			}
+		}
 
-					lock (_pendingRequestsLock)
-					{
-						_pendingRequests.Add(mapSectionWorkItem);
-					}
-
-					var generatorWorkItem = new MapSecWorkGenType(mapSectionWorkItem.JobId, mapSectionWorkItem, HandleGeneratedResponse);
-					_mapSectionGeneratorProcessor.AddWork(generatorWorkItem);
-
-					// Don't have a response now, but will receive call back when generated.
-					result = null;
+		private bool IsResponseComplete(MapSectionResponse mapSectionResponse, int targetIterations)
+		{
+			for (var i = 0; i < mapSectionResponse.Counts.Length; i++)
+			{
+				if (!mapSectionResponse.DoneFlags[i] && mapSectionResponse.Counts[i] < targetIterations)
+				{
+					return false;
 				}
 			}
 
-			return result;
+			return true;
+		}
+
+		private void QueueForGeneration(MapSecWorkReqType mapSectionWorkItem, MapSectionGeneratorProcessor mapSectionGeneratorProcessor)
+		{
+			lock (_pendingRequestsLock)
+			{
+				_pendingRequests.Add(mapSectionWorkItem);
+			}
+
+			var generatorWorkItem = new MapSecWorkGenType(mapSectionWorkItem.JobId, mapSectionWorkItem, HandleGeneratedResponse);
+			mapSectionGeneratorProcessor.AddWork(generatorWorkItem);
 		}
 
 		private bool CheckForMatchingAndAddToPending(MapSecWorkReqType mapSectionWorkItem)

@@ -278,8 +278,6 @@ namespace MSetExplorer
 
 			if (newJob != null)
 			{
-				//SetColorBandSet(newJob.ColorBandSetId, refresh: false);
-
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
 					ReuseLoadedSections(newJob);
