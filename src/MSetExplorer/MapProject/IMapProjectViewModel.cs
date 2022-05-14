@@ -25,8 +25,8 @@ namespace MSetExplorer
 		ColorBandSet CurrentColorBandSet { get; }
 
 		// Job Methods
-		bool GoBack();
-		bool GoForward();
+		bool GoBack(bool skipPanJobs);
+		bool GoForward(bool skipPanJobs);
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);

@@ -300,6 +300,8 @@ namespace MSetExplorer
 
 			if (targetIterations != CurrentJob.MapCalcSettings.TargetIterations)
 			{
+				CurrentProject.Add(colorBandSet);
+
 				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentJob.MapCalcSettings.RequestsPerJob);
 				LoadMap(CurrentProject, CurrentJob, colorBandSet.Id, CurrentJob.Coords, mapCalcSettings, TransformType.IterationUpdate, null);
@@ -308,6 +310,8 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"MapProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {CurrentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				CurrentProject.CurrentColorBandSet = colorBandSet;
+
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 			}
 		}
 
@@ -334,7 +338,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool GoBack()
+		public bool GoBack(bool skipPanJobs)
 		{
 			if (CurrentProject == null)
 			{
@@ -343,7 +347,7 @@ namespace MSetExplorer
 
 			var cbsBefore = CurrentColorBandSet;
 
-			if (CurrentProject.GoBack())
+			if (CurrentProject.GoBack(skipPanJobs))
 			{
 				var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, _blockSize);
 				if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
@@ -368,7 +372,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool GoForward()
+		public bool GoForward(bool skipPanJobs)
 		{
 			if (CurrentProject == null)
 			{
@@ -377,7 +381,7 @@ namespace MSetExplorer
 
 			var cbsBefore = CurrentColorBandSet;
 
-			if (CurrentProject.GoForward())
+			if (CurrentProject.GoForward(skipPanJobs))
 			{
 				var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, _blockSize);
 				if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)

@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Windows;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -96,17 +98,12 @@ namespace MSetExplorer
 				if (CurrentJob is null)
 				{
 					// Take the value given, as is. Without a current job, we cannot adjust the iterations.
-					_colorBandSet = value;
-					_colorMap = new ColorMap(value);
-					_colorMap.UseEscapeVelocities = _useEscapeVelocities;
+					LoadColorMap(value);
 				}
 				else
 				{
 					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MapCalcSettings.TargetIterations);
-
-					_colorBandSet = adjustedColorBandSet;
-					_colorMap = new ColorMap(adjustedColorBandSet);
-					_colorMap.UseEscapeVelocities = _useEscapeVelocities;
+					LoadColorMap(adjustedColorBandSet);
 
 					if (updateDisplay)
 					{
@@ -116,7 +113,25 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLine($"The MapDisplay is NOT processing a new ColorMap, the new value is the same as the existing value. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
+				if (updateDisplay)
+				{
+					Debug.WriteLine($"The MapDisplay is processing the existing ColorMap event though the new value is the same as the existing value. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
+					HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+				}
+				else
+				{
+					Debug.WriteLine($"The MapDisplay is NOT processing a new ColorMap, the new value is the same as the existing value. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
+				}
+			}
+		}
+
+		private void LoadColorMap(ColorBandSet colorBandSet)
+		{
+			if (ColorBandSet != colorBandSet)
+			{
+				_colorBandSet = colorBandSet;
+				_colorMap = new ColorMap(colorBandSet);
+				_colorMap.UseEscapeVelocities = _useEscapeVelocities;
 			}
 		}
 
@@ -240,10 +255,13 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void HandleColorMapChanged(ColorMap colorMap, bool useEscapeVelocities)
+		private void HandleColorMapChanged(ColorMap? colorMap, bool useEscapeVelocities)
 		{
-			var loadedSections = GetMapSectionsSnapShot();
-			DrawSections(loadedSections, colorMap, useEscapeVelocities);
+			if (colorMap != null)
+			{
+				var loadedSections = GetMapSectionsSnapShot();
+				DrawSections(loadedSections, colorMap, useEscapeVelocities);
+			}
 		}
 
 		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap? colorMap, bool useEscapVelocities)
@@ -313,43 +331,51 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 
-			_screenSectionCollection.Shift(shiftAmount);
+			if (cntRemoved > 0 || cntUpdated > 0)
+			{
+				//MessageBox.Show("The old sections have been removed.");
+
+				_screenSectionCollection.Shift(shiftAmount);
+			}
 
 			if (CanvasControlOffset != curJob.CanvasControlOffset)
 			{
 				CanvasControlOffset = curJob.CanvasControlOffset;
-				RedrawSections(MapSections);
+				//MessageBox.Show("The CanvasControlOffset has been updated.");
 			}
+
+			_screenSectionCollection.HideScreenSections();
+			//MessageBox.Show("The Screen Sections have been hidden.");
+
+			RedrawSections(MapSections);
+			//MessageBox.Show("The Screen Sections have been redrawn.");
 
 			if (sectionsToLoad.Count > 0)
 			{
+				//MessageBox.Show("Just before requesting new Screen Sections.");
 				_mapLoaderManager.Push(curJob, sectionsToLoad);
 			}
 		}
 
 		private bool ShouldAttemptToReuseLoadedSections(Job? previousJob, Job newJob)
 		{
-			// TODO: ShouldAttemptToReuseLoadedSections is always returning false -- restore previous functionality.
-			return false;
+			if (MapSections.Count == 0 || previousJob is null)
+			{
+				return false;
+			}
 
-			//if (MapSections.Count == 0 /*|| newJob.ParentJobId is null*/ || newJob.TransformType == TransformType.CanvasSizeUpdate || newJob.TransformType == TransformType.ColorMapUpdate)
-			//{
-			//	return false;
-			//}
+			if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
+			{
+				return false;
+			}
 
-			//if (previousJob is null)
-			//{
-			//	return false;
-			//}
-			//else if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
-			//{
-			//	return false;
-			//}
-			//else
-			//{
-			//	var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
-			//	return jobSpd == previousSpd;
-			//}
+			if (newJob.ColorBandSetId != previousJob.ColorBandSetId)
+			{
+				return false;
+			}
+
+			var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
+			return jobSpd == previousSpd;
 		}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)
@@ -370,42 +396,46 @@ namespace MSetExplorer
 			var cntRetained = 0;
 			var cntUpdated = 0;
 
-			IList<MapSection> toBeRemoved = new List<MapSection>();
-			shiftAmount = new VectorInt();
+			var toBeRemoved = new List<MapSection>();
+			var differences = new Dictionary<VectorInt, int>();
 
 			foreach (var mapSection in sectionsPresent)
 			{
 				var matchingNewSection = newSet.FirstOrDefault(x => x == mapSection);
-				if(matchingNewSection == null)
+				if (matchingNewSection == null)
 				{
 					toBeRemoved.Add(mapSection);
 					cntRemoved++;
 				}
 				else
 				{
+					cntRetained++;
 					var diff = matchingNewSection.BlockPosition.Sub(mapSection.BlockPosition);
+					if (diff.X != 0 || diff.Y != 0)
+					{
+						cntUpdated++;
+						mapSection.BlockPosition = matchingNewSection.BlockPosition;
 
-					if (cntRetained == 0)
-					{
-						shiftAmount = diff;
-					}
-					else
-					{
-						if (shiftAmount != diff)
+						if (differences.TryGetValue(diff, out var value))
 						{
-							throw new InvalidOperationException($"The MapSection Collection contains inconsistent block positions. Compare: {diff} and {shiftAmount}.");
-							//Debug.WriteLine("The MapSection Collection contains inconsistent block positions.");
+							differences[diff] = value + 1;
+						}
+						else
+						{
+							differences.Add(diff, 1);
 						}
 					}
-
-					cntRetained++;
-
-					if (mapSection.BlockPosition != matchingNewSection.BlockPosition)
-					{
-						mapSection.BlockPosition = matchingNewSection.BlockPosition;
-						cntUpdated++;
-					}
 				}
+			}
+
+			if (differences.Count > 0)
+			{
+				var mostPrevalentCnt = differences.Max(x => x.Value);
+				shiftAmount = differences.First(x => x.Value == mostPrevalentCnt).Key;
+			}
+			else
+			{
+				shiftAmount = new VectorInt();
 			}
 
 			foreach(var mapSection in toBeRemoved)
@@ -413,6 +443,7 @@ namespace MSetExplorer
 				if (!sectionsPresent.Remove(mapSection))
 				{
 					Debug.WriteLine($"Could not remove MapSection: {mapSection}.");
+					//Thread.Sleep(300);
 				}
 			}
 
@@ -430,6 +461,7 @@ namespace MSetExplorer
 			{
 				//Debug.WriteLine($"About to redraw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
 				_screenSectionCollection.Redraw(mapSection.BlockPosition);
+				//Thread.Sleep(200);
 			}
 		}
 

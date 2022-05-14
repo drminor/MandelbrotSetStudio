@@ -171,6 +171,28 @@ namespace MSS.Types.MSet
 			});
 		}
 
+		public bool Add(ColorBandSet colorBandSet)
+		{
+			_colorsLock.EnterUpgradeableReadLock();
+
+			try
+			{
+				if (!Contains(colorBandSet))
+				{
+					DoWithWriteLock(() => { _colorsCollection.Add(colorBandSet); });
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			finally
+			{
+				_colorsLock.ExitUpgradeableReadLock();
+			}
+		}
+
 		public void Clear()
 		{
 			DoWithWriteLock(() =>
@@ -363,11 +385,7 @@ namespace MSS.Types.MSet
 
 		public bool Contains(ColorBandSet colorBandSet)
 		{
-			var x = _colorsCollection.Contains(colorBandSet);
-			var result = _colorsCollection.Any(x => x.Id == colorBandSet.Id);
-
-			Debug.Assert(x == result, "The colorsCollection is not using the correct IEqualityComparer.");
-
+			var result = _colorsCollection.Contains(colorBandSet);
 			return result;
 		}
 

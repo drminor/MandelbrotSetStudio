@@ -197,7 +197,8 @@ namespace MSetExplorer
 				return;
 			}
 
-			_ = _vm.MapProjectViewModel.GoBack();
+			var skipPanJobs = !( Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
+			_ = _vm.MapProjectViewModel.GoBack(skipPanJobs);
 		}
 
 		private void GoForward_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -211,7 +212,9 @@ namespace MSetExplorer
 			{
 				return;
 			}
-			_ = _vm.MapProjectViewModel.GoForward();
+
+			var skipPanJobs = !(Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
+			_ = _vm.MapProjectViewModel.GoForward(skipPanJobs);
 		}
 
 		#endregion

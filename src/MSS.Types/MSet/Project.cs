@@ -233,25 +233,30 @@ namespace MSS.Types.MSet
 
 		public void Add(Job job)
 		{
-			//if (job.TransformType == TransformType.IterationUpdate)
-			//{
-			//	_jobsCollection.InsertAfter(job);
-			//}
-			//else
-			//{
-			//	_jobsCollection.Push(job);
-			//}
-
 			_jobsCollection.Push(job);
+
+			if (!_colorBandSetCollection.MoveCurrentTo(job.ColorBandSetId))
+			{
+				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
+			}
+
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
-		public bool GoBack()
+		public void Add(ColorBandSet colorBandSet)
+		{
+			if (_colorBandSetCollection.Add(colorBandSet))
+			{
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
+
+		public bool GoBack(bool skipPanJobs)
 		{
 			_stateLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (_jobsCollection.TryGetPreviousJob(out var job))
+				if (_jobsCollection.TryGetPreviousJob(skipPanJobs, out var job))
 				{
 					//int idx = index;
 					DoWithWriteLock(() =>
@@ -272,12 +277,12 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public bool GoForward()
+		public bool GoForward(bool skipPanJobs)
 		{
 			_stateLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (_jobsCollection.TryGetNextJob(out var job))
+				if (_jobsCollection.TryGetNextJob(skipPanJobs, out var job))
 				{
 					DoWithWriteLock(() =>
 					{

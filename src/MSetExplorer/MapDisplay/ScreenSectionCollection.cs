@@ -11,6 +11,7 @@ namespace MSetExplorer
 	internal class ScreenSectionCollection : IScreenSectionCollection
 	{
 		private static readonly SizeInt INITIAL_SCREEN_SECTION_ALLOCATION = new(14);
+
 		private readonly SizeInt _blockSize;
 		private readonly int _maxYPtr;
 		private readonly GeometryDrawing _foundationRectangle;
@@ -34,7 +35,7 @@ namespace MSetExplorer
 
 			_screenSections = new ScreenSection[maxSizeInBlocks.Height, maxSizeInBlocks.Width];
 
-			_canvasSizeInBlocks = maxSizeInBlocks; // INITIAL_SCREEN_SECTION_ALLOCATION;
+			_canvasSizeInBlocks = maxSizeInBlocks;
 			Debug.WriteLine($"Allocating {_canvasSizeInBlocks} ScreenSections.");
 			BuildScreenSections(_screenSections, _canvasSizeInBlocks, _blockSize, DrawingGroup);
 		}
@@ -44,7 +45,7 @@ namespace MSetExplorer
 		private SizeInt GetMaxSizeInBlocks()
 		{
 			// TODO: Get the size in pixels of the largest display on the host.
-			var result = new SizeInt(30);
+			var result = INITIAL_SCREEN_SECTION_ALLOCATION;
 			return result;
 		}
 
@@ -58,8 +59,8 @@ namespace MSetExplorer
 			set
 			{
 				var newVal = new SizeInt(
-					width: Math.Min(value.Width, 30),
-					height: Math.Min(value.Height, 30)
+					width: Math.Min(value.Width, INITIAL_SCREEN_SECTION_ALLOCATION.Width),
+					height: Math.Min(value.Height, INITIAL_SCREEN_SECTION_ALLOCATION.Height)
 					);
 
 				if (_canvasSizeInBlocks != newVal)
@@ -77,8 +78,6 @@ namespace MSetExplorer
 
 		public void HideScreenSections()
 		{
-			//_drawingGroup.Children.Clear();
-
 			foreach (var blockPosition in ScreenTypeHelper.Points(_canvasSizeInBlocks))
 			{
 				var screenSection = GetScreenSection(blockPosition, out var _);
@@ -124,10 +123,15 @@ namespace MSetExplorer
 			if (screenSection != null)
 			{
 				var result = screenSection.Hide();
+				if (!result)
+				{
+					Debug.WriteLine("Cannot hide an inactive mapSection.");
+				}
 				return result;
 			}
 			else
 			{
+				Debug.WriteLine("Cannot hide a null mapSection.");
 				return false;
 			}
 		}
@@ -146,7 +150,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			HideScreenSections();
+			//HideScreenSections();
 
 			var oldStartIndex = _startIndex;
 			_startIndex = IndexAdd(_startIndex, amount.Invert());
@@ -171,11 +175,20 @@ namespace MSetExplorer
 		{
 			index = index.Add(amount).Mod(_canvasSizeInBlocks);
 
-			var result = new VectorInt
-				(
-					index.X += index.X < 0 ? _canvasSizeInBlocks.Width : 0,
-					index.Y += index.Y < 0 ? _canvasSizeInBlocks.Height : 0
-				);
+			int nx = index.X;
+			int ny = index.Y;
+
+			if (nx < 0)
+			{
+				nx += _canvasSizeInBlocks.Width; 
+			}
+
+			if (ny < 0)
+			{
+				ny += _canvasSizeInBlocks.Height;
+			}
+
+			var result = new VectorInt(nx, ny);
 
 			return result;
 		}

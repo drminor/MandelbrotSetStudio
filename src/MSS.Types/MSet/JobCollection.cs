@@ -244,26 +244,53 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public bool TryGetPreviousJob([MaybeNullWhen(false)] out Job job)
+		public bool TryGetPreviousJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job)
 		{
 			_jobsLock.EnterUpgradeableReadLock();
 			try
 			{
-				var parentJobId = CurrentJob?.ParentJobId;
-
-				if (!(parentJobId is null))
+				if (!TryGetJobFromStack(_jobsPointer, out job))
 				{
-					var result = TryFindByJobId(parentJobId.Value, out job);
-					if (job != null && !job.IsPreferredChild)
+					return false;
+				}
+
+				if (skipPanJobs)
+				{
+					if (AnySiblingHaveTransformTypeOf(job, TransformType.Pan))
 					{
-						job = GetPreferredSibling(job);
+						// Move to first "non-pan" job.
+						while (true)
+						{
+							if (!TryGetPreviousJobInStack(job, out var previousJob))
+							{
+								// return the first job.
+								return true;
+							}
+
+							job = previousJob;
+							if (!AnySiblingHaveTransformTypeOf(job, TransformType.Pan))
+							{
+								break;
+							}
+						}
 					}
-					return result;
+
+					if (TryGetPreviousJobInStack(job, out var previousJob2))
+					{
+						// return the job just prior to the found "non-pan" job.
+						job = previousJob2;
+						return true;
+					}
+					else
+					{
+						// return the first job.
+						return true;
+					}
 				}
 				else
 				{
-					job = null;
-					return false;
+					var result = TryGetPreviousJobInStack(job, out job);
+					return result;
 				}
 			}
 			finally
@@ -293,13 +320,58 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public bool TryGetNextJob([MaybeNullWhen(false)] out Job job)
+		public bool TryGetNextJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job)
 		{
 			_jobsLock.EnterUpgradeableReadLock();
 			try
 			{
-				var result = TryGetNextJobInStack(_jobsPointer, out job);
-				return result;
+				if (!TryGetJobFromStack(_jobsPointer, out job))
+				{
+					return false;
+				}
+				
+				if (skipPanJobs)
+				{
+					// Find next with TransformType != Pan
+					while(true)
+					{
+						if (!TryGetNextJobInStack(job, out var nextJob))
+						{
+							return false;
+						}
+
+						job = nextJob;
+						if (!AnySiblingHaveTransformTypeOf(job, TransformType.Pan))
+						{
+							break;
+						}
+					}
+
+					// Find next with TransformType != Pan or if none, take the last job
+					while (true)
+					{
+						if (!TryGetNextJobInStack(job, out var nextjob))
+						{
+							// return the last child job
+							return true;
+						}
+
+						if (!AnySiblingHaveTransformTypeOf(nextjob, TransformType.Pan))
+						{
+							// return the job just before this "non-pan" job.
+							return true;
+						}
+						else
+						{
+							job = nextjob;
+						}
+					}
+				}
+				else
+				{
+					var result = TryGetNextJobInStack(job, out job);
+					return result;
+				}
 			}
 			finally
 			{
@@ -338,21 +410,46 @@ namespace MSS.Types.MSet
 
 		#region Collection Management 
 
-		private bool TryGetNextJobInStack(int jobIndex, [MaybeNullWhen(false)] out Job nextJob)
+		private bool TryGetNextJobInStack(Job job, [MaybeNullWhen(false)] out Job nextJob)
 		{
-			if (TryGetJobFromStack(jobIndex, out var job))
+			if (TryGetPreferredChildJob(job, out var childJob))
 			{
-				if (TryGetPreferredChildJob(job, out var childJob))
-				{
-					nextJob = childJob;
-					return true;
-				}
+				nextJob = childJob;
+				return true;
 			}
-
-			nextJob = null;
-			return false;
+			else
+			{
+				nextJob = null;
+				return false;
+			}
 		}
 
+		private bool TryGetPreviousJobInStack(Job job, [MaybeNullWhen(false)] out Job previousJob)
+		{
+			var parentJobId = job.ParentJobId;
+
+			if (parentJobId != null)
+			{
+				if (TryFindByJobId(parentJobId.Value, out previousJob))
+				{
+					if (!previousJob.IsPreferredChild)
+					{
+						previousJob = GetPreferredSibling(previousJob);
+					}
+					return true;
+				}
+				else
+				{
+					previousJob = null;
+					return false;
+				}
+			}
+			else
+			{
+				previousJob = null;
+				return false;
+			}
+		}
 
 		private bool TryGetNextJobIndexInStack(int jobIndex, out int nextJobIndex)
 		{
@@ -390,6 +487,12 @@ namespace MSS.Types.MSet
 			childJob = _jobsCollection.FirstOrDefault(x => x.ParentJobId == startingJob.Id && x.IsPreferredChild);
 
 			var result = childJob != null;
+			return result;
+		}
+
+		private bool AnySiblingHaveTransformTypeOf(Job job, TransformType transformType)
+		{
+			var result = _jobsCollection.Any(x => x.ParentJobId == job.ParentJobId && x.TransformType == transformType);
 			return result;
 		}
 

@@ -183,6 +183,7 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"MainWindow got a CBS update with Id = {colorBandSet.Id}");
+				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
 				MapProjectViewModel.UpdateColorBandSet(colorBandSet);
 			}
 		}

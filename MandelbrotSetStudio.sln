@@ -8,6 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\BlockOffsetsForInitialSet.txt = Notes\BlockOffsetsForInitialSet.txt
 		Notes\ColorMapFromHistogramData.txt = Notes\ColorMapFromHistogramData.txt
 		Notes\Formula.txt = Notes\Formula.txt
+		Notes\JobNavigationWithShiftKey.txt = Notes\JobNavigationWithShiftKey.txt
 		Notes\MapViewerMapInfoDivisionStrategy.txt = Notes\MapViewerMapInfoDivisionStrategy.txt
 		MongoDb_Schemas.txt = MongoDb_Schemas.txt
 		Notes\Normalize_Sample_Math.txt = Notes\Normalize_Sample_Math.txt

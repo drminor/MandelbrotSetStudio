@@ -484,11 +484,6 @@ namespace MSetExplorer
 
 		public void ApplyChanges(int? newTargetIterations = null)
 		{
-			// Create a new ColorBandSet with a new id, having the same values of this instance.
-
-
-			//var newSet = _currentColorBandSet.CreateNewCopy();
-
 			ColorBandSet newSet;
 
 			if (newTargetIterations.HasValue)
