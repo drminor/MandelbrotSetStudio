@@ -15,6 +15,9 @@ namespace MSS.Types
 		public RPoint() : this(0, 0, 0)
 		{ }
 
+		public RPoint(RVector rVector) : this(rVector.Values, rVector.Exponent)
+		{ }
+
 		public RPoint(BigInteger[] values, int exponent) : this(values[0], values[1], exponent)
 		{ }
 

@@ -7,8 +7,6 @@ namespace MSetExplorer
 {
 	public class CoordsEditorViewModel : ViewModelBase
 	{
-		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
-
 		private const int _numDigitsForDisplayExtent = 4;
 
 		private readonly SizeInt _displaySize;
@@ -46,9 +44,7 @@ namespace MSetExplorer
 
 			_zoom = RValueHelper.GetResolution(_coords.Width);
 
-			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(_coords, _displaySize, _blockSize, projectAdapter);
+			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(_coords, _displaySize, _blockSize);
 			MapCoordsDetail2 = new MapCoordsDetailViewModel(jobAreaInfo);
 		}
 

@@ -315,7 +315,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public RRectangle? GetUpdatedCoords(TransformType transformType, RectangleInt newArea)
+		public JobAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt newArea)
 		{
 			if (CurrentProject == null)
 			{
@@ -326,15 +326,16 @@ namespace MSetExplorer
 
 			if (newArea == new RectangleInt())
 			{
-				return curJob.Coords;
+				return new JobAreaInfo(curJob.Coords, curJob.Subdivision.SamplePointDelta, curJob.MapBlockOffset, curJob.CanvasControlOffset, curJob.CanvasSizeInBlocks);
 			}
 			else
 			{
 				var position = curJob.Coords.Position;
 				var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 				var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+ 				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, CanvasSize, _blockSize);
 
-				return coords;
+				return jobAreaInfo;
 			}
 		}
 

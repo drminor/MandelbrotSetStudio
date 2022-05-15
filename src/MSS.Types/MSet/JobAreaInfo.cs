@@ -3,15 +3,15 @@
 	public class JobAreaInfo
 	{
 		public RRectangle Coords { get; init; }
-		public Subdivision Subdivision { get; init; }
+		public RSize SamplePointDelta { get; init; }
 		public BigVector MapBlockOffset { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
 		public SizeInt CanvasSizeInBlocks { get; init; }
 
-		public JobAreaInfo(RRectangle coords, Subdivision subdivision, BigVector mapBlockOffset, VectorInt canvasControlOffset, SizeInt canvasSizeInBlocks)
+		public JobAreaInfo(RRectangle coords, RSize samplePointDelta, BigVector mapBlockOffset, VectorInt canvasControlOffset, SizeInt canvasSizeInBlocks)
 		{
-			Subdivision = subdivision;
 			Coords = coords;
+			SamplePointDelta = samplePointDelta;
 			CanvasSizeInBlocks = canvasSizeInBlocks;
 			MapBlockOffset = mapBlockOffset;
 			CanvasControlOffset = canvasControlOffset;

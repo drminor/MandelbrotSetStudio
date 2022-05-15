@@ -21,17 +21,20 @@ namespace MSetExplorer
 				throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {transformType}. Only jobs with TransformType = 'none' be parentless.");
 			}
 
-			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, blockSize, projectAdapter);
+			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, blockSize);
+
+			// Get a subdivision record from the database.
+			var subdivision = GetSubdivision(jobAreaInfo.SamplePointDelta, blockSize, projectAdapter);
 
 			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
 			var jobName = GetJobName(transformType);
 
-			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, colorBandSetId, jobAreaInfo, mapCalcSettings);
+			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, colorBandSetId, jobAreaInfo, subdivision, mapCalcSettings);
 
 			return job;
 		}
 
-		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize, ProjectAdapter projectAdapter)
+		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
@@ -49,13 +52,11 @@ namespace MSetExplorer
 			//var samplePointDeltaD = RMapHelper.GetSamplePointDiag(coords, displaySize, out var newDCoords);
 			//RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, mSetInfo.Coords, coordsWork, newDCoords);
 
-			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(samplePointDelta, blockSize, projectAdapter);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, subdivision.Position, samplePointDelta, blockSize, out var canvasControlOffset);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
-			var result = new JobAreaInfo(updatedCoords, subdivision, mapBlockOffset, canvasControlOffset, canvasSizeInBlocks);
+			var result = new JobAreaInfo(updatedCoords, samplePointDelta, mapBlockOffset, canvasControlOffset, canvasSizeInBlocks);
 
 			return result;
 		}

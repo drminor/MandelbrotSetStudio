@@ -89,6 +89,8 @@ namespace MSetExplorer
 
 		public ColorBandSet ColorBandSet => _colorBandSet;
 
+		private bool _cmLoadedButNotHandled = false;
+
 		public void SetColorBandSet(ColorBandSet value, bool updateDisplay)
 		{
 			if (value != _colorBandSet)
@@ -99,6 +101,7 @@ namespace MSetExplorer
 				{
 					// Take the value given, as is. Without a current job, we cannot adjust the iterations.
 					LoadColorMap(value);
+					_cmLoadedButNotHandled = true;
 				}
 				else
 				{
@@ -108,7 +111,13 @@ namespace MSetExplorer
 					if (updateDisplay)
 					{
 						HandleColorMapChanged(_colorMap, _useEscapeVelocities);
-					}	
+						_cmLoadedButNotHandled = false;
+					}
+					else
+					{
+						_cmLoadedButNotHandled = true;
+					}
+
 				}
 			}
 			else
@@ -116,7 +125,9 @@ namespace MSetExplorer
 				if (updateDisplay)
 				{
 					Debug.WriteLine($"The MapDisplay is processing the existing ColorMap event though the new value is the same as the existing value. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
+					Debug.Assert(_cmLoadedButNotHandled, "HandleColorMapChanged is perhaps being called unneccessarily.");
 					HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+					_cmLoadedButNotHandled = false;
 				}
 				else
 				{
@@ -184,7 +195,14 @@ namespace MSetExplorer
 		public VectorInt CanvasControlOffset
 		{ 
 			get => _canvasControlOffset;
-			set { _canvasControlOffset = value; OnPropertyChanged(); }
+			set
+			{
+				if (value != _canvasControlOffset)
+				{
+					_canvasControlOffset = value;
+					OnPropertyChanged();
+				}
+			}
 		}
 
 		public ObservableCollection<MapSection> MapSections { get; }
@@ -324,35 +342,31 @@ namespace MSetExplorer
 			var sectionsToLoad = GetNotYetLoaded(sectionsRequired, loadedSections);
 
 			// Remove from the screen sections that are not part of the updated view.
-			var uResults = UpdateMapSectionCollection(MapSections, sectionsRequired, out var shiftAmount);
-			var cntRemoved = uResults.Item1;
-			var cntRetained = uResults.Item2;
-			var cntUpdated = uResults.Item3;
+			var shiftAmount = UpdateMapSectionCollection(MapSections, sectionsRequired, out var cntRemoved, out var cntRetained, out var cntUpdated);
 
 			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 
-			if (cntRemoved > 0 || cntUpdated > 0)
+			if (!shiftAmount.EqualsZero)
 			{
-				//MessageBox.Show("The old sections have been removed.");
-
 				_screenSectionCollection.Shift(shiftAmount);
-			}
 
-			if (CanvasControlOffset != curJob.CanvasControlOffset)
+				if (CanvasControlOffset != curJob.CanvasControlOffset)
+				{
+					CanvasControlOffset = curJob.CanvasControlOffset;
+				}
+
+				RedrawSections(MapSections);
+			}
+			else
 			{
-				CanvasControlOffset = curJob.CanvasControlOffset;
-				//MessageBox.Show("The CanvasControlOffset has been updated.");
+				if (CanvasControlOffset != curJob.CanvasControlOffset)
+				{
+					CanvasControlOffset = curJob.CanvasControlOffset;
+				}
 			}
-
-			_screenSectionCollection.HideScreenSections();
-			//MessageBox.Show("The Screen Sections have been hidden.");
-
-			RedrawSections(MapSections);
-			//MessageBox.Show("The Screen Sections have been redrawn.");
 
 			if (sectionsToLoad.Count > 0)
 			{
-				//MessageBox.Show("Just before requesting new Screen Sections.");
 				_mapLoaderManager.Push(curJob, sectionsToLoad);
 			}
 		}
@@ -390,11 +404,11 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Tuple<int, int, int> UpdateMapSectionCollection(ObservableCollection<MapSection> sectionsPresent, IList<MapSection> newSet, out VectorInt shiftAmount)
+		private VectorInt UpdateMapSectionCollection(ObservableCollection<MapSection> sectionsPresent, IList<MapSection> newSet, out int cntRemoved, out int cntRetained, out int cntUpdated)
 		{
-			var cntRemoved = 0;
-			var cntRetained = 0;
-			var cntUpdated = 0;
+			cntRemoved = 0;
+			cntRetained = 0;
+			cntUpdated = 0;
 
 			var toBeRemoved = new List<MapSection>();
 			var differences = new Dictionary<VectorInt, int>();
@@ -428,6 +442,7 @@ namespace MSetExplorer
 				}
 			}
 
+			VectorInt shiftAmount;
 			if (differences.Count > 0)
 			{
 				var mostPrevalentCnt = differences.Max(x => x.Value);
@@ -447,7 +462,7 @@ namespace MSetExplorer
 				}
 			}
 
-			return new Tuple<int, int, int>(cntRemoved, cntRetained, cntUpdated);
+			return shiftAmount;
 		}
 
 		private IReadOnlyList<MapSection> GetMapSectionsSnapShot()
@@ -457,6 +472,9 @@ namespace MSetExplorer
 
 		private void RedrawSections(IEnumerable<MapSection> source)
 		{
+			Debug.WriteLine($"Hiding all screen sections and redrawing {source.Count()}.");
+			_screenSectionCollection.HideScreenSections();
+
 			foreach (var mapSection in source)
 			{
 				//Debug.WriteLine($"About to redraw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");

@@ -219,12 +219,10 @@ namespace MSS.Common
 
 		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
-		public static BigVector GetMapBlockOffset(ref RRectangle mapCoords, RPoint subdivisionOrigin, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
+		public static BigVector GetMapBlockOffset(ref RRectangle mapCoords, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
-			var coords = RNormalizer.Normalize(mapCoords, subdivisionOrigin, out var destinationOrigin);
-			var mapOrigin = coords.Position;
-
-			var distance = mapOrigin.Diff(destinationOrigin);
+			var mapOrigin = mapCoords.Position;
+			var distance = new RVector(mapOrigin);
 			//Debug.WriteLine($"Our origin is {mapCoords.Position}, repo origin is {destinationOrigin}, for a distance of {distance}.");
 
 			BigVector result;
@@ -238,10 +236,7 @@ namespace MSS.Common
 				var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta, out var newDistance);
 				//Debug.WriteLine($"The offset in samplePoints is {offsetInSamplePoints}.");
 
-				var nrmDestOrigin = RNormalizer.Normalize(destinationOrigin, newDistance, out var nrmNewDistance);
-
-				var newMapOrigin = nrmDestOrigin.Translate(nrmNewDistance);
-
+				var newMapOrigin = new RPoint(newDistance);
 				mapCoords = CombinePosAndSize(newMapOrigin, mapCoords.Size);
 
 				result = GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
@@ -260,9 +255,7 @@ namespace MSS.Common
 			var offsetInSamplePoints = nrmDistance.Divide(nrmSamplePointDelta);
 
 			var rOffset = new RVector(offsetInSamplePoints);
-
 			newDistance = rOffset.Scale(nrmSamplePointDelta);
-
 			newDistance = Reducer.Reduce(newDistance);
 
 			return offsetInSamplePoints;

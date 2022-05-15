@@ -49,7 +49,7 @@ namespace MSetExplorer
 				mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 				
 
-				mapCoordsView1.DataContext = _vm.MSetInfoViewModel;
+				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 				mapCoordsView1.KeyDown += MapCoordsView1_KeyDown;
 				mapCoordsView1.PreviewKeyDown += MapCoordsView1_PreviewKeyDown;
 
@@ -133,7 +133,7 @@ namespace MSetExplorer
 		{
 			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
 			{
-				var coords = _vm.MSetInfoViewModel.Coords;
+				var coords = _vm.MapCoordsViewModel.Coords;
 				Clipboard.SetText(coords.ToString());
 				e.Handled = true;
 			}
@@ -143,7 +143,7 @@ namespace MSetExplorer
 		{
 			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
 			{
-				var coords = _vm.MSetInfoViewModel.Coords;
+				var coords = _vm.MapCoordsViewModel.Coords;
 				Clipboard.SetText(coords.ToString());
 			}
 		}

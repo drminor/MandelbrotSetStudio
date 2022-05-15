@@ -13,6 +13,9 @@ namespace MSS.Types
 		public RVector() : this(0, 0, 0)
 		{ }
 
+		public RVector(RPoint rPoint) : this(rPoint.Values, rPoint.Exponent)
+		{ }
+
 		public RVector(BigVector bigVector) : this(bigVector.Values, 0)
 		{ }
 

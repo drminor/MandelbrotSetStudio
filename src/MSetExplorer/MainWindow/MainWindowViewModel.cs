@@ -32,14 +32,14 @@ namespace MSetExplorer
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
 			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
 
-			ColorBandSetViewModel = colorBandViewModel;
-			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
-			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
+			MapCoordsViewModel = new MapCoordsViewModel();
 
 			MapCalcSettingsViewModel = new MapCalcSettingsViewModel();
 			MapCalcSettingsViewModel.MapSettingsUpdateRequested += MapCalcSettingsViewModel_MapSettingsUpdateRequested;
 
-			MSetInfoViewModel = new MSetInfoViewModel();
+			ColorBandSetViewModel = colorBandViewModel;
+			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
+			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 		}
 
 		#endregion
@@ -48,11 +48,10 @@ namespace MSetExplorer
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 		public IMapProjectViewModel MapProjectViewModel { get; }
-		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 
+		public MapCoordsViewModel MapCoordsViewModel { get; } 
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
-
-		public MSetInfoViewModel MSetInfoViewModel { get; }
+		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 
 		public int DispWidth
 		{
@@ -108,7 +107,7 @@ namespace MSetExplorer
 				var curJob = MapProjectViewModel.CurrentJob;
 
 				MapCalcSettingsViewModel.CurrentJob = curJob;
-				MSetInfoViewModel.CurrentJob = curJob;
+				MapCoordsViewModel.CurrentJob = curJob;
 				MapDisplayViewModel.CurrentJob = curJob;
 			}
 
@@ -148,10 +147,10 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				// Calculate new Coords for preview
-				var newCoords = MapProjectViewModel.GetUpdatedCoords(e.TransformType, e.NewArea);
-				if (newCoords != null)
+				var jobAreaInfo = MapProjectViewModel.GetUpdatedJobAreaInfo(e.TransformType, e.NewArea);
+				if (jobAreaInfo != null)
 				{
-					MSetInfoViewModel.Coords = newCoords;
+					MapCoordsViewModel.Preview(jobAreaInfo);
 				}
 			}
 			else

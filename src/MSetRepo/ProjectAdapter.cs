@@ -476,10 +476,10 @@ namespace MSetRepo
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 				colorBandSetId: jobRecord.ColorBandSetId,
 				coords: coords,
-				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord),
 				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset),
 				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset),
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
+				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord),
 				mapCalcSettings: jobRecord.MSetInfo.MapCalcSettings,
 				lastSaved: jobRecord.LastSaved
 				);

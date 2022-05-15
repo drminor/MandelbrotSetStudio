@@ -325,7 +325,7 @@ namespace MSetExplorer
 			{
 				if (BlockPosition != position)
 				{
-					Debug.WriteLine($"Redrawing image for {position}, the previous value is {BlockPosition}. SI = {screenIndex}.");
+					//Debug.WriteLine($"Redrawing image for {position}, the previous value is {BlockPosition}. SI = {screenIndex}.");
 
 					BlockPosition = position;
 					Active = false;

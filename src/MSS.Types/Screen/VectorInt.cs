@@ -67,6 +67,8 @@ namespace MSS.Types
 			return new VectorInt(X / dividend.Width, Y / dividend.Height);
 		}
 
+		public bool EqualsZero => X == 0 && Y == 0;
+
 		public override string? ToString()
 		{
 			return $"x:{X}, y:{Y}";
@@ -76,7 +78,7 @@ namespace MSS.Types
 
 		public override bool Equals(object? obj)
 		{
-			return obj is VectorInt pi && Equals(pi);
+			return obj is VectorInt vectorInt && Equals(vectorInt);
 		}
 
 		public bool Equals(VectorInt other)

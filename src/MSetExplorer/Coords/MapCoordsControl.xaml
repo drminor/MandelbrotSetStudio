@@ -5,9 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
              mc:Ignorable="d" 
-             d:DesignWidth="290">
-
-    <!--d:DesignHeight="250" d:DesignWidth="250"-->
+             d:DesignWidth="290" d:DesignHeight="200">
     <Grid>
 
         <Grid.RowDefinitions>
@@ -19,7 +17,7 @@
             <Grid  Margin="5">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="42" />
-                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="120" />
                     <ColumnDefinition Width="59" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
@@ -30,25 +28,32 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <TextBlock Text="Start X:" Grid.Row="0" Grid.Column="0" Margin="0,5" Height="18" />
-                <TextBox x:Name="txtStartX" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" VerticalAlignment="Center" Text="{Binding StartingX}"/>
+                <TextBox x:Name="txtStartX" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" VerticalAlignment="Center" Text="{Binding X1}"/>
 
                 <TextBlock Text="End X:" Grid.Row="1" Margin="0,5" Height="18" />
-                <TextBox x:Name="txtEndX" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" VerticalAlignment="Center" Text="{Binding EndingX}"/>
+                <TextBox x:Name="txtEndX" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" VerticalAlignment="Center" Text="{Binding X2}"/>
 
                 <TextBlock Text="Start Y:" Grid.Row="2" Margin="0,5" Height="18" />
-                <TextBox x:Name="txtStartY" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" VerticalAlignment="Center" Text="{Binding StartingY}"/>
+                <TextBox x:Name="txtStartY" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" VerticalAlignment="Center" Text="{Binding Y1}"/>
 
                 <TextBlock Text="End Y:" Grid.Row="3" Margin="0,5" Height="18" />
-                <TextBox x:Name="txtEndY" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" VerticalAlignment="Center" Text="{Binding EndingY}"/>
+                <TextBox x:Name="txtEndY" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" VerticalAlignment="Center" Text="{Binding Y2}"/>
 
-                <TextBlock Text="Zoom:" Grid.Row="4" Grid.Column="0" Margin="0,5" Height="18" />
-                <TextBlock x:Name="txtZoom" Grid.Row="4" Grid.Column="1" Margin="5,3" VerticalAlignment="Center" Text="{Binding Zoom, StringFormat={}{0:n0}}" />
+                <TextBlock Text="SPD:" Grid.Row="4" Grid.Column="0" Margin="0,5" Height="18" />
+                <TextBlock x:Name="txtSpd" Grid.Row="4" Grid.Column="1" Margin="5,3" VerticalAlignment="Center" Text="{Binding SamplePointDelta}" />
 
-                <TextBlock Text="Precision:" Grid.Row="4" Grid.Column="2" Margin="0,5" Height="18" />
-                <TextBlock x:Name="txtPrecision" Grid.Row="4" Grid.Column="3" Margin="5,3" VerticalAlignment="Center" Text="{Binding Precision, StringFormat={}{0:n0}}" />
+                <TextBlock Text="Exp:" Grid.Row="4" Grid.Column="2" Margin="0,5" Height="18" />
+                <TextBlock x:Name="txtSpdExp" Grid.Row="4" Grid.Column="3" Margin="5,3" VerticalAlignment="Center" Text="{Binding SamplePointDeltaExp, StringFormat={}{0:n0}}" />
+
+                <TextBlock Text="Zoom:" Grid.Row="5" Grid.Column="0" Margin="0,5" Height="18" />
+                <TextBlock x:Name="txtZoom" Grid.Row="5" Grid.Column="1" Margin="5,3" VerticalAlignment="Center" Text="{Binding Zoom, StringFormat={}{0:n0}}" />
+
+                <TextBlock Text="Precision:" Grid.Row="5" Grid.Column="2" Margin="0,5" Height="18" />
+                <TextBlock x:Name="txtPrecision" Grid.Row="5" Grid.Column="3" Margin="5,3" VerticalAlignment="Center" Text="{Binding PrecisionX, StringFormat={}{0:n0}}" />
 
 
 

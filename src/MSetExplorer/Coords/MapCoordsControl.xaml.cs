@@ -9,11 +9,11 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapCoordsControl : UserControl
 	{
-		private MSetInfoViewModel _vm;
+		private MapCoordsViewModel _vm;
 
 		public MapCoordsControl()
 		{
-			_vm = (MSetInfoViewModel)DataContext;
+			_vm = (MapCoordsViewModel)DataContext;
 			Loaded += MapCoordsControl_Loaded;
 			InitializeComponent();
 		}
@@ -27,19 +27,10 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (MSetInfoViewModel)DataContext;
-				_vm.PropertyChanged += ViewModel_PropertyChanged;
+				_vm = (MapCoordsViewModel)DataContext;
 				txtStartX.AcceptsReturn = true;
 
 				//Debug.WriteLine("The MapCoordsControl is now loaded");
-			}
-		}
-
-		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(MSetInfoViewModel.CoordsAreDirty))
-			{
-				dispSecMapCoordsCommit.Visibility = _vm.CoordsAreDirty ? Visibility.Visible : Visibility.Collapsed;
 			}
 		}
 

@@ -80,7 +80,7 @@ namespace MSS.Types
 
 		public override bool Equals(object? obj)
 		{
-			return obj is PointInt pi && Equals(pi);
+			return obj is PointInt pointInt && Equals(pointInt);
 		}
 
 		public bool Equals(PointInt other)

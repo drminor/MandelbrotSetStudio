@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace MSetExplorer
 {
@@ -9,11 +8,10 @@ namespace MSetExplorer
 
 		IMapProjectViewModel MapProjectViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
-		ColorBandSetViewModel ColorBandSetViewModel { get; }
 
+		MapCoordsViewModel MapCoordsViewModel { get; }
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
-		
-		MSetInfoViewModel MSetInfoViewModel { get; }
+		ColorBandSetViewModel ColorBandSetViewModel { get; }
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
