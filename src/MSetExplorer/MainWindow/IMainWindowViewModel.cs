@@ -10,6 +10,9 @@ namespace MSetExplorer
 		IMapProjectViewModel MapProjectViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 		ColorBandSetViewModel ColorBandSetViewModel { get; }
+
+		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
+		
 		MSetInfoViewModel MSetInfoViewModel { get; }
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);

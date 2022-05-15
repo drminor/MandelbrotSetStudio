@@ -173,6 +173,17 @@ namespace MSetExplorer
 			}
 		);
 
+		public static readonly RoutedUICommand ToggleJobTree = new RoutedUICommand(
+			text: "ToggleJobTree",
+			name: "ToggleJobTree",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.F5
+				)
+			}
+		);
+
 		#endregion
 	}
 }

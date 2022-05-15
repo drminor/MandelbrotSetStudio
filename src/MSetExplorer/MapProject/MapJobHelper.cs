@@ -100,17 +100,6 @@ namespace MSetExplorer
 
 		#region Build Initial MSetInfo
 
-		//public static MSetInfo BuildInitialMSetInfo(int maxIterations)
-		//{
-		//	//var coords = RMapConstants.ENTIRE_SET_RECTANGLE;
-		//	var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
-
-		//	var mapCalcSettings = new MapCalcSettings(targetIterations: maxIterations, requestsPerJob: 100);
-		//	var result = new MSetInfo(coords, mapCalcSettings);
-
-		//	return result;
-		//}
-
 		public static ColorBandSet BuildInitialColorBandSet(int maxIterations)
 		{
 			var colorBands = new List<ColorBand>

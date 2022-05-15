@@ -10,11 +10,11 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapCalcSettingsControl : UserControl
 	{
-		private MSetInfoViewModel _vm;
+		private MapCalcSettingsViewModel _vm;
 
 		public MapCalcSettingsControl()
 		{
-			_vm = (MSetInfoViewModel)DataContext;
+			_vm = (MapCalcSettingsViewModel)DataContext;
 			Loaded += MapCalcSettingsControl_Loaded;
 			InitializeComponent();
 		}
@@ -28,7 +28,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (MSetInfoViewModel)DataContext;
+				_vm = (MapCalcSettingsViewModel)DataContext;
 
 				txtTargetIterations.LostFocus += TxtTargetInterations_LostFocus;
 

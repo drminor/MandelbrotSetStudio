@@ -46,12 +46,13 @@ namespace MSetExplorer
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 
-				mapCalcSettingsView1.DataContext = _vm.MSetInfoViewModel;
+				mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
+				
+
 				mapCoordsView1.DataContext = _vm.MSetInfoViewModel;
 				mapCoordsView1.KeyDown += MapCoordsView1_KeyDown;
 				mapCoordsView1.PreviewKeyDown += MapCoordsView1_PreviewKeyDown;
 
-				_vm.MSetInfoViewModel.MapSettingsUpdateRequested += MSetInfoViewModel_MapSettingsUpdateRequested;
 
 				Debug.WriteLine("The MainWindow is now loaded");
 			}
@@ -89,15 +90,6 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
-		{
-			if (e.MapSettingsUpdateType == MapSettingsUpdateType.NewProject)
-			{
-				Debug.WriteLine($"MainWindow ViewModel received request to start a new project.");
-				LoadNewProject(e.Coords, new MapCalcSettings(e.TargetIterations, e.RequestsPerJob));
-			}
-		}
-
 		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoBack))
@@ -128,7 +120,7 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(ColorBandSetViewModel.AverageMapSectionTargetIteration))
 			{
-				_vm.MSetInfoViewModel.TargetIterationsAvailable = _vm.ColorBandSetViewModel.AverageMapSectionTargetIteration;
+				_vm.MapCalcSettingsViewModel.TargetIterationsAvailable = _vm.ColorBandSetViewModel.AverageMapSectionTargetIteration;
 			}
 
 			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
@@ -179,6 +171,43 @@ namespace MSetExplorer
 
 			_vm.MapProjectViewModel.ProjectClose();
 			Close();
+		}
+
+		// Show Hide Job Tree
+		private void JobTree_Checked(object sender, RoutedEventArgs e)
+		{
+			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
+			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+			Width = showJobTreeControl ? 1905 : 1495;
+		}
+
+		private void JobTree_Unchecked(object sender, RoutedEventArgs e)
+		{
+			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
+			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+			Width = showJobTreeControl ? 1905 : 1495;
+		}
+
+		private void ToggleJobTreeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = true;
+		}
+
+		private void ToggleJobTreeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
+			showJobTreeControl = !showJobTreeControl;
+
+			mnuItem_JobTreeWindow.IsChecked = showJobTreeControl;
+			mnuItem_CoordsWindow.IsChecked = !showJobTreeControl;
+			mnuItemCalcWindow.IsChecked = !showJobTreeControl;
+			mnuItemColorBandWindow.IsChecked = !showJobTreeControl;
+
+			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+			colRight.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+			colLeft.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+
+			//Width = showJobTreeControl ? 1493 : 1495;
 		}
 
 		#endregion
@@ -489,7 +518,6 @@ namespace MSetExplorer
 		private void LoadNewProject(RRectangle coords, MapCalcSettings mapCalcSettings)
 		{
 			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-			//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, isPreview: false);
 			_vm.MapProjectViewModel.ProjectStartNew(coords, colorBandSet, mapCalcSettings);
 		}
 
@@ -882,6 +910,16 @@ namespace MSetExplorer
 			ChangesSaved,
 			NotSavingChanges,
 			SaveCancelled,
+		}
+
+		private void MenuItem_Checked(object sender, RoutedEventArgs e)
+		{
+
+		}
+
+		private void MenuItem_Unchecked(object sender, RoutedEventArgs e)
+		{
+
 		}
 	}
 }

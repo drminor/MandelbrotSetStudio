@@ -18,8 +18,6 @@ namespace MSetExplorer
 		private bool _coordsAreDirty;
 		private long _zoom;
 
-
-
 		#region Constructor
 
 		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize, bool allowEdits) : this(new SingleCoordEditorViewModel[] {

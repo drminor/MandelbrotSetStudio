@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="MainWindow" Width="1520" Height="1105">
+        Title="MainWindow" Width="1495" Height="1095">
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
@@ -14,7 +14,7 @@
 
         <CommandBinding Command="local:CustomCommands.JobGoBack" CanExecute="GoBack_CanExecute" Executed="GoBack_Executed" />
         <CommandBinding Command="local:CustomCommands.JobGoForward" CanExecute="GoForward_CanExecute" Executed="GoForward_Executed" />
-        
+
         <CommandBinding Command="local:CustomCommands.PanLeft" CanExecute="Pan_CanExecute" Executed="PanLeft_Executed" />
         <CommandBinding Command="local:CustomCommands.PanUp" CanExecute="Pan_CanExecute" Executed="PanUp_Executed" />
         <CommandBinding Command="local:CustomCommands.PanRight" CanExecute="Pan_CanExecute" Executed="PanRight_Executed" />
@@ -23,6 +23,9 @@
         <CommandBinding Command="local:CustomCommands.ColorsOpen" CanExecute="ColorsOpenCommand_CanExecute" Executed="ColorsOpenCommand_Executed" />
         <!--<CommandBinding Command="local:CustomCommands.ColorsSave" CanExecute="ColorsSaveCommand_CanExecute" Executed="ColorsSaveCommand_Executed" />-->
         <CommandBinding Command="local:CustomCommands.ColorsSaveAs" CanExecute="ColorsSaveAsCommand_CanExecute" Executed="ColorsSaveAsCommand_Executed" />
+
+        <CommandBinding Command="local:CustomCommands.ToggleJobTree" CanExecute="ToggleJobTreeCommand_CanExecute" Executed="ToggleJobTreeCommand_Executed" />
+
 
     </Window.CommandBindings>
 
@@ -34,11 +37,12 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <Menu Grid.Row="0" Grid.ColumnSpan="3" Height="25">
-            
+        <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="25">
+
             <MenuItem Header="_Project">
                 <MenuItem Header="_New" Click="NewButton_Click"/>
                 <MenuItem Header="_Open" Click="OpenButton_Click"/>
@@ -58,17 +62,18 @@
                 <MenuItem Header="_Use EscapeVelocities" IsCheckable="True" x:Name="mnuItem_UseEscapeVelocities" Checked="UseEscapeVelocities_Checked" Unchecked="UseEscapeVelocities_Unchecked" IsChecked="True"/>
                 <MenuItem Header="Use _RealTimePreview" IsCheckable="True" x:Name="mnuItem_UseRealTimePreview" Checked="UseRealTimePreview_Checked" Unchecked="UseRealTimePreview_Unchecked" IsChecked="False"/>
             </MenuItem>
-            
+
             <MenuItem Header="_Windows">
                 <MenuItem Header="Pan Buttons" IsCheckable="True"/>
                 <MenuItem Header="Nav Buttons" IsCheckable="True"/>
                 <MenuItem Header="Screen Size Buttons" IsCheckable="True"/>
                 <Separator/>
-                <MenuItem Header="Coordinates" IsCheckable="True"/>
-                <MenuItem Header="Calculation Parameters" IsCheckable="True"/>
-                <MenuItem Header="Color Band Editor" IsCheckable="True"/>
+                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Header="Calculation" x:Name="mnuItemCalcWindow" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Header="Color Band Editor" x:Name="mnuItemColorBandWindow" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Unchecked" IsChecked="False"/>
             </MenuItem>
-            
+
             <MenuItem Header="_Map">
                 <MenuItem Header="Move _Back" Command="local:CustomCommands.JobGoBack" />
                 <MenuItem Header="Move _Forward" Command="local:CustomCommands.JobGoForward" />
@@ -81,7 +86,7 @@
 
         </Menu>
 
-        <Grid Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="colLeft">
+        <Grid Grid.Row="1" Grid.Column="0" x:Name="colLeft">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -134,11 +139,11 @@
 
         </Grid>
 
-        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="colCenter">
+        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" x:Name="colCenter">
             <local:MapDisplayControl x:Name="mapDisplay1"></local:MapDisplayControl>
         </Border>
 
-        <Grid Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="colRight">
+        <Grid Grid.Row="1" Grid.Column="2" x:Name="colRight">
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -162,6 +167,13 @@
             </Border>
 
         </Grid>
-        
+
+        <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Collapsed">
+            <Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" >
+                <local:JobTreeControl/>
+            </Border>
+            
+        </Grid>
+
     </Grid>
 </Window>

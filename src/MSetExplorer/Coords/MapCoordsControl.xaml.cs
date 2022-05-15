@@ -56,7 +56,7 @@ namespace MSetExplorer
 
 			////_  = _vm.Test(txtStartY.Text);
 
-			_vm.SaveCoords();
+			//_vm.SaveCoords();
 
 		}
 	}

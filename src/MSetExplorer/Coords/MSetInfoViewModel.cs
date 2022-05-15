@@ -21,17 +21,11 @@ namespace MSetExplorer
 		private RRectangle _coords;
 		private bool _coordsAreDirty;
 
-		private int _targetIterations;
-		private double _targetIterationsAvailable;
-		private int _requestsPerJob;
-
 		public MSetInfoViewModel()
 		{
 			_currentJob = new Job();
 
 			_coords = _currentJob.Coords;
-			_targetIterations = _currentJob.MapCalcSettings.TargetIterations;
-			_requestsPerJob = _currentJob.MapCalcSettings.RequestsPerJob;
 
 			_startingX = RValueHelper.ConvertToString(_coords.Left);
 			_endingX = RValueHelper.ConvertToString(_coords.Right);
@@ -40,8 +34,6 @@ namespace MSetExplorer
 		}
 
 		#region Public Properties
-
-		public event EventHandler<MapSettingsUpdateRequestedEventArgs>? MapSettingsUpdateRequested;
 
 		public Job CurrentJob
 		{
@@ -52,10 +44,6 @@ namespace MSetExplorer
 				{
 					_currentJob = value;
 					Coords = value.Coords.Clone();
-					TargetIterations = value.MapCalcSettings.TargetIterations;
-					RequestsPerJob = value.MapCalcSettings.RequestsPerJob;
-					
-
 					CoordsAreDirty = false;
 				}
 			}
@@ -204,77 +192,38 @@ namespace MSetExplorer
 			}
 		}
 
-		public int TargetIterations
-		{
-			get => _targetIterations;
-			set
-			{
-				if (value != _targetIterations)
-				{
-					_targetIterations = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public int RequestsPerJob
-		{
-			get => _requestsPerJob;
-			set
-			{
-				if (value != _requestsPerJob)
-				{
-					_requestsPerJob = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public double TargetIterationsAvailable
-		{
-			get => _targetIterationsAvailable;
-			set
-			{
-				if (value != _targetIterationsAvailable)
-				{
-					_targetIterationsAvailable = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
 		#endregion
 
 		#region Public Methods
 
-		public void SaveCoords() 
-		{
-			// TODO: Validate new values
+		//public void SaveCoords() 
+		//{
+		//	// TODO: Validate new values
 
-			if (CurrentJob.IsEmpty)
-			{
-				if (TargetIterations == 0)
-				{
-					TargetIterations = 700;
-				}
+		//	if (CurrentJob.IsEmpty)
+		//	{
+		//		if (TargetIterations == 0)
+		//		{
+		//			TargetIterations = 700;
+		//		}
 
-				if (RequestsPerJob == 0)
-				{
-					RequestsPerJob = 100;
-				}
+		//		if (RequestsPerJob == 0)
+		//		{
+		//			RequestsPerJob = 100;
+		//		}
 
-				MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.NewProject, Coords, TargetIterations, RequestsPerJob));
-			}
-			else
-			{
-				MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.Coordinates, Coords));
-			}
-		}
+		//		MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.NewProject, Coords, TargetIterations, RequestsPerJob));
+		//	}
+		//	else
+		//	{
+		//		MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.Coordinates, Coords));
+		//	}
+		//}
 
-		public void TriggerIterationUpdate()
-		{
-			MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, TargetIterations));
-		}
+		//public void TriggerIterationUpdate()
+		//{
+		//	MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, TargetIterations));
+		//}
 
 		#endregion
 
@@ -366,16 +315,6 @@ namespace MSetExplorer
 			if (y2Updated)
 			{
 				OnPropertyChanged(nameof(EndingY));
-			}
-
-			if (TargetIterations == 0)
-			{
-				TargetIterations = 700;
-			}
-
-			if (RequestsPerJob == 0)
-			{
-				RequestsPerJob = 100;
 			}
 		}
 

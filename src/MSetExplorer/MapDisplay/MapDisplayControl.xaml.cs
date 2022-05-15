@@ -110,7 +110,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		#endregion
 
 		#region Event Handlers

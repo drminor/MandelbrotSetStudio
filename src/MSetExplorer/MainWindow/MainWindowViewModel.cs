@@ -36,8 +36,10 @@ namespace MSetExplorer
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
+			MapCalcSettingsViewModel = new MapCalcSettingsViewModel();
+			MapCalcSettingsViewModel.MapSettingsUpdateRequested += MapCalcSettingsViewModel_MapSettingsUpdateRequested;
+
 			MSetInfoViewModel = new MSetInfoViewModel();
-			MSetInfoViewModel.MapSettingsUpdateRequested += MSetInfoViewModel_MapSettingsUpdateRequested;
 		}
 
 		#endregion
@@ -47,6 +49,9 @@ namespace MSetExplorer
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 		public IMapProjectViewModel MapProjectViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
+
+		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
+
 		public MSetInfoViewModel MSetInfoViewModel { get; }
 
 		public int DispWidth
@@ -102,6 +107,7 @@ namespace MSetExplorer
 			{
 				var curJob = MapProjectViewModel.CurrentJob;
 
+				MapCalcSettingsViewModel.CurrentJob = curJob;
 				MSetInfoViewModel.CurrentJob = curJob;
 				MapDisplayViewModel.CurrentJob = curJob;
 			}
@@ -155,19 +161,12 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MSetInfoViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
+		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
 		{
 			// Update the Target Iterations
 			if (e.MapSettingsUpdateType == MapSettingsUpdateType.TargetIterations)
 			{
 				ColorBandSetViewModel.ApplyChanges(e.TargetIterations);
-			}
-
-			// Jump to new Coordinates
-			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.Coordinates)
-			{
-				Debug.WriteLine($"MainWindow ViewModel received request to update the coords.");
-				//MapProjectViewModel.UpdateMapCoordinates(e.Coords);
 			}
 		}
 
