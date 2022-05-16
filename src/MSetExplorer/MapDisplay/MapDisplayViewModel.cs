@@ -29,6 +29,7 @@ namespace MSetExplorer
 		private ColorBandSet _colorBandSet;
 		private ColorMap? _colorMap;
 		private bool _useEscapeVelocities;
+		private bool _highlightSelectedColorBand;
 
 		private SizeDbl _containerSize;
 
@@ -110,7 +111,7 @@ namespace MSetExplorer
 
 					if (updateDisplay)
 					{
-						HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+						HandleColorMapChanged(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
 						_cmLoadedButNotHandled = false;
 					}
 					else
@@ -124,9 +125,8 @@ namespace MSetExplorer
 			{
 				if (updateDisplay)
 				{
-					Debug.WriteLine($"The MapDisplay is processing the existing ColorMap event though the new value is the same as the existing value. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
-					Debug.Assert(_cmLoadedButNotHandled, "HandleColorMapChanged is perhaps being called unneccessarily.");
-					HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+					Debug.WriteLine($"The MapDisplay is processing the existing ColorMap event though the new value is the same as the existing value. Id = {value.Id}. ColorMapLoadedButNotHandled = {_cmLoadedButNotHandled}.");
+					HandleColorMapChanged(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
 					_cmLoadedButNotHandled = false;
 				}
 				else
@@ -143,6 +143,7 @@ namespace MSetExplorer
 				_colorBandSet = colorBandSet;
 				_colorMap = new ColorMap(colorBandSet);
 				_colorMap.UseEscapeVelocities = _useEscapeVelocities;
+				_colorMap.HighlightSelectedColorBand = _highlightSelectedColorBand;
 			}
 		}
 
@@ -160,7 +161,27 @@ namespace MSetExplorer
 					if (!(_colorMap is null))
 					{
 						_colorMap.UseEscapeVelocities = value;
-						HandleColorMapChanged(_colorMap, _useEscapeVelocities);
+						HandleColorMapChanged(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
+					}
+				}
+			}
+		}
+
+		public bool HighlightSelectedColorBand
+		{
+			get => _highlightSelectedColorBand;
+			set
+			{
+				if (value != _highlightSelectedColorBand)
+				{
+					var strState = value ? "On" : "Off";
+					Debug.WriteLine($"The MapDisplay is turning {strState} the Highlighting the selected ColorBand.");
+					_highlightSelectedColorBand = value;
+
+					if (!(_colorMap is null))
+					{
+						_colorMap.HighlightSelectedColorBand = value;
+						HandleColorMapChanged(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
 					}
 				}
 			}
@@ -253,7 +274,7 @@ namespace MSetExplorer
 			{
 				// Add items
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
-				DrawSections(mapSections, _colorMap, _useEscapeVelocities);
+				DrawSections(mapSections, _colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
 			}
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
 			{
@@ -273,37 +294,12 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void HandleColorMapChanged(ColorMap? colorMap, bool useEscapeVelocities)
+		private void HandleColorMapChanged(ColorMap? colorMap, bool useEscapeVelocities, bool highlightSelectedColorBand)
 		{
 			if (colorMap != null)
 			{
 				var loadedSections = GetMapSectionsSnapShot();
-				DrawSections(loadedSections, colorMap, useEscapeVelocities);
-			}
-		}
-
-		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap? colorMap, bool useEscapVelocities)
-		{
-			if (colorMap != null)
-			{
-				Debug.Assert(colorMap.UseEscapeVelocities == useEscapVelocities, "UseEscapeVelocities MisMatch on DrawSections.");
-
-				foreach (var mapSection in mapSections)
-				{
-					if (mapSection.Counts != null)
-					{
-						//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-						var pixels = _mapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
-						_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
-					}
-				}
-			}
-			else
-			{
-				foreach (var mapSection in mapSections)
-				{
-					Debug.WriteLine($"Not drawing screen section at position: {mapSection.BlockPosition}, the color map is null.");
-				}
+				DrawSections(loadedSections, colorMap, useEscapeVelocities, highlightSelectedColorBand);
 			}
 		}
 
@@ -468,6 +464,32 @@ namespace MSetExplorer
 		private IReadOnlyList<MapSection> GetMapSectionsSnapShot()
 		{
 			return new ReadOnlyCollection<MapSection>(MapSections);
+		}
+
+		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap? colorMap, bool useEscapVelocities, bool highlightSelectedColorBand)
+		{
+			if (colorMap != null)
+			{
+				Debug.Assert(colorMap.UseEscapeVelocities == useEscapVelocities, "UseEscapeVelocities MisMatch on DrawSections.");
+				Debug.Assert(colorMap.HighlightSelectedColorBand == highlightSelectedColorBand, "HighlightSelectedColorBand MisMatch on DrawSections.");
+
+				foreach (var mapSection in mapSections)
+				{
+					if (mapSection.Counts != null)
+					{
+						//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+						var pixels = _mapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
+						_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
+					}
+				}
+			}
+			else
+			{
+				foreach (var mapSection in mapSections)
+				{
+					Debug.WriteLine($"Not drawing screen section at position: {mapSection.BlockPosition}, the color map is null.");
+				}
+			}
 		}
 
 		private void RedrawSections(IEnumerable<MapSection> source)

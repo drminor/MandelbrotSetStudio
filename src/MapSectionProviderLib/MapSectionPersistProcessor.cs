@@ -3,6 +3,7 @@ using MSS.Common;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,10 +22,13 @@ namespace MapSectionProviderLib
 
 		private readonly object _queueLock = new();
 
+		private StringBuilder _sbForDiag;
+
 		#region Constructor
 
 		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter)
 		{
+			_sbForDiag = new StringBuilder();
 			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
@@ -89,10 +93,12 @@ namespace MapSectionProviderLib
 					{
 						if (mapSectionResponse.MapSectionId != null)
 						{
+							_sbForDiag.AppendLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
 						}
 						else
 						{
+							_sbForDiag.AppendLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
 							_ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
 						}
 					}
@@ -104,6 +110,7 @@ namespace MapSectionProviderLib
 				catch (Exception e)
 				{
 					Debug.WriteLine($"The persist queue got an exception: {e}.");
+					Debug.WriteLine($"The recent operations are\r\n {_sbForDiag}");
 					//throw;
 				}
 			}

@@ -326,6 +326,7 @@ namespace MSetExplorer
 
 			if (newArea == new RectangleInt())
 			{
+				Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
 				return new JobAreaInfo(curJob.Coords, curJob.Subdivision.SamplePointDelta, curJob.MapBlockOffset, curJob.CanvasControlOffset, curJob.CanvasSizeInBlocks);
 			}
 			else
@@ -333,7 +334,7 @@ namespace MSetExplorer
 				var position = curJob.Coords.Position;
 				var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 				var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
- 				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, CanvasSize, _blockSize);
+ 				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, CanvasSize, newArea, _blockSize);
 
 				return jobAreaInfo;
 			}

@@ -199,7 +199,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		public BlendVals? BlendVals { get; set; }
+		public BlendVals BlendVals { get; set; }
 
 		#endregion
 

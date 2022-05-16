@@ -200,8 +200,8 @@ namespace MSetExplorer
 
 			mnuItem_JobTreeWindow.IsChecked = showJobTreeControl;
 			mnuItem_CoordsWindow.IsChecked = !showJobTreeControl;
-			mnuItemCalcWindow.IsChecked = !showJobTreeControl;
-			mnuItemColorBandWindow.IsChecked = !showJobTreeControl;
+			mnuItem_CalcWindow.IsChecked = !showJobTreeControl;
+			mnuItem_ColorBandWindow.IsChecked = !showJobTreeControl;
 
 			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
 			colRight.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
@@ -440,6 +440,25 @@ namespace MSetExplorer
 			if (_vm != null)
 			{
 				_vm.ColorBandSetViewModel.UseRealTimePreview = useRealTimePreview;
+			}
+		}
+
+		// High Light (only) the Selected Color Band
+		private void HighlightSelected_Checked(object sender, RoutedEventArgs e)
+		{
+			var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;
+			if (_vm != null)
+			{
+				_vm.ColorBandSetViewModel.HighlightSelectedBand = highlightSelectedCb;
+			}
+		}
+
+		private void HighlightSelected_Unchecked(object sender, RoutedEventArgs e)
+		{
+			var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;
+			if (_vm != null)
+			{
+				_vm.ColorBandSetViewModel.HighlightSelectedBand = highlightSelectedCb;
 			}
 		}
 
@@ -912,14 +931,5 @@ namespace MSetExplorer
 			SaveCancelled,
 		}
 
-		private void MenuItem_Checked(object sender, RoutedEventArgs e)
-		{
-
-		}
-
-		private void MenuItem_Unchecked(object sender, RoutedEventArgs e)
-		{
-
-		}
 	}
 }

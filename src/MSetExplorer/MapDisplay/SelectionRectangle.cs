@@ -216,16 +216,14 @@ namespace MSetExplorer
 			if (e.Delta < 0)
 			{
 				// Reverse roll, zooms out.
-				//newPos = new Point(cPos.X - _pitch, cPos.Y - _pitch);
-				//newSize = new Size(cSize.Width + _pitch * 2, cSize.Height + _pitch * 2);
-				selection = Expand(SelectedPosition, SelectedSize, PITCH_TARGET);
+				//selection = Expand(SelectedPosition, SelectedSize, PITCH_TARGET);
+				selection = Expand(SelectedPosition, SelectedSize, _pitch);
 			}
 			else if (e.Delta > 0 && cSize.Width >= _pitch * 4 && cSize.Height >= _pitch * 4)
 			{
 				// Forward roll, zooms in.
-				//newPos = new Point(cPos.X + _pitch, cPos.Y + _pitch);
-				//newSize = new Size(cSize.Width - _pitch * 2, cSize.Height - _pitch * 2);
-				selection = Expand(SelectedPosition, SelectedSize, -1 * PITCH_TARGET);
+				//selection = Expand(SelectedPosition, SelectedSize, -1 * PITCH_TARGET);
+				selection = Expand(SelectedPosition, SelectedSize, -1 * _pitch);
 			}
 			else
 			{

@@ -25,6 +25,7 @@ namespace MSetExplorer
 		void SetColorBandSet(ColorBandSet value, bool updateDisplay);
 
 		bool UseEscapeVelocities { get; set; }
+		bool HighlightSelectedColorBand { get; set; }
 
 		// These may need to be dependency properties
 		SizeDbl ContainerSize { get; set; }

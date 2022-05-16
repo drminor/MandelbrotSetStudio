@@ -61,6 +61,7 @@
                 <Separator/>
                 <MenuItem Header="_Use EscapeVelocities" IsCheckable="True" x:Name="mnuItem_UseEscapeVelocities" Checked="UseEscapeVelocities_Checked" Unchecked="UseEscapeVelocities_Unchecked" IsChecked="True"/>
                 <MenuItem Header="Use _RealTimePreview" IsCheckable="True" x:Name="mnuItem_UseRealTimePreview" Checked="UseRealTimePreview_Checked" Unchecked="UseRealTimePreview_Unchecked" IsChecked="False"/>
+                <MenuItem Header="Highlight Selected Band" IsCheckable="True" x:Name="mnuItem_HighlightSelectedBand" Checked="HighlightSelected_Checked" Unchecked="HighlightSelected_Unchecked" IsChecked="False"/>
             </MenuItem>
 
             <MenuItem Header="_Windows">
@@ -69,8 +70,8 @@
                 <MenuItem Header="Screen Size Buttons" IsCheckable="True"/>
                 <Separator/>
                 <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="True"/>
-                <MenuItem Header="Calculation" x:Name="mnuItemCalcWindow" IsCheckable="True" IsChecked="True"/>
-                <MenuItem Header="Color Band Editor" x:Name="mnuItemColorBandWindow" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>
                 <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Unchecked" IsChecked="False"/>
             </MenuItem>
 

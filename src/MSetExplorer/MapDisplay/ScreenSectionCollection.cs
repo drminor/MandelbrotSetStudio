@@ -285,6 +285,8 @@ namespace MSetExplorer
 
 			public PointInt ScreenPosition => ScreenTypeHelper.ConvertToPointInt(_imageDrawing.Rect.Location);
 
+			//public byte[] PixelBuffer => ((WriteableBitmap) _image.Source).p
+
 			#endregion
 
 			#region Public Methods

@@ -30,10 +30,11 @@ namespace MSetExplorer
 		private ColorBandSet? _colorBandSet;	// The value assigned to this model
 		private bool _useEscapeVelocities;
 		private bool _useRealTimePreview;
+		private bool _highlightSelectedBand;
 
 		private readonly ColorBandSetCollection _colorBandSetCollection;
 
-		private ColorBandSet _currentColorBandSet; // => _colorBandSetCollection.CurrentColorBandSet; // The value which is currently being edited.
+		private ColorBandSet _currentColorBandSet; // The value which is currently being edited.
 
 		private ListCollectionView _colorBandsView;
 		private ColorBand? _currentColorBand;
@@ -65,7 +66,6 @@ namespace MSetExplorer
 			_isDirty = false;
 			_histLock = new object();
 			BeyondTargetSpecs = null;
-			//_averageMapSectionTargetIteration = 0;
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged;
 		}
@@ -174,6 +174,22 @@ namespace MSetExplorer
 					}
 
 					OnPropertyChanged(nameof(UseRealTimePreview));
+				}
+			}
+		}
+
+		public bool HighlightSelectedBand
+		{
+			get => _highlightSelectedBand;
+			set
+			{
+				if (value != _highlightSelectedBand)
+				{
+					var strState = value ? "On" : "Off";
+					Debug.WriteLine($"The ColorBandSetViewModel is turning {strState} the High Lighting the Selected Color Band.");
+					_highlightSelectedBand = value;
+
+					OnPropertyChanged(nameof(HighlightSelectedBand));
 				}
 			}
 		}
@@ -369,6 +385,11 @@ namespace MSetExplorer
 
 		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
 		{
+			if (ColorBandSet != null)
+			{
+				ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
+			}
+
 			CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
 		}
 
@@ -522,6 +543,25 @@ namespace MSetExplorer
 			if (UseRealTimePreview)
 			{
 				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+			}
+		}
+
+		public IDictionary<int, int> GetHistogramForColorBand(int index)
+		{
+			var currentColorBand = CurrentColorBand;
+
+			if (currentColorBand == null)
+			{
+				return new Dictionary<int, int>();
+			}
+			else
+			{
+				var previousCutoff = currentColorBand.PreviousCutoff ?? 0;
+				var cutoff = currentColorBand.Cutoff;
+
+				var kvpsForBand = Histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff);
+
+				return new Dictionary<int, int>(kvpsForBand);
 			}
 		}
 

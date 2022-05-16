@@ -16,12 +16,12 @@ namespace MSetExplorer
 		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
 		{
-			if (!parentJobId.HasValue && transformType != TransformType.None)
+			if (!parentJobId.HasValue && !(transformType == TransformType.None || transformType == TransformType.CanvasSizeUpdate))
 			{
 				throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {transformType}. Only jobs with TransformType = 'none' be parentless.");
 			}
 
-			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, blockSize);
+			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, newArea, blockSize);
 
 			// Get a subdivision record from the database.
 			var subdivision = GetSubdivision(jobAreaInfo.SamplePointDelta, blockSize, projectAdapter);
@@ -34,7 +34,7 @@ namespace MSetExplorer
 			return job;
 		}
 
-		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
+		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, RectangleInt? newArea, SizeInt blockSize)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);

@@ -46,6 +46,8 @@ namespace MSS.Types
 			_name = name;
 			_description = description;
 
+			SelectedColorBandIndex = 0;
+
 			_lastSavedUtc = DateTime.UtcNow;
 			LastUpdatedUtc = DateTime.MinValue;
 		}
@@ -55,7 +57,7 @@ namespace MSS.Types
 
 		#region Public Properties - Derived
 
-		public int HighCutoff => base[^1].Cutoff;
+		public int HighCutoff => this[^1].Cutoff;
 
 		public bool IsDirty => LastSavedUtc.Equals(DateTime.MinValue) || LastUpdatedUtc > LastSavedUtc;
 		public bool AssignedToProject => ProjectId != ObjectId.Empty;
@@ -111,6 +113,24 @@ namespace MSS.Types
 					OnPropertyChanged();
 				}
 			}
+		}
+
+
+		public int SelectedColorBandIndex { get; set; }
+
+		public ColorBand SelectedColorBand
+		{
+			get
+			{
+				if (SelectedColorBandIndex < 0 || SelectedColorBandIndex > Count - 1)
+				{
+					return this[0];
+				}
+				else
+				{
+					return this[SelectedColorBandIndex];
+				}
+			} 
 		}
 
 		public DateTime LastSavedUtc

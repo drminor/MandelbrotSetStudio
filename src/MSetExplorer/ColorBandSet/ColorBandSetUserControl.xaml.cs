@@ -1,5 +1,7 @@
 ﻿using MSS.Types;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -65,18 +67,41 @@ namespace MSetExplorer
 		{
 			string msg;
 
-			var specs = _vm.BeyondTargetSpecs;
-
-			if (specs != null)
+			if (lvColorBands.Items.CurrentItem is ColorBand selItem)
 			{
-				msg = $"Percentage: {specs.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
+				var index = lvColorBands.Items.IndexOf(selItem);
+
+				//msg = $"Percentage: {selItem.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
+				msg = $"Percentage: {selItem.Percentage}";
+
+				if (index == lvColorBands.Items.Count - 1 && _vm.BeyondTargetSpecs != null)
+				{
+					var specs = _vm.BeyondTargetSpecs;
+					msg += $"\nBeyond Last Info: Percentage: {specs.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
+				}
+
+				ReportHistogram(_vm.GetHistogramForColorBand(index));
 			}
 			else
 			{
-				msg = "No Details Available.";
+				msg = "No Current Item.";
 			}
 
 			_ = MessageBox.Show(msg);
+		}
+
+		private void ReportHistogram(IDictionary<int, int> histogram)
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine("Histogram:");
+
+			foreach(KeyValuePair<int, int> kvp in histogram)
+			{
+				sb.AppendLine($"\t{kvp.Key} : {kvp.Value}");
+			}
+
+			Debug.WriteLine(sb.ToString());
 		}
 
 		private void CommitEditOnLostFocus(object sender, DependencyPropertyChangedEventArgs e)

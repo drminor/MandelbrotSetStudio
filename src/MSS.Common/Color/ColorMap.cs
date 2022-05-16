@@ -44,6 +44,8 @@ namespace MSS.Common
 
         public bool UseEscapeVelocities { get; set; }
 
+        public bool HighlightSelectedColorBand { get; set; }
+
         #endregion
 
         #region Public Methods
@@ -60,16 +62,13 @@ namespace MSS.Common
             else
             {
                 var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
-
-                if (cme.BlendVals != null)
-				{
-                    cme.BlendVals.Value.BlendAndPlace(stepFactor, destination);
-				}
-                else
-				{
-                    throw new InvalidOperationException("BlendVals is null for a CME with BlendStyle != none.");
-				}
+                cme.BlendVals.BlendAndPlace(stepFactor, destination);
             }
+
+            if (HighlightSelectedColorBand && cme != _colorBandSet.SelectedColorBand)
+			{
+                destination[3] = 25; // set the opacity to 25, instead of 255.
+			}
         }
 
         public byte[] GetColor(int countVal, double escapeVelocity)
@@ -85,16 +84,9 @@ namespace MSS.Common
             }
             else
 			{
-                if (cme.BlendVals != null)
-                {
-                    result = new byte[3];
-                    var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
-                    cme.BlendVals.Value.BlendAndPlace(stepFactor, result);
-                }
-                else
-                {
-                    throw new InvalidOperationException("BlendVals is null for a CME with BlendStyle != none.");
-                }
+                result = new byte[3];
+                var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
+                cme.BlendVals.BlendAndPlace(stepFactor, result);
             }
 
             return result;

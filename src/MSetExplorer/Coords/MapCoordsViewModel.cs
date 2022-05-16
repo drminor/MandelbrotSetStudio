@@ -76,8 +76,16 @@ namespace MSetExplorer
 				{
 					_currentJob = value;
 					UpdateCoords(GetJobAreaInfo(value));
+					OnPropertyChanged();
+					OnPropertyChanged(nameof(JobId));
 				}
 			}
+		}
+
+		public string JobId
+		{
+			get => CurrentJob.Id.ToString();
+			set => OnPropertyChanged();
 		}
 
 		public RRectangle Coords
@@ -311,7 +319,7 @@ namespace MSetExplorer
 				X1 = RValueHelper.ConvertToString(startingX);
 				X2 = RValueHelper.ConvertToString(endingX);
 				Y1 = RValueHelper.ConvertToString(startingY);
-				Y2 = RValueHelper.ConvertToString(endingX);
+				Y2 = RValueHelper.ConvertToString(endingY);
 
 				PrecisionX = RValueHelper.GetPrecision(startingX, endingX, out var diffX) + _numDigitsForDisplayExtent;
 				Width = RValueHelper.ConvertToString(diffX, useSciNotationForLengthsGe: 6);

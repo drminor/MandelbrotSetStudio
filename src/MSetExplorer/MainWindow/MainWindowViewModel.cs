@@ -129,6 +129,19 @@ namespace MSetExplorer
 			{
 				MapDisplayViewModel.UseEscapeVelocities = ColorBandSetViewModel.UseEscapeVelocities;
 			}
+
+			if (e.PropertyName == nameof(ColorBandSetViewModel.HighlightSelectedBand))
+			{
+				MapDisplayViewModel.HighlightSelectedColorBand = ColorBandSetViewModel.HighlightSelectedBand;
+			}
+
+			if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
+			{
+				if (MapProjectViewModel.CurrentProject != null && MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
+				{
+					MapDisplayViewModel.SetColorBandSet(ColorBandSetViewModel.ColorBandSet, updateDisplay: true);
+				}
+			}
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
