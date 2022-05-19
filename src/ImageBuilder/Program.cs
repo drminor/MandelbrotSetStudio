@@ -111,7 +111,7 @@ namespace ImageBuilder
 
 						try
 						{
-							var x = mClient.GenerateMapSectionAsync(request).GetAwaiter().GetResult();
+							var x = mClient.GenerateMapSectionAsyncR(request).GetAwaiter().GetResult();
 
 							Debug.WriteLine($"The reply contains {x.Counts.Length} count values.");
 							Console.WriteLine($"The reply contains {x.Counts.Length} count values.");

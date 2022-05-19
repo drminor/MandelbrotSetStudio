@@ -5,8 +5,9 @@ namespace MEngineClient
 {
 	public interface IMEngineClient
 	{
-		Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest);
+		string EndPointAddress { get; }
 
+		//Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest);
 		ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest);
 	}
 }

@@ -9,27 +9,32 @@ namespace MEngineClient
 {
 	public class MClient : IMEngineClient
 	{
-		private readonly string _endPointAddress;
 		private GrpcChannel _grpcChannel;
 
 		public MClient(string endPointAddress)
 		{
-			_endPointAddress = endPointAddress;
+			EndPointAddress = endPointAddress;
 			_grpcChannel = null;
 		}
 
-		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
-		{
-			var mEngineService = GetMapSectionService();
-			var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
-			return reply;
-		}
+		public string EndPointAddress { get; init; }
 
+		//public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
+		//{
+		//	var mEngineService = GetMapSectionService();
+		//	var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
+		//	return reply;
+		//}
 
 		public async ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest)
 		{
 			var mEngineService = GetMapSectionService();
+			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
+
+			var stopWatch = Stopwatch.StartNew();
 			var reply = await mEngineService.GenerateMapSectionAsyncR(mapSectionRequest);
+			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
+
 			return reply;
 		}
 
@@ -53,7 +58,7 @@ namespace MEngineClient
 			{
 				if (_grpcChannel == null)
 				{
-					_grpcChannel = GrpcChannel.ForAddress(_endPointAddress);
+					_grpcChannel = GrpcChannel.ForAddress(EndPointAddress);
 				}
 
 				return _grpcChannel;

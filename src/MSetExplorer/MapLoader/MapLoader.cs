@@ -115,6 +115,11 @@ namespace MSetExplorer
 			{
 				var mapSection = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
 
+				if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
+				{
+					Debug.WriteLine($"MapSection for {mapSection.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}.");
+				}
+
 				_callback(this, mapSection);
 				mapSectionRequest.Handled = true;
 			}

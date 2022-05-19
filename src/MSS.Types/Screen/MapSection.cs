@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace MSS.Types
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>
 	{
 		private readonly Lazy<IHistogram> _histogram;
-		//private readonly Func<int[], IHistogram> _histogramBuilder;
 
 		public MapSection(PointInt blockPosition, SizeInt size, int[] counts, int targetIterations, string subdivisionId
 			, BigVector repoBlockPosition, bool isInverted, Func<int[], IHistogram> histogramBuilder)

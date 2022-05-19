@@ -111,6 +111,7 @@ namespace MSetExplorer
 			CurrentRequest?.MapLoader.Stop();
 		}
 
+		// TODO: Create a scheduled task to remove completed MapLoader instances.
 		private void MapLoaderComplete(Task task)
 		{
 		//	Thread.Sleep(5 * 1000);

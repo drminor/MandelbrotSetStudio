@@ -114,7 +114,8 @@ namespace MSS.Common
 				Counts = null,
 				DoneFlags = null,
 				ZValues = null,
-				IsInverted = isInverted
+				IsInverted = isInverted,
+				TimeToCompleteGenRequest = null
 			};
 
 			return mapSectionRequest;

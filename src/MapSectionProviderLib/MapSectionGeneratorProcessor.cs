@@ -43,12 +43,17 @@ namespace MapSectionProviderLib
 			_workQueue = new BlockingCollection<MapSecWorkGenType>(QUEUE_CAPACITY);
 			_cancelledJobIds = new List<int>();
 
-			var numberOfLogicalProc = Environment.ProcessorCount;
-			_workQueueProcessors = new Task[numberOfLogicalProc - 1];
+			//var numberOfLogicalProc = Environment.ProcessorCount;
+			//_workQueueProcessors = new Task[numberOfLogicalProc - 1];
+
+			var taskCnt = 12;
+			_workQueueProcessors = new Task[taskCnt];
 
 			for (var i = 0; i < _workQueueProcessors.Length; i++)
 			{
-				_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionPersistProcessor, _cts.Token));
+				var client = GetNextClient();
+
+				_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(client, _mapSectionPersistProcessor, _cts.Token));
 			}
 		}
 
@@ -113,7 +118,7 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private async Task ProcessTheQueueAsync(MapSectionPersistProcessor mapSectionPersistProcessor, CancellationToken ct)
+		private async Task ProcessTheQueueAsync(IMEngineClient mEngineClient, MapSectionPersistProcessor mapSectionPersistProcessor, CancellationToken ct)
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
@@ -134,7 +139,6 @@ namespace MapSectionProviderLib
 					{
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
-						var mEngineClient = GetNextClient();
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsyncR(mapSectionRequest);
 
 						mapSectionResponse.MapSectionId = mapSectionWorkItem.Request.Request.MapSectionId;
@@ -153,7 +157,7 @@ namespace MapSectionProviderLib
 				}
 				catch (Exception e)
 				{
-					Debug.WriteLine($"The response queue got an exception: {e}.");
+					Debug.WriteLine($"The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client" }. The exception is {e}.");
 					throw;
 				}
 			}
