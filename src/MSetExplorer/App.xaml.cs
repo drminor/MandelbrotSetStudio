@@ -22,8 +22,8 @@ namespace MSetExplorer
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
 
 		//private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "https://localhost:5004", "https://localhost:5001" };
-
-		private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "http://192.168.2.104:5000" };
+		//private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "http://192.168.2.104:5000", "https://localhost:5001" };
+		private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "https://localhost:5001" };
 
 
 		private ProjectAdapter? _projectAdapter;
@@ -45,7 +45,7 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			var DO_START_SERVER = false;
+			var DO_START_SERVER = true;
 
 			var DROP_ALL_COLLECTIONS = false;
 			var DROP_MAP_SECTIONS = false;
@@ -165,8 +165,11 @@ namespace MSetExplorer
 			{
 				foreach(var ep in urls)
 				{
-					var proc = Process.Start(SERVER_EXE_PATH, " --urls " + ep);
-					_serverProcesses.Add(proc);
+					if (ep.ToLower().Contains("localhost"))
+					{
+						var proc = Process.Start(SERVER_EXE_PATH, " --urls " + ep);
+						_serverProcesses.Add(proc);
+					}
 				}
 			}
 		}
