@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <StartupObject>MEngineService.Program</StartupObject>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -25,9 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="qdDotNet">
-      <HintPath>..\..\x64\Debug\qdDotNet.dll</HintPath>
-    </Reference>
+    <None Update="Martin-Berube-Square-Animal-Tuna.ico">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+
+
 
 </Project>

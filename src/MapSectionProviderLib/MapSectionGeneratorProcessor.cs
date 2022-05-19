@@ -16,7 +16,8 @@ namespace MapSectionProviderLib
 		//private const int NUMBER_OF_CONSUMERS = 4;
 		private const int QUEUE_CAPACITY = 200;
 
-		private readonly IMEngineClient _mEngineClient;
+		private readonly IMEngineClient[] _mEngineClients;
+		private int _nextMEngineClientPtr;
 
 		private readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 
@@ -32,9 +33,10 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionGeneratorProcessor(IMEngineClient mEngineClient, MapSectionPersistProcessor mapSectionPersistProcessor)
+		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
-			_mEngineClient = mEngineClient;
+			_mEngineClients = mEngineClients;
+			_nextMEngineClientPtr = 0;
 			_mapSectionPersistProcessor = mapSectionPersistProcessor;
 
 			_cts = new CancellationTokenSource();
@@ -42,7 +44,6 @@ namespace MapSectionProviderLib
 			_cancelledJobIds = new List<int>();
 
 			var numberOfLogicalProc = Environment.ProcessorCount;
-
 			_workQueueProcessors = new Task[numberOfLogicalProc - 1];
 
 			for (var i = 0; i < _workQueueProcessors.Length; i++)
@@ -133,7 +134,8 @@ namespace MapSectionProviderLib
 					{
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
-						mapSectionResponse = await _mEngineClient.GenerateMapSectionAsyncR(mapSectionRequest);
+						var mEngineClient = GetNextClient();
+						mapSectionResponse = await mEngineClient.GenerateMapSectionAsyncR(mapSectionRequest);
 
 						mapSectionResponse.MapSectionId = mapSectionWorkItem.Request.Request.MapSectionId;
 
@@ -155,6 +157,18 @@ namespace MapSectionProviderLib
 					throw;
 				}
 			}
+		}
+
+		private IMEngineClient GetNextClient()
+		{
+			var result = _mEngineClients[_nextMEngineClientPtr++];
+
+			if (_nextMEngineClientPtr > _mEngineClients.Length - 1)
+			{
+				_nextMEngineClientPtr = 0;
+			}
+
+			return result;
 		}
 
 		private bool IsJobCancelled(int jobId)

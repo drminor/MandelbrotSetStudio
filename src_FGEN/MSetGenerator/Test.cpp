@@ -45,7 +45,7 @@ extern "C"
     {
         int targetCount = mapSectionRequest.maxIterations;
 
-        std::cout << "Generating MapSection for subdivision: " << mapSectionRequest.subdivisionId << " -- TargetCnt:" << targetCount << "\n";
+        std::cout << "Generating MapSection for subdivision: " << mapSectionRequest.subdivisionId << " -- Target Count:" << targetCount << "\n";
 
         int cellCount = mapSectionRequest.blockSizeWidth * mapSectionRequest.blockSizeHeight;
 

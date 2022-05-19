@@ -19,6 +19,7 @@ namespace MEngineService
 			// ZValues
 			double[] zValues = GetAndFillZValuesBuffer(mapSectionRequest, out var zValuesBuffer);
 
+			// Make the call using the filled buffers.
 			var requestStruct = new MapSectionReqHelper().GetRequestStruct(mapSectionRequest);
 			NativeMethods.GenerateMapSection(requestStruct, countsBuffer, doneFlagsBuffer, zValuesBuffer);
 

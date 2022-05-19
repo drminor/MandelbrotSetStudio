@@ -3,7 +3,9 @@ using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 
 namespace MSetExplorer
@@ -18,7 +20,11 @@ namespace MSetExplorer
 	{
 		private const string SERVER_EXE_PATH = @"C:\Users\david\source\repos\MandelbrotSetStudio\src_FGEN\MEngineService\bin\x64\Debug\net5.0\MEngineService.exe";
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
-		private const string M_ENGINE_END_POINT_ADDRESS = "https://localhost:5001";
+
+		//private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "https://localhost:5004", "https://localhost:5001" };
+
+		private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "http://192.168.2.104:5000" };
+
 
 		private ProjectAdapter? _projectAdapter;
 		private SharedColorBandSetAdapter? _sharedColorBandSetAdapter;
@@ -27,19 +33,19 @@ namespace MSetExplorer
 		private MapLoaderManager? _mapLoaderManager;
 		private ColorBandSetViewModel? _colorBandViewModel;
 
-		private Process? _serverProcess;
+		private IList<Process> _serverProcesses;
 
 		public App()
 		{
 			_projectAdapter = null;
 			_mapProjectViewModel = null;
 			_mapLoaderManager = null;
-			_serverProcess = null;
+			_serverProcesses = new List<Process>();
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			var DO_START_SERVER = true;
+			var DO_START_SERVER = false;
 
 			var DROP_ALL_COLLECTIONS = false;
 			var DROP_MAP_SECTIONS = false;
@@ -86,7 +92,7 @@ namespace MSetExplorer
 
 			if (DO_START_SERVER)
 			{
-				StartServer();
+				StartServer(M_ENGINE_END_POINT_ADDRESSES);
 			}
 
 			_sharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(MONGO_DB_CONN_STRING);
@@ -97,7 +103,7 @@ namespace MSetExplorer
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();
-			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESS, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO, mapSectionHelper);
+			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO, mapSectionHelper);
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
@@ -112,12 +118,15 @@ namespace MSetExplorer
 			window1.Show();
 		}
 
-		private MapLoaderManager BuildMapLoaderManager(string mEngineEndPointAddress, string dbProviderConnectionString, bool useTheMapSectionRepo, MapSectionHelper mapSectionHelper)
+		private MapLoaderManager BuildMapLoaderManager(string[] mEngineEndPointAddress, string dbProviderConnectionString, bool useTheMapSectionRepo, MapSectionHelper mapSectionHelper)
 		{
+			var mEngineClients = mEngineEndPointAddress.Select(x => new MClient(x)).ToArray();
 
-			var mEngineClient = new MClient(mEngineEndPointAddress);
+			//var mEngineClient = new MClient(mEngineEndPointAddress);
 			var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(dbProviderConnectionString);
-			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClient, mapSectionAdapter, useTheMapSectionRepo);
+
+			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, useTheMapSectionRepo);
+			
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
 
 			return result;
@@ -149,20 +158,24 @@ namespace MSetExplorer
 			StopServer();
 		}
 
-		private void StartServer()
+		private void StartServer(string[] urls)
 		{
 			var exists = Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(SERVER_EXE_PATH)).Length > 0;
 			if (!exists)
 			{
-				_serverProcess = Process.Start(SERVER_EXE_PATH);
+				foreach(var ep in urls)
+				{
+					var proc = Process.Start(SERVER_EXE_PATH, " --urls " + ep);
+					_serverProcesses.Add(proc);
+				}
 			}
 		}
 
 		private void StopServer()
 		{
-			if (!(_serverProcess is null))
+			foreach(var proc in _serverProcesses)
 			{
-				_serverProcess.Kill();
+				proc.Kill();
 			}
 		}
 
