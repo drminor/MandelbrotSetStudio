@@ -13,7 +13,7 @@ namespace MSetExplorer
 		public HistogramWorkRequest(HistogramWorkRequestType requestType, int[] cutoffs, IHistogram? histogram, Action<PercentageBand[]> workAction)
 		{
 			RequestType = requestType;
-			Cutoffs = cutOffs;
+			Cutoffs = cutoffs;
 			Histogram = histogram;
 			WorkAction = workAction ?? throw new ArgumentNullException(nameof(workAction));
 

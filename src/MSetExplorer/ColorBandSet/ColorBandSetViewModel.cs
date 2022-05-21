@@ -509,7 +509,7 @@ namespace MSetExplorer
 
 			if (newTargetIterations.HasValue)
 			{
-				newSet = _currentColorBandSet.CreateNewCopy(newTargetIterations.Value);
+				newSet = ColorBandSetHelper.AdjustTargetIterations(_currentColorBandSet, newTargetIterations.Value);
 			}
 			else
 			{
@@ -522,12 +522,12 @@ namespace MSetExplorer
 			_colorBandSet = newSet;
 
 			var curPos = ColorBandsView.CurrentPosition;
-			_colorBandSetHistoryCollection.Load(newSet);
+			_colorBandSetHistoryCollection.Load(_colorBandSet);
 
 			BuildViewAndRaisePropertyChangeEvents(curPos);
 			IsDirty = false;
 
-			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newSet, isPreview: false));
+			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_colorBandSet, isPreview: false));
 		}
 
 		public void RevertChanges()

@@ -183,9 +183,17 @@ namespace MSS.Types
 			return _reservedColorBands.ToList();
 		}
 
-		public void MoveItemsToReserve(int cutoff)
+		public void MoveItemsToReserveWithCutoffGtrThan(int cutoff)
 		{
+			var selectedItems = Items.Take(Count - 1).Where(x => x.Cutoff > cutoff).Reverse();
 
+			foreach(var colorBand in selectedItems)
+			{
+				var reservedColorBand = new ReservedColorBand(colorBand.StartColor, colorBand.BlendStyle, colorBand.EndColor);
+				Remove(colorBand);
+
+				_reservedColorBands.Push(reservedColorBand);
+			}
 		}
 
 		public void InsertCutoff(int index, int cutoff)

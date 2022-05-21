@@ -318,17 +318,17 @@ namespace MSS.Types.MSet
 			var colorBandSet = TrySetCurrentColorBandSet(colorBandSetId);
 
 			var targetIterations = CurrentJob.MapCalcSettings.TargetIterations;
-			if (colorBandSet == null || colorBandSet.HighCutoff > targetIterations)
+			if (colorBandSet == null || colorBandSet.HighCutoff != targetIterations)
 			{
 				colorBandSet = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIterations, _colorBandSetCollection.GetColorBandSets());
-			}
 
-			if (colorBandSet.HighCutoff != targetIterations)
-			{
-				var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
-				Debug.WriteLine($"Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id} for job: {CurrentJobId}.");
+				if (colorBandSet.HighCutoff != targetIterations)
+				{
+					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+					Debug.WriteLine($"Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id} for job: {CurrentJobId}.");
 
-				_colorBandSetCollection.Push(adjustedColorBandSet);
+					_colorBandSetCollection.Push(adjustedColorBandSet);
+				}
 			}
 
 			return CurrentColorBandSet.Id;

@@ -12,20 +12,15 @@ namespace MSS.Types
 		{
 			ColorBandSet result;
 
-			// TODO: Handle case where the targetIterations is higher that than the ColorBandSet's HighCutoff.
 			if (colorBandSet.HighCutoff != targetIterations)
 			{
 				result = GetBestMatchingColorBandSet(targetIterations, colorBandSetCollection);
-
-				if (result.HighCutoff > targetIterations)
-				{
-					var adjustedColorBandSet = AdjustTargetIterations(result, targetIterations);
-					result = adjustedColorBandSet;
-				}
+				var adjustedColorBandSet = AdjustTargetIterations(result, targetIterations);
+				result = adjustedColorBandSet;
 			}
 			else
 			{
-				result = colorBandSet.CreateNewCopy();
+				result = colorBandSet;
 			}
 
 			return result;
@@ -73,21 +68,16 @@ namespace MSS.Types
 			{
 				return colorBandSet;
 			}
-
-			colorBandSet = colorBandSet.CreateNewCopy(targetIterations);
-
-			if (colorBandSet.HighCutoff > targetIterations)
+			else if (colorBandSet.HighCutoff > targetIterations)
 			{
-				var x = colorBandSet.Take(colorBandSet.Count - 1).FirstOrDefault(x => x.Cutoff > targetIterations - 2);
-
-				while (x != null)
-				{
-					_ = colorBandSet.Remove(x);
-					x = colorBandSet.Take(colorBandSet.Count - 1).FirstOrDefault(x => x.Cutoff > targetIterations - 2);
-				}
+				var newColorBandSet = colorBandSet.CreateNewCopy(targetIterations);
+				newColorBandSet.MoveItemsToReserveWithCutoffGtrThan(targetIterations - 2);
+				return newColorBandSet;
 			}
-
-			return colorBandSet;
+			else
+			{
+				return colorBandSet.CreateNewCopy(targetIterations);
+			}
 		}
 	}
 }
