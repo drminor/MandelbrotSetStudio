@@ -15,23 +15,23 @@
 		//public PercentageBand() : this(0, 0, 0)
 		//{ }
 
-		public PercentageBand(int cutOff)
+		public PercentageBand(int cutoff)
 		{
-			Cutoff = cutOff;
+			Cutoff = cutoff;
 		}
 
-		//public PercentageBand(int cutOff, long exactCount, long runningSum)
+		//public PercentageBand(int cutoff, long exactCount, long runningSum)
 		//{
-		//	Cutoff = cutOff;
+		//	Cutoff = cutoff;
 		//	ExactCount = exactCount;
 		//	RunningSum = runningSum;
 
 		//	Count = exactCount;
 		//}
 
-		//public PercentageBand(int cutOff, long exactCount, long runningSum, long count, double percentage)
+		//public PercentageBand(int cutoff, long exactCount, long runningSum, long count, double percentage)
 		//{
-		//	Cutoff = cutOff;
+		//	Cutoff = cutoff;
 		//	ExactCount = exactCount;
 		//	RunningSum = runningSum;
 

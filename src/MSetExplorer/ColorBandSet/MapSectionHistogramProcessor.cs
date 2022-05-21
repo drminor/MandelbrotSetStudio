@@ -186,15 +186,15 @@ namespace MSetExplorer
 			}
 		}
 
-		private PercentageBand[] BuildNewPercentages(int[] cutOffs, IHistogram histogram)
+		private PercentageBand[] BuildNewPercentages(int[] cutoffs, IHistogram histogram)
 		{
-			var pbList = cutOffs.Select(x => new PercentageBand(x)).ToList();
+			var pbList = cutoffs.Select(x => new PercentageBand(x)).ToList();
 			pbList.Add(new PercentageBand(int.MaxValue));
 
 			var bucketCnts = pbList.ToArray();
 
 			var curBucketPtr = 0;
-			var curBucketCut = cutOffs[curBucketPtr];
+			var curBucketCut = cutoffs[curBucketPtr];
 
 			long runningSum = 0;
 

@@ -315,47 +315,12 @@ namespace MSS.Types.MSet
 
 		private ObjectId LoadColorBandSetForJob(ObjectId colorBandSetId)
 		{
-			ColorBandSet? colorBandSet;
+			var colorBandSet = TrySetCurrentColorBandSet(colorBandSetId);
 
 			var targetIterations = CurrentJob.MapCalcSettings.TargetIterations;
-
-			if (CurrentColorBandSet.Id == colorBandSetId)
-			{
-				colorBandSet = CurrentColorBandSet;
-			}
-			else
-			{
-				if (_colorBandSetCollection.TryFindByColorBandSetId(colorBandSetId, out colorBandSet))
-				{
-					_colorBandSetCollection.MoveCurrentTo(colorBandSet);
-				}
-			}
-
 			if (colorBandSet == null || colorBandSet.HighCutoff > targetIterations)
 			{
-				if (_colorBandSetCollection.TryGetCbsSmallestCutoffGtrThan(targetIterations, out var index))
-				{
-					_colorBandSetCollection.MoveCurrentTo(index);
-					colorBandSet = CurrentColorBandSet;
-				}
-				else
-				{
-					Debug.WriteLine("No Matching ColorBandSet found.");
-
-					//if (_colorBandSetCollection.TryGetCbsLargestCutoffLessThan(targetIterations, out var index2))
-					//{
-					//	_colorBandSetCollection.MoveCurrentTo(index2);
-					//}
-					//else
-					//{
-					//	Debug.WriteLine("HUH?");
-					//}
-				}
-			}
-
-			if (colorBandSet == null)
-			{
-				throw new InvalidOperationException("Unexpected error. The colorBandSet should have a value at this point.");
+				colorBandSet = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIterations, _colorBandSetCollection.GetColorBandSets());
 			}
 
 			if (colorBandSet.HighCutoff != targetIterations)
@@ -367,6 +332,25 @@ namespace MSS.Types.MSet
 			}
 
 			return CurrentColorBandSet.Id;
+		}
+
+		private ColorBandSet? TrySetCurrentColorBandSet(ObjectId colorBandSetId)
+		{
+			ColorBandSet? result;
+
+			if (CurrentColorBandSet.Id == colorBandSetId)
+			{
+				result = CurrentColorBandSet;
+			}
+			else
+			{
+				if (_colorBandSetCollection.TryFindByColorBandSetId(colorBandSetId, out result))
+				{
+					_colorBandSetCollection.MoveCurrentTo(result);
+				}
+			}
+
+			return result;
 		}
 
 		private void SaveColorBandSets(ObjectId projectId, IProjectAdapter projectAdapter)

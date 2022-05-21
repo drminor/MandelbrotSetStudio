@@ -19,6 +19,7 @@ namespace MSS.Types
 		private ObjectId _projectId;
 		private string? _name;
 		private string? _description;
+		private readonly Stack<ReservedColorBand> _reservedColorBands;
 
 		private DateTime _lastSavedUtc;
 
@@ -31,12 +32,12 @@ namespace MSS.Types
 		{ }
 
 		public ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands)
-			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands)
+			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands, null)
 		{
 			LastSavedUtc = DateTime.MinValue;
 		}
 
-		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands) : base(FixBands(colorBands))
+		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, IEnumerable<ReservedColorBand>? reservedColorBands) : base(FixBands(colorBands))
 		{
 			//Debug.WriteLine($"Constructing ColorBandSet with id: {id}.");
 
@@ -46,6 +47,8 @@ namespace MSS.Types
 			_name = name;
 			_description = description;
 
+			_reservedColorBands = reservedColorBands == null ? new Stack<ReservedColorBand>() : new Stack<ReservedColorBand>(reservedColorBands);
+
 			SelectedColorBandIndex = 0;
 
 			_lastSavedUtc = DateTime.UtcNow;
@@ -53,7 +56,6 @@ namespace MSS.Types
 		}
 
 		#endregion
-
 
 		#region Public Properties - Derived
 
@@ -115,7 +117,6 @@ namespace MSS.Types
 			}
 		}
 
-
 		public int SelectedColorBandIndex { get; set; }
 
 		public ColorBand SelectedColorBand
@@ -149,43 +150,6 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		public void Fix()
-		{
-			if (Items == null || Count == 0)
-			{
-				Insert(0, DEFAULT_HIGH_COLOR_BAND.Clone());
-			}
-			else
-			{
-				int? prevCutoff = null;
-
-				for (var i = 0; i < Count - 1; i++)
-				{
-					var cb = Items[i];
-					cb.PreviousCutoff = prevCutoff;
-					cb.SuccessorStartColor = Items[i + 1].StartColor;
-					prevCutoff = cb.Cutoff;
-
-					if (cb.BlendStyle == ColorBandBlendStyle.None)
-					{
-						cb.EndColor = cb.StartColor;
-					}
-					else if (cb.BlendStyle == ColorBandBlendStyle.Next)
-					{
-						cb.EndColor = Items[i + 1].StartColor;
-					}
-
-				}
-
-				var lastCb = Items[Count - 1];
-				lastCb.PreviousCutoff = prevCutoff;
-				if (lastCb.BlendStyle == ColorBandBlendStyle.None)
-				{
-					lastCb.EndColor = lastCb.StartColor;
-				}
-			}
-		}
-
 		public bool UpdatePercentages(PercentageBand[] newPercentages)
 		{
 			var len = Math.Min(newPercentages.Length, Count);
@@ -212,6 +176,32 @@ namespace MSS.Types
 			}
 
 			return true;
+		}
+
+		public IList<ReservedColorBand> GetReservedColorBands()
+		{
+			return _reservedColorBands.ToList();
+		}
+
+		public void MoveItemsToReserve(int cutoff)
+		{
+
+		}
+
+		public void InsertCutoff(int index, int cutoff)
+		{
+			InsertItem(index, new ColorBand(cutoff, ColorBandColor.White, ColorBandBlendStyle.None, ColorBandColor.White));
+			PullColorsDown(index);
+		}
+
+		public void DeleteCutoff(int index)
+		{
+			if (index < 0 || index > Count - 2)
+			{
+				throw new ArgumentException("Index must be between 0 and Count - 2, inclusive when deleting a cutoff.");
+			}
+
+			PullOffsetsDown(index);
 		}
 
 		#endregion
@@ -354,6 +344,58 @@ namespace MSS.Types
 			return result;
 		}
 
+		private void PullColorsDown(int index)
+		{
+			for (var ptr = index; ptr < Count - 3; ptr++)
+			{
+				var targetCb = Items[ptr];
+				var sourceCb = Items[ptr + 1];
+
+				targetCb.StartColor = sourceCb.StartColor;
+				targetCb.BlendStyle = sourceCb.BlendStyle;
+				targetCb.EndColor = sourceCb.EndColor;
+			}
+
+			if (index < Count - 2)
+			{
+				var targetCb = Items[index];
+				var sourceCb = GetNextReservedColorBand();
+
+				targetCb.StartColor = sourceCb.StartColor;
+				targetCb.BlendStyle = sourceCb.BlendStyle;
+				targetCb.EndColor = sourceCb.EndColor;
+			}
+		}
+
+		private void PullOffsetsDown(int index)
+		{
+			for (var ptr = index; ptr < Count - 3; ptr++)
+			{
+				var targetCb = Items[ptr];
+				var sourceCb = Items[ptr + 1];
+
+				targetCb.Cutoff = sourceCb.Cutoff;
+				sourceCb.PreviousCutoff = sourceCb.Cutoff;
+			}
+
+			var lastCb = Items[Count - 2];
+			RemoveItem(Count - 2);
+			var newReserved = new ReservedColorBand(lastCb.StartColor, lastCb.BlendStyle, lastCb.EndColor);
+			_reservedColorBands.Push(newReserved);
+		}
+
+		private ReservedColorBand GetNextReservedColorBand()
+		{
+			if (_reservedColorBands.Count == 0)
+			{
+				return new ReservedColorBand();
+			}
+			else
+			{
+				return _reservedColorBands.Pop();
+			}
+		}
+
 		#endregion
 
 		#region Clone Support
@@ -364,7 +406,7 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy());
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy());
 			result.LastSavedUtc = DateTime.MinValue;
 			return result;
 		}
@@ -377,7 +419,7 @@ namespace MSS.Types
 		{
 			var bandsCopy = CreateBandsCopy();
 			bandsCopy[^1].Cutoff = targetIterations;
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, bandsCopy);
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, bandsCopy, CreateReservedBandsCopy());
 			result.LastSavedUtc = DateTime.MinValue;
 			return result;
 		}
@@ -395,7 +437,7 @@ namespace MSS.Types
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with Id: {Id}.");
 
-			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy());
+			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy());
 			result.LastSavedUtc = LastSavedUtc;
 			result.LastUpdatedUtc = LastUpdatedUtc;
 			return result;
@@ -404,6 +446,12 @@ namespace MSS.Types
 		private IList<ColorBand> CreateBandsCopy()
 		{
 			var result = Items.Select(x => x.Clone()).ToList();
+			return result;
+		}
+
+		private IEnumerable<ReservedColorBand> CreateReservedBandsCopy()
+		{
+			var result = _reservedColorBands.Select(x => x.Clone());
 			return result;
 		}
 
@@ -475,5 +523,46 @@ namespace MSS.Types
 		{
 			base.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 		}
+
+		#region Public Methods Not Used
+
+		public void Fix()
+		{
+			if (Items == null || Count == 0)
+			{
+				Insert(0, DEFAULT_HIGH_COLOR_BAND.Clone());
+			}
+			else
+			{
+				int? prevCutoff = null;
+
+				for (var i = 0; i < Count - 1; i++)
+				{
+					var cb = Items[i];
+					cb.PreviousCutoff = prevCutoff;
+					cb.SuccessorStartColor = Items[i + 1].StartColor;
+					prevCutoff = cb.Cutoff;
+
+					if (cb.BlendStyle == ColorBandBlendStyle.None)
+					{
+						cb.EndColor = cb.StartColor;
+					}
+					else if (cb.BlendStyle == ColorBandBlendStyle.Next)
+					{
+						cb.EndColor = Items[i + 1].StartColor;
+					}
+
+				}
+
+				var lastCb = Items[Count - 1];
+				lastCb.PreviousCutoff = prevCutoff;
+				if (lastCb.BlendStyle == ColorBandBlendStyle.None)
+				{
+					lastCb.EndColor = lastCb.StartColor;
+				}
+			}
+		}
+
+		#endregion
 	}
 }

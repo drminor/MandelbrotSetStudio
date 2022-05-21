@@ -32,7 +32,7 @@ namespace MSetExplorer
 		private bool _useRealTimePreview;
 		private bool _highlightSelectedBand;
 
-		private readonly ColorBandSetCollection _colorBandSetCollection;
+		private readonly ColorBandSetHistoryCollection _colorBandSetHistoryCollection;
 
 		private ColorBandSet _currentColorBandSet; // The value which is currently being edited.
 
@@ -59,8 +59,8 @@ namespace MSetExplorer
 
 			_colorBandSet = null;
 
-			_colorBandSetCollection = new ColorBandSetCollection(new List<ColorBandSet> { new ColorBandSet() } );
-			_currentColorBandSet = _colorBandSetCollection.CurrentColorBandSet.Clone();
+			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() } );
+			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.Clone();
 			_colorBandsView = BuildColorBandsView(null);
 
 			_isDirty = false;
@@ -118,7 +118,7 @@ namespace MSetExplorer
 			{
 				_mapSectionHistogramProcessor.ProcessingEnabled = false;
 				_colorBandSet = value;
-				_colorBandSetCollection.Load(value?.CreateNewCopy());
+				_colorBandSetHistoryCollection.Load(value?.CreateNewCopy());
 
 				if (value != null)
 				{
@@ -169,7 +169,7 @@ namespace MSetExplorer
 
 					if (IsDirty)
 					{
-						var colorBandSet = _useRealTimePreview ? _currentColorBandSet : _colorBandSetCollection[0];
+						var colorBandSet = _useRealTimePreview ? _currentColorBandSet : _colorBandSetHistoryCollection[0];
 						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(colorBandSet, isPreview: true));
 					}
 
@@ -274,16 +274,16 @@ namespace MSetExplorer
 
 		public int CurrentIndex
 		{
-			get => _colorBandSetCollection.CurrentIndex;
+			get => _colorBandSetHistoryCollection.CurrentIndex;
 			set	{ } 
 		}
 
-		public bool CanGoBack => _colorBandSetCollection.CurrentIndex > 0;
-		public bool CanGoForward =>  _colorBandSetCollection.CurrentIndex < _colorBandSetCollection.Count - 1;
+		public bool CanGoBack => _colorBandSetHistoryCollection.CurrentIndex > 0;
+		public bool CanGoForward =>  _colorBandSetHistoryCollection.CurrentIndex < _colorBandSetHistoryCollection.Count - 1;
 
 		public bool GoBack()
 		{
-			if (_colorBandSetCollection.MoveCurrentTo(_colorBandSetCollection.CurrentIndex - 1))
+			if (_colorBandSetHistoryCollection.MoveCurrentTo(_colorBandSetHistoryCollection.CurrentIndex - 1))
 			{
 				BuildViewAndRaisePropertyChangeEvents();
 				return true;
@@ -296,7 +296,7 @@ namespace MSetExplorer
 
 		public bool GoForward()
 		{
-			if (_colorBandSetCollection.MoveCurrentTo(_colorBandSetCollection.CurrentIndex + 1))
+			if (_colorBandSetHistoryCollection.MoveCurrentTo(_colorBandSetHistoryCollection.CurrentIndex + 1))
 			{
 				BuildViewAndRaisePropertyChangeEvents();
 				return true;
@@ -409,22 +409,22 @@ namespace MSetExplorer
 			else if (e.Action == NotifyCollectionChangedAction.Add)
 			{
 				// Add items
-				var cutOffs = GetCutoffs();
+				var cutoffs = GetCutoffs();
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
-					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Add, cutOffs, mapSection.Histogram, HandleHistogramUpdate));
+					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Add, cutoffs, mapSection.Histogram, HandleHistogramUpdate));
 					_topValues.Increment(mapSection.TargetIterations);
 				}
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
 			{
 				// Remove items
-				var cutOffs = GetCutoffs();
+				var cutoffs = GetCutoffs();
 				var mapSections = e.OldItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
-					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Remove, cutOffs, mapSection.Histogram, HandleHistogramUpdate));
+					_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Remove, cutoffs, mapSection.Histogram, HandleHistogramUpdate));
 					_topValues.Decrement(mapSection.TargetIterations);
 				}
 			}
@@ -522,7 +522,7 @@ namespace MSetExplorer
 			_colorBandSet = newSet;
 
 			var curPos = ColorBandsView.CurrentPosition;
-			_colorBandSetCollection.Load(newSet);
+			_colorBandSetHistoryCollection.Load(newSet);
 
 			BuildViewAndRaisePropertyChangeEvents(curPos);
 			IsDirty = false;
@@ -532,7 +532,7 @@ namespace MSetExplorer
 
 		public void RevertChanges()
 		{
-			_colorBandSetCollection.Trim(0);
+			_colorBandSetHistoryCollection.Trim(0);
 
 			var curPos = ColorBandsView.CurrentPosition;
 			BuildViewAndRaisePropertyChangeEvents(curPos);
@@ -571,7 +571,7 @@ namespace MSetExplorer
 
 		private void BuildViewAndRaisePropertyChangeEvents(int? selectedIndex = null)
 		{
-			_currentColorBandSet = _colorBandSetCollection.CurrentColorBandSet.CreateNewCopy();
+			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 
 			ColorBandsView = BuildColorBandsView(_currentColorBandSet);
 
@@ -597,7 +597,7 @@ namespace MSetExplorer
 
 		private void PushCopyOfCurrent()
 		{
-			_colorBandSetCollection.Push(_currentColorBandSet.CreateNewCopy());
+			_colorBandSetHistoryCollection.Push(_currentColorBandSet.CreateNewCopy());
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
@@ -605,8 +605,8 @@ namespace MSetExplorer
 
 		private void UpdatePercentages()
 		{
-			var cutOffs = GetCutoffs();
-			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
+			var cutoffs = GetCutoffs();
+			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutoffs, null, HandleHistogramUpdate));
 		}
 
 		private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
@@ -616,8 +616,8 @@ namespace MSetExplorer
 				histogram.Add(ms.Histogram);
 			}
 
-			//var cutOffs = GetCutoffs();
-			//_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutOffs, null, HandleHistogramUpdate));
+			//var cutoffs = GetCutoffs();
+			//_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutoffs, null, HandleHistogramUpdate));
 		}
 
 		private void HandleHistogramUpdate(PercentageBand[] newPercentages)

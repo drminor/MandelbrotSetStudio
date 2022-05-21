@@ -10,7 +10,7 @@ namespace MSetExplorer
 		public IHistogram? Histogram { get; init; }
 		public Action<PercentageBand[]> WorkAction { get; init; }
 
-		public HistogramWorkRequest(HistogramWorkRequestType requestType, int[] cutOffs, IHistogram? histogram, Action<PercentageBand[]> workAction)
+		public HistogramWorkRequest(HistogramWorkRequestType requestType, int[] cutoffs, IHistogram? histogram, Action<PercentageBand[]> workAction)
 		{
 			RequestType = requestType;
 			Cutoffs = cutOffs;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -9,38 +10,59 @@ namespace MSS.Types
 	{
 		public static ColorBandSet AdjustTargetIterations(ColorBandSet colorBandSet, int targetIterations, IEnumerable<ColorBandSet> colorBandSetCollection)
 		{
-			ColorBandSet? result = null;
+			ColorBandSet result;
 
-			if (targetIterations < colorBandSet.HighCutoff)
+			// TODO: Handle case where the targetIterations is higher that than the ColorBandSet's HighCutoff.
+			if (colorBandSet.HighCutoff != targetIterations)
 			{
-				if (TryGetCbsSmallestCutoffGtrThan(targetIterations, colorBandSetCollection, out var matched))
+				result = GetBestMatchingColorBandSet(targetIterations, colorBandSetCollection);
+
+				if (result.HighCutoff > targetIterations)
 				{
-					result = matched;
+					var adjustedColorBandSet = AdjustTargetIterations(result, targetIterations);
+					result = adjustedColorBandSet;
 				}
-				else
-				{
-					throw new InvalidOperationException("No Matching ColorBandSet found.");
-				}
-			}
-
-			if (result != null && result.HighCutoff != targetIterations)
-			{
-				result = AdjustTargetIterations(result, targetIterations);
-			}
-
-			if (result != null)
-			{
-				return result.CreateNewCopy();
 			}
 			else
 			{
-				throw new InvalidOperationException("Result is null.");
+				result = colorBandSet.CreateNewCopy();
+			}
+
+			return result;
+		}
+
+		public static ColorBandSet GetBestMatchingColorBandSet(int cutoff, IEnumerable<ColorBandSet> colorBandSets)
+		{
+			// Try to find the ColorBandSet with a HighCutoff just less than the target cutoff.
+			if (TryGetCbsLargestCutoffLessThan(cutoff, colorBandSets, out var colorBandSet))
+			{
+				return colorBandSet;
+			}
+			else
+			{
+				// Try to find the ColorBandSet with a HighCutoff just greater than the target cutoff.
+				if (TryGetCbsSmallestCutoffGtrThan(cutoff, colorBandSets, out colorBandSet))
+				{
+					return colorBandSet;
+				}
+				else
+				{
+					Debug.WriteLine("This should never happen unless the colorBandSet collection is empty.");
+					return colorBandSets.First();
+				}
 			}
 		}
 
-		private static bool TryGetCbsSmallestCutoffGtrThan(int cutOff, IEnumerable<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		private static bool TryGetCbsSmallestCutoffGtrThan(int cutoff, IEnumerable<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			colorBandSet = colorBandSets.OrderByDescending(f => f.HighCutoff).FirstOrDefault(x => x.HighCutoff <= cutOff);
+			colorBandSet = colorBandSets.OrderByDescending(f => f.HighCutoff).FirstOrDefault(x => x.HighCutoff <= cutoff);
+
+			return colorBandSet != null;
+		}
+
+		private static bool TryGetCbsLargestCutoffLessThan(int cutoff, IEnumerable<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		{
+			colorBandSet = colorBandSets.OrderByDescending(x => x.HighCutoff).FirstOrDefault(x => x.HighCutoff <= cutoff);
 
 			return colorBandSet != null;
 		}

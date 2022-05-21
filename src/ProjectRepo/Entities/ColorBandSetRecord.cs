@@ -20,6 +20,8 @@ namespace ProjectRepo.Entities
 
 		public bool Onfile => Id != ObjectId.Empty;
 
+		public ReservedColorBandRecord[]? ReservedColorBandRecords { get; set; }
+
 		//public DateTime LastSaved { get; set; }
 	}
 

@@ -24,7 +24,7 @@ namespace MapSectionProviderLib
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<MapSecWorkGenType> _workQueue;
 
-		private readonly Task[] _workQueueProcessors;
+		private readonly IList<Task> _workQueueProcessors;
 
 		private readonly object _cancelledJobsLock = new();
 		private readonly List<int> _cancelledJobIds;
@@ -43,17 +43,27 @@ namespace MapSectionProviderLib
 			_workQueue = new BlockingCollection<MapSecWorkGenType>(QUEUE_CAPACITY);
 			_cancelledJobIds = new List<int>();
 
-			//var numberOfLogicalProc = Environment.ProcessorCount;
-			//_workQueueProcessors = new Task[numberOfLogicalProc - 1];
+			var numberOfLogicalProc = Environment.ProcessorCount;
+			var localTaskCnt = numberOfLogicalProc - 1;
+			var remoteTaskCnt = localTaskCnt / 3;
 
-			var taskCnt = 12;
-			_workQueueProcessors = new Task[taskCnt];
-
-			for (var i = 0; i < _workQueueProcessors.Length; i++)
+			_workQueueProcessors = new List<Task>();
+			foreach (var client in mEngineClients)
 			{
-				var client = GetNextClient();
-
-				_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(client, _mapSectionPersistProcessor, _cts.Token));
+				if (client.EndPointAddress.ToLower().Contains("localhost"))
+				{
+					for (var i = 0; i < localTaskCnt; i++)
+					{
+						_workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(client, _mapSectionPersistProcessor, _cts.Token)));
+					}
+				}
+				else
+				{
+					for (var i = 0; i < remoteTaskCnt; i++)
+					{
+						_workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(client, _mapSectionPersistProcessor, _cts.Token)));
+					}
+				}
 			}
 		}
 
@@ -103,7 +113,7 @@ namespace MapSectionProviderLib
 
 			try
 			{
-				for (var i = 0; i < _workQueueProcessors.Length; i++)
+				for (var i = 0; i < _workQueueProcessors.Count; i++)
 				{
 					_ = _workQueueProcessors[i].Wait(120 * 1000);
 				}
@@ -210,7 +220,7 @@ namespace MapSectionProviderLib
 						_workQueue.Dispose();
 					}
 
-					for (var i = 0; i < _workQueueProcessors.Length; i++)
+					for (var i = 0; i < _workQueueProcessors.Count; i++)
 					{
 						if (_workQueueProcessors[i] != null)
 						{

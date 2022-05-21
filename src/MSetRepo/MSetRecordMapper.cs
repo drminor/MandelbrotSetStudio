@@ -7,6 +7,7 @@ using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MSetRepo
@@ -58,6 +59,7 @@ namespace MSetRepo
 			{ 
 				Id = source.Id, 
 				//LastSaved = source.LastSavedUtc
+				ReservedColorBandRecords = source.GetReservedColorBands().Select(x => MapTo(x)).ToArray()
 			};
 
 			return result;
@@ -65,8 +67,11 @@ namespace MSetRepo
 
 		public ColorBandSet MapFrom(ColorBandSetRecord target)
 		{
-			var result = new ColorBandSet(target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, target.ColorBandRecords.Select(x => MapFrom(x)).ToList());
-			return result;
+			return new ColorBandSet(
+				target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, 
+				target.ColorBandRecords.Select(x => MapFrom(x)).ToList(), 
+				target.ReservedColorBandRecords?.Select(x => MapFrom(x))
+				);
 		}
 
 		public ColorBandRecord MapTo(ColorBand source)
@@ -77,6 +82,16 @@ namespace MSetRepo
 		public ColorBand MapFrom(ColorBandRecord target)
 		{
 			return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), target.EndCssColor);
+		}
+
+		public ReservedColorBandRecord MapTo(ReservedColorBand source)
+		{
+			return new ReservedColorBandRecord(source.StartColor.GetCssColor(), source.BlendStyle.ToString(), source.EndColor.GetCssColor());
+		}
+
+		public ReservedColorBand MapFrom(ReservedColorBandRecord target)
+		{
+			return new ReservedColorBand(target.StartCssColor, MapFromBlendStyle(target.BlendStyle), target.EndCssColor);
 		}
 
 		public ColorBandBlendStyle MapFromBlendStyle(string blendStyle)

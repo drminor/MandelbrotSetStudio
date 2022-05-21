@@ -10,7 +10,7 @@ namespace MSS.Common
     public class ColorMap : IEquatable<ColorMap?>, IEqualityComparer<ColorMap>
     {
         private readonly ColorBandSet _colorBandSet;
-        private readonly int[] _cutOffs;
+        private readonly int[] _cutoffs;
 
         #region Constructor
 
@@ -25,7 +25,7 @@ namespace MSS.Common
 
             _colorBandSet = colorBandSet;
             //_colorBandSet.Fix();
-            _cutOffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.Cutoff).ToArray();
+            _cutoffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.Cutoff).ToArray();
 
             foreach(var colorBand in _colorBandSet)
 			{
@@ -111,9 +111,9 @@ namespace MSS.Common
         }
 
         [Conditional("DEBUG")]
-        private void CheckStepFactor(int countVal, int cutOff, int botBucketVal, int bucketWidth, double stepFactor)
+        private void CheckStepFactor(int countVal, int cutoff, int botBucketVal, int bucketWidth, double stepFactor)
 		{
-            if (countVal > 5 && countVal == cutOff)
+            if (countVal > 5 && countVal == cutoff)
             {
                 //Debug.WriteLine("HereA");
             }
@@ -127,7 +127,7 @@ namespace MSS.Common
 
             if (bucketDistance < 0 || bucketDistance > bucketWidth || stepFactor > 1.0)
             {
-                Debug.WriteLine($"Step Distance is out of range: val: {countVal}, bot: {botBucketVal}, top: {cutOff}, width: {bucketWidth}, stepFactor: {stepFactor}.");
+                Debug.WriteLine($"Step Distance is out of range: val: {countVal}, bot: {botBucketVal}, top: {cutoff}, width: {bucketWidth}, stepFactor: {stepFactor}.");
             }
         }
 
@@ -149,7 +149,7 @@ namespace MSS.Common
             {
                 // Returns the index to the item with the matched cutoff value
                 // or the index of the item with the smallest cutoff larger than the sought value
-                var newIndex = Array.BinarySearch(_cutOffs, countVal);
+                var newIndex = Array.BinarySearch(_cutoffs, countVal);
 
                 result = newIndex < 0 ? ~newIndex : newIndex;
 			}
