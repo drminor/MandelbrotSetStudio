@@ -452,63 +452,30 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void InsertItem(int index, ColorBand newItem)
+		public bool TryInsertNewItem(out int index)
 		{
-			//Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-
-			lock (_histLock)
+			if (ColorBandsView.CurrentItem is ColorBand curItem)
 			{
-				_currentColorBandSet.Insert(index, newItem);
-			}
-
-			PushCopyOfCurrent();
-			IsDirty = true;
-
-			UpdatePercentages();
-
-			if (UseRealTimePreview)
-			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-			}
-		}
-
-		public void DeleteSelectedItem()
-		{
-			var view = ColorBandsView;
-
-			//Debug.WriteLine($"Getting ready to remove an item. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-
-			if (view != null)
-			{
-				if (view.CurrentItem is ColorBand curItem)
+				bool result;
+				switch (EditMode)
 				{
-					var currentSet = _currentColorBandSet;
-					var idx = currentSet.IndexOf(curItem);
+					case ColorBandSetEditMode.Offsets:
+						result = TryInsertOffset(curItem, out index);
+						break;
+					case ColorBandSetEditMode.Colors:
+						result = TryInsertColor(curItem, out index);
+						break;
+					case ColorBandSetEditMode.Bands:
+						result = TryInsertColorBand(curItem, out index);
+						break;
+					default:
+						throw new InvalidOperationException($"{EditMode} is not recognized.");
+				}
 
-					if (idx >= currentSet.Count - 1)
-					{
-						// Cannot delete the last entry
-						return;
-					}
-
-					bool colorBandWasRemoved;
-					lock (_histLock)
-					{
-						colorBandWasRemoved = currentSet.Remove(curItem);
-					}
-
+				if (result)
+				{
 					PushCopyOfCurrent();
-
-					if (!colorBandWasRemoved)
-					{
-						Debug.WriteLine("Could not remove the item.");
-					}
-
-					var idx1 = currentSet.IndexOf((ColorBand)view.CurrentItem);
-					Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {idx1}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-
 					IsDirty = true;
-
 					UpdatePercentages();
 
 					if (UseRealTimePreview)
@@ -516,7 +483,175 @@ namespace MSetExplorer
 						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
 					}
 				}
+
+				return result;
 			}
+			else
+			{
+				index = -1;
+				return false;
+			}
+		}
+
+		private bool TryInsertOffset(ColorBand curItem, out int index)
+		{
+			if (curItem.Cutoff - curItem.StartingCutoff < 1)
+			{
+				Debug.WriteLine($"InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+				index = -1;
+				return false;
+			}
+
+			var prevCutoff = curItem.PreviousCutoff ?? 0;
+			var newCutoff = prevCutoff + (curItem.Cutoff - prevCutoff) / 2;
+
+			var currentSet = _currentColorBandSet;
+			index = currentSet.IndexOf(curItem);
+
+			_currentColorBandSet.InsertCutoff(index, newCutoff);
+			return true;
+		}
+
+		private bool TryInsertColor(ColorBand curItem, out int index)
+		{
+			var currentSet = _currentColorBandSet;
+			index = currentSet.IndexOf(curItem);
+
+			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, curItem.StartColor);
+
+			_currentColorBandSet.InsertColor(index, colorBand);
+
+			return true;
+		}
+
+		private bool TryInsertColorBand(ColorBand curItem, out int index)
+		{
+			if (curItem.Cutoff - curItem.StartingCutoff < 1)
+			{
+				Debug.WriteLine($"InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+				index = -1;
+				return false;
+			}
+
+			var prevCutoff = curItem.PreviousCutoff ?? 0;
+			var newCutoff = prevCutoff + (curItem.Cutoff - prevCutoff) / 2;
+			var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, curItem.StartColor, curItem.PreviousCutoff, curItem.StartColor, double.NaN);
+
+			var currentSet = _currentColorBandSet;
+			index = currentSet.IndexOf(curItem);
+
+			//Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
+
+			lock (_histLock)
+			{
+				_currentColorBandSet.Insert(index, newItem);
+			}
+
+			if (!ColorBandsView.MoveCurrentTo(newItem))
+			{
+				Debug.WriteLine("Could not position the view to the new item.");
+			}
+
+			return true;
+		}
+
+		public bool TryDeleteSelectedItem()
+		{
+			if (ColorBandsView.CurrentItem is ColorBand curItem)
+			{
+				bool result;
+				switch (EditMode)
+				{
+					case ColorBandSetEditMode.Offsets:
+						result = TryDeleteOffset(curItem);
+						break;
+					case ColorBandSetEditMode.Colors:
+						result = TryDeleteColor(curItem);
+						break;
+					case ColorBandSetEditMode.Bands:
+						result = TryDeleteColorBand(curItem);
+						break;
+					default:
+						throw new InvalidOperationException($"{EditMode} is not recognized.");
+				}
+
+				if (result)
+				{
+					PushCopyOfCurrent();
+					IsDirty = true;
+					UpdatePercentages();
+
+					if (UseRealTimePreview)
+					{
+						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+					}
+				}
+
+				return result;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		private bool TryDeleteOffset(ColorBand curItem)
+		{
+			var currentSet = _currentColorBandSet;
+			var index = currentSet.IndexOf(curItem);
+
+			if (index > currentSet.Count - 2)
+			{
+				// Cannot delete the last entry
+				return false;
+			}
+
+			_currentColorBandSet.DeleteCutoff(index);
+			return true;
+		}
+
+		private bool TryDeleteColor(ColorBand curItem)
+		{
+			var currentSet = _currentColorBandSet;
+			var index = currentSet.IndexOf(curItem);
+
+			if (index > currentSet.Count - 2)
+			{
+				// Cannot delete the last entry
+				return false;
+			}
+
+			_currentColorBandSet.DeleteColor(index);
+			return true;
+		}
+
+		private bool TryDeleteColorBand(ColorBand curItem)
+		{
+			var currentSet = _currentColorBandSet;
+			var index = currentSet.IndexOf(curItem);
+
+			if (index >= currentSet.Count - 1)
+			{
+				// Cannot delete the last entry
+				return false;
+			}
+
+			bool colorBandWasRemoved;
+			lock (_histLock)
+			{
+				colorBandWasRemoved = currentSet.Remove(curItem);
+			}
+
+			if (!colorBandWasRemoved)
+			{
+				Debug.WriteLine("Could not remove the item.");
+			}
+
+			var newIndex = currentSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
+			//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {newIndex}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
+			Debug.WriteLine($"Removed item at former index: {index}. The new index is: {newIndex}.");
+
+			return true;
 		}
 
 		public void ApplyChanges(int? newTargetIterations = null)

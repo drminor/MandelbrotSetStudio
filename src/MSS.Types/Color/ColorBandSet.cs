@@ -199,7 +199,7 @@ namespace MSS.Types
 		public void InsertCutoff(int index, int cutoff)
 		{
 			InsertItem(index, new ColorBand(cutoff, ColorBandColor.White, ColorBandBlendStyle.None, ColorBandColor.White));
-			PullColorsDown(index);
+			PullColorsDown(index); // A band is pulled from the reserves and placed at the end.
 		}
 
 		public void DeleteCutoff(int index)
@@ -209,7 +209,23 @@ namespace MSS.Types
 				throw new ArgumentException("Index must be between 0 and Count - 2, inclusive when deleting a cutoff.");
 			}
 
-			PullOffsetsDown(index);
+			PullOffsetsDown(index); // Last Band is popped from the list and added to the reserves.
+		}
+
+		public void InsertColor(int index, ColorBand colorBand)
+		{
+			InsertItem(index, colorBand);
+			PullOffsetsDown(index); // Last Band is popped from the list and added to the reserves.
+		}
+
+		public void DeleteColor(int index)
+		{
+			if (index < 0 || index > Count - 2)
+			{
+				throw new ArgumentException("Index must be between 0 and Count - 2, inclusive when deleting a cutoff.");
+			}
+
+			PullColorsDown(index); // A band is pulled from the reserves and placed at the end.
 		}
 
 		#endregion

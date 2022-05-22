@@ -126,7 +126,10 @@ namespace MSetExplorer
 		// Insert
 		private void InsertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			InsertColorBand();
+			if (_vm.TryInsertNewItem(out var index))
+			{
+				FocusListBoxItem(index);
+			}
 		}
 
 		// Delete CanExecute
@@ -138,9 +141,8 @@ namespace MSetExplorer
 		// Delete
 		private void DeleteCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.DeleteSelectedItem();
+			_ = _vm.TryDeleteSelectedItem();
 		}
-
 
 		// Revert CanExecute
 		private void RevertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -169,33 +171,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
-
-		private void InsertColorBand()
-		{
-			Debug.WriteLine($"There are {lvColorBands.SelectedItems.Count} selected items. The current pos is {lvColorBands.SelectedIndex}.");
-
-			var view = _vm.ColorBandsView;
-
-			if (!view.IsAddingNew && lvColorBands.Items.CurrentItem is ColorBand selItem)
-			{
-				if (selItem.Cutoff - selItem.StartingCutoff < 1)
-				{
-					_ = MessageBox.Show("No Room to insert here.");
-					return;
-				}
-
-				var index = lvColorBands.Items.IndexOf(selItem);
-				var prevCutoff = selItem.PreviousCutoff ?? 0;
-				var newCutoff = prevCutoff + (selItem.Cutoff - prevCutoff) / 2;
-				var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, selItem.StartColor, selItem.PreviousCutoff, selItem.StartColor, double.NaN);
-				_vm.InsertItem(index, newItem);
-
-				//lvColorBands.Items.Refresh();
-				_ = lvColorBands.Items.MoveCurrentToPosition(index);
-
-				FocusListBoxItem(index);
-			}
-		}
 
 		private void FocusListBoxItem(int index)
 		{
