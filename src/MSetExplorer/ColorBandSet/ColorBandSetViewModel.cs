@@ -508,7 +508,11 @@ namespace MSetExplorer
 			var currentSet = _currentColorBandSet;
 			index = currentSet.IndexOf(curItem);
 
+			CurrentColorBand = null;
 			_currentColorBandSet.InsertCutoff(index, newCutoff);
+			ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(curItem);
+
 			return true;
 		}
 
@@ -519,7 +523,10 @@ namespace MSetExplorer
 
 			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, curItem.StartColor);
 
+			CurrentColorBand = null;
 			_currentColorBandSet.InsertColor(index, colorBand);
+			ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(curItem);
 
 			return true;
 		}
@@ -606,7 +613,11 @@ namespace MSetExplorer
 				return false;
 			}
 
+			CurrentColorBand = null;
 			_currentColorBandSet.DeleteCutoff(index);
+			ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(curItem);
+
 			return true;
 		}
 
@@ -621,7 +632,11 @@ namespace MSetExplorer
 				return false;
 			}
 
+			CurrentColorBand = null;
 			_currentColorBandSet.DeleteColor(index);
+			ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(curItem);
+
 			return true;
 		}
 

@@ -378,28 +378,27 @@ namespace MSS.Types
 				targetCb.StartColor = sourceCb.StartColor;
 				targetCb.BlendStyle = sourceCb.BlendStyle;
 				targetCb.EndColor = sourceCb.EndColor;
+				targetCb.SuccessorStartColor = Items[ptr + 2].StartColor;
 			}
 
-			if (index < Count - 2)
-			{
-				var targetCb = Items[index];
-				var sourceCb = GetNextReservedColorBand();
+			var targetCbE = Items[Count - 2];
+			var sourceCbE = GetNextReservedColorBand();
 
-				targetCb.StartColor = sourceCb.StartColor;
-				targetCb.BlendStyle = sourceCb.BlendStyle;
-				targetCb.EndColor = sourceCb.EndColor;
-			}
+			targetCbE.StartColor = sourceCbE.StartColor;
+			targetCbE.BlendStyle = sourceCbE.BlendStyle;
+			targetCbE.EndColor = sourceCbE.EndColor;
+			targetCbE.SuccessorStartColor = Items[Count - 1].StartColor;
 		}
 
 		private void PullOffsetsDown(int index)
 		{
-			for (var ptr = index; ptr < Count - 3; ptr++)
+			for (var ptr = index; ptr < Count - 2; ptr++)
 			{
 				var targetCb = Items[ptr];
 				var sourceCb = Items[ptr + 1];
 
 				targetCb.Cutoff = sourceCb.Cutoff;
-				sourceCb.PreviousCutoff = sourceCb.Cutoff;
+				targetCb.PreviousCutoff = ptr == 0 ? null : Items[ptr - 1].Cutoff;
 			}
 
 			var lastCb = Items[Count - 2];
