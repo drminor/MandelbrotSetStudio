@@ -7,7 +7,8 @@
              mc:Ignorable="d" 
              d:DesignHeight="110" d:DesignWidth="200">
     <Grid>
-        <Grid Margin="10" x:Name="grdTop">
+        <Border BorderThickness="1" BorderBrush="Black">
+        <Grid Margin="5,0" x:Name="grdTop">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="130" />
                 <ColumnDefinition Width="*" />
@@ -21,20 +22,22 @@
                 <!--<RowDefinition Height="*" />-->
             </Grid.RowDefinitions>
 
-            <TextBlock Text="Target Iterations:" Grid.Row="0" Margin="0,7,0,3" Height="21" />
-            <TextBox x:Name="txtTargetIterations" Grid.Row="0" Grid.Column="1" Margin="3" Text="{Binding TargetIterations}"/>
+            <TextBlock Text="Target Iterations:" Grid.Row="0" Margin="0,5" Height="18" />
+            <TextBox x:Name="txtTargetIterations" Grid.Row="0" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding TargetIterations}"/>
 
-            <TextBlock Text="Requests Per Job:" Grid.Row="1" Margin="0,7,0,3" Height="21" />
-            <TextBox x:Name="txtRequestsPerJob" Grid.Row="1" Grid.Column="1" Margin="3" Text="{Binding RequestsPerJob}" />
+            <TextBlock Text="Requests Per Job:" Grid.Row="1" Margin="0,5" Height="18" />
+            <TextBox x:Name="txtRequestsPerJob" Grid.Row="1" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding RequestsPerJob}" />
 
-            <TextBlock Text="Available Iterations:" Grid.Row="2" Margin="0,7,0,3" Height="21" />
-            <TextBox x:Name="txtAvailableIterations" Grid.Row="2" Grid.Column="1" Margin="3" Text="{Binding TargetIterationsAvailable}"/>            
+            <TextBlock Text="Available Iterations:" Grid.Row="2" Margin="0,5" Height="18" />
+            <TextBox x:Name="txtAvailableIterations" Grid.Row="2" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding TargetIterationsAvailable}"/>            
             
             <!--<Button x:Name="Save" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top" Margin="3"
                     Width="80" Height="25"
                     Content="Save" />-->
-        </Grid>            
+        </Grid>
+            
+        </Border>
     </Grid>
 </UserControl>

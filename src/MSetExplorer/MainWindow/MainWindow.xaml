@@ -69,9 +69,9 @@
                 <MenuItem Header="Nav Buttons" IsCheckable="True"/>
                 <MenuItem Header="Screen Size Buttons" IsCheckable="True"/>
                 <Separator/>
-                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="True"/>
-                <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="True"/>
-                <MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_UnChecked"/>
+                <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
+                <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>-->
                 <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Unchecked" IsChecked="False"/>
             </MenuItem>
 
@@ -155,11 +155,11 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="dispSecMapCoords">
+            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="dispSecMapCoords" Visibility="Collapsed">
                 <local:MapCoordsControl x:Name="mapCoordsView1" Focusable="True"/>
             </Border>
 
-            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="dispSecMapCalcSettings">
+            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,0" x:Name="dispSecMapCalcSettings" Visibility="Collapsed">
                 <local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" Focusable="True"/>
             </Border>
 

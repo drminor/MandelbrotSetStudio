@@ -26,6 +26,7 @@ namespace MSetExplorer
 
 		private double _rowHeight;
 		private double _itemWidth;
+		private ColorBandSetEditMode _editMode;
 
 		private ColorBandSet? _colorBandSet;	// The value assigned to this model
 		private bool _useEscapeVelocities;
@@ -56,6 +57,7 @@ namespace MSetExplorer
 
 			_rowHeight = 60;
 			_itemWidth = 180;
+			_editMode = ColorBandSetEditMode.Offsets;
 
 			_colorBandSet = null;
 
@@ -86,6 +88,20 @@ namespace MSetExplorer
 		{
 			get => _itemWidth;
 			set { _itemWidth = value; OnPropertyChanged(nameof(ItemWidth)); }
+		}
+
+		public ColorBandSetEditMode EditMode
+		{
+			get => _editMode;
+			set
+			{
+				if (value != _editMode)
+				{
+					Debug.WriteLine($"The Edit mode is now {value}");
+					_editMode = value;
+					OnPropertyChanged();
+				}
+			}
 		}
 
 		public ColorBandSet? ColorBandSet

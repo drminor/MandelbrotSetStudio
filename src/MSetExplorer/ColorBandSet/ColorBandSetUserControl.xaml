@@ -11,6 +11,10 @@
     <UserControl.CommandBindings>
         <CommandBinding Command="local:ColorBandSetCommands.Revert" CanExecute="RevertCommand_CanExecute" Executed="RevertCommand_Executed" />
         <CommandBinding Command="local:ColorBandSetCommands.Apply" CanExecute="ApplyCommand_CanExecute" Executed="ApplyCommand_Executed" />
+
+        <CommandBinding Command="local:ColorBandSetCommands.Insert" CanExecute="InsertCommand_CanExecute" Executed="InsertCommand_Executed" />
+        <CommandBinding Command="local:ColorBandSetCommands.Delete" CanExecute="DeleteCommand_CanExecute" Executed="DeleteCommand_Executed" />
+
     </UserControl.CommandBindings>
     
     <UserControl.Resources>
@@ -134,24 +138,29 @@
 
     </UserControl.Resources>
 
-    <Grid>
+    <Grid Width="290">
 
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <ListBox Name="lvColorBands" ItemsSource="{Binding ColorBandsView}"
+        <Border Grid.Row="0" BorderThickness="1,1,1,1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Border BorderThickness="0" Margin="0,3">
+                <local:ColorBandSetEditModeControl ColorBandSetEditMode="{Binding Path=EditMode}" />
+            </Border>
+        </Border>
+
+        <Border Grid.Row="1" BorderThickness="1,0,1,1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <ListBox Name="lvColorBands" ItemsSource="{Binding ColorBandsView}" BorderThickness="0"
                      ItemContainerStyle="{StaticResource CbContainerStyle}"
                      IsSynchronizedWithCurrentItem="True" Focusable="True">
                 
                 <ListBox.InputBindings>
                     <!--<KeyBinding Command="local:ColorBandSetCommands.Edit" Key="F2" />-->
-                    <KeyBinding Command="local:ColorBandSetCommands.Insert" Key="Insert" />
-                    <KeyBinding Command="local:ColorBandSetCommands.Delete" Key="Delete" />
                     <KeyBinding Command="local:ColorBandSetCommands.ShowDetails" Key="F3" />
 
                     <!--<KeyBinding Command="local:TransactionCommands.Commit" Key="Enter" />
@@ -191,13 +200,13 @@
             </ListBox>
         </Border>
 
-        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,5">
+        <Border Grid.Row="2" BorderThickness="1,0,1,1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
             <local:ColorBandUserControl x:Name="clrBandDetail" />
         </Border>
 
-        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,4,0,9">
+        <Border Grid.Row="3" BorderThickness="1,0,1,1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
 
-            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
                 <Button Name="btnRevert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Revert">Revert</Button>
                 <Button Name="btnInsert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Insert">Insert</Button>
                 <Button Name="btnDelete" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Delete">Delete</Button>
@@ -206,8 +215,10 @@
 
         </Border>
 
-        <Border Grid.Row="3" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,5">
-            <local:UndoPileControl x:Name="undoRedo1" />
+        <Border Grid.Row="4" BorderThickness="1,0,1,1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
+            <Border BorderThickness="0" Margin="0,3">
+                <local:UndoPileControl x:Name="undoRedo1" />
+            </Border>
         </Border>
 
     </Grid>

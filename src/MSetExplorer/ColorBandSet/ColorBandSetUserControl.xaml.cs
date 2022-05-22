@@ -48,7 +48,7 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
+			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty) || e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
 			{
 				CommandManager.InvalidateRequerySuggested();
 			}
@@ -120,7 +120,7 @@ namespace MSetExplorer
 		// Insert CanExecute
 		private void InsertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = true;
+			e.CanExecute = _vm?.CurrentColorBand != null;
 		}
 
 		// Insert
@@ -132,7 +132,7 @@ namespace MSetExplorer
 		// Delete CanExecute
 		private void DeleteCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.ColorBandsView.CurrentPosition < _vm?.ColorBandsView.Count - 1;
+			e.CanExecute = _vm?.CurrentColorBand != null; // _vm?.ColorBandsView.CurrentPosition < _vm?.ColorBandsView.Count - 1;
 		}
 
 		// Delete

@@ -173,6 +173,26 @@ namespace MSetExplorer
 			Close();
 		}
 
+		// Show Hide Coords Window
+		private void CoordsWindow_Checked(object sender, RoutedEventArgs e)
+		{
+			var showCoord = mnuItem_CoordsWindow.IsChecked;
+			dispSecMapCoords.Visibility = showCoord ? Visibility.Visible : Visibility.Collapsed;
+		}
+
+		private void CoordsWindow_UnChecked(object sender, RoutedEventArgs e)
+		{
+			var showCoord = mnuItem_CoordsWindow.IsChecked;
+			dispSecMapCoords.Visibility = showCoord ? Visibility.Visible : Visibility.Collapsed;
+		}
+
+		// Show Hide Coords Window
+		private void CalcSettingsWindow_Checked(object sender, RoutedEventArgs e)
+		{
+			var showCalcSettings = mnuItem_CalcWindow.IsChecked;
+			dispSecMapCalcSettings.Visibility = showCalcSettings ? Visibility.Visible : Visibility.Collapsed;
+		}
+
 		// Show Hide Job Tree
 		private void JobTree_Checked(object sender, RoutedEventArgs e)
 		{
@@ -201,7 +221,7 @@ namespace MSetExplorer
 			mnuItem_JobTreeWindow.IsChecked = showJobTreeControl;
 			mnuItem_CoordsWindow.IsChecked = !showJobTreeControl;
 			mnuItem_CalcWindow.IsChecked = !showJobTreeControl;
-			mnuItem_ColorBandWindow.IsChecked = !showJobTreeControl;
+			//mnuItem_ColorBandWindow.IsChecked = !showJobTreeControl;
 
 			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
 			colRight.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
@@ -931,5 +951,9 @@ namespace MSetExplorer
 			SaveCancelled,
 		}
 
+		private void mnuItem_CalcWindow_Unchecked(object sender, RoutedEventArgs e)
+		{
+
+		}
 	}
 }
