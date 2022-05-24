@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace MSetExplorer
 {
-	internal class MainWindowViewModel : ViewModelBase, IMainWindowViewModel 
+	public class ExplorerViewModel : ViewModelBase, IExplorerViewModel 
 	{
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
@@ -15,7 +15,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MainWindowViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel, 
+		public ExplorerViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel, 
 			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
 		{
 			MapProjectViewModel = mapProjectViewModel;

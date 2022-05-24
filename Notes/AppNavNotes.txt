@@ -1,0 +1,33 @@
+Startup
+	1. Get Preference from settings
+		a. Open Last Project
+		b. Open Top Nav
+
+
+if a. Open Last Project
+	-> Open Project
+
+
+if b. Open Top Nav
+	1. Show Top Nav
+	2. User will select 
+		a. Open Project
+		b. Settings
+		c. Close
+
+
+Open Project (if Project Id = null, then new)
+	1. Create VM
+	2. Create Window
+	3. Set DataContext
+	4. Subscribe to Window Closed
+	5. Open Window
+
+	
+Window Closed Event Handler
+	a. If settings are "Open Last Project", then close app
+	b. Open Top Nav
+
+Need to either
+	1. Allow user to change settings from an open project
+	2. All user to close project and open top-nav as an explict option as opposed to simply close.

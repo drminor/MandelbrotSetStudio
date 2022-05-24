@@ -14,23 +14,23 @@ namespace MSetExplorer
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
-	public partial class MainWindow : Window
+	public partial class ExplorerWindow : Window
 	{
-		private IMainWindowViewModel _vm;
+		private IExplorerViewModel _vm;
 
 		#region Constructor
 
-		public MainWindow()
+		public ExplorerWindow()
 		{
-			_vm = (IMainWindowViewModel)DataContext;
+			_vm = (IExplorerViewModel)DataContext;
 
-			Loaded += MainWindow_Loaded;
-			Closing += MainWindow_Closing;
-			ContentRendered += MainWindow_ContentRendered;
+			Loaded += ExplorerWindow_Loaded;
+			Closing += ExplorerWindow_Closing;
+			ContentRendered += ExplorerWindow_ContentRendered;
 			InitializeComponent();
 		}
 
-		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+		private void ExplorerWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
@@ -39,7 +39,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (IMainWindowViewModel)DataContext;
+				_vm = (IExplorerViewModel)DataContext;
 				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
@@ -58,7 +58,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MainWindow_ContentRendered(object? sender, EventArgs e)
+		private void ExplorerWindow_ContentRendered(object? sender, EventArgs e)
 		{
 			Debug.WriteLine("The MainWindow is handling ContentRendered");
 			//LoadNewProject();
@@ -68,7 +68,7 @@ namespace MSetExplorer
 			//SpIdxTest();
 		}
 
-		private void MainWindow_Closing(object sender, CancelEventArgs e)
+		private void ExplorerWindow_Closing(object sender, CancelEventArgs e)
 		{
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
@@ -152,7 +152,17 @@ namespace MSetExplorer
 
 		#region Window Button Handlers
 
-		private void CloseButton_Click(object sender, RoutedEventArgs e)
+		private void CloseAndReturnButton_Click(object sender, RoutedEventArgs e)
+		{
+			CloseOrExit(returnToTopNav: true);
+		}
+
+		private void ExitButton_Click(object sender, RoutedEventArgs e)
+		{
+			CloseOrExit(returnToTopNav: false);
+		}
+
+		private void CloseOrExit(bool returnToTopNav)
 		{
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
@@ -170,6 +180,7 @@ namespace MSetExplorer
 			}
 
 			_vm.MapProjectViewModel.ProjectClose();
+			Properties.Settings.Default["ShowTopNav"] = returnToTopNav;
 			Close();
 		}
 

@@ -6,10 +6,8 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
-	public interface IColorBandSetOpenSaveViewModel
+	public interface IColorBandSetOpenSaveViewModel : INotifyPropertyChanged
 	{
-		event PropertyChangedEventHandler? PropertyChanged;
-
 		DialogType DialogType { get; }
 
 		ObservableCollection<ColorBandSetInfo> ColorBandSetInfos { get; }

@@ -1,4 +1,4 @@
-﻿<Window x:Class="MSetExplorer.MainWindow"
+﻿<Window x:Class="MSetExplorer.ExplorerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -49,9 +49,10 @@
                 <MenuItem Header="_Save" Command="local:CustomCommands.ProjectSave" />
                 <MenuItem Header="Save_As" Command="local:CustomCommands.ProjectSaveAs" />
                 <Separator/>
-                <MenuItem Header="Edit Coords" Command="local:CustomCommands.ProjectEditCoords"/>
+                <MenuItem Header="Edit C_oords" Command="local:CustomCommands.ProjectEditCoords"/>
                 <Separator/>
-                <MenuItem Header="_Exit" Click="CloseButton_Click" />
+                <MenuItem Header="_Close And Return" Click="CloseAndReturnButton_Click" />
+                <MenuItem Header="_Exit Program" Click="ExitButton_Click" />
             </MenuItem>
 
             <MenuItem Header="_Colors">

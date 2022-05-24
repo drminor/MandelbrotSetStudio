@@ -2,9 +2,9 @@
 
 namespace MSetExplorer
 {
-	public interface IMainWindowViewModel
+	public interface IExplorerViewModel : INotifyPropertyChanged
 	{
-		event PropertyChangedEventHandler? PropertyChanged;
+		//event PropertyChangedEventHandler? PropertyChanged;
 
 		IMapProjectViewModel MapProjectViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
