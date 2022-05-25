@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
+    <ProjectReference Include="..\MSetOldTypes\MSetOldTypes.csproj" />
     <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
     <ProjectReference Include="..\PngImageLib\PngImageLib.csproj" />

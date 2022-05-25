@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSS.Types.MSet;
 
 namespace MSS.Types.MSet
 {
