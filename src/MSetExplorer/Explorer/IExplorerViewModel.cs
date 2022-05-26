@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using MSS.Types.MSet;
+using System.ComponentModel;
 
 namespace MSetExplorer
 {
@@ -15,5 +16,7 @@ namespace MSetExplorer
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
+
+		IProjectAdapter ProjectAdapter { get; }
 	}
 }

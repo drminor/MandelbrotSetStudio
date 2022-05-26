@@ -318,8 +318,8 @@ namespace MSetExplorer
 				BlockOffsetX = jobAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
 				BlockOffsetY = jobAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);
 
-				SamplePointDelta = jobAreaInfo.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
-				SamplePointDeltaExp = jobAreaInfo.SamplePointDelta.Exponent;
+				SamplePointDelta = jobAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
+				SamplePointDeltaExp = jobAreaInfo.Subdivision.SamplePointDelta.Exponent;
 
 				Zoom = RValueHelper.GetResolution(jobAreaInfo.Coords.Width);
 			}

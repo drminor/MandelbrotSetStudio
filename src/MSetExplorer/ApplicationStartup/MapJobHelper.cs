@@ -14,28 +14,15 @@ namespace MSetExplorer
 		#region Build Job
 
 		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
-			TransformType transformType, RectangleInt? newArea, SizeInt blockSize, ProjectAdapter projectAdapter)
+			TransformType transformType, RectangleInt? newArea, SizeInt blockSize, IProjectAdapter projectAdapter)
 		{
 			if (!parentJobId.HasValue && !(transformType == TransformType.None || transformType == TransformType.CanvasSizeUpdate))
 			{
 				throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {transformType}. Only jobs with TransformType = 'none' be parentless.");
 			}
 
-			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, newArea, blockSize);
+			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, newArea, blockSize, projectAdapter);
 
-			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(jobAreaInfo.SamplePointDelta, blockSize, projectAdapter);
-
-			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
-			var jobName = GetJobName(transformType);
-
-			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, subdivision, jobAreaInfo, colorBandSetId,  mapCalcSettings);
-
-			return job;
-		}
-
-		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, RectangleInt? newArea, SizeInt blockSize)
-		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
 
@@ -43,6 +30,22 @@ namespace MSetExplorer
 			var displaySize = canvasSize;
 
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(displaySize, blockSize);
+
+			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
+			var jobName = GetJobName(transformType);
+
+			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, jobAreaInfo, canvasSizeInBlocks, colorBandSetId,  mapCalcSettings);
+
+			return job;
+		}
+
+		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, RectangleInt? newArea, SizeInt blockSize, IProjectAdapter projectAdapter)
+		{
+			// Determine how much of the canvas control can be covered by the new map.
+			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
+
+			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
+			var displaySize = canvasSize;
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var updatedCoords = coords.Clone();
@@ -52,17 +55,19 @@ namespace MSetExplorer
 			//var samplePointDeltaD = RMapHelper.GetSamplePointDiag(coords, displaySize, out var newDCoords);
 			//RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, mSetInfo.Coords, coordsWork, newDCoords);
 
+			// Get a subdivision record from the database.
+			var subdivision = GetSubdivision(samplePointDelta, blockSize, projectAdapter);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
-			var result = new JobAreaInfo(updatedCoords, samplePointDelta, mapBlockOffset, canvasSize, canvasControlOffset, canvasSizeInBlocks);
+			var result = new JobAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
 
 		// Find an existing subdivision record that the same SamplePointDelta
-		private static Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize, ProjectAdapter projectAdapter)
+		private static Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize, IProjectAdapter projectAdapter)
 		{
 			Subdivision result;
 
@@ -99,14 +104,14 @@ namespace MSetExplorer
 
 		public static JobAreaInfo GetJobAreaInfo(Job job)
 		{
-			var result = new JobAreaInfo(job.Coords, job.Subdivision.SamplePointDelta, job.MapBlockOffset, job.CanvasSize, job.CanvasControlOffset, job.CanvasSizeInBlocks);
+			var result = new JobAreaInfo(job.Coords, job.CanvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
 
 			return result;
 		}
 
 		public static JobAreaInfo GetJobAreaInfo(Job job, SizeInt canvasSize)
 		{
-			var result = new JobAreaInfo(job.Coords, job.Subdivision.SamplePointDelta, job.MapBlockOffset, canvasSize, job.CanvasControlOffset, job.CanvasSizeInBlocks);
+			var result = new JobAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
 
 			return result;
 		}

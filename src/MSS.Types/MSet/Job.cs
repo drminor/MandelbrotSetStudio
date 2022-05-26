@@ -31,9 +31,9 @@ namespace MSS.Types.MSet
 		}
 
 		public Job(ObjectId? parentJobId, bool isPreferredChild, ObjectId projectId, string? label, TransformType transformType, RectangleInt? newArea,
-			Subdivision subdivision, JobAreaInfo jobAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
+			JobAreaInfo jobAreaInfo, SizeInt canvasSizeInBlocks, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
 			: this(ObjectId.GenerateNewId(), parentJobId, isPreferredChild, projectId, label, transformType, newArea,
-				  subdivision, jobAreaInfo.Coords, jobAreaInfo.MapBlockOffset, jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, jobAreaInfo.CanvasSizeInBlocks,
+				  jobAreaInfo.Subdivision, jobAreaInfo.Coords, jobAreaInfo.MapBlockOffset, jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, canvasSizeInBlocks,
 				  colorBandSetId, mapCalcSettings, DateTime.UtcNow)
 		{ }
 

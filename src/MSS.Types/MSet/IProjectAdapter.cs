@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types.MSet
 {
@@ -11,10 +12,13 @@ namespace MSS.Types.MSet
 		void UpdateColorBandSetDetails(ColorBandSet colorBandSet);
 
 		public Job InsertJob(Job job);
+		void UpdateJobDetails(Job job);
 
 		void UpdateProjectName(ObjectId projectId, string name);
 		void UpdateProjectDescription(ObjectId projectId, string? description);
-		void UpdateJobDetails(Job job);
 		void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId);
+
+		bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision);
+		Subdivision InsertSubdivision(Subdivision subdivision);
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -16,8 +17,10 @@ namespace MSetExplorer
 		#region Constructor
 
 		public ExplorerViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel, 
-			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
+			IProjectAdapter projectAdapter, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
 		{
+			ProjectAdapter = projectAdapter;
+
 			MapProjectViewModel = mapProjectViewModel;
 			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 
@@ -78,6 +81,8 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		public IProjectAdapter ProjectAdapter { get; init; }
 
 		#endregion
 

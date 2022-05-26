@@ -18,17 +18,19 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize, bool allowEdits) : this(new SingleCoordEditorViewModel[] {
+		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize, bool allowEdits, IProjectAdapter projectAdapter) 
+			: this(new SingleCoordEditorViewModel[] {
 			new SingleCoordEditorViewModel(coords.Left), new SingleCoordEditorViewModel(coords.Right),
-			new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, displaySize, allowEdits)
+			new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, displaySize, allowEdits, projectAdapter)
 		{ }
 
-		public CoordsEditorViewModel(string x1, string x2, string y1, string y2, SizeInt displaySize, bool allowEdits) : this(new SingleCoordEditorViewModel[] { 
+		public CoordsEditorViewModel(string x1, string x2, string y1, string y2, SizeInt displaySize, bool allowEdits, IProjectAdapter projectAdapter) 
+			: this(new SingleCoordEditorViewModel[] { 
 			new SingleCoordEditorViewModel(x1), new SingleCoordEditorViewModel(x2),
-			new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, displaySize, allowEdits)
+			new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, displaySize, allowEdits, projectAdapter)
 		{ }
 
-		private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, SizeInt displaySize, bool allowEdits)
+		private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, SizeInt displaySize, bool allowEdits, IProjectAdapter projectAdapter)
 		{
 			StartingX = vms[0];
 			EndingX = vms[1];
@@ -44,7 +46,7 @@ namespace MSetExplorer
 
 			_zoom = RValueHelper.GetResolution(_coords.Width);
 
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(_coords, _displaySize, newArea: null, _blockSize);
+			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(_coords, _displaySize, newArea: null, _blockSize, projectAdapter);
 			MapCoordsDetail2 = new MapCoordsDetailViewModel(jobAreaInfo);
 		}
 

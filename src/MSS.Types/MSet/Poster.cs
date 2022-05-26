@@ -14,7 +14,7 @@ namespace MSS.Types
 
 		private ObjectId _subdivisionId;
 		private JobAreaInfo _jobAreaInfo;
-		private ObjectId _colorBandSetId;
+		private ColorBandSet _colorBandSet;
 		private MapCalcSettings _mapCalcSettings;
 
 		private DateTime _lastUpdatedUtc;
@@ -23,16 +23,16 @@ namespace MSS.Types
 		#region Constructor
 
 		public Poster(string name, string? description, ObjectId? sourceJobId,
-			ObjectId subdivisionId, JobAreaInfo jobAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
+			ObjectId subdivisionId, JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 			: this(ObjectId.GenerateNewId(), name, description, sourceJobId,
-				  subdivisionId, jobAreaInfo, colorBandSetId, mapCalcSettings,
+				  subdivisionId, jobAreaInfo, colorBandSet, mapCalcSettings,
 				  DateTime.UtcNow, DateTime.MinValue, DateTime.MinValue)
 		{
 			OnFile = false;
 		}
 
 		public Poster(ObjectId id, string name, string? description, ObjectId? sourceJobId,
-			ObjectId subdivisionId, JobAreaInfo jobAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+			ObjectId subdivisionId, JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
 			DateTime dateCreated, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			Id = id;
@@ -44,7 +44,7 @@ namespace MSS.Types
 
 			_subdivisionId = subdivisionId;
 			_jobAreaInfo = jobAreaInfo;
-			_colorBandSetId = colorBandSetId;
+			_colorBandSet = colorBandSet;
 			_mapCalcSettings = mapCalcSettings;
 
 			DateCreatedUtc = dateCreated;
@@ -119,14 +119,14 @@ namespace MSS.Types
 			}
 		}
 
-		public ObjectId ColorBandSetId
+		public ColorBandSet ColorBandSet
 		{
-			get => _colorBandSetId;
+			get => _colorBandSet;
 			set
 			{
-				if (value != _colorBandSetId)
+				if (value != _colorBandSet)
 				{
-					_colorBandSetId = value;
+					_colorBandSet = value;
 					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}

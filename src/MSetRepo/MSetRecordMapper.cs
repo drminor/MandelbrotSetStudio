@@ -143,12 +143,10 @@ namespace MSetRepo
 		{
 			var result = new JobAreaInfo(
 				coords: _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto),
-				samplePointDelta: _dtoMapper.MapFrom(target.SamplePointDelta.Size),
-				mapBlockOffset: MapFrom(target.MapBlockOffset),
 				canvasSize: MapFrom(target.CanvasSize),
-				canvasControlOffset: MapFrom(target.CanvasControlOffset),
-				canvasSizeInBlocks: MapFrom(target.CanvasSizeInBlocks),
-				blockSize: MapFrom(target.BlockSize)
+				subdivision: MapFrom(target.SubdivisionRecord),
+				mapBlockOffset: MapFrom(target.MapBlockOffset),
+				canvasControlOffset: MapFrom(target.CanvasControlOffset)
 				);
 
 			return result;
@@ -158,12 +156,10 @@ namespace MSetRepo
 		{
 			var result = new JobAreaInfoRecord(
 				CoordsRecord: MapTo(source.Coords),
-				SamplePointDelta: MapTo(source.SamplePointDelta),
-				MapBlockOffset: MapTo(source.MapBlockOffset),
 				CanvasSize: MapTo(source.CanvasSize),
-				CanvasControlOffset: MapTo(source.CanvasControlOffset),
-				CanvasSizeInBlocks: MapTo(source.CanvasSizeInBlocks),
-				BlockSize: MapTo(source.BlockSize)
+				SubdivisionRecord: MapTo(source.Subdivision),
+				MapBlockOffset: MapTo(source.MapBlockOffset),
+				CanvasControlOffset: MapTo(source.CanvasControlOffset)
 				);
 
 			return result;
@@ -171,13 +167,7 @@ namespace MSetRepo
 
 		public Poster MapFrom(PosterRecord target)
 		{
-			var result = new Poster(target.Name, target.Description, target.SourceJobId, target.SubdivisionId,
-				MapFrom(target.JobAreaInfoRecord),
-				target.ColorBandSetId,
-				target.MapCalcSettings
-				);
-
-			return result;
+			throw new NotImplementedException();
 		}
 
 		public PosterRecord MapTo(Poster source)
@@ -188,7 +178,7 @@ namespace MSetRepo
 				SourceJobId: source.SourceJobId,
 				SubdivisionId: source.SubdivisionId,
 				JobAreaInfoRecord: MapTo(source.JobAreaInfo), 
-				ColorBandSetId: source.ColorBandSetId, 
+				ColorBandSetId: source.ColorBandSet.Id, 
 				MapCalcSettings: source.MapCalcSettings, 
 				DateCreatedUtc: source.DateCreatedUtc, 
 				LastSavedUtc: source.LastSavedUtc,

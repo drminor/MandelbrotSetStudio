@@ -409,7 +409,8 @@ namespace MSetExplorer
 				var posterSize = new SizeInt(2048);
 				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, posterSize);
 
-				var poster = new Poster("Test", null, curJob.Id, curJob.Subdivision.Id, jobAreaInfo, curJob.ColorBandSetId, curJob.MapCalcSettings);
+				var colorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
+				var poster = new Poster("Test", null, curJob.Id, curJob.Subdivision.Id, jobAreaInfo, colorBandSet, curJob.MapCalcSettings);
 				_vm.MapProjectViewModel.PosterCreate(poster);
 
 				_vm.MapProjectViewModel.ProjectClose();
@@ -752,7 +753,7 @@ namespace MSetExplorer
 			var curJob = _vm.MapProjectViewModel.CurrentJob;
 			if (!curJob.IsEmpty)
 			{
-				coordsEditorViewModel = new CoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize, allowEdits: true);
+				coordsEditorViewModel = new CoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize, allowEdits: true, _vm.ProjectAdapter);
 				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else
@@ -766,7 +767,7 @@ namespace MSetExplorer
 				//var x2 = "-0.4770369648923";
 				//var y1 = "0.5355758216817";
 				//var y2 = "0.5355758242393";
-				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.MapProjectViewModel.CanvasSize, allowEdits: false);
+				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.MapProjectViewModel.CanvasSize, allowEdits: false, _vm.ProjectAdapter);
 				mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
 			}
 

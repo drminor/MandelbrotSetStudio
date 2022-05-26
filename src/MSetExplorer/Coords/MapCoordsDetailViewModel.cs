@@ -46,8 +46,8 @@ namespace MSetExplorer
 			_blockOffsetX = jobAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
 			_blockOffsetY = jobAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);
 
-			_samplePointDelta = jobAreaInfo.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
-			_samplePointDeltaExp = jobAreaInfo.SamplePointDelta.Exponent;
+			_samplePointDelta = jobAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
+			_samplePointDeltaExp = jobAreaInfo.Subdivision.SamplePointDelta.Exponent;
 
 			_zoom = RValueHelper.GetResolution(jobAreaInfo.Coords.Width);
 
@@ -359,20 +359,5 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Methods
-
-		//public RRectangle GetCoords()
-		//{
-		//	// TODO: Do these need to be normalized?
-		//	var result = new RRectangle(StartingX.Value, EndingX.Value, StartingY.Value, EndingY.Value, StartingX.Exponent);
-		//	return result;
-		//}
-
-		#endregion
-
-		#region Private Methods
-
-
-		#endregion
 	}
 }

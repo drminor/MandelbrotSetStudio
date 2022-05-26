@@ -40,7 +40,16 @@ namespace MSetExplorer
 			var DROP_MAP_SECTIONS = false;
 			var USE_MAP_SECTION_REPO = true;
 
-			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_CONN_STRING, DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, USE_MAP_SECTION_REPO);
+			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
+
+			if (DROP_ALL_COLLECTIONS)
+			{
+				_repositoryAdapters.ProjectAdapter.DropCollections();
+			}
+			else if (DROP_MAP_SECTIONS)
+			{
+				_repositoryAdapters.ProjectAdapter.DropSubdivisionsAndMapSectionsCollections();
+			}
 
 			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO);
 
@@ -81,5 +90,32 @@ namespace MSetExplorer
 
 			// TODO: Dispose the MapLoaderManager, MapSectionRequestProcessor, etc.
 		}
+
+		//private void DoSchemaUpdates()
+		//{
+		//	//_projectAdapter.AddColorBandSetIdToAllJobs();
+		//	//_projectAdapter.AddIsPreferredChildToAllJobs();
+
+		//	//var report = _projectAdapter.FixAllJobRels();
+		//	//Debug.WriteLine(report);
+
+		//	//var report1 = _projectAdapter.OpenAllJobs();
+		//	//Debug.WriteLine($"Could not open these projects:\n {string.Join("; ", report1)}");
+
+		//	//Debug.WriteLine("About to call DeleteUnusedColorBandSets.");
+		//	//var report = _projectAdapter.DeleteUnusedColorBandSets();
+		//	//Debug.WriteLine(report);
+
+		//	//var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_CONN_STRING);
+		//	//mapSectionAdapter.AddCreatedDateToAllMapSections();
+
+		//	//var res = MessageBox.Show("FixAll complete, stop application?", "done", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+		//	//if (res == MessageBoxResult.Yes)
+		//	//{
+		//	//	Current.Shutdown();
+		//	//	return;
+		//	//}
+		//}
+
 	}
 }

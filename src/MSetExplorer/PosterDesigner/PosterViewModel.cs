@@ -26,7 +26,6 @@ namespace MSetExplorer
 
 			_canvasSize = new SizeInt();
 			_currentPoster = null;
-			CurrentColorBandSet = null;
 		}
 
 		#endregion
@@ -105,12 +104,11 @@ namespace MSetExplorer
 
 		//public Job CurrentJob => CurrentPoster?.CurrentJob ?? Job.Empty;
 
-		public ColorBandSet? CurrentColorBandSet { get; private set; }
+		public ColorBandSet? CurrentColorBandSet => CurrentPoster?.ColorBandSet;
 
 		#endregion
 
 		#region Public Methods -- Project
-
 
 		public bool PosterOpen(string projectName)
 		{
@@ -160,7 +158,7 @@ namespace MSetExplorer
 			}
 
 			// TOOD: Have the poster class implement ICloneable
-			var poster = new Poster(name, description, currentPoster.SourceJobId, currentPoster.SubdivisionId, currentPoster.JobAreaInfo, currentPoster.ColorBandSetId, currentPoster.MapCalcSettings);
+			var poster = new Poster(name, description, currentPoster.SourceJobId, currentPoster.SubdivisionId, currentPoster.JobAreaInfo, currentPoster.ColorBandSet, currentPoster.MapCalcSettings);
 
 			if (poster is null)
 			{
@@ -203,7 +201,7 @@ namespace MSetExplorer
 
 			if (CurrentPoster.JobAreaInfo.Coords != coords)
 			{
-				LoadMap(CurrentPoster, CurrentPoster.ColorBandSetId, coords, CurrentPoster.MapCalcSettings);
+				LoadMap(CurrentPoster, CurrentPoster.ColorBandSet.Id, coords, CurrentPoster.MapCalcSettings);
 			}
 		}
 
@@ -226,15 +224,14 @@ namespace MSetExplorer
 			{
 				//CurrentPoster.Add(colorBandSet);
 
-				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentPoster.ColorBandSetId}, New ColorBandSetId = {colorBandSet.Id}");
+				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentPoster.ColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentPoster.MapCalcSettings.RequestsPerJob);
 				LoadMap(CurrentPoster, colorBandSet.Id, CurrentPoster.JobAreaInfo.Coords, mapCalcSettings);
 			}
 			else
 			{
-				Debug.WriteLine($"MapProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {CurrentPoster.ColorBandSetId}, New ColorBandSetId = {colorBandSet.Id}");
-				CurrentPoster.ColorBandSetId = colorBandSet.Id;
-				CurrentColorBandSet = colorBandSet;
+				Debug.WriteLine($"MapProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {CurrentPoster.ColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
+				CurrentPoster.ColorBandSet = colorBandSet;
 
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 			}

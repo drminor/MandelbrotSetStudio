@@ -24,9 +24,6 @@
         <!--<CommandBinding Command="local:CustomCommands.ColorsSave" CanExecute="ColorsSaveCommand_CanExecute" Executed="ColorsSaveCommand_Executed" />-->
         <CommandBinding Command="local:CustomCommands.ColorsSaveAs" CanExecute="ColorsSaveAsCommand_CanExecute" Executed="ColorsSaveAsCommand_Executed" />
 
-        <CommandBinding Command="local:CustomCommands.ToggleJobTree" CanExecute="ToggleJobTreeCommand_CanExecute" Executed="ToggleJobTreeCommand_Executed" />
-
-
     </Window.CommandBindings>
 
     <Grid>
@@ -43,15 +40,13 @@
 
         <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="25">
 
-            <MenuItem Header="_Project">
-                <MenuItem Header="_New" Click="NewButton_Click"/>
+            <MenuItem Header="_Poster">
+                <!--<MenuItem Header="_New" Click="NewButton_Click"/>-->
                 <MenuItem Header="_Open" Click="OpenButton_Click"/>
                 <MenuItem Header="_Save" Command="local:CustomCommands.ProjectSave" />
                 <MenuItem Header="Save_As" Command="local:CustomCommands.ProjectSaveAs" />
                 <Separator/>
                 <MenuItem Header="Edit Coor_ds" Command="local:CustomCommands.ProjectEditCoords"/>
-                <Separator/>
-                <MenuItem Header="Create P_oster" Click="CreatePosterButton_Click"/>
                 <Separator/>
                 <MenuItem Header="_Close And Return" Click="CloseAndReturnButton_Click" />
                 <MenuItem Header="_Exit Program" Click="ExitButton_Click" />
@@ -70,18 +65,13 @@
             <MenuItem Header="_Windows">
                 <MenuItem Header="Pan Buttons" IsCheckable="True"/>
                 <MenuItem Header="Nav Buttons" IsCheckable="True"/>
-                <MenuItem Header="Screen Size Buttons" IsCheckable="True"/>
                 <Separator/>
                 <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_UnChecked"/>
                 <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
                 <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>-->
-                <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Unchecked" IsChecked="False"/>
             </MenuItem>
 
             <MenuItem Header="_Map">
-                <MenuItem Header="Move _Back" Command="local:CustomCommands.JobGoBack" />
-                <MenuItem Header="Move _Forward" Command="local:CustomCommands.JobGoForward" />
-                <Separator/>
                 <MenuItem Header="Pan _Left" Command="local:CustomCommands.PanLeft" />
                 <MenuItem Header="Pan _Up" Command="local:CustomCommands.PanUp" />
                 <MenuItem Header="Pan _Right" Command="local:CustomCommands.PanRight" />
@@ -110,35 +100,6 @@
             <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecNavButtons">
                 <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoBack">Go Back</Button>
                 <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
-            </StackPanel>
-
-            <StackPanel Grid.Row="2" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecScreenSizeButtons">
-                <Grid Margin="5,0" x:Name="grdTop">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="30" />
-                        <ColumnDefinition Width="40" />
-                        <ColumnDefinition Width="40" />
-                    </Grid.ColumnDefinitions>
-
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <!--<RowDefinition Height="*" />-->
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Text="W:" Grid.Row="0" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
-                    <TextBox x:Name="txtW" Grid.Row="0" Grid.Column="1"  Grid.RowSpan="2" Margin="3,10" Text="{Binding DispWidth}"/>
-                    <Button Grid.Row="0" Grid.Column="2" Margin="2" Click="W_Up_Button_Click">U</Button>
-                    <Button Grid.Row="1" Grid.Column="2" Margin="2" Click="W_Down_Button_Click">D</Button>
-
-                    <TextBlock Text="H:" Grid.Row="2" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
-                    <TextBox x:Name="txtH" Grid.Row="2" Grid.RowSpan="2" Grid.Column="1" Margin="3,10" Text="{Binding DispHeight}" />
-                    <Button Grid.Row="2" Grid.Column="2" Margin="2" Click="H_Up_Button_Click">U</Button>
-                    <Button Grid.Row="3" Grid.Column="2" Margin="2" Click="H_Down_Button_Click">D</Button>
-
-                </Grid>
             </StackPanel>
 
         </Grid>

@@ -203,43 +203,6 @@ namespace MSetExplorer
 			dispSecMapCalcSettings.Visibility = showCalcSettings ? Visibility.Visible : Visibility.Collapsed;
 		}
 
-		// Show Hide Job Tree
-		private void JobTree_Checked(object sender, RoutedEventArgs e)
-		{
-			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
-			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			Width = showJobTreeControl ? 1905 : 1495;
-		}
-
-		private void JobTree_Unchecked(object sender, RoutedEventArgs e)
-		{
-			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
-			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			Width = showJobTreeControl ? 1905 : 1495;
-		}
-
-		private void ToggleJobTreeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-		{
-			e.CanExecute = true;
-		}
-
-		private void ToggleJobTreeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
-		{
-			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
-			showJobTreeControl = !showJobTreeControl;
-
-			mnuItem_JobTreeWindow.IsChecked = showJobTreeControl;
-			mnuItem_CoordsWindow.IsChecked = !showJobTreeControl;
-			mnuItem_CalcWindow.IsChecked = !showJobTreeControl;
-			//mnuItem_ColorBandWindow.IsChecked = !showJobTreeControl;
-
-			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			colRight.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			colLeft.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-
-			//Width = showJobTreeControl ? 1493 : 1495;
-		}
-
 		#endregion
 
 		#region Map Nav Button Handlers
@@ -378,43 +341,6 @@ namespace MSetExplorer
 		private void EditCoordsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			ShowCoordsEditor();
-		}
-
-		private void CreatePosterButton_Click(object sender, RoutedEventArgs e)
-		{
-			var saveResult = ProjectSaveChanges();
-			if (saveResult == SaveResult.ChangesSaved)
-			{
-				_ = MessageBox.Show("Changes Saved");
-			}
-			else if (saveResult == SaveResult.NotSavingChanges)
-			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
-			}
-			else if (saveResult == SaveResult.SaveCancelled)
-			{
-				// user cancelled.
-				return;
-			}
-
-			var curJob = _vm.MapProjectViewModel.CurrentJob;
-
-			if (curJob.IsEmpty)
-			{
-				_ = MessageBox.Show("Cannot create a poster, there is not current job.");
-			}
-			else
-			{
-				var posterSize = new SizeInt(2048);
-				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, posterSize);
-
-				var poster = new Poster("Test", null, curJob.Id, curJob.Subdivision.Id, jobAreaInfo, curJob.ColorBandSetId, curJob.MapCalcSettings);
-				_vm.MapProjectViewModel.PosterCreate(poster);
-
-				_vm.MapProjectViewModel.ProjectClose();
-				Properties.Settings.Default["ShowTopNav"] = true;
-				Close();
-			}
 		}
 
 		#endregion
@@ -563,33 +489,6 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Disp Size Button Handlers
-
-		private void W_Up_Button_Click(object sender, RoutedEventArgs e)
-		{
-			Width += 128;
-			//_vm.BumpDispWidth(increase: true);
-		}
-
-		private void W_Down_Button_Click(object sender, RoutedEventArgs e)
-		{
-			Width -= 128;
-			//_vm.BumpDispWidth(increase: false);
-		}
-
-		private void H_Up_Button_Click(object sender, RoutedEventArgs e)
-		{
-			Height += 128;
-			//_vm.BumpDispHeight(increase: true);
-		}
-
-		private void H_Down_Button_Click(object sender, RoutedEventArgs e)
-		{
-			Height -= 128;
-			//_vm.BumpDispHeight(increase: false);
-		}
-
-		#endregion
 
 		#region Private Methods - Project
 
@@ -751,7 +650,7 @@ namespace MSetExplorer
 			var curJob = _vm.MapProjectViewModel.CurrentJob;
 			if (!curJob.IsEmpty)
 			{
-				coordsEditorViewModel = new CoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize, allowEdits: true);
+				coordsEditorViewModel = new CoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize, allowEdits: true, _vm.ProjectAdapter);
 				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else
@@ -765,7 +664,7 @@ namespace MSetExplorer
 				//var x2 = "-0.4770369648923";
 				//var y1 = "0.5355758216817";
 				//var y2 = "0.5355758242393";
-				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.MapProjectViewModel.CanvasSize, allowEdits: false);
+				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.MapProjectViewModel.CanvasSize, allowEdits: false, _vm.ProjectAdapter);
 				mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
 			}
 

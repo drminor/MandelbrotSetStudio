@@ -343,7 +343,7 @@ namespace MSetExplorer
 				var position = curJob.Coords.Position;
 				var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 				var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
- 				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, CanvasSize, newArea, _blockSize);
+ 				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, CanvasSize, newArea, _blockSize, _projectAdapter);
 
 				return jobAreaInfo;
 			}

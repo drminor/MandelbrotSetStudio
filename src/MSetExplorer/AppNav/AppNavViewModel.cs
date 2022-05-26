@@ -29,7 +29,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
 
 			return result;
 		}
@@ -46,7 +46,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new PosterDesignerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			var result = new PosterDesignerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
 
 			return result;
 		}

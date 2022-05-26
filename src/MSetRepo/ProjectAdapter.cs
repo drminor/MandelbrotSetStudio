@@ -746,7 +746,7 @@ namespace MSetRepo
 
 			if (posterReaderWriter.TryGet(posterId, out var posterRecord))
 			{
-				poster = _mSetRecordMapper.MapFrom(posterRecord);
+				poster = BuildPoster(posterRecord);
 			}
 			else
 			{
@@ -756,6 +756,32 @@ namespace MSetRepo
 			return poster != null;
 		}
 
+		private Poster BuildPoster(PosterRecord target)
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var colorBandSetRecord = colorBandSetReaderWriter.Get(target.ColorBandSetId);
+
+			if (colorBandSetRecord == null)
+			{
+				throw new KeyNotFoundException($"Cannot find a ColorBandSet record on file for the Poster with id: {target.Id}.");
+			}
+
+			var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+
+			var result = new Poster(
+				name: target.Name, 
+				description: target.Description, 
+				sourceJobId: target.SourceJobId, 
+				subdivisionId: target.SubdivisionId,
+				jobAreaInfo: _mSetRecordMapper.MapFrom(target.JobAreaInfoRecord),
+				colorBandSet: colorBandSet,
+				mapCalcSettings: target.MapCalcSettings
+				);
+
+			return result;
+		}
+
+
 		public bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster)
 		{
 			//Debug.WriteLine($"Retrieving Poster object with name: {name}.");
@@ -764,7 +790,7 @@ namespace MSetRepo
 
 			if (posterReaderWriter.TryGet(name, out var posterRecord))
 			{
-				poster = _mSetRecordMapper.MapFrom(posterRecord);
+				poster = BuildPoster(posterRecord);
 			}
 			else
 			{
