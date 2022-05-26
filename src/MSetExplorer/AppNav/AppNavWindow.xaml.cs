@@ -52,9 +52,8 @@ namespace MSetExplorer
 
 		private void DesignPosterButton_Click(object sender, RoutedEventArgs e)
 		{
-			MessageBox.Show("De Po");
+			GoToDesigner();
 		}
-
 
 		private void GoToExplorer()
 		{
@@ -80,6 +79,44 @@ namespace MSetExplorer
 			if (_lastWindow != null)
 			{
 				_lastWindow.Closed -= ExplorerWindow_Closed;
+				_lastWindow = null;
+			}
+
+			if (Properties.Settings.Default.ShowTopNav)
+			{
+				Show();
+				WindowState = WindowState.Normal;
+			}
+			else
+			{
+				ExitApp();
+			}
+		}
+
+		private void GoToDesigner()
+		{
+			var posterDesignerViewModel = _vm.GetPosterDesignerViewModel();
+
+			var designerWindow = new PosterDesignerWindow
+			{
+				DataContext = posterDesignerViewModel
+			};
+
+			_lastWindow = designerWindow;
+
+			designerWindow.Owner = Application.Current.MainWindow;
+			designerWindow.Closed += DesignerWindow_Closed;
+			designerWindow.Show();
+			_ = designerWindow.Focus();
+
+			Hide();
+		}
+
+		private void DesignerWindow_Closed(object? sender, System.EventArgs e)
+		{
+			if (_lastWindow != null)
+			{
+				_lastWindow.Closed -= DesignerWindow_Closed;
 				_lastWindow = null;
 			}
 

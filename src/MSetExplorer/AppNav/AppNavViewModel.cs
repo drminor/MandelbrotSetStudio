@@ -3,6 +3,9 @@ using System;
 
 namespace MSetExplorer
 {
+	public delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	public delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+
 	public class AppNavViewModel
 	{
 		public RepositoryAdapters RepositoryAdapters { get; init; }
@@ -27,6 +30,23 @@ namespace MSetExplorer
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
 			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+
+			return result;
+		}
+
+		public PosterDesignerViewModel GetPosterDesignerViewModel()
+		{
+			// Map Project ViewModel
+			var mapProjectViewModel = new MapProjectViewModel(RepositoryAdapters.ProjectAdapter, RMapConstants.BLOCK_SIZE);
+
+			// Map Display View Model
+			var mapSectionHelper = new MapSectionHelper();
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(MapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
+
+			// ColorBand ViewModel
+			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
+
+			var result = new PosterDesignerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
 
 			return result;
 		}

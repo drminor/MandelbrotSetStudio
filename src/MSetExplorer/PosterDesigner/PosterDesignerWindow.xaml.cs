@@ -736,9 +736,9 @@ namespace MSetExplorer
 
 			var result = projectName != null
 				? colorBandSetName != null
-					? $"Main Window {dash} {projectName} {dash} {colorBandSetName}"
-					: $"Main Window {dash} {projectName}"
-				: "MainWindow";
+					? $"Designer Window {dash} {projectName} {dash} {colorBandSetName}"
+					: $"Designer Window {dash} {projectName}"
+				: "Designer Window";
 
 			return result;
 		}
