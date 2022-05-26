@@ -8,11 +8,6 @@
 
   <ItemGroup>
     <Compile Remove="BigIntegerExtensions.cs" />
-    <Compile Remove="MSet\MSetInfo.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="MSet\MSetInfo.cs" />
   </ItemGroup>
 
   <ItemGroup>
