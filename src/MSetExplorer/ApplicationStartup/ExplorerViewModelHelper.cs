@@ -37,8 +37,6 @@ namespace MSetExplorer
 			var DROP_MAP_SECTIONS = false;
 			var USE_MAP_SECTION_REPO = true;
 
-			//base.OnStartup(e);
-
 			// Project Repository Adapter
 			_projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
 
@@ -52,8 +50,6 @@ namespace MSetExplorer
 			}
 
 			_projectAdapter.CreateCollections();
-
-			//DoSchemaUpdates();
 
 			_sharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(MONGO_DB_CONN_STRING);
 			_sharedColorBandSetAdapter.CreateCollections();
@@ -77,12 +73,8 @@ namespace MSetExplorer
 		private MapLoaderManager BuildMapLoaderManager(string[] mEngineEndPointAddress, string dbProviderConnectionString, bool useTheMapSectionRepo, MapSectionHelper mapSectionHelper)
 		{
 			var mEngineClients = mEngineEndPointAddress.Select(x => new MClient(x)).ToArray();
-
-			//var mEngineClient = new MClient(mEngineEndPointAddress);
 			var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(dbProviderConnectionString);
-
 			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, useTheMapSectionRepo);
-
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
 
 			return result;
@@ -101,6 +93,32 @@ namespace MSetExplorer
 				? throw new InvalidOperationException("Cannot create a ColorBandSet OpenSave ViewModel, the Shared ColorBandSet Adapter is null.")
 				: new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
 		}
+
+		//private void DoSchemaUpdates()
+		//{
+		//	//_projectAdapter.AddColorBandSetIdToAllJobs();
+		//	//_projectAdapter.AddIsPreferredChildToAllJobs();
+
+		//	//var report = _projectAdapter.FixAllJobRels();
+		//	//Debug.WriteLine(report);
+
+		//	//var report1 = _projectAdapter.OpenAllJobs();
+		//	//Debug.WriteLine($"Could not open these projects:\n {string.Join("; ", report1)}");
+
+		//	//Debug.WriteLine("About to call DeleteUnusedColorBandSets.");
+		//	//var report = _projectAdapter.DeleteUnusedColorBandSets();
+		//	//Debug.WriteLine(report);
+
+		//	//var mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_CONN_STRING);
+		//	//mapSectionAdapter.AddCreatedDateToAllMapSections();
+
+		//	//var res = MessageBox.Show("FixAll complete, stop application?", "done", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+		//	//if (res == MessageBoxResult.Yes)
+		//	//{
+		//	//	Current.Shutdown();
+		//	//	return;
+		//	//}
+		//}
 
 	}
 }

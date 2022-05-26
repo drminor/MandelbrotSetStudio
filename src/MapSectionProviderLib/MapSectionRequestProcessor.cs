@@ -40,6 +40,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
+		//TODO: Add support to the MapSectionRequestProcessor to not use a IMapSectionAdapter.
 		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor)
 		{
 			_nextJobId = 0;

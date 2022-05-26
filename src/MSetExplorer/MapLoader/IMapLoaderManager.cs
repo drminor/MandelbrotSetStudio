@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace MSetExplorer
 {
-	internal interface IMapLoaderManager
+	public interface IMapLoaderManager
 	{
 		event EventHandler<MapSection> MapSectionReady;
 

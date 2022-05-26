@@ -8,7 +8,7 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class AppNavWindow : Window
 	{
-		//private AppNavViewModel _vm;
+		private AppNavViewModel _vm;
 
 		private Window? _lastWindow;
 
@@ -16,7 +16,7 @@ namespace MSetExplorer
 		{
 			_lastWindow = null;
 
-			//_vm = (AppNavViewModel)DataContext;
+			_vm = (AppNavViewModel)DataContext;
 			Loaded += AppNavWindow_Loaded;
 			InitializeComponent();
 		}
@@ -30,7 +30,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				//_vm = (AppNavViewModel)DataContext;
+				_vm = (AppNavViewModel)DataContext;
 
 				if (!Properties.Settings.Default.ShowTopNav)
 				{
@@ -58,9 +58,7 @@ namespace MSetExplorer
 
 		private void GoToExplorer()
 		{
-			var explorerViewModelHelper = new ExplorerViewModelHelper();
-
-			var explorerViewModel = explorerViewModelHelper.GetExplorerViewModel();
+			var explorerViewModel = _vm.GetExplorerViewModel();
 
 			var explorerWindow = new ExplorerWindow
 			{

@@ -5,34 +5,33 @@ namespace MSetExplorer
 {
 	public class MEngineServerManager
 	{
-		private const string SERVER_EXE_PATH = @"C:\Users\david\source\repos\MandelbrotSetStudio\src_FGEN\MEngineService\bin\x64\Debug\net5.0\MEngineService.exe";
-
-		//private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "https://localhost:5004", "https://localhost:5001" };
-		//private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "http://192.168.2.104:5000", "https://localhost:5001" };
-		private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "https://localhost:5001" };
+		private readonly string _serverExePath;
+		private readonly string[] _mEngineEndPointAddresses;
 
 		private readonly IList<Process> _serverProcesses;
 
-		public MEngineServerManager()
+		public MEngineServerManager(string serverExePath, string[] mEngineEndPointAddresses)
 		{
+			_serverExePath = serverExePath;
+			_mEngineEndPointAddresses = mEngineEndPointAddresses;
 			_serverProcesses = new List<Process>();
 		}
 
 		public void Start()
 		{
-			StartServer(M_ENGINE_END_POINT_ADDRESSES);
+			StartServer(_mEngineEndPointAddresses);
 		}
 
 		private void StartServer(string[] urls)
 		{
-			var exists = Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(SERVER_EXE_PATH)).Length > 0;
+			var exists = Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(_serverExePath)).Length > 0;
 			if (!exists)
 			{
 				foreach (var ep in urls)
 				{
 					if (ep.ToLower().Contains("localhost"))
 					{
-						var proc = Process.Start(SERVER_EXE_PATH, " --urls " + ep);
+						var proc = Process.Start(_serverExePath, " --urls " + ep);
 						_serverProcesses.Add(proc);
 					}
 				}
