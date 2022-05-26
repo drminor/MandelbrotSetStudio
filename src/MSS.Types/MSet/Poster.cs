@@ -183,6 +183,37 @@ namespace MSS.Types
 
 		#endregion
 
+		#region
+
+		public bool Save(IProjectAdapter projectAdapter)
+		{
+			// TODO: Implement Poster.Save
+			//if (AnyJobIsDirty && !IsDirty && !(DateCreated > LastSavedUtc))
+			//{
+			//	Debug.WriteLine("Warning: Project is not marked as 'IsDirty', but one or more of the jobs are dirty.");
+			//}
+
+			//projectAdapter.UpdateProjectCurrentJobId(Id, CurrentJobId);
+			//if (IsDirty || AnyJobIsDirty)
+			//{
+			//	SaveColorBandSets(Id, projectAdapter);
+			//	SaveJobs(Id, projectAdapter);
+
+			//	LastSavedUtc = DateTime.UtcNow;
+			//	_originalCurrentJobId = CurrentJobId;
+			//	return true;
+			//}
+			//else
+			//{
+			//	Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
+			//	return false;
+			//}
+
+			return false;
+		}
+
+		#endregion
+
 		#region Property Changed Support
 
 		public event PropertyChangedEventHandler? PropertyChanged;

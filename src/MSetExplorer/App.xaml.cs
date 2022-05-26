@@ -78,6 +78,8 @@ namespace MSetExplorer
 			base.OnExit(e);
 
 			_mEngineServerManager.Stop();
+
+			// TODO: Dispose the MapLoaderManager, MapSectionRequestProcessor, etc.
 		}
 	}
 }

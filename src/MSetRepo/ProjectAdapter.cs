@@ -791,6 +791,22 @@ namespace MSetRepo
 			}
 		}
 
+		public void DeletePoster(ObjectId posterId)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+
+			// TODO: Remove ColorBandSets for Poster.
+			//var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			//var cbsIds = colorBandSetReaderWriter.GetColorBandSetIdsForProject(posterId);
+
+			//foreach (var colorBandSetId in cbsIds)
+			//{
+			//	_ = colorBandSetReaderWriter.Delete(colorBandSetId);
+			//}
+
+			_ = posterReaderWriter.Delete(posterId);
+		}
+
 		public bool PosterExists(string name)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
