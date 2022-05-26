@@ -36,7 +36,7 @@ namespace MSetExplorer
 
 		public MapCoordsViewModel()
 		{
-			_currentJob = new Job();
+			_currentJob = Job.Empty;
 
 			_coords = new RRectangle();
 			_x1 = string.Empty;
@@ -75,7 +75,7 @@ namespace MSetExplorer
 				if (value != _currentJob)
 				{
 					_currentJob = value;
-					UpdateCoords(GetJobAreaInfo(value));
+					UpdateCoords(MapJobHelper.GetJobAreaInfo(value));
 					OnPropertyChanged();
 					OnPropertyChanged(nameof(JobId));
 				}
@@ -291,18 +291,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
-
-		private JobAreaInfo? GetJobAreaInfo(Job job)
-		{
-			if (job.IsEmpty)
-			{
-				return null;
-			}
-			else
-			{
-				return new JobAreaInfo(job.Coords, job.Subdivision.SamplePointDelta, job.MapBlockOffset, job.CanvasControlOffset, job.CanvasSizeInBlocks);
-			}
-		}
 
 		private void UpdateCoords(JobAreaInfo? jobAreaInfo)
 		{

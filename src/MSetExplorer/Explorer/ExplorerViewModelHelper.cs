@@ -2,8 +2,6 @@
 using MSetRepo;
 using MSS.Common;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace MSetExplorer
@@ -89,8 +87,6 @@ namespace MSetExplorer
 
 			return result;
 		}
-
-
 
 		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{

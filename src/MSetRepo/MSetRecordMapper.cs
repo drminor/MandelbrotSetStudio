@@ -104,13 +104,10 @@ namespace MSetRepo
 			return Enum.Parse<TransformType>(transformType.ToString(System.Globalization.CultureInfo.InvariantCulture));
 		}
 
-
 		public JobRecord MapTo(Job source)
 		{
-
 			var coords = MapTo(source.Coords);
 			var mSetInfoRecord = new MSetInfoRecord(coords, source.MapCalcSettings);
-
 
 			var result = new JobRecord(
 				source.ParentJobId,
@@ -124,13 +121,14 @@ namespace MSetRepo
 				MapTo(source.NewArea?.Size ?? new SizeInt()), 
 				mSetInfoRecord,
 				source.ColorBandSetId,
-				MapTo(source.CanvasSizeInBlocks),
 				MapTo(source.MapBlockOffset),
-				MapTo(source.CanvasControlOffset)
+				MapTo(source.CanvasControlOffset),
+				MapTo(source.CanvasSizeInBlocks)
 				)
 			{
 				Id = source.Id,
-				LastSaved = source.LastSavedUtc
+				LastSaved = source.LastSavedUtc,
+				CanvasSize = MapTo(source.CanvasSize)
 			};
 
 			return result;
@@ -141,21 +139,65 @@ namespace MSetRepo
 			throw new NotImplementedException();
 		}
 
-		//public MSetInfo MapFrom(MSetInfoRecord target)
-		//{
-		//	var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
-		//	var result = new MSetInfo(coords, target.MapCalcSettings);
+		public JobAreaInfo MapFrom(JobAreaInfoRecord target)
+		{
+			var result = new JobAreaInfo(
+				coords: _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto),
+				samplePointDelta: _dtoMapper.MapFrom(target.SamplePointDelta.Size),
+				mapBlockOffset: MapFrom(target.MapBlockOffset),
+				canvasSize: MapFrom(target.CanvasSize),
+				canvasControlOffset: MapFrom(target.CanvasControlOffset),
+				canvasSizeInBlocks: MapFrom(target.CanvasSizeInBlocks),
+				blockSize: MapFrom(target.BlockSize)
+				);
 
-		//	return result;
-		//}
+			return result;
+		}
 
-		//public MSetInfoRecord MapTo(MSetInfo source)
-		//{
-		//	var coords = MapTo(source.Coords);
-		//	var result = new MSetInfoRecord(coords, source.MapCalcSettings);
+		public JobAreaInfoRecord MapTo(JobAreaInfo source)
+		{
+			var result = new JobAreaInfoRecord(
+				CoordsRecord: MapTo(source.Coords),
+				SamplePointDelta: MapTo(source.SamplePointDelta),
+				MapBlockOffset: MapTo(source.MapBlockOffset),
+				CanvasSize: MapTo(source.CanvasSize),
+				CanvasControlOffset: MapTo(source.CanvasControlOffset),
+				CanvasSizeInBlocks: MapTo(source.CanvasSizeInBlocks),
+				BlockSize: MapTo(source.BlockSize)
+				);
 
-		//	return result;
-		//}
+			return result;
+		}
+
+		public Poster MapFrom(PosterRecord target)
+		{
+			var result = new Poster(target.Name, target.Description, target.SourceJobId, target.SubdivisionId,
+				MapFrom(target.JobAreaInfoRecord),
+				target.ColorBandSetId,
+				target.MapCalcSettings
+				);
+
+			return result;
+		}
+
+		public PosterRecord MapTo(Poster source)
+		{
+			var result = new PosterRecord(
+				Name: source.Name,
+				Description: source.Description,
+				SourceJobId: source.SourceJobId,
+				SubdivisionId: source.SubdivisionId,
+				JobAreaInfoRecord: MapTo(source.JobAreaInfo), 
+				ColorBandSetId: source.ColorBandSetId, 
+				MapCalcSettings: source.MapCalcSettings, 
+				DateCreatedUtc: source.DateCreatedUtc, 
+				LastSavedUtc: source.LastSavedUtc,
+				LastAccessedUtc: source.LastAccessedUtc);
+
+			result.Id = source.Id;
+
+			return result;
+		}
 
 		public Subdivision MapFrom(SubdivisionRecord target)
 		{

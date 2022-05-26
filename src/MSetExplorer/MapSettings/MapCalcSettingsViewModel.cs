@@ -1,9 +1,6 @@
-﻿using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Diagnostics;
-using System.Globalization;
 
 namespace MSetExplorer
 {
@@ -17,7 +14,7 @@ namespace MSetExplorer
 
 		public MapCalcSettingsViewModel()
 		{
-			_currentJob = new Job();
+			_currentJob = Job.Empty;
 
 			_targetIterations = _currentJob.MapCalcSettings.TargetIterations;
 			_requestsPerJob = _currentJob.MapCalcSettings.RequestsPerJob;

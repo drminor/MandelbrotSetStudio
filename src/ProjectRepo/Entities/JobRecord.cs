@@ -19,9 +19,9 @@ namespace ProjectRepo.Entities
 		MSetInfoRecord MSetInfo,
 		ObjectId ColorBandSetId,
 
-		SizeIntRecord CanvasSizeInBlocks,
 		BigVectorRecord MapBlockOffset,
-		VectorIntRecord CanvasControlOffset
+		VectorIntRecord CanvasControlOffset,
+		SizeIntRecord CanvasSizeInBlocks
 		)
 	{
 		[BsonId]
@@ -33,6 +33,8 @@ namespace ProjectRepo.Entities
 		public bool Onfile => Id != ObjectId.Empty;
 
 		public DateTime LastSaved { get; set; }
+
+		public SizeIntRecord? CanvasSize { get; set; } // TODO: Make sure every JobRecord has a value for CanvasSize
 	}
 
 	public record JobModel1

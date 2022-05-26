@@ -29,7 +29,7 @@ namespace MSetExplorer
 			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
 			var jobName = GetJobName(transformType);
 
-			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, colorBandSetId, jobAreaInfo, subdivision, mapCalcSettings);
+			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, subdivision, jobAreaInfo, colorBandSetId,  mapCalcSettings);
 
 			return job;
 		}
@@ -39,7 +39,7 @@ namespace MSetExplorer
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
 
-			// Use the exact canvas size -- do not adjust based on aspect ration of the newArea.
+			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
 			var displaySize = canvasSize;
 
 			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(displaySize, blockSize);
@@ -56,7 +56,7 @@ namespace MSetExplorer
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
-			var result = new JobAreaInfo(updatedCoords, samplePointDelta, mapBlockOffset, canvasControlOffset, canvasSizeInBlocks);
+			var result = new JobAreaInfo(updatedCoords, samplePointDelta, mapBlockOffset, canvasSize, canvasControlOffset, canvasSizeInBlocks);
 
 			return result;
 		}
@@ -96,6 +96,22 @@ namespace MSetExplorer
 				//throw new InvalidOperationException("For testing we need the canvas size to be 1024 x 1024.");
 			}
 		}
+
+		public static JobAreaInfo GetJobAreaInfo(Job job)
+		{
+			var result = new JobAreaInfo(job.Coords, job.Subdivision.SamplePointDelta, job.MapBlockOffset, job.CanvasSize, job.CanvasControlOffset, job.CanvasSizeInBlocks);
+
+			return result;
+		}
+
+		public static JobAreaInfo GetJobAreaInfo(Job job, SizeInt canvasSize)
+		{
+			var result = new JobAreaInfo(job.Coords, job.Subdivision.SamplePointDelta, job.MapBlockOffset, canvasSize, job.CanvasControlOffset, job.CanvasSizeInBlocks);
+
+			return result;
+		}
+
+
 
 		#endregion
 

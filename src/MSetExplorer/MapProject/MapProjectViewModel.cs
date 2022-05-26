@@ -112,7 +112,7 @@ namespace MSetExplorer
 		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
 		//public bool CanSaveProject => CurrentProjectOnFile;
 
-		public Job CurrentJob => CurrentProject?.CurrentJob ?? new Job();
+		public Job CurrentJob => CurrentProject?.CurrentJob ?? Job.Empty;
 
 		public bool CanGoBack => CurrentProject?.CanGoBack ?? false;
 		public bool CanGoForward => CurrentProject?.CanGoForward ?? false;
@@ -245,6 +245,15 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Public Methods - Poster 
+
+		public void PosterCreate(Poster poster)
+		{
+			_projectAdapter.CreatePoster(poster);
+		}
+
+		#endregion
+
 		#region Public Methods - Job
 
 		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
@@ -327,7 +336,7 @@ namespace MSetExplorer
 			if (newArea == new RectangleInt())
 			{
 				Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
-				return new JobAreaInfo(curJob.Coords, curJob.Subdivision.SamplePointDelta, curJob.MapBlockOffset, curJob.CanvasControlOffset, curJob.CanvasSizeInBlocks);
+				return MapJobHelper.GetJobAreaInfo(curJob);
 			}
 			else
 			{

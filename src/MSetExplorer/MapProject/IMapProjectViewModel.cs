@@ -43,5 +43,7 @@ namespace MSetExplorer
 
 		long? DeleteMapSectionsSinceLastSave();
 
+		void PosterCreate(Poster poster);
+
 	}
 }

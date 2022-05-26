@@ -45,7 +45,7 @@ namespace MSS.Types.MSetOld
 
 		#region IEquatable and IEqualityComparer Support
 
-		public override bool Equals(object? obj)
+		public override bool Equals(object obj)
 		{
 			return obj is KPoint point && Equals(point);
 		}
@@ -63,7 +63,7 @@ namespace MSS.Types.MSetOld
 
 		public bool Equals(KPoint x, KPoint y)
 		{
-			return (x.Equals(y));
+			return x.Equals(y);
 		}
 
 		public int GetHashCode(KPoint obj)

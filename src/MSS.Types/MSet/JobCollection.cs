@@ -142,7 +142,7 @@ namespace MSS.Types.MSet
 
 				if (_jobsCollection.Count == 0)
 				{
-					_jobsCollection.Add(new Job());
+					_jobsCollection.Add(Job.Empty);
 				}
 
 				_jobsPointer = _jobsCollection.Count - 1;
@@ -215,7 +215,7 @@ namespace MSS.Types.MSet
 			DoWithWriteLock(() =>
 			{
 				_jobsCollection.Clear();
-				_jobsCollection.Add(new Job());
+				_jobsCollection.Add(Job.Empty);
 				_jobsPointer = 0;
 			});
 		}

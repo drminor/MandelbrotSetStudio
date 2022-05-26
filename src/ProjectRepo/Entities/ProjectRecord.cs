@@ -16,10 +16,6 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		public bool Onfile => Id != ObjectId.Empty;
-
-		public DateTime LastSaved { get; set; }
-
 		public ObjectId CurrentColorBandSetId { get; init; } = ObjectId.Empty;
 	}
 }

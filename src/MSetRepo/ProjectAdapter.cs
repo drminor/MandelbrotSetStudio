@@ -49,6 +49,9 @@ namespace MSetRepo
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			mapSectionReaderWriter.CreateCollection();
 
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			posterReaderWriter.CreateCollection();
+
 			mapSectionReaderWriter.CreateSubAndPosIndex();
 		}
 
@@ -466,6 +469,9 @@ namespace MSetRepo
 
 			var coords = _dtoMapper.MapFrom(jobRecord.MSetInfo.CoordsRecord.CoordsDto);
 
+			// TODO: Make sure every job record has a good value for CanvasSize
+			var canvasSize = jobRecord.CanvasSize == null ? new SizeInt() : _mSetRecordMapper.MapFrom(jobRecord.CanvasSize);
+
 			var job = new Job(
 				id: jobId,
 				parentJobId: jobRecord.ParentJobId,
@@ -477,6 +483,7 @@ namespace MSetRepo
 				colorBandSetId: jobRecord.ColorBandSetId,
 				coords: coords,
 				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset),
+				canvasSize: canvasSize,
 				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset),
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
 				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord),
@@ -725,6 +732,71 @@ namespace MSetRepo
 			_ = mapSectionReaderWriter.DeleteAllWithSubId(subdivision.Id);
 
 			return subsDeleted.HasValue && subsDeleted.Value > 0;
+		}
+
+		#endregion
+
+		#region Poster
+
+		public bool TryGetPoster(ObjectId posterId, [MaybeNullWhen(false)] out Poster poster)
+		{
+			//Debug.WriteLine($"Retrieving Poster object with Id: {posterId}.");
+
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+
+			if (posterReaderWriter.TryGet(posterId, out var posterRecord))
+			{
+				poster = _mSetRecordMapper.MapFrom(posterRecord);
+			}
+			else
+			{
+				poster = null;
+			}
+
+			return poster != null;
+		}
+
+		public bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster)
+		{
+			//Debug.WriteLine($"Retrieving Poster object with name: {name}.");
+
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+
+			if (posterReaderWriter.TryGet(name, out var posterRecord))
+			{
+				poster = _mSetRecordMapper.MapFrom(posterRecord);
+			}
+			else
+			{
+				poster = null;
+			}
+
+			return poster != null;
+		}
+
+		public void CreatePoster(Poster poster)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+
+			if (!posterReaderWriter.ExistsWithName(poster.Name))
+			{
+				var posterRecord = _mSetRecordMapper.MapTo(poster);
+				var posterRecordId = posterReaderWriter.Insert(posterRecord);
+
+				Debug.Assert(poster.Id == posterRecordId);
+			}
+			else
+			{
+				throw new InvalidOperationException($"Cannot create poster with name: {poster.Name}, a poster with that name already exists.");
+			}
+		}
+
+		public bool PosterExists(string name)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			var result = posterReaderWriter.ExistsWithName(name);
+
+			return result;
 		}
 
 		#endregion

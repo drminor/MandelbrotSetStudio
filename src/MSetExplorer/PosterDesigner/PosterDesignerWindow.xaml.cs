@@ -7,22 +7,21 @@ using System.Windows.Input;
 using System.Diagnostics.CodeAnalysis;
 using MSS.Types.MSet;
 using MSS.Common;
-using System.Linq;
 
 namespace MSetExplorer
 {
 	/// <summary>
-	/// Interaction logic for MainWindow.xaml
+	/// Interaction logic for PosterDesignerWindow.xaml
 	/// </summary>
-	public partial class ExplorerWindow : Window
+	public partial class PosterDesignerWindow : Window
 	{
-		private IExplorerViewModel _vm;
+		private IPosterDesignerViewModel _vm;
 
 		#region Constructor
 
-		public ExplorerWindow()
+		public PosterDesignerWindow()
 		{
-			_vm = (IExplorerViewModel)DataContext;
+			_vm = (IPosterDesignerViewModel)DataContext;
 
 			Loaded += ExplorerWindow_Loaded;
 			Closing += ExplorerWindow_Closing;
@@ -39,7 +38,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (IExplorerViewModel)DataContext;
+				_vm = (IPosterDesignerViewModel)DataContext;
 				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
@@ -47,7 +46,7 @@ namespace MSetExplorer
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 
 				mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
-				
+
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 				mapCoordsView1.KeyDown += MapCoordsView1_KeyDown;
@@ -257,7 +256,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			var skipPanJobs = !( Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
+			var skipPanJobs = !(Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
 			_ = _vm.MapProjectViewModel.GoBack(skipPanJobs);
 		}
 
@@ -335,7 +334,7 @@ namespace MSetExplorer
 				}
 			}
 		}
-		
+
 		// Project Save
 		private void SaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
@@ -704,7 +703,7 @@ namespace MSetExplorer
 			var defaultResult = _vm.MapProjectViewModel.CurrentProjectOnFile ? MessageBoxResult.Yes : MessageBoxResult.No;
 			var res = MessageBox.Show("The current project has pending changes. Save Changes?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
 
-			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?) null;
+			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?)null;
 
 			return result;
 		}
@@ -736,8 +735,8 @@ namespace MSetExplorer
 			const string dash = "\u2014";
 
 			var result = projectName != null
-				? colorBandSetName != null 
-					? $"Main Window {dash} {projectName} {dash} {colorBandSetName}" 
+				? colorBandSetName != null
+					? $"Main Window {dash} {projectName} {dash} {colorBandSetName}"
 					: $"Main Window {dash} {projectName}"
 				: "MainWindow";
 
@@ -935,7 +934,7 @@ namespace MSetExplorer
 				return true;
 			}
 			else
-			{ 
+			{
 				return false;
 			}
 		}
@@ -984,7 +983,7 @@ namespace MSetExplorer
 			return Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)
 				? PanAmountQualifer.Course
 				: Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)
-				? PanAmountQualifer.Fine 
+				? PanAmountQualifer.Fine
 				: PanAmountQualifer.Regular;
 		}
 
@@ -1003,5 +1002,6 @@ namespace MSetExplorer
 		{
 
 		}
+
 	}
 }

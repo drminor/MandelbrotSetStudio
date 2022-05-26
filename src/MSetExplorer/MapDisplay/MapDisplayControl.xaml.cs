@@ -63,8 +63,8 @@ namespace MSetExplorer
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
-				//_selectionRectangle.Enabled = true;
 
+				// A border is helpful for troubleshooting.
 				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(_canvas) : null;
 
 				Debug.WriteLine("The MapDisplay is now loaded.");

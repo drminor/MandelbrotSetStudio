@@ -8,7 +8,7 @@ namespace MSS.Types.MSet
 {
 	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>, ICloneable
 	{
-		private static Lazy<Job> _lazyJob = new Lazy<Job>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+		private static readonly Lazy<Job> _lazyJob = new Lazy<Job>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static readonly Job Empty = _lazyJob.Value;
 
 		private ObjectId _projectId;
@@ -24,18 +24,17 @@ namespace MSS.Types.MSet
 		public Job()
 		{
 			Subdivision = new Subdivision();
-			Coords = new RRectangle();
-			MapCalcSettings = new MapCalcSettings();
-
 			ColorBandSetId = ObjectId.Empty;
+			Coords = new RRectangle();
 			MapBlockOffset = new BigVector();
+			MapCalcSettings = new MapCalcSettings();
 		}
 
-		public Job(ObjectId? parentJobId, bool isPreferredChild, ObjectId projectId, string? label, TransformType transformType, RectangleInt? newArea, ObjectId colorBandSetId, 
-			JobAreaInfo jobAreaInfo, Subdivision subdivision, MapCalcSettings mapCalcSettings)
-			: this(ObjectId.GenerateNewId(), parentJobId, isPreferredChild, projectId, label, transformType, newArea, colorBandSetId, 
-				  jobAreaInfo.Coords, jobAreaInfo.MapBlockOffset, jobAreaInfo.CanvasControlOffset, jobAreaInfo.CanvasSizeInBlocks, subdivision,
-				  mapCalcSettings, DateTime.UtcNow)
+		public Job(ObjectId? parentJobId, bool isPreferredChild, ObjectId projectId, string? label, TransformType transformType, RectangleInt? newArea,
+			Subdivision subdivision, JobAreaInfo jobAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
+			: this(ObjectId.GenerateNewId(), parentJobId, isPreferredChild, projectId, label, transformType, newArea,
+				  subdivision, jobAreaInfo.Coords, jobAreaInfo.MapBlockOffset, jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, jobAreaInfo.CanvasSizeInBlocks,
+				  colorBandSetId, mapCalcSettings, DateTime.UtcNow)
 		{ }
 
 		public Job(
@@ -47,14 +46,14 @@ namespace MSS.Types.MSet
 
 			TransformType transformType,
 			RectangleInt? newArea,
-			ObjectId colorBandSetId,
 
-			//MSetInfo mSetInfo,
+			Subdivision subdivision,
 			RRectangle coords,
 			BigVector mapBlockOffset,
+			SizeInt canvasSize,
 			VectorInt canvasControlOffset,
 			SizeInt canvasSizeInBlocks,
-			Subdivision subdivision,
+			ObjectId colorBandSetId,
 			MapCalcSettings mapCalcSettings,
 			DateTime lastSaved
 			)
@@ -69,12 +68,14 @@ namespace MSS.Types.MSet
 			TransformType = transformType;
 			NewArea = newArea;
 
-			//MSetInfo = mSetInfo;
-			Coords = coords;
 			_colorBandSetId = colorBandSetId;
-			CanvasSizeInBlocks = canvasSizeInBlocks;
+
+			Coords = coords;
 			MapBlockOffset = mapBlockOffset;
+			CanvasSize = canvasSize;
+
 			CanvasControlOffset = canvasControlOffset;
+			CanvasSizeInBlocks = canvasSizeInBlocks;
 			MapCalcSettings = mapCalcSettings;
 
 			LastSavedUtc = lastSaved;
@@ -125,7 +126,6 @@ namespace MSS.Types.MSet
 		public TransformType TransformType { get; init; }
 		public RectangleInt? NewArea { get; init; }
 
-		//public MSetInfo MSetInfo { get; init; }
 		public RRectangle Coords { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
 	
@@ -142,9 +142,10 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public SizeInt CanvasSizeInBlocks { get; init; }
 		public BigVector MapBlockOffset { get; init; }
+		public SizeInt CanvasSize { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
+		public SizeInt CanvasSizeInBlocks { get; init; }
 
 		public DateTime LastSavedUtc
 		{
@@ -181,7 +182,7 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, ColorBandSetId, Coords.Clone(), MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, Subdivision, MapCalcSettings.Clone(), LastSavedUtc);
+			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Subdivision, Coords.Clone(), MapBlockOffset.Clone(), CanvasSize, CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc);
 			return result;
 		}
 

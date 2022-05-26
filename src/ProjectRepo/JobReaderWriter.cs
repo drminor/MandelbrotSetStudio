@@ -147,21 +147,21 @@ namespace ProjectRepo
 			return jobInfos;
 		}
 
-		public DateTime GetLastSaveTime(ObjectId projectId)
-		{
-			var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
-			var jobs = Collection.Find(filter).ToList();
+		//public DateTime GetLastSaveTime(ObjectId projectId)
+		//{
+		//	var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
+		//	var jobs = Collection.Find(filter).ToList();
 
-			if (jobs.Count < 1)
-			{
-				return DateTime.MinValue;
-			}
-			else
-			{
-				var result = jobs.Max(x => x.Id.CreationTime);
-				return result;
-			}
-		}
+		//	if (jobs.Count < 1)
+		//	{
+		//		return DateTime.MinValue;
+		//	}
+		//	else
+		//	{
+		//		var result = jobs.Max(x => x.Id.CreationTime);
+		//		return result;
+		//	}
+		//}
 
 		public void AddColorBandSetIdByProject(ObjectId projectId, ObjectId colorBandSetId)
 		{

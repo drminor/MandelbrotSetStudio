@@ -123,18 +123,21 @@ namespace MSS.Common
 
 		private RPoint GetMapPosition(Subdivision subdivision, BigVector blockPosition)
 		{
-			var nrmSubdivionPosition = RNormalizer.Normalize(subdivision.Position, subdivision.SamplePointDelta, out var nrmSamplePointDelta);
+			//var nrmSubdivisionPosition = RNormalizer.Normalize(subdivision.Position, subdivision.SamplePointDelta, out var nrmSamplePointDelta);
 
 			// Multiply the blockPosition by the blockSize
 			var numberOfSamplePointsFromSubOrigin = blockPosition.Scale(subdivision.BlockSize);
 
 			// Convert sample points to map coordinates.
-			var mapDistance = nrmSamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);
+			//var mapDistance = nrmSamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);
+			var mapDistance = subdivision.SamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);
 
 			// Add the map distance to the sub division origin
-			var mapPosition = nrmSubdivionPosition.Translate(mapDistance);
+			//var result = nrmSubdivisionPosition.Translate(mapDistance);
 
-			return mapPosition;
+			var result = new RPoint(mapDistance);
+
+			return result;
 		}
 
 		#endregion

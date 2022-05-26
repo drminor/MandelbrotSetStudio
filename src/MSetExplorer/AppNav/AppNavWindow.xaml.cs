@@ -45,10 +45,16 @@ namespace MSetExplorer
 			}
 		}
 
-		private void GoButton_Click(object sender, RoutedEventArgs e)
+		private void ExploreButton_Click(object sender, RoutedEventArgs e)
 		{
 			GoToExplorer();
 		}
+
+		private void DesignPosterButton_Click(object sender, RoutedEventArgs e)
+		{
+			MessageBox.Show("De Po");
+		}
+
 
 		private void GoToExplorer()
 		{

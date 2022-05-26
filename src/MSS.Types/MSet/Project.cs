@@ -45,6 +45,7 @@ namespace MSS.Types.MSet
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 			_originalCurrentJobId = currentJobId;
+			LastUpdatedUtc = DateTime.MinValue;
 			LastSavedUtc = lastSavedUtc;
 
 			var currentJob = _jobsCollection.GetJobs().FirstOrDefault(x => x.Id == currentJobId);
