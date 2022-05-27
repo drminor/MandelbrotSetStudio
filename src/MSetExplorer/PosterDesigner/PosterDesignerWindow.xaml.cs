@@ -64,6 +64,8 @@ namespace MSetExplorer
 			//ShowCoordsEditor();
 
 			//SpIdxTest();
+
+			_vm.PosterViewModel.PosterOpen("Test");
 		}
 
 		private void PosterDesignerWindow_Closing(object sender, CancelEventArgs e)

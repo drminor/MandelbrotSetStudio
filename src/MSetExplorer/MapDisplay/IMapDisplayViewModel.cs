@@ -18,7 +18,8 @@ namespace MSetExplorer
 		ImageSource ImageSource { get; }
 		ObservableCollection<MapSection> MapSections { get; }
 
-		Job? CurrentJob { get; set; }
+		JobAreaInfo? CurrentJobAreaInfo { get; set; }
+		MapCalcSettings MapCalcSettings { get; set; }
 
 		ColorBandSet ColorBandSet { get; }
 

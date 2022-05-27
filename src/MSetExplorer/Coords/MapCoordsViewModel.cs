@@ -9,7 +9,9 @@ namespace MSetExplorer
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
-		private Job _currentJob;
+		//private Job _currentJob;
+
+		private JobAreaInfo? _currentJobAreaInfo;
 
 		private RRectangle _coords;
 
@@ -36,7 +38,9 @@ namespace MSetExplorer
 
 		public MapCoordsViewModel()
 		{
-			_currentJob = Job.Empty;
+			//_currentJob = Job.Empty;
+
+			_currentJobAreaInfo = null;
 
 			_coords = new RRectangle();
 			_x1 = string.Empty;
@@ -67,26 +71,41 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public Job CurrentJob
+		//public Job CurrentJob
+		//{
+		//	get => _currentJob;
+		//	set
+		//	{
+		//		if (value != _currentJob)
+		//		{
+		//			_currentJob = value;
+		//			UpdateCoords(MapJobHelper.GetJobAreaInfo(value, new SizeInt(1024)));  // TODO: Update all JobRecords on file to have a valid CanvasSize.
+		//			OnPropertyChanged();
+		//			OnPropertyChanged(nameof(JobId));
+		//		}
+		//	}
+		//}
+
+		public JobAreaInfo CurrentJobAreaInfo
 		{
-			get => _currentJob;
+			get => _currentJobAreaInfo ?? new JobAreaInfo(new RRectangle(), new SizeInt(), new Subdivision(), new BigVector(), new VectorInt());
 			set
 			{
-				if (value != _currentJob)
+				if (value != _currentJobAreaInfo)
 				{
-					_currentJob = value;
-					UpdateCoords(MapJobHelper.GetJobAreaInfo(value, new SizeInt(1024)));  // TODO: Update all JobRecords on file to have a valid CanvasSize.
+					_currentJobAreaInfo = value;
+					UpdateCoords(_currentJobAreaInfo);
 					OnPropertyChanged();
-					OnPropertyChanged(nameof(JobId));
+					//OnPropertyChanged(nameof(JobId));
 				}
 			}
 		}
 
-		public string JobId
-		{
-			get => CurrentJob.Id.ToString();
-			set => OnPropertyChanged();
-		}
+		//public string JobId
+		//{
+		//	get => CurrentJob.Id.ToString();
+		//	set => OnPropertyChanged();
+		//}
 
 		public RRectangle Coords
 		{

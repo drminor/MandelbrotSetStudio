@@ -57,6 +57,8 @@ namespace MSetExplorer
 
 		private void GoToExplorer()
 		{
+			Hide();
+
 			var explorerViewModel = _vm.GetExplorerViewModel();
 
 			var explorerWindow = new ExplorerWindow
@@ -70,8 +72,6 @@ namespace MSetExplorer
 			explorerWindow.Closed += ExplorerWindow_Closed;
 			explorerWindow.Show();
 			_ = explorerWindow.Focus();
-
-			Hide();
 		}
 
 		private void ExplorerWindow_Closed(object? sender, System.EventArgs e)
@@ -95,7 +95,11 @@ namespace MSetExplorer
 
 		private void GoToDesigner()
 		{
+			Hide();
+
 			var posterDesignerViewModel = _vm.GetPosterDesignerViewModel();
+
+			//posterDesignerViewModel.p
 
 			var designerWindow = new PosterDesignerWindow
 			{
@@ -109,7 +113,6 @@ namespace MSetExplorer
 			designerWindow.Show();
 			_ = designerWindow.Focus();
 
-			Hide();
 		}
 
 		private void DesignerWindow_Closed(object? sender, System.EventArgs e)

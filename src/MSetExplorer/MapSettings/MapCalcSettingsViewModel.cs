@@ -6,7 +6,9 @@ namespace MSetExplorer
 {
 	public class MapCalcSettingsViewModel : ViewModelBase
 	{
-		private Job _currentJob;
+		//private Job _currentJob;
+
+		private MapCalcSettings _mapCalcSettings;
 
 		private int _targetIterations;
 		private double _targetIterationsAvailable;
@@ -14,27 +16,43 @@ namespace MSetExplorer
 
 		public MapCalcSettingsViewModel()
 		{
-			_currentJob = Job.Empty;
+			//_currentJob = Job.Empty;
+			_mapCalcSettings = new MapCalcSettings();
 
-			_targetIterations = _currentJob.MapCalcSettings.TargetIterations;
-			_requestsPerJob = _currentJob.MapCalcSettings.RequestsPerJob;
+			_targetIterations = _mapCalcSettings.TargetIterations;
+			_requestsPerJob = _mapCalcSettings.RequestsPerJob;
 		}
 
 		#region Public Properties
 
 		public event EventHandler<MapSettingsUpdateRequestedEventArgs>? MapSettingsUpdateRequested;
 
-		public Job CurrentJob
+		//public Job CurrentJob
+		//{
+		//	get => _currentJob;
+		//	set
+		//	{
+		//		if (value != _currentJob)
+		//		{
+		//			_currentJob = value;
+		//			TargetIterations = value.MapCalcSettings.TargetIterations;
+		//			RequestsPerJob = value.MapCalcSettings.RequestsPerJob;
+		//		}
+		//	}
+		//}
+
+		public MapCalcSettings MapCalcSettings
 		{
-			get => _currentJob;
+			get => _mapCalcSettings;
 			set
 			{
-				if (value != _currentJob)
+				if (value != _mapCalcSettings)
 				{
-					_currentJob = value;
-					TargetIterations = value.MapCalcSettings.TargetIterations;
-					RequestsPerJob = value.MapCalcSettings.RequestsPerJob;
+					_mapCalcSettings = value;
+					TargetIterations = _mapCalcSettings.TargetIterations;
+					RequestsPerJob = _mapCalcSettings.RequestsPerJob;
 				}
+						
 			}
 		}
 

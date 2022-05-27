@@ -199,7 +199,10 @@ namespace MSetRepo
 		public SubdivisionRecord MapTo(Subdivision source)
 		{
 			var samplePointDelta = MapTo(source.SamplePointDelta);
-			var result = new SubdivisionRecord(samplePointDelta, MapTo(source.BlockSize));
+			var result = new SubdivisionRecord(samplePointDelta, MapTo(source.BlockSize))
+			{
+				Id = source.Id
+			};
 
 			return result;
 		}

@@ -126,9 +126,9 @@ namespace MSetExplorer
 				UpdateTheCanvasSize(_vm.CanvasSize);
 			}
 
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJob) && _selectionRectangle != null)
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJobAreaInfo) && _selectionRectangle != null)
 			{
-				_selectionRectangle.Enabled = _vm.CurrentJob != null;
+				_selectionRectangle.Enabled = _vm.CurrentJobAreaInfo != null;
 			}
 		}
 

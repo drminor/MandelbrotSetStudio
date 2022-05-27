@@ -108,6 +108,22 @@ namespace MSetExplorer
 			// Update the MSet Info and Map Display with the new Job
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
+				var currentPoster = PosterViewModel.CurrentPoster;
+
+				if (currentPoster == null)
+				{
+					MapCalcSettingsViewModel.MapCalcSettings = new MapCalcSettings();
+				}
+				else
+				{
+					MapCalcSettingsViewModel.MapCalcSettings = currentPoster.MapCalcSettings;
+					var jobAreaInfo = currentPoster.JobAreaInfo;
+
+					MapCoordsViewModel.CurrentJobAreaInfo = jobAreaInfo;
+					MapDisplayViewModel.CurrentJobAreaInfo = jobAreaInfo;
+				}
+
+
 				// TOOD: Update the MapCalcSettings, MapCoords and MapDisplay view models to take a JobAreaInfo
 				//MapCalcSettingsViewModel.CurrentJob = curJob;
 				//MapCoordsViewModel.CurrentJob = curJob;
