@@ -12,7 +12,7 @@ namespace MSS.Common
 	public class MapSectionHelper
 	{
 		private const int VALUE_FACTOR = 10000;
-		private readonly DtoMapper _dtoMapper = new DtoMapper();
+		private readonly DtoMapper _dtoMapper = new();
 
 		#region Create MapSectionRequests
 

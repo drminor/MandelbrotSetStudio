@@ -36,8 +36,8 @@ namespace MSetExplorer
 
 		public PosterDesignerViewModel GetPosterDesignerViewModel()
 		{
-			// Map Project ViewModel
-			var mapProjectViewModel = new MapProjectViewModel(RepositoryAdapters.ProjectAdapter, RMapConstants.BLOCK_SIZE);
+			// Poster ViewModel
+			var posterViewModel = new PosterViewModel(RepositoryAdapters.ProjectAdapter, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();
@@ -46,7 +46,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new PosterDesignerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
 
 			return result;
 		}

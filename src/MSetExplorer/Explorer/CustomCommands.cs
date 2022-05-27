@@ -119,6 +119,45 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Poster
+
+		public static readonly RoutedUICommand PosterSave = new RoutedUICommand(
+			text: "Save",
+			name: "PosterSave",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.S,
+					ModifierKeys.Control
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand PosterSaveAs = new RoutedUICommand(
+			text: "SaveAs",
+			name: "PosterSaveAs",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.A,
+					ModifierKeys.Control
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand PosterEditCoords = new RoutedUICommand(
+			text: "EditCoords",
+			name: "PosterEditCoords",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.F4
+				)
+			}
+		);
+
+		#endregion
+
 		#region Colors
 
 		public static readonly RoutedUICommand ColorsOpen = new RoutedUICommand(

@@ -17,6 +17,7 @@ namespace MSetExplorer
 
 		ColorBandSet? CurrentColorBandSet { get; }
 
+		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
 		void UpdateMapCoordinates(RRectangle coords);
 

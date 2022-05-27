@@ -34,7 +34,7 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				Debug.WriteLine("The DataContext is null as the Main Window is being loaded.");
+				Debug.WriteLine("The DataContext is null as the Explorer Window is being loaded.");
 				return;
 			}
 			else
@@ -54,13 +54,13 @@ namespace MSetExplorer
 				mapCoordsView1.PreviewKeyDown += MapCoordsView1_PreviewKeyDown;
 
 
-				Debug.WriteLine("The MainWindow is now loaded");
+				Debug.WriteLine("The Explorer Window is now loaded");
 			}
 		}
 
 		private void ExplorerWindow_ContentRendered(object? sender, EventArgs e)
 		{
-			Debug.WriteLine("The MainWindow is handling ContentRendered");
+			Debug.WriteLine("The Explorer Window is handling ContentRendered");
 			//LoadNewProject();
 			//ShowMapCoordsEditor();
 			//ShowCoordsEditor();
@@ -998,11 +998,6 @@ namespace MSetExplorer
 			ChangesSaved,
 			NotSavingChanges,
 			SaveCancelled,
-		}
-
-		private void mnuItem_CalcWindow_Unchecked(object sender, RoutedEventArgs e)
-		{
-
 		}
 	}
 }

@@ -15,19 +15,19 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterDesignerViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
+		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			IProjectAdapter projectAdapter,	ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
 		{
 			ProjectAdapter = projectAdapter;
 
-			MapProjectViewModel = mapProjectViewModel;
-			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
+			PosterViewModel = posterViewModel;
+			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
-			MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+			PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 			DispWidth = MapDisplayViewModel.CanvasSize.Width;
 			DispHeight = MapDisplayViewModel.CanvasSize.Height;
 
@@ -48,8 +48,8 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public IPosterViewModel PosterViewModel { get; }
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
-		public IMapProjectViewModel MapProjectViewModel { get; }
 
 		public MapCoordsViewModel MapCoordsViewModel { get; }
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
@@ -103,26 +103,25 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		private void PosterViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			// Update the MSet Info and Map Display with the new Job
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
+			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
-				var curJob = MapProjectViewModel.CurrentJob;
-
-				MapCalcSettingsViewModel.CurrentJob = curJob;
-				MapCoordsViewModel.CurrentJob = curJob;
-				MapDisplayViewModel.CurrentJob = curJob;
+				// TOOD: Update the MapCalcSettings, MapCoords and MapDisplay view models to take a JobAreaInfo
+				//MapCalcSettingsViewModel.CurrentJob = curJob;
+				//MapCoordsViewModel.CurrentJob = curJob;
+				//MapDisplayViewModel.CurrentJob = curJob;
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
 			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
-				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
+				ColorBandSetViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 
-				if (MapProjectViewModel.CurrentProject != null)
+				if (PosterViewModel.CurrentColorBandSet != null)
 				{
-					MapDisplayViewModel.SetColorBandSet(MapProjectViewModel.CurrentColorBandSet, updateDisplay: true);
+					MapDisplayViewModel.SetColorBandSet(PosterViewModel.CurrentColorBandSet, updateDisplay: true);
 				}
 			}
 		}
@@ -141,7 +140,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
 			{
-				if (MapProjectViewModel.CurrentProject != null && MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
+				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
 				{
 					MapDisplayViewModel.SetColorBandSet(ColorBandSetViewModel.ColorBandSet, updateDisplay: true);
 				}
@@ -155,26 +154,13 @@ namespace MSetExplorer
 			{
 				DispWidth = MapDisplayViewModel.CanvasSize.Width;
 				DispHeight = MapDisplayViewModel.CanvasSize.Height;
-				MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+				PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 			}
 		}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
-			if (e.IsPreview)
-			{
-				// Calculate new Coords for preview
-				var jobAreaInfo = MapProjectViewModel.GetUpdatedJobAreaInfo(e.TransformType, e.NewArea);
-				if (jobAreaInfo != null)
-				{
-					MapCoordsViewModel.Preview(jobAreaInfo);
-				}
-			}
-			else
-			{
-				// Zoom or Pan Map Coordinates
-				MapProjectViewModel.UpdateMapView(e.TransformType, e.NewArea);
-			}
+			// TODO: Verify that the Poster Designer will not be handling MapView Updates
 		}
 
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
@@ -199,7 +185,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"MainWindow got a CBS update with Id = {colorBandSet.Id}");
 				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
-				MapProjectViewModel.UpdateColorBandSet(colorBandSet);
+				PosterViewModel.UpdateColorBandSet(colorBandSet);
 			}
 		}
 

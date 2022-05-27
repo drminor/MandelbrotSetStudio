@@ -49,8 +49,8 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public IMapDisplayViewModel MapDisplayViewModel { get; }
 		public IMapProjectViewModel MapProjectViewModel { get; }
+		public IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		public MapCoordsViewModel MapCoordsViewModel { get; } 
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }

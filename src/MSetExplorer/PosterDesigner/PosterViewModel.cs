@@ -190,6 +190,24 @@ namespace MSetExplorer
 
 		#region Public Methods - Job
 
+		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
+		{
+			// TOOD: Implement UpdateMapView
+			//Debug.Assert(transformType == TransformType.ZoomIn || transformType == TransformType.Pan, "UpdateMapView received a TransformType other than ZoomIn or Pan.");
+			//if (CurrentProject == null)
+			//{
+			//	return;
+			//}
+
+			//var curJob = CurrentJob;
+
+			//var position = curJob.Coords.Position;
+			//var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+
+			//var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+			//LoadMap(CurrentProject, curJob, curJob.ColorBandSetId, coords, curJob.MapCalcSettings, transformType, newArea);
+		}
+
 		// Currently Not Used.
 		public void UpdateMapCoordinates(RRectangle coords)
 		{

@@ -5,8 +5,7 @@ namespace MSetExplorer
 {
 	public interface IPosterDesignerViewModel : INotifyPropertyChanged
 	{
-
-		IMapProjectViewModel MapProjectViewModel { get; }
+		IPosterViewModel PosterViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		MapCoordsViewModel MapCoordsViewModel { get; }

@@ -157,13 +157,13 @@ namespace MSS.Common
 
 		public static void ReportSamplePointDiff(RSize spd, SizeDbl spdD, RRectangle origCoords, RRectangle coords, RectangleDbl coordsD)
 		{
-			var origCoordsD = ConvertToRectangleDbl(origCoords);
+			//var origCoordsD = ConvertToRectangleDbl(origCoords);
 
 			var realCoordsD = ConvertToRectangleDbl(coords);
 			var coordsDiff = realCoordsD.Diff(coordsD).Abs();
 
-			var realSpdD = ConvertToSizeDbl(spd);
-			var spdDiff = realSpdD.Diff(spdD).Abs();
+			//var realSpdD = ConvertToSizeDbl(spd);
+			//var spdDiff = realSpdD.Diff(spdD).Abs();
 
 			Debug.WriteLine($"\nThe new coords are : {coords}, old = {origCoords}. Using SamplePointDelta: {spd}\n");
 
