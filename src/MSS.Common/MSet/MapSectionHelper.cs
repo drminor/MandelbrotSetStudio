@@ -16,11 +16,11 @@ namespace MSS.Common
 
 		#region Create MapSectionRequests
 
-		public IList<MapSectionRequest> CreateSectionRequests(Job job, IList<MapSection>? emptyMapSections)
+		public IList<MapSectionRequest> CreateSectionRequests(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection>? emptyMapSections)
 		{
 			if (emptyMapSections == null)
 			{
-				return CreateSectionRequests(job);
+				return CreateSectionRequests(jobAreaInfo, mapCalcSettings);
 			}
 			else
 			{
@@ -31,7 +31,7 @@ namespace MSS.Common
 				foreach (var mapSection in emptyMapSections)
 				{
 					var screenPosition = mapSection.BlockPosition;
-					var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MapCalcSettings);
+					var mapSectionRequest = CreateRequest(screenPosition, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
 					result.Add(mapSectionRequest);
 				}
 
@@ -39,38 +39,37 @@ namespace MSS.Common
 			}
 		}
 
-		public IList<MapSectionRequest> CreateSectionRequests(Job job)
+		public IList<MapSectionRequest> CreateSectionRequests(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var result = new List<MapSectionRequest>();
 
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, job.MapBlockOffset, job.Subdivision, job.MapCalcSettings);
+				var mapSectionRequest = CreateRequest(screenPosition, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
 				result.Add(mapSectionRequest);
 			}
 
 			return result;
 		}
 
-		public IList<MapSection> CreateEmptyMapSections(Job job)
+		public IList<MapSection> CreateEmptyMapSections(JobAreaInfo jobAreaInfo, int targetIterations)
 		{
 			var emptyCountsData = new int[0];
 
 			var result = new List<MapSection>();
 
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(job.CanvasSizeInBlocks, job.CanvasControlOffset);
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
 
-			var subdivisionId = job.Subdivision.Id.ToString();
-			var targetIterations = job.MapCalcSettings.TargetIterations;
+			var subdivisionId = jobAreaInfo.Subdivision.Id.ToString();
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, job.MapBlockOffset, out var isInverted);
-				var mapSection = new MapSection(screenPosition, job.Subdivision.BlockSize, emptyCountsData, targetIterations,
+				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, jobAreaInfo.MapBlockOffset, out var isInverted);
+				var mapSection = new MapSection(screenPosition, jobAreaInfo.Subdivision.BlockSize, emptyCountsData, targetIterations,
 					subdivisionId, repoPosition, isInverted, BuildHistogram);
 				result.Add(mapSection);
 			}

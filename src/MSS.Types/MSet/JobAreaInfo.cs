@@ -1,6 +1,8 @@
-﻿namespace MSS.Types.MSet
+﻿using System;
+
+namespace MSS.Types.MSet
 {
-	public class JobAreaInfo
+	public class JobAreaInfo : ICloneable
 	{
 		public RRectangle Coords { get; init; }
 		public SizeInt CanvasSize { get; init; }
@@ -16,35 +18,16 @@
 			MapBlockOffset = mapBlockOffset;
 			CanvasControlOffset = canvasControlOffset;
 		}
-	}
 
-	public class JobAreaInfoOld
-	{
-		private static SizeInt DefaultBlockSize => new SizeInt(128);
-
-		public RRectangle Coords { get; init; }
-		public RSize SamplePointDelta { get; init; }
-		public BigVector MapBlockOffset { get; init; }
-		public SizeInt CanvasSize { get; init; }
-		public VectorInt CanvasControlOffset { get; init; }
-		public SizeInt CanvasSizeInBlocks { get; init; }
-
-		public SizeInt BlockSize { get; init; }
-
-		public JobAreaInfoOld(RRectangle coords, RSize samplePointDelta, BigVector mapBlockOffset, SizeInt canvasSize, VectorInt canvasControlOffset,
-			SizeInt canvasSizeInBlocks, SizeInt blockSize = default)
+		object ICloneable.Clone()
 		{
-			Coords = coords;
-			SamplePointDelta = samplePointDelta;
-			MapBlockOffset = mapBlockOffset;
-			CanvasSize = canvasSize;
-			CanvasControlOffset = canvasControlOffset;
-			CanvasSizeInBlocks = canvasSizeInBlocks;
+			return Clone();
+		}
 
-			if (blockSize.Width == default)
-			{
-				BlockSize = DefaultBlockSize;
-			}
+		// TODO: Implement ICloneable for Coords, Subdivision and BigVector
+		public JobAreaInfo Clone()
+		{
+			return new JobAreaInfo(Coords, CanvasSize, Subdivision, MapBlockOffset, CanvasControlOffset);
 		}
 	}
 }

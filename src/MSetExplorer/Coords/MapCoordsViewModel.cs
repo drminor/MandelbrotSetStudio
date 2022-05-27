@@ -75,7 +75,7 @@ namespace MSetExplorer
 				if (value != _currentJob)
 				{
 					_currentJob = value;
-					UpdateCoords(MapJobHelper.GetJobAreaInfo(value));
+					UpdateCoords(MapJobHelper.GetJobAreaInfo(value, new SizeInt(1024)));  // TODO: Update all JobRecords on file to have a valid CanvasSize.
 					OnPropertyChanged();
 					OnPropertyChanged(nameof(JobId));
 				}

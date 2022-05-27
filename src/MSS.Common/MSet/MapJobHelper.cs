@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -7,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace MSetExplorer
+namespace MSS.Common
 {
-	internal static class MapJobHelper
+	public static class MapJobHelper
 	{
 		#region Build Job
 
@@ -21,7 +20,7 @@ namespace MSetExplorer
 				throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {transformType}. Only jobs with TransformType = 'none' be parentless.");
 			}
 
-			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, newArea, blockSize, projectAdapter);
+			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, blockSize, projectAdapter);
 
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
@@ -39,7 +38,7 @@ namespace MSetExplorer
 			return job;
 		}
 
-		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, RectangleInt? newArea, SizeInt blockSize, IProjectAdapter projectAdapter)
+		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize, IProjectAdapter projectAdapter)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
@@ -104,7 +103,12 @@ namespace MSetExplorer
 
 		public static JobAreaInfo GetJobAreaInfo(Job job)
 		{
-			var result = new JobAreaInfo(job.Coords, job.CanvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
+			if (job.CanvasSize.Width == 0)
+			{
+				throw new ArgumentException("The job's canvas size is zero.");
+			}
+
+			var	result = new JobAreaInfo(job.Coords, job.CanvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
 
 			return result;
 		}

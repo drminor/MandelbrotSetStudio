@@ -410,7 +410,7 @@ namespace MSetExplorer
 				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, posterSize);
 
 				var colorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
-				var poster = new Poster("Test", null, curJob.Id, curJob.Subdivision.Id, jobAreaInfo, colorBandSet, curJob.MapCalcSettings);
+				var poster = new Poster("Test", null, curJob.Id, jobAreaInfo, colorBandSet, curJob.MapCalcSettings);
 				_vm.MapProjectViewModel.PosterCreate(poster);
 
 				_vm.MapProjectViewModel.ProjectClose();

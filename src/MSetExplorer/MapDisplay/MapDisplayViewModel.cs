@@ -312,7 +312,8 @@ namespace MSetExplorer
 			{
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
-					ReuseLoadedSections(newJob);
+					var canvasSize = CanvasSize; // TODO: Update all JobRecords on file to have a valid CanvasSize.
+					ReuseLoadedSections(MapJobHelper.GetJobAreaInfo(newJob, canvasSize), newJob.MapCalcSettings);
 				}
 				else
 				{
@@ -320,7 +321,8 @@ namespace MSetExplorer
 					MapSections.Clear();
 					CanvasControlOffset = newJob.CanvasControlOffset;
 
-					_mapLoaderManager.Push(newJob);
+					var canvasSize = CanvasSize; // TODO: Update all JobRecords on file to have a valid CanvasSize.
+					_mapLoaderManager.Push(MapJobHelper.GetJobAreaInfo(newJob, canvasSize), newJob.MapCalcSettings);
 				}
 			}
 			else
@@ -329,9 +331,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ReuseLoadedSections(Job curJob)
+		private void ReuseLoadedSections(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings)
 		{
-			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(curJob);
+			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(jobAreaInfo, mapCalcSettings.TargetIterations);
 			var loadedSections = GetMapSectionsSnapShot();
 
 			// Avoid requesting sections already drawn
@@ -346,24 +348,24 @@ namespace MSetExplorer
 			{
 				_screenSectionCollection.Shift(shiftAmount);
 
-				if (CanvasControlOffset != curJob.CanvasControlOffset)
+				if (CanvasControlOffset != jobAreaInfo.CanvasControlOffset)
 				{
-					CanvasControlOffset = curJob.CanvasControlOffset;
+					CanvasControlOffset = jobAreaInfo.CanvasControlOffset;
 				}
 
 				RedrawSections(MapSections);
 			}
 			else
 			{
-				if (CanvasControlOffset != curJob.CanvasControlOffset)
+				if (CanvasControlOffset != jobAreaInfo.CanvasControlOffset)
 				{
-					CanvasControlOffset = curJob.CanvasControlOffset;
+					CanvasControlOffset = jobAreaInfo.CanvasControlOffset;
 				}
 			}
 
 			if (sectionsToLoad.Count > 0)
 			{
-				_mapLoaderManager.Push(curJob, sectionsToLoad);
+				_mapLoaderManager.Push(jobAreaInfo, mapCalcSettings, sectionsToLoad);
 			}
 		}
 

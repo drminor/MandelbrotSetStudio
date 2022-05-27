@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types.MSet
@@ -23,18 +22,49 @@ namespace MSS.Types.MSet
 
 		public Job()
 		{
-			Subdivision = new Subdivision();
-			ColorBandSetId = ObjectId.Empty;
 			Coords = new RRectangle();
+			Subdivision = new Subdivision();
 			MapBlockOffset = new BigVector();
+
+			ColorBandSetId = ObjectId.Empty;
 			MapCalcSettings = new MapCalcSettings();
 		}
 
-		public Job(ObjectId? parentJobId, bool isPreferredChild, ObjectId projectId, string? label, TransformType transformType, RectangleInt? newArea,
-			JobAreaInfo jobAreaInfo, SizeInt canvasSizeInBlocks, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
-			: this(ObjectId.GenerateNewId(), parentJobId, isPreferredChild, projectId, label, transformType, newArea,
-				  jobAreaInfo.Subdivision, jobAreaInfo.Coords, jobAreaInfo.MapBlockOffset, jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, canvasSizeInBlocks,
-				  colorBandSetId, mapCalcSettings, DateTime.UtcNow)
+		public Job(
+			ObjectId? parentJobId, 
+			bool isPreferredChild, 
+			ObjectId projectId, 
+			string? label, 
+			TransformType transformType, 
+			RectangleInt? newArea,
+
+			JobAreaInfo jobAreaInfo, 
+
+			SizeInt canvasSizeInBlocks,
+			ObjectId colorBandSetId, 
+			MapCalcSettings mapCalcSettings
+			)
+
+			: this(
+				  ObjectId.GenerateNewId(), 
+				  parentJobId, 
+				  isPreferredChild, 
+				  projectId, 
+				  label, 
+				  transformType, 
+				  newArea,
+
+				  jobAreaInfo.Coords,
+				  jobAreaInfo.CanvasSize,
+				  jobAreaInfo.Subdivision, 
+				  jobAreaInfo.MapBlockOffset, 
+				  jobAreaInfo.CanvasControlOffset, 
+
+				  canvasSizeInBlocks,
+				  colorBandSetId, 
+				  mapCalcSettings, 
+				  DateTime.UtcNow
+				  )
 		{ }
 
 		public Job(
@@ -47,11 +77,12 @@ namespace MSS.Types.MSet
 			TransformType transformType,
 			RectangleInt? newArea,
 
-			Subdivision subdivision,
 			RRectangle coords,
-			BigVector mapBlockOffset,
 			SizeInt canvasSize,
+			Subdivision subdivision,
+			BigVector mapBlockOffset,
 			VectorInt canvasControlOffset,
+
 			SizeInt canvasSizeInBlocks,
 			ObjectId colorBandSetId,
 			MapCalcSettings mapCalcSettings,
@@ -62,20 +93,19 @@ namespace MSS.Types.MSet
 			_parentJobId = parentJobId;
 			_isPreferredChild = isPreferredChild;
 			_projectId = projectId;
-			Subdivision = subdivision;
 			Label = label;
 
 			TransformType = transformType;
 			NewArea = newArea;
 
-			_colorBandSetId = colorBandSetId;
-
 			Coords = coords;
-			MapBlockOffset = mapBlockOffset;
 			CanvasSize = canvasSize;
-
+			Subdivision = subdivision;
+			MapBlockOffset = mapBlockOffset;
 			CanvasControlOffset = canvasControlOffset;
+
 			CanvasSizeInBlocks = canvasSizeInBlocks;
+			_colorBandSetId = colorBandSetId;
 			MapCalcSettings = mapCalcSettings;
 
 			LastSavedUtc = lastSaved;
@@ -121,14 +151,18 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public Subdivision Subdivision { get; init; }
 		public string? Label { get; init; }
 		public TransformType TransformType { get; init; }
 		public RectangleInt? NewArea { get; init; }
 
 		public RRectangle Coords { get; init; }
-		public MapCalcSettings MapCalcSettings { get; init; }
-	
+		public SizeInt CanvasSize { get; init; }
+		public Subdivision Subdivision { get; init; }
+		public BigVector MapBlockOffset { get; init; }
+		public VectorInt CanvasControlOffset { get; init; }
+
+		public SizeInt CanvasSizeInBlocks { get; init; }
+
 		public ObjectId ColorBandSetId
 		{
 			get => _colorBandSetId;
@@ -142,10 +176,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public BigVector MapBlockOffset { get; init; }
-		public SizeInt CanvasSize { get; init; }
-		public VectorInt CanvasControlOffset { get; init; }
-		public SizeInt CanvasSizeInBlocks { get; init; }
+		public MapCalcSettings MapCalcSettings { get; init; }
 
 		public DateTime LastSavedUtc
 		{
@@ -175,6 +206,8 @@ namespace MSS.Types.MSet
 
 		#endregion
 
+		#region ICloneable Support
+
 		object ICloneable.Clone()
 		{
 			return Clone();
@@ -182,9 +215,13 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Subdivision, Coords.Clone(), MapBlockOffset.Clone(), CanvasSize, CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc);
+			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Coords.Clone(), CanvasSize, 
+				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc);
+
 			return result;
 		}
+
+		#endregion
 
 		#region IEqualityComparer / IEquatable Support
 

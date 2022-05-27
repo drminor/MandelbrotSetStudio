@@ -184,20 +184,21 @@ namespace MSS.Common
 
 		public static SizeInt GetCanvasSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
 		{
-			var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainderW);
-			var h = Math.DivRem(canvasSize.Height, blockSize.Height, out var remainderH);
+			//var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainderW);
+			//var h = Math.DivRem(canvasSize.Height, blockSize.Height, out var remainderH);
 
-			w = remainderW > 0 ? w++ : w;
-			h = remainderH > 0 ? h++ : h;
-			var result = new SizeInt(w, h);
+			//w = remainderW > 0 ? w++ : w;
+			//h = remainderH > 0 ? h++ : h;
+			//var result = new SizeInt(w, h);
+
+			var result = canvasSize.Divide(blockSize).Ceiling();
 
 			return result;
 		}
 
 		public static SizeInt GetCanvasSizeInWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)
 		{
-			var numBlocks = canvasSize.Divide(blockSize);
-			var result = numBlocks.Truncate();
+			var result = canvasSize.Divide(blockSize).Truncate();
 
 			if (keepSquare)
 			{
@@ -207,13 +208,9 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSizeInBlocks, VectorInt canvasControlOffset)
+		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
 		{
-			var result = new SizeInt(
-				canvasSizeInBlocks.Width + (Math.Abs(canvasControlOffset.X) > 0 ? 2 : 0),
-				canvasSizeInBlocks.Height + (Math.Abs(canvasControlOffset.Y) > 0 ? 2 : 0)
-				);
-
+			var result = GetCanvasSizeInBlocks(canvasSize, blockSize).Inflate(1);
 			return result;
 		}
 

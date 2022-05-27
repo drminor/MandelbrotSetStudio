@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 			_zoom = RValueHelper.GetResolution(_coords.Width);
 
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(_coords, _displaySize, newArea: null, _blockSize, projectAdapter);
+			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(_coords, _displaySize, _blockSize, projectAdapter);
 			MapCoordsDetail2 = new MapCoordsDetailViewModel(jobAreaInfo);
 		}
 

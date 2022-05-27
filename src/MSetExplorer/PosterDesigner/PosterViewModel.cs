@@ -157,8 +157,7 @@ namespace MSetExplorer
 				_projectAdapter.DeletePoster(existingPoster.Id);
 			}
 
-			// TOOD: Have the poster class implement ICloneable
-			var poster = new Poster(name, description, currentPoster.SourceJobId, currentPoster.SubdivisionId, currentPoster.JobAreaInfo, currentPoster.ColorBandSet, currentPoster.MapCalcSettings);
+			var poster = new Poster(name, description, currentPoster.SourceJobId, currentPoster.JobAreaInfo, currentPoster.ColorBandSet, currentPoster.MapCalcSettings);
 
 			if (poster is null)
 			{

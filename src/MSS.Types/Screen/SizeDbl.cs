@@ -102,6 +102,17 @@ namespace MSS.Types
 			return result;
 		}
 
+		public SizeInt Ceiling()
+		{
+			var result = new SizeInt
+				(
+					(int)Math.Ceiling(Width),
+					(int)Math.Ceiling(Height)
+				);
+
+			return result;
+		}
+
 		//public SizeDbl Diff(SizeInt offset)
 		//{
 		//	return new SizeDbl(Width - offset.Width, Height - offset.Height);

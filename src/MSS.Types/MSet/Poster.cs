@@ -7,12 +7,11 @@ using System.Runtime.CompilerServices;
 
 namespace MSS.Types
 {
-	public class Poster : INotifyPropertyChanged
+	public class Poster : INotifyPropertyChanged, ICloneable 
 	{
 		private string _name;
 		private string? _description;
 
-		private ObjectId _subdivisionId;
 		private JobAreaInfo _jobAreaInfo;
 		private ColorBandSet _colorBandSet;
 		private MapCalcSettings _mapCalcSettings;
@@ -23,16 +22,16 @@ namespace MSS.Types
 		#region Constructor
 
 		public Poster(string name, string? description, ObjectId? sourceJobId,
-			ObjectId subdivisionId, JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+			JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 			: this(ObjectId.GenerateNewId(), name, description, sourceJobId,
-				  subdivisionId, jobAreaInfo, colorBandSet, mapCalcSettings,
+				  jobAreaInfo, colorBandSet, mapCalcSettings,
 				  DateTime.UtcNow, DateTime.MinValue, DateTime.MinValue)
 		{
 			OnFile = false;
 		}
 
 		public Poster(ObjectId id, string name, string? description, ObjectId? sourceJobId,
-			ObjectId subdivisionId, JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
+			JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
 			DateTime dateCreated, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			Id = id;
@@ -42,7 +41,6 @@ namespace MSS.Types
 
 			SourceJobId = sourceJobId;
 
-			_subdivisionId = subdivisionId;
 			_jobAreaInfo = jobAreaInfo;
 			_colorBandSet = colorBandSet;
 			_mapCalcSettings = mapCalcSettings;
@@ -90,20 +88,6 @@ namespace MSS.Types
 		}
 
 		public ObjectId? SourceJobId { get; init; }
-
-		public ObjectId SubdivisionId
-		{
-			get => _subdivisionId;
-			set
-			{
-				if (value != _subdivisionId)
-				{
-					_subdivisionId = value;
-					LastUpdatedUtc = DateTime.UtcNow;
-					OnPropertyChanged();
-				}
-			}
-		}
 
 		public JobAreaInfo JobAreaInfo
 		{
@@ -183,7 +167,7 @@ namespace MSS.Types
 
 		#endregion
 
-		#region
+		#region Public Methods 
 
 		public bool Save(IProjectAdapter projectAdapter)
 		{
@@ -210,6 +194,20 @@ namespace MSS.Types
 			//}
 
 			return false;
+		}
+
+		#endregion
+
+		#region ICloneable Support
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		Poster Clone()
+		{
+			return new Poster(Name, Description, SourceJobId, JobAreaInfo.Clone(), ColorBandSet, MapCalcSettings);
 		}
 
 		#endregion
