@@ -116,8 +116,15 @@ namespace MSetExplorer
 				//MapCoordsViewModel.CurrentJob = curJob;
 				MapCoordsViewModel.CurrentJobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
 
+				MapDisplayViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
-				MapDisplayViewModel.CurrentJobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
+				var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
+					(
+					MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize),
+					curJob.MapCalcSettings
+					);
+
+				MapDisplayViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet

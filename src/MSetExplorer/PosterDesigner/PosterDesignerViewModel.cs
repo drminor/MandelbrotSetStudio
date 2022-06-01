@@ -15,7 +15,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
+		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
 			IProjectAdapter projectAdapter,	ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
 		{
 			ProjectAdapter = projectAdapter;
@@ -23,7 +23,7 @@ namespace MSetExplorer
 			PosterViewModel = posterViewModel;
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 
-			MapDisplayViewModel = mapDisplayViewModel;
+			MapScrollViewModel = mapScrollViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
@@ -49,7 +49,8 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public IPosterViewModel PosterViewModel { get; }
-		public IMapDisplayViewModel MapDisplayViewModel { get; }
+		public IMapScrollViewModel MapScrollViewModel { get; }
+		public IMapDisplayViewModel MapDisplayViewModel => MapScrollViewModel.MapDisplayViewModel;
 
 		public MapCoordsViewModel MapCoordsViewModel { get; }
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
@@ -117,17 +118,16 @@ namespace MSetExplorer
 				else
 				{
 					MapCalcSettingsViewModel.MapCalcSettings = currentPoster.MapCalcSettings;
+
 					var jobAreaInfo = currentPoster.JobAreaInfo;
-
 					MapCoordsViewModel.CurrentJobAreaInfo = jobAreaInfo;
-					MapDisplayViewModel.CurrentJobAreaInfo = jobAreaInfo;
+
+					//MapDisplayViewModel.MapCalcSettings = currentPoster.MapCalcSettings;
+
+					var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(jobAreaInfo, currentPoster.MapCalcSettings);
+
+					MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
 				}
-
-
-				// TOOD: Update the MapCalcSettings, MapCoords and MapDisplay view models to take a JobAreaInfo
-				//MapCalcSettingsViewModel.CurrentJob = curJob;
-				//MapCoordsViewModel.CurrentJob = curJob;
-				//MapDisplayViewModel.CurrentJob = curJob;
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet

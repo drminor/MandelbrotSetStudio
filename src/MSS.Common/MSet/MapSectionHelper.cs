@@ -16,17 +16,20 @@ namespace MSS.Common
 
 		#region Create MapSectionRequests
 
-		public IList<MapSectionRequest> CreateSectionRequests(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection>? emptyMapSections)
+		public IList<MapSectionRequest> CreateSectionRequests(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections)
 		{
 			if (emptyMapSections == null)
 			{
-				return CreateSectionRequests(jobAreaInfo, mapCalcSettings);
+				return CreateSectionRequests(jobAreaAndCalcSettings);
 			}
 			else
 			{
 				var result = new List<MapSectionRequest>();
 
 				Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
+
+				var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
+				var mapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
 
 				foreach (var mapSection in emptyMapSections)
 				{
@@ -39,9 +42,12 @@ namespace MSS.Common
 			}
 		}
 
-		public IList<MapSectionRequest> CreateSectionRequests(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings)
+		public IList<MapSectionRequest> CreateSectionRequests(JobAreaAndCalcSettings jobAreaAndCalcSettings)
 		{
 			var result = new List<MapSectionRequest>();
+
+			var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
+			var mapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
@@ -55,11 +61,14 @@ namespace MSS.Common
 			return result;
 		}
 
-		public IList<MapSection> CreateEmptyMapSections(JobAreaInfo jobAreaInfo, int targetIterations)
+		public IList<MapSection> CreateEmptyMapSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
 		{
 			var emptyCountsData = new int[0];
 
 			var result = new List<MapSection>();
+
+			var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
+			var targetIterations = jobAreaAndCalcSettings.MapCalcSettings.TargetIterations;
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");

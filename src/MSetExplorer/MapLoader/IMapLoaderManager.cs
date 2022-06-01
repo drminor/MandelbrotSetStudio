@@ -9,8 +9,8 @@ namespace MSetExplorer
 	{
 		event EventHandler<MapSection> MapSectionReady;
 
-		void Push(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings);
-		void Push(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections);
+		void Push(JobAreaAndCalcSettings jobAreaAndCalcSettings);
+		void Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection> emptyMapSections);
 		void StopCurrentJob();
 	}
 }

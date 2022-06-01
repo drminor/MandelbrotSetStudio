@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -7,8 +6,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using System.Windows;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -24,9 +21,7 @@ namespace MSetExplorer
 		private SizeInt _canvasSize;
 		private VectorInt _canvasControlOffset;
 
-		//private Job? _currentJob;
-
-		private JobAreaInfo? _currentJobAreaInfo;
+		private JobAreaAndCalcSettings? _currentJobAreaAndCalcSettings;
 		private MapCalcSettings _mapCalcSettings;
 
 		private ColorBandSet _colorBandSet;
@@ -51,8 +46,7 @@ namespace MSetExplorer
 			_screenSectionCollection = new ScreenSectionCollection(BlockSize);
 			ImageSource = new DrawingImage(_screenSectionCollection.DrawingGroup);
 
-			//_currentJob = null;
-			_currentJobAreaInfo = null;
+			_currentJobAreaAndCalcSettings = null;
 			_mapCalcSettings = new MapCalcSettings(700, 100);
 
 			_colorBandSet = new ColorBandSet();
@@ -80,32 +74,17 @@ namespace MSetExplorer
 
 		public ImageSource ImageSource { get; init; }
 
-		//public Job? CurrentJob
-		//{
-		//	get => _currentJob;
-		//	set
-		//	{
-		//		if (value != _currentJob)
-		//		{
-		//			var previousJob = _currentJob;
-		//			_currentJob = value?.Clone();
-		//			HandleCurrentJobChanged(previousJob, _currentJob);
-		//			OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentJob));
-		//		}
-		//	}
-		//}
-
-		public JobAreaInfo? CurrentJobAreaInfo
+		public JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings
 		{
-			get => _currentJobAreaInfo;
+			get => _currentJobAreaAndCalcSettings;
 			set
 			{
-				if (value != _currentJobAreaInfo)
+				if (value != _currentJobAreaAndCalcSettings)
 				{
-					var previousJob = _currentJobAreaInfo;
-					_currentJobAreaInfo = value?.Clone();
-					HandleCurrentJobChanged(previousJob, _currentJobAreaInfo);
-					OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentJobAreaInfo));
+					var previousValue = _currentJobAreaAndCalcSettings;
+					_currentJobAreaAndCalcSettings = value?.Clone();
+					HandleCurrentJobChanged(previousValue, _currentJobAreaAndCalcSettings);
+					OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentJobAreaAndCalcSettings));
 				}
 			}
 		}
@@ -134,7 +113,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
 
-				if (CurrentJobAreaInfo is null)
+				if (CurrentJobAreaAndCalcSettings is null)
 				{
 					// Take the value given, as is. Without a current job, we cannot adjust the iterations.
 					LoadColorMap(value);
@@ -142,9 +121,9 @@ namespace MSetExplorer
 				}
 				else
 				{
-					//var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJobAreaInfo.MapCalcSettings.TargetIterations);
-					//LoadColorMap(adjustedColorBandSet);
-					LoadColorMap(value);
+					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, MapCalcSettings.TargetIterations);
+					LoadColorMap(adjustedColorBandSet);
+					//LoadColorMap(value);
 
 					if (updateDisplay)
 					{
@@ -178,9 +157,11 @@ namespace MSetExplorer
 			if (ColorBandSet != colorBandSet)
 			{
 				_colorBandSet = colorBandSet;
-				_colorMap = new ColorMap(colorBandSet);
-				_colorMap.UseEscapeVelocities = _useEscapeVelocities;
-				_colorMap.HighlightSelectedColorBand = _highlightSelectedColorBand;
+				_colorMap = new ColorMap(colorBandSet)
+				{
+					UseEscapeVelocities = _useEscapeVelocities,
+					HighlightSelectedColorBand = _highlightSelectedColorBand
+				};
 			}
 		}
 
@@ -340,7 +321,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleCurrentJobChanged(JobAreaInfo? previousJob, JobAreaInfo? newJob)
+		private void HandleCurrentJobChanged(JobAreaAndCalcSettings? previousJob, JobAreaAndCalcSettings? newJob)
 		{
 			//Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
 			_mapLoaderManager.StopCurrentJob();
@@ -349,17 +330,14 @@ namespace MSetExplorer
 			{
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
-					var canvasSize = CanvasSize; // TODO: Update all JobRecords on file to have a valid CanvasSize.
-					ReuseLoadedSections(newJob, MapCalcSettings);
+					ReuseLoadedSections(newJob);
 				}
 				else
 				{
 					//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
 					MapSections.Clear();
-					CanvasControlOffset = newJob.CanvasControlOffset;
-
-					var canvasSize = CanvasSize; // TODO: Update all JobRecords on file to have a valid CanvasSize.
-					_mapLoaderManager.Push(newJob, MapCalcSettings);
+					CanvasControlOffset = newJob.JobAreaInfo.CanvasControlOffset;
+					_mapLoaderManager.Push(newJob);
 				}
 			}
 			else
@@ -368,9 +346,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ReuseLoadedSections(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings)
+		private void ReuseLoadedSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
 		{
-			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(jobAreaInfo, mapCalcSettings.TargetIterations);
+			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(jobAreaAndCalcSettings);
 			var loadedSections = GetMapSectionsSnapShot();
 
 			// Avoid requesting sections already drawn
@@ -381,50 +359,54 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 
+			var newCanvasControlOffset = jobAreaAndCalcSettings.JobAreaInfo.CanvasControlOffset;
+
 			if (!shiftAmount.EqualsZero)
 			{
 				_screenSectionCollection.Shift(shiftAmount);
 
-				if (CanvasControlOffset != jobAreaInfo.CanvasControlOffset)
+				if (CanvasControlOffset != newCanvasControlOffset)
 				{
-					CanvasControlOffset = jobAreaInfo.CanvasControlOffset;
+					CanvasControlOffset = newCanvasControlOffset;
 				}
 
 				RedrawSections(MapSections);
 			}
 			else
 			{
-				if (CanvasControlOffset != jobAreaInfo.CanvasControlOffset)
+				if (CanvasControlOffset != newCanvasControlOffset)
 				{
-					CanvasControlOffset = jobAreaInfo.CanvasControlOffset;
+					CanvasControlOffset = newCanvasControlOffset;
 				}
 			}
 
 			if (sectionsToLoad.Count > 0)
 			{
-				_mapLoaderManager.Push(jobAreaInfo, mapCalcSettings, sectionsToLoad);
+				_mapLoaderManager.Push(jobAreaAndCalcSettings, sectionsToLoad);
 			}
 		}
 
-		private bool ShouldAttemptToReuseLoadedSections(JobAreaInfo? previousJob, JobAreaInfo newJob)
+		private bool ShouldAttemptToReuseLoadedSections(JobAreaAndCalcSettings? previousJob, JobAreaAndCalcSettings? newJob)
 		{
-			if (MapSections.Count == 0 || previousJob is null)
-			{
-				return false;
-			}
-
-			//if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
+			//if (MapSections.Count == 0 || previousJob is null)
 			//{
 			//	return false;
 			//}
 
-			//if (newJob.ColorBandSetId != previousJob.ColorBandSetId)
-			//{
-			//	return false;
-			//}
+			////if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
+			////{
+			////	return false;
+			////}
 
-			var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
-			return jobSpd == previousSpd;
+			////if (newJob.ColorBandSetId != previousJob.ColorBandSetId)
+			////{
+			////	return false;
+			////}
+
+			//var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
+			//return jobSpd == previousSpd;
+
+			return false;
 		}
 
 		private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)

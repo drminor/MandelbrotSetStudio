@@ -568,7 +568,14 @@ namespace MSetRepo
 			if (result != null && highCutoff != targetIterations && colorBandSetCache != null)
 			{
 				var jobHelper = new MapSectionHelper();
-				var mapSectionRequests = jobHelper.CreateSectionRequests(MapJobHelper.GetJobAreaInfo(job), job.MapCalcSettings);
+
+				var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
+					(
+					MapJobHelper.GetJobAreaInfo(job), 
+					job.MapCalcSettings
+					);
+
+				var mapSectionRequests = jobHelper.CreateSectionRequests(jobAreaAndCalcSettings);
 
 				// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.
 

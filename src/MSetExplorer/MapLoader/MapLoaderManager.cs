@@ -46,19 +46,19 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Push(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings)
+		public void Push(JobAreaAndCalcSettings jobAreaAndCalcSettings)
 		{
-			Push(jobAreaInfo, mapCalcSettings, null);
+			Push(jobAreaAndCalcSettings, null);
 		}
 
-		public void Push(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection>? emptyMapSections)
+		public void Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections)
 		{
 			DoWithWriteLock(() =>
 			{
 				StopCurrentJobInternal();
 
-				var mapLoader = new MapLoader(jobAreaInfo.MapBlockOffset, HandleMapSection, _mapSectionHelper, _mapSectionRequestProcessor);
-				var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaInfo, mapCalcSettings, emptyMapSections);
+				var mapLoader = new MapLoader(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, HandleMapSection, _mapSectionHelper, _mapSectionRequestProcessor);
+				var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings, emptyMapSections);
 				var startTask = mapLoader.Start(mapSectionRequests);
 
 				_requests.Add(new GenMapRequestInfo(mapLoader, startTask));

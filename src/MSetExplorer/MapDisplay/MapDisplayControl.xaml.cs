@@ -67,7 +67,7 @@ namespace MSetExplorer
 				// A border is helpful for troubleshooting.
 				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(_canvas) : null;
 
-				Debug.WriteLine("The MapDisplay is now loaded.");
+				Debug.WriteLine("The MapDisplay Control is now loaded.");
 			}
 		}
 
@@ -126,9 +126,9 @@ namespace MSetExplorer
 				UpdateTheCanvasSize(_vm.CanvasSize);
 			}
 
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJobAreaInfo) && _selectionRectangle != null)
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJobAreaAndCalcSettings) && _selectionRectangle != null)
 			{
-				_selectionRectangle.Enabled = _vm.CurrentJobAreaInfo != null;
+				_selectionRectangle.Enabled = _vm.CurrentJobAreaAndCalcSettings != null;
 			}
 		}
 

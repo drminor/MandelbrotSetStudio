@@ -43,10 +43,12 @@ namespace MSetExplorer
 			var mapSectionHelper = new MapSectionHelper();
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(MapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
+			IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);
+
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
 
 			return result;
 		}

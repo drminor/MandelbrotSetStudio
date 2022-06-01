@@ -40,13 +40,14 @@ namespace MSetExplorer
 			{
 				_vm = (IPosterDesignerViewModel)DataContext;
 				_vm.PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
-				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+
+				//mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+				mapScroll1.DataContext = _vm.MapScrollViewModel;
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 
 				mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
-
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 				mapCoordsView1.KeyDown += MapCoordsView1_KeyDown;

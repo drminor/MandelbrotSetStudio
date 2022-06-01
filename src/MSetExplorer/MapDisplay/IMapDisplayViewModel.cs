@@ -7,10 +7,9 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public interface IMapDisplayViewModel
+	public interface IMapDisplayViewModel : INotifyPropertyChanged
 	{
 		bool InDesignMode { get; }
-		event PropertyChangedEventHandler? PropertyChanged;
 
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 
@@ -18,7 +17,7 @@ namespace MSetExplorer
 		ImageSource ImageSource { get; }
 		ObservableCollection<MapSection> MapSections { get; }
 
-		JobAreaInfo? CurrentJobAreaInfo { get; set; }
+		JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings { get; set; }
 		MapCalcSettings MapCalcSettings { get; set; }
 
 		ColorBandSet ColorBandSet { get; }

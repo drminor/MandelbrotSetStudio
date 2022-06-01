@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Designer Window" Width="1495" Height="1095">
+        Title="Designer Window" Width="1505" Height="1115">
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.PosterSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
@@ -101,9 +101,19 @@
 
         </Grid>
 
-        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" x:Name="colCenter">
-            <local:MapDisplayControl x:Name="mapDisplay1"></local:MapDisplayControl>
-        </Border>
+        <!--<DockPanel Grid.Row="1" Grid.Column="1" x:Name="colCenter">
+
+            <ScrollBar DockPanel.Dock="Bottom" Orientation="Horizontal" x:Name="HScrollBar"/>
+            <ScrollBar DockPanel.Dock="Right" Orientation="Vertical" x:Name="VScrollBar"/>
+
+            <Border BorderThickness="1" BorderBrush="Black">
+                <local:MapDisplayControl x:Name="mapDisplay1"></local:MapDisplayControl>
+            </Border>
+        </DockPanel>-->
+
+        <Grid Grid.Row="1" Grid.Column="1" x:Name="colCenter">
+            <local:MapScrollControl x:Name="mapScroll1"></local:MapScrollControl>
+        </Grid>
 
         <Grid Grid.Row="1" Grid.Column="2" x:Name="colRight">
 

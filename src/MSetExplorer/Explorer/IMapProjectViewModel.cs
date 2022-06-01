@@ -12,13 +12,14 @@ namespace MSetExplorer
 		SizeInt CanvasSize { get; set; }
 
 		Project? CurrentProject { get; }
+
 		string? CurrentProjectName { get; }
-		//bool CanSaveProject { get; }
 		bool CurrentProjectOnFile { get; }
 		bool CurrentProjectIsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
 
 		Job CurrentJob { get; }
+
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
 
