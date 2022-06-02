@@ -238,8 +238,8 @@ namespace MSetExplorer
 
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
-			var newArea = e.Area;
-			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, newArea, e.IsPreview));
+			var screenArea = e.Area;
+			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, screenArea, e.IsPreview));
 		}
 
 		public void UpdateMapViewPan(ImageDraggedEventArgs e)
@@ -248,8 +248,8 @@ namespace MSetExplorer
 
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
 			var invOffset = offset.Invert();
-			var newArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
-			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, newArea));
+			var screenArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
+			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, screenArea));
 		}
 
 		public void TearDown()

@@ -256,9 +256,9 @@ namespace MSetExplorer
 
 		#region Public Methods - Job
 
-		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
+		public void UpdateMapView(TransformType transformType, RectangleInt screenArea)
 		{
-			Debug.Assert(transformType == TransformType.ZoomIn || transformType == TransformType.Pan, "UpdateMapView received a TransformType other than ZoomIn or Pan.");
+			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan, "UpdateMapView received a TransformType other than ZoomIn or Pan.");
 			if (CurrentProject == null)
 			{
 				return;
@@ -266,11 +266,11 @@ namespace MSetExplorer
 
 			var curJob = CurrentJob;
 
-			var position = curJob.Coords.Position;
+			var mapPosition = curJob.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
-			var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
-			LoadMap(CurrentProject, curJob, curJob.ColorBandSetId, coords, curJob.MapCalcSettings, transformType, newArea);
+			var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
+			LoadMap(CurrentProject, curJob, curJob.ColorBandSetId, coords, curJob.MapCalcSettings, transformType, screenArea);
 		}
 
 		// Currently Not Used.
@@ -324,7 +324,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public JobAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt newArea)
+		public JobAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt screenArea)
 		{
 			if (CurrentProject == null)
 			{
@@ -333,16 +333,16 @@ namespace MSetExplorer
 
 			var curJob = CurrentJob;
 
-			if (newArea == new RectangleInt())
+			if (screenArea == new RectangleInt())
 			{
 				Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
 				return MapJobHelper.GetJobAreaInfo(curJob);
 			}
 			else
 			{
-				var position = curJob.Coords.Position;
+				var mapPosition = curJob.Coords.Position;
 				var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-				var coords = RMapHelper.GetMapCoords(newArea, position, samplePointDelta);
+				var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
  				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, CanvasSize, _blockSize, _projectAdapter);
 
 				return jobAreaInfo;

@@ -317,17 +317,17 @@ namespace MSetExplorer
 
 		private JobAreaInfo GetNewViewPort(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt displaySize)
 		{
-			var samplePointDelta = currentAreaInfo.Subdivision.SamplePointDelta;
-			var newCoords = RMapHelper.GetRegion(displayPosition, displaySize, currentAreaInfo.Coords.Position, samplePointDelta);
+			var screenArea = new RectangleInt(new PointInt(displayPosition), displaySize);
+			var mapPosition = currentAreaInfo.Coords.Position;
+			var subdivision = currentAreaInfo.Subdivision;
+			var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
 
-			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, samplePointDelta, currentAreaInfo.Subdivision.BlockSize, out var newCanvasControlOffset);
+			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
 
-			var result = new JobAreaInfo(newCoords, displaySize, currentAreaInfo.Subdivision, newMapBlockOffset, newCanvasControlOffset);
+			var result = new JobAreaInfo(newCoords, displaySize, subdivision, newMapBlockOffset, newCanvasControlOffset);
 
 			return result;
-
 		}
-
 
 		private void LoadMap(Poster poster, ObjectId colorBandSetId, RRectangle coords, MapCalcSettings mapCalcSettings)
 		{

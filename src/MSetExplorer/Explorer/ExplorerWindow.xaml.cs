@@ -407,10 +407,13 @@ namespace MSetExplorer
 			else
 			{
 				var posterSize = new SizeInt(2048);
-				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, posterSize);
-
+				var screenArea = new RectangleInt(new PointInt(), posterSize);
+				var newCoords = RMapHelper.GetMapCoords(screenArea, curJob.Coords.Position, curJob.Subdivision.SamplePointDelta);
+				var jobAreaInfo = new JobAreaInfo(newCoords, posterSize, curJob.Subdivision, curJob.MapBlockOffset, curJob.CanvasControlOffset);
 				var colorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
+
 				var poster = new Poster("Test", "First Poster", curJob.Id, jobAreaInfo, colorBandSet, curJob.MapCalcSettings);
+
 				_vm.MapProjectViewModel.PosterCreate(poster);
 
 				_vm.MapProjectViewModel.ProjectClose();

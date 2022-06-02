@@ -26,7 +26,7 @@ namespace MSS.Types
 
 		public Poster(string name, string? description, ObjectId? sourceJobId, JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 			: this(ObjectId.GenerateNewId(), name, description, sourceJobId, jobAreaInfo, colorBandSet, mapCalcSettings, new VectorInt(), 1.0d,
-				  DateTime.UtcNow, DateTime.MinValue, DateTime.MinValue)
+				  DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}

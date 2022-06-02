@@ -58,7 +58,7 @@ namespace MSS.Common
 			var subdivision = GetSubdivision(samplePointDelta, blockSize, projectAdapter);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, subdivision, out var canvasControlOffset);
 
 			var result = new JobAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, canvasControlOffset);
 

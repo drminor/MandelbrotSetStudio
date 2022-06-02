@@ -31,9 +31,9 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
-		//void UpdateTargetInterations(int targetIterations);
 		void UpdateMapCoordinates(RRectangle coords);
-		JobAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt newArea);
+
+		JobAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt screenArea);
 
 		// Project Methods
 		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);

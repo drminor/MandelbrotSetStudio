@@ -113,11 +113,12 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
-				MapCoordsViewModel.CurrentJobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
+				var newJobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
+				MapCoordsViewModel.CurrentJobAreaInfo = newJobAreaInfo;
 
 				var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
 					(
-					MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize),
+					newJobAreaInfo,
 					curJob.MapCalcSettings
 					);
 
@@ -173,7 +174,7 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				// Calculate new Coords for preview
-				var jobAreaInfo = MapProjectViewModel.GetUpdatedJobAreaInfo(e.TransformType, e.NewArea);
+				var jobAreaInfo = MapProjectViewModel.GetUpdatedJobAreaInfo(e.TransformType, e.ScreenArea);
 				if (jobAreaInfo != null)
 				{
 					MapCoordsViewModel.Preview(jobAreaInfo);
@@ -182,7 +183,7 @@ namespace MSetExplorer
 			else
 			{
 				// Zoom or Pan Map Coordinates
-				MapProjectViewModel.UpdateMapView(e.TransformType, e.NewArea);
+				MapProjectViewModel.UpdateMapView(e.TransformType, e.ScreenArea);
 			}
 		}
 

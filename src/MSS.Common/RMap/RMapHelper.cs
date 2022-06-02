@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 using System.Numerics;
@@ -9,27 +10,18 @@ namespace MSS.Common
 	{
 		#region Map Area Support
 
-		public static RRectangle GetMapCoords(RectangleInt area, RPoint position, RSize samplePointDelta)
+		public static RRectangle GetMapCoords(RectangleInt screenArea, RPoint mapPosition, RSize samplePointDelta)
 		{
 			//Debug.WriteLine($"GetMapCoords is receiving area: {area}.");
 
 			// Multiply the area by samplePointDelta to convert to map coordinates.
-			var rArea = ScaleByRsize(area, samplePointDelta);
+			var rArea = ScaleByRsize(screenArea, samplePointDelta);
 
 			// Translate the area by the current map position
-			var nrmArea = RNormalizer.Normalize(rArea, position, out var nrmPos);
+			var nrmArea = RNormalizer.Normalize(rArea, mapPosition, out var nrmPos);
 			var result = nrmArea.Translate(nrmPos);
 
 			//Debug.WriteLine($"Calc Map Coords: Trans: {result}, Pos: {nrmPos}, Area: {nrmArea}, area rat: {GetAspectRatio(nrmArea)}, result rat: {GetAspectRatio(result)}");
-
-			return result;
-		}
-
-		public static RRectangle GetRegion(VectorInt displayPosition, SizeInt displaySize, RPoint position, RSize samplePointDelta)
-		{
-			var rectangle = new RectangleInt(new PointInt(displayPosition), displaySize);
-
-			var result = GetMapCoords(rectangle, position, samplePointDelta);
 
 			return result;
 		}
@@ -225,7 +217,7 @@ namespace MSS.Common
 
 		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
-		public static BigVector GetMapBlockOffset(ref RRectangle mapCoords, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
+		public static BigVector GetMapBlockOffset(ref RRectangle mapCoords, Subdivision subdivision, out VectorInt canvasControlOffset)
 		{
 			var mapOrigin = mapCoords.Position;
 			var distance = new RVector(mapOrigin);
@@ -239,13 +231,13 @@ namespace MSS.Common
 			}
 			else
 			{
-				var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta, out var newDistance);
+				var offsetInSamplePoints = GetNumberOfSamplePoints(distance, subdivision.SamplePointDelta, out var newDistance);
 				//Debug.WriteLine($"The offset in samplePoints is {offsetInSamplePoints}.");
 
 				var newMapOrigin = new RPoint(newDistance);
 				mapCoords = CombinePosAndSize(newMapOrigin, mapCoords.Size);
 
-				result = GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
+				result = GetOffsetAndRemainder(offsetInSamplePoints, subdivision.BlockSize, out canvasControlOffset);
 				//Debug.WriteLine($"Starting Block Pos: {result}, Pixel Pos: {canvasControlOffset}.");
 			}
 
