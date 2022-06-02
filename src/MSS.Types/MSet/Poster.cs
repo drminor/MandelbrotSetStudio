@@ -16,23 +16,24 @@ namespace MSS.Types
 		private ColorBandSet _colorBandSet;
 		private MapCalcSettings _mapCalcSettings;
 
+		private VectorInt _dispPosition;
+		private double _dispZoom;
+
 		private DateTime _lastUpdatedUtc;
 		private DateTime _lastSavedUtc;
 
 		#region Constructor
 
-		public Poster(string name, string? description, ObjectId? sourceJobId,
-			JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
-			: this(ObjectId.GenerateNewId(), name, description, sourceJobId,
-				  jobAreaInfo, colorBandSet, mapCalcSettings,
+		public Poster(string name, string? description, ObjectId? sourceJobId, JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+			: this(ObjectId.GenerateNewId(), name, description, sourceJobId, jobAreaInfo, colorBandSet, mapCalcSettings, new VectorInt(), 1.0d,
 				  DateTime.UtcNow, DateTime.MinValue, DateTime.MinValue)
 		{
 			OnFile = false;
 		}
 
-		public Poster(ObjectId id, string name, string? description, ObjectId? sourceJobId,
-			JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
-			DateTime dateCreated, DateTime lastSavedUtc, DateTime lastAccessedUtc)
+		public Poster(ObjectId id, string name, string? description, ObjectId? sourceJobId, JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
+			VectorInt displayPosition, double displayZoom,
+			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			Id = id;
 
@@ -45,7 +46,10 @@ namespace MSS.Types
 			_colorBandSet = colorBandSet;
 			_mapCalcSettings = mapCalcSettings;
 
-			DateCreatedUtc = dateCreated;
+			_dispPosition = displayPosition;
+			_dispZoom = displayZoom;
+
+			DateCreatedUtc = dateCreatedUtc;
 			LastUpdatedUtc = DateTime.MinValue;
 			LastSavedUtc = lastSavedUtc;
 			LastAccessedUtc = lastAccessedUtc;
@@ -125,6 +129,34 @@ namespace MSS.Types
 				if (value != _mapCalcSettings)
 				{
 					_mapCalcSettings = value;
+					LastUpdatedUtc = DateTime.UtcNow;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public VectorInt DisplayPosition
+		{
+			get => _dispPosition;
+			set
+			{
+				if (value != _dispPosition)
+				{
+					_dispPosition = value;
+					LastUpdatedUtc = DateTime.UtcNow;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public double DisplayZoom
+		{
+			get => _dispZoom;
+			set
+			{
+				if (value != _dispZoom)
+				{
+					_dispZoom = value;
 					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}

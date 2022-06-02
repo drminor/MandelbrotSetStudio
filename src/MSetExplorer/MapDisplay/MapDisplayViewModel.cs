@@ -89,20 +89,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public MapCalcSettings MapCalcSettings
-		{
-			get => _mapCalcSettings;
-			set
-			{
-				if (value != _mapCalcSettings)
-				{
-					_mapCalcSettings = value;
-					//HandleCurrentJobChanged(previousJob, _currentJobAreaInfo);
-					OnPropertyChanged(nameof(IMapDisplayViewModel.MapCalcSettings));
-				}
-			}
-		}
-
 		public ColorBandSet ColorBandSet => _colorBandSet;
 
 		private bool _cmLoadedButNotHandled = false;
@@ -121,7 +107,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, MapCalcSettings.TargetIterations);
+					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJobAreaAndCalcSettings.MapCalcSettings.TargetIterations);
 					LoadColorMap(adjustedColorBandSet);
 					//LoadColorMap(value);
 

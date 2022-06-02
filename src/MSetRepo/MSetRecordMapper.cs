@@ -176,14 +176,17 @@ namespace MSetRepo
 				Name: source.Name,
 				Description: source.Description,
 				SourceJobId: source.SourceJobId,
-				JobAreaInfoRecord: MapTo(source.JobAreaInfo), 
-				ColorBandSetId: source.ColorBandSet.Id, 
-				MapCalcSettings: source.MapCalcSettings, 
-				DateCreatedUtc: source.DateCreatedUtc, 
+				JobAreaInfoRecord: MapTo(source.JobAreaInfo),
+				ColorBandSetId: source.ColorBandSet.Id,
+				MapCalcSettings: source.MapCalcSettings,
+				DisplayPosition: MapTo(source.DisplayPosition),
+				DisplayZoom: source.DisplayZoom,
+				DateCreatedUtc: source.DateCreatedUtc,
 				LastSavedUtc: source.LastSavedUtc,
-				LastAccessedUtc: source.LastAccessedUtc);
-
-			result.Id = source.Id;
+				LastAccessedUtc: source.LastAccessedUtc)
+			{
+				Id = source.Id
+			};
 
 			return result;
 		}

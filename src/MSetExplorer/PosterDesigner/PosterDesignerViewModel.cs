@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
+using System;
 using System.Diagnostics;
 
 namespace MSetExplorer
@@ -24,6 +25,9 @@ namespace MSetExplorer
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 
 			MapScrollViewModel = mapScrollViewModel;
+			MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
+
+
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
@@ -42,6 +46,17 @@ namespace MSetExplorer
 			ColorBandSetViewModel = colorBandViewModel;
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
+		}
+
+		private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(IMapScrollViewModel.HorizontalPosition) || e.PropertyName == nameof(IMapScrollViewModel.VerticalPosition))
+			{
+				if (PosterViewModel.CurrentPoster != null)
+				{
+					PosterViewModel.CurrentPoster.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), (int)Math.Round(MapScrollViewModel.VerticalPosition));
+				}
+			}
 		}
 
 		#endregion
@@ -106,32 +121,28 @@ namespace MSetExplorer
 
 		private void PosterViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			// Update the MSet Info and Map Display with the new Job
-			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
+			//// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
+			//if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
+			//{
+			//	var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
+
+			//	MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
+			//	MapCoordsViewModel.CurrentJobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
+			//	MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
+			//}
+
+			// Update the MapCalcSettings, MapCoords and Map Display with the new Job Area and Calc Settings
+			if (e.PropertyName == nameof(IPosterViewModel.JobAreaAndCalcSettings))
 			{
-				var currentPoster = PosterViewModel.CurrentPoster;
+				var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
 
-				if (currentPoster == null)
-				{
-					MapCalcSettingsViewModel.MapCalcSettings = new MapCalcSettings();
-				}
-				else
-				{
-					MapCalcSettingsViewModel.MapCalcSettings = currentPoster.MapCalcSettings;
-
-					var jobAreaInfo = currentPoster.JobAreaInfo;
-					MapCoordsViewModel.CurrentJobAreaInfo = jobAreaInfo;
-
-					//MapDisplayViewModel.MapCalcSettings = currentPoster.MapCalcSettings;
-
-					var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(jobAreaInfo, currentPoster.MapCalcSettings);
-
-					MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
-				}
+				MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
+				MapCoordsViewModel.CurrentJobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
+				MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
-			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
+			else if (e.PropertyName == nameof(IPosterViewModel.CurrentColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 

@@ -25,6 +25,15 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static RRectangle GetRegion(VectorInt displayPosition, SizeInt displaySize, RPoint position, RSize samplePointDelta)
+		{
+			var rectangle = new RectangleInt(new PointInt(displayPosition), displaySize);
+
+			var result = GetMapCoords(rectangle, position, samplePointDelta);
+
+			return result;
+		}
+
 		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
 		public static int CalculatePitch(SizeInt displaySize, int pitchTarget)
 		{

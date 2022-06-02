@@ -15,6 +15,9 @@ namespace ProjectRepo.Entities
 		ObjectId ColorBandSetId,
 		MapCalcSettings MapCalcSettings,
 
+		VectorIntRecord DisplayPosition,
+		double DisplayZoom,
+
 		DateTime DateCreatedUtc,
 		DateTime LastSavedUtc,
 		DateTime LastAccessedUtc

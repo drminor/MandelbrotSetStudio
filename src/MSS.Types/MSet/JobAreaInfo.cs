@@ -4,11 +4,21 @@ namespace MSS.Types.MSet
 {
 	public class JobAreaInfo : ICloneable
 	{
+		private static readonly Lazy<JobAreaInfo> _lazyJobAreaInfo = new Lazy<JobAreaInfo>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+		public static readonly JobAreaInfo Empty = _lazyJobAreaInfo.Value;
+
 		public RRectangle Coords { get; init; }
 		public SizeInt CanvasSize { get; init; }
 		public Subdivision Subdivision { get; init; }
 		public BigVector MapBlockOffset { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
+
+		public JobAreaInfo()
+		{
+			Coords = new RRectangle();
+			Subdivision = new Subdivision();
+			MapBlockOffset = new BigVector();
+		}
 
 		public JobAreaInfo(RRectangle coords, SizeInt canvasSize, Subdivision subdivision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
 		{

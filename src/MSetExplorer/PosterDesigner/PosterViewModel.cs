@@ -4,7 +4,6 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace MSetExplorer
@@ -17,6 +16,8 @@ namespace MSetExplorer
 		private SizeInt _canvasSize;
 		private Poster? _currentPoster;
 
+		JobAreaAndCalcSettings _jobAreaAndCalcSettings;
+
 		#region Constructor
 
 		public PosterViewModel(ProjectAdapter projectAdapter, SizeInt blockSize)
@@ -26,6 +27,7 @@ namespace MSetExplorer
 
 			_canvasSize = new SizeInt();
 			_currentPoster = null;
+			_jobAreaAndCalcSettings = JobAreaAndCalcSettings.Empty;
 		}
 
 		#endregion
@@ -66,37 +68,75 @@ namespace MSetExplorer
 					_currentPoster = value;
 					if (_currentPoster != null)
 					{
+						//var fullJobAreaInfo = _currentPoster.JobAreaInfo;
+						//var samplePointDelta = fullJobAreaInfo.Subdivision.SamplePointDelta;
+						//var newCoords = RMapHelper.GetRegion(_currentPoster.DisplayPosition, CanvasSize, fullJobAreaInfo.Coords.Position, samplePointDelta);
+
+						//var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, samplePointDelta, fullJobAreaInfo.Subdivision.BlockSize, out var newCanvasControlOffset);
+
+						//var viewPortArea = new JobAreaInfo(newCoords, CanvasSize, fullJobAreaInfo.Subdivision, newMapBlockOffset, newCanvasControlOffset);
+
+						var viewPortArea = GetNewViewPort(_currentPoster.JobAreaInfo, _currentPoster.DisplayPosition, CanvasSize);
+						JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, _currentPoster.MapCalcSettings);
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
 					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentPoster));
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
+				}
+			}
+		}
 
+		public JobAreaAndCalcSettings JobAreaAndCalcSettings
+		{
+			get => _jobAreaAndCalcSettings;
+
+			set
+			{
+				if (value != _jobAreaAndCalcSettings)
+				{
+					_jobAreaAndCalcSettings = value;
+					OnPropertyChanged(nameof(IPosterViewModel.JobAreaAndCalcSettings));
 				}
 			}
 		}
 
 		private void CurrentPoster_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(Project.IsDirty))
+			if (e.PropertyName == nameof(Poster.IsDirty))
 			{
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterIsDirty));
 			}
 
-			if (e.PropertyName == nameof(Project.OnFile))
+			else if (e.PropertyName == nameof(Poster.OnFile))
 			{
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterOnFile));
 			}
 
-			if (e.PropertyName == nameof(Project.CurrentColorBandSet))
+			else if (e.PropertyName == nameof(Poster.ColorBandSet))
 			{
-				Debug.WriteLine("The MapProjectViewModel is raising PropertyChanged: IPosterViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
+				Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentColorBandSet as the Poster's ColorBandSet is being updated.");
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
+			}
+
+			else if (e.PropertyName == nameof(Poster.DisplayPosition))
+			{
+				if (_currentPoster != null)
+				{
+					//var fullJobAreaInfo = _currentPoster.JobAreaInfo;
+					//var viewPortArea = new JobAreaInfo(fullJobAreaInfo.Coords, new SizeInt(1024), fullJobAreaInfo.Subdivision, fullJobAreaInfo.MapBlockOffset, fullJobAreaInfo.CanvasControlOffset);
+
+					var viewPortArea = GetNewViewPort( _currentPoster.JobAreaInfo, _currentPoster.DisplayPosition, CanvasSize);
+					JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, _currentPoster.MapCalcSettings);
+				}
+				else
+				{
+					JobAreaAndCalcSettings = JobAreaAndCalcSettings.Empty;
+				}
 			}
 		}
 
 		public bool CurrentPosterIsDirty => CurrentPoster?.IsDirty ?? false;
-
 
 		public string? CurrentPosterName => CurrentPoster?.Name;
 		public bool CurrentPosterOnFile => CurrentPoster?.OnFile ?? false;
@@ -239,7 +279,7 @@ namespace MSetExplorer
 
 			if (targetIterations != CurrentPoster.MapCalcSettings.TargetIterations)
 			{
-				//CurrentPoster.Add(colorBandSet);
+				CurrentPoster.ColorBandSet = colorBandSet;
 
 				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentPoster.ColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentPoster.MapCalcSettings.RequestsPerJob);
@@ -274,6 +314,20 @@ namespace MSetExplorer
 		//		OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 		//	}
 		//}
+
+		private JobAreaInfo GetNewViewPort(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt displaySize)
+		{
+			var samplePointDelta = currentAreaInfo.Subdivision.SamplePointDelta;
+			var newCoords = RMapHelper.GetRegion(displayPosition, displaySize, currentAreaInfo.Coords.Position, samplePointDelta);
+
+			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, samplePointDelta, currentAreaInfo.Subdivision.BlockSize, out var newCanvasControlOffset);
+
+			var result = new JobAreaInfo(newCoords, displaySize, currentAreaInfo.Subdivision, newMapBlockOffset, newCanvasControlOffset);
+
+			return result;
+
+		}
+
 
 		private void LoadMap(Poster poster, ObjectId colorBandSetId, RRectangle coords, MapCalcSettings mapCalcSettings)
 		{

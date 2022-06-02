@@ -763,31 +763,6 @@ namespace MSetRepo
 			return poster != null;
 		}
 
-		private Poster BuildPoster(PosterRecord target)
-		{
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			var colorBandSetRecord = colorBandSetReaderWriter.Get(target.ColorBandSetId);
-
-			if (colorBandSetRecord == null)
-			{
-				throw new KeyNotFoundException($"Cannot find a ColorBandSet record on file for the Poster with id: {target.Id}.");
-			}
-
-			var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
-
-			var result = new Poster(
-				name: target.Name, 
-				description: target.Description, 
-				sourceJobId: target.SourceJobId, 
-				jobAreaInfo: _mSetRecordMapper.MapFrom(target.JobAreaInfoRecord),
-				colorBandSet: colorBandSet,
-				mapCalcSettings: target.MapCalcSettings
-				);
-
-			return result;
-		}
-
-
 		public bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster)
 		{
 			//Debug.WriteLine($"Retrieving Poster object with name: {name}.");
@@ -804,6 +779,37 @@ namespace MSetRepo
 			}
 
 			return poster != null;
+		}
+
+		private Poster BuildPoster(PosterRecord target)
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var colorBandSetRecord = colorBandSetReaderWriter.Get(target.ColorBandSetId);
+
+			if (colorBandSetRecord == null)
+			{
+				throw new KeyNotFoundException($"Cannot find a ColorBandSet record on file for the Poster with id: {target.Id}.");
+			}
+
+			var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+
+			var result = new Poster(
+				id: target.Id,
+				name: target.Name,
+				description: target.Description,
+				sourceJobId: target.SourceJobId,
+				jobAreaInfo: _mSetRecordMapper.MapFrom(target.JobAreaInfoRecord),
+				colorBandSet: colorBandSet,
+				mapCalcSettings: target.MapCalcSettings,
+				displayPosition: _mSetRecordMapper.MapFrom(target.DisplayPosition),
+				displayZoom: target.DisplayZoom,
+				dateCreatedUtc: target.DateCreatedUtc,
+				lastSavedUtc: target.LastSavedUtc,
+				lastAccessedUtc: target.LastAccessedUtc
+
+				);
+
+			return result;
 		}
 
 		public void CreatePoster(Poster poster)

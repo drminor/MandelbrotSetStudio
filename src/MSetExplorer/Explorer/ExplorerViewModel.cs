@@ -113,10 +113,7 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
-				//MapCoordsViewModel.CurrentJob = curJob;
 				MapCoordsViewModel.CurrentJobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
-
-				MapDisplayViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
 				var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
 					(
