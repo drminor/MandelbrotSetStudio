@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using ImageBuilder;
+using MSS.Common;
 using System;
 
 namespace MSetExplorer
@@ -10,11 +11,13 @@ namespace MSetExplorer
 	{
 		public RepositoryAdapters RepositoryAdapters { get; init; }
 		public IMapLoaderManager MapLoaderManager { get; init; }
+		public PngBuilder PngBuilder { get; init; }
 
-		public AppNavViewModel(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
+		public AppNavViewModel(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, PngBuilder pngBuilder)
 		{
 			RepositoryAdapters = repositoryAdapters;
 			MapLoaderManager = mapLoaderManager;
+			PngBuilder = pngBuilder;
 		}
 
 		public ExplorerViewModel GetExplorerViewModel()
@@ -48,7 +51,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, PngBuilder, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
 
 			return result;
 		}

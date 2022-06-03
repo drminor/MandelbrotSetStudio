@@ -1,62 +1,77 @@
-﻿using MSS.Types;
+﻿using MEngineClient;
+using MEngineDataContracts;
+using MSS.Common;
+using MSS.Types;
 using PngImageLib;
 using System;
+using System.Diagnostics;
 using System.IO;
-using MSS.Common;
-using MSS.Types.MSetOld;
 
 namespace ImageBuilder
 {
 	public class PngBuilder
 	{
-		private readonly SizeInt _blockSize;
 		private readonly string _imageOutputFolder;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
+		private readonly IMEngineClient _mEngineClient;
 
-		public PngBuilder(string imageOutputFolder, SizeInt blockSize)
+		private readonly MapSectionHelper _mapSectionHelper;
+
+		public PngBuilder(string imageOutputFolder, IMEngineClient mEngineClient, IMapSectionAdapter mapSectionAdapter)
 		{
 			_imageOutputFolder = imageOutputFolder;
-			_blockSize = blockSize;
+			_mEngineClient = mEngineClient;
+			_mapSectionAdapter = mapSectionAdapter;
+			_mapSectionHelper = new MapSectionHelper();
 		}
 
-		public void Build(MSetInfoOld mSetInfo, IMapSectionReader mapSectionReader)
+		public void Build(Poster poster)
 		{
-			var projectName = mSetInfo.Name;
-			var isHighRes = mSetInfo.IsHighRes;
-			var maxIterations = mSetInfo.MapCalcSettings.TargetIterations;
-			var colorMap = mSetInfo.ColorMap;
+			var projectName = poster.Name;
 
-			var imageSizeInBlocks = mapSectionReader.GetImageSizeInBlocks();
+			var jobAreaInfo = poster.JobAreaInfo;
+			var mapCalcSettings = poster.MapCalcSettings;
+
+			var canvasSize = jobAreaInfo.CanvasSize;
+			var maxIterations = mapCalcSettings.TargetIterations;
+			var blockSize = jobAreaInfo.Subdivision.BlockSize;
+			var colorMap = new ColorMap(poster.ColorBandSet);
+
+			var imageSizeInBlocks = RMapHelper.GetMapExtentInBlocks(canvasSize, blockSize);
+			var imageSize = imageSizeInBlocks.Scale(blockSize);
+			var imagePath = GetImageFilename(projectName, imageSize.Width, _imageOutputFolder);
+
+			Debug.WriteLine($"Processing section requests. The map extent is {imageSizeInBlocks}.");
+			using var pngImage = new PngImage(imagePath, imageSize.Width, imageSize.Height);
 
 			var w = imageSizeInBlocks.Width;
 			var h = imageSizeInBlocks.Height;
 
-			var imageSize = imageSizeInBlocks.Scale(_blockSize);
-
-			var imagePath = GetImageFilename(projectName, imageSize.Width, isHighRes, _imageOutputFolder);
-
-			var key = new KPoint(0, 0);
-
-			using var pngImage = new PngImage(imagePath, imageSize.Width, imageSize.Height);
+			var key = new PointInt();
 			for (var vBPtr = 0; vBPtr < h; vBPtr++)
 			{
 				key.Y = vBPtr;
-				for (var lPtr = 0; lPtr < 100; lPtr++)
+				for (var lPtr = 0; lPtr < blockSize.Height; lPtr++)
 				{
 					var iLine = pngImage.ImageLine;
 
 					for (var hBPtr = 0; hBPtr < w; hBPtr++)
 					{
 						key.X = hBPtr;
+						var mapSectionRequest = _mapSectionHelper.CreateRequest(key, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
+						var mapSectionResponse = GetMapSection(mapSectionRequest);
+						var countsForThisLine = GetOneLineFromCountsBlock(mapSectionResponse.Counts, lPtr); // mapSectionReader.GetCounts(key, lPtr);
 
-						var countsForThisLine = mapSectionReader.GetCounts(key, lPtr);
-						if (countsForThisLine != null)
-						{
-							BuildPngImageLineSegment(hBPtr * _blockSize.Width, countsForThisLine, iLine, maxIterations, colorMap);
-						}
-						else
-						{
-							BuildBlankPngImageLineSegment(hBPtr * _blockSize.Width, _blockSize.Width, iLine);
-						}
+						//if (countsForThisLine != null)
+						//{
+						//	BuildPngImageLineSegment(hBPtr * blockSize.Width, countsForThisLine, iLine, maxIterations, colorMap);
+						//}
+						//else
+						//{
+						//	BuildBlankPngImageLineSegment(hBPtr * blockSize.Width, blockSize.Width, iLine);
+						//}
+
+						BuildPngImageLineSegment(hBPtr * blockSize.Width, countsForThisLine, iLine, maxIterations, colorMap);
 					}
 
 					pngImage.WriteLine(iLine);
@@ -64,7 +79,28 @@ namespace ImageBuilder
 			}
 		}
 
-		public static void BuildPngImageLineSegment(int pixPtr, int[] counts, ImageLine iLine, int maxIterations, ColorMap colorMap)
+		private MapSectionResponse GetMapSection(MapSectionRequest mapSectionRequest)
+		{
+			var mapSectionResponse = _mapSectionAdapter.GetMapSection(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
+
+			if (mapSectionResponse == null)
+			{
+				mapSectionResponse = _mEngineClient.GenerateMapSection(mapSectionRequest);
+			}
+
+			return mapSectionResponse;
+		}
+
+		private int[] GetOneLineFromCountsBlock(int[] counts, int lPtr)
+		{
+			var size = counts.Length;
+			int[] result = new int[size];
+
+			Array.Copy(counts, lPtr * size, result, 0, size);
+			return result;
+		}
+
+		private void BuildPngImageLineSegment(int pixPtr, int[] counts, ImageLine iLine, int maxIterations, ColorMap colorMap)
 		{
 			for (var xPtr = 0; xPtr < counts.Length; xPtr++)
 			{
@@ -84,15 +120,15 @@ namespace ImageBuilder
 			}
 		}
 
-		public static void BuildBlankPngImageLineSegment(int pixPtr, int len, ImageLine iLine)
-		{
-			for (var xPtr = 0; xPtr < len; xPtr++)
-			{
-				ImageLineHelper.SetPixel(iLine, pixPtr++, 255, 255, 255);
-			}
-		}
+		//private void BuildBlankPngImageLineSegment(int pixPtr, int len, ImageLine iLine)
+		//{
+		//	for (var xPtr = 0; xPtr < len; xPtr++)
+		//	{
+		//		ImageLineHelper.SetPixel(iLine, pixPtr++, 255, 255, 255);
+		//	}
+		//}
 
-		private static double GetEscVel(int rawCount, out int count)
+		private double GetEscVel(int rawCount, out int count)
 		{
 			var result = rawCount / 10000d;
 			count = (int)Math.Truncate(result);
@@ -100,20 +136,12 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private static string GetImageFilename(string fn, int imageWidth, bool isHighRes, string basePath)
+		private string GetImageFilename(string fn, int imageWidth, string basePath)
 		{
-			string imagePath;
-			if (isHighRes)
-			{
-				imagePath = Path.Combine(basePath, $"{fn}_hrez_{imageWidth}_test.png");
-			}
-			else
-			{
-				imagePath = Path.Combine(basePath, $"{fn}_{imageWidth}_test.png");
-			}
-
-			return imagePath;
+			var result = Path.Combine(basePath, $"{fn}_{imageWidth}_v1.png");
+			return result;
 		}
 
 	}
 }
+

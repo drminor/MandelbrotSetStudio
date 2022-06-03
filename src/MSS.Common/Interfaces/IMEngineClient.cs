@@ -9,5 +9,7 @@ namespace MEngineClient
 
 		//Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest);
 		ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest);
+
+		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest);
 	}
 }

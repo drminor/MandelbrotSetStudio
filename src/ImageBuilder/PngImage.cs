@@ -11,8 +11,8 @@ namespace ImageBuilder
         private readonly PngWriter png;
         private int curRow;
 
-        public readonly string Path;
-        public readonly ImageLine ImageLine;
+        public string Path { get; }
+        public ImageLine ImageLine { get; }
 
         public PngImage(string path, int width, int height)
         {

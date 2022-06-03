@@ -10,13 +10,15 @@ namespace MSetExplorer
 		JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings { get; set; }
 
 		double VerticalPosition { get; set; }
-
 		double HorizontalPosition { get; set; }
 
-		double GetVMax();
-		double GetHMax();
+		//double GetVMax();
+		//double GetHMax();
 
-		double GetVerticalViewPortSize();
-		double GetHorizontalViewPortSize();
+		double VMax { get; set; }
+		double HMax { get; set; }
+
+		double VerticalViewPortSize { get; }
+		double HorizontalViewPortSize { get; }
 	}
 }

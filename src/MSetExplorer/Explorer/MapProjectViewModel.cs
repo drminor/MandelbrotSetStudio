@@ -247,9 +247,22 @@ namespace MSetExplorer
 
 		#region Public Methods - Poster 
 
-		public void PosterCreate(Poster poster)
+		public Poster PosterCreate(string name, string? description, SizeInt posterSize)
 		{
+			var curJob = CurrentJob;
+			if (CurrentProject == null || curJob.IsEmpty)
+			{
+				throw new InvalidOperationException("Cannot create a poster, the current job is empty.");
+			}
+
+			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob.Coords, posterSize, curJob.Subdivision.BlockSize, _projectAdapter);
+			var colorBandSet = CurrentProject.CurrentColorBandSet;
+
+			var poster = new Poster(name, description, curJob.Id, jobAreaInfo, colorBandSet, curJob.MapCalcSettings);
+
 			_projectAdapter.CreatePoster(poster);
+
+			return poster;
 		}
 
 		#endregion

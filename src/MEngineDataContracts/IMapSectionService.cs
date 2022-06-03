@@ -13,6 +13,10 @@ namespace MEngineDataContracts
 		[OperationContract]
 		ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest, CallContext context = default);
 
+		[OperationContract]
+		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CallContext context = default);
+
+
 	}
 
 }

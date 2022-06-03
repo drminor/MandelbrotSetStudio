@@ -38,6 +38,18 @@ namespace MEngineClient
 			return reply;
 		}
 
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		{
+			var mEngineService = GetMapSectionService();
+			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
+
+			var stopWatch = Stopwatch.StartNew();
+			var reply = mEngineService.GenerateMapSectionAsyncR(mapSectionRequest);
+			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
+
+			return reply;
+		}
+
 		private IMapSectionService GetMapSectionService()
 		{
 			try

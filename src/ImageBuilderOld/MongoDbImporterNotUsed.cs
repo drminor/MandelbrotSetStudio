@@ -6,7 +6,7 @@ using ProjectRepo;
 using ProjectRepo.Entities;
 using System.Diagnostics;
 
-namespace MSetDatabaseClient
+namespace ImageBuilderOld
 {
 	public class MongoDbImporterNotUsed
 	{

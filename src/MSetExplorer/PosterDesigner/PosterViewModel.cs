@@ -68,14 +68,6 @@ namespace MSetExplorer
 					_currentPoster = value;
 					if (_currentPoster != null)
 					{
-						//var fullJobAreaInfo = _currentPoster.JobAreaInfo;
-						//var samplePointDelta = fullJobAreaInfo.Subdivision.SamplePointDelta;
-						//var newCoords = RMapHelper.GetRegion(_currentPoster.DisplayPosition, CanvasSize, fullJobAreaInfo.Coords.Position, samplePointDelta);
-
-						//var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, samplePointDelta, fullJobAreaInfo.Subdivision.BlockSize, out var newCanvasControlOffset);
-
-						//var viewPortArea = new JobAreaInfo(newCoords, CanvasSize, fullJobAreaInfo.Subdivision, newMapBlockOffset, newCanvasControlOffset);
-
 						var viewPortArea = GetNewViewPort(_currentPoster.JobAreaInfo, _currentPoster.DisplayPosition, CanvasSize);
 						JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, _currentPoster.MapCalcSettings);
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;

@@ -5,6 +5,10 @@ namespace MSetExplorer
 	internal class MapScrollViewModel : ViewModelBase, IMapScrollViewModel
 	{
 		private JobAreaAndCalcSettings? _currentJobAreaAndCalcSettings;
+
+		private double _vMax;
+		private double _hMax;
+
 		private double _verticalPosition;
 		private double _horizontalPosition;
 
@@ -13,6 +17,8 @@ namespace MSetExplorer
 		public MapScrollViewModel(IMapDisplayViewModel mapDisplayViewModel)
 		{
 			MapDisplayViewModel = mapDisplayViewModel;
+			VMax = 1024;
+			HMax = 1024;
 		}
 
 		#endregion
@@ -47,7 +53,7 @@ namespace MSetExplorer
 				if (value != _verticalPosition)
 				{
 					_verticalPosition = value;
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(IMapScrollViewModel.VerticalPosition));
 				}
 			}
 		}
@@ -60,7 +66,33 @@ namespace MSetExplorer
 				if (value != _verticalPosition)
 				{
 					_horizontalPosition = value;
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(IMapScrollViewModel.HorizontalPosition));
+				}
+			}
+		}
+
+		public double VMax
+		{
+			get => _vMax;
+			set
+			{
+				if (value != _vMax)
+				{
+					_vMax = value;
+					OnPropertyChanged(nameof(IMapScrollViewModel.VMax));
+				}
+			}
+		}
+
+		public double HMax
+		{
+			get => _hMax;
+			set
+			{
+				if (value != _hMax)
+				{
+					_hMax = value;
+					OnPropertyChanged(nameof(IMapScrollViewModel.HMax));
 				}
 			}
 		}
@@ -69,25 +101,9 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public double GetVMax()
-		{
-			return 1024;
-		}
+		public double VerticalViewPortSize => MapDisplayViewModel.CanvasSize.Height;
 
-		public double GetHMax()
-		{
-			return 1024;
-		}
-
-		public double GetVerticalViewPortSize()
-		{
-			return 1024;
-		}
-
-		public double GetHorizontalViewPortSize()
-		{
-			return 1024;
-		}
+		public double HorizontalViewPortSize => MapDisplayViewModel.CanvasSize.Width;
 
 		#endregion
 

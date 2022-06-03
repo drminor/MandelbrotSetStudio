@@ -44,17 +44,20 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapScrollViewModel.CurrentJobAreaAndCalcSettings))
+			if (e.PropertyName == nameof(IMapScrollViewModel.VMax))
 			{
-				if (_vm.CurrentJobAreaAndCalcSettings != null)
-				{
-					VScrollBar.Maximum = _vm.GetVMax();
-					HScrollBar.Maximum = _vm.GetHMax();
+				VScrollBar.Maximum = _vm.VMax;
+				VScrollBar.ViewportSize = _vm.VerticalViewPortSize;
+				VScrollBar.LargeChange = _vm.VerticalViewPortSize;
+				VScrollBar.SmallChange = 0.125 * VScrollBar.LargeChange;
+			}
 
-					VScrollBar.ViewportSize = _vm.GetVerticalViewPortSize();
-
-					HScrollBar.ViewportSize = _vm.GetHorizontalViewPortSize();
-				}
+			else if (e.PropertyName == nameof(IMapScrollViewModel.HMax))
+			{
+				HScrollBar.Maximum = _vm.HMax;
+				HScrollBar.ViewportSize = _vm.HorizontalViewPortSize;
+				HScrollBar.LargeChange = _vm.HorizontalViewPortSize;
+				HScrollBar.SmallChange = 0.125 * HScrollBar.LargeChange;
 			}
 		}
 

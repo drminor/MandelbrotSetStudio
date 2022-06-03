@@ -3,13 +3,16 @@ using MSS.Types.MSet;
 using System.ComponentModel;
 using System;
 using System.Diagnostics;
+using ImageBuilder;
 
 namespace MSetExplorer
 {
 	public class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
+		private readonly PngBuilder _pngBuilder;
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
+
 
 		private int _dispWidth;
 		private int _dispHeight;
@@ -17,9 +20,10 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
-			IProjectAdapter projectAdapter,	ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
+			IProjectAdapter projectAdapter, PngBuilder pngBuilder,	ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
 		{
 			ProjectAdapter = projectAdapter;
+			_pngBuilder = pngBuilder;
 
 			PosterViewModel = posterViewModel;
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
@@ -115,21 +119,34 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public void PrintPoster(Poster poster)
+		{
+			_pngBuilder.Build(poster);
+		}
+
 		#endregion
 
 		#region Event Handlers
 
 		private void PosterViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			//// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
-			//if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
-			//{
-			//	var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
+			// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
+			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
+			{
+				//var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
 
-			//	MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
-			//	MapCoordsViewModel.CurrentJobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-			//	MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
-			//}
+				//MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
+				//MapCoordsViewModel.CurrentJobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
+				//MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
+
+				var curPoster = PosterViewModel.CurrentPoster;
+
+				if (curPoster != null)
+				{
+					MapScrollViewModel.VMax = curPoster.JobAreaInfo.CanvasSize.Height;
+					MapScrollViewModel.HMax = curPoster.JobAreaInfo.CanvasSize.Width;
+				}
+			}
 
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Job Area and Calc Settings
 			if (e.PropertyName == nameof(IPosterViewModel.JobAreaAndCalcSettings))

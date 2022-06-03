@@ -1,4 +1,5 @@
-﻿using MSS.Types.MSet;
+﻿using MSS.Types;
+using MSS.Types.MSet;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -8,7 +9,6 @@ namespace MSetExplorer
 		IPosterViewModel PosterViewModel { get; }
 
 		IMapScrollViewModel MapScrollViewModel { get; }
-
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		MapCoordsViewModel MapCoordsViewModel { get; }
@@ -17,6 +17,8 @@ namespace MSetExplorer
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
+
+		void PrintPoster(Poster poster);
 
 		IProjectAdapter ProjectAdapter { get; init; }
 	}

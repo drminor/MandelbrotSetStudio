@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Diagnostics.CodeAnalysis;
 using MSS.Types.MSet;
 using MSS.Common;
+using ImageBuilder;
 
 namespace MSetExplorer
 {
@@ -276,7 +277,7 @@ namespace MSetExplorer
 		// Project Save As
 		private void SaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.PosterViewModel != null;
+			e.CanExecute = _vm?.PosterViewModel.CurrentPoster != null;
 		}
 
 		private void SaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -294,6 +295,28 @@ namespace MSetExplorer
 			}
 
 			_ = SavePosterInteractive(curPoster);
+		}
+
+		private void PrintCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.PosterViewModel.CurrentPoster != null;
+		}
+
+		private void PrintCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
+			if (curPoster == null)
+			{
+				return;
+			}
+
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
+
+			_vm.PrintPoster(curPoster);
 		}
 
 		// Project Edit Coords

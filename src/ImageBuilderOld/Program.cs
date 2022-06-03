@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 
-namespace ImageBuilder
+namespace ImageBuilderOld
 {
 	class Program
 	{

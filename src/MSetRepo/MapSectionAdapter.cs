@@ -18,11 +18,26 @@ namespace MSetRepo
 			_mSetRecordMapper = mSetRecordMapper;
 		}
 
-
 		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(subdivisionId), blockPosition);
+
+			if (mapSectionRecord == null)
+			{
+				return null;
+			}
+			else
+			{
+				var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+				return mapSectionResponse;
+			}
+		}
+
+		public MapSectionResponse? GetMapSection(string subdivisionId, BigVectorDto blockPosition)
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var mapSectionRecord = mapSectionReaderWriter.Get(new ObjectId(subdivisionId), blockPosition);
 
 			if (mapSectionRecord == null)
 			{

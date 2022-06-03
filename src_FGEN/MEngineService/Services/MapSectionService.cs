@@ -19,5 +19,11 @@ namespace MEngineService.Services
 
 			return new ValueTask<MapSectionResponse>(mapSectionResponse);
 		}
+
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CallContext context = default)
+		{
+			var mapSectionResponse = MapSectionGenerator.GenerateMapSection(mapSectionRequest);
+			return mapSectionResponse;
+		}
 	}
 }

@@ -372,9 +372,14 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ShouldAttemptToReuseLoadedSections(JobAreaAndCalcSettings? previousJob, JobAreaAndCalcSettings? newJob)
+		private bool ShouldAttemptToReuseLoadedSections(JobAreaAndCalcSettings? previousJob, JobAreaAndCalcSettings newJob)
 		{
 			//if (MapSections.Count == 0 || previousJob is null)
+			//{
+			//	return false;
+			//}
+
+			//if (newJob.MapCalcSettings.TargetIterations != previousJob.MapCalcSettings.TargetIterations)
 			//{
 			//	return false;
 			//}
@@ -384,12 +389,7 @@ namespace MSetExplorer
 			////	return false;
 			////}
 
-			////if (newJob.ColorBandSetId != previousJob.ColorBandSetId)
-			////{
-			////	return false;
-			////}
-
-			//var jobSpd = RNormalizer.Normalize(newJob.Subdivision.SamplePointDelta, previousJob.Subdivision.SamplePointDelta, out var previousSpd);
+			//var jobSpd = RNormalizer.Normalize(newJob.JobAreaInfo.Subdivision.SamplePointDelta, previousJob.JobAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
 			//return jobSpd == previousSpd;
 
 			return false;

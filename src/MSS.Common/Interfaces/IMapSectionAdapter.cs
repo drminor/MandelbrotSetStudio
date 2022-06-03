@@ -11,6 +11,8 @@ namespace MSS.Common
 		//MapSectionResponse? GetMapSection(string mapSectionId);
 		//Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
 
+		MapSectionResponse? GetMapSection(string subdivisionId, BigVectorDto blockPosition);
+
 		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition);
 
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);

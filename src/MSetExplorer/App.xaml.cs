@@ -1,4 +1,5 @@
-﻿using MEngineClient;
+﻿using ImageBuilder;
+using MEngineClient;
 using MSS.Common;
 using System.Linq;
 using System.Windows;
@@ -18,9 +19,13 @@ namespace MSetExplorer
 		//private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "http://192.168.2.104:5000", "https://localhost:5001" };
 		private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "https://localhost:5001" };
 
+		// TODO: Use the configuration properties to store the OutputImageFolderPath
+		private static readonly string OutputImageFolderPath = @"C:\_MandelbrotSetImages";
+
 		private readonly MEngineServerManager _mEngineServerManager;
 		private RepositoryAdapters? _repositoryAdapters;
 		private IMapLoaderManager? _mapLoaderManager;
+		private PngBuilder? _pngBuilder;
 
 		private AppNavWindow? _appNavWindow;
 
@@ -53,13 +58,15 @@ namespace MSetExplorer
 
 			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO);
 
-			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager);
+			_pngBuilder = BuildPngBuilder(OutputImageFolderPath, M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter);
+
+			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager, _pngBuilder);
 			_appNavWindow.Show();
 		}
 
-		private AppNavWindow GetAppNavWindow(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
+		private AppNavWindow GetAppNavWindow(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, PngBuilder pngBuilder)
 		{
-			var appNavViewModel = new AppNavViewModel(repositoryAdapters, mapLoaderManager);
+			var appNavViewModel = new AppNavViewModel(repositoryAdapters, mapLoaderManager, pngBuilder);
 
 			var appNavWindow = new AppNavWindow
 			{
@@ -78,6 +85,14 @@ namespace MSetExplorer
 
 			var mapSectionHelper = new MapSectionHelper();
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
+
+			return result;
+		}
+
+		private PngBuilder BuildPngBuilder(string outputFolderPath, string[] mEngineEndPointAddress, IMapSectionAdapter? mapSectionAdapter)
+		{
+			var mEngineClient = new MClient(mEngineEndPointAddress[0]);
+			var result = new PngBuilder(outputFolderPath, mEngineClient, mapSectionAdapter);
 
 			return result;
 		}

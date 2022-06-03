@@ -145,6 +145,18 @@ namespace MSetExplorer
 			}
 		);
 
+		public static readonly RoutedUICommand PosterPrint = new RoutedUICommand(
+			text: "Print",
+			name: "PosterPrint",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.P,
+					ModifierKeys.Control
+				)
+			}
+		);
+
 		public static readonly RoutedUICommand PosterEditCoords = new RoutedUICommand(
 			text: "EditCoords",
 			name: "PosterEditCoords",
