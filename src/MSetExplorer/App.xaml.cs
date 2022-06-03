@@ -1,6 +1,7 @@
 ﻿using ImageBuilder;
 using MEngineClient;
 using MSS.Common;
+using System;
 using System.Linq;
 using System.Windows;
 
@@ -91,6 +92,12 @@ namespace MSetExplorer
 
 		private PngBuilder BuildPngBuilder(string outputFolderPath, string[] mEngineEndPointAddress, IMapSectionAdapter? mapSectionAdapter)
 		{
+			if (mapSectionAdapter == null)
+			{
+				throw new InvalidOperationException("BuildPngBuilder requires a non-null MapSectionAdapter.");
+			}
+
+
 			var mEngineClient = new MClient(mEngineEndPointAddress[0]);
 			var result = new PngBuilder(outputFolderPath, mEngineClient, mapSectionAdapter);
 

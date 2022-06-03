@@ -6,6 +6,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace MSetExplorer
 {
@@ -197,7 +198,11 @@ namespace MSetExplorer
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
-			var project = _projectAdapter.CreateNewProject(name, description, currentProject.GetJobs(), currentProject.GetColorBandSets());
+			var jobs = currentProject.GetJobs().Select(x => x.CreateNewCopy());
+
+			var colorBandSets = currentProject.GetColorBandSets().Select(x => x.CreateNewCopy());
+
+			var project = _projectAdapter.CreateNewProject(name, description, jobs, colorBandSets);
 
 			if (project is null)
 			{
@@ -212,6 +217,44 @@ namespace MSetExplorer
 				return true;
 			}
 		}
+
+		//private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId)
+		//{
+		//	for (var i = 0; i < _jobsCollection.Count; i++)
+		//	{
+		//		var job = _jobsCollection[i];
+		//		if (job.ColorBandSetId == oldCbsId)
+		//		{
+		//			job.ColorBandSetId = newCbsId;
+		//		}
+		//	}
+		//}
+
+		//private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId)
+		//{
+		//	for (var i = 0; i < _jobsCollection.Count; i++)
+		//	{
+		//		var job = _jobsCollection[i];
+		//		if (oldParentId == job.ParentJobId)
+		//		{
+		//			job.ParentJobId = newParentId;
+		//		}
+		//	}
+		//}
+
+		//private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId)
+		//{
+		//	for (var i = 0; i < _colorsCollection.Count; i++)
+		//	{
+		//		var cbs = _colorsCollection[i];
+		//		if (oldParentId == cbs.ParentId)
+		//		{
+		//			Debug.WriteLine($"Updating the parent of ColorBandSet with ID: {cbs.Id}, created: {cbs.DateCreated} with new parent ID: {newParentId}.");
+		//			cbs.ParentId = newParentId;
+		//		}
+		//	}
+		//}
+
 
 		public void ProjectClose()
 		{
@@ -255,7 +298,13 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot create a poster, the current job is empty.");
 			}
 
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob.Coords, posterSize, curJob.Subdivision.BlockSize, _projectAdapter);
+			var coords = curJob.Coords;
+
+			// TOOD: Fix this temporary hack -- Poster Create -- force 30" x 20" output.
+			var newPosterSize = new SizeInt(18000, 12000);
+			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(coords, posterSize, newPosterSize, curJob.Subdivision);
+
+			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(newCoords, newPosterSize, curJob.Subdivision.BlockSize, _projectAdapter);
 			var colorBandSet = CurrentProject.CurrentColorBandSet;
 
 			var poster = new Poster(name, description, curJob.Id, jobAreaInfo, colorBandSet, curJob.MapCalcSettings);
@@ -349,7 +398,7 @@ namespace MSetExplorer
 			if (screenArea == new RectangleInt())
 			{
 				Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
-				return MapJobHelper.GetJobAreaInfo(curJob);
+				return MapJobHelper.GetJobAreaInfo(curJob, CanvasSize);
 			}
 			else
 			{
@@ -488,7 +537,7 @@ namespace MSetExplorer
 			// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
 			job = project.GetPreferredSibling(job);
 
-			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision.SamplePointDelta, _blockSize);
+			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
 			//var newMSetInfo = MSetInfo.UpdateWithNewCoords(job.MSetInfo, newCoords);
 
 			var transformType = TransformType.CanvasSizeUpdate;

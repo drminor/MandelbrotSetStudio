@@ -44,7 +44,7 @@ namespace MEngineClient
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
 			var stopWatch = Stopwatch.StartNew();
-			var reply = mEngineService.GenerateMapSectionAsyncR(mapSectionRequest);
+			var reply = mEngineService.GenerateMapSection(mapSectionRequest);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
 			return reply;

@@ -34,20 +34,37 @@ namespace MSetRepo
 			}
 		}
 
-		public MapSectionResponse? GetMapSection(string subdivisionId, BigVectorDto blockPosition)
+		public MapSectionResponse? GetMapSection(string subdivisionId, BigVectorDto blockPosition, bool returnOnlyCounts = false)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var mapSectionRecord = mapSectionReaderWriter.Get(new ObjectId(subdivisionId), blockPosition);
 
-			if (mapSectionRecord == null)
+			if (returnOnlyCounts)
 			{
-				return null;
+				var mapSectionRecordJustCounts = mapSectionReaderWriter.GetJustCounts(new ObjectId(subdivisionId), blockPosition);
+				if (mapSectionRecordJustCounts == null)
+				{
+					return null;
+				}
+				else
+				{
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordJustCounts);
+					return mapSectionResponse;
+				}
 			}
 			else
 			{
-				var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
-				return mapSectionResponse;
+				var mapSectionRecord = mapSectionReaderWriter.Get(new ObjectId(subdivisionId), blockPosition);
+				if (mapSectionRecord == null)
+				{
+					return null;
+				}
+				else
+				{
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+					return mapSectionResponse;
+				}
 			}
+
 		}
 
 		//public async Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId)

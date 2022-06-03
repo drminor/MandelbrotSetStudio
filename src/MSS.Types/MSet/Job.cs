@@ -65,7 +65,9 @@ namespace MSS.Types.MSet
 				  mapCalcSettings, 
 				  DateTime.UtcNow
 				  )
-		{ }
+		{
+			OnFile = false;
+		}
 
 		public Job(
 			ObjectId id,
@@ -118,6 +120,8 @@ namespace MSS.Types.MSet
 		public bool IsEmpty => Coords.WidthNumerator == 0;
 		public DateTime DateCreated => Id.CreationTime;
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
+
+		public bool OnFile { get; private set; }
 
 		public ObjectId Id { get; init; }
 
@@ -185,6 +189,7 @@ namespace MSS.Types.MSet
 			{
 				_lastSavedUtc = value;
 				LastUpdatedUtc = value;
+				OnFile = true;
 			}
 		}
 
@@ -220,6 +225,16 @@ namespace MSS.Types.MSet
 
 			return result;
 		}
+
+		public Job CreateNewCopy()
+		{
+			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Coords.Clone(), CanvasSize,
+				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow);
+
+			return result;
+		}
+
+
 
 		#endregion
 

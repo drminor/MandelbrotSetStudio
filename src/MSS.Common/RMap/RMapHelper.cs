@@ -47,12 +47,12 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RRectangle GetNewCoordsForNewCanvasSize(RRectangle currentCoords, SizeInt currentSizeInBlocks, SizeInt newSizeInBlocks, RSize samplePointDelta, SizeInt blockSize)
+		public static RRectangle GetNewCoordsForNewCanvasSize(RRectangle currentCoords, SizeInt currentSizeInBlocks, SizeInt newSizeInBlocks, Subdivision subdivision)
 		{
 			var diff = newSizeInBlocks.Sub(currentSizeInBlocks);
 
-			diff = diff.Scale(blockSize);
-			var rDiff = samplePointDelta.Scale(diff);
+			diff = diff.Scale(subdivision.BlockSize);
+			var rDiff = subdivision.SamplePointDelta.Scale(diff);
 			rDiff = rDiff.DivideBy2();
 
 			var result = AdjustCoords(currentCoords, rDiff);

@@ -119,9 +119,10 @@ namespace MSetExplorer
 			return result;
 		}
 
+		// TODO: Have the Poster specify whether or not to use EscapeVelocities
 		public void PrintPoster(Poster poster)
 		{
-			_pngBuilder.Build(poster);
+			_pngBuilder.Build(poster, MapDisplayViewModel.UseEscapeVelocities);
 		}
 
 		#endregion

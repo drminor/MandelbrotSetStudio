@@ -234,8 +234,6 @@ namespace MSetRepo
 
 		public MapSectionResponse MapFrom(MapSectionRecord target)
 		{
-			var x = new long[][] { new long[] { 0, 0 }, new long[]{ 0, 0 } };
-
 			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
 
 			var result = new MapSectionResponse
@@ -247,6 +245,25 @@ namespace MSetRepo
 				Counts = target.Counts,
 				DoneFlags = target.DoneFlags,
 				ZValues = target.ZValues
+			};
+
+			return result;
+		}
+
+
+		public MapSectionResponse MapFrom(MapSectionRecordJustCounts target)
+		{
+			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
+
+			var result = new MapSectionResponse
+			{
+				MapSectionId = target.Id.ToString(),
+				SubdivisionId = target.SubdivisionId.ToString(),
+				BlockPosition = blockPosition,
+				MapCalcSettings = target.MapCalcSettings,
+				Counts = target.Counts,
+				DoneFlags = null,
+				ZValues = null
 			};
 
 			return result;

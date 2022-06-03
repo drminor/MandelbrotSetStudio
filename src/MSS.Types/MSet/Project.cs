@@ -359,7 +359,7 @@ namespace MSS.Types.MSet
 			for (var i = 0; i < _colorBandSetCollection.Count; i++)
 			{
 				var cbs = _colorBandSetCollection[i];
-				if (cbs.DateCreated > LastSavedUtc)
+				if (!cbs.OnFile)
 				{
 					cbs.ProjectId = projectId;
 					//var updatedCbs = projectAdapter.InsertColorBandSet(cbs);
@@ -380,41 +380,14 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		//private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId/*, IProjectAdapter projectAdapter*/)
-		//{
-		//	for (var i = 0; i < _colorBandSetCollection.Count; i++)
-		//	{
-		//		var cbs = _colorBandSetCollection[i];
-		//		if (oldParentId == cbs.ParentId)
-		//		{
-		//			Debug.WriteLine($"Updating the parent of ColorBandSet with ID: {cbs.Id}, created: {cbs.DateCreated} with new parent ID: {newParentId}.");
-		//			cbs.ParentId = newParentId;
-		//			//projectAdapter.UpdateColorBandSetParentId(cbs.Id, cbs.ParentId);
-		//		}
-		//	}
-		//}
-
-		//private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId)
-		//{
-		//	for (var i = 0; i < _jobsCollection.Count; i++)
-		//	{
-		//		var job = _jobsCollection[i];
-		//		if (job.ColorBandSetId == oldCbsId)
-		//		{
-		//			job.ColorBandSetId = newCbsId;
-		//		}
-		//	}
-		//}
 
 		private void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter)
 		{
-			//var lastSavedTime = _projectAdapter.GetProjectJobsLastSaveTime(projectId);
-
 			for (var i = 0; i < _jobsCollection.Count; i++)
 			{
 				var job = _jobsCollection[i];
 
-				if (job.DateCreated > LastSavedUtc)
+				if (!job.OnFile)
 				{
 					job.ProjectId = projectId;
 					_ = projectAdapter.InsertJob(job);
@@ -434,19 +407,6 @@ namespace MSS.Types.MSet
 				}
 			}
 		}
-
-		//private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId/*, IProjectAdapter projectAdapter*/)
-		//{
-		//	for (var i = 0; i < _jobsCollection.Count; i++)
-		//	{
-		//		var job = _jobsCollection[i];
-		//		if (oldParentId == job.ParentJobId)
-		//		{
-		//			job.ParentJobId = newParentId;
-		//			//projectAdapter.UpdateJobsParent(job);
-		//		}
-		//	}
-		//}
 
 		#endregion
 

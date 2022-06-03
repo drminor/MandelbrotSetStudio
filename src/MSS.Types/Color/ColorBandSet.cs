@@ -35,6 +35,7 @@ namespace MSS.Types
 			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands, null)
 		{
 			LastSavedUtc = DateTime.MinValue;
+			OnFile = false;
 		}
 
 		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, IEnumerable<ReservedColorBand>? reservedColorBands) : base(FixBands(colorBands))
@@ -53,6 +54,7 @@ namespace MSS.Types
 
 			_lastSavedUtc = DateTime.UtcNow;
 			LastUpdatedUtc = DateTime.MinValue;
+			OnFile = true;
 		}
 
 		#endregion
@@ -71,9 +73,21 @@ namespace MSS.Types
 
 		public ObjectId Id { get; init; }
 
+		public bool OnFile { get; private set; }
+
 		public DateTime DateCreated => Id.CreationTime;
 
-		public ObjectId? ParentId { get; init; }
+		//public ObjectId? ParentId { get; init; }
+
+		public ObjectId? ParentId
+		{
+			get => _parentId;
+			set
+			{
+				_parentId = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
 
 		public ObjectId ProjectId
 		{

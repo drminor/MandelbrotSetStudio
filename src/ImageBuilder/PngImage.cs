@@ -17,7 +17,7 @@ namespace ImageBuilder
         public PngImage(string path, int width, int height)
         {
             Path = path;
-            OutputStream = File.Open(Path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+            OutputStream = File.Open(Path, FileMode.Create, FileAccess.Write, FileShare.Read);
 
             imi = new ImageInfo(width, height, 8, false); // 8 bits per channel, no alpha 
             png = new PngWriter(OutputStream, imi, path);
@@ -25,16 +25,16 @@ namespace ImageBuilder
             curRow = 0;
         }
 
-        public void WriteLine(int[] pixelData)
-        {
-            ImageLine iLine = new ImageLine(imi);
-            for(int ptr = 0; ptr < pixelData.Length; ptr++)
-            {
-                ImageLineHelper.SetPixelFromARGB8(iLine, ptr, pixelData[ptr]);
-            }
+        //public void WriteLine(int[] pixelData)
+        //{
+        //    var iLine = new ImageLine(imi);
+        //    for(var ptr = 0; ptr < pixelData.Length; ptr++)
+        //    {
+        //        ImageLineHelper.SetPixelFromARGB8(iLine, ptr, pixelData[ptr]);
+        //    }
 
-            png.WriteRow(iLine, curRow++);
-        }
+        //    png.WriteRow(iLine, curRow++);
+        //}
 
         public void WriteLine(ImageLine iline)
         {

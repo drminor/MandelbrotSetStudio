@@ -28,4 +28,28 @@ namespace ProjectRepo.Entities
 		public DateTime LastSavedUtc { get; set; }
 		public DateTime LastAccessed { get; set; }
 	}
+
+	/// <summary>
+	/// Record used to store the data found in a MapSectionResponse
+	/// </summary>
+	public record MapSectionRecordJustCounts(
+		DateTime DateCreatedUtc,
+		ObjectId SubdivisionId,
+		long BlockPosXHi,
+		long BlockPosXLo,
+		long BlockPosYHi,
+		long BlockPosYLo,
+		MapCalcSettings MapCalcSettings,
+		int[] Counts
+		)
+	{
+		[BsonId]
+		[BsonRepresentation(BsonType.ObjectId)]
+		public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
+
+		public DateTime LastSavedUtc { get; set; }
+		public DateTime LastAccessed { get; set; }
+	}
+
+
 }
