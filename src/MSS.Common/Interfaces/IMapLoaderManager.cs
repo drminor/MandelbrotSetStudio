@@ -7,10 +7,11 @@ namespace MSS.Common
 {
 	public interface IMapLoaderManager
 	{
-		event EventHandler<MapSection> MapSectionReady;
+		//event EventHandler<MapSection> MapSectionReady;
 
-		void Push(JobAreaAndCalcSettings jobAreaAndCalcSettings);
-		void Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection> emptyMapSections);
-		void StopCurrentJob();
+		event EventHandler<Tuple<MapSection, int>>? MapSectionReady;
+		int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings);
+		int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection> emptyMapSections);
+		void StopCurrentJob(int jobNumber);
 	}
 }

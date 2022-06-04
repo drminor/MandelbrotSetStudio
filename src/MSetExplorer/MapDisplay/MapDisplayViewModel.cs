@@ -16,6 +16,7 @@ namespace MSetExplorer
 
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private int? _currentMapLoaderJobNumber; 
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
 		private SizeInt _canvasSize;
@@ -39,7 +40,8 @@ namespace MSetExplorer
 			_keepDisplaySquare = false;
 			_mapSectionHelper = mapSectionHelper;
 			_mapLoaderManager = mapLoaderManager;
-			_mapLoaderManager.MapSectionReady += MapLoaderManager_MapSectionReady;
+			_currentMapLoaderJobNumber = null;
+			_mapLoaderManager.MapSectionReady += MapSectionReady;
 
 			BlockSize = blockSize;
 
@@ -260,11 +262,14 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
-
-		private void MapLoaderManager_MapSectionReady(object? sender, MapSection e)
+		private void MapSectionReady(object? sender, Tuple<MapSection, int> e)
 		{
 			// TODO: Use a lock on MapSectionReady to avoid race conditions as the ColorMap is applied.
-			MapSections.Add(e);
+
+			if (e.Item2 == _currentMapLoaderJobNumber)
+			{
+				MapSections.Add(e.Item1);
+			}
 		}
 
 		private void MapSections_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -310,20 +315,24 @@ namespace MSetExplorer
 		private void HandleCurrentJobChanged(JobAreaAndCalcSettings? previousJob, JobAreaAndCalcSettings? newJob)
 		{
 			//Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
-			_mapLoaderManager.StopCurrentJob();
+			if (_currentMapLoaderJobNumber != null)
+			{
+				_mapLoaderManager.StopCurrentJob(_currentMapLoaderJobNumber.Value);
+				_currentMapLoaderJobNumber = null;
+			}
 
 			if (newJob != null)
 			{
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
-					ReuseLoadedSections(newJob);
+					_currentMapLoaderJobNumber = ReuseLoadedSections(newJob);
 				}
 				else
 				{
 					//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
 					MapSections.Clear();
 					CanvasControlOffset = newJob.JobAreaInfo.CanvasControlOffset;
-					_mapLoaderManager.Push(newJob);
+					_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob);
 				}
 			}
 			else
@@ -332,7 +341,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ReuseLoadedSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
+		private int? ReuseLoadedSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
 		{
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(jobAreaAndCalcSettings);
 			var loadedSections = GetMapSectionsSnapShot();
@@ -368,7 +377,12 @@ namespace MSetExplorer
 
 			if (sectionsToLoad.Count > 0)
 			{
-				_mapLoaderManager.Push(jobAreaAndCalcSettings, sectionsToLoad);
+				var result = _mapLoaderManager.Push(jobAreaAndCalcSettings, sectionsToLoad);
+				return result;
+			}
+			else
+			{
+				return null;
 			}
 		}
 

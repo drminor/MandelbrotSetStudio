@@ -33,7 +33,7 @@ namespace ImageBuilder
 			_mapSectionHelper = new MapSectionHelper();
 		}
 
-		public void Build(Poster poster, bool useEscapeVelocities)
+		public void BuildPrep(Poster poster, bool useEscapeVelocities)
 		{
 			var jobAreaInfo = poster.JobAreaInfo;
 			var mapCalcSettings = poster.MapCalcSettings;
@@ -46,7 +46,7 @@ namespace ImageBuilder
 
 		private int _cntr = 0;
 
-		private void MapSectionReady(object? sender, MapSection e)
+		private void MapSectionReady(object? sender, Tuple<MapSection, int> e)
 		{
 			if (++_cntr % 10 == 0)
 			{
@@ -54,7 +54,7 @@ namespace ImageBuilder
 			}
 		}
 
-		public void BuildOld(Poster poster, bool useEscapeVelocities)
+		public void Build(Poster poster, bool useEscapeVelocities)
 		{
 			var projectName = poster.Name;
 
@@ -152,15 +152,6 @@ namespace ImageBuilder
 			}
 		}
 
-		//private int[] GetOneLineFromCountsBlock(int[] counts, int lPtr)
-		//{
-		//	int[] result = new int[_blockSize.Width];
-
-		//	Array.Copy(counts, lPtr * _blockSize.Width, result, 0, _blockSize.Width);
-		//	return result;
-		//}
-
-
 		private void BuildPngImageLineSegment(int pixPtr, int[] counts, ImageLine iLine, ColorMap colorMap)
 		{
 			var cComps = new byte[4];
@@ -179,21 +170,9 @@ namespace ImageBuilder
 					Debug.WriteLine($"The Escape Velocity is greater that 1.0");
 				}
 
-				//var escapeVelocity = GetEscVel(counts[xPtr], out var cnt);
-
-
-				//if (cnt == maxIterations)
-				//{
-				//	cComps = colorMap.HighColorBand.StartColor.ColorComps ?? new byte[] { 000000 };
-				//}
-				//else
-				//{
-				//	cComps = colorMap.GetColor(cnt, escapeVelocity);
-				//}
-
 				colorMap.PlaceColor(countVal, escapeVelocity, dest);
 
-				ImageLineHelper.SetPixel(iLine, pixPtr++, cComps[0], cComps[1], cComps[2]);
+				ImageLineHelper.SetPixel(iLine, pixPtr++, cComps[2], cComps[1], cComps[0]);
 			}
 		}
 
@@ -204,14 +183,6 @@ namespace ImageBuilder
 				ImageLineHelper.SetPixel(iLine, pixPtr++, 255, 255, 255);
 			}
 		}
-
-		//private double GetEscVel(int rawCount, out int count)
-		//{
-		//	var result = rawCount / 10000d;
-		//	count = (int)Math.Truncate(result);
-		//	result -= count;
-		//	return result;
-		//}
 
 		private string GetImageFilename(string fn, int imageWidth, string basePath)
 		{

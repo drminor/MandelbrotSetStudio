@@ -5,6 +5,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,7 +37,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		public event EventHandler<MapSection>? MapSectionReady;
+		public event EventHandler<Tuple<MapSection, int>>? MapSectionReady;
 
 		#region Public Properties
 
@@ -46,16 +47,19 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Push(JobAreaAndCalcSettings jobAreaAndCalcSettings)
+		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings)
 		{
-			Push(jobAreaAndCalcSettings, null);
+			var result = Push(jobAreaAndCalcSettings, null);
+			return result;
 		}
 
-		public void Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections)
+		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections)
 		{
+			var result = 0;
+
 			DoWithWriteLock(() =>
 			{
-				StopCurrentJobInternal();
+				//StopCurrentJobInternal(0);
 
 				var mapLoader = new MapLoader(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, HandleMapSection, _mapSectionHelper, _mapSectionRequestProcessor);
 				var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings, emptyMapSections);
@@ -64,19 +68,26 @@ namespace MSetExplorer
 				_requests.Add(new GenMapRequestInfo(mapLoader, startTask));
 				_requestsPointer = _requests.Count - 1;
 				_ = startTask?.ContinueWith(MapLoaderComplete);
+
+				result = mapLoader.JobNumber;
 			});
+
+			return result;
 		}
 
-		public void StopCurrentJob()
+		public void StopCurrentJob(int jobNumber)
 		{
-			DoWithWriteLock(StopCurrentJobInternal);
+			DoWithWriteLock(() => 
+			{
+				StopCurrentJobInternal(jobNumber);
+			});
 		}
 
 		#endregion
 
 		#region Event Handlers
 
-		private void HandleMapSection(object sender, MapSection mapSection)
+		private void HandleMapSection(object sender, Tuple<MapSection, int> mapSectionAndJobNumber)
 		{
 			DoWithWriteLock(() =>
 			{
@@ -88,16 +99,19 @@ namespace MSetExplorer
 				}
 				else
 				{
-					var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
+					// TODO: Compare the JobNumber with all active Job numbers.
+					//var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
 
-					if (jobNumber == currentRequest.JobNumber)
-					{
-						_synchronizationContext?.Post(o => MapSectionReady?.Invoke(this, mapSection), null);
-					}
-					else
-					{
-						Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}. CurJobNum: {currentRequest.JobNumber}");
-					}
+					//if (jobNumber == currentRequest.JobNumber)
+					//{
+					//	_synchronizationContext?.Post(o => MapSectionReady?.Invoke(this, mapSectionAndJobNumber), null);
+					//}
+					//else
+					//{
+					//	Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}. CurJobNum: {currentRequest.JobNumber}");
+					//}
+
+					_synchronizationContext?.Post(o => MapSectionReady?.Invoke(this, mapSectionAndJobNumber), null);
 				}
 			});
 		}
@@ -106,9 +120,14 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void StopCurrentJobInternal()
+		private void StopCurrentJobInternal(int jobNumber)
 		{
-			CurrentRequest?.MapLoader.Stop();
+			var request = _requests.FirstOrDefault(x => x.JobNumber == jobNumber);
+
+			if (request != null)
+			{
+				request.MapLoader.Stop();
+			}
 		}
 
 		// TODO: Create a scheduled task to remove completed MapLoader instances.
