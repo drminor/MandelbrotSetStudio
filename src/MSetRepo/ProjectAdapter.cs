@@ -141,13 +141,20 @@ namespace MSetRepo
 				var projectId = projectReaderWriter.Insert(projectRecord);
 				projectRecord = projectReaderWriter.Get(projectId);
 
-				var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
-				var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
-				//colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
+				if (projectRecord != null)
+				{
+					var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
+					var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
+					//colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
 
-				var result = AssembleProject(projectRecord, jobs, colorBandSets, DateTime.MinValue);
+					var result = AssembleProject(projectRecord, jobs, colorBandSets, DateTime.MinValue);
 
-				return result;
+					return result;
+				}
+				else
+				{
+					throw new InvalidOperationException($"Could not retrieve newly created project record with id: {projectId}.");
+				}
 			}
 			else
 			{
@@ -186,10 +193,10 @@ namespace MSetRepo
 			}
 		}
 
-		private Project? AssembleProject(ProjectRecord projectRecord, IEnumerable<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
+		private Project? AssembleProject(ProjectRecord? projectRecord, IEnumerable<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
 		{
 			Project? result;
-			if (jobs.Count() == 0 || colorBandSets.Count() == 0)
+			if (projectRecord == null || jobs.Count() == 0 || colorBandSets.Count() == 0)
 			{
 				result = null;
 			}
@@ -285,6 +292,7 @@ namespace MSetRepo
 		private IProjectInfo GetProjectInfoInternal(ProjectRecord projectRec, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter)
 		{
 			IProjectInfo result;
+			var dateCreated = projectRec.DateCreated.ToLocalTime();
 
 			var jobInfos = jobReaderWriter.GetJobInfos(projectRec.Id);
 
@@ -302,13 +310,11 @@ namespace MSetRepo
 					lastUpdated = lastSaved;
 				}
 
-				var dateCreated = projectRec.DateCreated.ToLocalTime();
-
 				result = new ProjectInfo(projectRec.Id, dateCreated, projectRec.Name, projectRec.Description, lastUpdated, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
 			else
 			{
-				result = new ProjectInfo(ObjectId.Empty, DateTime.MinValue, "name", null, DateTime.MinValue, 0, 0, 0);
+				result = new ProjectInfo(projectRec.Id, dateCreated, projectRec.Name, projectRec.Description, DateTime.MinValue, 0, 0, 0);
 			}
 
 			return result;
@@ -329,27 +335,17 @@ namespace MSetRepo
 			return result;
 		}
 
-		public ColorBandSet InsertColorBandSet(ColorBandSet colorBandSet)
+		public void InsertColorBandSet(ColorBandSet colorBandSet)
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			return InsertCbs(colorBandSet, colorBandSetReaderWriter);
+			InsertCbs(colorBandSet, colorBandSetReaderWriter);
 		}
 
-		private ColorBandSet InsertCbs(ColorBandSet colorBandSet, ColorBandSetReaderWriter colorBandSetReaderWriter)
+		private void InsertCbs(ColorBandSet colorBandSet, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
 			var colorBandSetRecord = _mSetRecordMapper.MapTo(colorBandSet);
-			var id = colorBandSetReaderWriter.Insert(colorBandSetRecord);
-			colorBandSetRecord = colorBandSetReaderWriter.Get(id);
-
-			if (colorBandSetRecord != null)
-			{
-				var result = _mSetRecordMapper.MapFrom(colorBandSetRecord);
-				return result;
-			}
-			else
-			{
-				throw new KeyNotFoundException("Could not insert a new ColorBandSet.");
-			}
+			_ = colorBandSetReaderWriter.Insert(colorBandSetRecord);
+			colorBandSet.LastSavedUtc = DateTime.UtcNow;
 		}
 
 		//public void UpdateColorBandSetParentId(ObjectId colorBandSetId, ObjectId? parentId)
@@ -562,31 +558,31 @@ namespace MSetRepo
 				}
 			}
 
-			var targetIterations = job.MapCalcSettings.TargetIterations;
-			var highCutoff = result?.HighCutoff;
+			//var targetIterations = job.MapCalcSettings.TargetIterations;
+			//var highCutoff = result?.HighCutoff;
 
-			if (result != null && highCutoff != targetIterations && colorBandSetCache != null)
-			{
-				var jobHelper = new MapSectionHelper();
+			//if (result != null && highCutoff != targetIterations && colorBandSetCache != null)
+			//{
+			//	var jobHelper = new MapSectionHelper();
 
-				var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
-					(
-					MapJobHelper.GetJobAreaInfo(job), 
-					job.MapCalcSettings
-					);
+			//	var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
+			//		(
+			//		MapJobHelper.GetJobAreaInfo(job), 
+			//		job.MapCalcSettings
+			//		);
 
-				var mapSectionRequests = jobHelper.CreateSectionRequests(jobAreaAndCalcSettings);
+			//	var mapSectionRequests = jobHelper.CreateSectionRequests(jobAreaAndCalcSettings);
 
-				// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.
+			//	// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.
 
-				var avgTargetIterations = mapSectionRequests.Average(x => x.MapCalcSettings.TargetIterations);
+			//	var avgTargetIterations = mapSectionRequests.Average(x => x.MapCalcSettings.TargetIterations);
 
-				var newTargetIterations = (int) Math.Round(avgTargetIterations);
+			//	var newTargetIterations = (int) Math.Round(avgTargetIterations);
 
-				Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff: {highCutoff} doesn't match the TargetIterations: {targetIterations}. Job has an average TargetIteration of {avgTargetIterations}.");
+			//	Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff: {highCutoff} doesn't match the TargetIterations: {targetIterations}. Job has an average TargetIteration of {avgTargetIterations}.");
 
-				result = GetUpdatedCbsWithTargetIteration(result, newTargetIterations, colorBandSetCache.Values, colorBandSetReaderWriter);
-			}
+			//	result = GetUpdatedCbsWithTargetIteration(result, newTargetIterations, colorBandSetCache.Values, colorBandSetReaderWriter);
+			//}
 
 			return result;
 		}
@@ -594,32 +590,29 @@ namespace MSetRepo
 		private ColorBandSet GetUpdatedCbsWithTargetIteration(ColorBandSet colorBandSet, int targetIterations, IEnumerable<ColorBandSet> colorBandSets, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
 			var updatedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations, colorBandSets);
-			var result = InsertCbs(updatedCbs, colorBandSetReaderWriter);
+			InsertCbs(updatedCbs, colorBandSetReaderWriter);
 
-			return result;
+			return updatedCbs;
 		}
 
 		private ColorBandSet GetUpdatedCbsForProject(ColorBandSet colorBandSet, ObjectId projectId, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
 			var updatedCbs = colorBandSet.CreateNewCopy();
 			updatedCbs.ProjectId = projectId;
-			var result = InsertCbs(updatedCbs, colorBandSetReaderWriter);
+			InsertCbs(updatedCbs, colorBandSetReaderWriter);
 
-			return result;
+			return updatedCbs;
 		}
 
-		public Job InsertJob(Job job)
+		public void InsertJob(Job job)
 		{
 			job.LastSavedUtc = DateTime.UtcNow;
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 
 			jobRecord.LastSaved = DateTime.UtcNow;
-			var id = jobReaderWriter.Insert(jobRecord);
-
-			var updatedJob = GetJob(id);
-
-			return updatedJob;
+			_ = jobReaderWriter.Insert(jobRecord);
+			job.LastSavedUtc = DateTime.UtcNow;
 		}
 
 		public void UpdateJobDetails(Job job)
@@ -717,17 +710,12 @@ namespace MSetRepo
 			return result;
 		}
 
-		public Subdivision InsertSubdivision(Subdivision subdivision)
+		public void InsertSubdivision(Subdivision subdivision)
 		{
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);
-			var subId = subdivisionReaderWriter.Insert(subdivisionRecord);
-
-			subdivisionRecord = subdivisionReaderWriter.Get(subId);
-			var result = _mSetRecordMapper.MapFrom(subdivisionRecord);
-
-			return result;
+			_ = subdivisionReaderWriter.Insert(subdivisionRecord);
 		}
 
 		public bool DeleteSubdivision(Subdivision subdivision)

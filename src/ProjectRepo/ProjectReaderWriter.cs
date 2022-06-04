@@ -36,7 +36,7 @@ namespace ProjectRepo
 			return result;
 		}
 
-		public ProjectRecord Get(ObjectId projectId)
+		public ProjectRecord? Get(ObjectId projectId)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
 			var projectRecord = Collection.Find(filter).FirstOrDefault();

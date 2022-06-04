@@ -68,16 +68,10 @@ namespace MSS.Common
 		// Find an existing subdivision record that the same SamplePointDelta
 		private static Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize, IProjectAdapter projectAdapter)
 		{
-			Subdivision result;
-
-			if (projectAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var subdivision))
+			if (!projectAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var result))
 			{
-				result = subdivision;
-			}
-			else
-			{
-				var subdivisionNotSaved = new Subdivision(samplePointDelta, blockSize);
-				result = projectAdapter.InsertSubdivision(subdivisionNotSaved);
+				result = new Subdivision(samplePointDelta, blockSize);
+				projectAdapter.InsertSubdivision(result);
 			}
 
 			return result;
@@ -105,7 +99,9 @@ namespace MSS.Common
 		{
 			if (job.CanvasSize.Width == 0)
 			{
-				throw new ArgumentException("The job's canvas size is zero.");
+				//throw new ArgumentException("The job's canvas size is zero.");
+				Debug.WriteLine($"WARNING: Job with Id: {job.Id} has a canvas size of zero, using 1024 x 1024.");
+				return GetJobAreaInfo(job, new SizeInt(1024));
 			}
 
 			var	result = new JobAreaInfo(job.Coords, job.CanvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
@@ -119,8 +115,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-
 
 		#endregion
 

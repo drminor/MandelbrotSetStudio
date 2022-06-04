@@ -5,13 +5,13 @@ namespace MSS.Types.MSet
 {
 	public interface IProjectAdapter
 	{
-		public ColorBandSet InsertColorBandSet(ColorBandSet colorBandSet);
+		public void InsertColorBandSet(ColorBandSet colorBandSet);
 
 		void UpdateColorBandSetName(ObjectId colorBandSetId, string? name);
 		void UpdateColorBandSetDescription(ObjectId colorBandSetId, string? description);
 		void UpdateColorBandSetDetails(ColorBandSet colorBandSet);
 
-		public Job InsertJob(Job job);
+		public void InsertJob(Job job);
 		void UpdateJobDetails(Job job);
 
 		void UpdateProjectName(ObjectId projectId, string name);
@@ -19,6 +19,6 @@ namespace MSS.Types.MSet
 		void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId);
 
 		bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision);
-		Subdivision InsertSubdivision(Subdivision subdivision);
+		void InsertSubdivision(Subdivision subdivision);
 	}
 }

@@ -90,7 +90,7 @@ namespace ImageBuilder
 					for (var hBPtr = 0; hBPtr < w; hBPtr++)
 					{
 						var mapSectionResponse = blocksForThisRow[hBPtr];
-						var countsForThisLine = GetOneLineFromCountsBlock(mapSectionResponse?.Counts, lPtr, blockSize.Width); // mapSectionReader.GetCounts(key, lPtr);
+						var countsForThisLine = GetOneLineFromCountsBlock(mapSectionResponse?.Counts, lPtr, blockSize.Width);
 
 						if (countsForThisLine != null)
 						{
@@ -100,8 +100,6 @@ namespace ImageBuilder
 						{
 							BuildBlankPngImageLineSegment(hBPtr * blockSize.Width, blockSize.Width, iLine);
 						}
-
-						//BuildPngImageLineSegment(hBPtr * blockSize.Width, countsForThisLine, iLine, maxIterations, colorMap);
 					}
 
 					pngImage.WriteLine(iLine);

@@ -362,11 +362,7 @@ namespace MSS.Types.MSet
 				if (!cbs.OnFile)
 				{
 					cbs.ProjectId = projectId;
-					//var updatedCbs = projectAdapter.InsertColorBandSet(cbs);
-					_ = projectAdapter.InsertColorBandSet(cbs);
-					//_colorBandSetCollection[i] = updatedCbs;
-					//UpdateCbsParentIds(cbs.Id, updatedCbs.Id/*, projectAdapter*/);
-					//UpdateJobCbsIds(cbs.Id, updatedCbs.Id);
+					projectAdapter.InsertColorBandSet(cbs);
 				}
 			}
 
@@ -390,10 +386,7 @@ namespace MSS.Types.MSet
 				if (!job.OnFile)
 				{
 					job.ProjectId = projectId;
-					_ = projectAdapter.InsertJob(job);
-					//var updatedJob = projectAdapter.InsertJob(job);
-					//_jobsCollection[i] = updatedJob;
-					//UpdateJobParents(job.Id, updatedJob.Id/*, projectAdapter*/);
+					projectAdapter.InsertJob(job);
 				}
 			}
 

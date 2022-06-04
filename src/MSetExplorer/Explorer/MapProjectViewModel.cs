@@ -198,9 +198,22 @@ namespace MSetExplorer
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
-			var jobs = currentProject.GetJobs().Select(x => x.CreateNewCopy());
+			var jobPairs = currentProject.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
+			var jobs = jobPairs.Select(x => x.Item2).ToArray();
 
-			var colorBandSets = currentProject.GetColorBandSets().Select(x => x.CreateNewCopy());
+			foreach(var oldIdAndNewJob in jobPairs)
+			{
+				UpdateJobParents(oldIdAndNewJob.Item1, oldIdAndNewJob.Item2.Id, jobs);
+			}
+
+			var colorBandSetPairs = currentProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
+			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
+
+			foreach (var oldIdAndNewCbs in colorBandSetPairs)
+			{
+				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
+				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
+			}
 
 			var project = _projectAdapter.CreateNewProject(name, description, jobs, colorBandSets);
 
@@ -210,51 +223,54 @@ namespace MSetExplorer
 			}
 			else
 			{
-				project.CurrentJob = currentProject.CurrentJob;
-				project.Save(_projectAdapter);
+				var oldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == currentProject.CurrentJobId);
+				var newCurJob = oldIdAndNewJob?.Item2;
+				project.CurrentJob = newCurJob ?? Job.Empty;
+
+				var oldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == currentProject.CurrentColorBandSet.Id);
+				var newCurCbs = oldIdAndNewCbs?.Item2;
+
+				project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
+
+				_ = project.Save(_projectAdapter);
 				CurrentProject = project;
 
 				return true;
 			}
 		}
 
-		//private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId)
-		//{
-		//	for (var i = 0; i < _jobsCollection.Count; i++)
-		//	{
-		//		var job = _jobsCollection[i];
-		//		if (job.ColorBandSetId == oldCbsId)
-		//		{
-		//			job.ColorBandSetId = newCbsId;
-		//		}
-		//	}
-		//}
+		private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
+		{
+			foreach(var job in jobs)
+			{
+				if (job.ParentJobId == oldParentId)
+				{
+					job.ParentJobId = newParentId;
+				}
+			}
+		}
 
-		//private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId)
-		//{
-		//	for (var i = 0; i < _jobsCollection.Count; i++)
-		//	{
-		//		var job = _jobsCollection[i];
-		//		if (oldParentId == job.ParentJobId)
-		//		{
-		//			job.ParentJobId = newParentId;
-		//		}
-		//	}
-		//}
+		private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId, ColorBandSet[] colorBandSets)
+		{
+			foreach (var cbs in colorBandSets)
+			{
+				if (cbs.ParentId == oldParentId)
+				{
+					cbs.ParentId = newParentId;
+				}
+			}
+		}
 
-		//private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId)
-		//{
-		//	for (var i = 0; i < _colorsCollection.Count; i++)
-		//	{
-		//		var cbs = _colorsCollection[i];
-		//		if (oldParentId == cbs.ParentId)
-		//		{
-		//			Debug.WriteLine($"Updating the parent of ColorBandSet with ID: {cbs.Id}, created: {cbs.DateCreated} with new parent ID: {newParentId}.");
-		//			cbs.ParentId = newParentId;
-		//		}
-		//	}
-		//}
-
+		private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId, Job[] jobs)
+		{
+			foreach (var job in jobs)
+			{
+				if (job.ColorBandSetId == oldCbsId)
+				{
+					job.ColorBandSetId = newCbsId;
+				}
+			}
+		}
 
 		public void ProjectClose()
 		{

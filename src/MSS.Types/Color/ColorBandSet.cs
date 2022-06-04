@@ -151,10 +151,11 @@ namespace MSS.Types
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;
-			private set
+			set
 			{
 				_lastSavedUtc = value;
 				LastUpdatedUtc = value;
+				OnFile = true;
 			}
 		}
 
@@ -443,8 +444,13 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy());
-			result.LastSavedUtc = DateTime.MinValue;
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy())
+			{
+				LastSavedUtc = DateTime.MinValue,
+				LastUpdatedUtc = LastUpdatedUtc,
+				OnFile = false
+			};
+
 			return result;
 		}
 
@@ -456,8 +462,13 @@ namespace MSS.Types
 		{
 			var bandsCopy = CreateBandsCopy();
 			bandsCopy[^1].Cutoff = targetIterations;
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, bandsCopy, CreateReservedBandsCopy());
-			result.LastSavedUtc = DateTime.MinValue;
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, bandsCopy, CreateReservedBandsCopy())
+			{
+				LastSavedUtc = DateTime.MinValue,
+				LastUpdatedUtc = LastUpdatedUtc,
+				OnFile = false
+			};
+
 			return result;
 		}
 
@@ -474,9 +485,13 @@ namespace MSS.Types
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with Id: {Id}.");
 
-			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy());
-			result.LastSavedUtc = LastSavedUtc;
-			result.LastUpdatedUtc = LastUpdatedUtc;
+			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy())
+			{
+				LastSavedUtc = LastSavedUtc,
+				LastUpdatedUtc = LastUpdatedUtc,
+				OnFile = OnFile
+			};
+
 			return result;
 		}
 
@@ -556,10 +571,14 @@ namespace MSS.Types
 
 		#endregion
 
+		#region Property Changed Support
+
 		protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			base.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 		}
+
+		#endregion
 
 		#region Public Methods Not Used
 

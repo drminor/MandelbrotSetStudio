@@ -220,8 +220,11 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Coords.Clone(), CanvasSize, 
-				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc);
+			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Coords.Clone(), CanvasSize,
+				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
+			{
+				OnFile = OnFile
+			};
 
 			return result;
 		}
@@ -229,7 +232,10 @@ namespace MSS.Types.MSet
 		public Job CreateNewCopy()
 		{
 			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Coords.Clone(), CanvasSize,
-				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow);
+				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
+			{
+				OnFile = false
+			};
 
 			return result;
 		}
