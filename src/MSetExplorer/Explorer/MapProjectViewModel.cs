@@ -298,13 +298,13 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot create a poster, the current job is empty.");
 			}
 
-			var coords = curJob.Coords;
+			//var coords = curJob.Coords;
+			//// TOOD: Fix this temporary hack -- Poster Create -- force 30" x 20" output.
+			//var newPosterSize = new SizeInt(18000, 12000);
+			//var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(coords, posterSize, newPosterSize, curJob.Subdivision);
+			//var jobAreaInfo = MapJobHelper.GetJobAreaInfo(newCoords, newPosterSize, curJob.Subdivision.BlockSize, _projectAdapter);
 
-			// TOOD: Fix this temporary hack -- Poster Create -- force 30" x 20" output.
-			var newPosterSize = new SizeInt(18000, 12000);
-			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(coords, posterSize, newPosterSize, curJob.Subdivision);
-
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(newCoords, newPosterSize, curJob.Subdivision.BlockSize, _projectAdapter);
+			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob.Coords, posterSize, curJob.Subdivision.BlockSize, _projectAdapter);
 			var colorBandSet = CurrentProject.CurrentColorBandSet;
 
 			var poster = new Poster(name, description, curJob.Id, jobAreaInfo, colorBandSet, curJob.MapCalcSettings);
@@ -320,7 +320,7 @@ namespace MSetExplorer
 
 		public void UpdateMapView(TransformType transformType, RectangleInt screenArea)
 		{
-			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan, "UpdateMapView received a TransformType other than ZoomIn or Pan.");
+			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
 			if (CurrentProject == null)
 			{
 				return;

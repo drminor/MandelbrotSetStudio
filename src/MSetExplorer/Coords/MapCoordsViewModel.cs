@@ -2,14 +2,13 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System.Globalization;
+using System.Text;
 
 namespace MSetExplorer
 {
 	public class MapCoordsViewModel : ViewModelBase
 	{
 		private const int _numDigitsForDisplayExtent = 4;
-
-		//private Job _currentJob;
 
 		private JobAreaInfo? _currentJobAreaInfo;
 
@@ -38,8 +37,6 @@ namespace MSetExplorer
 
 		public MapCoordsViewModel()
 		{
-			//_currentJob = Job.Empty;
-
 			_currentJobAreaInfo = null;
 
 			_coords = new RRectangle();
@@ -71,21 +68,6 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		//public Job CurrentJob
-		//{
-		//	get => _currentJob;
-		//	set
-		//	{
-		//		if (value != _currentJob)
-		//		{
-		//			_currentJob = value;
-		//			UpdateCoords(MapJobHelper.GetJobAreaInfo(value, new SizeInt(1024)));  // TODO: Update all JobRecords on file to have a valid CanvasSize.
-		//			OnPropertyChanged();
-		//			OnPropertyChanged(nameof(JobId));
-		//		}
-		//	}
-		//}
-
 		public JobAreaInfo CurrentJobAreaInfo
 		{
 			get => _currentJobAreaInfo ?? new JobAreaInfo(new RRectangle(), new SizeInt(), new Subdivision(), new BigVector(), new VectorInt());
@@ -100,12 +82,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//public string JobId
-		//{
-		//	get => CurrentJob.Id.ToString();
-		//	set => OnPropertyChanged();
-		//}
 
 		public RRectangle Coords
 		{
@@ -305,6 +281,18 @@ namespace MSetExplorer
 		public void Preview(JobAreaInfo jobAreaInfo)
 		{
 			UpdateCoords(jobAreaInfo);
+		}
+
+		public string GetStringValues()
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine(X1);
+			sb.AppendLine(X2);
+			sb.AppendLine(Y1);
+			sb.AppendLine(Y2);
+
+			return sb.ToString();
 		}
 
 		#endregion

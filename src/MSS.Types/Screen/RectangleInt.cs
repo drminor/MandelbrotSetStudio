@@ -56,6 +56,15 @@ namespace MSS.Types
 		//	return result;
 		//}
 
+		public RectangleInt Expand(SizeInt amount)
+		{
+			var newPos = new PointInt(Position.Sub(new VectorInt(amount.Width / 2, amount.Height / 2)));
+			var newSize = Size.Inflate(amount);
+			var result = new RectangleInt(newPos, newSize);
+
+			return result;
+		}
+
 		public override string? ToString()
 		{
 			return $"pos:{Position}, size:{Size}";

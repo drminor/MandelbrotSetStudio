@@ -7,7 +7,6 @@ using System.Windows.Input;
 using System.Diagnostics.CodeAnalysis;
 using MSS.Types.MSet;
 using MSS.Common;
-using System.Linq;
 
 namespace MSetExplorer
 {
@@ -47,12 +46,8 @@ namespace MSetExplorer
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 
 				mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
-				
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
-				mapCoordsView1.KeyDown += MapCoordsView1_KeyDown;
-				mapCoordsView1.PreviewKeyDown += MapCoordsView1_PreviewKeyDown;
-
 
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}
@@ -126,25 +121,6 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
 			{
 				CommandManager.InvalidateRequerySuggested();
-			}
-		}
-
-		private void MapCoordsView1_PreviewKeyDown(object sender, KeyEventArgs e)
-		{
-			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
-			{
-				var coords = _vm.MapCoordsViewModel.Coords;
-				Clipboard.SetText(coords.ToString());
-				e.Handled = true;
-			}
-		}
-
-		private void MapCoordsView1_KeyDown(object sender, KeyEventArgs e)
-		{
-			if (e.Key == Key.C && Keyboard.IsKeyDown(Key.LeftCtrl))
-			{
-				var coords = _vm.MapCoordsViewModel.Coords;
-				Clipboard.SetText(coords.ToString());
 			}
 		}
 
@@ -339,7 +315,7 @@ namespace MSetExplorer
 		// Project Save
 		private void SaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm.MapProjectViewModel.CurrentProjectOnFile;
+			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProjectOnFile ?? false;
 		}
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -350,7 +326,7 @@ namespace MSetExplorer
 		// Project Save As
 		private void SaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.MapProjectViewModel != null;
+			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProject != null;
 		}
 
 		private void SaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -422,7 +398,7 @@ namespace MSetExplorer
 		// Colors Import
 		private void ColorsOpenCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm.MapProjectViewModel.CurrentProject != null;
+			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProject != null;
 		}
 
 		private void ColorsOpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -455,7 +431,7 @@ namespace MSetExplorer
 		// Colors Export
 		private void ColorsSaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm.MapProjectViewModel.CurrentProject != null;
+			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProject != null;
 		}
 
 		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -536,7 +512,7 @@ namespace MSetExplorer
 
 		private void Pan_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.MapProjectViewModel != null;
+			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProject != null;
 		}
 
 		private void PanLeft_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -557,6 +533,41 @@ namespace MSetExplorer
 		private void PanDown_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			Pan(PanDirection.Down, GetPanAmountQualifer(), SHIFT_AMOUNT);
+		}
+
+		#endregion
+
+		#region Zoom Out Button Handlers
+
+		private void ZoomOut_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm.MapProjectViewModel.CurrentProject != null;
+		}
+
+		private void ZoomOut12_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			ZoomOut(ZoomOutAmountQualifer.x12, SHIFT_AMOUNT);
+		}
+
+		private void ZoomOut25_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			ZoomOut(ZoomOutAmountQualifer.x25, SHIFT_AMOUNT);
+		}
+
+		private void ZoomOut50_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			ZoomOut(ZoomOutAmountQualifer.x50, SHIFT_AMOUNT);
+		}
+
+		private void ZoomOut100_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			ZoomOut(ZoomOutAmountQualifer.x100, SHIFT_AMOUNT);
+		}
+
+		private void ZoomOutCustom_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			// TODO: Create Custom ZoomOut Dialog Box
+			_ = MessageBox.Show("Custom ZoomOut.");
 		}
 
 		#endregion
@@ -834,7 +845,6 @@ namespace MSetExplorer
 			Debug.WriteLine(l3);
 		}
 
-
 		#endregion
 
 		#region Private Methods -- Colors
@@ -939,7 +949,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods -- Pan
+		#region Private Methods -- Pan and ZoomOut
 
 		private void Pan(PanDirection direction, PanAmountQualifer qualifer, int amount)
 		{
@@ -959,7 +969,7 @@ namespace MSetExplorer
 				_ => baseAmount * 8,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize, targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.MapProjectViewModel.CanvasSize, targetAmount);
 
 			return result;
 		}
@@ -985,6 +995,31 @@ namespace MSetExplorer
 				: PanAmountQualifer.Regular;
 		}
 
+		private void ZoomOut(ZoomOutAmountQualifer qualifer, int amount)
+		{
+			var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
+			var curArea = new RectangleInt(new PointInt(), _vm.MapProjectViewModel.CanvasSize);
+			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
+
+			_vm.MapProjectViewModel.UpdateMapView(TransformType.ZoomOut, newArea);
+		}
+
+		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)
+		{
+			var targetAmount = qualifer switch
+			{
+				ZoomOutAmountQualifer.x12 => baseAmount * 8,   // 128
+				ZoomOutAmountQualifer.x25 => baseAmount * 16,  // 256
+				ZoomOutAmountQualifer.x50 => baseAmount * 32,  // 512
+				ZoomOutAmountQualifer.x100 => baseAmount * 64, // 1024
+				_ => baseAmount * 32,
+			};
+
+			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize, targetAmount);
+
+			return result;
+		}
+
 		#endregion
 
 		private enum SaveResult
@@ -995,5 +1030,6 @@ namespace MSetExplorer
 			NotSavingChanges,
 			SaveCancelled,
 		}
+
 	}
 }

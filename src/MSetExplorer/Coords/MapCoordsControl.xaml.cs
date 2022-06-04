@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace MSetExplorer
 {
@@ -29,8 +30,19 @@ namespace MSetExplorer
 			{
 				_vm = (MapCoordsViewModel)DataContext;
 				txtStartX.AcceptsReturn = true;
+				PreviewKeyDown += MapCoordsControl_PreviewKeyDown;
 
 				//Debug.WriteLine("The MapCoordsControl is now loaded");
+			}
+		}
+
+		private void MapCoordsControl_PreviewKeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.C && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
+			{
+				var stringVals = _vm.GetStringValues();
+				Clipboard.SetText(stringVals);
+				e.Handled = true;
 			}
 		}
 

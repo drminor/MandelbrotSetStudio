@@ -78,6 +78,48 @@ namespace MSetExplorer
 			}
 		);
 
+		public static readonly RoutedUICommand ZoomOut12 = new RoutedUICommand(
+			text: "Zoom Out 12%",
+			name: "ZoomOut12",
+			ownerType: typeof(CustomCommands)
+		);
+
+		public static readonly RoutedUICommand ZoomOut25 = new RoutedUICommand(
+			text: "Zoom Out 25%",
+			name: "ZoomOut24",
+			ownerType: typeof(CustomCommands)
+		);
+
+		public static readonly RoutedUICommand ZoomOut50 = new RoutedUICommand(
+			text: "Zoom Out 50%",
+			name: "ZoomOut50",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.Z,
+					ModifierKeys.Alt, "Alt-Z"
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand ZoomOut100 = new RoutedUICommand(
+			text: "Zoom Out 100%",
+			name: "ZoomOut100",
+			ownerType: typeof(CustomCommands)
+		);
+
+		public static readonly RoutedUICommand ZoomOutCustom = new RoutedUICommand(
+			text: "ZoomOut Custom",
+			name: "ZoomOutCustom",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.Z,
+					ModifierKeys.Control | ModifierKeys.Alt, "Ctrl-Alt-Z"
+				)
+			}
+		);
+
 		#endregion
 
 		#region Project
