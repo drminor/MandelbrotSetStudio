@@ -3,7 +3,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 
-namespace MSetExplorer
+namespace MSS.Common
 {
 	public interface IMapLoaderManager
 	{

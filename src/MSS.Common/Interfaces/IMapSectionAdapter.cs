@@ -1,10 +1,9 @@
 ﻿using MEngineDataContracts;
 using MongoDB.Bson;
-using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using System.Threading.Tasks;
 
-namespace MSS.Common
+namespace MSS.Common.MSetRepo
 {
 	public interface IMapSectionAdapter
 	{

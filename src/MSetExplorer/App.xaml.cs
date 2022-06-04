@@ -1,6 +1,7 @@
 ﻿using ImageBuilder;
 using MEngineClient;
 using MSS.Common;
+using MSS.Common.MSetRepo;
 using System;
 using System.Linq;
 using System.Windows;
@@ -59,7 +60,7 @@ namespace MSetExplorer
 
 			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO);
 
-			_pngBuilder = BuildPngBuilder(OutputImageFolderPath, M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter);
+			_pngBuilder = BuildPngBuilder(OutputImageFolderPath, M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, _mapLoaderManager);
 
 			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager, _pngBuilder);
 			_appNavWindow.Show();
@@ -90,7 +91,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private PngBuilder BuildPngBuilder(string outputFolderPath, string[] mEngineEndPointAddress, IMapSectionAdapter? mapSectionAdapter)
+		private PngBuilder BuildPngBuilder(string outputFolderPath, string[] mEngineEndPointAddress, IMapSectionAdapter? mapSectionAdapter, IMapLoaderManager mapLoaderManager)
 		{
 			if (mapSectionAdapter == null)
 			{
@@ -99,7 +100,7 @@ namespace MSetExplorer
 
 
 			var mEngineClient = new MClient(mEngineEndPointAddress[0]);
-			var result = new PngBuilder(outputFolderPath, mEngineClient, mapSectionAdapter);
+			var result = new PngBuilder(outputFolderPath, mEngineClient, mapSectionAdapter, mapLoaderManager);
 
 			return result;
 		}

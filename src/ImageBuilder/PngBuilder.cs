@@ -1,6 +1,7 @@
 ﻿using MEngineClient;
 using MEngineDataContracts;
 using MSS.Common;
+using MSS.Common.MSetRepo;
 using MSS.Types;
 using MSS.Types.MSet;
 using PngImageLib;
@@ -18,18 +19,42 @@ namespace ImageBuilder
 		private readonly string _imageOutputFolder;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly IMEngineClient _mEngineClient;
+		private readonly IMapLoaderManager _mapLoaderManager;
 
 		private readonly MapSectionHelper _mapSectionHelper;
 
-		public PngBuilder(string imageOutputFolder, IMEngineClient mEngineClient, IMapSectionAdapter mapSectionAdapter)
+		public PngBuilder(string imageOutputFolder, IMEngineClient mEngineClient, IMapSectionAdapter mapSectionAdapter, IMapLoaderManager mapLoaderManager)
 		{
 			_imageOutputFolder = imageOutputFolder;
 			_mEngineClient = mEngineClient;
 			_mapSectionAdapter = mapSectionAdapter;
+			_mapLoaderManager = mapLoaderManager;
+
 			_mapSectionHelper = new MapSectionHelper();
 		}
 
 		public void Build(Poster poster, bool useEscapeVelocities)
+		{
+			var jobAreaInfo = poster.JobAreaInfo;
+			var mapCalcSettings = poster.MapCalcSettings;
+			var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(jobAreaInfo, mapCalcSettings);
+
+			_mapLoaderManager.MapSectionReady += MapSectionReady;
+
+			_mapLoaderManager.Push(jobAreaAndCalcSettings);
+		}
+
+		private int _cntr = 0;
+
+		private void MapSectionReady(object? sender, MapSection e)
+		{
+			if (++_cntr % 10 == 0)
+			{
+				Debug.WriteLine($"Received {_cntr} map sections.");
+			}
+		}
+
+		public void BuildOld(Poster poster, bool useEscapeVelocities)
 		{
 			var projectName = poster.Name;
 

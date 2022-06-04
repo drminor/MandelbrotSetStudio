@@ -1,7 +1,7 @@
 ﻿using MEngineDataContracts;
 using System.Threading.Tasks;
 
-namespace MEngineClient
+namespace MSS.Common
 {
 	public interface IMEngineClient
 	{
