@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Windows;
 
 namespace MSetExplorer
@@ -36,9 +37,13 @@ namespace MSetExplorer
 			}
 		}
 
-		private void Progress_ProgressChanged(object? sender, int e)
+		private void Progress_ProgressChanged(object? sender, double e)
 		{
 			progressBar1.Value = e;
+			if (Math.Abs(e - 100) < 90)
+			{
+				WindowState = WindowState.Normal;
+			}
 		}
 
 		#endregion
@@ -52,7 +57,8 @@ namespace MSetExplorer
 
 		private void CancelButton_Click(object sender, RoutedEventArgs e)
 		{
-			_ = MessageBox.Show("Will cancel the Create Image job here.");
+			_vm.CancelCreateImage();
+			_ = MessageBox.Show("The operation has been cancelled.");
 
 			Close();
 		}

@@ -57,7 +57,7 @@ namespace MSetExplorer
 
 			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO);
 
-			_pngBuilder = BuildPngBuilder(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, _mapLoaderManager);
+			_pngBuilder = BuildPngBuilder(_mapLoaderManager);
 
 			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager, _pngBuilder);
 			_appNavWindow.Show();
@@ -88,15 +88,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private PngBuilder BuildPngBuilder(string[] mEngineEndPointAddress, IMapSectionAdapter? mapSectionAdapter, IMapLoaderManager mapLoaderManager)
+		private PngBuilder BuildPngBuilder(IMapLoaderManager mapLoaderManager)
 		{
-			if (mapSectionAdapter == null)
-			{
-				throw new InvalidOperationException("BuildPngBuilder requires a non-null MapSectionAdapter.");
-			}
-
-			var mEngineClient = new MClient(mEngineEndPointAddress[0]);
-			var result = new PngBuilder(mEngineClient, mapSectionAdapter, mapLoaderManager);
+			var result = new PngBuilder(mapLoaderManager);
 
 			return result;
 		}

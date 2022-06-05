@@ -10,19 +10,25 @@ namespace ImageBuilder
         private readonly ImageInfo imi;
         private readonly PngWriter png;
         private int curRow;
+        private bool weOwnTheStream;
 
         public string Path { get; }
         public ImageLine ImageLine { get; }
 
-        public PngImage(string path, int width, int height)
+        public PngImage(string path, int width, int height) : this(File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read), path, width, height)
         {
-            Path = path;
-            OutputStream = File.Open(Path, FileMode.Create, FileAccess.Write, FileShare.Read);
+            weOwnTheStream = true;
+        }
 
+        public PngImage(Stream outputStream, string path, int width, int height)
+		{
+            OutputStream = outputStream;
+            Path = path;
             imi = new ImageInfo(width, height, 8, false); // 8 bits per channel, no alpha 
             png = new PngWriter(OutputStream, imi, path);
             ImageLine = new ImageLine(imi);
             curRow = 0;
+            weOwnTheStream = false;
         }
 
         //public void WriteLine(int[] pixelData)
@@ -41,15 +47,20 @@ namespace ImageBuilder
             png.WriteRow(iline, curRow++);
         }
 
+        public void End()
+		{
+            png.End();
+		}
+
         #region IDisposable Support
 
-        private bool disposedValue = false; // To detect redundant calls
+        private bool disposedValue; // To detect redundant calls
 
         private void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
-                if (disposing)
+                if (disposing && weOwnTheStream)
                 {
                     png.End();
                 }

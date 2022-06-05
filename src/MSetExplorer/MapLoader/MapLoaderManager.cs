@@ -1,4 +1,5 @@
 ﻿using MapSectionProviderLib;
+using MEngineDataContracts;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -55,14 +56,18 @@ namespace MSetExplorer
 
 		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections)
 		{
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings, emptyMapSections);
+			var result = Push(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, mapSectionRequests);
+			return result;
+		}
+
+		public int Push(BigVector mapBlockOffset, IList<MapSectionRequest> mapSectionRequests)
+		{
 			var result = 0;
 
 			DoWithWriteLock(() =>
 			{
-				//StopCurrentJobInternal(0);
-
-				var mapLoader = new MapLoader(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, HandleMapSection, _mapSectionHelper, _mapSectionRequestProcessor);
-				var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings, emptyMapSections);
+				var mapLoader = new MapLoader(mapBlockOffset, HandleMapSection, _mapSectionHelper, _mapSectionRequestProcessor);
 				var startTask = mapLoader.Start(mapSectionRequests);
 
 				_requests.Add(new GenMapRequestInfo(mapLoader, startTask));
@@ -75,7 +80,13 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public void StopCurrentJob(int jobNumber)
+		public Task? GetTaskForJob(int jobNumber)
+		{
+			var request = _requests.FirstOrDefault(x => x.JobNumber == jobNumber);
+			return request?.Task;
+		}
+
+		public void StopJob(int jobNumber)
 		{
 			DoWithWriteLock(() => 
 			{

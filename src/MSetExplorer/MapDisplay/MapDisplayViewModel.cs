@@ -317,7 +317,7 @@ namespace MSetExplorer
 			//Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
 			if (_currentMapLoaderJobNumber != null)
 			{
-				_mapLoaderManager.StopCurrentJob(_currentMapLoaderJobNumber.Value);
+				_mapLoaderManager.StopJob(_currentMapLoaderJobNumber.Value);
 				_currentMapLoaderJobNumber = null;
 			}
 

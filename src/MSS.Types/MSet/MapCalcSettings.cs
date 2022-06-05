@@ -19,6 +19,8 @@ namespace MSS.Types.MSet
 		[DataMember(Order = 3)]
 		public int RequestsPerJob { get; init; }
 
+		public bool UseEscapeVelocities { get; set; }
+
 		#region Constructor
 
 		public MapCalcSettings()
@@ -26,16 +28,18 @@ namespace MSS.Types.MSet
 			TargetIterations = 0;
 			Threshold = 0;
 			RequestsPerJob = 0;
+			UseEscapeVelocities = true;
 		}
 
-		public MapCalcSettings(int targetIterations, int requestsPerJob) : this(targetIterations, DEFAULT_THRESHOLD, requestsPerJob)
+		public MapCalcSettings(int targetIterations, int requestsPerJob) : this(targetIterations, DEFAULT_THRESHOLD, requestsPerJob, useEscapeVelocities: true)
 		{ }
 
-		public MapCalcSettings(int targetIterations, int threshold, int requestsPerJob)
+		public MapCalcSettings(int targetIterations, int threshold, int requestsPerJob, bool useEscapeVelocities)
 		{
 			TargetIterations = targetIterations;
 			Threshold = threshold;
 			RequestsPerJob = requestsPerJob;
+			UseEscapeVelocities = useEscapeVelocities;
 		}
 
 		#endregion
@@ -47,9 +51,8 @@ namespace MSS.Types.MSet
 
 		public MapCalcSettings Clone()
 		{
-			return new MapCalcSettings(TargetIterations, RequestsPerJob, Threshold);
+			return new MapCalcSettings(TargetIterations, RequestsPerJob, Threshold, UseEscapeVelocities);
 		}
-
 
 		public override string ToString()
 		{

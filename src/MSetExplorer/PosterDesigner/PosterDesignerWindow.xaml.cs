@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using MSS.Types.MSet;
 using MSS.Common;
 using System.IO;
+using System.Linq;
 
 namespace MSetExplorer
 {
@@ -284,7 +285,7 @@ namespace MSetExplorer
 
 		private void CreateImageCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			if (_createImageProgressWindow != null)
+			if (_createImageProgressWindow != null && IsWindowOpen(_createImageProgressWindow))
 			{
 				_createImageProgressWindow.WindowState = WindowState.Normal;
 				return;
@@ -312,6 +313,11 @@ namespace MSetExplorer
 			}
 		}
 
+		private bool IsWindowOpen(Window window)
+		{
+			return window != null && Application.Current.Windows.Cast<Window>().Any(x => x.GetHashCode() == window.GetHashCode());
+		}
+
 		private bool TryGetImagePath(string initalName, [MaybeNullWhen(false)] out string imageFilePath)
 		{
 			var defaultOutputFolderPath = Properties.Settings.Default.DefaultOutputFolderPath;
@@ -337,7 +343,7 @@ namespace MSetExplorer
 		{
 			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(imageFilePath);
 
-			createImageProgressViewModel.CreateImage(imageFilePath, poster, useEscapeVelocities);
+			createImageProgressViewModel.CreateImage(imageFilePath, poster);
 
 			var result = new CreateImageProgressWindow()
 			{

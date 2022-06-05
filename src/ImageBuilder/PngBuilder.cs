@@ -7,6 +7,9 @@ using PngImageLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ImageBuilder
 {
@@ -14,24 +17,25 @@ namespace ImageBuilder
 	{
 		private const int VALUE_FACTOR = 10000;
 
-		private readonly IMapSectionAdapter _mapSectionAdapter;
-		//private readonly IMEngineClient _mEngineClient;
-		//private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionHelper _mapSectionHelper;
+
+		private int? _currentJobNumber;
+		private IDictionary<int, MapSection?>? _currentResponses;
 
 		//private int _cntr = 0;
 
-		//public PngBuilder(IMEngineClient mEngineClient, IMapSectionAdapter mapSectionAdapter, IMapLoaderManager mapLoaderManager)
-		public PngBuilder(IMEngineClient _, IMapSectionAdapter mapSectionAdapter, IMapLoaderManager __)
+		public PngBuilder(IMapLoaderManager mapLoaderManager)
 		{
-			//_mEngineClient = mEngineClient;
-			_mapSectionAdapter = mapSectionAdapter;
-			//_mapLoaderManager = mapLoaderManager;
-
+			_mapLoaderManager = mapLoaderManager;
 			_mapSectionHelper = new MapSectionHelper();
+			_currentJobNumber = null;
+			_currentResponses = null;
+
+			_mapLoaderManager.MapSectionReady += MapSectionReady;
 		}
 
-		//public void BuildPrep(Poster poster, bool useEscapeVelocities)
+		//public void BuildPrep(Poster poster)
 		//{
 		//	var jobAreaInfo = poster.JobAreaInfo;
 		//	var mapCalcSettings = poster.MapCalcSettings;
@@ -42,8 +46,7 @@ namespace ImageBuilder
 		//	_mapLoaderManager.Push(jobAreaAndCalcSettings);
 		//}
 
-		// TODO: Have the Poster specify whether or not to use EscapeVelocities
-		public void Build(string imageFilePath, Poster poster, bool useEscapeVelocities)
+		public async Task BuildAsync(string imageFilePath, Poster poster, Action<double> statusCallBack, CancellationToken ct)
 		{
 			var jobAreaInfo = poster.JobAreaInfo;
 			var mapCalcSettings = poster.MapCalcSettings;
@@ -52,7 +55,7 @@ namespace ImageBuilder
 			var blockSize = jobAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(poster.ColorBandSet)
 			{
-				UseEscapeVelocities = useEscapeVelocities
+				UseEscapeVelocities = mapCalcSettings.UseEscapeVelocities
 			};
 
 			var imageSizeInBlocks = RMapHelper.GetMapExtentInBlocks(canvasSize, blockSize);
@@ -60,14 +63,19 @@ namespace ImageBuilder
 
 			Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {imageSizeInBlocks}. The ColorMap has Id: {poster.ColorBandSet.Id}.");
 
-			using var pngImage = new PngImage(imageFilePath, imageSize.Width, imageSize.Height);
+			using var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
+			using var pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
 			var w = imageSizeInBlocks.Width;
 			var h = imageSizeInBlocks.Height;
 
-			for (var vBPtr = 0; vBPtr < h; vBPtr++)
+			for (var vBPtr = 0; vBPtr < h && !ct.IsCancellationRequested; vBPtr++)
 			{
-				var blocksForThisRow = GetAllBlocksForRow(vBPtr, w, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
+				var blocksForThisRow = await GetAllBlocksForRowAsync(vBPtr, w, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
+
+				var checkCnt = blocksForThisRow.Count;
+
+				Debug.Assert(checkCnt == w);
 
 				for (var lPtr = 0; lPtr < blockSize.Height; lPtr++)
 				{
@@ -75,8 +83,8 @@ namespace ImageBuilder
 
 					for (var hBPtr = 0; hBPtr < w; hBPtr++)
 					{
-						var mapSectionResponse = blocksForThisRow[hBPtr];
-						var countsForThisLine = GetOneLineFromCountsBlock(mapSectionResponse?.Counts, lPtr, blockSize.Width);
+						var mapSection = blocksForThisRow[hBPtr];
+						var countsForThisLine = GetOneLineFromCountsBlock(mapSection?.Counts, lPtr, blockSize.Width);
 
 						if (countsForThisLine != null)
 						{
@@ -90,36 +98,97 @@ namespace ImageBuilder
 
 					pngImage.WriteLine(iLine);
 				}
+
+				var p = vBPtr / (double)h;
+				statusCallBack(100 * p);
+			}
+
+			if (!ct.IsCancellationRequested)
+			{
+				pngImage.End();
 			}
 		}
 
-		private IDictionary<int, MapSectionResponse?> GetAllBlocksForRow(int rowPtr, int stride, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		//private async Task ProcessOneRowAsync(int rowPtr, int stride, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings, IMapLoaderManager _mapLoaderManager, CancellationToken ct)
+		//{
+		//	while (!ct.IsCancellationRequested)
+		//	{
+		//		try
+		//		{
+		//			var blocksForOneRow = await GetAllBlocksForRowAsync(rowPtr, stride, mapBlockOffset, subdivision, mapCalcSettings);
+		//		}
+		//		catch (OperationCanceledException)
+		//		{
+		//			//Debug.WriteLine("The response queue got a OCE.");
+		//		}
+		//		catch (Exception e)
+		//		{
+		//			Debug.WriteLine($"ProcessOnRowAsync got an exception. The exception is {e}.");
+		//			throw;
+		//		}
+		//	}
+		//}
+
+		//private async Task<IDictionary<int, MapSectionResponse?>> GetAllBlocksForRowAsyncOld (int rowPtr, int stride, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		//{
+		//	var result = new Dictionary<int, MapSectionResponse?>();
+
+		//	for (var colPtr = 0; colPtr < stride; colPtr++)
+		//	{
+		//		var key = new PointInt(colPtr, rowPtr);
+		//		var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, subdivision, mapCalcSettings);
+
+		//		var mapSectionResponse = await GetMapSectionAsync(mapSectionRequest);
+
+		//		result.Add(colPtr, mapSectionResponse);
+		//	}
+
+		//	return result;
+		//}
+
+		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(int rowPtr, int stride, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
-			var result = new Dictionary<int, MapSectionResponse?>();
+			var requests = new List<MapSectionRequest>();
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
 				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, subdivision, mapCalcSettings);
-				var mapSectionResponse = GetMapSection(mapSectionRequest);
-
-				result.Add(colPtr, mapSectionResponse);
+				requests.Add(mapSectionRequest);
 			}
 
-			return result;
+			_currentJobNumber = _mapLoaderManager.Push(mapBlockOffset, requests);
+			_currentResponses = new Dictionary<int, MapSection?>();
+
+			var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
+
+			if (task != null)
+			{
+				await task;
+			}
+
+			return _currentResponses ?? new Dictionary<int, MapSection?>();
 		}
 
-		private MapSectionResponse? GetMapSection(MapSectionRequest mapSectionRequest)
+		private void MapSectionReady(object? sender, Tuple<MapSection, int> e)
 		{
-			var mapSectionResponse = _mapSectionAdapter.GetMapSection(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
-
-			//if (mapSectionResponse == null)
-			//{
-			//	mapSectionResponse = _mEngineClient.GenerateMapSection(mapSectionRequest);
-			//}
-
-			return mapSectionResponse;
+			if (e.Item2 == _currentJobNumber)
+			{
+				_currentResponses?.Add(e.Item1.BlockPosition.X, e.Item1);
+			}
 		}
+
+		//private async Task<MapSectionResponse?> GetMapSectionAsync(MapSectionRequest mapSectionRequest)
+		//{
+		//	var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
+
+		//	//if (mapSectionResponse == null)
+		//	//{
+		//	//	mapSectionResponse = _mEngineClient.GenerateMapSection(mapSectionRequest);
+		//	//}
+
+		//	return mapSectionResponse;
+		//}
 
 		private int[]? GetOneLineFromCountsBlock(int[]? counts, int lPtr, int stride)
 		{
