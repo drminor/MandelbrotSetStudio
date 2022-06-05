@@ -10,8 +10,8 @@
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.PosterSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.PosterSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
-        <CommandBinding Command="local:CustomCommands.PosterPrint" CanExecute="PrintCommand_CanExecute" Executed="PrintCommand_Executed" />
-        <CommandBinding Command="local:CustomCommands.PosterEditCoords" CanExecute="EditCoordsCommand_CanExecute" Executed="EditCoordsCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.CreateImage" CanExecute="CreateImageCommand_CanExecute" Executed="CreateImageCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.EditCoords" CanExecute="EditCoordsCommand_CanExecute" Executed="EditCoordsCommand_Executed" />
 
         <CommandBinding Command="local:CustomCommands.PanLeft" CanExecute="Pan_CanExecute" Executed="PanLeft_Executed" />
         <CommandBinding Command="local:CustomCommands.PanUp" CanExecute="Pan_CanExecute" Executed="PanUp_Executed" />
@@ -49,9 +49,9 @@
                 <MenuItem Header="_Open" Click="OpenButton_Click"/>
                 <MenuItem Header="_Save" Command="local:CustomCommands.PosterSave" />
                 <MenuItem Header="Save_As" Command="local:CustomCommands.PosterSaveAs" />
-                <MenuItem Header="_Print" Command="local:CustomCommands.PosterPrint" />
+                <MenuItem Header="C_reate Image" Command="local:CustomCommands.CreateImage" />
                 <Separator/>
-                <MenuItem Header="Edit Coor_ds" Command="local:CustomCommands.PosterEditCoords"/>
+                <MenuItem Header="Edit Coor_ds" Command="local:CustomCommands.EditCoords"/>
                 <Separator/>
                 <MenuItem Header="_Close And Return" Click="CloseAndReturnButton_Click" />
                 <MenuItem Header="_Exit Program" Click="ExitButton_Click" />

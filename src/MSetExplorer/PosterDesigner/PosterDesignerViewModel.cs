@@ -13,7 +13,6 @@ namespace MSetExplorer
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
 
-
 		private int _dispWidth;
 		private int _dispHeight;
 
@@ -119,10 +118,10 @@ namespace MSetExplorer
 			return result;
 		}
 
-		// TODO: Have the Poster specify whether or not to use EscapeVelocities
-		public void PrintPoster(Poster poster)
+		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath)
 		{
-			_pngBuilder.Build(poster, MapDisplayViewModel.UseEscapeVelocities);
+			var result = new CreateImageProgressViewModel(_pngBuilder);
+			return result;
 		}
 
 		#endregion

@@ -31,5 +31,17 @@ namespace MSetExplorer.Properties {
                 return ((bool)(this["ShowTopNav"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\_MandelbrotSetImages")]
+        public string DefaultOutputFolderPath {
+            get {
+                return ((string)(this["DefaultOutputFolderPath"]));
+            }
+            set {
+                this["DefaultOutputFolderPath"] = value;
+            }
+        }
     }
 }

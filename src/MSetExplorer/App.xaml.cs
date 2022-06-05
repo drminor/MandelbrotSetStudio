@@ -21,9 +21,6 @@ namespace MSetExplorer
 		//private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "http://192.168.2.104:5000", "https://localhost:5001" };
 		private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "https://localhost:5001" };
 
-		// TODO: Use the configuration properties to store the OutputImageFolderPath
-		private static readonly string OutputImageFolderPath = @"C:\_MandelbrotSetImages";
-
 		private readonly MEngineServerManager _mEngineServerManager;
 		private RepositoryAdapters? _repositoryAdapters;
 		private IMapLoaderManager? _mapLoaderManager;
@@ -60,7 +57,7 @@ namespace MSetExplorer
 
 			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO);
 
-			_pngBuilder = BuildPngBuilder(OutputImageFolderPath, M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, _mapLoaderManager);
+			_pngBuilder = BuildPngBuilder(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, _mapLoaderManager);
 
 			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager, _pngBuilder);
 			_appNavWindow.Show();
@@ -91,16 +88,15 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private PngBuilder BuildPngBuilder(string outputFolderPath, string[] mEngineEndPointAddress, IMapSectionAdapter? mapSectionAdapter, IMapLoaderManager mapLoaderManager)
+		private PngBuilder BuildPngBuilder(string[] mEngineEndPointAddress, IMapSectionAdapter? mapSectionAdapter, IMapLoaderManager mapLoaderManager)
 		{
 			if (mapSectionAdapter == null)
 			{
 				throw new InvalidOperationException("BuildPngBuilder requires a non-null MapSectionAdapter.");
 			}
 
-
 			var mEngineClient = new MClient(mEngineEndPointAddress[0]);
-			var result = new PngBuilder(outputFolderPath, mEngineClient, mapSectionAdapter, mapLoaderManager);
+			var result = new PngBuilder(mEngineClient, mapSectionAdapter, mapLoaderManager);
 
 			return result;
 		}

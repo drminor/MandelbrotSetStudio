@@ -4,31 +4,7 @@ namespace MSetExplorer
 {
 	public static class CustomCommands
 	{
-		#region Job
-
-		public static readonly RoutedUICommand JobGoBack = new RoutedUICommand(
-			text: "Go Back",
-			name: "JobGoBack",
-			ownerType: typeof(CustomCommands),
-			inputGestures: new InputGestureCollection() {
-				new KeyGesture(
-					Key.B,
-					ModifierKeys.Alt
-				)
-			}
-		);
-
-		public static readonly RoutedUICommand JobGoForward = new RoutedUICommand(
-			text: "Go Forward",
-			name: "JobGoForward",
-			ownerType: typeof(CustomCommands),
-			inputGestures: new InputGestureCollection() {
-				new KeyGesture(
-					Key.F,
-					ModifierKeys.Alt
-				)
-			}
-		);
+		#region Map
 
 		public static readonly RoutedUICommand PanLeft = new RoutedUICommand(
 			text: "Pan Left",
@@ -120,6 +96,17 @@ namespace MSetExplorer
 			}
 		);
 
+		public static readonly RoutedUICommand EditCoords = new RoutedUICommand(
+			text: "EditCoords",
+			name: "EditCoords",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.F4
+				)
+			}
+		);
+
 		#endregion
 
 		#region Project
@@ -144,17 +131,6 @@ namespace MSetExplorer
 				new KeyGesture(
 					Key.A,
 					ModifierKeys.Control
-				)
-			}
-		);
-
-		public static readonly RoutedUICommand ProjectEditCoords = new RoutedUICommand(
-			text: "EditCoords",
-			name: "ProjectEditCoords",
-			ownerType: typeof(CustomCommands),
-			inputGestures: new InputGestureCollection() {
-				new KeyGesture(
-					Key.F4
 				)
 			}
 		);
@@ -187,9 +163,9 @@ namespace MSetExplorer
 			}
 		);
 
-		public static readonly RoutedUICommand PosterPrint = new RoutedUICommand(
-			text: "Print",
-			name: "PosterPrint",
+		public static readonly RoutedUICommand CreateImage = new RoutedUICommand(
+			text: "Create Image",
+			name: "CreateImage",
 			ownerType: typeof(CustomCommands),
 			inputGestures: new InputGestureCollection() {
 				new KeyGesture(
@@ -199,16 +175,30 @@ namespace MSetExplorer
 			}
 		);
 
-		public static readonly RoutedUICommand PosterEditCoords = new RoutedUICommand(
-			text: "EditCoords",
-			name: "PosterEditCoords",
+		public static readonly RoutedUICommand JobGoBack = new RoutedUICommand(
+			text: "Go Back",
+			name: "JobGoBack",
 			ownerType: typeof(CustomCommands),
 			inputGestures: new InputGestureCollection() {
 				new KeyGesture(
-					Key.F4
+					Key.B,
+					ModifierKeys.Alt
 				)
 			}
 		);
+
+		public static readonly RoutedUICommand JobGoForward = new RoutedUICommand(
+			text: "Go Forward",
+			name: "JobGoForward",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.F,
+					ModifierKeys.Alt
+				)
+			}
+		);
+
 
 		#endregion
 

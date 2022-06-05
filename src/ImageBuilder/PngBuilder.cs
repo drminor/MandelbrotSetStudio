@@ -1,5 +1,4 @@
-﻿using MEngineClient;
-using MEngineDataContracts;
+﻿using MEngineDataContracts;
 using MSS.Common;
 using MSS.Common.MSetRepo;
 using MSS.Types;
@@ -8,7 +7,6 @@ using PngImageLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 
 namespace ImageBuilder
 {
@@ -16,48 +14,37 @@ namespace ImageBuilder
 	{
 		private const int VALUE_FACTOR = 10000;
 
-		private readonly string _imageOutputFolder;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private readonly IMEngineClient _mEngineClient;
-		private readonly IMapLoaderManager _mapLoaderManager;
-
+		//private readonly IMEngineClient _mEngineClient;
+		//private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionHelper _mapSectionHelper;
 
-		public PngBuilder(string imageOutputFolder, IMEngineClient mEngineClient, IMapSectionAdapter mapSectionAdapter, IMapLoaderManager mapLoaderManager)
+		//private int _cntr = 0;
+
+		//public PngBuilder(IMEngineClient mEngineClient, IMapSectionAdapter mapSectionAdapter, IMapLoaderManager mapLoaderManager)
+		public PngBuilder(IMEngineClient _, IMapSectionAdapter mapSectionAdapter, IMapLoaderManager __)
 		{
-			_imageOutputFolder = imageOutputFolder;
-			_mEngineClient = mEngineClient;
+			//_mEngineClient = mEngineClient;
 			_mapSectionAdapter = mapSectionAdapter;
-			_mapLoaderManager = mapLoaderManager;
+			//_mapLoaderManager = mapLoaderManager;
 
 			_mapSectionHelper = new MapSectionHelper();
 		}
 
-		public void BuildPrep(Poster poster, bool useEscapeVelocities)
+		//public void BuildPrep(Poster poster, bool useEscapeVelocities)
+		//{
+		//	var jobAreaInfo = poster.JobAreaInfo;
+		//	var mapCalcSettings = poster.MapCalcSettings;
+		//	var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(jobAreaInfo, mapCalcSettings);
+
+		//	_mapLoaderManager.MapSectionReady += MapSectionReady;
+
+		//	_mapLoaderManager.Push(jobAreaAndCalcSettings);
+		//}
+
+		// TODO: Have the Poster specify whether or not to use EscapeVelocities
+		public void Build(string imageFilePath, Poster poster, bool useEscapeVelocities)
 		{
-			var jobAreaInfo = poster.JobAreaInfo;
-			var mapCalcSettings = poster.MapCalcSettings;
-			var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(jobAreaInfo, mapCalcSettings);
-
-			_mapLoaderManager.MapSectionReady += MapSectionReady;
-
-			_mapLoaderManager.Push(jobAreaAndCalcSettings);
-		}
-
-		private int _cntr = 0;
-
-		private void MapSectionReady(object? sender, Tuple<MapSection, int> e)
-		{
-			if (++_cntr % 10 == 0)
-			{
-				Debug.WriteLine($"Received {_cntr} map sections.");
-			}
-		}
-
-		public void Build(Poster poster, bool useEscapeVelocities)
-		{
-			var projectName = poster.Name;
-
 			var jobAreaInfo = poster.JobAreaInfo;
 			var mapCalcSettings = poster.MapCalcSettings;
 
@@ -70,11 +57,10 @@ namespace ImageBuilder
 
 			var imageSizeInBlocks = RMapHelper.GetMapExtentInBlocks(canvasSize, blockSize);
 			var imageSize = imageSizeInBlocks.Scale(blockSize);
-			var imagePath = GetImageFilename(projectName, imageSize.Width, _imageOutputFolder);
 
 			Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {imageSizeInBlocks}. The ColorMap has Id: {poster.ColorBandSet.Id}.");
 
-			using var pngImage = new PngImage(imagePath, imageSize.Width, imageSize.Height);
+			using var pngImage = new PngImage(imageFilePath, imageSize.Width, imageSize.Height);
 
 			var w = imageSizeInBlocks.Width;
 			var h = imageSizeInBlocks.Height;
@@ -182,11 +168,13 @@ namespace ImageBuilder
 			}
 		}
 
-		private string GetImageFilename(string fn, int imageWidth, string basePath)
-		{
-			var result = Path.Combine(basePath, $"{fn}_{imageWidth}_v1.png");
-			return result;
-		}
+		//private void MapSectionReady(object? sender, Tuple<MapSection, int> e)
+		//{
+		//	if (++_cntr % 10 == 0)
+		//	{
+		//		Debug.WriteLine($"Received {_cntr} map sections.");
+		//	}
+		//}
 
 	}
 }

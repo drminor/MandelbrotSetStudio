@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using MSS.Types.MSet;
+﻿using MSS.Types.MSet;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -18,7 +17,7 @@ namespace MSetExplorer
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
 
-		void PrintPoster(Poster poster);
+		CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath);
 
 		IProjectAdapter ProjectAdapter { get; init; }
 	}
