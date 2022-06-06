@@ -10,7 +10,7 @@ namespace MSetExplorer
 {
 	internal class ScreenSectionCollection : IScreenSectionCollection
 	{
-		private static readonly SizeInt INITIAL_SCREEN_SECTION_ALLOCATION = new(14);
+		private readonly SizeInt _maxSizeInBlocks;
 
 		private readonly SizeInt _blockSize;
 		private readonly int _maxYPtr;
@@ -22,11 +22,11 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ScreenSectionCollection(SizeInt blockSize)
+		public ScreenSectionCollection(SizeInt blockSize, SizeInt maxSizeInBlocks)
 		{
 			_blockSize = blockSize;
+			_maxSizeInBlocks = maxSizeInBlocks;
 
-			var maxSizeInBlocks = GetMaxSizeInBlocks();
 			_maxYPtr = maxSizeInBlocks.Height - 1;
 			DrawingGroup = new DrawingGroup();
 
@@ -35,19 +35,12 @@ namespace MSetExplorer
 
 			_screenSections = new ScreenSection[maxSizeInBlocks.Height, maxSizeInBlocks.Width];
 
-			_canvasSizeInBlocks = maxSizeInBlocks;
+			_canvasSizeInBlocks = new SizeInt(10);
 			Debug.WriteLine($"Allocating {_canvasSizeInBlocks} ScreenSections.");
 			BuildScreenSections(_screenSections, _canvasSizeInBlocks, _blockSize, DrawingGroup);
 		}
 
 		#endregion
-
-		private SizeInt GetMaxSizeInBlocks()
-		{
-			// TODO: Get the size in pixels of the largest display on the host.
-			var result = INITIAL_SCREEN_SECTION_ALLOCATION;
-			return result;
-		}
 
 		#region Public Properties
 
@@ -58,15 +51,20 @@ namespace MSetExplorer
 			get => _canvasSizeInBlocks;
 			set
 			{
-				var newVal = new SizeInt(
-					width: Math.Min(value.Width, INITIAL_SCREEN_SECTION_ALLOCATION.Width),
-					height: Math.Min(value.Height, INITIAL_SCREEN_SECTION_ALLOCATION.Height)
-					);
-
-				if (_canvasSizeInBlocks != newVal)
+				if (value.Width < 0 || value.Height < 0)
 				{
-					Debug.WriteLine($"Allocating additional ScreenSections. Old size: {_canvasSizeInBlocks}, new size: {newVal}.");
-					_canvasSizeInBlocks = newVal;
+					return;
+				}
+
+				if (value.Width > _maxSizeInBlocks.Width || value.Height > _maxSizeInBlocks.Height)
+				{
+					throw new ArgumentException($"The CanvasSizeInWholeBlocks cannot exceed the maximum supported value of {_maxSizeInBlocks}.");
+				}
+
+				if (_canvasSizeInBlocks != value)
+				{
+					Debug.WriteLine($"Allocating additional ScreenSections. Old size: {_canvasSizeInBlocks}, new size: {value}.");
+					_canvasSizeInBlocks = value;
 					BuildScreenSections(_screenSections, _canvasSizeInBlocks, _blockSize, DrawingGroup);
 				}
 			}
@@ -91,28 +89,33 @@ namespace MSetExplorer
 		public void Draw(PointInt position, byte[] pixels)
 		{
 			var screenSection = GetScreenSection(position, out var screenIndex);
-			//var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
-			//Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
 
 			if (screenSection is null || pixels is null)
 			{
+				Debug.WriteLine($"Not drawing section: {position} with screen index: {screenIndex}.");
 				return;
 			}
-
-			var invertedPosition = GetInvertedBlockPos(position);
-			screenSection.Draw(invertedPosition, pixels, screenIndex);
+			else
+			{
+				Debug.WriteLine($"Drawing section: {position} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}. si = {screenIndex}");
+				var invertedPosition = GetInvertedBlockPos(position);
+				screenSection.Draw(invertedPosition, pixels, screenIndex);
+			}
 		}
 
 		public void Redraw(PointInt position)
 		{
 			var screenSection = GetScreenSection(position, out var screenIndex);
-			//var desc = mapSection.Pixels1d is null ? "Not drawing" : "Drawing";
-			//Debug.WriteLine($"{desc} section: {mapSection.BlockPosition} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
 
 			if (screenSection != null)
 			{
+				Debug.WriteLine($"Redrawing section: {position} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}. si = {screenIndex}");
 				var invertedPosition = GetInvertedBlockPos(position);
 				screenSection.ReDraw(invertedPosition, screenIndex);
+			}
+			else
+			{
+				Debug.WriteLine($"Not redrwaing section: {position} with screen index: {screenIndex}.");
 			}
 		}
 

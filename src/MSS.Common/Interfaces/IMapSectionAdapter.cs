@@ -1,6 +1,7 @@
 ﻿using MEngineDataContracts;
 using MongoDB.Bson;
 using MSS.Types.DataTransferObjects;
+using System;
 using System.Threading.Tasks;
 
 namespace MSS.Common.MSetRepo
@@ -19,6 +20,8 @@ namespace MSS.Common.MSetRepo
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
 
 		long? ClearMapSections(string subdivisionId);
+
+		long? DeleteMapSectionsSince(DateTime lastSaved, bool overrideRecentGuard = false);
 
 		//void AddCreatedDateToAllMapSections();
 	}

@@ -30,6 +30,7 @@ namespace MSetExplorer
 		SizeDbl ContainerSize { get; set; }
 		SizeInt CanvasSize { get; set; }
 		VectorInt CanvasControlOffset { get; set; }
+		double DisplayZoom { get; set; }
 
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);

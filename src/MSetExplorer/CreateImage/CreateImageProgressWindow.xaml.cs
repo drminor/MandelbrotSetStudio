@@ -40,9 +40,10 @@ namespace MSetExplorer
 		private void Progress_ProgressChanged(object? sender, double e)
 		{
 			progressBar1.Value = e;
-			if (Math.Abs(e - 100) < 90)
+			if (Math.Abs(e - 100) < 1)
 			{
 				WindowState = WindowState.Normal;
+				Topmost = true;
 			}
 		}
 

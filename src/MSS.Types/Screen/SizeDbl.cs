@@ -41,10 +41,10 @@ namespace MSS.Types
 		//	return new SizeDbl(Width * factor.Width, Height * factor.Height);
 		//}
 
-		//public SizeDbl Scale(double factor)
-		//{
-		//	return new SizeDbl(Width * factor, Height * factor);
-		//}
+		public SizeDbl Scale(double factor)
+		{
+			return new SizeDbl(Width * factor, Height * factor);
+		}
 
 		public SizeDbl Translate(PointDbl offset)
 		{

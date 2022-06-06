@@ -46,7 +46,7 @@ namespace ImageBuilder
 		//	_mapLoaderManager.Push(jobAreaAndCalcSettings);
 		//}
 
-		public async Task BuildAsync(string imageFilePath, Poster poster, Action<double> statusCallBack, CancellationToken ct)
+		public async Task<bool> BuildAsync(string imageFilePath, Poster poster, Action<double> statusCallBack, CancellationToken ct)
 		{
 			var jobAreaInfo = poster.JobAreaInfo;
 			var mapCalcSettings = poster.MapCalcSettings;
@@ -63,50 +63,70 @@ namespace ImageBuilder
 
 			Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {imageSizeInBlocks}. The ColorMap has Id: {poster.ColorBandSet.Id}.");
 
-			using var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
-			using var pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
+			var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
+			var pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
-			var w = imageSizeInBlocks.Width;
-			var h = imageSizeInBlocks.Height;
-
-			for (var vBPtr = 0; vBPtr < h && !ct.IsCancellationRequested; vBPtr++)
+			try
 			{
-				var blocksForThisRow = await GetAllBlocksForRowAsync(vBPtr, w, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
 
-				var checkCnt = blocksForThisRow.Count;
+				var w = imageSizeInBlocks.Width;
+				var h = imageSizeInBlocks.Height;
 
-				Debug.Assert(checkCnt == w);
-
-				for (var lPtr = 0; lPtr < blockSize.Height; lPtr++)
+				for (var vBPtr = 0; vBPtr < h && !ct.IsCancellationRequested; vBPtr++)
 				{
-					var iLine = pngImage.ImageLine;
+					var blocksForThisRow = await GetAllBlocksForRowAsync(vBPtr, w, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
 
-					for (var hBPtr = 0; hBPtr < w; hBPtr++)
+					//var checkCnt = blocksForThisRow.Count;
+
+					//Debug.Assert(checkCnt == w);
+
+					for (var lPtr = 0; lPtr < blockSize.Height; lPtr++)
 					{
-						var mapSection = blocksForThisRow[hBPtr];
-						var countsForThisLine = GetOneLineFromCountsBlock(mapSection?.Counts, lPtr, blockSize.Width);
+						var iLine = pngImage.ImageLine;
 
-						if (countsForThisLine != null)
+						for (var hBPtr = 0; hBPtr < w; hBPtr++)
 						{
-							BuildPngImageLineSegment(hBPtr * blockSize.Width, countsForThisLine, iLine, colorMap);
+							var mapSection = blocksForThisRow[hBPtr];
+
+							var countsForThisLine = GetOneLineFromCountsBlock(mapSection?.Counts, lPtr, blockSize.Width);
+
+							if (countsForThisLine != null)
+							{
+								BuildPngImageLineSegment(hBPtr * blockSize.Width, countsForThisLine, iLine, colorMap);
+							}
+							else
+							{
+								BuildBlankPngImageLineSegment(hBPtr * blockSize.Width, blockSize.Width, iLine);
+							}
 						}
-						else
-						{
-							BuildBlankPngImageLineSegment(hBPtr * blockSize.Width, blockSize.Width, iLine);
-						}
+
+						pngImage.WriteLine(iLine);
 					}
 
-					pngImage.WriteLine(iLine);
+					var p = vBPtr / (double)h;
+					statusCallBack(100 * p);
 				}
-
-				var p = vBPtr / (double)h;
-				statusCallBack(100 * p);
 			}
-
-			if (!ct.IsCancellationRequested)
+			catch
 			{
-				pngImage.End();
+				if (!ct.IsCancellationRequested)
+				{
+					throw;
+				}
 			}
+			finally
+			{
+				if (!ct.IsCancellationRequested)
+				{
+					pngImage.End();
+				}
+				else
+				{
+					pngImage.Abort();
+				}
+			}
+
+			return true;
 		}
 
 		//private async Task ProcessOneRowAsync(int rowPtr, int stride, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings, IMapLoaderManager _mapLoaderManager, CancellationToken ct)
@@ -164,6 +184,7 @@ namespace ImageBuilder
 
 			if (task != null)
 			{
+				//Task.WaitAny(new Task[] {task, ct.WaitHandle})
 				await task;
 			}
 

@@ -16,6 +16,7 @@ namespace MSetExplorer
 
 		private IMapDisplayViewModel _vm;
 		private Canvas _canvas;
+		private ScaleTransform _scaleTransform;
 		private Image _mapDisplayImage;
 		private SelectionRectangle? _selectionRectangle;
 		private Border? _border;
@@ -26,6 +27,7 @@ namespace MSetExplorer
 		{
 			_canvas = new Canvas();
 			_mapDisplayImage = new Image();
+			_scaleTransform = new ScaleTransform(1, 1);
 
 			_vm = (IMapDisplayViewModel)DataContext;
 
@@ -48,6 +50,8 @@ namespace MSetExplorer
 
 				_canvas = MainCanvas;
 				_vm = (IMapDisplayViewModel) DataContext;
+
+				_canvas.RenderTransform = _scaleTransform;
 
 				UpdateTheVmWithOurSize(new SizeDbl(ActualWidth, ActualHeight));
 
@@ -121,12 +125,18 @@ namespace MSetExplorer
 				CanvasOffset = _vm.CanvasControlOffset;
 			}
 
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
 				UpdateTheCanvasSize(_vm.CanvasSize);
 			}
 
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJobAreaAndCalcSettings) && _selectionRectangle != null)
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.DisplayZoom))
+			{
+				_scaleTransform.ScaleX = _vm.DisplayZoom;
+				_scaleTransform.ScaleY = _vm.DisplayZoom;
+			}
+
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJobAreaAndCalcSettings) && _selectionRectangle != null)
 			{
 				_selectionRectangle.Enabled = _vm.CurrentJobAreaAndCalcSettings != null;
 			}

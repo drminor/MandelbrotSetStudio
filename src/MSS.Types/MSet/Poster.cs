@@ -17,7 +17,7 @@ namespace MSS.Types
 		private MapCalcSettings _mapCalcSettings;
 
 		private VectorInt _dispPosition;
-		private double _dispZoom;
+		private double _displayZoom;
 
 		private DateTime _lastUpdatedUtc;
 		private DateTime _lastSavedUtc;
@@ -47,7 +47,7 @@ namespace MSS.Types
 			_mapCalcSettings = mapCalcSettings;
 
 			_dispPosition = displayPosition;
-			_dispZoom = displayZoom;
+			_displayZoom = displayZoom;
 
 			DateCreatedUtc = dateCreatedUtc;
 			LastUpdatedUtc = DateTime.MinValue;
@@ -149,19 +149,26 @@ namespace MSS.Types
 			}
 		}
 
+		/// <summary>
+		/// Value between 0.0 and 1.0
+		/// 1.0 presents 1 map "pixel" to 1 screen pixel
+		/// 0.5 presents 2 map "pixels" to 1 screen pixel
+		/// </summary>
 		public double DisplayZoom
 		{
-			get => _dispZoom;
+			get => _displayZoom;
 			set
 			{
-				if (value != _dispZoom)
+				if (Math.Abs(value - _displayZoom) > 0.1)
 				{
-					_dispZoom = value;
+					_displayZoom = value;
 					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}
 			}
 		}
+
+
 
 		public DateTime DateCreatedUtc { get; init; }
 

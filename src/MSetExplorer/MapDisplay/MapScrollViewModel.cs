@@ -4,13 +4,15 @@ namespace MSetExplorer
 {
 	internal class MapScrollViewModel : ViewModelBase, IMapScrollViewModel
 	{
-		private JobAreaAndCalcSettings? _currentJobAreaAndCalcSettings;
+		//private JobAreaAndCalcSettings? _currentJobAreaAndCalcSettings;
 
 		private double _vMax;
 		private double _hMax;
 
 		private double _verticalPosition;
 		private double _horizontalPosition;
+
+		//private double _displayZoom;
 
 		#region Constructor
 
@@ -19,6 +21,8 @@ namespace MSetExplorer
 			MapDisplayViewModel = mapDisplayViewModel;
 			VMax = 1024;
 			HMax = 1024;
+
+			//_displayZoom = 100;
 		}
 
 		#endregion
@@ -27,23 +31,20 @@ namespace MSetExplorer
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; init; }
 
-		public JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings
-		{
-			get => _currentJobAreaAndCalcSettings;
-			set
-			{
-				if (value != _currentJobAreaAndCalcSettings)
-				{
-					var previousValue = _currentJobAreaAndCalcSettings;
-					_currentJobAreaAndCalcSettings = value?.Clone();
+		//public JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings
+		//{
+		//	get => _currentJobAreaAndCalcSettings;
+		//	set
+		//	{
+		//		if (value != _currentJobAreaAndCalcSettings)
+		//		{
+		//			_currentJobAreaAndCalcSettings = value?.Clone();
+		//			MapDisplayViewModel.CurrentJobAreaAndCalcSettings = _currentJobAreaAndCalcSettings;
 
-					MapDisplayViewModel.CurrentJobAreaAndCalcSettings = _currentJobAreaAndCalcSettings;
-
-					HandleCurrentJobChanged(previousValue, _currentJobAreaAndCalcSettings);
-					OnPropertyChanged(nameof(IMapScrollViewModel.CurrentJobAreaAndCalcSettings));
-				}
-			}
-		}
+		//			OnPropertyChanged(nameof(IMapScrollViewModel.CurrentJobAreaAndCalcSettings));
+		//		}
+		//	}
+		//}
 
 		public double VerticalPosition
 		{
@@ -97,22 +98,9 @@ namespace MSetExplorer
 			}
 		}
 
-		#endregion
-
-		#region Public Methods
-
 		public double VerticalViewPortSize => MapDisplayViewModel.CanvasSize.Height;
 
 		public double HorizontalViewPortSize => MapDisplayViewModel.CanvasSize.Width;
-
-		#endregion
-
-		#region Private Methods
-
-		private void HandleCurrentJobChanged(JobAreaAndCalcSettings? previousJob, JobAreaAndCalcSettings? newJob)
-		{
-			//Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
-		}
 
 		#endregion
 

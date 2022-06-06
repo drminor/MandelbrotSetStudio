@@ -78,10 +78,10 @@
                 <MenuItem Header="Nav Buttons" IsCheckable="True"/>
                 <MenuItem Header="Screen Size Buttons" IsCheckable="True"/>
                 <Separator/>
-                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_UnChecked"/>
+                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_Checked"/>
                 <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
                 <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>-->
-                <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Unchecked" IsChecked="False"/>
+                <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Checked" IsChecked="False"/>
             </MenuItem>
 
             <MenuItem Header="_Map">

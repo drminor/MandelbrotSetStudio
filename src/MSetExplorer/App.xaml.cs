@@ -40,6 +40,7 @@ namespace MSetExplorer
 
 			_mEngineServerManager.Start();
 
+			var DROP_RECENT_MAPSECTIONS = false;
 			var DROP_ALL_COLLECTIONS = false;
 			var DROP_MAP_SECTIONS = false;
 			var USE_MAP_SECTION_REPO = true;
@@ -53,6 +54,12 @@ namespace MSetExplorer
 			else if (DROP_MAP_SECTIONS)
 			{
 				_repositoryAdapters.ProjectAdapter.DropSubdivisionsAndMapSectionsCollections();
+			}
+
+			if (DROP_RECENT_MAPSECTIONS && _repositoryAdapters.MapSectionAdapter != null)
+			{
+				var lastSaved = DateTime.Parse("2023-01-01");
+				_repositoryAdapters.MapSectionAdapter.DeleteMapSectionsSince(lastSaved, overrideRecentGuard: true);
 			}
 
 			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO);

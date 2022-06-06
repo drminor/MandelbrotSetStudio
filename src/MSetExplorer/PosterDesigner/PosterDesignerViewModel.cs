@@ -133,12 +133,6 @@ namespace MSetExplorer
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
-				//var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
-
-				//MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
-				//MapCoordsViewModel.CurrentJobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-				//MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
-
 				var curPoster = PosterViewModel.CurrentPoster;
 
 				if (curPoster != null)
@@ -149,13 +143,19 @@ namespace MSetExplorer
 			}
 
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Job Area and Calc Settings
-			if (e.PropertyName == nameof(IPosterViewModel.JobAreaAndCalcSettings))
+			else if (e.PropertyName == nameof(IPosterViewModel.JobAreaAndCalcSettings))
 			{
 				var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
 
 				MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
 				MapCoordsViewModel.CurrentJobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-				MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
+				MapDisplayViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
+				//MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
+			}
+
+			else if (e.PropertyName == nameof(IPosterViewModel.DisplayZoom))
+			{
+				MapDisplayViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet

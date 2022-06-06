@@ -545,6 +545,22 @@ namespace PngImageLib
             }
         }
 
+        public void Abort()
+		{
+            try
+            {
+                datStreamDeflated.Close();
+                datStream.Close();
+
+                if (this.ShouldCloseStream)
+                    outputStream.Close();
+            }
+            catch (IOException e)
+            {
+                throw new PngjOutputException(e);
+            }
+        }
+
         /// <summary>
         ///  Filename or description, from the optional constructor argument.
         /// </summary>

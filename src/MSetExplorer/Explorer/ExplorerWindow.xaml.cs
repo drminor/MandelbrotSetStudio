@@ -167,13 +167,7 @@ namespace MSetExplorer
 			dispSecMapCoords.Visibility = showCoord ? Visibility.Visible : Visibility.Collapsed;
 		}
 
-		private void CoordsWindow_UnChecked(object sender, RoutedEventArgs e)
-		{
-			var showCoord = mnuItem_CoordsWindow.IsChecked;
-			dispSecMapCoords.Visibility = showCoord ? Visibility.Visible : Visibility.Collapsed;
-		}
-
-		// Show Hide Coords Window
+		// Show Hide CalcSettings Window
 		private void CalcSettingsWindow_Checked(object sender, RoutedEventArgs e)
 		{
 			var showCalcSettings = mnuItem_CalcWindow.IsChecked;
@@ -182,13 +176,6 @@ namespace MSetExplorer
 
 		// Show Hide Job Tree
 		private void JobTree_Checked(object sender, RoutedEventArgs e)
-		{
-			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
-			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			Width = showJobTreeControl ? 1905 : 1495;
-		}
-
-		private void JobTree_Unchecked(object sender, RoutedEventArgs e)
 		{
 			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
 			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
@@ -382,8 +369,8 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var posterSize = new SizeInt(12000);
-				_ = _vm.MapProjectViewModel.PosterCreate("Test", "First Poster", posterSize);
+				var posterSize = new SizeInt(11392);
+				_ = _vm.MapProjectViewModel.PosterCreate("Test19", "Main Area - First Poster", posterSize);
 
 				_vm.MapProjectViewModel.ProjectClose();
 				Properties.Settings.Default["ShowTopNav"] = true;

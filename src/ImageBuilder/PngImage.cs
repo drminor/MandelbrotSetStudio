@@ -52,6 +52,11 @@ namespace ImageBuilder
             png.End();
 		}
 
+        public void Abort()
+        {
+            png.Abort();
+        }
+
         #region IDisposable Support
 
         private bool disposedValue; // To detect redundant calls

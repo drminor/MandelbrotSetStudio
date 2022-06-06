@@ -12,6 +12,8 @@ namespace MSetExplorer
 {
 	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
+		private static readonly SizeInt INITIAL_SCREEN_SECTION_ALLOCATION = new(100);
+
 		private static bool _keepDisplaySquare;
 
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -21,9 +23,9 @@ namespace MSetExplorer
 
 		private SizeInt _canvasSize;
 		private VectorInt _canvasControlOffset;
+		private double _displayZoom;
 
 		private JobAreaAndCalcSettings? _currentJobAreaAndCalcSettings;
-		private MapCalcSettings _mapCalcSettings;
 
 		private ColorBandSet _colorBandSet;
 		private ColorMap? _colorMap;
@@ -31,6 +33,8 @@ namespace MSetExplorer
 		private bool _highlightSelectedColorBand;
 
 		private SizeDbl _containerSize;
+
+		private bool _cmLoadedButNotHandled;
 
 		#region Constructor
 
@@ -45,11 +49,10 @@ namespace MSetExplorer
 
 			BlockSize = blockSize;
 
-			_screenSectionCollection = new ScreenSectionCollection(BlockSize);
+			_screenSectionCollection = new ScreenSectionCollection(BlockSize, INITIAL_SCREEN_SECTION_ALLOCATION);
 			ImageSource = new DrawingImage(_screenSectionCollection.DrawingGroup);
 
 			_currentJobAreaAndCalcSettings = null;
-			_mapCalcSettings = new MapCalcSettings(700, 100);
 
 			_colorBandSet = new ColorBandSet();
 			_colorMap = null;
@@ -59,6 +62,7 @@ namespace MSetExplorer
 			//var screenSectionExtent = new SizeInt(12, 12);
 			ContainerSize = new SizeDbl(1050, 1050);
 			CanvasControlOffset = new VectorInt();
+			DisplayZoom = 1.0;
 
 			MapSections = new ObservableCollection<MapSection>();
 			MapSections.CollectionChanged += MapSections_CollectionChanged;
@@ -92,8 +96,6 @@ namespace MSetExplorer
 		}
 
 		public ColorBandSet ColorBandSet => _colorBandSet;
-
-		private bool _cmLoadedButNotHandled = false;
 
 		public void SetColorBandSet(ColorBandSet value, bool updateDisplay)
 		{
@@ -193,15 +195,21 @@ namespace MSetExplorer
 			}
 		}
 
+		// TODO: Prevent the ContainerSize from being set to a value that would require more than 100 x 100 blocks.
 		public SizeDbl ContainerSize
 		{
 			get => _containerSize;
 			set
 			{
 				_containerSize = value;
-				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, BlockSize, _keepDisplaySquare);
+
+				// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
+				var logicalContainerSize = value.Scale(1 / DisplayZoom);
+				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(logicalContainerSize, BlockSize, _keepDisplaySquare);
 				_screenSectionCollection.CanvasSizeInWholeBlocks = sizeInWholeBlocks.Inflate(2);
 
+				// Use the physical calculation to update the Size of the Control's Canvas.
+				sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, BlockSize, _keepDisplaySquare);
 				CanvasSize = sizeInWholeBlocks.Scale(BlockSize);
 			}
 		}
@@ -227,6 +235,32 @@ namespace MSetExplorer
 				if (value != _canvasControlOffset)
 				{
 					_canvasControlOffset = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		// TODO: Prevent the ContainerSize from being set to a value that would require more than 100 x 100 blocks.
+
+		/// <summary>
+		/// Value between 0.0 and 1.0
+		/// 1.0 presents 1 map "pixel" to 1 screen pixel
+		/// 0.5 presents 2 map "pixels" to 1 screen pixel
+		/// </summary>
+		public double DisplayZoom
+		{
+			get => _displayZoom;
+			set
+			{
+				if (Math.Abs(value  -_displayZoom) > 0.1)
+				{
+					_displayZoom = value;
+
+					// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
+					var logicalContainerSize = ContainerSize.Scale(1 / value);
+					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(logicalContainerSize, BlockSize, _keepDisplaySquare);
+					_screenSectionCollection.CanvasSizeInWholeBlocks = sizeInWholeBlocks.Inflate(2);
+
 					OnPropertyChanged();
 				}
 			}
@@ -262,6 +296,7 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
 		private void MapSectionReady(object? sender, Tuple<MapSection, int> e)
 		{
 			// TODO: Use a lock on MapSectionReady to avoid race conditions as the ColorMap is applied.

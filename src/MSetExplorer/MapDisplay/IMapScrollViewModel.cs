@@ -7,13 +7,10 @@ namespace MSetExplorer
 	{
 		IMapDisplayViewModel MapDisplayViewModel { get; init; }
 
-		JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings { get; set; }
+		//JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings { get; set; }
 
 		double VerticalPosition { get; set; }
 		double HorizontalPosition { get; set; }
-
-		//double GetVMax();
-		//double GetHMax();
 
 		double VMax { get; set; }
 		double HMax { get; set; }

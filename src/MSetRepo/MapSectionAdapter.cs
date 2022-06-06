@@ -3,6 +3,7 @@ using MongoDB.Bson;
 using MSS.Common.MSetRepo;
 using MSS.Types.DataTransferObjects;
 using ProjectRepo;
+using System;
 using System.Threading.Tasks;
 
 namespace MSetRepo
@@ -107,6 +108,14 @@ namespace MSetRepo
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var result = mapSectionReaderWriter.DeleteAllWithSubId(new ObjectId(subdivisionId));
+
+			return result;
+		}
+
+		public long? DeleteMapSectionsSince(DateTime lastSaved, bool overrideRecentGuard = false)
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var result = mapSectionReaderWriter.DeleteMapSectionsSince(lastSaved, overrideRecentGuard);
 
 			return result;
 		}

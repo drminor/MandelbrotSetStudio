@@ -184,11 +184,11 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public long? DeleteMapSectionsSince(DateTime lastSaved)
+		public long? DeleteMapSectionsSince(DateTime lastSaved, bool overrideRecentGuard = false)
 		{
-			if (DateTime.UtcNow - lastSaved > TimeSpan.FromHours(3))
+			if (!overrideRecentGuard && DateTime.UtcNow - lastSaved > TimeSpan.FromHours(3))
 			{
-				Debug.WriteLine($"Warning: Not deleting MapSections created since: {lastSaved}, {lastSaved} is too more than 3 hours ago.");
+				Debug.WriteLine($"Warning: Not deleting MapSections created since: {lastSaved}, {lastSaved} is longer than 3 hours ago.");
 				return 0;
 			}
 

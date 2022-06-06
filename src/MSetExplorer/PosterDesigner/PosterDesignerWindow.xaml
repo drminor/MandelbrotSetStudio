@@ -69,11 +69,10 @@
 
             <MenuItem Header="_Windows">
                 <MenuItem Header="Pan Buttons" IsCheckable="True"/>
-                <MenuItem Header="Nav Buttons" IsCheckable="True"/>
                 <Separator/>
-                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_UnChecked"/>
+                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_Checked"/>
                 <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
-                <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>-->
+                <MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>
             </MenuItem>
 
             <MenuItem Header="_Map">
@@ -98,8 +97,8 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
+            
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -111,10 +110,17 @@
                 <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanDown">Down</Button>
             </StackPanel>
 
-            <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecNavButtons">
-                <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoBack">Go Back</Button>
-                <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
-            </StackPanel>
+            <Border Grid.Row="1" BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Stretch" Margin="0,10">
+                
+                <StackPanel  Orientation="Vertical">
+                    <TextBlock Margin="10,10,0,5" >Zoom:</TextBlock>
+                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="0,5" x:Name="dispSecZoom">
+                        <TextBlock x:Name="txtblkZoomValue" Margin="5,95,2,0" >100%</TextBlock>
+                        <ScrollBar x:Name="scrBarZoom" Margin="5,0,5,5" Orientation="Vertical" Height="200"/>
+                    </StackPanel>
+                </StackPanel>
+                
+            </Border>
 
         </Grid>
 

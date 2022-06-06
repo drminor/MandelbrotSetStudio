@@ -348,7 +348,7 @@ namespace MSetExplorer
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
 			var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-			LoadMap(CurrentProject, curJob, curJob.ColorBandSetId, coords, curJob.MapCalcSettings, transformType, screenArea);
+			LoadMap(CurrentProject, curJob, coords, curJob.ColorBandSetId, curJob.MapCalcSettings, transformType, screenArea);
 		}
 
 		// Currently Not Used.
@@ -361,7 +361,7 @@ namespace MSetExplorer
 
 			if (CurrentJob.Coords != coords)
 			{
-				LoadMap(CurrentProject, CurrentJob, CurrentJob.ColorBandSetId, coords, CurrentJob.MapCalcSettings, TransformType.CoordinatesUpdate, null);
+				LoadMap(CurrentProject, CurrentJob, coords, CurrentJob.ColorBandSetId, CurrentJob.MapCalcSettings, TransformType.CoordinatesUpdate, null);
 			}
 		}
 
@@ -391,7 +391,7 @@ namespace MSetExplorer
 
 				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentJob.MapCalcSettings.RequestsPerJob);
-				LoadMap(CurrentProject, CurrentJob, colorBandSet.Id, CurrentJob.Coords, mapCalcSettings, TransformType.IterationUpdate, null);
+				LoadMap(CurrentProject, CurrentJob, CurrentJob.Coords, colorBandSet.Id, mapCalcSettings, TransformType.IterationUpdate, null);
 			}
 			else
 			{
@@ -516,7 +516,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void LoadMap(Project project, Job currentJob, ObjectId colorBandSetId, RRectangle coords, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		private void LoadMap(Project project, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
 			ObjectId? parentJobId;
 			if (transformType == TransformType.IterationUpdate)

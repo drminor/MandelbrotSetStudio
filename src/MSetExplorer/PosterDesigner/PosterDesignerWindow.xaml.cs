@@ -54,20 +54,45 @@ namespace MSetExplorer
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 
+				scrBarZoom.Value = 100;
+
+				scrBarZoom.Maximum = 100;
+				scrBarZoom.SmallChange = 10;
+				scrBarZoom.LargeChange = 20;
+
+				scrBarZoom.Scroll += ScrBarZoom_Scroll;
+
 				Debug.WriteLine("The MainWindow is now loaded");
+			}
+		}
+
+		private void ScrBarZoom_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+		{
+			if (_vm.PosterViewModel.CurrentPoster != null)
+			{
+				var displayZoomValue = GetDisplayZoomValue(e.NewValue);
+				_vm.PosterViewModel.CurrentPoster.DisplayZoom = displayZoomValue;
+				//_vm.MapDisplayViewModel.DisplayZoom = displayZoomValue;
+			}
+		}
+
+		private double GetDisplayZoomValue(double scrollBarValue)
+		{
+			if (scrollBarValue > 50)
+			{
+				return 1.0;
+			}
+			else
+			{
+				return 0.5;
 			}
 		}
 
 		private void PosterDesignerWindow_ContentRendered(object? sender, EventArgs e)
 		{
 			Debug.WriteLine("The PosterDesigner Window is handling ContentRendered");
-			//LoadNewProject();
-			//ShowMapCoordsEditor();
-			//ShowCoordsEditor();
 
-			//SpIdxTest();
-
-			_vm.PosterViewModel.PosterOpen("Test");
+			_ = _vm.PosterViewModel.PosterOpen("Test");
 		}
 
 		private void PosterDesignerWindow_Closing(object sender, CancelEventArgs e)
@@ -101,32 +126,6 @@ namespace MSetExplorer
 				CommandManager.InvalidateRequerySuggested();
 			}
 		}
-
-		//private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		//{
-		//	if (e.PropertyName == nameof(IMapProjectViewModel.CanGoBack))
-		//	{
-		//		btnGoBack.IsEnabled = _vm.MapProjectViewModel.CanGoBack;
-		//		return;
-		//	}
-
-		//	if (e.PropertyName == nameof(IMapProjectViewModel.CanGoForward))
-		//	{
-		//		btnGoForward.IsEnabled = _vm.MapProjectViewModel.CanGoForward;
-		//		return;
-		//	}
-
-		//	if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
-		//	{
-		//		Title = GetWindowTitle(_vm.MapProjectViewModel.CurrentProject?.Name, _vm.MapProjectViewModel.CurrentColorBandSet.Name);
-		//		CommandManager.InvalidateRequerySuggested();
-		//	}
-
-		//	if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectOnFile) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectIsDirty))
-		//	{
-		//		CommandManager.InvalidateRequerySuggested();
-		//	}
-		//}
 
 		private void ColorBandSetViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
@@ -180,13 +179,7 @@ namespace MSetExplorer
 			dispSecMapCoords.Visibility = showCoord ? Visibility.Visible : Visibility.Collapsed;
 		}
 
-		private void CoordsWindow_UnChecked(object sender, RoutedEventArgs e)
-		{
-			var showCoord = mnuItem_CoordsWindow.IsChecked;
-			dispSecMapCoords.Visibility = showCoord ? Visibility.Visible : Visibility.Collapsed;
-		}
-
-		// Show Hide Coords Window
+		// Show Hide CalcSettings Window
 		private void CalcSettingsWindow_Checked(object sender, RoutedEventArgs e)
 		{
 			var showCalcSettings = mnuItem_CalcWindow.IsChecked;

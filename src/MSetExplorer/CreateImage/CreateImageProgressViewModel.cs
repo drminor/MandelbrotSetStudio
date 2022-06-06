@@ -11,7 +11,7 @@ namespace MSetExplorer
 	{
 		private readonly PngBuilder _pngBuilder;
 		private CancellationTokenSource _cancellationTokenSource;
-		private Task? _task;
+		private Task<bool>?_task;
 
 		#region Constructor
 
@@ -42,7 +42,7 @@ namespace MSetExplorer
 			ImageFilePath = imageFilePath;
 			Poster = poster;
 
-			_task = _pngBuilder.BuildAsync(imageFilePath, poster, StatusCallBack, _cancellationTokenSource.Token);
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, poster, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 		}
 
 		public void CancelCreateImage()
@@ -51,15 +51,22 @@ namespace MSetExplorer
 
 			if (_task != null)
 			{
-				var result = Task.Run(async () => { await _task; });
+				//var result = Task.Run(async () => 
+				//{
+				//	await _task;
+				//});
+
+				//result.Wait();
+
+				_task.Wait();
 			}
 
 			// TODO: Schedule this or yield to allow the file to become free.
-			//if (ImageFilePath != null && File.Exists(ImageFilePath))
-			//{
-			//	Thread.Sleep(1000);
-			//	File.Delete(ImageFilePath);
-			//}
+			if (ImageFilePath != null && File.Exists(ImageFilePath))
+			{
+				Thread.Sleep(10000);
+				File.Delete(ImageFilePath);
+			}
 		}
 
 		#endregion
