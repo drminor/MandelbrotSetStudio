@@ -54,6 +54,11 @@ namespace MSetExplorer
 			return new Size(size.Width, size.Height);
 		}
 
+		public static Vector ConvertToVector(VectorInt vector)
+		{
+			return new Vector(vector.X, vector.Y);
+		}
+
 		public static Rect CreateRect(PointInt pointInt, SizeInt sizeInt)
 		{
 			return new Rect(ConvertToPoint(pointInt), ConvertToSize(sizeInt));

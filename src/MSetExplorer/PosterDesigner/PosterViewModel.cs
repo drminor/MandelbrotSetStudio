@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using MSetRepo;
+﻿using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -46,6 +45,8 @@ namespace MSetExplorer
 				if(value != _canvasSize)
 				{
 					_canvasSize = value;
+					MinimumDisplayZoom = GetMinimumDisplayZoom(CurrentPoster?.JobAreaInfo.CanvasSize, CanvasSize);
+
 					OnPropertyChanged(nameof(IPosterViewModel.CanvasSize));
 
 					//if (CurrentPoster != null)
@@ -66,9 +67,26 @@ namespace MSetExplorer
 			get => _displayZoom;
 			set
 			{
-				if (Math.Abs(value - _displayZoom) > 0.1)
+				if (Math.Abs(value - _displayZoom) > 0.001)
 				{
-					_displayZoom = value;
+					_displayZoom = Math.Max(MinimumDisplayZoom,  value);
+					Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
+					OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
+				}
+			}
+		}
+
+		private double _minimumDisplayZoom;
+
+		public double MinimumDisplayZoom
+		{
+			get => _minimumDisplayZoom;
+			set
+			{
+				if (Math.Abs(value - _minimumDisplayZoom) > 0.001)
+				{
+					_minimumDisplayZoom = value;
+					Debug.WriteLine($"The MinDispZoom is {MinimumDisplayZoom}.");
 					OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
 				}
 			}
@@ -86,6 +104,8 @@ namespace MSetExplorer
 						_currentPoster.PropertyChanged -= CurrentPoster_PropertyChanged;
 					}
 					_currentPoster = value;
+					MinimumDisplayZoom = GetMinimumDisplayZoom(_currentPoster?.JobAreaInfo.CanvasSize, CanvasSize);
+
 					if (_currentPoster != null)
 					{
 						var viewPortArea = GetNewViewPort(_currentPoster.JobAreaInfo, _currentPoster.DisplayPosition, CanvasSize, DisplayZoom);
@@ -108,6 +128,9 @@ namespace MSetExplorer
 				if (value != _jobAreaAndCalcSettings)
 				{
 					_jobAreaAndCalcSettings = value;
+
+					MinimumDisplayZoom = GetMinimumDisplayZoom(CurrentPoster?.JobAreaInfo.CanvasSize, CanvasSize);
+
 					OnPropertyChanged(nameof(IPosterViewModel.JobAreaAndCalcSettings));
 				}
 			}
@@ -155,6 +178,11 @@ namespace MSetExplorer
 					var viewPortArea = GetNewViewPort(curPoster.JobAreaInfo, curPoster.DisplayPosition, CanvasSize, DisplayZoom);
 					JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, curPoster.MapCalcSettings);
 				}
+			}
+
+			else if (e.PropertyName == nameof(Poster.JobAreaInfo))
+			{
+				// TODO: Handle Poster Canvas Size changes.
 			}
 		}
 
@@ -380,6 +408,22 @@ namespace MSetExplorer
 
 		//	project.Add(newJob);
 		//}
+
+		private double GetMinimumDisplayZoom(SizeInt? posterSize, SizeInt displaySize)
+		{
+			double result;
+
+			if (posterSize != null)
+			{
+				result = displaySize.Width / (double)posterSize.Value.Width;
+			}
+			else
+			{
+				result = 0.9;
+			}
+
+			return result;
+		}
 
 		#endregion
 

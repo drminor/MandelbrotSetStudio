@@ -1,28 +1,23 @@
-﻿using MSS.Types.MSet;
+﻿
+using MSS.Types;
 
 namespace MSetExplorer
 {
 	internal class MapScrollViewModel : ViewModelBase, IMapScrollViewModel
 	{
-		//private JobAreaAndCalcSettings? _currentJobAreaAndCalcSettings;
-
-		private double _vMax;
-		private double _hMax;
+		//private double _vMax;
+		//private double _hMax;
 
 		private double _verticalPosition;
 		private double _horizontalPosition;
-
-		//private double _displayZoom;
 
 		#region Constructor
 
 		public MapScrollViewModel(IMapDisplayViewModel mapDisplayViewModel)
 		{
 			MapDisplayViewModel = mapDisplayViewModel;
-			VMax = 1024;
-			HMax = 1024;
-
-			//_displayZoom = 100;
+			//VMax = 1024;
+			//HMax = 1024;
 		}
 
 		#endregion
@@ -30,21 +25,6 @@ namespace MSetExplorer
 		#region Public Properties 
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; init; }
-
-		//public JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings
-		//{
-		//	get => _currentJobAreaAndCalcSettings;
-		//	set
-		//	{
-		//		if (value != _currentJobAreaAndCalcSettings)
-		//		{
-		//			_currentJobAreaAndCalcSettings = value?.Clone();
-		//			MapDisplayViewModel.CurrentJobAreaAndCalcSettings = _currentJobAreaAndCalcSettings;
-
-		//			OnPropertyChanged(nameof(IMapScrollViewModel.CurrentJobAreaAndCalcSettings));
-		//		}
-		//	}
-		//}
 
 		public double VerticalPosition
 		{
@@ -72,35 +52,46 @@ namespace MSetExplorer
 			}
 		}
 
-		public double VMax
+		private SizeInt? _posterSize;
+		public SizeInt? PosterSize
 		{
-			get => _vMax;
+			get => _posterSize;
+
 			set
 			{
-				if (value != _vMax)
+				if (value != _posterSize)
 				{
-					_vMax = value;
-					OnPropertyChanged(nameof(IMapScrollViewModel.VMax));
+					_posterSize = value;
+					OnPropertyChanged(nameof(IMapScrollViewModel.PosterSize));
 				}
 			}
 		}
 
-		public double HMax
-		{
-			get => _hMax;
-			set
-			{
-				if (value != _hMax)
-				{
-					_hMax = value;
-					OnPropertyChanged(nameof(IMapScrollViewModel.HMax));
-				}
-			}
-		}
+		//public double VMax
+		//{
+		//	get => _vMax;
+		//	set
+		//	{
+		//		if (value != _vMax)
+		//		{
+		//			_vMax = value;
+		//			OnPropertyChanged(nameof(IMapScrollViewModel.VMax));
+		//		}
+		//	}
+		//}
 
-		public double VerticalViewPortSize => MapDisplayViewModel.CanvasSize.Height;
-
-		public double HorizontalViewPortSize => MapDisplayViewModel.CanvasSize.Width;
+		//public double HMax
+		//{
+		//	get => _hMax;
+		//	set
+		//	{
+		//		if (value != _hMax)
+		//		{
+		//			_hMax = value;
+		//			OnPropertyChanged(nameof(IMapScrollViewModel.HMax));
+		//		}
+		//	}
+		//}
 
 		#endregion
 

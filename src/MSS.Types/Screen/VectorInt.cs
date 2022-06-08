@@ -67,6 +67,11 @@ namespace MSS.Types
 			return new VectorInt(X / dividend.Width, Y / dividend.Height);
 		}
 
+		public VectorInt Scale(double factor)
+		{
+			return new VectorInt((int)Math.Round(X * factor), (int)Math.Round(Y * factor));
+		}
+
 		public bool EqualsZero => X == 0 && Y == 0;
 
 		public override string? ToString()

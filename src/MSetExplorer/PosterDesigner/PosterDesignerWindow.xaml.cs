@@ -9,6 +9,7 @@ using MSS.Types.MSet;
 using MSS.Common;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 
 namespace MSetExplorer
 {
@@ -54,11 +55,11 @@ namespace MSetExplorer
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 
-				scrBarZoom.Value = 100;
+				scrBarZoom.Value = 1;
 
-				scrBarZoom.Maximum = 100;
-				scrBarZoom.SmallChange = 10;
-				scrBarZoom.LargeChange = 20;
+				scrBarZoom.Maximum = 1;
+				scrBarZoom.SmallChange = 0.1;
+				scrBarZoom.LargeChange = 0.2;
 
 				scrBarZoom.Scroll += ScrBarZoom_Scroll;
 
@@ -70,21 +71,22 @@ namespace MSetExplorer
 		{
 			if (_vm.PosterViewModel.CurrentPoster != null)
 			{
-				var displayZoomValue = GetDisplayZoomValue(e.NewValue);
-				_vm.PosterViewModel.CurrentPoster.DisplayZoom = displayZoomValue;
-				//_vm.MapDisplayViewModel.DisplayZoom = displayZoomValue;
-			}
-		}
+				var val = e.NewValue;
+				if (val < 0)
+				{
+					val = 0;
+				}
 
-		private double GetDisplayZoomValue(double scrollBarValue)
-		{
-			if (scrollBarValue > 50)
-			{
-				return 1.0;
-			}
-			else
-			{
-				return 0.5;
+				if (val > 1)
+				{
+					val = 1;
+				}
+
+				_vm.PosterViewModel.CurrentPoster.DisplayZoom = val;
+
+				var adjustedDisplayZoom = _vm.PosterViewModel.DisplayZoom;
+
+				txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom * 100).ToString(CultureInfo.InvariantCulture);
 			}
 		}
 
@@ -119,6 +121,11 @@ namespace MSetExplorer
 			{
 				Title = GetWindowTitle(_vm.PosterViewModel.CurrentPoster?.Name, _vm.PosterViewModel.CurrentColorBandSet?.Name);
 				CommandManager.InvalidateRequerySuggested();
+			}
+
+			if (e.PropertyName == nameof(IPosterViewModel.MinimumDisplayZoom))
+			{
+				scrBarZoom.Minimum = _vm.PosterViewModel.MinimumDisplayZoom;
 			}
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectOnFile) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectIsDirty))
@@ -501,6 +508,10 @@ namespace MSetExplorer
 
 		private void PanLeft_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
+			//var x = _vm.MapDisplayViewModel.CanvasControlOffset;
+			//var y = _vm.MapDisplayViewModel.ClipRegion;
+
+			//_ = MessageBox.Show($"The Canvas Control Offset is {x}. The DrawingGroup's Clip Region is {y},");
 			Pan(PanDirection.Left, GetPanAmountQualifer(), SHIFT_AMOUNT);
 		}
 
@@ -517,6 +528,41 @@ namespace MSetExplorer
 		private void PanDown_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			Pan(PanDirection.Down, GetPanAmountQualifer(), SHIFT_AMOUNT);
+		}
+
+		#endregion
+
+
+		#region DisplayZoom Min Max Button Handlers
+
+		private void ButtonSetMaxZoom_Click(object sender, RoutedEventArgs e)
+		{
+			scrBarZoom.Value = 0;
+			_vm.MapScrollViewModel.VerticalPosition = 0;
+			_vm.MapScrollViewModel.HorizontalPosition = 0;
+
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
+			if (curPoster != null)
+			{
+				curPoster.DisplayZoom = 0;
+				var adjustedDisplayZoom = _vm.PosterViewModel.DisplayZoom;
+				txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom * 100).ToString(CultureInfo.InvariantCulture);
+			}
+		}
+
+		private void ButtonSetMinZoom_Click(object sender, RoutedEventArgs e)
+		{
+			scrBarZoom.Value = 1;
+
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
+			if (curPoster != null)
+			{
+				curPoster.DisplayZoom = 1;
+				var adjustedDisplayZoom = _vm.PosterViewModel.DisplayZoom;
+				txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom * 100).ToString(CultureInfo.InvariantCulture);
+			}
 		}
 
 		#endregion
@@ -558,20 +604,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods - Poster
-
-		//private void LoadNewProject()
-		//{
-		//	var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
-		//	var mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
-
-		//	LoadNewProject(coords, mapCalcSettings);
-		//}
-
-		//private void LoadNewProject(RRectangle coords, MapCalcSettings mapCalcSettings)
-		//{
-		//	var colorBandSet = MapJobHelper.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-		//	_vm.MapProjectViewModel.ProjectStartNew(coords, colorBandSet, mapCalcSettings);
-		//}
 
 		private SaveResultP PosterSaveChanges()
 		{
@@ -712,14 +744,12 @@ namespace MSetExplorer
 		private void ShowCoordsEditor()
 		{
 			CoordsEditorViewModel coordsEditorViewModel;
-			MapCalcSettings mapCalcSettings;
 
 			var curPoster = _vm.PosterViewModel.CurrentPoster;
 
 			if (curPoster != null)
 			{
 				coordsEditorViewModel = new CoordsEditorViewModel(curPoster.JobAreaInfo.Coords, _vm.PosterViewModel.CanvasSize, allowEdits: true, _vm.ProjectAdapter);
-				mapCalcSettings = curPoster.MapCalcSettings;
 			}
 			else
 			{
@@ -733,7 +763,6 @@ namespace MSetExplorer
 				//var y1 = "0.5355758216817";
 				//var y2 = "0.5355758242393";
 				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.PosterViewModel.CanvasSize, allowEdits: false, _vm.ProjectAdapter);
-				mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
 			}
 
 			var coordsEditorWindow = new CoordsEditorWindow()
@@ -756,7 +785,7 @@ namespace MSetExplorer
 
 			}
 
-			var newCoords = coordsEditorViewModel.Coords;
+			//var newCoords = coordsEditorViewModel.Coords;
 			//LoadNewProject(newCoords, mapCalcSettings);
 		}
 

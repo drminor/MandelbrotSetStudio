@@ -14,6 +14,7 @@ namespace MSetExplorer
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 
 		SizeInt BlockSize { get; }
+
 		ImageSource ImageSource { get; }
 		ObservableCollection<MapSection> MapSections { get; }
 
@@ -28,9 +29,14 @@ namespace MSetExplorer
 
 		// These may need to be dependency properties
 		SizeDbl ContainerSize { get; set; }
-		SizeInt CanvasSize { get; set; }
+		SizeInt CanvasSize { get; }
 		VectorInt CanvasControlOffset { get; set; }
+
+		SizeDbl LogicalDisplaySize { get; }
 		double DisplayZoom { get; set; }
+		
+		// Just for diagnostics
+		//RectangleDbl ClipRegion { get; }
 
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);

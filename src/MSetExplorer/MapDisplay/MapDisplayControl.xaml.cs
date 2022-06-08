@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,7 +17,6 @@ namespace MSetExplorer
 
 		private IMapDisplayViewModel _vm;
 		private Canvas _canvas;
-		private ScaleTransform _scaleTransform;
 		private Image _mapDisplayImage;
 		private SelectionRectangle? _selectionRectangle;
 		private Border? _border;
@@ -27,7 +27,6 @@ namespace MSetExplorer
 		{
 			_canvas = new Canvas();
 			_mapDisplayImage = new Image();
-			_scaleTransform = new ScaleTransform(1, 1);
 
 			_vm = (IMapDisplayViewModel)DataContext;
 
@@ -51,8 +50,6 @@ namespace MSetExplorer
 				_canvas = MainCanvas;
 				_vm = (IMapDisplayViewModel) DataContext;
 
-				_canvas.RenderTransform = _scaleTransform;
-
 				UpdateTheVmWithOurSize(new SizeDbl(ActualWidth, ActualHeight));
 
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
@@ -61,7 +58,8 @@ namespace MSetExplorer
 				_canvas.ClipToBounds = _clipImageBlocks;
 				_mapDisplayImage = new Image { Source = _vm.ImageSource };
 				_ = _canvas.Children.Add(_mapDisplayImage);
-				CanvasOffset = new VectorInt();
+
+				SetCanvasOffset(new VectorInt(), 0);
 				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
@@ -120,20 +118,14 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasControlOffset))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasControlOffset) || e.PropertyName == nameof(IMapDisplayViewModel.DisplayZoom))
 			{
-				CanvasOffset = _vm.CanvasControlOffset;
+				SetCanvasOffset(_vm.CanvasControlOffset, _vm.DisplayZoom);
 			}
 
-			else if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
 				UpdateTheCanvasSize(_vm.CanvasSize);
-			}
-
-			else if (e.PropertyName == nameof(IMapDisplayViewModel.DisplayZoom))
-			{
-				_scaleTransform.ScaleX = _vm.DisplayZoom;
-				_scaleTransform.ScaleY = _vm.DisplayZoom;
 			}
 
 			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJobAreaAndCalcSettings) && _selectionRectangle != null)
@@ -187,33 +179,37 @@ namespace MSetExplorer
 
 		#region Private Properties
 
+		private VectorInt _offset;
+		private double _offsetZoom;
+
 		/// <summary>
 		/// The position of the canvas' origin relative to the Image Block Data
 		/// </summary>
-		private VectorInt CanvasOffset
+		private void SetCanvasOffset(VectorInt value, double displayZoom)
 		{
-			get
+			if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.1)
 			{
-				var l = (double)_mapDisplayImage.GetValue(Canvas.LeftProperty);
-				var b = (double)_mapDisplayImage.GetValue(Canvas.BottomProperty);
-				var pointDbl = new PointDbl(l, b);
+				Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
+				Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
 
-				return new VectorInt(pointDbl.Round()).Invert();
+				_offset = value;
+				_offsetZoom = displayZoom;
+
+				var inverted = value.Invert();
+
+				inverted.Scale(displayZoom);
+
+				_mapDisplayImage.SetValue(Canvas.LeftProperty, (double)inverted.X);
+				_mapDisplayImage.SetValue(Canvas.BottomProperty, (double)inverted.Y);
+
+
 			}
 
-			set
-			{
-				var curVal = CanvasOffset;
-				if (value != curVal)
-				{
-					Debug.WriteLine($"CanvasOffset is being set to {value}.");
-					Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
+			//_vm.ClipRegion = new SizeDbl(
+			//	(double)_mapDisplayImage.GetValue(Canvas.LeftProperty),
+			//	(double)_mapDisplayImage.GetValue(Canvas.BottomProperty)
+			//	);
 
-					var inverted = value.Invert();
-					_mapDisplayImage.SetValue(Canvas.LeftProperty, (double) inverted.X);
-					_mapDisplayImage.SetValue(Canvas.BottomProperty, (double) inverted.Y);
-				}
-			}
 		}
 
 		#endregion

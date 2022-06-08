@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Windows;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -18,7 +19,9 @@ namespace MSetExplorer
 
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
-		private int? _currentMapLoaderJobNumber; 
+		private int? _currentMapLoaderJobNumber;
+
+		private readonly DrawingGroup _drawingGroup;
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
 		private SizeInt _canvasSize;
@@ -49,8 +52,9 @@ namespace MSetExplorer
 
 			BlockSize = blockSize;
 
-			_screenSectionCollection = new ScreenSectionCollection(BlockSize, INITIAL_SCREEN_SECTION_ALLOCATION);
-			ImageSource = new DrawingImage(_screenSectionCollection.DrawingGroup);
+			_drawingGroup = new DrawingGroup();
+			_screenSectionCollection = new ScreenSectionCollection(_drawingGroup, BlockSize, INITIAL_SCREEN_SECTION_ALLOCATION);
+			ImageSource = new DrawingImage(_drawingGroup);
 
 			_currentJobAreaAndCalcSettings = null;
 
@@ -60,9 +64,13 @@ namespace MSetExplorer
 			//_containerSize = new SizeDbl(1050, 1050);
 			//CanvasSize = new SizeInt(1024, 1024);
 			//var screenSectionExtent = new SizeInt(12, 12);
+
+			_logicalDisplaySize = new SizeDbl();
+
+			DisplayZoom = 0.55;
 			ContainerSize = new SizeDbl(1050, 1050);
+
 			CanvasControlOffset = new VectorInt();
-			DisplayZoom = 1.0;
 
 			MapSections = new ObservableCollection<MapSection>();
 			MapSections.CollectionChanged += MapSections_CollectionChanged;
@@ -203,13 +211,7 @@ namespace MSetExplorer
 			{
 				_containerSize = value;
 
-				// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
-				var logicalContainerSize = value.Scale(1 / DisplayZoom);
-				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(logicalContainerSize, BlockSize, _keepDisplaySquare);
-				_screenSectionCollection.CanvasSizeInWholeBlocks = sizeInWholeBlocks.Inflate(2);
-
-				// Use the physical calculation to update the Size of the Control's Canvas.
-				sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, BlockSize, _keepDisplaySquare);
+				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_containerSize, BlockSize, _keepDisplaySquare);
 				CanvasSize = sizeInWholeBlocks.Scale(BlockSize);
 			}
 		}
@@ -221,26 +223,18 @@ namespace MSetExplorer
 			{
 				if (value != _canvasSize)
 				{
+					Debug.WriteLine($"The MapDisplay Canvas Size is now {value}.");
 					_canvasSize = value;
+					LogicalDisplaySize = new SizeDbl(_canvasSize).Scale(1 / DisplayZoom);
+
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public VectorInt CanvasControlOffset
-		{ 
-			get => _canvasControlOffset;
-			set
-			{
-				if (value != _canvasControlOffset)
-				{
-					_canvasControlOffset = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//public RectangleDbl ClipRegion => ScreenTypeHelper.ConvertToRectangleDbl(_drawingGroup.ClipGeometry.Bounds);
 
-		// TODO: Prevent the ContainerSize from being set to a value that would require more than 100 x 100 blocks.
+		// TODO: Prevent the DisplayZoom from being set to a value that would require more than 100 x 100 blocks.
 
 		/// <summary>
 		/// Value between 0.0 and 1.0
@@ -256,10 +250,44 @@ namespace MSetExplorer
 				{
 					_displayZoom = value;
 
-					// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
-					var logicalContainerSize = ContainerSize.Scale(1 / value);
-					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(logicalContainerSize, BlockSize, _keepDisplaySquare);
-					_screenSectionCollection.CanvasSizeInWholeBlocks = sizeInWholeBlocks.Inflate(2);
+					_drawingGroup.Transform = new ScaleTransform(_displayZoom, _displayZoom);
+
+					LogicalDisplaySize = new SizeDbl(CanvasSize).Scale(1 / _displayZoom);
+
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		private SizeDbl _logicalDisplaySize;
+		public SizeDbl LogicalDisplaySize
+		{
+			get => _logicalDisplaySize;
+			set
+			{
+				if (_logicalDisplaySize != value)
+				{
+					_logicalDisplaySize = value;
+
+					UpdateClipRegion(_logicalDisplaySize, CanvasControlOffset);
+					UpdateScreenCollectionSize(_logicalDisplaySize);
+
+					Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
+
+					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
+				}
+			}
+		}
+
+		public VectorInt CanvasControlOffset
+		{
+			get => _canvasControlOffset;
+			set
+			{
+				if (value != _canvasControlOffset)
+				{
+					_canvasControlOffset = value;
+					UpdateClipRegion(LogicalDisplaySize, _canvasControlOffset);
 
 					OnPropertyChanged();
 				}
@@ -267,6 +295,26 @@ namespace MSetExplorer
 		}
 
 		public ObservableCollection<MapSection> MapSections { get; }
+
+		private void UpdateScreenCollectionSize(SizeDbl logicalContainerSize)
+		{
+			// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
+			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(logicalContainerSize, BlockSize, _keepDisplaySquare);
+			_screenSectionCollection.CanvasSizeInBlocks = sizeInWholeBlocks;
+		}
+
+		private void UpdateClipRegion(SizeDbl displaySize, VectorInt canvasControlOffset)
+		{
+			//// TODO: Allow the View to set "No Clipping."
+			//var maxYPtr = INITIAL_SCREEN_SECTION_ALLOCATION.Height - 1;
+
+			//var clipOrigin = new Point(canvasControlOffset.X, (maxYPtr * BlockSize.Height) - (displaySize.Height + canvasControlOffset.Y));
+			////var clipOrigin = displayOrigin + ScreenTypeHelper.ConvertToVector(canvasControlOffset);
+			//var clipRect = new Rect(clipOrigin, ScreenTypeHelper.ConvertToSize(displaySize.Inflate(BlockSize.Scale(2))));
+
+			//Debug.WriteLine($"MapDisplay's clip region is {clipRect}. The bounds are {_drawingGroup.Bounds}.");
+			//_drawingGroup.ClipGeometry = new RectangleGeometry(clipRect);
+		}
 
 		#endregion
 

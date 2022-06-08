@@ -57,6 +57,8 @@ namespace MSetExplorer
 			{
 				if (PosterViewModel.CurrentPoster != null)
 				{
+					// TODO: Update VectorInt to take a pair of doubles.
+					// OR: Add a Position Property to the IMapScrollViewModel of type VectorInt.
 					PosterViewModel.CurrentPoster.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), (int)Math.Round(MapScrollViewModel.VerticalPosition));
 				}
 			}
@@ -133,12 +135,35 @@ namespace MSetExplorer
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
+				//var curPoster = PosterViewModel.CurrentPoster;
+
+				//if (curPoster != null)
+				//{
+				//	MapScrollViewModel.VMax = curPoster.JobAreaInfo.CanvasSize.Height;
+				//	MapScrollViewModel.HMax = curPoster.JobAreaInfo.CanvasSize.Width;
+				//}
+				//else
+				//{
+				//	MapDisplayViewModel.CurrentJobAreaAndCalcSettings = null;
+				//}
+
+				//if (PosterViewModel.CurrentPoster == null)
+				//{
+				//	// Let the MapDisplay know to stop any current MapLoader job.
+				//	MapDisplayViewModel.CurrentJobAreaAndCalcSettings = null;
+				//}
+
 				var curPoster = PosterViewModel.CurrentPoster;
 
 				if (curPoster != null)
 				{
-					MapScrollViewModel.VMax = curPoster.JobAreaInfo.CanvasSize.Height;
-					MapScrollViewModel.HMax = curPoster.JobAreaInfo.CanvasSize.Width;
+					MapScrollViewModel.PosterSize = curPoster.JobAreaInfo.CanvasSize;
+				}
+				else
+				{
+					MapScrollViewModel.PosterSize = null;
+					// Let the MapDisplay know to stop any current MapLoader job.
+					MapDisplayViewModel.CurrentJobAreaAndCalcSettings = null;
 				}
 			}
 
@@ -150,7 +175,6 @@ namespace MSetExplorer
 				MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
 				MapCoordsViewModel.CurrentJobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
 				MapDisplayViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
-				//MapScrollViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
 			}
 
 			else if (e.PropertyName == nameof(IPosterViewModel.DisplayZoom))

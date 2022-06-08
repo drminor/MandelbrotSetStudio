@@ -10,7 +10,8 @@ namespace MSetExplorer
 		event PropertyChangedEventHandler? PropertyChanged;
 
 		SizeInt CanvasSize { get; set; }
-		double DisplayZoom { get; set; }
+		double DisplayZoom { get; }
+		double MinimumDisplayZoom { get; }
 
 		Poster? CurrentPoster { get; }
 		string? CurrentPosterName { get; }

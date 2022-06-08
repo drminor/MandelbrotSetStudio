@@ -26,6 +26,12 @@ namespace MSS.Types
 			return new SizeDbl(Width + amount, Height + amount);
 		}
 
+		public SizeDbl Inflate(SizeInt amount)
+		{
+			return new SizeDbl(Width + amount.Width, Height + amount.Height);
+		}
+
+
 		public SizeDbl Deflate(int amount)
 		{
 			return new SizeDbl(Width - amount, Height - amount);

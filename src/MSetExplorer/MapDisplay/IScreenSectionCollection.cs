@@ -5,8 +5,7 @@ namespace MSetExplorer
 {
 	internal interface IScreenSectionCollection
 	{
-		DrawingGroup DrawingGroup { get; }
-		SizeInt CanvasSizeInWholeBlocks { get; set; }
+		SizeInt CanvasSizeInBlocks { get; set; }
 
 		void Draw(PointInt position, byte[] pixels);
 		void Redraw(PointInt position);

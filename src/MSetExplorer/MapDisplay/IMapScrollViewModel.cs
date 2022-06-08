@@ -1,4 +1,4 @@
-﻿using MSS.Types.MSet;
+﻿using MSS.Types;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -7,15 +7,12 @@ namespace MSetExplorer
 	{
 		IMapDisplayViewModel MapDisplayViewModel { get; init; }
 
-		//JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings { get; set; }
+		SizeInt? PosterSize { get; set; }
 
 		double VerticalPosition { get; set; }
 		double HorizontalPosition { get; set; }
 
-		double VMax { get; set; }
-		double HMax { get; set; }
-
-		double VerticalViewPortSize { get; }
-		double HorizontalViewPortSize { get; }
+		//double VMax { get; set; }
+		//double HMax { get; set; }
 	}
 }
