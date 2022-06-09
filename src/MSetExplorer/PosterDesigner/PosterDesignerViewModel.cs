@@ -51,19 +51,6 @@ namespace MSetExplorer
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 		}
 
-		private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(IMapScrollViewModel.HorizontalPosition) || e.PropertyName == nameof(IMapScrollViewModel.VerticalPosition))
-			{
-				if (PosterViewModel.CurrentPoster != null)
-				{
-					// TODO: Update VectorInt to take a pair of doubles.
-					// OR: Add a Position Property to the IMapScrollViewModel of type VectorInt.
-					PosterViewModel.CurrentPoster.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), (int)Math.Round(MapScrollViewModel.VerticalPosition));
-				}
-			}
-		}
-
 		#endregion
 
 		#region Public Properties
@@ -135,24 +122,6 @@ namespace MSetExplorer
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
-				//var curPoster = PosterViewModel.CurrentPoster;
-
-				//if (curPoster != null)
-				//{
-				//	MapScrollViewModel.VMax = curPoster.JobAreaInfo.CanvasSize.Height;
-				//	MapScrollViewModel.HMax = curPoster.JobAreaInfo.CanvasSize.Width;
-				//}
-				//else
-				//{
-				//	MapDisplayViewModel.CurrentJobAreaAndCalcSettings = null;
-				//}
-
-				//if (PosterViewModel.CurrentPoster == null)
-				//{
-				//	// Let the MapDisplay know to stop any current MapLoader job.
-				//	MapDisplayViewModel.CurrentJobAreaAndCalcSettings = null;
-				//}
-
 				var curPoster = PosterViewModel.CurrentPoster;
 
 				if (curPoster != null)
@@ -162,6 +131,7 @@ namespace MSetExplorer
 				else
 				{
 					MapScrollViewModel.PosterSize = null;
+
 					// Let the MapDisplay know to stop any current MapLoader job.
 					MapDisplayViewModel.CurrentJobAreaAndCalcSettings = null;
 				}
@@ -183,13 +153,13 @@ namespace MSetExplorer
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
-			else if (e.PropertyName == nameof(IPosterViewModel.CurrentColorBandSet))
+			else if (e.PropertyName == nameof(IPosterViewModel.ColorBandSet))
 			{
-				ColorBandSetViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
+				ColorBandSetViewModel.ColorBandSet = PosterViewModel.ColorBandSet;
 
-				if (PosterViewModel.CurrentColorBandSet != null)
+				if (PosterViewModel.ColorBandSet != null)
 				{
-					MapDisplayViewModel.SetColorBandSet(PosterViewModel.CurrentColorBandSet, updateDisplay: true);
+					MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: true);
 				}
 			}
 		}
@@ -223,6 +193,16 @@ namespace MSetExplorer
 				DispWidth = MapDisplayViewModel.CanvasSize.Width;
 				DispHeight = MapDisplayViewModel.CanvasSize.Height;
 				PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+			}
+		}
+
+		private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName is (nameof(IMapScrollViewModel.HorizontalPosition)) or (nameof(IMapScrollViewModel.InvertedVerticalPosition)))
+			{
+				// TODO: Update VectorInt to take a pair of doubles.
+				// OR: Add a Position Property to the IMapScrollViewModel of type VectorInt.
+				PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), (int)Math.Round(MapScrollViewModel.InvertedVerticalPosition));
 			}
 		}
 

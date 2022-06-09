@@ -59,6 +59,9 @@ namespace MSetExplorer
 				_mapDisplayImage = new Image { Source = _vm.ImageSource };
 				_ = _canvas.Children.Add(_mapDisplayImage);
 
+				_offset = new VectorInt(-1, -1);
+				_offsetZoom = 0;
+
 				SetCanvasOffset(new VectorInt(), 0);
 				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
 
@@ -187,7 +190,7 @@ namespace MSetExplorer
 		/// </summary>
 		private void SetCanvasOffset(VectorInt value, double displayZoom)
 		{
-			if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.1)
+			if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
 			{
 				Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
 				Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
@@ -195,14 +198,13 @@ namespace MSetExplorer
 				_offset = value;
 				_offsetZoom = displayZoom;
 
-				var inverted = value.Invert();
+				// For a postive offset, we "pull" the image down and to the left.
+				var invertedOffset = value.Invert();
 
-				inverted.Scale(displayZoom);
+				var scaledInvertedOffset = invertedOffset.Scale(displayZoom);
 
-				_mapDisplayImage.SetValue(Canvas.LeftProperty, (double)inverted.X);
-				_mapDisplayImage.SetValue(Canvas.BottomProperty, (double)inverted.Y);
-
-
+				_mapDisplayImage.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
+				_mapDisplayImage.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
 			}
 
 			//_vm.ClipRegion = new SizeDbl(

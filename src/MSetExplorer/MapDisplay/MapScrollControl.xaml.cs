@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
-				_vm.PropertyChanged += ViewModel_PropertyChanged;
+				_vm.PropertyChanged += MapScrollViewModel_PropertyChanged;
 				_vm.MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
 				HScrollBar.Scroll += HScrollBar_Scroll;
@@ -45,6 +45,10 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Event Handlers
+
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
@@ -52,6 +56,28 @@ namespace MSetExplorer
 				ConfigureScrollBars(_vm.MapDisplayViewModel.LogicalDisplaySize, _vm.PosterSize);
 			}
 		}
+
+		private void MapScrollViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(IMapScrollViewModel.PosterSize))
+			{
+				ConfigureScrollBars(_vm.MapDisplayViewModel.LogicalDisplaySize, _vm.PosterSize);
+			}
+		}
+
+		private void VScrollBar_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+		{
+			_vm.VerticalPosition = e.NewValue;
+		}
+
+		private void HScrollBar_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+		{
+			_vm.HorizontalPosition = e.NewValue;
+		}
+
+		#endregion
+
+		#region Private Methods
 
 		private void ConfigureScrollBars(SizeDbl logicalDisplaySize, SizeInt? posterSize)
 		{
@@ -61,23 +87,6 @@ namespace MSetExplorer
 
 				try
 				{
-					//var displaySize = _vm.MapDisplayViewModel.CanvasSize;
-					//var verticalViewPortSize = displaySize.Height * logicalDisplaySize.Height / posterSize.Value.Height;
-
-					//VScrollBar.Maximum = (int)Math.Round(displaySize.Height - verticalViewPortSize);
-
-					//VScrollBar.ViewportSize = verticalViewPortSize;
-					//VScrollBar.LargeChange = verticalViewPortSize;
-					//VScrollBar.SmallChange = 0.125 * verticalViewPortSize;
-
-					//var horizontalViewPortSize = displaySize.Width * logicalDisplaySize.Width / posterSize.Value.Width;
-
-					//HScrollBar.Maximum = (int)Math.Round(displaySize.Width - horizontalViewPortSize);
-					//HScrollBar.ViewportSize = horizontalViewPortSize;
-					//HScrollBar.LargeChange = horizontalViewPortSize;
-					//HScrollBar.SmallChange = 0.125 * horizontalViewPortSize;
-
-
 					VScrollBar.Maximum = posterSize.Value.Height - logicalDisplaySize.Height;
 					var verticalViewPortSize = logicalDisplaySize.Height;
 
@@ -102,7 +111,6 @@ namespace MSetExplorer
 			{
 				ConfigureScrollBarsWithDefautVals();
 			}
-
 		}
 
 		private void ConfigureScrollBarsWithDefautVals()
@@ -116,40 +124,6 @@ namespace MSetExplorer
 			HScrollBar.ViewportSize = 1024;
 			HScrollBar.LargeChange = 128;
 			HScrollBar.SmallChange = 1;
-		}
-
-		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			//if (e.PropertyName == nameof(IMapScrollViewModel.VMax))
-			//{
-			//	VScrollBar.Maximum = _vm.VMax;
-			//	//VScrollBar.ViewportSize = _vm.VerticalViewPortSize;
-			//	//VScrollBar.LargeChange = _vm.VerticalViewPortSize;
-			//	//VScrollBar.SmallChange = 0.125 * VScrollBar.LargeChange;
-			//}
-
-			//else if (e.PropertyName == nameof(IMapScrollViewModel.HMax))
-			//{
-			//	HScrollBar.Maximum = _vm.HMax;
-			//	//HScrollBar.ViewportSize = _vm.HorizontalViewPortSize;
-			//	//HScrollBar.LargeChange = _vm.HorizontalViewPortSize;
-			//	//HScrollBar.SmallChange = 0.125 * HScrollBar.LargeChange;
-			//}
-
-			if (e.PropertyName == nameof(IMapScrollViewModel.PosterSize))
-			{
-				ConfigureScrollBars(_vm.MapDisplayViewModel.LogicalDisplaySize, _vm.PosterSize);
-			}
-		}
-
-		private void VScrollBar_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
-		{
-			_vm.VerticalPosition = e.NewValue;
-		}
-
-		private void HScrollBar_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
-		{
-			_vm.HorizontalPosition = e.NewValue;
 		}
 
 		#endregion

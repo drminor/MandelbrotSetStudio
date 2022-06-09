@@ -1,15 +1,14 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Windows;
-using System.Windows.Input;
 using System.Diagnostics.CodeAnalysis;
-using MSS.Types.MSet;
-using MSS.Common;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Globalization;
+using System.Windows;
+using System.Windows.Input;
 
 namespace MSetExplorer
 {
@@ -82,12 +81,15 @@ namespace MSetExplorer
 					val = 1;
 				}
 
-				_vm.PosterViewModel.CurrentPoster.DisplayZoom = val;
-
-				var adjustedDisplayZoom = _vm.PosterViewModel.DisplayZoom;
-
-				txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom * 100).ToString(CultureInfo.InvariantCulture);
+				SetDisplayZoom(val);
 			}
+		}
+
+		private void SetDisplayZoom(double val)
+		{
+			_vm.PosterViewModel.DisplayZoom = val;
+			var adjustedDisplayZoom = _vm.PosterViewModel.DisplayZoom;
+			txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom * 100).ToString(CultureInfo.InvariantCulture);
 		}
 
 		private void PosterDesignerWindow_ContentRendered(object? sender, EventArgs e)
@@ -119,7 +121,7 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
-				Title = GetWindowTitle(_vm.PosterViewModel.CurrentPoster?.Name, _vm.PosterViewModel.CurrentColorBandSet?.Name);
+				Title = GetWindowTitle(_vm.PosterViewModel.CurrentPoster?.Name, _vm.PosterViewModel.ColorBandSet?.Name);
 				CommandManager.InvalidateRequerySuggested();
 			}
 
@@ -394,7 +396,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			var initialName = _vm.PosterViewModel.CurrentColorBandSet?.Name ?? string.Empty;
+			var initialName = _vm.PosterViewModel.ColorBandSet?.Name ?? string.Empty;
 			if (ColorsShowOpenWindow(initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
@@ -405,7 +407,7 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"User declined to import a ColorBandSet.");
-				var projectsColorBandSet = _vm.PosterViewModel.CurrentColorBandSet;
+				var projectsColorBandSet = _vm.PosterViewModel.ColorBandSet;
 
 				if (_vm.MapDisplayViewModel.ColorBandSet != projectsColorBandSet && projectsColorBandSet != null)
 				{
@@ -422,7 +424,7 @@ namespace MSetExplorer
 
 		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var curColorBandSet = _vm.PosterViewModel.CurrentColorBandSet;
+			var curColorBandSet = _vm.PosterViewModel.ColorBandSet;
 
 			if (curColorBandSet == null)
 			{
@@ -532,7 +534,6 @@ namespace MSetExplorer
 
 		#endregion
 
-
 		#region DisplayZoom Min Max Button Handlers
 
 		private void ButtonSetMaxZoom_Click(object sender, RoutedEventArgs e)
@@ -541,28 +542,14 @@ namespace MSetExplorer
 			_vm.MapScrollViewModel.VerticalPosition = 0;
 			_vm.MapScrollViewModel.HorizontalPosition = 0;
 
-			var curPoster = _vm.PosterViewModel.CurrentPoster;
-
-			if (curPoster != null)
-			{
-				curPoster.DisplayZoom = 0;
-				var adjustedDisplayZoom = _vm.PosterViewModel.DisplayZoom;
-				txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom * 100).ToString(CultureInfo.InvariantCulture);
-			}
+			SetDisplayZoom(0);
 		}
 
 		private void ButtonSetMinZoom_Click(object sender, RoutedEventArgs e)
 		{
 			scrBarZoom.Value = 1;
 
-			var curPoster = _vm.PosterViewModel.CurrentPoster;
-
-			if (curPoster != null)
-			{
-				curPoster.DisplayZoom = 1;
-				var adjustedDisplayZoom = _vm.PosterViewModel.DisplayZoom;
-				txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom * 100).ToString(CultureInfo.InvariantCulture);
-			}
+			SetDisplayZoom(1);
 		}
 
 		#endregion

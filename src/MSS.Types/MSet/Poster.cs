@@ -168,8 +168,6 @@ namespace MSS.Types
 			}
 		}
 
-
-
 		public DateTime DateCreatedUtc { get; init; }
 
 		public DateTime LastSavedUtc

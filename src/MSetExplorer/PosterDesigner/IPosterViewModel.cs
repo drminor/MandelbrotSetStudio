@@ -10,21 +10,23 @@ namespace MSetExplorer
 		event PropertyChangedEventHandler? PropertyChanged;
 
 		SizeInt CanvasSize { get; set; }
-		double DisplayZoom { get; }
-		double MinimumDisplayZoom { get; }
 
 		Poster? CurrentPoster { get; }
 		string? CurrentPosterName { get; }
 		bool CurrentPosterOnFile { get; }
 		bool CurrentPosterIsDirty { get; }
 
+		ColorBandSet? ColorBandSet { get; set; }
+
+		VectorInt DisplayPosition { get; set; }
+		double DisplayZoom { get; set; }
+		double MinimumDisplayZoom { get; }
+
 		JobAreaAndCalcSettings JobAreaAndCalcSettings { get; }
 
-		ColorBandSet? CurrentColorBandSet { get; }
-
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
+		//void UpdateMapCoordinates(RRectangle coords);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
-		void UpdateMapCoordinates(RRectangle coords);
 
 		bool PosterOpen(string name);
 		void PosterSave();

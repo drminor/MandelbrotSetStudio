@@ -219,7 +219,7 @@ namespace ImageBuilder
 			}
 			else
 			{
-				int[] result = new int[stride];
+				var result = new int[stride];
 
 				Array.Copy(counts, lPtr * stride, result, 0, stride);
 				return result;

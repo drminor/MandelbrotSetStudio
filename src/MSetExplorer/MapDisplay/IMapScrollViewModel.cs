@@ -9,6 +9,7 @@ namespace MSetExplorer
 
 		SizeInt? PosterSize { get; set; }
 
+		double InvertedVerticalPosition { get; }
 		double VerticalPosition { get; set; }
 		double HorizontalPosition { get; set; }
 

@@ -5,19 +5,16 @@ namespace MSetExplorer
 {
 	internal class MapScrollViewModel : ViewModelBase, IMapScrollViewModel
 	{
-		//private double _vMax;
-		//private double _hMax;
-
+		private double _invertedVerticalPosition;
 		private double _verticalPosition;
 		private double _horizontalPosition;
+		private SizeInt? _posterSize;
 
 		#region Constructor
 
 		public MapScrollViewModel(IMapDisplayViewModel mapDisplayViewModel)
 		{
 			MapDisplayViewModel = mapDisplayViewModel;
-			//VMax = 1024;
-			//HMax = 1024;
 		}
 
 		#endregion
@@ -25,6 +22,21 @@ namespace MSetExplorer
 		#region Public Properties 
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; init; }
+
+
+		public double InvertedVerticalPosition
+		{
+			get => _invertedVerticalPosition;
+			private set
+			{
+				if (value != _invertedVerticalPosition)
+				{
+					_invertedVerticalPosition = value;
+					OnPropertyChanged(nameof(IMapScrollViewModel.InvertedVerticalPosition));
+				}
+			}
+		}
+
 
 		public double VerticalPosition
 		{
@@ -34,6 +46,8 @@ namespace MSetExplorer
 				if (value != _verticalPosition)
 				{
 					_verticalPosition = value;
+					//InvertedVerticalPosition = PosterSize.HasValue ? PosterSize.Value.Height - _verticalPosition : 0;
+					InvertedVerticalPosition = _verticalPosition;
 					OnPropertyChanged(nameof(IMapScrollViewModel.VerticalPosition));
 				}
 			}
@@ -44,7 +58,7 @@ namespace MSetExplorer
 			get => _horizontalPosition;
 			set
 			{
-				if (value != _verticalPosition)
+				if (value != _horizontalPosition)
 				{
 					_horizontalPosition = value;
 					OnPropertyChanged(nameof(IMapScrollViewModel.HorizontalPosition));
@@ -52,7 +66,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private SizeInt? _posterSize;
 		public SizeInt? PosterSize
 		{
 			get => _posterSize;
@@ -62,36 +75,16 @@ namespace MSetExplorer
 				if (value != _posterSize)
 				{
 					_posterSize = value;
+					//InvertedVerticalPosition = PosterSize.HasValue ? PosterSize.Value.Height - _verticalPosition : 0;
 					OnPropertyChanged(nameof(IMapScrollViewModel.PosterSize));
+
+					OnPropertyChanged(nameof(IMapScrollViewModel.HorizontalPosition));
+					OnPropertyChanged(nameof(IMapScrollViewModel.InvertedVerticalPosition));
+					OnPropertyChanged(nameof(IMapScrollViewModel.VerticalPosition));
+
 				}
 			}
 		}
-
-		//public double VMax
-		//{
-		//	get => _vMax;
-		//	set
-		//	{
-		//		if (value != _vMax)
-		//		{
-		//			_vMax = value;
-		//			OnPropertyChanged(nameof(IMapScrollViewModel.VMax));
-		//		}
-		//	}
-		//}
-
-		//public double HMax
-		//{
-		//	get => _hMax;
-		//	set
-		//	{
-		//		if (value != _hMax)
-		//		{
-		//			_hMax = value;
-		//			OnPropertyChanged(nameof(IMapScrollViewModel.HMax));
-		//		}
-		//	}
-		//}
 
 		#endregion
 

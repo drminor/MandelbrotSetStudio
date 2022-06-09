@@ -22,6 +22,7 @@ namespace MSetExplorer
 		private int? _currentMapLoaderJobNumber;
 
 		private readonly DrawingGroup _drawingGroup;
+		private readonly ScaleTransform _scaleTransform;
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
 		private SizeInt _canvasSize;
@@ -53,6 +54,8 @@ namespace MSetExplorer
 			BlockSize = blockSize;
 
 			_drawingGroup = new DrawingGroup();
+			_scaleTransform = new ScaleTransform();
+			_drawingGroup.Transform = _scaleTransform;
 			_screenSectionCollection = new ScreenSectionCollection(_drawingGroup, BlockSize, INITIAL_SCREEN_SECTION_ALLOCATION);
 			ImageSource = new DrawingImage(_drawingGroup);
 
@@ -67,7 +70,7 @@ namespace MSetExplorer
 
 			_logicalDisplaySize = new SizeDbl();
 
-			DisplayZoom = 0.55;
+			DisplayZoom = 1.0;
 			ContainerSize = new SizeDbl(1050, 1050);
 
 			CanvasControlOffset = new VectorInt();
@@ -250,7 +253,9 @@ namespace MSetExplorer
 				{
 					_displayZoom = value;
 
-					_drawingGroup.Transform = new ScaleTransform(_displayZoom, _displayZoom);
+					//_drawingGroup.Transform = new ScaleTransform(_displayZoom, _displayZoom);
+					_scaleTransform.ScaleX = _displayZoom;
+					_scaleTransform.ScaleY = _displayZoom;
 
 					LogicalDisplaySize = new SizeDbl(CanvasSize).Scale(1 / _displayZoom);
 
