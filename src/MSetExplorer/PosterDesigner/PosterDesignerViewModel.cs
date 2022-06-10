@@ -147,10 +147,10 @@ namespace MSetExplorer
 				MapDisplayViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
 			}
 
-			else if (e.PropertyName == nameof(IPosterViewModel.DisplayZoom))
-			{
-				MapDisplayViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
-			}
+			//else if (e.PropertyName == nameof(IPosterViewModel.DisplayZoom))
+			//{
+			//	MapDisplayViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
+			//}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
 			else if (e.PropertyName == nameof(IPosterViewModel.ColorBandSet))
@@ -194,6 +194,11 @@ namespace MSetExplorer
 				DispHeight = MapDisplayViewModel.CanvasSize.Height;
 				PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 			}
+
+			if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
+			{
+				PosterViewModel.LogicalDisplaySize = MapDisplayViewModel.LogicalDisplaySize;
+			}
 		}
 
 		private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -203,6 +208,12 @@ namespace MSetExplorer
 				// TODO: Update VectorInt to take a pair of doubles.
 				// OR: Add a Position Property to the IMapScrollViewModel of type VectorInt.
 				PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), (int)Math.Round(MapScrollViewModel.InvertedVerticalPosition));
+			}
+
+			else if (e.PropertyName == nameof(IMapScrollViewModel.DisplayZoom))
+			{
+				PosterViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
+				MapDisplayViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
 			}
 		}
 

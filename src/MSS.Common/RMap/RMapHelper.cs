@@ -232,44 +232,69 @@ namespace MSS.Common
 
 		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
-			var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainderW);
-			var wE = Math.DivRem(remainderW + canvasControlOffset.X, blockSize.Width, out var remainderW2);
-			w += wE;
-			w = remainderW2 > 0 ? w + 1 : w;
+			var sizeCorrection = blockSize.Sub(canvasControlOffset).Mod(blockSize);
+			var totalSize = canvasSize.Inflate(sizeCorrection);
+			var rawResult = totalSize.DivRem(blockSize, out var remainder);
+			var extra = new SizeInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
+			var result = rawResult.Inflate(extra);
 
-			var h = Math.DivRem(canvasSize.Height, blockSize.Height, out var remainderH);
-			var hE = Math.DivRem(remainderH + canvasControlOffset.Y, blockSize.Height, out var remainderH2);
-			h += hE;
-			h = remainderH2 > 0 ? h + 1 : h;
+			//var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainderW);
+			//var wE = Math.DivRem(remainderW + canvasControlOffset.X, blockSize.Width, out var remainderW2);
+			//w += wE;
+			//w = remainderW2 > 0 ? w + 1 : w;
 
-			var result = new SizeInt(w, h);
+			//var h = Math.DivRem(canvasSize.Height, blockSize.Height, out var remainderH);
+			//var hE = Math.DivRem(remainderH + canvasControlOffset.Y, blockSize.Height, out var remainderH2);
+			//h += hE;
+			//h = remainderH2 > 0 ? h + 1 : h;
+
+			//var result = new SizeInt(w, h);
 			return result;
 		}
 
 		public static SizeInt GetMapExtentInBlocks(SizeDbl canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
-			var wRat = canvasSize.Width / blockSize.Width;
-			var w = Math.Truncate(wRat);
-			var remainderW = wRat - w;
-			var wERat = remainderW + canvasControlOffset.X / (double) blockSize.Width;
-			var wE = Math.Truncate(wERat);
-			var remainderW2 = wERat - wE;
 
-			w += wE;
-			w = remainderW2 > 0 ? w + 1 : w;
+			//var totalWidth = canvasSize.Width + blockSize.Width - canvasControlOffset.X;
+			//var totalHeight = canvasSize.Height + blockSize.Height - canvasControlOffset.Y;
 
-			var hRat = canvasSize.Height / blockSize.Height;
-			var h = Math.Truncate(hRat);
-			var remainderH = hRat - h;
-			var hERat = remainderH + canvasControlOffset.Y / (double)blockSize.Height;
-			var hE = Math.Truncate(hERat);
+			//var totalSize = new SizeDbl(totalWidth, totalHeight);
 
-			var remainderH2 = hERat - hE;
+			//var result = totalSize.DivRem(blockSize, out var remainder);
 
-			h += hE;
-			h = remainderH2 > 0 ? h + 1 : h;
+			//var extra = new SizeInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
 
-			var result = new SizeDbl(w, h).Round();
+			//result = result.Inflate(extra);
+
+			var sizeCorrection = blockSize.Sub(canvasControlOffset).Mod(blockSize);
+			var totalSize = canvasSize.Inflate(sizeCorrection);
+			var rawResult = totalSize.DivRem(blockSize, out var remainder);
+			var extra = new SizeInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
+			var result = rawResult.Inflate(extra);
+
+
+			//var wRat = canvasSize.Width / blockSize.Width;
+			//var w = Math.Truncate(wRat);
+			//var remainderW = wRat - w;
+			//var wERat = remainderW + canvasControlOffset.X / (double) blockSize.Width;
+			//var wE = Math.Truncate(wERat);
+			//var remainderW2 = wERat - wE;
+
+			//w += wE;
+			//w = remainderW2 > 0 ? w + 1 : w;
+
+			//var hRat = canvasSize.Height / blockSize.Height;
+			//var h = Math.Truncate(hRat);
+			//var remainderH = hRat - h;
+			//var hERat = remainderH + canvasControlOffset.Y / (double)blockSize.Height;
+			//var hE = Math.Truncate(hERat);
+
+			//var remainderH2 = hERat - hE;
+
+			//h += hE;
+			//h = remainderH2 > 0 ? h + 1 : h;
+
+			//var result = new SizeDbl(w, h).Round();
 			return result;
 		}
 

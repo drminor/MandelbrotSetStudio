@@ -94,20 +94,25 @@ namespace MSS.Types
 			return result;
 		}
 
-		//public SizeInt DivRem(SizeInt dividend, out SizeInt remainder)
-		//{
-		//	var blocksH = Math.DivRem(Width, dividend.Width, out var remainderH);
-		//	var blocksV = Math.DivRem(Height, dividend.Height, out var remainderV);
+		public SizeInt DivRem(SizeInt dividend, out SizeInt remainder)
+		{
+			var w = Math.DivRem(Width, dividend.Width, out var remainderW);
+			var h = Math.DivRem(Height, dividend.Height, out var remainderH);
 
-		//	remainder = new SizeInt(remainderH, remainderV);
-		//	var result = new SizeInt(blocksH, blocksV);
+			remainder = new SizeInt(remainderW, remainderH);
+			var result = new SizeInt(w, h);
 
-		//	return result;
-		//}
+			return result;
+		}
 
 		public SizeInt Mod(VectorInt dividend)
 		{
 			return new SizeInt(Width % dividend.X, Height % dividend.Y);
+		}
+
+		public SizeInt Mod(SizeInt dividend)
+		{
+			return new SizeInt(Width % dividend.Width, Height % dividend.Height);
 		}
 
 		//public SizeInt Abs()
@@ -126,6 +131,14 @@ namespace MSS.Types
 			var result = new SizeInt(Width - amount.Width, Height - amount.Height);
 			return result;
 		}
+
+
+		public SizeInt Sub(VectorInt amount)
+		{
+			var result = new SizeInt(Width - amount.X, Height - amount.Y);
+			return result;
+		}
+
 
 		public override string? ToString()
 		{

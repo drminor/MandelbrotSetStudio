@@ -10,6 +10,7 @@ namespace MSetExplorer
 		event PropertyChangedEventHandler? PropertyChanged;
 
 		SizeInt CanvasSize { get; set; }
+		SizeInt LogicalDisplaySize { get; set; }
 
 		Poster? CurrentPoster { get; }
 		string? CurrentPosterName { get; }
@@ -20,7 +21,7 @@ namespace MSetExplorer
 
 		VectorInt DisplayPosition { get; set; }
 		double DisplayZoom { get; set; }
-		double MinimumDisplayZoom { get; }
+		//double MinimumDisplayZoom { get; }
 
 		JobAreaAndCalcSettings JobAreaAndCalcSettings { get; }
 

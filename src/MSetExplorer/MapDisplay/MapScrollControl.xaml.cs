@@ -79,12 +79,10 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void ConfigureScrollBars(SizeDbl logicalDisplaySize, SizeInt? posterSize)
+		private void ConfigureScrollBars(SizeInt logicalDisplaySize, SizeInt? posterSize)
 		{
 			if (posterSize.HasValue)
 			{
-				// NOTE: LogicalDisplaySize = new SizeDbl(CanvasSize).Scale(1 / _displayZoom);
-
 				try
 				{
 					VScrollBar.Maximum = posterSize.Value.Height - logicalDisplaySize.Height;

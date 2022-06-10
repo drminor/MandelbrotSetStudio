@@ -77,6 +77,24 @@ namespace MSS.Types
 			return result;
 		}
 
+		public SizeInt DivRem(SizeInt dividend, out SizeDbl remainder)
+		{
+			var w = DivRem(Width, dividend.Width, out var remainderW);
+			var h = DivRem(Height, dividend.Height, out var remainderH);
+
+			remainder = new SizeDbl(remainderW, remainderH);
+			return new SizeInt(w, h);
+		}
+
+		private int DivRem(double dividend, double divisor, out double remainder)
+		{
+			var rat = dividend / divisor;
+			var result = Math.Truncate(rat);
+			remainder = rat - result;
+
+			return (int) result;
+		}
+
 		//public SizeDbl Mod(SizeInt dividend)
 		//{
 		//	return new SizeDbl(Width % dividend.Width, Height % dividend.Height);

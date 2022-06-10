@@ -45,7 +45,12 @@ namespace MSetExplorer
 			{
 				_vm = (IPosterDesignerViewModel)DataContext;
 				_vm.PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
+
+				_vm.PosterViewModel.LogicalDisplaySize = _vm.MapDisplayViewModel.LogicalDisplaySize;
+				_vm.MapScrollViewModel.CanvasSize = _vm.MapDisplayViewModel.CanvasSize;
+
 				mapScroll1.DataContext = _vm.MapScrollViewModel;
+				_vm.MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
@@ -57,8 +62,8 @@ namespace MSetExplorer
 				scrBarZoom.Value = 1;
 
 				scrBarZoom.Maximum = 1;
-				scrBarZoom.SmallChange = 0.1;
-				scrBarZoom.LargeChange = 0.2;
+				scrBarZoom.SmallChange = 0.17;
+				scrBarZoom.LargeChange = 1.7;
 
 				scrBarZoom.Scroll += ScrBarZoom_Scroll;
 
@@ -71,15 +76,15 @@ namespace MSetExplorer
 			if (_vm.PosterViewModel.CurrentPoster != null)
 			{
 				var val = e.NewValue;
-				if (val < 0)
-				{
-					val = 0;
-				}
-
-				if (val > 1)
+				if (val < 1)
 				{
 					val = 1;
 				}
+
+				//if (val > 1)
+				//{
+				//	val = 1;
+				//}
 
 				SetDisplayZoom(val);
 			}
@@ -87,8 +92,8 @@ namespace MSetExplorer
 
 		private void SetDisplayZoom(double val)
 		{
-			_vm.PosterViewModel.DisplayZoom = val;
-			var adjustedDisplayZoom = _vm.PosterViewModel.DisplayZoom;
+			_vm.MapScrollViewModel.DisplayZoom = val;
+			var adjustedDisplayZoom = _vm.MapScrollViewModel.DisplayZoom;
 			txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom * 100).ToString(CultureInfo.InvariantCulture);
 		}
 
@@ -125,14 +130,19 @@ namespace MSetExplorer
 				CommandManager.InvalidateRequerySuggested();
 			}
 
-			if (e.PropertyName == nameof(IPosterViewModel.MinimumDisplayZoom))
-			{
-				scrBarZoom.Minimum = _vm.PosterViewModel.MinimumDisplayZoom;
-			}
-
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectOnFile) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectIsDirty))
 			{
 				CommandManager.InvalidateRequerySuggested();
+			}
+		}
+
+		private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(IMapScrollViewModel.MaximumDisplayZoom))
+			{
+				scrBarZoom.Maximum = _vm.MapScrollViewModel.MaximumDisplayZoom;
+				scrBarZoom.LargeChange = scrBarZoom.Maximum / 8;
+				scrBarZoom.SmallChange = scrBarZoom.LargeChange / 8;
 			}
 		}
 
@@ -538,17 +548,14 @@ namespace MSetExplorer
 
 		private void ButtonSetMaxZoom_Click(object sender, RoutedEventArgs e)
 		{
-			scrBarZoom.Value = 0;
-			_vm.MapScrollViewModel.VerticalPosition = 0;
-			_vm.MapScrollViewModel.HorizontalPosition = 0;
-
-			SetDisplayZoom(0);
+			var max = _vm.MapScrollViewModel.MaximumDisplayZoom;
+			scrBarZoom.Value = max;
+			SetDisplayZoom(max);
 		}
 
 		private void ButtonSetMinZoom_Click(object sender, RoutedEventArgs e)
 		{
 			scrBarZoom.Value = 1;
-
 			SetDisplayZoom(1);
 		}
 
@@ -734,9 +741,9 @@ namespace MSetExplorer
 
 			var curPoster = _vm.PosterViewModel.CurrentPoster;
 
-			if (curPoster != null)
+			if (curPoster != null && _vm.MapScrollViewModel.PosterSize.HasValue)
 			{
-				coordsEditorViewModel = new CoordsEditorViewModel(curPoster.JobAreaInfo.Coords, _vm.PosterViewModel.CanvasSize, allowEdits: true, _vm.ProjectAdapter);
+				coordsEditorViewModel = new CoordsEditorViewModel(curPoster.JobAreaInfo.Coords, _vm.MapScrollViewModel.PosterSize.Value, allowEdits: true, _vm.ProjectAdapter);
 			}
 			else
 			{

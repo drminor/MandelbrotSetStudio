@@ -28,6 +28,7 @@ namespace MSetExplorer
 		private SizeInt _canvasSize;
 		private VectorInt _canvasControlOffset;
 		private double _displayZoom;
+		private SizeInt _logicalDisplaySize;
 
 		private JobAreaAndCalcSettings? _currentJobAreaAndCalcSettings;
 
@@ -68,7 +69,7 @@ namespace MSetExplorer
 			//CanvasSize = new SizeInt(1024, 1024);
 			//var screenSectionExtent = new SizeInt(12, 12);
 
-			_logicalDisplaySize = new SizeDbl();
+			_logicalDisplaySize = new SizeInt();
 
 			DisplayZoom = 1.0;
 			ContainerSize = new SizeDbl(1050, 1050);
@@ -230,9 +231,9 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"The MapDisplay Canvas Size is now {value}.");
 					_canvasSize = value;
-					LogicalDisplaySize = new SizeDbl(_canvasSize).Scale(1 / DisplayZoom);
+					LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
 
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
 				}
 			}
 		}
@@ -242,32 +243,32 @@ namespace MSetExplorer
 		// TODO: Prevent the DisplayZoom from being set to a value that would require more than 100 x 100 blocks.
 
 		/// <summary>
-		/// Value between 0.0 and 1.0
-		/// 1.0 presents 1 map "pixel" to 1 screen pixel
-		/// 0.5 presents 2 map "pixels" to 1 screen pixel
+		/// 1 = LogicalDisplay Size = PosterSize
+		/// 2 = LogicalDisplay Size Width is 1/2 PosterSize Width (1 Screen Pixel = 2 * (CanvasSize / PosterSize)
+		/// 4 = 1/4 PosterSize
+		/// Maximum is PosterSize / Actual CanvasSize 
 		/// </summary>
 		public double DisplayZoom
 		{
 			get => _displayZoom;
 			set
 			{
-				if (Math.Abs(value  -_displayZoom) > 0.1)
+				if (Math.Abs(value  -_displayZoom) > 0.01)
 				{
 					_displayZoom = value;
 
 					//_drawingGroup.Transform = new ScaleTransform(_displayZoom, _displayZoom);
-					_scaleTransform.ScaleX = _displayZoom;
-					_scaleTransform.ScaleY = _displayZoom;
+					_scaleTransform.ScaleX = 1 / _displayZoom;
+					_scaleTransform.ScaleY = 1 / _displayZoom;
 
-					LogicalDisplaySize = new SizeDbl(CanvasSize).Scale(1 / _displayZoom);
+					LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
 
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		private SizeDbl _logicalDisplaySize;
-		public SizeDbl LogicalDisplaySize
+		public SizeInt LogicalDisplaySize
 		{
 			get => _logicalDisplaySize;
 			set
@@ -276,10 +277,9 @@ namespace MSetExplorer
 				{
 					_logicalDisplaySize = value;
 
-					UpdateScreenCollectionSize(_logicalDisplaySize, CanvasControlOffset);
-
 					Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
 
+					UpdateScreenCollectionSize(LogicalDisplaySize, CanvasControlOffset);
 					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
 				}
 			}
@@ -294,8 +294,7 @@ namespace MSetExplorer
 				{
 					_canvasControlOffset = value;
 
-					UpdateScreenCollectionSize(LogicalDisplaySize, _canvasControlOffset);
-
+					UpdateScreenCollectionSize(LogicalDisplaySize, CanvasControlOffset);
 					OnPropertyChanged();
 				}
 			}
@@ -303,12 +302,9 @@ namespace MSetExplorer
 
 		public ObservableCollection<MapSection> MapSections { get; }
 
-		private void UpdateScreenCollectionSize(SizeDbl logicalContainerSize, VectorInt canvasControlOffset)
+		private void UpdateScreenCollectionSize(SizeInt logicalContainerSize, VectorInt canvasControlOffset)
 		{
 			// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
-
-			//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(logicalContainerSize, BlockSize, _keepDisplaySquare);
-
 			var sizeInBlocks = RMapHelper.GetMapExtentInBlocks(logicalContainerSize, canvasControlOffset, BlockSize);
 
 			_screenSectionCollection.CanvasSizeInBlocks = sizeInBlocks;

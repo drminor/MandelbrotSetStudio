@@ -12,7 +12,8 @@ namespace MSetExplorer
 		private readonly ProjectAdapter _projectAdapter;
 
 		private SizeInt _canvasSize;
-		private double _minimumDisplayZoom;
+		private SizeInt _logicalDisplaySize;
+
 		private Poster? _currentPoster;
 
 		JobAreaAndCalcSettings _jobAreaAndCalcSettings;
@@ -51,14 +52,28 @@ namespace MSetExplorer
 				if(value != _canvasSize)
 				{
 					_canvasSize = value;
-					MinimumDisplayZoom = GetMinimumDisplayZoom(CurrentPoster?.JobAreaInfo.CanvasSize, CanvasSize);
-
 					OnPropertyChanged(nameof(IPosterViewModel.CanvasSize));
 
-					//if (CurrentPoster != null)
-					//{
-					//	RerunWithNewDisplaySize(CurrentPoster);
-					//}
+				}
+			}
+		}
+
+		public SizeInt LogicalDisplaySize
+		{
+			get => _logicalDisplaySize;
+			set
+			{
+				if (value != _logicalDisplaySize)
+				{
+					_logicalDisplaySize = value;
+					var curPoster = CurrentPoster;
+					if (curPoster != null)
+					{
+						var viewPortArea = GetNewViewPort(curPoster.JobAreaInfo, DisplayPosition, LogicalDisplaySize);
+						JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, curPoster.MapCalcSettings);
+					}
+
+					OnPropertyChanged(nameof(IPosterViewModel.LogicalDisplaySize));
 				}
 			}
 		}
@@ -75,11 +90,10 @@ namespace MSetExplorer
 						_currentPoster.PropertyChanged -= CurrentPoster_PropertyChanged;
 					}
 					_currentPoster = value;
-					MinimumDisplayZoom = GetMinimumDisplayZoom(_currentPoster?.JobAreaInfo.CanvasSize, CanvasSize);
 
 					if (_currentPoster != null)
 					{
-						var viewPortArea = GetNewViewPort(_currentPoster.JobAreaInfo, _currentPoster.DisplayPosition, CanvasSize, DisplayZoom);
+						var viewPortArea = GetNewViewPort(_currentPoster.JobAreaInfo, _currentPoster.DisplayPosition, LogicalDisplaySize);
 						JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, _currentPoster.MapCalcSettings);
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
 					}
@@ -117,7 +131,7 @@ namespace MSetExplorer
 				{
 					if (value != DisplayPosition)
 					{
-						var viewPortArea = GetNewViewPort(curPoster.JobAreaInfo, value, CanvasSize, DisplayZoom);
+						var viewPortArea = GetNewViewPort(curPoster.JobAreaInfo, value, LogicalDisplaySize);
 						JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, curPoster.MapCalcSettings);
 
 						curPoster.DisplayPosition = value;
@@ -131,11 +145,34 @@ namespace MSetExplorer
 			}
 		}
 
-		/// <summary>
-		/// Value between 0.0 and 1.0
-		/// 1.0 presents 1 map "pixel" to 1 screen pixel
-		/// 0.5 presents 2 map "pixels" to 1 screen pixel
-		/// </summary>
+		///// <summary>
+		///// Value between 0.0 and 1.0
+		///// 1.0 presents 1 map "pixel" to 1 screen pixel
+		///// 0.5 presents 2 map "pixels" to 1 screen pixel
+		///// </summary>
+		//public double DisplayZoom
+		//{
+		//	get => CurrentPoster?.DisplayZoom ?? 1;
+		//	set
+		//	{
+		//		var curPoster = CurrentPoster;
+		//		if (curPoster != null)
+		//		{
+		//			if (Math.Abs(value - DisplayZoom) > 0.001)
+		//			{
+		//				var newDisplayZoom = Math.Max(MinimumDisplayZoom, value);
+
+		//				var viewPortArea = GetNewViewPort(curPoster.JobAreaInfo, curPoster.DisplayPosition, LogicalDisplaySize);
+		//				JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, curPoster.MapCalcSettings);
+
+		//				curPoster.DisplayZoom = newDisplayZoom;
+		//				Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
+		//				OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
+		//			}
+		//		}
+		//	}
+		//}
+
 		public double DisplayZoom
 		{
 			get => CurrentPoster?.DisplayZoom ?? 1;
@@ -146,32 +183,28 @@ namespace MSetExplorer
 				{
 					if (Math.Abs(value - DisplayZoom) > 0.001)
 					{
-						var newDisplayZoom = Math.Max(MinimumDisplayZoom, value);
-
-						var viewPortArea = GetNewViewPort(curPoster.JobAreaInfo, curPoster.DisplayPosition, CanvasSize, newDisplayZoom);
-						JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, curPoster.MapCalcSettings);
-
-						curPoster.DisplayZoom = newDisplayZoom;
-						Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
+						curPoster.DisplayZoom = value;
+						Debug.WriteLine($"The DispZoom is {value}.");
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
 					}
 				}
 			}
 		}
 
-		public double MinimumDisplayZoom
-		{
-			get => _minimumDisplayZoom;
-			private set
-			{
-				if (Math.Abs(value - _minimumDisplayZoom) > 0.001)
-				{
-					_minimumDisplayZoom = value;
-					Debug.WriteLine($"The MinDispZoom is {MinimumDisplayZoom}.");
-					OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
-				}
-			}
-		}
+
+		//public double MinimumDisplayZoom
+		//{
+		//	get => _minimumDisplayZoom;
+		//	private set
+		//	{
+		//		if (Math.Abs(value - _minimumDisplayZoom) > 0.001)
+		//		{
+		//			_minimumDisplayZoom = value;
+		//			Debug.WriteLine($"The MinDispZoom is {MinimumDisplayZoom}.");
+		//			OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
+		//		}
+		//	}
+		//}
 
 		/// <summary>
 		/// Job Area for what is currently being displayed.
@@ -187,7 +220,7 @@ namespace MSetExplorer
 					_jobAreaAndCalcSettings = value;
 
 					// TODO: Handle Poster Canvas Size changes.
-					MinimumDisplayZoom = GetMinimumDisplayZoom(CurrentPoster?.JobAreaInfo.CanvasSize, CanvasSize);
+					//MinimumDisplayZoom = GetMinimumDisplayZoom(posterSize: CurrentPoster?.JobAreaInfo.CanvasSize, CanvasSize);
 
 					OnPropertyChanged(nameof(IPosterViewModel.JobAreaAndCalcSettings));
 				}
@@ -344,37 +377,16 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private double GetMinimumDisplayZoom(SizeInt? posterSize, SizeInt displaySize)
+		private JobAreaInfo GetNewViewPort(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize)
 		{
-			double result;
-
-			if (posterSize != null)
-			{
-				var pixelsPerSampleHorizontal = displaySize.Width / (double)posterSize.Value.Width;
-				var pixelsPerSampleVertical = displaySize.Height / (double)posterSize.Value.Height;
-
-				result = Math.Max(pixelsPerSampleHorizontal, pixelsPerSampleVertical);
-			}
-			else
-			{
-				result = 0.9;
-			}
-
-			return result;
-		}
-
-		private JobAreaInfo GetNewViewPort(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt displaySize, double displayZoom)
-		{
-			var logicalDispSize = displaySize.Scale(1 / displayZoom);
-
-			var screenArea = new RectangleInt(new PointInt(displayPosition), logicalDispSize);
+			var screenArea = new RectangleInt(new PointInt(displayPosition), logicalDisplaySize);
 			var mapPosition = currentAreaInfo.Coords.Position;
 			var subdivision = currentAreaInfo.Subdivision;
 
 			var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
 			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
 
-			var result = new JobAreaInfo(newCoords, logicalDispSize, subdivision, newMapBlockOffset, newCanvasControlOffset);
+			var result = new JobAreaInfo(newCoords, logicalDisplaySize, subdivision, newMapBlockOffset, newCanvasControlOffset);
 
 			return result;
 		}
