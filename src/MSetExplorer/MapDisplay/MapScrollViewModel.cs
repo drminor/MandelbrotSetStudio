@@ -46,7 +46,7 @@ namespace MSetExplorer
 				if (value != _verticalPosition)
 				{
 					_verticalPosition = value;
-					//InvertedVerticalPosition = PosterSize.HasValue ? PosterSize.Value.Height - _verticalPosition : 0;
+					//InvertedVerticalPosition = GetInvertedYPos(value);
 					InvertedVerticalPosition = _verticalPosition;
 					OnPropertyChanged(nameof(IMapScrollViewModel.VerticalPosition));
 				}
@@ -75,15 +75,28 @@ namespace MSetExplorer
 				if (value != _posterSize)
 				{
 					_posterSize = value;
-					//InvertedVerticalPosition = PosterSize.HasValue ? PosterSize.Value.Height - _verticalPosition : 0;
+					//InvertedVerticalPosition = GetInvertedYPos(VerticalPosition);
 					OnPropertyChanged(nameof(IMapScrollViewModel.PosterSize));
-
-					OnPropertyChanged(nameof(IMapScrollViewModel.HorizontalPosition));
-					OnPropertyChanged(nameof(IMapScrollViewModel.InvertedVerticalPosition));
-					OnPropertyChanged(nameof(IMapScrollViewModel.VerticalPosition));
-
 				}
 			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private double GetInvertedYPos(double yPos)
+		{
+			double result = 0;
+
+			if (PosterSize.HasValue)
+			{
+				result = PosterSize.Value.Height - yPos;
+				var logicalDisplayHeight = MapDisplayViewModel.LogicalDisplaySize.Height;
+				result -= logicalDisplayHeight;
+			}
+
+			return result;
 		}
 
 		#endregion

@@ -43,6 +43,12 @@ namespace MSetExplorer
 			Poster = poster;
 
 			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, poster, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+
+			//_task.ContinueWith(t =>
+			//{
+
+			//}
+			//);
 		}
 
 		public void CancelCreateImage()
@@ -51,13 +57,6 @@ namespace MSetExplorer
 
 			if (_task != null)
 			{
-				//var result = Task.Run(async () => 
-				//{
-				//	await _task;
-				//});
-
-				//result.Wait();
-
 				_task.Wait();
 			}
 
@@ -66,6 +65,14 @@ namespace MSetExplorer
 			{
 				Thread.Sleep(10000);
 				File.Delete(ImageFilePath);
+			}
+		}
+
+		public void WaitForImageToComplete()
+		{
+			if (_task != null)
+			{
+				_task.Wait();
 			}
 		}
 

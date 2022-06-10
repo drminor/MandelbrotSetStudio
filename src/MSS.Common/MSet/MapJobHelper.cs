@@ -28,7 +28,7 @@ namespace MSS.Common
 			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
 			var displaySize = canvasSize;
 
-			var canvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(displaySize, blockSize);
+			var canvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(displaySize, jobAreaInfo.CanvasControlOffset, blockSize);
 
 			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
 			var jobName = GetJobName(transformType);
@@ -83,17 +83,17 @@ namespace MSS.Common
 			return result;
 		}
 
-		[Conditional("DEBUG")]
-		public static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)
-		{
-			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(new SizeDbl(canvasSize), blockSize, keepSquare: true);
+		//[Conditional("DEBUG")]
+		//public static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)
+		//{
+		//	var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInBlocks(new SizeDbl(canvasSize), blockSize, keepSquare: true);
 
-			if (sizeInWholeBlocks != new SizeInt(8))
-			{
-				Debug.WriteLine($"The canvas size is not 1024 x 1024.");
-				//throw new InvalidOperationException("For testing we need the canvas size to be 1024 x 1024.");
-			}
-		}
+		//	if (sizeInWholeBlocks != new SizeInt(8))
+		//	{
+		//		Debug.WriteLine($"The canvas size is not 1024 x 1024.");
+		//		//throw new InvalidOperationException("For testing we need the canvas size to be 1024 x 1024.");
+		//	}
+		//}
 
 		public static JobAreaInfo GetJobAreaInfo(Job job)
 		{

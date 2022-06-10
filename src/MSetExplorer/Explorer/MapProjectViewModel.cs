@@ -146,7 +146,12 @@ namespace MSetExplorer
 			{
 				CurrentProject = project;
 
-				var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, _blockSize);
+				if (project.CurrentJob.IsEmpty)
+				{
+					Debug.WriteLine("Warning the current job is empty on Project Open.");
+				}
+
+				var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, project.CurrentJob.CanvasControlOffset, _blockSize);
 				if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 				{
 					FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
@@ -438,7 +443,7 @@ namespace MSetExplorer
 
 			if (CurrentProject.GoBack(skipPanJobs))
 			{
-				var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, _blockSize);
+				var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
 				if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 				{
 					FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
@@ -472,7 +477,7 @@ namespace MSetExplorer
 
 			if (CurrentProject.GoForward(skipPanJobs))
 			{
-				var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, _blockSize);
+				var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
 				if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 				{
 					FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
@@ -503,7 +508,7 @@ namespace MSetExplorer
 		{
 			var wasUpdated = false;
 
-			var currentCanvasSizeInBlocks = RMapHelper.GetCanvasSizeInBlocks(CanvasSize, _blockSize);
+			var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
 			if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 			{
 				FindOrCreateJobForNewCanvasSize(project, CurrentJob, currentCanvasSizeInBlocks);

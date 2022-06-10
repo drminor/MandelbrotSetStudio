@@ -214,6 +214,8 @@ namespace MSetExplorer
 			{
 				_containerSize = value;
 
+				Debug.WriteLine($"The container size is now {value}.");
+
 				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_containerSize, BlockSize, _keepDisplaySquare);
 				CanvasSize = sizeInWholeBlocks.Scale(BlockSize);
 			}
@@ -274,8 +276,7 @@ namespace MSetExplorer
 				{
 					_logicalDisplaySize = value;
 
-					UpdateClipRegion(_logicalDisplaySize, CanvasControlOffset);
-					UpdateScreenCollectionSize(_logicalDisplaySize);
+					UpdateScreenCollectionSize(_logicalDisplaySize, CanvasControlOffset);
 
 					Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
 
@@ -292,7 +293,8 @@ namespace MSetExplorer
 				if (value != _canvasControlOffset)
 				{
 					_canvasControlOffset = value;
-					UpdateClipRegion(LogicalDisplaySize, _canvasControlOffset);
+
+					UpdateScreenCollectionSize(LogicalDisplaySize, _canvasControlOffset);
 
 					OnPropertyChanged();
 				}
@@ -301,24 +303,15 @@ namespace MSetExplorer
 
 		public ObservableCollection<MapSection> MapSections { get; }
 
-		private void UpdateScreenCollectionSize(SizeDbl logicalContainerSize)
+		private void UpdateScreenCollectionSize(SizeDbl logicalContainerSize, VectorInt canvasControlOffset)
 		{
 			// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
-			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(logicalContainerSize, BlockSize, _keepDisplaySquare);
-			_screenSectionCollection.CanvasSizeInBlocks = sizeInWholeBlocks;
-		}
 
-		private void UpdateClipRegion(SizeDbl displaySize, VectorInt canvasControlOffset)
-		{
-			//// TODO: Allow the View to set "No Clipping."
-			//var maxYPtr = INITIAL_SCREEN_SECTION_ALLOCATION.Height - 1;
+			//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(logicalContainerSize, BlockSize, _keepDisplaySquare);
 
-			//var clipOrigin = new Point(canvasControlOffset.X, (maxYPtr * BlockSize.Height) - (displaySize.Height + canvasControlOffset.Y));
-			////var clipOrigin = displayOrigin + ScreenTypeHelper.ConvertToVector(canvasControlOffset);
-			//var clipRect = new Rect(clipOrigin, ScreenTypeHelper.ConvertToSize(displaySize.Inflate(BlockSize.Scale(2))));
+			var sizeInBlocks = RMapHelper.GetMapExtentInBlocks(logicalContainerSize, canvasControlOffset, BlockSize);
 
-			//Debug.WriteLine($"MapDisplay's clip region is {clipRect}. The bounds are {_drawingGroup.Bounds}.");
-			//_drawingGroup.ClipGeometry = new RectangleGeometry(clipRect);
+			_screenSectionCollection.CanvasSizeInBlocks = sizeInBlocks;
 		}
 
 		#endregion
@@ -409,7 +402,7 @@ namespace MSetExplorer
 				_currentMapLoaderJobNumber = null;
 			}
 
-			if (newJob != null)
+			if (newJob?.IsEmpty == false)
 			{
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{

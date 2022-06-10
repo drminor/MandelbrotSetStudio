@@ -22,6 +22,8 @@ namespace MSS.Types.MSet
 		public JobAreaInfo JobAreaInfo { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
 
+		public bool IsEmpty => JobAreaInfo.IsEmpty;
+
 		object ICloneable.Clone()
 		{
 			throw new NotImplementedException();

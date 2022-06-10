@@ -183,19 +183,40 @@ namespace MSS.Common
 
 		#region Job Block Support
 
-		public static SizeInt GetCanvasSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
-		{
-			//var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainderW);
-			//var h = Math.DivRem(canvasSize.Height, blockSize.Height, out var remainderH);
+		//public static SizeInt GetCanvasSizeInBlocks(SizeInt canvasSize, SizeInt blockSize)
+		//{
+		//	//var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainderW);
+		//	//var h = Math.DivRem(canvasSize.Height, blockSize.Height, out var remainderH);
 
-			//w = remainderW > 0 ? w++ : w;
-			//h = remainderH > 0 ? h++ : h;
-			//var result = new SizeInt(w, h);
+		//	//w = remainderW > 0 ? ++w : w;
+		//	//h = remainderH > 0 ? ++h : h;
+		//	//var result = new SizeInt(w, h);
 
-			var result = canvasSize.Divide(blockSize).Ceiling();
+		//	var result = canvasSize.Divide(blockSize).Ceiling();
 
-			return result;
-		}
+		//	return result;
+		//}
+
+		//public static SizeInt GetCanvasSizeInBlocks(SizeDbl canvasSize, SizeInt blockSize)
+		//{
+		//	//var w = canvasSize.Width / blockSize.Width;
+		//	//var h = canvasSize.Height / blockSize.Height;
+
+		//	//var wT = Math.Truncate(w);
+		//	//var hT = Math.Truncate(h);
+
+		//	//var remainderW = w - wT;
+		//	//var remainderH = h - hT;
+
+		//	//w = remainderW > 0 ? ++w : w;
+		//	//h = remainderH > 0 ? ++h : h;
+		//	//var result = new SizeDbl(w, h).Round();
+
+		//	var result = canvasSize.Divide(blockSize).Ceiling();
+
+		//	return result;
+		//}
+
 
 		public static SizeInt GetCanvasSizeInWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)
 		{
@@ -209,9 +230,46 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
+		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
-			var result = GetCanvasSizeInBlocks(canvasSize, blockSize).Inflate(1);
+			var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainderW);
+			var wE = Math.DivRem(remainderW + canvasControlOffset.X, blockSize.Width, out var remainderW2);
+			w += wE;
+			w = remainderW2 > 0 ? w + 1 : w;
+
+			var h = Math.DivRem(canvasSize.Height, blockSize.Height, out var remainderH);
+			var hE = Math.DivRem(remainderH + canvasControlOffset.Y, blockSize.Height, out var remainderH2);
+			h += hE;
+			h = remainderH2 > 0 ? h + 1 : h;
+
+			var result = new SizeInt(w, h);
+			return result;
+		}
+
+		public static SizeInt GetMapExtentInBlocks(SizeDbl canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
+		{
+			var wRat = canvasSize.Width / blockSize.Width;
+			var w = Math.Truncate(wRat);
+			var remainderW = wRat - w;
+			var wERat = remainderW + canvasControlOffset.X / (double) blockSize.Width;
+			var wE = Math.Truncate(wERat);
+			var remainderW2 = wERat - wE;
+
+			w += wE;
+			w = remainderW2 > 0 ? w + 1 : w;
+
+			var hRat = canvasSize.Height / blockSize.Height;
+			var h = Math.Truncate(hRat);
+			var remainderH = hRat - h;
+			var hERat = remainderH + canvasControlOffset.Y / (double)blockSize.Height;
+			var hE = Math.Truncate(hERat);
+
+			var remainderH2 = hERat - hE;
+
+			h += hE;
+			h = remainderH2 > 0 ? h + 1 : h;
+
+			var result = new SizeDbl(w, h).Round();
 			return result;
 		}
 

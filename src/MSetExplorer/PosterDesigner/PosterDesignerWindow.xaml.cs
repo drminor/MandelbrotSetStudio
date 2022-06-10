@@ -357,7 +357,7 @@ namespace MSetExplorer
 
 		private string GetImageFilename(string projectName, int imageWidth)
 		{
-			var result = $"{projectName}_{imageWidth}_v1.png";
+			var result = $"{projectName}_{imageWidth}_v4.png";
 			return result;
 		}
 

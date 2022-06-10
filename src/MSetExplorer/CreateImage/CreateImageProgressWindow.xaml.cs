@@ -43,6 +43,7 @@ namespace MSetExplorer
 			if (Math.Abs(e - 100) < 1)
 			{
 				WindowState = WindowState.Normal;
+				btnCancel.Content = "Close";
 				Topmost = true;
 			}
 		}
@@ -58,8 +59,15 @@ namespace MSetExplorer
 
 		private void CancelButton_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.CancelCreateImage();
-			_ = MessageBox.Show("The operation has been cancelled.");
+			if ((btnCancel.Content as string) != "Close")
+			{
+				_vm.CancelCreateImage();
+				_ = MessageBox.Show("The operation has been cancelled.");
+			}
+			else
+			{
+				_vm.WaitForImageToComplete();
+			}
 
 			Close();
 		}

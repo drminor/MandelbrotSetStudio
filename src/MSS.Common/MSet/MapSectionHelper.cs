@@ -49,7 +49,7 @@ namespace MSS.Common
 			var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
 			var mapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
 
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.Subdivision.BlockSize);
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, jobAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
@@ -70,7 +70,7 @@ namespace MSS.Common
 			var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
 			var targetIterations = jobAreaAndCalcSettings.MapCalcSettings.TargetIterations;
 
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.Subdivision.BlockSize);
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, jobAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
 
 			var subdivisionId = jobAreaInfo.Subdivision.Id.ToString();

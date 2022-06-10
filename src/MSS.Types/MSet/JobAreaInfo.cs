@@ -13,6 +13,8 @@ namespace MSS.Types.MSet
 		public BigVector MapBlockOffset { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
 
+		public bool IsEmpty => Subdivision.BlockSize.Width == 0;
+
 		public JobAreaInfo()
 		{
 			Coords = new RRectangle();
