@@ -63,6 +63,16 @@ namespace MSetExplorer
 			{
 				ConfigureScrollBars(_vm.MapDisplayViewModel.LogicalDisplaySize, _vm.PosterSize);
 			}
+
+			if (e.PropertyName == nameof(IMapScrollViewModel.VerticalPosition))
+			{
+				VScrollBar.Value = _vm.VerticalPosition;
+			}
+
+			if (e.PropertyName == nameof(IMapScrollViewModel.HorizontalPosition))
+			{
+				HScrollBar.Value = _vm.HorizontalPosition;
+			}
 		}
 
 		private void VScrollBar_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)

@@ -88,9 +88,6 @@ namespace MSetExplorer
 				{
 					_displayZoom = Math.Min(MaximumDisplayZoom, value);
 
-					VerticalPosition = 0;
-					HorizontalPosition = 0;
-
 					Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
 					OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
 				}

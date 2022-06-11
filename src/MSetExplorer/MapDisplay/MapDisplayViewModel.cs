@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 
@@ -408,6 +409,7 @@ namespace MSetExplorer
 				{
 					//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
 					MapSections.Clear();
+					Thread.Sleep(300);
 					CanvasControlOffset = newJob.JobAreaInfo.CanvasControlOffset;
 					_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob);
 				}

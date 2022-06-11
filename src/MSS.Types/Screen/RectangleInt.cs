@@ -44,11 +44,11 @@ namespace MSS.Types
 		//	return result;
 		//}
 
-		//public RectangleInt Translate(PointInt amount)
-		//{
-		//	RectangleInt result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
-		//	return result;
-		//}
+		public RectangleInt Translate(VectorInt amount)
+		{
+			RectangleInt result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
+			return result;
+		}
 
 		//public RectangleInt Translate(SizeInt amount)
 		//{

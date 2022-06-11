@@ -380,17 +380,20 @@ namespace MSetExplorer
 		private JobAreaInfo GetNewViewPort(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize)
 		{
 			var diagScreenArea = new RectangleInt(new PointInt(), currentAreaInfo.CanvasSize);
-
 			var screenArea = new RectangleInt(new PointInt(displayPosition), logicalDisplaySize);
-
 			var diagSqAmt = diagScreenArea.Width * diagScreenArea.Height;
 			var screenSqAmt = screenArea.Width * screenArea.Height;
-
 			var sizeRat = screenSqAmt / (double) diagSqAmt;
 
 			Debug.WriteLine($"Creating ViewPort at pos: {displayPosition} and size: {logicalDisplaySize}.");
 			Debug.WriteLine($"The new ViewPort covers {sizeRat}. Total Screen Area: {diagScreenArea}, viewPortArea: {screenArea}.");
 
+			var totalLeft = diagScreenArea.Position.X + diagScreenArea.Width;
+			var screenLeft = screenArea.Position.X + screenArea.Width;
+			var totalTop = diagScreenArea.Position.Y + diagScreenArea.Height;
+			var screenTop = screenArea.Position.Y + screenArea.Height;
+			var trAmt = new VectorInt(Math.Max(screenLeft - totalLeft, 0), Math.Max(screenTop - totalTop, 0));
+			screenArea = screenArea.Translate(trAmt);
 
 			var mapPosition = currentAreaInfo.Coords.Position;
 			var subdivision = currentAreaInfo.Subdivision;
