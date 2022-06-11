@@ -145,34 +145,6 @@ namespace MSetExplorer
 			}
 		}
 
-		///// <summary>
-		///// Value between 0.0 and 1.0
-		///// 1.0 presents 1 map "pixel" to 1 screen pixel
-		///// 0.5 presents 2 map "pixels" to 1 screen pixel
-		///// </summary>
-		//public double DisplayZoom
-		//{
-		//	get => CurrentPoster?.DisplayZoom ?? 1;
-		//	set
-		//	{
-		//		var curPoster = CurrentPoster;
-		//		if (curPoster != null)
-		//		{
-		//			if (Math.Abs(value - DisplayZoom) > 0.001)
-		//			{
-		//				var newDisplayZoom = Math.Max(MinimumDisplayZoom, value);
-
-		//				var viewPortArea = GetNewViewPort(curPoster.JobAreaInfo, curPoster.DisplayPosition, LogicalDisplaySize);
-		//				JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, curPoster.MapCalcSettings);
-
-		//				curPoster.DisplayZoom = newDisplayZoom;
-		//				Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
-		//				OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
-		//			}
-		//		}
-		//	}
-		//}
-
 		public double DisplayZoom
 		{
 			get => CurrentPoster?.DisplayZoom ?? 1;
@@ -191,21 +163,6 @@ namespace MSetExplorer
 			}
 		}
 
-
-		//public double MinimumDisplayZoom
-		//{
-		//	get => _minimumDisplayZoom;
-		//	private set
-		//	{
-		//		if (Math.Abs(value - _minimumDisplayZoom) > 0.001)
-		//		{
-		//			_minimumDisplayZoom = value;
-		//			Debug.WriteLine($"The MinDispZoom is {MinimumDisplayZoom}.");
-		//			OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
-		//		}
-		//	}
-		//}
-
 		/// <summary>
 		/// Job Area for what is currently being displayed.
 		/// </summary>
@@ -218,10 +175,6 @@ namespace MSetExplorer
 				if (value != _jobAreaAndCalcSettings)
 				{
 					_jobAreaAndCalcSettings = value;
-
-					// TODO: Handle Poster Canvas Size changes.
-					//MinimumDisplayZoom = GetMinimumDisplayZoom(posterSize: CurrentPoster?.JobAreaInfo.CanvasSize, CanvasSize);
-
 					OnPropertyChanged(nameof(IPosterViewModel.JobAreaAndCalcSettings));
 				}
 			}

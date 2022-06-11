@@ -66,19 +66,15 @@ namespace MSetExplorer
 			_colorBandSet = new ColorBandSet();
 			_colorMap = null;
 
-			//_containerSize = new SizeDbl(1050, 1050);
-			//CanvasSize = new SizeInt(1024, 1024);
-			//var screenSectionExtent = new SizeInt(12, 12);
-
 			_logicalDisplaySize = new SizeInt();
-
-			DisplayZoom = 1.0;
-			ContainerSize = new SizeDbl(1050, 1050);
 
 			CanvasControlOffset = new VectorInt();
 
 			MapSections = new ObservableCollection<MapSection>();
 			MapSections.CollectionChanged += MapSections_CollectionChanged;
+
+			DisplayZoom = 1.0;
+			ContainerSize = new SizeDbl(1050, 1050);
 		}
 
 		#endregion
@@ -256,9 +252,10 @@ namespace MSetExplorer
 			{
 				if (Math.Abs(value  -_displayZoom) > 0.01)
 				{
+					MapSections.Clear();
+
 					_displayZoom = value;
 
-					//_drawingGroup.Transform = new ScaleTransform(_displayZoom, _displayZoom);
 					_scaleTransform.ScaleX = 1 / _displayZoom;
 					_scaleTransform.ScaleY = 1 / _displayZoom;
 
@@ -315,6 +312,11 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+
+		#endregion
+
+		#region Raise MapViewUpdateRequested Event Methods
+
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
 			var screenArea = e.Area;
@@ -331,12 +333,13 @@ namespace MSetExplorer
 			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, screenArea));
 		}
 
+		#endregion
+
+		// TODO: Implement IDisposable
 		public void TearDown()
 		{
 			// TODO: Unsubscribe our Event Handlers in MapDisplayViewModel::TearDown
 		}
-
-		#endregion
 
 		#region Event Handlers
 
@@ -409,7 +412,6 @@ namespace MSetExplorer
 				{
 					//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
 					MapSections.Clear();
-					Thread.Sleep(300);
 					CanvasControlOffset = newJob.JobAreaInfo.CanvasControlOffset;
 					_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob);
 				}
