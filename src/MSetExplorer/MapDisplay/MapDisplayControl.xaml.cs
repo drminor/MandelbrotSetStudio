@@ -201,7 +201,7 @@ namespace MSetExplorer
 				// For a postive offset, we "pull" the image down and to the left.
 				var invertedOffset = value.Invert();
 
-				var scaledInvertedOffset = invertedOffset.Scale(displayZoom);
+				var scaledInvertedOffset = invertedOffset.Scale(1/displayZoom);
 
 				_mapDisplayImage.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
 				_mapDisplayImage.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);

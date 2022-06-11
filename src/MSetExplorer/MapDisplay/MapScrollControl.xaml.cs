@@ -98,6 +98,8 @@ namespace MSetExplorer
 					HScrollBar.ViewportSize = horizontalViewPortSize;
 					HScrollBar.LargeChange = horizontalViewPortSize;
 					HScrollBar.SmallChange = 0.125 * horizontalViewPortSize;
+
+					Debug.WriteLine($"LogicalDisplaySize: {logicalDisplaySize}, V-ViewPortSize: {verticalViewPortSize}, H-ViewPortSize: {horizontalViewPortSize}.");
 				}
 				catch (Exception e)
 				{

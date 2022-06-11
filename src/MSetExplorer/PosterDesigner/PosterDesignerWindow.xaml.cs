@@ -59,11 +59,14 @@ namespace MSetExplorer
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 
+				scrBarZoom.Minimum = 1;
 				scrBarZoom.Value = 1;
 
-				scrBarZoom.Maximum = 1;
-				scrBarZoom.SmallChange = 0.17;
-				scrBarZoom.LargeChange = 1.7;
+				scrBarZoom.Maximum = 10;
+				scrBarZoom.SmallChange = 0.1;
+				scrBarZoom.LargeChange = 1;
+
+				scrBarZoom.Value = 1;
 
 				scrBarZoom.Scroll += ScrBarZoom_Scroll;
 
@@ -94,7 +97,7 @@ namespace MSetExplorer
 		{
 			_vm.MapScrollViewModel.DisplayZoom = val;
 			var adjustedDisplayZoom = _vm.MapScrollViewModel.DisplayZoom;
-			txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom * 100).ToString(CultureInfo.InvariantCulture);
+			txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
 		}
 
 		private void PosterDesignerWindow_ContentRendered(object? sender, EventArgs e)
@@ -140,6 +143,7 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IMapScrollViewModel.MaximumDisplayZoom))
 			{
+				scrBarZoom.Minimum = 1;
 				scrBarZoom.Maximum = _vm.MapScrollViewModel.MaximumDisplayZoom;
 				scrBarZoom.LargeChange = scrBarZoom.Maximum / 8;
 				scrBarZoom.SmallChange = scrBarZoom.LargeChange / 8;
@@ -551,6 +555,9 @@ namespace MSetExplorer
 			var max = _vm.MapScrollViewModel.MaximumDisplayZoom;
 			scrBarZoom.Value = max;
 			SetDisplayZoom(max);
+
+			_vm.MapScrollViewModel.VerticalPosition = 0;
+			_vm.MapScrollViewModel.HorizontalPosition = 0;
 		}
 
 		private void ButtonSetMinZoom_Click(object sender, RoutedEventArgs e)
