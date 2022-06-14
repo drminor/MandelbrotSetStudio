@@ -28,5 +28,10 @@ namespace MSS.Types.DataTransferObjects
 		{
 			return new long[][] { X, Y };
 		}
+
+		public override string? ToString()
+		{
+			return "Need to Override TS"; // BigIntegerHelper.FromLongs(X)
+		}
 	}
 }

@@ -43,9 +43,10 @@ namespace MSetExplorer
 			var DROP_RECENT_MAPSECTIONS = false;
 			var DROP_ALL_COLLECTIONS = false;
 			var DROP_MAP_SECTIONS = false;
+
 			var USE_MAP_SECTION_REPO = true;
 
-			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_CONN_STRING, USE_MAP_SECTION_REPO);
+			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_CONN_STRING);
 
 			if (DROP_ALL_COLLECTIONS)
 			{
@@ -56,7 +57,7 @@ namespace MSetExplorer
 				_repositoryAdapters.ProjectAdapter.DropSubdivisionsAndMapSectionsCollections();
 			}
 
-			if (DROP_RECENT_MAPSECTIONS && _repositoryAdapters.MapSectionAdapter != null)
+			if (DROP_RECENT_MAPSECTIONS)
 			{
 				var lastSaved = DateTime.Parse("2023-01-01");
 				_repositoryAdapters.MapSectionAdapter.DeleteMapSectionsSince(lastSaved, overrideRecentGuard: true);
@@ -84,7 +85,7 @@ namespace MSetExplorer
 			return appNavWindow;
 		}
 
-		private IMapLoaderManager BuildMapLoaderManager(string[] mEngineEndPointAddress, IMapSectionAdapter? mapSectionAdapter, bool useTheMapSectionRepo)
+		private IMapLoaderManager BuildMapLoaderManager(string[] mEngineEndPointAddress, IMapSectionAdapter mapSectionAdapter, bool useTheMapSectionRepo)
 		{
 			var mEngineClients = mEngineEndPointAddress.Select(x => new MClient(x)).ToArray();
 			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, useTheMapSectionRepo);

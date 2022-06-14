@@ -113,6 +113,8 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
+				MapDisplayViewModel.RebuildScreenSections();
+
 				var newJobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
 				MapCoordsViewModel.CurrentJobAreaInfo = newJobAreaInfo;
 
@@ -211,6 +213,32 @@ namespace MSetExplorer
 				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
 				MapProjectViewModel.UpdateColorBandSet(colorBandSet);
 			}
+		}
+
+		#endregion
+
+		#region IDisposable Support
+
+		private bool disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+					MapDisplayViewModel.Dispose();
+				}
+
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			Dispose(disposing: true);
+			System.GC.SuppressFinalize(this);
 		}
 
 		#endregion

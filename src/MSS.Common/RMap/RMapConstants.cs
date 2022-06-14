@@ -27,7 +27,7 @@ namespace MSS.Common
 
 			ENTIRE_SET_RECTANGLE = new RRectangle(-4, 2, -3, 3, -1);
 
-			ENTIRE_SET_RECTANGLE_EVEN = new RRectangle(-5, 3, -4, 4, -1);
+			ENTIRE_SET_RECTANGLE_EVEN = new RRectangle(-4, 4, -4, 4, -1);
 
 			TEST_RECTANGLE = new RRectangle(0, 1, 0, 1, 0);
 

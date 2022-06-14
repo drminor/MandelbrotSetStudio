@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using ProjectRepo.Entities;
 using System;
@@ -35,37 +34,7 @@ namespace ProjectRepo
 			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<MapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "SubAndPos" }));
 		}
 
-		public MapSectionRecord? Get(ObjectId mapSectionId)
-		{
-			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
-			var mapSectionRecord = Collection.Find(filter);
-
-			var result = mapSectionRecord.FirstOrDefault();
-
-			if (result != null)
-			{
-				result.LastAccessed = DateTime.UtcNow;
-			}
-
-			return result;
-		}
-
-		public async Task<MapSectionRecord?> GetAsync(ObjectId mapSectionId)
-		{
-			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
-			var mapSectionRecord = await Collection.FindAsync(filter);
-
-			var result = mapSectionRecord.FirstOrDefault();
-
-			if (result != null)
-			{
-				result.LastAccessed = DateTime.UtcNow;
-			}
-
-			return result;
-		}
-
-		public async Task<MapSectionRecord?> GetAsync (ObjectId subdivisionId, BigVectorDto blockPosition)
+		public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, BigVectorDto blockPosition)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
 			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
@@ -90,77 +59,88 @@ namespace ProjectRepo
 			}
 		}
 
-		public MapSectionRecord? Get(ObjectId subdivisionId, BigVectorDto blockPosition)
+		public async Task<bool?> GetIsV1Async(ObjectId subdivisionId, BigVectorDto blockPosition)
 		{
-			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
+			var filter1 = Builders<BsonDocument>.Filter.Eq("SubdivisionId", subdivisionId);
+			var filter2 = Builders<BsonDocument>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
+			var filter3 = Builders<BsonDocument>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
+			var filter4 = Builders<BsonDocument>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
+			var filter5 = Builders<BsonDocument>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
 
-			var mapSectionRecord = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5);
+			var bDoc = await BsonDocumentCollection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5);
 
-			var itemsFound = mapSectionRecord.ToList();
+			var itemsFound = bDoc.ToList();
 
-			if (itemsFound.Count > 0)
+			if (itemsFound.Count == 1)
 			{
-				var result = itemsFound[0];
-				result.LastAccessed = DateTime.UtcNow;
-				return result;
+				var test = itemsFound[0].GetValue("EscapeVelocities", BsonNull.Value);
+				return test.IsBsonNull;
+			}
+			else if (itemsFound.Count > 1)
+			{
+				throw new InvalidOperationException("There should only be as single MapSection record.");
 			}
 			else
 			{
-				//Debug.WriteLine("MapSection Not found.");
-				return default;
+				return null;
 			}
 		}
 
-		public MapSectionRecordJustCounts? GetJustCounts(ObjectId subdivisionId, BigVectorDto blockPosition)
-		{
-			var projection1 = Builders<MapSectionRecord>.Projection.Expression
-				(
-					p => new MapSectionRecordJustCounts(p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi, p.BlockPosYLo, p.MapCalcSettings, p.Counts)
-				);
+		//public MapSectionRecordJustCounts? GetJustCounts(ObjectId subdivisionId, BigVectorDto blockPosition)
+		//{
+		//	var projection1 = Builders<MapSectionRecord>.Projection.Expression
+		//		(
+		//			p => new MapSectionRecordJustCounts(p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi, p.BlockPosYLo, p.MapCalcSettings, p.Counts)
+		//		);
 
-			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
+		//	var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
+		//	var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
+		//	var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
+		//	var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
+		//	var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
 
-			var mapSectionRecordJc = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5).Project(projection1);
+		//	var mapSectionRecordJc = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5).Project(projection1);
 
-			var itemsFound = mapSectionRecordJc.ToList();
+		//	var itemsFound = mapSectionRecordJc.ToList();
 
-			if (itemsFound.Count > 0)
-			{
-				var result = itemsFound[0];
-				result.LastAccessed = DateTime.UtcNow;
-				return result;
-			}
-			else
-			{
-				//Debug.WriteLine("MapSection Not found.");
-				return default;
-			}
-		}
+		//	if (itemsFound.Count > 0)
+		//	{
+		//		var result = itemsFound[0];
+		//		result.LastAccessed = DateTime.UtcNow;
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		//Debug.WriteLine("MapSection Not found.");
+		//		return default;
+		//	}
+		//}
 
 		public async Task<ObjectId> InsertAsync(MapSectionRecord mapSectionRecord)
 		{
-			mapSectionRecord.LastSavedUtc = DateTime.UtcNow;
-			await Collection.InsertOneAsync(mapSectionRecord);
-			return mapSectionRecord.Id;
+			try
+			{
+				mapSectionRecord.LastSavedUtc = DateTime.UtcNow;
+				await Collection.InsertOneAsync(mapSectionRecord);
+				return mapSectionRecord.Id;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Got exception {e}.");
+				throw;
+			}
 		}
 
-		public async Task<long?> UpdateZValuesAync(ObjectId mapSectionId, int targetIterations, int[] counts, bool[] doneFlags, double[] zValues)
+		public async Task<long?> UpdateZValuesAync(MapSectionRecord mapSectionRecord)
 		{
-			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
+			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionRecord.Id);
 
 			var updateDefinition = Builders<MapSectionRecord>.Update
-				.Set(u => u.MapCalcSettings.TargetIterations, targetIterations)
-				.Set(u => u.Counts, counts)
-				.Set(u => u.DoneFlags, doneFlags)
-				.Set(u => u.ZValues, zValues)
+				.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations)
+				.Set(u => u.Counts, mapSectionRecord.Counts)
+				.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
+				.Set(u => u.DoneFlags, mapSectionRecord.DoneFlags)
+				.Set(u => u.ZValues, mapSectionRecord.ZValues)
 				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			UpdateResult? result = await Collection.UpdateOneAsync(filter, updateDefinition);
@@ -196,6 +176,72 @@ namespace ProjectRepo
 			var deleteResult = Collection.DeleteMany(filter);
 
 			return GetReturnCount(deleteResult);
+		}
+
+		public async Task<int> UpdateToNewVersionAsync(MapSectionRecord mapSectionRecord)
+		{
+			var filter = Builders<BsonDocument>.Filter.Eq("_id", mapSectionRecord.Id);
+
+			var bsonDocCollection = BsonDocumentCollection;
+			var records = await bsonDocCollection.FindAsync(filter);
+
+			var mapSectionRecords = records.ToList();
+
+			if (mapSectionRecords.Count == 1)
+			{
+				var updateDefinition = Builders<BsonDocument>.Update
+					.Set("Counts", mapSectionRecord.Counts)
+					.Set("EscapeVelocities", mapSectionRecord.EscapeVelocities)
+					.Set("DoneFlags", mapSectionRecord.DoneFlags)
+					.Set("ZValues", mapSectionRecord.ZValues);
+
+				_ = await bsonDocCollection.UpdateOneAsync(filter, updateDefinition);
+
+				return 1;
+			}
+			else if (mapSectionRecords.Count > 1)
+			{
+				throw new InvalidOperationException($"There should only be one MapSectionRecord with Id: {mapSectionRecord.Id}.");
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+
+		public async Task<ObjectId?> GetId(ObjectId subdivisionId, BigVectorDto blockPosition)
+		{
+			var filter1 = Builders<BsonDocument>.Filter.Eq("SubdivisionId", subdivisionId);
+			var filter2 = Builders<BsonDocument>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
+			var filter3 = Builders<BsonDocument>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
+			var filter4 = Builders<BsonDocument>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
+			var filter5 = Builders<BsonDocument>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
+
+			var bDoc = await BsonDocumentCollection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5);
+
+			var itemsFound = bDoc.ToList();
+
+			if (itemsFound.Count == 1)
+			{
+				var test = itemsFound[0].GetValue("_id");
+				if (test.IsObjectId)
+				{
+					return test.AsObjectId;
+				}
+				else
+				{
+					return null;
+				}
+			}
+			else if (itemsFound.Count > 1)
+			{
+				throw new InvalidOperationException("There should only be as single MapSection record.");
+			}
+			else
+			{
+				return null;
+			}
 		}
 
 		//public void AddCreatedDateToAllRecords()

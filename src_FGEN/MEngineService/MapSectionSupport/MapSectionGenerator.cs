@@ -9,8 +9,13 @@ namespace MEngineService
 	{
 		public static MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
-			// Counts
-			int[] counts = GetAndFillCountsBuffer(mapSectionRequest, out var countsBuffer);
+			//// Counts
+			//int[] counts = GetAndFillCountsBuffer(mapSectionRequest, out var countsBuffer);
+
+			ushort[] counts = GetCounts(mapSectionRequest);
+			ushort[] escapeVelocities = GetEscapeVelocities(mapSectionRequest);
+
+			var countsAndEscVels = GetCountsAndEscVelsBuffer(counts, escapeVelocities, out var countsAndEscVelsBuffer);
 
 			// Done Flags
 			byte[] doneFlagsAsBArray = ConvertDoneFlags(mapSectionRequest);
@@ -21,11 +26,13 @@ namespace MEngineService
 
 			// Make the call using the filled buffers.
 			var requestStruct = new MapSectionReqHelper().GetRequestStruct(mapSectionRequest);
-			NativeMethods.GenerateMapSection(requestStruct, countsBuffer, doneFlagsBuffer, zValuesBuffer);
+			NativeMethods.GenerateMapSection(requestStruct, countsAndEscVelsBuffer, doneFlagsBuffer, zValuesBuffer);
 
 			// Counts
-			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
-			Marshal.FreeCoTaskMem(countsBuffer);
+			Marshal.Copy(countsAndEscVelsBuffer, countsAndEscVels, 0, countsAndEscVels.Length);
+			Marshal.FreeCoTaskMem(countsAndEscVelsBuffer);
+
+			MapSectionRequest.SplitCountsAndEscapeVelocities(countsAndEscVels, new Span<ushort>(counts), new Span<ushort>(escapeVelocities));
 
 			// Done Flags
 			Marshal.Copy(doneFlagsBuffer, doneFlagsAsBArray, 0, doneFlagsAsBArray.Length);
@@ -43,6 +50,7 @@ namespace MEngineService
 				BlockPosition = mapSectionRequest.BlockPosition,
 				MapCalcSettings = mapSectionRequest.MapCalcSettings,
 				Counts = counts,
+				EscapeVelocities = escapeVelocities,
 				DoneFlags = doneFlags,
 				ZValues = zValues
 			};
@@ -50,23 +58,65 @@ namespace MEngineService
 			return result;
 		}
 
-		private static int[] GetAndFillCountsBuffer(MapSectionRequest mapSectionRequest, out IntPtr countsBuffer)
-		{
-			int[] counts;
+		//private static int[] GetAndFillCountsBuffer(MapSectionRequest mapSectionRequest, out IntPtr countsBuffer)
+		//{
+		//	int[] counts;
 			
+		//	if (mapSectionRequest.Counts != null)
+		//	{
+		//		counts = mapSectionRequest.Counts;
+		//	}
+		//	else
+		//	{
+		//		counts = new int[mapSectionRequest.BlockSize.NumberOfCells];
+		//	}
+
+		//	countsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(int)) * counts.Length);
+		//	Marshal.Copy(counts, 0, countsBuffer, counts.Length);
+
+		//	return counts;
+		//}
+
+		private static int[] GetCountsAndEscVelsBuffer(ushort[] counts, ushort[] escapeVelocities, out IntPtr countsAndEscVelsBuffer)
+		{
+			var countsPlusEscVels = MapSectionRequest.CombineCountsAndEscapeVelocities(counts, escapeVelocities);
+
+			countsAndEscVelsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(int)) * countsPlusEscVels.Length);
+			Marshal.Copy(countsPlusEscVels, 0, countsAndEscVelsBuffer, counts.Length);
+
+			return countsPlusEscVels;
+		}
+
+		private static ushort[] GetCounts(MapSectionRequest mapSectionRequest)
+		{
+			ushort[] counts;
+
 			if (mapSectionRequest.Counts != null)
 			{
 				counts = mapSectionRequest.Counts;
 			}
 			else
 			{
-				counts = new int[mapSectionRequest.BlockSize.NumberOfCells];
+				counts = new ushort[mapSectionRequest.BlockSize.NumberOfCells];
 			}
 
-			countsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(int)) * counts.Length);
-			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
-
 			return counts;
+		}
+
+		private static ushort[] GetEscapeVelocities(MapSectionRequest mapSectionRequest)
+		{
+			ushort[] escapeVelocities;
+
+			if (mapSectionRequest.EscapeVelocities != null)
+			{
+				escapeVelocities = mapSectionRequest.EscapeVelocities;
+			}
+			else
+			{
+				escapeVelocities = new ushort[mapSectionRequest.BlockSize.NumberOfCells];
+			}
+
+			return escapeVelocities;
 		}
 
 		private static byte[] ConvertDoneFlags(MapSectionRequest mapSectionRequest)

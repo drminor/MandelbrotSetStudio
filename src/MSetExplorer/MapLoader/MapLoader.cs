@@ -13,7 +13,7 @@ namespace MSetExplorer
 	internal class MapLoader
 	{
 		private readonly BigVector _mapBlockOffset;
-		private readonly Action<object, Tuple<MapSection, int>> _callback;
+		private readonly Action<MapSection, int> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapSectionHelper _mapSectionHelper;
 
@@ -25,7 +25,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapLoader(BigVector mapBlockOffset, Action<object, Tuple<MapSection, int>> callback, MapSectionHelper mapSectionHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(BigVector mapBlockOffset, Action<MapSection, int> callback, MapSectionHelper mapSectionHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_mapBlockOffset = mapBlockOffset;
 			_callback = callback;
@@ -120,7 +120,7 @@ namespace MSetExplorer
 					Debug.WriteLine($"MapSection for {mapSection.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}.");
 				}
 
-				_callback(this, new Tuple<MapSection, int>(mapSection, JobNumber));
+				_callback(mapSection, JobNumber);
 				mapSectionRequest.Handled = true;
 			}
 

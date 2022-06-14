@@ -31,7 +31,7 @@ namespace MSS.Types
 		//	}
 		//}
 
-		public HistogramALow(IEnumerable<int> values)
+		public HistogramALow(IEnumerable<ushort> values)
 		{
 			var low = values.Min();
 			var high = values.Max();

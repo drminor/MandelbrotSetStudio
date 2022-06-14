@@ -5,14 +5,14 @@ namespace MSetExplorer
 {
 	public class RepositoryAdapters
 	{
-		public RepositoryAdapters(string dbConnectionString,  bool useMapSectionRepo)
+		public RepositoryAdapters(string dbConnectionString)
 		{
 			// Project Repository Adapter
 			ProjectAdapter = MSetRepoHelper.GetProjectAdapter(dbConnectionString);
 
 			ProjectAdapter.CreateCollections();
 
-			MapSectionAdapter = useMapSectionRepo ? MSetRepoHelper.GetMapSectionAdapter(dbConnectionString) : null;
+			MapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(dbConnectionString);
 
 			SharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(dbConnectionString);
 			SharedColorBandSetAdapter.CreateCollections();
@@ -20,7 +20,7 @@ namespace MSetExplorer
 
 		public ProjectAdapter ProjectAdapter { get; init; }
 
-		public IMapSectionAdapter? MapSectionAdapter { get; init; }
+		public IMapSectionAdapter MapSectionAdapter { get; init; }
 
 		public SharedColorBandSetAdapter SharedColorBandSetAdapter { get; init; }
 

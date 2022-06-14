@@ -5,8 +5,8 @@ namespace MEngineService
 {
 	internal static class NativeMethods
     {
-        //[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
-        [DllImport("MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
+        //[DllImport("MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void GenerateMapSection(MapSectionRequestStruct requestStruct, IntPtr counts, IntPtr doneFlags, IntPtr zValues);
 
         #region Just for Testing

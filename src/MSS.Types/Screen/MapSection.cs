@@ -8,12 +8,13 @@ namespace MSS.Types
 	{
 		private readonly Lazy<IHistogram> _histogram;
 
-		public MapSection(PointInt blockPosition, SizeInt size, int[] counts, int targetIterations, string subdivisionId
-			, BigVector repoBlockPosition, bool isInverted, Func<int[], IHistogram> histogramBuilder)
+		public MapSection(PointInt blockPosition, SizeInt size, ushort[] counts, ushort[] escapeVelocities, int targetIterations, string subdivisionId
+			, BigVector repoBlockPosition, bool isInverted, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			BlockPosition = blockPosition;
 			Size = size;
 			Counts = counts ?? throw new ArgumentNullException(nameof(counts));
+			EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
 			TargetIterations = targetIterations;
 
 			SubdivisionId = subdivisionId;
@@ -26,7 +27,8 @@ namespace MSS.Types
 		public PointInt BlockPosition { get; set; }
 		public SizeInt Size { get; init; }
 
-		public int[] Counts { get; init; }
+		public ushort[] Counts { get; init; }
+		public ushort[] EscapeVelocities { get; init; }
 		public int TargetIterations { get; init; }
 
 		public string SubdivisionId { get; init; }

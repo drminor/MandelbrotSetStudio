@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
@@ -17,6 +18,20 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		public static IEnumerable<PointInt> Points(object array)
+		{
+			if (array is Array s && s.Rank == 2)
+			{
+				var extents = new SizeInt(s.GetLength(0), s.GetLength(1));
+				return Points(extents);
+			}
+			else
+			{
+				throw new ArgumentException("The array must have two dimensions.");
+			}
+		}
+
 
 		#region Convert to MSS Types
 

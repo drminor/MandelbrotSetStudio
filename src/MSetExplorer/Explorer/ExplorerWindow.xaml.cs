@@ -41,6 +41,10 @@ namespace MSetExplorer
 				_vm = (IExplorerViewModel)DataContext;
 				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+				//_vm.MapDisplayViewModel.CanvasControlOffset = new VectorInt(5, 5);
+				//_vm.MapDisplayViewModel.CanvasControlOffset = new VectorInt(0, 0);
+
+				//_vm.MapDisplayViewModel.SetColorBandSet(_vm.MapDisplayViewModel.ColorBandSet.CreateNewCopy(), updateDisplay:true);
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
@@ -599,6 +603,7 @@ namespace MSetExplorer
 
 		private void LoadNewProject(RRectangle coords, MapCalcSettings mapCalcSettings)
 		{
+			//_vm.MapDisplayViewModel.RebuildScreenSections();
 			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			_vm.MapProjectViewModel.ProjectStartNew(coords, colorBandSet, mapCalcSettings);
 		}

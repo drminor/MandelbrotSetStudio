@@ -24,6 +24,9 @@ namespace MSetExplorer
 			MapDisplayViewModel = mapDisplayViewModel;
 			_displayZoom = 1;
 			_maximumDisplayZoom = 1;
+
+			CanvasSize = MapDisplayViewModel.CanvasSize;
+
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 		}
 
@@ -87,6 +90,8 @@ namespace MSetExplorer
 				if (Math.Abs(value - DisplayZoom) > 0.001)
 				{
 					_displayZoom = Math.Min(MaximumDisplayZoom, value);
+
+					MapDisplayViewModel.DisplayZoom = _displayZoom;
 
 					Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
 					OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));

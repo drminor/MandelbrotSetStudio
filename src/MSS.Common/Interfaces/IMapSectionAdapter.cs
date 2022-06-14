@@ -8,16 +8,14 @@ namespace MSS.Common.MSetRepo
 {
 	public interface IMapSectionAdapter
 	{
-		//MapSectionResponse? GetMapSection(string mapSectionId);
-		//Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
-
-		MapSectionResponse? GetMapSection(string subdivisionId, BigVectorDto blockPosition, bool returnOnlyCounts = false);
+		//MapSectionResponse? GetMapSection(string subdivisionId, BigVectorDto blockPosition, bool returnOnlyCounts = false);
 
 		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition);
 
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
+
 
 		long? ClearMapSections(string subdivisionId);
 

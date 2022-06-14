@@ -11,7 +11,7 @@ namespace MSS.Common
 {
 	public class MapSectionHelper
 	{
-		private const int VALUE_FACTOR = 10000;
+		private const double VALUE_FACTOR = 10000;
 		private readonly DtoMapper _dtoMapper = new();
 
 		#region Create MapSectionRequests
@@ -63,7 +63,8 @@ namespace MSS.Common
 
 		public IList<MapSection> CreateEmptyMapSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
 		{
-			var emptyCountsData = new int[0];
+			var emptyCountsData = new ushort[0];
+			var emptyEscapeVelocities = new ushort[0];
 
 			var result = new List<MapSection>();
 
@@ -78,7 +79,7 @@ namespace MSS.Common
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
 				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, jobAreaInfo.MapBlockOffset, out var isInverted);
-				var mapSection = new MapSection(screenPosition, jobAreaInfo.Subdivision.BlockSize, emptyCountsData, targetIterations,
+				var mapSection = new MapSection(screenPosition, jobAreaInfo.Subdivision.BlockSize, emptyCountsData, emptyEscapeVelocities, targetIterations,
 					subdivisionId, repoPosition, isInverted, BuildHistogram);
 				result.Add(mapSection);
 			}
@@ -160,13 +161,14 @@ namespace MSS.Common
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var blockSize = mapSectionRequest.BlockSize;
-			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionResponse.MapCalcSettings.TargetIterations,
+
+			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionResponse.EscapeVelocities, mapSectionResponse.MapCalcSettings.TargetIterations,
 				mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted, BuildHistogram);
 
 			return mapSection;
 		}
 
-		public byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
+		public byte[] GetPixelArray(ushort[] counts, ushort[] escapeVelocities, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
 			var numberofCells = blockSize.NumberOfCells;
 			var result = new byte[4 * numberofCells];
@@ -181,19 +183,23 @@ namespace MSS.Common
 
 				for (var colPtr = 0; colPtr < blockSize.Width; colPtr++)
 				{
-					var countVal = counts[curSourcePtr++];
-					countVal = Math.DivRem(countVal, VALUE_FACTOR, out var ev);
+					var countVal = counts[curSourcePtr];
+					//countVal = Math.DivRem(countVal, VALUE_FACTOR, out var ev);
+					//var escapeVelocity = useEscapeVelocities ? ev / (double)VALUE_FACTOR : 0;
+					var escapeVelocity = useEscapeVelocities ? escapeVelocities[curSourcePtr] / VALUE_FACTOR : 0;
 
-					//var escapeVel = useEscapeVelocities ? Math.Max(1, ev / (double)VALUE_FACTOR) : 0;
-					var escapeVel = useEscapeVelocities ? ev / (double)VALUE_FACTOR : 0;
-
-					if (escapeVel > 1.0)
+					if (escapeVelocity > 1.0)
 					{
 						Debug.WriteLine($"The Escape Velocity is greater that 1.0");
 					}
 
-					colorMap.PlaceColor(countVal, escapeVel, new Span<byte>(result, curResultPtr, 4));
+					escapeVelocity = 0;
+					var ccv = Convert.ToUInt16(countVal);
+
+					colorMap.PlaceColor(ccv, escapeVelocity, new Span<byte>(result, curResultPtr, 4));
 					curResultPtr += 4;
+
+					curSourcePtr++;
 				}
 			}
 
@@ -208,9 +214,10 @@ namespace MSS.Common
 			return result;
 		}
 
-		private IHistogram BuildHistogram(int[] counts)
+		private IHistogram BuildHistogram(ushort[] counts)
 		{
-			return new HistogramALow(counts.Select(x => (int)Math.Round(x / (double)VALUE_FACTOR)));
+			//return new HistogramALow(counts.Select(x => (int)Math.Round(x / (double)VALUE_FACTOR)));
+			return new HistogramALow(counts);
 		}
 
 		private IEnumerable<PointInt> Points(SizeInt size)

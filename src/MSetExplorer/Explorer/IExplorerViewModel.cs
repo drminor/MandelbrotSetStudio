@@ -1,9 +1,10 @@
 ﻿using MSS.Types.MSet;
+using System;
 using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	public interface IExplorerViewModel : INotifyPropertyChanged
+	public interface IExplorerViewModel : INotifyPropertyChanged, IDisposable
 	{
 		IMapProjectViewModel MapProjectViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }

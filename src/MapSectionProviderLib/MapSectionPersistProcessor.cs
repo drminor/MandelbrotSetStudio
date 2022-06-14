@@ -93,12 +93,12 @@ namespace MapSectionProviderLib
 					{
 						if (mapSectionResponse.MapSectionId != null)
 						{
-							_sbForDiag.AppendLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+							//_sbForDiag.AppendLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
 						}
 						else
 						{
-							_sbForDiag.AppendLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
+							//_sbForDiag.AppendLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
 							_ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
 						}
 					}

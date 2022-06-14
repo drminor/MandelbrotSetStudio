@@ -16,8 +16,12 @@ namespace MSetExplorer
 		private bool _clipImageBlocks;
 
 		private IMapDisplayViewModel _vm;
+		
 		private Canvas _canvas;
 		private Image _mapDisplayImage;
+		private VectorInt _offset;
+		private double _offsetZoom;
+
 		private SelectionRectangle? _selectionRectangle;
 		private Border? _border;
 
@@ -27,12 +31,23 @@ namespace MSetExplorer
 		{
 			_canvas = new Canvas();
 			_mapDisplayImage = new Image();
-
+			
+			_showBorder = false;
+			_clipImageBlocks = true;
+			_offset = new VectorInt(-1, -1);
+			_offsetZoom = 1;
+			
 			_vm = (IMapDisplayViewModel)DataContext;
 
 			Loaded += MapDisplay_Loaded;
+			Initialized += MapDisplayControl_Initialized;
 			Unloaded += MapDisplayControl_Unloaded;
 			InitializeComponent();
+		}
+
+		private void MapDisplayControl_Initialized(object? sender, EventArgs e)
+		{
+			Debug.WriteLine("The MapDisplayControl is initialized.");
 		}
 
 		private void MapDisplay_Loaded(object sender, RoutedEventArgs e)
@@ -44,9 +59,6 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_showBorder = false;
-				_clipImageBlocks = true;
-
 				_canvas = MainCanvas;
 				_vm = (IMapDisplayViewModel) DataContext;
 
@@ -58,11 +70,6 @@ namespace MSetExplorer
 				_canvas.ClipToBounds = _clipImageBlocks;
 				_mapDisplayImage = new Image { Source = _vm.ImageSource };
 				_ = _canvas.Children.Add(_mapDisplayImage);
-
-				_offset = new VectorInt(-1, -1);
-				_offsetZoom = 0;
-
-				SetCanvasOffset(new VectorInt(), 0);
 				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
@@ -71,6 +78,8 @@ namespace MSetExplorer
 
 				// A border is helpful for troubleshooting.
 				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(_canvas) : null;
+
+				SetCanvasOffset(new VectorInt(), 1);
 
 				Debug.WriteLine("The MapDisplay Control is now loaded.");
 			}
@@ -111,7 +120,7 @@ namespace MSetExplorer
 			if (!(_vm is null))
 			{
 				_vm.PropertyChanged -= ViewModel_PropertyChanged;
-				_vm.TearDown();
+				_vm.Dispose();
 			}
 		}
 
@@ -182,9 +191,6 @@ namespace MSetExplorer
 
 		#region Private Properties
 
-		private VectorInt _offset;
-		private double _offsetZoom;
-
 		/// <summary>
 		/// The position of the canvas' origin relative to the Image Block Data
 		/// </summary>
@@ -192,7 +198,7 @@ namespace MSetExplorer
 		{
 			if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
 			{
-				Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
+				Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
 				Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
 
 				_offset = value;

@@ -15,7 +15,7 @@ namespace ImageBuilder
 {
 	public class PngBuilder
 	{
-		private const int VALUE_FACTOR = 10000;
+		private const double VALUE_FACTOR = 10000;
 
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -32,7 +32,7 @@ namespace ImageBuilder
 			_currentJobNumber = null;
 			_currentResponses = null;
 
-			_mapLoaderManager.MapSectionReady += MapSectionReady;
+			//_mapLoaderManager.MapSectionReady += MapSectionReady;
 		}
 
 		public async Task<bool> BuildAsync(string imageFilePath, Poster poster, Action<double> statusCallBack, CancellationToken ct)
@@ -84,11 +84,12 @@ namespace ImageBuilder
 						{
 							var mapSection = blocksForThisRow[blockPtrX];
 							var countsForThisLine = GetOneLineFromCountsBlock(mapSection?.Counts, linePtr, blockSize.Width);
+							var escVelsForThisLine = GetOneLineFromCountsBlock(mapSection?.EscapeVelocities, linePtr, blockSize.Width);
 							var lineLength = GetLineLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
 
 							try
 							{
-								FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, lineLength, samplesToSkip, colorMap);
+								FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
 								destPixPtr += lineLength;
 							}
 							catch (Exception e)
@@ -188,7 +189,7 @@ namespace ImageBuilder
 				requests.Add(mapSectionRequest);
 			}
 
-			_currentJobNumber = _mapLoaderManager.Push(mapBlockOffset, requests);
+			_currentJobNumber = _mapLoaderManager.Push(mapBlockOffset, requests, MapSectionReady);
 			_currentResponses = new Dictionary<int, MapSection?>();
 
 			var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
@@ -208,15 +209,15 @@ namespace ImageBuilder
 			return _currentResponses ?? new Dictionary<int, MapSection?>();
 		}
 
-		private void MapSectionReady(object? sender, Tuple<MapSection, int> e)
+		private void MapSectionReady(MapSection mapSection, int jobNumber)
 		{
-			if (e.Item2 == _currentJobNumber)
+			if (jobNumber == _currentJobNumber)
 			{
-				_currentResponses?.Add(e.Item1.BlockPosition.X, e.Item1);
+				_currentResponses?.Add(mapSection.BlockPosition.X, mapSection);
 			}
 		}
 
-		private int[]? GetOneLineFromCountsBlock(int[]? counts, int lPtr, int stride)
+		private ushort[]? GetOneLineFromCountsBlock(ushort[]? counts, int lPtr, int stride)
 		{
 			if (counts == null)
 			{
@@ -224,16 +225,16 @@ namespace ImageBuilder
 			}
 			else
 			{
-				var result = new int[stride];
+				var result = new ushort[stride];
 
 				Array.Copy(counts, lPtr * stride, result, 0, stride);
 				return result;
 			}
 		}
 
-		private void FillPngImageLineSegment(ImageLine iLine, int pixPtr, int[]? counts, int lineLength, int samplesToSkip, ColorMap colorMap)
+		private void FillPngImageLineSegment(ImageLine iLine, int pixPtr, ushort[]? counts, ushort[]? escapeVelocities, int lineLength, int samplesToSkip, ColorMap colorMap)
 		{
-			if (counts == null)
+			if (counts == null || escapeVelocities == null)
 			{
 				FillPngImageLineSegmentWithWhite(iLine, pixPtr, lineLength);
 				return;
@@ -244,11 +245,10 @@ namespace ImageBuilder
 
 			for (var xPtr = 0; xPtr < lineLength; xPtr++)
 			{
+				//countVal = Math.DivRem(countVal, VALUE_FACTOR, out var ev);
+				//var escapeVelocity = colorMap.UseEscapeVelocities ? ev / (double)VALUE_FACTOR : 0;
 				var countVal = counts[xPtr + samplesToSkip];
-				countVal = Math.DivRem(countVal, VALUE_FACTOR, out var ev);
-
-				//var escapeVel = useEscapeVelocities ? Math.Max(1, ev / (double)VALUE_FACTOR) : 0;
-				var escapeVelocity = colorMap.UseEscapeVelocities ? ev / (double)VALUE_FACTOR : 0;
+				var escapeVelocity = colorMap.UseEscapeVelocities ? escapeVelocities[xPtr + samplesToSkip] / VALUE_FACTOR : 0;
 
 				if (escapeVelocity > 1.0)
 				{

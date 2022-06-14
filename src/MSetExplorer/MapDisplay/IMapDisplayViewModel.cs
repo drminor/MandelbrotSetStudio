@@ -7,7 +7,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public interface IMapDisplayViewModel : INotifyPropertyChanged
+	public interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
 	{
 		bool InDesignMode { get; }
 
@@ -41,6 +41,7 @@ namespace MSetExplorer
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
-		void TearDown();
+		VectorInt ScreenCollectionIndex { get; }
+		void RebuildScreenSections();
 	}
 }

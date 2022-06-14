@@ -8,7 +8,7 @@ namespace ProjectRepo.Entities
 	/// <summary>
 	/// Record used to store the data found in a MapSectionResponse
 	/// </summary>
-	public record MapSectionRecord(
+	public record MapSectionRecordJustCounts(
 		DateTime DateCreatedUtc,
 		ObjectId SubdivisionId,
 		long BlockPosXHi,
@@ -17,9 +17,7 @@ namespace ProjectRepo.Entities
 		long BlockPosYLo,
 		MapCalcSettings MapCalcSettings,
 		byte[] Counts,
-		byte[] EscapeVelocities,
-		byte[] DoneFlags,
-		ZValues ZValues
+		byte[] EscapeVelocities
 		)
 	{
 		[BsonId]

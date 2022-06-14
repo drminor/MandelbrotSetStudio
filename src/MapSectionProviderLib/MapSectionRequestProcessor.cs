@@ -38,6 +38,8 @@ namespace MapSectionProviderLib
 		private int _nextJobId;
 		private bool disposedValue;
 
+		private int _recordsUpdated;
+
 		#region Constructor
 
 		//TODO: Add support to the MapSectionRequestProcessor to not use a IMapSectionAdapter.
@@ -61,6 +63,12 @@ namespace MapSectionProviderLib
 				_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionGeneratorProcessor, _cts.Token));
 			}
 		}
+
+		#endregion
+
+		#region Public Properties
+
+		public int NumberOfRecordsUpdated => _recordsUpdated;
 
 		#endregion
 
@@ -227,6 +235,7 @@ namespace MapSectionProviderLib
 					request.MapSectionId = mapSectionResponse.MapSectionId;
 					request.IncreasingIterations = true;
 					request.Counts = mapSectionResponse.Counts;
+					request.EscapeVelocities = mapSectionResponse.EscapeVelocities;
 					request.DoneFlags = mapSectionResponse.DoneFlags;
 					request.ZValues = mapSectionResponse.ZValues;
 
@@ -292,10 +301,28 @@ namespace MapSectionProviderLib
 
 		private async Task<MapSectionResponse> FetchAsync(MapSecWorkReqType mapSectionWorkItem)
 		{
-			var mapSectionRequest = mapSectionWorkItem.Request;
-			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
+			if (_mapSectionAdapter != null)
+			{
+				var mapSectionRequest = mapSectionWorkItem.Request;
+				var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
 
-			return mapSectionResponse;
+				if (mapSectionResponse?.JustNowUpdated == true)
+				{
+					_recordsUpdated++;
+
+					//if (_recordsUpdated % 10 == 0)
+					//{
+					//	Debug.WriteLine($"{_recordsUpdated} records have been updated.");
+					//}
+				}
+
+				return mapSectionResponse;
+			}
+			else
+			{
+				await Task.Delay(100);
+				return null;
+			}
 		}
 
 		private void HandleGeneratedResponse(MapSecWorkReqType mapSectionWorkItem, MapSectionResponse mapSectionResponse)
@@ -400,6 +427,7 @@ namespace MapSectionProviderLib
 				SubdivisionId = mapSectionRequest.SubdivisionId,
 				BlockPosition = mapSectionRequest.BlockPosition,
 				Counts = null,
+				EscapeVelocities = null,
 				DoneFlags = null,
 				ZValues = null
 			};

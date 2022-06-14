@@ -14,7 +14,7 @@ namespace MSetExplorer
 {
 	internal class MapLoaderManager : IMapLoaderManager, IDisposable
 	{
-		private readonly SynchronizationContext? _synchronizationContext;
+		//private readonly SynchronizationContext? _synchronizationContext;
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
@@ -26,7 +26,7 @@ namespace MSetExplorer
 
 		public MapLoaderManager(MapSectionHelper mapSectionHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			_synchronizationContext = SynchronizationContext.Current;
+			//_synchronizationContext = SynchronizationContext.Current;
 			_mapSectionHelper = mapSectionHelper;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 
@@ -38,7 +38,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		public event EventHandler<Tuple<MapSection, int>>? MapSectionReady;
+		//public event EventHandler<Tuple<MapSection, int>>? MapSectionReady;
 
 		#region Public Properties
 
@@ -48,26 +48,26 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings)
+		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, Action<MapSection, int> callback)
 		{
-			var result = Push(jobAreaAndCalcSettings, null);
+			var result = Push(jobAreaAndCalcSettings, null, callback);
 			return result;
 		}
 
-		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections)
+		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections, Action<MapSection, int> callback)
 		{
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings, emptyMapSections);
-			var result = Push(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, mapSectionRequests);
+			var result = Push(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, mapSectionRequests, callback);
 			return result;
 		}
 
-		public int Push(BigVector mapBlockOffset, IList<MapSectionRequest> mapSectionRequests)
+		public int Push(BigVector mapBlockOffset, IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int> callback)
 		{
 			var result = 0;
 
 			DoWithWriteLock(() =>
 			{
-				var mapLoader = new MapLoader(mapBlockOffset, HandleMapSection, _mapSectionHelper, _mapSectionRequestProcessor);
+				var mapLoader = new MapLoader(mapBlockOffset, callback, _mapSectionHelper, _mapSectionRequestProcessor);
 				var startTask = mapLoader.Start(mapSectionRequests);
 
 				_requests.Add(new GenMapRequestInfo(mapLoader, startTask));
@@ -96,38 +96,38 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Event Handlers
+		//#region Event Handlers
 
-		private void HandleMapSection(object sender, Tuple<MapSection, int> mapSectionAndJobNumber)
-		{
-			DoWithWriteLock(() =>
-			{
-				var currentRequest = CurrentRequest;
+		//private void HandleMapSection(object sender, Tuple<MapSection, int> mapSectionAndJobNumber)
+		//{
+		//	DoWithWriteLock(() =>
+		//	{
+		//		var currentRequest = CurrentRequest;
 
-				if (currentRequest == null)
-				{
-					Debug.WriteLine($"HandleMapSection cannot handle the new section there is no current request.");
-				}
-				else
-				{
-					// TODO: Compare the JobNumber with all active Job numbers.
-					//var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
+		//		if (currentRequest == null)
+		//		{
+		//			Debug.WriteLine($"HandleMapSection cannot handle the new section there is no current request.");
+		//		}
+		//		else
+		//		{
+		//			// TODO: Compare the JobNumber with all active Job numbers.
+		//			//var jobNumber = (sender as MapLoader)?.JobNumber ?? -1;
 
-					//if (jobNumber == currentRequest.JobNumber)
-					//{
-					//	_synchronizationContext?.Post(o => MapSectionReady?.Invoke(this, mapSectionAndJobNumber), null);
-					//}
-					//else
-					//{
-					//	Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}. CurJobNum: {currentRequest.JobNumber}");
-					//}
+		//			//if (jobNumber == currentRequest.JobNumber)
+		//			//{
+		//			//	_synchronizationContext?.Post(o => MapSectionReady?.Invoke(this, mapSectionAndJobNumber), null);
+		//			//}
+		//			//else
+		//			//{
+		//			//	Debug.WriteLine($"HandleMapSection is ignoring the new section for job with jobNumber: {jobNumber}. CurJobNum: {currentRequest.JobNumber}");
+		//			//}
 
-					_synchronizationContext?.Post(o => MapSectionReady?.Invoke(this, mapSectionAndJobNumber), null);
-				}
-			});
-		}
+		//			_synchronizationContext?.p .Post(o => MapSectionReady?.Invoke(this, mapSectionAndJobNumber), null);
+		//		}
+		//	});
+		//}
 
-		#endregion
+		//#endregion
 
 		#region Private Methods
 

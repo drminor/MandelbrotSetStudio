@@ -213,7 +213,7 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(IMapScrollViewModel.DisplayZoom))
 			{
 				PosterViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
-				MapDisplayViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
+				//MapDisplayViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
 			}
 		}
 

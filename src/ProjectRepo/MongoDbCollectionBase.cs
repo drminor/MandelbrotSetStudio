@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
 using MSS.Common.MSetRepo;
 using System;
 
@@ -17,13 +18,12 @@ namespace ProjectRepo
             _collectionName = collectionName;
 
             _collectionLazy = new Lazy<IMongoCollection<T>>(() => Database.GetCollection<T>(_collectionName), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
-
-			//RegisterMapIfNeeded<BWRectangle>();
-			//RegisterMapIfNeeded<BigIntegerWrapper>();
 		}
 
 		public IMongoDatabase Database => _dbProvider.Database;
         public IMongoCollection<T> Collection => _collectionLazy.Value;
+
+		public IMongoCollection<BsonDocument> BsonDocumentCollection => Database.GetCollection<BsonDocument>(_collectionName);
 
 		public virtual bool CreateCollection()
 		{

@@ -8,7 +8,7 @@ namespace ProjectRepo.Entities
 	/// <summary>
 	/// Record used to store the data found in a MapSectionResponse
 	/// </summary>
-	public record MapSectionRecord(
+	public record MapSectionRecordV1(
 		DateTime DateCreatedUtc,
 		ObjectId SubdivisionId,
 		long BlockPosXHi,
@@ -16,10 +16,9 @@ namespace ProjectRepo.Entities
 		long BlockPosYHi,
 		long BlockPosYLo,
 		MapCalcSettings MapCalcSettings,
-		byte[] Counts,
-		byte[] EscapeVelocities,
-		byte[] DoneFlags,
-		ZValues ZValues
+		int[] Counts,
+		bool[] DoneFlags,
+		double[] ZValues
 		)
 	{
 		[BsonId]
@@ -29,6 +28,5 @@ namespace ProjectRepo.Entities
 		public DateTime LastSavedUtc { get; set; }
 		public DateTime LastAccessed { get; set; }
 	}
-
 
 }

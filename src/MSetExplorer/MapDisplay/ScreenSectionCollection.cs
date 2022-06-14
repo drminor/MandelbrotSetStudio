@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -38,15 +39,14 @@ namespace MSetExplorer
 
 			_screenSections = new ScreenSection[maxSizeInBlocks.Height, maxSizeInBlocks.Width];
 
-			//_canvasSizeInBlocks = new SizeInt(8);
 			CanvasSizeInBlocks = new SizeInt(8);
-			//Debug.WriteLine($"Allocating {_canvasSizeInBlocks} ScreenSections.");
-			//BuildScreenSections(_screenSections, _canvasSizeInBlocks, _blockSize, _drawingGroup);
 		}
 
 		#endregion
 
 		#region Public Properties
+
+		public VectorInt SectionIndex => _startIndex;
 
 		private SizeInt _allocatedBlocks;
 
@@ -63,11 +63,7 @@ namespace MSetExplorer
 				if (_canvasSizeInBlocks != value)
 				{
 					_canvasSizeInBlocks = value;
-					var prevValue = _allocatedBlocks;
-					_allocatedBlocks = _canvasSizeInBlocks.Inflate(2);
-
-					Debug.WriteLine($"Allocating ScreenSections. Old size: {prevValue}, new size: {_allocatedBlocks}.");
-					BuildScreenSections(_screenSections, _allocatedBlocks, _blockSize, _drawingGroup);
+					_allocatedBlocks = RebuildScreenSections(_canvasSizeInBlocks);
 				}
 			}
 		}
@@ -76,21 +72,52 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void HideScreenSections()
+		public IList<ScreenSection> GetAllScreenSections()
 		{
-			foreach (var blockPosition in ScreenTypeHelper.Points(_allocatedBlocks))
+			var result = new List<ScreenSection>();
+
+			foreach (var blockPosition in ScreenTypeHelper.Points(_screenSections))
 			{
-				var screenSection = GetScreenSection(blockPosition, out var _);
-				if (screenSection != null)
+				var screenSection = GetScreenSection(blockPosition);
+				result.Add(screenSection);
+			}
+
+			return result;
+		}
+
+		public void HideScreenSections(bool rebuild = false)
+		{
+			if (rebuild)
+			{
+				_allocatedBlocks = RebuildScreenSections(_canvasSizeInBlocks);
+			}
+			else
+			{
+				foreach (var blockPosition in ScreenTypeHelper.Points(_screenSections))
+				//foreach (var blockPosition in ScreenTypeHelper.Points(_allocatedBlocks))
 				{
-					screenSection.Active = false;
+					var screenSection = GetScreenSection(blockPosition);
+					if (screenSection != null)
+					{
+						screenSection.Active = false;
+					}
 				}
 			}
 		}
 
+		private SizeInt RebuildScreenSections(SizeInt canvasSizeInBlocks)
+		{
+			var numberOfBlocksToAllocate = canvasSizeInBlocks.Inflate(2);
+
+			Debug.WriteLine($"Allocating ScreenSections. Old size: {_allocatedBlocks}, new size: {numberOfBlocksToAllocate}.");
+			BuildScreenSections(_screenSections, numberOfBlocksToAllocate, _blockSize, _drawingGroup);
+
+			return numberOfBlocksToAllocate;
+		}
+
 		public void Draw(PointInt position, byte[] pixels)
 		{
-			var screenSection = GetScreenSection(position, out var screenIndex);
+			var screenSection = GetScreenSection(position);
 
 			if (screenSection is null || pixels is null)
 			{
@@ -101,19 +128,19 @@ namespace MSetExplorer
 			{
 				var invertedPosition = GetInvertedBlockPos(position);
 				//Debug.WriteLine($"Drawing section: {position} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}. ip = {invertedPosition}");
-				screenSection.Draw(invertedPosition, pixels, screenIndex);
+				screenSection.Draw(invertedPosition, pixels);
 			}
 		}
 
 		public void Redraw(PointInt position)
 		{
-			var screenSection = GetScreenSection(position, out var screenIndex);
+			var screenSection = GetScreenSection(position);
 
 			if (screenSection != null)
 			{
-				//Debug.WriteLine($"Redrawing section: {position} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}. si = {screenIndex}");
+				//Debug.WriteLine($"Redrawing section: {position} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}.");
 				var invertedPosition = GetInvertedBlockPos(position);
-				screenSection.ReDraw(invertedPosition, screenIndex);
+				screenSection.ReDraw(invertedPosition);
 			}
 			else
 			{
@@ -123,7 +150,7 @@ namespace MSetExplorer
 
 		public bool Hide(MapSection mapSection)
 		{
-			var screenSection = GetScreenSection(mapSection.BlockPosition, out var _);
+			var screenSection = GetScreenSection(mapSection.BlockPosition);
 
 			if (screenSection != null)
 			{
@@ -167,10 +194,10 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private ScreenSection GetScreenSection(PointInt blockPosition, out VectorInt screenIndex)
+		private ScreenSection GetScreenSection(PointInt blockPosition)
 		{
 			// Use the start index to find the "current" cell in the 2-D Ring Buffer
-			screenIndex = IndexAdd(_startIndex, new VectorInt(blockPosition));
+			var screenIndex = IndexAdd(_startIndex, new VectorInt(blockPosition));
 			var result = _screenSections[screenIndex.Y, screenIndex.X];
 
 			return result;
@@ -200,21 +227,39 @@ namespace MSetExplorer
 
 		private void BuildScreenSections(ScreenSection[,] currentSections, SizeInt blocksToAllocate, SizeInt blockSize, DrawingGroup drawingGroup)
 		{
-
 			if (blocksToAllocate.Width > _maxSizeInBlocks.Width || blocksToAllocate.Height > _maxSizeInBlocks.Height)
 			{
 				throw new ArgumentException($"The CanvasSizeInWholeBlocks cannot exceed the maximum supported value of {_maxSizeInBlocks}.");
 			}
 
+			//var l0 = currentSections.GetLength(0);
+			//var l1 = currentSections.GetLength(1);
+
+			//for(var j = 0; j < l1; j++)
+			//{
+			//	for (var i = 0; i < l0; i++)
+			//	{
+			//		var screenSection = currentSections[j, i];
+			//		if (screenSection != null)
+			//		{
+			//			screenSection.Delete();
+			//		}
+			//	}
+			//}
 
 			foreach (var blockPosition in ScreenTypeHelper.Points(blocksToAllocate))
 			{
-				//if (currentSections[blockPosition.Y, blockPosition.X] == null)
-				//{
+				if (currentSections[blockPosition.Y, blockPosition.X] == null)
+				{
 					var invertedPosition = GetInvertedBlockPos(blockPosition);
 					var screenSection = new ScreenSection(invertedPosition, blockSize, drawingGroup);
 					currentSections[blockPosition.Y, blockPosition.X] = screenSection;
-				//}
+				}
+
+				//var invertedPosition = GetInvertedBlockPos(blockPosition);
+				//var screenSection = new ScreenSection(invertedPosition, blockSize, drawingGroup);
+				//currentSections[blockPosition.Y, blockPosition.X] = screenSection;
+
 			}
 		}
 
@@ -232,7 +277,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		private class ScreenSection
+		public class ScreenSection
 		{
 			private PointInt _blockPosition;
 			private readonly SizeInt _blockSize;
@@ -314,11 +359,17 @@ namespace MSetExplorer
 				}
 			}
 
-			public void Draw(PointInt position, byte[] pixels, VectorInt screenIndex)
+			public void Delete()
+			{
+				Hide();
+				_imageDrawing = new ImageDrawing();
+			}
+
+			public void Draw(PointInt position, byte[] pixels)
 			{
 				if (BlockPosition != position)
 				{
-					//Debug.WriteLine($"Creating new ImageDrawing for {position}, the previous value is {BlockPosition}. SI = {screenIndex}.");
+					//Debug.WriteLine($"Creating new ImageDrawing for {position}, the previous value is {BlockPosition}");
 
 					BlockPosition = position;
 					Active = false;
@@ -333,7 +384,7 @@ namespace MSetExplorer
 				WritePixels(pixels, bitmap);
 			}
 
-			public void ReDraw(PointInt position, VectorInt screenIndex)
+			public void ReDraw(PointInt position)
 			{
 				if (BlockPosition != position)
 				{

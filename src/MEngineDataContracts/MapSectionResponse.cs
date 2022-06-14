@@ -20,14 +20,19 @@ namespace MEngineDataContracts
 		public MapCalcSettings MapCalcSettings { get; set; }
 
 		[DataMember(Order = 5)]
-		public int[] Counts { get; set; }
+		public ushort[] Counts { get; set; }
 
 		[DataMember(Order = 6)]
-		public bool[] DoneFlags { get; set; }
+		public ushort[] EscapeVelocities { get; set; }
 
 		[DataMember(Order = 7)]
+		public bool[] DoneFlags { get; set; }
+
+		[DataMember(Order = 8)]
 		public double[] ZValues { get; set; }
 
 		public bool RequestCancelled { get; set; }
+
+		public bool JustNowUpdated { get; set; }
 	}
 }
