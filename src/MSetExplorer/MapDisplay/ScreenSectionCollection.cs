@@ -115,7 +115,7 @@ namespace MSetExplorer
 			return numberOfBlocksToAllocate;
 		}
 
-		public void Draw(PointInt position, byte[] pixels)
+		public void Draw(PointInt position, byte[] pixels, bool offline)
 		{
 			var screenSection = GetScreenSection(position);
 
@@ -126,9 +126,16 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var invertedPosition = GetInvertedBlockPos(position);
 				//Debug.WriteLine($"Drawing section: {position} with screen pos: {screenSection.ScreenPosition} and dc: {screenSection.BlockPosition}. ip = {invertedPosition}");
-				screenSection.Draw(invertedPosition, pixels);
+				if (offline)
+				{
+					screenSection.DrawOffline(pixels);
+				}
+				else
+				{
+					var invertedPosition = GetInvertedBlockPos(position);
+					screenSection.Draw(invertedPosition, pixels);
+				}
 			}
 		}
 
@@ -287,6 +294,8 @@ namespace MSetExplorer
 			private ImageDrawing _imageDrawing;
 			private bool _active;
 
+			private byte[]? _pendingPixels;
+
 			#region Constructor
 
 			public ScreenSection(PointInt blockPosition, SizeInt blockSize, DrawingGroup drawingGroup)
@@ -296,6 +305,8 @@ namespace MSetExplorer
 				_drawingGroup = drawingGroup;
 				_image = CreateImage(_blockSize.Width, _blockSize.Height);
 				_imageDrawing = CreateImageDrawing(_blockPosition);
+
+				_pendingPixels = null;
 			}
 
 			#endregion
@@ -369,7 +380,7 @@ namespace MSetExplorer
 			{
 				if (BlockPosition != position)
 				{
-					//Debug.WriteLine($"Creating new ImageDrawing for {position}, the previous value is {BlockPosition}");
+					//Debug.WriteLine($"Creating new ImageDrawing for {position} while drawing. The previous value is {BlockPosition}");
 
 					BlockPosition = position;
 					Active = false;
@@ -377,39 +388,80 @@ namespace MSetExplorer
 				}
 				else
 				{
-					//Debug.WriteLine($"Updating existing ImageDrawing for {position}. SI = {screenIndex}.");
+					//Debug.WriteLine($"Updating existing ImageDrawing for {position} while drawing for {position}.");
+				}
+
+				var bitmap = (WriteableBitmap)_imageDrawing.ImageSource;
+				WritePixels(pixels, bitmap);
+				Active = true;
+			}
+
+			public void ReDraw(PointInt position)
+			{
+				if (_pendingPixels != null)
+				{
+					BringOnline(position, _pendingPixels);
+					_pendingPixels = null;
+				}
+				else
+				{
+					if (BlockPosition != position)
+					{
+						// TODO: Add logic to atempt to locate the "old" bitmap.
+						throw new InvalidOperationException("Cannot redraw a screen section at a different position.");
+					}
+					else
+					{
+						//Debug.WriteLine($"Updating existing ImageDrawing for {position} while re-drawing.");
+					}
+				}
+
+				Active = true;
+			}
+			 
+			private void BringOnline(PointInt position, byte[] pixels)
+			{
+				if (BlockPosition != position)
+				{
+					//Debug.WriteLine($"Creating new ImageDrawing for {position} while re-drawing. The previous value is {BlockPosition}");
+
+					BlockPosition = position;
+					Active = false;
+					_imageDrawing = CreateImageDrawing(BlockPosition);
+				}
+				else
+				{
+					//Debug.WriteLine($"Updating existing ImageDrawing for {position} while re-drawing.");
 				}
 
 				var bitmap = (WriteableBitmap)_imageDrawing.ImageSource;
 				WritePixels(pixels, bitmap);
 			}
 
-			public void ReDraw(PointInt position)
+			public void DrawOffline(byte[] pixels)
 			{
-				if (BlockPosition != position)
-				{
-					//Debug.WriteLine($"Redrawing image for {position}, the previous value is {BlockPosition}. SI = {screenIndex}.");
+				//if (Active)
+				//{
+				//	throw new InvalidOperationException("Attempting to DrawOffline to an Active ScreenSection.");
+				//}
 
-					BlockPosition = position;
-					Active = false;
-					_imageDrawing = CreateImageDrawing(BlockPosition);
-				}
-				else
-				{
-					//Debug.WriteLine($"Redrawing image for {position}. SI = {screenIndex}.");
-				}
+				//if (BlockPosition != position)
+				//{
+				//	//Debug.WriteLine($"Creating new ImageDrawing for {position} while drawing off-line. The previous value is {BlockPosition}");
 
-				//Debug.Assert(!Active, "Attempting to refresh a screen section that is already active.");
-				//Active = true;
+				//	BlockPosition = position;
+				//	_imageDrawing = CreateImageDrawing(BlockPosition);
+				//}
+				//else
+				//{
+				//	//Debug.WriteLine($"Updating existing ImageDrawing for {position} while drawing off-line.");
+				//	_imageDrawing = CreateImageDrawing(BlockPosition);
+				//}
 
-				if (Active)
-				{
-					Debug.WriteLine("Attempting to refresh a screen section that is already active.");
-				}
-				else
-				{
-					Active = true;
-				}
+				//var bitmap = (WriteableBitmap)_imageDrawing.ImageSource;
+				//WritePixels(pixels, bitmap);
+
+				_pendingPixels = pixels;
 			}
 
 			#endregion
@@ -424,9 +476,6 @@ namespace MSetExplorer
 				var rect = new Int32Rect(0, 0, w, h);
 				var stride = 4 * w;
 				bitmap.WritePixels(rect, pixels, stride, 0);
-
-				Active = true;
-
 			}
 
 			private ImageDrawing CreateImageDrawing(PointInt blockPosition)

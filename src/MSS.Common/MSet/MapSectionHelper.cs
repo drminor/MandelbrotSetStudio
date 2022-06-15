@@ -5,7 +5,6 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace MSS.Common
 {
@@ -13,6 +12,8 @@ namespace MSS.Common
 	{
 		private const double VALUE_FACTOR = 10000;
 		private readonly DtoMapper _dtoMapper = new();
+
+		public long NumberOfCountValSwitches { get; private set; }
 
 		#region Create MapSectionRequests
 
@@ -173,6 +174,8 @@ namespace MSS.Common
 			var numberofCells = blockSize.NumberOfCells;
 			var result = new byte[4 * numberofCells];
 
+			var previousCountVal = counts[0];
+
 			for (var rowPtr = 0; rowPtr < blockSize.Height; rowPtr++)
 			{
 				// Calculate the array index for the beginning of this destination and source row.
@@ -184,8 +187,13 @@ namespace MSS.Common
 				for (var colPtr = 0; colPtr < blockSize.Width; colPtr++)
 				{
 					var countVal = counts[curSourcePtr];
-					//countVal = Math.DivRem(countVal, VALUE_FACTOR, out var ev);
-					//var escapeVelocity = useEscapeVelocities ? ev / (double)VALUE_FACTOR : 0;
+
+					if (countVal != previousCountVal)
+					{
+						NumberOfCountValSwitches++;
+						previousCountVal = countVal;
+					}
+
 					var escapeVelocity = useEscapeVelocities ? escapeVelocities[curSourcePtr] / VALUE_FACTOR : 0;
 
 					if (escapeVelocity > 1.0)

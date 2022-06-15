@@ -35,6 +35,10 @@ namespace ImageBuilder
 			//_mapLoaderManager.MapSectionReady += MapSectionReady;
 		}
 
+		//public long NumberOfCountValSwitches => _mapSectionHelper.NumberOfCountValSwitches;
+
+		public long NumberOfCountValSwitches { get; private set; }
+
 		public async Task<bool> BuildAsync(string imageFilePath, Poster poster, Action<double> statusCallBack, CancellationToken ct)
 		{
 			var jobAreaInfo = poster.JobAreaInfo;
@@ -243,11 +247,18 @@ namespace ImageBuilder
 			var cComps = new byte[4];
 			var dest = new Span<byte>(cComps);
 
+			var previousCountVal = counts[0];
+
 			for (var xPtr = 0; xPtr < lineLength; xPtr++)
 			{
-				//countVal = Math.DivRem(countVal, VALUE_FACTOR, out var ev);
-				//var escapeVelocity = colorMap.UseEscapeVelocities ? ev / (double)VALUE_FACTOR : 0;
 				var countVal = counts[xPtr + samplesToSkip];
+
+				if (countVal != previousCountVal)
+				{
+					NumberOfCountValSwitches++;
+					previousCountVal = countVal;
+				}
+
 				var escapeVelocity = colorMap.UseEscapeVelocities ? escapeVelocities[xPtr + samplesToSkip] / VALUE_FACTOR : 0;
 
 				if (escapeVelocity > 1.0)

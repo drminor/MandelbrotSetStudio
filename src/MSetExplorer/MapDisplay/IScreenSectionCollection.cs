@@ -8,8 +8,9 @@ namespace MSetExplorer
 
 		VectorInt SectionIndex { get; } // Just for diagnostics.
 
-		void Draw(PointInt position, byte[] pixels);
+		void Draw(PointInt position, byte[] pixels, bool offline);
 		void Redraw(PointInt position);
+
 		bool Hide(MapSection mapSection);
 
 		void HideScreenSections(bool rebuild = false);

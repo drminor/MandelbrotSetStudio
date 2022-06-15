@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using MSetExplorer.ScreenHelpers;
+using MSS.Common;
 using MSS.Types;
 using System;
 using System.ComponentModel;
@@ -15,7 +16,7 @@ namespace MSetExplorer
 	/// <summary>
 	/// Interaction logic for PosterDesignerWindow.xaml
 	/// </summary>
-	public partial class PosterDesignerWindow : Window
+	public partial class PosterDesignerWindow : Window, IHaveAppNavRequestResponse
 	{
 		private IPosterDesignerViewModel _vm;
 
@@ -23,9 +24,10 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterDesignerWindow()
+		public PosterDesignerWindow(AppNavRequestResponse appNavRequestResponse)
 		{
 			_vm = (IPosterDesignerViewModel)DataContext;
+			AppNavRequestResponse = appNavRequestResponse;
 			_createImageProgressWindow = null;
 
 			Loaded += PosterDesignerWindow_Loaded;
@@ -74,40 +76,19 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ScrBarZoom_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
-		{
-			if (_vm.PosterViewModel.CurrentPoster != null)
-			{
-				var val = e.NewValue;
-				if (val < 1)
-				{
-					val = 1;
-				}
-
-				//if (val > 1)
-				//{
-				//	val = 1;
-				//}
-
-				SetDisplayZoom(val);
-			}
-		}
-
-		private void SetDisplayZoom(double val)
-		{
-			_vm.MapScrollViewModel.DisplayZoom = val;
-			var adjustedDisplayZoom = _vm.MapScrollViewModel.DisplayZoom;
-			txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
-			
-			_vm.MapScrollViewModel.VerticalPosition = 0;
-			_vm.MapScrollViewModel.HorizontalPosition = 0;
-		}
-
 		private void PosterDesignerWindow_ContentRendered(object? sender, EventArgs e)
 		{
 			Debug.WriteLine("The PosterDesigner Window is handling ContentRendered");
 
-			_ = _vm.PosterViewModel.PosterOpen("Test");
+			if (AppNavRequestResponse.RequestCommand == RequestResponseCommand.OpenPoster)
+			{
+				var posterName = AppNavRequestResponse.RequestParameters?[0];
+
+				if (posterName != null)
+				{
+					_ = _vm.PosterViewModel.PosterOpen(posterName);
+				}
+			}
 		}
 
 		private void PosterDesignerWindow_Closing(object sender, CancelEventArgs e)
@@ -122,6 +103,20 @@ namespace MSetExplorer
 				// user cancelled.
 				e.Cancel = true;
 			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void SetDisplayZoom(double val)
+		{
+			_vm.MapScrollViewModel.DisplayZoom = val;
+			var adjustedDisplayZoom = _vm.MapScrollViewModel.DisplayZoom;
+			txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
+			
+			_vm.MapScrollViewModel.VerticalPosition = 0;
+			_vm.MapScrollViewModel.HorizontalPosition = 0;
 		}
 
 		#endregion
@@ -166,21 +161,36 @@ namespace MSetExplorer
 			}
 		}
 
+		private void ScrBarZoom_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+		{
+			if (_vm.PosterViewModel.CurrentPoster != null)
+			{
+				var val = e.NewValue;
+				if (val < 1)
+				{
+					val = 1;
+				}
+
+				SetDisplayZoom(val);
+			}
+		}
+
 		#endregion
 
 		#region Window Button Handlers
 
 		private void CloseAndReturnButton_Click(object sender, RoutedEventArgs e)
 		{
-			CloseOrExit(returnToTopNav: true);
+			CloseOrExit(OnCloseBehavior.ReturnToTopNav);
 		}
 
 		private void ExitButton_Click(object sender, RoutedEventArgs e)
 		{
-			CloseOrExit(returnToTopNav: false);
+			CloseOrExit(OnCloseBehavior.Close);
 		}
 
-		private void CloseOrExit(bool returnToTopNav)
+
+		private void CloseOrExit(OnCloseBehavior onCloseBehavior)
 		{
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
@@ -194,7 +204,7 @@ namespace MSetExplorer
 			}
 
 			_vm.PosterViewModel.PosterClose();
-			Properties.Settings.Default["ShowTopNav"] = returnToTopNav;
+			AppNavRequestResponse.OnCloseBehavior = onCloseBehavior;
 			Close();
 		}
 
@@ -215,24 +225,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Project Button Handlers
-
-		//// New
-		//private void NewButton_Click(object sender, RoutedEventArgs e)
-		//{
-		//	var saveResult = ProjectSaveChanges();
-		//	if (saveResult == SaveResult.ChangesSaved)
-		//	{
-		//		_ = MessageBox.Show("Changes Saved");
-		//	}
-		//	else if (saveResult == SaveResult.SaveCancelled)
-		//	{
-		//		// user cancelled.
-		//		return;
-		//	}
-
-
-		//	LoadNewProject();
-		//}
 
 		// Open
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
@@ -699,7 +691,7 @@ namespace MSetExplorer
 		{
 			// TODO: replace with PosterDesigner ViewModel
 			var defaultResult = _vm.PosterViewModel.CurrentPosterOnFile ? MessageBoxResult.Yes : MessageBoxResult.No;
-			var res = MessageBox.Show("The current project has pending changes. Save Changes?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
+			var res = MessageBox.Show("The current poster has pending changes. Save Changes?", "Pending Changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
 
 			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?)null;
 
@@ -708,17 +700,16 @@ namespace MSetExplorer
 
 		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
 		{
-			//TODO: Create a PosterOpenSave Window
-			var projectOpenSaveVm = _vm.CreateAProjectOpenSaveViewModel(initalName, dialogType);
-			var projectOpenSaveWindow = new ProjectOpenSaveWindow
+			var posterOpenSaveVm = _vm.CreateAPosterOpenSaveViewModel(initalName, dialogType);
+			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
-				DataContext = projectOpenSaveVm
+				DataContext = posterOpenSaveVm
 			};
 
-			if (projectOpenSaveWindow.ShowDialog() == true)
+			if (posterOpenSaveWindow.ShowDialog() == true)
 			{
-				selectedName = projectOpenSaveWindow.ProjectName;
-				description = projectOpenSaveWindow.ProjectDescription;
+				selectedName = posterOpenSaveWindow.PosterName;
+				description = posterOpenSaveWindow.PosterDescription;
 				return true;
 			}
 			else
@@ -729,14 +720,14 @@ namespace MSetExplorer
 			}
 		}
 
-		private string GetWindowTitle(string? projectName, string? colorBandSetName)
+		private string GetWindowTitle(string? posterName, string? colorBandSetName)
 		{
 			const string dash = "\u2014";
 
-			var result = projectName != null
+			var result = posterName != null
 				? colorBandSetName != null
-					? $"Designer Window {dash} {projectName} {dash} {colorBandSetName}"
-					: $"Designer Window {dash} {projectName}"
+					? $"Designer Window {dash} {posterName} {dash} {colorBandSetName}"
+					: $"Designer Window {dash} {posterName}"
 				: "Designer Window";
 
 			return result;
@@ -747,24 +738,14 @@ namespace MSetExplorer
 			CoordsEditorViewModel coordsEditorViewModel;
 
 			var curPoster = _vm.PosterViewModel.CurrentPoster;
+			var posterSize = _vm.MapScrollViewModel.PosterSize;
 
-			if (curPoster != null && _vm.MapScrollViewModel.PosterSize.HasValue)
+			if (! (curPoster != null && posterSize.HasValue) )
 			{
-				coordsEditorViewModel = new CoordsEditorViewModel(curPoster.JobAreaInfo.Coords, _vm.MapScrollViewModel.PosterSize.Value, allowEdits: true, _vm.ProjectAdapter);
+				return;
 			}
-			else
-			{
-				var x1 = "-0.477036968733327014028268226139546";
-				var x2 = "-0.477036964892343354414420540166062";
-				var y1 = "0.535575821681765930306959274776606";
-				var y2 = "0.535575824239325800205884281044245";
 
-				//var x1 = "-0.4770369687333";
-				//var x2 = "-0.4770369648923";
-				//var y1 = "0.5355758216817";
-				//var y2 = "0.5355758242393";
-				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.PosterViewModel.CanvasSize, allowEdits: false, _vm.ProjectAdapter);
-			}
+			coordsEditorViewModel = new CoordsEditorViewModel(curPoster.JobAreaInfo.Coords, posterSize.Value, allowEdits: true, _vm.ProjectAdapter);
 
 			var coordsEditorWindow = new CoordsEditorWindow()
 			{
@@ -785,44 +766,6 @@ namespace MSetExplorer
 				}
 
 			}
-
-			//var newCoords = coordsEditorViewModel.Coords;
-			//LoadNewProject(newCoords, mapCalcSettings);
-		}
-
-		//private void ShowMapCoordsEdTest()
-		//{
-		//	var mapCoordsEditorViewModel = new MapCoordsEdTestViewModel();
-		//	var mapCoordsEditorWindow = new MapCoordsEdTestWindow()
-		//	{
-		//		DataContext = mapCoordsEditorViewModel
-		//	};
-
-		//	if (mapCoordsEditorWindow.ShowDialog() == true)
-		//	{
-		//		_ = MessageBox.Show("Saved.");
-		//	}
-		//	//else
-		//	//{
-		//	//	_ = MessageBox.Show("Cancelled.");
-		//	//}
-		//}
-
-		private void SpIdxTest()
-		{
-			var sPoint = new RPoint(-5, -4, -1);
-			var l1 = new MapSectionSpIdxItem(sPoint);
-			Debug.WriteLine(l1);
-
-
-			var nPoint = new RPoint(l1.XValues[6].Value * 8, l1.YValues[6].Value * 8, sPoint.Exponent - 3); ;
-			var l2 = new MapSectionSpIdxItem(nPoint);
-			Debug.WriteLine(l2);
-
-			nPoint = new RPoint(l2.XValues[6].Value * 8, l2.YValues[2].Value * 8, nPoint.Exponent - 3);
-
-			var l3 = new MapSectionSpIdxItem(nPoint);
-			Debug.WriteLine(l3);
 		}
 
 		#endregion
@@ -1013,5 +956,6 @@ namespace MSetExplorer
 			SaveCancelled,
 		}
 
+		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
 	}
 }

@@ -130,11 +130,19 @@ namespace MSetExplorer
 				if (_tcs?.Task.IsCompleted == false)
 				{
 					_tcs.SetResult();
+					var emptyMapSection = new MapSection(new PointInt(), new SizeInt(), new ushort[0], new ushort[0], 0, "", new BigVector(), false, BuildHstFake);
+					_callback(emptyMapSection, -1);
+
 				}
 
 				var pr = _mapSectionRequestProcessor.GetPendingRequests(JobNumber);
 				Debug.WriteLine($"MapLoader is done with Job: {JobNumber}, there are {pr.Count} requests still pending.");
 			}
+		}
+
+		private IHistogram BuildHstFake(ushort[] dummy)
+		{
+			return new HistogramALow(dummy);
 		}
 
 		#endregion

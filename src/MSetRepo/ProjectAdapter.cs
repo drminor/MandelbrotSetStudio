@@ -326,10 +326,15 @@ namespace MSetRepo
 
 		public ColorBandSet? GetColorBandSet(string id)
 		{
+			var result = GetColorBandSet(new ObjectId(id), new ColorBandSetReaderWriter(_dbProvider));
+			return result;
+		}
+
+		private ColorBandSet? GetColorBandSet(ObjectId id, ColorBandSetReaderWriter colorBandSetReaderWriter)
+		{
 			Debug.WriteLine($"Retrieving ColorBandSet with Id: {id}.");
 
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			var colorBandSetRecord = colorBandSetReaderWriter.Get(new ObjectId(id));
+			var colorBandSetRecord = colorBandSetReaderWriter.Get(id);
 
 			var result = colorBandSetRecord == null ? null : _mSetRecordMapper.MapFrom(colorBandSetRecord);
 			return result;
@@ -733,6 +738,18 @@ namespace MSetRepo
 
 		#region Poster
 
+		public IList<Poster> GetAllPosters()
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+
+			var posterRecords = posterReaderWriter.GetAll();
+
+			var result = posterRecords.Select(x => BuildPoster(x, colorBandSetReaderWriter)).ToList();
+
+			return result;
+		}
+
 		public bool TryGetPoster(ObjectId posterId, [MaybeNullWhen(false)] out Poster poster)
 		{
 			//Debug.WriteLine($"Retrieving Poster object with Id: {posterId}.");
@@ -741,7 +758,8 @@ namespace MSetRepo
 
 			if (posterReaderWriter.TryGet(posterId, out var posterRecord))
 			{
-				poster = BuildPoster(posterRecord);
+				var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+				poster = BuildPoster(posterRecord, colorBandSetReaderWriter);
 			}
 			else
 			{
@@ -759,7 +777,8 @@ namespace MSetRepo
 
 			if (posterReaderWriter.TryGet(name, out var posterRecord))
 			{
-				poster = BuildPoster(posterRecord);
+				var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+				poster = BuildPoster(posterRecord, colorBandSetReaderWriter);
 			}
 			else
 			{
@@ -769,17 +788,15 @@ namespace MSetRepo
 			return poster != null;
 		}
 
-		private Poster BuildPoster(PosterRecord target)
+		private Poster BuildPoster(PosterRecord target, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			var colorBandSetRecord = colorBandSetReaderWriter.Get(target.ColorBandSetId);
+			var colorBandSet = GetColorBandSet(target.ColorBandSetId, colorBandSetReaderWriter);
 
-			if (colorBandSetRecord == null)
+			if (colorBandSet == null)
 			{
-				throw new KeyNotFoundException($"Cannot find a ColorBandSet record on file for the Poster with id: {target.Id}.");
+				Debug.WriteLine($"WARNING: Cannot find a ColorBandSet record on file for the Poster with namer: {target.Name}. Using the default, empty ColorBandSet.");
+				colorBandSet = new ColorBandSet();
 			}
-
-			var colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
 
 			var result = new Poster(
 				id: target.Id,
@@ -840,6 +857,12 @@ namespace MSetRepo
 
 			return result;
 		}
+
+		#endregion
+
+		#region PosterInfo
+
+
 
 		#endregion
 

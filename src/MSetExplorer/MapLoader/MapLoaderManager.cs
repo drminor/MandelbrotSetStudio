@@ -44,6 +44,8 @@ namespace MSetExplorer
 
 		private GenMapRequestInfo? CurrentRequest => DoWithReadLock(() => { return (_requestsPointer == -1 || _requestsPointer > _requests.Count - 1) ? null : _requests[_requestsPointer]; });
 
+		public long NumberOfCountValSwitches => _mapSectionHelper.NumberOfCountValSwitches;
+
 		#endregion
 
 		#region Public Methods

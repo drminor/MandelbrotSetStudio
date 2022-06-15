@@ -19,5 +19,7 @@ namespace MSS.Common
 		Task? GetTaskForJob(int jobNumber);
 
 		void StopJob(int jobNumber);
+
+		long NumberOfCountValSwitches { get; }
 	}
 }

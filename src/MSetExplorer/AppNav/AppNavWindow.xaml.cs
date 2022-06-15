@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MSetExplorer.ScreenHelpers;
+using System.Diagnostics;
 using System.Windows;
 
 namespace MSetExplorer
@@ -60,78 +61,35 @@ namespace MSetExplorer
 			Hide();
 
 			var explorerViewModel = _vm.GetExplorerViewModel();
-
-			var explorerWindow = new ExplorerWindow
+			var explorerWindow = new ExplorerWindow(AppNavRequestResponse.BuildEmptyRequest())
 			{
 				DataContext = explorerViewModel
 			};
 
 			_lastWindow = explorerWindow;
+			_lastWindow.Closed += LastWindow_Closed;
 
 			explorerWindow.Owner = Application.Current.MainWindow;
-			explorerWindow.Closed += ExplorerWindow_Closed;
 			explorerWindow.Show();
 			_ = explorerWindow.Focus();
 		}
 
-		private void ExplorerWindow_Closed(object? sender, System.EventArgs e)
-		{
-			if (_lastWindow != null)
-			{
-				_lastWindow.Closed -= ExplorerWindow_Closed;
-				_lastWindow = null;
-			}
-
-			if (Properties.Settings.Default.ShowTopNav)
-			{
-				Show();
-				WindowState = WindowState.Normal;
-			}
-			else
-			{
-				ExitApp();
-			}
-		}
-
-		private void GoToDesigner()
+		private void GoToDesigner(AppNavRequestResponse? appNavRequestResponse = null)
 		{
 			Hide();
 
 			var posterDesignerViewModel = _vm.GetPosterDesignerViewModel();
-
-			//posterDesignerViewModel.p
-
-			var designerWindow = new PosterDesignerWindow
+			var designerWindow = new PosterDesignerWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
 			{
 				DataContext = posterDesignerViewModel
 			};
 
 			_lastWindow = designerWindow;
+			_lastWindow.Closed += LastWindow_Closed;
 
 			designerWindow.Owner = Application.Current.MainWindow;
-			designerWindow.Closed += DesignerWindow_Closed;
 			designerWindow.Show();
 			_ = designerWindow.Focus();
-
-		}
-
-		private void DesignerWindow_Closed(object? sender, System.EventArgs e)
-		{
-			if (_lastWindow != null)
-			{
-				_lastWindow.Closed -= DesignerWindow_Closed;
-				_lastWindow = null;
-			}
-
-			if (Properties.Settings.Default.ShowTopNav)
-			{
-				Show();
-				WindowState = WindowState.Normal;
-			}
-			else
-			{
-				ExitApp();
-			}
 		}
 
 		private void LeaveButton_Click(object sender, RoutedEventArgs e)
@@ -144,5 +102,59 @@ namespace MSetExplorer
 			Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
 			Close();
 		}
+
+		#region Nav Window Support
+
+		private void LastWindow_Closed(object? sender, System.EventArgs e)
+		{
+			if (_lastWindow != null)
+			{
+				_lastWindow.Closed -= LastWindow_Closed;
+			}
+
+			if (_lastWindow is IHaveAppNavRequestResponse navWin)
+			{
+				HandleNavWinClosing(navWin);
+			}
+			else
+			{
+				CloseOrShow(GetOnCloseBehavior(Properties.Settings.Default.ShowTopNav));
+			}
+		}
+
+		private void HandleNavWinClosing(IHaveAppNavRequestResponse navWin)
+		{
+			if (navWin.AppNavRequestResponse.ResponseCommand is RequestResponseCommand responseCommand)
+			{
+				if (responseCommand == RequestResponseCommand.OpenPoster)
+				{
+					var requestCommand = navWin.AppNavRequestResponse.BuildRequestFromResponse();
+					GoToDesigner(requestCommand);
+					return;
+				}
+			}
+
+			CloseOrShow(navWin.AppNavRequestResponse.OnCloseBehavior);
+		}
+
+		private void CloseOrShow(OnCloseBehavior onCloseBehavior)
+		{
+			if (onCloseBehavior == OnCloseBehavior.ReturnToTopNav)
+			{
+				Show();
+				WindowState = WindowState.Normal;
+			}
+			else
+			{
+				ExitApp();
+			}
+		}
+
+		private OnCloseBehavior GetOnCloseBehavior(bool showTopNav)
+		{
+			return showTopNav ? OnCloseBehavior.ReturnToTopNav : OnCloseBehavior.Close;
+		}
+
+		#endregion
 	}
 }

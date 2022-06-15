@@ -33,6 +33,8 @@ namespace MSetExplorer
 		public string? ImageFilePath { get; private set; }
 		public Poster? Poster { get; private set; }
 
+		public long NumberOfCountValSwitches => _pngBuilder.NumberOfCountValSwitches;
+
 		#endregion
 
 		#region Public Methods

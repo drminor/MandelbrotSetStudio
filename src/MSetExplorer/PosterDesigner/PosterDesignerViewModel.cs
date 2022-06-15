@@ -10,7 +10,7 @@ namespace MSetExplorer
 	public class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
 		private readonly PngBuilder _pngBuilder;
-		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
+		private readonly PosterOpenSaveViewModelCreator _posterOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
 
 		private int _dispWidth;
@@ -19,7 +19,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
-			IProjectAdapter projectAdapter, PngBuilder pngBuilder,	ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
+			IProjectAdapter projectAdapter, PngBuilder pngBuilder,PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
 		{
 			ProjectAdapter = projectAdapter;
 			_pngBuilder = pngBuilder;
@@ -38,7 +38,7 @@ namespace MSetExplorer
 			DispWidth = MapDisplayViewModel.CanvasSize.Width;
 			DispHeight = MapDisplayViewModel.CanvasSize.Height;
 
-			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
+			_posterOpenSaveViewModelCreator = posterOpenSaveViewModelCreator;
 			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
 
 			MapCoordsViewModel = new MapCoordsViewModel();
@@ -95,9 +95,9 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			var result = _projectOpenSaveViewModelCreator(initalName, dialogType);
+			var result = _posterOpenSaveViewModelCreator(initalName, dialogType);
 			return result;
 		}
 

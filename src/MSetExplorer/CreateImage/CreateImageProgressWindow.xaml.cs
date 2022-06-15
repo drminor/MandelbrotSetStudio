@@ -39,6 +39,7 @@ namespace MSetExplorer
 
 		private void Progress_ProgressChanged(object? sender, double e)
 		{
+			Debug.WriteLine($"There have been {_vm.NumberOfCountValSwitches}.");
 			progressBar1.Value = e;
 			if (Math.Abs(e - 100) < 1)
 			{

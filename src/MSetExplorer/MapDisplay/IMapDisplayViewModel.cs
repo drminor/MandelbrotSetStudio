@@ -42,6 +42,5 @@ namespace MSetExplorer
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
 		VectorInt ScreenCollectionIndex { get; }
-		void RebuildScreenSections();
 	}
 }

@@ -10,6 +10,7 @@ namespace MSetExplorer
 	{
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
+		private readonly PosterOpenSaveViewModelCreator _posterOpenSaveViewModelCreator;
 
 		private int _dispWidth;
 		private int _dispHeight;
@@ -17,7 +18,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public ExplorerViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel, 
-			IProjectAdapter projectAdapter, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
+			IProjectAdapter projectAdapter, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator)
 		{
 			ProjectAdapter = projectAdapter;
 
@@ -34,6 +35,7 @@ namespace MSetExplorer
 
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
 			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
+			_posterOpenSaveViewModelCreator = posterOpenSaveViewModelCreator;
 
 			MapCoordsViewModel = new MapCoordsViewModel();
 
@@ -100,6 +102,12 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
+		{
+			var result = _posterOpenSaveViewModelCreator(initalName, dialogType);
+			return result;
+		}
+
 		#endregion
 
 		#region Event Handlers
@@ -112,8 +120,6 @@ namespace MSetExplorer
 				var curJob = MapProjectViewModel.CurrentJob;
 
 				MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
-
-				MapDisplayViewModel.RebuildScreenSections();
 
 				var newJobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
 				MapCoordsViewModel.CurrentJobAreaInfo = newJobAreaInfo;

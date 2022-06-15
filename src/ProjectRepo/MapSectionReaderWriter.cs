@@ -86,35 +86,36 @@ namespace ProjectRepo
 			}
 		}
 
-		//public MapSectionRecordJustCounts? GetJustCounts(ObjectId subdivisionId, BigVectorDto blockPosition)
-		//{
-		//	var projection1 = Builders<MapSectionRecord>.Projection.Expression
-		//		(
-		//			p => new MapSectionRecordJustCounts(p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi, p.BlockPosYLo, p.MapCalcSettings, p.Counts)
-		//		);
+		public async Task<MapSectionRecordJustCounts?> GetJustCountsAsync(ObjectId subdivisionId, BigVectorDto blockPosition)
+		{
+			var projection1 = Builders<MapSectionRecord>.Projection.Expression
+				(
+					p => new MapSectionRecordJustCounts(p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi, p.BlockPosYLo, p.MapCalcSettings, p.Counts, p.EscapeVelocities)
+				);
 
-		//	var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-		//	var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
-		//	var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
-		//	var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
-		//	var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
+			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
 
-		//	var mapSectionRecordJc = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5).Project(projection1);
+			IFindFluent<MapSectionRecord, MapSectionRecordJustCounts> operation = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5).Project(projection1);
 
-		//	var itemsFound = mapSectionRecordJc.ToList();
+			var itemsFound = await operation.ToListAsync().ConfigureAwait(false);
 
-		//	if (itemsFound.Count > 0)
-		//	{
-		//		var result = itemsFound[0];
-		//		result.LastAccessed = DateTime.UtcNow;
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		//Debug.WriteLine("MapSection Not found.");
-		//		return default;
-		//	}
-		//}
+			if (itemsFound.Count > 0)
+			{
+				var result = itemsFound[0];
+				result.LastAccessed = DateTime.UtcNow;
+				return result;
+			}
+			else
+			{
+				//Debug.WriteLine("MapSection Not found.");
+				return default;
+			}
+
+		}
 
 		public async Task<ObjectId> InsertAsync(MapSectionRecord mapSectionRecord)
 		{

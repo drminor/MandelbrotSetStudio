@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSetExplorer.ScreenHelpers;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -13,15 +14,16 @@ namespace MSetExplorer
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
-	public partial class ExplorerWindow : Window
+	public partial class ExplorerWindow : Window, IHaveAppNavRequestResponse
 	{
 		private IExplorerViewModel _vm;
 
 		#region Constructor
 
-		public ExplorerWindow()
+		public ExplorerWindow(AppNavRequestResponse appNavRequestResponse)
 		{
 			_vm = (IExplorerViewModel)DataContext;
+			AppNavRequestResponse = appNavRequestResponse;
 
 			Loaded += ExplorerWindow_Loaded;
 			Closing += ExplorerWindow_Closing;
@@ -134,15 +136,15 @@ namespace MSetExplorer
 
 		private void CloseAndReturnButton_Click(object sender, RoutedEventArgs e)
 		{
-			CloseOrExit(returnToTopNav: true);
+			CloseOrExit(OnCloseBehavior.ReturnToTopNav);
 		}
 
 		private void ExitButton_Click(object sender, RoutedEventArgs e)
 		{
-			CloseOrExit(returnToTopNav: false);
+			CloseOrExit(OnCloseBehavior.Close);
 		}
 
-		private void CloseOrExit(bool returnToTopNav)
+		private void CloseOrExit(OnCloseBehavior onCloseBehavior)
 		{
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
@@ -160,7 +162,7 @@ namespace MSetExplorer
 			}
 
 			_vm.MapProjectViewModel.ProjectClose();
-			Properties.Settings.Default["ShowTopNav"] = returnToTopNav;
+			AppNavRequestResponse.OnCloseBehavior = onCloseBehavior;
 			Close();
 		}
 
@@ -266,7 +268,6 @@ namespace MSetExplorer
 				return;
 			}
 
-
 			LoadNewProject();
 		}
 
@@ -369,16 +370,20 @@ namespace MSetExplorer
 
 			if (curJob.IsEmpty)
 			{
-				_ = MessageBox.Show("Cannot create a poster, there is not current job.");
+				_ = MessageBox.Show("Cannot create a poster, there is no current job.");
 			}
 			else
 			{
-				var posterSize = new SizeInt(11392);
-				_ = _vm.MapProjectViewModel.PosterCreate("Test19", "Main Area - First Poster", posterSize);
+				if (SavePosterInteractive(_vm.MapProjectViewModel.CurrentProjectName, out var newPoster))
+				{
+					_vm.MapProjectViewModel.ProjectClose();
 
-				_vm.MapProjectViewModel.ProjectClose();
-				Properties.Settings.Default["ShowTopNav"] = true;
-				Close();
+					AppNavRequestResponse.OnCloseBehavior = OnCloseBehavior.ReturnToTopNav;
+					AppNavRequestResponse.ResponseCommand = RequestResponseCommand.OpenPoster;
+					AppNavRequestResponse.ResponseParameters = new string[] { newPoster.Name };
+
+					Close();
+				}
 			}
 		}
 
@@ -702,7 +707,7 @@ namespace MSetExplorer
 		private bool? ProjectUserSaysSaveChanges()
 		{
 			var defaultResult = _vm.MapProjectViewModel.CurrentProjectOnFile ? MessageBoxResult.Yes : MessageBoxResult.No;
-			var res = MessageBox.Show("The current project has pending changes. Save Changes?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
+			var res = MessageBox.Show("The current project has pending changes. Save Changes?", "Pending Changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
 
 			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?) null;
 
@@ -835,6 +840,61 @@ namespace MSetExplorer
 
 			var l3 = new MapSectionSpIdxItem(nPoint);
 			Debug.WriteLine(l3);
+		}
+
+		#endregion
+
+		#region Private Methods - Poster
+
+		private bool SavePosterInteractive(string? initialName, [MaybeNullWhen(false)] out Poster newPoster)
+		{
+			bool result;
+
+			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
+			{
+				if (selectedName != null)
+				{
+					// TODO: Handle cases where PosterCreate fails.
+					var posterSize = new SizeInt(4096);
+					newPoster = _vm.MapProjectViewModel.PosterCreate(selectedName, description, posterSize);
+					result = true;
+				}
+				else
+				{
+					Debug.WriteLine($"No name was provided. Cancelling the Create Poster operation.");
+					newPoster = null;
+					result = false;
+				}
+			}
+			else
+			{
+				newPoster = null;
+				result = false;
+			}
+
+			return result;
+		}
+
+		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
+		{
+			var posterOpenSaveVm = _vm.CreateAPosterOpenSaveViewModel(initalName, dialogType);
+			var posterOpenSaveWindow = new PosterOpenSaveWindow
+			{
+				DataContext = posterOpenSaveVm
+			};
+
+			if (posterOpenSaveWindow.ShowDialog() == true)
+			{
+				selectedName = posterOpenSaveWindow.PosterName;
+				description = posterOpenSaveWindow.PosterDescription;
+				return true;
+			}
+			else
+			{
+				selectedName = null;
+				description = null;
+				return false;
+			}
 		}
 
 		#endregion
@@ -1022,6 +1082,8 @@ namespace MSetExplorer
 			NotSavingChanges,
 			SaveCancelled,
 		}
+
+		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
 
 	}
 }

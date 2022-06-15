@@ -1,20 +1,21 @@
 ﻿using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace MSetExplorer
 {
 	/// <summary>
-	/// Interaction logic for ProjectOpenSaveWindow.xaml
+	/// Interaction logic for PosterOpenSaveWindow.xaml
 	/// </summary>
-	public partial class ProjectOpenSaveWindow : Window
-	{
-		private IProjectOpenSaveViewModel _vm;
+	public partial class PosterOpenSaveWindow : Window
+	{ 
+		private IPosterOpenSaveViewModel _vm;
 
 		#region Constructor 
 
-		public ProjectOpenSaveWindow()
+		public PosterOpenSaveWindow()
 		{
-			_vm = (IProjectOpenSaveViewModel)DataContext;
+			_vm = (IPosterOpenSaveViewModel)DataContext;
 
 			Loaded += ProjectOpenSaveWindow_Loaded;
 			InitializeComponent();
@@ -24,28 +25,29 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				Debug.WriteLine("The DataContext is null as the ProjectOpenSave Window is being loaded.");
+				Debug.WriteLine("The DataContext is null as the PosterOpenSave Window is being loaded.");
 				return;
 			}
 			else
 			{
-				_vm = (IProjectOpenSaveViewModel)DataContext;
+				_vm = (IPosterOpenSaveViewModel)DataContext;
 				borderTop.DataContext = DataContext;
 
 				btnSave.Content = _vm.DialogType == DialogType.Open ? "Open" : "Save";
-				Title = _vm.DialogType == DialogType.Open ? "Open Project" : "Save Project";
+				Title = _vm.DialogType == DialogType.Open ? "Open Poster" : "Save Poster";
 
-				lvProjects.ItemsSource = _vm.ProjectInfos;
-				lvProjects.SelectionChanged += LvProjects_SelectionChanged;
+				lvPosters.ItemsSource = _vm.Posters;
+				lvPosters.SelectionChanged += LvPosters_SelectionChanged;
 
-				lvProjects.MouseDoubleClick += LvProjects_MouseDoubleClick;
+				lvPosters.MouseDoubleClick += LvPosters_MouseDoubleClick;
 
+				txtName.Text = _vm.SelectedName;
 				txtName.LostFocus += TxtName_LostFocus;
 
 				_ = txtName.Focus();
 				btnSave.IsEnabled = _vm.SelectedName != null;
 
-				Debug.WriteLine("The ProjectOpenSave Window is now loaded");
+				Debug.WriteLine("The PosterOpenSave Window is now loaded");
 			}
 		}
 
@@ -53,7 +55,7 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void LvProjects_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		private void LvPosters_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
 		{
 			TakeSelection();
 		}
@@ -62,15 +64,15 @@ namespace MSetExplorer
 		{
 			if (string.IsNullOrWhiteSpace(txtName.Text))
 			{
-				_vm.SelectedName = _vm.SelectedProject?.Name;
+				_vm.SelectedName = _vm.SelectedPoster?.Name;
 				_vm.UserIsSettingTheName = false;
 			}
 			else
 			{
-				if (txtName.Text == _vm.SelectedProject?.Name)
+				if (txtName.Text == _vm.SelectedPoster?.Name)
 				{
 					_vm.UserIsSettingTheName = false;
-					_vm.SelectedName = _vm.SelectedProject?.Name;
+					_vm.SelectedName = _vm.SelectedPoster?.Name;
 				}
 				else
 				{
@@ -81,7 +83,7 @@ namespace MSetExplorer
 			btnSave.IsEnabled = _vm.SelectedName != null;
 		}
 
-		private void LvProjects_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+		private void LvPosters_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			btnSave.IsEnabled = _vm.SelectedName != null;
 		}
@@ -90,8 +92,8 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public string? ProjectName => _vm.SelectedName;
-		public string? ProjectDescription => _vm.SelectedDescription;
+		public string? PosterName => _vm.SelectedName;
+		public string? PosterDescription => _vm.SelectedDescription;
 
 		#endregion
 
@@ -117,9 +119,9 @@ namespace MSetExplorer
 		{
 			if (_vm.DialogType == DialogType.Save)
 			{
-				if (_vm.IsNameTaken(ProjectName))
+				if (_vm.IsNameTaken(PosterName))
 				{
-					var res = MessageBox.Show("A project already exists with this name. Do you want to overwrite?", "Overwrite Existing Project", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
+					var res = MessageBox.Show("A Poster already exists with this name. Do you want to overwrite?", "Overwrite Existing Poster", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
 
 					if (res == MessageBoxResult.No)
 					{

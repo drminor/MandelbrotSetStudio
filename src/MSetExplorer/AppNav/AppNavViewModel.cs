@@ -6,6 +6,7 @@ namespace MSetExplorer
 {
 	public delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 	public delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	public delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
 	public class AppNavViewModel
 	{
@@ -32,7 +33,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel);
 
 			return result;
 		}
@@ -51,7 +52,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, PngBuilder, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, PngBuilder, CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel);
 
 			return result;
 		}
@@ -70,6 +71,12 @@ namespace MSetExplorer
 				: new ColorBandSetOpenSaveViewModel(RepositoryAdapters.SharedColorBandSetAdapter, initalName, dialogType);
 		}
 
+		private IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
+		{
+			return RepositoryAdapters.ProjectAdapter == null
+				? throw new InvalidOperationException("Cannot create a Poster OpenSave ViewModel, the ProjectAdapter is null.")
+				: new PosterOpenSaveViewModel(RepositoryAdapters.ProjectAdapter, initalName, dialogType);
+		}
 
 	}
 }

@@ -37,10 +37,10 @@ namespace MSetRepo
 			}
 			else
 			{
-				MapSectionRecord? msRec;
+				MapSectionRecordJustCounts? mapSectionRecordCountsOnly;
 				try
 				{
-					msRec = await mapSectionReaderWriter.GetAsync(subObjectId, blockPosition);
+					mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subObjectId, blockPosition);
 				}
 				catch
 				{
@@ -53,12 +53,12 @@ namespace MSetRepo
 					{
 						throw new InvalidOperationException("Cannot delete the bad MapSectionRecord.");
 					}
-					msRec = null;
+					mapSectionRecordCountsOnly = null;
 				}
 
-				if (msRec != null)
+				if (mapSectionRecordCountsOnly != null)
 				{
-					var mapSectionResponse = _mSetRecordMapper.MapFrom(msRec);
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly);
 					return mapSectionResponse;
 				}
 				else

@@ -352,14 +352,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public void RebuildScreenSections()
-		{
-			//var orginal = CanvasControlOffset;
-			//CanvasControlOffset = new VectorInt(CanvasControlOffset.X + 1, CanvasControlOffset.Y + 1);
-			//CanvasControlOffset = orginal;
-			////_screenSectionCollection.HideScreenSections(rebuild: true);
-		}
-
 		#endregion
 
 		#region Raise MapViewUpdateRequested Event Methods
@@ -384,57 +376,70 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//private async void MapSectionReady(object? sender, Tuple<MapSection, int> e)
-		//{
-		//	if (e.Item2 == _currentMapLoaderJobNumber)
-		//	{
-		//		await Dispatcher.Yield(DispatcherPriority.Background);
-
-		//		DrawASection(e.Item1, _colorMap, _useEscapeVelocities);
-
-		//		lock (_paintLocker)
-		//		{
-		//			MapSections.Add(e.Item1);
-		//		}
-		//	}
-		//}
-
-
-		//			_synchronizationContext?.p .Post(o => MapSectionReady?.Invoke(this, mapSectionAndJobNumber), null);
-
+		private int callCounter = 0;
+		private List<MapSection> mapSectionsPendingUiUpdate = new List<MapSection>();
 
 		private void MapSectionReady(MapSection mapSection, int jobNumber)
 		{
-			if (jobNumber == _currentMapLoaderJobNumber)
+			var shouldUpdateUi = ProcessMapSection(mapSection, jobNumber, mapSectionsPendingUiUpdate);
+
+			if (shouldUpdateUi)
 			{
-				_synchronizationContext?.Post(async (o) => await ProcessMapSection(mapSection), null);
+				//_synchronizationContext?.Send(async (o) => await UpdateUi(mapSectionsPendingUiUpdate), null);
+				_synchronizationContext?.Send(o => UpdateUi(mapSectionsPendingUiUpdate), null);
 			}
 		}
 
-		private async Task<bool> ProcessMapSection(MapSection mapSection)
+		private bool ProcessMapSection(MapSection mapSection, int jobNumber, List<MapSection> sectionsPendingUiUpdate)
 		{
-			await Dispatcher.Yield(DispatcherPriority.Background);
-
-			DrawASection(mapSection, _colorMap, _useEscapeVelocities);
+			bool shouldUpdateUi;
 
 			lock (_paintLocker)
 			{
-				MapSections.Add(mapSection);
+				if (jobNumber == _currentMapLoaderJobNumber)
+				{
+					DrawASection(mapSection, _colorMap, _useEscapeVelocities, drawOffline: true);
+					sectionsPendingUiUpdate.Add(mapSection);
+					shouldUpdateUi = ++callCounter % 90 == 0;
+				}
+				else if (jobNumber == -1)
+				{
+					shouldUpdateUi = true;
+				}
+				else
+				{
+					shouldUpdateUi = false;
+				}
+			}
+
+			return shouldUpdateUi;
+		}
+
+		private async Task<bool> UpdateUiAsync(List<MapSection> sectionsPendingUiUpdate)
+		{
+			await Dispatcher.Yield(DispatcherPriority.Background);
+
+			RedrawSections(sectionsPendingUiUpdate);
+
+			foreach(var mapSection in sectionsPendingUiUpdate)
+			{
+				//MapSections.Add(mapSection);
+				_screenSectionCollection.Redraw(mapSection.BlockPosition);
 			}
 
 			return true;
 		}
 
+		private bool UpdateUi(List<MapSection> sectionsPendingUiUpdate)
+		{ 
+			foreach (var mapSection in sectionsPendingUiUpdate)
+			{
+				MapSections.Add(mapSection);
+				_screenSectionCollection.Redraw(mapSection.BlockPosition);
+			}
 
-		//private void MapSectionReady(object? sender, Tuple<MapSection, int> e)
-		//{
-		//	if (e.Item2 == _currentMapLoaderJobNumber)
-		//	{
-		//		MapSections.Add(e.Item1);
-		//	}
-		//}
-
-		//private int pCntr = 0;
+			return true;
+		}
 
 		//private void MapSections_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		//{
@@ -684,7 +689,7 @@ namespace MSetExplorer
 
 				foreach (var mapSection in mapSections)
 				{
-					DrawASection(mapSection, colorMap, useEscapVelocities);
+					DrawASection(mapSection, colorMap, useEscapVelocities, drawOffline: false);
 				}
 			}
 			else
@@ -696,13 +701,14 @@ namespace MSetExplorer
 			}
 		}
 
-		private void DrawASection(MapSection mapSection, ColorMap? colorMap, bool useEscapVelocities)
+		private void DrawASection(MapSection mapSection, ColorMap? colorMap, bool useEscapVelocities, bool drawOffline)
 		{
 			if (mapSection.Counts != null && colorMap != null)
 			{
 				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
 				var pixels = _mapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.EscapeVelocities, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
-				_screenSectionCollection.Draw(mapSection.BlockPosition, pixels);
+
+				_screenSectionCollection.Draw(mapSection.BlockPosition, pixels, drawOffline);
 			}
 			else
 			{

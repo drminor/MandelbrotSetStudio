@@ -18,7 +18,7 @@ namespace MSetRepo
 	/// Maps 
 	///		Project, 
 	///		ColorBandSet, ColorBand
-	///		Job, MSetInfo, 
+	///		Job, 
 	///		Subdivision, MapSectionResponse
 	///		RPoint, RSize, RRectangle,
 	///		PointInt, SizeInt, VectorInt, BigVector,
@@ -28,8 +28,7 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		//IMapper<MSetInfo, MSetInfoRecord>,
-		IMapper<Subdivision, SubdivisionRecord>, /*IMapper<MapSectionResponse, MapSectionRecordV1>,*/ IMapper<MapSectionResponse, MapSectionRecord>,
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse, MapSectionRecord>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
@@ -265,9 +264,6 @@ namespace MSetRepo
 		/// <returns></returns>
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
-			var boolSpanForDoneFlags = new ReadOnlySpan<bool>(source.DoneFlags);
-			var doneFlagsSpan = MemoryMarshal.Cast<bool, byte>(boolSpanForDoneFlags);
-
 			try
 			{
 				var zVals = new ZValues(source.ZValues);
@@ -372,20 +368,14 @@ namespace MSetRepo
 		{
 			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
 
-			var byteSpanForCounts = new ReadOnlySpan<byte>(target.Counts);
-			var countsSpan = MemoryMarshal.Cast<byte, ushort>(byteSpanForCounts);
-
-			var byteSpanForEscVels = new ReadOnlySpan<byte>(target.EscapeVelocities);
-			var escVelsSpan = MemoryMarshal.Cast<byte, ushort>(byteSpanForEscVels);
-
 			var result = new MapSectionResponse
 			{
 				MapSectionId = target.Id.ToString(),
 				SubdivisionId = target.SubdivisionId.ToString(),
 				BlockPosition = blockPosition,
 				MapCalcSettings = target.MapCalcSettings,
-				Counts = countsSpan.ToArray(),
-				EscapeVelocities = escVelsSpan.ToArray(),
+				Counts = GetUShorts(target.Counts),
+				EscapeVelocities = GetUShorts(target.EscapeVelocities),
 				DoneFlags = null,
 				ZValues = null
 			};
