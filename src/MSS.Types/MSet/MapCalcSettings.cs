@@ -21,6 +21,8 @@ namespace MSS.Types.MSet
 
 		public bool UseEscapeVelocities { get; set; }
 
+		public bool DontFetchZValuesFromRepo { get; set; } // TODO: Finish including the property: Don'tFetchZValuesFromRepo
+
 		#region Constructor
 
 		public MapCalcSettings()

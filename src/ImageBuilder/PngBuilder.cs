@@ -46,6 +46,7 @@ namespace ImageBuilder
 			var canvasControlOffset = jobAreaInfo.CanvasControlOffset;
 
 			var mapCalcSettings = poster.MapCalcSettings;
+			mapCalcSettings.DontFetchZValuesFromRepo = true;
 
 			var blockSize = jobAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(poster.ColorBandSet)

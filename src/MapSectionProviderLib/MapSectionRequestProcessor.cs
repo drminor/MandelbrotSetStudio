@@ -42,7 +42,6 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		//TODO: Add support to the MapSectionRequestProcessor to not use a IMapSectionAdapter.
 		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor)
 		{
 			_nextJobId = 0;
@@ -304,7 +303,7 @@ namespace MapSectionProviderLib
 			if (_mapSectionAdapter != null)
 			{
 				var mapSectionRequest = mapSectionWorkItem.Request;
-				var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition);
+				var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition, mapSectionRequest.DontFetchZValuesFromRepo);
 
 				if (mapSectionResponse?.JustNowUpdated == true)
 				{

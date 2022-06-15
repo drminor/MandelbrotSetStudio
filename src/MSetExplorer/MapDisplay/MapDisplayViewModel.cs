@@ -376,17 +376,18 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private int callCounter = 0;
-		private List<MapSection> mapSectionsPendingUiUpdate = new List<MapSection>();
+		private int _callCounter;
+		private List<MapSection> _mapSectionsPendingUiUpdate = new List<MapSection>();
+		private Stopwatch? _stopwatch;
 
 		private void MapSectionReady(MapSection mapSection, int jobNumber)
 		{
-			var shouldUpdateUi = ProcessMapSection(mapSection, jobNumber, mapSectionsPendingUiUpdate);
+			var shouldUpdateUi = ProcessMapSection(mapSection, jobNumber, _mapSectionsPendingUiUpdate);
 
 			if (shouldUpdateUi)
 			{
 				//_synchronizationContext?.Send(async (o) => await UpdateUi(mapSectionsPendingUiUpdate), null);
-				_synchronizationContext?.Send(o => UpdateUi(mapSectionsPendingUiUpdate), null);
+				_synchronizationContext?.Send(o => UpdateUi(_mapSectionsPendingUiUpdate), null);
 			}
 		}
 
@@ -400,10 +401,20 @@ namespace MSetExplorer
 				{
 					DrawASection(mapSection, _colorMap, _useEscapeVelocities, drawOffline: true);
 					sectionsPendingUiUpdate.Add(mapSection);
-					shouldUpdateUi = ++callCounter % 90 == 0;
+					if (_stopwatch == null)
+					{
+						_stopwatch = Stopwatch.StartNew();
+					}
+					shouldUpdateUi = --_callCounter <= 0 || _stopwatch?.ElapsedMilliseconds > 2000;
 				}
 				else if (jobNumber == -1)
 				{
+					if (_stopwatch != null) 
+					{
+						_stopwatch.Stop();
+						_stopwatch = null;
+					}
+
 					shouldUpdateUi = true;
 				}
 				else
@@ -415,21 +426,6 @@ namespace MSetExplorer
 			return shouldUpdateUi;
 		}
 
-		private async Task<bool> UpdateUiAsync(List<MapSection> sectionsPendingUiUpdate)
-		{
-			await Dispatcher.Yield(DispatcherPriority.Background);
-
-			RedrawSections(sectionsPendingUiUpdate);
-
-			foreach(var mapSection in sectionsPendingUiUpdate)
-			{
-				//MapSections.Add(mapSection);
-				_screenSectionCollection.Redraw(mapSection.BlockPosition);
-			}
-
-			return true;
-		}
-
 		private bool UpdateUi(List<MapSection> sectionsPendingUiUpdate)
 		{ 
 			foreach (var mapSection in sectionsPendingUiUpdate)
@@ -437,6 +433,11 @@ namespace MSetExplorer
 				MapSections.Add(mapSection);
 				_screenSectionCollection.Redraw(mapSection.BlockPosition);
 			}
+			if (_stopwatch != null)
+			{
+				_stopwatch.Restart();
+			}
+			_callCounter = CanvasSize.Width;
 
 			return true;
 		}

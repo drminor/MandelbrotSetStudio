@@ -10,7 +10,7 @@ namespace MSS.Common.MSetRepo
 	{
 		//MapSectionResponse? GetMapSection(string subdivisionId, BigVectorDto blockPosition, bool returnOnlyCounts = false);
 
-		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition);
+		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition, bool excludeZValues = false);
 
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 

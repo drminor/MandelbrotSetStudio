@@ -21,7 +21,7 @@ namespace MSetRepo
 			_mSetRecordMapper = mSetRecordMapper;
 		}
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition, bool excludeZValues = false)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var subObjectId = new ObjectId(subdivisionId);
@@ -32,15 +32,46 @@ namespace MSetRepo
 				if (mapSectionResponse != null)
 				{
 					_ = await UpdateToNewV(mapSectionResponse, mapSectionReaderWriter);
+
+					if (excludeZValues)
+					{
+						mapSectionResponse.DoneFlags = new bool[0];
+						mapSectionResponse.ZValues = new double[0];
+					}
 				}
+
 				return mapSectionResponse;
 			}
 			else
 			{
-				MapSectionRecordJustCounts? mapSectionRecordCountsOnly;
 				try
 				{
-					mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subObjectId, blockPosition);
+					if (excludeZValues)
+					{
+						var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subObjectId, blockPosition);
+						if (mapSectionRecordCountsOnly != null)
+						{
+							var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly);
+							return mapSectionResponse;
+						}
+						else
+						{
+							return null;
+						}
+					}
+					else
+					{
+						var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subObjectId, blockPosition);
+						if (mapSectionRecord != null)
+						{
+							var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+							return mapSectionResponse;
+						}
+						else
+						{
+							return null;
+						}
+					}
 				}
 				catch
 				{
@@ -53,16 +84,7 @@ namespace MSetRepo
 					{
 						throw new InvalidOperationException("Cannot delete the bad MapSectionRecord.");
 					}
-					mapSectionRecordCountsOnly = null;
-				}
 
-				if (mapSectionRecordCountsOnly != null)
-				{
-					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly);
-					return mapSectionResponse;
-				}
-				else
-				{
 					return null;
 				}
 			}

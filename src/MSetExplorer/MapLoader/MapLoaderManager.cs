@@ -52,7 +52,8 @@ namespace MSetExplorer
 
 		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, Action<MapSection, int> callback)
 		{
-			var result = Push(jobAreaAndCalcSettings, null, callback);
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings);
+			var result = Push(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, mapSectionRequests, callback);
 			return result;
 		}
 

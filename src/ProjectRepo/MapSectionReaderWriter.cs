@@ -136,13 +136,26 @@ namespace ProjectRepo
 		{
 			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionRecord.Id);
 
-			var updateDefinition = Builders<MapSectionRecord>.Update
-				.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations)
-				.Set(u => u.Counts, mapSectionRecord.Counts)
-				.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
-				.Set(u => u.DoneFlags, mapSectionRecord.DoneFlags)
-				.Set(u => u.ZValues, mapSectionRecord.ZValues)
-				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+			UpdateDefinition<MapSectionRecord> updateDefinition;
+
+			if (mapSectionRecord.DoneFlags.Length == 0)
+			{
+				updateDefinition = Builders<MapSectionRecord>.Update
+					.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations)
+					.Set(u => u.Counts, mapSectionRecord.Counts)
+					.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
+					.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+			}
+			else
+			{
+				updateDefinition = Builders<MapSectionRecord>.Update
+					.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations)
+					.Set(u => u.Counts, mapSectionRecord.Counts)
+					.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
+					.Set(u => u.DoneFlags, mapSectionRecord.DoneFlags)
+					.Set(u => u.ZValues, mapSectionRecord.ZValues)
+					.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+			}
 
 			UpdateResult? result = await Collection.UpdateOneAsync(filter, updateDefinition);
 

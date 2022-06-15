@@ -69,8 +69,7 @@ namespace MSetExplorer
 					var curPoster = CurrentPoster;
 					if (curPoster != null)
 					{
-						var viewPortArea = GetNewViewPort(curPoster.JobAreaInfo, DisplayPosition, LogicalDisplaySize);
-						JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, curPoster.MapCalcSettings);
+						JobAreaAndCalcSettings = GetNewJob(curPoster.JobAreaInfo, DisplayPosition, LogicalDisplaySize, curPoster.MapCalcSettings);
 					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.LogicalDisplaySize));
@@ -93,8 +92,7 @@ namespace MSetExplorer
 
 					if (_currentPoster != null)
 					{
-						var viewPortArea = GetNewViewPort(_currentPoster.JobAreaInfo, _currentPoster.DisplayPosition, LogicalDisplaySize);
-						JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, _currentPoster.MapCalcSettings);
+						JobAreaAndCalcSettings = GetNewJob(_currentPoster.JobAreaInfo, DisplayPosition, LogicalDisplaySize, _currentPoster.MapCalcSettings);
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
 					}
 
@@ -131,8 +129,7 @@ namespace MSetExplorer
 				{
 					if (value != DisplayPosition)
 					{
-						var viewPortArea = GetNewViewPort(curPoster.JobAreaInfo, value, LogicalDisplaySize);
-						JobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, curPoster.MapCalcSettings);
+						JobAreaAndCalcSettings = GetNewJob(curPoster.JobAreaInfo, value, LogicalDisplaySize, curPoster.MapCalcSettings);
 
 						curPoster.DisplayPosition = value;
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
@@ -329,6 +326,18 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		private JobAreaAndCalcSettings GetNewJob(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, MapCalcSettings mapCalcSettings)
+		{
+			var viewPortArea = GetNewViewPort(currentAreaInfo, DisplayPosition, LogicalDisplaySize);
+
+			var mapCalcSettingsCpy = mapCalcSettings.Clone();
+			mapCalcSettingsCpy.DontFetchZValuesFromRepo = true;
+
+			var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, mapCalcSettingsCpy);
+
+			return jobAreaAndCalcSettings;
+		}
 
 		private JobAreaInfo GetNewViewPort(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize)
 		{
