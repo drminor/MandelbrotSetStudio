@@ -497,6 +497,16 @@ namespace MSS.Common
 			}
 		}
 
+		public static double GetSmallestScaleFactor(SizeDbl sizeToFit, SizeDbl containerSize)
+		{
+			var wRat = containerSize.Width / sizeToFit.Width; // Scale Factor to multiply item being fitted to get container units.
+			var hRat = containerSize.Height / sizeToFit.Height;
+
+			var result = Math.Min(wRat, hRat);
+
+			return result;
+		}
+
 		#endregion
 	}
 }

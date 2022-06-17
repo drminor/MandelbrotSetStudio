@@ -152,6 +152,15 @@ namespace MSS.Types
 			return new SizeDbl(Math.Abs(Width), Math.Abs(Height));
 		}
 
+		public RectangleDbl PlaceAtCenter(SizeDbl containerSize)
+		{
+			var diff = containerSize.Diff(this);
+			var halfDiff = diff.Scale(0.5);
+			var result = new RectangleDbl(new PointDbl(halfDiff), this);
+
+			return result;
+		}
+
 		//public SizeInt Ceiling()
 		//{
 		//	return new SizeInt((int)Math.Ceiling(Width), (int)Math.Ceiling(Height));

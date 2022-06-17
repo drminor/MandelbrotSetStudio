@@ -11,9 +11,9 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class PosterSizeEditorDialog : Window
 	{
-		private bool _showBorder;
+		private readonly bool _showBorder;
 		private Canvas _canvas;
-		private ScaleTransform _scaleTransform;
+		private readonly ScaleTransform _scaleTransform;
 		private Border? _border;
 
 		private PosterSizeEditorViewModel _vm;
@@ -42,6 +42,7 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (PosterSizeEditorViewModel)DataContext;
+				_vm.PropertyChanged += ViewModel_PropertyChanged;
 				_canvas = canvas1;
 				_canvas.SizeChanged += CanvasSize_Changed;
 
@@ -53,7 +54,6 @@ namespace MSetExplorer
 				_border = _showBorder ? BuildBorder(_canvas) : null;
 
 				var sizeDbl = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
-
 				UpdateTheVmWithOurSize(sizeDbl);
 				UpdateTheBorderSize(sizeDbl.Round());
 
@@ -86,6 +86,14 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
+		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(PosterSizeEditorViewModel.LayoutInfo))
+			{
+				Debug.WriteLine("Got a LayInfo update.");
+			}
+		}
+
 		private void CanvasSize_Changed(object sender, SizeChangedEventArgs e)
 		{
 			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize));
@@ -102,15 +110,18 @@ namespace MSetExplorer
 
 		private void UpdateTheVmWithOurSize(SizeDbl size)
 		{
-			_scaleTransform.ScaleX = size.Width / _vm.PreviewImage.Width;
-			_scaleTransform.ScaleY = size.Height / _vm.PreviewImage.Height;
-
-			if (_border != null)
-			{
-				size = size.Inflate(8);
-			}
+			//if (_border != null)
+			//{
+			//	size = size.Inflate(8);
+			//}
 
 			_vm.ContainerSize = size;
+
+			//_scaleTransform.ScaleX = size.Width / _vm.PreviewImage.Width;
+			//_scaleTransform.ScaleY = size.Height / _vm.PreviewImage.Height;
+
+			_scaleTransform.ScaleX = _vm.LayoutInfo.ScaleFactorForPreviewImage;
+			_scaleTransform.ScaleY = _vm.LayoutInfo.ScaleFactorForPreviewImage;
 		}
 
 		private void UpdateTheBorderSize(SizeInt size)

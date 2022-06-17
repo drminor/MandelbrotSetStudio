@@ -8,6 +8,14 @@ namespace MSetExplorer
 {
 	public static class ScreenTypeHelper
 	{
+		#region Enumerate over 2-D set of points
+
+		/// <summary>
+		/// Produces an enumeration from 0 to the given horizontal and from 0 to the given vertical extent.
+		/// Can be used in a foreach statement to iterate over each item. Each column in row 1, then each column in row 2, etc.
+		/// </summary>
+		/// <param name="size">Specfies the upperbound of the horizontal and vertical extent.</param>
+		/// <returns>IEnumerable that returns each item by rows</returns>
 		public static IEnumerable<PointInt> Points(SizeInt size)
 		{
 			for (var yBlockPtr = 0; yBlockPtr < size.Height; yBlockPtr++)
@@ -19,6 +27,11 @@ namespace MSetExplorer
 			}
 		}
 
+		/// <summary>
+		/// Can be used in a foreach statement to iterate over each item. Each column in row 1, then each column in row 2, etc.
+		/// </summary>
+		/// <param name="array">Array of rank 2</param>
+		/// <returns>IEnumerable that returns each item by rows</returns>
 		public static IEnumerable<PointInt> Points(object array)
 		{
 			if (array is Array s && s.Rank == 2)
@@ -32,6 +45,7 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
 
 		#region Convert to MSS Types
 

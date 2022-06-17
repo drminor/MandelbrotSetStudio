@@ -26,12 +26,12 @@ namespace MSetExplorer
 
 			var imageData = task.Result;
 
-			var result = WritePixels(imageData, size);
+			var result = CreateImageSource(imageData, size);
 
 			return result;
 		}
 
-		private static ImageSource WritePixels(byte[] pixels, SizeInt size)
+		public static ImageSource CreateImageSource(byte[] pixels, SizeInt size)
 		{
 			var w = size.Width;
 			var h = size.Height;
@@ -44,6 +44,8 @@ namespace MSetExplorer
 
 			return bitmap;
 		}
+
+
 
 
 	}
