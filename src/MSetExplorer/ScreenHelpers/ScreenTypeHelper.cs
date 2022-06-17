@@ -40,6 +40,12 @@ namespace MSetExplorer
 			return new PointDbl(p.X, p.Y).Round();
 		}
 
+		public static SizeInt ConvertToSizeInt(Size size)
+		{
+			var t = ConvertToSizeDbl(size);
+			return t.Round();
+		}
+
 		public static SizeDbl ConvertToSizeDbl(Size size)
 		{
 			return new SizeDbl(size.Width, size.Height);

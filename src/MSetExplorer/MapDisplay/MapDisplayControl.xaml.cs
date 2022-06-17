@@ -167,7 +167,7 @@ namespace MSetExplorer
 
 		private void UpdateTheVmWithOurSize(SizeDbl size)
 		{
-			if (!(_border is null))
+			if (_border != null)
 			{
 				size = size.Inflate(8);
 			}
@@ -180,7 +180,7 @@ namespace MSetExplorer
 			_canvas.Width = size.Width;
 			_canvas.Height = size.Height;
 
-			if (!(_border is null))
+			if (_border != null)
 			{
 				_border.Width = size.Width + 4;
 				_border.Height = size.Height + 4;

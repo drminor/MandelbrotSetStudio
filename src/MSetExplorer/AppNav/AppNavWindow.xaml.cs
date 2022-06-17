@@ -43,7 +43,8 @@ namespace MSetExplorer
 					}
 					else
 					{
-						GoToDesigner();
+						var initalCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenPoster, new string[] { "Test" });
+						GoToDesigner(initalCommand);
 					}
 				}
 				else

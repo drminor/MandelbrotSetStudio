@@ -5,13 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Edit Poster Size" Height="1050" Width="800">
+        Title="Edit Poster Size" Height="700" Width="800"
+        MinHeight="500" MinWidth="500">
     <Grid>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
@@ -32,7 +33,34 @@
 
         </Border>
 
-        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid  Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="100"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="100"/>
+
+            </Grid.RowDefinitions>
+    
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
+
+            <DockPanel Grid.Row="1" Grid.Column="1" LastChildFill="True">
+                <TextBlock DockPanel.Dock="Top" Margin="5,0,0,0">Preview:</TextBlock>
+                    
+                <Border BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Canvas DockPanel.Dock="Top" x:Name="canvas1" Margin="10" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                </Border>
+            </DockPanel>
+
+
+        </Grid>
+
+
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnSave" HorizontalAlignment="Center" Width="140" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" >Apply Changes</Button>
@@ -41,12 +69,5 @@
 
         </Border>
 
-        <Border Grid.Row="2" BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <DockPanel LastChildFill="True">
-                <TextBlock DockPanel.Dock="Top" Margin="5,0,0,0">Preview:</TextBlock>
-                <Canvas DockPanel.Dock="Top" x:Name="canvas1" Margin="10" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-
-            </DockPanel>
-        </Border>
     </Grid>
 </Window>

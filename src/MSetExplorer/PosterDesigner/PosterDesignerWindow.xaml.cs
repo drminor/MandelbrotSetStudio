@@ -652,38 +652,41 @@ namespace MSetExplorer
 				return SaveResultP.SaveCancelled;
 			}
 
-			var triResult = PosterUserSaysSaveChanges();
+			return SaveResultP.NotSavingChanges;
 
-			if (triResult == true)
-			{
-				if (_vm.PosterViewModel.CurrentPosterOnFile)
-				{
-					// The Project is on-file, just save the pending changes.
-					_vm.PosterViewModel.PosterSave();
-					return SaveResultP.ChangesSaved;
-				}
-				else
-				{
-					// The Project is not on-file, must ask user for the name and optional description.
-					triResult = SavePosterInteractive(curProject);
-					if (triResult == true)
-					{
-						return SaveResultP.ChangesSaved;
-					}
-					else
-					{
-						return SaveResultP.SaveCancelled;
-					}
-				}
-			}
-			else if (triResult == false)
-			{
-				return SaveResultP.NotSavingChanges;
-			}
-			else
-			{
-				return SaveResultP.SaveCancelled;
-			}
+			// TODO: Re-instate Poster-Save Changes.
+			//var triResult = PosterUserSaysSaveChanges();
+
+			//if (triResult == true)
+			//{
+			//	if (_vm.PosterViewModel.CurrentPosterOnFile)
+			//	{
+			//		// The Project is on-file, just save the pending changes.
+			//		_vm.PosterViewModel.PosterSave();
+			//		return SaveResultP.ChangesSaved;
+			//	}
+			//	else
+			//	{
+			//		// The Project is not on-file, must ask user for the name and optional description.
+			//		triResult = SavePosterInteractive(curProject);
+			//		if (triResult == true)
+			//		{
+			//			return SaveResultP.ChangesSaved;
+			//		}
+			//		else
+			//		{
+			//			return SaveResultP.SaveCancelled;
+			//		}
+			//	}
+			//}
+			//else if (triResult == false)
+			//{
+			//	return SaveResultP.NotSavingChanges;
+			//}
+			//else
+			//{
+			//	return SaveResultP.SaveCancelled;
+			//}
 		}
 
 		private bool? SavePosterInteractive(Poster curPoster)

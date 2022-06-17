@@ -1,10 +1,15 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
+using System.Diagnostics;
 using System.Windows.Media;
 
 namespace MSetExplorer
 {
 	public class PosterSizeEditorViewModel : ViewModelBase
 	{
+
+		private SizeDbl _containerSize;
+
 		private RRectangle _coords;
 		private int _width;
 		private int _height;
@@ -18,6 +23,16 @@ namespace MSetExplorer
 		}
 
 		public ImageSource PreviewImage { get; init; }
+
+		public SizeDbl ContainerSize
+		{
+			get => _containerSize;
+			set
+			{
+				_containerSize = value;
+				Debug.WriteLine($"The container size is now {value}.");
+			}
+		}
 
 
 		public RRectangle Coords
