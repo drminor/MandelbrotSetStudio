@@ -11,6 +11,7 @@ namespace MSS.Types
 	{
 		private string _name;
 		private string? _description;
+		private string _size;
 
 		private JobAreaInfo _jobAreaInfo;
 		private ColorBandSet _colorBandSet;
@@ -54,6 +55,9 @@ namespace MSS.Types
 			LastSavedUtc = lastSavedUtc;
 			LastAccessedUtc = lastAccessedUtc;
 
+			_size = string.Empty;
+			Size = GetFormattedPosterSize(jobAreaInfo.CanvasSize);
+
 			//Debug.WriteLine($"Poster is loaded.");
 		}
 
@@ -91,9 +95,22 @@ namespace MSS.Types
 			}
 		}
 
+		public string Size
+		{
+			get => _size;
+			private set
+			{
+				if (value != _size)
+				{
+					_size = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public ObjectId? SourceJobId { get; init; }
 
-		public JobAreaInfo JobAreaInfo
+		public JobAreaInfo MapAreaInfo
 		{
 			get => _jobAreaInfo;
 			set
@@ -101,6 +118,7 @@ namespace MSS.Types
 				if (value != _jobAreaInfo)
 				{
 					_jobAreaInfo = value;
+					Size = GetFormattedPosterSize(value.CanvasSize);
 					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}
@@ -150,9 +168,9 @@ namespace MSS.Types
 		}
 
 		/// <summary>
-		/// Value between 0.0 and 1.0
+		/// Value between 1.0 and a maximum, where the maximum is posterSize / displaySize
 		/// 1.0 presents 1 map "pixel" to 1 screen pixel
-		/// 0.5 presents 2 map "pixels" to 1 screen pixel
+		/// 2.0 presents 2 map "pixels" to 1 screen pixel
 		/// </summary>
 		public double DisplayZoom
 		{
@@ -235,6 +253,16 @@ namespace MSS.Types
 
 		#endregion
 
+		#region Private Methods
+
+		private string GetFormattedPosterSize(SizeInt size)
+		{
+			var result = $"{size.Width} x {size.Height}";
+			return result;
+		}
+
+		#endregion
+
 		#region ICloneable Support
 
 		object ICloneable.Clone()
@@ -244,7 +272,7 @@ namespace MSS.Types
 
 		Poster Clone()
 		{
-			return new Poster(Name, Description, SourceJobId, JobAreaInfo.Clone(), ColorBandSet, MapCalcSettings);
+			return new Poster(Name, Description, SourceJobId, MapAreaInfo.Clone(), ColorBandSet, MapCalcSettings);
 		}
 
 		#endregion

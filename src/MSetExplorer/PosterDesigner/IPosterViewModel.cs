@@ -17,6 +17,9 @@ namespace MSetExplorer
 		bool CurrentPosterOnFile { get; }
 		bool CurrentPosterIsDirty { get; }
 
+		JobAreaInfo PosterAreaInfo { get; }
+		SizeInt PosterSize { get; }
+
 		ColorBandSet? ColorBandSet { get; set; }
 
 		VectorInt DisplayPosition { get; set; }

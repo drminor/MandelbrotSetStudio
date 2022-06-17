@@ -40,6 +40,9 @@ namespace MSetExplorer
 		public string? CurrentPosterName => CurrentPoster?.Name;
 		public bool CurrentPosterOnFile => CurrentPoster?.OnFile ?? false;
 
+		public JobAreaInfo PosterAreaInfo => CurrentPoster?.MapAreaInfo ?? JobAreaInfo.Empty;
+		public SizeInt PosterSize => PosterAreaInfo.CanvasSize;
+
 		#endregion
 
 		#region Public Properties
@@ -69,7 +72,7 @@ namespace MSetExplorer
 					var curPoster = CurrentPoster;
 					if (curPoster != null)
 					{
-						JobAreaAndCalcSettings = GetNewJob(curPoster.JobAreaInfo, DisplayPosition, LogicalDisplaySize, curPoster.MapCalcSettings);
+						JobAreaAndCalcSettings = GetNewJob(curPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, curPoster.MapCalcSettings);
 					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.LogicalDisplaySize));
@@ -92,7 +95,7 @@ namespace MSetExplorer
 
 					if (_currentPoster != null)
 					{
-						JobAreaAndCalcSettings = GetNewJob(_currentPoster.JobAreaInfo, DisplayPosition, LogicalDisplaySize, _currentPoster.MapCalcSettings);
+						JobAreaAndCalcSettings = GetNewJob(_currentPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, _currentPoster.MapCalcSettings);
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
 					}
 
@@ -129,9 +132,9 @@ namespace MSetExplorer
 				{
 					if (value != DisplayPosition)
 					{
-						JobAreaAndCalcSettings = GetNewJob(curPoster.JobAreaInfo, value, LogicalDisplaySize, curPoster.MapCalcSettings);
-
 						curPoster.DisplayPosition = value;
+						JobAreaAndCalcSettings = GetNewJob(curPoster.MapAreaInfo, value, LogicalDisplaySize, curPoster.MapCalcSettings);
+
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 					}
 				}
@@ -243,7 +246,7 @@ namespace MSetExplorer
 				_projectAdapter.DeletePoster(existingPoster.Id);
 			}
 
-			var poster = new Poster(name, description, currentPoster.SourceJobId, currentPoster.JobAreaInfo, currentPoster.ColorBandSet, currentPoster.MapCalcSettings);
+			var poster = new Poster(name, description, currentPoster.SourceJobId, currentPoster.MapAreaInfo, currentPoster.ColorBandSet, currentPoster.MapCalcSettings);
 
 			if (poster is null)
 			{
@@ -277,8 +280,8 @@ namespace MSetExplorer
 			// The canvas size for this poster is not changing.
 			var canvasSize = CanvasSize;
 
-			var position = currentPoster.JobAreaInfo.Coords.Position;
-			var subdivision = currentPoster.JobAreaInfo.Subdivision;
+			var position = currentPoster.MapAreaInfo.Coords.Position;
+			var subdivision = currentPoster.MapAreaInfo.Subdivision;
 
 			var newCoords = RMapHelper.GetMapCoords(newArea, position, subdivision.SamplePointDelta);
 			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
@@ -329,10 +332,10 @@ namespace MSetExplorer
 
 		private JobAreaAndCalcSettings GetNewJob(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, MapCalcSettings mapCalcSettings)
 		{
-			var viewPortArea = GetNewViewPort(currentAreaInfo, DisplayPosition, LogicalDisplaySize);
+			var viewPortArea = GetNewViewPort(currentAreaInfo, displayPosition, logicalDisplaySize);
 
 			var mapCalcSettingsCpy = mapCalcSettings.Clone();
-			mapCalcSettingsCpy.DontFetchZValuesFromRepo = true;
+			//mapCalcSettingsCpy.DontFetchZValuesFromRepo = true;
 
 			var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, mapCalcSettingsCpy);
 

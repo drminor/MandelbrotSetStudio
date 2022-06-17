@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MSS.Types;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -113,6 +114,15 @@ namespace MSetExplorer
 		private void DeleteButton_Click(object sender, RoutedEventArgs e)
 		{
 			_vm.DeleteSelected();
+		}
+
+		private void ButtonPreview_Click(object sender, RoutedEventArgs e)
+		{
+			var imageSize = new SizeInt(1024);
+
+ 			var imageData = _vm.GetPreviewImageData(imageSize);
+
+			Debug.WriteLine($"The ImageData has {imageData?.Length ?? 0} bytes.");
 		}
 
 		private void TakeSelection()

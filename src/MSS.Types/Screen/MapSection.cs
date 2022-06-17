@@ -6,7 +6,15 @@ namespace MSS.Types
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>
 	{
+		private static readonly Lazy<MapSection> _lazyMapSection = new Lazy<MapSection>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+		public static readonly MapSection Empty = _lazyMapSection.Value;
+
 		private readonly Lazy<IHistogram> _histogram;
+
+		#region Constructor
+
+		public MapSection() : this(new PointInt(), new SizeInt(), Array.Empty<ushort>(), Array.Empty<ushort>(), 0, string.Empty, new BigVector(), false, BuildHstFake)
+		{ }
 
 		public MapSection(PointInt blockPosition, SizeInt size, ushort[] counts, ushort[] escapeVelocities, int targetIterations, string subdivisionId
 			, BigVector repoBlockPosition, bool isInverted, Func<ushort[], IHistogram> histogramBuilder)
@@ -24,6 +32,12 @@ namespace MSS.Types
 			_histogram = new Lazy<IHistogram>(() => histogramBuilder(Counts), System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		}
 
+		#endregion
+
+		#region Public Properties
+
+		public bool IsEmpty => SubdivisionId == string.Empty;
+
 		public PointInt BlockPosition { get; set; }
 		public SizeInt Size { get; init; }
 
@@ -35,8 +49,9 @@ namespace MSS.Types
 		public BigVector RepoBlockPosition { get; init; }
 		public bool IsInverted { get; init; }
 
-
 		public IHistogram Histogram => _histogram.Value;
+
+		#endregion
 
 		public override string? ToString()
 		{
@@ -94,6 +109,11 @@ namespace MSS.Types
 		}
 
 		#endregion
+
+		private static IHistogram BuildHstFake(ushort[] dummy)
+		{
+			return new HistogramALow(dummy);
+		}
 	}
 }
 

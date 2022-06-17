@@ -20,8 +20,9 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Name" Width="250" DisplayMemberBinding="{Binding Name}" />
-                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreated}" />
-                        <GridViewColumn Header="Updated" Width="190" DisplayMemberBinding="{Binding LastSaved}" />
+                        <GridViewColumn Header="Size" Width="180" DisplayMemberBinding="{Binding Size}" />
+                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreatedUtc}" />
+                        <GridViewColumn Header="Updated" Width="190" DisplayMemberBinding="{Binding LastSavedUtc}" />
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -34,6 +35,7 @@
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                     <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Name:" VerticalAlignment="Top"/>
                     <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="170" Height="22"/>
+                    <Button Margin="15,0,0,0" Click="ButtonPreview_Click" >Preview</Button>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">

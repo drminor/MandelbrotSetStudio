@@ -18,5 +18,7 @@ namespace MSetExplorer
 
 		bool IsNameTaken(string? name);
 		void DeleteSelected();
+
+		byte[]? GetPreviewImageData(SizeInt imageSize);
 	}
 }

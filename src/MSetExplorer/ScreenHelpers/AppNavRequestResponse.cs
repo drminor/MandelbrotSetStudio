@@ -39,7 +39,8 @@ namespace MSetExplorer.ScreenHelpers
 		{
 			if (onCloseBehavior == null)
 			{
-				onCloseBehavior = Properties.Settings.Default["ShowTopNav"] as string == "x" ? OnCloseBehavior.ReturnToTopNav : OnCloseBehavior.Close;
+				var showTopNav = Properties.Settings.Default.ShowTopNav;
+				onCloseBehavior = showTopNav ? OnCloseBehavior.ReturnToTopNav : OnCloseBehavior.Close;
 			}
 
 			return new AppNavRequestResponse(onCloseBehavior ?? OnCloseBehavior.ReturnToTopNav, RequestResponseCommand.None, null);

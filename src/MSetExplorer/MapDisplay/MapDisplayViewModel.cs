@@ -263,6 +263,9 @@ namespace MSetExplorer
 				if (Math.Abs(value  -_displayZoom) > 0.01)
 				{
 					ClearDisplay();
+
+					//Debug.WriteLine($"The DrawingGroup has {_screenSectionCollection.CurrentDrawingGroupCnt} item.");
+
 					_displayZoom = value;
 
 					_scaleTransform.ScaleX = 1 / _displayZoom;
@@ -377,7 +380,7 @@ namespace MSetExplorer
 		#region Event Handlers
 
 		private int _callCounter;
-		private List<MapSection> _mapSectionsPendingUiUpdate = new List<MapSection>();
+		private List<Tuple<MapSection, int>> _mapSectionsPendingUiUpdate = new List<Tuple<MapSection, int>>();
 		private Stopwatch? _stopwatch;
 
 		private void MapSectionReady(MapSection mapSection, int jobNumber)
@@ -391,21 +394,29 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ProcessMapSection(MapSection mapSection, int jobNumber, List<MapSection> sectionsPendingUiUpdate)
+		private bool ProcessMapSection(MapSection mapSection, int jobNumber, List<Tuple<MapSection, int>> sectionsPendingUiUpdate)
 		{
 			bool shouldUpdateUi;
 
 			lock (_paintLocker)
 			{
-				if (jobNumber == _currentMapLoaderJobNumber)
+				if (jobNumber == _currentMapLoaderJobNumber && mapSection.Counts != null)
 				{
 					DrawASection(mapSection, _colorMap, _useEscapeVelocities, drawOffline: true);
-					sectionsPendingUiUpdate.Add(mapSection);
+					sectionsPendingUiUpdate.Add(new Tuple<MapSection, int>(mapSection, jobNumber));
 					if (_stopwatch == null)
 					{
 						_stopwatch = Stopwatch.StartNew();
 					}
-					shouldUpdateUi = --_callCounter <= 0 || _stopwatch?.ElapsedMilliseconds > 2000;
+					shouldUpdateUi = --_callCounter <= 0 || _stopwatch?.ElapsedMilliseconds > 500;
+					if (shouldUpdateUi)
+					{
+						if (_stopwatch != null)
+						{
+							_stopwatch.Restart();
+						}
+						_callCounter = Math.Min(CanvasSize.Width / BlockSize.Width, 8);
+					}
 				}
 				else if (jobNumber == -1)
 				{
@@ -426,18 +437,19 @@ namespace MSetExplorer
 			return shouldUpdateUi;
 		}
 
-		private bool UpdateUi(List<MapSection> sectionsPendingUiUpdate)
+		private bool UpdateUi(List<Tuple<MapSection, int>> sectionsPendingUiUpdate)
 		{ 
-			foreach (var mapSection in sectionsPendingUiUpdate)
+			foreach (var mapSectionAndJobNumber in sectionsPendingUiUpdate)
 			{
-				MapSections.Add(mapSection);
-				_screenSectionCollection.Redraw(mapSection.BlockPosition);
+				var mapSection = mapSectionAndJobNumber.Item1;
+				var jobNumber = mapSectionAndJobNumber.Item2;
+
+				if (jobNumber == _currentMapLoaderJobNumber)
+				{
+					MapSections.Add(mapSection);
+					_screenSectionCollection.Redraw(mapSection.BlockPosition);
+				}
 			}
-			if (_stopwatch != null)
-			{
-				_stopwatch.Restart();
-			}
-			_callCounter = CanvasSize.Width;
 
 			return true;
 		}

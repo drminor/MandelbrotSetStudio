@@ -18,7 +18,7 @@ namespace MSetExplorer
 
 		private readonly DrawingGroup _drawingGroup;
 
-		private readonly GeometryDrawing _foundationRectangle;
+		//private readonly GeometryDrawing _foundationRectangle;
 		private readonly ScreenSection[,] _screenSections;
 
 		private SizeInt _canvasSizeInBlocks;
@@ -34,8 +34,8 @@ namespace MSetExplorer
 
 			_maxYPtr = maxSizeInBlocks.Height - 1;
 
-			_foundationRectangle = BuildFoundationRectangle(maxSizeInBlocks, _blockSize);
-			_drawingGroup.Children.Add(_foundationRectangle);
+			//_foundationRectangle = BuildFoundationRectangle(maxSizeInBlocks, _blockSize);
+			//_drawingGroup.Children.Add(_foundationRectangle);
 
 			_screenSections = new ScreenSection[maxSizeInBlocks.Height, maxSizeInBlocks.Width];
 
@@ -47,6 +47,8 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public VectorInt SectionIndex => _startIndex;
+
+		public int CurrentDrawingGroupCnt => _drawingGroup.Children.Count;
 
 		private SizeInt _allocatedBlocks;
 
@@ -93,6 +95,8 @@ namespace MSetExplorer
 			}
 			else
 			{
+				_drawingGroup.Children.Clear();
+				//_drawingGroup.Children.Add(_foundationRectangle);
 				foreach (var blockPosition in ScreenTypeHelper.Points(_screenSections))
 				//foreach (var blockPosition in ScreenTypeHelper.Points(_allocatedBlocks))
 				{
@@ -408,7 +412,9 @@ namespace MSetExplorer
 					if (BlockPosition != position)
 					{
 						// TODO: Add logic to atempt to locate the "old" bitmap.
-						throw new InvalidOperationException("Cannot redraw a screen section at a different position.");
+						//throw new InvalidOperationException("Cannot redraw a screen section at a different position.");
+						Debug.WriteLine($"WARNING: Cannot redraw a screen section at a different position.");
+						return;
 					}
 					else
 					{

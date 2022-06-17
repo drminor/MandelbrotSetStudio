@@ -1,5 +1,6 @@
 ﻿using ImageBuilder;
 using MSS.Common;
+using MSS.Types;
 using System;
 
 namespace MSetExplorer
@@ -52,7 +53,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, PngBuilder, CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, MapLoaderManager, CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel);
 
 			return result;
 		}
@@ -75,8 +76,22 @@ namespace MSetExplorer
 		{
 			return RepositoryAdapters.ProjectAdapter == null
 				? throw new InvalidOperationException("Cannot create a Poster OpenSave ViewModel, the ProjectAdapter is null.")
-				: new PosterOpenSaveViewModel(RepositoryAdapters.ProjectAdapter, initalName, dialogType);
+				: new PosterOpenSaveViewModel(MapLoaderManager, RepositoryAdapters.ProjectAdapter, initalName, dialogType);
 		}
+
+		//private PosterSizeEditorViewModel CreateAPosterSizeEditorViewModel(Poster poster, SizeInt size)
+		//{
+		//	if (RepositoryAdapters.ProjectAdapter == null)
+		//	{
+		//		throw new InvalidOperationException("Cannot create a Poster SizeEditor ViewModel, the ProjectAdapter is null.");
+		//	}
+
+		//	var bitmapBuilder = new BitmapBuilder(MapLoaderManager);
+		//	var posterPreviewImage = ImageHelper.GetPosterPreview(RepositoryAdapters.ProjectAdapter, bitmapBuilder, poster, size);
+		//	var result = new PosterSizeEditorViewModel(posterPreviewImage, poster.MapAreaInfo.Coords, poster.MapAreaInfo.CanvasSize);
+
+		//	return result;
+		//}
 
 	}
 }

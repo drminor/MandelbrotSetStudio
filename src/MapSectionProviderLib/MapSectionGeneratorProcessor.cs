@@ -83,6 +83,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		// TODO: Add a timestamp the cancelledJobIds list and then use it to determine when that entry can be deleted.
 		public void CancelJob(int jobId)
 		{
 			lock (_cancelledJobsLock)

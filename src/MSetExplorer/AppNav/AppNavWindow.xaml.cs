@@ -35,7 +35,16 @@ namespace MSetExplorer
 
 				if (!Properties.Settings.Default.ShowTopNav)
 				{
-					GoToExplorer();
+					var lastWindowName = Properties.Settings.Default.LastWindowName;
+
+					if (lastWindowName == "Explorer")
+					{
+						GoToExplorer();
+					}
+					else
+					{
+						GoToDesigner();
+					}
 				}
 				else
 				{
@@ -67,6 +76,7 @@ namespace MSetExplorer
 			};
 
 			_lastWindow = explorerWindow;
+			_lastWindow.Name = "Explorer";
 			_lastWindow.Closed += LastWindow_Closed;
 
 			explorerWindow.Owner = Application.Current.MainWindow;
@@ -85,6 +95,7 @@ namespace MSetExplorer
 			};
 
 			_lastWindow = designerWindow;
+			_lastWindow.Name = "Designer";
 			_lastWindow.Closed += LastWindow_Closed;
 
 			designerWindow.Owner = Application.Current.MainWindow;
@@ -146,6 +157,12 @@ namespace MSetExplorer
 			}
 			else
 			{
+				if (_lastWindow != null)
+				{
+					Properties.Settings.Default.LastWindowName = _lastWindow.Name;
+					Properties.Settings.Default.Save();
+				}
+
 				ExitApp();
 			}
 		}

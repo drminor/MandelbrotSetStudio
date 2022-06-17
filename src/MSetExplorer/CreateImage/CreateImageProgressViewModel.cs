@@ -44,7 +44,7 @@ namespace MSetExplorer
 			ImageFilePath = imageFilePath;
 			Poster = poster;
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, poster, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, poster.MapAreaInfo, poster.ColorBandSet, poster.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
 			//_task.ContinueWith(t =>
 			//{

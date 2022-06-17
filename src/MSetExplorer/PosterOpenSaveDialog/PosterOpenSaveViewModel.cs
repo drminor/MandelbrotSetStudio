@@ -1,16 +1,23 @@
-﻿using MongoDB.Bson;
+﻿using ImageBuilder;
+using MongoDB.Bson;
 using MSetRepo;
+using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Data;
 
 namespace MSetExplorer
 {
 	public class PosterOpenSaveViewModel : IPosterOpenSaveViewModel, INotifyPropertyChanged
 	{
+		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly ProjectAdapter _projectAdapter;
 		private Poster? _selectedPoster;
 
@@ -21,8 +28,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterOpenSaveViewModel(ProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
+		public PosterOpenSaveViewModel(IMapLoaderManager mapLoaderManager, ProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
 		{
+			_mapLoaderManager = mapLoaderManager;
 			_projectAdapter = projectAdapter;
 			DialogType = dialogType;
 
@@ -130,6 +138,46 @@ namespace MSetExplorer
 				_projectAdapter.DeleteProject(poster.Id);
 				_ = Posters.Remove(poster);
 			}
+		}
+
+		public byte[]? GetPreviewImageData(SizeInt imageSize)
+		{
+			var poster = SelectedPoster;
+
+			if (poster == null)
+			{
+				throw new InvalidOperationException("No Selected Poster.");
+			}
+
+			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+
+			//Task.Run(async bitmapBuilder.BuildAsync(poster.))
+
+			var cts = new CancellationTokenSource();
+			var posterAreaInfo = poster.MapAreaInfo;
+			var previewMapArea = new JobAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.MapBlockOffset, posterAreaInfo.CanvasControlOffset);
+
+			//byte[]? result = null;
+
+			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, poster.ColorBandSet, poster.MapCalcSettings, cts.Token, StatusCallBack));
+
+			var result = task.Result;
+
+			//task.GetAwaiter().GetResult();
+
+			//Task<LogEntity> task = Task.Run<LogEntity>(async () => await GetLogAsync());
+			//return task.Result;
+
+			//var task = bitmapBuilder.BuildAsync(previewMapArea, poster.ColorBandSet, poster.MapCalcSettings, StatusCallBack, cts.Token); 
+			//var result = task.GetAwaiter()
+			return result;
+		}
+
+		private Progress<double> _previewImageDataBuilderProgress = new Progress<double>();
+
+		private void StatusCallBack(double value)
+		{
+			((IProgress<double>)_previewImageDataBuilderProgress).Report(value);
 		}
 
 		#endregion

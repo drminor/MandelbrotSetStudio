@@ -177,7 +177,7 @@ namespace MSetRepo
 				Name: source.Name,
 				Description: source.Description,
 				SourceJobId: source.SourceJobId,
-				JobAreaInfoRecord: MapTo(source.JobAreaInfo),
+				JobAreaInfoRecord: MapTo(source.MapAreaInfo),
 				ColorBandSetId: source.ColorBandSet.Id,
 				MapCalcSettings: source.MapCalcSettings,
 				DisplayPosition: MapTo(source.DisplayPosition),

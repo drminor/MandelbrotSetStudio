@@ -25,13 +25,28 @@ namespace MSetExplorer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool ShowTopNav {
             get {
                 return ((bool)(this["ShowTopNav"]));
             }
         }
-        
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastWindowName
+        {
+            get
+            {
+                return ((string)(this["LastWindowName"]));
+            }
+            set
+            {
+                this["LastWindowName"] = value;
+            }
+        }
+
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("C:\\_MandelbrotSetImages")]
@@ -43,5 +58,6 @@ namespace MSetExplorer.Properties {
                 this["DefaultOutputFolderPath"] = value;
             }
         }
+
     }
 }

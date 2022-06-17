@@ -1,15 +1,16 @@
-﻿using MSS.Types;
+﻿using ImageBuilder;
+using MSS.Common;
+using MSS.Types;
 using MSS.Types.MSet;
-using System.ComponentModel;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
-using ImageBuilder;
 
 namespace MSetExplorer
 {
 	public class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
-		private readonly PngBuilder _pngBuilder;
+		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly PosterOpenSaveViewModelCreator _posterOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
 
@@ -19,10 +20,10 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
-			IProjectAdapter projectAdapter, PngBuilder pngBuilder,PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
+			IProjectAdapter projectAdapter, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
 		{
 			ProjectAdapter = projectAdapter;
-			_pngBuilder = pngBuilder;
+			_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
@@ -109,7 +110,17 @@ namespace MSetExplorer
 
 		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath)
 		{
-			var result = new CreateImageProgressViewModel(_pngBuilder);
+			var pngBuilder = new PngBuilder(_mapLoaderManager);
+			var result = new CreateImageProgressViewModel(pngBuilder);
+			return result;
+		}
+
+		public PosterSizeEditorViewModel CreateAPosterSizeEditorViewModel(Poster poster, SizeInt size)
+		{
+			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+			var posterPreviewImage = ImageHelper.GetPosterPreview(ProjectAdapter, bitmapBuilder, poster, size);
+			var result = new PosterSizeEditorViewModel(posterPreviewImage, poster.MapAreaInfo.Coords, poster.MapAreaInfo.CanvasSize);
+
 			return result;
 		}
 
@@ -126,11 +137,11 @@ namespace MSetExplorer
 
 				if (curPoster != null)
 				{
-					MapScrollViewModel.PosterSize = curPoster.JobAreaInfo.CanvasSize;
+					MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
 				}
 				else
 				{
-					MapScrollViewModel.PosterSize = null;
+					//MapScrollViewModel.PosterSize = null;
 
 					// Let the MapDisplay know to stop any current MapLoader job.
 					MapDisplayViewModel.CurrentJobAreaAndCalcSettings = null;

@@ -15,5 +15,7 @@ namespace MSetExplorer
 
 		void HideScreenSections(bool rebuild = false);
 		void Shift(VectorInt amount);
+
+		int CurrentDrawingGroupCnt { get; }
 	}
 }

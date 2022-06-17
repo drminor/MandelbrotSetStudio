@@ -41,6 +41,8 @@ namespace MSetExplorer
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
+		void ClearDisplay();
+
 		VectorInt ScreenCollectionIndex { get; }
 	}
 }

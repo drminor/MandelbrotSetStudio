@@ -2,17 +2,15 @@
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
-using PngImageLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ImageBuilder
 {
-	public class PngBuilder
+	public class BitmapBuilder
 	{
 		private const double VALUE_FACTOR = 10000;
 
@@ -22,7 +20,7 @@ namespace ImageBuilder
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection?>? _currentResponses;
 
-		public PngBuilder(IMapLoaderManager mapLoaderManager)
+		public BitmapBuilder(IMapLoaderManager mapLoaderManager)
 		{
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionHelper = new MapSectionHelper();
@@ -32,7 +30,7 @@ namespace ImageBuilder
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<bool> BuildAsync(string imageFilePath, JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct)
+		public async Task<byte[]> BuildAsync(JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
 		{
 			var mapBlockOffset = jobAreaInfo.MapBlockOffset;
 			var canvasControlOffset = jobAreaInfo.CanvasControlOffset;
@@ -45,20 +43,19 @@ namespace ImageBuilder
 				UseEscapeVelocities = mapCalcSettings.UseEscapeVelocities
 			};
 
-			PngImage? pngImage = null;
-			
+			var imageSize = jobAreaInfo.CanvasSize;
+
+			var result = new byte[imageSize.NumberOfCells * 4];
+
 			try
 			{
-				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
-
-				var imageSize = jobAreaInfo.CanvasSize;
-				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
-
 				var numberOfWholeBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize);
 				var w = numberOfWholeBlocks.Width;
 				var h = numberOfWholeBlocks.Height;
 
 				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {numberOfWholeBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
+
+				var destPixPtr = 0;
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
@@ -73,20 +70,18 @@ namespace ImageBuilder
 
 					for (var linePtr = startingLinePtr; linePtr >= endingLinePtr; linePtr--)
 					{
-						var iLine = pngImage.ImageLine;
-						var destPixPtr = 0;
 
 						for (var blockPtrX = 0; blockPtrX < w; blockPtrX++)
 						{
 							var mapSection = blocksForThisRow[blockPtrX];
-							var countsForThisLine = GetOneLineFromCountsBlock(mapSection?.Counts, linePtr, blockSize.Width);
-							var escVelsForThisLine = GetOneLineFromCountsBlock(mapSection?.EscapeVelocities, linePtr, blockSize.Width);
-							var lineLength = GetLineLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
+							var countsForThisSegment = GetOneLineFromCountsBlock(mapSection?.Counts, linePtr, blockSize.Width);
+							var escVelsForThisSegment = GetOneLineFromCountsBlock(mapSection?.EscapeVelocities, linePtr, blockSize.Width);
+							var segmentLength = GetSegmentLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
 
 							try
 							{
-								FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
-								destPixPtr += lineLength;
+								FillImageLineSegment(result, destPixPtr, countsForThisSegment, escVelsForThisSegment, segmentLength, samplesToSkip, colorMap);
+								destPixPtr += segmentLength;
 							}
 							catch (Exception e)
 							{
@@ -97,12 +92,10 @@ namespace ImageBuilder
 								}
 							}
 						}
-
-						pngImage.WriteLine(iLine);
 					}
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
-					statusCallBack(100 * percentageCompleted);
+					statusCallBack?.Invoke(100 * percentageCompleted);
 				}
 			}
 			catch (Exception e)
@@ -113,19 +106,9 @@ namespace ImageBuilder
 					throw;
 				}
 			}
-			finally
-			{
-				if (!ct.IsCancellationRequested)
-				{
-					pngImage?.End();
-				}
-				else
-				{
-					pngImage?.Abort();
-				}
-			}
 
-			return true;
+
+			return result;
 		}
 
 		private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int numberOfLinesToSkip)
@@ -151,7 +134,7 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private int GetLineLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
+		private int GetSegmentLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
 		{
 			int result;
 
@@ -228,16 +211,13 @@ namespace ImageBuilder
 			}
 		}
 
-		private void FillPngImageLineSegment(ImageLine iLine, int pixPtr, ushort[]? counts, ushort[]? escapeVelocities, int lineLength, int samplesToSkip, ColorMap colorMap)
+		private void FillImageLineSegment(byte[] imageData, int pixPtr, ushort[]? counts, ushort[]? escapeVelocities, int lineLength, int samplesToSkip, ColorMap colorMap)
 		{
 			if (counts == null || escapeVelocities == null)
 			{
-				FillPngImageLineSegmentWithWhite(iLine, pixPtr, lineLength);
+				FillPngImageLineSegmentWithWhite(imageData, pixPtr, lineLength);
 				return;
 			}
-
-			var cComps = new byte[4];
-			var dest = new Span<byte>(cComps);
 
 			var previousCountVal = counts[0];
 
@@ -258,17 +238,23 @@ namespace ImageBuilder
 					Debug.WriteLine($"The Escape Velocity is greater that 1.0");
 				}
 
-				colorMap.PlaceColor(countVal, escapeVelocity, dest);
+				var offset = pixPtr++ * 4;
+				var dest = new Span<byte>(imageData, offset, 4);
 
-				ImageLineHelper.SetPixel(iLine, pixPtr++, cComps[2], cComps[1], cComps[0]);
+				colorMap.PlaceColor(countVal, escapeVelocity, dest);
 			}
 		}
 
-		private void FillPngImageLineSegmentWithWhite(ImageLine iLine, int pixPtr, int len)
+		private void FillPngImageLineSegmentWithWhite(Span<byte> imageLine, int pixPtr, int len)
 		{
 			for (var xPtr = 0; xPtr < len; xPtr++)
 			{
-				ImageLineHelper.SetPixel(iLine, pixPtr++, 255, 255, 255);
+				var offset = pixPtr++ * 4;
+
+				imageLine[offset] = 255;
+				imageLine[offset + 1] = 255;
+				imageLine[offset + 2] = 255;
+				imageLine[offset + 3] = 255;
 			}
 		}
 

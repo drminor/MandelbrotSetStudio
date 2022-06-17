@@ -111,6 +111,7 @@ namespace MSetExplorer
 
 		private void SetDisplayZoom(double val)
 		{
+			//_vm.MapDisplayViewModel.ClearDisplay();
 			_vm.MapScrollViewModel.DisplayZoom = val;
 			var adjustedDisplayZoom = _vm.MapScrollViewModel.DisplayZoom;
 			txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
@@ -289,6 +290,32 @@ namespace MSetExplorer
 			_ = SavePosterInteractive(curPoster);
 		}
 
+		// Project Save As
+		private void EditSizeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.PosterViewModel.CurrentPoster != null;
+		}
+
+		private void EditSizeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
+			if (curPoster == null)
+			{
+				return;
+			}
+
+			var previewSize = new SizeInt(1024);
+			var posterSizeEditorViewModel = _vm.CreateAPosterSizeEditorViewModel(curPoster, previewSize);
+
+			var posterSizeEditorDialog = new PosterSizeEditorDialog()
+			{
+				DataContext = posterSizeEditorViewModel
+			};
+
+			_ = posterSizeEditorDialog.ShowDialog();
+		}
+
 		private void CreateImageCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.CanExecute = _vm?.PosterViewModel.CurrentPoster != null;
@@ -314,7 +341,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			var initialImageFilename = GetImageFilename(curPoster.Name, curPoster.JobAreaInfo.CanvasSize.Width);
+			var initialImageFilename = GetImageFilename(curPoster.Name, _vm.PosterViewModel.PosterSize.Width);
 
 			if (TryGetImagePath(initialImageFilename, out var imageFilePath))
 			{
@@ -745,7 +772,9 @@ namespace MSetExplorer
 				return;
 			}
 
-			coordsEditorViewModel = new CoordsEditorViewModel(curPoster.JobAreaInfo.Coords, posterSize.Value, allowEdits: true, _vm.ProjectAdapter);
+			var posterAreaInfo = _vm.PosterViewModel.PosterAreaInfo;
+
+			coordsEditorViewModel = new CoordsEditorViewModel(posterAreaInfo.Coords, posterAreaInfo.CanvasSize, allowEdits: true, _vm.ProjectAdapter);
 
 			var coordsEditorWindow = new CoordsEditorWindow()
 			{

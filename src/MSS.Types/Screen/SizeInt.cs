@@ -139,13 +139,12 @@ namespace MSS.Types
 			return result;
 		}
 
+		#endregion
 
-		public override string? ToString()
+		public override string ToString()
 		{
 			return $"w:{Width}, h:{Height}";
 		}
-
-		#endregion
 
 		#region IEquatable and IEqualityComparer Support
 

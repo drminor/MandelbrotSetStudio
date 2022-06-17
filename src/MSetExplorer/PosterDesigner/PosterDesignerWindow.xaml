@@ -10,6 +10,8 @@
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.PosterSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.PosterSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.PosterEditSize" CanExecute="EditSizeCommand_CanExecute" Executed="EditSizeCommand_Executed" />
+
         <CommandBinding Command="local:CustomCommands.CreateImage" CanExecute="CreateImageCommand_CanExecute" Executed="CreateImageCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.EditCoords" CanExecute="EditCoordsCommand_CanExecute" Executed="EditCoordsCommand_Executed" />
 
@@ -49,6 +51,8 @@
                 <MenuItem Header="_Open" Click="OpenButton_Click"/>
                 <MenuItem Header="_Save" Command="local:CustomCommands.PosterSave" />
                 <MenuItem Header="Save_As" Command="local:CustomCommands.PosterSaveAs" />
+                <MenuItem Header="Edit Size" Command="local:CustomCommands.PosterEditSize" />
+
                 <MenuItem Header="C_reate Image" Command="local:CustomCommands.CreateImage" />
                 <Separator/>
                 <MenuItem Header="Edit Coor_ds" Command="local:CustomCommands.EditCoords"/>

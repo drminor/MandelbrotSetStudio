@@ -1,0 +1,52 @@
+﻿<Window x:Class="MSetExplorer.PosterSizeEditorDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MSetExplorer"
+        mc:Ignorable="d"
+        Title="Edit Poster Size" Height="1050" Width="800">
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+
+            <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
+
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                    <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="Width:" VerticalAlignment="Center"/>
+                    <TextBox x:Name="txtWidth" Text="{Binding CanvasSize.Width}" Width="100" Height="22"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,10">
+                    <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="Height:" VerticalAlignment="Center"/>
+                    <TextBox x:Name="txtHeight" Text="{Binding CanvasSize.Height}" Width="100" Height="22"/>
+                </StackPanel>
+
+            </StackPanel>
+
+        </Border>
+
+        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnSave" HorizontalAlignment="Center" Width="140" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" >Apply Changes</Button>
+                <Button Name="btnCancel" HorizontalAlignment="Center" Width="140" FontSize="16" Margin="10" Click="CancelButton_Click" IsCancel="True">_Cancel</Button>
+            </StackPanel>
+
+        </Border>
+
+        <Border Grid.Row="2" BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <DockPanel LastChildFill="True">
+                <TextBlock DockPanel.Dock="Top" Margin="5,0,0,0">Preview:</TextBlock>
+                <Canvas DockPanel.Dock="Top" x:Name="canvas1" Margin="10" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
