@@ -12,8 +12,9 @@ namespace MSetExplorer
 	public partial class PosterSizeEditorDialog : Window
 	{
 		private readonly bool _showBorder;
+
 		private Canvas _canvas;
-		private readonly ScaleTransform _scaleTransform;
+		private Image _image;
 		private Border? _border;
 
 		private PosterSizeEditorViewModel _vm;
@@ -23,8 +24,7 @@ namespace MSetExplorer
 		public PosterSizeEditorDialog()
 		{
 			_canvas = new Canvas();
-			_scaleTransform = new ScaleTransform(0.5, 0.5);
-
+			_image = new Image();
 			_showBorder = true;
 
 			_vm = (PosterSizeEditorViewModel)DataContext;
@@ -46,9 +46,8 @@ namespace MSetExplorer
 				_canvas = canvas1;
 				_canvas.SizeChanged += CanvasSize_Changed;
 
-				var image = new Image { Source = _vm.PreviewImage };
-				_canvas.RenderTransform = _scaleTransform;
-				_ = canvas1.Children.Add(image);
+				_image = new Image { Source = _vm.PreviewImage };
+				_ = canvas1.Children.Add(_image);
 
 				// A border is helpful for troubleshooting.
 				_border = _showBorder ? BuildBorder(_canvas) : null;
@@ -90,7 +89,7 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(PosterSizeEditorViewModel.LayoutInfo))
 			{
-				Debug.WriteLine("Got a LayoutInfo update.");
+				SetImageOffset(_vm.LayoutInfo.OriginalImageArea.Position);
 				UpdateOffsetsXEnabled();
 				UpdateOffsetsYEnabled();
 			}
@@ -103,6 +102,35 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(PosterSizeEditorViewModel.PreserveHeight))
 			{
 				UpdateOffsetsYEnabled();
+			}
+		}
+
+		private void CanvasSize_Changed(object sender, SizeChangedEventArgs e)
+		{
+			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize));
+			UpdateTheBorderSize(ScreenTypeHelper.ConvertToSizeInt(e.NewSize));
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void UpdateTheVmWithOurSize(SizeDbl size)
+		{
+			if (_border != null)
+			{
+				size = size.Inflate(8);
+			}
+
+			_vm.ContainerSize = size;
+		}
+
+		private void UpdateTheBorderSize(SizeInt size)
+		{
+			if (_border != null)
+			{
+				_border.Width = 4 + size.Width;
+				_border.Height = 4 + size.Height;
 			}
 		}
 
@@ -120,43 +148,10 @@ namespace MSetExplorer
 			txtAfterY.IsEnabled = offsetYAreEnabled;
 		}
 
-		private void CanvasSize_Changed(object sender, SizeChangedEventArgs e)
+		private void SetImageOffset(PointDbl value)
 		{
-			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize));
-			UpdateTheBorderSize(ScreenTypeHelper.ConvertToSizeInt(e.NewSize));
-		}
-
-		#endregion
-
-		#region Public Properties
-
-		#endregion
-
-		#region Private Methods
-
-		private void UpdateTheVmWithOurSize(SizeDbl size)
-		{
-			//if (_border != null)
-			//{
-			//	size = size.Inflate(8);
-			//}
-
-			_vm.ContainerSize = size;
-
-			//_scaleTransform.ScaleX = size.Width / _vm.PreviewImage.Width;
-			//_scaleTransform.ScaleY = size.Height / _vm.PreviewImage.Height;
-
-			_scaleTransform.ScaleX = _vm.LayoutInfo.ScaleFactorForPreviewImage;
-			_scaleTransform.ScaleY = _vm.LayoutInfo.ScaleFactorForPreviewImage;
-		}
-
-		private void UpdateTheBorderSize(SizeInt size)
-		{
-			if (_border != null)
-			{
-				_border.Width = 4 + size.Width / _scaleTransform.ScaleX;
-				_border.Height = 4 + size.Height / _scaleTransform.ScaleY;
-			}
+			_image.SetValue(Canvas.LeftProperty, value.X);
+			_image.SetValue(Canvas.BottomProperty, value.Y);
 		}
 
 		#endregion

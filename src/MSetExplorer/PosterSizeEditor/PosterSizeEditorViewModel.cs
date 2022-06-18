@@ -3,12 +3,17 @@ using MSS.Types;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Media;
 
 namespace MSetExplorer
 {
 	public class PosterSizeEditorViewModel : ViewModelBase, IDataErrorInfo
 	{
+		private SizeDbl _previewImageSize;
+		private DrawingGroup _drawingGroup;
+		private ScaleTransform _scaleTransform;
+
 		private bool _preserveAspectRatio;
 		private SizeInt _currentSize;
 
@@ -28,11 +33,13 @@ namespace MSetExplorer
 
 		public PosterSizeEditorViewModel(ImageSource previewImage, SizeInt posterSize, SizeDbl? displaySize = null)
 		{
-			PreviewImage = previewImage;
+			_previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
+			_scaleTransform = new ScaleTransform(0.5, 0.5);
+			_drawingGroup = CreateDrawingGroup(previewImage, _scaleTransform);
+			PreviewImage = new DrawingImage(_drawingGroup);
 
-			var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
 			var containerSize = displaySize ?? new SizeDbl(300, 300);
-			_layoutInfo = new PreviewImageLayoutInfo(new SizeDbl(posterSize), previewImageSize, containerSize);
+			_layoutInfo = new PreviewImageLayoutInfo(new SizeDbl(posterSize), _previewImageSize, containerSize);
 
 			_currentSize = new SizeInt(2, 1);
 			Width = posterSize.Width;
@@ -43,6 +50,11 @@ namespace MSetExplorer
 			_beforeY = 0;
 			_afterY = 0;
 
+			var newPos = new PointDbl(BeforeX, BeforeY);
+			var newSize = new SizeDbl(_currentSize);
+
+			NewMapArea = new RectangleDbl(newPos, newSize);
+
 			_originalSize = new SizeInt(2, 1);
 			OriginalWidth = Width;
 			OriginalHeight = Height;
@@ -50,6 +62,22 @@ namespace MSetExplorer
 
 			_preserveWidth = true;
 			_preserveHeight = true;
+		}
+
+		private DrawingGroup CreateDrawingGroup(ImageSource previewImage, ScaleTransform scaleTransform)
+		{
+			var imageDrawing = CreateImageDrawing(previewImage);
+			var result = new DrawingGroup();
+			result.Transform = scaleTransform;
+			result.Children.Add(imageDrawing);
+			return result;
+		}
+
+		private ImageDrawing CreateImageDrawing(ImageSource previewImage)
+		{
+			var rect = new Rect(new Size(previewImage.Width, previewImage.Height));
+			var result = new ImageDrawing(previewImage, rect);
+			return result;
 		}
 
 		#endregion
@@ -276,6 +304,8 @@ namespace MSetExplorer
 				{
 					_layoutInfo.ContainerSize = value;
 					_layoutInfo.Update();
+					_scaleTransform.ScaleX = _layoutInfo.ScaleFactorForPreviewImage;
+					_scaleTransform.ScaleY = _layoutInfo.ScaleFactorForPreviewImage;
 					OnPropertyChanged(nameof(LayoutInfo));
 
 					Debug.WriteLine($"The container size is now {value}.");
@@ -293,6 +323,8 @@ namespace MSetExplorer
 				{
 					_layoutInfo.NewMapArea = value;
 					_layoutInfo.Update();
+					_scaleTransform.ScaleX = _layoutInfo.ScaleFactorForPreviewImage;
+					_scaleTransform.ScaleY = _layoutInfo.ScaleFactorForPreviewImage;
 					OnPropertyChanged(nameof(LayoutInfo));
 
 					OnPropertyChanged();

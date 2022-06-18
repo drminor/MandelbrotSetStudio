@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
+using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -42,25 +43,28 @@ namespace MSetExplorer
 
 		public void Update()
 		{
-			var scaleFactor = RMapHelper.GetSmallestScaleFactor(NewMapArea.Size, ContainerSize);
+			Debug.WriteLine($"Edit Poster Size Layout Update: NewMapArea: {NewMapArea}, ContainerSize: {ContainerSize}.");
 
+			// Determine Size and Location of "enclosing" rectangle, representing the new size
+			var scaleFactor = RMapHelper.GetSmallestScaleFactor(NewMapArea.Size, ContainerSize);
 			var newImageSize = NewMapArea.Size.Scale(scaleFactor);
 			NewImageArea = newImageSize.PlaceAtCenter(ContainerSize); // This centers the Preview Map and Enclosing rectangle on the Control.
 
+			// Determine Size and Location of the PreviewImage, representing the current size.
 			var originalImageSize = OriginalMapSize.Scale(scaleFactor);
-
-			//OriginalImageArea = originalImageSize.PlaceAtCenter(newImageSize); // Just Center it.
-
 			var originalImagePos = NewMapArea.Position.Scale(scaleFactor);
 			OriginalImageArea = new RectangleDbl(originalImagePos, originalImageSize);
 
 			// Get the scale factor needed to reduce the logical preview image area into its "container" rectangle
+			//var insideScaleFactor = RMapHelper.GetSmallestScaleFactor(newImageSize, originalImageSize);
 			var insideScaleFactor = RMapHelper.GetSmallestScaleFactor(originalImageSize, newImageSize);
 
-			// Get the scale factor needed to reduce the actual bitmap to the container
-			var previewImageScaleFactor = RMapHelper.GetSmallestScaleFactor(PreviewImageSize, ContainerSize);
+			// Get the scale factor needed to reduce the actual preview image's bitmap to the container
+			var previewImageScaleFactor = RMapHelper.GetSmallestScaleFactor(PreviewImageSize, originalImageSize);
 
-			ScaleFactorForPreviewImage = insideScaleFactor * previewImageScaleFactor;
+			ScaleFactorForPreviewImage = previewImageScaleFactor;
+
+			Debug.WriteLine($"NewImageArea: {NewImageArea}, OriginalImageArea: {OriginalImageArea}, insideSF: {insideScaleFactor}, previewSF: {ScaleFactorForPreviewImage}.");
 		}
 
 		#endregion

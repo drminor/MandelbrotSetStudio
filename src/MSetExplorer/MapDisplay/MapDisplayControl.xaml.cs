@@ -187,10 +187,6 @@ namespace MSetExplorer
 			}
 		}
 
-		#endregion
-
-		#region Private Properties
-
 		/// <summary>
 		/// The position of the canvas' origin relative to the Image Block Data
 		/// </summary>

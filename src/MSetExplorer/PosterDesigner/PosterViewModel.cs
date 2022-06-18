@@ -41,11 +41,29 @@ namespace MSetExplorer
 		public bool CurrentPosterOnFile => CurrentPoster?.OnFile ?? false;
 
 		public JobAreaInfo PosterAreaInfo => CurrentPoster?.MapAreaInfo ?? JobAreaInfo.Empty;
-		public SizeInt PosterSize => PosterAreaInfo.CanvasSize;
 
 		#endregion
 
 		#region Public Properties
+
+		public SizeInt PosterSize
+		{
+			get => PosterAreaInfo.CanvasSize;
+			set
+			{
+				if (value != PosterSize)
+				{
+					var curPoster = CurrentPoster;
+					if (curPoster != null)
+					{
+						//var coords = curPoster.MapAreaInfo.Coords;
+						//var blockSize = curPoster.MapAreaInfo.Subdivision.BlockSize;
+
+						//curPoster.MapAreaInfo = MapJobHelper.GetJobAreaInfo(coords, value, blockSize, _projectAdapter);
+					}
+				}
+			}
+		}
 
 		public SizeInt CanvasSize
 		{

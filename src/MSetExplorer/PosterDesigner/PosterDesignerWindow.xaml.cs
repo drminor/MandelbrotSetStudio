@@ -298,22 +298,7 @@ namespace MSetExplorer
 
 		private void EditSizeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var curPoster = _vm.PosterViewModel.CurrentPoster;
-
-			if (curPoster == null)
-			{
-				return;
-			}
-
-			var previewSize = new SizeInt(1024);
-			var posterSizeEditorViewModel = _vm.CreateAPosterSizeEditorViewModel(curPoster, previewSize);
-
-			var posterSizeEditorDialog = new PosterSizeEditorDialog()
-			{
-				DataContext = posterSizeEditorViewModel
-			};
-
-			_ = posterSizeEditorDialog.ShowDialog();
+			ShowSizeEditor();
 		}
 
 		private void CreateImageCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -784,19 +769,31 @@ namespace MSetExplorer
 				DataContext = coordsEditorViewModel
 			};
 
-			if (coordsEditorWindow.ShowDialog() == true)
-			{
-				var saveResult = PosterSaveChanges();
-				if (saveResult == SaveResultP.ChangesSaved)
-				{
-					_ = MessageBox.Show("Changes Saved");
-				}
-				else if (saveResult == SaveResultP.SaveCancelled)
-				{
-					// user cancelled.
-					return;
-				}
+			_ = coordsEditorWindow.ShowDialog();
+		}
 
+		private void ShowSizeEditor()
+		{
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
+			if (curPoster == null)
+			{
+				return;
+			}
+
+			var previewSize = new SizeInt(1024);
+			var posterSizeEditorViewModel = _vm.CreateAPosterSizeEditorViewModel(curPoster, previewSize);
+
+			var posterSizeEditorDialog = new PosterSizeEditorDialog()
+			{
+				DataContext = posterSizeEditorViewModel
+			};
+
+			if (posterSizeEditorDialog.ShowDialog() == true)
+			{
+				var newSize = posterSizeEditorViewModel.NewMapArea.Size.Round();
+
+				_vm.PosterViewModel.PosterSize = newSize;
 			}
 		}
 
