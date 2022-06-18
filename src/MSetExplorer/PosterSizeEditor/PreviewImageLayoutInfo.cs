@@ -1,7 +1,5 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using System;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -10,31 +8,33 @@ namespace MSetExplorer
 
 		public PreviewImageLayoutInfo(SizeDbl imageSize, SizeDbl previewImageSize, SizeDbl containerSize)
 		{
-			ImageSize = imageSize;
+			OriginalMapSize = imageSize;
 			PreviewImageSize = previewImageSize;
 			ContainerSize = containerSize;
 
-			NewImageArea = new RectangleDbl(new PointDbl(), ImageSize);
+			NewMapArea = new RectangleDbl(new PointDbl(), OriginalMapSize);
 		}
 
 		#region Public Properties
 
 		// Environment
-		public SizeDbl ImageSize { get; init; }
+		public SizeDbl OriginalMapSize { get; init; }
 		public SizeDbl PreviewImageSize { get; init; }
 
 		// Inputs
 		public SizeDbl ContainerSize { get; set; }
-
-		public RectangleDbl NewImageArea { get; set; }
+		public RectangleDbl NewMapArea { get; set; }
 
 		// Outputs
-		public RectangleDbl OriginalImageDisplayArea { get; set; } // Size and placement of the preview image, relative to the NewPreviewImageArea
+		public RectangleDbl OriginalImageArea { get; private set; } // Size and placement of the preview image, relative to the NewImageArea
+		public RectangleDbl NewImageArea { get; private set; } // Size and placement of a rectangle that encloses the OriginalImageArea, relative to the container  
+		public double ScaleFactorForPreviewImage { get; private set; }
 
-		public RectangleDbl NewImageDisplayArea { get; set; } // Size and placement of a rectangle that encloses the PreviewImageArea, relative to the container  
+		//public double BeforeX => OriginalImageArea.X1 - NewImageArea.X1;
+		//public double AfterX => NewImageArea.X2 - OriginalImageArea.X2;
 
-		public double ScaleFactorForPreviewImage { get; set; } 
-
+		//public double BeforeY => OriginalImageArea.Y1 - NewImageArea.Y1;
+		//public double AfterY => NewImageArea.Y2 - OriginalImageArea.Y2;
 
 		#endregion
 
@@ -42,46 +42,26 @@ namespace MSetExplorer
 
 		public void Update()
 		{
-			// ScaleTransform = new SizeDbl(ContainerSize.Width / PreviewImageSize.Width, ContainerSize.Height / PreviewImageSize.Height);
+			var scaleFactor = RMapHelper.GetSmallestScaleFactor(NewMapArea.Size, ContainerSize);
 
-			var scaleFactor = RMapHelper.GetSmallestScaleFactor(NewImageArea.Size, ContainerSize);
+			var newImageSize = NewMapArea.Size.Scale(scaleFactor);
+			NewImageArea = newImageSize.PlaceAtCenter(ContainerSize); // This centers the Preview Map and Enclosing rectangle on the Control.
 
-			var newImageDisplaySize = NewImageArea.Size.Scale(scaleFactor);
-			NewImageDisplayArea = newImageDisplaySize.PlaceAtCenter(ContainerSize);
+			var originalImageSize = OriginalMapSize.Scale(scaleFactor);
 
-			var originalImageDisplaySize = ImageSize.Scale(scaleFactor);
+			//OriginalImageArea = originalImageSize.PlaceAtCenter(newImageSize); // Just Center it.
 
-			// TODO: don't center, use the NewImageArea offset
-			OriginalImageDisplayArea = originalImageDisplaySize.PlaceAtCenter(newImageDisplaySize);
+			var originalImagePos = NewMapArea.Position.Scale(scaleFactor);
+			OriginalImageArea = new RectangleDbl(originalImagePos, originalImageSize);
 
 			// Get the scale factor needed to reduce the logical preview image area into its "container" rectangle
-			var insideScaleFactor = RMapHelper.GetSmallestScaleFactor(originalImageDisplaySize, newImageDisplaySize);
+			var insideScaleFactor = RMapHelper.GetSmallestScaleFactor(originalImageSize, newImageSize);
 
 			// Get the scale factor needed to reduce the actual bitmap to the container
 			var previewImageScaleFactor = RMapHelper.GetSmallestScaleFactor(PreviewImageSize, ContainerSize);
 
 			ScaleFactorForPreviewImage = insideScaleFactor * previewImageScaleFactor;
 		}
-
-		//public static double GetSmallestScaleFactor(SizeDbl sizeToFit, SizeDbl containerSize)
-		//{
-		//	var wRat = containerSize.Width / sizeToFit.Width; // Scale Factor to multiply item being fitted to get container units.
-		//	var hRat = containerSize.Height / sizeToFit.Height;
-
-		//	var result = Math.Min(wRat, hRat);
-
-		//	return result;
-		//}
-
-		//public static RectangleDbl PlaceAtCenter(SizeDbl sizeToFit, SizeDbl containerSize)
-		//{
-		//	var hDiff = containerSize.Width - sizeToFit.Width;
-		//	var vDiff = containerSize.Height - sizeToFit.Height;
-
-		//	var result = new RectangleDbl(new PointDbl(hDiff / 2, vDiff / 2), sizeToFit);
-
-		//	return result;
-		//}
 
 		#endregion
 

@@ -507,6 +507,15 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static double GetLargestScaleFactor(SizeDbl sizeToFit, SizeDbl containerSize)
+		{
+			var wRat = containerSize.Width / sizeToFit.Width; // Scale Factor to multiply item being fitted to get container units.
+			var hRat = containerSize.Height / sizeToFit.Height;
+
+			var result = Math.Max(wRat, hRat);
+
+			return result;
+		}
 		#endregion
 	}
 }

@@ -21,6 +21,8 @@ namespace MSS.Types
 		public double Width { get; set; }
 		public double Height { get; set; }
 
+		public double AspectRatio => Width / Height;
+
 		public SizeDbl Inflate(int amount)
 		{
 			return new SizeDbl(Width + amount, Height + amount);
@@ -30,7 +32,6 @@ namespace MSS.Types
 		{
 			return new SizeDbl(Width + amount.Width, Height + amount.Height);
 		}
-
 
 		public SizeDbl Deflate(int amount)
 		{

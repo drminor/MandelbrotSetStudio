@@ -119,7 +119,7 @@ namespace MSetExplorer
 		{
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
 			var posterPreviewImage = ImageHelper.GetPosterPreview(ProjectAdapter, bitmapBuilder, poster, size);
-			var result = new PosterSizeEditorViewModel(posterPreviewImage, poster.MapAreaInfo.Coords, poster.MapAreaInfo.CanvasSize);
+			var result = new PosterSizeEditorViewModel(posterPreviewImage, poster.MapAreaInfo.CanvasSize);
 
 			return result;
 		}

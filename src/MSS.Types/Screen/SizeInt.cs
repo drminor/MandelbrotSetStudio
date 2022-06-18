@@ -30,6 +30,8 @@ namespace MSS.Types
 
 		public int NumberOfCells => Width * Height;
 
+		public double AspectRatio => Width / (double)Height;
+
 		private static int ConvertToInt(BigInteger n)
 		{
 			if (n < int.MaxValue && n > int.MinValue)

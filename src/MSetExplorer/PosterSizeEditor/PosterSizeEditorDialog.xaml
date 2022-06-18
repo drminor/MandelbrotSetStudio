@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Edit Poster Size" Height="700" Width="800"
+        Title="Edit Poster Size" Height="624" Width="607"
         MinHeight="500" MinWidth="500">
     <Grid>
 
@@ -15,16 +15,20 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+        <Border Grid.Row="0" BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
 
             <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
 
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                    <CheckBox Margin="10,0" FontSize="16" VerticalContentAlignment="Center" IsChecked="{Binding PreserveAspectRatio}">Preserve Aspect Ratio</CheckBox>
+                </StackPanel>                
+                
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                     <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="Width:" VerticalAlignment="Center"/>
                     <TextBox x:Name="txtWidth" Text="{Binding Width}" Width="80" Height="22"/>
 
                     <TextBlock Width="115" Margin="20,0,5,0" FontSize="16" Text="Original Width:" VerticalAlignment="Center"/>
-                    <TextBlock  Width="80" FontSize="16" Text="{Binding OriginalWidth}" VerticalAlignment="Center"/>
+                    <TextBlock  Width="50" FontSize="16" Text="{Binding OriginalWidth}" VerticalAlignment="Center"/>
 
                     <TextBlock Width="95" Margin="20,0,5,0" FontSize="16" Text="Aspect Ratio:" VerticalAlignment="Center"/>
                     <TextBlock Width="65" FontSize="16" Text="{Binding AspectRatio}" VerticalAlignment="Center"/>
@@ -36,9 +40,9 @@
                     <TextBox x:Name="txtHeight" Text="{Binding Height}" Width="80" Height="22"/>
 
                     <TextBlock Width="115" Margin="20,0,5,0" FontSize="16" Text="Original Height:" VerticalAlignment="Center"/>
-                    <TextBlock Width="80" FontSize="16" Text="{Binding OriginalHeight}" VerticalAlignment="Center"/>
+                    <TextBlock Width="50" FontSize="16" Text="{Binding OriginalHeight}" VerticalAlignment="Center"/>
 
-                    <TextBlock Width="155" Margin="20,0,5,0" FontSize="16" Text="Original Aspect Ratio:" VerticalAlignment="Center"/>
+                    <TextBlock Width="161" Margin="20,0,5,0" FontSize="16" Text="Original Aspect Ratio:" VerticalAlignment="Center"/>
                     <TextBlock Width="65" FontSize="16" Text="{Binding OriginalAspectRatio}" VerticalAlignment="Center"/>
 
                 </StackPanel>
@@ -50,20 +54,66 @@
         <Grid  Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <Grid.RowDefinitions>
-                <RowDefinition Height="100"/>
+                <RowDefinition Height="20"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="100"/>
+                <RowDefinition Height="20"/>
 
             </Grid.RowDefinitions>
     
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="200"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="100"/>
             </Grid.ColumnDefinitions>
 
-            <DockPanel Grid.Row="1" Grid.Column="1" LastChildFill="True">
-                <TextBlock DockPanel.Dock="Top" Margin="5,0,0,0">Preview:</TextBlock>
+            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical">
+                <TextBlock Margin="10,40,0,2">Horizontal</TextBlock>
+                <Border BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0">
+                    <StackPanel Orientation="Vertical">
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                            <CheckBox Margin="10,0" FontSize="16" VerticalContentAlignment="Center" IsChecked="{Binding PreserveWidth}">Preserve Width</CheckBox>
+                        </StackPanel>
+                        
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                            <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="Before:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="txtBeforeX" Text="{Binding BeforeX, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                            <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="After:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="txtAfterX" Text="{Binding AfterX, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Margin="10,40,0,2">Vertical</TextBlock>
+                <Border BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0">
+                    <StackPanel Orientation="Vertical">
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                            <CheckBox Margin="10,0" FontSize="16" VerticalContentAlignment="Center" IsChecked="{Binding PreserveHeight}">Preserve Height</CheckBox>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                            <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="Before:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="txtBeforeY" Text="{Binding BeforeY, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                            <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="After:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="txtAfterY" Text="{Binding AfterY, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+
+
+
+            </StackPanel>
+            
+            <DockPanel Grid.Row="1" Grid.Column="1" LastChildFill="True" Margin="0,0,10,0">
+                <TextBlock DockPanel.Dock="Top" Margin="5,0,0,3">Preview:</TextBlock>
                     
                 <Border BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <Canvas DockPanel.Dock="Top" x:Name="canvas1" Margin="10" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>

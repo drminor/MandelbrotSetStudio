@@ -90,8 +90,34 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(PosterSizeEditorViewModel.LayoutInfo))
 			{
-				Debug.WriteLine("Got a LayInfo update.");
+				Debug.WriteLine("Got a LayoutInfo update.");
+				UpdateOffsetsXEnabled();
+				UpdateOffsetsYEnabled();
 			}
+
+			if (e.PropertyName == nameof(PosterSizeEditorViewModel.PreserveWidth))
+			{
+				UpdateOffsetsXEnabled();
+			}
+
+			if (e.PropertyName == nameof(PosterSizeEditorViewModel.PreserveHeight))
+			{
+				UpdateOffsetsYEnabled();
+			}
+		}
+
+		private void UpdateOffsetsXEnabled()
+		{
+			var offsetXAreEnabled = (!_vm.PreserveWidth) || (_vm.PreserveWidth && _vm.Width - _vm.OriginalWidth > 0);
+			txtBeforeX.IsEnabled = offsetXAreEnabled;
+			txtAfterX.IsEnabled = offsetXAreEnabled;
+		}
+
+		private void UpdateOffsetsYEnabled()
+		{
+			var offsetYAreEnabled = (!_vm.PreserveHeight) || (_vm.PreserveHeight && _vm.Height - _vm.OriginalHeight > 0);
+			txtBeforeY.IsEnabled = offsetYAreEnabled;
+			txtAfterY.IsEnabled = offsetYAreEnabled;
 		}
 
 		private void CanvasSize_Changed(object sender, SizeChangedEventArgs e)

@@ -2,6 +2,7 @@
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -22,11 +23,15 @@ namespace MSetExplorer
 
 			var previewMapArea = MapJobHelper.GetJobAreaInfo(coords, size, blockSize, projectAdapter);
 
+			Debug.WriteLine($"Creating Poster Preview Image. The coords are {coords}, size is {size}.");
+
 			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, poster.ColorBandSet, poster.MapCalcSettings, cts.Token));
 
 			var imageData = task.Result;
 
 			var result = CreateImageSource(imageData, size);
+
+			//var result = new WriteableBitmap(1, 1, 96, 96, PixelFormats.Bgra32, null);
 
 			return result;
 		}
