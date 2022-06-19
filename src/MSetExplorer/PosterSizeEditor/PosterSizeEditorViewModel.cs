@@ -8,7 +8,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public class PosterSizeEditorViewModel : ViewModelBase, IDataErrorInfo
+	public class PosterSizeEditorViewModel : ViewModelBase //, IDataErrorInfo
 	{
 		private SizeDbl _previewImageSize;
 		private DrawingGroup _drawingGroup;
@@ -95,23 +95,32 @@ namespace MSetExplorer
 
 					if (value)
 					{
-						var previousSize = _currentSize;
-						_currentSize = RestoreAspectRatio(new SizeDbl(_currentSize), _originalSize.AspectRatio).Round();
+						var newSize = RestoreAspectRatio(new SizeDbl(_currentSize), _originalSize.AspectRatio).Round();
+						NewMapArea = new RectangleDbl(new PointDbl(), new SizeDbl(newSize));
 
-						if (previousSize.Width != _currentSize.Width)
-						{
-							OnPropertyChanged(nameof(Width));
-						}
+						_beforeX = 0; _afterX = 0; _beforeY = 0; _afterY = 0;
+						OnPropertyChanged(nameof(BeforeX));
+						OnPropertyChanged(nameof(AfterX));
+						OnPropertyChanged(nameof(BeforeY));
+						OnPropertyChanged(nameof(AfterY));
 
-						if (previousSize.Height != _currentSize.Height)
-						{
-							OnPropertyChanged(nameof(Height));
-						}
+						//var previousSize = _currentSize;
+						//_currentSize = RestoreAspectRatio(new SizeDbl(_currentSize), _originalSize.AspectRatio).Round();
 
-						if (previousSize.Width != _currentSize.Width || previousSize.Height != _currentSize.Height)
-						{
-							OnPropertyChanged(nameof(AspectRatio));
-						}
+						//if (previousSize.Width != _currentSize.Width)
+						//{
+						//	OnPropertyChanged(nameof(Width));
+						//}
+
+						//if (previousSize.Height != _currentSize.Height)
+						//{
+						//	OnPropertyChanged(nameof(Height));
+						//}
+
+						//if (previousSize.Width != _currentSize.Width || previousSize.Height != _currentSize.Height)
+						//{
+						//	OnPropertyChanged(nameof(AspectRatio));
+						//}
 					}
 
 					OnPropertyChanged();
@@ -206,7 +215,7 @@ namespace MSetExplorer
 			get => _beforeX;
 			set
 			{
-				if (value != _beforeX && value >= 0 && !(PreserveWidth && value > _currentSize.Width - _originalSize.Width))
+				if (value != _beforeX)
 				{
 					var previous = _beforeX;
 
@@ -229,11 +238,17 @@ namespace MSetExplorer
 			get => _afterX;
 			set
 			{
-				if (value != _afterX && value >= 0 && !(PreserveWidth && value > _currentSize.Width - _originalSize.Width))
+				if (value != _afterX)
 				{
 					var previous = _afterX;
 					_afterX = value;
 					OnPropertyChanged();
+
+					if (PreserveHeight)
+					{
+						_beforeX = _beforeX - (value - previous);
+						OnPropertyChanged(nameof(BeforeX));
+					}
 
 					NewMapArea = HandleAfterXUpdate(previous, value);
 				}
@@ -258,7 +273,7 @@ namespace MSetExplorer
 			get => _beforeY;
 			set
 			{
-				if (value != _beforeY && value >= 0 && !(PreserveHeight && value > _currentSize.Height - _originalSize.Height)) 
+				if (value != _beforeY)
 				{
 					var previous = _beforeY;
 					_beforeY = value;
@@ -280,11 +295,17 @@ namespace MSetExplorer
 			get => _afterY;
 			set
 			{
-				if (value != _afterY && value >= 0 && !(PreserveHeight && value > _currentSize.Height - _originalSize.Height))
+				if (value != _afterY)
 				{
 					var previous = _afterY;
 					_afterY = value;
 					OnPropertyChanged();
+
+					if (PreserveHeight)
+					{
+						_beforeY = _beforeY - (value - previous);
+						OnPropertyChanged(nameof(BeforeY));
+					}
 
 					NewMapArea = HandleAfterYUpdate(previous, value);
 				}
@@ -345,6 +366,7 @@ namespace MSetExplorer
 					}
 					else if (newSize.Height != _currentSize.Height)
 					{
+						_currentSize = newSize;
 						OnPropertyChanged(nameof(Height));
 					}
 

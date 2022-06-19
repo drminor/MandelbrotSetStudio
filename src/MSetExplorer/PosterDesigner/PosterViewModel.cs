@@ -4,6 +4,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
@@ -219,9 +220,14 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public bool PosterOpen(string projectName)
+		public bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster)
 		{
-			if (_projectAdapter.TryGetPoster(projectName, out var poster))
+			return _projectAdapter.TryGetPoster(name, out poster);
+		}
+
+		public bool PosterOpen(string name)
+		{
+			if (_projectAdapter.TryGetPoster(name, out var poster))
 			{
 				CurrentPoster = poster;
 				return true;

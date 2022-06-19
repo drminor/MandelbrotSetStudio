@@ -1,6 +1,7 @@
 ﻿using MSetExplorer.ScreenHelpers;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -82,12 +83,7 @@ namespace MSetExplorer
 
 			if (AppNavRequestResponse.RequestCommand == RequestResponseCommand.OpenPoster)
 			{
-				var posterName = AppNavRequestResponse.RequestParameters?[0];
-
-				if (posterName != null)
-				{
-					_ = _vm.PosterViewModel.PosterOpen(posterName);
-				}
+				OpenPosterFromAppRequest(AppNavRequestResponse.RequestParameters);
 			}
 		}
 
@@ -298,7 +294,15 @@ namespace MSetExplorer
 
 		private void EditSizeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			ShowSizeEditor();
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
+			if (curPoster != null)
+			{
+				if (TryGetNewSizeFromUser(curPoster, out var newSize))
+				{
+					_vm.PosterViewModel.PosterSize = newSize;
+				}
+			}
 		}
 
 		private void CreateImageCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -772,17 +776,43 @@ namespace MSetExplorer
 			_ = coordsEditorWindow.ShowDialog();
 		}
 
-		private void ShowSizeEditor()
+		private void OpenPosterFromAppRequest(string[]? requestParameters)
 		{
-			var curPoster = _vm.PosterViewModel.CurrentPoster;
-
-			if (curPoster == null)
+			if (requestParameters == null || requestParameters.Length < 1)
 			{
-				return;
+				throw new InvalidOperationException("The Poster's name must be included in the RequestParameters when the Command = 'OpenPoster.'");
 			}
 
+			var posterName = requestParameters[0];
+			var getSize = requestParameters.Length > 1 && requestParameters[1] == "OpenSizeDialog";
+
+			if (getSize)
+			{
+				if (_vm.PosterViewModel.TryGetPoster(posterName, out var poster))
+				{
+					if (TryGetNewSizeFromUser(poster, out var newSize))
+					{
+						// TODO: Calculate a new MapArea using the new Poster Size.
+						//poster.MapAreaInfo = new JobAreaInfo()
+
+						_ = MessageBox.Show($"Will Update Poster with new size ({newSize}) and then Open it.");
+					}
+				}
+				else
+				{
+					_ = MessageBox.Show($"Could not find a poster record with name: {posterName}.", "Poster Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+				}
+			}
+			else
+			{
+				_ = _vm.PosterViewModel.PosterOpen(posterName);
+			}
+		}
+
+		private bool TryGetNewSizeFromUser(Poster poster, out SizeInt size)
+		{
 			var previewSize = new SizeInt(1024);
-			var posterSizeEditorViewModel = _vm.CreateAPosterSizeEditorViewModel(curPoster, previewSize);
+			var posterSizeEditorViewModel = _vm.CreateAPosterSizeEditorViewModel(poster, previewSize);
 
 			var posterSizeEditorDialog = new PosterSizeEditorDialog()
 			{
@@ -791,9 +821,15 @@ namespace MSetExplorer
 
 			if (posterSizeEditorDialog.ShowDialog() == true)
 			{
-				var newSize = posterSizeEditorViewModel.NewMapArea.Size.Round();
+				size = posterSizeEditorViewModel.NewMapArea.Size.Round();
+				_ = MessageBox.Show($"Will update the poster to have a size of {size}.");
 
-				_vm.PosterViewModel.PosterSize = newSize;
+				return true;
+			}
+			else
+			{
+				size = new SizeInt();
+				return false;
 			}
 		}
 

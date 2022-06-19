@@ -374,13 +374,15 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (SavePosterInteractive(_vm.MapProjectViewModel.CurrentProjectName, out var newPoster))
+				if (SavePosterInteractive(_vm.MapProjectViewModel.CurrentProjectName, out var name, out var description))
 				{
+					var currentSize = _vm.GetCanvasSize(curJob);
+					var newPoster = _vm.MapProjectViewModel.PosterCreate(name, description, currentSize);
 					_vm.MapProjectViewModel.ProjectClose();
 
 					AppNavRequestResponse.OnCloseBehavior = OnCloseBehavior.ReturnToTopNav;
 					AppNavRequestResponse.ResponseCommand = RequestResponseCommand.OpenPoster;
-					AppNavRequestResponse.ResponseParameters = new string[] { newPoster.Name };
+					AppNavRequestResponse.ResponseParameters = new string[] { newPoster.Name, "OpenSizeDialog" };
 
 					Close();
 				}
@@ -846,29 +848,24 @@ namespace MSetExplorer
 
 		#region Private Methods - Poster
 
-		private bool SavePosterInteractive(string? initialName, [MaybeNullWhen(false)] out Poster newPoster)
+		private bool SavePosterInteractive(string? initialName, [MaybeNullWhen(false)] out string name, out string? description)
 		{
 			bool result;
 
-			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
+			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, out name, out description))
 			{
-				if (selectedName != null)
+				if (name != null)
 				{
-					// TODO: Handle cases where PosterCreate fails.
-					var posterSize = new SizeInt(4096);
-					newPoster = _vm.MapProjectViewModel.PosterCreate(selectedName, description, posterSize);
 					result = true;
 				}
 				else
 				{
 					Debug.WriteLine($"No name was provided. Cancelling the Create Poster operation.");
-					newPoster = null;
 					result = false;
 				}
 			}
 			else
 			{
-				newPoster = null;
 				result = false;
 			}
 

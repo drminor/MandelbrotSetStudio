@@ -26,10 +26,11 @@ namespace MSS.Types
 		//	return new PointDbl(X * factor.X, Y * factor.Y);
 		//}
 
-		//public PointDbl Translate(PointDbl offset)
-		//{
-		//	return new PointDbl(X + offset.X, Y + offset.Y);
-		//}
+		// TODO: Create VectorDbl type (and new PointDbl constructor that takes a VectorDbl)
+		public PointDbl Translate(PointDbl offset)
+		{
+			return new PointDbl(X + offset.X, Y + offset.Y);
+		}
 
 		//public PointDbl Translate(SizeDbl offset)
 		//{
@@ -54,6 +55,16 @@ namespace MSS.Types
 		public SizeDbl Diff(PointDbl amount)
 		{
 			return new SizeDbl(X - amount.X, Y - amount.Y);
+		}
+
+		public PointDbl Min(PointDbl pointB)
+		{
+			return new PointDbl(Math.Min(X, pointB.X), Math.Min(Y, pointB.Y));
+		}
+
+		public PointDbl Max(PointDbl pointB)
+		{
+			return new PointDbl(Math.Max(X, pointB.X), Math.Max(Y, pointB.Y));
 		}
 
 		public PointInt Round()

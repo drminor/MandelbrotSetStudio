@@ -6,6 +6,15 @@ namespace MSS.Types
 {
 	public struct RectangleDbl : IEquatable<RectangleDbl>, IEqualityComparer<RectangleDbl>
 	{
+		public RectangleDbl(PointDbl p1, PointDbl p2) : this(p1.X, p2.X, p1.Y, p2.Y)
+		{ }
+
+		public RectangleDbl(PointDbl point, SizeDbl size) : this(point.X, point.X + size.Width, point.Y, point.Y + size.Height)
+		{ }
+
+		public RectangleDbl(RectangleInt rectangleInt) : this(rectangleInt.X1, rectangleInt.X2, rectangleInt.Y1, rectangleInt.Y2)
+		{ }
+
 		public RectangleDbl(double x1, double x2, double y1, double y2)
 		{
 			X1 = x1;
@@ -13,18 +22,6 @@ namespace MSS.Types
 			Y1 = y1;
 			Y2 = y2;
 		}
-
-		public RectangleDbl(PointDbl point, SizeDbl size)
-		{
-			X1 = point.X;
-			X2 = point.X + size.Width;
-			Y1 = point.Y;
-			Y2 = point.Y + size.Height;
-		}
-
-		public RectangleDbl(RectangleInt rectangleInt) : this(rectangleInt.X1, rectangleInt.X2, rectangleInt.Y1, rectangleInt.Y2)
-		{ }
-
 
 		public double X1 { get; init; }
 		public double X2 { get; init; }
@@ -34,7 +31,8 @@ namespace MSS.Types
 		public double Width => X2 - X1;
 		public double Height => Y2 - Y1;
 
-		public PointDbl Point => new PointDbl(X1, Y1);
+		public PointDbl Point1 => new PointDbl(X1, Y1);
+		public PointDbl Point2 => new PointDbl(X2, Y2);
 		public PointDbl Position => new PointDbl(X1, Y1);
 		public SizeDbl Size => new SizeDbl(Width, Height);
 
@@ -102,7 +100,7 @@ namespace MSS.Types
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(Point, Size);
+			return HashCode.Combine(Position, Size);
 		}
 
 		public int GetHashCode([DisallowNull] RectangleDbl obj)

@@ -516,6 +516,16 @@ namespace MSS.Common
 
 			return result;
 		}
+
+		public static RectangleDbl GetBoundingRectangle(RectangleDbl a, RectangleDbl b)
+		{
+			var p1 = a.Point1.Min(b.Point1);
+			var p2 = a.Point2.Max(b.Point2);
+			var result = new RectangleDbl(p1, p2);
+
+			return result;
+		}
+
 		#endregion
 	}
 }

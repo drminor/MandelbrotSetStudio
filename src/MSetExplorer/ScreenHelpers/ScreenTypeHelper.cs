@@ -94,6 +94,11 @@ namespace MSetExplorer
 			return new Vector(vector.X, vector.Y);
 		}
 
+		public static Rect ConvertToRect(RectangleDbl rectangle)
+		{
+			return new Rect(new Point(rectangle.X1, rectangle.Y1), new Point(rectangle.Y1, rectangle.Y2));
+		}
+
 		public static Rect CreateRect(PointInt pointInt, SizeInt sizeInt)
 		{
 			return new Rect(ConvertToPoint(pointInt), ConvertToSize(sizeInt));
@@ -120,6 +125,17 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public static System.Drawing.Size ConvertToDrawingSize(SizeDbl size)
+		{
+			var sizeInt = size.Round();
+			return new System.Drawing.Size(sizeInt.Width, sizeInt.Height);
+		}
+
+		public static System.Drawing.Point ConvertToDrawingPoint(PointDbl point)
+		{
+			var pointInt = point.Round();
+			return new System.Drawing.Point(pointInt.X, pointInt.Y);
+		}
 
 		#endregion
 	}

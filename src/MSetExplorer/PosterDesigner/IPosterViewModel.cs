@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
@@ -32,6 +33,7 @@ namespace MSetExplorer
 		//void UpdateMapCoordinates(RRectangle coords);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
 
+		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
 		bool PosterOpen(string name);
 		void PosterSave();
 		bool PosterSaveAs(string name, string? description);

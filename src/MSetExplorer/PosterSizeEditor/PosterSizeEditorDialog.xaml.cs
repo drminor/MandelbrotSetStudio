@@ -1,8 +1,10 @@
 ﻿using MSS.Types;
 using System.Diagnostics;
+//using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -15,6 +17,7 @@ namespace MSetExplorer
 
 		private Canvas _canvas;
 		private Image _image;
+		private Rectangle _newImageRectangle;
 		private Border? _border;
 
 		private PosterSizeEditorViewModel _vm;
@@ -25,7 +28,8 @@ namespace MSetExplorer
 		{
 			_canvas = new Canvas();
 			_image = new Image();
-			_showBorder = true;
+			_newImageRectangle = new Rectangle();
+			_showBorder = false;
 
 			_vm = (PosterSizeEditorViewModel)DataContext;
 			Loaded += PosterSizeEditorDialog_Loaded;
@@ -48,16 +52,36 @@ namespace MSetExplorer
 
 				_image = new Image { Source = _vm.PreviewImage };
 				_ = canvas1.Children.Add(_image);
-
-				// A border is helpful for troubleshooting.
-				_border = _showBorder ? BuildBorder(_canvas) : null;
+				_image.SetValue(Panel.ZIndexProperty, 10);
 
 				var sizeDbl = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
 				UpdateTheVmWithOurSize(sizeDbl);
+
+				_newImageRectangle = BuildNewImageRectangle(_canvas, _vm.LayoutInfo.NewImageArea);
+
+				// A border is helpful for troubleshooting.
+				_border = _showBorder ? BuildBorder(_canvas) : null;
 				UpdateTheBorderSize(sizeDbl.Round());
 
 				Debug.WriteLine("The PosterSizeEditor Dialog is now loaded");
 			}
+		}
+
+		private Rectangle BuildNewImageRectangle(Canvas canvas, RectangleDbl newImageSizeArea)
+		{
+			var result = new Rectangle
+			{
+				Width = newImageSizeArea.Width,
+				Height = newImageSizeArea.Height,
+				Fill = Brushes.Gray
+			};
+
+			_ = canvas.Children.Add(result);
+			result.SetValue(Canvas.LeftProperty, newImageSizeArea.X1);
+			result.SetValue(Canvas.BottomProperty, newImageSizeArea.Y1);
+			result.SetValue(Panel.ZIndexProperty, 5);
+
+			return result;
 		}
 
 		private Border BuildBorder(Canvas canvas)
@@ -90,19 +114,21 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(PosterSizeEditorViewModel.LayoutInfo))
 			{
 				SetImageOffset(_vm.LayoutInfo.OriginalImageArea.Position);
-				UpdateOffsetsXEnabled();
-				UpdateOffsetsYEnabled();
+				DrawNewImageSizeRectangle(_vm.LayoutInfo.NewImageArea);
+
+				//UpdateOffsetsXEnabled();
+				//UpdateOffsetsYEnabled();
 			}
 
-			if (e.PropertyName == nameof(PosterSizeEditorViewModel.PreserveWidth))
-			{
-				UpdateOffsetsXEnabled();
-			}
+			//if (e.PropertyName == nameof(PosterSizeEditorViewModel.PreserveWidth))
+			//{
+			//	UpdateOffsetsXEnabled();
+			//}
 
-			if (e.PropertyName == nameof(PosterSizeEditorViewModel.PreserveHeight))
-			{
-				UpdateOffsetsYEnabled();
-			}
+			//if (e.PropertyName == nameof(PosterSizeEditorViewModel.PreserveHeight))
+			//{
+			//	UpdateOffsetsYEnabled();
+			//}
 		}
 
 		private void CanvasSize_Changed(object sender, SizeChangedEventArgs e)
@@ -134,24 +160,32 @@ namespace MSetExplorer
 			}
 		}
 
-		private void UpdateOffsetsXEnabled()
-		{
-			var offsetXAreEnabled = (!_vm.PreserveWidth) || (_vm.PreserveWidth && _vm.Width - _vm.OriginalWidth > 0);
-			txtBeforeX.IsEnabled = offsetXAreEnabled;
-			txtAfterX.IsEnabled = offsetXAreEnabled;
-		}
+		//private void UpdateOffsetsXEnabled()
+		//{
+		//	var offsetXAreEnabled = (!_vm.PreserveWidth) || (_vm.PreserveWidth && _vm.Width - _vm.OriginalWidth > 0);
+		//	txtBeforeX.IsEnabled = offsetXAreEnabled;
+		//	txtAfterX.IsEnabled = offsetXAreEnabled;
+		//}
 
-		private void UpdateOffsetsYEnabled()
-		{
-			var offsetYAreEnabled = (!_vm.PreserveHeight) || (_vm.PreserveHeight && _vm.Height - _vm.OriginalHeight > 0);
-			txtBeforeY.IsEnabled = offsetYAreEnabled;
-			txtAfterY.IsEnabled = offsetYAreEnabled;
-		}
+		//private void UpdateOffsetsYEnabled()
+		//{
+		//	var offsetYAreEnabled = (!_vm.PreserveHeight) || (_vm.PreserveHeight && _vm.Height - _vm.OriginalHeight > 0);
+		//	txtBeforeY.IsEnabled = offsetYAreEnabled;
+		//	txtAfterY.IsEnabled = offsetYAreEnabled;
+		//}
 
 		private void SetImageOffset(PointDbl value)
 		{
 			_image.SetValue(Canvas.LeftProperty, value.X);
 			_image.SetValue(Canvas.BottomProperty, value.Y);
+		}
+
+		private void DrawNewImageSizeRectangle(RectangleDbl newImageArea)
+		{
+			_newImageRectangle.Width = newImageArea.Width;
+			_newImageRectangle.Height = newImageArea.Height;
+			_newImageRectangle.SetValue(Canvas.LeftProperty, newImageArea.X1);
+			_newImageRectangle.SetValue(Canvas.BottomProperty, newImageArea.Y1);
 		}
 
 		#endregion

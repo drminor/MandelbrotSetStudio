@@ -108,6 +108,18 @@ namespace MSetExplorer
 			return result;
 		}
 
+		// TODO: Once every job has a value for the Canvas Size, then consider using that property's value instead of the current display size.
+		public SizeInt GetCanvasSize(Job job)
+		{
+			var result = job.CanvasSize;
+			if (result.Width == 0 || result.Height == 0)
+			{
+				result = MapDisplayViewModel.CanvasSize;
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Event Handlers
@@ -121,6 +133,7 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
+				// TODO: Once every job has a valid CanvasSize, don't use the current DisplaySize.
 				var newJobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
 				MapCoordsViewModel.CurrentJobAreaInfo = newJobAreaInfo;
 

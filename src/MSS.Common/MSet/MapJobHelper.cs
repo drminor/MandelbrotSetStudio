@@ -95,19 +95,19 @@ namespace MSS.Common
 		//	}
 		//}
 
-		public static JobAreaInfo GetJobAreaInfo(Job job)
-		{
-			if (job.CanvasSize.Width == 0)
-			{
-				//throw new ArgumentException("The job's canvas size is zero.");
-				Debug.WriteLine($"WARNING: Job with Id: {job.Id} has a canvas size of zero, using 1024 x 1024.");
-				return GetJobAreaInfo(job, new SizeInt(1024));
-			}
+		//public static JobAreaInfo GetJobAreaInfo(Job job)
+		//{
+		//	if (job.CanvasSize.Width == 0)
+		//	{
+		//		//throw new ArgumentException("The job's canvas size is zero.");
+		//		Debug.WriteLine($"WARNING: Job with Id: {job.Id} has a canvas size of zero, using 1024 x 1024.");
+		//		return GetJobAreaInfo(job, new SizeInt(1024));
+		//	}
 
-			var	result = new JobAreaInfo(job.Coords, job.CanvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
+		//	var	result = new JobAreaInfo(job.Coords, job.CanvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public static JobAreaInfo GetJobAreaInfo(Job job, SizeInt canvasSize)
 		{

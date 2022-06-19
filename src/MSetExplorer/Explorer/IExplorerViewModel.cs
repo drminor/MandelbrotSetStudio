@@ -1,4 +1,5 @@
-﻿using MSS.Types.MSet;
+﻿using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 
@@ -16,6 +17,8 @@ namespace MSetExplorer
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
 		IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType);
+
+		SizeInt GetCanvasSize(Job job);
 
 		IProjectAdapter ProjectAdapter { get; }
 	}
