@@ -551,6 +551,7 @@ namespace MSetExplorer
 			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
 			var sizeDbl = endP.Diff(startP);
 
+			// TODO: Create VectoryDbl type
 			var result = new VectorInt(sizeDbl.Round());
 
 			return result;

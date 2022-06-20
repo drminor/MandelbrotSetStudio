@@ -38,6 +38,8 @@ namespace MSetExplorer
 			_drawingGroup = CreateDrawingGroup(previewImage, _scaleTransform);
 			PreviewImage = new DrawingImage(_drawingGroup);
 
+			//_preserveAspectRatio = true;
+
 			var containerSize = displaySize ?? new SizeDbl(300, 300);
 			_layoutInfo = new PreviewImageLayoutInfo(new SizeDbl(posterSize), _previewImageSize, containerSize);
 
@@ -103,24 +105,6 @@ namespace MSetExplorer
 						OnPropertyChanged(nameof(AfterX));
 						OnPropertyChanged(nameof(BeforeY));
 						OnPropertyChanged(nameof(AfterY));
-
-						//var previousSize = _currentSize;
-						//_currentSize = RestoreAspectRatio(new SizeDbl(_currentSize), _originalSize.AspectRatio).Round();
-
-						//if (previousSize.Width != _currentSize.Width)
-						//{
-						//	OnPropertyChanged(nameof(Width));
-						//}
-
-						//if (previousSize.Height != _currentSize.Height)
-						//{
-						//	OnPropertyChanged(nameof(Height));
-						//}
-
-						//if (previousSize.Width != _currentSize.Width || previousSize.Height != _currentSize.Height)
-						//{
-						//	OnPropertyChanged(nameof(AspectRatio));
-						//}
 					}
 
 					OnPropertyChanged();
@@ -145,8 +129,6 @@ namespace MSetExplorer
 						{
 							OnPropertyChanged(nameof(Height));
 						}
-
-						SetOffsetsForNewSize(previousSize, _currentSize);
 					}
 					else
 					{
@@ -180,8 +162,6 @@ namespace MSetExplorer
 						{
 							OnPropertyChanged(nameof(Width));
 						}
-
-						SetOffsetsForNewSize(previousSize, _currentSize);
 					}
 					else
 					{
@@ -346,6 +326,7 @@ namespace MSetExplorer
 					_layoutInfo.Update();
 					_scaleTransform.ScaleX = _layoutInfo.ScaleFactorForPreviewImage;
 					_scaleTransform.ScaleY = _layoutInfo.ScaleFactorForPreviewImage;
+
 					OnPropertyChanged(nameof(LayoutInfo));
 
 					OnPropertyChanged();
@@ -515,11 +496,6 @@ namespace MSetExplorer
 
 		private RectangleDbl HandleBeforeXUpdate(int previous, int val)
 		{
-			if (val < 0 || (PreserveWidth && val > _currentSize.Width - _originalSize.Width))
-			{
-				throw new InvalidOperationException($"The before or after horizontal offset must be between 0 and {_currentSize.Width - _originalSize.Width}.");
-			}
-
 			var delta = val - previous;
 
 			RectangleDbl result;
@@ -547,11 +523,6 @@ namespace MSetExplorer
 
 		private RectangleDbl HandleAfterXUpdate(int previous, int val)
 		{
-			if (val < 0 || (PreserveWidth && val > _currentSize.Width - _originalSize.Width))
-			{
-				throw new InvalidOperationException($"The before or after horizontal offset must be between 0 and {_currentSize.Width - _originalSize.Width}.");
-			}
-
 			var delta = val - previous;
 
 			RectangleDbl result;
@@ -579,11 +550,6 @@ namespace MSetExplorer
 
 		private RectangleDbl HandleBeforeYUpdate(int previous, int val)
 		{
-			if (val < 0 || (PreserveHeight && val > _currentSize.Height - _originalSize.Height))
-			{
-				throw new InvalidOperationException($"The before or after vertical offset must be between 0 and {_currentSize.Height - _originalSize.Height}.");
-			}
-
 			var delta = val - previous;
 
 			RectangleDbl result;
@@ -611,11 +577,6 @@ namespace MSetExplorer
 
 		private RectangleDbl HandleAfterYUpdate(int previous, int val)
 		{
-			if (val < 0 || (PreserveHeight && val > _currentSize.Height - _originalSize.Height))
-			{
-				throw new InvalidOperationException($"The before or after vertical offset must be between 0 and {_currentSize.Height - _originalSize.Height}.");
-			}
-
 			var delta = val - previous;
 
 			RectangleDbl result;

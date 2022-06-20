@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System;
 using System.Diagnostics;
 //using System.Drawing;
 using System.Windows;
@@ -18,6 +19,7 @@ namespace MSetExplorer
 		private Canvas _canvas;
 		private Image _image;
 		private Rectangle _newImageRectangle;
+		private Rectangle _clipRectangle;
 		private Border? _border;
 
 		private PosterSizeEditorViewModel _vm;
@@ -29,6 +31,7 @@ namespace MSetExplorer
 			_canvas = new Canvas();
 			_image = new Image();
 			_newImageRectangle = new Rectangle();
+			_clipRectangle = new Rectangle();
 			_showBorder = false;
 
 			_vm = (PosterSizeEditorViewModel)DataContext;
@@ -58,10 +61,13 @@ namespace MSetExplorer
 				UpdateTheVmWithOurSize(sizeDbl);
 
 				_newImageRectangle = BuildNewImageRectangle(_canvas, _vm.LayoutInfo.NewImageArea);
+				_clipRectangle = BuildClipRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
 
 				// A border is helpful for troubleshooting.
 				_border = _showBorder ? BuildBorder(_canvas) : null;
 				UpdateTheBorderSize(sizeDbl.Round());
+
+				_vm.PreserveAspectRatio = true;
 
 				Debug.WriteLine("The PosterSizeEditor Dialog is now loaded");
 			}
@@ -80,6 +86,25 @@ namespace MSetExplorer
 			result.SetValue(Canvas.LeftProperty, newImageSizeArea.X1);
 			result.SetValue(Canvas.BottomProperty, newImageSizeArea.Y1);
 			result.SetValue(Panel.ZIndexProperty, 5);
+
+			return result;
+		}
+
+		private Rectangle BuildClipRectangle(Canvas canvas, RectangleDbl clip)
+		{
+			var result = new Rectangle
+			{
+				Width = clip.Width,
+				Height = clip.Height,
+				Fill = Brushes.Transparent,
+				Stroke = Brushes.Red,
+				StrokeThickness = 0.5
+			};
+
+			_ = canvas.Children.Add(result);
+			result.SetValue(Canvas.LeftProperty, clip.X1);
+			result.SetValue(Canvas.BottomProperty, clip.Y1);
+			result.SetValue(Panel.ZIndexProperty, 15);
 
 			return result;
 		}
@@ -113,22 +138,12 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(PosterSizeEditorViewModel.LayoutInfo))
 			{
-				SetImageOffset(_vm.LayoutInfo.OriginalImageArea.Position);
+				SetOriginalImageOffset(_vm.LayoutInfo.OriginalImageArea.Position);
+				ClipOriginalImage(_vm.LayoutInfo.PreviewImageClipRegionYInverted);
+				DrawClipRectangle(_vm.LayoutInfo.PreviewImageClipRegion);
+
 				DrawNewImageSizeRectangle(_vm.LayoutInfo.NewImageArea);
-
-				//UpdateOffsetsXEnabled();
-				//UpdateOffsetsYEnabled();
 			}
-
-			//if (e.PropertyName == nameof(PosterSizeEditorViewModel.PreserveWidth))
-			//{
-			//	UpdateOffsetsXEnabled();
-			//}
-
-			//if (e.PropertyName == nameof(PosterSizeEditorViewModel.PreserveHeight))
-			//{
-			//	UpdateOffsetsYEnabled();
-			//}
 		}
 
 		private void CanvasSize_Changed(object sender, SizeChangedEventArgs e)
@@ -160,32 +175,37 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void UpdateOffsetsXEnabled()
-		//{
-		//	var offsetXAreEnabled = (!_vm.PreserveWidth) || (_vm.PreserveWidth && _vm.Width - _vm.OriginalWidth > 0);
-		//	txtBeforeX.IsEnabled = offsetXAreEnabled;
-		//	txtAfterX.IsEnabled = offsetXAreEnabled;
-		//}
-
-		//private void UpdateOffsetsYEnabled()
-		//{
-		//	var offsetYAreEnabled = (!_vm.PreserveHeight) || (_vm.PreserveHeight && _vm.Height - _vm.OriginalHeight > 0);
-		//	txtBeforeY.IsEnabled = offsetYAreEnabled;
-		//	txtAfterY.IsEnabled = offsetYAreEnabled;
-		//}
-
-		private void SetImageOffset(PointDbl value)
+		private void SetOriginalImageOffset(PointDbl value)
 		{
+			Debug.WriteLine($"The original image is being placed at {value}.");
 			_image.SetValue(Canvas.LeftProperty, value.X);
 			_image.SetValue(Canvas.BottomProperty, value.Y);
 		}
 
+		private void ClipOriginalImage(RectangleDbl clipRegion)
+		{
+
+			Debug.WriteLine($"Clip region is {clipRegion}.");
+			var rect = ScreenTypeHelper.ConvertToRect(clipRegion);
+			_image.Clip = new RectangleGeometry(rect);
+		}
+
 		private void DrawNewImageSizeRectangle(RectangleDbl newImageArea)
 		{
-			_newImageRectangle.Width = newImageArea.Width;
-			_newImageRectangle.Height = newImageArea.Height;
+			Debug.WriteLine($"The new image is being placed at {newImageArea}.");
+			_newImageRectangle.Width = Math.Max(newImageArea.Width, 0);
+			_newImageRectangle.Height = Math.Max(newImageArea.Height, 0);
 			_newImageRectangle.SetValue(Canvas.LeftProperty, newImageArea.X1);
 			_newImageRectangle.SetValue(Canvas.BottomProperty, newImageArea.Y1);
+		}
+
+		private void DrawClipRectangle(RectangleDbl clipRegion)
+		{
+			//Debug.WriteLine($"The new image is being placed at {clipRegion}.");
+			_clipRectangle.Width = Math.Max(clipRegion.Width, 0);
+			_clipRectangle.Height = Math.Max(clipRegion.Height, 0);
+			_clipRectangle.SetValue(Canvas.LeftProperty, clipRegion.X1);
+			_clipRectangle.SetValue(Canvas.BottomProperty, clipRegion.Y1);
 		}
 
 		#endregion
@@ -205,8 +225,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-
-
 	}
 }

@@ -47,6 +47,11 @@ namespace MSS.Types
 			return new PointDbl(X * factor, Y * factor);
 		}
 
+		public PointDbl Invert()
+		{
+			return Scale(-1);
+		}
+
 		//public PointDbl Translate(SizeInt offset)
 		//{
 		//	return new PointDbl(X + offset.Width, Y + offset.Height);

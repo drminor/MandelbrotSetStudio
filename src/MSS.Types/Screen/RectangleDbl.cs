@@ -36,6 +36,12 @@ namespace MSS.Types
 		public PointDbl Position => new PointDbl(X1, Y1);
 		public SizeDbl Size => new SizeDbl(Width, Height);
 
+		public RectangleDbl Scale(double factor)
+		{
+			RectangleDbl result = new(X1 * factor, X2 * factor, Y1 * factor, Y2 * factor);
+			return result;
+		}
+
 		//public RectangleDbl Scale(PointDbl factor)
 		//{
 		//	RectangleDbl result = new(X1 * factor.X, X2 * factor.X, Y1 * factor.Y, Y2 * factor.Y);
@@ -48,11 +54,11 @@ namespace MSS.Types
 		//	return result;
 		//}
 
-		//public RectangleDbl Translate(PointDbl amount)
-		//{
-		//	RectangleDbl result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
-		//	return result;
-		//}
+		public RectangleDbl Translate(PointDbl amount)
+		{
+			RectangleDbl result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
+			return result;
+		}
 
 		//public RectangleDbl Translate(SizeDbl amount)
 		//{

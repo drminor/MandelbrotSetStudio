@@ -79,6 +79,11 @@ namespace MSetExplorer
 			return new Point(pointInt.X, pointInt.Y);
 		}
 
+		public static Point ConvertToPoint(PointDbl pointInt)
+		{
+			return new Point(pointInt.X, pointInt.Y);
+		}
+
 		public static Size ConvertToSize(SizeInt size)
 		{
 			return new Size(size.Width, size.Height);
@@ -96,7 +101,7 @@ namespace MSetExplorer
 
 		public static Rect ConvertToRect(RectangleDbl rectangle)
 		{
-			return new Rect(new Point(rectangle.X1, rectangle.Y1), new Point(rectangle.Y1, rectangle.Y2));
+			return new Rect(ConvertToPoint(rectangle.Point1), ConvertToPoint(rectangle.Point2));
 		}
 
 		public static Rect CreateRect(PointInt pointInt, SizeInt sizeInt)
@@ -125,18 +130,25 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public static System.Drawing.Size ConvertToDrawingSize(SizeDbl size)
-		{
-			var sizeInt = size.Round();
-			return new System.Drawing.Size(sizeInt.Width, sizeInt.Height);
-		}
+		//public static System.Drawing.Size ConvertToDrawingSize(SizeDbl size)
+		//{
+		//	var sizeInt = size.Round();
+		//	return new System.Drawing.Size(sizeInt.Width, sizeInt.Height);
+		//}
 
-		public static System.Drawing.Point ConvertToDrawingPoint(PointDbl point)
-		{
-			var pointInt = point.Round();
-			return new System.Drawing.Point(pointInt.X, pointInt.Y);
-		}
+		//public static System.Drawing.Point ConvertToDrawingPoint(PointDbl point)
+		//{
+		//	var pointInt = point.Round();
+		//	return new System.Drawing.Point(pointInt.X, pointInt.Y);
+		//}
 
 		#endregion
+
+		// Invert p1:(0,0), p2:100,100) -> p1:(0,100), p2:100,0)
+
+		public static RectangleDbl FlipY(RectangleDbl r, double maxY)
+		{
+			return new RectangleDbl(r.X1, r.X2, maxY - r.Y1, maxY - r.Y2);
+		}
 	}
 }
