@@ -76,6 +76,18 @@ namespace ProjectRepo
 			return posterRecord.Id;
 		}
 
+		public void UpdateMapArea(PosterRecord posterRecord)
+		{
+			var filter = Builders<PosterRecord>.Filter.Eq("_id", posterRecord.Id);
+
+			var updateDefinition = Builders<PosterRecord>.Update
+				.Set(u => u.JobAreaInfoRecord, posterRecord.JobAreaInfoRecord)
+				.Set(u => u.DisplayPosition, posterRecord.DisplayPosition)
+				.Set(u => u.DisplayZoom, posterRecord.DisplayZoom);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
 		public void UpdateName(ObjectId posterId, string name)
 		{
 			var filter = Builders<PosterRecord>.Filter.Eq("_id", posterId);

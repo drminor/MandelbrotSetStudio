@@ -161,7 +161,7 @@ namespace MSS.Types
 				if (value != _dispPosition)
 				{
 					_dispPosition = value;
-					LastUpdatedUtc = DateTime.UtcNow;
+					//LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}
 			}
@@ -180,7 +180,7 @@ namespace MSS.Types
 				if (Math.Abs(value - _displayZoom) > 0.1)
 				{
 					_displayZoom = value;
-					LastUpdatedUtc = DateTime.UtcNow;
+					//LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}
 			}
@@ -226,6 +226,8 @@ namespace MSS.Types
 
 		public bool Save(IProjectAdapter projectAdapter)
 		{
+			projectAdapter.UpdatePoster(this);
+			//projectAdapter.
 			// TODO: Implement Poster.Save
 			//if (AnyJobIsDirty && !IsDirty && !(DateCreated > LastSavedUtc))
 			//{

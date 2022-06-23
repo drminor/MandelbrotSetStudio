@@ -469,20 +469,20 @@ namespace MSS.Common
 			}
 		}
 
-		private static SizeDbl ConvertToSizeDbl(RSize rSize)
-		{
-			try
-			{
-				return new SizeDbl(
-					BigIntegerHelper.ConvertToDouble(rSize.Width),
-					BigIntegerHelper.ConvertToDouble(rSize.Height)
-					);
-			}
-			catch
-			{
-				return new SizeDbl(double.NaN, double.NaN);
-			}
-		}
+		//private static SizeDbl ConvertToSizeDbl(RSize rSize)
+		//{
+		//	try
+		//	{
+		//		return new SizeDbl(
+		//			BigIntegerHelper.ConvertToDouble(rSize.Width),
+		//			BigIntegerHelper.ConvertToDouble(rSize.Height)
+		//			);
+		//	}
+		//	catch
+		//	{
+		//		return new SizeDbl(double.NaN, double.NaN);
+		//	}
+		//}
 
 		public static double GetAspectRatio(RRectangle rRectangle)
 		{
@@ -497,24 +497,12 @@ namespace MSS.Common
 			}
 		}
 
-		public static double GetSmallestScaleFactor(SizeDbl sizeToFit, SizeDbl containerSize)
+		public static SizeDbl GetBoundingSize(RectangleDbl a, RectangleDbl b)
 		{
-			var wRat = containerSize.Width / sizeToFit.Width; // Scale Factor to multiply item being fitted to get container units.
-			var hRat = containerSize.Height / sizeToFit.Height;
+			var boundingRectangle = GetBoundingRectangle(a, b);
+			var boundingSize = GetBoundingSize(boundingRectangle);
 
-			var result = Math.Min(wRat, hRat);
-
-			return result;
-		}
-
-		public static double GetLargestScaleFactor(SizeDbl sizeToFit, SizeDbl containerSize)
-		{
-			var wRat = containerSize.Width / sizeToFit.Width; // Scale Factor to multiply item being fitted to get container units.
-			var hRat = containerSize.Height / sizeToFit.Height;
-
-			var result = Math.Max(wRat, hRat);
-
-			return result;
+			return boundingSize;
 		}
 
 		public static RectangleDbl GetBoundingRectangle(RectangleDbl a, RectangleDbl b)
@@ -525,6 +513,47 @@ namespace MSS.Common
 
 			return result;
 		}
+
+		public static SizeDbl GetBoundingSize(RectangleDbl a)
+		{
+			var distance = a.Position.Abs();
+			var result = a.Size.Inflate(new SizeDbl(distance));
+
+			return result;
+		}
+
+
+		//public static double GetSmallestScaleFactor(RectangleDbl a, RectangleDbl b)
+		//{
+		//	var diff = a.Position.Diff(b.Position);
+		//	var distance = diff.Abs();
+		//	var aSizePlusTranslated = a.Size.Inflate(distance);
+
+		//	var result = GetSmallestScaleFactor(aSizePlusTranslated, b.Size);
+
+		//	return result;
+		//}
+
+		public static double GetSmallestScaleFactor(SizeDbl sizeToFit, SizeDbl containerSize)
+		{
+			var wRat = containerSize.Width / sizeToFit.Width; // Scale Factor to multiply item being fitted to get container units.
+			var hRat = containerSize.Height / sizeToFit.Height;
+
+			var result = Math.Min(wRat, hRat);
+
+			return result;
+		}
+
+		//public static double GetLargestScaleFactor(SizeDbl sizeToFit, SizeDbl containerSize)
+		//{
+		//	var wRat = containerSize.Width / sizeToFit.Width; // Scale Factor to multiply item being fitted to get container units.
+		//	var hRat = containerSize.Height / sizeToFit.Height;
+
+		//	var result = Math.Max(wRat, hRat);
+
+		//	return result;
+		//}
+
 
 		#endregion
 	}

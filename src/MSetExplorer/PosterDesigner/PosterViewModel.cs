@@ -1,4 +1,5 @@
-﻿using MSetRepo;
+﻿using MongoDB.Bson;
+using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -238,6 +239,11 @@ namespace MSetExplorer
 			}
 		}
 
+		public void LoadPoster(Poster poster)
+		{
+			CurrentPoster = poster;
+		}
+
 		public void PosterSave()
 		{
 			var poster = CurrentPoster;
@@ -301,19 +307,22 @@ namespace MSetExplorer
 				return;
 			}
 
-			// The canvas size for this poster is not changing.
-			var canvasSize = CanvasSize;
+			// The new canvas size 
+			var canvasSize = newArea.Size;
 
 			var position = currentPoster.MapAreaInfo.Coords.Position;
 			var subdivision = currentPoster.MapAreaInfo.Subdivision;
 
+			// Use the new size and position to calculate the new map coordinates
 			var newCoords = RMapHelper.GetMapCoords(newArea, position, subdivision.SamplePointDelta);
 			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
 
-			JobAreaAndCalcSettings = new JobAreaAndCalcSettings(
-				new JobAreaInfo(newCoords, canvasSize, subdivision, newMapBlockOffset, newCanvasControlOffset),
-				currentPoster.MapCalcSettings.Clone()
-				);
+			// Update the current poster's map specification.
+			var newMapAreaInfo = new JobAreaInfo(newCoords, canvasSize, subdivision, newMapBlockOffset, newCanvasControlOffset);
+			currentPoster.MapAreaInfo = newMapAreaInfo;
+
+			// Use the new map specification and the current zoom and display position to set the region to display.
+			JobAreaAndCalcSettings = GetNewJob(currentPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, currentPoster.MapCalcSettings);
 		}
 
 		public void UpdateColorBandSet(ColorBandSet colorBandSet)

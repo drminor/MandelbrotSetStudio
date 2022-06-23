@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types
@@ -21,6 +22,8 @@ namespace MSS.Types
 			X2 = x2;
 			Y1 = y1;
 			Y2 = y2;
+
+			Validate();
 		}
 
 		public double X1 { get; init; }
@@ -84,6 +87,25 @@ namespace MSS.Types
 			return new RectangleDbl(Math.Abs(X1), Math.Abs(X2), Math.Abs(Y1), Math.Abs(Y2));
 		}
 
+		public override string? ToString()
+		{
+			return $"pos:{Position}, size:{Size}";
+		}
+
+		[Conditional("Debug")]
+		private void Validate()
+		{
+			if (! (X2 >= X1 || double.IsNaN(X1) || double.IsNaN(X2) || double.IsInfinity(X1) || double.IsInfinity(X2)) )
+			{
+				throw new ArgumentException($"The beginning X must be less than or equal to the ending X.");
+			}
+
+			if (! (Y2 >= Y1 || double.IsNaN(Y1) || double.IsNaN(Y2) || double.IsInfinity(Y1) || double.IsInfinity(Y2)) )
+			{
+				throw new ArgumentException($"The beginning Y must be less than or equal to the ending Y.");
+			}
+		}
+
 		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)
@@ -126,9 +148,5 @@ namespace MSS.Types
 
 		#endregion
 
-		public override string? ToString()
-		{
-			return $"pos:{Position}, size:{Size}";
-		}
 	}
 }

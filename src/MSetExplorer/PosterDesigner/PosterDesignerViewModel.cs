@@ -5,6 +5,8 @@ using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Threading;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -20,7 +22,8 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
-			IProjectAdapter projectAdapter, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
+			IProjectAdapter projectAdapter, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, 
+			CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
 		{
 			ProjectAdapter = projectAdapter;
 			_mapLoaderManager = mapLoaderManager;
@@ -115,13 +118,41 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public PosterSizeEditorViewModel CreateAPosterSizeEditorViewModel(Poster poster, SizeInt size)
+		public ImageSource GetPreviewImage(Poster poster, SizeInt previewImagesize, CancellationToken ct, bool useGenericImage = true)
 		{
-			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var posterPreviewImage = ImageHelper.GetPosterPreview(ProjectAdapter, bitmapBuilder, poster, size);
-			var result = new PosterSizeEditorViewModel(posterPreviewImage, poster.MapAreaInfo.CanvasSize);
+			if (useGenericImage)
+			{
+				var result = ImageHelper.CreateGenericImageSource(Colors.LightGreen, previewImagesize);
+				return result;
+			}
+			else
+			{
+				// TODO: XX Add Support to get the Poster Preview Image in the background with a high priority.
+				var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+				var result = ImageHelper.GetPosterPreview(poster, previewImagesize, bitmapBuilder, ProjectAdapter, ct);
+				return result;
+			}
+		}
 
-			return result;
+		//public PosterSizeEditorViewModel CreateAPosterSizeEditorViewModel(Poster poster, ImageSource previewImage, SizeDbl? displaySize)
+		//{
+		//	var result = new PosterSizeEditorViewModel(poster, previewImage, displaySize);
+
+		//	return result;
+		//}
+
+		public JobAreaInfo GetUpdatedJobAreaInfo(JobAreaInfo mapAreaInfo, RectangleDbl screenArea)
+		{
+			var mapPosition = mapAreaInfo.Coords.Position;
+			var samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta;
+			var screenAreaInt = screenArea.Round();
+			var coords = RMapHelper.GetMapCoords(screenAreaInt, mapPosition, samplePointDelta);
+
+			var posterSize = screenAreaInt.Size;
+			var blockSize = mapAreaInfo.Subdivision.BlockSize;
+			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, posterSize, blockSize, ProjectAdapter);
+
+			return jobAreaInfo;
 		}
 
 		#endregion

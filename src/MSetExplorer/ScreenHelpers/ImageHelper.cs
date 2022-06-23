@@ -13,26 +13,52 @@ namespace MSetExplorer
 {
 	internal class ImageHelper
 	{
-		public static ImageSource GetPosterPreview(IProjectAdapter projectAdapter, BitmapBuilder bitmapBuilder, Poster poster, SizeInt size)
+		public static ImageSource GetPosterPreview(Poster poster, SizeInt previewImagesize, BitmapBuilder bitmapBuilder, IProjectAdapter projectAdapter, CancellationToken ct)
 		{
-			var cts = new CancellationTokenSource();
 			var posterAreaInfo = poster.MapAreaInfo;
 
 			var coords = posterAreaInfo.Coords;
 			var blockSize = posterAreaInfo.Subdivision.BlockSize;
 
-			var previewMapArea = MapJobHelper.GetJobAreaInfo(coords, size, blockSize, projectAdapter);
+			var previewMapArea = MapJobHelper.GetJobAreaInfo(coords, previewImagesize, blockSize, projectAdapter);
 
-			Debug.WriteLine($"Creating Poster Preview Image. The coords are {coords}, size is {size}.");
+			Debug.WriteLine($"Creating Poster Preview Image. The coords are {coords}, size is {previewImagesize}.");
 
-			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, poster.ColorBandSet, poster.MapCalcSettings, cts.Token));
+			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, poster.ColorBandSet, poster.MapCalcSettings, ct));
 
-			var imageData = task.Result;
+			ImageSource result;
 
-			var result = CreateImageSource(imageData, size);
+			try
+			{
+				byte[] pixels = task.Result;
+				result = CreateImageSource(pixels, previewImagesize);
+			}
+			catch (System.AggregateException)
+			{
+				result = CreateGenericImageSource(Colors.LightSeaGreen, previewImagesize);				
+			}
 
-			//var result = new WriteableBitmap(1, 1, 96, 96, PixelFormats.Bgra32, null);
+			return result;
+		}
 
+		public static ImageSource CreateGenericImageSource(Color color, SizeInt previewImageSize)
+		{
+			byte r = color.R;
+			byte g = color.G;
+			byte b = color.B;
+
+			byte[] pixels = new byte[previewImageSize.NumberOfCells * 4];
+			
+			for(var i = 0; i < previewImageSize.NumberOfCells; i++)
+			{
+				var offSet = i * 4;
+				pixels[offSet] = b;
+				pixels[offSet + 1] = g;
+				pixels[offSet + 2] = r;
+				pixels[offSet + 3] = 255;
+			}
+
+			var result = CreateImageSource(pixels, previewImageSize);
 			return result;
 		}
 

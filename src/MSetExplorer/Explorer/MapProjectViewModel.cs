@@ -319,18 +319,9 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot create a poster, the current job is empty.");
 			}
 
-			//var coords = curJob.Coords;
-			//// TOOD: Fix this temporary hack -- Poster Create -- force 30" x 20" output.
-			//var newPosterSize = new SizeInt(18000, 12000);
-			//var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(coords, posterSize, newPosterSize, curJob.Subdivision);
-			//var jobAreaInfo = MapJobHelper.GetJobAreaInfo(newCoords, newPosterSize, curJob.Subdivision.BlockSize, _projectAdapter);
-
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob.Coords, posterSize, curJob.Subdivision.BlockSize, _projectAdapter);
 			var colorBandSet = CurrentProject.CurrentColorBandSet;
-
-			var poster = new Poster(name, description, curJob.Id, jobAreaInfo, colorBandSet, curJob.MapCalcSettings);
-
-			_projectAdapter.CreatePoster(poster);
+			var blockSize = curJob.Subdivision.BlockSize;
+			var poster = MapJobHelper.PosterCreate(name, description, posterSize, curJob.Id, curJob.Coords, colorBandSet, curJob.MapCalcSettings, blockSize, _projectAdapter);
 
 			return poster;
 		}
@@ -409,12 +400,12 @@ namespace MSetExplorer
 
 		public JobAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt screenArea)
 		{
-			if (CurrentProject == null)
+			var curJob = CurrentJob;
+
+			if (curJob.IsEmpty)
 			{
 				return null;
 			}
-
-			var curJob = CurrentJob;
 
 			if (screenArea == new RectangleInt())
 			{

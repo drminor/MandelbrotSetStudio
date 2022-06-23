@@ -30,18 +30,13 @@ namespace MSS.Types
 
 		public int NumberOfCells => Width * Height;
 
-		public double AspectRatio => Width / (double)Height;
+		public double AspectRatio => Height == 0 ? 1 : Width / (double)Height;
 
 		private static int ConvertToInt(BigInteger n)
 		{
-			if (n < int.MaxValue && n > int.MinValue)
-			{
-				return (int)n;
-			}
-			else
-			{
-				throw new ArgumentException($"The BigInteger:{n} cannot be converted into an integer.");
-			}
+			return n < int.MaxValue && n > int.MinValue
+				? (int)n
+                :              throw new ArgumentException($"The BigInteger:{n} cannot be converted into an integer.");
 		}
 
 		#region Public Methods

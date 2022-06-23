@@ -135,7 +135,7 @@ namespace MSetExplorer
 
 			if (poster != null)
 			{
-				_projectAdapter.DeleteProject(poster.Id);
+				_projectAdapter.DeletePoster(poster.Id);
 				_ = Posters.Remove(poster);
 			}
 		}

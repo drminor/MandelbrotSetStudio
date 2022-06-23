@@ -20,5 +20,8 @@ namespace MSS.Types.MSet
 
 		bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision);
 		void InsertSubdivision(Subdivision subdivision);
+
+		void CreatePoster(Poster poster);
+		void UpdatePoster(Poster poster);
 	}
 }

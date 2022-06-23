@@ -9,6 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 
@@ -19,6 +20,8 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class PosterDesignerWindow : Window, IHaveAppNavRequestResponse
 	{
+		private const double PREVIEW_IMAGE_SIZE = 1024;
+
 		private IPosterDesignerViewModel _vm;
 
 		private CreateImageProgressWindow? _createImageProgressWindow;
@@ -116,6 +119,12 @@ namespace MSetExplorer
 			_vm.MapScrollViewModel.HorizontalPosition = 0;
 		}
 
+		private void SetDisplayPosition(VectorInt position)
+		{
+			_vm.MapScrollViewModel.HorizontalPosition = position.X;
+			_vm.MapScrollViewModel.VerticalPosition = position.Y;
+		}
+
 		#endregion
 
 		#region Event Handlers
@@ -124,6 +133,9 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
+				SetDisplayZoom(_vm.PosterViewModel.DisplayZoom);
+				SetDisplayPosition(_vm.PosterViewModel.DisplayPosition);
+
 				Title = GetWindowTitle(_vm.PosterViewModel.CurrentPoster?.Name, _vm.PosterViewModel.ColorBandSet?.Name);
 				CommandManager.InvalidateRequerySuggested();
 			}
@@ -298,9 +310,13 @@ namespace MSetExplorer
 
 			if (curPoster != null)
 			{
-				if (TryGetNewSizeFromUser(curPoster, out var newSize))
+				if (TryGetNewSizeFromUser(curPoster, out var newMapArea))
 				{
-					_vm.PosterViewModel.PosterSize = newSize;
+					//var newMapAreaInfo = _vm.GetUpdatedJobAreaInfo(curPoster.MapAreaInfo, newMapArea);
+					//curPoster.MapAreaInfo = newMapAreaInfo;
+					//_vm.PosterViewModel.LoadPoster(curPoster);
+
+					_vm.PosterViewModel.UpdateMapView(TransformType.ZoomIn, newMapArea.Round());
 				}
 			}
 		}
@@ -641,41 +657,40 @@ namespace MSetExplorer
 				return SaveResultP.SaveCancelled;
 			}
 
-			return SaveResultP.NotSavingChanges;
+			//return SaveResultP.NotSavingChanges;
 
-			// TODO: Re-instate Poster-Save Changes.
-			//var triResult = PosterUserSaysSaveChanges();
+			var triResult = PosterUserSaysSaveChanges();
 
-			//if (triResult == true)
-			//{
-			//	if (_vm.PosterViewModel.CurrentPosterOnFile)
-			//	{
-			//		// The Project is on-file, just save the pending changes.
-			//		_vm.PosterViewModel.PosterSave();
-			//		return SaveResultP.ChangesSaved;
-			//	}
-			//	else
-			//	{
-			//		// The Project is not on-file, must ask user for the name and optional description.
-			//		triResult = SavePosterInteractive(curProject);
-			//		if (triResult == true)
-			//		{
-			//			return SaveResultP.ChangesSaved;
-			//		}
-			//		else
-			//		{
-			//			return SaveResultP.SaveCancelled;
-			//		}
-			//	}
-			//}
-			//else if (triResult == false)
-			//{
-			//	return SaveResultP.NotSavingChanges;
-			//}
-			//else
-			//{
-			//	return SaveResultP.SaveCancelled;
-			//}
+			if (triResult == true)
+			{
+				if (_vm.PosterViewModel.CurrentPosterOnFile)
+				{
+					// The Project is on-file, just save the pending changes.
+					_vm.PosterViewModel.PosterSave();
+					return SaveResultP.ChangesSaved;
+				}
+				else
+				{
+					// The Project is not on-file, must ask user for the name and optional description.
+					triResult = SavePosterInteractive(curProject);
+					if (triResult == true)
+					{
+						return SaveResultP.ChangesSaved;
+					}
+					else
+					{
+						return SaveResultP.SaveCancelled;
+					}
+				}
+			}
+			else if (triResult == false)
+			{
+				return SaveResultP.NotSavingChanges;
+			}
+			else
+			{
+				return SaveResultP.SaveCancelled;
+			}
 		}
 
 		private bool? SavePosterInteractive(Poster curPoster)
@@ -786,50 +801,85 @@ namespace MSetExplorer
 			var posterName = requestParameters[0];
 			var getSize = requestParameters.Length > 1 && requestParameters[1] == "OpenSizeDialog";
 
-			if (getSize)
+			if (_vm.PosterViewModel.TryGetPoster(posterName, out var poster))
 			{
-				if (_vm.PosterViewModel.TryGetPoster(posterName, out var poster))
+				if (getSize)
 				{
-					if (TryGetNewSizeFromUser(poster, out var newSize))
+					if (TryGetNewSizeFromUser(poster, out var newMapArea))
 					{
-						// TODO: Calculate a new MapArea using the new Poster Size.
-						//poster.MapAreaInfo = new JobAreaInfo()
-
-						_ = MessageBox.Show($"Will Update Poster with new size ({newSize}) and then Open it.");
+						var newMapAreaInfo = _vm.GetUpdatedJobAreaInfo(poster.MapAreaInfo, newMapArea);
+						poster.MapAreaInfo = newMapAreaInfo;
 					}
 				}
-				else
-				{
-					_ = MessageBox.Show($"Could not find a poster record with name: {posterName}.", "Poster Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
-				}
+
+				_vm.PosterViewModel.LoadPoster(poster);
 			}
 			else
 			{
-				_ = _vm.PosterViewModel.PosterOpen(posterName);
+				_ = MessageBox.Show($"Could not find a poster record with name: {posterName}.", "Poster Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
 			}
 		}
 
-		private bool TryGetNewSizeFromUser(Poster poster, out SizeInt size)
+		private bool TryGetNewSizeFromUser(Poster poster, out RectangleDbl newMapArea)
 		{
-			var previewSize = new SizeInt(1024);
-			var posterSizeEditorViewModel = _vm.CreateAPosterSizeEditorViewModel(poster, previewSize);
+			var cts = new CancellationTokenSource();
+			var previewSize = GetPreviewSize(poster.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
+			var previewImage = _vm.GetPreviewImage(poster, previewSize, cts.Token, useGenericImage: true);
 
-			var posterSizeEditorDialog = new PosterSizeEditorDialog()
+			var posterSizeEditorViewModel = new PosterSizeEditorViewModel();
+
+			var posterSizeEditorDialog = new PosterSizeEditorDialog(poster, previewImage)
 			{
 				DataContext = posterSizeEditorViewModel
 			};
 
-			if (posterSizeEditorDialog.ShowDialog() == true)
-			{
-				size = posterSizeEditorViewModel.NewMapArea.Size.Round();
-				_ = MessageBox.Show($"Will update the poster to have a size of {size}.");
+			posterSizeEditorDialog.ApplyChangesRequested += PosterSizeEditorDialog_ApplyChangesRequested;
 
-				return true;
-			}
-			else
+			try
 			{
-				size = new SizeInt();
-				return false;
+				if (posterSizeEditorDialog.ShowDialog() == true)
+				{
+					newMapArea = posterSizeEditorDialog.NewMapArea;
+					return true;
+				}
+				else
+				{
+					newMapArea = new RectangleDbl();
+					return false;
+				}
+			}
+			finally
+			{
+				posterSizeEditorDialog.ApplyChangesRequested -= PosterSizeEditorDialog_ApplyChangesRequested;
+			}
+		}
+
+		private SizeInt GetPreviewSize(SizeInt currentSize, double previewImageSideLength)
+		{
+			var scaleFactor = RMapHelper.GetSmallestScaleFactor(new SizeDbl(currentSize), new SizeDbl(previewImageSideLength));
+			var previewSize = currentSize.Scale(scaleFactor);
+
+			return previewSize;
+		}
+
+		private void PosterSizeEditorDialog_ApplyChangesRequested(object? sender, EventArgs e)
+		{
+			if (sender is PosterSizeEditorDialog sizeEditorDialog)
+			{
+				var poster = sizeEditorDialog.Poster;
+				if (poster != null)
+				{
+					var mapAreaInfo = poster.MapAreaInfo;
+					var newMapArea = sizeEditorDialog.NewMapArea;
+
+					var newMapAreaInfo = _vm.GetUpdatedJobAreaInfo(mapAreaInfo, newMapArea);
+
+					var cts = new CancellationTokenSource();
+					var previewSize = GetPreviewSize(newMapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
+					var previewImage = _vm.GetPreviewImage(poster, previewSize, cts.Token, useGenericImage: true);
+
+					sizeEditorDialog.UpdateWithNewMapInfo(newMapAreaInfo, previewImage);
+				}
 			}
 		}
 

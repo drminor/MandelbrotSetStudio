@@ -6,6 +6,10 @@ namespace MSS.Types
 {
 	public struct PointDbl : IEquatable<PointDbl>, IEqualityComparer<PointDbl>
 	{
+		private static PointDbl ZeroSingleton = new PointDbl();
+
+		public static PointDbl Zero => ZeroSingleton;
+
 		public PointDbl(PointInt pointInt) : this(pointInt.X, pointInt.Y)
 		{ }
 
@@ -86,6 +90,11 @@ namespace MSS.Types
 				);
 
 			return result;
+		}
+
+		public PointDbl Abs()
+		{
+			return new PointDbl(Math.Abs(X), Math.Abs(Y));
 		}
 
 		#region IEquatable and IEqualityComparer Support

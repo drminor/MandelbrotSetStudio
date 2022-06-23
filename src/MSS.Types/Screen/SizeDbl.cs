@@ -6,11 +6,6 @@ namespace MSS.Types
 {
 	public struct SizeDbl : IEquatable<SizeDbl>, IEqualityComparer<SizeDbl>
 	{
-		public SizeDbl(double width, double height)
-		{
-			Width = width;
-			Height = height;
-		}
 		// Square from single value
 		public SizeDbl(double extent) : this(extent, extent)
 		{ }
@@ -18,10 +13,19 @@ namespace MSS.Types
 		public SizeDbl(SizeInt size) : this(size.Width, size.Height)
 		{ }
 
+		public SizeDbl(PointDbl point) : this(point.X, point.Y)
+		{ }
+
+		public SizeDbl(double width, double height)
+		{
+			Width = width;
+			Height = height;
+		}
+
 		public double Width { get; set; }
 		public double Height { get; set; }
 
-		public double AspectRatio => Width / Height;
+		public double AspectRatio => (Height - 0 < 0.001) ? 1 : Width / Height;
 
 		public SizeDbl Inflate(int amount)
 		{
@@ -29,6 +33,11 @@ namespace MSS.Types
 		}
 
 		public SizeDbl Inflate(SizeInt amount)
+		{
+			return new SizeDbl(Width + amount.Width, Height + amount.Height);
+		}
+
+		public SizeDbl Inflate(SizeDbl amount)
 		{
 			return new SizeDbl(Width + amount.Width, Height + amount.Height);
 		}

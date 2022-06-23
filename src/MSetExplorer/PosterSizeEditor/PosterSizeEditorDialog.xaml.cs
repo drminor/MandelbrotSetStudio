@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 //using System.Drawing;
@@ -24,10 +25,16 @@ namespace MSetExplorer
 
 		private PosterSizeEditorViewModel _vm;
 
+		private Poster? _initialPoster;
+		private ImageSource? _initialPreviewImage;
+
 		#region Constructor
 
-		public PosterSizeEditorDialog()
+		public PosterSizeEditorDialog(Poster poster, ImageSource previewImage)
 		{
+			_initialPoster = poster;
+			_initialPreviewImage = previewImage;
+
 			_canvas = new Canvas();
 			_image = new Image();
 			_newImageRectangle = new Rectangle();
@@ -51,23 +58,37 @@ namespace MSetExplorer
 				_vm = (PosterSizeEditorViewModel)DataContext;
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
 				_canvas = canvas1;
-				_canvas.SizeChanged += CanvasSize_Changed;
 
 				_image = new Image { Source = _vm.PreviewImage };
 				_ = canvas1.Children.Add(_image);
 				_image.SetValue(Panel.ZIndexProperty, 10);
 
-				var sizeDbl = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
-				UpdateTheVmWithOurSize(sizeDbl);
+				var containerSize = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
+				//UpdateTheVmWithOurSize(sizeDbl);
 
-				_newImageRectangle = BuildNewImageRectangle(_canvas, _vm.LayoutInfo.NewImageArea);
+				//_newImageRectangle = BuildNewImageRectangle(_canvas, _vm.LayoutInfo.NewImageArea);
+				//_clipRectangle = BuildClipRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
+
+				_newImageRectangle = BuildNewImageRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
 				_clipRectangle = BuildClipRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
+
+				if (_initialPoster == null || _initialPreviewImage == null)
+				{
+					throw new InvalidOperationException("The initialPoster or the initialPreviewImage is null.");
+				}
+				_vm.Initialize(_initialPoster, _initialPreviewImage, containerSize);
+				_initialPoster = null;
+				_initialPreviewImage = null;
+
+				//_vm.PreserveAspectRatio = true;
+				//_vm.PreserveWidth = true;
+				//_vm.PreserveHeight = true;
+
+				_canvas.SizeChanged += CanvasSize_Changed;
 
 				// A border is helpful for troubleshooting.
 				_border = _showBorder ? BuildBorder(_canvas) : null;
-				UpdateTheBorderSize(sizeDbl.Round());
-
-				_vm.PreserveAspectRatio = true;
+				UpdateTheBorderSize(containerSize.Round());
 
 				Debug.WriteLine("The PosterSizeEditor Dialog is now loaded");
 			}
@@ -128,6 +149,21 @@ namespace MSetExplorer
 			result.SetValue(Panel.ZIndexProperty, 100);
 
 			return result;
+		}
+
+		#endregion
+
+		#region Public Properties
+
+		public event EventHandler? ApplyChangesRequested;
+
+		public Poster? Poster => _vm.Poster;
+
+		public RectangleDbl NewMapArea => _vm.NewMapArea;
+
+		public void UpdateWithNewMapInfo(JobAreaInfo mapAreaInfo, ImageSource previewImage)
+		{
+			_vm.UpdateWithNewMapInfo(mapAreaInfo, previewImage);
 		}
 
 		#endregion
@@ -212,10 +248,15 @@ namespace MSetExplorer
 
 		#region Button Handlers
 
-		private void SaveButton_Click(object sender, RoutedEventArgs e)
+		private void OkButton_Click(object sender, RoutedEventArgs e)
 		{
 			DialogResult = true;
 			Close();
+		}
+
+		private void ApplyChangesButton_Click(object sender, RoutedEventArgs e)
+		{
+			ApplyChangesRequested?.Invoke(this, new EventArgs());
 		}
 
 		private void CancelButton_Click(object sender, RoutedEventArgs e)

@@ -17,7 +17,7 @@ namespace MapSectionProviderLib
 	public class MapSectionRequestProcessor : IDisposable
 	{
 		private const int NUMBER_OF_CONSUMERS = 2;
-		private const int QUEUE_CAPACITY = 200;
+		private const int QUEUE_CAPACITY = 10; //200;
 
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly DtoMapper _dtoMapper;

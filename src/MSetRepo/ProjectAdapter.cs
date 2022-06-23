@@ -834,6 +834,14 @@ namespace MSetRepo
 			}
 		}
 
+		public void UpdatePoster(Poster poster)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			var posterRecord = _mSetRecordMapper.MapTo(poster);
+
+			posterReaderWriter.UpdateMapArea(posterRecord);
+		}
+
 		public void DeletePoster(ObjectId posterId)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);

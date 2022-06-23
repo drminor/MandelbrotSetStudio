@@ -51,10 +51,10 @@
             </StackPanel>
 
         </Border>
-        <Border Grid.Row="1" x:Name="OffsetsPanel" Visibility="Visible">
+        <Border Grid.Row="1" x:Name="OffsetsPanel" Visibility="Visible" Margin="5">
 
             <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical">
-                <Border BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0">
+                <Border BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <StackPanel Orientation="Vertical">
 
                         <TextBlock Margin="10,5,0,0">Horizontal Offsets</TextBlock>
@@ -97,7 +97,8 @@
 
         <Border Grid.Row="3" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnSave" HorizontalAlignment="Center" Width="140" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" >Apply Changes</Button>
+                <Button Name="btnOk" HorizontalAlignment="Center" Width="140" FontSize="16" Margin="10" Click="OkButton_Click" IsDefault="True" >Ok</Button>
+                <Button Name="btnApplyChanges" HorizontalAlignment="Center" Width="140" FontSize="16" Margin="10" Click="ApplyChangesButton_Click" IsDefault="True" >Apply Changes</Button>
                 <Button Name="btnCancel" HorizontalAlignment="Center" Width="140" FontSize="16" Margin="10" Click="CancelButton_Click" IsCancel="True">_Cancel</Button>
             </StackPanel>
         </Border>
