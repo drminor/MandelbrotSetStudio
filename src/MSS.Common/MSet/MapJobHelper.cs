@@ -1,31 +1,31 @@
 ﻿using MongoDB.Bson;
-using MSS.Common;
+using MSS.Common.MSetRepo;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace MSS.Common
 {
-
-	//var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, CanvasSize, _blockSize, _projectAdapter);
-	//var job = MapJobHelper.BuildJob(parentJobId, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
-
-
-	public static class MapJobHelper
+	public class MapJobHelper
 	{
+		private readonly IMapSectionAdapter _mapSectionAdapter;
+
+		public MapJobHelper(IMapSectionAdapter mapSectionAdapter)
+		{
+			_mapSectionAdapter = mapSectionAdapter;
+		}
+
 		#region Build Job
 
-		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
-			TransformType transformType, RectangleInt? newArea, SizeInt blockSize, IProjectAdapter projectAdapter)
+		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+			TransformType transformType, RectangleInt? newArea, SizeInt blockSize)
 		{
-			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, blockSize, projectAdapter);
+			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, blockSize);
 			var result = BuildJob(parentJobId, projectId, jobAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea);
 			return result;
 		}
 
-		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, JobAreaInfo jobAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, JobAreaInfo jobAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea)
 		{
 			if (!parentJobId.HasValue && !(transformType == TransformType.None || transformType == TransformType.CanvasSizeUpdate))
@@ -51,7 +51,7 @@ namespace MSS.Common
 			return job;
 		}
 
-		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize, IProjectAdapter projectAdapter)
+		public JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
@@ -68,7 +68,7 @@ namespace MSS.Common
 			//RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, mSetInfo.Coords, coordsWork, newDCoords);
 
 			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(samplePointDelta, blockSize, projectAdapter);
+			var subdivision = GetSubdivision(samplePointDelta, blockSize);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, subdivision, out var canvasControlOffset);
@@ -79,12 +79,12 @@ namespace MSS.Common
 		}
 
 		// Find an existing subdivision record that the same SamplePointDelta
-		private static Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize, IProjectAdapter projectAdapter)
+		private Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize)
 		{
-			if (!projectAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var result))
+			if (! _mapSectionAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var result))
 			{
 				result = new Subdivision(samplePointDelta, blockSize);
-				projectAdapter.InsertSubdivision(result);
+				_mapSectionAdapter.InsertSubdivision(result);
 			}
 
 			return result;
@@ -93,6 +93,13 @@ namespace MSS.Common
 		public static string GetJobName(TransformType transformType)
 		{
 			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
+			return result;
+		}
+
+		public static JobAreaInfo GetJobAreaInfo(Job job, SizeInt canvasSize)
+		{
+			var result = new JobAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
+
 			return result;
 		}
 
@@ -108,33 +115,12 @@ namespace MSS.Common
 		//	}
 		//}
 
-		//public static JobAreaInfo GetJobAreaInfo(Job job)
-		//{
-		//	if (job.CanvasSize.Width == 0)
-		//	{
-		//		//throw new ArgumentException("The job's canvas size is zero.");
-		//		Debug.WriteLine($"WARNING: Job with Id: {job.Id} has a canvas size of zero, using 1024 x 1024.");
-		//		return GetJobAreaInfo(job, new SizeInt(1024));
-		//	}
-
-		//	var	result = new JobAreaInfo(job.Coords, job.CanvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
-
-		//	return result;
-		//}
-
-		public static JobAreaInfo GetJobAreaInfo(Job job, SizeInt canvasSize)
-		{
-			var result = new JobAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
-
-			return result;
-		}
-
 		#endregion
 
-		public static Poster PosterCreate(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, RRectangle coords, ColorBandSet colorBandSet, 
+		public Poster CreatePoster(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, RRectangle coords, ColorBandSet colorBandSet, 
 			MapCalcSettings mapCalcSettings, SizeInt blockSize, IProjectAdapter projectAdapter)
 		{
-			var jobAreaInfo = GetJobAreaInfo(coords, posterSize, blockSize, projectAdapter);
+			var jobAreaInfo = GetJobAreaInfo(coords, posterSize, blockSize);
 
 			var poster = new Poster(name, description, sourceJobId, jobAreaInfo, colorBandSet, mapCalcSettings);
 
@@ -143,34 +129,5 @@ namespace MSS.Common
 			return poster;
 		}
 
-		#region Build Initial MSetInfo
-
-		public static ColorBandSet BuildInitialColorBandSet(int maxIterations)
-		{
-			var colorBands = new List<ColorBand>
-			{
-				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(50, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(70, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
-			};
-
-			var highColorCss = "#000000";
-			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
-
-			var result = new ColorBandSet(colorBands);
-
-			return result;
-		}
-
-		#endregion
 	}
 }

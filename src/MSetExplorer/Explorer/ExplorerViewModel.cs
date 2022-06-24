@@ -11,6 +11,7 @@ namespace MSetExplorer
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
 		private readonly PosterOpenSaveViewModelCreator _posterOpenSaveViewModelCreator;
+		private readonly CoordsEditorViewModelCreator _coordsEditorViewModelCreator;
 
 		private int _dispWidth;
 		private int _dispHeight;
@@ -18,7 +19,8 @@ namespace MSetExplorer
 		#region Constructor
 
 		public ExplorerViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel, 
-			IProjectAdapter projectAdapter, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator)
+			IProjectAdapter projectAdapter, ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, 
+			PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
 		{
 			ProjectAdapter = projectAdapter;
 
@@ -36,6 +38,7 @@ namespace MSetExplorer
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
 			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
 			_posterOpenSaveViewModelCreator = posterOpenSaveViewModelCreator;
+			_coordsEditorViewModelCreator = coordsEditorViewModelCreator;
 
 			MapCoordsViewModel = new MapCoordsViewModel();
 
@@ -105,6 +108,12 @@ namespace MSetExplorer
 		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
 			var result = _posterOpenSaveViewModelCreator(initalName, dialogType);
+			return result;
+		}
+
+		public CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
+		{
+			var result = _coordsEditorViewModelCreator(coords, canvasSize, allowEdits);
 			return result;
 		}
 

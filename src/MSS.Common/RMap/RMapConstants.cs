@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System.Collections.Generic;
 
 namespace MSS.Common
 {
@@ -34,5 +35,33 @@ namespace MSS.Common
 			TEST_RECTANGLE_HALF = new RRectangle(1, 2, 1, 2, -2);
 
 		}
+
+		public static ColorBandSet BuildInitialColorBandSet(int maxIterations)
+		{
+			var colorBands = new List<ColorBand>
+			{
+				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(50, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(70, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
+			};
+
+			var highColorCss = "#000000";
+			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
+
+			var result = new ColorBandSet(colorBands);
+
+			return result;
+		}
+
+
 	}
 }

@@ -352,6 +352,16 @@ namespace MSetExplorer
 			}
 		}
 
+		public void RestartLastJob()
+		{
+			var currentJob = CurrentJobAreaAndCalcSettings;
+
+			if (currentJob != null && !currentJob.IsEmpty)
+			{
+				SubmitJob(currentJob);
+			}
+		}
+
 		#endregion
 
 		#region Raise MapViewUpdateRequested Event Methods

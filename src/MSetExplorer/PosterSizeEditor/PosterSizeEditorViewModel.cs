@@ -27,15 +27,16 @@ namespace MSetExplorer
 
 		private SizeInt _originalSize;
 
-		private Poster? _poster;
 		private ImageDrawing _previewImageDrawing;
 		private ImageSource _previewImage;
 
+		private readonly LazyMapPreviewImageProvider _lazyMapPreviewImageProvider;
+
 		#region Constructor
 
-		public PosterSizeEditorViewModel(/*Poster poster, ImageSource previewImage*/)
+		public PosterSizeEditorViewModel(LazyMapPreviewImageProvider lazyMapPreviewImageProvider)
 		{
-			//_poster = poster;
+			_lazyMapPreviewImageProvider = lazyMapPreviewImageProvider;
 			_scaleTransform = new ScaleTransform();
 
 			_drawingGroup = new DrawingGroup
@@ -43,45 +44,28 @@ namespace MSetExplorer
 				Transform = _scaleTransform
 			};
 
-			//_previewImageDrawing = CreateImageDrawing(previewImage);
-			//_drawingGroup.Children.Add(_previewImageDrawing);
-			//_previewImage = new DrawingImage(_drawingGroup);
-
 			_previewImageDrawing = new ImageDrawing();
+			_drawingGroup.Children.Add(_previewImageDrawing);
+
 			_previewImage = new DrawingImage(_drawingGroup);
 			_layoutInfo = new PreviewImageLayoutInfo();
 
-			//var posterSize = _poster.MapAreaInfo.CanvasSize;
-			//var containerSize = new SizeDbl(300, 300);
-			//var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
-			//_layoutInfo = new PreviewImageLayoutInfo(new SizeDbl(posterSize), previewImageSize, containerSize);
-
-			//_currentSize = new SizeInt(2, 1);
-			//Width = posterSize.Width;
-			//Height = posterSize.Height;
-
-			//_beforeX = 0;
-			//_afterX = 0;
-			//_beforeY = 0;
-			//_afterY = 0;
-
-			//var newPos = new PointDbl(BeforeX, BeforeY);
-			//var newSize = new SizeDbl(_currentSize);
-
-			//NewMapArea = new RectangleDbl(newPos, newSize);
-
-			//_originalSize = new SizeInt(2, 1);
-			//OriginalWidth = Width;
-			//OriginalHeight = Height;
-
-			//_preserveWidth = true;
-			//_preserveHeight = true;
+			_lazyMapPreviewImageProvider.BitmapHasBeenLoaded += MapPreviewImageProvider_BitmapHasBeenLoaded;
 		}
 
-		public void Initialize(Poster poster, ImageSource previewImage, SizeDbl containerSize)
+		private void MapPreviewImageProvider_BitmapHasBeenLoaded(object? sender, EventArgs e)
 		{
-			_poster = poster;
-			UpdateWithChangesInternal(poster.MapAreaInfo, previewImage, containerSize);
+			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
+
+			_ = _drawingGroup.Children.Remove(_previewImageDrawing);
+			_previewImageDrawing = CreateImageDrawing(previewImage);
+			_drawingGroup.Children.Add(_previewImageDrawing);
+			_previewImage = new DrawingImage(_drawingGroup);
+		}
+
+		public void Initialize(JobAreaInfo posterMapAreaInfo, SizeDbl containerSize)
+		{
+			UpdateWithChangesInternal(posterMapAreaInfo, containerSize);
 
 			_preserveAspectRatio = true;
 			_preserveWidth = true;
@@ -91,29 +75,34 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(PreserveWidth));
 			OnPropertyChanged(nameof(PreserveHeight));
 
-			NewMapArea = new RectangleDbl(new PointDbl(), new SizeDbl(_poster.MapAreaInfo.CanvasSize));
+			var newMapArea = new RectangleDbl(new PointDbl(), new SizeDbl(posterMapAreaInfo.CanvasSize));
+			InvertAndSetNewMapArea(newMapArea);
 		}
 
-		public void UpdateWithNewMapInfo(JobAreaInfo mapAreaInfo, ImageSource previewImage)
+		public void UpdateWithNewMapInfo(JobAreaInfo posterMapAreaInfo)
 		{
-			if (_poster != null)
-			{
-				_poster.MapAreaInfo = mapAreaInfo;
-				UpdateWithChangesInternal(mapAreaInfo, previewImage, ContainerSize);
+			UpdateWithChangesInternal(posterMapAreaInfo, ContainerSize);
 
-				NewMapArea = new RectangleDbl(new PointDbl(), new SizeDbl(_poster.MapAreaInfo.CanvasSize));
-			}
+			var newMapArea = new RectangleDbl(new PointDbl(), new SizeDbl(posterMapAreaInfo.CanvasSize));
+			InvertAndSetNewMapArea(newMapArea);
 		}
 
-		private void UpdateWithChangesInternal(JobAreaInfo mapAreaInfo, ImageSource previewImage, SizeDbl containerSize)
+		private void UpdateWithChangesInternal(JobAreaInfo posterMapAreaInfo, SizeDbl containerSize)
 		{
-			_previewImageDrawing = CreateImageDrawing(previewImage);
-			_drawingGroup.Children.Add(_previewImageDrawing);
-			_previewImage = new DrawingImage(_drawingGroup);
+			PosterMapAreaInfo = posterMapAreaInfo;
 
-			var posterSize = mapAreaInfo.CanvasSize;
+			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
 			var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
-			_layoutInfo = new PreviewImageLayoutInfo(new SizeDbl(posterSize), previewImageSize, containerSize);
+
+			//_drawingGroup.Children.Remove(_previewImageDrawing);
+			//_previewImageDrawing = CreateImageDrawing(previewImage);
+			//_drawingGroup.Children.Add(_previewImageDrawing);
+			//_previewImage = new DrawingImage(_drawingGroup);
+
+			var posterSize = posterMapAreaInfo.CanvasSize;
+			_lazyMapPreviewImageProvider.MapAreaInfo = posterMapAreaInfo;
+
+			_layoutInfo = new PreviewImageLayoutInfo(posterSize, previewImageSize, containerSize);
 
 			_originalSize = posterSize;
 			OnPropertyChanged(nameof(OriginalWidth));
@@ -144,7 +133,8 @@ namespace MSetExplorer
 					if (value)
 					{
 						var newSize = RestoreAspectRatio(new SizeDbl(_currentSize), _originalSize.AspectRatio).Round();
-						NewMapArea = new RectangleDbl(new PointDbl(), new SizeDbl(newSize));
+						var newMapArea = new RectangleDbl(new PointDbl(), new SizeDbl(newSize));
+						InvertAndSetNewMapArea(newMapArea);
 
 						_beforeX = 0; _afterX = 0; _beforeY = 0; _afterY = 0;
 						OnPropertyChanged(nameof(BeforeX));
@@ -185,7 +175,8 @@ namespace MSetExplorer
 						SetOffsetsForNewSize(previousSize, _currentSize);
 					}
 
-					NewMapArea = new RectangleDbl(new PointDbl(BeforeX, BeforeY).Invert(), new SizeDbl(_currentSize));
+					var newMapArea = new RectangleDbl(new PointDbl(BeforeX, BeforeY), new SizeDbl(_currentSize));
+					InvertAndSetNewMapArea(newMapArea);
 				}
 			}
 		}
@@ -218,7 +209,8 @@ namespace MSetExplorer
 						SetOffsetsForNewSize(previousSize, _currentSize);
 					}
 
-					NewMapArea = new RectangleDbl(new PointDbl(BeforeX, BeforeY).Invert(), new SizeDbl(_currentSize));
+					var newMapArea = new RectangleDbl(new PointDbl(BeforeX, BeforeY), new SizeDbl(_currentSize));
+					InvertAndSetNewMapArea(newMapArea);
 				}
 			}
 		}
@@ -254,7 +246,8 @@ namespace MSetExplorer
 						OnPropertyChanged(nameof(AfterX));
 					}
 
-					NewMapArea = HandleBeforeXUpdate(previous, value);
+					var newMapArea = HandleBeforeXUpdate(previous, value);
+					InvertAndSetNewMapArea(newMapArea);
 				}
 			}
 		}
@@ -276,7 +269,8 @@ namespace MSetExplorer
 						OnPropertyChanged(nameof(BeforeX));
 					}
 
-					NewMapArea = HandleAfterXUpdate(previous, value);
+					var newMapArea = HandleAfterXUpdate(previous, value);
+					InvertAndSetNewMapArea(newMapArea);
 				}
 			}
 		}
@@ -311,7 +305,8 @@ namespace MSetExplorer
 						OnPropertyChanged(nameof(AfterY));
 					}
 
-					NewMapArea = HandleBeforeYUpdate(previous, value);
+					var newMapArea = HandleBeforeYUpdate(previous, value);
+					InvertAndSetNewMapArea(newMapArea);
 				}
 			}
 		}
@@ -333,8 +328,9 @@ namespace MSetExplorer
 						OnPropertyChanged(nameof(BeforeY));
 					}
 
-					NewMapArea = HandleAfterYUpdate(previous, value);
-				}
+					var newMapArea = HandleAfterYUpdate(previous, value);
+					InvertAndSetNewMapArea(newMapArea);
+ 				}
 			}
 		}
 
@@ -361,10 +357,17 @@ namespace MSetExplorer
 			}
 		}
 
+		private void InvertAndSetNewMapArea(RectangleDbl newMapAreaInverted)
+		{
+			var unInverted = new RectangleDbl(newMapAreaInverted.Position.Invert(), newMapAreaInverted.Size);
+			NewMapArea = unInverted;
+		}
+
 		public RectangleDbl NewMapArea
 		{
 			get => _layoutInfo.NewMapArea;
-			set
+			
+			private set
 			{
 				if (!_layoutInfo.IsEmpty && value != _layoutInfo.NewMapArea)
 				{
@@ -401,48 +404,26 @@ namespace MSetExplorer
 					{
 						OnPropertyChanged(nameof(AspectRatio));
 					}
-
-					//var newPos = value.Position.Round();
-					//BeforeX = newPos.X;
-					//BeforeY = newPos.Y;
 				}
 			}
 		}
 
 		public PreviewImageLayoutInfo LayoutInfo => _layoutInfo;
 
-		public Poster? Poster => _poster;
+		public JobAreaInfo? PosterMapAreaInfo { get; private set; }
 
-		public JobAreaInfo? MapAreaInfo
-		{
-			get => _poster?.MapAreaInfo;
-			set
-			{
-				if (_poster != null)
-				{
-					if (value != null && value != _poster.MapAreaInfo)
-					{
-						// TODO: XX Update the PosterSizeEditor with the new MapArea
-						_poster.MapAreaInfo = value;
-						var newSize = RestoreAspectRatio(new SizeDbl(_currentSize), _originalSize.AspectRatio).Round();
-						NewMapArea = new RectangleDbl(new PointDbl(), new SizeDbl(newSize));
-					}
-				}
-			}
-		}
+		public ImageSource PreviewImage => _previewImage;
+		//{
+		//	get => _previewImage;
+		//	set
+		//	{
+		//		_drawingGroup.Children.Remove(_previewImageDrawing);
+		//		_previewImageDrawing = CreateImageDrawing(value);
+		//		_drawingGroup.Children.Add(_previewImageDrawing);
 
-		public ImageSource PreviewImage
-		{
-			get => _previewImage;
-			set
-			{
-				_drawingGroup.Children.Remove(_previewImageDrawing);
-				_previewImageDrawing = CreateImageDrawing(value);
-				_drawingGroup.Children.Add(_previewImageDrawing);
-
-				_layoutInfo.PreviewImageSize = new SizeDbl(value.Width, value.Height);
-			}
-		}
+		//		_layoutInfo.PreviewImageSize = new SizeDbl(value.Width, value.Height);
+		//	}
+		//}
 
 		#endregion
 
@@ -574,7 +555,7 @@ namespace MSetExplorer
 		{
 			RectangleDbl result;
 			var delta = val - previous;
-			var newPos = new PointDbl(BeforeX, BeforeY).Invert();
+			var newPos = new PointDbl(BeforeX, BeforeY);
 
 			if (PreserveWidth)
 			{
@@ -594,7 +575,7 @@ namespace MSetExplorer
 		{
 			RectangleDbl result;
 			var delta = val - previous;
-			var newPos = new PointDbl(BeforeX, BeforeY).Invert();
+			var newPos = new PointDbl(BeforeX, BeforeY);
 
 			if (PreserveWidth)
 			{
@@ -614,7 +595,7 @@ namespace MSetExplorer
 		{
 			RectangleDbl result;
 			var delta = val - previous;
-			var newPos = new PointDbl(BeforeX, BeforeY).Invert();
+			var newPos = new PointDbl(BeforeX, BeforeY);
 
 			if (PreserveHeight)
 			{
@@ -634,7 +615,7 @@ namespace MSetExplorer
 		{
 			RectangleDbl result;
 			var delta = val - previous;
-			var newPos = new PointDbl(BeforeX, BeforeY).Invert();
+			var newPos = new PointDbl(BeforeX, BeforeY);
 
 			if (PreserveHeight)
 			{

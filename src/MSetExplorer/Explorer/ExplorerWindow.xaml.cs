@@ -610,8 +610,7 @@ namespace MSetExplorer
 
 		private void LoadNewProject(RRectangle coords, MapCalcSettings mapCalcSettings)
 		{
-			//_vm.MapDisplayViewModel.RebuildScreenSections();
-			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			_vm.MapProjectViewModel.ProjectStartNew(coords, colorBandSet, mapCalcSettings);
 		}
 
@@ -759,22 +758,26 @@ namespace MSetExplorer
 			var curJob = _vm.MapProjectViewModel.CurrentJob;
 			if (!curJob.IsEmpty)
 			{
-				coordsEditorViewModel = new CoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize, allowEdits: true, _vm.ProjectAdapter);
+				coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize, allowEdits: true);
 				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else
 			{
-				var x1 = "-0.477036968733327014028268226139546";
-				var x2 = "-0.477036964892343354414420540166062";
-				var y1 = "0.535575821681765930306959274776606";
-				var y2 = "0.535575824239325800205884281044245";
+				//var x1 = "-0.477036968733327014028268226139546";
+				//var x2 = "-0.477036964892343354414420540166062";
+				//var y1 = "0.535575821681765930306959274776606";
+				//var y2 = "0.535575824239325800205884281044245";
 
-				//var x1 = "-0.4770369687333";
-				//var x2 = "-0.4770369648923";
-				//var y1 = "0.5355758216817";
-				//var y2 = "0.5355758242393";
-				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.MapProjectViewModel.CanvasSize, allowEdits: false, _vm.ProjectAdapter);
-				mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+				////var x1 = "-0.4770369687333";
+				////var x2 = "-0.4770369648923";
+				////var y1 = "0.5355758216817";
+				////var y2 = "0.5355758242393";
+
+				//var coords = new RRectangle(x1, x2, y1, y2);
+				//coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(coords, _vm.MapProjectViewModel.CanvasSize, allowEdits: false);
+				//mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+
+				return;
 			}
 
 			var coordsEditorWindow = new CoordsEditorWindow()

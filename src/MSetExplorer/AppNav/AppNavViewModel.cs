@@ -9,15 +9,21 @@ namespace MSetExplorer
 	public delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 	public delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
+	public delegate CoordsEditorViewModel CoordsEditorViewModelCreator(RRectangle coords, SizeInt canvasSize, bool allowEdits);
+
 	public class AppNavViewModel
 	{
 		public RepositoryAdapters RepositoryAdapters { get; init; }
+		
+
+		public MapJobHelper MapJobHelper { get; init; }
 		public IMapLoaderManager MapLoaderManager { get; init; }
 		public PngBuilder PngBuilder { get; init; }
 
 		public AppNavViewModel(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, PngBuilder pngBuilder)
 		{
 			RepositoryAdapters = repositoryAdapters;
+			MapJobHelper = new MapJobHelper(repositoryAdapters.MapSectionAdapter);
 			MapLoaderManager = mapLoaderManager;
 			PngBuilder = pngBuilder;
 		}
@@ -25,7 +31,7 @@ namespace MSetExplorer
 		public ExplorerViewModel GetExplorerViewModel()
 		{
 			// Map Project ViewModel
-			var mapProjectViewModel = new MapProjectViewModel(RepositoryAdapters.ProjectAdapter, RMapConstants.BLOCK_SIZE);
+			var mapProjectViewModel = new MapProjectViewModel(RepositoryAdapters.ProjectAdapter, MapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();
@@ -34,7 +40,8 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel);
+			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, 
+				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
 
 			return result;
 		}
@@ -53,7 +60,8 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, MapLoaderManager, CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, MapJobHelper, MapLoaderManager, 
+				CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateACoordsEditorViewModel);
 
 			return result;
 		}
@@ -79,19 +87,11 @@ namespace MSetExplorer
 				: new PosterOpenSaveViewModel(MapLoaderManager, RepositoryAdapters.ProjectAdapter, initalName, dialogType);
 		}
 
-		//private PosterSizeEditorViewModel CreateAPosterSizeEditorViewModel(Poster poster, SizeInt size)
-		//{
-		//	if (RepositoryAdapters.ProjectAdapter == null)
-		//	{
-		//		throw new InvalidOperationException("Cannot create a Poster SizeEditor ViewModel, the ProjectAdapter is null.");
-		//	}
-
-		//	var bitmapBuilder = new BitmapBuilder(MapLoaderManager);
-		//	var posterPreviewImage = ImageHelper.GetPosterPreview(RepositoryAdapters.ProjectAdapter, bitmapBuilder, poster, size);
-		//	var result = new PosterSizeEditorViewModel(posterPreviewImage, poster.MapAreaInfo.Coords, poster.MapAreaInfo.CanvasSize);
-
-		//	return result;
-		//}
+		private CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
+		{
+			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, MapJobHelper);
+			return result;
+		}
 
 	}
 }

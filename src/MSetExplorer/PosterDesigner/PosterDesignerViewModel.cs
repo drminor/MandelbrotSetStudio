@@ -12,9 +12,11 @@ namespace MSetExplorer
 {
 	public class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
+		private readonly MapJobHelper _mapJobHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly PosterOpenSaveViewModelCreator _posterOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
+		private readonly CoordsEditorViewModelCreator _coordsEditorViewModelCreator;
 
 		private int _dispWidth;
 		private int _dispHeight;
@@ -22,10 +24,10 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
-			IProjectAdapter projectAdapter, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, 
-			CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
+			MapJobHelper mapJobHelper, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, 
+			CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
 		{
-			ProjectAdapter = projectAdapter;
+			_mapJobHelper = mapJobHelper;
 			_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
@@ -44,6 +46,7 @@ namespace MSetExplorer
 
 			_posterOpenSaveViewModelCreator = posterOpenSaveViewModelCreator;
 			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
+			_coordsEditorViewModelCreator = coordsEditorViewModelCreator;
 
 			MapCoordsViewModel = new MapCoordsViewModel();
 
@@ -93,8 +96,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public IProjectAdapter ProjectAdapter { get; init; }
-
 		#endregion
 
 		#region Public Methods
@@ -118,28 +119,18 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public ImageSource GetPreviewImage(Poster poster, SizeInt previewImagesize, CancellationToken ct, bool useGenericImage = true)
+		public CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
 		{
-			if (useGenericImage)
-			{
-				var result = ImageHelper.CreateGenericImageSource(Colors.LightGreen, previewImagesize);
-				return result;
-			}
-			else
-			{
-				// TODO: XX Add Support to get the Poster Preview Image in the background with a high priority.
-				var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-				var result = ImageHelper.GetPosterPreview(poster, previewImagesize, bitmapBuilder, ProjectAdapter, ct);
-				return result;
-			}
+			var result = _coordsEditorViewModelCreator(coords, canvasSize, allowEdits);
+			return result;
 		}
 
-		//public PosterSizeEditorViewModel CreateAPosterSizeEditorViewModel(Poster poster, ImageSource previewImage, SizeDbl? displaySize)
-		//{
-		//	var result = new PosterSizeEditorViewModel(poster, previewImage, displaySize);
-
-		//	return result;
-		//}
+		public LazyMapPreviewImageProvider GetPreviewImageProvider (JobAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, Color fallbackColor)
+		{
+			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+			var result = new LazyMapPreviewImageProvider(bitmapBuilder, _mapJobHelper, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, fallbackColor);
+			return result;
+		}
 
 		public JobAreaInfo GetUpdatedJobAreaInfo(JobAreaInfo mapAreaInfo, RectangleDbl screenArea)
 		{
@@ -150,7 +141,7 @@ namespace MSetExplorer
 
 			var posterSize = screenAreaInt.Size;
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, posterSize, blockSize, ProjectAdapter);
+			var jobAreaInfo = _mapJobHelper.GetJobAreaInfo(coords, posterSize, blockSize);
 
 			return jobAreaInfo;
 		}

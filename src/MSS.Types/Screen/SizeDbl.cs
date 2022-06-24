@@ -230,5 +230,11 @@ namespace MSS.Types
 		{
 			return $"w:{Width}, h:{Height}";
 		}
+
+		public string? ToString(string? format)
+		{
+			return $"w:{Width.ToString(format)}, h:{Height.ToString(format)}";
+		}
+
 	}
 }

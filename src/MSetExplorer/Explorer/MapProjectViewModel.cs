@@ -13,6 +13,7 @@ namespace MSetExplorer
 	internal class MapProjectViewModel : ViewModelBase, IMapProjectViewModel, IDisposable
 	{
 		private readonly ProjectAdapter _projectAdapter;
+		private readonly MapJobHelper _mapJobHelper;
 		private readonly SizeInt _blockSize;
 
 		private SizeInt _canvasSize;
@@ -20,9 +21,10 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapProjectViewModel(ProjectAdapter projectAdapter, SizeInt blockSize)
+		public MapProjectViewModel(ProjectAdapter projectAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
+			_mapJobHelper = mapJobHelper;
 			_blockSize = blockSize;
 
 			_canvasSize = new SizeInt();
@@ -133,7 +135,7 @@ namespace MSetExplorer
 
 			var projectId = ObjectId.Empty;
 
-			var job = MapJobHelper.BuildJob(null, projectId, CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.None, null, _blockSize, _projectAdapter);
+			var job = _mapJobHelper.BuildJob(null, projectId, CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.None, null, _blockSize);
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
@@ -321,7 +323,7 @@ namespace MSetExplorer
 
 			var colorBandSet = CurrentProject.CurrentColorBandSet;
 			var blockSize = curJob.Subdivision.BlockSize;
-			var poster = MapJobHelper.PosterCreate(name, description, posterSize, curJob.Id, curJob.Coords, colorBandSet, curJob.MapCalcSettings, blockSize, _projectAdapter);
+			var poster = _mapJobHelper.CreatePoster(name, description, posterSize, curJob.Id, curJob.Coords, colorBandSet, curJob.MapCalcSettings, blockSize, _projectAdapter);
 
 			return poster;
 		}
@@ -417,7 +419,7 @@ namespace MSetExplorer
 				var mapPosition = curJob.Coords.Position;
 				var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 				var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
- 				var jobAreaInfo = MapJobHelper.GetJobAreaInfo(coords, CanvasSize, _blockSize, _projectAdapter);
+ 				var jobAreaInfo = _mapJobHelper.GetJobAreaInfo(coords, CanvasSize, _blockSize);
 
 				return jobAreaInfo;
 			}
@@ -526,7 +528,7 @@ namespace MSetExplorer
 				parentJobId = currentJob.Id;
 			}
 
-			var job = MapJobHelper.BuildJob(parentJobId, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
+			var job = _mapJobHelper.BuildJob(parentJobId, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize);
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -555,7 +557,7 @@ namespace MSetExplorer
 			var transformType = TransformType.CanvasSizeUpdate;
 			RectangleInt? newArea = null;
 
-			var newJob = MapJobHelper.BuildJob(job.ParentJobId, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize, _projectAdapter);
+			var newJob = _mapJobHelper.BuildJob(job.ParentJobId, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
 
 			Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
 			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");

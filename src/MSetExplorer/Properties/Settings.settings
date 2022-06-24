@@ -2,14 +2,20 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="MSetExplorer.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="ShowTopNav" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
+    <Setting Name="ShowTopNav" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="LastWindowName" Type="System.String" Scope="User">
       <Value Profile="(Default)">Designer</Value>
     </Setting>
     <Setting Name="DefaultOutputFolderPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\_MandelbrotSetImages</Value>
+    </Setting>
+    <Setting Name="LastProjectName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">l3</Value>
+    </Setting>
+    <Setting Name="LastPosterName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">l3-Mark45</Value>
     </Setting>
   </Settings>
 </SettingsFile>

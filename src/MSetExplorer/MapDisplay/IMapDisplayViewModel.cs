@@ -41,6 +41,10 @@ namespace MSetExplorer
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
+		// New Methods to replace the Update... methods above.
+		void SubmitJob(JobAreaAndCalcSettings job);
+		void CancelJob();
+		void RestartLastJob();
 		void ClearDisplay();
 
 		VectorInt ScreenCollectionIndex { get; }

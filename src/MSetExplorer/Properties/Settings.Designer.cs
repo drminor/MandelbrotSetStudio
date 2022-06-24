@@ -23,12 +23,15 @@ namespace MSetExplorer.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool ShowTopNav {
             get {
                 return ((bool)(this["ShowTopNav"]));
+            }
+            set {
+                this["ShowTopNav"] = value;
             }
         }
         
@@ -53,6 +56,30 @@ namespace MSetExplorer.Properties {
             }
             set {
                 this["DefaultOutputFolderPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("l3")]
+        public string LastProjectName {
+            get {
+                return ((string)(this["LastProjectName"]));
+            }
+            set {
+                this["LastProjectName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("l3-Mark45")]
+        public string LastPosterName {
+            get {
+                return ((string)(this["LastPosterName"]));
+            }
+            set {
+                this["LastPosterName"] = value;
             }
         }
     }

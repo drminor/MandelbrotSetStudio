@@ -25,15 +25,14 @@ namespace MSetExplorer
 
 		private PosterSizeEditorViewModel _vm;
 
-		private Poster? _initialPoster;
-		private ImageSource? _initialPreviewImage;
+		private JobAreaInfo? _initialPosterMapAreaInfo;
+		//private ImageSource? _initialPreviewImage;
 
 		#region Constructor
 
-		public PosterSizeEditorDialog(Poster poster, ImageSource previewImage)
+		public PosterSizeEditorDialog(JobAreaInfo posterMapAreaInfo)
 		{
-			_initialPoster = poster;
-			_initialPreviewImage = previewImage;
+			_initialPosterMapAreaInfo = posterMapAreaInfo;
 
 			_canvas = new Canvas();
 			_image = new Image();
@@ -72,13 +71,13 @@ namespace MSetExplorer
 				_newImageRectangle = BuildNewImageRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
 				_clipRectangle = BuildClipRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
 
-				if (_initialPoster == null || _initialPreviewImage == null)
+				if (_initialPosterMapAreaInfo == null)
 				{
-					throw new InvalidOperationException("The initialPoster or the initialPreviewImage is null.");
+					throw new InvalidOperationException("The initialPosterMapAreaInfo is null.");
 				}
-				_vm.Initialize(_initialPoster, _initialPreviewImage, containerSize);
-				_initialPoster = null;
-				_initialPreviewImage = null;
+				_vm.Initialize(_initialPosterMapAreaInfo, containerSize);
+				_initialPosterMapAreaInfo = null;
+				//_initialPreviewImage = null;
 
 				//_vm.PreserveAspectRatio = true;
 				//_vm.PreserveWidth = true;
@@ -157,13 +156,13 @@ namespace MSetExplorer
 
 		public event EventHandler? ApplyChangesRequested;
 
-		public Poster? Poster => _vm.Poster;
+		public JobAreaInfo? PosterMapAreaInfo => _vm.PosterMapAreaInfo;
 
 		public RectangleDbl NewMapArea => _vm.NewMapArea;
 
-		public void UpdateWithNewMapInfo(JobAreaInfo mapAreaInfo, ImageSource previewImage)
+		public void UpdateWithNewMapInfo(JobAreaInfo mapAreaInfo/*, ImageSource previewImage*/)
 		{
-			_vm.UpdateWithNewMapInfo(mapAreaInfo, previewImage);
+			_vm.UpdateWithNewMapInfo(mapAreaInfo/*, previewImage*/);
 		}
 
 		#endregion
@@ -175,6 +174,7 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(PosterSizeEditorViewModel.LayoutInfo))
 			{
 				SetOriginalImageOffset(_vm.LayoutInfo.OriginalImageArea.Position);
+
 				ClipOriginalImage(_vm.LayoutInfo.PreviewImageClipRegionYInverted);
 				DrawClipRectangle(_vm.LayoutInfo.PreviewImageClipRegion);
 
@@ -221,14 +221,14 @@ namespace MSetExplorer
 		private void ClipOriginalImage(RectangleDbl clipRegion)
 		{
 
-			Debug.WriteLine($"Clip region is {clipRegion}.");
+			//Debug.WriteLine($"Clip region is {clipRegion}.");
 			var rect = ScreenTypeHelper.ConvertToRect(clipRegion);
 			_image.Clip = new RectangleGeometry(rect);
 		}
 
 		private void DrawNewImageSizeRectangle(RectangleDbl newImageArea)
 		{
-			Debug.WriteLine($"The new image is being placed at {newImageArea}.");
+			//Debug.WriteLine($"The new image is being placed at {newImageArea}.");
 			_newImageRectangle.Width = Math.Max(newImageArea.Width, 0);
 			_newImageRectangle.Height = Math.Max(newImageArea.Height, 0);
 			_newImageRectangle.SetValue(Canvas.LeftProperty, newImageArea.X1);

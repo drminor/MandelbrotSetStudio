@@ -1,7 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
-using System.Threading;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -20,13 +19,12 @@ namespace MSetExplorer
 		IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
 		CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath);
+		CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits);
 
-		//PosterSizeEditorViewModel CreateAPosterSizeEditorViewModel(Poster poster, SizeInt previewImageSize, SizeDbl? displaySize);
-
-		ImageSource GetPreviewImage(Poster poster, SizeInt previewImagesize, CancellationToken ct, bool useGenericImage = true);
+		//ImageSource GetPreviewImage(JobAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, CancellationToken ct, bool useGenericImage = true);
+		LazyMapPreviewImageProvider GetPreviewImageProvider(JobAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, Color fallbackColor);
 
 		JobAreaInfo GetUpdatedJobAreaInfo(JobAreaInfo jobAreaInfo, RectangleDbl screenArea);
 
-		IProjectAdapter ProjectAdapter { get; init; }
 	}
 }

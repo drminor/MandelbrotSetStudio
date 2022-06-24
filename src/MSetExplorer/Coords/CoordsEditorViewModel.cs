@@ -18,19 +18,19 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize, bool allowEdits, IProjectAdapter projectAdapter) 
+		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper) 
 			: this(new SingleCoordEditorViewModel[] {
 			new SingleCoordEditorViewModel(coords.Left), new SingleCoordEditorViewModel(coords.Right),
-			new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, displaySize, allowEdits, projectAdapter)
+			new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, displaySize, allowEdits, mapJobHelper)
 		{ }
 
-		public CoordsEditorViewModel(string x1, string x2, string y1, string y2, SizeInt displaySize, bool allowEdits, IProjectAdapter projectAdapter) 
+		public CoordsEditorViewModel(string x1, string x2, string y1, string y2, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper) 
 			: this(new SingleCoordEditorViewModel[] { 
 			new SingleCoordEditorViewModel(x1), new SingleCoordEditorViewModel(x2),
-			new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, displaySize, allowEdits, projectAdapter)
+			new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, displaySize, allowEdits, mapJobHelper)
 		{ }
 
-		private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, SizeInt displaySize, bool allowEdits, IProjectAdapter projectAdapter)
+		private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper)
 		{
 			StartingX = vms[0];
 			EndingX = vms[1];
@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 			_zoom = RValueHelper.GetResolution(_coords.Width);
 
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(_coords, _displaySize, _blockSize, projectAdapter);
+			var jobAreaInfo = mapJobHelper.GetJobAreaInfo(_coords, _displaySize, _blockSize);
 			MapCoordsDetail2 = new MapCoordsDetailViewModel(jobAreaInfo);
 		}
 

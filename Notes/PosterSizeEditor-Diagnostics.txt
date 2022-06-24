@@ -1,0 +1,124 @@
+
+-- Good X
+Edit Poster Size Layout Update: NewMapArea: pos:x:-800, y:-0, size:w:2048, h:2048, ContainerSize: w:560.5, h:271.06.
+BoundingSize: w:271.06, h:271.06, NewSize: w:271.06, h:271.06, OriginalSize: w:271.06, h:271.06.
+BoundingPos: x:144.72, y:0.00, NewPos: x:144.72, y:0.00, OrigPos: x:250.60, y:0.00
+ClipSize: w:165.18, h:271.06, Tr.ClipSize: w:165.18, h:271.06
+ClipPos: x:0.00, y:0.00, Tr.ClipPos: x:250.60, y:0.00
+
+-- Bad X
+Edit Poster Size Layout Update: NewMapArea: pos:x:800, y:-0, size:w:2048, h:2048, ContainerSize: w:560.5, h:271.06.
+BoundingSize: w:271.06, h:271.06, NewSize: w:271.06, h:271.06, OriginalSize: w:271.06, h:271.06.
+BoundingPos: x:144.72, y:0.00, NewPos: x:250.60, y:0.00, OrigPos: x:144.72, y:0.00
+ClipSize: w:165.18, h:271.06, Tr.ClipSize: w:165.18, h:271.06
+ClipPos: x:105.88, y:0.00, Tr.ClipPos: x:250.60, y:0.00
+
+-- Good Y
+Edit Poster Size Layout Update: NewMapArea: pos:x:-0, y:-800, size:w:2048, h:2048, ContainerSize: w:560.5, h:271.06.
+BoundingSize: w:271.06, h:271.06, NewSize: w:271.06, h:271.06, OriginalSize: w:271.06, h:271.06.
+BoundingPos: x:144.72, y:0.00, NewPos: x:144.72, y:0.00, OrigPos: x:144.72, y:105.88
+ClipSize: w:271.06, h:165.18, Tr.ClipSize: w:271.06, h:165.18
+ClipPos: x:0.00, y:0.00, Tr.ClipPos: x:144.72, y:105.88
+
+-- Bad Y
+Edit Poster Size Layout Update: NewMapArea: pos:x:-0, y:800, size:w:2048, h:2048, ContainerSize: w:560.5, h:271.06.
+BoundingSize: w:271.06, h:271.06, NewSize: w:271.06, h:271.06, OriginalSize: w:271.06, h:271.06.
+BoundingPos: x:144.72, y:0.00, NewPos: x:144.72, y:105.88, OrigPos: x:144.72, y:0.00
+ClipSize: w:271.06, h:165.18, Tr.ClipSize: w:271.06, h:165.18
+ClipPos: x:0.00, y:105.88, Tr.ClipPos: x:144.72, y:105.88
+
+
+-- Good X and Good Y
+Edit Poster Size Layout Update: NewMapArea: pos:x:-800, y:-800, size:w:2048, h:2048, ContainerSize: w:560.5, h:271.06.
+BoundingSize: w:271.06, h:271.06, NewSize: w:271.06, h:271.06, OriginalSize: w:271.06, h:271.06.
+BoundingPos: x:144.72, y:0.00, NewPos: x:144.72, y:0.00, OrigPos: x:250.60, y:105.88
+ClipSize: w:165.18, h:165.18, Tr.ClipSize: w:165.18, h:165.18
+ClipPos: x:0.00, y:0.00, Tr.ClipPos: x:250.60, y:105.88
+
+
+-- Bad X and Bad Y
+Edit Poster Size Layout Update: NewMapArea: pos:x:800, y:800, size:w:2048, h:2048, ContainerSize: w:560.5, h:271.06.
+BoundingSize: w:271.06, h:271.06, NewSize: w:271.06, h:271.06, OriginalSize: w:271.06, h:271.06.
+BoundingPos: x:144.72, y:0.00, NewPos: x:250.60, y:105.88, OrigPos: x:144.72, y:0.00
+ClipSize: w:165.18, h:165.18, Tr.ClipSize: w:165.18, h:165.18
+ClipPos: x:105.88, y:105.88, Tr.ClipPos: x:250.60, y:105.88
+
+-- Bad X and Good Y
+Edit Poster Size Layout Update: NewMapArea: pos:x:800, y:-800, size:w:2048, h:2048, ContainerSize: w:560.5, h:271.06.
+BoundingSize: w:271.06, h:271.06, NewSize: w:271.06, h:271.06, OriginalSize: w:271.06, h:271.06.
+BoundingPos: x:144.72, y:0.00, NewPos: x:250.60, y:0.00, OrigPos: x:144.72, y:105.88
+ClipSize: w:165.18, h:165.18, Tr.ClipSize: w:165.18, h:165.18
+ClipPos: x:105.88, y:0.00, Tr.ClipPos: x:250.60, y:105.88
+
+
+////////////// Older Items ////////////
+
+Edit Poster Size Layout Update: NewMapArea: pos:x:-0, y:-0, size:w:2048, h:2048, ContainerSize: w:559.5, h:266.06.
+BoundingSize: w:266.05999999999995, h:266.06, NewSize: w:266.06, h:266.06, OriginalSize: w:266.06, h:266.06.
+BoundingPos: x:146.72, y:0, NewPos: x:146.72, y:0, OrigPos: x:146.72, y:0
+ClipPos: x:0, y:0, ClipSize: w:266.06, h:266.06
+Tr.ClipPos: x:146.72, y:0, Tr.ClipSize: w:266.05999999999995, h:266.06
+The original image is being placed at x:146.72, y:0.
+
+
+
+Edit Poster Size Layout Update: NewMapArea: pos:x:-0, y:800, size:w:2048, h:2048, ContainerSize: w:452.5, h:144.
+
+BoundingSize: w:144, h:144, NewSize: w:144, h:144, OriginalSize: w:144, h:144.
+BoundingPos: x:154.22, y:0, NewPos: x:154.22, y:56.27, OrigPos: x:154.22, y:0
+
+ClipPos: x:0, y:56.27, ClipSize: w:144, h:87.79
+Tr.ClipPos: x:154.22, y:56.27, Tr.ClipSize: w:144, h:87.79
+
+The original image is being placed at x:154.220000, 0
+
+
+----------------
+
+-- Good Y
+Edit Poster Size Layout Update: NewMapArea: pos:x:-0, y:-800, size:w:2048, h:2048, ContainerSize: w:555.5, h:272.06.
+BoundingSize: w:272.06, h:272.06, NewSize: w:272.06, h:272.06, OriginalSize: w:272.06, h:272.06.
+BoundingPos: x:141.72, y:0.00, NewPos: x:141.72, y:0.00, OrigPos: x:141.72, y:106.27
+ClipPos: x:0.00, y:0.00, Tr.ClipPos: w:272.06, h:165.79
+ClipSize: x:0.00, y:0.00, Tr.ClipSize: w:272.06, h:165.79
+
+-- Bad Y
+Edit Poster Size Layout Update: NewMapArea: pos:x:-0, y:800, size:w:2048, h:2048, ContainerSize: w:1375.5, h:342.06.
+BoundingSize: w:342.06, h:342.06, NewSize: w:342.06, h:342.06, OriginalSize: w:342.06, h:342.06.
+BoundingPos: x:516.72, y:0.00, NewPos: x:516.72, y:133.62, OrigPos: x:516.72, y:0.00
+ClipPos: x:0.00, y:133.62, Tr.ClipPos: w:342.06, h:208.44
+ClipSize: x:0.00, y:133.62, Tr.ClipSize: w:342.06, h:208.44
+
+-- Good Y
+Edit Poster Size Layout Update: NewMapArea: pos:x:-0, y:-800, size:w:2048, h:2048, ContainerSize: w:1375.5, h:342.06.
+BoundingSize: w:342.06, h:342.06, NewSize: w:342.06, h:342.06, OriginalSize: w:342.06, h:342.06.
+BoundingPos: x:516.72, y:0.00, NewPos: x:516.72, y:0.00, OrigPos: x:516.72, y:133.62
+ClipPos: x:0.00, y:0.00, Tr.ClipPos: w:342.06, h:208.44
+ClipSize: x:0.00, y:0.00, Tr.ClipSize: w:342.06, h:208.44
+
+
+
+-- Bad X
+Edit Poster Size Layout Update: NewMapArea: pos:x:800, y:-0, size:w:2048, h:2048, ContainerSize: w:1375.5, h:342.06.
+BoundingSize: w:342.06, h:342.06, NewSize: w:342.06, h:342.06, OriginalSize: w:342.06, h:342.06.
+BoundingPos: x:516.72, y:0.00, NewPos: x:650.34, y:0.00, OrigPos: x:516.72, y:0.00
+ClipPos: x:133.62, y:0.00, Tr.ClipPos: w:208.44, h:342.06
+ClipSize: x:133.62, y:0.00, Tr.ClipSize: w:208.44, h:342.06
+
+-- Good X
+Edit Poster Size Layout Update: NewMapArea: pos:x:-800, y:-0, size:w:2048, h:2048, ContainerSize: w:523.5, h:270.06.
+BoundingSize: w:270.06, h:270.06, NewSize: w:270.06, h:270.06, OriginalSize: w:270.06, h:270.06.
+BoundingPos: x:126.72, y:0.00, NewPos: x:126.72, y:0.00, OrigPos: x:232.21, y:0.00
+ClipPos: x:0.00, y:0.00, Tr.ClipPos: w:164.57, h:270.06
+ClipSize: x:0.00, y:0.00, Tr.ClipSize: w:164.57, h:270.06
+
+
+//;/
+
+
+
+
+
+
+
+

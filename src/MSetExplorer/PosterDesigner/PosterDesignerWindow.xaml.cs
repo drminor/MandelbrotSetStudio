@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -21,10 +22,12 @@ namespace MSetExplorer
 	public partial class PosterDesignerWindow : Window, IHaveAppNavRequestResponse
 	{
 		private const double PREVIEW_IMAGE_SIZE = 1024;
+		private readonly static Color FALL_BACK_COLOR = Colors.LightGreen;
 
 		private IPosterDesignerViewModel _vm;
 
 		private CreateImageProgressWindow? _createImageProgressWindow;
+		//private LazyMapPreviewImageProvider? _lazyMapPreviewImageProvider;
 
 		#region Constructor
 
@@ -33,6 +36,7 @@ namespace MSetExplorer
 			_vm = (IPosterDesignerViewModel)DataContext;
 			AppNavRequestResponse = appNavRequestResponse;
 			_createImageProgressWindow = null;
+			//_lazyMapPreviewImageProvider = null;
 
 			Loaded += PosterDesignerWindow_Loaded;
 			Closing += PosterDesignerWindow_Closing;
@@ -310,13 +314,15 @@ namespace MSetExplorer
 
 			if (curPoster != null)
 			{
-				if (TryGetNewSizeFromUser(curPoster, out var newMapArea))
-				{
-					//var newMapAreaInfo = _vm.GetUpdatedJobAreaInfo(curPoster.MapAreaInfo, newMapArea);
-					//curPoster.MapAreaInfo = newMapAreaInfo;
-					//_vm.PosterViewModel.LoadPoster(curPoster);
+				_vm.MapDisplayViewModel.CancelJob();
 
-					_vm.PosterViewModel.UpdateMapView(TransformType.ZoomIn, newMapArea.Round());
+				if (TryGetNewSizeFromUser(curPoster, out var newPosterMapAreaInfo))
+				{
+					_vm.PosterViewModel.UpdateMapView(newPosterMapAreaInfo);
+				}
+				else
+				{
+					_vm.MapDisplayViewModel.RestartLastJob();
 				}
 			}
 		}
@@ -781,7 +787,7 @@ namespace MSetExplorer
 
 			var posterAreaInfo = _vm.PosterViewModel.PosterAreaInfo;
 
-			coordsEditorViewModel = new CoordsEditorViewModel(posterAreaInfo.Coords, posterAreaInfo.CanvasSize, allowEdits: true, _vm.ProjectAdapter);
+			coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(posterAreaInfo.Coords, posterAreaInfo.CanvasSize, allowEdits: true);
 
 			var coordsEditorWindow = new CoordsEditorWindow()
 			{
@@ -805,10 +811,10 @@ namespace MSetExplorer
 			{
 				if (getSize)
 				{
-					if (TryGetNewSizeFromUser(poster, out var newMapArea))
+					if (TryGetNewSizeFromUser(poster, out var newPosterMapAreaInfo))
 					{
-						var newMapAreaInfo = _vm.GetUpdatedJobAreaInfo(poster.MapAreaInfo, newMapArea);
-						poster.MapAreaInfo = newMapAreaInfo;
+						// The View Model has not been fully initialized yet, so we update the poster directly.
+						poster.MapAreaInfo = newPosterMapAreaInfo;
 					}
 				}
 
@@ -820,15 +826,16 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool TryGetNewSizeFromUser(Poster poster, out RectangleDbl newMapArea)
+		private bool TryGetNewSizeFromUser(Poster poster, out JobAreaInfo newPosterMapAreaInfo)
 		{
 			var cts = new CancellationTokenSource();
 			var previewSize = GetPreviewSize(poster.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
-			var previewImage = _vm.GetPreviewImage(poster, previewSize, cts.Token, useGenericImage: true);
 
-			var posterSizeEditorViewModel = new PosterSizeEditorViewModel();
+			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(poster.MapAreaInfo, poster.ColorBandSet, poster.MapCalcSettings, previewSize, FALL_BACK_COLOR);
 
-			var posterSizeEditorDialog = new PosterSizeEditorDialog(poster, previewImage)
+			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
+
+			var posterSizeEditorDialog = new PosterSizeEditorDialog(poster.MapAreaInfo)
 			{
 				DataContext = posterSizeEditorViewModel
 			};
@@ -839,12 +846,23 @@ namespace MSetExplorer
 			{
 				if (posterSizeEditorDialog.ShowDialog() == true)
 				{
-					newMapArea = posterSizeEditorDialog.NewMapArea;
-					return true;
+					var posterMapAreaInfo = posterSizeEditorDialog.PosterMapAreaInfo;
+
+					if (posterMapAreaInfo != null)
+					{
+						var newMapArea = posterSizeEditorDialog.NewMapArea;
+						newPosterMapAreaInfo = _vm.GetUpdatedJobAreaInfo(posterMapAreaInfo, newMapArea);
+						return true;
+					}
+					else
+					{
+						newPosterMapAreaInfo = new JobAreaInfo();
+						return false;
+					}
 				}
 				else
 				{
-					newMapArea = new RectangleDbl();
+					newPosterMapAreaInfo = new JobAreaInfo();
 					return false;
 				}
 			}
@@ -864,21 +882,14 @@ namespace MSetExplorer
 
 		private void PosterSizeEditorDialog_ApplyChangesRequested(object? sender, EventArgs e)
 		{
-			if (sender is PosterSizeEditorDialog sizeEditorDialog)
+			if (sender is PosterSizeEditorDialog posterSizeEditorDialog)
 			{
-				var poster = sizeEditorDialog.Poster;
-				if (poster != null)
+				var posterMapAreaInfo = posterSizeEditorDialog.PosterMapAreaInfo;
+				if (posterMapAreaInfo != null)
 				{
-					var mapAreaInfo = poster.MapAreaInfo;
-					var newMapArea = sizeEditorDialog.NewMapArea;
-
-					var newMapAreaInfo = _vm.GetUpdatedJobAreaInfo(mapAreaInfo, newMapArea);
-
-					var cts = new CancellationTokenSource();
-					var previewSize = GetPreviewSize(newMapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
-					var previewImage = _vm.GetPreviewImage(poster, previewSize, cts.Token, useGenericImage: true);
-
-					sizeEditorDialog.UpdateWithNewMapInfo(newMapAreaInfo, previewImage);
+					var newMapArea = posterSizeEditorDialog.NewMapArea;
+					var newPosterMapAreaInfo = _vm.GetUpdatedJobAreaInfo(posterMapAreaInfo, newMapArea);
+					posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo);
 				}
 			}
 		}

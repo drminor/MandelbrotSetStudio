@@ -657,85 +657,6 @@ namespace MSetRepo
 
 		#endregion
 
-		#region Subdivision
-
-		public Subdivision[] GetAllSubdivions()
-		{
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-
-			var allRecs = subdivisionReaderWriter.GetAll();
-
-			var result = allRecs.Select(x => _mSetRecordMapper.MapFrom(x)).ToArray();
-
-			return result;
-		}
-
-		public SubdivisionInfo[] GetAllSubdivisionInfos()
-		{
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-
-			var allRecs = subdivisionReaderWriter.GetAll();
-
-			var result = allRecs
-				.Select(x => _mSetRecordMapper.MapFrom(x))
-				.Select(x => new SubdivisionInfo(x.Id, x.SamplePointDelta.Width))
-				.ToArray();
-
-			return result;
-		}
-
-		public bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision)
-		{
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-
-			var samplePointDeltaReduced = Reducer.Reduce(samplePointDelta);
-			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDeltaReduced);
-
-			var matches = subdivisionReaderWriter.Get(samplePointDeltaDto, blockSize);
-
-			if (matches.Count > 1)
-			{
-				throw new InvalidOperationException($"Found more than one subdivision was found matching: {samplePointDelta}.");
-			}
-
-			bool result;
-
-			if (matches.Count < 1)
-			{
-				subdivision = null;
-				result = false;
-			}
-			else
-			{
-				var subdivisionRecord = matches[0];
-				subdivision = _mSetRecordMapper.MapFrom(subdivisionRecord);
-				result = true;
-			}
-
-			return result;
-		}
-
-		public void InsertSubdivision(Subdivision subdivision)
-		{
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-
-			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);
-			_ = subdivisionReaderWriter.Insert(subdivisionRecord);
-		}
-
-		public bool DeleteSubdivision(Subdivision subdivision)
-		{
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			var subsDeleted = subdivisionReaderWriter.Delete(subdivision.Id);
-
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			_ = mapSectionReaderWriter.DeleteAllWithSubId(subdivision.Id);
-
-			return subsDeleted.HasValue && subsDeleted.Value > 0;
-		}
-
-		#endregion
-
 		#region Poster
 
 		public IList<Poster> GetAllPosters()
@@ -865,12 +786,6 @@ namespace MSetRepo
 
 			return result;
 		}
-
-		#endregion
-
-		#region PosterInfo
-
-
 
 		#endregion
 

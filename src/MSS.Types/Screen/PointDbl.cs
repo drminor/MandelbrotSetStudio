@@ -141,5 +141,11 @@ namespace MSS.Types
 		{
 			return $"x:{X}, y:{Y}";
 		}
+
+		public string? ToString(string? format)
+		{
+			return $"x:{X.ToString(format)}, y:{Y.ToString(format)}";
+		}
+
 	}
 }

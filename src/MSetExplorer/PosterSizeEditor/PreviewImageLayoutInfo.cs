@@ -2,18 +2,18 @@
 using MSS.Types;
 using System;
 using System.Diagnostics;
+using System.Windows;
 
 namespace MSetExplorer
 {
 	public class PreviewImageLayoutInfo
 	{
 		public PreviewImageLayoutInfo()
-		{
-		}
+		{ }
 
-		public PreviewImageLayoutInfo(SizeDbl imageSize, SizeDbl previewImageSize, SizeDbl containerSize)
+		public PreviewImageLayoutInfo(SizeInt imageSize, SizeDbl previewImageSize, SizeDbl containerSize)
 		{
-			OriginalMapSize = imageSize;
+			OriginalMapSize = new SizeDbl(imageSize);
 			PreviewImageSize = previewImageSize;
 			ContainerSize = containerSize;
 
@@ -53,147 +53,104 @@ namespace MSetExplorer
 
 		public void Update()
 		{
-			//var placementMode = ((int)Math.Round(NewMapArea.X1)) % 4;
 			Debug.WriteLine($"Edit Poster Size Layout Update: NewMapArea: {NewMapArea}, ContainerSize: {ContainerSize}.");
 
-			//var originalToNewScaleFactor = RMapHelper.GetSmallestScaleFactor(OriginalMapSize, NewMapArea.Size);
-			//var adjOriginalMapSize = OriginalMapSize.Scale(originalToNewScaleFactor);
-
-			// Create a rectangle that encloses both the new and original maps
+			// Get the portion of the originalMapArea that will be part of the new Image.
 			var originalMapArea = new RectangleDbl(new PointDbl(), OriginalMapSize);
-			//var clippedOriginalMapArea = GetOriginalImageClipRegion(NewMapArea, originalMapArea);
+			var clippedOriginalMapArea = GetOriginalImageClipRegion(NewMapArea, originalMapArea);
 
-			var coma1 = GetIntersect1(NewMapArea, originalMapArea);
-			var coma2 = GetIntersect2(NewMapArea, originalMapArea);
-			var coma3 = GetIntersect3(NewMapArea, originalMapArea);
+			// Get a rectangle that will hold both the new and the portion of the original
+			var boundingMapArea = RMapHelper.GetBoundingRectangle(clippedOriginalMapArea, NewMapArea);
 
-			Debug.Assert(coma1 == coma2, "Get Intersect1 and 2 Mismatch.");
-			Debug.Assert(coma2 == coma3, "Get Intersect2 and 3 Mismatch.");
-			Debug.Assert(coma1 == coma3, "Get Intersect1 and 3 Mismatch.");
-
-			var clippedOriginalMapArea = coma3;
-
-		   //var boundingMapArea = RMapHelper.GetBoundingRectangle(originalMapArea, NewMapArea);
-		   var boundingMapArea = RMapHelper.GetBoundingRectangle(clippedOriginalMapArea, NewMapArea);
+			// Scale Factor to convert from Map to Screen sizes / positions
+			var scaleFactor = RMapHelper.GetSmallestScaleFactor(boundingMapArea.Size, ContainerSize);
+			scaleFactor = Math.Max(scaleFactor, 0.001);
 
 			// Determine Size and Location of bounding rectangle
-			var scaleFactor = RMapHelper.GetSmallestScaleFactor(boundingMapArea.Size, ContainerSize);
 			var boundingImageSize = boundingMapArea.Size.Scale(scaleFactor);
 			var boundingImageArea = boundingImageSize.PlaceAtCenter(ContainerSize); // This centers the BoundingImageArea on the Control.
 
 			// Determine Size and Location of the original and new images
-			var boundingImagePos = boundingImageArea.Position;
+			var originalImagePos = clippedOriginalMapArea.Position.Scale(scaleFactor);
 			var newImagePos = NewMapArea.Position.Scale(scaleFactor);
 
-			var originalImagePos = TranslateNewAndOrigImages(boundingImagePos, ref newImagePos);
+			TranslateNewAndOrigImages(boundingImageArea.Position, ref originalImagePos, ref newImagePos);
 
 			var originalImageSize = OriginalMapSize.Scale(scaleFactor);
-			OriginalImageArea = new RectangleDbl(originalImagePos, originalImageSize);
+			OriginalImageArea = ScreenTypeHelper.MakeSafe(new RectangleDbl(originalImagePos, originalImageSize));
 
 			var newImageSize = NewMapArea.Size.Scale(scaleFactor);
-			NewImageArea = new RectangleDbl(newImagePos, newImageSize);
+			NewImageArea = ScreenTypeHelper.MakeSafe(new RectangleDbl(newImagePos, newImageSize));
 
 			// Get the scale factor needed to reduce the actual preview image's bitmap to the container
 			var previewImageScaleFactor = RMapHelper.GetSmallestScaleFactor(PreviewImageSize, originalImageSize);
-			ScaleFactorForPreviewImage = double.IsInfinity(previewImageScaleFactor) ? 1 : double.IsNaN(previewImageScaleFactor) ? 1 : previewImageScaleFactor;
+			ScaleFactorForPreviewImage = double.IsInfinity(previewImageScaleFactor) || double.IsNaN(previewImageScaleFactor) ? 1 : previewImageScaleFactor;
 
-			// Calculate the area of the OriginalImage that will be retained.
-			//var rawPreviewImageClipRegion = GetOriginalImageClipRegion(NewImageArea, OriginalImageArea);
-			var rawPreviewImageClipRegion = clippedOriginalMapArea.Scale(scaleFactor);
-
+			// Clip the Original Image
+			var rawPreviewImageClipRegion = ScreenTypeHelper.MakeSafe(clippedOriginalMapArea.Scale(scaleFactor));
 			PreviewImageClipRegion = rawPreviewImageClipRegion.Translate(OriginalImageArea.Position);
 			PreviewImageClipRegionYInverted = ScreenTypeHelper.FlipY(rawPreviewImageClipRegion, OriginalImageArea.Height);
 
-			Debug.WriteLine($"BoundingSize: {boundingImageArea.Size}, NewSize: {newImageSize}, OriginalSize: {originalImageSize}.");
-			Debug.WriteLine($"BoundingPos: {boundingImageArea.Position}, NewPos: {newImagePos}, OrigPos: {originalImagePos}");
+			// Diagnostics
+			Debug.WriteLine($"BoundingSize: {boundingImageArea.Size.ToString("F2")}, NewSize: {newImageSize.ToString("F2")}, OriginalSize: {originalImageSize.ToString("F2")}.");
+			Debug.WriteLine($"BoundingPos: {boundingImageArea.Position.ToString("F2")}, NewPos: {newImagePos.ToString("F2")}, OrigPos: {originalImagePos.ToString("F2")}");
+			Debug.WriteLine($"ClipSize: {rawPreviewImageClipRegion.Size.ToString("F2")}, Tr.ClipSize: {PreviewImageClipRegion.Size.ToString("F2")}");
+			Debug.WriteLine($"ClipPos: {rawPreviewImageClipRegion.Position.ToString("F2")}, Tr.ClipPos: {PreviewImageClipRegion.Position.ToString("F2")}");
 			//Debug.WriteLine($"ScaleFactors:: OrigToNew: {originalToNewScaleFactor}, BoundingArea: {scaleFactor}, PreviewImage: {previewImageScaleFactor}.");
 		}
 
-		private PointDbl TranslateNewAndOrigImages(PointDbl boundingImagePos, ref PointDbl newImagePos)
+		#endregion
+
+		#region Private Methods
+
+		private void TranslateNewAndOrigImages(PointDbl boundingImagePos, ref PointDbl originalImagePos, ref PointDbl newImagePos)
 		{
+			// TODO: Take into account position of the originalImagePos
+
 			double oPosX;
 			double nPosX;
-			if (newImagePos.X <= 0)
+			if (newImagePos.X <= originalImagePos.X)
 			{
 				nPosX = boundingImagePos.X;
 				oPosX = nPosX - newImagePos.X;
 			}
 			else
 			{
-				oPosX = boundingImagePos.X;
+				oPosX = boundingImagePos.X + originalImagePos.X;
 				nPosX = oPosX + newImagePos.X;
 			}
 
 			double oPosY;
 			double nPosY;
-			if (newImagePos.Y <= 0)
+			if (newImagePos.Y <= originalImagePos.Y)
 			{
 				nPosY = boundingImagePos.Y;
-				oPosY = nPosY + newImagePos.Y;
+				oPosY = nPosY - newImagePos.Y;
 			}
 			else
 			{
-				oPosY = boundingImagePos.Y;
+				oPosY = boundingImagePos.Y + originalImagePos.Y;
 				nPosY = oPosY + newImagePos.Y;
 			}
 
 			newImagePos = new PointDbl(nPosX, nPosY);
-			var originalImagePos = new PointDbl(oPosX, oPosY);
-
-			return originalImagePos;
+			originalImagePos = new PointDbl(oPosX, oPosY);
 		}
 
-		//private RectangleDbl GetOriginalImageClipRegion(RectangleDbl newArea, RectangleDbl originalArea)
-		//{
-		//	Debug.Assert(originalArea.X1 == 0 && originalArea.Y1 == 0);
+		private RectangleDbl GetOriginalImageClipRegion(RectangleDbl newMapArea, RectangleDbl originalMapArea)
+		{
+			var coma1 = GetIntersect1(newMapArea, originalMapArea);
+			var coma2 = GetIntersect2(newMapArea, originalMapArea);
+			var coma3 = ScreenTypeHelper.Intersect(newMapArea, originalMapArea);
 
-		//	//var newAreaP1 = newArea.Position.Invert();
-		//	//var newAreaP2 = newAreaP1.Translate(new PointDbl(newArea.Size));
+			if (coma1 != coma3 || coma2 != coma3)
+			{
+				Debug.WriteLine($"Comma1 != Comma2 or Comma3 {coma1}, {coma2}, {coma3}.");
+			}
 
-		//	//var newAreaP1 = newArea.Point1; // Left, Bottom
-		//	//var newAreaP2 = newArea.Point2; // Right, Top
+			return coma3;
+		}
 
-		//	//var X1 = Math.Max(newArea.X1 - originalArea.X1, 0);
-		//	//var X1 = Math.Max(newAreaP1.X, 0);
-		//	var X1 = Math.Max(newArea.Point1.X - originalArea.Point1.X, 0);
-
-		//	//var X2 = originalArea.Width - Math.Max(originalArea.X2 - newArea.X2, 0);
-		//	//var X2 = originalArea.Width - Math.Max(originalArea.Width - newAreaP2.X, 0);
-		//	var X2 = Math.Max(newArea.Point2.X, originalArea.Point2.X);
-
-		//	//var Y1 = Math.Max(newArea.Y1 - originalArea.Y1, 0);
-		//	//var Y1 = Math.Max(newAreaP1.Y, 0);
-		//	var Y1 = Math.Max(newArea.Point1.Y - originalArea.Point1.Y, 0);
-
-		//	//var Y2 = originalArea.Height - Math.Max(originalArea.Y2 - newArea.Y2, 0);
-		//	//var Y2 = originalArea.Height - Math.Max(originalArea.Height - newAreaP2.Y, 0);
-		//	var Y2 = Math.Max(newArea.Point2.Y, originalArea.Point2.Y);
-
-		//	if (X1 > originalArea.Width || X2 < 0)
-		//	{
-		//		X1 = 0;
-		//		X2 = 0;
-		//	}
-		//	else if (X2 > originalArea.Width)
-		//	{
-		//		X2 = originalArea.Width;
-		//	}
-
-		//	if (Y1 > originalArea.Height || Y2 < 0)
-		//	{
-		//		Y1 = 0;
-		//		Y2 = 0;
-		//	}
-		//	else if (Y2 > originalArea.Height)
-		//	{
-		//		Y2 = originalArea.Width;
-		//	}
-
-
-		//	var clip = new RectangleDbl(X1, X2, Y1, Y2);
-
-		//	return clip;
-		//}
 
 		private RectangleDbl GetIntersect1(RectangleDbl newArea, RectangleDbl originalArea)
 		{
@@ -223,7 +180,7 @@ namespace MSetExplorer
 
 		private RectangleDbl GetIntersect2(RectangleDbl newArea, RectangleDbl originalArea)
 		{
-			Debug.Assert(originalArea.Position == PointDbl.Zero, "The originalArea has a non-zero position.");
+			//Debug.Assert(originalArea.Position == PointDbl.Zero, "The originalArea has a non-zero position.");
 
 			//float x1 = Mathf.Min(r1.xMax, r2.xMax);
 			var x1 = Math.Min(newArea.X2, originalArea.X2);
@@ -260,16 +217,9 @@ namespace MSetExplorer
 
 		private RectangleDbl GetIntersect3(RectangleDbl newArea, RectangleDbl originalArea)
 		{
-			var na = ScreenTypeHelper.ConvertToRect(newArea);
-			var oa = ScreenTypeHelper.ConvertToRect(originalArea);
-
-			oa.Intersect(na);
-
-			var result = ScreenTypeHelper.ConvertToRectangleDbl(oa);
-			return result;
+			return ScreenTypeHelper.Intersect(newArea, originalArea);
 		}
 		
 		#endregion
-
-		}
 	}
+}

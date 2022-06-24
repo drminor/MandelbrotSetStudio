@@ -1,11 +1,14 @@
 ﻿using MEngineDataContracts;
 using MongoDB.Bson;
+using MSS.Common.DataTransferObjects;
 using MSS.Common.MSetRepo;
+using MSS.Types;
 using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 using ProjectRepo;
-using ProjectRepo.Entities;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace MSetRepo
@@ -14,12 +17,16 @@ namespace MSetRepo
 	{
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
+		private readonly DtoMapper _dtoMapper;
 
 		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
+			_dtoMapper = new DtoMapper();
 		}
+
+		#region MapSection
 
 		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition, bool excludeZValues = false)
 		{
@@ -115,7 +122,6 @@ namespace MSetRepo
 			return result;
 		}
 
-
 		private async Task<MapSectionResponse?> GetMapSectionV1Async(string subdivisionId, BigVectorDto blockPosition)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriterV1(_dbProvider);
@@ -131,7 +137,6 @@ namespace MSetRepo
 				return mapSectionResponse;
 			}
 		}
-
 
 		//public MapSectionResponse? GetMapSection(string subdivisionId, BigVectorDto blockPosition, bool returnOnlyCounts = false)
 		//{
@@ -226,6 +231,86 @@ namespace MSetRepo
 
 		//	mapSectionReaderWriter.AddCreatedDateToAllRecords();
 		//}
+		#endregion
 
+		#region Subdivision
+
+		public bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision)
+		{
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+			var samplePointDeltaReduced = Reducer.Reduce(samplePointDelta);
+			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDeltaReduced);
+
+			var matches = subdivisionReaderWriter.Get(samplePointDeltaDto, blockSize);
+
+			if (matches.Count > 1)
+			{
+				throw new InvalidOperationException($"Found more than one subdivision was found matching: {samplePointDelta}.");
+			}
+
+			bool result;
+
+			if (matches.Count < 1)
+			{
+				subdivision = null;
+				result = false;
+			}
+			else
+			{
+				var subdivisionRecord = matches[0];
+				subdivision = _mSetRecordMapper.MapFrom(subdivisionRecord);
+				result = true;
+			}
+
+			return result;
+		}
+
+		public void InsertSubdivision(Subdivision subdivision)
+		{
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);
+			_ = subdivisionReaderWriter.Insert(subdivisionRecord);
+		}
+
+		//public bool DeleteSubdivision(Subdivision subdivision)
+		//{
+		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+		//	var subsDeleted = subdivisionReaderWriter.Delete(subdivision.Id);
+
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	_ = mapSectionReaderWriter.DeleteAllWithSubId(subdivision.Id);
+
+		//	return subsDeleted.HasValue && subsDeleted.Value > 0;
+		//}
+
+		//public Subdivision[] GetAllSubdivions()
+		//{
+		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+		//	var allRecs = subdivisionReaderWriter.GetAll();
+
+		//	var result = allRecs.Select(x => _mSetRecordMapper.MapFrom(x)).ToArray();
+
+		//	return result;
+		//}
+
+		//public SubdivisionInfo[] GetAllSubdivisionInfos()
+		//{
+		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+		//	var allRecs = subdivisionReaderWriter.GetAll();
+
+		//	var result = allRecs
+		//		.Select(x => _mSetRecordMapper.MapFrom(x))
+		//		.Select(x => new SubdivisionInfo(x.Id, x.SamplePointDelta.Width))
+		//		.ToArray();
+
+		//	return result;
+		//}
+
+
+		#endregion
 	}
 }

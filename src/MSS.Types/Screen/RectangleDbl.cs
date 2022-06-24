@@ -92,6 +92,13 @@ namespace MSS.Types
 			return $"pos:{Position}, size:{Size}";
 		}
 
+		public string? ToString(string? format)
+		{
+			return $"pos:{Position.ToString(format)}, size:{Size.ToString(format)}";
+
+		}
+
+
 		[Conditional("Debug")]
 		private void Validate()
 		{

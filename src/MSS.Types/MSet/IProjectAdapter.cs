@@ -18,9 +18,6 @@ namespace MSS.Types.MSet
 		void UpdateProjectDescription(ObjectId projectId, string? description);
 		void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId);
 
-		bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision);
-		void InsertSubdivision(Subdivision subdivision);
-
 		void CreatePoster(Poster poster);
 		void UpdatePoster(Poster poster);
 	}

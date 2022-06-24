@@ -317,12 +317,30 @@ namespace MSetExplorer
 			var newCoords = RMapHelper.GetMapCoords(newArea, position, subdivision.SamplePointDelta);
 			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
 
-			// Update the current poster's map specification.
 			var newMapAreaInfo = new JobAreaInfo(newCoords, canvasSize, subdivision, newMapBlockOffset, newCanvasControlOffset);
-			currentPoster.MapAreaInfo = newMapAreaInfo;
+
+			UpdateMapView(currentPoster, newMapAreaInfo);
+		}
+
+		public void UpdateMapView(JobAreaInfo newMapAreaInfo)
+		{
+			var currentPoster = CurrentPoster;
+
+			if (currentPoster == null)
+			{
+				return;
+			}
+
+			UpdateMapView(currentPoster, newMapAreaInfo);
+		}
+
+		private void UpdateMapView(Poster poster, JobAreaInfo newMapAreaInfo)
+		{
+			// Update the current poster's map specification.
+			poster.MapAreaInfo = newMapAreaInfo;
 
 			// Use the new map specification and the current zoom and display position to set the region to display.
-			JobAreaAndCalcSettings = GetNewJob(currentPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, currentPoster.MapCalcSettings);
+			JobAreaAndCalcSettings = GetNewJob(poster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, poster.MapCalcSettings);
 		}
 
 		public void UpdateColorBandSet(ColorBandSet colorBandSet)

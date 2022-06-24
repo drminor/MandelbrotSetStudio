@@ -29,8 +29,9 @@ namespace MSetExplorer
 		JobAreaAndCalcSettings JobAreaAndCalcSettings { get; }
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
-		//void UpdateMapCoordinates(RRectangle coords);
+		void UpdateMapView(JobAreaInfo newMapAreaInfo);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
+		//void UpdateMapCoordinates(RRectangle coords);
 
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
 		bool PosterOpen(string name);
