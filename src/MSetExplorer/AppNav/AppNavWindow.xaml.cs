@@ -112,6 +112,12 @@ namespace MSetExplorer
 
 		private void ExitApp()
 		{
+			if (_lastWindow != null)
+			{
+				Properties.Settings.Default.LastWindowName = _lastWindow.Name;
+				Properties.Settings.Default.Save();
+			}
+
 			Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
 			Close();
 		}
@@ -159,12 +165,6 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (_lastWindow != null)
-				{
-					Properties.Settings.Default.LastWindowName = _lastWindow.Name;
-					Properties.Settings.Default.Save();
-				}
-
 				ExitApp();
 			}
 		}

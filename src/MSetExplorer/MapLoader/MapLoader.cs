@@ -44,6 +44,8 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public event EventHandler<MapSectionProcessInfo>? RequestCompleted;
+
 		public int JobNumber { get; init; }
 
 		#endregion
@@ -125,13 +127,16 @@ namespace MSetExplorer
 			}
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
+
+			RequestCompleted?.Invoke(this, new MapSectionProcessInfo(JobNumber, _sectionsCompleted, mapSectionRequest.TimeToCompleteGenRequest ?? TimeSpan.FromSeconds(0), mapSectionRequest.FoundInRepo));
+
 			if (_sectionsCompleted == _mapSectionRequests?.Count || (_isStopping && _sectionsCompleted == _sectionsRequested))
 			{
 				if (_tcs?.Task.IsCompleted == false)
 				{
 					_tcs.SetResult();
 					_callback(MapSection.Empty, -1);
-
+					RequestCompleted?.Invoke(this, new MapSectionProcessInfo(JobNumber, -1, TimeSpan.FromSeconds(0), true));
 				}
 
 				var pr = _mapSectionRequestProcessor.GetPendingRequests(JobNumber);

@@ -42,11 +42,10 @@ namespace MSetExplorer
 			{
 				_vm = (IExplorerViewModel)DataContext;
 				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
-				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
-				//_vm.MapDisplayViewModel.CanvasControlOffset = new VectorInt(5, 5);
-				//_vm.MapDisplayViewModel.CanvasControlOffset = new VectorInt(0, 0);
 
-				//_vm.MapDisplayViewModel.SetColorBandSet(_vm.MapDisplayViewModel.ColorBandSet.CreateNewCopy(), updateDisplay:true);
+				jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
+				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
@@ -185,7 +184,7 @@ namespace MSetExplorer
 		{
 			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
 			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			Width = showJobTreeControl ? 1905 : 1495;
+			Width = showJobTreeControl ? 2075 : 1665;
 		}
 
 		private void ToggleJobTreeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -207,7 +206,7 @@ namespace MSetExplorer
 			colRight.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
 			colLeft.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
 
-			//Width = showJobTreeControl ? 1493 : 1495;
+			//Width = showJobTreeControl ? 2075 : 1665;
 		}
 
 		#endregion

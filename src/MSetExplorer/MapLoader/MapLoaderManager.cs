@@ -40,6 +40,10 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public event EventHandler<int>? RequestAdded;
+
+		public event EventHandler<MapSectionProcessInfo>? RequestCompleted;
+
 		//private GenMapRequestInfo? CurrentRequest => DoWithReadLock(() => { return (_requestsPointer == -1 || _requestsPointer > _requests.Count - 1) ? null : _requests[_requestsPointer]; });
 
 		public long NumberOfCountValSwitches => _mapSectionHelper.NumberOfCountValSwitches;
@@ -71,14 +75,24 @@ namespace MSetExplorer
 				var mapLoader = new MapLoader(mapBlockOffset, callback, _mapSectionHelper, _mapSectionRequestProcessor);
 				var startTask = mapLoader.Start(mapSectionRequests);
 
-				_requests.Add(new GenMapRequestInfo(mapLoader, startTask));
+				var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask);
+				_requests.Add(genMapRequestInfo);
 				_requestsPointer = _requests.Count - 1;
 				_ = startTask?.ContinueWith(MapLoaderComplete);
 
 				result = mapLoader.JobNumber;
+
+				genMapRequestInfo.RequestCompleted += GenMapRequestInfo_RequestCompleted;
+
+				RequestAdded?.Invoke(this, mapLoader.JobNumber);
 			});
 
 			return result;
+		}
+
+		private void GenMapRequestInfo_RequestCompleted(object? sender, MapSectionProcessInfo e)
+		{
+			RequestCompleted?.Invoke(this, e);
 		}
 
 		public Task? GetTaskForJob(int jobNumber)
@@ -220,6 +234,8 @@ namespace MSetExplorer
 
 		private class GenMapRequestInfo
 		{
+			public event EventHandler<MapSectionProcessInfo>? RequestCompleted;
+
 			public MapLoader MapLoader { get; init; }
 			public Task Task { get; init; }
 
@@ -227,6 +243,13 @@ namespace MSetExplorer
 			{
 				MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
 				Task = task ?? throw new ArgumentNullException(nameof(task));
+
+				MapLoader.RequestCompleted += MapLoader_RequestCompleted;
+			}
+
+			private void MapLoader_RequestCompleted(object? sender, MapSectionProcessInfo e)
+			{
+				RequestCompleted?.Invoke(this, e);
 			}
 
 			public int JobNumber => MapLoader.JobNumber;

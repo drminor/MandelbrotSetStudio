@@ -4,50 +4,40 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" Width="700">
+             mc:Ignorable="d" Width="290" Height="185">
 
     <Grid>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="150"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
-
-            <ListView Margin="10" Name="lvJobProgressEntries" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedJobProgress}">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Label" Width="140" DisplayMemberBinding="{Binding Label}" />
-                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreated}" />
-                        <GridViewColumn Header="Section Count" Width="95" DisplayMemberBinding="{Binding NumberOfSections}" />
-                        <GridViewColumn Header="% Completed" Width="85" DisplayMemberBinding="{Binding PercentComplete}" />
-                        <GridViewColumn Header="Fetched" Width="85" DisplayMemberBinding="{Binding Fetched}" />
-                        <GridViewColumn Header="Generated" Width="85" DisplayMemberBinding="{Binding Generated}" />
-                    </GridView>
-                </ListView.View>
-            </ListView>
-
-        </Border>
-
-        <Border x:Name="borderTop" Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
+        <Border x:Name="borderTop" Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0">
             <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
 
                 <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Width="63" Margin="10, 0, 10, 0" FontSize="16" Text="Name:" VerticalAlignment="Top"/>
-                    <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="170" Height="22"/>
+                    <TextBlock Width="60" Margin="10, 0, 10, 0" FontSize="16" Text="%Comp:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtName" Text="{Binding PercentageComplete, Mode=OneWay}"  Width="50" Height="22"/>
                 </StackPanel>
-
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Width="63" Margin="10, 0, 5, 0" FontSize="16" Text="Progress:" VerticalAlignment="Top"/>
-                    <ProgressBar x:Name="progressBar1" Height="20" Width="500" HorizontalAlignment="Left" Margin="5,5"></ProgressBar>
-                </StackPanel>
-
 
             </StackPanel>
         </Border>
 
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+
+            <ListView Margin="10" Name="lvJobProgressEntries">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Num" Width="40" DisplayMemberBinding="{Binding JobAndReqNum}" />
+                        <GridViewColumn Header="Seconds" Width="65" DisplayMemberBinding="{Binding RequestDuration}" />
+                        <GridViewColumn Header="InRepo" Width="55" DisplayMemberBinding="{Binding FoundInRepo}" />
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+        </Border>        
+        
     </Grid>
 
 </UserControl>

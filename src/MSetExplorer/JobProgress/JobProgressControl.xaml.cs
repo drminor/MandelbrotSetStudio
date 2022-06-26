@@ -1,18 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -45,7 +35,7 @@ namespace MSetExplorer
 				_vm = (JobProgressViewModel)DataContext;
 				borderTop.DataContext = DataContext;
 
-				lvJobProgressEntries.ItemsSource = _vm.JobProgressRecords;
+				lvJobProgressEntries.ItemsSource = _vm.MapSectionProcessInfos;
 				//lvJobProgressEntries.SelectionChanged += LvJobProgressEntries_SelectionChanged;
 				//lvJobProgressEntries.MouseDoubleClick += LvJobProgressEntries_MouseDoubleClick;
 

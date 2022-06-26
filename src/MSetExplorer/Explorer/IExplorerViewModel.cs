@@ -19,6 +19,8 @@ namespace MSetExplorer
 		IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType);
 		CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits);
 
+		JobProgressViewModel CreateAJobProgressViewModel();
+
 		SizeInt GetCanvasSize(Job job);
 	}
 }

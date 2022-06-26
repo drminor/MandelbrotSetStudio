@@ -13,6 +13,8 @@ namespace MSetExplorer
 		private readonly PosterOpenSaveViewModelCreator _posterOpenSaveViewModelCreator;
 		private readonly CoordsEditorViewModelCreator _coordsEditorViewModelCreator;
 
+		private readonly IMapLoaderManager _mapLoaderManager;
+
 		private int _dispWidth;
 		private int _dispHeight;
 
@@ -20,8 +22,12 @@ namespace MSetExplorer
 
 		public ExplorerViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel, 
 			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, 
-			PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
+			PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator, 
+			IMapLoaderManager mapLoaderManager)
 		{
+
+			_mapLoaderManager = mapLoaderManager;
+
 			MapProjectViewModel = mapProjectViewModel;
 			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 
@@ -122,6 +128,12 @@ namespace MSetExplorer
 				result = MapDisplayViewModel.CanvasSize;
 			}
 
+			return result;
+		}
+
+		public JobProgressViewModel CreateAJobProgressViewModel()
+		{
+			var result = new JobProgressViewModel(_mapLoaderManager);
 			return result;
 		}
 

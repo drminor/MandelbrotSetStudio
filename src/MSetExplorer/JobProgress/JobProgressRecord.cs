@@ -4,16 +4,19 @@ namespace MSetExplorer
 {
 	public class JobProgressRecord : ViewModelBase
 	{
-		private int _percentComplete;
+		private double _percentComplete;
 		private int _fetchedCount;
 		private int _generatedCount;
 
-		public JobProgressRecord(string label, DateTime dateCreated, int totalSections)
+		public JobProgressRecord(int jobNumber, string label, DateTime dateCreated, int totalSections)
 		{
+			JobNumber = jobNumber;
 			Label = label;
 			DateCreated = dateCreated;
 			TotalSections = totalSections;
 		}
+
+		public int JobNumber { get; init; }
 
 		public string Label { get; init; }
 
@@ -21,7 +24,7 @@ namespace MSetExplorer
 
 		public int TotalSections { get; init; }
 
-		public int PercentComplete
+		public double PercentComplete
 		{
 			get => _percentComplete;
 			set
@@ -57,7 +60,28 @@ namespace MSetExplorer
 				{
 					_generatedCount = value;
 					OnPropertyChanged();
-					OnPropertyChanged(nameof(PercentComplete));
+
+					if (TotalSections > 0)
+					{
+						PercentComplete = 100 * (_generatedCount + _fetchedCount / TotalSections);
+						OnPropertyChanged(nameof(PercentComplete));
+					}
+				}
+			}
+		}
+
+		public double PercentageFetched
+		{
+			get
+			{
+				if (_generatedCount == 0)
+				{
+					return 100;
+				}
+				else
+				{
+					var result = 100 * _fetchedCount / (double)_generatedCount;
+					return result;
 				}
 			}
 		}

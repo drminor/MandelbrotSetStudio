@@ -41,7 +41,7 @@ namespace MSetExplorer
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
 			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, 
-				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
+				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel, MapLoaderManager);
 
 			return result;
 		}

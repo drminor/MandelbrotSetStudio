@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Explorer Window" Width="1495" Height="1095">
+        Title="Explorer Window" Width="1665" Height="1095">
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
@@ -108,6 +108,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -126,7 +127,9 @@
                 <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
             </StackPanel>
 
-            <StackPanel Grid.Row="2" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecScreenSizeButtons">
+            <local:JobProgressControl x:Name="jobProgress1" Grid.Row="2" Visibility="Visible"/>
+
+            <StackPanel Grid.Row="3" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecScreenSizeButtons">
                 <Grid Margin="5,0" x:Name="grdTop">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="30" />
