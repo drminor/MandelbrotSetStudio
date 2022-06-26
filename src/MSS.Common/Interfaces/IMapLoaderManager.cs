@@ -7,10 +7,8 @@ using System.Threading.Tasks;
 
 namespace MSS.Common
 {
-	public interface IMapLoaderManager
+	public interface IMapLoaderManager : IDisposable
 	{
-		//event EventHandler<Tuple<MapSection, int>>? MapSectionReady;
-
 		int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, Action<MapSection, int> callback);
 		int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection, int> callback);
 

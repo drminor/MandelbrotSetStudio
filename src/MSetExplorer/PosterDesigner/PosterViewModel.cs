@@ -226,7 +226,7 @@ namespace MSetExplorer
 			return _projectAdapter.TryGetPoster(name, out poster);
 		}
 
-		public bool PosterOpen(string name)
+		public bool Open(string name)
 		{
 			if (_projectAdapter.TryGetPoster(name, out var poster))
 			{
@@ -239,12 +239,12 @@ namespace MSetExplorer
 			}
 		}
 
-		public void LoadPoster(Poster poster)
+		public void Load(Poster poster)
 		{
 			CurrentPoster = poster;
 		}
 
-		public void PosterSave()
+		public void Save()
 		{
 			var poster = CurrentPoster;
 
@@ -262,7 +262,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool PosterSaveAs(string name, string? description)
+		public bool SaveAs(string name, string? description)
 		{
 			var currentPoster = CurrentPoster;
 
@@ -291,7 +291,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void PosterClose()
+		public void Close()
 		{
 			CurrentPoster = null;
 		}

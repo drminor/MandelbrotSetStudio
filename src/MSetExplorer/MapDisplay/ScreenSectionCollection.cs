@@ -347,7 +347,8 @@ namespace MSetExplorer
 					{
 						if (Active)
 						{
-							RemoveFromGroup("setting the BlockPosition");
+							Active = false;
+							//RemoveFromGroup("setting the BlockPosition");
 						}
 
 						_blockPosition = value;
@@ -387,7 +388,7 @@ namespace MSetExplorer
 					//Debug.WriteLine($"Creating new ImageDrawing for {position} while drawing. The previous value is {BlockPosition}");
 
 					BlockPosition = position;
-					Active = false;
+					//Active = false;
 					_imageDrawing = CreateImageDrawing(BlockPosition);
 				}
 				else
@@ -432,7 +433,7 @@ namespace MSetExplorer
 					//Debug.WriteLine($"Creating new ImageDrawing for {position} while re-drawing. The previous value is {BlockPosition}");
 
 					BlockPosition = position;
-					Active = false;
+					//Active = false;
 					_imageDrawing = CreateImageDrawing(BlockPosition);
 				}
 				else
@@ -474,6 +475,9 @@ namespace MSetExplorer
 
 			#region Private Methods
 
+			// TODO: See if WritePixels can be replaced with something that updates the Bitmap's backbuffer.
+			// It may be possible to have a object pool of bitmaps and then
+			// 1) Get object, 2) fill object, 3) create an Image around the object. We may be able to avoid allocating new Byte[] in this fashion.
 			private void WritePixels(byte[] pixels, WriteableBitmap bitmap)
 			{
 				var w = (int)Math.Round(bitmap.Width);

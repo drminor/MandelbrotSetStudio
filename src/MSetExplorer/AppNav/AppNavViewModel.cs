@@ -18,14 +18,14 @@ namespace MSetExplorer
 
 		public MapJobHelper MapJobHelper { get; init; }
 		public IMapLoaderManager MapLoaderManager { get; init; }
-		public PngBuilder PngBuilder { get; init; }
+		//public PngBuilder PngBuilder { get; init; }
 
-		public AppNavViewModel(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, PngBuilder pngBuilder)
+		public AppNavViewModel(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
 		{
 			RepositoryAdapters = repositoryAdapters;
 			MapJobHelper = new MapJobHelper(repositoryAdapters.MapSectionAdapter);
 			MapLoaderManager = mapLoaderManager;
-			PngBuilder = pngBuilder;
+			//PngBuilder = pngBuilder;
 		}
 
 		public ExplorerViewModel GetExplorerViewModel()
@@ -40,7 +40,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, 
+			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, 
 				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
 
 			return result;
@@ -60,7 +60,8 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, MapJobHelper, MapLoaderManager, 
+			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, 
+				MapJobHelper, MapLoaderManager, 
 				CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateACoordsEditorViewModel);
 
 			return result;

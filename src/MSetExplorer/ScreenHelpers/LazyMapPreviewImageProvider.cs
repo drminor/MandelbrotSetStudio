@@ -133,49 +133,35 @@ namespace MSetExplorer
 
 		private void FillBitmapWithColor(Color color, WriteableBitmap bitmap)
 		{
-			var r = color.R;
-			var g = color.G;
-			var b = color.B;
-
-			//	var bitmap = (WriteableBitmap)result.ImageSource;
-			//	var ar = new byte[_blockSize.NumberOfCells * 4];
-			//	bitmap.CopyPixels(ar, 4 * _blockSize.Width, 0);
-
-			var stride = bitmap.BackBufferStride;
-			var pixels = new byte[stride];
 			var width = (int) Math.Round(bitmap.Width);
 
-			for (var i = 0; i < width; i++)
-			{
-				var offSet = i * 4;
-				pixels[offSet] = b;
-				pixels[offSet + 1] = g;
-				pixels[offSet + 2] = r;
-				pixels[offSet + 3] = 255;
-			}
+			var pixels = CreateOneRowWithColor(color, width);
+			var stride = width * 4;
 
 			var rect = new Int32Rect(0, 0, width, 1);
 
 			for (var i = 0; i < bitmap.Height; i++)
 			{
 				rect.Y = i;
-				bitmap.WritePixels(rect, pixels, bitmap.BackBufferStride, 0);
+				bitmap.WritePixels(rect, pixels, stride, 0);
 			}
 		}
 
-		//private WriteableBitmap CreateImageSource(byte[] pixels, SizeInt size)
-		//{
-		//	var w = size.Width;
-		//	var h = size.Height;
+		private byte[] CreateOneRowWithColor(Color color, int rowLength)
+		{
+			var pixels = new byte[rowLength * 4];
 
-		//	var bitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+			for (var i = 0; i < rowLength; i++)
+			{
+				var offSet = i * 4;
+				pixels[offSet] = color.B;
+				pixels[offSet + 1] = color.G;
+				pixels[offSet + 2] = color.R;
+				pixels[offSet + 3] = 255;
+			}
 
-		//	var rect = new Int32Rect(0, 0, w, h);
-		//	var stride = 4 * w;
-		//	bitmap.WritePixels(rect, pixels, stride, 0);
-
-		//	return bitmap;
-		//}
+			return pixels;
+		}
 
 		private WriteableBitmap CreateBitmap(SizeInt size)
 		{
@@ -187,7 +173,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
 	}
 
 }

@@ -90,18 +90,12 @@ namespace MSetExplorer
 		private void UpdateWithChangesInternal(JobAreaInfo posterMapAreaInfo, SizeDbl containerSize)
 		{
 			PosterMapAreaInfo = posterMapAreaInfo;
-
-			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
-			var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
-
-			//_drawingGroup.Children.Remove(_previewImageDrawing);
-			//_previewImageDrawing = CreateImageDrawing(previewImage);
-			//_drawingGroup.Children.Add(_previewImageDrawing);
-			//_previewImage = new DrawingImage(_drawingGroup);
-
-			var posterSize = posterMapAreaInfo.CanvasSize;
 			_lazyMapPreviewImageProvider.MapAreaInfo = posterMapAreaInfo;
 
+			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
+
+			var posterSize = posterMapAreaInfo.CanvasSize;
+			var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
 			_layoutInfo = new PreviewImageLayoutInfo(posterSize, previewImageSize, containerSize);
 
 			_originalSize = posterSize;
@@ -413,17 +407,6 @@ namespace MSetExplorer
 		public JobAreaInfo? PosterMapAreaInfo { get; private set; }
 
 		public ImageSource PreviewImage => _previewImage;
-		//{
-		//	get => _previewImage;
-		//	set
-		//	{
-		//		_drawingGroup.Children.Remove(_previewImageDrawing);
-		//		_previewImageDrawing = CreateImageDrawing(value);
-		//		_drawingGroup.Children.Add(_previewImageDrawing);
-
-		//		_layoutInfo.PreviewImageSize = new SizeDbl(value.Width, value.Height);
-		//	}
-		//}
 
 		#endregion
 

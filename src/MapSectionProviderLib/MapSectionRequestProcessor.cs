@@ -464,6 +464,16 @@ namespace MapSectionProviderLib
 							_workQueueProcessors[i].Dispose();
 						}
 					}
+
+					if (_mapSectionGeneratorProcessor != null)
+					{
+						_mapSectionGeneratorProcessor.Dispose();
+					}
+
+					if (_mapSectionResponseProcessor != null)
+					{
+						_mapSectionResponseProcessor.Dispose();
+					}
 				}
 
 				disposedValue = true;

@@ -26,7 +26,6 @@ namespace MSetExplorer
 		private PosterSizeEditorViewModel _vm;
 
 		private JobAreaInfo? _initialPosterMapAreaInfo;
-		//private ImageSource? _initialPreviewImage;
 
 		#region Constructor
 
@@ -62,12 +61,6 @@ namespace MSetExplorer
 				_ = canvas1.Children.Add(_image);
 				_image.SetValue(Panel.ZIndexProperty, 10);
 
-				var containerSize = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
-				//UpdateTheVmWithOurSize(sizeDbl);
-
-				//_newImageRectangle = BuildNewImageRectangle(_canvas, _vm.LayoutInfo.NewImageArea);
-				//_clipRectangle = BuildClipRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
-
 				_newImageRectangle = BuildNewImageRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
 				_clipRectangle = BuildClipRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
 
@@ -75,13 +68,10 @@ namespace MSetExplorer
 				{
 					throw new InvalidOperationException("The initialPosterMapAreaInfo is null.");
 				}
+
+				var containerSize = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
 				_vm.Initialize(_initialPosterMapAreaInfo, containerSize);
 				_initialPosterMapAreaInfo = null;
-				//_initialPreviewImage = null;
-
-				//_vm.PreserveAspectRatio = true;
-				//_vm.PreserveWidth = true;
-				//_vm.PreserveHeight = true;
 
 				_canvas.SizeChanged += CanvasSize_Changed;
 
@@ -160,9 +150,9 @@ namespace MSetExplorer
 
 		public RectangleDbl NewMapArea => _vm.NewMapArea;
 
-		public void UpdateWithNewMapInfo(JobAreaInfo mapAreaInfo/*, ImageSource previewImage*/)
+		public void UpdateWithNewMapInfo(JobAreaInfo mapAreaInfo)
 		{
-			_vm.UpdateWithNewMapInfo(mapAreaInfo/*, previewImage*/);
+			_vm.UpdateWithNewMapInfo(mapAreaInfo);
 		}
 
 		#endregion

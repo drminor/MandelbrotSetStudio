@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -669,20 +668,25 @@ namespace MSetExplorer
 			return true;
 		}
 
-		public void ApplyChanges(int? newTargetIterations = null)
+		public void ApplyChanges(int newTargetIterations)
 		{
-			ColorBandSet newSet;
-
-			if (newTargetIterations.HasValue)
+			if (newTargetIterations != _currentColorBandSet.HighCutoff)
 			{
-				newSet = ColorBandSetHelper.AdjustTargetIterations(_currentColorBandSet, newTargetIterations.Value);
+				var newSet = ColorBandSetHelper.AdjustTargetIterations(_currentColorBandSet, newTargetIterations);
+				ApplyChangesInt(newSet);
 			}
-			else
-			{
-				Debug.Assert(IsDirty, "ApplyChanges is being called, but we are not dirty.");
-				newSet = _currentColorBandSet.CreateNewCopy();
-			}
+		}
 
+		public void ApplyChanges()
+		{
+			Debug.Assert(IsDirty, "ApplyChanges is being called, but we are not dirty.");
+			var newSet = _currentColorBandSet.CreateNewCopy();
+
+			ApplyChangesInt(newSet);
+		}
+
+		private void ApplyChangesInt(ColorBandSet newSet)
+		{
 			Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}, name: {newSet.Name}. The old Id is {ColorBandSet?.Id ?? ObjectId.Empty}");
 
 			_colorBandSet = newSet;

@@ -24,7 +24,6 @@ namespace MSetExplorer
 		private readonly MEngineServerManager _mEngineServerManager;
 		private RepositoryAdapters? _repositoryAdapters;
 		private IMapLoaderManager? _mapLoaderManager;
-		private PngBuilder? _pngBuilder;
 
 		private AppNavWindow? _appNavWindow;
 
@@ -65,15 +64,13 @@ namespace MSetExplorer
 
 			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO);
 
-			_pngBuilder = BuildPngBuilder(_mapLoaderManager);
-
-			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager, _pngBuilder);
+			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager);
 			_appNavWindow.Show();
 		}
 
-		private AppNavWindow GetAppNavWindow(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, PngBuilder pngBuilder)
+		private AppNavWindow GetAppNavWindow(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
 		{
-			var appNavViewModel = new AppNavViewModel(repositoryAdapters, mapLoaderManager, pngBuilder);
+			var appNavViewModel = new AppNavViewModel(repositoryAdapters, mapLoaderManager);
 
 			var appNavWindow = new AppNavWindow
 			{
@@ -96,18 +93,17 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private PngBuilder BuildPngBuilder(IMapLoaderManager mapLoaderManager)
-		{
-			var result = new PngBuilder(mapLoaderManager);
-
-			return result;
-		}
-
 		protected override void OnExit(ExitEventArgs e)
 		{
 			base.OnExit(e);
 
 			_mEngineServerManager.Stop();
+			
+			if (_mapLoaderManager != null)
+			{
+				_mapLoaderManager.Dispose();
+			}
+
 
 			// TODO: Dispose the MapLoaderManager, MapSectionRequestProcessor, etc.
 		}

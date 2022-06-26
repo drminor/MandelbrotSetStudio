@@ -34,10 +34,10 @@ namespace MSetExplorer
 		//void UpdateMapCoordinates(RRectangle coords);
 
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
-		bool PosterOpen(string name);
-		void LoadPoster(Poster poster);
-		void PosterSave();
-		bool PosterSaveAs(string name, string? description);
-		void PosterClose();
+		bool Open(string name);
+		void Load(Poster poster);
+		void Save();
+		bool SaveAs(string name, string? description);
+		void Close();
 	}
 }

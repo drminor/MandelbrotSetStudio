@@ -20,7 +20,5 @@ namespace MSetExplorer
 		CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits);
 
 		SizeInt GetCanvasSize(Job job);
-
-		IProjectAdapter ProjectAdapter { get; }
 	}
 }

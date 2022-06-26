@@ -6,40 +6,23 @@ namespace MSetExplorer
 {
 	public class MapCalcSettingsViewModel : ViewModelBase
 	{
-		//private Job _currentJob;
-
 		private MapCalcSettings _mapCalcSettings;
 
-		private int _targetIterations;
+		//private int _targetIterations;
+		//private int _requestsPerJob;
 		private double _targetIterationsAvailable;
-		private int _requestsPerJob;
 
 		public MapCalcSettingsViewModel()
 		{
-			//_currentJob = Job.Empty;
 			_mapCalcSettings = new MapCalcSettings();
 
-			_targetIterations = _mapCalcSettings.TargetIterations;
-			_requestsPerJob = _mapCalcSettings.RequestsPerJob;
+			//_targetIterations = _mapCalcSettings.TargetIterations;
+			//_requestsPerJob = _mapCalcSettings.RequestsPerJob;
 		}
 
 		#region Public Properties
 
 		public event EventHandler<MapSettingsUpdateRequestedEventArgs>? MapSettingsUpdateRequested;
-
-		//public Job CurrentJob
-		//{
-		//	get => _currentJob;
-		//	set
-		//	{
-		//		if (value != _currentJob)
-		//		{
-		//			_currentJob = value;
-		//			TargetIterations = value.MapCalcSettings.TargetIterations;
-		//			RequestsPerJob = value.MapCalcSettings.RequestsPerJob;
-		//		}
-		//	}
-		//}
 
 		public MapCalcSettings MapCalcSettings
 		{
@@ -49,34 +32,62 @@ namespace MSetExplorer
 				if (value != _mapCalcSettings)
 				{
 					_mapCalcSettings = value;
-					TargetIterations = _mapCalcSettings.TargetIterations;
-					RequestsPerJob = _mapCalcSettings.RequestsPerJob;
+					OnPropertyChanged(nameof(TargetIterations));
+					OnPropertyChanged(nameof(RequestsPerJob));
+					//TargetIterations = _mapCalcSettings.TargetIterations;
+					//RequestsPerJob = _mapCalcSettings.RequestsPerJob;
 				}
-						
 			}
 		}
+
+		//public int TargetIterations
+		//{
+		//	get => _targetIterations;
+		//	set
+		//	{
+		//		if (value != _targetIterations)
+		//		{
+		//			_targetIterations = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		public int TargetIterations
 		{
-			get => _targetIterations;
+			get => _mapCalcSettings.TargetIterations;
 			set
 			{
-				if (value != _targetIterations)
+				if (value != _mapCalcSettings.TargetIterations)
 				{
-					_targetIterations = value;
-					OnPropertyChanged();
+					//_mapCalcSettings = new MapCalcSettings(value, _mapCalcSettings.RequestsPerJob);
+					//OnPropertyChanged();
+					TriggerIterationUpdate(value);
 				}
 			}
 		}
 
+		//public int RequestsPerJob
+		//{
+		//	get => _requestsPerJob;
+		//	set
+		//	{
+		//		if (value != _requestsPerJob)
+		//		{
+		//			_requestsPerJob = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
+
 		public int RequestsPerJob
 		{
-			get => _requestsPerJob;
+			get => _mapCalcSettings.RequestsPerJob;
 			set
 			{
-				if (value != _requestsPerJob)
+				if (value != RequestsPerJob)
 				{
-					_requestsPerJob = value;
+					_mapCalcSettings = new MapCalcSettings(_mapCalcSettings.TargetIterations, value);
 					OnPropertyChanged();
 				}
 			}
@@ -99,9 +110,9 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void TriggerIterationUpdate()
+		public void TriggerIterationUpdate(int newValue)
 		{
-			MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, TargetIterations));
+			MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, newValue));
 		}
 
 		#endregion

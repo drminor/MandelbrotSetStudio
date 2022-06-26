@@ -228,6 +228,11 @@ namespace MapSectionProviderLib
 							_workQueueProcessors[i].Dispose();
 						}
 					}
+
+					if (_mapSectionPersistProcessor != null)
+					{
+						_mapSectionPersistProcessor.Dispose();
+					}
 				}
 
 				disposedValue = true;

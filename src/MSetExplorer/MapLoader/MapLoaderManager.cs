@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace MSetExplorer
 {
-	internal class MapLoaderManager : IMapLoaderManager, IDisposable
+	internal class MapLoaderManager : IMapLoaderManager
 	{
 		//private readonly SynchronizationContext? _synchronizationContext;
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -38,11 +38,9 @@ namespace MSetExplorer
 
 		#endregion
 
-		//public event EventHandler<Tuple<MapSection, int>>? MapSectionReady;
-
 		#region Public Properties
 
-		private GenMapRequestInfo? CurrentRequest => DoWithReadLock(() => { return (_requestsPointer == -1 || _requestsPointer > _requests.Count - 1) ? null : _requests[_requestsPointer]; });
+		//private GenMapRequestInfo? CurrentRequest => DoWithReadLock(() => { return (_requestsPointer == -1 || _requestsPointer > _requests.Count - 1) ? null : _requests[_requestsPointer]; });
 
 		public long NumberOfCountValSwitches => _mapSectionHelper.NumberOfCountValSwitches;
 

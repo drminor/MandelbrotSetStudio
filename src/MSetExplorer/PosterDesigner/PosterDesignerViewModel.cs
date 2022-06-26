@@ -5,7 +5,6 @@ using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Threading;
 using System.Windows.Media;
 
 namespace MSetExplorer

@@ -2,7 +2,6 @@
 using MSS.Types;
 using System;
 using System.Diagnostics;
-using System.Windows;
 
 namespace MSetExplorer
 {
@@ -16,18 +15,9 @@ namespace MSetExplorer
 			OriginalMapSize = new SizeDbl(imageSize);
 			PreviewImageSize = previewImageSize;
 			ContainerSize = containerSize;
-
-			//NewMapArea = new RectangleDbl(new PointDbl(), OriginalMapSize);
 		}
 
 		#region Public Properties
-
-		//// Convenience Properties
-		//// These are Positive for a new image larger than the original.
-		//public double BeforeX => NewImageArea.X1 - OriginalImageArea.X1;
-		//public double AfterX => NewImageArea.X2 - OriginalImageArea.X2;
-		//public double BeforeY => NewImageArea.Y1 - OriginalImageArea.Y1;
-		//public double AfterY => NewImageArea.Y2 - OriginalImageArea.Y2;
 
 		public bool IsEmpty => OriginalMapSize.Width == 0;
 
@@ -57,7 +47,8 @@ namespace MSetExplorer
 
 			// Get the portion of the originalMapArea that will be part of the new Image.
 			var originalMapArea = new RectangleDbl(new PointDbl(), OriginalMapSize);
-			var clippedOriginalMapArea = GetOriginalImageClipRegion(NewMapArea, originalMapArea);
+			//var clippedOriginalMapArea = GetOriginalImageClipRegion(NewMapArea, originalMapArea);
+			var clippedOriginalMapArea = ScreenTypeHelper.Intersect(NewMapArea, originalMapArea);
 
 			// Get a rectangle that will hold both the new and the portion of the original
 			var boundingMapArea = RMapHelper.GetBoundingRectangle(clippedOriginalMapArea, NewMapArea);
@@ -137,6 +128,10 @@ namespace MSetExplorer
 			originalImagePos = new PointDbl(oPosX, oPosY);
 		}
 
+		#endregion
+
+		#region Old But Good Private Methods
+
 		private RectangleDbl GetOriginalImageClipRegion(RectangleDbl newMapArea, RectangleDbl originalMapArea)
 		{
 			var coma1 = GetIntersect1(newMapArea, originalMapArea);
@@ -180,44 +175,29 @@ namespace MSetExplorer
 
 		private RectangleDbl GetIntersect2(RectangleDbl newArea, RectangleDbl originalArea)
 		{
-			//Debug.Assert(originalArea.Position == PointDbl.Zero, "The originalArea has a non-zero position.");
-
-			//float x1 = Mathf.Min(r1.xMax, r2.xMax);
 			var x1 = Math.Min(newArea.X2, originalArea.X2);
 
-			//float x2 = Mathf.Max(r1.xMin, r2.xMin);
 			var x2 = Math.Max(newArea.X1, originalArea.X1);
 
-			//float y1 = Mathf.Min(r1.yMax, r2.yMax);
 			var y1 = Math.Min(newArea.Y2, originalArea.Y2);
 
-			//float y2 = Mathf.Max(r1.yMin, r2.yMin);
 			var y2 = Math.Max(newArea.Y1, originalArea.Y1);
 
 			var result = new RectangleDbl
 				(
 				new PointDbl
 					(
-					//area.x = Mathf.Min(x1, x2);
 					Math.Min(x1, x2),
-					//area.y = Mathf.Min(y1, y2);
 					Math.Min(y1, y2)
 					),
 				new SizeDbl
 					(
-					//area.width = Mathf.Max(0.0f, x1 - x2);
 					Math.Max(x1 - x2, 0),
-					//area.height = Mathf.Max(0.0f, y1 - y2);
 					Math.Max(y1 - y2, 0)
 					)
 				);
 
 			return result;
-		}
-
-		private RectangleDbl GetIntersect3(RectangleDbl newArea, RectangleDbl originalArea)
-		{
-			return ScreenTypeHelper.Intersect(newArea, originalArea);
 		}
 		
 		#endregion

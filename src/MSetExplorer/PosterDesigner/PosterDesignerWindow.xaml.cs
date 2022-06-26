@@ -27,7 +27,6 @@ namespace MSetExplorer
 		private IPosterDesignerViewModel _vm;
 
 		private CreateImageProgressWindow? _createImageProgressWindow;
-		//private LazyMapPreviewImageProvider? _lazyMapPreviewImageProvider;
 
 		#region Constructor
 
@@ -36,7 +35,6 @@ namespace MSetExplorer
 			_vm = (IPosterDesignerViewModel)DataContext;
 			AppNavRequestResponse = appNavRequestResponse;
 			_createImageProgressWindow = null;
-			//_lazyMapPreviewImageProvider = null;
 
 			Loaded += PosterDesignerWindow_Loaded;
 			Closing += PosterDesignerWindow_Closing;
@@ -118,13 +116,15 @@ namespace MSetExplorer
 			_vm.MapScrollViewModel.DisplayZoom = val;
 			var adjustedDisplayZoom = _vm.MapScrollViewModel.DisplayZoom;
 			txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
-			
-			_vm.MapScrollViewModel.VerticalPosition = 0;
-			_vm.MapScrollViewModel.HorizontalPosition = 0;
+
+			//_vm.MapScrollViewModel.VerticalPosition = 0;
+			//_vm.MapScrollViewModel.HorizontalPosition = 0;
+			SetDisplayPosition(new VectorInt());
 		}
 
 		private void SetDisplayPosition(VectorInt position)
 		{
+			// TODO: Consider making this part of the MapScrollView (code behind) ConfigureScrollBars
 			_vm.MapScrollViewModel.HorizontalPosition = position.X;
 			_vm.MapScrollViewModel.VerticalPosition = position.Y;
 		}
@@ -216,7 +216,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			_vm.PosterViewModel.PosterClose();
+			_vm.PosterViewModel.Close();
 			AppNavRequestResponse.OnCloseBehavior = onCloseBehavior;
 			Close();
 		}
@@ -259,7 +259,7 @@ namespace MSetExplorer
 				if (selectedName != null)
 				{
 					Debug.WriteLine($"Opening project with name: {selectedName}.");
-					_ = _vm.PosterViewModel.PosterOpen(selectedName);
+					_ = _vm.PosterViewModel.Open(selectedName);
 				}
 				else
 				{
@@ -276,7 +276,7 @@ namespace MSetExplorer
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.PosterViewModel.PosterSave();
+			_vm.PosterViewModel.Save();
 		}
 
 		// Project Save As
@@ -651,7 +651,7 @@ namespace MSetExplorer
 				if (_vm.PosterViewModel.CurrentPosterOnFile)
 				{
 					// Silently record the new CurrentJob selection
-					_vm.PosterViewModel.PosterSave();
+					_vm.PosterViewModel.Save();
 					return SaveResultP.CurrentJobAutoSaved;
 				}
 
@@ -672,7 +672,7 @@ namespace MSetExplorer
 				if (_vm.PosterViewModel.CurrentPosterOnFile)
 				{
 					// The Project is on-file, just save the pending changes.
-					_vm.PosterViewModel.PosterSave();
+					_vm.PosterViewModel.Save();
 					return SaveResultP.ChangesSaved;
 				}
 				else
@@ -711,7 +711,7 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"Saving project with name: {selectedName}.");
 					// TODO: Handle cases where ProjectSaveAs fails.
-					result = _vm.PosterViewModel.PosterSaveAs(selectedName, description);
+					result = _vm.PosterViewModel.SaveAs(selectedName, description);
 				}
 				else
 				{
@@ -818,7 +818,7 @@ namespace MSetExplorer
 					}
 				}
 
-				_vm.PosterViewModel.LoadPoster(poster);
+				_vm.PosterViewModel.Load(poster);
 			}
 			else
 			{
