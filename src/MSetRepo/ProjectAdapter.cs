@@ -173,12 +173,12 @@ namespace MSetRepo
 				var projectId = projectReaderWriter.Insert(projectRecord);
 				projectRecord = projectReaderWriter.Get(projectId);
 
-				foreach(var job in jobs)
+				foreach (var job in jobs)
 				{
 					job.ProjectId = projectId;
 				}
 
-				foreach(var cbs in colorBandSets)
+				foreach (var cbs in colorBandSets)
 				{
 					cbs.ProjectId = projectId;
 				}
@@ -260,7 +260,7 @@ namespace MSetRepo
 
 		public long? DeleteMapSectionsSince(DateTime lastSaved)
 		{
-			var mapSectionReaderWriter  = new MapSectionReaderWriter(_dbProvider);
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var deleteCnt = mapSectionReaderWriter.DeleteMapSectionsSince(lastSaved);
 
 			return deleteCnt;
@@ -800,7 +800,7 @@ namespace MSetRepo
 			var projectIds = projectReaderWriter.GetAllIds();
 			foreach (var projectId in projectIds)
 			{
-				if(!TryGetProject(projectId, out var _))
+				if (!TryGetProject(projectId, out var _))
 				{
 					result.Add(projectId);
 				}

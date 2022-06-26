@@ -11,7 +11,7 @@ namespace MSetExplorer
 {
 	public class ProjectOpenSaveViewModel : IProjectOpenSaveViewModel, INotifyPropertyChanged
 	{
-		private readonly ProjectAdapter _projectAdapter;
+		private readonly IProjectAdapter _projectAdapter;
 		private IProjectInfo? _selectedProject;
 
 		private string? _selectedName;
@@ -21,7 +21,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ProjectOpenSaveViewModel(ProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
+		public ProjectOpenSaveViewModel(IProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
 		{
 			_projectAdapter = projectAdapter;
 			DialogType = dialogType;

@@ -35,7 +35,6 @@ namespace MSetExplorer
 			MapScrollViewModel = mapScrollViewModel;
 			MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
 
-
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 

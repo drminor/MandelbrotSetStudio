@@ -12,7 +12,7 @@ namespace MSetExplorer
 {
 	internal class MapProjectViewModel : ViewModelBase, IMapProjectViewModel, IDisposable
 	{
-		private readonly ProjectAdapter _projectAdapter;
+		private readonly IProjectAdapter _projectAdapter;
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly SizeInt _blockSize;
 
@@ -21,7 +21,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapProjectViewModel(ProjectAdapter projectAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
+		public MapProjectViewModel(IProjectAdapter projectAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
 			_mapJobHelper = mapJobHelper;

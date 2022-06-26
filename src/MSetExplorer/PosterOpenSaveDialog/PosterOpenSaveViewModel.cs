@@ -18,7 +18,7 @@ namespace MSetExplorer
 	public class PosterOpenSaveViewModel : IPosterOpenSaveViewModel, INotifyPropertyChanged
 	{
 		private readonly IMapLoaderManager _mapLoaderManager;
-		private readonly ProjectAdapter _projectAdapter;
+		private readonly IProjectAdapter _projectAdapter;
 		private Poster? _selectedPoster;
 
 		private string? _selectedName;
@@ -28,7 +28,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterOpenSaveViewModel(IMapLoaderManager mapLoaderManager, ProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
+		public PosterOpenSaveViewModel(IMapLoaderManager mapLoaderManager, IProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
 		{
 			_mapLoaderManager = mapLoaderManager;
 			_projectAdapter = projectAdapter;

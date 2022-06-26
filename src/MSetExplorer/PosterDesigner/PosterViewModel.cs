@@ -1,6 +1,4 @@
-﻿using MongoDB.Bson;
-using MSetRepo;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -11,7 +9,7 @@ namespace MSetExplorer
 {
 	internal class PosterViewModel : ViewModelBase, IPosterViewModel, IDisposable
 	{
-		private readonly ProjectAdapter _projectAdapter;
+		private readonly IProjectAdapter _projectAdapter;
 
 		private SizeInt _canvasSize;
 		private SizeInt _logicalDisplaySize;
@@ -22,7 +20,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterViewModel(ProjectAdapter projectAdapter)
+		public PosterViewModel(IProjectAdapter projectAdapter)
 		{
 			_projectAdapter = projectAdapter;
 

@@ -1,6 +1,7 @@
-﻿using ImageBuilder;
+﻿using MSetRepo;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 
 namespace MSetExplorer
@@ -13,25 +14,24 @@ namespace MSetExplorer
 
 	public class AppNavViewModel
 	{
-		public RepositoryAdapters RepositoryAdapters { get; init; }
-		
+		private IProjectAdapter _projectAdapter;
+		private SharedColorBandSetAdapter _sharedColorBandSetAdapter;
 
 		public MapJobHelper MapJobHelper { get; init; }
 		public IMapLoaderManager MapLoaderManager { get; init; }
-		//public PngBuilder PngBuilder { get; init; }
 
 		public AppNavViewModel(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
 		{
-			RepositoryAdapters = repositoryAdapters;
+			_projectAdapter = repositoryAdapters.ProjectAdapter;
+			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
 			MapJobHelper = new MapJobHelper(repositoryAdapters.MapSectionAdapter);
 			MapLoaderManager = mapLoaderManager;
-			//PngBuilder = pngBuilder;
 		}
 
 		public ExplorerViewModel GetExplorerViewModel()
 		{
 			// Map Project ViewModel
-			var mapProjectViewModel = new MapProjectViewModel(RepositoryAdapters.ProjectAdapter, MapJobHelper, RMapConstants.BLOCK_SIZE);
+			var mapProjectViewModel = new MapProjectViewModel(_projectAdapter, MapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();
@@ -49,7 +49,7 @@ namespace MSetExplorer
 		public PosterDesignerViewModel GetPosterDesignerViewModel()
 		{
 			// Poster ViewModel
-			var posterViewModel = new PosterViewModel(RepositoryAdapters.ProjectAdapter);
+			var posterViewModel = new PosterViewModel(_projectAdapter);
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();
@@ -69,23 +69,17 @@ namespace MSetExplorer
 
 		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return RepositoryAdapters.ProjectAdapter == null
-				? throw new InvalidOperationException("Cannot create a Project OpenSave ViewModel, the ProjectAdapter is null.")
-				: new ProjectOpenSaveViewModel(RepositoryAdapters.ProjectAdapter, initalName, dialogType);
+			return new ProjectOpenSaveViewModel(_projectAdapter, initalName, dialogType);
 		}
 
 		private IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return RepositoryAdapters.SharedColorBandSetAdapter == null
-				? throw new InvalidOperationException("Cannot create a ColorBandSet OpenSave ViewModel, the Shared ColorBandSet Adapter is null.")
-				: new ColorBandSetOpenSaveViewModel(RepositoryAdapters.SharedColorBandSetAdapter, initalName, dialogType);
+			return new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
 		}
 
 		private IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return RepositoryAdapters.ProjectAdapter == null
-				? throw new InvalidOperationException("Cannot create a Poster OpenSave ViewModel, the ProjectAdapter is null.")
-				: new PosterOpenSaveViewModel(MapLoaderManager, RepositoryAdapters.ProjectAdapter, initalName, dialogType);
+			return new PosterOpenSaveViewModel(MapLoaderManager, _projectAdapter, initalName, dialogType);
 		}
 
 		private CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
