@@ -132,23 +132,26 @@ namespace MSetExplorer
 				if (value != _verticalPosition)
 				{
 					_verticalPosition = value;
-					Debug.WriteLine($"Vertical Pos: {value}, Inverted: {InvertedVerticalPosition}.");
+					_invertedVerticalPosition = GetInvertedYPos(value);
+					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
 					OnPropertyChanged(nameof(IMapScrollViewModel.VerticalPosition));
+					OnPropertyChanged(nameof(IMapScrollViewModel.InvertedVerticalPosition));
 				}
-
-				InvertedVerticalPosition = GetInvertedYPos(value);
 			}
 		}
 
 		public double InvertedVerticalPosition
 		{
 			get => _invertedVerticalPosition;
-			private set
+			set
 			{
 				if (value != _invertedVerticalPosition)
 				{
 					_invertedVerticalPosition = value;
+					_verticalPosition = GetInvertedYPos(value);
+					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
 					OnPropertyChanged(nameof(IMapScrollViewModel.InvertedVerticalPosition));
+					OnPropertyChanged(nameof(IMapScrollViewModel.VerticalPosition));
 				}
 			}
 		}

@@ -150,14 +150,26 @@ namespace MSetExplorer
 
 		private void PosterViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
+			if (e.PropertyName == nameof(IPosterViewModel.PosterSize))
+			{
+				MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
+			}
+			else if (e.PropertyName == nameof(IPosterViewModel.DisplayZoom))
+			{
+				MapScrollViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
+			}
+
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
-			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
+			else if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
 				var curPoster = PosterViewModel.CurrentPoster;
 
 				if (curPoster != null)
 				{
 					MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
+					MapScrollViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
+					MapScrollViewModel.HorizontalPosition = PosterViewModel.DisplayPosition.X;
+					MapScrollViewModel.InvertedVerticalPosition = PosterViewModel.DisplayPosition.Y;
 				}
 				else
 				{
@@ -234,17 +246,19 @@ namespace MSetExplorer
 
 		private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName is (nameof(IMapScrollViewModel.HorizontalPosition)) or (nameof(IMapScrollViewModel.InvertedVerticalPosition)))
+			if (e.PropertyName == nameof(IMapScrollViewModel.HorizontalPosition))
 			{
-				// TODO: Update VectorInt to take a pair of doubles.
-				// OR: Add a Position Property to the IMapScrollViewModel of type VectorInt.
-				PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), (int)Math.Round(MapScrollViewModel.InvertedVerticalPosition));
+				PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), PosterViewModel.DisplayPosition.Y);
+			}
+
+			else if (e.PropertyName == nameof(IMapScrollViewModel.InvertedVerticalPosition))
+			{
+				PosterViewModel.DisplayPosition = new VectorInt(PosterViewModel.DisplayPosition.X, (int)Math.Round(MapScrollViewModel.InvertedVerticalPosition));
 			}
 
 			else if (e.PropertyName == nameof(IMapScrollViewModel.DisplayZoom))
 			{
 				PosterViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
-				//MapDisplayViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
 			}
 		}
 

@@ -13,7 +13,7 @@ namespace MSetExplorer
 		double DisplayZoom { get; set; }
 		double MaximumDisplayZoom { get; }
 
-		double InvertedVerticalPosition { get; }
+		double InvertedVerticalPosition { get; set; }
 		double VerticalPosition { get; set; }
 		double HorizontalPosition { get; set; }
 	}

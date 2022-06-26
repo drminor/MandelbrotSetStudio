@@ -109,10 +109,19 @@ namespace MSetExplorer
 					{
 						_currentPoster.PropertyChanged -= CurrentPoster_PropertyChanged;
 					}
+
 					_currentPoster = value;
 
 					if (_currentPoster != null)
 					{
+						var dispPos = _currentPoster.DisplayPosition;
+						OnPropertyChanged(nameof(IPosterViewModel.PosterSize));
+						OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
+
+						// Setting the PosterSize and DisplayZoom can update the DisplayPosition. Use the value read from file.
+						_currentPoster.DisplayPosition = dispPos;
+						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
+
 						JobAreaAndCalcSettings = GetNewJob(_currentPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, _currentPoster.MapCalcSettings);
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
 					}
