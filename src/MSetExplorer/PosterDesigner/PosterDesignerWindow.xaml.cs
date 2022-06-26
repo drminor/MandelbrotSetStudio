@@ -6,7 +6,6 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -58,7 +57,9 @@ namespace MSetExplorer
 				_vm.MapScrollViewModel.CanvasSize = _vm.MapDisplayViewModel.CanvasSize;
 
 				mapScroll1.DataContext = _vm.MapScrollViewModel;
-				_vm.MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
+				//_vm.MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
+
+				mapDisplayZoom1.DataContext = _vm.MapScrollViewModel;
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
@@ -67,16 +68,16 @@ namespace MSetExplorer
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 
-				scrBarZoom.Minimum = 1;
-				scrBarZoom.Value = 1;
+				//scrBarZoom.Minimum = 1;
+				//scrBarZoom.Value = 1;
 
-				scrBarZoom.Maximum = 10;
-				scrBarZoom.SmallChange = 0.1;
-				scrBarZoom.LargeChange = 1;
+				//scrBarZoom.Maximum = 10;
+				//scrBarZoom.SmallChange = 0.1;
+				//scrBarZoom.LargeChange = 1;
 
-				scrBarZoom.Value = 1;
+				//scrBarZoom.Value = 1;
 
-				scrBarZoom.Scroll += ScrBarZoom_Scroll;
+				//scrBarZoom.Scroll += ScrBarZoom_Scroll;
 
 				Debug.WriteLine("The MainWindow is now loaded");
 			}
@@ -108,28 +109,32 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods
+		//#region Private Methods
 
-		private void SetDisplayZoom(double val)
-		{
-			//_vm.MapDisplayViewModel.ClearDisplay();
-			_vm.MapScrollViewModel.DisplayZoom = val;
-			var adjustedDisplayZoom = _vm.MapScrollViewModel.DisplayZoom;
-			txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
+		//private void SetDisplayZoom(double val)
+		//{
+		//	////_vm.MapDisplayViewModel.ClearDisplay();
 
-			//_vm.MapScrollViewModel.VerticalPosition = 0;
-			//_vm.MapScrollViewModel.HorizontalPosition = 0;
-			SetDisplayPosition(new VectorInt());
-		}
+		//	//if (val < 1)
+		//	//{
+		//	//	val = 1;
+		//	//}
 
-		private void SetDisplayPosition(VectorInt position)
-		{
-			// TODO: Consider making this part of the MapScrollView (code behind) ConfigureScrollBars
-			_vm.MapScrollViewModel.HorizontalPosition = position.X;
-			_vm.MapScrollViewModel.VerticalPosition = position.Y;
-		}
+		//	//_vm.MapScrollViewModel.DisplayZoom = val;
+		//	//var adjustedDisplayZoom = _vm.MapScrollViewModel.DisplayZoom;
+		//	//txtblkZoomValue.Text = Math.Round(adjustedDisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
 
-		#endregion
+		//	SetDisplayPosition(new VectorInt());
+		//}
+
+		//private void SetDisplayPosition(VectorInt position)
+		//{
+		//	//// TODO: Consider making this part of the MapScrollView (code behind) ConfigureScrollBars
+		//	//_vm.MapScrollViewModel.HorizontalPosition = position.X;
+		//	//_vm.MapScrollViewModel.VerticalPosition = position.Y;
+		//}
+
+		//#endregion
 
 		#region Event Handlers
 
@@ -137,8 +142,9 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
-				SetDisplayZoom(_vm.PosterViewModel.DisplayZoom);
-				SetDisplayPosition(_vm.PosterViewModel.DisplayPosition);
+				_vm.MapScrollViewModel.DisplayZoom = _vm.PosterViewModel.DisplayZoom;
+				_vm.MapScrollViewModel.HorizontalPosition = _vm.PosterViewModel.DisplayPosition.X;
+				_vm.MapScrollViewModel.VerticalPosition = _vm.PosterViewModel.DisplayPosition.Y;
 
 				Title = GetWindowTitle(_vm.PosterViewModel.CurrentPoster?.Name, _vm.PosterViewModel.ColorBandSet?.Name);
 				CommandManager.InvalidateRequerySuggested();
@@ -147,17 +153,6 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectOnFile) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectIsDirty))
 			{
 				CommandManager.InvalidateRequerySuggested();
-			}
-		}
-
-		private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(IMapScrollViewModel.MaximumDisplayZoom))
-			{
-				scrBarZoom.Minimum = 1;
-				scrBarZoom.Maximum = _vm.MapScrollViewModel.MaximumDisplayZoom;
-				scrBarZoom.LargeChange = scrBarZoom.Maximum / 8;
-				scrBarZoom.SmallChange = scrBarZoom.LargeChange / 8;
 			}
 		}
 
@@ -174,19 +169,37 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ScrBarZoom_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
-		{
-			if (_vm.PosterViewModel.CurrentPoster != null)
-			{
-				var val = e.NewValue;
-				if (val < 1)
-				{
-					val = 1;
-				}
+		//private void ScrBarZoom_Scroll(object sender, ScrollEventArgs e)
+		//{
+		//	if (_vm.PosterViewModel.CurrentPoster != null)
+		//	{
+		//		var et = e.ScrollEventType;
 
-				SetDisplayZoom(val);
-			}
-		}
+		//		if (et == ScrollEventType.First)
+		//		{
+		//			SetDisplayZoom(1);
+		//		}
+		//		else if (et == ScrollEventType.Last)
+		//		{
+		//			var max = _vm.MapScrollViewModel.MaximumDisplayZoom;
+		//			SetDisplayZoom(max);
+		//		}
+		//		else if (et == ScrollEventType.LargeDecrement || et == ScrollEventType.LargeIncrement || et == ScrollEventType.SmallDecrement || et == ScrollEventType.SmallIncrement)
+		//		{
+		//			SetDisplayZoom(e.NewValue);
+		//		}
+		//		else if (et == ScrollEventType.EndScroll)
+		//		{
+		//			SetDisplayZoom(e.NewValue);
+		//		}
+		//		//else if (et == ScrollEventType.ThumbPosition)
+		//		//{
+		//		//}
+		//		//else if (et == ScrollEventType.ThumbTrack)
+		//		//{
+		//		//}
+		//	}
+		//}
 
 		#endregion
 
@@ -581,22 +594,22 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region DisplayZoom Min Max Button Handlers
+		//#region DisplayZoom Min Max Button Handlers
 
-		private void ButtonSetMaxZoom_Click(object sender, RoutedEventArgs e)
-		{
-			var max = _vm.MapScrollViewModel.MaximumDisplayZoom;
-			scrBarZoom.Value = max;
-			SetDisplayZoom(max);
-		}
+		//private void ButtonSetMaxZoom_Click(object sender, RoutedEventArgs e)
+		//{
+		//	var max = _vm.MapScrollViewModel.MaximumDisplayZoom;
+		//	scrBarZoom.Value = max;
+		//	SetDisplayZoom(max);
+		//}
 
-		private void ButtonSetMinZoom_Click(object sender, RoutedEventArgs e)
-		{
-			scrBarZoom.Value = 1;
-			SetDisplayZoom(1);
-		}
+		//private void ButtonSetMinZoom_Click(object sender, RoutedEventArgs e)
+		//{
+		//	scrBarZoom.Value = 1;
+		//	SetDisplayZoom(1);
+		//}
 
-		#endregion
+		//#endregion
 
 		#region Zoom Out Button Handlers
 

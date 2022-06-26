@@ -114,7 +114,8 @@
                 <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanDown">Down</Button>
             </StackPanel>
 
-            <Border Grid.Row="1" BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Stretch" Margin="0,10">
+            <local:MapDisplayZoomControl x:Name="mapDisplayZoom1" Grid.Row="1" Margin="0,10"/>
+            <!--<Border Grid.Row="1" BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Stretch" Margin="0,10">
                 
                 <StackPanel  Orientation="Vertical">
                     <Button Click="ButtonSetMinZoom_Click" >Min</Button>
@@ -126,7 +127,7 @@
                     <Button Click="ButtonSetMaxZoom_Click">Max</Button>
                 </StackPanel>
                 
-            </Border>
+            </Border>-->
 
         </Grid>
 

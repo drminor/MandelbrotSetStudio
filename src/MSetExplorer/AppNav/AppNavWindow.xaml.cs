@@ -33,7 +33,11 @@ namespace MSetExplorer
 			{
 				_vm = (AppNavViewModel)DataContext;
 
-				if (!Properties.Settings.Default.ShowTopNav)
+				if (Properties.Settings.Default.ShowTopNav)
+				{
+					WindowState = WindowState.Normal;
+				}
+				else
 				{
 					var lastWindowName = Properties.Settings.Default.LastWindowName;
 
@@ -47,10 +51,6 @@ namespace MSetExplorer
 						//GoToDesigner(initalCommand);
 						GoToDesigner();
 					}
-				}
-				else
-				{
-					WindowState = WindowState.Normal;
 				}
 
 				Debug.WriteLine("The AppNav Window is now loaded");

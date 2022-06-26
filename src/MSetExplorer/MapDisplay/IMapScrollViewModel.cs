@@ -16,6 +16,5 @@ namespace MSetExplorer
 		double InvertedVerticalPosition { get; }
 		double VerticalPosition { get; set; }
 		double HorizontalPosition { get; set; }
-
 	}
 }
