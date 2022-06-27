@@ -19,7 +19,7 @@ namespace MapSectionProviderLib
 		private readonly IMEngineClient[] _mEngineClients;
 		private int _nextMEngineClientPtr;
 
-		private readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
+		private readonly MapSectionPersistProcessor? _mapSectionPersistProcessor;
 
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<MapSecWorkGenType> _workQueue;
@@ -33,7 +33,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients, MapSectionPersistProcessor mapSectionPersistProcessor)
+		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients, MapSectionPersistProcessor? mapSectionPersistProcessor)
 		{
 			_mEngineClients = mEngineClients;
 			_nextMEngineClientPtr = 0;
@@ -129,7 +129,7 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private async Task ProcessTheQueueAsync(IMEngineClient mEngineClient, MapSectionPersistProcessor mapSectionPersistProcessor, CancellationToken ct)
+		private async Task ProcessTheQueueAsync(IMEngineClient mEngineClient, MapSectionPersistProcessor? mapSectionPersistProcessor, CancellationToken ct)
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
@@ -140,7 +140,7 @@ namespace MapSectionProviderLib
 					// The original request is in the Request's Request property.
 					var mapSectionRequest = mapSectionWorkItem.Request.Request;
 
-					MapSectionResponse mapSectionResponse;
+					MapSectionResponse? mapSectionResponse;
 
 					if (IsJobCancelled(mapSectionWorkItem.JobId))
 					{

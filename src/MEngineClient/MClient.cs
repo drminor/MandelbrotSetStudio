@@ -10,7 +10,7 @@ namespace MEngineClient
 {
 	public class MClient : IMEngineClient
 	{
-		private GrpcChannel _grpcChannel;
+		private GrpcChannel? _grpcChannel;
 
 		public MClient(string endPointAddress)
 		{

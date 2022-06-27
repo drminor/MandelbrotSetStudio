@@ -111,9 +111,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
+		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)
 		{
-			if (mapSectionResponse.Counts != null && !mapSectionResponse.RequestCancelled)
+			if (mapSectionResponse != null && mapSectionResponse.Counts != null && !mapSectionResponse.RequestCancelled)
 			{
 				var mapSection = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
 

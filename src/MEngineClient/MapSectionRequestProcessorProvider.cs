@@ -14,12 +14,12 @@ namespace MEngineClient
 
 			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
 
-			IMapSectionAdapter forLookup = useMapSectionRepository ? mapSectionAdapter : null;
+			IMapSectionAdapter? mapSectionAdapterForLookup = useMapSectionRepository ? mapSectionAdapter : null;
 
 			// Force LookUps to find nothing
 			//forLookup = null;
 
-			var mapSectionRequestProcessor = new MapSectionRequestProcessor(forLookup, mapSectionGeneratorProcessor, mapSectionResponseProcessor);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapterForLookup, mapSectionGeneratorProcessor, mapSectionResponseProcessor);
 
 			return mapSectionRequestProcessor;
 		}

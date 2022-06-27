@@ -19,7 +19,7 @@ namespace MapSectionProviderLib
 		private const int NUMBER_OF_CONSUMERS = 2;
 		private const int QUEUE_CAPACITY = 10; //200;
 
-		private readonly IMapSectionAdapter _mapSectionAdapter;
+		private readonly IMapSectionAdapter? _mapSectionAdapter;
 		private readonly DtoMapper _dtoMapper;
 
 		private readonly MapSectionGeneratorProcessor _mapSectionGeneratorProcessor;
@@ -42,7 +42,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor)
+		public MapSectionRequestProcessor(IMapSectionAdapter? mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor)
 		{
 			_nextJobId = 0;
 			_mapSectionAdapter = mapSectionAdapter;
@@ -73,7 +73,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSectionResponse> responseHandler) 
+		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSectionResponse?> responseHandler) 
 		{
 			var mapSectionWorkItem = new MapSecWorkReqType(jobNumber, mapSectionRequest, responseHandler);
 
@@ -164,7 +164,7 @@ namespace MapSectionProviderLib
 				{
 					var mapSectionWorkItem = _workQueue.Take(ct);
 
-					MapSectionResponse mapSectionResponse;
+					MapSectionResponse? mapSectionResponse;
 					if (IsJobCancelled(mapSectionWorkItem.JobId))
 					{
 						mapSectionResponse = BuildEmptyResponse(mapSectionWorkItem.Request);
@@ -197,7 +197,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionResponse> FetchOrQueueForGenerationAsync(MapSecWorkReqType mapSectionWorkItem, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
+		private async Task<MapSectionResponse?> FetchOrQueueForGenerationAsync(MapSecWorkReqType mapSectionWorkItem, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
 		{
 			if (CheckForMatchingAndAddToPending(mapSectionWorkItem))
 			{
@@ -300,7 +300,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionResponse> FetchAsync(MapSecWorkReqType mapSectionWorkItem)
+		private async Task<MapSectionResponse?> FetchAsync(MapSecWorkReqType mapSectionWorkItem)
 		{
 			if (_mapSectionAdapter != null)
 			{
@@ -326,7 +326,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private void HandleGeneratedResponse(MapSecWorkReqType mapSectionWorkItem, MapSectionResponse mapSectionResponse)
+		private void HandleGeneratedResponse(MapSecWorkReqType mapSectionWorkItem, MapSectionResponse? mapSectionResponse)
 		{
 			// Set the original request's repsonse to the generated response.
 			mapSectionWorkItem.Response = mapSectionResponse ?? BuildEmptyResponse(mapSectionWorkItem.Request);

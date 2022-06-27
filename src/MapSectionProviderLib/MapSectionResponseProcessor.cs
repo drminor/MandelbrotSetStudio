@@ -100,13 +100,16 @@ namespace MapSectionProviderLib
 				{
 					var mapSectionWorkItem = _workQueue.Take(ct);
 
-					if (!mapSectionWorkItem.Response.RequestCancelled && IsJobCancelled(mapSectionWorkItem.JobId))
+					if (mapSectionWorkItem.Response != null)
 					{
-						mapSectionWorkItem.Response.RequestCancelled = true;
-					}
+						if (!mapSectionWorkItem.Response.RequestCancelled && IsJobCancelled(mapSectionWorkItem.JobId))
+						{
+							mapSectionWorkItem.Response.RequestCancelled = true;
+						}
 
-					mapSectionWorkItem.Request.Completed = true;
-					mapSectionWorkItem.RunWorkAction();
+						mapSectionWorkItem.Request.Completed = true;
+						mapSectionWorkItem.RunWorkAction();
+					}
 				}
 				catch (OperationCanceledException)
 				{
