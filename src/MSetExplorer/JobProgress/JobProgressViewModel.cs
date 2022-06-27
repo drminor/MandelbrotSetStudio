@@ -19,7 +19,7 @@ namespace MSetExplorer
 		{
 			_synchronizationContext = SynchronizationContext.Current;
 			_mapLoaderManager = mapLoaderManager;
-			_currentJobProgressInfo = new JobProgressInfo(0, "temp", DateTime.Now, 0);
+			_currentJobProgressInfo = new JobProgressInfo(0, "temp", DateTime.UtcNow, 0);
 			MapSectionProcessInfos = new ObservableCollection<MapSectionProcessInfo>();
 
 			_mapLoaderManager.RequestAdded += MapLoaderManager_RequestAdded;
@@ -34,6 +34,9 @@ namespace MSetExplorer
 		private void HandleRequstAdded(JobProgressInfo jobProgressInfo)
 		{
 			CurrentJobProgressInfo = jobProgressInfo;
+			CurrentJobProgressInfo.DateCreatedUtc = DateTime.UtcNow;
+
+			OnPropertyChanged(nameof(TotalSections));
 		}
 
 		private void MapLoaderManager_RequestCompleted(object? sender, MapSectionProcessInfo e)
@@ -65,6 +68,12 @@ namespace MSetExplorer
 				}
 			}
 
+			OnPropertyChanged(nameof(RunTime));
+			OnPropertyChanged(nameof(EstimatedTimeRemaining));
+
+			OnPropertyChanged(nameof(FetchedCount));
+			OnPropertyChanged(nameof(GeneratedCount));
+
 			OnPropertyChanged(nameof(PercentComplete));
 		}
 
@@ -87,25 +96,43 @@ namespace MSetExplorer
 			}
 		}
 
+		public int TotalSections
+		{
+			get => CurrentJobProgressInfo.TotalSections;
+			set { }
+		}
+
+		public TimeSpan RunTime
+		{
+			get => CurrentJobProgressInfo.RunTime;
+			set { }
+		}
+
+		public TimeSpan EstimatedTimeRemaining
+		{
+			get => CurrentJobProgressInfo.EstimatedTimeRemaining;
+			set { }
+		}
+
 		public double PercentComplete
 		{
 			get => CurrentJobProgressInfo.PercentComplete;
 			set { }
 		}
 
+		public int FetchedCount
+		{
+			get => CurrentJobProgressInfo.FetchedCount;
+			set { }
+		}
+
+		public int GeneratedCount
+		{
+			get => CurrentJobProgressInfo.GeneratedCount;
+			set { }
+		}
+
 		#endregion
 
-		//public void Done(int jobNumber)
-		//{
-		//	if (CurrentJobProgressInfo.JobNumber == jobNumber)
-		//	{
-		//		CurrentJobProgressInfo.PercentComplete = 100;
-		//		OnPropertyChanged(nameof(PercentComplete));
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLine($"Done was called but not used. Our JobNumber = {CurrentJobProgressInfo.JobNumber}, JobNumber provided: {jobNumber}.");
-		//	}
-		//}
 	}
 }

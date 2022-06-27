@@ -157,10 +157,10 @@ namespace MapSectionProviderLib
 						_workQueue.Dispose();
 					}
 
-					if (_workQueueProcessor != null)
-					{
-						_workQueueProcessor.Dispose();
-					}
+					//if (_workQueueProcessor != null)
+					//{
+					//	_workQueueProcessor.Dispose();
+					//}
 				}
 
 				disposedValue = true;

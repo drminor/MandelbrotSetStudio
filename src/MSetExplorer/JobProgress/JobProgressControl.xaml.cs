@@ -54,8 +54,11 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(JobProgressViewModel.PercentComplete))
 			{
-				prgBarCurrentJob.Value = _vm.PercentComplete;
 				MoveSelectedToLast();
+
+				prgBarCurrentJob.Value = _vm.PercentComplete;
+
+
 			}
 		}
 

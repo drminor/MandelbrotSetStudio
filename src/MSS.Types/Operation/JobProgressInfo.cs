@@ -5,15 +5,14 @@ namespace MSS.Types
 {
 	public class JobProgressInfo 
 	{
-		private double _percentComplete;
 		private int _fetchedCount;
 		private int _generatedCount;
 
-		public JobProgressInfo(int jobNumber, string label, DateTime dateCreated, int totalSections)
+		public JobProgressInfo(int jobNumber, string label, DateTime dateCreatedUtc, int totalSections)
 		{
 			JobNumber = jobNumber;
 			Label = label;
-			DateCreated = dateCreated;
+			DateCreatedUtc = dateCreatedUtc;
 			TotalSections = totalSections;
 		}
 
@@ -21,22 +20,31 @@ namespace MSS.Types
 
 		public string Label { get; init; }
 
-		public DateTime DateCreated { get; init; }
+		public DateTime DateCreatedUtc { get; set; }
 
 		public int TotalSections { get; init; }
 
-		public double PercentComplete
+		public TimeSpan RunTime => DateTime.UtcNow - DateCreatedUtc;
+
+		public TimeSpan EstimatedTimeRemaining
 		{
-			get => _percentComplete;
-			set
+			get
 			{
-				if (value != _percentComplete)
+				TimeSpan result;
+				if (RunTime.TotalSeconds > 5 && PercentComplete > 1)
 				{
-					_percentComplete = value;
-					//OnPropertyChanged();
+					result = TimeSpan.FromSeconds((RunTime.TotalSeconds * 100 / PercentComplete) - RunTime.TotalSeconds);
 				}
+				else
+				{
+					result = TimeSpan.Zero;
+				}
+
+				return result;
 			}
 		}
+
+		public double PercentComplete { get; set; }
 
 		public int FetchedCount
 		{
@@ -46,12 +54,10 @@ namespace MSS.Types
 				if (value != _fetchedCount)
 				{
 					_fetchedCount = value;
-					//OnPropertyChanged();
 					if (TotalSections > 0)
 					{
 						PercentComplete = 100 * (_generatedCount + _fetchedCount) / TotalSections;
-						Debug.WriteLine($"G: {_generatedCount}, F: {_fetchedCount}, PC: {_percentComplete}, TS: {TotalSections}.");
-						//OnPropertyChanged(nameof(PercentComplete));
+						//Debug.WriteLine($"G: {GeneratedCount}, F: {FetchedCount}, PC: {PercentComplete}, TS: {TotalSections}.");
 					}
 				}
 			}
@@ -65,12 +71,10 @@ namespace MSS.Types
 				if (value != _generatedCount)
 				{
 					_generatedCount = value;
-					//OnPropertyChanged();
 
 					if (TotalSections > 0)
 					{
 						PercentComplete = 100 * (_generatedCount + _fetchedCount) / TotalSections;
-						//OnPropertyChanged(nameof(PercentComplete));
 					}
 				}
 			}

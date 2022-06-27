@@ -223,13 +223,13 @@ namespace MapSectionProviderLib
 						_workQueue.Dispose();
 					}
 
-					for (var i = 0; i < _workQueueProcessors.Count; i++)
-					{
-						if (_workQueueProcessors[i] != null)
-						{
-							_workQueueProcessors[i].Dispose();
-						}
-					}
+					//for (var i = 0; i < _workQueueProcessors.Count; i++)
+					//{
+					//	if (_workQueueProcessors[i] != null)
+					//	{
+					//		_workQueueProcessors[i].Dispose();
+					//	}
+					//}
 
 					if (_mapSectionPersistProcessor != null)
 					{

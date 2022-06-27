@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
-             mc:Ignorable="d" Width="220" Height="210">
+             mc:Ignorable="d" Width="220" Height="235">
 
     <Grid>
         <Border x:Name="borderTop" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -14,16 +14,32 @@
                     <RowDefinition Height="150"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0">
+                <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
                     <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
 
                         <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Width="90" Margin="10, 0, 10, 0" FontSize="16" Text="% Complete:" VerticalAlignment="Top"/>
-                            <TextBox x:Name="txtPercentComplete" Text="{Binding PercentComplete, Mode=OneWay}"  Width="50" Height="22"/>
+                            <TextBlock Width="15" Margin="10, 0, 5, 0" FontSize="16" Text="F:" VerticalAlignment="Top"/>
+                            <TextBox Text="{Binding FetchedCount, Mode=OneWay}"  Width="33" Height="22"/>
+
+                            <TextBlock Width="15" Margin="5, 0" FontSize="16" Text="G:" VerticalAlignment="Top"/>
+                            <TextBox Text="{Binding GeneratedCount, Mode=OneWay}"  Width="33" Height="22"/>
+
+                            <TextBlock Width="15" Margin="5, 0" FontSize="16" Text="T:" VerticalAlignment="Top"/>
+                            <TextBox Text="{Binding TotalSections, Mode=OneWay}"  Width="33" Height="22"/>
                         </StackPanel>
 
-                        <ProgressBar x:Name="prgBarCurrentJob" Height="12" Margin="5"/>
+                        <ProgressBar x:Name="prgBarCurrentJob" Height="12" Margin="10,5,10,0"/>
 
+
+                        <StackPanel Orientation="Horizontal" Margin="10,5,10,0">
+                            <!--<TextBlock Text="So Far:" Width="38" Margin="10,0,5,0" VerticalAlignment="Top"/>-->
+                            <TextBox Text="{Binding RunTime, Mode=OneWay}" Margin="0,0,15,0" Width="85"/>
+
+                            <!--<TextBlock Text="Remaining:" Width="63" Margin="5, 0" VerticalAlignment="Top"/>-->
+                            <TextBox Text="{Binding EstimatedTimeRemaining, Mode=OneWay}"  Width="85" />
+
+                        </StackPanel>                        
+                        
                     </StackPanel>
                 </Border>
 
