@@ -158,6 +158,8 @@ namespace MapSectionProviderLib
 						{
 							mapSectionPersistProcessor.AddWork(mapSectionResponse);
 						}
+
+						mapSectionWorkItem.Request.Request.ProcessingEndTime = DateTime.UtcNow;
 					}
 
 					mapSectionWorkItem.RunWorkAction(mapSectionResponse);

@@ -127,7 +127,7 @@
                 <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
             </StackPanel>
 
-            <local:JobProgressControl x:Name="jobProgress1" Grid.Row="2" Visibility="Visible"/>
+            <local:JobProgressControl x:Name="jobProgress1" Grid.Row="2" Margin="5" Visibility="Visible"/>
 
             <StackPanel Grid.Row="3" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecScreenSizeButtons">
                 <Grid Margin="5,0" x:Name="grdTop">

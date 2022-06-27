@@ -58,6 +58,11 @@ namespace MEngineDataContracts
 		public string ClientEndPointAddress { get; set; }
 		public TimeSpan? TimeToCompleteGenRequest { get; set; }
 
+		public DateTime ProcessingStartTime { get; set; }
+		public DateTime? ProcessingEndTime { get; set; }
+
+		public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
+
 		public bool GetIsDone()
 		{
 			if (DoneFlags == null)

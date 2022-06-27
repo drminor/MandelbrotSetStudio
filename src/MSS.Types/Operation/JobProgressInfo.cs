@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Diagnostics;
 
-namespace MSetExplorer
+namespace MSS.Types
 {
-	public class JobProgressRecord : ViewModelBase
+	public class JobProgressInfo 
 	{
 		private double _percentComplete;
 		private int _fetchedCount;
 		private int _generatedCount;
 
-		public JobProgressRecord(int jobNumber, string label, DateTime dateCreated, int totalSections)
+		public JobProgressInfo(int jobNumber, string label, DateTime dateCreated, int totalSections)
 		{
 			JobNumber = jobNumber;
 			Label = label;
@@ -32,7 +33,7 @@ namespace MSetExplorer
 				if (value != _percentComplete)
 				{
 					_percentComplete = value;
-					OnPropertyChanged();
+					//OnPropertyChanged();
 				}
 			}
 		}
@@ -45,8 +46,13 @@ namespace MSetExplorer
 				if (value != _fetchedCount)
 				{
 					_fetchedCount = value;
-					OnPropertyChanged();
-					OnPropertyChanged(nameof(PercentComplete));
+					//OnPropertyChanged();
+					if (TotalSections > 0)
+					{
+						PercentComplete = 100 * (_generatedCount + _fetchedCount) / TotalSections;
+						Debug.WriteLine($"G: {_generatedCount}, F: {_fetchedCount}, PC: {_percentComplete}, TS: {TotalSections}.");
+						//OnPropertyChanged(nameof(PercentComplete));
+					}
 				}
 			}
 		}
@@ -59,12 +65,12 @@ namespace MSetExplorer
 				if (value != _generatedCount)
 				{
 					_generatedCount = value;
-					OnPropertyChanged();
+					//OnPropertyChanged();
 
 					if (TotalSections > 0)
 					{
-						PercentComplete = 100 * (_generatedCount + _fetchedCount / TotalSections);
-						OnPropertyChanged(nameof(PercentComplete));
+						PercentComplete = 100 * (_generatedCount + _fetchedCount) / TotalSections;
+						//OnPropertyChanged(nameof(PercentComplete));
 					}
 				}
 			}

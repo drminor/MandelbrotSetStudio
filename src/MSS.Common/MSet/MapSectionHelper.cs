@@ -125,7 +125,8 @@ namespace MSS.Common
 				DoneFlags = null,
 				ZValues = null,
 				IsInverted = isInverted,
-				TimeToCompleteGenRequest = null
+				TimeToCompleteGenRequest = null,
+				ProcessingStartTime = DateTime.UtcNow
 			};
 
 			return mapSectionRequest;

@@ -217,6 +217,7 @@ namespace MapSectionProviderLib
 			if (mapSectionResponse.MapCalcSettings.TargetIterations >= requestedIterations)
 			{
 				mapSectionWorkItem.Request.FoundInRepo = true;
+				mapSectionWorkItem.Request.ProcessingEndTime = DateTime.UtcNow;
 				return mapSectionResponse;
 			}
 
@@ -225,6 +226,7 @@ namespace MapSectionProviderLib
 				if (IsResponseComplete(mapSectionResponse, requestedIterations))
 				{
 					mapSectionWorkItem.Request.FoundInRepo = true;
+					mapSectionWorkItem.Request.ProcessingEndTime = DateTime.UtcNow;
 					return mapSectionResponse;
 				}
 				else

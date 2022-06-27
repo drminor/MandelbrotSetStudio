@@ -13,58 +13,59 @@ namespace MSetExplorer
 
 		private readonly SynchronizationContext? _synchronizationContext;
 		private readonly IMapLoaderManager _mapLoaderManager;
-		private JobProgressRecord _currentJobProgressRecord;
+		private JobProgressInfo _currentJobProgressInfo;
 
 		public JobProgressViewModel(IMapLoaderManager mapLoaderManager)
 		{
 			_synchronizationContext = SynchronizationContext.Current;
 			_mapLoaderManager = mapLoaderManager;
-			_currentJobProgressRecord = new JobProgressRecord(0, "temp", DateTime.Now, 0);
+			_currentJobProgressInfo = new JobProgressInfo(0, "temp", DateTime.Now, 0);
 			MapSectionProcessInfos = new ObservableCollection<MapSectionProcessInfo>();
 
 			_mapLoaderManager.RequestAdded += MapLoaderManager_RequestAdded;
 			_mapLoaderManager.RequestCompleted += MapLoaderManager_RequestCompleted;	
 		}
 
-		private void MapLoaderManager_RequestAdded(object? sender, int e)
+		private void MapLoaderManager_RequestAdded(object? sender, JobProgressInfo e)
 		{
 			_synchronizationContext?.Post((o) => HandleRequstAdded(e), null);
 		}
 
-		private void HandleRequstAdded(int jobNumber)
+		private void HandleRequstAdded(JobProgressInfo jobProgressInfo)
 		{
-			CurrentJobProgressRecord.PropertyChanged -= CurrentJobProgressRecord_PropertyChanged;
-			CurrentJobProgressRecord = new JobProgressRecord(jobNumber, "temp", DateTime.Now, 100);
-
-			CurrentJobProgressRecord.PropertyChanged += CurrentJobProgressRecord_PropertyChanged;
-		}
-
-		private void CurrentJobProgressRecord_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			OnPropertyChanged(nameof(PercentageComplete));
+			CurrentJobProgressInfo = jobProgressInfo;
 		}
 
 		private void MapLoaderManager_RequestCompleted(object? sender, MapSectionProcessInfo e)
 		{
-
 			Debug.WriteLine($"Got a RequestCompleted event. JobNumber: {e.JobNumber}, Number Completed: {e.RequestsCompleted}.");
 			_synchronizationContext?.Post((o) => HandleRequestCompleted(e), null);
 		}
 
 		private void HandleRequestCompleted(MapSectionProcessInfo mapSectionProcessInfo)
 		{
-			MapSectionProcessInfos.Add(mapSectionProcessInfo);
-			if (CurrentJobProgressRecord.JobNumber == mapSectionProcessInfo.JobNumber)
+			if (mapSectionProcessInfo.RequestsCompleted == -1)
 			{
-				if (mapSectionProcessInfo.FoundInRepo)
+
+			}
+			else
+			{
+				MapSectionProcessInfos.Add(mapSectionProcessInfo);
+
+				if (CurrentJobProgressInfo.JobNumber == mapSectionProcessInfo.JobNumber)
 				{
-					CurrentJobProgressRecord.FetchedCount += 1;
-				}
-				else
-				{
-					CurrentJobProgressRecord.GeneratedCount += 1;
+					if (mapSectionProcessInfo.FoundInRepo)
+					{
+						CurrentJobProgressInfo.FetchedCount += 1;
+					}
+					else
+					{
+						CurrentJobProgressInfo.GeneratedCount += 1;
+					}
 				}
 			}
+
+			OnPropertyChanged(nameof(PercentComplete));
 		}
 
 		#endregion
@@ -73,26 +74,38 @@ namespace MSetExplorer
 
 		public ObservableCollection<MapSectionProcessInfo> MapSectionProcessInfos { get; }
 
-		public JobProgressRecord CurrentJobProgressRecord
+		public JobProgressInfo CurrentJobProgressInfo
 		{
-			get => _currentJobProgressRecord; 
+			get => _currentJobProgressInfo; 
 			set
 			{
-				if (value !=_currentJobProgressRecord)
+				if (value !=_currentJobProgressInfo)
 				{
-					_currentJobProgressRecord = value;
+					_currentJobProgressInfo = value;
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public double PercentageComplete
+		public double PercentComplete
 		{
-			get => CurrentJobProgressRecord.PercentComplete;
+			get => CurrentJobProgressInfo.PercentComplete;
 			set { }
 		}
 
-
 		#endregion
+
+		//public void Done(int jobNumber)
+		//{
+		//	if (CurrentJobProgressInfo.JobNumber == jobNumber)
+		//	{
+		//		CurrentJobProgressInfo.PercentComplete = 100;
+		//		OnPropertyChanged(nameof(PercentComplete));
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"Done was called but not used. Our JobNumber = {CurrentJobProgressInfo.JobNumber}, JobNumber provided: {jobNumber}.");
+		//	}
+		//}
 	}
 }

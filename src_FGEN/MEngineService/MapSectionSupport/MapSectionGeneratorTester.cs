@@ -15,13 +15,16 @@ namespace MEngineService
 	{
 		public static void TestTheGenerator()
 		{
-			MapSectionRequest request = new MapSectionRequest();
-			request.SubdivisionId = "TestA";
-			request.BlockPosition = new BigVectorDto();
-			request.Position = new RPointDto(new BigInteger[] { 3, 1 }, -2);
-			request.BlockSize = new SizeInt(128, 128);
-			request.SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8);
-			request.MapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 100, useEscapeVelocities: true);
+			MapSectionRequest request = new MapSectionRequest
+			{
+				SubdivisionId = "TestA",
+				BlockPosition = new BigVectorDto(),
+				Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
+				BlockSize = new SizeInt(128, 128),
+				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
+				MapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 100, useEscapeVelocities: true),
+				ProcessingStartTime = DateTime.UtcNow
+			};
 
 			var response = MapSectionGenerator.GenerateMapSection(request);
 

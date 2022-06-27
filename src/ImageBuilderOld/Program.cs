@@ -140,7 +140,8 @@ namespace ImageBuilderOld
 				MapCalcSettings = new MapCalcSettings(targetIterations: 100, requestsPerJob: 100),
 				Counts = null,
 				DoneFlags = null,
-				ZValues = null
+				ZValues = null,
+				ProcessingStartTime = DateTime.UtcNow
 			};
 
 			//var tSize = new RSizeDto(new BigInteger[] { 11, 12 }, 3);

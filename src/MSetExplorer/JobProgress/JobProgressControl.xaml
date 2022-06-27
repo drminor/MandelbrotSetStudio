@@ -4,40 +4,47 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
-             mc:Ignorable="d" Width="290" Height="185">
+             mc:Ignorable="d" Width="220" Height="210">
 
     <Grid>
+        <Border x:Name="borderTop" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="150"/>
+                </Grid.RowDefinitions>
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="150"/>
-        </Grid.RowDefinitions>
+                <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0">
+                    <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
 
-        <Border x:Name="borderTop" Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0">
-            <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Width="90" Margin="10, 0, 10, 0" FontSize="16" Text="% Complete:" VerticalAlignment="Top"/>
+                            <TextBox x:Name="txtPercentComplete" Text="{Binding PercentComplete, Mode=OneWay}"  Width="50" Height="22"/>
+                        </StackPanel>
 
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Width="60" Margin="10, 0, 10, 0" FontSize="16" Text="%Comp:" VerticalAlignment="Top"/>
-                    <TextBox x:Name="txtName" Text="{Binding PercentageComplete, Mode=OneWay}"  Width="50" Height="22"/>
-                </StackPanel>
+                        <ProgressBar x:Name="prgBarCurrentJob" Height="12" Margin="5"/>
 
-            </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <ListView Grid.Row="1" Margin="5" Name="lvJobProgressEntries" IsSynchronizedWithCurrentItem="True">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Id" Width="40" DisplayMemberBinding="{Binding JobAndReqNum}" />
+                            <GridViewColumn Header="Seconds" Width="65" DisplayMemberBinding="{Binding RequestDurationSeconds, StringFormat={}{0:n3} }" />
+                            <GridViewColumn Header="Generated" Width="62" DisplayMemberBinding="{Binding Generated}">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock HorizontalAlignment="Center" Text="{Binding Generated}"></TextBlock>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+            </Grid>
         </Border>
-
-        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
-
-            <ListView Margin="10" Name="lvJobProgressEntries">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Num" Width="40" DisplayMemberBinding="{Binding JobAndReqNum}" />
-                        <GridViewColumn Header="Seconds" Width="65" DisplayMemberBinding="{Binding RequestDuration}" />
-                        <GridViewColumn Header="InRepo" Width="55" DisplayMemberBinding="{Binding FoundInRepo}" />
-                    </GridView>
-                </ListView.View>
-            </ListView>
-
-        </Border>        
-        
     </Grid>
 
 </UserControl>

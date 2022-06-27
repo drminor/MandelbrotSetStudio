@@ -40,7 +40,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public event EventHandler<int>? RequestAdded;
+		public event EventHandler<JobProgressInfo>? RequestAdded;
 
 		public event EventHandler<MapSectionProcessInfo>? RequestCompleted;
 
@@ -84,7 +84,7 @@ namespace MSetExplorer
 
 				genMapRequestInfo.RequestCompleted += GenMapRequestInfo_RequestCompleted;
 
-				RequestAdded?.Invoke(this, mapLoader.JobNumber);
+				RequestAdded?.Invoke(this, new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count));
 			});
 
 			return result;

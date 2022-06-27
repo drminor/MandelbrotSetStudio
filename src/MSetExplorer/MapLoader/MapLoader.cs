@@ -128,7 +128,7 @@ namespace MSetExplorer
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
 
-			RequestCompleted?.Invoke(this, new MapSectionProcessInfo(JobNumber, _sectionsCompleted, mapSectionRequest.TimeToCompleteGenRequest ?? TimeSpan.FromSeconds(0), mapSectionRequest.FoundInRepo));
+			RequestCompleted?.Invoke(this, new MapSectionProcessInfo(JobNumber, _sectionsCompleted, mapSectionRequest.ProcessingDuration ?? TimeSpan.FromSeconds(0), mapSectionRequest.FoundInRepo));
 
 			if (_sectionsCompleted == _mapSectionRequests?.Count || (_isStopping && _sectionsCompleted == _sectionsRequested))
 			{

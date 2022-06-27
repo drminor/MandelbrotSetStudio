@@ -9,7 +9,7 @@ namespace MSS.Common
 {
 	public interface IMapLoaderManager : IDisposable
 	{
-		event EventHandler<int>? RequestAdded;
+		event EventHandler<JobProgressInfo>? RequestAdded;
 		event EventHandler<MapSectionProcessInfo>? RequestCompleted;
 
 		int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, Action<MapSection, int> callback);
