@@ -142,7 +142,7 @@
         </DockPanel>-->
 
         <Grid Grid.Row="1" Grid.Column="1" x:Name="colCenter">
-            <local:MapScrollControl x:Name="mapScroll1"></local:MapScrollControl>
+            <local:MapScrollControl x:Name="mapScroll1" Margin="5"></local:MapScrollControl>
         </Grid>
 
         <Grid Grid.Row="1" Grid.Column="2" x:Name="colRight">

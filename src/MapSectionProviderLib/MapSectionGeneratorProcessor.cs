@@ -117,12 +117,12 @@ namespace MapSectionProviderLib
 				for (var i = 0; i < _workQueueProcessors.Count; i++)
 				{
 					_ = _workQueueProcessors[i].Wait(120 * 1000);
+					Debug.WriteLine($"The MapSectionRequestProcesssor's WorkQueueProcessor Task #{i} has completed.");
 				}
 			}
 			catch { }
 
 			_mapSectionPersistProcessor?.Stop(immediately);
-
 		}
 
 		#endregion
@@ -212,7 +212,6 @@ namespace MapSectionProviderLib
 					// Dispose managed state (managed objects)
 					Stop(true);
 
-					// Dispose managed state (managed objects)
 					if (_cts != null)
 					{
 						_cts.Dispose();

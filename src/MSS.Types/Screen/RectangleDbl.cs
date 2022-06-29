@@ -87,6 +87,33 @@ namespace MSS.Types
 			return new RectangleDbl(Math.Abs(X1), Math.Abs(X2), Math.Abs(Y1), Math.Abs(Y2));
 		}
 
+		/// <summary>
+		/// Transforms the rectangle to use a new Y origin where the range of Y values is from zero to maxY.
+		/// If the rectangle values increase from 0 = bottom to maxY = top, then the new rectangle has values that increase from 0 = top to maxY = bottom.
+		/// If the rectangle values increase from 0 = top to maxY = bottom, then the new rectangle has values that increase from 0 = bottom to maxY = top.
+		/// </summary>
+		/// <param name="maxY"></param>
+		/// <returns>Example: FlipY(p1:(0,0), p2:(100,100), 200) -> p1:(0,200), p2:100,100) </returns>
+		public RectangleDbl FlipY(double maxY)
+		{
+			return new RectangleDbl(X1, X2, maxY - Y1, maxY - Y2);
+		}
+
+		public RectangleDbl MakeSafe()
+		{
+			if (double.IsNaN(X1) || double.IsNaN(X2) || double.IsInfinity(X1) || double.IsInfinity(X2))
+			{
+				return new RectangleDbl();
+			}
+
+			if (double.IsNaN(Y1) || double.IsNaN(Y2) || double.IsInfinity(Y1) || double.IsInfinity(Y2))
+			{
+				return new RectangleDbl();
+			}
+
+			return this;
+		}
+
 		public override string? ToString()
 		{
 			return $"pos:{Position}, size:{Size}";

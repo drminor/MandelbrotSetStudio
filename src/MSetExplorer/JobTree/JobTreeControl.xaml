@@ -7,21 +7,25 @@
              mc:Ignorable="d" 
              d:DesignHeight="1000" d:DesignWidth="400">
     <Grid>
-        <Grid>
+        <Border BorderThickness="1" BorderBrush="Black" VerticalAlignment="Stretch">
+            <Grid>
 
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"></RowDefinition>
-            </Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="400" ></ColumnDefinition>
-            </Grid.ColumnDefinitions>
+                </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Grid.Column="0" BorderThickness="1" BorderBrush="Black" VerticalAlignment="Stretch" Height="900">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="400"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" FontSize="16" Height="22">Job Tree</TextBlock>
+
+                <TreeView Grid.Row="1" Margin="5" ></TreeView>
                 
-            </Border>
-            
-            
-        </Grid> 
+
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

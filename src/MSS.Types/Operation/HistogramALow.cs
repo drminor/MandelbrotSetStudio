@@ -90,7 +90,6 @@ namespace MSS.Types
 
 		public double GetAverageMaxIndex() => throw new NotImplementedException();
 
-
 		public KeyValuePair<int, int>[] GetKeyValuePairs()
 		{
 			var cnt = _values.Count(x => x != 0);
@@ -106,6 +105,17 @@ namespace MSS.Types
 			}
 
 			return result;
+		}
+
+		public IEnumerable<KeyValuePair<int, int>> GetKeyValuePairs2()
+		{
+			for (var i = 0; i < _values.Length; i++)
+			{
+				if (_values[i] != 0)
+				{
+					yield return new KeyValuePair<int, int>(i + _lowBound, _values[i]);
+				}
+			}
 		}
 
 		public void Reset()

@@ -16,6 +16,8 @@ namespace MSS.Types
 		double GetAverageMaxIndex();
 		KeyValuePair<int, int>[] GetKeyValuePairs();
 
+		IEnumerable<KeyValuePair<int, int>> GetKeyValuePairs2();
+
 		void Reset();
 		void Reset(int newSize);
 

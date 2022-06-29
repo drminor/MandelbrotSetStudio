@@ -7,14 +7,14 @@
              mc:Ignorable="d" Width="220" Height="235">
 
     <Grid>
-        <Border x:Name="borderTop" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border x:Name="borderTop" BorderThickness="0.5" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="150"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+                <Border Grid.Row="0" BorderThickness="0.5,0.5,0.5,0.5" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
 
                         <StackPanel Orientation="Horizontal" Margin="0,5">
@@ -43,7 +43,7 @@
                     </StackPanel>
                 </Border>
 
-                <ListView Grid.Row="1" Margin="5" Name="lvJobProgressEntries" IsSynchronizedWithCurrentItem="True">
+                <ListView Grid.Row="1" Name="lvJobProgressEntries" IsSynchronizedWithCurrentItem="True">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="Id" Width="40" DisplayMemberBinding="{Binding JobAndReqNum}" />

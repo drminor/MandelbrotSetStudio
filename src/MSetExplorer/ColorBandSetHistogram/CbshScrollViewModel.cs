@@ -4,36 +4,36 @@ using System.Diagnostics;
 
 namespace MSetExplorer
 {
-	internal class MapScrollViewModel : ViewModelBase, IMapScrollViewModel
+	public class CbshScrollViewModel : ViewModelBase
 	{
 		private double _invertedVerticalPosition;
 		private double _verticalPosition;
 		private double _horizontalPosition;
 
 		private SizeInt _canvasSize;
-		private SizeInt? _posterSize;
+		private SizeInt? _histogramSize;
 
 		private double _displayZoom;
 		private double _maximumDisplayZoom;
 
 		#region Constructor
 
-		public MapScrollViewModel(IMapDisplayViewModel mapDisplayViewModel)
+		public CbshScrollViewModel(CbshDisplayViewModel cbshDisplayViewModel)
 		{
-			MapDisplayViewModel = mapDisplayViewModel;
+			CbshDisplayViewModel = cbshDisplayViewModel;
 			_displayZoom = 1;
 			_maximumDisplayZoom = 1;
 
-			CanvasSize = MapDisplayViewModel.CanvasSize;
+			CanvasSize = CbshDisplayViewModel.CanvasSize;
 
-			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
+			CbshDisplayViewModel.PropertyChanged += CbshDisplayViewModel_PropertyChanged;
 		}
 
-		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void CbshDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			if (e.PropertyName == nameof(CbshDisplayViewModel.CanvasSize))
 			{
-				CanvasSize = MapDisplayViewModel.CanvasSize;
+				CanvasSize = CbshDisplayViewModel.CanvasSize;
 			}
 
 			//if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJobAreaAndCalcSettings))
@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 		#region Public Properties 
 
-		public IMapDisplayViewModel MapDisplayViewModel { get; init; }
+		public CbshDisplayViewModel CbshDisplayViewModel { get; init; }
 
 		public SizeInt CanvasSize
 		{
@@ -56,25 +56,25 @@ namespace MSetExplorer
 				if (value != _canvasSize)
 				{
 					_canvasSize = value;
-					MaximumDisplayZoom = GetMaximumDisplayZoom(PosterSize, CanvasSize);
+					MaximumDisplayZoom = GetMaximumDisplayZoom(HistogramSize, CanvasSize);
 
 					OnPropertyChanged(nameof(IMapScrollViewModel.CanvasSize));
 				}
 			}
 		}
 
-		public SizeInt? PosterSize
+		public SizeInt? HistogramSize
 		{
-			get => _posterSize;
+			get => _histogramSize;
 
 			set
 			{
-				if (value != _posterSize)
+				if (value != _histogramSize)
 				{
-					_posterSize = value;
+					_histogramSize = value;
 					InvertedVerticalPosition = GetInvertedYPos(VerticalPosition);
 
-					MaximumDisplayZoom = GetMaximumDisplayZoom(PosterSize, CanvasSize);
+					MaximumDisplayZoom = GetMaximumDisplayZoom(HistogramSize, CanvasSize);
 
 					OnPropertyChanged(nameof(IMapScrollViewModel.PosterSize));
 				}
@@ -95,7 +95,7 @@ namespace MSetExplorer
 				{
 					_displayZoom = Math.Min(MaximumDisplayZoom, value);
 
-					MapDisplayViewModel.DisplayZoom = _displayZoom;
+					CbshDisplayViewModel.DisplayZoom = _displayZoom;
 
 					Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
 					OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
@@ -177,10 +177,10 @@ namespace MSetExplorer
 		{
 			double result = 0;
 
-			if (PosterSize.HasValue)
+			if (HistogramSize.HasValue)
 			{
-				result = PosterSize.Value.Height - yPos;
-				var logicalDisplayHeight = MapDisplayViewModel.LogicalDisplaySize.Height;
+				result = HistogramSize.Value.Height - yPos;
+				var logicalDisplayHeight = CbshDisplayViewModel.LogicalDisplaySize.Height;
 				result -= logicalDisplayHeight;
 			}
 
@@ -213,4 +213,6 @@ namespace MSetExplorer
 		#endregion
 
 	}
+
+
 }

@@ -38,10 +38,16 @@ namespace MSetExplorer
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(MapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
-			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
+			var histogram = new HistogramA(0);
+			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram);
+			var colorBandSetViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections, mapSectionHistogramProcessor);
 
-			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, 
-				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel, MapLoaderManager);
+			// ColorBand Histogram ViewModel
+			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
+
+			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel,
+				MapLoaderManager,
+				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
 
 			return result;
 		}
@@ -58,9 +64,14 @@ namespace MSetExplorer
 			IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);
 
 			// ColorBand ViewModel
-			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
+			var histogram = new HistogramA(0);
+			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram);
+			var colorBandSetViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections, mapSectionHistogramProcessor);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, 
+			// ColorBand Histogram ViewModel
+			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
+
+			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel,
 				MapJobHelper, MapLoaderManager, 
 				CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateACoordsEditorViewModel);
 

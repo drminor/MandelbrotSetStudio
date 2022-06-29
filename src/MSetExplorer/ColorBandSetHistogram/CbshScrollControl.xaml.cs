@@ -6,23 +6,23 @@ using System.Windows.Controls;
 namespace MSetExplorer
 {
 	/// <summary>
-	/// Interaction logic for MapScrollControl.xaml
+	/// Interaction logic for CbshScrollControl.xaml
 	/// </summary>
-	public partial class MapScrollControl : UserControl
+	public partial class CbshScrollControl : UserControl
 	{
-		private IMapScrollViewModel _vm;
+		private CbshScrollViewModel _vm;
 
 		#region Constructor
 
-		public MapScrollControl()
+		public CbshScrollControl()
 		{
-			_vm = (IMapScrollViewModel)DataContext;
+			_vm = (CbshScrollViewModel)DataContext;
 
-			Loaded += MapScroll_Loaded;
+			Loaded += CbshScroll_Loaded;
 			InitializeComponent();
 		}
 
-		private void MapScroll_Loaded(object sender, System.Windows.RoutedEventArgs e)
+		private void CbshScroll_Loaded(object sender, System.Windows.RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
@@ -31,43 +31,48 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (IMapScrollViewModel)DataContext;
+				_vm = (CbshScrollViewModel)DataContext;
 
-				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+				cbshDisplayControl1.DataContext = _vm.CbshDisplayViewModel;
 
-				_vm.PropertyChanged += MapScrollViewModel_PropertyChanged;
-				_vm.MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
+				_vm.PropertyChanged += CbshScrollViewModel_PropertyChanged; 
+				_vm.CbshDisplayViewModel.PropertyChanged += CbshDisplayViewModel_PropertyChanged;
 
 				HScrollBar.Scroll += HScrollBar_Scroll;
-				VScrollBar.Scroll += VScrollBar_Scroll;
+				//VScrollBar.Scroll += VScrollBar_Scroll;
 
 				Debug.WriteLine("The MapScroll Control is now loaded.");
 			}
+		}
+
+		private void _vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			throw new NotImplementedException();
 		}
 
 		#endregion
 
 		#region Event Handlers
 
-		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void CbshDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
 			{
-				ConfigureScrollBars(_vm.MapDisplayViewModel.LogicalDisplaySize, _vm.PosterSize);
+				ConfigureScrollBars(_vm.CbshDisplayViewModel.LogicalDisplaySize, _vm.HistogramSize);
 			}
 		}
 
-		private void MapScrollViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void CbshScrollViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(IMapScrollViewModel.PosterSize))
 			{
-				ConfigureScrollBars(_vm.MapDisplayViewModel.LogicalDisplaySize, _vm.PosterSize);
+				ConfigureScrollBars(_vm.CbshDisplayViewModel.LogicalDisplaySize, _vm.HistogramSize);
 			}
 
-			if (e.PropertyName == nameof(IMapScrollViewModel.VerticalPosition))
-			{
-				VScrollBar.Value = _vm.VerticalPosition;
-			}
+			//if (e.PropertyName == nameof(IMapScrollViewModel.VerticalPosition))
+			//{
+			//	VScrollBar.Value = _vm.VerticalPosition;
+			//}
 
 			if (e.PropertyName == nameof(IMapScrollViewModel.HorizontalPosition))
 			{
@@ -95,12 +100,12 @@ namespace MSetExplorer
 			{
 				try
 				{
-					VScrollBar.Maximum = posterSize.Value.Height - logicalDisplaySize.Height;
+					//VScrollBar.Maximum = posterSize.Value.Height - logicalDisplaySize.Height;
 					var verticalViewPortSize = logicalDisplaySize.Height;
 
-					VScrollBar.ViewportSize = verticalViewPortSize;
-					VScrollBar.LargeChange = verticalViewPortSize;
-					VScrollBar.SmallChange = 0.125 * verticalViewPortSize;
+					//VScrollBar.ViewportSize = verticalViewPortSize;
+					//VScrollBar.LargeChange = verticalViewPortSize;
+					//VScrollBar.SmallChange = 0.125 * verticalViewPortSize;
 
 					HScrollBar.Maximum = posterSize.Value.Width - logicalDisplaySize.Width;
 					var horizontalViewPortSize = logicalDisplaySize.Width;
@@ -125,10 +130,10 @@ namespace MSetExplorer
 
 		private void ConfigureScrollBarsWithDefautVals()
 		{
-			VScrollBar.Maximum = 0;
-			VScrollBar.ViewportSize = 1024;
-			VScrollBar.LargeChange = 128;
-			VScrollBar.SmallChange = 1;
+			//VScrollBar.Maximum = 0;
+			//VScrollBar.ViewportSize = 1024;
+			//VScrollBar.LargeChange = 128;
+			//VScrollBar.SmallChange = 1;
 
 			HScrollBar.Maximum = 0;
 			HScrollBar.ViewportSize = 1024;

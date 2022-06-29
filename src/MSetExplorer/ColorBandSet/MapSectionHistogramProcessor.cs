@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MSetExplorer
 {
-	internal class MapSectionHistogramProcessor : IDisposable
+	internal class MapSectionHistogramProcessor : IDisposable, IMapSectionHistogramProcessor
 	{
 		private readonly IHistogram _histogram;
 
@@ -41,11 +42,16 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public event EventHandler<PercentageBand[]>? PercentageBandsUpdated;
+		public event EventHandler? HistogramUpdated;
+
+		public IHistogram Histogram => _histogram;
+
 		public bool ProcessingEnabled
 		{
 			get
 			{
-				lock(_processingEnabledLock)
+				lock (_processingEnabledLock)
 				{
 					return _processingEnabled;
 				}
@@ -65,7 +71,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public double GetAverageTopValue() => _histogram.GetAverageMaxIndex();
+		//public double GetAverageTopValue() => _histogram.GetAverageMaxIndex();
 
 		public void AddWork(HistogramWorkRequest histogramWorkRequest)
 		{
@@ -104,6 +110,34 @@ namespace MSetExplorer
 			{ }
 		}
 
+		public void LoadHistogram(IEnumerable<IHistogram> histograms)
+		{
+			foreach (var histogram in histograms)
+			{
+				_histogram.Add(histogram);
+			}
+
+			HistogramUpdated?.Invoke(this, EventArgs.Empty);
+		}
+
+		public void Reset()
+		{
+			_histogram.Reset();
+			HistogramUpdated?.Invoke(this, EventArgs.Empty);
+		}
+
+		public void Reset(int newSize)
+		{
+			_histogram.Reset(newSize);
+			HistogramUpdated?.Invoke(this, EventArgs.Empty);
+		}
+
+		public KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff)
+		{
+			var result = _histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff);
+			return result.ToArray();
+		}
+
 		#endregion
 
 		#region Private Methods
@@ -118,7 +152,7 @@ namespace MSetExplorer
 			{
 				try
 				{
-					while(_workQueue.TryTake(out var currentWorkRequest, _waitDuration.Milliseconds, ct))
+					while (_workQueue.TryTake(out var currentWorkRequest, _waitDuration.Milliseconds, ct))
 					{
 						lastWorkRequest = DoWorkRequest(currentWorkRequest);
 					}
@@ -156,10 +190,12 @@ namespace MSetExplorer
 						if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Add)
 						{
 							_histogram.Add(histogramWorkRequest.Histogram);
+							HistogramUpdated?.Invoke(this, EventArgs.Empty);
 						}
 						else if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Remove)
 						{
 							_histogram.Remove(histogramWorkRequest.Histogram);
+							HistogramUpdated?.Invoke(this, EventArgs.Empty);
 						}
 					}
 
@@ -182,6 +218,7 @@ namespace MSetExplorer
 				{
 					var newPercentages = BuildNewPercentages(histogramWorkRequest.Cutoffs, _histogram);
 					histogramWorkRequest.RunWorkAction(newPercentages);
+					PercentageBandsUpdated?.Invoke(this, newPercentages);
 				}
 			}
 		}
@@ -224,7 +261,7 @@ namespace MSetExplorer
 				bucketCnts[curBucketPtr].RunningSum = runningSum;
 			}
 
-			for(; i < kvps.Length; i++)
+			for (; i < kvps.Length; i++)
 			{
 				var amount = kvps[i].Value;
 				runningSum += amount;
@@ -243,7 +280,7 @@ namespace MSetExplorer
 			//var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
 			var total = (double)runningSum;
 
-			foreach(var pb in bucketCnts)
+			foreach (var pb in bucketCnts)
 			{
 				pb.Percentage = Math.Round(100 * (pb.Count / total), 2);
 			}

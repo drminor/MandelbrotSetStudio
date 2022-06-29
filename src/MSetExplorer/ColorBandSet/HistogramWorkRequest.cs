@@ -3,7 +3,7 @@ using System;
 
 namespace MSetExplorer
 {
-	internal class HistogramWorkRequest
+	public class HistogramWorkRequest
 	{
 		public HistogramWorkRequestType RequestType { get; init; }
 		public int[] Cutoffs { get; init; }
@@ -29,7 +29,7 @@ namespace MSetExplorer
 		}
 	}
 
-	internal enum HistogramWorkRequestType
+	public enum HistogramWorkRequestType
 	{
 		Add,
 		Remove,

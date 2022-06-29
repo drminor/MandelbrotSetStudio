@@ -274,17 +274,17 @@ namespace MSetExplorer
 			}
 		}
 
-		private GeometryDrawing BuildFoundationRectangle(SizeInt sizeInBlocks, SizeInt blockSize)
-		{
-			var rectangle = new RectangleGeometry()
-			{
-				Rect = ScreenTypeHelper.CreateRect(new PointInt(), sizeInBlocks.Scale(blockSize))
-			};
+		//private GeometryDrawing BuildFoundationRectangle(SizeInt sizeInBlocks, SizeInt blockSize)
+		//{
+		//	var rectangle = new RectangleGeometry()
+		//	{
+		//		Rect = ScreenTypeHelper.CreateRect(new PointInt(), sizeInBlocks.Scale(blockSize))
+		//	};
 
-			var result = new GeometryDrawing(Brushes.Transparent, new Pen(Brushes.Transparent, 1), rectangle);
+		//	var result = new GeometryDrawing(Brushes.Transparent, new Pen(Brushes.Transparent, 1), rectangle);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 
@@ -308,7 +308,7 @@ namespace MSetExplorer
 				_blockSize = blockSize;
 				_drawingGroup = drawingGroup;
 				_image = CreateImage(_blockSize.Width, _blockSize.Height);
-				_imageDrawing = CreateImageDrawing(_blockPosition);
+				_imageDrawing = CreateImageDrawing(_blockPosition, _image.Source);
 
 				_pendingPixels = null;
 			}
@@ -377,7 +377,7 @@ namespace MSetExplorer
 
 			public void Delete()
 			{
-				Hide();
+				_ = Hide();
 				_imageDrawing = new ImageDrawing();
 			}
 
@@ -389,7 +389,7 @@ namespace MSetExplorer
 
 					BlockPosition = position;
 					//Active = false;
-					_imageDrawing = CreateImageDrawing(BlockPosition);
+					_imageDrawing = CreateImageDrawing(BlockPosition, _image.Source);
 				}
 				else
 				{
@@ -434,7 +434,7 @@ namespace MSetExplorer
 
 					BlockPosition = position;
 					//Active = false;
-					_imageDrawing = CreateImageDrawing(BlockPosition);
+					_imageDrawing = CreateImageDrawing(BlockPosition, _image.Source);
 				}
 				else
 				{
@@ -488,11 +488,11 @@ namespace MSetExplorer
 				bitmap.WritePixels(rect, pixels, stride, 0);
 			}
 
-			private ImageDrawing CreateImageDrawing(PointInt blockPosition)
+			private ImageDrawing CreateImageDrawing(PointInt blockPosition, ImageSource imageSource)
 			{
 				var position = blockPosition.Scale(_blockSize);
 				var rect = ScreenTypeHelper.CreateRect(position, _blockSize);
-				var result = new ImageDrawing(_image.Source, rect);
+				var result = new ImageDrawing(imageSource, rect);
 
 				return result;
 			}

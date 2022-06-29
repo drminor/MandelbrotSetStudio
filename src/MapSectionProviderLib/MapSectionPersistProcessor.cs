@@ -71,7 +71,8 @@ namespace MapSectionProviderLib
 
 			try
 			{
-				_workQueueProcessor.Wait(120 * 1000);
+				_ =_workQueueProcessor.Wait(120 * 1000);
+				Debug.WriteLine("The MapSectionPersistProcesssor's WorkQueueProcessor Task has completed.");
 			}
 			catch
 			{ }

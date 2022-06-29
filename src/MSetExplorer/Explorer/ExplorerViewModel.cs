@@ -20,10 +20,11 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ExplorerViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel, 
+		public ExplorerViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
+			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel,
+			IMapLoaderManager mapLoaderManager,
 			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, 
-			PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator, 
-			IMapLoaderManager mapLoaderManager)
+			PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
 		{
 
 			_mapLoaderManager = mapLoaderManager;
@@ -52,6 +53,8 @@ namespace MSetExplorer
 			ColorBandSetViewModel = colorBandViewModel;
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
+
+			ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
 		}
 
 		#endregion
@@ -64,6 +67,7 @@ namespace MSetExplorer
 		public MapCoordsViewModel MapCoordsViewModel { get; } 
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
+		public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 
 		public int DispWidth
 		{
@@ -167,6 +171,7 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
+				ColorBandSetHistogramViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 
 				if (MapProjectViewModel.CurrentProject != null)
 				{
@@ -189,7 +194,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
 			{
-				if (MapProjectViewModel.CurrentProject != null && MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
+				if (MapDisplayViewModel.HighlightSelectedColorBand && MapProjectViewModel.CurrentProject != null && ColorBandSetViewModel.ColorBandSet != null)
 				{
 					MapDisplayViewModel.SetColorBandSet(ColorBandSetViewModel.ColorBandSet, updateDisplay: true);
 				}
@@ -240,14 +245,16 @@ namespace MSetExplorer
 
 			if (e.IsPreview)
 			{
-				Debug.WriteLine($"MainWindow got a CBS preview with Id = {colorBandSet.Id}");
+				Debug.WriteLine($"MainWindow ViewModel got a CBS preview with Id = {colorBandSet.Id}");
 				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+				ColorBandSetHistogramViewModel.ColorBandSet = colorBandSet;
 			}
 			else
 			{
-				Debug.WriteLine($"MainWindow got a CBS update with Id = {colorBandSet.Id}");
+				Debug.WriteLine($"MainWindow ViewModel got a CBS update with Id = {colorBandSet.Id}");
 				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
 				MapProjectViewModel.UpdateColorBandSet(colorBandSet);
+				ColorBandSetHistogramViewModel.ColorBandSet = colorBandSet;
 			}
 		}
 

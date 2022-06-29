@@ -378,6 +378,12 @@ namespace MSS.Types
 					lastCb.EndColor = lastCb.StartColor;
 				}
 
+				var totalWidth = result.Sum(x => x.BucketWidth);
+				var maxCutoff = lastCb.Cutoff;
+				var minCutoff = colorBands[0].StartingCutoff;
+
+				var totalRange = 1 + maxCutoff - minCutoff;
+
 			}
 
 			return result;

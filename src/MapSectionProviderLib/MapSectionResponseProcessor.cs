@@ -78,12 +78,21 @@ namespace MapSectionProviderLib
 				}
 			}
 
+			// Don't block the UI thread, since the task may be waiting for the UI thread to complete its work as it executes the RunWorkAction.
+			_ = Task.Run(WaitForTheQueueProcessorToComplete);
+		}
+
+		private void WaitForTheQueueProcessorToComplete()
+		{
 			try
 			{
-				_workQueueProcessor.Wait(120 * 1000);
+				_ = _workQueueProcessor.Wait(10 * 1000);
+				Debug.WriteLine("The MapSectionReponseProcesssor's WorkQueueProcessor Task has completed.");
 			}
-			catch
-			{ }
+			catch (Exception e) 
+			{
+				Debug.WriteLine($"While Waiting for the processor to complete, the MapSectionResponseProcessor received exception: {e}.");
+			}
 		}
 
 		#endregion

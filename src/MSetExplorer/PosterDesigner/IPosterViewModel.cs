@@ -31,7 +31,7 @@ namespace MSetExplorer
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateMapView(JobAreaInfo newMapAreaInfo);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
-		//void UpdateMapCoordinates(RRectangle coords);
+
 
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
 		bool Open(string name);

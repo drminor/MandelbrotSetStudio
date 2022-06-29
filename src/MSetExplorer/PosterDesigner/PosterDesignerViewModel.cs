@@ -23,6 +23,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
+			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel,
 			MapJobHelper mapJobHelper, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, 
 			CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
 		{
@@ -54,6 +55,8 @@ namespace MSetExplorer
 			ColorBandSetViewModel = colorBandViewModel;
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
+
+			ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
 		}
 
 		#endregion
@@ -67,6 +70,7 @@ namespace MSetExplorer
 		public MapCoordsViewModel MapCoordsViewModel { get; }
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
+		public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 
 		public int DispWidth
 		{

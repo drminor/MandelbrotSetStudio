@@ -19,13 +19,15 @@ namespace MSetExplorer
 	{
 		private readonly ObservableCollection<MapSection> _mapSections;
 		private readonly SynchronizationContext? _synchronizationContext;
-		private readonly MapSectionHistogramProcessor _mapSectionHistogramProcessor;
+		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
 		private readonly HistogramD _topValues;
 		private double _averageMapSectionTargetIteration;
 
 		private double _rowHeight;
 		private double _itemWidth;
 		private ColorBandSetEditMode _editMode;
+
+		//private IHistogram _histogram { get; init; }
 
 		private ColorBandSet? _colorBandSet;	// The value assigned to this model
 		private bool _useEscapeVelocities;
@@ -40,18 +42,17 @@ namespace MSetExplorer
 		private ColorBand? _currentColorBand;
 
 		private bool _isDirty;
-
 		private readonly object _histLock;
 
 		#region Constructor
 
-		public ColorBandSetViewModel(ObservableCollection<MapSection> mapSections)
+		public ColorBandSetViewModel(ObservableCollection<MapSection> mapSections, IMapSectionHistogramProcessor mapSectionHistogramProcessor)
 		{
 			_useEscapeVelocities = true;
 			_mapSections = mapSections;
 			_synchronizationContext = SynchronizationContext.Current;
-			Histogram = new HistogramA(0);
-			_mapSectionHistogramProcessor = new MapSectionHistogramProcessor(Histogram);
+			//_histogram = histogram;
+			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
 			_topValues = new HistogramD();
 
 			_rowHeight = 60;
@@ -131,23 +132,25 @@ namespace MSetExplorer
 
 			lock (_histLock)
 			{
+				_topValues.Clear();
 				_mapSectionHistogramProcessor.ProcessingEnabled = false;
 				_colorBandSet = value;
 				_colorBandSetHistoryCollection.Load(value?.CreateNewCopy());
 
 				if (value != null)
 				{
-					Histogram.Reset(value.HighCutoff);
-					_topValues.Clear();
-					PopulateHistorgram(_mapSections, Histogram);
+					//_histogram.Reset(value.HighCutoff);
+					_mapSectionHistogramProcessor.Reset(value.HighCutoff); // Make Reset disable processing
+					//PopulateHistorgram(_mapSections, _histogram);
+					_mapSectionHistogramProcessor.LoadHistogram(_mapSections.Select(x => x.Histogram)); // TODO: Make LoadHistogram enable processing
 					_mapSectionHistogramProcessor.ProcessingEnabled = true;
 
 					UpdatePercentages();
 				}
 				else
 				{
-					Histogram.Reset();
-					_topValues.Clear();
+					//_histogram.Reset();
+					_mapSectionHistogramProcessor.Reset();
 					AverageMapSectionTargetIteration = 0;
 				}
 			}
@@ -251,8 +254,6 @@ namespace MSetExplorer
 				OnPropertyChanged();
 			}
 		}
-
-		public IHistogram Histogram { get; init; }
 
 		public PercentageBand? BeyondTargetSpecs { get; private set; }
 
@@ -418,7 +419,8 @@ namespace MSetExplorer
 			if (e.Action == NotifyCollectionChangedAction.Reset)
 			{
 				//	Reset
-				Histogram.Reset();
+				//_histogram.Reset();
+				_mapSectionHistogramProcessor.Reset();
 				_topValues.Clear();
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Add)
@@ -729,7 +731,8 @@ namespace MSetExplorer
 				var previousCutoff = currentColorBand.PreviousCutoff ?? 0;
 				var cutoff = currentColorBand.Cutoff;
 
-				var kvpsForBand = Histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff);
+				//var kvpsForBand = _histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff);
+				var kvpsForBand = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(previousCutoff, cutoff);
 
 				return new Dictionary<int, int>(kvpsForBand);
 			}
@@ -779,16 +782,16 @@ namespace MSetExplorer
 			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutoffs, null, HandleHistogramUpdate));
 		}
 
-		private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
-		{
-			foreach (var ms in mapSections)
-			{
-				histogram.Add(ms.Histogram);
-			}
+		//private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
+		//{
+		//	foreach (var ms in mapSections)
+		//	{
+		//		histogram.Add(ms.Histogram);
+		//	}
 
-			//var cutoffs = GetCutoffs();
-			//_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutoffs, null, HandleHistogramUpdate));
-		}
+		//	//var cutoffs = GetCutoffs();
+		//	//_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutoffs, null, HandleHistogramUpdate));
+		//}
 
 		private void HandleHistogramUpdate(PercentageBand[] newPercentages)
 		{
@@ -904,9 +907,27 @@ namespace MSetExplorer
 
 		#region IDisposable Support
 
+		private bool disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+
+					_mapSectionHistogramProcessor.Dispose();
+				}
+
+				disposedValue = true;
+			}
+		}
+
 		public void Dispose()
 		{
-			((IDisposable)_mapSectionHistogramProcessor).Dispose();
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
 		}
 
 		#endregion

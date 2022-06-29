@@ -41,7 +41,7 @@ namespace MSetExplorer
 
 		private void MapLoaderManager_RequestCompleted(object? sender, MapSectionProcessInfo e)
 		{
-			Debug.WriteLine($"Got a RequestCompleted event. JobNumber: {e.JobNumber}, Number Completed: {e.RequestsCompleted}.");
+			//Debug.WriteLine($"Got a RequestCompleted event. JobNumber: {e.JobNumber}, Number Completed: {e.RequestsCompleted}.");
 			_synchronizationContext?.Post((o) => HandleRequestCompleted(e), null);
 		}
 

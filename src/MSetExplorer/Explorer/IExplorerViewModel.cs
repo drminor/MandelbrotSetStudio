@@ -13,6 +13,7 @@ namespace MSetExplorer
 		MapCoordsViewModel MapCoordsViewModel { get; }
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		ColorBandSetViewModel ColorBandSetViewModel { get; }
+		ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
@@ -20,6 +21,8 @@ namespace MSetExplorer
 		CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits);
 
 		JobProgressViewModel CreateAJobProgressViewModel();
+
+		//ColorBandSetHistogramViewModel CreateACbshViewModel();
 
 		SizeInt GetCanvasSize(Job job);
 	}

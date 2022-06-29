@@ -109,6 +109,11 @@ namespace MSetExplorer
 			return new Rect(ConvertToPoint(pointInt), ConvertToSize(sizeInt));
 		}
 
+		public static Rect CreateRect(SizeInt size)
+		{
+			return new Rect(new Point(), ConvertToSize(size));
+		}
+
 		public static Rect CreateRect(SizeDbl size)
 		{
 			return new Rect(new Point(), ConvertToSize(size));
@@ -144,33 +149,11 @@ namespace MSetExplorer
 
 		#endregion
 
-		// Invert p1:(0,0), p2:100,100) -> p1:(0,100), p2:100,0)
-
-		public static RectangleDbl FlipY(RectangleDbl r, double maxY)
-		{
-			return new RectangleDbl(r.X1, r.X2, maxY - r.Y1, maxY - r.Y2);
-		}
-
 		public static RectangleDbl Intersect(RectangleDbl a, RectangleDbl b)
 		{
 			var t = ConvertToRect(a);
 			t.Intersect(ConvertToRect(b));
 			return ConvertToRectangleDbl(t);
-		}
-
-		public static RectangleDbl MakeSafe(RectangleDbl a)
-		{
-			if (double.IsNaN(a.X1) || double.IsNaN(a.X2) || double.IsInfinity(a.X1) || double.IsInfinity(a.X2))
-			{
-				return new RectangleDbl();
-			}
-
-			if (double.IsNaN(a.Y1) || double.IsNaN(a.Y2) || double.IsInfinity(a.Y1) || double.IsInfinity(a.Y2))
-			{
-				return new RectangleDbl();
-			}
-
-			return a;
 		}
 	}
 }

@@ -20,7 +20,7 @@ namespace MSetExplorer
 		{
 			_canvas = new Canvas();
 			_drawingGroup = new DrawingGroup();
-			_rectangle = BuildRectangle(new SizeDbl(), ColorBandColor.White, ColorBandColor.White);
+			_rectangle = DrawingHelper.BuildRectangle(new RectangleDbl(), ColorBandColor.White, ColorBandColor.White, horizBlend:false);
 			_drawingGroup.Children.Add(_rectangle);
 
 			Loaded += ColorPanelControl_Loaded;
@@ -103,7 +103,7 @@ namespace MSetExplorer
 			{
 				if (d is TwoColorPanelControl uc)
 				{
-					uc._rectangle.Brush = uc.BuildBrush(uc.StartColor, uc.EndColor);
+					uc._rectangle.Brush = DrawingHelper.BuildBrush(uc.StartColor, uc.EndColor, horizBlend:false);
 				}
 			}
 		}
@@ -114,55 +114,72 @@ namespace MSetExplorer
 
 		private void RefreshTheView(SizeDbl size, ColorBandColor startColor, ColorBandColor endColor)
 		{
-			if (size.Width > 5 && size.Height > 5)
+			size = size.Deflate(4);
+			DrawingHelper.UpdateRectangleDrawing(_rectangle, size, startColor, endColor, horizBlend:false);
+
+			if (size.Width > 0 && size.Height > 0)
 			{
-				size = size.Deflate(4);
-				
 				_canvas.Width = size.Width;
 				_canvas.Height = size.Height;
-
-				_rectangle.Brush = BuildBrush(startColor, endColor);
-				_rectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.CreateRect(size));
 			}
 			else
 			{
-				_rectangle.Brush = Brushes.Transparent;
+				_canvas.Width = 1;
+				_canvas.Height = 1;
 			}
 		}
 
-		private GeometryDrawing BuildRectangle(SizeDbl size, ColorBandColor startColor, ColorBandColor endColor)
-		{
-			var result = new GeometryDrawing
-				(
-				BuildBrush(startColor, endColor),
-				new Pen(Brushes.Transparent, 0),
-				new RectangleGeometry(ScreenTypeHelper.CreateRect(size))
-				); ;
+		//private void RefreshTheViewOld(SizeDbl size, ColorBandColor startColor, ColorBandColor endColor)
+		//{
+		//	if (size.Width > 5 && size.Height > 5)
+		//	{
+		//		size = size.Deflate(4);
 
-			return result;
-		}
+		//		_canvas.Width = size.Width;
+		//		_canvas.Height = size.Height;
 
-		private Brush BuildBrush(ColorBandColor startColor, ColorBandColor endColor)
-		{
-			var startC = ScreenTypeHelper.ConvertToColor(startColor);
-			var endC = ScreenTypeHelper.ConvertToColor(endColor);
+		//		_rectangle.Brush = DrawingHelper.BuildBrush(startColor, endColor);
+		//		_rectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.CreateRect(size));
+		//	}
+		//	else
+		//	{
+		//		_rectangle.Brush = Brushes.Transparent;
+		//	}
+		//}
+		
+		//private GeometryDrawing BuildRectangle(SizeDbl size, ColorBandColor startColor, ColorBandColor endColor)
+		//{
+		//	var result = new GeometryDrawing
+		//		(
+		//		BuildBrush(startColor, endColor),
+		//		new Pen(Brushes.Transparent, 0),
+		//		new RectangleGeometry(ScreenTypeHelper.CreateRect(size))
+		//		); ;
 
-			var result = new LinearGradientBrush
-				(
-				new GradientStopCollection
-				{
-					new GradientStop(startC, 0.0),
-					new GradientStop(startC, 0.15),
-					new GradientStop(endC, 0.85),
-					new GradientStop(endC, 1.0),
+		//	return result;
+		//}
 
-				},
-				new Point(0.5, 0),
-				new Point(0.5, 1)
-				);
+		//private Brush BuildBrush(ColorBandColor startColor, ColorBandColor endColor)
+		//{
+		//	var startC = ScreenTypeHelper.ConvertToColor(startColor);
+		//	var endC = ScreenTypeHelper.ConvertToColor(endColor);
 
-			return result;
-		}
+		//	var result = new LinearGradientBrush
+		//		(
+		//		new GradientStopCollection
+		//		{
+		//			new GradientStop(startC, 0.0),
+		//			new GradientStop(startC, 0.15),
+		//			new GradientStop(endC, 0.85),
+		//			new GradientStop(endC, 1.0),
+
+		//		},
+		//		new Point(0.5, 0),
+		//		new Point(0.5, 1)
+		//		);
+
+		//	return result;
+		//}
 
 
 		#endregion

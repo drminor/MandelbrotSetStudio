@@ -46,13 +46,14 @@ namespace MSetExplorer
 				jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
-
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 
 				mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
+
+				cbsh1.DataContext = _vm.ColorBandSetHistogramViewModel;
 
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}

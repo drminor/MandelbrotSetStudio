@@ -68,19 +68,19 @@ namespace MSetExplorer
 			TranslateNewAndOrigImages(boundingImageArea.Position, ref originalImagePos, ref newImagePos);
 
 			var originalImageSize = OriginalMapSize.Scale(scaleFactor);
-			OriginalImageArea = ScreenTypeHelper.MakeSafe(new RectangleDbl(originalImagePos, originalImageSize));
+			OriginalImageArea = new RectangleDbl(originalImagePos, originalImageSize).MakeSafe();
 
 			var newImageSize = NewMapArea.Size.Scale(scaleFactor);
-			NewImageArea = ScreenTypeHelper.MakeSafe(new RectangleDbl(newImagePos, newImageSize));
+			NewImageArea = new RectangleDbl(newImagePos, newImageSize).MakeSafe();
 
 			// Get the scale factor needed to reduce the actual preview image's bitmap to the container
 			var previewImageScaleFactor = RMapHelper.GetSmallestScaleFactor(PreviewImageSize, originalImageSize);
 			ScaleFactorForPreviewImage = double.IsInfinity(previewImageScaleFactor) || double.IsNaN(previewImageScaleFactor) ? 1 : previewImageScaleFactor;
 
 			// Clip the Original Image
-			var rawPreviewImageClipRegion = ScreenTypeHelper.MakeSafe(clippedOriginalMapArea.Scale(scaleFactor));
+			var rawPreviewImageClipRegion = clippedOriginalMapArea.Scale(scaleFactor).MakeSafe();
 			PreviewImageClipRegion = rawPreviewImageClipRegion.Translate(OriginalImageArea.Position);
-			PreviewImageClipRegionYInverted = ScreenTypeHelper.FlipY(rawPreviewImageClipRegion, OriginalImageArea.Height);
+			PreviewImageClipRegionYInverted = rawPreviewImageClipRegion.FlipY(OriginalImageArea.Height);
 
 			// Diagnostics
 			Debug.WriteLine($"BoundingSize: {boundingImageArea.Size.ToString("F2")}, NewSize: {newImageSize.ToString("F2")}, OriginalSize: {originalImageSize.ToString("F2")}.");

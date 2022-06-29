@@ -135,11 +135,13 @@ namespace MapSectionProviderLib
 				for (var i = 0; i < _workQueueProcessors.Length; i++)
 				{
 					_ = _workQueueProcessors[i].Wait(120 * 1000);
+					Debug.WriteLine($"The MapSectionRequestProcesssor's WorkQueueProcessor Task #{i} has completed.");
 				}
 			}
 			catch { }
 
 			_mapSectionGeneratorProcessor?.Stop(immediately);
+			_mapSectionResponseProcessor?.Stop(immediately);
 		}
 
 		public int GetNextRequestId()
