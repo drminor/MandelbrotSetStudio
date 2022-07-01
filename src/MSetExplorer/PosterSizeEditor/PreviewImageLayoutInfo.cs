@@ -5,14 +5,26 @@ using System.Diagnostics;
 
 namespace MSetExplorer
 {
+	/// <remarks>
+	/// The OriginalMapArea with origin 0,0 and OriginalMapSize size are in (logical MapDisplay) Screen coordinates for the project / poster Map.
+	/// The NewMapSize and BeforeOffset and AfterOffset are also in Screen coordinates.
+	/// 
+	/// These Screen Coordinates will be translated into Real coordinates to generate the Real Map using the current SamplePointDelta.
+	/// The BeforeOffset and AfterOffset are added to the P1 and P2 values of the OriginalMapArea having P1 = [0,0] and P2 = [Width,Height]
+	///		tranlating the old to new using the current SamplePointDelta to produce a new (Map) Coords value.
+	///		
+	/// The NewMapSize will be the new project / poster size used to determine the number of Real sample points to calculate for the horizontal and vertical Real Map extents.
+	/// 
+	/// </remarks>
+
 	public class PreviewImageLayoutInfo
 	{
 		public PreviewImageLayoutInfo()
 		{ }
 
-		public PreviewImageLayoutInfo(SizeInt imageSize, SizeDbl previewImageSize, SizeDbl containerSize)
+		public PreviewImageLayoutInfo(SizeDbl originalMapSize, SizeDbl previewImageSize, SizeDbl containerSize)
 		{
-			OriginalMapSize = new SizeDbl(imageSize);
+			OriginalMapSize = originalMapSize;
 			PreviewImageSize = previewImageSize;
 			ContainerSize = containerSize;
 		}
@@ -27,7 +39,12 @@ namespace MSetExplorer
 
 		// Inputs
 		public SizeDbl ContainerSize { get; set; }
-		public RectangleDbl NewMapArea { get; set; }
+
+		public SizeDbl NewMapSize { get; set; }
+		public PointDbl BeforeOffset { get; set; } // Really a vector. This added to the original MapDisplay position (i.e., 0,0) gives the new MapDisplay position.
+		public PointDbl AfterOffset { get; set; } // Really a vector. This added to the original MapDisplay position (i.e., 0,0) gives the new MapDisplay position.
+
+		public RectangleDbl ResultNewMapArea => new RectangleDbl(BeforeOffset, OriginalMapSize.Translate(AfterOffset));
 
 		// Outputs
 		public RectangleDbl OriginalImageArea { get; private set; } // Size and placement of the preview image, relative to the NewImageArea
@@ -41,21 +58,21 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Update()
+		public void Update(double currentToOriginalScaleFactor)
 		{
-			Debug.WriteLine($"Edit Poster Size Layout Update: NewMapArea: {NewMapArea}, ContainerSize: {ContainerSize}.");
+			Debug.WriteLine($"Edit Poster Size Layout Update: BeforeOffset: {BeforeOffset}, AfterOffset: {AfterOffset}, NewMapSize: {NewMapSize}, ContainerSize: {ContainerSize}.");
 
 			// Get the portion of the originalMapArea that will be part of the new Image.
 			var originalMapArea = new RectangleDbl(new PointDbl(), OriginalMapSize);
-			//var clippedOriginalMapArea = GetOriginalImageClipRegion(NewMapArea, originalMapArea);
-			var clippedOriginalMapArea = ScreenTypeHelper.Intersect(NewMapArea, originalMapArea);
+			var newMapArea = new RectangleDbl(BeforeOffset, originalMapArea.Point2.Translate(AfterOffset));
+			var clippedOriginalMapArea = ScreenTypeHelper.Intersect(newMapArea, originalMapArea);
 
 			// Get a rectangle that will hold both the new and the portion of the original
-			var boundingMapArea = RMapHelper.GetBoundingRectangle(clippedOriginalMapArea, NewMapArea);
+			var boundingMapArea = RMapHelper.GetBoundingRectangle(clippedOriginalMapArea, newMapArea);
 
-			// Scale Factor to convert from Map to Screen sizes / positions
+			// Scale Factor to convert from MapDisplay sizes to SizeEditor sizes/positions.
 			var scaleFactor = RMapHelper.GetSmallestScaleFactor(boundingMapArea.Size, ContainerSize);
-			scaleFactor = Math.Max(scaleFactor, 0.001);
+			scaleFactor = Math.Max(scaleFactor, 0.000001);
 
 			// Determine Size and Location of bounding rectangle
 			var boundingImageSize = boundingMapArea.Size.Scale(scaleFactor);
@@ -63,14 +80,15 @@ namespace MSetExplorer
 
 			// Determine Size and Location of the original and new images
 			var originalImagePos = clippedOriginalMapArea.Position.Scale(scaleFactor);
-			var newImagePos = NewMapArea.Position.Scale(scaleFactor);
+			var newImagePos = newMapArea.Position.Scale(scaleFactor);
 
 			TranslateNewAndOrigImages(boundingImageArea.Position, ref originalImagePos, ref newImagePos);
 
 			var originalImageSize = OriginalMapSize.Scale(scaleFactor);
 			OriginalImageArea = new RectangleDbl(originalImagePos, originalImageSize).MakeSafe();
 
-			var newImageSize = NewMapArea.Size.Scale(scaleFactor);
+			var newImageSizeScaledToOriginal = NewMapSize.Scale(currentToOriginalScaleFactor);
+			var newImageSize = newImageSizeScaledToOriginal.Scale(scaleFactor);
 			NewImageArea = new RectangleDbl(newImagePos, newImageSize).MakeSafe();
 
 			// Get the scale factor needed to reduce the actual preview image's bitmap to the container

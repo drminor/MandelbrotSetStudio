@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Designer Window" Width="1505" Height="1115">
+        Title="Designer Window" Width="1505" Height="1125">
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.PosterSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />

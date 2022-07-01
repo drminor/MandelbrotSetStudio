@@ -73,7 +73,22 @@ namespace ImageBuilder
 
 						for (var blockPtrX = 0; blockPtrX < w; blockPtrX++)
 						{
-							var mapSection = blocksForThisRow[blockPtrX];
+							MapSection? mapSection;
+							try
+							{
+								mapSection = blocksForThisRow[blockPtrX];
+							}
+							catch (Exception e)
+							{
+								Debug.WriteLine($"Got ee: {e}.");
+								throw;
+							}
+
+							if (mapSection == null)
+							{
+								Debug.WriteLine($"Got a null mapSection.");
+							}
+
 							var countsForThisSegment = GetOneLineFromCountsBlock(mapSection?.Counts, linePtr, blockSize.Width);
 							var escVelsForThisSegment = GetOneLineFromCountsBlock(mapSection?.EscapeVelocities, linePtr, blockSize.Width);
 							var segmentLength = GetSegmentLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
@@ -117,13 +132,35 @@ namespace ImageBuilder
 
 			if (blockPtrY == 0)
 			{
+				//numberOfLinesToSkip = 0;
+				//result = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
+				
+				//numberOfLinesToSkip = canvasControlOffsetY;
+				//result = blockHeight - canvasControlOffsetY;
+
 				numberOfLinesToSkip = 0;
-				result = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
+				result = blockHeight - canvasControlOffsetY;
+
+
 			}
 			else if (blockPtrY == numberOfWholeBlocksY - 1)
 			{
-				numberOfLinesToSkip = canvasControlOffsetY;
-				result = blockHeight - canvasControlOffsetY;
+				//numberOfLinesToSkip = canvasControlOffsetY;
+				//result = blockHeight - canvasControlOffsetY;
+
+				//numberOfLinesToSkip = 0;
+				//result = canvasControlOffsetY;
+
+				if (canvasControlOffsetY == 0)
+				{
+					numberOfLinesToSkip = 0;
+					result = blockHeight;
+				}
+				else
+				{
+					numberOfLinesToSkip = blockHeight - canvasControlOffsetY;
+					result = canvasControlOffsetY;
+				}
 			}
 			else
 			{
@@ -183,16 +220,29 @@ namespace ImageBuilder
 				{
 
 				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"Got ex: {e}.");
+
+					throw;
+				}
 			}
 
 			return _currentResponses ?? new Dictionary<int, MapSection?>();
 		}
 
-		private void MapSectionReady(MapSection mapSection, int jobNumber)
+		private void MapSectionReady(MapSection mapSection, int jobNumber, bool isLastSection)
 		{
 			if (jobNumber == _currentJobNumber)
 			{
-				_currentResponses?.Add(mapSection.BlockPosition.X, mapSection);
+				if (!mapSection.IsEmpty)
+				{
+					_currentResponses?.Add(mapSection.BlockPosition.X, mapSection);
+				}
+				else
+				{
+					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. LastSection = {isLastSection}, Job Number: {jobNumber}.");
+				}
 			}
 		}
 

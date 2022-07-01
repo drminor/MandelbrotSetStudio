@@ -42,7 +42,7 @@ namespace MSetExplorer
 
 		public event EventHandler<JobProgressInfo>? RequestAdded;
 
-		public event EventHandler<MapSectionProcessInfo>? RequestCompleted;
+		public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
 		//private GenMapRequestInfo? CurrentRequest => DoWithReadLock(() => { return (_requestsPointer == -1 || _requestsPointer > _requests.Count - 1) ? null : _requests[_requestsPointer]; });
 
@@ -52,21 +52,21 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, Action<MapSection, int> callback)
+		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, Action<MapSection, int, bool> callback)
 		{
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings);
 			var result = Push(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, mapSectionRequests, callback);
 			return result;
 		}
 
-		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections, Action<MapSection, int> callback)
+		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections, Action<MapSection, int, bool> callback)
 		{
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings, emptyMapSections);
 			var result = Push(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, mapSectionRequests, callback);
 			return result;
 		}
 
-		public int Push(BigVector mapBlockOffset, IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int> callback)
+		public int Push(BigVector mapBlockOffset, IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int, bool> callback)
 		{
 			var result = 0;
 
@@ -82,7 +82,7 @@ namespace MSetExplorer
 
 				result = mapLoader.JobNumber;
 
-				genMapRequestInfo.RequestCompleted += GenMapRequestInfo_RequestCompleted;
+				genMapRequestInfo.MapSectionLoaded += GenMapRequestInfo_MapSectionLoaded;
 
 				RequestAdded?.Invoke(this, new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count));
 			});
@@ -90,9 +90,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void GenMapRequestInfo_RequestCompleted(object? sender, MapSectionProcessInfo e)
+		private void GenMapRequestInfo_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
 		{
-			RequestCompleted?.Invoke(this, e);
+			SectionLoaded?.Invoke(this, e);
 		}
 
 		public Task? GetTaskForJob(int jobNumber)
@@ -234,7 +234,7 @@ namespace MSetExplorer
 
 		private class GenMapRequestInfo
 		{
-			public event EventHandler<MapSectionProcessInfo>? RequestCompleted;
+			public event EventHandler<MapSectionProcessInfo>? MapSectionLoaded;
 
 			public MapLoader MapLoader { get; init; }
 			public Task Task { get; init; }
@@ -244,12 +244,12 @@ namespace MSetExplorer
 				MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
 				Task = task ?? throw new ArgumentNullException(nameof(task));
 
-				MapLoader.RequestCompleted += MapLoader_RequestCompleted;
+				MapLoader.SectionLoaded += MapLoader_SectionLoaded;
 			}
 
-			private void MapLoader_RequestCompleted(object? sender, MapSectionProcessInfo e)
+			private void MapLoader_SectionLoaded(object? sender, MapSectionProcessInfo e)
 			{
-				RequestCompleted?.Invoke(this, e);
+				MapSectionLoaded?.Invoke(this, e);
 			}
 
 			public int JobNumber => MapLoader.JobNumber;

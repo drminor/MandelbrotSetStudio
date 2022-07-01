@@ -1,19 +1,7 @@
 ﻿using MSS.Types;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -38,7 +26,7 @@ namespace MSetExplorer
 		{
 			_canvas = new Canvas();
 			_colorBandsDisplayImage = new Image();
-			_clipImageBlocks = true;
+			_clipImageBlocks = false;
 
 
 			//_offset = new VectorInt(-1, -1);
@@ -63,7 +51,7 @@ namespace MSetExplorer
 				_canvas = MainCanvas;
 				_vm = (CbshDisplayViewModel)DataContext;
 
-				UpdateTheVmWithOurSize(new SizeDbl(ActualWidth, ActualHeight));
+				UpdateTheVmWithOurSize(new SizeDbl(TopBorder.ActualWidth, TopBorder.ActualHeight));
 
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
 				TopBorder.SizeChanged += Container_SizeChanged;
@@ -92,16 +80,10 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			//if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasControlOffset) || e.PropertyName == nameof(IMapDisplayViewModel.DisplayZoom))
-			//{
-			//	SetCanvasOffset(_vm.CanvasControlOffset, _vm.DisplayZoom);
-			//}
-
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
 				UpdateTheCanvasSize(_vm.CanvasSize);
 			}
-
 		}
 
 		#endregion

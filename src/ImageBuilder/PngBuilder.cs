@@ -128,6 +128,29 @@ namespace ImageBuilder
 			return true;
 		}
 
+		//private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int numberOfLinesToSkip)
+		//{
+		//	int result;
+
+		//	if (blockPtrY == 0)
+		//	{
+		//		numberOfLinesToSkip = 0;
+		//		result = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
+		//	}
+		//	else if (blockPtrY == numberOfWholeBlocksY - 1)
+		//	{
+		//		numberOfLinesToSkip = canvasControlOffsetY;
+		//		result = blockHeight - canvasControlOffsetY;
+		//	}
+		//	else
+		//	{
+		//		numberOfLinesToSkip = 0;
+		//		result = blockHeight;
+		//	}
+
+		//	return result;
+		//}
+
 		private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int numberOfLinesToSkip)
 		{
 			int result;
@@ -135,12 +158,12 @@ namespace ImageBuilder
 			if (blockPtrY == 0)
 			{
 				numberOfLinesToSkip = 0;
-				result = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
+				result = blockHeight - canvasControlOffsetY;
 			}
 			else if (blockPtrY == numberOfWholeBlocksY - 1)
 			{
-				numberOfLinesToSkip = canvasControlOffsetY;
-				result = blockHeight - canvasControlOffsetY;
+				numberOfLinesToSkip = blockHeight - canvasControlOffsetY;
+				result = canvasControlOffsetY;
 			}
 			else
 			{
@@ -205,11 +228,18 @@ namespace ImageBuilder
 			return _currentResponses ?? new Dictionary<int, MapSection?>();
 		}
 
-		private void MapSectionReady(MapSection mapSection, int jobNumber)
+		private void MapSectionReady(MapSection mapSection, int jobNumber, bool isLastSection)
 		{
 			if (jobNumber == _currentJobNumber)
 			{
-				_currentResponses?.Add(mapSection.BlockPosition.X, mapSection);
+				if (!mapSection.IsEmpty)
+				{
+					_currentResponses?.Add(mapSection.BlockPosition.X, mapSection);
+				}
+				else
+				{
+					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. LastSection = {isLastSection}, Job Number: {jobNumber}.");
+				}
 			}
 		}
 

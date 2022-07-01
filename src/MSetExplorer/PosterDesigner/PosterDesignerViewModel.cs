@@ -134,14 +134,26 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public JobAreaInfo GetUpdatedJobAreaInfo(JobAreaInfo mapAreaInfo, RectangleDbl screenArea)
+		public JobAreaInfo GetUpdatedJobAreaInfo(JobAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
 		{
 			var mapPosition = mapAreaInfo.Coords.Position;
 			var samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta;
 			var screenAreaInt = screenArea.Round();
 			var coords = RMapHelper.GetMapCoords(screenAreaInt, mapPosition, samplePointDelta);
 
-			var posterSize = screenAreaInt.Size;
+			var rCoords = Reducer.Reduce(coords);
+
+			if (screenArea.Position.X == 0 && screenArea.Position.Y == 0)
+			{
+				if (rCoords != mapAreaInfo.Coords)
+				{
+					Debug.WriteLine($"Coords were updated, but the new ScreenArea's position is zero.");
+					//throw new InvalidOperationException("if the pos has not changed, the coords should not change.");
+				}
+			}
+
+
+			var posterSize = newMapSize.Round();
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var jobAreaInfo = _mapJobHelper.GetJobAreaInfo(coords, posterSize, blockSize);
 

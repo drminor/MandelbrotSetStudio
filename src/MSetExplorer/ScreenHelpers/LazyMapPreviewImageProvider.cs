@@ -105,7 +105,7 @@ namespace MSetExplorer
 					try
 					{
 						var pixels = await _bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, mapCalcSettings, _cts.Token);
-						_synchronizationContext?.Send(o => BitmapCompleted(pixels), null);
+						_synchronizationContext?.Post(o => BitmapCompleted(pixels), null);
 					}
 					catch (AggregateException agEx)
 					{

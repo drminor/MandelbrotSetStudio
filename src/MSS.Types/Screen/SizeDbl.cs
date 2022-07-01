@@ -25,7 +25,7 @@ namespace MSS.Types
 		public double Width { get; set; }
 		public double Height { get; set; }
 
-		public double AspectRatio => (Height - 0 < 0.001) ? 1 : Width / Height;
+		public double AspectRatio => Height == 0 ? 1 : Width / Height;
 
 		public SizeDbl Inflate(int amount)
 		{
@@ -65,6 +65,11 @@ namespace MSS.Types
 		public SizeDbl Translate(PointDbl offset)
 		{
 			return new SizeDbl(Width + offset.X, Height + offset.Y);
+		}
+
+		public SizeDbl Sub(SizeDbl offset)
+		{
+			return new SizeDbl(Width - offset.Width, Height - offset.Height);
 		}
 
 		public SizeDbl Scale(SizeInt factor)

@@ -24,7 +24,7 @@ namespace MSetExplorer
 		//ImageSource GetPreviewImage(JobAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, CancellationToken ct, bool useGenericImage = true);
 		LazyMapPreviewImageProvider GetPreviewImageProvider(JobAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, Color fallbackColor);
 
-		JobAreaInfo GetUpdatedJobAreaInfo(JobAreaInfo jobAreaInfo, RectangleDbl screenArea);
+		JobAreaInfo GetUpdatedJobAreaInfo(JobAreaInfo jobAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize);
 
 	}
 }

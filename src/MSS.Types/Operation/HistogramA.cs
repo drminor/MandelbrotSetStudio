@@ -113,12 +113,14 @@ namespace MSS.Types
 			}
 
 			_topValues.Clear();
+			UpperCatchAllValue = 0;
 		}
 
 		public void Reset(int newSize)
 		{
-			_values = new int[newSize + 1];
+			_values = new int[newSize];
 			_topValues.Clear();
+			UpperCatchAllValue = 0;
 		}
 
 		//public void Set(int[] indexes, int[] amounts)

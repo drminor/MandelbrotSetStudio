@@ -725,11 +725,11 @@ namespace MSetExplorer
 			}
 
 			var posterName = requestParameters[0];
-			var getSize = requestParameters.Length > 1 && requestParameters[1] == "OpenSizeDialog";
+			var getSizeRequestParameter = requestParameters.Length > 1 && requestParameters[1] == "OpenSizeDialog";
 
 			if (_vm.PosterViewModel.TryGetPoster(posterName, out var poster))
 			{
-				if (getSize)
+				if (getSizeRequestParameter)
 				{
 					if (TryGetNewSizeFromUser(poster, out var newPosterMapAreaInfo))
 					{
@@ -771,7 +771,8 @@ namespace MSetExplorer
 					if (posterMapAreaInfo != null)
 					{
 						var newMapArea = posterSizeEditorDialog.NewMapArea;
-						newPosterMapAreaInfo = _vm.GetUpdatedJobAreaInfo(posterMapAreaInfo, newMapArea);
+						var newMapSize = posterSizeEditorDialog.NewMapSize;
+						newPosterMapAreaInfo = _vm.GetUpdatedJobAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
 						return true;
 					}
 					else
@@ -808,7 +809,8 @@ namespace MSetExplorer
 				if (posterMapAreaInfo != null)
 				{
 					var newMapArea = posterSizeEditorDialog.NewMapArea;
-					var newPosterMapAreaInfo = _vm.GetUpdatedJobAreaInfo(posterMapAreaInfo, newMapArea);
+					var newMapSize = posterSizeEditorDialog.NewMapSize;
+					var newPosterMapAreaInfo = _vm.GetUpdatedJobAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
 					posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo);
 				}
 			}

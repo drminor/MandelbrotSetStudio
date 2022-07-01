@@ -43,7 +43,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public event EventHandler<PercentageBand[]>? PercentageBandsUpdated;
-		public event EventHandler? HistogramUpdated;
+		public event EventHandler<HistogramUpdateType>? HistogramUpdated;
 
 		public IHistogram Histogram => _histogram;
 
@@ -117,24 +117,31 @@ namespace MSetExplorer
 				_histogram.Add(histogram);
 			}
 
-			HistogramUpdated?.Invoke(this, EventArgs.Empty);
+			HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
 		}
 
 		public void Reset()
 		{
 			_histogram.Reset();
-			HistogramUpdated?.Invoke(this, EventArgs.Empty);
+			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
 		}
 
 		public void Reset(int newSize)
 		{
 			_histogram.Reset(newSize);
-			HistogramUpdated?.Invoke(this, EventArgs.Empty);
+			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
 		}
 
-		public KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff)
+		// TODO: Handle Long to Int conversion for GetKeyValuePairsForBand.
+		public KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll)
 		{
-			var result = _histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff);
+			var result = _histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff).ToList();
+
+			if (includeCatchAll && cutoff == _histogram.Length)
+			{
+				result.Add(new KeyValuePair<int, int>(cutoff + 1, (int)_histogram.UpperCatchAllValue));
+			}
+
 			return result.ToArray();
 		}
 
@@ -187,15 +194,23 @@ namespace MSetExplorer
 				{
 					if (histogramWorkRequest.Histogram != null)
 					{
-						if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Add)
+						switch (histogramWorkRequest.RequestType)
 						{
-							_histogram.Add(histogramWorkRequest.Histogram);
-							HistogramUpdated?.Invoke(this, EventArgs.Empty);
-						}
-						else if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Remove)
-						{
-							_histogram.Remove(histogramWorkRequest.Histogram);
-							HistogramUpdated?.Invoke(this, EventArgs.Empty);
+							case HistogramWorkRequestType.Add:
+								_histogram.Add(histogramWorkRequest.Histogram);
+								HistogramUpdated?.Invoke(this, HistogramUpdateType.BlockAdded);
+								break;
+							case HistogramWorkRequestType.Remove:
+								_histogram.Remove(histogramWorkRequest.Histogram);
+								HistogramUpdated?.Invoke(this, HistogramUpdateType.BlockRemoved);
+								break;
+							case HistogramWorkRequestType.Refresh:
+								HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
+								break;
+							default:
+								Debug.WriteLine("WARNING: Unrecognized HistogramRequestType, using BucketsUpdated.");
+								HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
+								break;
 						}
 					}
 

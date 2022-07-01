@@ -35,6 +35,7 @@ namespace MSetExplorer
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
+			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
 			MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 			DispWidth = MapDisplayViewModel.CanvasSize.Width;
@@ -228,6 +229,12 @@ namespace MSetExplorer
 				// Zoom or Pan Map Coordinates
 				MapProjectViewModel.UpdateMapView(e.TransformType, e.ScreenArea);
 			}
+		}
+
+		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
+		{
+			ColorBandSetViewModel.RefreshPercentages();
+			ColorBandSetHistogramViewModel.RefreshHistogramDisplay();
 		}
 
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)

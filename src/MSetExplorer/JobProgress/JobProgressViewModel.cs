@@ -23,7 +23,7 @@ namespace MSetExplorer
 			MapSectionProcessInfos = new ObservableCollection<MapSectionProcessInfo>();
 
 			_mapLoaderManager.RequestAdded += MapLoaderManager_RequestAdded;
-			_mapLoaderManager.RequestCompleted += MapLoaderManager_RequestCompleted;	
+			_mapLoaderManager.SectionLoaded += MapLoaderManager_SectionLoaded;	
 		}
 
 		private void MapLoaderManager_RequestAdded(object? sender, JobProgressInfo e)
@@ -39,13 +39,13 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(TotalSections));
 		}
 
-		private void MapLoaderManager_RequestCompleted(object? sender, MapSectionProcessInfo e)
+		private void MapLoaderManager_SectionLoaded(object? sender, MapSectionProcessInfo e)
 		{
 			//Debug.WriteLine($"Got a RequestCompleted event. JobNumber: {e.JobNumber}, Number Completed: {e.RequestsCompleted}.");
-			_synchronizationContext?.Post((o) => HandleRequestCompleted(e), null);
+			_synchronizationContext?.Post((o) => HandleMapSectionLoaded(e), null);
 		}
 
-		private void HandleRequestCompleted(MapSectionProcessInfo mapSectionProcessInfo)
+		private void HandleMapSectionLoaded(MapSectionProcessInfo mapSectionProcessInfo)
 		{
 			if (mapSectionProcessInfo.RequestsCompleted == -1)
 			{

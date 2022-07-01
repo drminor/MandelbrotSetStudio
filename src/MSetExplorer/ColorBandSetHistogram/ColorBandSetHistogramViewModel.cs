@@ -18,7 +18,7 @@ namespace MSetExplorer
 			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
 			_colorBandSet = new ColorBandSet();
 
-			var cbshDisplayViewModel = new CbshDisplayViewModel(mapSectionHistogramProcessor);
+			var cbshDisplayViewModel = new CbshDisplayViewModel(_mapSectionHistogramProcessor);
 			CbshScrollViewModel = new CbshScrollViewModel(cbshDisplayViewModel);
 			CbshScrollViewModel.PropertyChanged += CbshScrollViewModel_PropertyChanged;
 
@@ -79,6 +79,11 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public void RefreshHistogramDisplay()
+		{
+			CbshDisplayViewModel.RefreshHistogramDisplay();
+		}
 
 		#endregion
 

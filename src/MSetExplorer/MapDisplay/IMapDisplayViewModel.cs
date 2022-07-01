@@ -12,6 +12,7 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
+		event EventHandler<int>? DisplayJobCompleted;
 
 		SizeInt BlockSize { get; }
 

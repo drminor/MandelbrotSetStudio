@@ -149,6 +149,7 @@ namespace MSetExplorer
 		public JobAreaInfo? PosterMapAreaInfo => _vm.PosterMapAreaInfo;
 
 		public RectangleDbl NewMapArea => _vm.NewMapArea;
+		public SizeDbl NewMapSize => _vm.NewMapSize;
 
 		public void UpdateWithNewMapInfo(JobAreaInfo mapAreaInfo)
 		{

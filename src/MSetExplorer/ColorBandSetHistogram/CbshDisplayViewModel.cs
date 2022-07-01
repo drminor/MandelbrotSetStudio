@@ -59,6 +59,7 @@ namespace MSetExplorer
 			LogicalDisplaySize = CanvasSize;
 
 			_mapSectionHistogramProcessor.PercentageBandsUpdated += PercentageBandsUpdated;
+			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
 		}
 
 		#endregion
@@ -115,19 +116,10 @@ namespace MSetExplorer
 			get => _displayZoom;
 			set
 			{
-				if (Math.Abs(value - _displayZoom) > 0.01)
+				if (Math.Abs(value - _displayZoom) > 0.00001)
 				{
-					//ClearDisplay();
-
-					//Debug.WriteLine($"The DrawingGroup has {_screenSectionCollection.CurrentDrawingGroupCnt} item.");
-
 					_displayZoom = value;
-
 					_scaleTransform.ScaleX = 1 / _displayZoom;
-					//_scaleTransform.ScaleY = 1 / _displayZoom;
-
-					//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
-
 					OnPropertyChanged();
 				}
 			}
@@ -172,9 +164,17 @@ namespace MSetExplorer
 
 					var newLogicalWidth = DrawColorBands();
 					LogicalDisplaySize = newLogicalWidth.HasValue ? new SizeInt(newLogicalWidth.Value, _canvasSize.Height) : _canvasSize;
-					DrawHistogram();
 				}
 			}
+		}
+
+		#endregion
+
+		#region Public Methods
+
+		public void RefreshHistogramDisplay()
+		{
+			DrawHistogram();
 		}
 
 		#endregion
@@ -244,6 +244,18 @@ namespace MSetExplorer
 			CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
 		}
 
+		private void HistogramUpdated(object? sender, HistogramUpdateType e)
+		{
+			if (e == HistogramUpdateType.Clear)
+			{
+				ClearHistogramItems();
+			}
+			else if (e == HistogramUpdateType.Refresh)
+			{
+				DrawHistogram();
+			}
+		}
+
 		private void PercentageBandsUpdated(object? sender, PercentageBand[] e)
 		{
 			UpdatePercentages();
@@ -260,23 +272,23 @@ namespace MSetExplorer
 		private void DrawHistogram()
 		{
 			ClearHistogramItems();
+
 			var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
 			var endingIndex = _colorBandSet[EndPtr].Cutoff;
+			var highCutoff = _colorBandSet.HighCutoff;
 
-			var rn = 1 + endingIndex - startingIndex; 
-			if (Math.Abs(LogicalDisplaySize.Width - rn) > 20)
-			{
-				Debug.WriteLine($"The range of indexes does not match the Logical Display Width. Range: {endingIndex - startingIndex}, Width: {LogicalDisplaySize.Width}.");
-				return;
-			}
-
-			//if (endingIndex - startingIndex != LogicalDisplaySize.Width)
+			//var rn = 1 + endingIndex - startingIndex;
+			//if (Math.Abs(LogicalDisplaySize.Width - rn) > 20)
 			//{
 			//	Debug.WriteLine($"The range of indexes does not match the Logical Display Width. Range: {endingIndex - startingIndex}, Width: {LogicalDisplaySize.Width}.");
 			//	return;
 			//}
 
-			var hEntries = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(startingIndex, endingIndex).ToArray();
+			//LogicalDisplaySize = new SizeInt(rn + 10, _canvasSize.Height);
+
+			DrawHistogramBorder(LogicalDisplaySize.Width - 10, _histDispHeight);
+
+			var hEntries = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true).ToArray();
 
 			if (hEntries.Length < 1)
 			{
@@ -296,6 +308,8 @@ namespace MSetExplorer
 				geometryGroup.Children.Add(BuildHLine(x, height));
 			}
 
+			var hTestEntry = hEntries[^1];
+
 			var lineGroupDrawing = new GeometryDrawing(Brushes.IndianRed, new Pen(Brushes.DarkRed, 0.75), geometryGroup);
 
 			_historgramItems.Add(lineGroupDrawing);
@@ -304,8 +318,23 @@ namespace MSetExplorer
 
 		private LineGeometry BuildHLine(int x, double height)
 		{
-			var result = new LineGeometry(new Point(x, 0), new Point(x, height));
+			var result = new LineGeometry(new Point(x, _histDispHeight - 2), new Point(x, _histDispHeight - height - 2));
 			return result;
+		}
+
+		private GeometryDrawing DrawHistogramBorder(int width, int height)
+		{
+			var histogramBorder = new GeometryDrawing
+			(
+				Brushes.Transparent,
+				new Pen(Brushes.DarkGray, 0.5),
+				new RectangleGeometry(new Rect(new Point(2, 2), new Size(width - 1, height - 1)))
+			);
+
+			_historgramItems.Add(histogramBorder);
+			_drawingGroup.Children.Add(histogramBorder);
+
+			return histogramBorder;
 		}
 
 		private int? DrawColorBands()
@@ -332,7 +361,17 @@ namespace MSetExplorer
 				curOffset += lastWidth;
 			}
 
-			return curOffset;
+			return GetExtent() + 10;
+		}
+
+		private int GetExtent()
+		{
+			var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
+			var endingIndex = _colorBandSet[EndPtr].Cutoff;
+
+			var result = 1 + endingIndex - startingIndex;
+
+			return result;
 		}
 
 		private void UpdatePercentages()

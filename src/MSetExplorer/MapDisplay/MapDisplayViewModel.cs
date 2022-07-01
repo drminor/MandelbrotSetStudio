@@ -88,6 +88,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
+		public event EventHandler<int>? DisplayJobCompleted;
 
 		public VectorInt ScreenCollectionIndex => _screenSectionCollection.SectionIndex;
 
@@ -219,10 +220,12 @@ namespace MSetExplorer
 			{
 				_containerSize = value;
 
-				Debug.WriteLine($"The container size is now {value}.");
-
 				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_containerSize, BlockSize, _keepDisplaySquare);
-				CanvasSize = sizeInWholeBlocks.Scale(BlockSize);
+				var desiredCanvasSize = sizeInWholeBlocks.Scale(BlockSize);
+
+				Debug.WriteLine($"The container size is now {value} Would set the Canvas Size to {desiredCanvasSize}, but keeping it at 1024 x 1024 for now.");
+
+				CanvasSize = new SizeInt(1024);
 			}
 		}
 
@@ -390,27 +393,60 @@ namespace MSetExplorer
 		private List<Tuple<MapSection, int>> _mapSectionsPendingUiUpdate = new List<Tuple<MapSection, int>>();
 		private Stopwatch? _stopwatch;
 
-		private void MapSectionReady(MapSection mapSection, int jobNumber)
+		private void MapSectionReady(MapSection mapSection, int jobNumber, bool isLastSection)
 		{
-			var shouldUpdateUi = ProcessMapSection(mapSection, jobNumber, _mapSectionsPendingUiUpdate);
+			var shouldUpdateUi = IsMapSectionForCurJob(mapSection, jobNumber, isLastSection, _mapSectionsPendingUiUpdate);
 
 			if (shouldUpdateUi)
 			{
 				//_synchronizationContext?.Send(async (o) => await UpdateUi(mapSectionsPendingUiUpdate), null);
 				_synchronizationContext?.Send(o => UpdateUi(_mapSectionsPendingUiUpdate), null);
+
+				if (isLastSection)
+				{
+					_synchronizationContext?.Post(o =>
+					{
+						DisplayJobCompleted?.Invoke(this, jobNumber);
+					}
+					, null);
+				}
 			}
 		}
 
-		private bool ProcessMapSection(MapSection mapSection, int jobNumber, List<Tuple<MapSection, int>> sectionsPendingUiUpdate)
+		private bool IsMapSectionForCurJob(MapSection mapSection, int jobNumber, bool isLastSection, List<Tuple<MapSection, int>> sectionsPendingUiUpdate)
 		{
-			bool shouldUpdateUi;
-
 			lock (_paintLocker)
 			{
-				if (jobNumber == _currentMapLoaderJobNumber && mapSection.Counts != null)
+				if (jobNumber != _currentMapLoaderJobNumber)
 				{
-					DrawASection(mapSection, _colorMap, _useEscapeVelocities, drawOffline: true);
-					sectionsPendingUiUpdate.Add(new Tuple<MapSection, int>(mapSection, jobNumber));
+					return false;
+				}
+
+				if (  (!mapSection.IsEmpty) && mapSection.Counts != null)
+				{
+					try
+					{
+						DrawASection(mapSection, _colorMap, _useEscapeVelocities, drawOffline: true);
+						sectionsPendingUiUpdate.Add(new Tuple<MapSection, int>(mapSection, jobNumber));
+					}
+					catch (Exception e)
+					{
+						Debug.WriteLine($"While calling DrawASection, got an exception: {e}.");
+					}
+				}
+
+				bool shouldUpdateUi;
+				if (isLastSection)
+				{
+					shouldUpdateUi = true;
+					if (_stopwatch != null)
+					{
+						_stopwatch.Stop();
+						_stopwatch = null;
+					}
+				}
+				else
+				{
 					if (_stopwatch == null)
 					{
 						_stopwatch = Stopwatch.StartNew();
@@ -424,24 +460,10 @@ namespace MSetExplorer
 						}
 						_callCounter = Math.Min(CanvasSize.Width / BlockSize.Width, 8);
 					}
-				}
-				else if (jobNumber == -1)
-				{
-					if (_stopwatch != null) 
-					{
-						_stopwatch.Stop();
-						_stopwatch = null;
-					}
 
-					shouldUpdateUi = true;
 				}
-				else
-				{
-					shouldUpdateUi = false;
-				}
+				return shouldUpdateUi;
 			}
-
-			return shouldUpdateUi;
 		}
 
 		private bool UpdateUi(List<Tuple<MapSection, int>> sectionsPendingUiUpdate)

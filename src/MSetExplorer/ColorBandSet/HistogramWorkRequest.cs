@@ -17,7 +17,7 @@ namespace MSetExplorer
 			Histogram = histogram;
 			WorkAction = workAction ?? throw new ArgumentNullException(nameof(workAction));
 
-			if (RequestType != HistogramWorkRequestType.BucketsUpdated && Histogram == null)
+			if (RequestType != HistogramWorkRequestType.Refresh && Histogram == null)
 			{
 				throw new ArgumentException("The Histogram cannot be null, unless the request type is 'Update-Buckets'.");
 			}
@@ -33,7 +33,7 @@ namespace MSetExplorer
 	{
 		Add,
 		Remove,
-		BucketsUpdated
+		Refresh
 	}
 
 }

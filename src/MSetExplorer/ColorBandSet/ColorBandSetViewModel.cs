@@ -140,9 +140,9 @@ namespace MSetExplorer
 				if (value != null)
 				{
 					//_histogram.Reset(value.HighCutoff);
-					_mapSectionHistogramProcessor.Reset(value.HighCutoff); // Make Reset disable processing
+					_mapSectionHistogramProcessor.Reset(value.HighCutoff); // TODO: Make Reset disable processing, ColorBandSetViewModel
 					//PopulateHistorgram(_mapSections, _histogram);
-					_mapSectionHistogramProcessor.LoadHistogram(_mapSections.Select(x => x.Histogram)); // TODO: Make LoadHistogram enable processing
+					_mapSectionHistogramProcessor.LoadHistogram(_mapSections.Select(x => x.Histogram)); // TODO: Make LoadHistogram enable processing, ColorBandSetViewModel
 					_mapSectionHistogramProcessor.ProcessingEnabled = true;
 
 					UpdatePercentages();
@@ -732,10 +732,15 @@ namespace MSetExplorer
 				var cutoff = currentColorBand.Cutoff;
 
 				//var kvpsForBand = _histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff);
-				var kvpsForBand = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(previousCutoff, cutoff);
+				var kvpsForBand = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(previousCutoff, cutoff, includeCatchAll: true);
 
 				return new Dictionary<int, int>(kvpsForBand);
 			}
+		}
+
+		public void RefreshPercentages()
+		{
+			UpdatePercentages();
 		}
 
 		#endregion
@@ -779,7 +784,7 @@ namespace MSetExplorer
 		private void UpdatePercentages()
 		{
 			var cutoffs = GetCutoffs();
-			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.BucketsUpdated, cutoffs, null, HandleHistogramUpdate));
+			_mapSectionHistogramProcessor.AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Refresh, cutoffs, null, HandleHistogramUpdate));
 		}
 
 		//private void PopulateHistorgram(IEnumerable<MapSection> mapSections, IHistogram histogram)
