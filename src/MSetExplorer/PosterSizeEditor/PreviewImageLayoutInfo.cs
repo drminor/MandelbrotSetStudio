@@ -24,17 +24,19 @@ namespace MSetExplorer
 
 		public PreviewImageLayoutInfo(SizeDbl originalMapSize, SizeDbl previewImageSize, SizeDbl containerSize)
 		{
-			OriginalMapSize = originalMapSize;
+			OriginalMapArea = new RectangleDbl(new PointDbl(), originalMapSize);
 			PreviewImageSize = previewImageSize;
 			ContainerSize = containerSize;
 		}
 
 		#region Public Properties
 
-		public bool IsEmpty => OriginalMapSize.Width == 0;
+		public bool IsEmpty => OriginalMapArea.Width == 0;
 
 		// Environment
-		public SizeDbl OriginalMapSize { get; init; }
+		public RectangleDbl OriginalMapArea { get; init; }
+
+
 		public SizeDbl PreviewImageSize { get; set; }
 
 		// Inputs
@@ -44,7 +46,8 @@ namespace MSetExplorer
 		public PointDbl BeforeOffset { get; set; } // Really a vector. This added to the original MapDisplay position (i.e., 0,0) gives the new MapDisplay position.
 		public PointDbl AfterOffset { get; set; } // Really a vector. This added to the original MapDisplay position (i.e., 0,0) gives the new MapDisplay position.
 
-		public RectangleDbl ResultNewMapArea => new RectangleDbl(BeforeOffset, OriginalMapSize.Translate(AfterOffset));
+		public RectangleDbl ResultNewMapArea => new RectangleDbl(BeforeOffset, OriginalMapArea.Point2.Translate(AfterOffset));
+
 
 		// Outputs
 		public RectangleDbl OriginalImageArea { get; private set; } // Size and placement of the preview image, relative to the NewImageArea
@@ -63,9 +66,8 @@ namespace MSetExplorer
 			Debug.WriteLine($"Edit Poster Size Layout Update: BeforeOffset: {BeforeOffset}, AfterOffset: {AfterOffset}, NewMapSize: {NewMapSize}, ContainerSize: {ContainerSize}.");
 
 			// Get the portion of the originalMapArea that will be part of the new Image.
-			var originalMapArea = new RectangleDbl(new PointDbl(), OriginalMapSize);
-			var newMapArea = new RectangleDbl(BeforeOffset, originalMapArea.Point2.Translate(AfterOffset));
-			var clippedOriginalMapArea = ScreenTypeHelper.Intersect(newMapArea, originalMapArea);
+			var newMapArea = new RectangleDbl(BeforeOffset, OriginalMapArea.Point2.Translate(AfterOffset));
+			var clippedOriginalMapArea = ScreenTypeHelper.Intersect(newMapArea, OriginalMapArea);
 
 			// Get a rectangle that will hold both the new and the portion of the original
 			var boundingMapArea = RMapHelper.GetBoundingRectangle(clippedOriginalMapArea, newMapArea);
@@ -84,7 +86,7 @@ namespace MSetExplorer
 
 			TranslateNewAndOrigImages(boundingImageArea.Position, ref originalImagePos, ref newImagePos);
 
-			var originalImageSize = OriginalMapSize.Scale(scaleFactor);
+			var originalImageSize = OriginalMapArea.Size.Scale(scaleFactor);
 			OriginalImageArea = new RectangleDbl(originalImagePos, originalImageSize).MakeSafe();
 
 			var newImageSizeScaledToOriginal = NewMapSize.Scale(currentToOriginalScaleFactor);

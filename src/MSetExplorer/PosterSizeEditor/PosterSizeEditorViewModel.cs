@@ -311,9 +311,6 @@ namespace MSetExplorer
 						OnPropertyChanged(nameof(AfterX));
 					}
 
-					//var newMapArea = HandleAfterXUpdate(previous, value);
-					//InvertAndSetNewMapArea(newMapArea);
-
 					BeforeOffset = new PointDbl(BeforeX, BeforeY);
 					AfterOffset = new PointDbl(AfterX, AfterY);
 					_currentSize = HandleBeforeXUpdate(previous, value);
@@ -479,6 +476,8 @@ namespace MSetExplorer
 				if (!_layoutInfo.IsEmpty && value != NewMapSize)
 				{
 					_layoutInfo.NewMapSize = value;
+					OnPropertyChanged(nameof(Width));
+					OnPropertyChanged(nameof(Height));
 				}
 			}
 		}
