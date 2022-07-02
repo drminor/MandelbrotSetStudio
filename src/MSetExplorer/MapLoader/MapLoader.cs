@@ -134,8 +134,12 @@ namespace MSetExplorer
 				if (_tcs?.Task.IsCompleted == false)
 				{
 					_callback(mapSectionResult, JobNumber, isLastSection);
-					SectionLoaded?.Invoke(this, new MapSectionProcessInfo(JobNumber, -1, TimeSpan.FromSeconds(0), true));
-					mapSectionRequest.Handled = true;
+
+					if (!mapSectionResult.IsEmpty)
+					{
+						SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
+						mapSectionRequest.Handled = true;
+					}
 
 					_tcs.SetResult();
 				}
@@ -149,10 +153,16 @@ namespace MSetExplorer
 				if (!mapSectionResult.IsEmpty)
 				{
 					_callback(mapSectionResult, JobNumber, isLastSection);
-					SectionLoaded?.Invoke(this, new MapSectionProcessInfo(JobNumber, -1, TimeSpan.FromSeconds(0), true));
+					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
 					mapSectionRequest.Handled = true;
 				}
 			}
+		}
+
+		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest mapSectionRequest)
+		{
+			var result = new MapSectionProcessInfo(JobNumber, _sectionsCompleted, mapSectionRequest.TimeToCompleteGenRequest, mapSectionRequest.ProcessingDuration, mapSectionRequest.FoundInRepo);
+			return result;
 		}
 
 		#endregion

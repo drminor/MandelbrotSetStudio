@@ -2,9 +2,9 @@
 using MSS.Common;
 using MSS.Common.MSetRepo;
 
-namespace MEngineClient
+namespace MapSectionProviderLib
 {
-	public static class MapSectionRequestProcessorProvider
+	public static class MapSectionRequestProcessorBuilder
 	{
 		public static MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, bool useMapSectionRepository)
 		{
@@ -17,8 +17,7 @@ namespace MEngineClient
 			IMapSectionAdapter? mapSectionAdapterForLookup = useMapSectionRepository ? mapSectionAdapter : null;
 
 			// Force LookUps to find nothing
-			//forLookup = null;
-
+			// mapSectionAdapterForLookup = null;
 			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapterForLookup, mapSectionGeneratorProcessor, mapSectionResponseProcessor);
 
 			return mapSectionRequestProcessor;

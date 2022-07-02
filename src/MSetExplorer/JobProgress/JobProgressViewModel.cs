@@ -47,24 +47,17 @@ namespace MSetExplorer
 
 		private void HandleMapSectionLoaded(MapSectionProcessInfo mapSectionProcessInfo)
 		{
-			if (mapSectionProcessInfo.RequestsCompleted == -1)
-			{
+			MapSectionProcessInfos.Add(mapSectionProcessInfo);
 
-			}
-			else
+			if (CurrentJobProgressInfo.JobNumber == mapSectionProcessInfo.JobNumber)
 			{
-				MapSectionProcessInfos.Add(mapSectionProcessInfo);
-
-				if (CurrentJobProgressInfo.JobNumber == mapSectionProcessInfo.JobNumber)
+				if (mapSectionProcessInfo.FoundInRepo)
 				{
-					if (mapSectionProcessInfo.FoundInRepo)
-					{
-						CurrentJobProgressInfo.FetchedCount += 1;
-					}
-					else
-					{
-						CurrentJobProgressInfo.GeneratedCount += 1;
-					}
+					CurrentJobProgressInfo.FetchedCount += 1;
+				}
+				else
+				{
+					CurrentJobProgressInfo.GeneratedCount += 1;
 				}
 			}
 

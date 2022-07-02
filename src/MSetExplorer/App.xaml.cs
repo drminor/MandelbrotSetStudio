@@ -1,4 +1,4 @@
-﻿using ImageBuilder;
+﻿using MapSectionProviderLib;
 using MEngineClient;
 using MSS.Common;
 using MSS.Common.MSetRepo;
@@ -85,7 +85,7 @@ namespace MSetExplorer
 		private IMapLoaderManager BuildMapLoaderManager(string[] mEngineEndPointAddress, IMapSectionAdapter mapSectionAdapter, bool useTheMapSectionRepo)
 		{
 			var mEngineClients = mEngineEndPointAddress.Select(x => new MClient(x)).ToArray();
-			var mapSectionRequestProcessor = MapSectionRequestProcessorProvider.CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, useTheMapSectionRepo);
+			var mapSectionRequestProcessor = MapSectionRequestProcessorBuilder.CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, useTheMapSectionRepo);
 
 			var mapSectionHelper = new MapSectionHelper();
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
