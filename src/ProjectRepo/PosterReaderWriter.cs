@@ -81,7 +81,7 @@ namespace ProjectRepo
 			var filter = Builders<PosterRecord>.Filter.Eq("_id", posterRecord.Id);
 
 			var updateDefinition = Builders<PosterRecord>.Update
-				.Set(u => u.JobAreaInfoRecord, posterRecord.JobAreaInfoRecord)
+				.Set(u => u.MapAreaInfoRecord, posterRecord.MapAreaInfoRecord)
 				.Set(u => u.DisplayPosition, posterRecord.DisplayPosition)
 				.Set(u => u.DisplayZoom, posterRecord.DisplayZoom);
 

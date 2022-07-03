@@ -811,7 +811,7 @@ namespace MSetRepo
 				name: target.Name,
 				description: target.Description,
 				sourceJobId: target.SourceJobId,
-				jobAreaInfo: _mSetRecordMapper.MapFrom(target.JobAreaInfoRecord),
+				mapAreaInfo: _mSetRecordMapper.MapFrom(target.MapAreaInfoRecord),
 				colorBandSet: colorBandSet,
 				mapCalcSettings: target.MapCalcSettings,
 				displayPosition: _mSetRecordMapper.MapFrom(target.DisplayPosition),

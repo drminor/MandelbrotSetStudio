@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace MSetExplorer
 {
-	public class ExplorerViewModel : ViewModelBase, IExplorerViewModel 
+	internal class ExplorerViewModel : ViewModelBase, IExplorerViewModel 
 	{
 		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
@@ -156,12 +156,12 @@ namespace MSetExplorer
 				MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
 				// TODO: Once every job has a valid CanvasSize, don't use the current DisplaySize.
-				var newJobAreaInfo = MapJobHelper.GetJobAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
-				MapCoordsViewModel.CurrentJobAreaInfo = newJobAreaInfo;
+				var newMapAreaInfo = MapJobHelper.GetMapAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
+				MapCoordsViewModel.CurrentMapAreaInfo = newMapAreaInfo;
 
 				var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
 					(
-					newJobAreaInfo,
+					newMapAreaInfo,
 					curJob.MapCalcSettings
 					);
 
@@ -218,10 +218,10 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				// Calculate new Coords for preview
-				var jobAreaInfo = MapProjectViewModel.GetUpdatedJobAreaInfo(e.TransformType, e.ScreenArea);
-				if (jobAreaInfo != null)
+				var mapAreaInfo = MapProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea);
+				if (mapAreaInfo != null)
 				{
-					MapCoordsViewModel.Preview(jobAreaInfo);
+					MapCoordsViewModel.Preview(mapAreaInfo);
 				}
 			}
 			else

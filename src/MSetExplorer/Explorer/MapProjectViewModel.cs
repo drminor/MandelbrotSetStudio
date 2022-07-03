@@ -402,7 +402,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public MapAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt screenArea)
+		public MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea)
 		{
 			var curJob = CurrentJob;
 
@@ -414,16 +414,16 @@ namespace MSetExplorer
 			if (screenArea == new RectangleInt())
 			{
 				Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
-				return MapJobHelper.GetJobAreaInfo(curJob, CanvasSize);
+				return MapJobHelper.GetMapAreaInfo(curJob, CanvasSize);
 			}
 			else
 			{
 				var mapPosition = curJob.Coords.Position;
 				var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 				var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
- 				var jobAreaInfo = _mapJobHelper.GetJobAreaInfo(coords, CanvasSize, _blockSize);
+ 				var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, CanvasSize, _blockSize);
 
-				return jobAreaInfo;
+				return mapAreaInfo;
 			}
 		}
 

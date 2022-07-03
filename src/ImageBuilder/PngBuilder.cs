@@ -32,12 +32,12 @@ namespace ImageBuilder
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<bool> BuildAsync(string imageFilePath, MapAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct)
+		public async Task<bool> BuildAsync(string imageFilePath, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct)
 		{
-			var mapBlockOffset = jobAreaInfo.MapBlockOffset;
-			var canvasControlOffset = jobAreaInfo.CanvasControlOffset;
+			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
+			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 
-			var blockSize = jobAreaInfo.Subdivision.BlockSize;
+			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
 			{
 				UseEscapeVelocities = mapCalcSettings.UseEscapeVelocities
@@ -49,7 +49,7 @@ namespace ImageBuilder
 			{
 				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
-				var imageSize = jobAreaInfo.CanvasSize;
+				var imageSize = mapAreaInfo.CanvasSize;
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
 				var numberOfWholeBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize);
@@ -60,7 +60,7 @@ namespace ImageBuilder
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
-					var blocksForThisRow = await GetAllBlocksForRowAsync(blockPtrY, w, mapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(blockPtrY, w, mapBlockOffset, mapAreaInfo.Subdivision, mapCalcSettings);
 
 					//var checkCnt = blocksForThisRow.Count;
 					//Debug.Assert(checkCnt == w);

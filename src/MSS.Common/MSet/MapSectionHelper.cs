@@ -17,11 +17,11 @@ namespace MSS.Common
 
 		#region Create MapSectionRequests
 
-		public IList<MapSectionRequest> CreateSectionRequests(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections)
+		public IList<MapSectionRequest> CreateSectionRequests(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection>? emptyMapSections)
 		{
 			if (emptyMapSections == null)
 			{
-				return CreateSectionRequests(jobAreaAndCalcSettings);
+				return CreateSectionRequests(mapAreaInfo, mapCalcSettings);
 			}
 			else
 			{
@@ -29,13 +29,10 @@ namespace MSS.Common
 
 				Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
 
-				var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-				var mapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
-
 				foreach (var mapSection in emptyMapSections)
 				{
 					var screenPosition = mapSection.BlockPosition;
-					var mapSectionRequest = CreateRequest(screenPosition, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
+					var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Subdivision, mapCalcSettings);
 					result.Add(mapSectionRequest);
 				}
 
@@ -43,44 +40,40 @@ namespace MSS.Common
 			}
 		}
 
-		public IList<MapSectionRequest> CreateSectionRequests(JobAreaAndCalcSettings jobAreaAndCalcSettings)
+		public IList<MapSectionRequest> CreateSectionRequests(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var result = new List<MapSectionRequest>();
 
-			var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-			var mapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
-
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, jobAreaInfo.Subdivision.BlockSize);
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Subdivision, mapCalcSettings);
 				result.Add(mapSectionRequest);
 			}
 
 			return result;
 		}
 
-		public IList<MapSection> CreateEmptyMapSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
+		public IList<MapSection> CreateEmptyMapSections(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var emptyCountsData = new ushort[0];
 			var emptyEscapeVelocities = new ushort[0];
 
 			var result = new List<MapSection>();
 
-			var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-			var targetIterations = jobAreaAndCalcSettings.MapCalcSettings.TargetIterations;
+			var targetIterations = mapCalcSettings.TargetIterations;
 
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, jobAreaInfo.Subdivision.BlockSize);
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
 
-			var subdivisionId = jobAreaInfo.Subdivision.Id.ToString();
+			var subdivisionId = mapAreaInfo.Subdivision.Id.ToString();
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, jobAreaInfo.MapBlockOffset, out var isInverted);
-				var mapSection = new MapSection(screenPosition, jobAreaInfo.Subdivision.BlockSize, emptyCountsData, emptyEscapeVelocities, targetIterations,
+				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapAreaInfo.MapBlockOffset, out var isInverted);
+				var mapSection = new MapSection(screenPosition, mapAreaInfo.Subdivision.BlockSize, emptyCountsData, emptyEscapeVelocities, targetIterations,
 					subdivisionId, repoPosition, isInverted, BuildHistogram);
 				result.Add(mapSection);
 			}

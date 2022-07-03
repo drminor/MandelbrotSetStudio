@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	public interface IMapScrollViewModel : INotifyPropertyChanged
+	internal interface IMapScrollViewModel : INotifyPropertyChanged
 	{
 		IMapDisplayViewModel MapDisplayViewModel { get; init; }
 

@@ -5,7 +5,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public interface IPosterDesignerViewModel : INotifyPropertyChanged
+	internal interface IPosterDesignerViewModel : INotifyPropertyChanged
 	{
 		IPosterViewModel PosterViewModel { get; }
 
@@ -21,10 +21,10 @@ namespace MSetExplorer
 		CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath);
 		CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits);
 
-		//ImageSource GetPreviewImage(JobAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, CancellationToken ct, bool useGenericImage = true);
+		//ImageSource GetPreviewImage(MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, CancellationToken ct, bool useGenericImage = true);
 		LazyMapPreviewImageProvider GetPreviewImageProvider(MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, Color fallbackColor);
 
-		MapAreaInfo GetUpdatedJobAreaInfo(MapAreaInfo jobAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize);
+		MapAreaInfo GetUpdatedMapAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize);
 
 	}
 }

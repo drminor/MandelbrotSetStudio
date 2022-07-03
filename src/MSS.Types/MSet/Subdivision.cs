@@ -3,7 +3,7 @@ using System;
 
 namespace MSS.Types.MSet
 {
-	public class Subdivision
+	public class Subdivision : ICloneable
 	{
 		public ObjectId Id { get; init; }
 		public SizeInt BlockSize { get; init; }
@@ -28,5 +28,14 @@ namespace MSS.Types.MSet
 
 		public RPoint Position => RPoint.Zero;
 
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public Subdivision Clone()
+		{
+			return new Subdivision(Id, SamplePointDelta.Clone(), BlockSize);
+		}
 	}
 }

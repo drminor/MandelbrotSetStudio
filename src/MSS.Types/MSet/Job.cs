@@ -38,7 +38,7 @@ namespace MSS.Types.MSet
 			TransformType transformType, 
 			RectangleInt? newArea,
 
-			MapAreaInfo jobAreaInfo, 
+			MapAreaInfo mapAreaInfo, 
 
 			SizeInt canvasSizeInBlocks,
 			ObjectId colorBandSetId, 
@@ -54,11 +54,11 @@ namespace MSS.Types.MSet
 				  transformType, 
 				  newArea,
 
-				  jobAreaInfo.Coords,
-				  jobAreaInfo.CanvasSize,
-				  jobAreaInfo.Subdivision, 
-				  jobAreaInfo.MapBlockOffset, 
-				  jobAreaInfo.CanvasControlOffset, 
+				  mapAreaInfo.Coords,
+				  mapAreaInfo.CanvasSize,
+				  mapAreaInfo.Subdivision, 
+				  mapAreaInfo.MapBlockOffset, 
+				  mapAreaInfo.CanvasControlOffset, 
 
 				  canvasSizeInBlocks,
 				  colorBandSetId, 

@@ -30,18 +30,18 @@ namespace ImageBuilder
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<byte[]> BuildAsync(MapAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
+		public async Task<byte[]> BuildAsync(MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
 		{
-			var mapBlockOffset = jobAreaInfo.MapBlockOffset;
-			var canvasControlOffset = jobAreaInfo.CanvasControlOffset;
+			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
+			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 
-			var blockSize = jobAreaInfo.Subdivision.BlockSize;
+			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
 			{
 				UseEscapeVelocities = mapCalcSettings.UseEscapeVelocities
 			};
 
-			var imageSize = jobAreaInfo.CanvasSize;
+			var imageSize = mapAreaInfo.CanvasSize;
 
 			var result = new byte[imageSize.NumberOfCells * 4];
 
@@ -57,7 +57,7 @@ namespace ImageBuilder
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
-					var blocksForThisRow = await GetAllBlocksForRowAsync(blockPtrY, w, mapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(blockPtrY, w, mapBlockOffset, mapAreaInfo.Subdivision, mapCalcSettings);
 
 					//var checkCnt = blocksForThisRow.Count;
 					//Debug.Assert(checkCnt == w);

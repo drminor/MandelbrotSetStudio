@@ -59,7 +59,7 @@ namespace MSetExplorer
 						//var coords = curPoster.MapAreaInfo.Coords;
 						//var blockSize = curPoster.MapAreaInfo.Subdivision.BlockSize;
 
-						//curPoster.MapAreaInfo = MapJobHelper.GetJobAreaInfo(coords, value, blockSize, _projectAdapter);
+						//curPoster.MapAreaInfo = MapJobHelper.GetMapAreaInfo(coords, value, blockSize, _projectAdapter);
 					}
 				}
 			}
@@ -372,8 +372,8 @@ namespace MSetExplorer
 				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentPoster.ColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentPoster.MapCalcSettings.RequestsPerJob);
 
-				//LoadMap(CurrentPoster, CurrentPoster.JobAreaInfo.Coords, colorBandSet.Id, mapCalcSettings);
-				JobAreaAndCalcSettings = new JobAreaAndCalcSettings(JobAreaAndCalcSettings.JobAreaInfo, mapCalcSettings);
+				//LoadMap(CurrentPoster, CurrentPoster.MapAreaInfo.Coords, colorBandSet.Id, mapCalcSettings);
+				JobAreaAndCalcSettings = new JobAreaAndCalcSettings(JobAreaAndCalcSettings.MapAreaInfo, mapCalcSettings);
 			}
 			else
 			{

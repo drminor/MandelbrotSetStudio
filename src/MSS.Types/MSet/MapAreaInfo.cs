@@ -4,8 +4,8 @@ namespace MSS.Types.MSet
 {
 	public class MapAreaInfo : ICloneable
 	{
-		private static readonly Lazy<MapAreaInfo> _lazyJobAreaInfo = new Lazy<MapAreaInfo>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
-		public static readonly MapAreaInfo Empty = _lazyJobAreaInfo.Value;
+		private static readonly Lazy<MapAreaInfo> _lazyMapAreaInfo = new Lazy<MapAreaInfo>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+		public static readonly MapAreaInfo Empty = _lazyMapAreaInfo.Value;
 
 		public RRectangle Coords { get; init; }
 		public SizeInt CanvasSize { get; init; }
@@ -36,10 +36,9 @@ namespace MSS.Types.MSet
 			return Clone();
 		}
 
-		// TODO: Implement ICloneable for Coords, Subdivision and BigVector
 		public MapAreaInfo Clone()
 		{
-			return new MapAreaInfo(Coords, CanvasSize, Subdivision, MapBlockOffset, CanvasControlOffset);
+			return new MapAreaInfo(Coords.Clone(), CanvasSize, Subdivision.Clone(), MapBlockOffset.Clone(), CanvasControlOffset);
 		}
 	}
 }

@@ -13,7 +13,7 @@ namespace MSS.Types
 		private string? _description;
 		private string _size;
 
-		private MapAreaInfo _jobAreaInfo;
+		private MapAreaInfo _mapAreaInfo;
 		private ColorBandSet _colorBandSet;
 		private MapCalcSettings _mapCalcSettings;
 
@@ -25,14 +25,14 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public Poster(string name, string? description, ObjectId? sourceJobId, MapAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
-			: this(ObjectId.GenerateNewId(), name, description, sourceJobId, jobAreaInfo, colorBandSet, mapCalcSettings, new VectorInt(), 1.0d,
+		public Poster(string name, string? description, ObjectId? sourceJobId, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+			: this(ObjectId.GenerateNewId(), name, description, sourceJobId, mapAreaInfo, colorBandSet, mapCalcSettings, new VectorInt(), 1.0d,
 				  DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}
 
-		public Poster(ObjectId id, string name, string? description, ObjectId? sourceJobId, MapAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
+		public Poster(ObjectId id, string name, string? description, ObjectId? sourceJobId, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
 			VectorInt displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
@@ -43,7 +43,7 @@ namespace MSS.Types
 
 			SourceJobId = sourceJobId;
 
-			_jobAreaInfo = jobAreaInfo;
+			_mapAreaInfo = mapAreaInfo;
 			_colorBandSet = colorBandSet;
 			_mapCalcSettings = mapCalcSettings;
 
@@ -56,7 +56,7 @@ namespace MSS.Types
 			LastAccessedUtc = lastAccessedUtc;
 
 			_size = string.Empty;
-			Size = GetFormattedPosterSize(jobAreaInfo.CanvasSize);
+			Size = GetFormattedPosterSize(mapAreaInfo.CanvasSize);
 
 			//Debug.WriteLine($"Poster is loaded.");
 		}
@@ -112,12 +112,12 @@ namespace MSS.Types
 
 		public MapAreaInfo MapAreaInfo
 		{
-			get => _jobAreaInfo;
+			get => _mapAreaInfo;
 			set
 			{
-				if (value != _jobAreaInfo)
+				if (value != _mapAreaInfo)
 				{
-					_jobAreaInfo = value;
+					_mapAreaInfo = value;
 					Size = GetFormattedPosterSize(value.CanvasSize);
 					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();

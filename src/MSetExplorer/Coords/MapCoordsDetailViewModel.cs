@@ -37,21 +37,21 @@ namespace MSetExplorer
 
 		private long _zoom;
 
-		public bool HaveJobAreaInfo { get; init; }
+		public bool HaveMapAreaInfo { get; init; }
 
 		#region Constructor
 
-		public MapCoordsDetailViewModel(MapAreaInfo jobAreaInfo) : this(jobAreaInfo.Coords)
+		public MapCoordsDetailViewModel(MapAreaInfo mapAreaInfo) : this(mapAreaInfo.Coords)
 		{
-			_blockOffsetX = jobAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
-			_blockOffsetY = jobAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);
+			_blockOffsetX = mapAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
+			_blockOffsetY = mapAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);
 
-			_samplePointDelta = jobAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
-			_samplePointDeltaExp = jobAreaInfo.Subdivision.SamplePointDelta.Exponent;
+			_samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
+			_samplePointDeltaExp = mapAreaInfo.Subdivision.SamplePointDelta.Exponent;
 
-			_zoom = RValueHelper.GetResolution(jobAreaInfo.Coords.Width);
+			_zoom = RValueHelper.GetResolution(mapAreaInfo.Coords.Width);
 
-			HaveJobAreaInfo = true;
+			HaveMapAreaInfo = true;
 		}
 
 		public MapCoordsDetailViewModel(RRectangle coords)
@@ -83,7 +83,7 @@ namespace MSetExplorer
 
 			_samplePointDelta = string.Empty;
 			_samplePointDeltaExp = 0;
-			HaveJobAreaInfo = false;
+			HaveMapAreaInfo = false;
 		}
 
 		#endregion

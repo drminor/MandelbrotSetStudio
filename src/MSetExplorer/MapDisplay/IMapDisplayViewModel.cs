@@ -1,5 +1,4 @@
 ﻿using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -7,7 +6,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
+	internal interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
 	{
 		bool InDesignMode { get; }
 

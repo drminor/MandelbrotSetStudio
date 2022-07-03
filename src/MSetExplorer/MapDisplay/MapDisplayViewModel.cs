@@ -335,8 +335,8 @@ namespace MSetExplorer
 
 			CancelJob();
 
-			CanvasControlOffset = job.JobAreaInfo.CanvasControlOffset;
-			_currentMapLoaderJobNumber = _mapLoaderManager.Push(job, MapSectionReady);
+			CanvasControlOffset = job.MapAreaInfo.CanvasControlOffset;
+			_currentMapLoaderJobNumber = _mapLoaderManager.Push(job.MapAreaInfo, job.MapCalcSettings, MapSectionReady);
 		}
 
 		public void CancelJob()
@@ -520,15 +520,15 @@ namespace MSetExplorer
 				//	//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
 				// ClearDisplay();
 
-				//	CanvasControlOffset = newJob.JobAreaInfo.CanvasControlOffset;
+				//	CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
 				//	_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob);
 				//}
 
 				//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
 				ClearDisplay();
 
-				CanvasControlOffset = newJob.JobAreaInfo.CanvasControlOffset;
-				_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob, MapSectionReady);
+				CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+				_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady);
 			}
 			else
 			{
@@ -549,7 +549,7 @@ namespace MSetExplorer
 
 		//	Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 
-		//	var newCanvasControlOffset = jobAreaAndCalcSettings.JobAreaInfo.CanvasControlOffset;
+		//	var newCanvasControlOffset = jobAreaAndCalcSettings.MapAreaInfo.CanvasControlOffset;
 
 		//	if (!shiftAmount.EqualsZero)
 		//	{
@@ -598,7 +598,7 @@ namespace MSetExplorer
 		//	////	return false;
 		//	////}
 
-		//	//var jobSpd = RNormalizer.Normalize(newJob.JobAreaInfo.Subdivision.SamplePointDelta, previousJob.JobAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
+		//	//var jobSpd = RNormalizer.Normalize(newJob.MapAreaInfo.Subdivision.SamplePointDelta, previousJob.MapAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
 		//	//return jobSpd == previousSpd;
 
 		//	return false;

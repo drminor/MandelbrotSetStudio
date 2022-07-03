@@ -772,7 +772,7 @@ namespace MSetExplorer
 					{
 						var newMapArea = posterSizeEditorDialog.NewMapArea;
 						var newMapSize = posterSizeEditorDialog.NewMapSize;
-						newPosterMapAreaInfo = _vm.GetUpdatedJobAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
+						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
 						return true;
 					}
 					else
@@ -810,7 +810,7 @@ namespace MSetExplorer
 				{
 					var newMapArea = posterSizeEditorDialog.NewMapArea;
 					var newMapSize = posterSizeEditorDialog.NewMapSize;
-					var newPosterMapAreaInfo = _vm.GetUpdatedJobAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
+					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
 					posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo);
 				}
 			}

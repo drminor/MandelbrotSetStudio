@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
-	public interface IPosterViewModel
+	internal interface IPosterViewModel
 	{
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler? PropertyChanged;

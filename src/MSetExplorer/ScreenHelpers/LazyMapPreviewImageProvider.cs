@@ -20,7 +20,7 @@ namespace MSetExplorer
 
 		private MapAreaInfo _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
 		private SizeInt _previewImageSize;
-		private MapAreaInfo _previewJobAreaInfo;	// Coods, SampleSize, etc. are ajusted for the previewImageSize
+		private MapAreaInfo _previewMapAreaInfo;	// Coods, SampleSize, etc. are ajusted for the previewImageSize
 
 		private readonly ColorBandSet _colorBandSet;
 		private readonly MapCalcSettings _mapCalcSettings;
@@ -43,12 +43,12 @@ namespace MSetExplorer
 
 			_cts = new CancellationTokenSource();
 
-			_previewJobAreaInfo = GetPreviewJobAreaInfo(_mapAreaInfo, _previewImageSize);
+			_previewMapAreaInfo = GetPreviewMapAreaInfo(_mapAreaInfo, _previewImageSize);
 
 			Bitmap = CreateBitmap(_previewImageSize);
 			FillBitmapWithColor(_fallbackColor, Bitmap);
 
-			QueueBitmapGeneration(_previewJobAreaInfo, _colorBandSet, _mapCalcSettings);
+			QueueBitmapGeneration(_previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
 		}
 
 		#endregion
@@ -68,9 +68,9 @@ namespace MSetExplorer
 				{
 					_mapAreaInfo = value;
 
-					_previewJobAreaInfo = GetPreviewJobAreaInfo(_mapAreaInfo, _previewImageSize);
+					_previewMapAreaInfo = GetPreviewMapAreaInfo(_mapAreaInfo, _previewImageSize);
 					FillBitmapWithColor(_fallbackColor, Bitmap);
-					QueueBitmapGeneration(_previewJobAreaInfo, _colorBandSet, _mapCalcSettings);
+					QueueBitmapGeneration(_previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
 				}
 			}
 		}
@@ -84,12 +84,12 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private MapAreaInfo GetPreviewJobAreaInfo(MapAreaInfo mapAreaInfo, SizeInt previewImageSize)
+		private MapAreaInfo GetPreviewMapAreaInfo(MapAreaInfo mapAreaInfo, SizeInt previewImageSize)
 		{
 			var coords = mapAreaInfo.Coords;
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 
-			var result = _mapJobHelper.GetJobAreaInfo(coords, previewImageSize, blockSize);
+			var result = _mapJobHelper.GetMapAreaInfo(coords, previewImageSize, blockSize);
 
 			return result;
 		}

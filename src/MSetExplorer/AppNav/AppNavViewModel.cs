@@ -12,7 +12,7 @@ namespace MSetExplorer
 
 	public delegate CoordsEditorViewModel CoordsEditorViewModelCreator(RRectangle coords, SizeInt canvasSize, bool allowEdits);
 
-	public class AppNavViewModel
+	internal class AppNavViewModel
 	{
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;

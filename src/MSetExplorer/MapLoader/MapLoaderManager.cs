@@ -52,17 +52,17 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, Action<MapSection, int, bool> callback)
+		public int Push(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection, int, bool> callback)
 		{
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings);
-			var result = Push(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, mapSectionRequests, callback);
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(mapAreaInfo, mapCalcSettings);
+			var result = Push(mapAreaInfo.MapBlockOffset, mapSectionRequests, callback);
 			return result;
 		}
 
-		public int Push(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections, Action<MapSection, int, bool> callback)
+		public int Push(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection>? emptyMapSections, Action<MapSection, int, bool> callback)
 		{
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobAreaAndCalcSettings, emptyMapSections);
-			var result = Push(jobAreaAndCalcSettings.JobAreaInfo.MapBlockOffset, mapSectionRequests, callback);
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(mapAreaInfo, mapCalcSettings, emptyMapSections);
+			var result = Push(mapAreaInfo.MapBlockOffset, mapSectionRequests, callback);
 			return result;
 		}
 

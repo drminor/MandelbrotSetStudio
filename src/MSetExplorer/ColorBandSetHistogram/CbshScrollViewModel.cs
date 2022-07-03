@@ -38,7 +38,7 @@ namespace MSetExplorer
 
 			//if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJobAreaAndCalcSettings))
 			//{
-			//	PosterSize = MapDisplayViewModel.CurrentJobAreaAndCalcSettings?.JobAreaInfo.CanvasSize;
+			//	PosterSize = MapDisplayViewModel.CurrentJobAreaAndCalcSettings?.MapAreaInfo.CanvasSize;
 			//}
 		}
 

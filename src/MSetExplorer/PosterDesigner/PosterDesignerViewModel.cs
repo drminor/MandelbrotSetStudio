@@ -9,7 +9,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
+	internal class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
@@ -134,30 +134,37 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public MapAreaInfo GetUpdatedJobAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
+		public MapAreaInfo GetUpdatedMapAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
 		{
 			var mapPosition = mapAreaInfo.Coords.Position;
 			var samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta;
 			var screenAreaInt = screenArea.Round();
+
 			var coords = RMapHelper.GetMapCoords(screenAreaInt, mapPosition, samplePointDelta);
+			var reducedCoords = Reducer.Reduce(coords);
 
-			var rCoords = Reducer.Reduce(coords);
+			CheckCoordsChange(mapAreaInfo, screenArea, reducedCoords);
 
-			if (screenArea.Position.X == 0 && screenArea.Position.Y == 0)
+			var posterSize = newMapSize.Round();
+			var blockSize = mapAreaInfo.Subdivision.BlockSize;
+
+			var result = _mapJobHelper.GetMapAreaInfo(reducedCoords, posterSize, blockSize);
+
+			return result;
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckCoordsChange(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, RRectangle newCoords)
+		{
+			if (screenArea == new RectangleDbl(new RectangleInt(new PointInt(), mapAreaInfo.CanvasSize)))
 			{
-				if (rCoords != mapAreaInfo.Coords)
+				if (newCoords != Reducer.Reduce(mapAreaInfo.Coords))
 				{
-					Debug.WriteLine($"Coords were updated, but the new ScreenArea's position is zero.");
+					Debug.WriteLine($"The new ScreenArea matches the existing ScreenArea, but the Coords were updated.");
 					//throw new InvalidOperationException("if the pos has not changed, the coords should not change.");
 				}
 			}
 
-
-			var posterSize = newMapSize.Round();
-			var blockSize = mapAreaInfo.Subdivision.BlockSize;
-			var jobAreaInfo = _mapJobHelper.GetJobAreaInfo(coords, posterSize, blockSize);
-
-			return jobAreaInfo;
 		}
 
 		#endregion
@@ -202,7 +209,7 @@ namespace MSetExplorer
 				var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
 
 				MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
-				MapCoordsViewModel.CurrentJobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
+				MapCoordsViewModel.CurrentMapAreaInfo = jobAreaAndCalcSettings.MapAreaInfo;
 				MapDisplayViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
 			}
 

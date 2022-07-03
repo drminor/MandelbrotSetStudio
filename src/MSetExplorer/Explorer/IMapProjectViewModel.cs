@@ -33,7 +33,7 @@ namespace MSetExplorer
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
 		void UpdateMapCoordinates(RRectangle coords);
 
-		MapAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt screenArea);
+		MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea);
 
 		// Project Methods
 		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);

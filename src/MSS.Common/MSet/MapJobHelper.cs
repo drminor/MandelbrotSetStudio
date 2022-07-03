@@ -20,12 +20,12 @@ namespace MSS.Common
 		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea, SizeInt blockSize)
 		{
-			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, blockSize);
-			var result = BuildJob(parentJobId, projectId, jobAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea);
+			var mapAreaInfo = GetMapAreaInfo(coords, canvasSize, blockSize);
+			var result = BuildJob(parentJobId, projectId, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea);
 			return result;
 		}
 
-		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo jobAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea)
 		{
 			if (!parentJobId.HasValue && !(transformType == TransformType.None || transformType == TransformType.CanvasSizeUpdate))
@@ -34,24 +34,24 @@ namespace MSS.Common
 			}
 
 			// Determine how much of the canvas control can be covered by the new map.
-			var canvasSize = jobAreaInfo.CanvasSize;
+			var canvasSize = mapAreaInfo.CanvasSize;
 
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
 
 			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
 			var displaySize = canvasSize;
 
-			var canvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(displaySize, jobAreaInfo.CanvasControlOffset, jobAreaInfo.Subdivision.BlockSize);
+			var canvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(displaySize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
 
 			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
 			var jobName = GetJobName(transformType);
 
-			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, jobAreaInfo, canvasSizeInBlocks, colorBandSetId, mapCalcSettings);
+			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, mapAreaInfo, canvasSizeInBlocks, colorBandSetId, mapCalcSettings);
 
 			return job;
 		}
 
-		public MapAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
+		public MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
@@ -96,7 +96,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static MapAreaInfo GetJobAreaInfo(Job job, SizeInt canvasSize)
+		public static MapAreaInfo GetMapAreaInfo(Job job, SizeInt canvasSize)
 		{
 			var result = new MapAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
 
@@ -120,9 +120,9 @@ namespace MSS.Common
 		public Poster CreatePoster(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, RRectangle coords, ColorBandSet colorBandSet, 
 			MapCalcSettings mapCalcSettings, SizeInt blockSize, IProjectAdapter projectAdapter)
 		{
-			var jobAreaInfo = GetJobAreaInfo(coords, posterSize, blockSize);
+			var mapAreaInfo = GetMapAreaInfo(coords, posterSize, blockSize);
 
-			var poster = new Poster(name, description, sourceJobId, jobAreaInfo, colorBandSet, mapCalcSettings);
+			var poster = new Poster(name, description, sourceJobId, mapAreaInfo, colorBandSet, mapCalcSettings);
 
 			projectAdapter.CreatePoster(poster);
 

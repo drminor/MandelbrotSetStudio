@@ -10,7 +10,7 @@ namespace MSetExplorer
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
-		private MapAreaInfo? _currentJobAreaInfo;
+		private MapAreaInfo? _currentMapAreaInfo;
 
 		private RRectangle _coords;
 
@@ -37,7 +37,7 @@ namespace MSetExplorer
 
 		public MapCoordsViewModel()
 		{
-			_currentJobAreaInfo = null;
+			_currentMapAreaInfo = null;
 
 			_coords = new RRectangle();
 			_x1 = string.Empty;
@@ -68,15 +68,15 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public MapAreaInfo CurrentJobAreaInfo
+		public MapAreaInfo CurrentMapAreaInfo
 		{
-			get => _currentJobAreaInfo ?? new MapAreaInfo(new RRectangle(), new SizeInt(), new Subdivision(), new BigVector(), new VectorInt());
+			get => _currentMapAreaInfo ?? new MapAreaInfo(new RRectangle(), new SizeInt(), new Subdivision(), new BigVector(), new VectorInt());
 			set
 			{
-				if (value != _currentJobAreaInfo)
+				if (value != _currentMapAreaInfo)
 				{
-					_currentJobAreaInfo = value;
-					UpdateCoords(_currentJobAreaInfo);
+					_currentMapAreaInfo = value;
+					UpdateCoords(_currentMapAreaInfo);
 					OnPropertyChanged();
 					//OnPropertyChanged(nameof(JobId));
 				}
@@ -278,9 +278,9 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Preview(MapAreaInfo jobAreaInfo)
+		public void Preview(MapAreaInfo mapAreaInfo)
 		{
-			UpdateCoords(jobAreaInfo);
+			UpdateCoords(mapAreaInfo);
 		}
 
 		public string GetStringValues()
@@ -299,11 +299,11 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void UpdateCoords(MapAreaInfo? jobAreaInfo)
+		private void UpdateCoords(MapAreaInfo? mapAreaInfo)
 		{
-			if (jobAreaInfo != null)
+			if (mapAreaInfo != null)
 			{
-				Coords = jobAreaInfo.Coords;
+				Coords = mapAreaInfo.Coords;
 				var rValues = _coords.GetRValues();
 
 				var startingX = rValues[0];
@@ -322,13 +322,13 @@ namespace MSetExplorer
 				PrecisionY = RValueHelper.GetPrecision(startingY, endingY, out var diffY) + _numDigitsForDisplayExtent;
 				Height = RValueHelper.ConvertToString(diffY, useSciNotationForLengthsGe: 6);
 
-				BlockOffsetX = jobAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
-				BlockOffsetY = jobAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);
+				BlockOffsetX = mapAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
+				BlockOffsetY = mapAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);
 
-				SamplePointDelta = jobAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
-				SamplePointDeltaExp = jobAreaInfo.Subdivision.SamplePointDelta.Exponent;
+				SamplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
+				SamplePointDeltaExp = mapAreaInfo.Subdivision.SamplePointDelta.Exponent;
 
-				Zoom = RValueHelper.GetResolution(jobAreaInfo.Coords.Width);
+				Zoom = RValueHelper.GetResolution(mapAreaInfo.Coords.Width);
 			}
 			else
 			{
