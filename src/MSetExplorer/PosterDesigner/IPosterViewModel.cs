@@ -18,7 +18,7 @@ namespace MSetExplorer
 		bool CurrentPosterOnFile { get; }
 		bool CurrentPosterIsDirty { get; }
 
-		JobAreaInfo PosterAreaInfo { get; }
+		MapAreaInfo PosterAreaInfo { get; }
 		SizeInt PosterSize { get; set; }
 
 		ColorBandSet? ColorBandSet { get; set; }
@@ -29,7 +29,7 @@ namespace MSetExplorer
 		JobAreaAndCalcSettings JobAreaAndCalcSettings { get; }
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
-		void UpdateMapView(JobAreaInfo newMapAreaInfo);
+		void UpdateMapView(MapAreaInfo newMapAreaInfo);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
 
 

@@ -41,7 +41,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapCoordsDetailViewModel(JobAreaInfo jobAreaInfo) : this(jobAreaInfo.Coords)
+		public MapCoordsDetailViewModel(MapAreaInfo jobAreaInfo) : this(jobAreaInfo.Coords)
 		{
 			_blockOffsetX = jobAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
 			_blockOffsetY = jobAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);

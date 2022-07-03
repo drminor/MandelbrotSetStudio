@@ -99,6 +99,11 @@ namespace MSetExplorer
 			return new Vector(vector.X, vector.Y);
 		}
 
+		public static Rect ConvertToRect(RectangleInt rectangle)
+		{
+			return new Rect(new Point(rectangle.X1, rectangle.Y1), new Point(rectangle.X2, rectangle.Y2));
+		}
+
 		public static Rect ConvertToRect(RectangleDbl rectangle)
 		{
 			return new Rect(ConvertToPoint(rectangle.Point1), ConvertToPoint(rectangle.Point2));

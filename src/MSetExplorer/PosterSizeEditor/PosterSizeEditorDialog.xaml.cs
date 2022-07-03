@@ -25,11 +25,11 @@ namespace MSetExplorer
 
 		private PosterSizeEditorViewModel _vm;
 
-		private JobAreaInfo? _initialPosterMapAreaInfo;
+		private MapAreaInfo? _initialPosterMapAreaInfo;
 
 		#region Constructor
 
-		public PosterSizeEditorDialog(JobAreaInfo posterMapAreaInfo)
+		public PosterSizeEditorDialog(MapAreaInfo posterMapAreaInfo)
 		{
 			_initialPosterMapAreaInfo = posterMapAreaInfo;
 
@@ -146,12 +146,12 @@ namespace MSetExplorer
 
 		public event EventHandler? ApplyChangesRequested;
 
-		public JobAreaInfo? PosterMapAreaInfo => _vm.PosterMapAreaInfo;
+		public MapAreaInfo? PosterMapAreaInfo => _vm.PosterMapAreaInfo;
 
 		public RectangleDbl NewMapArea => _vm.NewMapArea;
 		public SizeDbl NewMapSize => _vm.NewMapSize;
 
-		public void UpdateWithNewMapInfo(JobAreaInfo mapAreaInfo)
+		public void UpdateWithNewMapInfo(MapAreaInfo mapAreaInfo)
 		{
 			_vm.UpdateWithNewMapInfo(mapAreaInfo);
 		}

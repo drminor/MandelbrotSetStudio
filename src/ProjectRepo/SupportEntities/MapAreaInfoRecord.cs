@@ -1,6 +1,6 @@
 ﻿namespace ProjectRepo.Entities
 {
-	public record JobAreaInfoRecord(
+	public record MapAreaInfoRecord(
 		RRectangleRecord CoordsRecord,
 		SizeIntRecord CanvasSize,
 		SubdivisionRecord SubdivisionRecord,

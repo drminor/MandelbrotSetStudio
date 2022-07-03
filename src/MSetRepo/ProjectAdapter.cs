@@ -468,10 +468,10 @@ namespace MSetRepo
 
 			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
 
-			var coords = _dtoMapper.MapFrom(jobRecord.MSetInfo.CoordsRecord.CoordsDto);
+			var coords = _dtoMapper.MapFrom(jobRecord.MapAreaInfoRecord.CoordsRecord.CoordsDto);
 
 			// TODO: Make sure every job record has a good value for CanvasSize
-			var canvasSize = jobRecord.CanvasSize == null ? new SizeInt() : _mSetRecordMapper.MapFrom(jobRecord.CanvasSize);
+			var canvasSize = jobRecord.MapAreaInfoRecord.CanvasSize == null ? new SizeInt() : _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord.CanvasSize);
 
 			var job = new Job(
 				id: jobId,
@@ -483,12 +483,12 @@ namespace MSetRepo
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 				colorBandSetId: jobRecord.ColorBandSetId,
 				coords: coords,
-				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapBlockOffset),
+				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord.MapBlockOffset),
 				canvasSize: canvasSize,
-				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.CanvasControlOffset),
+				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord.CanvasControlOffset),
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
 				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord),
-				mapCalcSettings: jobRecord.MSetInfo.MapCalcSettings,
+				mapCalcSettings: jobRecord.MapCalcSettings,
 				lastSaved: jobRecord.LastSaved
 				);
 
@@ -654,6 +654,93 @@ namespace MSetRepo
 
 		//	return result;
 		//}
+
+
+		//public long UpdateAllJobsToUseMapAreaInfoRec1()
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+		//	var subdivisonReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+		//	var result = 0L;
+
+		//	var allProjectIds = projectReaderWriter.GetAllIds();
+
+		//	foreach(var projectId in allProjectIds)
+		//	{
+		//		var allJobsIds = jobReaderWriter.GetJobIds(projectId);
+
+		//		foreach(var jobId in allJobsIds)
+		//		{
+		//			var jobRecord = jobReaderWriter.Get(jobId);
+		//			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
+		//			var canvasSizeRec = jobRecord.MapAreaInfoRecord.CanvasSize ?? new SizeIntRecord(1024, 1024);
+		//			var newMapAreaInfoRec = new MapAreaInfoRecord(jobRecord.MapAreaInfoRecord.CoordsRecord, canvasSizeRec, subdivisionRecord, jobRecord.MapAreaInfoRecord.MapBlockOffset, jobRecord.MapAreaInfoRecord.CanvasControlOffset);
+
+		//			var transformType = Enum.Parse<TransformType>(jobRecord.TransformType.ToString());
+
+		//			var transformType2 = Enum.GetName(transformType) ?? "None";
+
+		//			var numberUpdated = jobReaderWriter.ConvertToMapAreaRecord(jobId, newMapAreaInfoRec, transformType2);
+		//			result += numberUpdated;
+		//		}
+
+		//		//break;
+		//	}
+
+		//	return result;
+		//}
+
+		//public long UpdateAllJobsToHaveMapCalcSettings()
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+		//	var result = 0L;
+
+		//	var allProjectIds = projectReaderWriter.GetAllIds();
+
+		//	foreach (var projectId in allProjectIds)
+		//	{
+		//		var allJobsIds = jobReaderWriter.GetJobIds(projectId);
+
+		//		foreach (var jobId in allJobsIds)
+		//		{
+		//			var jobRecord = jobReaderWriter.Get(jobId);
+
+		//			var mapCalcSettings = jobRecord.MapCalcSettings;
+		//			var numberUpdated = jobReaderWriter.AddMapCalcSettingsField(jobId, mapCalcSettings);
+		//			result += numberUpdated;
+		//		}
+
+		//		//break;
+		//	}
+
+		//	return result;
+		//}
+
+
+		//public long UpdateAllJobsToUseMapAreaInfoRec2()
+		//{
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+		//	var result = jobReaderWriter.RemoveJobsWithNoProject();
+		//	return result;
+		//}
+
+		//public long RemoveFetchZValuesPropFromAllJobs()
+		//{
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+		//	var result = jobReaderWriter.RemoveFetchZValuesProperty();
+		//	return result;
+		//}
+
+
+		public long RemoveOldMapAreaPropsFromAllJobs()
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = jobReaderWriter.RemoveOldMapAreaProperties();
+			return result;
+		}
 
 		#endregion
 

@@ -746,7 +746,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool TryGetNewSizeFromUser(Poster poster, out JobAreaInfo newPosterMapAreaInfo)
+		private bool TryGetNewSizeFromUser(Poster poster, out MapAreaInfo newPosterMapAreaInfo)
 		{
 			var cts = new CancellationTokenSource();
 			var previewSize = GetPreviewSize(poster.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
@@ -777,13 +777,13 @@ namespace MSetExplorer
 					}
 					else
 					{
-						newPosterMapAreaInfo = new JobAreaInfo();
+						newPosterMapAreaInfo = new MapAreaInfo();
 						return false;
 					}
 				}
 				else
 				{
-					newPosterMapAreaInfo = new JobAreaInfo();
+					newPosterMapAreaInfo = new MapAreaInfo();
 					return false;
 				}
 			}

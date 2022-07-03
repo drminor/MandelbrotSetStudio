@@ -22,9 +22,9 @@ namespace MSetExplorer
 		CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits);
 
 		//ImageSource GetPreviewImage(JobAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, CancellationToken ct, bool useGenericImage = true);
-		LazyMapPreviewImageProvider GetPreviewImageProvider(JobAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, Color fallbackColor);
+		LazyMapPreviewImageProvider GetPreviewImageProvider(MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, Color fallbackColor);
 
-		JobAreaInfo GetUpdatedJobAreaInfo(JobAreaInfo jobAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize);
+		MapAreaInfo GetUpdatedJobAreaInfo(MapAreaInfo jobAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize);
 
 	}
 }

@@ -25,7 +25,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, JobAreaInfo jobAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo jobAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea)
 		{
 			if (!parentJobId.HasValue && !(transformType == TransformType.None || transformType == TransformType.CanvasSizeUpdate))
@@ -51,7 +51,7 @@ namespace MSS.Common
 			return job;
 		}
 
-		public JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
+		public MapAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
@@ -73,7 +73,7 @@ namespace MSS.Common
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, subdivision, out var canvasControlOffset);
 
-			var result = new JobAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, canvasControlOffset);
+			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
@@ -96,9 +96,9 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static JobAreaInfo GetJobAreaInfo(Job job, SizeInt canvasSize)
+		public static MapAreaInfo GetJobAreaInfo(Job job, SizeInt canvasSize)
 		{
-			var result = new JobAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
+			var result = new MapAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
 
 			return result;
 		}

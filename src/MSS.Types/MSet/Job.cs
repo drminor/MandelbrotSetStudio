@@ -38,7 +38,7 @@ namespace MSS.Types.MSet
 			TransformType transformType, 
 			RectangleInt? newArea,
 
-			JobAreaInfo jobAreaInfo, 
+			MapAreaInfo jobAreaInfo, 
 
 			SizeInt canvasSizeInBlocks,
 			ObjectId colorBandSetId, 

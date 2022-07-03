@@ -11,7 +11,7 @@ namespace ProjectRepo.Entities
 		string? Description,
 
 		ObjectId? SourceJobId,
-		JobAreaInfoRecord  JobAreaInfoRecord,
+		MapAreaInfoRecord  MapAreaInfoRecord,
 		ObjectId ColorBandSetId,
 		MapCalcSettings MapCalcSettings,
 

@@ -10,7 +10,7 @@ namespace MSetExplorer
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
-		private JobAreaInfo? _currentJobAreaInfo;
+		private MapAreaInfo? _currentJobAreaInfo;
 
 		private RRectangle _coords;
 
@@ -68,9 +68,9 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public JobAreaInfo CurrentJobAreaInfo
+		public MapAreaInfo CurrentJobAreaInfo
 		{
-			get => _currentJobAreaInfo ?? new JobAreaInfo(new RRectangle(), new SizeInt(), new Subdivision(), new BigVector(), new VectorInt());
+			get => _currentJobAreaInfo ?? new MapAreaInfo(new RRectangle(), new SizeInt(), new Subdivision(), new BigVector(), new VectorInt());
 			set
 			{
 				if (value != _currentJobAreaInfo)
@@ -278,7 +278,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Preview(JobAreaInfo jobAreaInfo)
+		public void Preview(MapAreaInfo jobAreaInfo)
 		{
 			UpdateCoords(jobAreaInfo);
 		}
@@ -299,7 +299,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void UpdateCoords(JobAreaInfo? jobAreaInfo)
+		private void UpdateCoords(MapAreaInfo? jobAreaInfo)
 		{
 			if (jobAreaInfo != null)
 			{

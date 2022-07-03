@@ -9,17 +9,17 @@ namespace MSS.Types.MSet
 
 		public JobAreaAndCalcSettings()
 		{
-			JobAreaInfo = JobAreaInfo.Empty;
+			JobAreaInfo = MapAreaInfo.Empty;
 			MapCalcSettings = new MapCalcSettings();
 		}
 
-		public JobAreaAndCalcSettings(JobAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings)
+		public JobAreaAndCalcSettings(MapAreaInfo jobAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			JobAreaInfo = jobAreaInfo;
 			MapCalcSettings = mapCalcSettings;
 		}
 
-		public JobAreaInfo JobAreaInfo { get; init; }
+		public MapAreaInfo JobAreaInfo { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
 
 		public bool IsEmpty => JobAreaInfo.IsEmpty;

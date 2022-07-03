@@ -40,7 +40,7 @@ namespace MSetExplorer
 		public string? CurrentPosterName => CurrentPoster?.Name;
 		public bool CurrentPosterOnFile => CurrentPoster?.OnFile ?? false;
 
-		public JobAreaInfo PosterAreaInfo => CurrentPoster?.MapAreaInfo ?? JobAreaInfo.Empty;
+		public MapAreaInfo PosterAreaInfo => CurrentPoster?.MapAreaInfo ?? MapAreaInfo.Empty;
 
 		#endregion
 
@@ -324,12 +324,12 @@ namespace MSetExplorer
 			var newCoords = RMapHelper.GetMapCoords(newArea, position, subdivision.SamplePointDelta);
 			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
 
-			var newMapAreaInfo = new JobAreaInfo(newCoords, canvasSize, subdivision, newMapBlockOffset, newCanvasControlOffset);
+			var newMapAreaInfo = new MapAreaInfo(newCoords, canvasSize, subdivision, newMapBlockOffset, newCanvasControlOffset);
 
 			UpdateMapView(currentPoster, newMapAreaInfo);
 		}
 
-		public void UpdateMapView(JobAreaInfo newMapAreaInfo)
+		public void UpdateMapView(MapAreaInfo newMapAreaInfo)
 		{
 			var currentPoster = CurrentPoster;
 
@@ -341,7 +341,7 @@ namespace MSetExplorer
 			UpdateMapView(currentPoster, newMapAreaInfo);
 		}
 
-		private void UpdateMapView(Poster poster, JobAreaInfo newMapAreaInfo)
+		private void UpdateMapView(Poster poster, MapAreaInfo newMapAreaInfo)
 		{
 			// Update the current poster's map specification.
 			poster.MapAreaInfo = newMapAreaInfo;
@@ -388,7 +388,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private JobAreaAndCalcSettings GetNewJob(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, MapCalcSettings mapCalcSettings)
+		private JobAreaAndCalcSettings GetNewJob(MapAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, MapCalcSettings mapCalcSettings)
 		{
 			var viewPortArea = GetNewViewPort(currentAreaInfo, displayPosition, logicalDisplaySize);
 
@@ -400,7 +400,7 @@ namespace MSetExplorer
 			return jobAreaAndCalcSettings;
 		}
 
-		private JobAreaInfo GetNewViewPort(JobAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize)
+		private MapAreaInfo GetNewViewPort(MapAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize)
 		{
 			var diagScreenArea = new RectangleInt(new PointInt(), currentAreaInfo.CanvasSize);
 			var screenArea = new RectangleInt(new PointInt(displayPosition), logicalDisplaySize);
@@ -424,7 +424,7 @@ namespace MSetExplorer
 			var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
 			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
 
-			var result = new JobAreaInfo(newCoords, logicalDisplaySize, subdivision, newMapBlockOffset, newCanvasControlOffset);
+			var result = new MapAreaInfo(newCoords, logicalDisplaySize, subdivision, newMapBlockOffset, newCanvasControlOffset);
 
 			return result;
 		}

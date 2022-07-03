@@ -104,9 +104,7 @@ namespace MSetExplorer
 
 		public Task? GetTaskForJob(int jobNumber)
 		{
-			Task? result = null;
-
-			DoWithReadLock(() =>
+			var result = DoWithReadLock(() =>
 			{
 				var t = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.Task;
 				return t;

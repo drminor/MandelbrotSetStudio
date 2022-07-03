@@ -155,7 +155,7 @@ namespace MSetExplorer
 
 			var cts = new CancellationTokenSource();
 			var posterAreaInfo = poster.MapAreaInfo;
-			var previewMapArea = new JobAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.MapBlockOffset, posterAreaInfo.CanvasControlOffset);
+			var previewMapArea = new MapAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.MapBlockOffset, posterAreaInfo.CanvasControlOffset);
 
 			//byte[]? result = null;
 

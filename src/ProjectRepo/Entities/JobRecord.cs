@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types.MSet;
 using System;
 
 namespace ProjectRepo.Entities
@@ -10,17 +11,21 @@ namespace ProjectRepo.Entities
 		ObjectId ProjectId,
 		ObjectId SubDivisionId,
 		string? Label,
-		int TransformType,			// TODO: Change the JobRecord's TransformType (enum) from an int to a string.
+		int TransformType,          // TODO: Change the JobRecord's TransformType (enum) from an int to a string.
 
+		MapAreaInfoRecord MapAreaInfoRecord,
+		string TransformTypeString,
 
 		PointIntRecord NewAreaPosition,
 		SizeIntRecord NewAreaSize,
 
-		MSetInfoRecord MSetInfo,
+		//MSetInfoRecord MSetInfo,
 		ObjectId ColorBandSetId,
+		MapCalcSettings MapCalcSettings,
 
-		BigVectorRecord MapBlockOffset,
-		VectorIntRecord CanvasControlOffset,
+
+		//BigVectorRecord MapBlockOffset,
+		//VectorIntRecord CanvasControlOffset,
 		SizeIntRecord CanvasSizeInBlocks
 		)
 	{
@@ -34,7 +39,14 @@ namespace ProjectRepo.Entities
 
 		public DateTime LastSaved { get; set; }
 
-		public SizeIntRecord? CanvasSize { get; set; } // TODO: Make sure every JobRecord has a value for CanvasSize
+		//public MapCalcSettings? MapCalcSettings { get; set; }
+
+		//public MSetInfoRecord? MSetInfo { get; set; }
+		//public BigVectorRecord? MapBlockOffset { get; set; }
+
+		//public VectorIntRecord? CanvasControlOffset { get; set; }
+		//public SizeIntRecord? CanvasSize { get; set; } // TODO: Make sure every JobRecord has a value for CanvasSize
+
 	}
 
 	public record JobInfoRecord

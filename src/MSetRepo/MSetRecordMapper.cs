@@ -108,7 +108,9 @@ namespace MSetRepo
 		public JobRecord MapTo(Job source)
 		{
 			var coords = MapTo(source.Coords);
-			var mSetInfoRecord = new MSetInfoRecord(coords, source.MapCalcSettings);
+			//var mSetInfoRecord = new MSetInfoRecord(coords, source.MapCalcSettings);
+
+			var mapAreaInfoRecord = new MapAreaInfoRecord(coords, MapTo(source.CanvasSize), MapTo(source.Subdivision), MapTo(source.MapBlockOffset), MapTo(source.CanvasControlOffset));
 
 			var result = new JobRecord(
 				source.ParentJobId,
@@ -118,18 +120,24 @@ namespace MSetRepo
 				source.Label,
 
 				(int)source.TransformType,
-				MapTo(source.NewArea?.Position ?? new PointInt()),
-				MapTo(source.NewArea?.Size ?? new SizeInt()), 
-				mSetInfoRecord,
-				source.ColorBandSetId,
-				MapTo(source.MapBlockOffset),
-				MapTo(source.CanvasControlOffset),
-				MapTo(source.CanvasSizeInBlocks)
+
+				MapAreaInfoRecord: mapAreaInfoRecord,
+				TransformTypeString: Enum.GetName(source.TransformType) ?? "unknown",
+				
+
+				NewAreaPosition: MapTo(source.NewArea?.Position ?? new PointInt()),
+				NewAreaSize: MapTo(source.NewArea?.Size ?? new SizeInt()), 
+				//mSetInfoRecord,
+				ColorBandSetId: source.ColorBandSetId,
+				//MapTo(source.MapBlockOffset),
+				//MapTo(source.CanvasControlOffset),
+				MapCalcSettings: source.MapCalcSettings,
+				CanvasSizeInBlocks: MapTo(source.CanvasSizeInBlocks)
 				)
 			{
 				Id = source.Id,
-				LastSaved = source.LastSavedUtc,
-				CanvasSize = MapTo(source.CanvasSize)
+				LastSaved = source.LastSavedUtc
+				//, CanvasSize = MapTo(source.CanvasSize)
 			};
 
 			return result;
@@ -140,9 +148,9 @@ namespace MSetRepo
 			throw new NotImplementedException();
 		}
 
-		public JobAreaInfo MapFrom(JobAreaInfoRecord target)
+		public MapAreaInfo MapFrom(MapAreaInfoRecord target)
 		{
-			var result = new JobAreaInfo(
+			var result = new MapAreaInfo(
 				coords: _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto),
 				canvasSize: MapFrom(target.CanvasSize),
 				subdivision: MapFrom(target.SubdivisionRecord),
@@ -153,9 +161,9 @@ namespace MSetRepo
 			return result;
 		}
 
-		public JobAreaInfoRecord MapTo(JobAreaInfo source)
+		public MapAreaInfoRecord MapTo(MapAreaInfo source)
 		{
-			var result = new JobAreaInfoRecord(
+			var result = new MapAreaInfoRecord(
 				CoordsRecord: MapTo(source.Coords),
 				CanvasSize: MapTo(source.CanvasSize),
 				SubdivisionRecord: MapTo(source.Subdivision),
@@ -177,7 +185,7 @@ namespace MSetRepo
 				Name: source.Name,
 				Description: source.Description,
 				SourceJobId: source.SourceJobId,
-				JobAreaInfoRecord: MapTo(source.MapAreaInfo),
+				MapAreaInfoRecord: MapTo(source.MapAreaInfo),
 				ColorBandSetId: source.ColorBandSet.Id,
 				MapCalcSettings: source.MapCalcSettings,
 				DisplayPosition: MapTo(source.DisplayPosition),

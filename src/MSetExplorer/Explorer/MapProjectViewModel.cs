@@ -402,7 +402,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public JobAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt screenArea)
+		public MapAreaInfo? GetUpdatedJobAreaInfo(TransformType transformType, RectangleInt screenArea)
 		{
 			var curJob = CurrentJob;
 

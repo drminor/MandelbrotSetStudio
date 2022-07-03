@@ -2,10 +2,10 @@
 
 namespace MSS.Types.MSet
 {
-	public class JobAreaInfo : ICloneable
+	public class MapAreaInfo : ICloneable
 	{
-		private static readonly Lazy<JobAreaInfo> _lazyJobAreaInfo = new Lazy<JobAreaInfo>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
-		public static readonly JobAreaInfo Empty = _lazyJobAreaInfo.Value;
+		private static readonly Lazy<MapAreaInfo> _lazyJobAreaInfo = new Lazy<MapAreaInfo>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+		public static readonly MapAreaInfo Empty = _lazyJobAreaInfo.Value;
 
 		public RRectangle Coords { get; init; }
 		public SizeInt CanvasSize { get; init; }
@@ -15,14 +15,14 @@ namespace MSS.Types.MSet
 
 		public bool IsEmpty => Subdivision.BlockSize.Width == 0;
 
-		public JobAreaInfo()
+		public MapAreaInfo()
 		{
 			Coords = new RRectangle();
 			Subdivision = new Subdivision();
 			MapBlockOffset = new BigVector();
 		}
 
-		public JobAreaInfo(RRectangle coords, SizeInt canvasSize, Subdivision subdivision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
+		public MapAreaInfo(RRectangle coords, SizeInt canvasSize, Subdivision subdivision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
 		{
 			Coords = coords;
 			CanvasSize = canvasSize;
@@ -37,9 +37,9 @@ namespace MSS.Types.MSet
 		}
 
 		// TODO: Implement ICloneable for Coords, Subdivision and BigVector
-		public JobAreaInfo Clone()
+		public MapAreaInfo Clone()
 		{
-			return new JobAreaInfo(Coords, CanvasSize, Subdivision, MapBlockOffset, CanvasControlOffset);
+			return new MapAreaInfo(Coords, CanvasSize, Subdivision, MapBlockOffset, CanvasControlOffset);
 		}
 	}
 }

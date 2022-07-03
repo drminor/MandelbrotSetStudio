@@ -30,7 +30,7 @@ namespace ImageBuilder
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<byte[]> BuildAsync(JobAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
+		public async Task<byte[]> BuildAsync(MapAreaInfo jobAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
 		{
 			var mapBlockOffset = jobAreaInfo.MapBlockOffset;
 			var canvasControlOffset = jobAreaInfo.CanvasControlOffset;

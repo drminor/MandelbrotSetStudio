@@ -18,9 +18,9 @@ namespace MSetExplorer
 		private readonly BitmapBuilder _bitmapBuilder;
 		private readonly MapJobHelper _mapJobHelper;
 
-		private JobAreaInfo _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
+		private MapAreaInfo _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
 		private SizeInt _previewImageSize;
-		private JobAreaInfo _previewJobAreaInfo;	// Coods, SampleSize, etc. are ajusted for the previewImageSize
+		private MapAreaInfo _previewJobAreaInfo;	// Coods, SampleSize, etc. are ajusted for the previewImageSize
 
 		private readonly ColorBandSet _colorBandSet;
 		private readonly MapCalcSettings _mapCalcSettings;
@@ -29,7 +29,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(BitmapBuilder bitmapBuilder, MapJobHelper mapJobHelper, JobAreaInfo mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Color fallbackColor)
+		public LazyMapPreviewImageProvider(BitmapBuilder bitmapBuilder, MapJobHelper mapJobHelper, MapAreaInfo mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Color fallbackColor)
 		{
 			_synchronizationContext = SynchronizationContext.Current;
 			_bitmapBuilder = bitmapBuilder;
@@ -59,7 +59,7 @@ namespace MSetExplorer
 
 		public WriteableBitmap Bitmap { get; init; }
 
-		public JobAreaInfo MapAreaInfo
+		public MapAreaInfo MapAreaInfo
 		{
 			get => _mapAreaInfo;
 			set
@@ -84,7 +84,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private JobAreaInfo GetPreviewJobAreaInfo(JobAreaInfo mapAreaInfo, SizeInt previewImageSize)
+		private MapAreaInfo GetPreviewJobAreaInfo(MapAreaInfo mapAreaInfo, SizeInt previewImageSize)
 		{
 			var coords = mapAreaInfo.Coords;
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
@@ -95,7 +95,7 @@ namespace MSetExplorer
 		}
 
 
-		private void QueueBitmapGeneration(JobAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		private void QueueBitmapGeneration(MapAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			var previewImageSize = previewMapArea.CanvasSize;
 			Debug.WriteLine($"Creating a preview image with size: {previewMapArea.CanvasSize} and map coords: {previewMapArea.Coords}.");

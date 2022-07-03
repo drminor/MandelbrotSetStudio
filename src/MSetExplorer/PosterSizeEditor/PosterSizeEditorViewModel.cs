@@ -71,7 +71,7 @@ namespace MSetExplorer
 			_previewImage = new DrawingImage(_drawingGroup);
 		}
 
-		public void Initialize(JobAreaInfo posterMapAreaInfo, SizeDbl containerSize)
+		public void Initialize(MapAreaInfo posterMapAreaInfo, SizeDbl containerSize)
 		{
 			_preserveAspectRatio = true;
 			_preserveWidth = true;
@@ -89,7 +89,7 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		public void UpdateWithNewMapInfo(JobAreaInfo posterMapAreaInfo)
+		public void UpdateWithNewMapInfo(MapAreaInfo posterMapAreaInfo)
 		{
 			UpdateWithChangesInternal(posterMapAreaInfo, ContainerSize);
 
@@ -105,7 +105,7 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		private void UpdateWithChangesInternal(JobAreaInfo posterMapAreaInfo, SizeDbl containerSize)
+		private void UpdateWithChangesInternal(MapAreaInfo posterMapAreaInfo, SizeDbl containerSize)
 		{
 			PosterMapAreaInfo = posterMapAreaInfo;
 			_lazyMapPreviewImageProvider.MapAreaInfo = posterMapAreaInfo;
@@ -523,7 +523,7 @@ namespace MSetExplorer
 
 		public PreviewImageLayoutInfo LayoutInfo => _layoutInfo;
 
-		public JobAreaInfo? PosterMapAreaInfo { get; private set; }
+		public MapAreaInfo? PosterMapAreaInfo { get; private set; }
 
 		public ImageSource PreviewImage => _previewImage;
 

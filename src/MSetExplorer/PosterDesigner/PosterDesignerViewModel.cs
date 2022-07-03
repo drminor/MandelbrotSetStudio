@@ -127,14 +127,14 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public LazyMapPreviewImageProvider GetPreviewImageProvider (JobAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, Color fallbackColor)
+		public LazyMapPreviewImageProvider GetPreviewImageProvider (MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, Color fallbackColor)
 		{
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
 			var result = new LazyMapPreviewImageProvider(bitmapBuilder, _mapJobHelper, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, fallbackColor);
 			return result;
 		}
 
-		public JobAreaInfo GetUpdatedJobAreaInfo(JobAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
+		public MapAreaInfo GetUpdatedJobAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
 		{
 			var mapPosition = mapAreaInfo.Coords.Position;
 			var samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta;
