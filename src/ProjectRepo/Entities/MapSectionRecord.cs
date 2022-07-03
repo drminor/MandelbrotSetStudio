@@ -31,4 +31,9 @@ namespace ProjectRepo.Entities
 	}
 
 
+	/// <summary>
+	/// Record used to store just the ZValues found in a MapSectionResponse
+	/// </summary>
+	public record ZValuesRecord(ZValues ZValues);
+
 }

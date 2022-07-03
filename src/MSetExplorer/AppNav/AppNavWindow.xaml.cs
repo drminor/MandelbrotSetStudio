@@ -1,4 +1,5 @@
 ﻿using MSetExplorer.ScreenHelpers;
+using System;
 using System.Diagnostics;
 using System.Windows;
 
@@ -10,8 +11,9 @@ namespace MSetExplorer
 	public partial class AppNavWindow : Window
 	{
 		private AppNavViewModel _vm;
-
 		private Window? _lastWindow;
+
+		#region Constructor
 
 		public AppNavWindow()
 		{
@@ -57,6 +59,10 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Button Handlers
+
 		private void ExploreButton_Click(object sender, RoutedEventArgs e)
 		{
 			GoToExplorer();
@@ -66,6 +72,20 @@ namespace MSetExplorer
 		{
 			GoToDesigner();
 		}
+
+		private void LeaveButton_Click(object sender, RoutedEventArgs e)
+		{
+			ExitApp();
+		}
+
+		private void RemoveMapSectionsButton_Click(object sender, RoutedEventArgs e)
+		{
+			var createdDate = DateTime.Parse("2022-05-29");
+			var numberOfRecordsDeleted = _vm.DeleteMapSectionsCreatedSince(createdDate);
+			_ = MessageBox.Show($"{numberOfRecordsDeleted} MapSections removed.");
+		}
+
+		#endregion
 
 		private void GoToExplorer()
 		{
@@ -103,11 +123,6 @@ namespace MSetExplorer
 			designerWindow.Owner = Application.Current.MainWindow;
 			designerWindow.Show();
 			_ = designerWindow.Focus();
-		}
-
-		private void LeaveButton_Click(object sender, RoutedEventArgs e)
-		{
-			ExitApp();
 		}
 
 		private void ExitApp()

@@ -135,6 +135,8 @@ namespace MSetExplorer
 
 			var projectId = ObjectId.Empty;
 
+			//mapCalcSettings.FetchZValues = true;
+
 			var job = _mapJobHelper.BuildJob(null, projectId, CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.None, null, _blockSize);
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -528,6 +530,8 @@ namespace MSetExplorer
 				parentJobId = currentJob.Id;
 			}
 
+			//mapCalcSettings.FetchZValues = true;
+
 			var job = _mapJobHelper.BuildJob(parentJobId, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize);
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
@@ -556,6 +560,9 @@ namespace MSetExplorer
 
 			var transformType = TransformType.CanvasSizeUpdate;
 			RectangleInt? newArea = null;
+
+
+			//job.MapCalcSettings.FetchZValues = true;
 
 			var newJob = _mapJobHelper.BuildJob(job.ParentJobId, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
 

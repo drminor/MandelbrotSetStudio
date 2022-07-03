@@ -35,8 +35,6 @@ namespace ImageBuilder
 			var mapBlockOffset = jobAreaInfo.MapBlockOffset;
 			var canvasControlOffset = jobAreaInfo.CanvasControlOffset;
 
-			mapCalcSettings.DontFetchZValuesFromRepo = true;
-
 			var blockSize = jobAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
 			{

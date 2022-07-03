@@ -14,28 +14,31 @@ namespace MSetExplorer
 
 	public class AppNavViewModel
 	{
-		private IProjectAdapter _projectAdapter;
-		private SharedColorBandSetAdapter _sharedColorBandSetAdapter;
+		private readonly IProjectAdapter _projectAdapter;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
 
-		public MapJobHelper MapJobHelper { get; init; }
-		public IMapLoaderManager MapLoaderManager { get; init; }
+		private readonly SharedColorBandSetAdapter _sharedColorBandSetAdapter;
+
+		private readonly MapJobHelper _mapJobHelper;
+		private readonly IMapLoaderManager _mapLoaderManager;
 
 		public AppNavViewModel(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
 		{
 			_projectAdapter = repositoryAdapters.ProjectAdapter;
+			_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
 			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
-			MapJobHelper = new MapJobHelper(repositoryAdapters.MapSectionAdapter);
-			MapLoaderManager = mapLoaderManager;
+			_mapJobHelper = new MapJobHelper(repositoryAdapters.MapSectionAdapter);
+			_mapLoaderManager = mapLoaderManager;
 		}
 
 		public ExplorerViewModel GetExplorerViewModel()
 		{
 			// Map Project ViewModel
-			var mapProjectViewModel = new MapProjectViewModel(_projectAdapter, MapJobHelper, RMapConstants.BLOCK_SIZE);
+			var mapProjectViewModel = new MapProjectViewModel(_projectAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();
-			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(MapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
@@ -46,7 +49,7 @@ namespace MSetExplorer
 			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
 
 			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel,
-				MapLoaderManager,
+				_mapLoaderManager,
 				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
 
 			return result;
@@ -59,7 +62,7 @@ namespace MSetExplorer
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();
-			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(MapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);
 
@@ -72,7 +75,7 @@ namespace MSetExplorer
 			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
 
 			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel,
-				MapJobHelper, MapLoaderManager, 
+				_mapJobHelper, _mapLoaderManager, 
 				CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateACoordsEditorViewModel);
 
 			return result;
@@ -90,14 +93,25 @@ namespace MSetExplorer
 
 		private IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return new PosterOpenSaveViewModel(MapLoaderManager, _projectAdapter, initalName, dialogType);
+			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, initalName, dialogType);
 		}
 
 		private CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
 		{
-			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, MapJobHelper);
+			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, _mapJobHelper);
 			return result;
 		}
+
+
+		#region Utilities
+
+		public long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc)
+		{
+			var numberOfRecordsDeleted = _mapSectionAdapter.DeleteMapSectionsCreatedSince(dateCreatedUtc, overrideRecentGuard: true);
+			return numberOfRecordsDeleted;
+		}
+
+		#endregion
 
 	}
 }

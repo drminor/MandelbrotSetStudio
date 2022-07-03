@@ -132,11 +132,11 @@ namespace ProjectRepo
 			return colorBandSetIds;
 		}
 
-		public IEnumerable<JobModel1> GetJobInfos(ObjectId projectId)
+		public IEnumerable<JobInfoRecord> GetJobInfos(ObjectId projectId)
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
-					p => new JobModel1(p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MSetInfo.CoordsRecord.CoordsDto.Exponent)
+					p => new JobInfoRecord(p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MSetInfo.CoordsRecord.CoordsDto.Exponent)
 				);
 
 			//List models = collection.Find(_ => true).Project(projection1).ToList();

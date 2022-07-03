@@ -1,11 +1,12 @@
 ﻿using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
+using System;
 using System.Runtime.Serialization;
 
 namespace MEngineDataContracts
 {
 	[DataContract]
-	public class MapSectionResponse
+	public class MapSectionResponse : ICloneable
 	{
 		[DataMember(Order = 1)]
 		public string MapSectionId { get; set; }
@@ -34,5 +35,29 @@ namespace MEngineDataContracts
 		public bool RequestCancelled { get; set; }
 
 		public bool JustNowUpdated { get; set; }
+
+		object ICloneable.Clone()
+		{
+			return Clone(stripZValues: false);
+		}
+
+		public MapSectionResponse Clone(bool stripZValues)
+		{
+			var result = new MapSectionResponse()
+			{
+				MapSectionId = MapSectionId,
+				SubdivisionId = SubdivisionId,
+				BlockPosition = BlockPosition,
+				MapCalcSettings = MapCalcSettings,
+				Counts = Counts,
+				EscapeVelocities = EscapeVelocities,
+				DoneFlags = DoneFlags,
+				ZValues = stripZValues ? null : (double[])ZValues.Clone(),
+				RequestCancelled = RequestCancelled,
+				JustNowUpdated = JustNowUpdated
+			};
+
+			return result;
+		}
 	}
 }

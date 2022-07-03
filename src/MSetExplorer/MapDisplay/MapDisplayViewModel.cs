@@ -13,6 +13,8 @@ namespace MSetExplorer
 {
 	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
+		private const double SECTION_DRAW_DELAY = 200;
+
 		private static readonly SizeInt INITIAL_SCREEN_SECTION_ALLOCATION = new(100);
 
 		private static bool _keepDisplaySquare;
@@ -422,7 +424,7 @@ namespace MSetExplorer
 					return false;
 				}
 
-				if (  (!mapSection.IsEmpty) && mapSection.Counts != null)
+				if ( (!mapSection.IsEmpty) && mapSection.Counts != null)
 				{
 					try
 					{
@@ -451,7 +453,7 @@ namespace MSetExplorer
 					{
 						_stopwatch = Stopwatch.StartNew();
 					}
-					shouldUpdateUi = --_callCounter <= 0 || _stopwatch?.ElapsedMilliseconds > 500;
+					shouldUpdateUi = --_callCounter <= 0 || _stopwatch?.ElapsedMilliseconds > SECTION_DRAW_DELAY;
 					if (shouldUpdateUi)
 					{
 						if (_stopwatch != null)
@@ -482,48 +484,6 @@ namespace MSetExplorer
 
 			return true;
 		}
-
-		//private void MapSections_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-		//{
-		//	//lock (_paintLocker)
-		//	//{
-
-		//		if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
-		//		{
-		//			//	Reset
-		//			_screenSectionCollection.HideScreenSections();
-		//		}
-		//		else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-		//		{
-		//			// Add items
-		//			var mapSections = e.NewItems?.Cast<MapSection>().ToList() ?? new List<MapSection>();
-
-		//			//var dispatcher = Dispatcher.CurrentDispatcher;
-		//			//var dOp = dispatcher.BeginInvoke(() => DrawSections(mapSections, _colorMap, _useEscapeVelocities, _highlightSelectedColorBand), DispatcherPriority.Normal);
-		//			//var status = dOp.Status;
-
-		//			//while (status != DispatcherOperationStatus.Completed)
-		//			//{
-		//			//	status = dOp.Wait(TimeSpan.FromMilliseconds(60));
-		//			//}
-
-		//			DrawSections(mapSections, _colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
-		//		}
-		//		else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
-		//		{
-		//			// Remove items
-		//			var mapSections = e.OldItems?.Cast<MapSection>() ?? new List<MapSection>();
-		//			foreach (var mapSection in mapSections)
-		//			{
-		//				if (!_screenSectionCollection.Hide(mapSection))
-		//				{
-		//					Debug.WriteLine($"While handling the MapSections_CollectionChanged:Remove, the MapDisplayViewModel cannot Hide the MapSection: {mapSection}.");
-		//				}
-		//			}
-		//		}
-
-		//	//}
-		//}
 
 		#endregion
 

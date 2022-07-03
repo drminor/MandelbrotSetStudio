@@ -21,17 +21,18 @@ namespace MSS.Types.MSet
 
 		public bool UseEscapeVelocities { get; set; }
 
-		public bool DontFetchZValuesFromRepo { get; set; } // TODO: Finish including the property: Don'tFetchZValuesFromRepo
+		// TODO: Delete the FetchZValues property from the MapCalcSettings class.
+		public bool FetchZValues { get; set; }
+
+		public bool DontFetchZValuesFromRepo { get; set; }
+
+		public bool DontFetchZValues { get; set; }
+
 
 		#region Constructor
 
-		public MapCalcSettings()
-		{
-			TargetIterations = 0;
-			Threshold = 0;
-			RequestsPerJob = 0;
-			UseEscapeVelocities = true;
-		}
+		public MapCalcSettings() : this(0, 0, 0, true)
+		{ }
 
 		public MapCalcSettings(int targetIterations, int requestsPerJob) : this(targetIterations, DEFAULT_THRESHOLD, requestsPerJob, useEscapeVelocities: true)
 		{ }
@@ -42,18 +43,21 @@ namespace MSS.Types.MSet
 			Threshold = threshold;
 			RequestsPerJob = requestsPerJob;
 			UseEscapeVelocities = useEscapeVelocities;
+
+			FetchZValues = false;
 		}
 
 		#endregion
 
 		object ICloneable.Clone()
 		{
-			throw new NotImplementedException();
+			return Clone();
 		}
 
 		public MapCalcSettings Clone()
 		{
-			return new MapCalcSettings(TargetIterations, RequestsPerJob, Threshold, UseEscapeVelocities);
+			var result = new MapCalcSettings(TargetIterations, RequestsPerJob, Threshold, UseEscapeVelocities);
+			return result;
 		}
 
 		public override string ToString()

@@ -1,11 +1,10 @@
-﻿using System;
+﻿using MEngineDataContracts;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-
-using MapSecWorkReqType = MapSectionProviderLib.WorkItem<MEngineDataContracts.MapSectionRequest, MEngineDataContracts.MapSectionResponse>;
 
 namespace MapSectionProviderLib
 {
@@ -15,7 +14,7 @@ namespace MapSectionProviderLib
 		private readonly object _cancelledJobsLock = new();
 
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<MapSecWorkReqType> _workQueue;
+		private readonly BlockingCollection<MapSectionWorkRequest> _workQueue;
 
 		private readonly List<int> _cancelledJobIds;
 
@@ -28,7 +27,7 @@ namespace MapSectionProviderLib
 		{
 			_cts = new CancellationTokenSource();
 
-			_workQueue = new BlockingCollection<MapSecWorkReqType>(QUEUE_CAPACITY);
+			_workQueue = new BlockingCollection<MapSectionWorkRequest>(QUEUE_CAPACITY);
 			_cancelledJobIds = new List<int>();
 
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
@@ -38,7 +37,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(MapSecWorkReqType mapSectionWorkItem)
+		public void AddWork(MapSectionWorkRequest mapSectionWorkItem)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
@@ -107,17 +106,17 @@ namespace MapSectionProviderLib
 			{
 				try
 				{
-					var mapSectionWorkItem = _workQueue.Take(ct);
+					var mapSectionWorkRequest = _workQueue.Take(ct);
 
-					if (mapSectionWorkItem.Response != null)
+					if (mapSectionWorkRequest.Response != null)
 					{
-						if (!mapSectionWorkItem.Response.RequestCancelled && IsJobCancelled(mapSectionWorkItem.JobId))
+						if (  (!mapSectionWorkRequest.Response.RequestCancelled) && JobIsCancelled(mapSectionWorkRequest.JobId))
 						{
-							mapSectionWorkItem.Response.RequestCancelled = true;
+							mapSectionWorkRequest.Response.RequestCancelled = true;
 						}
 
-						mapSectionWorkItem.Request.Completed = true;
-						mapSectionWorkItem.RunWorkAction();
+						mapSectionWorkRequest.Request.Completed = true;
+						mapSectionWorkRequest.RunWorkAction();
 					}
 				}
 				catch (OperationCanceledException)
@@ -132,9 +131,10 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private bool IsJobCancelled(int jobId)
+		private bool JobIsCancelled(int jobId)
 		{
 			bool result;
+
 			lock (_cancelledJobsLock)
 			{
 				result = _cancelledJobIds.Contains(jobId);

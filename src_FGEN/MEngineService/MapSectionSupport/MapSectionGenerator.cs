@@ -1,17 +1,18 @@
 ﻿using MEngineDataContracts;
+using MEngineService.Services;
+using MongoDB.Bson;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace MEngineService
 {
 	public static class MapSectionGenerator
 	{
-		public static MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public static async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		{
-			//// Counts
-			//int[] counts = GetAndFillCountsBuffer(mapSectionRequest, out var countsBuffer);
-
 			ushort[] counts = GetCounts(mapSectionRequest);
 			ushort[] escapeVelocities = GetEscapeVelocities(mapSectionRequest);
 
@@ -20,12 +21,20 @@ namespace MEngineService
 			// Done Flags
 			byte[] doneFlagsAsBArray = ConvertDoneFlags(mapSectionRequest);
 			var doneFlagsBuffer = GetDoneFlagsBuffer(doneFlagsAsBArray);
-			
-			// ZValues
-			double[] zValues = GetAndFillZValuesBuffer(mapSectionRequest, out var zValuesBuffer);
 
-			// Make the call using the filled buffers.
-			var requestStruct = new MapSectionReqHelper().GetRequestStruct(mapSectionRequest);
+			// ZValues
+
+			var zValsAndBuffer = await GetAndFillZValuesBufferAsync(mapSectionRequest);
+
+			var zValues = zValsAndBuffer.Item1;
+			var zValuesBuffer = zValsAndBuffer.Item2;
+
+
+			/* ***********************************
+			 *		Make the call 
+			 *		using the filled buffers.
+			 **************************************/
+			var requestStruct = MapSectionReqHelper.GetRequestStruct(mapSectionRequest);
 			NativeMethods.GenerateMapSection(requestStruct, countsAndEscVelsBuffer, doneFlagsBuffer, zValuesBuffer);
 
 			// Counts
@@ -37,7 +46,7 @@ namespace MEngineService
 			// Done Flags
 			Marshal.Copy(doneFlagsBuffer, doneFlagsAsBArray, 0, doneFlagsAsBArray.Length);
 			Marshal.FreeCoTaskMem(doneFlagsBuffer);
-			var doneFlags = doneFlagsAsBArray.Select(x => x == 1 ? true : false).ToArray();
+			var doneFlags = CompressDoneFlags(doneFlagsAsBArray);
 
 			// ZValues
 			Marshal.Copy(zValuesBuffer, zValues, 0, zValues.Length);
@@ -57,25 +66,6 @@ namespace MEngineService
 
 			return result;
 		}
-
-		//private static int[] GetAndFillCountsBuffer(MapSectionRequest mapSectionRequest, out IntPtr countsBuffer)
-		//{
-		//	int[] counts;
-			
-		//	if (mapSectionRequest.Counts != null)
-		//	{
-		//		counts = mapSectionRequest.Counts;
-		//	}
-		//	else
-		//	{
-		//		counts = new int[mapSectionRequest.BlockSize.NumberOfCells];
-		//	}
-
-		//	countsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(int)) * counts.Length);
-		//	Marshal.Copy(counts, 0, countsBuffer, counts.Length);
-
-		//	return counts;
-		//}
 
 		private static int[] GetCountsAndEscVelsBuffer(ushort[] counts, ushort[] escapeVelocities, out IntPtr countsAndEscVelsBuffer)
 		{
@@ -125,7 +115,21 @@ namespace MEngineService
 
 			if (mapSectionRequest.DoneFlags != null)
 			{
-				doneFlagsAsBArray = mapSectionRequest.DoneFlags.Select(x => x ? (byte)1 : (byte)0).ToArray();
+				if (mapSectionRequest.DoneFlags.Length == 1)
+				{
+					if (mapSectionRequest.DoneFlags[0])
+					{
+						throw new InvalidOperationException("If all of the DoneFlags are true, then no request should be sent.");
+					}
+
+					var df = mapSectionRequest.DoneFlags[0] ? (byte)1 : (byte)0;
+					//var df = (byte)0;
+					doneFlagsAsBArray = Enumerable.Repeat(df, mapSectionRequest.BlockSize.NumberOfCells).ToArray();
+				}
+				else
+				{
+					doneFlagsAsBArray = mapSectionRequest.DoneFlags.Select(x => x ? (byte)1 : (byte)0).ToArray();
+				}
 			}
 			else
 			{
@@ -135,31 +139,110 @@ namespace MEngineService
 			return doneFlagsAsBArray;
 		}
 
+		private static bool[] CompressDoneFlags(byte[] doneFlags)
+		{
+			bool[] result;
+
+			if (!doneFlags.Any(x => x != 1))
+			{
+				// All ones
+				result = new bool[1] { true };
+			}
+			else if (!doneFlags.Any(x => x != 0))
+			{
+				// all Zeros
+				result = new bool[1] { false };
+			}
+			else
+			{
+				// Mix
+				result = doneFlags.Select(x => x == 1).ToArray();
+			}
+
+
+			//bool[] result;
+
+			//var currentVal = doneFlags[0];
+			//bool? allTheSame = null;
+
+			//if (currentVal != 0 && currentVal != 1)
+			//{
+			//	throw new InvalidOperationException($"Expecting a 1 or a 0, but got {currentVal}.");
+			//}
+
+			//for (var i = 0; i < doneFlags.Length; i++)
+			//{
+			//	if (doneFlags[i] != currentVal)
+			//	{
+			//		allTheSame = false;
+			//		break;
+			//	}
+
+			//	allTheSame = true;
+			//}
+
+			//if (!allTheSame.HasValue)
+			//{
+			//	throw new InvalidOperationException("The local var 'AllTheSame' has not been assigned.");
+			//}
+			//else
+			//{
+			//	if (allTheSame.Value)
+			//	{
+			//		result = new bool[1] { currentVal == 1 };
+			//	}
+			//	else
+			//	{
+			//		result = doneFlags.Select(x => x == 1).ToArray();
+			//	}
+			//}
+
+			//var result = doneFlags.Select(x => x == 1).ToArray();
+			return result;
+		}
+
 		private static IntPtr GetDoneFlagsBuffer(byte[] doneFlagsAsBArray)
 		{
+			Debug.Assert(Marshal.SizeOf(typeof(byte)) == 1, "Byte length is not 1.");
+
 			IntPtr doneFlagsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(byte)) * doneFlagsAsBArray.Length);
 			Marshal.Copy(doneFlagsAsBArray, 0, doneFlagsBuffer, doneFlagsAsBArray.Length);
 
 			return doneFlagsBuffer;
 		}
 
-		private static double[] GetAndFillZValuesBuffer(MapSectionRequest mapSectionRequest, out IntPtr zValuesBuffer)
+		private static async Task<ValueTuple<double[], IntPtr>> GetAndFillZValuesBufferAsync(MapSectionRequest mapSectionRequest)
 		{
 			double[] zValues;
 
-			if (mapSectionRequest.ZValues != null)
+			if (mapSectionRequest.MapSectionId != null)
 			{
-				zValues = mapSectionRequest.ZValues;
+				// Fetch the zvalues from the repo.
+				var mapSectionObjId = new ObjectId(mapSectionRequest.MapSectionId);
+
+				var zValuesObject = await MapSectionService.MapSectionAdapter.GetMapSectionZValuesAsync(mapSectionObjId);
+
+				if (zValuesObject != null)
+				{
+					zValues = zValuesObject.GetZValuesAsDoubleArray();
+				}
+				else
+				{
+					throw new InvalidOperationException($"Could not retrieve the ZValues from the repo for MapSectionId: {mapSectionRequest.MapSectionId}.");
+					//Debug.WriteLine($"WARNING: Could not retrieve the ZValues from the repo for MapSectionId: {mapSectionRequest.MapSectionId}.");
+					//zValues = new double[mapSectionRequest.BlockSize.NumberOfCells * 4];
+				}
 			}
 			else
 			{
 				zValues = new double[mapSectionRequest.BlockSize.NumberOfCells * 4];
 			}
 
-			zValuesBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(double)) * zValues.Length);
+
+			var zValuesBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(double)) * zValues.Length);
 			Marshal.Copy(zValues, 0, zValuesBuffer, zValues.Length);
 
-			return zValues;
+			return new ValueTuple<double[], IntPtr>(zValues, zValuesBuffer);
 		}
 
 	}

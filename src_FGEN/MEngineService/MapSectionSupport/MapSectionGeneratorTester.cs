@@ -13,23 +13,23 @@ namespace MEngineService
 {
 	public class MapSectionGeneratorTester
 	{
-		public static void TestTheGenerator()
-		{
-			MapSectionRequest request = new MapSectionRequest
-			{
-				SubdivisionId = "TestA",
-				BlockPosition = new BigVectorDto(),
-				Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
-				BlockSize = new SizeInt(128, 128),
-				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
-				MapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 100, useEscapeVelocities: true),
-				ProcessingStartTime = DateTime.UtcNow
-			};
+		//public static void TestTheGenerator()
+		//{
+		//	MapSectionRequest request = new MapSectionRequest
+		//	{
+		//		SubdivisionId = "TestA",
+		//		BlockPosition = new BigVectorDto(),
+		//		Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
+		//		BlockSize = new SizeInt(128, 128),
+		//		SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
+		//		MapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 100, useEscapeVelocities: true),
+		//		ProcessingStartTime = DateTime.UtcNow
+		//	};
 
-			var response = MapSectionGenerator.GenerateMapSection(request);
+		//	var response = MapSectionGenerator.GenerateMapSection(request);
 
-			Console.WriteLine($"The response has {response.Counts.Length} count values.");
-		}
+		//	Console.WriteLine($"The response has {response.Counts.Length} count values.");
+		//}
 
 		//public static void BasicTest()
 		//{

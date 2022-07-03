@@ -6,11 +6,11 @@ namespace MapSectionProviderLib
 {
 	public static class MapSectionRequestProcessorBuilder
 	{
-		public static MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, bool useMapSectionRepository)
+		public static MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, bool useMapSectionRepository, bool fetchZValues)
 		{
 			var mapSectionPersistProcessor = useMapSectionRepository ? new MapSectionPersistProcessor(mapSectionAdapter) : null;
 
-			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients, mapSectionPersistProcessor);
+			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients/*, mapSectionPersistProcessor*/);
 
 			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
 
@@ -18,7 +18,7 @@ namespace MapSectionProviderLib
 
 			// Force LookUps to find nothing
 			// mapSectionAdapterForLookup = null;
-			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapterForLookup, mapSectionGeneratorProcessor, mapSectionResponseProcessor);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapterForLookup, mapSectionGeneratorProcessor, mapSectionResponseProcessor, fetchZValues);
 
 			return mapSectionRequestProcessor;
 		}

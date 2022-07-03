@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="AppNavWindow" Height="200" Width="400">
+        Title="AppNavWindow" Height="325" Width="400">
     <Grid>
         <StackPanel Orientation="Vertical">
             <Button Width="100" Height="25" Click="ExploreButton_Click" Margin="0,10">Explore</Button>
@@ -13,6 +13,8 @@
             <Button Width="100" Height="25" Click="DesignPosterButton_Click" Margin="0,10">Design Poster</Button>
             
             <Button Width="100" Height="25" Click="LeaveButton_Click" Margin="0,10" >Leave</Button>
+
+            <Button Width="200" Click="RemoveMapSectionsButton_Click" Margin="0,120">Remove Recent MapSections</Button>
 
         </StackPanel>
     </Grid>

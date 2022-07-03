@@ -7,11 +7,13 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
-namespace MSS.Common.MSetRepo
+namespace MSS.Common
 {
 	public interface IMapSectionAdapter
 	{
-		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition, bool excludeZValues = false);
+		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition, bool includeZValues);
+
+		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
 
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 
@@ -19,7 +21,7 @@ namespace MSS.Common.MSetRepo
 
 		long? ClearMapSections(string subdivisionId);
 
-		long? DeleteMapSectionsSince(DateTime lastSaved, bool overrideRecentGuard = false);
+		long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false);
 
 		//void AddCreatedDateToAllMapSections();
 

@@ -4,9 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace MEngineService
 {
-	internal class MapSectionReqHelper
+	internal static class MapSectionReqHelper
 	{
-		public MapSectionRequestStruct GetRequestStruct(MapSectionRequest mapSectionRequest)
+		public static MapSectionRequestStruct GetRequestStruct(MapSectionRequest mapSectionRequest)
 		{
 			MapSectionRequestStruct result = new MapSectionRequestStruct();
 

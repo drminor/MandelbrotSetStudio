@@ -1,5 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MEngineClient;
+using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSetRepo;
 using System;
@@ -44,6 +45,7 @@ namespace MSetExplorer
 			var DROP_MAP_SECTIONS = false;
 
 			var USE_MAP_SECTION_REPO = true;
+			var FETCH_ZVALUES_LOCALLY = false;
 
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_CONN_STRING);
 
@@ -59,10 +61,10 @@ namespace MSetExplorer
 			if (DROP_RECENT_MAPSECTIONS)
 			{
 				var lastSaved = DateTime.Parse("2023-01-01");
-				_repositoryAdapters.MapSectionAdapter.DeleteMapSectionsSince(lastSaved, overrideRecentGuard: true);
+				_repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
 			}
 
-			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO);
+			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO, FETCH_ZVALUES_LOCALLY);
 
 			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager);
 			_appNavWindow.Show();
@@ -82,10 +84,10 @@ namespace MSetExplorer
 			return appNavWindow;
 		}
 
-		private IMapLoaderManager BuildMapLoaderManager(string[] mEngineEndPointAddress, IMapSectionAdapter mapSectionAdapter, bool useTheMapSectionRepo)
+		private IMapLoaderManager BuildMapLoaderManager(string[] mEngineEndPointAddress, IMapSectionAdapter mapSectionAdapter, bool useTheMapSectionRepo, bool fetchZValues)
 		{
 			var mEngineClients = mEngineEndPointAddress.Select(x => new MClient(x)).ToArray();
-			var mapSectionRequestProcessor = MapSectionRequestProcessorBuilder.CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, useTheMapSectionRepo);
+			var mapSectionRequestProcessor = MapSectionRequestProcessorBuilder.CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, useTheMapSectionRepo, fetchZValues);
 
 			var mapSectionHelper = new MapSectionHelper();
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
@@ -101,11 +103,9 @@ namespace MSetExplorer
 			
 			if (_mapLoaderManager != null)
 			{
+				// This disposes the MapSectionRequestProcessor, MapSectionGeneratorProcessor and MapSectionResponseProcessor.
 				_mapLoaderManager.Dispose();
 			}
-
-
-			// TODO: Dispose the MapLoaderManager, MapSectionRequestProcessor, etc.
 		}
 
 		//private void DoSchemaUpdates()

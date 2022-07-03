@@ -9,6 +9,7 @@ namespace ProjectRepo.Entities
 	/// Record used to store the data found in a MapSectionResponse
 	/// </summary>
 	public record MapSectionRecordJustCounts(
+		ObjectId Id,
 		DateTime DateCreatedUtc,
 		ObjectId SubdivisionId,
 		long BlockPosXHi,
@@ -17,12 +18,13 @@ namespace ProjectRepo.Entities
 		long BlockPosYLo,
 		MapCalcSettings MapCalcSettings,
 		byte[] Counts,
-		byte[] EscapeVelocities
+		byte[] EscapeVelocities,
+		byte[] DoneFlags
 		)
 	{
-		[BsonId]
-		[BsonRepresentation(BsonType.ObjectId)]
-		public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
+		//[BsonId]
+		//[BsonRepresentation(BsonType.ObjectId)]
+		//public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
 
 		public DateTime LastSavedUtc { get; set; }
 		public DateTime LastAccessed { get; set; }

@@ -105,6 +105,7 @@ namespace MSetExplorer
 
 				//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
 
+				mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 				_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
 				mapSectionRequest.Sent = true;
 				_ = Interlocked.Increment(ref _sectionsRequested);

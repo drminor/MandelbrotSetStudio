@@ -37,15 +37,12 @@ namespace ProjectRepo.Entities
 		public SizeIntRecord? CanvasSize { get; set; } // TODO: Make sure every JobRecord has a value for CanvasSize
 	}
 
-	public record JobModel1
+	public record JobInfoRecord
 	(
 		DateTime DateCreated,
 		int TransformType,
 		ObjectId SubDivisionId,
 		int MapCoordExponent
-	)
-	{ }
-
-
+	);
 
 }

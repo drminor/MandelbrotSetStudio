@@ -376,7 +376,7 @@ namespace MSetRepo
 				MapCalcSettings = target.MapCalcSettings,
 				Counts = GetUShorts(target.Counts),
 				EscapeVelocities = GetUShorts(target.EscapeVelocities),
-				DoneFlags = null,
+				DoneFlags = GetBools(target.DoneFlags),
 				ZValues = null
 			};
 

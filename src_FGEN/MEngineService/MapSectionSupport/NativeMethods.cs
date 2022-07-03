@@ -5,9 +5,15 @@ namespace MEngineService
 {
 	internal static class NativeMethods
     {
+        // TODO: Update the MSetGenerator.dll to be built from a source.cpp file with a name different than Test.cpp.
+
         [DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
-        //[DllImport("MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void GenerateMapSection(MapSectionRequestStruct requestStruct, IntPtr counts, IntPtr doneFlags, IntPtr zValues);
+
+        // Use this for "PROD" deployment.
+        //[DllImport("MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
+        //internal static extern void GenerateMapSection(MapSectionRequestStruct requestStruct, IntPtr counts, IntPtr doneFlags, IntPtr zValues);
+
 
         #region Just for Testing
 

@@ -53,7 +53,7 @@ namespace MEngineDataContracts
 		public bool Handled { get; set; }
 
 		public bool IncreasingIterations { get; set; }
-		public bool DontFetchZValuesFromRepo => MapCalcSettings.DontFetchZValuesFromRepo;
+		public bool FetchZValues => MapCalcSettings.FetchZValues;
 		
 		public string ClientEndPointAddress { get; set; }
 		public TimeSpan? TimeToCompleteGenRequest { get; set; }

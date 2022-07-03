@@ -27,29 +27,29 @@ namespace MEngineClient
 		//	return reply;
 		//}
 
-		public async ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest)
+		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		{
 			var mEngineService = GetMapSectionService();
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
 			var stopWatch = Stopwatch.StartNew();
-			var reply = await mEngineService.GenerateMapSectionAsyncR(mapSectionRequest);
+			var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
 			return reply;
 		}
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
-		{
-			var mEngineService = GetMapSectionService();
-			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
+		//public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		//{
+		//	var mEngineService = GetMapSectionService();
+		//	mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
-			var stopWatch = Stopwatch.StartNew();
-			var reply = mEngineService.GenerateMapSection(mapSectionRequest);
-			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
+		//	var stopWatch = Stopwatch.StartNew();
+		//	var reply = mEngineService.GenerateMapSection(mapSectionRequest);
+		//	mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-			return reply;
-		}
+		//	return reply;
+		//}
 
 		private IMapSectionService GetMapSectionService()
 		{

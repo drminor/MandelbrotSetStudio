@@ -18,7 +18,7 @@ namespace MSetExplorer
 
 		private readonly DrawingGroup _drawingGroup;
 
-		//private readonly GeometryDrawing _foundationRectangle;
+		private readonly GeometryDrawing _foundationRectangle;
 		private readonly ScreenSection[,] _screenSections;
 
 		private SizeInt _canvasSizeInBlocks;
@@ -34,7 +34,7 @@ namespace MSetExplorer
 
 			_maxYPtr = maxSizeInBlocks.Height - 1;
 
-			//_foundationRectangle = BuildFoundationRectangle(maxSizeInBlocks, _blockSize);
+			_foundationRectangle = BuildFoundationRectangle(maxSizeInBlocks, _blockSize);
 			//_drawingGroup.Children.Add(_foundationRectangle);
 
 			_screenSections = new ScreenSection[maxSizeInBlocks.Height, maxSizeInBlocks.Width];
@@ -258,6 +258,8 @@ namespace MSetExplorer
 			//	}
 			//}
 
+			//_foundationRectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.CreateRect(new PointInt(), blocksToAllocate.Scale(blockSize)));
+
 			foreach (var blockPosition in ScreenTypeHelper.Points(blocksToAllocate))
 			{
 				if (currentSections[blockPosition.Y, blockPosition.X] == null)
@@ -274,17 +276,17 @@ namespace MSetExplorer
 			}
 		}
 
-		//private GeometryDrawing BuildFoundationRectangle(SizeInt sizeInBlocks, SizeInt blockSize)
-		//{
-		//	var rectangle = new RectangleGeometry()
-		//	{
-		//		Rect = ScreenTypeHelper.CreateRect(new PointInt(), sizeInBlocks.Scale(blockSize))
-		//	};
+		private GeometryDrawing BuildFoundationRectangle(SizeInt sizeInBlocks, SizeInt blockSize)
+		{
+			var rectangle = new RectangleGeometry()
+			{
+				Rect = ScreenTypeHelper.CreateRect(new PointInt(), sizeInBlocks.Scale(blockSize))
+			};
 
-		//	var result = new GeometryDrawing(Brushes.Transparent, new Pen(Brushes.Transparent, 1), rectangle);
+			var result = new GeometryDrawing(Brushes.Transparent, new Pen(Brushes.GhostWhite, 1), rectangle);
 
-		//	return result;
-		//}
+			return result;
+		}
 
 		#endregion
 

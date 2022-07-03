@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Diagnostics;
@@ -90,7 +91,7 @@ namespace ProjectRepo
 		{
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression
 				(
-					p => new MapSectionRecordJustCounts(p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi, p.BlockPosYLo, p.MapCalcSettings, p.Counts, p.EscapeVelocities)
+					p => new MapSectionRecordJustCounts(p.Id, p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi, p.BlockPosYLo, p.MapCalcSettings, p.Counts, p.EscapeVelocities, p.DoneFlags)
 				);
 
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
@@ -114,7 +115,31 @@ namespace ProjectRepo
 				//Debug.WriteLine("MapSection Not found.");
 				return default;
 			}
+		}
 
+		public async Task<ZValues?> GetZValuesAsync(ObjectId mapSectionId)
+		{
+			var projection1 = Builders<MapSectionRecord>.Projection.Expression
+				(
+					p => new ZValuesRecord(p.ZValues)
+				);
+
+			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
+
+			IFindFluent<MapSectionRecord, ZValuesRecord> operation = Collection.Find(filter).Project(projection1);
+
+			var itemsFound = await operation.ToListAsync().ConfigureAwait(false);
+
+			if (itemsFound.Count > 0)
+			{
+				var result = itemsFound[0];
+				return result.ZValues;
+			}
+			else
+			{
+				//Debug.WriteLine("MapSection Not found.");
+				return default;
+			}
 		}
 
 		public async Task<ObjectId> InsertAsync(MapSectionRecord mapSectionRecord)
@@ -178,15 +203,15 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public long? DeleteMapSectionsSince(DateTime lastSaved, bool overrideRecentGuard = false)
+		public long? DeleteMapSectionsSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false)
 		{
-			if (!overrideRecentGuard && DateTime.UtcNow - lastSaved > TimeSpan.FromHours(3))
+			if (!overrideRecentGuard && DateTime.UtcNow - dateCreatedUtc > TimeSpan.FromHours(3))
 			{
-				Debug.WriteLine($"Warning: Not deleting MapSections created since: {lastSaved}, {lastSaved} is longer than 3 hours ago.");
+				Debug.WriteLine($"Warning: Not deleting MapSections created since: {dateCreatedUtc}, {dateCreatedUtc} is longer than 3 hours ago.");
 				return 0;
 			}
 
-			var filter = Builders<MapSectionRecord>.Filter.Gt("DateCreatedUtc", lastSaved);
+			var filter = Builders<MapSectionRecord>.Filter.Gt("DateCreatedUtc", dateCreatedUtc);
 			var deleteResult = Collection.DeleteMany(filter);
 
 			return GetReturnCount(deleteResult);
@@ -222,7 +247,6 @@ namespace ProjectRepo
 				return 0;
 			}
 		}
-
 
 		public async Task<ObjectId?> GetId(ObjectId subdivisionId, BigVectorDto blockPosition)
 		{

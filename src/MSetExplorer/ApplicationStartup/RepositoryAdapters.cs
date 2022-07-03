@@ -1,5 +1,5 @@
 ﻿using MSetRepo;
-using MSS.Common.MSetRepo;
+using MSS.Common;
 
 namespace MSetExplorer
 {

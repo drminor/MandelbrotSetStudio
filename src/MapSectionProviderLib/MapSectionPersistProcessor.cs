@@ -1,5 +1,5 @@
 ﻿using MEngineDataContracts;
-using MSS.Common.MSetRepo;
+using MSS.Common;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -94,12 +94,12 @@ namespace MapSectionProviderLib
 					{
 						if (mapSectionResponse.MapSectionId != null)
 						{
-							//_sbForDiag.AppendLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
 						}
 						else
 						{
-							//_sbForDiag.AppendLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
+							Debug.WriteLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
 							_ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
 						}
 					}

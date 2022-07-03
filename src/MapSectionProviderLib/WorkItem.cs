@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MEngineDataContracts;
+using System;
 
 namespace MapSectionProviderLib
 {
@@ -26,6 +27,20 @@ namespace MapSectionProviderLib
 		public void RunWorkAction()
 		{
 			WorkAction(Request, Response);
+		}
+	}
+
+	public class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSectionResponse>
+	{
+		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSectionResponse?> workAction) : base(jobId, request, workAction)
+		{
+		}
+	}
+
+	public class MapSectionGenerateRequest : WorkItem<MapSectionWorkRequest, MapSectionResponse>
+	{
+		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse?> workAction) : base(jobId, request, workAction)
+		{
 		}
 	}
 }
