@@ -55,6 +55,16 @@ namespace ProjectRepo
 			return null;
 		}
 
+		protected virtual long? GetReturnCount(UpdateResult updateResult)
+		{
+			if (updateResult.IsAcknowledged)
+			{
+				return updateResult.ModifiedCount;
+			}
+
+			return null;
+		}
+
 		#region unused
 
 		//private void RegisterMapIfNeeded<TClass>()

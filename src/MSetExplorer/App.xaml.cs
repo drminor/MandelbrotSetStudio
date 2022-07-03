@@ -67,7 +67,21 @@ namespace MSetExplorer
 			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO, FETCH_ZVALUES_LOCALLY);
 
 			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager);
+
+			_appNavWindow.Unloaded += AppNavWindow_Unloaded;
 			_appNavWindow.Show();
+		}
+
+		private void AppNavWindow_Unloaded(object sender, RoutedEventArgs e)
+		{
+			if (_appNavWindow != null)
+			{
+				_appNavWindow.Unloaded -= AppNavWindow_Unloaded;
+			}
+
+
+
+			throw new NotImplementedException();
 		}
 
 		private AppNavWindow GetAppNavWindow(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)

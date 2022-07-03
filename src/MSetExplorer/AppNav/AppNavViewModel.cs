@@ -111,6 +111,12 @@ namespace MSetExplorer
 			return numberOfRecordsDeleted;
 		}
 
+		public long? DoSchemaUpdates()
+		{
+			var numUpdated = ((MapSectionAdapter)_mapSectionAdapter).RemoveFetchZValuesProp();
+			return numUpdated;
+		}
+
 		#endregion
 
 	}

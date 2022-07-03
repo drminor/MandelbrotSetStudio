@@ -150,6 +150,7 @@ namespace MSetExplorer
 
 				while (!ct.IsCancellationRequested)
 				{
+					Thread.Sleep(5 * 1000);
 					requestsLock.EnterUpgradeableReadLock();
 
 					try

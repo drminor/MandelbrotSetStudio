@@ -21,7 +21,13 @@ namespace MSetExplorer
 
 			_vm = (AppNavViewModel)DataContext;
 			Loaded += AppNavWindow_Loaded;
+			Closing += AppNavWindow_Closing;
 			InitializeComponent();
+		}
+
+		private void AppNavWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			ExitApp();
 		}
 
 		private void AppNavWindow_Loaded(object sender, RoutedEventArgs e)
@@ -75,14 +81,16 @@ namespace MSetExplorer
 
 		private void LeaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			ExitApp();
+			Close();
 		}
 
 		private void RemoveMapSectionsButton_Click(object sender, RoutedEventArgs e)
 		{
-			var createdDate = DateTime.Parse("2022-05-29");
-			var numberOfRecordsDeleted = _vm.DeleteMapSectionsCreatedSince(createdDate);
-			_ = MessageBox.Show($"{numberOfRecordsDeleted} MapSections removed.");
+			//var createdDate = DateTime.Parse("2022-05-29");
+			//var numberOfRecordsProcessed = _vm.DeleteMapSectionsCreatedSince(createdDate);
+
+			var numberOfRecordsProcessed = _vm.DoSchemaUpdates();
+			_ = MessageBox.Show($"{numberOfRecordsProcessed} MapSections processed.");
 		}
 
 		#endregion
@@ -134,7 +142,6 @@ namespace MSetExplorer
 			}
 
 			Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
-			Close();
 		}
 
 		#region Nav Window Support
@@ -180,7 +187,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				ExitApp();
+				Close();
 			}
 		}
 

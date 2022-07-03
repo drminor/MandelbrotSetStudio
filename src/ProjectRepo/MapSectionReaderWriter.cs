@@ -294,5 +294,19 @@ namespace ProjectRepo
 		//	_ = Collection.UpdateMany(filter, updateDefinition, options);
 		//}
 
+		public long RemoveFetchZValuesProp()
+		{
+			var filter = Builders<MapSectionRecord>.Filter.Empty;
+			var updateDefinition = Builders<MapSectionRecord>.Update
+				.Unset("MapCalcSettings.FetchZValues")
+				.Unset("MapCalcSettings.DontFetchZValuesFromRepo")
+				.Unset("MapCalcSettings.DontFetchZValues");
+			var options = new UpdateOptions { IsUpsert = false };
+
+			var updateResult = Collection.UpdateMany(filter, updateDefinition, options);
+
+			return GetReturnCount(updateResult) ?? -1;
+		}
+
 	}
 }

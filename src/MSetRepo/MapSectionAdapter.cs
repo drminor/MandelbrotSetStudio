@@ -183,6 +183,12 @@ namespace MSetRepo
 			return result;
 		}
 
+		public long? RemoveFetchZValuesProp()
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var numberUpdated = mapSectionReaderWriter.RemoveFetchZValuesProp();
+			return numberUpdated;
+		}
 
 		//public void AddCreatedDateToAllMapSections()
 		//{
@@ -190,6 +196,7 @@ namespace MSetRepo
 
 		//	mapSectionReaderWriter.AddCreatedDateToAllRecords();
 		//}
+
 		#endregion
 
 		#region Subdivision
