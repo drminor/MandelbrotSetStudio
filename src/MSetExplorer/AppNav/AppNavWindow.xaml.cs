@@ -41,25 +41,28 @@ namespace MSetExplorer
 			{
 				_vm = (AppNavViewModel)DataContext;
 
-				if (Properties.Settings.Default.ShowTopNav)
-				{
-					WindowState = WindowState.Normal;
-				}
-				else
-				{
-					var lastWindowName = Properties.Settings.Default.LastWindowName;
+				_vm.GetXSamplingEditorViewModel();
 
-					if (lastWindowName == "Explorer")
-					{
-						GoToExplorer();
-					}
-					else
-					{
-						//var initalCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenPoster, new string[] { "Test" });
-						//GoToDesigner(initalCommand);
-						GoToDesigner();
-					}
-				}
+
+				//if (Properties.Settings.Default.ShowTopNav)
+				//{
+				//	WindowState = WindowState.Normal;
+				//}
+				//else
+				//{
+				//	var lastWindowName = Properties.Settings.Default.LastWindowName;
+
+				//	if (lastWindowName == "Explorer")
+				//	{
+				//		GoToExplorer();
+				//	}
+				//	else
+				//	{
+				//		//var initalCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenPoster, new string[] { "Test" });
+				//		//GoToDesigner(initalCommand);
+				//		GoToDesigner();
+				//	}
+				//}
 
 				Debug.WriteLine("The AppNav Window is now loaded");
 			}

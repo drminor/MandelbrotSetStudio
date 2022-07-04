@@ -28,7 +28,19 @@ namespace MSetExplorer.XPoc
 			_precision = precision;
 		}
 
+		public XSamplingEditorViewModel(RRectangle coords)
+		{
+			_coords = coords;
+			_precision = null;
+		}
+
 		#endregion
+
+
+		public void DoIt()
+		{
+
+		}
 
 		#region Public Properties
 
