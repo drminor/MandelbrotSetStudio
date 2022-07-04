@@ -96,12 +96,12 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static MapAreaInfo GetMapAreaInfo(Job job, SizeInt canvasSize)
-		{
-			var result = new MapAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
+		//public static MapAreaInfo GetMapAreaInfo(Job job, SizeInt canvasSize)
+		//{
+		//	var result = new MapAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		//[Conditional("DEBUG")]
 		//public static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)

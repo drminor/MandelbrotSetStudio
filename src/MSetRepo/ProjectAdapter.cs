@@ -466,13 +466,6 @@ namespace MSetRepo
 				throw new KeyNotFoundException($"Could not find a job with jobId = {jobId}.");
 			}
 
-			var subdivisionRecord = subdivisonReaderWriter.Get(jobRecord.SubDivisionId);
-
-			var coords = _dtoMapper.MapFrom(jobRecord.MapAreaInfoRecord.CoordsRecord.CoordsDto);
-
-			// TODO: Make sure every job record has a good value for CanvasSize
-			var canvasSize = jobRecord.MapAreaInfoRecord.CanvasSize == null ? new SizeInt() : _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord.CanvasSize);
-
 			var job = new Job(
 				id: jobId,
 				parentJobId: jobRecord.ParentJobId,
@@ -481,13 +474,11 @@ namespace MSetRepo
 				label: jobRecord.Label,
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
-				colorBandSetId: jobRecord.ColorBandSetId,
-				coords: coords,
-				mapBlockOffset: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord.MapBlockOffset),
-				canvasSize: canvasSize,
-				canvasControlOffset: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord.CanvasControlOffset),
+
+				mapAreaInfo: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord),
 				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
-				subdivision: _mSetRecordMapper.MapFrom(subdivisionRecord),
+				colorBandSetId: jobRecord.ColorBandSetId,
+
 				mapCalcSettings: jobRecord.MapCalcSettings,
 				lastSaved: jobRecord.LastSaved
 				);
@@ -811,7 +802,7 @@ namespace MSetRepo
 				name: target.Name,
 				description: target.Description,
 				sourceJobId: target.SourceJobId,
-				mapAreaInfo: _mSetRecordMapper.MapFrom(target.MapAreaInfoRecord),
+				mapAreaInfo: _mSetRecordMapper.MapFrom(target.JobAreaInfoRecord),
 				colorBandSet: colorBandSet,
 				mapCalcSettings: target.MapCalcSettings,
 				displayPosition: _mSetRecordMapper.MapFrom(target.DisplayPosition),
@@ -854,7 +845,7 @@ namespace MSetRepo
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 
-			// TODO: Remove ColorBandSets for Poster.
+			// TODO: Remove ColorBandSets for Poster as its being deleted.
 			//var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			//var cbsIds = colorBandSetReaderWriter.GetColorBandSetIdsForProject(posterId);
 
@@ -862,6 +853,8 @@ namespace MSetRepo
 			//{
 			//	_ = colorBandSetReaderWriter.Delete(colorBandSetId);
 			//}
+
+			// TODO: Consider removing MapSections for Poster as its being deleted.
 
 			_ = posterReaderWriter.Delete(posterId);
 		}

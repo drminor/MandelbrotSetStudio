@@ -112,14 +112,14 @@ namespace MSetExplorer
 		protected override void OnExit(ExitEventArgs e)
 		{
 			base.OnExit(e);
-
-			_mEngineServerManager.Stop();
 			
 			if (_mapLoaderManager != null)
 			{
 				// This disposes the MapSectionRequestProcessor, MapSectionGeneratorProcessor and MapSectionResponseProcessor.
 				_mapLoaderManager.Dispose();
 			}
+
+			_mEngineServerManager.Stop();
 		}
 
 		//private void DoSchemaUpdates()

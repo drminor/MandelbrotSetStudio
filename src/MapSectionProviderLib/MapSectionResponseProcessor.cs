@@ -110,10 +110,10 @@ namespace MapSectionProviderLib
 
 					if (mapSectionWorkRequest.Response != null)
 					{
-						if (  (!mapSectionWorkRequest.Response.RequestCancelled) && JobIsCancelled(mapSectionWorkRequest.JobId))
-						{
-							mapSectionWorkRequest.Response.RequestCancelled = true;
-						}
+						//if (  (!mapSectionWorkRequest.Response.RequestCancelled) && JobIsCancelled(mapSectionWorkRequest.JobId))
+						//{
+						//	mapSectionWorkRequest.Response.RequestCancelled = true;
+						//}
 
 						mapSectionWorkRequest.Request.Completed = true;
 						mapSectionWorkRequest.RunWorkAction();

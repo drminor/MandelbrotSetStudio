@@ -1,12 +1,13 @@
 ﻿using MSS.Common;
 using MSS.Common.DataTransferObjects;
+using MSS.Types.MSet;
 using ProjectRepo;
 
 namespace MSetRepo
 {
 	public static class MSetRepoHelper
 	{
-		public static ProjectAdapter GetProjectAdapter(string dbProviderConnString)
+		public static IProjectAdapter GetProjectAdapter(string dbProviderConnString)
 		{
 			var dbProvider = new DbProvider(dbProviderConnString);
 			var mSetRecordMapper = GetMSetRecordMapper();

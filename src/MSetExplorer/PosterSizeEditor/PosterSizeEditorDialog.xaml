@@ -63,10 +63,12 @@
                             <CheckBox Margin="10,0" FontSize="16" VerticalContentAlignment="Center" IsChecked="{Binding PreserveWidth}" Width="135" >Preserve Width</CheckBox>
                             
                             <TextBlock Margin="15,0,5,0" FontSize="16" Text="Before:" VerticalAlignment="Center" Width="50"/>
-                            <TextBox x:Name="txtBeforeX" Text="{Binding BeforeX, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>
+                            <!--<TextBox x:Name="txtBeforeX" Text="{Binding BeforeX, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>-->
+                            <TextBox x:Name="txtBeforeX" Text="{Binding BeforeX}" Width="80" Height="22"/>
 
                             <TextBlock Margin="15,0,5,0" FontSize="16" Text="After:" VerticalAlignment="Center" Width="50"/>
-                            <TextBox x:Name="txtAfterX" Text="{Binding AfterX, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>
+                            <!--<TextBox x:Name="txtAfterX" Text="{Binding AfterX, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>-->
+                            <TextBox x:Name="txtAfterX" Text="{Binding AfterX}" Width="80" Height="22"/>
                         </StackPanel>
 
                         <TextBlock Margin="10,5,0,0">Vertical Offsets</TextBlock>
@@ -75,10 +77,10 @@
                             <CheckBox Margin="10,0" FontSize="16" VerticalContentAlignment="Center" IsChecked="{Binding PreserveHeight}" Width="135" >Preserve Height</CheckBox>
 
                             <TextBlock Margin="15,0,5,0" FontSize="16" Text="Before:" VerticalAlignment="Center" Width="50"/>
-                            <TextBox x:Name="txtBeforeY" Text="{Binding BeforeY, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>
+                            <TextBox x:Name="txtBeforeY" Text="{Binding BeforeY}" Width="80" Height="22"/>
 
                             <TextBlock Margin="15,0,5,0" FontSize="16" Text="After:" VerticalAlignment="Center" Width="50"/>
-                            <TextBox x:Name="txtAfterY" Text="{Binding AfterY, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="80" Height="22"/>
+                            <TextBox x:Name="txtAfterY" Text="{Binding AfterY}" Width="80" Height="22"/>
                         </StackPanel>
 
                     </StackPanel>

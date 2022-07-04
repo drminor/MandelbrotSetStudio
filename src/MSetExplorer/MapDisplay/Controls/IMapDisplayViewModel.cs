@@ -8,6 +8,14 @@ namespace MSetExplorer
 {
 	internal interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
 	{
+		ImageSource ImageSource { get; }
+		SizeDbl ContainerSize { get; set; }
+		SizeDbl CanvasSize { get; }
+		VectorInt CanvasControlOffset { get; set; }
+
+		SizeDbl LogicalDisplaySize { get; }
+		double DisplayZoom { get; set; }
+
 		bool InDesignMode { get; }
 
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
@@ -15,7 +23,6 @@ namespace MSetExplorer
 
 		SizeInt BlockSize { get; }
 
-		ImageSource ImageSource { get; }
 		ObservableCollection<MapSection> MapSections { get; }
 
 		JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings { get; set; }
@@ -26,17 +33,6 @@ namespace MSetExplorer
 
 		bool UseEscapeVelocities { get; set; }
 		bool HighlightSelectedColorBand { get; set; }
-
-		// These may need to be dependency properties
-		SizeDbl ContainerSize { get; set; }
-		SizeInt CanvasSize { get; }
-		VectorInt CanvasControlOffset { get; set; }
-
-		SizeInt LogicalDisplaySize { get; }
-		double DisplayZoom { get; set; }
-		
-		// Just for diagnostics
-		//RectangleDbl ClipRegion { get; }
 
 		void UpdateMapViewZoom(AreaSelectedEventArgs e);
 		void UpdateMapViewPan(ImageDraggedEventArgs e);

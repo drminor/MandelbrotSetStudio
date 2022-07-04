@@ -10,7 +10,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public class CbshDisplayViewModel : ViewModelBase
+	public class CbshDisplayViewModel : ViewModelBase, ICbshDisplayViewModel
 	{
 		//private readonly SynchronizationContext? _synchronizationContext;
 		//private readonly object _paintLocker;
@@ -348,7 +348,7 @@ namespace MSetExplorer
 			var curOffset = 0;
 			int lastWidth;
 
-			for(var i = StartPtr; i <= EndPtr; i++)
+			for (var i = StartPtr; i <= EndPtr; i++)
 			{
 				var colorBand = _colorBandSet[i];
 				lastWidth = colorBand.BucketWidth;

@@ -28,10 +28,10 @@ namespace MSetExplorer
 		private readonly ScaleTransform _scaleTransform;
 		private readonly IScreenSectionCollection _screenSectionCollection;
 
-		private SizeInt _canvasSize;
+		private SizeDbl _canvasSize;
 		private VectorInt _canvasControlOffset;
 		private double _displayZoom;
-		private SizeInt _logicalDisplaySize;
+		private SizeDbl _logicalDisplaySize;
 
 		private JobAreaAndCalcSettings? _currentJobAreaAndCalcSettings;
 
@@ -72,7 +72,7 @@ namespace MSetExplorer
 			_colorBandSet = new ColorBandSet();
 			_colorMap = null;
 
-			_logicalDisplaySize = new SizeInt();
+			_logicalDisplaySize = new SizeDbl();
 
 			CanvasControlOffset = new VectorInt();
 
@@ -227,11 +227,11 @@ namespace MSetExplorer
 
 				Debug.WriteLine($"The container size is now {value} Would set the Canvas Size to {desiredCanvasSize}, but keeping it at 1024 x 1024 for now.");
 
-				CanvasSize = new SizeInt(1024);
+				CanvasSize = new SizeDbl(1024);
 			}
 		}
 
-		public SizeInt CanvasSize
+		public SizeDbl CanvasSize
 		{
 			get => _canvasSize;
 			set
@@ -280,7 +280,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeInt LogicalDisplaySize
+		public SizeDbl LogicalDisplaySize
 		{
 			get => _logicalDisplaySize;
 			set
@@ -291,7 +291,7 @@ namespace MSetExplorer
 
 					Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
 
-					UpdateScreenCollectionSize(LogicalDisplaySize, CanvasControlOffset);
+					UpdateScreenCollectionSize(LogicalDisplaySize.Round(), CanvasControlOffset);
 					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
 				}
 			}
@@ -306,7 +306,7 @@ namespace MSetExplorer
 				{
 					_canvasControlOffset = value;
 
-					UpdateScreenCollectionSize(LogicalDisplaySize, CanvasControlOffset);
+					UpdateScreenCollectionSize(LogicalDisplaySize.Round(), CanvasControlOffset);
 					OnPropertyChanged();
 				}
 			}
@@ -383,7 +383,7 @@ namespace MSetExplorer
 
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
 			var invOffset = offset.Invert();
-			var screenArea = new RectangleInt(new PointInt(invOffset), CanvasSize);
+			var screenArea = new RectangleInt(new PointInt(invOffset), CanvasSize.Round());
 			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, screenArea));
 		}
 
@@ -460,7 +460,7 @@ namespace MSetExplorer
 						{
 							_stopwatch.Restart();
 						}
-						_callCounter = Math.Min(CanvasSize.Width / BlockSize.Width, 8);
+						_callCounter = Math.Min(CanvasSize.Round().Width / BlockSize.Width, 8);
 					}
 
 				}

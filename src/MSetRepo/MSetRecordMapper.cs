@@ -185,7 +185,7 @@ namespace MSetRepo
 				Name: source.Name,
 				Description: source.Description,
 				SourceJobId: source.SourceJobId,
-				MapAreaInfoRecord: MapTo(source.MapAreaInfo),
+				JobAreaInfoRecord: MapTo(source.MapAreaInfo),
 				ColorBandSetId: source.ColorBandSet.Id,
 				MapCalcSettings: source.MapCalcSettings,
 				DisplayPosition: MapTo(source.DisplayPosition),
@@ -272,13 +272,15 @@ namespace MSetRepo
 		/// <returns></returns>
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
+			ZValues zVals;
+
 			try
 			{
-				var zVals = new ZValues(source.ZValues);
+				zVals = new ZValues(source.ZValuesForLocalStorage);
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine($"Got Exception: {e}.");
+				Debug.WriteLine($"While parsing the ZValues as a MapSectionRecord is created from a MapSectionResponse, an exception was encountered: {e}.");
 				throw;
 			}
 
@@ -294,7 +296,7 @@ namespace MSetRepo
 				Counts: GetBytes(source.Counts),
 				EscapeVelocities: GetBytes(source.EscapeVelocities),
 				DoneFlags: GetBytes(source.DoneFlags),
-				ZValues: new ZValues(source.ZValues)
+				ZValues: zVals
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),

@@ -46,6 +46,11 @@ namespace MSS.Types
 			return new SizeInt(Width + amount.Width, Height + amount.Height);
 		}
 
+		public SizeInt Add(VectorInt amount)
+		{
+			return new SizeInt(Width + amount.X, Height + amount.Y);
+		}
+
 		//public SizeInt Deflate(SizeInt amount)
 		//{
 		//	return new SizeInt(Width - amount.Width, Height - amount.Height);

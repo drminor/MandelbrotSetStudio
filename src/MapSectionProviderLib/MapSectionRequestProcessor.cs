@@ -86,6 +86,18 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		public int GetNumberOfPendingRequests(int jobNumber)
+		{
+			int result;
+
+			lock (_pendingRequestsLock)
+			{
+				result = _pendingRequests.Count(x => x.JobId == jobNumber);
+			}
+
+			return result;
+		}
+
 		public IList<MapSectionRequest> GetPendingRequests(int jobNumber)
 		{
 			IList<MapSectionRequest> pendingRequestsCopy;
@@ -243,15 +255,15 @@ namespace MapSectionProviderLib
 
 		private bool IsResponseComplete(MapSectionResponse mapSectionResponse, int requestedIterations)
 		{
-			if (mapSectionResponse.MapCalcSettings.TargetIterations >= requestedIterations)
-			{
-				//The MapSection fetched from the repository is the result of a request to generate at or above the current request's target interations.
-				return true;
-			}
-
 			if (mapSectionResponse.Counts == null)
 			{
 				return false;
+			}
+
+			if (mapSectionResponse.MapCalcSettings.TargetIterations >= requestedIterations)
+			{
+				//The MapSection fetched from the repository is the result of a request to generate at or above the current request's target iterations.
+				return true;
 			}
 
 			if (mapSectionResponse.DoneFlags.Length == 1)

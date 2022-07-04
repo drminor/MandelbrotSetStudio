@@ -79,7 +79,7 @@ namespace ImageBuilder
 							var mapSection = blocksForThisRow[blockPtrX];
 							var countsForThisLine = GetOneLineFromCountsBlock(mapSection?.Counts, linePtr, blockSize.Width);
 							var escVelsForThisLine = GetOneLineFromCountsBlock(mapSection?.EscapeVelocities, linePtr, blockSize.Width);
-							var lineLength = GetLineLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
+							var lineLength = GetSegmentLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
 
 							try
 							{
@@ -126,53 +126,31 @@ namespace ImageBuilder
 			return true;
 		}
 
-		//private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int numberOfLinesToSkip)
-		//{
-		//	int result;
-
-		//	if (blockPtrY == 0)
-		//	{
-		//		numberOfLinesToSkip = 0;
-		//		result = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
-		//	}
-		//	else if (blockPtrY == numberOfWholeBlocksY - 1)
-		//	{
-		//		numberOfLinesToSkip = canvasControlOffsetY;
-		//		result = blockHeight - canvasControlOffsetY;
-		//	}
-		//	else
-		//	{
-		//		numberOfLinesToSkip = 0;
-		//		result = blockHeight;
-		//	}
-
-		//	return result;
-		//}
-
-		private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int numberOfLinesToSkip)
+		private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int linesToSkip)
 		{
-			int result;
+			int numberOfLines;
 
 			if (blockPtrY == 0)
 			{
-				numberOfLinesToSkip = 0;
-				result = blockHeight - canvasControlOffsetY;
+				linesToSkip = canvasControlOffsetY;
+				numberOfLines = blockHeight - canvasControlOffsetY;
 			}
 			else if (blockPtrY == numberOfWholeBlocksY - 1)
 			{
-				numberOfLinesToSkip = blockHeight - canvasControlOffsetY;
-				result = canvasControlOffsetY;
+				numberOfLines = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
+				linesToSkip = blockHeight - numberOfLines;
+
 			}
 			else
 			{
-				numberOfLinesToSkip = 0;
-				result = blockHeight;
+				linesToSkip = 0;
+				numberOfLines = blockHeight;
 			}
 
-			return result;
+			return numberOfLines;
 		}
 
-		private int GetLineLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
+		private int GetSegmentLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
 		{
 			int result;
 
@@ -299,6 +277,53 @@ namespace ImageBuilder
 				ImageLineHelper.SetPixel(iLine, pixPtr++, 255, 255, 255);
 			}
 		}
+		/*
+		private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int numberOfLinesToSkip)
+		{
+			int result;
+
+			if (blockPtrY == 0)
+			{
+				numberOfLinesToSkip = 0;
+				result = blockHeight - canvasControlOffsetY;
+			}
+			else if (blockPtrY == numberOfWholeBlocksY - 1)
+			{
+				numberOfLinesToSkip = blockHeight - canvasControlOffsetY;
+				result = canvasControlOffsetY;
+			}
+			else
+			{
+				numberOfLinesToSkip = 0;
+				result = blockHeight;
+			}
+
+			return result;
+		}
+
+		private int GetLineLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
+		{
+			int result;
+
+			if (blockPtrX == 0)
+			{
+				samplesToSkip = canvasControlOffsetX;
+				result = blockWidth - canvasControlOffsetX;
+			}
+			else if (blockPtrX == numberOfWholeBlocksX - 1)
+			{
+				samplesToSkip = 0;
+				result = canvasControlOffsetX + imageWidth - (blockWidth * (numberOfWholeBlocksX - 1));
+			}
+			else
+			{
+				samplesToSkip = 0;
+				result = blockWidth;
+			}
+
+			return result;
+		}
+		*/
 
 	}
 }

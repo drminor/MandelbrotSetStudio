@@ -17,8 +17,8 @@ namespace MSetExplorer
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
 		private readonly CoordsEditorViewModelCreator _coordsEditorViewModelCreator;
 
-		private int _dispWidth;
-		private int _dispHeight;
+		private double _dispWidth;
+		private double _dispHeight;
 
 		#region Constructor
 
@@ -72,7 +72,7 @@ namespace MSetExplorer
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 		public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 
-		public int DispWidth
+		public double DispWidth
 		{
 			get => _dispWidth;
 			set
@@ -85,7 +85,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public int DispHeight
+		public double DispHeight
 		{
 			get => _dispHeight;
 			set
@@ -177,9 +177,12 @@ namespace MSetExplorer
 			{
 				MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
 			}
-			else if (e.PropertyName == nameof(IPosterViewModel.DisplayZoom))
+			else if (e.PropertyName == nameof(IPosterViewModel.LogicalDisplaySize))
 			{
+				MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
 				MapScrollViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
+				MapScrollViewModel.HorizontalPosition = PosterViewModel.DisplayPosition.X;
+				MapScrollViewModel.InvertedVerticalPosition = PosterViewModel.DisplayPosition.Y;
 			}
 
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
@@ -263,6 +266,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
 			{
+				PosterViewModel.DisplayZoom = MapDisplayViewModel.DisplayZoom;
 				PosterViewModel.LogicalDisplaySize = MapDisplayViewModel.LogicalDisplaySize;
 			}
 		}

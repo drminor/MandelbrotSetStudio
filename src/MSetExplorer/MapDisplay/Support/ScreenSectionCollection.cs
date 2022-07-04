@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -95,10 +96,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_drawingGroup.Children.Clear();
-				//_drawingGroup.Children.Add(_foundationRectangle);
 				foreach (var blockPosition in ScreenTypeHelper.Points(_screenSections))
-				//foreach (var blockPosition in ScreenTypeHelper.Points(_allocatedBlocks))
 				{
 					var screenSection = GetScreenSection(blockPosition);
 					if (screenSection != null)
@@ -106,6 +104,16 @@ namespace MSetExplorer
 						screenSection.Active = false;
 					}
 				}
+
+				var missedCnt = 0;
+				foreach(var imageDrawing in _drawingGroup.Children.OfType<ImageDrawing>())
+				{
+					_drawingGroup.Children.Remove(imageDrawing);
+					missedCnt++;
+				}
+
+				Debug.WriteLine($"While Hiding Screen Sections, found {missedCnt} orphan ImageDrawings.");
+				//_drawingGroup.Children.Remove
 			}
 		}
 
@@ -246,7 +254,6 @@ namespace MSetExplorer
 			var maxX = int.MinValue;
 			var minY = int.MaxValue;
 
-
 			foreach (var blockPosition in ScreenTypeHelper.Points(blocksToAllocate))
 			{
 				var invertedPosition = GetInvertedBlockPos(blockPosition);
@@ -273,8 +280,8 @@ namespace MSetExplorer
 
 			_foundationRectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(bounds));
 
-			_drawingGroup.Children.Remove(_foundationRectangle);
-			_drawingGroup.Children.Add(_foundationRectangle);
+			//_drawingGroup.Children.Remove(_foundationRectangle);
+			//_drawingGroup.Children.Add(_foundationRectangle);
 		}
 
 		private GeometryDrawing BuildFoundationRectangle(SizeInt sizeInBlocks, SizeInt blockSize)

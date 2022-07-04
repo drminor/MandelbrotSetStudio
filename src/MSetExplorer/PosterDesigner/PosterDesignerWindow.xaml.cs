@@ -255,7 +255,7 @@ namespace MSetExplorer
 
 				if (TryGetNewSizeFromUser(curPoster, out var newPosterMapAreaInfo))
 				{
-					_vm.PosterViewModel.UpdateMapView(newPosterMapAreaInfo);
+					_vm.PosterViewModel.ResetMapView(newPosterMapAreaInfo);
 				}
 				else
 				{
@@ -926,7 +926,7 @@ namespace MSetExplorer
 		{
 			var qualifiedAmount = GetPanAmount(amount, qualifer);
 			var panVector = GetPanVector(direction, qualifiedAmount);
-			var newArea = new RectangleInt(new PointInt(panVector), _vm.PosterViewModel.CanvasSize);
+			var newArea = new RectangleInt(new PointInt(panVector), _vm.PosterViewModel.CanvasSize.Round());
 			_vm.PosterViewModel.UpdateMapView(TransformType.Pan, newArea);
 		}
 
@@ -940,7 +940,7 @@ namespace MSetExplorer
 				_ => baseAmount * 8,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.PosterViewModel.CanvasSize, targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.PosterViewModel.CanvasSize.Round(), targetAmount);
 
 			return result;
 		}
@@ -971,7 +971,7 @@ namespace MSetExplorer
 			//_ = MessageBox.Show($"Zooming Out. Amount = {amount}.");
 
 			var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
-			var curArea = new RectangleInt(new PointInt(), _vm.PosterViewModel.CanvasSize);
+			var curArea = new RectangleInt(new PointInt(), _vm.PosterViewModel.CanvasSize.Round());
 			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
 			_vm.PosterViewModel.UpdateMapView(TransformType.ZoomOut, newArea);
@@ -988,7 +988,7 @@ namespace MSetExplorer
 				_ => baseAmount * 32,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize, targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize.Round(), targetAmount);
 
 			return result;
 		}

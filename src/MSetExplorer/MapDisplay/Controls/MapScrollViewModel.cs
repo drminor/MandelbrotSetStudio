@@ -10,7 +10,7 @@ namespace MSetExplorer
 		private double _verticalPosition;
 		private double _horizontalPosition;
 
-		private SizeInt _canvasSize;
+		private SizeDbl _canvasSize;
 		private SizeInt? _posterSize;
 
 		private double _displayZoom;
@@ -48,7 +48,7 @@ namespace MSetExplorer
 
 		public IMapDisplayViewModel MapDisplayViewModel { get; init; }
 
-		public SizeInt CanvasSize
+		public SizeDbl CanvasSize
 		{
 			get => _canvasSize;
 			set
@@ -91,15 +91,24 @@ namespace MSetExplorer
 			get => _displayZoom;
 			set
 			{
-				if (Math.Abs(value - DisplayZoom) > 0.001)
-				{
-					_displayZoom = Math.Min(MaximumDisplayZoom, value);
+				//if (Math.Abs(value - DisplayZoom) > 0.001)
+				//{
+				//	_displayZoom = Math.Min(MaximumDisplayZoom, value);
 
-					MapDisplayViewModel.DisplayZoom = _displayZoom;
+				//	MapDisplayViewModel.DisplayZoom = _displayZoom;
 
-					Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
-					OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
-				}
+				//	Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
+				//	OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
+				//}
+
+				var previousValue = _displayZoom;
+
+				_displayZoom = Math.Min(MaximumDisplayZoom, value);
+
+				MapDisplayViewModel.DisplayZoom = _displayZoom;
+
+				Debug.WriteLine($"The MapScrollViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+				OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
 			}
 		}
 
@@ -111,11 +120,15 @@ namespace MSetExplorer
 				if (Math.Abs(value - _maximumDisplayZoom) > 0.001)
 				{
 					_maximumDisplayZoom = value;
-					Debug.WriteLine($"The MaxDispZoom is {MaximumDisplayZoom}.");
 
 					if (DisplayZoom > MaximumDisplayZoom)
 					{
+						Debug.WriteLine($"The MapScrollViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
 						DisplayZoom = MaximumDisplayZoom;
+					}
+					else
+					{
+						Debug.WriteLine($"The MapScrollViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
 					}
 
 					OnPropertyChanged(nameof(IMapScrollViewModel.MaximumDisplayZoom));
@@ -187,7 +200,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private double GetMaximumDisplayZoom(SizeInt? posterSize, SizeInt displaySize)
+		private double GetMaximumDisplayZoom(SizeInt? posterSize, SizeDbl displaySize)
 		{
 			double result;
 
@@ -197,8 +210,8 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var pixelsPerSampleHorizontal = posterSize.Value.Width / (double)displaySize.Width;
-				var pixelsPerSampleVertical = posterSize.Value.Height / (double)displaySize.Height;
+				var pixelsPerSampleHorizontal = posterSize.Value.Width / displaySize.Width;
+				var pixelsPerSampleVertical = posterSize.Value.Height / displaySize.Height;
 
 				result = Math.Min(pixelsPerSampleHorizontal, pixelsPerSampleVertical);
 				if (result < 1)

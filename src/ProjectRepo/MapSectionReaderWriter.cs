@@ -182,7 +182,7 @@ namespace ProjectRepo
 					.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 			}
 
-			UpdateResult? result = await Collection.UpdateOneAsync(filter, updateDefinition);
+			var result = await Collection.UpdateOneAsync(filter, updateDefinition);
 
 			return result?.ModifiedCount;
 		}
@@ -231,8 +231,8 @@ namespace ProjectRepo
 				var updateDefinition = Builders<BsonDocument>.Update
 					.Set("Counts", mapSectionRecord.Counts)
 					.Set("EscapeVelocities", mapSectionRecord.EscapeVelocities)
-					.Set("DoneFlags", mapSectionRecord.DoneFlags)
-					.Set("ZValues", mapSectionRecord.ZValues);
+					.Set("DoneFlags", mapSectionRecord.DoneFlags);
+					//.Set("ZValues", mapSectionRecord.ZValues);
 
 				_ = await bsonDocCollection.UpdateOneAsync(filter, updateDefinition);
 

@@ -11,8 +11,8 @@ namespace MSetExplorer
 	{
 		private readonly IProjectAdapter _projectAdapter;
 
-		private SizeInt _canvasSize;
-		private SizeInt _logicalDisplaySize;
+		private SizeDbl _canvasSize;
+		private SizeDbl _logicalDisplaySize;
 
 		private Poster? _currentPoster;
 
@@ -24,7 +24,7 @@ namespace MSetExplorer
 		{
 			_projectAdapter = projectAdapter;
 
-			_canvasSize = new SizeInt();
+			_canvasSize = new SizeDbl();
 			_currentPoster = null;
 			_jobAreaAndCalcSettings = JobAreaAndCalcSettings.Empty;
 		}
@@ -46,26 +46,9 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public SizeInt PosterSize
-		{
-			get => PosterAreaInfo.CanvasSize;
-			set
-			{
-				if (value != PosterSize)
-				{
-					var curPoster = CurrentPoster;
-					if (curPoster != null)
-					{
-						//var coords = curPoster.MapAreaInfo.Coords;
-						//var blockSize = curPoster.MapAreaInfo.Subdivision.BlockSize;
+		public SizeInt PosterSize => PosterAreaInfo.CanvasSize;
 
-						//curPoster.MapAreaInfo = MapJobHelper.GetMapAreaInfo(coords, value, blockSize, _projectAdapter);
-					}
-				}
-			}
-		}
-
-		public SizeInt CanvasSize
+		public SizeDbl CanvasSize
 		{
 			get => _canvasSize;
 			set
@@ -79,7 +62,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeInt LogicalDisplaySize
+		public SizeDbl LogicalDisplaySize
 		{
 			get => _logicalDisplaySize;
 			set
@@ -87,10 +70,11 @@ namespace MSetExplorer
 				if (value != _logicalDisplaySize)
 				{
 					_logicalDisplaySize = value;
-					var curPoster = CurrentPoster;
-					if (curPoster != null)
+					if (CurrentPoster != null)
 					{
-						JobAreaAndCalcSettings = GetNewJob(curPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, curPoster.MapCalcSettings);
+						UpdateMapView(CurrentPoster);
+
+						//JobAreaAndCalcSettings = GetNewJob(curPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, curPoster.MapCalcSettings);
 					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.LogicalDisplaySize));
@@ -122,7 +106,7 @@ namespace MSetExplorer
 						_currentPoster.DisplayPosition = dispPos;
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 
-						JobAreaAndCalcSettings = GetNewJob(_currentPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, _currentPoster.MapCalcSettings);
+						JobAreaAndCalcSettings = GetNewJob(_currentPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize.Round(), _currentPoster.MapCalcSettings);
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
 					}
 
@@ -160,7 +144,7 @@ namespace MSetExplorer
 					if (value != DisplayPosition)
 					{
 						curPoster.DisplayPosition = value;
-						JobAreaAndCalcSettings = GetNewJob(curPoster.MapAreaInfo, value, LogicalDisplaySize, curPoster.MapCalcSettings);
+						JobAreaAndCalcSettings = GetNewJob(curPoster.MapAreaInfo, value, LogicalDisplaySize.Round(), curPoster.MapCalcSettings);
 
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 					}
@@ -183,7 +167,7 @@ namespace MSetExplorer
 					if (Math.Abs(value - DisplayZoom) > 0.001)
 					{
 						curPoster.DisplayZoom = value;
-						Debug.WriteLine($"The DispZoom is {value}.");
+						Debug.WriteLine($"The PosterViewModel's DispZoom is being updated to {value}.");
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
 					}
 				}
@@ -221,6 +205,11 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(Poster.OnFile))
 			{
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterOnFile));
+			}
+
+			else if (e.PropertyName == nameof(DisplayZoom))
+			{
+				OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
 			}
 		}
 
@@ -305,31 +294,31 @@ namespace MSetExplorer
 
 		public void UpdateMapView(TransformType transformType, RectangleInt newArea)
 		{
-			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
+			//Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
-			var currentPoster = CurrentPoster;
+			//var currentPoster = CurrentPoster;
 
-			if (currentPoster == null)
-			{
-				return;
-			}
+			//if (currentPoster == null)
+			//{
+			//	return;
+			//}
 
-			// The new canvas size 
-			var canvasSize = newArea.Size;
+			//// The new canvas size 
+			//var canvasSize = newArea.Size;
 
-			var position = currentPoster.MapAreaInfo.Coords.Position;
-			var subdivision = currentPoster.MapAreaInfo.Subdivision;
+			//var position = currentPoster.MapAreaInfo.Coords.Position;
+			//var subdivision = currentPoster.MapAreaInfo.Subdivision;
 
-			// Use the new size and position to calculate the new map coordinates
-			var newCoords = RMapHelper.GetMapCoords(newArea, position, subdivision.SamplePointDelta);
-			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
+			//// Use the new size and position to calculate the new map coordinates
+			//var newCoords = RMapHelper.GetMapCoords(newArea, position, subdivision.SamplePointDelta);
+			//var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
 
-			var newMapAreaInfo = new MapAreaInfo(newCoords, canvasSize, subdivision, newMapBlockOffset, newCanvasControlOffset);
+			//var newMapAreaInfo = new MapAreaInfo(newCoords, canvasSize, subdivision, newMapBlockOffset, newCanvasControlOffset);
 
-			UpdateMapView(currentPoster, newMapAreaInfo);
+			//UpdateMapView(currentPoster, newMapAreaInfo);
 		}
 
-		public void UpdateMapView(MapAreaInfo newMapAreaInfo)
+		public void ResetMapView(MapAreaInfo newMapAreaInfo)
 		{
 			var currentPoster = CurrentPoster;
 
@@ -338,16 +327,22 @@ namespace MSetExplorer
 				return;
 			}
 
-			UpdateMapView(currentPoster, newMapAreaInfo);
-		}
-
-		private void UpdateMapView(Poster poster, MapAreaInfo newMapAreaInfo)
-		{
 			// Update the current poster's map specification.
-			poster.MapAreaInfo = newMapAreaInfo;
+			currentPoster.MapAreaInfo = newMapAreaInfo;
+			OnPropertyChanged(nameof(IPosterViewModel.PosterSize));
+			currentPoster.DisplayPosition = new VectorInt();
+			currentPoster.DisplayZoom = 1;
 
+			_logicalDisplaySize = new SizeDbl(10, 10);
+			LogicalDisplaySize = CanvasSize;
+
+			//UpdateMapView(currentPoster);
+		}
+
+		private void UpdateMapView(Poster poster)
+		{
 			// Use the new map specification and the current zoom and display position to set the region to display.
-			JobAreaAndCalcSettings = GetNewJob(poster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, poster.MapCalcSettings);
+			JobAreaAndCalcSettings = GetNewJob(poster.MapAreaInfo, DisplayPosition, LogicalDisplaySize.Round(), poster.MapCalcSettings);
 		}
 
 		public void UpdateColorBandSet(ColorBandSet colorBandSet)

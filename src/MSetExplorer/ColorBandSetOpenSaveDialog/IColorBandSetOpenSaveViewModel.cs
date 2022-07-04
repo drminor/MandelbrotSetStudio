@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
-	public interface IColorBandSetOpenSaveViewModel : INotifyPropertyChanged
+	internal interface IColorBandSetOpenSaveViewModel : INotifyPropertyChanged
 	{
 		DialogType DialogType { get; }
 

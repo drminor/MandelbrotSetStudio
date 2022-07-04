@@ -25,7 +25,9 @@ namespace MSetExplorer
 		private readonly ColorBandSet _colorBandSet;
 		private readonly MapCalcSettings _mapCalcSettings;
 		private readonly Color _fallbackColor;
-		private readonly CancellationTokenSource _cts;
+
+		private CancellationTokenSource _cts;
+		private Task? _currentBitmapBuilderTask;
 
 		#region Constructor
 
@@ -42,6 +44,7 @@ namespace MSetExplorer
 			_fallbackColor = fallbackColor;
 
 			_cts = new CancellationTokenSource();
+			_currentBitmapBuilderTask = null;
 
 			_previewMapAreaInfo = GetPreviewMapAreaInfo(_mapAreaInfo, _previewImageSize);
 
@@ -94,31 +97,58 @@ namespace MSetExplorer
 			return result;
 		}
 
-
 		private void QueueBitmapGeneration(MapAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			var previewImageSize = previewMapArea.CanvasSize;
 			Debug.WriteLine($"Creating a preview image with size: {previewMapArea.CanvasSize} and map coords: {previewMapArea.Coords}.");
 
-			var task = Task.Run(async () =>
+			if (_currentBitmapBuilderTask != null)
+			{
+				if (!_cts.IsCancellationRequested)
+				{
+					_cts.Cancel();
+				}
+
+				// TODO: Wait on the current task to complete.
+
+				Thread.Sleep(1 * 1000);
+
+				_cts = new CancellationTokenSource();
+			}
+
+			_currentBitmapBuilderTask = Task.Run(async () =>
 				{
 					try
 					{
 						var pixels = await _bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, mapCalcSettings, _cts.Token);
-						_synchronizationContext?.Post(o => BitmapCompleted(pixels), null);
+						if (!_cts.IsCancellationRequested)
+						{
+							_synchronizationContext?.Post(o => BitmapCompleted(pixels, o), _cts);
+						}
 					}
 					catch (AggregateException agEx)
 					{
 						Debug.WriteLine($"The BitmapBuilder task failed. The exception is {agEx}.");
 					}
-				}
+				}, _cts.Token
 			);
 		}
 
-		private void BitmapCompleted(byte[] pixels)
+		private void BitmapCompleted(byte[]? pixels, object? state)
 		{
-			WritePixels(pixels, Bitmap);
-			BitmapHasBeenLoaded?.Invoke(this, EventArgs.Empty);
+			if (state != null && state == _cts && !((CancellationTokenSource) state).IsCancellationRequested)
+			{
+				if (pixels != null)
+				{
+					WritePixels(pixels, Bitmap);
+				}
+				else
+				{
+					FillBitmapWithColor(Colors.LightCoral, Bitmap);
+				}
+
+				BitmapHasBeenLoaded?.Invoke(this, EventArgs.Empty);
+			}
 		}
 
 		private void WritePixels(byte[] pixels, WriteableBitmap bitmap)

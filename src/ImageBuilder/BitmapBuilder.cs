@@ -19,6 +19,7 @@ namespace ImageBuilder
 
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection?>? _currentResponses;
+		private bool _isStopping;
 
 		public BitmapBuilder(IMapLoaderManager mapLoaderManager)
 		{
@@ -26,11 +27,12 @@ namespace ImageBuilder
 			_mapSectionHelper = new MapSectionHelper();
 			_currentJobNumber = null;
 			_currentResponses = null;
+			_isStopping = false;
 		}
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<byte[]> BuildAsync(MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
+		public async Task<byte[]?> BuildAsync(MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
@@ -58,17 +60,21 @@ namespace ImageBuilder
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
 					var blocksForThisRow = await GetAllBlocksForRowAsync(blockPtrY, w, mapBlockOffset, mapAreaInfo.Subdivision, mapCalcSettings);
+					if (ct.IsCancellationRequested || blocksForThisRow.Count == 0)
+					{
+						return null;
+					} 
 
 					//var checkCnt = blocksForThisRow.Count;
 					//Debug.Assert(checkCnt == w);
 
 					var numberOfLines = GetNumberOfLines(blockPtrY, imageSize.Height, h, blockSize.Height, canvasControlOffset.Y, out var linesTopSkip);
+
 					var startingLinePtr = blockSize.Height - 1 - linesTopSkip;
 					var endingLinePtr = startingLinePtr - (numberOfLines - 1);
 
 					for (var linePtr = startingLinePtr; linePtr >= endingLinePtr; linePtr--)
 					{
-
 						for (var blockPtrX = 0; blockPtrX < w; blockPtrX++)
 						{
 							MapSection? mapSection;
@@ -120,53 +126,32 @@ namespace ImageBuilder
 				}
 			}
 
-
 			return result;
 		}
 
-		private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int numberOfLinesToSkip)
+		private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int linesToSkip)
 		{
-			int result;
+			int numberOfLines;
 
 			if (blockPtrY == 0)
 			{
-				//numberOfLinesToSkip = 0;
-				//result = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
-				
-				//numberOfLinesToSkip = canvasControlOffsetY;
-				//result = blockHeight - canvasControlOffsetY;
-
-				numberOfLinesToSkip = 0;
-				result = blockHeight - canvasControlOffsetY;
-
-
+				linesToSkip = canvasControlOffsetY;
+				numberOfLines = blockHeight - canvasControlOffsetY;
 			}
 			else if (blockPtrY == numberOfWholeBlocksY - 1)
 			{
-				//numberOfLinesToSkip = canvasControlOffsetY;
-				//result = blockHeight - canvasControlOffsetY;
+				numberOfLines = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
+				linesToSkip = blockHeight - numberOfLines;
 
-				//numberOfLinesToSkip = 0;
-				//result = canvasControlOffsetY;
-
-				if (canvasControlOffsetY == 0)
-				{
-					numberOfLinesToSkip = 0;
-					result = blockHeight;
-				}
-				else
-				{
-					numberOfLinesToSkip = blockHeight - canvasControlOffsetY;
-					result = canvasControlOffsetY;
-				}
 			}
 			else
 			{
-				numberOfLinesToSkip = 0;
-				result = blockHeight;
+				linesToSkip = 0;
+				numberOfLines = blockHeight;
 			}
 
-			return result;
+			return numberOfLines;
+
 		}
 
 		private int GetSegmentLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
@@ -192,6 +177,7 @@ namespace ImageBuilder
 			return result;
 		}
 
+
 		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(int rowPtr, int stride, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var requests = new List<MapSectionRequest>();
@@ -203,35 +189,53 @@ namespace ImageBuilder
 				requests.Add(mapSectionRequest);
 			}
 
-			_currentJobNumber = _mapLoaderManager.Push(mapBlockOffset, requests, MapSectionReady);
 			_currentResponses = new Dictionary<int, MapSection?>();
 
-			var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
-
-			if (task != null)
+			try
 			{
-				try
-				{
-					await task;
-				}
-				catch (OperationCanceledException)
-				{
+				_currentJobNumber = _mapLoaderManager.Push(mapBlockOffset, requests, MapSectionReady);
 
-				}
-				catch (Exception e)
-				{
-					Debug.WriteLine($"Got ex: {e}.");
+				var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
 
-					throw;
+				if (task != null)
+				{
+					try
+					{
+						await task;
+					}
+					catch (OperationCanceledException)
+					{
+						Debug.WriteLine($"The BitmapBuilder's MapLoader's Task is cancelled.");
+						throw;
+					}
+					catch (Exception e)
+					{
+						Debug.WriteLine($"The BitmapBuilder's MapLoader's Task encountered an exception: {e}.");
+						throw;
+					}
+				}
+				else
+				{
+					Debug.WriteLine($"The BitmapBuilder's MapLoader's Task was not found.");
+					throw new InvalidOperationException("The MapLoaderManger task could be found.");
 				}
 			}
+			catch
+			{
+				_isStopping = true;
+			}
 
-			return _currentResponses ?? new Dictionary<int, MapSection?>();
+			if (_isStopping)
+			{
+				_currentResponses.Clear();
+			}
+
+			return _currentResponses;
 		}
 
 		private void MapSectionReady(MapSection mapSection, int jobNumber, bool isLastSection)
 		{
-			if (jobNumber == _currentJobNumber)
+			if (!_isStopping && jobNumber == _currentJobNumber)
 			{
 				if (!mapSection.IsEmpty)
 				{

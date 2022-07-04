@@ -41,7 +41,13 @@ namespace MSetExplorer
 
 			_vm = (PosterSizeEditorViewModel)DataContext;
 			Loaded += PosterSizeEditorDialog_Loaded;
+			Closing += PosterSizeEditorDialog_Closing;
 			InitializeComponent();
+		}
+
+		private void PosterSizeEditorDialog_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			_vm.CancelPreviewImageGeneration();
 		}
 
 		private void PosterSizeEditorDialog_Loaded(object sender, RoutedEventArgs e)
@@ -151,6 +157,10 @@ namespace MSetExplorer
 		public RectangleDbl NewMapArea => _vm.NewMapArea;
 		public SizeDbl NewMapSize => _vm.NewMapSize;
 
+		#endregion
+
+		#region Public Methods
+
 		public void UpdateWithNewMapInfo(MapAreaInfo mapAreaInfo)
 		{
 			_vm.UpdateWithNewMapInfo(mapAreaInfo);
@@ -247,6 +257,7 @@ namespace MSetExplorer
 
 		private void ApplyChangesButton_Click(object sender, RoutedEventArgs e)
 		{
+			_vm.CancelPreviewImageGeneration();
 			ApplyChangesRequested?.Invoke(this, new EventArgs());
 		}
 

@@ -22,10 +22,7 @@ namespace MSS.Types.MSet
 
 		public Job()
 		{
-			Coords = new RRectangle();
-			Subdivision = new Subdivision();
-			MapBlockOffset = new BigVector();
-
+			MapAreaInfo = new MapAreaInfo();
 			ColorBandSetId = ObjectId.Empty;
 			MapCalcSettings = new MapCalcSettings();
 		}
@@ -54,11 +51,7 @@ namespace MSS.Types.MSet
 				  transformType, 
 				  newArea,
 
-				  mapAreaInfo.Coords,
-				  mapAreaInfo.CanvasSize,
-				  mapAreaInfo.Subdivision, 
-				  mapAreaInfo.MapBlockOffset, 
-				  mapAreaInfo.CanvasControlOffset, 
+				  mapAreaInfo, 
 
 				  canvasSizeInBlocks,
 				  colorBandSetId, 
@@ -79,11 +72,7 @@ namespace MSS.Types.MSet
 			TransformType transformType,
 			RectangleInt? newArea,
 
-			RRectangle coords,
-			SizeInt canvasSize,
-			Subdivision subdivision,
-			BigVector mapBlockOffset,
-			VectorInt canvasControlOffset,
+			MapAreaInfo mapAreaInfo,
 
 			SizeInt canvasSizeInBlocks,
 			ObjectId colorBandSetId,
@@ -100,11 +89,7 @@ namespace MSS.Types.MSet
 			TransformType = transformType;
 			NewArea = newArea;
 
-			Coords = coords;
-			CanvasSize = canvasSize;
-			Subdivision = subdivision;
-			MapBlockOffset = mapBlockOffset;
-			CanvasControlOffset = canvasControlOffset;
+			MapAreaInfo = mapAreaInfo;
 
 			CanvasSizeInBlocks = canvasSizeInBlocks;
 			_colorBandSetId = colorBandSetId;
@@ -116,6 +101,12 @@ namespace MSS.Types.MSet
 		#endregion
 
 		#region Public Properties
+
+		public RRectangle Coords => MapAreaInfo.Coords;
+		public SizeInt CanvasSize => MapAreaInfo.CanvasSize;
+		public Subdivision Subdivision => MapAreaInfo.Subdivision;
+		public BigVector MapBlockOffset => MapAreaInfo.MapBlockOffset;
+		public VectorInt CanvasControlOffset => MapAreaInfo.CanvasControlOffset;
 
 		public bool IsEmpty => Coords.WidthNumerator == 0;
 		public DateTime DateCreated => Id.CreationTime;
@@ -159,11 +150,7 @@ namespace MSS.Types.MSet
 		public TransformType TransformType { get; init; }
 		public RectangleInt? NewArea { get; init; }
 
-		public RRectangle Coords { get; init; }
-		public SizeInt CanvasSize { get; init; }
-		public Subdivision Subdivision { get; init; }
-		public BigVector MapBlockOffset { get; init; }
-		public VectorInt CanvasControlOffset { get; init; }
+		public MapAreaInfo MapAreaInfo { get; init; }
 
 		public SizeInt CanvasSizeInBlocks { get; init; }
 
@@ -220,8 +207,8 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Coords.Clone(), CanvasSize,
-				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
+			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
 			{
 				OnFile = OnFile
 			};
@@ -231,8 +218,8 @@ namespace MSS.Types.MSet
 
 		public Job CreateNewCopy()
 		{
-			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Coords.Clone(), CanvasSize,
-				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
+			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(), 
+				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
 			{
 				OnFile = false
 			};

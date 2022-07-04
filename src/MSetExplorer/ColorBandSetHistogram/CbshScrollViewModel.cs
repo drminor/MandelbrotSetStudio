@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace MSetExplorer
 {
-	public class CbshScrollViewModel : ViewModelBase
+	public class CbshScrollViewModel : ViewModelBase, ICbshScrollViewModel
 	{
 		private double _invertedVerticalPosition;
 		private double _verticalPosition;

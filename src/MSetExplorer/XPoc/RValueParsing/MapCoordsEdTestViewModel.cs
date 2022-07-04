@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 
-namespace MSetExplorer
+namespace MSetExplorer.XPoc
 {
 	public class MapCoordsEdTestViewModel : ViewModelBase
 	{

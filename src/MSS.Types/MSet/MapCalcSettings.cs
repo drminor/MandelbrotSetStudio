@@ -21,14 +21,6 @@ namespace MSS.Types.MSet
 
 		public bool UseEscapeVelocities { get; set; }
 
-		////// TODO: Delete the FetchZValues property from the MapCalcSettings class.
-		//public bool? FetchZValues { get; set; }
-
-		//public bool? DontFetchZValuesFromRepo { get; set; }
-
-		//public bool? DontFetchZValues { get; set; }
-
-
 		#region Constructor
 
 		public MapCalcSettings() : this(0, 0, 0, true)

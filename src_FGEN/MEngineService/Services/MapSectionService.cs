@@ -26,12 +26,11 @@ namespace MEngineService.Services
 		{
 			var mapSectionResponse = await MapSectionGenerator.GenerateMapSectionAsync(mapSectionRequest);
 
-			var cpyWithNoZValues = mapSectionResponse.Clone(stripZValues: true);
-
-			Debug.WriteLine($"Adding MapSectionResponse with ID: {mapSectionResponse.MapSectionId} to the MapSectionPersist Processor. ");
+			Debug.WriteLine($"Adding MapSectionResponse with ID: {mapSectionResponse.MapSectionId} to the MapSection Persist Processor. ");
 			_mapSectionPersistProcessor.AddWork(mapSectionResponse);
 
-			return cpyWithNoZValues;
+			mapSectionResponse.IncludeZValues = false;
+			return mapSectionResponse;
 		}
 
 		//public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CallContext context = default)

@@ -15,8 +15,8 @@ namespace MSetExplorer
 
 		private readonly IMapLoaderManager _mapLoaderManager;
 
-		private int _dispWidth;
-		private int _dispHeight;
+		private double _dispWidth;
+		private double _dispHeight;
 
 		#region Constructor
 
@@ -37,7 +37,7 @@ namespace MSetExplorer
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-			MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+			MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize.Round();
 			DispWidth = MapDisplayViewModel.CanvasSize.Width;
 			DispHeight = MapDisplayViewModel.CanvasSize.Height;
 
@@ -70,7 +70,7 @@ namespace MSetExplorer
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 		public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 
-		public int DispWidth
+		public double DispWidth
 		{
 			get => _dispWidth;
 			set
@@ -83,7 +83,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public int DispHeight
+		public double DispHeight
 		{
 			get => _dispHeight;
 			set
@@ -124,17 +124,17 @@ namespace MSetExplorer
 			return result;
 		}
 
-		// TODO: Once every job has a value for the Canvas Size, then consider using that property's value instead of the current display size.
-		public SizeInt GetCanvasSize(Job job)
-		{
-			var result = job.CanvasSize;
-			if (result.Width == 0 || result.Height == 0)
-			{
-				result = MapDisplayViewModel.CanvasSize;
-			}
+		//// TODO: Once every job has a value for the Canvas Size, then consider using that property's value instead of the current display size.
+		//public SizeInt GetCanvasSize(Job job)
+		//{
+		//	var result = job.CanvasSize;
+		//	if (result.Width == 0 || result.Height == 0)
+		//	{
+		//		result = MapDisplayViewModel.CanvasSize;
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public JobProgressViewModel CreateAJobProgressViewModel()
 		{
@@ -155,9 +155,14 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
-				// TODO: Once every job has a valid CanvasSize, don't use the current DisplaySize.
-				var newMapAreaInfo = MapJobHelper.GetMapAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
+				// TODO: Check This: Once every job has a valid CanvasSize, don't use the current DisplaySize.
+
+				//var newMapAreaInfo = MapJobHelper.GetMapAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
+
+				var newMapAreaInfo = curJob.MapAreaInfo;
+
 				MapCoordsViewModel.CurrentMapAreaInfo = newMapAreaInfo;
+				
 
 				var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
 					(
@@ -209,7 +214,7 @@ namespace MSetExplorer
 			{
 				DispWidth = MapDisplayViewModel.CanvasSize.Width;
 				DispHeight = MapDisplayViewModel.CanvasSize.Height;
-				MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+				MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize.Round();
 			}
 		}
 

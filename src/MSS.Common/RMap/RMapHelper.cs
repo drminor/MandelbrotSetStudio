@@ -232,11 +232,14 @@ namespace MSS.Common
 
 		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
-			var sizeCorrection = blockSize.Sub(canvasControlOffset).Mod(blockSize);
-			var totalSize = canvasSize.Inflate(sizeCorrection);
+			//var sizeCorrection = blockSize.Sub(canvasControlOffset).Mod(blockSize);
+			//var totalSize = canvasSize.Inflate(sizeCorrection);
+
+			var totalSize = canvasSize.Add(canvasControlOffset);
+
 			var rawResult = totalSize.DivRem(blockSize, out var remainder);
-			var extra = new SizeInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
-			var result = rawResult.Inflate(extra);
+			var extra = new VectorInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
+			var result = rawResult.Add(extra);
 
 			//var w = Math.DivRem(canvasSize.Width, blockSize.Width, out var remainderW);
 			//var wE = Math.DivRem(remainderW + canvasControlOffset.X, blockSize.Width, out var remainderW2);

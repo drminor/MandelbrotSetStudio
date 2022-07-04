@@ -100,10 +100,10 @@ namespace MSetExplorer
 			return et switch
 			{
 				ScrollEventType.EndScroll => val,
-				ScrollEventType.First => 1,
+				ScrollEventType.First => _vm.MaximumDisplayZoom,
 				ScrollEventType.LargeDecrement => val,
 				ScrollEventType.LargeIncrement => val,
-				ScrollEventType.Last => _vm.MaximumDisplayZoom,
+				ScrollEventType.Last => 1,
 				ScrollEventType.SmallDecrement => val,
 				ScrollEventType.SmallIncrement => val,
 				ScrollEventType.ThumbPosition => val,

@@ -145,8 +145,8 @@ namespace MSetExplorer
 					_tcs.SetResult();
 				}
 
-				var pr = _mapSectionRequestProcessor.GetPendingRequests(JobNumber);
-				Debug.WriteLine($"MapLoader is done with Job: {JobNumber}, there are {pr.Count} requests still pending.");
+				var numberOfPendingRequests = _mapSectionRequestProcessor.GetNumberOfPendingRequests(JobNumber);
+				Debug.WriteLine($"MapLoader is done with Job: {JobNumber}, there are {numberOfPendingRequests} requests still pending.");
 			}
 			else
 			{

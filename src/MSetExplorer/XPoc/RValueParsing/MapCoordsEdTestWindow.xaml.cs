@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Windows;
 
-namespace MSetExplorer
+namespace MSetExplorer.XPoc
 {
 	/// <summary>
 	/// Interaction logic for MapCoordsEditorWindow.xaml

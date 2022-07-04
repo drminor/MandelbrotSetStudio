@@ -146,9 +146,15 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
+						if (mapSectionRequest.BlockPosition.X[1] == 61 && mapSectionRequest.BlockPosition.Y[1] == 32)
+						{
+							Debug.WriteLine("Found it.");
+						}
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
+
+						
 
 						mapSectionResponse.MapSectionId = mapSectionRequest.MapSectionId;
 
@@ -159,10 +165,10 @@ namespace MapSectionProviderLib
 
 						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-						if (IsJobCancelled(mapSectionGenerateRequest.JobId))
-						{
-							mapSectionResponse = null;
-						}
+						//if (IsJobCancelled(mapSectionGenerateRequest.JobId))
+						//{
+						//	mapSectionResponse = null;
+						//}
 
 					}
 

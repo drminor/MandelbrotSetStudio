@@ -5,13 +5,15 @@ using System;
 
 namespace ProjectRepo.Entities
 {
+	// TODO: Change the JobRecord's TransformType (enum) from an int to a string.
+	// Remove TransformType, renameTransformTypeString to TransformType.
 	public record JobRecord(
 		ObjectId? ParentJobId,
 		bool IsPreferredChild,
 		ObjectId ProjectId,
 		ObjectId SubDivisionId,
 		string? Label,
-		int TransformType,          // TODO: Change the JobRecord's TransformType (enum) from an int to a string.
+		int TransformType,
 
 		MapAreaInfoRecord MapAreaInfoRecord,
 		string TransformTypeString,
@@ -19,13 +21,8 @@ namespace ProjectRepo.Entities
 		PointIntRecord NewAreaPosition,
 		SizeIntRecord NewAreaSize,
 
-		//MSetInfoRecord MSetInfo,
 		ObjectId ColorBandSetId,
 		MapCalcSettings MapCalcSettings,
-
-
-		//BigVectorRecord MapBlockOffset,
-		//VectorIntRecord CanvasControlOffset,
 		SizeIntRecord CanvasSizeInBlocks
 		)
 	{
@@ -38,15 +35,6 @@ namespace ProjectRepo.Entities
 		public bool Onfile => Id != ObjectId.Empty;
 
 		public DateTime LastSaved { get; set; }
-
-		//public MapCalcSettings? MapCalcSettings { get; set; }
-
-		//public MSetInfoRecord? MSetInfo { get; set; }
-		//public BigVectorRecord? MapBlockOffset { get; set; }
-
-		//public VectorIntRecord? CanvasControlOffset { get; set; }
-		//public SizeIntRecord? CanvasSize { get; set; } // TODO: Make sure every JobRecord has a value for CanvasSize
-
 	}
 
 	public record JobInfoRecord

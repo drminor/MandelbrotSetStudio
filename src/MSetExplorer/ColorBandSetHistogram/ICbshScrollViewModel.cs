@@ -1,14 +1,13 @@
 ﻿using MSS.Types;
-using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	internal interface IMapScrollViewModel : INotifyPropertyChanged
+	public interface ICbshScrollViewModel
 	{
-		IMapDisplayViewModel MapDisplayViewModel { get; init; }
+		CbshDisplayViewModel CbshDisplayViewModel { get; init; }
 
-		SizeDbl CanvasSize { get; set; }
-		SizeInt? PosterSize { get; set; }
+		SizeInt CanvasSize { get; set; }
+		SizeInt? HistogramSize { get; set; }
 
 		double DisplayZoom { get; set; }
 		double MaximumDisplayZoom { get; }

@@ -376,8 +376,8 @@ namespace MSetExplorer
 			{
 				if (SavePosterInteractive(_vm.MapProjectViewModel.CurrentProjectName, out var name, out var description))
 				{
-					var currentSize = _vm.GetCanvasSize(curJob);
-					var newPoster = _vm.MapProjectViewModel.PosterCreate(name, description, currentSize);
+					//var currentSize = _vm.GetCanvasSize(curJob);
+					var newPoster = _vm.MapProjectViewModel.PosterCreate(name, description, curJob.CanvasSize);
 					_vm.MapProjectViewModel.ProjectClose();
 
 					AppNavRequestResponse.OnCloseBehavior = OnCloseBehavior.ReturnToTopNav;
@@ -1067,7 +1067,7 @@ namespace MSetExplorer
 				_ => baseAmount * 32,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize, targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize.Round(), targetAmount);
 
 			return result;
 		}

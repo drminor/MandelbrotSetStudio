@@ -1,5 +1,6 @@
 ﻿using MSetRepo;
 using MSS.Common;
+using MSS.Types.MSet;
 
 namespace MSetExplorer
 {
@@ -18,7 +19,7 @@ namespace MSetExplorer
 			SharedColorBandSetAdapter.CreateCollections();
 		}
 
-		public ProjectAdapter ProjectAdapter { get; init; }
+		public IProjectAdapter ProjectAdapter { get; init; }
 
 		public IMapSectionAdapter MapSectionAdapter { get; init; }
 

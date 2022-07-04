@@ -45,7 +45,7 @@ namespace MSetExplorer
 			_mapDisplayViewModel = mapDisplayViewModel;
 			_blockSize = blockSize;
 
-			CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+			CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
 
 			_selectedArea = BuildSelectionRectangle(_canvas);
 			SelectedPosition = new Point();
@@ -158,7 +158,7 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
-				CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+				CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
 				_selectedArea.Width = _defaultSelectionSize.Width;
 				_selectedArea.Height = _defaultSelectionSize.Height;
 			}

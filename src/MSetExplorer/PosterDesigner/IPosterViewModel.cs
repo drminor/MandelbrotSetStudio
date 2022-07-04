@@ -10,8 +10,8 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler? PropertyChanged;
 
-		SizeInt CanvasSize { get; set; }
-		SizeInt LogicalDisplaySize { get; set; }
+		SizeDbl CanvasSize { get; set; }
+		SizeDbl LogicalDisplaySize { get; set; }
 
 		Poster? CurrentPoster { get; }
 		string? CurrentPosterName { get; }
@@ -19,7 +19,7 @@ namespace MSetExplorer
 		bool CurrentPosterIsDirty { get; }
 
 		MapAreaInfo PosterAreaInfo { get; }
-		SizeInt PosterSize { get; set; }
+		SizeInt PosterSize { get; }
 
 		ColorBandSet? ColorBandSet { get; set; }
 
@@ -29,7 +29,7 @@ namespace MSetExplorer
 		JobAreaAndCalcSettings JobAreaAndCalcSettings { get; }
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
-		void UpdateMapView(MapAreaInfo newMapAreaInfo);
+		void ResetMapView(MapAreaInfo newMapAreaInfo);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
 
 

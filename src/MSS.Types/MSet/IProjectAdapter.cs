@@ -7,6 +7,8 @@ namespace MSS.Types.MSet
 {
 	public interface IProjectAdapter
 	{
+		void CreateCollections();
+		void DropCollections();
 
 		//public void InsertColorBandSet(ColorBandSet colorBandSet);
 

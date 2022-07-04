@@ -89,7 +89,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void ConfigureScrollBars(SizeInt logicalDisplaySize, SizeInt? posterSize)
+		private void ConfigureScrollBars(SizeDbl logicalDisplaySize, SizeInt? posterSize)
 		{
 			if (posterSize.HasValue)
 			{

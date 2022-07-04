@@ -29,8 +29,19 @@ namespace MEngineDataContracts
 		[DataMember(Order = 7)]
 		public bool[] DoneFlags { get; set; }
 
+		public double[] ZValuesForLocalStorage { get; set; }
+
 		[DataMember(Order = 8)]
-		public double[] ZValues { get; set; }
+		public double[] ZValues
+		{ 
+			get => IncludeZValues ? ZValuesForLocalStorage : null;
+			set
+			{
+				ZValuesForLocalStorage = value;
+			}
+		}
+
+		public bool IncludeZValues { get; set; }
 
 		public bool RequestCancelled { get; set; }
 
@@ -38,10 +49,10 @@ namespace MEngineDataContracts
 
 		object ICloneable.Clone()
 		{
-			return Clone(stripZValues: false);
+			return Clone();
 		}
 
-		public MapSectionResponse Clone(bool stripZValues)
+		public MapSectionResponse Clone()
 		{
 			var result = new MapSectionResponse()
 			{
@@ -52,7 +63,8 @@ namespace MEngineDataContracts
 				Counts = Counts,
 				EscapeVelocities = EscapeVelocities,
 				DoneFlags = DoneFlags,
-				ZValues = stripZValues ? null : (double[])ZValues.Clone(),
+				ZValuesForLocalStorage = ZValuesForLocalStorage,
+				IncludeZValues = IncludeZValues,
 				RequestCancelled = RequestCancelled,
 				JustNowUpdated = JustNowUpdated
 			};

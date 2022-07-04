@@ -5,7 +5,7 @@ using MSS.Types.MSet;
 
 namespace MSetExplorer
 {
-	public class CoordsEditorViewModel : ViewModelBase
+	internal class CoordsEditorViewModel : ViewModelBase
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
@@ -157,8 +157,8 @@ namespace MSetExplorer
 			//var height = RValueHelper.ConvertToString(diffY, useSciNotationForLengthsGe: 6);
 
 			precisionY += _numDigitsForDisplayExtent;
-			var newY1Sme = StartingY.SignManExp.ReducePrecisionTo(precisionY);
-			var newY2Sme = EndingY.SignManExp.ReducePrecisionTo(precisionY);
+			var newY1Sme = startingY.SignManExp.ReducePrecisionTo(precisionY);
+			var newY2Sme = endingY.SignManExp.ReducePrecisionTo(precisionY);
 
 			var result = RValueHelper.BuildRRectangle(new SignManExp[] { newX1Sme, newX2Sme,	newY1Sme, newY2Sme });
 

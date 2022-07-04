@@ -137,7 +137,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
-				UpdateTheCanvasSize(_vm.CanvasSize);
+				UpdateTheCanvasSize(_vm.CanvasSize.Round());
 			}
 
 			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentJobAreaAndCalcSettings) && _selectionRectangle != null)

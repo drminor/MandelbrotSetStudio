@@ -219,14 +219,13 @@ namespace MSS.Common
 		{
 			var reducedR = Reducer.Reduce(rValue);
 
-			var reciprocalOfTheDenominator = BigInteger.Pow(2, -1 * reducedR.Exponent);
-
 			if (reducedR.Value == 0)
 			{
 				return 0;
 			}
 			else
 			{
+				var reciprocalOfTheDenominator = BigInteger.Pow(2, -1 * reducedR.Exponent);
 				var result = BigInteger.Divide(reciprocalOfTheDenominator, reducedR.Value);
 				return (long)result;
 			}

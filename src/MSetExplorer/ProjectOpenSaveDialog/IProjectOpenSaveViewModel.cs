@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 
 namespace MSetExplorer
 {
-	public interface IProjectOpenSaveViewModel
+	internal interface IProjectOpenSaveViewModel
 	{
 		DialogType DialogType { get; }
 

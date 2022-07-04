@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace MSetExplorer
 {
-	public interface IPosterOpenSaveViewModel
+	internal interface IPosterOpenSaveViewModel
 	{
 		DialogType DialogType { get; }
 
