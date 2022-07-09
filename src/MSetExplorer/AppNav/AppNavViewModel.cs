@@ -4,7 +4,6 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -33,55 +32,6 @@ namespace MSetExplorer
 			_mapLoaderManager = mapLoaderManager;
 		}
 
-		public XSamplingEditorViewModel GetXSamplingEditorViewModel()
-		{
-			var spdNumerator = new long[] { 0, 1545950080965521 };
-			var spdExponent = -89;
-
-			var samplePointDelta = new RSize(
-				BigIntegerHelper.FromLongs(spdNumerator),
-				BigIntegerHelper.FromLongs(spdNumerator),
-				spdExponent
-				);
-
-			var bPosXHi = 0;
-			var bPosXLo = 1492162821;
-
-			var bPosYHi = 0;
-			var bPosYLo = 1675271270;
-
-			var mapBlockPosition = new BigVector(
-				BigIntegerHelper.FromLongs(new long[] { bPosXHi, bPosXLo }),
-				BigIntegerHelper.FromLongs(new long[] { bPosYHi, bPosYLo })
-				);
-
-			Debug.WriteLine($"SPD: {samplePointDelta}, MapBlockPosition: {mapBlockPosition}.");
-
-			var rect = new RRectangle(new RPoint(), samplePointDelta);
-
-			var result = new XSamplingEditorViewModel(rect);
-
-			return result;
-		}
-
-		/*
-
-625a6b2db475dbd8fc268fcb
-BlockPosXHi
-:
-0
-BlockPosXLo
-:
--1492162821
-BlockPosYHi
-:
-0
-BlockPosYLo
-:
-1675271270
-
-
-		*/
 		public ExplorerViewModel GetExplorerViewModel()
 		{
 			// Map Project ViewModel
@@ -132,6 +82,12 @@ BlockPosYLo
 			return result;
 		}
 
+		public XSamplingEditorViewModel GetXSamplingEditorViewModel()
+		{
+			var result = new XSamplingEditorViewModel(_mapSectionAdapter);
+			return result;
+		}
+
 		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
 			return new ProjectOpenSaveViewModel(_projectAdapter, initalName, dialogType);
@@ -152,7 +108,6 @@ BlockPosYLo
 			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, _mapJobHelper);
 			return result;
 		}
-
 
 		#region Utilities
 

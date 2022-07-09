@@ -1,4 +1,5 @@
 ﻿using MSetExplorer.ScreenHelpers;
+using MSetExplorer.XPoc;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -41,28 +42,19 @@ namespace MSetExplorer
 			{
 				_vm = (AppNavViewModel)DataContext;
 
-				_vm.GetXSamplingEditorViewModel();
+				if (Properties.Settings.Default.ShowTopNav)
+				{
+					WindowState = WindowState.Normal;
+				}
+				else
+				{
+					//var initalCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenPoster, new string[] { "Test" });
+					AppNavRequestResponse? initialCommand = null;
 
-
-				//if (Properties.Settings.Default.ShowTopNav)
-				//{
-				//	WindowState = WindowState.Normal;
-				//}
-				//else
-				//{
-				//	var lastWindowName = Properties.Settings.Default.LastWindowName;
-
-				//	if (lastWindowName == "Explorer")
-				//	{
-				//		GoToExplorer();
-				//	}
-				//	else
-				//	{
-				//		//var initalCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenPoster, new string[] { "Test" });
-				//		//GoToDesigner(initalCommand);
-				//		GoToDesigner();
-				//	}
-				//}
+					var lastWindowName = Properties.Settings.Default.LastWindowName;
+					var route = GetRoute(lastWindowName);
+					route(initialCommand); 
+				}
 
 				Debug.WriteLine("The AppNav Window is now loaded");
 			}
@@ -82,6 +74,11 @@ namespace MSetExplorer
 			GoToDesigner();
 		}
 
+		private void SampleTestButton_Click(object sender, RoutedEventArgs e)
+		{
+			GoToSampleTest();
+		}
+
 		private void LeaveButton_Click(object sender, RoutedEventArgs e)
 		{
 			Close();
@@ -98,12 +95,23 @@ namespace MSetExplorer
 
 		#endregion
 
-		private void GoToExplorer()
+		private void ExitApp()
+		{
+			if (_lastWindow != null)
+			{
+				Properties.Settings.Default.LastWindowName = _lastWindow.Name;
+				Properties.Settings.Default.Save();
+			}
+
+			Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
+		}
+
+		private void GoToExplorer(AppNavRequestResponse? appNavRequestResponse = null)
 		{
 			Hide();
 
 			var explorerViewModel = _vm.GetExplorerViewModel();
-			var explorerWindow = new ExplorerWindow(AppNavRequestResponse.BuildEmptyRequest())
+			var explorerWindow = new ExplorerWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
 			{
 				DataContext = explorerViewModel
 			};
@@ -136,18 +144,38 @@ namespace MSetExplorer
 			_ = designerWindow.Focus();
 		}
 
-		private void ExitApp()
+		private void GoToSampleTest(AppNavRequestResponse? appNavRequestResponse = null)
 		{
-			if (_lastWindow != null)
-			{
-				Properties.Settings.Default.LastWindowName = _lastWindow.Name;
-				Properties.Settings.Default.Save();
-			}
+			Hide();
 
-			Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
+			var xSamplingEditorViewModel = _vm.GetXSamplingEditorViewModel();
+			var xSamplingEditorWindow = new XSamplingEditorWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
+			{
+				DataContext = xSamplingEditorViewModel
+			};
+
+			_lastWindow = xSamplingEditorWindow;
+			_lastWindow.Name = "xSampling";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			xSamplingEditorWindow.Owner = Application.Current.MainWindow;
+			xSamplingEditorWindow.Show();
+			_ = xSamplingEditorWindow.Focus();
 		}
 
 		#region Nav Window Support
+
+		private Action<AppNavRequestResponse?> GetRoute(string lastWindowName)
+		{
+			switch (lastWindowName)
+			{
+				case "Explorer": return GoToExplorer;
+				case "Designer": return GoToDesigner;
+				case "xSampling": return GoToSampleTest;
+				default:
+					return x => WindowState = WindowState.Normal;
+			}
+		}
 
 		private void LastWindow_Closed(object? sender, System.EventArgs e)
 		{

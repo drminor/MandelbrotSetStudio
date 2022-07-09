@@ -1,32 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using MSetExplorer.ScreenHelpers;
+using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace MSetExplorer.XPoc
 {
 	/// <summary>
 	/// Interaction logic for XSamplingEditorWindow.xaml
 	/// </summary>
-	public partial class XSamplingEditorWindow : Window
+	public partial class XSamplingEditorWindow : Window, IHaveAppNavRequestResponse
 	{
 		private XSamplingEditorViewModel _vm;
 
 		#region Constructor
 
-		public XSamplingEditorWindow()
+		public XSamplingEditorWindow(AppNavRequestResponse appNavRequestResponse)
 		{
 			_vm = _vm = (XSamplingEditorViewModel)DataContext;
+			AppNavRequestResponse = appNavRequestResponse;
 
 			Loaded += XSamplingEditorWindow_Loaded;
 			InitializeComponent();
@@ -42,11 +33,48 @@ namespace MSetExplorer.XPoc
 			else
 			{
 				_vm = (XSamplingEditorViewModel)DataContext;
+
+				sldrWidth.Minimum = 800;
+				sldrWidth.Maximum = 3000;
+
+				sldrWidth.SmallChange = 1;
+				sldrWidth.LargeChange = 10;
+
 				Debug.WriteLine("The XSamplingEditor Window is now loaded");
 
 			}
 		}
 
 		#endregion
+
+		private void sldrWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			_vm.CanvasWidth = (int) Math.Round(e.NewValue);
+		}
+
+
+		#region Button Handlers
+
+		private void SaveButton_Click(object sender, RoutedEventArgs e)
+		{
+			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.Close);
+			Close();
+		}
+
+		private void CloseButton_Click(object sender, RoutedEventArgs e)
+		{
+			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.Close);
+			Close();
+		}
+
+		private void DeleteButton_Click(object sender, RoutedEventArgs e)
+		{
+			//_vm.DeleteSelected();
+		}
+
+		#endregion
+
+		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
+
 	}
 }

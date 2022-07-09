@@ -15,7 +15,6 @@ namespace MapSectionProviderLib
 		private const int QUEUE_CAPACITY = 200;
 
 		private readonly IMEngineClient[] _mEngineClients;
-		private int _nextMEngineClientPtr;
 
 		//private readonly MapSectionPersistProcessor? _mapSectionPersistProcessor;
 
@@ -34,7 +33,6 @@ namespace MapSectionProviderLib
 		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients/*, MapSectionPersistProcessor? mapSectionPersistProcessor*/)
 		{
 			_mEngineClients = mEngineClients;
-			_nextMEngineClientPtr = 0;
 			//_mapSectionPersistProcessor = mapSectionPersistProcessor;
 
 			_cts = new CancellationTokenSource();
@@ -43,10 +41,10 @@ namespace MapSectionProviderLib
 
 			var numberOfLogicalProc = Environment.ProcessorCount;
 			var localTaskCnt = numberOfLogicalProc - 1;
-			var remoteTaskCnt = localTaskCnt / 3;
+			var remoteTaskCnt = localTaskCnt - 1; // localTaskCnt / 3;
 
 			_workQueueProcessors = new List<Task>();
-			foreach (var client in mEngineClients)
+			foreach (var client in _mEngineClients)
 			{
 				if (client.EndPointAddress.ToLower().Contains("localhost"))
 				{
@@ -81,7 +79,6 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		// TODO: Add a timestamp the cancelledJobIds list and then use it to determine when that entry can be deleted.
 		public void CancelJob(int jobId)
 		{
 			lock (_cancelledJobsLock)
@@ -146,30 +143,18 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						if (mapSectionRequest.BlockPosition.X[1] == 61 && mapSectionRequest.BlockPosition.Y[1] == 32)
-						{
-							Debug.WriteLine("Found it.");
-						}
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 
-						
-
 						mapSectionResponse.MapSectionId = mapSectionRequest.MapSectionId;
-
-						//if (mapSectionPersistProcessor != null)
-						//{
-						//	mapSectionPersistProcessor.AddWork(mapSectionResponse);
-						//}
-
+						//mapSectionPersistProcessor.AddWork(mapSectionResponse);
 						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
 						//if (IsJobCancelled(mapSectionGenerateRequest.JobId))
 						//{
 						//	mapSectionResponse = null;
 						//}
-
 					}
 
 					mapSectionGenerateRequest.Response = mapSectionResponse;
@@ -185,18 +170,6 @@ namespace MapSectionProviderLib
 					throw;
 				}
 			}
-		}
-
-		private IMEngineClient GetNextClient()
-		{
-			var result = _mEngineClients[_nextMEngineClientPtr++];
-
-			if (_nextMEngineClientPtr > _mEngineClients.Length - 1)
-			{
-				_nextMEngineClientPtr = 0;
-			}
-
-			return result;
 		}
 
 		private bool IsJobCancelled(int jobId)
@@ -253,7 +226,6 @@ namespace MapSectionProviderLib
 
 		public void Dispose()
 		{
-			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
 			Dispose(disposing: true);
 			GC.SuppressFinalize(this);
 		}

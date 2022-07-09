@@ -5,8 +5,179 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer.XPoc"
         mc:Ignorable="d"
-        Title="XSamplingEditorWindow" Height="450" Width="800">
+        Title="XSamplingEditorWindow" Height="300" Width="1000">
     <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="5" x:Name="grdCoords1">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- COLUMN 1-->
+
+            <!-- X1 -->
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+                <TextBlock Width="20" Margin="5,3,3,3" FontSize="14" Text="X1:" />
+                <TextBox x:Name="txtX1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Left}"/>
+            </StackPanel>
+
+            <!-- Y1 -->
+            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+                <TextBlock Width="20" Margin="5,3,3,3" FontSize="14" Text="Y1:" />
+                <TextBox x:Name="txtY1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Bottom}"/>
+            </StackPanel>
+
+            <!-- COLUMN 1-->
+
+            <!-- Width -->
+            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
+                <TextBlock Width="80" Margin="15,3,3,3" FontSize="14" Text="Width:" />
+                <TextBox x:Name="txtWidth" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Width, Mode=OneWay}"/>
+
+                <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Precision:" />
+                <!--<TextBox x:Name="txtPrecisionX" Width="24" Margin="3" VerticalAlignment="Center" Text="{Binding PrecisionX}"/>-->
+                <TextBox x:Name="txtPrecisionX" Width="24" Margin="3" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Height -->
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,1,0,10">
+                <TextBlock Width="80" Margin="15,3,3,3" FontSize="14" Text="Height:" />
+                <TextBox x:Name="txtHeight" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Height, Mode=OneWay}"/>
+
+                <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Precision:" />
+                <!--<TextBox x:Name="txtPrecisionY" Width="24" Margin="3" VerticalAlignment="Center" Text="{Binding PrecisionY}"/>-->
+                <TextBox x:Name="txtPrecisionY" Width="24" Margin="3" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- COLUMN 2-->
+
+            <!-- Sample Point Delta -->
+            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="0,1" x:Name="stkPanSamplePointDelta">
+                <TextBlock Width="45" Margin="15,3,3,3" FontSize="14" Text="Spd:" />
+                <TextBox x:Name="txtSamplePointDelta" Width="180" Margin="3" VerticalAlignment="Center" Text="{Binding SamplePointDelta}"/>
+
+                <TextBlock Width="25" Margin="5,3" FontSize="14" Text="Exp:" />
+                <TextBox x:Name="txtSamplePointDeltaExp" Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding SamplePointDeltaExp}"/>
+            </StackPanel>
+
+            <!-- Zoom -->
+            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Margin="0,1" x:Name="stkPanZoom">
+                <TextBlock Width="45" Margin="15,3,3,3" FontSize="14" Text="Zoom:" />
+                <TextBox x:Name="txtZoom" Width="80" Margin="3" VerticalAlignment="Center" Text="{Binding Zoom}"/>
+
+            </StackPanel>
+
+        </Grid>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="100,10">
+
+            <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
+            <TextBox x:Name="txtCanvasWidth" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding CanvasWidth}"/>
+
+            <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+            <TextBox x:Name="txtCanvasHeight" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding CanvasHeight}"/>
+
+            <Button Width="100" Margin="100,3,3,3">Go</Button>
+
+            <Slider x:Name="sldrWidth" Width="400" TickFrequency="200" IsSnapToTickEnabled="True" ValueChanged="sldrWidth_ValueChanged"></Slider>
+            
+            
+        </StackPanel>
         
+        <Grid Grid.Row="2" Margin="5" x:Name="grdCoords2">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- COLUMN 1-->
+
+            <!-- X1 -->
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+                <TextBlock Width="20" Margin="5,3,3,3" FontSize="14" Text="X1:" />
+                <TextBox x:Name="txtNX1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding NewLeft}"/>
+            </StackPanel>
+
+            <!-- Y1 -->
+            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+                <TextBlock Width="20" Margin="5,3,3,3" FontSize="14" Text="Y1:" />
+                <TextBox x:Name="txtNY1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding NewBottom}"/>
+            </StackPanel>
+
+            <!-- COLUMN 1-->
+
+            <!-- Width -->
+            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
+                <TextBlock Width="80" Margin="15,3,3,3" FontSize="14" Text="Width:" />
+                <TextBox x:Name="txtNWidth" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding NewWidth, Mode=OneWay}"/>
+
+                <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Precision:" />
+                <!--<TextBox x:Name="txtNPrecisionX" Width="24" Margin="3" VerticalAlignment="Center" Text="{Binding PrecisionX}"/>-->
+                <TextBox x:Name="txtNPrecisionX" Width="24" Margin="3" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Height -->
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,1,0,10">
+                <TextBlock Width="80" Margin="15,3,3,3" FontSize="14" Text="Height:" />
+                <TextBox x:Name="txtNHeight" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding NewHeight, Mode=OneWay}"/>
+
+                <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Precision:" />
+                <!--<TextBox x:Name="txtNPrecisionY" Width="24" Margin="3" VerticalAlignment="Center" Text="{Binding PrecisionY}"/>-->
+                <TextBox x:Name="txtNPrecisionY" Width="24" Margin="3" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- COLUMN 2-->
+
+            <!-- Sample Point Delta -->
+            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="0,1" x:Name="stkNPanSamplePointDelta">
+                <TextBlock Width="45" Margin="15,3,3,3" FontSize="14" Text="Spd:" />
+                <TextBox x:Name="txtNSamplePointDelta" Width="180" Margin="3" VerticalAlignment="Center" Text="{Binding NewSamplePointDelta}"/>
+
+                <TextBlock Width="25" Margin="5,3" FontSize="14" Text="Exp:" />
+                <TextBox x:Name="txtNSamplePointDeltaExp" Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding NewSamplePointDeltaExp}"/>
+            </StackPanel>
+
+            <!-- Zoom -->
+            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Margin="0,1" x:Name="stkNPanZoom">
+                <TextBlock Width="45" Margin="15,3,3,3" FontSize="14" Text="Zoom:" />
+                <TextBox x:Name="txtNZoom" Width="80" Margin="3" VerticalAlignment="Center" Text="{Binding NewZoom}"/>
+
+            </StackPanel>
+
+        </Grid>
+
+        <Border Grid.Row="3" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Cancel</Button>
+            </StackPanel>
+
+        </Border>
     </Grid>
 </Window>

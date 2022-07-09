@@ -6,11 +6,11 @@ namespace MSetExplorer
 	public class MEngineServerManager
 	{
 		private readonly string _serverExePath;
-		private readonly string[] _mEngineEndPointAddresses;
+		private readonly string _mEngineEndPointAddresses;
 
 		private readonly IList<Process> _serverProcesses;
 
-		public MEngineServerManager(string serverExePath, string[] mEngineEndPointAddresses)
+		public MEngineServerManager(string serverExePath, string mEngineEndPointAddresses)
 		{
 			_serverExePath = serverExePath;
 			_mEngineEndPointAddresses = mEngineEndPointAddresses;
@@ -22,19 +22,13 @@ namespace MSetExplorer
 			StartServer(_mEngineEndPointAddresses);
 		}
 
-		private void StartServer(string[] urls)
+		private void StartServer(string ep)
 		{
 			var exists = Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(_serverExePath)).Length > 0;
 			if (!exists)
 			{
-				foreach (var ep in urls)
-				{
-					if (ep.ToLower().Contains("localhost"))
-					{
-						var proc = Process.Start(_serverExePath, " --urls " + ep);
-						_serverProcesses.Add(proc);
-					}
-				}
+				var proc = Process.Start(_serverExePath, " --urls " + ep);
+				_serverProcesses.Add(proc);
 			}
 		}
 

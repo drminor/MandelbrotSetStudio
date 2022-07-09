@@ -1,9 +1,8 @@
 ﻿using MapSectionProviderLib;
 using MEngineClient;
-using MSetRepo;
 using MSS.Common;
-using MSS.Common.MSetRepo;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 
@@ -15,14 +14,21 @@ namespace MSetExplorer
 	public partial class App : Application
 	{
 		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
-
 		private const string SERVER_EXE_PATH = @"C:\Users\david\source\repos\MandelbrotSetStudio\src_FGEN\MEngineService\bin\x64\Debug\net5.0\MEngineService.exe";
 
-		//private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "https://localhost:5004", "https://localhost:5001" };
-		//private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "http://192.168.2.104:5000", "https://localhost:5001" };
-		private static readonly string[] M_ENGINE_END_POINT_ADDRESSES = new string[] { "https://localhost:5001" };
+		private const string LOCAL_M_ENGINE_ADDRESS = "https://localhost:5001";
+		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.1.20:5000" };
 
-		private readonly MEngineServerManager _mEngineServerManager;
+		private static readonly bool USE_LOCAL_ENGINE = false; // If true, we will host a server -- AND include it in the list of servers to use by our client.
+		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
+
+		private const bool DROP_RECENT_MAPSECTIONS = false;
+		private const bool DROP_ALL_COLLECTIONS = false;
+		private const bool DROP_MAP_SECTIONS = false;
+
+		private const bool FETCH_ZVALUES_LOCALLY = false;
+
+		private readonly MEngineServerManager? _mEngineServerManager;
 		private RepositoryAdapters? _repositoryAdapters;
 		private IMapLoaderManager? _mapLoaderManager;
 
@@ -31,57 +37,64 @@ namespace MSetExplorer
 		public App()
 		{
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-			_mEngineServerManager = new MEngineServerManager(SERVER_EXE_PATH, M_ENGINE_END_POINT_ADDRESSES);
+
+			if (USE_LOCAL_ENGINE)
+			{
+				_mEngineServerManager = new MEngineServerManager(SERVER_EXE_PATH, LOCAL_M_ENGINE_ADDRESS);
+			}
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
 
-			_mEngineServerManager.Start();
-
-			var DROP_RECENT_MAPSECTIONS = false;
-			var DROP_ALL_COLLECTIONS = false;
-			var DROP_MAP_SECTIONS = false;
-
-			var USE_MAP_SECTION_REPO = true;
-			var FETCH_ZVALUES_LOCALLY = false;
+			_mEngineServerManager?.Start();
 
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_CONN_STRING);
+			PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAPSECTIONS, _repositoryAdapters);
 
-			if (DROP_ALL_COLLECTIONS)
-			{
-				_repositoryAdapters.ProjectAdapter.DropCollections();
-			}
-			else if (DROP_MAP_SECTIONS)
-			{
-				_repositoryAdapters.ProjectAdapter.DropSubdivisionsAndMapSectionsCollections();
-			}
+			var mEngineAddresses = USE_REMOTE_ENGINE ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();
 
-			if (DROP_RECENT_MAPSECTIONS)
+			if (USE_LOCAL_ENGINE)
 			{
-				var lastSaved = DateTime.Parse("2023-01-01");
-				_repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
+				mEngineAddresses.Add(LOCAL_M_ENGINE_ADDRESS);
 			}
 
-			_mapLoaderManager = BuildMapLoaderManager(M_ENGINE_END_POINT_ADDRESSES, _repositoryAdapters.MapSectionAdapter, USE_MAP_SECTION_REPO, FETCH_ZVALUES_LOCALLY);
+			_mapLoaderManager = BuildMapLoaderManager(mEngineAddresses, _repositoryAdapters.MapSectionAdapter, FETCH_ZVALUES_LOCALLY);
 
 			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager);
-
-			_appNavWindow.Unloaded += AppNavWindow_Unloaded;
 			_appNavWindow.Show();
 		}
 
-		private void AppNavWindow_Unloaded(object sender, RoutedEventArgs e)
+		protected override void OnExit(ExitEventArgs e)
 		{
-			if (_appNavWindow != null)
+			base.OnExit(e);
+
+			if (_mapLoaderManager != null)
 			{
-				_appNavWindow.Unloaded -= AppNavWindow_Unloaded;
+				// This disposes the MapSectionRequestProcessor, MapSectionGeneratorProcessor and MapSectionResponseProcessor.
+				_mapLoaderManager.Dispose();
 			}
 
+			_mEngineServerManager?.Stop();
+		}
 
+		private void PrepareRepositories(bool dropAllCollections, bool dropMapSections, bool dropRecentMapSections, RepositoryAdapters repositoryAdapters)
+		{
+			if (dropAllCollections)
+			{
+				repositoryAdapters.ProjectAdapter.DropCollections();
+			}
+			else if (dropMapSections)
+			{
+				repositoryAdapters.ProjectAdapter.DropSubdivisionsAndMapSectionsCollections();
+			}
 
-			throw new NotImplementedException();
+			if (dropRecentMapSections)
+			{
+				var lastSaved = DateTime.Parse("2023-01-01");
+				repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
+			}
 		}
 
 		private AppNavWindow GetAppNavWindow(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
@@ -98,10 +111,10 @@ namespace MSetExplorer
 			return appNavWindow;
 		}
 
-		private IMapLoaderManager BuildMapLoaderManager(string[] mEngineEndPointAddress, IMapSectionAdapter mapSectionAdapter, bool useTheMapSectionRepo, bool fetchZValues)
+		private IMapLoaderManager BuildMapLoaderManager(IList<string> mEngineEndPointAddress, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
 		{
 			var mEngineClients = mEngineEndPointAddress.Select(x => new MClient(x)).ToArray();
-			var mapSectionRequestProcessor = MapSectionRequestProcessorBuilder.CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, useTheMapSectionRepo, fetchZValues);
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, fetchZValues);
 
 			var mapSectionHelper = new MapSectionHelper();
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
@@ -109,18 +122,16 @@ namespace MSetExplorer
 			return result;
 		}
 
-		protected override void OnExit(ExitEventArgs e)
+		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
 		{
-			base.OnExit(e);
-			
-			if (_mapLoaderManager != null)
-			{
-				// This disposes the MapSectionRequestProcessor, MapSectionGeneratorProcessor and MapSectionResponseProcessor.
-				_mapLoaderManager.Dispose();
-			}
+			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients);
+			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionGeneratorProcessor, mapSectionResponseProcessor, fetchZValues);
 
-			_mEngineServerManager.Stop();
+			return mapSectionRequestProcessor;
 		}
+
+
 
 		//private void DoSchemaUpdates()
 		//{
