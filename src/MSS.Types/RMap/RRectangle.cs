@@ -10,10 +10,11 @@ namespace MSS.Types
 	{
 		public static readonly RRectangle Zero = new RRectangle();
 
-
 		public BigInteger[] Values { get; init; }
 
 		public int Exponent { get; init; }
+
+		public int Precision { get; set; }
 
 		public RRectangle() : this(0, 0, 0, 0, 0)
 		{ }
@@ -40,13 +41,14 @@ namespace MSS.Types
 			}
 		}
 
-		public RRectangle(RectangleInt rect) : this(rect.X1, rect.X2, rect.Y1, rect.Y2, 0)
+		public RRectangle(RectangleInt rect) : this(rect.X1, rect.X2, rect.Y1, rect.Y2, 0, null)
 		{ }
 
-		public RRectangle(BigInteger x1, BigInteger x2, BigInteger y1, BigInteger y2, int exponent)
+		public RRectangle(BigInteger x1, BigInteger x2, BigInteger y1, BigInteger y2, int exponent, int? precision = null)
 		{
 			Values = new BigInteger[] { x1, x2, y1, y2 };
 			Exponent = exponent;
+			Precision = precision ?? BigIntegerHelper.MAX_PRECISION;
 			Validate();
 		}
 

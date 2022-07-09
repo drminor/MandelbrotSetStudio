@@ -1,9 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
-using System.Diagnostics;
-using System.Globalization;
-using System.Numerics;
+using System;
 
 
 namespace MSetExplorer.XPoc
@@ -15,25 +13,18 @@ namespace MSetExplorer.XPoc
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly SizeInt _blockSize;
 
-		private int _canvasWidth;
-		private int _canvasHeight;
-
-		private SizeInt _mapSize;
+		private SizeInt _screenSize;
 
 		private RRectangle _coords;
+
+		private int _exponent;
+
 		private RRectangle _newCoords;
-
-		//private int? _precision;
-
-		private long _samplePointDelta;
-		private int _samplePointDeltaExp;
-
-		private int _zoom;
 
 		private long _newSamplePointDelta;
 		private int _newSamplePointDeltaExp;
 
-		private int _newZoom;
+		//private int _newZoom;
 
 
 		#region Constructor
@@ -43,77 +34,54 @@ namespace MSetExplorer.XPoc
 			_blockSize = RMapConstants.BLOCK_SIZE;
 			_mapSectionAdapter = mapSectionAdapter;
 
-			_canvasWidth = 1024;
-			_canvasHeight = 1024;
-			_mapSize = new SizeInt(1024);
+			_screenSize = new SizeInt(1024);
 
 			_coords = new RRectangle();
 			_newCoords = new RRectangle();
 
-			Zoom = 1;
+			_exponent = -1;
+			Exponent = 0;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public int CanvasWidth
+		public int ScreenWidth
 		{
-			get => _canvasWidth;
+			get => _screenSize.Width;
 			set
 			{
-				if (value != _canvasWidth)
-				{
-					_canvasWidth = value;
-					MapSize = new SizeInt(CanvasWidth, CanvasHeight);
-
-					OnPropertyChanged();
-				}
+				ScreenSize = new SizeInt(value);
 			}
 		}
 
-		public int CanvasHeight
+		public int ScreenHeight
 		{
-			get => _canvasHeight;
+			get => _screenSize.Height;
 			set
 			{
-				if (value != _canvasHeight)
-				{
-					_canvasHeight = value;
-					MapSize = new SizeInt(CanvasWidth, CanvasHeight);
-
-					OnPropertyChanged();
-				}
+				ScreenSize = new SizeInt(value);
 			}
 		}
 
-		public SizeInt MapSize
+		public SizeInt ScreenSize
 		{
-			get => _mapSize;
+			get => _screenSize;
 			set
 			{
-				if (value != _mapSize)
+				if (value != _screenSize)
 				{
-					_mapSize = value;
+					_screenSize = value;
 
-					if (_mapSize.Width == 0 || _mapSize.Height == 0)
+					if (_screenSize.Width == 0 || _screenSize.Height == 0)
 					{
 						return;
 					}
 
-					var mapAreaInfo = GetMapAreaInfo(Coords, MapSize, _blockSize);
-
-					NewCoords = mapAreaInfo.Coords;
-					NewSamplePointDelta = (long)mapAreaInfo.Subdivision.SamplePointDelta.WidthNumerator;
-					NewSamplePointDeltaExp = mapAreaInfo.Subdivision.SamplePointDelta.Exponent;
-
-					NewZoom = mapAreaInfo.Coords.Exponent * -1;
-
-					OnPropertyChanged();
-					OnPropertyChanged(nameof(NewWidth));
-					OnPropertyChanged(nameof(NewHeight));
-					OnPropertyChanged(nameof(NewSamplePointDelta));
-					OnPropertyChanged(nameof(NewSamplePointDeltaExp));
+					UpdateNewCoords();
+					OnPropertyChanged(nameof(ScreenWidth));
+					OnPropertyChanged(nameof(ScreenHeight));
 				}
 			}
 		}
@@ -127,19 +95,27 @@ namespace MSetExplorer.XPoc
 				{
 					_coords = value;
 
-					var mapAreaInfo = GetMapAreaInfo(Coords, MapSize, _blockSize);
+					OnPropertyChanged(nameof(Left));
+					OnPropertyChanged(nameof(Bottom));
+					OnPropertyChanged(nameof(Width));
+					OnPropertyChanged(nameof(Height));
+					OnPropertyChanged(nameof(Exponent));
 
-					NewCoords = mapAreaInfo.Coords;
-					NewSamplePointDelta = (long) mapAreaInfo.Subdivision.SamplePointDelta.WidthNumerator;
-					NewSamplePointDeltaExp = mapAreaInfo.Subdivision.SamplePointDelta.Exponent;
+					UpdateNewCoords();
+				}
+			}
+		}
 
-					NewZoom = mapAreaInfo.Coords.Exponent * -1;
+		public int Exponent
+		{
+			get => _exponent;
+			set
+			{
+				if (value != _exponent)
+				{
+					_exponent = value;
 
-					OnPropertyChanged();
-					OnPropertyChanged(nameof(NewWidth));
-					OnPropertyChanged(nameof(NewHeight));
-					OnPropertyChanged(nameof(NewSamplePointDelta));
-					OnPropertyChanged(nameof(NewSamplePointDeltaExp));
+					Coords = new RRectangle(0, 1, 0, 1, -1 * value);
 				}
 			}
 		}
@@ -153,34 +129,11 @@ namespace MSetExplorer.XPoc
 				{
 					_newCoords = value;
 
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public long SamplePointDelta
-		{
-			get => _samplePointDelta;
-			set { _samplePointDelta = value; OnPropertyChanged(); }
-		}
-
-		public int SamplePointDeltaExp
-		{
-			get => _samplePointDeltaExp;
-			set { _samplePointDeltaExp = value; OnPropertyChanged(); }
-		}
-
-		public int Zoom
-		{
-			get => _zoom;
-			set
-			{
-				if (value != _zoom)
-				{
-					_zoom = value;
-
-					Coords = new RRectangle(0, 1, 0, 1, -1 * value);
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(NewLeft));
+					OnPropertyChanged(nameof(NewBottom));
+					OnPropertyChanged(nameof(NewWidth));
+					OnPropertyChanged(nameof(NewHeight));
+					OnPropertyChanged(nameof(NewExponent));
 				}
 			}
 		}
@@ -197,13 +150,35 @@ namespace MSetExplorer.XPoc
 			set { _newSamplePointDeltaExp = value; OnPropertyChanged(); }
 		}
 
-		public int NewZoom
+		private double _mapWidthDiff;
+		public double MapWidthDiff
 		{
-			get => _newZoom;
-			set { _newZoom = value; OnPropertyChanged(); }
+			get => _mapWidthDiff;
+			set
+			{
+				if (value != _mapWidthDiff)
+				{
+					_mapWidthDiff = value;
+					OnPropertyChanged();
+				}
+			}
 		}
-		#endregion
 
+		private double _screenWidthDiff;
+		public double ScreenWidthDiff
+		{
+			get => _screenWidthDiff;
+			set
+			{
+				if (value != _screenWidthDiff)
+				{
+					_screenWidthDiff = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		#endregion
 
 		#region The Coords Component Properties
 
@@ -217,7 +192,6 @@ namespace MSetExplorer.XPoc
 					_coords.Values[0] = value;
 					OnPropertyChanged();
 					OnPropertyChanged(nameof(Width));
-					OnPropertyChanged(nameof(Coords));
 				}
 			}
 		}
@@ -232,7 +206,6 @@ namespace MSetExplorer.XPoc
 					_coords.Values[1] = value;
 					OnPropertyChanged();
 					OnPropertyChanged(nameof(Width));
-					OnPropertyChanged(nameof(Coords));
 				}
 			}
 		}
@@ -247,7 +220,6 @@ namespace MSetExplorer.XPoc
 					_coords.Values[2] = value;
 					OnPropertyChanged();
 					OnPropertyChanged(nameof(Height));
-					OnPropertyChanged(nameof(Coords));
 				}
 			}
 		}
@@ -262,7 +234,19 @@ namespace MSetExplorer.XPoc
 					_coords.Values[3] = value;
 					OnPropertyChanged();
 					OnPropertyChanged(nameof(Height));
-					OnPropertyChanged(nameof(Coords));
+				}
+			}
+		}
+
+		public int Precision
+		{
+			get => _coords.Precision;
+			set
+			{
+				if (value != _coords.Precision)
+				{
+					_coords.Precision = value;
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -334,6 +318,25 @@ namespace MSetExplorer.XPoc
 			}
 		}
 
+		public int NewExponent
+		{
+			get => _newCoords.Exponent;
+			set { }
+		}
+
+		public int NewPrecision
+		{
+			get => _newCoords.Precision;
+			set
+			{
+				if (value != _newCoords.Precision)
+				{
+					_newCoords.Precision = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public long NewWidth => (long)_newCoords.Width.Value;
 		public long NewHeight => (long)_newCoords.Height.Value;
 
@@ -341,12 +344,51 @@ namespace MSetExplorer.XPoc
 
 		#region Private Methods
 
+		private void UpdateNewCoords()
+		{
+			var mapAreaInfo = GetMapAreaInfo(Coords, ScreenSize, _blockSize);
+
+			NewCoords = mapAreaInfo.Coords;
+
+			NewSamplePointDelta = (long)mapAreaInfo.Subdivision.SamplePointDelta.WidthNumerator;
+			NewSamplePointDeltaExp = mapAreaInfo.Subdivision.SamplePointDelta.Exponent;
+
+			OnPropertyChanged(nameof(NewSamplePointDelta));
+			OnPropertyChanged(nameof(NewSamplePointDeltaExp));
+
+			if (BigIntegerHelper.TryConvertToDouble(mapAreaInfo.Subdivision.SamplePointDelta.Width, out var sampleWidth))
+			{
+				if (BigIntegerHelper.TryConvertToDouble(Coords.Width, out var mapWidth))
+				{
+					MapWidthDiff = GetCoordDiff(sampleWidth, ScreenSize.Width, mapWidth);
+					ScreenWidthDiff = MapWidthDiff * ScreenSize.Width;
+				}
+				else
+				{
+					MapWidthDiff = double.NaN;
+					ScreenWidthDiff = double.NaN;
+				}
+			}
+			else
+			{
+				MapWidthDiff = double.NaN;
+				ScreenWidthDiff = double.NaN;
+			}
+		}
+
+		private double GetCoordDiff(double sampleWidth, int screenWidth, double mapWidth)
+		{
+			var rWidth = screenWidth * sampleWidth;
+			var result = Math.Abs(mapWidth - rWidth);
+
+			return result;
+		}
+
 		private MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeInt mapSize, SizeInt blockSize)
 		{
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var updatedCoords = coords.Clone();
 			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref updatedCoords, mapSize);
-
 
 			//Debug.WriteLine($"\nThe new coords are : {coordsWork},\n old = {mSetInfo.Coords}. (While calculating SamplePointDelta.)\n");
 
@@ -354,7 +396,8 @@ namespace MSetExplorer.XPoc
 			//RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, mSetInfo.Coords, coordsWork, newDCoords);
 
 			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(samplePointDelta, blockSize);
+			//var subdivision = GetSubdivision(samplePointDelta, blockSize);
+			var subdivision = new Subdivision(samplePointDelta, blockSize);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, subdivision, out var canvasControlOffset);
@@ -365,15 +408,15 @@ namespace MSetExplorer.XPoc
 		}
 
 		// Find an existing subdivision record that the same SamplePointDelta
-		private Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize)
-		{
-			if (!_mapSectionAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var result))
-			{
-				result = new Subdivision(samplePointDelta, blockSize);
-			}
+		//private Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize)
+		//{
+		//	if (!_mapSectionAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var result))
+		//	{
+		//		result = new Subdivision(samplePointDelta, blockSize);
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		/*
 		
@@ -435,7 +478,6 @@ namespace MSetExplorer.XPoc
 		//		return updatedMapAreaInfo;
 		//	}
 		//}
-
 
 		#endregion
 	}

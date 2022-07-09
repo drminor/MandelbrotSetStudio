@@ -6,9 +6,9 @@ namespace MSS.Types
 {
 	public class RVector : IBigRatShape, IEquatable<RVector>, IEqualityComparer<RVector>
 	{
-		public BigInteger[] Values { get; init; }
+		public static readonly RVector Zero = new RVector();
 
-		public int Exponent { get; init; }
+		#region Constructors
 
 		public RVector() : this(0, 0, 0)
 		{ }
@@ -32,12 +32,24 @@ namespace MSS.Types
 			Exponent = exponent;
 		}
 
+		#endregion
+
+		#region Public Properties
+
+		public BigInteger[] Values { get; init; }
+
+		public int Exponent { get; init; }
+
 		public BigInteger XNumerator => Values[0];
 
 		public BigInteger YNumerator => Values[1];
 
 		public RValue X => new(XNumerator, Exponent);
 		public RValue Y => new(YNumerator, Exponent);
+
+		#endregion
+
+		#region Public Methods
 
 		object ICloneable.Clone()
 		{
@@ -68,6 +80,8 @@ namespace MSS.Types
 			return result;
 		}
 
+		#endregion
+
 		#region IEqualityComparer / IEquatable Support
 
 		public bool Equals(RVector? a, RVector? b)
@@ -89,7 +103,15 @@ namespace MSS.Types
 
 		public bool Equals(RVector? other)
 		{
-			return !(other is null) && XNumerator.Equals(other.XNumerator) && YNumerator.Equals(other.YNumerator);
+			if (other is null)
+			{
+				return false;
+			}
+
+			var reducedOther = Reducer.Reduce(other);
+			var reduced = Reducer.Reduce(this);
+
+			return reduced.XNumerator == reducedOther.XNumerator && reduced.YNumerator == reducedOther.YNumerator;
 		}
 
 		public override int GetHashCode()
@@ -113,6 +135,5 @@ namespace MSS.Types
 		}
 
 		#endregion
-
 	}
 }

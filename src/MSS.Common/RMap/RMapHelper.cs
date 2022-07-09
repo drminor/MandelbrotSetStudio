@@ -310,7 +310,7 @@ namespace MSS.Common
 			//Debug.WriteLine($"Our origin is {mapCoords.Position}, repo origin is {destinationOrigin}, for a distance of {distance}.");
 
 			BigVector result;
-			if (distance.X == 0 && distance.Y == 0)
+			if (distance == RVector.Zero)
 			{
 				canvasControlOffset = new VectorInt();
 				result = new BigVector();

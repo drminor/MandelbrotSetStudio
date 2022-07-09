@@ -14,17 +14,14 @@ namespace MSS.Types
 		public RValue() : this(0, 0, null)
 		{ }
 
-		public RValue(BigInteger[] values, int exponent) : this(values[0], exponent, null)
-		{ }
-
 		public RValue(BigInteger value, int exponent) : this(value, exponent, null)
 		{ }
 
-		public RValue(BigInteger value, int exponent, int? precision)
+		public RValue(BigInteger value, int exponent, int? precision = null)
 		{
 			Values = new BigInteger[] { value };
 			Exponent = exponent;
-			Precision = precision ?? int.MaxValue; // GetPrecision(value, exponent);
+			Precision = precision ?? BigIntegerHelper.MAX_PRECISION;
 		}
 
 		//private int GetPrecision(BigInteger value, int exponent)

@@ -1,7 +1,9 @@
 ﻿using MSetExplorer.ScreenHelpers;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 
 namespace MSetExplorer.XPoc
 {
@@ -34,42 +36,37 @@ namespace MSetExplorer.XPoc
 			{
 				_vm = (XSamplingEditorViewModel)DataContext;
 
-				sldrWidth.Minimum = 800;
-				sldrWidth.Maximum = 3000;
+				sldrWidth.Minimum = 128 * 4;
+				sldrWidth.Maximum = 128 * 20;
 
+				sldrWidth.Value = 512;
+
+				sldrWidth.TickFrequency = 1; // (sldrWidth.Maximum - sldrWidth.Minimum) / 10;
 				sldrWidth.SmallChange = 1;
-				sldrWidth.LargeChange = 10;
+				sldrWidth.LargeChange = 128;
+				sldrWidth.TickPlacement = TickPlacement.None;
+
+				sldrWidth.ValueChanged += SldrWidth_ValueChanged;
+
+				_vm.ScreenSize = new SizeInt(512);
 
 				Debug.WriteLine("The XSamplingEditor Window is now loaded");
-
 			}
 		}
 
 		#endregion
 
-		private void sldrWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		private void SldrWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
-			_vm.CanvasWidth = (int) Math.Round(e.NewValue);
+			_vm.ScreenSize = new SizeInt((int)Math.Round(e.NewValue));
 		}
-
 
 		#region Button Handlers
 
-		private void SaveButton_Click(object sender, RoutedEventArgs e)
-		{
-			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.Close);
-			Close();
-		}
-
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
 		{
-			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.Close);
+			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.ReturnToTopNav);
 			Close();
-		}
-
-		private void DeleteButton_Click(object sender, RoutedEventArgs e)
-		{
-			//_vm.DeleteSelected();
 		}
 
 		#endregion

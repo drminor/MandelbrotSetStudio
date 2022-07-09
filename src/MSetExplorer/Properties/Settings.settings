@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="ShowTopNav" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="LastWindowName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Designer</Value>
+      <Value Profile="(Default)">Explorer</Value>
     </Setting>
     <Setting Name="DefaultOutputFolderPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\_MandelbrotSetImages</Value>
