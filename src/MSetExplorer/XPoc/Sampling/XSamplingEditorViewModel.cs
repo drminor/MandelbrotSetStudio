@@ -47,11 +47,45 @@ namespace MSetExplorer.XPoc
 
 		#region Public Properties
 
-		public MapAreaInfoViewModel MapAreaInfoViewModelCanS { get; }
-		public MapAreaInfoViewModel MapAreaInfoViewModelSelS { get; }
+		public RRectangle Coords
+		{
+			get => _coords;
+			set
+			{
+				if (value != _coords)
+				{
+					_coords = value;
 
+					OnPropertyChanged(nameof(Left));
+					OnPropertyChanged(nameof(Bottom));
+					OnPropertyChanged(nameof(Width));
+					OnPropertyChanged(nameof(Height));
+					OnPropertyChanged(nameof(Exponent));
+
+					UpdateScreenCoords();
+				}
+			}
+		}
+
+		public int Exponent
+		{
+			get => _exponent;
+			set
+			{
+				if (value != _exponent)
+				{
+					_exponent = Math.Abs(value) * -1;
+					Coords = new RRectangle(0, 1, 0, 1, value);
+				}
+			}
+		}
+		
+		#endregion
+
+		#region Public Properties - MapAreaInfo Canvas
+
+		public MapAreaInfoViewModel MapAreaInfoViewModelCanS { get; }
 		public MapAreaInfoViewModel MapAreaInfoViewModelCanN { get; }
-		public MapAreaInfoViewModel MapAreaInfoViewModelSelN { get; }
 
 		public int ScreenWidth
 		{
@@ -119,38 +153,12 @@ namespace MSetExplorer.XPoc
 			}
 		}
 
-		public RRectangle Coords
-		{
-			get => _coords;
-			set
-			{
-				if (value != _coords)
-				{
-					_coords = value;
+		#endregion
 
-					OnPropertyChanged(nameof(Left));
-					OnPropertyChanged(nameof(Bottom));
-					OnPropertyChanged(nameof(Width));
-					OnPropertyChanged(nameof(Height));
-					OnPropertyChanged(nameof(Exponent));
+		#region Public Properties - MapAreaInfo Selection
 
-					UpdateScreenCoords();
-				}
-			}
-		}
-
-		public int Exponent
-		{
-			get => _exponent;
-			set
-			{
-				if (value != _exponent)
-				{
-					_exponent = Math.Abs(value) * -1;
-					Coords = new RRectangle(0, 1, 0, 1, value);
-				}
-			}
-		}
+		public MapAreaInfoViewModel MapAreaInfoViewModelSelS { get; }
+		public MapAreaInfoViewModel MapAreaInfoViewModelSelN { get; }
 
 		public double SelectionWidth
 		{

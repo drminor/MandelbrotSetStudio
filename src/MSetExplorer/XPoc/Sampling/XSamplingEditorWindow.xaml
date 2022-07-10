@@ -90,10 +90,10 @@
                     <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenHeight}"/>
 
                     <TextBlock Width="45" Margin="55,3,3,3" FontSize="14" Text="Width:" />
-                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding NrmScreenWidth}"/>
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidthNrm}"/>
 
                     <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
-                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding NrmScreenHeight}"/>
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenHeightNrm}"/>
 
                 </StackPanel>
 
@@ -132,10 +132,10 @@
                     <TextBox  Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionHeight}"/>
 
                     <TextBlock Width="45" Margin="55,3,3,3" FontSize="14" Text="Width:" />
-                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding NrmSelectionWidth}"/>
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionWidthNrm}"/>
 
                     <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
-                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding NrmSelectionHeight}"/>
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionHeightNrm}"/>
 
                 </StackPanel>
 

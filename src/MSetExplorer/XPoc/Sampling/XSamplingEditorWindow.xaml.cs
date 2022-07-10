@@ -75,7 +75,6 @@ namespace MSetExplorer.XPoc
 			_vm.MapAreaInfoViewModelSelN.SectionTitle = "Selection Size Normalized";
 			mapAreaInfoSelN.DataContext = _vm.MapAreaInfoViewModelSelN;
 
-
 			var minWidth = 16;
 
 			sldrSelectionWidth.Minimum = minWidth;
