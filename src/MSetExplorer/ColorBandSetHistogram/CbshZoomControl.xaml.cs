@@ -20,15 +20,15 @@ namespace MSetExplorer
 		{
 			_vm = (CbshScrollViewModel)DataContext;
 
-			Loaded += MapDisplayZoomControl_Loaded;
+			Loaded += CbshZoomControl_Loaded;
 			InitializeComponent();
 		}
 
-		private void MapDisplayZoomControl_Loaded(object sender, RoutedEventArgs e)
+		private void CbshZoomControl_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
-				//throw new InvalidOperationException("The DataContext is null as the MapScroll UserControl is being loaded.");
+				//throw new InvalidOperationException("The DataContext is null as the CbshZoom UserControl is being loaded.");
 				return;
 			}
 			else
@@ -48,7 +48,7 @@ namespace MSetExplorer
 
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
-				Debug.WriteLine("The MapDisplayZoom Control is now loaded.");
+				Debug.WriteLine("The CbshZoom Control is now loaded.");
 			}
 		}
 

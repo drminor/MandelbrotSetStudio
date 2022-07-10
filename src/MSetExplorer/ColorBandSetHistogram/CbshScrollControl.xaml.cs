@@ -26,7 +26,7 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				//throw new InvalidOperationException("The DataContext is null as the MapScroll UserControl is being loaded.");
+				//throw new InvalidOperationException("The DataContext is null as the CbshScroll UserControl is being loaded.");
 				return;
 			}
 			else
@@ -41,7 +41,7 @@ namespace MSetExplorer
 				HScrollBar.Scroll += HScrollBar_Scroll;
 				//VScrollBar.Scroll += VScrollBar_Scroll;
 
-				Debug.WriteLine("The MapScroll Control is now loaded.");
+				Debug.WriteLine("The CbshScroll Control is now loaded.");
 			}
 		}
 

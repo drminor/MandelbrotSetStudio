@@ -1,0 +1,79 @@
+﻿<UserControl x:Class="MSetExplorer.XPoc.MapAreaInfoControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MSetExplorer.XPoc"
+             mc:Ignorable="d" 
+             Width="900" Height="80">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- COLUMN 1-->
+
+        <!-- Sample Point Delta -->
+        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+            <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="Spd:" />
+            <TextBox x:Name="txtNSamplePointDelta" Width="130" Margin="3" VerticalAlignment="Center" Text="{Binding SamplePointDelta}"/>
+
+            <TextBlock Width="25" Margin="5,3" FontSize="14" Text="Exp:" />
+            <TextBox x:Name="txtNSamplePointDeltaExp" Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding SamplePointDeltaExp}"/>
+
+            <CheckBox Margin="5,3,3,3" FontSize="14" IsChecked="{Binding SamplePointDeltaOnFile}">On file</CheckBox>
+        </StackPanel>
+
+        <!-- X1 -->
+        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+            <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="X1:" />
+            <TextBox x:Name="txtNX1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Left}"/>
+        </StackPanel>
+
+        <!-- Y1 -->
+        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+            <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="Y1:" />
+            <TextBox x:Name="txtNY1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Bottom}"/>
+        </StackPanel>
+
+        <!-- COLUMN 1-->
+
+        <!-- Width -->
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
+            <TextBlock Width="45" Margin="5,3" FontSize="14" Text="Width:" />
+            <TextBox x:Name="txtNWidth" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Width}"/>
+
+            <TextBlock Width="60" Margin="5,3,3,3" FontSize="14" Text="Exponent:" />
+            <TextBox x:Name="txtNExponent" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Exponent}"/>
+        </StackPanel>
+
+        <!-- Height -->
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
+            <TextBlock Width="45" Margin="5,3" FontSize="14" Text="Height:" />
+            <TextBox x:Name="txtNHeight" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Height}"/>
+
+            <TextBlock Width="60" Margin="5,3,3,3" FontSize="14" Text="Precision:" />
+            <TextBox x:Name="txtNPrecision" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Precision}"/>
+        </StackPanel>
+
+        <!-- COLUMN 2-->
+
+
+        <!-- Diff -->
+        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Margin="0,1">
+            <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="Diff:" />
+            <TextBox Width="80" Margin="3" VerticalAlignment="Center" Text="{Binding MapWidthDiff}"/>
+
+            <TextBlock Width="40" Margin="5,3" FontSize="14" Text="Pixels:" />
+            <TextBox Width="80" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidthDiff}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

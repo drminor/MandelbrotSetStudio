@@ -36,30 +36,68 @@ namespace MSetExplorer.XPoc
 			{
 				_vm = (XSamplingEditorViewModel)DataContext;
 
-				sldrWidth.Minimum = 128 * 4;
-				sldrWidth.Maximum = 128 * 20;
-
-				sldrWidth.Value = 512;
-
-				sldrWidth.TickFrequency = 1; // (sldrWidth.Maximum - sldrWidth.Minimum) / 10;
-				sldrWidth.SmallChange = 1;
-				sldrWidth.LargeChange = 128;
-				sldrWidth.TickPlacement = TickPlacement.None;
-
-				sldrWidth.ValueChanged += SldrWidth_ValueChanged;
-
-				_vm.ScreenSize = new SizeInt(512);
+				PrepareMapAreaInfo1();
+				PrepareMapAreaInfo2();
 
 				Debug.WriteLine("The XSamplingEditor Window is now loaded");
 			}
 		}
 
+		private void PrepareMapAreaInfo1()
+		{
+			mapAreaInfo1.DataContext = _vm.MapAreaInfoViewModel1;
+
+			var minWidth = 128 * 4;
+
+			sldrCanvasWidth.Minimum = minWidth;
+			sldrCanvasWidth.Maximum = 128 * 17; // 2048 + 128
+
+			sldrCanvasWidth.TickFrequency = 16;
+			sldrCanvasWidth.SmallChange = 16;
+			sldrCanvasWidth.LargeChange = 128;
+			sldrCanvasWidth.TickPlacement = TickPlacement.Both;
+
+			sldrCanvasWidth.Value = 1024;
+			_vm.ScreenSize = new SizeInt(1024);
+
+			sldrCanvasWidth.ValueChanged += SldrCanvasWidth_ValueChanged;
+		}
+
+		private void PrepareMapAreaInfo2()
+		{
+			mapAreaInfo2.DataContext = _vm.MapAreaInfoViewModel2;
+
+			var minWidth = 16;
+
+			sldrSelectionWidth.Minimum = minWidth;
+			sldrSelectionWidth.Maximum = 16 * 64;
+
+			sldrSelectionWidth.TickFrequency = 16;
+			sldrSelectionWidth.SmallChange = 16;
+			sldrSelectionWidth.LargeChange = 16;
+			sldrSelectionWidth.TickPlacement = TickPlacement.Both;
+
+			sldrSelectionWidth.Value = 16;
+			_vm.SelectionSize = new SizeDbl(16);
+
+			sldrSelectionWidth.ValueChanged += SldrSelectionWidth_ValueChanged;
+		}
+
 		#endregion
 
-		private void SldrWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		#region Event Handlers
+
+		private void SldrCanvasWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
 			_vm.ScreenSize = new SizeInt((int)Math.Round(e.NewValue));
 		}
+
+		private void SldrSelectionWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			_vm.SelectionSize = new SizeDbl(e.NewValue);
+		}
+
+		#endregion
 
 		#region Button Handlers
 
@@ -69,9 +107,14 @@ namespace MSetExplorer.XPoc
 			Close();
 		}
 
+		private void ExitButton_Click(object sender, RoutedEventArgs e)
+		{
+			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.Close);
+			Close();
+		}
+
 		#endregion
 
 		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
-
 	}
 }

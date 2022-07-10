@@ -14,28 +14,28 @@ namespace MSS.Types
 		private static readonly double NAT_LOG_OF_2 = Math.Log(2);
 
 		// Largest integer that can be represented by a double for which it and all smaller integers can be reduced by 1 without loosing precision.
-		private static readonly BigInteger FACTOR = new BigInteger(Math.Pow(2, 53));
+		private static readonly BigInteger FACTOR = BigInteger.Pow(2, 53);
 
 		#region Division
 
-		//public static RValue Divide(RValue dividend, int divisor)
-		//{
-		//	var newNumerator = Divide(dividend.Value, dividend.Exponent, divisor, out var newExponent);
-		//	var result = new RValue(newNumerator, newExponent, dividend.Precision); // TODO:Px -- Check RValue Precision
-		//	return result;
-		//}
+		//var tResult = BigInteger.DivRem(106, 10, out var tRemainder); tResult = 10, tRemainder = 6
 
-		public static RValue Divide(RValue dividend, int divisor)
+		public static RValue Divide(RValue dividend, int divisor, double toleranceFactor)
 		{
 			var exponentDelta = 0;
-			var tolerance = 20d / (double)divisor;
+			var tolerance = toleranceFactor / divisor;
 
 			var result = BigInteger.DivRem(dividend.Value, divisor, out var remainder);
-			var adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+			var adjRem = ((double)remainder) / Math.Pow(2, dividend.Exponent - exponentDelta);
 
-			//var adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
-			//var adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
-			ReportDivideValues(dividend, divisor, dividend.Value, result, remainder, exponentDelta);
+			while(result == 0)
+			{
+				exponentDelta++;
+				var adjDividend = dividend.Value * new BigInteger(Math.Pow(2, exponentDelta));
+
+				result = BigInteger.DivRem(adjDividend, divisor, out remainder);
+				adjRem = ((double)remainder) * Math.Pow(2, dividend.Exponent - exponentDelta);
+			}
 
 			while (adjRem > tolerance)
 			{
@@ -43,11 +43,8 @@ namespace MSS.Types
 				var adjDividend = dividend.Value * new BigInteger(Math.Pow(2, exponentDelta));
 
 				result = BigInteger.DivRem(adjDividend, divisor, out remainder);
-				adjRem = ((double)remainder) / Math.Pow(2, exponentDelta);
+				adjRem = ((double)remainder) * Math.Pow(2, dividend.Exponent - exponentDelta);
 
-
-				//adjRemA1 = ((double)remainder) * Math.Pow(2, dividendExponent - exponentDelta);
-				//adjRemA2 = ((double)remainder) / divisor * Math.Pow(2, dividendExponent - exponentDelta);
 				ReportDivideValues(dividend, divisor, adjDividend, result, remainder, exponentDelta);
 			}
 
@@ -169,12 +166,9 @@ namespace MSS.Types
 
 		#region ToString support
 
-		public static string GetDisplay(RValue rValue, bool includeDecimalOutput = false, IFormatProvider? formatProvider = null)
+		public static string GetDisplay(RValue rValue, bool includeDecimalOutput = false)
 		{
-			if (formatProvider is null)
-			{
-				formatProvider = CultureInfo.InvariantCulture;
-			}
+			var formatProvider = CultureInfo.InvariantCulture;
 
 			var result = $"{rValue.Value}/{ Math.Pow(2, -1 * rValue.Exponent).ToString(formatProvider)}";
 
@@ -195,12 +189,9 @@ namespace MSS.Types
 			return GetDisplay(bigRatShape.Values, bigRatShape.Exponent, includeDecimalOutput);
 		}
 
-		public static string GetDisplay(BigInteger[] values, int exponent, bool includeDecimalOutput = false, IFormatProvider? formatProvider = null)
+		public static string GetDisplay(BigInteger[] values, int exponent, bool includeDecimalOutput = false)
 		{
-			if (formatProvider is null)
-			{
-				formatProvider = CultureInfo.InvariantCulture;
-			}
+			var formatProvider = CultureInfo.InvariantCulture;
 
 			var strDenominator = Math.Pow(2, -1 * exponent).ToString(formatProvider);
 
@@ -263,7 +254,6 @@ namespace MSS.Types
 		{
 			Debug.Assert(values.Length == 2, "FromLongs received array of values whose length is not 2.");
 
-			//var result = FACTOR;
 			var result = FACTOR * values[0];
 			result += values[1];
 
@@ -323,12 +313,6 @@ namespace MSS.Types
 
 		public static bool TryConvertToDouble(RValue r, out double dValue)
 		{
-			if (r.Value == 0)
-			{
-				dValue = 0;
-				return true;
-			}
-
 			if (TryConvertToDouble(r.Value, out dValue))
 			{
 				try
@@ -352,50 +336,34 @@ namespace MSS.Types
 
 		public static double ConvertToDouble(RValue r)
 		{
-			return ConvertToDouble(r.Value, r.Exponent);
+			var result = ConvertToDouble(r.Value) * Math.Pow(2, r.Exponent);
+			return result;
 		}
 
 		public static double ConvertToDouble(BigInteger n, int exponent)
 		{
-			if(n == 0)
-			{
-				return 0;
-			}
-
-			if (TryConvertToDouble(n, out var result))
-			{
-				try
-				{
-					checked
-					{
-						result *= Math.Pow(2, exponent);
-					}
-				}
-				catch
-				{
-					result = double.NaN;
-				}
-			}
-			else
-			{
-				result = double.NaN;
-			}
-
+			var result = ConvertToDouble(n) * Math.Pow(2, exponent);
 			return result;
 		}
 
 		public static bool TryConvertToDouble(BigInteger n, out double d)
 		{
-			if (!SafeCastToDouble(n))
-			{
-				d = double.NaN;
-				return false;
-			}
-			else
+			if (SafeCastToDouble(n))
 			{
 				d = (double)n;
 				return true;
 			}
+			else
+			{
+				d = double.NaN;
+				return false;
+			}
+		}
+
+		public static double ConvertToDouble(BigInteger n)
+		{
+			var result = SafeCastToDouble(n) ? (double)n : double.NaN;
+			return result;
 		}
 
 		public static bool SafeCastToDouble(BigInteger n)

@@ -5,10 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer.XPoc"
         mc:Ignorable="d"
-        Title="XSamplingEditorWindow" Height="360" Width="1000">
+        Title="XSamplingEditorWindow" Width="1000" Height="600">
     <Grid>
 
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -47,7 +49,7 @@
             <!-- Width -->
             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
                 <TextBlock Width="50" Margin="15,3,3,3" FontSize="14" Text="Width:" />
-                <TextBox x:Name="txtWidth" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Width, Mode=OneWay}"/>
+                <TextBox x:Name="txtWidth" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Width}"/>
 
                 <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Exponent:" />
                 <TextBox x:Name="txtExponent" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Exponent}"/>
@@ -56,7 +58,7 @@
             <!-- Height -->
             <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,1,0,10">
                 <TextBlock Width="50" Margin="15,3,3,3" FontSize="14" Text="Height:" />
-                <TextBox x:Name="txtHeight" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Height, Mode=OneWay}"/>
+                <TextBox x:Name="txtHeight" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Height}"/>
 
                 <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Precision:" />
                 <TextBox x:Name="txtPrecision" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Precision}"/>
@@ -64,15 +66,17 @@
 
         </Grid>
 
-        <Border Grid.Row="1" BorderBrush="Black" BorderThickness="0.75" Margin="5">
+        <Border Grid.Row="1" BorderBrush="Black" BorderThickness="0.75" Margin="5,0,0,0">
             <Grid>
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,10">
+                <TextBlock Grid.Row="0" Margin="5,0">Canvas Size</TextBlock>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
                     <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
                     <TextBox x:Name="txtCanvasWidth" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidth}"/>
 
@@ -80,84 +84,48 @@
                     <TextBox x:Name="txtCanvasHeight" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenHeight}"/>
                 </StackPanel>
 
-                <Slider Grid.Row="1" x:Name="sldrWidth" HorizontalAlignment="Left" Margin="5" Width="980" Height="50" IsSnapToTickEnabled="True"></Slider>
+                <Slider Grid.Row="2" x:Name="sldrCanvasWidth" HorizontalAlignment="Left" Margin="5,0" Width="980" Height="40" IsSnapToTickEnabled="True"></Slider>
 
             </Grid>
         </Border>
-        
-        <Grid Grid.Row="2" Margin="5" x:Name="grdCoords2">
 
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- COLUMN 1-->
-
-            <!-- X1 -->
-            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
-                <TextBlock Width="20" Margin="5,3,3,3" FontSize="14" Text="X1:" />
-                <TextBox x:Name="txtNX1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding NewLeft}"/>
-            </StackPanel>
-
-            <!-- Y1 -->
-            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
-                <TextBlock Width="20" Margin="5,3,3,3" FontSize="14" Text="Y1:" />
-                <TextBox x:Name="txtNY1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding NewBottom}"/>
-            </StackPanel>
-
-            <!-- COLUMN 1-->
-
-            <!-- Width -->
-            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
-                <TextBlock Width="50" Margin="15,3,3,3" FontSize="14" Text="Width:" />
-                <TextBox x:Name="txtNWidth" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding NewWidth, Mode=OneWay}"/>
-
-                <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Exponent:" />
-                <TextBox x:Name="txtNExponent" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding NewExponent}"/>
-            </StackPanel>
-
-            <!-- Height -->
-            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
-                <TextBlock Width="50" Margin="15,3,3,3" FontSize="14" Text="Height:" />
-                <TextBox x:Name="txtNHeight" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding NewHeight, Mode=OneWay}"/>
-
-                <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Precision:" />
-                <TextBox x:Name="txtNPrecision" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding NewPrecision}"/>
-            </StackPanel>
-
-            <!-- COLUMN 2-->
-
-            <!-- Sample Point Delta -->
-            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="0,1" x:Name="stkNPanSamplePointDelta">
-                <TextBlock Width="40" Margin="15,3,3,3" FontSize="14" Text="Spd:" />
-                <TextBox x:Name="txtNSamplePointDelta" Width="180" Margin="3" VerticalAlignment="Center" Text="{Binding NewSamplePointDelta}"/>
-
-                <TextBlock Width="25" Margin="5,3" FontSize="14" Text="Exp:" />
-                <TextBox x:Name="txtNSamplePointDeltaExp" Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding NewSamplePointDeltaExp}"/>
-            </StackPanel>
-
-            <!-- Zoom -->
-            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Margin="0,1" x:Name="stkNPanZoom">
-                <TextBlock Width="40" Margin="15,3,3,3" FontSize="14" Text="Diff:" />
-                <TextBox x:Name="txtDummy1" Width="80" Margin="3" VerticalAlignment="Center" Text="{Binding MapWidthDiff}"/>
-
-                <TextBlock Width="40" Margin="5,3" FontSize="14" Text="Pixels:" />
-                <TextBox x:Name="txtDummy2" Width="80" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidthDiff}"/>
-            </StackPanel>
-
+        <Grid Grid.Row="2" HorizontalAlignment="Left">
+            <local:MapAreaInfoControl x:Name="mapAreaInfo1"/>
         </Grid>
 
-        <Border Grid.Row="3" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="3" BorderBrush="Black" BorderThickness="0.75" Margin="5,0,0,0">
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Margin="5,0">Selection Size</TextBlock>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
+                    <TextBox x:Name="txtSelectionWidth" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionWidth}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox x:Name="txtSelectionHeight" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionHeight}"/>
+                </StackPanel>
+
+                <Slider Grid.Row="2" x:Name="sldrSelectionWidth" HorizontalAlignment="Left" Margin="5,0" Width="980" Height="40" IsSnapToTickEnabled="True"></Slider>
+
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="4" HorizontalAlignment="Left">
+            <local:MapAreaInfoControl x:Name="mapAreaInfo2"/>
+        </Grid>
+
+        <Border Grid.Row="5" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
+                <Button Name="btnExit" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="ExitButton_Click" IsCancel="True">_Exit App</Button>
             </StackPanel>
 
         </Border>

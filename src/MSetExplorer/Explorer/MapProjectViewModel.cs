@@ -323,6 +323,7 @@ namespace MSetExplorer
 
 			var colorBandSet = CurrentProject.CurrentColorBandSet;
 			var blockSize = curJob.Subdivision.BlockSize;
+
 			var poster = _mapJobHelper.CreatePoster(name, description, posterSize, curJob.Id, curJob.Coords, colorBandSet, curJob.MapCalcSettings, blockSize, _projectAdapter);
 
 			return poster;

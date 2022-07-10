@@ -43,7 +43,7 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				//throw new InvalidOperationException("The DataContext is null as the MapDisplay UserControl is being loaded.");
+				//throw new InvalidOperationException("The DataContext is null as the CbshDisplay UserControl is being loaded.");
 				return;
 			}
 			else

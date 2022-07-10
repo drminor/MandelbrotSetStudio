@@ -13,9 +13,16 @@ namespace MSS.Common
 		public MapJobHelper(IMapSectionAdapter mapSectionAdapter)
 		{
 			_mapSectionAdapter = mapSectionAdapter;
+			ToleranceFactor = 10; // Sample Delta Sizes are calculated to within 10 pixels of the diplay area.
 		}
 
-		#region Build Job
+		#region Public Properties
+
+		public double ToleranceFactor { get; set; }
+
+		#endregion
+
+		#region Public Methods
 
 		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea, SizeInt blockSize)
@@ -61,7 +68,7 @@ namespace MSS.Common
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var updatedCoords = coords.Clone();
-			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref updatedCoords, displaySize);
+			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref updatedCoords, displaySize, ToleranceFactor);
 			//Debug.WriteLine($"\nThe new coords are : {coordsWork},\n old = {mSetInfo.Coords}. (While calculating SamplePointDelta.)\n");
 
 			//var samplePointDeltaD = RMapHelper.GetSamplePointDiag(coords, displaySize, out var newDCoords);
@@ -78,6 +85,22 @@ namespace MSS.Common
 			return result;
 		}
 
+		public Poster CreatePoster(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, RRectangle coords, ColorBandSet colorBandSet,
+			MapCalcSettings mapCalcSettings, SizeInt blockSize, IProjectAdapter projectAdapter)
+		{
+			var mapAreaInfo = GetMapAreaInfo(coords, posterSize, blockSize);
+
+			var poster = new Poster(name, description, sourceJobId, mapAreaInfo, colorBandSet, mapCalcSettings);
+
+			projectAdapter.CreatePoster(poster);
+
+			return poster;
+		}
+
+		#endregion
+
+		#region Private Methods
+
 		// Find an existing subdivision record that the same SamplePointDelta
 		private Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize)
 		{
@@ -90,18 +113,11 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static string GetJobName(TransformType transformType)
+		private string GetJobName(TransformType transformType)
 		{
 			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
 			return result;
 		}
-
-		//public static MapAreaInfo GetMapAreaInfo(Job job, SizeInt canvasSize)
-		//{
-		//	var result = new MapAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
-
-		//	return result;
-		//}
 
 		//[Conditional("DEBUG")]
 		//public static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)
@@ -116,18 +132,5 @@ namespace MSS.Common
 		//}
 
 		#endregion
-
-		public Poster CreatePoster(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, RRectangle coords, ColorBandSet colorBandSet, 
-			MapCalcSettings mapCalcSettings, SizeInt blockSize, IProjectAdapter projectAdapter)
-		{
-			var mapAreaInfo = GetMapAreaInfo(coords, posterSize, blockSize);
-
-			var poster = new Poster(name, description, sourceJobId, mapAreaInfo, colorBandSet, mapCalcSettings);
-
-			projectAdapter.CreatePoster(poster);
-
-			return poster;
-		}
-
 	}
 }
