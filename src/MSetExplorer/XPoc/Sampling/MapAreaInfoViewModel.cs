@@ -9,6 +9,7 @@ namespace MSetExplorer.XPoc
 	{
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
+		private string _sectionTitle;
 		private MapAreaInfo _mapAreaInfo;
 		private RRectangle _coords;
 
@@ -24,6 +25,7 @@ namespace MSetExplorer.XPoc
 		public MapAreaInfoViewModel(IMapSectionAdapter mapSectionAdapter)
 		{
 			_mapSectionAdapter = mapSectionAdapter;
+			_sectionTitle = "Section Title";
 			_mapAreaInfo = new MapAreaInfo();
 			_coords = new RRectangle();
 		}
@@ -31,6 +33,12 @@ namespace MSetExplorer.XPoc
 		#endregion
 
 		#region Public Properties
+
+		public string SectionTitle
+		{
+			get => _sectionTitle;
+			set { _sectionTitle = value; OnPropertyChanged(); }
+		}
 
 		public MapAreaInfo MapAreaInfo
 		{
@@ -183,7 +191,7 @@ namespace MSetExplorer.XPoc
 		private double GetCoordDiff(double sampleWidth, int screenWidth, double mapWidth)
 		{
 			var rWidth = sampleWidth * screenWidth;
-			var result = Math.Abs(mapWidth - rWidth);
+			var result = mapWidth - rWidth;
 
 			return result;
 		}

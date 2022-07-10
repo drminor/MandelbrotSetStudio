@@ -49,7 +49,7 @@ namespace MSS.Types
 			}
 
 			var newExponent = dividend.Exponent - exponentDelta;
-			var rResult = new RValue(result, newExponent, dividend.Precision); // TODO:Px -- Check RValue Precision
+			var rResult = new RValue(result, newExponent, dividend.Precision);
 
 			return rResult;
 		}
@@ -375,5 +375,38 @@ namespace MSS.Types
 		}
 
 		#endregion
+
+		public static int GetPrecision(IBigRatShape ratShape)
+		{
+			var result = GetPrecision(ratShape.Values, ratShape.Exponent);
+			return result;
+		}
+
+		public static int GetPrecision(BigInteger[] values, int exponent)
+		{
+			var precision = values.Min(x => BigInteger.Abs(x).ToString(CultureInfo.InvariantCulture).Length);
+
+			var be = BigInteger.Pow(2, Math.Abs(exponent));
+			var ePrecision = be.ToString(CultureInfo.InvariantCulture).Length;
+
+			precision = Math.Max(precision, ePrecision);
+			precision += 1;
+
+			return precision;
+		}
+
+		public static int GetPrecision(BigInteger value, int exponent)
+		{
+			var precision = BigInteger.Abs(value).ToString(CultureInfo.InvariantCulture).Length;
+
+			var be = BigInteger.Pow(2, Math.Abs(exponent));
+			var ePrecision = be.ToString(CultureInfo.InvariantCulture).Length;
+
+			precision = Math.Max(precision, ePrecision);
+			precision += 1;
+
+			return precision;
+		}
+
 	}
 }

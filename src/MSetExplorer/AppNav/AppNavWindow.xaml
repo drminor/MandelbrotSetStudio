@@ -5,18 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="AppNavWindow" Height="325" Width="400">
+        Title="AppNavWindow" Height="320" Width="400">
     <Grid>
         <StackPanel Orientation="Vertical">
             <Button Width="100" Height="25" Click="ExploreButton_Click" Margin="0,10">Explore</Button>
             
             <Button Width="100" Height="25" Click="DesignPosterButton_Click" Margin="0,10">Design Poster</Button>
             
-            <Button Width="100" Height="25" Click="LeaveButton_Click" Margin="0,10" >Leave</Button>
+            <Button Width="100" Height="25" Click="ExitAppButton_Click" Margin="0,10" >Exit App</Button>
 
             <Button Width="100" Height="25" Click="SampleTestButton_Click" Margin="0,10" >Sample Test</Button>
             
-            <Button Width="200" Click="RemoveMapSectionsButton_Click" Margin="0,90">Remove Recent MapSections</Button>
+            <Button Width="200" Click="RemoveMapSectionsButton_Click" Margin="0,75">Remove Recent MapSections</Button>
 
         </StackPanel>
     </Grid>

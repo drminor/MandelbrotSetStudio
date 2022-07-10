@@ -154,13 +154,13 @@ namespace MSS.Common
 
 		public static void ReportSamplePointDiff(RSize spd, SizeDbl spdD, RRectangle origCoords, RRectangle coords, RectangleDbl coordsD)
 		{
-			//var origCoordsD = ConvertToRectangleDbl(origCoords);
+			var origCoordsD = ConvertToRectangleDbl(origCoords);
 
 			var realCoordsD = ConvertToRectangleDbl(coords);
 			var coordsDiff = realCoordsD.Diff(coordsD).Abs();
 
-			//var realSpdD = ConvertToSizeDbl(spd);
-			//var spdDiff = realSpdD.Diff(spdD).Abs();
+			var realSpdD = ConvertToSizeDbl(spd);
+			var spdDiff = realSpdD.Diff(spdD).Abs();
 
 			Debug.WriteLine($"\nThe new coords are : {coords}, old = {origCoords}. Using SamplePointDelta: {spd}\n");
 
@@ -171,8 +171,10 @@ namespace MSS.Common
 				Debug.WriteLine($"Compare to double math: Coords Size differs by w:{perWDiff}, h:{perHDiff} percentage.");
 			}
 
-			//Debug.WriteLine($"\nThe new coords are: {realCoordsD},\n old = {origCoordsD}, Compare: {coordsD}. Diff: {coordsDiff}, Exp: {coords.Exponent}");
-			//Debug.WriteLine($"\nThe new SamplePointDelta is: {realSpdD}, Compare: {spdD}. Diff: {spdDiff}, Exp: {spd.Exponent}.");
+			Debug.WriteLine($"\nThe new coords are: {realCoordsD},\n old = {origCoordsD}, Compare: {coordsD}. Diff: {coordsDiff}, Exp: {coords.Exponent}");
+			Debug.WriteLine($"\nThe new SamplePointDelta is: {realSpdD}, Compare: {spdD}. Diff: {spdDiff}, Exp: {spd.Exponent}.");
+
+			Debug.WriteLine($"\nCoords Precision: {BigIntegerHelper.GetPrecision(origCoords)} Spd Precision: {BigIntegerHelper.GetPrecision(spd)}.");
 		}
 
 		#endregion
@@ -384,20 +386,20 @@ namespace MSS.Common
 			}
 		}
 
-		//private static SizeDbl ConvertToSizeDbl(RSize rSize)
-		//{
-		//	try
-		//	{
-		//		return new SizeDbl(
-		//			BigIntegerHelper.ConvertToDouble(rSize.Width),
-		//			BigIntegerHelper.ConvertToDouble(rSize.Height)
-		//			);
-		//	}
-		//	catch
-		//	{
-		//		return new SizeDbl(double.NaN, double.NaN);
-		//	}
-		//}
+		private static SizeDbl ConvertToSizeDbl(RSize rSize)
+		{
+			try
+			{
+				return new SizeDbl(
+					BigIntegerHelper.ConvertToDouble(rSize.Width),
+					BigIntegerHelper.ConvertToDouble(rSize.Height)
+					);
+			}
+			catch
+			{
+				return new SizeDbl(double.NaN, double.NaN);
+			}
+		}
 
 		public static double GetAspectRatio(RRectangle rRectangle)
 		{

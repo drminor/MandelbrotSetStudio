@@ -45,7 +45,11 @@ namespace MSetExplorer.XPoc
 
 		private void PrepareMapAreaInfo1()
 		{
-			mapAreaInfo1.DataContext = _vm.MapAreaInfoViewModel1;
+			_vm.MapAreaInfoViewModelCanS.SectionTitle = "Canvas Size";
+			mapAreaInfoCanS.DataContext = _vm.MapAreaInfoViewModelCanS;
+
+			_vm.MapAreaInfoViewModelCanN.SectionTitle = "Canvas Size Normalized";
+			mapAreaInfoCanN.DataContext = _vm.MapAreaInfoViewModelCanN;
 
 			var minWidth = 128 * 4;
 
@@ -65,7 +69,12 @@ namespace MSetExplorer.XPoc
 
 		private void PrepareMapAreaInfo2()
 		{
-			mapAreaInfo2.DataContext = _vm.MapAreaInfoViewModel2;
+			_vm.MapAreaInfoViewModelSelS.SectionTitle = "Selection Size";
+			mapAreaInfoSelS.DataContext = _vm.MapAreaInfoViewModelSelS;
+
+			_vm.MapAreaInfoViewModelSelN.SectionTitle = "Selection Size Normalized";
+			mapAreaInfoSelN.DataContext = _vm.MapAreaInfoViewModelSelN;
+
 
 			var minWidth = 16;
 

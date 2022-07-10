@@ -24,10 +24,10 @@
         <!-- Sample Point Delta -->
         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
             <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="Spd:" />
-            <TextBox x:Name="txtNSamplePointDelta" Width="130" Margin="3" VerticalAlignment="Center" Text="{Binding SamplePointDelta}"/>
+            <TextBox Width="130" Margin="3" VerticalAlignment="Center" Text="{Binding SamplePointDelta}"/>
 
-            <TextBlock Width="25" Margin="5,3" FontSize="14" Text="Exp:" />
-            <TextBox x:Name="txtNSamplePointDeltaExp" Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding SamplePointDeltaExp}"/>
+            <TextBlock Width="25" Margin="5,3,3,3" FontSize="14" Text="Exp:" />
+            <TextBox Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding SamplePointDeltaExp}"/>
 
             <CheckBox Margin="5,3,3,3" FontSize="14" IsChecked="{Binding SamplePointDeltaOnFile}">On file</CheckBox>
         </StackPanel>
@@ -35,33 +35,35 @@
         <!-- X1 -->
         <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
             <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="X1:" />
-            <TextBox x:Name="txtNX1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Left}"/>
+            <TextBox Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Left}"/>
         </StackPanel>
 
         <!-- Y1 -->
         <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
             <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="Y1:" />
-            <TextBox x:Name="txtNY1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Bottom}"/>
+            <TextBox Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Bottom}"/>
         </StackPanel>
 
         <!-- COLUMN 1-->
 
+        <TextBlock Grid.Row="0" Grid.Column="1" Width="175" Margin="3" FontSize="14" Text="{Binding SectionTitle}" />
+
         <!-- Width -->
         <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
-            <TextBlock Width="45" Margin="5,3" FontSize="14" Text="Width:" />
-            <TextBox x:Name="txtNWidth" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Width}"/>
+            <TextBlock Width="45" Margin="5,3,3,3" FontSize="14" Text="Width:" />
+            <TextBox Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Width}"/>
 
             <TextBlock Width="60" Margin="5,3,3,3" FontSize="14" Text="Exponent:" />
-            <TextBox x:Name="txtNExponent" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Exponent}"/>
+            <TextBox Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Exponent}"/>
         </StackPanel>
 
         <!-- Height -->
         <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
-            <TextBlock Width="45" Margin="5,3" FontSize="14" Text="Height:" />
-            <TextBox x:Name="txtNHeight" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Height}"/>
+            <TextBlock Width="45" Margin="5,3,3,3" FontSize="14" Text="Height:" />
+            <TextBox Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Height}"/>
 
             <TextBlock Width="60" Margin="5,3,3,3" FontSize="14" Text="Precision:" />
-            <TextBox x:Name="txtNPrecision" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Precision}"/>
+            <TextBox Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Precision}"/>
         </StackPanel>
 
         <!-- COLUMN 2-->

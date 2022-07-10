@@ -79,7 +79,7 @@ namespace MSetExplorer
 			GoToSampleTest();
 		}
 
-		private void LeaveButton_Click(object sender, RoutedEventArgs e)
+		private void ExitAppButton_Click(object sender, RoutedEventArgs e)
 		{
 			Close();
 		}

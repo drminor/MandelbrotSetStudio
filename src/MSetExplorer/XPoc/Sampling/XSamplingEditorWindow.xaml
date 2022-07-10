@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer.XPoc"
         mc:Ignorable="d"
-        Title="XSamplingEditorWindow" Width="1000" Height="600">
+        Title="XSamplingEditorWindow" Width="900" Height="720">
     <Grid>
 
         <Grid.RowDefinitions>
@@ -15,9 +15,11 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="5" x:Name="grdCoords1">
+        <Grid Grid.Row="0" Margin="0,5,0,0" x:Name="grdCoords1">
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -48,25 +50,25 @@
 
             <!-- Width -->
             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
-                <TextBlock Width="50" Margin="15,3,3,3" FontSize="14" Text="Width:" />
+                <TextBlock Width="45" Margin="5,3,3,3" FontSize="14" Text="Width:" />
                 <TextBox x:Name="txtWidth" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Width}"/>
 
-                <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Exponent:" />
+                <TextBlock Width="60" Margin="5,3,3,3" FontSize="14" Text="Exponent:" />
                 <TextBox x:Name="txtExponent" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Exponent}"/>
             </StackPanel>
 
             <!-- Height -->
             <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,1,0,10">
-                <TextBlock Width="50" Margin="15,3,3,3" FontSize="14" Text="Height:" />
+                <TextBlock Width="45" Margin="5,3,3,3" FontSize="14" Text="Height:" />
                 <TextBox x:Name="txtHeight" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Height}"/>
 
-                <TextBlock Width="60" Margin="5,3" FontSize="14" Text="Precision:" />
+                <TextBlock Width="60" Margin="5,3,3,3" FontSize="14" Text="Precision:" />
                 <TextBox x:Name="txtPrecision" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Precision}"/>
             </StackPanel>
 
         </Grid>
 
-        <Border Grid.Row="1" BorderBrush="Black" BorderThickness="0.75" Margin="5,0,0,0">
+        <Border Grid.Row="1" BorderBrush="Black" BorderThickness="0.75" Margin="5,0">
             <Grid>
 
                 <Grid.RowDefinitions>
@@ -75,25 +77,40 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Margin="5,0">Canvas Size</TextBlock>
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
-                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
-                    <TextBox x:Name="txtCanvasWidth" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidth}"/>
-
-                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
-                    <TextBox x:Name="txtCanvasHeight" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenHeight}"/>
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0">
+                    <TextBlock Grid.Row="0" Margin="0">Canvas Size</TextBlock>
+                    <TextBlock Grid.Row="0" Margin="260,0,0,0">Normalized Canvas Size</TextBlock>
                 </StackPanel>
 
-                <Slider Grid.Row="2" x:Name="sldrCanvasWidth" HorizontalAlignment="Left" Margin="5,0" Width="980" Height="40" IsSnapToTickEnabled="True"></Slider>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,5,10">
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidth}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenHeight}"/>
+
+                    <TextBlock Width="45" Margin="55,3,3,3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding NrmScreenWidth}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding NrmScreenHeight}"/>
+
+                </StackPanel>
+
+                <Slider Grid.Row="2" x:Name="sldrCanvasWidth" HorizontalAlignment="Left" Margin="5,0,0,0" Width="890" Height="40" IsSnapToTickEnabled="True"></Slider>
 
             </Grid>
         </Border>
 
-        <Grid Grid.Row="2" HorizontalAlignment="Left">
-            <local:MapAreaInfoControl x:Name="mapAreaInfo1"/>
+        <Grid Grid.Row="2" HorizontalAlignment="Left" Margin="0,0,0,5">
+            <local:MapAreaInfoControl x:Name="mapAreaInfoCanS"/>
         </Grid>
 
-        <Border Grid.Row="3" BorderBrush="Black" BorderThickness="0.75" Margin="5,0,0,0">
+        <Grid Grid.Row="3" HorizontalAlignment="Left" Margin="0,0,0,5">
+            <local:MapAreaInfoControl x:Name="mapAreaInfoCanN"/>
+        </Grid>
+        
+        <Border Grid.Row="4" BorderBrush="Black" BorderThickness="0.75" Margin="5,0">
             <Grid>
 
                 <Grid.RowDefinitions>
@@ -102,26 +119,41 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Margin="5,0">Selection Size</TextBlock>
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0">
+                    <TextBlock Grid.Row="0" Margin="0">Selection Size</TextBlock>
+                    <TextBlock Grid.Row="0" Margin="260,0,0,0">Normalized Selection Size</TextBlock>
+                </StackPanel>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
                     <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
-                    <TextBox x:Name="txtSelectionWidth" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionWidth}"/>
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionWidth}"/>
 
                     <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
-                    <TextBox x:Name="txtSelectionHeight" Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionHeight}"/>
+                    <TextBox  Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionHeight}"/>
+
+                    <TextBlock Width="45" Margin="55,3,3,3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding NrmSelectionWidth}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding NrmSelectionHeight}"/>
+
                 </StackPanel>
 
-                <Slider Grid.Row="2" x:Name="sldrSelectionWidth" HorizontalAlignment="Left" Margin="5,0" Width="980" Height="40" IsSnapToTickEnabled="True"></Slider>
+                <Slider Grid.Row="2" x:Name="sldrSelectionWidth" HorizontalAlignment="Left" Margin="5,0,0,0" Width="890" Height="40" IsSnapToTickEnabled="True"></Slider>
 
             </Grid>
         </Border>
 
-        <Grid Grid.Row="4" HorizontalAlignment="Left">
-            <local:MapAreaInfoControl x:Name="mapAreaInfo2"/>
+        <Grid Grid.Row="5" HorizontalAlignment="Left" Margin="0,0,0,5">
+            <local:MapAreaInfoControl x:Name="mapAreaInfoSelS"/>
         </Grid>
 
-        <Border Grid.Row="5" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid Grid.Row="6" HorizontalAlignment="Left" Margin="0,0,0,5">
+            <local:MapAreaInfoControl x:Name="mapAreaInfoSelN"/>
+        </Grid>
+
+
+        <Border Grid.Row="7" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>

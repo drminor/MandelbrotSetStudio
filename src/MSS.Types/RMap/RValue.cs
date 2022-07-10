@@ -24,20 +24,6 @@ namespace MSS.Types
 			Precision = precision ?? BigIntegerHelper.MAX_PRECISION;
 		}
 
-		//private int GetPrecision(BigInteger value, int exponent)
-		//{
-		//	var precision = BigInteger.Abs(value).ToString(CultureInfo.InvariantCulture).Length;
-
-		//	var be = BigInteger.Pow(2, Math.Abs(exponent));
-		//	var ePrecision = BigInteger.Abs(be).ToString(CultureInfo.InvariantCulture).Length;
-
-		//	precision = Math.Max(precision, ePrecision);
-		//	//precision += 5;
-		//	precision += 1;
-
-		//	return precision;
-		//}
-
 		#endregion
 
 		#region Public Properties
