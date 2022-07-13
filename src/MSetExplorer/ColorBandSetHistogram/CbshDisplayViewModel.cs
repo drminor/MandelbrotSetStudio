@@ -324,11 +324,12 @@ namespace MSetExplorer
 
 		private GeometryDrawing DrawHistogramBorder(int width, int height)
 		{
+			var borderSize = width > 1 && height > 1 ? new Size(width - 1, height - 1) : new Size(1, 1);
 			var histogramBorder = new GeometryDrawing
 			(
 				Brushes.Transparent,
 				new Pen(Brushes.DarkGray, 0.5),
-				new RectangleGeometry(new Rect(new Point(2, 2), new Size(width - 1, height - 1)))
+				new RectangleGeometry(new Rect(new Point(2, 2), borderSize))
 			);
 
 			_historgramItems.Add(histogramBorder);

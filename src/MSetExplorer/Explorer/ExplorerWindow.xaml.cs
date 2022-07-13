@@ -53,7 +53,7 @@ namespace MSetExplorer
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 
-				cbsh1.DataContext = _vm.ColorBandSetHistogramViewModel;
+				//cbsh1.DataContext = _vm.ColorBandSetHistogramViewModel;
 
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}
@@ -186,6 +186,14 @@ namespace MSetExplorer
 			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
 			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
 			Width = showJobTreeControl ? 2075 : 1665;
+		}
+
+		// Show Hide Job Tree
+		private void Histogram_Checked(object sender, RoutedEventArgs e)
+		{
+			var showHistogramControl = mnuItem_HistogramWindow.IsChecked;
+			botRow.Visibility = showHistogramControl ? Visibility.Visible : Visibility.Collapsed;
+			Height = showHistogramControl ? 1340 : 1100;
 		}
 
 		private void ToggleJobTreeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)

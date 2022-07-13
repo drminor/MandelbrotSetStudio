@@ -51,7 +51,7 @@ namespace MSetExplorer
 		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
 			_useEscapeVelocities = true;
-			_keepDisplaySquare = false;
+			_keepDisplaySquare = true;
 
 			_synchronizationContext = SynchronizationContext.Current;
 			_mapSectionHelper = mapSectionHelper;
@@ -225,9 +225,11 @@ namespace MSetExplorer
 				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_containerSize, BlockSize, _keepDisplaySquare);
 				var desiredCanvasSize = sizeInWholeBlocks.Scale(BlockSize);
 
-				Debug.WriteLine($"The container size is now {value} Would set the Canvas Size to {desiredCanvasSize}, but keeping it at 1024 x 1024 for now.");
+				//Debug.WriteLine($"The container size is now {value} Would set the Canvas Size to {desiredCanvasSize}, but keeping it at 1024 x 1024 for now.");
+				//CanvasSize = new SizeDbl(1024);
 
-				CanvasSize = new SizeDbl(1024);
+				CanvasSize = new SizeDbl(desiredCanvasSize);
+				//DisplayZoom = 1024 / (double) desiredCanvasSize.Width; //  _canvasSize.Width / 1024;
 			}
 		}
 

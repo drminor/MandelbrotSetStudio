@@ -204,16 +204,16 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetMapExtentInBlocks(SizeDbl canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
-		{
-			var sizeCorrection = blockSize.Sub(canvasControlOffset).Mod(blockSize);
-			var totalSize = canvasSize.Inflate(sizeCorrection);
-			var rawResult = totalSize.DivRem(blockSize, out var remainder);
-			var extra = new SizeInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
-			var result = rawResult.Inflate(extra);
+		//public static SizeInt GetMapExtentInBlocks(SizeDbl canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
+		//{
+		//	var sizeCorrection = blockSize.Sub(canvasControlOffset).Mod(blockSize);
+		//	var totalSize = canvasSize.Inflate(sizeCorrection);
+		//	var rawResult = totalSize.DivRem(blockSize, out var remainder);
+		//	var extra = new SizeInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
+		//	var result = rawResult.Inflate(extra);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.

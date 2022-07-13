@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Explorer Window" Width="1475" Height="1345">
+        Title="Explorer Window" Width="1475" Height="1100">
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
@@ -49,7 +49,7 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="25">
+        <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="20">
 
             <MenuItem Header="_Project">
                 <MenuItem Header="_New" Click="NewButton_Click"/>
@@ -84,6 +84,7 @@
                 <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
                 <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>-->
                 <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Checked" IsChecked="False"/>
+                <MenuItem Header="Histogram" x:Name="mnuItem_HistogramWindow" IsCheckable="True" Checked="Histogram_Checked" Unchecked="Histogram_Checked" IsChecked="False"/>
             </MenuItem>
 
             <MenuItem Header="_Map">
@@ -200,8 +201,8 @@
             
         </Grid>
 
-        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" x:Name="botRow" BorderThickness="0"   HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Visible">
-            <local:ColorBandSetHistogramControl x:Name="cbsh1"/>
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" x:Name="botRow" BorderThickness="0"   HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Collapsed">
+            <!--<local:ColorBandSetHistogramControl x:Name="cbsh1"/>-->
             
         </Border>
 
