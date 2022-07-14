@@ -3,6 +3,7 @@ using MEngineDataContracts;
 using MSetRepo;
 using MSS.Common;
 using ProtoBuf.Grpc;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -10,7 +11,12 @@ namespace MEngineService.Services
 {
 	public class MapSectionService : IMapSectionService
     {
-		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
+		// TODO: Have the MapSectionService get the MongoDb connection string from the appsettings.json file.
+		//private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
+		//private const string MONGO_DB_CONN_STRING = "mongodb://davidmain:27017";
+		//private const string MONGO_DB_CONN_STRING = "mongodb://desktop-bau7fe6:27017";
+		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
+		private const int MONGO_DB_PORT = 27017;
 
 		public static IMapSectionAdapter MapSectionAdapter { get; private set; }
 
@@ -18,8 +24,9 @@ namespace MEngineService.Services
 
 		static MapSectionService()
 		{
-			MapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_CONN_STRING);
+			MapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_SERVER, MONGO_DB_PORT);
 			_mapSectionPersistProcessor = new MapSectionPersistProcessor(MapSectionAdapter);
+			Console.WriteLine($"The MapSection Persist Processor has started. Server: {MONGO_DB_SERVER}, Port: {MONGO_DB_PORT}.");
 		}
 
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default)

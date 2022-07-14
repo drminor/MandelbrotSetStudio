@@ -13,14 +13,20 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class App : Application
 	{
-		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
+		//private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
+		//private const string MONGO_DB_CONN_STRING = "mongodb://davidmain:27017";
+		//private const string MONGO_DB_CONN_STRING = "mongodb://desktop-bau7fe6:27017";
+
+		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
+		private const int MONGO_DB_PORT = 27017;
+
 		private const string SERVER_EXE_PATH = @"C:\Users\david\source\repos\MandelbrotSetStudio\src_FGEN\MEngineService\bin\x64\Debug\net5.0\MEngineService.exe";
 
 		private const string LOCAL_M_ENGINE_ADDRESS = "https://localhost:5001";
-		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.1.20:5000" };
+		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.2.109:5000" };
 
 		private static readonly bool USE_LOCAL_ENGINE = true; // If true, we will host a server -- AND include it in the list of servers to use by our client.
-		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
+		private static readonly bool USE_REMOTE_ENGINE = true;  // If true, send part of our work to the remote server(s)
 
 		private const bool DROP_RECENT_MAPSECTIONS = false;
 		private const bool DROP_ALL_COLLECTIONS = false;
@@ -50,7 +56,7 @@ namespace MSetExplorer
 
 			_mEngineServerManager?.Start();
 
-			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_CONN_STRING);
+			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT);
 			PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAPSECTIONS, _repositoryAdapters);
 
 			var mEngineAddresses = USE_REMOTE_ENGINE ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();

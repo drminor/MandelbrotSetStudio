@@ -1,14 +1,20 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace MEngineService
 {
 	public class Program
 	{
+		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
+		private const int MONGO_DB_PORT = 27017;
+
 		public static void Main(string[] args)
 		{
 			CreateHostBuilder(args).Build().Run();
+
+			Console.WriteLine($"Service is started. Server: {MONGO_DB_SERVER}, Port: {MONGO_DB_PORT}.");
 		}
 
 		// Additional configuration is required to successfully run gRPC on macOS.

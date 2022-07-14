@@ -7,27 +7,27 @@ namespace MSetRepo
 {
 	public static class MSetRepoHelper
 	{
-		public static IProjectAdapter GetProjectAdapter(string dbProviderConnString)
+		public static IProjectAdapter GetProjectAdapter(string server, int port)
 		{
-			var dbProvider = new DbProvider(dbProviderConnString);
+			var dbProvider = new DbProvider(server, port);
 			var mSetRecordMapper = GetMSetRecordMapper();
 			var projectAdapter = new ProjectAdapter(dbProvider, mSetRecordMapper);
 
 			return projectAdapter;
 		}
 
-		public static IMapSectionAdapter GetMapSectionAdapter(string dbProviderConnString)
+		public static IMapSectionAdapter GetMapSectionAdapter(string server, int port)
 		{
-			var dbProvider = new DbProvider(dbProviderConnString);
+			var dbProvider = new DbProvider(server, port);
 			var mSetRecordMapper = GetMSetRecordMapper();
 			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
 
 			return mapSectionAdapter;
 		}
 
-		public static SharedColorBandSetAdapter GetSharedColorBandSetAdapter(string dbProviderConnString)
+		public static SharedColorBandSetAdapter GetSharedColorBandSetAdapter(string server, int port)
 		{
-			var dbProvider = new DbProvider(dbProviderConnString);
+			var dbProvider = new DbProvider(server, port);
 			var mSetRecordMapper = GetMSetRecordMapper();
 			var sharedColorBandSetAdapter = new SharedColorBandSetAdapter(dbProvider, mSetRecordMapper);
 

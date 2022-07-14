@@ -17,7 +17,6 @@ namespace MSetRepo
 	{
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
-		private readonly DtoMapper _dtoMapper;
 
 		#region Constructor
 
@@ -25,7 +24,6 @@ namespace MSetRepo
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
-			_dtoMapper = new DtoMapper();
 		}
 
 		#endregion

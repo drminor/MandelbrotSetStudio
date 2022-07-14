@@ -39,8 +39,6 @@ namespace MEngineService
 			{
 				app.UseDeveloperExceptionPage();
 			}
-
-			
 						
 			app.UseRouting();
 
