@@ -21,7 +21,7 @@ namespace MSetExplorer
 		MapAreaInfo PosterAreaInfo { get; }
 		SizeInt PosterSize { get; }
 
-		ColorBandSet? ColorBandSet { get; set; }
+		ColorBandSet ColorBandSet { get; set; }
 
 		VectorInt DisplayPosition { get; set; }
 		double DisplayZoom { get; set; }

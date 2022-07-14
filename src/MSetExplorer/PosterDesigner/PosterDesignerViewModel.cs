@@ -213,23 +213,17 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
 				MapCoordsViewModel.CurrentMapAreaInfo = jobAreaAndCalcSettings.MapAreaInfo;
+
+				MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: false);
 				MapDisplayViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
 			}
-
-			//else if (e.PropertyName == nameof(IPosterViewModel.DisplayZoom))
-			//{
-			//	MapDisplayViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
-			//}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
 			else if (e.PropertyName == nameof(IPosterViewModel.ColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = PosterViewModel.ColorBandSet;
 
-				if (PosterViewModel.ColorBandSet != null)
-				{
-					MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: true);
-				}
+				MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: true);
 			}
 		}
 

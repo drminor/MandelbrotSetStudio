@@ -73,8 +73,6 @@ namespace MSetExplorer
 					if (CurrentPoster != null)
 					{
 						UpdateMapView(CurrentPoster);
-
-						//JobAreaAndCalcSettings = GetNewJob(curPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize, curPoster.MapCalcSettings);
 					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.LogicalDisplaySize));
@@ -116,9 +114,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSet? ColorBandSet
+		public ColorBandSet ColorBandSet
 		{
-			get => CurrentPoster?.ColorBandSet;
+			get => CurrentPoster?.ColorBandSet ?? new ColorBandSet();
 			set
 			{
 				var curPoster = CurrentPoster;
@@ -367,7 +365,6 @@ namespace MSetExplorer
 				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentPoster.ColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentPoster.MapCalcSettings.RequestsPerJob);
 
-				//LoadMap(CurrentPoster, CurrentPoster.MapAreaInfo.Coords, colorBandSet.Id, mapCalcSettings);
 				JobAreaAndCalcSettings = new JobAreaAndCalcSettings(JobAreaAndCalcSettings.MapAreaInfo, mapCalcSettings);
 			}
 			else
