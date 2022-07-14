@@ -219,52 +219,6 @@ namespace MSetRepo
 			return result;
 		}
 
-		//public MapSectionRecordV1 MapToV1(MapSectionResponse source)
-		//{
-		//	var 
-
-
-		//	var result = new MapSectionRecordV1
-		//		(
-		//		DateCreatedUtc: DateTime.UtcNow,
-		//		SubdivisionId: new ObjectId(source.SubdivisionId),
-		//		BlockPosXHi: source.BlockPosition.X[0],
-		//		BlockPosXLo: source.BlockPosition.X[1],
-		//		BlockPosYHi: source.BlockPosition.Y[0],
-		//		BlockPosYLo: source.BlockPosition.Y[1],
-		//		source.MapCalcSettings,
-		//		source.Counts,
-		//		source.DoneFlags,
-		//		source.ZValues
-		//		)
-		//	{
-		//		LastAccessed = DateTime.UtcNow,
-		//	};
-
-		//	return result;
-		//}
-
-		public MapSectionResponse MapFrom(MapSectionRecordV1 target)
-		{
-			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
-
-			var counts = MapSectionRequest.SplitCountsAndEscapeVelocities(target.Counts, out var escapeVelocities);
-
-			var result = new MapSectionResponse
-			{
-				MapSectionId = target.Id.ToString(),
-				SubdivisionId = target.SubdivisionId.ToString(),
-				BlockPosition = blockPosition,
-				MapCalcSettings = target.MapCalcSettings,
-				Counts = counts,
-				EscapeVelocities = escapeVelocities,
-				DoneFlags = target.DoneFlags,
-				ZValues = target.ZValues
-			};
-
-			return result;
-		}
-
 		/// <summary>
 		/// Take a response from the MEngineService and prepare it for storing in the repo.
 		/// </summary>
@@ -292,6 +246,7 @@ namespace MSetRepo
 				BlockPosXLo: source.BlockPosition.X[1],
 				BlockPosYHi: source.BlockPosition.Y[0],
 				BlockPosYLo: source.BlockPosition.Y[1],
+
 				source.MapCalcSettings,
 				Counts: GetBytes(source.Counts),
 				EscapeVelocities: GetBytes(source.EscapeVelocities),

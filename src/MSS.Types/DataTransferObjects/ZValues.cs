@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 
-namespace MSS.Types.MSet
+namespace MSS.Types.DataTransferObjects
 {
 	[ProtoContract(SkipConstructor = true)]
 	public class ZValues

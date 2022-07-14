@@ -1,4 +1,5 @@
 ﻿using MEngineDataContracts;
+using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using System;
@@ -325,7 +326,8 @@ namespace MapSectionProviderLib
 			if (_mapSectionAdapter != null)
 			{
 				var mapSectionRequest = mapSectionWorkRequest.Request;
-				var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition, _fetchZValues);
+				var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+				var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, mapSectionRequest.BlockPosition, _fetchZValues);
 
 				if (mapSectionResponse?.JustNowUpdated == true)
 				{

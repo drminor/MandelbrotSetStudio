@@ -25,10 +25,11 @@ namespace MSetExplorer
 		private const string LOCAL_M_ENGINE_ADDRESS = "https://localhost:5001";
 		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.2.109:5000" };
 
+		private static readonly bool START_LOCAL_ENGINE = true;
 		private static readonly bool USE_LOCAL_ENGINE = true; // If true, we will host a server -- AND include it in the list of servers to use by our client.
 		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
 
-		private const bool DROP_RECENT_MAPSECTIONS = false;
+		private const bool DROP_RECENT_MAP_SECTIONS = false;
 		private const bool DROP_ALL_COLLECTIONS = false;
 		private const bool DROP_MAP_SECTIONS = false;
 
@@ -44,7 +45,7 @@ namespace MSetExplorer
 		{
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-			if (USE_LOCAL_ENGINE)
+			if (START_LOCAL_ENGINE)
 			{
 				_mEngineServerManager = new MEngineServerManager(SERVER_EXE_PATH, LOCAL_M_ENGINE_ADDRESS);
 			}
@@ -57,7 +58,7 @@ namespace MSetExplorer
 			_mEngineServerManager?.Start();
 
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT);
-			PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAPSECTIONS, _repositoryAdapters);
+			PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
 
 			var mEngineAddresses = USE_REMOTE_ENGINE ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();
 
@@ -98,7 +99,7 @@ namespace MSetExplorer
 
 			if (dropRecentMapSections)
 			{
-				var lastSaved = DateTime.Parse("2023-01-01");
+				var lastSaved = DateTime.Parse("2022-05-29");
 				repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
 			}
 		}

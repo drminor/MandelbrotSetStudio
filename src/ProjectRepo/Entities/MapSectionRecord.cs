@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
 
@@ -15,6 +16,7 @@ namespace ProjectRepo.Entities
 		long BlockPosXLo,
 		long BlockPosYHi,
 		long BlockPosYLo,
+
 		MapCalcSettings MapCalcSettings,
 		byte[] Counts,
 		byte[] EscapeVelocities,

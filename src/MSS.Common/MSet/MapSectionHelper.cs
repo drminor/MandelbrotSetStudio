@@ -11,7 +11,16 @@ namespace MSS.Common
 	public class MapSectionHelper
 	{
 		private const double VALUE_FACTOR = 10000;
-		private readonly DtoMapper _dtoMapper = new();
+		private readonly DtoMapper _dtoMapper;
+
+		#region Constructor
+
+		public MapSectionHelper()
+		{
+			_dtoMapper = new DtoMapper();
+		}
+
+		#endregion
 
 		public long NumberOfCountValSwitches { get; private set; }
 

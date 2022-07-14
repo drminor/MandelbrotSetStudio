@@ -28,73 +28,53 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition, bool includeZValues)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var subObjectId = new ObjectId(subdivisionId);
 
-			if (true == await IsMapSectionAV1Async(subObjectId, blockPosition, mapSectionReaderWriter))
+			try
 			{
-				var mapSectionResponse = await GetMapSectionV1Async(subdivisionId, blockPosition);
-				if (mapSectionResponse != null)
+				if (includeZValues)
 				{
-					_ = await UpdateToNewV(mapSectionResponse, mapSectionReaderWriter);
-
-					if (!includeZValues)
+					var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition);
+					if (mapSectionRecord != null)
 					{
-						mapSectionResponse.DoneFlags = new bool[0];
-						mapSectionResponse.ZValues = new double[0];
+						var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+						return mapSectionResponse;
+					}
+					else
+					{
+						return null;
 					}
 				}
-
-				return mapSectionResponse;
+				else
+				{
+					var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subdivisionId, blockPosition);
+					if (mapSectionRecordCountsOnly != null)
+					{
+						var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly);
+						return mapSectionResponse;
+					}
+					else
+					{
+						return null;
+					}
+				}
 			}
-			else
+			catch (Exception e)
 			{
-				try
+				Debug.WriteLine($"While reading JustCounts, got exception: {e}.");
+				var id = await mapSectionReaderWriter.GetId(subdivisionId, blockPosition);
+				if (id != null)
 				{
-					if (includeZValues)
-					{
-						var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subObjectId, blockPosition);
-						if (mapSectionRecord != null)
-						{
-							var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
-							return mapSectionResponse;
-						}
-						else
-						{
-							return null;
-						}
-					}
-					else
-					{
-						var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subObjectId, blockPosition);
-						if (mapSectionRecordCountsOnly != null)
-						{
-							var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly);
-							return mapSectionResponse;
-						}
-						else
-						{
-							return null;
-						}
-					}
+					mapSectionReaderWriter.Delete(id.Value);
 				}
-				catch (Exception e)
+				else
 				{
-					Debug.WriteLine($"While reading JustCounts, got exception: {e}.");
-					var id = await mapSectionReaderWriter.GetId(subObjectId, blockPosition);
-					if (id != null)
-					{
-						mapSectionReaderWriter.Delete(id.Value);
-					}
-					else
-					{
-						throw new InvalidOperationException("Cannot delete the bad MapSectionRecord.");
-					}
+					throw new InvalidOperationException("Cannot delete the bad MapSectionRecord.");
+				}
 
-					return null;
-				}
+				return null;
 			}
 		}
 
@@ -104,47 +84,6 @@ namespace MSetRepo
 			var result = await mapSectionReaderWriter.GetZValuesAsync(mapSectionId);
 
 			return result;
-		}
-
-		private async Task<bool> UpdateToNewV(MapSectionResponse mapSectionResponse, MapSectionReaderWriter mapSectionReaderWriter)
-		{
-			var updatedMapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
-			var numberOfRecordsUpdated = await mapSectionReaderWriter.UpdateToNewVersionAsync(updatedMapSectionRecord);
-
-			if (numberOfRecordsUpdated == 1)
-			{
-				Debug.WriteLine($"Updated MapSection: {updatedMapSectionRecord.Id}.");
-				mapSectionResponse.JustNowUpdated = true;
-				return true;
-			}
-			else
-			{
-				Debug.WriteLine($"WARNING: Could not update MapSection: {updatedMapSectionRecord.Id}.");
-				return false;
-			}
-		}
-
-		private async Task<bool?> IsMapSectionAV1Async(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionReaderWriter mapSectionReaderWriter)
-		{
-			var result = await mapSectionReaderWriter.GetIsV1Async(subdivisionId, blockPosition);
-
-			return result;
-		}
-
-		private async Task<MapSectionResponse?> GetMapSectionV1Async(string subdivisionId, BigVectorDto blockPosition)
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriterV1(_dbProvider);
-			var mapSectionRecord = await mapSectionReaderWriter.GetAsync(new ObjectId(subdivisionId), blockPosition);
-
-			if (mapSectionRecord == null)
-			{
-				return null;
-			}
-			else
-			{
-				var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
-				return mapSectionResponse;
-			}
 		}
 
 		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
@@ -167,10 +106,10 @@ namespace MSetRepo
 			return result;
 		}
 
-		public long? ClearMapSections(string subdivisionId)
+		public long? ClearMapSections(ObjectId subdivisionId)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var result = mapSectionReaderWriter.DeleteAllWithSubId(new ObjectId(subdivisionId));
+			var result = mapSectionReaderWriter.DeleteAllWithSubId(subdivisionId);
 
 			return result;
 		}
@@ -183,12 +122,12 @@ namespace MSetRepo
 			return result;
 		}
 
-		public long? RemoveFetchZValuesProp()
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var numberUpdated = mapSectionReaderWriter.RemoveFetchZValuesProp();
-			return numberUpdated;
-		}
+		//public long? RemoveFetchZValuesProp()
+		//{
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	var numberUpdated = mapSectionReaderWriter.RemoveFetchZValuesProp();
+		//	return numberUpdated;
+		//}
 
 		//public void AddCreatedDateToAllMapSections()
 		//{

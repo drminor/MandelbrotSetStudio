@@ -11,7 +11,7 @@ namespace MSS.Common
 {
 	public interface IMapSectionAdapter
 	{
-		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition, bool includeZValues);
+		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues);
 
 		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
 
@@ -19,7 +19,7 @@ namespace MSS.Common
 
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
 
-		long? ClearMapSections(string subdivisionId);
+		long? ClearMapSections(ObjectId subdivisionId);
 
 		long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false);
 

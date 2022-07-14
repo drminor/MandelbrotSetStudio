@@ -10,7 +10,7 @@ namespace ProjectRepo
 {
 	public class SubdivisonReaderWriter : MongoDbCollectionBase<SubdivisionRecord>
 	{
-		private const string COLLECTION_NAME = "SubDivisions";
+		private const string COLLECTION_NAME = "Subdivisions";
 
 		public SubdivisonReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
