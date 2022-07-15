@@ -17,7 +17,7 @@ namespace MapSectionProviderLib
 		private const int NUMBER_OF_CONSUMERS = 2;
 		private const int QUEUE_CAPACITY = 10; //200;
 
-		private readonly IMapSectionAdapter? _mapSectionAdapter;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly DtoMapper _dtoMapper;
 
 		private readonly MapSectionGeneratorProcessor _mapSectionGeneratorProcessor;
@@ -37,11 +37,9 @@ namespace MapSectionProviderLib
 		private int _nextJobId;
 		private bool disposedValue;
 
-		private int _recordsUpdated;
-
 		#region Constructor
 
-		public MapSectionRequestProcessor(IMapSectionAdapter? mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, bool fetchZValues)
+		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, bool fetchZValues)
 		{
 			_nextJobId = 0;
 			_mapSectionAdapter = mapSectionAdapter;
@@ -62,12 +60,6 @@ namespace MapSectionProviderLib
 				_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionGeneratorProcessor, _cts.Token));
 			}
 		}
-
-		#endregion
-
-		#region Public Properties
-
-		public int NumberOfRecordsUpdated => _recordsUpdated;
 
 		#endregion
 
@@ -181,7 +173,7 @@ namespace MapSectionProviderLib
 					MapSectionResponse? mapSectionResponse;
 					if (IsJobCancelled(mapSectionWorkRequest.JobId))
 					{
-						mapSectionResponse = BuildEmptyResponse(mapSectionWorkRequest.Request);
+						mapSectionResponse = new MapSectionResponse(mapSectionWorkRequest.Request);
 						mapSectionResponse.RequestCancelled = true;
 					}
 					else
@@ -240,7 +232,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				// Update the request with the values (in progress) retreived from the repository.
+				// Update the request with the values (in progress) retrieved from the repository.
 				var request = mapSectionWorkRequest.Request;
 				request.MapSectionId = mapSectionResponse.MapSectionId;
 				request.IncreasingIterations = true;
@@ -323,35 +315,18 @@ namespace MapSectionProviderLib
 
 		private async Task<MapSectionResponse?> FetchAsync(MapSectionWorkRequest mapSectionWorkRequest)
 		{
-			if (_mapSectionAdapter != null)
-			{
-				var mapSectionRequest = mapSectionWorkRequest.Request;
-				var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-				var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, mapSectionRequest.BlockPosition, _fetchZValues);
+			var mapSectionRequest = mapSectionWorkRequest.Request;
+			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+			var blockPosition = mapSectionRequest.BlockPosition;
+			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, _fetchZValues);
 
-				if (mapSectionResponse?.JustNowUpdated == true)
-				{
-					_recordsUpdated++;
-
-					//if (_recordsUpdated % 10 == 0)
-					//{
-					//	Debug.WriteLine($"{_recordsUpdated} records have been updated.");
-					//}
-				}
-
-				return mapSectionResponse;
-			}
-			else
-			{
-				//await Task.Delay(100);
-				return null;
-			}
+			return mapSectionResponse;
 		}
 
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse)
 		{
 			// Set the original request's repsonse to the generated response.
-			mapSectionWorkRequest.Response = mapSectionResponse ?? BuildEmptyResponse(mapSectionWorkRequest.Request);
+			mapSectionWorkRequest.Response = mapSectionResponse ?? new MapSectionResponse(mapSectionWorkRequest.Request);
 
 			// Send the original request to the response processor.
 			_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
@@ -433,22 +408,6 @@ namespace MapSectionProviderLib
 			{
 				result = _cancelledJobIds.Contains(jobId);
 			}
-
-			return result;
-		}
-
-		private MapSectionResponse BuildEmptyResponse(MapSectionRequest mapSectionRequest)
-		{
-			var result = new MapSectionResponse
-			{
-				MapSectionId = mapSectionRequest.MapSectionId,
-				SubdivisionId = mapSectionRequest.SubdivisionId,
-				BlockPosition = mapSectionRequest.BlockPosition,
-				Counts = null,
-				EscapeVelocities = null,
-				DoneFlags = null,
-				ZValues = null
-			};
 
 			return result;
 		}

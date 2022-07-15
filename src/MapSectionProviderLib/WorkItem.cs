@@ -3,7 +3,7 @@ using System;
 
 namespace MapSectionProviderLib
 {
-	public class WorkItem<T, U>
+	internal class WorkItem<T, U>
 	{
 		public int JobId { get; init; }
 		public T Request { get; init; }
@@ -30,14 +30,14 @@ namespace MapSectionProviderLib
 		}
 	}
 
-	public class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSectionResponse>
+	internal class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSectionResponse>
 	{
 		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSectionResponse?> workAction) : base(jobId, request, workAction)
 		{
 		}
 	}
 
-	public class MapSectionGenerateRequest : WorkItem<MapSectionWorkRequest, MapSectionResponse>
+	internal class MapSectionGenerateRequest : WorkItem<MapSectionWorkRequest, MapSectionResponse>
 	{
 		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse?> workAction) : base(jobId, request, workAction)
 		{

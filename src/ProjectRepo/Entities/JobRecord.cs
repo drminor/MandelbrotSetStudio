@@ -36,13 +36,4 @@ namespace ProjectRepo.Entities
 
 		public DateTime LastSaved { get; set; }
 	}
-
-	public record JobInfoRecord
-	(
-		DateTime DateCreated,
-		int TransformType,
-		ObjectId SubDivisionId,
-		int MapCoordExponent
-	);
-
 }

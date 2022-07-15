@@ -23,10 +23,10 @@ namespace MEngineService
 			result.blockSizeWidth = mapSectionRequest.BlockSize.Width;
 			result.blockSizeHeight = mapSectionRequest.BlockSize.Height;
 
-			// RSizeDto SamplePointsDelta;
-			result.samplePointDeltaWidth = mapSectionRequest.SamplePointsDelta.Width;
-			result.samplePointDeltaHeight = mapSectionRequest.SamplePointsDelta.Height;
-			result.samplePointDeltaExponent = mapSectionRequest.SamplePointsDelta.Exponent;
+			// RSizeDto SamplePointDelta;
+			result.samplePointDeltaWidth = mapSectionRequest.SamplePointDelta.Width;
+			result.samplePointDeltaHeight = mapSectionRequest.SamplePointDelta.Height;
+			result.samplePointDeltaExponent = mapSectionRequest.SamplePointDelta.Exponent;
 
 			// MapCalcSettings
 			result.maxIterations = mapSectionRequest.MapCalcSettings.TargetIterations;

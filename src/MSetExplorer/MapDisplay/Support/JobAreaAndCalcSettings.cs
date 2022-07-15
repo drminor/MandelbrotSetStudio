@@ -1,4 +1,5 @@
-﻿using MSS.Types.MSet;
+﻿using MSS.Types;
+using MSS.Types.MSet;
 using System;
 
 namespace MSetExplorer
@@ -10,16 +11,25 @@ namespace MSetExplorer
 
 		public JobAreaAndCalcSettings()
 		{
+			OwnerId = string.Empty;
+			OwnerType = JobOwnerType.Project;
 			MapAreaInfo = MapAreaInfo.Empty;
 			MapCalcSettings = new MapCalcSettings();
 		}
 
-		public JobAreaAndCalcSettings(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		public JobAreaAndCalcSettings(string ownerId, JobOwnerType ownerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
+			OwnerId = ownerId;
+			OwnerType = ownerType;
 			MapAreaInfo = mapAreaInfo;
 			MapCalcSettings = mapCalcSettings;
 		}
 
+		public JobAreaAndCalcSettings(JobAreaAndCalcSettings current, MapCalcSettings newMapCalcSettings) : this(current.OwnerId, current.OwnerType, current.MapAreaInfo, newMapCalcSettings)
+		{ }
+
+		public string OwnerId { get; init; }
+		public JobOwnerType OwnerType { get; init; }
 		public MapAreaInfo MapAreaInfo { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
 
@@ -32,7 +42,7 @@ namespace MSetExplorer
 
 		public JobAreaAndCalcSettings Clone()
 		{
-			return new JobAreaAndCalcSettings(MapAreaInfo.Clone(), MapCalcSettings.Clone());
+			return new JobAreaAndCalcSettings(OwnerId, OwnerType, MapAreaInfo.Clone(), MapCalcSettings.Clone());
 		}
 	}
 }

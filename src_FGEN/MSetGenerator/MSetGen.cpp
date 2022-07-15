@@ -26,7 +26,7 @@ typedef struct _MSETREQ
     int blockSizeWidth;
     int blockSizeHeight;
 
-    // SamplePointsDelta -- RSizeDto
+    // SamplePointDelta -- RSizeDto
     LONGLONG samplePointDeltaWidth[2];
     LONGLONG samplePointDeltaHeight[2];
     int samplePointDeltaExponent;

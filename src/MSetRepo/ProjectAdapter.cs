@@ -1,6 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo;
@@ -41,44 +39,21 @@ namespace MSetRepo
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			colorBandSetReaderWriter.CreateCollection();
 
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			subdivisionReaderWriter.CreateCollection();
-
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			mapSectionReaderWriter.CreateCollection();
-
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 			posterReaderWriter.CreateCollection();
-
-			mapSectionReaderWriter.CreateSubAndPosIndex();
 		}
 
-		public void DropCollections()
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			mapSectionReaderWriter.DropCollection();
+		//public void DropCollections()
+		//{
+		//	var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+		//	colorBandSetReaderWriter.DropCollection();
 
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			subdivisionReaderWriter.DropCollection();
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+		//	jobReaderWriter.DropCollection();
 
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			colorBandSetReaderWriter.DropCollection();
-
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			jobReaderWriter.DropCollection();
-
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			projectReaderWriter.DropCollection();
-		}
-
-		public void DropSubdivisionsAndMapSectionsCollections()
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			mapSectionReaderWriter.DropCollection();
-
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			subdivisionReaderWriter.DropCollection();
-		}
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	projectReaderWriter.DropCollection();
+		//}
 
 		#endregion
 
@@ -254,14 +229,6 @@ namespace MSetRepo
 			var result = projectReaderWriter.ExistsWithName(name);
 
 			return result;
-		}
-
-		public long? DeleteMapSectionsSince(DateTime lastSaved)
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var deleteCnt = mapSectionReaderWriter.DeleteMapSectionsSince(lastSaved);
-
-			return deleteCnt;
 		}
 
 		#endregion

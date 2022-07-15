@@ -21,7 +21,7 @@ namespace MEngineService
 		//		BlockPosition = new BigVectorDto(),
 		//		Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
 		//		BlockSize = new SizeInt(128, 128),
-		//		SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
+		//		SamplePointDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
 		//		MapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 100, useEscapeVelocities: true),
 		//		ProcessingStartTime = DateTime.UtcNow
 		//	};
@@ -112,7 +112,7 @@ namespace MEngineService
 		//	request.BlockPosition = new PointInt(0, 0);
 		//	request.Position = new RPointDto(new BigInteger[] { 4, 5 }, 1);
 		//	request.BlockSize = new SizeInt(128, 128);
-		//	request.SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8);
+		//	request.SamplePointDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8);
 		//	request.MapCalcSettings = new MapCalcSettings(maxIterations: 400, threshold: 4, iterationsPerStep: 100);
 
 		//	MapSectionRequestStruct requestStruct = new MapSectionReqHelper().GetRequestStruct(request);

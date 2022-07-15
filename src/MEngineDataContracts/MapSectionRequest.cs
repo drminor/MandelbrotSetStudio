@@ -14,33 +14,39 @@ namespace MEngineDataContracts
 		public string MapSectionId { get; set; }
 
 		[DataMember(Order = 2)]
-		public string SubdivisionId { get; set; }
+		public string OwnerId { get; set; }
 
 		[DataMember(Order = 3)]
-		public BigVectorDto BlockPosition { get; set; }
+		public int JobOwnerType { get; set; }
 
 		[DataMember(Order = 4)]
-		public RPointDto Position { get; set; }
+		public string SubdivisionId { get; set; }
 
 		[DataMember(Order = 5)]
-		public SizeInt BlockSize { get; set; }
+		public BigVectorDto BlockPosition { get; set; }
 
 		[DataMember(Order = 6)]
-		public RSizeDto SamplePointsDelta { get; set; }
+		public RPointDto Position { get; set; }
 
 		[DataMember(Order = 7)]
-		public MapCalcSettings MapCalcSettings { get; set; }
+		public SizeInt BlockSize { get; set; }
 
 		[DataMember(Order = 8)]
-		public ushort[] Counts { get; set; }
+		public RSizeDto SamplePointDelta { get; set; }
 
 		[DataMember(Order = 9)]
-		public ushort[] EscapeVelocities { get; set; }
+		public MapCalcSettings MapCalcSettings { get; set; }
 
 		[DataMember(Order = 10)]
-		public bool[] DoneFlags { get; set; }
+		public ushort[] Counts { get; set; }
 
 		[DataMember(Order = 11)]
+		public ushort[] EscapeVelocities { get; set; }
+
+		[DataMember(Order = 12)]
+		public bool[] DoneFlags { get; set; }
+
+		[DataMember(Order = 13)]
 		public double[] ZValues { get; set; }
 
 		public bool IsInverted { get; init; }

@@ -36,7 +36,7 @@ namespace MEngineClient
 			var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-			Debug.Assert(reply.ZValues == null, "The MapSectionResponse includes ZValues.");
+			Debug.Assert(reply.ZValues == null && reply.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
 
 			return reply;
 		}

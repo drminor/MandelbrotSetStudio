@@ -6,6 +6,7 @@ using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo;
+using ProjectRepo.Entities;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -25,6 +26,47 @@ namespace MSetRepo
 			_mSetRecordMapper = mSetRecordMapper;
 			_dtoMapper = new DtoMapper();
 		}
+
+		#region Collections
+
+		public void CreateCollections()
+		{
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			jobMapSectionReaderWriter.CreateCollection();
+
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			mapSectionReaderWriter.CreateCollection();
+			mapSectionReaderWriter.CreateSubAndPosIndex();
+
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			subdivisionReaderWriter.CreateCollection();
+		}
+
+		//public void DropCollections()
+		//{
+		//	var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+		//	jobMapSectionReaderWriter.DropCollection();
+
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	mapSectionReaderWriter.DropCollection();
+
+		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+		//	subdivisionReaderWriter.DropCollection();
+		//}
+
+		//public void DropSubdivisionsAndMapSectionsCollections()
+		//{
+		//	var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+		//	jobMapSectionReaderWriter.DropCollection();
+
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	mapSectionReaderWriter.DropCollection();
+
+		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+		//	subdivisionReaderWriter.DropCollection();
+		//}
+
+		#endregion
 
 		#region MapSection
 
@@ -122,6 +164,14 @@ namespace MSetRepo
 			return result;
 		}
 
+		public long? DeleteMapSectionsSince(DateTime lastSaved)
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var deleteCnt = mapSectionReaderWriter.DeleteMapSectionsSince(lastSaved);
+
+			return deleteCnt;
+		}
+
 		//public long? RemoveFetchZValuesProp()
 		//{
 		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
@@ -135,6 +185,42 @@ namespace MSetRepo
 
 		//	mapSectionReaderWriter.AddCreatedDateToAllRecords();
 		//}
+
+		#endregion
+
+		#region JobMapSection
+
+		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse)
+		{
+			var result = await SaveJobMapSectionAsync(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType);
+			return result;
+		}
+
+		public async Task<ObjectId?> SaveJobMapSectionAsync(string mapSectionIdStr, string ownerIdStr, int jobOwnerType)
+		{
+			if (string.IsNullOrEmpty(mapSectionIdStr))
+			{
+				throw new ArgumentNullException(nameof(mapSectionIdStr), "The mapSectionIdStr argument must have a non-null value.");
+			}
+
+			if (string.IsNullOrEmpty(ownerIdStr))
+			{
+				throw new ArgumentNullException(nameof(mapSectionIdStr), "The ownerIdStr argument must have a non-null value.");
+			}
+
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
+			var mapSectionId = new ObjectId(mapSectionIdStr);
+			var ownerId = new ObjectId(ownerIdStr);
+			var ownerType = jobOwnerType;
+			var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, ownerId, ownerType);
+
+			var jobMapSectionId = await jobMapSectionReaderWriter.InsertAsync(jobMapSectionRecord);
+
+			return jobMapSectionId;
+		}
+
+
 
 		#endregion
 

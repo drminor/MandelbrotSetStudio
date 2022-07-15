@@ -25,14 +25,14 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public Poster(string name, string? description, ObjectId? sourceJobId, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		public Poster(string name, string? description, ObjectId sourceJobId, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 			: this(ObjectId.GenerateNewId(), name, description, sourceJobId, mapAreaInfo, colorBandSet, mapCalcSettings, new VectorInt(), 1.0d,
 				  DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}
 
-		public Poster(ObjectId id, string name, string? description, ObjectId? sourceJobId, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
+		public Poster(ObjectId id, string name, string? description, ObjectId sourceJobId, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
 			VectorInt displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
@@ -108,7 +108,7 @@ namespace MSS.Types
 			}
 		}
 
-		public ObjectId? SourceJobId { get; init; }
+		public ObjectId SourceJobId { get; init; }
 
 		public MapAreaInfo MapAreaInfo
 		{

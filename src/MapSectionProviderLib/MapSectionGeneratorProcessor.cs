@@ -67,7 +67,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(MapSectionGenerateRequest mapSectionWorkItem)
+		internal void AddWork(MapSectionGenerateRequest mapSectionWorkItem)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
@@ -147,14 +147,11 @@ namespace MapSectionProviderLib
 						//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 
-						mapSectionResponse.MapSectionId = mapSectionRequest.MapSectionId;
+						Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
+
+						//mapSectionResponse.MapSectionId = mapSectionRequest.MapSectionId;
 						//mapSectionPersistProcessor.AddWork(mapSectionResponse);
 						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-
-						//if (IsJobCancelled(mapSectionGenerateRequest.JobId))
-						//{
-						//	mapSectionResponse = null;
-						//}
 					}
 
 					mapSectionGenerateRequest.Response = mapSectionResponse;

@@ -26,30 +26,23 @@ namespace MSS.Common
 
 		#region Create MapSectionRequests
 
-		public IList<MapSectionRequest> CreateSectionRequests(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection>? emptyMapSections)
+		public IList<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
 		{
-			if (emptyMapSections == null)
+			var result = new List<MapSectionRequest>();
+
+			Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
+
+			foreach (var mapSection in emptyMapSections)
 			{
-				return CreateSectionRequests(mapAreaInfo, mapCalcSettings);
+				var screenPosition = mapSection.BlockPosition;
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
+				result.Add(mapSectionRequest);
 			}
-			else
-			{
-				var result = new List<MapSectionRequest>();
 
-				Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
-
-				foreach (var mapSection in emptyMapSections)
-				{
-					var screenPosition = mapSection.BlockPosition;
-					var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Subdivision, mapCalcSettings);
-					result.Add(mapSectionRequest);
-				}
-
-				return result;
-			}
+			return result;
 		}
 
-		public IList<MapSectionRequest> CreateSectionRequests(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		public IList<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var result = new List<MapSectionRequest>();
 
@@ -58,7 +51,7 @@ namespace MSS.Common
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Subdivision, mapCalcSettings);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
 				result.Add(mapSectionRequest);
 			}
 
@@ -94,10 +87,10 @@ namespace MSS.Common
 
 		#region Create Single MapSectionRequest
 
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
-			var result = CreateRequest(repoPosition, isInverted, subdivision, mapCalcSettings);
+			var result = CreateRequest(repoPosition, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
 
 			return result;
 		}
@@ -112,16 +105,18 @@ namespace MSS.Common
 		/// <param name="mapCalcSettings"></param>
 		/// <param name="mapPosition"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(BigVector repoPosition, bool isInverted, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(BigVector repoPosition, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
 			var mapSectionRequest = new MapSectionRequest
 			{
+				OwnerId = ownerId,
+				JobOwnerType = (int)jobOwnerType,
 				SubdivisionId = subdivision.Id.ToString(),
 				BlockPosition = _dtoMapper.MapTo(repoPosition),
 				BlockSize = subdivision.BlockSize,
 				Position = _dtoMapper.MapTo(mapPosition),
-				SamplePointsDelta = _dtoMapper.MapTo(subdivision.SamplePointDelta),
+				SamplePointDelta = _dtoMapper.MapTo(subdivision.SamplePointDelta),
 				MapCalcSettings = mapCalcSettings,
 				Counts = null,
 				DoneFlags = null,

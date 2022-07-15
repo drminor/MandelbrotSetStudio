@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSS.Common.MSetRepo;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -82,6 +81,12 @@ namespace MSS.Common
 
 			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, canvasControlOffset);
 
+			return result;
+		}
+
+		public long? DeleteMapSectionsSince(DateTime lastSaved)
+		{
+			var result = _mapSectionAdapter.DeleteMapSectionsSince(lastSaved);
 			return result;
 		}
 

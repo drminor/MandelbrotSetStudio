@@ -24,7 +24,7 @@ namespace MEngineService
         public int blockSizeWidth;
         public int blockSizeHeight;
 
-        // RSizeDto SamplePointsDelta;
+        // RSizeDto SamplePointDelta;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
         public long[] samplePointDeltaWidth;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]

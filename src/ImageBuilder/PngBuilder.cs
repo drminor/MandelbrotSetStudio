@@ -1,4 +1,5 @@
 ﻿using MEngineDataContracts;
+using MongoDB.Bson;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -176,11 +177,13 @@ namespace ImageBuilder
 		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(int rowPtr, int stride, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var requests = new List<MapSectionRequest>();
+			var ownerId = ObjectId.GenerateNewId().ToString();
+			var jobOwnerType = JobOwnerType.ImageBuilder;
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
-				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, subdivision, mapCalcSettings);
+				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, ownerId, jobOwnerType, subdivision, mapCalcSettings);
 				requests.Add(mapSectionRequest);
 			}
 

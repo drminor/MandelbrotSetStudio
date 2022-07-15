@@ -162,10 +162,11 @@ namespace MSetExplorer
 				var newMapAreaInfo = curJob.MapAreaInfo;
 
 				MapCoordsViewModel.CurrentMapAreaInfo = newMapAreaInfo;
-				
 
 				var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
 					(
+					curJob.Id.ToString(),
+					JobOwnerType.Project,
 					newMapAreaInfo,
 					curJob.MapCalcSettings
 					);

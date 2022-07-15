@@ -1,5 +1,4 @@
-﻿using MEngineDataContracts;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -37,7 +36,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(MapSectionWorkRequest mapSectionWorkItem)
+		internal void AddWork(MapSectionWorkRequest mapSectionWorkItem)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{

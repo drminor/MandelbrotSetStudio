@@ -291,16 +291,19 @@ namespace MSetRepo
 			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
 
 			var result = new MapSectionResponse
-			{
-				MapSectionId = target.Id.ToString(),
-				SubdivisionId = target.SubdivisionId.ToString(),
-				BlockPosition = blockPosition,
-				MapCalcSettings = target.MapCalcSettings,
-				Counts = GetUShorts(target.Counts),
-				EscapeVelocities = GetUShorts(target.EscapeVelocities),
-				DoneFlags = GetBools(target.DoneFlags),
-				ZValues = target.ZValues.GetZValuesAsDoubleArray()
-			};
+			(
+				mapSectionId: target.Id.ToString(),
+				ownerId: string.Empty,
+				jobOwnerType: (int)JobOwnerType.Undetermined,
+				subdivisionId:  target.SubdivisionId.ToString(),
+				blockPosition: blockPosition,
+				mapCalcSettings: target.MapCalcSettings,
+				counts: GetUShorts(target.Counts),
+
+				escapeVelocities:  GetUShorts(target.EscapeVelocities),
+				doneFlags: GetBools(target.DoneFlags),
+				zValues: target.ZValues.GetZValuesAsDoubleArray()
+			);
 
 			return result;
 		}
@@ -334,16 +337,21 @@ namespace MSetRepo
 			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
 
 			var result = new MapSectionResponse
-			{
-				MapSectionId = target.Id.ToString(),
-				SubdivisionId = target.SubdivisionId.ToString(),
-				BlockPosition = blockPosition,
-				MapCalcSettings = target.MapCalcSettings,
-				Counts = GetUShorts(target.Counts),
-				EscapeVelocities = GetUShorts(target.EscapeVelocities),
-				DoneFlags = GetBools(target.DoneFlags),
-				ZValues = null
-			};
+			(
+				mapSectionId: target.Id.ToString(),
+				ownerId: string.Empty,
+				jobOwnerType: (int) JobOwnerType.Poster,
+				subdivisionId: target.SubdivisionId.ToString(),
+				blockPosition: blockPosition,
+				mapCalcSettings: target.MapCalcSettings,
+				counts: GetUShorts(target.Counts),
+
+				escapeVelocities: GetUShorts(target.EscapeVelocities),
+				doneFlags: GetBools(target.DoneFlags),
+				zValues: null
+			);
+
+			result.IncludeZValues = false;
 
 			return result;
 		}

@@ -338,7 +338,7 @@ namespace MSetExplorer
 			CancelJob();
 
 			CanvasControlOffset = job.MapAreaInfo.CanvasControlOffset;
-			_currentMapLoaderJobNumber = _mapLoaderManager.Push(job.MapAreaInfo, job.MapCalcSettings, MapSectionReady);
+			_currentMapLoaderJobNumber = _mapLoaderManager.Push(job.OwnerId, job.OwnerType, job.MapAreaInfo, job.MapCalcSettings, MapSectionReady);
 		}
 
 		public void CancelJob()
@@ -530,7 +530,8 @@ namespace MSetExplorer
 				ClearDisplay();
 
 				CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
-				_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady);
+
+				_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady);
 			}
 			else
 			{

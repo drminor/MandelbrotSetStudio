@@ -100,7 +100,10 @@ namespace MapSectionProviderLib
 						else
 						{
 							Debug.WriteLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
-							_ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+							var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+							mapSectionResponse.MapSectionId = mapSectionId.ToString();
+
+							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
 						}
 					}
 				}

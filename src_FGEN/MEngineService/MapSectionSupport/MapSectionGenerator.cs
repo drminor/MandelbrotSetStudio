@@ -52,17 +52,7 @@ namespace MEngineService
 			Marshal.Copy(zValuesBuffer, zValues, 0, zValues.Length);
 			Marshal.FreeCoTaskMem(zValuesBuffer);
 
-			var result = new MapSectionResponse
-			{
-				MapSectionId = mapSectionRequest.MapSectionId,
-				SubdivisionId = mapSectionRequest.SubdivisionId,
-				BlockPosition = mapSectionRequest.BlockPosition,
-				MapCalcSettings = mapSectionRequest.MapCalcSettings,
-				Counts = counts,
-				EscapeVelocities = escapeVelocities,
-				DoneFlags = doneFlags,
-				ZValues = zValues
-			};
+			var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlags, zValues);
 
 			return result;
 		}

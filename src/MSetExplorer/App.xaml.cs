@@ -1,7 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MEngineClient;
 using MSS.Common;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -13,10 +12,6 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class App : Application
 	{
-		//private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
-		//private const string MONGO_DB_CONN_STRING = "mongodb://davidmain:27017";
-		//private const string MONGO_DB_CONN_STRING = "mongodb://desktop-bau7fe6:27017";
-
 		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		private const int MONGO_DB_PORT = 27017;
 
@@ -25,13 +20,9 @@ namespace MSetExplorer
 		private const string LOCAL_M_ENGINE_ADDRESS = "https://localhost:5001";
 		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.2.109:5000" };
 
-		private static readonly bool START_LOCAL_ENGINE = true;
+		private static readonly bool START_LOCAL_ENGINE = false;
 		private static readonly bool USE_LOCAL_ENGINE = true; // If true, we will host a server -- AND include it in the list of servers to use by our client.
 		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
-
-		private const bool DROP_RECENT_MAP_SECTIONS = false;
-		private const bool DROP_ALL_COLLECTIONS = false;
-		private const bool DROP_MAP_SECTIONS = false;
 
 		private const bool FETCH_ZVALUES_LOCALLY = false;
 
@@ -58,7 +49,7 @@ namespace MSetExplorer
 			_mEngineServerManager?.Start();
 
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT);
-			PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
+			//PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
 
 			var mEngineAddresses = USE_REMOTE_ENGINE ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();
 
@@ -84,24 +75,6 @@ namespace MSetExplorer
 			}
 
 			_mEngineServerManager?.Stop();
-		}
-
-		private void PrepareRepositories(bool dropAllCollections, bool dropMapSections, bool dropRecentMapSections, RepositoryAdapters repositoryAdapters)
-		{
-			if (dropAllCollections)
-			{
-				repositoryAdapters.ProjectAdapter.DropCollections();
-			}
-			else if (dropMapSections)
-			{
-				repositoryAdapters.ProjectAdapter.DropSubdivisionsAndMapSectionsCollections();
-			}
-
-			if (dropRecentMapSections)
-			{
-				var lastSaved = DateTime.Parse("2022-05-29");
-				repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
-			}
 		}
 
 		private AppNavWindow GetAppNavWindow(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
@@ -138,7 +111,27 @@ namespace MSetExplorer
 			return mapSectionRequestProcessor;
 		}
 
+		//private const bool DROP_RECENT_MAP_SECTIONS = false;
+		//private const bool DROP_ALL_COLLECTIONS = false;
+		//private const bool DROP_MAP_SECTIONS = false;
 
+		//private void PrepareRepositories(bool dropAllCollections, bool dropMapSections, bool dropRecentMapSections, RepositoryAdapters repositoryAdapters)
+		//{
+		//	if (dropAllCollections)
+		//	{
+		//		repositoryAdapters.ProjectAdapter.DropCollections();
+		//	}
+		//	else if (dropMapSections)
+		//	{
+		//		repositoryAdapters.ProjectAdapter.DropSubdivisionsAndMapSectionsCollections();
+		//	}
+
+		//	if (dropRecentMapSections)
+		//	{
+		//		var lastSaved = DateTime.Parse("2022-05-29");
+		//		repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
+		//	}
+		//}
 
 		//private void DoSchemaUpdates()
 		//{

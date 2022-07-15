@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using MSS.Types.DataTransferObjects;
-using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Diagnostics;
@@ -37,7 +36,6 @@ namespace ProjectRepo
 				.Ascending(x => x.BlockPosYLo)
 				.Ascending(x => x.BlockPosXHi)
 				.Ascending(x => x.BlockPosYHi);
-
 
 			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<MapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "SubAndPos" }));
 		}

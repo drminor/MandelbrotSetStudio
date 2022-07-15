@@ -104,7 +104,7 @@ namespace MSetExplorer
 						_currentPoster.DisplayPosition = dispPos;
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 
-						JobAreaAndCalcSettings = GetNewJob(_currentPoster.MapAreaInfo, DisplayPosition, LogicalDisplaySize.Round(), _currentPoster.MapCalcSettings);
+						JobAreaAndCalcSettings = GetNewJob(_currentPoster, DisplayPosition, LogicalDisplaySize.Round());
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
 					}
 
@@ -142,7 +142,7 @@ namespace MSetExplorer
 					if (value != DisplayPosition)
 					{
 						curPoster.DisplayPosition = value;
-						JobAreaAndCalcSettings = GetNewJob(curPoster.MapAreaInfo, value, LogicalDisplaySize.Round(), curPoster.MapCalcSettings);
+						JobAreaAndCalcSettings = GetNewJob(curPoster, value, LogicalDisplaySize.Round());
 
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 					}
@@ -340,7 +340,7 @@ namespace MSetExplorer
 		private void UpdateMapView(Poster poster)
 		{
 			// Use the new map specification and the current zoom and display position to set the region to display.
-			JobAreaAndCalcSettings = GetNewJob(poster.MapAreaInfo, DisplayPosition, LogicalDisplaySize.Round(), poster.MapCalcSettings);
+			JobAreaAndCalcSettings = GetNewJob(poster, DisplayPosition, LogicalDisplaySize.Round());
 		}
 
 		public void UpdateColorBandSet(ColorBandSet colorBandSet)
@@ -365,7 +365,7 @@ namespace MSetExplorer
 				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentPoster.ColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentPoster.MapCalcSettings.RequestsPerJob);
 
-				JobAreaAndCalcSettings = new JobAreaAndCalcSettings(JobAreaAndCalcSettings.MapAreaInfo, mapCalcSettings);
+				JobAreaAndCalcSettings = new JobAreaAndCalcSettings(JobAreaAndCalcSettings, mapCalcSettings);
 			}
 			else
 			{
@@ -380,14 +380,14 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private JobAreaAndCalcSettings GetNewJob(MapAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, MapCalcSettings mapCalcSettings)
+		private JobAreaAndCalcSettings GetNewJob(Poster poster, VectorInt displayPosition, SizeInt logicalDisplaySize)
 		{
-			var viewPortArea = GetNewViewPort(currentAreaInfo, displayPosition, logicalDisplaySize);
+			var viewPortArea = GetNewViewPort(poster.MapAreaInfo, displayPosition, logicalDisplaySize);
 
-			var mapCalcSettingsCpy = mapCalcSettings.Clone();
+			var mapCalcSettingsCpy = poster.MapCalcSettings.Clone();
 			//mapCalcSettingsCpy.DontFetchZValuesFromRepo = true;
 
-			var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(viewPortArea, mapCalcSettingsCpy);
+			var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(poster.SourceJobId.ToString(), JobOwnerType.Poster, viewPortArea, mapCalcSettingsCpy);
 
 			return jobAreaAndCalcSettings;
 		}

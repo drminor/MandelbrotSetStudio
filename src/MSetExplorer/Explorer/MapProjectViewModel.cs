@@ -303,7 +303,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var deleteCnt = _projectAdapter.DeleteMapSectionsSince(lastSaved);
+				var deleteCnt = _mapJobHelper.DeleteMapSectionsSince(lastSaved);
 
 				return deleteCnt;
 			}

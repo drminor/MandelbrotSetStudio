@@ -10,11 +10,13 @@ namespace MSetExplorer
 		{
 			// Project Repository Adapter
 			ProjectAdapter = MSetRepoHelper.GetProjectAdapter(server, port);
-
 			ProjectAdapter.CreateCollections();
 
+			// MapSection Repository Adapter
 			MapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(server, port);
+			MapSectionAdapter.CreateCollections();
 
+			// SharedColorBandSet Repository Adapter
 			SharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(server, port);
 			SharedColorBandSetAdapter.CreateCollections();
 		}

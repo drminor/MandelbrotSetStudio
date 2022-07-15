@@ -136,7 +136,7 @@ namespace ImageBuilderOld
 				BlockPosition = new BigVectorDto(new BigInteger[] { 0, 0 }),
 				Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
 				BlockSize = RMapConstants.BLOCK_SIZE,
-				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
+				SamplePointDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
 				MapCalcSettings = new MapCalcSettings(targetIterations: 100, requestsPerJob: 100),
 				Counts = null,
 				DoneFlags = null,
