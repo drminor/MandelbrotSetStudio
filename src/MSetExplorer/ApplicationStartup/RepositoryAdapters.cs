@@ -6,19 +6,23 @@ namespace MSetExplorer
 {
 	public class RepositoryAdapters
 	{
-		public RepositoryAdapters(string server, int port)
+		public RepositoryAdapters(string server, int port, bool createCollections)
 		{
 			// Project Repository Adapter
 			ProjectAdapter = MSetRepoHelper.GetProjectAdapter(server, port);
-			ProjectAdapter.CreateCollections();
 
 			// MapSection Repository Adapter
 			MapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(server, port);
-			MapSectionAdapter.CreateCollections();
 
 			// SharedColorBandSet Repository Adapter
 			SharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(server, port);
-			SharedColorBandSetAdapter.CreateCollections();
+
+			if (createCollections)
+			{
+				ProjectAdapter.CreateCollections();
+				MapSectionAdapter.CreateCollections();
+				SharedColorBandSetAdapter.CreateCollections();
+			}
 		}
 
 		public IProjectAdapter ProjectAdapter { get; init; }

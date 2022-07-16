@@ -484,7 +484,7 @@ namespace MSetExplorer
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 				}
 
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+				//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 
@@ -518,7 +518,7 @@ namespace MSetExplorer
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
 				}
 
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+				//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 

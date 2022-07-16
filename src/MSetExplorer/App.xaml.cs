@@ -21,6 +21,8 @@ namespace MSetExplorer
 		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.2.109:5000" };
 
 		private static readonly bool START_LOCAL_ENGINE = true;
+
+		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool USE_LOCAL_ENGINE = true; // If true, we will host a server -- AND include it in the list of servers to use by our client.
 		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
 
@@ -48,7 +50,7 @@ namespace MSetExplorer
 
 			_mEngineServerManager?.Start();
 
-			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT);
+			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, CREATE_COLLECTIONS);
 			//PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
 
 			var mEngineAddresses = USE_REMOTE_ENGINE ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();
