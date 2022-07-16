@@ -10,6 +10,7 @@ namespace MSetExplorer
 
 		void Draw(PointInt position, byte[] pixels, bool offline);
 		void Redraw(PointInt position);
+		void Finish();
 
 		bool Hide(MapSection mapSection);
 

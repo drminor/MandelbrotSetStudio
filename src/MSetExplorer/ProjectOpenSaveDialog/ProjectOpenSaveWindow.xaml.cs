@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace MSetExplorer
 {
@@ -17,6 +18,7 @@ namespace MSetExplorer
 			_vm = (IProjectOpenSaveViewModel)DataContext;
 
 			Loaded += ProjectOpenSaveWindow_Loaded;
+			ContentRendered += ProjectOpenSaveWindow_ContentRendered;
 			InitializeComponent();
 		}
 
@@ -39,10 +41,10 @@ namespace MSetExplorer
 				lvProjects.SelectionChanged += LvProjects_SelectionChanged;
 
 				lvProjects.MouseDoubleClick += LvProjects_MouseDoubleClick;
+				lvProjects.Focusable = true;
 
 				txtName.LostFocus += TxtName_LostFocus;
 
-				_ = txtName.Focus();
 				btnSave.IsEnabled = _vm.SelectedName != null;
 
 				Debug.WriteLine("The ProjectOpenSave Window is now loaded");
@@ -52,6 +54,22 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private void ProjectOpenSaveWindow_ContentRendered(object? sender, System.EventArgs e)
+		{
+			if (_vm.DialogType == DialogType.Save)
+			{
+				_ = txtName.Focus();
+			}
+			else
+			{
+				if (lvProjects.ItemContainerGenerator.ContainerFromItem(lvProjects.Items[0]) is ListViewItem item)
+				{
+					lvProjects.SelectedIndex = 0;
+					_ = item.Focus();
+				}
+			}
+		}
 
 		private void LvProjects_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
 		{

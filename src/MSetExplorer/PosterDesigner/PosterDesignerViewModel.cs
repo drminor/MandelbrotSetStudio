@@ -17,8 +17,7 @@ namespace MSetExplorer
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
 		private readonly CoordsEditorViewModelCreator _coordsEditorViewModelCreator;
 
-		private double _dispWidth;
-		private double _dispHeight;
+		private SizeDbl _mapDisplaySize;
 
 		#region Constructor
 
@@ -31,17 +30,19 @@ namespace MSetExplorer
 			_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
-			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
-
 			MapScrollViewModel = mapScrollViewModel;
+
+			//PosterViewModel.LogicalDisplaySize = MapDisplayViewModel.LogicalDisplaySize;
+			//MapScrollViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+
+			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 			MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
 
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
 			PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
-			DispWidth = MapDisplayViewModel.CanvasSize.Width;
-			DispHeight = MapDisplayViewModel.CanvasSize.Height;
+			MapDisplaySize = MapDisplayViewModel.CanvasSize;
 
 			_posterOpenSaveViewModelCreator = posterOpenSaveViewModelCreator;
 			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
@@ -72,28 +73,21 @@ namespace MSetExplorer
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 		public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 
-		public double DispWidth
+		public SizeDbl MapDisplaySize
 		{
-			get => _dispWidth;
+			get => _mapDisplaySize;
 			set
 			{
-				if (value != _dispWidth)
+				if (value != _mapDisplaySize)
 				{
-					_dispWidth = value;
-					OnPropertyChanged();
+					//var prev = _mapDisplaySize;
+					_mapDisplaySize = value;
+					//Debug.WriteLine($"Raising the OnPropertyChanged for the MapDisplaySize. Old = {prev}, new = {value}.");
+					OnPropertyChanged(nameof(IPosterDesignerViewModel.MapDisplaySize));
 				}
-			}
-		}
-
-		public double DispHeight
-		{
-			get => _dispHeight;
-			set
-			{
-				if (value != _dispHeight)
+				else
 				{
-					_dispHeight = value;
-					OnPropertyChanged();
+					//Debug.WriteLine($"Not raising the OnPropertyChanged for the MapDisplaySize, the value {value} is unchanged.");
 				}
 			}
 		}
@@ -141,14 +135,13 @@ namespace MSetExplorer
 			var screenAreaInt = screenArea.Round();
 
 			var coords = RMapHelper.GetMapCoords(screenAreaInt, mapPosition, samplePointDelta);
-			var reducedCoords = Reducer.Reduce(coords);
 
-			CheckCoordsChange(mapAreaInfo, screenArea, reducedCoords);
+			CheckCoordsChange(mapAreaInfo, screenArea, coords);
 
 			var posterSize = newMapSize.Round();
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 
-			var result = _mapJobHelper.GetMapAreaInfo(reducedCoords, posterSize, blockSize);
+			var result = _mapJobHelper.GetMapAreaInfo(coords, posterSize, blockSize);
 
 			return result;
 		}
@@ -158,7 +151,7 @@ namespace MSetExplorer
 		{
 			if (screenArea == new RectangleDbl(new RectangleInt(new PointInt(), mapAreaInfo.CanvasSize)))
 			{
-				if (newCoords != Reducer.Reduce(mapAreaInfo.Coords))
+				if (Reducer.Reduce(newCoords) != Reducer.Reduce(mapAreaInfo.Coords))
 				{
 					Debug.WriteLine($"The new ScreenArea matches the existing ScreenArea, but the Coords were updated.");
 					//throw new InvalidOperationException("if the pos has not changed, the coords should not change.");
@@ -253,8 +246,7 @@ namespace MSetExplorer
 			// Let the Map Project know about Map Display size changes
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
-				DispWidth = MapDisplayViewModel.CanvasSize.Width;
-				DispHeight = MapDisplayViewModel.CanvasSize.Height;
+				MapDisplaySize = MapDisplayViewModel.CanvasSize;
 				PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 			}
 

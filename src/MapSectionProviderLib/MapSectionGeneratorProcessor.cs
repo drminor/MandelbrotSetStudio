@@ -147,7 +147,10 @@ namespace MapSectionProviderLib
 						//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 
-						Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
+						if (mapSectionRequest.MapSectionId != null)
+						{
+							Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
+						}
 
 						//mapSectionResponse.MapSectionId = mapSectionRequest.MapSectionId;
 						//mapSectionPersistProcessor.AddWork(mapSectionResponse);

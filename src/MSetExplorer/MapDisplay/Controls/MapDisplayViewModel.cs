@@ -78,11 +78,11 @@ namespace MSetExplorer
 
 			_paintLocker = new object();
 			MapSections = new ObservableCollection<MapSection>();
-			//MapSections = new List<MapSection>();
-			//MapSections.CollectionChanged += MapSections_CollectionChanged;
+
+			HandleContainerSizeUpdates = true;
 
 			DisplayZoom = 1.0;
-			ContainerSize = new SizeDbl(500, 500);
+			ContainerSize = new SizeDbl(600);
 		}
 
 		#endregion
@@ -214,22 +214,29 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool HandleContainerSizeUpdates { get; set; }
+
 		// TODO: Prevent the ContainerSize from being set to a value that would require more than 100 x 100 blocks.
 		public SizeDbl ContainerSize
 		{
 			get => _containerSize;
 			set
 			{
-				_containerSize = value;
+				if (HandleContainerSizeUpdates)
+				{
+					_containerSize = value;
 
-				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_containerSize, BlockSize, _keepDisplaySquare);
-				var desiredCanvasSize = sizeInWholeBlocks.Scale(BlockSize);
+					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ContainerSize, BlockSize, _keepDisplaySquare);
+					var desiredCanvasSize = sizeInWholeBlocks.Scale(BlockSize);
 
-				//Debug.WriteLine($"The container size is now {value} Would set the Canvas Size to {desiredCanvasSize}, but keeping it at 1024 x 1024 for now.");
-				//CanvasSize = new SizeDbl(1024);
+					//Debug.WriteLine($"The Container size is now {value}, updating the CanvasSize from {CanvasSize} to {desiredCanvasSize}.");
 
-				CanvasSize = new SizeDbl(desiredCanvasSize);
-				//DisplayZoom = 1024 / (double) desiredCanvasSize.Width; //  _canvasSize.Width / 1024;
+					CanvasSize = new SizeDbl(desiredCanvasSize);
+				}
+				else
+				{
+					//Debug.WriteLine($"Not handling the ContainerSize update. The value is {value}.");
+				}
 			}
 		}
 
@@ -410,6 +417,7 @@ namespace MSetExplorer
 				{
 					_synchronizationContext?.Post(o =>
 					{
+						_screenSectionCollection.Finish();
 						DisplayJobCompleted?.Invoke(this, jobNumber);
 					}
 					, null);
@@ -442,6 +450,7 @@ namespace MSetExplorer
 				bool shouldUpdateUi;
 				if (isLastSection)
 				{
+					Debug.WriteLine($"Setting should update to true, it is the last section.");
 					shouldUpdateUi = true;
 					if (_stopwatch != null)
 					{
@@ -455,17 +464,28 @@ namespace MSetExplorer
 					{
 						_stopwatch = Stopwatch.StartNew();
 					}
-					shouldUpdateUi = --_callCounter <= 0 || _stopwatch?.ElapsedMilliseconds > SECTION_DRAW_DELAY;
+
+					var callCounterExpired = --_callCounter <= 0;
+					var drawDelayDurationExceeded = _stopwatch?.ElapsedMilliseconds > SECTION_DRAW_DELAY;
+
+					shouldUpdateUi = callCounterExpired || drawDelayDurationExceeded;
 					if (shouldUpdateUi)
 					{
+						Debug.WriteLine($"Setting should update to true, callCounterExpired: {callCounterExpired}, drawDelayDurationExceeded: {drawDelayDurationExceeded}.");
+
 						if (_stopwatch != null)
 						{
 							_stopwatch.Restart();
 						}
 						_callCounter = Math.Min(CanvasSize.Round().Width / BlockSize.Width, 8);
 					}
+					else
+					{
+						Debug.WriteLine($"Setting should update to false.");
 
+					}
 				}
+
 				return shouldUpdateUi;
 			}
 		}
@@ -482,7 +502,13 @@ namespace MSetExplorer
 					MapSections.Add(mapSection);
 					_screenSectionCollection.Redraw(mapSection.BlockPosition);
 				}
+				else
+				{
+					Debug.WriteLine($"UpdateUi is skipping. The jobNumber = {jobNumber}, our JobNumber = {_currentMapLoaderJobNumber}.");
+				}
 			}
+
+			sectionsPendingUiUpdate.Clear();
 
 			return true;
 		}

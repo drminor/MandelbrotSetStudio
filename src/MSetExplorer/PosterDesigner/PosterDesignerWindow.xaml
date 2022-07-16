@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Designer Window" Width="1505" Height="1125">
+        Title="Designer Window" Width="993" Height="608">
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.PosterSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
@@ -44,7 +44,7 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="25">
+        <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="20">
 
             <MenuItem Header="_Poster">
                 <!--<MenuItem Header="_New" Click="NewButton_Click"/>-->

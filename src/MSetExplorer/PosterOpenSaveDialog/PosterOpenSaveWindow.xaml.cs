@@ -19,6 +19,7 @@ namespace MSetExplorer
 			_vm = (IPosterOpenSaveViewModel)DataContext;
 
 			Loaded += ProjectOpenSaveWindow_Loaded;
+			ContentRendered += PosterOpenSaveWindow_ContentRendered;
 			InitializeComponent();
 		}
 
@@ -55,6 +56,22 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private void PosterOpenSaveWindow_ContentRendered(object? sender, System.EventArgs e)
+		{
+			if (_vm.DialogType == DialogType.Save)
+			{
+				_ = txtName.Focus();
+			}
+			else
+			{
+				if (lvPosters.ItemContainerGenerator.ContainerFromItem(lvPosters.Items[0]) is ListViewItem item)
+				{
+					lvPosters.SelectedIndex = 0;
+					_ = item.Focus();
+				}
+			}
+		}
 
 		private void LvPosters_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
 		{

@@ -9,7 +9,10 @@ namespace MSetExplorer
 	internal interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
 	{
 		ImageSource ImageSource { get; }
+
+		bool HandleContainerSizeUpdates { get; set; }
 		SizeDbl ContainerSize { get; set; }
+		
 		SizeDbl CanvasSize { get; }
 		VectorInt CanvasControlOffset { get; set; }
 

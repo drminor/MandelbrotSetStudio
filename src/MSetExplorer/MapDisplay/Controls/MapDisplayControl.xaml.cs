@@ -62,8 +62,6 @@ namespace MSetExplorer
 				_canvas = MainCanvas;
 				_vm = (IMapDisplayViewModel) DataContext;
 
-				UpdateTheVmWithOurSize(new SizeDbl(ActualWidth, ActualHeight));
-
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
 				SizeChanged += MapDisplay_SizeChanged;
 
@@ -71,6 +69,8 @@ namespace MSetExplorer
 				_mapDisplayImage = new Image { Source = _vm.ImageSource };
 				_ = _canvas.Children.Add(_mapDisplayImage);
 				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
+				_mapDisplayImage.SetValue(Canvas.LeftProperty, 0d);
+				_mapDisplayImage.SetValue(Canvas.RightProperty, 0d);
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -80,6 +80,8 @@ namespace MSetExplorer
 				_border = _showBorder && (!_clipImageBlocks) ? BuildBorder(_canvas) : null;
 
 				SetCanvasOffset(new VectorInt(), 1);
+
+				UpdateTheVmWithOurSize(new SizeDbl(ActualWidth, ActualHeight));
 
 				Debug.WriteLine("The MapDisplay Control is now loaded.");
 			}
@@ -130,7 +132,7 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasControlOffset) || e.PropertyName == nameof(IMapDisplayViewModel.DisplayZoom))
+			if (e.PropertyName is (nameof(IMapDisplayViewModel.CanvasControlOffset)) or (nameof(IMapDisplayViewModel.DisplayZoom)))
 			{
 				SetCanvasOffset(_vm.CanvasControlOffset, _vm.DisplayZoom);
 			}
@@ -148,6 +150,7 @@ namespace MSetExplorer
 
 		private void MapDisplay_SizeChanged(object? sender, SizeChangedEventArgs e)
 		{
+			//Debug.WriteLine($"The MapDisplay Size is changing. The new size is {e.NewSize}, the old size is {e.PreviousSize}");
 			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize));
 		}
 

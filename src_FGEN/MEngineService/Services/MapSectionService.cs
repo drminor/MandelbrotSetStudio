@@ -12,9 +12,7 @@ namespace MEngineService.Services
 	public class MapSectionService : IMapSectionService
     {
 		// TODO: Have the MapSectionService get the MongoDb connection string from the appsettings.json file.
-		//private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
-		//private const string MONGO_DB_CONN_STRING = "mongodb://davidmain:27017";
-		//private const string MONGO_DB_CONN_STRING = "mongodb://desktop-bau7fe6:27017";
+
 		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		private const int MONGO_DB_PORT = 27017;
 

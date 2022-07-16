@@ -167,6 +167,12 @@ namespace MSetExplorer
 			}
 		}
 
+		public void Finish()
+		{
+			_drawingGroup.Children.Remove(_foundationRectangle);
+			_drawingGroup.Children.Add(_foundationRectangle);
+		}
+
 		public bool Hide(MapSection mapSection)
 		{
 			var screenSection = GetScreenSection(mapSection.BlockPosition);
@@ -254,7 +260,7 @@ namespace MSetExplorer
 			var maxX = int.MinValue;
 			var minY = int.MaxValue;
 
-			foreach (var blockPosition in ScreenTypeHelper.Points(blocksToAllocate))
+			foreach (var blockPosition  in ScreenTypeHelper.Points(blocksToAllocate))
 			{
 				var invertedPosition = GetInvertedBlockPos(blockPosition);
 				if (currentSections[blockPosition.Y, blockPosition.X] == null)
@@ -274,14 +280,14 @@ namespace MSetExplorer
 				}
 			}
 
-			var bounds = new RectangleInt(new PointInt(0, minY * blockSize.Height), new SizeInt(maxX * blockSize.Width, 0));
-
+			var x1 = 0;
+			var x2 = (maxX + 1) * blockSize.Width;
+			var y1 = minY * blockSize.Height;
+			var y2 = _maxSizeInBlocks.Height * blockSize.Height;
+			var bounds = new RectangleInt(x1, x2, y1, y2);
 			Debug.WriteLine($"The new ScreenSectionCollection Bounds is {bounds}.");
 
 			_foundationRectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(bounds));
-
-			//_drawingGroup.Children.Remove(_foundationRectangle);
-			//_drawingGroup.Children.Add(_foundationRectangle);
 		}
 
 		private GeometryDrawing BuildFoundationRectangle(SizeInt sizeInBlocks, SizeInt blockSize)

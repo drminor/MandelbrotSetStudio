@@ -7,6 +7,7 @@ namespace MSetExplorer
 {
 	internal interface IPosterDesignerViewModel : INotifyPropertyChanged
 	{
+		SizeDbl MapDisplaySize { get; }
 		IPosterViewModel PosterViewModel { get; }
 
 		IMapScrollViewModel MapScrollViewModel { get; }

@@ -78,7 +78,7 @@ namespace MSetExplorer
 				var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, _cts.Token);
 				_requests.Add(genMapRequestInfo);
 
-				result = mapLoader.JobNumber;
+				result = genMapRequestInfo.JobNumber;
 
 				genMapRequestInfo.MapSectionLoaded += GenMapRequestInfo_MapSectionLoaded;
 
