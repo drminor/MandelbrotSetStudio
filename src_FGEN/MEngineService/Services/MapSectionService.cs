@@ -16,32 +16,34 @@ namespace MEngineService.Services
 		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		private const int MONGO_DB_PORT = 27017;
 
-		public static IMapSectionAdapter MapSectionAdapter { get; private set; }
+		private static readonly IMapSectionAdapter _mapSectionAdapter;
+		private static readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 
-		public static MapSectionPersistProcessor _mapSectionPersistProcessor;
+		private static int _sectionCntr;
 
 		static MapSectionService()
 		{
-			MapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_SERVER, MONGO_DB_PORT);
-			_mapSectionPersistProcessor = new MapSectionPersistProcessor(MapSectionAdapter);
+			_mapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(MONGO_DB_SERVER, MONGO_DB_PORT);
+			_mapSectionPersistProcessor = new MapSectionPersistProcessor(_mapSectionAdapter);
+			_sectionCntr = 0;
 			Console.WriteLine($"The MapSection Persist Processor has started. Server: {MONGO_DB_SERVER}, Port: {MONGO_DB_PORT}.");
 		}
 
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default)
 		{
-			var mapSectionResponse = await MapSectionGenerator.GenerateMapSectionAsync(mapSectionRequest);
+			var mapSectionResponse = await MapSectionGenerator.GenerateMapSectionAsync(mapSectionRequest, _mapSectionAdapter);
 
-			Debug.WriteLine($"Adding MapSectionResponse with ID: {mapSectionResponse.MapSectionId} to the MapSection Persist Processor. ");
+			var idStr = string.IsNullOrEmpty(mapSectionResponse.MapSectionId) ? "new" : mapSectionResponse.MapSectionId;
+
+			Debug.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. ");
 			_mapSectionPersistProcessor.AddWork(mapSectionResponse);
 
 			mapSectionResponse.IncludeZValues = false;
+
+			Console.WriteLine($"Returned {++_sectionCntr} sections.");
+
 			return mapSectionResponse;
 		}
 
-		//public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CallContext context = default)
-		//{
-		//	var mapSectionResponse = MapSectionGenerator.GenerateMapSection(mapSectionRequest);
-		//	return mapSectionResponse;
-		//}
 	}
 }

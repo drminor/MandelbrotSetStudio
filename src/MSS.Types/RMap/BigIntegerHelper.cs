@@ -45,7 +45,7 @@ namespace MSS.Types
 				result = BigInteger.DivRem(adjDividend, divisor, out remainder);
 				adjRem = ((double)remainder) * Math.Pow(2, dividend.Exponent - exponentDelta);
 
-				ReportDivideValues(dividend, divisor, adjDividend, result, remainder, exponentDelta);
+				//ReportDivideValues(dividend, divisor, adjDividend, result, remainder, exponentDelta);
 			}
 
 			var newExponent = dividend.Exponent - exponentDelta;

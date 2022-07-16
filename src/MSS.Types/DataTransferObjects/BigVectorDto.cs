@@ -1,5 +1,7 @@
 ﻿using ProtoBuf;
+using System.Globalization;
 using System.Numerics;
+using System.Text;
 
 namespace MSS.Types.DataTransferObjects
 {
@@ -31,7 +33,23 @@ namespace MSS.Types.DataTransferObjects
 
 		public override string? ToString()
 		{
-			return "Need to Override TS"; // BigIntegerHelper.FromLongs(X)
+			var sb = new StringBuilder();
+
+			_ = sb.Append("X:")
+			.Append(GetString(X))
+			.Append(", Y:")
+			.Append(GetString(Y));
+
+			return sb.ToString();
 		}
+
+		private string GetString(long[] vals)
+		{
+			return vals[1] == 0
+				? vals[0].ToString(CultureInfo.InvariantCulture)
+				: vals[1].ToString(CultureInfo.InvariantCulture) + ", " + vals[0].ToString(CultureInfo.InvariantCulture);
+		}
+
+
 	}
 }

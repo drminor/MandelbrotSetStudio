@@ -35,7 +35,7 @@ namespace MSetExplorer
 		public ExplorerViewModel GetExplorerViewModel()
 		{
 			// Map Project ViewModel
-			var mapProjectViewModel = new MapProjectViewModel(_projectAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
+			var mapProjectViewModel = new MapProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();

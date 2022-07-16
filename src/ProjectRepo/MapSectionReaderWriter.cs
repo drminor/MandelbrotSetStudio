@@ -19,7 +19,7 @@ namespace ProjectRepo
 		{
 			if (base.CreateCollection())
 			{
-				CreateSubAndPosIndex();
+				//CreateSubAndPosIndex();
 				return true;
 			}
 			else

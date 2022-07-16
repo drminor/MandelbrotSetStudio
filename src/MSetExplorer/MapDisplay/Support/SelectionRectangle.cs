@@ -166,7 +166,7 @@ namespace MSetExplorer
 
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
 		{
-			Debug.WriteLine($"The {e.Key} was pressed on the Selected Area.");
+			//Debug.WriteLine($"The {e.Key} was pressed on the Selected Area.");
 
 			if (!Selecting)
 			{
@@ -184,13 +184,13 @@ namespace MSetExplorer
 		{
 			if (!Dragging)
 			{
-				Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- not in drag.");
+				//Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- not in drag.");
 				return;
 			}
 
 			if (e.Key == Key.Escape)
 			{
-				Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
+				//Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
 				_dragHasBegun = false;
 				Dragging = false;
 			}
@@ -227,7 +227,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLine("MouseWheel, but no change.");
+				//Debug.WriteLine("MouseWheel, but no change.");
 				return;
 			}
 
@@ -296,11 +296,11 @@ namespace MSetExplorer
 		{
 			if (!Enabled)
 			{
-				Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event -- we are disabled.");
+				//Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event -- we are disabled.");
 				return;
 			}
 
-			Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event. IsFocused = {_canvas.IsFocused}. Have a mouse down event = {_haveMouseDown}, IsDragging = {Dragging}, Selecting = {Selecting}");
+			//Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event. IsFocused = {_canvas.IsFocused}. Have a mouse down event = {_haveMouseDown}, IsDragging = {Dragging}, Selecting = {Selecting}");
 
 			if (Dragging)
 			{
@@ -324,23 +324,23 @@ namespace MSetExplorer
 
 			if (!Selecting)
 			{
-				Debug.WriteLine($"Activating Select at {posYInverted}.");
+				//Debug.WriteLine($"Activating Select at {posYInverted}.");
 				Activate(posYInverted);
 			}
 			else
 			{
 				if (Contains(posYInverted))
 				{
-					Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = True.");
+					//Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = True.");
 					var adjArea = Area.Round();
 					Deactivate();
 
-					Debug.WriteLine($"Will start job here with position: {adjArea.Position}");
+					//Debug.WriteLine($"Will start job here with position: {adjArea.Position}");
 					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, adjArea));
 				}
 				else
 				{
-					Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = False.");
+					//Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = False.");
 				}
 			}
 		}
@@ -360,7 +360,7 @@ namespace MSetExplorer
 
 				if (offset == null)
 				{
-					Debug.WriteLine($"DragOffset is null, cannot process the DragComplete event:{offset}.");
+					//Debug.WriteLine($"DragOffset is null, cannot process the DragComplete event:{offset}.");
 				}
 				else
 				{
@@ -391,7 +391,7 @@ namespace MSetExplorer
 
 				if (!_selectedArea.Focus())
 				{
-					Debug.WriteLine("Canvas Enter did not move the focus to the SelectedRectangle.");
+					//Debug.WriteLine("Canvas Enter did not move the focus to the SelectedRectangle.");
 				}
 			}
 
@@ -401,7 +401,7 @@ namespace MSetExplorer
 
 				if (!_dragLine.Focus())
 				{
-					Debug.WriteLine("Canvas Enter did not move the focus to the DragLine.");
+					//Debug.WriteLine("Canvas Enter did not move the focus to the DragLine.");
 				}
 			}
 			else
@@ -418,7 +418,7 @@ namespace MSetExplorer
 
 			if (!_selectedArea.Focus())
 			{
-				Debug.WriteLine("Activate did not move the focus to the SelectedRectangle");
+				//Debug.WriteLine("Activate did not move the focus to the SelectedRectangle");
 			}
 		}
 

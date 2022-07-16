@@ -340,7 +340,7 @@ namespace MSetRepo
 			(
 				mapSectionId: target.Id.ToString(),
 				ownerId: string.Empty,
-				jobOwnerType: (int) JobOwnerType.Poster,
+				jobOwnerType: JobOwnerType.Poster,
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
@@ -350,8 +350,6 @@ namespace MSetRepo
 				doneFlags: GetBools(target.DoneFlags),
 				zValues: null
 			);
-
-			result.IncludeZValues = false;
 
 			return result;
 		}

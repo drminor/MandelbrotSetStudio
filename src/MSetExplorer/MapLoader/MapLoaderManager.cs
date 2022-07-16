@@ -137,7 +137,7 @@ namespace MSetExplorer
 
 		private void RemoveCompletedRequests(List<GenMapRequestInfo> requestInfos, ReaderWriterLockSlim requestsLock, CancellationToken ct)
 		{
-			var timeToWait = TimeSpan.FromSeconds(20);
+			var timeToWait = TimeSpan.FromSeconds(4);
 			var timeToWarn = TimeSpan.FromMinutes(3);
 
 			var countToWarn = 0;
@@ -149,7 +149,7 @@ namespace MSetExplorer
 				while (!ct.IsCancellationRequested)
 				{
 					Thread.Sleep(5 * 1000);
-					requestsLock.EnterUpgradeableReadLock();
+					 requestsLock.EnterUpgradeableReadLock();
 
 					try
 					{
@@ -167,7 +167,7 @@ namespace MSetExplorer
 							}
 							else
 							{
-								if (requestInfo.TaskStartedDate - now > timeToWarn)
+								if (now - requestInfo.TaskStartedDate > timeToWarn)
 								{
 									countToWarn++;
 								}
@@ -200,6 +200,7 @@ namespace MSetExplorer
 						if (countToWarn > 0)
 						{
 							Debug.WriteLine($"WARNING: There are {countToWarn} MapLoaderRequests running longer than {timeToWarn.TotalMinutes} minutes.");
+							countToWarn = 0;
 						}
 					}
 
@@ -360,8 +361,30 @@ namespace MSetExplorer
 					if (disposing)
 					{
 						// Dispose managed state (managed objects)
-						//Task.Dispose();
-						_onCompletedTask?.Dispose();
+
+						if (Task != null)
+						{
+							if (Task.IsCompleted)
+							{
+								Task.Dispose();
+							}
+							else
+							{
+								Debug.WriteLine($"The Task is not null and not completed as the GenMapRequestInfo is being disposed.");
+							}
+						}
+
+						if (_onCompletedTask != null)
+						{
+							if (_onCompletedTask.IsCompleted)
+							{
+								_onCompletedTask.Dispose();
+							}
+							else
+							{
+								Debug.WriteLine($"The onCompletedTask is not null and not completed as the GenMapRequestInfo is being disposed.");
+							}
+						}
 					}
 
 					disposedValue = true;

@@ -1,4 +1,5 @@
-﻿using MSS.Types.DataTransferObjects;
+﻿using MSS.Types;
+using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
@@ -7,11 +8,11 @@ using System.Runtime.Serialization;
 namespace MEngineDataContracts
 {
 	[DataContract]
-	public class MapSectionResponse : ICloneable
+	public class MapSectionResponse //: ICloneable
 	{
 		public MapSectionResponse()
 		{
-			Debug.WriteLine("The MapSectionResponse's paremeterless contructor is being called.");
+			SubdivisionId = string.Empty;
 		}
 
 		public MapSectionResponse(MapSectionRequest mapSectionRequest)
@@ -24,7 +25,7 @@ namespace MEngineDataContracts
 				  mapSectionRequest.MapCalcSettings, counts, escapeVelocities, doneFlags, zValues)
 		{ }
 
-		public MapSectionResponse(string mapSectionId, string ownerId, int jobOwnerType, string subdivisionId, BigVectorDto blockPosition, 
+		public MapSectionResponse(string mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition, 
 			MapCalcSettings mapCalcSettings, ushort[] counts, ushort[] escapeVelocities, bool[] doneFlags, double[] zValues)
 		{
 			MapSectionId = mapSectionId;
@@ -45,10 +46,10 @@ namespace MEngineDataContracts
 		public string MapSectionId { get; set; }
 
 		[DataMember(Order = 2)]
-		public string OwnerId { get; init; }
+		public string OwnerId { get; set; }
 
 		[DataMember(Order = 3)]
-		public int JobOwnerType { get; init; }
+		public JobOwnerType JobOwnerType { get; set; }
 
 		[DataMember(Order = 4)]
 		public string SubdivisionId { get; init; }
@@ -84,20 +85,22 @@ namespace MEngineDataContracts
 
 		public bool RequestCancelled { get; set; }
 
-		object ICloneable.Clone()
-		{
-			return Clone();
-		}
+		public bool IsEmpty => string.IsNullOrEmpty(SubdivisionId);
 
-		public MapSectionResponse Clone()
-		{
-			var result = new MapSectionResponse(MapSectionId, OwnerId, JobOwnerType, SubdivisionId, BlockPosition, MapCalcSettings, 
-				Counts, EscapeVelocities, DoneFlags, ZValuesForLocalStorage);
+		//object ICloneable.Clone()
+		//{
+		//	return Clone();
+		//}
 
-			result.IncludeZValues = IncludeZValues;
-			result.RequestCancelled = RequestCancelled;
+		//public MapSectionResponse Clone()
+		//{
+		//	var result = new MapSectionResponse(MapSectionId, OwnerId, JobOwnerType, SubdivisionId, BlockPosition, MapCalcSettings, 
+		//		Counts, EscapeVelocities, DoneFlags, ZValuesForLocalStorage);
 
-			return result;
-		}
+		//	result.IncludeZValues = IncludeZValues;
+		//	result.RequestCancelled = RequestCancelled;
+
+		//	return result;
+		//}
 	}
 }

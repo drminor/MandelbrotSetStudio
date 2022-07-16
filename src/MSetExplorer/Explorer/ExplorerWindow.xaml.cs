@@ -78,7 +78,7 @@ namespace MSetExplorer
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.MapProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -153,7 +153,7 @@ namespace MSetExplorer
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.MapProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -268,7 +268,7 @@ namespace MSetExplorer
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.MapProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -289,7 +289,7 @@ namespace MSetExplorer
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.MapProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -321,6 +321,7 @@ namespace MSetExplorer
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			_vm.MapProjectViewModel.ProjectSave();
+			_ = MessageBox.Show("Changes Saved");
 		}
 
 		// Project Save As
@@ -366,7 +367,7 @@ namespace MSetExplorer
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.MapProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -638,12 +639,25 @@ namespace MSetExplorer
 					if (_vm.MapProjectViewModel.CurrentProjectOnFile)
 					{
 						// Silently record the new CurrentJob selection
-						_vm.MapProjectViewModel.ProjectSave();
-						return SaveResult.CurrentJobAutoSaved;
+						if (_vm.MapProjectViewModel.ProjectSave())
+						{
+							return SaveResult.CurrentJobAutoSaved;
+						}
+						else
+						{
+							// The ViewModel's ProjectSave method found no changes to save.
+							return SaveResult.NoChangesToSave;
+						}
+					}
+					else
+					{
+						return SaveResult.NoChangesToSave;
 					}
 				}
-
-				return SaveResult.NoChangesToSave;
+				else
+				{
+					return SaveResult.NotSavingChanges;
+				}
 			}
 
 			if (!ColorsCommitUpdates().HasValue)
@@ -658,8 +672,14 @@ namespace MSetExplorer
 				if (_vm.MapProjectViewModel.CurrentProjectOnFile)
 				{
 					// The Project is on-file, just save the pending changes.
-					_vm.MapProjectViewModel.ProjectSave();
-					return SaveResult.ChangesSaved;
+					if (_vm.MapProjectViewModel.ProjectSave())
+					{
+						return SaveResult.ChangesSaved;
+					}
+					else
+					{
+						return SaveResult.NoChangesToSave;
+					}
 				}
 				else
 				{
@@ -696,8 +716,10 @@ namespace MSetExplorer
 				if (selectedName != null)
 				{
 					Debug.WriteLine($"Saving project with name: {selectedName}.");
-					// TODO: Handle cases where ProjectSaveAs fails.
-					result = _vm.MapProjectViewModel.ProjectSaveAs(selectedName, description);
+
+					// TODO: Add error handling around ProjectSaveAs.
+					_vm.MapProjectViewModel.ProjectSaveAs(selectedName, description);
+					result = true;
 				}
 				else
 				{

@@ -111,7 +111,7 @@ namespace MSS.Common
 			var mapSectionRequest = new MapSectionRequest
 			{
 				OwnerId = ownerId,
-				JobOwnerType = (int)jobOwnerType,
+				JobOwnerType = jobOwnerType,
 				SubdivisionId = subdivision.Id.ToString(),
 				BlockPosition = _dtoMapper.MapTo(repoPosition),
 				BlockSize = subdivision.BlockSize,

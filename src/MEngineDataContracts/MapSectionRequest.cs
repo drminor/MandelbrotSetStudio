@@ -17,7 +17,7 @@ namespace MEngineDataContracts
 		public string OwnerId { get; set; }
 
 		[DataMember(Order = 3)]
-		public int JobOwnerType { get; set; }
+		public JobOwnerType JobOwnerType { get; set; }
 
 		[DataMember(Order = 4)]
 		public string SubdivisionId { get; set; }

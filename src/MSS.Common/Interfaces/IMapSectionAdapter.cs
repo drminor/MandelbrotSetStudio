@@ -22,14 +22,18 @@ namespace MSS.Common
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 
 		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse);
-		Task<ObjectId?> SaveJobMapSectionAsync(string mapSectionIdStr, string OwnerIdStr, int jobOwnerType);
 
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
 
 		long? ClearMapSections(ObjectId subdivisionId);
 
 		long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false);
-		long? DeleteMapSectionsSince(DateTime lastSaved);
+
+		//long? DeleteMapSectionsSince(DateTime lastSaved);
+
+		long? DeleteMapSectionsForJob(ObjectId ownerId, JobOwnerType jobOwnerType);
+
+		Task<long?> DeleteMapSectionsForJobAsync(ObjectId ownerId, JobOwnerType jobOwnerType);
 
 		//void AddCreatedDateToAllMapSections();
 

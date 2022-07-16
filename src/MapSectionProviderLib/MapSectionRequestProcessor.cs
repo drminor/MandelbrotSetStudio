@@ -30,7 +30,9 @@ namespace MapSectionProviderLib
 		private readonly Task[] _workQueueProcessors;
 
 		private readonly object _cancelledJobsLock = new();
-		private readonly object _pendingRequestsLock = new();
+
+		private readonly ReaderWriterLockSlim _requestsLock;
+
 		private readonly List<int> _cancelledJobIds;
 		private readonly List<MapSectionWorkRequest> _pendingRequests;
 
@@ -51,6 +53,7 @@ namespace MapSectionProviderLib
 			_cts = new CancellationTokenSource();
 			_workQueue = new BlockingCollection<MapSectionWorkRequest>(QUEUE_CAPACITY);
 			_pendingRequests = new List<MapSectionWorkRequest>();
+			_requestsLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 			_cancelledJobIds = new List<int>();
 
 			_workQueueProcessors = new Task[NUMBER_OF_CONSUMERS];
@@ -81,27 +84,15 @@ namespace MapSectionProviderLib
 
 		public int GetNumberOfPendingRequests(int jobNumber)
 		{
-			int result;
-
-			lock (_pendingRequestsLock)
-			{
-				result = _pendingRequests.Count(x => x.JobId == jobNumber);
-			}
-
+			var result = DoWithReadLock(() => { return _pendingRequests.Count(x => x.JobId == jobNumber); });
 			return result;
 		}
 
-		public IList<MapSectionRequest> GetPendingRequests(int jobNumber)
-		{
-			IList<MapSectionRequest> pendingRequestsCopy;
-
-			lock (_pendingRequestsLock)
-			{
-				pendingRequestsCopy = new List<MapSectionRequest>(_pendingRequests.Where(x => x.JobId == jobNumber).Select(x => x.Request));
-			}
-
-			return pendingRequestsCopy;
-		}
+		//public IList<MapSectionRequest> GetPendingRequests(int jobNumber)
+		//{
+		//	var result = DoWithReadLock(() => { return new List<MapSectionRequest>(_pendingRequests.Where(x => x.JobId == jobNumber).Select(x => x.Request)); } );
+		//	return result;
+		//}
 
 		public void CancelJob(int jobId)
 		{
@@ -113,7 +104,6 @@ namespace MapSectionProviderLib
 				}
 
 				_mapSectionGeneratorProcessor.CancelJob(jobId);
-				_mapSectionResponseProcessor.CancelJob(jobId);
 			}
 		}
 
@@ -173,8 +163,10 @@ namespace MapSectionProviderLib
 					MapSectionResponse? mapSectionResponse;
 					if (IsJobCancelled(mapSectionWorkRequest.JobId))
 					{
-						mapSectionResponse = new MapSectionResponse(mapSectionWorkRequest.Request);
-						mapSectionResponse.RequestCancelled = true;
+						mapSectionResponse = new MapSectionResponse(mapSectionWorkRequest.Request)
+						{
+							RequestCancelled = true
+						};
 					}
 					else
 					{
@@ -228,6 +220,11 @@ namespace MapSectionProviderLib
 			{
 				mapSectionWorkRequest.Request.FoundInRepo = true;
 				mapSectionWorkRequest.Request.ProcessingEndTime = DateTime.UtcNow;
+
+				mapSectionResponse.OwnerId = mapSectionWorkRequest.Request.OwnerId;
+				mapSectionResponse.JobOwnerType = mapSectionWorkRequest.Request.JobOwnerType;
+				_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
+
 				return mapSectionResponse;
 			}
 			else
@@ -279,10 +276,12 @@ namespace MapSectionProviderLib
 
 		private void QueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor)
 		{
-			lock (_pendingRequestsLock)
+			if (mapSectionWorkRequest == null)
 			{
-				_pendingRequests.Add(mapSectionWorkRequest);
+				throw new ArgumentNullException(nameof(mapSectionWorkRequest), "The mapSectionWorkRequest must be non-null.");
 			}
+
+			DoWithWriteLock(() => { _pendingRequests.Add(mapSectionWorkRequest); });
 
 			var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest.JobId, mapSectionWorkRequest, HandleGeneratedResponse);
 			mapSectionGeneratorProcessor.AddWork(mapSectionGenerateRequest);
@@ -290,26 +289,40 @@ namespace MapSectionProviderLib
 
 		private bool CheckForMatchingAndAddToPending(MapSectionWorkRequest mapSectionWorkRequest)
 		{
-			var pendingRequests = GetMatchingRequests(mapSectionWorkRequest.Request);
+			_requestsLock.EnterUpgradeableReadLock();
 
-			//Debug.WriteLine($"Checking for dups, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}.");
-
-			if (pendingRequests.Count > 0)
+			try
 			{
-				//Debug.WriteLine($"Found a dup request, marking this one as pending.");
+				var pendingRequests = GetMatchingRequests(mapSectionWorkRequest.Request);
 
-				lock (_pendingRequestsLock)
+				//Debug.WriteLine($"Checking for dups, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}.");
+
+				if (pendingRequests.Count > 0)
 				{
-					// There is already a request made for this same block, add our request to the queue
-					mapSectionWorkRequest.Request.Pending = true;
-					_pendingRequests.Add(mapSectionWorkRequest);
-				}
+					//Debug.WriteLine($"Found a dup request, marking this one as pending.");
 
-				return true;
+					_requestsLock.EnterWriteLock();
+					try
+					{
+						// There is already a request made for this same block, add our request to the queue
+						mapSectionWorkRequest.Request.Pending = true;
+						_pendingRequests.Add(mapSectionWorkRequest);
+					}
+					finally
+					{
+						_requestsLock.ExitWriteLock();
+					}
+
+					return true;
+				}
+				else
+				{
+					return false;
+				}
 			}
-			else
+			finally
 			{
-				return false;
+				_requestsLock.ExitUpgradeableReadLock();
 			}
 		}
 
@@ -325,66 +338,95 @@ namespace MapSectionProviderLib
 
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse)
 		{
+			if (mapSectionResponse == null || mapSectionResponse.IsEmpty)
+			{
+				Debug.WriteLine("The MapSectionResponse is empty in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
+			}
+
+			var mapSectionRequest = mapSectionWorkRequest.Request;
+
+			// if the mapSectionResponse is null, create a mapSectionResponse with null counts, null, escape velocities, etc., from the request.
+			var response = mapSectionResponse ?? new MapSectionResponse(mapSectionRequest);
+
+
 			// Set the original request's repsonse to the generated response.
-			mapSectionWorkRequest.Response = mapSectionResponse ?? new MapSectionResponse(mapSectionWorkRequest.Request);
+			mapSectionWorkRequest.Response = response;
 
 			// Send the original request to the response processor.
 			_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
 
-			//if (IsJobCancelled(mapSectionWorkItem.JobId))
-			//{
-			//	Thread.Sleep(2 * 1000);
-			//}
+			_requestsLock.EnterUpgradeableReadLock();
 
-			var pendingRequests = GetPendingRequests(mapSectionWorkRequest.Request);
-			//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkItem.Request}");
-
-			//Debug.Assert(RequestExists(mapSectionWorkItem.Request, pendingRequests), "The primary request was not included in the list of pending requests.");
-			if (!RequestExists(mapSectionWorkRequest.Request, pendingRequests))
+			try
 			{
-				Debug.WriteLine("The primary request was not included in the list of pending requests.");
-			}
+				var pendingRequests = GetPendingRequests(mapSectionRequest);
+				//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionRequest}");
 
-			foreach (var workItem in pendingRequests)
-			{
-				if (workItem != mapSectionWorkRequest/* && !IsJobCancelled(workItem.JobId)*/) // The original requestor needs all responses, cancelled or not to determine if the job is complete.
+				if (pendingRequests.Count > 0)
 				{
-					workItem.Response = mapSectionWorkRequest.Response;
-					_mapSectionResponseProcessor.AddWork(workItem);
+					_requestsLock.EnterWriteLock();
+
+					try
+					{
+						RemoveFoundRequests(pendingRequests);
+					}
+					finally
+					{
+						_requestsLock.ExitWriteLock();
+					}
 				}
+
+				// For diagnostics only
+				if (!RequestExists(mapSectionWorkRequest.Request, pendingRequests))
+				{
+					Debug.WriteLine("WARNING: The primary request was not included in the list of pending requests.");
+				}
+
+				foreach (var workItem in pendingRequests)
+				{
+					if (workItem != mapSectionWorkRequest)
+					{
+						workItem.Response = response;
+						_mapSectionResponseProcessor.AddWork(workItem);
+					}
+				}
+			}
+			finally
+			{
+				_requestsLock.ExitUpgradeableReadLock();
 			}
 		}
 
 		// Exclude requests that were added to "piggy back" onto a "real" request.
 		private List<MapSectionWorkRequest> GetMatchingRequests(MapSectionRequest mapSectionRequest)
 		{
-			List<MapSectionWorkRequest> result; // = new List<MapSecWorkReqType>();
-
 			var subdivisionId = mapSectionRequest.SubdivisionId;
 			var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-
-			lock (_pendingRequestsLock)
-			{
-				result = _pendingRequests.Where(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition).ToList();
-			}
+			var result = _pendingRequests.Where(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition).ToList();
 
 			return result;
 		}
 
-		// Find and remove all matching requests.
+		// Find all matching requests.
 		private List<MapSectionWorkRequest> GetPendingRequests(MapSectionRequest mapSectionRequest)
 		{
-			List<MapSectionWorkRequest> result; // = new List<MapSecWorkReqType>();
-
 			var subdivisionId = mapSectionRequest.SubdivisionId;
 			var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-			lock (_pendingRequestsLock)
-			{
-				result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition).ToList();
 
-				foreach (var workItem in result)
+			var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition).ToList();
+
+			return result;
+		}
+
+		private bool RemoveFoundRequests(IList<MapSectionWorkRequest> requests)
+		{
+			var result = true;
+
+			foreach (var workItem in requests)
+			{
+				if (!_pendingRequests.Remove(workItem))
 				{
-					_pendingRequests.Remove(workItem);
+					result = false;
 				}
 			}
 
@@ -410,6 +452,38 @@ namespace MapSectionProviderLib
 			}
 
 			return result;
+		}
+
+		#endregion
+
+		#region Lock Helpers
+
+		private T DoWithReadLock<T>(Func<T> function)
+		{
+			_requestsLock.EnterReadLock();
+
+			try
+			{
+				return function();
+			}
+			finally
+			{
+				_requestsLock.ExitReadLock();
+			}
+		}
+
+		private void DoWithWriteLock(Action action)
+		{
+			_requestsLock.EnterWriteLock();
+
+			try
+			{
+				action();
+			}
+			finally
+			{
+				_requestsLock.ExitWriteLock();
+			}
 		}
 
 		#endregion

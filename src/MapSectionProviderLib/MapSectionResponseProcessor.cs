@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +14,7 @@ namespace MapSectionProviderLib
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<MapSectionWorkRequest> _workQueue;
 
-		private readonly List<int> _cancelledJobIds;
+		//private readonly List<int> _cancelledJobIds;
 
 		private Task _workQueueProcessor;
 		private bool disposedValue;
@@ -27,9 +26,9 @@ namespace MapSectionProviderLib
 			_cts = new CancellationTokenSource();
 
 			_workQueue = new BlockingCollection<MapSectionWorkRequest>(QUEUE_CAPACITY);
-			_cancelledJobIds = new List<int>();
+			//_cancelledJobIds = new List<int>();
 
-			_workQueueProcessor = Task.Run(ProcessTheQueue);
+			_workQueueProcessor = Task.Run(() => { ProcessTheQueue(_cts.Token); });
 		}
 
 		#endregion
@@ -48,16 +47,16 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		public void CancelJob(int jobId)
-		{
-			lock (_cancelledJobsLock)
-			{
-				if (!_cancelledJobIds.Contains(jobId))
-				{
-					_cancelledJobIds.Add(jobId);
-				}
-			}
-		}
+		//public void CancelJob(int jobId)
+		//{
+		//	lock (_cancelledJobsLock)
+		//	{
+		//		if (!_cancelledJobIds.Contains(jobId))
+		//		{
+		//			_cancelledJobIds.Add(jobId);
+		//		}
+		//	}
+		//}
 
 		public void Stop(bool immediately)
 		{
@@ -97,26 +96,22 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private void ProcessTheQueue()
+		private void ProcessTheQueue(CancellationToken ct)
 		{
-			var ct = _cts.Token;
-
 			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
 					var mapSectionWorkRequest = _workQueue.Take(ct);
 
-					if (mapSectionWorkRequest.Response != null)
-					{
-						//if (  (!mapSectionWorkRequest.Response.RequestCancelled) && JobIsCancelled(mapSectionWorkRequest.JobId))
-						//{
-						//	mapSectionWorkRequest.Response.RequestCancelled = true;
-						//}
+					//if (mapSectionWorkRequest.Response != null)
+					//{
+					//	mapSectionWorkRequest.Request.Completed = true;
+					//	mapSectionWorkRequest.RunWorkAction();
+					//}
 
-						mapSectionWorkRequest.Request.Completed = true;
-						mapSectionWorkRequest.RunWorkAction();
-					}
+					mapSectionWorkRequest.Request.Completed = true;
+					mapSectionWorkRequest.RunWorkAction();
 				}
 				catch (OperationCanceledException)
 				{
@@ -128,18 +123,6 @@ namespace MapSectionProviderLib
 					throw;
 				}
 			}
-		}
-
-		private bool JobIsCancelled(int jobId)
-		{
-			bool result;
-
-			lock (_cancelledJobsLock)
-			{
-				result = _cancelledJobIds.Contains(jobId);
-			}
-
-			return result;
 		}
 
 		#endregion

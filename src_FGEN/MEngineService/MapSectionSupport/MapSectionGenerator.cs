@@ -1,6 +1,7 @@
 ﻿using MEngineDataContracts;
 using MEngineService.Services;
 using MongoDB.Bson;
+using MSS.Common;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace MEngineService
 {
 	public static class MapSectionGenerator
 	{
-		public static async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
+		public static async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, IMapSectionAdapter mapSectionAdapter)
 		{
 			ushort[] counts = GetCounts(mapSectionRequest);
 			ushort[] escapeVelocities = GetEscapeVelocities(mapSectionRequest);
@@ -24,7 +25,7 @@ namespace MEngineService
 
 			// ZValues
 
-			var zValsAndBuffer = await GetAndFillZValuesBufferAsync(mapSectionRequest);
+			var zValsAndBuffer = await GetAndFillZValuesBufferAsync(mapSectionRequest, mapSectionAdapter);
 
 			var zValues = zValsAndBuffer.Item1;
 			var zValuesBuffer = zValsAndBuffer.Item2;
@@ -201,7 +202,7 @@ namespace MEngineService
 			return doneFlagsBuffer;
 		}
 
-		private static async Task<ValueTuple<double[], IntPtr>> GetAndFillZValuesBufferAsync(MapSectionRequest mapSectionRequest)
+		private static async Task<ValueTuple<double[], IntPtr>> GetAndFillZValuesBufferAsync(MapSectionRequest mapSectionRequest, IMapSectionAdapter mapSectionAdapter)
 		{
 			double[] zValues;
 
@@ -210,7 +211,7 @@ namespace MEngineService
 				// Fetch the zvalues from the repo.
 				var mapSectionObjId = new ObjectId(mapSectionRequest.MapSectionId);
 
-				var zValuesObject = await MapSectionService.MapSectionAdapter.GetMapSectionZValuesAsync(mapSectionObjId);
+				var zValuesObject = await mapSectionAdapter.GetMapSectionZValuesAsync(mapSectionObjId);
 
 				if (zValuesObject != null)
 				{

@@ -7,10 +7,6 @@ namespace MSS.Common
 	{
 		string EndPointAddress { get; }
 
-		//ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest);
-
 		Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest);
-
-		//MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest);
 	}
 }

@@ -38,11 +38,11 @@ namespace MSetExplorer
 		// Project Methods
 		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
 		bool ProjectOpen(string name);
-		void ProjectSave();
-		bool ProjectSaveAs(string name, string? description);
+		bool ProjectSave();
+		void ProjectSaveAs(string name, string? description);
 		void ProjectClose();
 
-		long? DeleteMapSectionsSinceLastSave();
+		long DeleteMapSectionsForUnsavedJobs();
 
 		Poster PosterCreate(string name, string? description, SizeInt posterSize);
 	}

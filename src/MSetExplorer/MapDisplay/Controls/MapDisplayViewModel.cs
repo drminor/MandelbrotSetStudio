@@ -450,7 +450,7 @@ namespace MSetExplorer
 				bool shouldUpdateUi;
 				if (isLastSection)
 				{
-					Debug.WriteLine($"Setting should update to true, it is the last section.");
+					//Debug.WriteLine($"Setting should update to true, it is the last section.");
 					shouldUpdateUi = true;
 					if (_stopwatch != null)
 					{
@@ -471,7 +471,7 @@ namespace MSetExplorer
 					shouldUpdateUi = callCounterExpired || drawDelayDurationExceeded;
 					if (shouldUpdateUi)
 					{
-						Debug.WriteLine($"Setting should update to true, callCounterExpired: {callCounterExpired}, drawDelayDurationExceeded: {drawDelayDurationExceeded}.");
+						//Debug.WriteLine($"Setting should update to true, callCounterExpired: {callCounterExpired}, drawDelayDurationExceeded: {drawDelayDurationExceeded}.");
 
 						if (_stopwatch != null)
 						{
@@ -481,7 +481,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						Debug.WriteLine($"Setting should update to false.");
+						//Debug.WriteLine($"Setting should update to false.");
 
 					}
 				}

@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types;
 using System;
 
 namespace ProjectRepo.Entities
@@ -8,7 +9,7 @@ namespace ProjectRepo.Entities
 	(
 		ObjectId MapSectionId,
 		ObjectId OwnerId,
-		int OwnerTypeId
+		JobOwnerType OwnerType
 	)
 	{
 		[BsonId]

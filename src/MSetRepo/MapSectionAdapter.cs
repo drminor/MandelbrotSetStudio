@@ -20,12 +20,16 @@ namespace MSetRepo
 		private readonly MSetRecordMapper _mSetRecordMapper;
 		private readonly DtoMapper _dtoMapper;
 
+		#region Constructor
+
 		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
 			_dtoMapper = new DtoMapper();
 		}
+
+		#endregion
 
 		#region Collections
 
@@ -35,11 +39,13 @@ namespace MSetRepo
 			jobMapSectionReaderWriter.CreateCollection();
 
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			mapSectionReaderWriter.CreateCollection();
-			mapSectionReaderWriter.CreateSubAndPosIndex();
+			if (mapSectionReaderWriter.CreateCollection())
+			{
+				mapSectionReaderWriter.CreateSubAndPosIndex();
+			}
 
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			subdivisionReaderWriter.CreateCollection();
+			_ = subdivisionReaderWriter.CreateCollection();
 		}
 
 		//public void DropCollections()
@@ -164,13 +170,13 @@ namespace MSetRepo
 			return result;
 		}
 
-		public long? DeleteMapSectionsSince(DateTime lastSaved)
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var deleteCnt = mapSectionReaderWriter.DeleteMapSectionsSince(lastSaved);
+		//public long? DeleteMapSectionsSince(DateTime lastSaved)
+		//{
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	var deleteCnt = mapSectionReaderWriter.DeleteMapSectionsSince(lastSaved);
 
-			return deleteCnt;
-		}
+		//	return deleteCnt;
+		//}
 
 		//public long? RemoveFetchZValuesProp()
 		//{
@@ -192,26 +198,26 @@ namespace MSetRepo
 
 		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse)
 		{
-			var result = await SaveJobMapSectionAsync(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType);
+			var mapSectionIdStr = mapSectionResponse.MapSectionId;
+			if (string.IsNullOrEmpty(mapSectionIdStr))
+			{
+				throw new ArgumentNullException(nameof(MapSectionResponse.MapSectionId), "The MapSectionId cannot be null.");
+			}
+
+			var ownerIdStr = mapSectionResponse.OwnerId;
+			if (string.IsNullOrEmpty(ownerIdStr))
+			{
+				throw new ArgumentNullException(nameof(mapSectionIdStr), "The OwnerId cannot be null.");
+			}
+
+			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(ownerIdStr), mapSectionResponse.JobOwnerType);
 			return result;
 		}
 
-		public async Task<ObjectId?> SaveJobMapSectionAsync(string mapSectionIdStr, string ownerIdStr, int jobOwnerType)
+		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId ownerId, JobOwnerType jobOwnerType)
 		{
-			if (string.IsNullOrEmpty(mapSectionIdStr))
-			{
-				throw new ArgumentNullException(nameof(mapSectionIdStr), "The mapSectionIdStr argument must have a non-null value.");
-			}
-
-			if (string.IsNullOrEmpty(ownerIdStr))
-			{
-				throw new ArgumentNullException(nameof(mapSectionIdStr), "The ownerIdStr argument must have a non-null value.");
-			}
-
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
-			var mapSectionId = new ObjectId(mapSectionIdStr);
-			var ownerId = new ObjectId(ownerIdStr);
 			var ownerType = jobOwnerType;
 			var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, ownerId, ownerType);
 
@@ -220,6 +226,90 @@ namespace MSetRepo
 			return jobMapSectionId;
 		}
 
+		public async Task<long?> DeleteMapSectionsForJobAsync(ObjectId ownerId, JobOwnerType jobOwnerType)
+		{
+			Debug.WriteLine($"Removing MapSections and JobMapSections for {jobOwnerType}: {ownerId}. (Async)");
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
+			var jobMapSectionRecords = await jobMapSectionReaderWriter.GetByOwnerIdAsync(ownerId, jobOwnerType);
+			var numberJobMapSectionsDeleted = await jobMapSectionReaderWriter.DeleteJobMapSectionsAsync(ownerId, jobOwnerType);
+
+			var result = 0L;
+
+			// TODO: Update to use Async methods
+			foreach (var jobMapSectionRecord in jobMapSectionRecords)
+			{
+				if (!jobMapSectionReaderWriter.DoesJobMapSectionRecordExist(jobMapSectionRecord.MapSectionId))
+				{
+					var numberDeleted = mapSectionReaderWriter.Delete(jobMapSectionRecord.MapSectionId);
+					if (numberDeleted.HasValue)
+					{
+						result += numberDeleted.Value;
+					}
+				}
+			}
+
+			Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {result} MapSections. (Async)");
+			return result;
+		}
+
+		public long? DeleteMapSectionsForJob(ObjectId ownerId, JobOwnerType jobOwnerType)
+		{
+			Debug.WriteLine($"Removing MapSections and JobMapSections for {jobOwnerType}: {ownerId}.");
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
+			var jobMapSectionRecords = jobMapSectionReaderWriter.GetByOwnerId(ownerId, jobOwnerType);
+
+			var beforeCnt = 0L;
+			foreach (var jobMapSectionRecord in jobMapSectionRecords)
+			{
+				var jobMapSectionRecordsBefore = jobMapSectionReaderWriter.GetByMapSectionId(jobMapSectionRecord.MapSectionId);
+
+				beforeCnt += jobMapSectionRecordsBefore.Count;
+			}
+
+			var numberJobMapSectionsDeleted = jobMapSectionReaderWriter.DeleteJobMapSections(ownerId, jobOwnerType);
+
+			var result = 0L;
+
+			var afterCnt = 0L;
+			foreach (var jobMapSectionRecord in jobMapSectionRecords)
+			{
+				var jobMapSectionRecordsAfter = jobMapSectionReaderWriter.GetByMapSectionId(jobMapSectionRecord.MapSectionId);
+				afterCnt += jobMapSectionRecordsAfter.Count;
+
+				if (!jobMapSectionReaderWriter.DoesJobMapSectionRecordExist(jobMapSectionRecord.MapSectionId))
+				{
+					var numberDeleted = mapSectionReaderWriter.Delete(jobMapSectionRecord.MapSectionId);
+					if(numberDeleted.HasValue)
+					{
+						result += numberDeleted.Value;
+					}
+				}
+			}
+
+			Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {result} MapSections.");
+			return result;
+		}
+
+		public long? DuplicateJobMapSections(ObjectId ownerId, JobOwnerType jobOwnerType, ObjectId newOwnerId)
+		{
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
+			var jobMapSectionRecords = jobMapSectionReaderWriter.GetByOwnerId(ownerId, jobOwnerType);
+
+			foreach (var jmsr in jobMapSectionRecords)
+			{
+				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, newOwnerId, jmsr.OwnerType);
+				_ = jobMapSectionReaderWriter.Insert(newJmsr);
+			}
+
+			var result = jobMapSectionRecords.Count;
+
+			return result;
+		}
 
 
 		#endregion

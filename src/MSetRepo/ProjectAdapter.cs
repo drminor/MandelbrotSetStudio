@@ -199,7 +199,7 @@ namespace MSetRepo
 			projectReaderWriter.UpdateCurrentJobId(projectId, currentJobId);
 		}
 
-		public void DeleteProject(ObjectId projectId)
+		public bool DeleteProject(ObjectId projectId)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
@@ -220,7 +220,9 @@ namespace MSetRepo
 				_ = colorBandSetReaderWriter.Delete(colorBandSetId);
 			}
 
-			_ = projectReaderWriter.Delete(projectId);
+			var numberDeleted = projectReaderWriter.Delete(projectId);
+
+			return numberDeleted == 1;
 		}
 
 		public bool ProjectExists(string name)

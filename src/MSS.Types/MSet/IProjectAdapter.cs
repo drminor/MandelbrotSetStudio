@@ -27,7 +27,7 @@ namespace MSS.Types.MSet
 		void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId);
 		void UpdateProjectDescription(ObjectId projectId, string? description);
 		void UpdateProjectName(ObjectId projectId, string name);
-		void DeleteProject(ObjectId projectId);
+		bool DeleteProject(ObjectId projectId);
 		IEnumerable<IProjectInfo> GetAllProjectInfos();
 
 		Job GetJob(ObjectId jobId);

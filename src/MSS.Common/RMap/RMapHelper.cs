@@ -12,7 +12,7 @@ namespace MSS.Common
 
 		public static RRectangle GetMapCoords(RectangleInt screenArea, RPoint mapPosition, RSize samplePointDelta)
 		{
-			Debug.WriteLine($"GetMapCoords is receiving area: {screenArea}.");
+			//Debug.WriteLine($"GetMapCoords is receiving area: {screenArea}.");
 
 			// Multiply the area by samplePointDelta to convert to map coordinates.
 			var rArea = ScaleByRsize(screenArea, samplePointDelta);

@@ -33,12 +33,12 @@ namespace MEngineClient
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
 			var stopWatch = Stopwatch.StartNew();
-			var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
+			var mapSectionResponse = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-			Debug.Assert(reply.ZValues == null && reply.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
+			Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
 
-			return reply;
+			return mapSectionResponse;
 		}
 
 		//public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)

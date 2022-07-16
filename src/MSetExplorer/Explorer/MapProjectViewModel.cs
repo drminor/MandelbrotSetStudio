@@ -13,6 +13,8 @@ namespace MSetExplorer
 	internal class MapProjectViewModel : ViewModelBase, IMapProjectViewModel, IDisposable
 	{
 		private readonly IProjectAdapter _projectAdapter;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
+
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly SizeInt _blockSize;
 
@@ -21,9 +23,10 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapProjectViewModel(IProjectAdapter projectAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
+		public MapProjectViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
+			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;
 			_blockSize = blockSize;
 
@@ -113,7 +116,6 @@ namespace MSetExplorer
 
 		public string? CurrentProjectName => CurrentProject?.Name;
 		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
-		//public bool CanSaveProject => CurrentProjectOnFile;
 
 		public Job CurrentJob => CurrentProject?.CurrentJob ?? Job.Empty;
 
@@ -167,40 +169,47 @@ namespace MSetExplorer
 			}
 		}
 
-		public void ProjectSave()
-		{
-			var project = CurrentProject;
-
-			if (project != null)
-			{
-				if (!CurrentProjectOnFile)
-				{
-					throw new InvalidOperationException("Cannot save an unloaded project, use SaveProject instead.");
-				}
-
-				Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
-
-				project.Save(_projectAdapter);
-
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectOnFile));
-
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-			}
-		}
-
-		public bool ProjectSaveAs(string name, string? description)
+		public bool ProjectSave()
 		{
 			var currentProject = CurrentProject;
 
 			if (currentProject == null)
 			{
-				return false;
+				throw new InvalidOperationException("The project must be non-null.");
+			}
+
+			if (!CurrentProjectOnFile)
+			{
+				throw new InvalidOperationException("Cannot save a new project, use Save As instead.");
+			}
+
+			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSave found the CurrentJob to be empty.");
+
+			var result = currentProject.Save(_projectAdapter);
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
+			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectOnFile));
+
+			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+
+			return result;
+		}
+
+		public void ProjectSaveAs(string name, string? description)
+		{
+			var currentProject = CurrentProject;
+
+			if (currentProject == null)
+			{
+				throw new InvalidOperationException("The project must be non-null.");
 			}
 
 			if (_projectAdapter.TryGetProject(name, out var existingProject))
 			{
-				_projectAdapter.DeleteProject(existingProject.Id);
+				if (!_projectAdapter.DeleteProject(existingProject.Id))
+				{
+					throw new InvalidOperationException("Cannot delete existing project record.");
+				}
 			}
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
@@ -226,24 +235,20 @@ namespace MSetExplorer
 
 			if (project is null)
 			{
-				return false;
+				throw new InvalidOperationException("Could not create the new project.");
 			}
-			else
-			{
-				var oldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == currentProject.CurrentJobId);
-				var newCurJob = oldIdAndNewJob?.Item2;
-				project.CurrentJob = newCurJob ?? Job.Empty;
 
-				var oldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == currentProject.CurrentColorBandSet.Id);
-				var newCurCbs = oldIdAndNewCbs?.Item2;
+			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == currentProject.CurrentJobId);
+			var newCurJob = firstOldIdAndNewJob?.Item2;
+			project.CurrentJob = newCurJob ?? Job.Empty;
 
-				project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
+			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == currentProject.CurrentColorBandSet.Id);
+			var newCurCbs = firstOldIdAndNewCbs?.Item2;
 
-				_ = project.Save(_projectAdapter);
-				CurrentProject = project;
+			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
 
-				return true;
-			}
+			_ = project.Save(_projectAdapter);
+			CurrentProject = project;
 		}
 
 		private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
@@ -284,29 +289,56 @@ namespace MSetExplorer
 			CurrentProject = null;
 		}
 
-		public long? DeleteMapSectionsSinceLastSave()
+		public long? DeleteMapSectionsSinceLastSaveOld()
 		{
-			if (CurrentProject is null)
+			//if (CurrentProject is null)
+			//{
+			//	return 0;
+			//}
+
+			//var lastSaved = CurrentProject.LastSavedUtc;
+			//if (! _projectAdapter.TryGetProject(CurrentProject.Id, out var _))
+			//{
+			//	lastSaved = CurrentProject.DateCreated;
+			//}
+
+			//if (lastSaved - DateTime.MinValue < TimeSpan.FromDays(5))
+			//{
+			//	return 0;
+			//}
+			//else
+			//{
+			//	var deleteCnt = _mapJobHelper.DeleteMapSectionsSince(lastSaved);
+
+			//	return deleteCnt;
+			//}
+
+			return 0;
+		}
+
+		public long DeleteMapSectionsForUnsavedJobs()
+		{
+			var currentProject = CurrentProject;
+
+			if (currentProject is null)
 			{
 				return 0;
 			}
 
-			var lastSaved = CurrentProject.LastSavedUtc;
-			if (! _projectAdapter.TryGetProject(CurrentProject.Id, out var _))
+			var result = 0L;
+
+			var jobs = currentProject.GetJobs().Where(x => !x.OnFile).ToList();
+
+			foreach(var job in jobs)
 			{
-				lastSaved = CurrentProject.DateCreated;
+				var numberDeleted = _mapSectionAdapter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
+				if (numberDeleted.HasValue)
+				{
+					result += numberDeleted.Value;
+				}
 			}
 
-			if (lastSaved - DateTime.MinValue < TimeSpan.FromDays(5))
-			{
-				return 0;
-			}
-			else
-			{
-				var deleteCnt = _mapJobHelper.DeleteMapSectionsSince(lastSaved);
-
-				return deleteCnt;
-			}
+			return result;
 		}
 
 		#endregion
@@ -324,7 +356,10 @@ namespace MSetExplorer
 			var colorBandSet = CurrentProject.CurrentColorBandSet;
 			var blockSize = curJob.Subdivision.BlockSize;
 
-			var poster = _mapJobHelper.CreatePoster(name, description, posterSize, curJob.Id, curJob.Coords, colorBandSet, curJob.MapCalcSettings, blockSize, _projectAdapter);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(curJob.Coords, posterSize, blockSize);
+			var poster = new Poster(name, description, curJob.Id, mapAreaInfo, colorBandSet, curJob.MapCalcSettings);
+
+			_projectAdapter.CreatePoster(poster);
 
 			return poster;
 		}

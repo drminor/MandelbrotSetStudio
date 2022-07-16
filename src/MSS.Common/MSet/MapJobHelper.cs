@@ -84,23 +84,11 @@ namespace MSS.Common
 			return result;
 		}
 
-		public long? DeleteMapSectionsSince(DateTime lastSaved)
-		{
-			var result = _mapSectionAdapter.DeleteMapSectionsSince(lastSaved);
-			return result;
-		}
-
-		public Poster CreatePoster(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, RRectangle coords, ColorBandSet colorBandSet,
-			MapCalcSettings mapCalcSettings, SizeInt blockSize, IProjectAdapter projectAdapter)
-		{
-			var mapAreaInfo = GetMapAreaInfo(coords, posterSize, blockSize);
-
-			var poster = new Poster(name, description, sourceJobId, mapAreaInfo, colorBandSet, mapCalcSettings);
-
-			projectAdapter.CreatePoster(poster);
-
-			return poster;
-		}
+		//public long? DeleteMapSectionsSince(DateTime lastSaved)
+		//{
+		//	var result = _mapSectionAdapter.DeleteMapSectionsSince(lastSaved);
+		//	return result;
+		//}
 
 		#endregion
 

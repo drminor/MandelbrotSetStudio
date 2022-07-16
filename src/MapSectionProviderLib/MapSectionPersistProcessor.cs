@@ -90,12 +90,19 @@ namespace MapSectionProviderLib
 				{
 					var mapSectionResponse = _workQueue.Take(ct);
 
+					if (mapSectionResponse.IsEmpty)
+					{
+						Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
+					}
+
 					if (mapSectionResponse.Counts != null)
 					{
 						if (mapSectionResponse.MapSectionId != null)
 						{
 							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
+
+							// TODO: The OwnerId may already be on file for this MapSection -- or not.
 						}
 						else
 						{
@@ -105,6 +112,8 @@ namespace MapSectionProviderLib
 
 							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
 						}
+
+
 					}
 				}
 				catch (OperationCanceledException)

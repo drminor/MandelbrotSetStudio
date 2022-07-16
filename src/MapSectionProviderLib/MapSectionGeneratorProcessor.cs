@@ -147,6 +147,11 @@ namespace MapSectionProviderLib
 						//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 
+						if (mapSectionResponse.IsEmpty)
+						{
+							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
+						}
+
 						if (mapSectionRequest.MapSectionId != null)
 						{
 							Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
@@ -166,7 +171,7 @@ namespace MapSectionProviderLib
 				}
 				catch (Exception e)
 				{
-					Debug.WriteLine($"The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client" }. The exception is {e}.");
+					Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client" }. The exception is {e}.");
 					throw;
 				}
 			}
