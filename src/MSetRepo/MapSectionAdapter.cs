@@ -10,6 +10,7 @@ using ProjectRepo.Entities;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MSetRepo
@@ -76,7 +77,7 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues, CancellationToken ct)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
@@ -84,7 +85,7 @@ namespace MSetRepo
 			{
 				if (includeZValues)
 				{
-					var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition);
+					var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition, ct);
 					if (mapSectionRecord != null)
 					{
 						var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
@@ -97,7 +98,7 @@ namespace MSetRepo
 				}
 				else
 				{
-					var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subdivisionId, blockPosition);
+					var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subdivisionId, blockPosition, ct);
 					if (mapSectionRecordCountsOnly != null)
 					{
 						var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly);

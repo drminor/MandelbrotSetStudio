@@ -84,12 +84,6 @@ namespace MSS.Common
 			return result;
 		}
 
-		//public long? DeleteMapSectionsSince(DateTime lastSaved)
-		//{
-		//	var result = _mapSectionAdapter.DeleteMapSectionsSince(lastSaved);
-		//	return result;
-		//}
-
 		#endregion
 
 		#region Private Methods

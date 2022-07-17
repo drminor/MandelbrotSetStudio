@@ -22,13 +22,10 @@ namespace MapSectionProviderLib
 
 		private readonly object _queueLock = new();
 
-		private StringBuilder _sbForDiag;
-
 		#region Constructor
 
 		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter)
 		{
-			_sbForDiag = new StringBuilder();
 			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
@@ -112,8 +109,6 @@ namespace MapSectionProviderLib
 
 							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
 						}
-
-
 					}
 				}
 				catch (OperationCanceledException)
@@ -123,7 +118,7 @@ namespace MapSectionProviderLib
 				catch (Exception e)
 				{
 					Debug.WriteLine($"The persist queue got an exception: {e}.");
-					Debug.WriteLine($"The recent operations are\r\n {_sbForDiag}");
+					Console.WriteLine($"\n\nWARNING:The persist queue got an exception: {e}.\n\n");
 					//throw;
 				}
 			}

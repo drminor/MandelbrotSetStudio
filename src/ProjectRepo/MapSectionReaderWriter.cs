@@ -4,6 +4,7 @@ using MSS.Types.DataTransferObjects;
 using ProjectRepo.Entities;
 using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ProjectRepo
@@ -40,7 +41,7 @@ namespace ProjectRepo
 			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<MapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "SubAndPos" }));
 		}
 
-		public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, BigVectorDto blockPosition)
+		public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
 			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
@@ -49,7 +50,7 @@ namespace ProjectRepo
 			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
 
 
-			var mapSectionRecord = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5);
+			var mapSectionRecord = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5, options: null, ct);
 
 			var itemsFound = mapSectionRecord.ToList();
 
@@ -66,7 +67,7 @@ namespace ProjectRepo
 			}
 		}
 
-		public async Task<MapSectionRecordJustCounts?> GetJustCountsAsync(ObjectId subdivisionId, BigVectorDto blockPosition)
+		public async Task<MapSectionRecordJustCounts?> GetJustCountsAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
 		{
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression
 				(
@@ -81,7 +82,7 @@ namespace ProjectRepo
 
 			var operation = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5).Project(projection1);
 
-			var itemsFound = await operation.ToListAsync().ConfigureAwait(false);
+			var itemsFound = await operation.ToListAsync(ct).ConfigureAwait(false);
 
 			if (itemsFound.Count > 0)
 			{

@@ -55,8 +55,8 @@ namespace ProjectRepo
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerId, ownerId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
-			var resultCursor = await Collection.FindAsync(filter1 & filter2);
-			var jobMapSectionRecords = await resultCursor.ToListAsync();
+			var resultCursor = await Collection.FindAsync(filter1 & filter2).ConfigureAwait(false);
+			var jobMapSectionRecords = await resultCursor.ToListAsync().ConfigureAwait(false);
 
 			return jobMapSectionRecords;
 		}
@@ -71,7 +71,7 @@ namespace ProjectRepo
 			jobMapSectionRecord.Id = ObjectId.GenerateNewId();
 			jobMapSectionRecord.LastSaved = DateTime.UtcNow;
 
-			await Collection.InsertOneAsync(jobMapSectionRecord);
+			await Collection.InsertOneAsync(jobMapSectionRecord).ConfigureAwait(false);
 			return jobMapSectionRecord.Id;
 		}
 
@@ -102,7 +102,7 @@ namespace ProjectRepo
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerId, ownerId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
 
-			var deleteResult = await Collection.DeleteManyAsync(filter1 & filter2);
+			var deleteResult = await Collection.DeleteManyAsync(filter1 & filter2).ConfigureAwait(false);
 
 			return GetReturnCount(deleteResult);
 		}

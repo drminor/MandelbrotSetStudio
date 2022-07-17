@@ -5,6 +5,7 @@ using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MSS.Common
@@ -15,7 +16,7 @@ namespace MSS.Common
 		//void DropCollections();
 		//void DropSubdivisionsAndMapSectionsCollections();
 
-		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues);
+		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues, CancellationToken ct);
 
 		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
 
