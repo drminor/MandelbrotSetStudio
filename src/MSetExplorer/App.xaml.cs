@@ -22,7 +22,7 @@ namespace MSetExplorer
 
 		private static readonly bool CREATE_COLLECTIONS = false;
 
-		private static readonly bool START_LOCAL_ENGINE = true; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
+		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
 		private static readonly bool USE_LOCAL_ENGINE = true; // If true, we will host a server -- AND include it in the list of servers to use by our client.
 		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
 

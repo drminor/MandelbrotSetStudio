@@ -51,6 +51,11 @@ namespace MSS.Common
 		{
 			var diff = newSizeInBlocks.Sub(currentSizeInBlocks);
 
+			if (diff == SizeInt.Zero)
+			{
+				return currentCoords;
+			}
+
 			diff = diff.Scale(subdivision.BlockSize);
 			var rDiff = subdivision.SamplePointDelta.Scale(diff);
 			rDiff = rDiff.DivideBy2();

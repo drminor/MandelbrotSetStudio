@@ -12,6 +12,20 @@ namespace MEngineService
 {
 	public static class MapSectionGenerator
 	{
+
+		public static string[] GetStringVals(MapSectionRequest mapSectionRequest)
+		{
+			var requestStruct = MapSectionReqHelper.GetRequestStruct(mapSectionRequest);
+			string px = new string('1', 200);
+			string py = new string('1', 200);
+			string dw = new string('1', 200);
+			string dh = new string('1', 200);
+
+			NativeMethods.GetStringValues(requestStruct, out px, out py, out dw, out dh);
+
+			return new string[] { px, py, dw, dh };
+		}
+
 		public static async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, IMapSectionAdapter mapSectionAdapter)
 		{
 			ushort[] counts = GetCounts(mapSectionRequest);

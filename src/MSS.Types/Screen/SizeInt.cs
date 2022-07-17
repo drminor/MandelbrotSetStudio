@@ -9,6 +9,11 @@ namespace MSS.Types
 	[ProtoContract(SkipConstructor = true)]
 	public struct SizeInt : IEquatable<SizeInt>, IEqualityComparer<SizeInt>
 	{
+		private static SizeInt ZeroSingleton = new SizeInt();
+
+		public static SizeInt Zero => ZeroSingleton;
+
+
 		// Square from single value
 		public SizeInt(int extent) : this(extent, extent)
 		{ }
