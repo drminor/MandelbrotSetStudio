@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
+using MSS.Common;
 using MSS.Types.MSet;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -12,6 +13,7 @@ namespace MSetExplorer
 	public class ProjectOpenSaveViewModel : IProjectOpenSaveViewModel, INotifyPropertyChanged
 	{
 		private readonly IProjectAdapter _projectAdapter;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private IProjectInfo? _selectedProject;
 
 		private string? _selectedName;
@@ -21,9 +23,10 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ProjectOpenSaveViewModel(IProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
+		public ProjectOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, string? initialName, DialogType dialogType)
 		{
 			_projectAdapter = projectAdapter;
+			_mapSectionAdapter = mapSectionAdapter;
 			DialogType = dialogType;
 
 			ProjectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
@@ -117,7 +120,7 @@ namespace MSetExplorer
 
 			if (projectInfo != null)
 			{
-				_projectAdapter.DeleteProject(projectInfo.ProjectId);
+				ProjectAndMapSectionHelper.DeleteProject(projectInfo.Name, _projectAdapter, _mapSectionAdapter);
 				_ = ProjectInfos.Remove(projectInfo);
 			}
 		}

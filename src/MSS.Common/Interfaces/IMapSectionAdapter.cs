@@ -4,6 +4,7 @@ using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,17 +27,14 @@ namespace MSS.Common
 
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
 
-		long? ClearMapSections(ObjectId subdivisionId);
-
 		long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false);
-
-		//long? DeleteMapSectionsSince(DateTime lastSaved);
 
 		long? DeleteMapSectionsForJob(ObjectId ownerId, JobOwnerType jobOwnerType);
 
-		Task<long?> DeleteMapSectionsForJobAsync(ObjectId ownerId, JobOwnerType jobOwnerType);
+		long? DeleteMapSectionsForMany(IList<ObjectId> ownerIds, JobOwnerType jobOwnerType);
 
-		//void AddCreatedDateToAllMapSections();
+		long? DuplicateJobMapSections(ObjectId ownerId, JobOwnerType jobOwnerType, ObjectId newOwnerId);
+
 
 		bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision);
 		void InsertSubdivision(Subdivision subdivision);

@@ -12,6 +12,8 @@ namespace MSS.Types.MSet
 		Project? CreateNewProject(string name, string? description, IEnumerable<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
 		Project? CreateProject(string name, string? description, ObjectId currentJobId);
 		IEnumerable<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
+		IList<ObjectId> GetAllJobsIdsForProject(ObjectId projectId);
+
 
 		IList<Poster> GetAllPosters();
 		bool PosterExists(string name);

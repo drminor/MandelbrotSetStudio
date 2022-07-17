@@ -90,7 +90,7 @@ namespace MSetExplorer
 
 		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return new ProjectOpenSaveViewModel(_projectAdapter, initalName, dialogType);
+			return new ProjectOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, initalName, dialogType);
 		}
 
 		private IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType)
@@ -110,12 +110,6 @@ namespace MSetExplorer
 		}
 
 		#region Utilities
-
-		public long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc)
-		{
-			var numberOfRecordsDeleted = _mapSectionAdapter.DeleteMapSectionsCreatedSince(dateCreatedUtc, overrideRecentGuard: true);
-			return numberOfRecordsDeleted;
-		}
 
 		//// Remove FetchZValuesFromRepo property from MapSections
 		//public long? DoSchemaUpdates()

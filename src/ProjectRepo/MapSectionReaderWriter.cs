@@ -200,10 +200,10 @@ namespace ProjectRepo
 		public async Task<ObjectId?> GetId(ObjectId subdivisionId, BigVectorDto blockPosition)
 		{
 			var filter1 = Builders<BsonDocument>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<BsonDocument>.Filter.Eq("BlockPosition.X[1]", blockPosition.X[1]);
-			var filter3 = Builders<BsonDocument>.Filter.Eq("BlockPosition.Y[1]", blockPosition.Y[1]);
-			var filter4 = Builders<BsonDocument>.Filter.Eq("BlockPosition.X[0]", blockPosition.X[0]);
-			var filter5 = Builders<BsonDocument>.Filter.Eq("BlockPosition.Y[0]", blockPosition.Y[0]);
+			var filter2 = Builders<BsonDocument>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
+			var filter3 = Builders<BsonDocument>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
+			var filter4 = Builders<BsonDocument>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
+			var filter5 = Builders<BsonDocument>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
 
 			var bDoc = await BsonDocumentCollection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5);
 

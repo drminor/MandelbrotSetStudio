@@ -378,6 +378,14 @@ namespace MSetRepo
 
 		#region Job
 
+		public IList<ObjectId> GetAllJobsIdsForProject(ObjectId projectId)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = jobReaderWriter.GetJobIds(projectId).ToList();
+
+			return result;
+		}
+
 		public IEnumerable<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));

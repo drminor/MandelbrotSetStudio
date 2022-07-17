@@ -8,6 +8,7 @@ using MSS.Types.MSet;
 using ProjectRepo;
 using ProjectRepo.Entities;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -155,14 +156,6 @@ namespace MSetRepo
 			return result;
 		}
 
-		public long? ClearMapSections(ObjectId subdivisionId)
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var result = mapSectionReaderWriter.DeleteAllWithSubId(subdivisionId);
-
-			return result;
-		}
-
 		public long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
@@ -170,28 +163,6 @@ namespace MSetRepo
 
 			return result;
 		}
-
-		//public long? DeleteMapSectionsSince(DateTime lastSaved)
-		//{
-		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-		//	var deleteCnt = mapSectionReaderWriter.DeleteMapSectionsSince(lastSaved);
-
-		//	return deleteCnt;
-		//}
-
-		//public long? RemoveFetchZValuesProp()
-		//{
-		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-		//	var numberUpdated = mapSectionReaderWriter.RemoveFetchZValuesProp();
-		//	return numberUpdated;
-		//}
-
-		//public void AddCreatedDateToAllMapSections()
-		//{
-		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-
-		//	mapSectionReaderWriter.AddCreatedDateToAllRecords();
-		//}
 
 		#endregion
 
@@ -227,31 +198,25 @@ namespace MSetRepo
 			return jobMapSectionId;
 		}
 
-		public async Task<long?> DeleteMapSectionsForJobAsync(ObjectId ownerId, JobOwnerType jobOwnerType)
+		public long? DeleteMapSectionsForMany(IList<ObjectId> ownerIds, JobOwnerType jobOwnerType)
 		{
-			Debug.WriteLine($"Removing MapSections and JobMapSections for {jobOwnerType}: {ownerId}. (Async)");
+			var result = 0L;
+
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
-			var jobMapSectionRecords = await jobMapSectionReaderWriter.GetByOwnerIdAsync(ownerId, jobOwnerType);
-			var numberJobMapSectionsDeleted = await jobMapSectionReaderWriter.DeleteJobMapSectionsAsync(ownerId, jobOwnerType);
-
-			var result = 0L;
-
-			// TODO: Update to use Async methods
-			foreach (var jobMapSectionRecord in jobMapSectionRecords)
+			foreach (var ownerId in ownerIds)
 			{
-				if (!jobMapSectionReaderWriter.DoesJobMapSectionRecordExist(jobMapSectionRecord.MapSectionId))
+				Debug.WriteLine($"Removing MapSections and JobMapSections for {jobOwnerType}: {ownerId}.");
+				var singleResult = DeleteMapSectionsForJobInternal(ownerId, jobOwnerType, mapSectionReaderWriter, jobMapSectionReaderWriter, out var numberJobMapSectionsDeleted);
+				Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {singleResult} MapSections.");
+
+				if (singleResult.HasValue)
 				{
-					var numberDeleted = mapSectionReaderWriter.Delete(jobMapSectionRecord.MapSectionId);
-					if (numberDeleted.HasValue)
-					{
-						result += numberDeleted.Value;
-					}
+					result += singleResult.Value;
 				}
 			}
 
-			Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {result} MapSections. (Async)");
 			return result;
 		}
 
@@ -261,25 +226,34 @@ namespace MSetRepo
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
+			var result = DeleteMapSectionsForJobInternal(ownerId, jobOwnerType, mapSectionReaderWriter, jobMapSectionReaderWriter, out var numberJobMapSectionsDeleted);
+
+			Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {result} MapSections.");
+
+			return result;
+		}
+
+		private long? DeleteMapSectionsForJobInternal(ObjectId ownerId, JobOwnerType jobOwnerType, MapSectionReaderWriter mapSectionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter, out long? numberJobMapSectionsDeleted)
+		{
 			var jobMapSectionRecords = jobMapSectionReaderWriter.GetByOwnerId(ownerId, jobOwnerType);
 
-			var beforeCnt = 0L;
-			foreach (var jobMapSectionRecord in jobMapSectionRecords)
-			{
-				var jobMapSectionRecordsBefore = jobMapSectionReaderWriter.GetByMapSectionId(jobMapSectionRecord.MapSectionId);
+			//var beforeCnt = 0L;
+			//foreach (var jobMapSectionRecord in jobMapSectionRecords)
+			//{
+			//	var jobMapSectionRecordsBefore = jobMapSectionReaderWriter.GetByMapSectionId(jobMapSectionRecord.MapSectionId);
 
-				beforeCnt += jobMapSectionRecordsBefore.Count;
-			}
+			//	beforeCnt += jobMapSectionRecordsBefore.Count;
+			//}
 
-			var numberJobMapSectionsDeleted = jobMapSectionReaderWriter.DeleteJobMapSections(ownerId, jobOwnerType);
+			numberJobMapSectionsDeleted = jobMapSectionReaderWriter.DeleteJobMapSections(ownerId, jobOwnerType);
 
 			var result = 0L;
 
-			var afterCnt = 0L;
+			//var afterCnt = 0L;
 			foreach (var jobMapSectionRecord in jobMapSectionRecords)
 			{
-				var jobMapSectionRecordsAfter = jobMapSectionReaderWriter.GetByMapSectionId(jobMapSectionRecord.MapSectionId);
-				afterCnt += jobMapSectionRecordsAfter.Count;
+				//var jobMapSectionRecordsAfter = jobMapSectionReaderWriter.GetByMapSectionId(jobMapSectionRecord.MapSectionId);
+				//afterCnt += jobMapSectionRecordsAfter.Count;
 
 				if (!jobMapSectionReaderWriter.DoesJobMapSectionRecordExist(jobMapSectionRecord.MapSectionId))
 				{
@@ -291,7 +265,6 @@ namespace MSetRepo
 				}
 			}
 
-			Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {result} MapSections.");
 			return result;
 		}
 
@@ -311,6 +284,35 @@ namespace MSetRepo
 
 			return result;
 		}
+
+		//public async Task<long?> DeleteMapSectionsForJobAsync(ObjectId ownerId, JobOwnerType jobOwnerType)
+		//{
+		//	Debug.WriteLine($"Removing MapSections and JobMapSections for {jobOwnerType}: {ownerId}. (Async)");
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
+		//	var jobMapSectionRecords = await jobMapSectionReaderWriter.GetByOwnerIdAsync(ownerId, jobOwnerType);
+		//	var numberJobMapSectionsDeleted = await jobMapSectionReaderWriter.DeleteJobMapSectionsAsync(ownerId, jobOwnerType);
+
+		//	var result = 0L;
+
+		//	// TODO: Update to use Async methods
+		//	foreach (var jobMapSectionRecord in jobMapSectionRecords)
+		//	{
+		//		if (!jobMapSectionReaderWriter.DoesJobMapSectionRecordExist(jobMapSectionRecord.MapSectionId))
+		//		{
+		//			var numberDeleted = mapSectionReaderWriter.Delete(jobMapSectionRecord.MapSectionId);
+		//			if (numberDeleted.HasValue)
+		//			{
+		//				result += numberDeleted.Value;
+		//			}
+		//		}
+		//	}
+
+		//	Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {result} MapSections. (Async)");
+		//	return result;
+		//}
+
 
 
 		#endregion

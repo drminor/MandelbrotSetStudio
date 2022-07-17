@@ -204,13 +204,7 @@ namespace MSetExplorer
 				throw new InvalidOperationException("The project must be non-null.");
 			}
 
-			if (_projectAdapter.TryGetProject(name, out var existingProject))
-			{
-				if (!_projectAdapter.DeleteProject(existingProject.Id))
-				{
-					throw new InvalidOperationException("Cannot delete existing project record.");
-				}
-			}
+			ProjectAndMapSectionHelper.DeleteProject(name, _projectAdapter, _mapSectionAdapter);
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
@@ -219,7 +213,12 @@ namespace MSetExplorer
 
 			foreach(var oldIdAndNewJob in jobPairs)
 			{
-				UpdateJobParents(oldIdAndNewJob.Item1, oldIdAndNewJob.Item2.Id, jobs);
+				var formerJobId = oldIdAndNewJob.Item1;
+				var newJobId = oldIdAndNewJob.Item2.Id;
+				UpdateJobParents(formerJobId, newJobId, jobs);
+
+				var numberJobMapSectionRefsCreated = _mapSectionAdapter.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
+				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
 			}
 
 			var colorBandSetPairs = currentProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
@@ -287,33 +286,6 @@ namespace MSetExplorer
 		public void ProjectClose()
 		{
 			CurrentProject = null;
-		}
-
-		public long? DeleteMapSectionsSinceLastSaveOld()
-		{
-			//if (CurrentProject is null)
-			//{
-			//	return 0;
-			//}
-
-			//var lastSaved = CurrentProject.LastSavedUtc;
-			//if (! _projectAdapter.TryGetProject(CurrentProject.Id, out var _))
-			//{
-			//	lastSaved = CurrentProject.DateCreated;
-			//}
-
-			//if (lastSaved - DateTime.MinValue < TimeSpan.FromDays(5))
-			//{
-			//	return 0;
-			//}
-			//else
-			//{
-			//	var deleteCnt = _mapJobHelper.DeleteMapSectionsSince(lastSaved);
-
-			//	return deleteCnt;
-			//}
-
-			return 0;
 		}
 
 		public long DeleteMapSectionsForUnsavedJobs()
