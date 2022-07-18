@@ -23,6 +23,10 @@ namespace MSetExplorer
 				MapSectionAdapter.CreateCollections();
 				SharedColorBandSetAdapter.CreateCollections();
 			}
+			else
+			{
+				ProjectAdapter.WarmUp();
+			}
 		}
 
 		public IProjectAdapter ProjectAdapter { get; init; }

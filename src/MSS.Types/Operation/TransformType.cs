@@ -3,7 +3,7 @@ namespace MSS.Types
 {
 	public enum TransformType
 	{
-		None,
+		Home,
 		CoordinatesUpdate,
 		IterationUpdate,
 		ColorMapUpdate,

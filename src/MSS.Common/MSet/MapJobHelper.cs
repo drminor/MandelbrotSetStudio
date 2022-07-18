@@ -34,7 +34,7 @@ namespace MSS.Common
 		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea)
 		{
-			if (!parentJobId.HasValue && !(transformType == TransformType.None || transformType == TransformType.CanvasSizeUpdate))
+			if (!parentJobId.HasValue && !(transformType == TransformType.Home || transformType == TransformType.CanvasSizeUpdate))
 			{
 				throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {transformType}. Only jobs with TransformType = 'none' be parentless.");
 			}
@@ -102,7 +102,7 @@ namespace MSS.Common
 
 		private string GetJobName(TransformType transformType)
 		{
-			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
+			var result = transformType == TransformType.Home ? "Home" : transformType.ToString();
 			return result;
 		}
 

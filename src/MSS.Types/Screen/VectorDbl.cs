@@ -4,22 +4,19 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types
 {
-	public struct PointDbl : IEquatable<PointDbl>, IEqualityComparer<PointDbl>
+	public struct VectorDbl : IEquatable<VectorDbl>, IEqualityComparer<VectorDbl>
 	{
-		private static PointDbl ZeroSingleton = new PointDbl();
+		private static VectorDbl ZeroSingleton = new VectorDbl();
 
-		public static PointDbl Zero => ZeroSingleton;
+		public static VectorDbl Zero => ZeroSingleton;
 
-		public PointDbl(PointInt pointInt) : this(pointInt.X, pointInt.Y)
+		public VectorDbl(PointDbl pointDbl) : this(pointDbl.X, pointDbl.Y)
 		{ }
 
-		public PointDbl(VectorDbl vectorDbl) : this(vectorDbl.X, vectorDbl.Y)
-		{ }
+		//public VectorDbl(SizeDbl size) : this(size.Width, size.Height)
+		//{ }
 
-		public PointDbl(SizeDbl size) : this(size.Width, size.Height)
-		{ }
-
-		public PointDbl(double x, double y)
+		public VectorDbl(double x, double y)
 		{
 			X = x;
 			Y = y;
@@ -33,10 +30,10 @@ namespace MSS.Types
 		//	return new PointDbl(X * factor.X, Y * factor.Y);
 		//}
 
-		public PointDbl Translate(VectorDbl offset)
-		{
-			return new PointDbl(X + offset.X, Y + offset.Y);
-		}
+		//public PointDbl Translate(PointDbl offset)
+		//{
+		//	return new PointDbl(X + offset.X, Y + offset.Y);
+		//}
 
 		//public PointDbl Translate(SizeDbl offset)
 		//{
@@ -48,12 +45,12 @@ namespace MSS.Types
 		//	return new PointDbl(X * factor.Width, Y * factor.Height);
 		//}
 
-		public PointDbl Scale(double factor)
+		public VectorDbl Scale(double factor)
 		{
-			return new PointDbl(X * factor, Y * factor);
+			return new VectorDbl(X * factor, Y * factor);
 		}
 
-		public PointDbl Invert()
+		public VectorDbl Invert()
 		{
 			return Scale(-1);
 		}
@@ -63,29 +60,29 @@ namespace MSS.Types
 		//	return new PointDbl(X + offset.Width, Y + offset.Height);
 		//}
 
-		public SizeDbl Diff(PointDbl amount)
-		{
-			return new SizeDbl(X - amount.X, Y - amount.Y);
-		}
+		//public SizeDbl Diff(PointDbl amount)
+		//{
+		//	return new SizeDbl(X - amount.X, Y - amount.Y);
+		//}
 
-		public PointDbl Min(PointDbl pointB)
-		{
-			return new PointDbl(Math.Min(X, pointB.X), Math.Min(Y, pointB.Y));
-		}
+		//public PointDbl Min(PointDbl pointB)
+		//{
+		//	return new PointDbl(Math.Min(X, pointB.X), Math.Min(Y, pointB.Y));
+		//}
 
-		public PointDbl Max(PointDbl pointB)
-		{
-			return new PointDbl(Math.Max(X, pointB.X), Math.Max(Y, pointB.Y));
-		}
+		//public PointDbl Max(PointDbl pointB)
+		//{
+		//	return new PointDbl(Math.Max(X, pointB.X), Math.Max(Y, pointB.Y));
+		//}
 
-		public PointInt Round()
+		public VectorInt Round()
 		{
 			return Round(MidpointRounding.ToEven);
 		}
 
-		public PointInt Round(MidpointRounding midpointRounding)
+		public VectorInt Round(MidpointRounding midpointRounding)
 		{
-			var result = new PointInt
+			var result = new VectorInt
 				(
 					(int)Math.Round(X, midpointRounding),
 					(int)Math.Round(Y, midpointRounding)
@@ -94,9 +91,9 @@ namespace MSS.Types
 			return result;
 		}
 
-		public PointDbl Abs()
+		public VectorDbl Abs()
 		{
-			return new PointDbl(Math.Abs(X), Math.Abs(Y));
+			return new VectorDbl(Math.Abs(X), Math.Abs(Y));
 		}
 
 		#region IEquatable and IEqualityComparer Support
@@ -106,13 +103,13 @@ namespace MSS.Types
 			return obj is PointDbl dp && Equals(dp);
 		}
 
-		public bool Equals(PointDbl other)
+		public bool Equals(VectorDbl other)
 		{
 			return X == other.X &&
 				   Y == other.Y;
 		}
 
-		public bool Equals(PointDbl a, PointDbl b)
+		public bool Equals(VectorDbl a, VectorDbl b)
 		{
 			return a.Equals(b);
 		}
@@ -122,17 +119,17 @@ namespace MSS.Types
 			return HashCode.Combine(X, Y);
 		}
 
-		public int GetHashCode([DisallowNull] PointDbl obj)
+		public int GetHashCode([DisallowNull] VectorDbl obj)
 		{
 			return HashCode.Combine(obj.X, obj.Y);
 		}
 
-		public static bool operator ==(PointDbl left, PointDbl right)
+		public static bool operator ==(VectorDbl left, VectorDbl right)
 		{
 			return left.Equals(right);
 		}
 
-		public static bool operator !=(PointDbl left, PointDbl right)
+		public static bool operator !=(VectorDbl left, VectorDbl right)
 		{
 			return !(left == right);
 		}

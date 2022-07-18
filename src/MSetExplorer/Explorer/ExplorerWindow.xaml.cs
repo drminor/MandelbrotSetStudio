@@ -55,6 +55,8 @@ namespace MSetExplorer
 
 				//cbsh1.DataContext = _vm.ColorBandSetHistogramViewModel;
 
+				jobTree1.DataContext = _vm.JobTreeViewModel;
+
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}
 		}
@@ -67,6 +69,13 @@ namespace MSetExplorer
 			//ShowCoordsEditor();
 
 			//SpIdxTest();
+
+			DisplayJobTree(true);
+
+			if (AppNavRequestResponse.RequestCommand == RequestResponseCommand.OpenProject)
+			{
+				OpenProjectFromAppRequest(AppNavRequestResponse.RequestParameters);
+			}
 		}
 
 		private void ExplorerWindow_Closing(object sender, CancelEventArgs e)
@@ -185,7 +194,15 @@ namespace MSetExplorer
 		{
 			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
 			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			Width = showJobTreeControl ? 2075 : 1665;
+			Width = showJobTreeControl ? 1885 : 1475;
+		}
+
+		private void DisplayJobTree(bool show)
+		{
+			mnuItem_JobTreeWindow.IsChecked = show;
+
+			colFarRight.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+			Width = show ? 1885 : 1475;
 		}
 
 		// Show Hide Job Tree
@@ -608,6 +625,18 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods - Project
+
+		private void OpenProjectFromAppRequest(string[]? requestParameters)
+		{
+			if (requestParameters == null || requestParameters.Length < 1)
+			{
+				throw new InvalidOperationException("The Project's name must be included in the RequestParameters when the Command = 'OpenProject.'");
+			}
+
+			var projectName = requestParameters[0];
+
+			_ = _vm.MapProjectViewModel.ProjectOpen(projectName);
+		}
 
 		private void LoadNewProject()
 		{

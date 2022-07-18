@@ -4,15 +4,20 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
+             xmlns:mtmset="clr-namespace:MSS.Types.MSet;assembly=MSS.Types"
+
              mc:Ignorable="d" 
              d:DesignHeight="1000" d:DesignWidth="400">
+
+    
+    
     <Grid>
         <Border BorderThickness="1" BorderBrush="Black" VerticalAlignment="Stretch">
             <Grid>
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="700"/>
 
                 </Grid.RowDefinitions>
 
@@ -20,10 +25,31 @@
                     <ColumnDefinition Width="400"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Row="0" FontSize="16" Height="22">Job Tree</TextBlock>
+                <TextBlock Grid.Row="0" FontSize="16" Height="22" Margin="5,1">Job Tree</TextBlock>
 
-                <TreeView Grid.Row="1" Margin="5" ></TreeView>
-                
+                <TreeView Grid.Row="1" Margin="0" ItemsSource="{Binding JobItems}" BorderThickness="0" Focusable="True" x:Name="trvJobs" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <TreeView.Resources>
+                        <HierarchicalDataTemplate DataType="{x:Type mtmset:JobTreeItem}" ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding TransformType}"/>
+                                
+                                <TextBlock Text=" — " Foreground="Green"/>
+                                <TextBlock Text="{Binding Zoom}" Foreground="Green"/>
+
+                                <TextBlock Text="   [" Foreground="Blue"/>
+                                <TextBlock Text="{Binding Children.Count}" Foreground="Blue"/>
+                                <TextBlock Text="]" Foreground="Blue"/>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+
+                        <!--<DataTemplate DataType="{x:Type mtmset:JobTreeItem}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding TransformType}"/>
+                                <TextBlock Text="{Binding Zoom}" Margin="10,0,0,0"/>
+                            </StackPanel>
+                        </DataTemplate>-->
+                    </TreeView.Resources>
+                </TreeView>
 
             </Grid>
         </Border>

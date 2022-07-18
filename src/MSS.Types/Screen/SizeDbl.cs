@@ -37,9 +37,9 @@ namespace MSS.Types
 			return new SizeDbl(Width + amount.Width, Height + amount.Height);
 		}
 
-		public SizeDbl Inflate(SizeDbl amount)
+		public SizeDbl Inflate(VectorDbl amount)
 		{
-			return new SizeDbl(Width + amount.Width, Height + amount.Height);
+			return new SizeDbl(Width + amount.X, Height + amount.Y);
 		}
 
 		public SizeDbl Deflate(int amount)

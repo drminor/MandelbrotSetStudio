@@ -117,16 +117,24 @@ extern "C"
         const char* cDeltaH = sDh.c_str();
 
         *px = (char*)::CoTaskMemAlloc(strlen(cPx) + 1);
-        strcpy_s(*px, strlen(cPx) + 1, cPx);
+        if (*px != 0) {
+            strcpy_s(*px, strlen(cPx) + 1, cPx);
+        }
 
         *py = (char*)::CoTaskMemAlloc(strlen(cPy) + 1);
-        strcpy_s(*py, strlen(cPy) + 1, cPy);
+        if (*py != 0) {
+            strcpy_s(*py, strlen(cPy) + 1, cPy);
+        }
 
         *deltaW = (char*)::CoTaskMemAlloc(strlen(cDeltaW) + 1);
-        strcpy_s(*deltaW, strlen(cDeltaW) + 1, cDeltaW);
+        if (*deltaW != 0) {
+            strcpy_s(*deltaW, strlen(cDeltaW) + 1, cDeltaW);
+        }
 
         *deltaH = (char*)::CoTaskMemAlloc(strlen(cDeltaH) + 1);
-        strcpy_s(*deltaH, strlen(cDeltaH) + 1, cDeltaH);
+        if (*deltaH != 0) {
+            strcpy_s(*deltaH, strlen(cDeltaH) + 1, cDeltaH);
+        }
 
 
         //std::cout << "posX is " << px << " and deltaWidth is " << dw;

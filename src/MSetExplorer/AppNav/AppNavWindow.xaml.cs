@@ -48,10 +48,13 @@ namespace MSetExplorer
 				}
 				else
 				{
-					//var initalCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenPoster, new string[] { "Test" });
-					AppNavRequestResponse? initialCommand = null;
+					//var initialCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenPoster, new string[] { "Test" });
+					//AppNavRequestResponse? initialCommand = null;
 
-					var lastWindowName = Properties.Settings.Default.LastWindowName;
+					//var lastWindowName = Properties.Settings.Default.LastWindowName;
+					var lastWindowName = "Explorer";
+					var initialCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenProject, new string[] { "CloserA1" });
+
 					var route = GetRoute(lastWindowName);
 					route(initialCommand); 
 				}

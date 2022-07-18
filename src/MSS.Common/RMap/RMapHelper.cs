@@ -439,7 +439,7 @@ namespace MSS.Common
 		public static SizeDbl GetBoundingSize(RectangleDbl a)
 		{
 			var distance = a.Position.Abs();
-			var result = a.Size.Inflate(new SizeDbl(distance));
+			var result = a.Size.Inflate(new VectorDbl(distance));
 
 			return result;
 		}

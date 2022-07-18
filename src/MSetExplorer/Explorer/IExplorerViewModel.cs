@@ -13,6 +13,8 @@ namespace MSetExplorer
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		ColorBandSetViewModel ColorBandSetViewModel { get; }
 		ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
+		
+		IJobTreeViewModel JobTreeViewModel { get; }
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);

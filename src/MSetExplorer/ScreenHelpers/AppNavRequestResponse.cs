@@ -50,7 +50,7 @@ namespace MSetExplorer.ScreenHelpers
 	public enum RequestResponseCommand
 	{
 		OpenPoster,
-		OpenJob,
+		OpenProject,
 		None
 	}
 

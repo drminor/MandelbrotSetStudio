@@ -55,6 +55,14 @@ namespace MSetRepo
 		//	projectReaderWriter.DropCollection();
 		//}
 
+
+		public void WarmUp()
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var x = projectReaderWriter.Collection.Indexes;
+			_ = x.List();
+		}
+
 		#endregion
 
 		#region Project

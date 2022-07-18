@@ -8,6 +8,7 @@ namespace MSS.Types.MSet
 	{
 		void CreateCollections();
 		//void DropCollections();
+		void WarmUp();
 
 		Project? CreateNewProject(string name, string? description, IEnumerable<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
 		Project? CreateProject(string name, string? description, ObjectId currentJobId);

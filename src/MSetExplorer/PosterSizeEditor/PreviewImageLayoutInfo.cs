@@ -43,11 +43,11 @@ namespace MSetExplorer
 		public SizeDbl ContainerSize { get; set; }
 
 		public SizeDbl NewMapSize { get; set; }
-		public PointDbl BeforeOffset { get; set; } // Really a vector. This added to the original MapDisplay position (i.e., 0,0) gives the new MapDisplay position.
-		public PointDbl AfterOffset { get; set; } // Really a vector. This added to the original MapDisplay position (i.e., 0,0) gives the new MapDisplay position.
+		public VectorDbl BeforeOffset { get; set; } // Really a vector. This added to the original MapDisplay position (i.e., 0,0) gives the new MapDisplay position.
+		public VectorDbl AfterOffset { get; set; } // Really a vector. This added to the original MapDisplay position (i.e., 0,0) gives the new MapDisplay position.
 
-		public RectangleDbl ResultNewMapArea => new RectangleDbl(BeforeOffset, OriginalMapArea.Point2.Translate(AfterOffset));
-
+		//public RectangleDbl ResultNewMapArea => new RectangleDbl(new PointDbl().Translate(BeforeOffset), OriginalMapArea.Point2.Translate(AfterOffset));
+		public RectangleDbl ResultNewMapArea => ScreenTypeHelper.GetNewBoundingArea(OriginalMapArea, BeforeOffset, AfterOffset);
 
 		// Outputs
 		public RectangleDbl OriginalImageArea { get; private set; } // Size and placement of the preview image, relative to the NewImageArea
@@ -66,7 +66,9 @@ namespace MSetExplorer
 			Debug.WriteLine($"Edit Poster Size Layout Update: BeforeOffset: {BeforeOffset}, AfterOffset: {AfterOffset}, NewMapSize: {NewMapSize}, ContainerSize: {ContainerSize}.");
 
 			// Get the portion of the originalMapArea that will be part of the new Image.
-			var newMapArea = new RectangleDbl(BeforeOffset, OriginalMapArea.Point2.Translate(AfterOffset));
+			//var newMapArea = new RectangleDbl(new PointDbl().Translate(BeforeOffset), OriginalMapArea.Point2.Translate(AfterOffset));
+			var newMapArea = ScreenTypeHelper.GetNewBoundingArea(OriginalMapArea, BeforeOffset, AfterOffset);
+
 			var clippedOriginalMapArea = ScreenTypeHelper.Intersect(newMapArea, OriginalMapArea);
 
 			// Get a rectangle that will hold both the new and the portion of the original

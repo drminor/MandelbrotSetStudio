@@ -32,6 +32,9 @@ namespace MSetExplorer
 			MapProjectViewModel = mapProjectViewModel;
 			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 
+			JobTreeViewModel = new JobTreeViewModel();
+
+
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
@@ -63,6 +66,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public IMapProjectViewModel MapProjectViewModel { get; }
+		public IJobTreeViewModel JobTreeViewModel { get; }
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		public MapCoordsViewModel MapCoordsViewModel { get; } 
@@ -148,8 +152,13 @@ namespace MSetExplorer
 
 		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
+			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
+			{
+				JobTreeViewModel.CurrentProject = MapProjectViewModel.CurrentProject;
+			}
+			
 			// Update the MSet Info and Map Display with the new Job
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
+			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
 			{
 				var curJob = MapProjectViewModel.CurrentJob;
 

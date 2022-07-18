@@ -160,5 +160,18 @@ namespace MSetExplorer
 			t.Intersect(ConvertToRect(b));
 			return ConvertToRectangleDbl(t);
 		}
+
+		public static RectangleDbl GetNewBoundingArea(SizeDbl baseSize, VectorDbl beforeOffset, VectorDbl afterOffset)
+		{
+			var result = GetNewBoundingArea(new RectangleDbl(new PointDbl(), baseSize), beforeOffset, afterOffset);
+			return result;
+		}
+
+		public static RectangleDbl GetNewBoundingArea(RectangleDbl baseRect, VectorDbl beforeOffset, VectorDbl afterOffset)
+		{
+			var result = new RectangleDbl(new PointDbl().Translate(beforeOffset), baseRect.Point2.Translate(afterOffset));
+			return result;
+		}
+
 	}
 }

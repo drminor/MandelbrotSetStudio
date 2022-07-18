@@ -84,8 +84,8 @@ namespace MSetExplorer
 			
 			UpdateWithChangesInternal(posterMapAreaInfo, containerSize);
 
-			BeforeOffset = new PointDbl(BeforeX, BeforeY);
-			AfterOffset = new PointDbl(AfterX, AfterY);
+			BeforeOffset = new VectorDbl(BeforeX, BeforeY);
+			AfterOffset = new VectorDbl(AfterX, AfterY);
 
 			PerformLayout();
 		}
@@ -100,8 +100,8 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(BeforeY));
 			OnPropertyChanged(nameof(AfterY));
 
-			BeforeOffset = new PointDbl(BeforeX, BeforeY);
-			AfterOffset = new PointDbl(AfterX, AfterY);
+			BeforeOffset = new VectorDbl(BeforeX, BeforeY);
+			AfterOffset = new VectorDbl(AfterX, AfterY);
 
 			PerformLayout();
 		}
@@ -193,32 +193,29 @@ namespace MSetExplorer
 						_scaleFactorCurrentToOrginal = _originalSize.Width / _currentSize.Width;
 						_currentSizeScaled = _currentSize.Scale(_scaleFactorCurrentToOrginal);
 
-						OnPropertyChanged();
+						//OnPropertyChanged();
 
-						if (_currentSize.Height != previousSize.Height)
-						{
-							OnPropertyChanged(nameof(Height));
-						}
+						//if (_currentSize.Height != previousSize.Height)
+						//{
+						//	OnPropertyChanged(nameof(Height));
+						//}
 					}
 					else
 					{
 						_currentSize = new SizeDbl(value, _currentSize.Height);
 
-						//var newSizeScaled = SetOffsetsForNewSize(previousSize.Scale(_scaleFactorCurrentToOrginal), _currentSize.Scale(_scaleFactorCurrentToOrginal));
-
-						//var newBeforeOffset = GetOffsetsForNewSize(previousSize.Scale(_scaleFactorCurrentToOrginal), _currentSize.Scale(_scaleFactorCurrentToOrginal), BeforeOffset, AfterOffset, out var newAfterOffset);
 						var newBeforeOffset = GetOffsetsForNewWidth(previousSize, _currentSize, BeforeOffset, AfterOffset, out var newAfterOffset);
-						var newAreaScaled = new RectangleDbl(newBeforeOffset, new PointDbl(_originalSize.Width + newAfterOffset.X, _originalSize.Height + newAfterOffset.Y));
+						//var newAreaScaled = new RectangleDbl(new PointDbl().Translate(newBeforeOffset), new PointDbl(_originalSize.Width + newAfterOffset.X, _originalSize.Height + newAfterOffset.Y));
+						var newAreaScaled = ScreenTypeHelper.GetNewBoundingArea(_originalSize, newBeforeOffset, newAfterOffset);
 						_currentSizeScaled = newAreaScaled.Size;
-
 						_currentSize = _currentSizeScaled.Scale(1 / _scaleFactorCurrentToOrginal);
 
 						//OnPropertyChanged();
 
-						if (_currentSize.Height != previousSize.Height)
-						{
-							//OnPropertyChanged(nameof(Height));
-						}
+						//if (_currentSize.Height != previousSize.Height)
+						//{
+						//	OnPropertyChanged(nameof(Height));
+						//}
 
 						//OnPropertyChanged(nameof(AspectRatio));
 
@@ -249,32 +246,27 @@ namespace MSetExplorer
 
 						//OnPropertyChanged();
 
-						if (_currentSize.Width != previousSize.Width)
-						{
-							//OnPropertyChanged(nameof(Width));
-						}
+						//if (_currentSize.Width != previousSize.Width)
+						//{
+						//	OnPropertyChanged(nameof(Width));
+						//}
 					}
 					else
 					{
 						_currentSize = new SizeDbl(_currentSize.Width, value);
 
-						//var newSizeScaled = SetOffsetsForNewSize(previousSize.Scale(_scaleFactorCurrentToOrginal), _currentSize.Scale(_scaleFactorCurrentToOrginal));
-						//_scaleFactorCurrentToOrginal = _originalSize.Width / newSizeScaled.Width;
-						//_currentSizeScaled = newSizeScaled;
-
-						//var newBeforeOffset = GetOffsetsForNewSize(previousSize.Scale(_scaleFactorCurrentToOrginal), _currentSize.Scale(_scaleFactorCurrentToOrginal), BeforeOffset, AfterOffset, out var newAfterOffset);
 						var newBeforeOffset = GetOffsetsForNewHeight(previousSize, _currentSize, BeforeOffset, AfterOffset, out var newAfterOffset);
-						var newAreaScaled = new RectangleDbl(newBeforeOffset, new PointDbl(_originalSize.Width + newAfterOffset.X, _originalSize.Height + newAfterOffset.Y));
+						//var newAreaScaled = new RectangleDbl(newBeforeOffset, new PointDbl(_originalSize.Width + newAfterOffset.X, _originalSize.Height + newAfterOffset.Y));
+						var newAreaScaled = ScreenTypeHelper.GetNewBoundingArea(_originalSize, newBeforeOffset, newAfterOffset);
 						_currentSizeScaled = newAreaScaled.Size;
-
 						_currentSize = _currentSizeScaled.Scale(1 / _scaleFactorCurrentToOrginal);
 
 						//OnPropertyChanged();
 
-						if (_currentSize.Width != previousSize.Width)
-						{
-							//OnPropertyChanged(nameof(Width));
-						}
+						//if (_currentSize.Width != previousSize.Width)
+						//{
+						//	OnPropertyChanged(nameof(Width));
+						//}
 
 						//OnPropertyChanged(nameof(AspectRatio));
 
@@ -313,13 +305,13 @@ namespace MSetExplorer
 					_beforeX = value;
 					//OnPropertyChanged();
 
-					BeforeOffset = new PointDbl(BeforeX, BeforeY);
+					BeforeOffset = new VectorDbl(BeforeX, BeforeY);
 
 					if (PreserveWidth)
 					{
 						_afterX = _afterX + (value - previous);
 						//OnPropertyChanged(nameof(AfterX));
-						AfterOffset = new PointDbl(AfterX, AfterY);
+						AfterOffset = new VectorDbl(AfterX, AfterY);
 					}
 					else
 					{
@@ -342,13 +334,13 @@ namespace MSetExplorer
 					var previous = _afterX;
 					_afterX = value;
 					//OnPropertyChanged();
-					AfterOffset = new PointDbl(AfterX, AfterY);
+					AfterOffset = new VectorDbl(AfterX, AfterY);
 
 					if (PreserveWidth)
 					{
 						_beforeX = _beforeX + (value - previous);
 						//OnPropertyChanged(nameof(BeforeX));
-						BeforeOffset = new PointDbl(BeforeX, BeforeY);
+						BeforeOffset = new VectorDbl(BeforeX, BeforeY);
 					}
 					else
 					{
@@ -384,13 +376,13 @@ namespace MSetExplorer
 					var previous = _beforeY;
 					_beforeY = value;
 					//OnPropertyChanged();
-					BeforeOffset = new PointDbl(BeforeX, BeforeY);
+					BeforeOffset = new VectorDbl(BeforeX, BeforeY);
 
 					if (PreserveHeight)
 					{
 						_afterY = _afterY + (value - previous);
 						//OnPropertyChanged(nameof(AfterY));
-						AfterOffset = new PointDbl(AfterX, AfterY);
+						AfterOffset = new VectorDbl(AfterX, AfterY);
 					}
 					else
 					{
@@ -413,13 +405,13 @@ namespace MSetExplorer
 					var previous = _afterY;
 					_afterY = value;
 					//OnPropertyChanged();
-					AfterOffset = new PointDbl(AfterX, AfterY);
+					AfterOffset = new VectorDbl(AfterX, AfterY);
 
 					if (PreserveHeight)
 					{
 						_beforeY = _beforeY + (value - previous);
 						//OnPropertyChanged(nameof(BeforeY));
-						BeforeOffset = new PointDbl(BeforeX, BeforeY);
+						BeforeOffset = new VectorDbl(BeforeX, BeforeY);
 					}
 					else
 					{
@@ -445,8 +437,8 @@ namespace MSetExplorer
 				{
 					_layoutInfo.ContainerSize = value;
 
-					BeforeOffset = new PointDbl(BeforeX, BeforeY);
-					AfterOffset = new PointDbl(AfterX, AfterY);
+					BeforeOffset = new VectorDbl(BeforeX, BeforeY);
+					AfterOffset = new VectorDbl(AfterX, AfterY);
 					NewMapSize = _currentSize;
 					PerformLayout();
 
@@ -456,7 +448,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private PointDbl BeforeOffset
+		private VectorDbl BeforeOffset
 		{
 			get => _layoutInfo.BeforeOffset;
 			set
@@ -487,7 +479,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private PointDbl AfterOffset
+		private VectorDbl AfterOffset
 		{
 			get => _layoutInfo.AfterOffset;
 			set
@@ -677,7 +669,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private PointDbl GetOffsetsForNewWidth(SizeDbl previousSize, SizeDbl size, PointDbl beforeOffsets, PointDbl afterOffsets, out PointDbl newAfterOffsets)
+		private VectorDbl GetOffsetsForNewWidth(SizeDbl previousSize, SizeDbl size, VectorDbl beforeOffsets, VectorDbl afterOffsets, out VectorDbl newAfterOffsets)
 		{
 			var ps = previousSize.Scale(_scaleFactorCurrentToOrginal);
 			var cs = size.Scale(_scaleFactorCurrentToOrginal);
@@ -686,13 +678,13 @@ namespace MSetExplorer
 			var deltaWidth = newWidthSameHeight - ps.Width;
 			var halfDeltaW = deltaWidth / 2;
 
-			var newBeforeOffsets = new PointDbl(beforeOffsets.X -= halfDeltaW, beforeOffsets.Y);
-			newAfterOffsets = new PointDbl(afterOffsets.X += halfDeltaW, afterOffsets.Y);
+			var newBeforeOffsets = new VectorDbl(beforeOffsets.X -= halfDeltaW, beforeOffsets.Y);
+			newAfterOffsets = new VectorDbl(afterOffsets.X += halfDeltaW, afterOffsets.Y);
 
 			return newBeforeOffsets;
 		}
 
-		private PointDbl GetOffsetsForNewHeight(SizeDbl previousSize, SizeDbl size, PointDbl beforeOffsets, PointDbl afterOffsets, out PointDbl newAfterOffsets)
+		private VectorDbl GetOffsetsForNewHeight(SizeDbl previousSize, SizeDbl size, VectorDbl beforeOffsets, VectorDbl afterOffsets, out VectorDbl newAfterOffsets)
 		{
 			var ps = previousSize.Scale(_scaleFactorCurrentToOrginal);
 			var cs = size.Scale(_scaleFactorCurrentToOrginal);
@@ -701,8 +693,8 @@ namespace MSetExplorer
 			var deltaHeight = newHeightSameWidth - ps.Height;
 			var halfDeltaH = deltaHeight / 2;
 
-			var newBeforeOffsets = new PointDbl(beforeOffsets.X, beforeOffsets.Y - halfDeltaH);
-			newAfterOffsets = new PointDbl(afterOffsets.X, afterOffsets.Y + halfDeltaH);
+			var newBeforeOffsets = new VectorDbl(beforeOffsets.X, beforeOffsets.Y - halfDeltaH);
+			newAfterOffsets = new VectorDbl(afterOffsets.X, afterOffsets.Y + halfDeltaH);
 
 			return newBeforeOffsets;
 		}

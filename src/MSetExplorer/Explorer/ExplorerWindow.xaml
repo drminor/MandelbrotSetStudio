@@ -194,9 +194,9 @@
 
         </Grid>
 
-        <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Collapsed">
-            <Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" >
-                <local:JobTreeControl/>
+        <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Visible">
+            <Border  Margin="0,5,5,5" >
+                <local:JobTreeControl x:Name="jobTree1"  ></local:JobTreeControl>
             </Border>
             
         </Grid>
