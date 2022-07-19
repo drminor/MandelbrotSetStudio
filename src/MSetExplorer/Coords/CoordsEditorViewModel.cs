@@ -14,7 +14,7 @@ namespace MSetExplorer
 
 		private RRectangle _coords;
 		private bool _coordsAreDirty;
-		private long _zoom;
+		private string _zoom;
 
 		#region Constructor
 
@@ -44,7 +44,7 @@ namespace MSetExplorer
 			_coords = GetCoords(vms);
 			MapCoordsDetail1 = new MapCoordsDetailViewModel(_coords);
 
-			_zoom = RValueHelper.GetResolution(_coords.Width);
+			_zoom = RValueHelper.GetFormattedResolution(_coords.Width);
 
 			var mapAreaInfo = mapJobHelper.GetMapAreaInfo(_coords, _displaySize, _blockSize);
 			MapCoordsDetail2 = new MapCoordsDetailViewModel(mapAreaInfo);
@@ -82,7 +82,7 @@ namespace MSetExplorer
 		public SingleCoordEditorViewModel EndingY { get; init; }
 
 
-		public long Zoom
+		public string Zoom
 		{
 			get => _zoom;
 			set
@@ -110,7 +110,7 @@ namespace MSetExplorer
 
 					CoordsAreDirty = true;
 
-					Zoom = RValueHelper.GetResolution(_coords.Width);
+					Zoom = RValueHelper.GetFormattedResolution(_coords.Width);
 
 					OnPropertyChanged();
 				}

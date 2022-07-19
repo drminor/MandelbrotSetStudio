@@ -18,7 +18,7 @@ namespace MSetExplorer
 		bool CurrentProjectIsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
 
-		Job CurrentJob { get; }
+		Job CurrentJob { get; set; }
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }

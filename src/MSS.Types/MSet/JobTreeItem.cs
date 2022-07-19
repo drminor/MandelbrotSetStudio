@@ -25,7 +25,9 @@ namespace MSS.Types.MSet
 		public ObservableCollection<JobTreeItem> Children { get; init; }
 
 		public string TransformType => Job.TransformType.ToString();
-		public int Zoom => -1 * Job.MapAreaInfo.Coords.Exponent;
+		public int Zoom => -1 * Job.MapAreaInfo.Subdivision.SamplePointDelta.Exponent;
+		public DateTime Created => Job.DateCreated;
+		public string Id => Job.Id.ToString();
 
 		#endregion
 

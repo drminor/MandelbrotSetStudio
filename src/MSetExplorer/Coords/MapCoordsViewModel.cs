@@ -31,7 +31,7 @@ namespace MSetExplorer
 		private string _samplePointDelta;
 		private int _samplePointDeltaExp;
 
-		private long _zoom;
+		private string _zoom;
 
 		#region Constructor
 
@@ -57,7 +57,7 @@ namespace MSetExplorer
 			_samplePointDelta = string.Empty;
 			_samplePointDeltaExp = 0;
 
-			_zoom = 0;
+			_zoom = "0";
 		}
 
 		#endregion
@@ -186,7 +186,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public long Zoom
+		public string Zoom
 		{
 			get => _zoom;
 			set
@@ -328,7 +328,7 @@ namespace MSetExplorer
 				SamplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
 				SamplePointDeltaExp = mapAreaInfo.Subdivision.SamplePointDelta.Exponent;
 
-				Zoom = RValueHelper.GetResolution(mapAreaInfo.Coords.Width);
+				Zoom = RValueHelper.GetFormattedResolution(mapAreaInfo.Coords.Width);
 			}
 			else
 			{
@@ -350,7 +350,7 @@ namespace MSetExplorer
 				SamplePointDelta = string.Empty;
 				SamplePointDeltaExp = 0;
 
-				_zoom = 0;
+				_zoom = "0";
 			}
 		}
 

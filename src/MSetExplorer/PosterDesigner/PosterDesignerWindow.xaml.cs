@@ -52,6 +52,7 @@ namespace MSetExplorer
 			{
 				_vm = (IPosterDesignerViewModel)DataContext;
 
+				jobTree1.DataContext = _vm.JobTreeViewModel;
 				mapScroll1.DataContext = _vm.MapScrollViewModel;
 				mapDisplayZoom1.DataContext = _vm.MapScrollViewModel;
 				colorBandView1.DataContext = _vm.ColorBandSetViewModel;

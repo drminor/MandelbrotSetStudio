@@ -117,7 +117,17 @@ namespace MSetExplorer
 		public string? CurrentProjectName => CurrentProject?.Name;
 		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
 
-		public Job CurrentJob => CurrentProject?.CurrentJob ?? Job.Empty;
+		public Job CurrentJob
+		{
+			get => CurrentProject?.CurrentJob ?? Job.Empty;
+			set 
+			{
+				if (CurrentProject != null)
+				{
+					CurrentProject.CurrentJob = value;
+				}
+			}
+		}
 
 		public bool CanGoBack => CurrentProject?.CanGoBack ?? false;
 		public bool CanGoForward => CurrentProject?.CanGoForward ?? false;

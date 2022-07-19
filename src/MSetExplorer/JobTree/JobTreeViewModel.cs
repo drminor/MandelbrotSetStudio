@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -28,8 +29,10 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public ObservableCollection<JobTreeItem> JobItems { get; init; }
 
+		public event EventHandler<NavigateToJobRequestedEventArgs>? NavigateToJobRequested;
+
+		public ObservableCollection<JobTreeItem> JobItems { get; init; }
 
 		public Project? CurrentProject
 		{
@@ -63,13 +66,33 @@ namespace MSetExplorer
 			}
 		}
 
-
 		public Job CurrentJob => CurrentProject?.CurrentJob ?? Job.Empty;
 
+		#endregion
+
+		#region Public Methods
+
+		public void NavigateToJob(string jobId)
+		{
+			if (CurrentProject != null)
+			{
+				var oJobId = new ObjectId(jobId);
+				var jobs = CurrentProject.GetJobs().ToList();
+
+				var job = jobs.FirstOrDefault(X => X.Id == oJobId);
+
+				if (job != null)
+				{
+					NavigateToJobRequested?.Invoke(this, new NavigateToJobRequestedEventArgs(job));
+				}
+			}
+		}
 
 		#endregion
 
 		#region Private Methods
+
+		private int visited;
 
 		private void LoadTree(IList<Job>? jobs)
 		{
@@ -80,22 +103,84 @@ namespace MSetExplorer
 				return;
 			}
 
+			var jobTreeItems = GetTree(jobs);
+
+			var totalConsolidated = ConsolidatePans(jobTreeItems);
+
+			Debug.WriteLine($"Consolidated {totalConsolidated} jobs.");
+
+			foreach(var jobTreeItem in jobTreeItems)
+			{
+				JobItems.Add(jobTreeItem);
+			}
+		}
+
+		private int ConsolidatePans(IList<JobTreeItem> jobTreeItems)
+		{
+			var totalResult = 0;
+
+			int currentResult;
+
+			do
+			{
+				currentResult = 0;
+
+				foreach(var jobTreeItem in jobTreeItems)
+				{
+					var numConsolidated = ConsolidatePansRecurse(jobTreeItem);
+					currentResult += numConsolidated;
+					totalResult += numConsolidated;
+				}
+			}
+			while (currentResult > 0);
+
+
+			return totalResult;
+		}
+
+		private int ConsolidatePansRecurse(JobTreeItem jobTreeItem)
+		{
+			var result = 0;
+
+			for(var j = 0; j < jobTreeItem.Children.Count; j++)
+			{
+				var child = jobTreeItem.Children[j];
+				if (child.Job.TransformType == TransformType.Pan)
+				{
+					for (var i = 0; i < child.Children.Count; i++)
+					{
+						var granChild = child.Children[i];
+						if (granChild.Job.TransformType == TransformType.Pan)
+						{
+							_ = child.Children.Remove(granChild);
+							jobTreeItem.Children.Add(granChild);
+							result++;
+						}
+					}
+				}
+
+				var tResult = ConsolidatePansRecurse(child);
+				result += tResult;
+			}
+
+			return result;
+		}
+
+		private IList<JobTreeItem> GetTree(IList<Job> jobs)
+		{
+			visited = 0;
+
+			var result = new List<JobTreeItem>();
+
 			if (!TryGetRoot(jobs, out var root))
 			{
-				return;
+				return result;
 			}
 
-			JobItems.Add(root);
+			result.Add(root);
+			visited++;
 
-			var jc = new JobCollection(jobs);
-
-			var firstChild = jobs.OrderBy(x => x.DateCreated).FirstOrDefault(x => x.ParentJobId != null);
-
-			if (firstChild != null)
-			{
-				jc.MoveCurrentTo(firstChild);
-				LoadChildItemsRecurse(jc, root);
-			}
+			LoadChildItemsRecurse(jobs, root);
 
 			// Add Miscellaneous children of the top node (for example children with TransformType = CanvasSizeUpdate)
 			var topLevelNonPreferredJobs = GetTopLevelNonPreferredJobs(jobs);
@@ -104,86 +189,49 @@ namespace MSetExplorer
 			foreach (var job in topLevelNonPreferredJobs)
 			{
 				root.Children.Add(new JobTreeItem(childCntr++, job));
+				visited++;
 			}
+
+			if (visited != jobs.Count)
+			{
+				Debug.WriteLine("Not all jobs were included.");
+			}
+
+			return result;
 		}
 
-		private void LoadChildItemsRecurse(JobCollection jc, JobTreeItem jobTreeItem)
+		private void LoadChildItemsRecurse(IList<Job> jobs, JobTreeItem jobTreeItem)
 		{
 			var childCntr = 0;
-			var childJobs = GetChildren(jc);
+			var childJobs = GetChildren(jobs, jobTreeItem);
 			foreach (var job in childJobs)
 			{
 				var jobTreeItemChild = new JobTreeItem(childCntr++, job);
 				jobTreeItem.Children.Add(jobTreeItemChild);
-				LoadChildItemsRecurse(jc, jobTreeItemChild);
+				visited++;
+				LoadChildItemsRecurse(jobs, jobTreeItemChild);
 			}
 		}
 
-		private IList<Job> GetChildren(JobCollection jc)
+		private IList<Job> GetChildren(IList<Job> jobs, JobTreeItem jobTreeItem)
 		{
-			//result = jobs.Where(x => x.ParentJobId == jobId).OrderBy(GetSortKey).ToList();
-			//result = jp.Jobs.Skip(jp.Ptr).Where(x => x.ParentJobId == jobId).OrderBy(x => x.DateCreated).ToList();
-
-			IList<Job> result;
-
-			if (TryGetNextNonPanJob(jc, out var job))
-			{
-				result = GetAllChildren(jc, job);
-			}
-			else
-			{
-				result = GetAllChildren(jc, null);
-			}
-
+			var result = jobs.Where(x => x.ParentJobId == jobTreeItem.Job.Id).OrderBy(x => x.DateCreated).ToList();
 			return result;
-		}
-
-		private IList<Job> GetAllChildren(JobCollection jc, Job? job)
-		{
-			var result = new List<Job>();
-
-			var curJob = jc.CurrentJob;
-
-			var jobs = jc.GetJobs().ToList();
-
-			var children = jobs.Where(x => x.ParentJobId == curJob.ParentJobId);
-			if (job != null && children.Contains(job))
-			{
-				return result;
-			}
-			else
-			{
-				result.AddRange(children);
-			}
-
-			return result;
-		}
-
-		private bool TryGetNextNonPanJob(JobCollection jc, [MaybeNullWhen(false)] out Job job)
-		{
-			if (jc.TryGetNextJob(skipPanJobs: true, out job))
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
 		}
 
 		private bool TryGetRoot(IList<Job> jobs, [MaybeNullWhen(false)] out JobTreeItem root)
 		{
 			var rootJob = jobs.Where(x => x.TransformType == TransformType.Home).FirstOrDefault();
 
-			if (rootJob == null)
-			{
-				root = null;
-				return false;
-			}
-			else
+			if (rootJob != null)
 			{
 				root = new JobTreeItem(0, rootJob);
 				return true;
+			}
+			else
+			{
+				root = null;
+				return false;
 			}
 		}
 
@@ -194,21 +242,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		//#region JobsListAndPtr Support Class
-
-		//private class JobListAndPtr
-		//{
-		//	public JobListAndPtr(IList<Job> jobs)
-		//	{
-		//		Jobs = jobs;
-		//	}
-
-		//	public IList<Job> Jobs { get; init; }
-		//	public int Ptr { get; set; }
-		//}
-
-		//#endregion
 	}
 }
 

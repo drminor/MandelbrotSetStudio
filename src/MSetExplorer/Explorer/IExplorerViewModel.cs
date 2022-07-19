@@ -23,8 +23,5 @@ namespace MSetExplorer
 
 		JobProgressViewModel CreateAJobProgressViewModel();
 
-		//ColorBandSetHistogramViewModel CreateACbshViewModel();
-
-		//SizeInt GetCanvasSize(Job job);
 	}
 }

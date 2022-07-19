@@ -201,21 +201,38 @@ namespace MSS.Common
 
 		public static int GetPrecision(RValue rValue1, RValue rValue2, out RValue diff)
 		{
-			var nr1 = RNormalizer.Normalize(rValue1, rValue2, out var nr2);
-			var diffNoPrecision = nr1.Sub(nr2).Abs();
+			var nrmRVal1 = RNormalizer.Normalize(rValue1, rValue2, out var nrmRVal2);
+			var diffNoPrecision = nrmRVal1.Sub(nrmRVal2).Abs();
 
 			var doubles = ConvertToDoubles(diffNoPrecision);
 			var msd = doubles[0];
-			var l10 = Math.Log10(msd);
+			var logB10 = Math.Log10(msd);
 
-			var result = (int)Math.Ceiling(Math.Abs(l10));
+			var result = (int)Math.Ceiling(Math.Abs(logB10));
 
 			diff = new RValue(diffNoPrecision.Value, diffNoPrecision.Exponent, result);
 
 			return result;
 		}
 
-		public static long GetResolution(RValue rValue)
+		public static string GetFormattedResolution(RValue rValue)
+		{
+			var resolution = GetResolution(rValue);
+			var billons = BigInteger.Divide(resolution, BigInteger.Pow(new BigInteger(1000), 3));
+
+			if (billons > 0)
+			{
+				var d = billons * 1000;
+				var r = (long) Math.Round((double)d / 1000);
+				return $"{r}B";
+			}
+			else
+			{
+				return resolution.ToString(CultureInfo.InvariantCulture);
+			}
+		}
+
+		public static BigInteger GetResolution(RValue rValue)
 		{
 			var reducedR = Reducer.Reduce(rValue);
 
@@ -227,7 +244,7 @@ namespace MSS.Common
 			{
 				var reciprocalOfTheDenominator = BigInteger.Pow(2, -1 * reducedR.Exponent);
 				var result = BigInteger.Divide(reciprocalOfTheDenominator, reducedR.Value);
-				return (long)result;
+				return result;
 			}
 		}
 

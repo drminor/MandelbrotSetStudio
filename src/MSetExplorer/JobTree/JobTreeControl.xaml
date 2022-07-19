@@ -8,8 +8,6 @@
 
              mc:Ignorable="d" 
              d:DesignHeight="1000" d:DesignWidth="400">
-
-    
     
     <Grid>
         <Border BorderThickness="1" BorderBrush="Black" VerticalAlignment="Stretch">
@@ -17,7 +15,7 @@
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="700"/>
+                    <RowDefinition Height="*"/>
 
                 </Grid.RowDefinitions>
 
@@ -31,14 +29,19 @@
                     <TreeView.Resources>
                         <HierarchicalDataTemplate DataType="{x:Type mtmset:JobTreeItem}" ItemsSource="{Binding Children}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding TransformType}"/>
+                                <TextBlock Text="{Binding TransformType}" />
                                 
-                                <TextBlock Text=" — " Foreground="Green"/>
-                                <TextBlock Text="{Binding Zoom}" Foreground="Green"/>
+                                <TextBlock Text="—" Foreground="BlueViolet"/>
+                                <TextBlock Text="{Binding Zoom}" Foreground="BlueViolet"/>
 
-                                <TextBlock Text="   [" Foreground="Blue"/>
+                                <TextBlock Text="—" Foreground="ForestGreen"/>
+                                <TextBlock Text="{Binding Created}" Foreground="ForestGreen"/>
+
+                                <TextBlock Text=" [" Foreground="Blue"/>
                                 <TextBlock Text="{Binding Children.Count}" Foreground="Blue"/>
                                 <TextBlock Text="]" Foreground="Blue"/>
+
+                                <Button Click="Button_Click" Tag="{Binding Id}" Margin="5,1,0,1">Go</Button>
                             </StackPanel>
                         </HierarchicalDataTemplate>
 

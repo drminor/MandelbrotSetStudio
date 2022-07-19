@@ -30,10 +30,8 @@ namespace MSetExplorer
 			_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
+			JobTreeViewModel = new JobTreeViewModel();
 			MapScrollViewModel = mapScrollViewModel;
-
-			//PosterViewModel.LogicalDisplaySize = MapDisplayViewModel.LogicalDisplaySize;
-			//MapScrollViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 			MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
@@ -65,6 +63,8 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public IPosterViewModel PosterViewModel { get; }
+		public IJobTreeViewModel JobTreeViewModel { get; }
+
 		public IMapScrollViewModel MapScrollViewModel { get; }
 		public IMapDisplayViewModel MapDisplayViewModel => MapScrollViewModel.MapDisplayViewModel;
 
@@ -157,7 +157,6 @@ namespace MSetExplorer
 					//throw new InvalidOperationException("if the pos has not changed, the coords should not change.");
 				}
 			}
-
 		}
 
 		#endregion
@@ -227,12 +226,12 @@ namespace MSetExplorer
 				MapDisplayViewModel.UseEscapeVelocities = ColorBandSetViewModel.UseEscapeVelocities;
 			}
 
-			if (e.PropertyName == nameof(ColorBandSetViewModel.HighlightSelectedBand))
+			else if (e.PropertyName == nameof(ColorBandSetViewModel.HighlightSelectedBand))
 			{
 				MapDisplayViewModel.HighlightSelectedColorBand = ColorBandSetViewModel.HighlightSelectedBand;
 			}
 
-			if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
+			else if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
 			{
 				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
 				{
@@ -250,7 +249,7 @@ namespace MSetExplorer
 				PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 			}
 
-			if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
 			{
 				PosterViewModel.DisplayZoom = MapDisplayViewModel.DisplayZoom;
 				PosterViewModel.LogicalDisplaySize = MapDisplayViewModel.LogicalDisplaySize;

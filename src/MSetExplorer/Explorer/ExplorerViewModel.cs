@@ -3,6 +3,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows;
 
 namespace MSetExplorer
 {
@@ -33,6 +34,7 @@ namespace MSetExplorer
 			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 
 			JobTreeViewModel = new JobTreeViewModel();
+			JobTreeViewModel.NavigateToJobRequested += JobTreeViewModel_NavigateToJobRequested;
 
 
 			MapDisplayViewModel = mapDisplayViewModel;
@@ -59,6 +61,11 @@ namespace MSetExplorer
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
 			ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
+		}
+
+		private void JobTreeViewModel_NavigateToJobRequested(object? sender, NavigateToJobRequestedEventArgs e)
+		{
+			MapProjectViewModel.CurrentJob = e.Job;
 		}
 
 		#endregion

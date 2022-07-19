@@ -499,6 +499,8 @@ namespace MSetExplorer
 				var w = (int)Math.Round(bitmap.Width);
 				var h = (int)Math.Round(bitmap.Height);
 
+				Debug.Assert(w == 128 && h == 128 && pixels.Length == 4 * 128 * 128, "Pixels are not complete.");
+
 				var rect = new Int32Rect(0, 0, w, h);
 				var stride = 4 * w;
 				bitmap.WritePixels(rect, pixels, stride, 0);

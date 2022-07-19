@@ -41,7 +41,6 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
@@ -49,6 +48,7 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
+        <!-- Menu -->
         <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="20">
 
             <MenuItem Header="_Project">
@@ -106,7 +106,9 @@
             </MenuItem>
 
         </Menu>
-        <Border BorderThickness="0.75" BorderBrush="Black" Grid.Row="1" Grid.Column="0" x:Name="colLeft" Margin="5">
+        
+        <!-- Pan Buttons, Back/Forward, Display Size -->
+        <Border Grid.Row="1" Grid.Column="0" BorderThickness="0.75" BorderBrush="Black" x:Name="colLeft" Margin="5">
             <Grid >
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -165,6 +167,7 @@
 
         </Border>
 
+        <!-- Map Display -->
         <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" x:Name="colCenter" Margin="0,5">
             <local:MapDisplayControl x:Name="mapDisplay1"></local:MapDisplayControl>
         </Border>
@@ -194,6 +197,7 @@
 
         </Grid>
 
+        <!-- Job Tree -->
         <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Visible">
             <Border  Margin="0,5,5,5" >
                 <local:JobTreeControl x:Name="jobTree1"  ></local:JobTreeControl>
@@ -201,8 +205,9 @@
             
         </Grid>
 
-        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" x:Name="botRow" BorderThickness="0"   HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Collapsed">
-            <!--<local:ColorBandSetHistogramControl x:Name="cbsh1"/>-->
+        <!-- Histogram -->
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" x:Name="botRow" BorderThickness="0" HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Collapsed">
+            <local:ColorBandSetHistogramControl x:Name="cbsh1"/>
             
         </Border>
 
