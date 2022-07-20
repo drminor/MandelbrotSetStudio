@@ -10,6 +10,7 @@ namespace MSetExplorer
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
+		private string? _jobId;
 		private MapAreaInfo? _currentMapAreaInfo;
 
 		private RRectangle _coords;
@@ -18,6 +19,7 @@ namespace MSetExplorer
 		private string _x2;
 		private string _y1;
 		private string _y2;
+		private int _coordsExp;
 
 		private string _width;
 		private string _height;
@@ -37,6 +39,7 @@ namespace MSetExplorer
 
 		public MapCoordsViewModel()
 		{
+			_jobId = null;
 			_currentMapAreaInfo = null;
 
 			_coords = new RRectangle();
@@ -62,11 +65,20 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Event Handlers
-
-		#endregion
-
 		#region Public Properties
+
+		public string? JobId
+		{
+			get => _jobId;
+			set
+			{
+				if (value != _jobId)
+				{
+					_jobId = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public MapAreaInfo CurrentMapAreaInfo
 		{
@@ -78,7 +90,6 @@ namespace MSetExplorer
 					_currentMapAreaInfo = value;
 					UpdateCoords(_currentMapAreaInfo);
 					OnPropertyChanged();
-					//OnPropertyChanged(nameof(JobId));
 				}
 			}
 		}
@@ -155,6 +166,19 @@ namespace MSetExplorer
 				if (value != _y2)
 				{
 					_y2 = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int CoordsExp
+		{
+			get => _coordsExp;
+			set
+			{
+				if (value != _coordsExp)
+				{
+					_coordsExp = value;
 					OnPropertyChanged();
 				}
 			}
@@ -315,6 +339,7 @@ namespace MSetExplorer
 				X2 = RValueHelper.ConvertToString(endingX);
 				Y1 = RValueHelper.ConvertToString(startingY);
 				Y2 = RValueHelper.ConvertToString(endingY);
+				CoordsExp = Coords.Exponent;
 
 				PrecisionX = RValueHelper.GetPrecision(startingX, endingX, out var diffX) + _numDigitsForDisplayExtent;
 				Width = RValueHelper.ConvertToString(diffX, useSciNotationForLengthsGe: 6);
@@ -337,6 +362,7 @@ namespace MSetExplorer
 				X2 = string.Empty;
 				Y1 = string.Empty;
 				Y2 = string.Empty;
+				CoordsExp = 0;
 
 				PrecisionX = 0;
 				Width = string.Empty;

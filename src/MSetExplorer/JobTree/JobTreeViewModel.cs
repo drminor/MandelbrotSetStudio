@@ -14,6 +14,8 @@ namespace MSetExplorer
 	public class JobTreeViewModel : ViewModelBase, IJobTreeViewModel
 	{
 		private Project? _currentProject;
+		private Job? _currentJob;
+		private IList<Job> _jobsList;
 
 		#region Constructor
 
@@ -21,6 +23,7 @@ namespace MSetExplorer
 		{
 			JobItems = new ObservableCollection<JobTreeItem>();
 			_currentProject = null;
+			_jobsList = new List<Job>();
 		}
 
 		#endregion
@@ -28,7 +31,6 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public new bool InDesignMode => base.InDesignMode;
-
 
 		public event EventHandler<NavigateToJobRequestedEventArgs>? NavigateToJobRequested;
 
@@ -47,39 +49,54 @@ namespace MSetExplorer
 					}
 
 					_currentProject = value;
-					LoadTree(_currentProject?.GetJobs().ToList());
+					_jobsList = _currentProject?.GetJobs().ToList() ?? new List<Job>();
+					ShowOriginalVersion();
 
 					if (_currentProject != null)
 					{
 						_currentProject.PropertyChanged += CurrentProject_PropertyChanged;
 					}
-
 				}
 			}
 		}
+
+		public Job? CurrentJob
+		{
+			get => _currentJob;
+			private set
+			{
+				if (value != _currentJob)
+				{
+					_currentJob = value;
+					ShowJob(_currentJob);
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		#endregion
+
+		#region Event Handlers
 
 		private void CurrentProject_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(Project.CurrentJob))
 			{
-				OnPropertyChanged(nameof(IJobTreeViewModel.CurrentJob));
+				CurrentJob = CurrentProject?.CurrentJob;
 			}
 		}
-
-		public Job CurrentJob => CurrentProject?.CurrentJob ?? Job.Empty;
 
 		#endregion
 
 		#region Public Methods
 
-		public void NavigateToJob(string jobId)
+		public void RaiseNavigateToJobRequested(ObjectId jobId)
 		{
 			if (CurrentProject != null)
 			{
-				var oJobId = new ObjectId(jobId);
 				var jobs = CurrentProject.GetJobs().ToList();
 
-				var job = jobs.FirstOrDefault(X => X.Id == oJobId);
+				var job = jobs.FirstOrDefault(X => X.Id == jobId);
 
 				if (job != null)
 				{
@@ -88,11 +105,97 @@ namespace MSetExplorer
 			}
 		}
 
+		public void ShowOriginalVersion()
+		{
+			LoadTree(_jobsList);
+		}
+
+		public void RollupPans()
+		{
+			var jobTreeItems = new List<JobTreeItem>(JobItems);
+			JobItems.Clear(); 
+			
+			var totalPansConsolidated = ConsolidatePans(jobTreeItems);
+			Debug.WriteLine($"Pans consolidated = {totalPansConsolidated}.");
+
+			foreach (var jobTreeItem in jobTreeItems)
+			{
+				JobItems.Add(jobTreeItem);
+			}
+		}
+
+		public void RollupSingles()
+		{
+			var jobTreeItems = new List<JobTreeItem>(JobItems);
+			JobItems.Clear();
+
+			var totalSingesConsolidated = ConsolidateSingles(JobItems);
+			Debug.WriteLine($"Singles consolidated = {totalSingesConsolidated}.");
+
+			foreach (var jobTreeItem in jobTreeItems)
+			{
+				JobItems.Add(jobTreeItem);
+			}
+		}
+
+		#endregion
+
+		#region Private UI Methods
+
+		private void ShowJob(Job? job)
+		{
+			if (job == null)
+			{
+				return;
+			}
+
+			var foundNode = JobItems.FirstOrDefault(x => x.Job.Id == job.Id);
+
+			if (foundNode != null)
+			{
+				foundNode.IsExpanded = true;
+				foundNode.IsSelected = true;
+			}
+			else
+			{
+				foreach (var jobTreeItem in JobItems)
+				{
+					if (ShowJobRecurse(job, jobTreeItem))
+					{
+						jobTreeItem.IsExpanded = true;
+					}
+				}
+			}
+		}
+
+		private bool ShowJobRecurse(Job job, JobTreeItem jobTreeItem)
+		{
+			var foundNode = jobTreeItem.Children.FirstOrDefault(x => x.Job.Id == job.Id);
+
+			if (foundNode != null)
+			{
+				foundNode.IsExpanded = true;
+				foundNode.IsSelected = true;
+				return true;
+			}
+			else
+			{
+				foreach (var child in jobTreeItem.Children)
+				{
+					if (ShowJobRecurse(job, child))
+					{
+						child.IsExpanded = true;
+						return true;
+					}
+				}
+
+				return false;
+			}
+		}
+
 		#endregion
 
 		#region Private Methods
-
-		private int visited;
 
 		private void LoadTree(IList<Job>? jobs)
 		{
@@ -104,10 +207,6 @@ namespace MSetExplorer
 			}
 
 			var jobTreeItems = GetTree(jobs);
-
-			var totalConsolidated = ConsolidatePans(jobTreeItems);
-
-			Debug.WriteLine($"Consolidated {totalConsolidated} jobs.");
 
 			foreach(var jobTreeItem in jobTreeItems)
 			{
@@ -166,9 +265,54 @@ namespace MSetExplorer
 			return result;
 		}
 
+		private int ConsolidateSingles(IList<JobTreeItem> jobTreeItems)
+		{
+			var totalResult = 0;
+
+			int currentResult;
+
+			do
+			{
+				currentResult = 0;
+
+				foreach (var jobTreeItem in jobTreeItems)
+				{
+					var numConsolidated = ConsolidateSinglesRecurse(jobTreeItem);
+					currentResult += numConsolidated;
+					totalResult += numConsolidated;
+				}
+			}
+			while (currentResult > 0);
+
+
+			return totalResult;
+		}
+
+		private int ConsolidateSinglesRecurse(JobTreeItem jobTreeItem)
+		{
+			var result = 0;
+
+			for (var j = 0; j < jobTreeItem.Children.Count; j++)
+			{
+				var child = jobTreeItem.Children[j];
+				if (child.Children.Count == 1)
+				{
+					var granChild = child.Children[0];
+					_ = child.Children.Remove(granChild);
+					jobTreeItem.Children.Add(granChild);
+					result++;
+				}
+
+				var tResult = ConsolidateSinglesRecurse(child);
+				result += tResult;
+			}
+
+			return result;
+		}
+
 		private IList<JobTreeItem> GetTree(IList<Job> jobs)
 		{
-			visited = 0;
+			var visited = 0;
 
 			var result = new List<JobTreeItem>();
 
@@ -180,7 +324,7 @@ namespace MSetExplorer
 			result.Add(root);
 			visited++;
 
-			LoadChildItemsRecurse(jobs, root);
+			LoadChildItemsRecurse(jobs, root, ref visited);
 
 			// Add Miscellaneous children of the top node (for example children with TransformType = CanvasSizeUpdate)
 			var topLevelNonPreferredJobs = GetTopLevelNonPreferredJobs(jobs);
@@ -200,7 +344,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void LoadChildItemsRecurse(IList<Job> jobs, JobTreeItem jobTreeItem)
+		private void LoadChildItemsRecurse(IList<Job> jobs, JobTreeItem jobTreeItem, ref int visited)
 		{
 			var childCntr = 0;
 			var childJobs = GetChildren(jobs, jobTreeItem);
@@ -209,13 +353,13 @@ namespace MSetExplorer
 				var jobTreeItemChild = new JobTreeItem(childCntr++, job);
 				jobTreeItem.Children.Add(jobTreeItemChild);
 				visited++;
-				LoadChildItemsRecurse(jobs, jobTreeItemChild);
+				LoadChildItemsRecurse(jobs, jobTreeItemChild, ref visited);
 			}
 		}
 
 		private IList<Job> GetChildren(IList<Job> jobs, JobTreeItem jobTreeItem)
 		{
-			var result = jobs.Where(x => x.ParentJobId == jobTreeItem.Job.Id).OrderBy(x => x.DateCreated).ToList();
+			var result = jobs.Where(x => x.ParentJobId == jobTreeItem.Job.Id).OrderBy(x => x.Id.Timestamp).ToList();
 			return result;
 		}
 
@@ -237,7 +381,7 @@ namespace MSetExplorer
 
 		private IList<Job> GetTopLevelNonPreferredJobs(IList<Job> jobs)
 		{
-			var result = jobs.Where(x => x.ParentJobId == null && x.TransformType != TransformType.Home).OrderBy(x => x.DateCreated).ToList();
+			var result = jobs.Where(x => x.ParentJobId == null && x.TransformType != TransformType.Home).OrderBy(x => x.Id.Timestamp).ToList();
 			return result;
 		}
 

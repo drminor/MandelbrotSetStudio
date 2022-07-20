@@ -7,10 +7,8 @@ using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace MSetRepo
 {
@@ -108,8 +106,6 @@ namespace MSetRepo
 		public JobRecord MapTo(Job source)
 		{
 			var coords = MapTo(source.Coords);
-			//var mSetInfoRecord = new MSetInfoRecord(coords, source.MapCalcSettings);
-
 			var mapAreaInfoRecord = new MapAreaInfoRecord(coords, MapTo(source.CanvasSize), MapTo(source.Subdivision), MapTo(source.MapBlockOffset), MapTo(source.CanvasControlOffset));
 
 			var result = new JobRecord(
@@ -127,17 +123,13 @@ namespace MSetRepo
 
 				NewAreaPosition: MapTo(source.NewArea?.Position ?? new PointInt()),
 				NewAreaSize: MapTo(source.NewArea?.Size ?? new SizeInt()), 
-				//mSetInfoRecord,
 				ColorBandSetId: source.ColorBandSetId,
-				//MapTo(source.MapBlockOffset),
-				//MapTo(source.CanvasControlOffset),
 				MapCalcSettings: source.MapCalcSettings,
 				CanvasSizeInBlocks: MapTo(source.CanvasSizeInBlocks)
 				)
 			{
 				Id = source.Id,
 				LastSaved = source.LastSavedUtc
-				//, CanvasSize = MapTo(source.CanvasSize)
 			};
 
 			return result;

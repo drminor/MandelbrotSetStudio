@@ -27,8 +27,6 @@ namespace MSetExplorer
 		private double _itemWidth;
 		private ColorBandSetEditMode _editMode;
 
-		//private IHistogram _histogram { get; init; }
-
 		private ColorBandSet? _colorBandSet;	// The value assigned to this model
 		private bool _useEscapeVelocities;
 		private bool _useRealTimePreview;

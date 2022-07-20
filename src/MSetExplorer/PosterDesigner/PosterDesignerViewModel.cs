@@ -204,6 +204,8 @@ namespace MSetExplorer
 				var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
 
 				MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
+
+				MapCoordsViewModel.JobId = PosterViewModel.CurrentPoster?.SourceJobId.ToString();
 				MapCoordsViewModel.CurrentMapAreaInfo = jobAreaAndCalcSettings.MapAreaInfo;
 
 				MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: false);

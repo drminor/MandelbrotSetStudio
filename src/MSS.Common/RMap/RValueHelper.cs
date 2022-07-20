@@ -217,18 +217,53 @@ namespace MSS.Common
 
 		public static string GetFormattedResolution(RValue rValue)
 		{
-			var resolution = GetResolution(rValue);
-			var billons = BigInteger.Divide(resolution, BigInteger.Pow(new BigInteger(1000), 3));
+			var culture = CultureInfo.CreateSpecificCulture(CultureInfo.CurrentCulture.Name);
+			var numberFormatInfo = culture.NumberFormat;
+			numberFormatInfo.NumberGroupSeparator = ",";
+			numberFormatInfo.NumberDecimalDigits = 0;
 
-			if (billons > 0)
+			var resolution = GetResolution(rValue);
+
+			var septillons = BigInteger.Divide(resolution, BigInteger.Pow(new BigInteger(1000), 8)); // 10 ^ 24 - Yotta
+			if (septillons > 0)
 			{
-				var d = billons * 1000;
-				var r = (long) Math.Round((double)d / 1000);
-				return $"{r}B";
+				var n = septillons * 1000;
+				var np = (long)Math.Round((double)n / 1000);
+				return np.ToString("N", numberFormatInfo) + " Y";
 			}
 			else
 			{
-				return resolution.ToString(CultureInfo.InvariantCulture);
+				var quintillions = BigInteger.Divide(resolution, BigInteger.Pow(new BigInteger(1000), 6)); // 10 ^ 18 - Exa
+				if (quintillions > 0)
+				{
+					var n = quintillions * 1000;
+					var np = (long)Math.Round((double)n / 1000);
+					return np.ToString("N", numberFormatInfo) + " E";
+				}
+				else
+				{
+					var trillons = BigInteger.Divide(resolution, BigInteger.Pow(new BigInteger(1000), 4)); // 10 ^ 12 - Tera
+					if (trillons > 0)
+					{
+						var n = trillons * 1000;
+						var nb = (long)Math.Round((double)n / 1000);
+						return nb.ToString("N", numberFormatInfo) + " T";
+					}
+					else
+					{
+						var millions = BigInteger.Divide(resolution, BigInteger.Pow(new BigInteger(1000), 2)); // 10 ^ 6 - Mega
+						if (millions > 0)
+						{
+							var n = millions * 1000;
+							var nb = (long)Math.Round((double)n / 1000);
+							return nb.ToString("N", numberFormatInfo) + " M";
+						}
+						else
+						{
+							return resolution.ToString("N", numberFormatInfo);
+						}
+					}
+				}
 			}
 		}
 

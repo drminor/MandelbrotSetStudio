@@ -7,6 +7,9 @@ namespace MSS.Types.MSet
 {
 	public class JobTreeItem : INotifyPropertyChanged
 	{
+		private bool _isSelected;
+		private bool _isExpanded;
+
 		#region Constructor
 
 		public JobTreeItem(int ordinal, Job job, ObservableCollection<JobTreeItem>? children = null)
@@ -20,12 +23,38 @@ namespace MSS.Types.MSet
 
 		#region Public Properties
 
+		public bool IsSelected
+		{
+			get => _isSelected;
+			set
+			{
+				if (value != _isSelected)
+				{
+					_isSelected = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsExpanded
+		{
+			get => _isExpanded;
+			set
+			{
+				if (value != _isExpanded)
+				{
+					_isExpanded = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public int Ordinal { get; set; }
 		public Job Job { get; init; }
 		public ObservableCollection<JobTreeItem> Children { get; init; }
 
 		public string TransformType => Job.TransformType.ToString();
-		public int Zoom => -1 * Job.MapAreaInfo.Subdivision.SamplePointDelta.Exponent;
+		public int Zoom => -1 * Job.MapAreaInfo.Coords.Exponent;
 		public DateTime Created => Job.DateCreated;
 		public string Id => Job.Id.ToString();
 
@@ -35,10 +64,10 @@ namespace MSS.Types.MSet
 
 		public event PropertyChangedEventHandler? PropertyChanged;
 
-		//private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-		//{
-		//	PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		//}
+		private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
 		#endregion
 	}

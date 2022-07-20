@@ -23,25 +23,49 @@
                     <ColumnDefinition Width="400"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Row="0" FontSize="16" Height="22" Margin="5,1">Job Tree</TextBlock>
+                <StackPanel Grid.Row="0" Margin="5,1" Orientation="Horizontal">
+                    <TextBlock FontSize="16" Height="22">Job Tree</TextBlock>
+                    <Button Margin="25,0,10,0" Padding="5,0" Click="ButtonShowOriginal_Click" >Original</Button>
+                    <Button Margin="10,0" Padding="5,0" Click="ButtonRollupPans_Click" >Rollup Pans</Button>
+                    <Button Margin="10,0" Padding="5,0" Click="ButtonRollupSingles_Click" >Rollup Singles</Button>
+                </StackPanel>
 
                 <TreeView Grid.Row="1" Margin="0" ItemsSource="{Binding JobItems}" BorderThickness="0" Focusable="True" x:Name="trvJobs" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="{x:Type TreeViewItem}">
+
+                            <Style.Resources>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Cornsilk"/>
+                            </Style.Resources>
+
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                            <Setter Property="FontWeight" Value="Normal" />
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True"> 
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </Trigger>
+                            </Style.Triggers>
+
+                        </Style>
+
+                    </TreeView.ItemContainerStyle>
                     <TreeView.Resources>
                         <HierarchicalDataTemplate DataType="{x:Type mtmset:JobTreeItem}" ItemsSource="{Binding Children}">
-                            <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" ToolTip="{Binding Id}" KeyUp="JobTreeItem_KeyUp" Tag="{Binding Id}" >
                                 <TextBlock Text="{Binding TransformType}" />
                                 
-                                <TextBlock Text="—" Foreground="BlueViolet"/>
-                                <TextBlock Text="{Binding Zoom}" Foreground="BlueViolet"/>
+                                <TextBlock Text="—" Foreground="BlueViolet" />
+                                <TextBlock Text="{Binding Zoom}" Foreground="BlueViolet" />
 
                                 <TextBlock Text="—" Foreground="ForestGreen"/>
-                                <TextBlock Text="{Binding Created}" Foreground="ForestGreen"/>
+                                <TextBlock Text="{Binding Created}" Foreground="ForestGreen" />
 
                                 <TextBlock Text=" [" Foreground="Blue"/>
-                                <TextBlock Text="{Binding Children.Count}" Foreground="Blue"/>
-                                <TextBlock Text="]" Foreground="Blue"/>
+                                <TextBlock Text="{Binding Children.Count}" Foreground="Blue" />
+                                <TextBlock Text="]" Foreground="Blue" />
 
-                                <Button Click="Button_Click" Tag="{Binding Id}" Margin="5,1,0,1">Go</Button>
+                                <Button Click="Button_Click" Tag="{Binding Id}" Margin="5,1,0,1" Focusable="False" >Go</Button>
                             </StackPanel>
                         </HierarchicalDataTemplate>
 

@@ -1,4 +1,5 @@
-﻿using MSS.Types.MSet;
+﻿using MongoDB.Bson;
+using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -15,8 +16,13 @@ namespace MSetExplorer
 
 		public ObservableCollection<JobTreeItem> JobItems { get; }
 
-		Job CurrentJob { get; }
+		Job? CurrentJob { get; }
 
-		void NavigateToJob(string jobId);
+		void RaiseNavigateToJobRequested(ObjectId jobId);
+
+		public void ShowOriginalVersion();
+		public void RollupPans();
+		public void RollupSingles();
+
 	}
 }
