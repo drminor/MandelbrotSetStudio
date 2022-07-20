@@ -3,11 +3,11 @@ using System;
 
 namespace MSetExplorer
 {
-	public class NavigateToJobRequestedEventArgs : EventArgs
+	public class ProjectJobAddedEventArgs : EventArgs
 	{
 		public Job Job { get; init; }
 
-		public NavigateToJobRequestedEventArgs(Job job)
+		public ProjectJobAddedEventArgs(Job job)
 		{
 			Job = job;
 		}

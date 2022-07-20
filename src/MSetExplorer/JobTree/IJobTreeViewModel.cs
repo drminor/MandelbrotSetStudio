@@ -10,19 +10,20 @@ namespace MSetExplorer
 	{
 		bool InDesignMode { get; }
 
-		public event EventHandler<NavigateToJobRequestedEventArgs>? NavigateToJobRequested;
+		event EventHandler<NavigateToJobRequestedEventArgs>? NavigateToJobRequested;
 
 		Project? CurrentProject { get; set; }
 
-		public ObservableCollection<JobTreeItem> JobItems { get; }
+		ObservableCollection<JobTreeItem> JobItems { get; }
 
 		Job? CurrentJob { get; }
 
 		void RaiseNavigateToJobRequested(ObjectId jobId);
 
-		public void ShowOriginalVersion();
-		public void RollupPans();
-		public void RollupSingles();
+		void AddJob(Job job);
+		void ShowOriginalVersion();
+		void RollupPans();
+		void RollupSingles();
 
 	}
 }

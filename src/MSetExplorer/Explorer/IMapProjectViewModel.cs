@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -7,6 +8,8 @@ namespace MSetExplorer
 	public interface IMapProjectViewModel
 	{
 		bool InDesignMode { get; }
+		event EventHandler<ProjectJobAddedEventArgs>? ProjectJobAdded;
+
 		event PropertyChangedEventHandler? PropertyChanged;
 
 		SizeInt CanvasSize { get; set; }

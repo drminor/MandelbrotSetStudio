@@ -32,6 +32,7 @@ namespace MSetExplorer
 
 			MapProjectViewModel = mapProjectViewModel;
 			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
+			MapProjectViewModel.ProjectJobAdded += MapProjectViewModel_ProjectJobAdded;
 
 			JobTreeViewModel = new JobTreeViewModel();
 			JobTreeViewModel.NavigateToJobRequested += JobTreeViewModel_NavigateToJobRequested;
@@ -61,6 +62,11 @@ namespace MSetExplorer
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
 			ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
+		}
+
+		private void MapProjectViewModel_ProjectJobAdded(object? sender, ProjectJobAddedEventArgs e)
+		{
+			JobTreeViewModel.AddJob(e.Job);
 		}
 
 		private void JobTreeViewModel_NavigateToJobRequested(object? sender, NavigateToJobRequestedEventArgs e)

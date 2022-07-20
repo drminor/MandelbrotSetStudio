@@ -257,7 +257,7 @@ namespace MSetRepo
 		{
 			var result = new byte[uShorts.Length * 2];
 
-			for (var i = 0; i < uShorts.Length - 1; i++)
+			for (var i = 0; i < uShorts.Length; i++)
 			{
 				BitConverter.TryWriteBytes(new Span<byte>(result, i * 2, 2), uShorts[i]);
 			}
@@ -269,7 +269,7 @@ namespace MSetRepo
 		{
 			var result = new byte[bools.Length];
 
-			for (var i = 0; i < bools.Length - 1; i++)
+			for (var i = 0; i < bools.Length; i++)
 			{
 				BitConverter.TryWriteBytes(new Span<byte>(result, i, 1), bools[i]);
 			}
@@ -304,7 +304,7 @@ namespace MSetRepo
 		{
 			var result = new ushort[raw.Length / 2];
 
-			for(var i = 0; i < result.Length - 1; i++)
+			for(var i = 0; i < result.Length; i++)
 			{
 				result[i] = BitConverter.ToUInt16(raw, i * 2);
 			}
@@ -316,7 +316,7 @@ namespace MSetRepo
 		{
 			var result = new bool[raw.Length];
 
-			for (var i = 0; i < result.Length - 1; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = BitConverter.ToBoolean(raw, i);
 			}

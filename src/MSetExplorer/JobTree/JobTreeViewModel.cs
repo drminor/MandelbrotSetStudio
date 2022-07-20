@@ -51,6 +51,7 @@ namespace MSetExplorer
 					_currentProject = value;
 					_jobsList = _currentProject?.GetJobs().ToList() ?? new List<Job>();
 					ShowOriginalVersion();
+					CurrentJob = _currentProject?.CurrentJob;
 
 					if (_currentProject != null)
 					{
@@ -89,6 +90,23 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		// This is temporary -- until we can replace the Project's JobCollection with a JobTreeViewModel or similar.
+		public void AddJob(Job job)
+		{
+			if (job.ParentJobId == null)
+			{
+				Debug.WriteLine($"Not adding job to the tree, it has no parent.");
+				return;
+			}
+
+			_jobsList.Add(job);
+			if (TryFindJobTreeItem(job.ParentJobId.Value, out var foundNode))
+			{
+				foundNode.Children.Add(new JobTreeItem(job));
+				ShowJob(job);
+			}
+		}
 
 		public void RaiseNavigateToJobRequested(ObjectId jobId)
 		{
@@ -185,6 +203,50 @@ namespace MSetExplorer
 					if (ShowJobRecurse(job, child))
 					{
 						child.IsExpanded = true;
+						return true;
+					}
+				}
+
+				return false;
+			}
+		}
+
+		private bool TryFindJobTreeItem(ObjectId jobId, [MaybeNullWhen(false)] out JobTreeItem foundNode)
+		{
+			foundNode = JobItems.FirstOrDefault(x => x.Job.Id == jobId);
+
+			if (foundNode != null)
+			{
+				return true;
+			}
+			else
+			{
+				foreach (var jobTreeItem in JobItems)
+				{
+					if (TryFindJobTreeItemRecurse(jobId, jobTreeItem, out foundNode))
+					{
+						return true;
+					}
+				}
+
+				return false;
+			}
+		}
+
+		private bool TryFindJobTreeItemRecurse(ObjectId jobId, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out JobTreeItem foundNode)
+		{
+			foundNode = jobTreeItem.Children.FirstOrDefault(x => x.Job.Id == jobId);
+
+			if (foundNode != null)
+			{
+				return true;
+			}
+			else
+			{
+				foreach (var child in jobTreeItem.Children)
+				{
+					if (TryFindJobTreeItemRecurse(jobId, child, out foundNode))
+					{
 						return true;
 					}
 				}
@@ -329,10 +391,10 @@ namespace MSetExplorer
 			// Add Miscellaneous children of the top node (for example children with TransformType = CanvasSizeUpdate)
 			var topLevelNonPreferredJobs = GetTopLevelNonPreferredJobs(jobs);
 
-			var childCntr = root.Children.Count + 1;
+			//var childCntr = root.Children.Count + 1;
 			foreach (var job in topLevelNonPreferredJobs)
 			{
-				root.Children.Add(new JobTreeItem(childCntr++, job));
+				root.Children.Add(new JobTreeItem(/*childCntr++, */job));
 				visited++;
 			}
 
@@ -346,11 +408,11 @@ namespace MSetExplorer
 
 		private void LoadChildItemsRecurse(IList<Job> jobs, JobTreeItem jobTreeItem, ref int visited)
 		{
-			var childCntr = 0;
+			//var childCntr = 0;
 			var childJobs = GetChildren(jobs, jobTreeItem);
 			foreach (var job in childJobs)
 			{
-				var jobTreeItemChild = new JobTreeItem(childCntr++, job);
+				var jobTreeItemChild = new JobTreeItem(/*childCntr++, */job);
 				jobTreeItem.Children.Add(jobTreeItemChild);
 				visited++;
 				LoadChildItemsRecurse(jobs, jobTreeItemChild, ref visited);
@@ -369,7 +431,7 @@ namespace MSetExplorer
 
 			if (rootJob != null)
 			{
-				root = new JobTreeItem(0, rootJob);
+				root = new JobTreeItem(rootJob);
 				return true;
 			}
 			else

@@ -202,11 +202,11 @@ namespace MSS.Types.MSet
 			{
 				job.IsPreferredChild = false;
 
-				var childJobs = _jobsCollection.Where(c => c.ParentJobId == job.Id);
-				foreach(var childJob in childJobs)
-				{
-					childJob.ParentJobId = newSibling.Id;
-				}
+				//var childJobs = _jobsCollection.Where(c => c.ParentJobId == job.Id);
+				//foreach(var childJob in childJobs)
+				//{
+				//	childJob.ParentJobId = newSibling.Id;
+				//}
 			}
 		}
 

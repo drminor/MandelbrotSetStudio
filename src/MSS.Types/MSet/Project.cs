@@ -68,8 +68,6 @@ namespace MSS.Types.MSet
 				LastUpdatedUtc = DateTime.UtcNow;
 			}
 
-
-
 			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobsCollection.CurrentJob.Id}, Current ColorBandSetId: {_colorBandSetCollection.CurrentColorBandSet.Id}. IsDirty = {IsDirty}");
 		}
 

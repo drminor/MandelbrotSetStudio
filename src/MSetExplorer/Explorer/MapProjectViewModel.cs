@@ -41,6 +41,8 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
+		public event EventHandler<ProjectJobAddedEventArgs>? ProjectJobAdded;
+
 		public SizeInt CanvasSize
 		{
 			get => _canvasSize;
@@ -552,6 +554,7 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(job);
+			ProjectJobAdded?.Invoke(this, new ProjectJobAddedEventArgs(job));
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
@@ -581,6 +584,7 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(newJob);
+			ProjectJobAdded?.Invoke(this, new ProjectJobAddedEventArgs(newJob));
 		}
 
 		#endregion

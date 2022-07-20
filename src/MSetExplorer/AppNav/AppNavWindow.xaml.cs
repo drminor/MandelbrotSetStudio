@@ -41,6 +41,7 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (AppNavViewModel)DataContext;
+				btnFirstButton.Focus();
 
 				if (Properties.Settings.Default.ShowTopNav)
 				{
@@ -82,6 +83,11 @@ namespace MSetExplorer
 		private void SampleTestButton_Click(object sender, RoutedEventArgs e)
 		{
 			GoToSampleTest();
+		}
+
+		private void ShowSystemColorsButton_Click(object sender, RoutedEventArgs e)
+		{
+			GoToSystemColors();
 		}
 
 		private void ExitAppButton_Click(object sender, RoutedEventArgs e)
@@ -168,6 +174,22 @@ namespace MSetExplorer
 			_ = xSamplingEditorWindow.Focus();
 		}
 
+
+		private void GoToSystemColors(AppNavRequestResponse? appNavRequestResponse = null)
+		{
+			Hide();
+
+			var sysColorsWindow = new SysColorsWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest(onCloseBehavior: OnCloseBehavior.ReturnToTopNav));
+
+			_lastWindow = sysColorsWindow;
+			_lastWindow.Name = "SysColors";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			sysColorsWindow.Owner = Application.Current.MainWindow;
+			sysColorsWindow.Show();
+			_ = sysColorsWindow.Focus();
+		}
+
 		#region Nav Window Support
 
 		private Action<AppNavRequestResponse?> GetRoute(string lastWindowName)
@@ -177,6 +199,7 @@ namespace MSetExplorer
 				case "Explorer": return GoToExplorer;
 				case "Designer": return GoToDesigner;
 				case "xSampling": return GoToSampleTest;
+				case "SysColors": return GoToSystemColors;
 				default:
 					return x => WindowState = WindowState.Normal;
 			}
