@@ -21,7 +21,7 @@ namespace MSetExplorer
 		bool CurrentProjectIsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
 
-		Job CurrentJob { get; set; }
+		Job CurrentJob { get; }
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
@@ -34,7 +34,7 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void UpdateColorBandSet(ColorBandSet colorBandSet);
-		void UpdateMapCoordinates(RRectangle coords);
+		//void UpdateMapCoordinates(RRectangle coords);
 
 		MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea);
 

@@ -15,7 +15,6 @@ namespace MSS.Types.MSet
 		private ObjectId _colorBandSetId;
 
 		private bool _isPreferredChild;
-		private DateTime _lastUpdatedUtc;
 		private DateTime _lastSavedUtc;
 
 		#region Constructor
@@ -180,21 +179,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public DateTime LastUpdatedUtc
-		{
-			get => _lastUpdatedUtc;
-
-			private set
-			{
-				//var isDirtyBefore = IsDirty;
-				_lastUpdatedUtc = value;
-
-				//if (IsDirty != isDirtyBefore)
-				//{
-				//	OnPropertyChanged(nameof(IsDirty));
-				//}
-			}
-		}
+		public DateTime LastUpdatedUtc { get; private set; }
 
 		#endregion
 
@@ -227,8 +212,6 @@ namespace MSS.Types.MSet
 			return result;
 		}
 
-
-
 		#endregion
 
 		#region IEqualityComparer / IEquatable Support
@@ -240,9 +223,32 @@ namespace MSS.Types.MSet
 
 		public bool Equals(Job? other)
 		{
-			return other != null
-				&& Id.Equals(other.Id)
-				&& LastSavedUtc == other.LastSavedUtc;
+			//return other != null
+			//	&& Id.Equals(other.Id)
+			//	&& LastSavedUtc == other.LastSavedUtc;
+			
+			if (other == null)
+			{
+				return false;
+			}
+			else
+			{
+				if (Id.Equals(other.Id))
+				{
+					if (LastSavedUtc != other.LastSavedUtc)
+					{
+						return false;
+					}
+					else
+					{
+						return true;
+					}
+				}
+				else
+				{
+					return false;
+				}
+			}
 		}
 
 		public bool Equals(Job? x, Job? y)

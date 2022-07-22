@@ -31,14 +31,9 @@ namespace MSS.Common
 			return result;
 		}
 
-		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+		private Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea)
 		{
-			if (!parentJobId.HasValue && !(transformType == TransformType.Home || transformType == TransformType.CanvasSizeUpdate))
-			{
-				throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {transformType}. Only jobs with TransformType = 'none' be parentless.");
-			}
-
 			// Determine how much of the canvas control can be covered by the new map.
 			var canvasSize = mapAreaInfo.CanvasSize;
 
@@ -102,7 +97,8 @@ namespace MSS.Common
 
 		private string GetJobName(TransformType transformType)
 		{
-			var result = transformType == TransformType.Home ? "Home" : transformType.ToString();
+			//var result = transformType == TransformType.Home ? "Home" : transformType.ToString();
+			var result = transformType.ToString();
 			return result;
 		}
 

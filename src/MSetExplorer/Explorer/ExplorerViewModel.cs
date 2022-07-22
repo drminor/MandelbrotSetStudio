@@ -1,9 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Windows;
 
 namespace MSetExplorer
 {
@@ -32,11 +30,8 @@ namespace MSetExplorer
 
 			MapProjectViewModel = mapProjectViewModel;
 			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
-			MapProjectViewModel.ProjectJobAdded += MapProjectViewModel_ProjectJobAdded;
 
 			JobTreeViewModel = new JobTreeViewModel();
-			JobTreeViewModel.NavigateToJobRequested += JobTreeViewModel_NavigateToJobRequested;
-
 
 			MapDisplayViewModel = mapDisplayViewModel;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
@@ -62,16 +57,6 @@ namespace MSetExplorer
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
 			ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
-		}
-
-		private void MapProjectViewModel_ProjectJobAdded(object? sender, ProjectJobAddedEventArgs e)
-		{
-			JobTreeViewModel.AddJob(e.Job);
-		}
-
-		private void JobTreeViewModel_NavigateToJobRequested(object? sender, NavigateToJobRequestedEventArgs e)
-		{
-			MapProjectViewModel.CurrentJob = e.Job;
 		}
 
 		#endregion
@@ -178,9 +163,7 @@ namespace MSetExplorer
 				MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
 				// TODO: Check This: Once every job has a valid CanvasSize, don't use the current DisplaySize.
-
 				//var newMapAreaInfo = MapJobHelper.GetMapAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
-
 				var newMapAreaInfo = curJob.MapAreaInfo;
 
 				MapCoordsViewModel.JobId = curJob.Id.ToString();

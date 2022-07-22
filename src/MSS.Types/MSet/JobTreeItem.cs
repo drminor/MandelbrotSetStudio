@@ -12,9 +12,14 @@ namespace MSS.Types.MSet
 
 		#region Constructor
 
-		public JobTreeItem(/*int ordinal, */Job job, ObservableCollection<JobTreeItem>? children = null)
+		public JobTreeItem()
 		{
-			//Ordinal = ordinal;
+			Job = new Job();
+			Children = new ObservableCollection<JobTreeItem>();
+		}
+
+		public JobTreeItem(Job job, ObservableCollection<JobTreeItem>? children = null)
+		{
 			Job = job ?? throw new ArgumentNullException(nameof(job));
 			Children = children ?? new ObservableCollection<JobTreeItem>();
 		}
@@ -49,7 +54,6 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		//public int Ordinal { get; set; }
 		public Job Job { get; init; }
 		public ObservableCollection<JobTreeItem> Children { get; init; }
 

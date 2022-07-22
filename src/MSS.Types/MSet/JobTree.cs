@@ -1,0 +1,776 @@
+﻿using MongoDB.Bson;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Threading;
+
+namespace MSS.Types.MSet
+{
+	public class JobTree : IJobTree
+	{
+		private readonly ReaderWriterLockSlim _jobsLock;
+		private readonly JobTreeItem _root;
+
+		private List<JobTreeItem>? _currentPath;
+
+		#region Constructor
+
+		public JobTree(IList<Job> jobs)
+		{
+			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+			_root = BuildTree(jobs, out _currentPath);
+		}
+
+		#endregion
+
+		#region Public Properties
+
+		public ObservableCollection<JobTreeItem> JobItems => _root.Children;
+
+		public Job? CurrentJob
+		{
+			get => DoWithReadLock(() => GetCurrentJob(_currentPath));
+			set
+			{
+				_jobsLock.EnterWriteLock();
+				
+				try
+				{
+					if (value != GetCurrentJob(_currentPath))
+					{
+						_ = MoveCurrentTo(value, _root, out _currentPath);
+					}
+
+				}
+				finally
+				{
+					_jobsLock.ExitWriteLock();
+				}
+			}
+		}
+
+		public bool CanGoBack => DoWithReadLock(() => { return CanMoveBack(_currentPath); });
+
+		public bool CanGoForward => DoWithReadLock(() => { return CanMoveForward(_currentPath); });
+
+		// TODO: Enumerate over the Tree to avoid actually creating lists.
+		public bool AnyJobIsDirty => GetJobs().Any(x => x.IsDirty);
+
+		#endregion
+
+		#region Public Methods
+
+		public void Add(Job job, bool selectAddedJob)
+		{
+			_jobsLock.EnterWriteLock();
+
+			try
+			{
+				// TODO: Consider adding a new field to store the Id of the job from which this job was created.
+				var parentIdToUse = GetParentIdToUse(job);
+				job.ParentJobId = parentIdToUse;
+
+				if (TryAdd(job, out var path))
+				{
+					if (selectAddedJob)
+					{
+						ExpandAndSelect(path.ToArray());
+						_currentPath = path;
+					}
+				}
+				else
+				{
+					Debug.WriteLine($"Could not add the new Job: {job.Id}.");
+				}
+			}
+			finally
+			{
+				_jobsLock.ExitWriteLock();
+			}
+		}
+
+		private ObjectId? GetParentIdToUse(Job job)
+		{
+			var parentJobId = job.ParentJobId;
+			if (!parentJobId.HasValue)
+			{
+				if (job.TransformType != TransformType.Home)
+				{
+					throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {job.TransformType}.");
+				}
+				else
+				{
+					// The job will not have a parent.
+					return parentJobId;
+				}
+			}
+
+			if (job.TransformType == TransformType.CanvasSizeUpdate)
+			{
+				// The new job will be a child of the source job.
+				return parentJobId;
+			}
+
+			if (!TryFindJobTreeItem(parentJobId.Value, _root, out var path))
+			{
+				throw new InvalidOperationException("Cannot find the Parent Job.");
+			}
+
+			var parentJobTreeItem = path[^1];
+			var grandParentJobTreeItem = GetParent(path);
+			var children = grandParentJobTreeItem.Children;
+			var currentPosition = children.IndexOf(parentJobTreeItem);
+
+			if (currentPosition == children.Count - 1)
+			{
+				// The new job will be sibling of the source job.
+				ObjectId? grandParentJobId = grandParentJobTreeItem.Job.Id;
+				if (grandParentJobId == ObjectId.Empty)
+				{
+					grandParentJobId = null;
+				}
+
+				return grandParentJobId;
+			}
+			else
+			{
+				// The new job will be a child of the source job.
+				return parentJobId;
+			}
+		}
+
+		public bool TryGetPreviousJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job)
+		{
+			if (_currentPath == null)
+			{
+				job = null;
+				return false;
+			}
+
+			var backPath = GetPreviousJobPath(_currentPath, skipPanJobs);
+
+			job = GetCurrentJob(backPath);
+
+			return job != null;
+		}
+
+		public bool MoveBack(bool skipPanJobs)
+		{
+			if (_currentPath == null)
+			{
+				return false;
+			}
+
+			var backPath = GetPreviousJobPath(_currentPath, skipPanJobs);
+
+			if (backPath != null)
+			{
+				_currentPath = backPath;
+				ExpandAndSelect(backPath.ToArray());
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public bool TryGetNextJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job)
+		{
+			if (_currentPath == null)
+			{
+				job = null;
+				return false;
+			}
+
+			var forwardPath = GetNextJobPath(_currentPath, skipPanJobs);
+
+			job = GetCurrentJob(forwardPath);
+
+			return job != null;
+		}
+
+		public bool MoveForward(bool skipPanJobs)
+		{
+			if (_currentPath == null)
+			{
+				return false;
+			}
+
+			var forwardPath = GetNextJobPath(_currentPath, skipPanJobs);
+
+			if (forwardPath != null)
+			{
+				_currentPath = forwardPath;
+				ExpandAndSelect(forwardPath.ToArray());
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public Job? GetJob(ObjectId jobId)
+		{
+			_ = TryFindJob(jobId, _root, out var result);
+			return result;
+		}
+
+		public Job? GetParent(Job job)
+		{
+			if (job.ParentJobId == null)
+			{
+				return null;
+			}
+			else
+			{
+				_ = TryFindJob(job.ParentJobId.Value, _root, out var result);
+				return result;
+			}
+		}
+
+		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy)
+		{
+			_jobsLock.EnterUpgradeableReadLock();
+
+			try
+			{
+				List<JobTreeItem>? path;
+				if (job.TransformType == TransformType.CanvasSizeUpdate)
+				{
+					_ = TryFindJobTreeParent(job, out path);
+				}
+				else
+				{
+					_ = TryFindJobTreeItem(job.Id, _root, out path);
+				}
+
+				var parent = GetJobTreeItem(path);
+
+				if (parent != null)
+				{
+					_ = TryGetCanvasSizeUpdateJob(parent.Children, canvasSizeInBlocks, out proxy);
+					return proxy != null;
+				}
+				else
+				{
+					proxy = null;
+					return false;
+				}
+			}
+			finally
+			{
+				_jobsLock.ExitUpgradeableReadLock();
+			}
+
+		}
+
+		public IEnumerable<Job> GetJobs()
+		{
+			_jobsLock.EnterReadLock();
+
+			try
+			{
+				var result = GetJobs(_root);
+				return result;
+			}
+			finally
+			{
+				_jobsLock.ExitReadLock();
+			}
+		}
+
+		#endregion
+
+		#region Load Methods
+
+		private JobTreeItem BuildTree(IList<Job>? jobs, out List<JobTreeItem>? path)
+		{
+			var result = new JobTreeItem();
+
+			if (jobs == null || jobs.Count == 0)
+			{
+				path = null;
+			}
+			else
+			{
+				var visited = 0;
+				LoadChildItemsRecurse(jobs, null, result, ref visited);
+				if (visited != jobs.Count)
+				{
+					Debug.WriteLine("Not all jobs were included.");
+				}
+
+				_ = MoveCurrentTo(jobs[0], result, out path);
+			}
+
+			return result;
+		}
+
+		private void LoadChildItemsRecurse(IList<Job> jobs, ObjectId? parentJobId, JobTreeItem jobTreeItem, ref int visited)
+		{
+			var childJobs = GetChildren(jobs, parentJobId);
+			foreach (var job in childJobs)
+			{
+				var jobTreeItemChild = new JobTreeItem(job);
+				jobTreeItem.Children.Add(jobTreeItemChild);
+				visited++;
+				LoadChildItemsRecurse(jobs, job.Id, jobTreeItemChild, ref visited);
+			}
+		}
+
+		private IList<Job> GetChildren(IList<Job> jobs, ObjectId? parentJobId)
+		{
+			var result = jobs.Where(x => x.ParentJobId == parentJobId).OrderBy(x => x.Id.Timestamp).ToList();
+			return result;
+		}
+
+		#endregion
+
+		#region Collection Methods
+
+		private IList<Job> GetJobs(JobTreeItem jobTreeItem)
+		{
+			var result = new List<Job>();
+
+			foreach (var child in jobTreeItem.Children)
+			{
+				result.Add(child.Job);
+				var jobList = GetJobs(child);
+				result.AddRange(jobList);
+			}
+
+			return result;
+		}
+
+		private bool TryAdd(Job job, [MaybeNullWhen(false)] out List<JobTreeItem> path)
+		{
+			bool result;
+			path = null;
+
+			var parentJobId = job.ParentJobId;
+
+			if (parentJobId == null)
+			{
+				var newNode = new JobTreeItem(job);
+				_root.Children.Add(newNode);
+				path = new List<JobTreeItem> { newNode };
+				result = true;
+			}
+			else
+			{
+				if (TryFindJobTreeItem(parentJobId.Value, _root, out path))
+				{
+					var newNode = new JobTreeItem(job);
+					path[^1].Children.Add(newNode);
+					path.Add(newNode);
+					result = true;
+				}
+				else
+				{
+					result = false;
+				}
+			}
+
+			return result;
+		}
+
+		private bool TryFindJobTreeParent(Job job, [MaybeNullWhen(false)] out List<JobTreeItem> path)
+		{
+			if (job.ParentJobId == null)
+			{
+				path = new List<JobTreeItem> { _root };
+				return true;
+			}
+			else
+			{
+				return TryFindJobTreeItem(job.ParentJobId.Value, _root, out path);
+			}
+		}
+
+		private bool TryFindJobTreeItem(ObjectId jobId, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out List<JobTreeItem> path)
+		{
+			var foundNode = jobTreeItem.Children.FirstOrDefault(x => x.Job.Id == jobId);
+
+			if (foundNode != null)
+			{
+				path = new List<JobTreeItem> { foundNode };
+				return true;
+			}
+			else
+			{
+				foreach (var child in jobTreeItem.Children)
+				{
+					if (TryFindJobTreeItem(jobId, child, out var localPath))
+					{
+						path = new List<JobTreeItem> { child };
+						path.AddRange(localPath);
+						return true;
+					}
+				}
+
+				path = null;
+				return false;
+			}
+		}
+
+
+		private bool TryFindJob(ObjectId jobId, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out Job job)
+		{
+			var foundNode = jobTreeItem.Children.FirstOrDefault(x => x.Job.Id == jobId);
+
+			if (foundNode != null)
+			{
+				job = foundNode.Job;
+				return true;
+			}
+			else
+			{
+				foreach (var child in jobTreeItem.Children)
+				{
+					if (TryFindJob(jobId, child, out job))
+					{
+						return true;
+					}
+				}
+
+				job = null;
+				return false;
+			}
+		}
+
+		private bool MoveCurrentTo(Job? job, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out List<JobTreeItem> path)
+		{
+			if (job == null)
+			{
+				path = null;
+				return false;
+			}
+
+			if (TryFindJobTreeItem(job.Id, jobTreeItem, out path))
+			{
+				ExpandAndSelect(path.ToArray());
+				return true;
+			}
+			else
+			{
+				path = null;
+				return false;
+			}
+		}
+
+		private void ExpandAndSelect(JobTreeItem[] path)
+		{
+			foreach(var p in path.SkipLast(1))
+			{
+				p.IsExpanded = true;
+			}
+
+			var terminal = GetJobTreeItem(path);
+			if (terminal != null)
+			{
+				terminal.IsExpanded = true;
+				terminal.IsSelected = true;
+			}
+		}
+
+		private JobTreeItem? GetJobTreeItem(IList<JobTreeItem>? path)
+		{
+			return path?[^1];
+		}
+
+		private Job? GetCurrentJob(IList<JobTreeItem>? path)
+		{
+			return path?[^1].Job;
+		}
+
+		private JobTreeItem GetParent(IList<JobTreeItem> path)
+		{
+			var result = path.Count == 1 ? _root : path[^2];
+			return result;
+		}
+
+		private JobTreeItem? GetGrandParent(IList<JobTreeItem> path)
+		{
+			var result = path.Count == 1 ? null : path.Count == 2 ? _root : path[^3];
+			return result;
+		}
+
+		#endregion
+
+		#region Navigate Forward / Backward
+
+		private List<JobTreeItem>? GetNextJobPath(IList<JobTreeItem> path, bool skipPanJobs)
+		{
+			var currentItem = GetJobTreeItem(path);
+
+			if (currentItem == null || path == null)
+			{
+				return null;
+			}
+
+			List<JobTreeItem>? result;
+
+			if (currentItem.Children.Count > 0)
+			{
+				var nextJobTreeItem = GetNextJobTreeItem(currentItem.Children, -1, skipPanJobs);
+				if (nextJobTreeItem == null)
+				{
+					nextJobTreeItem = currentItem.Children[0];
+				}
+
+				// The new job will be a child of the current job
+				result = new List<JobTreeItem>(path)
+					{
+						nextJobTreeItem
+					};
+
+				return result;
+			}
+			else
+			{
+				var parentJobTreeItem = GetParent(path);
+				var siblings = parentJobTreeItem.Children;
+				var currentPosition = siblings.IndexOf(currentItem);
+
+				var nextJobTreeItem = GetNextJobTreeItem(siblings, currentPosition, skipPanJobs);
+
+				if (nextJobTreeItem == null)
+				{
+					var children = currentItem.Children;
+					nextJobTreeItem = GetNextJobTreeItem(children, -1, skipPanJobs);
+					if (nextJobTreeItem != null)
+					{
+						// The new job will be a child of the current job
+						result = new List<JobTreeItem>(path)
+						{
+							nextJobTreeItem
+						};
+					}
+					else
+					{
+						return null;
+					}
+				}
+				else
+				{
+					// The new job will be a sibling of the current job
+					result = new List<JobTreeItem>(path.SkipLast(1))
+					{
+						nextJobTreeItem
+					};
+				}
+
+			}
+
+			return result;
+		}
+
+		private JobTreeItem? GetNextJobTreeItem(IList<JobTreeItem> jobTreeItems, int currentPosition, bool skipPanJobs)
+		{
+			JobTreeItem? result;
+
+			if (skipPanJobs)
+			{
+				result = jobTreeItems.Skip(currentPosition + 1).FirstOrDefault(x => x.Job.TransformType != TransformType.Pan);
+			}
+			else
+			{
+				result = jobTreeItems.Skip(currentPosition + 1).FirstOrDefault();
+			}
+
+			return result;
+		}
+
+		private bool CanMoveForward(IList<JobTreeItem>? path)
+		{
+			var currentItem = GetJobTreeItem(path);
+
+			if (currentItem == null || path == null)
+			{
+				return false;
+			}
+
+			var parentJobTreeItem = GetParent(path);
+			var children = parentJobTreeItem.Children;
+			var currentPosition = children.IndexOf(currentItem);
+
+			if (currentPosition == children.Count - 1)
+			{
+				var grandChildren = children[currentPosition].Children;
+				return grandChildren.Count > 0;
+			}
+			else
+			{
+				return true;
+			}
+		}
+
+		private List<JobTreeItem>? GetPreviousJobPath(IList<JobTreeItem> path, bool skipPanJobs)
+		{
+			var currentItem = GetJobTreeItem(path);
+
+			if (currentItem == null || path == null)
+			{
+				return null;
+			}
+			else
+			{
+				var parentJobTreeItem = GetParent(path);
+				var children = parentJobTreeItem.Children;
+
+				var currentPosition = children.IndexOf(currentItem);
+
+				List<JobTreeItem> result;
+
+				var previousJobTreeItem = GetPreviousJobTreeItem(children, currentPosition, skipPanJobs);
+
+				if (previousJobTreeItem == null)
+				{
+					if (path.Count > 1)
+					{
+						var grandParentJobTreeItem = GetParent(path.SkipLast(1).ToList());
+						var ancestors = grandParentJobTreeItem.Children;
+						previousJobTreeItem = GetPreviousJobTreeItem(ancestors, ancestors.Count, skipPanJobs);
+						if (previousJobTreeItem != null)
+						{
+							result = new List<JobTreeItem>(path.SkipLast(2))
+							{
+								previousJobTreeItem
+							};
+						}
+						else
+						{
+							return null;
+						}
+					}
+					else
+					{
+						return null;
+					}
+				}
+				else
+				{
+					result = new List<JobTreeItem>(path.SkipLast(1))
+					{
+						previousJobTreeItem
+					};
+				}
+
+				return result;
+			}
+		}
+
+		private JobTreeItem? GetPreviousJobTreeItem(IList<JobTreeItem> jobTreeItems, int currentPosition, bool skipPanJobs)
+		{
+			JobTreeItem? result;
+
+			if (skipPanJobs)
+			{
+				result = jobTreeItems.SkipLast(jobTreeItems.Count - currentPosition).LastOrDefault(x => x.Job.TransformType != TransformType.Pan);
+			}
+			else
+			{
+				result = jobTreeItems.SkipLast(jobTreeItems.Count - currentPosition).LastOrDefault();
+			}
+
+			return result;
+		}
+
+		private bool CanMoveBack(IList<JobTreeItem>? path)
+		{
+			var currentItem = GetJobTreeItem(path);
+
+			if (currentItem == null || path == null)
+			{
+				return false;
+			}
+
+			var parentJobTreeItem = GetParent(path);
+			var children = parentJobTreeItem.Children;
+			var currentPosition = children.IndexOf(currentItem);
+
+			if (currentPosition > 0)
+			{
+				// We can move to the previous item at the current level.
+				return true;
+			}
+			else
+			{
+				// If we can go up, return true.
+				return path.Count > 1;
+			}
+		}
+
+		/// <summary>
+		/// Finds the sibling job of the given job that has a TransformType of CanvasSizeUpdate
+		/// and has the same CanvasSizeInBlocks
+		/// </summary>
+		/// <param name="job"></param>
+		/// <param name="childJob">If successful, the preferred child job of the given job</param>
+		/// <returns>True if there is any child of the specified job.</returns>
+		private bool TryGetCanvasSizeUpdateJob(IList<JobTreeItem> jobTreeItems, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job childJob)
+		{
+			var childJobTreeItem = jobTreeItems.FirstOrDefault(x => x.Job.TransformType == TransformType.CanvasSizeUpdate && x.Job.CanvasSizeInBlocks == canvasSizeInBlocks);
+			childJob = childJobTreeItem?.Job;
+			var result = childJob != null;
+
+			return result;
+		}
+
+		/// <summary>
+		/// 
+		/// If the given job is not the preferred child, return the child of the job's parent that is the preferred child.
+		/// </summary>
+		/// <param name="job"></param>
+		/// <returns></returns>
+		private Job? GetPreferredSibling(Job job)
+		{
+			if (TryFindJobTreeParent(job, out var path))
+			{
+				var parentGroup = path[^1];
+				var result = parentGroup.Children.FirstOrDefault(x => x.Job.IsPreferredChild);
+				return result?.Job;
+			}
+			else
+			{
+				// TODO: Consider throwing KeyNotFound exception. The caller should only be asking to locate jobs that exist.
+				return null;
+			}
+		}
+
+		#endregion
+
+		#region Lock Helpers
+
+		private T DoWithReadLock<T>(Func<T> function)
+		{
+			_jobsLock.EnterReadLock();
+
+			try
+			{
+				return function();
+			}
+			finally
+			{
+				_jobsLock.ExitReadLock();
+			}
+		}
+
+		#endregion
+
+		#region IDisposable Support
+
+		public void Dispose()
+		{
+			GC.SuppressFinalize(this);
+			((IDisposable)_jobsLock).Dispose();
+		}
+
+		#endregion
+	}
+}

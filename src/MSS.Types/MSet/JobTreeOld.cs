@@ -1,16 +1,16 @@
 ﻿using MongoDB.Bson;
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+//using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
 namespace MSS.Types.MSet
 {
-	public class JobCollection
+	public class JobTreeOld : IJobTree
 	{
 		private readonly Collection<Job> _jobsCollection;
 		private readonly ReaderWriterLockSlim _jobsLock;
@@ -19,7 +19,7 @@ namespace MSS.Types.MSet
 
 		#region Constructor
 
-		public JobCollection(IEnumerable<Job> jobs)
+		public JobTreeOld(IEnumerable<Job> jobs)
 		{
 			_jobsCollection = new Collection<Job>(jobs.ToList());
 			_jobsPointer = _jobsCollection.Count - 1;
@@ -31,14 +31,49 @@ namespace MSS.Types.MSet
 
 		#region Public Properties
 
-		public Job CurrentJob => DoWithReadLock(() => { return  _jobsCollection[_jobsPointer]; });
+		public Job? CurrentJob
+		{
+			get => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
+			set
+			{
+				_jobsLock.EnterUpgradeableReadLock();
+
+				try
+				{
+					if (value == null)
+					{
+						DoWithWriteLock(() => { _jobsPointer = -1; });
+					}
+					else if (TryGetIndexFromId(value.Id, out var index))
+					{
+						DoWithWriteLock(() => { _jobsPointer = index; });
+					}
+					else
+					{
+						DoWithWriteLock(() => { _jobsPointer = -1; });
+						Debug.WriteLine($"Could not set the current job to {value.Id}.");
+					}
+				}
+				finally
+				{
+					_jobsLock.ExitUpgradeableReadLock();
+				}
+			}
+		}
+
 		public bool CanGoBack => !(CurrentJob?.ParentJobId is null);
 		public bool CanGoForward => DoWithReadLock(() => { return HaveNextJobInStack(_jobsPointer); });
 
-		public int CurrentIndex => DoWithReadLock(() => { return _jobsPointer; });
+		//public int CurrentIndex => DoWithReadLock(() => { return _jobsPointer; });
 		public int Count => DoWithReadLock(() => { return _jobsCollection.Count; });
 
+		// TODO: Have the old JobTree implement JobItems
+		public ObservableCollection<JobTreeItem> JobItems => throw new NotImplementedException();
+
 		public IEnumerable<Job> GetJobs() => DoWithReadLock(() => { return new ReadOnlyCollection<Job>(_jobsCollection); });
+
+		public bool AnyJobIsDirty => GetJobs().Any(x => x.IsDirty);
+
 
 		#endregion
 
@@ -50,111 +85,128 @@ namespace MSS.Types.MSet
 			set => DoWithWriteLock(() => { _jobsCollection[index] = value; });
 		}
 
-		public void UpdateItem(int index, Job job)
+		public Job? GetJob(ObjectId jobId)
 		{
-			DoWithWriteLock(() => { _jobsCollection[index] = job; });
+			_ = TryFindByJobId(jobId, out var job);
+			return job;
 		}
 
-		public bool MoveCurrentTo(Job job)
+		public Job? GetParent(Job job)
 		{
-			_jobsLock.EnterUpgradeableReadLock();
-
-			try
+			if (job.ParentJobId == null)
 			{
-				if (TryGetIndexFromId(job.Id, out var index))
-				{
-					DoWithWriteLock(() => { _jobsPointer = index; });
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-			finally
-			{
-				_jobsLock.ExitUpgradeableReadLock();
-			}
-		}
-
-		public bool MoveCurrentTo(ObjectId jobId)
-		{
-			_jobsLock.EnterUpgradeableReadLock();
-
-			try
-			{
-				if (TryGetIndexFromId(jobId, out var index))
-				{
-					DoWithWriteLock(() => { _jobsPointer = index; });
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-			finally
-			{
-				_jobsLock.ExitUpgradeableReadLock();
-			}
-		}
-
-		public bool MoveCurrentTo(int index)
-		{
-			_jobsLock.EnterUpgradeableReadLock();
-
-			try
-			{
-				if (index < 0 || index > _jobsCollection.Count - 1)
-				{
-					return false;
-				}
-				else
-				{
-					DoWithWriteLock(() => { _jobsPointer = index; });
-					return true;
-				}
-			}
-			finally
-			{
-				_jobsLock.ExitUpgradeableReadLock();
-			}
-		}
-
-		public void Load(Job job)
-		{
-			var jobs = new List<Job>() { job };
-			Load(jobs);
-		}
-
-		public bool Load(IEnumerable<Job> jobs)
-		{
-			var result = true;
-
-			DoWithWriteLock(() =>
-			{
-				_jobsCollection.Clear();
-
-				foreach (var job in jobs)
-				{
-					_jobsCollection.Add(job);
-				}
-
-				if (_jobsCollection.Count == 0)
-				{
-					_jobsCollection.Add(Job.Empty);
-				}
-
-				_jobsPointer = _jobsCollection.Count - 1;
-			});
-
-			if (!CheckCollectionIntegrity(out var reason))
-			{
-				Debug.WriteLine($"Job Collection is not integral. Reason: {reason}");
+				return null;
 			}
 
+			_ = TryFindByJobId(job.ParentJobId.Value, out var result);
 			return result;
 		}
+
+		//public void UpdateItem(int index, Job job)
+		//{
+		//	DoWithWriteLock(() => { _jobsCollection[index] = job; });
+		//}
+
+		//public bool MoveCurrentTo(Job job)
+		//{
+		//	_jobsLock.EnterUpgradeableReadLock();
+
+		//	try
+		//	{
+		//		if (TryGetIndexFromId(job.Id, out var index))
+		//		{
+		//			DoWithWriteLock(() => { _jobsPointer = index; });
+		//			return true;
+		//		}
+		//		else
+		//		{
+		//			return false;
+		//		}
+		//	}
+		//	finally
+		//	{
+		//		_jobsLock.ExitUpgradeableReadLock();
+		//	}
+		//}
+
+		//public bool MoveCurrentTo(ObjectId jobId)
+		//{
+		//	_jobsLock.EnterUpgradeableReadLock();
+
+		//	try
+		//	{
+		//		if (TryGetIndexFromId(jobId, out var index))
+		//		{
+		//			DoWithWriteLock(() => { _jobsPointer = index; });
+		//			return true;
+		//		}
+		//		else
+		//		{
+		//			return false;
+		//		}
+		//	}
+		//	finally
+		//	{
+		//		_jobsLock.ExitUpgradeableReadLock();
+		//	}
+		//}
+
+		//public bool MoveCurrentTo(int index)
+		//{
+		//	_jobsLock.EnterUpgradeableReadLock();
+
+		//	try
+		//	{
+		//		if (index < 0 || index > _jobsCollection.Count - 1)
+		//		{
+		//			return false;
+		//		}
+		//		else
+		//		{
+		//			DoWithWriteLock(() => { _jobsPointer = index; });
+		//			return true;
+		//		}
+		//	}
+		//	finally
+		//	{
+		//		_jobsLock.ExitUpgradeableReadLock();
+		//	}
+		//}
+
+		//public void Load(Job job)
+		//{
+		//	var jobs = new List<Job>() { job };
+		//	Load(jobs);
+		//}
+
+		//public bool Load(IEnumerable<Job> jobs)
+		//{
+		//	var result = true;
+
+		//	DoWithWriteLock(() =>
+		//	{
+		//		_jobsCollection.Clear();
+
+		//		foreach (var job in jobs)
+		//		{
+		//			_jobsCollection.Add(job);
+		//		}
+
+		//		if (_jobsCollection.Count == 0)
+		//		{
+		//			_jobsCollection.Add(Job.Empty);
+		//		}
+
+		//		_jobsPointer = _jobsCollection.Count - 1;
+		//	});
+
+		//	if (!CheckCollectionIntegrity(out var reason))
+		//	{
+		//		Debug.WriteLine($"Job Collection is not integral. Reason: {reason}");
+		//	}
+
+		//	return result;
+		//}
 
 		//public void InsertAfter(Job job)
 		//{
@@ -179,7 +231,7 @@ namespace MSS.Types.MSet
 		//	}
 		//}
 
-		public void Push(Job job)
+		public void Add(Job job, bool selectAddedJob)
 		{
 			DoWithWriteLock(() =>
 			{
@@ -190,7 +242,10 @@ namespace MSS.Types.MSet
 
 				_jobsCollection.Add(job);
 
-				_jobsPointer = _jobsCollection.Count - 1;
+				if (selectAddedJob)
+				{
+					_jobsPointer = _jobsCollection.Count - 1;
+				}
 			});
 		}
 
@@ -198,7 +253,7 @@ namespace MSS.Types.MSet
 		{
 			var siblings = _jobsCollection.Where(x => x.ParentJobId == newSibling.ParentJobId);
 
-			foreach(var job in siblings)
+			foreach (var job in siblings)
 			{
 				job.IsPreferredChild = false;
 
@@ -210,39 +265,39 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public void Clear()
-		{
-			DoWithWriteLock(() =>
-			{
-				_jobsCollection.Clear();
-				_jobsCollection.Add(Job.Empty);
-				_jobsPointer = 0;
-			});
-		}
+		//public void Clear()
+		//{
+		//	DoWithWriteLock(() =>
+		//	{
+		//		_jobsCollection.Clear();
+		//		_jobsCollection.Add(Job.Empty);
+		//		_jobsPointer = 0;
+		//	});
+		//}
 
-		public bool GoBack()
-		{
-			_jobsLock.EnterUpgradeableReadLock();
-			try
-			{
-				var parentJobId = CurrentJob?.ParentJobId;
+		//public bool GoBack()
+		//{
+		//	_jobsLock.EnterUpgradeableReadLock();
+		//	try
+		//	{
+		//		var parentJobId = CurrentJob?.ParentJobId;
 
-				if (!(parentJobId is null))
-				{
-					if (TryGetIndexFromId(parentJobId.Value, out var index))
-					{
-						DoWithWriteLock(() => UpdateJobsPtr(index));
-						return true;
-					}
-				}
+		//		if (!(parentJobId is null))
+		//		{
+		//			if (TryGetIndexFromId(parentJobId.Value, out var index))
+		//			{
+		//				DoWithWriteLock(() => UpdateJobsPtr(index));
+		//				return true;
+		//			}
+		//		}
 
-				return false;
-			}
-			finally
-			{
-				_jobsLock.ExitUpgradeableReadLock();
-			}
-		}
+		//		return false;
+		//	}
+		//	finally
+		//	{
+		//		_jobsLock.ExitUpgradeableReadLock();
+		//	}
+		//}
 
 		public bool TryGetPreviousJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job)
 		{
@@ -299,26 +354,31 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public bool GoForward()
+		public bool MoveBack(bool skipPanJobs)
 		{
-			_jobsLock.EnterUpgradeableReadLock();
-			try
-			{
-				if (TryGetNextJobIndexInStack(_jobsPointer, out var nextJobIndex))
-				{
-					DoWithWriteLock(() => UpdateJobsPtr(nextJobIndex));
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-			finally
-			{
-				_jobsLock.ExitUpgradeableReadLock();
-			}
+			return false;
 		}
+
+		//public bool GoForward()
+		//{
+		//	_jobsLock.EnterUpgradeableReadLock();
+		//	try
+		//	{
+		//		if (TryGetNextJobIndexInStack(_jobsPointer, out var nextJobIndex))
+		//		{
+		//			DoWithWriteLock(() => UpdateJobsPtr(nextJobIndex));
+		//			return true;
+		//		}
+		//		else
+		//		{
+		//			return false;
+		//		}
+		//	}
+		//	finally
+		//	{
+		//		_jobsLock.ExitUpgradeableReadLock();
+		//	}
+		//}
 
 		public bool TryGetNextJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job)
 		{
@@ -329,11 +389,11 @@ namespace MSS.Types.MSet
 				{
 					return false;
 				}
-				
+
 				if (skipPanJobs)
 				{
 					// Find next with TransformType != Pan
-					while(true)
+					while (true)
 					{
 						if (!TryGetNextJobInStack(job, out var nextJob))
 						{
@@ -379,6 +439,11 @@ namespace MSS.Types.MSet
 			}
 		}
 
+		public bool MoveForward(bool skipPanJobs)
+		{
+			return false;
+		}
+
 		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy)
 		{
 			_jobsLock.EnterUpgradeableReadLock();
@@ -392,19 +457,40 @@ namespace MSS.Types.MSet
 			}
 		}
 
+		/// <summary>
+		/// If the job given has is not the preferred child, return child of the job's parent this is the preferred child.
+		/// </summary>
+		/// <param name="job"></param>
+		/// <returns></returns>
+		public Job? GetPreferredSibling(Job job)
+		{
+			Job? result;
+
+			if (!job.IsPreferredChild /*&& job.ParentJobId.HasValue*/)
+			{
+				result = _jobsCollection.FirstOrDefault(x => x.ParentJobId == job.ParentJobId && x.IsPreferredChild);
+			}
+			else
+			{
+				result = job;
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Private Methods
 
-		private void UpdateJobsPtr(int newJobIndex)
-		{
-			if (newJobIndex < 0 || newJobIndex > _jobsCollection.Count - 1)
-			{
-				throw new ArgumentException($"The newJobIndex with value: {newJobIndex} is not valid.", nameof(newJobIndex));
-			}
+		//private void UpdateJobsPtr(int newJobIndex)
+		//{
+		//	if (newJobIndex < 0 || newJobIndex > _jobsCollection.Count - 1)
+		//	{
+		//		throw new ArgumentException($"The newJobIndex with value: {newJobIndex} is not valid.", nameof(newJobIndex));
+		//	}
 
-			_jobsPointer = newJobIndex;
-		}
+		//	_jobsPointer = newJobIndex;
+		//}
 
 		#endregion
 
@@ -436,7 +522,7 @@ namespace MSS.Types.MSet
 					{
 						previousJob = GetPreferredSibling(previousJob);
 					}
-					return true;
+					return previousJob != null;
 				}
 				else
 				{
@@ -451,21 +537,21 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		private bool TryGetNextJobIndexInStack(int jobIndex, out int nextJobIndex)
-		{
-			nextJobIndex = -1;
+		//private bool TryGetNextJobIndexInStack(int jobIndex, out int nextJobIndex)
+		//{
+		//	nextJobIndex = -1;
 
-			if (TryGetJobFromStack(jobIndex, out var job))
-			{
-				if (TryGetPreferredChildJobIndex(job, out var childJobIndex))
-				{
-					nextJobIndex = childJobIndex;
-					return true;
-				}
-			}
+		//	if (TryGetJobFromStack(jobIndex, out var job))
+		//	{
+		//		if (TryGetPreferredChildJobIndex(job, out var childJobIndex))
+		//		{
+		//			nextJobIndex = childJobIndex;
+		//			return true;
+		//		}
+		//	}
 
-			return false;
-		}
+		//	return false;
+		//}
 
 		private bool TryGetJobFromStack(int jobIndex, [MaybeNullWhen(false)] out Job job)
 		{
@@ -484,10 +570,18 @@ namespace MSS.Types.MSet
 		private bool TryGetPreferredChildJob(Job job, [MaybeNullWhen(false)] out Job childJob)
 		{
 			var startingJob = GetPreferredSibling(job);
-			childJob = _jobsCollection.FirstOrDefault(x => x.ParentJobId == startingJob.Id && x.IsPreferredChild);
+			if (startingJob == null)
+			{
+				childJob = null;
+				return false;
+			}
+			else
+			{
+				childJob = _jobsCollection.FirstOrDefault(x => x.ParentJobId == startingJob?.Id && x.IsPreferredChild);
 
-			var result = childJob != null;
-			return result;
+				var result = childJob != null;
+				return result;
+			}
 		}
 
 		private bool AnySiblingHaveTransformTypeOf(Job job, TransformType transformType)
@@ -503,18 +597,18 @@ namespace MSS.Types.MSet
 		/// <param name="job"></param>
 		/// <param name="childJobIndex">If successful, the index of the most recent child job of the given parentJob</param>
 		/// <returns>True if there is any child of the specified job.</returns>
-		private bool TryGetPreferredChildJobIndex(Job job, out int childJobIndex)
-		{
-			var startingJob = GetPreferredSibling(job);
+		//private bool TryGetPreferredChildJobIndex(Job job, out int childJobIndex)
+		//{
+		//	var startingJob = GetPreferredSibling(job);
 
-			childJobIndex = _jobsCollection.Select((value, index) => new { value, index })
-				.Where(pair => pair.value.ParentJobId == startingJob.Id && pair.value.IsPreferredChild)
-				.Select(pair => pair.index).DefaultIfEmpty(-1)
-				.FirstOrDefault();
+		//	childJobIndex = _jobsCollection.Select((value, index) => new { value, index })
+		//		.Where(pair => pair.value.ParentJobId == startingJob.Id && pair.value.IsPreferredChild)
+		//		.Select(pair => pair.index).DefaultIfEmpty(-1)
+		//		.FirstOrDefault();
 
-			var result = childJobIndex != -1;
-			return result;
-		}
+		//	var result = childJobIndex != -1;
+		//	return result;
+		//}
 
 		/// <summary>
 		/// Finds the sibling job of the given job that has a TransformType of CanvasSizeUpdate.
@@ -550,54 +644,40 @@ namespace MSS.Types.MSet
 		private bool HasLatestChildJob(Job job)
 		{
 			var startingJob = GetPreferredSibling(job);
-			var result = _jobsCollection.Any(x => x.ParentJobId == startingJob.Id && x.IsPreferredChild);
 
-			return result;
+			if (startingJob == null)
+			{
+				return false;
+			}
+			else
+			{
+				var result = _jobsCollection.Any(x => x.ParentJobId == startingJob.Id && x.IsPreferredChild);
+				return result;
+			}
 		}
 
-		public bool TryFindByJobId(ObjectId id, [MaybeNullWhen(false)] out Job job)
+		private bool TryFindByJobId(ObjectId id, [MaybeNullWhen(false)] out Job job)
 		{
 			job = _jobsCollection.FirstOrDefault(x => x.Id == id);
 			return job != null;
 		}
 
-		/// <summary>
-		/// If the job given has is not the preferred child, return child of the job's parent this is the preferred child.
-		/// </summary>
-		/// <param name="job"></param>
-		/// <returns></returns>
-		public Job GetPreferredSibling(Job job)
-		{
-			Job preferredChild;
+		//private Job GetParentJob(Job job)
+		//{
+		//	if (!job.ParentJobId.HasValue)
+		//	{
+		//		throw new InvalidOperationException($"Attempting to retreive the parent job for job: {job.Id}, but this job's ParentJobId is null.");
+		//	}
 
-			if (!job.IsPreferredChild /*&& job.ParentJobId.HasValue*/)
-			{
-				preferredChild = _jobsCollection.FirstOrDefault(x => x.ParentJobId == job.ParentJobId && x.IsPreferredChild) ?? job;
-			}
-			else
-			{
-				preferredChild = job;
-			}
-
-			return preferredChild;
-		}
-
-		private Job GetParentJob(Job job)
-		{
-			if (!job.ParentJobId.HasValue)
-			{
-				throw new InvalidOperationException($"Attempting to retreive the parent job for job: {job.Id}, but this job's ParentJobId is null.");
-			}
-
-			if (TryFindByJobId(job.ParentJobId.Value, out var parentJob))
-			{
-				return parentJob;
-			}
-			else
-			{
-				throw new InvalidOperationException($"Attempting to retreive the parent job for job: {job.Id}, but no job with this job's ParentJobId of {job.ParentJobId.Value} exists in the JobCollection.");
-			}
-		}
+		//	if (TryFindByJobId(job.ParentJobId.Value, out var parentJob))
+		//	{
+		//		return parentJob;
+		//	}
+		//	else
+		//	{
+		//		throw new InvalidOperationException($"Attempting to retreive the parent job for job: {job.Id}, but no job with this job's ParentJobId of {job.ParentJobId.Value} exists in the JobCollection.");
+		//	}
+		//}
 
 		private bool TryGetIndexFromId(ObjectId id, out int index)
 		{
@@ -653,7 +733,7 @@ namespace MSS.Types.MSet
 				var allParentIds = GetAllParentIds(_jobsCollection);
 				var allUnmatched = allParentIds.Except(allFoundParentIds);
 
-				foreach(var s in allUnmatched)
+				foreach (var s in allUnmatched)
 				{
 					reasons.Add($"Parent Job with Id: {s} has no preferred child.");
 				}

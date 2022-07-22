@@ -73,6 +73,8 @@ namespace MSetExplorer
 						_currentProject.PropertyChanged -= CurrentProject_PropertyChanged;
 					}
 					_currentProject = value;
+
+
 					if (_currentProject != null)
 					{
 						_currentProject.PropertyChanged += CurrentProject_PropertyChanged;
@@ -122,12 +124,12 @@ namespace MSetExplorer
 		public Job CurrentJob
 		{
 			get => CurrentProject?.CurrentJob ?? Job.Empty;
-			set 
+			private set 
 			{
-				if (CurrentProject != null)
-				{
-					CurrentProject.CurrentJob = value;
-				}
+				//if (CurrentProject != null)
+				//{
+				//	CurrentProject.CurrentJob = value;
+				//}
 			}
 		}
 
@@ -162,21 +164,25 @@ namespace MSetExplorer
 			{
 				CurrentProject = project;
 
-				if (project.CurrentJob.IsEmpty)
+				if (project.CurrentJob == null || project.CurrentJob.IsEmpty)
 				{
-					Debug.WriteLine("Warning the current job is empty on Project Open.");
+					Debug.WriteLine("Warning the current job is null or empty on Project Open.");
+					return false;
 				}
-
-				var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, project.CurrentJob.CanvasControlOffset, _blockSize);
-				if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+				else
 				{
-					FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
-				}
+					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, project.CurrentJob.CanvasControlOffset, _blockSize);
+					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+					{
+						FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
+					}
 
-				return true;
+					return true;
+				}
 			}
 			else
 			{
+				Debug.WriteLine($"Cannot find a project record for name = {projectName}.");
 				return false;
 			}
 		}
@@ -369,19 +375,19 @@ namespace MSetExplorer
 			LoadMap(CurrentProject, curJob, coords, curJob.ColorBandSetId, curJob.MapCalcSettings, transformType, screenArea);
 		}
 
-		// Currently Not Used.
-		public void UpdateMapCoordinates(RRectangle coords)
-		{
-			if (CurrentProject == null)
-			{
-				return;
-			}
+		//// Currently Not Used.
+		//public void UpdateMapCoordinates(RRectangle coords)
+		//{
+		//	if (CurrentProject == null)
+		//	{
+		//		return;
+		//	}
 
-			if (CurrentJob.Coords != coords)
-			{
-				LoadMap(CurrentProject, CurrentJob, coords, CurrentJob.ColorBandSetId, CurrentJob.MapCalcSettings, TransformType.CoordinatesUpdate, null);
-			}
-		}
+		//	if (CurrentJob.Coords != coords)
+		//	{
+		//		LoadMap(CurrentProject, CurrentJob, coords, CurrentJob.ColorBandSetId, CurrentJob.MapCalcSettings, TransformType.CoordinatesUpdate, null);
+		//	}
+		//}
 
 		public void UpdateColorBandSet(ColorBandSet colorBandSet)
 		{
@@ -537,24 +543,15 @@ namespace MSetExplorer
 
 		private void LoadMap(Project project, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
-			ObjectId? parentJobId;
-			if (transformType == TransformType.IterationUpdate)
-			{
-				// Make the new job a sibling of the current job, instead of a child
-				parentJobId = currentJob.ParentJobId ?? currentJob?.Id;
-			}
-			else
-			{
-				// The new job will be a child of the current job.
-				parentJobId = currentJob.Id;
-			}
+			// THE JOB TREE now contains the logic for determining if the new job will be a child or a sibling of the source job.
+			// TODO: Verify that the currentJob is indeed the current job that should be used for the new Job's source.
 
-			var job = _mapJobHelper.BuildJob(parentJobId, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize);
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(job);
-			ProjectJobAdded?.Invoke(this, new ProjectJobAddedEventArgs(job));
+			//ProjectJobAdded?.Invoke(this, new ProjectJobAddedEventArgs(job));
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
@@ -571,14 +568,24 @@ namespace MSetExplorer
 			}
 
 			// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
-			job = project.GetPreferredSibling(job);
+			if (job.TransformType == TransformType.CanvasSizeUpdate)
+			{
+				var preferredJob = project.GetParent(job);
+
+				if (preferredJob is null)
+				{
+					throw new InvalidOperationException("Could not get the preferred job as we create a new job for the updated canvas size.");
+				}
+
+				job = preferredJob;
+			}
 
 			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
 
 			var transformType = TransformType.CanvasSizeUpdate;
 			RectangleInt? newArea = null;
 
-			var newJob = _mapJobHelper.BuildJob(job.ParentJobId, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
+			var newJob = _mapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
 
 			Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
 			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");

@@ -10,9 +10,9 @@ namespace MSS.Types.MSet
 		//void DropCollections();
 		void WarmUp();
 
-		Project? CreateNewProject(string name, string? description, IEnumerable<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
+		Project? CreateNewProject(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
 		Project? CreateProject(string name, string? description, ObjectId currentJobId);
-		IEnumerable<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
+		IList<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
 		IList<ObjectId> GetAllJobsIdsForProject(ObjectId projectId);
 
 

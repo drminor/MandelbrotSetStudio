@@ -143,7 +143,7 @@ namespace MSetRepo
 			}
 		}
 
-		public Project? CreateNewProject(string name, string? description, IEnumerable<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
+		public Project? CreateNewProject(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
@@ -174,7 +174,7 @@ namespace MSetRepo
 			}
 		}
 
-		private Project? AssembleProject(ProjectRecord? projectRecord, IEnumerable<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
+		private Project? AssembleProject(ProjectRecord? projectRecord, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
 		{
 			Project? result;
 			if (projectRecord == null || jobs.Count() == 0 || colorBandSets.Count() == 0)
@@ -394,7 +394,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public IEnumerable<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets)
+		public IList<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
 			var result = GetAllJobsForProject(projectId, colorBandSetCache);
@@ -402,7 +402,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		private IEnumerable<Job> GetAllJobsForProject(ObjectId projectId, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
+		private IList<Job> GetAllJobsForProject(ObjectId projectId, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
 		{
 			var result = new List<Job>();
 
@@ -585,6 +585,8 @@ namespace MSetRepo
 
 		public void InsertJob(Job job)
 		{
+			var dt = job.DateCreated;
+
 			job.LastSavedUtc = DateTime.UtcNow;
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
@@ -592,6 +594,12 @@ namespace MSetRepo
 			jobRecord.LastSaved = DateTime.UtcNow;
 			_ = jobReaderWriter.Insert(jobRecord);
 			job.LastSavedUtc = DateTime.UtcNow;
+
+			var dt2 = job.DateCreated;
+
+			var dur = dt2 - dt;
+
+			Debug.WriteLine($"The job date created has changeed by {dur}.");
 		}
 
 		public void UpdateJobDetails(Job job)

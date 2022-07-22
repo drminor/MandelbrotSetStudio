@@ -44,12 +44,33 @@ namespace MSetRepo
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc)
+			var currentJobId = GetCurrentJobId(source);
+			var result = new ProjectRecord(source.Name, source.Description, currentJobId, source.LastSavedUtc)
 			{
 				Id = source.Id
 			};
 
 			return result;
+		}
+
+		// TODO: Make the CurrentJobId property of the Project class non-nullable.
+		private ObjectId GetCurrentJobId(Project source)
+		{
+			if (source.CurrentJobId.HasValue)
+			{
+				return source.CurrentJobId.Value;
+			}
+			else
+			{
+				var jobList = source.GetJobs().ToList();
+
+				if (jobList.Count == 0)
+				{
+					throw new InvalidOperationException("MapTo cannot create a project record from a project with no jobs.");
+				}
+
+				return jobList[0].Id;
+			}
 		}
 
 		public ColorBandSetRecord MapTo(ColorBandSet source)

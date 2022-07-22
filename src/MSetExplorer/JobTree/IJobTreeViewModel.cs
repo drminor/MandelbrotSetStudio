@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MSS.Types.MSet;
-using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -10,20 +9,20 @@ namespace MSetExplorer
 	{
 		bool InDesignMode { get; }
 
-		event EventHandler<NavigateToJobRequestedEventArgs>? NavigateToJobRequested;
+		//event EventHandler<NavigateToJobRequestedEventArgs>? NavigateToJobRequested;
 
 		Project? CurrentProject { get; set; }
 
-		ObservableCollection<JobTreeItem> JobItems { get; }
+		ObservableCollection<JobTreeItem>? JobItems { get; }
 
-		Job? CurrentJob { get; }
+		//Job? CurrentJob { get; }
 
 		void RaiseNavigateToJobRequested(ObjectId jobId);
 
-		void AddJob(Job job);
-		void ShowOriginalVersion();
-		void RollupPans();
-		void RollupSingles();
+		//void AddJob(Job job);
+		//void ShowOriginalVersion();
+		//void RollupPans();
+		//void RollupSingles();
 
 	}
 }

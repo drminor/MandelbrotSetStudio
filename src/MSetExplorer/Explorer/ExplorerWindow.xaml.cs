@@ -102,17 +102,17 @@ namespace MSetExplorer
 
 		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoBack))
-			{
-				btnGoBack.IsEnabled = _vm.MapProjectViewModel.CanGoBack;
-				return;
-			}
+			//if (e.PropertyName == nameof(IMapProjectViewModel.CanGoBack))
+			//{
+			//	btnGoBack.IsEnabled = _vm.MapProjectViewModel.CanGoBack;
+			//	return;
+			//}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoForward))
-			{
-				btnGoForward.IsEnabled = _vm.MapProjectViewModel.CanGoForward;
-				return;
-			}
+			//if (e.PropertyName == nameof(IMapProjectViewModel.CanGoForward))
+			//{
+			//	btnGoForward.IsEnabled = _vm.MapProjectViewModel.CanGoForward;
+			//	return;
+			//}
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
@@ -120,7 +120,7 @@ namespace MSetExplorer
 				CommandManager.InvalidateRequerySuggested();
 			}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectOnFile) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectIsDirty))
+			if (e.PropertyName is (nameof(IMapProjectViewModel.CurrentProjectOnFile)) or (nameof(IMapProjectViewModel.CurrentProjectIsDirty)) or (nameof(IMapProjectViewModel.CurrentJob)))
 			{
 				CommandManager.InvalidateRequerySuggested();
 			}

@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 
 namespace MSetExplorer
@@ -33,41 +32,10 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IJobTreeViewModel)DataContext;
-				//_vm.PropertyChanged += ViewModel_PropertyChanged;
 
 				//Debug.WriteLine("The JobTree UserControl is now loaded");
 			}
 		}
-
-		//private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		//{
-		//	if (e.PropertyName == nameof(IJobTreeViewModel.CurrentJob))
-		//	{
-		//		var currentJob = _vm.CurrentJob;
-		//		if (currentJob is null)
-		//		{
-		//			return;
-		//		}
-
-		//		var collectionSource = trvJobs.ItemsSource;
-
-		//		if (collectionSource is CollectionViewSource a)
-		//		{
-		//			if (a.View.MoveCurrentTo(currentJob))
-		//			{
-		//				var sItem = trvJobs.SelectedItem;
-		//				if (sItem is TreeViewItem tvi)
-		//				{
-		//					tvi.BringIntoView();
-		//				}
-		//			}
-		//			else
-		//			{
-		//				Debug.WriteLine($"Could not Move the Tree View's Current Item to {currentJob.Id}.");
-		//			}
-		//		}
-		//	}
-		//}
 
 		#endregion
 
@@ -101,17 +69,17 @@ namespace MSetExplorer
 
 		private void ButtonShowOriginal_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.ShowOriginalVersion();
+			//_vm.ShowOriginalVersion();
 		}
 
 		private void ButtonRollupPans_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.RollupPans();
+			//_vm.RollupPans();
 		}
 
 		private void ButtonRollupSingles_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.RollupSingles();
+			//_vm.RollupSingles();
 		}
 
 
