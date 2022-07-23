@@ -12,7 +12,13 @@ namespace MSS.Types.MSet
 
 		Job CurrentJob { get; set; }
 
+		IReadOnlyCollection<JobTreeItem>? GetCurrentPath();
+		IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId);
+
+		void AddHomeJob(Job job);
 		void Add(Job job, bool selectTheAddedJob);
+		bool RestoreBranch(ObjectId jobId);
+		bool DeleteBranch(ObjectId jobId);
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
@@ -26,13 +32,10 @@ namespace MSS.Types.MSet
 		Job? GetParent(Job job);
 		Job? GetJob(ObjectId jobId);
 
+		// TODO: Consider moving these to the class that uses a JobTree
 		bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy);
-
 		bool AnyJobIsDirty { get; }
 		void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter);
-
-		IJobTree CreateCopy();
-
 		IEnumerable<Job> GetJobs();
 	}
 }

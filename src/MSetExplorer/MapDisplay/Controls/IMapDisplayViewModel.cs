@@ -6,7 +6,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	internal interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
+	public interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
 	{
 		ImageSource ImageSource { get; }
 

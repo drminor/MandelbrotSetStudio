@@ -4,7 +4,7 @@ using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	internal interface IExplorerViewModel : INotifyPropertyChanged, IDisposable
+	public interface IExplorerViewModel : INotifyPropertyChanged, IDisposable
 	{
 		IMapProjectViewModel MapProjectViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }

@@ -97,7 +97,7 @@ namespace MSS.Types.MSet
 		public bool CanGoBack => _jobTree.CanGoBack;
 		public bool CanGoForward => _jobTree.CanGoForward;
 
-		public bool AnyJobIsDirty => _jobTree.AnyJobIsDirty;
+		//public bool AnyJobIsDirty => _jobTree.AnyJobIsDirty;
 
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
 
@@ -109,10 +109,6 @@ namespace MSS.Types.MSet
 				return result;
 			}
 		}
-
-		public IEnumerable<Job> GetJobs() => _jobTree.GetJobs();
-
-		public IEnumerable<ColorBandSet> GetColorBandSets() => _colorBandSetCollection.GetColorBandSets();
 
 		public ObjectId Id { get; init; }
 
@@ -197,22 +193,6 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		//public void RefreshCurrentJob()
-		//{
-		//	if (CurrentJob != null && CurrentJob.ColorBandSetId != CurrentColorBandSet.Id)
-		//	{
-		//		Debug.WriteLine($"Loading ColorBandSet: {CurrentJob.ColorBandSetId} as the Current Job is being updated.");
-		//		var colorBandSetId = LoadColorBandSetForJob(CurrentJob.ColorBandSetId);
-		//		if (CurrentJob.ColorBandSetId != colorBandSetId)
-		//		{
-		//			CurrentJob.ColorBandSetId = colorBandSetId;
-		//			LastUpdatedUtc = DateTime.UtcNow;
-		//		}
-		//	}
-
-		//	OnPropertyChanged(nameof(CurrentJob));
-		//}
-
 		public ObjectId CurrentJobId
 		{
 			get
@@ -257,30 +237,6 @@ namespace MSS.Types.MSet
 		#endregion
 
 		#region Public Methods
-
-		public bool Save(IProjectAdapter projectAdapter)
-		{
-			if (AnyJobIsDirty && !IsDirty && !(DateCreated > LastSavedUtc))
-			{
-				Debug.WriteLine("Warning: Project is not marked as 'IsDirty', but one or more of the jobs are dirty.");
-			}
-
-			projectAdapter.UpdateProjectCurrentJobId(Id, CurrentJobId);
-			if (IsDirty || AnyJobIsDirty)
-			{
-				SaveColorBandSets(Id, projectAdapter);
-				SaveJobs(Id, projectAdapter);
-
-				LastSavedUtc = DateTime.UtcNow;
-				_originalCurrentJobId = CurrentJobId;
-				return true;
-			}
-			else
-			{
-				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
-				return false;
-			}
-		}
 
 		public void Add(Job job)
 		{
@@ -364,6 +320,107 @@ namespace MSS.Types.MSet
 
 		public Job? GetParent(Job job) => _jobTree.GetParent(job);
 
+		public IReadOnlyCollection<JobTreeItem>? GetCurrentPath() => _jobTree.GetCurrentPath();
+		public IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
+
+		public bool RestoreBranch(ObjectId jobId)
+		{
+			var result = _jobTree.RestoreBranch(jobId);
+			return result;
+		}
+
+		public bool DeleteBranch(ObjectId jobId)
+		{
+			var result = _jobTree.DeleteBranch(jobId);
+			return result;
+		}
+
+		public bool Save(IProjectAdapter projectAdapter)
+		{
+			if (_jobTree.AnyJobIsDirty && !IsDirty && !(DateCreated > LastSavedUtc))
+			{
+				Debug.WriteLine("Warning: Project is not marked as 'IsDirty', but one or more of the jobs are dirty.");
+			}
+
+			projectAdapter.UpdateProjectCurrentJobId(Id, CurrentJobId);
+			if (IsDirty || _jobTree.AnyJobIsDirty)
+			{
+				SaveColorBandSets(Id, projectAdapter);
+				SaveJobs(Id, projectAdapter);
+
+				LastSavedUtc = DateTime.UtcNow;
+				_originalCurrentJobId = CurrentJobId;
+				return true;
+			}
+			else
+			{
+				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
+				return false;
+			}
+		}
+
+		public Project CreateCopy(string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
+		{
+			// TODO: Update the JobTree with a new Clone or Copy method. 
+			var jobPairs = _jobTree.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
+			var jobs = jobPairs.Select(x => x.Item2).ToArray();
+
+			foreach (var oldIdAndNewJob in jobPairs)
+			{
+				var formerJobId = oldIdAndNewJob.Item1;
+				var newJobId = oldIdAndNewJob.Item2.Id;
+				UpdateJobParents(formerJobId, newJobId, jobs);
+
+				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
+				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
+			}
+
+			var colorBandSetPairs = _colorBandSetCollection.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
+			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
+
+			foreach (var oldIdAndNewCbs in colorBandSetPairs)
+			{
+				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
+				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
+			}
+
+			var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets);
+
+			if (project is null)
+			{
+				throw new InvalidOperationException("Could not create the new project.");
+			}
+
+			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == CurrentJobId);
+			var newCurJob = firstOldIdAndNewJob?.Item2;
+			project.CurrentJob = newCurJob ?? Job.Empty;
+
+			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == CurrentColorBandSet.Id);
+			var newCurCbs = firstOldIdAndNewCbs?.Item2;
+
+			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
+
+			return project;
+		}
+
+		public long DeleteMapSectionsForUnsavedJobs(IMapSectionDuplicator mapSectionDuplicator)
+		{
+			var result = 0L;
+
+			var jobs = _jobTree.GetJobs().Where(x => !x.OnFile).ToList();
+
+			foreach (var job in jobs)
+			{
+				var numberDeleted = mapSectionDuplicator.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
+				if (numberDeleted.HasValue)
+				{
+					result += numberDeleted.Value;
+				}
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Private Methods
@@ -438,20 +495,39 @@ namespace MSS.Types.MSet
 		private void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter)
 		{
 			_jobTree.SaveJobs(projectId, projectAdapter);
-			//var unSavedJobs = _jobTree.GetJobs().Where(x => !x.OnFile).ToList();
+		}
 
-			//foreach(var job in unSavedJobs)
-			//{
-			//		job.ProjectId = projectId;
-			//		projectAdapter.InsertJob(job);
-			//}
+		private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
+		{
+			foreach (var job in jobs)
+			{
+				if (job.ParentJobId == oldParentId)
+				{
+					job.ParentJobId = newParentId;
+				}
+			}
+		}
 
-			//var dirtyJobs = _jobTree.GetJobs().Where(x => x.IsDirty).ToList();
+		private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId, ColorBandSet[] colorBandSets)
+		{
+			foreach (var cbs in colorBandSets)
+			{
+				if (cbs.ParentId == oldParentId)
+				{
+					cbs.ParentId = newParentId;
+				}
+			}
+		}
 
-			//foreach (var job in dirtyJobs)
-			//{
-			//	projectAdapter.UpdateJobDetails(job);
-			//}
+		private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId, Job[] jobs)
+		{
+			foreach (var job in jobs)
+			{
+				if (job.ColorBandSetId == oldCbsId)
+				{
+					job.ColorBandSetId = newCbsId;
+				}
+			}
 		}
 
 		#endregion

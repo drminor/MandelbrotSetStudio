@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -63,7 +64,9 @@ namespace MSS.Types.MSet
 		public string TransformType => Job.TransformType.ToString();
 		public int Zoom => -1 * Job.MapAreaInfo.Coords.Exponent;
 		public DateTime Created => Job.DateCreated;
-		public string Id => Job.Id.ToString();
+		public ObjectId JobId => Job.Id;
+
+		public string IdAndParentId => Job.Id + (Job.ParentJobId?.ToString() ?? "null");
 
 		#endregion
 

@@ -20,9 +20,11 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ExplorerWindow(AppNavRequestResponse appNavRequestResponse)
+		public ExplorerWindow(IExplorerViewModel dataContext, AppNavRequestResponse appNavRequestResponse)
 		{
-			_vm = (IExplorerViewModel)DataContext;
+			//_vm = (IExplorerViewModel)DataContext;
+			DataContext = dataContext;
+			_vm = dataContext;
 			AppNavRequestResponse = appNavRequestResponse;
 
 			Loaded += ExplorerWindow_Loaded;
@@ -40,7 +42,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (IExplorerViewModel)DataContext;
+				//_vm = (IExplorerViewModel)DataContext;
 				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
 
 				jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();

@@ -1,8 +1,8 @@
 ﻿using MongoDB.Bson;
 using MSS.Types.MSet;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 
 namespace MSetExplorer
 {
@@ -38,21 +38,23 @@ namespace MSetExplorer
 			}
 		}
 
-		//public Job? CurrentJob => CurrentProject?.CurrentJob;
+		public Job? CurrentJob => CurrentProject?.CurrentJob;
 
 		#endregion
 
 		#region Public Methods
 
-		//public void RaiseNavigateToJobRequested(Job job)
-		//{
-		//	if (CurrentProject != null)
-		//	{
-		//		CurrentProject.CurrentJob = job;
-		//	}
-		//}
+		public IReadOnlyCollection<JobTreeItem>? GetCurrentPath()
+		{
+			return CurrentProject?.GetCurrentPath();
+		}
 
-		public void RaiseNavigateToJobRequested(ObjectId jobId)
+		public IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId)
+		{
+			return CurrentProject?.GetPath(jobId);
+		}
+
+		public bool RaiseNavigateToJobRequested(ObjectId jobId)
 		{
 			if (CurrentProject != null)
 			{
@@ -67,11 +69,40 @@ namespace MSetExplorer
 					else
 					{
 						Debug.WriteLine($"The Current Job is already {job.Id}.");
-						//CurrentProject.RefreshCurrentJob();
 					}
 				}
 			}
+		}
 
+		public bool RestoreBranch(ObjectId jobId)
+		{
+			if (CurrentProject != null)
+			{
+				var result = CurrentProject.RestoreBranch(jobId);
+				return result;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public bool DeleteBranch(ObjectId jobId)
+		{
+			if (CurrentProject != null)
+			{
+				var result = CurrentProject.DeleteBranch(jobId);
+				return result;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public string GetDetails(ObjectId jobId)
+		{
+			return $"Getting details for {jobId}.";
 		}
 
 		#endregion

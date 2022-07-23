@@ -28,7 +28,6 @@ namespace MSS.Types.MSet
 
 		public Job(
 			ObjectId? parentJobId, 
-			bool isPreferredChild, 
 			ObjectId projectId, 
 			string? label, 
 			TransformType transformType, 
@@ -44,7 +43,6 @@ namespace MSS.Types.MSet
 			: this(
 				  ObjectId.GenerateNewId(), 
 				  parentJobId, 
-				  isPreferredChild, 
 				  projectId, 
 				  label, 
 				  transformType, 
@@ -64,7 +62,6 @@ namespace MSS.Types.MSet
 		public Job(
 			ObjectId id,
 			ObjectId? parentJobId,
-			bool isPreferredChild,
 			ObjectId projectId,
 			string? label,
 
@@ -81,7 +78,6 @@ namespace MSS.Types.MSet
 		{
 			Id = id;
 			_parentJobId = parentJobId;
-			_isPreferredChild = isPreferredChild;
 			_projectId = projectId;
 			Label = label;
 
@@ -135,15 +131,15 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public bool IsPreferredChild
-		{
-			get => _isPreferredChild;
-			set
-			{
-				_isPreferredChild = value;
-				LastUpdatedUtc = DateTime.UtcNow;
-			}
-		}
+		//public bool IsPreferredChild
+		//{
+		//	get => _isPreferredChild;
+		//	set
+		//	{
+		//		_isPreferredChild = value;
+		//		LastUpdatedUtc = DateTime.UtcNow;
+		//	}
+		//}
 
 		public string? Label { get; init; }
 		public TransformType TransformType { get; init; }
@@ -192,7 +188,7 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+			var result = new Job(Id, ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
 				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
 			{
 				OnFile = OnFile
@@ -203,7 +199,7 @@ namespace MSS.Types.MSet
 
 		public Job CreateNewCopy()
 		{
-			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(), 
+			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(), 
 				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
 			{
 				OnFile = false

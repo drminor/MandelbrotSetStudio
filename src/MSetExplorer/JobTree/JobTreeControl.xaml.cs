@@ -55,36 +55,75 @@ namespace MSetExplorer
 			}
 		}
 
-		private void Button_Click(object sender, RoutedEventArgs e)
+		#endregion
+
+		#region Command Binding Handlers
+
+		// MoveTo CanExecute
+		private void MoveToCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			if (sender is Button btn)
+			e.CanExecute = _vm.CurrentProject != null;
+		}
+
+		// MoveTo
+		private void MoveToCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (e.Parameter is ObjectId jobId)
 			{
-				if (btn.Tag is string strJobId)
-				{
-					var jobId = new ObjectId(strJobId);
-					_vm.RaiseNavigateToJobRequested(jobId);
-				}
+				_ = _vm.RaiseNavigateToJobRequested(jobId);
 			}
 		}
 
-		private void ButtonShowOriginal_Click(object sender, RoutedEventArgs e)
+		// Restore Current Branch CanExecute
+		private void RestoreBranchCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			//_vm.ShowOriginalVersion();
+			if (e.Parameter is ObjectId jobId)
+			{
+				var currentPath = _vm.GetPath(jobId);
+				e.CanExecute = currentPath?.Count > 1;
+			}
 		}
 
-		private void ButtonRollupPans_Click(object sender, RoutedEventArgs e)
+		// Restore Current Branch
+		private void RestoreBranchCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			//_vm.RollupPans();
+			if (e.Parameter is ObjectId jobId)
+			{
+				_ = _vm.RestoreBranch(jobId);
+			}
 		}
 
-		private void ButtonRollupSingles_Click(object sender, RoutedEventArgs e)
+		// Delete CanExecute
+		private void DeleteCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			//_vm.RollupSingles();
+			e.CanExecute = _vm.CurrentProject != null;
+		}
+
+		// Delete
+		private void DeleteCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (e.Parameter is ObjectId jobId)
+			{
+				_ = _vm.DeleteBranch(jobId);
+			}
+		}
+
+		// Show Details  CanExecute
+		private void ShowDetailsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm.CurrentProject != null;
+		}
+
+		// Show Details
+		private void ShowDetailsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (e.Parameter is ObjectId jobId)
+			{
+				_ = MessageBox.Show(_vm.GetDetails(jobId));
+			}
 		}
 
 
 		#endregion
-
-
 	}
 }

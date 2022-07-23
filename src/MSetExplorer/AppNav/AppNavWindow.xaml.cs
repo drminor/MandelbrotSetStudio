@@ -122,10 +122,10 @@ namespace MSetExplorer
 			Hide();
 
 			var explorerViewModel = _vm.GetExplorerViewModel();
-			var explorerWindow = new ExplorerWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
-			{
-				DataContext = explorerViewModel
-			};
+			var explorerWindow = new ExplorerWindow(explorerViewModel, appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
+			//{
+			//	DataContext = explorerViewModel
+			//};
 
 			_lastWindow = explorerWindow;
 			_lastWindow.Name = "Explorer";

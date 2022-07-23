@@ -4,7 +4,7 @@ using System;
 
 namespace MSetExplorer
 {
-	internal class JobAreaAndCalcSettings : ICloneable
+	public class JobAreaAndCalcSettings : ICloneable
 	{
 		private static readonly Lazy<JobAreaAndCalcSettings> _lazyJobAreaAndCalcSettings = new Lazy<JobAreaAndCalcSettings>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static readonly JobAreaAndCalcSettings Empty = _lazyJobAreaAndCalcSettings.Value;

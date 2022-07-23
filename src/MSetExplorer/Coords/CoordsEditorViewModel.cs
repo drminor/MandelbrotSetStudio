@@ -5,7 +5,7 @@ using MSS.Types.MSet;
 
 namespace MSetExplorer
 {
-	internal class CoordsEditorViewModel : ViewModelBase
+	public class CoordsEditorViewModel : ViewModelBase
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 

@@ -6,7 +6,6 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace MSetExplorer
 {
@@ -224,80 +223,10 @@ namespace MSetExplorer
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
-			// TODO: Update the JobTree with a new Clone or Copy method. 
-			var jobPairs = currentProject.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
-			var jobs = jobPairs.Select(x => x.Item2).ToArray();
-
-			foreach(var oldIdAndNewJob in jobPairs)
-			{
-				var formerJobId = oldIdAndNewJob.Item1;
-				var newJobId = oldIdAndNewJob.Item2.Id;
-				UpdateJobParents(formerJobId, newJobId, jobs);
-
-				var numberJobMapSectionRefsCreated = _mapSectionAdapter.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
-				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
-			}
-
-			var colorBandSetPairs = currentProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
-			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
-
-			foreach (var oldIdAndNewCbs in colorBandSetPairs)
-			{
-				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
-				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
-			}
-
-			var project = _projectAdapter.CreateProject(name, description, jobs, colorBandSets);
-
-			if (project is null)
-			{
-				throw new InvalidOperationException("Could not create the new project.");
-			}
-
-			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == currentProject.CurrentJobId);
-			var newCurJob = firstOldIdAndNewJob?.Item2;
-			project.CurrentJob = newCurJob ?? Job.Empty;
-
-			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == currentProject.CurrentColorBandSet.Id);
-			var newCurCbs = firstOldIdAndNewCbs?.Item2;
-
-			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
+			var project = currentProject.CreateCopy(name, description, _projectAdapter, _mapSectionAdapter);
 
 			_ = project.Save(_projectAdapter);
 			CurrentProject = project;
-		}
-
-		private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
-		{
-			foreach(var job in jobs)
-			{
-				if (job.ParentJobId == oldParentId)
-				{
-					job.ParentJobId = newParentId;
-				}
-			}
-		}
-
-		private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId, ColorBandSet[] colorBandSets)
-		{
-			foreach (var cbs in colorBandSets)
-			{
-				if (cbs.ParentId == oldParentId)
-				{
-					cbs.ParentId = newParentId;
-				}
-			}
-		}
-
-		private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId, Job[] jobs)
-		{
-			foreach (var job in jobs)
-			{
-				if (job.ColorBandSetId == oldCbsId)
-				{
-					job.ColorBandSetId = newCbsId;
-				}
-			}
 		}
 
 		public void ProjectClose()
@@ -314,18 +243,7 @@ namespace MSetExplorer
 				return 0;
 			}
 
-			var result = 0L;
-
-			var jobs = currentProject.GetJobs().Where(x => !x.OnFile).ToList();
-
-			foreach(var job in jobs)
-			{
-				var numberDeleted = _mapSectionAdapter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
-				if (numberDeleted.HasValue)
-				{
-					result += numberDeleted.Value;
-				}
-			}
+			var result = currentProject.DeleteMapSectionsForUnsavedJobs(_mapSectionAdapter);
 
 			return result;
 		}
@@ -550,7 +468,6 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(job);
-			//ProjectJobAdded?.Invoke(this, new ProjectJobAddedEventArgs(job));
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
 			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));

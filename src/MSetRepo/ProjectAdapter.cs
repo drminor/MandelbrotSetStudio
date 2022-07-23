@@ -452,7 +452,7 @@ namespace MSetRepo
 			var job = new Job(
 				id: jobId,
 				parentJobId: jobRecord.ParentJobId,
-				isPreferredChild: jobRecord.IsPreferredChild,
+				//isPreferredChild: jobRecord.IsPreferredChild,
 				projectId: jobRecord.ProjectId,
 				label: jobRecord.Label,
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),

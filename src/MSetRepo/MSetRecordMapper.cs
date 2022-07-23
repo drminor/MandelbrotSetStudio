@@ -109,13 +109,13 @@ namespace MSetRepo
 			var mapAreaInfoRecord = new MapAreaInfoRecord(coords, MapTo(source.CanvasSize), MapTo(source.Subdivision), MapTo(source.MapBlockOffset), MapTo(source.CanvasControlOffset));
 
 			var result = new JobRecord(
-				source.ParentJobId,
-				source.IsPreferredChild,
-				source.ProjectId,
-				source.Subdivision.Id,
-				source.Label,
+				ParentJobId: source.ParentJobId,
+				IsPreferredChild: false, //source.IsPreferredChild,
+				ProjectId: source.ProjectId,
+				SubDivisionId: source.Subdivision.Id,
+				Label: source.Label,
 
-				(int)source.TransformType,
+				TransformType: (int)source.TransformType,
 
 				MapAreaInfoRecord: mapAreaInfoRecord,
 				TransformTypeString: Enum.GetName(source.TransformType) ?? "unknown",
