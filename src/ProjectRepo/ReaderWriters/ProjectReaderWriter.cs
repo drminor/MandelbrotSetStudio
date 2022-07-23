@@ -60,7 +60,7 @@ namespace ProjectRepo
 			return projectRecord != null;
 		}
 
-		public bool ExistsWithName(string name)
+		public bool ProjectExists(string name)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("Name", name);
 			var result = Collection.Find(filter).Any();

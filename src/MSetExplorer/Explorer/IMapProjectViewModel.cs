@@ -8,7 +8,6 @@ namespace MSetExplorer
 	public interface IMapProjectViewModel
 	{
 		bool InDesignMode { get; }
-		event EventHandler<ProjectJobAddedEventArgs>? ProjectJobAdded;
 
 		event PropertyChangedEventHandler? PropertyChanged;
 

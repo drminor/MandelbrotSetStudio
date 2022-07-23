@@ -86,7 +86,10 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(Project.CurrentJob))
 			{
-				CurrentJob = CurrentProject?.CurrentJob;
+				if (CurrentProject != null)
+				{
+					CurrentJob = CurrentProject.CurrentJob.IsEmpty ? null : CurrentProject.CurrentJob;
+				}
 			}
 		}
 

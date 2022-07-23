@@ -30,16 +30,24 @@ namespace MSS.Types.MSet
 
 		public ObservableCollection<JobTreeItem> JobItems => _root.Children;
 
-		public Job? CurrentJob
+		public Job CurrentJob
 		{
-			get => DoWithReadLock(() => GetCurrentJob(_currentPath));
+			get => DoWithReadLock(() =>
+				{
+					var currentJob = GetJobFromPath(_currentPath);
+					if (currentJob == null)
+					{
+						currentJob = JobItems[0].Job;
+					}
+					return currentJob;
+				});
 			set
 			{
 				_jobsLock.EnterWriteLock();
 				
 				try
 				{
-					if (value != GetCurrentJob(_currentPath))
+					if (value != GetJobFromPath(_currentPath))
 					{
 						_ = MoveCurrentTo(value, _root, out _currentPath);
 					}
@@ -63,27 +71,82 @@ namespace MSS.Types.MSet
 
 		#region Public Methods
 
-		public void Add(Job job, bool selectAddedJob)
+		public void Add(Job job, bool selectTheAddedJob)
 		{
 			_jobsLock.EnterWriteLock();
 
 			try
 			{
-				// TODO: Consider adding a new field to store the Id of the job from which this job was created.
-				var parentIdToUse = GetParentIdToUse(job);
-				job.ParentJobId = parentIdToUse;
+				List<JobTreeItem>? newPath;
 
-				if (TryAdd(job, out var path))
+				if (job.ParentJobId == null)
 				{
-					if (selectAddedJob)
+					if (job.TransformType != TransformType.Home)
 					{
-						ExpandAndSelect(path.ToArray());
-						_currentPath = path;
+						throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {job.TransformType}.");
 					}
+
+					if (_root.Children.Count > 0)
+					{
+						throw new InvalidOperationException("Attempting to add a job with TransformType = Home to a non-empty tree.");
+					}
+
+					var newNode = new JobTreeItem(job);
+					newPath = AddJob(newNode, null);
 				}
 				else
 				{
-					Debug.WriteLine($"Could not add the new Job: {job.Id}.");
+					if (!TryFindJobTreeItem(job.ParentJobId.Value, _root, out var parentPath))
+					{
+						throw new InvalidOperationException("Cannot find parent for the Job that is being added.");
+					}
+
+					var parentJobTreeItem = parentPath[^1];
+
+					if (job.TransformType == TransformType.CanvasSizeUpdate)
+					{
+						parentJobTreeItem.AddCanvasSizeUpdateJob(job);
+						// CanvasSizeUpdates are not selected, just return
+						return;
+					}
+					else
+					{
+						var newNode = new JobTreeItem(job);
+
+						var grandParentJobTreeItem = GetParent(parentPath);
+						var siblings = grandParentJobTreeItem.Children;
+						var currentPosition = siblings.IndexOf(parentJobTreeItem);
+
+						if (currentPosition != siblings.Count - 1)
+						{
+							// Take all items past the current position and add them to an alternate path
+							var alts = siblings.Skip(currentPosition + 1).ToList();
+
+							for(var i = 0; i < alts.Count; i++)
+							{
+								var child = alts[i];
+								_ = siblings.Remove(child);
+								child.Job.ParentJobId = parentJobTreeItem.Job.Id;
+								parentJobTreeItem.Children.Add(child);
+							}
+						}
+
+						ObjectId? grandParentJobId = grandParentJobTreeItem.Job.Id;
+						if (grandParentJobId == ObjectId.Empty)
+						{
+							grandParentJobId = null;
+						}
+
+						job.ParentJobId = grandParentJobId;
+						var grandParentPath = parentPath.SkipLast(1).ToList();
+						newPath = AddJob(newNode, grandParentPath);
+					}
+				}
+
+				if (selectTheAddedJob)
+				{
+					ExpandAndSelect(newPath);
+					_currentPath = newPath;
 				}
 			}
 			finally
@@ -92,54 +155,15 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		private ObjectId? GetParentIdToUse(Job job)
+		private ObjectId GetTheHomeId()
 		{
-			var parentJobId = job.ParentJobId;
-			if (!parentJobId.HasValue)
+			var homeNode =_root.Children.FirstOrDefault(x => x.Job.TransformType == TransformType.Home);
+			if (homeNode == null)
 			{
-				if (job.TransformType != TransformType.Home)
-				{
-					throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {job.TransformType}.");
-				}
-				else
-				{
-					// The job will not have a parent.
-					return parentJobId;
-				}
+				throw new InvalidOperationException("Could not find the home node.");
 			}
 
-			if (job.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				// The new job will be a child of the source job.
-				return parentJobId;
-			}
-
-			if (!TryFindJobTreeItem(parentJobId.Value, _root, out var path))
-			{
-				throw new InvalidOperationException("Cannot find the Parent Job.");
-			}
-
-			var parentJobTreeItem = path[^1];
-			var grandParentJobTreeItem = GetParent(path);
-			var children = grandParentJobTreeItem.Children;
-			var currentPosition = children.IndexOf(parentJobTreeItem);
-
-			if (currentPosition == children.Count - 1)
-			{
-				// The new job will be sibling of the source job.
-				ObjectId? grandParentJobId = grandParentJobTreeItem.Job.Id;
-				if (grandParentJobId == ObjectId.Empty)
-				{
-					grandParentJobId = null;
-				}
-
-				return grandParentJobId;
-			}
-			else
-			{
-				// The new job will be a child of the source job.
-				return parentJobId;
-			}
+			return homeNode.Job.Id;
 		}
 
 		public bool TryGetPreviousJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job)
@@ -152,7 +176,7 @@ namespace MSS.Types.MSet
 
 			var backPath = GetPreviousJobPath(_currentPath, skipPanJobs);
 
-			job = GetCurrentJob(backPath);
+			job = GetJobFromPath(backPath);
 
 			return job != null;
 		}
@@ -169,7 +193,7 @@ namespace MSS.Types.MSet
 			if (backPath != null)
 			{
 				_currentPath = backPath;
-				ExpandAndSelect(backPath.ToArray());
+				ExpandAndSelect(backPath);
 				return true;
 			}
 			else
@@ -188,7 +212,7 @@ namespace MSS.Types.MSet
 
 			var forwardPath = GetNextJobPath(_currentPath, skipPanJobs);
 
-			job = GetCurrentJob(forwardPath);
+			job = GetJobFromPath(forwardPath);
 
 			return job != null;
 		}
@@ -205,7 +229,7 @@ namespace MSS.Types.MSet
 			if (forwardPath != null)
 			{
 				_currentPath = forwardPath;
-				ExpandAndSelect(forwardPath.ToArray());
+				ExpandAndSelect(forwardPath);
 				return true;
 			}
 			else
@@ -239,22 +263,23 @@ namespace MSS.Types.MSet
 
 			try
 			{
-				List<JobTreeItem>? path;
-				if (job.TransformType == TransformType.CanvasSizeUpdate)
+				if (!TryFindJobTreeItem(job.Id, _root, out var path))
 				{
-					_ = TryFindJobTreeParent(job, out path);
-				}
-				else
-				{
-					_ = TryFindJobTreeItem(job.Id, _root, out path);
+					proxy = null;
+					return false;
 				}
 
-				var parent = GetJobTreeItem(path);
+				var parent = job.TransformType == TransformType.CanvasSizeUpdate ? GetGrandParent(path) : GetParent(path);
 
-				if (parent != null)
+				if (parent == null)
 				{
-					_ = TryGetCanvasSizeUpdateJob(parent.Children, canvasSizeInBlocks, out proxy);
-					return proxy != null;
+					proxy = null;
+					return false;
+				}
+
+				if (TryGetCanvasSizeUpdateJob(parent.Children, canvasSizeInBlocks, out proxy))
+				{
+					return true;
 				}
 				else
 				{
@@ -266,7 +291,40 @@ namespace MSS.Types.MSet
 			{
 				_jobsLock.ExitUpgradeableReadLock();
 			}
+		}
 
+		// TODO: Finish the CreateCopy method on the JobTree class.
+		public IJobTree CreateCopy()
+		{
+			return new JobTree(GetJobs().ToList());
+		}
+
+		public void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter)
+		{
+			_jobsLock.EnterReadLock();
+
+			try
+			{
+				// TODO: Walk the tree
+				var unSavedJobs = GetJobs(_root).Where(x => !x.OnFile).ToList();
+
+				foreach (var job in unSavedJobs)
+				{
+					job.ProjectId = projectId;
+					projectAdapter.InsertJob(job);
+				}
+
+				var dirtyJobs = GetJobs(_root).Where(x => x.IsDirty).ToList();
+
+				foreach (var job in dirtyJobs)
+				{
+					projectAdapter.UpdateJobDetails(job);
+				}
+			}
+			finally
+			{
+				_jobsLock.ExitReadLock();
+			}
 		}
 
 		public IEnumerable<Job> GetJobs()
@@ -288,13 +346,15 @@ namespace MSS.Types.MSet
 
 		#region Load Methods
 
-		private JobTreeItem BuildTree(IList<Job>? jobs, out List<JobTreeItem>? path)
+		private JobTreeItem BuildTree(IList<Job> jobs, out List<JobTreeItem>? path)
 		{
 			var result = new JobTreeItem();
 
-			if (jobs == null || jobs.Count == 0)
+			//if (jobs == null || jobs.Count == 0)
+			if (jobs.Count == 0)
 			{
-				path = null;
+				throw new ArgumentException("jobs cannot be null", nameof(jobs));
+				//path = null;
 			}
 			else
 			{
@@ -333,50 +393,25 @@ namespace MSS.Types.MSet
 
 		#region Collection Methods
 
-		private IList<Job> GetJobs(JobTreeItem jobTreeItem)
+		private List<JobTreeItem> AddJob(JobTreeItem newNode, List<JobTreeItem>? path)
 		{
-			var result = new List<Job>();
-
-			foreach (var child in jobTreeItem.Children)
+			if (path == null || path.Count < 1)
 			{
-				result.Add(child.Job);
-				var jobList = GetJobs(child);
-				result.AddRange(jobList);
-			}
-
-			return result;
-		}
-
-		private bool TryAdd(Job job, [MaybeNullWhen(false)] out List<JobTreeItem> path)
-		{
-			bool result;
-			path = null;
-
-			var parentJobId = job.ParentJobId;
-
-			if (parentJobId == null)
-			{
-				var newNode = new JobTreeItem(job);
 				_root.Children.Add(newNode);
-				path = new List<JobTreeItem> { newNode };
-				result = true;
+				var result = new List<JobTreeItem> { newNode };
+
+				return result;
 			}
 			else
 			{
-				if (TryFindJobTreeItem(parentJobId.Value, _root, out path))
+				path[^1].Children.Add(newNode);
+				var result = new List<JobTreeItem>(path)
 				{
-					var newNode = new JobTreeItem(job);
-					path[^1].Children.Add(newNode);
-					path.Add(newNode);
-					result = true;
-				}
-				else
-				{
-					result = false;
-				}
-			}
+					newNode
+				};
 
-			return result;
+				return result;
+			}
 		}
 
 		private bool TryFindJobTreeParent(Job job, [MaybeNullWhen(false)] out List<JobTreeItem> path)
@@ -418,7 +453,6 @@ namespace MSS.Types.MSet
 			}
 		}
 
-
 		private bool TryFindJob(ObjectId jobId, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out Job job)
 		{
 			var foundNode = jobTreeItem.Children.FirstOrDefault(x => x.Job.Id == jobId);
@@ -453,7 +487,7 @@ namespace MSS.Types.MSet
 
 			if (TryFindJobTreeItem(job.Id, jobTreeItem, out path))
 			{
-				ExpandAndSelect(path.ToArray());
+				ExpandAndSelect(path);
 				return true;
 			}
 			else
@@ -463,7 +497,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		private void ExpandAndSelect(JobTreeItem[] path)
+		private void ExpandAndSelect(IList<JobTreeItem> path)
 		{
 			foreach(var p in path.SkipLast(1))
 			{
@@ -478,12 +512,12 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		private JobTreeItem? GetJobTreeItem(IList<JobTreeItem>? path)
+		private JobTreeItem GetJobTreeItem(IList<JobTreeItem> path)
 		{
-			return path?[^1];
+			return path[^1];
 		}
 
-		private Job? GetCurrentJob(IList<JobTreeItem>? path)
+		private Job? GetJobFromPath(IList<JobTreeItem>? path)
 		{
 			return path?[^1].Job;
 		}
@@ -500,6 +534,20 @@ namespace MSS.Types.MSet
 			return result;
 		}
 
+		private IList<Job> GetJobs(JobTreeItem jobTreeItem)
+		{
+			var result = new List<Job>();
+
+			foreach (var child in jobTreeItem.Children)
+			{
+				result.Add(child.Job);
+				var jobList = GetJobs(child);
+				result.AddRange(jobList);
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Navigate Forward / Backward
@@ -508,64 +556,67 @@ namespace MSS.Types.MSet
 		{
 			var currentItem = GetJobTreeItem(path);
 
-			if (currentItem == null || path == null)
+			if (currentItem == null)
 			{
 				return null;
 			}
 
 			List<JobTreeItem>? result;
 
-			if (currentItem.Children.Count > 0)
+			//if (currentItem.Children.Count > 0)
+			//{
+			//	var nextJobTreeItem = GetNextJobTreeItem(currentItem.Children, -1, skipPanJobs);
+			//	if (nextJobTreeItem == null)
+			//	{
+			//		nextJobTreeItem = currentItem.Children[0];
+			//	}
+
+			//	// The new job will be a child of the current job
+			//	result = new List<JobTreeItem>(path)
+			//		{
+			//			nextJobTreeItem
+			//		};
+
+			//	return result;
+			//}
+			//else
+			//{
+
+			var parentJobTreeItem = GetParent(path);
+			var siblings = parentJobTreeItem.Children;
+			var currentPosition = siblings.IndexOf(currentItem);
+
+			var nextJobTreeItem = GetNextJobTreeItem(siblings, currentPosition, skipPanJobs);
+
+			if (nextJobTreeItem == null)
 			{
-				var nextJobTreeItem = GetNextJobTreeItem(currentItem.Children, -1, skipPanJobs);
-				if (nextJobTreeItem == null)
-				{
-					nextJobTreeItem = currentItem.Children[0];
-				}
+			//var children = currentItem.Children;
+			//nextJobTreeItem = GetNextJobTreeItem(children, -1, skipPanJobs);
+			//if (nextJobTreeItem != null)
+			//{
+			//	// The new job will be a child of the current job
+			//	result = new List<JobTreeItem>(path)
+			//	{
+			//		nextJobTreeItem
+			//	};
+			//}
+			//else
+			//{
+			//	return null;
+			//}
 
-				// The new job will be a child of the current job
-				result = new List<JobTreeItem>(path)
-					{
-						nextJobTreeItem
-					};
-
-				return result;
+				return null;
 			}
 			else
 			{
-				var parentJobTreeItem = GetParent(path);
-				var siblings = parentJobTreeItem.Children;
-				var currentPosition = siblings.IndexOf(currentItem);
-
-				var nextJobTreeItem = GetNextJobTreeItem(siblings, currentPosition, skipPanJobs);
-
-				if (nextJobTreeItem == null)
+				// The new job will be a sibling of the current job
+				result = new List<JobTreeItem>(path.SkipLast(1))
 				{
-					var children = currentItem.Children;
-					nextJobTreeItem = GetNextJobTreeItem(children, -1, skipPanJobs);
-					if (nextJobTreeItem != null)
-					{
-						// The new job will be a child of the current job
-						result = new List<JobTreeItem>(path)
-						{
-							nextJobTreeItem
-						};
-					}
-					else
-					{
-						return null;
-					}
-				}
-				else
-				{
-					// The new job will be a sibling of the current job
-					result = new List<JobTreeItem>(path.SkipLast(1))
-					{
-						nextJobTreeItem
-					};
-				}
-
+					nextJobTreeItem
+				};
 			}
+
+			//}
 
 			return result;
 		}
@@ -588,33 +639,35 @@ namespace MSS.Types.MSet
 
 		private bool CanMoveForward(IList<JobTreeItem>? path)
 		{
-			var currentItem = GetJobTreeItem(path);
-
-			if (currentItem == null || path == null)
+			if (path == null)
 			{
 				return false;
 			}
 
-			var parentJobTreeItem = GetParent(path);
-			var children = parentJobTreeItem.Children;
-			var currentPosition = children.IndexOf(currentItem);
+			var currentItem = GetJobTreeItem(path);
 
-			if (currentPosition == children.Count - 1)
-			{
-				var grandChildren = children[currentPosition].Children;
-				return grandChildren.Count > 0;
-			}
-			else
-			{
-				return true;
-			}
+			var parentJobTreeItem = GetParent(path);
+			var siblings = parentJobTreeItem.Children;
+			var currentPosition = siblings.IndexOf(currentItem);
+
+			//if (currentPosition == children.Count - 1)
+			//{
+			//	var grandChildren = children[currentPosition].Children;
+			//	return grandChildren.Count > 0;
+			//}
+			//else
+			//{
+			//	return true;
+			//}
+
+			return !(currentPosition == siblings.Count - 1);
 		}
 
 		private List<JobTreeItem>? GetPreviousJobPath(IList<JobTreeItem> path, bool skipPanJobs)
 		{
 			var currentItem = GetJobTreeItem(path);
 
-			if (currentItem == null || path == null)
+			if (currentItem == null)
 			{
 				return null;
 			}
@@ -625,7 +678,7 @@ namespace MSS.Types.MSet
 
 				var currentPosition = children.IndexOf(currentItem);
 
-				List<JobTreeItem> result;
+				List<JobTreeItem>? result;
 
 				var previousJobTreeItem = GetPreviousJobTreeItem(children, currentPosition, skipPanJobs);
 
@@ -645,12 +698,12 @@ namespace MSS.Types.MSet
 						}
 						else
 						{
-							return null;
+							result = null;
 						}
 					}
 					else
 					{
-						return null;
+						result = null;
 					}
 				}
 				else
@@ -683,16 +736,16 @@ namespace MSS.Types.MSet
 
 		private bool CanMoveBack(IList<JobTreeItem>? path)
 		{
-			var currentItem = GetJobTreeItem(path);
-
-			if (currentItem == null || path == null)
+			if (path == null)
 			{
 				return false;
 			}
 
+			var currentItem = GetJobTreeItem(path);
+
 			var parentJobTreeItem = GetParent(path);
-			var children = parentJobTreeItem.Children;
-			var currentPosition = children.IndexOf(currentItem);
+			var siblings = parentJobTreeItem.Children;
+			var currentPosition = siblings.IndexOf(currentItem);
 
 			if (currentPosition > 0)
 			{
@@ -728,20 +781,20 @@ namespace MSS.Types.MSet
 		/// </summary>
 		/// <param name="job"></param>
 		/// <returns></returns>
-		private Job? GetPreferredSibling(Job job)
-		{
-			if (TryFindJobTreeParent(job, out var path))
-			{
-				var parentGroup = path[^1];
-				var result = parentGroup.Children.FirstOrDefault(x => x.Job.IsPreferredChild);
-				return result?.Job;
-			}
-			else
-			{
-				// TODO: Consider throwing KeyNotFound exception. The caller should only be asking to locate jobs that exist.
-				return null;
-			}
-		}
+		//private Job? GetPreferredSibling(Job job)
+		//{
+		//	if (TryFindJobTreeParent(job, out var path))
+		//	{
+		//		var parentGroup = path[^1];
+		//		var result = parentGroup.Children.FirstOrDefault(x => x.Job.IsPreferredChild);
+		//		return result?.Job;
+		//	}
+		//	else
+		//	{
+		//		// TODO: Consider throwing KeyNotFound exception. The caller should only be asking to locate jobs that exist.
+		//		return null;
+		//	}
+		//}
 
 		#endregion
 

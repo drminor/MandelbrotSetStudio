@@ -111,43 +111,43 @@ namespace MSetRepo
 			}
 		}
 
-		public Project? CreateProject(string name, string? description, ObjectId currentJobId)
+		//public Project? CreateProject(string name, string? description, ObjectId currentJobId)
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+
+		//	if (!projectReaderWriter.ExistsWithName(name))
+		//	{
+		//		var projectRecord = new ProjectRecord(name, description, currentJobId, DateTime.UtcNow);
+
+		//		var projectId = projectReaderWriter.Insert(projectRecord);
+		//		projectRecord = projectReaderWriter.Get(projectId);
+
+		//		if (projectRecord != null)
+		//		{
+		//			var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
+		//			var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
+		//			//colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
+
+		//			var result = AssembleProject(projectRecord, jobs, colorBandSets, DateTime.MinValue);
+
+		//			return result;
+		//		}
+		//		else
+		//		{
+		//			throw new InvalidOperationException($"Could not retrieve newly created project record with id: {projectId}.");
+		//		}
+		//	}
+		//	else
+		//	{
+		//		throw new InvalidOperationException($"Cannot create project with name: {name}, a project with that name already exists.");
+		//	}
+		//}
+
+		public Project? CreateProject(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			if (!projectReaderWriter.ExistsWithName(name))
-			{
-				var projectRecord = new ProjectRecord(name, description, currentJobId, DateTime.UtcNow);
-
-				var projectId = projectReaderWriter.Insert(projectRecord);
-				projectRecord = projectReaderWriter.Get(projectId);
-
-				if (projectRecord != null)
-				{
-					var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
-					var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
-					//colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
-
-					var result = AssembleProject(projectRecord, jobs, colorBandSets, DateTime.MinValue);
-
-					return result;
-				}
-				else
-				{
-					throw new InvalidOperationException($"Could not retrieve newly created project record with id: {projectId}.");
-				}
-			}
-			else
-			{
-				throw new InvalidOperationException($"Cannot create project with name: {name}, a project with that name already exists.");
-			}
-		}
-
-		public Project? CreateNewProject(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
-		{
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-
-			if (!projectReaderWriter.ExistsWithName(name))
+			if (!projectReaderWriter.ProjectExists(name))
 			{
 				var projectRecord = new ProjectRecord(name, description, jobs.First().Id, DateTime.UtcNow);
 
@@ -236,7 +236,7 @@ namespace MSetRepo
 		public bool ProjectExists(string name)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			var result = projectReaderWriter.ExistsWithName(name);
+			var result = projectReaderWriter.ProjectExists(name);
 
 			return result;
 		}

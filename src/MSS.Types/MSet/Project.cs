@@ -75,7 +75,7 @@ namespace MSS.Types.MSet
 				LastUpdatedUtc = DateTime.UtcNow;
 			}
 
-			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentJob?.Id}, Current ColorBandSetId: {_colorBandSetCollection.CurrentColorBandSet.Id}. IsDirty = {IsDirty}");
+			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentJob.Id}, Current ColorBandSetId: {_colorBandSetCollection.CurrentColorBandSet.Id}. IsDirty = {IsDirty}");
 		}
 
 		private IJobTree GetJobTreeImplementation(IList<Job> jobs)
@@ -173,15 +173,15 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public Job? CurrentJob
+		public Job CurrentJob
 		{
 			get => _jobTree.CurrentJob;
 			set
 			{
 				if (CurrentJob != value)
 				{
-					_ = _jobTree.CurrentJob = value; // .MoveCurrentTo(value);
-					if (CurrentJob != null && CurrentJob.ColorBandSetId != CurrentColorBandSet.Id)
+					_jobTree.CurrentJob = value; 
+					if ( (!CurrentJob.IsEmpty) && CurrentJob.ColorBandSetId != CurrentColorBandSet.Id)
 					{
 						Debug.WriteLine($"Loading ColorBandSet: {CurrentJob.ColorBandSetId} as the Current Job is being updated.");
 						var colorBandSetId = LoadColorBandSetForJob(CurrentJob.ColorBandSetId);
@@ -197,23 +197,36 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public void RefreshCurrentJob()
+		//public void RefreshCurrentJob()
+		//{
+		//	if (CurrentJob != null && CurrentJob.ColorBandSetId != CurrentColorBandSet.Id)
+		//	{
+		//		Debug.WriteLine($"Loading ColorBandSet: {CurrentJob.ColorBandSetId} as the Current Job is being updated.");
+		//		var colorBandSetId = LoadColorBandSetForJob(CurrentJob.ColorBandSetId);
+		//		if (CurrentJob.ColorBandSetId != colorBandSetId)
+		//		{
+		//			CurrentJob.ColorBandSetId = colorBandSetId;
+		//			LastUpdatedUtc = DateTime.UtcNow;
+		//		}
+		//	}
+
+		//	OnPropertyChanged(nameof(CurrentJob));
+		//}
+
+		public ObjectId CurrentJobId
 		{
-			if (CurrentJob != null && CurrentJob.ColorBandSetId != CurrentColorBandSet.Id)
+			get
 			{
-				Debug.WriteLine($"Loading ColorBandSet: {CurrentJob.ColorBandSetId} as the Current Job is being updated.");
-				var colorBandSetId = LoadColorBandSetForJob(CurrentJob.ColorBandSetId);
-				if (CurrentJob.ColorBandSetId != colorBandSetId)
+				var currentJob = CurrentJob;
+
+				if (currentJob.IsEmpty)
 				{
-					CurrentJob.ColorBandSetId = colorBandSetId;
-					LastUpdatedUtc = DateTime.UtcNow;
+					throw new InvalidOperationException("The current job is empty.");
 				}
+
+				return currentJob.Id;
 			}
-
-			OnPropertyChanged(nameof(CurrentJob));
 		}
-
-		public ObjectId? CurrentJobId => CurrentJob?.Id;
 
 		public ColorBandSet CurrentColorBandSet
 		{
@@ -229,7 +242,7 @@ namespace MSS.Types.MSet
 						_colorBandSetCollection.Push(value);
 					}
 
-					if (CurrentJob != null)
+					if (!CurrentJob.IsEmpty)
 					{
 						CurrentJob.ColorBandSetId = value.Id;
 					}
@@ -247,11 +260,6 @@ namespace MSS.Types.MSet
 
 		public bool Save(IProjectAdapter projectAdapter)
 		{
-			if (CurrentJobId == null)
-			{
-				throw new InvalidOperationException("Cannot save a project if the currrent job is null.");
-			}
-
 			if (AnyJobIsDirty && !IsDirty && !(DateCreated > LastSavedUtc))
 			{
 				Debug.WriteLine("Warning: Project is not marked as 'IsDirty', but one or more of the jobs are dirty.");
@@ -276,7 +284,7 @@ namespace MSS.Types.MSet
 
 		public void Add(Job job)
 		{
-			_jobTree.Add(job, selectAddedJob: true);
+			_jobTree.Add(job, selectTheAddedJob: true);
 
 			if (!_colorBandSetCollection.MoveCurrentTo(job.ColorBandSetId))
 			{
@@ -362,9 +370,9 @@ namespace MSS.Types.MSet
 
 		private ObjectId LoadColorBandSetForJob(ObjectId colorBandSetId)
 		{
-			if (CurrentJob == null)
+			if (CurrentJob.IsEmpty)
 			{
-				throw new InvalidOperationException("The current Job is null.");
+				throw new InvalidOperationException("The current Job is empty.");
 			}
 
 			var colorBandSet = TrySetCurrentColorBandSet(colorBandSetId);
@@ -429,20 +437,21 @@ namespace MSS.Types.MSet
 
 		private void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter)
 		{
-			var unSavedJobs = _jobTree.GetJobs().Where(x => !x.OnFile).ToList();
+			_jobTree.SaveJobs(projectId, projectAdapter);
+			//var unSavedJobs = _jobTree.GetJobs().Where(x => !x.OnFile).ToList();
 
-			foreach(var job in unSavedJobs)
-			{
-					job.ProjectId = projectId;
-					projectAdapter.InsertJob(job);
-			}
+			//foreach(var job in unSavedJobs)
+			//{
+			//		job.ProjectId = projectId;
+			//		projectAdapter.InsertJob(job);
+			//}
 
-			var dirtyJobs = _jobTree.GetJobs().Where(x => x.IsDirty).ToList();
+			//var dirtyJobs = _jobTree.GetJobs().Where(x => x.IsDirty).ToList();
 
-			foreach (var job in dirtyJobs)
-			{
-				projectAdapter.UpdateJobDetails(job);
-			}
+			//foreach (var job in dirtyJobs)
+			//{
+			//	projectAdapter.UpdateJobDetails(job);
+			//}
 		}
 
 		#endregion

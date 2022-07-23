@@ -31,9 +31,9 @@ namespace MSS.Types.MSet
 
 		#region Public Properties
 
-		public Job? CurrentJob
+		public Job CurrentJob
 		{
-			get => DoWithReadLock(() => { return _jobsPointer == -1 ? null : _jobsCollection[_jobsPointer]; });
+			get => DoWithReadLock(() => { return _jobsPointer == -1 ? _jobsCollection[0] : _jobsCollection[_jobsPointer]; });
 			set
 			{
 				_jobsLock.EnterUpgradeableReadLock();

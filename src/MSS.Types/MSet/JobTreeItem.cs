@@ -22,6 +22,7 @@ namespace MSS.Types.MSet
 		{
 			Job = job ?? throw new ArgumentNullException(nameof(job));
 			Children = children ?? new ObservableCollection<JobTreeItem>();
+			AlternateDispSizes = null;
 		}
 
 		#endregion
@@ -56,11 +57,26 @@ namespace MSS.Types.MSet
 
 		public Job Job { get; init; }
 		public ObservableCollection<JobTreeItem> Children { get; init; }
+		public ObservableCollection<Job>? AlternateDispSizes { get; private set; }
+
 
 		public string TransformType => Job.TransformType.ToString();
 		public int Zoom => -1 * Job.MapAreaInfo.Coords.Exponent;
 		public DateTime Created => Job.DateCreated;
 		public string Id => Job.Id.ToString();
+
+		#endregion
+
+		#region Public Methods 
+
+		public void AddCanvasSizeUpdateJob(Job job)
+		{
+			if (AlternateDispSizes == null)
+			{
+				AlternateDispSizes = new ObservableCollection<Job>();
+			}
+			AlternateDispSizes.Add(job);
+		}
 
 		#endregion
 

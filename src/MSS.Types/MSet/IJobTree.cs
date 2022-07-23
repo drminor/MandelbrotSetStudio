@@ -10,9 +10,9 @@ namespace MSS.Types.MSet
 	{
 		ObservableCollection<JobTreeItem> JobItems { get; }
 
-		Job? CurrentJob { get; set; }
+		Job CurrentJob { get; set; }
 
-		void Add(Job job, bool selectAddedJob);
+		void Add(Job job, bool selectTheAddedJob);
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
@@ -29,6 +29,10 @@ namespace MSS.Types.MSet
 		bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy);
 
 		bool AnyJobIsDirty { get; }
+		void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter);
+
+		IJobTree CreateCopy();
+
 		IEnumerable<Job> GetJobs();
 	}
 }

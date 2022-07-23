@@ -41,8 +41,6 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public event EventHandler<ProjectJobAddedEventArgs>? ProjectJobAdded;
-
 		public SizeInt CanvasSize
 		{
 			get => _canvasSize;
@@ -164,7 +162,7 @@ namespace MSetExplorer
 			{
 				CurrentProject = project;
 
-				if (project.CurrentJob == null || project.CurrentJob.IsEmpty)
+				if (project.CurrentJob.IsEmpty)
 				{
 					Debug.WriteLine("Warning the current job is null or empty on Project Open.");
 					return false;
@@ -226,6 +224,7 @@ namespace MSetExplorer
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
+			// TODO: Update the JobTree with a new Clone or Copy method. 
 			var jobPairs = currentProject.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
 			var jobs = jobPairs.Select(x => x.Item2).ToArray();
 
@@ -248,7 +247,7 @@ namespace MSetExplorer
 				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
 			}
 
-			var project = _projectAdapter.CreateNewProject(name, description, jobs, colorBandSets);
+			var project = _projectAdapter.CreateProject(name, description, jobs, colorBandSets);
 
 			if (project is null)
 			{
@@ -591,7 +590,6 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(newJob);
-			ProjectJobAdded?.Invoke(this, new ProjectJobAddedEventArgs(newJob));
 		}
 
 		#endregion
