@@ -3,6 +3,7 @@ using MongoDB.Driver;
 using MSS.Types.DataTransferObjects;
 using ProjectRepo.Entities;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -174,6 +175,15 @@ namespace ProjectRepo
 
 			return GetReturnCount(deleteResult);
 		}
+
+		public long? Delete(IList<ObjectId> mapSectionIds)
+		{
+			var filter = Builders<MapSectionRecord>.Filter.In(u => u.Id, mapSectionIds);
+			var deleteResult = Collection.DeleteMany(filter);
+
+			return GetReturnCount(deleteResult);
+		}
+
 
 		public long? DeleteAllWithSubId(ObjectId subdivisionId)
 		{

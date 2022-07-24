@@ -24,7 +24,7 @@ namespace MSS.Types.MSet
 		void DeletePoster(ObjectId posterId);
 
 		bool ProjectExists(string name);
-		bool TryGetProject(ObjectId projectId, [MaybeNullWhen(false)] out Project project);
+		//bool TryGetProject(ObjectId projectId, [MaybeNullWhen(false)] out Project project);
 		bool TryGetProject(string name, [MaybeNullWhen(false)] out Project project);
 		void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId);
 		void UpdateProjectDescription(ObjectId projectId, string? description);

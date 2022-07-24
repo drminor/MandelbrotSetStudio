@@ -109,6 +109,14 @@ namespace MSetExplorer
 			return result;
 		}
 
+		private long? DropRecentMapSections(IMapSectionDeleter mapSectionDeleter)
+		{
+			var lastSaved = DateTime.Parse("2022-05-29");
+			var result = mapSectionDeleter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
+			return result;
+
+		}
+
 		#region Utilities
 
 		//// Remove FetchZValuesFromRepo property from MapSections

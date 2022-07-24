@@ -129,23 +129,23 @@ namespace MSS.Types.MSet
 
 				if (!TryFindJobTreeItem(job.ParentJobId.Value, _root, out var parentPath))
 				{
-					throw new InvalidOperationException("Cannot find parent for the job that is being added.");
+					throw new InvalidOperationException($"Cannot find parent for the job: {job.Id} that is being added.");
 				}
 
 				/*
-				The new job's parent identifies the preceeding job.
-				If the parent is the last child of the GrandParent,
-				then simply add the new job the GrandParent.
+				The new job's Parent identifies the preceeding job.
+				If the Parent is the last child of the Grandparent,
+				then simply add the new job the Grandparent.
 				Else
 
 						-- SwitchAltBranches --
-				1. Get a list of all items after the parent and remove them
+				1. Get a list of all items after the Parent and remove them
 				2. The first becomes our child -- [The Alternate currently in the main trunk]
 				3. Move all children of this first child [The other alternates] and make them our children
-				4. The items that used to follow the first child become childern of that first child
+				4. The items that used to follow the first child are then added as children of that first child
 						-- SwitchAltBranches
 
-				5. Add us to the grand parent (following the parent)
+				5. Add us to the Grandparent (following the Parent)
 				*/
 
 				var parentJobTreeItem = parentPath[^1];
@@ -165,8 +165,8 @@ namespace MSS.Types.MSet
 
 				if (currentPosition != siblings.Count - 1)
 				{
-					// Take all items past the current position and add them to an alternate path
-					SwitchAltBranches(newNode, siblings, currentPosition);
+					// Take all items *following* the current position and add them to an alternate path
+					SwitchAltBranches(newNode, siblings, currentPosition + 1);
 				}
 
 				// Add the new job to the end of the main trunk.
@@ -185,11 +185,16 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		private void SwitchAltBranches(JobTreeItem newNode, IList<JobTreeItem> siblings, int currentPosition)
+		private void SwitchAltBranches(JobTreeItem newNode, IList<JobTreeItem> siblings, int startIndex)
 		{
-			var alts = siblings.Skip(currentPosition + 1).ToList();
+			/* 	Nodes have children in three cases:
+			1. The root node's children in the list of jobs currently in play. Some of these may be active alternates.
+			2. An active alternate, a child of the root node, or a child of a parked alternate contains all of the other alternates currently not in play, aka the "parked alternates.
+			3. The job is a "parked" alternate, its children are used to store the jobs that follow this alternate that would also be made active. 	*/
 
-			Debug.Assert(currentPosition != siblings.Count - 1, "During SwitchAltBranch the currentPosition was at the end.");
+			var alts = siblings.Skip(startIndex).ToList();
+
+			Debug.Assert(startIndex != siblings.Count - 1, "During SwitchAltBranch the currentPosition was at the end.");
 
 			// The first "orphan" becomes a child of the node being added.
 			var child = alts[0];
@@ -230,24 +235,27 @@ namespace MSS.Types.MSet
 
 			if (!TryFindJobTreeItem(jobId, _root, out var path))
 			{
-				throw new InvalidOperationException("Cannot find job that is being restored.");
+				throw new InvalidOperationException($"Cannot find job: {jobId} that is being restored.");
 			}
 
 			/*
 			1. Get the jobTreeItem
-			2. Find its parent
-			3. Remove the jobTreeItem from its parent
+			2. Find its Parent (The active alternate that will be removed)
+			3. Remove the jobTreeItem from its Parent
 			4. Get a list of our children and remove them.
 
 					-- SwitchAltBranches --
-			5. Get a list of all items after the parent and remove them
+			5. Get a list of all items after the Parent and remove them
+
+			5. -- Not the same as for add:: Get a list of all items *starting with the Parent* (not after the Parent) and remove them
+
 			6. The first becomes our child -- [The Alternate currently in the main trunk]
 			7. Move all children of this first child [The other alternates] and make them our children
-			8. The items that used to follow the first child become childern of that first child
+			8. The items that used to follow the first child are then added as children of that first child
 					-- SwitchAltBranches
 
-			9. Add us to the grand parent (following the parent)
-			10. Add our former childern to the grandparent (following us.)
+			9. Add us to the Grandparent (following the parent)
+			10. Add our former childern to the Grandparent (following us.)
 			*/
 
 			var jobTreeItem = path[^1];
@@ -260,7 +268,7 @@ namespace MSS.Types.MSet
 
 			var parentJobTreeItem = parentPath[^1];
 
-			// Remove the alt node being restored
+			// Remove the alt node being restored from the list of parked alternates.
 			_ = parentJobTreeItem.Children.Remove(jobTreeItem);
 			
 			var ourChildern = new List<JobTreeItem>(jobTreeItem.Children);
@@ -270,7 +278,7 @@ namespace MSS.Types.MSet
 			var siblings = grandParentJobTreeItem.Children;
 			var currentPosition = siblings.IndexOf(parentJobTreeItem);
 
-			// Take all items past the current position of the grandparent and add them to an alternate path
+			// Take all items *starting with* the current position of the grandparent and add them to an alternate path
 			SwitchAltBranches(jobTreeItem, siblings, currentPosition);
 
 			// Add the new job to the end of the main trunk.
@@ -290,10 +298,31 @@ namespace MSS.Types.MSet
 			return true;
 		}
 
-		public bool DeleteBranch(ObjectId jobId)
+		public long DeleteBranch(ObjectId jobId, IMapSectionDeleter mapSectionDeleter)
 		{
-			Debug.WriteLine($"Deleting Branch: {jobId}.");
-			return true;
+			if (!TryFindJobTreeItem(jobId, _root, out var path))
+			{
+				throw new InvalidOperationException($"Cannot find job: {jobId} that is being deleted.");
+			}
+
+			Debug.WriteLine($"Deleting all jobs in branch anchored by job: {jobId}.");
+
+			var currentItem = path[^1];
+			var result = 0L;
+			var jobs = GetJobs(currentItem).ToList();
+
+			foreach (var job in jobs)
+			{
+				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
+				if (numberDeleted.HasValue)
+				{
+					result += numberDeleted.Value;
+				}
+			}
+
+			Debug.WriteLine($"{result} jobs were deleted.");
+
+			return result;
 		}
 
 		public bool TryGetPreviousJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job)

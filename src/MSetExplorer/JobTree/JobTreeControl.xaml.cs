@@ -107,7 +107,8 @@ namespace MSetExplorer
 		{
 			if (e.Parameter is ObjectId jobId)
 			{
-				_ = _vm.DeleteBranch(jobId);
+				var numberDeleted = _vm.DeleteBranch(jobId);
+				_ = MessageBox.Show($"{numberDeleted} jobs were deleted.");
 			}
 		}
 

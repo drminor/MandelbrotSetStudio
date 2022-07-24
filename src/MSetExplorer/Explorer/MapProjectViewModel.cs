@@ -152,6 +152,7 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
+			CurrentProject.MapSectionDeleter = _mapSectionAdapter;
 			job.ProjectId = CurrentProject.Id;
 		}
 
@@ -160,6 +161,7 @@ namespace MSetExplorer
 			if (_projectAdapter.TryGetProject(projectName, out var project))
 			{
 				CurrentProject = project;
+				CurrentProject.MapSectionDeleter = _mapSectionAdapter;
 
 				if (project.CurrentJob.IsEmpty)
 				{

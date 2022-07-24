@@ -41,6 +41,15 @@ namespace ProjectRepo
 			return count > 0;
 		}
 
+		public IList<JobMapSectionRecord> DoJobMapSectionRecordsExist(IList<ObjectId> jobMapSectionIds)
+		{
+			var filter1 = Builders<JobMapSectionRecord>.Filter.In(f => f.MapSectionId, jobMapSectionIds);
+
+			var jobMapSectionRecords = Collection.Find(filter1).ToList();
+
+			return jobMapSectionRecords;
+		}
+
 		public IList<JobMapSectionRecord> GetByOwnerId(ObjectId ownerId, JobOwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerId, ownerId);

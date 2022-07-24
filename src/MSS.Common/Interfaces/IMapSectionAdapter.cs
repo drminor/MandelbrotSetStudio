@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace MSS.Common
 {
-	public interface IMapSectionAdapter : IMapSectionDuplicator
+	public interface IMapSectionAdapter : IMapSectionDuplicator, IMapSectionDeleter
 	{
 		void CreateCollections();
 		//void DropCollections();
@@ -26,14 +26,6 @@ namespace MSS.Common
 		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse);
 
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
-
-		long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false);
-
-		//long? DeleteMapSectionsForJob(ObjectId ownerId, JobOwnerType jobOwnerType);
-
-		//long? DeleteMapSectionsForMany(IList<ObjectId> ownerIds, JobOwnerType jobOwnerType);
-
-		//long? DuplicateJobMapSections(ObjectId ownerId, JobOwnerType jobOwnerType, ObjectId newOwnerId);
 
 		bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision);
 		void InsertSubdivision(Subdivision subdivision);

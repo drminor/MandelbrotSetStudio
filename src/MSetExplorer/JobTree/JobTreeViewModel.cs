@@ -110,7 +110,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool DeleteBranch(ObjectId jobId)
+		public long DeleteBranch(ObjectId jobId)
 		{
 			if (CurrentProject != null)
 			{
@@ -119,7 +119,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				return false;
+				return 0;
 			}
 		}
 

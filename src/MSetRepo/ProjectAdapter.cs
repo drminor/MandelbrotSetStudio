@@ -67,27 +67,27 @@ namespace MSetRepo
 
 		#region Project
 
-		public bool TryGetProject(ObjectId projectId, [MaybeNullWhen(false)] out Project project)
-		{
-			//Debug.WriteLine($"Retrieving Project object for Project with name: {name}.");
+		//public bool TryGetProject(ObjectId projectId, [MaybeNullWhen(false)] out Project project)
+		//{
+		//	//Debug.WriteLine($"Retrieving Project object for Project with name: {name}.");
 
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			if (projectReaderWriter.TryGet(projectId, out var projectRecord))
-			{
-				var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
-				var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
-				//colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
+		//	if (projectReaderWriter.TryGet(projectId, out var projectRecord))
+		//	{
+		//		var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
+		//		var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
+		//		//colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
 
-				project = AssembleProject(projectRecord, jobs, colorBandSets, projectRecord.LastSavedUtc);
-				return project != null;
-			}
-			else
-			{
-				project = null;
-				return false;
-			}
-		}
+		//		project = AssembleProject(projectRecord, jobs, colorBandSets, projectRecord.LastSavedUtc);
+		//		return project != null;
+		//	}
+		//	else
+		//	{
+		//		project = null;
+		//		return false;
+		//	}
+		//}
 
 		public bool TryGetProject(string name, [MaybeNullWhen(false)] out Project project)
 		{
@@ -751,24 +751,6 @@ namespace MSetRepo
 		#endregion
 
 		#region Active Job Schema Updates
-
-		public ObjectId[] OpenAllJobs()
-		{
-			var result = new List<ObjectId>();
-
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-
-			var projectIds = projectReaderWriter.GetAllIds();
-			foreach (var projectId in projectIds)
-			{
-				if (!TryGetProject(projectId, out var _))
-				{
-					result.Add(projectId);
-				}
-			}
-
-			return result.ToArray();
-		}
 
 		public int DeleteUnusedColorBandSets()
 		{

@@ -225,6 +225,8 @@ namespace MSS.Types.MSet
 			}
 		}
 
+		public IMapSectionDeleter? MapSectionDeleter { get; set; }
+
 		#endregion
 
 		#region Public Methods
@@ -320,9 +322,14 @@ namespace MSS.Types.MSet
 			return result;
 		}
 
-		public bool DeleteBranch(ObjectId jobId)
+		public long DeleteBranch(ObjectId jobId)
 		{
-			var result = _jobTree.DeleteBranch(jobId);
+			if (MapSectionDeleter == null)
+			{
+				throw new InvalidOperationException("The MapDeleter has not been set.");
+			}
+
+			var result = _jobTree.DeleteBranch(jobId, MapSectionDeleter);
 			return result;
 		}
 
@@ -390,11 +397,12 @@ namespace MSS.Types.MSet
 			var newCurCbs = firstOldIdAndNewCbs?.Item2;
 
 			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
+			project.MapSectionDeleter = MapSectionDeleter;
 
 			return project;
 		}
 
-		public long DeleteMapSectionsForUnsavedJobs(IMapSectionDuplicator mapSectionDuplicator)
+		public long DeleteMapSectionsForUnsavedJobs(IMapSectionDeleter mapSectionDeleter)
 		{
 			var result = 0L;
 
@@ -402,7 +410,7 @@ namespace MSS.Types.MSet
 
 			foreach (var job in jobs)
 			{
-				var numberDeleted = mapSectionDuplicator.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
+				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
 				if (numberDeleted.HasValue)
 				{
 					result += numberDeleted.Value;

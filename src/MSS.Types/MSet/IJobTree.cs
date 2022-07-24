@@ -18,7 +18,7 @@ namespace MSS.Types.MSet
 		void AddHomeJob(Job job);
 		void Add(Job job, bool selectTheAddedJob);
 		bool RestoreBranch(ObjectId jobId);
-		bool DeleteBranch(ObjectId jobId);
+		long DeleteBranch(ObjectId jobId, IMapSectionDeleter mapSectionDeleter);
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }

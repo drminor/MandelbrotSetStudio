@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		bool RestoreBranch(ObjectId jobId);
 
-		bool DeleteBranch(ObjectId jobId);
+		long DeleteBranch(ObjectId jobId);
 
 		string GetDetails(ObjectId jobId);
 	}
