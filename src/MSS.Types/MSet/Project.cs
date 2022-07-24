@@ -97,18 +97,9 @@ namespace MSS.Types.MSet
 		public bool CanGoBack => _jobTree.CanGoBack;
 		public bool CanGoForward => _jobTree.CanGoForward;
 
-		//public bool AnyJobIsDirty => _jobTree.AnyJobIsDirty;
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.AnyJobIsDirty;
 
-		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
-
-		public bool IsCurrentJobIdChanged
-		{
-			get
-			{
-				var result = CurrentJobId != _originalCurrentJobId;
-				return result;
-			}
-		}
+		public bool IsCurrentJobIdChanged => CurrentJobId != _originalCurrentJobId;
 
 		public ObjectId Id { get; init; }
 

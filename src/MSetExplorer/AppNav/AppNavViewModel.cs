@@ -148,11 +148,11 @@ namespace MSetExplorer
 		//}
 
 		// Remove the old properties that are now part of the MapAreaInfo record
-		public long? DoSchemaUpdates()
-		{
-			var numUpdated = ((ProjectAdapter)_projectAdapter).RemoveOldMapAreaPropsFromAllJobs();
-			return numUpdated;
-		}
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = ((ProjectAdapter)_projectAdapter).RemoveOldMapAreaPropsFromAllJobs();
+		//	return numUpdated;
+		//}
 
 
 		#endregion

@@ -47,16 +47,13 @@ namespace ProjectRepo
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobRecord.Id);
 
 			var updateDefinition = Builders<JobRecord>.Update
-				.Set(u => u.ProjectId, jobRecord.ProjectId)
 				.Set(u => u.ParentJobId, jobRecord.ParentJobId)
-				.Set(u => u.IsPreferredChild, jobRecord.IsPreferredChild)
-				//.Set(u => u.MSetInfo, jobRecord.MSetInfo)
+				.Set(u => u.IsAlternatePathHead, jobRecord.IsAlternatePathHead)
+				.Set(u => u.ProjectId, jobRecord.ProjectId)
+
 				.Set(u => u.MapAreaInfoRecord, jobRecord.MapAreaInfoRecord)
 				.Set(u => u.ColorBandSetId, jobRecord.ColorBandSetId)
 				.Set(u => u.MapCalcSettings, jobRecord.MapCalcSettings)
-				//.Set(u => u.CanvasSizeInBlocks, jobRecord.CanvasSizeInBlocks)
-				//.Set(u => u.MapBlockOffset, jobRecord.MapBlockOffset)
-				//.Set(u => u.CanvasControlOffset, jobRecord.CanvasControlOffset)
 				.Set(u => u.LastSaved, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
@@ -73,30 +70,6 @@ namespace ProjectRepo
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
-
-
-		//public void UpdateJobsProject(ObjectId jobId, ObjectId projectId)
-		//{
-		//	var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
-
-		//	var updateDefinition = Builders<JobRecord>.Update
-		//		.Set(u => u.ProjectId, projectId)
-		//		.Set(u => u.LastSaved, DateTime.UtcNow);
-
-		//	_ = Collection.UpdateOne(filter, updateDefinition);
-		//}
-
-		//public void UpdateJobsParent(ObjectId jobId, ObjectId? parentId, bool isPreferredChild)
-		//{
-		//	var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
-
-		//	var updateDefinition = Builders<JobRecord>.Update
-		//		.Set(u => u.ParentJobId, parentId)
-		//		.Set(u => u.IsPreferredChild, isPreferredChild)
-		//		.Set(u => u.LastSaved, DateTime.UtcNow);
-
-		//	_ = Collection.UpdateOne(filter, updateDefinition);
-		//}
 
 		public long? Delete(ObjectId jobId)
 		{
@@ -148,6 +121,22 @@ namespace ProjectRepo
 			var jobInfos = Collection.Find(filter).Project(projection1).ToEnumerable();
 
 			return jobInfos;
+		}
+
+		#endregion
+
+		#region SCHEMA Changes
+
+		public void AddIsIsAlternatePathHeadToAllJobs()
+		{
+			var filter = Builders<JobRecord>.Filter.Empty;
+			var updateDefinition = Builders<JobRecord>.Update
+				.Set("IsAlternatePathHead", false);
+				//.Unset("IsPreferredChild");
+
+			var options = new UpdateOptions { IsUpsert = false };
+
+			_ = Collection.UpdateMany(filter, updateDefinition, options);
 		}
 
 		//public DateTime GetLastSaveTime(ObjectId projectId)
@@ -299,33 +288,32 @@ namespace ProjectRepo
 		//	return result;
 		//}
 
+		//public long RemoveOldMapAreaProperties()
+		//{
+		//	//var updateDefinition = Builders<JobRecord>.Update
+		//	//	.Unset("MSetInfo")
+		//	//	.Unset("MapBlockOffset")
+		//	//	.Unset("CanvasControlOffset")
+		//	//	.Unset("CanvasSize");
 
-		public long RemoveOldMapAreaProperties()
-		{
-			//var updateDefinition = Builders<JobRecord>.Update
-			//	.Unset("MSetInfo")
-			//	.Unset("MapBlockOffset")
-			//	.Unset("CanvasControlOffset")
-			//	.Unset("CanvasSize");
+		//	//var options = new UpdateOptions { IsUpsert = false };
 
-			//var options = new UpdateOptions { IsUpsert = false };
+		//	var result = 0L;
 
-			var result = 0L;
+		//	//var filter = Builders<JobRecord>.Filter.Empty;
+		//	//var jobs = Collection.Find(filter).ToList();
 
-			//var filter = Builders<JobRecord>.Filter.Empty;
-			//var jobs = Collection.Find(filter).ToList();
-
-			//foreach (var j in jobs)
-			//{
-			//	filter = Builders<JobRecord>.Filter.Eq("_id", j.Id);
-			//	var updateResult2 = Collection.UpdateOne(filter, updateDefinition, options);
-			//	var cnt = GetReturnCount(updateResult2) ?? -1;
-			//	result += cnt;
-			//}
+		//	//foreach (var j in jobs)
+		//	//{
+		//	//	filter = Builders<JobRecord>.Filter.Eq("_id", j.Id);
+		//	//	var updateResult2 = Collection.UpdateOne(filter, updateDefinition, options);
+		//	//	var cnt = GetReturnCount(updateResult2) ?? -1;
+		//	//	result += cnt;
+		//	//}
 
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 

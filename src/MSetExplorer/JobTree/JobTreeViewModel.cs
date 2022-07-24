@@ -3,6 +3,9 @@ using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Text;
 
 namespace MSetExplorer
 {
@@ -38,7 +41,33 @@ namespace MSetExplorer
 			}
 		}
 
-		public Job? CurrentJob => CurrentProject?.CurrentJob;
+		public Job? CurrentJob
+		{
+			get => CurrentProject?.CurrentJob;
+			set
+			{
+				var currentProject = CurrentProject;
+				if (currentProject != null)
+				{
+					if (value == null)
+					{
+						Debug.WriteLine("Not setting the current job to null.");
+						return;
+					}
+
+					if (value != currentProject.CurrentJob)
+					{
+						currentProject.CurrentJob = value;
+					}
+					else
+					{
+						Debug.WriteLine($"The Current Job is already {value.Id}.");
+					}
+
+					OnPropertyChanged(nameof(IJobTreeViewModel.CurrentJob));
+				}
+			}
+		}
 
 		#endregion
 
@@ -54,23 +83,17 @@ namespace MSetExplorer
 			return CurrentProject?.GetPath(jobId);
 		}
 
-		public bool RaiseNavigateToJobRequested(ObjectId jobId)
+		public bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job)
 		{
 			if (CurrentProject != null)
 			{
-				var job = CurrentProject.GetJob(jobId);
-
-				if (job != null)
-				{
-					if (CurrentProject.CurrentJob != job)
-					{
-						CurrentProject.CurrentJob = job;
-					}
-					else
-					{
-						Debug.WriteLine($"The Current Job is already {job.Id}.");
-					}
-				}
+				job = CurrentProject.GetJob(jobId);
+				return job != null;
+			}
+			else
+			{
+				job = null;
+				return false;
 			}
 		}
 
@@ -102,7 +125,21 @@ namespace MSetExplorer
 
 		public string GetDetails(ObjectId jobId)
 		{
-			return $"Getting details for {jobId}.";
+			var path = GetPath(jobId);
+
+			if (path == null)
+			{
+				return $"Could not find a job with JobId: {jobId}.";
+			}
+
+			var jobTreeItem = path.ToArray()[^1];
+
+			var sb = new StringBuilder();
+
+			sb.AppendLine(jobTreeItem.IdAndParentId);
+			sb.AppendLine($"AlternatePathHead: {jobTreeItem.IsAlternatePathHead}");
+
+			return sb.ToString();
 		}
 
 		#endregion

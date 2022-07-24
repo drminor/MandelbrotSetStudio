@@ -669,6 +669,7 @@ namespace MSetExplorer
 				{
 					if (_vm.MapProjectViewModel.CurrentProjectOnFile)
 					{
+						Debug.WriteLine($"Saving Project Silently: Not Dirty, but the Currently Selected Job has been updated.");
 						// Silently record the new CurrentJob selection
 						if (_vm.MapProjectViewModel.ProjectSave())
 						{

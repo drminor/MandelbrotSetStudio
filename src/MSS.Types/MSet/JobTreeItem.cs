@@ -61,12 +61,37 @@ namespace MSS.Types.MSet
 		public ObservableCollection<Job>? AlternateDispSizes { get; private set; }
 
 
-		public string TransformType => Job.TransformType.ToString();
+		public TransformType TransformType => Job.TransformType;
 		public int Zoom => -1 * Job.MapAreaInfo.Coords.Exponent;
 		public DateTime Created => Job.DateCreated;
-		public ObjectId JobId => Job.Id;
 
-		public string IdAndParentId => Job.Id + (Job.ParentJobId?.ToString() ?? "null");
+		public ObjectId? JobId => Job.Id == ObjectId.Empty ? null : Job.Id;
+
+		public ObjectId? ParentJobId
+		{
+			get => Job.ParentJobId;
+			set => Job.ParentJobId = value;
+		}
+
+		public bool IsAlternatePathHead
+		{
+			get => Job.IsAlternatePathHead;
+			set => Job.IsAlternatePathHead = value;
+		}
+
+		public string IdAndParentId
+		{
+			get
+			{
+				var result = Job.Id + ", " + (Job.ParentJobId?.ToString() ?? "null");
+				if (Job.IsAlternatePathHead)
+				{
+					result += $", Alt: Yes";
+				}
+
+				return result;
+			}
+		}
 
 		#endregion
 

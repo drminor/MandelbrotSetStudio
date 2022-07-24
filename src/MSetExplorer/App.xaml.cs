@@ -1,6 +1,8 @@
 ﻿using MapSectionProviderLib;
 using MEngineClient;
+using MSetRepo;
 using MSS.Common;
+using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -52,6 +54,11 @@ namespace MSetExplorer
 
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, CREATE_COLLECTIONS);
 			//PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
+
+			//if (_repositoryAdapters.ProjectAdapter is ProjectAdapter pa)
+			//{
+			//	DoSchemaUpdates(pa);
+			//}
 
 			var mEngineAddresses = USE_REMOTE_ENGINE ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();
 
@@ -160,6 +167,11 @@ namespace MSetExplorer
 		//	//	return;
 		//	//}
 		//}
+
+		private void DoSchemaUpdates(ProjectAdapter projectAdapter)
+		{
+			//projectAdapter.AddIsIsAlternatePathHeadToAllJobs();
+		}
 
 	}
 }

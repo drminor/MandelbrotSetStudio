@@ -122,8 +122,6 @@ namespace MSS.Types.MSet
 
 			try
 			{
-				List<JobTreeItem>? newPath;
-
 				if (job.ParentJobId == null)
 				{
 					throw new ArgumentException("When adding a job, the job's ParentJobId must be non-null.");
@@ -133,6 +131,22 @@ namespace MSS.Types.MSet
 				{
 					throw new InvalidOperationException("Cannot find parent for the job that is being added.");
 				}
+
+				/*
+				The new job's parent identifies the preceeding job.
+				If the parent is the last child of the GrandParent,
+				then simply add the new job the GrandParent.
+				Else
+
+						-- SwitchAltBranches --
+				1. Get a list of all items after the parent and remove them
+				2. The first becomes our child -- [The Alternate currently in the main trunk]
+				3. Move all children of this first child [The other alternates] and make them our children
+				4. The items that used to follow the first child become childern of that first child
+						-- SwitchAltBranches
+
+				5. Add us to the grand parent (following the parent)
+				*/
 
 				var parentJobTreeItem = parentPath[^1];
 
@@ -152,37 +166,12 @@ namespace MSS.Types.MSet
 				if (currentPosition != siblings.Count - 1)
 				{
 					// Take all items past the current position and add them to an alternate path
-					var alts = siblings.Skip(currentPosition + 1).ToList();
-
-					//for(var i = 0; i < alts.Count; i++)
-					//{
-					//	var child = alts[i];
-					//	_ = siblings.Remove(child);
-					//	child.Job.ParentJobId = parentJobTreeItem.Job.Id;
-					//	parentJobTreeItem.Children.Add(child);
-					//}
-
-					var child = alts[0];
-					_ = siblings.Remove(child);
-					child.Job.ParentJobId = parentJobTreeItem.Job.Id;
-					parentJobTreeItem.Children.Add(child);
-
-					var parent = child;
-
-					for (var i = 1; i < alts.Count; i++)
-					{
-						child = alts[i];
-						_ = siblings.Remove(child);
-						child.Job.ParentJobId = parent.Job.Id;
-						parent.Children.Add(child);
-					}
+					SwitchAltBranches(newNode, siblings, currentPosition);
 				}
 
-				ObjectId? grandParentJobId = grandParentJobTreeItem.Job.Id;
-				job.ParentJobId = grandParentJobId == ObjectId.Empty ? null : grandParentJobId;
+				// Add the new job to the end of the main trunk.
 				var grandParentPath = GetParentPath(parentPath);
-
-				newPath = AddJob(newNode, grandParentPath);
+				var newPath = AddJob(newNode, grandParentPath);
 
 				if (selectTheAddedJob)
 				{
@@ -196,6 +185,45 @@ namespace MSS.Types.MSet
 			}
 		}
 
+		private void SwitchAltBranches(JobTreeItem newNode, IList<JobTreeItem> siblings, int currentPosition)
+		{
+			var alts = siblings.Skip(currentPosition + 1).ToList();
+
+			Debug.Assert(currentPosition != siblings.Count - 1, "During SwitchAltBranch the currentPosition was at the end.");
+
+			// The first "orphan" becomes a child of the node being added.
+			var child = alts[0];
+
+			_ = siblings.Remove(child);
+			child.ParentJobId = newNode.JobId;
+			newNode.Children.Add(child);
+
+			// Move all children of this first child[The other alternates] and make them our children
+			var otherAlts = new List<JobTreeItem>(child.Children);
+			for (var i = 1; i < otherAlts.Count; i++)
+			{
+				var grandChild = otherAlts[i];
+				_ = child.Children.Remove(grandChild);
+				grandChild.ParentJobId = newNode.JobId;
+				newNode.Children.Add(child);
+			}
+
+			// Mark both the first orphan and the job being added as being the head of an alternate path.
+			child.IsAlternatePathHead = true;
+			newNode.IsAlternatePathHead = true;
+
+			// All of the jobs that followed the first orphan are now added as children to the orphan
+			var parent = child;
+
+			for (var i = 1; i < alts.Count; i++)
+			{
+				child = alts[i];
+				_ = siblings.Remove(child);
+				child.ParentJobId = parent.JobId;
+				parent.Children.Add(child);
+			}
+		}
+
 		public bool RestoreBranch(ObjectId jobId)
 		{
 			Debug.WriteLine($"Restoring Branch: {jobId}.");
@@ -204,6 +232,23 @@ namespace MSS.Types.MSet
 			{
 				throw new InvalidOperationException("Cannot find job that is being restored.");
 			}
+
+			/*
+			1. Get the jobTreeItem
+			2. Find its parent
+			3. Remove the jobTreeItem from its parent
+			4. Get a list of our children and remove them.
+
+					-- SwitchAltBranches --
+			5. Get a list of all items after the parent and remove them
+			6. The first becomes our child -- [The Alternate currently in the main trunk]
+			7. Move all children of this first child [The other alternates] and make them our children
+			8. The items that used to follow the first child become childern of that first child
+					-- SwitchAltBranches
+
+			9. Add us to the grand parent (following the parent)
+			10. Add our former childern to the grandparent (following us.)
+			*/
 
 			var jobTreeItem = path[^1];
 			var parentPath = GetParentPath(path);
@@ -215,45 +260,32 @@ namespace MSS.Types.MSet
 
 			var parentJobTreeItem = parentPath[^1];
 
+			// Remove the alt node being restored
+			_ = parentJobTreeItem.Children.Remove(jobTreeItem);
+			
+			var ourChildern = new List<JobTreeItem>(jobTreeItem.Children);
+			jobTreeItem.Children.Clear();
+
 			var grandParentJobTreeItem = GetParent(parentPath);
 			var siblings = grandParentJobTreeItem.Children;
 			var currentPosition = siblings.IndexOf(parentJobTreeItem);
 
-			Debug.Assert(currentPosition != siblings.Count - 1, "During RestoreBranch we found a JobTreeItem whose parent is the last child.");
-
 			// Take all items past the current position of the grandparent and add them to an alternate path
-			var alts = siblings.Skip(currentPosition + 1).ToList();
+			SwitchAltBranches(jobTreeItem, siblings, currentPosition);
 
-			var child = alts[0];
-			_ = siblings.Remove(child);
-			child.Job.ParentJobId = parentJobTreeItem.Job.Id;
-			parentJobTreeItem.Children.Add(child);
+			// Add the new job to the end of the main trunk.
+			var grandParentPath = GetParentPath(parentPath);
+			var newPath = AddJob(jobTreeItem, grandParentPath);
 
-			var parent = child;
-
-			for (var i = 1; i < alts.Count; i++)
+			for(var i = 0; i < ourChildern.Count; i++)
 			{
-				child = alts[i];
-				_ = siblings.Remove(child);
-				child.Job.ParentJobId = parent.Job.Id;
-				parent.Children.Add(child);
+				var child = ourChildern[i];
+				child.ParentJobId = grandParentJobTreeItem.JobId;
+				grandParentJobTreeItem.Children.Add(child);
 			}
 
-			ObjectId? grandParentJobId = grandParentJobTreeItem.Job.Id == ObjectId.Empty ? null : grandParentJobTreeItem.Job.Id;
-
-			_ = parentJobTreeItem.Children.Remove(jobTreeItem);
-			jobTreeItem.Job.ParentJobId = grandParentJobId == ObjectId.Empty ? null : grandParentJobId;
-			siblings.Add(jobTreeItem);
-
-			var ourChildren = jobTreeItem.Children.ToList();
-
-			for (var i = 0; i < ourChildren.Count; i++)
-			{
-				child = ourChildren[i];
-				_ = jobTreeItem.Children.Remove(child);
-				child.Job.ParentJobId = grandParentJobId;
-				siblings.Add(child);
-			}
+			ExpandAndSelect(newPath);
+			_currentPath = newPath;
 
 			return true;
 		}
@@ -273,7 +305,6 @@ namespace MSS.Types.MSet
 			}
 
 			var backPath = GetPreviousJobPath(_currentPath, skipPanJobs);
-
 			job = GetJobFromPath(backPath);
 
 			return job != null;
@@ -309,7 +340,6 @@ namespace MSS.Types.MSet
 			}
 
 			var forwardPath = GetNextJobPath(_currentPath, skipPanJobs);
-
 			job = GetJobFromPath(forwardPath);
 
 			return job != null;
@@ -502,10 +532,11 @@ namespace MSS.Types.MSet
 
 		#region Collection Methods
 
-		private List<JobTreeItem> AddJob(JobTreeItem newNode, List<JobTreeItem>? path)
+		private List<JobTreeItem> AddJob(JobTreeItem newNode, IList<JobTreeItem>? path)
 		{
 			if (path == null || !path.Any())
 			{
+				newNode.ParentJobId = _root.JobId;
 				_root.Children.Add(newNode);
 				var result = new List<JobTreeItem> { newNode };
 
@@ -513,11 +544,9 @@ namespace MSS.Types.MSet
 			}
 			else
 			{
+				newNode.ParentJobId = path[^1].JobId;
 				path[^1].Children.Add(newNode);
-				var result = new List<JobTreeItem>(path)
-				{
-					newNode
-				};
+				var result = new List<JobTreeItem>(path) { newNode };
 
 				return result;
 			}
@@ -543,7 +572,7 @@ namespace MSS.Types.MSet
 
 		private bool TryFindJobTreeItem(ObjectId jobId, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out List<JobTreeItem> path)
 		{
-			var foundNode = jobTreeItem.Children.FirstOrDefault(x => x.Job.Id == jobId);
+			var foundNode = jobTreeItem.Children.FirstOrDefault(x => x.JobId == jobId);
 
 			if (foundNode != null)
 			{
@@ -569,7 +598,7 @@ namespace MSS.Types.MSet
 
 		private bool TryFindJob(ObjectId jobId, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out Job job)
 		{
-			var foundNode = jobTreeItem.Children.FirstOrDefault(x => x.Job.Id == jobId);
+			var foundNode = jobTreeItem.Children.FirstOrDefault(x => x.JobId == jobId);
 
 			if (foundNode != null)
 			{
@@ -694,38 +723,39 @@ namespace MSS.Types.MSet
 			var siblings = parentJobTreeItem.Children;
 			var currentPosition = siblings.IndexOf(currentItem);
 
-			var nextJobTreeItem = GetNextJobTreeItem(siblings, currentPosition, skipPanJobs);
-
-			if (nextJobTreeItem == null)
+			if (currentItem.ParentJobId.HasValue && currentItem.IsAlternatePathHead && currentItem.Children.Any())
 			{
-				return null;
+				// The new job will be a child of the current job
+				result = new List<JobTreeItem>(path) { currentItem.Children[0] };
 			}
 			else
 			{
-				// The new job will be a sibling of the current job
-				result = new List<JobTreeItem>(path.SkipLast(1))
+				if (TryGetNextJobTreeItem(siblings, currentPosition, skipPanJobs, out var nextJobTreeItem))
 				{
-					nextJobTreeItem
-				};
+					// The new job will be a sibling of the current job
+					result = new List<JobTreeItem>(path.SkipLast(1)) { nextJobTreeItem };
+				}
+				else
+				{
+					result = null;
+				}
 			}
 
 			return result;
 		}
 
-		private JobTreeItem? GetNextJobTreeItem(IList<JobTreeItem> jobTreeItems, int currentPosition, bool skipPanJobs)
+		private bool TryGetNextJobTreeItem(IList<JobTreeItem> jobTreeItems, int currentPosition, bool skipPanJobs, [MaybeNullWhen(false)] out JobTreeItem nextJobTreeItem)
 		{
-			JobTreeItem? result;
-
 			if (skipPanJobs)
 			{
-				result = jobTreeItems.Skip(currentPosition + 1).FirstOrDefault(x => x.Job.TransformType != TransformType.Pan);
+				nextJobTreeItem = jobTreeItems.Skip(currentPosition + 1).FirstOrDefault(x => x.Job.TransformType != TransformType.Pan);
 			}
 			else
 			{
-				result = jobTreeItems.Skip(currentPosition + 1).FirstOrDefault();
+				nextJobTreeItem = jobTreeItems.Skip(currentPosition + 1).FirstOrDefault();
 			}
 
-			return result;
+			return nextJobTreeItem != null;
 		}
 
 		private bool CanMoveForward(IList<JobTreeItem>? path)

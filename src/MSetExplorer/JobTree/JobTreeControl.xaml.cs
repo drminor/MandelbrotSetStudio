@@ -70,7 +70,10 @@ namespace MSetExplorer
 		{
 			if (e.Parameter is ObjectId jobId)
 			{
-				_ = _vm.RaiseNavigateToJobRequested(jobId);
+				if (_vm.TryGetJob(jobId, out var job))
+				{
+					_vm.CurrentJob = job;
+				}
 			}
 		}
 
@@ -122,7 +125,6 @@ namespace MSetExplorer
 				_ = MessageBox.Show(_vm.GetDetails(jobId));
 			}
 		}
-
 
 		#endregion
 	}

@@ -90,7 +90,7 @@
                                 <TextBlock Text=" - " Foreground="BlueViolet" />
                                 <TextBlock Text="{Binding Zoom}" Foreground="BlueViolet" />
 
-                                <TextBlock Text=" " Foreground="ForestGreen"/>
+                                <TextBlock Text="    " Foreground="ForestGreen"/>
                                 <TextBlock Text="{Binding Created}" Foreground="ForestGreen" />
 
                                 <TextBlock Text=" [" Foreground="Blue"/>

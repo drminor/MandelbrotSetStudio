@@ -3,6 +3,7 @@ using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
@@ -11,14 +12,15 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 
 		Project? CurrentProject { get; set; }
-		Job? CurrentJob { get; }
+		Job? CurrentJob { get; set; }
 
+		bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job);
 		public IReadOnlyCollection<JobTreeItem>? GetCurrentPath();
 		public IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId);
 
 		ObservableCollection<JobTreeItem>? JobItems { get; }
 
-		bool RaiseNavigateToJobRequested(ObjectId jobId);
+		//bool RaiseNavigateToJobRequested(ObjectId jobId);
 
 		bool RestoreBranch(ObjectId jobId);
 

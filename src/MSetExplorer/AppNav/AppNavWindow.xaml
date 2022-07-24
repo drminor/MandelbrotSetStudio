@@ -25,9 +25,9 @@
                 <MenuItem Header="Show System _Colors" Click="ShowSystemColorsButton_Click"/>
             </MenuItem>
 
-            <MenuItem Header="_Utilities">
+            <!--<MenuItem Header="_Utilities">
                 <MenuItem Header="Remove Recent MapSections" Click="RemoveMapSectionsButton_Click"/>
-            </MenuItem>
+            </MenuItem>-->
         </Menu>
         
         <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,20">

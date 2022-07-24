@@ -12,9 +12,9 @@ namespace MSS.Types.MSet
 
 		private ObjectId _projectId;
 		private ObjectId? _parentJobId;
+		private bool _isAlternatePathHead;
 		private ObjectId _colorBandSetId;
 
-		private bool _isPreferredChild;
 		private DateTime _lastSavedUtc;
 
 		#region Constructor
@@ -42,7 +42,8 @@ namespace MSS.Types.MSet
 
 			: this(
 				  ObjectId.GenerateNewId(), 
-				  parentJobId, 
+				  parentJobId,
+				  isAlternatePathHead: false,
 				  projectId, 
 				  label, 
 				  transformType, 
@@ -62,6 +63,7 @@ namespace MSS.Types.MSet
 		public Job(
 			ObjectId id,
 			ObjectId? parentJobId,
+			bool isAlternatePathHead,
 			ObjectId projectId,
 			string? label,
 
@@ -78,6 +80,7 @@ namespace MSS.Types.MSet
 		{
 			Id = id;
 			_parentJobId = parentJobId;
+			_isAlternatePathHead = isAlternatePathHead;
 			_projectId = projectId;
 			Label = label;
 
@@ -131,15 +134,15 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		//public bool IsPreferredChild
-		//{
-		//	get => _isPreferredChild;
-		//	set
-		//	{
-		//		_isPreferredChild = value;
-		//		LastUpdatedUtc = DateTime.UtcNow;
-		//	}
-		//}
+		public bool IsAlternatePathHead
+		{
+			get => _isAlternatePathHead;
+			set
+			{
+				_isAlternatePathHead = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
 
 		public string? Label { get; init; }
 		public TransformType TransformType { get; init; }
@@ -188,7 +191,7 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+			var result = new Job(Id, ParentJobId, IsAlternatePathHead, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
 				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
 			{
 				OnFile = OnFile
@@ -199,7 +202,7 @@ namespace MSS.Types.MSet
 
 		public Job CreateNewCopy()
 		{
-			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(), 
+			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, IsAlternatePathHead, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(), 
 				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
 			{
 				OnFile = false

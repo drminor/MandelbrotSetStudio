@@ -97,11 +97,12 @@ namespace MSetExplorer
 
 		private void RemoveMapSectionsButton_Click(object sender, RoutedEventArgs e)
 		{
+			_ = MessageBox.Show("This command is currently coded to perform no action.");
 			//var createdDate = DateTime.Parse("2022-05-29");
 			//var numberOfRecordsProcessed = _vm.DeleteMapSectionsCreatedSince(createdDate);
 
-			var numberOfRecordsProcessed = _vm.DoSchemaUpdates();
-			_ = MessageBox.Show($"{numberOfRecordsProcessed} MapSections processed.");
+			//var numberOfRecordsProcessed = _vm.DoSchemaUpdates();
+			//_ = MessageBox.Show($"{numberOfRecordsProcessed} MapSections processed.");
 		}
 
 		#endregion

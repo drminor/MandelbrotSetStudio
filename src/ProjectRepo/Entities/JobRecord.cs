@@ -5,11 +5,9 @@ using System;
 
 namespace ProjectRepo.Entities
 {
-	// TODO: Change the JobRecord's TransformType (enum) from an int to a string.
-	// Remove TransformType, renameTransformTypeString to TransformType.
 	public record JobRecord(
 		ObjectId? ParentJobId,
-		bool IsPreferredChild,
+		bool IsAlternatePathHead,
 		ObjectId ProjectId,
 		ObjectId SubDivisionId,
 		string? Label,
