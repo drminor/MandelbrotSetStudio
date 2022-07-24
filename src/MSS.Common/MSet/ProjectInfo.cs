@@ -3,7 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace MSS.Types.MSet
+namespace MSS.Common
 {
 	public class ProjectInfo : IProjectInfo
 	{

@@ -2,9 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mssc="clr-namespace:MSS.Common;assembly=MSS.Common"
              xmlns:local="clr-namespace:MSetExplorer"
-             xmlns:mtmset="clr-namespace:MSS.Types.MSet;assembly=MSS.Types"
 
              mc:Ignorable="d" 
              d:DesignHeight="1000" d:DesignWidth="400">
@@ -60,7 +60,7 @@
                     </TreeView.CommandBindings>
                     
                     <TreeView.Resources>
-                        <HierarchicalDataTemplate DataType="{x:Type mtmset:JobTreeItem}" ItemsSource="{Binding Children}">
+                        <HierarchicalDataTemplate DataType="{x:Type mssc:JobTreeItem}" ItemsSource="{Binding Children}">
                             <StackPanel Orientation="Horizontal" KeyUp="JobTreeItem_KeyUp" Tag="{Binding IdAndParentId}" >
 
                                 <!--<TreeView.InputBindings>

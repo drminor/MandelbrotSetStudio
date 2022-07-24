@@ -4,6 +4,9 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;x64</Platforms>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -12,14 +15,17 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="MSet\JobTreeOld.cs" />
     <Compile Remove="RMap\JobHelperNotUsed.cs" />
     <Compile Remove="RMap\RMapHelperOldMethods.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="MSet\JobTreeOld.cs" />
     <None Include="RMap\RMapHelperOldMethods.cs" />
   </ItemGroup>
 

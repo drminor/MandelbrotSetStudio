@@ -1,6 +1,6 @@
 ﻿using MongoDB.Bson;
-
-namespace MSS.Types.MSet
+using MSS.Types;
+namespace MSS.Common
 {
 	public interface IMapSectionDuplicator
 	{

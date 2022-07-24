@@ -1,8 +1,9 @@
 ﻿using MongoDB.Bson;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 
-namespace MSS.Types.MSet
+namespace MSS.Common
 {
 	public interface IMapSectionDeleter
 	{

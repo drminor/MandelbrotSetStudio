@@ -1,11 +1,12 @@
 ﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace MSS.Types
+namespace MSS.Common
 {
 	public class Poster : INotifyPropertyChanged, ICloneable 
 	{

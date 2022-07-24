@@ -8,11 +8,6 @@
 
   <ItemGroup>
     <Compile Remove="BigIntegerExtensions.cs" />
-    <Compile Remove="MSet\JobTreeOld.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="MSet\JobTreeOld.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,10 +1,12 @@
 ﻿using MongoDB.Bson;
+using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace MSS.Types.MSet
+namespace MSS.Common
 {
 	public class JobTreeItem : INotifyPropertyChanged
 	{

@@ -1,4 +1,6 @@
 ﻿using MongoDB.Bson;
+using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -7,7 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
-namespace MSS.Types.MSet
+namespace MSS.Common
 {
 	public class JobTree : IJobTree
 	{
@@ -308,9 +310,9 @@ namespace MSS.Types.MSet
 			Debug.WriteLine($"Deleting all jobs in branch anchored by job: {jobId}.");
 
 			var currentItem = path[^1];
-			var result = 0L;
 			var jobs = GetJobs(currentItem).ToList();
 
+			var result = 0L;
 			foreach (var job in jobs)
 			{
 				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
@@ -321,6 +323,14 @@ namespace MSS.Types.MSet
 			}
 
 			Debug.WriteLine($"{result} jobs were deleted.");
+
+			var parentPath = GetParentPath(path);
+
+			if (parentPath != null)
+			{
+				var parentItem = parentPath[^1];
+				_ = parentItem.Children.Remove(currentItem);
+			}
 
 			return result;
 		}

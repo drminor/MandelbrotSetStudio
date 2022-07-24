@@ -2,7 +2,7 @@
 using System;
 using System.ComponentModel;
 
-namespace MSS.Types.MSet
+namespace MSS.Common
 {
 	public interface IProjectInfo : INotifyPropertyChanged
 	{

@@ -1,4 +1,6 @@
 ﻿using MongoDB.Bson;
+using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,7 +10,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace MSS.Types.MSet
+namespace MSS.Common
 {
 	public class Project : IDisposable, INotifyPropertyChanged
 	{

@@ -234,7 +234,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		private long? DeleteMapSectionsForJobInternal(ObjectId ownerId, JobOwnerType jobOwnerType, MapSectionReaderWriter mapSectionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter, out long? numberJobMapSectionsDeleted)
+		private long? DeleteMapSectionsForJobInternalNew(ObjectId ownerId, JobOwnerType jobOwnerType, MapSectionReaderWriter mapSectionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter, out long? numberJobMapSectionsDeleted)
 		{
 			var jobMapSectionRecords = jobMapSectionReaderWriter.GetByOwnerId(ownerId, jobOwnerType);
 			var jobMapSectionRecIds = jobMapSectionRecords.Select(x => x.Id).ToList();
@@ -258,6 +258,45 @@ namespace MSetRepo
 
 			return numberDeleted;
 		}
+
+
+
+		private long? DeleteMapSectionsForJobInternal(ObjectId ownerId, JobOwnerType jobOwnerType, MapSectionReaderWriter mapSectionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter, out long? numberJobMapSectionsDeleted)
+		{
+			var jobMapSectionRecords = jobMapSectionReaderWriter.GetByOwnerId(ownerId, jobOwnerType);
+
+			//var beforeCnt = 0L;
+			//foreach (var jobMapSectionRecord in jobMapSectionRecords)
+			//{
+			//	var jobMapSectionRecordsBefore = jobMapSectionReaderWriter.GetByMapSectionId(jobMapSectionRecord.MapSectionId);
+
+			//	beforeCnt += jobMapSectionRecordsBefore.Count;
+			//}
+
+			numberJobMapSectionsDeleted = jobMapSectionReaderWriter.DeleteJobMapSections(ownerId, jobOwnerType);
+
+			var result = 0L;
+
+			//var afterCnt = 0L;
+			foreach (var jobMapSectionRecord in jobMapSectionRecords)
+			{
+				//var jobMapSectionRecordsAfter = jobMapSectionReaderWriter.GetByMapSectionId(jobMapSectionRecord.MapSectionId);
+				//afterCnt += jobMapSectionRecordsAfter.Count;
+
+				if (!jobMapSectionReaderWriter.DoesJobMapSectionRecordExist(jobMapSectionRecord.MapSectionId))
+				{
+					var numberDeleted = mapSectionReaderWriter.Delete(jobMapSectionRecord.MapSectionId);
+					if (numberDeleted.HasValue)
+					{
+						result += numberDeleted.Value;
+					}
+				}
+			}
+
+			return result;
+		}
+
+
 
 		public long? DuplicateJobMapSections(ObjectId ownerId, JobOwnerType jobOwnerType, ObjectId newOwnerId)
 		{
