@@ -61,27 +61,13 @@ namespace MSS.Common
 
 		public bool CanGoForward => DoWithReadLock(() => { return CanMoveForward(_currentPath); });
 
+		public bool IsDirty { get; set; }
+
 		public bool AnyJobIsDirty => DoWithReadLock(() => { return GetJobs(_root).Any(x => x.IsDirty); });
 
 		#endregion
 
 		#region Public Methods
-
-		public IReadOnlyCollection<JobTreeItem>? GetCurrentPath()
-		{
-			return DoWithReadLock(() =>
-			{
-				return _currentPath == null ? null : new ReadOnlyCollection<JobTreeItem>(_currentPath);
-			});
-		}
-
-		public IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId)
-		{
-			return DoWithReadLock(() =>
-			{
-				var path = GetJobPath(jobId); return path == null ? null : new ReadOnlyCollection<JobTreeItem>(path);
-			});
-		}
 
 		public void AddHomeJob(Job job)
 		{
@@ -111,6 +97,8 @@ namespace MSS.Common
 
 				ExpandAndSelect(newPath);
 				_currentPath = newPath;
+
+				IsDirty = true;
 			}
 			finally
 			{
@@ -180,6 +168,8 @@ namespace MSS.Common
 					ExpandAndSelect(newPath);
 					_currentPath = newPath;
 				}
+
+				IsDirty = true;
 			}
 			finally
 			{
@@ -296,43 +286,9 @@ namespace MSS.Common
 
 			ExpandAndSelect(newPath);
 			_currentPath = newPath;
+			IsDirty = true;
 
 			return true;
-		}
-
-		public long DeleteBranch(ObjectId jobId, IMapSectionDeleter mapSectionDeleter)
-		{
-			if (!TryFindJobTreeItem(jobId, _root, out var path))
-			{
-				throw new InvalidOperationException($"Cannot find job: {jobId} that is being deleted.");
-			}
-
-			Debug.WriteLine($"Deleting all jobs in branch anchored by job: {jobId}.");
-
-			var currentItem = path[^1];
-			var jobs = GetJobs(currentItem).ToList();
-
-			var result = 0L;
-			foreach (var job in jobs)
-			{
-				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
-				if (numberDeleted.HasValue)
-				{
-					result += numberDeleted.Value;
-				}
-			}
-
-			Debug.WriteLine($"{result} jobs were deleted.");
-
-			var parentPath = GetParentPath(path);
-
-			if (parentPath != null)
-			{
-				var parentItem = parentPath[^1];
-				_ = parentItem.Children.Remove(currentItem);
-			}
-
-			return result;
 		}
 
 		public bool TryGetPreviousJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job)
@@ -402,25 +358,6 @@ namespace MSS.Common
 			else
 			{
 				return false;
-			}
-		}
-
-		public Job? GetJob(ObjectId jobId)
-		{
-			_ = TryFindJob(jobId, _root, out var result);
-			return result;
-		}
-
-		public Job? GetParent(Job job)
-		{
-			if (job.ParentJobId == null)
-			{
-				return null;
-			}
-			else
-			{
-				_ = TryFindJob(job.ParentJobId.Value, _root, out var result);
-				return result;
 			}
 		}
 
@@ -500,6 +437,26 @@ namespace MSS.Common
 			}
 		}
 
+		#endregion
+
+		#region Public Methods - Path and Collection
+
+		public IReadOnlyCollection<JobTreeItem>? GetCurrentPath()
+		{
+			return DoWithReadLock(() =>
+			{
+				return _currentPath == null ? null : new ReadOnlyCollection<JobTreeItem>(_currentPath);
+			});
+		}
+
+		public IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId)
+		{
+			return DoWithReadLock(() =>
+			{
+				var path = GetJobPath(jobId); return path == null ? null : new ReadOnlyCollection<JobTreeItem>(path);
+			});
+		}
+
 		public IEnumerable<Job> GetJobs()
 		{
 			_jobsLock.EnterReadLock();
@@ -513,6 +470,47 @@ namespace MSS.Common
 			{
 				_jobsLock.ExitReadLock();
 			}
+		}
+
+		public Job? GetJob(ObjectId jobId)
+		{
+			_ = TryFindJob(jobId, _root, out var result);
+			return result;
+		}
+
+		public Job? GetParent(Job job)
+		{
+			if (job.ParentJobId == null)
+			{
+				return null;
+			}
+			else
+			{
+				_ = TryFindJob(job.ParentJobId.Value, _root, out var result);
+				return result;
+			}
+		}
+
+		public List<Job>? GetJobAndDescendants(ObjectId jobId)
+		{
+			return DoWithReadLock(() =>
+			{
+				List<Job>? result;
+
+				if (TryFindJobTreeItem(jobId, _root, out var path))
+				{
+					var jobTreeItem = path[^1];
+
+					result = new List<Job> { jobTreeItem.Job };
+					result.AddRange(GetJobs(jobTreeItem));
+				}
+				else
+				{
+					result = null;
+				}
+
+				return result;
+			});
 		}
 
 		#endregion

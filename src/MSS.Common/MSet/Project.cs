@@ -3,6 +3,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -94,12 +95,12 @@ namespace MSS.Common
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
-		public IJobTree JobTree => _jobTree;
+		public ObservableCollection<JobTreeItem>? JobItems => _jobTree.JobItems;
 
 		public bool CanGoBack => _jobTree.CanGoBack;
 		public bool CanGoForward => _jobTree.CanGoForward;
 
-		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.AnyJobIsDirty;
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyJobIsDirty;
 
 		public bool IsCurrentJobIdChanged => CurrentJobId != _originalCurrentJobId;
 
@@ -227,8 +228,6 @@ namespace MSS.Common
 			}
 		}
 
-		public IMapSectionDeleter? MapSectionDeleter { get; set; }
-
 		#endregion
 
 		#region Public Methods
@@ -315,23 +314,15 @@ namespace MSS.Common
 
 		public Job? GetParent(Job job) => _jobTree.GetParent(job);
 
+		public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetJobAndDescendants(jobId);
+
+
 		public IReadOnlyCollection<JobTreeItem>? GetCurrentPath() => _jobTree.GetCurrentPath();
 		public IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
 
 		public bool RestoreBranch(ObjectId jobId)
 		{
 			var result = _jobTree.RestoreBranch(jobId);
-			return result;
-		}
-
-		public long DeleteBranch(ObjectId jobId)
-		{
-			if (MapSectionDeleter == null)
-			{
-				throw new InvalidOperationException("The MapDeleter has not been set.");
-			}
-
-			var result = _jobTree.DeleteBranch(jobId, MapSectionDeleter);
 			return result;
 		}
 
@@ -350,6 +341,7 @@ namespace MSS.Common
 
 				LastSavedUtc = DateTime.UtcNow;
 				_originalCurrentJobId = CurrentJobId;
+				_jobTree.IsDirty = false;
 				return true;
 			}
 			else
@@ -399,7 +391,7 @@ namespace MSS.Common
 			var newCurCbs = firstOldIdAndNewCbs?.Item2;
 
 			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
-			project.MapSectionDeleter = MapSectionDeleter;
+			//project.MapSectionDeleter = MapSectionDeleter;
 
 			return project;
 		}

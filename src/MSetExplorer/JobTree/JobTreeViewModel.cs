@@ -1,6 +1,8 @@
 ﻿using MongoDB.Bson;
+using MSetRepo;
 using MSS.Common;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -12,12 +14,16 @@ namespace MSetExplorer
 {
 	public class JobTreeViewModel : ViewModelBase, IJobTreeViewModel
 	{
+		private readonly IProjectAdapter _projectAdapter;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private Project? _currentProject;
 
 		#region Constructor
 
-		public JobTreeViewModel()
+		public JobTreeViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
 		{
+			_projectAdapter = projectAdapter;
+			_mapSectionAdapter = mapSectionAdapter;
 			_currentProject = null;
 		}
 
@@ -27,7 +33,7 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public ObservableCollection<JobTreeItem>? JobItems => CurrentProject?.JobTree.JobItems;
+		public ObservableCollection<JobTreeItem>? JobItems => CurrentProject?.JobItems;
 
 		public Project? CurrentProject
 		{
@@ -111,11 +117,23 @@ namespace MSetExplorer
 			}
 		}
 
-		public long DeleteBranch(ObjectId jobId)
+		public long DeleteBranch(ObjectId jobId, out long numberOfMapSectionsDeleted)
 		{
+			numberOfMapSectionsDeleted = 0;
+
 			if (CurrentProject != null)
 			{
-				var result = CurrentProject.DeleteBranch(jobId);
+				var result = 0L;
+				var jobAndDescendants = CurrentProject.GetJobAndDescendants(jobId) ?? new List<Job>();
+
+				CurrentProject.GoBack(skipPanJobs: true);
+
+				foreach(var job in jobAndDescendants)
+				{
+					numberOfMapSectionsDeleted += ProjectAndMapSectionHelper.DeleteJob(job, _projectAdapter, _mapSectionAdapter);
+					result++;
+				}
+
 				return result;
 			}
 			else
@@ -123,6 +141,41 @@ namespace MSetExplorer
 				return 0;
 			}
 		}
+
+		//public long DeleteBranch(ObjectId jobId, IMapSectionDeleter mapSectionDeleter)
+		//{
+		//	if (!TryFindJobTreeItem(jobId, _root, out var path))
+		//	{
+		//		throw new InvalidOperationException($"Cannot find job: {jobId} that is being deleted.");
+		//	}
+
+		//	Debug.WriteLine($"Deleting all jobs in branch anchored by job: {jobId}.");
+
+		//	var currentItem = path[^1];
+		//	var jobs = GetJobs(currentItem).ToList();
+
+		//	var result = 0L;
+		//	foreach (var job in jobs)
+		//	{
+		//		var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
+		//		if (numberDeleted.HasValue)
+		//		{
+		//			result += numberDeleted.Value;
+		//		}
+		//	}
+
+		//	Debug.WriteLine($"{result} jobs were deleted.");
+
+		//	var parentPath = GetParentPath(path);
+
+		//	if (parentPath != null)
+		//	{
+		//		var parentItem = parentPath[^1];
+		//		_ = parentItem.Children.Remove(currentItem);
+		//	}
+
+		//	return result;
+		//}
 
 		public string GetDetails(ObjectId jobId)
 		{
@@ -144,6 +197,8 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+
 
 	}
 }

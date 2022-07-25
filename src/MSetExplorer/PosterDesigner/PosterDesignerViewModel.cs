@@ -22,7 +22,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
-			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel,
+			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
 			MapJobHelper mapJobHelper, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, 
 			CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
 		{
@@ -30,7 +30,7 @@ namespace MSetExplorer
 			_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
-			JobTreeViewModel = new JobTreeViewModel();
+			JobTreeViewModel = jobTreeViewModel;
 			MapScrollViewModel = mapScrollViewModel;
 
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;

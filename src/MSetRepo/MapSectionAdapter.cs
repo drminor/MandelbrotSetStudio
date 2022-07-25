@@ -191,15 +191,20 @@ namespace MSetRepo
 		{
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
-			var ownerType = jobOwnerType;
-			var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, ownerId, ownerType);
-
-			var jobMapSectionId = await jobMapSectionReaderWriter.InsertAsync(jobMapSectionRecord);
-
-			return jobMapSectionId;
+			var existingRecord = await jobMapSectionReaderWriter.GetByMapAndOwnerIdAsync(mapSectionId, ownerId, jobOwnerType);
+			if (existingRecord == null)
+			{
+				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, ownerId, jobOwnerType);
+				var jobMapSectionId = await jobMapSectionReaderWriter.InsertAsync(jobMapSectionRecord);
+				return jobMapSectionId;
+			}
+			else
+			{
+				return existingRecord.Id;
+			}
 		}
 
-		public long? DeleteMapSectionsForMany(IList<ObjectId> ownerIds, JobOwnerType jobOwnerType)
+		public long? DeleteMapSectionsForMany(IEnumerable<ObjectId> ownerIds, JobOwnerType jobOwnerType)
 		{
 			var result = 0L;
 
@@ -241,8 +246,7 @@ namespace MSetRepo
 
 			numberJobMapSectionsDeleted = jobMapSectionReaderWriter.DeleteJobMapSections(ownerId, jobOwnerType);
 
-			var jobMapSecRecsExtant = jobMapSectionReaderWriter.DoJobMapSectionRecordsExist(jobMapSectionRecIds);
-			var jobMapSecRecIdsExtant = jobMapSecRecsExtant.Select(x => x.Id);
+			var jobMapSecRecIdsExtant = jobMapSectionReaderWriter.DoJobMapSectionRecordsExist(jobMapSectionRecIds).ToArray();
 
 			var toBeRemoved = new List<ObjectId>();
 
@@ -259,8 +263,6 @@ namespace MSetRepo
 			return numberDeleted;
 		}
 
-
-
 		private long? DeleteMapSectionsForJobInternal(ObjectId ownerId, JobOwnerType jobOwnerType, MapSectionReaderWriter mapSectionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter, out long? numberJobMapSectionsDeleted)
 		{
 			var jobMapSectionRecords = jobMapSectionReaderWriter.GetByOwnerId(ownerId, jobOwnerType);
@@ -275,9 +277,12 @@ namespace MSetRepo
 
 			numberJobMapSectionsDeleted = jobMapSectionReaderWriter.DeleteJobMapSections(ownerId, jobOwnerType);
 
-			var result = 0L;
+			var jobMapSectionRecIds = jobMapSectionRecords.Select(x => x.Id);
+			var jobMapSecRecIdsExtant = jobMapSectionReaderWriter.DoJobMapSectionRecordsExist(jobMapSectionRecIds);
 
+			var result = 0L;
 			//var afterCnt = 0L;
+			var jobMapSectionFound = 0L;
 			foreach (var jobMapSectionRecord in jobMapSectionRecords)
 			{
 				//var jobMapSectionRecordsAfter = jobMapSectionReaderWriter.GetByMapSectionId(jobMapSectionRecord.MapSectionId);
@@ -291,12 +296,19 @@ namespace MSetRepo
 						result += numberDeleted.Value;
 					}
 				}
+				else
+				{
+					jobMapSectionFound++;
+				}
+			}
+
+			if (jobMapSecRecIdsExtant.Count() !=  jobMapSectionFound)
+			{
+				Debug.WriteLine("Hi there.");
 			}
 
 			return result;
 		}
-
-
 
 		public long? DuplicateJobMapSections(ObjectId ownerId, JobOwnerType jobOwnerType, ObjectId newOwnerId)
 		{

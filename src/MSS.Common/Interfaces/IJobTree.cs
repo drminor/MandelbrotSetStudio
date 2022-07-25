@@ -13,6 +13,8 @@ namespace MSS.Common
 		ObservableCollection<JobTreeItem> JobItems { get; }
 
 		Job CurrentJob { get; set; }
+		bool IsDirty { get; set; }
+		bool AnyJobIsDirty { get; }
 
 		IReadOnlyCollection<JobTreeItem>? GetCurrentPath();
 		IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId);
@@ -20,7 +22,6 @@ namespace MSS.Common
 		void AddHomeJob(Job job);
 		void Add(Job job, bool selectTheAddedJob);
 		bool RestoreBranch(ObjectId jobId);
-		long DeleteBranch(ObjectId jobId, IMapSectionDeleter mapSectionDeleter);
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
@@ -34,10 +35,11 @@ namespace MSS.Common
 		Job? GetParent(Job job);
 		Job? GetJob(ObjectId jobId);
 
+		IEnumerable<Job> GetJobs();
+		List<Job>? GetJobAndDescendants(ObjectId jobId);
+
 		// TODO: Consider moving these to the class that uses a JobTree
 		bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy);
-		bool AnyJobIsDirty { get; }
 		void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter);
-		IEnumerable<Job> GetJobs();
 	}
 }

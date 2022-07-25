@@ -37,6 +37,7 @@ namespace MSS.Common
 		Job GetJob(ObjectId jobId);
 		void InsertJob(Job job);
 		void UpdateJobDetails(Job job);
+		bool DeleteJob(ObjectId jobId);
 
 		void InsertColorBandSet(ColorBandSet colorBandSet);
 		ColorBandSet? GetColorBandSet(string id);

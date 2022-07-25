@@ -609,6 +609,13 @@ namespace MSetRepo
 			job.LastSavedUtc = DateTime.UtcNow;
 		}
 
+		public bool DeleteJob(ObjectId jobId)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = DeleteJob(jobId, jobReaderWriter);
+			return result > 0;
+		}
+
 		private long DeleteJob(ObjectId jobId, JobReaderWriter jobReaderWriter)
 		{
 			var result = jobReaderWriter.Delete(jobId);
