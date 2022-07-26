@@ -171,6 +171,7 @@ namespace MSetExplorer
 		private void DoSchemaUpdates(ProjectAdapter projectAdapter)
 		{
 			//projectAdapter.AddIsIsAlternatePathHeadToAllJobs();
+			//projectAdapter.RemoveColorBandSetIdFromProject();
 		}
 
 	}

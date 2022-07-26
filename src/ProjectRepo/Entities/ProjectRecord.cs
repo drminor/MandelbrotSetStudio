@@ -6,7 +6,7 @@ namespace ProjectRepo.Entities
 {
 	public record ProjectRecord(string Name, 
 		string? Description, 
-		ObjectId CurrentJobId, 
+		ObjectId CurrentJobId,
 		DateTime LastSavedUtc
 		)
 	{
@@ -15,7 +15,5 @@ namespace ProjectRepo.Entities
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
 		public DateTime DateCreated => Id.CreationTime;
-
-		public ObjectId CurrentColorBandSetId { get; init; } = ObjectId.Empty;
 	}
 }

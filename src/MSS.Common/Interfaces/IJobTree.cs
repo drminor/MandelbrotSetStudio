@@ -16,12 +16,13 @@ namespace MSS.Common
 		bool IsDirty { get; set; }
 		bool AnyJobIsDirty { get; }
 
-		IReadOnlyCollection<JobTreeItem>? GetCurrentPath();
-		IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId);
+		List<JobTreeItem>? GetCurrentPath();
+		List<JobTreeItem>? GetPath(ObjectId jobId);
 
 		void AddHomeJob(Job job);
 		void Add(Job job, bool selectTheAddedJob);
 		bool RestoreBranch(ObjectId jobId);
+		bool RemoveBranch(ObjectId jobId);
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }

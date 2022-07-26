@@ -85,7 +85,7 @@ namespace MSetExplorer
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
 			{
-				_ = MessageBox.Show("Changes Saved");
+				//_ = MessageBox.Show("Changes Saved");
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
@@ -160,7 +160,7 @@ namespace MSetExplorer
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
 			{
-				_ = MessageBox.Show("Changes Saved");
+				//_ = MessageBox.Show("Changes Saved");
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
@@ -283,7 +283,7 @@ namespace MSetExplorer
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
 			{
-				_ = MessageBox.Show("Changes Saved");
+				//_ = MessageBox.Show("Changes Saved");
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
@@ -304,7 +304,7 @@ namespace MSetExplorer
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
 			{
-				_ = MessageBox.Show("Changes Saved");
+				//_ = MessageBox.Show("Changes Saved");
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
@@ -340,7 +340,7 @@ namespace MSetExplorer
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			_vm.MapProjectViewModel.ProjectSave();
-			_ = MessageBox.Show("Changes Saved");
+			//_ = MessageBox.Show("Changes Saved");
 		}
 
 		// Project Save As

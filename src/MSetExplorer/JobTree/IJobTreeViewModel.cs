@@ -17,8 +17,8 @@ namespace MSetExplorer
 		Job? CurrentJob { get; set; }
 
 		bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job);
-		public IReadOnlyCollection<JobTreeItem>? GetCurrentPath();
-		public IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId);
+		public List<JobTreeItem>? GetCurrentPath();
+		public List<JobTreeItem>? GetPath(ObjectId jobId);
 
 		ObservableCollection<JobTreeItem>? JobItems { get; }
 

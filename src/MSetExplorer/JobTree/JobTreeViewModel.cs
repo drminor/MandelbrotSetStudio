@@ -2,12 +2,10 @@
 using MSetRepo;
 using MSS.Common;
 using MSS.Types.MSet;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
 
 namespace MSetExplorer
@@ -80,12 +78,12 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public IReadOnlyCollection<JobTreeItem>? GetCurrentPath()
+		public List<JobTreeItem>? GetCurrentPath()
 		{
 			return CurrentProject?.GetCurrentPath();
 		}
 
-		public IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId)
+		public List<JobTreeItem>? GetPath(ObjectId jobId)
 		{
 			return CurrentProject?.GetPath(jobId);
 		}
@@ -126,13 +124,15 @@ namespace MSetExplorer
 				var result = 0L;
 				var jobAndDescendants = CurrentProject.GetJobAndDescendants(jobId) ?? new List<Job>();
 
-				CurrentProject.GoBack(skipPanJobs: true);
-
 				foreach(var job in jobAndDescendants)
 				{
 					numberOfMapSectionsDeleted += ProjectAndMapSectionHelper.DeleteJob(job, _projectAdapter, _mapSectionAdapter);
 					result++;
 				}
+
+				//CurrentProject.GoBack(skipPanJobs: true);
+
+				CurrentProject.DeleteBranch(jobId);
 
 				return result;
 			}
@@ -141,41 +141,6 @@ namespace MSetExplorer
 				return 0;
 			}
 		}
-
-		//public long DeleteBranch(ObjectId jobId, IMapSectionDeleter mapSectionDeleter)
-		//{
-		//	if (!TryFindJobTreeItem(jobId, _root, out var path))
-		//	{
-		//		throw new InvalidOperationException($"Cannot find job: {jobId} that is being deleted.");
-		//	}
-
-		//	Debug.WriteLine($"Deleting all jobs in branch anchored by job: {jobId}.");
-
-		//	var currentItem = path[^1];
-		//	var jobs = GetJobs(currentItem).ToList();
-
-		//	var result = 0L;
-		//	foreach (var job in jobs)
-		//	{
-		//		var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
-		//		if (numberDeleted.HasValue)
-		//		{
-		//			result += numberDeleted.Value;
-		//		}
-		//	}
-
-		//	Debug.WriteLine($"{result} jobs were deleted.");
-
-		//	var parentPath = GetParentPath(path);
-
-		//	if (parentPath != null)
-		//	{
-		//		var parentItem = parentPath[^1];
-		//		_ = parentItem.Children.Remove(currentItem);
-		//	}
-
-		//	return result;
-		//}
 
 		public string GetDetails(ObjectId jobId)
 		{
@@ -186,12 +151,31 @@ namespace MSetExplorer
 				return $"Could not find a job with JobId: {jobId}.";
 			}
 
-			var jobTreeItem = path.ToArray()[^1];
+			var jobTreeItem = path[^1];
 
 			var sb = new StringBuilder();
 
-			sb.AppendLine(jobTreeItem.IdAndParentId);
-			sb.AppendLine($"AlternatePathHead: {jobTreeItem.IsAlternatePathHead}");
+			sb.AppendLine($"TransformType: {jobTreeItem.TransformType}");
+			sb.AppendLine($"Id: {jobTreeItem.JobId}");
+			sb.AppendLine($"ParentId: {jobTreeItem.ParentJobId}");
+			sb.AppendLine($"Is Alternate Path Head: {jobTreeItem.IsAlternatePathHead}");
+			sb.AppendLine($"Is Parked Alternate: {jobTreeItem.IsParkedAlternatePathHead} ");
+			sb.AppendLine($"Children: {jobTreeItem.Children.Count}");
+			sb.AppendLine($"CanvasSize Disp Alternates: {jobTreeItem.AlternateDispSizes?.Count ?? 0}");
+
+			if (jobTreeItem.Job.ParentJobId.HasValue)
+			{
+				var parentPath = GetPath(jobTreeItem.Job.ParentJobId.Value);
+
+				if (parentPath != null)
+				{
+					var parentJobTreeItem = parentPath[^1];
+					var idx = parentJobTreeItem.Children.IndexOf(jobTreeItem);
+					var numberOfFollowingNodes = parentJobTreeItem.Children.Count - idx - 1;
+
+					_ = sb.AppendLine($"Following Nodes: {numberOfFollowingNodes}.");
+				}
+			}
 
 			return sb.ToString();
 		}

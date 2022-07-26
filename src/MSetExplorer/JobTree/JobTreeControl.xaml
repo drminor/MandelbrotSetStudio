@@ -67,8 +67,6 @@
                                     <KeyBinding Command="local:JobTreeCommands.ShowDetails" Key="F3" />
                                 </TreeView.InputBindings>-->
 
-
-
                                 <StackPanel.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="_Move To" Command="local:JobTreeCommands.MoveTo" CommandParameter="{Binding JobId}" />

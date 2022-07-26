@@ -178,7 +178,7 @@ namespace MSetRepo
 		private Project? AssembleProject(ProjectRecord? projectRecord, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
 		{
 			Project? result;
-			if (projectRecord == null || jobs.Count() == 0 || colorBandSets.Count() == 0)
+			if (projectRecord == null || jobs.Count == 0 || !colorBandSets.Any())
 			{
 				result = null;
 			}
@@ -759,6 +759,13 @@ namespace MSetRepo
 		#endregion
 
 		#region Active Job Schema Updates
+
+		//public long RemoveColorBandSetIdFromProject()
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	var result = projectReaderWriter.RemoveCurrentColorBandSetProp();
+		//	return result;
+		//}
 
 		public int DeleteUnusedColorBandSets()
 		{

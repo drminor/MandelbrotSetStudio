@@ -30,7 +30,7 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public Project(string name, string? description, IList<Job> jobs, IList<ColorBandSet> colorBandSets, ObjectId currentJobId) 
+		public Project(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId) 
 			: this(ObjectId.GenerateNewId(), name, description, jobs, colorBandSets, currentJobId, DateTime.MinValue)
 		{
 			OnFile = false;
@@ -38,55 +38,57 @@ namespace MSS.Common
 
 		public Project(ObjectId id, string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId, DateTime lastSavedUtc)
 		{
-			if (jobs.Count == 0)
+			if (!jobs.Any())
 			{
 				throw new InvalidOperationException("Cannot create a project using an empty list of jobs.");
 			}
 
 			Id = id;
+			OnFile = true;
 
  			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_description = description;
 
-			_jobTree = GetJobTreeImplementation(jobs);
+			_jobTree = new JobTree(jobs);
 			_colorBandSetCollection = new ColorBandSetCollection(colorBandSets);
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
-			_originalCurrentJobId = currentJobId;
 			LastUpdatedUtc = DateTime.MinValue;
 			LastSavedUtc = lastSavedUtc;
 
-			var currentJob = jobs.FirstOrDefault(x => x.Id == currentJobId);
+			_originalCurrentJobId = currentJobId;
+			var currentJob = GetCurrentJob(jobs, currentJobId);
 
-			if (currentJob == null)
+			if (!_colorBandSetCollection.ColorBandSetExists(currentJob.ColorBandSetId))
 			{
-				currentJob = jobs.LastOrDefault();
-				Debug.WriteLine($"Warning the Project has a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
+				Debug.WriteLine($"WARNING: The ColorBandSetId {currentJob.ColorBandSetId} of the current job was not found as the project is being constructed.");
 			}
 
-			if (currentJob == null)
+			var colorBandSetId = LoadColorBandSetForJob(currentJob.ColorBandSetId);
+
+			if (currentJob.ColorBandSetId != colorBandSetId)
 			{
-				throw new ApplicationException("The currentJob is null, but there's no way that that could happen.");
+				Debug.WriteLine("WARNING: A ColorBandSet different than the currentJob's ColorBandSet had to be loaded as the project is being constructed.");
+				currentJob.ColorBandSetId = colorBandSetId;
+				LastUpdatedUtc = DateTime.UtcNow;
 			}
 
 			CurrentJob = currentJob;
-			Debug.WriteLine($"Loading ColorBandSet: {currentJob.ColorBandSetId} as projects is being constructed.");
-			var colorBandSetId = LoadColorBandSetForJob(currentJob.ColorBandSetId);
-			if (CurrentJob.ColorBandSetId != colorBandSetId)
-			{
-				CurrentJob.ColorBandSetId = colorBandSetId;
-				LastUpdatedUtc = DateTime.UtcNow;
-			}
 
 			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentJob.Id}, Current ColorBandSetId: {_colorBandSetCollection.CurrentColorBandSet.Id}. IsDirty = {IsDirty}");
 		}
 
-		private IJobTree GetJobTreeImplementation(IList<Job> jobs)
+		private Job GetCurrentJob(IList<Job> jobs, ObjectId currentJobId)
 		{
-			//var result = new JobTreeOld(jobs);
-			var result = new JobTree(jobs);
+			var currentJob = jobs.FirstOrDefault(x => x.Id == currentJobId);
 
-			return result;
+			if (currentJob == null)
+			{
+				currentJob = jobs.Last();
+				Debug.WriteLine($"WARNING: The Project has a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
+			}
+
+			return currentJob;
 		}
 
 		#endregion
@@ -317,8 +319,8 @@ namespace MSS.Common
 		public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetJobAndDescendants(jobId);
 
 
-		public IReadOnlyCollection<JobTreeItem>? GetCurrentPath() => _jobTree.GetCurrentPath();
-		public IReadOnlyCollection<JobTreeItem>? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
+		public List<JobTreeItem>? GetCurrentPath() => _jobTree.GetCurrentPath();
+		public List<JobTreeItem>? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
 
 		public bool RestoreBranch(ObjectId jobId)
 		{
@@ -326,29 +328,38 @@ namespace MSS.Common
 			return result;
 		}
 
+		public bool DeleteBranch(ObjectId jobId)
+		{
+			var result = _jobTree.RemoveBranch(jobId);
+			return result;
+		}
+
 		public bool Save(IProjectAdapter projectAdapter)
 		{
-			if (_jobTree.AnyJobIsDirty && !IsDirty && !(DateCreated > LastSavedUtc))
+			if (! (IsCurrentJobIdChanged || IsDirty) )
 			{
-				Debug.WriteLine("Warning: Project is not marked as 'IsDirty', but one or more of the jobs are dirty.");
+				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
+				return false;
 			}
 
-			projectAdapter.UpdateProjectCurrentJobId(Id, CurrentJobId);
-			if (IsDirty || _jobTree.AnyJobIsDirty)
+			if (IsCurrentJobIdChanged)
 			{
+				projectAdapter.UpdateProjectCurrentJobId(Id, CurrentJobId);
+			}
+
+			if (IsDirty)
+			{
+				projectAdapter.UpdateProjectName(Id, Name);
+				projectAdapter.UpdateProjectDescription(Id, Description);
 				SaveColorBandSets(Id, projectAdapter);
 				SaveJobs(Id, projectAdapter);
 
 				LastSavedUtc = DateTime.UtcNow;
 				_originalCurrentJobId = CurrentJobId;
 				_jobTree.IsDirty = false;
-				return true;
 			}
-			else
-			{
-				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
-				return false;
-			}
+
+			return true;
 		}
 
 		public Project CreateCopy(string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)

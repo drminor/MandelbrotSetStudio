@@ -30,13 +30,14 @@ namespace MSetExplorer
 			{
 				_vm = (MapCoordsViewModel)DataContext;
 				txtStartX.AcceptsReturn = true;
-				PreviewKeyDown += MapCoordsControl_PreviewKeyDown;
+				txtStartX.PreviewKeyDown += TxtStartX_PreviewKeyDown;
+				//PreviewKeyDown += MapCoordsControl_PreviewKeyDown;
 
 				//Debug.WriteLine("The MapCoordsControl is now loaded");
 			}
 		}
 
-		private void MapCoordsControl_PreviewKeyDown(object sender, KeyEventArgs e)
+		private void TxtStartX_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.Key == Key.C && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
 			{

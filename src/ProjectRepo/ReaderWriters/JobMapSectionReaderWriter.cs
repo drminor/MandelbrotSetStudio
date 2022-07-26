@@ -41,14 +41,14 @@ namespace ProjectRepo
 			return count > 0;
 		}
 
-		public IEnumerable<ObjectId> DoJobMapSectionRecordsExist(IEnumerable<ObjectId> jobMapSectionIds)
+		public IEnumerable<ObjectId> DoJobMapSectionRecordsExist(IEnumerable<ObjectId> mapSectionIds)
 		{
-			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => p.Id);
-			var filter1 = Builders<JobMapSectionRecord>.Filter.In(f => f.MapSectionId, jobMapSectionIds);
+			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => p.MapSectionId);
+			var filter1 = Builders<JobMapSectionRecord>.Filter.In(f => f.MapSectionId, mapSectionIds);
 
-			var jobMapSectionRecordIds = Collection.Find(filter1).Project(projection1).ToList();
+			var foundMapSectionIds = Collection.Find(filter1).Project(projection1).ToList().Distinct();
 
-			return jobMapSectionRecordIds;
+			return foundMapSectionIds;
 		}
 
 		public IList<JobMapSectionRecord> GetByOwnerId(ObjectId ownerId, JobOwnerType jobOwnerType)
@@ -58,6 +58,15 @@ namespace ProjectRepo
 			var jobMapSectionRecords = Collection.Find(filter1 & filter2).ToList();
 
 			return jobMapSectionRecords;
+		}
+
+		public IList<ObjectId> GetMapSectionIdsByOwnerId(ObjectId ownerId, JobOwnerType jobOwnerType)
+		{
+			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerId, ownerId);
+			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
+			var jobMapSectionRecordIds = Collection.Find(filter1 & filter2).Project(x => x.MapSectionId).ToList();
+
+			return jobMapSectionRecordIds;
 		}
 
 		public async Task<IList<JobMapSectionRecord>> GetByOwnerIdAsync(ObjectId ownerId, JobOwnerType jobOwnerType)

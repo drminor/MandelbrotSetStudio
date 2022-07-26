@@ -4,6 +4,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace MSS.Common
@@ -81,6 +82,8 @@ namespace MSS.Common
 			set => Job.IsAlternatePathHead = value;
 		}
 
+		public bool IsParkedAlternatePathHead => !IsAlternatePathHead && Children.Any() && !Job.IsEmpty;
+
 		public string IdAndParentId
 		{
 			get
@@ -101,10 +104,21 @@ namespace MSS.Common
 
 		public void AddCanvasSizeUpdateJob(Job job)
 		{
+			if (TransformType == TransformType.CanvasSizeUpdate)
+			{
+				throw new InvalidOperationException("Cannot add a CanvasSizeUpdate child to a CanvasSizeUpdate JobTreeItem.");
+			}
+
+			if (job.TransformType != TransformType.CanvasSizeUpdate)
+			{
+				throw new InvalidOperationException($"The AddCanvasSizeUpdateJob method was called, but the job's TransformType is {job.TransformType}.");
+			}
+
 			if (AlternateDispSizes == null)
 			{
 				AlternateDispSizes = new ObservableCollection<Job>();
 			}
+
 			AlternateDispSizes.Add(job);
 		}
 

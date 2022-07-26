@@ -311,6 +311,7 @@ namespace MSetExplorer
 		{
 			var sb = new StringBuilder();
 
+			sb.AppendLine($"Job: {JobId}");
 			sb.AppendLine(X1);
 			sb.AppendLine(X2);
 			sb.AppendLine(Y1);

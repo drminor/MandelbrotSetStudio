@@ -122,5 +122,18 @@ namespace ProjectRepo
 
 			return GetReturnCount(deleteResult);
 		}
+
+		//public long RemoveCurrentColorBandSetProp()
+		//{
+		//	var filter = Builders<ProjectRecord>.Filter.Empty;
+		//	var updateDefinition = Builders<ProjectRecord>.Update
+		//		.Unset(f => f.CurrentColorBandSetId);
+
+		//	var options = new UpdateOptions { IsUpsert = false };
+
+		//	var updateResult = Collection.UpdateMany(filter, updateDefinition, options);
+
+		//	return GetReturnCount(updateResult) ?? 0;
+		//}
 	}
 }
