@@ -145,7 +145,9 @@ namespace MSS.Types.MSet
 		}
 
 		public string? Label { get; init; }
-		public TransformType TransformType { get; init; }
+
+		public TransformType TransformType { get; set; } //TODO: Make this set init.
+		
 		public RectangleInt? NewArea { get; init; }
 
 		public MapAreaInfo MapAreaInfo { get; init; }

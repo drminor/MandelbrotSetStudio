@@ -36,6 +36,19 @@ namespace ProjectRepo
 			return result;
 		}
 
+		public IEnumerable<ObjectId> GetAllJobIds()
+		{
+			var projection1 = Builders<JobRecord>.Projection.Expression
+				(
+					p => p.Id
+				);
+
+			var filter = Builders<JobRecord>.Filter.Empty;
+			var result = Collection.Find(filter).Project(projection1).ToEnumerable();
+
+			return result;
+		}
+
 		public ObjectId Insert(JobRecord jobRecord)
 		{
 			Collection.InsertOne(jobRecord);

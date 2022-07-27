@@ -146,5 +146,56 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
+		public IEnumerable<Tuple<ObjectId, ObjectId>> GetAllMapSectionIdsFromJobMapSections()
+		{
+			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new Tuple<ObjectId, ObjectId>(p.Id, p.MapSectionId));
+			var filter1 = Builders<JobMapSectionRecord>.Filter.Empty;
+
+			var mapSectionIds = Collection.Find(filter1).Project(projection1).ToEnumerable();
+
+			return mapSectionIds;
+		}
+
+		public IList<ObjectId> GetDistinctJobIdsFromJobMapSections(JobOwnerType jobOwnerType)
+		{
+			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => p.OwnerId);
+			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
+
+			var ownerIds = Collection.Find(filter1).Project(projection1).ToList().Distinct().ToList();
+
+			return ownerIds;
+		}
+
+
+		//public void AddSubdivisionIdToAllRecords()
+		//{
+		//	var filter = Builders<JobMapSectionRecord>.Filter.Empty;
+		//	var updateDefinition = Builders<JobMapSectionRecord>.Update
+		//		.Set(f => f.SubdivisionId, ObjectId.GenerateNewId());
+
+		//	var options = new UpdateOptions { IsUpsert = false };
+
+		//	_ = Collection.UpdateMany(filter, updateDefinition, options);
+		//}
+
+		public IEnumerable<JobMapSectionRecord> GetAllJobMapSections()
+		{
+			var filter = Builders<JobMapSectionRecord>.Filter.Empty;
+			var jobMapSectionRecords = Collection.Find(filter).ToEnumerable();
+
+			return jobMapSectionRecords;
+		}
+
+		//public void SetSubdivisionId(ObjectId mapSectionId, ObjectId subdivisionId)
+		//{
+		//	var filter = Builders<JobMapSectionRecord>.Filter.Eq("_id", mapSectionId);
+
+		//	var updateDefinition = Builders<JobMapSectionRecord>.Update
+		//		.Set(u => u.SubdivisionId, subdivisionId);
+
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
+
+
 	}
 }

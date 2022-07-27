@@ -4,6 +4,7 @@ using MSetRepo;
 using MSS.Common;
 using MSS.Types.MSet;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 
@@ -59,6 +60,17 @@ namespace MSetExplorer
 			//{
 			//	DoSchemaUpdates(pa);
 			//}
+
+			if (_repositoryAdapters.MapSectionAdapter is MapSectionAdapter ma)
+			{
+				//var report = GetJobMapSectionsReferenceReport(ma);
+				//Debug.WriteLine(report);
+
+				//var report = GetListOfNonExtantJobsReferenced(ma);
+				//Debug.WriteLine(report);
+
+				//DoSchemaUpdates(ma);
+			}
 
 			var mEngineAddresses = USE_REMOTE_ENGINE ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();
 
@@ -173,6 +185,25 @@ namespace MSetExplorer
 			//projectAdapter.AddIsIsAlternatePathHeadToAllJobs();
 			//projectAdapter.RemoveColorBandSetIdFromProject();
 		}
+
+		private void DoSchemaUpdates(MapSectionAdapter mapSectionAdapter)
+		{
+			//mapSectionAdapter.AddSubdivisionId();
+
+		}
+
+		private string GetJobMapSectionsReferenceReport(MapSectionAdapter mapSectionAdapter)
+		{
+			var report = mapSectionAdapter.GetJobMapSectionsReferenceReport();
+			return report;
+		}
+
+		private string GetListOfNonExtantJobsReferenced(MapSectionAdapter mapSectionAdapter)
+		{
+			var report = mapSectionAdapter.GetListOfNonExtantJobsReferenced();
+			return report;
+		}
+
 
 	}
 }

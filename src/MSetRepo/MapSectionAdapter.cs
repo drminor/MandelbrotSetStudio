@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -177,24 +178,30 @@ namespace MSetRepo
 				throw new ArgumentNullException(nameof(MapSectionResponse.MapSectionId), "The MapSectionId cannot be null.");
 			}
 
+			var subdivisionIdStr = mapSectionResponse.SubdivisionId;
+			if (string.IsNullOrEmpty(subdivisionIdStr))
+			{
+				throw new ArgumentNullException(nameof(MapSectionResponse.SubdivisionId), "The SubdivisionId cannot be null.");
+			}
+
 			var ownerIdStr = mapSectionResponse.OwnerId;
 			if (string.IsNullOrEmpty(ownerIdStr))
 			{
 				throw new ArgumentNullException(nameof(mapSectionIdStr), "The OwnerId cannot be null.");
 			}
 
-			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(ownerIdStr), mapSectionResponse.JobOwnerType);
+			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(subdivisionIdStr), new ObjectId(ownerIdStr), mapSectionResponse.JobOwnerType);
 			return result;
 		}
 
-		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId ownerId, JobOwnerType jobOwnerType)
+		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId ownerId, JobOwnerType jobOwnerType)
 		{
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
 			var existingRecord = await jobMapSectionReaderWriter.GetByMapAndOwnerIdAsync(mapSectionId, ownerId, jobOwnerType);
 			if (existingRecord == null)
 			{
-				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, ownerId, jobOwnerType);
+				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, ownerId, jobOwnerType);
 				var jobMapSectionId = await jobMapSectionReaderWriter.InsertAsync(jobMapSectionRecord);
 				return jobMapSectionId;
 			}
@@ -289,7 +296,7 @@ namespace MSetRepo
 
 			foreach (var jmsr in jobMapSectionRecords)
 			{
-				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, newOwnerId, jmsr.OwnerType);
+				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, jmsr.SubdivisionId, newOwnerId, jmsr.OwnerType);
 				_ = jobMapSectionReaderWriter.Insert(newJmsr);
 			}
 
@@ -297,6 +304,114 @@ namespace MSetRepo
 
 			return result;
 		}
+
+		public string GetJobMapSectionsReferenceReport()
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
+			var mapSectionIds = mapSectionReaderWriter.GetAllMapSectionIds();
+			var dict = new SortedDictionary<ObjectId, int>();
+			foreach (var msIdRef in mapSectionIds)
+			{
+				dict.Add(msIdRef, 0);
+			}
+
+			var mapSectionIdReferences = jobMapSectionReaderWriter.GetAllMapSectionIdsFromJobMapSections();
+
+			foreach(var msIdRef in mapSectionIdReferences)
+			{
+				if (dict.TryGetValue(msIdRef.Item2, out var cnt))
+				{
+					dict[msIdRef.Item2] = cnt + 1;
+				}
+			}
+
+			var sb = new StringBuilder();
+
+			var runningCnt = 0;
+
+			foreach(var kvp in dict)
+			{
+				sb.AppendLine($"{kvp.Key}\t{kvp.Value}");
+				runningCnt += kvp.Value;
+			}
+
+			var headLine = $"\nThere are {dict.Count} MapSections and {runningCnt} references.\n";
+			headLine += $"MapSectionId\tCount Refs";
+
+			return headLine + sb.ToString();
+		}
+
+		public List<string> DeleteNonExtantJobsReferenced()
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
+			var jobIds = jobReaderWriter.GetAllJobIds();
+
+			var dict = new SortedDictionary<ObjectId, int>();
+
+			foreach(var jobId in jobIds)
+			{
+				dict.Add(jobId, 0);
+			}
+
+			var jobIdsNotFound = new List<ObjectId>();
+
+			var msJobIds = jobMapSectionReaderWriter.GetDistinctJobIdsFromJobMapSections(JobOwnerType.Project);
+
+			foreach (var jobId in msJobIds)
+			{
+				if (!dict.TryGetValue(jobId, out _))
+				{
+					jobIdsNotFound.Add(jobId);
+				}
+			}
+
+			foreach(var jobId in jobIdsNotFound)
+			{
+				jobMapSectionReaderWriter.DeleteJobMapSections(jobId, JobOwnerType.Project);
+			}
+
+			var result = jobIdsNotFound.Select(x => x.ToString()).ToList();
+			return result;
+		}
+
+		//public void AddSubdivisionId()
+		//{
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
+		//	jobMapSectionReaderWriter.AddSubdivisionIdToAllRecords();
+
+		//	var jobMapSections = jobMapSectionReaderWriter.GetAllJobMapSections();
+		//	var mapSections = mapSectionReaderWriter.GetAllSubdivisionIds();
+
+		//	var dict = new Dictionary<ObjectId, ObjectId>();
+
+		//	foreach(var ms in mapSections)
+		//	{
+		//		dict.Add(ms.Item1, ms.Item2);
+		//	}
+
+		//	var notFound = 0;
+
+		//	foreach (var jm in jobMapSections)
+		//	{
+		//		if (dict.TryGetValue(jm.MapSectionId, out var subId))
+		//		{
+		//			jobMapSectionReaderWriter.SetSubdivisionId(jm.MapSectionId, subId);
+		//		}
+		//		else
+		//		{
+		//			notFound++;
+		//		}
+		//	}
+
+		//	Debug.WriteLine($"Could not find: {notFound} records.");
+
+		//}
 
 		#endregion
 

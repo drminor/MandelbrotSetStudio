@@ -241,6 +241,18 @@ namespace ProjectRepo
 			}
 		}
 
+		public IEnumerable<ObjectId> GetAllMapSectionIds()
+		{
+			var projection1 = Builders<MapSectionRecord>.Projection.Expression(p => p.Id);
+
+			var filter = Builders<MapSectionRecord>.Filter.Empty;
+
+			IFindFluent<MapSectionRecord, ObjectId> operation = Collection.Find(filter).Project(projection1);
+
+			var itemsFound = operation.ToEnumerable();
+			return itemsFound;
+		}
+
 		//public void AddCreatedDateToAllRecords()
 		//{
 		//	var filter = Builders<MapSectionRecord>.Filter.Empty;

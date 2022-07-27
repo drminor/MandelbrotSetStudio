@@ -23,7 +23,20 @@ namespace MSS.Common
 		public JobTree(IList<Job> jobs)
 		{
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
-			_root = BuildTree(jobs, out _currentPath);
+			var numberOfJobsWithNullParentId = jobs.Count(x => !x.ParentJobId.HasValue);
+			if (numberOfJobsWithNullParentId > 1)
+			{
+				_root = BuildTree(jobs, out _currentPath);
+			}
+			else
+			{
+				_root = BuildTreeForOldPro(jobs, out _currentPath);
+
+				var homeId = _root.Children[0].Job.Id;
+				var numberLoaded = LoadJobsForOldPro(jobs, homeId, out _currentPath);
+
+				Debug.WriteLine($"Loaded {numberLoaded + 1} jobs out of {jobs.Count()} jobs.");
+			}
 		}
 
 		#endregion
@@ -634,6 +647,58 @@ namespace MSS.Common
 		private IList<Job> GetChildren(IList<Job> jobs, ObjectId? parentJobId)
 		{
 			var result = jobs.Where(x => x.ParentJobId == parentJobId).OrderBy(x => x.Id.Timestamp).ToList();
+			return result;
+		}
+
+		private JobTreeItem BuildTreeForOldPro(IList<Job> jobs, out List<JobTreeItem>? path)
+		{
+			var hJob = jobs.FirstOrDefault(x => x.TransformType == TransformType.Home);
+
+			if (hJob == null)
+			{
+				throw new InvalidOperationException("Could not find hjob.");
+			}
+
+			var root = new JobTreeItem();
+
+			var homeJobTreeItem = new JobTreeItem(hJob)
+			{
+				ParentJobId = root.JobId
+			};
+
+			root.Children.Add(homeJobTreeItem);
+
+			path = new List<JobTreeItem> { homeJobTreeItem };
+			return root;
+		}
+
+		private int LoadJobsForOldPro(IList<Job> jobs, ObjectId homeId, out List<JobTreeItem>? path)
+		{
+			var result = 0;
+			var wlist = jobs.Where(x => x.TransformType != TransformType.Home).OrderBy(x => x.Id.Timestamp).ToList();
+
+			foreach(var j in wlist)
+			{
+				Debug.WriteLine($"Id: {j.Id}, PId: {j.ParentJobId}");
+			}
+
+			foreach (var job in wlist)
+			{
+				if (!job.ParentJobId.HasValue)
+				{
+					job.ParentJobId = homeId;
+				}
+
+				if (job.TransformType == TransformType.CanvasSizeUpdate)
+				{
+					job.TransformType = TransformType.ZoomOut;
+				}
+
+				Add(job, selectTheAddedJob: false);
+			}
+
+			_ = MoveCurrentTo(jobs[0], _root, out path);
+
 			return result;
 		}
 

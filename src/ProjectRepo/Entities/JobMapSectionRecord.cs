@@ -8,6 +8,7 @@ namespace ProjectRepo.Entities
 	public record JobMapSectionRecord 
 	(
 		ObjectId MapSectionId,
+		ObjectId SubdivisionId,
 		ObjectId OwnerId,
 		JobOwnerType OwnerType
 	)
