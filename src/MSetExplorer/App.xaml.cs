@@ -3,9 +3,11 @@ using MEngineClient;
 using MSetRepo;
 using MSS.Common;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Windows;
 
 namespace MSetExplorer
@@ -24,6 +26,7 @@ namespace MSetExplorer
 		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.2.109:5000" };
 
 		private static readonly bool CREATE_COLLECTIONS = false;
+		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
 		private static readonly bool START_LOCAL_ENGINE = true; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
 		private static readonly bool USE_LOCAL_ENGINE = true; // If true, we will host a server -- AND include it in the list of servers to use by our client.
@@ -61,15 +64,13 @@ namespace MSetExplorer
 			//	DoSchemaUpdates(pa);
 			//}
 
-			if (_repositoryAdapters.MapSectionAdapter is MapSectionAdapter ma)
+			if (CLEAN_UP_JOB_MAP_SECTIONS && _repositoryAdapters.MapSectionAdapter is MapSectionAdapter ma)
 			{
-				//var report = GetJobMapSectionsReferenceReport(ma);
-				//Debug.WriteLine(report);
+				var report = GetJobMapSectionsReferenceReport(ma);
+				Debug.WriteLine(report);
 
-				//var report = GetListOfNonExtantJobsReferenced(ma);
-				//Debug.WriteLine(report);
-
-				//DoSchemaUpdates(ma);
+				report = DeleteNonExtantJobsReferenced(ma);
+				Debug.WriteLine(report);
 			}
 
 			var mEngineAddresses = USE_REMOTE_ENGINE ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();
@@ -180,17 +181,17 @@ namespace MSetExplorer
 		//	//}
 		//}
 
-		private void DoSchemaUpdates(ProjectAdapter projectAdapter)
-		{
-			//projectAdapter.AddIsIsAlternatePathHeadToAllJobs();
-			//projectAdapter.RemoveColorBandSetIdFromProject();
-		}
+		//private void DoSchemaUpdates(ProjectAdapter projectAdapter)
+		//{
+		//	//projectAdapter.AddIsIsAlternatePathHeadToAllJobs();
+		//	//projectAdapter.RemoveColorBandSetIdFromProject();
+		//}
 
-		private void DoSchemaUpdates(MapSectionAdapter mapSectionAdapter)
-		{
-			//mapSectionAdapter.AddSubdivisionId();
+		//private void DoSchemaUpdates(MapSectionAdapter mapSectionAdapter)
+		//{
+		//	//mapSectionAdapter.AddSubdivisionId();
 
-		}
+		//}
 
 		private string GetJobMapSectionsReferenceReport(MapSectionAdapter mapSectionAdapter)
 		{
@@ -198,10 +199,20 @@ namespace MSetExplorer
 			return report;
 		}
 
-		private string GetListOfNonExtantJobsReferenced(MapSectionAdapter mapSectionAdapter)
+		private string DeleteNonExtantJobsReferenced(MapSectionAdapter mapSectionAdapter)
 		{
-			var report = mapSectionAdapter.GetListOfNonExtantJobsReferenced();
-			return report;
+			var jobsNotFound = mapSectionAdapter.DeleteNonExtantJobsReferenced();
+
+			var sb = new StringBuilder();
+
+			sb.AppendLine("JobIds referenced in one or more JobMapSectionRecords for which no Job record exists.");
+			sb.AppendLine("JobId\tMapSectionsDelerted");
+			foreach(Tuple<string, long?> entry in jobsNotFound)
+			{
+				sb.AppendLine($"{entry.Item1}\t{entry.Item2}");
+			}
+
+			return sb.ToString();
 		}
 
 
