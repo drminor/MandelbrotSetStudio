@@ -77,8 +77,6 @@ namespace MSS.Types
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		//public ObjectId? ParentId { get; init; }
-
 		public ObjectId? ParentId
 		{
 			get => _parentId;

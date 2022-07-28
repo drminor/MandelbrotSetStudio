@@ -412,7 +412,8 @@ namespace MSetExplorer
 
 				if (_vm.MapDisplayViewModel.ColorBandSet != projectsColorBandSet && projectsColorBandSet != null)
 				{
-					_vm.MapDisplayViewModel.SetColorBandSet(projectsColorBandSet, updateDisplay: true);
+					//_vm.MapDisplayViewModel.SetColorBandSet(projectsColorBandSet, updateDisplay: true);
+					_vm.PosterViewModel.PreviewColorBandSet = null;
 				}
 			}
 		}
@@ -907,7 +908,8 @@ namespace MSetExplorer
 				var id = vm.SelectedColorBandSetInfo?.Id;
 				if (id != null && vm.TryImportColorBandSet(id.Value, out var colorBandSet))
 				{
-					_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+					//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+					_vm.PosterViewModel.PreviewColorBandSet = colorBandSet;
 				}
 			}
 		}

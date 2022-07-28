@@ -6,6 +6,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace MSetExplorer
 {
@@ -20,6 +21,8 @@ namespace MSetExplorer
 		private SizeInt _canvasSize;
 		private Project? _currentProject;
 
+		private ColorBandSet? _previewColorBandSet;
+
 		#region Constructor
 
 		public MapProjectViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
@@ -31,7 +34,7 @@ namespace MSetExplorer
 
 			_canvasSize = new SizeInt();
 			_currentProject = null;
-			//_currentProjectIsDirty = false;
+			_previewColorBandSet = null;
 		}
 
 		#endregion
@@ -114,7 +117,6 @@ namespace MSetExplorer
 
 		public bool IsCurrentJobIdChanged => CurrentProject?.IsCurrentJobIdChanged ?? false;
 
-
 		public string? CurrentProjectName => CurrentProject?.Name;
 		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
 
@@ -133,7 +135,44 @@ namespace MSetExplorer
 		public bool CanGoBack => CurrentProject?.CanGoBack ?? false;
 		public bool CanGoForward => CurrentProject?.CanGoForward ?? false;
 
-		public ColorBandSet CurrentColorBandSet => CurrentProject?.CurrentColorBandSet ?? new ColorBandSet();
+		public ColorBandSet CurrentColorBandSet
+		{
+			get => PreviewColorBandSet ?? CurrentProject?.CurrentColorBandSet ?? new ColorBandSet();
+			set
+			{
+				var currentProject = CurrentProject;
+				if (currentProject != null)
+				{
+					if (value != CurrentColorBandSet)
+					{
+						currentProject.CurrentColorBandSet = value;
+						OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+					}
+				}
+			}
+		}
+
+		public ColorBandSet? PreviewColorBandSet
+		{
+			get => _previewColorBandSet;
+			set
+			{
+				if (value != _previewColorBandSet)
+				{
+					if (value == null || CurrentJob == null)
+					{
+						_previewColorBandSet = value;
+					}
+					else
+					{
+						var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MapCalcSettings.TargetIterations);
+						_previewColorBandSet = adjustedColorBandSet;
+					}
+
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+				}
+			}
+		}
 
 		#endregion
 
@@ -193,14 +232,14 @@ namespace MSetExplorer
 				throw new InvalidOperationException("The project must be non-null.");
 			}
 
-			if (!CurrentProjectOnFile)
+			if (!currentProject.OnFile)
 			{
 				throw new InvalidOperationException("Cannot save a new project, use Save As instead.");
 			}
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSave found the CurrentJob to be empty.");
 
-			var result = currentProject.Save(_projectAdapter);
+			var result = Save(currentProject, _projectAdapter);
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectOnFile));
@@ -223,9 +262,10 @@ namespace MSetExplorer
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
-			var project = currentProject.CreateCopy(name, description, _projectAdapter, _mapSectionAdapter);
+			var project = CreateCopy(currentProject, name, description, _projectAdapter, _mapSectionAdapter);
 
-			_ = project.Save(_projectAdapter);
+			Save(currentProject, _projectAdapter);
+
 			CurrentProject = project;
 		}
 
@@ -243,7 +283,7 @@ namespace MSetExplorer
 				return 0;
 			}
 
-			var result = currentProject.DeleteMapSectionsForUnsavedJobs(_mapSectionAdapter);
+			var result = DeleteMapSectionsForUnsavedJobs(currentProject, _mapSectionAdapter);
 
 			return result;
 		}
@@ -507,6 +547,181 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(newJob);
+		}
+
+		#endregion
+
+		#region Private Methods -- Saving
+
+		private bool Save(Project project, IProjectAdapter projectAdapter)
+		{
+			if (!(project.IsCurrentJobIdChanged || project.IsDirty))
+			{
+				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
+				return false;
+			}
+
+			if (IsCurrentJobIdChanged)
+			{
+				projectAdapter.UpdateProjectCurrentJobId(project.Id, project.CurrentJobId);
+			}
+
+			if (project.IsDirty)
+			{
+				projectAdapter.UpdateProjectName(project.Id, project.Name);
+				projectAdapter.UpdateProjectDescription(project.Id, project.Description);
+				SaveColorBandSets(project, projectAdapter);
+				SaveJobs(project, projectAdapter);
+
+				project.MarkAsSaved();
+			}
+
+			return true;
+		}
+
+		public Project CreateCopy(Project sourceProject, string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
+		{
+			// TODO: Update the JobTree with a new Clone or Copy method. 
+			var jobPairs = sourceProject.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
+			var jobs = jobPairs.Select(x => x.Item2).ToArray();
+
+			foreach (var oldIdAndNewJob in jobPairs)
+			{
+				var formerJobId = oldIdAndNewJob.Item1;
+				var newJobId = oldIdAndNewJob.Item2.Id;
+				UpdateJobParents(formerJobId, newJobId, jobs);
+
+				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
+				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
+			}
+
+			var colorBandSetPairs = sourceProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
+			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
+
+			foreach (var oldIdAndNewCbs in colorBandSetPairs)
+			{
+				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
+				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
+			}
+
+			var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets);
+
+			if (project is null)
+			{
+				throw new InvalidOperationException("Could not create the new project.");
+			}
+
+			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == sourceProject.CurrentJobId);
+			var newCurJob = firstOldIdAndNewJob?.Item2;
+			project.CurrentJob = newCurJob ?? Job.Empty;
+
+			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == CurrentColorBandSet.Id);
+			var newCurCbs = firstOldIdAndNewCbs?.Item2;
+
+			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
+
+			return project;
+		}
+
+		private long DeleteMapSectionsForUnsavedJobs(Project project, IMapSectionDeleter mapSectionDeleter)
+		{
+			var result = 0L;
+
+			var jobs = project.GetJobs().Where(x => !x.OnFile).ToList();
+
+			foreach (var job in jobs)
+			{
+				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
+				if (numberDeleted.HasValue)
+				{
+					result += numberDeleted.Value;
+				}
+			}
+
+			return result;
+		}
+
+		private void SaveColorBandSets(Project project, IProjectAdapter projectAdapter)
+		{
+			var colorBandSets = project.GetColorBandSets();
+			var unsavedColorBandSets = colorBandSets.Where(x => x.OnFile).ToList();
+
+			foreach (var cbs in unsavedColorBandSets)
+			{
+				if (cbs.ProjectId != project.Id)
+				{
+					Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.ProjectId}, current Project: {project.Id}.");
+					var newCbs = cbs.Clone();
+					newCbs.ProjectId = project.Id;
+					projectAdapter.InsertColorBandSet(newCbs);
+				}
+				else
+				{
+					projectAdapter.InsertColorBandSet(cbs);
+				}
+			}
+
+			var dirtyColorBandSets = colorBandSets.Where(x => x.IsDirty).ToList();
+
+			foreach (var cbs in dirtyColorBandSets)
+			{
+				projectAdapter.UpdateColorBandSetDetails(cbs);
+			}
+		}
+
+		private void SaveJobs(Project project, IProjectAdapter projectAdapter)
+		{
+			//_jobTree.SaveJobs(projectId, projectAdapter);
+
+			var jobs = project.GetJobs();
+
+			var unSavedJobs = jobs.Where(x => !x.OnFile).ToList();
+
+			foreach (var job in unSavedJobs)
+			{
+				job.ProjectId = project.Id;
+				projectAdapter.InsertJob(job);
+			}
+
+			var dirtyJobs = jobs.Where(x => x.IsDirty).ToList();
+
+			foreach (var job in dirtyJobs)
+			{
+				projectAdapter.UpdateJobDetails(job);
+			}
+		}
+
+		private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
+		{
+			foreach (var job in jobs)
+			{
+				if (job.ParentJobId == oldParentId)
+				{
+					job.ParentJobId = newParentId;
+				}
+			}
+		}
+
+		private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId, ColorBandSet[] colorBandSets)
+		{
+			foreach (var cbs in colorBandSets)
+			{
+				if (cbs.ParentId == oldParentId)
+				{
+					cbs.ParentId = newParentId;
+				}
+			}
+		}
+
+		private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId, Job[] jobs)
+		{
+			foreach (var job in jobs)
+			{
+				if (job.ColorBandSetId == oldCbsId)
+				{
+					job.ColorBandSetId = newCbsId;
+				}
+			}
 		}
 
 		#endregion

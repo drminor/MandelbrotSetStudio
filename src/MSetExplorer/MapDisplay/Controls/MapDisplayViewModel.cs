@@ -33,7 +33,7 @@ namespace MSetExplorer
 		private double _displayZoom;
 		private SizeDbl _logicalDisplaySize;
 
-		private JobAreaAndCalcSettings? _currentJobAreaAndCalcSettings;
+		private AreaColorAndCalcSettings? _currentJobAreaAndCalcSettings;
 
 		private ColorBandSet _colorBandSet;
 		private ColorMap? _colorMap;
@@ -42,7 +42,7 @@ namespace MSetExplorer
 
 		private SizeDbl _containerSize;
 
-		private bool _cmLoadedButNotHandled;
+		//private bool _cmLoadedButNotHandled;
 
 		private object _paintLocker;
 
@@ -100,7 +100,7 @@ namespace MSetExplorer
 
 		public ImageSource ImageSource { get; init; }
 
-		public JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings
+		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
 		{
 			get => _currentJobAreaAndCalcSettings;
 			set
@@ -110,69 +110,95 @@ namespace MSetExplorer
 					var previousValue = _currentJobAreaAndCalcSettings;
 					_currentJobAreaAndCalcSettings = value?.Clone();
 					HandleCurrentJobChanged(previousValue, _currentJobAreaAndCalcSettings);
-					OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentJobAreaAndCalcSettings));
+					OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings));
 				}
 			}
 		}
 
-		public ColorBandSet ColorBandSet => _colorBandSet;
-
-		public void SetColorBandSet(ColorBandSet value, bool updateDisplay)
+		public ColorBandSet ColorBandSet
 		{
-			if (value != _colorBandSet)
+			get => _colorBandSet;
+			set
 			{
-				Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
-
-				if (CurrentJobAreaAndCalcSettings is null)
+				if (value != _colorBandSet)
 				{
-					// Take the value given, as is. Without a current job, we cannot adjust the iterations.
+					Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
 
-					_colorBandSet = value;
-					_colorMap = new ColorMap(value)
-					{
-						UseEscapeVelocities = _useEscapeVelocities,
-						HighlightSelectedColorBand = _highlightSelectedColorBand
-					};
+					_colorMap = LoadColorMap(value);
 
-					_cmLoadedButNotHandled = true;
-				}
-				else
-				{
-					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJobAreaAndCalcSettings.MapCalcSettings.TargetIterations);
-					_colorBandSet = adjustedColorBandSet;
-					_colorMap = new ColorMap(adjustedColorBandSet)
-					{
-						UseEscapeVelocities = _useEscapeVelocities,
-						HighlightSelectedColorBand = _highlightSelectedColorBand
-					};
-
-
-					if (updateDisplay)
-					{
-						RedrawSections(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
-						_cmLoadedButNotHandled = false;
-					}
-					else
-					{
-						_cmLoadedButNotHandled = true;
-					}
-
-				}
-			}
-			else
-			{
-				if (updateDisplay && _colorMap != null)
-				{
-					Debug.WriteLine($"The MapDisplay is processing the existing ColorMap event though the new value is the same as the existing value. Id = {value.Id}. ColorMapLoadedButNotHandled = {_cmLoadedButNotHandled}.");
 					RedrawSections(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
-					_cmLoadedButNotHandled = false;
-				}
-				else
-				{
-					Debug.WriteLine($"The MapDisplay is NOT processing a new ColorMap, the new value is the same as the existing value. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
 				}
 			}
 		}
+
+		private ColorMap LoadColorMap(ColorBandSet colorBandSet)
+		{
+			_colorBandSet = colorBandSet;
+			var colorMap = new ColorMap(colorBandSet)
+			{
+				UseEscapeVelocities = _useEscapeVelocities,
+				HighlightSelectedColorBand = _highlightSelectedColorBand
+			};
+
+			return colorMap;
+		}
+
+		//public void SetColorBandSet(ColorBandSet value, bool updateDisplay)
+		//{
+		//	if (value != _colorBandSet)
+		//	{
+		//		Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
+
+		//		if (CurrentAreaColorAndCalcSettings is null)
+		//		{
+		//			// Take the value given, as is. Without a current job, we cannot adjust the iterations.
+
+		//			_colorBandSet = value;
+		//			_colorMap = new ColorMap(value)
+		//			{
+		//				UseEscapeVelocities = _useEscapeVelocities,
+		//				HighlightSelectedColorBand = _highlightSelectedColorBand
+		//			};
+
+		//			_cmLoadedButNotHandled = true;
+		//		}
+		//		else
+		//		{
+		//			var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentAreaColorAndCalcSettings.MapCalcSettings.TargetIterations);
+		//			_colorBandSet = adjustedColorBandSet;
+		//			_colorMap = new ColorMap(adjustedColorBandSet)
+		//			{
+		//				UseEscapeVelocities = _useEscapeVelocities,
+		//				HighlightSelectedColorBand = _highlightSelectedColorBand
+		//			};
+
+
+		//			if (updateDisplay)
+		//			{
+		//				RedrawSections(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
+		//				_cmLoadedButNotHandled = false;
+		//			}
+		//			else
+		//			{
+		//				_cmLoadedButNotHandled = true;
+		//			}
+
+		//		}
+		//	}
+		//	else
+		//	{
+		//		if (updateDisplay && _colorMap != null)
+		//		{
+		//			Debug.WriteLine($"The MapDisplay is processing the existing ColorMap event though the new value is the same as the existing value. Id = {value.Id}. ColorMapLoadedButNotHandled = {_cmLoadedButNotHandled}.");
+		//			RedrawSections(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
+		//			_cmLoadedButNotHandled = false;
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLine($"The MapDisplay is NOT processing a new ColorMap, the new value is the same as the existing value. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
+		//		}
+		//	}
+		//}
 
 		public bool UseEscapeVelocities
 		{
@@ -335,7 +361,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void SubmitJob(JobAreaAndCalcSettings job)
+		public void SubmitJob(AreaColorAndCalcSettings job)
 		{
 			if (job.IsEmpty)
 			{
@@ -368,7 +394,7 @@ namespace MSetExplorer
 
 		public void RestartLastJob()
 		{
-			var currentJob = CurrentJobAreaAndCalcSettings;
+			var currentJob = CurrentAreaColorAndCalcSettings;
 
 			if (currentJob != null && !currentJob.IsEmpty)
 			{
@@ -528,7 +554,7 @@ namespace MSetExplorer
 			DrawSections(loadedSections, colorMap, useEscapeVelocities, highlightSelectedColorBand);
 		}
 
-		private void HandleCurrentJobChanged(JobAreaAndCalcSettings? previousJob, JobAreaAndCalcSettings? newJob)
+		private void HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob)
 		{
 			//Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
 			if (_currentMapLoaderJobNumber != null)
@@ -556,6 +582,11 @@ namespace MSetExplorer
 				ClearDisplay();
 
 				CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+
+				if (newJob.ColorBandSet != ColorBandSet)
+				{
+					_colorMap = LoadColorMap(newJob.ColorBandSet);
+				}
 
 				_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady);
 			}

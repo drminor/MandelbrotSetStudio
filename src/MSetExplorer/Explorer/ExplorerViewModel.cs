@@ -154,30 +154,35 @@ namespace MSetExplorer
 			{
 				JobTreeViewModel.CurrentProject = MapProjectViewModel.CurrentProject;
 			}
-			
+
 			// Update the MSet Info and Map Display with the new Job
 			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
 			{
 				var curJob = MapProjectViewModel.CurrentJob;
+				var curJobId = curJob.Id.ToString();
 
-				MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
-
-				// TODO: Check This: Once every job has a valid CanvasSize, don't use the current DisplaySize.
-				//var newMapAreaInfo = MapJobHelper.GetMapAreaInfo(curJob, MapDisplayViewModel.CanvasSize);
+				var newMapCalcSettings = curJob.MapCalcSettings;
 				var newMapAreaInfo = curJob.MapAreaInfo;
+				var newColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 
-				MapCoordsViewModel.JobId = curJob.Id.ToString();
+				MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
+
+				MapCoordsViewModel.JobId = curJobId;
 				MapCoordsViewModel.CurrentMapAreaInfo = newMapAreaInfo;
 
-				var jobAreaAndCalcSettings = new JobAreaAndCalcSettings
+				var areaColorAndCalcSettings = new AreaColorAndCalcSettings
 					(
-					curJob.Id.ToString(),
+					curJobId,
 					JobOwnerType.Project,
 					newMapAreaInfo,
+					newColorBandSet,
 					curJob.MapCalcSettings
 					);
 
-				MapDisplayViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
+				ColorBandSetViewModel.ColorBandSet = newColorBandSet;
+				ColorBandSetHistogramViewModel.ColorBandSet = newColorBandSet;
+
+				MapDisplayViewModel.CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
@@ -188,7 +193,7 @@ namespace MSetExplorer
 
 				if (MapProjectViewModel.CurrentProject != null)
 				{
-					MapDisplayViewModel.SetColorBandSet(MapProjectViewModel.CurrentColorBandSet, updateDisplay: true);
+					MapDisplayViewModel.ColorBandSet = MapProjectViewModel.CurrentColorBandSet;
 				}
 			}
 		}
@@ -207,9 +212,9 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
 			{
-				if (MapDisplayViewModel.HighlightSelectedColorBand && MapProjectViewModel.CurrentProject != null && ColorBandSetViewModel.ColorBandSet != null)
+				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null && MapProjectViewModel.CurrentProject != null)
 				{
-					MapDisplayViewModel.SetColorBandSet(ColorBandSetViewModel.ColorBandSet, updateDisplay: true);
+					MapDisplayViewModel.ColorBandSet = ColorBandSetViewModel.ColorBandSet;
 				}
 			}
 		}
@@ -265,16 +270,19 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				Debug.WriteLine($"MainWindow ViewModel got a CBS preview with Id = {colorBandSet.Id}");
-				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
-				ColorBandSetHistogramViewModel.ColorBandSet = colorBandSet;
+
+				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+				MapProjectViewModel.PreviewColorBandSet = colorBandSet;
 			}
 			else
 			{
 				Debug.WriteLine($"MainWindow ViewModel got a CBS update with Id = {colorBandSet.Id}");
-				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
+
+				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
 				MapProjectViewModel.UpdateColorBandSet(colorBandSet);
-				ColorBandSetHistogramViewModel.ColorBandSet = colorBandSet;
 			}
+
+			ColorBandSetHistogramViewModel.ColorBandSet = colorBandSet;
 		}
 
 		#endregion

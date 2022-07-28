@@ -194,22 +194,23 @@ namespace MSetExplorer
 					//MapScrollViewModel.PosterSize = null;
 
 					// Let the MapDisplay know to stop any current MapLoader job.
-					MapDisplayViewModel.CurrentJobAreaAndCalcSettings = null;
+					MapDisplayViewModel.CurrentAreaColorAndCalcSettings = null;
 				}
 			}
 
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Job Area and Calc Settings
-			else if (e.PropertyName == nameof(IPosterViewModel.JobAreaAndCalcSettings))
+			else if (e.PropertyName == nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings))
 			{
-				var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
+				var areaColorAndCalcSettings = PosterViewModel.CurrentAreaColorAndCalcSettings;
 
-				MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
+				MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 
 				MapCoordsViewModel.JobId = PosterViewModel.CurrentPoster?.SourceJobId.ToString();
-				MapCoordsViewModel.CurrentMapAreaInfo = jobAreaAndCalcSettings.MapAreaInfo;
+				MapCoordsViewModel.CurrentMapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
 
-				MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: false);
-				MapDisplayViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
+				//MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: false);
+
+				MapDisplayViewModel.CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
@@ -217,7 +218,7 @@ namespace MSetExplorer
 			{
 				ColorBandSetViewModel.ColorBandSet = PosterViewModel.ColorBandSet;
 
-				MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: true);
+				MapDisplayViewModel.ColorBandSet = PosterViewModel.ColorBandSet;
 			}
 		}
 
@@ -237,7 +238,7 @@ namespace MSetExplorer
 			{
 				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
 				{
-					MapDisplayViewModel.SetColorBandSet(ColorBandSetViewModel.ColorBandSet, updateDisplay: true);
+					MapDisplayViewModel.ColorBandSet = ColorBandSetViewModel.ColorBandSet;
 				}
 			}
 		}
@@ -297,12 +298,13 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				Debug.WriteLine($"MainWindow got a CBS preview with Id = {colorBandSet.Id}");
-				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+				PosterViewModel.PreviewColorBandSet = colorBandSet;
 			}
 			else
 			{
 				Debug.WriteLine($"MainWindow got a CBS update with Id = {colorBandSet.Id}");
-				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
+				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
 				PosterViewModel.UpdateColorBandSet(colorBandSet);
 			}
 		}

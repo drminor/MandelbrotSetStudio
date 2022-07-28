@@ -28,11 +28,11 @@ namespace MSetExplorer
 
 		ObservableCollection<MapSection> MapSections { get; }
 
-		JobAreaAndCalcSettings? CurrentJobAreaAndCalcSettings { get; set; }
+		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; set; }
 
-		ColorBandSet ColorBandSet { get; }
+		ColorBandSet ColorBandSet { get; set; }
 
-		void SetColorBandSet(ColorBandSet value, bool updateDisplay);
+		//void SetColorBandSet(ColorBandSet value, bool updateDisplay);
 
 		bool UseEscapeVelocities { get; set; }
 		bool HighlightSelectedColorBand { get; set; }
@@ -41,7 +41,7 @@ namespace MSetExplorer
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
 		// New Methods to replace the Update... methods above.
-		void SubmitJob(JobAreaAndCalcSettings job);
+		void SubmitJob(AreaColorAndCalcSettings job);
 		void CancelJob();
 		void RestartLastJob();
 		void ClearDisplay();

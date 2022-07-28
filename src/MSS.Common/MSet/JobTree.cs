@@ -492,34 +492,6 @@ namespace MSS.Common
 			}
 		}
 
-		public void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter)
-		{
-			_jobsLock.EnterReadLock();
-
-			try
-			{
-				// TODO: Walk the tree
-				var unSavedJobs = GetJobs(_root).Where(x => !x.OnFile).ToList();
-
-				foreach (var job in unSavedJobs)
-				{
-					job.ProjectId = projectId;
-					projectAdapter.InsertJob(job);
-				}
-
-				var dirtyJobs = GetJobs(_root).Where(x => x.IsDirty).ToList();
-
-				foreach (var job in dirtyJobs)
-				{
-					projectAdapter.UpdateJobDetails(job);
-				}
-			}
-			finally
-			{
-				_jobsLock.ExitReadLock();
-			}
-		}
-
 		#endregion
 
 		#region Public Methods - Collection

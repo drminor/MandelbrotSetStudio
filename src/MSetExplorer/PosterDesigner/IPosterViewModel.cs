@@ -22,16 +22,18 @@ namespace MSetExplorer
 		MapAreaInfo PosterAreaInfo { get; }
 		SizeInt PosterSize { get; }
 
-		ColorBandSet ColorBandSet { get; set; }
+		ColorBandSet ColorBandSet { get; }
+		void UpdateColorBandSet(ColorBandSet colorBandSet);
+
+		ColorBandSet? PreviewColorBandSet { get; set; }
 
 		VectorInt DisplayPosition { get; set; }
 		double DisplayZoom { get; set; }
 
-		JobAreaAndCalcSettings JobAreaAndCalcSettings { get; }
+		AreaColorAndCalcSettings CurrentAreaColorAndCalcSettings { get; }
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		void ResetMapView(MapAreaInfo newMapAreaInfo);
-		void UpdateColorBandSet(ColorBandSet colorBandSet);
 
 
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);

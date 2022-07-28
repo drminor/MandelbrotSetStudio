@@ -39,8 +39,6 @@ namespace MSS.Common
 		IEnumerable<Job> GetJobs();
 		List<Job>? GetJobAndDescendants(ObjectId jobId);
 
-		// TODO: Consider moving these to the class that uses a JobTree
 		bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy);
-		void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter);
 	}
 }

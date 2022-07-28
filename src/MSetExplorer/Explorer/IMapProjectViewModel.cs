@@ -26,7 +26,8 @@ namespace MSetExplorer
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
 
-		ColorBandSet CurrentColorBandSet { get; }
+		ColorBandSet CurrentColorBandSet { get; set; }
+		ColorBandSet? PreviewColorBandSet { get; set; }
 
 		// Job Methods
 		bool GoBack(bool skipPanJobs);

@@ -19,7 +19,7 @@ namespace MSS.Common
 		private string? _description;
 
 		private readonly IJobTree _jobTree;
-		private readonly ColorBandSetCollection _colorBandSetCollection;
+		private readonly List<ColorBandSet> _colorBandSets;
 
 		private readonly ReaderWriterLockSlim _stateLock;
 
@@ -50,36 +50,14 @@ namespace MSS.Common
 			_description = description;
 
 			_jobTree = new JobTree(jobs);
-			_colorBandSetCollection = new ColorBandSetCollection(colorBandSets);
+			//_colorBandSetCollection = new ColorBandSetCollection(colorBandSets);
+			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 			LastUpdatedUtc = DateTime.MinValue;
 			LastSavedUtc = lastSavedUtc;
-
 			_originalCurrentJobId = currentJobId;
-			var currentJob = GetCurrentJob(jobs, currentJobId);
 
-			if (!_colorBandSetCollection.ColorBandSetExists(currentJob.ColorBandSetId))
-			{
-				Debug.WriteLine($"WARNING: The ColorBandSetId {currentJob.ColorBandSetId} of the current job was not found as the project is being constructed.");
-			}
-
-			var colorBandSetId = LoadColorBandSetForJob(currentJob.ColorBandSetId);
-
-			if (currentJob.ColorBandSetId != colorBandSetId)
-			{
-				Debug.WriteLine("WARNING: A ColorBandSet different than the currentJob's ColorBandSet had to be loaded as the project is being constructed.");
-				currentJob.ColorBandSetId = colorBandSetId;
-				LastUpdatedUtc = DateTime.UtcNow;
-			}
-
-			CurrentJob = currentJob;
-
-			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentJob.Id}, Current ColorBandSetId: {_colorBandSetCollection.CurrentColorBandSet.Id}. IsDirty = {IsDirty}");
-		}
-
-		private Job GetCurrentJob(IList<Job> jobs, ObjectId currentJobId)
-		{
 			var currentJob = jobs.FirstOrDefault(x => x.Id == currentJobId);
 
 			if (currentJob == null)
@@ -88,7 +66,10 @@ namespace MSS.Common
 				Debug.WriteLine($"WARNING: The Project has a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
 			}
 
-			return currentJob;
+			LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
+			_jobTree.CurrentJob = currentJob;
+
+			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentJob.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
 		}
 
 		#endregion
@@ -98,6 +79,16 @@ namespace MSS.Common
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
 		public ObservableCollection<JobTreeItem>? JobItems => _jobTree.JobItems;
+
+		public List<Job> GetJobs()
+		{
+			return _jobTree.GetJobs().ToList();
+		}
+
+		public List<ColorBandSet> GetColorBandSets()
+		{
+			return _colorBandSets;
+		}
 
 		public bool CanGoBack => _jobTree.CanGoBack;
 		public bool CanGoForward => _jobTree.CanGoForward;
@@ -172,15 +163,17 @@ namespace MSS.Common
 			{
 				if (CurrentJob != value)
 				{
-					_jobTree.CurrentJob = value; 
-					if ( (!CurrentJob.IsEmpty) && CurrentJob.ColorBandSetId != CurrentColorBandSet.Id)
+					if (!value.IsEmpty)
 					{
-						Debug.WriteLine($"Loading ColorBandSet: {CurrentJob.ColorBandSetId} as the Current Job is being updated.");
-						var colorBandSetId = LoadColorBandSetForJob(CurrentJob.ColorBandSetId);
-						if (CurrentJob.ColorBandSetId != colorBandSetId)
+						var colorBandSetIdBeforeUpdate = _jobTree.CurrentJob.ColorBandSetId;
+
+						LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
+
+						_jobTree.CurrentJob = value;
+
+						if (_jobTree.CurrentJob.ColorBandSetId != colorBandSetIdBeforeUpdate)
 						{
-							CurrentJob.ColorBandSetId = colorBandSetId;
-							LastUpdatedUtc = DateTime.UtcNow;
+							OnPropertyChanged(nameof(CurrentColorBandSet));
 						}
 					}
 
@@ -206,26 +199,36 @@ namespace MSS.Common
 
 		public ColorBandSet CurrentColorBandSet
 		{
-			get => _colorBandSetCollection.CurrentColorBandSet;
+			get => _colorBandSets.FirstOrDefault(x => x.Id == CurrentJob.ColorBandSetId) ?? new ColorBandSet();
 			set
 			{
-				if (CurrentColorBandSet != value)
+				if (!CurrentJob.IsEmpty)
 				{
-					if (!_colorBandSetCollection.MoveCurrentTo(value))
+					var newCbs = value;
+
+					if (newCbs.Id != CurrentJob.ColorBandSetId)
 					{
-						// Set the incoming ColorBandSet's ProjectId to this Project's Id.
-						value.ProjectId = Id;
-						_colorBandSetCollection.Push(value);
+						if (!_colorBandSets.Contains(newCbs))
+						{
+							if (newCbs.ProjectId != Id)
+							{
+								// Make a copy of the incoming ColorBandSet
+								// and set it's ProjectId to this Project's Id.
+								newCbs = newCbs.Clone();
+								newCbs.ProjectId = Id;
+							}
+							_colorBandSets.Add(newCbs);
+						}
+
+						CurrentJob.ColorBandSetId = newCbs.Id;
+						LastUpdatedUtc = DateTime.UtcNow;
+
+						OnPropertyChanged(nameof(CurrentColorBandSet));
 					}
-
-					if (!CurrentJob.IsEmpty)
-					{
-						CurrentJob.ColorBandSetId = value.Id;
-					}
-
-					LastUpdatedUtc = DateTime.UtcNow;
-
-					OnPropertyChanged(nameof(CurrentColorBandSet));
+				}
+				else
+				{
+					Debug.WriteLine($"Not setting the CurrentColorBandSet, the CurrentJob is empty.");
 				}
 			}
 		}
@@ -238,9 +241,20 @@ namespace MSS.Common
 		{
 			_jobTree.Add(job, selectTheAddedJob: true);
 
-			if (!_colorBandSetCollection.MoveCurrentTo(job.ColorBandSetId))
+			//if (!_colorBandSetCollection.MoveCurrentTo(job.ColorBandSetId))
+			//{
+			//	throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
+			//}
+
+			var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
+
+			if (colorBandSet == null)
 			{
 				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
+			}
+			else
+			{
+				CurrentColorBandSet = colorBandSet;
 			}
 
 			LastUpdatedUtc = DateTime.UtcNow;
@@ -250,10 +264,8 @@ namespace MSS.Common
 
 		public void Add(ColorBandSet colorBandSet)
 		{
-			if (_colorBandSetCollection.Add(colorBandSet))
-			{
-				LastUpdatedUtc = DateTime.UtcNow;
-			}
+			_colorBandSets.Add(colorBandSet);
+			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
 		public bool GoBack(bool skipPanJobs)
@@ -318,7 +330,6 @@ namespace MSS.Common
 
 		public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetJobAndDescendants(jobId);
 
-
 		public List<JobTreeItem>? GetCurrentPath() => _jobTree.GetCurrentPath();
 		public List<JobTreeItem>? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
 
@@ -334,204 +345,67 @@ namespace MSS.Common
 			return result;
 		}
 
-		public bool Save(IProjectAdapter projectAdapter)
+		public void MarkAsSaved()
 		{
-			if (! (IsCurrentJobIdChanged || IsDirty) )
-			{
-				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
-				return false;
-			}
-
-			if (IsCurrentJobIdChanged)
-			{
-				projectAdapter.UpdateProjectCurrentJobId(Id, CurrentJobId);
-			}
-
-			if (IsDirty)
-			{
-				projectAdapter.UpdateProjectName(Id, Name);
-				projectAdapter.UpdateProjectDescription(Id, Description);
-				SaveColorBandSets(Id, projectAdapter);
-				SaveJobs(Id, projectAdapter);
-
-				LastSavedUtc = DateTime.UtcNow;
-				_originalCurrentJobId = CurrentJobId;
-				_jobTree.IsDirty = false;
-			}
-
-			return true;
-		}
-
-		public Project CreateCopy(string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
-		{
-			// TODO: Update the JobTree with a new Clone or Copy method. 
-			var jobPairs = _jobTree.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
-			var jobs = jobPairs.Select(x => x.Item2).ToArray();
-
-			foreach (var oldIdAndNewJob in jobPairs)
-			{
-				var formerJobId = oldIdAndNewJob.Item1;
-				var newJobId = oldIdAndNewJob.Item2.Id;
-				UpdateJobParents(formerJobId, newJobId, jobs);
-
-				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
-				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
-			}
-
-			var colorBandSetPairs = _colorBandSetCollection.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
-			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
-
-			foreach (var oldIdAndNewCbs in colorBandSetPairs)
-			{
-				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
-				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
-			}
-
-			var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets);
-
-			if (project is null)
-			{
-				throw new InvalidOperationException("Could not create the new project.");
-			}
-
-			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == CurrentJobId);
-			var newCurJob = firstOldIdAndNewJob?.Item2;
-			project.CurrentJob = newCurJob ?? Job.Empty;
-
-			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == CurrentColorBandSet.Id);
-			var newCurCbs = firstOldIdAndNewCbs?.Item2;
-
-			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
-			//project.MapSectionDeleter = MapSectionDeleter;
-
-			return project;
-		}
-
-		public long DeleteMapSectionsForUnsavedJobs(IMapSectionDeleter mapSectionDeleter)
-		{
-			var result = 0L;
-
-			var jobs = _jobTree.GetJobs().Where(x => !x.OnFile).ToList();
-
-			foreach (var job in jobs)
-			{
-				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
-				if (numberDeleted.HasValue)
-				{
-					result += numberDeleted.Value;
-				}
-			}
-
-			return result;
+			LastSavedUtc = DateTime.UtcNow;
+			_originalCurrentJobId = CurrentJobId;
+			_jobTree.IsDirty = false;
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private ObjectId LoadColorBandSetForJob(ObjectId colorBandSetId)
+		private ColorBandSet LoadColorBandSet(Job job, string operationDescription)
 		{
-			if (CurrentJob.IsEmpty)
+			var colorBandSetId = job.ColorBandSetId;
+			var targetIterations = job.MapCalcSettings.TargetIterations;
+
+			var result = GetColorBandSetForJob(colorBandSetId);
+			
+			if (result == null)
 			{
-				throw new InvalidOperationException("The current Job is empty.");
+				Debug.WriteLine($"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found {operationDescription}."); //as the project is being constructed
+				result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
+				job.ColorBandSetId = result.Id;
+				LastUpdatedUtc = DateTime.UtcNow;
 			}
-
-			var colorBandSet = TrySetCurrentColorBandSet(colorBandSetId);
-
-			var targetIterations = CurrentJob.MapCalcSettings.TargetIterations;
-			if (colorBandSet == null || colorBandSet.HighCutoff != targetIterations)
+			else if (result.HighCutoff != targetIterations)
 			{
-				colorBandSet = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIterations, _colorBandSetCollection.GetColorBandSets());
-
-				if (colorBandSet.HighCutoff != targetIterations)
-				{
-					var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
-					Debug.WriteLine($"Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id} for job: {CurrentJobId}.");
-
-					_colorBandSetCollection.Push(adjustedColorBandSet);
-				}
-			}
-
-			return CurrentColorBandSet.Id;
-		}
-
-		private ColorBandSet? TrySetCurrentColorBandSet(ObjectId colorBandSetId)
-		{
-			ColorBandSet? result;
-
-			if (CurrentColorBandSet.Id == colorBandSetId)
-			{
-				result = CurrentColorBandSet;
-			}
-			else
-			{
-				if (_colorBandSetCollection.TryFindByColorBandSetId(colorBandSetId, out result))
-				{
-					_colorBandSetCollection.MoveCurrentTo(result);
-				}
+				Debug.WriteLine($"WARNING: A ColorBandSet different than the currentJob's ColorBandSet is being loaded {operationDescription}.");
+				result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
+				job.ColorBandSetId = result.Id;
+				LastUpdatedUtc = DateTime.UtcNow;
 			}
 
 			return result;
 		}
 
-		private void SaveColorBandSets(ObjectId projectId, IProjectAdapter projectAdapter)
+		private ColorBandSet? GetColorBandSetForJob(ObjectId colorBandSetId)
 		{
-			for (var i = 0; i < _colorBandSetCollection.Count; i++)
+			var result = _colorBandSets.FirstOrDefault(x => x.Id == colorBandSetId);
+			if (result == null)
 			{
-				var cbs = _colorBandSetCollection[i];
-				if (!cbs.OnFile)
-				{
-					cbs.ProjectId = projectId;
-					projectAdapter.InsertColorBandSet(cbs);
-				}
+				Debug.WriteLine($"WARNING: The job's current ColorBandSet: {colorBandSetId} does not exist in the Project list of ColorBandSets.");
 			}
 
-			for (var i = 0; i < _colorBandSetCollection.Count; i++)
-			{
-				var cbs = _colorBandSetCollection[i];
-				if (cbs.IsDirty)
-				{
-					projectAdapter.UpdateColorBandSetDetails(cbs);
-				}
-			}
+			return result;
 		}
 
-		private void SaveJobs(ObjectId projectId, IProjectAdapter projectAdapter)
+		private ColorBandSet FindOrCreateSuitableColorBandSetForJob(int targetIterations)
 		{
-			_jobTree.SaveJobs(projectId, projectAdapter);
-		}
+			var colorBandSet = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIterations, _colorBandSets);
 
-		private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
-		{
-			foreach (var job in jobs)
+			if (colorBandSet.HighCutoff != targetIterations)
 			{
-				if (job.ParentJobId == oldParentId)
-				{
-					job.ParentJobId = newParentId;
-				}
-			}
-		}
+				var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+				Debug.WriteLine($"WARNING: Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id} for job: {CurrentJobId}.");
 
-		private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId, ColorBandSet[] colorBandSets)
-		{
-			foreach (var cbs in colorBandSets)
-			{
-				if (cbs.ParentId == oldParentId)
-				{
-					cbs.ParentId = newParentId;
-				}
+				_colorBandSets.Add(adjustedColorBandSet);
+				colorBandSet = adjustedColorBandSet;
 			}
-		}
 
-		private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId, Job[] jobs)
-		{
-			foreach (var job in jobs)
-			{
-				if (job.ColorBandSetId == oldCbsId)
-				{
-					job.ColorBandSetId = newCbsId;
-				}
-			}
+			return colorBandSet;
 		}
 
 		#endregion
@@ -596,9 +470,9 @@ namespace MSS.Common
 						_jobTree.Dispose();
 					}
 
-					if (_colorBandSetCollection != null)
+					if (_colorBandSets != null)
 					{
-						_colorBandSetCollection.Dispose();
+						//_colorBandSetCollection.Dispose();
 						//_colorBandSetCollection = null;
 					}
 

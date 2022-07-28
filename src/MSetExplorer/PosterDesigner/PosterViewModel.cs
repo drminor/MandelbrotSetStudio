@@ -16,7 +16,8 @@ namespace MSetExplorer
 
 		private Poster? _currentPoster;
 
-		JobAreaAndCalcSettings _jobAreaAndCalcSettings;
+		AreaColorAndCalcSettings _areaColorAndCalcSettings;
+		private ColorBandSet? _previewColorBandSet;
 
 		#region Constructor
 
@@ -26,7 +27,8 @@ namespace MSetExplorer
 
 			_canvasSize = new SizeDbl();
 			_currentPoster = null;
-			_jobAreaAndCalcSettings = JobAreaAndCalcSettings.Empty;
+			_areaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
+			_previewColorBandSet = null;
 		}
 
 		#endregion
@@ -104,7 +106,7 @@ namespace MSetExplorer
 						_currentPoster.DisplayPosition = dispPos;
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 
-						JobAreaAndCalcSettings = GetNewJob(_currentPoster, DisplayPosition, LogicalDisplaySize.Round());
+						CurrentAreaColorAndCalcSettings = GetNewJob(_currentPoster, DisplayPosition, LogicalDisplaySize.Round());
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
 					}
 
@@ -116,20 +118,43 @@ namespace MSetExplorer
 
 		public ColorBandSet ColorBandSet
 		{
-			get => CurrentPoster?.ColorBandSet ?? new ColorBandSet();
+			get => PreviewColorBandSet ?? CurrentPoster?.ColorBandSet ?? new ColorBandSet();
 			set
 			{
-				var curPoster = CurrentPoster;
-				if (curPoster != null)
+				var currentProject = CurrentPoster;
+				if (currentProject != null)
 				{
 					if (value != ColorBandSet)
 					{
-						curPoster.ColorBandSet = value ?? new ColorBandSet();
+						currentProject.ColorBandSet = value;
 						OnPropertyChanged(nameof(IPosterViewModel.ColorBandSet));
 					}
 				}
 			}
 		}
+
+		public ColorBandSet? PreviewColorBandSet
+		{
+			get => _previewColorBandSet;
+			set
+			{
+				if (value != _previewColorBandSet)
+				{
+					if (value == null || CurrentPoster == null)
+					{
+						_previewColorBandSet = value;
+					}
+					else
+					{
+						var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentPoster.MapCalcSettings.TargetIterations);
+						_previewColorBandSet = adjustedColorBandSet;
+					}
+
+					OnPropertyChanged(nameof(IPosterViewModel.ColorBandSet));
+				}
+			}
+		}
+
 
 		public VectorInt DisplayPosition
 		{
@@ -142,14 +167,14 @@ namespace MSetExplorer
 					if (value != DisplayPosition)
 					{
 						curPoster.DisplayPosition = value;
-						JobAreaAndCalcSettings = GetNewJob(curPoster, value, LogicalDisplaySize.Round());
+						CurrentAreaColorAndCalcSettings = GetNewJob(curPoster, value, LogicalDisplaySize.Round());
 
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 					}
 				}
 				else
 				{
-					JobAreaAndCalcSettings = JobAreaAndCalcSettings.Empty;
+					CurrentAreaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
 				}
 			}
 		}
@@ -175,16 +200,16 @@ namespace MSetExplorer
 		/// <summary>
 		/// Job Area for what is currently being displayed.
 		/// </summary>
-		public JobAreaAndCalcSettings JobAreaAndCalcSettings
+		public AreaColorAndCalcSettings CurrentAreaColorAndCalcSettings
 		{
-			get => _jobAreaAndCalcSettings;
+			get => _areaColorAndCalcSettings;
 
 			set
 			{
-				if (value != _jobAreaAndCalcSettings)
+				if (value != _areaColorAndCalcSettings)
 				{
-					_jobAreaAndCalcSettings = value;
-					OnPropertyChanged(nameof(IPosterViewModel.JobAreaAndCalcSettings));
+					_areaColorAndCalcSettings = value;
+					OnPropertyChanged(nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings));
 				}
 			}
 		}
@@ -340,7 +365,7 @@ namespace MSetExplorer
 		private void UpdateMapView(Poster poster)
 		{
 			// Use the new map specification and the current zoom and display position to set the region to display.
-			JobAreaAndCalcSettings = GetNewJob(poster, DisplayPosition, LogicalDisplaySize.Round());
+			CurrentAreaColorAndCalcSettings = GetNewJob(poster, DisplayPosition, LogicalDisplaySize.Round());
 		}
 
 		public void UpdateColorBandSet(ColorBandSet colorBandSet)
@@ -365,7 +390,7 @@ namespace MSetExplorer
 				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentPoster.ColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentPoster.MapCalcSettings.RequestsPerJob);
 
-				JobAreaAndCalcSettings = new JobAreaAndCalcSettings(JobAreaAndCalcSettings, mapCalcSettings);
+				CurrentAreaColorAndCalcSettings = new AreaColorAndCalcSettings(CurrentAreaColorAndCalcSettings, mapCalcSettings);
 			}
 			else
 			{
@@ -380,16 +405,16 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private JobAreaAndCalcSettings GetNewJob(Poster poster, VectorInt displayPosition, SizeInt logicalDisplaySize)
+		private AreaColorAndCalcSettings GetNewJob(Poster poster, VectorInt displayPosition, SizeInt logicalDisplaySize)
 		{
 			var viewPortArea = GetNewViewPort(poster.MapAreaInfo, displayPosition, logicalDisplaySize);
 
 			var mapCalcSettingsCpy = poster.MapCalcSettings.Clone();
 			//mapCalcSettingsCpy.DontFetchZValuesFromRepo = true;
 
-			var jobAreaAndCalcSettings = new JobAreaAndCalcSettings(poster.SourceJobId.ToString(), JobOwnerType.Poster, viewPortArea, mapCalcSettingsCpy);
+			var areaColorAndCalcSettings = new AreaColorAndCalcSettings(poster.SourceJobId.ToString(), JobOwnerType.Poster, viewPortArea, poster.ColorBandSet, mapCalcSettingsCpy);
 
-			return jobAreaAndCalcSettings;
+			return areaColorAndCalcSettings;
 		}
 
 		private MapAreaInfo GetNewViewPort(MapAreaInfo currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize)
