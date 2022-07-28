@@ -143,63 +143,6 @@ namespace MSetExplorer
 			return colorMap;
 		}
 
-		//public void SetColorBandSet(ColorBandSet value, bool updateDisplay)
-		//{
-		//	if (value != _colorBandSet)
-		//	{
-		//		Debug.WriteLine($"The MapDisplay is processing a new ColorMap. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
-
-		//		if (CurrentAreaColorAndCalcSettings is null)
-		//		{
-		//			// Take the value given, as is. Without a current job, we cannot adjust the iterations.
-
-		//			_colorBandSet = value;
-		//			_colorMap = new ColorMap(value)
-		//			{
-		//				UseEscapeVelocities = _useEscapeVelocities,
-		//				HighlightSelectedColorBand = _highlightSelectedColorBand
-		//			};
-
-		//			_cmLoadedButNotHandled = true;
-		//		}
-		//		else
-		//		{
-		//			var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentAreaColorAndCalcSettings.MapCalcSettings.TargetIterations);
-		//			_colorBandSet = adjustedColorBandSet;
-		//			_colorMap = new ColorMap(adjustedColorBandSet)
-		//			{
-		//				UseEscapeVelocities = _useEscapeVelocities,
-		//				HighlightSelectedColorBand = _highlightSelectedColorBand
-		//			};
-
-
-		//			if (updateDisplay)
-		//			{
-		//				RedrawSections(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
-		//				_cmLoadedButNotHandled = false;
-		//			}
-		//			else
-		//			{
-		//				_cmLoadedButNotHandled = true;
-		//			}
-
-		//		}
-		//	}
-		//	else
-		//	{
-		//		if (updateDisplay && _colorMap != null)
-		//		{
-		//			Debug.WriteLine($"The MapDisplay is processing the existing ColorMap event though the new value is the same as the existing value. Id = {value.Id}. ColorMapLoadedButNotHandled = {_cmLoadedButNotHandled}.");
-		//			RedrawSections(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
-		//			_cmLoadedButNotHandled = false;
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"The MapDisplay is NOT processing a new ColorMap, the new value is the same as the existing value. Id = {value.Id}. UpdateDisplay = {updateDisplay}");
-		//		}
-		//	}
-		//}
-
 		public bool UseEscapeVelocities
 		{
 			get => _useEscapeVelocities;
@@ -282,10 +225,7 @@ namespace MSetExplorer
 			}
 		}
 
-		//public RectangleDbl ClipRegion => ScreenTypeHelper.ConvertToRectangleDbl(_drawingGroup.ClipGeometry.Bounds);
-
 		// TODO: Prevent the DisplayZoom from being set to a value that would require more than 100 x 100 blocks.
-
 		/// <summary>
 		/// 1 = LogicalDisplay Size = PosterSize
 		/// 2 = LogicalDisplay Size Width is 1/2 PosterSize Width (1 Screen Pixel = 2 * (CanvasSize / PosterSize)

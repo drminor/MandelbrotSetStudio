@@ -26,7 +26,8 @@ namespace MSetExplorer
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
 
-		ColorBandSet CurrentColorBandSet { get; set; }
+		ColorBandSet ColorBandSet { get; set; }
+		//void UpdateColorBandSet(ColorBandSet colorBandSet);
 		ColorBandSet? PreviewColorBandSet { get; set; }
 
 		// Job Methods
@@ -34,7 +35,6 @@ namespace MSetExplorer
 		bool GoForward(bool skipPanJobs);
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
-		void UpdateColorBandSet(ColorBandSet colorBandSet);
 		//void UpdateMapCoordinates(RRectangle coords);
 
 		MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea);

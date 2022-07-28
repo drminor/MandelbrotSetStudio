@@ -118,7 +118,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
 			{
-				Title = GetWindowTitle(_vm.MapProjectViewModel.CurrentProject?.Name, _vm.MapProjectViewModel.CurrentColorBandSet.Name);
+				Title = GetWindowTitle(_vm.MapProjectViewModel.CurrentProject?.Name, _vm.MapProjectViewModel.ColorBandSet.Name);
 				CommandManager.InvalidateRequerySuggested();
 			}
 
@@ -434,25 +434,18 @@ namespace MSetExplorer
 				return;
 			}
 
-			var initialName = _vm.MapProjectViewModel.CurrentColorBandSet.Name;
+			var initialName = _vm.MapProjectViewModel.ColorBandSet.Name;
 			if (ColorsShowOpenWindow(initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
 				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.MapProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
-				_vm.MapProjectViewModel.UpdateColorBandSet(adjustedCbs);
+				_vm.MapProjectViewModel.ColorBandSet = adjustedCbs;
 			}
 			else
 			{
 				Debug.WriteLine($"User declined to import a ColorBandSet.");
-				var projectsColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
-
-				if (_vm.MapDisplayViewModel.ColorBandSet != projectsColorBandSet)
-				{
-					//_vm.MapDisplayViewModel.SetColorBandSet(projectsColorBandSet, updateDisplay: true);
-					_vm.MapProjectViewModel.PreviewColorBandSet = null;
-					
-				}
+				_vm.MapProjectViewModel.PreviewColorBandSet = null;
 			}
 		}
 
@@ -469,7 +462,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			var curColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
+			var curColorBandSet = _vm.MapProjectViewModel.ColorBandSet;
 
 			_ = ColorsShowSaveWindow(curColorBandSet);
 		}

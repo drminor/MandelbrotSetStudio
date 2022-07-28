@@ -82,7 +82,7 @@ namespace MSetExplorer
 
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProject));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+					OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
 					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 				}
@@ -104,12 +104,31 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(Project.CurrentColorBandSet))
 			{
 				Debug.WriteLine("The MapProjectViewModel is raising PropertyChanged: IMapProjectViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+				OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
 			}
 
 			if (e.PropertyName == nameof(Project.CurrentJob))
 			{
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+				var currentProject = CurrentProject;
+
+				if (currentProject != null)
+				{
+					var cbsBefore = ColorBandSet;
+					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
+					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+					{
+						FindOrCreateJobForNewCanvasSize(currentProject, CurrentJob, currentCanvasSizeInBlocks);
+					}
+
+					if (ColorBandSet != cbsBefore)
+					{
+						OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
+					}
+
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+				}
 			}
 		}
 
@@ -135,7 +154,7 @@ namespace MSetExplorer
 		public bool CanGoBack => CurrentProject?.CanGoBack ?? false;
 		public bool CanGoForward => CurrentProject?.CanGoForward ?? false;
 
-		public ColorBandSet CurrentColorBandSet
+		public ColorBandSet ColorBandSet
 		{
 			get => PreviewColorBandSet ?? CurrentProject?.CurrentColorBandSet ?? new ColorBandSet();
 			set
@@ -143,10 +162,9 @@ namespace MSetExplorer
 				var currentProject = CurrentProject;
 				if (currentProject != null)
 				{
-					if (value != CurrentColorBandSet)
+					if (UpdateColorBandSet(currentProject, value))
 					{
-						currentProject.CurrentColorBandSet = value;
-						OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+						OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
 					}
 				}
 			}
@@ -169,7 +187,7 @@ namespace MSetExplorer
 						_previewColorBandSet = adjustedColorBandSet;
 					}
 
-					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+					OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
 				}
 			}
 		}
@@ -346,41 +364,41 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		public void UpdateColorBandSet(ColorBandSet colorBandSet)
+		private bool UpdateColorBandSet(Project project, ColorBandSet colorBandSet)
 		{
-			if (CurrentProject == null)
+			// Discard the Preview ColorBandSet. 
+			_previewColorBandSet = null;
+
+			var currentJob = project.CurrentJob;
+
+			if (ColorBandSet.Id != currentJob.ColorBandSetId)
 			{
-				return;
+				Debug.WriteLine($"The project's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {ColorBandSet.Count} bands. The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
 			}
 
-			if (CurrentColorBandSet.Id != CurrentJob.ColorBandSetId)
-			{
-				Debug.WriteLine($"The project's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands. The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
-			}
-
-			if (CurrentColorBandSet == colorBandSet)
+			if (ColorBandSet == colorBandSet)
 			{
 				Debug.WriteLine($"MapProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
-				return;
+				return false;
 			}
 
 			var targetIterations = colorBandSet.HighCutoff;
 
-			if (targetIterations != CurrentJob.MapCalcSettings.TargetIterations)
+			if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
 			{
-				CurrentProject.Add(colorBandSet);
+				project.Add(colorBandSet);
 
-				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {CurrentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
-				var mapCalcSettings = new MapCalcSettings(targetIterations, CurrentJob.MapCalcSettings.RequestsPerJob);
-				LoadMap(CurrentProject, CurrentJob, CurrentJob.Coords, colorBandSet.Id, mapCalcSettings, TransformType.IterationUpdate, null);
+				Debug.WriteLine($"MapProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {project.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
+				var mapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
+				LoadMap(project, currentJob, currentJob.Coords, colorBandSet.Id, mapCalcSettings, TransformType.IterationUpdate, null);
 			}
 			else
 			{
-				Debug.WriteLine($"MapProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {CurrentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
-				CurrentProject.CurrentColorBandSet = colorBandSet;
-
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
+				Debug.WriteLine($"MapProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {project.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
+				project.CurrentColorBandSet = colorBandSet;
 			}
+
+			return true;
 		}
 
 		public MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea)
@@ -416,31 +434,33 @@ namespace MSetExplorer
 				return false;
 			}
 
-			var cbsBefore = CurrentColorBandSet;
+			var result = CurrentProject.GoBack(skipPanJobs);
+			return result;
+			//var cbsBefore = ColorBandSet;
 
-			if (CurrentProject.GoBack(skipPanJobs))
-			{
-				var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
-				if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-				{
-					FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
-				}
+			//if (CurrentProject.GoBack(skipPanJobs))
+			//{
+			//	var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
+			//	if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+			//	{
+			//		FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
+			//	}
 
-				if (CurrentColorBandSet != cbsBefore)
-				{
-					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
-				}
+			//	if (ColorBandSet != cbsBefore)
+			//	{
+			//		OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
+			//	}
 
-				//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+			//	//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+			//	OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+			//	OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			//	return true;
+			//}
+			//else
+			//{
+			//	return false;
+			//}
 		}
 
 		public bool GoForward(bool skipPanJobs)
@@ -450,31 +470,33 @@ namespace MSetExplorer
 				return false;
 			}
 
-			var cbsBefore = CurrentColorBandSet;
+			var result = CurrentProject.GoForward(skipPanJobs);
+			return result;
+			//var cbsBefore = ColorBandSet;
 
-			if (CurrentProject.GoForward(skipPanJobs))
-			{
-				var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
-				if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-				{
-					FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
-				}
+			//if (CurrentProject.GoForward(skipPanJobs))
+			//{
+			//	var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
+			//	if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+			//	{
+			//		FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
+			//	}
 
-				if (CurrentColorBandSet != cbsBefore)
-				{
-					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentColorBandSet));
-				}
+			//	if (ColorBandSet != cbsBefore)
+			//	{
+			//		OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
+			//	}
 
-				//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-				OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+			//	//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+			//	OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+			//	OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
 
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			//	return true;
+			//}
+			//else
+			//{
+			//	return false;
+			//}
 		}
 
 		#endregion
@@ -500,9 +522,6 @@ namespace MSetExplorer
 
 		private void LoadMap(Project project, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
-			// THE JOB TREE now contains the logic for determining if the new job will be a child or a sibling of the source job.
-			// TODO: Verify that the currentJob is indeed the current job that should be used for the new Job's source.
-
 			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize);
 
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
@@ -615,7 +634,7 @@ namespace MSetExplorer
 			var newCurJob = firstOldIdAndNewJob?.Item2;
 			project.CurrentJob = newCurJob ?? Job.Empty;
 
-			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == CurrentColorBandSet.Id);
+			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == ColorBandSet.Id);
 			var newCurCbs = firstOldIdAndNewCbs?.Item2;
 
 			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
