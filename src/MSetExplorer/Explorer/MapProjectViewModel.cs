@@ -89,49 +89,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private void CurrentProject_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(Project.IsDirty))
-			{
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
-			}
-
-			if (e.PropertyName == nameof(Project.OnFile))
-			{
-				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectOnFile));
-			}
-
-			if (e.PropertyName == nameof(Project.CurrentColorBandSet))
-			{
-				Debug.WriteLine("The MapProjectViewModel is raising PropertyChanged: IMapProjectViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
-				OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
-			}
-
-			if (e.PropertyName == nameof(Project.CurrentJob))
-			{
-				var currentProject = CurrentProject;
-
-				if (currentProject != null)
-				{
-					var cbsBefore = ColorBandSet;
-					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
-					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-					{
-						FindOrCreateJobForNewCanvasSize(currentProject, CurrentJob, currentCanvasSizeInBlocks);
-					}
-
-					if (ColorBandSet != cbsBefore)
-					{
-						OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
-					}
-
-					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
-					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-				}
-			}
-		}
-
 		public bool CurrentProjectIsDirty => CurrentProject?.IsDirty ?? false;
 
 		public bool IsCurrentJobIdChanged => CurrentProject?.IsCurrentJobIdChanged ?? false;
@@ -142,13 +99,7 @@ namespace MSetExplorer
 		public Job CurrentJob
 		{
 			get => CurrentProject?.CurrentJob ?? Job.Empty;
-			private set 
-			{
-				//if (CurrentProject != null)
-				//{
-				//	CurrentProject.CurrentJob = value;
-				//}
-			}
+			private set { }
 		}
 
 		public bool CanGoBack => CurrentProject?.CanGoBack ?? false;
@@ -194,6 +145,54 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Event Handlers
+
+		private void CurrentProject_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(Project.IsDirty))
+			{
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
+			}
+
+			else if (e.PropertyName == nameof(Project.OnFile))
+			{
+				OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectOnFile));
+			}
+
+			else if (e.PropertyName == nameof(Project.CurrentColorBandSet))
+			{
+				Debug.WriteLine("The MapProjectViewModel is raising PropertyChanged: IMapProjectViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
+				OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
+			}
+
+			else if (e.PropertyName == nameof(Project.CurrentJob))
+			{
+				var currentProject = CurrentProject;
+
+				if (currentProject != null)
+				{
+					var cbsBefore = ColorBandSet;
+					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
+					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+					{
+						FindOrCreateJobForNewCanvasSize(currentProject, CurrentJob, currentCanvasSizeInBlocks);
+					}
+
+					if (ColorBandSet != cbsBefore)
+					{
+						OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
+					}
+
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
+					OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+				}
+			}
+		}
+
+
+		#endregion
+
 		#region Public Methods -- Project
 
 		public void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
@@ -203,9 +202,7 @@ namespace MSetExplorer
 				Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At ProjectStartNew.");
 			}
 
-			var projectId = ObjectId.Empty;
-
-			var job = _mapJobHelper.BuildJob(null, projectId, CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, null, _blockSize);
+			var job = _mapJobHelper.BuildHomeJob(CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, _blockSize);
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
@@ -257,7 +254,7 @@ namespace MSetExplorer
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSave found the CurrentJob to be empty.");
 
-			var result = Save(currentProject, _projectAdapter);
+			var result = JobOwnerHelper.Save(currentProject, _projectAdapter);
 
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectIsDirty));
 			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentProjectOnFile));
@@ -280,9 +277,9 @@ namespace MSetExplorer
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
-			var project = CreateCopy(currentProject, name, description, _projectAdapter, _mapSectionAdapter);
+			var project = JobOwnerHelper.CreateCopyOfProject(currentProject, name, description, _projectAdapter, _mapSectionAdapter);
 
-			Save(currentProject, _projectAdapter);
+			 JobOwnerHelper.Save(currentProject, _projectAdapter);
 
 			CurrentProject = project;
 		}
@@ -301,7 +298,7 @@ namespace MSetExplorer
 				return 0;
 			}
 
-			var result = DeleteMapSectionsForUnsavedJobs(currentProject, _mapSectionAdapter);
+			var result = JobOwnerHelper.DeleteMapSectionsForUnsavedJobs(currentProject, _mapSectionAdapter);
 
 			return result;
 		}
@@ -319,10 +316,15 @@ namespace MSetExplorer
 			}
 
 			var colorBandSet = CurrentProject.CurrentColorBandSet;
-			var blockSize = curJob.Subdivision.BlockSize;
+			var coords = curJob.Coords;
+			var mapCalcSettings = curJob.MapCalcSettings;
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(curJob.Coords, posterSize, blockSize);
-			var poster = new Poster(name, description, curJob.Id, mapAreaInfo, colorBandSet, curJob.MapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, _blockSize);
+			Debug.WriteLine($"Starting job for new Poster with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+			var sourceJobId = curJob.Id;
+			var poster = new Poster(name, description, sourceJobId, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
+			job.ProjectId = CurrentProject.Id;
 
 			_projectAdapter.CreatePoster(poster);
 
@@ -436,31 +438,6 @@ namespace MSetExplorer
 
 			var result = CurrentProject.GoBack(skipPanJobs);
 			return result;
-			//var cbsBefore = ColorBandSet;
-
-			//if (CurrentProject.GoBack(skipPanJobs))
-			//{
-			//	var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
-			//	if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-			//	{
-			//		FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
-			//	}
-
-			//	if (ColorBandSet != cbsBefore)
-			//	{
-			//		OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
-			//	}
-
-			//	//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-			//	OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-			//	OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
-
-			//	return true;
-			//}
-			//else
-			//{
-			//	return false;
-			//}
 		}
 
 		public bool GoForward(bool skipPanJobs)
@@ -472,31 +449,6 @@ namespace MSetExplorer
 
 			var result = CurrentProject.GoForward(skipPanJobs);
 			return result;
-			//var cbsBefore = ColorBandSet;
-
-			//if (CurrentProject.GoForward(skipPanJobs))
-			//{
-			//	var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
-			//	if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-			//	{
-			//		FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
-			//	}
-
-			//	if (ColorBandSet != cbsBefore)
-			//	{
-			//		OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
-			//	}
-
-			//	//OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-			//	OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-			//	OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
-
-			//	return true;
-			//}
-			//else
-			//{
-			//	return false;
-			//}
 		}
 
 		#endregion
@@ -570,180 +522,180 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods -- Saving
+		//#region Private Methods -- Saving
 
-		private bool Save(Project project, IProjectAdapter projectAdapter)
-		{
-			if (!(project.IsCurrentJobIdChanged || project.IsDirty))
-			{
-				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
-				return false;
-			}
+		//private bool Save(Project project, IProjectAdapter projectAdapter)
+		//{
+		//	if (!(project.IsCurrentJobIdChanged || project.IsDirty))
+		//	{
+		//		Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
+		//		return false;
+		//	}
 
-			if (IsCurrentJobIdChanged)
-			{
-				projectAdapter.UpdateProjectCurrentJobId(project.Id, project.CurrentJobId);
-			}
+		//	if (IsCurrentJobIdChanged)
+		//	{
+		//		projectAdapter.UpdateProjectCurrentJobId(project.Id, project.CurrentJobId);
+		//	}
 
-			if (project.IsDirty)
-			{
-				projectAdapter.UpdateProjectName(project.Id, project.Name);
-				projectAdapter.UpdateProjectDescription(project.Id, project.Description);
-				SaveColorBandSets(project, projectAdapter);
-				SaveJobs(project, projectAdapter);
+		//	if (project.IsDirty)
+		//	{
+		//		projectAdapter.UpdateProjectName(project.Id, project.Name);
+		//		projectAdapter.UpdateProjectDescription(project.Id, project.Description);
+		//		SaveColorBandSets(project, projectAdapter);
+		//		SaveJobs(project, projectAdapter);
 
-				project.MarkAsSaved();
-			}
+		//		project.MarkAsSaved();
+		//	}
 
-			return true;
-		}
+		//	return true;
+		//}
 
-		public Project CreateCopy(Project sourceProject, string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
-		{
-			// TODO: Update the JobTree with a new Clone or Copy method. 
-			var jobPairs = sourceProject.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
-			var jobs = jobPairs.Select(x => x.Item2).ToArray();
+		//public Project CreateCopy(Project sourceProject, string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
+		//{
+		//	// TODO: Update the JobTree with a new Clone or Copy method. 
+		//	var jobPairs = sourceProject.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
+		//	var jobs = jobPairs.Select(x => x.Item2).ToArray();
 
-			foreach (var oldIdAndNewJob in jobPairs)
-			{
-				var formerJobId = oldIdAndNewJob.Item1;
-				var newJobId = oldIdAndNewJob.Item2.Id;
-				UpdateJobParents(formerJobId, newJobId, jobs);
+		//	foreach (var oldIdAndNewJob in jobPairs)
+		//	{
+		//		var formerJobId = oldIdAndNewJob.Item1;
+		//		var newJobId = oldIdAndNewJob.Item2.Id;
+		//		UpdateJobParents(formerJobId, newJobId, jobs);
 
-				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
-				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
-			}
+		//		var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
+		//		Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
+		//	}
 
-			var colorBandSetPairs = sourceProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
-			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
+		//	var colorBandSetPairs = sourceProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
+		//	var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
 
-			foreach (var oldIdAndNewCbs in colorBandSetPairs)
-			{
-				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
-				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
-			}
+		//	foreach (var oldIdAndNewCbs in colorBandSetPairs)
+		//	{
+		//		UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
+		//		UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
+		//	}
 
-			var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets);
+		//	var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets);
 
-			if (project is null)
-			{
-				throw new InvalidOperationException("Could not create the new project.");
-			}
+		//	if (project is null)
+		//	{
+		//		throw new InvalidOperationException("Could not create the new project.");
+		//	}
 
-			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == sourceProject.CurrentJobId);
-			var newCurJob = firstOldIdAndNewJob?.Item2;
-			project.CurrentJob = newCurJob ?? Job.Empty;
+		//	var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == sourceProject.CurrentJobId);
+		//	var newCurJob = firstOldIdAndNewJob?.Item2;
+		//	project.CurrentJob = newCurJob ?? Job.Empty;
 
-			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == ColorBandSet.Id);
-			var newCurCbs = firstOldIdAndNewCbs?.Item2;
+		//	var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == ColorBandSet.Id);
+		//	var newCurCbs = firstOldIdAndNewCbs?.Item2;
 
-			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
+		//	project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
 
-			return project;
-		}
+		//	return project;
+		//}
 
-		private long DeleteMapSectionsForUnsavedJobs(Project project, IMapSectionDeleter mapSectionDeleter)
-		{
-			var result = 0L;
+		//private long DeleteMapSectionsForUnsavedJobs(Project project, IMapSectionDeleter mapSectionDeleter)
+		//{
+		//	var result = 0L;
 
-			var jobs = project.GetJobs().Where(x => !x.OnFile).ToList();
+		//	var jobs = project.GetJobs().Where(x => !x.OnFile).ToList();
 
-			foreach (var job in jobs)
-			{
-				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
-				if (numberDeleted.HasValue)
-				{
-					result += numberDeleted.Value;
-				}
-			}
+		//	foreach (var job in jobs)
+		//	{
+		//		var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
+		//		if (numberDeleted.HasValue)
+		//		{
+		//			result += numberDeleted.Value;
+		//		}
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		private void SaveColorBandSets(Project project, IProjectAdapter projectAdapter)
-		{
-			var colorBandSets = project.GetColorBandSets();
-			var unsavedColorBandSets = colorBandSets.Where(x => x.OnFile).ToList();
+		//private void SaveColorBandSets(Project project, IProjectAdapter projectAdapter)
+		//{
+		//	var colorBandSets = project.GetColorBandSets();
+		//	var unsavedColorBandSets = colorBandSets.Where(x => x.OnFile).ToList();
 
-			foreach (var cbs in unsavedColorBandSets)
-			{
-				if (cbs.ProjectId != project.Id)
-				{
-					Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.ProjectId}, current Project: {project.Id}.");
-					var newCbs = cbs.Clone();
-					newCbs.ProjectId = project.Id;
-					projectAdapter.InsertColorBandSet(newCbs);
-				}
-				else
-				{
-					projectAdapter.InsertColorBandSet(cbs);
-				}
-			}
+		//	foreach (var cbs in unsavedColorBandSets)
+		//	{
+		//		if (cbs.ProjectId != project.Id)
+		//		{
+		//			Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.ProjectId}, current Project: {project.Id}.");
+		//			var newCbs = cbs.Clone();
+		//			newCbs.ProjectId = project.Id;
+		//			projectAdapter.InsertColorBandSet(newCbs);
+		//		}
+		//		else
+		//		{
+		//			projectAdapter.InsertColorBandSet(cbs);
+		//		}
+		//	}
 
-			var dirtyColorBandSets = colorBandSets.Where(x => x.IsDirty).ToList();
+		//	var dirtyColorBandSets = colorBandSets.Where(x => x.IsDirty).ToList();
 
-			foreach (var cbs in dirtyColorBandSets)
-			{
-				projectAdapter.UpdateColorBandSetDetails(cbs);
-			}
-		}
+		//	foreach (var cbs in dirtyColorBandSets)
+		//	{
+		//		projectAdapter.UpdateColorBandSetDetails(cbs);
+		//	}
+		//}
 
-		private void SaveJobs(Project project, IProjectAdapter projectAdapter)
-		{
-			//_jobTree.SaveJobs(projectId, projectAdapter);
+		//private void SaveJobs(Project project, IProjectAdapter projectAdapter)
+		//{
+		//	//_jobTree.SaveJobs(projectId, projectAdapter);
 
-			var jobs = project.GetJobs();
+		//	var jobs = project.GetJobs();
 
-			var unSavedJobs = jobs.Where(x => !x.OnFile).ToList();
+		//	var unSavedJobs = jobs.Where(x => !x.OnFile).ToList();
 
-			foreach (var job in unSavedJobs)
-			{
-				job.ProjectId = project.Id;
-				projectAdapter.InsertJob(job);
-			}
+		//	foreach (var job in unSavedJobs)
+		//	{
+		//		job.ProjectId = project.Id;
+		//		projectAdapter.InsertJob(job);
+		//	}
 
-			var dirtyJobs = jobs.Where(x => x.IsDirty).ToList();
+		//	var dirtyJobs = jobs.Where(x => x.IsDirty).ToList();
 
-			foreach (var job in dirtyJobs)
-			{
-				projectAdapter.UpdateJobDetails(job);
-			}
-		}
+		//	foreach (var job in dirtyJobs)
+		//	{
+		//		projectAdapter.UpdateJobDetails(job);
+		//	}
+		//}
 
-		private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
-		{
-			foreach (var job in jobs)
-			{
-				if (job.ParentJobId == oldParentId)
-				{
-					job.ParentJobId = newParentId;
-				}
-			}
-		}
+		//private void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
+		//{
+		//	foreach (var job in jobs)
+		//	{
+		//		if (job.ParentJobId == oldParentId)
+		//		{
+		//			job.ParentJobId = newParentId;
+		//		}
+		//	}
+		//}
 
-		private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId, ColorBandSet[] colorBandSets)
-		{
-			foreach (var cbs in colorBandSets)
-			{
-				if (cbs.ParentId == oldParentId)
-				{
-					cbs.ParentId = newParentId;
-				}
-			}
-		}
+		//private void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId, ColorBandSet[] colorBandSets)
+		//{
+		//	foreach (var cbs in colorBandSets)
+		//	{
+		//		if (cbs.ParentId == oldParentId)
+		//		{
+		//			cbs.ParentId = newParentId;
+		//		}
+		//	}
+		//}
 
-		private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId, Job[] jobs)
-		{
-			foreach (var job in jobs)
-			{
-				if (job.ColorBandSetId == oldCbsId)
-				{
-					job.ColorBandSetId = newCbsId;
-				}
-			}
-		}
+		//private void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId, Job[] jobs)
+		//{
+		//	foreach (var job in jobs)
+		//	{
+		//		if (job.ColorBandSetId == oldCbsId)
+		//		{
+		//			job.ColorBandSetId = newCbsId;
+		//		}
+		//	}
+		//}
 
-		#endregion
+		//#endregion
 
 		#region IDisposable Support
 

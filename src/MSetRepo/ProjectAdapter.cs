@@ -387,7 +387,23 @@ namespace MSetRepo
 
 		#region Job
 
-		public IList<ObjectId> GetAllJobsIdsForProject(ObjectId projectId)
+		public IList<ObjectId> GetAllJobIdsForPoster(ObjectId posterId)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = jobReaderWriter.GetJobIds(posterId).ToList();
+
+			return result;
+		}
+
+		public IList<Job> GetAllJobsForPoster(ObjectId poster, IEnumerable<ColorBandSet> colorBandSets)
+		{
+			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
+			var result = GetAllJobsForProject(poster, colorBandSetCache);
+
+			return result;
+		}
+
+		public IList<ObjectId> GetAllJobIdsForProject(ObjectId projectId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var result = jobReaderWriter.GetJobIds(projectId).ToList();
@@ -465,7 +481,7 @@ namespace MSetRepo
 				lastSaved: jobRecord.LastSaved
 				);
 
-			var colorBandSet = GetColorBandSet(job, jobReaderWriter, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
+			var colorBandSet = GetColorBandSet(job, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
 
 			ObjectId cbsId;
 			if (colorBandSet != null)
@@ -496,7 +512,7 @@ namespace MSetRepo
 			return job;
 		}
 
-		private ColorBandSet? GetColorBandSet(Job job, JobReaderWriter jobReaderWriter, ColorBandSetReaderWriter colorBandSetReaderWriter, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache, out bool isCacheHit)
+		private ColorBandSet? GetColorBandSet(Job job, ColorBandSetReaderWriter colorBandSetReaderWriter, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache, out bool isCacheHit)
 		{
 			ColorBandSet? result;
 
@@ -678,22 +694,27 @@ namespace MSetRepo
 
 		private Poster BuildPoster(PosterRecord target, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
-			var colorBandSet = GetColorBandSet(target.ColorBandSetId, colorBandSetReaderWriter);
+			//var colorBandSets = new List<ColorBandSet> { GetColorBandSet(target. .ColorBandSetId, colorBandSetReaderWriter) };
 
-			if (colorBandSet == null)
-			{
-				Debug.WriteLine($"WARNING: Cannot find a ColorBandSet record on file for the Poster with namer: {target.Name}. Using the default, empty ColorBandSet.");
-				colorBandSet = new ColorBandSet();
-			}
+			//if (colorBandSet == null)
+			//{
+			//	Debug.WriteLine($"WARNING: Cannot find a ColorBandSet record on file for the Poster with namer: {target.Name}. Using the default, empty ColorBandSet.");
+			//	colorBandSet = new ColorBandSet();
+			//}
+
+			// TODO: Load some jobs
+
+			var jobs = new List<Job>();
+			var colorBandSets = new List<ColorBandSet>();
 
 			var result = new Poster(
 				id: target.Id,
 				name: target.Name,
 				description: target.Description,
 				sourceJobId: target.SourceJobId,
-				mapAreaInfo: _mSetRecordMapper.MapFrom(target.JobAreaInfoRecord),
-				colorBandSet: colorBandSet,
-				mapCalcSettings: target.MapCalcSettings,
+				jobs: jobs,
+				colorBandSets: colorBandSets,
+				currentJobId: target.CurrentJobId,
 				displayPosition: _mSetRecordMapper.MapFrom(target.DisplayPosition),
 				displayZoom: target.DisplayZoom,
 				dateCreatedUtc: target.DateCreatedUtc,
@@ -705,11 +726,64 @@ namespace MSetRepo
 			return result;
 		}
 
+		public Poster? CreatePoster(string name, string? description, ObjectId sourceJobId, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+
+			if (!posterReaderWriter.PosterExists(name))
+			{
+				var posterRecord = new PosterRecord(name, description, sourceJobId, jobs.First().Id, 
+					DisplayPosition: new VectorIntRecord(0,0), 
+					DisplayZoom: 0,
+					DateCreatedUtc: DateTime.UtcNow,
+					LastSavedUtc: DateTime.UtcNow,
+					LastAccessedUtc: DateTime.UtcNow);
+
+				var posterId = posterReaderWriter.Insert(posterRecord);
+				posterRecord = posterReaderWriter.Get(posterId);
+
+				foreach (var job in jobs)
+				{
+					job.ProjectId = posterId;
+				}
+
+				foreach (var cbs in colorBandSets)
+				{
+					cbs.ProjectId = posterId;
+				}
+
+				var result = AssemblePoster(posterRecord, jobs, colorBandSets, DateTime.MinValue);
+
+				return result;
+			}
+			else
+			{
+				throw new InvalidOperationException($"Cannot create project with name: {name}, a project with that name already exists.");
+			}
+		}
+
+		private Poster? AssemblePoster(PosterRecord? posterRecord, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
+		{
+			Poster? result;
+			if (posterRecord == null || jobs.Count == 0 || !colorBandSets.Any())
+			{
+				result = null;
+			}
+			else
+			{
+				var displayPosition = _mSetRecordMapper.MapFrom(posterRecord.DisplayPosition);
+				result = new Poster(posterRecord.Id, posterRecord.Name, posterRecord.Description, posterRecord.SourceJobId, jobs, colorBandSets,
+					posterRecord.CurrentJobId, displayPosition, posterRecord.DisplayZoom, DateTime.UtcNow, lastSavedUtc, DateTime.MinValue);
+
+			}
+			return result;
+		}
+
 		public void CreatePoster(Poster poster)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 
-			if (!posterReaderWriter.ExistsWithName(poster.Name))
+			if (!posterReaderWriter.PosterExists(poster.Name))
 			{
 				var posterRecord = _mSetRecordMapper.MapTo(poster);
 				var posterRecordId = posterReaderWriter.Insert(posterRecord);
@@ -730,28 +804,36 @@ namespace MSetRepo
 			posterReaderWriter.UpdateMapArea(posterRecord);
 		}
 
-		public void DeletePoster(ObjectId posterId)
+		public bool DeletePoster(ObjectId posterId)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-			// TODO: Remove ColorBandSets for Poster as its being deleted.
-			//var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			//var cbsIds = colorBandSetReaderWriter.GetColorBandSetIdsForProject(posterId);
+			var jobIds = jobReaderWriter.GetJobIds(posterId);
 
-			//foreach (var colorBandSetId in cbsIds)
-			//{
-			//	_ = colorBandSetReaderWriter.Delete(colorBandSetId);
-			//}
+			foreach (var jobId in jobIds)
+			{
+				_ = DeleteJob(jobId, jobReaderWriter);
+			}
 
-			// TODO: Consider removing MapSections for Poster as its being deleted.
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 
-			_ = posterReaderWriter.Delete(posterId);
+			var cbsIds = colorBandSetReaderWriter.GetColorBandSetIdsForProject(posterId);
+
+			foreach (var colorBandSetId in cbsIds)
+			{
+				_ = colorBandSetReaderWriter.Delete(colorBandSetId);
+			}
+
+			var numberDeleted = posterReaderWriter.Delete(posterId);
+
+			return numberDeleted == 1;
 		}
 
 		public bool PosterExists(string name)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
-			var result = posterReaderWriter.ExistsWithName(name);
+			var result = posterReaderWriter.PosterExists(name);
 
 			return result;
 		}

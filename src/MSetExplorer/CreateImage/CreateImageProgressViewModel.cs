@@ -45,7 +45,9 @@ namespace MSetExplorer
 			ImageFilePath = imageFilePath;
 			Poster = poster;
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, poster.MapAreaInfo, poster.ColorBandSet, poster.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+			var curJob = poster.CurrentJob;
+
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
 			//_task.ContinueWith(t =>
 			//{
@@ -63,10 +65,9 @@ namespace MSetExplorer
 				_task.Wait();
 			}
 
-			// TODO: Schedule this or yield to allow the file to become free.
 			if (ImageFilePath != null && File.Exists(ImageFilePath))
 			{
-				Thread.Sleep(10000);
+				Thread.Sleep(10 * 1000);
 				File.Delete(ImageFilePath);
 			}
 		}

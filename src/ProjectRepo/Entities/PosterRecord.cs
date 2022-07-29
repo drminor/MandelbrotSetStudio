@@ -9,11 +9,8 @@ namespace ProjectRepo.Entities
 
 		string Name, 
 		string? Description,
-
 		ObjectId SourceJobId,
-		MapAreaInfoRecord  JobAreaInfoRecord,
-		ObjectId ColorBandSetId,
-		MapCalcSettings MapCalcSettings,
+		ObjectId CurrentJobId, 
 
 		VectorIntRecord DisplayPosition,
 		double DisplayZoom,
@@ -21,7 +18,6 @@ namespace ProjectRepo.Entities
 		DateTime DateCreatedUtc,
 		DateTime LastSavedUtc,
 		DateTime LastAccessedUtc
-
 		)
 	{
 		[BsonId]

@@ -14,16 +14,20 @@ namespace MSS.Common
 
 		Project? CreateProject(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
 		IList<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
-		IList<ObjectId> GetAllJobsIdsForProject(ObjectId projectId);
+		IList<ObjectId> GetAllJobIdsForProject(ObjectId projectId);
 
-
+		void CreatePoster(Poster poster);
+		//Poster? CreatePoster(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId);
+		Poster? CreatePoster(string name, string? description, ObjectId sourceJobId, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId);
 		IList<Poster> GetAllPosters();
+		IList<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
+		IList<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
+
 		bool PosterExists(string name);
 		bool TryGetPoster(ObjectId posterId, [MaybeNullWhen(false)] out Poster poster);
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
-		void CreatePoster(Poster poster);
 		void UpdatePoster(Poster poster);
-		void DeletePoster(ObjectId posterId);
+		bool DeletePoster(ObjectId posterId);
 
 		bool ProjectExists(string name);
 		//bool TryGetProject(ObjectId projectId, [MaybeNullWhen(false)] out Project project);

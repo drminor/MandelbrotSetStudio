@@ -19,28 +19,32 @@ namespace MSetExplorer
 		bool CurrentPosterOnFile { get; }
 		bool CurrentPosterIsDirty { get; }
 
+		Job CurrentJob { get; }
+		AreaColorAndCalcSettings CurrentAreaColorAndCalcSettings { get; }
 		MapAreaInfo PosterAreaInfo { get; }
 		SizeInt PosterSize { get; }
 
 		ColorBandSet ColorBandSet { get; }
-		void UpdateColorBandSet(ColorBandSet colorBandSet);
-
 		ColorBandSet? PreviewColorBandSet { get; set; }
 
 		VectorInt DisplayPosition { get; set; }
 		double DisplayZoom { get; set; }
 
-		AreaColorAndCalcSettings CurrentAreaColorAndCalcSettings { get; }
 
-		void UpdateMapView(TransformType transformType, RectangleInt newArea);
-		void ResetMapView(MapAreaInfo newMapAreaInfo);
+		//void UpdateMapView(Poster poster, RectangleInt? newArea);
 
+		void UpdateMapSpecs(TransformType transformType, RectangleInt newArea);
+		void UpdateMapSpecs(Poster currentPoster, MapAreaInfo newMapAreaInfo);
+		MapAreaInfo GetUpdatedMapAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize);
+
+		void UpdateColorBandSet(ColorBandSet colorBandSet);
 
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
-		bool Open(string name);
-		void Load(Poster poster);
-		void Save();
-		bool SaveAs(string name, string? description);
+		bool PosterOpen(string name);
+		void Load(Poster poster, MapAreaInfo? newMapAreaInfo);
+		
+		void PosterSave();
+		void PosterSaveAs(string name, string? description);
 		void Close();
 	}
 }

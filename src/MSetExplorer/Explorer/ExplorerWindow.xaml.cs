@@ -404,8 +404,8 @@ namespace MSetExplorer
 			{
 				if (SavePosterInteractive(_vm.MapProjectViewModel.CurrentProjectName, out var name, out var description))
 				{
-					//var currentSize = _vm.GetCanvasSize(curJob);
-					var newPoster = _vm.MapProjectViewModel.PosterCreate(name, description, curJob.CanvasSize);
+					var tentativePosterSize = curJob.CanvasSize;
+					var newPoster = _vm.MapProjectViewModel.PosterCreate(name, description, tentativePosterSize);
 					_vm.MapProjectViewModel.ProjectClose();
 
 					AppNavRequestResponse.OnCloseBehavior = OnCloseBehavior.ReturnToTopNav;

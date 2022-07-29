@@ -4,7 +4,8 @@ using System;
 
 namespace ProjectRepo.Entities
 {
-	public record ProjectRecord(string Name, 
+	public record ProjectRecord(
+		string Name, 
 		string? Description, 
 		ObjectId CurrentJobId,
 		DateTime LastSavedUtc

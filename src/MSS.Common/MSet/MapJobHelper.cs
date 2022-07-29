@@ -31,7 +31,19 @@ namespace MSS.Common
 			return result;
 		}
 
-		private Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+		public Job BuildHomeJob(SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+			TransformType transformType, SizeInt blockSize)
+		{
+			ObjectId? parentJobId = null;
+			ObjectId projectId = ObjectId.Empty;
+			RectangleInt? newArea = null;
+
+			var mapAreaInfo = GetMapAreaInfo(coords, canvasSize, blockSize);
+			var result = BuildJob(parentJobId, projectId, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea);
+			return result;
+		}
+
+		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea)
 		{
 			// Determine how much of the canvas control can be covered by the new map.

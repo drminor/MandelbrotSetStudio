@@ -154,12 +154,12 @@ namespace MSetExplorer
 			//Task.Run(async bitmapBuilder.BuildAsync(poster.))
 
 			var cts = new CancellationTokenSource();
-			var posterAreaInfo = poster.MapAreaInfo;
+			var posterAreaInfo = poster.CurrentJob.MapAreaInfo;
 			var previewMapArea = new MapAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.MapBlockOffset, posterAreaInfo.CanvasControlOffset);
 
 			//byte[]? result = null;
 
-			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, poster.ColorBandSet, poster.MapCalcSettings, cts.Token, StatusCallBack));
+			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, poster.CurrentColorBandSet, poster.CurrentJob.MapCalcSettings, cts.Token, StatusCallBack));
 
 			var result = task.Result;
 

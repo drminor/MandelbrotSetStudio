@@ -62,7 +62,7 @@ namespace ProjectRepo
 			return posterRecord != null;
 		}
 
-		public bool ExistsWithName(string name)
+		public bool PosterExists(string name)
 		{
 			var filter = Builders<PosterRecord>.Filter.Eq("Name", name);
 			var result = Collection.Find(filter).Any();
@@ -81,7 +81,7 @@ namespace ProjectRepo
 			var filter = Builders<PosterRecord>.Filter.Eq("_id", posterRecord.Id);
 
 			var updateDefinition = Builders<PosterRecord>.Update
-				.Set(u => u.JobAreaInfoRecord, posterRecord.JobAreaInfoRecord)
+				.Set(u => u.CurrentJobId, posterRecord.CurrentJobId)
 				.Set(u => u.DisplayPosition, posterRecord.DisplayPosition)
 				.Set(u => u.DisplayZoom, posterRecord.DisplayZoom);
 

@@ -27,7 +27,6 @@ namespace MSetExplorer
 		bool CanGoForward { get; }
 
 		ColorBandSet ColorBandSet { get; set; }
-		//void UpdateColorBandSet(ColorBandSet colorBandSet);
 		ColorBandSet? PreviewColorBandSet { get; set; }
 
 		// Job Methods

@@ -16,7 +16,7 @@ namespace MSetRepo
 			if (projectAdapter.TryGetProject(name, out var formerProject))
 			{
 				var formerProjectId = formerProject.Id;
-				var formerProjectJobIds = projectAdapter.GetAllJobsIdsForProject(formerProjectId);
+				var formerProjectJobIds = projectAdapter.GetAllJobIdsForProject(formerProjectId);
 
 				var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForMany(formerProjectJobIds, JobOwnerType.Project) ?? 0;
 				if (numberOfMapSectionsDeleted == 0)
@@ -25,6 +25,32 @@ namespace MSetRepo
 				}
 
 				if (!projectAdapter.DeleteProject(formerProjectId))
+				{
+					throw new InvalidOperationException("Cannot delete existing project record.");
+				}
+
+				return numberOfMapSectionsDeleted;
+			}
+			else
+			{
+				return -1;
+			}
+		}
+
+		public static long DeletePoster(string name, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
+		{
+			if (projectAdapter.TryGetPoster(name, out var formerPoster))
+			{
+				var formerPosterId = formerPoster.Id;
+				var formerProjectJobIds = projectAdapter.GetAllJobIdsForPoster(formerPosterId);
+
+				var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForMany(formerProjectJobIds, JobOwnerType.Project) ?? 0;
+				if (numberOfMapSectionsDeleted == 0)
+				{
+					Debug.WriteLine("WARNING: No MapSections were removed for the project being overwritten.");
+				}
+
+				if (!projectAdapter.DeletePoster(formerPosterId))
 				{
 					throw new InvalidOperationException("Cannot delete existing project record.");
 				}

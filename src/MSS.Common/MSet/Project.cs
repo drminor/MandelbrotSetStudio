@@ -13,7 +13,7 @@ using System.Threading;
 
 namespace MSS.Common
 {
-	public class Project : IDisposable, INotifyPropertyChanged
+	public class Project : IDisposable, INotifyPropertyChanged, IJobOwner
 	{
 		private string _name;
 		private string? _description;
@@ -30,7 +30,7 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public Project(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId) 
+		public Project(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId)
 			: this(ObjectId.GenerateNewId(), name, description, jobs, colorBandSets, currentJobId, DateTime.MinValue)
 		{
 			OnFile = false;
@@ -46,7 +46,7 @@ namespace MSS.Common
 			Id = id;
 			OnFile = true;
 
- 			_name = name ?? throw new ArgumentNullException(nameof(name));
+			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_description = description;
 
 			_jobTree = new JobTree(jobs);
@@ -79,16 +79,6 @@ namespace MSS.Common
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
 		public ObservableCollection<JobTreeItem>? JobItems => _jobTree.JobItems;
-
-		public List<Job> GetJobs()
-		{
-			return _jobTree.GetJobs().ToList();
-		}
-
-		public List<ColorBandSet> GetColorBandSets()
-		{
-			return _colorBandSets;
-		}
 
 		public bool CanGoBack => _jobTree.CanGoBack;
 		public bool CanGoForward => _jobTree.CanGoForward;
@@ -233,6 +223,8 @@ namespace MSS.Common
 			}
 		}
 
+		public ObjectId CurrentColorBandSetId => CurrentColorBandSet.Id;
+
 		#endregion
 
 		#region Public Methods
@@ -319,9 +311,14 @@ namespace MSS.Common
 			}
 		}
 
-		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
+		public List<Job> GetJobs()
 		{
-			return _jobTree.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out matchingProxy);
+			return _jobTree.GetJobs().ToList();
+		}
+
+		public List<ColorBandSet> GetColorBandSets()
+		{
+			return _colorBandSets;
 		}
 
 		public Job? GetJob(ObjectId jobId) => _jobTree.GetJob(jobId);
@@ -332,6 +329,11 @@ namespace MSS.Common
 
 		public List<JobTreeItem>? GetCurrentPath() => _jobTree.GetCurrentPath();
 		public List<JobTreeItem>? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
+
+		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
+		{
+			return _jobTree.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out matchingProxy);
+		}
 
 		public bool RestoreBranch(ObjectId jobId)
 		{
@@ -362,7 +364,7 @@ namespace MSS.Common
 			var targetIterations = job.MapCalcSettings.TargetIterations;
 
 			var result = GetColorBandSetForJob(colorBandSetId);
-			
+
 			if (result == null)
 			{
 				Debug.WriteLine($"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found {operationDescription}."); //as the project is being constructed

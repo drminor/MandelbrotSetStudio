@@ -213,7 +213,7 @@ namespace MSetExplorer
 				if (selectedName != null)
 				{
 					Debug.WriteLine($"Opening project with name: {selectedName}.");
-					_ = _vm.PosterViewModel.Open(selectedName);
+					_ = _vm.PosterViewModel.PosterOpen(selectedName);
 				}
 				else
 				{
@@ -230,7 +230,7 @@ namespace MSetExplorer
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.PosterViewModel.Save();
+			_vm.PosterViewModel.PosterSave();
 		}
 
 		// Project Save As
@@ -272,7 +272,7 @@ namespace MSetExplorer
 
 				if (TryGetNewSizeFromUser(curPoster, out var newPosterMapAreaInfo))
 				{
-					_vm.PosterViewModel.ResetMapView(newPosterMapAreaInfo);
+					_vm.PosterViewModel.UpdateMapSpecs(curPoster, newPosterMapAreaInfo);
 				}
 				else
 				{
@@ -402,7 +402,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
-				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, curPoster.MapCalcSettings.TargetIterations);
+				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, curPoster.CurrentJob.MapCalcSettings.TargetIterations);
 				_vm.PosterViewModel.UpdateColorBandSet(adjustedCbs);
 			}
 			else
@@ -589,7 +589,7 @@ namespace MSetExplorer
 				if (_vm.PosterViewModel.CurrentPosterOnFile)
 				{
 					// Silently record the new CurrentJob selection
-					_vm.PosterViewModel.Save();
+					_vm.PosterViewModel.PosterSave();
 					return SaveResultP.CurrentJobAutoSaved;
 				}
 
@@ -610,7 +610,7 @@ namespace MSetExplorer
 				if (_vm.PosterViewModel.CurrentPosterOnFile)
 				{
 					// The Project is on-file, just save the pending changes.
-					_vm.PosterViewModel.Save();
+					_vm.PosterViewModel.PosterSave();
 					return SaveResultP.ChangesSaved;
 				}
 				else
@@ -649,7 +649,8 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"Saving project with name: {selectedName}.");
 					// TODO: Handle cases where ProjectSaveAs fails.
-					result = _vm.PosterViewModel.SaveAs(selectedName, description);
+					_vm.PosterViewModel.PosterSaveAs(selectedName, description);
+					result = true;
 				}
 				else
 				{
@@ -747,16 +748,13 @@ namespace MSetExplorer
 
 			if (_vm.PosterViewModel.TryGetPoster(posterName, out var poster))
 			{
+				MapAreaInfo? newPosterMapAreaInfo = null;
 				if (getSizeRequestParameter)
 				{
-					if (TryGetNewSizeFromUser(poster, out var newPosterMapAreaInfo))
-					{
-						// The View Model has not been fully initialized yet, so we update the poster directly.
-						poster.MapAreaInfo = newPosterMapAreaInfo;
-					}
+					_ = TryGetNewSizeFromUser(poster, out newPosterMapAreaInfo);
 				}
 
-				_vm.PosterViewModel.Load(poster);
+				_vm.PosterViewModel.Load(poster, newPosterMapAreaInfo);
 			}
 			else
 			{
@@ -766,14 +764,16 @@ namespace MSetExplorer
 
 		private bool TryGetNewSizeFromUser(Poster poster, out MapAreaInfo newPosterMapAreaInfo)
 		{
-			var cts = new CancellationTokenSource();
-			var previewSize = GetPreviewSize(poster.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
+			var curJob = poster.CurrentJob;
 
-			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(poster.MapAreaInfo, poster.ColorBandSet, poster.MapCalcSettings, previewSize, FALL_BACK_COLOR);
+			var cts = new CancellationTokenSource();
+			var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
+
+			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, previewSize, FALL_BACK_COLOR);
 
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 
-			var posterSizeEditorDialog = new PosterSizeEditorDialog(poster.MapAreaInfo)
+			var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo)
 			{
 				DataContext = posterSizeEditorViewModel
 			};
@@ -946,7 +946,7 @@ namespace MSetExplorer
 			var qualifiedAmount = GetPanAmount(amount, qualifer);
 			var panVector = GetPanVector(direction, qualifiedAmount);
 			var newArea = new RectangleInt(new PointInt(panVector), _vm.PosterViewModel.CanvasSize.Round());
-			_vm.PosterViewModel.UpdateMapView(TransformType.Pan, newArea);
+			_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, newArea);
 		}
 
 		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)
@@ -993,7 +993,7 @@ namespace MSetExplorer
 			var curArea = new RectangleInt(new PointInt(), _vm.PosterViewModel.CanvasSize.Round());
 			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
-			_vm.PosterViewModel.UpdateMapView(TransformType.ZoomOut, newArea);
+			_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea);
 		}
 
 		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)

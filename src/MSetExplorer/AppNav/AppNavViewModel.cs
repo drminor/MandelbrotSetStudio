@@ -61,7 +61,7 @@ namespace MSetExplorer
 		public PosterDesignerViewModel GetPosterDesignerViewModel()
 		{
 			// Poster ViewModel
-			var posterViewModel = new PosterViewModel(_projectAdapter);
+			var posterViewModel = new PosterViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();

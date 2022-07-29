@@ -130,33 +130,8 @@ namespace MSetExplorer
 
 		public MapAreaInfo GetUpdatedMapAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
 		{
-			var mapPosition = mapAreaInfo.Coords.Position;
-			var samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta;
-			var screenAreaInt = screenArea.Round();
-
-			var coords = RMapHelper.GetMapCoords(screenAreaInt, mapPosition, samplePointDelta);
-
-			CheckCoordsChange(mapAreaInfo, screenArea, coords);
-
-			var posterSize = newMapSize.Round();
-			var blockSize = mapAreaInfo.Subdivision.BlockSize;
-
-			var result = _mapJobHelper.GetMapAreaInfo(coords, posterSize, blockSize);
-
+			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, screenArea, newMapSize);
 			return result;
-		}
-
-		[Conditional("DEBUG")]
-		private void CheckCoordsChange(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, RRectangle newCoords)
-		{
-			if (screenArea == new RectangleDbl(new RectangleInt(new PointInt(), mapAreaInfo.CanvasSize)))
-			{
-				if (Reducer.Reduce(newCoords) != Reducer.Reduce(mapAreaInfo.Coords))
-				{
-					Debug.WriteLine($"The new ScreenArea matches the existing ScreenArea, but the Coords were updated.");
-					//throw new InvalidOperationException("if the pos has not changed, the coords should not change.");
-				}
-			}
 		}
 
 		#endregion
