@@ -326,7 +326,9 @@ namespace MSetExplorer
 					throw new InvalidOperationException("Cannot save an unloaded project, use SaveProject instead.");
 				}
 
-				poster.Save(_projectAdapter);
+				JobOwnerHelper.Save(poster, _projectAdapter);
+
+				//poster.Save(_projectAdapter);
 
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterIsDirty));
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterOnFile));
@@ -416,9 +418,10 @@ namespace MSetExplorer
 		public void UpdateMapSpecs(Poster currentPoster, MapAreaInfo newMapAreaInfo)
 		{
 			var curJob = currentPoster.CurrentJob;
+			var colorBandSetId = curJob.ColorBandSetId;
 			var mapCalcSettings = curJob.MapCalcSettings;
 
-			LoadMap(currentPoster, curJob, newMapAreaInfo, ColorBandSet.Id, mapCalcSettings, TransformType.ZoomIn);
+			LoadMap(currentPoster, curJob, newMapAreaInfo, colorBandSetId, mapCalcSettings, TransformType.ZoomIn);
 			OnPropertyChanged(nameof(IPosterViewModel.PosterSize));
 			currentPoster.DisplayPosition = new VectorInt();
 			currentPoster.DisplayZoom = 1;
@@ -444,9 +447,11 @@ namespace MSetExplorer
 
 			var mapPosition = curJob.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-
 			var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-			LoadMap(currentPoster, curJob, coords, curJob.ColorBandSetId, curJob.MapCalcSettings, transformType, screenArea);
+
+			var colorBandSetId = curJob.ColorBandSetId;
+			var mapCalcSettings = curJob.MapCalcSettings;
+			LoadMap(currentPoster, curJob, coords, colorBandSetId, mapCalcSettings, transformType, screenArea);
 
 			OnPropertyChanged(nameof(IPosterViewModel.PosterSize));
 			currentPoster.DisplayPosition = new VectorInt();

@@ -405,14 +405,22 @@ namespace MSetExplorer
 				if (SavePosterInteractive(_vm.MapProjectViewModel.CurrentProjectName, out var name, out var description))
 				{
 					var tentativePosterSize = curJob.CanvasSize;
-					var newPoster = _vm.MapProjectViewModel.PosterCreate(name, description, tentativePosterSize);
-					_vm.MapProjectViewModel.ProjectClose();
 
-					AppNavRequestResponse.OnCloseBehavior = OnCloseBehavior.ReturnToTopNav;
-					AppNavRequestResponse.ResponseCommand = RequestResponseCommand.OpenPoster;
-					AppNavRequestResponse.ResponseParameters = new string[] { newPoster.Name, "OpenSizeDialog" };
+					if (_vm.MapProjectViewModel.TryCreatePoster(name, description, tentativePosterSize, out var newPoster))
+					{
+						_vm.MapProjectViewModel.ProjectClose();
 
-					Close();
+						AppNavRequestResponse.OnCloseBehavior = OnCloseBehavior.ReturnToTopNav;
+						AppNavRequestResponse.ResponseCommand = RequestResponseCommand.OpenPoster;
+						AppNavRequestResponse.ResponseParameters = new string[] { newPoster.Name, "OpenSizeDialog" };
+
+						Close();
+					}
+					else
+					{
+						_ = MessageBox.Show("Could not create the new poster.");
+					}
+
 				}
 			}
 		}

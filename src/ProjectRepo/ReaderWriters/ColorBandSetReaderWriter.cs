@@ -114,14 +114,12 @@ namespace ProjectRepo
 
 		public IEnumerable<ObjectId> GetColorBandSetIdsForProject(ObjectId projectId)
 		{
-			// TODO: Use Projection
+			var projection1 = Builders<ColorBandSetRecord>.Projection.Expression(p => p.Id);
+
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
-			var colorBandSets = Collection.Find(filter).ToList();
+			var colorBandSetIds = Collection.Find(filter).Project(projection1).ToList();
 
-			// Get the _id values of the found documents
-			var ids = colorBandSets.Select(d => d.Id);
-
-			return ids;
+			return colorBandSetIds;
 		}
 
 		public IEnumerable<ColorBandSetRecord> GetColorBandSetsForProject(ObjectId projectId)
@@ -131,22 +129,6 @@ namespace ProjectRepo
 
 			return colorBandSets;
 		}
-
-		//public DateTime GetLastSaveTime(ObjectId projectId)
-		//{
-		//	var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
-		//	var cbSetRecs = Collection.Find(filter).ToList();
-
-		//	if (cbSetRecs.Count < 1)
-		//	{
-		//		return DateTime.MinValue;
-		//	}
-		//	else
-		//	{
-		//		var result = cbSetRecs.Max(x => x.Id.CreationTime);
-		//		return result;
-		//	}
-		//}
 
 	}
 }

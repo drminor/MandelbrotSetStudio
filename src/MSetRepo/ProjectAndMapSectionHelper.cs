@@ -92,6 +92,8 @@ namespace MSetRepo
 				throw new InvalidOperationException("Cannot delete existing job record.");
 			}
 
+			//projectAdapter.d
+
 			return numberOfMapSectionsDeleted ?? 0;
 		}
 

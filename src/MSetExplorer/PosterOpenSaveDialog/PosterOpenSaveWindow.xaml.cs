@@ -38,7 +38,7 @@ namespace MSetExplorer
 				btnSave.Content = _vm.DialogType == DialogType.Open ? "Open" : "Save";
 				Title = _vm.DialogType == DialogType.Open ? "Open Poster" : "Save Poster";
 
-				lvPosters.ItemsSource = _vm.Posters;
+				lvPosters.ItemsSource = _vm.PosterInfos;
 				lvPosters.SelectionChanged += LvPosters_SelectionChanged;
 
 				lvPosters.MouseDoubleClick += LvPosters_MouseDoubleClick;

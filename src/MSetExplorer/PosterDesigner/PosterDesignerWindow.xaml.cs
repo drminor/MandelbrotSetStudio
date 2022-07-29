@@ -212,12 +212,12 @@ namespace MSetExplorer
 			{
 				if (selectedName != null)
 				{
-					Debug.WriteLine($"Opening project with name: {selectedName}.");
+					Debug.WriteLine($"Opening poster with name: {selectedName}.");
 					_ = _vm.PosterViewModel.PosterOpen(selectedName);
 				}
 				else
 				{
-					Debug.WriteLine($"Cannot open project with name: {selectedName}.");
+					Debug.WriteLine($"Cannot open poster with name: {selectedName}.");
 				}
 			}
 		}

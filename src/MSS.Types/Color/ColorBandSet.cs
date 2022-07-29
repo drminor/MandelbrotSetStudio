@@ -13,7 +13,18 @@ namespace MSS.Types
 {
 	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet?>, ICloneable, INotifyPropertyChanged
 	{
-		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
+		#region Static Members
+
+		public static ColorBandSet Empty { get;}
+		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND;
+
+		static ColorBandSet()
+		{
+			DEFAULT_HIGH_COLOR_BAND = new(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
+			Empty = new ColorBandSet();
+		}
+
+		#endregion
 
 		private ObjectId? _parentId;
 		private ObjectId _projectId;
@@ -26,7 +37,9 @@ namespace MSS.Types
 		#region Constructor
 
 		public ColorBandSet() : this(projectId: ObjectId.Empty, colorBands: null)
-		{ }
+		{
+			Id = ObjectId.Empty;
+		}
 
 		public ColorBandSet(IList<ColorBand>? colorBands) : this(projectId: ObjectId.Empty, colorBands)
 		{ }
@@ -381,7 +394,6 @@ namespace MSS.Types
 				var minCutoff = colorBands[0].StartingCutoff;
 
 				var totalRange = 1 + maxCutoff - minCutoff;
-
 			}
 
 			return result;

@@ -6,6 +6,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace MSetExplorer
@@ -307,7 +308,7 @@ namespace MSetExplorer
 
 		#region Public Methods - Poster 
 
-		public Poster PosterCreate(string name, string? description, SizeInt posterSize)
+		public bool TryCreatePoster(string name, string? description, SizeInt posterSize, [MaybeNullWhen(false)] out Poster poster)
 		{
 			var curJob = CurrentJob;
 			if (CurrentProject == null || curJob.IsEmpty)
@@ -323,12 +324,14 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting job for new Poster with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			var sourceJobId = curJob.Id;
-			var poster = new Poster(name, description, sourceJobId, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
-			job.ProjectId = CurrentProject.Id;
 
-			_projectAdapter.CreatePoster(poster);
+			poster = _projectAdapter.CreatePoster(name, description, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet });
+			if (poster != null)
+			{
+				_ = JobOwnerHelper.Save(poster, _projectAdapter);
+			}
 
-			return poster;
+			return poster != null;
 		}
 
 		#endregion

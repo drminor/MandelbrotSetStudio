@@ -31,12 +31,13 @@ namespace MSS.Common
 		#region Constructor
 
 		public Project(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId)
-			: this(ObjectId.GenerateNewId(), name, description, jobs, colorBandSets, currentJobId, DateTime.MinValue)
+			: this(ObjectId.GenerateNewId(), name, description, jobs, colorBandSets, currentJobId, DateTime.MinValue, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}
 
-		public Project(ObjectId id, string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId, DateTime lastSavedUtc)
+		public Project(ObjectId id, string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
+			DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			if (!jobs.Any())
 			{
@@ -56,6 +57,7 @@ namespace MSS.Common
 
 			LastUpdatedUtc = DateTime.MinValue;
 			LastSavedUtc = lastSavedUtc;
+			LastAccessedUtc = lastAccessedUtc;
 			_originalCurrentJobId = currentJobId;
 
 			var currentJob = jobs.FirstOrDefault(x => x.Id == currentJobId);
@@ -119,6 +121,8 @@ namespace MSS.Common
 			}
 		}
 
+		public DateTime DateCreatedUtc { get; init; }
+
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;
@@ -145,6 +149,8 @@ namespace MSS.Common
 				}
 			}
 		}
+
+		public DateTime LastAccessedUtc { get; init; } // TODO: finish incorporating this property into this class.
 
 		public Job CurrentJob
 		{
@@ -227,7 +233,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Public Methods
+		#region Public Methods - Job Tree
 
 		public void Add(Job job)
 		{
@@ -258,6 +264,13 @@ namespace MSS.Common
 		{
 			_colorBandSets.Add(colorBandSet);
 			LastUpdatedUtc = DateTime.UtcNow;
+		}
+
+		public void MarkAsSaved()
+		{
+			LastSavedUtc = DateTime.UtcNow;
+			_originalCurrentJobId = CurrentJobId;
+			_jobTree.IsDirty = false;
 		}
 
 		public bool GoBack(bool skipPanJobs)
@@ -345,13 +358,6 @@ namespace MSS.Common
 		{
 			var result = _jobTree.RemoveBranch(jobId);
 			return result;
-		}
-
-		public void MarkAsSaved()
-		{
-			LastSavedUtc = DateTime.UtcNow;
-			_originalCurrentJobId = CurrentJobId;
-			_jobTree.IsDirty = false;
 		}
 
 		#endregion

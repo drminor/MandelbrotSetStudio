@@ -16,5 +16,7 @@ namespace ProjectRepo.Entities
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
 		public DateTime DateCreated => Id.CreationTime;
+
+		public DateTime LastAccessedUtc { get; set; }
 	}
 }

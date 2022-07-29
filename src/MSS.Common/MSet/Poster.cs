@@ -9,10 +9,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace MSS.Common
 {
+	// TODO: Dispose the Job Tree
 	public class Poster : INotifyPropertyChanged, ICloneable, IJobOwner
 	{
 		private string _name;
@@ -22,7 +22,7 @@ namespace MSS.Common
 		private readonly IJobTree _jobTree;
 		private readonly List<ColorBandSet> _colorBandSets;
 
-		private readonly ReaderWriterLockSlim _stateLock;
+		//private readonly ReaderWriterLockSlim _stateLock;
 
 		private DateTime _lastUpdatedUtc;
 		private DateTime _lastSavedUtc;
@@ -32,38 +32,21 @@ namespace MSS.Common
 		private VectorInt _dispPosition;
 		private double _displayZoom;
 
-		//private MapAreaInfo _mapAreaInfo;
-		//private ColorBandSet _colorBandSet;
-		//private MapCalcSettings _mapCalcSettings;
-
 		#region Constructor
 
 		public Poster(string name, string? description, ObjectId sourceJobId,
-
 			IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId
-
-			//, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings
 			)
-
 			: this(ObjectId.GenerateNewId(), name, description, sourceJobId,
-
 				  jobs, colorBandSets, currentJobId,
-
-				  //mapAreaInfo, colorBandSet, mapCalcSettings, 
-
 				  new VectorInt(), 1.0d,
-
 				  DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}
 
 		public Poster(ObjectId id, string name, string? description, ObjectId sourceJobId,
-
 			IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
-
-			//MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
-
 			VectorInt displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
@@ -74,27 +57,19 @@ namespace MSS.Common
 
 			SourceJobId = sourceJobId;
 
-			//_mapAreaInfo = mapAreaInfo;
-			//_colorBandSet = colorBandSet;
-			//_mapCalcSettings = mapCalcSettings;
-
 			_dispPosition = displayPosition;
 			_displayZoom = displayZoom;
+
+			_jobTree = new JobTree(jobs);
+
+			_colorBandSets = new List<ColorBandSet>(colorBandSets);
+			//_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 			DateCreatedUtc = dateCreatedUtc;
 			LastUpdatedUtc = DateTime.MinValue;
 			LastSavedUtc = lastSavedUtc;
 			LastAccessedUtc = lastAccessedUtc;
 
-
-
-			_jobTree = new JobTree(jobs);
-			//_colorBandSetCollection = new ColorBandSetCollection(colorBandSets);
-			_colorBandSets = new List<ColorBandSet>(colorBandSets);
-			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
-
-			LastUpdatedUtc = DateTime.MinValue;
-			LastSavedUtc = lastSavedUtc;
 			_originalCurrentJobId = currentJobId;
 
 			var currentJob = jobs.FirstOrDefault(x => x.Id == currentJobId);
@@ -105,23 +80,18 @@ namespace MSS.Common
 				Debug.WriteLine($"WARNING: The Project has a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
 			}
 
-			LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
 			_jobTree.CurrentJob = currentJob;
+			var colorBandSet = LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
 
 			_size = string.Empty;
 			Size = GetFormattedPosterSize(currentJob.MapAreaInfo.CanvasSize);
 
-			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentJob.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
-
-
-			//Debug.WriteLine($"Poster is loaded.");
+			Debug.WriteLine($"Poster is loaded. CurrentJobId: {CurrentJob.Id}, Current ColorBandSetId: {CurrentColorBandSet.Id}. IsDirty: {IsDirty}");
 		}
 
 		#endregion
 
 		#region Public Properties
-
-		//public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
@@ -133,7 +103,6 @@ namespace MSS.Common
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyJobIsDirty;
 
 		public bool IsCurrentJobIdChanged => CurrentJobId != _originalCurrentJobId;
-
 
 		public ObjectId Id { get; init; }
 
@@ -181,54 +150,6 @@ namespace MSS.Common
 		}
 
 		public ObjectId SourceJobId { get; init; }
-
-		//public AreaColorAndCalcSettings 
-		//	{
-		//	get; set;
-		//}
-
-		//public MapAreaInfo MapAreaInfo
-		//{
-		//	get => _mapAreaInfo;
-		//	set
-		//	{
-		//		if (value != _mapAreaInfo)
-		//		{
-		//			_mapAreaInfo = value;
-		//			Size = GetFormattedPosterSize(value.CanvasSize);
-		//			LastUpdatedUtc = DateTime.UtcNow;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
-
-		//public ColorBandSet ColorBandSet
-		//{
-		//	get => _colorBandSet;
-		//	set
-		//	{
-		//		if (value != _colorBandSet)
-		//		{
-		//			_colorBandSet = value;
-		//			LastUpdatedUtc = DateTime.UtcNow;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
-
-		//public MapCalcSettings MapCalcSettings
-		//{
-		//	get => _mapCalcSettings;
-		//	set
-		//	{
-		//		if (value != _mapCalcSettings)
-		//		{
-		//			_mapCalcSettings = value;
-		//			LastUpdatedUtc = DateTime.UtcNow;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
 
 		public VectorInt DisplayPosition
 		{
@@ -325,13 +246,19 @@ namespace MSS.Common
 			get
 			{
 				var currentJob = CurrentJob;
-
 				if (currentJob.IsEmpty)
 				{
 					throw new InvalidOperationException("The current job is empty.");
 				}
-
 				return currentJob.Id;
+			}
+			set
+			{
+				if (value != CurrentJobId)
+				{
+					CurrentJobId = value;
+					OnPropertyChanged();
+				}
 			}
 		}
 
@@ -381,21 +308,9 @@ namespace MSS.Common
 		{
 			_jobTree.Add(job, selectTheAddedJob: true);
 
-			//if (!_colorBandSetCollection.MoveCurrentTo(job.ColorBandSetId))
-			//{
-			//	throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
-			//}
-
 			var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
 
-			if (colorBandSet == null)
-			{
-				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
-			}
-			else
-			{
-				CurrentColorBandSet = colorBandSet;
-			}
+			CurrentColorBandSet = colorBandSet ?? throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
 
 			LastUpdatedUtc = DateTime.UtcNow;
 
@@ -413,14 +328,6 @@ namespace MSS.Common
 			LastSavedUtc = DateTime.UtcNow;
 			_originalCurrentJobId = CurrentJobId;
 			_jobTree.IsDirty = false;
-		}
-
-
-		public bool Save(IProjectAdapter projectAdapter)
-		{
-			projectAdapter.UpdatePoster(this);
-			LastSavedUtc = DateTime.UtcNow;
-			return true;
 		}
 
 		#endregion
@@ -474,17 +381,23 @@ namespace MSS.Common
 
 			var result = GetColorBandSetForJob(colorBandSetId);
 
-			if (result == null)
+			if (result == null || result.HighCutoff != targetIterations)
 			{
-				Debug.WriteLine($"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found {operationDescription}."); //as the project is being constructed
+				string msg;
+				if (result == null)
+				{
+					msg = $"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found {operationDescription}."; //as the project is being constructed
+				}
+				else
+				{
+					msg = $"WARNING: The Current Job's ColorBandSet {colorBandSetId} has a HighCutoff that is different than that Job's target iteration." +
+						$"Loading the best matching ColorBandSet from the same project {operationDescription}.";
+				}
+
+				Debug.WriteLine(msg);
+
 				result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
-				job.ColorBandSetId = result.Id;
-				LastUpdatedUtc = DateTime.UtcNow;
-			}
-			else if (result.HighCutoff != targetIterations)
-			{
-				Debug.WriteLine($"WARNING: A ColorBandSet different than the currentJob's ColorBandSet is being loaded {operationDescription}.");
-				result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
+				_colorBandSets.Add(result);
 				job.ColorBandSetId = result.Id;
 				LastUpdatedUtc = DateTime.UtcNow;
 			}
@@ -511,8 +424,6 @@ namespace MSS.Common
 			{
 				var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
 				Debug.WriteLine($"WARNING: Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id} for job: {CurrentJobId}.");
-
-				_colorBandSets.Add(adjustedColorBandSet);
 				colorBandSet = adjustedColorBandSet;
 			}
 
@@ -536,7 +447,7 @@ namespace MSS.Common
 
 		Poster Clone()
 		{
-			return new Poster(Name, Description, SourceJobId, 
+			return new Poster(Name, Description, SourceJobId,
 				//MapAreaInfo.Clone(), ColorBandSet, MapCalcSettings
 				_jobTree.GetJobs().ToList(), _colorBandSets, _jobTree.CurrentJob.Id
 				);

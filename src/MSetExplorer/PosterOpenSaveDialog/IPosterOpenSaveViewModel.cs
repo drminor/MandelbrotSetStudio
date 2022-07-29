@@ -1,6 +1,5 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using System.Collections.ObjectModel;
 
 namespace MSetExplorer
@@ -9,8 +8,8 @@ namespace MSetExplorer
 	{
 		DialogType DialogType { get; }
 
-		ObservableCollection<Poster> Posters { get; }
-		Poster? SelectedPoster { get; set; }
+		ObservableCollection<IPosterInfo> PosterInfos { get; }
+		IPosterInfo? SelectedPoster { get; set; }
 
 		string? SelectedName { get; set; }
 		string? SelectedDescription { get; set; }

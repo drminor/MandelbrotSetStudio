@@ -21,6 +21,7 @@ namespace MSS.Types.MSet
 
 		public Job()
 		{
+			Id = ObjectId.Empty;
 			MapAreaInfo = new MapAreaInfo();
 			ColorBandSetId = ObjectId.Empty;
 			MapCalcSettings = new MapCalcSettings();

@@ -5,6 +5,7 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -19,7 +20,7 @@ namespace MSetExplorer
 	{
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly IProjectAdapter _projectAdapter;
-		private Poster? _selectedPoster;
+		private IPosterInfo? _selectedPoster;
 
 		private string? _selectedName;
 		private string? _selectedDescription;
@@ -34,8 +35,9 @@ namespace MSetExplorer
 			_projectAdapter = projectAdapter;
 			DialogType = dialogType;
 
-			Posters = new ObservableCollection<Poster>(_projectAdapter.GetAllPosters());
-			SelectedPoster = Posters.FirstOrDefault(x => x.Name == initialName);
+			var posters = _projectAdapter.GetAllPosterInfos();
+			PosterInfos = new ObservableCollection<IPosterInfo>(posters);
+			SelectedPoster = PosterInfos.FirstOrDefault(x => x.Name == initialName);
 
 			if (SelectedPoster == null)
 			{
@@ -43,7 +45,7 @@ namespace MSetExplorer
 				_userIsSettingTheName = true;
 			}
 
-			var view = CollectionViewSource.GetDefaultView(Posters);
+			var view = CollectionViewSource.GetDefaultView(PosterInfos);
 			_ = view.MoveCurrentTo(SelectedPoster);
 		}
 
@@ -53,7 +55,7 @@ namespace MSetExplorer
 
 		public DialogType DialogType { get; }
 
-		public ObservableCollection<Poster> Posters { get; init; }
+		public ObservableCollection<IPosterInfo> PosterInfos { get; init; }
 
 		public string? SelectedName
 		{
@@ -83,9 +85,9 @@ namespace MSetExplorer
 			{
 				_selectedDescription = value;
 
-				if (SelectedPoster != null && SelectedPoster.Id != ObjectId.Empty && SelectedPoster.Description != value)
+				if (SelectedPoster != null && SelectedPoster.PosterId != ObjectId.Empty && SelectedPoster.Description != value)
 				{
-					_projectAdapter.UpdateProjectDescription(SelectedPoster.Id, SelectedDescription);
+					_projectAdapter.UpdateProjectDescription(SelectedPoster.PosterId, SelectedDescription);
 					SelectedPoster.Description = value;
 				}
 
@@ -93,7 +95,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public Poster? SelectedPoster
+		public IPosterInfo? SelectedPoster
 		{
 			get => _selectedPoster;
 
@@ -135,31 +137,37 @@ namespace MSetExplorer
 
 			if (poster != null)
 			{
-				_projectAdapter.DeletePoster(poster.Id);
-				_ = Posters.Remove(poster);
+				_projectAdapter.DeletePoster(poster.PosterId);
+				_ = PosterInfos.Remove(poster);
 			}
 		}
 
 		public byte[]? GetPreviewImageData(SizeInt imageSize)
 		{
-			var poster = SelectedPoster;
+			var posterInfo = SelectedPoster;
 
-			if (poster == null)
+			if (posterInfo == null)
 			{
 				throw new InvalidOperationException("No Selected Poster.");
 			}
 
-			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+			var job = _projectAdapter.GetJob(posterInfo.CurrentJobId);
+			var colorBandSet = _projectAdapter.GetColorBandSet(job.ColorBandSetId.ToString());
+			if (colorBandSet == null)
+			{
+				throw new KeyNotFoundException($"Could not fetch the Current ColorBandSet: {job.ColorBandSetId} for job: {posterInfo.CurrentJobId}.");
+			}
 
 			//Task.Run(async bitmapBuilder.BuildAsync(poster.))
 
-			var cts = new CancellationTokenSource();
-			var posterAreaInfo = poster.CurrentJob.MapAreaInfo;
+			var posterAreaInfo = job.MapAreaInfo;
 			var previewMapArea = new MapAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.MapBlockOffset, posterAreaInfo.CanvasControlOffset);
 
 			//byte[]? result = null;
 
-			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, poster.CurrentColorBandSet, poster.CurrentJob.MapCalcSettings, cts.Token, StatusCallBack));
+			var cts = new CancellationTokenSource();
+			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, job.MapCalcSettings, cts.Token, StatusCallBack));
 
 			var result = task.Result;
 

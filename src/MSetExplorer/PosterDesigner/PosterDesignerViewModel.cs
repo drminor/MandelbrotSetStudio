@@ -180,7 +180,7 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 
-				MapCoordsViewModel.JobId = PosterViewModel.CurrentPoster?.SourceJobId.ToString();
+				MapCoordsViewModel.JobId = PosterViewModel.CurrentPoster?.CurrentJob.Id.ToString();
 				MapCoordsViewModel.CurrentMapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
 
 				//MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: false);

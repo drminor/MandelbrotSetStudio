@@ -14,7 +14,7 @@ namespace MSetExplorer
 	{
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private Project? _currentProject;
+		private IJobOwner? _currentProject;
 
 		#region Constructor
 
@@ -33,7 +33,7 @@ namespace MSetExplorer
 
 		public ObservableCollection<JobTreeItem>? JobItems => CurrentProject?.JobItems;
 
-		public Project? CurrentProject
+		public IJobOwner? CurrentProject
 		{
 			get => _currentProject;
 			set
@@ -130,9 +130,7 @@ namespace MSetExplorer
 					result++;
 				}
 
-				//CurrentProject.GoBack(skipPanJobs: true);
-
-				CurrentProject.DeleteBranch(jobId);
+				_ = CurrentProject.DeleteBranch(jobId);
 
 				return result;
 			}
@@ -155,13 +153,13 @@ namespace MSetExplorer
 
 			var sb = new StringBuilder();
 
-			sb.AppendLine($"TransformType: {jobTreeItem.TransformType}");
-			sb.AppendLine($"Id: {jobTreeItem.JobId}");
-			sb.AppendLine($"ParentId: {jobTreeItem.ParentJobId}");
-			sb.AppendLine($"Is Alternate Path Head: {jobTreeItem.IsAlternatePathHead}");
-			sb.AppendLine($"Is Parked Alternate: {jobTreeItem.IsParkedAlternatePathHead} ");
-			sb.AppendLine($"Children: {jobTreeItem.Children.Count}");
-			sb.AppendLine($"CanvasSize Disp Alternates: {jobTreeItem.AlternateDispSizes?.Count ?? 0}");
+			_ = sb.AppendLine($"TransformType: {jobTreeItem.TransformType}");
+			_ = sb.AppendLine($"Id: {jobTreeItem.JobId}");
+			_ = sb.AppendLine($"ParentId: {jobTreeItem.ParentJobId}");
+			_ = sb.AppendLine($"Is Alternate Path Head: {jobTreeItem.IsAlternatePathHead}");
+			_ = sb.AppendLine($"Is Parked Alternate: {jobTreeItem.IsParkedAlternatePathHead} ");
+			_ = sb.AppendLine($"Children: {jobTreeItem.Children.Count}");
+			_ = sb.AppendLine($"CanvasSize Disp Alternates: {jobTreeItem.AlternateDispSizes?.Count ?? 0}");
 
 			if (jobTreeItem.Job.ParentJobId.HasValue)
 			{

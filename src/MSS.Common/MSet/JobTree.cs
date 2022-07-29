@@ -30,12 +30,14 @@ namespace MSS.Common
 			}
 			else
 			{
-				_root = BuildTreeForOldPro(jobs, out _currentPath);
+				_root = BuildTree(jobs, out _currentPath);
 
-				var homeId = _root.Children[0].Job.Id;
-				var numberLoaded = LoadJobsForOldPro(jobs, homeId, out _currentPath);
+				//_root = BuildTreeForOldPro(jobs, out _currentPath);
 
-				Debug.WriteLine($"Loaded {numberLoaded + 1} jobs out of {jobs.Count()} jobs.");
+				//var homeId = _root.Children[0].Job.Id;
+				//var numberLoaded = LoadJobsForOldPro(jobs, homeId, out _currentPath);
+
+				//Debug.WriteLine($"Loaded {numberLoaded + 1} jobs out of {jobs.Count()} jobs.");
 			}
 		}
 

@@ -13,7 +13,7 @@ namespace MSetExplorer
 	{
 		bool InDesignMode { get; }
 
-		Project? CurrentProject { get; set; }
+		IJobOwner? CurrentProject { get; set; }
 		Job? CurrentJob { get; set; }
 
 		bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job);

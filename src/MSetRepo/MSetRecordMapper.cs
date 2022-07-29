@@ -46,7 +46,8 @@ namespace MSetRepo
 		{
 			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc)
 			{
-				Id = source.Id
+				Id = source.Id,
+				LastAccessedUtc = source.LastAccessedUtc
 			};
 
 			return result;

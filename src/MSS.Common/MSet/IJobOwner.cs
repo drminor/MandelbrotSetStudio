@@ -3,6 +3,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace MSS.Common
 {
@@ -12,20 +13,33 @@ namespace MSS.Common
 		string Name { get; set; }
 		string? Description { get; set; }
 
-		ObjectId CurrentJobId { get; }
+		 ObservableCollection<JobTreeItem>? JobItems { get; }
+
+
+		Job CurrentJob { get; set; }
 		ObjectId CurrentColorBandSetId { get; }
 
-		List<Job> GetJobs();
-		List<ColorBandSet> GetColorBandSets();
 
 		bool OnFile { get; }
 		bool IsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
 
-		DateTime DateCreated { get; }
+		DateTime DateCreatedUtc { get; init; }
 		DateTime LastSavedUtc { get; }
+		DateTime LastAccessedUtc { get; init; }
 		DateTime LastUpdatedUtc { get; }
 
+		List<Job> GetJobs();
+		List<ColorBandSet> GetColorBandSets();
+
+		List<JobTreeItem>? GetCurrentPath();
+		Job? GetJob(ObjectId jobId);
+		List<Job>? GetJobAndDescendants(ObjectId jobId);
+		Job? GetParent(Job job);
+		List<JobTreeItem>? GetPath(ObjectId jobId);
+
+		bool RestoreBranch(ObjectId jobId);
+		bool DeleteBranch(ObjectId jobId);
 		void MarkAsSaved();
 	}
 }

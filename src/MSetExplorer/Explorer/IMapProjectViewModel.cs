@@ -3,6 +3,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
@@ -47,6 +48,7 @@ namespace MSetExplorer
 
 		long DeleteMapSectionsForUnsavedJobs();
 
-		Poster PosterCreate(string name, string? description, SizeInt posterSize);
+		//Poster PosterCreate(string name, string? description, SizeInt posterSize);
+		bool TryCreatePoster(string name, string? description, SizeInt posterSize, [MaybeNullWhen(false)] out Poster poster);
 	}
 }
