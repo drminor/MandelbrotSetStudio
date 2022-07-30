@@ -99,7 +99,7 @@ namespace MSetExplorer
 					if (_currentPoster != null)
 					{
 						var dispPos = _currentPoster.DisplayPosition;
-						OnPropertyChanged(nameof(IPosterViewModel.PosterSize));
+						OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 						OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
 
 						// Setting the PosterSize and DisplayZoom can update the DisplayPosition. Use the value read from file.
@@ -113,7 +113,7 @@ namespace MSetExplorer
 					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentPoster));
-					OnPropertyChanged(nameof(IPosterViewModel.ColorBandSet));
+					OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 				}
 			}
 		}
@@ -130,20 +130,20 @@ namespace MSetExplorer
 		}
 
 		public MapAreaInfo PosterAreaInfo => CurrentPoster?.CurrentJob.MapAreaInfo ?? MapAreaInfo.Empty;
+
 		public SizeInt PosterSize => PosterAreaInfo.CanvasSize;
 
-		public ColorBandSet ColorBandSet
+		public ColorBandSet CurrentColorBandSet
 		{
 			get => PreviewColorBandSet ?? CurrentPoster?.CurrentColorBandSet ?? new ColorBandSet();
 			set
 			{
-				var currentProject = CurrentPoster;
-				if (currentProject != null)
+				var currentPoster = CurrentPoster;
+				if (currentPoster != null)
 				{
-					if (value != ColorBandSet)
+					if (UpdateColorBandSet(value))
 					{
-						currentProject.CurrentColorBandSet = value;
-						OnPropertyChanged(nameof(IPosterViewModel.ColorBandSet));
+						OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
 					}
 				}
 			}
@@ -166,7 +166,7 @@ namespace MSetExplorer
 						_previewColorBandSet = adjustedColorBandSet;
 					}
 
-					OnPropertyChanged(nameof(IPosterViewModel.ColorBandSet));
+					OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 				}
 			}
 		}
@@ -248,31 +248,17 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterOnFile));
 			}
 
-			else if (e.PropertyName == nameof(Project.CurrentColorBandSet))
+			else if (e.PropertyName == nameof(IPosterViewModel.CurrentColorBandSet))
 			{
-				Debug.WriteLine("The MapProjectViewModel is raising PropertyChanged: IMapProjectViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
-				OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
+				Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
+				OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 			}
 
 			else if (e.PropertyName == nameof(Project.CurrentJob))
 			{
-				var poster = CurrentPoster;
-
-				if (poster != null)
+				if (CurrentPoster != null)
 				{
-					var cbsBefore = ColorBandSet;
-					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(PosterSize, CurrentJob.CanvasControlOffset, _blockSize);
-					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-					{
-						FindOrCreateJobForNewCanvasSize(poster, CurrentJob, currentCanvasSizeInBlocks);
-					}
-
-					if (ColorBandSet != cbsBefore)
-					{
-						OnPropertyChanged(nameof(IMapProjectViewModel.ColorBandSet));
-					}
-
-					OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
+					OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 				}
 			}
 			else if (e.PropertyName == nameof(DisplayZoom))
@@ -364,13 +350,13 @@ namespace MSetExplorer
 
 		#region Public Methods - MapView
 
-		public void UpdateColorBandSet(ColorBandSet colorBandSet)
+		public bool UpdateColorBandSet(ColorBandSet colorBandSet)
 		{
 			var poster = CurrentPoster;
 
 			if (poster == null)
 			{
-				return;
+				return false;
 			}
 
 			// Discard the Preview ColorBandSet. 
@@ -378,15 +364,15 @@ namespace MSetExplorer
 
 			var currentJob = poster.CurrentJob;
 
-			if (ColorBandSet.Id != currentJob.ColorBandSetId)
+			if (CurrentColorBandSet.Id != currentJob.ColorBandSetId)
 			{
-				Debug.WriteLine($"The project's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {ColorBandSet.Count} bands. The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
+				Debug.WriteLine($"The project's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands. The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
 			}
 
-			if (colorBandSet == ColorBandSet)
+			if (colorBandSet == CurrentColorBandSet)
 			{
 				Debug.WriteLine($"PosterViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
-				return;
+				return false;
 			}
 
 			var targetIterations = colorBandSet.HighCutoff;
@@ -398,21 +384,24 @@ namespace MSetExplorer
 				Debug.WriteLine($"PosterViewModel is updating the Target Iterations. Current ColorBandSetId = {poster.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 				var mapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
 
-				CurrentAreaColorAndCalcSettings = new AreaColorAndCalcSettings(CurrentAreaColorAndCalcSettings, mapCalcSettings);
+				//CurrentAreaColorAndCalcSettings = new AreaColorAndCalcSettings(CurrentAreaColorAndCalcSettings, mapCalcSettings);
+				LoadMap(poster, currentJob, currentJob.Coords, colorBandSet.Id, mapCalcSettings, TransformType.IterationUpdate, null);
 			}
 			else
 			{
 				Debug.WriteLine($"PosterViewModel is updating the ColorBandSet. Current ColorBandSetId = {poster.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
 
-				poster.Add(ColorBandSet);
-
-				OnPropertyChanged(nameof(IPosterViewModel.ColorBandSet));
+				//poster.Add(CurrentColorBandSet);
+				//OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
+				poster.CurrentColorBandSet = colorBandSet;
 			}
+
+			return true;
 		}
 
 		#endregion
 
-		#region Public Methods -- Poster Job
+		#region Public Methods -- Job
 
 		// PosterDesigner Edit Size
 		public void UpdateMapSpecs(Poster currentPoster, MapAreaInfo newMapAreaInfo)
@@ -422,7 +411,7 @@ namespace MSetExplorer
 			var mapCalcSettings = curJob.MapCalcSettings;
 
 			LoadMap(currentPoster, curJob, newMapAreaInfo, colorBandSetId, mapCalcSettings, TransformType.ZoomIn);
-			OnPropertyChanged(nameof(IPosterViewModel.PosterSize));
+			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 			currentPoster.DisplayPosition = new VectorInt();
 			currentPoster.DisplayZoom = 1;
 
@@ -453,7 +442,7 @@ namespace MSetExplorer
 			var mapCalcSettings = curJob.MapCalcSettings;
 			LoadMap(currentPoster, curJob, coords, colorBandSetId, mapCalcSettings, transformType, screenArea);
 
-			OnPropertyChanged(nameof(IPosterViewModel.PosterSize));
+			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 			currentPoster.DisplayPosition = new VectorInt();
 			currentPoster.DisplayZoom = 1;
 
@@ -585,45 +574,45 @@ namespace MSetExplorer
 
 			poster.Add(job);
 
-			OnPropertyChanged(nameof(IMapProjectViewModel.CurrentJob));
-			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoBack));
-			OnPropertyChanged(nameof(IMapProjectViewModel.CanGoForward));
+			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+			//OnPropertyChanged(nameof(IPosterViewModel.CanGoBack));
+			//OnPropertyChanged(nameof(IPosterViewModel.CanGoForward));
 		}
 
-		private void FindOrCreateJobForNewCanvasSize(Poster poster, Job job, SizeInt newCanvasSizeInBlocks)
-		{
-			// Note if this job is itself a CanvasSizeUpdate Proxy Job, then its parent is used to conduct the search.
-			if (poster.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out var matchingProxy))
-			{
-				poster.CurrentJob = matchingProxy;
-				return;
-			}
+		//private void FindOrCreateJobForNewCanvasSize(Poster poster, Job job, SizeInt newCanvasSizeInBlocks)
+		//{
+		//	// Note if this job is itself a CanvasSizeUpdate Proxy Job, then its parent is used to conduct the search.
+		//	if (poster.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out var matchingProxy))
+		//	{
+		//		poster.CurrentJob = matchingProxy;
+		//		return;
+		//	}
 
-			// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
-			if (job.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				var preferredJob = poster.GetParent(job);
+		//	// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
+		//	if (job.TransformType == TransformType.CanvasSizeUpdate)
+		//	{
+		//		var preferredJob = poster.GetParent(job);
 
-				if (preferredJob is null)
-				{
-					throw new InvalidOperationException("Could not get the preferred job as we create a new job for the updated canvas size.");
-				}
+		//		if (preferredJob is null)
+		//		{
+		//			throw new InvalidOperationException("Could not get the preferred job as we create a new job for the updated canvas size.");
+		//		}
 
-				job = preferredJob;
-			}
+		//		job = preferredJob;
+		//	}
 
-			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
+		//	var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
 
-			var transformType = TransformType.CanvasSizeUpdate;
-			RectangleInt? newArea = null;
+		//	var transformType = TransformType.CanvasSizeUpdate;
+		//	RectangleInt? newArea = null;
 
-			var newJob = _mapJobHelper.BuildJob(job.Id, poster.Id, PosterSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
+		//	var newJob = _mapJobHelper.BuildJob(job.Id, poster.Id, PosterSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
 
-			Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
-			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+		//	Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+		//	Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			poster.Add(newJob);
-		}
+		//	poster.Add(newJob);
+		//}
 
 		[Conditional("DEBUG")]
 		private void CheckCoordsChange(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, RRectangle newCoords)

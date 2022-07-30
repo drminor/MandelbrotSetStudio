@@ -111,8 +111,10 @@ namespace MSetExplorer
 					_drawingGroup.Children.Remove(imageDrawing);
 					missedCnt++;
 				}
-
+				// Log: While Hiding Screen Sections,
 				Debug.WriteLine($"While Hiding Screen Sections, found {missedCnt} orphan ImageDrawings.");
+				// Log: Add Spacer
+				Debug.WriteLine($"Clearing Display\n\n");
 				//_drawingGroup.Children.Remove
 			}
 		}
@@ -285,7 +287,9 @@ namespace MSetExplorer
 			var y1 = minY * blockSize.Height;
 			var y2 = _maxSizeInBlocks.Height * blockSize.Height;
 			var bounds = new RectangleInt(x1, x2, y1, y2);
-			Debug.WriteLine($"The new ScreenSectionCollection Bounds is {bounds}.");
+
+			// Log: The new ScreenSectionCollection Bounds
+			//Debug.WriteLine($"The new ScreenSectionCollection Bounds is {bounds}.");
 
 			_foundationRectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(bounds));
 		}

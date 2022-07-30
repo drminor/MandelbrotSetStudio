@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
-	public interface IMapProjectViewModel
+	public interface IProjectViewModel
 	{
 		bool InDesignMode { get; }
 
@@ -20,14 +20,14 @@ namespace MSetExplorer
 		string? CurrentProjectName { get; }
 		bool CurrentProjectOnFile { get; }
 		bool CurrentProjectIsDirty { get; }
-		bool IsCurrentJobIdChanged { get; }
 
 		Job CurrentJob { get; }
+		bool IsCurrentJobIdChanged { get; }
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
 
-		ColorBandSet ColorBandSet { get; set; }
+		ColorBandSet CurrentColorBandSet { get; set; }
 		ColorBandSet? PreviewColorBandSet { get; set; }
 
 		// Job Methods
@@ -48,7 +48,6 @@ namespace MSetExplorer
 
 		long DeleteMapSectionsForUnsavedJobs();
 
-		//Poster PosterCreate(string name, string? description, SizeInt posterSize);
 		bool TryCreatePoster(string name, string? description, SizeInt posterSize, [MaybeNullWhen(false)] out Poster poster);
 	}
 }

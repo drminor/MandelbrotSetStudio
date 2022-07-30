@@ -34,8 +34,8 @@ namespace MSetExplorer
 
 		public ExplorerViewModel GetExplorerViewModel()
 		{
-			// Map Project ViewModel
-			var mapProjectViewModel = new MapProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
+			// Project ViewModel
+			var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
 			var mapSectionHelper = new MapSectionHelper();
@@ -50,8 +50,7 @@ namespace MSetExplorer
 			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter);
-
-			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
+			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
 				_mapLoaderManager,
 				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
 

@@ -108,6 +108,8 @@ namespace MSetExplorer
 				MapDisplayViewModel.DisplayZoom = _displayZoom;
 
 				Debug.WriteLine($"The MapScrollViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+				// Log: Add Spacer
+				Debug.WriteLine("\n\n");
 				OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
 			}
 		}

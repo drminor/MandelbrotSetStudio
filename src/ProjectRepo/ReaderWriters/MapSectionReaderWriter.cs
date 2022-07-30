@@ -63,6 +63,7 @@ namespace ProjectRepo
 			}
 			else
 			{
+				// Log: MapSection Not Found
 				//Debug.WriteLine("MapSection Not found.");
 				return default;
 			}
@@ -93,7 +94,8 @@ namespace ProjectRepo
 			}
 			else
 			{
-				Debug.WriteLine("MapSection Not found.");
+				// Log: MapSection Not Found
+				//Debug.WriteLine("MapSection Not found.");
 				return default;
 			}
 		}
@@ -118,7 +120,8 @@ namespace ProjectRepo
 			}
 			else
 			{
-				Debug.WriteLine("MapSection Not found.");
+				// Log: MapSection Not Found
+				//Debug.WriteLine("MapSection Not found.");
 				return default;
 			}
 		}

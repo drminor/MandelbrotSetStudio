@@ -239,11 +239,6 @@ namespace MSS.Common
 		{
 			_jobTree.Add(job, selectTheAddedJob: true);
 
-			//if (!_colorBandSetCollection.MoveCurrentTo(job.ColorBandSetId))
-			//{
-			//	throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
-			//}
-
 			var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
 
 			if (colorBandSet == null)

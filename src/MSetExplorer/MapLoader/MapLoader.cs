@@ -131,7 +131,8 @@ namespace MSetExplorer
 
 				if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
 				{
-					Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}.");
+					//Log: MapSection BlockPosition and TimeToCompleteRequest
+					//Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}.");
 				}
 			}
 			else
@@ -162,7 +163,8 @@ namespace MSetExplorer
 				var numberOfPendingRequests = _mapSectionRequestProcessor.GetNumberOfPendingRequests(JobNumber);
 				var notHandled = _mapSectionRequests?.Count(x => !x.Handled) ?? 0;
 				var notSent = _mapSectionRequests?.Count(x => !x.Sent) ?? 0;
-				Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections. There are {numberOfPendingRequests}/{notHandled}/{notSent} requests still pending, not handled, not sent.");
+				// Log: MapLoader is done with Job:
+				//Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections. There are {numberOfPendingRequests}/{notHandled}/{notSent} requests still pending, not handled, not sent.");
 			}
 			else
 			{

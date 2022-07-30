@@ -19,7 +19,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ExplorerViewModel(IMapProjectViewModel mapProjectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
+		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
 			IMapLoaderManager mapLoaderManager,
 			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, 
@@ -28,8 +28,8 @@ namespace MSetExplorer
 
 			_mapLoaderManager = mapLoaderManager;
 
-			MapProjectViewModel = mapProjectViewModel;
-			MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
+			ProjectViewModel = projectViewModel;
+			ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
 
 			JobTreeViewModel = jobTreeViewModel;
 
@@ -38,7 +38,7 @@ namespace MSetExplorer
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-			MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize.Round();
+			ProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize.Round();
 			DispWidth = MapDisplayViewModel.CanvasSize.Width;
 			DispHeight = MapDisplayViewModel.CanvasSize.Height;
 
@@ -63,7 +63,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public IMapProjectViewModel MapProjectViewModel { get; }
+		public IProjectViewModel ProjectViewModel { get; }
 		public IJobTreeViewModel JobTreeViewModel { get; }
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
 
@@ -148,22 +148,22 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		private void ProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
+			if (e.PropertyName == nameof(IProjectViewModel.CurrentProject))
 			{
-				JobTreeViewModel.CurrentProject = MapProjectViewModel.CurrentProject;
+				JobTreeViewModel.CurrentProject = ProjectViewModel.CurrentProject;
 			}
 
 			// Update the MSet Info and Map Display with the new Job
-			else if (e.PropertyName == nameof(IMapProjectViewModel.CurrentJob))
+			if (e.PropertyName == nameof(IProjectViewModel.CurrentJob))
 			{
-				var curJob = MapProjectViewModel.CurrentJob;
+				var curJob = ProjectViewModel.CurrentJob;
 				var curJobId = curJob.Id.ToString();
 
 				var newMapCalcSettings = curJob.MapCalcSettings;
 				var newMapAreaInfo = curJob.MapAreaInfo;
-				var newColorBandSet = MapProjectViewModel.ColorBandSet;
+				var newColorBandSet = ProjectViewModel.CurrentColorBandSet;
 
 				MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
 
@@ -186,14 +186,14 @@ namespace MSetExplorer
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
-			else if (e.PropertyName == nameof(IMapProjectViewModel.ColorBandSet))
+			else if (e.PropertyName == nameof(IProjectViewModel.CurrentColorBandSet))
 			{
-				ColorBandSetViewModel.ColorBandSet = MapProjectViewModel.ColorBandSet;
-				ColorBandSetHistogramViewModel.ColorBandSet = MapProjectViewModel.ColorBandSet;
+				ColorBandSetViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
+				ColorBandSetHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 
-				if (MapProjectViewModel.CurrentProject != null)
+				if (ProjectViewModel.CurrentProject != null)
 				{
-					MapDisplayViewModel.ColorBandSet = MapProjectViewModel.ColorBandSet;
+					MapDisplayViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 				}
 			}
 		}
@@ -212,7 +212,7 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
 			{
-				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null && MapProjectViewModel.CurrentProject != null)
+				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null && ProjectViewModel.CurrentProject != null)
 				{
 					MapDisplayViewModel.ColorBandSet = ColorBandSetViewModel.ColorBandSet;
 				}
@@ -226,7 +226,7 @@ namespace MSetExplorer
 			{
 				DispWidth = MapDisplayViewModel.CanvasSize.Width;
 				DispHeight = MapDisplayViewModel.CanvasSize.Height;
-				MapProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize.Round();
+				ProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize.Round();
 			}
 		}
 
@@ -235,7 +235,7 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				// Calculate new Coords for preview
-				var mapAreaInfo = MapProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea);
+				var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea);
 				if (mapAreaInfo != null)
 				{
 					MapCoordsViewModel.Preview(mapAreaInfo);
@@ -244,7 +244,7 @@ namespace MSetExplorer
 			else
 			{
 				// Zoom or Pan Map Coordinates
-				MapProjectViewModel.UpdateMapView(e.TransformType, e.ScreenArea);
+				ProjectViewModel.UpdateMapView(e.TransformType, e.ScreenArea);
 			}
 		}
 
@@ -272,14 +272,14 @@ namespace MSetExplorer
 				Debug.WriteLine($"MainWindow ViewModel got a CBS preview with Id = {colorBandSet.Id}");
 
 				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
-				MapProjectViewModel.PreviewColorBandSet = colorBandSet;
+				ProjectViewModel.PreviewColorBandSet = colorBandSet;
 			}
 			else
 			{
 				Debug.WriteLine($"MainWindow ViewModel got a CBS update with Id = {colorBandSet.Id}");
 
 				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
-				MapProjectViewModel.ColorBandSet = colorBandSet;
+				ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 
 			ColorBandSetHistogramViewModel.ColorBandSet = colorBandSet;

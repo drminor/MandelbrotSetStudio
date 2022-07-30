@@ -119,11 +119,11 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
-				Title = GetWindowTitle(_vm.PosterViewModel.CurrentPoster?.Name, _vm.PosterViewModel.ColorBandSet?.Name);
+				Title = GetWindowTitle(_vm.PosterViewModel.CurrentPoster?.Name, _vm.PosterViewModel.CurrentColorBandSet?.Name);
 				CommandManager.InvalidateRequerySuggested();
 			}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectOnFile) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectIsDirty))
+			if (e.PropertyName == nameof(IPosterViewModel.CurrentPosterOnFile) || e.PropertyName == nameof(IPosterViewModel.CurrentPosterIsDirty))
 			{
 				CommandManager.InvalidateRequerySuggested();
 			}
@@ -397,7 +397,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			var initialName = _vm.PosterViewModel.ColorBandSet?.Name ?? string.Empty;
+			var initialName = _vm.PosterViewModel.CurrentColorBandSet?.Name ?? string.Empty;
 			if (ColorsShowOpenWindow(initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
@@ -408,7 +408,7 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"User declined to import a ColorBandSet.");
-				var projectsColorBandSet = _vm.PosterViewModel.ColorBandSet;
+				var projectsColorBandSet = _vm.PosterViewModel.CurrentColorBandSet;
 
 				if (_vm.MapDisplayViewModel.ColorBandSet != projectsColorBandSet && projectsColorBandSet != null)
 				{
@@ -426,7 +426,7 @@ namespace MSetExplorer
 
 		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var curColorBandSet = _vm.PosterViewModel.ColorBandSet;
+			var curColorBandSet = _vm.PosterViewModel.CurrentColorBandSet;
 
 			if (curColorBandSet == null)
 			{

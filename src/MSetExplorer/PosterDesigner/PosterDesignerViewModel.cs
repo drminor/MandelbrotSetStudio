@@ -140,10 +140,11 @@ namespace MSetExplorer
 
 		private void PosterViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IPosterViewModel.PosterSize))
+			if (e.PropertyName == nameof(IPosterViewModel.CurrentJob))
 			{
 				MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
 			}
+
 			else if (e.PropertyName == nameof(IPosterViewModel.LogicalDisplaySize))
 			{
 				MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
@@ -189,11 +190,11 @@ namespace MSetExplorer
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
-			else if (e.PropertyName == nameof(IPosterViewModel.ColorBandSet))
+			else if (e.PropertyName == nameof(IPosterViewModel.CurrentColorBandSet))
 			{
-				ColorBandSetViewModel.ColorBandSet = PosterViewModel.ColorBandSet;
+				ColorBandSetViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 
-				MapDisplayViewModel.ColorBandSet = PosterViewModel.ColorBandSet;
+				MapDisplayViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 			}
 		}
 
