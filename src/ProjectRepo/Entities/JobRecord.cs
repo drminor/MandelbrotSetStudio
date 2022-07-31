@@ -30,8 +30,12 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		public bool Onfile => Id != ObjectId.Empty;
-
+		// TODO: Rename LastSaved to LastSavedUtc
 		public DateTime LastSaved { get; set; }
+		public DateTime LastAccessedUtc { get; set; }
+
+		public IterationUpdateRecord[]? IterationUpdates { get; set; }
+		public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
 	}
+
 }

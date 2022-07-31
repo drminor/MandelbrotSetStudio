@@ -59,7 +59,8 @@ namespace MSetRepo
 			{ 
 				Id = source.Id, 
 				//LastSaved = source.LastSavedUtc
-				ReservedColorBandRecords = source.GetReservedColorBands().Select(x => MapTo(x)).ToArray()
+				ReservedColorBandRecords = source.GetReservedColorBands().Select(x => MapTo(x)).ToArray(),
+				ColorBandsSerialNumber = source.ColorBandsSerialNumber
 			};
 
 			return result;
@@ -70,7 +71,8 @@ namespace MSetRepo
 			return new ColorBandSet(
 				target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, 
 				target.ColorBandRecords.Select(x => MapFrom(x)).ToList(), 
-				target.ReservedColorBandRecords?.Select(x => MapFrom(x))
+				target.ReservedColorBandRecords?.Select(x => MapFrom(x)),
+				target.ColorBandsSerialNumber
 				);
 		}
 
@@ -130,7 +132,10 @@ namespace MSetRepo
 				)
 			{
 				Id = source.Id,
-				LastSaved = source.LastSavedUtc
+				LastSaved = source.LastSavedUtc,
+				LastAccessedUtc = source.LastAccessedUtc,
+				IterationUpdates = source.IterationUpdates,
+				ColorMapUpdates = source.ColorMapUpdates
 			};
 
 			return result;
@@ -217,11 +222,11 @@ namespace MSetRepo
 		/// <returns></returns>
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
-			ZValues zVals;
+			ZValuesDto zVals;
 
 			try
 			{
-				zVals = new ZValues(source.ZValuesForLocalStorage);
+				zVals = new ZValuesDto(source.ZValuesForLocalStorage);
 			}
 			catch (Exception e)
 			{

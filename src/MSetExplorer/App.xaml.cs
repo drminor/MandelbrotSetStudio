@@ -59,10 +59,10 @@ namespace MSetExplorer
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, CREATE_COLLECTIONS);
 			//PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
 
-			//if (_repositoryAdapters.ProjectAdapter is ProjectAdapter pa)
-			//{
-			//	DoSchemaUpdates(pa);
-			//}
+			if (_repositoryAdapters.ProjectAdapter is ProjectAdapter pa)
+			{
+				DoSchemaUpdates(pa);
+			}
 
 			if (CLEAN_UP_JOB_MAP_SECTIONS && _repositoryAdapters.MapSectionAdapter is MapSectionAdapter ma)
 			{
@@ -181,11 +181,13 @@ namespace MSetExplorer
 		//	//}
 		//}
 
-		//private void DoSchemaUpdates(ProjectAdapter projectAdapter)
-		//{
-		//	//projectAdapter.AddIsIsAlternatePathHeadToAllJobs();
-		//	//projectAdapter.RemoveColorBandSetIdFromProject();
-		//}
+		private void DoSchemaUpdates(ProjectAdapter projectAdapter)
+		{
+			projectAdapter.DoSchemaUpdates();
+			//projectAdapter.AddIsIsAlternatePathHeadToAllJobs();
+			//projectAdapter.RemoveColorBandSetIdFromProject();
+			//projectAdapter.RemoveEscapeVels();
+		}
 
 		//private void DoSchemaUpdates(MapSectionAdapter mapSectionAdapter)
 		//{

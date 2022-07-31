@@ -100,23 +100,23 @@ namespace ProjectRepo
 			}
 		}
 
-		public async Task<ZValues?> GetZValuesAsync(ObjectId mapSectionId)
+		public async Task<ZValuesDto?> GetZValuesAsync(ObjectId mapSectionId)
 		{
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression
 				(
-					p => new ZValuesRecord(p.ZValues)
+					p => p.ZValues
 				);
 
 			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
 
-			IFindFluent<MapSectionRecord, ZValuesRecord> operation = Collection.Find(filter).Project(projection1);
+			IFindFluent<MapSectionRecord, ZValuesDto> operation = Collection.Find(filter).Project(projection1);
 
 			var itemsFound = await operation.ToListAsync().ConfigureAwait(false);
 
 			if (itemsFound.Count > 0)
 			{
 				var result = itemsFound[0];
-				return result.ZValues;
+				return result;
 			}
 			else
 			{

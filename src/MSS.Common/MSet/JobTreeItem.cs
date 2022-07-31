@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -11,27 +12,57 @@ namespace MSS.Common
 {
 	public class JobTreeItem : INotifyPropertyChanged
 	{
+		private bool _isIterationChange;
+		private bool _isColorMapChange;
 		private bool _isSelected;
 		private bool _isExpanded;
 
 		#region Constructor
 
-		public JobTreeItem()
-		{
-			Job = new Job();
-			Children = new ObservableCollection<JobTreeItem>();
-		}
+		public JobTreeItem() : this(new Job(), false, false)
+		{ }
 
-		public JobTreeItem(Job job, ObservableCollection<JobTreeItem>? children = null)
+		public JobTreeItem(Job job) : this(job, false, false)
+		{ }
+
+		public JobTreeItem(Job job, bool isIterationChange, bool isColorMapChange)
 		{
 			Job = job ?? throw new ArgumentNullException(nameof(job));
-			Children = children ?? new ObservableCollection<JobTreeItem>();
+			Children = new ObservableCollection<JobTreeItem>();
+			IsIterationChange = isIterationChange;
+			IsColorMapChange = isColorMapChange;
 			AlternateDispSizes = null;
 		}
 
 		#endregion
 
 		#region Public Properties
+
+		public bool IsIterationChange
+		{
+			get => _isIterationChange;
+			set
+			{
+				if (value != _isIterationChange)
+				{
+					_isIterationChange = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsColorMapChange
+		{
+			get => _isColorMapChange;
+			set
+			{
+				if (value != _isColorMapChange)
+				{
+					_isColorMapChange = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public bool IsSelected
 		{
@@ -61,7 +92,11 @@ namespace MSS.Common
 
 		public Job Job { get; init; }
 		public ObservableCollection<JobTreeItem> Children { get; init; }
-		public ObservableCollection<Job>? AlternateDispSizes { get; private set; }
+
+
+
+
+		public List<Job>? AlternateDispSizes { get; private set; }
 
 
 		public TransformType TransformType => Job.TransformType;
@@ -117,7 +152,7 @@ namespace MSS.Common
 
 			if (AlternateDispSizes == null)
 			{
-				AlternateDispSizes = new ObservableCollection<Job>();
+				AlternateDispSizes = new List<Job>();
 			}
 
 			AlternateDispSizes.Add(job);

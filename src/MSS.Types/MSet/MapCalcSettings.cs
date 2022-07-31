@@ -36,6 +36,8 @@ namespace MSS.Types.MSet
 
 		#endregion
 
+		#region Public Methods
+
 		object ICloneable.Clone()
 		{
 			return Clone();
@@ -51,6 +53,8 @@ namespace MSS.Types.MSet
 		{
 			return $"TargetIterations: {TargetIterations}, RequestsPerJob: {RequestsPerJob}, Threshold: {Threshold}";
 		}
+
+		#endregion
 
 		#region IEquatable and IEqualityComparer Support
 

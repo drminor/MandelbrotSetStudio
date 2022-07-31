@@ -11,7 +11,7 @@ using System.Text;
 
 namespace MSS.Types
 {
-	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet?>, ICloneable, INotifyPropertyChanged
+	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet?>, INotifyPropertyChanged, ICloneable
 	{
 		#region Static Members
 
@@ -44,14 +44,14 @@ namespace MSS.Types
 		public ColorBandSet(IList<ColorBand>? colorBands) : this(projectId: ObjectId.Empty, colorBands)
 		{ }
 
-		public ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands)
-			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands, null)
+		private ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands)
+			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands, null, Guid.NewGuid())
 		{
 			LastSavedUtc = DateTime.MinValue;
 			OnFile = false;
 		}
 
-		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, IEnumerable<ReservedColorBand>? reservedColorBands) : base(FixBands(colorBands))
+		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) : base(FixBands(colorBands))
 		{
 			//Debug.WriteLine($"Constructing ColorBandSet with id: {id}.");
 
@@ -62,6 +62,7 @@ namespace MSS.Types
 			_description = description;
 
 			_reservedColorBands = reservedColorBands == null ? new Stack<ReservedColorBand>() : new Stack<ReservedColorBand>(reservedColorBands);
+			ColorBandsSerialNumber = colorBandsSerialNumber;
 
 			SelectedColorBandIndex = 0;
 
@@ -85,6 +86,8 @@ namespace MSS.Types
 		#region Public Properties
 
 		public ObjectId Id { get; init; }
+
+		public Guid ColorBandsSerialNumber { get; private set; }
 
 		public bool OnFile { get; private set; }
 
@@ -455,12 +458,12 @@ namespace MSS.Types
 		#region Clone Support
 
 		/// <summary>
-		/// Receives a new ObjectId and becomes a child of this ColorBandSet.
+		/// Identical clone, but with a new "Serial Number" and record id.
 		/// </summary>
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy())
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -471,14 +474,14 @@ namespace MSS.Types
 		}
 
 		/// <summary>
-		/// Receives a new ObjectId and becomes a child of this ColorBandSet.
+		/// Receives a new targetIterations, but keeps the same "Serial Number."
 		/// </summary>
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy(int targetIterations)
 		{
 			var bandsCopy = CreateBandsCopy();
 			bandsCopy[^1].Cutoff = targetIterations;
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, bandsCopy, CreateReservedBandsCopy())
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), ParentId, ProjectId, Name, Description, bandsCopy, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -501,7 +504,7 @@ namespace MSS.Types
 		{
 			Debug.WriteLine($"Cloning ColorBandSet with Id: {Id}.");
 
-			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy())
+			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = LastSavedUtc,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -554,15 +557,17 @@ namespace MSS.Types
 			return Equals(obj as ColorBandSet);
 		}
 
+		//public bool Equals(ColorBandSet? other)
+		//{
+		//	return other != null
+		//		&& ColorBandsSerialNumber == other.ColorBandsSerialNumber
+		//		&& HighCutoff == other.HighCutoff;
+		//}
+
 		public bool Equals(ColorBandSet? other)
 		{
 			return other != null
 				&& Id.Equals(other.Id);
-		}
-
-		public override int GetHashCode()
-		{
-			return Id.GetHashCode();
 		}
 
 		public bool Equals(ColorBandSet? x, ColorBandSet? y)
@@ -570,10 +575,25 @@ namespace MSS.Types
 			return x is null ? y is null : x.Equals(y);
 		}
 
+		public override int GetHashCode()
+		{
+			return Id.GetHashCode();
+		}
+
 		public int GetHashCode([DisallowNull] ColorBandSet obj)
 		{
 			return GetHashCode(obj);
 		}
+
+		//public override int GetHashCode()
+		//{
+		//	return HashCode.Combine(ColorBandsSerialNumber, HighCutoff);
+		//}
+
+		//public int GetHashCode([DisallowNull] ColorBandSet obj)
+		//{
+		//	return HashCode.Combine(obj.ColorBandsSerialNumber, obj.HighCutoff);
+		//}
 
 		public static bool operator ==(ColorBandSet? left, ColorBandSet? right)
 		{

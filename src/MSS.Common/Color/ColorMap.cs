@@ -20,8 +20,7 @@ namespace MSS.Common
             //Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
 
             //_colorBandSet.Fix();
-            //_cutoffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.Cutoff).ToArray();
-            _cutoffs = colorBandSet.TakeLast(1).Select(x => x.Cutoff).ToArray();
+            _cutoffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.Cutoff).ToArray();
 
             foreach (var colorBand in _colorBandSet)
 			{
@@ -144,7 +143,8 @@ namespace MSS.Common
             else
             {
                 // Returns the index to the item with the matched cutoff value
-                // or the index of the item with the smallest cutoff larger than the sought value
+                // or the (bitwise complement of the) index of the item with the smallest cutoff larger than the sought value.
+                // If there is no element with a cutoff larger than the sought value, the (bitwise complement of the) 1 + the index of the last item.
                 var newIndex = Array.BinarySearch(_cutoffs, countVal);
 
                 result = newIndex < 0 ? ~newIndex : newIndex;

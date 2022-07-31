@@ -140,17 +140,26 @@ namespace ProjectRepo
 
 		#region SCHEMA Changes
 
-		public void AddIsIsAlternatePathHeadToAllJobs()
-		{
-			var filter = Builders<JobRecord>.Filter.Empty;
-			var updateDefinition = Builders<JobRecord>.Update
-				.Set("IsAlternatePathHead", false);
-				//.Unset("IsPreferredChild");
+		//public void RemoveEscapeVelsFromAllJobs()
+		//{
+		//	var filter = Builders<JobRecord>.Filter.Empty;
+		//	var updateDefinition = Builders<JobRecord>.Update.Unset(f => f.MapCalcSettings.UseEscapeVelocities);
+		//	var options = new UpdateOptions { IsUpsert = false };
 
-			var options = new UpdateOptions { IsUpsert = false };
+		//	_ = Collection.UpdateMany(filter, updateDefinition, options);
+		//}
 
-			_ = Collection.UpdateMany(filter, updateDefinition, options);
-		}
+		//public void AddIsIsAlternatePathHeadToAllJobs()
+		//{
+		//	var filter = Builders<JobRecord>.Filter.Empty;
+		//	var updateDefinition = Builders<JobRecord>.Update
+		//		.Set("IsAlternatePathHead", false);
+		//		//.Unset("IsPreferredChild");
+
+		//	var options = new UpdateOptions { IsUpsert = false };
+
+		//	_ = Collection.UpdateMany(filter, updateDefinition, options);
+		//}
 
 		//public DateTime GetLastSaveTime(ObjectId projectId)
 		//{

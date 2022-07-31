@@ -128,8 +128,9 @@ namespace MSetExplorer
 						Debug.WriteLine($"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
 
 						currentProject.Add(value);
-						var newMapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
-						LoadMap(currentProject, currentJob, currentJob.Coords, value.Id, newMapCalcSettings, TransformType.IterationUpdate, null);
+						//var newMapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
+						//LoadMap(currentProject, currentJob, currentJob.Coords, value.Id, newMapCalcSettings, TransformType.IterationUpdate, null);
+						AddNewIterationUpdateJob(currentProject, value);
 					}
 					else
 					{
@@ -373,18 +374,21 @@ namespace MSetExplorer
 		public void UpdateMapView(TransformType transformType, RectangleInt screenArea)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
-			if (CurrentProject == null)
+
+			var currentProject = CurrentProject;
+
+			if (currentProject == null)
 			{
 				return;
 			}
 
-			var curJob = CurrentJob;
+			//var mapPosition = curJob.Coords.Position;
+			//var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
-			var mapPosition = curJob.Coords.Position;
-			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			//var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
+			//LoadMap(CurrentProject, curJob, newCoords, curJob.ColorBandSetId, curJob.MapCalcSettings, transformType, screenArea);
 
-			var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-			LoadMap(CurrentProject, curJob, newCoords, curJob.ColorBandSetId, curJob.MapCalcSettings, transformType, screenArea);
+			AddNewCoordinateUpdateJob(currentProject, transformType, screenArea);
 		}
 
 		//// Currently Not Used.
@@ -490,11 +494,24 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void LoadMap(Project project, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		private void AddNewCoordinateUpdateJob(Project project, TransformType transformType, RectangleInt newScreenArea)
 		{
-			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize);
+			var currentJob = project.CurrentJob;
+			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
 
-			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			// Calculate the new Map Coordinates from the newScreenArea, using the current Map's position and samplePointDelta.
+			var mapPosition = currentJob.Coords.Position;
+			var samplePointDelta = currentJob.Subdivision.SamplePointDelta;
+			var newCoords = RMapHelper.GetMapCoords(newScreenArea, mapPosition, samplePointDelta);
+
+			// Use the current display size, colors and iterations.
+			var mapSize = currentJob.CanvasSize;
+			var colorBandSetId = currentJob.ColorBandSetId;
+			var mapCalcSettings = currentJob.MapCalcSettings;
+
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, mapSize, newCoords, colorBandSetId, mapCalcSettings, transformType, newScreenArea, _blockSize);
+
+			Debug.WriteLine($"Adding Project Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(job);
 
@@ -502,6 +519,46 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
 			OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 		}
+
+		private void AddNewIterationUpdateJob(Project project, ColorBandSet colorBandSet)
+		{
+			var currentJob = project.CurrentJob;
+
+			// Use the ColorBandSet's highCutoff to set the targetIterations of the current MapCalcSettings
+			var targetIterations = colorBandSet.HighCutoff;
+			var mapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
+
+			// Use the current display size and Map Coordinates
+			var mapSize = currentJob.CanvasSize;
+			var coords = currentJob.MapAreaInfo.Coords;
+
+			// This an iteration update with the same screen area
+			var transformType = TransformType.IterationUpdate;
+			var newScreenArea = new RectangleInt();
+
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, mapSize, coords, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea, _blockSize);
+
+			Debug.WriteLine($"Adding Project Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+			project.Add(job);
+
+			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
+			OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
+			OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
+		}
+
+		//private void LoadMap(Project project, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		//{
+		//	var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, CanvasSize, coords, colorBandSetId, mapCalcSettings, transformType, newArea, _blockSize);
+
+		//	Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+		//	project.Add(job);
+
+		//	OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
+		//	OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
+		//	OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
+		//}
 
 		private void RerunWithNewDisplaySize(Project project)
 		{

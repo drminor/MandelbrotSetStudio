@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace MSS.Types
 {
+	// TODO: How is the ColorBandSetComparer class being used?
 	public class ColorBandSetComparer : IEqualityComparer<ColorBandSet>
 	{
 		public bool Equals(ColorBandSet? x, ColorBandSet? y)

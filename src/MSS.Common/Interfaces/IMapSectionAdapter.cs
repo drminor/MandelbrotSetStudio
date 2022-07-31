@@ -19,7 +19,7 @@ namespace MSS.Common
 
 		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues, CancellationToken ct);
 
-		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
+		Task<ZValuesDto?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
 
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 

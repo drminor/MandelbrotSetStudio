@@ -21,7 +21,7 @@ namespace ProjectRepo.Entities
 		byte[] Counts,
 		byte[] EscapeVelocities,
 		byte[] DoneFlags,
-		ZValues ZValues
+		ZValuesDto ZValues
 		)
 	{
 		[BsonId]
@@ -33,9 +33,9 @@ namespace ProjectRepo.Entities
 	}
 
 
-	/// <summary>
-	/// Record used to store just the ZValues found in a MapSectionResponse
-	/// </summary>
-	public record ZValuesRecord(ZValues ZValues);
+	///// <summary>
+	///// Record used to store just the ZValues found in a MapSectionResponse
+	///// </summary>
+	//public record ZValuesRecord(ZValues ZValues);
 
 }

@@ -474,7 +474,12 @@ namespace MSetRepo
 
 				mapCalcSettings: jobRecord.MapCalcSettings,
 				lastSaved: jobRecord.LastSaved
-				);
+				)
+			{
+				LastAccessedUtc = jobRecord.LastAccessedUtc,
+				IterationUpdates = jobRecord.IterationUpdates,
+				ColorMapUpdates = jobRecord.ColorMapUpdates
+			};
 
 			var colorBandSet = GetColorBandSet(job, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
 
@@ -876,6 +881,18 @@ namespace MSetRepo
 
 		#region Active Job Schema Updates
 
+		public void DoSchemaUpdates()
+		{
+
+		}
+
+		//public void RemoveEscapeVels()
+		//{
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+		//	jobReaderWriter.RemoveEscapeVelsFromAllJobs();
+		//}
+
 		//public long RemoveColorBandSetIdFromProject()
 		//{
 		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
@@ -1188,12 +1205,12 @@ namespace MSetRepo
 		//			return result;
 		//		}
 
-		public void AddIsIsAlternatePathHeadToAllJobs()
-		{
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+		//public void AddIsIsAlternatePathHeadToAllJobs()
+		//{
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-			jobReaderWriter.AddIsIsAlternatePathHeadToAllJobs();
-		}
+		//	jobReaderWriter.AddIsIsAlternatePathHeadToAllJobs();
+		//}
 
 		#endregion
 	}

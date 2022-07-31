@@ -170,6 +170,9 @@ namespace MSS.Types.MSet
 
 		public MapCalcSettings MapCalcSettings { get; init; }
 
+		public IterationUpdateRecord[]? IterationUpdates { get; set; }
+		public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
+
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;
@@ -181,7 +184,8 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public DateTime LastUpdatedUtc { get; private set; }
+		public DateTime LastUpdatedUtc { get; set; }
+		public DateTime LastAccessedUtc { get; set; }
 
 		#endregion
 
@@ -225,32 +229,7 @@ namespace MSS.Types.MSet
 
 		public bool Equals(Job? other)
 		{
-			//return other != null
-			//	&& Id.Equals(other.Id)
-			//	&& LastSavedUtc == other.LastSavedUtc;
-			
-			if (other == null)
-			{
-				return false;
-			}
-			else
-			{
-				if (Id.Equals(other.Id))
-				{
-					if (LastSavedUtc != other.LastSavedUtc)
-					{
-						return false;
-					}
-					else
-					{
-						return true;
-					}
-				}
-				else
-				{
-					return false;
-				}
-			}
+			return other != null && Id.Equals(other.Id);
 		}
 
 		public bool Equals(Job? x, Job? y)
@@ -287,4 +266,5 @@ namespace MSS.Types.MSet
 
 		#endregion
 	}
+
 }
