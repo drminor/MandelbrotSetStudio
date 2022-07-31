@@ -208,7 +208,8 @@ namespace MSetExplorer
 			}
 
 			var initialName = _vm.PosterViewModel.CurrentPosterName;
-			if (PosterShowOpenSaveWindow(DialogType.Open, initialName, out var selectedName, out _))
+			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+			if (PosterShowOpenSaveWindow(DialogType.Open, initialName, useEscapeVelocities, out var selectedName, out _))
 			{
 				if (selectedName != null)
 				{
@@ -351,7 +352,7 @@ namespace MSetExplorer
 
 		private CreateImageProgressWindow StartImageCreation(string imageFilePath, Poster poster, bool useEscapeVelocities)
 		{
-			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(imageFilePath);
+			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(imageFilePath, useEscapeVelocities);
 
 			createImageProgressViewModel.CreateImage(imageFilePath, poster);
 
@@ -661,8 +662,8 @@ namespace MSetExplorer
 			bool? result;
 
 			var initialName = curPoster.Name;
-
-			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
+			var useEscapeVelocitities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, useEscapeVelocitities, out var selectedName, out var description))
 			{
 				if (selectedName != null)
 				{
@@ -696,9 +697,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
+		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, bool useEscapeVelocities, out string? selectedName, out string? description)
 		{
-			var posterOpenSaveVm = _vm.CreateAPosterOpenSaveViewModel(initalName, dialogType);
+			var posterOpenSaveVm = _vm.CreateAPosterOpenSaveViewModel(initalName, useEscapeVelocities, dialogType);
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
 				DataContext = posterOpenSaveVm
@@ -793,7 +794,8 @@ namespace MSetExplorer
 			var cts = new CancellationTokenSource();
 			var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
 
-			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, previewSize, FALL_BACK_COLOR);
+			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
 
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 

@@ -83,17 +83,25 @@
                                     </StackPanel>
                                 </StackPanel.ToolTip>
                                 
+                                <!-- Transform -->
                                 <TextBlock Text="{Binding TransformType}" />
                                 
+                                <!-- Zoom -->
                                 <TextBlock Text=" - " Foreground="BlueViolet" />
                                 <TextBlock Text="{Binding Zoom}" Foreground="BlueViolet" />
+                                
+                                <!-- Iterations-->
+                                <TextBlock Text=" / " Foreground="ForestGreen" />
+                                <TextBlock Text="{Binding Iterations}" Foreground="ForestGreen" />
 
-                                <TextBlock Text="    " Foreground="ForestGreen"/>
-                                <TextBlock Text="{Binding Created}" Foreground="ForestGreen" />
+                                <!-- Created -->
+                                <TextBlock Text="   " Foreground="DarkBlue"/>
+                                <TextBlock Text="{Binding Created}" Foreground="DarkBlue" />
 
-                                <TextBlock Text=" [" Foreground="Blue"/>
-                                <TextBlock Text="{Binding Children.Count}" Foreground="Blue" />
-                                <TextBlock Text="]" Foreground="Blue" />
+                                <!-- Child Count -->
+                                <!--<TextBlock Text=" [" Foreground="DarkGreen"/>
+                                <TextBlock Text="{Binding Children.Count}" Foreground="DarkGreen" />
+                                <TextBlock Text="]" Foreground="DarkGreen" />-->
 
                                 <Button Margin="5,1,0,1" Focusable="False" Command="local:JobTreeCommands.MoveTo" CommandParameter="{Binding JobId}" >Go</Button>
                             </StackPanel>

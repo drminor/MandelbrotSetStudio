@@ -33,7 +33,7 @@ namespace ImageBuilder
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<byte[]?> BuildAsync(MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
+		public async Task<byte[]?> BuildAsync(MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, CancellationToken ct, Action<double>? statusCallBack = null)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
@@ -41,7 +41,7 @@ namespace ImageBuilder
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
 			{
-				UseEscapeVelocities = mapCalcSettings.UseEscapeVelocities
+				UseEscapeVelocities = useEscapeVelocities
 			};
 
 			var imageSize = mapAreaInfo.CanvasSize;

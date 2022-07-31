@@ -10,10 +10,11 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		public ColorBandSetInfo(ObjectId id, int numberOfBands, string? name, string? description)
+		public ColorBandSetInfo(ObjectId id, int maxIterations, int numberOfBands, string? name, string? description)
 		{
 			Debug.WriteLine($"Constructing ColorBandSetInfo with Id: {id}.");
 			Id = id;
+			MaxIterations = maxIterations;
 			NumberOfBands = numberOfBands;
 			_name = name ?? throw new ArgumentNullException("When creating a ColorBandSetInfo, the name cannot be null.");
 			_description = description;
@@ -25,6 +26,7 @@ namespace MSS.Types
 
 		public ObjectId Id { get; init; }
 		public DateTime DateCreated => Id.CreationTime;
+		public int MaxIterations { get; init; }
 		public int NumberOfBands { get; init; }
 
 		private string _name;

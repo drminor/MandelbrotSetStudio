@@ -20,6 +20,7 @@ namespace MSetExplorer
 	{
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly IProjectAdapter _projectAdapter;
+		private bool _useEscapeVelocities;
 		private IPosterInfo? _selectedPoster;
 
 		private string? _selectedName;
@@ -29,10 +30,11 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterOpenSaveViewModel(IMapLoaderManager mapLoaderManager, IProjectAdapter projectAdapter, string? initialName, DialogType dialogType)
+		public PosterOpenSaveViewModel(IMapLoaderManager mapLoaderManager, IProjectAdapter projectAdapter, string? initialName, bool useEscapeVelocitites, DialogType dialogType)
 		{
 			_mapLoaderManager = mapLoaderManager;
 			_projectAdapter = projectAdapter;
+			_useEscapeVelocities = useEscapeVelocitites;
 			DialogType = dialogType;
 
 			var posters = _projectAdapter.GetAllPosterInfos();
@@ -167,7 +169,7 @@ namespace MSetExplorer
 
 			var cts = new CancellationTokenSource();
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, job.MapCalcSettings, cts.Token, StatusCallBack));
+			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, job.MapCalcSettings, _useEscapeVelocities, cts.Token, StatusCallBack));
 
 			var result = task.Result;
 

@@ -408,7 +408,8 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (SavePosterInteractive(_vm.ProjectViewModel.CurrentProjectName, out var name, out var description))
+				var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+				if (SavePosterInteractive(_vm.ProjectViewModel.CurrentProjectName, useEscapeVelocities, out var name, out var description))
 				{
 					var tentativePosterSize = curJob.CanvasSize;
 
@@ -922,11 +923,11 @@ namespace MSetExplorer
 
 		#region Private Methods - Poster
 
-		private bool SavePosterInteractive(string? initialName, [MaybeNullWhen(false)] out string name, out string? description)
+		private bool SavePosterInteractive(string? initialName, bool useEscapeVelocities, [MaybeNullWhen(false)] out string name, out string? description)
 		{
 			bool result;
 
-			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, out name, out description))
+			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, useEscapeVelocities, out name, out description))
 			{
 				if (name != null)
 				{
@@ -946,9 +947,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
+		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, bool useEscapeVelocities, out string? selectedName, out string? description)
 		{
-			var posterOpenSaveVm = _vm.CreateAPosterOpenSaveViewModel(initalName, dialogType);
+			var posterOpenSaveVm = _vm.CreateAPosterOpenSaveViewModel(initalName, useEscapeVelocities, dialogType);
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
 				DataContext = posterOpenSaveVm

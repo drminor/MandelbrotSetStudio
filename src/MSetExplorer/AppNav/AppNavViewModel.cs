@@ -9,7 +9,7 @@ namespace MSetExplorer
 {
 	internal delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 	internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
-	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, bool useEscapeVelocities, DialogType dialogType);
 
 	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(RRectangle coords, SizeInt canvasSize, bool allowEdits);
 
@@ -101,9 +101,9 @@ namespace MSetExplorer
 			return new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
 		}
 
-		private IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
+		private IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
 		{
-			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, initalName, dialogType);
+			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, initalName, useEscapeVelocities, dialogType);
 		}
 
 		private CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)

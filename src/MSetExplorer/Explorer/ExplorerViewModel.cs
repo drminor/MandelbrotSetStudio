@@ -114,9 +114,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
 		{
-			var result = _posterOpenSaveViewModelCreator(initalName, dialogType);
+			var result = _posterOpenSaveViewModelCreator(initalName, useEscapeVelocities, dialogType);
 			return result;
 		}
 

@@ -11,14 +11,16 @@ namespace MSetExplorer
 	public class CreateImageProgressViewModel
 	{
 		private readonly PngBuilder _pngBuilder;
+		private bool _useEscapeVelocities;
 		private CancellationTokenSource _cancellationTokenSource;
 		private Task<bool>?_task;
 
 		#region Constructor
 
-		public CreateImageProgressViewModel(PngBuilder pngBuilder)
+		public CreateImageProgressViewModel(PngBuilder pngBuilder, bool useEscapeVelocities)
 		{
 			_pngBuilder = pngBuilder;
+			_useEscapeVelocities = useEscapeVelocities;
 			_cancellationTokenSource = new CancellationTokenSource();
 			_task = null;
 
@@ -47,7 +49,7 @@ namespace MSetExplorer
 
 			var curJob = poster.CurrentJob;
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, _useEscapeVelocities, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
 			//_task.ContinueWith(t =>
 			//{

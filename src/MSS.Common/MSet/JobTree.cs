@@ -22,13 +22,11 @@ namespace MSS.Common
 
 		public JobTree(IList<Job> jobs)
 		{
+			ReportInput(jobs);
+
 			_jobsLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 			var numberOfJobsWithNullParentId = jobs.Count(x => !x.ParentJobId.HasValue);
 			if (numberOfJobsWithNullParentId > 1)
-			{
-				_root = BuildTree(jobs, out _currentPath);
-			}
-			else
 			{
 				_root = BuildTree(jobs, out _currentPath);
 
@@ -38,6 +36,54 @@ namespace MSS.Common
 				//var numberLoaded = LoadJobsForOldPro(jobs, homeId, out _currentPath);
 
 				//Debug.WriteLine($"Loaded {numberLoaded + 1} jobs out of {jobs.Count()} jobs.");
+			}
+			else
+			{
+				_root = BuildTreeForOldPro(jobs, out _currentPath);
+				var homeId = _root.Children[0].Job.Id;
+				var numberLoaded = LoadJobsForOldPro(jobs, homeId, out _currentPath);
+				Debug.WriteLine($"Loaded {numberLoaded + 1} jobs out of {jobs.Count()} jobs.");
+			}
+
+			ReportOutput(_root);
+		}
+
+		private	void ReportInput(IList<Job> jobs)
+		{
+			Debug.WriteLine("INPUT Report");
+			Debug.WriteLine("Id\t\t\t\tParentId\t\t\t\tDate\t\t\tTransformType\t\t\tTimestamp");
+
+			var hj = jobs.FirstOrDefault(x => x.TransformType == TransformType.Home);
+
+			if (hj != null)
+			{
+				Debug.WriteLine($"{hj.Id}\t{hj.ParentJobId}\t{hj.DateCreated}\t{hj.TransformType}\t{hj.Id.Timestamp}");
+			}
+			else
+			{
+				Debug.WriteLine("No Home Node Found.");
+			}
+
+			var wlist = jobs.Where(x => x.TransformType != TransformType.Home).OrderBy(x => x.ParentJobId?.ToString() ?? " ").ToList();
+
+			foreach (var j in wlist)
+			{
+				Debug.WriteLine($"{j.Id}\t{j.ParentJobId}\t{j.DateCreated}\t{j.TransformType}\t{j.Id.Timestamp}");
+			}
+		}
+
+		private void ReportOutput(JobTreeItem start)
+		{
+			Debug.WriteLine("OUTPUT Report");
+			Debug.WriteLine("Id\t\t\t\tParentId\t\t\t\tDate\t\t\tTransformType\t\t\tTimestamp");
+
+			var jwps = GetJobsWithParentage(null, start);
+
+			foreach (var jwp in jwps)
+			{
+				var j = jwp.Item1;
+				var p = jwp.Item2;
+				Debug.WriteLine($"{j.Id}\t{p?.Id.ToString() ?? "null"}\t{j.DateCreated}\t{j.TransformType}\t{j.Id.Timestamp}");
 			}
 		}
 
@@ -574,7 +620,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Load Methods, Private
+		#region Load Methods
 
 		private JobTreeItem BuildTree(IList<Job> jobs, out List<JobTreeItem>? path)
 		{
@@ -630,7 +676,7 @@ namespace MSS.Common
 
 			if (hJob == null)
 			{
-				throw new InvalidOperationException("Could not find hjob.");
+				throw new InvalidOperationException("There is no Job with TransformType = Home.");
 			}
 
 			var root = new JobTreeItem();
@@ -649,16 +695,11 @@ namespace MSS.Common
 		private int LoadJobsForOldPro(IList<Job> jobs, ObjectId homeId, out List<JobTreeItem>? path)
 		{
 			var result = 0;
-			var wlist = jobs.Where(x => x.TransformType != TransformType.Home).OrderBy(x => x.Id.Timestamp).ToList();
-
-			foreach(var j in wlist)
-			{
-				Debug.WriteLine($"Id: {j.Id}, PId: {j.ParentJobId}");
-			}
+			var wlist = jobs.Where(x => x.TransformType != TransformType.Home).OrderBy(x => x.ParentJobId?.ToString() ?? " ").ToList();
 
 			foreach (var job in wlist)
 			{
-				if (!job.ParentJobId.HasValue)
+				if (!job.ParentJobId.HasValue && job.TransformType != TransformType.Home)
 				{
 					job.ParentJobId = homeId;
 				}
@@ -667,18 +708,41 @@ namespace MSS.Common
 				{
 					job.TransformType = TransformType.ZoomOut;
 				}
-
-				Add(job, selectTheAddedJob: false);
 			}
+
+			result += LoadOldJobs(homeId, wlist);
 
 			_ = MoveCurrentTo(jobs[0], _root, out path);
 
 			return result;
 		}
 
+		private int LoadOldJobs(ObjectId parent, List<Job> jlist)
+		{
+			var result = 0;
+			var children = jlist.Where(x => x.ParentJobId == parent).OrderBy(o => o.Id.ToString()).ToList();
+
+			Debug.WriteLine($"FoundOldJobs, found {children.Count} jobs for Parent: {parent}.");
+
+			for(var cPtr = 0; cPtr < children.Count; cPtr++)
+			{
+				var ch = children[cPtr];
+				Add(ch, selectTheAddedJob: false);
+				jlist.Remove(ch);
+				result++;
+			}
+
+			for (var c2ptr = 0; c2ptr < children.Count; c2ptr++)
+			{
+				result += LoadOldJobs(children[c2ptr].Id, jlist);
+			}
+
+			return result;
+		}
+
 		#endregion
 
-		#region Collection Methods, Private With Support for CanvasSizeUpdates
+		#region Private Collection Methods, With Support for CanvasSizeUpdates
 
 		private bool MoveCurrentTo(Job? job, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out List<JobTreeItem> path)
 		{
@@ -789,9 +853,35 @@ namespace MSS.Common
 			return result;
 		}
 
+		private List<Tuple<Job,Job?>> GetJobsWithParentage(JobTreeItem? parent, JobTreeItem jobTreeItem)
+		{
+			var result = new List<Tuple<Job, Job?>>();
+
+			var parentJob = jobTreeItem.Job;
+
+			foreach (var child in jobTreeItem.Children)
+			{
+				result.Add(new Tuple<Job, Job?>(child.Job, parentJob));
+				if (child.AlternateDispSizes != null)
+				{
+					result.AddRange
+						(
+							child.AlternateDispSizes.Select(x => new Tuple<Job, Job?>(x, child.Job))
+						);
+				}
+
+				var jobList = GetJobsWithParentage(jobTreeItem, child);
+				result.AddRange(jobList);
+
+				parentJob = jobTreeItem.IsAlternatePathHead ? parent?.Job : child.Job;
+			}
+
+			return result;
+		}
+
 		#endregion
 
-		#region Collection Methods, Private No Support for CanvasSizeUpdates
+		#region Private Collection Methods, No Support for CanvasSizeUpdates
 
 		private List<JobTreeItem> AddJob(JobTreeItem newNode, IList<JobTreeItem>? path)
 		{
@@ -883,7 +973,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Path Methods - Private
+		#region Private Path Methods
 
 		private void ExpandAndSelect(IList<JobTreeItem>? path)
 		{

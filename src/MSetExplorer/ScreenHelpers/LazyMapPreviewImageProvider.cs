@@ -24,6 +24,7 @@ namespace MSetExplorer
 
 		private readonly ColorBandSet _colorBandSet;
 		private readonly MapCalcSettings _mapCalcSettings;
+		private readonly bool _useEscapeVelocitites;
 		private readonly Color _fallbackColor;
 
 		private CancellationTokenSource _cts;
@@ -31,7 +32,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(BitmapBuilder bitmapBuilder, MapJobHelper mapJobHelper, MapAreaInfo mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Color fallbackColor)
+		public LazyMapPreviewImageProvider(BitmapBuilder bitmapBuilder, MapJobHelper mapJobHelper, MapAreaInfo mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
 		{
 			_synchronizationContext = SynchronizationContext.Current;
 			_bitmapBuilder = bitmapBuilder;
@@ -41,6 +42,7 @@ namespace MSetExplorer
 			_previewImageSize = previewImageSize;
 			_colorBandSet = colorBandSet;
 			_mapCalcSettings = mapCalcSettings;
+			_useEscapeVelocitites = useEscapeVelocities;
 			_fallbackColor = fallbackColor;
 
 			_cts = new CancellationTokenSource();
@@ -120,7 +122,7 @@ namespace MSetExplorer
 				{
 					try
 					{
-						var pixels = await _bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, mapCalcSettings, _cts.Token);
+						var pixels = await _bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, mapCalcSettings, _useEscapeVelocitites, _cts.Token);
 						if (!_cts.IsCancellationRequested)
 						{
 							_synchronizationContext?.Post(o => BitmapCompleted(pixels, o), _cts);

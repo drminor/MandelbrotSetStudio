@@ -66,6 +66,7 @@ namespace MSS.Common
 
 		public TransformType TransformType => Job.TransformType;
 		public int Zoom => -1 * Job.MapAreaInfo.Coords.Exponent;
+		public int Iterations => Job.MapCalcSettings.TargetIterations;
 		public DateTime Created => Job.DateCreated;
 
 		public ObjectId? JobId => Job.Id == ObjectId.Empty ? null : Job.Id;

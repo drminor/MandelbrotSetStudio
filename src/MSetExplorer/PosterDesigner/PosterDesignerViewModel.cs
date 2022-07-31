@@ -96,9 +96,9 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
 		{
-			var result = _posterOpenSaveViewModelCreator(initalName, dialogType);
+			var result = _posterOpenSaveViewModelCreator(initalName, useEscapeVelocities, dialogType);
 			return result;
 		}
 
@@ -108,10 +108,10 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath)
+		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath, bool useEscapeVelocities)
 		{
 			var pngBuilder = new PngBuilder(_mapLoaderManager);
-			var result = new CreateImageProgressViewModel(pngBuilder);
+			var result = new CreateImageProgressViewModel(pngBuilder, useEscapeVelocities);
 			return result;
 		}
 
@@ -121,10 +121,10 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public LazyMapPreviewImageProvider GetPreviewImageProvider (MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SizeInt previewImagesize, Color fallbackColor)
+		public LazyMapPreviewImageProvider GetPreviewImageProvider (MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, SizeInt previewImagesize, Color fallbackColor)
 		{
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var result = new LazyMapPreviewImageProvider(bitmapBuilder, _mapJobHelper, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, fallbackColor);
+			var result = new LazyMapPreviewImageProvider(bitmapBuilder, _mapJobHelper, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
 			return result;
 		}
 
