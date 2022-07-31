@@ -237,22 +237,14 @@ namespace MSS.Common
 
 		public void Add(Job job)
 		{
-			_jobTree.Add(job, selectTheAddedJob: true);
-
-			var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
-
-			if (colorBandSet == null)
+			if (!_colorBandSets.Any(x => x.Id == job.ColorBandSetId))
 			{
 				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
 			}
-			else
-			{
-				CurrentColorBandSet = colorBandSet;
-			}
+
+			_jobTree.Add(job, selectTheAddedJob: true);
 
 			LastUpdatedUtc = DateTime.UtcNow;
-
-			CurrentJob = job;
 		}
 
 		public void Add(ColorBandSet colorBandSet)

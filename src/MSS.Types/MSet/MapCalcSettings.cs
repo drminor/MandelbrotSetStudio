@@ -11,13 +11,13 @@ namespace MSS.Types.MSet
 		private static readonly int DEFAULT_THRESHOLD = 4;
 
 		[DataMember(Order = 1)]
-		public int TargetIterations { get; init; }
+		public int TargetIterations { get; set; }
 
 		[DataMember(Order = 2)]
-		public int Threshold { get; init; }
+		public int Threshold { get; set; }
 
 		[DataMember(Order = 3)]
-		public int RequestsPerJob { get; init; }
+		public int RequestsPerJob { get; set; }
 
 		public bool UseEscapeVelocities { get; set; }
 

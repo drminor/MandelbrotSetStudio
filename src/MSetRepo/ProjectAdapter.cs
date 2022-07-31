@@ -785,7 +785,25 @@ namespace MSetRepo
 			}
 		}
 
-		public void UpdatePoster(Poster poster)
+		public void UpdatePosterCurrentJobId(ObjectId posterId, ObjectId? currentJobId)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			posterReaderWriter.UpdateCurrentJobId(posterId, currentJobId);
+		}
+
+		public void UpdatePosterName(ObjectId posterId, string name)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			posterReaderWriter.UpdateName(posterId, name);
+		}
+
+		public void UpdatePosterDescription(ObjectId posterId, string? description)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			posterReaderWriter.UpdateDescription(posterId, description);
+		}
+
+		public void UpdatePosterMapArea(Poster poster)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 			var posterRecord = _mSetRecordMapper.MapTo(poster);
@@ -845,6 +863,7 @@ namespace MSetRepo
 
 		private IPosterInfo GetPosterInfoInternal(PosterRecord posterRec, JobReaderWriter jobReaderWriter)
 		{
+			Debug.WriteLine($"Retrieving PosterInfo. Poster: {posterRec.Id}, Current Job: {posterRec.CurrentJobId}");
 			var jobRec = jobReaderWriter.Get(posterRec.CurrentJobId);
 			var lastSavedUtc = jobRec != null ? jobRec.LastSaved > posterRec.LastSavedUtc ? jobRec.LastSaved : posterRec.LastSavedUtc : posterRec.LastSavedUtc;
 			var size = jobRec != null ? _mSetRecordMapper.MapFrom(jobRec.MapAreaInfoRecord.CanvasSize) : new SizeInt();

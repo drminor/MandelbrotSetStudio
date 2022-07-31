@@ -224,15 +224,18 @@ namespace MSS.Common
 				{
 					if (!value.IsEmpty)
 					{
-						var colorBandSetIdBeforeUpdate = _jobTree.CurrentJob.ColorBandSetId;
-
-						LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
-
-						_jobTree.CurrentJob = value;
-
-						if (_jobTree.CurrentJob.ColorBandSetId != colorBandSetIdBeforeUpdate)
+						if (value != CurrentJob)
 						{
-							OnPropertyChanged(nameof(CurrentColorBandSet));
+							var colorBandSetIdBeforeUpdate = _jobTree.CurrentJob.ColorBandSetId;
+
+							_ = LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
+
+							_jobTree.CurrentJob = value;
+
+							if (_jobTree.CurrentJob.ColorBandSetId != colorBandSetIdBeforeUpdate)
+							{
+								OnPropertyChanged(nameof(CurrentColorBandSet));
+							}
 						}
 					}
 
@@ -306,15 +309,14 @@ namespace MSS.Common
 
 		public void Add(Job job)
 		{
+			if (!_colorBandSets.Any(x => x.Id == job.ColorBandSetId))
+			{
+				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
+			}
+
 			_jobTree.Add(job, selectTheAddedJob: true);
 
-			var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
-
-			CurrentColorBandSet = colorBandSet ?? throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
-
 			LastUpdatedUtc = DateTime.UtcNow;
-
-			CurrentJob = job;
 		}
 
 		public void Add(ColorBandSet colorBandSet)

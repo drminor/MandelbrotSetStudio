@@ -83,7 +83,8 @@ namespace ProjectRepo
 			var updateDefinition = Builders<PosterRecord>.Update
 				.Set(u => u.CurrentJobId, posterRecord.CurrentJobId)
 				.Set(u => u.DisplayPosition, posterRecord.DisplayPosition)
-				.Set(u => u.DisplayZoom, posterRecord.DisplayZoom);
+				.Set(u => u.DisplayZoom, posterRecord.DisplayZoom)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -105,6 +106,17 @@ namespace ProjectRepo
 
 			var updateDefinition = Builders<PosterRecord>.Update
 				.Set(u => u.Description, description)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void UpdateCurrentJobId(ObjectId projectId, ObjectId? currentJobId)
+		{
+			var filter = Builders<PosterRecord>.Filter.Eq("_id", projectId);
+
+			var updateDefinition = Builders<PosterRecord>.Update
+				.Set(u => u.CurrentJobId, currentJobId)
 				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);

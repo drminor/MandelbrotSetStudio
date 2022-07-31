@@ -19,9 +19,11 @@ namespace MSS.Common
 		bool ProjectExists(string name);
 		//bool TryGetProject(ObjectId projectId, [MaybeNullWhen(false)] out Project project);
 		bool TryGetProject(string name, [MaybeNullWhen(false)] out Project project);
+
 		void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId);
 		void UpdateProjectDescription(ObjectId projectId, string? description);
 		void UpdateProjectName(ObjectId projectId, string name);
+
 		bool DeleteProject(ObjectId projectId);
 		IEnumerable<IProjectInfo> GetAllProjectInfos();
 
@@ -29,14 +31,19 @@ namespace MSS.Common
 		IList<Poster> GetAllPosters();
 		IList<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
 		IList<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
-		IEnumerable<IPosterInfo> GetAllPosterInfos();
+
 
 		bool PosterExists(string name);
 		bool TryGetPoster(ObjectId posterId, [MaybeNullWhen(false)] out Poster poster);
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
-		void UpdatePoster(Poster poster);
-		bool DeletePoster(ObjectId posterId);
 
+		void UpdatePosterCurrentJobId(ObjectId posterId, ObjectId? currentJobId);
+		void UpdatePosterDescription(ObjectId posterId, string name);
+		void UpdatePosterName(ObjectId posterId, string name);
+		
+		void UpdatePosterMapArea(Poster poster);
+		bool DeletePoster(ObjectId posterId);
+		IEnumerable<IPosterInfo> GetAllPosterInfos();
 
 		Job GetJob(ObjectId jobId);
 		void InsertJob(Job job);

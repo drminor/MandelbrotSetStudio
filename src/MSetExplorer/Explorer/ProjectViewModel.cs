@@ -97,11 +97,7 @@ namespace MSetExplorer
 		public string? CurrentProjectName => CurrentProject?.Name;
 		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
 
-		public Job CurrentJob
-		{
-			get => CurrentProject?.CurrentJob ?? Job.Empty;
-			private set { }
-		}
+		public Job CurrentJob => CurrentProject?.CurrentJob ?? Job.Empty;
 
 		public bool CanGoBack => CurrentProject?.CanGoBack ?? false;
 		public bool CanGoForward => CurrentProject?.CanGoForward ?? false;
@@ -112,12 +108,52 @@ namespace MSetExplorer
 			set
 			{
 				var currentProject = CurrentProject;
-				if (currentProject != null)
+				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
 				{
-					if (UpdateColorBandSet(currentProject, value))
+					CheckCurrentProject(currentProject);
+
+					// Discard the Preview ColorBandSet. 
+					_previewColorBandSet = null;
+
+					if (value == CurrentColorBandSet)
 					{
-						OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
+						Debug.WriteLine($"ProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
 					}
+
+					var targetIterations = value.HighCutoff;
+					var currentJob = currentProject.CurrentJob;
+
+					if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
+					{
+						Debug.WriteLine($"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+
+						currentProject.Add(value);
+						var newMapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
+						LoadMap(currentProject, currentJob, currentJob.Coords, value.Id, newMapCalcSettings, TransformType.IterationUpdate, null);
+					}
+					else
+					{
+						Debug.WriteLine($"ProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+						currentProject.CurrentColorBandSet = value;
+					}
+
+					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
+				}
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckCurrentProject(IJobOwner jobOwner)
+		{
+			if (jobOwner.CurrentJob.IsEmpty)
+			{
+				Debug.WriteLine($"The CurrentJob IsEmpty = { CurrentJob.IsEmpty}.");
+			}
+			else
+			{
+				if (jobOwner.CurrentColorBandSetId != jobOwner.CurrentJob.ColorBandSetId)
+				{
+					Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
 				}
 			}
 		}
@@ -254,13 +290,9 @@ namespace MSetExplorer
 			}
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSave found the CurrentJob to be empty.");
-
 			var result = JobOwnerHelper.Save(currentProject, _projectAdapter);
-
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentProjectIsDirty));
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentProjectOnFile));
-
-			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 
 			return result;
 		}
@@ -274,13 +306,13 @@ namespace MSetExplorer
 				throw new InvalidOperationException("The project must be non-null.");
 			}
 
-			ProjectAndMapSectionHelper.DeleteProject(name, _projectAdapter, _mapSectionAdapter);
+			_ = ProjectAndMapSectionHelper.DeleteProject(name, _projectAdapter, _mapSectionAdapter);
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
-			var project = JobOwnerHelper.CreateCopyOfProject(currentProject, name, description, _projectAdapter, _mapSectionAdapter);
+			var project = (Project)JobOwnerHelper.CreateCopy(currentProject, name, description, _projectAdapter, _mapSectionAdapter);
 
-			 JobOwnerHelper.Save(currentProject, _projectAdapter);
+			_ = JobOwnerHelper.Save(currentProject, _projectAdapter);
 
 			CurrentProject = project;
 		}
@@ -351,8 +383,8 @@ namespace MSetExplorer
 			var mapPosition = curJob.Coords.Position;
 			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 
-			var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-			LoadMap(CurrentProject, curJob, coords, curJob.ColorBandSetId, curJob.MapCalcSettings, transformType, screenArea);
+			var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
+			LoadMap(CurrentProject, curJob, newCoords, curJob.ColorBandSetId, curJob.MapCalcSettings, transformType, screenArea);
 		}
 
 		//// Currently Not Used.
@@ -369,42 +401,42 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		private bool UpdateColorBandSet(Project project, ColorBandSet colorBandSet)
-		{
-			// Discard the Preview ColorBandSet. 
-			_previewColorBandSet = null;
+		//private bool UpdateColorBandSet(Project project, ColorBandSet colorBandSet)
+		//{
+		//	// Discard the Preview ColorBandSet. 
+		//	_previewColorBandSet = null;
 
-			var currentJob = project.CurrentJob;
+		//	var currentJob = project.CurrentJob;
 
-			if (CurrentColorBandSet.Id != currentJob.ColorBandSetId)
-			{
-				Debug.WriteLine($"The project's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands. The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
-			}
+		//	if (CurrentColorBandSet.Id != currentJob.ColorBandSetId)
+		//	{
+		//		Debug.WriteLine($"The project's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands. The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
+		//	}
 
-			if (colorBandSet == CurrentColorBandSet)
-			{
-				Debug.WriteLine($"ProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
-				return false;
-			}
+		//	if (colorBandSet == CurrentColorBandSet)
+		//	{
+		//		Debug.WriteLine($"ProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
+		//		return false;
+		//	}
 
-			var targetIterations = colorBandSet.HighCutoff;
+		//	var targetIterations = colorBandSet.HighCutoff;
 
-			if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
-			{
-				project.Add(colorBandSet);
+		//	if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
+		//	{
+		//		project.Add(colorBandSet);
 
-				Debug.WriteLine($"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {project.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
-				var mapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
-				LoadMap(project, currentJob, currentJob.Coords, colorBandSet.Id, mapCalcSettings, TransformType.IterationUpdate, null);
-			}
-			else
-			{
-				Debug.WriteLine($"ProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {project.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
-				project.CurrentColorBandSet = colorBandSet;
-			}
+		//		Debug.WriteLine($"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {project.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
+		//		var mapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
+		//		LoadMap(project, currentJob, currentJob.Coords, colorBandSet.Id, mapCalcSettings, TransformType.IterationUpdate, null);
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"ProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {project.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
+		//		project.CurrentColorBandSet = colorBandSet;
+		//	}
 
-			return true;
-		}
+		//	return true;
+		//}
 
 		public MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea)
 		{

@@ -13,21 +13,19 @@ namespace MSS.Common
 		string Name { get; set; }
 		string? Description { get; set; }
 
-		 ObservableCollection<JobTreeItem>? JobItems { get; }
-
+		ObservableCollection<JobTreeItem>? JobItems { get; }
 
 		Job CurrentJob { get; set; }
 		ObjectId CurrentColorBandSetId { get; }
-
 
 		bool OnFile { get; }
 		bool IsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
 
-		DateTime DateCreatedUtc { get; init; }
-		DateTime LastSavedUtc { get; }
-		DateTime LastAccessedUtc { get; init; }
-		DateTime LastUpdatedUtc { get; }
+		//DateTime DateCreatedUtc { get; init; }
+		//DateTime LastSavedUtc { get; }
+		//DateTime LastAccessedUtc { get; init; }
+		//DateTime LastUpdatedUtc { get; }
 
 		List<Job> GetJobs();
 		List<ColorBandSet> GetColorBandSets();

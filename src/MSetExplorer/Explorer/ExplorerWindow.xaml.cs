@@ -339,8 +339,14 @@ namespace MSetExplorer
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.ProjectViewModel.ProjectSave();
-			//_ = MessageBox.Show("Changes Saved");
+			if (!_vm.ProjectViewModel.ProjectSave())
+			{
+				_ = MessageBox.Show("Could not save changes.");
+			}
+			else
+			{
+				//_ = MessageBox.Show("Changes Saved");
+			}
 		}
 
 		// Project Save As

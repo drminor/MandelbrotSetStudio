@@ -24,7 +24,7 @@ namespace MSetExplorer
 		AreaColorAndCalcSettings CurrentAreaColorAndCalcSettings { get; }
 		MapAreaInfo PosterAreaInfo { get; }
 
-		ColorBandSet CurrentColorBandSet { get; }
+		ColorBandSet CurrentColorBandSet { get; set; }
 		ColorBandSet? PreviewColorBandSet { get; set; }
 
 		VectorInt DisplayPosition { get; set; }
@@ -36,13 +36,11 @@ namespace MSetExplorer
 		void UpdateMapSpecs(Poster currentPoster, MapAreaInfo newMapAreaInfo);
 		MapAreaInfo GetUpdatedMapAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize);
 
-		bool UpdateColorBandSet(ColorBandSet colorBandSet);
-
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
 		bool PosterOpen(string name);
 		void Load(Poster poster, MapAreaInfo? newMapAreaInfo);
 		
-		void PosterSave();
+		bool PosterSave();
 		void PosterSaveAs(string name, string? description);
 		void Close();
 	}

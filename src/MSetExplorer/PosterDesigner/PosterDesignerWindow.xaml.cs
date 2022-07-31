@@ -230,7 +230,14 @@ namespace MSetExplorer
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.PosterViewModel.PosterSave();
+			if (!_vm.PosterViewModel.PosterSave())
+			{
+				_ = MessageBox.Show("Could not save changes.");
+			}
+			else
+			{
+				//_ = MessageBox.Show("Changes Saved");
+			}
 		}
 
 		// Project Save As
@@ -403,7 +410,7 @@ namespace MSetExplorer
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
 				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, curPoster.CurrentJob.MapCalcSettings.TargetIterations);
-				_vm.PosterViewModel.UpdateColorBandSet(adjustedCbs);
+				_vm.PosterViewModel.CurrentColorBandSet = adjustedCbs;
 			}
 			else
 			{
@@ -589,8 +596,14 @@ namespace MSetExplorer
 				if (_vm.PosterViewModel.CurrentPosterOnFile)
 				{
 					// Silently record the new CurrentJob selection
-					_vm.PosterViewModel.PosterSave();
-					return SaveResultP.CurrentJobAutoSaved;
+					if (_vm.PosterViewModel.PosterSave())
+					{
+						return SaveResultP.CurrentJobAutoSaved;
+					}
+					else
+					{
+						return SaveResultP.NoChangesToSave;
+					}
 				}
 
 				return SaveResultP.NoChangesToSave;
@@ -610,8 +623,14 @@ namespace MSetExplorer
 				if (_vm.PosterViewModel.CurrentPosterOnFile)
 				{
 					// The Project is on-file, just save the pending changes.
-					_vm.PosterViewModel.PosterSave();
-					return SaveResultP.ChangesSaved;
+					if (_vm.PosterViewModel.PosterSave())
+					{
+						return SaveResultP.ChangesSaved;
+					}
+					else
+					{
+						return SaveResultP.NoChangesToSave;
+					}
 				}
 				else
 				{
@@ -748,10 +767,15 @@ namespace MSetExplorer
 
 			if (_vm.PosterViewModel.TryGetPoster(posterName, out var poster))
 			{
-				MapAreaInfo? newPosterMapAreaInfo = null;
+				MapAreaInfo? newPosterMapAreaInfo;
+
 				if (getSizeRequestParameter)
 				{
 					_ = TryGetNewSizeFromUser(poster, out newPosterMapAreaInfo);
+				}
+				else
+				{
+					newPosterMapAreaInfo = null;
 				}
 
 				_vm.PosterViewModel.Load(poster, newPosterMapAreaInfo);
@@ -762,7 +786,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool TryGetNewSizeFromUser(Poster poster, out MapAreaInfo newPosterMapAreaInfo)
+		private bool TryGetNewSizeFromUser(Poster poster, [MaybeNullWhen(false)] out MapAreaInfo newPosterMapAreaInfo)
 		{
 			var curJob = poster.CurrentJob;
 
@@ -795,13 +819,13 @@ namespace MSetExplorer
 					}
 					else
 					{
-						newPosterMapAreaInfo = new MapAreaInfo();
+						newPosterMapAreaInfo = null;
 						return false;
 					}
 				}
 				else
 				{
-					newPosterMapAreaInfo = new MapAreaInfo();
+					newPosterMapAreaInfo = null;
 					return false;
 				}
 			}

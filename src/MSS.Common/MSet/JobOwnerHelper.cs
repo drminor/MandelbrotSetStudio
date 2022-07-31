@@ -20,7 +20,19 @@ namespace MSS.Common
 
 			if (jobOwner.IsCurrentJobIdChanged)
 			{
-				projectAdapter.UpdateProjectCurrentJobId(jobOwner.Id, jobOwner.CurrentJob.Id);
+				if (jobOwner is Project)
+				{
+					projectAdapter.UpdateProjectCurrentJobId(jobOwner.Id, jobOwner.CurrentJob.Id);
+				}
+				else if (jobOwner is Poster poster) 
+				{
+					projectAdapter.UpdatePosterMapArea(poster);
+					//projectAdapter.UpdateProjectCurrentJobId(jobOwner.Id, jobOwner.CurrentJob.Id);
+				}
+				else
+				{
+					throw new InvalidOperationException("The JobOwner is neither a Project or a Poster");
+				}
 			}
 
 			if (jobOwner.IsDirty)
@@ -28,8 +40,8 @@ namespace MSS.Common
 				var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(jobOwner, projectAdapter);
 				Debug.WriteLine($"Removed {numberColorBandSetsRemoved} unused ColorBandSets.");
 
-				projectAdapter.UpdateProjectName(jobOwner.Id, jobOwner.Name);
-				projectAdapter.UpdateProjectDescription(jobOwner.Id, jobOwner.Description);
+				//projectAdapter.UpdateProjectName(jobOwner.Id, jobOwner.Name);
+				//projectAdapter.UpdateProjectDescription(jobOwner.Id, jobOwner.Description);
 
 				SaveColorBandSets(jobOwner, projectAdapter);
 				SaveJobs(jobOwner, projectAdapter);
@@ -40,9 +52,8 @@ namespace MSS.Common
 			return true;
 		}
 
-		public static Project CreateCopyOfProject(Project sourceProject, string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
+		public static IJobOwner CreateCopy(IJobOwner sourceProject, string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
 		{
-			// TODO: Update the JobTree with a new Clone or Copy method. 
 			var jobPairs = sourceProject.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
 			var jobs = jobPairs.Select(x => x.Item2).ToArray();
 
@@ -65,67 +76,47 @@ namespace MSS.Common
 				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
 			}
 
+			var project = CreateJobOwner(sourceProject, name, description, jobs, colorBandSets, projectAdapter);
+
+			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == sourceProject.CurrentJob.Id);
+			var newCurJob = firstOldIdAndNewJob?.Item2;
+			project.CurrentJob = newCurJob ?? Job.Empty;
+
+			return project;
+		}
+
+		private static IJobOwner CreateJobOwner(IJobOwner sourceProject, string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		{
+			if (sourceProject is Poster p)
+			{
+				return CreatePoster(name, description, p.CurrentJob.Id, jobs, colorBandSets, projectAdapter);
+			}
+			else
+			{
+				return CreateProject(name, description, jobs, colorBandSets, projectAdapter);
+			}
+		}
+
+		private static IJobOwner CreateProject(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		{
 			var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets);
 
 			if (project is null)
 			{
 				throw new InvalidOperationException("Could not create the new project.");
 			}
-
-			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == sourceProject.CurrentJob.Id);
-			var newCurJob = firstOldIdAndNewJob?.Item2;
-			project.CurrentJob = newCurJob ?? Job.Empty;
-
-			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == sourceProject.CurrentColorBandSetId);
-			var newCurCbs = firstOldIdAndNewCbs?.Item2;
-
-			project.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
-
 			return project;
 		}
 
-		public static Poster CreateCopyOfPoster(Poster sourcePoster, string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
+		private static IJobOwner CreatePoster(string name, string? description, ObjectId sourceJobId, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
 		{
-			// TODO: Update the JobTree with a new Clone or Copy method. 
-			var jobPairs = sourcePoster.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
-			var jobs = jobPairs.Select(x => x.Item2).ToArray();
+			var project = projectAdapter.CreatePoster(name, description, sourceJobId, jobs, colorBandSets);
 
-			foreach (var oldIdAndNewJob in jobPairs)
+			if (project is null)
 			{
-				var formerJobId = oldIdAndNewJob.Item1;
-				var newJobId = oldIdAndNewJob.Item2.Id;
-				UpdateJobParents(formerJobId, newJobId, jobs);
-
-				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
-				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
+				throw new InvalidOperationException("Could not create the new poster.");
 			}
-
-			var colorBandSetPairs = sourcePoster.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
-			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
-
-			foreach (var oldIdAndNewCbs in colorBandSetPairs)
-			{
-				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
-				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
-			}
-
-			var poster = projectAdapter.CreatePoster(name, description, sourcePoster.CurrentJob.Id, jobs, colorBandSets);
-
-			if (poster is null)
-			{
-				throw new InvalidOperationException("Could not create the new project.");
-			}
-
-			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == sourcePoster.CurrentJob.Id);
-			var newCurJob = firstOldIdAndNewJob?.Item2;
-			poster.CurrentJob = newCurJob ?? Job.Empty;
-
-			var firstOldIdAndNewCbs = colorBandSetPairs.FirstOrDefault(x => x.Item1 == sourcePoster.CurrentColorBandSetId);
-			var newCurCbs = firstOldIdAndNewCbs?.Item2;
-
-			poster.CurrentColorBandSet = newCurCbs ?? new ColorBandSet();
-
-			return poster;
+			return project;
 		}
 
 		public static long DeleteMapSectionsForUnsavedJobs(IJobOwner jobOwner, IMapSectionDeleter mapSectionDeleter)
