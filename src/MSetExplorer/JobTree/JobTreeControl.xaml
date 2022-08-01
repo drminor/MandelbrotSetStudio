@@ -102,6 +102,11 @@
                                 <!--<TextBlock Text=" [" Foreground="DarkGreen"/>
                                 <TextBlock Text="{Binding Children.Count}" Foreground="DarkGreen" />
                                 <TextBlock Text="]" Foreground="DarkGreen" />-->
+                                
+                                <!-- Path Head Type -->
+                                <TextBlock Text=" [" Foreground="DarkGreen"/>
+                                <TextBlock Text="{Binding PathHeadType}" Foreground="DarkGreen" />
+                                <TextBlock Text="]" Foreground="DarkGreen" />
 
                                 <Button Margin="5,1,0,1" Focusable="False" Command="local:JobTreeCommands.MoveTo" CommandParameter="{Binding JobId}" >Go</Button>
                             </StackPanel>

@@ -18,6 +18,8 @@ namespace MSetExplorer
 		string? CurrentPosterName { get; }
 		bool CurrentPosterOnFile { get; }
 		bool CurrentPosterIsDirty { get; }
+		int GetGetNumberOfDirtyJobs();
+
 		SizeInt PosterSize { get; }
 
 		Job CurrentJob { get; }

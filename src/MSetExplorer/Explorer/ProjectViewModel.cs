@@ -92,6 +92,11 @@ namespace MSetExplorer
 
 		public bool CurrentProjectIsDirty => CurrentProject?.IsDirty ?? false;
 
+		public int GetGetNumberOfDirtyJobs()
+		{
+			return CurrentProject?.GetNumberOfDirtyJobs() ?? 0;
+		}
+
 		public bool IsCurrentJobIdChanged => CurrentProject?.IsCurrentJobIdChanged ?? false;
 
 		public string? CurrentProjectName => CurrentProject?.Name;

@@ -20,6 +20,7 @@ namespace MSetExplorer
 		string? CurrentProjectName { get; }
 		bool CurrentProjectOnFile { get; }
 		bool CurrentProjectIsDirty { get; }
+		int GetGetNumberOfDirtyJobs();
 
 		Job CurrentJob { get; }
 		bool IsCurrentJobIdChanged { get; }

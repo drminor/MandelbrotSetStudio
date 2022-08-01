@@ -286,7 +286,11 @@ namespace MSetRepo
 					lastUpdated = lastSaved;
 				}
 
-				result = new ProjectInfo(projectRec.Id, dateCreated, projectRec.Name, projectRec.Description, lastUpdated, jobInfos.Count(), minMapCoordsExponent, minSamplePointDeltaExponent);
+				var numberOfFirstLevelChildJobs = jobInfos.Count(x => !x.ParentJobId.HasValue);
+
+				var jobCount = numberOfFirstLevelChildJobs > 1 ? jobInfos.Count() : -1 * jobInfos.Count();
+
+				result = new ProjectInfo(projectRec.Id, dateCreated, projectRec.Name, projectRec.Description, lastUpdated, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
 			else
 			{
@@ -325,6 +329,7 @@ namespace MSetRepo
 		private void InsertCbs(ColorBandSet colorBandSet, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
 			var colorBandSetRecord = _mSetRecordMapper.MapTo(colorBandSet);
+
 			_ = colorBandSetReaderWriter.Insert(colorBandSetRecord);
 			colorBandSet.LastSavedUtc = DateTime.UtcNow;
 		}

@@ -87,6 +87,12 @@ namespace MSS.Common
 
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyJobIsDirty;
 
+		public int GetNumberOfDirtyJobs()
+		{
+			var result = _jobTree.GetJobs().Count(x => !x.OnFile || x.IsDirty);
+			return result;
+		}  
+
 		public bool IsCurrentJobIdChanged => CurrentJobId != _originalCurrentJobId;
 
 		public ObjectId Id { get; init; }

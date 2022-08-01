@@ -93,13 +93,9 @@ namespace MSS.Common
 		public Job Job { get; init; }
 		public ObservableCollection<JobTreeItem> Children { get; init; }
 
-
-
-
 		public List<Job>? AlternateDispSizes { get; private set; }
 
 
-		public TransformType TransformType => Job.TransformType;
 		public int Zoom => -1 * Job.MapAreaInfo.Coords.Exponent;
 		public int Iterations => Job.MapCalcSettings.TargetIterations;
 		public DateTime Created => Job.DateCreated;
@@ -112,6 +108,19 @@ namespace MSS.Common
 			set => Job.ParentJobId = value;
 		}
 
+		public TransformType TransformType
+		{
+			get => Job.TransformType;
+			set
+			{
+				if (value != Job.TransformType)
+				{
+					Job.TransformType = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public bool IsAlternatePathHead
 		{
 			get => Job.IsAlternatePathHead;
@@ -119,6 +128,8 @@ namespace MSS.Common
 		}
 
 		public bool IsParkedAlternatePathHead => !IsAlternatePathHead && Children.Any() && !Job.IsEmpty;
+
+		public string? PathHeadType => IsAlternatePathHead ? "Alt" : IsParkedAlternatePathHead ? "Prk" : null;
 
 		public string IdAndParentId
 		{

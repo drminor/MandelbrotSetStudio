@@ -18,7 +18,7 @@ namespace ProjectRepo.Entities
 
 		public ReservedColorBandRecord[]? ReservedColorBandRecords { get; set; }
 
-		public Guid ColorBandsSerialNumber { get; set; }
+		public Guid ColorBandsSerialNumber { get; set; } = Guid.NewGuid();
 
 		public DateTime DateCreatedUtc { get; set; }
 		public DateTime LastAccessed { get; set; }

@@ -21,6 +21,7 @@ namespace MSS.Common
 		bool OnFile { get; }
 		bool IsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
+		int GetNumberOfDirtyJobs();
 
 		//DateTime DateCreatedUtc { get; init; }
 		//DateTime LastSavedUtc { get; }

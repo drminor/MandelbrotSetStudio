@@ -122,6 +122,11 @@ namespace MSetExplorer
 
 		public bool CurrentPosterIsDirty => CurrentPoster?.IsDirty ?? false;
 
+		public int GetGetNumberOfDirtyJobs()
+		{
+			return CurrentPoster?.GetNumberOfDirtyJobs() ?? 0;
+		}
+
 		public string? CurrentPosterName => CurrentPoster?.Name;
 		public bool CurrentPosterOnFile => CurrentPoster?.OnFile ?? false;
 

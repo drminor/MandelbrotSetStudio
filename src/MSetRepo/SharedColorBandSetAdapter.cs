@@ -114,7 +114,7 @@ namespace MSetRepo
 
 			var allColorBandSetRecords = colorsReaderWriter.GetAll();
 
-			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.ColorBandRecords.Max(y => y.CutOff), x.ColorBandRecords.Length, x.Name, x.Description));
+			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.ColorBandRecords.Max(y => y.CutOff)));
 
 			return result;
 		}
@@ -124,7 +124,7 @@ namespace MSetRepo
 			var colorsReaderWriter = new SharedColorBandSetReaderWriter(_dbProvider);
 			var cbsRecord = colorsReaderWriter.Get(id);
 
-			var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.ColorBandRecords.Max(y => y.CutOff), cbsRecord.ColorBandRecords.Length, cbsRecord.Name, cbsRecord.Description);
+			var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name, cbsRecord.Description, cbsRecord.LastAccessed, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, cbsRecord.ColorBandRecords.Max(y => y.CutOff));
 
 			return result;
 		}

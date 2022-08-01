@@ -10,14 +10,16 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		public ColorBandSetInfo(ObjectId id, int maxIterations, int numberOfBands, string? name, string? description)
+		public ColorBandSetInfo(ObjectId id, string? name, string? description, DateTime lastAccessed, Guid colorBandSerialNumber, int numberOfBands, int maxIterations)
 		{
 			Debug.WriteLine($"Constructing ColorBandSetInfo with Id: {id}.");
 			Id = id;
-			MaxIterations = maxIterations;
-			NumberOfBands = numberOfBands;
-			_name = name ?? throw new ArgumentNullException("When creating a ColorBandSetInfo, the name cannot be null.");
+			_name = name ?? throw new ArgumentNullException(nameof(name), "When creating a ColorBandSetInfo, the name cannot be null.");
 			_description = description;
+			LastAccessed = lastAccessed;
+			NumberOfBands = numberOfBands;
+			MaxIterations = maxIterations;
+			ColorBandSerialNumber = colorBandSerialNumber;
 		}
 
 		#endregion
@@ -26,8 +28,10 @@ namespace MSS.Types
 
 		public ObjectId Id { get; init; }
 		public DateTime DateCreated => Id.CreationTime;
-		public int MaxIterations { get; init; }
+		public DateTime LastAccessed { get; init; }
 		public int NumberOfBands { get; init; }
+		public int MaxIterations { get; init; }
+		public Guid ColorBandSerialNumber { get; init; }
 
 		private string _name;
 		public string Name

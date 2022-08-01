@@ -15,14 +15,7 @@ namespace MSS.Types
 	{
 		#region Static Members
 
-		public static ColorBandSet Empty { get;}
-		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND;
-
-		static ColorBandSet()
-		{
-			DEFAULT_HIGH_COLOR_BAND = new(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
-			Empty = new ColorBandSet();
-		}
+		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
 
 		#endregion
 
@@ -36,16 +29,20 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public ColorBandSet() : this(projectId: ObjectId.Empty, colorBands: null)
-		{
-			Id = ObjectId.Empty;
-		}
-
-		public ColorBandSet(IList<ColorBand>? colorBands) : this(projectId: ObjectId.Empty, colorBands)
+		public ColorBandSet() 
+			: this(colorBands: null)
 		{ }
 
-		private ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands)
-			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands, null, Guid.NewGuid())
+		public ColorBandSet(IList<ColorBand>? colorBands) 
+			: this(projectId: ObjectId.Empty, colorBands, Guid.NewGuid())
+		{ }
+
+		public ColorBandSet(IList<ColorBand>? colorBands, Guid colorBandsSerialNumber)
+			: this(projectId: ObjectId.Empty, colorBands, colorBandsSerialNumber)
+		{ }
+
+		private ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands, Guid colorBandsSerialNumber)
+			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands, null, colorBandsSerialNumber)
 		{
 			LastSavedUtc = DateTime.MinValue;
 			OnFile = false;
@@ -75,14 +72,14 @@ namespace MSS.Types
 
 		#region Public Properties - Derived
 
+		public bool IsReadOnly => false;
+		public bool IsAssignedToProject => ProjectId != ObjectId.Empty;
+		public bool IsDirty => LastSavedUtc.Equals(DateTime.MinValue) || LastUpdatedUtc > LastSavedUtc;
+
 		public int HighCutoff => this[^1].Cutoff;
 
-		public bool IsDirty => LastSavedUtc.Equals(DateTime.MinValue) || LastUpdatedUtc > LastSavedUtc;
-		public bool AssignedToProject => ProjectId != ObjectId.Empty;
-		public bool IsReadOnly => false;
-
 		#endregion
-		
+
 		#region Public Properties
 
 		public ObjectId Id { get; init; }

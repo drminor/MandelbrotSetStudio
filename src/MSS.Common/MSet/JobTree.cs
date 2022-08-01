@@ -211,14 +211,17 @@ namespace MSS.Common
 
 				var newNode = new JobTreeItem(job);
 
-				var grandParentJobTreeItem = GetParent(parentPath);
-				var siblings = grandParentJobTreeItem.Children;
-				var currentPosition = siblings.IndexOf(parentJobTreeItem);
-
-				if (currentPosition != siblings.Count - 1)
+				if (job.TransformType == TransformType.ZoomIn || job.TransformType == TransformType.ZoomOut)
 				{
-					// Take all items *following* the current position and add them to an alternate path
-					SwitchAltBranches(newNode, siblings, currentPosition + 1);
+					var grandParentJobTreeItem = GetParent(parentPath);
+					var siblings = grandParentJobTreeItem.Children;
+					var currentPosition = siblings.IndexOf(parentJobTreeItem);
+
+					if (currentPosition != siblings.Count - 1)
+					{
+						// Take all items *following* the current position and add them to an alternate path
+						SwitchAltBranches(newNode, siblings, currentPosition + 1);
+					}
 				}
 
 				// Add the new job to the end of the main trunk.

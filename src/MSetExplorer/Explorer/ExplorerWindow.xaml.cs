@@ -339,6 +339,13 @@ namespace MSetExplorer
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
+			var shouldContinue = ProjectSaveConfirmOnHighJobCount();
+
+			if (shouldContinue != true)
+			{
+				return;
+			}
+
 			if (!_vm.ProjectViewModel.ProjectSave())
 			{
 				_ = MessageBox.Show("Could not save changes.");
@@ -673,6 +680,18 @@ namespace MSetExplorer
 				return SaveResult.NoChangesToSave;
 			}
 
+			var shouldContinue = ProjectSaveConfirmOnHighJobCount();
+			
+			if (shouldContinue != true)
+			{
+				return shouldContinue == false ? SaveResult.NotSavingChanges : SaveResult.SaveCancelled;
+			}
+
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return SaveResult.SaveCancelled;
+			}
+
 			if (!_vm.ProjectViewModel.CurrentProjectIsDirty)
 			{
 				if (_vm.ProjectViewModel.IsCurrentJobIdChanged)
@@ -700,11 +719,6 @@ namespace MSetExplorer
 				{
 					return SaveResult.NotSavingChanges;
 				}
-			}
-
-			if (!ColorsCommitUpdates().HasValue)
-			{
-				return SaveResult.SaveCancelled;
 			}
 
 			var triResult = ProjectUserSaysSaveChanges();
@@ -745,6 +759,28 @@ namespace MSetExplorer
 			{
 				return SaveResult.SaveCancelled;
 			}
+		}
+
+		private bool? ProjectSaveConfirmOnHighJobCount()
+		{
+			var numberOfDirtyJobs = _vm.ProjectViewModel.GetGetNumberOfDirtyJobs();
+			if (numberOfDirtyJobs > 3)
+			{
+				var x = MessageBox.Show($"There are {numberOfDirtyJobs} dirty jobs. Continue to save?", "High Dirty Job Count", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
+				if (x == MessageBoxResult.Yes)
+				{
+					return true;
+				}
+				else if(x == MessageBoxResult.No)
+				{
+					return false;
+				}
+				else if (x == MessageBoxResult.Cancel)
+				{
+					return null;
+				}
+			}
+			return true;
 		}
 
 		private bool? SaveProjectInteractive(Project curProject)

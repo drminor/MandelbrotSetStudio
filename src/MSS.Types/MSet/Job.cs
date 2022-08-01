@@ -209,11 +209,14 @@ namespace MSS.Types.MSet
 
 		public Job CreateNewCopy()
 		{
-			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, IsAlternatePathHead, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(), 
+			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, IsAlternatePathHead, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
 				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
 			{
 				OnFile = false
 			};
+
+			result.IterationUpdates = (IterationUpdateRecord[]?) IterationUpdates?.Clone() ?? null;
+			result.ColorMapUpdates = (ColorMapUpdateRecord[]?) ColorMapUpdates?.Clone() ?? null;
 
 			return result;
 		}

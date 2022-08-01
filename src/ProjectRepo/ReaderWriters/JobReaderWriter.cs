@@ -125,7 +125,7 @@ namespace ProjectRepo
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
-					p => new JobInfoRecord(p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MapAreaInfoRecord.CoordsRecord.CoordsDto.Exponent)
+					p => new JobInfoRecord(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MapAreaInfoRecord.CoordsRecord.CoordsDto.Exponent)
 				);
 
 			//List models = collection.Find(_ => true).Project(projection1).ToList();
