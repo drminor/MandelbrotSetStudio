@@ -12,9 +12,9 @@ namespace MSS.Common
 		//void DropCollections();
 		void WarmUp();
 
-		Project? CreateProject(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
-		IList<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
-		IList<ObjectId> GetAllJobIdsForProject(ObjectId projectId);
+		Project? CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
+		List<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
+		List<ObjectId> GetAllJobIdsForProject(ObjectId projectId);
 
 		bool ProjectExists(string name);
 		//bool TryGetProject(ObjectId projectId, [MaybeNullWhen(false)] out Project project);
@@ -27,10 +27,10 @@ namespace MSS.Common
 		bool DeleteProject(ObjectId projectId);
 		IEnumerable<IProjectInfo> GetAllProjectInfos();
 
-		Poster? CreatePoster(string name, string? description, ObjectId sourceJobId, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
-		IList<Poster> GetAllPosters();
-		IList<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
-		IList<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
+		Poster? CreatePoster(string name, string? description, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
+		List<Poster> GetAllPosters();
+		List<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
+		List<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
 
 
 		bool PosterExists(string name);

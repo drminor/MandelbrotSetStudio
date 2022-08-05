@@ -19,6 +19,8 @@ namespace MSS.Types.MSet
 		[DataMember(Order = 3)]
 		public int RequestsPerJob { get; set; }
 
+		//public bool UseEscapeVelocities { get; set; }
+
 		#region Constructor
 
 		public MapCalcSettings() : this(0, 0, 0)

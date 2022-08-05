@@ -113,7 +113,7 @@ namespace MSetRepo
 
 			var result = new JobRecord(
 				ParentJobId: source.ParentJobId,
-				IsAlternatePathHead: source.IsAlternatePathHead,
+				IsAlternatePathHead: false,  // source.IsAlternatePathHead,
 				ProjectId: source.ProjectId,
 				SubDivisionId: source.Subdivision.Id,
 				Label: source.Label,

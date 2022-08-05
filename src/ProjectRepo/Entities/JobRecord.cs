@@ -7,7 +7,7 @@ namespace ProjectRepo.Entities
 {
 	public record JobRecord(
 		ObjectId? ParentJobId,
-		bool IsAlternatePathHead,
+		bool IsAlternatePathHead, // Remove this on next Schema Update
 		ObjectId ProjectId,
 		ObjectId SubDivisionId,
 		string? Label,

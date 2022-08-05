@@ -256,6 +256,18 @@ namespace ProjectRepo
 			return itemsFound;
 		}
 
+		//public void RemoveEscapeVelsFromMapSectionRecords()
+		//{
+		//	var filter = Builders<MapSectionRecord>.Filter.Empty;
+
+		//	var updateDefinition = Builders<MapSectionRecord>.Update
+		//		.Unset(f => f.MapCalcSettings.UseEscapeVelocities);
+
+		//	var options = new UpdateOptions { IsUpsert = false };
+
+		//	_ = Collection.UpdateMany(filter, updateDefinition, options);
+		//}
+
 		//public void AddCreatedDateToAllRecords()
 		//{
 		//	var filter = Builders<MapSectionRecord>.Filter.Empty;

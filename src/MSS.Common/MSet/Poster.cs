@@ -35,7 +35,7 @@ namespace MSS.Common
 		#region Constructor
 
 		public Poster(string name, string? description, ObjectId sourceJobId,
-			IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId
+			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId
 			)
 			: this(ObjectId.GenerateNewId(), name, description, sourceJobId,
 				  jobs, colorBandSets, currentJobId,
@@ -46,7 +46,7 @@ namespace MSS.Common
 		}
 
 		public Poster(ObjectId id, string name, string? description, ObjectId sourceJobId,
-			IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
+			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
 			VectorInt displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{

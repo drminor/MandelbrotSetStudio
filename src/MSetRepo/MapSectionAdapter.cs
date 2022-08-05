@@ -496,5 +496,21 @@ namespace MSetRepo
 
 
 		#endregion
+
+		#region Active Map Section Schema Updates
+
+		public void DoSchemaUpdates()
+		{
+			//RemoveEscapeVels();
+		}
+
+		//public void RemoveEscapeVels()
+		//{
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+
+		//	mapSectionReaderWriter.RemoveEscapeVelsFromMapSectionRecords();
+		//}
+
+		#endregion
 	}
 }

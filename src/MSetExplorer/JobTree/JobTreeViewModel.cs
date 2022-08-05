@@ -156,8 +156,8 @@ namespace MSetExplorer
 			_ = sb.AppendLine($"TransformType: {jobTreeItem.TransformType}");
 			_ = sb.AppendLine($"Id: {jobTreeItem.JobId}");
 			_ = sb.AppendLine($"ParentId: {jobTreeItem.ParentJobId}");
-			_ = sb.AppendLine($"Is Alternate Path Head: {jobTreeItem.IsAlternatePathHead}");
-			_ = sb.AppendLine($"Is Parked Alternate: {jobTreeItem.IsParkedAlternatePathHead} ");
+			_ = sb.AppendLine($"Is Alternate Path Head: {jobTreeItem.IsActiveAlternateBranchHead}");
+			_ = sb.AppendLine($"Is Parked Alternate: {jobTreeItem.IsParkedAlternateBranchHead} ");
 			_ = sb.AppendLine($"Children: {jobTreeItem.Children.Count}");
 			_ = sb.AppendLine($"CanvasSize Disp Alternates: {jobTreeItem.AlternateDispSizes?.Count ?? 0}");
 

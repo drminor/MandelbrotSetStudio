@@ -19,8 +19,9 @@ namespace MSS.Common
 		List<JobTreeItem>? GetCurrentPath();
 		List<JobTreeItem>? GetPath(ObjectId jobId);
 
-		void AddHomeJob(Job job);
-		void Add(Job job, bool selectTheAddedJob);
+		//List<JobTreeItem> AddHomeJob(Job job, JobTreeItem root);
+		List<JobTreeItem> Add(Job job, bool selectTheAddedJob);
+
 		bool RestoreBranch(ObjectId jobId);
 		bool RemoveBranch(ObjectId jobId);
 

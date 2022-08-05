@@ -144,7 +144,7 @@ namespace MSetRepo
 		//	}
 		//}
 
-		public Project? CreateProject(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
+		public Project? CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
@@ -175,7 +175,7 @@ namespace MSetRepo
 			}
 		}
 
-		private Project? AssembleProject(ProjectRecord? projectRecord, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc, DateTime lastAccessedUtc)
+		private Project? AssembleProject(ProjectRecord? projectRecord, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			Project? result;
 			if (projectRecord == null || jobs.Count == 0 || !colorBandSets.Any())
@@ -387,7 +387,7 @@ namespace MSetRepo
 
 		#region Job
 
-		public IList<ObjectId> GetAllJobIdsForPoster(ObjectId posterId)
+		public List<ObjectId> GetAllJobIdsForPoster(ObjectId posterId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var result = jobReaderWriter.GetJobIds(posterId).ToList();
@@ -395,7 +395,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public IList<Job> GetAllJobsForPoster(ObjectId poster, IEnumerable<ColorBandSet> colorBandSets)
+		public List<Job> GetAllJobsForPoster(ObjectId poster, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
 			var result = GetAllJobsForProject(poster, colorBandSetCache);
@@ -403,7 +403,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public IList<ObjectId> GetAllJobIdsForProject(ObjectId projectId)
+		public List<ObjectId> GetAllJobIdsForProject(ObjectId projectId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var result = jobReaderWriter.GetJobIds(projectId).ToList();
@@ -411,7 +411,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public IList<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets)
+		public List<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
 			var result = GetAllJobsForProject(projectId, colorBandSetCache);
@@ -419,7 +419,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		private IList<Job> GetAllJobsForProject(ObjectId projectId, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
+		private List<Job> GetAllJobsForProject(ObjectId projectId, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
 		{
 			var result = new List<Job>();
 
@@ -467,7 +467,7 @@ namespace MSetRepo
 			var job = new Job(
 				id: jobId,
 				parentJobId: jobRecord.ParentJobId,
-				isAlternatePathHead: jobRecord.IsAlternatePathHead,
+				//isAlternatePathHead: jobRecord.IsAlternatePathHead,
 				projectId: jobRecord.ProjectId,
 				label: jobRecord.Label,
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
@@ -647,7 +647,7 @@ namespace MSetRepo
 
 		#region Poster
 
-		public IList<Poster> GetAllPosters()
+		public List<Poster> GetAllPosters()
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
@@ -726,7 +726,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public Poster? CreatePoster(string name, string? description, ObjectId sourceJobId, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
+		public Poster? CreatePoster(string name, string? description, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 
@@ -761,7 +761,7 @@ namespace MSetRepo
 			}
 		}
 
-		private Poster? AssemblePoster(PosterRecord? posterRecord, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
+		private Poster? AssemblePoster(PosterRecord? posterRecord, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
 		{
 			Poster? result;
 			if (posterRecord == null || jobs.Count == 0 || !colorBandSets.Any())

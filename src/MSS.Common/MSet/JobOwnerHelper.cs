@@ -10,6 +10,81 @@ namespace MSS.Common
 {
 	public static class JobOwnerHelper
 	{
+		#region Create new and Create copy
+
+		public static IJobOwner CreateCopy(IJobOwner sourceProject, string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
+		{
+			var jobPairs = sourceProject.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
+			var jobs = jobPairs.Select(x => x.Item2).ToArray();
+
+			foreach (var oldIdAndNewJob in jobPairs)
+			{
+				var formerJobId = oldIdAndNewJob.Item1;
+				var newJobId = oldIdAndNewJob.Item2.Id;
+				UpdateJobParents(formerJobId, newJobId, jobs);
+
+				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
+				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
+			}
+
+			var colorBandSetPairs = sourceProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
+			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
+
+			foreach (var oldIdAndNewCbs in colorBandSetPairs)
+			{
+				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
+				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
+			}
+
+			var project = CreateJobOwner(sourceProject, name, description, jobs.ToList(), colorBandSets, projectAdapter);
+
+			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == sourceProject.CurrentJob.Id);
+			var newCurJob = firstOldIdAndNewJob?.Item2;
+			project.CurrentJob = newCurJob ?? Job.Empty;
+
+			return project;
+		}
+
+		public static IJobOwner CreateJobOwner(IJobOwner sourceJobOwner, string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		{
+			if (sourceJobOwner is Poster p)
+			{
+				return CreatePoster(name, description, p.CurrentJob.Id, jobs, colorBandSets, projectAdapter);
+			}
+			else
+			{
+				// TODO: Have Projects record the Id of the Project from which it was created -- just as Posters do.
+				// Then replace thi CreateJobOwner "thingy" with a delegate that can be used for either.
+				return CreateProject(name, description, jobs, colorBandSets, projectAdapter);
+			}
+		}
+
+		private static IJobOwner CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		{
+			var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets);
+
+			if (project is null)
+			{
+				throw new InvalidOperationException("Could not create the new project.");
+			}
+			return project;
+		}
+
+		private static IJobOwner CreatePoster(string name, string? description, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		{
+			var project = projectAdapter.CreatePoster(name, description, sourceJobId, jobs, colorBandSets);
+
+			if (project is null)
+			{
+				throw new InvalidOperationException("Could not create the new poster.");
+			}
+			return project;
+		}
+
+		#endregion
+
+		#region Save
+
 		public static bool Save(IJobOwner jobOwner, IProjectAdapter projectAdapter)
 		{
 			if (!(jobOwner.IsCurrentJobIdChanged || jobOwner.IsDirty))
@@ -52,72 +127,92 @@ namespace MSS.Common
 			return true;
 		}
 
-		public static IJobOwner CreateCopy(IJobOwner sourceProject, string name, string? description, IProjectAdapter projectAdapter, IMapSectionDuplicator mapSectionDuplicator)
+		private static void SaveColorBandSets(IJobOwner jobOwner, IProjectAdapter projectAdapter)
 		{
-			var jobPairs = sourceProject.GetJobs().Select(x => new Tuple<ObjectId, Job>(x.Id, x.CreateNewCopy())).ToArray();
-			var jobs = jobPairs.Select(x => x.Item2).ToArray();
+			var colorBandSets = jobOwner.GetColorBandSets();
+			var unsavedColorBandSets = colorBandSets.Where(x => !x.OnFile).ToList();
 
-			foreach (var oldIdAndNewJob in jobPairs)
+			foreach (var cbs in unsavedColorBandSets)
 			{
-				var formerJobId = oldIdAndNewJob.Item1;
-				var newJobId = oldIdAndNewJob.Item2.Id;
-				UpdateJobParents(formerJobId, newJobId, jobs);
-
-				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
-				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
+				if (cbs.ProjectId != jobOwner.Id)
+				{
+					Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.ProjectId}, current Project: {jobOwner.Id}.");
+					var newCbs = cbs.Clone();
+					newCbs.ProjectId = jobOwner.Id;
+					projectAdapter.InsertColorBandSet(newCbs);
+				}
+				else
+				{
+					projectAdapter.InsertColorBandSet(cbs);
+				}
 			}
 
-			var colorBandSetPairs = sourceProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
-			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
+			var dirtyColorBandSets = colorBandSets.Where(x => x.IsDirty).ToList();
 
-			foreach (var oldIdAndNewCbs in colorBandSetPairs)
+			foreach (var cbs in dirtyColorBandSets)
 			{
-				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
-				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
-			}
-
-			var project = CreateJobOwner(sourceProject, name, description, jobs, colorBandSets, projectAdapter);
-
-			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == sourceProject.CurrentJob.Id);
-			var newCurJob = firstOldIdAndNewJob?.Item2;
-			project.CurrentJob = newCurJob ?? Job.Empty;
-
-			return project;
-		}
-
-		private static IJobOwner CreateJobOwner(IJobOwner sourceProject, string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
-		{
-			if (sourceProject is Poster p)
-			{
-				return CreatePoster(name, description, p.CurrentJob.Id, jobs, colorBandSets, projectAdapter);
-			}
-			else
-			{
-				return CreateProject(name, description, jobs, colorBandSets, projectAdapter);
+				projectAdapter.UpdateColorBandSetDetails(cbs);
 			}
 		}
 
-		private static IJobOwner CreateProject(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		private static void SaveJobs(IJobOwner jobOwner, IProjectAdapter projectAdapter)
 		{
-			var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets);
+			//_jobTree.SaveJobs(projectId, projectAdapter);
 
-			if (project is null)
+			var jobs = jobOwner.GetJobs();
+
+			var unSavedJobs = jobs.Where(x => !x.OnFile).ToList();
+
+			foreach (var job in unSavedJobs)
 			{
-				throw new InvalidOperationException("Could not create the new project.");
+				job.ProjectId = jobOwner.Id;
+				projectAdapter.InsertJob(job);
 			}
-			return project;
+
+			var dirtyJobs = jobs.Where(x => x.IsDirty).ToList();
+
+			foreach (var job in dirtyJobs)
+			{
+				projectAdapter.UpdateJobDetails(job);
+			}
 		}
 
-		private static IJobOwner CreatePoster(string name, string? description, ObjectId sourceJobId, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		private static void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
 		{
-			var project = projectAdapter.CreatePoster(name, description, sourceJobId, jobs, colorBandSets);
-
-			if (project is null)
+			foreach (var job in jobs)
 			{
-				throw new InvalidOperationException("Could not create the new poster.");
+				if (job.ParentJobId == oldParentId)
+				{
+					job.ParentJobId = newParentId;
+				}
 			}
-			return project;
 		}
+
+		private static void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId, ColorBandSet[] colorBandSets)
+		{
+			foreach (var cbs in colorBandSets)
+			{
+				if (cbs.ParentId == oldParentId)
+				{
+					cbs.ParentId = newParentId;
+				}
+			}
+		}
+
+		private static void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId, Job[] jobs)
+		{
+			foreach (var job in jobs)
+			{
+				if (job.ColorBandSetId == oldCbsId)
+				{
+					job.ColorBandSetId = newCbsId;
+				}
+			}
+		}
+
+		#endregion
+
+		#region Delete MapSections and ColorBandSets
 
 		public static long DeleteMapSectionsForUnsavedJobs(IJobOwner jobOwner, IMapSectionDeleter mapSectionDeleter)
 		{
@@ -164,88 +259,6 @@ namespace MSS.Common
 			return colorBandSetsToRemoved.Count;
 		}
 
-		public static void SaveColorBandSets(IJobOwner jobOwner, IProjectAdapter projectAdapter)
-		{
-			var colorBandSets = jobOwner.GetColorBandSets();
-			var unsavedColorBandSets = colorBandSets.Where(x => !x.OnFile).ToList();
-
-			foreach (var cbs in unsavedColorBandSets)
-			{
-				if (cbs.ProjectId != jobOwner.Id)
-				{
-					Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.ProjectId}, current Project: {jobOwner.Id}.");
-					var newCbs = cbs.Clone();
-					newCbs.ProjectId = jobOwner.Id;
-					projectAdapter.InsertColorBandSet(newCbs);
-				}
-				else
-				{
-					projectAdapter.InsertColorBandSet(cbs);
-				}
-			}
-
-			var dirtyColorBandSets = colorBandSets.Where(x => x.IsDirty).ToList();
-
-			foreach (var cbs in dirtyColorBandSets)
-			{
-				projectAdapter.UpdateColorBandSetDetails(cbs);
-			}
-		}
-
-		public static void SaveJobs(IJobOwner jobOwner, IProjectAdapter projectAdapter)
-		{
-			//_jobTree.SaveJobs(projectId, projectAdapter);
-
-			var jobs = jobOwner.GetJobs();
-
-			var unSavedJobs = jobs.Where(x => !x.OnFile).ToList();
-
-			foreach (var job in unSavedJobs)
-			{
-				job.ProjectId = jobOwner.Id;
-				projectAdapter.InsertJob(job);
-			}
-
-			var dirtyJobs = jobs.Where(x => x.IsDirty).ToList();
-
-			foreach (var job in dirtyJobs)
-			{
-				projectAdapter.UpdateJobDetails(job);
-			}
-		}
-
-		public static void UpdateJobParents(ObjectId oldParentId, ObjectId newParentId, Job[] jobs)
-		{
-			foreach (var job in jobs)
-			{
-				if (job.ParentJobId == oldParentId)
-				{
-					job.ParentJobId = newParentId;
-				}
-			}
-		}
-
-		public static void UpdateCbsParentIds(ObjectId oldParentId, ObjectId newParentId, ColorBandSet[] colorBandSets)
-		{
-			foreach (var cbs in colorBandSets)
-			{
-				if (cbs.ParentId == oldParentId)
-				{
-					cbs.ParentId = newParentId;
-				}
-			}
-		}
-
-		public static void UpdateJobCbsIds(ObjectId oldCbsId, ObjectId newCbsId, Job[] jobs)
-		{
-			foreach (var job in jobs)
-			{
-				if (job.ColorBandSetId == oldCbsId)
-				{
-					job.ColorBandSetId = newCbsId;
-				}
-			}
-		}
-
+		#endregion
 	}
 }

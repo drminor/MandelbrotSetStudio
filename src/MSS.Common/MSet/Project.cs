@@ -30,13 +30,13 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public Project(string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId)
+		public Project(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId)
 			: this(ObjectId.GenerateNewId(), name, description, jobs, colorBandSets, currentJobId, DateTime.MinValue, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}
 
-		public Project(ObjectId id, string name, string? description, IList<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
+		public Project(ObjectId id, string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
 			DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			if (!jobs.Any())

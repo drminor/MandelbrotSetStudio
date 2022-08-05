@@ -64,6 +64,11 @@ namespace MSetExplorer
 				DoSchemaUpdates(pa);
 			}
 
+			if (_repositoryAdapters.MapSectionAdapter is MapSectionAdapter maForSu)
+			{
+				DoSchemaUpdates(maForSu);
+			}
+
 			if (CLEAN_UP_JOB_MAP_SECTIONS && _repositoryAdapters.MapSectionAdapter is MapSectionAdapter ma)
 			{
 				var report = GetJobMapSectionsReferenceReport(ma);
@@ -184,16 +189,18 @@ namespace MSetExplorer
 		private void DoSchemaUpdates(ProjectAdapter projectAdapter)
 		{
 			projectAdapter.DoSchemaUpdates();
+
+
 			//projectAdapter.AddIsIsAlternatePathHeadToAllJobs();
 			//projectAdapter.RemoveColorBandSetIdFromProject();
 			//projectAdapter.RemoveEscapeVels();
 		}
 
-		//private void DoSchemaUpdates(MapSectionAdapter mapSectionAdapter)
-		//{
-		//	//mapSectionAdapter.AddSubdivisionId();
-
-		//}
+		private void DoSchemaUpdates(MapSectionAdapter mapSectionAdapter)
+		{
+			mapSectionAdapter.DoSchemaUpdates();
+			//mapSectionAdapter.AddSubdivisionId();
+		}
 
 		private string GetJobMapSectionsReferenceReport(MapSectionAdapter mapSectionAdapter)
 		{
