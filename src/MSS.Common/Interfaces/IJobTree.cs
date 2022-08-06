@@ -23,7 +23,10 @@ namespace MSS.Common
 		JobTreePath Add(Job job, bool selectTheAddedJob);
 
 		bool RestoreBranch(ObjectId jobId);
+		bool RestoreBranch(JobTreePath path);
+
 		bool RemoveBranch(ObjectId jobId);
+		bool RemoveBranch(JobTreePath path);
 
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }

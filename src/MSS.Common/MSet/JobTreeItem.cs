@@ -286,7 +286,18 @@ namespace MSS.Common
 		public bool Remove(JobTreeItem jobTreeItem)
 		{
 			jobTreeItem.ParentNode = null;
-			var result = Children.Remove(jobTreeItem);
+
+			bool result;
+
+			if (jobTreeItem.TransformType == TransformType.CanvasSizeUpdate)
+			{
+				result = AlternateDispSizes?.Remove(jobTreeItem) ?? false;
+			}
+			else
+			{
+				result = Children.Remove(jobTreeItem);
+			}
+
 			return result;
 		}
 

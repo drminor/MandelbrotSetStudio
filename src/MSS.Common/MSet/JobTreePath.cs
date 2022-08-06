@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MSS.Common
 {
@@ -47,6 +48,16 @@ namespace MSS.Common
 		#endregion
 
 		#region Public Methods
+
+		public JobTreePath GetParentPath()
+		{
+			return new JobTreePath(Terms.SkipLast(1));
+		}
+
+		public JobTreePath GetGrandParentPath()
+		{
+			return new JobTreePath(Terms.SkipLast(2));
+		}
 
 		public JobTreePath Combine(JobTreePath jobTreePath)
 		{
