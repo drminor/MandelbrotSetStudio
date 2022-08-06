@@ -333,7 +333,7 @@ namespace MSS.Common
 
 		public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetJobAndDescendants(jobId);
 
-		public List<JobTreeItem>? GetCurrentPath() => _jobTree.GetCurrentPath();
+		public List<JobTreeItem>? GetCurrentPath() =>  _jobTree.GetCurrentPath();
 		public List<JobTreeItem>? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
 
 		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
