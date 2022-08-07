@@ -77,6 +77,12 @@ namespace MSS.Types.MSet
 			DateTime lastSaved
 			)
 		{
+			if (parentJobId == null && !(TransformType == TransformType.Home || transformType == TransformType.CanvasSizeUpdate))
+			{
+				throw new ArgumentException("The ParentJobId cannot be null for Jobs with a TransformType other than Home and CanvasSizeUpdate.");
+			}
+
+
 			Id = id;
 			_parentJobId = parentJobId;
 			_projectId = projectId;
@@ -92,6 +98,7 @@ namespace MSS.Types.MSet
 			MapCalcSettings = mapCalcSettings;
 
 			LastSavedUtc = lastSaved;
+
 		}
 
 		#endregion

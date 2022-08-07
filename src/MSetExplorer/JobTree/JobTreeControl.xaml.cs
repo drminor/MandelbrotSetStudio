@@ -94,7 +94,14 @@ namespace MSetExplorer
 		{
 			if (e.Parameter is ObjectId jobId)
 			{
-				_ = _vm.RestoreBranch(jobId);
+				try
+				{
+					_ = _vm.RestoreBranch(jobId);
+				}
+				catch (System.InvalidOperationException ioe)
+				{
+					MessageBox.Show($"Restore failed. Error = {ioe.Message}.");
+				}
 			}
 		}
 

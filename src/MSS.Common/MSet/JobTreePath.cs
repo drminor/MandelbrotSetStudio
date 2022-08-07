@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -21,13 +22,16 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public JobTreePath(JobTreeItem term)
-		{
-			Terms = new List<JobTreeItem> { term };
-		}
+		public JobTreePath(JobTreeItem term) : this (new [] { term })
+		{ }
 
 		public JobTreePath(IEnumerable<JobTreeItem> terms)
 		{
+			if (!terms.Any())
+			{
+				throw new ArgumentException("When creating a JobTreePath, terms must have at least one element.");
+			}
+
 			Terms = new List<JobTreeItem>(terms);
 		}
 
@@ -41,22 +45,38 @@ namespace MSS.Common
 
 		public JobTreeItem LastTerm => Terms[^1];
 
-		public JobTreeItem ParentTerm => Terms[^2];
+		public JobTreeItem? ParentTerm => Terms.Count > 1 ?  Terms[^2] : null;
 
-		public JobTreeItem GrandparentTerm => Terms[^3];
+		public JobTreeItem? GrandparentTerm => Terms.Count > 2 ? Terms[^3] : null;
+
+		public JobTreeItem CanvasSizeUpdateParentTerm => Terms[^2];
+
+		public Job Job => Terms[^1].Job;
 
 		#endregion
 
 		#region Public Methods
 
-		public JobTreePath GetParentPath()
+		public JobTreePath? GetParentPath()
 		{
+			return Terms.Count > 1 ? new JobTreePath(Terms.SkipLast(1)) : NullPath;
+		}
+
+		public JobTreePath? GetGrandparentPath()
+		{
+			return Terms.Count > 2 ? new JobTreePath(Terms.SkipLast(2)) : NullPath;
+		}
+
+		public JobTreePath GetParentPathForCanvasSizeUpdate()
+		{
+			// This theoretically could throw an exception, but it does then its due to an error in the caller's application logic.
 			return new JobTreePath(Terms.SkipLast(1));
 		}
 
-		public JobTreePath GetGrandParentPath()
+		public JobTreePath GetParentPathForParkedAlt()
 		{
-			return new JobTreePath(Terms.SkipLast(2));
+			// This theoretically could throw an exception, but it does then its due to an error in the caller's application logic.
+			return new JobTreePath(Terms.SkipLast(1));
 		}
 
 		public JobTreePath Combine(JobTreePath jobTreePath)
@@ -77,7 +97,6 @@ namespace MSS.Common
 		}
 
 		#endregion
-
 
 		#region Overrides, Conversion Operators and ICloneable Support
 
