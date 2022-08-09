@@ -30,6 +30,27 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static string[] GetFormattedCoords(RRectangle coords)
+		{
+			//var result = new string[4];
+			//var rValues = coords.GetRValues();
+
+			//result[0] = ConvertToString(rValues[0]);
+			//result[1] = ConvertToString(rValues[1]);
+			//result[2] = ConvertToString(rValues[2]);
+			//result[3] = ConvertToString(rValues[3]);
+
+			var result = coords.GetRValues().Select(x => ConvertToString(x)).ToArray();
+
+			return result;
+		}
+
+		public static string[] GetValuesAsStrings(IBigRatShape bigRatShape)
+		{
+			var result = bigRatShape.Values.Select(x => new RValue(x, bigRatShape.Exponent)).Select(x => ConvertToString(x)).ToArray();
+			return result;
+		}
+
 		#endregion
 
 		#region From String

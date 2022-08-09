@@ -10,7 +10,7 @@
              d:DesignHeight="1000" d:DesignWidth="400">
     
     <Grid>
-        <Border BorderThickness="1" BorderBrush="Black" VerticalAlignment="Stretch">
+        <Border BorderThickness="1" BorderBrush="Black" VerticalAlignment="Stretch" x:Name="borderTop">
             <Grid>
 
                 <Grid.RowDefinitions>
@@ -30,18 +30,22 @@
                     <Button Margin="10,0" Padding="5,0" Click="ButtonRollupSingles_Click" >Rollup Singles</Button>-->
                 </StackPanel>
 
-                <TreeView Grid.Row="1" Margin="0" ItemsSource="{Binding JobItems}" BorderThickness="0" Focusable="True" x:Name="trvJobs" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TreeView x:Name="trvJobs" Grid.Row="1" Margin="0" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          Focusable="True" ItemsSource="{Binding JobItems}">
 
                     <TreeView.ItemContainerStyle>
                         <Style TargetType="{x:Type TreeViewItem}">
 
                             <Style.Resources>
-                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Cornsilk"/>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Cornsilk" Opacity="30"/>
                                 <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="DarkSlateGray"/>
                             </Style.Resources>
 
                             <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                            <Setter Property="IsSelected"  Value="{Binding IsCurrent, Mode=TwoWay}" />
+
+                            <!--<Setter Property="Background" Value="{Binding ItemColor}"/>-->
+
                             <Setter Property="FontWeight" Value="Normal" />
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True"> 
@@ -61,7 +65,7 @@
                     
                     <TreeView.Resources>
                         <HierarchicalDataTemplate DataType="{x:Type mssc:JobTreeItem}" ItemsSource="{Binding Children}">
-                            <StackPanel Orientation="Horizontal" KeyUp="JobTreeItem_KeyUp" Tag="{Binding IdAndParentId}" >
+                            <StackPanel Orientation="Horizontal" Focusable="True" KeyUp="JobTreeItem_KeyUp" Tag="{Binding IdAndParentId}" Background="{Binding ItemColor}" >
 
                                 <!--<TreeView.InputBindings>
                                     <KeyBinding Command="local:JobTreeCommands.ShowDetails" Key="F3" />
@@ -77,12 +81,16 @@
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
 
-                                <StackPanel.ToolTip>
+                                <!--<StackPanel.ToolTip>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{Binding IdAndParentId}"/>
                                     </StackPanel>
+                                </StackPanel.ToolTip>-->
+
+                                <StackPanel.ToolTip>
+                                    <TextBlock Text="{Binding IdAndParentId}"/>
                                 </StackPanel.ToolTip>
-                                
+
                                 <!-- Transform -->
                                 <TextBlock Text="{Binding TransformType}" />
                                 
@@ -97,6 +105,10 @@
                                 <!-- Created -->
                                 <TextBlock Text="   " Foreground="DarkBlue"/>
                                 <TextBlock Text="{Binding Created}" Foreground="DarkBlue" />
+
+                                <!--<TextBlock Text="   " Foreground="{Binding ItemColor}"/>
+                                <TextBlock Text="{Binding Created}" Foreground="{Binding ItemColor}" />-->
+
 
                                 <!-- Child Count -->
                                 <!--<TextBlock Text=" [" Foreground="DarkGreen"/>

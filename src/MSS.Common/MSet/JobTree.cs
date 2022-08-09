@@ -14,7 +14,7 @@ namespace MSS.Common
 	public class JobTree : IJobTree
 	{
 		private readonly ReaderWriterLockSlim _jobsLock;
-		private readonly JobTreeItem _root;
+		private readonly JobTreePath _root;
 
 		private JobTreePath? _currentPath;
 
@@ -30,6 +30,8 @@ namespace MSS.Common
 			Debug.WriteLine($"Loading {jobs.Count()} jobs.");
 			_root = JobTreeItem.CreateRoot();
 			_currentPath = BuildTree(jobs, _root);
+
+			Debug.Assert(!IsDirty, "IsDirty should be false as the constructor is exited.");
 
 			ReportOutput(_root);
 		}
@@ -60,7 +62,7 @@ namespace MSS.Common
 			}
 		}
 
-		private void ReportOutput(JobTreeItem start)
+		private void ReportOutput(JobTreePath start)
 		{
 			Debug.WriteLine("OUTPUT Report");
 			Debug.WriteLine("Id\t\t\t\tParentId\t\t\t\tDate\t\t\tTransformType\t\t\tTimestamp");
@@ -79,7 +81,7 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		public ObservableCollection<JobTreeItem> JobItems => _root.Children;
+		public ObservableCollection<JobTreeItem> JobItems => _root.LastTerm.Children;
 
 		public Job CurrentJob
 		{
@@ -97,7 +99,10 @@ namespace MSS.Common
 			{
 				if (value != _currentPath?.Job)
 				{
+					//UpdateIsSelectedForRelatives(_currentPath?.LastTerm, isSelected: false);
 					var moved = MoveCurrentTo(value, _root, out _currentPath);
+					//UpdateIsSelectedForRelatives(_currentPath?.LastTerm, isSelected: true);
+
 					if (!moved && value != null)
 					{
 						Debug.WriteLine($"WARNING: Could not MoveCurrent to job: {value.Id}.");
@@ -114,6 +119,22 @@ namespace MSS.Common
 		public bool IsDirty { get; set; }
 
 		public bool AnyJobIsDirty => DoWithReadLock(() => { return GetJobs(_root).Any(x => x.IsDirty); });
+
+		private JobTreeItem? _selectedItem;
+
+		public JobTreeItem? SelectedItem
+		{
+			get => _selectedItem;
+			set
+			{
+				if (value != _selectedItem)
+				{
+					UpdateIsSelectedForRelatives(_selectedItem, false);
+					_selectedItem = value;
+					UpdateIsSelectedForRelatives(_selectedItem, true);
+				}
+			}
+		}
 
 		#endregion
 
@@ -148,6 +169,7 @@ namespace MSS.Common
 			try
 			{
 				newPath = AddInternal(job, currentBranch: _root);
+				IsDirty = true;
 			}
 			finally
 			{
@@ -156,7 +178,7 @@ namespace MSS.Common
 
 			if (selectTheAddedJob)
 			{
-				ExpandAndSelect(newPath);
+				ExpandAndSetCurrent(newPath);
 				_currentPath = newPath;
 			}
 
@@ -173,12 +195,12 @@ namespace MSS.Common
 				throw new InvalidOperationException($"Cannot find job: {jobId} that is being restored.");
 			}
 
-			while(path != null && !path.LastTerm.IsParkedAlternateBranchHead)
+			while(path != null && !path.IsParkedAlternate)
 			{
 				path = path.GetParentPath();
 			}
 
-			if (path == null || !path.LastTerm.IsActiveAlternateBranchHead)
+			if (path == null || !path.IsParkedAlternate)
 			{
 				throw new InvalidOperationException("Cannot restore this branch, it is not a \"parked\" alternate.");
 			}
@@ -202,7 +224,7 @@ namespace MSS.Common
 				newPath = MakeBranchActive(path);
 			}
 
-			ExpandAndSelect(newPath);
+			ExpandAndSetCurrent(newPath);
 			_currentPath = newPath;
 			IsDirty = true;
 			return true;
@@ -276,12 +298,12 @@ namespace MSS.Common
 				An active alternate may be "parked" if its part of a trunk that is parked, if that trunk is made active, this will be the active node.
 			*/
 
-			if (!newNode.IsParkedAlternateBranchHead)
+			if (!newNode.IsParkedAlternate)
 			{
 				throw new InvalidOperationException("The newNode being Switched to become the Active ALT is not a Parked ALT.");
 			}
 
-			if (!currentAlt.IsActiveAlternateBranchHead)
+			if (!currentAlt.IsActiveAlternate)
 			{
 				throw new InvalidOperationException("The oldNode being Switched out to become a Parked ALT is not the Active ALT.");
 			}
@@ -298,7 +320,10 @@ namespace MSS.Common
 
 			var strSiblings = string.Join("; ", siblings.Select(x => x.IdAndParentId));
 			var strNewNodeChildren = string.Join("; ", newNode.Children.Select(x => x.IdAndParentId));
-			Debug.WriteLine($"CurrentAlt: {currentAlt.Job.Id}, CurrentAlt ParentNode: {parentNode.Job.Id}, Siblings = {strSiblings}. current Pos: {currentPosition}, NewNode: {newNode.IdAndParentId}, NewNode Children = {strSiblings}.");
+			//Debug.WriteLine($"CurrentAlt: {currentAlt.Job.Id}, CurrentAlt ParentNode: {parentNode.Job.Id}, Siblings = {strSiblings}. current Pos: {currentPosition}, NewNode: {newNode.IdAndParentId}, NewNode Children = {strSiblings}.");
+
+			Debug.WriteLine($"Switching Branches. CurrentAlt: {currentAlt.Job.Id}, CurrentAlt ParentNode: {parentNode.Job.Id}. Current Pos: {currentPosition}, NewNode: {newNode.IdAndParentId}.");
+
 
 			// Take all items after the current position of the grandparent and add them to an alternate path
 			var jobsFollowingCurrentAlt = siblings.Skip(currentPosition + 1).ToList();
@@ -314,10 +339,10 @@ namespace MSS.Common
 				_ = otherAlt.Move(newNode);
 			}
 			// The job being added is the active alternate among it's peer alternates..
-			currentAlt.IsActiveAlternateBranchHead = false;
-			currentAlt.IsParkedAlternateBranchHead = true;
-			newNode.IsActiveAlternateBranchHead = true;
-			newNode.IsParkedAlternateBranchHead = false;
+			currentAlt.IsActiveAlternate = false;
+			currentAlt.IsParkedAlternate = true;
+			newNode.IsActiveAlternate = true;
+			newNode.IsParkedAlternate = false;
 
 			// All of the jobs that followed the first orphan are now added as children to the orphan
 			var parent = currentAlt;
@@ -351,10 +376,12 @@ namespace MSS.Common
 			{
 				var csuParentPath = path.GetParentPathForCanvasSizeUpdate();
 				result = csuParentPath.LastTerm.Remove(jobTreeItem);
+				IsDirty = true;
+
 				return result;
 			}
 
-			if (jobTreeItem.IsActiveAlternateBranchHead)
+			if (jobTreeItem.IsActiveAlternate)
 			{
 				// Restore the most recent alternate branches before removing.
 				Debug.WriteLine($"Making the branch being removed a parked alternate.");
@@ -377,7 +404,7 @@ namespace MSS.Common
 				// TODO: Determine if this JobTreeItem with TransformType = ZoomIn is the last node of the current branch as we execute RemoveBranch
 			}
 
-			if (parent.IsActiveAlternateBranchHead || idx == 0)
+			if (parent.IsActiveAlternate || idx == 0)
 			{
 				if (parentPath == null)
 				{
@@ -396,12 +423,14 @@ namespace MSS.Common
 
 			result = parent.Remove(jobTreeItem);
 
-			if (parent.IsActiveAlternateBranchHead && !parent.Children.Any())
+			if (parent.IsActiveAlternate && !parent.Children.Any())
 			{
-				parent.IsActiveAlternateBranchHead = false;
+				parent.IsActiveAlternate = false;
 			}
 
-			ExpandAndSelect(_currentPath);
+			ExpandAndSetCurrent(_currentPath);
+
+			IsDirty = true;
 
 			return result;
 		}
@@ -438,7 +467,7 @@ namespace MSS.Common
 			if (backPath != null)
 			{
 				_currentPath = backPath;
-				ExpandAndSelect(backPath);
+				ExpandAndSetCurrent(backPath);
 				return true;
 			}
 			else
@@ -473,7 +502,7 @@ namespace MSS.Common
 			if (forwardPath != null)
 			{
 				_currentPath = forwardPath;
-				ExpandAndSelect(forwardPath);
+				ExpandAndSetCurrent(forwardPath);
 				return true;
 			}
 			else
@@ -585,10 +614,8 @@ namespace MSS.Common
 
 				if (TryFindJobTreeItemById(jobId, _root, includeCanvasSizeUpdateJobs: false, out var path))
 				{
-					var jobTreeItem = path.LastTerm;
-
-					result = new List<Job> { jobTreeItem.Job };
-					result.AddRange(GetJobs(jobTreeItem));
+					result = new List<Job> { path.LastTerm.Job };
+					result.AddRange(GetJobs(path));
 				}
 				else
 				{
@@ -603,7 +630,7 @@ namespace MSS.Common
 
 		#region Private Add Methods
 
-		private JobTreePath AddInternal(Job job, JobTreeItem currentBranch)
+		private JobTreePath AddInternal(Job job, JobTreePath currentBranch)
 		{
 			JobTreePath newPath;
 
@@ -618,15 +645,13 @@ namespace MSS.Common
 			else
 			{
 				var parentPath = GetSourceJob(job, currentBranch);
-				newPath = AddJobAtParentPath(job, parentPath);
+				newPath = AddAtParentPath(job, parentPath);
 			}
-
-			IsDirty = true;
 
 			return newPath;
 		}
 
-		private JobTreePath AddHomeJob(Job job, JobTreeItem currentBranch)
+		private JobTreePath AddHomeJob(Job job, JobTreePath currentBranch)
 		{
 			if (job.ParentJobId != null)
 			{
@@ -638,24 +663,24 @@ namespace MSS.Common
 				throw new InvalidOperationException($"Attempting to add a Home job, but the job's TransformType is {job.TransformType}.");
 			}
 
-			if (!currentBranch.IsRoot)
+			var node = currentBranch.LastTerm;
+			if (!node.IsRoot)
 			{
 				throw new InvalidOperationException("Attempting to add a Home job to a branch whose IsRoot property is false.");
 			}
 
-			if (currentBranch.Children.Any())
+			if (node.Children.Any())
 			{
 				throw new InvalidOperationException("Attempting to add a Home job to a parent node that already hase one or more children.");
 			}
 
-			var homeNode = currentBranch.AddJob(job);
-			var newPath = new JobTreePath(homeNode);
-			IsDirty = true;
+			var homeNode = node.AddJob(job);
+			var newPath = currentBranch.Combine(homeNode);
 
 			return newPath;
 		}
 
-		private JobTreePath AddCanvasSizeUpdateJob(Job job, JobTreeItem currentBranch)
+		private JobTreePath AddCanvasSizeUpdateJob(Job job, JobTreePath currentBranch)
 		{
 			if (job.TransformType != TransformType.CanvasSizeUpdate)
 			{
@@ -676,7 +701,7 @@ namespace MSS.Common
 			return newPath;
 		}
 
-		private JobTreePath AddJobAtParentPath(Job job, JobTreePath parentPath)
+		private JobTreePath AddAtParentPath(Job job, JobTreePath parentPath)
 		{
 			JobTreePath newPath;
 
@@ -685,62 +710,86 @@ namespace MSS.Common
 
 			// Add the new Job to the list of it's parent's "real" children.
 			// The index is the position of the new job among its siblings which are sorted by the CreatedDate, ascending.
-			int index = parentNode.AddRealChild(job);
+			var index = parentNode.AddRealChild(job);
+
+			// Get the job already in the tree for which the job being added will directly follow.
+			Job preceedingJob;
 
 			if (index == 0)
 			{
 				Debug.Assert(parentNode.RealChildJobs.Count == 1, "Our index is Zero, but we're not the first.");
-				newPath = AddJobInLine(job, parentPath);
-			}
-			else
-			{
-				var preceedingJob = parentNode.RealChildJobs.Values[index - 1];
-				var preceedingPath = GetJobPath(preceedingJob);
+				//newPath = AddInLine(job, parentPath);
 
-				// Does the preceeding sibling job (in date order) move the map to a different Zoom level.
-				var addingJobAsAnAlt = preceedingJob.TransformType == TransformType.ZoomIn || preceedingJob.TransformType == TransformType.ZoomOut;
+				// Find the sibling of the parent, that comes just before the parent.
+				var grandparentNode = GetParentComponent(parentPath);
+				var parentNodePos = grandparentNode.Children.IndexOf(parentNode);
 
-				if (addingJobAsAnAlt)
+				//while (parentNodePos == 0 && grandparentNode.ParentNode != null)
+				//{
+				//	grandparentNode = grandparentNode.ParentNode;
+				//	parentNodePos = grandparentNode.Children.IndexOf(parentNode);
+				//}
+
+				//if (parentNodePos == 0)
+				//{
+				//	newPath = AddInLine(job, parentPath);
+				//	return newPath; // TODO: Make the AddAtParentPath method have a single exit point.
+				//}
+
+				if (parentNodePos == 0)
 				{
-					// Add the new node as a Parked ALT.
-					newPath = AddJobAsParkedAlt(job, preceedingPath);
+					if (grandparentNode.IsRoot)
+					{
+						preceedingJob = parentNode.Job;
+					}
+					else
+					{
+						preceedingJob = grandparentNode.Job;
+					}
 				}
 				else
 				{
-					// Add the new node in-line after the preceeding ALT Job
-					newPath = AddJobAfterAlt(job, preceedingPath, parentPath);
+					var nodePreceedingParent = grandparentNode.Children[parentNodePos];
+
+					// Find the last job of that sibling.
+					preceedingJob = nodePreceedingParent.Children.Count > 0 ? nodePreceedingParent.Children[^1].Job : nodePreceedingParent.Job;
 				}
+			}
+			else
+			{
+				preceedingJob = parentNode.RealChildJobs.Values[index - 1];
+			}
+
+			var preceedingPath = GetJobPath(preceedingJob);
+
+			// Does the preceeding sibling job (in date order) move the map to a different Zoom level.
+			var addingJobAsAnAlt = preceedingJob.TransformType is TransformType.ZoomIn or TransformType.ZoomOut;
+
+			if (addingJobAsAnAlt)
+			{
+				// Add the new node as a Parked ALT.
+				newPath = AddAsParkedAlt(job, preceedingPath);
+			}
+			else
+			{
+				// Add the new node in-line after the preceeding ALT Job
+				newPath = AddAfter(job, preceedingPath, parentPath);
 			}
 
 			return newPath;
 		}
 
-		private JobTreePath AddJobInLine(Job job, JobTreePath parentPath)
-		{
-			Debug.WriteLine($"Adding job: {job.Id}, in-line after: {parentPath.Job.Id}.");
-
-			// The grandparentPath points to the locgial parent. This identifies the branch on which the parent is currently attached.
-			// If the parent is a PRK then this grandparent is the ALT on the active branch
-			var grandparentPath = GetParentPath(parentPath);
-
-			// Add the new job as a sibling to the branch on which my real parent's JobTreeItem was found (in sort order by date created.)
-			Debug.Assert(grandparentPath?.LastTerm.IsActiveAlternateBranchHead != true, "AddJobInLine is adding a job to a Active Alt node.");
-			var result = AddJob(job, grandparentPath);
-
-			return result;
-		}
-
-		private JobTreePath AddJobAsParkedAlt(Job job, JobTreePath preceedingPath)
+		private JobTreePath AddAsParkedAlt(Job job, JobTreePath preceedingPath)
 		{
 			JobTreePath activeAltPath;
 
-			if (preceedingPath.LastTerm.IsActiveAlternateBranchHead)
+			if (preceedingPath.IsActiveAlternate)
 			{
 				// The preceeding node is the Active ALT.
 				// Add the new job as a sibling to the branch on which my real parent's JobTreeItem was found (in sort order by date created.)
 				activeAltPath = preceedingPath;
 			}
-			else if (preceedingPath.LastTerm.IsParkedAlternateBranchHead)
+			else if (preceedingPath.IsParkedAlternate)
 			{
 				// The parent of the preceeding node is the Active ALT
 				var parkedParentPath = preceedingPath.GetParentPathForParkedAlt();
@@ -750,7 +799,7 @@ namespace MSS.Common
 			{
 				// The preceeding node has not yet been made an Alternate.
 				Debug.WriteLine($"Found a Job that is a new Alternate. Marking existing node: {preceedingPath.LastTerm} as the Active ALT.");
-				preceedingPath.LastTerm.IsActiveAlternateBranchHead = true;
+				preceedingPath.LastTerm.IsActiveAlternate = true;
 				activeAltPath = preceedingPath;
 			}
 
@@ -758,36 +807,74 @@ namespace MSS.Common
 
 			var parkedAltPath = AddJob(job, activeAltPath);
 
+			// TODO: See if we can avoid making the just added job be on the 'Main' branch.
 			var newPath = MakeBranchActive(parkedAltPath);
 
 			return newPath;
 		}
 
-		private JobTreePath AddJobAfterAlt(Job job, JobTreePath preceedingPath, JobTreePath parentPath)
+		private JobTreePath AddAfter(Job job, JobTreePath preceedingPath, JobTreePath parentPath)
 		{
 			JobTreePath newPath;
 
-			if (preceedingPath.LastTerm.IsParkedAlternateBranchHead)
+			//if (preceedingPath.IsParkedAlternate)
+			//{
+			//	// Add the new job as a child of the Parked Alternate
+			//	var activeAltPath = MakeBranchActive(preceedingPath);
+			//	newPath = AddJob(job, activeAltPath);
+			//}
+			//else
+			//{
+			//	// Add the new job as a sibling to it's parent
+			//	Debug.Assert(preceedingPath.LastTerm.ParentNode == parentPath.LastTerm.ParentNode, "The Preceeding Node's Logical Parent and the Parent Node's Logical Parent are not the same.");
+			//	newPath = AddInLine(job, parentPath);
+			//}
+
+			if (preceedingPath.IsParkedAlternate)
 			{
-				// Add the new job as a child of the Parked Alternate
-				var activeAltPath = MakeBranchActive(preceedingPath);
-				newPath = AddJob(job, activeAltPath);
+				//// Switch the preceeding job in so that it is on the 'main' branch.
+				//preceedingPath = MakeBranchActive(preceedingPath);
+				if (job.ParentJobId == preceedingPath.Job.Id) // preceedingPath.LastTerm == parentPath.LastTerm)
+				{
+					// Add the job as a child of the Parked Alt
+					newPath = AddJob(job, preceedingPath);
+				}
+				else
+				{
+					newPath = AddInLine(job, preceedingPath.GetParentPathForParkedAlt());
+				}
 			}
 			else
 			{
-				// Add the new job as a sibling to it's parent
-				Debug.Assert(preceedingPath.LastTerm.ParentNode == parentPath.LastTerm.ParentNode, "The Preceeding Node's Logical Parent and the Parent Node's Logical Parent are not the same.");
-				newPath = AddJobInLine(job, parentPath);
+				// Add the job as a sibling of its parent 
+				newPath = AddInLine(job, preceedingPath);
 			}
 
 			return newPath;
+		}
+
+		private JobTreePath AddInLine(Job job, JobTreePath parentPath)
+		{
+			Debug.WriteLine($"Adding job: {job.Id}, in-line after: {parentPath.Job.Id}.");
+
+			Debug.Assert(!parentPath.IsParkedAlternate, "AddJobInLine is adding a job to an Active Alt node. (The value of the specified path to which we are adding in-line is a Parked Alt node.");
+
+			// The grandparentPath points to the locgial parent. This identifies the branch on which the parent is currently attached.
+			// If the parent is a PRK then this grandparent is the ALT on the active branch
+			var grandparentPath = GetParentPath(parentPath);
+
+			// Add the new job as a sibling to the branch on which my real parent's JobTreeItem was found (in sort order by date created.)
+			Debug.Assert(grandparentPath == null || !grandparentPath.IsActiveAlternate, "AddJobInLine is adding a job to an Active Alt node.");
+			var result = AddJob(job, grandparentPath);
+
+			return result;
 		}
 
 		#endregion
 
 		#region Private Load and Export Job Methods
 
-		private JobTreePath? BuildTree(IList<Job> jobs, JobTreeItem root)
+		private JobTreePath? BuildTree(IList<Job> jobs, JobTreePath root)
 		{
 			var homeJob = GetHomeJob(jobs);
 			var homePath = AddHomeJob(homeJob, root);
@@ -840,10 +927,9 @@ namespace MSS.Common
 			return homeJob;
 		}
 
-		private void LoadChildItems(IList<Job> jobs, JobTreePath currentBranchPath, ref int visited)
+		private void LoadChildItems(IList<Job> jobs, JobTreePath currentBranch, ref int visited)
 		{
-			var currentBranch = currentBranchPath.LastTerm;
-			var childJobs = GetChildren(currentBranch.JobId, jobs);
+			var childJobs = GetChildren(currentBranch.LastTerm.JobId, jobs);
 			foreach (var job in childJobs)
 			{
 				visited++;
@@ -900,12 +986,12 @@ namespace MSS.Common
 		//	return remainingJobs;
 		//}
 
-		private IList<Job> GetJobs(JobTreeItem jobTreeItem)
+		private IList<Job> GetJobs(JobTreePath currentBranch)
 		{
 			// TODO: Consider implementing an IEnumerator<JobTreeItem> for the JobTree class.
 			var result = new List<Job>();
 
-			foreach (var child in jobTreeItem.Children)
+			foreach (var child in currentBranch.LastTerm.Children)
 			{
 				result.Add(child.Job);
 
@@ -914,20 +1000,20 @@ namespace MSS.Common
 					result.AddRange(child.AlternateDispSizes.Select(x => x.Job));
 				}
 
-				var jobList = GetJobs(child);
+				var jobList = GetJobs(currentBranch.Combine(child));
 				result.AddRange(jobList);
 			}
 
 			return result;
 		}
 
-		private List<Tuple<Job, Job?>> GetJobsWithParentage(JobTreeItem jobTreeItem)
+		private List<Tuple<Job, Job?>> GetJobsWithParentage(JobTreePath currentBranch)
 		{
 			var result = new List<Tuple<Job, Job?>>();
 
-			var parentJob = jobTreeItem.Job;
+			var parentJob = currentBranch.LastTerm.Job;
 
-			foreach (var child in jobTreeItem.Children)
+			foreach (var child in currentBranch.LastTerm.Children)
 			{
 				result.Add(new Tuple<Job, Job?>(child.Job, parentJob));
 				if (child.AlternateDispSizes != null)
@@ -938,7 +1024,7 @@ namespace MSS.Common
 						);
 				}
 
-				var jobList = GetJobsWithParentage(child);
+				var jobList = GetJobsWithParentage(currentBranch.Combine(child));
 				result.AddRange(jobList);
 			}
 
@@ -967,28 +1053,28 @@ namespace MSS.Common
 			}
 		}
 
-		private bool TryFindJobTreeItemById(ObjectId jobId, JobTreeItem currentBranch, bool includeCanvasSizeUpdateJobs, [MaybeNullWhen(false)] out JobTreePath path)
+		private bool TryFindJobTreeItemById(ObjectId jobId, JobTreePath currentBranch, bool includeCanvasSizeUpdateJobs, [MaybeNullWhen(false)] out JobTreePath path)
 		{
 			if (includeCanvasSizeUpdateJobs)
 			{
 				throw new NotImplementedException("TryFindJobTreeItemById does not yet locate jobs with TransformType = CanvasSizeUpdate.");
 			}
 
-			var foundNode = currentBranch.Children.FirstOrDefault(x => x.JobId == jobId);
+			var foundNode = currentBranch.LastTerm.Children.FirstOrDefault(x => x.JobId == jobId);
 
 			if (foundNode != null)
 			{
-				path = new JobTreePath(foundNode);
+				path = currentBranch.Combine(foundNode);
 				return true;
 			}
 			else
 			{
-				foreach (var child in currentBranch.Children)
+				foreach (var child in currentBranch.LastTerm.Children)
 				{
-					if (TryFindJobTreeItemById(jobId, child, includeCanvasSizeUpdateJobs, out var localPath))
+
+					if (TryFindJobTreeItemById(jobId, currentBranch.Combine(child), includeCanvasSizeUpdateJobs, out var localPath))
 					{
-						path = new JobTreePath(child);
-						path = path.Combine(localPath);
+						path = currentBranch.Combine(localPath);
 						return true;
 					}
 				}
@@ -998,7 +1084,7 @@ namespace MSS.Common
 			}
 		}
 
-		private bool MoveCurrentTo(Job? job, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out JobTreePath path)
+		private bool MoveCurrentTo(Job? job, JobTreePath currentBranch, [MaybeNullWhen(false)] out JobTreePath path)
 		{
 			if (job == null)
 			{
@@ -1008,14 +1094,14 @@ namespace MSS.Common
 
 			if (job.TransformType == TransformType.CanvasSizeUpdate)
 			{
-				var result = TryFindCanvasSizeUpdateTreeItem(job, jobTreeItem, out path);
+				var result = TryFindCanvasSizeUpdateTreeItem(job, currentBranch, out path);
 				return result;
 			}
 			else
 			{
-				if (TryFindJobTreeItem(job, jobTreeItem, out path))
+				if (TryFindJobTreeItem(job, currentBranch, out path))
 				{
-					ExpandAndSelect(path);
+					ExpandAndSetCurrent(path);
 					return true;
 				}
 				else
@@ -1036,28 +1122,27 @@ namespace MSS.Common
 		//	return result;
 		//}
 
-		private bool TryFindJobTreeItem(Job job, JobTreeItem parentNode, [MaybeNullWhen(false)] out JobTreePath path)
+		private bool TryFindJobTreeItem(Job job, JobTreePath currentBranch, [MaybeNullWhen(false)] out JobTreePath path)
 		{
 			if (job.TransformType == TransformType.CanvasSizeUpdate)
 			{
 				throw new InvalidOperationException($"TryFindJobTreeItem does not support finding jobs with TransformType = CanvasSizeUpdate. Use {nameof(TryFindCanvasSizeUpdateTreeItem)} instead.");
 			}
 
-			var foundNode = parentNode.Children.FirstOrDefault(x => x.Job.Id == job.Id);
+			var foundNode = currentBranch.LastTerm.Children.FirstOrDefault(x => x.Job.Id == job.Id);
 
 			if (foundNode != null)
 			{
-				path = new JobTreePath(foundNode);
+				path = currentBranch.Combine(foundNode);
 				return true;
 			}
 			else
 			{
-				foreach (var child in parentNode.Children)
+				foreach (var child in currentBranch.LastTerm.Children)
 				{
-					if (TryFindJobTreeItem(job, child, out var localPath))
+					if (TryFindJobTreeItem(job, currentBranch.Combine(child), out var localPath))
 					{
-						path = new JobTreePath(child);
-						path.Combine(localPath);
+						path = currentBranch.Combine(localPath);
 						return true;
 					}
 				}
@@ -1067,7 +1152,7 @@ namespace MSS.Common
 			}
 		}
 
-		private JobTreePath GetSourceJob(Job job, JobTreeItem currentBranch)
+		private JobTreePath GetSourceJob(Job job, JobTreePath currentBranch)
 		{
 			JobTreePath result;
 
@@ -1080,7 +1165,7 @@ namespace MSS.Common
 
 			if (parentJobId == currentBranch.Job.Id)
 			{
-				result = new JobTreePath(currentBranch);
+				result = currentBranch;
 			}
 			else
 			{
@@ -1096,7 +1181,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		private bool TryFindCanvasSizeUpdateTreeItem(Job job, JobTreeItem parentNode, [MaybeNullWhen(false)] out JobTreePath path)
+		private bool TryFindCanvasSizeUpdateTreeItem(Job job, JobTreePath currentBranch, [MaybeNullWhen(false)] out JobTreePath path)
 		{
 			if (job.TransformType != TransformType.CanvasSizeUpdate)
 			{
@@ -1111,7 +1196,7 @@ namespace MSS.Common
 				throw new InvalidOperationException("When finding a CanvasSizeUpdate, the job must have a parent.");
 			}
 
-			if (TryFindJobTreeItemById(parentJobId.Value, parentNode, includeCanvasSizeUpdateJobs: false, out var parentPath))
+			if (TryFindJobTreeItemById(parentJobId.Value, currentBranch, includeCanvasSizeUpdateJobs: false, out var parentPath))
 			{
 				var parentJobTreeItem = parentPath.LastTerm;
 				var canvasSizeUpdateTreeItem = parentJobTreeItem.AlternateDispSizes?.FirstOrDefault(x => x.Job.Id == job.Id);
@@ -1153,11 +1238,11 @@ namespace MSS.Common
 
 		private JobTreePath AddJob(Job job, JobTreePath? parentPath)
 		{
-			var parentNode = parentPath == null ? _root : parentPath.LastTerm;
+			var parentNode = parentPath == null ? _root.LastTerm : parentPath.LastTerm;
 			var newNode = parentNode.AddJob(job);
-			if (parentNode.IsActiveAlternateBranchHead)
+			if (parentNode.IsActiveAlternate)
 			{
-				newNode.IsParkedAlternateBranchHead = true;
+				newNode.IsParkedAlternate = true;
 			}
 
 			var result = CreatePath(parentPath, newNode);
@@ -1167,16 +1252,16 @@ namespace MSS.Common
 
 		private JobTreePath AddJobTreeItem(JobTreeItem newNode, JobTreePath? parentPath)
 		{
-			var parentNode = parentPath == null ? _root : parentPath.LastTerm;
+			var parentNode = parentPath == null ? _root.LastTerm : parentPath.LastTerm;
 			parentNode.AddNode(newNode);
 			var result = CreatePath(parentPath, newNode);
 
 			return result;
 		}
 
-		private bool TryFindJob(ObjectId jobId, JobTreeItem jobTreeItem, [MaybeNullWhen(false)] out Job job)
+		private bool TryFindJob(ObjectId jobId, JobTreePath currentBranch, [MaybeNullWhen(false)] out Job job)
 		{
-			var foundNode = jobTreeItem.Children.FirstOrDefault(x => x.JobId == jobId);
+			var foundNode = currentBranch.LastTerm.Children.FirstOrDefault(x => x.JobId == jobId);
 
 			if (foundNode != null)
 			{
@@ -1185,9 +1270,9 @@ namespace MSS.Common
 			}
 			else
 			{
-				foreach (var child in jobTreeItem.Children)
+				foreach (var child in currentBranch.LastTerm.Children)
 				{
-					if (TryFindJob(jobId, child, out job))
+					if (TryFindJob(jobId, currentBranch.Combine(child), out job))
 					{
 						return true;
 					}
@@ -1198,11 +1283,52 @@ namespace MSS.Common
 			}
 		}
 
+		private void UpdateIsSelectedForRelatives(JobTreeItem? jobTreeItem, bool isSelected)
+		{
+			if (jobTreeItem != null)
+			{
+				jobTreeItem.IsSelected = isSelected;
+
+				if (TryFindJobTreeParent(jobTreeItem.Job, out var realParentPath))
+				{
+					var realParentNode = realParentPath.LastTerm;
+
+					// Set the parent node's IsParentOfSelected
+					realParentNode.IsParentOfSelected = isSelected;
+
+					// Use the grandparent node (or root) to start the search for each sibling
+					var grandparentPath = realParentPath.GetParentPath() ?? _root;
+
+					// Set each sibling node's IsSiblingSelected
+					foreach (var realSiblingJob in realParentNode.RealChildJobs.Values)
+					{
+						if (TryFindJobTreeItem(realSiblingJob, grandparentPath, out var siblingPath))
+						{
+							siblingPath.LastTerm.IsSiblingOfSelected = isSelected;
+						}
+					}
+				}
+
+				// Use the Logical ParentNode to start the search for each child.
+				
+				var logicalParentPath = jobTreeItem.ParentNode == null ? _root : new JobTreePath(jobTreeItem.ParentNode);
+
+				// Set each child node's IsChildOfSelected
+				foreach (var realChildJob in jobTreeItem.RealChildJobs.Values)
+				{
+					if (TryFindJobTreeItem(realChildJob, logicalParentPath, out var childPath))
+					{
+						childPath.LastTerm.IsChildOfSelected = isSelected;
+					}
+				}
+			}
+		}
+
 		#endregion
 
 		#region Private Path Methods
 
-		private void ExpandAndSelect(JobTreePath path)
+		private void ExpandAndSetCurrent(JobTreePath path)
 		{
 			foreach(var p in path.Terms.SkipLast(1))
 			{
@@ -1210,24 +1336,31 @@ namespace MSS.Common
 			}
 
 			var lastTerm = path.LastTerm.TransformType == TransformType.CanvasSizeUpdate ? path.CanvasSizeUpdateParentTerm : path.LastTerm;
-			lastTerm.IsSelected = true;
+			lastTerm.IsCurrent = true;
+
+			//var parentTermIndex = path.LastTerm.TransformType == TransformType.CanvasSizeUpdate ? path.Count - 2 : path.Count - 1;
+			//if (parentTermIndex < path.Count)
+			//{
+			//	var parentNode = path.Terms[parentTermIndex];
+			//	parentNode.IsParentOfSelected = true;
+			//}
 		}
 
 		private JobTreeItem GetItemComponent(JobTreePath? path)
 		{
-			var result = path == null ? _root : path.LastTerm;
+			var result = path == null ? _root.LastTerm : path.LastTerm;
 			return result;
 		}
 
 		private JobTreeItem GetParentComponent(JobTreePath path)
 		{
-			var result = path.Count == 1 ? _root : (path.ParentTerm ?? throw new InvalidOperationException("Attemting to GetParentComponent on path with a single term."));
+			var result = path.Count == 1 ? _root.LastTerm : path.GetParentTermForPathWithTwoOrMoreTerms();
 			return result;
 		}
 
 		private JobTreeItem? GetGrandparentComponent(JobTreePath path)
 		{
-			var result = path.Count == 1 ? null : path.Count == 2 ? _root : (path.GrandparentTerm ?? throw new InvalidOperationException("Attempting to GetGranParentComponent on path with only two terms."));
+			var result = path.Count == 1 ? null : path.Count == 2 ? _root.LastTerm : (path.GrandparentTerm ?? throw new InvalidOperationException("Never Happen: Attempting to GetGranParentComponent on path with only two terms."));
 			return result;
 		}
 
@@ -1264,7 +1397,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Navigate Forward / Backward
+		#region Private Navigate Methods
 
 		private JobTreePath? GetNextJobPath(JobTreePath path, bool skipPanJobs)
 		{
@@ -1281,7 +1414,7 @@ namespace MSS.Common
 			var siblings = parentJobTreeItem.Children;
 			var currentPosition = siblings.IndexOf(currentItem);
 
-			if (currentItem.ParentJobId.HasValue && currentItem.IsActiveAlternateBranchHead && currentItem.Children.Any())
+			if (currentItem.ParentJobId.HasValue && currentItem.IsActiveAlternate && currentItem.Children.Any())
 			{
 				// The new job will be a child of the current job
 				result = path.Combine(currentItem.Children[0]);
@@ -1291,8 +1424,8 @@ namespace MSS.Common
 				if (TryGetNextJobTreeItem(siblings, currentPosition, skipPanJobs, out var nextJobTreeItem))
 				{
 					// The new job will be a sibling of the current job
-					result = CreateSiblingPath(path, nextJobTreeItem);
-
+					//result = CreateSiblingPath(path, nextJobTreeItem);
+					result = CreatePath(path, nextJobTreeItem);
 				}
 				else
 				{
@@ -1362,7 +1495,8 @@ namespace MSS.Common
 
 			if (previousJobTreeItem != null)
 			{
-				var result = CreateSiblingPath(newBasePath, previousJobTreeItem);
+				//var result = CreateSiblingPath(newBasePath, previousJobTreeItem);
+				var result = CreatePath(newBasePath, previousJobTreeItem);
 
 				return result;
 			}

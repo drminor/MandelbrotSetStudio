@@ -16,9 +16,11 @@ namespace MSetExplorer
 		IJobOwner? CurrentProject { get; set; }
 		Job? CurrentJob { get; set; }
 
+		JobTreeItem? SelectedViewItem { get; set; }
+
 		bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job);
-		public List<JobTreeItem>? GetCurrentPath();
-		public List<JobTreeItem>? GetPath(ObjectId jobId);
+		public JobTreePath? GetCurrentPath();
+		public JobTreePath? GetPath(ObjectId jobId);
 
 		ObservableCollection<JobTreeItem>? JobItems { get; }
 

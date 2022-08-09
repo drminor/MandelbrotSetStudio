@@ -218,6 +218,7 @@ namespace MSetExplorer
 					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
 					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 					{
+						Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Current Job changing (ProjectViewModel).");
 						FindOrCreateJobForNewCanvasSize(currentProject, CurrentJob, currentCanvasSizeInBlocks);
 					}
 
@@ -268,6 +269,7 @@ namespace MSetExplorer
 					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, project.CurrentJob.CanvasControlOffset, _blockSize);
 					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 					{
+						Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Project Open (ProjectViewModel).");
 						FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
 					}
 
@@ -572,6 +574,7 @@ namespace MSetExplorer
 			var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
 			if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 			{
+				Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- MapControl Size is changing (ProjectViewModel).");
 				FindOrCreateJobForNewCanvasSize(project, CurrentJob, currentCanvasSizeInBlocks);
 				wasUpdated = true;
 			}
@@ -587,6 +590,7 @@ namespace MSetExplorer
 			// Note if this job is itself a CanvasSizeUpdate Proxy Job, then its parent is used to conduct the search.
 			if (project.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out var matchingProxy))
 			{
+				Debug.WriteLine("Found existing CanvasSizeUpdate Job.");
 				project.CurrentJob = matchingProxy;
 				return;
 			}
@@ -611,7 +615,7 @@ namespace MSetExplorer
 
 			var newJob = _mapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
 
-			Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+			Debug.WriteLine($"Creating CanvasSizeUpdate Job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
 			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(newJob);

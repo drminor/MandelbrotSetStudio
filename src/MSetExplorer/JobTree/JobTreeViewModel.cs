@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Text;
 
 namespace MSetExplorer
@@ -74,32 +75,36 @@ namespace MSetExplorer
 			}
 		}
 
+		public JobTreeItem? SelectedViewItem
+		{
+			get => CurrentProject?.SelectedViewItem;
+			set
+			{
+				if (CurrentProject != null)
+				{
+					CurrentProject.SelectedViewItem = value;
+				}
+			}
+		}
+
 		#endregion
 
 		#region Public Methods
 
-		public List<JobTreeItem>? GetCurrentPath()
+		public JobTreePath? GetCurrentPath()
 		{
 			return CurrentProject?.GetCurrentPath();
 		}
 
-		public List<JobTreeItem>? GetPath(ObjectId jobId)
+		public JobTreePath? GetPath(ObjectId jobId)
 		{
 			return CurrentProject?.GetPath(jobId);
 		}
 
 		public bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job)
 		{
-			if (CurrentProject != null)
-			{
-				job = CurrentProject.GetJob(jobId);
-				return job != null;
-			}
-			else
-			{
-				job = null;
-				return false;
-			}
+			job = CurrentProject?.GetPath(jobId)?.LastTerm.Job;
+			return job != null;
 		}
 
 		public bool RestoreBranch(ObjectId jobId)
@@ -149,33 +154,68 @@ namespace MSetExplorer
 				return $"Could not find a job with JobId: {jobId}.";
 			}
 
-			var jobTreeItem = path[^1];
+			var jobTreeItem = path.LastTerm;
 
-			var sb = new StringBuilder();
+			var job = jobTreeItem.Job;
 
-			_ = sb.AppendLine($"TransformType: {jobTreeItem.TransformType}");
-			_ = sb.AppendLine($"Id: {jobTreeItem.JobId}");
-			_ = sb.AppendLine($"ParentId: {jobTreeItem.ParentJobId}");
-			_ = sb.AppendLine($"Is Alternate Path Head: {jobTreeItem.IsActiveAlternateBranchHead}");
-			_ = sb.AppendLine($"Is Parked Alternate: {jobTreeItem.IsParkedAlternateBranchHead} ");
-			_ = sb.AppendLine($"Children: {jobTreeItem.Children.Count}");
-			_ = sb.AppendLine($"CanvasSize Disp Alternates: {jobTreeItem.AlternateDispSizes?.Count ?? 0}");
+			var coordVals = RValueHelper.GetValuesAsStrings(job.MapAreaInfo.Coords);
 
-			if (jobTreeItem.Job.ParentJobId.HasValue)
+			var sb = new StringBuilder()
+				.AppendLine("Job Details:")
+				.AppendLine($"X1: {coordVals[0]}\tY1: {coordVals[2]}")
+				.AppendLine($"X2: {coordVals[1]}\tY2: {coordVals[3]}")
+
+				.AppendLine($"\tTransformType: {jobTreeItem.TransformType}")
+				.AppendLine($"\tId: {jobTreeItem.JobId}")
+				.AppendLine($"\tParentId: {jobTreeItem.ParentJobId}")
+				.AppendLine($"\tCanvasSize Disp Alternates: {jobTreeItem.AlternateDispSizes?.Count ?? 0}");
+
+			if (jobTreeItem.IsActiveAlternate)
 			{
-				var parentPath = GetPath(jobTreeItem.Job.ParentJobId.Value);
-
-				if (parentPath != null)
-				{
-					var parentJobTreeItem = parentPath[^1];
-					var idx = parentJobTreeItem.Children.IndexOf(jobTreeItem);
-					var numberOfFollowingNodes = parentJobTreeItem.Children.Count - idx - 1;
-
-					_ = sb.AppendLine($"Following Nodes: {numberOfFollowingNodes}.");
-				}
+				_ = sb.AppendLine("\nThis Job is on the Active Branch.");
+				_ = sb.AppendLine("List of all Branches:");
+				DisplayAlternates(jobTreeItem, sb, jobTreeItem);
+			}
+			else if(jobTreeItem.IsParkedAlternate)
+			{
+				_ = sb.AppendLine("\nThis job is not on the Active Branch:");
+				_ = sb.AppendLine("List of all Branches:");
+				var activeAltParentPath = path.GetParentPathForParkedAlt();
+				DisplayAlternates(jobTreeItem, sb, activeAltParentPath.LastTerm);
+			}
+			else
+			{
+				_ = sb.AppendLine($"Children: {jobTreeItem.Children.Count}");
 			}
 
+			//if (parentNode != null)
+			//{
+			//	var idx = parentNode.Children.IndexOf(jobTreeItem);
+			//	var numberOfFollowingNodes = parentNode.Children.Count - idx - 1;
+
+			//	_ = sb.AppendLine($"Following Nodes: {numberOfFollowingNodes}.");
+			//}
+
 			return sb.ToString();
+		}
+
+		private void DisplayAlternates(JobTreeItem item, StringBuilder sb, JobTreeItem parentNode)
+		{
+			_ = sb.AppendLine("  TransformType\tDateCreated\t\t\tChild Count\tIsActive");
+
+			var altNodes = new List<JobTreeItem>(parentNode.Children);
+			var sortPosition = parentNode.GetSortPosition(item.Job);
+			altNodes.Insert(sortPosition, item);
+
+			foreach (var altNode in altNodes)
+			{
+				if (altNode == item)
+				{
+					_ = sb.Append("*-");
+				}
+				_ = sb.AppendLine($"{altNode.TransformType}\t{altNode.Job.DateCreated}\t{altNode.Children.Count()}\t\t{altNode.IsActiveAlternate}");
+			}
+
 		}
 
 		#endregion

@@ -7,33 +7,47 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace MSS.Common
 {
 	public class JobTreeItem : INotifyPropertyChanged, IEqualityComparer<JobTreeItem>, IEquatable<JobTreeItem>, IComparable<JobTreeItem>
-		/* ,  IComparer<JobTreeItem>, IComparer */
 	{
 		private bool _isActiveAlternateBranchHead;
 		private bool _isParkedAlternateBranchHead;
+
 		private bool _isIterationChange;
 		private bool _isColorMapChange;
-		private bool _isSelected;
+
+		private bool _isCurrent;
 		private bool _isExpanded;
+
+		private bool _isSelected;
+		private bool _isParentOfSelected;
+		private bool _isSiblingOfSelected;
+		private bool _isChildOfSelected;
+		private string? _itemColor;
 
 		private readonly ObjectIdComparer _comparer;
 
-		#region Static Methods
+		#region Static Members
 
-		public static JobTreeItem CreateRoot()
+		public static JobTreePath CreateRoot()
 		{
-			var result = new JobTreeItem();
+			var result = new JobTreePath(new JobTreeItem());
 
 			Debug.Assert(result.Job.Id == ObjectId.Empty, "Creating a Root JobTreeItem that has a JobId != ObjectId.Empty.");
 
 			return result;
 		}
+
+		public static string IsSelectedColor { get; set; } = "";
+		public static string IsParentSelectedColor { get; set; } = "";
+		public static string IsSiblingSelectedColor { get; set; } = "";
+		public static string IsChildSelectedColor { get; set; } = "";
+
 
 		#endregion
 
@@ -53,6 +67,14 @@ namespace MSS.Common
 			IsIterationChange = isIterationChange;
 			IsColorMapChange = isColorMapChange;
 
+			_itemColor = null; //"#20fff8dc";
+			_isExpanded = false;
+
+			_isSelected = false;
+			_isParentOfSelected = false;
+			_isSiblingOfSelected = false;
+			_isChildOfSelected = false;
+
 			AlternateDispSizes = null;
 			RealChildJobs = new SortedList<ObjectId, Job>(new ObjectIdComparer());
 			_comparer = new ObjectIdComparer();
@@ -67,6 +89,8 @@ namespace MSS.Common
 		public List<JobTreeItem>? AlternateDispSizes { get; private set; }
 
 		public SortedList<ObjectId, Job> RealChildJobs { get; set; }
+
+		#endregion
 
 		#region Convenience Properties
 
@@ -98,14 +122,44 @@ namespace MSS.Common
 			private set;
 		}
 
-		public bool IsSelected
+		public bool IsActiveAlternate
 		{
-			get => _isSelected;
+			get => _isActiveAlternateBranchHead;
 			set
 			{
-				if (value != _isSelected)
+				if (value != _isActiveAlternateBranchHead)
 				{
-					_isSelected = value;
+					_isActiveAlternateBranchHead = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsParkedAlternate
+		{
+			get => _isParkedAlternateBranchHead;
+			set
+			{
+				if (value != _isParkedAlternateBranchHead)
+				{
+					_isParkedAlternateBranchHead = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		#endregion
+
+		#region UI Properties
+
+		public bool IsCurrent
+		{
+			get => _isCurrent;
+			set
+			{
+				if (value != _isCurrent)
+				{
+					_isCurrent = value;
 					OnPropertyChanged();
 				}
 			}
@@ -123,36 +177,6 @@ namespace MSS.Common
 				}
 			}
 		}
-
-		public bool IsActiveAlternateBranchHead
-		{
-			get => _isActiveAlternateBranchHead;
-			set
-			{
-				if (value != _isActiveAlternateBranchHead)
-				{
-					_isActiveAlternateBranchHead = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public bool IsParkedAlternateBranchHead
-		{
-			get => _isParkedAlternateBranchHead;
-			set
-			{
-				if (value != _isParkedAlternateBranchHead)
-				{
-					_isParkedAlternateBranchHead = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		#endregion
-
-		#region UI Properties
 
 		public bool IsIterationChange
 		{
@@ -180,19 +204,88 @@ namespace MSS.Common
 			}
 		}
 
-		public string? PathHeadType => IsActiveAlternateBranchHead ? "[Alt]" : IsParkedAlternateBranchHead ? "[Prk]" : null;
+		public bool IsSelected
+		{
+			get => _isSelected;
+			set
+			{
+				if (value != _isSelected)
+				{
+					_isSelected = value;
+					ItemColor = GetItemColor(_isSelected, _isParentOfSelected, _isSiblingOfSelected, _isChildOfSelected);
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsParentOfSelected
+		{
+			get => _isParentOfSelected;
+			set
+			{
+				if (value != _isParentOfSelected)
+				{
+					_isParentOfSelected = value;
+					ItemColor = GetItemColor(_isSelected, _isParentOfSelected, _isSiblingOfSelected, _isChildOfSelected);
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsSiblingOfSelected
+		{
+			get => _isSiblingOfSelected;
+			set
+			{
+				if (value != _isSiblingOfSelected)
+				{
+					_isSiblingOfSelected = value;
+					ItemColor = GetItemColor(_isSelected, _isParentOfSelected, _isSiblingOfSelected, _isChildOfSelected);
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsChildOfSelected
+		{
+			get => _isChildOfSelected;
+			set
+			{
+				if (value != _isChildOfSelected)
+				{
+					_isChildOfSelected = value;
+					ItemColor = GetItemColor(_isSelected, _isParentOfSelected, _isSiblingOfSelected, _isChildOfSelected);
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public string? ItemColor
+		{
+			get => _itemColor;
+			set
+			{
+				if (value != _itemColor)
+				{
+					_itemColor = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public string? PathHeadType => IsActiveAlternate ? "[Alt]" : IsParkedAlternate ? "[Prk]" : null;
 
 		public string IdAndParentId
 		{
 			get
 			{
 				var result = Job.Id + ", " + (Job.ParentJobId?.ToString() ?? "null");
-				if (IsActiveAlternateBranchHead)
+				if (IsActiveAlternate)
 				{
 					result += ", Alt: Yes";
 				}
 
-				if (IsParkedAlternateBranchHead)
+				if (IsParkedAlternate)
 				{
 					result += ", Prk: Yes";
 				}
@@ -200,8 +293,6 @@ namespace MSS.Common
 				return result;
 			}
 		}
-
-		#endregion
 
 		#endregion
 
@@ -258,10 +349,10 @@ namespace MSS.Common
 
 			node.ParentNode = this;
 
-			if (!IsRoot && !IsParkedAlternateBranchHead)
+			if (!IsRoot && !IsParkedAlternate)
 			{
-				IsActiveAlternateBranchHead = true;
-				node.IsParkedAlternateBranchHead = true;
+				IsActiveAlternate = true;
+				node.IsParkedAlternate = true;
 			}
 
 		}
@@ -390,6 +481,34 @@ namespace MSS.Common
 			RealChildJobs.Add(job.Id, job);
 			var result = RealChildJobs.IndexOfKey(job.Id);
 			return result;
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private string? GetItemColor(bool isSelected, bool isParentSelected, bool isSiblingSelected, bool isChildSelected)
+		{
+			if (isSelected)
+			{
+				return IsSelectedColor;
+			}
+			else if (isParentSelected)
+			{
+				return IsParentSelectedColor;
+			}
+			else if (isSiblingSelected)
+			{
+				return IsSiblingSelectedColor;
+			}
+			else if (isChildSelected)
+			{
+				return IsChildSelectedColor;
+			}
+			else
+			{
+				return null; // "#fff8dc"; // (Cornflower Silk)
+			}
 		}
 
 		#endregion

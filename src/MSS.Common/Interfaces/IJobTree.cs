@@ -16,10 +16,11 @@ namespace MSS.Common
 		bool IsDirty { get; set; }
 		bool AnyJobIsDirty { get; }
 
+		JobTreeItem? SelectedItem { get; set; }
+
 		JobTreePath? GetCurrentPath();
 		JobTreePath? GetPath(ObjectId jobId);
 
-		//List<JobTreeItem> AddHomeJob(Job job, JobTreeItem root);
 		JobTreePath Add(Job job, bool selectTheAddedJob);
 
 		bool RestoreBranch(ObjectId jobId);

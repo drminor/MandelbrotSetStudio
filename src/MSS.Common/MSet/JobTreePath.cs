@@ -1,6 +1,7 @@
 ﻿using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace MSS.Common
@@ -53,6 +54,12 @@ namespace MSS.Common
 
 		public Job Job => Terms[^1].Job;
 
+		public bool IsRoot => Terms[0].IsRoot;
+		public bool IsHome => Terms[0].IsHome;
+
+		public bool IsActiveAlternate => Terms[^1].IsActiveAlternate;
+		public bool IsParkedAlternate => Terms[^1].IsParkedAlternate;
+
 		#endregion
 
 		#region Public Methods
@@ -79,6 +86,18 @@ namespace MSS.Common
 			return new JobTreePath(Terms.SkipLast(1));
 		}
 
+		public JobTreeItem GetParentTermForPathWithTwoOrMoreTerms()
+		{
+			if(Terms.Count < 2)
+			{
+				throw new InvalidOperationException("GetParentTermForParentWith2OrMoreTerms was called with a path that had fewer than 2 term.");
+			}
+			else
+			{
+				return Terms[^2];
+			}
+		}
+
 		public JobTreePath Combine(JobTreePath jobTreePath)
 		{
 			return Combine(jobTreePath.Terms);
@@ -91,8 +110,19 @@ namespace MSS.Common
 
 		public JobTreePath Combine(IEnumerable<JobTreeItem> jobTreeItems)
 		{
-			var result = Clone();
-			result.Terms.AddRange(jobTreeItems);
+			JobTreePath result;
+
+			if (Terms[0].IsRoot)
+			{
+				Debug.Assert(Terms.Count == 1, "Combining JobTreePaths and the anchor starts with root and has more than one term.");
+				result = new JobTreePath(jobTreeItems);
+			}
+			else
+			{
+				result = Clone();
+				result.Terms.AddRange(jobTreeItems);
+			}
+
 			return result;
 		}
 

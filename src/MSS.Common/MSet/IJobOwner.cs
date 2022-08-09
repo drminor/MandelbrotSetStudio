@@ -31,14 +31,17 @@ namespace MSS.Common
 		List<Job> GetJobs();
 		List<ColorBandSet> GetColorBandSets();
 
-		List<JobTreeItem>? GetCurrentPath();
+		JobTreePath? GetCurrentPath();
+
+		JobTreePath? GetPath(ObjectId jobId);
 		Job? GetJob(ObjectId jobId);
-		List<Job>? GetJobAndDescendants(ObjectId jobId);
 		Job? GetParent(Job job);
-		List<JobTreeItem>? GetPath(ObjectId jobId);
+		List<Job>? GetJobAndDescendants(ObjectId jobId);
 
 		bool RestoreBranch(ObjectId jobId);
 		bool DeleteBranch(ObjectId jobId);
 		void MarkAsSaved();
+
+		JobTreeItem? SelectedViewItem { get; set; }
 	}
 }

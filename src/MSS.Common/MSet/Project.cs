@@ -71,6 +71,8 @@ namespace MSS.Common
 			LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
 			_jobTree.CurrentJob = currentJob;
 
+			//_jobTree
+
 			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentJob.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
 		}
 
@@ -237,6 +239,16 @@ namespace MSS.Common
 
 		public ObjectId CurrentColorBandSetId => CurrentColorBandSet.Id;
 
+		public JobTreeItem? SelectedViewItem
+		{
+			get => _jobTree.SelectedItem;
+			set
+			{
+				_jobTree.SelectedItem = value;
+				OnPropertyChanged();
+			}
+		}
+
 		#endregion
 
 		#region Public Methods - Job Tree
@@ -327,14 +339,12 @@ namespace MSS.Common
 			return _colorBandSets;
 		}
 
+		public JobTreePath? GetCurrentPath() => _jobTree.GetCurrentPath();
+		public JobTreePath? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
+
 		public Job? GetJob(ObjectId jobId) => _jobTree.GetJob(jobId);
-
 		public Job? GetParent(Job job) => _jobTree.GetParent(job);
-
 		public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetJobAndDescendants(jobId);
-
-		public List<JobTreeItem>? GetCurrentPath() =>  _jobTree.GetCurrentPath();
-		public List<JobTreeItem>? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
 
 		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
 		{

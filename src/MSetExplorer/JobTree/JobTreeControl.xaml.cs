@@ -1,9 +1,11 @@
 ﻿using MongoDB.Bson;
+using MSS.Common;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using MSS.Common;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -34,7 +36,29 @@ namespace MSetExplorer
 			{
 				_vm = (IJobTreeViewModel)DataContext;
 
+				JobTreeItem.IsSelectedColor = GetColorString(Colors.Tan);
+				JobTreeItem.IsParentSelectedColor = GetColorString(Colors.LightPink);
+				JobTreeItem.IsSiblingSelectedColor = GetColorString(Colors.LightGoldenrodYellow);
+				JobTreeItem.IsChildSelectedColor = GetColorString(Colors.LightCyan);
+
+				trvJobs.SelectedItemChanged += TrvJobs_SelectedItemChanged;
+
 				//Debug.WriteLine("The JobTree UserControl is now loaded");
+			}
+		}
+
+		private string GetColorString(Color color)
+		{
+			var colorStringWithOpacity = color.ToString(CultureInfo.InvariantCulture);
+			var result = "#" + new string(colorStringWithOpacity.ToCharArray(), 3, 6);
+			return result;
+		}
+
+		private void TrvJobs_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+		{
+			if (trvJobs.SelectedItem is JobTreeItem selectedItem)
+			{
+				_vm.SelectedViewItem = selectedItem;
 			}
 		}
 
@@ -134,7 +158,13 @@ namespace MSetExplorer
 			// TODO: OJ -- Need the TransformType to find Alternate Display Jobs
 			if (e.Parameter is ObjectId jobId)
 			{
-				_ = MessageBox.Show(_vm.GetDetails(jobId));
+				var details = _vm.GetDetails(jobId) + "\n\nCopy To Clipboard?";
+
+				var resp = MessageBox.Show(details, jobId.ToString(), MessageBoxButton.YesNo, MessageBoxImage.Information, MessageBoxResult.No);
+				if (resp == MessageBoxResult.Yes)
+				{
+					Clipboard.SetText(details);
+				}
 			}
 		}
 
