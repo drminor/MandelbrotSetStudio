@@ -103,7 +103,7 @@ namespace MSetExplorer
 
 		public bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job)
 		{
-			job = CurrentProject?.GetPath(jobId)?.LastTerm.Job;
+			job = CurrentProject?.GetPath(jobId)?.LastTerm?.Job;
 			return job != null;
 		}
 
@@ -149,12 +149,12 @@ namespace MSetExplorer
 		{
 			var path = GetPath(jobId);
 
-			if (path == null)
+			if (path == null || path.IsEmpty)
 			{
 				return $"Could not find a job with JobId: {jobId}.";
 			}
 
-			var jobTreeItem = path.LastTerm;
+			var jobTreeItem = path.GetItemUnsafe();
 
 			var job = jobTreeItem.Job;
 
@@ -180,8 +180,8 @@ namespace MSetExplorer
 			{
 				_ = sb.AppendLine("\nThis job is not on the Active Branch:");
 				_ = sb.AppendLine("List of all Branches:");
-				var activeAltParentPath = path.GetParentPathForParkedAlt();
-				DisplayAlternates(jobTreeItem, sb, activeAltParentPath.LastTerm);
+				var activeAltParentPath = path.GetParentPathUnsafe();
+				DisplayAlternates(jobTreeItem, sb, activeAltParentPath.GetItemUnsafe());
 			}
 			else
 			{
@@ -201,7 +201,7 @@ namespace MSetExplorer
 
 		private void DisplayAlternates(JobTreeItem item, StringBuilder sb, JobTreeItem parentNode)
 		{
-			_ = sb.AppendLine("  TransformType\tDateCreated\t\t\tChild Count\tIsActive");
+			_ = sb.AppendLine("  TransformType\tDateCreated\t\tChild Count\tIsActive");
 
 			var altNodes = new List<JobTreeItem>(parentNode.Children);
 			var sortPosition = parentNode.GetSortPosition(item.Job);

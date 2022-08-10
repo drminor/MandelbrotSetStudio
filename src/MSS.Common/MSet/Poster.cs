@@ -60,7 +60,7 @@ namespace MSS.Common
 			_dispPosition = displayPosition;
 			_displayZoom = displayZoom;
 
-			_jobTree = new JobTree(jobs);
+			_jobTree = new JobTree(jobs, checkHomeJob: true);
 
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			//_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);

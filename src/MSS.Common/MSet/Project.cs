@@ -50,7 +50,7 @@ namespace MSS.Common
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_description = description;
 
-			_jobTree = new JobTree(jobs);
+			_jobTree = new JobTree(jobs, checkHomeJob: true);
 			//_colorBandSetCollection = new ColorBandSetCollection(colorBandSets);
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);

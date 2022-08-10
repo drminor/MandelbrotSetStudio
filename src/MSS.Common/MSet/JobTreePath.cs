@@ -1,4 +1,5 @@
-﻿using MSS.Types.MSet;
+﻿using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,31 +9,17 @@ namespace MSS.Common
 {
 	public class JobTreePath : ICloneable
 	{
-		#region Static Members
-
-		private static readonly JobTreePath? _nullValue;
-
-		static JobTreePath()
-		{
-			_nullValue = null;
-		}
-
-		public static JobTreePath? NullPath => _nullValue;
-
-		#endregion
-
 		#region Constructor
 
-		public JobTreePath(JobTreeItem term) : this (new [] { term })
+		public JobTreePath(JobTreeItem root) : this (root, root.Children.Take(1))
 		{ }
 
-		public JobTreePath(IEnumerable<JobTreeItem> terms)
-		{
-			if (!terms.Any())
-			{
-				throw new ArgumentException("When creating a JobTreePath, terms must have at least one element.");
-			}
+		public JobTreePath(JobTreeItem root, JobTreeItem term) : this(root, new[] { term })
+		{ }
 
+		public JobTreePath(JobTreeItem root, IEnumerable<JobTreeItem> terms)
+		{
+			Tree = root;
 			Terms = new List<JobTreeItem>(terms);
 		}
 
@@ -40,22 +27,25 @@ namespace MSS.Common
 
 		#region Public Properties
 
+		public JobTreeItem Tree { get; }
+
 		public List<JobTreeItem> Terms { get; init; }
 
 		public int Count => Terms.Count;
 
-		public JobTreeItem LastTerm => Terms[^1];
+		public bool IsEmpty => Terms.Count == 0;
+
+		public JobTreeItem? LastTerm => Terms.Count > 0 ? Terms[^1] : null;
 
 		public JobTreeItem? ParentTerm => Terms.Count > 1 ?  Terms[^2] : null;
 
 		public JobTreeItem? GrandparentTerm => Terms.Count > 2 ? Terms[^3] : null;
 
-		public JobTreeItem CanvasSizeUpdateParentTerm => Terms[^2];
-
 		public Job Job => Terms[^1].Job;
+		public TransformType TransformType => Job.TransformType;
 
-		public bool IsRoot => Terms[0].IsRoot;
-		public bool IsHome => Terms[0].IsHome;
+		public bool IsRoot => Terms[^1].IsRoot;
+		public bool IsHome => Terms[^1].IsHome;
 
 		public bool IsActiveAlternate => Terms[^1].IsActiveAlternate;
 		public bool IsParkedAlternate => Terms[^1].IsParkedAlternate;
@@ -64,38 +54,70 @@ namespace MSS.Common
 
 		#region Public Methods
 
+		public JobTreePath GetRootPath()
+		{
+			return new JobTreePath(Tree, new List<JobTreeItem>());
+		}
+
 		public JobTreePath? GetParentPath()
 		{
-			return Terms.Count > 1 ? new JobTreePath(Terms.SkipLast(1)) : NullPath;
+			var result = Terms.Count > 0 ? new JobTreePath(Tree, Terms.SkipLast(1)) : null;
+			return result;
 		}
 
 		public JobTreePath? GetGrandparentPath()
 		{
-			return Terms.Count > 2 ? new JobTreePath(Terms.SkipLast(2)) : NullPath;
+			var result = Terms.Count > 1 ? new JobTreePath(Tree, Terms.SkipLast(2)) : null;
+			return result;
 		}
 
-		public JobTreePath GetParentPathForCanvasSizeUpdate()
+		public JobTreePath GetParentPathUnsafe()
 		{
-			// This theoretically could throw an exception, but it does then its due to an error in the caller's application logic.
-			return new JobTreePath(Terms.SkipLast(1));
+			return new JobTreePath(Tree, Terms.SkipLast(1));
 		}
 
-		public JobTreePath GetParentPathForParkedAlt()
+		public JobTreePath GetGrandparentPathUnSafe()
 		{
-			// This theoretically could throw an exception, but it does then its due to an error in the caller's application logic.
-			return new JobTreePath(Terms.SkipLast(1));
+			return new JobTreePath(Tree, Terms.SkipLast(2));
 		}
 
-		public JobTreeItem GetParentTermForPathWithTwoOrMoreTerms()
+		public JobTreeItem GetItemUnsafe()
 		{
-			if(Terms.Count < 2)
-			{
-				throw new InvalidOperationException("GetParentTermForParentWith2OrMoreTerms was called with a path that had fewer than 2 term.");
-			}
-			else
-			{
-				return Terms[^2];
-			}
+			return Terms[^1];
+		}
+
+		public JobTreeItem GetParentItemUnsafe()
+		{
+			return Terms[^2];
+		}
+
+		public JobTreeItem GetGrandparentComponentUnsafe()
+		{
+			return Terms[^3];
+		}
+
+		public JobTreeItem GetItemOrRoot()
+		{
+			var result = IsEmpty ? Tree : GetItemUnsafe();
+			return result;
+		}
+
+		public JobTreeItem GetParentItemOrRoot()
+		{
+			var result = GetParentPath()?.LastTerm ?? Tree;
+			return result;
+		}
+
+		public JobTreePath CreatePath(JobTreeItem item)
+		{
+			var result = new JobTreePath(Tree, item);
+			return result;
+		}
+
+		public JobTreePath CreateSiblingPath(JobTreePath path, JobTreeItem item)
+		{
+			var result = path.IsEmpty ? new JobTreePath(Tree, item) : path.GetParentPathUnsafe().Combine(item);
+			return result;
 		}
 
 		public JobTreePath Combine(JobTreePath jobTreePath)
@@ -110,19 +132,8 @@ namespace MSS.Common
 
 		public JobTreePath Combine(IEnumerable<JobTreeItem> jobTreeItems)
 		{
-			JobTreePath result;
-
-			if (Terms[0].IsRoot)
-			{
-				Debug.Assert(Terms.Count == 1, "Combining JobTreePaths and the anchor starts with root and has more than one term.");
-				result = new JobTreePath(jobTreeItems);
-			}
-			else
-			{
-				result = Clone();
-				result.Terms.AddRange(jobTreeItems);
-			}
-
+			var result = Clone();
+			result.Terms.AddRange(jobTreeItems);
 			return result;
 		}
 
@@ -130,9 +141,9 @@ namespace MSS.Common
 
 		#region Overrides, Conversion Operators and ICloneable Support
 
-		public static implicit operator List<JobTreeItem>?(JobTreePath? jobTreePath) => jobTreePath == null ? null : jobTreePath.Terms;
+		//public static implicit operator List<JobTreeItem>?(JobTreePath? jobTreePath) => jobTreePath == null ? null : jobTreePath.Terms;
 
-		public static explicit operator JobTreePath(List<JobTreeItem> terms) => new JobTreePath(terms);
+		//public static explicit operator JobTreePath(List<JobTreeItem> terms) => new JobTreePath(terms);
 
 		public override string ToString() => string.Join('\\', Terms);
 
@@ -143,7 +154,7 @@ namespace MSS.Common
 
 		public JobTreePath Clone()
 		{
-			return new JobTreePath(Terms);
+			return new JobTreePath(Tree, Terms);
 		}
 
 		#endregion

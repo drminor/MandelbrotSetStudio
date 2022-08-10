@@ -7,7 +7,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -28,26 +27,50 @@ namespace MSS.Common
 		private bool _isParentOfSelected;
 		private bool _isSiblingOfSelected;
 		private bool _isChildOfSelected;
-		private string? _itemColor;
+		private string _itemColor;
 
 		private readonly ObjectIdComparer _comparer;
 
-		#region Static Members
-
-		public static JobTreePath CreateRoot()
-		{
-			var result = new JobTreePath(new JobTreeItem());
-
-			Debug.Assert(result.Job.Id == ObjectId.Empty, "Creating a Root JobTreeItem that has a JobId != ObjectId.Empty.");
-
-			return result;
-		}
+		#region Static Properties
 
 		public static string IsSelectedColor { get; set; } = "";
 		public static string IsParentSelectedColor { get; set; } = "";
 		public static string IsSiblingSelectedColor { get; set; } = "";
 		public static string IsChildSelectedColor { get; set; } = "";
 
+		#endregion
+
+		#region Static Methods
+
+		public static JobTreePath CreateRoot()
+		{
+			var result = new JobTreePath(new JobTreeItem());
+			Debug.Assert(result.Job.Id == ObjectId.Empty, "Creating a Root JobTreeItem that has a JobId != ObjectId.Empty.");
+
+			return result;
+		}
+
+		public static JobTreePath CreateRoot(Job homeJob)
+		{
+			if (homeJob.ParentJobId != null)
+			{
+				Debug.WriteLine($"WARNING: The job: {homeJob.Id} used to create the JobTree(path) has a non-null ParentJobId. Setting the ParentJobId to null.");
+				homeJob.ParentJobId = null;
+			}
+
+			if (homeJob.TransformType != TransformType.Home)
+			{
+				Debug.WriteLine($"WARNING: The job: {homeJob.Id} used to create the JobTree(path) has TransformType of {homeJob.TransformType}. Expecting the TransformType to be {nameof(TransformType.Home)}.");
+			}
+
+			var rootItem = new JobTreeItem();
+			var homeItem = _ = rootItem.AddJob(homeJob);
+			var result = new JobTreePath(rootItem, homeItem);
+
+			Debug.Assert(result.Tree.Job.Id == ObjectId.Empty, "Creating a Root JobTreeItem that has a JobId != ObjectId.Empty.");
+
+			return result;
+		}
 
 		#endregion
 
@@ -67,7 +90,7 @@ namespace MSS.Common
 			IsIterationChange = isIterationChange;
 			IsColorMapChange = isColorMapChange;
 
-			_itemColor = null; //"#20fff8dc";
+			_itemColor = "#fff8dc";
 			_isExpanded = false;
 
 			_isSelected = false;
@@ -260,7 +283,7 @@ namespace MSS.Common
 			}
 		}
 
-		public string? ItemColor
+		public string ItemColor
 		{
 			get => _itemColor;
 			set
@@ -325,7 +348,7 @@ namespace MSS.Common
 
 			if (node.Job.Id == ObjectId.Empty)
 			{
-				throw new InvalidOperationException("Cannot add a JobTreeItem with a Job that has an Id == ObjectId.Empty.");
+				throw new InvalidOperationException("Cannot add a JobTreeItem for a Job that has a Empty ObjectId.");
 			}
 
 			if (IsRoot && (!Children.Any()))
@@ -344,6 +367,7 @@ namespace MSS.Common
 				{
 					index = ~index;
 				}
+
 				Children.Insert(index, node);
 			}
 
@@ -487,7 +511,7 @@ namespace MSS.Common
 
 		#region Private Methods
 
-		private string? GetItemColor(bool isSelected, bool isParentSelected, bool isSiblingSelected, bool isChildSelected)
+		private string GetItemColor(bool isSelected, bool isParentSelected, bool isSiblingSelected, bool isChildSelected)
 		{
 			if (isSelected)
 			{
@@ -507,7 +531,7 @@ namespace MSS.Common
 			}
 			else
 			{
-				return null; // "#fff8dc"; // (Cornflower Silk)
+				return "#fff8dc";// (Cornflower Silk)
 			}
 		}
 
@@ -524,21 +548,33 @@ namespace MSS.Common
 
 		#endregion
 
-		#region IComparer and IComparer<JobTreeItem> Support
+		#region IComparable Support
 
-		//public int Compare(JobTreeItem? x, JobTreeItem? y)
-		//{
-		//	
-		//
-		//	return _comparer.Compare(x, y);
-		//}
+		public int CompareTo(JobTreeItem? other)
+		{
+			var result = other == null ? 1 : JobId.CompareTo(other.JobId);
+			return result;
+		}
 
-		//public int Compare(object? x, object? y)
-		//{
-		//	return (x is JobTreeItem a && y is JobTreeItem b)
-		//		? _comparer.Compare(x, y)
-		//		: 0;
-		//}
+		public static bool operator <(JobTreeItem left, JobTreeItem right)
+		{
+			return ReferenceEquals(left, null) ? !ReferenceEquals(right, null) : left.CompareTo(right) < 0;
+		}
+
+		public static bool operator <=(JobTreeItem left, JobTreeItem right)
+		{
+			return ReferenceEquals(left, null) || left.CompareTo(right) <= 0;
+		}
+
+		public static bool operator >(JobTreeItem left, JobTreeItem right)
+		{
+			return !ReferenceEquals(left, null) && left.CompareTo(right) > 0;
+		}
+
+		public static bool operator >=(JobTreeItem left, JobTreeItem right)
+		{
+			return ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.CompareTo(right) >= 0;
+		}
 
 		#endregion
 
@@ -570,12 +606,6 @@ namespace MSS.Common
 			return obj.GetHashCode();
 		}
 
-		public int CompareTo(JobTreeItem? other)
-		{
-			var result = other == null ? 1 : JobId.CompareTo(other.JobId);
-			return result;
-		}
-
 		public static bool operator ==(JobTreeItem? left, JobTreeItem? right)
 		{
 			return EqualityComparer<JobTreeItem>.Default.Equals(left, right);
@@ -587,6 +617,23 @@ namespace MSS.Common
 		}
 
 		#endregion
-	}
 
+		#region IComparer and IComparer<JobTreeItem> Support -- Not Implemented
+
+		//public int Compare(JobTreeItem? x, JobTreeItem? y)
+		//{
+		//	
+		//
+		//	return _comparer.Compare(x, y);
+		//}
+
+		//public int Compare(object? x, object? y)
+		//{
+		//	return (x is JobTreeItem a && y is JobTreeItem b)
+		//		? _comparer.Compare(x, y)
+		//		: 0;
+		//}
+
+		#endregion
+	}
 }
