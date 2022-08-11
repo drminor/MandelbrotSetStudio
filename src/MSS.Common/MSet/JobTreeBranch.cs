@@ -1,30 +1,24 @@
-﻿using MSS.Types;
-using MSS.Types.MSet;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace MSS.Common
 {
-	public class JobTreePath : IJobTreeBranch
+	public class JobTreeBranch : IJobTreeBranch
 	{
 		#region Constructor
 
-		public JobTreePath(JobTreeBranch jobTreeBranch) : this(jobTreeBranch.Tree, jobTreeBranch.Terms)
+		public JobTreeBranch(JobTreeItem root) : this(root, root.Children.Take(1))
 		{ }
 
-		public JobTreePath(JobTreeItem root) : this (root, root.Children.Take(1))
+		public JobTreeBranch(JobTreeItem root, JobTreeItem term) : this(root, new[] { term })
 		{ }
 
-		public JobTreePath(JobTreeItem root, JobTreeItem term) : this(root, new[] { term })
-		{ }
-
-		public JobTreePath(JobTreeItem root, IEnumerable<JobTreeItem> terms)
+		public JobTreeBranch(JobTreeItem root, IEnumerable<JobTreeItem> terms)
 		{
 			Tree = root;
-			Terms = terms.Any() ? new List<JobTreeItem>(terms) : throw new ArgumentException("The list of terms cannot be empty when constructing a JobTreePath.", nameof(terms));
+			Terms = new List<JobTreeItem>(terms);
 		}
 
 		#endregion
@@ -37,22 +31,11 @@ namespace MSS.Common
 
 		public int Count => Terms.Count;
 
-		public bool IsEmpty => false;
+		public bool IsEmpty => !Terms.Any();
 
-		public JobTreeItem Item => Terms[^1];
-
-		public JobTreeItem? LastTerm => Item;
-		public JobTreeItem? ParentTerm => Terms.Count > 1 ?  Terms[^2] : null;
+		public JobTreeItem? LastTerm => Terms.Count > 0 ? Terms[^1] : null;
+		public JobTreeItem? ParentTerm => Terms.Count > 1 ? Terms[^2] : null;
 		public JobTreeItem? GrandparentTerm => Terms.Count > 2 ? Terms[^3] : null;
-
-		public Job Job => Terms[^1].Job;
-		public TransformType TransformType => Job.TransformType;
-
-		public bool IsRoot => Terms[^1].IsRoot;
-		public bool IsHome => Terms[^1].IsHome;
-
-		public bool IsActiveAlternate => Terms[^1].IsActiveAlternate;
-		public bool IsParkedAlternate => Terms[^1].IsParkedAlternate;
 
 		#endregion
 
@@ -63,14 +46,9 @@ namespace MSS.Common
 			return new JobTreeBranch(Tree, new List<JobTreeItem>());
 		}
 
-		JobTreePath? IJobTreeBranch.GetCurrentPath()
+		public JobTreePath? GetCurrentPath()
 		{
-			return this;
-		}
-
-		public JobTreeBranch GetParentBranch()
-		{
-			var result = new JobTreeBranch(Tree, Terms.SkipLast(1));
+			var result = IsEmpty ? null : new JobTreePath(this);
 			return result;
 		}
 
@@ -86,13 +64,7 @@ namespace MSS.Common
 			return parentPath != null;
 		}
 
-		public JobTreePath GetParentPathUnsafe()
-		{
-			var result = new JobTreePath(Tree, Terms.SkipLast(1));
-			return result;
-		}
-
-		public JobTreeItem? GetParentItem()
+		JobTreeItem? GetParentItem()
 		{
 			return GetParentPath()?.Item;
 		}
@@ -109,6 +81,12 @@ namespace MSS.Common
 			return grandparentPath != null;
 		}
 
+		public JobTreeItem GetItemOrRoot()
+		{
+			var result = GetCurrentPath()?.Item ?? Tree;
+			return result;
+		}
+
 		public JobTreeItem GetParentItemOrRoot()
 		{
 			var result = GetParentPath()?.LastTerm ?? Tree;
@@ -122,7 +100,7 @@ namespace MSS.Common
 
 		public JobTreePath Combine(JobTreeItem jobTreeItem)
 		{
-			return Combine( new[] { jobTreeItem });
+			return Combine(new[] { jobTreeItem });
 		}
 
 		public JobTreePath Combine(IEnumerable<JobTreeItem> jobTreeItems)

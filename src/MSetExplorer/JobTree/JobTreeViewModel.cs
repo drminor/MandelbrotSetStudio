@@ -154,7 +154,7 @@ namespace MSetExplorer
 				return $"Could not find a job with JobId: {jobId}.";
 			}
 
-			var jobTreeItem = path.GetItemUnsafe();
+			var jobTreeItem = path.Item;
 
 			var job = jobTreeItem.Job;
 
@@ -166,8 +166,8 @@ namespace MSetExplorer
 				.AppendLine($"X2: {coordVals[1]}\tY2: {coordVals[3]}")
 
 				.AppendLine($"\tTransformType: {jobTreeItem.TransformType}")
-				.AppendLine($"\tId: {jobTreeItem.JobId}")
-				.AppendLine($"\tParentId: {jobTreeItem.ParentJobId}")
+				.AppendLine($"\tId: {jobTreeItem.Job.Id}")
+				.AppendLine($"\tParentId: {jobTreeItem.Job.ParentJobId}")
 				.AppendLine($"\tCanvasSize Disp Alternates: {jobTreeItem.AlternateDispSizes?.Count ?? 0}");
 
 			if (jobTreeItem.IsActiveAlternate)
@@ -181,7 +181,7 @@ namespace MSetExplorer
 				_ = sb.AppendLine("\nThis job is not on the Active Branch:");
 				_ = sb.AppendLine("List of all Branches:");
 				var activeAltParentPath = path.GetParentPathUnsafe();
-				DisplayAlternates(jobTreeItem, sb, activeAltParentPath.GetItemUnsafe());
+				DisplayAlternates(jobTreeItem, sb, activeAltParentPath.Item);
 			}
 			else
 			{
@@ -209,11 +209,8 @@ namespace MSetExplorer
 
 			foreach (var altNode in altNodes)
 			{
-				if (altNode == item)
-				{
-					_ = sb.Append("*-");
-				}
-				_ = sb.AppendLine($"{altNode.TransformType}\t{altNode.Job.DateCreated}\t{altNode.Children.Count()}\t\t{altNode.IsActiveAlternate}");
+				var strItemIndicator = altNode == item ? "*-" : "  ";
+				_ = sb.AppendLine($"{strItemIndicator}{altNode.TransformType}\t{altNode.Job.DateCreated}\t{altNode.Children.Count()}\t\t{altNode.IsActiveAlternate}");
 			}
 
 		}

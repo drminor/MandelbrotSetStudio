@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace MSS.Common
 {
@@ -42,15 +43,13 @@ namespace MSS.Common
 
 		#region Static Methods
 
-		public static JobTreePath CreateRoot()
+		public static JobTreeBranch CreateRoot()
 		{
-			var result = new JobTreePath(new JobTreeItem());
-			Debug.Assert(result.Job.Id == ObjectId.Empty, "Creating a Root JobTreeItem that has a JobId != ObjectId.Empty.");
-
+			var result = new JobTreeBranch(new JobTreeItem());
 			return result;
 		}
 
-		public static JobTreePath CreateRoot(Job homeJob)
+		public static IJobTreeBranch CreateRoot(Job homeJob, out JobTreePath currentPath)
 		{
 			if (homeJob.ParentJobId != null)
 			{
@@ -65,11 +64,10 @@ namespace MSS.Common
 
 			var rootItem = new JobTreeItem();
 			var homeItem = _ = rootItem.AddJob(homeJob);
-			var result = new JobTreePath(rootItem, homeItem);
+			rootItem.RealChildJobs.Add(homeJob.Id, homeJob);
+			currentPath = new JobTreePath(rootItem, homeItem);
 
-			Debug.Assert(result.Tree.Job.Id == ObjectId.Empty, "Creating a Root JobTreeItem that has a JobId != ObjectId.Empty.");
-
-			return result;
+			return currentPath;
 		}
 
 		#endregion
@@ -121,9 +119,7 @@ namespace MSS.Common
 		public int Iterations => Job.MapCalcSettings.TargetIterations;
 		public DateTime Created => Job.DateCreated;
 
-		public ObjectId JobId => IsRoot ? ObjectId.Empty : Job.Id;
-
-		//IsRoot? Children[0].Job Job.ParentJobId;
+		public ObjectId JobId => Job.Id;
 
 		public ObjectId? ParentJobId => Job.ParentJobId;
 
@@ -378,7 +374,6 @@ namespace MSS.Common
 				IsActiveAlternate = true;
 				node.IsParkedAlternate = true;
 			}
-
 		}
 
 		public bool Move(JobTreeItem destination)
@@ -548,11 +543,35 @@ namespace MSS.Common
 
 		#endregion
 
+		public override string ToString()
+		{
+			var sb = new StringBuilder()
+				.AppendLine($"TransformType: {TransformType}")
+				.Append($" Id: {Job.Id}");
+
+			if (IsHome)
+			{
+				_ = sb.Append(" [Home]");
+			}
+
+			if (IsRoot)
+			{
+				_ = sb.Append(" [Root]");
+			}
+
+			_ = sb.Append($" ParentId: {Job.ParentJobId}")
+				.Append($" CanvasSize Disp Alternates: {AlternateDispSizes?.Count ?? 0}")
+				.Append($" IsAlt: {IsActiveAlternate}; IsParked: {IsParkedAlternate}")
+				.Append($"Children: {Children.Count}; Real Childern: {RealChildJobs.Count}");
+
+			return sb.ToString();
+		}
+
 		#region IComparable Support
 
 		public int CompareTo(JobTreeItem? other)
 		{
-			var result = other == null ? 1 : JobId.CompareTo(other.JobId);
+			var result = other == null ? 1 : Job.Id.CompareTo(other.Job.Id);
 			return result;
 		}
 
@@ -598,7 +617,7 @@ namespace MSS.Common
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(JobId);
+			return HashCode.Combine(Job.Id);
 		}
 
 		public int GetHashCode([DisallowNull] JobTreeItem obj)

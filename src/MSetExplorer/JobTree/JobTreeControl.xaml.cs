@@ -124,7 +124,7 @@ namespace MSetExplorer
 				}
 				catch (System.InvalidOperationException ioe)
 				{
-					MessageBox.Show($"Restore failed. Error = {ioe.Message}.");
+					_ = MessageBox.Show($"Restore failed. Error = {ioe.Message}.");
 				}
 			}
 		}
@@ -140,9 +140,12 @@ namespace MSetExplorer
 		{
 			if (e.Parameter is ObjectId jobId)
 			{
-				var numberJobsDeleted = _vm.DeleteBranch(jobId, out var numberOfMapSectionsDeleted);
-
-				_ = MessageBox.Show($"{numberJobsDeleted} jobs and {numberOfMapSectionsDeleted} map sections were deleted.");
+				var msgBoxResp = MessageBox.Show("About to delete the selected branch and all of its descendants. Continue?", "Deleting Branch", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+				if (msgBoxResp == MessageBoxResult.Yes)
+				{
+					var numberJobsDeleted = _vm.DeleteBranch(jobId, out var numberOfMapSectionsDeleted);
+					_ = MessageBox.Show($"{numberJobsDeleted} jobs and {numberOfMapSectionsDeleted} map sections were deleted.");
+				}
 			}
 		}
 
