@@ -15,9 +15,6 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public JobTreePath(JobTreeItem rootItem) : this (rootItem, rootItem.Children.Take(1))
-		{ }
-
 		public JobTreePath(JobTreeItem rootItem, JobTreeItem term) : this(rootItem, new[] { term })
 		{ }
 
@@ -116,7 +113,7 @@ namespace MSS.Common
 
 		public JobTreeItem GetParentItemOrRoot()
 		{
-			var result = GetParentPath()?.LastTerm ?? _rootItem;
+			var result = GetParentPath()?.Item ?? _rootItem;
 			return result;
 		}
 
@@ -152,7 +149,7 @@ namespace MSS.Common
 
 		//public static explicit operator JobTreePath(List<JobTreeItem> terms) => new JobTreePath(terms);
 
-		public override string ToString() => string.Join('\\', Terms);
+		public override string ToString() => string.Join('\\', Terms.Select(x => x.Job.Id.ToString()));
 
 		object ICloneable.Clone()
 		{

@@ -69,7 +69,7 @@ namespace MSS.Common
 				Debug.WriteLine($"WARNING: The Project has a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
 			}
 
-			LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
+			_ = LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
 			_jobTree.CurrentJob = currentJob;
 
 			//_jobTree
@@ -172,7 +172,7 @@ namespace MSS.Common
 					{
 						var colorBandSetIdBeforeUpdate = _jobTree.CurrentJob.ColorBandSetId;
 
-						LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
+						_ = LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
 
 						_jobTree.CurrentJob = value;
 
@@ -261,7 +261,7 @@ namespace MSS.Common
 				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
 			}
 
-			_jobTree.Add(job, selectTheAddedJob: true);
+			_ = _jobTree.Add(job, selectTheAddedJob: true);
 
 			LastUpdatedUtc = DateTime.UtcNow;
 		}

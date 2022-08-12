@@ -15,8 +15,8 @@ namespace MSS.Common
 {
 	public class JobTreeItem : INotifyPropertyChanged, IEqualityComparer<JobTreeItem>, IEquatable<JobTreeItem>, IComparable<JobTreeItem>, ICloneable
 	{
-		private bool _isActiveAlternateBranchHead;
-		private bool _isParkedAlternateBranchHead;
+		private bool _isActiveAlternate;
+		private bool _isParkedAlternate;
 
 		private bool _isIterationChange;
 		private bool _isColorMapChange;
@@ -62,33 +62,10 @@ namespace MSS.Common
 				Debug.WriteLine($"WARNING: The job: {homeJob.Id} used to create the JobTree(path) has TransformType of {homeJob.TransformType}. Expecting the TransformType to be {nameof(TransformType.Home)}.");
 			}
 
-			// This one ensures that the root's current path is null.
 			var tree = new JobTreeItem();
 			var homeItem = tree.AddJob(homeJob);
 			currentPath = new JobTreePath(tree, homeItem);
 			var root = currentPath.GetRoot();
-
-			// This one ensures that the root's current path is null, but "reaches into" the tree to get the home path.
-			//var tree = new JobTreeItem(homeJob);
-			//var homeItem = tree.Children[0];
-			//currentPath = new JobTreePath(tree, homeItem);
-			//var root = currentPath.GetRoot();
-
-			// This one and the following two, return a root that points to the homeJob, instead of to the well, root.
-			//var tree = new JobTreeItem(homeJob);
-			//var homeItem = tree.Children[0];
-			//var root = new JobTreeBranch(tree, homeItem);
-			//currentPath = root.GetCurrentPath();
-
-			//var tree = new JobTreeItem();
-			//var homeItem = tree.AddJob(homeJob);
-			//var root = new JobTreeBranch(tree, homeItem);
-			//currentPath = root.GetCurrentPath();
-
-			//var tree = new JobTreeItem();
-			//var homeItem = tree.AddJob(homeJob);
-			//currentPath = new JobTreePath(tree, homeItem);
-			//var root = new JobTreeBranch(currentPath);
 
 			return root;
 		}
@@ -98,15 +75,14 @@ namespace MSS.Common
 		#region Constructor
 
 		private JobTreeItem() : this(null)
-		{
-			IsRoot = true;
-		}
+		{ }
 
 		private JobTreeItem(Job? job) : this(new Job(), null, false, false)
 		{
+			IsRoot = true;
 			if (job != null)
 			{
-				AddJob(job);
+				_ = AddJob(job);
 			}
 		}
 
@@ -137,10 +113,13 @@ namespace MSS.Common
 		#region Public Properties
 
 		public Job Job { get; init; }
+		public JobTreeItem? ParentNode { get; private set; }
 		public ObservableCollection<JobTreeItem> Children { get; init; }
 		public List<JobTreeItem>? AlternateDispSizes { get; private set; }
 
 		public SortedList<ObjectId, Job> RealChildJobs { get; set; }
+
+		public bool IsOnPreferredPath { get; set; }
 
 		#endregion
 
@@ -151,35 +130,28 @@ namespace MSS.Common
 		public DateTime Created => Job.DateCreated;
 
 		public ObjectId JobId => Job.Id;
-
 		public ObjectId? ParentJobId => Job.ParentJobId;
-
 		public TransformType TransformType => Job.TransformType;
 
 		#endregion
 
 		#region Branch Properties
 
+		//public bool IsRoot => Job.Id == ObjectId.Empty;
 		public bool IsRoot { get; init; }
 
 		public bool IsHome { get; private set; }
 
 		public bool IsOrphan => ParentNode is null;
 
-		public JobTreeItem? ParentNode
-		{
-			get;
-			private set;
-		}
-
 		public bool IsActiveAlternate
 		{
-			get => _isActiveAlternateBranchHead;
+			get => _isActiveAlternate;
 			set
 			{
-				if (value != _isActiveAlternateBranchHead)
+				if (value != _isActiveAlternate)
 				{
-					_isActiveAlternateBranchHead = value;
+					_isActiveAlternate = value;
 					OnPropertyChanged();
 				}
 			}
@@ -187,12 +159,12 @@ namespace MSS.Common
 
 		public bool IsParkedAlternate
 		{
-			get => _isParkedAlternateBranchHead;
+			get => _isParkedAlternate;
 			set
 			{
-				if (value != _isParkedAlternateBranchHead)
+				if (value != _isParkedAlternate)
 				{
-					_isParkedAlternateBranchHead = value;
+					_isParkedAlternate = value;
 					OnPropertyChanged();
 				}
 			}
@@ -360,13 +332,12 @@ namespace MSS.Common
 			else
 			{
 				AddNode(node);
-
 			}
 
 			return node;
 		}
 
-		public void AddNode(JobTreeItem node)
+		private void AddNode(JobTreeItem node)
 		{
 			if (node.TransformType == TransformType.CanvasSizeUpdate)
 			{
@@ -403,6 +374,10 @@ namespace MSS.Common
 			if (!IsRoot && !IsParkedAlternate)
 			{
 				IsActiveAlternate = true;
+			}
+
+			if (IsActiveAlternate)
+			{
 				node.IsParkedAlternate = true;
 			}
 		}
@@ -435,10 +410,14 @@ namespace MSS.Common
 			if (jobTreeItem.TransformType == TransformType.CanvasSizeUpdate)
 			{
 				result = AlternateDispSizes?.Remove(jobTreeItem) ?? false;
+				return result;
 			}
-			else
+
+			result = Children.Remove(jobTreeItem);
+
+			if (IsActiveAlternate && !Children.Any())
 			{
-				result = Children.Remove(jobTreeItem);
+				IsActiveAlternate = false;
 			}
 
 			return result;
@@ -533,6 +512,26 @@ namespace MSS.Common
 			return result;
 		}
 
+		public List<JobTreeItem> GetAncestors()
+		{
+			var result = new List<JobTreeItem>
+			{
+				this
+			};
+
+			var parentNode = ParentNode;
+
+			while(parentNode != null)
+			{
+				result.Add(parentNode);
+				parentNode = parentNode.ParentNode;
+			}
+
+			return result;
+		}
+
+
+
 		#endregion
 
 		#region Private Methods
@@ -574,26 +573,39 @@ namespace MSS.Common
 
 		#endregion
 
+		#region ToString and ICloneable Support
+
 		public override string ToString()
 		{
 			var sb = new StringBuilder()
-				.AppendLine($"TransformType: {TransformType}")
+				.Append($"TransformType: {TransformType}")
 				.Append($" Id: {Job.Id}");
 
 			if (IsHome)
 			{
 				_ = sb.Append(" [Home]");
 			}
-
-			if (IsRoot)
+			else if (IsRoot)
 			{
 				_ = sb.Append(" [Root]");
 			}
+			else
+			{
+				if (IsActiveAlternate)
+				{
+					_ = sb.Append(" [Alt]");
+				}
+				else if (IsParkedAlternate)
+				{
+					_ = sb.Append(" [Prk]");
 
-			_ = sb.Append($" ParentId: {Job.ParentJobId}")
-				.Append($" CanvasSize Disp Alternates: {AlternateDispSizes?.Count ?? 0}")
-				.Append($" IsAlt: {IsActiveAlternate}; IsParked: {IsParkedAlternate}")
-				.Append($"Children: {Children.Count}; Real Childern: {RealChildJobs.Count}");
+				}
+				_ = sb.Append($" ParentId: {Job.ParentJobId}");
+			}
+
+			_ = sb.Append($" CanvasSizeUpdates: {AlternateDispSizes?.Count ?? 0}")
+				.Append($" Children: {Children.Count};")
+				.Append($" Real Childern: {RealChildJobs.Count}");
 
 			return sb.ToString();
 		}
@@ -604,11 +616,13 @@ namespace MSS.Common
 		}
 
 		// TODO: JobTreeItem.Clone method is not complete.
-		JobTreeItem Clone()
+		public JobTreeItem Clone()
 		{
 			var result = new JobTreeItem(Job, ParentNode, IsIterationChange, IsColorMapChange);
 			return result;
 		}
+
+		#endregion
 
 		#region IComparable Support
 
