@@ -305,7 +305,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public void ProjectSaveAs(string name, string? description)
+		public bool ProjectSaveAs(string name, string? description, [MaybeNullWhen(true)] out string errorText)
 		{
 			var currentProject = CurrentProject;
 
@@ -314,15 +314,34 @@ namespace MSetExplorer
 				throw new InvalidOperationException("The project must be non-null.");
 			}
 
-			_ = ProjectAndMapSectionHelper.DeleteProject(name, _projectAdapter, _mapSectionAdapter);
+			if (_projectAdapter.ProjectExists(name, out var projectId))
+			{
+				if (!ProjectAndMapSectionHelper.DeleteProject(projectId, _projectAdapter, _mapSectionAdapter, out var numberOfMapSectionsDeleted))
+				{
+					errorText = $"Could not delete existing project having name: {name}";
+					return false;
+				}
+				else
+				{
+					Debug.WriteLine($"As new Project is being SavedAs, overwriting exiting project: {name}, {numberOfMapSectionsDeleted} Map Sections were deleted.");
+				}
+			}
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
 			var project = (Project)JobOwnerHelper.CreateCopy(currentProject, name, description, _projectAdapter, _mapSectionAdapter);
 
-			_ = JobOwnerHelper.Save(currentProject, _projectAdapter);
-
-			CurrentProject = project;
+			if (JobOwnerHelper.Save(currentProject, _projectAdapter))
+			{
+				CurrentProject = project;
+				errorText = null;
+				return true;
+			}
+			else
+			{
+				errorText = "Could not save the new project record.";
+				return false;
+			}
 		}
 
 		public void ProjectClose()

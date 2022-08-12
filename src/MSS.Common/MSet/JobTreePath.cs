@@ -2,6 +2,7 @@
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -10,20 +11,19 @@ namespace MSS.Common
 {
 	public class JobTreePath : IJobTreeBranch
 	{
+		private readonly JobTreeItem _rootItem;
+
 		#region Constructor
 
-		public JobTreePath(JobTreeBranch jobTreeBranch) : this(jobTreeBranch.Tree, jobTreeBranch.Terms)
+		public JobTreePath(JobTreeItem rootItem) : this (rootItem, rootItem.Children.Take(1))
 		{ }
 
-		public JobTreePath(JobTreeItem root) : this (root, root.Children.Take(1))
+		public JobTreePath(JobTreeItem rootItem, JobTreeItem term) : this(rootItem, new[] { term })
 		{ }
 
-		public JobTreePath(JobTreeItem root, JobTreeItem term) : this(root, new[] { term })
-		{ }
-
-		public JobTreePath(JobTreeItem root, IEnumerable<JobTreeItem> terms)
+		public JobTreePath(JobTreeItem rootItem, IEnumerable<JobTreeItem> terms)
 		{
-			Tree = root;
+			_rootItem = rootItem;
 			Terms = terms.Any() ? new List<JobTreeItem>(terms) : throw new ArgumentException("The list of terms cannot be empty when constructing a JobTreePath.", nameof(terms));
 		}
 
@@ -31,7 +31,7 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		public JobTreeItem Tree { get; }
+		public ObservableCollection<JobTreeItem> Children => _rootItem.Children;
 
 		public List<JobTreeItem> Terms { get; init; }
 
@@ -58,37 +58,37 @@ namespace MSS.Common
 
 		#region Public Methods
 
-		public JobTreeBranch GetRootBranch()
+		public JobTreeBranch GetRoot()
 		{
-			return new JobTreeBranch(Tree, new List<JobTreeItem>());
+			return new JobTreeBranch(_rootItem, new List<JobTreeItem>());
 		}
 
 		JobTreePath? IJobTreeBranch.GetCurrentPath()
 		{
-			return this;
+			return Clone();
 		}
 
 		public JobTreeBranch GetParentBranch()
 		{
-			var result = new JobTreeBranch(Tree, Terms.SkipLast(1));
+			var result = new JobTreeBranch(_rootItem, Terms.SkipLast(1));
 			return result;
 		}
 
 		public JobTreePath? GetParentPath()
 		{
-			var result = Terms.Count > 1 ? new JobTreePath(Tree, Terms.SkipLast(1)) : null;
+			var result = Terms.Count > 1 ? new JobTreePath(_rootItem, Terms.SkipLast(1)) : null;
 			return result;
 		}
 
 		public bool TryGetParentPath([MaybeNullWhen(false)] out JobTreePath parentPath)
 		{
-			parentPath = Terms.Count > 1 ? new JobTreePath(Tree, Terms.SkipLast(1)) : null;
+			parentPath = Terms.Count > 1 ? new JobTreePath(_rootItem, Terms.SkipLast(1)) : null;
 			return parentPath != null;
 		}
 
 		public JobTreePath GetParentPathUnsafe()
 		{
-			var result = new JobTreePath(Tree, Terms.SkipLast(1));
+			var result = new JobTreePath(_rootItem, Terms.SkipLast(1));
 			return result;
 		}
 
@@ -105,13 +105,18 @@ namespace MSS.Common
 
 		public bool TryGetGrandparentPath([MaybeNullWhen(false)] out JobTreePath grandparentPath)
 		{
-			grandparentPath = Terms.Count > 2 ? new JobTreePath(Tree, Terms.SkipLast(2)) : null;
+			grandparentPath = Terms.Count > 2 ? new JobTreePath(_rootItem, Terms.SkipLast(2)) : null;
 			return grandparentPath != null;
+		}
+
+		JobTreeItem IJobTreeBranch.GetItemOrRoot()
+		{
+			return Item;
 		}
 
 		public JobTreeItem GetParentItemOrRoot()
 		{
-			var result = GetParentPath()?.LastTerm ?? Tree;
+			var result = GetParentPath()?.LastTerm ?? _rootItem;
 			return result;
 		}
 
@@ -132,6 +137,13 @@ namespace MSS.Common
 			return result;
 		}
 
+		public JobTreePath CreateSiblingPath(JobTreeItem child)
+		{
+			var parentPath = GetParentPath();
+			var result = parentPath == null ? new JobTreePath(_rootItem, child) : parentPath.Combine(child);
+			return result;
+		}
+
 		#endregion
 
 		#region Overrides, Conversion Operators and ICloneable Support
@@ -149,7 +161,7 @@ namespace MSS.Common
 
 		public JobTreePath Clone()
 		{
-			return new JobTreePath(Tree, Terms);
+			return new JobTreePath(_rootItem, Terms);
 		}
 
 		#endregion

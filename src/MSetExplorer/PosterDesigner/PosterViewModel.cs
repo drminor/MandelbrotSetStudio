@@ -411,24 +411,43 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public void PosterSaveAs(string name, string? description)
+		public bool PosterSaveAs(string name, string? description, [MaybeNullWhen(true)] out string errorText)
 		{
 			var currentPoster = CurrentPoster;
 
 			if (currentPoster == null)
 			{
-				throw new InvalidOperationException("The poster must be non-null.");
+				throw new InvalidOperationException("The project must be non-null.");
 			}
 
-			_ = ProjectAndMapSectionHelper.DeletePoster(name, _projectAdapter, _mapSectionAdapter);
+			if (_projectAdapter.PosterExists(name, out var posterId))
+			{
+				if (!ProjectAndMapSectionHelper.DeletePoster(posterId, _projectAdapter, _mapSectionAdapter, out var numberOfMapSectionsDeleted))
+				{
+					errorText = $"Could not delete existing poster having name: {name}";
+					return false;
+				}
+				else
+				{
+					Debug.WriteLine($"As new Poster is being SavedAs, overwriting exiting poster: {name}, {numberOfMapSectionsDeleted} Map Sections were deleted.");
+				}
+			}
 
-			Debug.Assert(!CurrentJob.IsEmpty, "PosterSaveAs found the CurrentJob to be empty.");
+			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSaveAs found the CurrentJob to be empty.");
 
 			var poster = (Poster)JobOwnerHelper.CreateCopy(currentPoster, name, description, _projectAdapter, _mapSectionAdapter);
 
-			_ = JobOwnerHelper.Save(poster, _projectAdapter);
-
-			CurrentPoster = poster;
+			if (JobOwnerHelper.Save(currentPoster, _projectAdapter))
+			{
+				CurrentPoster = poster;
+				errorText = null;
+				return true;
+			}
+			else
+			{
+				errorText = "Could not save the new poster record.";
+				return false;
+			}
 		}
 
 		public void Close()

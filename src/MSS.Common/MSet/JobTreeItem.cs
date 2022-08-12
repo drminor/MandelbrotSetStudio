@@ -13,7 +13,7 @@ using System.Text;
 
 namespace MSS.Common
 {
-	public class JobTreeItem : INotifyPropertyChanged, IEqualityComparer<JobTreeItem>, IEquatable<JobTreeItem>, IComparable<JobTreeItem>
+	public class JobTreeItem : INotifyPropertyChanged, IEqualityComparer<JobTreeItem>, IEquatable<JobTreeItem>, IComparable<JobTreeItem>, ICloneable
 	{
 		private bool _isActiveAlternateBranchHead;
 		private bool _isParkedAlternateBranchHead;
@@ -43,10 +43,10 @@ namespace MSS.Common
 
 		#region Static Methods
 
-		public static JobTreeBranch CreateRoot()
+		public static IJobTreeBranch CreateRoot()
 		{
-			var result = new JobTreeBranch(new JobTreeItem());
-			return result;
+			var rootBranch = new JobTreeBranch(new JobTreeItem());
+			return rootBranch;
 		}
 
 		public static IJobTreeBranch CreateRoot(Job homeJob, out JobTreePath currentPath)
@@ -62,21 +62,52 @@ namespace MSS.Common
 				Debug.WriteLine($"WARNING: The job: {homeJob.Id} used to create the JobTree(path) has TransformType of {homeJob.TransformType}. Expecting the TransformType to be {nameof(TransformType.Home)}.");
 			}
 
-			var rootItem = new JobTreeItem();
-			var homeItem = _ = rootItem.AddJob(homeJob);
-			rootItem.RealChildJobs.Add(homeJob.Id, homeJob);
-			currentPath = new JobTreePath(rootItem, homeItem);
+			// This one ensures that the root's current path is null.
+			var tree = new JobTreeItem();
+			var homeItem = tree.AddJob(homeJob);
+			currentPath = new JobTreePath(tree, homeItem);
+			var root = currentPath.GetRoot();
 
-			return currentPath;
+			// This one ensures that the root's current path is null, but "reaches into" the tree to get the home path.
+			//var tree = new JobTreeItem(homeJob);
+			//var homeItem = tree.Children[0];
+			//currentPath = new JobTreePath(tree, homeItem);
+			//var root = currentPath.GetRoot();
+
+			// This one and the following two, return a root that points to the homeJob, instead of to the well, root.
+			//var tree = new JobTreeItem(homeJob);
+			//var homeItem = tree.Children[0];
+			//var root = new JobTreeBranch(tree, homeItem);
+			//currentPath = root.GetCurrentPath();
+
+			//var tree = new JobTreeItem();
+			//var homeItem = tree.AddJob(homeJob);
+			//var root = new JobTreeBranch(tree, homeItem);
+			//currentPath = root.GetCurrentPath();
+
+			//var tree = new JobTreeItem();
+			//var homeItem = tree.AddJob(homeJob);
+			//currentPath = new JobTreePath(tree, homeItem);
+			//var root = new JobTreeBranch(currentPath);
+
+			return root;
 		}
 
 		#endregion
 
 		#region Constructor
 
-		private JobTreeItem() : this(new Job(), null, false, false)
+		private JobTreeItem() : this(null)
 		{
 			IsRoot = true;
+		}
+
+		private JobTreeItem(Job? job) : this(new Job(), null, false, false)
+		{
+			if (job != null)
+			{
+				AddJob(job);
+			}
 		}
 
 		private JobTreeItem(Job job, JobTreeItem? parentNode, bool isIterationChange, bool isColorMapChange)
@@ -565,6 +596,18 @@ namespace MSS.Common
 				.Append($"Children: {Children.Count}; Real Childern: {RealChildJobs.Count}");
 
 			return sb.ToString();
+		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		// TODO: JobTreeItem.Clone method is not complete.
+		JobTreeItem Clone()
+		{
+			var result = new JobTreeItem(Job, ParentNode, IsIterationChange, IsColorMapChange);
+			return result;
 		}
 
 		#region IComparable Support

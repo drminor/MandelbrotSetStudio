@@ -20,6 +20,8 @@ namespace MSetExplorer
 	{
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly IProjectAdapter _projectAdapter;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
+
 		private bool _useEscapeVelocities;
 		private IPosterInfo? _selectedPoster;
 
@@ -30,10 +32,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterOpenSaveViewModel(IMapLoaderManager mapLoaderManager, IProjectAdapter projectAdapter, string? initialName, bool useEscapeVelocitites, DialogType dialogType)
+		public PosterOpenSaveViewModel(IMapLoaderManager mapLoaderManager, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, string? initialName, bool useEscapeVelocitites, DialogType dialogType)
 		{
 			_mapLoaderManager = mapLoaderManager;
 			_projectAdapter = projectAdapter;
+			_mapSectionAdapter = mapSectionAdapter;
+
 			_useEscapeVelocities = useEscapeVelocitites;
 			DialogType = dialogType;
 
@@ -129,19 +133,33 @@ namespace MSetExplorer
 
 		public bool IsNameTaken(string? name)
 		{
-			var result = name != null && _projectAdapter.PosterExists(name);
+			var result = name != null && _projectAdapter.PosterExists(name, out _);
 			return result;
 		}
 
-		public void DeleteSelected()
+		public bool DeleteSelected(out long numberOfMapSectionsDeleted)
 		{
-			var poster = SelectedPoster;
+			numberOfMapSectionsDeleted = 0;
 
-			if (poster != null)
+			var posterInfo = SelectedPoster;
+
+			if (posterInfo == null)
 			{
-				_projectAdapter.DeletePoster(poster.PosterId);
-				_ = PosterInfos.Remove(poster);
+				return false;
 			}
+
+			bool result;
+			if (ProjectAndMapSectionHelper.DeletePoster(posterInfo.PosterId, _projectAdapter, _mapSectionAdapter, out numberOfMapSectionsDeleted))
+			{
+				_ = PosterInfos.Remove(posterInfo);
+				result = true;
+			}
+			else
+			{
+				result = false;
+			}
+
+			return result;
 		}
 
 		public byte[]? GetPreviewImageData(SizeInt imageSize)

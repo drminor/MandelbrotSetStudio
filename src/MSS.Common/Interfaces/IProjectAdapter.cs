@@ -16,7 +16,8 @@ namespace MSS.Common
 		List<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
 		List<ObjectId> GetAllJobIdsForProject(ObjectId projectId);
 
-		bool ProjectExists(string name);
+		bool ProjectExists(string name, [MaybeNullWhen(false)] out ObjectId projectId);
+		bool ProjectExists(ObjectId projectId);
 		//bool TryGetProject(ObjectId projectId, [MaybeNullWhen(false)] out Project project);
 		bool TryGetProject(string name, [MaybeNullWhen(false)] out Project project);
 
@@ -32,8 +33,9 @@ namespace MSS.Common
 		List<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
 		List<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
 
+		bool PosterExists(string name, [MaybeNullWhen(false)] out ObjectId posterId);
+		bool PosterExists(ObjectId posterId);
 
-		bool PosterExists(string name);
 		bool TryGetPoster(ObjectId posterId, [MaybeNullWhen(false)] out Poster poster);
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
 
@@ -53,6 +55,7 @@ namespace MSS.Common
 		void InsertColorBandSet(ColorBandSet colorBandSet);
 		ColorBandSet? GetColorBandSet(string id);
 		IEnumerable<ColorBandSet> GetColorBandSetsForProject(ObjectId projectId);
+		//long DeleteColorBandSetsForProject(ObjectId projectId);
 		bool DeleteColorBandSet(ObjectId colorBandSetId);
 
 		void UpdateColorBandSetDescription(ObjectId colorBandSetId, string? description);

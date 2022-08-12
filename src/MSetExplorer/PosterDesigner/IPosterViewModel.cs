@@ -43,7 +43,8 @@ namespace MSetExplorer
 		void Load(Poster poster, MapAreaInfo? newMapAreaInfo);
 		
 		bool PosterSave();
-		void PosterSaveAs(string name, string? description);
+		bool PosterSaveAs(string name, string? description, [MaybeNullWhen(true)] out string errorText);
+
 		void Close();
 	}
 }

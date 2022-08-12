@@ -61,6 +61,7 @@ namespace MSS.Common
 			_displayZoom = displayZoom;
 
 			_jobTree = new JobTree(jobs, checkHomeJob: true);
+			_jobTree.UseRealRelationShipsToUpdateSelected = false;
 
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			//_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);

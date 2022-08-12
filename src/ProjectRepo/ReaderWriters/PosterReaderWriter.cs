@@ -62,12 +62,13 @@ namespace ProjectRepo
 			return posterRecord != null;
 		}
 
-		public bool PosterExists(string name)
+		public bool PosterExists(string name, [MaybeNullWhen(false)] out ObjectId posterId)
 		{
 			var filter = Builders<PosterRecord>.Filter.Eq("Name", name);
-			var result = Collection.Find(filter).Any();
+			var result = Collection.Find(filter).FirstOrDefault();
+			posterId = result?.Id ?? ObjectId.Empty;
 
-			return result;
+			return result != null;
 		}
 
 		public ObjectId Insert(PosterRecord posterRecord)

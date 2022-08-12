@@ -148,11 +148,12 @@ namespace MSetRepo
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 
-			if (!projectReaderWriter.ProjectExists(name))
+			if (!projectReaderWriter.ProjectExists(name, out var projectId))
 			{
 				var projectRecord = new ProjectRecord(name, description, jobs.First().Id, DateTime.UtcNow);
 
-				var projectId = projectReaderWriter.Insert(projectRecord);
+				projectId = projectReaderWriter.Insert(projectRecord);
+
 				projectRecord = projectReaderWriter.Get(projectId);
 
 				foreach (var job in jobs)
@@ -171,7 +172,7 @@ namespace MSetRepo
 			}
 			else
 			{
-				throw new InvalidOperationException($"Cannot create project with name: {name}, a project with that name already exists.");
+				throw new InvalidOperationException($"Cannot create project with name: {name}, a project already exists with that name.");
 			}
 		}
 
@@ -221,25 +222,26 @@ namespace MSetRepo
 			}
 
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-
-			var cbsIds = colorBandSetReaderWriter.GetColorBandSetIdsForProject(projectId);
-
-			foreach (var colorBandSetId in cbsIds)
-			{
-				_ = colorBandSetReaderWriter.Delete(colorBandSetId);
-			}
-
+			_ = colorBandSetReaderWriter.DeleteColorBandSetsForProject(projectId);
 			var numberDeleted = projectReaderWriter.Delete(projectId);
 
 			return numberDeleted == 1;
 		}
 
-		public bool ProjectExists(string name)
+		public bool ProjectExists(string name, [MaybeNullWhen(false)] out ObjectId projectId)
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			var result = projectReaderWriter.ProjectExists(name);
+			var result = projectReaderWriter.ProjectExists(name, out projectId);
 
 			return result;
+		}
+
+		public bool ProjectExists(ObjectId projectId)
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var result = projectReaderWriter.Get(projectId);
+
+			return result != null;
 		}
 
 		#endregion
@@ -730,7 +732,7 @@ namespace MSetRepo
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 
-			if (!posterReaderWriter.PosterExists(name))
+			if (!posterReaderWriter.PosterExists(name, out var posterId))
 			{
 				var posterRecord = new PosterRecord(name, description, sourceJobId, jobs.First().Id, 
 					DisplayPosition: new VectorIntRecord(0,0), 
@@ -739,7 +741,7 @@ namespace MSetRepo
 					LastSavedUtc: DateTime.UtcNow,
 					LastAccessedUtc: DateTime.UtcNow);
 
-				var posterId = posterReaderWriter.Insert(posterRecord);
+				posterId = posterReaderWriter.Insert(posterRecord);
 
 				foreach (var job in jobs)
 				{
@@ -757,7 +759,7 @@ namespace MSetRepo
 			}
 			else
 			{
-				throw new InvalidOperationException($"Cannot create project with name: {name}, a project with that name already exists.");
+				throw new InvalidOperationException($"Cannot create a poster with name: {name}, a poster: {posterId} with that name already exists.");
 			}
 		}
 
@@ -782,7 +784,7 @@ namespace MSetRepo
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 
-			if (!posterReaderWriter.PosterExists(poster.Name))
+			if (!posterReaderWriter.PosterExists(poster.Name, out var posterId))
 			{
 				var posterRecord = _mSetRecordMapper.MapTo(poster);
 				var posterRecordId = posterReaderWriter.Insert(posterRecord);
@@ -791,7 +793,7 @@ namespace MSetRepo
 			}
 			else
 			{
-				throw new InvalidOperationException($"Cannot create poster with name: {poster.Name}, a poster with that name already exists.");
+				throw new InvalidOperationException($"Cannot create poster with name: {poster.Name}, a poster: {posterId} with that name already exists.");
 			}
 		}
 
@@ -834,25 +836,26 @@ namespace MSetRepo
 			}
 
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-
-			var cbsIds = colorBandSetReaderWriter.GetColorBandSetIdsForProject(posterId);
-
-			foreach (var colorBandSetId in cbsIds)
-			{
-				_ = colorBandSetReaderWriter.Delete(colorBandSetId);
-			}
-
+			_ = colorBandSetReaderWriter.DeleteColorBandSetsForProject(posterId);
 			var numberDeleted = posterReaderWriter.Delete(posterId);
 
 			return numberDeleted == 1;
 		}
 
-		public bool PosterExists(string name)
+		public bool PosterExists(string name, [MaybeNullWhen(false)] out ObjectId posterId)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
-			var result = posterReaderWriter.PosterExists(name);
+			var result = posterReaderWriter.PosterExists(name, out posterId);
 
 			return result;
+		}
+
+		public bool PosterExists(ObjectId posterId)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			var result = posterReaderWriter.Get(posterId);
+
+			return result != null;
 		}
 
 		#endregion

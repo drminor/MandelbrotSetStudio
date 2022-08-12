@@ -44,7 +44,7 @@ namespace MSetExplorer
 		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
 		bool ProjectOpen(string name);
 		bool ProjectSave();
-		void ProjectSaveAs(string name, string? description);
+		bool ProjectSaveAs(string name, string? description, [MaybeNullWhen(true)] out string errorText);
 		void ProjectClose();
 
 		long DeleteMapSectionsForUnsavedJobs();

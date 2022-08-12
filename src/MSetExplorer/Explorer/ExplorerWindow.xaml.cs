@@ -796,8 +796,15 @@ namespace MSetExplorer
 					Debug.WriteLine($"Saving project with name: {selectedName}.");
 
 					// TODO: Add error handling around ProjectSaveAs.
-					_vm.ProjectViewModel.ProjectSaveAs(selectedName, description);
-					result = true;
+					if (!_vm.ProjectViewModel.ProjectSaveAs(selectedName, description, out var errorText))
+					{
+						_ = MessageBox.Show($"Could not save the project using the new name: {selectedName}. The error is {errorText}");
+						result = false;
+					}
+					else
+					{
+						result = true;
+					}
 				}
 				else
 				{

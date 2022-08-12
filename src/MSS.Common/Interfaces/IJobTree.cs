@@ -17,6 +17,7 @@ namespace MSS.Common
 		bool AnyJobIsDirty { get; }
 
 		JobTreeItem? SelectedItem { get; set; }
+		bool UseRealRelationShipsToUpdateSelected { get; set; }
 
 		JobTreePath? GetCurrentPath();
 		JobTreePath? GetPath(ObjectId jobId);

@@ -104,12 +104,12 @@ namespace ProjectRepo
 		//	_ = Collection.UpdateOne(filter, updateDefinition);
 		//}
 
-		public long? Delete(ObjectId colorBandSetId)
+		public long Delete(ObjectId colorBandSetId)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
 			var deleteResult = Collection.DeleteOne(filter);
 
-			return GetReturnCount(deleteResult);
+			return GetReturnCount(deleteResult) ?? 0;
 		}
 
 		public IEnumerable<ObjectId> GetColorBandSetIdsForProject(ObjectId projectId)
@@ -129,6 +129,15 @@ namespace ProjectRepo
 
 			return colorBandSets;
 		}
+
+		public long DeleteColorBandSetsForProject(ObjectId projectId)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+			var deleteResult = Collection.DeleteMany(filter);
+
+			return GetReturnCount(deleteResult) ?? 0;
+		}
+
 
 	}
 }

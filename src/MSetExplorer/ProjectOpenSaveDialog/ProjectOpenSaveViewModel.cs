@@ -2,6 +2,7 @@
 using MSetRepo;
 using MSS.Common;
 using MSS.Types.MSet;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -110,19 +111,33 @@ namespace MSetExplorer
 
 		public bool IsNameTaken(string? name)
 		{
-			var result = name != null && _projectAdapter.ProjectExists(name);
+			var result = name != null && _projectAdapter.ProjectExists(name, out _);
 			return result;
 		}
 
-		public void DeleteSelected()
+		public bool DeleteSelected(out long numberOfMapSectionsDeleted)
 		{
+			numberOfMapSectionsDeleted = 0;
+
 			var projectInfo = SelectedProject;
 
-			if (projectInfo != null)
+			if (projectInfo == null)
 			{
-				ProjectAndMapSectionHelper.DeleteProject(projectInfo.Name, _projectAdapter, _mapSectionAdapter);
-				_ = ProjectInfos.Remove(projectInfo);
+				return false;
 			}
+
+			bool result;
+			if (ProjectAndMapSectionHelper.DeleteProject(projectInfo.ProjectId, _projectAdapter, _mapSectionAdapter, out numberOfMapSectionsDeleted))
+			{
+				_ = ProjectInfos.Remove(projectInfo);
+				result = true;
+			}
+			else
+			{
+				result = false;
+			}
+
+			return result;
 		}
 
 		#endregion

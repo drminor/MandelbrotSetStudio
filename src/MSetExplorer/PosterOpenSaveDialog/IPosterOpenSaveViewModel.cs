@@ -17,7 +17,7 @@ namespace MSetExplorer
 		bool UserIsSettingTheName { get; set; }
 
 		bool IsNameTaken(string? name);
-		void DeleteSelected();
+		bool DeleteSelected(out long numberOfMapSectionsDeleted);
 
 		byte[]? GetPreviewImageData(SizeInt imageSize);
 	}

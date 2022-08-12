@@ -668,9 +668,18 @@ namespace MSetExplorer
 				if (selectedName != null)
 				{
 					Debug.WriteLine($"Saving project with name: {selectedName}.");
-					// TODO: Handle cases where ProjectSaveAs fails.
-					_vm.PosterViewModel.PosterSaveAs(selectedName, description);
-					result = true;
+
+					if (!_vm.PosterViewModel.PosterSaveAs(selectedName, description, out var errorText))
+					{
+						_ = MessageBox.Show($"Could not save the poster using the new name: {selectedName}. The error is {errorText}");
+						result = false;
+					}
+					else
+					{
+						result = true;
+					}
+
+
 				}
 				else
 				{

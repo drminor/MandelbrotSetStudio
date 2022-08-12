@@ -60,12 +60,13 @@ namespace ProjectRepo
 			return projectRecord != null;
 		}
 
-		public bool ProjectExists(string name)
+		public bool ProjectExists(string name, [MaybeNullWhen(false)] out ObjectId projectId)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("Name", name);
-			var result = Collection.Find(filter).Any();
+			var result = Collection.Find(filter).FirstOrDefault();
+			projectId = result?.Id ?? ObjectId.Empty;
 
-			return result;
+			return result != null;
 		}
 
 		public async Task<ProjectRecord> GetAsync(string name)

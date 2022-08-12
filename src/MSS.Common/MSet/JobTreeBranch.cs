@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -7,17 +8,22 @@ namespace MSS.Common
 {
 	public class JobTreeBranch : IJobTreeBranch
 	{
+		private readonly JobTreeItem _rootItem;
+
 		#region Constructor
 
-		public JobTreeBranch(JobTreeItem root) : this(root, root.Children.Take(1))
+		public JobTreeBranch(JobTreePath jobTreePath) : this(jobTreePath.GetRoot()._rootItem, new List<JobTreeItem>(jobTreePath.Terms))
 		{ }
 
-		public JobTreeBranch(JobTreeItem root, JobTreeItem term) : this(root, new[] { term })
+		public JobTreeBranch(JobTreeItem rootItem) : this(rootItem, rootItem.Children.Take(1))
 		{ }
 
-		public JobTreeBranch(JobTreeItem root, IEnumerable<JobTreeItem> terms)
+		public JobTreeBranch(JobTreeItem rootItem, JobTreeItem term) : this(rootItem, new[] { term })
+		{ }
+
+		public JobTreeBranch(JobTreeItem rootItem, IEnumerable<JobTreeItem> terms)
 		{
-			Tree = root;
+			_rootItem = rootItem;
 			Terms = new List<JobTreeItem>(terms);
 		}
 
@@ -25,7 +31,7 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		public JobTreeItem Tree { get; }
+		public ObservableCollection<JobTreeItem> Children => _rootItem.Children;
 
 		public List<JobTreeItem> Terms { get; init; }
 
@@ -41,26 +47,26 @@ namespace MSS.Common
 
 		#region Public Methods
 
-		public JobTreeBranch GetRootBranch()
+		public JobTreeBranch GetRoot()
 		{
-			return new JobTreeBranch(Tree, new List<JobTreeItem>());
+			return new JobTreeBranch(_rootItem, new List<JobTreeItem>());
 		}
 
 		public JobTreePath? GetCurrentPath()
 		{
-			var result = IsEmpty ? null : new JobTreePath(this);
+			var result = IsEmpty ? null : new JobTreePath(_rootItem, Terms);
 			return result;
 		}
 
 		public JobTreePath? GetParentPath()
 		{
-			var result = Terms.Count > 1 ? new JobTreePath(Tree, Terms.SkipLast(1)) : null;
+			var result = Terms.Count > 1 ? new JobTreePath(_rootItem, Terms.SkipLast(1)) : null;
 			return result;
 		}
 
 		public bool TryGetParentPath([MaybeNullWhen(false)] out JobTreePath parentPath)
 		{
-			parentPath = Terms.Count > 1 ? new JobTreePath(Tree, Terms.SkipLast(1)) : null;
+			parentPath = Terms.Count > 1 ? new JobTreePath(_rootItem, Terms.SkipLast(1)) : null;
 			return parentPath != null;
 		}
 
@@ -77,19 +83,19 @@ namespace MSS.Common
 
 		public bool TryGetGrandparentPath([MaybeNullWhen(false)] out JobTreePath grandparentPath)
 		{
-			grandparentPath = Terms.Count > 2 ? new JobTreePath(Tree, Terms.SkipLast(2)) : null;
+			grandparentPath = Terms.Count > 2 ? new JobTreePath(_rootItem, Terms.SkipLast(2)) : null;
 			return grandparentPath != null;
 		}
 
 		public JobTreeItem GetItemOrRoot()
 		{
-			var result = GetCurrentPath()?.Item ?? Tree;
+			var result = GetCurrentPath()?.Item ?? _rootItem;
 			return result;
 		}
 
 		public JobTreeItem GetParentItemOrRoot()
 		{
-			var result = GetParentPath()?.LastTerm ?? Tree;
+			var result = GetParentPath()?.Item ?? _rootItem;
 			return result;
 		}
 
@@ -105,8 +111,17 @@ namespace MSS.Common
 
 		public JobTreePath Combine(IEnumerable<JobTreeItem> jobTreeItems)
 		{
-			var result = Clone();
-			result.Terms.AddRange(jobTreeItems);
+			var newTerms = new List<JobTreeItem>(Terms);
+			newTerms.AddRange(jobTreeItems);
+
+			var result = new JobTreePath(_rootItem, newTerms);
+			return result;
+		}
+
+		public JobTreePath CreateSiblingPath(JobTreeItem child)
+		{
+			var parentPath = GetParentPath();
+			var result = parentPath == null ? new JobTreePath(_rootItem, child) : parentPath.Combine(child);
 			return result;
 		}
 
@@ -114,9 +129,7 @@ namespace MSS.Common
 
 		#region Overrides, Conversion Operators and ICloneable Support
 
-		//public static implicit operator List<JobTreeItem>?(JobTreePath? jobTreePath) => jobTreePath == null ? null : jobTreePath.Terms;
-
-		//public static explicit operator JobTreePath(List<JobTreeItem> terms) => new JobTreePath(terms);
+		public static implicit operator JobTreePath(JobTreeBranch b) => new JobTreeBranch(b);
 
 		public override string ToString() => string.Join('\\', Terms);
 
@@ -125,12 +138,11 @@ namespace MSS.Common
 			return Clone();
 		}
 
-		public JobTreePath Clone()
+		public JobTreeBranch Clone()
 		{
-			return new JobTreePath(Tree, Terms);
+			return new JobTreeBranch(_rootItem, Terms);
 		}
 
 		#endregion
-
 	}
 }

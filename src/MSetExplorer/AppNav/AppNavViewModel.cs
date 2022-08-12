@@ -103,7 +103,7 @@ namespace MSetExplorer
 
 		private IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
 		{
-			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, initalName, useEscapeVelocities, dialogType);
+			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, _mapSectionAdapter, initalName, useEscapeVelocities, dialogType);
 		}
 
 		private CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
