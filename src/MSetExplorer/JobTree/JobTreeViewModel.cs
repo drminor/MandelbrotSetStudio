@@ -181,7 +181,7 @@ namespace MSetExplorer
 			{
 				_ = sb.AppendLine("\nThis job is not on the Active Branch:");
 				_ = sb.AppendLine("List of all Branches:");
-				var activeAltParentPath = path.GetParentPathUnsafe();
+				var activeAltParentPath = path.GetParentPath()!;
 				DisplayAlternates(jobTreeItem, sb, activeAltParentPath.Item);
 			}
 			else

@@ -186,7 +186,7 @@ namespace MSS.Common
 
 			if (node.TransformType == TransformType.CanvasSizeUpdate)
 			{
-				var parentPath = path.GetParentPathUnsafe();
+				var parentPath = path.GetParentPath()!;
 				newPath = MakeBranchActive(parentPath).Combine(node);
 			}
 			else
@@ -225,7 +225,7 @@ namespace MSS.Common
 
 			if (path.TransformType == TransformType.CanvasSizeUpdate)
 			{
-				var csuParentItem = path.GetParentPathUnsafe().Item;
+				var csuParentItem = path.GetParentPath()!.Item;
 				result = csuParentItem.Remove(jobTreeItem);
 				IsDirty = true;
 
@@ -363,7 +363,7 @@ namespace MSS.Common
 					{
 						// The parentPath points to the "original job" for which the CanvasSizeUpdate job was created.
 						// We need to get its parentPath to continue.
-						parentNode = parentPath.GetParentPathUnsafe().Item;
+						parentNode = parentPath.GetParentPath()!.Item;
 					}
 					else
 					{
@@ -579,7 +579,7 @@ namespace MSS.Common
 			else if (preceedingPath.IsParkedAlternate)
 			{
 				// The parent of the preceeding node is the Active ALT
-				var parkedParentPath = preceedingPath.GetParentPathUnsafe();
+				var parkedParentPath = preceedingPath.GetParentPath()!;
 				activeAltPath = parkedParentPath;
 			}
 			else
@@ -613,7 +613,7 @@ namespace MSS.Common
 				}
 				else
 				{
-					newPath = AddInLine(job, preceedingPath.GetParentPathUnsafe());
+					newPath = AddInLine(job, preceedingPath.GetParentPath()!);
 				}
 			}
 			else
@@ -817,7 +817,7 @@ namespace MSS.Common
 
 			SwitchAltBranches(parkedAltNode, activeAltNode);
 
-			var parentPath = path.GetParentPathUnsafe();
+			var parentPath = path.GetParentPath()!;
 			var grandparentItem = parentPath.GetParentItemOrRoot();
 			var grandparentBranch = parentPath.GetParentBranch();
 
@@ -1355,19 +1355,17 @@ namespace MSS.Common
 				return null;
 			}
 
-			var newBasePath = path.Clone();
-
 			var parentJobTreeItem = path.GetParentItemOrRoot();
 			var siblings = parentJobTreeItem.Children;
 			var currentPosition = siblings.IndexOf(currentItem);
 			var previousJobTreeItem = GetPreviousJobTreeItem(siblings, currentPosition, skipPanJobs);
 
-			while (previousJobTreeItem == null && newBasePath.Count > 1)
+			while (previousJobTreeItem == null && path.Count > 1)
 			{
-				newBasePath = newBasePath.GetParentPathUnsafe();
-				currentItem = newBasePath.Item;
+				path = path.GetParentPath()!;
+				currentItem = path.Item;
 
-				var grandparentNode = newBasePath.GetParentItemOrRoot();
+				var grandparentNode = path.GetParentItemOrRoot();
 				var ancestors = grandparentNode.Children;
 				currentPosition = ancestors.IndexOf(currentItem);
 				previousJobTreeItem = GetPreviousJobTreeItem(ancestors, currentPosition + 1, skipPanJobs);
@@ -1375,7 +1373,7 @@ namespace MSS.Common
 
 			if (previousJobTreeItem != null)
 			{
-				var result = newBasePath.Combine(previousJobTreeItem);
+				var result = path.Combine(previousJobTreeItem);
 
 				return result;
 			}
@@ -1451,7 +1449,7 @@ namespace MSS.Common
 				p.IsExpanded = true;
 			}
 
-			var lastTerm = (path.TransformType == TransformType.CanvasSizeUpdate ? path.GetParentPathUnsafe() : path).Item;
+			var lastTerm = (path.TransformType == TransformType.CanvasSizeUpdate ? path.GetParentPath()! : path).Item;
 			lastTerm.IsCurrent = true;
 		}
 

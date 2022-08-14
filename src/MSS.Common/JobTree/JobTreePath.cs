@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace MSS.Common
 {
-	public class JobTreePath : IJobTreeBranch
+	public class JobTreePath : IJobTreePath
 	{
 		private readonly JobTreeItem _rootItem;
 
@@ -40,7 +40,7 @@ namespace MSS.Common
 		public JobTreeItem Item => Terms[^1];
 
 		public JobTreeItem? LastTerm => Item;
-		public JobTreeItem? ParentTerm => Terms.Count > 1 ?  Terms[^2] : null;
+		public JobTreeItem? ParentTerm => Terms.Count > 1 ? Terms[^2] : null;
 		public JobTreeItem? GrandparentTerm => Terms.Count > 2 ? Terms[^3] : null;
 
 		public Job Job => Terms[^1].Job;
@@ -125,7 +125,7 @@ namespace MSS.Common
 
 		public JobTreePath Combine(JobTreeItem jobTreeItem)
 		{
-			return Combine( new[] { jobTreeItem });
+			return Combine(new[] { jobTreeItem });
 		}
 
 		public JobTreePath Combine(IEnumerable<JobTreeItem> jobTreeItems)

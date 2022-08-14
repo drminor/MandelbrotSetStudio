@@ -79,7 +79,7 @@ namespace MSS.Common
 			return parentPath != null;
 		}
 
-		JobTreeItem? GetParentItem()
+		public JobTreeItem? GetParentItem()
 		{
 			return GetParentPath()?.Item;
 		}

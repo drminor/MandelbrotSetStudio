@@ -19,13 +19,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="JobTree\JobTreeOld.cs" />
+    <Compile Remove="JobTree\JobTreeOldNotUsed.cs" />
+    <Compile Remove="JobTree\SJobTreeItemNotUsed.cs" />
     <Compile Remove="RMap\JobHelperNotUsed.cs" />
     <Compile Remove="RMap\RMapHelperOldMethods.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="JobTree\JobTreeOld.cs" />
+    <None Include="JobTree\JobTreeOldNotUsed.cs" />
+    <None Include="JobTree\SJobTreeItemNotUsed.cs" />
     <None Include="RMap\RMapHelperOldMethods.cs" />
   </ItemGroup>
 

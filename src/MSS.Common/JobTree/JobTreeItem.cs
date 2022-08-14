@@ -13,7 +13,7 @@ using System.Text;
 
 namespace MSS.Common
 {
-	public class JobTreeItem : INotifyPropertyChanged, IEqualityComparer<JobTreeItem>, IEquatable<JobTreeItem>, IComparable<JobTreeItem>, ICloneable, IJobTreeItem
+	public class JobTreeItem : IJobTreeItem, INotifyPropertyChanged, IEqualityComparer<JobTreeItem>, IEquatable<JobTreeItem>, IComparable<JobTreeItem>, ICloneable
 	{
 		private bool _isActiveAlternate;
 		private bool _isParkedAlternate;

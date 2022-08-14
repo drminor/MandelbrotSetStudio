@@ -8,8 +8,6 @@ namespace MSS.Common
 {
 	public interface IJobTreeBranch : ICloneable
 	{
-		//JobTreeItem RootItem { get; }
-
 		Job? Job { get; }
 		ObservableCollection<JobTreeItem> Children { get; }
 		List<JobTreeItem>? AlternateDispSizes { get; }
@@ -24,6 +22,8 @@ namespace MSS.Common
 		JobTreeItem? GrandparentTerm { get; }
 
 		JobTreePath? GetCurrentPath();
+
+		JobTreeItem? GetParentItem();
 		JobTreePath? GetParentPath();
 		JobTreeBranch GetParentBranch();
 
@@ -38,9 +38,5 @@ namespace MSS.Common
 		JobTreePath Combine(JobTreeItem jobTreeItem);
 		JobTreePath Combine(JobTreePath jobTreePath);
 		JobTreePath Combine(IEnumerable<JobTreeItem> jobTreeItems);
-
-		//JobTreeItem GetItemOrRoot();
-		//bool TryGetParentBranch([MaybeNullWhen(false)] out JobTreeBranch parentPath);
-
 	}
 }
