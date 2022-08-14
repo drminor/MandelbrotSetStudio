@@ -11,7 +11,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace MSS.Common
+namespace MSS.Common.MSet
 {
 	public class Project : IDisposable, INotifyPropertyChanged, IJobOwner
 	{

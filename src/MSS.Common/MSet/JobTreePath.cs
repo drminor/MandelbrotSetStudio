@@ -28,7 +28,8 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		public ObservableCollection<JobTreeItem> Children => _rootItem.Children;
+		public ObservableCollection<JobTreeItem> Children => Terms[^1].Children;
+		public List<JobTreeItem>? AlternateDispSizes => Terms[^1].AlternateDispSizes;
 
 		public List<JobTreeItem> Terms { get; init; }
 

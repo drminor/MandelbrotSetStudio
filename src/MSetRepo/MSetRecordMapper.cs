@@ -2,6 +2,7 @@
 using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;

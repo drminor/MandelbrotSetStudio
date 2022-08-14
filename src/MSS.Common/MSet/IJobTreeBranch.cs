@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
@@ -8,7 +10,10 @@ namespace MSS.Common
 	public interface IJobTreeBranch : ICloneable
 	{
 		//JobTreeItem RootItem { get; }
+
+		Job? Job { get; }
 		ObservableCollection<JobTreeItem> Children { get; }
+		List<JobTreeItem>? AlternateDispSizes { get; }
 
 		int Count { get; }
 		bool IsEmpty { get; }
@@ -21,6 +26,7 @@ namespace MSS.Common
 
 		JobTreePath? GetCurrentPath();
 		JobTreePath? GetParentPath();
+		JobTreeBranch GetParentBranch();
 
 		JobTreeBranch GetRoot();
 		JobTreeItem GetItemOrRoot();

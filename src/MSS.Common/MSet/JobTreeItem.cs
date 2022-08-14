@@ -13,7 +13,7 @@ using System.Text;
 
 namespace MSS.Common
 {
-	public class JobTreeItem : INotifyPropertyChanged, IEqualityComparer<JobTreeItem>, IEquatable<JobTreeItem>, IComparable<JobTreeItem>, ICloneable
+	public class JobTreeItem : INotifyPropertyChanged, IEqualityComparer<JobTreeItem>, IEquatable<JobTreeItem>, IComparable<JobTreeItem>, ICloneable, IJobTreeItem
 	{
 		private bool _isActiveAlternate;
 		private bool _isParkedAlternate;
@@ -64,6 +64,7 @@ namespace MSS.Common
 
 			var tree = new JobTreeItem();
 			var homeItem = tree.AddJob(homeJob);
+			tree.RealChildJobs.Add(homeJob.Id, homeJob);
 			currentPath = new JobTreePath(tree, homeItem);
 			var root = currentPath.GetRoot();
 
@@ -152,6 +153,18 @@ namespace MSS.Common
 				if (value != _isActiveAlternate)
 				{
 					_isActiveAlternate = value;
+					Job.IsAlternatePathHead = value;
+					if (ParentNode != null)
+					{
+						if (ParentNode.RealChildJobs.TryGetValue(Job.Id, out var parentsRef))
+						{
+							parentsRef.IsAlternatePathHead = value;
+						}
+						else
+						{
+							Debug.WriteLine($"Could not find the Parent's Reference for the Active Alt Node: {Job.Id}. The Active Alt Node's ParentNode has Id: {ParentNode.Job.Id}.");
+						}
+					}
 					OnPropertyChanged();
 				}
 			}
@@ -521,7 +534,7 @@ namespace MSS.Common
 
 			var parentNode = ParentNode;
 
-			while(parentNode != null)
+			while (parentNode != null)
 			{
 				result.Add(parentNode);
 				parentNode = parentNode.ParentNode;

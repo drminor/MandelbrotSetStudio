@@ -10,7 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace MSS.Common
+namespace MSS.Common.MSet
 {
 	// TODO: Dispose the Job Tree
 	public class Poster : INotifyPropertyChanged, ICloneable, IJobOwner

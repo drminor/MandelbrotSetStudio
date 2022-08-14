@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -90,7 +91,7 @@ namespace MSS.Common
 			if (!(jobOwner.IsCurrentJobIdChanged || jobOwner.IsDirty))
 			{
 				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
-				return false;
+				return true; // Our caller interprets false as a critical error.
 			}
 
 			if (jobOwner.IsCurrentJobIdChanged)

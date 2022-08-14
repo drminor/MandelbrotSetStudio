@@ -4,7 +4,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace MSS.Common
+namespace MSS.Common.MSet
 {
 	public class PosterInfo : IPosterInfo
 	{

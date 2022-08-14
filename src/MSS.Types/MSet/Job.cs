@@ -12,7 +12,7 @@ namespace MSS.Types.MSet
 
 		private ObjectId _projectId;
 		private ObjectId? _parentJobId;
-		//private bool _isAlternatePathHead;
+		private bool _isAlternatePathHead;
 		private ObjectId _colorBandSetId;
 
 		private DateTime _lastSavedUtc;
@@ -139,15 +139,15 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		//public bool IsAlternatePathHead
-		//{
-		//	get => _isAlternatePathHead;
-		//	set
-		//	{
-		//		_isAlternatePathHead = value;
-		//		LastUpdatedUtc = DateTime.UtcNow;
-		//	}
-		//}
+		public bool IsAlternatePathHead
+		{
+			get => _isAlternatePathHead;
+			set
+			{
+				_isAlternatePathHead = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
 
 		public string? Label { get; init; }
 

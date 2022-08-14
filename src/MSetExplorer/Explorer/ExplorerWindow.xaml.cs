@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Diagnostics.CodeAnalysis;
 using MSS.Types.MSet;
 using MSS.Common;
+using MSS.Common.MSet;
 
 namespace MSetExplorer
 {

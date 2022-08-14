@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
@@ -31,7 +32,9 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		public ObservableCollection<JobTreeItem> Children => _rootItem.Children;
+		public Job? Job => LastTerm?.Job;
+		public ObservableCollection<JobTreeItem> Children => GetItemOrRoot().Children;
+		public List<JobTreeItem>? AlternateDispSizes => GetItemOrRoot().AlternateDispSizes;
 
 		public List<JobTreeItem> Terms { get; init; }
 
@@ -55,6 +58,12 @@ namespace MSS.Common
 		public JobTreePath? GetCurrentPath()
 		{
 			var result = IsEmpty ? null : new JobTreePath(_rootItem, Terms);
+			return result;
+		}
+
+		public JobTreeBranch GetParentBranch()
+		{
+			var result = new JobTreeBranch(_rootItem, Terms.SkipLast(1));
 			return result;
 		}
 
@@ -111,17 +120,19 @@ namespace MSS.Common
 
 		public JobTreePath Combine(IEnumerable<JobTreeItem> jobTreeItems)
 		{
-			var newTerms = new List<JobTreeItem>(Terms);
-			newTerms.AddRange(jobTreeItems);
+			JobTreePath result;
 
-			var result = new JobTreePath(_rootItem, newTerms);
-			return result;
-		}
+			if (IsEmpty)
+			{
+				result = new JobTreePath(_rootItem, jobTreeItems);
+			}
+			else
+			{
+				var newTerms = new List<JobTreeItem>(Terms);
+				newTerms.AddRange(jobTreeItems);
+				result = new JobTreePath(_rootItem, newTerms);
+			}
 
-		public JobTreePath CreateSiblingPath(JobTreeItem child)
-		{
-			var parentPath = GetParentPath();
-			var result = parentPath == null ? new JobTreePath(_rootItem, child) : parentPath.Combine(child);
 			return result;
 		}
 
@@ -129,9 +140,15 @@ namespace MSS.Common
 
 		#region Overrides, Conversion Operators and ICloneable Support
 
-		public static implicit operator JobTreePath(JobTreeBranch b) => new JobTreeBranch(b);
+		public static implicit operator JobTreeBranch(JobTreePath path)
+		{
+			return new JobTreeBranch(path);
+		}
 
-		public override string ToString() => string.Join('\\', Terms);
+		public override string ToString()
+		{
+			return string.Join('\\', Terms);
+		}
 
 		object ICloneable.Clone()
 		{
