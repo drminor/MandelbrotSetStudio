@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

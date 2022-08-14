@@ -1,11 +1,10 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
 using MSS.Types.MSet;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace MSS.Common
+namespace MSS.Common.MSet
 {
 	public interface IJobOwner
 	{
