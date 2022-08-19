@@ -6,10 +6,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Common
 {
-	using JobPathType = ITreePath<JobTreeItem, Job>;
-	using JobNodeType = ITreeNode<JobTreeItem, Job>;
+	using JobPathType = ITreePath<JobTreeNode, Job>;
+	using JobNodeType = ITreeNode<JobTreeNode, Job>;
 
-	public interface IJobTree : ITree<JobTreeItem, Job>, IDisposable
+	public interface IJobTree : ITree<JobTreeNode, Job>, IDisposable
 	{
 		//ObservableCollection<JobNodeType> Nodes { get; }
 

@@ -36,10 +36,10 @@ namespace MSetExplorer
 			{
 				_vm = (IJobTreeViewModel)DataContext;
 
-				JobTreeItem.IsSelectedColor = GetColorString(Colors.Tan);
-				JobTreeItem.IsParentSelectedColor = GetColorString(Colors.LightPink);
-				JobTreeItem.IsSiblingSelectedColor = GetColorString(Colors.LightGoldenrodYellow);
-				JobTreeItem.IsChildSelectedColor = GetColorString(Colors.LightCyan);
+				JobTreeNode.IsSelectedColor = GetColorString(Colors.Tan);
+				JobTreeNode.IsParentSelectedColor = GetColorString(Colors.LightPink);
+				JobTreeNode.IsSiblingSelectedColor = GetColorString(Colors.LightGoldenrodYellow);
+				JobTreeNode.IsChildSelectedColor = GetColorString(Colors.LightCyan);
 
 				trvJobs.SelectedItemChanged += TrvJobs_SelectedItemChanged;
 
@@ -56,7 +56,7 @@ namespace MSetExplorer
 
 		private void TrvJobs_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
 		{
-			if (trvJobs.SelectedItem is JobTreeItem selectedItem)
+			if (trvJobs.SelectedItem is JobTreeNode selectedItem)
 			{
 				_vm.SelectedViewItem = selectedItem;
 			}

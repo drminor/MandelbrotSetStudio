@@ -11,9 +11,9 @@ using System.Threading;
 
 namespace MSS.Common
 {
-	using JobBranchType = ITreeBranch<JobTreeItem, Job>;
-	using JobPathType = ITreePath<JobTreeItem, Job>;
-	using JobNodeType = ITreeNode<JobTreeItem, Job>;
+	using JobBranchType = ITreeBranch<JobTreeNode, Job>;
+	using JobPathType = ITreePath<JobTreeNode, Job>;
+	using JobNodeType = ITreeNode<JobTreeNode, Job>;
 
 
 	/// <remarks>
@@ -37,7 +37,7 @@ namespace MSS.Common
 	///			c. Make the new newly added node, active by calling MakeBranchActive
 	/// </remarks>
 
-	public class JobTree : ITree<JobTreeItem, Job>, IJobTree
+	public class JobTree : ITree<JobTreeNode, Job>, IJobTree
 	{
 		protected readonly ReaderWriterLockSlim _treeLock;
 
@@ -53,12 +53,14 @@ namespace MSS.Common
 		{
 			_treeLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
-			var homeJob = GetHomeJob(jobs, checkHomeJob);
-			var homeNode = new JobTreeItem(homeJob);
-			_root = new JobTreeBranch(homeNode, homeNode.Children[0].Node);
-			_currentPath = _root.GetCurrentPath();
+			//var homeJob = GetHomeJob(jobs, checkHomeJob);
+			//var homeNode = new JobTreeNode(homeJob);
+			//_root = new JobTreeBranch(homeNode, homeNode.Children[0].Node);
+			//_currentPath = _root.GetCurrentPath();
 
-			Debug.Assert(!IsDirty, "IsDirty should be false as the constructor is exited.");
+			_root = new JobTreeBranch();
+			var homeJob = GetHomeJob(jobs, checkHomeJob);
+			_currentPath = AddJob(homeJob, _root);
 
 			if (_currentPath == null)
 			{
@@ -67,13 +69,14 @@ namespace MSS.Common
 
 			if (!_currentPath.IsHome)
 			{
-				throw new InvalidOperationException("The new JobTreeBranch's CurrentPath is not the HomeNode.");
+				//throw new InvalidOperationException("The new JobTreeBranch's CurrentPath is not the HomeNode.");
+				Debug.WriteLine("WARNING: The new JobTreeBranch's CurrentPath is not the HomeNode.");
 			}
 
 			jobs = jobs.OrderBy(x => x.Id.ToString()).ToList();
 			ReportInput(jobs);
 
-			Debug.WriteLine($"Loading {jobs.Count()} jobs.");
+			Debug.WriteLine($"Loading {jobs.Count} jobs.");
 
 			// Have BuildTree start with the homeJob, and not the root, so that it will not add the Home Job a second time.
 			_currentPath = PopulateTree(jobs, _currentPath);
@@ -89,8 +92,8 @@ namespace MSS.Common
 		#region Public Properties
 
 		//public ObservableCollection<JobTreeItem> Nodes => _root.Children;
-		public ObservableCollection<JobTreeItem> Nodes => _currentPath == null 
-			? new ObservableCollection<JobTreeItem> { _root.Node } 
+		public ObservableCollection<JobTreeNode> Nodes => _currentPath == null 
+			? new ObservableCollection<JobTreeNode> { _root.Node } 
 			: _currentPath.Children;
 
 		public Job CurrentJob
@@ -357,7 +360,7 @@ namespace MSS.Common
 			{
 				if (TryFindParentPath(job, _root, out var parentPath))
 				{
-					JobTreeItem parentNode;
+					JobTreeNode parentNode;
 
 					if (job.TransformType == TransformType.CanvasSizeUpdate)
 					{
@@ -631,7 +634,7 @@ namespace MSS.Common
 			}
 		}
 
-		public Job? GetParentItem(JobTreeItem node)
+		public Job? GetParentItem(JobTreeNode node)
 		{
 			if (node.ParentId == null)
 			{
@@ -962,7 +965,7 @@ namespace MSS.Common
 		/// </summary>
 		/// <param name="parkedAlt"></param>
 		/// <param name="activeAlt"></param>
-		private void SwitchAltBranches(JobTreeItem parkedAlt, JobTreeItem activeAlt)
+		private void SwitchAltBranches(JobTreeNode parkedAlt, JobTreeNode activeAlt)
 		{
 			/* 	
 				Nodes have children in three cases:
@@ -1037,6 +1040,7 @@ namespace MSS.Common
 			var parkedAlts = currentAltPath.Node.Children;
 			var mostRecentParkedAlt = parkedAlts.Aggregate((i1, i2) => (i1.Item.CompareTo(i2.Item) > 0) ? i1 : i2);
 
+			//var result = currentAltPath.Combine((JobTreeNode)mostRecentParkedAlt);
 			var result = currentAltPath.Combine(mostRecentParkedAlt.Node);
 
 			return result;
@@ -1131,12 +1135,12 @@ namespace MSS.Common
 			}
 		}
 
-		private void ReportOutput(JobBranchType start, JobPathType? currentPath)
+		private void ReportOutput(JobBranchType root, JobPathType? currentPath)
 		{
 			Debug.WriteLine($"OUTPUT Report for currentPath: {currentPath}");
 			Debug.WriteLine("Id\t\t\t\t\t\t\tParentId\t\t\t\t\tDate\t\t\tTransformType\t\t\tTimestamp");
 
-			var jwps = GetJobsWithParentage(start);
+			var jwps = GetJobsWithParentage(root);
 
 			foreach (var jwp in jwps)
 			{
@@ -1363,9 +1367,9 @@ namespace MSS.Common
 			return result;
 		}
 
-		private List<Tuple<JobTreeItem, JobTreeItem?>> GetNodesWithParentage(JobBranchType currentBranch)
+		private List<Tuple<JobTreeNode, JobTreeNode?>> GetNodesWithParentage(JobBranchType currentBranch)
 		{
-			var result = new List<Tuple<JobTreeItem, JobTreeItem?>> ();
+			var result = new List<Tuple<JobTreeNode, JobTreeNode?>> ();
 
 			//foreach (var child in currentBranch.GetNodeOrRoot().Children)
 			//{
@@ -1424,6 +1428,7 @@ namespace MSS.Common
 
 			foreach (JobNodeType child in node.Children)
 			{
+				//var cPath = currentBranch.Combine((JobTreeNode)child);
 				var cPath = currentBranch.Combine(child.Node);
 
 				//ITreeBranch<JobTreeItem,Job> cb = cPath;
@@ -1432,6 +1437,7 @@ namespace MSS.Common
 				//var testBranchItem = cb.GetItemOrRoot();
 				//var testPathItem = cPath.Item;
 
+				//if (TryFindPathByIdInternal(id, currentBranch.Combine((JobTreeNode)child), out var localPath))
 				if (TryFindPathByIdInternal(id, currentBranch.Combine(child.Node), out var localPath))
 				{
 					path = currentBranch.Combine(localPath);
@@ -1463,6 +1469,7 @@ namespace MSS.Common
 				//var testBranchItem = cb.GetItemOrRoot();
 				//var testPathItem = cPath.Item;
 
+				//if (TryFindPathInternal(item, currentBranch.Combine((JobTreeNode)child), out var localPath))
 				if (TryFindPathInternal(item, currentBranch.Combine(child.Node), out var localPath))
 				{
 					path = currentBranch.Combine(localPath);

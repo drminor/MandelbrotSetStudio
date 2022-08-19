@@ -13,7 +13,7 @@ using System.Text;
 
 namespace MSetExplorer
 {
-	using JobPathType = ITreePath<JobTreeItem, Job>;
+	using JobPathType = ITreePath<JobTreeNode, Job>;
 
 	public class JobTreeViewModel : ViewModelBase, IJobTreeViewModel
 	{
@@ -36,7 +36,7 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public ObservableCollection<JobTreeItem>? JobItems => CurrentProject?.JobItems;
+		public ObservableCollection<JobTreeNode>? JobItems => CurrentProject?.JobItems;
 
 		public IJobOwner? CurrentProject
 		{
@@ -79,7 +79,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public JobTreeItem? SelectedViewItem
+		public JobTreeNode? SelectedViewItem
 		{
 			get => CurrentProject?.SelectedViewItem;
 			set
@@ -203,11 +203,11 @@ namespace MSetExplorer
 			return sb.ToString();
 		}
 
-		private void DisplayAlternates(JobTreeItem node, StringBuilder sb, JobTreeItem parentNode)
+		private void DisplayAlternates(JobTreeNode node, StringBuilder sb, JobTreeNode parentNode)
 		{
 			_ = sb.AppendLine("  TransformType\tDateCreated\t\tChild Count\tIsActive");
 
-			var altNodes = parentNode.Children.Cast<JobTreeItem>().ToList();
+			var altNodes = parentNode.Children.Cast<JobTreeNode>().ToList();
 			var sortPosition = parentNode.GetSortPosition(node.Item);
 			altNodes.Insert(sortPosition, node);
 

@@ -64,7 +64,7 @@
                     </TreeView.CommandBindings>
                     
                     <TreeView.Resources>
-                        <HierarchicalDataTemplate DataType="{x:Type mssc:JobTreeItem}" ItemsSource="{Binding Children}">
+                        <HierarchicalDataTemplate DataType="{x:Type mssc:JobTreeNode}" ItemsSource="{Binding Children}">
                             <StackPanel Orientation="Horizontal" Focusable="True" KeyUp="JobTreeItem_KeyUp" Tag="{Binding IdAndParentId}" Background="{Binding ItemColor}" >
 
                                 <!--<TreeView.InputBindings>

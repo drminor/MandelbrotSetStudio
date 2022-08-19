@@ -9,7 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
-	using JobPathType = ITreePath<JobTreeItem, Job>;
+	using JobPathType = ITreePath<JobTreeNode, Job>;
 
 	public interface IJobTreeViewModel : INotifyPropertyChanged
 	{
@@ -19,12 +19,12 @@ namespace MSetExplorer
 		Job? CurrentJob { get; set; }
 		public JobPathType? GetCurrentPath();
 
-		JobTreeItem? SelectedViewItem { get; set; }
+		JobTreeNode? SelectedViewItem { get; set; }
 
 		bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job);
 		public JobPathType? GetPath(ObjectId jobId);
 
-		ObservableCollection<JobTreeItem>? JobItems { get; }
+		ObservableCollection<JobTreeNode>? JobItems { get; }
 
 		bool RestoreBranch(ObjectId jobId);
 		long DeleteBranch(ObjectId jobId, out long numberOfMapSectionsDeleted);

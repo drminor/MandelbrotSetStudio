@@ -63,22 +63,14 @@ namespace MSS.Types
 
 		public ObservableCollection<U> Children { get; private set; }
 
-		//public ObservableCollection<U> Children =>
-		//	(ObservableCollection<U>)
-		//		(
-		//			IsEmpty
-		//			? _rootItem.Children
-		//			: Terms[^1].Children
-		//		)
-		//	.Cast<U>();
-
 		public List<U> Terms { get; init; }
 
 		public int Count => Terms.Count;
 
 		public bool IsEmpty => !Terms.Any();
 
-		public virtual U Node => Terms[^1];
+		//public virtual U Node => Terms[^1];
+		public virtual U Node => IsEmpty ? _rootItem : Terms[^1];
 
 		public bool IsRoot => Node.IsRoot;
 		public bool IsHome => Node.IsHome;

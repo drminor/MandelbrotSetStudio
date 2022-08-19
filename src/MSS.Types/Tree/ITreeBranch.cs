@@ -36,7 +36,7 @@ namespace MSS.Types
 		bool TryGetGrandparentPath([MaybeNullWhen(false)] out ITreePath<U,V> grandparentPath);
 
 		ITreePath<U,V> Combine(U node);
-		ITreePath<U,V> Combine(ITreePath<U,V> treePath);
+		 ITreePath<U,V> Combine(ITreePath<U,V> treePath);
 		ITreePath<U,V> Combine(IEnumerable<U> nodes);
 	}
 }

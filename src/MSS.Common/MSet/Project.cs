@@ -13,7 +13,7 @@ using System.Threading;
 
 namespace MSS.Common.MSet
 {
-	using JobPathType = ITreePath<JobTreeItem, Job>;
+	using JobPathType = ITreePath<JobTreeNode, Job>;
 
 	public class Project : IDisposable, INotifyPropertyChanged, IJobOwner
 	{
@@ -85,7 +85,7 @@ namespace MSS.Common.MSet
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
-		public ObservableCollection<JobTreeItem>? JobItems => _jobTree.Nodes;
+		public ObservableCollection<JobTreeNode>? JobItems => _jobTree.Nodes;
 
 		public bool CanGoBack => _jobTree.CanGoBack;
 		public bool CanGoForward => _jobTree.CanGoForward;
@@ -242,7 +242,7 @@ namespace MSS.Common.MSet
 
 		public ObjectId CurrentColorBandSetId => CurrentColorBandSet.Id;
 
-		public JobTreeItem? SelectedViewItem
+		public JobTreeNode? SelectedViewItem
 		{
 			get => _jobTree.SelectedNode?.Node;
 			set

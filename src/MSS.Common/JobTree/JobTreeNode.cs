@@ -11,9 +11,9 @@ using System.Text;
 
 namespace MSS.Common
 {
-	using JobNodeType = ITreeNode<JobTreeItem, Job>;
+	using JobNodeType = ITreeNode<JobTreeNode, Job>;
 
-	public class JobTreeItem : TreeNode<JobTreeItem, Job>, INotifyPropertyChanged, ICloneable
+	public class JobTreeNode : TreeNode<JobTreeNode, Job>, INotifyPropertyChanged, ICloneable
 	{
 		private bool _isActiveAlternate;
 		private bool _isParkedAlternate;
@@ -38,10 +38,10 @@ namespace MSS.Common
 
 		#region Constructor
 
-		private JobTreeItem() : this(null)
+		public JobTreeNode() : this(null)
 		{ }
 
-		public JobTreeItem(Job? job) : this(new Job(), parentNode: null, isIterationChange: false, isColorMapChange: false)
+		public JobTreeNode(Job? job) : this(new Job(), parentNode: null, isIterationChange: false, isColorMapChange: false)
 		{
 			IsRoot = true;
 			if (job != null)
@@ -50,7 +50,7 @@ namespace MSS.Common
 			}
 		}
 
-		private JobTreeItem(Job job, JobNodeType? parentNode, bool isIterationChange, bool isColorMapChange)
+		private JobTreeNode(Job job, JobNodeType? parentNode, bool isIterationChange, bool isColorMapChange)
 
 			: this(job, parentNode, new ObservableCollection<JobNodeType>(), isRoot: false, isHome: false, isCurrent: false, isExpanded: false,
 				  isIterationChange, isColorMapChange, isActiveAlternate: false, isParkedAlternate: false, 
@@ -58,10 +58,10 @@ namespace MSS.Common
 				  alternateDispSizes: null, realChildJobs: new SortedList<ObjectId, Job>(new ObjectIdComparer()), isOnPreferredPath: false)
 		{ }
 
-		private JobTreeItem(Job job, JobNodeType? parentNode, ObservableCollection<JobNodeType> children, bool isRoot, bool isHome, bool isCurrent, bool isExpanded,
+		private JobTreeNode(Job job, JobNodeType? parentNode, ObservableCollection<JobNodeType> children, bool isRoot, bool isHome, bool isCurrent, bool isExpanded,
 			bool isIterationChange, bool isColorMapChange, bool isActiveAlternate, bool isParkedAlternate,
 			bool isSelected, bool isParentOfSelected, bool isSiblingOfSelected, bool isChildOfSelected, 
-			List<JobTreeItem>? alternateDispSizes, SortedList<ObjectId, Job> realChildJobs, bool isOnPreferredPath)
+			List<JobTreeNode>? alternateDispSizes, SortedList<ObjectId, Job> realChildJobs, bool isOnPreferredPath)
 
 			: base(job, parentNode, isRoot, isHome, isCurrent, isExpanded)
 		{
@@ -93,7 +93,7 @@ namespace MSS.Common
 
 		public override ObservableCollection<JobNodeType> Children { get; init; }
 
-		public List<JobTreeItem>? AlternateDispSizes { get; private set; }
+		public List<JobTreeNode>? AlternateDispSizes { get; private set; }
 
 		public SortedList<ObjectId, Job> RealChildJobs { get; set; }
 
@@ -279,10 +279,10 @@ namespace MSS.Common
 
 		#region Public Methods 
 
-		public override JobTreeItem AddItem(Job job)
+		public override JobTreeNode AddItem(Job job)
 		{
 			// TODO: Determine the isIterationChange and isColorMapChange when adding  a new job.
-			var node = new JobTreeItem(job, this, isIterationChange: false, isColorMapChange: false);
+			var node = new JobTreeNode(job, this, isIterationChange: false, isColorMapChange: false);
 
 			if (job.TransformType == TransformType.CanvasSizeUpdate)
 			{
@@ -296,7 +296,7 @@ namespace MSS.Common
 			return node;
 		}
 
-		public void AddNode(JobTreeItem node)
+		public void AddNode(JobTreeNode node)
 		{
 			if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
 			{
@@ -341,7 +341,7 @@ namespace MSS.Common
 			}
 		}
 
-		public bool Remove(JobTreeItem jobTreeItem)
+		public bool Remove(JobTreeNode jobTreeItem)
 		{
 			jobTreeItem.ParentNode = null;
 
@@ -363,23 +363,23 @@ namespace MSS.Common
 			return result;
 		}
 
-		public JobTreeItem AddCanvasSizeUpdateJob(Job job)
+		public JobTreeNode AddCanvasSizeUpdateJob(Job job)
 		{
 			if (job.TransformType != TransformType.CanvasSizeUpdate)
 			{
 				throw new InvalidOperationException($"Cannot add a JobTreeItem that has a Job with TransformType = {job.TransformType} via call to AddCanvasSizeUpdateNode.");
 			}
 
-			var newNode = new JobTreeItem(job, this, isIterationChange: false, isColorMapChange: false);
+			var newNode = new JobTreeNode(job, this, isIterationChange: false, isColorMapChange: false);
 			AddCanvasSizeUpdateNode(newNode);
 			return newNode;
 		}
 
-		private void AddCanvasSizeUpdateNode(JobTreeItem node)
+		private void AddCanvasSizeUpdateNode(JobTreeNode node)
 		{
 			if (AlternateDispSizes == null)
 			{
-				AlternateDispSizes = new List<JobTreeItem>();
+				AlternateDispSizes = new List<JobTreeNode>();
 			}
 
 			AlternateDispSizes.Add(node);
@@ -465,9 +465,9 @@ namespace MSS.Common
 		}
 
 		// TODO: JobTreeItem.Clone method is not complete.
-		public override JobTreeItem Clone()
+		public override JobTreeNode Clone()
 		{
-			var result = new JobTreeItem(Item, ParentNode, Children, IsRoot, IsHome, IsCurrent, IsExpanded, 
+			var result = new JobTreeNode(Item, ParentNode, Children, IsRoot, IsHome, IsCurrent, IsExpanded, 
 				IsIterationChange, IsColorMapChange, IsActiveAlternate, IsParkedAlternate, 
 				IsSelected, IsParentOfSelected, IsSiblingOfSelected, IsChildOfSelected, 
 				AlternateDispSizes, RealChildJobs, IsOnPreferredPath);

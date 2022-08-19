@@ -384,10 +384,10 @@ namespace MSS.Types
 			return result;
 		}
 
-		private IList<ITreeItem<V>> GetNodes(ITreeBranch<U,V> currentBranch)
+		private IList<ITreeNode<U,V>> GetNodes(ITreeBranch<U,V> currentBranch)
 		{
 			// TODO: Consider implementing an IEnumerator<ITreeItem<U,V> for the Tree class.
-			var result = new List<ITreeItem<V>>();
+			var result = new List<ITreeNode<U,V>>();
 
 			//foreach (var child in currentBranch.GetNodeOrRoot().Children)
 			//{
@@ -400,9 +400,9 @@ namespace MSS.Types
 			return result;
 		}
 
-		private List< Tuple<ITreeItem<V>, ITreeItem<V>? > > GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
+		private List< Tuple<ITreeNode<U, V>, ITreeNode<U, V>? > > GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
 		{
-			var result = new List<Tuple<ITreeItem<V>, ITreeItem<V>?>>();
+			var result = new List<Tuple<ITreeNode<U, V>, ITreeNode<U, V>?>>();
 
 			//foreach (var child in currentBranch.GetNodeOrRoot().Children)
 			//{
@@ -440,7 +440,7 @@ namespace MSS.Types
 		protected bool TryFindPath(V item, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)
 		{
 			path = currentBranch.GetCurrentPath();
-			return (item.Equals(path?.LastTerm)) || TryFindPathInternal(item, currentBranch, out path);
+			return item.Equals(path?.LastTerm) || TryFindPathInternal(item, currentBranch, out path);
 		}
 
 		protected bool TryFindPathById(ObjectId id, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)
@@ -512,7 +512,7 @@ namespace MSS.Types
 			return false;
 		}
 
-		protected bool NodeContainsItem(ITreeBranch<U,V> branch, Func<ITreeItem<V>, bool> predicate, [MaybeNullWhen(false)] out ITreePath<U,V> path)
+		protected bool NodeContainsItem(ITreeBranch<U,V> branch, Func<ITreeNode<U,V>, bool> predicate, [MaybeNullWhen(false)] out ITreePath<U,V> path)
 		{
 			//var foundNode = branch.GetNodeOrRoot().Children.FirstOrDefault(predicate);
 			var foundNode = branch.Children.FirstOrDefault(predicate);

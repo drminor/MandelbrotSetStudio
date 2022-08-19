@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MSS.Types
 {
-	public abstract class TreeNode<U, V> : ITreeNode<U,V>, INotifyPropertyChanged, ICloneable where U : ITreeItem<V> where V : IEquatable<V>, IComparable<V>
+	public abstract class TreeNode<U, V> : ITreeNode<U,V>, INotifyPropertyChanged, ICloneable where U : ITreeNode<U,V> where V : IEquatable<V>, IComparable<V>
 	{
 		private bool _isCurrent;
 		private bool _isExpanded;

@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 
 namespace MSS.Common.MSet
 {
-	using JobPathType = ITreePath<JobTreeItem, Job>;
+	using JobPathType = ITreePath<JobTreeNode, Job>;
 
 	public interface IJobOwner
 	{
@@ -14,7 +14,7 @@ namespace MSS.Common.MSet
 		string Name { get; set; }
 		string? Description { get; set; }
 
-		ObservableCollection<JobTreeItem>? JobItems { get; }
+		ObservableCollection<JobTreeNode>? JobItems { get; }
 
 		Job CurrentJob { get; set; }
 		ObjectId CurrentColorBandSetId { get; }
@@ -43,6 +43,6 @@ namespace MSS.Common.MSet
 		bool DeleteBranch(ObjectId jobId);
 		void MarkAsSaved();
 
-		JobTreeItem? SelectedViewItem { get; set; }
+		JobTreeNode? SelectedViewItem { get; set; }
 	}
 }

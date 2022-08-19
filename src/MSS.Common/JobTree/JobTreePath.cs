@@ -8,15 +8,24 @@ using System.Linq;
 
 namespace MSS.Common
 {
-	using JobBranchType = ITreeBranch<JobTreeItem, Job>;
-	using JobPathType = ITreePath<JobTreeItem, Job>;
-	using JobNodeType = JobTreeItem;
+	using JobBranchType = ITreeBranch<JobTreeNode, Job>;
+	using JobPathType = ITreePath<JobTreeNode, Job>;
+	using JobNodeType = JobTreeNode;
 
-	public class JobTreePath : JobPathType
+	public class JobTreePath : ITreePath<JobTreeNode, Job>
 	{
 		protected JobNodeType _rootItem;
 
 		#region Constructor
+
+		// Used to create a JobTreeBranch
+		protected JobTreePath()
+		{
+			_rootItem = new JobTreeNode();
+			Terms = new List<JobNodeType>();
+
+			Children = new ObservableCollection<JobNodeType>();
+		}
 
 		// Used to create a JobTreeBranch
 		protected JobTreePath(JobNodeType rootItem)
