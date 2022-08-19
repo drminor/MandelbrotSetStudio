@@ -23,8 +23,6 @@ namespace MSS.Common
 		{
 			_rootItem = new JobTreeNode();
 			Terms = new List<JobNodeType>();
-
-			//Children = new ObservableCollection<JobNodeType>();
 		}
 
 		// Used to create a JobTreeBranch
@@ -32,12 +30,6 @@ namespace MSS.Common
 		{
 			_rootItem = rootItem;
 			Terms = new List<JobNodeType>();
-
-			//Children = new ObservableCollection<JobNodeType>();
-			//foreach (var c in rootItem.Children)
-			//{
-			//	Children.Add(c.Node);
-			//}
 		}
 
 		public JobTreePath(JobNodeType rootItem, JobNodeType term) : this(rootItem, new[] { term })
@@ -51,44 +43,14 @@ namespace MSS.Common
 			}
 
 			_rootItem = rootItem;
-
 			Terms = terms.ToList();
-
-			var lastTerm = Terms[^1];
-
-			//Children = new ObservableCollection<JobNodeType>();
-			//foreach (var c in lastTerm.Children)
-			//{
-			//	Children.Add(c.Node);
-			//}
 		}
-
-		//// Used by the Clone Method
-		//private JobTreePath(JobNodeType rootItem, List<JobNodeType> terms, ObservableCollection<JobNodeType> children)
-		//{
-		//	_rootItem = rootItem;
-		//	Terms = terms;
-		//	//Children = children;
-		//}
 
 		#endregion
 
 		#region Public Properties
 
 		virtual public ObservableCollection<JobNodeType> Children => new(Node.Children.Select(x => x.Node));
-		//{
-		//	get
-		//	{
-		//		var result = new ObservableCollection<JobNodeType>();
-
-		//		foreach (var c in Node.Children)
-		//		{
-		//			result.Add(c.Node);
-		//		}
-
-		//		return result;
-		//	}
-		//}
 
 		public List<JobNodeType> Terms { get; init; }
 

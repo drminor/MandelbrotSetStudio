@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -99,6 +100,7 @@ namespace MSS.Types
 
 		public virtual void AddNode(ITreeNode<U, V> node)
 		{
+			Debug.WriteLine("WARNING: Calling AddNode on the base: TreeNode.");
 			if (!Children.Any())
 			{
 				Children.Add(node);
@@ -119,6 +121,7 @@ namespace MSS.Types
 
 		public bool Move(ITreeNode<U, V> destination)
 		{
+			Debug.WriteLine("WARNING: Calling Move on the base: TreeNode.");
 			if (IsRoot)
 			{
 				throw new InvalidOperationException("Moving the root node is not supported.");
@@ -136,7 +139,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		public virtual bool Remove(ITreeNode<U, V> jobTreeItem)
+		virtual public bool Remove(ITreeNode<U, V> jobTreeItem)
 		{
 			jobTreeItem.ParentNode = null;
 			bool result = Children.Remove(jobTreeItem);

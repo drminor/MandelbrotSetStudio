@@ -296,7 +296,7 @@ namespace MSS.Common
 			return node;
 		}
 
-		public void AddNode(JobTreeNode node)
+		public override void AddNode(JobNodeType node)
 		{
 			if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
 			{
@@ -310,7 +310,7 @@ namespace MSS.Common
 
 			if (IsRoot && (!Children.Any()))
 			{
-				node.IsHome = true;
+				node.Node.IsHome = true;
 			}
 
 			if (!Children.Any())
@@ -337,23 +337,23 @@ namespace MSS.Common
 
 			if (IsActiveAlternate)
 			{
-				node.IsParkedAlternate = true;
+				node.Node.IsParkedAlternate = true;
 			}
 		}
 
-		public bool Remove(JobTreeNode jobTreeItem)
+		public override bool Remove(JobNodeType node)
 		{
-			jobTreeItem.ParentNode = null;
+			node.ParentNode = null;
 
 			bool result;
 
-			if (jobTreeItem.Item.TransformType == TransformType.CanvasSizeUpdate)
+			if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
 			{
-				result = AlternateDispSizes?.Remove(jobTreeItem) ?? false;
+				result = AlternateDispSizes?.Remove(node.Node) ?? false;
 				return result;
 			}
 
-			result = Children.Remove(jobTreeItem);
+			result = Children.Remove(node);
 
 			if (IsActiveAlternate && !Children.Any())
 			{
@@ -464,7 +464,6 @@ namespace MSS.Common
 			return Clone();
 		}
 
-		// TODO: JobTreeItem.Clone method is not complete.
 		public override JobTreeNode Clone()
 		{
 			var result = new JobTreeNode(Item, ParentNode, Children, IsRoot, IsHome, IsCurrent, IsExpanded, 
