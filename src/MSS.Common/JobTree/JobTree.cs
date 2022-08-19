@@ -53,11 +53,6 @@ namespace MSS.Common
 		{
 			_treeLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
-			//var homeJob = GetHomeJob(jobs, checkHomeJob);
-			//var homeNode = new JobTreeNode(homeJob);
-			//_root = new JobTreeBranch(homeNode, homeNode.Children[0].Node);
-			//_currentPath = _root.GetCurrentPath();
-
 			_root = new JobTreeBranch();
 			var homeJob = GetHomeJob(jobs, checkHomeJob);
 			_currentPath = AddJob(homeJob, _root);
@@ -91,10 +86,23 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		//public ObservableCollection<JobTreeItem> Nodes => _root.Children;
-		public ObservableCollection<JobTreeNode> Nodes => _currentPath == null 
-			? new ObservableCollection<JobTreeNode> { _root.Node } 
-			: _currentPath.Children;
+		public ObservableCollection<JobTreeNode> Nodes => _root.Children;
+		//{
+		//	get
+		//	{
+		//		var result = _root.GetRoot().Children;
+
+		//		var testcp = _root.GetCurrentPath();
+		//		var test = _root.Children;
+
+		//		return result;
+
+		//	}
+		//}
+			
+		//public ObservableCollection<JobTreeNode> Nodes => _currentPath == null 
+		//	? new ObservableCollection<JobTreeNode> { _root.Node } 
+		//	: _currentPath.Children;
 
 		public Job CurrentJob
 		{

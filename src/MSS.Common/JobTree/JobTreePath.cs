@@ -16,7 +16,7 @@ namespace MSS.Common
 	{
 		protected JobNodeType _rootItem;
 
-		#region Constructor
+		#region Constructors
 
 		// Used to create a JobTreeBranch
 		protected JobTreePath()
@@ -24,7 +24,7 @@ namespace MSS.Common
 			_rootItem = new JobTreeNode();
 			Terms = new List<JobNodeType>();
 
-			Children = new ObservableCollection<JobNodeType>();
+			//Children = new ObservableCollection<JobNodeType>();
 		}
 
 		// Used to create a JobTreeBranch
@@ -33,11 +33,11 @@ namespace MSS.Common
 			_rootItem = rootItem;
 			Terms = new List<JobNodeType>();
 
-			Children = new ObservableCollection<JobNodeType>();
-			foreach (var c in rootItem.Children)
-			{
-				Children.Add(c.Node);
-			}
+			//Children = new ObservableCollection<JobNodeType>();
+			//foreach (var c in rootItem.Children)
+			//{
+			//	Children.Add(c.Node);
+			//}
 		}
 
 		public JobTreePath(JobNodeType rootItem, JobNodeType term) : this(rootItem, new[] { term })
@@ -56,34 +56,39 @@ namespace MSS.Common
 
 			var lastTerm = Terms[^1];
 
-			Children = new ObservableCollection<JobNodeType>();
-			foreach (var c in lastTerm.Children)
-			{
-				Children.Add(c.Node);
-			}
+			//Children = new ObservableCollection<JobNodeType>();
+			//foreach (var c in lastTerm.Children)
+			//{
+			//	Children.Add(c.Node);
+			//}
 		}
 
-		// Used by the Clone Method
-		private JobTreePath(JobNodeType rootItem, List<JobNodeType> terms, ObservableCollection<JobNodeType> children)
-		{
-			_rootItem = rootItem;
-			Terms = terms;
-			Children = children;
-		}
+		//// Used by the Clone Method
+		//private JobTreePath(JobNodeType rootItem, List<JobNodeType> terms, ObservableCollection<JobNodeType> children)
+		//{
+		//	_rootItem = rootItem;
+		//	Terms = terms;
+		//	//Children = children;
+		//}
 
 		#endregion
 
 		#region Public Properties
 
-		public ObservableCollection<JobNodeType> Children { get; private set; }
-		//public ObservableCollection<JobNodeType> Children =>
-		//	(ObservableCollection<JobNodeType>)
-		//		(
-		//			IsEmpty
-		//			? _rootItem.Children
-		//			: Terms[^1].Children
-		//		)
-		//	.Cast<JobNodeType>();
+		virtual public ObservableCollection<JobNodeType> Children => new(Node.Children.Select(x => x.Node));
+		//{
+		//	get
+		//	{
+		//		var result = new ObservableCollection<JobNodeType>();
+
+		//		foreach (var c in Node.Children)
+		//		{
+		//			result.Add(c.Node);
+		//		}
+
+		//		return result;
+		//	}
+		//}
 
 		public List<JobNodeType> Terms { get; init; }
 
@@ -91,7 +96,7 @@ namespace MSS.Common
 
 		public bool IsEmpty => !Terms.Any();
 
-		public virtual JobNodeType Node => IsEmpty ? _rootItem : Terms[^1];
+		virtual public JobNodeType Node => IsEmpty ? _rootItem : Terms[^1];
 
 		public bool IsRoot => Node.IsRoot;
 		public bool IsHome => Node.IsHome;
@@ -202,8 +207,6 @@ namespace MSS.Common
 			}
 		}
 
-		#endregion
-
 		public JobPathType CreateSiblingPath(JobNodeType child)
 		{
 			var parentPath = GetParentPath();
@@ -215,6 +218,7 @@ namespace MSS.Common
 			return result;
 		}
 
+		#endregion
 
 		#region Overrides, Conversion Operators and ICloneable Support
 
@@ -235,7 +239,7 @@ namespace MSS.Common
 
 		public JobTreePath Clone()
 		{
-			return new JobTreePath(_rootItem.Clone(), new List<JobNodeType>(Terms), new ObservableCollection<JobNodeType>(Children));
+			return new JobTreePath(_rootItem.Clone(), new List<JobNodeType>(Terms)/*, new ObservableCollection<JobNodeType>(Children)*/);
 		}
 
 		#endregion

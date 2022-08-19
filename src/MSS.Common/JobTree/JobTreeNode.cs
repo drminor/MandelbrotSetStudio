@@ -107,9 +107,9 @@ namespace MSS.Common
 		public int Iterations => Item.MapCalcSettings.TargetIterations;
 		public DateTime Created => Item.DateCreated;
 
-		//public ObjectId JobId => Job.Id;
-		//public ObjectId? ParentJobId => Job.ParentJobId;
-		//public TransformType TransformType => Job.TransformType;
+		public ObjectId JobId => Item.Id;
+		public ObjectId? ParentJobId => Item.ParentJobId;
+		public TransformType TransformType => Item.TransformType;
 
 		#endregion
 

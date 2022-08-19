@@ -61,7 +61,7 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public ObservableCollection<U> Children { get; private set; }
+		virtual public ObservableCollection<U> Children { get; private set; }
 
 		public List<U> Terms { get; init; }
 
@@ -69,8 +69,7 @@ namespace MSS.Types
 
 		public bool IsEmpty => !Terms.Any();
 
-		//public virtual U Node => Terms[^1];
-		public virtual U Node => IsEmpty ? _rootItem : Terms[^1];
+		virtual public U Node => IsEmpty ? _rootItem : Terms[^1];
 
 		public bool IsRoot => Node.IsRoot;
 		public bool IsHome => Node.IsHome;

@@ -52,8 +52,10 @@ namespace MSS.Common.MSet
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_description = description;
 
-			_jobTree = new JobTree(jobs, checkHomeJob: true);
-			_jobTree.UseRealRelationShipsToUpdateSelected = false;
+			_jobTree = new JobTree(jobs, checkHomeJob: true)
+			{
+				UseRealRelationShipsToUpdateSelected = false
+			};
 
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
@@ -74,7 +76,7 @@ namespace MSS.Common.MSet
 			_ = LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
 			_jobTree.CurrentItem = currentJob;
 
-			//_jobTree
+			JobItems = _jobTree.Nodes;
 
 			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentItem.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
 		}
@@ -85,7 +87,17 @@ namespace MSS.Common.MSet
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
-		public ObservableCollection<JobTreeNode>? JobItems => _jobTree.Nodes;
+		private ObservableCollection<JobTreeNode>? _jobItems;
+
+		public ObservableCollection<JobTreeNode>? JobItems
+		{
+			get => _jobItems;
+			set
+			{
+				_jobItems = value;
+				OnPropertyChanged();
+			}
+		}
 
 		public bool CanGoBack => _jobTree.CanGoBack;
 		public bool CanGoForward => _jobTree.CanGoForward;
