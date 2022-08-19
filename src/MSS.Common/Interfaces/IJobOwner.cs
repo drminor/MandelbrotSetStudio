@@ -6,6 +6,8 @@ using System.Collections.ObjectModel;
 
 namespace MSS.Common.MSet
 {
+	using JobPathType = ITreePath<JobTreeItem, Job>;
+
 	public interface IJobOwner
 	{
 		ObjectId Id { get; init; }
@@ -30,9 +32,9 @@ namespace MSS.Common.MSet
 		List<Job> GetJobs();
 		List<ColorBandSet> GetColorBandSets();
 
-		JobTreePath? GetCurrentPath();
+		JobPathType? GetCurrentPath();
 
-		JobTreePath? GetPath(ObjectId jobId);
+		JobPathType? GetPath(ObjectId jobId);
 		Job? GetJob(ObjectId jobId);
 		Job? GetParent(Job job);
 		List<Job>? GetJobAndDescendants(ObjectId jobId);

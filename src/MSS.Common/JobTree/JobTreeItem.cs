@@ -6,14 +6,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace MSS.Common
 {
-	public class JobTreeItem : IJobTreeItem, INotifyPropertyChanged, IEqualityComparer<JobTreeItem>, IEquatable<JobTreeItem>, IComparable<JobTreeItem>, ICloneable
+	using JobNodeType = ITreeNode<JobTreeItem, Job>;
+
+	public class JobTreeItem : TreeNode<JobTreeItem, Job>, INotifyPropertyChanged, ICloneable
 	{
 		private bool _isActiveAlternate;
 		private bool _isParkedAlternate;
@@ -21,16 +21,11 @@ namespace MSS.Common
 		private bool _isIterationChange;
 		private bool _isColorMapChange;
 
-		private bool _isCurrent;
-		private bool _isExpanded;
-
 		private bool _isSelected;
 		private bool _isParentOfSelected;
 		private bool _isSiblingOfSelected;
 		private bool _isChildOfSelected;
 		private string _itemColor;
-
-		private readonly ObjectIdComparer _comparer;
 
 		#region Static Properties
 
@@ -41,81 +36,63 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Static Methods
-
-		public static IJobTreeBranch CreateRoot()
-		{
-			var rootBranch = new JobTreeBranch(new JobTreeItem());
-			return rootBranch;
-		}
-
-		public static IJobTreeBranch CreateRoot(Job homeJob, out JobTreePath currentPath)
-		{
-			if (homeJob.ParentJobId != null)
-			{
-				Debug.WriteLine($"WARNING: The job: {homeJob.Id} used to create the JobTree(path) has a non-null ParentJobId. Setting the ParentJobId to null.");
-				homeJob.ParentJobId = null;
-			}
-
-			if (homeJob.TransformType != TransformType.Home)
-			{
-				Debug.WriteLine($"WARNING: The job: {homeJob.Id} used to create the JobTree(path) has TransformType of {homeJob.TransformType}. Expecting the TransformType to be {nameof(TransformType.Home)}.");
-			}
-
-			var tree = new JobTreeItem();
-			var homeItem = tree.AddJob(homeJob);
-			tree.RealChildJobs.Add(homeJob.Id, homeJob);
-			currentPath = new JobTreePath(tree, homeItem);
-			var root = currentPath.GetRoot();
-
-			return root;
-		}
-
-		#endregion
-
 		#region Constructor
 
 		private JobTreeItem() : this(null)
 		{ }
 
-		private JobTreeItem(Job? job) : this(new Job(), null, false, false)
+		public JobTreeItem(Job? job) : this(new Job(), parentNode: null, isIterationChange: false, isColorMapChange: false)
 		{
 			IsRoot = true;
 			if (job != null)
 			{
-				_ = AddJob(job);
+				_ = AddItem(job);
 			}
 		}
 
-		private JobTreeItem(Job job, JobTreeItem? parentNode, bool isIterationChange, bool isColorMapChange)
+		private JobTreeItem(Job job, JobNodeType? parentNode, bool isIterationChange, bool isColorMapChange)
+
+			: this(job, parentNode, new ObservableCollection<JobNodeType>(), isRoot: false, isHome: false, isCurrent: false, isExpanded: false,
+				  isIterationChange, isColorMapChange, isActiveAlternate: false, isParkedAlternate: false, 
+				  isSelected: false, isParentOfSelected: false, isSiblingOfSelected: false, isChildOfSelected: false, 
+				  alternateDispSizes: null, realChildJobs: new SortedList<ObjectId, Job>(new ObjectIdComparer()), isOnPreferredPath: false)
+		{ }
+
+		private JobTreeItem(Job job, JobNodeType? parentNode, ObservableCollection<JobNodeType> children, bool isRoot, bool isHome, bool isCurrent, bool isExpanded,
+			bool isIterationChange, bool isColorMapChange, bool isActiveAlternate, bool isParkedAlternate,
+			bool isSelected, bool isParentOfSelected, bool isSiblingOfSelected, bool isChildOfSelected, 
+			List<JobTreeItem>? alternateDispSizes, SortedList<ObjectId, Job> realChildJobs, bool isOnPreferredPath)
+
+			: base(job, parentNode, isRoot, isHome, isCurrent, isExpanded)
 		{
-			Job = job ?? throw new ArgumentNullException(nameof(job));
-			ParentNode = parentNode;
-			Children = new ObservableCollection<JobTreeItem>();
+			Children = children;
+			Id = job.Id;
+			ParentId = job.ParentJobId;
 
 			IsIterationChange = isIterationChange;
 			IsColorMapChange = isColorMapChange;
 
-			_itemColor = "#fff8dc";
-			_isExpanded = false;
+			IsActiveAlternate = isActiveAlternate;
+			IsParkedAlternate = isParkedAlternate;
 
-			_isSelected = false;
-			_isParentOfSelected = false;
-			_isSiblingOfSelected = false;
-			_isChildOfSelected = false;
+			_isSelected = isSelected;
+			_isParentOfSelected = isParentOfSelected;
+			_isSiblingOfSelected = isSiblingOfSelected;
+			_isChildOfSelected = isChildOfSelected;
 
-			AlternateDispSizes = null;
-			RealChildJobs = new SortedList<ObjectId, Job>(new ObjectIdComparer());
-			_comparer = new ObjectIdComparer();
+			_itemColor = GetItemColor(_isSelected, _isParentOfSelected, _isSiblingOfSelected, _isChildOfSelected);
+
+			AlternateDispSizes = alternateDispSizes;
+			RealChildJobs = realChildJobs;
+			IsOnPreferredPath = isOnPreferredPath;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public Job Job { get; init; }
-		public JobTreeItem? ParentNode { get; private set; }
-		public ObservableCollection<JobTreeItem> Children { get; init; }
+		public override ObservableCollection<JobNodeType> Children { get; init; }
+
 		public List<JobTreeItem>? AlternateDispSizes { get; private set; }
 
 		public SortedList<ObjectId, Job> RealChildJobs { get; set; }
@@ -126,24 +103,17 @@ namespace MSS.Common
 
 		#region Convenience Properties
 
-		public int Zoom => -1 * Job.MapAreaInfo.Coords.Exponent;
-		public int Iterations => Job.MapCalcSettings.TargetIterations;
-		public DateTime Created => Job.DateCreated;
+		public int Zoom => -1 * Item.MapAreaInfo.Coords.Exponent;
+		public int Iterations => Item.MapCalcSettings.TargetIterations;
+		public DateTime Created => Item.DateCreated;
 
-		public ObjectId JobId => Job.Id;
-		public ObjectId? ParentJobId => Job.ParentJobId;
-		public TransformType TransformType => Job.TransformType;
+		//public ObjectId JobId => Job.Id;
+		//public ObjectId? ParentJobId => Job.ParentJobId;
+		//public TransformType TransformType => Job.TransformType;
 
 		#endregion
 
 		#region Branch Properties
-
-		//public bool IsRoot => Job.Id == ObjectId.Empty;
-		public bool IsRoot { get; init; }
-
-		public bool IsHome { get; private set; }
-
-		public bool IsOrphan => ParentNode is null;
 
 		public bool IsActiveAlternate
 		{
@@ -153,18 +123,20 @@ namespace MSS.Common
 				if (value != _isActiveAlternate)
 				{
 					_isActiveAlternate = value;
-					Job.IsAlternatePathHead = value;
-					if (ParentNode != null)
-					{
-						if (ParentNode.RealChildJobs.TryGetValue(Job.Id, out var parentsRef))
-						{
-							parentsRef.IsAlternatePathHead = value;
-						}
-						else
-						{
-							Debug.WriteLine($"Could not find the Parent's Reference for the Active Alt Node: {Job.Id}. The Active Alt Node's ParentNode has Id: {ParentNode.Job.Id}.");
-						}
-					}
+					Item.IsAlternatePathHead = value;
+					
+					// TODO: Move this code to the Tree class.
+					//if (ParentNode != null)
+					//{
+					//	if (ParentNode.RealChildJobs.TryGetValue(Job.Id, out var parentsRef))
+					//	{
+					//		parentsRef.IsAlternatePathHead = value;
+					//	}
+					//	else
+					//	{
+					//		Debug.WriteLine($"Could not find the Parent's Reference for the Active Alt Node: {Job.Id}. The Active Alt Node's ParentNode has Id: {ParentNode.Item.Id}.");
+					//	}
+					//}
 					OnPropertyChanged();
 				}
 			}
@@ -186,32 +158,6 @@ namespace MSS.Common
 		#endregion
 
 		#region UI Properties
-
-		public bool IsCurrent
-		{
-			get => _isCurrent;
-			set
-			{
-				if (value != _isCurrent)
-				{
-					_isCurrent = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public bool IsExpanded
-		{
-			get => _isExpanded;
-			set
-			{
-				if (value != _isExpanded)
-				{
-					_isExpanded = value;
-					OnPropertyChanged();
-				}
-			}
-		}
 
 		public bool IsIterationChange
 		{
@@ -310,11 +256,11 @@ namespace MSS.Common
 
 		public string? PathHeadType => IsActiveAlternate ? "[Alt]" : IsParkedAlternate ? "[Prk]" : null;
 
-		public string IdAndParentId
+		public new string IdAndParentId
 		{
 			get
 			{
-				var result = Job.Id + ", " + (Job.ParentJobId?.ToString() ?? "null");
+				var result = Item.Id + ", " + (Item.ParentJobId?.ToString() ?? "null");
 				if (IsActiveAlternate)
 				{
 					result += ", Alt: Yes";
@@ -333,7 +279,7 @@ namespace MSS.Common
 
 		#region Public Methods 
 
-		public JobTreeItem AddJob(Job job)
+		public override JobTreeItem AddItem(Job job)
 		{
 			// TODO: Determine the isIterationChange and isColorMapChange when adding  a new job.
 			var node = new JobTreeItem(job, this, isIterationChange: false, isColorMapChange: false);
@@ -350,14 +296,14 @@ namespace MSS.Common
 			return node;
 		}
 
-		private void AddNode(JobTreeItem node)
+		public void AddNode(JobTreeItem node)
 		{
-			if (node.TransformType == TransformType.CanvasSizeUpdate)
+			if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
 			{
-				throw new InvalidOperationException($"Cannot add a JobTreeItem with TransformType = {node.TransformType} to a JobTreeItem.");
+				throw new InvalidOperationException($"Cannot add a JobTreeItem with TransformType = {node.Item.TransformType} to a JobTreeItem.");
 			}
 
-			if (node.Job.Id == ObjectId.Empty)
+			if (node.Item.Id == ObjectId.Empty)
 			{
 				throw new InvalidOperationException("Cannot add a JobTreeItem for a Job that has a Empty ObjectId.");
 			}
@@ -373,7 +319,7 @@ namespace MSS.Common
 			}
 			else
 			{
-				var index = GetSortPosition(node.Job);
+				var index = GetSortPosition(node.Item);
 				if (index < 0)
 				{
 					index = ~index;
@@ -395,32 +341,13 @@ namespace MSS.Common
 			}
 		}
 
-		public bool Move(JobTreeItem destination)
-		{
-			if (IsRoot)
-			{
-				throw new InvalidOperationException("Moving the root node is not supported.");
-			}
-
-			if (ParentNode is null)
-			{
-				throw new InvalidOperationException("Cannot move an orphan JobTreeItem.");
-			}
-
-			var parentNode = ParentNode;
-			var result = parentNode.Remove(this);
-			destination.AddNode(this);
-
-			return result;
-		}
-
 		public bool Remove(JobTreeItem jobTreeItem)
 		{
 			jobTreeItem.ParentNode = null;
 
 			bool result;
 
-			if (jobTreeItem.TransformType == TransformType.CanvasSizeUpdate)
+			if (jobTreeItem.Item.TransformType == TransformType.CanvasSizeUpdate)
 			{
 				result = AlternateDispSizes?.Remove(jobTreeItem) ?? false;
 				return result;
@@ -435,66 +362,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-		public int GetSortPosition(Job job)
-		{
-			var cnt = Children.Count;
-			if (cnt == 0)
-			{
-				return 0;
-			}
-
-			if (_comparer.Compare(Children[^1].Job.Id, job.Id) < 0)
-			{
-				return cnt;
-			}
-
-			if (_comparer.Compare(Children[0].Job.Id, job.Id) > 0)
-			{
-				return 0;
-			}
-
-			//var index = Children.ToList().BinarySearch(item);
-			//return index < 0 ? ~index : index;
-
-			for (var i = 0; i < cnt; i++)
-			{
-				//if (Children[i].c)
-				//if (Children[i].Job.Id.Equals(job.Id.ToString(), StringComparison.Ordinal))
-				if (_comparer.Equals(Children[i].Job.Id, job.Id))
-				{
-					return i;
-				}
-
-				if (_comparer.Compare(Children[i].Job.Id, job.Id) > 0)
-				{
-					return ~i;
-				}
-			}
-
-			return cnt;
-		}
-
-		//private int GetSortPosition(ObservableCollection<JobTreeItem> lst, JobTreeItem item)
-		//{
-		//	if (lst.Count == 0)
-		//	{
-		//		return 0;
-		//	}
-
-		//	if (lst[lst.Count - 1].Created < item.Created)
-		//	{
-		//		return lst.Count;
-		//	}
-
-		//	if (lst[0].Created > item.Created)
-		//	{
-		//		return 0;
-		//	}
-
-		//	int index = lst.ToList().BinarySearch(item);
-		//	return index < 0 ? ~index : index;
-		//}
 
 		public JobTreeItem AddCanvasSizeUpdateJob(Job job)
 		{
@@ -524,26 +391,6 @@ namespace MSS.Common
 			var result = RealChildJobs.IndexOfKey(job.Id);
 			return result;
 		}
-
-		public List<JobTreeItem> GetAncestors()
-		{
-			var result = new List<JobTreeItem>
-			{
-				this
-			};
-
-			var parentNode = ParentNode;
-
-			while (parentNode != null)
-			{
-				result.Add(parentNode);
-				parentNode = parentNode.ParentNode;
-			}
-
-			return result;
-		}
-
-
 
 		#endregion
 
@@ -575,24 +422,13 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Property Changed Support
-
-		public event PropertyChangedEventHandler? PropertyChanged;
-
-		private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		}
-
-		#endregion
-
 		#region ToString and ICloneable Support
 
 		public override string ToString()
 		{
 			var sb = new StringBuilder()
-				.Append($"TransformType: {TransformType}")
-				.Append($" Id: {Job.Id}");
+				.Append($"TransformType: {Item.TransformType}")
+				.Append($" Id: {Id}");
 
 			if (IsHome)
 			{
@@ -613,7 +449,7 @@ namespace MSS.Common
 					_ = sb.Append(" [Prk]");
 
 				}
-				_ = sb.Append($" ParentId: {Job.ParentJobId}");
+				_ = sb.Append($" ParentId: {ParentNode?.Id}");
 			}
 
 			_ = sb.Append($" CanvasSizeUpdates: {AlternateDispSizes?.Count ?? 0}")
@@ -629,9 +465,13 @@ namespace MSS.Common
 		}
 
 		// TODO: JobTreeItem.Clone method is not complete.
-		public JobTreeItem Clone()
+		public override JobTreeItem Clone()
 		{
-			var result = new JobTreeItem(Job, ParentNode, IsIterationChange, IsColorMapChange);
+			var result = new JobTreeItem(Item, ParentNode, Children, IsRoot, IsHome, IsCurrent, IsExpanded, 
+				IsIterationChange, IsColorMapChange, IsActiveAlternate, IsParkedAlternate, 
+				IsSelected, IsParentOfSelected, IsSiblingOfSelected, IsChildOfSelected, 
+				AlternateDispSizes, RealChildJobs, IsOnPreferredPath);
+
 			return result;
 		}
 
@@ -639,71 +479,71 @@ namespace MSS.Common
 
 		#region IComparable Support
 
-		public int CompareTo(JobTreeItem? other)
-		{
-			var result = other == null ? 1 : Job.Id.CompareTo(other.Job.Id);
-			return result;
-		}
+		//public int CompareTo(JobTreeItem? other)
+		//{
+		//	var result = other == null ? 1 : Job.Id.CompareTo(other.Job.Id);
+		//	return result;
+		//}
 
-		public static bool operator <(JobTreeItem left, JobTreeItem right)
-		{
-			return ReferenceEquals(left, null) ? !ReferenceEquals(right, null) : left.CompareTo(right) < 0;
-		}
+		//public static bool operator <(JobTreeItem left, JobTreeItem right)
+		//{
+		//	return ReferenceEquals(left, null) ? !ReferenceEquals(right, null) : left.CompareTo(right) < 0;
+		//}
 
-		public static bool operator <=(JobTreeItem left, JobTreeItem right)
-		{
-			return ReferenceEquals(left, null) || left.CompareTo(right) <= 0;
-		}
+		//public static bool operator <=(JobTreeItem left, JobTreeItem right)
+		//{
+		//	return ReferenceEquals(left, null) || left.CompareTo(right) <= 0;
+		//}
 
-		public static bool operator >(JobTreeItem left, JobTreeItem right)
-		{
-			return !ReferenceEquals(left, null) && left.CompareTo(right) > 0;
-		}
+		//public static bool operator >(JobTreeItem left, JobTreeItem right)
+		//{
+		//	return !ReferenceEquals(left, null) && left.CompareTo(right) > 0;
+		//}
 
-		public static bool operator >=(JobTreeItem left, JobTreeItem right)
-		{
-			return ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.CompareTo(right) >= 0;
-		}
+		//public static bool operator >=(JobTreeItem left, JobTreeItem right)
+		//{
+		//	return ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.CompareTo(right) >= 0;
+		//}
 
 		#endregion
 
 		#region IEqualityComparer and IEquatable Support
 
-		public bool Equals(JobTreeItem? x, JobTreeItem? y)
-		{
-			return x?.Equals(y) ?? y is null;
-		}
+		//public bool Equals(JobTreeItem? x, JobTreeItem? y)
+		//{
+		//	return x?.Equals(y) ?? y is null;
+		//}
 
-		public override bool Equals(object? obj)
-		{
-			return Equals(obj as JobTreeItem);
-		}
+		//public override bool Equals(object? obj)
+		//{
+		//	return Equals(obj as JobTreeItem);
+		//}
 
-		public bool Equals(JobTreeItem? other)
-		{
-			return other != null &&
-				   _comparer.Equals(Job.Id, other.Job.Id);
-		}
+		//public bool Equals(JobTreeItem? other)
+		//{
+		//	return other != null &&
+		//		   _comparer.Equals(Job.Id, other.Job.Id);
+		//}
 
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(Job.Id);
-		}
+		//public override int GetHashCode()
+		//{
+		//	return HashCode.Combine(Job.Id);
+		//}
 
-		public int GetHashCode([DisallowNull] JobTreeItem obj)
-		{
-			return obj.GetHashCode();
-		}
+		//public int GetHashCode([DisallowNull] JobTreeItem obj)
+		//{
+		//	return obj.GetHashCode();
+		//}
 
-		public static bool operator ==(JobTreeItem? left, JobTreeItem? right)
-		{
-			return EqualityComparer<JobTreeItem>.Default.Equals(left, right);
-		}
+		//public static bool operator ==(JobTreeItem? left, JobTreeItem? right)
+		//{
+		//	return EqualityComparer<JobTreeItem>.Default.Equals(left, right);
+		//}
 
-		public static bool operator !=(JobTreeItem? left, JobTreeItem? right)
-		{
-			return !(left == right);
-		}
+		//public static bool operator !=(JobTreeItem? left, JobTreeItem? right)
+		//{
+		//	return !(left == right);
+		//}
 
 		#endregion
 

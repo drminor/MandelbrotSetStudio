@@ -13,6 +13,8 @@ using System.Threading;
 
 namespace MSS.Common.MSet
 {
+	using JobPathType = ITreePath<JobTreeItem, Job>;
+
 	public class Project : IDisposable, INotifyPropertyChanged, IJobOwner
 	{
 		private string _name;
@@ -70,11 +72,11 @@ namespace MSS.Common.MSet
 			}
 
 			_ = LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
-			_jobTree.CurrentJob = currentJob;
+			_jobTree.CurrentItem = currentJob;
 
 			//_jobTree
 
-			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentJob.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
+			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentItem.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
 		}
 
 		#endregion
@@ -83,16 +85,16 @@ namespace MSS.Common.MSet
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
-		public ObservableCollection<JobTreeItem>? JobItems => _jobTree.JobItems;
+		public ObservableCollection<JobTreeItem>? JobItems => _jobTree.Nodes;
 
 		public bool CanGoBack => _jobTree.CanGoBack;
 		public bool CanGoForward => _jobTree.CanGoForward;
 
-		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyJobIsDirty;
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyItemIsDirty;
 
 		public int GetNumberOfDirtyJobs()
 		{
-			var result = _jobTree.GetJobs().Count(x => !x.OnFile || x.IsDirty);
+			var result = _jobTree.GetItems().Count(x => !x.OnFile || x.IsDirty);
 			return result;
 		}  
 
@@ -163,20 +165,20 @@ namespace MSS.Common.MSet
 
 		public Job CurrentJob
 		{
-			get => _jobTree.CurrentJob;
+			get => _jobTree.CurrentItem;
 			set
 			{
 				if (CurrentJob != value)
 				{
 					if (!value.IsEmpty)
 					{
-						var colorBandSetIdBeforeUpdate = _jobTree.CurrentJob.ColorBandSetId;
+						var colorBandSetIdBeforeUpdate = _jobTree.CurrentItem.ColorBandSetId;
 
 						_ = LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
 
-						_jobTree.CurrentJob = value;
+						_jobTree.CurrentItem = value;
 
-						if (_jobTree.CurrentJob.ColorBandSetId != colorBandSetIdBeforeUpdate)
+						if (_jobTree.CurrentItem.ColorBandSetId != colorBandSetIdBeforeUpdate)
 						{
 							OnPropertyChanged(nameof(CurrentColorBandSet));
 						}
@@ -242,10 +244,10 @@ namespace MSS.Common.MSet
 
 		public JobTreeItem? SelectedViewItem
 		{
-			get => _jobTree.SelectedItem;
+			get => _jobTree.SelectedNode?.Node;
 			set
 			{
-				_jobTree.SelectedItem = value;
+				_jobTree.SelectedNode = value;
 				OnPropertyChanged();
 			}
 		}
@@ -261,7 +263,7 @@ namespace MSS.Common.MSet
 				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
 			}
 
-			_ = _jobTree.Add(job, selectTheAddedJob: true);
+			_ = _jobTree.Add(job, selectTheAddedItem: true);
 
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
@@ -284,7 +286,7 @@ namespace MSS.Common.MSet
 			_stateLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (_jobTree.TryGetPreviousJob(skipPanJobs, out var job))
+				if (_jobTree.TryGetPreviousJob(out var job, skipPanJobs))
 				{
 					//int idx = index;
 					DoWithWriteLock(() =>
@@ -310,7 +312,7 @@ namespace MSS.Common.MSet
 			_stateLock.EnterUpgradeableReadLock();
 			try
 			{
-				if (_jobTree.TryGetNextJob(skipPanJobs, out var job))
+				if (_jobTree.TryGetNextJob(out var job, skipPanJobs))
 				{
 					DoWithWriteLock(() =>
 					{
@@ -332,7 +334,7 @@ namespace MSS.Common.MSet
 
 		public List<Job> GetJobs()
 		{
-			return _jobTree.GetJobs().ToList();
+			return _jobTree.GetItems().ToList();
 		}
 
 		public List<ColorBandSet> GetColorBandSets()
@@ -340,12 +342,12 @@ namespace MSS.Common.MSet
 			return _colorBandSets;
 		}
 
-		public JobTreePath? GetCurrentPath() => _jobTree.GetCurrentPath();
-		public JobTreePath? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
+		public JobPathType? GetCurrentPath() => _jobTree.GetCurrentPath();
+		public JobPathType? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
 
-		public Job? GetJob(ObjectId jobId) => _jobTree.GetJob(jobId);
-		public Job? GetParent(Job job) => _jobTree.GetParent(job);
-		public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetJobAndDescendants(jobId);
+		public Job? GetJob(ObjectId jobId) => _jobTree.GetItem(jobId);
+		public Job? GetParent(Job job) => _jobTree.GetParentItem(job);
+		public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetItemAndDescendants(jobId);
 
 		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
 		{

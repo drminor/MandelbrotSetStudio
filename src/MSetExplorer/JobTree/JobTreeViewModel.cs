@@ -2,6 +2,7 @@
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
+using MSS.Types;
 using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,6 +13,8 @@ using System.Text;
 
 namespace MSetExplorer
 {
+	using JobPathType = ITreePath<JobTreeItem, Job>;
+
 	public class JobTreeViewModel : ViewModelBase, IJobTreeViewModel
 	{
 		private readonly IProjectAdapter _projectAdapter;
@@ -92,19 +95,19 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public JobTreePath? GetCurrentPath()
+		public JobPathType? GetCurrentPath()
 		{
 			return CurrentProject?.GetCurrentPath();
 		}
 
-		public JobTreePath? GetPath(ObjectId jobId)
+		public JobPathType? GetPath(ObjectId jobId)
 		{
 			return CurrentProject?.GetPath(jobId);
 		}
 
 		public bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job)
 		{
-			job = CurrentProject?.GetPath(jobId)?.LastTerm?.Job;
+			job = CurrentProject?.GetPath(jobId)?.LastTerm?.Item;
 			return job != null;
 		}
 
@@ -155,9 +158,9 @@ namespace MSetExplorer
 				return $"Could not find a job with JobId: {jobId}.";
 			}
 
-			var jobTreeItem = path.Item;
+			var jobTreeItem = path.Node;
 
-			var job = jobTreeItem.Job;
+			var job = jobTreeItem.Item;
 
 			var coordVals = RValueHelper.GetValuesAsStrings(job.MapAreaInfo.Coords);
 
@@ -166,9 +169,9 @@ namespace MSetExplorer
 				.AppendLine($"X1: {coordVals[0]}\tY1: {coordVals[2]}")
 				.AppendLine($"X2: {coordVals[1]}\tY2: {coordVals[3]}")
 
-				.AppendLine($"\tTransformType: {jobTreeItem.TransformType}")
-				.AppendLine($"\tId: {jobTreeItem.Job.Id}")
-				.AppendLine($"\tParentId: {jobTreeItem.Job.ParentJobId}")
+				.AppendLine($"\tTransformType: {job.TransformType}")
+				.AppendLine($"\tId: {job.Id}")
+				.AppendLine($"\tParentId: {job.ParentJobId}")
 				.AppendLine($"\tCanvasSize Disp Alternates: {jobTreeItem.AlternateDispSizes?.Count ?? 0}");
 
 			if (jobTreeItem.IsActiveAlternate)
@@ -182,7 +185,7 @@ namespace MSetExplorer
 				_ = sb.AppendLine("\nThis job is not on the Active Branch:");
 				_ = sb.AppendLine("List of all Branches:");
 				var activeAltParentPath = path.GetParentPath()!;
-				DisplayAlternates(jobTreeItem, sb, activeAltParentPath.Item);
+				DisplayAlternates(jobTreeItem, sb, activeAltParentPath.Node);
 			}
 			else
 			{
@@ -200,18 +203,18 @@ namespace MSetExplorer
 			return sb.ToString();
 		}
 
-		private void DisplayAlternates(JobTreeItem item, StringBuilder sb, JobTreeItem parentNode)
+		private void DisplayAlternates(JobTreeItem node, StringBuilder sb, JobTreeItem parentNode)
 		{
 			_ = sb.AppendLine("  TransformType\tDateCreated\t\tChild Count\tIsActive");
 
-			var altNodes = new List<JobTreeItem>(parentNode.Children);
-			var sortPosition = parentNode.GetSortPosition(item.Job);
-			altNodes.Insert(sortPosition, item);
+			var altNodes = parentNode.Children.Cast<JobTreeItem>().ToList();
+			var sortPosition = parentNode.GetSortPosition(node.Item);
+			altNodes.Insert(sortPosition, node);
 
 			foreach (var altNode in altNodes)
 			{
-				var strItemIndicator = altNode == item ? "*-" : "  ";
-				_ = sb.AppendLine($"{strItemIndicator}{altNode.TransformType}\t{altNode.Job.DateCreated}\t{altNode.Children.Count()}\t\t{altNode.IsActiveAlternate}");
+				var strItemIndicator = altNode == node ? "*-" : "  ";
+				_ = sb.AppendLine($"{strItemIndicator}{altNode.Item.TransformType}\t{altNode.Item.DateCreated}\t{altNode.Children.Count()}\t\t{altNode.IsActiveAlternate}");
 			}
 
 		}

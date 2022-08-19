@@ -2,48 +2,54 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Common
 {
-	public interface IJobTree : IDisposable
+	using JobPathType = ITreePath<JobTreeItem, Job>;
+	using JobNodeType = ITreeNode<JobTreeItem, Job>;
+
+	public interface IJobTree : ITree<JobTreeItem, Job>, IDisposable
 	{
-		ObservableCollection<JobTreeItem> JobItems { get; }
+		//ObservableCollection<JobNodeType> Nodes { get; }
 
-		Job CurrentJob { get; set; }
-		bool IsDirty { get; set; }
-		bool AnyJobIsDirty { get; }
+		//Job CurrentItem { get; set; }
+		//bool IsDirty { get; set; }
+		//bool AnyItemIsDirty { get; }
 
-		JobTreeItem? SelectedItem { get; set; }
+		//JobPathType? GetCurrentPath();
+		//JobPathType? GetPath(ObjectId jobId);
+
+		//JobPathType Add(Job job, bool selectTheAddedItem);
+
+		//bool RemoveBranch(ObjectId jobId);
+		//bool RemoveBranch(JobPathType path);
+
+		//bool CanGoBack { get; }
+		//bool CanGoForward { get; }
+
+		//bool TryGetNextItem([MaybeNullWhen(false)] out Job item, Func<JobNodeType, bool>? predicate = null);
+		//bool TryGetPreviousItem([MaybeNullWhen(false)] out Job item, Func<JobNodeType, bool>? predicate = null);
+
+		//bool MoveBack(Func<JobNodeType, bool>? predicate = null);
+		//bool MoveForward(Func<JobNodeType, bool>? predicate = null);
+
+		//Job? GetParentItem(Job job);
+		//Job? GetItem(ObjectId jobId);
+
+		//IEnumerable<Job> GetItems();
+		//List<Job>? GetItemAndDescendants(ObjectId jobId);
+
+		JobNodeType? SelectedNode { get; set; }
 		bool UseRealRelationShipsToUpdateSelected { get; set; }
 
-		JobTreePath? GetCurrentPath();
-		JobTreePath? GetPath(ObjectId jobId);
-
-		JobTreePath Add(Job job, bool selectTheAddedJob);
+		Job? GetParentItem(Job job);
 
 		bool RestoreBranch(ObjectId jobId);
-		bool RestoreBranch(JobTreePath path);
+		bool RestoreBranch(JobPathType path);
 
-		bool RemoveBranch(ObjectId jobId);
-		bool RemoveBranch(JobTreePath path);
-
-		bool CanGoBack { get; }
-		bool CanGoForward { get; }
-
-		bool TryGetNextJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job);
-		bool TryGetPreviousJob(bool skipPanJobs, [MaybeNullWhen(false)] out Job job);
-
-		bool MoveBack(bool skipPanJobs);
-		bool MoveForward(bool skipPanJobs);
-
-		Job? GetParent(Job job);
-		Job? GetJob(ObjectId jobId);
-
-		IEnumerable<Job> GetJobs();
-		List<Job>? GetJobAndDescendants(ObjectId jobId);
+		bool TryGetNextJob([MaybeNullWhen(false)] out Job item, bool skipPanJobs);
+		bool TryGetPreviousJob([MaybeNullWhen(false)] out Job item, bool skipPanJobs);
 
 		bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy);
 	}

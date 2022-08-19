@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types.MSet
 {
-	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>, ICloneable
+	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>, IComparable<Job?>, ICloneable
 	{
 		private static readonly Lazy<Job> _lazyJob = new Lazy<Job>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static readonly Job Empty = _lazyJob.Value;
@@ -227,7 +227,7 @@ namespace MSS.Types.MSet
 
 		#endregion
 
-		#region IEqualityComparer / IEquatable Support
+		#region IEqualityComparer, IEquatable, IComparable Support
 
 		public override bool Equals(object? obj)
 		{
@@ -269,6 +269,17 @@ namespace MSS.Types.MSet
 		public static bool operator !=(Job? left, Job? right)
 		{
 			return !(left == right);
+		}
+
+		public int CompareTo(Job? other)
+		{
+			if (other is null)
+			{
+				return 1;
+			}
+
+			return string.Compare(Id.ToString(), other.Id.ToString(), StringComparison.Ordinal);
+
 		}
 
 		#endregion
