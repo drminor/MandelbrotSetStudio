@@ -11,10 +11,10 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
+using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+
 namespace MSS.Common.MSet
 {
-	using JobPathType = ITreePath<JobTreeNode, Job>;
-
 	public class Project : IDisposable, INotifyPropertyChanged, IJobOwner
 	{
 		private string _name;

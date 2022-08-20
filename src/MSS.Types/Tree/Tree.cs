@@ -11,19 +11,18 @@ namespace MSS.Types
 {
 	public class Tree<U,V> : ITree<U,V> where U: class, ITreeNode<U,V> where V: class, IEquatable<V>, IComparable<V>
 	{
-		protected readonly ReaderWriterLockSlim _treeLock;
-		protected virtual ITreeBranch<U, V> _root { get; set; }
-
-		protected ITreePath<U,V>? _currentPath;
+		protected ReaderWriterLockSlim TreeLock { get; }
+		protected virtual ITreeBranch<U, V> Root { get; set; }
+		protected ITreePath<U, V>? CurrentPath { get; set; }
 
 		#region Constructor
 
 		public Tree(TreeBranch<U,V> root)
 		{
-			_treeLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+			TreeLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
-			_root = root;
-			_currentPath = _root.GetCurrentPath();
+			Root = root;
+			CurrentPath = Root.GetCurrentPath();
 
 			Debug.Assert(!IsDirty, "IsDirty should be false as the constructor is exited.");
 		}
@@ -32,13 +31,13 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public virtual ObservableCollection<U> Nodes => _root.Children;
+		public ObservableCollection<U> Nodes => Root.Children;
 
 		public V CurrentItem
 		{
 			get => DoWithReadLock(() =>
 			{
-				var currentItem = _currentPath?.Item;
+				var currentItem = CurrentPath?.Item;
 				if (currentItem == null)
 				{
 					Debug.WriteLine("WARNING: In CurrentItem:Getter, the CurrentPath is null. Returning the Home Item.");
@@ -49,11 +48,15 @@ namespace MSS.Types
 
 			set => DoWithWriteLock(() =>
 			{
-				if (value != _currentPath?.Item)
+				if (value != CurrentPath?.Item)
 				{
 					if (value != null)
 					{
-						if (!MoveCurrentTo(value, _root, out _currentPath))
+						if (MoveCurrentTo(value, Root, out var path))
+						{
+							CurrentPath = path;
+						}
+						else
 						{
 							Debug.WriteLine($"WARNING: Could not MoveCurrent to item: {value}.");
 						}
@@ -67,15 +70,15 @@ namespace MSS.Types
 		{
 			get
 			{
-				_treeLock.EnterReadLock();
+				TreeLock.EnterReadLock();
 
 				try
 				{
-					return CanMoveBack(_currentPath);
+					return CanMoveBack(CurrentPath);
 				}
 				finally
 				{
-					_treeLock.ExitReadLock();
+					TreeLock.ExitReadLock();
 				}
 			}
 		}
@@ -84,15 +87,15 @@ namespace MSS.Types
 		{
 			get
 			{
-				_treeLock.EnterReadLock();
+				TreeLock.EnterReadLock();
 
 				try
 				{
-					return CanMoveForward(_currentPath);
+					return CanMoveForward(CurrentPath);
 				}
 				finally
 				{
-					_treeLock.ExitReadLock();
+					TreeLock.ExitReadLock();
 				}
 			}
 		}
@@ -103,15 +106,15 @@ namespace MSS.Types
 		{
 			get
 			{
-				_treeLock.EnterReadLock();
+				TreeLock.EnterReadLock();
 
 				try
 				{
-					return GetNodes(_root).Any(x => x.IsDirty);
+					return GetNodes(Root).Any(x => x.IsDirty);
 				}
 				finally
 				{
-					_treeLock.ExitReadLock();
+					TreeLock.ExitReadLock();
 				}
 
 			}
@@ -123,24 +126,24 @@ namespace MSS.Types
 
 		public virtual ITreePath<U,V> Add(V item, bool selectTheAddedItem)
 		{
-			_treeLock.EnterWriteLock();
+			TreeLock.EnterWriteLock();
 
 			ITreePath<U,V> newPath;
 
 			try
 			{
-				newPath = AddInternal(item, currentBranch: _root);
+				newPath = AddInternal(item, currentBranch: Root);
 				IsDirty = true;
 			}
 			finally
 			{
-				_treeLock.ExitWriteLock();
+				TreeLock.ExitWriteLock();
 			}
 
 			if (selectTheAddedItem)
 			{
 				ExpandAndSetCurrent(newPath);
-				_currentPath = newPath;
+				CurrentPath = newPath;
 			}
 
 			return newPath;
@@ -149,7 +152,7 @@ namespace MSS.Types
 		public bool RemoveBranch(ObjectId itemId)
 		{
 			// TODO: RemoveBranch does not support removing CanvasSizeUpdate nodes.
-			if (!TryFindPathById(itemId, _root, out var path))
+			if (!TryFindPathById(itemId, Root, out var path))
 			{
 				return false;
 			}
@@ -166,13 +169,13 @@ namespace MSS.Types
 
 		public bool TryGetPreviousItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
-			if (_currentPath == null)
+			if (CurrentPath == null)
 			{
 				item = null;
 				return false;
 			}
 
-			var backPath = GetPreviousItemPath(_currentPath, predicate);
+			var backPath = GetPreviousItemPath(CurrentPath, predicate);
 			item = backPath?.Item;
 
 			return item != null;
@@ -180,16 +183,16 @@ namespace MSS.Types
 
 		public bool MoveBack(Func<ITreeNode<U,V>, bool>? predicate = null)
 		{
-			if (_currentPath == null)
+			if (CurrentPath == null)
 			{
 				return false;
 			}
 
-			var backPath = GetPreviousItemPath(_currentPath, predicate);
+			var backPath = GetPreviousItemPath(CurrentPath, predicate);
 
 			if (backPath != null)
 			{
-				_currentPath = backPath;
+				CurrentPath = backPath;
 				ExpandAndSetCurrent(backPath);
 				return true;
 			}
@@ -201,13 +204,13 @@ namespace MSS.Types
 
 		public bool TryGetNextItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
-			if (_currentPath == null)
+			if (CurrentPath == null)
 			{
 				item = null;
 				return false;
 			}
 
-			var forwardPath = GetNextItemPath(_currentPath, predicate);
+			var forwardPath = GetNextItemPath(CurrentPath, predicate);
 			item = forwardPath?.Item;
 
 			return item != null;
@@ -215,16 +218,16 @@ namespace MSS.Types
 
 		public bool MoveForward(Func<ITreeNode<U,V>, bool>? predicate = null)
 		{
-			if (_currentPath == null)
+			if (CurrentPath == null)
 			{
 				return false;
 			}
 
-			var forwardPath = GetNextItemPath(_currentPath, predicate);
+			var forwardPath = GetNextItemPath(CurrentPath, predicate);
 
 			if (forwardPath != null)
 			{
-				_currentPath = forwardPath;
+				CurrentPath = forwardPath;
 				ExpandAndSetCurrent(forwardPath);
 				return true;
 			}
@@ -240,50 +243,50 @@ namespace MSS.Types
 
 		public ITreePath<U,V>? GetCurrentPath()
 		{
-			_treeLock.EnterReadLock();
+			TreeLock.EnterReadLock();
 
 			try
 			{
-				return _currentPath == null ? null : _currentPath;
+				return CurrentPath == null ? null : CurrentPath;
 			}
 			finally
 			{
-				_treeLock.ExitReadLock();
+				TreeLock.ExitReadLock();
 			}
 		}
 
 		public ITreePath<U,V>? GetPath(ObjectId itemId)
 		{
-			_treeLock.EnterReadLock();
+			TreeLock.EnterReadLock();
 
 			try
 			{
-				return GetPathById(itemId, _root);
+				return GetPathById(itemId, Root);
 			}
 			finally
 			{
-				_treeLock.ExitReadLock();
+				TreeLock.ExitReadLock();
 			}
 		}
 
 		public IEnumerable<V> GetItems()
 		{
-			_treeLock.EnterReadLock();
+			TreeLock.EnterReadLock();
 
 			try
 			{
-				var result = GetItems(_root);
+				var result = GetItems(Root);
 				return result;
 			}
 			finally
 			{
-				_treeLock.ExitReadLock();
+				TreeLock.ExitReadLock();
 			}
 		}
 
 		public V? GetItem(ObjectId itemId)
 		{
-			_ = TryFindItem(itemId, _root, out var result);
+			_ = TryFindItem(itemId, Root, out var result);
 			return result;
 		}
 
@@ -295,20 +298,20 @@ namespace MSS.Types
 			}
 			else
 			{
-				_ = TryFindItem(node.ParentId.Value, _root, out var result);
+				_ = TryFindItem(node.ParentId.Value, Root, out var result);
 				return result;
 			}
 		}
 
 		public List<V>? GetItemAndDescendants(ObjectId itemId)
 		{
-			_treeLock.EnterReadLock();
+			TreeLock.EnterReadLock();
 
 			try
 			{
 				List<V>? result;
 
-				if (TryFindPathById(itemId, _root, out var path))
+				if (TryFindPathById(itemId, Root, out var path))
 				{
 					result = new List<V> { path.NodeSafe.Item };
 					result.AddRange(GetItems(path));
@@ -322,7 +325,7 @@ namespace MSS.Types
 			}
 			finally
 			{
-				_treeLock.ExitReadLock();
+				TreeLock.ExitReadLock();
 			}
 		}
 
@@ -692,7 +695,7 @@ namespace MSS.Types
 
 		private V DoWithReadLock(Func<V> function)
 		{
-			_treeLock.EnterReadLock();
+			TreeLock.EnterReadLock();
 
 			try
 			{
@@ -700,13 +703,13 @@ namespace MSS.Types
 			}
 			finally
 			{
-				_treeLock.ExitReadLock();
+				TreeLock.ExitReadLock();
 			}
 		}
 
 		private void DoWithWriteLock(Action action)
 		{
-			_treeLock.EnterWriteLock();
+			TreeLock.EnterWriteLock();
 
 			try
 			{
@@ -714,7 +717,7 @@ namespace MSS.Types
 			}
 			finally
 			{
-				_treeLock.ExitWriteLock();
+				TreeLock.ExitWriteLock();
 			}
 		}
 
@@ -725,7 +728,7 @@ namespace MSS.Types
 		public void Dispose()
 		{
 			GC.SuppressFinalize(this);
-			((IDisposable)_treeLock).Dispose();
+			((IDisposable)TreeLock).Dispose();
 		}
 
 		#endregion

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace MSS.Types
 {
-	public class TreeBranch<U,V> : /*TreePath<U,V>, */ITreeBranch<U, V> where U : class, ITreeNode<U,V> where V : class, IEquatable<V>, IComparable<V>
+	public class TreeBranch<U,V> : ITreeBranch<U, V> where U : class, ITreeNode<U,V> where V : class, IEquatable<V>, IComparable<V>
 	{
 		protected U RootItem { get; }
 

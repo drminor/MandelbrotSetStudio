@@ -1,11 +1,9 @@
-﻿using MSS.Types;
-using MSS.Types.MSet;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace MSS.Common
 {
-	public class JobTreePath : TreePath<JobTreeNode, Job>
+	public class JobTreePath : /*TreePath<JobTreeNode, Job>*/ JobTreeBranch
 	{
 		#region Constructors
 

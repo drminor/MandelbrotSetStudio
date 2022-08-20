@@ -7,10 +7,10 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
+using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+
 namespace MSetExplorer
 {
-	using JobPathType = ITreePath<JobTreeNode, Job>;
-
 	public interface IJobTreeViewModel : INotifyPropertyChanged
 	{
 		bool InDesignMode { get; }

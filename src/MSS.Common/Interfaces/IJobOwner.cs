@@ -4,10 +4,10 @@ using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
+using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+
 namespace MSS.Common.MSet
 {
-	using JobPathType = ITreePath<JobTreeNode, Job>;
-
 	public interface IJobOwner
 	{
 		ObjectId Id { get; init; }

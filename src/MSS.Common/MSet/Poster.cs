@@ -10,11 +10,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
+using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+
 namespace MSS.Common.MSet
 {
-
-	using JobPathType = ITreePath<JobTreeNode, Job>;
-
 
 	// TODO: Dispose the Job Tree
 	public class Poster : INotifyPropertyChanged, ICloneable, IJobOwner

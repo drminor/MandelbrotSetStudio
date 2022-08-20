@@ -11,10 +11,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
+using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+
 namespace MSetExplorer
 {
-	using JobPathType = ITreePath<JobTreeNode, Job>;
-
 	public class JobTreeViewModel : ViewModelBase, IJobTreeViewModel
 	{
 		private readonly IProjectAdapter _projectAdapter;

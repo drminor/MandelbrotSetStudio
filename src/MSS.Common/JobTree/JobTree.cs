@@ -7,11 +7,12 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
+using JobBranchType = MSS.Types.ITreeBranch<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+
 namespace MSS.Common
 {
-	using JobBranchType = ITreeBranch<JobTreeNode, Job>;
-	using JobNodeType = ITreeNode<JobTreeNode, Job>;
-	using JobPathType = ITreePath<JobTreeNode, Job>;
 
 	/// <remarks>
 	///	New jobs are inserted into order by the date the job was created.
@@ -46,14 +47,14 @@ namespace MSS.Common
 
 			//_root = new JobTreeBranch();
 			var homeJob = GetHomeJob(jobs, checkHomeJob);
-			_currentPath = AddJob(homeJob, _root);
+			CurrentPath = AddJob(homeJob, Root);
 
-			if (_currentPath == null)
+			if (CurrentPath == null)
 			{
 				throw new InvalidOperationException("The new JobTreeBranch has a null _currentPath.");
 			}
 
-			if (!_currentPath.IsHome)
+			if (!CurrentPath.IsHome)
 			{
 				//throw new InvalidOperationException("The new JobTreeBranch's CurrentPath is not the HomeNode.");
 				Debug.WriteLine("WARNING: The new JobTreeBranch's CurrentPath is not the HomeNode.");
@@ -65,9 +66,9 @@ namespace MSS.Common
 			Debug.WriteLine($"Loading {jobs.Count} jobs.");
 
 			// Have BuildTree start with the homeJob, and not the root, so that it will not add the Home Job a second time.
-			_currentPath = PopulateTree(jobs, _currentPath);
+			CurrentPath = PopulateTree(jobs, CurrentPath);
 
-			ReportOutput(_root, _currentPath);
+			ReportOutput(Root, CurrentPath);
 
 			//Debug.Assert(_root.RootItem.Job.Id == ObjectId.Empty, "Creating a Root JobTreeItem that has a JobId != ObjectId.Empty.");
 			Debug.Assert(!IsDirty, "IsDirty should be false as the constructor is exited.");
@@ -94,9 +95,9 @@ namespace MSS.Common
 			{
 				if (value != _selectedItem)
 				{
-					UpdateIsSelected(_selectedItem, false, UseRealRelationShipsToUpdateSelected, _root);
+					UpdateIsSelected(_selectedItem, false, UseRealRelationShipsToUpdateSelected, Root);
 					_selectedItem = value;
-					UpdateIsSelected(_selectedItem, true, UseRealRelationShipsToUpdateSelected, _root);
+					UpdateIsSelected(_selectedItem, true, UseRealRelationShipsToUpdateSelected, Root);
 				}
 			}
 		}
@@ -112,7 +113,7 @@ namespace MSS.Common
 			Debug.WriteLine($"Restoring Branch: {jobId}.");
 
 			// TODO: RestoreBranch does not support CanvasSizeUpdateJobs
-			if (!TryFindPathById(jobId, _root, out var path))
+			if (!TryFindPathById(jobId, Root, out var path))
 			{
 				throw new InvalidOperationException($"Cannot find job: {jobId} that is being restored.");
 			}
@@ -147,20 +148,20 @@ namespace MSS.Common
 			}
 
 			ExpandAndSetCurrent(newPath);
-			_currentPath = newPath;
+			CurrentPath = newPath;
 			IsDirty = true;
 			return true;
 		}
 
 		public bool TryGetPreviousJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)
 		{
-			if (_currentPath == null)
+			if (CurrentPath == null)
 			{
 				job = null;
 				return false;
 			}
 
-			var backPath = GetPreviousItemPath(_currentPath, GetPredicate(skipPanJobs));
+			var backPath = GetPreviousItemPath(CurrentPath, GetPredicate(skipPanJobs));
 			job = backPath?.Item;
 
 			return job != null;
@@ -168,16 +169,16 @@ namespace MSS.Common
 
 		public bool MoveBack(bool skipPanJobs)
 		{
-			if (_currentPath == null)
+			if (CurrentPath == null)
 			{
 				return false;
 			}
 
-			var backPath = GetPreviousItemPath(_currentPath, GetPredicate(skipPanJobs));
+			var backPath = GetPreviousItemPath(CurrentPath, GetPredicate(skipPanJobs));
 
 			if (backPath != null)
 			{
-				_currentPath = backPath;
+				CurrentPath = backPath;
 				ExpandAndSetCurrent(backPath);
 				return true;
 			}
@@ -189,13 +190,13 @@ namespace MSS.Common
 
 		public bool TryGetNextJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)
 		{
-			if (_currentPath == null)
+			if (CurrentPath == null)
 			{
 				job = null;
 				return false;
 			}
 
-			var forwardPath = GetNextItemPath(_currentPath, GetPredicate(skipPanJobs));
+			var forwardPath = GetNextItemPath(CurrentPath, GetPredicate(skipPanJobs));
 			job = forwardPath?.Item;
 
 			return job != null;
@@ -203,16 +204,16 @@ namespace MSS.Common
 
 		public bool MoveForward(bool skipPanJobs)
 		{
-			if (_currentPath == null)
+			if (CurrentPath == null)
 			{
 				return false;
 			}
 
-			var forwardPath = GetNextItemPath(_currentPath, GetPredicate(skipPanJobs));
+			var forwardPath = GetNextItemPath(CurrentPath, GetPredicate(skipPanJobs));
 
 			if (forwardPath != null)
 			{
-				_currentPath = forwardPath;
+				CurrentPath = forwardPath;
 				ExpandAndSetCurrent(forwardPath);
 				return true;
 			}
@@ -229,11 +230,11 @@ namespace MSS.Common
 				throw new ArgumentException("The job must have a non-null ParentJobId.", nameof(job));
 			}
 
-			_treeLock.EnterUpgradeableReadLock();
+			TreeLock.EnterUpgradeableReadLock();
 
 			try
 			{
-				if (TryFindParentPath(job, _root, out var parentPath))
+				if (TryFindParentPath(job, Root, out var parentPath))
 				{
 					JobTreeNode parentNode;
 
@@ -260,29 +261,29 @@ namespace MSS.Common
 			}
 			finally
 			{
-				_treeLock.ExitUpgradeableReadLock();
+				TreeLock.ExitUpgradeableReadLock();
 			}
 		}
 
 		public override JobPathType Add(Job item, bool selectTheAddedItem)
 		{
 			JobPathType newPath;
-			_treeLock.EnterWriteLock();
+			TreeLock.EnterWriteLock();
 
 			try
 			{
-				newPath = AddInternal(item, currentBranch: _root);
+				newPath = AddInternal(item, currentBranch: Root);
 				IsDirty = true;
 			}
 			finally
 			{
-				_treeLock.ExitWriteLock();
+				TreeLock.ExitWriteLock();
 			}
 
 			if (selectTheAddedItem)
 			{
 				ExpandAndSetCurrent(newPath);
-				_currentPath = newPath;
+				CurrentPath = newPath;
 			}
 
 			return newPath;
@@ -300,7 +301,7 @@ namespace MSS.Common
 			}
 			else
 			{
-				_ = TryFindItem(job.ParentJobId.Value, _root, out var result);
+				_ = TryFindItem(job.ParentJobId.Value, Root, out var result);
 				return result;
 			}
 		}
@@ -339,7 +340,7 @@ namespace MSS.Common
 			}
 			else
 			{
-				_ = TryFindItem(job.ParentJobId.Value, _root, out var result);
+				_ = TryFindItem(job.ParentJobId.Value, Root, out var result);
 				return result;
 			}
 		}
