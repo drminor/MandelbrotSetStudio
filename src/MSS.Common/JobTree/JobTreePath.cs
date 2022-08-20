@@ -1,18 +1,11 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace MSS.Common
 {
-	using JobBranchType = ITreeBranch<JobTreeNode, Job>;
-	using JobPathType = ITreePath<JobTreeNode, Job>;
-	using JobNodeType = JobTreeNode;
-
-	public class JobTreePath : TreePath<JobTreeNode, Job> // ITreePath<JobTreeNode, Job>
+	public class JobTreePath : TreePath<JobTreeNode, Job>
 	{
 		#region Constructors
 
@@ -24,16 +17,16 @@ namespace MSS.Common
 		}
 
 		// Used to create a JobTreeBranch
-		protected JobTreePath(JobNodeType rootItem) : base(rootItem)
+		protected JobTreePath(JobTreeNode rootItem) : base(rootItem)
 		{
 			//_rootItem = rootItem;
 			//Terms = new List<JobNodeType>();
 		}
 
-		public JobTreePath(JobNodeType rootItem, JobNodeType term) : this(rootItem, new[] { term })
+		public JobTreePath(JobTreeNode rootItem, JobTreeNode term) : this(rootItem, new[] { term })
 		{ }
 
-		public JobTreePath(JobNodeType rootItem, IEnumerable<JobNodeType> terms) : base(rootItem, terms)
+		public JobTreePath(JobTreeNode rootItem, IEnumerable<JobTreeNode> terms) : base(rootItem, terms)
 		{
 			//if (!terms.Any())
 			//{
@@ -65,7 +58,7 @@ namespace MSS.Common
 
 		public override JobTreePath Clone()
 		{
-			return new JobTreePath(_rootItem.Clone(), new List<JobNodeType>(Terms)/*, new ObservableCollection<JobNodeType>(Children)*/);
+			return new JobTreePath(RootItem.Clone(), new List<JobTreeNode>(Terms)/*, new ObservableCollection<JobNodeType>(Children)*/);
 		}
 
 		#endregion

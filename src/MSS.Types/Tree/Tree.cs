@@ -121,7 +121,7 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		virtual public ITreePath<U,V> Add(V item, bool selectTheAddedItem)
+		public virtual ITreePath<U,V> Add(V item, bool selectTheAddedItem)
 		{
 			_treeLock.EnterWriteLock();
 
@@ -146,10 +146,10 @@ namespace MSS.Types
 			return newPath;
 		}
 
-		public bool RemoveBranch(ObjectId id)
+		public bool RemoveBranch(ObjectId itemId)
 		{
 			// TODO: RemoveBranch does not support removing CanvasSizeUpdate nodes.
-			if (!TryFindPathById(id, _root, out var path))
+			if (!TryFindPathById(itemId, _root, out var path))
 			{
 				return false;
 			}
@@ -252,13 +252,13 @@ namespace MSS.Types
 			}
 		}
 
-		public ITreePath<U,V>? GetPath(ObjectId id)
+		public ITreePath<U,V>? GetPath(ObjectId itemId)
 		{
 			_treeLock.EnterReadLock();
 
 			try
 			{
-				return GetPathById(id, _root);
+				return GetPathById(itemId, _root);
 			}
 			finally
 			{
@@ -281,9 +281,9 @@ namespace MSS.Types
 			}
 		}
 
-		public V? GetItem(ObjectId id)
+		public V? GetItem(ObjectId itemId)
 		{
-			_ = TryFindItem(id, _root, out var result);
+			_ = TryFindItem(itemId, _root, out var result);
 			return result;
 		}
 
@@ -300,7 +300,7 @@ namespace MSS.Types
 			}
 		}
 
-		public List<V>? GetItemAndDescendants(ObjectId id)
+		public List<V>? GetItemAndDescendants(ObjectId itemId)
 		{
 			_treeLock.EnterReadLock();
 
@@ -308,7 +308,7 @@ namespace MSS.Types
 			{
 				List<V>? result;
 
-				if (TryFindPathById(id, _root, out var path))
+				if (TryFindPathById(itemId, _root, out var path))
 				{
 					result = new List<V> { path.NodeSafe.Item };
 					result.AddRange(GetItems(path));

@@ -5,14 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
+using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+
 namespace MSS.Common
 {
-	using JobNodeType = ITreeNode<JobTreeNode, Job>;
-
 	public class JobTreeNode : TreeNode<JobTreeNode, Job>, INotifyPropertyChanged, ICloneable
 	{
 		private bool _isActiveAlternate;

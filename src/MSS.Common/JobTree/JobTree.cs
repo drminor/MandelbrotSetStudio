@@ -3,17 +3,15 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Threading;
 
 namespace MSS.Common
 {
 	using JobBranchType = ITreeBranch<JobTreeNode, Job>;
-	using JobPathType = ITreePath<JobTreeNode, Job>;
 	using JobNodeType = ITreeNode<JobTreeNode, Job>;
+	using JobPathType = ITreePath<JobTreeNode, Job>;
 
 	/// <remarks>
 	///	New jobs are inserted into order by the date the job was created.
