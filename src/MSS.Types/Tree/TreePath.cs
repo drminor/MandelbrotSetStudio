@@ -44,7 +44,6 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		//virtual public ObservableCollection<U> Children { get; private set; }
 		virtual public ObservableCollection<U> Children => new(Node.Children.Select(x => x.Node));
 		public List<U> Terms { get; init; }
 		virtual public U Node => IsEmpty ? _rootItem : Terms[^1];

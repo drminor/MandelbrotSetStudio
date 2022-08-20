@@ -525,7 +525,7 @@ namespace MSS.Types
 
 		#region Private Navigate Methods
 
-		protected ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
+		protected ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<ITreeNode<U,V>, bool>? predicate = null)
 		{
 			var currentItem = path.NodeSafe;
 
@@ -535,10 +535,10 @@ namespace MSS.Types
 			var siblings = parentNode.Children;
 			var currentPosition = siblings.IndexOf(currentItem);
 
-			if (TryGetNextNode((IList<U>)siblings, currentPosition, out var nextNode, predicate))
+			if (TryGetNextNode(siblings, currentPosition, out var nextNode, predicate))
 			{
 				//The new item will be a sibling of the current item
-				result = path.Combine(nextNode);
+				result = path.Combine(nextNode.Node);
 			}
 			else
 			{
@@ -548,7 +548,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		private bool TryGetNextNode(IList<U> nodes, int currentPosition, [MaybeNullWhen(false)] out U nextNode, Func<U, bool>? predicate = null)
+		private bool TryGetNextNode(IList<ITreeNode<U, V>> nodes, int currentPosition, [MaybeNullWhen(false)] out ITreeNode<U, V> nextNode, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
 			if (predicate != null)
 			{
@@ -578,7 +578,7 @@ namespace MSS.Types
 			return !(currentPosition == siblings.Count - 1);
 		}
 
-		protected ITreePath<U,V>? GetPreviousItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
+		protected ITreePath<U,V>? GetPreviousItemPath(ITreePath<U,V> path, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
 			var currentItem = path.NodeSafe;
 
@@ -590,7 +590,7 @@ namespace MSS.Types
 			var parentNode = path.GetParentNodeOrRoot();
 			var siblings = parentNode.Children;
 			var currentPosition = siblings.IndexOf(currentItem);
-			var previousNode = GetPreviousNode((IList<U>)siblings, currentPosition, predicate);
+			var previousNode = GetPreviousNode(siblings, currentPosition, predicate);
 
 			// TODO: Make climbing the tree, more elegant
 			while (previousNode == null && path.Count > 1)
@@ -601,12 +601,12 @@ namespace MSS.Types
 				var grandparentNode = path.GetParentNodeOrRoot();
 				var ancestors = grandparentNode.Children;
 				currentPosition = ancestors.IndexOf(currentItem);
-				previousNode = GetPreviousNode((IList<U>)ancestors, currentPosition + 1, predicate);
+				previousNode = GetPreviousNode(ancestors, currentPosition + 1, predicate);
 			}
 
 			if (previousNode != null)
 			{
-				var result = path.Combine(previousNode);
+				var result = path.Combine(previousNode.Node);
 
 				return result;
 			}
@@ -616,9 +616,9 @@ namespace MSS.Types
 			}
 		}
 
-		private U? GetPreviousNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate = null)
+		private ITreeNode<U, V>? GetPreviousNode(IList<ITreeNode<U, V>> nodes, int currentPosition, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
-			U? result;
+			ITreeNode<U, V>? result;
 
 			if (predicate != null)
 			{

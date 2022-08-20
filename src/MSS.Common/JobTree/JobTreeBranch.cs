@@ -33,8 +33,6 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		//override public ObservableCollection<JobNodeType> Children => new(Node.Children.Select(x => x.Node));
-
 		override public JobNodeType Node => _rootItem;
 
 		#endregion

@@ -28,8 +28,6 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		//override public ObservableCollection<U> Children => new(Node.Children.Select(x => x.Node));
-
 		override public U Node => _rootItem;
 
 		#endregion
