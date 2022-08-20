@@ -13,11 +13,9 @@ namespace MSS.Types
 		public TreePath(U rootItem) : base(rootItem)
 		{ }
 
-		// Creates a Branch with a path consisting of the single term.
 		public TreePath(U rootItem, U term) : base(rootItem, new[] { term })
 		{ }
 
-		// Creates a Branch with a path composed of the terms.
 		public TreePath(U rootItem, IEnumerable<U> terms) : base(rootItem, terms)
 		{
 			if (!terms.Any())

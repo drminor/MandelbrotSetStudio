@@ -3,37 +3,23 @@ using System.Linq;
 
 namespace MSS.Common
 {
-	public class JobTreePath : /*TreePath<JobTreeNode, Job>*/ JobTreeBranch
+	public class JobTreePath : JobTreeBranch
 	{
 		#region Constructors
 
 		// Used to create a JobTreeBranch
 		protected JobTreePath() : base(new JobTreeNode())
-		{
-			//_rootItem = new JobTreeNode();
-			//Terms = new List<JobNodeType>();
-		}
+		{ }
 
 		// Used to create a JobTreeBranch
 		protected JobTreePath(JobTreeNode rootItem) : base(rootItem)
-		{
-			//_rootItem = rootItem;
-			//Terms = new List<JobNodeType>();
-		}
+		{ }
 
 		public JobTreePath(JobTreeNode rootItem, JobTreeNode term) : this(rootItem, new[] { term })
 		{ }
 
 		public JobTreePath(JobTreeNode rootItem, IEnumerable<JobTreeNode> terms) : base(rootItem, terms)
-		{
-			//if (!terms.Any())
-			//{
-			//	throw new ArgumentException("The list of terms cannot be empty when constructing a JobTreePath.", nameof(terms));
-			//}
-
-			//_rootItem = rootItem;
-			//Terms = terms.ToList();
-		}
+		{ }
 
 		#endregion
 

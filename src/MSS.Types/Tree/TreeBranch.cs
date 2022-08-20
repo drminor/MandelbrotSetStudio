@@ -12,7 +12,6 @@ namespace MSS.Types
 
 		#region Constructor
 
-		// Used to create a TreeBranch
 		public TreeBranch(U rootItem)
 		{
 			RootItem = rootItem;

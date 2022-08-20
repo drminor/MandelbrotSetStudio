@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace MSS.Common
 {
-	public class JobTreeBranch : /*JobTreePath*/ TreeBranch<JobTreeNode, Job>, ITreeBranch<JobTreeNode, Job>, ICloneable 
+	public class JobTreeBranch : TreeBranch<JobTreeNode, Job>, ITreeBranch<JobTreeNode, Job>, ICloneable 
 	{
 		#region Constructor
 

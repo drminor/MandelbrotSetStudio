@@ -41,11 +41,8 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public JobTree(List<Job> jobs, bool checkHomeJob) : base(new TreeBranch<JobTreeNode, Job>(new JobTreeNode()))
+		public JobTree(List<Job> jobs, bool checkHomeJob) : base(new JobTreeBranch())
 		{
-			//_treeLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
-
-			//_root = new JobTreeBranch();
 			var homeJob = GetHomeJob(jobs, checkHomeJob);
 			CurrentPath = AddJob(homeJob, Root);
 
@@ -77,8 +74,6 @@ namespace MSS.Common
 		#endregion
 
 		#region Public Properties
-
-		//public ObservableCollection<JobTreeNode> Nodes => _root.Children;
 
 		public Job CurrentJob
 		{
