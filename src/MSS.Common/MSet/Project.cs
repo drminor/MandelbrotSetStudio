@@ -106,7 +106,8 @@ namespace MSS.Common.MSet
 
 		public int GetNumberOfDirtyJobs()
 		{
-			var result = _jobTree.GetItems().Count(x => !x.OnFile || x.IsDirty);
+			var jobs = _jobTree.GetItems();
+			var result = jobs.Count(x => !x.OnFile || x.IsDirty);
 			return result;
 		}  
 

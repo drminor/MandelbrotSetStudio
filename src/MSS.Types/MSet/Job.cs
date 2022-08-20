@@ -82,7 +82,6 @@ namespace MSS.Types.MSet
 				throw new ArgumentException("The ParentJobId cannot be null for Jobs with a TransformType other than Home and CanvasSizeUpdate.");
 			}
 
-
 			Id = id;
 			_parentJobId = parentJobId;
 			_projectId = projectId;

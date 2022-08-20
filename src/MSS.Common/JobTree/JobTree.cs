@@ -13,7 +13,6 @@ using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.J
 
 namespace MSS.Common
 {
-
 	/// <remarks>
 	///	New jobs are inserted into order by the date the job was created.
 	///	The new job's Parent identifies the job from which this job was created.
@@ -715,7 +714,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Private Load and Export Job Methods
+		#region Private Populate Methods
 
 		private void ReportInput(IList<Job> jobs)
 		{
@@ -838,11 +837,8 @@ namespace MSS.Common
 				}
 				else
 				{
-					//var path = AddInternal(job, currentBranch);
 					var path = AddInternal(job, currentBranch);
-
 					ValidateAddInternal(job, currentBranch);
-
 					LoadChildItems(jobs, path, ref visited);
 				}
 			}
@@ -906,29 +902,6 @@ namespace MSS.Common
 			}
 
 			return result;
-		}
-
-
-		private bool TryFindCanvasSizeUpdatePath(Job job, JobBranchType currentBranch, [MaybeNullWhen(false)] out JobPathType path)
-		{
-			var parentJobId = job.ParentJobId;
-
-			if (parentJobId == null)
-			{
-				throw new ArgumentException("When finding a CanvasSizeUpdate, the job must have a parent.", nameof(job));
-			}
-
-			if (TryFindPathById(parentJobId.Value, currentBranch, out var parentPath))
-			{
-				var foundNode = parentPath.NodeSafe.AlternateDispSizes?.FirstOrDefault(x => x.Item.Id == job.Id);
-				path = foundNode == null ? null : parentPath.Combine(foundNode);
-				return path != null;
-			}
-			else
-			{
-				path = null;
-				return false;
-			}
 		}
 
 		#endregion

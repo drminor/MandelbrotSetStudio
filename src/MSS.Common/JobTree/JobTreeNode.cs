@@ -122,7 +122,7 @@ namespace MSS.Common
 				if (value != _isActiveAlternate)
 				{
 					_isActiveAlternate = value;
-					Item.IsAlternatePathHead = value;
+					//Item.IsAlternatePathHead = value;
 					
 					// TODO: Move this code to the Tree class.
 					//if (ParentNode != null)

@@ -9,7 +9,7 @@ using System.Threading;
 
 namespace MSS.Types
 {
-	public class Tree<U,V> : ITree<U,V> where U: class, ITreeNode<U,V> where V: class, IEquatable<V>, IComparable<V>
+	public abstract class Tree<U,V> : ITree<U,V> where U: class, ITreeNode<U,V> where V: class, IEquatable<V>, IComparable<V>
 	{
 		protected ReaderWriterLockSlim TreeLock { get; }
 		protected virtual ITreeBranch<U, V> Root { get; set; }
@@ -124,30 +124,30 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		public virtual ITreePath<U,V> Add(V item, bool selectTheAddedItem)
-		{
-			TreeLock.EnterWriteLock();
+		public abstract ITreePath<U, V> Add(V item, bool selectTheAddedItem);
+		//{
+		//	TreeLock.EnterWriteLock();
 
-			ITreePath<U,V> newPath;
+		//	ITreePath<U,V> newPath;
 
-			try
-			{
-				newPath = AddInternal(item, currentBranch: Root);
-				IsDirty = true;
-			}
-			finally
-			{
-				TreeLock.ExitWriteLock();
-			}
+		//	try
+		//	{
+		//		newPath = AddInternal(item, currentBranch: Root);
+		//		IsDirty = true;
+		//	}
+		//	finally
+		//	{
+		//		TreeLock.ExitWriteLock();
+		//	}
 
-			if (selectTheAddedItem)
-			{
-				ExpandAndSetCurrent(newPath);
-				CurrentPath = newPath;
-			}
+		//	if (selectTheAddedItem)
+		//	{
+		//		ExpandAndSetCurrent(newPath);
+		//		CurrentPath = newPath;
+		//	}
 
-			return newPath;
-		}
+		//	return newPath;
+		//}
 
 		public bool RemoveBranch(ObjectId itemId)
 		{
@@ -331,46 +331,7 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Private Add Methods
-
-		// TODO: Implement AddInternal on the Tree class.
-		private ITreePath<U,V> AddInternal(V item, ITreeBranch<U,V> currentBranch)
-		{
-			throw new NotImplementedException("AddInternal not yet implemented.");
-		}
-
-		private ITreePath<U,V> AddInLine(V item, ITreePath<U,V> parentPath)
-		{
-			Debug.WriteLine($"Adding item: {item}, in-line after: {parentPath.NodeSafe.Id}.");
-
-			ITreeBranch<U,V> parentBranchToUse = parentPath.GetParentBranch();
-
-			var result = AddItem(item, parentBranchToUse);
-
-			return result;
-		}
-
-		private ITreePath<U,V> AddItem(V item, ITreeBranch<U,V> parentBranch)
-		{
-			var parentNode = parentBranch.GetNodeOrRoot();
-			var newNode = parentNode.AddItem(item);
-
-			var result = parentBranch.Combine(newNode);
-
-			return result;
-		}
-
-		#endregion
-
-		#region Private Load and Export Item Methods
-
-		//protected ITreeBranch<U,V> CreateTree(List<V> items, out ITreePath<U,V>? currentPath)
-		//{
-		//	V homeItem = items.Take(1).First();
-		//	var root = new TreeBranch<U, V>(homeItem);
-		//	currentPath = root.GetCurrentPath();
-		//	return root;
-		//}
+		#region Private Export Item Methods
 
 		private IList<V> GetItems(ITreeBranch<U,V> currentBranch)
 		{
@@ -660,7 +621,7 @@ namespace MSS.Types
 			}
 		}
 
-		protected bool MoveCurrentTo(V item, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)
+		protected virtual bool MoveCurrentTo(V item, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)
 		{
 			if (TryFindPath(item, currentBranch, out path))
 			{
