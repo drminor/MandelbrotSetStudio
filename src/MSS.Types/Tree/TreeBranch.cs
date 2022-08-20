@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace MSS.Types
 {
@@ -7,43 +9,18 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		//public JobTreeBranch(ITreePath<V> jobTreePath) : this(jobTreePath.GetRoot()._rootItem, new List<JobTreeItem>(jobTreePath.Terms))
-		//{ }
+		// Creates a Branch with a null path
+		public TreeBranch(U rootItem) : base(rootItem)
+		{
+		}
 
-		//public TreeBranch(U rootItem) : this(rootItem, rootItem.Children.Take(1))
-		//{ }
-
-		//public TreeBranch(V homeJob)
-		//{
-		//	//if (homeJob.ParentJobId != null)
-		//	//{
-		//	//	Debug.WriteLine($"WARNING: The job: {homeJob.Id} used to create the JobTree(path) has a non-null ParentJobId. Setting the ParentJobId to null.");
-		//	//	homeJob.ParentJobId = null;
-		//	//}
-
-		//	//if (homeJob.TransformType != TransformType.Home)
-		//	//{
-		//	//	Debug.WriteLine($"WARNING: The job: {homeJob.Id} used to create the JobTree(path) has TransformType of {homeJob.TransformType}. Expecting the TransformType to be {nameof(TransformType.Home)}.");
-		//	//}
-
-
-		//	_rootItem = (U) (ITreeItem<V>)  new TreeItem<V>(homeJob, null);
-		//	Terms = new List<U>();
-
-		//	Terms.Add(_rootItem);
-		//	Children = new ObservableCollection<U>(_rootItem.Children.Cast<U>().ToList());
-		//}
-
-
+		// Creates a Branch with a path consisting of the single term.
 		public TreeBranch(U rootItem, U term) : base(rootItem, new[] { term })
 		{
 		}
 
+		// Creates a Branch with a path composed of the terms.
 		public TreeBranch(U rootItem, IEnumerable<U> terms) : base(rootItem, terms)
-		{
-		}
-
-		public TreeBranch(U rootItem) : base(rootItem)
 		{
 		}
 
@@ -51,28 +28,9 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		//public new ObservableCollection<ITreeItem<V>> Children { get; set; }
+		//override public ObservableCollection<U> Children => new(Node.Children.Select(x => x.Node));
 
-		#endregion
-
-		#region Public Methods
-
-
-		//public ITreePath<U,V> Combine(IEnumerable<U> jobTreeItems)
-		//{
-		//	if (IsEmpty)
-		//	{
-		//		var result = new TreePath<U,V>(_rootItem, jobTreeItems);
-		//		return (ITreePath<U, V>)result;
-		//	}
-		//	else
-		//	{
-		//		var newTerms = new List<U>(Terms);
-		//		newTerms.AddRange(jobTreeItems);
-		//		var result = new TreePath<U,V>(_rootItem, newTerms);
-		//		return (ITreePath<U, V>)result;
-		//	}
-		//}
+		override public U Node => _rootItem;
 
 		#endregion
 

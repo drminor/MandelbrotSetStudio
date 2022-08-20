@@ -13,6 +13,7 @@ namespace MSS.Common
 	{
 		#region Constructor
 
+		// Creates a Branch using a new root
 		public JobTreeBranch() : base()
 		{ }
 
@@ -30,25 +31,35 @@ namespace MSS.Common
 
 		#endregion
 
-
 		#region Public Properties
 
-		override public ObservableCollection<JobNodeType> Children => new(Node.Children.Select(x => x.Node));
-		//{
-		//	get
-		//	{
-		//		var result = new ObservableCollection<JobNodeType>();
-
-		//		foreach (var c in Node.Children)
-		//		{
-		//			result.Add(c.Node);
-		//		}
-
-		//		return result;
-		//	}
-		//}
+		//override public ObservableCollection<JobNodeType> Children => new(Node.Children.Select(x => x.Node));
 
 		override public JobNodeType Node => _rootItem;
+
+		#endregion
+
+		#region Overrides, Conversion Operators and ICloneable Support
+
+		//public static implicit operator JobTreeBranch(JobTreePath path)
+		//{
+		//	return new JobTreeBranch(path);
+		//}
+
+		public override string ToString()
+		{
+			return string.Join('\\', Terms);
+		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public override JobTreeBranch Clone()
+		{
+			return new JobTreeBranch(_rootItem, Terms);
+		}
 
 		#endregion
 	}

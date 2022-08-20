@@ -158,9 +158,9 @@ namespace MSetExplorer
 				return $"Could not find a job with JobId: {jobId}.";
 			}
 
-			var jobTreeItem = path.Node;
+			var node = path.NodeSafe;
 
-			var job = jobTreeItem.Item;
+			var job = node.Item;
 
 			var coordVals = RValueHelper.GetValuesAsStrings(job.MapAreaInfo.Coords);
 
@@ -172,24 +172,24 @@ namespace MSetExplorer
 				.AppendLine($"\tTransformType: {job.TransformType}")
 				.AppendLine($"\tId: {job.Id}")
 				.AppendLine($"\tParentId: {job.ParentJobId}")
-				.AppendLine($"\tCanvasSize Disp Alternates: {jobTreeItem.AlternateDispSizes?.Count ?? 0}");
+				.AppendLine($"\tCanvasSize Disp Alternates: {node.AlternateDispSizes?.Count ?? 0}");
 
-			if (jobTreeItem.IsActiveAlternate)
+			if (node.IsActiveAlternate)
 			{
 				_ = sb.AppendLine("\nThis Job is on the Active Branch.");
 				_ = sb.AppendLine("List of all Branches:");
-				DisplayAlternates(jobTreeItem, sb, jobTreeItem);
+				DisplayAlternates(node, sb, node);
 			}
-			else if(jobTreeItem.IsParkedAlternate)
+			else if(node.IsParkedAlternate)
 			{
 				_ = sb.AppendLine("\nThis job is not on the Active Branch:");
 				_ = sb.AppendLine("List of all Branches:");
 				var activeAltParentPath = path.GetParentPath()!;
-				DisplayAlternates(jobTreeItem, sb, activeAltParentPath.Node);
+				DisplayAlternates(node, sb, activeAltParentPath.NodeSafe);
 			}
 			else
 			{
-				_ = sb.AppendLine($"Children: {jobTreeItem.Children.Count}");
+				_ = sb.AppendLine($"Children: {node.Children.Count}");
 			}
 
 			//if (parentNode != null)

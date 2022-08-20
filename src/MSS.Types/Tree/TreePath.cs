@@ -17,13 +17,6 @@ namespace MSS.Types
 		{
 			_rootItem = rootItem;
 			Terms = new List<U>();
-
-			Children = new ObservableCollection<U>();
-
-			foreach(U c in rootItem.Children)
-			{
-				Children.Add(c.Node);
-			}
 		}
 
 		public TreePath(U rootItem, U term) : this(rootItem, new[] { term })
@@ -37,16 +30,7 @@ namespace MSS.Types
 			}
 
 			_rootItem = rootItem;
-
 			Terms = terms.ToList();
-
-			var lastTerm = Terms[^1];
-
-			Children = new ObservableCollection<U>();
-			foreach (U c in lastTerm.Children)
-			{
-				Children.Add(c.Node);
-			}
 		}
 
 		// Used by the Clone Method
@@ -54,23 +38,20 @@ namespace MSS.Types
 		{
 			_rootItem = rootItem;
 			Terms = terms;
-			Children = children;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		virtual public ObservableCollection<U> Children { get; private set; }
-
+		//virtual public ObservableCollection<U> Children { get; private set; }
+		virtual public ObservableCollection<U> Children => new(Node.Children.Select(x => x.Node));
 		public List<U> Terms { get; init; }
+		virtual public U Node => IsEmpty ? _rootItem : Terms[^1];
+		public U NodeSafe => Terms[^1];
 
 		public int Count => Terms.Count;
-
 		public bool IsEmpty => !Terms.Any();
-
-		virtual public U Node => IsEmpty ? _rootItem : Terms[^1];
-
 		public bool IsRoot => Node.IsRoot;
 		public bool IsHome => Node.IsHome;
 
@@ -79,6 +60,7 @@ namespace MSS.Types
 		public U? GrandparentTerm => Terms.Count > 2 ? Terms[^3] : null;
 
 		public V? Item => LastTerm?.Item;
+		public V ItemSafe => NodeSafe.Item;
 
 		#endregion
 
@@ -135,6 +117,13 @@ namespace MSS.Types
 			return grandparentPath != null;
 		}
 
+		// TOOD: Use this new version
+		public U GetNodeOrRootNew()
+		{
+			var result = Node;
+			return result;
+		}
+
 		public U GetNodeOrRoot()
 		{
 			var result = GetCurrentPath()?.Node ?? _rootItem;
@@ -173,19 +162,18 @@ namespace MSS.Types
 			}
 		}
 
-		#endregion
-
-		public ITreePath<U,V> CreateSiblingPath(U child)
+		public ITreePath<U, V> CreateSiblingPath(U child)
 		{
 			var parentPath = GetParentPath();
 
-			var result = parentPath == null 
-				? new TreePath<U,V>(_rootItem, child) 
+			var result = parentPath == null
+				? new TreePath<U, V>(_rootItem, child)
 				: parentPath.Combine(child);
 
 			return result;
 		}
 
+		#endregion
 
 		#region Overrides, Conversion Operators and ICloneable Support
 
@@ -204,7 +192,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		public TreePath<U,V> Clone()
+		virtual public TreePath<U,V> Clone()
 		{
 			return new TreePath<U,V>((U)_rootItem.Clone(), new List<U>(Terms), new ObservableCollection<U>(Children));
 		}
