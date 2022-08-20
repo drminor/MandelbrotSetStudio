@@ -158,7 +158,7 @@ namespace MSetExplorer
 				return $"Could not find a job with JobId: {jobId}.";
 			}
 
-			var node = path.NodeSafe;
+			var node = path.Node;
 
 			var job = node.Item;
 
@@ -185,7 +185,7 @@ namespace MSetExplorer
 				_ = sb.AppendLine("\nThis job is not on the Active Branch:");
 				_ = sb.AppendLine("List of all Branches:");
 				var activeAltParentPath = path.GetParentPath()!;
-				DisplayAlternates(node, sb, activeAltParentPath.NodeSafe);
+				DisplayAlternates(node, sb, activeAltParentPath.Node);
 			}
 			else
 			{

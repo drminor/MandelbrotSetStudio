@@ -8,8 +8,6 @@ namespace MSS.Types
 	public interface ITreeBranch<U, V> : ICloneable where U : class, ITreeNode<U, V> where V : class, IEquatable<V>, IComparable<V>
 	{
 		List<U> Terms { get; init; }
-		U? Node { get; }
-		V? Item { get; }
 		ObservableCollection<U> Children { get; }
 
 		int Count { get; }

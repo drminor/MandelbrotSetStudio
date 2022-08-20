@@ -27,12 +27,6 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Public Properties
-
-		override public JobTreeNode Node => RootItem;
-
-		#endregion
-
 		#region Overrides, Conversion Operators and ICloneable Support
 
 		//public static implicit operator JobTreeBranch(JobTreePath path)

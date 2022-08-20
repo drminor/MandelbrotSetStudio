@@ -28,13 +28,10 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public U NodeSafe => Terms[^1];
-		public V ItemSafe => NodeSafe.Item;
+		//public override ObservableCollection<U> Children => new(Node.Children.Select(x => x.Node));
 
-		public override ObservableCollection<U> Children => new(Node.Children.Select(x => x.Node));
-
-		public override U Node => Terms[^1];
-		public override V Item => Node.Item;
+		public U Node => Terms[^1];
+		public V Item => Node.Item;
 
 		#endregion
 
@@ -68,10 +65,10 @@ namespace MSS.Types
 
 		//public static explicit operator JobTreePath(List<JobTreeItem> terms) => new JobTreePath(terms);
 
-		public override string ToString()
-		{
-			return string.Join('\\', Terms.Select(x => x.Item.ToString()));
-		}
+		//public override string ToString()
+		//{
+		//	return string.Join('\\', Terms.Select(x => x.Item.ToString()));
+		//}
 
 		object ICloneable.Clone()
 		{
@@ -79,9 +76,11 @@ namespace MSS.Types
 			return result;
 		}
 
-		public override TreePath<U,V> Clone()
+		public override TreePath<U, V> Clone()
 		{
-			return new TreePath<U,V>((U)RootItem.Clone(), new List<U>(Terms));
+			var result = base.Clone();
+			return (TreePath<U, V>)result;
+			//return new TreePath<U,V>((U)RootItem.Clone(), new List<U>(Terms));
 		}
 
 		#endregion

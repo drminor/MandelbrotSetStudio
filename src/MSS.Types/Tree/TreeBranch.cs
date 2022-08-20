@@ -31,12 +31,10 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		//override public U Node => _rootItem;
-
 		public virtual ObservableCollection<U> Children => new(Node.Children.Select(x => x.Node));
 
 		public List<U> Terms { get; init; }
-		public virtual U Node => IsEmpty ? RootItem : Terms[^1];
+		private U Node => IsEmpty ? RootItem : Terms[^1];
 
 		public int Count => Terms.Count;
 		public bool IsEmpty => !Terms.Any();
@@ -47,7 +45,7 @@ namespace MSS.Types
 		public U? ParentTerm => Terms.Count > 1 ? Terms[^2] : null;
 		public U? GrandparentTerm => Terms.Count > 2 ? Terms[^3] : null;
 
-		public virtual V? Item => LastTerm?.Item;
+		//public virtual V? Item => LastTerm?.Item;
 
 		#endregion
 
@@ -159,7 +157,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			return string.Join('\\', Terms);
+			return string.Join('\\', Terms.Select(x => x.Item.ToString()));
 		}
 
 		object ICloneable.Clone()
@@ -169,7 +167,7 @@ namespace MSS.Types
 
 		virtual public ITreeBranch<U,V> Clone()
 		{
-			return new TreeBranch<U, V>(RootItem, Terms);
+			return new TreeBranch<U, V>((U)RootItem.Clone(), new List<U>(Terms));
 		}
 
 		#endregion

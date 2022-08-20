@@ -313,7 +313,7 @@ namespace MSS.Types
 
 				if (TryFindPathById(itemId, Root, out var path))
 				{
-					result = new List<V> { path.NodeSafe.Item };
+					result = new List<V> { path.Node.Item };
 					result.AddRange(GetItems(path));
 				}
 				else
@@ -491,7 +491,7 @@ namespace MSS.Types
 
 		protected ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<ITreeNode<U,V>, bool>? predicate = null)
 		{
-			var currentItem = path.NodeSafe;
+			var currentItem = path.Node;
 
 			ITreePath<U,V>? result;
 
@@ -544,7 +544,7 @@ namespace MSS.Types
 
 		protected ITreePath<U,V>? GetPreviousItemPath(ITreePath<U,V> path, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
-			var currentItem = path.NodeSafe;
+			var currentItem = path.Node;
 
 			if (currentItem == null)
 			{
@@ -560,7 +560,7 @@ namespace MSS.Types
 			while (previousNode == null && path.Count > 1)
 			{
 				path = path.GetParentPath()!;
-				currentItem = path.NodeSafe;
+				currentItem = path.Node;
 
 				var grandparentNode = path.GetParentNodeOrRoot();
 				var ancestors = grandparentNode.Children;
@@ -646,7 +646,7 @@ namespace MSS.Types
 				p.IsExpanded = true;
 			}
 
-			var lastTerm = path .NodeSafe;
+			var lastTerm = path .Node;
 			lastTerm.IsCurrent = true;
 		}
 
