@@ -67,7 +67,6 @@ namespace MSS.Types
 			});
 		}
 
-		// TODO: Consider having the ITreeItem<U,V> Tree keep track of "CanGoBack" / "CanGoForward" as to make these real properties.
 		public bool CanGoBack
 		{
 			get
@@ -126,7 +125,29 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		public abstract ITreePath<U, V> Add(V item, bool selectTheAddedItem);
+		public ITreePath<U, V> Add(V item, bool selectTheAddedItem)
+		{
+			ITreePath<U, V> newPath;
+			TreeLock.EnterWriteLock();
+
+			try
+			{
+				newPath = AddInternal(item, currentBranch: Root);
+				IsDirty = true;
+			}
+			finally
+			{
+				TreeLock.ExitWriteLock();
+			}
+
+			if (selectTheAddedItem)
+			{
+				ExpandAndSetCurrent(newPath);
+				CurrentPath = newPath;
+			}
+
+			return newPath;
+		}
 
 		public bool RemoveBranch(ObjectId itemId)
 		{
@@ -165,7 +186,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		public bool TryGetPreviousItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null)
+		public virtual bool TryGetPreviousItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
 			if (CurrentPath == null)
 			{
@@ -179,7 +200,7 @@ namespace MSS.Types
 			return item != null;
 		}
 
-		public bool MoveBack(Func<ITreeNode<U,V>, bool>? predicate = null)
+		public virtual bool MoveBack(Func<ITreeNode<U,V>, bool>? predicate = null)
 		{
 			if (CurrentPath == null)
 			{
@@ -200,7 +221,7 @@ namespace MSS.Types
 			}
 		}
 
-		public bool TryGetNextItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null)
+		public virtual bool TryGetNextItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
 			if (CurrentPath == null)
 			{
@@ -214,7 +235,7 @@ namespace MSS.Types
 			return item != null;
 		}
 
-		public bool MoveForward(Func<ITreeNode<U,V>, bool>? predicate = null)
+		public virtual bool MoveForward(Func<ITreeNode<U,V>, bool>? predicate = null)
 		{
 			if (CurrentPath == null)
 			{
@@ -329,9 +350,25 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Private Export Item Methods
+		#region Protected Add Methods
 
-		private IList<V> GetItems(ITreeBranch<U,V> currentBranch)
+		protected abstract ITreePath<U, V> AddInternal(V item, ITreeBranch<U,V> currentBranch);
+
+		protected virtual ITreePath<U, V> AddItem(V item, ITreeBranch<U, V> parentBranch)
+		{
+			var parentNode = parentBranch.GetNodeOrRoot();
+			var newNode = parentNode.AddItem(item);
+
+			var result = parentBranch.Combine(newNode);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Protected Export Item Methods
+
+		protected IList<V> GetItems(ITreeBranch<U,V> currentBranch)
 		{
 			// TODO: Consider implementing an IEnumerator<ITreeItem<U,V> for the Tree class.
 			var result = new List<V>();
@@ -347,7 +384,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		private IList<ITreeNode<U,V>> GetNodes(ITreeBranch<U,V> currentBranch)
+		protected IList<ITreeNode<U,V>> GetNodes(ITreeBranch<U,V> currentBranch)
 		{
 			// TODO: Consider implementing an IEnumerator<ITreeItem<U,V> for the Tree class.
 			var result = new List<ITreeNode<U,V>>();
@@ -363,7 +400,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		private List< Tuple<ITreeNode<U, V>, ITreeNode<U, V>? > > GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
+		protected List< Tuple<ITreeNode<U, V>, ITreeNode<U, V>? > > GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
 		{
 			var result = new List<Tuple<ITreeNode<U, V>, ITreeNode<U, V>?>>();
 
@@ -485,9 +522,9 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Private Navigate Methods
+		#region Protected Navigate Methods
 
-		protected ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<ITreeNode<U,V>, bool>? predicate = null)
+		protected virtual ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<ITreeNode<U,V>, bool>? predicate = null)
 		{
 			var currentItem = path.Node;
 
@@ -510,7 +547,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		private bool TryGetNextNode(IList<ITreeNode<U, V>> nodes, int currentPosition, [MaybeNullWhen(false)] out ITreeNode<U, V> nextNode, Func<ITreeNode<U, V>, bool>? predicate = null)
+		protected virtual bool TryGetNextNode(IList<ITreeNode<U, V>> nodes, int currentPosition, [MaybeNullWhen(false)] out ITreeNode<U, V> nextNode, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
 			if (predicate != null)
 			{
@@ -524,7 +561,7 @@ namespace MSS.Types
 			return nextNode != null;
 		}
 
-		private bool CanMoveForward(ITreePath<U,V>? path)
+		protected virtual bool CanMoveForward(ITreePath<U,V>? path)
 		{
 			var currentItem = path?.LastTerm;
 
@@ -540,7 +577,7 @@ namespace MSS.Types
 			return !(currentPosition == siblings.Count - 1);
 		}
 
-		protected ITreePath<U,V>? GetPreviousItemPath(ITreePath<U,V> path, Func<ITreeNode<U, V>, bool>? predicate = null)
+		protected virtual ITreePath<U,V>? GetPreviousItemPath(ITreePath<U,V> path, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
 			var currentItem = path.Node;
 
@@ -578,7 +615,7 @@ namespace MSS.Types
 			}
 		}
 
-		private ITreeNode<U, V>? GetPreviousNode(IList<ITreeNode<U, V>> nodes, int currentPosition, Func<ITreeNode<U, V>, bool>? predicate = null)
+		protected virtual ITreeNode<U, V>? GetPreviousNode(IList<ITreeNode<U, V>> nodes, int currentPosition, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
 			ITreeNode<U, V>? result;
 
@@ -594,7 +631,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		private bool CanMoveBack(ITreePath<U,V>? path)
+		protected virtual bool CanMoveBack(ITreePath<U,V>? path)
 		{
 			var currentItem = path?.LastTerm;
 
@@ -632,7 +669,7 @@ namespace MSS.Types
 			}
 		}
 
-		protected void ExpandAndSetCurrent(ITreePath<U,V>? path)
+		protected virtual void ExpandAndSetCurrent(ITreePath<U,V>? path)
 		{
 			if (path == null || path.IsEmpty)
 			{
@@ -652,7 +689,7 @@ namespace MSS.Types
 
 		#region Lock Helpers
 
-		private V DoWithReadLock(Func<V> function)
+		protected V DoWithReadLock(Func<V> function)
 		{
 			TreeLock.EnterReadLock();
 
@@ -666,7 +703,7 @@ namespace MSS.Types
 			}
 		}
 
-		private void DoWithWriteLock(Action action)
+		protected void DoWithWriteLock(Action action)
 		{
 			TreeLock.EnterWriteLock();
 
