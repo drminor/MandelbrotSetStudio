@@ -681,85 +681,90 @@ namespace MSetExplorer
 				return SaveResult.NoChangesToSave;
 			}
 
-			var shouldContinue = ProjectSaveConfirmOnHighJobCount();
-			
-			if (shouldContinue != true)
-			{
-				return shouldContinue == false ? SaveResult.NotSavingChanges : SaveResult.SaveCancelled;
-			}
-
 			if (!ColorsCommitUpdates().HasValue)
 			{
 				return SaveResult.SaveCancelled;
 			}
 
+			SaveResult result;
+
 			if (!_vm.ProjectViewModel.CurrentProjectIsDirty)
 			{
-				if (_vm.ProjectViewModel.IsCurrentJobIdChanged)
+				result = ProjectSaveCurrentJobId();
+			}
+			else
+			{
+				result = ProjectSaveDirtyJob(curProject);
+			}
+
+			return result;
+		}
+
+		// TODO: See if similar changes to the ProjectSave logic can be applied to the Poster
+		private SaveResult ProjectSaveCurrentJobId()
+		{
+			SaveResult result;
+
+			if (_vm.ProjectViewModel.IsCurrentJobIdChanged)
+			{
+				if (_vm.ProjectViewModel.CurrentProjectOnFile)
 				{
-					if (_vm.ProjectViewModel.CurrentProjectOnFile)
-					{
-						Debug.WriteLine($"Saving Project Silently: Not Dirty, but the Currently Selected Job has been updated.");
-						// Silently record the new CurrentJob selection
-						if (_vm.ProjectViewModel.ProjectSave())
-						{
-							return SaveResult.CurrentJobAutoSaved;
-						}
-						else
-						{
-							// The ViewModel's ProjectSave method found no changes to save.
-							return SaveResult.NoChangesToSave;
-						}
-					}
-					else
-					{
-						return SaveResult.NoChangesToSave;
-					}
+					Debug.WriteLine($"Saving Project Silently: Not Dirty, but the Currently Selected Job has been updated.");
+
+					// Silently record the new CurrentJob selection
+					result = _vm.ProjectViewModel.ProjectSave() ? SaveResult.CurrentJobAutoSaved : SaveResult.NoChangesToSave;
 				}
 				else
 				{
-					return SaveResult.NotSavingChanges;
+					result = SaveResult.NoChangesToSave;
 				}
 			}
+			else
+			{
+				result = SaveResult.NotSavingChanges;
+			}
 
-			var triResult = ProjectUserSaysSaveChanges();
+			return result;
+		}
+
+		private SaveResult ProjectSaveDirtyJob(Project curProject)
+		{
+			SaveResult result;
+
+			var triResult = ProjectSaveUserConfirm();
 
 			if (triResult == true)
 			{
 				if (_vm.ProjectViewModel.CurrentProjectOnFile)
 				{
 					// The Project is on-file, just save the pending changes.
-					if (_vm.ProjectViewModel.ProjectSave())
-					{
-						return SaveResult.ChangesSaved;
-					}
-					else
-					{
-						return SaveResult.NoChangesToSave;
-					}
+					result = _vm.ProjectViewModel.ProjectSave() ? SaveResult.ChangesSaved : SaveResult.NoChangesToSave;
 				}
 				else
 				{
 					// The Project is not on-file, must ask user for the name and optional description.
 					triResult = SaveProjectInteractive(curProject);
-					if (triResult == true)
-					{
-						return SaveResult.ChangesSaved;
-					}
-					else
-					{
-						return SaveResult.SaveCancelled;
-					}
+					result = triResult == true ? SaveResult.ChangesSaved : SaveResult.SaveCancelled;
 				}
-			}
-			else if (triResult == false)
-			{
-				return SaveResult.NotSavingChanges;
 			}
 			else
 			{
-				return SaveResult.SaveCancelled;
+				result = triResult == false ? SaveResult.NotSavingChanges : SaveResult.SaveCancelled;
 			}
+
+			return result;
+		}
+
+		private bool? ProjectSaveUserConfirm()
+		{
+			var numberOfDirtyJobs = _vm.ProjectViewModel.GetGetNumberOfDirtyJobs();
+			var	message = $"The current project has {numberOfDirtyJobs} un-saved jobs. Save Changes?";
+
+			var defaultResult = _vm.ProjectViewModel.CurrentProjectOnFile ? MessageBoxResult.Yes : MessageBoxResult.No;
+			var res = MessageBox.Show(message, "Pending Changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
+			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?)null;
+
+			return result;
 		}
 
 		private bool? ProjectSaveConfirmOnHighJobCount()
@@ -767,12 +772,12 @@ namespace MSetExplorer
 			var numberOfDirtyJobs = _vm.ProjectViewModel.GetGetNumberOfDirtyJobs();
 			if (numberOfDirtyJobs > 3)
 			{
-				var x = MessageBox.Show($"There are {numberOfDirtyJobs} dirty jobs. Continue to save?", "High Dirty Job Count", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
+				var x = MessageBox.Show($"There are {numberOfDirtyJobs} un-saved jobs. Continue to save?", "Number of Un-Saved Jobs is High", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
 				if (x == MessageBoxResult.Yes)
 				{
 					return true;
 				}
-				else if(x == MessageBoxResult.No)
+				else if (x == MessageBoxResult.No)
 				{
 					return false;
 				}
@@ -817,16 +822,6 @@ namespace MSetExplorer
 			{
 				result = null;
 			}
-
-			return result;
-		}
-
-		private bool? ProjectUserSaysSaveChanges()
-		{
-			var defaultResult = _vm.ProjectViewModel.CurrentProjectOnFile ? MessageBoxResult.Yes : MessageBoxResult.No;
-			var res = MessageBox.Show("The current project has pending changes. Save Changes?", "Pending Changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
-
-			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?) null;
 
 			return result;
 		}
@@ -1201,6 +1196,5 @@ namespace MSetExplorer
 		}
 
 		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
-
 	}
 }

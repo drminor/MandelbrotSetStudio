@@ -7,12 +7,16 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-using JobBranchType = MSS.Types.ITreeBranch<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
-using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
-using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+//using JobBranchType = MSS.Types.ITreeBranch<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+//using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+//using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
 
 namespace MSS.Common
 {
+	using JobBranchType = ITreeBranch<JobTreeNode, Job>;
+	using JobPathType = ITreePath<JobTreeNode, Job>;
+	using JobNodeType = ITreeNode<JobTreeNode, Job>;
+
 	/// <remarks>
 	///	New jobs are inserted into order by the date the job was created.
 	///	The new job's Parent identifies the job from which this job was created.
@@ -34,16 +38,16 @@ namespace MSS.Common
 	///			c. Make the new newly added node, active by calling MakeBranchActive
 	/// </remarks>
 
-	public class JobTree : Tree<JobTreeNode, Job>, IJobTree
+	public class JobTreeFlat : Tree<JobTreeNode, Job>, IJobTree
 	{
-		private JobNodeType? _selectedItem;
-
 		#region Constructor
 
-		public JobTree(List<Job> jobs, bool checkHomeJob) : base(new JobTreeBranch())
+		public JobTreeFlat(List<Job> jobs, bool checkHomeJob) : base(new JobTreeBranch())
 		{
 			var homeJob = GetHomeJob(jobs, checkHomeJob);
 			CurrentPath = AddJob(homeJob, Root);
+			var parentNode = CurrentPath.GetParentNodeOrRoot();
+			parentNode.RealChildJobs.Add(homeJob.Id, homeJob);
 
 			if (CurrentPath == null)
 			{
@@ -82,25 +86,80 @@ namespace MSS.Common
 
 		public bool AnyJobIsDirty => AnyItemIsDirty;
 
-		public JobNodeType? SelectedNode
+		public override JobNodeType? SelectedNode
 		{
-			get => _selectedItem;
+			get => base.SelectedNode;
 			set
 			{
-				if (value != _selectedItem)
+				if (value != base.SelectedNode)
 				{
-					UpdateIsSelected(_selectedItem, false, UseRealRelationShipsToUpdateSelected, Root);
-					_selectedItem = value;
-					UpdateIsSelected(_selectedItem, true, UseRealRelationShipsToUpdateSelected, Root);
+					UpdateIsSelected(base.SelectedNode, false, SelectionMode, Root);
+					base.SelectedNode = value;
+					UpdateIsSelected(base.SelectedNode, true, SelectionMode, Root);
 				}
 			}
 		}
 
-		public bool UseRealRelationShipsToUpdateSelected { get; set; }
+		public JobTreeSelectionMode SelectionMode { get; set; }
 
 		#endregion
 
 		#region Public Methods
+
+		public override bool RemoveBranch(JobPathType path)
+		{
+			// TODO: RemoveBranch does not support removing CanvasSizeUpdate nodes.
+
+			var node = path.Node;
+
+			JobPathType newPath;
+
+			if (path.Node.IsActiveAlternate)
+			{
+				// Restore the most recent alternate branches before removing.
+				Debug.WriteLine($"Making the branch being removed a parked alternate.");
+
+				var alternateToMakeActive = SelectMostRecentAlternate(path);
+				newPath = MakeBranchActive(alternateToMakeActive);
+			}
+			else
+			{
+				newPath = path;
+			}
+
+			var parentNode = path.GetParentNodeOrRoot();
+			var idx = parentNode.Children.IndexOf(node);
+
+			if (node.TransformType == TransformType.ZoomIn)
+			{
+				// TODO: Determine if this is the last
+			}
+
+			if (parentNode.IsActiveAlternate || idx == 0)
+			{
+				if (parentNode.IsHome)
+				{
+					throw new InvalidOperationException("Removing the Home node is not yet supported.");
+				}
+
+				CurrentPath = newPath.GetParentPath();
+			}
+			else
+			{
+				CurrentPath = newPath.CreateSiblingPath(parentNode.Children[idx - 1].Node);
+			}
+
+			var result = parentNode.Children.Remove(node);
+
+			if (parentNode.IsActiveAlternate && !parentNode.Children.Any())
+			{
+				parentNode.IsActiveAlternate = false;
+			}
+
+			ExpandAndSetCurrent(CurrentPath);
+
+			return result;
+		}
 
 		public bool RestoreBranch(ObjectId jobId)
 		{
@@ -862,26 +921,6 @@ namespace MSS.Common
 			return result;
 		}
 
-		//private List<Job> PrepareRemaingJobs(IList<Job> jobs, Job homeJob)
-		//{
-		//	//foreach (var job in jobs)
-		//	//{
-		//	//	if (job.ParentJobId == null)
-		//	//	{
-		//	//		job.ParentJobId = homeJob.Id;
-		//	//	}
-
-		//	//	//if (job.TransformType == TransformType.CanvasSizeUpdate)
-		//	//	//{
-		//	//	//	job.TransformType = TransformType.ZoomOut;
-		//	//	//}
-		//	//}
-
-		//	var remainingJobs = jobs.Where(x => x != homeJob).OrderBy(x => x.Id.ToString()).ToList();
-
-		//	return remainingJobs;
-		//}
-
 		private List<Tuple<Job, Job?>> GetJobsWithParentage(JobBranchType currentBranch)
 		{
 			var result = new List<Tuple<Job, Job?>>();
@@ -908,9 +947,9 @@ namespace MSS.Common
 
 		#region Private Navigate Methods
 
-		private void UpdateIsSelected(JobNodeType? jobTreeItem, bool isSelected, bool useRealRelationships, JobBranchType startPos)
+		private void UpdateIsSelected(JobNodeType? jobTreeItem, bool isSelected,JobTreeSelectionMode jobTreeSelectionMode, JobBranchType startPos)
 		{
-			if (useRealRelationships)
+			if (jobTreeSelectionMode == JobTreeSelectionMode.Real)
 			{
 				UpdateIsSelectedReal(jobTreeItem, isSelected, startPos);
 			}

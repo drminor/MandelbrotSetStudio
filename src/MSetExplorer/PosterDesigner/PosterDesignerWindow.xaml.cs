@@ -583,6 +583,7 @@ namespace MSetExplorer
 
 		#region Private Methods - Poster
 
+		// TOOD: Update the PosterSaveChanges logic to match the ProjectSaveChanges logic.
 		private SaveResultP PosterSaveChanges()
 		{
 			// TODO: Replace with PosterDesigner viewmodel

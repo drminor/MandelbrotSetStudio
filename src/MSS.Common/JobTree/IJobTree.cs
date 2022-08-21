@@ -4,15 +4,13 @@ using MSS.Types.MSet;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
-using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
-
 namespace MSS.Common
 {
+	using JobPathType = ITreePath<JobTreeNode, Job>;
+
 	public interface IJobTree : ITree<JobTreeNode, Job>, IDisposable
 	{
-		JobNodeType? SelectedNode { get; set; }
-		bool UseRealRelationShipsToUpdateSelected { get; set; }
+		JobTreeSelectionMode SelectionMode { get; set; }
 
 		Job? GetParentItem(Job job);
 

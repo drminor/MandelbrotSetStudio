@@ -329,15 +329,15 @@ namespace MSS.Common
 
 			node.ParentNode = this;
 
-			if (!IsRoot && !IsParkedAlternate)
-			{
-				IsActiveAlternate = true;
-			}
+			//if (!IsRoot && !IsParkedAlternate)
+			//{
+			//	IsActiveAlternate = true;
+			//}
 
-			if (IsActiveAlternate)
-			{
-				node.Node.IsParkedAlternate = true;
-			}
+			//if (IsActiveAlternate)
+			//{
+			//	node.Node.IsParkedAlternate = true;
+			//}
 		}
 
 		public override bool Remove(JobNodeType node)
@@ -354,10 +354,10 @@ namespace MSS.Common
 
 			result = Children.Remove(node);
 
-			if (IsActiveAlternate && !Children.Any())
-			{
-				IsActiveAlternate = false;
-			}
+			//if (IsActiveAlternate && !Children.Any())
+			//{
+			//	IsActiveAlternate = false;
+			//}
 
 			return result;
 		}
@@ -472,94 +472,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-		#endregion
-
-		#region IComparable Support
-
-		//public int CompareTo(JobTreeItem? other)
-		//{
-		//	var result = other == null ? 1 : Job.Id.CompareTo(other.Job.Id);
-		//	return result;
-		//}
-
-		//public static bool operator <(JobTreeItem left, JobTreeItem right)
-		//{
-		//	return ReferenceEquals(left, null) ? !ReferenceEquals(right, null) : left.CompareTo(right) < 0;
-		//}
-
-		//public static bool operator <=(JobTreeItem left, JobTreeItem right)
-		//{
-		//	return ReferenceEquals(left, null) || left.CompareTo(right) <= 0;
-		//}
-
-		//public static bool operator >(JobTreeItem left, JobTreeItem right)
-		//{
-		//	return !ReferenceEquals(left, null) && left.CompareTo(right) > 0;
-		//}
-
-		//public static bool operator >=(JobTreeItem left, JobTreeItem right)
-		//{
-		//	return ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.CompareTo(right) >= 0;
-		//}
-
-		#endregion
-
-		#region IEqualityComparer and IEquatable Support
-
-		//public bool Equals(JobTreeItem? x, JobTreeItem? y)
-		//{
-		//	return x?.Equals(y) ?? y is null;
-		//}
-
-		//public override bool Equals(object? obj)
-		//{
-		//	return Equals(obj as JobTreeItem);
-		//}
-
-		//public bool Equals(JobTreeItem? other)
-		//{
-		//	return other != null &&
-		//		   _comparer.Equals(Job.Id, other.Job.Id);
-		//}
-
-		//public override int GetHashCode()
-		//{
-		//	return HashCode.Combine(Job.Id);
-		//}
-
-		//public int GetHashCode([DisallowNull] JobTreeItem obj)
-		//{
-		//	return obj.GetHashCode();
-		//}
-
-		//public static bool operator ==(JobTreeItem? left, JobTreeItem? right)
-		//{
-		//	return EqualityComparer<JobTreeItem>.Default.Equals(left, right);
-		//}
-
-		//public static bool operator !=(JobTreeItem? left, JobTreeItem? right)
-		//{
-		//	return !(left == right);
-		//}
-
-		#endregion
-
-		#region IComparer and IComparer<JobTreeItem> Support -- Not Implemented
-
-		//public int Compare(JobTreeItem? x, JobTreeItem? y)
-		//{
-		//	
-		//
-		//	return _comparer.Compare(x, y);
-		//}
-
-		//public int Compare(object? x, object? y)
-		//{
-		//	return (x is JobTreeItem a && y is JobTreeItem b)
-		//		? _comparer.Compare(x, y)
-		//		: 0;
-		//}
 
 		#endregion
 	}

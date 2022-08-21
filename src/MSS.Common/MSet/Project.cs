@@ -52,10 +52,7 @@ namespace MSS.Common.MSet
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_description = description;
 
-			_jobTree = new JobTree(jobs, checkHomeJob: true)
-			{
-				UseRealRelationShipsToUpdateSelected = false
-			};
+			_jobTree = BuildJobTree(jobs, useFlat: false, checkHomeJob: true, JobTreeSelectionMode.Real);
 
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
@@ -79,6 +76,28 @@ namespace MSS.Common.MSet
 			JobItems = _jobTree.Nodes;
 
 			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentItem.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
+		}
+
+		private IJobTree BuildJobTree(List<Job> jobs, bool useFlat, bool checkHomeJob, JobTreeSelectionMode jobTreeSelectionMode)
+		{
+			IJobTree result;
+
+			if (useFlat)
+			{
+				result = new JobTreeFlat(jobs, checkHomeJob)
+				{
+					SelectionMode = jobTreeSelectionMode
+				};
+			}
+			else
+			{
+				result = new JobTreeSimple(jobs, checkHomeJob)
+				{
+					SelectionMode = jobTreeSelectionMode
+				};
+			}
+
+			return result;
 		}
 
 		#endregion
@@ -519,4 +538,5 @@ namespace MSS.Common.MSet
 
 		#endregion
 	}
+
 }

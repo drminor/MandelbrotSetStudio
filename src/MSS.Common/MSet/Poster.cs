@@ -63,8 +63,7 @@ namespace MSS.Common.MSet
 			_dispPosition = displayPosition;
 			_displayZoom = displayZoom;
 
-			_jobTree = new JobTree(jobs, checkHomeJob: true);
-			_jobTree.UseRealRelationShipsToUpdateSelected = false;
+			_jobTree = BuildJobTree(jobs, useFlat: true, checkHomeJob: true, JobTreeSelectionMode.Real);
 
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			//_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
@@ -91,6 +90,28 @@ namespace MSS.Common.MSet
 			Size = GetFormattedPosterSize(currentJob.MapAreaInfo.CanvasSize);
 
 			Debug.WriteLine($"Poster is loaded. CurrentJobId: {CurrentJob.Id}, Current ColorBandSetId: {CurrentColorBandSet.Id}. IsDirty: {IsDirty}");
+		}
+
+		private IJobTree BuildJobTree(List<Job> jobs, bool useFlat, bool checkHomeJob, JobTreeSelectionMode jobTreeSelectionMode)
+		{
+			IJobTree result;
+
+			if (useFlat)
+			{
+				result = new JobTreeFlat(jobs, checkHomeJob)
+				{
+					SelectionMode = jobTreeSelectionMode
+				};
+			}
+			else
+			{
+				result = new JobTreeSimple(jobs, checkHomeJob)
+				{
+					SelectionMode = jobTreeSelectionMode
+				};
+			}
+
+			return result;
 		}
 
 		#endregion

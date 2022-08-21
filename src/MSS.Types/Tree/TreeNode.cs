@@ -98,30 +98,29 @@ namespace MSS.Types
 
 		public abstract U AddItem(V job);
 
-		public virtual void AddNode(ITreeNode<U, V> node)
-		{
-			Debug.WriteLine("WARNING: Calling AddNode on the base: TreeNode.");
-			if (!Children.Any())
-			{
-				Children.Add(node);
-			}
-			else
-			{
-				var index = GetSortPosition(node.Item);
-				if (index < 0)
-				{
-					index = ~index;
-				}
+		public abstract void AddNode(ITreeNode<U, V> node);
+		//{
+		//	Debug.WriteLine("WARNING: Calling AddNode on the base: TreeNode.");
+		//	if (!Children.Any())
+		//	{
+		//		Children.Add(node);
+		//	}
+		//	else
+		//	{
+		//		var index = GetSortPosition(node.Item);
+		//		if (index < 0)
+		//		{
+		//			index = ~index;
+		//		}
 
-				Children.Insert(index, node);
-			}
+		//		Children.Insert(index, node);
+		//	}
 
-			node.ParentNode = this;
-		}
+		//	node.ParentNode = this;
+		//}
 
 		public bool Move(ITreeNode<U, V> destination)
 		{
-			Debug.WriteLine("WARNING: Calling Move on the base: TreeNode.");
 			if (IsRoot)
 			{
 				throw new InvalidOperationException("Moving the root node is not supported.");
@@ -142,7 +141,7 @@ namespace MSS.Types
 		virtual public bool Remove(ITreeNode<U, V> jobTreeItem)
 		{
 			jobTreeItem.ParentNode = null;
-			bool result = Children.Remove(jobTreeItem);
+			var result = Children.Remove(jobTreeItem);
 
 			return result;
 		}

@@ -33,6 +33,8 @@ namespace MSS.Types
 
 		public ObservableCollection<U> Nodes => Root.Children;
 
+		public virtual ITreeNode<U, V>? SelectedNode { get; set; }
+
 		public V CurrentItem
 		{
 			get => DoWithReadLock(() =>
@@ -125,33 +127,9 @@ namespace MSS.Types
 		#region Public Methods
 
 		public abstract ITreePath<U, V> Add(V item, bool selectTheAddedItem);
-		//{
-		//	TreeLock.EnterWriteLock();
-
-		//	ITreePath<U,V> newPath;
-
-		//	try
-		//	{
-		//		newPath = AddInternal(item, currentBranch: Root);
-		//		IsDirty = true;
-		//	}
-		//	finally
-		//	{
-		//		TreeLock.ExitWriteLock();
-		//	}
-
-		//	if (selectTheAddedItem)
-		//	{
-		//		ExpandAndSetCurrent(newPath);
-		//		CurrentPath = newPath;
-		//	}
-
-		//	return newPath;
-		//}
 
 		public bool RemoveBranch(ObjectId itemId)
 		{
-			// TODO: RemoveBranch does not support removing CanvasSizeUpdate nodes.
 			if (!TryFindPathById(itemId, Root, out var path))
 			{
 				return false;
@@ -161,10 +139,30 @@ namespace MSS.Types
 			return result;
 		}
 
-		public bool RemoveBranch(ITreePath<U,V> path)
+		public virtual bool RemoveBranch(ITreePath<U, V> path)
 		{
-			// TODO: Implement JobTree::RemoveBranch
-			return true;
+			var node = path.Node;
+			var parentNode = path.GetParentNodeOrRoot();
+			var idx = parentNode.Children.IndexOf(node);
+
+			if (idx == 0)
+			{
+				if (parentNode.IsHome)
+				{
+					throw new InvalidOperationException("Removing the Home node is not yet supported.");
+				}
+
+				CurrentPath = path.GetParentPath();
+			}
+			else
+			{
+				CurrentPath = path.CreateSiblingPath(parentNode.Children[idx - 1].Node);
+			}
+
+			var result = parentNode.Children.Remove(node);
+			ExpandAndSetCurrent(CurrentPath);
+
+			return result;
 		}
 
 		public bool TryGetPreviousItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null)
@@ -634,9 +632,9 @@ namespace MSS.Types
 			}
 		}
 
-		protected void ExpandAndSetCurrent(ITreePath<U,V> path)
+		protected void ExpandAndSetCurrent(ITreePath<U,V>? path)
 		{
-			if (path.IsEmpty)
+			if (path == null || path.IsEmpty)
 			{
 				return;
 			}
