@@ -38,7 +38,7 @@ namespace MSetExplorer
 
 				JobTreeNode.IsSelectedColor = GetColorString(Colors.Tan);
 				JobTreeNode.IsParentSelectedColor = GetColorString(Colors.LightPink);
-				JobTreeNode.IsSiblingSelectedColor = GetColorString(Colors.LightGoldenrodYellow);
+				JobTreeNode.IsSiblingSelectedColor = GetColorString(Colors.BlanchedAlmond);
 				JobTreeNode.IsChildSelectedColor = GetColorString(Colors.LightCyan);
 
 				trvJobs.SelectedItemChanged += TrvJobs_SelectedItemChanged;

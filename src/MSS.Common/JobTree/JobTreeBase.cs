@@ -38,7 +38,7 @@ namespace MSS.Common
 	///			c. Make the new newly added node, active by calling MakeBranchActive
 	/// </remarks>
 
-	public abstract class JobTreeBase : Tree<JobTreeNode, Job>, IJobTree
+	public abstract class JobTreeBase : Tree<JobTreeNode, Job>, IJobTree, ITree<JobTreeNode, Job>
 	{
 		#region Constructor
 
@@ -502,27 +502,40 @@ namespace MSS.Common
 
 		#region Private Navigate Methods
 
-		protected virtual void UpdateIsSelected(JobNodeType? jobTreeItem, bool isSelected, JobTreeSelectionMode jobTreeSelectionMode, JobBranchType startPos)
+		protected virtual void UpdateIsSelected(JobNodeType? jobTreeNode, bool isSelected, JobTreeSelectionMode jobTreeSelectionMode, JobBranchType startPos)
 		{
+			if (jobTreeNode == null)
+			{
+				return;
+			}
+
+			var node = jobTreeNode.Node;
+
 			if (jobTreeSelectionMode == JobTreeSelectionMode.Real)
 			{
-				UpdateIsSelectedReal(jobTreeItem, isSelected, startPos);
+				UpdateIsSelectedReal(node, isSelected, startPos);
 			}
 			else
 			{
-				UpdateIsSelectedLogical(jobTreeItem, isSelected, startPos);
+				UpdateIsSelectedLogical(node, isSelected, startPos);
 			}
 		}
 
-		protected abstract void UpdateIsSelectedLogical(JobNodeType? jobTreeItem, bool isSelected, JobBranchType startPos);
+		protected abstract void UpdateIsSelectedLogical(JobTreeNode node,  bool isSelected, JobBranchType startPos);
 
-		protected abstract void UpdateIsSelectedReal(JobNodeType? jobTreeItem, bool isSelected, JobBranchType startPos);
+		protected abstract void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos);
 
-		protected virtual Func<JobNodeType, bool>? GetPredicate(bool skipPanJobs)
+		protected Func<JobNodeType, bool>? GetPredicate(bool skipPanJobs)
 		{
 			Func<JobNodeType, bool>? result = skipPanJobs
-				? x => x.Item.TransformType is TransformType.ZoomIn or TransformType.ZoomOut or TransformType.Home
+				? x => DoesNodeChangeZoom(x.Node)
 				: null;
+			return result;
+		}
+
+		protected virtual bool DoesNodeChangeZoom(JobTreeNode node)
+		{
+			var result = node.TransformType is TransformType.ZoomIn or TransformType.ZoomOut or TransformType.Home;
 			return result;
 		}
 

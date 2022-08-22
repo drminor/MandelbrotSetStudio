@@ -528,37 +528,30 @@ namespace MSS.Types
 		{
 			var currentItem = path.Node;
 
-			ITreePath<U,V>? result;
-
 			var parentNode = path.GetParentNodeOrRoot();
 			var siblings = parentNode.Children;
 			var currentPosition = siblings.IndexOf(currentItem);
 
-			if (TryGetNextNode(siblings, currentPosition, out var nextNode, predicate))
+			var nextNode = GetNextNode(siblings, currentPosition, predicate);
+
+			if (nextNode != null)
 			{
 				//The new item will be a sibling of the current item
-				result = path.Combine(nextNode.Node);
+				var result = path.Combine(nextNode.Node);
+				return result;
 			}
 			else
 			{
-				result = null;
+				return null;
 			}
-
-			return result;
 		}
 
-		protected virtual bool TryGetNextNode(IList<ITreeNode<U, V>> nodes, int currentPosition, [MaybeNullWhen(false)] out ITreeNode<U, V> nextNode, Func<ITreeNode<U, V>, bool>? predicate = null)
+		protected virtual ITreeNode<U, V>? GetNextNode(IList<ITreeNode<U, V>> nodes, int currentPosition, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
-			if (predicate != null)
-			{
-				nextNode = nodes.Skip(currentPosition + 1).FirstOrDefault(predicate);
-			}
-			else
-			{
-				nextNode = nodes.Skip(currentPosition + 1).FirstOrDefault();
-			}
-
-			return nextNode != null;
+			var result = predicate != null
+				? nodes.Skip(currentPosition + 1).FirstOrDefault(predicate)
+				: nodes.Skip(currentPosition + 1).FirstOrDefault();
+			return result;
 		}
 
 		protected virtual bool CanMoveForward(ITreePath<U,V>? path)
@@ -606,7 +599,6 @@ namespace MSS.Types
 			if (previousNode != null)
 			{
 				var result = path.Combine(previousNode.Node);
-
 				return result;
 			}
 			else
@@ -617,17 +609,9 @@ namespace MSS.Types
 
 		protected virtual ITreeNode<U, V>? GetPreviousNode(IList<ITreeNode<U, V>> nodes, int currentPosition, Func<ITreeNode<U, V>, bool>? predicate = null)
 		{
-			ITreeNode<U, V>? result;
-
-			if (predicate != null)
-			{
-				result = nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault(predicate);
-			}
-			else
-			{
-				result = nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault();
-			}
-
+			var result = predicate != null
+				? nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault(predicate)
+				: nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault();
 			return result;
 		}
 

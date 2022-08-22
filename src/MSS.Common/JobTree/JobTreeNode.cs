@@ -8,12 +8,16 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
-using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+//using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
 
 namespace MSS.Common
 {
+	using JobNodeType = ITreeNode<JobTreeNode, Job>;
+
 	public class JobTreeNode : TreeNode<JobTreeNode, Job>, INotifyPropertyChanged, ICloneable
 	{
+		private static readonly string PreferredPathMark = new('\u0077', 1);
+
 		private bool _isActiveAlternate;
 		private bool _isParkedAlternate;
 
@@ -92,11 +96,34 @@ namespace MSS.Common
 
 		public override ObservableCollection<JobNodeType> Children { get; init; }
 
+		public bool IsOnPreferredPath { get; set; }
+
+		public JobNodeType? PreferredChild
+		{
+			get => Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath) ?? Children.LastOrDefault();
+			set
+			{
+				var currentValue = PreferredChild;
+				if (currentValue != null && currentValue != value)
+				{
+					currentValue.Node.IsOnPreferredPath = false;
+				}
+
+				if (value != null)
+				{
+					value.Node.IsOnPreferredPath = true;
+				}
+
+				if (ParentNode != null)
+				{
+					ParentNode.Node.PreferredChild = this;
+				}
+			}
+		}
+
 		public List<JobTreeNode>? AlternateDispSizes { get; private set; }
 
 		public SortedList<ObjectId, Job> RealChildJobs { get; set; }
-
-		public bool IsOnPreferredPath { get; set; }
 
 		#endregion
 
@@ -252,6 +279,8 @@ namespace MSS.Common
 				}
 			}
 		}
+
+		public string IsOnPreferredPathMarker => IsOnPreferredPath ? PreferredPathMark : " ";
 
 		public string? PathHeadType => IsActiveAlternate ? "[Alt]" : IsParkedAlternate ? "[Prk]" : null;
 

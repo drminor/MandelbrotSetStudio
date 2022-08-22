@@ -4,12 +4,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-
-//using JobBranchType = MSS.Types.ITreeBranch<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
-//using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
-//using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
 
 namespace MSS.Common
 {
@@ -174,10 +169,8 @@ namespace MSS.Common
 				preceedingPath = GetPath(preceedingJob1, parentPath.GetParentBranch());
 			}
 
-			var preceedingJob = preceedingPath.Item;
-
 			// Does the preceeding sibling job (in date order) move the map to a different Zoom level.
-			var addingJobAsAnAlt = preceedingJob!.TransformType is TransformType.ZoomIn or TransformType.ZoomOut;
+			var addingJobAsAnAlt = DoesNodeChangeZoom(preceedingPath.Node);
 
 			if (addingJobAsAnAlt)
 			{
@@ -454,13 +447,13 @@ namespace MSS.Common
 
 		#region Private Navigate Methods
 
-		protected override void UpdateIsSelectedLogical(JobNodeType? jobTreeItem, bool isSelected, JobBranchType startPos)
+		protected override void UpdateIsSelectedLogical(JobTreeNode node, bool isSelected, JobBranchType startPos)
 		{
-			if (jobTreeItem != null)
+			if (node != null)
 			{
-				jobTreeItem.Node.IsSelected = isSelected;
+				node.Node.IsSelected = isSelected;
 
-				if (!TryFindPath(jobTreeItem.Item, startPos, out var path))
+				if (!TryFindPath(node.Item, startPos, out var path))
 				{
 					return;
 				}
@@ -492,13 +485,13 @@ namespace MSS.Common
 				//	siblingItem.IsSiblingOfSelected = isSelected;
 				//}
 
-				if (jobTreeItem.Node.RealChildJobs.Any())
+				if (node.Node.RealChildJobs.Any())
 				{
 					// Use the prior job's parent path to start the search for each child.
 					var parentBranch = backPath.GetParentBranch();
 
 					// Set each child node's IsChildOfSelected
-					foreach (var realChildJob in jobTreeItem.Node.RealChildJobs.Values)
+					foreach (var realChildJob in node.Node.RealChildJobs.Values)
 					{
 						if (TryFindPath(realChildJob, parentBranch, out var childPath))
 						{
@@ -519,43 +512,45 @@ namespace MSS.Common
 			}
 		}
 
-		protected override void UpdateIsSelectedReal(JobNodeType? jobTreeItem, bool isSelected, JobBranchType startPos)
+		protected override void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos)
 		{
-			if (jobTreeItem != null)
+			node.IsSelected = isSelected;
+
+			if (!TryFindPath(node.Item, startPos, out var path))
 			{
-				jobTreeItem.Node.IsSelected = isSelected;
+				return;
+			}
 
-				if (TryFindParentPath(jobTreeItem.Item, startPos, out var realParentPath))
+			var parentPath = path.GetParentPath();
+
+			if (parentPath != null)
+			{
+				var parentNode = parentPath.Node;
+				// Set the parent node's IsParentOfSelected
+				parentNode.IsParentOfSelected = isSelected;
+
+				// Use the logical grandparent path (or root) to start the search for each sibling
+				var grandparentBranch = parentPath.GetParentBranch();
+
+				// Set each sibling node's IsSiblingSelected
+				foreach (var realSiblingJob in parentNode.RealChildJobs.Values)
 				{
-					var realParentNode = realParentPath.Node;
-
-					// Set the parent node's IsParentOfSelected
-					realParentNode.IsParentOfSelected = isSelected;
-
-					// Use the logical grandparent path (or root) to start the search for each sibling
-					var grandparentBranch = realParentPath.GetParentBranch();
-
-					// Set each sibling node's IsSiblingSelected
-					foreach (var realSiblingJob in realParentNode.RealChildJobs.Values)
+					if (TryFindPath(realSiblingJob, grandparentBranch, out var siblingPath))
 					{
-						if (TryFindPath(realSiblingJob, grandparentBranch, out var siblingPath))
-						{
-							siblingPath.Node.IsSiblingOfSelected = isSelected;
-						}
+						siblingPath.Node.IsSiblingOfSelected = isSelected;
 					}
+				}
+			}
 
-					// Use the real parent path to start the search for each child.
-					var logicalParentBranch = realParentPath;
+			// Use the real parent path to start the search for each child.
+			var logicalParentBranch = path.GetParentBranch();
 
-					// Set each child node's IsChildOfSelected
-					foreach (var realChildJob in jobTreeItem.Node.RealChildJobs.Values)
-					{
-						if (TryFindPath(realChildJob, logicalParentBranch, out var childPath))
-						{
-							childPath.Node.IsChildOfSelected = isSelected;
-						}
-					}
-
+			// Set each child node's IsChildOfSelected
+			foreach (var realChildJob in node.Node.RealChildJobs.Values)
+			{
+				if (TryFindPath(realChildJob, logicalParentBranch, out var childPath))
+				{
+					childPath.Node.IsChildOfSelected = isSelected;
 				}
 			}
 		}

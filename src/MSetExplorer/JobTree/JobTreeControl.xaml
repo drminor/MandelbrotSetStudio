@@ -81,15 +81,12 @@
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
 
-                                <!--<StackPanel.ToolTip>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding IdAndParentId}"/>
-                                    </StackPanel>
-                                </StackPanel.ToolTip>-->
-
                                 <StackPanel.ToolTip>
                                     <TextBlock Text="{Binding IdAndParentId}"/>
                                 </StackPanel.ToolTip>
+
+                                <!-- Is On Preferred Path Marker -->
+                                <TextBlock Text="{Binding IsOnPreferredPathMarker}" FontFamily="Wingdings" Margin="0,3,0,-6"/>
 
                                 <!-- Transform -->
                                 <TextBlock Text="{Binding TransformType}" />
@@ -109,14 +106,13 @@
                                 <!--<TextBlock Text="   " Foreground="{Binding ItemColor}"/>
                                 <TextBlock Text="{Binding Created}" Foreground="{Binding ItemColor}" />-->
 
-
                                 <!-- Child Count -->
                                 <!--<TextBlock Text=" [" Foreground="DarkGreen"/>
                                 <TextBlock Text="{Binding Children.Count}" Foreground="DarkGreen" />
                                 <TextBlock Text="]" Foreground="DarkGreen" />-->
                                 
                                 <!-- Path Head Type -->
-                                <TextBlock Margin="2,1,0,1"  Text="{Binding PathHeadType}" Foreground="DarkGreen" />
+                                <TextBlock Margin="2,1,0,1" Text="{Binding PathHeadType}" Foreground="DarkGreen" />
 
                                 <Button Margin="5,1,0,1" Focusable="False" Command="local:JobTreeCommands.MoveTo" CommandParameter="{Binding JobId}" >Go</Button>
                             </StackPanel>
