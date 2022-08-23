@@ -78,14 +78,14 @@ namespace MSS.Common
 			return result;
 		}
 
-		public override bool RestoreBranch(ObjectId jobId)
+		public override bool MakePreferred(ObjectId jobId)
 		{
-			Debug.WriteLine($"Restoring Branch: {jobId}.");
+			Debug.WriteLine($"Marking Branch for {jobId}, the preferred branch.");
 
-			// TODO: RestoreBranch does not support CanvasSizeUpdateJobs
+			// TODO: MakePreferred does not support CanvasSizeUpdateJobs
 			if (!TryFindPathById(jobId, Root, out var path))
 			{
-				throw new InvalidOperationException($"Cannot find job: {jobId} that is being restored.");
+				throw new InvalidOperationException($"Cannot find job: {jobId} for which to mark the branch as preferred.");
 			}
 
 			while (path != null && !(path.Count > 1))
@@ -95,16 +95,21 @@ namespace MSS.Common
 
 			if (path == null || !path.Node.IsParkedAlternate)
 			{
-				throw new InvalidOperationException("Cannot restore this branch, it is not a \"parked\" alternate.");
+				throw new InvalidOperationException("Cannot mark this branch as preferred, it is not a \"parked\" alternate.");
 			}
 
-			var result = RestoreBranch(path);
+			var result = MakePreferred(path);
 
 			return result;
 		}
 
-		public override bool RestoreBranch(JobPathType path)
+		public override bool MakePreferred(JobPathType? path)
 		{
+			if (path == null)
+			{
+				return base.MakePreferred(path);
+			}
+
 			JobPathType newPath;
 
 			if (path.Item.TransformType == TransformType.CanvasSizeUpdate)
@@ -120,6 +125,7 @@ namespace MSS.Common
 			ExpandAndSetCurrent(newPath);
 			CurrentPath = newPath;
 			IsDirty = true;
+
 			return true;
 		}
 

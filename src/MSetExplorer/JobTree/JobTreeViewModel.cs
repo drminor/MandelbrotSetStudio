@@ -111,11 +111,11 @@ namespace MSetExplorer
 			return job != null;
 		}
 
-		public bool RestoreBranch(ObjectId jobId)
+		public bool MarkBranchAsPreferred(ObjectId jobId)
 		{
 			if (CurrentProject != null)
 			{
-				var result = CurrentProject.RestoreBranch(jobId);
+				var result = CurrentProject.MarkBranchAsPreferred(jobId);
 				return result;
 			}
 			else

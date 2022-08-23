@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -24,6 +25,7 @@ namespace MSS.Common
 		private bool _isIterationChange;
 		private bool _isColorMapChange;
 
+		private bool _isOnPreferredPath;
 		private bool _isSelected;
 		private bool _isParentOfSelected;
 		private bool _isSiblingOfSelected;
@@ -96,28 +98,59 @@ namespace MSS.Common
 
 		public override ObservableCollection<JobNodeType> Children { get; init; }
 
-		public bool IsOnPreferredPath { get; set; }
-
 		public JobNodeType? PreferredChild
 		{
 			get => Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath) ?? Children.LastOrDefault();
 			set
 			{
-				var currentValue = PreferredChild;
-				if (currentValue != null && currentValue != value)
+				var numberOfChildNodesReset = 0;
+				var numberOfParentNodesUpdated = 0;
+				if (SetPreferredChild(value?.Node, ref numberOfChildNodesReset, ref numberOfParentNodesUpdated))
 				{
-					currentValue.Node.IsOnPreferredPath = false;
+					Debug.WriteLine($"Updating the preferred child for node: {Id} to {value?.Id}. {numberOfChildNodesReset} child nodes reset, {numberOfParentNodesUpdated} parent nodes updated.");
 				}
+			}
+		}
 
-				if (value != null)
+		private bool SetPreferredChild(JobTreeNode? child, ref int numberOfChildNodesReset, ref int numberOfParentNodesUpdated)
+		{
+			var currentValue = Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath);
+			if (currentValue != child)
+			{
+				if (child != null && !Children.Contains(child))
 				{
-					value.Node.IsOnPreferredPath = true;
+					throw new InvalidOperationException("Cannot set this JobTreeNode's PreferredChild to be a node that isn't contained in this node's list of child nodes.");
 				}
 
 				if (ParentNode != null)
 				{
-					ParentNode.Node.PreferredChild = this;
+					var parentsPreferredChild = ParentNode.Node.Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath);
+					if (parentsPreferredChild != this)
+					{
+						numberOfParentNodesUpdated++;
+						_ = ParentNode.Node.SetPreferredChild(this, ref numberOfChildNodesReset, ref numberOfParentNodesUpdated);
+					}
 				}
+
+				var downLevelChildrenUpdated = ResetPreferredChildren();
+				if (downLevelChildrenUpdated > 0)
+				{
+					Debug.WriteLine($"Reset {downLevelChildrenUpdated} down-level children's IsOnPreferredPath setting.");
+				}
+
+				numberOfChildNodesReset += downLevelChildrenUpdated;
+
+				if (child != null)
+				{
+					child.Node.IsOnPreferredPath = true;
+				}
+
+				return true;
+			}
+			else
+			{
+				Debug.WriteLine($"SetPreferredChild found that the currentValue: {currentValue?.Id ?? ObjectId.Empty} already equals the new value: {child?.Id ?? ObjectId.Empty}.");
+				return false;
 			}
 		}
 
@@ -207,6 +240,25 @@ namespace MSS.Common
 				{
 					_isColorMapChange = value;
 					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsOnPreferredPath
+		{
+			get => _isOnPreferredPath;
+			set
+			{
+				if (value != _isOnPreferredPath)
+				{
+					//Debug.WriteLine($"Updating the IsOnPreferredPath to {value} for {Id}.");
+					_isOnPreferredPath = value;
+					OnPropertyChanged();
+					OnPropertyChanged(nameof(IsOnPreferredPathMarker));
+				}
+				else
+				{
+					//Debug.WriteLine($"Not updating the IsOnPreferredPath to {value} for {Id}, it already has this value.");
 				}
 			}
 		}
@@ -446,6 +498,30 @@ namespace MSS.Common
 			{
 				return "#fff8dc";// (Cornflower Silk)
 			}
+		}
+
+		private int ResetPreferredChildren()
+		{
+			var result = 0;
+
+			foreach (var c in Children)
+			{
+				if (c.Node.IsOnPreferredPath)
+				{
+					c.Node.IsOnPreferredPath = false;
+					result++;
+				}
+
+				var downLevelChildrenUpdated = c.Node.ResetPreferredChildren();
+				//if (downLevelChildrenUpdated > 0)
+				//{
+				//	Debug.WriteLine($"Reset {downLevelChildrenUpdated} down-level children's IsOnPreferredPath setting.");
+				//}
+
+				result += downLevelChildrenUpdated;
+			}
+
+			return result;
 		}
 
 		#endregion

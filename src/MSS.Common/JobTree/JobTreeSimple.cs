@@ -52,17 +52,6 @@ namespace MSS.Common
 				newPath = AddInLine(job, parentPath);
 			}
 
-			//if (job.Id.ToString() == "6301d00e2b3d34c349eff531" || job.ParentJobId.ToString() == "6301d00e2b3d34c349eff531")
-			//if (job.Id.ToString() == "6301c2fd2b3d34c349eff520" || job.ParentJobId.ToString() == "6301c2fd2b3d34c349eff520")
-			//{
-			//		newPath.Node.IsOnPreferredPath = true;
-			//}
-
-			if (job.Id.ToString() == "6301d0672b3d34c349eff56a")
-			{
-				parentNode.PreferredChild = newPath.Node;
-			}
-
 			_ = parentNode.AddRealChild(job);
 
 			return newPath;
@@ -121,18 +110,18 @@ namespace MSS.Common
 						{
 							if (predicate(preferredNode))
 							{
-								result = node; // preferredNode;
+								// TODO: Check the impact of returning a child of one of the items in the list,
+								// as opposed to returning one of the items in the list.
+								result = preferredNode; 
 								break;
 							}
 						}
 					}
-					else
+
+					if (i > currentPosition && predicate(node))
 					{
-						if (predicate(node))
-						{
-							result = node;
-							break;
-						}
+						result = node;
+						break;
 					}
 				}
 			}

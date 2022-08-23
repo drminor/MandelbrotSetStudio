@@ -14,8 +14,8 @@ namespace MSS.Common
 
 		Job? GetParentItem(Job job);
 
-		bool RestoreBranch(ObjectId jobId);
-		bool RestoreBranch(JobPathType path);
+		bool MakePreferred(ObjectId jobId);
+		bool MakePreferred(JobPathType? path);
 
 		bool TryGetNextJob([MaybeNullWhen(false)] out Job item, bool skipPanJobs);
 		bool TryGetPreviousJob([MaybeNullWhen(false)] out Job item, bool skipPanJobs);

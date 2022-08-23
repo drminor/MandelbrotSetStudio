@@ -66,12 +66,13 @@ namespace MSS.Common.MSet
 
 			if (currentJob == null)
 			{
-				currentJob = jobs.Last();
 				Debug.WriteLine($"WARNING: The Project has a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
+				currentJob = jobs.Last();
 			}
 
 			_ = LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
 			_jobTree.CurrentItem = currentJob;
+			_ = _jobTree.MakePreferred(_jobTree.GetCurrentPath());
 
 			JobItems = _jobTree.Nodes;
 
@@ -386,9 +387,9 @@ namespace MSS.Common.MSet
 			return _jobTree.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out matchingProxy);
 		}
 
-		public bool RestoreBranch(ObjectId jobId)
+		public bool MarkBranchAsPreferred(ObjectId jobId)
 		{
-			var result = _jobTree.RestoreBranch(jobId);
+			var result = _jobTree.MakePreferred(jobId);
 			return result;
 		}
 

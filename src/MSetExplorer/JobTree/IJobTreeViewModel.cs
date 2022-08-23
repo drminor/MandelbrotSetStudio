@@ -26,7 +26,7 @@ namespace MSetExplorer
 
 		ObservableCollection<JobTreeNode>? JobItems { get; }
 
-		bool RestoreBranch(ObjectId jobId);
+		bool MarkBranchAsPreferred(ObjectId jobId);
 		long DeleteBranch(ObjectId jobId, out long numberOfMapSectionsDeleted);
 		string GetDetails(ObjectId jobId);
 	}

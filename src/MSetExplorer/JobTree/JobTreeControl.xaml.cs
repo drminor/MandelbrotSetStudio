@@ -104,7 +104,7 @@ namespace MSetExplorer
 		}
 
 		// Restore Current Branch CanExecute
-		private void RestoreBranchCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		private void ActivateBranchCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			if (e.Parameter is ObjectId jobId)
 			{
@@ -114,17 +114,17 @@ namespace MSetExplorer
 		}
 
 		// Restore Current Branch
-		private void RestoreBranchCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		private void ActivateBranchCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			if (e.Parameter is ObjectId jobId)
 			{
 				try
 				{
-					_ = _vm.RestoreBranch(jobId);
+					_ = _vm.MarkBranchAsPreferred(jobId);
 				}
 				catch (System.InvalidOperationException ioe)
 				{
-					_ = MessageBox.Show($"Restore failed. Error = {ioe.Message}.");
+					_ = MessageBox.Show($"Could not mark the branch as preferred. Error = {ioe.Message}.");
 				}
 			}
 		}

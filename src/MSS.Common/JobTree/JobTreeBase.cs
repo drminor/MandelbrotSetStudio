@@ -114,14 +114,34 @@ namespace MSS.Common
 			return result;
 		}
 
-		public virtual bool RestoreBranch(ObjectId jobId)
+		public virtual bool MakePreferred(ObjectId jobId)
 		{
-			throw new NotImplementedException("The RestoreBranch method is not supported by this implementation.");
+			Debug.WriteLine($"Marking Branch for {jobId}, the preferred branch.");
+
+			// TODO: MakePreferred does not support CanvasSizeUpdateJobs
+			if (!TryFindPathById(jobId, Root, out var path))
+			{
+				throw new InvalidOperationException($"Cannot find job: {jobId} for which to mark the branch as preferred.");
+			}
+
+			var result = MakePreferred(path);
+
+			return result;
 		}
 
-		public virtual bool RestoreBranch(JobPathType path)
+		public virtual bool MakePreferred(JobPathType? path)
 		{
-			throw new NotImplementedException("The RestoreBranch method is not supported by this implementation.");
+			if (path == null)
+			{
+				Root.GetNodeOrRoot().PreferredChild = null;
+			}
+			else
+			{
+				var parentNode = path.GetParentNodeOrRoot();
+				parentNode.PreferredChild = path.Node;
+			}
+
+			return true;
 		}
 
 		public virtual bool TryGetPreviousJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)

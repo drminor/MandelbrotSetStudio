@@ -58,7 +58,7 @@
 
                     <TreeView.CommandBindings>
                         <CommandBinding Command="local:JobTreeCommands.MoveTo" CanExecute="MoveToCommand_CanExecute" Executed="MoveToCommand_Executed" />
-                        <CommandBinding Command="local:JobTreeCommands.RestoreBranch" CanExecute="RestoreBranchCommand_CanExecute" Executed="RestoreBranchCommand_Executed" />
+                        <CommandBinding Command="local:JobTreeCommands.ActivateBranch" CanExecute="ActivateBranchCommand_CanExecute" Executed="ActivateBranchCommand_Executed" />
                         <CommandBinding Command="local:JobTreeCommands.Delete" CanExecute="DeleteCommand_CanExecute" Executed="DeleteCommand_Executed"/>
                         <CommandBinding Command="local:JobTreeCommands.ShowDetails" CanExecute="ShowDetailsCommand_CanExecute" Executed="ShowDetailsCommand_Executed" />
                     </TreeView.CommandBindings>
@@ -74,7 +74,7 @@
                                 <StackPanel.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="_Move To" Command="local:JobTreeCommands.MoveTo" CommandParameter="{Binding JobId}" />
-                                        <MenuItem Header="_Restore Branch" Command="local:JobTreeCommands.RestoreBranch" CommandParameter="{Binding JobId}" />
+                                        <MenuItem Header="Mark As _Active" Command="local:JobTreeCommands.ActivateBranch" CommandParameter="{Binding JobId}" />
                                         <MenuItem Header="_Delete" Command="local:JobTreeCommands.Delete" CommandParameter="{Binding JobId}" />
                                         <Separator/>
                                         <MenuItem Header="_Show Details" Command="local:JobTreeCommands.ShowDetails" CommandParameter="{Binding JobId}" />

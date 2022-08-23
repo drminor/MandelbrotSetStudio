@@ -23,9 +23,9 @@ namespace MSetExplorer
         //    }
         //);
 
-        public static readonly RoutedUICommand RestoreBranch = new RoutedUICommand(
-            text: "Restore Branch",
-            name: "RestoreBranch",
+        public static readonly RoutedUICommand ActivateBranch = new RoutedUICommand(
+            text: "Mark Branch As Preferred",
+            name: "ActivateBranch",
             ownerType: typeof(JobTreeCommands),
             inputGestures: new InputGestureCollection() {
                 new KeyGesture(Key.Insert)
@@ -48,7 +48,7 @@ namespace MSetExplorer
             inputGestures: new InputGestureCollection() {
                 new KeyGesture(Key.F3)
             }
-       );
+        );
 
     }
 }

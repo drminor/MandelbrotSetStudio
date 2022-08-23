@@ -400,9 +400,9 @@ namespace MSS.Common.MSet
 			return _jobTree.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out matchingProxy);
 		}
 
-		public bool RestoreBranch(ObjectId jobId)
+		public bool MarkBranchAsPreferred(ObjectId jobId)
 		{
-			var result = _jobTree.RestoreBranch(jobId);
+			var result = _jobTree.MakePreferred(jobId);
 			return result;
 		}
 

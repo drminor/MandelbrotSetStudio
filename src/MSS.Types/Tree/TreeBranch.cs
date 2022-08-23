@@ -100,13 +100,6 @@ namespace MSS.Types
 			return grandparentPath != null;
 		}
 
-		// TOOD: Use this new version
-		public U GetNodeOrRootNew()
-		{
-			var result = Node;
-			return result;
-		}
-
 		public U GetNodeOrRoot()
 		{
 			var result = GetCurrentPath()?.Node ?? RootItem;

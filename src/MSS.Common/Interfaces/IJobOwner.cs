@@ -39,7 +39,7 @@ namespace MSS.Common.MSet
 		Job? GetParent(Job job);
 		List<Job>? GetJobAndDescendants(ObjectId jobId);
 
-		bool RestoreBranch(ObjectId jobId);
+		bool MarkBranchAsPreferred(ObjectId jobId);
 		bool DeleteBranch(ObjectId jobId);
 		void MarkAsSaved();
 
