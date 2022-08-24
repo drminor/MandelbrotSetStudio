@@ -25,7 +25,6 @@ namespace MSS.Types
 		{
 			Item = item ?? throw new ArgumentNullException(nameof(item));
 			ParentNode = parentNode;
-			//Children = new ObservableCollection<ITreeNode<U, V>>();
 			IsDirty = false;
 			IsRoot = isRoot;
 			IsHome = isHome;
@@ -41,7 +40,6 @@ namespace MSS.Types
 		public ObjectId Id { get; protected set; }
 		public ObjectId? ParentId { get; protected set; }
 		public U? ParentNode { get; set; }
-		//public U Node => (U)(ITreeNode<U, V>)this;
 		public abstract ObservableCollection<U> Children { get; init; }
 		public bool IsDirty { get; set; }
 

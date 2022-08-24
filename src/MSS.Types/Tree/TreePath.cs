@@ -43,13 +43,13 @@ namespace MSS.Types
 			return result;
 		}
 
-		public ITreePath<U, V> CreateSiblingPath(U child)
+		public ITreePath<U, V> CreateSiblingPath(U term)
 		{
 			var parentPath = GetParentPath();
 
 			var result = parentPath == null
-				? new TreePath<U, V>(RootItem, child)
-				: parentPath.Combine(child);
+				? new TreePath<U, V>(RootItem, term)
+				: parentPath.Combine(term);
 
 			return result;
 		}

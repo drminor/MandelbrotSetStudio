@@ -35,11 +35,11 @@ namespace MSS.Types
 		bool TryGetParentPath([MaybeNullWhen(false)] out ITreePath<U,V> parentPath);
 		bool TryGetGrandparentPath([MaybeNullWhen(false)] out ITreePath<U,V> grandparentPath);
 
-		ITreePath<U,V> Combine(U node);
+		ITreePath<U,V> Combine(U term);
 		ITreePath<U,V> Combine(ITreePath<U,V> treePath);
 		ITreePath<U,V> Combine(IEnumerable<U> terms);
 
-		ITreePath<U, V> CreatePath(U node);
+		ITreePath<U, V> CreatePath(U term);
 		ITreePath<U, V> CreatePath(IEnumerable<U> terms);
 
 	}

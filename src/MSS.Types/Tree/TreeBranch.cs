@@ -59,15 +59,15 @@ namespace MSS.Types
 			return path != null;
 		}
 
-		public ITreePath<U, V> CreatePath(U node)
+		public ITreePath<U, V> CreatePath(U term)
 		{
-			if (node.IsRoot)
+			if (term.IsRoot)
 			{
 				throw new ArgumentException("Cannot create a path using the root node.");
 			}
 
-			var terms = new List<U> { node };
-			var parentNode = node.ParentNode;
+			var terms = new List<U> { term };
+			var parentNode = term.ParentNode;
 
 			while (parentNode != null && !parentNode.IsRoot)
 			{
@@ -145,14 +145,14 @@ namespace MSS.Types
 			return result;
 		}
 
-		public ITreePath<U, V> Combine(ITreePath<U, V> node)
+		public ITreePath<U, V> Combine(ITreePath<U, V> term)
 		{
-			return Combine(node.Terms);
+			return Combine(term.Terms);
 		}
 
-		public ITreePath<U, V> Combine(U node)
+		public ITreePath<U, V> Combine(U term)
 		{
-			return Combine(new[] { node });
+			return Combine(new[] { term });
 		}
 
 		public ITreePath<U, V> Combine(IEnumerable<U> terms)
@@ -183,7 +183,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			return string.Join("; ", Terms.Select(x => $"{x.Id}/{x.ParentId ?? ObjectId.Empty}"));
+			return string.Join("; ", Terms.Select(x => $"{x.Id}, {x.ParentId ?? ObjectId.Empty}"));
 		}
 
 		object ICloneable.Clone()

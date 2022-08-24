@@ -491,26 +491,18 @@ namespace MSS.Types
 			return false;
 		}
 
-		//protected bool NodeContainsItem(ITreeBranch<U,V> branch, Func<ITreeNode<U,V>, bool> predicate, [MaybeNullWhen(false)] out ITreePath<U,V> path)
-		//{
-		//	var foundNode = branch.GetNodeOrRoot().Children.FirstOrDefault(predicate);
-		//	//var foundNode = branch.Children.FirstOrDefault(predicate);
-		//	path = foundNode == null ? null : branch.Combine(foundNode.Node);
-		//	return path != null;
-		//}
-
 		#endregion
 
 		#region Protected Navigate Methods
 
 		protected virtual ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
 		{
-			var currentItem = path.Node;
+			//var currentItem = path.Node;
+			//var parentNode = path.GetParentNodeOrRoot();
+			//var siblings = parentNode.Children;
+			//var currentPosition = siblings.IndexOf(currentItem);
 
-			var parentNode = path.GetParentNodeOrRoot();
-			var siblings = parentNode.Children;
-			var currentPosition = siblings.IndexOf(currentItem);
-
+			var currentPosition = GetPosition(path, out var siblings);
 			var nextNode = GetNextNode(siblings, currentPosition, predicate);
 
 			if (nextNode != null)
@@ -525,60 +517,85 @@ namespace MSS.Types
 			}
 		}
 
-		protected virtual U? GetNextNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate = null)
+		protected virtual IEnumerable<U>? GetNextNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate = null)
 		{
-			var result = predicate != null
+			var node = predicate != null
 				? nodes.Skip(currentPosition + 1).FirstOrDefault(predicate)
 				: nodes.Skip(currentPosition + 1).FirstOrDefault();
-			return result;
+
+			return node == null ? null : new[] { node };
 		}
 
 		protected virtual bool CanMoveForward(ITreePath<U,V>? path)
 		{
-			var currentItem = path?.LastTerm;
+			//var currentItem = path?.LastTerm;
+			//if (path == null || currentItem == null)
+			//{
+			//	return false;
+			//}
 
-			if (path == null || currentItem == null)
+			if (path == null)
 			{
 				return false;
 			}
 
-			var parentNode = path.GetParentNodeOrRoot();
-			var siblings = parentNode.Children;
-			var currentPosition = siblings.IndexOf(currentItem);
+			//var parentNode = path.GetParentNodeOrRoot();
+			//var siblings = parentNode.Children;
+			//var currentPosition = siblings.IndexOf(currentItem);
+			var currentPosition = GetPosition(path, out var siblings);
 
-			return !(currentPosition == siblings.Count - 1);
+			//return !(currentPosition == siblings.Count - 1);
+
+			if (currentPosition < siblings.Count - 1)
+			{
+				// We can move to the next item at the current level.
+				return true;
+			}
+			else
+			{
+				// We can go down, return true.
+				return path.Node.Children.Any();
+			}
 		}
 
 		protected virtual ITreePath<U, V>? GetPreviousItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
 		{
-			var currentItem = path.Node;
+			//var currentItem = path.Node;
 
-			if (currentItem == null)
-			{
-				return null;
-			}
+			//if (currentItem == null)
+			//{
+			//	return null;
+			//}
 
-			var parentNode = path.GetParentNodeOrRoot();
-			var siblings = parentNode.Children;
-			var currentPosition = siblings.IndexOf(currentItem);
+			//var parentNode = path.GetParentNodeOrRoot();
+			//var siblings = parentNode.Children;
+			//var currentPosition = siblings.IndexOf(currentItem);
+
+			var currentPosition = GetPosition(path, out var siblings);
 			var previousNode = GetPreviousNode(siblings, currentPosition, predicate);
+
+			var previousPath = path;
 			var curPath = path.GetParentPath();
 
-			// TODO: Make climbing the tree, more elegant
 			while (previousNode == null && curPath != null)
 			{
-				currentItem = path.Node;
+				//currentItem = curPath.Node;
 
-				var grandparentNode = curPath.GetParentNodeOrRoot();
-				siblings = grandparentNode.Children;
-				currentPosition = siblings.IndexOf(currentItem);
-				previousNode = GetPreviousNode(siblings, currentPosition + 1, predicate);
+				//var grandparentNode = curPath.GetParentNodeOrRoot();
+				//siblings = grandparentNode.Children;
+				//currentPosition = siblings.IndexOf(currentItem);
+				//previousNode = GetPreviousNode(siblings, currentPosition + 1, predicate);
+
+				currentPosition = GetPosition(curPath, out siblings);
+				previousNode = GetPreviousNode(siblings, currentPosition, predicate);
+
+				previousPath = curPath;
 				curPath = curPath.GetParentPath();
 			}
 
 			if (previousNode != null)
 			{
-				var result = path.Combine(previousNode);
+				var result = previousPath.Combine(previousNode);
 				return result;
 			}
 			else
@@ -587,26 +604,34 @@ namespace MSS.Types
 			}
 		}
 
-		protected virtual U? GetPreviousNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate = null)
+		protected virtual IEnumerable<U>? GetPreviousNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate = null)
 		{
-			var result = predicate != null
+			var node = predicate != null
 				? nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault(predicate)
 				: nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault();
-			return result;
+
+			return node == null ? null : new[] { node };
 		}
 
 		protected virtual bool CanMoveBack(ITreePath<U,V>? path)
 		{
-			var currentItem = path?.LastTerm;
+			//var currentItem = path?.LastTerm;
 
-			if (path == null || currentItem == null)
+			//if (path == null || currentItem == null)
+			//{
+			//	return false;
+			//}
+
+			if (path == null)
 			{
 				return false;
 			}
 
-			var parentNode = path.GetParentNodeOrRoot();
-			var siblings = parentNode.Children;
-			var currentPosition = siblings.IndexOf(currentItem);
+			//var parentNode = path.GetParentNodeOrRoot();
+			//var siblings = parentNode.Children;
+			//var currentPosition = siblings.IndexOf(currentItem);
+
+			var currentPosition = GetPosition(path, out _);
 
 			if (currentPosition > 0)
 			{
@@ -618,6 +643,14 @@ namespace MSS.Types
 				// If we can go up, return true.
 				return path.Count > 1;
 			}
+		}
+
+		private int GetPosition(ITreePath<U, V> path, out ObservableCollection<U> siblings)
+		{
+			var parentNode = path.GetParentNodeOrRoot();
+			siblings = parentNode.Children;
+			var position = siblings.IndexOf(path.Node);
+			return position;
 		}
 
 		protected virtual bool MoveCurrentTo(V item, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)

@@ -29,10 +29,10 @@ namespace MSS.Common
 
 		//public static explicit operator JobTreePath(List<JobTreeItem> terms) => new JobTreePath(terms);
 
-		public override string ToString()
-		{
-			return string.Join('\\', Terms.Select(x => x.Item.ToString()));
-		}
+		//public override string ToString()
+		//{
+		//	return string.Join('\\', Terms.Select(x => x.Item.ToString()));
+		//}
 
 		//object ICloneable.Clone()
 		//{
@@ -42,7 +42,7 @@ namespace MSS.Common
 
 		public override JobTreePath Clone()
 		{
-			return new JobTreePath(RootItem.Clone(), new List<JobTreeNode>(Terms)/*, new ObservableCollection<JobNodeType>(Children)*/);
+			return new JobTreePath(RootItem.Clone(), new List<JobTreeNode>(Terms));
 		}
 
 		#endregion

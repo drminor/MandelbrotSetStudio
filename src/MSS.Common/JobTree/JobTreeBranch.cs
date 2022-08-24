@@ -34,10 +34,10 @@ namespace MSS.Common
 		//	return new JobTreeBranch(path);
 		//}
 
-		public override string ToString()
-		{
-			return string.Join('\\', Terms);
-		}
+		//public override string ToString()
+		//{
+		//	return string.Join("; ", Terms.Select(x => $"{x.Id}, {x.ParentId ?? ObjectId.Empty}"));
+		//}
 
 		object ICloneable.Clone()
 		{

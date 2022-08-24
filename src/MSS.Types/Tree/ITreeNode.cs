@@ -8,8 +8,6 @@ namespace MSS.Types
 	public interface ITreeNode<U, V> : ITreeItem<V>, ICloneable where U: class, ITreeNode<U,V> where V : IEquatable<V>, IComparable<V>
 	{
 		U? ParentNode { get; set; }
-		//U Node { get; }
-		//ObservableCollection<ITreeNode<U, V>> Children { get; init; }
 		ObservableCollection<U> Children { get; init; }
 
 		bool IsHome { get; }

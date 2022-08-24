@@ -15,7 +15,6 @@ namespace MSS.Common
 {
 	using JobBranchType = ITreeBranch<JobTreeNode, Job>;
 	using JobPathType = ITreePath<JobTreeNode, Job>;
-	using JobNodeType = ITreeNode<JobTreeNode, Job>;
 
 	/// <remarks>
 	///	New jobs are inserted into order by the date the job was created.
@@ -567,16 +566,68 @@ namespace MSS.Common
 			}
 		}
 
-		protected abstract void UpdateIsSelectedLogical(JobTreeNode node,  bool isSelected, JobBranchType startPos);
+		protected virtual void UpdateIsSelectedLogical(JobTreeNode node,  bool isSelected, JobBranchType startPos)
+		{
+			node.IsSelected = isSelected;
+
+			var path = startPos.CreatePath(node);
+
+			//var ancestors = jobTreeItem.GetAncestors();
+			//var path2 = _xroot.Combine(ancestors);
+			//var strPath1 = string.Join("; ", path.Terms.Select(x => x.JobId.ToString()));
+			//var strPath2 = string.Join("; ", path2.Terms.Select(x => x.JobId.ToString()));
+			//Debug.WriteLine($"Path: {strPath1}\nPath2: {strPath2}.");
+
+			//var strPath1 = string.Join("\n\t", path.Terms.Select(x => $"Id:{x.Item.Id}, ParentId:{x.Item.ParentJobId}, Alt:{x.IsActiveAlternate}, Prk:{x.IsParkedAlternate}"));
+			//Debug.WriteLine($"Path: {strPath1}.");
+
+			var backPath = GetPreviousItemPath(path, GetPredicate(skipPanJobs: true));
+
+			if (backPath == null)
+			{
+				return;
+			}
+
+			// The backPath points to the first job previous to the give job that has a TransformType of Zoom-In or Zoom-Out or Home.
+
+			// Set the parent node's IsParentOfSelected
+			backPath.Node.IsParentOfSelected = isSelected;
+
+			//// Set each sibling node's IsSiblingSelected
+			//foreach (var siblingItem in parentNode.Children)
+			//{
+			//	siblingItem.IsSiblingOfSelected = isSelected;
+			//}
+
+			//if (jobTreeItem.Node.RealChildJobs.Any())
+			//{
+			//	// Use the prior job's parent path to start the search for each child.
+			//	var parentBranch = backPath.GetParentBranch();
+
+			//	// Set each child node's IsChildOfSelected
+			//	foreach (var realChildJob in jobTreeItem.Node.RealChildJobs.Values)
+			//	{
+			//		if (TryFindPath(realChildJob, parentBranch, out var childPath))
+			//		{
+			//			childPath.Node.IsChildOfSelected = isSelected;
+			//		}
+			//	}
+			//}
+			//else
+			//{
+			//	var forwardPath = GetNextItemPath(path, GetPredicate(skipPanJobs: true));
+
+			//	if (forwardPath != null)
+			//	{
+			//		forwardPath.Node.IsChildOfSelected = true;
+			//	}
+			//}
+
+		}
 
 		protected virtual void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos)
 		{
 			node.IsSelected = isSelected;
-
-			if (!TryFindPath(node.Item, startPos, out var pathOld))
-			{
-				return;
-			}
 
 			var path = startPos.CreatePath(node);
 
