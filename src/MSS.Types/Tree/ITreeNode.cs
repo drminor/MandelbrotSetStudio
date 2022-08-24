@@ -21,7 +21,7 @@ namespace MSS.Types
 		void AddNode(U node);
 
 		IList<U> GetAncestors();
-		int GetSortPosition(V item);
+		int GetSortPosition(U node);
 		bool Move(U destination);
 		bool Remove(U node);
 	}

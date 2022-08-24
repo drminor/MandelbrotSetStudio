@@ -98,7 +98,7 @@ namespace MSS.Common
 
 		public JobTreeNode? PreferredChild
 		{
-			get => Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath) ?? Children.LastOrDefault();
+			get => Children.FirstOrDefault(x => x.IsOnPreferredPath) ?? Children.LastOrDefault();
 			set
 			{
 				var numberOfChildNodesReset = 0;
@@ -112,7 +112,7 @@ namespace MSS.Common
 
 		private bool SetPreferredChild(JobTreeNode? child, ref int numberOfChildNodesReset, ref int numberOfParentNodesUpdated)
 		{
-			var currentValue = Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath);
+			var currentValue = Children.FirstOrDefault(x => x.IsOnPreferredPath);
 			if (currentValue != child)
 			{
 				if (child != null && !Children.Contains(child))
@@ -122,7 +122,7 @@ namespace MSS.Common
 
 				//if (ParentNode != null)
 				//{
-				//	var parentsPreferredChild = ParentNode.Node.Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath);
+				//	var parentsPreferredChild = ParentNode.Node.Children.FirstOrDefault(x => x.IsOnPreferredPath);
 				//	if (parentsPreferredChild != this)
 				//	{
 				//		numberOfParentNodesUpdated++;
@@ -252,7 +252,8 @@ namespace MSS.Common
 					//Debug.WriteLine($"Updating the IsOnPreferredPath to {value} for {Id}.");
 					_isOnPreferredPath = value;
 					OnPropertyChanged();
-					OnPropertyChanged(nameof(IsOnPreferredPathMarker));
+					//OnPropertyChanged(nameof(IsOnPreferredPathMarker));
+					OnPropertyChanged(nameof(IsOnPreferredPathMarkerOpacity));
 				}
 				else
 				{
@@ -330,7 +331,9 @@ namespace MSS.Common
 			}
 		}
 
-		public string IsOnPreferredPathMarker => IsOnPreferredPath ? PreferredPathMark : " ";
+		public string IsOnPreferredPathMarker => PreferredPathMark;
+
+		public double IsOnPreferredPathMarkerOpacity => IsOnPreferredPath ? 1.0 : 0.0;
 
 		public string? PathHeadType => IsActiveAlternate ? "[Alt]" : IsParkedAlternate ? "[Prk]" : null;
 
@@ -397,7 +400,7 @@ namespace MSS.Common
 			}
 			else
 			{
-				var index = GetSortPosition(node.Item);
+				var index = GetSortPosition(node);
 				if (index < 0)
 				{
 					index = ~index;

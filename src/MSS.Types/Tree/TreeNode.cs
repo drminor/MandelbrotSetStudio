@@ -125,13 +125,15 @@ namespace MSS.Types
 			return result;
 		}
 
-		public int GetSortPosition(V item)
+		public int GetSortPosition(U node)
 		{
 			var cnt = Children.Count;
 			if (cnt == 0)
 			{
 				return 0;
 			}
+
+			var item = node.Item;
 
 			// If the item is greater than the last item, return an index indicating "add to end."
 			if (Children[^1].Item.CompareTo(item) < 0)

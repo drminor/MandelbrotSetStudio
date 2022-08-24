@@ -631,6 +631,7 @@ namespace MSS.Common
 
 			var path = startPos.CreatePath(node);
 
+			// TODO: Get the real parent
 			var parentPath = path.GetParentPath();
 
 			if (parentPath != null)
@@ -668,6 +669,110 @@ namespace MSS.Common
 					childPath.Node.IsChildOfSelected = isSelected;
 				}
 			}
+		}
+
+		protected override IEnumerable<JobTreeNode>? GetNextNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
+		{
+			IEnumerable<JobTreeNode>? result = null;
+
+			if (predicate != null)
+			{
+				for (var i = currentPosition; i < nodes.Count; i++)
+				{
+					var node = nodes[i];
+					var preferredNode = node.PreferredChild;
+
+					if (preferredNode != null && predicate(preferredNode))
+					{
+						result = new[] { node, preferredNode };
+						break;
+					}
+					else
+					{
+						if (i > currentPosition && predicate(node))
+						{
+							result = new[] { node };
+							break;
+						}
+					}
+				}
+			}
+			else
+			{
+				for (var i = currentPosition; i < nodes.Count; i++)
+				{
+					var node = nodes[i];
+					var preferredNode = node.PreferredChild;
+
+					if (preferredNode != null)
+					{
+						result = new[] { node, preferredNode };
+						break;
+					}
+					else
+					{
+						if (i > currentPosition)
+						{
+							result = new[] { node };
+							break;
+						}
+					}
+				}
+			}
+
+			return result;
+		}
+
+		protected override IEnumerable<JobTreeNode>? GetPreviousNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
+		{
+			IEnumerable<JobTreeNode>? result = null;
+
+			if (predicate != null)
+			{
+				for (var i = currentPosition; i >= 0; i--)
+				{
+					var node = nodes[i];
+					var preferredNode = node.PreferredChild;
+
+					if (preferredNode != null && predicate(preferredNode))
+					{
+						result = new[] { node, preferredNode };
+						break;
+					}
+					else
+					{
+						if (i < currentPosition && predicate(node))
+						{
+							result = new[] { node };
+							break;
+						}
+					}
+				}
+			}
+			else
+			{
+				for (var i = currentPosition; i >= 0; i--)
+				{
+					var node = nodes[i];
+					var preferredNode = node.PreferredChild;
+
+					if (preferredNode != null)
+					{
+						result = new[] { node, preferredNode };
+						break;
+					}
+					else
+					{
+						if (i < currentPosition)
+						{
+							result = new[] { node };
+							break;
+						}
+					}
+				}
+			}
+
+			return result;
 		}
 
 		protected Func<JobTreeNode, bool>? GetPredicate(bool skipPanJobs)

@@ -86,7 +86,7 @@
                                 </StackPanel.ToolTip>
 
                                 <!-- Is On Preferred Path Marker -->
-                                <TextBlock Text="{Binding IsOnPreferredPathMarker}" FontFamily="Wingdings" Margin="0,3,0,-6"/>
+                                <TextBlock Text="{Binding IsOnPreferredPathMarker}" FontFamily="Wingdings" Margin="0,3,0,-6" Opacity="{Binding IsOnPreferredPathMarkerOpacity}" />
 
                                 <!-- Transform -->
                                 <TextBlock Text="{Binding TransformType}" />

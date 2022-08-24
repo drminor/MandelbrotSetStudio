@@ -207,8 +207,8 @@ namespace MSetExplorer
 		{
 			_ = sb.AppendLine("  TransformType\tDateCreated\t\tChild Count\tIsActive");
 
-			var altNodes = parentNode.Children.Cast<JobTreeNode>().ToList();
-			var sortPosition = parentNode.GetSortPosition(node.Item);
+			var altNodes = parentNode.Children;
+			var sortPosition = parentNode.GetSortPosition(node);
 			altNodes.Insert(sortPosition, node);
 
 			foreach (var altNode in altNodes)

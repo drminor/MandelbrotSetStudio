@@ -18,6 +18,51 @@ namespace MSS.Common
 
 		#endregion
 
+		#region Public Methods
+
+		public override bool MakePreferred(JobPathType? path)
+		{
+			if (path == null)
+			{
+				Root.GetNodeOrRoot().PreferredChild = null;
+			}
+			else
+			{
+				var originalPathTerms = path.ToString();
+				var parentPath = path.GetParentPath();
+
+				while (parentPath != null)
+				{
+					try
+					{
+						parentPath.Node.PreferredChild = path.Node;
+					}
+					catch (InvalidOperationException ioe)
+					{
+						Debug.WriteLine($"Error1 while setting the parentNode: {parentPath.Node.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
+					}
+
+					path = parentPath;
+					parentPath = path.GetParentPath();
+				}
+
+				var parentNode = path.GetParentNodeOrRoot();
+
+				try
+				{
+					parentNode.PreferredChild = path.Node;
+				}
+				catch (InvalidOperationException ioe)
+				{
+					Debug.WriteLine($"Error2 while setting the parentNode: {parentNode.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
+				}
+			}
+
+			return true;
+		}
+
+		#endregion
+
 		#region Private Add Methods
 
 		protected override JobPathType AddAtParentPath(Job job, JobPathType parentPath)
@@ -71,41 +116,51 @@ namespace MSS.Common
 
 		protected override IEnumerable<JobTreeNode>? GetNextNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
 		{
-			IEnumerable<JobTreeNode>? result;
+			IEnumerable<JobTreeNode>? result = null;
 
 			if (predicate != null)
 			{
-				result = null;
 				for(var i = currentPosition; i < nodes.Count; i++)
 				{
 					var node = nodes[i];
+					var preferredNode = node.PreferredChild;
 
-					if (node.Children.Count > 0)
+					if (preferredNode != null && predicate(preferredNode))
 					{
-						var preferredNode = node.PreferredChild;
-						if (preferredNode != null)
-						{
-							if (predicate(preferredNode))
-							{
-								// TODO: Check the impact of returning a child of one of the items in the list,
-								// as opposed to returning one of the items in the list.
-								result = new[] { preferredNode }; 
-								break;
-							}
-						}
-					}
-
-					if (i > currentPosition && predicate(node))
-					{
-						result = new[] { node };
+						result = new[] { node, preferredNode };
 						break;
+					}
+					else
+					{
+						if (i > currentPosition && predicate(node))
+						{
+							result = new[] { node };
+							break;
+						}
 					}
 				}
 			}
 			else
 			{
-				var node = nodes.Skip(currentPosition).FirstOrDefault()?.PreferredChild ?? nodes.Skip(currentPosition + 1).FirstOrDefault();
-				result = node == null ? null : new[] { node };
+				for (var i = currentPosition; i < nodes.Count; i++)
+				{
+					var node = nodes[i];
+					var preferredNode = node.PreferredChild;
+
+					if (preferredNode != null)
+					{
+						result = new[] { node, preferredNode };
+						break;
+					}
+					else
+					{
+						if (i > currentPosition)
+						{
+							result = new[] { node };
+							break;
+						}
+					}
+				}
 			}
 
 			return result;
@@ -113,11 +168,54 @@ namespace MSS.Common
 
 		protected override IEnumerable<JobTreeNode>? GetPreviousNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
 		{
-			var node = predicate != null
-				? nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault(predicate)
-				: nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault();
+			IEnumerable<JobTreeNode>? result = null;
 
-			return node == null ? null : new[] { node };
+			if (predicate != null)
+			{
+				for (var i = currentPosition; i >= 0; i--)
+				{
+					var node = nodes[i];
+					var preferredNode = node.PreferredChild;
+
+					if (preferredNode != null && predicate(preferredNode))
+					{
+						result = new[] { node, preferredNode };
+						break;
+					}
+					else
+					{
+						if (i < currentPosition && predicate(node))
+						{
+							result = new[] { node };
+							break;
+						}
+					}
+				}
+			}
+			else
+			{
+				for (var i = currentPosition; i >= 0; i--)
+				{
+					var node = nodes[i];
+					var preferredNode = node.PreferredChild;
+
+					if (preferredNode != null)
+					{
+						result = new[] { node, preferredNode };
+						break;
+					}
+					else
+					{
+						if (i < currentPosition)
+						{
+							result = new[] { node };
+							break;
+						}
+					}
+				}
+			}
+
+			return result;
 		}
 
 		#endregion

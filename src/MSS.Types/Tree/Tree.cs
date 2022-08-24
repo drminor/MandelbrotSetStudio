@@ -497,11 +497,6 @@ namespace MSS.Types
 
 		protected virtual ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
 		{
-			//var currentItem = path.Node;
-			//var parentNode = path.GetParentNodeOrRoot();
-			//var siblings = parentNode.Children;
-			//var currentPosition = siblings.IndexOf(currentItem);
-
 			var currentPosition = GetPosition(path, out var siblings);
 			var nextNode = GetNextNode(siblings, currentPosition, predicate);
 
@@ -528,23 +523,12 @@ namespace MSS.Types
 
 		protected virtual bool CanMoveForward(ITreePath<U,V>? path)
 		{
-			//var currentItem = path?.LastTerm;
-			//if (path == null || currentItem == null)
-			//{
-			//	return false;
-			//}
-
 			if (path == null)
 			{
 				return false;
 			}
 
-			//var parentNode = path.GetParentNodeOrRoot();
-			//var siblings = parentNode.Children;
-			//var currentPosition = siblings.IndexOf(currentItem);
 			var currentPosition = GetPosition(path, out var siblings);
-
-			//return !(currentPosition == siblings.Count - 1);
 
 			if (currentPosition < siblings.Count - 1)
 			{
@@ -560,17 +544,6 @@ namespace MSS.Types
 
 		protected virtual ITreePath<U, V>? GetPreviousItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
 		{
-			//var currentItem = path.Node;
-
-			//if (currentItem == null)
-			//{
-			//	return null;
-			//}
-
-			//var parentNode = path.GetParentNodeOrRoot();
-			//var siblings = parentNode.Children;
-			//var currentPosition = siblings.IndexOf(currentItem);
-
 			var currentPosition = GetPosition(path, out var siblings);
 			var previousNode = GetPreviousNode(siblings, currentPosition, predicate);
 
@@ -579,13 +552,6 @@ namespace MSS.Types
 
 			while (previousNode == null && curPath != null)
 			{
-				//currentItem = curPath.Node;
-
-				//var grandparentNode = curPath.GetParentNodeOrRoot();
-				//siblings = grandparentNode.Children;
-				//currentPosition = siblings.IndexOf(currentItem);
-				//previousNode = GetPreviousNode(siblings, currentPosition + 1, predicate);
-
 				currentPosition = GetPosition(curPath, out siblings);
 				previousNode = GetPreviousNode(siblings, currentPosition, predicate);
 
@@ -615,21 +581,10 @@ namespace MSS.Types
 
 		protected virtual bool CanMoveBack(ITreePath<U,V>? path)
 		{
-			//var currentItem = path?.LastTerm;
-
-			//if (path == null || currentItem == null)
-			//{
-			//	return false;
-			//}
-
 			if (path == null)
 			{
 				return false;
 			}
-
-			//var parentNode = path.GetParentNodeOrRoot();
-			//var siblings = parentNode.Children;
-			//var currentPosition = siblings.IndexOf(currentItem);
 
 			var currentPosition = GetPosition(path, out _);
 
