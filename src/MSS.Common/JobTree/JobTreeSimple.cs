@@ -91,10 +91,9 @@ namespace MSS.Common
 		#endregion
 
 		#region Private Navigate Methods
-
-		protected override JobNodeType? GetNextNode(IList<JobNodeType> nodes, int currentPosition, Func<JobNodeType, bool>? predicate = null)
+		protected override JobTreeNode? GetNextNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
 		{
-			JobNodeType? result;
+			JobTreeNode? result;
 
 			if (predicate != null)
 			{
@@ -105,7 +104,7 @@ namespace MSS.Common
 
 					if (node.Children.Count > 0)
 					{
-						var preferredNode = node.Node.PreferredChild;
+						var preferredNode = node.PreferredChild;
 						if (preferredNode != null)
 						{
 							if (predicate(preferredNode))
@@ -127,13 +126,13 @@ namespace MSS.Common
 			}
 			else
 			{
-				result = nodes.Skip(currentPosition).FirstOrDefault()?.Node.PreferredChild ?? nodes.Skip(currentPosition + 1).FirstOrDefault();
+				result = nodes.Skip(currentPosition).FirstOrDefault()?.PreferredChild ?? nodes.Skip(currentPosition + 1).FirstOrDefault();
 			}
 
 			return result;
 		}
 
-		protected override JobNodeType? GetPreviousNode(IList<JobNodeType> nodes, int currentPosition, Func<JobNodeType, bool>? predicate = null)
+		protected override JobTreeNode? GetPreviousNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
 		{
 			var result = predicate != null
 				? nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault(predicate)
@@ -202,54 +201,54 @@ namespace MSS.Common
 				//}
 		}
 
-		protected override void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos)
-		{
-			node.IsSelected = isSelected;
+		//protected override void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos)
+		//{
+		//	node.IsSelected = isSelected;
 
-			if (!TryFindPath(node.Item, startPos, out var path))
-			{
-				return;
-			}
+		//	if (!TryFindPath(node.Item, startPos, out var path))
+		//	{
+		//		return;
+		//	}
 
-			var parentPath = path.GetParentPath();
+		//	var parentPath = path.GetParentPath();
 
-			if (parentPath != null)
-			{
-				// Set the parent node's IsParentOfSelected
-				parentPath.Node.IsParentOfSelected = isSelected;
+		//	if (parentPath != null)
+		//	{
+		//		// Set the parent node's IsParentOfSelected
+		//		parentPath.Node.IsParentOfSelected = isSelected;
 
-				// Use the logical grandparent path (or root) to start the search for each sibling
-				var grandparentBranch = parentPath.GetParentBranch();
+		//		// Use the logical grandparent path (or root) to start the search for each sibling
+		//		var grandparentBranch = parentPath.GetParentBranch();
 
-				// Set each sibling node's IsSiblingSelected -- Using RealChildJobs
-				//foreach (var realSiblingJob in parentPath.Node.RealChildJobs.Values)
-				//{
-				//	if (TryFindPath(realSiblingJob, grandparentBranch, out var siblingPath))
-				//	{
-				//		siblingPath.Node.IsSiblingOfSelected = isSelected;
-				//	}
-				//}
+		//		// Set each sibling node's IsSiblingSelected -- Using RealChildJobs
+		//		//foreach (var realSiblingJob in parentPath.Node.RealChildJobs.Values)
+		//		//{
+		//		//	if (TryFindPath(realSiblingJob, grandparentBranch, out var siblingPath))
+		//		//	{
+		//		//		siblingPath.Node.IsSiblingOfSelected = isSelected;
+		//		//	}
+		//		//}
 
-				// Set each sibling node's IsSiblingSelected -- Using Logical Children
-				foreach (var siblingNode in parentPath.Node.Children)
-				{
-					siblingNode.Node.IsSiblingOfSelected = isSelected;
-				}
-			}
+		//		// Set each sibling node's IsSiblingSelected -- Using Logical Children
+		//		foreach (var siblingNode in parentPath.Node.Children)
+		//		{
+		//			siblingNode.Node.IsSiblingOfSelected = isSelected;
+		//		}
+		//	}
 
-			// Use the real parent path to start the search for each child.
-			var logicalParentBranch = path.GetParentBranch();
+		//	// Use the real parent path to start the search for each child.
+		//	var logicalParentBranch = path.GetParentBranch();
 
-			// Set each child node's IsChildOfSelected
-			foreach (var realChildJob in node.Node.RealChildJobs.Values)
-			{
-				if (TryFindPath(realChildJob, logicalParentBranch, out var childPath))
-				{
-					childPath.Node.IsChildOfSelected = isSelected;
-				}
-			}
+		//	// Set each child node's IsChildOfSelected
+		//	foreach (var realChildJob in node.Node.RealChildJobs.Values)
+		//	{
+		//		if (TryFindPath(realChildJob, logicalParentBranch, out var childPath))
+		//		{
+		//			childPath.Node.IsChildOfSelected = isSelected;
+		//		}
+		//	}
 
-		}
+		//}
 
 		#endregion
 	}

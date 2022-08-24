@@ -5,11 +5,12 @@ using System.Collections.ObjectModel;
 
 namespace MSS.Types
 {
-	public interface ITreeNode<U, V> : ITreeItem<V>, ICloneable where U: ITreeItem<V> where V : IEquatable<V>, IComparable<V>
+	public interface ITreeNode<U, V> : ITreeItem<V>, ICloneable where U: class, ITreeNode<U,V> where V : IEquatable<V>, IComparable<V>
 	{
-		ITreeNode<U, V>? ParentNode { get; set; }
-		U Node { get; }
-		ObservableCollection<ITreeNode<U, V>> Children { get; init; }
+		U? ParentNode { get; set; }
+		//U Node { get; }
+		//ObservableCollection<ITreeNode<U, V>> Children { get; init; }
+		ObservableCollection<U> Children { get; init; }
 
 		bool IsHome { get; }
 		bool IsOrphan { get; }
@@ -19,12 +20,12 @@ namespace MSS.Types
 		bool IsExpanded { get; set; }
 
 		U AddItem(V item);
-		void AddNode(ITreeNode<U,V> node);
+		void AddNode(U node);
 
-		List<ITreeNode<U, V>> GetAncestors();
+		IList<U> GetAncestors();
 		int GetSortPosition(V item);
-		bool Move(ITreeNode<U, V> destination);
-		bool Remove(ITreeNode<U,V> node);
+		bool Move(U destination);
+		bool Remove(U node);
 	}
 
 	public interface ITreeItem<V> where V: IEquatable<V>, IComparable<V>

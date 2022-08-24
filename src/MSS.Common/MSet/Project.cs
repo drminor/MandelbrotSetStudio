@@ -277,7 +277,7 @@ namespace MSS.Common.MSet
 
 		public JobTreeNode? SelectedViewItem
 		{
-			get => _jobTree.SelectedNode?.Node;
+			get => _jobTree.SelectedNode;
 			set
 			{
 				_jobTree.SelectedNode = value;

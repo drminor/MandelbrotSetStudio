@@ -86,7 +86,7 @@ namespace MSS.Common
 
 		public bool AnyJobIsDirty => AnyItemIsDirty;
 
-		public override JobNodeType? SelectedNode
+		public override JobTreeNode? SelectedNode
 		{
 			get => base.SelectedNode;
 			set
@@ -137,8 +137,34 @@ namespace MSS.Common
 			}
 			else
 			{
+				var originalPathTerms = path.ToString();
+				var parentPath = path.GetParentPath();
+
+				while (parentPath != null)
+				{
+					try
+					{
+						parentPath.Node.PreferredChild = path.Node;
+					} 
+					catch (InvalidOperationException ioe)
+					{
+						Debug.WriteLine($"Error1 while setting the parentNode: {parentPath.Node.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
+					}
+
+					path = parentPath;
+					parentPath = path.GetParentPath();
+				}
+
 				var parentNode = path.GetParentNodeOrRoot();
-				parentNode.PreferredChild = path.Node;
+
+				try
+				{
+					parentNode.PreferredChild = path.Node;
+				}
+				catch (InvalidOperationException ioe)
+				{
+					Debug.WriteLine($"Error2 while setting the parentNode: {parentNode.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
+				}
 			}
 
 			return true;
@@ -522,14 +548,14 @@ namespace MSS.Common
 
 		#region Private Navigate Methods
 
-		protected virtual void UpdateIsSelected(JobNodeType? jobTreeNode, bool isSelected, JobTreeSelectionMode jobTreeSelectionMode, JobBranchType startPos)
+		protected virtual void UpdateIsSelected(JobTreeNode? jobTreeNode, bool isSelected, JobTreeSelectionMode jobTreeSelectionMode, JobBranchType startPos)
 		{
 			if (jobTreeNode == null)
 			{
 				return;
 			}
 
-			var node = jobTreeNode.Node;
+			var node = jobTreeNode;
 
 			if (jobTreeSelectionMode == JobTreeSelectionMode.Real)
 			{
@@ -543,12 +569,60 @@ namespace MSS.Common
 
 		protected abstract void UpdateIsSelectedLogical(JobTreeNode node,  bool isSelected, JobBranchType startPos);
 
-		protected abstract void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos);
-
-		protected Func<JobNodeType, bool>? GetPredicate(bool skipPanJobs)
+		protected virtual void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos)
 		{
-			Func<JobNodeType, bool>? result = skipPanJobs
-				? x => DoesNodeChangeZoom(x.Node)
+			node.IsSelected = isSelected;
+
+			if (!TryFindPath(node.Item, startPos, out var pathOld))
+			{
+				return;
+			}
+
+			var path = startPos.CreatePath(node);
+
+			var parentPath = path.GetParentPath();
+
+			if (parentPath != null)
+			{
+				// Set the parent node's IsParentOfSelected
+				parentPath.Node.IsParentOfSelected = isSelected;
+
+				// Use the logical grandparent path (or root) to start the search for each sibling
+				var grandparentBranch = parentPath.GetParentBranch();
+
+				// Set each sibling node's IsSiblingSelected -- Using RealChildJobs
+				foreach (var realSiblingJob in parentPath.Node.RealChildJobs.Values)
+				{
+					if (TryFindPath(realSiblingJob, grandparentBranch, out var siblingPath))
+					{
+						siblingPath.Node.IsSiblingOfSelected = isSelected;
+					}
+				}
+
+				// Set each sibling node's IsSiblingSelected -- Using Logical Children
+				foreach (var siblingNode in parentPath.Node.Children)
+				{
+					siblingNode.IsSiblingOfSelected = isSelected;
+				}
+			}
+
+			// Use the real parent path to start the search for each child.
+			var logicalParentBranch = path.GetParentBranch();
+
+			// Set each child node's IsChildOfSelected
+			foreach (var realChildJob in node.RealChildJobs.Values)
+			{
+				if (TryFindPath(realChildJob, logicalParentBranch, out var childPath))
+				{
+					childPath.Node.IsChildOfSelected = isSelected;
+				}
+			}
+		}
+
+		protected Func<JobTreeNode, bool>? GetPredicate(bool skipPanJobs)
+		{
+			Func<JobTreeNode, bool>? result = skipPanJobs
+				? x => DoesNodeChangeZoom(x)
 				: null;
 			return result;
 		}

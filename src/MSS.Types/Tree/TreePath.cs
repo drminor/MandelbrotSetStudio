@@ -28,8 +28,6 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		//public override ObservableCollection<U> Children => new(Node.Children.Select(x => x.Node));
-
 		public U Node => Terms[^1];
 		public V Item => Node.Item;
 
@@ -58,17 +56,10 @@ namespace MSS.Types
 
 		#endregion
 
-
 		#region Overrides, Conversion Operators and ICloneable Support
 
 		//public static implicit operator List<JobTreeItem>?(JobTreePath? jobTreePath) => jobTreePath == null ? null : jobTreePath.Terms;
-
 		//public static explicit operator JobTreePath(List<JobTreeItem> terms) => new JobTreePath(terms);
-
-		//public override string ToString()
-		//{
-		//	return string.Join('\\', Terms.Select(x => x.Item.ToString()));
-		//}
 
 		object ICloneable.Clone()
 		{

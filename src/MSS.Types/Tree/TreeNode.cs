@@ -10,22 +10,22 @@ using System.Text;
 
 namespace MSS.Types
 {
-	public abstract class TreeNode<U, V> : ITreeNode<U,V>, INotifyPropertyChanged, ICloneable where U : ITreeNode<U,V> where V : IEquatable<V>, IComparable<V>
+	public abstract class TreeNode<U, V> : ITreeNode<U,V>, INotifyPropertyChanged, ICloneable where U : class, ITreeNode<U,V> where V : IEquatable<V>, IComparable<V>
 	{
 		private bool _isCurrent;
 		private bool _isExpanded;
 
 		#region Constructor
 
-		public TreeNode(V item, ITreeNode<U, V>? parentNode)
+		public TreeNode(V item, U? parentNode)
 			: this(item, parentNode, isRoot: false, isHome: false, isCurrent: false, isExpanded: false)
 		{ }
 
-		protected TreeNode(V item, ITreeNode<U, V>? parentNode, bool isRoot, bool isHome, bool isCurrent, bool isExpanded)
+		protected TreeNode(V item, U? parentNode, bool isRoot, bool isHome, bool isCurrent, bool isExpanded)
 		{
 			Item = item ?? throw new ArgumentNullException(nameof(item));
 			ParentNode = parentNode;
-			Children = new ObservableCollection<ITreeNode<U, V>>();
+			//Children = new ObservableCollection<ITreeNode<U, V>>();
 			IsDirty = false;
 			IsRoot = isRoot;
 			IsHome = isHome;
@@ -40,9 +40,9 @@ namespace MSS.Types
 		public V Item { get; init; }
 		public ObjectId Id { get; protected set; }
 		public ObjectId? ParentId { get; protected set; }
-		public ITreeNode<U,V>? ParentNode { get; set; }
-		public U Node => (U)(ITreeNode<U, V>)this;
-		public abstract ObservableCollection<ITreeNode<U,V>> Children { get; init; }
+		public U? ParentNode { get; set; }
+		//public U Node => (U)(ITreeNode<U, V>)this;
+		public abstract ObservableCollection<U> Children { get; init; }
 		public bool IsDirty { get; set; }
 
 		#endregion
@@ -98,28 +98,9 @@ namespace MSS.Types
 
 		public abstract U AddItem(V job);
 
-		public abstract void AddNode(ITreeNode<U, V> node);
-		//{
-		//	Debug.WriteLine("WARNING: Calling AddNode on the base: TreeNode.");
-		//	if (!Children.Any())
-		//	{
-		//		Children.Add(node);
-		//	}
-		//	else
-		//	{
-		//		var index = GetSortPosition(node.Item);
-		//		if (index < 0)
-		//		{
-		//			index = ~index;
-		//		}
+		public abstract void AddNode(U node);
 
-		//		Children.Insert(index, node);
-		//	}
-
-		//	node.ParentNode = this;
-		//}
-
-		public bool Move(ITreeNode<U, V> destination)
+		public bool Move(U destination)
 		{
 			if (IsRoot)
 			{
@@ -132,16 +113,16 @@ namespace MSS.Types
 			}
 
 			var parentNode = ParentNode;
-			var result = parentNode.Remove(this);
-			destination.AddNode(this);
+			var result = parentNode.Remove((U)(ITreeNode<U, V>)this);
+			destination.AddNode((U)(ITreeNode<U, V>)this);
 
 			return result;
 		}
 
-		virtual public bool Remove(ITreeNode<U, V> jobTreeItem)
+		virtual public bool Remove(U node)
 		{
-			jobTreeItem.ParentNode = null;
-			var result = Children.Remove(jobTreeItem);
+			node.ParentNode = null;
+			var result = Children.Remove(node);
 
 			return result;
 		}
@@ -182,12 +163,9 @@ namespace MSS.Types
 			return cnt;
 		}
 
-		public List<ITreeNode<U, V>> GetAncestors()
+		public IList<U> GetAncestors()
 		{
-			var result = new List<ITreeNode<U, V>>
-			{
-				this
-			};
+			var result = new List<U>();
 
 			var parentNode = ParentNode;
 

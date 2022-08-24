@@ -7,7 +7,7 @@ namespace MSS.Types
 {
 	public interface ITreeBranch<U, V> : ICloneable where U : class, ITreeNode<U, V> where V : class, IEquatable<V>, IComparable<V>
 	{
-		List<U> Terms { get; init; }
+		IList<U> Terms { get; init; }
 		ObservableCollection<U> Children { get; }
 
 		int Count { get; }
@@ -18,6 +18,8 @@ namespace MSS.Types
 		U? LastTerm { get; }
 		U? ParentTerm { get; }
 		U? GrandparentTerm { get; }
+
+		bool ContainsItem(Func<U, bool> predicate, [MaybeNullWhen(false)] out ITreePath<U, V> path);
 
 		ITreePath<U,V>? GetCurrentPath();
 
@@ -35,6 +37,10 @@ namespace MSS.Types
 
 		ITreePath<U,V> Combine(U node);
 		ITreePath<U,V> Combine(ITreePath<U,V> treePath);
-		ITreePath<U,V> Combine(IEnumerable<U> nodes);
+		ITreePath<U,V> Combine(IEnumerable<U> terms);
+
+		ITreePath<U, V> CreatePath(U node);
+		ITreePath<U, V> CreatePath(IEnumerable<U> terms);
+
 	}
 }

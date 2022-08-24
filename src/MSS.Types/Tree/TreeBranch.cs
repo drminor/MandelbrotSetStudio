@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
@@ -31,9 +32,9 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public virtual ObservableCollection<U> Children => new(Node.Children.Select(x => x.Node));
+		public virtual ObservableCollection<U> Children => Node.Children;
 
-		public List<U> Terms { get; init; }
+		public IList<U> Terms { get; init; }
 		private U Node => IsEmpty ? RootItem : Terms[^1];
 
 		public int Count => Terms.Count;
@@ -50,6 +51,38 @@ namespace MSS.Types
 		#endregion
 
 		#region Public Methods
+
+		public bool ContainsItem(Func<U, bool> predicate, [MaybeNullWhen(false)] out ITreePath<U, V> path)
+		{
+			var foundNode = GetNodeOrRoot().Children.FirstOrDefault(predicate);
+			path = foundNode == null ? null : Combine(foundNode);
+			return path != null;
+		}
+
+		public ITreePath<U, V> CreatePath(U node)
+		{
+			if (node.IsRoot)
+			{
+				throw new ArgumentException("Cannot create a path using the root node.");
+			}
+
+			var terms = new List<U> { node };
+			var parentNode = node.ParentNode;
+
+			while (parentNode != null && !parentNode.IsRoot)
+			{
+				terms.Add(parentNode);
+				parentNode = parentNode.ParentNode;
+			}
+
+			var result = CreatePath(terms.Reverse<U>());
+			return result;
+		}
+
+		public ITreePath<U,V> CreatePath(IEnumerable<U> terms)
+		{
+			return new TreePath<U,V>(RootItem, terms);
+		}
 
 		public ITreeBranch<U, V> GetRoot()
 		{
@@ -88,10 +121,10 @@ namespace MSS.Types
 			return GetParentPath()?.Node;
 		}
 
-		public bool TryGetParentNode([MaybeNullWhen(false)] out U parentNode)
+		public bool TryGetParentNode([MaybeNullWhen(false)] out U parentItem)
 		{
-			parentNode = GetParentPath()?.Node;
-			return parentNode != null;
+			parentItem = GetParentPath()?.Node;
+			return parentItem != null;
 		}
 
 		public bool TryGetGrandparentPath([MaybeNullWhen(false)] out ITreePath<U, V> grandparentPath)
@@ -112,27 +145,27 @@ namespace MSS.Types
 			return result;
 		}
 
-		public ITreePath<U, V> Combine(ITreePath<U, V> jobTreePath)
+		public ITreePath<U, V> Combine(ITreePath<U, V> node)
 		{
-			return Combine(jobTreePath.Terms);
+			return Combine(node.Terms);
 		}
 
-		public ITreePath<U, V> Combine(U jobTreeItem)
+		public ITreePath<U, V> Combine(U node)
 		{
-			return Combine(new[] { jobTreeItem });
+			return Combine(new[] { node });
 		}
 
-		public ITreePath<U, V> Combine(IEnumerable<U> jobTreeItems)
+		public ITreePath<U, V> Combine(IEnumerable<U> terms)
 		{
 			if (IsEmpty)
 			{
-				var result = new TreePath<U, V>(RootItem, jobTreeItems);
+				var result = new TreePath<U, V>(RootItem, terms);
 				return result;
 			}
 			else
 			{
 				var newTerms = new List<U>(Terms);
-				newTerms.AddRange(jobTreeItems);
+				newTerms.AddRange(terms);
 				var result = new TreePath<U, V>(RootItem, newTerms);
 				return result;
 			}
@@ -150,7 +183,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			return string.Join('\\', Terms.Select(x => x.Item.ToString()));
+			return string.Join("; ", Terms.Select(x => $"{x.Id}/{x.ParentId ?? ObjectId.Empty}"));
 		}
 
 		object ICloneable.Clone()

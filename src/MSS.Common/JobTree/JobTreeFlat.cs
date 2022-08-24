@@ -63,7 +63,7 @@ namespace MSS.Common
 			}
 			else
 			{
-				CurrentPath = newPath.CreateSiblingPath(parentNode.Children[idx - 1].Node);
+				CurrentPath = newPath.CreateSiblingPath(parentNode.Children[idx - 1]);
 			}
 
 			var result = parentNode.Children.Remove(node);
@@ -340,7 +340,7 @@ namespace MSS.Common
 			// The parked ALT's children contains all of the job following the parked ALT.
 			var ourChildern = new List<JobNodeType>(parkedAltNode.Children);
 
-			SwitchAltBranches(parkedAltNode, activeAltNode.Node);
+			SwitchAltBranches(parkedAltNode, activeAltNode);
 
 			var parentPath = path.GetParentPath()!;
 			var grandparentItem = parentPath.GetParentNodeOrRoot();
@@ -444,7 +444,7 @@ namespace MSS.Common
 			var mostRecentParkedAlt = parkedAlts.Aggregate((i1, i2) => (i1.Item.CompareTo(i2.Item) > 0) ? i1 : i2);
 
 			//var result = currentAltPath.Combine((JobTreeNode)mostRecentParkedAlt);
-			var result = currentAltPath.Combine(mostRecentParkedAlt.Node);
+			var result = currentAltPath.Combine(mostRecentParkedAlt);
 
 			return result;
 		}
@@ -457,7 +457,7 @@ namespace MSS.Common
 		{
 			if (node != null)
 			{
-				node.Node.IsSelected = isSelected;
+				node.IsSelected = isSelected;
 
 				if (!TryFindPath(node.Item, startPos, out var path))
 				{
@@ -491,13 +491,13 @@ namespace MSS.Common
 				//	siblingItem.IsSiblingOfSelected = isSelected;
 				//}
 
-				if (node.Node.RealChildJobs.Any())
+				if (node.RealChildJobs.Any())
 				{
 					// Use the prior job's parent path to start the search for each child.
 					var parentBranch = backPath.GetParentBranch();
 
 					// Set each child node's IsChildOfSelected
-					foreach (var realChildJob in node.Node.RealChildJobs.Values)
+					foreach (var realChildJob in node.RealChildJobs.Values)
 					{
 						if (TryFindPath(realChildJob, parentBranch, out var childPath))
 						{
@@ -552,7 +552,7 @@ namespace MSS.Common
 			var logicalParentBranch = path.GetParentBranch();
 
 			// Set each child node's IsChildOfSelected
-			foreach (var realChildJob in node.Node.RealChildJobs.Values)
+			foreach (var realChildJob in node.RealChildJobs.Values)
 			{
 				if (TryFindPath(realChildJob, logicalParentBranch, out var childPath))
 				{

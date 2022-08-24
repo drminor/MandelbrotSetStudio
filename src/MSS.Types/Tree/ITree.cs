@@ -14,7 +14,7 @@ namespace MSS.Types
 		bool IsDirty { get; set; }
 		bool AnyItemIsDirty { get; }
 
-		ITreeNode<U,V>? SelectedNode { get; set; }
+		U? SelectedNode { get; set; }
 
 		ITreePath<U,V>? GetCurrentPath();
 		ITreePath<U,V>? GetPath(ObjectId itemId);

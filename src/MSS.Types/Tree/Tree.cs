@@ -33,7 +33,7 @@ namespace MSS.Types
 
 		public ObservableCollection<U> Nodes => Root.Children;
 
-		public virtual ITreeNode<U, V>? SelectedNode { get; set; }
+		public virtual U? SelectedNode { get; set; }
 
 		public V CurrentItem
 		{
@@ -177,7 +177,7 @@ namespace MSS.Types
 			}
 			else
 			{
-				CurrentPath = path.CreateSiblingPath(parentNode.Children[idx - 1].Node);
+				CurrentPath = path.CreateSiblingPath(parentNode.Children[idx - 1]);
 			}
 
 			var result = parentNode.Children.Remove(node);
@@ -377,7 +377,7 @@ namespace MSS.Types
 			{
 				result.Add(child.Item);
 
-				var nodeList = GetItems(currentBranch.Combine(child.Node));
+				var nodeList = GetItems(currentBranch.Combine(child));
 				result.AddRange(nodeList);
 			}
 
@@ -393,22 +393,22 @@ namespace MSS.Types
 			{
 				result.Add(child);
 
-				var nodeList = GetNodes(currentBranch.Combine(child.Node));
+				var nodeList = GetNodes(currentBranch.Combine(child));
 				result.AddRange(nodeList);
 			}
 
 			return result;
 		}
 
-		protected List< Tuple<ITreeNode<U, V>, ITreeNode<U, V>? > > GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
+		protected List< Tuple<U, U?> > GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
 		{
-			var result = new List<Tuple<ITreeNode<U, V>, ITreeNode<U, V>?>>();
+			var result = new List<Tuple<U, U?>>();
 
 			foreach (var child in currentBranch.GetNodeOrRoot().Children)
 			{
-				result.Add(new Tuple<ITreeNode<U, V>, ITreeNode<U, V>?>(child, (U?)child.ParentNode));
+				result.Add(new Tuple<U, U?>(child, child.ParentNode));
 
-				var nodeList = GetNodesWithParentage(currentBranch.Combine(child.Node));
+				var nodeList = GetNodesWithParentage(currentBranch.Combine(child));
 				result.AddRange(nodeList);
 			}
 
@@ -451,8 +451,7 @@ namespace MSS.Types
 
 		protected bool TryFindPathByIdInternal(ObjectId id, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)
 		{
-			//var tc = currentBranch.Children;
-			if (NodeContainsItem(currentBranch, x => x.Id == id, out path))
+			if (currentBranch.ContainsItem(x => x.Id == id, out path))
 			{
 				return true;
 			}
@@ -461,17 +460,8 @@ namespace MSS.Types
 
 			foreach (U child in node.Children)
 			{
-				var cPath = currentBranch.Combine(child);
-
-				//ITreeBranch<U,V> cb = cPath;
-				//var testBranchChildren = cb.Children;
-				//var testPathChildren = cPath.Children;
-				//var testBranchItem = cb.GetItemOrRoot();
-				//var testPathItem = cPath.Item;
-
-				if (TryFindPathByIdInternal(id, currentBranch.Combine(child), out var localPath))
+				if (TryFindPathByIdInternal(id, currentBranch.Combine(child), out path))
 				{
-					path = currentBranch.Combine(localPath);
 					return true;
 				}
 			}
@@ -482,28 +472,17 @@ namespace MSS.Types
 
 		protected bool TryFindPathInternal(V item, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)
 		{
-			//var tc = currentBranch.Children;
-			if (NodeContainsItem(currentBranch, x => x.Item.Equals(item), out path))
+			if (currentBranch.ContainsItem(x => x.Item.Equals(item), out path))
 			{
 				return true;
 			}
 
 			var node = currentBranch.GetNodeOrRoot();
 
-
 			foreach (U child in node.Children)
 			{
-				var cPath = currentBranch.Combine(child);
-
-				//ITreeBranch<U,V> cb = cPath;
-				//var testBranchChildren = cb.Children;
-				//var testPathChildren = cPath.Children;
-				//var testBranchItem = cb.GetItemOrRoot();
-				//var testPathItem = cPath.Item;
-
-				if (TryFindPathInternal(item, currentBranch.Combine(child), out var localPath))
+				if (TryFindPathInternal(item, currentBranch.Combine(child), out path))
 				{
-					path = currentBranch.Combine(localPath);
 					return true;
 				}
 			}
@@ -512,19 +491,19 @@ namespace MSS.Types
 			return false;
 		}
 
-		protected bool NodeContainsItem(ITreeBranch<U,V> branch, Func<ITreeNode<U,V>, bool> predicate, [MaybeNullWhen(false)] out ITreePath<U,V> path)
-		{
-			var foundNode = branch.GetNodeOrRoot().Children.FirstOrDefault(predicate);
-			//var foundNode = branch.Children.FirstOrDefault(predicate);
-			path = foundNode == null ? null : branch.Combine(foundNode.Node);
-			return path != null;
-		}
+		//protected bool NodeContainsItem(ITreeBranch<U,V> branch, Func<ITreeNode<U,V>, bool> predicate, [MaybeNullWhen(false)] out ITreePath<U,V> path)
+		//{
+		//	var foundNode = branch.GetNodeOrRoot().Children.FirstOrDefault(predicate);
+		//	//var foundNode = branch.Children.FirstOrDefault(predicate);
+		//	path = foundNode == null ? null : branch.Combine(foundNode.Node);
+		//	return path != null;
+		//}
 
 		#endregion
 
 		#region Protected Navigate Methods
 
-		protected virtual ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<ITreeNode<U,V>, bool>? predicate = null)
+		protected virtual ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
 		{
 			var currentItem = path.Node;
 
@@ -537,7 +516,7 @@ namespace MSS.Types
 			if (nextNode != null)
 			{
 				//The new item will be a sibling of the current item
-				var result = path.Combine(nextNode.Node);
+				var result = path.Combine(nextNode);
 				return result;
 			}
 			else
@@ -546,7 +525,7 @@ namespace MSS.Types
 			}
 		}
 
-		protected virtual ITreeNode<U, V>? GetNextNode(IList<ITreeNode<U, V>> nodes, int currentPosition, Func<ITreeNode<U, V>, bool>? predicate = null)
+		protected virtual U? GetNextNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate = null)
 		{
 			var result = predicate != null
 				? nodes.Skip(currentPosition + 1).FirstOrDefault(predicate)
@@ -570,7 +549,7 @@ namespace MSS.Types
 			return !(currentPosition == siblings.Count - 1);
 		}
 
-		protected virtual ITreePath<U,V>? GetPreviousItemPath(ITreePath<U,V> path, Func<ITreeNode<U, V>, bool>? predicate = null)
+		protected virtual ITreePath<U, V>? GetPreviousItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
 		{
 			var currentItem = path.Node;
 
@@ -583,22 +562,23 @@ namespace MSS.Types
 			var siblings = parentNode.Children;
 			var currentPosition = siblings.IndexOf(currentItem);
 			var previousNode = GetPreviousNode(siblings, currentPosition, predicate);
+			var curPath = path.GetParentPath();
 
 			// TODO: Make climbing the tree, more elegant
-			while (previousNode == null && path.Count > 1)
+			while (previousNode == null && curPath != null)
 			{
-				path = path.GetParentPath()!;
 				currentItem = path.Node;
 
-				var grandparentNode = path.GetParentNodeOrRoot();
-				var ancestors = grandparentNode.Children;
-				currentPosition = ancestors.IndexOf(currentItem);
-				previousNode = GetPreviousNode(ancestors, currentPosition + 1, predicate);
+				var grandparentNode = curPath.GetParentNodeOrRoot();
+				siblings = grandparentNode.Children;
+				currentPosition = siblings.IndexOf(currentItem);
+				previousNode = GetPreviousNode(siblings, currentPosition + 1, predicate);
+				curPath = curPath.GetParentPath();
 			}
 
 			if (previousNode != null)
 			{
-				var result = path.Combine(previousNode.Node);
+				var result = path.Combine(previousNode);
 				return result;
 			}
 			else
@@ -607,7 +587,7 @@ namespace MSS.Types
 			}
 		}
 
-		protected virtual ITreeNode<U, V>? GetPreviousNode(IList<ITreeNode<U, V>> nodes, int currentPosition, Func<ITreeNode<U, V>, bool>? predicate = null)
+		protected virtual U? GetPreviousNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate = null)
 		{
 			var result = predicate != null
 				? nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault(predicate)

@@ -13,8 +13,6 @@ using System.Text;
 
 namespace MSS.Common
 {
-	using JobNodeType = ITreeNode<JobTreeNode, Job>;
-
 	public class JobTreeNode : TreeNode<JobTreeNode, Job>, INotifyPropertyChanged, ICloneable
 	{
 		private static readonly string PreferredPathMark = new('\u0077', 1);
@@ -55,15 +53,15 @@ namespace MSS.Common
 			}
 		}
 
-		private JobTreeNode(Job job, JobNodeType? parentNode, bool isIterationChange, bool isColorMapChange)
+		private JobTreeNode(Job job, JobTreeNode? parentNode, bool isIterationChange, bool isColorMapChange)
 
-			: this(job, parentNode, new ObservableCollection<JobNodeType>(), isRoot: false, isHome: false, isCurrent: false, isExpanded: false,
+			: this(job, parentNode, new ObservableCollection<JobTreeNode>(), isRoot: false, isHome: false, isCurrent: false, isExpanded: false,
 				  isIterationChange, isColorMapChange, isActiveAlternate: false, isParkedAlternate: false, 
 				  isSelected: false, isParentOfSelected: false, isSiblingOfSelected: false, isChildOfSelected: false, 
 				  alternateDispSizes: null, realChildJobs: new SortedList<ObjectId, Job>(new ObjectIdComparer()), isOnPreferredPath: false)
 		{ }
 
-		private JobTreeNode(Job job, JobNodeType? parentNode, ObservableCollection<JobNodeType> children, bool isRoot, bool isHome, bool isCurrent, bool isExpanded,
+		private JobTreeNode(Job job, JobTreeNode? parentNode, ObservableCollection<JobTreeNode> children, bool isRoot, bool isHome, bool isCurrent, bool isExpanded,
 			bool isIterationChange, bool isColorMapChange, bool isActiveAlternate, bool isParkedAlternate,
 			bool isSelected, bool isParentOfSelected, bool isSiblingOfSelected, bool isChildOfSelected, 
 			List<JobTreeNode>? alternateDispSizes, SortedList<ObjectId, Job> realChildJobs, bool isOnPreferredPath)
@@ -96,16 +94,16 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		public override ObservableCollection<JobNodeType> Children { get; init; }
+		public override ObservableCollection<JobTreeNode> Children { get; init; }
 
-		public JobNodeType? PreferredChild
+		public JobTreeNode? PreferredChild
 		{
 			get => Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath) ?? Children.LastOrDefault();
 			set
 			{
 				var numberOfChildNodesReset = 0;
 				var numberOfParentNodesUpdated = 0;
-				if (SetPreferredChild(value?.Node, ref numberOfChildNodesReset, ref numberOfParentNodesUpdated))
+				if (SetPreferredChild(value, ref numberOfChildNodesReset, ref numberOfParentNodesUpdated))
 				{
 					Debug.WriteLine($"Updating the preferred child for node: {Id} to {value?.Id}. {numberOfChildNodesReset} child nodes reset, {numberOfParentNodesUpdated} parent nodes updated.");
 				}
@@ -122,15 +120,15 @@ namespace MSS.Common
 					throw new InvalidOperationException("Cannot set this JobTreeNode's PreferredChild to be a node that isn't contained in this node's list of child nodes.");
 				}
 
-				if (ParentNode != null)
-				{
-					var parentsPreferredChild = ParentNode.Node.Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath);
-					if (parentsPreferredChild != this)
-					{
-						numberOfParentNodesUpdated++;
-						_ = ParentNode.Node.SetPreferredChild(this, ref numberOfChildNodesReset, ref numberOfParentNodesUpdated);
-					}
-				}
+				//if (ParentNode != null)
+				//{
+				//	var parentsPreferredChild = ParentNode.Node.Children.Cast<JobTreeNode>().FirstOrDefault(x => x.IsOnPreferredPath);
+				//	if (parentsPreferredChild != this)
+				//	{
+				//		numberOfParentNodesUpdated++;
+				//		_ = ParentNode.Node.SetPreferredChild(this, ref numberOfChildNodesReset, ref numberOfParentNodesUpdated);
+				//	}
+				//}
 
 				var downLevelChildrenUpdated = ResetPreferredChildren();
 				if (downLevelChildrenUpdated > 0)
@@ -142,7 +140,7 @@ namespace MSS.Common
 
 				if (child != null)
 				{
-					child.Node.IsOnPreferredPath = true;
+					child.IsOnPreferredPath = true;
 				}
 
 				return true;
@@ -376,7 +374,7 @@ namespace MSS.Common
 			return node;
 		}
 
-		public override void AddNode(JobNodeType node)
+		public override void AddNode(JobTreeNode node)
 		{
 			if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
 			{
@@ -390,7 +388,7 @@ namespace MSS.Common
 
 			if (IsRoot && (!Children.Any()))
 			{
-				node.Node.IsHome = true;
+				node.IsHome = true;
 			}
 
 			if (!Children.Any())
@@ -421,7 +419,7 @@ namespace MSS.Common
 			//}
 		}
 
-		public override bool Remove(JobNodeType node)
+		public override bool Remove(JobTreeNode node)
 		{
 			node.ParentNode = null;
 
@@ -429,7 +427,7 @@ namespace MSS.Common
 
 			if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
 			{
-				result = AlternateDispSizes?.Remove(node.Node) ?? false;
+				result = AlternateDispSizes?.Remove(node) ?? false;
 				return result;
 			}
 
@@ -506,13 +504,13 @@ namespace MSS.Common
 
 			foreach (var c in Children)
 			{
-				if (c.Node.IsOnPreferredPath)
+				if (c.IsOnPreferredPath)
 				{
-					c.Node.IsOnPreferredPath = false;
+					c.IsOnPreferredPath = false;
 					result++;
 				}
 
-				var downLevelChildrenUpdated = c.Node.ResetPreferredChildren();
+				var downLevelChildrenUpdated = c.ResetPreferredChildren();
 				//if (downLevelChildrenUpdated > 0)
 				//{
 				//	Debug.WriteLine($"Reset {downLevelChildrenUpdated} down-level children's IsOnPreferredPath setting.");
