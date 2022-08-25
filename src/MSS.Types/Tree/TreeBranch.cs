@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -158,6 +159,7 @@ namespace MSS.Types
 		{
 			if (IsEmpty)
 			{
+				Debug.WriteLine($"Combine on Empty Branch. Terms: {terms}");
 				var result = new TreePath<U, V>(RootItem, terms);
 				return result;
 			}

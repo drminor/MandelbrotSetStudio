@@ -461,12 +461,6 @@ namespace MSS.Common
 			node.IsSelected = isSelected;
 			var path = startPos.CreatePath(node);
 
-			//var ancestors = jobTreeItem.GetAncestors();
-			//var path2 = _xroot.Combine(ancestors);
-			//var strPath1 = string.Join("; ", path.Terms.Select(x => x.JobId.ToString()));
-			//var strPath2 = string.Join("; ", path2.Terms.Select(x => x.JobId.ToString()));
-			//Debug.WriteLine($"Path: {strPath1}\nPath2: {strPath2}.");
-
 			var strPath1 = string.Join("\n\t", path.Terms.Select(x => $"Id:{x.Item.Id}, ParentId:{x.Item.ParentJobId}, Alt:{x.IsActiveAlternate}, Prk:{x.IsParkedAlternate}"));
 			Debug.WriteLine($"Path: {strPath1}.");
 

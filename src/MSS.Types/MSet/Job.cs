@@ -138,6 +138,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
+		// TODO: Rename the IsAlternatePathHead property: IsOnPreferredPath (class: Job.)
 		public bool IsAlternatePathHead
 		{
 			get => _isAlternatePathHead;
