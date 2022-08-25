@@ -186,30 +186,9 @@ namespace MSS.Types
 			return result;
 		}
 
-		public virtual bool TryGetPreviousItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null)
+		public virtual bool MoveBack(Func<U, bool>? predicate)
 		{
-			if (CurrentPath == null)
-			{
-				item = null;
-				return false;
-			}
-
-			var backPath = GetPreviousItemPath(CurrentPath, predicate);
-			item = backPath?.Item;
-
-			return item != null;
-		}
-
-		public virtual bool MoveBack(Func<ITreeNode<U,V>, bool>? predicate = null)
-		{
-			if (CurrentPath == null)
-			{
-				return false;
-			}
-
-			var backPath = GetPreviousItemPath(CurrentPath, predicate);
-
-			if (backPath != null)
+			if (TryGetPreviousItemPath(out var backPath, predicate))
 			{
 				CurrentPath = backPath;
 				ExpandAndSetCurrent(backPath);
@@ -221,30 +200,22 @@ namespace MSS.Types
 			}
 		}
 
-		public virtual bool TryGetNextItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null)
+		public virtual bool TryGetPreviousItemPath([MaybeNullWhen(false)] out ITreePath<U,V> backPath, Func<U, bool>? predicate)
 		{
 			if (CurrentPath == null)
 			{
-				item = null;
+				backPath = null;
 				return false;
 			}
 
-			var forwardPath = GetNextItemPath(CurrentPath, predicate);
-			item = forwardPath?.Item;
+			backPath = GetPreviousItemPath(CurrentPath, predicate);
 
-			return item != null;
+			return backPath != null;
 		}
 
-		public virtual bool MoveForward(Func<ITreeNode<U,V>, bool>? predicate = null)
+		public virtual bool MoveForward(Func<U, bool>? predicate)
 		{
-			if (CurrentPath == null)
-			{
-				return false;
-			}
-
-			var forwardPath = GetNextItemPath(CurrentPath, predicate);
-
-			if (forwardPath != null)
+			if (TryGetNextItemPath(out var forwardPath, predicate))
 			{
 				CurrentPath = forwardPath;
 				ExpandAndSetCurrent(forwardPath);
@@ -254,6 +225,19 @@ namespace MSS.Types
 			{
 				return false;
 			}
+		}
+
+		public virtual bool TryGetNextItemPath([MaybeNullWhen(false)] out ITreePath<U, V> forwardPath, Func<U, bool>? predicate)
+		{
+			if (CurrentPath == null)
+			{
+				forwardPath = null;
+				return false;
+			}
+
+			forwardPath = GetNextItemPath(CurrentPath, predicate);
+
+			return forwardPath != null;
 		}
 
 		#endregion
@@ -495,7 +479,7 @@ namespace MSS.Types
 
 		#region Protected Navigate Methods
 
-		protected virtual ITreePath<U,V>? GetNextItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
+		protected virtual ITreePath<U, V>? GetNextItemPath(ITreePath<U, V> path, Func<U, bool>? predicate)
 		{
 			var currentPosition = GetPosition(path, out var siblings);
 			var nextNode = GetNextNode(siblings, currentPosition, predicate);
@@ -512,11 +496,11 @@ namespace MSS.Types
 			}
 		}
 
-		protected virtual IEnumerable<U>? GetNextNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate = null)
+		private IEnumerable<U>? GetNextNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate)
 		{
 			var node = predicate != null
-				? nodes.Skip(currentPosition + 1).FirstOrDefault(predicate)
-				: nodes.Skip(currentPosition + 1).FirstOrDefault();
+			? nodes.Skip(currentPosition + 1).FirstOrDefault(predicate)
+			: nodes.Skip(currentPosition + 1).FirstOrDefault();
 
 			return node == null ? null : new[] { node };
 		}
@@ -542,7 +526,7 @@ namespace MSS.Types
 			}
 		}
 
-		protected virtual ITreePath<U, V>? GetPreviousItemPath(ITreePath<U,V> path, Func<U, bool>? predicate = null)
+		protected virtual ITreePath<U, V>? GetPreviousItemPath(ITreePath<U, V> path, Func<U, bool>? predicate)
 		{
 			var currentPosition = GetPosition(path, out var siblings);
 			var previousNode = GetPreviousNode(siblings, currentPosition, predicate);
@@ -570,7 +554,7 @@ namespace MSS.Types
 			}
 		}
 
-		protected virtual IEnumerable<U>? GetPreviousNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate = null)
+		private IEnumerable<U>? GetPreviousNode(IList<U> nodes, int currentPosition, Func<U, bool>? predicate)
 		{
 			var node = predicate != null
 				? nodes.SkipLast(nodes.Count - currentPosition).LastOrDefault(predicate)
@@ -600,7 +584,7 @@ namespace MSS.Types
 			}
 		}
 
-		private int GetPosition(ITreePath<U, V> path, out ObservableCollection<U> siblings)
+		protected int GetPosition(ITreePath<U, V> path, out ObservableCollection<U> siblings)
 		{
 			var parentNode = path.GetParentNodeOrRoot();
 			siblings = parentNode.Children;

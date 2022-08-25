@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -117,7 +115,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		virtual public bool Remove(U node)
+		public virtual bool Remove(U node)
 		{
 			node.ParentNode = null;
 			var result = Children.Remove(node);
@@ -198,18 +196,7 @@ namespace MSS.Types
 			var sb = new StringBuilder()
 				.Append($" Id: {Id}");
 
-			if (IsHome)
-			{
-				_ = sb.Append(" [Home]");
-			}
-			else if (IsRoot)
-			{
-				_ = sb.Append(" [Root]");
-			}
-			else
-			{
-				_ = sb.Append($" ParentId: {ParentNode?.Id}");
-			}
+			_ = IsHome ? sb.Append(" [Home]") : IsRoot ? sb.Append(" [Root]") : sb.Append($" ParentId: {ParentNode?.Id}");
 
 			_ = sb.Append($" Children: {Children.Count};");
 

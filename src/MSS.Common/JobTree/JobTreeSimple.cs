@@ -28,33 +28,37 @@ namespace MSS.Common
 			}
 			else
 			{
-				var originalPathTerms = path.ToString();
-				var parentPath = path.GetParentPath();
+				// TODO: Get a path to the node identifed by path, based the node's ParentId.
+				// Then set the preferred child top, down.
 
-				while (parentPath != null)
-				{
-					try
-					{
-						parentPath.Node.PreferredChild = path.Node;
-					}
-					catch (InvalidOperationException ioe)
-					{
-						Debug.WriteLine($"Error1 while setting the parentNode: {parentPath.Node.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
-					}
-
-					path = parentPath;
-					parentPath = path.GetParentPath();
-				}
+ 				var pathsAndParents = new List<Tuple<JobTreeNode, JobTreeNode>>();
 
 				var parentNode = path.GetParentNodeOrRoot();
+				pathsAndParents.Add(new Tuple<JobTreeNode, JobTreeNode>(parentNode, path.Node));
 
-				try
+				// Get the parent path using the current path's Job's ParentJobId
+				var previousPath = path;
+				path = GetParentPath(path.Item, Root);
+
+				while (path != null)
 				{
-					parentNode.PreferredChild = path.Node;
+					parentNode = path.GetParentNodeOrRoot();
+					pathsAndParents.Add(new Tuple<JobTreeNode, JobTreeNode>(parentNode, path.Node));
+
+					previousPath = path;
+					path = GetParentPath(path.Item, Root);
 				}
-				catch (InvalidOperationException ioe)
+
+				parentNode = previousPath.GetParentNodeOrRoot();
+				pathsAndParents.Add(new Tuple<JobTreeNode, JobTreeNode>(parentNode, previousPath.Node));
+
+				pathsAndParents.Reverse();
+
+				foreach(var pAndP in pathsAndParents)
 				{
-					Debug.WriteLine($"Error2 while setting the parentNode: {parentNode.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
+					parentNode = pAndP.Item1;
+					var node = pAndP.Item2;
+					parentNode.PreferredChild = node;
 				}
 			}
 
@@ -114,79 +118,185 @@ namespace MSS.Common
 
 		#region Private Navigate Methods
 
-		protected override IEnumerable<JobTreeNode>? GetNextNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
+		protected override JobPathType? GetNextItemPath(JobPathType path, Func<JobTreeNode, bool>? predicate)
 		{
-			IEnumerable<JobTreeNode>? result = null;
+			JobPathType? result;
 
 			if (predicate != null)
 			{
-				for(var i = currentPosition; i < nodes.Count; i++)
-				{
-					var node = nodes[i];
-					var preferredNode = node.PreferredChild;
+				result = GetNextPath(path);
 
-					if (preferredNode != null && predicate(preferredNode))
-					{
-						result = new[] { node, preferredNode };
-						break;
-					}
-					else
-					{
-						if (i > currentPosition && predicate(node))
-						{
-							result = new[] { node };
-							break;
-						}
-					}
+				while(result != null && !predicate(result.Node))
+				{
+					result = GetNextPath(result);
 				}
 			}
 			else
 			{
-				for (var i = currentPosition; i < nodes.Count; i++)
-				{
-					var node = nodes[i];
-					var preferredNode = node.PreferredChild;
-
-					if (preferredNode != null)
-					{
-						result = new[] { node, preferredNode };
-						break;
-					}
-					else
-					{
-						if (i > currentPosition)
-						{
-							result = new[] { node };
-							break;
-						}
-					}
-				}
+				result = GetNextPath(path);
 			}
 
 			return result;
 		}
 
-		protected override IEnumerable<JobTreeNode>? GetPreviousNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
+		private JobPathType? GetNextPath(JobPathType path)
 		{
-			IEnumerable<JobTreeNode>? result = null;
+			JobPathType? result;
+
+			var currentPosition = GetPosition(path, out var siblings);
+			var currentNode = siblings[currentPosition];
+			var preferredNode = currentNode.PreferredChild;
+
+			if (preferredNode != null && preferredNode.ParentId == currentNode.Id)
+			{
+				result = path.Combine(new[] { currentNode, preferredNode });
+			}
+			else if (currentPosition < siblings.Count && siblings[currentPosition + 1].ParentId == currentNode.Id)
+			{
+				result = path.Combine(siblings[currentPosition + 1]);
+			}
+			else
+			{
+				// TODO: Optimize calls to GetPath by providing a closer starting point.
+				var realChildPaths = currentNode.RealChildJobs.Select(x => GetPath(x.Value, Root));
+				result = realChildPaths.FirstOrDefault(x => x.Node.IsOnPreferredPath) ?? realChildPaths.LastOrDefault();
+			}
+
+			return result;
+		}
+
+		protected override JobPathType? GetPreviousItemPath(JobPathType path, Func<JobTreeNode, bool>? predicate)
+		{
+			JobPathType? result;
 
 			if (predicate != null)
 			{
+				result = GetPreviousPath(path);
+
+				while (result != null && !predicate(result.Node))
+				{
+					result = GetPreviousPath(result);
+				}
+			}
+			else
+			{
+				result = GetPreviousPath(path);
+			}
+
+			return result;
+		}
+
+		private JobPathType? GetPreviousPath(JobPathType path)
+		{
+			JobPathType? result = null;
+
+			var currentPosition = GetPosition(path, out var siblings);
+			var currentNode = siblings[currentPosition];
+
+			if (currentPosition > 0 && siblings[currentPosition - 1].ParentId == currentNode.Id)
+			{
+				var previousNode = siblings[currentPosition - 1];
+
+				if (previousNode.Children.Count > 0)
+				{
+					var preferredNode = previousNode.PreferredChild;
+
+					if (preferredNode?.ParentId == currentNode.Id)
+					{
+						result = path.Combine(new[] { currentNode, preferredNode });
+					}
+				}
+				else
+				{
+					result = path.Combine(previousNode);
+				}
+			}
+
+			if (result == null)
+			{
+				// TODO: Optimize call to GetParentPath by providing a closer starting point.
+				result = GetParentPath(currentNode.Item, Root);
+			}
+
+			return result;
+		}
+
+		#endregion
+
+		#region OLD - DELETE
+
+		protected JobPathType? GetPreviousItemPathOLD(JobPathType path, Func<JobTreeNode, bool>? predicate)
+		{
+			//var previousNode = GetPreviousPath(path, predicate);
+
+			//var previousPath = path;
+			//var curPath = path.GetParentPath();
+
+			//while (previousNode == null && curPath != null)
+			//{
+			//	previousNode = GetPreviousPath(path, predicate);
+
+			//	previousPath = curPath;
+			//	curPath = curPath.GetParentPath();
+			//}
+
+			//if (previousNode != null)
+			//{
+			//	var result = previousPath.Combine(previousNode);
+			//	return result;
+			//}
+			//else
+			//{
+			//	return null;
+			//}
+
+			JobPathType? result;
+
+			if (predicate != null)
+			{
+				result = GetPreviousPath(path);
+
+				while (result != null && !predicate(result.Node))
+				{
+					result = GetPreviousPath(result);
+				}
+			}
+			else
+			{
+				result = GetPreviousPath(path);
+			}
+
+			return result;
+		}
+
+		private JobPathType? GetPreviousPath(JobPathType path, Func<JobTreeNode, bool>? predicate)
+		{
+			JobPathType? result;
+
+			var currentPosition = GetPosition(path, out var siblings);
+			//var currentNode = siblings[currentPosition];
+			//var preferredNode = currentNode.PreferredChild;
+
+			if (predicate != null)
+			{
+				result = null;
 				for (var i = currentPosition; i >= 0; i--)
 				{
-					var node = nodes[i];
+					var node = siblings[i];
 					var preferredNode = node.PreferredChild;
 
 					if (preferredNode != null && predicate(preferredNode))
 					{
-						result = new[] { node, preferredNode };
+						var newTerms = new[] { node, preferredNode };
+						result = path.Combine(newTerms);
 						break;
 					}
 					else
 					{
 						if (i < currentPosition && predicate(node))
 						{
-							result = new[] { node };
+							var newTerms = new[] { node };
+							result = path.Combine(newTerms);
 							break;
 						}
 					}
@@ -194,25 +304,7 @@ namespace MSS.Common
 			}
 			else
 			{
-				for (var i = currentPosition; i >= 0; i--)
-				{
-					var node = nodes[i];
-					var preferredNode = node.PreferredChild;
-
-					if (preferredNode != null)
-					{
-						result = new[] { node, preferredNode };
-						break;
-					}
-					else
-					{
-						if (i < currentPosition)
-						{
-							result = new[] { node };
-							break;
-						}
-					}
-				}
+				result = GetPreviousPath(path);
 			}
 
 			return result;

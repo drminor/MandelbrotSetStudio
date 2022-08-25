@@ -9,8 +9,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-//using JobNodeType = MSS.Types.ITreeNode<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
-
 namespace MSS.Common
 {
 	public class JobTreeNode : TreeNode<JobTreeNode, Job>, INotifyPropertyChanged, ICloneable
@@ -102,53 +100,12 @@ namespace MSS.Common
 			set
 			{
 				var numberOfChildNodesReset = 0;
-				var numberOfParentNodesUpdated = 0;
-				if (SetPreferredChild(value, ref numberOfChildNodesReset, ref numberOfParentNodesUpdated))
+				//var numberOfParentNodesUpdated = 0;
+				if (SetPreferredChild(value, ref numberOfChildNodesReset/*, ref numberOfParentNodesUpdated*/))
 				{
-					Debug.WriteLine($"Updating the preferred child for node: {Id} to {value?.Id}. {numberOfChildNodesReset} child nodes reset, {numberOfParentNodesUpdated} parent nodes updated.");
+					//Debug.WriteLine($"Updating the preferred child for node: {Id} to {value?.Id}. {numberOfChildNodesReset} child nodes reset, {numberOfParentNodesUpdated} parent nodes updated.");
+					Debug.WriteLine($"Updating the preferred child for node: {Id} to {value?.Id}. {numberOfChildNodesReset} child nodes were reset.");
 				}
-			}
-		}
-
-		private bool SetPreferredChild(JobTreeNode? child, ref int numberOfChildNodesReset, ref int numberOfParentNodesUpdated)
-		{
-			var currentValue = Children.FirstOrDefault(x => x.IsOnPreferredPath);
-			if (currentValue != child)
-			{
-				if (child != null && !Children.Contains(child))
-				{
-					throw new InvalidOperationException("Cannot set this JobTreeNode's PreferredChild to be a node that isn't contained in this node's list of child nodes.");
-				}
-
-				//if (ParentNode != null)
-				//{
-				//	var parentsPreferredChild = ParentNode.Node.Children.FirstOrDefault(x => x.IsOnPreferredPath);
-				//	if (parentsPreferredChild != this)
-				//	{
-				//		numberOfParentNodesUpdated++;
-				//		_ = ParentNode.Node.SetPreferredChild(this, ref numberOfChildNodesReset, ref numberOfParentNodesUpdated);
-				//	}
-				//}
-
-				var downLevelChildrenUpdated = ResetPreferredChildren();
-				if (downLevelChildrenUpdated > 0)
-				{
-					Debug.WriteLine($"Reset {downLevelChildrenUpdated} down-level children's IsOnPreferredPath setting.");
-				}
-
-				numberOfChildNodesReset += downLevelChildrenUpdated;
-
-				if (child != null)
-				{
-					child.IsOnPreferredPath = true;
-				}
-
-				return true;
-			}
-			else
-			{
-				Debug.WriteLine($"SetPreferredChild found that the currentValue: {currentValue?.Id ?? ObjectId.Empty} already equals the new value: {child?.Id ?? ObjectId.Empty}.");
-				return false;
 			}
 		}
 
@@ -252,7 +209,7 @@ namespace MSS.Common
 					//Debug.WriteLine($"Updating the IsOnPreferredPath to {value} for {Id}.");
 					_isOnPreferredPath = value;
 					OnPropertyChanged();
-					//OnPropertyChanged(nameof(IsOnPreferredPathMarker));
+					OnPropertyChanged(nameof(IsOnPreferredPathMarker));
 					OnPropertyChanged(nameof(IsOnPreferredPathMarkerOpacity));
 				}
 				else
@@ -501,6 +458,48 @@ namespace MSS.Common
 			}
 		}
 
+		private bool SetPreferredChild(JobTreeNode? child, ref int numberOfChildNodesReset/*, ref int numberOfParentNodesUpdated*/)
+		{
+			var currentValue = Children.FirstOrDefault(x => x.IsOnPreferredPath);
+			if (currentValue != child)
+			{
+				if (child != null && !Children.Contains(child))
+				{
+					throw new InvalidOperationException("Cannot set this JobTreeNode's PreferredChild to be a node that isn't contained in this node's list of child nodes.");
+				}
+
+				//if (ParentNode != null)
+				//{
+				//	var parentsPreferredChild = ParentNode.Children.FirstOrDefault(x => x.IsOnPreferredPath);
+				//	if (parentsPreferredChild != this)
+				//	{
+				//		numberOfParentNodesUpdated++;
+				//		_ = ParentNode.SetPreferredChild(this, ref numberOfChildNodesReset, ref numberOfParentNodesUpdated);
+				//	}
+				//}
+
+				var downLevelChildrenUpdated = ResetPreferredChildren();
+				if (downLevelChildrenUpdated > 0)
+				{
+					Debug.WriteLine($"Reset {downLevelChildrenUpdated} down-level children's IsOnPreferredPath setting.");
+				}
+
+				numberOfChildNodesReset += downLevelChildrenUpdated;
+
+				if (child != null)
+				{
+					child.IsOnPreferredPath = true;
+				}
+
+				return true;
+			}
+			else
+			{
+				Debug.WriteLine($"SetPreferredChild found that the currentValue: {currentValue?.Id ?? ObjectId.Empty} already equals the new value: {child?.Id ?? ObjectId.Empty}.");
+				return false;
+			}
+		}
+
 		private int ResetPreferredChildren()
 		{
 			var result = 0;
@@ -511,15 +510,10 @@ namespace MSS.Common
 				{
 					c.IsOnPreferredPath = false;
 					result++;
+
+					var downLevelChildrenUpdated = c.ResetPreferredChildren();
+					result += downLevelChildrenUpdated;
 				}
-
-				var downLevelChildrenUpdated = c.ResetPreferredChildren();
-				//if (downLevelChildrenUpdated > 0)
-				//{
-				//	Debug.WriteLine($"Reset {downLevelChildrenUpdated} down-level children's IsOnPreferredPath setting.");
-				//}
-
-				result += downLevelChildrenUpdated;
 			}
 
 			return result;

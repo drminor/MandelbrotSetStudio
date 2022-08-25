@@ -33,6 +33,7 @@ namespace MSS.Types
 		#region Public Properties
 
 		public virtual ObservableCollection<U> Children => Node.Children;
+		//public virtual ObservableCollection<U> Children => new(Node.Children);
 
 		public IList<U> Terms { get; init; }
 		private U Node => IsEmpty ? RootItem : Terms[^1];
@@ -45,8 +46,6 @@ namespace MSS.Types
 		public U? LastTerm => Terms.Count > 0 ? Terms[^1] : null;
 		public U? ParentTerm => Terms.Count > 1 ? Terms[^2] : null;
 		public U? GrandparentTerm => Terms.Count > 2 ? Terms[^3] : null;
-
-		//public virtual V? Item => LastTerm?.Item;
 
 		#endregion
 
@@ -172,7 +171,6 @@ namespace MSS.Types
 		}
 
 		#endregion
-
 
 		#region Overrides, Conversion Operators and ICloneable Support
 

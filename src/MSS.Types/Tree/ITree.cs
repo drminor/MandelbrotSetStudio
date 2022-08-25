@@ -30,11 +30,11 @@ namespace MSS.Types
 		bool CanGoBack { get; }
 		bool CanGoForward { get; }
 
-		bool TryGetNextItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null);
-		bool TryGetPreviousItem([MaybeNullWhen(false)] out V item, Func<ITreeNode<U, V>, bool>? predicate = null);
+		bool TryGetNextItemPath([MaybeNullWhen(false)] out ITreePath<U, V> path, Func<U, bool>? predicate);
+		bool TryGetPreviousItemPath([MaybeNullWhen(false)] out ITreePath<U, V> path, Func<U, bool>? predicate);
 
-		bool MoveBack(Func<ITreeNode<U, V>, bool>? predicate = null);
-		bool MoveForward(Func<ITreeNode<U, V>, bool>? predicate = null);
+		bool MoveBack(Func<U, bool>? predicate);
+		bool MoveForward(Func<U, bool>? predicate);
 
 		V? GetParentItem(U node);
 		V? GetItem(ObjectId itemId);

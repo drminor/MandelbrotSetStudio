@@ -107,24 +107,27 @@ namespace MSS.Common
 		{
 			if (path == null)
 			{
-				return base.MakePreferred(path);
-			}
-
-			JobPathType newPath;
-
-			if (path.Item.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				var parentPath = path.GetParentPath()!;
-				newPath = MakeBranchActive(parentPath).Combine(path.Node);
+				//return base.MakePreferred(path);
+				Root.GetNodeOrRoot().PreferredChild = null;
 			}
 			else
 			{
-				newPath = MakeBranchActive(path);
-			}
+				JobPathType newPath;
 
-			ExpandAndSetCurrent(newPath);
-			CurrentPath = newPath;
-			IsDirty = true;
+				if (path.Item.TransformType == TransformType.CanvasSizeUpdate)
+				{
+					var parentPath = path.GetParentPath()!;
+					newPath = MakeBranchActive(parentPath).Combine(path.Node);
+				}
+				else
+				{
+					newPath = MakeBranchActive(path);
+				}
+
+				ExpandAndSetCurrent(newPath);
+				CurrentPath = newPath;
+				IsDirty = true;
+			}
 
 			return true;
 		}

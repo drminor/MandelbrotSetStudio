@@ -15,6 +15,7 @@ namespace MSS.Common
 {
 	using JobBranchType = ITreeBranch<JobTreeNode, Job>;
 	using JobPathType = ITreePath<JobTreeNode, Job>;
+	using JobNodeType = ITreeNode<JobTreeNode, Job>;
 
 	/// <remarks>
 	///	New jobs are inserted into order by the date the job was created.
@@ -128,115 +129,86 @@ namespace MSS.Common
 			return result;
 		}
 
-		public virtual bool MakePreferred(JobPathType? path)
-		{
-			if (path == null)
-			{
-				Root.GetNodeOrRoot().PreferredChild = null;
-			}
-			else
-			{
-				var originalPathTerms = path.ToString();
-				var parentPath = path.GetParentPath();
+		public abstract bool MakePreferred(JobPathType? path);
+		//{
+		//	if (path == null)
+		//	{
+		//		Root.GetNodeOrRoot().PreferredChild = null;
+		//	}
+		//	else
+		//	{
+		//		// TODO: Get a path to the node identifed by path, based the node's ParentId.
+		//		// Then set the preferred child top, down.
+		//		var originalPathTerms = path.ToString();
+		//		//var parentPath = path.GetParentPath();
 
-				while (parentPath != null)
-				{
-					try
-					{
-						parentPath.Node.PreferredChild = path.Node;
-					} 
-					catch (InvalidOperationException ioe)
-					{
-						Debug.WriteLine($"Error1 while setting the parentNode: {parentPath.Node.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
-					}
+		//		//while (parentPath != null)
+		//		//{
+		//		//	try
+		//		//	{
+		//		//		parentPath.Node.PreferredChild = path.Node;
+		//		//	} 
+		//		//	catch (InvalidOperationException ioe)
+		//		//	{
+		//		//		Debug.WriteLine($"Error1 while setting the parentNode: {parentPath.Node.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
+		//		//	}
 
-					path = parentPath;
-					parentPath = path.GetParentPath();
-				}
+		//		//	path = parentPath;
+		//		//	parentPath = path.GetParentPath();
+		//		//}
 
-				var parentNode = path.GetParentNodeOrRoot();
+		//		//var parentNode = path.GetParentNodeOrRoot();
 
-				try
-				{
-					parentNode.PreferredChild = path.Node;
-				}
-				catch (InvalidOperationException ioe)
-				{
-					Debug.WriteLine($"Error2 while setting the parentNode: {parentNode.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
-				}
-			}
+		//		//try
+		//		//{
+		//		//	parentNode.PreferredChild = path.Node;
+		//		//}
+		//		//catch (InvalidOperationException ioe)
+		//		//{
+		//		//	Debug.WriteLine($"Error2 while setting the parentNode: {parentNode.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
+		//		//}
 
-			return true;
-		}
+		//		var parentNode = path.GetParentNodeOrRoot();
+
+		//		try
+		//		{
+		//			parentNode.PreferredChild = path.Node;
+		//		}
+		//		catch (InvalidOperationException ioe)
+		//		{
+		//			Debug.WriteLine($"Error2 while setting the parentNode: {parentNode.Id}'s PreferredChild to {path.Node.Id}. The original path has terms: {originalPathTerms}. \nThe error is {ioe}");
+		//		}
+
+
+		//	}
+
+		//	return true;
+		//}
 
 		public virtual bool TryGetPreviousJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)
 		{
-			if (CurrentPath == null)
-			{
-				job = null;
-				return false;
-			}
-
-			var backPath = GetPreviousItemPath(CurrentPath, GetPredicate(skipPanJobs));
+			var result = TryGetPreviousItemPath(out var backPath, GetPredicate(skipPanJobs));
 			job = backPath?.Item;
-
-			return job != null;
+			return result;
 		}
 
 		public virtual bool MoveBack(bool skipPanJobs)
 		{
-			if (CurrentPath == null)
-			{
-				return false;
-			}
-
-			var backPath = GetPreviousItemPath(CurrentPath, GetPredicate(skipPanJobs));
-
-			if (backPath != null)
-			{
-				CurrentPath = backPath;
-				ExpandAndSetCurrent(backPath);
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			var result = MoveBack(GetPredicate(skipPanJobs));
+			return result;
 		}
 
 		public virtual bool TryGetNextJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)
 		{
-			if (CurrentPath == null)
-			{
-				job = null;
-				return false;
-			}
-
-			var forwardPath = GetNextItemPath(CurrentPath, GetPredicate(skipPanJobs));
+			var result = TryGetNextItemPath(out var forwardPath, GetPredicate(skipPanJobs));
 			job = forwardPath?.Item;
-
-			return job != null;
+			return result;
 		}
 
 		public virtual bool MoveForward(bool skipPanJobs)
 		{
-			if (CurrentPath == null)
-			{
-				return false;
-			}
-
-			var forwardPath = GetNextItemPath(CurrentPath, GetPredicate(skipPanJobs));
-
-			if (forwardPath != null)
-			{
-				CurrentPath = forwardPath;
-				ExpandAndSetCurrent(forwardPath);
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			var result = MoveForward(GetPredicate(skipPanJobs));
+			return result;
 		}
 
 		public virtual bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy)
@@ -285,7 +257,7 @@ namespace MSS.Common
 
 		#region Public Methods - Collection
 
-		public Job? GetParent(Job job)
+		public Job? GetParentItem(Job job)
 		{
 			if (job.ParentJobId == null)
 			{
@@ -306,35 +278,10 @@ namespace MSS.Common
 		public bool TryFindParentPath(Job job, JobBranchType currentBranch, [MaybeNullWhen(false)] out JobPathType path)
 		{
 			path = currentBranch.GetCurrentPath();
-
 			var parentId = job.ParentJobId;
-			if (parentId == null)
-			{
-				return false;
-			}
+			var result = parentId == null ? false : TryFindPathById(parentId.Value, currentBranch, out path);
 
-			if (TryFindPathById(parentId.Value, currentBranch, out var path1))
-			{
-				path = path1;
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		public Job? GetParentItem(Job job)
-		{
-			if (job.ParentJobId == null)
-			{
-				return null;
-			}
-			else
-			{
-				_ = TryFindItem(job.ParentJobId.Value, Root, out var result);
-				return result;
-			}
+			return result;
 		}
 
 		#endregion
@@ -671,7 +618,24 @@ namespace MSS.Common
 			}
 		}
 
-		protected override IEnumerable<JobTreeNode>? GetNextNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
+		protected override JobPathType? GetNextItemPath(JobPathType path, Func<JobTreeNode, bool>? predicate)
+		{
+			var currentPosition = GetPosition(path, out var siblings);
+			var nextNode = GetNextNode(siblings, currentPosition, predicate);
+
+			if (nextNode != null)
+			{
+				//The new item will be a sibling of the current item
+				var result = path.Combine(nextNode);
+				return result;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		private IEnumerable<JobTreeNode>? GetNextNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate)
 		{
 			IEnumerable<JobTreeNode>? result = null;
 
@@ -723,7 +687,35 @@ namespace MSS.Common
 			return result;
 		}
 
-		protected override IEnumerable<JobTreeNode>? GetPreviousNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate = null)
+		protected override JobPathType? GetPreviousItemPath(JobPathType path, Func<JobTreeNode, bool>? predicate)
+		{
+			var currentPosition = GetPosition(path, out var siblings);
+			var previousNewPathTerms = GetPreviousNode(siblings, currentPosition, predicate);
+
+			var previousPath = path;
+			var curPath = path.GetParentPath();
+
+			while (previousNewPathTerms == null && curPath != null)
+			{
+				currentPosition = GetPosition(curPath, out siblings);
+				previousNewPathTerms = GetPreviousNode(siblings, currentPosition, predicate);
+
+				previousPath = curPath;
+				curPath = curPath.GetParentPath();
+			}
+
+			if (previousNewPathTerms != null)
+			{
+				var result = previousPath.Combine(previousNewPathTerms);
+				return result;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		private IEnumerable<JobTreeNode>? GetPreviousNode(IList<JobTreeNode> nodes, int currentPosition, Func<JobTreeNode, bool>? predicate)
 		{
 			IEnumerable<JobTreeNode>? result = null;
 
