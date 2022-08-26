@@ -35,41 +35,57 @@ namespace MSS.Common
 			}
 			else
 			{
-				// Get a path to the node identifed by path, based the node's ParentId.
-				// Then set the preferred child top, down.
+				// Assemble a list of parents and their preferred child for each term
+				// of a path constructed using the specified path's "real" parent.
 
 				var parentNode = path.GetParentNodeOrRoot();
 				var parentChildPairs = new[] { (parent: parentNode, child: path.Node) }.ToList();
 
 				// Get the parent path using the current path's Job's ParentJobId
+
 				var previousPath = path;
-				path = GetParentPath(path.Item, Root);
+				var nextPath = GetParentPath(previousPath.Item, Root);
 
-				while (path != null)
+				while (nextPath != null)
 				{
-					parentNode = path.GetParentNodeOrRoot();
-					parentChildPairs.Add((parentNode, path.Node));
+					parentNode = nextPath.GetParentNodeOrRoot();
+					parentChildPairs.Add((parentNode, nextPath.Node));
 
-					previousPath = path;
-					path = GetParentPath(path.Item, Root);
+					previousPath = nextPath;
+					nextPath = GetParentPath(previousPath.Item, Root);
 				}
 
+				// Include the top-most "real" path, and its parent, the root node.
 				parentNode = previousPath.GetParentNodeOrRoot();
 				parentChildPairs.Add((parentNode, previousPath.Node));
 
+				// Using the assembled list, set the preferred child, using its logical parent, starting from the top.
 				parentChildPairs.Reverse();
-
-				foreach(var (parent, child) in parentChildPairs)
+				foreach (var (parent, child) in parentChildPairs)
 				{
 					if (parent.SetPreferredChild(child, ref numberReset))
 					{
 						numberSet++;
 					}
 				}
+
+				// For each child of the last term, set the last child to be the preferred child.
+				var lastChildPath = path;
+				var lastChildNode = lastChildPath.Children.LastOrDefault();
+
+				while (lastChildNode != null)
+				{
+					if (lastChildPath.Node.SetPreferredChild(lastChildNode, ref numberReset))
+					{
+						numberSet++;
+					}
+
+					lastChildPath = lastChildPath.Combine(lastChildNode);
+					lastChildNode = lastChildPath.Children.LastOrDefault();
+				}
 			}
 
 			Debug.WriteLine($"Setting path: {path?.Node.Id} to be the preferred path. Set {numberSet} nodes, reset {numberReset}.");
-
 			return true;
 		}
 
@@ -125,6 +141,54 @@ namespace MSS.Common
 		#endregion
 
 		#region Private Navigate Methods
+
+		protected override void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos)
+		{
+			node.IsSelected = isSelected;
+
+			var path = startPos.CreatePath(node);
+			var backPath = GetPreviousItemPath(path, GetPredicate(skipPanJobs: true));
+
+			if (backPath != null)
+			{
+				backPath.Node.IsParentOfSelected = isSelected;
+			}
+
+			var prevPath = GetPreviousItemPath(path, null);
+
+			while (prevPath != null && !DoesNodeChangeZoom(prevPath.Node))
+			{
+				UpdateIsSiblingAndIsChildOfSelected(prevPath.Node, isSelected);
+				prevPath = GetPreviousItemPath(prevPath, null);
+			}
+
+			var nextPath = GetNextItemPath(path, null);
+
+			while (nextPath != null && !DoesNodeChangeZoom(nextPath.Node))
+			{
+				UpdateIsSiblingAndIsChildOfSelected(nextPath.Node, isSelected);
+				nextPath = GetNextItemPath(nextPath, null);
+			}
+
+			if (nextPath != null)
+			{
+				nextPath.Node.IsChildOfSelected = isSelected;
+			}
+		}
+
+		private void UpdateIsSiblingAndIsChildOfSelected(JobTreeNode node, bool isSelected)
+		{
+			node.IsSiblingOfSelected = isSelected;
+
+			if (!DoesNodeChangeZoom(node))
+			{
+				foreach (var c in node.Children.Where(x => DoesNodeChangeZoom(x)))
+				{
+					c.IsChildOfSelected = isSelected;
+				}
+			}
+
+		}
 
 		protected override JobPathType? GetNextItemPath(JobPathType path, Func<JobTreeNode, bool>? predicate)
 		{
@@ -245,49 +309,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		protected override void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos)
-		{
-			node.IsSelected = isSelected;
 
-			var path = startPos.CreatePath(node);
-			var backPath = GetPreviousItemPath(path, GetPredicate(skipPanJobs: true));
-
-			if (backPath != null)
-			{
-				backPath.Node.IsParentOfSelected = isSelected;
-			}
-
-			var prevPath = GetPreviousItemPath(path, null);
-
-			while (prevPath != null && !DoesNodeChangeZoom(prevPath.Node))
-			{
-				UpdateIsSiblingAndIsChildOfSelected(prevPath.Node, isSelected);
-				prevPath = GetPreviousItemPath(prevPath, null);
-			}
-
-			var nextPath = GetNextItemPath(path, null);
-
-			while (nextPath != null && !DoesNodeChangeZoom(nextPath.Node))
-			{
-				UpdateIsSiblingAndIsChildOfSelected(nextPath.Node, isSelected);
-				nextPath = GetNextItemPath(nextPath, null);
-			}
-
-			if (nextPath != null)
-			{
-				nextPath.Node.IsChildOfSelected = isSelected;
-			}
-		}
-
-		private void UpdateIsSiblingAndIsChildOfSelected(JobTreeNode node, bool isSelected)
-		{
-			node.IsSiblingOfSelected = isSelected;
-
-			foreach(var c in node.Children.Where(x => x.TransformType is TransformType.ZoomIn or TransformType.ZoomOut))
-			{
-				c.IsChildOfSelected = isSelected;
-			}
-		}
 
 		#endregion
 	}

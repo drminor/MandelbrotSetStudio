@@ -99,12 +99,8 @@ namespace MSS.Common
 			get => Children.FirstOrDefault(x => x.IsOnPreferredPath) ?? Children.LastOrDefault();
 			set
 			{
-				var numberOfChildNodesReset = 0;
-				//if (SetPreferredChild(value, ref numberOfChildNodesReset))
-				//{
-				//	Debug.WriteLine($"Updating the preferred child for node: {Id} to {value?.Id}. {numberOfChildNodesReset} child nodes were reset.");
-				//}
-				_ = SetPreferredChild(value, ref numberOfChildNodesReset);
+				var numberReset = 0;
+				_ = SetPreferredChild(value, ref numberReset);
 			}
 		}
 
@@ -136,20 +132,6 @@ namespace MSS.Common
 				if (value != _isActiveAlternate)
 				{
 					_isActiveAlternate = value;
-					//Item.IsAlternatePathHead = value;
-					
-					// TODO: Move this code to the Tree class.
-					//if (ParentNode != null)
-					//{
-					//	if (ParentNode.RealChildJobs.TryGetValue(Job.Id, out var parentsRef))
-					//	{
-					//		parentsRef.IsAlternatePathHead = value;
-					//	}
-					//	else
-					//	{
-					//		Debug.WriteLine($"Could not find the Parent's Reference for the Active Alt Node: {Job.Id}. The Active Alt Node's ParentNode has Id: {ParentNode.Item.Id}.");
-					//	}
-					//}
 					OnPropertyChanged();
 				}
 			}
