@@ -61,6 +61,10 @@ namespace MSetExplorer
 		{
 			if (trvJobs.SelectedItem is JobTreeNode selectedItem)
 			{
+				if (selectedItem.TransformType == MSS.Types.TransformType.CanvasSizeUpdate)
+				{
+					throw new System.NotImplementedException("Setting the selected item of a JobTree is not supported.");
+				}
 				_vm.SelectedViewItem = selectedItem;
 			}
 		}

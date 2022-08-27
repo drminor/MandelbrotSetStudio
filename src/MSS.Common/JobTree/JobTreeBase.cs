@@ -3,6 +3,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -93,6 +94,11 @@ namespace MSS.Common
 			{
 				if (value != base.SelectedNode)
 				{
+					if (value != null && value.TransformType == TransformType.CanvasSizeUpdate)
+					{
+						throw new InvalidOperationException("Cannot set the Selected Node to a CanvasSizeUpdate job.");
+					}
+
 					UpdateIsSelected(base.SelectedNode, false, Root);
 					base.SelectedNode = value;
 					UpdateIsSelected(base.SelectedNode, true, Root);
@@ -222,20 +228,20 @@ namespace MSS.Common
 			{
 				if (TryFindParentPath(job, Root, out var parentPath))
 				{
-					JobTreeNode parentNode;
+					JobTreeNode? parentNode;
 
 					if (job.TransformType == TransformType.CanvasSizeUpdate)
 					{
 						// The parentPath points to the "original job" for which the CanvasSizeUpdate job was created.
 						// We need to get its parentPath to continue.
-						parentNode = parentPath.GetParentPath()!.Node;
+						parentNode = parentPath.GetParentPath()?.Node;
 					}
 					else
 					{
 						parentNode = parentPath.Node;
 					}
 
-					var proxyJobTreeItem = parentNode.AlternateDispSizes?.FirstOrDefault(x => x.Item.CanvasSizeInBlocks == canvasSizeInBlocks);
+					var proxyJobTreeItem = parentNode?.AlternateDispSizes?.FirstOrDefault(x => x.Item.CanvasSizeInBlocks == canvasSizeInBlocks);
 					proxy = proxyJobTreeItem?.Item;
 					return proxy != null;
 				}
@@ -472,7 +478,7 @@ namespace MSS.Common
 
 		protected virtual IList<Job> GetChildren(JobPathType? currentPath, IList<Job> jobs)
 		{
-			var parentJobId = currentPath == null ? (ObjectId?)null : currentPath.Item!.Id;
+			var parentJobId = currentPath == null ? (ObjectId?)null : currentPath.Item.Id;
 			parentJobId = parentJobId == ObjectId.Empty ? null : parentJobId;
 			var result = jobs.Where(x => x.ParentJobId == parentJobId).OrderBy(x => x.Id.Timestamp).ToList();
 
@@ -529,7 +535,6 @@ namespace MSS.Common
 			{
 				throw new ArgumentException("The job must have a TransformType = CanvasSizeUpdate when finding a CanvasSizeUpdate job.", nameof(job));
 			}
-
 
 			if (TryFindParentPath(job, currentBranch, out var parentPath))
 			{
@@ -771,6 +776,74 @@ namespace MSS.Common
 		{
 			var result = node.TransformType is TransformType.ZoomIn or TransformType.ZoomOut or TransformType.Home;
 			return result;
+		}
+
+		protected override int GetPosition(JobPathType path, out ObservableCollection<JobTreeNode> siblings)
+		{
+			if (path.Node.TransformType == TransformType.CanvasSizeUpdate)
+			{
+				var parentPath = path.GetParentPath()!;
+
+				var parentNode = parentPath.GetParentNodeOrRoot();
+				siblings = parentNode.Children;
+				var position = siblings.IndexOf(parentPath.Node);
+				return position;
+			}
+			else
+			{
+				var parentNode = path.GetParentNodeOrRoot();
+				siblings = parentNode.Children;
+				var position = siblings.IndexOf(path.Node);
+				return position;
+			}
+		}
+
+		//protected override bool MoveCurrentTo(Job item, JobBranchType currentBranch, [MaybeNullWhen(false)] out JobPathType path)
+		//{
+		//	if (item.TransformType == TransformType.CanvasSizeUpdate)
+		//	{
+		//		if (TryFindCanvasSizeUpdateJob(item, currentBranch, out var csuPath))
+		//		{
+		//			path = csuPath.GetParentPath()!;
+		//			ExpandAndSetCurrent(path);
+		//			return true;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		if (TryFindPath(item, currentBranch, out path))
+		//		{
+		//			ExpandAndSetCurrent(path);
+		//			return true;
+		//		}
+		//	}
+
+		//	path = null;
+		//	return false;
+		//}
+
+		protected override void ExpandAndSetCurrent(JobPathType? path)
+		{
+			if (path == null || path.IsEmpty)
+			{
+				return;
+			}
+
+			foreach (var p in path.Terms.SkipLast(1))
+			{
+				p.IsExpanded = true;
+			}
+
+			var lastTerm = path.Node;
+
+			if (lastTerm.TransformType == TransformType.CanvasSizeUpdate)
+			{
+				path.GetParentNode()!.IsCurrent = true;
+			}
+			else
+			{
+				lastTerm.IsCurrent = true;
+			}
 		}
 
 		#endregion

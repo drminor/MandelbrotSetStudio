@@ -97,7 +97,7 @@ namespace MEngineService
 		//	Marshal.Copy(buffer, arrayRes, 0, size);
 		//	Marshal.FreeCoTaskMem(buffer);
 
-		//	// TODO: Update C++ code to use integers
+		//	// TOD O: Update C++ code to use integers
 		//	uint[] res = arrayRes.Cast<uint>().ToArray();
 
 		//	for (int i = 0; i < size; i++)
@@ -125,7 +125,7 @@ namespace MEngineService
 		//	Marshal.Copy(rawCnts, tmpCnts, 0, length);
 		//	Marshal.FreeCoTaskMem(rawCnts);
 
-		//	// TODO: Update C++ code to use integers
+		//	// TOD O: Update C++ code to use integers
 		//	uint[] cnts = tmpCnts.Cast<uint>().ToArray();
 
 		//	for (int i = 0; i < length; i++)

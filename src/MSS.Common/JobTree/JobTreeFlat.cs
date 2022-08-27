@@ -155,7 +155,7 @@ namespace MSS.Common
 				// Find the sibling of the parent, that comes just before the parent.
 				if (parentPath.TryGetParentPath(out var grandparentPath))
 				{
-					var grandparentId = grandparentPath.Item!.Id;
+					var grandparentId = grandparentPath.Item.Id;
 					var grandparentBranch = grandparentPath.GetParentBranch();
 
 					if (TryFindPathById(grandparentId, grandparentBranch, out var realGrandparentPath))

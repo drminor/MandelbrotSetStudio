@@ -589,7 +589,7 @@ namespace MSS.Types
 			}
 		}
 
-		protected int GetPosition(ITreePath<U, V> path, out ObservableCollection<U> siblings)
+		protected virtual int GetPosition(ITreePath<U, V> path, out ObservableCollection<U> siblings)
 		{
 			var parentNode = path.GetParentNodeOrRoot();
 			siblings = parentNode.Children;
