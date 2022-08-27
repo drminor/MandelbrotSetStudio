@@ -27,14 +27,17 @@ namespace MSS.Common
 		private bool _isSiblingOfSelected;
 		private bool _isChildOfSelected;
 		private string _itemColor;
+		private string _goColor;
 
 		#region Static Properties
 
-		public static string IsCurrentColor { get; set; } = "";
-		public static string IsSelectedColor { get; set; } = "";
+		public static string CurrentColor { get; set; } = "";
+		public static string SelectedColor { get; set; } = "";
 		public static string IsParentSelectedColor { get; set; } = "";
 		public static string IsSiblingSelectedColor { get; set; } = "";
 		public static string IsChildSelectedColor { get; set; } = "";
+
+		public static string DefaultColor { get; set; } = "";
 
 		#endregion
 
@@ -83,6 +86,7 @@ namespace MSS.Common
 			_isChildOfSelected = isChildOfSelected;
 
 			_itemColor = GetItemColor(_isSelected, _isParentOfSelected, _isSiblingOfSelected, _isChildOfSelected);
+			_goColor = GetGoColor(IsCurrent);
 
 			AlternateDispSizes = alternateDispSizes;
 			RealChildJobs = realChildJobs;
@@ -216,16 +220,8 @@ namespace MSS.Common
 			{
 				if (value != base.IsCurrent)
 				{
-					if (!value)
-					{
-						Debug.WriteLine("Reseting IsCurrent.");
-					}
 					base.IsCurrent = value;
-					ItemColor = GetItemColor(_isSelected, _isParentOfSelected, _isSiblingOfSelected, _isChildOfSelected);
-				}
-				else
-				{
-					Debug.WriteLine("Not updating IsCurrent, the value has not changed.");
+					GoColor = GetGoColor(value);
 				}
 			}
 		}
@@ -294,6 +290,19 @@ namespace MSS.Common
 				if (value != _itemColor)
 				{
 					_itemColor = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public string GoColor
+		{
+			get => _goColor;
+			set
+			{
+				if (value != _goColor)
+				{
+					_goColor = value;
 					OnPropertyChanged();
 				}
 			}
@@ -484,16 +493,17 @@ namespace MSS.Common
 
 		#region Private Methods
 
+		private string GetGoColor(bool isCurrent)
+		{
+			var result = isCurrent ? CurrentColor : DefaultColor;
+			return result;
+		}
+
 		private string GetItemColor(bool isSelected, bool isParentSelected, bool isSiblingSelected, bool isChildSelected)
 		{
-			if (IsCurrent)
-			{
-				return IsCurrentColor;
-			}
-
 			if (isSelected)
 			{
-				return IsSelectedColor;
+				return SelectedColor;
 			}
 			else if (isParentSelected)
 			{
@@ -509,7 +519,7 @@ namespace MSS.Common
 			}
 			else
 			{
-				return "#fff8dc";// (Cornflower Silk)
+				return DefaultColor;
 			}
 		}
 

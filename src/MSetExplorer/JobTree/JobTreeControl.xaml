@@ -46,12 +46,12 @@
 
                             <!--<Setter Property="Background" Value="{Binding ItemColor}"/>-->
 
-                            <Setter Property="FontWeight" Value="Normal" />
+                            <!--<Setter Property="FontWeight" Value="Normal" />
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True"> 
                                     <Setter Property="FontWeight" Value="Bold" />
                                 </Trigger>
-                            </Style.Triggers>
+                            </Style.Triggers>-->
 
                         </Style>
                     </TreeView.ItemContainerStyle>
@@ -114,7 +114,7 @@
                                 <!-- Path Head Type -->
                                 <TextBlock Margin="2,1,0,1" Text="{Binding PathHeadType}" Foreground="DarkGreen" />
 
-                                <Button Margin="5,1,0,1" Focusable="False" Command="local:JobTreeCommands.MoveTo" CommandParameter="{Binding JobId}" >Go</Button>
+                                <Button Margin="5,0,0,0" Focusable="False" Command="local:JobTreeCommands.MoveTo" CommandParameter="{Binding JobId}" Background="{Binding GoColor}" Content=" Go " />
                             </StackPanel>
                         </HierarchicalDataTemplate>
 

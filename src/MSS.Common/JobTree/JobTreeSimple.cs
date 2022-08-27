@@ -28,8 +28,8 @@ namespace MSS.Common
 			var numberSet = 0;
 			var numberReset = 0;
 
-			var sb = new StringBuilder();
-			sb.AppendLine("*****");
+			//var sb = new StringBuilder();
+			//_ = sb.AppendLine("*****");
 
 			if (path == null)
 			{
@@ -71,16 +71,16 @@ namespace MSS.Common
 					if (parent.SetPreferredChild(child, !alreadyVisited, ref numberReset))
 					{
 						var strResetingChildNodes = !alreadyVisited ? ", and reseting child nodes." : ".";
-						sb.AppendLine($"Setting node: {child.Id} to be the preferred child of parent: {parent.Id}{strResetingChildNodes}");
+						//_ = sb.AppendLine($"Setting node: {child.Id} to be the preferred child of parent: {parent.Id}{strResetingChildNodes}");
 						numberSet++;
 					}
 					else
 					{
-						sb.AppendLine($"Node: {child.Id} is already the preferred child of parent: {parent.Id}.");
+						//_ = sb.AppendLine($"Node: {child.Id} is already the preferred child of parent: {parent.Id}.");
 					}
 				}
 
-				sb.AppendLine("Now selecting the child's last child as the preferred child.");
+				//_ = sb.AppendLine("Now selecting the child's last child as the preferred child.");
 
 				//	For each child of the last term, set the last child to be the preferred child.
 				var nextChildJob = path.Node.RealChildJobs.LastOrDefault().Value;
@@ -97,22 +97,22 @@ namespace MSS.Common
 					if (parentNode.SetPreferredChild(child, !alreadyVisited, ref numberReset))
 					{
 						var strResetingChildNodes = !alreadyVisited ? ", and reseting child nodes." : ".";
-						sb.AppendLine($"Setting node: {child.Id} to be the preferred child of parent: {parentNode.Id}{strResetingChildNodes}");
+						//_ = sb.AppendLine($"Setting node: {child.Id} to be the preferred child of parent: {parentNode.Id}{strResetingChildNodes}");
 						numberSet++;
 					}
 					else
 					{
-						sb.AppendLine($"Node: {nextChildPath.Node.Id} is already the preferred child of parent: {parentNode.Id}.");
+						//_ = sb.AppendLine($"Node: {nextChildPath.Node.Id} is already the preferred child of parent: {parentNode.Id}.");
 					}
 
 					nextChildJob = nextChildPath.Node.RealChildJobs.LastOrDefault().Value;
 				}
 			}
 
-			sb.AppendLine($"Setting path: {path?.Node.Id} to be the preferred path. Set {numberSet} nodes, reset {numberReset}.");
-			sb.AppendLine("*****");
+			//_ = sb.AppendLine($"Setting path: {path?.Node.Id} to be the preferred path. Set {numberSet} nodes, reset {numberReset}.");
+			//_ = sb.AppendLine("*****");
 
-			Debug.WriteLine(sb.ToString());
+			//Debug.WriteLine(sb.ToString());
 
 			return true;
 		}
@@ -191,7 +191,7 @@ namespace MSS.Common
 
 			while (prevPath != null && !DoesNodeChangeZoom(prevPath.Node))
 			{
-				UpdateIsSiblingAndIsChildOfSelected(prevPath.Node, isSelected);
+				_ = UpdateIsSiblingAndIsChildOfSelected(prevPath.Node, isSelected);
 				prevPath = GetPreviousItemPath(prevPath, null);
 			}
 
@@ -199,7 +199,7 @@ namespace MSS.Common
 
 			while (nextPath != null && !DoesNodeChangeZoom(nextPath.Node))
 			{
-				UpdateIsSiblingAndIsChildOfSelected(nextPath.Node, isSelected);
+				_ = UpdateIsSiblingAndIsChildOfSelected(nextPath.Node, isSelected);
 				nextPath = GetNextItemPath(nextPath, null);
 			}
 
@@ -258,13 +258,13 @@ namespace MSS.Common
 			if (preferredNode != null && preferredNode.ParentId == currentNode.Id)
 			{
 				result = path.Combine(preferredNode);
-				Debug.WriteLine($"GetNextPath, using the node's preferred child.\n{result}");
+				//Debug.WriteLine($"GetNextPath, using the node's preferred child.\n{result}");
 			}
 			else if (currentPosition < siblings.Count - 1 && siblings[currentPosition + 1].ParentId == currentNode.Id)
 			{
 				var nextNode = siblings[currentPosition + 1];
 				result = path.CreateSiblingPath(nextNode);
-				Debug.WriteLine($"GetNextPath, using the next node.\n{result}");
+				//Debug.WriteLine($"GetNextPath, using the next node.\n{result}");
 			}
 			else
 			{
@@ -276,7 +276,7 @@ namespace MSS.Common
 				//var preferredRealChildJob = currentNode.RealChildJobs.FirstOrDefault(x => x.Value.IsAlternatePathHead).Value ?? currentNode.RealChildJobs.LastOrDefault().Value;
 				//result = preferredRealChildJob != null ? GetPath(preferredRealChildJob, Root) : null;
 
-				Debug.WriteLine($"GetNextPath, initial result is null, using RealChildJobs.\n{result}.");
+				//Debug.WriteLine($"GetNextPath, initial result is null, using RealChildJobs.\n{result}.");
 			}
 
 			return result;
@@ -321,17 +321,17 @@ namespace MSS.Common
 					if (preferredNode?.ParentId == currentNode.Id)
 					{
 						result = path.CreateSiblingPath(previousNode).Combine(preferredNode);
-						Debug.WriteLine($"GetPreviousPath, using the node's preferred child.\n{result}");
+						//Debug.WriteLine($"GetPreviousPath, using the node's preferred child.\n{result}");
 					}
 					else
 					{
-						Debug.WriteLine($"GetPreviousPath, node has children, the preferredNode has ParentId: {preferredNode?.ParentId}, the currentNode has id: {currentNode.Id}.\n{result}");
+						//Debug.WriteLine($"GetPreviousPath, node has children, the preferredNode has ParentId: {preferredNode?.ParentId}, the currentNode has id: {currentNode.Id}.\n{result}");
 					}
 				}
 				else
 				{
 					result = path.CreateSiblingPath(previousNode);
-					Debug.WriteLine($"GetPreviousPath, using the previous node.\n{result}");
+					//Debug.WriteLine($"GetPreviousPath, using the previous node.\n{result}");
 				}
 			}
 
@@ -339,7 +339,7 @@ namespace MSS.Common
 			{
 				// TODO: Optimize call to GetParentPath by providing a closer starting point.
 				result = GetParentPath(currentNode.Item, Root);
-				Debug.WriteLine($"GetPreviousPath, initial result is null, using GetParentPath.\n{result}.");
+				//Debug.WriteLine($"GetPreviousPath, initial result is null, using GetParentPath.\n{result}.");
 			}
 
 			return result;

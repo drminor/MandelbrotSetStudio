@@ -255,7 +255,7 @@ namespace MSS.Types
 
 			try
 			{
-				return CurrentPath == null ? null : CurrentPath;
+				return CurrentPath;
 			}
 			finally
 			{
@@ -406,7 +406,7 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Private Collection Methods, With Support for CanvasSizeUpdates
+		#region Private Collection Methods
 
 		protected bool TryFindItem(ObjectId id, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out V item)
 		{
@@ -459,7 +459,7 @@ namespace MSS.Types
 			return false;
 		}
 
-		protected bool TryFindPathInternal(V item, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)
+		protected virtual bool TryFindPathInternal(V item, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)
 		{
 			if (currentBranch.ContainsItem(x => x.Item.Equals(item), out path))
 			{
@@ -622,7 +622,7 @@ namespace MSS.Types
 				p.IsExpanded = true;
 			}
 
-			var lastTerm = path .Node;
+			var lastTerm = path.Node;
 			lastTerm.IsCurrent = true;
 		}
 

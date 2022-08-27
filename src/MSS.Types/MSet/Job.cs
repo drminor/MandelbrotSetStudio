@@ -193,7 +193,19 @@ namespace MSS.Types.MSet
 
 		#endregion
 
-		#region ICloneable Support
+		#region ToString and ICloneable Support
+
+		public override string ToString()
+		{
+			if (ParentJobId != null)
+			{
+				return $"{TransformType} {Id} {ParentJobId} {DateCreated}";
+			}
+			else
+			{
+				return $"{TransformType} {Id} {DateCreated}";
+			}
+		}
 
 		object ICloneable.Clone()
 		{

@@ -490,6 +490,73 @@ namespace MSS.Common
 
 		#endregion
 
+		#region Private Collection Methods
+
+		protected override bool TryFindPathInternal(Job item, JobBranchType currentBranch, [MaybeNullWhen(false)] out JobPathType path)
+		{
+			if (item.TransformType == TransformType.CanvasSizeUpdate)
+			{
+				return TryFindCanvasSizeUpdateJob(item, currentBranch, out path);
+			}
+
+			if (currentBranch.ContainsItem(x => x.Item.Equals(item), out path))
+			{
+				return true;
+			}
+
+			var node = currentBranch.GetNodeOrRoot();
+
+			foreach (var child in node.Children)
+			{
+				if (TryFindPathInternal(item, currentBranch.Combine(child), out path))
+				{
+					return true;
+				}
+			}
+
+			path = null;
+			return false;
+		}
+
+		private bool TryFindCanvasSizeUpdateJob(Job job, JobBranchType currentBranch, [MaybeNullWhen(false)] out JobPathType path)
+		{
+			if (job.ParentJobId == null)
+			{
+				throw new ArgumentException("The job must have a non-null ParentJobId when finding a CanvasSizeUpdate job.", nameof(job));
+			}
+
+			if (job.TransformType != TransformType.CanvasSizeUpdate)
+			{
+				throw new ArgumentException("The job must have a TransformType = CanvasSizeUpdate when finding a CanvasSizeUpdate job.", nameof(job));
+			}
+
+
+			if (TryFindParentPath(job, currentBranch, out var parentPath))
+			{
+				JobTreeNode parentNode = parentPath.Node;
+
+				var canvasSizeUpdateNode = parentNode.AlternateDispSizes?.FirstOrDefault(x => x.Item == job);
+
+				if (canvasSizeUpdateNode != null)
+				{
+					path = parentPath.Combine(canvasSizeUpdateNode);
+					return true;
+				}
+				else
+				{
+					path = null;
+					return false;
+				}
+			}
+			else
+			{
+				path = null;
+				return false;
+			}
+		}
+
+		#endregion
+
 		#region Private Navigate Methods
 
 		protected virtual void UpdateIsSelected(JobTreeNode? node, bool isSelected, JobBranchType startPos)

@@ -36,8 +36,10 @@ namespace MSetExplorer
 			{
 				_vm = (IJobTreeViewModel)DataContext;
 
-				JobTreeNode.IsCurrentColor = GetColorString(Colors.ForestGreen);
-				JobTreeNode.IsSelectedColor = GetColorString(Colors.Tan);
+				JobTreeNode.DefaultColor = GetColorString(Colors.Cornsilk);
+
+				JobTreeNode.CurrentColor = GetColorString(Colors.Turquoise);
+				JobTreeNode.SelectedColor = GetColorString(Colors.Turquoise);
 				JobTreeNode.IsParentSelectedColor = GetColorString(Colors.LightPink);
 				JobTreeNode.IsSiblingSelectedColor = GetColorString(Colors.BlanchedAlmond);
 				JobTreeNode.IsChildSelectedColor = GetColorString(Colors.LightCyan);
