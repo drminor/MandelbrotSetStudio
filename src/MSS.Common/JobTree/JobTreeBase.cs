@@ -93,14 +93,12 @@ namespace MSS.Common
 			{
 				if (value != base.SelectedNode)
 				{
-					UpdateIsSelected(base.SelectedNode, false, SelectionMode, Root);
+					UpdateIsSelected(base.SelectedNode, false, Root);
 					base.SelectedNode = value;
-					UpdateIsSelected(base.SelectedNode, true, SelectionMode, Root);
+					UpdateIsSelected(base.SelectedNode, true, Root);
 				}
 			}
 		}
-
-		public JobTreeSelectionMode SelectionMode { get; set; }
 
 		#endregion
 
@@ -494,77 +492,13 @@ namespace MSS.Common
 
 		#region Private Navigate Methods
 
-		protected virtual void UpdateIsSelected(JobTreeNode? jobTreeNode, bool isSelected, JobTreeSelectionMode jobTreeSelectionMode, JobBranchType startPos)
+		protected virtual void UpdateIsSelected(JobTreeNode? node, bool isSelected, JobBranchType startPos)
 		{
-			if (jobTreeNode == null)
+			if (node == null)
 			{
 				return;
 			}
 
-			var node = jobTreeNode;
-
-			if (jobTreeSelectionMode == JobTreeSelectionMode.Real)
-			{
-				UpdateIsSelectedReal(node, isSelected, startPos);
-			}
-			else
-			{
-				UpdateIsSelectedLogical(node, isSelected, startPos);
-			}
-		}
-
-		protected virtual void UpdateIsSelectedLogical(JobTreeNode node,  bool isSelected, JobBranchType startPos)
-		{
-			node.IsSelected = isSelected;
-
-			var path = startPos.CreatePath(node);
-
-			var backPath = GetPreviousItemPath(path, GetPredicate(skipPanJobs: true));
-
-			if (backPath == null)
-			{
-				return;
-			}
-
-			// The backPath points to the first job previous to the give job that has a TransformType of Zoom-In or Zoom-Out or Home.
-
-			// Set the parent node's IsParentOfSelected
-			backPath.Node.IsParentOfSelected = isSelected;
-
-			//// Set each sibling node's IsSiblingSelected
-			//foreach (var siblingItem in parentNode.Children)
-			//{
-			//	siblingItem.IsSiblingOfSelected = isSelected;
-			//}
-
-			//if (jobTreeItem.Node.RealChildJobs.Any())
-			//{
-			//	// Use the prior job's parent path to start the search for each child.
-			//	var parentBranch = backPath.GetParentBranch();
-
-			//	// Set each child node's IsChildOfSelected
-			//	foreach (var realChildJob in jobTreeItem.Node.RealChildJobs.Values)
-			//	{
-			//		if (TryFindPath(realChildJob, parentBranch, out var childPath))
-			//		{
-			//			childPath.Node.IsChildOfSelected = isSelected;
-			//		}
-			//	}
-			//}
-			//else
-			//{
-			//	var forwardPath = GetNextItemPath(path, GetPredicate(skipPanJobs: true));
-
-			//	if (forwardPath != null)
-			//	{
-			//		forwardPath.Node.IsChildOfSelected = true;
-			//	}
-			//}
-
-		}
-
-		protected virtual void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos)
-		{
 			node.IsSelected = isSelected;
 
 			var path = startPos.CreatePath(node);

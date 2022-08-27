@@ -10,8 +10,6 @@ namespace MSS.Common
 
 	public interface IJobTree : ITree<JobTreeNode, Job>, IDisposable
 	{
-		JobTreeSelectionMode SelectionMode { get; set; }
-
 		Job? GetParentItem(Job job);
 
 		bool MakePreferred(ObjectId jobId);

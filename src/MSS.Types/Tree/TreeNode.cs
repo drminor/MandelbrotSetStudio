@@ -53,7 +53,7 @@ namespace MSS.Types
 
 		#region UI Properties
 
-		public bool IsCurrent
+		public virtual bool IsCurrent
 		{
 			get => _isCurrent;
 			set

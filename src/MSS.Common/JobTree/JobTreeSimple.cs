@@ -1,9 +1,11 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace MSS.Common
 {
@@ -26,12 +28,13 @@ namespace MSS.Common
 			var numberSet = 0;
 			var numberReset = 0;
 
+			var sb = new StringBuilder();
+			sb.AppendLine("*****");
+
 			if (path == null)
 			{
-				if (Root.GetNodeOrRoot().SetPreferredChild(null, ref numberReset))
-				{
-					numberSet++;
-				}
+				Debug.WriteLine("MakePreferred is clearing all node.");
+				Root.GetNodeOrRoot().PreferredChild = null;
 			}
 			else
 			{
@@ -41,10 +44,8 @@ namespace MSS.Common
 				var parentNode = path.GetParentNodeOrRoot();
 				var parentChildPairs = new[] { (parent: parentNode, child: path.Node) }.ToList();
 
-				// Get the parent path using the current path's Job's ParentJobId
-
 				var previousPath = path;
-				var nextPath = GetParentPath(previousPath.Item, Root);
+				var nextPath = GetParentPath(previousPath.Item, Root); // Using the real parent Id here.
 
 				while (nextPath != null)
 				{
@@ -55,37 +56,64 @@ namespace MSS.Common
 					nextPath = GetParentPath(previousPath.Item, Root);
 				}
 
-				// Include the top-most "real" path, and its parent, the root node.
+				// Set the preferred child of the root node using the very first term of the given path.
 				parentNode = previousPath.GetParentNodeOrRoot();
 				parentChildPairs.Add((parentNode, previousPath.Node));
 
 				// Using the assembled list, set the preferred child, using its logical parent, starting from the top.
 				parentChildPairs.Reverse();
+
+				var vistedNodeIds = new List<ObjectId>();
 				foreach (var (parent, child) in parentChildPairs)
 				{
-					if (parent.SetPreferredChild(child, ref numberReset))
+					var alreadyVisited = vistedNodeIds.Contains(parent.Id);
+					vistedNodeIds.Add(parent.Id);
+					if (parent.SetPreferredChild(child, !alreadyVisited, ref numberReset))
 					{
+						var strResetingChildNodes = !alreadyVisited ? ", and reseting child nodes." : ".";
+						sb.AppendLine($"Setting node: {child.Id} to be the preferred child of parent: {parent.Id}{strResetingChildNodes}");
 						numberSet++;
+					}
+					else
+					{
+						sb.AppendLine($"Node: {child.Id} is already the preferred child of parent: {parent.Id}.");
 					}
 				}
 
-				// For each child of the last term, set the last child to be the preferred child.
-				var lastChildPath = path;
-				var lastChildNode = lastChildPath.Children.LastOrDefault();
+				sb.AppendLine("Now selecting the child's last child as the preferred child.");
 
-				while (lastChildNode != null)
+				//	For each child of the last term, set the last child to be the preferred child.
+				var nextChildJob = path.Node.RealChildJobs.LastOrDefault().Value;
+
+				while (nextChildJob != null)
 				{
-					if (lastChildPath.Node.SetPreferredChild(lastChildNode, ref numberReset))
+					var nextChildPath = GetPath(nextChildJob, Root);
+					var child = nextChildPath.Node; 
+					parentNode = nextChildPath.GetParentNodeOrRoot();
+
+					var alreadyVisited = vistedNodeIds.Contains(parentNode.Id);
+					vistedNodeIds.Add(parentNode.Id);
+
+					if (parentNode.SetPreferredChild(child, !alreadyVisited, ref numberReset))
 					{
+						var strResetingChildNodes = !alreadyVisited ? ", and reseting child nodes." : ".";
+						sb.AppendLine($"Setting node: {child.Id} to be the preferred child of parent: {parentNode.Id}{strResetingChildNodes}");
 						numberSet++;
 					}
+					else
+					{
+						sb.AppendLine($"Node: {nextChildPath.Node.Id} is already the preferred child of parent: {parentNode.Id}.");
+					}
 
-					lastChildPath = lastChildPath.Combine(lastChildNode);
-					lastChildNode = lastChildPath.Children.LastOrDefault();
+					nextChildJob = nextChildPath.Node.RealChildJobs.LastOrDefault().Value;
 				}
 			}
 
-			Debug.WriteLine($"Setting path: {path?.Node.Id} to be the preferred path. Set {numberSet} nodes, reset {numberReset}.");
+			sb.AppendLine($"Setting path: {path?.Node.Id} to be the preferred path. Set {numberSet} nodes, reset {numberReset}.");
+			sb.AppendLine("*****");
+
+			Debug.WriteLine(sb.ToString());
+
 			return true;
 		}
 
@@ -142,8 +170,13 @@ namespace MSS.Common
 
 		#region Private Navigate Methods
 
-		protected override void UpdateIsSelectedReal(JobTreeNode node, bool isSelected, JobBranchType startPos)
+		protected override void UpdateIsSelected(JobTreeNode? node, bool isSelected, JobBranchType startPos)
 		{
+			if (node == null)
+			{
+				return;
+			}
+
 			node.IsSelected = isSelected;
 
 			var path = startPos.CreatePath(node);
@@ -176,9 +209,11 @@ namespace MSS.Common
 			}
 		}
 
-		private void UpdateIsSiblingAndIsChildOfSelected(JobTreeNode node, bool isSelected)
+		private bool UpdateIsSiblingAndIsChildOfSelected(JobTreeNode node, bool isSelected)
 		{
 			node.IsSiblingOfSelected = isSelected;
+
+			var result = DoesNodeChangeZoom(node);
 
 			if (!DoesNodeChangeZoom(node))
 			{
@@ -188,6 +223,7 @@ namespace MSS.Common
 				}
 			}
 
+			return result;
 		}
 
 		protected override JobPathType? GetNextItemPath(JobPathType path, Func<JobTreeNode, bool>? predicate)
@@ -308,8 +344,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-
 
 		#endregion
 	}

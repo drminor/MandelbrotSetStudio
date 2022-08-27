@@ -30,6 +30,7 @@ namespace MSS.Common
 
 		#region Static Properties
 
+		public static string IsCurrentColor { get; set; } = "";
 		public static string IsSelectedColor { get; set; } = "";
 		public static string IsParentSelectedColor { get; set; } = "";
 		public static string IsSiblingSelectedColor { get; set; } = "";
@@ -99,8 +100,15 @@ namespace MSS.Common
 			get => Children.FirstOrDefault(x => x.IsOnPreferredPath) ?? Children.LastOrDefault();
 			set
 			{
-				var numberReset = 0;
-				_ = SetPreferredChild(value, ref numberReset);
+				if (value != null)
+				{
+					var numberReset = 0;
+					_ = SetPreferredChild(value, resetSiblingsRecursive: false, ref numberReset);
+				}
+				else
+				{
+					ResetPreferredChildren();
+				}
 			}
 		}
 
@@ -197,6 +205,27 @@ namespace MSS.Common
 				else
 				{
 					//Debug.WriteLine($"Not updating the IsOnPreferredPath to {value} for {Id}, it already has this value.");
+				}
+			}
+		}
+
+		public override bool IsCurrent
+		{
+			get => base.IsCurrent;
+			set
+			{
+				if (value != base.IsCurrent)
+				{
+					if (!value)
+					{
+						Debug.WriteLine("Reseting IsCurrent.");
+					}
+					base.IsCurrent = value;
+					ItemColor = GetItemColor(_isSelected, _isParentOfSelected, _isSiblingOfSelected, _isChildOfSelected);
+				}
+				else
+				{
+					Debug.WriteLine("Not updating IsCurrent, the value has not changed.");
 				}
 			}
 		}
@@ -412,17 +441,24 @@ namespace MSS.Common
 			return result;
 		}
 
-		public bool SetPreferredChild(JobTreeNode? child, ref int numberOfChildNodesReset)
+		public bool SetPreferredChild(JobTreeNode child, bool resetSiblingsRecursive, ref int numberOfChildNodesReset)
 		{
 			var currentValue = Children.FirstOrDefault(x => x.IsOnPreferredPath);
 			if (currentValue != child)
 			{
-				if (child != null && !Children.Contains(child))
+				if (!Children.Contains(child))
 				{
 					throw new InvalidOperationException("Cannot set this JobTreeNode's PreferredChild to be a node that isn't contained in this node's list of child nodes.");
 				}
 
-				numberOfChildNodesReset += ResetPreferredChildren();
+				if (resetSiblingsRecursive)
+				{
+					numberOfChildNodesReset += ResetPreferredChildren();
+				}
+				else
+				{
+					Debug.WriteLine($"Not clearing child items as node: {child.Id} is selected to be the preferred child of parent: {Id}.");
+				}
 
 				if (child != null)
 				{
@@ -433,6 +469,12 @@ namespace MSS.Common
 			}
 			else
 			{
+				if (resetSiblingsRecursive)
+				{
+					numberOfChildNodesReset += ResetPreferredChildren();
+				}
+
+
 				//Debug.WriteLine($"SetPreferredChild found that the currentValue: {currentValue?.Id ?? ObjectId.Empty} already equals the new value: {child?.Id ?? ObjectId.Empty}.");
 				return false;
 			}
@@ -444,6 +486,11 @@ namespace MSS.Common
 
 		private string GetItemColor(bool isSelected, bool isParentSelected, bool isSiblingSelected, bool isChildSelected)
 		{
+			if (IsCurrent)
+			{
+				return IsCurrentColor;
+			}
+
 			if (isSelected)
 			{
 				return IsSelectedColor;
@@ -475,7 +522,8 @@ namespace MSS.Common
 				if (c.IsOnPreferredPath)
 				{
 					c.IsOnPreferredPath = false;
-					result += 1 + c.ResetPreferredChildren();
+					result++;
+					result += c.ResetPreferredChildren();
 				}
 			}
 

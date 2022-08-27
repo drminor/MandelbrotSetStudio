@@ -85,17 +85,11 @@ namespace MSS.Common.MSet
 
 			if (useFlat)
 			{
-				result = new JobTreeFlat(jobs, checkHomeJob)
-				{
-					SelectionMode = jobTreeSelectionMode
-				};
+				result = new JobTreeFlat(jobs, checkHomeJob);
 			}
 			else
 			{
-				result = new JobTreeSimple(jobs, checkHomeJob)
-				{
-					SelectionMode = jobTreeSelectionMode
-				};
+				result = new JobTreeSimple(jobs, checkHomeJob);
 			}
 
 			return result;

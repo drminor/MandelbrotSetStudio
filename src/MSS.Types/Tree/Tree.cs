@@ -54,6 +54,11 @@ namespace MSS.Types
 				{
 					if (value != null)
 					{
+						if (CurrentPath != null)
+						{
+							CurrentPath.Node.IsCurrent = false;
+						}
+
 						if (MoveCurrentTo(value, Root, out var path))
 						{
 							CurrentPath = path;
