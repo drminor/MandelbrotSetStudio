@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.MSet;
-using MSS.Types;
 using MSS.Types.MSet;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -27,7 +26,7 @@ namespace MSetExplorer
 		ObservableCollection<JobTreeNode>? JobItems { get; }
 
 		bool MarkBranchAsPreferred(ObjectId jobId);
-		long DeleteBranch(ObjectId jobId, out long numberOfMapSectionsDeleted);
+		long DeleteBranch(ObjectId jobId, NodeSelectionType deleteType, out long numberOfMapSectionsDeleted);
 		string GetDetails(ObjectId jobId);
 	}
 }

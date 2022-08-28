@@ -83,8 +83,6 @@ namespace MSetExplorer
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentProject));
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
-					//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
-					//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 				}
 			}
 		}
@@ -140,22 +138,6 @@ namespace MSetExplorer
 					}
 
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
-				}
-			}
-		}
-
-		[Conditional("DEBUG")]
-		private void CheckCurrentProject(IJobOwner jobOwner)
-		{
-			if (jobOwner.CurrentJob.IsEmpty)
-			{
-				Debug.WriteLine($"The CurrentJob IsEmpty = { CurrentJob.IsEmpty}.");
-			}
-			else
-			{
-				if (jobOwner.CurrentColorBandSetId != jobOwner.CurrentJob.ColorBandSetId)
-				{
-					Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
 				}
 			}
 		}
@@ -492,45 +474,25 @@ namespace MSetExplorer
 
 		public bool GoBack(bool skipPanJobs)
 		{
-			if (CurrentProject == null)
-			{
-				return false;
-			}
-
-			var result = CurrentProject.GoBack(skipPanJobs);
+			var result = CurrentProject?.GoBack(skipPanJobs) ?? false;
 			return result;
 		}
 
 		public bool GoForward(bool skipPanJobs)
 		{
-			if (CurrentProject == null)
-			{
-				return false;
-			}
-
-			var result = CurrentProject.GoForward(skipPanJobs);
+			var result = CurrentProject?.GoForward(skipPanJobs) ?? false;
 			return result;
 		}
 
 		public bool CanGoBack(bool skipPanJobs)
 		{
-			if (CurrentProject == null)
-			{
-				return false;
-			}
-
-			var result = CurrentProject.CanGoBack(skipPanJobs);
+			var result = CurrentProject?.CanGoBack(skipPanJobs) ?? false;
 			return result;
 		}
 
 		public bool CanGoForward(bool skipPanJobs)
 		{
-			if (CurrentProject == null)
-			{
-				return false;
-			}
-
-			var result = CurrentProject.CanGoForward(skipPanJobs);
+			var result = CurrentProject?.CanGoForward(skipPanJobs) ?? false;
 			return result;
 		}
 
@@ -560,8 +522,6 @@ namespace MSetExplorer
 			project.Add(job);
 
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
-			//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
-			//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 		}
 
 		private void AddNewIterationUpdateJob(Project project, ColorBandSet colorBandSet)
@@ -587,8 +547,6 @@ namespace MSetExplorer
 			project.Add(job);
 
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
-			//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
-			//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 		}
 
 		//private void LoadMap(Project project, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
@@ -600,8 +558,6 @@ namespace MSetExplorer
 		//	project.Add(job);
 
 		//	OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
-		//	OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
-		//	OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 		//}
 
 		private void RerunWithNewDisplaySize(Project project)
@@ -656,6 +612,22 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(newJob);
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckCurrentProject(IJobOwner jobOwner)
+		{
+			if (jobOwner.CurrentJob.IsEmpty)
+			{
+				Debug.WriteLine($"The CurrentJob IsEmpty = { CurrentJob.IsEmpty}.");
+			}
+			else
+			{
+				if (jobOwner.CurrentColorBandSetId != jobOwner.CurrentJob.ColorBandSetId)
+				{
+					Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
+				}
+			}
 		}
 
 		#endregion

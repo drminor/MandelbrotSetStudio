@@ -96,7 +96,7 @@ namespace MSS.Common
 
 					if (parentNode.SetPreferredChild(child, !alreadyVisited, ref numberReset))
 					{
-						var strResetingChildNodes = !alreadyVisited ? ", and reseting child nodes." : ".";
+						//var strResetingChildNodes = !alreadyVisited ? ", and reseting child nodes." : ".";
 						//_ = sb.AppendLine($"Setting node: {child.Id} to be the preferred child of parent: {parentNode.Id}{strResetingChildNodes}");
 						numberSet++;
 					}
@@ -225,8 +225,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-
 
 		#endregion
 	}

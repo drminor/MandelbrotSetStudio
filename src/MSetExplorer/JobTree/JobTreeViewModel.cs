@@ -2,7 +2,6 @@
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
-using MSS.Types;
 using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -124,7 +123,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public long DeleteBranch(ObjectId jobId, out long numberOfMapSectionsDeleted)
+		public long DeleteBranch(ObjectId jobId, NodeSelectionType selectionType, out long numberOfMapSectionsDeleted)
 		{
 			numberOfMapSectionsDeleted = 0;
 

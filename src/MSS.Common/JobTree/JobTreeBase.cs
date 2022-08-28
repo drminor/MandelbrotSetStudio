@@ -118,6 +118,13 @@ namespace MSS.Common
 			return result;
 		}
 
+		public IList<JobPathType> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
+		{
+			var result = new List<JobPathType>();
+
+			return result;
+		}
+
 		public virtual bool MakePreferred(ObjectId jobId)
 		{
 			Debug.WriteLine($"Marking Branch for {jobId}, the preferred branch.");
@@ -135,33 +142,33 @@ namespace MSS.Common
 
 		public abstract bool MakePreferred(JobPathType? path);
 
-		public virtual bool TryGetPreviousJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)
+		public bool TryGetPreviousJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)
 		{
 			var result = TryGetPreviousItemPath(out var backPath, GetPredicate(skipPanJobs));
 			job = backPath?.Item;
 			return result;
 		}
 
-		public virtual bool MoveBack(bool skipPanJobs)
+		public bool MoveBack(bool skipPanJobs)
 		{
 			var result = MoveBack(GetPredicate(skipPanJobs));
 			return result;
 		}
 
-		public virtual bool TryGetNextJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)
+		public bool TryGetNextJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)
 		{
 			var result = TryGetNextItemPath(out var forwardPath, GetPredicate(skipPanJobs));
 			job = forwardPath?.Item;
 			return result;
 		}
 
-		public virtual bool MoveForward(bool skipPanJobs)
+		public bool MoveForward(bool skipPanJobs)
 		{
 			var result = MoveForward(GetPredicate(skipPanJobs));
 			return result;
 		}
 
-		public virtual bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy)
+		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy)
 		{
 			if (job.ParentJobId == null)
 			{
@@ -262,7 +269,7 @@ namespace MSS.Common
 			return newPath;
 		}
 
-		protected JobPathType AddCanvasSizeUpdateJob(Job job, JobBranchType currentBranch)
+		private JobPathType AddCanvasSizeUpdateJob(Job job, JobBranchType currentBranch)
 		{
 			if (job.TransformType != TransformType.CanvasSizeUpdate)
 			{
@@ -295,7 +302,7 @@ namespace MSS.Common
 
 		#region Private Populate Methods
 
-		protected virtual void ReportInput(IList<Job> jobs)
+		private void ReportInput(IList<Job> jobs)
 		{
 			Debug.WriteLine("INPUT Report");
 			Debug.WriteLine("Id\t\t\t\tParentId\t\t\t\tDate\t\t\tTransformType\t\t\tTimestamp");
@@ -321,7 +328,7 @@ namespace MSS.Common
 			}
 		}
 
-		protected virtual void ReportOutput(JobBranchType root, JobPathType? currentPath)
+		private void ReportOutput(JobBranchType root, JobPathType? currentPath)
 		{
 			Debug.WriteLine($"OUTPUT Report for currentPath: {currentPath}");
 			Debug.WriteLine("Id\t\t\t\t\t\t\tParentId\t\t\t\t\tDate\t\t\tTransformType\t\t\tTimestamp");
@@ -336,7 +343,7 @@ namespace MSS.Common
 			}
 		}
 
-		protected virtual JobPathType? PopulateTree(IList<Job> jobs, JobBranchType currentBranch)
+		private JobPathType? PopulateTree(IList<Job> jobs, JobBranchType currentBranch)
 		{
 			var visited = 1;
 			LoadChildItems(jobs, currentBranch, ref visited);
@@ -354,7 +361,7 @@ namespace MSS.Common
 			return path;
 		}
 
-		protected virtual Job GetHomeJob(IList<Job> jobs, bool checkHomeJob)
+		private Job GetHomeJob(IList<Job> jobs, bool checkHomeJob)
 		{
 			if (!jobs.Any())
 			{
@@ -400,7 +407,7 @@ namespace MSS.Common
 			return homeJob;
 		}
 
-		protected virtual void LoadChildItems(IList<Job> jobs, JobBranchType currentBranch, ref int visited)
+		private void LoadChildItems(IList<Job> jobs, JobBranchType currentBranch, ref int visited)
 		{
 			var currentPath = currentBranch.GetCurrentPath();
 
@@ -423,7 +430,7 @@ namespace MSS.Common
 			}
 		}
 
-		protected virtual IList<Job> GetChildren(JobPathType? currentPath, IList<Job> jobs)
+		private IList<Job> GetChildren(JobPathType? currentPath, IList<Job> jobs)
 		{
 			var parentJobId = currentPath == null ? (ObjectId?)null : currentPath.Item.Id;
 			parentJobId = parentJobId == ObjectId.Empty ? null : parentJobId;

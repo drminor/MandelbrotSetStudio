@@ -63,7 +63,7 @@ namespace MSS.Common.MSet
 			_dispPosition = displayPosition;
 			_displayZoom = displayZoom;
 
-			_jobTree = BuildJobTree(jobs, useFlat: true, checkHomeJob: true, JobTreeSelectionMode.Real);
+			_jobTree = BuildJobTree(jobs, useFlat: true, checkHomeJob: true);
 
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			//_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
@@ -92,7 +92,7 @@ namespace MSS.Common.MSet
 			Debug.WriteLine($"Poster is loaded. CurrentJobId: {CurrentJob.Id}, Current ColorBandSetId: {CurrentColorBandSet.Id}. IsDirty: {IsDirty}");
 		}
 
-		private IJobTree BuildJobTree(List<Job> jobs, bool useFlat, bool checkHomeJob, JobTreeSelectionMode jobTreeSelectionMode)
+		private IJobTree BuildJobTree(List<Job> jobs, bool useFlat, bool checkHomeJob)
 		{
 			IJobTree result;
 
