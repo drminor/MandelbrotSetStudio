@@ -113,9 +113,6 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		public bool CanGoBack => _jobTree.CanGoBack;
-		public bool CanGoForward => _jobTree.CanGoForward;
-
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyItemIsDirty;
 
 		public int GetNumberOfDirtyJobs()
@@ -357,6 +354,18 @@ namespace MSS.Common.MSet
 			{
 				_stateLock.ExitUpgradeableReadLock();
 			}
+		}
+
+		public bool CanGoBack(bool skipPanJobs)
+		{
+			var result = _jobTree.TryGetPreviousJob(out _, skipPanJobs);
+			return result;
+		}
+
+		public bool CanGoForward(bool skipPanJobs)
+		{
+			var result = _jobTree.TryGetNextJob(out _, skipPanJobs);
+			return result;
 		}
 
 		public List<Job> GetJobs()

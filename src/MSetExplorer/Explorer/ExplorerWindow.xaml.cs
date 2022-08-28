@@ -244,7 +244,7 @@ namespace MSetExplorer
 
 		private void GoBack_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.ProjectViewModel?.CanGoBack ?? false;
+			e.CanExecute = _vm?.ProjectViewModel?.CanGoBack(skipPanJobs:false) ?? false;
 		}
 
 		private void GoBack_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -260,7 +260,7 @@ namespace MSetExplorer
 
 		private void GoForward_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.ProjectViewModel?.CanGoForward ?? false;
+			e.CanExecute = _vm?.ProjectViewModel?.CanGoForward(skipPanJobs:false) ?? false;
 		}
 
 		private void GoForward_Executed(object sender, ExecutedRoutedEventArgs e)

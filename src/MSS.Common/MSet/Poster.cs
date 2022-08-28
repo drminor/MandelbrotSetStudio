@@ -116,9 +116,6 @@ namespace MSS.Common.MSet
 
 		public ObservableCollection<JobTreeNode>? JobItems => _jobTree.Nodes;
 
-		public bool CanGoBack => _jobTree.CanGoBack;
-		public bool CanGoForward => _jobTree.CanGoForward;
-
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyItemIsDirty;
 
 		public int GetNumberOfDirtyJobs()
@@ -387,7 +384,6 @@ namespace MSS.Common.MSet
 		public Job? GetJob(ObjectId jobId) => _jobTree.GetItem(jobId);
 		public Job? GetParent(Job job) => _jobTree.GetParentItem(job);
 		public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetItemAndDescendants(jobId);
-
 
 		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
 		{

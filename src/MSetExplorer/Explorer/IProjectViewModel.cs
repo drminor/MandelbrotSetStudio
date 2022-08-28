@@ -25,15 +25,15 @@ namespace MSetExplorer
 		Job CurrentJob { get; }
 		bool IsCurrentJobIdChanged { get; }
 
-		bool CanGoBack { get; }
-		bool CanGoForward { get; }
-
 		ColorBandSet CurrentColorBandSet { get; set; }
 		ColorBandSet? PreviewColorBandSet { get; set; }
 
 		// Job Methods
 		bool GoBack(bool skipPanJobs);
 		bool GoForward(bool skipPanJobs);
+
+		bool CanGoBack(bool skipPanJobs);
+		bool CanGoForward(bool skipPanJobs);
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea);
 		//void UpdateMapCoordinates(RRectangle coords);

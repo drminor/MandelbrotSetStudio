@@ -21,14 +21,8 @@ namespace MSS.Types
 
 		ITreePath<U,V> Add(V item, bool selectTheAddedItem);
 
-		//bool RestoreBranch(ObjectId itemId);
-		//bool RestoreBranch(ITreePath<V> path);
-
 		bool RemoveBranch(ObjectId itemId);
 		bool RemoveBranch(ITreePath<U, V> path);
-
-		bool CanGoBack { get; }
-		bool CanGoForward { get; }
 
 		bool TryGetNextItemPath([MaybeNullWhen(false)] out ITreePath<U, V> path, Func<U, bool>? predicate);
 		bool TryGetPreviousItemPath([MaybeNullWhen(false)] out ITreePath<U, V> path, Func<U, bool>? predicate);

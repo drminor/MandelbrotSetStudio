@@ -83,8 +83,8 @@ namespace MSetExplorer
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentProject));
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
-					OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
-					OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
+					//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
+					//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 				}
 			}
 		}
@@ -102,9 +102,6 @@ namespace MSetExplorer
 		public bool CurrentProjectOnFile => CurrentProject?.OnFile ?? false;
 
 		public Job CurrentJob => CurrentProject?.CurrentJob ?? Job.Empty;
-
-		public bool CanGoBack => CurrentProject?.CanGoBack ?? false;
-		public bool CanGoForward => CurrentProject?.CanGoForward ?? false;
 
 		public ColorBandSet CurrentColorBandSet
 		{
@@ -226,8 +223,8 @@ namespace MSetExplorer
 						OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
 					}
 
-					OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
-					OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
+					//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
+					//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 				}
 			}
@@ -515,6 +512,28 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public bool CanGoBack(bool skipPanJobs)
+		{
+			if (CurrentProject == null)
+			{
+				return false;
+			}
+
+			var result = CurrentProject.CanGoBack(skipPanJobs);
+			return result;
+		}
+
+		public bool CanGoForward(bool skipPanJobs)
+		{
+			if (CurrentProject == null)
+			{
+				return false;
+			}
+
+			var result = CurrentProject.CanGoForward(skipPanJobs);
+			return result;
+		}
+
 		#endregion
 
 		#region Private Methods
@@ -541,8 +560,8 @@ namespace MSetExplorer
 			project.Add(job);
 
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
-			OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
-			OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
+			//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
+			//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 		}
 
 		private void AddNewIterationUpdateJob(Project project, ColorBandSet colorBandSet)
@@ -568,8 +587,8 @@ namespace MSetExplorer
 			project.Add(job);
 
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
-			OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
-			OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
+			//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
+			//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 		}
 
 		//private void LoadMap(Project project, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
