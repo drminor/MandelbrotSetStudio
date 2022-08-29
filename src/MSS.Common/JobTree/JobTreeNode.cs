@@ -71,7 +71,6 @@ namespace MSS.Common
 			: base(job, parentNode, isRoot, isHome, isCurrent, isExpanded)
 		{
 			Children = children;
-			Id = job.Id;
 			ParentId = job.ParentJobId;
 
 			IsIterationChange = isIterationChange;
@@ -98,6 +97,23 @@ namespace MSS.Common
 		#region Public Properties
 
 		public override ObservableCollection<JobTreeNode> Children { get; init; }
+
+		public override ObjectId Id
+		{
+			get => Item.Id;
+		}
+
+		public override ObjectId? ParentId
+		{
+			get => Item.ParentJobId;
+			protected set => Item.ParentJobId = value;
+		}
+		
+		public override bool IsDirty
+		{
+			get => Item.IsDirty;
+			set => Item.LastUpdatedUtc = DateTime.UtcNow;
+		}
 
 		public JobTreeNode? PreferredChild
 		{

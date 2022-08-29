@@ -18,22 +18,20 @@ namespace MSS.Types
 
 		ITreePath<U,V>? GetCurrentPath();
 		ITreePath<U,V>? GetPath(ObjectId itemId);
+		V? GetItem(ObjectId itemId);
 
 		ITreePath<U,V> Add(V item, bool selectTheAddedItem);
 
 		bool RemoveBranch(ObjectId itemId);
 		bool RemoveBranch(ITreePath<U, V> path);
 
-		bool TryGetNextItemPath([MaybeNullWhen(false)] out ITreePath<U, V> path, Func<U, bool>? predicate);
-		bool TryGetPreviousItemPath([MaybeNullWhen(false)] out ITreePath<U, V> path, Func<U, bool>? predicate);
+		bool TryGetNextItemPath([MaybeNullWhen(false)] out ITreePath<U, V> forwardPath, Func<U, bool>? predicate);
+		bool TryGetPreviousItemPath([MaybeNullWhen(false)] out ITreePath<U, V> backPath, Func<U, bool>? predicate);
 
 		bool MoveBack(Func<U, bool>? predicate);
 		bool MoveForward(Func<U, bool>? predicate);
 
-		V? GetParentItem(U node);
-		V? GetItem(ObjectId itemId);
-
-		IEnumerable<V> GetItems();
-		List<V>? GetItemAndDescendants(ObjectId itemId);
+		IEnumerable<U> GetNodes();
+		IList<U>? GetNodesAndDescendants(ObjectId itemId);
 	}
 }

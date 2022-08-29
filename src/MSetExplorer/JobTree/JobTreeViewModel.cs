@@ -123,22 +123,20 @@ namespace MSetExplorer
 			}
 		}
 
-		public long DeleteBranch(ObjectId jobId, NodeSelectionType selectionType, out long numberOfMapSectionsDeleted)
+		public long DeleteJobs(JobPathType path, NodeSelectionType selectionType, out long numberOfMapSectionsDeleted)
 		{
 			numberOfMapSectionsDeleted = 0;
 
 			if (CurrentProject != null)
 			{
 				var result = 0L;
-				var jobAndDescendants = CurrentProject.GetJobAndDescendants(jobId) ?? new List<Job>();
+				var jobPathsRemoved = CurrentProject.RemoveJobs(path, selectionType);
 
-				foreach(var job in jobAndDescendants)
+				foreach(var jobPath in jobPathsRemoved)
 				{
-					numberOfMapSectionsDeleted += ProjectAndMapSectionHelper.DeleteJob(job, _projectAdapter, _mapSectionAdapter);
+					numberOfMapSectionsDeleted += ProjectAndMapSectionHelper.DeleteJob(jobPath.Item, _projectAdapter, _mapSectionAdapter);
 					result++;
 				}
-
-				_ = CurrentProject.DeleteBranch(jobId);
 
 				return result;
 			}

@@ -277,7 +277,7 @@ namespace MSS.Types
 			}
 		}
 
-		public IEnumerable<V> GetItems()
+		public IEnumerable<U> GetNodes()
 		{
 			TreeLock.EnterReadLock();
 
@@ -298,30 +298,17 @@ namespace MSS.Types
 			return result;
 		}
 
-		public V? GetParentItem(U node)
-		{
-			if (node.ParentId == null)
-			{
-				return null;
-			}
-			else
-			{
-				_ = TryFindItem(node.ParentId.Value, Root, out var result);
-				return result;
-			}
-		}
-
-		public List<V>? GetItemAndDescendants(ObjectId itemId)
+		public IList<U>? GetNodesAndDescendants(ObjectId itemId)
 		{
 			TreeLock.EnterReadLock();
 
 			try
 			{
-				List<V>? result;
+				List<U>? result;
 
 				if (TryFindPathById(itemId, Root, out var path))
 				{
-					result = new List<V> { path.Node.Item };
+					result = new List<U> { path.Node };
 					result.AddRange(GetItems(path));
 				}
 				else
@@ -357,14 +344,14 @@ namespace MSS.Types
 
 		#region Protected Export Item Methods
 
-		protected IList<V> GetItems(ITreeBranch<U,V> currentBranch)
+		protected IList<U> GetItems(ITreeBranch<U,V> currentBranch)
 		{
 			// TODO: Consider implementing an IEnumerator<ITreeItem<U,V> for the Tree class.
-			var result = new List<V>();
+			var result = new List<U>();
 
 			foreach (var child in currentBranch.GetNodeOrRoot().Children)
 			{
-				result.Add(child.Item);
+				result.Add(child);
 
 				var nodeList = GetItems(currentBranch.Combine(child));
 				result.AddRange(nodeList);

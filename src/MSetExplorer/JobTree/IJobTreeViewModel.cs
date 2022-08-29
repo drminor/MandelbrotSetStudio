@@ -14,6 +14,8 @@ namespace MSetExplorer
 	{
 		bool InDesignMode { get; }
 
+		ObservableCollection<JobTreeNode>? JobItems { get; }
+
 		IJobOwner? CurrentProject { get; set; }
 		Job? CurrentJob { get; set; }
 		public JobPathType? GetCurrentPath();
@@ -23,10 +25,8 @@ namespace MSetExplorer
 		bool TryGetJob(ObjectId jobId, [MaybeNullWhen(false)] out Job job);
 		public JobPathType? GetPath(ObjectId jobId);
 
-		ObservableCollection<JobTreeNode>? JobItems { get; }
-
 		bool MarkBranchAsPreferred(ObjectId jobId);
-		long DeleteBranch(ObjectId jobId, NodeSelectionType deleteType, out long numberOfMapSectionsDeleted);
+		long DeleteJobs(JobPathType path, NodeSelectionType selectionType, out long numberOfMapSectionsDeleted);
 		string GetDetails(ObjectId jobId);
 	}
 }

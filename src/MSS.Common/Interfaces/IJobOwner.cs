@@ -4,10 +4,11 @@ using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
 
 namespace MSS.Common.MSet
 {
+	using JobPathType = ITreePath<JobTreeNode, Job>;
+
 	public interface IJobOwner
 	{
 		ObjectId Id { get; init; }
@@ -37,10 +38,14 @@ namespace MSS.Common.MSet
 		JobPathType? GetPath(ObjectId jobId);
 		Job? GetJob(ObjectId jobId);
 		Job? GetParent(Job job);
-		List<Job>? GetJobAndDescendants(ObjectId jobId);
+		//List<Job>? GetJobAndDescendants(ObjectId jobId);
 
 		bool MarkBranchAsPreferred(ObjectId jobId);
-		bool DeleteBranch(ObjectId jobId);
+
+		//bool DeleteBranch(ObjectId jobId);
+
+		IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType);
+
 		void MarkAsSaved();
 
 		JobTreeNode? SelectedViewItem { get; set; }

@@ -78,6 +78,11 @@ namespace MSS.Common
 			return result;
 		}
 
+		public override IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
+		{
+			throw new NotImplementedException();
+		}
+
 		public override bool MakePreferred(ObjectId jobId)
 		{
 			Debug.WriteLine($"Marking Branch for {jobId}, the preferred branch.");

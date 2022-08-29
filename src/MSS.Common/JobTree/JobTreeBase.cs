@@ -112,18 +112,11 @@ namespace MSS.Common
 
 		public override bool RemoveBranch(JobPathType path)
 		{
-			// TODO: RemoveBranch does not support removing CanvasSizeUpdate nodes.
-
 			var result = base.RemoveBranch(path);
 			return result;
 		}
 
-		public IList<JobPathType> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
-		{
-			var result = new List<JobPathType>();
-
-			return result;
-		}
+		public abstract IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType);
 
 		public virtual bool MakePreferred(ObjectId jobId)
 		{

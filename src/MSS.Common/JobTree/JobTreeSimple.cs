@@ -117,6 +117,32 @@ namespace MSS.Common
 			return true;
 		}
 
+		public override IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
+		{
+			var result = new List<JobTreeNode>();
+
+			switch (nodeSelectionType)
+			{
+				case NodeSelectionType.SingleNode:
+					break;
+				case NodeSelectionType.Preceeding:
+					break;
+				case NodeSelectionType.Children:
+					break;
+				case NodeSelectionType.Siblings:
+					break;
+				case NodeSelectionType.Branch:
+					_ = RemoveBranch(path);
+					break;
+				case NodeSelectionType.ContainingBranch:
+					break;
+				default:
+					break;
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Private Add Methods

@@ -8,7 +8,7 @@ using System.Text;
 
 namespace MSS.Types
 {
-	public abstract class TreeNode<U, V> : ITreeNode<U,V>, INotifyPropertyChanged, ICloneable where U : class, ITreeNode<U,V> where V : IEquatable<V>, IComparable<V>
+	public abstract class TreeNode<U, V> : ITreeNode<U,V>, ITreeItem<V>, INotifyPropertyChanged, ICloneable where U : class, ITreeNode<U,V> where V : IEquatable<V>, IComparable<V>
 	{
 		private bool _isCurrent;
 		private bool _isExpanded;
@@ -35,11 +35,13 @@ namespace MSS.Types
 		#region Public Properties
 
 		public V Item { get; init; }
-		public ObjectId Id { get; protected set; }
-		public ObjectId? ParentId { get; protected set; }
 		public U? ParentNode { get; set; }
 		public abstract ObservableCollection<U> Children { get; init; }
-		public bool IsDirty { get; set; }
+
+		public abstract ObjectId Id { get; }
+		public abstract ObjectId? ParentId { get; protected set; }
+
+		public abstract bool IsDirty { get; set; }
 
 		#endregion
 

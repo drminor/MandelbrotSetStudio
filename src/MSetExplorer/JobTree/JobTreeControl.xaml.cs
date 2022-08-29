@@ -154,10 +154,17 @@ namespace MSetExplorer
 				//	_ = MessageBox.Show($"{numberJobsDeleted} jobs and {numberOfMapSectionsDeleted} map sections were deleted.");
 				//}
 
-				var dialog = new JobDeleteDialog();
-				if (dialog.ShowDialog() == true)
+				var currentPath = _vm.GetPath(jobId);
+
+				if (currentPath == null)
 				{
-					var numberJobsDeleted = _vm.DeleteBranch(jobId, NodeSelectionType.SingleNode, out var numberOfMapSectionsDeleted);
+					return;
+				}
+
+				var jobDeleteDialog  = new JobDeleteDialog(currentPath);
+				if (jobDeleteDialog.ShowDialog() == true)
+				{
+					var numberJobsDeleted = _vm.DeleteJobs(currentPath, jobDeleteDialog.SelectionType, out var numberOfMapSectionsDeleted);
 					_ = MessageBox.Show($"{numberJobsDeleted} jobs and {numberOfMapSectionsDeleted} map sections were deleted.");
 				}
 			}

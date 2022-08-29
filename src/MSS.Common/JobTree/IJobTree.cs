@@ -21,6 +21,6 @@ namespace MSS.Common
 
 		bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy);
 
-		IList<JobPathType> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType);
+		IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType);
 	}
 }

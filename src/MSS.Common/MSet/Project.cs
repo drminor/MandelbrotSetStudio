@@ -117,8 +117,8 @@ namespace MSS.Common.MSet
 
 		public int GetNumberOfDirtyJobs()
 		{
-			var jobs = _jobTree.GetItems();
-			var result = jobs.Count(x => !x.OnFile || x.IsDirty);
+			var jobs = _jobTree.GetNodes();
+			var result = jobs.Count(x => !x.Item.OnFile || x.Item.IsDirty);
 			return result;
 		}  
 
@@ -370,7 +370,7 @@ namespace MSS.Common.MSet
 
 		public List<Job> GetJobs()
 		{
-			return _jobTree.GetItems().ToList();
+			return _jobTree.GetNodes().Select(x => x.Item).ToList();
 		}
 
 		public List<ColorBandSet> GetColorBandSets()
@@ -383,7 +383,7 @@ namespace MSS.Common.MSet
 
 		public Job? GetJob(ObjectId jobId) => _jobTree.GetItem(jobId);
 		public Job? GetParent(Job job) => _jobTree.GetParentItem(job);
-		public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetItemAndDescendants(jobId);
+		//public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetItemAndDescendants(jobId);
 
 		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
 		{
@@ -399,6 +399,12 @@ namespace MSS.Common.MSet
 		public bool DeleteBranch(ObjectId jobId)
 		{
 			var result = _jobTree.RemoveBranch(jobId);
+			return result;
+		}
+
+		public IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
+		{
+			var result = _jobTree.RemoveJobs(path, nodeSelectionType);
 			return result;
 		}
 
@@ -538,7 +544,6 @@ namespace MSS.Common.MSet
 			Dispose(disposing: true);
 			GC.SuppressFinalize(this);
 		}
-
 
 		#endregion
 	}
