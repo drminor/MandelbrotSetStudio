@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public ObservableCollection<JobTreeNode>? JobItems => CurrentProject?.JobItems;
+		public ObservableCollection<JobTreeNode>? JobNodes => CurrentProject?.JobNodes;
 
 		public IJobOwner? CurrentProject
 		{
@@ -45,7 +45,7 @@ namespace MSetExplorer
 				if (value != _currentProject)
 				{
 					_currentProject = value;
-					OnPropertyChanged(nameof(IJobTreeViewModel.JobItems));
+					OnPropertyChanged(nameof(IJobTreeViewModel.JobNodes));
 				}
 			}
 		}

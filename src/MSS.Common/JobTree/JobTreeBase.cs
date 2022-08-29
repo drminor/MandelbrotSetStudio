@@ -110,12 +110,6 @@ namespace MSS.Common
 
 		#region Public Methods
 
-		public override bool RemoveBranch(JobPathType path)
-		{
-			var result = base.RemoveBranch(path);
-			return result;
-		}
-
 		public abstract IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType);
 
 		public virtual bool MakePreferred(ObjectId jobId)

@@ -117,6 +117,12 @@ namespace MSS.Common
 			return true;
 		}
 
+		public override bool RemoveNode(JobPathType path)
+		{
+			var removedJobs = RemoveJobs(path, NodeSelectionType.SingleNode);
+			return removedJobs.Count > 0;
+		}
+
 		public override IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
 		{
 			var result = new List<JobTreeNode>();
@@ -132,10 +138,10 @@ namespace MSS.Common
 				case NodeSelectionType.Siblings:
 					break;
 				case NodeSelectionType.Branch:
-					_ = RemoveBranch(path);
+					_ = RemoveNode(path);
 					break;
 				case NodeSelectionType.ContainingBranch:
-					break;
+					throw new NotImplementedException();
 				default:
 					break;
 			}

@@ -14,7 +14,7 @@ namespace MSetExplorer
 	{
 		bool InDesignMode { get; }
 
-		ObservableCollection<JobTreeNode>? JobItems { get; }
+		ObservableCollection<JobTreeNode>? JobNodes { get; }
 
 		IJobOwner? CurrentProject { get; set; }
 		Job? CurrentJob { get; set; }

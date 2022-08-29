@@ -74,7 +74,7 @@ namespace MSS.Common.MSet
 			_jobTree.CurrentItem = currentJob;
 			_ = _jobTree.MakePreferred(_jobTree.GetCurrentPath());
 
-			JobItems = _jobTree.Nodes;
+			JobNodes = _jobTree.Nodes;
 
 			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentItem.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
 		}
@@ -103,7 +103,7 @@ namespace MSS.Common.MSet
 
 		private ObservableCollection<JobTreeNode>? _jobItems;
 
-		public ObservableCollection<JobTreeNode>? JobItems
+		public ObservableCollection<JobTreeNode>? JobNodes
 		{
 			get => _jobItems;
 			set
@@ -393,12 +393,6 @@ namespace MSS.Common.MSet
 		public bool MarkBranchAsPreferred(ObjectId jobId)
 		{
 			var result = _jobTree.MakePreferred(jobId);
-			return result;
-		}
-
-		public bool DeleteBranch(ObjectId jobId)
-		{
-			var result = _jobTree.RemoveBranch(jobId);
 			return result;
 		}
 

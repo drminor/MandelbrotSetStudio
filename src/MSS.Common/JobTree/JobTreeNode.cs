@@ -98,10 +98,7 @@ namespace MSS.Common
 
 		public override ObservableCollection<JobTreeNode> Children { get; init; }
 
-		public override ObjectId Id
-		{
-			get => Item.Id;
-		}
+		public override ObjectId Id => Item.Id;
 
 		public override ObjectId? ParentId
 		{

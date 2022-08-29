@@ -154,18 +154,18 @@ namespace MSS.Types
 			return newPath;
 		}
 
-		public bool RemoveBranch(ObjectId itemId)
+		public bool RemoveNode(ObjectId itemId)
 		{
 			if (!TryFindPathById(itemId, Root, out var path))
 			{
 				return false;
 			}
 
-			var result = RemoveBranch(path);
+			var result = RemoveNode(path);
 			return result;
 		}
 
-		public virtual bool RemoveBranch(ITreePath<U, V> path)
+		public virtual bool RemoveNode(ITreePath<U, V> path)
 		{
 			var node = path.Node;
 			var parentNode = path.GetParentNodeOrRoot();
@@ -185,7 +185,7 @@ namespace MSS.Types
 				CurrentPath = path.CreateSiblingPath(parentNode.Children[idx - 1]);
 			}
 
-			var result = parentNode.Children.Remove(node);
+			var result = parentNode.Remove(node);
 			ExpandAndSetCurrent(CurrentPath);
 
 			return result;
@@ -283,7 +283,7 @@ namespace MSS.Types
 
 			try
 			{
-				var result = GetItems(Root);
+				var result = GetNodes(Root);
 				return result;
 			}
 			finally
@@ -309,7 +309,7 @@ namespace MSS.Types
 				if (TryFindPathById(itemId, Root, out var path))
 				{
 					result = new List<U> { path.Node };
-					result.AddRange(GetItems(path));
+					result.AddRange(GetNodes(path));
 				}
 				else
 				{
@@ -344,26 +344,10 @@ namespace MSS.Types
 
 		#region Protected Export Item Methods
 
-		protected IList<U> GetItems(ITreeBranch<U,V> currentBranch)
+		protected IList<U> GetNodes(ITreeBranch<U,V> currentBranch)
 		{
 			// TODO: Consider implementing an IEnumerator<ITreeItem<U,V> for the Tree class.
 			var result = new List<U>();
-
-			foreach (var child in currentBranch.GetNodeOrRoot().Children)
-			{
-				result.Add(child);
-
-				var nodeList = GetItems(currentBranch.Combine(child));
-				result.AddRange(nodeList);
-			}
-
-			return result;
-		}
-
-		protected IList<ITreeNode<U,V>> GetNodes(ITreeBranch<U,V> currentBranch)
-		{
-			// TODO: Consider implementing an IEnumerator<ITreeItem<U,V> for the Tree class.
-			var result = new List<ITreeNode<U,V>>();
 
 			foreach (var child in currentBranch.GetNodeOrRoot().Children)
 			{

@@ -40,7 +40,6 @@ namespace MSS.Types
 
 		public abstract ObjectId Id { get; }
 		public abstract ObjectId? ParentId { get; protected set; }
-
 		public abstract bool IsDirty { get; set; }
 
 		#endregion

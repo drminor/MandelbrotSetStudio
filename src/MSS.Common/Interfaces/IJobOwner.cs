@@ -15,10 +15,11 @@ namespace MSS.Common.MSet
 		string Name { get; set; }
 		string? Description { get; set; }
 
-		ObservableCollection<JobTreeNode>? JobItems { get; }
+		ObservableCollection<JobTreeNode>? JobNodes { get; }
 
 		Job CurrentJob { get; set; }
 		ObjectId CurrentColorBandSetId { get; }
+		JobTreeNode? SelectedViewItem { get; set; }
 
 		bool OnFile { get; }
 		bool IsDirty { get; }
@@ -42,12 +43,8 @@ namespace MSS.Common.MSet
 
 		bool MarkBranchAsPreferred(ObjectId jobId);
 
-		//bool DeleteBranch(ObjectId jobId);
-
 		IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType);
 
 		void MarkAsSaved();
-
-		JobTreeNode? SelectedViewItem { get; set; }
 	}
 }

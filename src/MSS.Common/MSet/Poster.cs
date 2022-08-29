@@ -114,7 +114,7 @@ namespace MSS.Common.MSet
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
-		public ObservableCollection<JobTreeNode>? JobItems => _jobTree.Nodes;
+		public ObservableCollection<JobTreeNode>? JobNodes => _jobTree.Nodes;
 
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyItemIsDirty;
 
@@ -393,12 +393,6 @@ namespace MSS.Common.MSet
 		public bool MarkBranchAsPreferred(ObjectId jobId)
 		{
 			var result = _jobTree.MakePreferred(jobId);
-			return result;
-		}
-
-		public bool DeleteBranch(ObjectId jobId)
-		{
-			var result = _jobTree.RemoveBranch(jobId);
 			return result;
 		}
 
