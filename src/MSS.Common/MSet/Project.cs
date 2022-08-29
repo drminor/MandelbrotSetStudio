@@ -117,8 +117,8 @@ namespace MSS.Common.MSet
 
 		public int GetNumberOfDirtyJobs()
 		{
-			var jobs = _jobTree.GetNodes();
-			var result = jobs.Count(x => !x.Item.OnFile || x.Item.IsDirty);
+			var jobs = _jobTree.GetItems();
+			var result = jobs.Count(x => !x.OnFile || x.IsDirty);
 			return result;
 		}  
 
@@ -368,9 +368,9 @@ namespace MSS.Common.MSet
 			return result;
 		}
 
-		public List<Job> GetJobs()
+		public IEnumerable<Job> GetJobs()
 		{
-			return _jobTree.GetNodes().Select(x => x.Item).ToList();
+			return _jobTree.GetItems();
 		}
 
 		public List<ColorBandSet> GetColorBandSets()

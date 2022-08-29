@@ -22,8 +22,10 @@ namespace MSS.Types
 
 		ITreePath<U,V> Add(V item, bool selectTheAddedItem);
 
-		bool RemoveNode(ObjectId itemId);
 		bool RemoveNode(ITreePath<U, V> path);
+
+		bool RemoveBranch(ObjectId itemId);
+		bool RemoveBranch(ITreePath<U, V> path);
 
 		bool TryGetNextItemPath([MaybeNullWhen(false)] out ITreePath<U, V> forwardPath, Func<U, bool>? predicate);
 		bool TryGetPreviousItemPath([MaybeNullWhen(false)] out ITreePath<U, V> backPath, Func<U, bool>? predicate);
@@ -31,7 +33,7 @@ namespace MSS.Types
 		bool MoveBack(Func<U, bool>? predicate);
 		bool MoveForward(Func<U, bool>? predicate);
 
-		IEnumerable<U> GetNodes();
-		IList<U>? GetNodesAndDescendants(ObjectId itemId);
+		IEnumerable<V> GetItems();
+		IList<V>? GetItemsAndDescendants(ObjectId itemId);
 	}
 }

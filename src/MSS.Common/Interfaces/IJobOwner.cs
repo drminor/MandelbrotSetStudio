@@ -31,7 +31,7 @@ namespace MSS.Common.MSet
 		//DateTime LastAccessedUtc { get; init; }
 		//DateTime LastUpdatedUtc { get; }
 
-		List<Job> GetJobs();
+		IEnumerable<Job> GetJobs();
 		List<ColorBandSet> GetColorBandSets();
 
 		JobPathType? GetCurrentPath();

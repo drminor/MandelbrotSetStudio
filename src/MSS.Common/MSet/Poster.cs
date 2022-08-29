@@ -120,7 +120,7 @@ namespace MSS.Common.MSet
 
 		public int GetNumberOfDirtyJobs()
 		{
-			var result = _jobTree.GetNodes().Count(x => !x.Item.OnFile || x.IsDirty);
+			var result = _jobTree.GetItems().Count(x => !x.OnFile || x.IsDirty);
 			return result;
 		}
 
@@ -368,9 +368,9 @@ namespace MSS.Common.MSet
 
 		#region Public Methods - Job Tree
 
-		public List<Job> GetJobs()
+		public IEnumerable<Job> GetJobs()
 		{
-			return _jobTree.GetNodes().Select(x => x.Item).ToList();
+			return _jobTree.GetItems();
 		}
 
 		public List<ColorBandSet> GetColorBandSets()
@@ -481,7 +481,7 @@ namespace MSS.Common.MSet
 		{
 			return new Poster(Name, Description, SourceJobId,
 				//MapAreaInfo.Clone(), ColorBandSet, MapCalcSettings
-				_jobTree.GetNodes().Select(x => x.Item).ToList(), _colorBandSets, _jobTree.CurrentItem.Id
+				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id
 				);
 		}
 

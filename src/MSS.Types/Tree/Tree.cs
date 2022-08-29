@@ -9,7 +9,7 @@ using System.Threading;
 
 namespace MSS.Types
 {
-	public abstract class Tree<U,V> : ITree<U,V> where U: class, ITreeNode<U,V> where V: class, IEquatable<V>, IComparable<V>
+	public abstract class Tree<U,V> : ITree<U,V> where U: class, ITreeItem<V>, ITreeNode<U,V> where V: class, IEquatable<V>, IComparable<V>
 	{
 		protected ReaderWriterLockSlim TreeLock { get; }
 		protected virtual ITreeBranch<U, V> Root { get; set; }
@@ -72,40 +72,6 @@ namespace MSS.Types
 			});
 		}
 
-		public bool CanGoBack
-		{
-			get
-			{
-				TreeLock.EnterReadLock();
-
-				try
-				{
-					return CanMoveBack(CurrentPath);
-				}
-				finally
-				{
-					TreeLock.ExitReadLock();
-				}
-			}
-		}
-
-		public bool CanGoForward
-		{
-			get
-			{
-				TreeLock.EnterReadLock();
-
-				try
-				{
-					return CanMoveForward(CurrentPath);
-				}
-				finally
-				{
-					TreeLock.ExitReadLock();
-				}
-			}
-		}
-
 		public bool IsDirty { get; set; }
 
 		public bool AnyItemIsDirty
@@ -154,18 +120,25 @@ namespace MSS.Types
 			return newPath;
 		}
 
-		public bool RemoveNode(ObjectId itemId)
+		// Removes only the single node at path.
+		public virtual bool RemoveNode(ITreePath<U, V> path)
+		{
+			throw new NotImplementedException();
+		}
+
+		public bool RemoveBranch(ObjectId itemId)
 		{
 			if (!TryFindPathById(itemId, Root, out var path))
 			{
 				return false;
 			}
 
-			var result = RemoveNode(path);
+			var result = RemoveBranch(path);
 			return result;
 		}
 
-		public virtual bool RemoveNode(ITreePath<U, V> path)
+		// Removes the node at path and all of it's children
+		public virtual bool RemoveBranch(ITreePath<U, V> path)
 		{
 			var node = path.Node;
 			var parentNode = path.GetParentNodeOrRoot();
@@ -277,13 +250,13 @@ namespace MSS.Types
 			}
 		}
 
-		public IEnumerable<U> GetNodes()
+		public IEnumerable<V> GetItems()
 		{
 			TreeLock.EnterReadLock();
 
 			try
 			{
-				var result = GetNodes(Root);
+				var result = GetItems(Root);
 				return result;
 			}
 			finally
@@ -298,18 +271,18 @@ namespace MSS.Types
 			return result;
 		}
 
-		public IList<U>? GetNodesAndDescendants(ObjectId itemId)
+		public IList<V>? GetItemsAndDescendants(ObjectId itemId)
 		{
 			TreeLock.EnterReadLock();
 
 			try
 			{
-				List<U>? result;
+				List<V>? result;
 
 				if (TryFindPathById(itemId, Root, out var path))
 				{
-					result = new List<U> { path.Node };
-					result.AddRange(GetNodes(path));
+					result = new List<V> { path.Node.Item };
+					result.AddRange(GetItems(path));
 				}
 				else
 				{
@@ -344,9 +317,23 @@ namespace MSS.Types
 
 		#region Protected Export Item Methods
 
-		protected IList<U> GetNodes(ITreeBranch<U,V> currentBranch)
+		protected virtual IList<V> GetItems(ITreeBranch<U,V> currentBranch)
 		{
-			// TODO: Consider implementing an IEnumerator<ITreeItem<U,V> for the Tree class.
+			var result = new List<V>();
+
+			foreach (var child in currentBranch.GetNodeOrRoot().Children)
+			{
+				result.Add(child.Item);
+
+				var nodeList = GetItems(currentBranch.Combine(child));
+				result.AddRange(nodeList);
+			}
+
+			return result;
+		}
+
+		protected virtual IList<U> GetNodes(ITreeBranch<U, V> currentBranch)
+		{
 			var result = new List<U>();
 
 			foreach (var child in currentBranch.GetNodeOrRoot().Children)
@@ -360,7 +347,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		protected List< Tuple<U, U?> > GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
+		protected virtual List< Tuple<U, U?> > GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
 		{
 			var result = new List<Tuple<U, U?>>();
 

@@ -110,8 +110,6 @@ namespace MSS.Common
 
 		#region Public Methods
 
-		public abstract IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType);
-
 		public virtual bool MakePreferred(ObjectId jobId)
 		{
 			Debug.WriteLine($"Marking Branch for {jobId}, the preferred branch.");
@@ -128,6 +126,20 @@ namespace MSS.Common
 		}
 
 		public abstract bool MakePreferred(JobPathType? path);
+
+		public override bool RemoveNode(JobPathType path)
+		{
+			var removedJobs = RemoveJobs(path, NodeSelectionType.SingleNode);
+			return removedJobs.Count > 0;
+		}
+
+		public override bool RemoveBranch(JobPathType path)
+		{
+			var removedJobs = RemoveJobs(path, NodeSelectionType.Branch);
+			return removedJobs.Count > 0;
+		}
+
+		public abstract IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType);
 
 		public bool TryGetPreviousJob([MaybeNullWhen(false)] out Job job, bool skipPanJobs)
 		{
@@ -474,6 +486,14 @@ namespace MSS.Common
 				return false;
 			}
 		}
+
+		#endregion
+
+		#region Protected Export Item Methods
+
+		protected abstract override IList<JobTreeNode> GetNodes(JobBranchType currentBranch);
+
+		protected abstract override List<Tuple<JobTreeNode, JobTreeNode?>> GetNodesWithParentage(JobBranchType currentBranch);
 
 		#endregion
 

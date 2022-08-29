@@ -23,7 +23,7 @@ namespace MSS.Common
 
 		#region Public Methods
 
-		public override bool RemoveNode(JobPathType path)
+		public override bool RemoveBranch(JobPathType path)
 		{
 			// TODO: RemoveBranch does not support removing CanvasSizeUpdate nodes.
 

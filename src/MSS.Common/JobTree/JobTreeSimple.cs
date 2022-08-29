@@ -117,12 +117,6 @@ namespace MSS.Common
 			return true;
 		}
 
-		public override bool RemoveNode(JobPathType path)
-		{
-			var removedJobs = RemoveJobs(path, NodeSelectionType.SingleNode);
-			return removedJobs.Count > 0;
-		}
-
 		public override IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
 		{
 			var result = new List<JobTreeNode>();
@@ -138,7 +132,7 @@ namespace MSS.Common
 				case NodeSelectionType.Siblings:
 					break;
 				case NodeSelectionType.Branch:
-					_ = RemoveNode(path);
+					_ = RemoveBranch(path);
 					break;
 				case NodeSelectionType.ContainingBranch:
 					throw new NotImplementedException();
@@ -196,6 +190,57 @@ namespace MSS.Common
 			var newPath = AddItem(job, grandparentBranch);
 
 			return newPath;
+		}
+
+		#endregion
+
+		#region Protected Export Item Methods
+
+		protected override IList<Job> GetItems(JobBranchType currentBranch)
+		{
+			var result = new List<Job>();
+
+			foreach (var child in currentBranch.GetNodeOrRoot().Children)
+			{
+				result.Add(child.Item);
+
+				var nodeList = GetItems(currentBranch.Combine(child));
+				result.AddRange(nodeList);
+			}
+
+			return result;
+		}
+
+		// TODO: Fix GetNodes for JobTreeSimple
+		protected override IList<JobTreeNode> GetNodes(JobBranchType currentBranch)
+		{
+			var result = new List<JobTreeNode>();
+
+			foreach (var child in currentBranch.GetNodeOrRoot().Children)
+			{
+				result.Add(child);
+
+				var nodeList = GetNodes(currentBranch.Combine(child));
+				result.AddRange(nodeList);
+			}
+
+			return result;
+		}
+
+		// TODO: Fix GetNodesWithParentage for JobTreeSimple
+		protected override List<Tuple<JobTreeNode, JobTreeNode?>> GetNodesWithParentage(JobBranchType currentBranch)
+		{
+			var result = new List<Tuple<JobTreeNode, JobTreeNode?>>();
+
+			foreach (var child in currentBranch.GetNodeOrRoot().Children)
+			{
+				result.Add(new Tuple<JobTreeNode, JobTreeNode?>(child, child.ParentNode));
+
+				var nodeList = GetNodesWithParentage(currentBranch.Combine(child));
+				result.AddRange(nodeList);
+			}
+
+			return result;
 		}
 
 		#endregion
