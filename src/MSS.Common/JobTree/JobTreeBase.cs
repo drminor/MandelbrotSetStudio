@@ -48,7 +48,7 @@ namespace MSS.Common
 			var homeJob = GetHomeJob(jobs, checkHomeJob);
 			CurrentPath = AddItem(homeJob, Root);
 			var parentNode = CurrentPath.GetParentNodeOrRoot();
-			parentNode.RealChildJobs.Add(homeJob.Id, homeJob);
+			parentNode.AddRealChild(homeJob);
 
 			if (CurrentPath == null)
 			{
@@ -489,15 +489,17 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Protected Export Item Methods
+		#region Protected GetNode Methods
 
-		protected abstract override IList<JobTreeNode> GetNodes(JobBranchType currentBranch);
+		//protected abstract override IList<Job> GetItems(JobBranchType currentBranch);
 
-		protected abstract override List<Tuple<JobTreeNode, JobTreeNode?>> GetNodesWithParentage(JobBranchType currentBranch);
+		//protected abstract override IList<JobTreeNode> GetNodes(JobBranchType currentBranch);
+
+		//protected abstract override List<Tuple<JobTreeNode, JobTreeNode?>> GetNodesWithParentage(JobBranchType currentBranch);
 
 		#endregion
 
-		#region Private Navigate Methods
+		#region Protected Navigate Methods
 
 		protected virtual void UpdateIsSelected(JobTreeNode? node, bool isSelected, JobBranchType startPos)
 		{

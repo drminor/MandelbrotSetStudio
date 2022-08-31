@@ -329,6 +329,7 @@ namespace MSS.Types
 				result.AddRange(nodeList);
 			}
 
+			Debug.WriteLine($"GetItems for branch: {currentBranch} returned {result.Count} nodes.");
 			return result;
 		}
 
@@ -344,6 +345,7 @@ namespace MSS.Types
 				result.AddRange(nodeList);
 			}
 
+			Debug.WriteLine($"GetNodes for branch: {currentBranch} returned {result.Count} nodes.");
 			return result;
 		}
 
@@ -359,6 +361,7 @@ namespace MSS.Types
 				result.AddRange(nodeList);
 			}
 
+			Debug.WriteLine($"GetNodesWithParentage for branch: {currentBranch} returned {result.Count} nodes.");
 			return result;
 		}
 
@@ -381,7 +384,7 @@ namespace MSS.Types
 		{
 			return TryFindPath(item, currentBranch, out var path)
 				? path
-				: throw new InvalidOperationException($"Cannot find Item: {item} in the Tree.");
+				: throw new InvalidOperationException($"Cannot find Item: {item} in the Tree, using currentBranch: {currentBranch}.");
 		}
 
 		protected bool TryFindPath(V item, ITreeBranch<U,V> currentBranch, [MaybeNullWhen(false)] out ITreePath<U,V> path)

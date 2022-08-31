@@ -71,8 +71,6 @@ namespace MSS.Common
 			: base(job, parentNode, isRoot, isHome, isCurrent, isExpanded)
 		{
 			Children = children;
-			ParentId = job.ParentJobId;
-
 			IsIterationChange = isIterationChange;
 			IsColorMapChange = isColorMapChange;
 
@@ -97,20 +95,10 @@ namespace MSS.Common
 		#region Public Properties
 
 		public override ObservableCollection<JobTreeNode> Children { get; init; }
-
 		public override ObjectId Id => Item.Id;
+		public override ObjectId? ParentId => Item.ParentJobId;
+		public override bool IsDirty => Item.IsDirty;
 
-		public override ObjectId? ParentId
-		{
-			get => Item.ParentJobId;
-			protected set => Item.ParentJobId = value;
-		}
-		
-		public override bool IsDirty
-		{
-			get => Item.IsDirty;
-			set => Item.LastUpdatedUtc = DateTime.UtcNow;
-		}
 
 		public JobTreeNode? PreferredChild
 		{
@@ -463,6 +451,12 @@ namespace MSS.Common
 			return result;
 		}
 
+		public bool RemoveRealChild(Job job)
+		{
+			var result = RealChildJobs.Remove(job.Id);
+			return result;
+		}
+
 		public bool SetPreferredChild(JobTreeNode child, bool resetSiblingsRecursive, ref int numberOfChildNodesReset)
 		{
 			var currentValue = Children.FirstOrDefault(x => x.IsOnPreferredPath);
@@ -493,9 +487,14 @@ namespace MSS.Common
 			{
 				if (resetSiblingsRecursive)
 				{
-					numberOfChildNodesReset += ResetPreferredChildren();
-				}
+					var numReset = ResetPreferredChildren();
+					numberOfChildNodesReset += numReset;
 
+					if (numReset > 0)
+					{
+						Debug.WriteLine($"Even though the current preferred child is already set to the new value, {numReset} children had their IsOnPreferredPath reset.");
+					}
+				}
 
 				//Debug.WriteLine($"SetPreferredChild found that the currentValue: {currentValue?.Id ?? ObjectId.Empty} already equals the new value: {child?.Id ?? ObjectId.Empty}.");
 				return false;

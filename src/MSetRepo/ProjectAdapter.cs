@@ -187,7 +187,6 @@ namespace MSetRepo
 			else
 			{
 				result = new Project(projectRecord.Id, projectRecord.Name, projectRecord.Description, jobs, colorBandSets, projectRecord.CurrentJobId, lastSavedUtc, lastAccessedUtc);
-
 			}
 			return result;
 		}

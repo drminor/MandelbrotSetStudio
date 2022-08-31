@@ -139,7 +139,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Private Add Methods
+		#region Protected Add Methods
 
 		protected override JobPathType AddAtParentPath(Job job, JobPathType parentPath)
 		{
@@ -299,6 +299,27 @@ namespace MSS.Common
 
 			var result = parentBranch.Combine(newNode);
 
+			return result;
+		}
+
+		#endregion
+
+		#region Protected GetNode Methods
+
+		protected override IList<Job> GetItems(JobBranchType currentBranch)
+		{
+			var result = GetNodes(currentBranch).Select(x => x.Item).ToList();
+			return result;
+		}
+
+		protected override IList<JobTreeNode> GetNodes(JobBranchType currentBranch)
+		{
+			throw new NotImplementedException();
+		}
+
+		protected override List<Tuple<JobTreeNode, JobTreeNode?>> GetNodesWithParentage(JobBranchType currentBranch)
+		{
+			var result = GetNodes(currentBranch).Select(x => new Tuple<JobTreeNode, JobTreeNode?>(x, x.ParentNode)).ToList();
 			return result;
 		}
 

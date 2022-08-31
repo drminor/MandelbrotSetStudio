@@ -31,6 +31,6 @@ namespace MSS.Types
 		V Item { get; init; }
 		ObjectId Id { get; }
 		ObjectId? ParentId { get; }
-		bool IsDirty { get; set; }
+		bool IsDirty { get; }
 	}
 }

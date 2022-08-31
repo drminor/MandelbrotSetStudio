@@ -96,7 +96,7 @@ namespace MSS.Types
 
 		public ITreeBranch<U, V> GetParentBranch()
 		{
-			var result = Count > 1
+			var result = Terms.Count > 1
 				? new TreeBranch<U, V>(RootItem, Terms.SkipLast(1))
 				: new TreeBranch<U, V>(RootItem);
 
@@ -182,7 +182,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			return string.Join("; ", Terms.Select(x => $"{x.Id}, {x.ParentId ?? ObjectId.Empty}"));
+			return "Branch:" + string.Join("; ", Terms.Select(x => $"{x.Id}, {x.ParentId ?? ObjectId.Empty}"));
 		}
 
 		object ICloneable.Clone()

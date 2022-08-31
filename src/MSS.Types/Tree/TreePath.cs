@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -60,6 +61,11 @@ namespace MSS.Types
 
 		//public static implicit operator List<JobTreeItem>?(JobTreePath? jobTreePath) => jobTreePath == null ? null : jobTreePath.Terms;
 		//public static explicit operator JobTreePath(List<JobTreeItem> terms) => new JobTreePath(terms);
+
+		public override string ToString()
+		{
+			return "Path:" + string.Join("; ", Terms.Select(x => $"{x.Id}, {x.ParentId ?? ObjectId.Empty}"));
+		}
 
 		object ICloneable.Clone()
 		{

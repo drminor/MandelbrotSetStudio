@@ -15,6 +15,9 @@ namespace MSetExplorer
 
 	internal class AppNavViewModel
 	{
+		private static readonly bool _useSimpleJobTree = true;
+
+
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
@@ -49,7 +52,7 @@ namespace MSetExplorer
 			// ColorBand Histogram ViewModel
 			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
 
-			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter);
+			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
 				_mapLoaderManager,
 				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
@@ -76,7 +79,7 @@ namespace MSetExplorer
 			// ColorBand Histogram ViewModel
 			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
 
-			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter);
+			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
 			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
 				_mapJobHelper, _mapLoaderManager,

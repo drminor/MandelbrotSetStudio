@@ -145,7 +145,7 @@ namespace MSS.Types.MSet
 			set
 			{
 				_isAlternatePathHead = value;
-				LastUpdatedUtc = DateTime.UtcNow;
+				//LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
 

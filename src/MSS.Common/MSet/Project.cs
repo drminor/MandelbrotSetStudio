@@ -115,13 +115,6 @@ namespace MSS.Common.MSet
 
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyItemIsDirty;
 
-		public int GetNumberOfDirtyJobs()
-		{
-			var jobs = _jobTree.GetItems();
-			var result = jobs.Count(x => !x.OnFile || x.IsDirty);
-			return result;
-		}  
-
 		public bool IsCurrentJobIdChanged => CurrentJobId != _originalCurrentJobId;
 
 		public ObjectId Id { get; init; }
@@ -276,6 +269,8 @@ namespace MSS.Common.MSet
 			}
 		}
 
+		//TODO: Add a "PreferredPath property to the Project class.
+
 		#endregion
 
 		#region Public Methods - Job Tree
@@ -399,6 +394,13 @@ namespace MSS.Common.MSet
 		public IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
 		{
 			var result = _jobTree.RemoveJobs(path, nodeSelectionType);
+			return result;
+		}
+
+		public int GetNumberOfDirtyJobs()
+		{
+			var jobs = _jobTree.GetItems();
+			var result = jobs.Count(x => !x.OnFile || x.IsDirty);
 			return result;
 		}
 

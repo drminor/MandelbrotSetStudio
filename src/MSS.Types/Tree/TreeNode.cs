@@ -23,7 +23,6 @@ namespace MSS.Types
 		{
 			Item = item ?? throw new ArgumentNullException(nameof(item));
 			ParentNode = parentNode;
-			IsDirty = false;
 			IsRoot = isRoot;
 			IsHome = isHome;
 			_isCurrent = isCurrent;
@@ -36,11 +35,11 @@ namespace MSS.Types
 
 		public V Item { get; init; }
 		public U? ParentNode { get; set; }
-		public abstract ObservableCollection<U> Children { get; init; }
 
+		public abstract ObservableCollection<U> Children { get; init; }
 		public abstract ObjectId Id { get; }
-		public abstract ObjectId? ParentId { get; protected set; }
-		public abstract bool IsDirty { get; set; }
+		public abstract ObjectId? ParentId { get; }
+		public abstract bool IsDirty { get; }
 
 		#endregion
 

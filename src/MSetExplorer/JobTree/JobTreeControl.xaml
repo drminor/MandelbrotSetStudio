@@ -31,7 +31,7 @@
                 </StackPanel>
 
                 <TreeView x:Name="trvJobs" Grid.Row="1" Margin="0" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                          Focusable="True" ItemsSource="{Binding JobItems}">
+                          Focusable="True" ItemsSource="{Binding JobNodes}">
 
                     <TreeView.ItemContainerStyle>
                         <Style TargetType="{x:Type TreeViewItem}">

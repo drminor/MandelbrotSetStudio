@@ -18,14 +18,16 @@ namespace MSetExplorer
 	{
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
+		private readonly bool _useSimpleJobTree;
 		private IJobOwner? _currentProject;
 
 		#region Constructor
 
-		public JobTreeViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
+		public JobTreeViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, bool useSimpleJobTree)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
+			_useSimpleJobTree = useSimpleJobTree;
 			_currentProject = null;
 		}
 
@@ -132,11 +134,13 @@ namespace MSetExplorer
 				var result = 0L;
 				var jobPathsRemoved = CurrentProject.RemoveJobs(path, selectionType);
 
-				foreach(var jobPath in jobPathsRemoved)
-				{
-					numberOfMapSectionsDeleted += ProjectAndMapSectionHelper.DeleteJob(jobPath.Item, _projectAdapter, _mapSectionAdapter);
-					result++;
-				}
+				Debug.WriteLine($"RemoveJobs returned {jobPathsRemoved.Count} jobs.");
+
+				//foreach(var jobPath in jobPathsRemoved)
+				//{
+				//	numberOfMapSectionsDeleted += ProjectAndMapSectionHelper.DeleteJob(jobPath.Item, _projectAdapter, _mapSectionAdapter);
+				//	result++;
+				//}
 
 				return result;
 			}
@@ -156,7 +160,6 @@ namespace MSetExplorer
 			}
 
 			var node = path.Node;
-
 			var job = node.Item;
 
 			var coordVals = RValueHelper.GetValuesAsStrings(job.MapAreaInfo.Coords);
@@ -169,7 +172,23 @@ namespace MSetExplorer
 				.AppendLine($"\tTransformType: {job.TransformType}")
 				.AppendLine($"\tId: {job.Id}")
 				.AppendLine($"\tParentId: {job.ParentJobId}")
-				.AppendLine($"\tCanvasSize Disp Alternates: {node.AlternateDispSizes?.Count ?? 0}");
+				.AppendLine($"\tChildern: {node.Children.Count}")
+				.AppendLine($"\tReal Child Jobs: {node.RealChildJobs.Count}")
+				.AppendLine($"\tDisp Alternates: {node.AlternateDispSizes?.Count ?? 0}")
+				.AppendLine($"\tOn Preferred Path: {node.IsOnPreferredPath}")
+				.AppendLine($"\tIsDirty: {node.IsDirty}");
+
+			if (!_useSimpleJobTree)
+			{
+				AddDetailsForFlattenedJobTree(path, sb);
+			}
+
+			return sb.ToString();
+		}
+
+		private void AddDetailsForFlattenedJobTree(JobPathType path, StringBuilder sb)
+		{
+			var node = path.Node;
 
 			if (node.IsActiveAlternate)
 			{
@@ -177,7 +196,7 @@ namespace MSetExplorer
 				_ = sb.AppendLine("List of all Branches:");
 				DisplayAlternates(node, sb, node);
 			}
-			else if(node.IsParkedAlternate)
+			else if (node.IsParkedAlternate)
 			{
 				_ = sb.AppendLine("\nThis job is not on the Active Branch:");
 				_ = sb.AppendLine("List of all Branches:");
@@ -196,8 +215,6 @@ namespace MSetExplorer
 
 			//	_ = sb.AppendLine($"Following Nodes: {numberOfFollowingNodes}.");
 			//}
-
-			return sb.ToString();
 		}
 
 		private void DisplayAlternates(JobTreeNode node, StringBuilder sb, JobTreeNode parentNode)
@@ -213,7 +230,6 @@ namespace MSetExplorer
 				var strItemIndicator = altNode == node ? "*-" : "  ";
 				_ = sb.AppendLine($"{strItemIndicator}{altNode.Item.TransformType}\t{altNode.Item.DateCreated}\t{altNode.Children.Count()}\t\t{altNode.IsActiveAlternate}");
 			}
-
 		}
 
 		#endregion
