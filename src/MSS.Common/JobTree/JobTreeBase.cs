@@ -85,8 +85,6 @@ namespace MSS.Common
 			set => CurrentItem = value;
 		}
 
-		public bool AnyJobIsDirty => AnyItemIsDirty;
-
 		public override JobTreeNode? SelectedNode
 		{
 			get => base.SelectedNode;

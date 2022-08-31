@@ -113,7 +113,7 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyItemIsDirty;
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty; // || _jobTree.AnyItemIsDirty;
 
 		public bool IsCurrentJobIdChanged => CurrentJobId != _originalCurrentJobId;
 

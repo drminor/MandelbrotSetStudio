@@ -120,7 +120,7 @@ namespace MSS.Common
 
 			if (startingNode.IsCurrent || parentChildPairs.Any(x => x.child.IsCurrent))
 			{
-				_ = MoveCurrentTo(SelectedNode.Item, Root, out var _);
+				CurrentItem = SelectedNode.Item; // _ = MoveCurrentTo(SelectedNode.Item, Root, out var _);
 			}
 
 			// Remove each child, unless its parent is in the list of nodes to be removed.
@@ -130,10 +130,6 @@ namespace MSS.Common
 			{
 				if (parent.Id != startingNode.Id && !childIds.Contains(parent.Id))
 				{
-					if (child.IsCurrent)
-					{
-						_ = MoveCurrentTo(SelectedNode.Item, Root, out var _);
-					}
 					_ = parent.Remove(child);
 					_ = parent.RemoveRealChild(child.Item);
 				}
@@ -158,7 +154,8 @@ namespace MSS.Common
 
 			if (siblings.Count == 1)
 			{
-				result = TryGetPreviousItemPath(out var backPath, predicate: null) ? backPath.Node : throw new InvalidOperationException("Cannot find a previous item.");
+				var backPath = GetPreviousItemPath(path, predicate: null);
+				result = backPath != null ? backPath.Node : throw new InvalidOperationException("Cannot find a previous item.");
 			}
 			else
 			{

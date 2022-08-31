@@ -183,12 +183,19 @@ namespace MSS.Types.MSet
 			set
 			{
 				_lastSavedUtc = value;
-				LastUpdatedUtc = value;
+				_lastUpdatedUtc = value;
 				OnFile = true;
 			}
 		}
 
-		public DateTime LastUpdatedUtc { get; set; }
+		private DateTime _lastUpdatedUtc;
+
+		public DateTime LastUpdatedUtc
+		{
+			get => _lastUpdatedUtc;
+			set => _lastUpdatedUtc = value;
+		}
+
 		public DateTime LastAccessedUtc { get; set; }
 
 		#endregion

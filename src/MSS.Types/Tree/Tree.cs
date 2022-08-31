@@ -82,13 +82,13 @@ namespace MSS.Types
 
 				try
 				{
+					Debug.WriteLine("Evaluating AnyItemIsDirty");
 					return GetNodes(Root).Any(x => x.IsDirty);
 				}
 				finally
 				{
 					TreeLock.ExitReadLock();
 				}
-
 			}
 		}
 

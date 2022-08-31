@@ -132,9 +132,11 @@ namespace MSetExplorer
 			if (CurrentProject != null)
 			{
 				var result = 0L;
-				var jobPathsRemoved = CurrentProject.RemoveJobs(path, selectionType);
+				var nodesRemoved = CurrentProject.RemoveJobs(path, selectionType);
 
-				Debug.WriteLine($"RemoveJobs returned {jobPathsRemoved.Count} jobs.");
+				var wasCurrentJobRemoved = nodesRemoved.Any(x => x.Id == CurrentJob?.Id);
+
+				Debug.WriteLine($"RemoveJobs returned {nodesRemoved.Count} jobs.");
 
 				//foreach(var jobPath in jobPathsRemoved)
 				//{

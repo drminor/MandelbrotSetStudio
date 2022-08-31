@@ -116,7 +116,7 @@ namespace MSS.Common.MSet
 
 		public ObservableCollection<JobTreeNode>? JobNodes => _jobTree.Nodes;
 
-		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty || _jobTree.AnyItemIsDirty;
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty; // || _jobTree.AnyItemIsDirty;
 
 		public int GetNumberOfDirtyJobs()
 		{
