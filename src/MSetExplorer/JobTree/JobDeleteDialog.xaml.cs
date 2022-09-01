@@ -57,7 +57,7 @@ namespace MSetExplorer
 
 		private void SiblingsButton_Click(object sender, RoutedEventArgs e)
 		{
-			SelectionType = NodeSelectionType.Siblings;
+			SelectionType = NodeSelectionType.SiblingBranches;
 			DialogResult = true;
 		}
 
@@ -69,7 +69,7 @@ namespace MSetExplorer
 
 		private void FollowingButton_Click(object sender, RoutedEventArgs e)
 		{
-			SelectionType = NodeSelectionType.SingleNode | NodeSelectionType.Children;
+			SelectionType = NodeSelectionType.Run;
 			DialogResult = true;
 		}
 

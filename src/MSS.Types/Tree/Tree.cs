@@ -271,7 +271,7 @@ namespace MSS.Types
 			return result;
 		}
 
-		public IList<V>? GetItemsAndDescendants(ObjectId itemId)
+		public IList<V>? GetItemAndDescendants(ObjectId itemId)
 		{
 			TreeLock.EnterReadLock();
 

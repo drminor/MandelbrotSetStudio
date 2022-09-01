@@ -13,6 +13,7 @@ namespace MSS.Types
 		bool IsHome { get; }
 		bool IsOrphan { get; }
 		bool IsRoot { get; init; }
+		bool HasSiblings { get; }
 
 		bool IsCurrent { get; set; }
 		bool IsExpanded { get; set; }

@@ -79,12 +79,6 @@ namespace MSS.Common
 
 		#region Public Properties
 
-		public Job CurrentJob
-		{
-			get => CurrentItem;
-			set => CurrentItem = value;
-		}
-
 		public override JobTreeNode? SelectedNode
 		{
 			get => base.SelectedNode;
@@ -133,7 +127,7 @@ namespace MSS.Common
 
 		public override bool RemoveBranch(JobPathType path)
 		{
-			var removedJobs = RemoveJobs(path, NodeSelectionType.Branch);
+			var removedJobs = RemoveJobs(path, NodeSelectionType.Run);
 			return removedJobs.Count > 0;
 		}
 

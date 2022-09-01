@@ -40,13 +40,13 @@ namespace MSS.Common
 			else
 			{
 				var visitedNodeIds = new List<ObjectId>();
-				var parentChildPairs = GetAncestorParentChildPairs(path);
-				SetPreferredChildNodes(parentChildPairs, visitedNodeIds, ref numberSet, ref numberReset);
+				var ancendantPairs = GetNodeAndAncestorPairsAll(path);
+				SetPreferredChildNodes(ancendantPairs, visitedNodeIds, ref numberSet, ref numberReset);
 
 				//_ = sb.AppendLine("Now selecting the child's last child as the preferred child.");
 
-				parentChildPairs = GetDescendantPCPairsLast(path);
-				SetPreferredChildNodes(parentChildPairs, visitedNodeIds, ref numberSet, ref numberReset);
+				var descendantPairs = GetNodeAndDescendantPairsLast(path).Skip(1).ToList();
+				SetPreferredChildNodes(descendantPairs, visitedNodeIds, ref numberSet, ref numberReset);
 			}
 
 			//_ = sb.AppendLine($"Setting path: {path?.Node.Id} to be the preferred path. Set {numberSet} nodes, reset {numberReset}.");
@@ -59,36 +59,84 @@ namespace MSS.Common
 
 		public override IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
 		{
-			IList<JobTreeNode> result;
-
-			switch (nodeSelectionType)
+			var jobsToRemove = nodeSelectionType switch
 			{
-				case NodeSelectionType.SingleNode:
-					result = new List<JobTreeNode>(); break;
+				NodeSelectionType.SingleNode => GetSingleParentChildPair(path),
 
-				case NodeSelectionType.Preceeding:
-					result = new List<JobTreeNode>(); break;
+				NodeSelectionType.Preceeding => GetNodeAndAncestorPairsRun(path).SkipLast(1).ToList(),
 
-				case NodeSelectionType.Children:
-					result = new List<JobTreeNode>(); break;
+				NodeSelectionType.Following => GetNodeAndDescendantPairsRun(path).Skip(1).ToList(),
 
-				case NodeSelectionType.Siblings:
-					result = new List<JobTreeNode>(); break;
+				NodeSelectionType.Children => GetNodeAndDescendantPairsAll(GetBranchHead(path)).Skip(1).ToList(),
 
-				case NodeSelectionType.Branch:
-					result = RemoveJobsBranch(path); break;
+				NodeSelectionType.SiblingBranches => throw new NotImplementedException(),
 
-				case NodeSelectionType.ContainingBranch:
-					throw new NotImplementedException();
+				NodeSelectionType.Run => GetNodeAndDescendantPairsRun(GetBranchHead(path)),
 
-				default:
-					result = new List<JobTreeNode>(); break;
+				NodeSelectionType.Branch => GetNodeAndDescendantPairsAll(GetBranchHead(path)),
+
+				_ => throw new NotImplementedException(),
+			};
+
+			if (jobsToRemove.Any(x => x.child.IsSelected) || SelectedNode == null)
+			{
+				SelectedNode = GetNewSelectedNode(path);
 			}
 
+			var topLevelPairs = RemoveJobs(jobsToRemove, SelectedNode);
+			Debug.WriteLine($"Removed these top-level pairs:");
+			foreach(var (parent, child) in topLevelPairs)
+			{
+				Debug.WriteLine($"\tParent: {parent.Id}, Child: {child.Id}");
+			}
+
+			foreach (var (parent, child) in topLevelPairs)
+			{
+				var siblings = parent.RealChildJobs;
+				if (siblings.Count == 2 && !DoesNodeChangeZoom(parent))
+				{
+					// Once the node at path is removed, the parent will have only a single child, 
+					// move this sole, remaining child so that it is a child of the path's grandparent.
+
+					// TODO: Move the found sole, remaining child.
+					//var grandparentNode = parentPath.GetParentNodeOrRoot();
+					//_ = SelectedNode.Move(grandparentNode);
+
+					Debug.WriteLine("Found a sole remaining child.");
+				}
+			}
+
+			var result = jobsToRemove.Select(x => x.child).ToList();
 			return result;
 		}
 
-		private IList<JobTreeNode> RemoveJobsBranch(JobPathType path)
+		private List<(JobTreeNode parent, JobTreeNode child)> RemoveJobs(List<(JobTreeNode parent, JobTreeNode child)> parentChildPairs, JobTreeNode selectedNode)
+		{
+			var topLevelPairs = new List<(JobTreeNode parent, JobTreeNode child)>();
+
+			var childIds = parentChildPairs.Select(x => x.child.Id).ToList();
+			foreach (var (parent, child) in parentChildPairs)
+			{
+				if (!childIds.Contains(parent.Id))
+				{
+					topLevelPairs.Add((parent, child));
+				}
+			}
+
+			if (topLevelPairs.Any(x => x.child.IsOnPreferredPath))
+			{
+				_ = MakePreferred(selectedNode.Id);
+			}
+
+			if (topLevelPairs.Any(x => x.child.IsCurrent))
+			{
+				CurrentItem = selectedNode.Item;
+			}
+
+			return topLevelPairs;
+		}
+
+		private IList<JobTreeNode> RemoveJobsChildren(JobPathType path, bool includeParent)
 		{
 			var startingNode = path.Node;
 			var parentPath = path.GetParentPath();
@@ -116,11 +164,11 @@ namespace MSS.Common
 			}
 
 			// Get a list of parentChildPairs for each job that will be removed.
-			var parentChildPairs = GetDescendantPCPairsAll(path);
+			var parentChildPairs = GetNodeAndDescendantPairsAll(path);
 
-			if (startingNode.IsCurrent || parentChildPairs.Any(x => x.child.IsCurrent))
+			if (parentChildPairs.Any(x => x.child.IsCurrent))
 			{
-				CurrentItem = SelectedNode.Item; // _ = MoveCurrentTo(SelectedNode.Item, Root, out var _);
+				CurrentItem = SelectedNode.Item;
 			}
 
 			// Remove each child, unless its parent is in the list of nodes to be removed.
@@ -135,12 +183,22 @@ namespace MSS.Common
 				}
 			}
 
-			Debug.Assert(!parentChildPairs.Any(x => x.child.Id == startingNode.Id), "Node already deleted.");
-
-			_ = parentNode.Remove(startingNode);
-			_ = parentNode.RemoveRealChild(startingNode.Item);
-
 			var result = parentChildPairs.Select(x => x.child).ToList();
+
+			Debug.Assert(!parentChildPairs.Any(x => x.child.Id == startingNode.Id), "ParentNode deleted while deleting child nodes.");
+
+			if (includeParent)
+			{
+				if (startingNode.IsCurrent)
+				{
+					CurrentItem = SelectedNode.Item;
+				}
+
+				_ = parentNode.Remove(startingNode);
+				_ = parentNode.RemoveRealChild(startingNode.Item);
+				result.Add(startingNode);
+			}
+
 			return result;
 		}
 
@@ -152,7 +210,7 @@ namespace MSS.Common
 			var parentNode = path.GetParentNodeOrRoot();
 			var siblings = parentNode.RealChildJobs;
 
-			if (siblings.Count == 1)
+			if (siblings.Count < 2)
 			{
 				var backPath = GetPreviousItemPath(path, predicate: null);
 				result = backPath != null ? backPath.Node : throw new InvalidOperationException("Cannot find a previous item.");
@@ -277,38 +335,72 @@ namespace MSS.Common
 
 		#region Protected GetNode Methods
 
-		private List<(JobTreeNode parent, JobTreeNode child)> GetAncestorParentChildPairs(JobPathType path)
+		private List<(JobTreeNode parent, JobTreeNode child)> GetSingleParentChildPair(JobPathType path)
 		{
-			// Assemble a list of parents and their preferred child for each term
-			// of a path constructed using the specified path's "real" parent.
+			var parentChildPairs = new List<(JobTreeNode parent, JobTreeNode child)>
+			{
+				(path.GetParentNodeOrRoot(), path.Node)
+			};
 
-			var parentChildPairs = new List<(JobTreeNode parent, JobTreeNode child)>();
+			return parentChildPairs;
+		}
 
-			var parentNode = path.GetParentNodeOrRoot();
-			parentChildPairs.Add((parentNode, path.Node));
+		private List<(JobTreeNode parent, JobTreeNode child)> GetNodeAndAncestorPairsAll(JobPathType path)
+		{
+			var parentChildPairs = new List<(JobTreeNode parent, JobTreeNode child)>
+			{
+				(path.GetParentNodeOrRoot(), path.Node)
+			};
 
 			var previousPath = path;
 			var nextPath = GetParentPath(previousPath.Item, Root); // Using the real parent Id here.
 
 			while (nextPath != null)
 			{
-				parentNode = nextPath.GetParentNodeOrRoot();
-				parentChildPairs.Add((parentNode, nextPath.Node));
+				parentChildPairs.Add((nextPath.GetParentNodeOrRoot(), nextPath.Node));
 
 				previousPath = nextPath;
 				nextPath = GetParentPath(previousPath.Item, Root);
 			}
 
 			// Set the preferred child of the root node using the very first term of the given path.
-			parentNode = previousPath.GetParentNodeOrRoot();
-			parentChildPairs.Add((parentNode, previousPath.Node));
+			parentChildPairs.Add((previousPath.GetParentNodeOrRoot(), previousPath.Node));
 
 			parentChildPairs.Reverse();
 
 			return parentChildPairs;
 		}
 
-		private List<(JobTreeNode parent, JobTreeNode child)> GetDescendantPCPairsLast(JobPathType path)
+		private List<(JobTreeNode parent, JobTreeNode child)> GetNodeAndAncestorPairsRun(JobPathType path)
+		{
+			var parentChildPairs = new List<(JobTreeNode parent, JobTreeNode child)>
+			{
+				(path.GetParentNodeOrRoot(), path.Node)
+			};
+
+			var previousPath = path;
+			var nextPath = GetParentPath(previousPath.Item, Root); // Using the real parent Id here.
+
+			while (nextPath != null && !IsBranchHead(nextPath.Node))
+			{
+				parentChildPairs.Add((nextPath.GetParentNodeOrRoot(), nextPath.Node));
+
+				previousPath = nextPath;
+				nextPath = GetParentPath(previousPath.Item, Root);
+			}
+
+			if (nextPath == null && !IsBranchHead(previousPath.Node))
+			{
+				// Set the preferred child of the root node using the very first term of the given path.
+				parentChildPairs.Add((previousPath.GetParentNodeOrRoot(), previousPath.Node));
+			}
+
+			parentChildPairs.Reverse();
+
+			return parentChildPairs;
+		}
+
+		private List<(JobTreeNode parent, JobTreeNode child)> GetNodeAndDescendantPairsLast(JobPathType path)
 		{
 			var parentChildPairs = new List<(JobTreeNode parent, JobTreeNode child)>();
 
@@ -318,17 +410,22 @@ namespace MSS.Common
 			while (nextChildJob != null)
 			{
 				var nextChildPath = GetPath(nextChildJob, Root);
-				var child = nextChildPath.Node;
-				var parentNode = nextChildPath.GetParentNodeOrRoot();
-				parentChildPairs.Add((parentNode, child));
+				parentChildPairs.Add((nextChildPath.GetParentNodeOrRoot(), nextChildPath.Node));
 
 				nextChildJob = nextChildPath.Node.RealChildJobs.LastOrDefault().Value;
 			}
 
-			return parentChildPairs;
+			var result = new List<(JobTreeNode parent, JobTreeNode child)>
+			{
+				(path.GetParentNodeOrRoot(), path.Node)
+			};
+
+			result.AddRange(parentChildPairs);
+
+			return result;
 		}
 
-		private List<(JobTreeNode parent, JobTreeNode child)> GetDescendantPCPairsAll(JobPathType path)
+		private List<(JobTreeNode parent, JobTreeNode child)> GetNodeAndDescendantPairsAll(JobPathType path)
 		{
 			var parentChildPairs = new List<(JobTreeNode parent, JobTreeNode child)>();
 
@@ -337,30 +434,47 @@ namespace MSS.Common
 				var nextChildPath = GetPath(nextChildJob, Root);
 				parentChildPairs.Add((nextChildPath.GetParentNodeOrRoot(), nextChildPath.Node));
 
-				parentChildPairs.AddRange(GetDescendantPCPairsAll(nextChildPath));
+				parentChildPairs.AddRange(GetNodeAndDescendantPairsAll(nextChildPath));
 			}
 
-			return parentChildPairs;
-		}
-
-		private void SetPreferredChildNodes(List<(JobTreeNode parent, JobTreeNode child)> parentChildPairs, List<ObjectId> vistedNodeIds, ref int numberSet, ref int numberReset)
-		{
-			foreach (var (parent, child) in parentChildPairs)
+			var result = new List<(JobTreeNode parent, JobTreeNode child)>
 			{
-				var alreadyVisited = vistedNodeIds.Contains(parent.Id);
-				vistedNodeIds.Add(parent.Id);
-				if (parent.SetPreferredChild(child, !alreadyVisited, ref numberReset))
-				{
-					var strResetingChildNodes = !alreadyVisited ? ", and reseting child nodes." : ".";
-					//_ = sb.AppendLine($"Setting node: {child.Id} to be the preferred child of parent: {parent.Id}{strResetingChildNodes}");
-					numberSet++;
-				}
-				else
-				{
-					//_ = sb.AppendLine($"Node: {child.Id} is already the preferred child of parent: {parent.Id}.");
-				}
-			}
+				(path.GetParentNodeOrRoot(), path.Node)
+			};
+
+			result.AddRange(parentChildPairs);
+
+			return result;
 		}
+
+		private List<(JobTreeNode parent, JobTreeNode child)> GetNodeAndDescendantPairsRun(JobPathType path)
+		{
+			var parentChildPairs = new List<(JobTreeNode parent, JobTreeNode child)>();
+
+			foreach (var nextChildJob in path.Node.RealChildJobs.Values)
+			{
+				var nextChildPath = GetPath(nextChildJob, Root);
+
+				if (IsBranchHead(nextChildPath.Node))
+				{
+					break;
+				}
+
+				parentChildPairs.Add((nextChildPath.GetParentNodeOrRoot(), nextChildPath.Node));
+
+				parentChildPairs.AddRange(GetNodeAndDescendantPairsRun(nextChildPath));
+			}
+
+			var result = new List<(JobTreeNode parent, JobTreeNode child)>
+			{
+				(path.GetParentNodeOrRoot(), path.Node)
+			};
+
+			result.AddRange(parentChildPairs);
+
+			return result;
+		}
+
 
 		//protected override IList<Job> GetItems(JobBranchType currentBranch)
 		//{
@@ -445,6 +559,51 @@ namespace MSS.Common
 		//	var result = GetNodes(currentBranch).Select(x => new Tuple<JobTreeNode, JobTreeNode?>(x, x.ParentNode)).ToList();
 		//	return result;
 		//}
+
+		#endregion
+
+		#region Private Branch Methods
+
+		private JobPathType GetBranchHead(JobPathType path)
+		{
+			var resultPath = path;
+			while (!IsBranchHead(resultPath.Node))
+			{
+				resultPath = GetParentPath(resultPath.Item, Root); // Using the real parent Id here.
+				if (resultPath == null)
+				{
+					throw new InvalidOperationException();
+				}
+			}
+
+			return resultPath;
+		}
+
+		private bool IsBranchHead(JobTreeNode node)
+		{
+			var result = node.IsHome || DoesNodeChangeZoom(node) || node.HasRealSiblings;
+			return result;
+		}
+
+		private void SetPreferredChildNodes(List<(JobTreeNode parent, JobTreeNode child)> parentChildPairs, List<ObjectId> vistedNodeIds, ref int numberSet, ref int numberReset)
+		{
+			foreach (var (parent, child) in parentChildPairs)
+			{
+				var alreadyVisited = vistedNodeIds.Contains(parent.Id);
+				vistedNodeIds.Add(parent.Id);
+				if (parent.SetPreferredChild(child, !alreadyVisited, ref numberReset))
+				{
+					var strResetingChildNodes = !alreadyVisited ? ", and reseting child nodes." : ".";
+					//_ = sb.AppendLine($"Setting node: {child.Id} to be the preferred child of parent: {parent.Id}{strResetingChildNodes}");
+					numberSet++;
+				}
+				else
+				{
+					//_ = sb.AppendLine($"Node: {child.Id} is already the preferred child of parent: {parent.Id}.");
+				}
+			}
+		}
+
 
 		#endregion
 	}

@@ -49,6 +49,8 @@ namespace MSS.Types
 		public bool IsHome { get; protected set; }
 		public bool IsOrphan => ParentNode is null;
 
+		public bool HasSiblings => ParentNode?.Children.Count > 1;
+
 		#endregion
 
 		#region UI Properties

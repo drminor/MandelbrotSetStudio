@@ -99,6 +99,7 @@ namespace MSS.Common
 		public override ObjectId? ParentId => Item.ParentJobId;
 		public override bool IsDirty => Item.IsDirty;
 
+		public bool HasRealSiblings => ParentNode?.RealChildJobs.Count > 1;
 
 		public JobTreeNode? PreferredChild
 		{

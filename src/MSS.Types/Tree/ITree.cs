@@ -34,6 +34,6 @@ namespace MSS.Types
 		bool MoveForward(Func<U, bool>? predicate);
 
 		IEnumerable<V> GetItems();
-		IList<V>? GetItemsAndDescendants(ObjectId itemId);
+		IList<V>? GetItemAndDescendants(ObjectId itemId);
 	}
 }
