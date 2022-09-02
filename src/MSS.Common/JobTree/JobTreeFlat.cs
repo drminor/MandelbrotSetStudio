@@ -317,9 +317,9 @@ namespace MSS.Common
 			throw new NotImplementedException();
 		}
 
-		protected override List<Tuple<JobTreeNode, JobTreeNode?>> GetNodesWithParentage(JobBranchType currentBranch)
+		protected override List<(JobTreeNode? parent, JobTreeNode child)> GetNodesWithParentage(JobBranchType currentBranch)
 		{
-			var result = GetNodes(currentBranch).Select(x => new Tuple<JobTreeNode, JobTreeNode?>(x, x.ParentNode)).ToList();
+			var result = GetNodes(currentBranch).Select(x => (x.ParentNode, x)).ToList();
 			return result;
 		}
 

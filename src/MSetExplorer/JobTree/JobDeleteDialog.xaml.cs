@@ -46,30 +46,36 @@ namespace MSetExplorer
 		private void SingleButton_Click(object sender, RoutedEventArgs e)
 		{
 			DialogResult = true;
-			SelectionType = NodeSelectionType.SingleNode;
+			SelectionType = NodeSelectionType.SingleNode;						// 1
+		}
+
+		private void RunButton_Click(object sender, RoutedEventArgs e)
+		{
+			DialogResult = true;
+			SelectionType = NodeSelectionType.Run;								// 1 | 2 | 4
 		}
 
 		private void BranchButton_Click(object sender, RoutedEventArgs e)
 		{
-			SelectionType = NodeSelectionType.Branch;
+			SelectionType = NodeSelectionType.Branch;					       // 1 | 8
 			DialogResult = true;
 		}
 
 		private void SiblingsButton_Click(object sender, RoutedEventArgs e)
 		{
-			SelectionType = NodeSelectionType.SiblingBranches;
+			SelectionType = NodeSelectionType.SiblingBranches;					// 16
 			DialogResult = true;
 		}
 
 		private void PreceedingButton_Click(object sender, RoutedEventArgs e)
 		{
-			SelectionType = NodeSelectionType.SingleNode | NodeSelectionType.Preceeding;
+			SelectionType = NodeSelectionType.SinglePlusPreceeding;				// 1 | 2				
 			DialogResult = true;
 		}
 
 		private void FollowingButton_Click(object sender, RoutedEventArgs e)
 		{
-			SelectionType = NodeSelectionType.Run;
+			SelectionType = NodeSelectionType.SinglePlusFollowing;				// 1 | 4
 			DialogResult = true;
 		}
 

@@ -8,11 +8,13 @@ namespace MSS.Common
 	{
 		SingleNode = 1,
 		Preceeding = 2,
+		SinglePlusPreceeding = 1 | 2,
 		Following = 4,
+		SinglePlusFollowing = 1 | 4,
+		Run = 1 | 2 | 4,
 		Children = 8,
-		SiblingBranches = 16,
-		Run = 1 | 4,
-		Branch = 1 | 8
+		Branch = 1 | 8,
+		SiblingBranches = 16
 	}
 
 	// Any given node that has one or more siblings or changes the zoom is a "Branch Head."
@@ -30,15 +32,17 @@ namespace MSS.Common
 	// Children is defined to be the set of all descendant nodes
 	//		if and only if the given node is a branch head.
 
-	// Run is used to specify the set of all nodes following the given node and the given node itself,
-	//		if and only if the given node is a branch head.
+	// Run is used to specify the set of all nodes preceeding, following, and the given node itself,
+	//		if and only if the given node is NOT a branch head. (Use SinglePlusFollowing for a BranchHead.)
 
-	// Branch is defined by the set of all descendants of a given node plus the given node,
+	// Branch is defined by the children of a given node plus the given node,
 	//		if and only if the given node is a branch head.
 
 	// SiblingBranches is defined by the set of all nodes returned by specifying Branch on each sibling of the given node.
 	// This will of course be the empty set if the given node has no siblings.
 
-	// To select the Run or Branch for a given non-Branch Head node, first find the Branch Head node for the given node
-	//		and then specify Run or Branch for that Branch Head node.
+	// To select Children or Branch for a given non-Branch Head node, first find the Branch Head node for the given node
+	//		and then specify Children or Branch for that Branch Head node.
+
+	// Similarily, to select a complete Run, first find the Branch Head node and then specify SinglePlusFollowing.
 }

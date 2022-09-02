@@ -349,13 +349,13 @@ namespace MSS.Types
 			return result;
 		}
 
-		protected virtual List< Tuple<U, U?> > GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
+		protected virtual List<(U? parent, U child)> GetNodesWithParentage(ITreeBranch<U,V> currentBranch)
 		{
-			var result = new List<Tuple<U, U?>>();
+			var result = new List<(U? parent, U child)>();
 
 			foreach (var child in currentBranch.GetNodeOrRoot().Children)
 			{
-				result.Add(new Tuple<U, U?>(child, child.ParentNode));
+				result.Add((child.ParentNode, child));
 
 				var nodeList = GetNodesWithParentage(currentBranch.Combine(child));
 				result.AddRange(nodeList);

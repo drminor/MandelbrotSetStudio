@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="JobDeleteDialog" Width="470" Height="280">
+        Title="JobDeleteDialog" Width="470" Height="330">
 
     <Grid>
 
@@ -25,6 +25,11 @@
                     <TextBlock Margin="10">Remove the selected job.</TextBlock>
                 </StackPanel>
 
+                <StackPanel Orientation="Horizontal">
+                    <Button Name="btnRun" HorizontalAlignment="Center" Width="120" FontSize="16" Margin="10" Click="RunButton_Click" TabIndex="1" IsDefault="True" >_Run</Button>
+                    <TextBlock Margin="10" TextWrapping="Wrap" Width="300">Remove this and all jobs preceeding or following that have the same zoom-level.</TextBlock>
+                </StackPanel>
+
                 <StackPanel Orientation="Horizontal" x:Name="pnlBranch" >
                     <Button Name="btnBranch" HorizontalAlignment="Center" Width="120" FontSize="16" Margin="10" Click="BranchButton_Click" IsCancel="True" TabIndex="2">_Branch</Button>
                     <TextBlock Margin="10">Remove all jobs on the current branch.</TextBlock>
@@ -41,7 +46,7 @@
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" x:Name="pnlFollowing" >
-                    <Button Name="btnFollowing" HorizontalAlignment="Center" Width="120" FontSize="16" Margin="10" Click="PreceedingButton_Click" TabIndex="3">_Following</Button>
+                    <Button Name="btnFollowing" HorizontalAlignment="Center" Width="120" FontSize="16" Margin="10" Click="FollowingButton_Click" TabIndex="3">_Following</Button>
                     <TextBlock Margin="10" TextWrapping="Wrap" Width="300">Remove this and all jobs after this job on the current branch.</TextBlock>
                 </StackPanel>
 
