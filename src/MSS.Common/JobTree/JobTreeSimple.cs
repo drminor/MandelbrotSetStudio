@@ -57,52 +57,81 @@ namespace MSS.Common
 
 		public override IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
 		{
-			var jobsToRemove = nodeSelectionType switch
+			Debug.WriteLine($"Remove Jobs: Starting for path: {path.Node.Id}. SelectionType: {nodeSelectionType}.");
+			var jobsToRemove = GetJobsToRemove(path, nodeSelectionType);
+
+			if (jobsToRemove.Count == 0)
 			{
-				NodeSelectionType.SingleNode => GetSingleParentChildPair(path),										// 1
-
-				NodeSelectionType.Preceeding => GetNodeAndAncestorPairsRun(path).SkipLast(1).ToList(),				// 2
-
-				NodeSelectionType.SinglePlusPreceeding => GetNodeAndAncestorPairsRun(path),							// 1 | 2 (3)
-
-				NodeSelectionType.Following => GetNodeAndDescendantPairsRun(path).Skip(1).ToList(),					// 4
-
-				NodeSelectionType.SinglePlusFollowing => GetNodeAndDescendantPairsRun(path),                        // 1 | 4 (5)
-
-				NodeSelectionType.Run => GetNodeAndDescendantPairsRun(GetBranchHead(path)),                         // 1 | 2 | 4 (7)
-
-				NodeSelectionType.Children => GetDescendantPairsAll(GetBranchHead(path)),                           // 8
-
-				NodeSelectionType.Branch => GetNodeAndDescendantPairsAll(GetBranchHead(path)),                      // 1 | 8 (9)
-
-				NodeSelectionType.SiblingBranches => GetDescendantPairsAllForSiblingBranches(GetBranchHead(path)),	// 16
-
-				_ => throw new NotImplementedException(),
-			};
-
-			var selectedNode = SelectedNode;
-
-			if (jobsToRemove.Any(x => x.child.IsSelected) || selectedNode == null)
-			{
-				selectedNode = GetNewSelectedNode(path);
-				SelectedNode = selectedNode;
+				Debug.WriteLine("Remove Jobs: found no jobs to remove.");
+				return new List<JobTreeNode>();
 			}
+
+			// Update the selected node, if any being removed in selected.
+			//var selectedNode = SelectedNode;
+
+			//if (jobsToRemove.Any(x => x.child.IsSelected) || selectedNode == null)
+			//{
+			//	selectedNode = GetNewSelectedNode(path);
+			//	SelectedNode = selectedNode;
+			//}
+
+			var saveSelectedNode = SelectedNode;
+			Debug.WriteLine("Remove Jobs: is setting the Selected Node to null.");
+			SelectedNode = null;
+
+			//if (jobsToRemove.Any(x => x.child.IsCurrent))
+			//{
+			//	var newCurrentNode = GetNewCurrentNode(path);
+			//	Debug.WriteLine($"Remove Jobs is updating the Current Item using node: {SelectedNode}.");
+			//	CurrentItem = newCurrentNode.Item;
+			//}
+
+			var newCurrentNode = GetNewCurrentNode(path);
+			Debug.WriteLine($"Remove Jobs is updating the Current Item to {newCurrentNode.Item.Id}.");
+			CurrentItem = newCurrentNode.Item;
+
+			var topLevelPairs = RemoveJobs(path, jobsToRemove);
 
 			if (jobsToRemove.Any(x => x.child.IsOnPreferredPath))
 			{
-				_ = MakePreferred(selectedNode.Id);
+				Debug.WriteLine($"Remove Jobs is updating the preferred path using node: {newCurrentNode.Item.Id}.");
+				_ = MakePreferred(newCurrentNode.Item.Id);
 			}
 
-			if (jobsToRemove.Any(x => x.child.IsCurrent))
-			{
-				CurrentItem = selectedNode.Item;
-			}
+			//Debug.WriteLine($"Remove Jobs: is moving the Selected Node to {SelectedNode}.");
 
-			var topLevelPairs = RemoveJobs(path, jobsToRemove);
 
 			ReportTopLevelJobsRemoved(topLevelPairs);
 
 			var result = jobsToRemove.Select(x => x.child).ToList();
+			return result;
+		}
+
+		private List<(JobTreeNode parent, JobTreeNode child)> GetJobsToRemove(JobPathType path, NodeSelectionType nodeSelectionType)
+		{
+			var result = nodeSelectionType switch
+			{
+				NodeSelectionType.SingleNode => GetSingleParentChildPair(path),                                         // 1
+
+				NodeSelectionType.Preceeding => GetNodeAndAncestorPairsRun(path).SkipLast(1).ToList(),                  // 2
+
+				NodeSelectionType.SinglePlusPreceeding => GetNodeAndAncestorPairsRun(path),                             // 1 | 2 (3)
+
+				NodeSelectionType.Following => GetNodeAndDescendantPairsRun(path).Skip(1).ToList(),                     // 4
+
+				NodeSelectionType.SinglePlusFollowing => GetNodeAndDescendantPairsRun(path),                            // 1 | 4 (5)
+
+				NodeSelectionType.Run => GetNodeAndDescendantPairsRun(GetBranchHead(path)),                             // 1 | 2 | 4 (7)
+
+				NodeSelectionType.Children => GetDescendantPairsAll(GetBranchHead(path)),                               // 8
+
+				NodeSelectionType.Branch => GetNodeAndDescendantPairsAll(GetBranchHead(path)),                          // 1 | 8 (9)
+
+				NodeSelectionType.SiblingBranches => GetDescendantPairsAllForOtherSiblingBranches(GetBranchHead(path)), // 16
+
+				_ => throw new NotImplementedException(),
+			};
+
 			return result;
 		}
 
@@ -163,38 +192,46 @@ namespace MSS.Common
 		{
 			if (node == null)
 			{
+				Debug.WriteLine($"UpdateIsSelected, value = null, no action taken.");
 				return;
 			}
 
-			node.IsSelected = isSelected;
-
-			var path = startPos.CreatePath(node);
-			var backPath = GetPreviousItemPath(path, GetPredicate(skipPanJobs: true));
-
-			if (backPath != null)
+			try
 			{
-				backPath.Node.IsParentOfSelected = isSelected;
+				node.IsSelected = isSelected;
+
+				var path = startPos.CreatePath(node);
+				var backPath = GetPreviousItemPath(path, GetPredicate(skipPanJobs: true));
+
+				if (backPath != null)
+				{
+					backPath.Node.IsParentOfSelected = isSelected;
+				}
+
+				var prevPath = GetPreviousItemPath(path, null);
+
+				while (prevPath != null && !DoesNodeChangeZoom(prevPath.Node))
+				{
+					UpdateIsSiblingAndIsChildOfSelected(prevPath.Node, isSelected);
+					prevPath = GetPreviousItemPath(prevPath, null);
+				}
+
+				var nextPath = GetNextItemPath(path, null);
+
+				while (nextPath != null && !DoesNodeChangeZoom(nextPath.Node))
+				{
+					UpdateIsSiblingAndIsChildOfSelected(nextPath.Node, isSelected);
+					nextPath = GetNextItemPath(nextPath, null);
+				}
+
+				if (nextPath != null)
+				{
+					nextPath.Node.IsChildOfSelected = isSelected;
+				}
 			}
-
-			var prevPath = GetPreviousItemPath(path, null);
-
-			while (prevPath != null && !DoesNodeChangeZoom(prevPath.Node))
+			catch (Exception e)
 			{
-				UpdateIsSiblingAndIsChildOfSelected(prevPath.Node, isSelected);
-				prevPath = GetPreviousItemPath(prevPath, null);
-			}
-
-			var nextPath = GetNextItemPath(path, null);
-
-			while (nextPath != null && !DoesNodeChangeZoom(nextPath.Node))
-			{
-				UpdateIsSiblingAndIsChildOfSelected(nextPath.Node, isSelected);
-				nextPath = GetNextItemPath(nextPath, null);
-			}
-
-			if (nextPath != null)
-			{
-				nextPath.Node.IsChildOfSelected = isSelected;
+				Debug.WriteLine($"UpdateIsSelected received exception: {e} while attempting to set IsSelected to {isSelected} for node: {node}");
 			}
 		}
 
@@ -235,14 +272,14 @@ namespace MSS.Common
 			};
 
 			var previousPath = path;
-			var nextPath = GetParentPath(previousPath.Item, Root); // Using the real parent Id here.
+			var nextPath = GetParentPath(previousPath.Item, Root); // Using the real parent Id here. // TODO: Tighten up the Call to GetParentPath
 
 			while (nextPath != null)
 			{
 				parentChildPairs.Add((nextPath.GetParentNodeOrRoot(), nextPath.Node));
 
 				previousPath = nextPath;
-				nextPath = GetParentPath(previousPath.Item, Root);
+				nextPath = GetParentPath(previousPath.Item, Root); // TODO: Tighten up the Call to GetParentPath
 			}
 
 			// Set the preferred child of the root node using the very first term of the given path.
@@ -350,15 +387,21 @@ namespace MSS.Common
 			return parentChildPairs;
 		}
 
-		private List<(JobTreeNode parent, JobTreeNode child)> GetDescendantPairsAllForSiblingBranches(JobPathType path)
+		private List<(JobTreeNode parent, JobTreeNode child)> GetDescendantPairsAllForOtherSiblingBranches(JobPathType path)
 		{
 			var parentChildPairs = new List<(JobTreeNode parent, JobTreeNode child)>();
 
+			var node = path.Node;
 			var parentNode = path.GetParentNodeOrRoot();
 			var siblings = parentNode.RealChildJobs;
 
 			foreach(var siblingJob in siblings)
 			{
+				if (siblingJob.Value.Id == node.Id)
+				{
+					continue;
+				}
+
 				var siblingPath = GetPath(siblingJob.Value.Id);
 				if (siblingPath != null)
 				{
@@ -373,40 +416,40 @@ namespace MSS.Common
 			return parentChildPairs;
 		}
 
-		protected override IList<Job> GetItems(JobBranchType currentBranch)
-		{
-			var result = GetNodes(currentBranch).Select(x => x.Item).ToList();
-			return result;
-		}
+		//protected override IList<Job> GetItems(JobBranchType currentBranch)
+		//{
+		//	var result = GetNodes(currentBranch).Select(x => x.Item).ToList();
+		//	return result;
+		//}
 
-		protected override IList<JobTreeNode> GetNodes(JobBranchType currentBranch)
-		{
-			var result = GetNodesWithParentage(currentBranch).Select(x => x.child).ToList();
-			return result;
-		}
+		//protected override IList<JobTreeNode> GetNodes(JobBranchType currentBranch)
+		//{
+		//	var result = GetNodesWithParentage(currentBranch).Select(x => x.child).ToList();
+		//	return result;
+		//}
 
-		protected override List<(JobTreeNode? parent, JobTreeNode child)> GetNodesWithParentage(JobBranchType branch)
-		{
-			List<(JobTreeNode? parent, JobTreeNode child)> result;
+		//protected override List<(JobTreeNode? parent, JobTreeNode child)> GetNodesWithParentage(JobBranchType branch)
+		//{
+		//	List<(JobTreeNode? parent, JobTreeNode child)> result;
 
-			var path = branch.GetCurrentPath();
+		//	var path = branch.GetCurrentPath();
 
-			if (path != null)
-			{
-				result = GetDescendantPairsAll(path).Select(x => ((JobTreeNode?) x.parent, x.child)).ToList();
-			}
-			else
-			{
-				result = new List<(JobTreeNode? parent, JobTreeNode child)>();
-				foreach(var child in branch.Children)
-				{
-					var childPath = branch.CreatePath(new JobTreeNode[] { child });
-					result.AddRange(GetDescendantPairsAll(childPath).Select(x => ((JobTreeNode?)x.parent, x.child)).ToList());
-				}
-			}
+		//	if (path != null)
+		//	{
+		//		result = GetDescendantPairsAll(path).Select(x => ((JobTreeNode?) x.parent, x.child)).ToList();
+		//	}
+		//	else
+		//	{
+		//		result = new List<(JobTreeNode? parent, JobTreeNode child)>();
+		//		foreach(var child in branch.Children)
+		//		{
+		//			var childPath = branch.CreatePath(new JobTreeNode[] { child });
+		//			result.AddRange(GetDescendantPairsAll(childPath).Select(x => ((JobTreeNode?)x.parent, x.child)).ToList());
+		//		}
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 
@@ -455,26 +498,50 @@ namespace MSS.Common
 		private List<(JobTreeNode parent, JobTreeNode child)> RemoveJobs(JobPathType path, List<(JobTreeNode parent, JobTreeNode child)> parentChildPairs)
 		{
 			var topLevelPairs = new List<(JobTreeNode parent, JobTreeNode child)>();
+			var pairsToBeOrphaned = new List<(JobTreeNode parent, JobTreeNode child)>();
 
 			var childIds = parentChildPairs.Select(x => x.child.Id).ToList();
 			foreach (var (parent, child) in parentChildPairs)
 			{
+				// Find all of the parents of nodes being removed
+				// that are not also being removed.
 				if (!childIds.Contains(parent.Id))
 				{
 					topLevelPairs.Add((parent, child));
 				}
+
+				// Find all of the childern of the children being removed
+				// that are not also being removed.
+				foreach(var grandChild in child.Children)
+				{
+					if (!childIds.Contains(grandChild.Id))
+					{
+						pairsToBeOrphaned.Add((child, grandChild));
+					}
+				}
+			}
+
+			// Remove the nodes that will become orphaned.
+			foreach (var (child, grandchild) in pairsToBeOrphaned)
+			{
+				Debug.WriteLine($"Remove Jobs: is removing node to be orphaned: {grandchild.Id} from it's parent: {child.Id}.");
+				_ = child.Remove(grandchild);
+				_ = child.RemoveRealChild(grandchild.Item);
 			}
 
 			foreach (var (parent, child) in topLevelPairs)
 			{
+				Debug.WriteLine($"Remove Jobs: removing child: {child.Id} from parent: {parent.Id}.");
+
 				_ = parent.Remove(child);
 				_ = parent.RemoveRealChild(child.Item);
 
 				var siblings = parent.RealChildJobs;
 				if (child.ParentJobId == parent.Id && siblings.Count > 0)
 				{
-					var firstChildNode = parent.Children[0];
-					if (siblings.Count == 1 && !DoesNodeChangeZoom(firstChildNode))
+					var soleChildJob = siblings.Values[0];
+
+					if (siblings.Count == 1 && !DoesItemChangeZoom(soleChildJob))
 					{
 						// The parent no longer has child "choices" or "exits"; 
 						// move this sole, remaining child so that it is a child of the parent's parent.
@@ -482,44 +549,68 @@ namespace MSS.Common
 						var parentPath = path.CreatePath(parent);
 						var grandparentNode = parentPath.GetParentNodeOrRoot();
 
-						Debug.WriteLine($"Moving a sole remaining child: {child.Id} to the grandparent node: {grandparentNode.Id}.");
-						_ = firstChildNode.Move(grandparentNode);
+						Debug.WriteLine($"Remove Jobs: having removed child: {child.Id}, it's real parent: {child.ParentId} now has but one real child: {soleChildJob.Id}.");
+						Debug.WriteLine($"Remove Jobs: moving the logical children of parent: {parent.Id}.");
+						
+						var nodesToMove = new List<JobTreeNode>(parent.Children);
+						foreach(var logicalChildNode in nodesToMove)
+						{
+							Debug.WriteLine($"Remove Jobs: moving logical child: {logicalChildNode.Id} to the grandparent node: {grandparentNode.Id}.");
+							_ = logicalChildNode.Move(grandparentNode);
+						}
+
+						//_ = firstChildNode.Move(grandparentNode);
 					}
 				}
 			}
+
+			// Re-add the orphaned nodes.
+			var firstParentNode = parentChildPairs[0].parent;
+			var firstParentPath = path.CreatePath(firstParentNode);
+
+			foreach (var (child, grandchild) in pairsToBeOrphaned)
+			{
+				Debug.WriteLine($"Remove Jobs: is adding the orphaned node: {grandchild.Id} to {firstParentNode.Id}.");
+				grandchild.Item.ParentJobId = firstParentNode.Id;
+				_ = AddAtParentPath(grandchild.Item, firstParentPath);
+			}
+
 
 			return topLevelPairs;
 		}
 
 		// Find the node that will receive the selection once the node at path is removed.
-		private JobTreeNode GetNewSelectedNode(JobPathType path)
+		private JobTreeNode GetNewCurrentNode(JobPathType path)
 		{
 			JobTreeNode result;
 
-			var parentNode = path.GetParentNodeOrRoot();
-			var siblings = parentNode.RealChildJobs;
+			//var parentNode = path.GetParentNodeOrRoot();
+			//var siblings = parentNode.RealChildJobs;
 
-			if (siblings.Count < 2)
-			{
-				var backPath = GetPreviousItemPath(path, predicate: null);
-				result = backPath != null ? backPath.Node : throw new InvalidOperationException("Cannot find a previous item.");
-			}
-			else
-			{
-				var jobToReceiveSelection = siblings.LastOrDefault(x => x.Key != path.Node.Id).Value;
-				result = parentNode.Children.First(x => x.Id == jobToReceiveSelection.Id);
-			}
+			//if (siblings.Count < 2)
+			//{
+			//	var backPath = GetPreviousItemPath(path, predicate: null);
+			//	result = backPath != null ? backPath.Node : throw new InvalidOperationException("Cannot find a previous item.");
+			//}
+			//else
+			//{
+			//	var jobToReceiveSelection = siblings.LastOrDefault(x => x.Key != path.Node.Id).Value;
+			//	result = parentNode.Children.First(x => x.Id == jobToReceiveSelection.Id);
+			//}
+
+			var backPath = GetPreviousItemPath(path, predicate: null);
+			result = backPath != null ? backPath.Node : throw new InvalidOperationException("Cannot find a previous item.");
 
 			return result;
 		}
 
-		[Conditional("Debug")]
+		[Conditional("DEBUG")]
 		private void ReportTopLevelJobsRemoved(List<(JobTreeNode parent, JobTreeNode child)> topLevelPairs)
 		{
-			Debug.WriteLine($"Removed these top-level pairs:");
+			Debug.WriteLine($"Remove Jobs: removed these top-level pairs:");
 			foreach (var (parent, child) in topLevelPairs)
 			{
-				Debug.WriteLine($"\tParent: {parent.Id}, Child: {child.Id}");
+				Debug.WriteLine($"\tChild: {child.Id}, Parent: {parent.Id}");
 			}
 		}
 

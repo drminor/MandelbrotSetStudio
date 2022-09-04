@@ -110,8 +110,7 @@ namespace MSS.Types
 				throw new InvalidOperationException("Cannot move an orphan JobTreeItem.");
 			}
 
-			var parentNode = ParentNode;
-			var result = parentNode.Remove((U)(ITreeNode<U, V>)this);
+			var result = ParentNode.Remove((U)(ITreeNode<U, V>)this);
 			destination.AddNode((U)(ITreeNode<U, V>)this);
 
 			return result;

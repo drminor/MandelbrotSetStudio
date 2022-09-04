@@ -2,7 +2,9 @@
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
+using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -85,9 +87,16 @@ namespace MSetExplorer
 			get => CurrentProject?.SelectedViewItem;
 			set
 			{
-				if (CurrentProject != null)
+				try
 				{
-					CurrentProject.SelectedViewItem = value;
+					if (CurrentProject != null)
+					{
+						CurrentProject.SelectedViewItem = value;
+					}
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"JobTreeViewModel received exception: {e} while attempting to set the SelectedViewItem to value: {value}");
 				}
 			}
 		}
@@ -166,18 +175,22 @@ namespace MSetExplorer
 
 			var coordVals = RValueHelper.GetValuesAsStrings(job.MapAreaInfo.Coords);
 
+			var nt = node.IsRoot ? " [Root]" : node.IsHome ? " [Home]" : null;
+
 			var sb = new StringBuilder()
-				.AppendLine("Job Details:")
+				.AppendLine($"Job Details:{nt}")
 				.AppendLine($"X1: {coordVals[0]}\tY1: {coordVals[2]}")
 				.AppendLine($"X2: {coordVals[1]}\tY2: {coordVals[3]}")
 
 				.AppendLine($"\tTransformType: {job.TransformType}")
 				.AppendLine($"\tId: {job.Id}")
-				.AppendLine($"\tParentId: {job.ParentJobId}")
+				.AppendLine($"\tParentId: {job.ParentJobId ?? ObjectId.Empty} ParentNodeId: {node.ParentNode?.Id ?? ObjectId.Empty}")
 				.AppendLine($"\tChildern: {node.Children.Count}")
 				.AppendLine($"\tReal Child Jobs: {node.RealChildJobs.Count}")
 				.AppendLine($"\tDisp Alternates: {node.AlternateDispSizes?.Count ?? 0}")
 				.AppendLine($"\tOn Preferred Path: {node.IsOnPreferredPath}")
+				.AppendLine($"\tIs Branch Head: {IsBranchHead(node)}")
+				.AppendLine($"\tHas Real Siblings: {node.HasRealSiblings}")
 				.AppendLine($"\tIsDirty: {node.IsDirty}");
 
 			if (!_useSimpleJobTree)
@@ -186,6 +199,18 @@ namespace MSetExplorer
 			}
 
 			return sb.ToString();
+		}
+
+		private bool IsBranchHead(JobTreeNode node)
+		{
+			var result = node.IsHome || DoesNodeChangeZoom(node) || node.HasRealSiblings;
+			return result;
+		}
+
+		protected virtual bool DoesNodeChangeZoom(JobTreeNode node)
+		{
+			var result = node.TransformType is TransformType.ZoomIn or TransformType.ZoomOut or TransformType.Home;
+			return result;
 		}
 
 		private void AddDetailsForFlattenedJobTree(JobPathType path, StringBuilder sb)

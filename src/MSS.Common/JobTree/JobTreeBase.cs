@@ -677,9 +677,14 @@ namespace MSS.Common
 			return result;
 		}
 
-		protected virtual bool DoesNodeChangeZoom(JobTreeNode node)
+		protected bool DoesNodeChangeZoom(JobTreeNode node)
 		{
-			var result = node.TransformType is TransformType.ZoomIn or TransformType.ZoomOut or TransformType.Home;
+			return DoesItemChangeZoom(node.Item);
+		}
+		
+		protected virtual bool DoesItemChangeZoom(Job job)
+		{
+			var result = job.TransformType is TransformType.ZoomIn or TransformType.ZoomOut or TransformType.Home;
 			return result;
 		}
 

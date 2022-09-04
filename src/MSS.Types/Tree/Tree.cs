@@ -329,7 +329,7 @@ namespace MSS.Types
 				result.AddRange(nodeList);
 			}
 
-			Debug.WriteLine($"GetItems for branch: {currentBranch} returned {result.Count} nodes.");
+			//Debug.WriteLine($"GetItems for branch: {currentBranch} returned {result.Count} nodes.");
 			return result;
 		}
 
@@ -345,7 +345,7 @@ namespace MSS.Types
 				result.AddRange(nodeList);
 			}
 
-			Debug.WriteLine($"GetNodes for branch: {currentBranch} returned {result.Count} nodes.");
+			//Debug.WriteLine($"GetNodes for branch: {currentBranch} returned {result.Count} nodes.");
 			return result;
 		}
 
@@ -361,7 +361,7 @@ namespace MSS.Types
 				result.AddRange(nodeList);
 			}
 
-			Debug.WriteLine($"GetNodesWithParentage for branch: {currentBranch} returned {result.Count} nodes.");
+			//Debug.WriteLine($"GetNodesWithParentage for branch: {currentBranch} returned {result.Count} nodes.");
 			return result;
 		}
 

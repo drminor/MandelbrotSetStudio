@@ -113,7 +113,7 @@ namespace MSS.Common
 				}
 				else
 				{
-					ResetPreferredChildren();
+					_ = ResetPreferredChildren();
 				}
 			}
 		}

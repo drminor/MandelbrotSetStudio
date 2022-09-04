@@ -64,7 +64,16 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			return "Path:" + string.Join("; ", Terms.Select(x => $"{x.Id}, {x.ParentId ?? ObjectId.Empty}"));
+			var reversed = Terms.Reverse().ToList();
+			//return "Path:" + string.Join("; ", Terms.Select(x => $"{x.Id}, {x.ParentId ?? ObjectId.Empty}"));
+			return "Path:" + string.Join("; ", reversed.Select(x => $"{GetLast4(x.Id)}"));
+		}
+
+		private string GetLast4(ObjectId objectId)
+		{
+			var strId = objectId.ToString();
+			var result = strId.Substring(strId.Length - 4, 4);
+			return result;
 		}
 
 		object ICloneable.Clone()
