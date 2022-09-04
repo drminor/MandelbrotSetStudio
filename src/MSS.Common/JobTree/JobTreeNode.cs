@@ -368,6 +368,12 @@ namespace MSS.Common
 				throw new InvalidOperationException("Cannot add a JobTreeItem for a Job that has a Empty ObjectId.");
 			}
 
+			if (node.ParentNode != null && node.ParentNode != this)
+			{
+				Debug.WriteLine($"WARNING: Adding Node to Node: {Id}, but its parent node has id: {node.ParentNode.Id}. Setting the parent node to be this node.");
+				ParentNode = this;
+			}
+
 			if (IsRoot && (!Children.Any()))
 			{
 				node.IsHome = true;

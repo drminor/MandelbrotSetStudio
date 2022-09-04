@@ -100,10 +100,10 @@ namespace MSS.Common
 
 			//Debug.WriteLine($"Remove Jobs: is moving the Selected Node to {SelectedNode}.");
 
-
 			ReportTopLevelJobsRemoved(topLevelPairs);
 
 			var result = jobsToRemove.Select(x => x.child).ToList();
+			IsDirty = true;
 			return result;
 		}
 
@@ -137,7 +137,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Private Add Methods
+		#region Private Add Item Methods
 
 		protected override JobPathType AddAtParentPath(Job job, JobPathType parentPath)
 		{
@@ -149,10 +149,13 @@ namespace MSS.Common
 			{
 				var existingJob = parentNode.RealChildJobs.Values[0];
 
-				if (TryFindPath(existingJob, Root, out var path))
+				if (!parentNode.Children.Any(x => x.Id == existingJob.Id))
 				{
-					Debug.WriteLine($"Moving job: {existingJob.Id}, to be a child of {parentNode.Id}.");
-					_ = path.Node.Move(parentNode);
+					if (TryFindPath(existingJob, Root, out var existingJobpath))
+					{
+						Debug.WriteLine($"Moving job: {existingJob.Id}, to be a child of {parentNode.Id}.");
+						_ = existingJobpath.Node.Move(parentNode);
+					}
 				}
 
 				Debug.WriteLine($"Adding job: {job.Id}, as a child of {parentPath.Node.Id}.");
@@ -180,6 +183,74 @@ namespace MSS.Common
 			var grandparentNode = parentPath.GetParentNodeOrRoot();
 			Debug.WriteLine($"Adding job: {job.Id}, a sibling to its parent: {parentPath.Node.Id} as a child of {grandparentNode.Id}.");
 			var newPath = AddItem(job, grandparentBranch);
+
+			return newPath;
+		}
+
+		#endregion
+
+		#region Private Add Node Methods
+
+		private JobPathType AddNodeAtParentPath(JobTreeNode node, JobTreeNode parentNode, JobBranchType parentBranch)
+		{
+			//var parentNode = parentBranch.Node;
+
+			JobPathType newPath;
+
+			if (parentNode.RealChildJobs.Count > 0)
+			{
+				var existingJob = parentNode.RealChildJobs.Values[0];
+
+				if (!parentNode.Children.Any(x => x.Id == existingJob.Id))
+				{
+					if (TryFindPath(existingJob, Root, out var existingJobpath))
+					{
+						Debug.WriteLine($"Moving job: {existingJob.Id}, to be a child of {parentNode.Id}.");
+						_ = existingJobpath.Node.Move(parentNode);
+					}
+				}
+
+				//var parentNode = parentBranch.GetNodeOrRoot();
+				Debug.WriteLine($"Adding JobTreeNode: {node.Id}, as a child of {parentNode.Id}.");
+				newPath = AddNode(node, parentNode, parentBranch);
+			}
+			else if (DoesNodeChangeZoom(parentNode))
+			{
+				Debug.WriteLine($"Adding JobTreeNode: {node.Id}, as a child of {parentNode.Id}. The parent's TransformType is {parentNode.TransformType}.");
+				newPath = AddNode(node, parentNode, parentBranch);
+			}
+			else
+			{
+				//Debug.WriteLine($"Adding job: {job.Id}, in-line after {parentPath.Node.Id} as a child of {grandparentNode.Id}.");
+				var parentPath = parentBranch.GetCurrentPath();
+
+				if (parentPath == null)
+				{
+					throw new InvalidOperationException("Wnen adding in-line, the parentBranch should have a current path.");
+				}
+
+				newPath = AddNodeInLine(node, parentPath);
+			}
+
+			_ = parentNode.AddRealChild(node.Item);
+
+			return newPath;
+		}
+
+		private JobPathType AddNodeInLine(JobTreeNode node, JobPathType parentPath)
+		{
+			var grandparentBranch = parentPath.GetParentBranch();
+			var grandparentNode = parentPath.GetParentNodeOrRoot();
+			Debug.WriteLine($"Adding JobTreeNode: {node.Id}, a sibling to its parent: {parentPath.Node.Id} as a child of {grandparentNode.Id}.");
+
+			var newPath = AddNode(node, grandparentNode, grandparentBranch);
+			return newPath;
+		}
+
+		private JobPathType AddNode(JobTreeNode node, JobTreeNode parentNode, JobBranchType parentBranch)
+		{
+			parentNode.AddNode(node);
+			var newPath = parentBranch.Combine(node);
 
 			return newPath;
 		}
@@ -572,7 +643,7 @@ namespace MSS.Common
 			{
 				Debug.WriteLine($"Remove Jobs: is adding the orphaned node: {grandchild.Id} to {firstParentNode.Id}.");
 				grandchild.Item.ParentJobId = firstParentNode.Id;
-				_ = AddAtParentPath(grandchild.Item, firstParentPath);
+				_ = AddNodeAtParentPath(grandchild, firstParentNode, firstParentPath);
 			}
 
 
