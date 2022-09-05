@@ -142,9 +142,6 @@ namespace MSetExplorer
 			{
 				var result = 0L;
 				var nodesRemoved = CurrentProject.RemoveJobs(path, selectionType);
-
-				var wasCurrentJobRemoved = nodesRemoved.Any(x => x.Id == CurrentJob?.Id);
-
 				Debug.WriteLine($"RemoveJobs returned {nodesRemoved.Count} jobs.");
 
 				//foreach(var jobPath in jobPathsRemoved)
@@ -177,6 +174,8 @@ namespace MSetExplorer
 
 			var nt = node.IsRoot ? " [Root]" : node.IsHome ? " [Home]" : null;
 
+			var isBranchHead = IsBranchHead(node);
+
 			var sb = new StringBuilder()
 				.AppendLine($"Job Details:{nt}")
 				.AppendLine($"X1: {coordVals[0]}\tY1: {coordVals[2]}")
@@ -189,7 +188,7 @@ namespace MSetExplorer
 				.AppendLine($"\tReal Child Jobs: {node.RealChildJobs.Count}")
 				.AppendLine($"\tDisp Alternates: {node.AlternateDispSizes?.Count ?? 0}")
 				.AppendLine($"\tOn Preferred Path: {node.IsOnPreferredPath}")
-				.AppendLine($"\tIs Branch Head: {IsBranchHead(node)}")
+				.AppendLine($"\tIs Branch Head: {isBranchHead}")
 				.AppendLine($"\tHas Real Siblings: {node.HasRealSiblings}")
 				.AppendLine($"\tIsDirty: {node.IsDirty}");
 
@@ -201,13 +200,43 @@ namespace MSetExplorer
 			return sb.ToString();
 		}
 
+		//private bool IsBranchHead(JobTreeNode node)
+		//{
+		//	if (node.IsHome || node.ParentNode == null)
+		//	{
+		//		return true;
+		//	}
+
+		//	if (node.ParentNode.Id == node.ParentId)
+		//	{
+		//		if (node.ParentNode.RealChildJobs.Count > 1 || DoesNodeChangeZoom(node.ParentNode))
+		//		{
+		//			return true;
+		//		}
+		//		else
+		//		{
+		//			return false;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		return false;
+		//	}
+		//}
+
 		private bool IsBranchHead(JobTreeNode node)
 		{
-			var result = node.IsHome || DoesNodeChangeZoom(node) || node.HasRealSiblings;
+			var realChildCount = node.RealChildJobs.Count;
+			var changesZoom = DoesNodeChangeZoom(node);
+			var isHome = node.IsHome;
+
+			Debug.Assert((node.ParentNode == null && node.IsHome) || node.ParentNode != null, "Found a non-IsHome job that has no ParentNode.");
+
+			var result = isHome || realChildCount > 1 || changesZoom;
 			return result;
 		}
 
-		protected virtual bool DoesNodeChangeZoom(JobTreeNode node)
+		private bool DoesNodeChangeZoom(JobTreeNode node)
 		{
 			var result = node.TransformType is TransformType.ZoomIn or TransformType.ZoomOut or TransformType.Home;
 			return result;

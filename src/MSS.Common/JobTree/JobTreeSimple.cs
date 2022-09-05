@@ -86,6 +86,7 @@ namespace MSS.Common
 			//	CurrentItem = newCurrentNode.Item;
 			//}
 
+			var saveCurrentItem = CurrentItem;
 			var newCurrentNode = GetNewCurrentNode(path);
 			Debug.WriteLine($"Remove Jobs is updating the Current Item to {newCurrentNode.Item.Id}.");
 			CurrentItem = newCurrentNode.Item;
@@ -96,6 +97,25 @@ namespace MSS.Common
 			{
 				Debug.WriteLine($"Remove Jobs is updating the preferred path using node: {newCurrentNode.Item.Id}.");
 				_ = MakePreferred(newCurrentNode.Item.Id);
+			}
+
+			if (TryFindPath(saveCurrentItem, Root, out var currentPath))
+			{
+				CurrentItem = currentPath.Node.Item;
+			}
+
+			if (saveSelectedNode == null)
+			{
+				saveSelectedNode = newCurrentNode;
+			}
+
+			if (TryFindPath(saveSelectedNode.Item, Root, out var selectedPath))
+			{
+				SelectedNode = selectedPath.Node;
+			}
+			else
+			{
+				SelectedNode = newCurrentNode;
 			}
 
 			//Debug.WriteLine($"Remove Jobs: is moving the Selected Node to {SelectedNode}.");
@@ -543,7 +563,11 @@ namespace MSS.Common
 
 		private bool IsBranchHead(JobTreeNode node)
 		{
-			var result = node.IsHome || DoesNodeChangeZoom(node) || node.HasRealSiblings;
+			var realChildCount = node.RealChildJobs.Count;
+			var changesZoom = DoesNodeChangeZoom(node);
+			var isHome = node.IsHome;
+
+			var result = isHome || realChildCount > 1 || changesZoom;
 			return result;
 		}
 
@@ -596,16 +620,13 @@ namespace MSS.Common
 			foreach (var (child, grandchild) in pairsToBeOrphaned)
 			{
 				Debug.WriteLine($"Remove Jobs: is removing node to be orphaned: {grandchild.Id} from it's parent: {child.Id}.");
-				_ = child.Remove(grandchild);
-				_ = child.RemoveRealChild(grandchild.Item);
+				_ = RemoveNode(grandchild, child);
 			}
 
 			foreach (var (parent, child) in topLevelPairs)
 			{
 				Debug.WriteLine($"Remove Jobs: removing child: {child.Id} from parent: {parent.Id}.");
-
-				_ = parent.Remove(child);
-				_ = parent.RemoveRealChild(child.Item);
+				_ = RemoveNode(child, parent);
 
 				var siblings = parent.RealChildJobs;
 				if (child.ParentJobId == parent.Id && siblings.Count > 0)
@@ -646,8 +667,30 @@ namespace MSS.Common
 				_ = AddNodeAtParentPath(grandchild, firstParentNode, firstParentPath);
 			}
 
-
 			return topLevelPairs;
+		}
+
+		private bool RemoveNode(JobTreeNode child, JobTreeNode parent)
+		{
+			if (child.ParentJobId != parent.Id)
+			{
+				var realPath = GetPath(child.Item, Root);
+				var realParentNode = realPath.GetParentNodeOrRoot();
+				if (!realParentNode.RemoveRealChild(child.Item))
+				{
+					Debug.WriteLine($"WARNING: could not remove RealChildJob: {child.Id} from real parent: {realParentNode.Id}.");
+				}
+			}
+			else
+			{
+				if (!parent.RemoveRealChild(child.Item))
+				{
+					Debug.WriteLine($"WARNING: could not remove RealChildJob: {child.Id} from parent: {parent.Id}.");
+				}
+			}
+
+			var result = parent.Remove(child);
+			return result;
 		}
 
 		// Find the node that will receive the selection once the node at path is removed.

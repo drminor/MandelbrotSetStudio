@@ -17,11 +17,11 @@ namespace MSS.Common
 		SiblingBranches = 16
 	}
 
-	// Any given node that has one or more siblings or changes the zoom is a "Branch Head."
+	// Any given node that has more than one child or changes the zoom is a "Branch Head."
 	// The first child of the Root Node, i.e., the Home node is considered to be a "Branch Head."
 
 	// The Branch Head for any given node that is itself not a branch head is defined as
-	//		the first ancestor node that has one or more siblings or changes the zoom.
+	//		the first ancestor node that has more than one child or changes the zoom.
 
 	// Preceeding is defined to be the set of ancestor nodes of a given node up to, but not including,
 	//		the first antecendant Branch Head.

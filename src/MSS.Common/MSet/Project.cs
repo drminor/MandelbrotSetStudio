@@ -393,8 +393,18 @@ namespace MSS.Common.MSet
 
 		public IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
 		{
-			var result = _jobTree.RemoveJobs(path, nodeSelectionType);
-			return result;
+			var saveCurrentPath = _jobTree.GetCurrentPath();
+			var nodesRemoved = _jobTree.RemoveJobs(path, nodeSelectionType);
+			var newCurrentPath = _jobTree.GetCurrentPath();
+
+			var wasCurrentJobRemoved = nodesRemoved.Any(x => x.Id == CurrentJob?.Id);
+			if (wasCurrentJobRemoved || newCurrentPath != saveCurrentPath)
+			{
+				Debug.WriteLine($"RemoveJobs has changed the current path. Old: {saveCurrentPath}, new: {newCurrentPath}");
+				OnPropertyChanged(nameof(CurrentJob));
+			}
+
+			return nodesRemoved;
 		}
 
 		public int GetNumberOfDirtyJobs()
