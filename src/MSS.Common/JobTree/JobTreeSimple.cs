@@ -66,59 +66,45 @@ namespace MSS.Common
 				return new List<JobTreeNode>();
 			}
 
-			// Update the selected node, if any being removed in selected.
-			//var selectedNode = SelectedNode;
-
-			//if (jobsToRemove.Any(x => x.child.IsSelected) || selectedNode == null)
-			//{
-			//	selectedNode = GetNewSelectedNode(path);
-			//	SelectedNode = selectedNode;
-			//}
-
 			var saveSelectedNode = SelectedNode;
 			Debug.WriteLine("Remove Jobs: is setting the Selected Node to null.");
 			SelectedNode = null;
 
-			//if (jobsToRemove.Any(x => x.child.IsCurrent))
-			//{
-			//	var newCurrentNode = GetNewCurrentNode(path);
-			//	Debug.WriteLine($"Remove Jobs is updating the Current Item using node: {SelectedNode}.");
-			//	CurrentItem = newCurrentNode.Item;
-			//}
-
-			var saveCurrentItem = CurrentItem;
 			var newCurrentNode = GetNewCurrentNode(path);
-			Debug.WriteLine($"Remove Jobs is updating the Current Item to {newCurrentNode.Item.Id}.");
-			CurrentItem = newCurrentNode.Item;
+			Debug.WriteLine($"Remove Jobs is updating the Current Item to {newCurrentNode?.Item.Id}.");
+			var saveCurrentItem = CurrentItem;
+
+			if (newCurrentNode != null)
+			{
+				CurrentItem = newCurrentNode.Item;
+			}
 
 			var topLevelPairs = RemoveJobs(path, jobsToRemove);
 
+			// Reset the Current Job
+			CurrentItem = TryFindPath(saveCurrentItem, Root, out var newPath) ? newPath.Item : newCurrentNode?.Item ?? Root.Children[0].Item;
+
+			// Reset the Selected Job
+			if (saveSelectedNode != null)
+			{
+				SelectedNode = TryFindPath(saveSelectedNode.Item, Root, out var selectedPath) ? selectedPath.Node : newCurrentNode;
+				Debug.WriteLine($"Remove Jobs: moved the Selected Node to {SelectedNode}.");
+			}
+
+			// Restore or set the Preferred Path
 			if (jobsToRemove.Any(x => x.child.IsOnPreferredPath))
 			{
-				Debug.WriteLine($"Remove Jobs is updating the preferred path using node: {newCurrentNode.Item.Id}.");
-				_ = MakePreferred(newCurrentNode.Item.Id);
+				if (nodeSelectionType is not (NodeSelectionType.Children or NodeSelectionType.Branch or NodeSelectionType.SiblingBranches))
+				{
+					// TODO: Find the last (deepest) descendant of the newCurrentNode whose IsOnPreferredPath property = true.
+				}
+				else
+				{
+					var newPreferredItemId = newCurrentNode?.Item.Id ?? Root.Children[0].Item.Id;
+					Debug.WriteLine($"Remove Jobs is updating the preferred path using node: {newPreferredItemId}.");
+					_ = MakePreferred(newPreferredItemId);
+				}
 			}
-
-			if (TryFindPath(saveCurrentItem, Root, out var currentPath))
-			{
-				CurrentItem = currentPath.Node.Item;
-			}
-
-			if (saveSelectedNode == null)
-			{
-				saveSelectedNode = newCurrentNode;
-			}
-
-			if (TryFindPath(saveSelectedNode.Item, Root, out var selectedPath))
-			{
-				SelectedNode = selectedPath.Node;
-			}
-			else
-			{
-				SelectedNode = newCurrentNode;
-			}
-
-			//Debug.WriteLine($"Remove Jobs: is moving the Selected Node to {SelectedNode}.");
 
 			ReportTopLevelJobsRemoved(topLevelPairs);
 
@@ -629,11 +615,11 @@ namespace MSS.Common
 				_ = RemoveNode(child, parent);
 
 				var siblings = parent.RealChildJobs;
-				if (child.ParentJobId == parent.Id && siblings.Count > 0)
+				if (child.ParentJobId == parent.Id && siblings.Count == 1)
 				{
 					var soleChildJob = siblings.Values[0];
 
-					if (siblings.Count == 1 && !DoesItemChangeZoom(soleChildJob))
+					if (!DoesItemChangeZoom(soleChildJob))
 					{
 						// The parent no longer has child "choices" or "exits"; 
 						// move this sole, remaining child so that it is a child of the parent's parent.
@@ -650,8 +636,6 @@ namespace MSS.Common
 							Debug.WriteLine($"Remove Jobs: moving logical child: {logicalChildNode.Id} to the grandparent node: {grandparentNode.Id}.");
 							_ = logicalChildNode.Move(grandparentNode);
 						}
-
-						//_ = firstChildNode.Move(grandparentNode);
 					}
 				}
 			}
@@ -694,27 +678,9 @@ namespace MSS.Common
 		}
 
 		// Find the node that will receive the selection once the node at path is removed.
-		private JobTreeNode GetNewCurrentNode(JobPathType path)
+		private JobTreeNode? GetNewCurrentNode(JobPathType path)
 		{
-			JobTreeNode result;
-
-			//var parentNode = path.GetParentNodeOrRoot();
-			//var siblings = parentNode.RealChildJobs;
-
-			//if (siblings.Count < 2)
-			//{
-			//	var backPath = GetPreviousItemPath(path, predicate: null);
-			//	result = backPath != null ? backPath.Node : throw new InvalidOperationException("Cannot find a previous item.");
-			//}
-			//else
-			//{
-			//	var jobToReceiveSelection = siblings.LastOrDefault(x => x.Key != path.Node.Id).Value;
-			//	result = parentNode.Children.First(x => x.Id == jobToReceiveSelection.Id);
-			//}
-
-			var backPath = GetPreviousItemPath(path, predicate: null);
-			result = backPath != null ? backPath.Node : throw new InvalidOperationException("Cannot find a previous item.");
-
+			var result = GetPreviousItemPath(path, predicate: null)?.Node;
 			return result;
 		}
 
