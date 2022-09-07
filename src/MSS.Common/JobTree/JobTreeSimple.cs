@@ -656,13 +656,20 @@ namespace MSS.Common
 
 		private bool RemoveNode(JobTreeNode child, JobTreeNode parent)
 		{
-			if (child.ParentJobId != parent.Id)
+			if (child.ParentJobId != null && child.ParentJobId != parent.Id)
 			{
-				var realPath = GetPath(child.Item, Root);
-				var realParentNode = realPath.GetParentNodeOrRoot();
-				if (!realParentNode.RemoveRealChild(child.Item))
+				var realParentPath = GetPathById(child.ParentJobId.Value, Root);
+				if (realParentPath != null)
 				{
-					Debug.WriteLine($"WARNING: could not remove RealChildJob: {child.Id} from real parent: {realParentNode.Id}.");
+					var realParentNode = realParentPath.Node;
+					if (!realParentNode.RemoveRealChild(child.Item))
+					{
+						Debug.WriteLine($"WARNING: could not remove RealChildJob: {child.Id} from real parent: {realParentNode.Id}.");
+					}
+				}
+				else
+				{
+					Debug.WriteLine($"WARNING: could not remove RealChildJob: {child.Id}, could not find any node with Id = {child.ParentJobId.Value}.");
 				}
 			}
 			else

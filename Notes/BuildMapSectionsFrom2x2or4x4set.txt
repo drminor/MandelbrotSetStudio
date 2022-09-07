@@ -1,0 +1,36 @@
+
+
+block at xlo, xhi, ylo, yhi and spd = ?
+
+
+maps to 2 x 2 group at spd = ?
+	xlo	xhi
+1
+2
+3
+4
+
+
+maps to 4 x 4 group at spd = ?
+
+
+	xlo	xhi
+1
+2
+3
+4
+
+1
+2
+3
+4
+
+1
+2
+3
+4
+
+1
+2
+3
+4
