@@ -1,6 +1,6 @@
 ﻿using MEngineDataContracts;
 
-namespace MEngineService
+namespace MapSectionGeneratorLib
 {
 	internal static class MapSectionReqHelper
 	{

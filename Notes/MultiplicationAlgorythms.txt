@@ -1,0 +1,5 @@
+Karatsuba
+Schonhage-Strassen
+Martin Furer
+Harvey & van der Hoeven
+Joris van der Hoeven & David Harvey

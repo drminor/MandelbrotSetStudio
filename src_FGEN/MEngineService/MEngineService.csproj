@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\MapSectionGeneratorLib\MapSectionGeneratorLib.csproj" />
     <ProjectReference Include="..\..\src\MapSectionProviderLib\MapSectionProviderLib.csproj" />
     <ProjectReference Include="..\..\src\MEngineDataContracts\MEngineDataContracts.csproj" />
     <ProjectReference Include="..\..\src\MSetRepo\MSetRepo.csproj" />

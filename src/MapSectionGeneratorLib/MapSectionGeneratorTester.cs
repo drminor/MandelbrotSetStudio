@@ -9,7 +9,7 @@ using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 
-namespace MEngineService
+namespace MapSectionGeneratorLib
 {
 	public class MapSectionGeneratorTester
 	{

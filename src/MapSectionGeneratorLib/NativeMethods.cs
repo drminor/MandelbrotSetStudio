@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace MEngineService
+namespace MapSectionGeneratorLib
 {
 	internal static class NativeMethods
     {

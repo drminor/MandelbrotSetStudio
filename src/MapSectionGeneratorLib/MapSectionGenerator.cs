@@ -1,5 +1,4 @@
 ﻿using MEngineDataContracts;
-using MEngineService.Services;
 using MongoDB.Bson;
 using MSS.Common;
 using System;
@@ -8,7 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace MEngineService
+namespace MapSectionGeneratorLib
 {
 	public static class MapSectionGenerator
 	{
@@ -16,25 +15,25 @@ namespace MEngineService
 		public static string[] GetStringVals(MapSectionRequest mapSectionRequest)
 		{
 			var requestStruct = MapSectionReqHelper.GetRequestStruct(mapSectionRequest);
-			string px = new string('1', 200);
-			string py = new string('1', 200);
-			string dw = new string('1', 200);
-			string dh = new string('1', 200);
+			//var px = new string('1', 200);
+			//var py = new string('1', 200);
+			//var dw = new string('1', 200);
+			//var dh = new string('1', 200);
 
-			NativeMethods.GetStringValues(requestStruct, out px, out py, out dw, out dh);
+			NativeMethods.GetStringValues(requestStruct, out var px, out var py, out var dw, out var dh);
 
 			return new string[] { px, py, dw, dh };
 		}
 
 		public static async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, IMapSectionAdapter mapSectionAdapter)
 		{
-			ushort[] counts = GetCounts(mapSectionRequest);
-			ushort[] escapeVelocities = GetEscapeVelocities(mapSectionRequest);
+			var counts = GetCounts(mapSectionRequest);
+			var escapeVelocities = GetEscapeVelocities(mapSectionRequest);
 
 			var countsAndEscVels = GetCountsAndEscVelsBuffer(counts, escapeVelocities, out var countsAndEscVelsBuffer);
 
 			// Done Flags
-			byte[] doneFlagsAsBArray = ConvertDoneFlags(mapSectionRequest);
+			var doneFlagsAsBArray = ConvertDoneFlags(mapSectionRequest);
 			var doneFlagsBuffer = GetDoneFlagsBuffer(doneFlagsAsBArray);
 
 			// ZValues
@@ -210,7 +209,7 @@ namespace MEngineService
 		{
 			Debug.Assert(Marshal.SizeOf(typeof(byte)) == 1, "Byte length is not 1.");
 
-			IntPtr doneFlagsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(byte)) * doneFlagsAsBArray.Length);
+			var doneFlagsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(byte)) * doneFlagsAsBArray.Length);
 			Marshal.Copy(doneFlagsAsBArray, 0, doneFlagsBuffer, doneFlagsAsBArray.Length);
 
 			return doneFlagsBuffer;

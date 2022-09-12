@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace MEngineService
+namespace MapSectionGeneratorLib
 {
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     public struct MapSectionRequestStruct
