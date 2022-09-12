@@ -100,12 +100,13 @@
                                 <TextBlock Text="{Binding Iterations}" Foreground="ForestGreen" />
 
                                 <!-- Created -->
+                                <!--<TextBlock Text="   " Foreground="DarkBlue"/>
+                                <TextBlock Text="{Binding Created}" Foreground="DarkBlue" />-->
+
+                                <!-- Id and ParentId -->
                                 <TextBlock Text="   " Foreground="DarkBlue"/>
-                                <TextBlock Text="{Binding Created}" Foreground="DarkBlue" />
-
-                                <!--<TextBlock Text="   " Foreground="{Binding ItemColor}"/>
-                                <TextBlock Text="{Binding Created}" Foreground="{Binding ItemColor}" />-->
-
+                                <TextBlock Text="{Binding IdAndParentId}" Foreground="DarkBlue" />
+                                
                                 <!-- Child Count -->
                                 <!--<TextBlock Text=" [" Foreground="DarkGreen"/>
                                 <TextBlock Text="{Binding Children.Count}" Foreground="DarkGreen" />

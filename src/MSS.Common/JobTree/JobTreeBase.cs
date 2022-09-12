@@ -328,8 +328,8 @@ namespace MSS.Common
 
 			foreach (var nodeAndParent in nodeAndParents)
 			{
-				var job = nodeAndParent.Item2.Item;
-				var parentJob = nodeAndParent.Item1?.Item;
+				var job = nodeAndParent.child.Item;
+				var parentJob = nodeAndParent.parent?.Item;
 				Debug.WriteLine($"{job.Id}\t{parentJob?.Id.ToString() ?? "null\t\t\t\t\t"}\t{job.DateCreated}\t{job.TransformType}\t{job.Id.Timestamp}");
 			}
 		}

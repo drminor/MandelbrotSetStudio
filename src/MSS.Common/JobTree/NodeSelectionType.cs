@@ -14,7 +14,9 @@ namespace MSS.Common
 		Run = 1 | 2 | 4,
 		Children = 8,
 		Branch = 1 | 8,
-		SiblingBranches = 16
+		Ancestors = 16,
+		AllButPreferred = 32,
+		SiblingBranches = 64
 	}
 
 	// Any given node that has more than one child or changes the zoom is a "Branch Head."

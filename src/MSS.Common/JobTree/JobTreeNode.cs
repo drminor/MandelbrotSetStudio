@@ -317,23 +317,47 @@ namespace MSS.Common
 
 		public string? PathHeadType => IsActiveAlternate ? "[Alt]" : IsParkedAlternate ? "[Prk]" : null;
 
+		//public new string IdAndParentId
+		//{
+		//	get
+		//	{
+		//		var result = Item.Id + ", " + (Item.ParentJobId?.ToString() ?? "null");
+		//		if (IsActiveAlternate)
+		//		{
+		//			result += ", Alt: Yes";
+		//		}
+
+		//		if (IsParkedAlternate)
+		//		{
+		//			result += ", Prk: Yes";
+		//		}
+
+		//		return result;
+		//	}
+		//}
+
 		public new string IdAndParentId
 		{
 			get
 			{
-				var result = Item.Id + ", " + (Item.ParentJobId?.ToString() ?? "null");
-				if (IsActiveAlternate)
+				var result = GetLast4Chars(Item.Id);
+				if (Item.ParentJobId != null)
 				{
-					result += ", Alt: Yes";
+					result += $", {GetLast4Chars(Item.ParentJobId.Value)}";
 				}
-
-				if (IsParkedAlternate)
+				else
 				{
-					result += ", Prk: Yes";
+					result += ", null";
 				}
 
 				return result;
 			}
+		}
+
+		private string GetLast4Chars(ObjectId id)
+		{
+			var s = id.ToString();
+			return s.Substring(s.Length - 4, 4);
 		}
 
 		#endregion

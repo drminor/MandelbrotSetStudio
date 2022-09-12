@@ -49,6 +49,18 @@ namespace MSetExplorer
 			SelectionType = NodeSelectionType.SingleNode;						// 1
 		}
 
+		private void PreceedingButton_Click(object sender, RoutedEventArgs e)
+		{
+			SelectionType = NodeSelectionType.SinglePlusPreceeding;             // 1 | 2				
+			DialogResult = true;
+		}
+
+		private void FollowingButton_Click(object sender, RoutedEventArgs e)
+		{
+			SelectionType = NodeSelectionType.SinglePlusFollowing;              // 1 | 4
+			DialogResult = true;
+		}
+
 		private void RunButton_Click(object sender, RoutedEventArgs e)
 		{
 			DialogResult = true;
@@ -57,25 +69,25 @@ namespace MSetExplorer
 
 		private void BranchButton_Click(object sender, RoutedEventArgs e)
 		{
-			SelectionType = NodeSelectionType.Branch;					       // 1 | 8
+			SelectionType = NodeSelectionType.Branch;							// 1 | 8
+			DialogResult = true;
+		}
+
+		private void AncestorsButton_Click(object sender, RoutedEventArgs e)
+		{
+			SelectionType = NodeSelectionType.Branch;							// 16
+			DialogResult = true;
+		}
+
+		private void NonPreferredButton_Click(object sender, RoutedEventArgs e)
+		{
+			SelectionType = NodeSelectionType.AllButPreferred;					// 32
 			DialogResult = true;
 		}
 
 		private void SiblingsButton_Click(object sender, RoutedEventArgs e)
 		{
-			SelectionType = NodeSelectionType.SiblingBranches;					// 16
-			DialogResult = true;
-		}
-
-		private void PreceedingButton_Click(object sender, RoutedEventArgs e)
-		{
-			SelectionType = NodeSelectionType.SinglePlusPreceeding;				// 1 | 2				
-			DialogResult = true;
-		}
-
-		private void FollowingButton_Click(object sender, RoutedEventArgs e)
-		{
-			SelectionType = NodeSelectionType.SinglePlusFollowing;				// 1 | 4
+			SelectionType = NodeSelectionType.SiblingBranches;					// 64
 			DialogResult = true;
 		}
 
@@ -83,6 +95,44 @@ namespace MSetExplorer
 		{
 			DialogResult = false;
 		}
+
+		/* Button Panel Visibility Guide
+
+			B	R
+			Y	Y	SingleNode
+			N	Y	Preceeding
+			N	Y	Following
+			Y	Y	Run
+			Y	N	Branch
+			Y	Y	Ancestors
+			Y	Y	AllButPreferred
+			Y	N	SiblingBranches
+
+
+			--Branch--
+
+			SingleNode
+			Run
+
+			Branch
+
+			Ancestors
+			AllButPreferred
+
+			SiblingBranches
+
+			--Run--
+
+			SingleNode
+			Run
+
+			Preceeding
+			Following
+
+			Ancestors
+			AllButPreferred
+
+		*/
 
 		#endregion
 	}
