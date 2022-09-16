@@ -16,8 +16,6 @@ namespace MapSectionProviderLib
 
 		private readonly IMEngineClient[] _mEngineClients;
 
-		//private readonly MapSectionPersistProcessor? _mapSectionPersistProcessor;
-
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<MapSectionGenerateRequest> _workQueue;
 
@@ -30,10 +28,9 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients/*, MapSectionPersistProcessor? mapSectionPersistProcessor*/)
+		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients)
 		{
 			_mEngineClients = mEngineClients;
-			//_mapSectionPersistProcessor = mapSectionPersistProcessor;
 
 			_cts = new CancellationTokenSource();
 			_workQueue = new BlockingCollection<MapSectionGenerateRequest>(QUEUE_CAPACITY);
@@ -116,15 +113,13 @@ namespace MapSectionProviderLib
 				}
 			}
 			catch { }
-
-			//_mapSectionPersistProcessor?.Stop(immediately);
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private async Task ProcessTheQueueAsync(IMEngineClient mEngineClient/*, MapSectionPersistProcessor? mapSectionPersistProcessor*/, CancellationToken ct)
+		private async Task ProcessTheQueueAsync(IMEngineClient mEngineClient, CancellationToken ct)
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
@@ -144,7 +139,6 @@ namespace MapSectionProviderLib
 					else
 					{
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
-						//mapSectionResponse = await _mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 
 						if (mapSectionResponse.IsEmpty)
@@ -157,8 +151,6 @@ namespace MapSectionProviderLib
 							Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
 						}
 
-						//mapSectionResponse.MapSectionId = mapSectionRequest.MapSectionId;
-						//mapSectionPersistProcessor.AddWork(mapSectionResponse);
 						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 					}
 

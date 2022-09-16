@@ -1,4 +1,5 @@
-﻿using MapSectionProviderLib;
+﻿using MapSectionGeneratorLib;
+using MapSectionProviderLib;
 using MEngineClient;
 using MSetRepo;
 using MSS.Common;
@@ -30,8 +31,10 @@ namespace MSetExplorer
 		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
-		private static readonly bool START_LOCAL_ENGINE = true; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
-		private static readonly bool USE_LOCAL_ENGINE = true; // If true, we will host a server -- AND include it in the list of servers to use by our client.
+		private static readonly bool USE_M_ENGINE_SERVICE = false; 
+
+		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
+		private static readonly bool USE_LOCAL_ENGINE = false; // If true, we will host a server -- AND include it in the list of servers to use by our client.
 		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
 
 		private const bool FETCH_ZVALUES_LOCALLY = false;
@@ -39,6 +42,7 @@ namespace MSetExplorer
 		private readonly MEngineServerManager? _mEngineServerManager;
 		private RepositoryAdapters? _repositoryAdapters;
 		private IMapLoaderManager? _mapLoaderManager;
+		private MapSectionPersistProcessor? _mapSectionPersistProcessor;
 
 		private AppNavWindow? _appNavWindow;
 
@@ -87,7 +91,11 @@ namespace MSetExplorer
 				mEngineAddresses.Add(LOCAL_M_ENGINE_ADDRESS);
 			}
 
-			_mapLoaderManager = BuildMapLoaderManager(mEngineAddresses, _repositoryAdapters.MapSectionAdapter, FETCH_ZVALUES_LOCALLY);
+			var mEngineClients = USE_M_ENGINE_SERVICE 
+				? CreateMEngineClients(mEngineAddresses) 
+				: CreateInProcessMEngineClient(_repositoryAdapters.MapSectionAdapter, out _mapSectionPersistProcessor);
+
+			_mapLoaderManager = BuildMapLoaderManager(mEngineClients, _repositoryAdapters.MapSectionAdapter, FETCH_ZVALUES_LOCALLY);
 
 			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager);
 			_appNavWindow.Show();
@@ -101,6 +109,11 @@ namespace MSetExplorer
 			{
 				// This disposes the MapSectionRequestProcessor, MapSectionGeneratorProcessor and MapSectionResponseProcessor.
 				_mapLoaderManager.Dispose();
+			}
+
+			if (_mapSectionPersistProcessor != null)
+			{
+				_mapSectionPersistProcessor.Dispose();
 			}
 
 			_mEngineServerManager?.Stop();
@@ -120,9 +133,22 @@ namespace MSetExplorer
 			return appNavWindow;
 		}
 
-		private IMapLoaderManager BuildMapLoaderManager(IList<string> mEngineEndPointAddress, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
+		private IMEngineClient[] CreateMEngineClients(IList<string> mEngineEndPointAddress)
 		{
 			var mEngineClients = mEngineEndPointAddress.Select(x => new MClient(x)).ToArray();
+			return mEngineClients;
+		}
+
+		private IMEngineClient[] CreateInProcessMEngineClient(IMapSectionAdapter mapSectionAdapter, out MapSectionPersistProcessor mapSectionPersistProcessor)
+		{
+			mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter);
+			var inProcessClient = new MClientInProcess(mapSectionAdapter, mapSectionPersistProcessor);
+			var mEngineClients = new[] { inProcessClient };
+			return mEngineClients;
+		}
+
+		private IMapLoaderManager BuildMapLoaderManager(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
+		{
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, mapSectionAdapter, fetchZValues);
 
 			var mapSectionHelper = new MapSectionHelper();

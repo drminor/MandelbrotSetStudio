@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ImageBuilder\ImageBuilder.csproj" />
+    <ProjectReference Include="..\MapSectionGeneratorLib\MapSectionGeneratorLib.csproj" />
     <ProjectReference Include="..\MapSectionProviderLib\MapSectionProviderLib.csproj" />
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
     <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />

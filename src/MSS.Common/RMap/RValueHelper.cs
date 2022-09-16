@@ -78,7 +78,8 @@ namespace MSS.Common
 			var formatProvider = CultureInfo.InvariantCulture;
 
 			var pow = (int)Math.Round(3.3333 * (1 + sme.NumberOfDigitsAfterDecimalPoint));
-			var bigInt = BigInteger.Parse(sme.Mantissa, formatProvider);
+			var digits = sme.Mantissa.Replace(",", "");
+			var bigInt = BigInteger.Parse(digits, formatProvider);
 
 			var factor = BigInteger.Pow(2, pow);
 			bigInt *= factor;
