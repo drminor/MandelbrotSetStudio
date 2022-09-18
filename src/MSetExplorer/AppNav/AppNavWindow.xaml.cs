@@ -26,7 +26,7 @@ namespace MSetExplorer
 			InitializeComponent();
 		}
 
-		private void AppNavWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+		private void AppNavWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
 		{
 			ExitApp();
 		}

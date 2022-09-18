@@ -84,7 +84,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void PosterDesignerWindow_Closing(object sender, CancelEventArgs e)
+		private void PosterDesignerWindow_Closing(object? sender, CancelEventArgs e)
 		{
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)

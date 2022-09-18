@@ -81,7 +81,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ExplorerWindow_Closing(object sender, CancelEventArgs e)
+		private void ExplorerWindow_Closing(object? sender, CancelEventArgs e)
 		{
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)

@@ -45,7 +45,7 @@ namespace MSetExplorer
 			InitializeComponent();
 		}
 
-		private void PosterSizeEditorDialog_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+		private void PosterSizeEditorDialog_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
 		{
 			_vm.CancelPreviewImageGeneration();
 		}
