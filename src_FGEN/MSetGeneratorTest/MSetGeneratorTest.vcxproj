@@ -137,14 +137,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="IntrinsicTests.cpp" />
+    <CustomBuild Include="IntrinsicTests.h">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">python ..\..\..\CxxTestLib\bin\cxxtestgen.py --runner=ParenPrinter -o TestRunner.cpp --headers=HeadersToTest.txt</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generates the Test Runner Class</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TestRunner.cpp</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="IntrinsicTests.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">python ..\..\..\CxxTestLib\bin\cxxtestgen.py --runner=ParenPrinter -o IntrinsicTests.cpp IntrinsicTests.h</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generates the Test Runner Class</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">IntrinsicTests.cpp</Outputs>
+    <CustomBuild Include="SampleTests.h">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">python ..\..\..\CxxTestLib\bin\cxxtestgen.py --runner=ParenPrinter -o SampleTests.cpp SampleTests.h</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">SampleTests.cpp</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="HeadersToTest.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="TestRunner.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
