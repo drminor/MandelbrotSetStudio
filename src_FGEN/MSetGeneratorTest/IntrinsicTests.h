@@ -2,12 +2,12 @@
 
 #include <cxxtest/TestSuite.h>
 
-class MyTestSuite : public CxxTest::TestSuite
+class IntrinsicTest : public CxxTest::TestSuite
 {
 public:
 	void testMultiplication(void)
 	{
-		TS_ASSERT_EQUALS(2 * 2, 5);
+		TS_ASSERT_EQUALS(2 * 2, 4);
 	}
 
 	void testAddition(void)
