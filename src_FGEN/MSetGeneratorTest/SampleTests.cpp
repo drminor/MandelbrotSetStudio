@@ -18,32 +18,7 @@ int main( int argc, char *argv[] ) {
     status = CxxTest::Main< CxxTest::ParenPrinter >( tmp, argc, argv );
     return status;
 }
-bool suite_IntrinsicTest_init = false;
-#include "IntrinsicTests.h"
-
-static IntrinsicTest suite_IntrinsicTest;
-
-static CxxTest::List Tests_IntrinsicTest = { 0, 0 };
-CxxTest::StaticSuiteDescription suiteDescription_IntrinsicTest( "IntrinsicTests.h", 7, "IntrinsicTest", suite_IntrinsicTest, Tests_IntrinsicTest );
-
-static class TestDescription_suite_IntrinsicTest_testMultiplication : public CxxTest::RealTestDescription {
-public:
- TestDescription_suite_IntrinsicTest_testMultiplication() : CxxTest::RealTestDescription( Tests_IntrinsicTest, suiteDescription_IntrinsicTest, 12, "testMultiplication" ) {}
- void runTest() { suite_IntrinsicTest.testMultiplication(); }
-} testDescription_suite_IntrinsicTest_testMultiplication;
-
-static class TestDescription_suite_IntrinsicTest_testAddition : public CxxTest::RealTestDescription {
-public:
- TestDescription_suite_IntrinsicTest_testAddition() : CxxTest::RealTestDescription( Tests_IntrinsicTest, suiteDescription_IntrinsicTest, 17, "testAddition" ) {}
- void runTest() { suite_IntrinsicTest.testAddition(); }
-} testDescription_suite_IntrinsicTest_testAddition;
-
-static class TestDescription_suite_IntrinsicTest_testVecAdd : public CxxTest::RealTestDescription {
-public:
- TestDescription_suite_IntrinsicTest_testVecAdd() : CxxTest::RealTestDescription( Tests_IntrinsicTest, suiteDescription_IntrinsicTest, 23, "testVecAdd" ) {}
- void runTest() { suite_IntrinsicTest.testVecAdd(); }
-} testDescription_suite_IntrinsicTest_testVecAdd;
-
+bool suite_SampleTest_init = false;
 #include "SampleTests.h"
 
 static SampleTest suite_SampleTest;
