@@ -14,7 +14,10 @@ namespace MSS.Types
 		private static readonly double NAT_LOG_OF_2 = Math.Log(2);
 
 		// Largest integer that can be represented by a double for which it and all smaller integers can be reduced by 1 without loosing precision.
-		private static readonly BigInteger FACTOR = BigInteger.Pow(2, 53);
+		private static readonly BigInteger MAX_DP_INTEGER = BigInteger.Pow(2, 53);
+
+		// Integer used to convert BigIntegers to/from array of longs.
+		private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, 64);
 
 		#region Division
 
@@ -222,7 +225,7 @@ namespace MSS.Types
 
 		public static long[] ToLongs(BigInteger bi)
 		{
-			var hi = BigInteger.DivRem(bi, FACTOR, out var lo);
+			var hi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
 
 			//if (hi > 0)
 			//{
@@ -254,7 +257,7 @@ namespace MSS.Types
 		{
 			Debug.Assert(values.Length == 2, "FromLongs received array of values whose length is not 2.");
 
-			var result = FACTOR * values[0];
+			var result = LONG_FACTOR * values[0];
 			result += values[1];
 
 			return result;
@@ -369,7 +372,7 @@ namespace MSS.Types
 		public static bool SafeCastToDouble(BigInteger n)
 		{
 			//bool result = DOUBLE_MIN_VALUE <= n && n <= DOUBLE_MAX_VALUE;
-			var result = BigInteger.Abs(n) <= FACTOR;
+			var result = BigInteger.Abs(n) <= MAX_DP_INTEGER;
 
 			return result;
 		}
