@@ -14,7 +14,7 @@ namespace MSS.Types
 
 		public int Exponent { get; init; }
 
-		public int Precision { get; set; }
+		public int Precision { get; set; }	// Number of significan binary digits
 
 		public RRectangle() : this(0, 0, 0, 0, 0)
 		{ }
@@ -48,7 +48,7 @@ namespace MSS.Types
 		{
 			Values = new BigInteger[] { x1, x2, y1, y2 };
 			Exponent = exponent;
-			Precision = precision ?? BigIntegerHelper.MAX_PRECISION;
+			Precision = precision ?? BigIntegerHelper.DEFAULT_PRECISION;
 			Validate();
 		}
 

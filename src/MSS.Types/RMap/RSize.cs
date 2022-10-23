@@ -116,13 +116,13 @@ namespace MSS.Types
 		//	return new RSize(w, h, Exponent);
 		//}
 
+		#region ToString / IEqualityComparer / IEquatable Support
+
 		public override string ToString()
 		{
 			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
 			return result;
 		}
-
-		#region IEqualityComparer / IEquatable Support
 
 		public bool Equals(RSize? a, RSize? b)
 		{
@@ -167,6 +167,5 @@ namespace MSS.Types
 		}
 
 		#endregion
-
 	}
 }

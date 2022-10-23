@@ -9,15 +9,15 @@ namespace MSS.Types
 {
 	public static class BigIntegerHelper
 	{
-		public const int MAX_PRECISION = 33;
+		public const int DEFAULT_PRECISION = 33; // Number of significan binary digits
 
 		private static readonly double NAT_LOG_OF_2 = Math.Log(2);
 
 		// Largest integer that can be represented by a double for which it and all smaller integers can be reduced by 1 without loosing precision.
 		private static readonly BigInteger MAX_DP_INTEGER = BigInteger.Pow(2, 53);
 
-		// Integer used to convert BigIntegers to/from array of longs.
-		private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, 64);
+		// Integer used to convert BigIntegers to/from array of ulongs.
+		private static readonly BigInteger LONG_FACTOR = new BigInteger(long.MaxValue); // BigInteger.Add(BigInteger.One, BigInteger.Pow(2, 63));
 
 		#region Division
 
@@ -173,7 +173,7 @@ namespace MSS.Types
 		{
 			var formatProvider = CultureInfo.InvariantCulture;
 
-			var result = $"{rValue.Value}/{ Math.Pow(2, -1 * rValue.Exponent).ToString(formatProvider)}";
+			var result = $"{rValue.Value}/2^{(-1 * rValue.Exponent).ToString(formatProvider)}";
 
 			// TODO: Use Convert RValue To String insted of ConvertToDouble.
 			// TODO: Use the RValue's precision to inform the ConvertToDouble method
@@ -182,7 +182,7 @@ namespace MSS.Types
 				result += $"({ConvertToDouble(rValue)})";
 			}
 
-			result += $" exp: {rValue.Exponent.ToString(formatProvider)}";
+			//result += $" exp: {rValue.Exponent.ToString(formatProvider)}";
 
 			return result;
 		}
@@ -196,7 +196,7 @@ namespace MSS.Types
 		{
 			var formatProvider = CultureInfo.InvariantCulture;
 
-			var strDenominator = Math.Pow(2, -1 * exponent).ToString(formatProvider);
+			var strDenominator = $"2^{(-1 * exponent).ToString(formatProvider)}"; 	//"; Math.Pow(2, -1 * exponent).ToString(formatProvider);
 
 			string[] strVals;
 			if (includeDecimalOutput)
@@ -209,13 +209,16 @@ namespace MSS.Types
 				strVals = values.Select((x, i) => new string(x.ToString(formatProvider) + "/" + strDenominator)).ToArray();
 			}
 
-			var display = string.Join("; ", strVals) + " exp:" + exponent.ToString(formatProvider);
+			var display = string.Join("; ", strVals); // + " exp:" + exponent.ToString(formatProvider);
+
 			return display;
 		}
 
 		#endregion
 
-		#region Convert to Integer Types
+		#region Convert to Array of Longs
+
+		// TODO: Use Little-Endian format, instead of Big-Endian format when creating an Array of Longs from a BigInteger
 
 		public static long[][] ToLongs(BigInteger[] values)
 		{
@@ -262,6 +265,10 @@ namespace MSS.Types
 
 			return result;
 		}
+
+		#endregion
+
+		#region Convert to Integer
 
 		public static bool TryConvertToInt(IBigRatShape bigRatShape, out int[] values)
 		{
@@ -379,6 +386,48 @@ namespace MSS.Types
 
 		#endregion
 
+		#region Precision Support
+
+		public static RValue TrimToMatchPrecision(RValue rValue)
+		{
+			var result = TrimToMatchPrecision(rValue, rValue.Precision);
+			return result;
+		}
+
+		public static RValue TrimToNumBaseUIntDigits(RValue rValue, int numberOfBaseUIntDigits)
+		{
+			var result = TrimToMatchPrecision(rValue, numberOfBaseUIntDigits * 32);
+			return result;
+		}
+
+		public static RValue TrimToMatchPrecision(RValue rValue, int precision)
+		{
+			var numberOfDecimalDigits = (int)Math.Round(Math.Log10(2) * precision, MidpointRounding.AwayFromZero);
+			numberOfDecimalDigits++; // Leave an extra decimal digit for padding or rounding
+
+			var bStr = rValue.Value.ToString(CultureInfo.InvariantCulture);
+			var indexOfFSD = bStr.IndexOfAny(new[] { '1', '2', '3', '4', '5', '6', '7', '8', '9' });
+
+			var bStrLength = bStr.Length - indexOfFSD;
+
+			if (bStrLength > numberOfDecimalDigits)
+			{
+				var dDiff = bStrLength - numberOfDecimalDigits;
+
+				var diffInBinaryDigits = (int)Math.Round(dDiff / Math.Log10(2), MidpointRounding.ToZero);
+
+				//var divisorPow =  (int)Math.Round(Math.Log2(bDiff), MidpointRounding.ToZero);
+				var divisor = BigInteger.Pow(2, diffInBinaryDigits);
+
+				var result = new RValue(rValue.Value / divisor, rValue.Exponent + diffInBinaryDigits, rValue.Precision);
+				return result;
+			}
+			else
+			{
+				return rValue;
+			}
+		}
+
 		public static int GetPrecision(IBigRatShape ratShape)
 		{
 			var result = GetPrecision(ratShape.Values, ratShape.Exponent);
@@ -410,6 +459,25 @@ namespace MSS.Types
 
 			return precision;
 		}
+
+		public static int GetNumBaseUIntDigits(int precision)
+		{
+			if (precision <= 32)
+			{
+				return 1;
+			}
+
+			var result = Math.DivRem(precision, 32, out var remainder);	
+			if (remainder > 0)
+			{
+				result++;
+			}
+
+			return result;
+		}
+
+
+		#endregion
 
 	}
 }

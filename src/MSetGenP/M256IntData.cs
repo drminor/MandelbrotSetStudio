@@ -7,28 +7,28 @@ namespace MSetGenP
 	public unsafe struct M256IntData
 	{
 		[FieldOffset(0)]
-		public byte Int0;
+		public uint Int0;
 		
 		[FieldOffset(32)]
-		public byte Int1;
+		public uint Int1;
 
 		[FieldOffset(64)]
-		public byte Int2;
+		public uint Int2;
 
 		[FieldOffset(96)]
-		public byte Int3;
+		public uint Int3;
 
 		[FieldOffset(128)]
-		public byte Int4;
+		public uint Int4;
 
 		[FieldOffset(160)]
-		public byte Int5;
+		public uint Int5;
 
 		[FieldOffset(192)]
-		public byte Int6;
+		public uint Int6;
 
 		[FieldOffset(224)]
-		public byte Int7;
+		public uint Int7;
 
 
 		[FieldOffset(0)]

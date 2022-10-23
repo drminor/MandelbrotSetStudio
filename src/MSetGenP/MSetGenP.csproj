@@ -8,4 +8,9 @@
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
+    <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
+  </ItemGroup>
+
 </Project>

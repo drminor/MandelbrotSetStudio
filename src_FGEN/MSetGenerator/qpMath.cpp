@@ -28,7 +28,11 @@ qp qpMath::fromLongRational(LONGLONG hi, LONGLONG lo, int exponent)
 	//qp n = add(nH, nL);
 	//qp result = mulD(n, e);
 
-	qp nh = qp(std::ldexp(hi, 64));
+
+	//qp nh = qp(std::ldexp(hi, 64));
+
+	double dHi = MAXLONGLONG * hi;
+	qp nh = qp(dHi);
 	qp nl = qp(lo);
 	qp n = add(nh, nl);
 

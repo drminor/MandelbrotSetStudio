@@ -21,7 +21,7 @@ namespace MSS.Types
 		{
 			Values = new BigInteger[] { value };
 			Exponent = exponent;
-			Precision = precision ?? BigIntegerHelper.MAX_PRECISION;
+			Precision = precision ?? BigIntegerHelper.DEFAULT_PRECISION;
 		}
 
 		#endregion
@@ -57,6 +57,16 @@ namespace MSS.Types
 			}
 
 			return new RValue(Value - rValue.Value, Exponent, Math.Min(Precision, rValue.Precision));
+		}
+
+		// TODO: Adjust the Product and Exponent to be no more precise than the new precision.
+		public RValue Mul(RValue rValue)
+		{
+			var result = new RValue(Value * rValue.Value, Exponent + rValue.Exponent, Math.Min(Precision, rValue.Precision));
+
+			result = BigIntegerHelper.TrimToMatchPrecision(result);
+
+			return result;
 		}
 
 		public static RValue Min(RValue a, RValue b)
@@ -97,9 +107,12 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			var reducedVal = Reducer.Reduce(this);
-			var result = BigIntegerHelper.GetDisplay(reducedVal);
-			
+			//var reducedVal = Reducer.Reduce(this);
+			//var result = BigIntegerHelper.GetDisplay(reducedVal);
+
+			var result = BigIntegerHelper.GetDisplay(this, includeDecimalOutput: false);
+
+
 			return result;
 		}
 
