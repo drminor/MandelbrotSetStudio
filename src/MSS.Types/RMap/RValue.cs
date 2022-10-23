@@ -59,11 +59,17 @@ namespace MSS.Types
 			return new RValue(Value - rValue.Value, Exponent, Math.Min(Precision, rValue.Precision));
 		}
 
-		// TODO: Adjust the Product and Exponent to be no more precise than the new precision.
 		public RValue Mul(RValue rValue)
 		{
 			var result = new RValue(Value * rValue.Value, Exponent + rValue.Exponent, Math.Min(Precision, rValue.Precision));
+			result = BigIntegerHelper.TrimToMatchPrecision(result);
 
+			return result;
+		}
+
+		public RValue Square()
+		{
+			var result = new RValue(BigInteger.Pow(Value, 2), Exponent * 2, Precision);
 			result = BigIntegerHelper.TrimToMatchPrecision(result);
 
 			return result;

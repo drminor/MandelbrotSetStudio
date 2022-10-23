@@ -8,9 +8,11 @@ namespace MSetGenP
 {
 	public class SmxMathHelper
 	{
+		#region Multiply and Square
+
 		public static Smx Multiply(Smx a, Smx b)
 		{
-			var mantissa = MultiplyRaw(a.Mantissa, b.Mantissa);
+			var mantissa = Multiply(a.Mantissa, b.Mantissa);
 
 			var sign = a.Sign == b.Sign;
 			var exponent = a.Exponent + b.Exponent;
@@ -21,7 +23,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static ulong[] MultiplyRaw(ulong[] ax, ulong[] bx)
+		public static ulong[] Multiply(ulong[] ax, ulong[] bx)
 		{
 			Debug.WriteLine(GetDiagDisplay("ax", ax));
 			Debug.WriteLine(GetDiagDisplay("bx", bx));
@@ -62,6 +64,123 @@ namespace MSetGenP
 
 			return fullMantissa;
 		}
+
+		public static Smx Square(Smx a)
+		{
+			var mantissa = Square(a.Mantissa);
+			Smx result = BuildSmx(true, mantissa, a.Exponent * 2, a.Precision);
+
+			return result;
+		}
+
+		public static ulong[] Square(ulong[] ax)
+		{
+			Debug.WriteLine(GetDiagDisplay("ax", ax));
+
+			var seive = new ulong[(int)Math.Pow(ax.Length, 2)];
+
+			var fullMantissa = new ulong[ax.Length * 2];
+
+			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
+			for (int j = 0; j < ax.Length; j++)
+			{
+				for (int i = 0; i < ax.Length; i++)
+				{
+					ulong product;
+
+					if (j > i)
+					{
+						continue;
+					}
+
+					product = ax[j] * ax[i];
+					seive[j * ax.Length + i] = product;
+
+					if (j < i)
+					{
+						seive[i * ax.Length + j] = product;
+						product *= 2;
+					}
+
+					var resultPtr = j + i;  // 0, 1, 1, 2
+
+					var lo = Split(product, out var hi);
+					fullMantissa[resultPtr] += lo;
+					fullMantissa[resultPtr + 1] += hi;
+				}
+			}
+
+			var splitSieve = Split(seive);
+			Debug.WriteLine(GetDiagDisplay("sieve", splitSieve, ax.Length * 2));
+
+			Debug.WriteLine(GetDiagDisplay("result", fullMantissa));
+
+			// Process the carry portion of each result bin.
+			// This will leave each result bin with a value <= 2^32 for the final digit.
+			for (int i = 1; i < fullMantissa.Length - 1; i++)
+			{
+				var lo = Split(fullMantissa[i], out var hi);
+				fullMantissa[i] = lo;
+				fullMantissa[i + 1] += hi;
+			}
+
+			return fullMantissa;
+		}
+
+		/* What partial product gets added to which bin
+
+			//  2 x 2						3 x 3										4 x 4
+			// 0, 1,   1, 2		 0, 1, 2,   1, 2, 3,  2, 3  4		0, 1, 2, 3,   1, 2, 3, 4,    2, 3, 4, 5,    3, 4, 5, 6 
+			// 1, 2,   2, 3      1, 2, 3,   2, 3, 4,  3, 4, 5       1, 2, 3, 4,   2, 3, 4, 5,    3, 4, 5, 6,    4, 5, 6, 7
+
+				2 x 2
+			index a index b	index c	on, or below the diagonal 
+			0		0		0		D		E
+			0		1		1		B		E
+			1		0		1		A		S
+			1		1		2		D		E
+
+				3 x 3
+			0		0		0		D		E
+			0		1		1		B		E
+			0		2		2		B		E
+
+			1		0		1		A		S
+			1		1		2		D		E
+			1		2		3		B		E
+
+			2		0		2		A		S
+			2		1		3		A		S
+			2		2		4		D		E
+
+				4 x 4
+			0		0		0		D		E
+			0		1		1		B		E
+			0		2		2		B		E	**
+			0		3		3		B		E
+
+			1		0		1		A		S
+			1		1		2		D		E
+			1		2		3		B		E
+			1		3		4		B		E
+
+			2		0		2		A		S	**
+			2		1		3		A		S
+			2		2		4		D		E
+			2		3		5		B		E
+
+			3		0		3		A		S
+			3		1		4		A		S
+			3		2		5		A		S
+			3		3		6		D		E
+
+
+
+		*/
+
+		#endregion
+
+		#region Build Smx Support
 
 		private static Smx BuildSmx(bool sign, ulong[] mantissa, int exponent, int precision)
 		{
@@ -185,6 +304,8 @@ namespace MSetGenP
 			}
 
 		}
+
+		#endregion
 
 		#region Split and Pack 
 
@@ -375,18 +496,6 @@ namespace MSetGenP
 		#region RValue Comparison
 
 		public static bool AreClose(RValue a, RValue b)
-		{
-			if (Math.Abs(a.Exponent) > Math.Abs(b.Exponent))
-			{
-				return AreCloseInternal(b, a);
-			}
-			else
-			{
-				return AreCloseInternal(a, b);
-			}
-		}
-
-		public static bool AreCloseInternal(RValue a, RValue b)
 		{
 			var aNrm = RNormalizer.Normalize(a, b, out var bNrm);
 			var strA = aNrm.Value.ToString();
