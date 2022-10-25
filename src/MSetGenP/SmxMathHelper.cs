@@ -8,6 +8,22 @@ namespace MSetGenP
 {
 	public class SmxMathHelper
 	{
+		#region Constants
+
+		private static readonly ulong MAX_MSB = (ulong)Math.Pow(2, 30);
+		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
+
+		// Integer used to convert BigIntegers to/from array of ulongs.
+		private static readonly BigInteger BI_ULONG_FACTOR = BigInteger.Pow(2, 64);
+
+		// Integer used to convert BigIntegers to/from array of ulongs containing partial-words
+		private static readonly BigInteger BI_UINT_FACTOR = BigInteger.Pow(2, 32);
+
+		// Integer used to pack a pair of ulong values into a single ulong.
+		private static readonly ulong UL_UINT_FACTOR = (ulong)Math.Pow(2, 32);
+
+		#endregion
+
 		#region Multiply and Square
 
 		public static Smx Multiply(Smx a, Smx b)
@@ -25,10 +41,10 @@ namespace MSetGenP
 
 		public static ulong[] Multiply(ulong[] ax, ulong[] bx)
 		{
-			Debug.WriteLine(GetDiagDisplay("ax", ax));
-			Debug.WriteLine(GetDiagDisplay("bx", bx));
+			//Debug.WriteLine(GetDiagDisplay("ax", ax));
+			//Debug.WriteLine(GetDiagDisplay("bx", bx));
 
-			var seive = new ulong[ax.Length * bx.Length];
+			//var seive = new ulong[ax.Length * bx.Length];
 
 			var fullMantissa = new ulong[ax.Length + bx.Length];
 
@@ -38,7 +54,7 @@ namespace MSetGenP
 				for (int i = 0; i < bx.Length; i++)
 				{
 					var product = ax[j] * bx[i];
-					seive[j * bx.Length + i] = product;
+					//seive[j * bx.Length + i] = product;
 
 					var resultPtr = j + i;  // 0, 1, 1, 2
 
@@ -48,10 +64,10 @@ namespace MSetGenP
 				}
 			}
 
-			var splitSieve = Split(seive);
-			Debug.WriteLine(GetDiagDisplay("sieve", splitSieve, bx.Length * 2));
+			//var splitSieve = Split(seive);
+			//Debug.WriteLine(GetDiagDisplay("sieve", splitSieve, bx.Length * 2));
 
-			Debug.WriteLine(GetDiagDisplay("result", fullMantissa));
+			//Debug.WriteLine(GetDiagDisplay("result", fullMantissa));
 
 			// Process the carry portion of each result bin.
 			// This will leave each result bin with a value <= 2^32 for the final digit.
@@ -75,9 +91,9 @@ namespace MSetGenP
 
 		public static ulong[] Square(ulong[] ax)
 		{
-			Debug.WriteLine(GetDiagDisplay("ax", ax));
+			//Debug.WriteLine(GetDiagDisplay("ax", ax));
 
-			var seive = new ulong[(int)Math.Pow(ax.Length, 2)];
+			//var seive = new ulong[(int)Math.Pow(ax.Length, 2)];
 
 			var fullMantissa = new ulong[ax.Length * 2];
 
@@ -94,11 +110,11 @@ namespace MSetGenP
 					}
 
 					product = ax[j] * ax[i];
-					seive[j * ax.Length + i] = product;
+					//seive[j * ax.Length + i] = product;
 
 					if (j < i)
 					{
-						seive[i * ax.Length + j] = product;
+						//seive[i * ax.Length + j] = product;
 						product *= 2;
 					}
 
@@ -110,10 +126,67 @@ namespace MSetGenP
 				}
 			}
 
-			var splitSieve = Split(seive);
-			Debug.WriteLine(GetDiagDisplay("sieve", splitSieve, ax.Length * 2));
+			//var splitSieve = Split(seive);
+			//Debug.WriteLine(GetDiagDisplay("sieve", splitSieve, ax.Length * 2));
 
-			Debug.WriteLine(GetDiagDisplay("result", fullMantissa));
+			//Debug.WriteLine(GetDiagDisplay("result", fullMantissa));
+
+			// Process the carry portion of each result bin.
+			// This will leave each result bin with a value <= 2^32 for the final digit.
+			for (int i = 1; i < fullMantissa.Length - 1; i++)
+			{
+				var lo = Split(fullMantissa[i], out var hi);
+				fullMantissa[i] = lo;
+				fullMantissa[i + 1] += hi;
+			}
+
+			return fullMantissa;
+		}
+
+		public static Smx Multiply(Smx a, int b)
+		{
+			if (b == 0)
+			{
+				return new Smx(0, 1, a.Precision);
+			}
+
+			var mantissa = Multiply(a.Mantissa, (uint) Math.Abs(b));
+
+			var signOfB = b < 0;
+
+			var sign = a.Sign == signOfB;
+			var exponent = a.Exponent;
+			var precision = a.Precision;
+
+			Smx result = BuildSmx(sign, mantissa, exponent, precision);
+
+			return result;
+		}
+
+		public static ulong[] Multiply(ulong[] ax, uint b)
+		{
+			//Debug.WriteLine(GetDiagDisplay("ax", ax));
+			//Debug.WriteLine($"b = {b}");
+
+			//var seive = new ulong[ax.Length];
+
+			var fullMantissa = new ulong[ax.Length + 1];
+
+			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
+			for (int j = 0; j < ax.Length; j++)
+			{
+				var product = ax[j] * b;
+				//seive[j] = product;
+
+				var lo = Split(product, out var hi);		//  2 x 1					3 x 1			4 x 1
+				fullMantissa[j] += lo;			            // 0, 1				0, 1, 2				0, 1, 2, 3
+				fullMantissa[j + 1] += hi;			        // 1, 2				1, 2, 3				1, 2, 3, 4
+			}
+
+			//var splitSieve = Split(seive);
+			//Debug.WriteLine(GetDiagDisplay("sieve", splitSieve, 2));
+
+			//Debug.WriteLine(GetDiagDisplay("result", fullMantissa));
 
 			// Process the carry portion of each result bin.
 			// This will leave each result bin with a value <= 2^32 for the final digit.
@@ -180,6 +253,203 @@ namespace MSetGenP
 
 		#endregion
 
+		#region Add and Subtract
+
+		public static Smx Sub(Smx a, Smx b)
+		{
+			var bNegated = new Smx(!b.Sign, b.Mantissa, b.Exponent, b.Precision);
+			var result = Add(a, bNegated);
+
+			return result;
+		}
+
+		public static Smx Add(Smx a, Smx b)
+		{
+			var nrmA = Normalize(a, b, out var nrmB);
+
+			bool sign;
+			ulong[] mantissa;
+			var exponent = nrmA.Exponent;
+			var precision = Math.Min(a.Precision, b.Precision);
+
+			if (a.Sign == b.Sign)
+			{
+				sign = a.Sign;
+				mantissa = Add(nrmA.Mantissa, nrmB.Mantissa);
+			}
+			else
+			{
+				var cmp = Compare(nrmA.Mantissa, nrmB.Mantissa);
+
+				if (cmp > 0)
+				{
+					sign = a.Sign;
+					mantissa = Sub(nrmA.Mantissa, nrmB.Mantissa);
+				}
+				else
+				{
+					sign = b.Sign;
+					mantissa = Sub(nrmB.Mantissa, nrmA.Mantissa);
+				}
+			}
+
+			var spMantissa = ReSplit(mantissa);
+			var trMantissa = TrimLeadingZeros(spMantissa);
+
+			var adjMantissa = FillMsb(trMantissa, out var shiftAmount);
+			exponent -= shiftAmount;
+
+			var result = new Smx(sign, adjMantissa, exponent, precision);
+			return result;
+		}
+
+		public static ulong[] Add(ulong[] ax, ulong[] bx)
+		{
+			ulong[] result;
+
+			if (ax.Length < bx.Length)
+			{
+				result = AddInternal(bx, ax);
+			}
+			else
+			{
+				result = AddInternal(ax, bx);
+			}
+
+			return result;
+		}
+
+		private static ulong[] AddInternal(ulong[] ax, ulong[] bx)
+		{
+			Debug.Assert(ax.Length >= bx.Length, "AddInternal expects ax to have as many (or more) digits as bx.");
+
+			var maxLen = Math.Max(ax.Length, bx.Length);
+			ulong[] result = new ulong[maxLen];
+
+			var i = 0;
+
+			for(; i < bx.Length; i++)
+			{
+				result[i] = ax[i] + bx[i];	
+			}
+
+			for(; i < ax.Length; i++)
+			{
+				result[i] = ax[i];
+			}
+
+			return result;
+		}
+
+		public static ulong[] Sub(ulong[] ax, ulong[] bx)
+		{
+			Debug.Assert(ax.Length >= bx.Length, "While subtracting b from a, b was found to have more digits than a. A should be larger and therefor have 0 or more digis than b.");
+
+			var maxLen = Math.Max(ax.Length, bx.Length);
+			ulong[] result = new ulong[maxLen];
+
+			var i = 0;
+
+			for (; i < bx.Length; i++)
+			{
+				var diff = (long)ax[i] - (long)bx[i];
+
+				if (diff < 0)
+				{
+					Borrow(ax, i + 1);
+					diff = (long)ax[i] - (long)bx[i];
+				}
+
+				Debug.Assert(!(diff < 0), "After borrow, the difference is still negative.");
+
+				result[i] = (ulong)diff;
+			}
+
+			for (; i < ax.Length; i++)
+			{
+				result[i] = ax[i];
+			}
+
+			return result;
+		}
+
+		private static void Borrow(ulong[] x, int index)
+		{
+			if (index >= x.Length)
+			{
+				throw new Exception("UnderFlow while subtracting. Attempting to borrow from a digit past the msb.");
+			}
+
+			if (x[index] == 0)
+			{
+				Borrow(x, index + 1);
+			}
+
+			x[index] --;
+			x[index - 1] += MAX_DIGIT_VALUE;
+
+			Debug.Assert(x[index] > 0);
+		}
+
+		private static int Compare(ulong[] ax, ulong[] bx)
+		{
+			if (ax.Length != bx.Length)
+			{
+				return ax.Length > bx.Length ? 1 : -1;
+			}
+
+			for(int i = ax.Length - 1; i >= 0; i--)
+			{
+				if (ax[i] != bx[i])
+				{
+					return ax[i] > bx[i] ? 1 : -1;	
+				}
+			}
+
+			return 0;
+		}
+
+		private static Smx Normalize(Smx a, Smx b, out Smx normalizedB)
+		{
+			if (a.Exponent == b.Exponent)
+			{
+				normalizedB = b;
+				return a;
+			}
+
+			var diff = a.Exponent - b.Exponent;
+
+			if (diff > 0)
+			{
+				normalizedB = b;
+				var newAMantissa = Scale(a.Mantissa, (uint)diff);
+				var result = new Smx(a.Sign, newAMantissa, b.Exponent, a.Precision);
+				return result;
+			}	
+			else
+			{
+				var newBMantissa = Scale(b.Mantissa, (uint)diff);
+				normalizedB = new Smx(b.Sign, newBMantissa, a.Exponent, b.Precision);
+				return a;
+			}
+		}
+
+		private static ulong[] Scale(ulong[] x, uint factor)
+		{
+			var result = new ulong[x.Length];
+
+			for(var i = 0; i < result.Length; i++)
+			{
+				result[i] = x[i] * factor;
+			}
+
+			result = ReSplit(result);
+
+			return result;
+		}
+
+		#endregion
+
 		#region Build Smx Support
 
 		private static Smx BuildSmx(bool sign, ulong[] mantissa, int exponent, int precision)
@@ -197,11 +467,21 @@ namespace MSetGenP
 				exponent -= shiftAmount;
 
 				var adjMantissa = Round(mantissa, numBaseUInt32Digits);
-				var adjExponent = exponent + 32 * (mantissa.Length - numBaseUInt32Digits);	
+				var adjExponent = exponent + 32 * (mantissa.Length - numBaseUInt32Digits);
+
+				//var reducedMantissa = Reduce(adjMantissa, out shiftAmount);
+				//adjExponent += shiftAmount;
+				//result = new Smx(sign, reducedMantissa, adjExponent, precision);
+
 				result = new Smx(sign, adjMantissa, adjExponent, precision);
+
 			}
 			else
 			{
+				//var reducedMantissa = Reduce(mantissa, out var shiftAmount);
+				//exponent += shiftAmount;
+				//result = new Smx(sign, reducedMantissa, exponent, precision);
+
 				result = new Smx(sign, mantissa, exponent, precision);
 			}
 
@@ -224,9 +504,6 @@ namespace MSetGenP
 
 			return result;
 		}
-
-		private readonly static ulong MAX_MSB = (ulong)Math.Pow(2, 30);
-		private readonly static ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
 
 		public static ulong[] FillMsb(ulong[] mantissa, out int shiftAmount)
 		{
@@ -261,7 +538,7 @@ namespace MSetGenP
 					throw new OverflowException($"FillMsb overflowed digit at index {i} while multiplying");
 				}
 
-				result[i] = (ulong)td;
+				result[i] = td;
 			}
 
 			for (int i = 0; i < mantissa.Length - 1; i++)
@@ -277,6 +554,9 @@ namespace MSetGenP
 			{
 				throw new OverflowException($"FillMsb overflowed the most signifcant digit.");
 			}
+
+			var lz = BitOperations.LeadingZeroCount(result[^1]);
+			Debug.WriteLine($"Upon completing a FillMsb op, the MSD has {lz} leading zeros.");
 
 			return result;
 		}
@@ -305,6 +585,51 @@ namespace MSetGenP
 
 		}
 
+		public static ulong[] Reduce(ulong[] mantissa, out int shiftAmount)
+		{
+			shiftAmount = 0;
+
+			if (AreComponentsEven(mantissa))
+			{
+				shiftAmount++;
+				var w = new ulong[mantissa.Length];
+
+				for(int i = 0; i < w.Length; i++)
+				{
+					w[i] = mantissa[i] / 2;	
+				}
+
+				while(AreComponentsEven(w))
+				{
+					shiftAmount++;
+
+					for (int i = 0; i < w.Length; i++)
+					{
+						w[i] = w[i] / 2;
+					}
+				}
+
+				return w;
+			}
+			else
+			{
+				return mantissa;	
+			}
+		}
+
+		public static bool AreComponentsEven(ulong[] mantissa)
+		{
+			foreach(var value in mantissa)
+			{
+				if (value % 2 != 0)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
 		#endregion
 
 		#region Split and Pack 
@@ -323,7 +648,34 @@ namespace MSetGenP
 			return result;
 		}
 
-		private static ulong Split(ulong x, out ulong hi)
+		private static ulong[] ReSplit(ulong[] values)
+		{
+			for (int i = 0; i < values.Length - 1; i++)
+			{
+				var lo = Split(values[i], out var hi);
+				values[i] = lo;
+				values[i + 1] += hi;
+			}
+
+			var lo1 = Split(values[^1], out var hi1);
+			values[^1] = lo1;
+
+			var carryOut = hi1;
+
+			if (carryOut > 0)
+			{
+				var newResult = new ulong[values.Length + 1];
+				Array.Copy(values, 0, newResult, 0, values.Length);
+				newResult[^1] = carryOut;
+				return newResult;
+			}
+			else
+			{
+				return values;
+			}
+		}
+
+		public static ulong Split(ulong x, out ulong hi)
 		{
 			var hiTemp = (uint)(x >> 32); // Move bits 32-63 -> bits 0-31
 			hi = hiTemp;
@@ -421,14 +773,6 @@ namespace MSetGenP
 
 		#region To ULong Support
 
-		// Integer used to convert BigIntegers to/from array of ulongs.
-		private static readonly BigInteger BI_ULONG_FACTOR = BigInteger.Pow(2, 64);
-
-		// Integer used to convert BigIntegers to/from array of ulongs containing partial-words
-		private static readonly BigInteger BI_UINT_FACTOR = BigInteger.Pow(2, 32);
-
-		private static readonly ulong UL_UINT_FACTOR = (ulong)Math.Pow(2, 32);
-
 		public static ulong[] ToULongs(BigInteger bi)
 		{
 			var tResult = new List<ulong>();
@@ -516,9 +860,6 @@ namespace MSetGenP
 				return false;
 			}
 
-			//numberOfDecimalDigits = Math.Min(numberOfDecimalDigits, strA.Length);
-			//numberOfDecimalDigits = Math.Min(numberOfDecimalDigits, strB.Length);
-
 			Debug.WriteLine($"AreClose is comparing {numberOfDecimalDigits} characters of {strA} and {strB}.");
 
 			strA = strA.Substring(0, numberOfDecimalDigits);
@@ -528,6 +869,45 @@ namespace MSetGenP
 
 			return strA == strB;
 		}
+
+		#endregion
+
+		#region Precision Support
+
+		public static int GetPrecision(Smx a)
+		{
+			var result = GetPrecision(a.Mantissa, a.Exponent);
+			return result;
+		}
+
+		public static int GetPrecision(ulong[] mantissa, int exponent)
+		{
+			var reducedMantissa = Reduce(mantissa, out var shiftAmount);
+			var adjustedExponent = exponent + shiftAmount;
+
+			var numberOfSignificanDecimalDigits = GetNumberOfSignificantDigits(reducedMantissa);
+			var numberOfSignificantBinaryDigits = Math.Log10(2) * numberOfSignificanDecimalDigits;
+
+
+
+			var result = (int) Math.Round(Math.Abs(adjustedExponent) - numberOfSignificantBinaryDigits);
+
+			return result;
+		}
+
+		public static int GetNumberOfSignificantDigits(ulong[] mantissa)
+		{
+			var result = 0;
+
+			for(int i = 0; i < mantissa.Length; i++)
+			{
+				var lz = 64 - BitOperations.LeadingZeroCount(mantissa[i]);
+				result += lz;
+			}
+
+			return result;
+		}
+
 
 		#endregion
 	}

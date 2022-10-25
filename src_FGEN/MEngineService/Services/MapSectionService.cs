@@ -40,12 +40,15 @@ namespace MEngineService.Services
 
 			var idStr = string.IsNullOrEmpty(mapSectionResponse.MapSectionId) ? "new" : mapSectionResponse.MapSectionId;
 
-			Debug.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. ");
+			//Debug.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. ");
 			_mapSectionPersistProcessor.AddWork(mapSectionResponse);
 
 			mapSectionResponse.IncludeZValues = false;
 
-			Console.WriteLine($"Returned {++_sectionCntr} sections.");
+			if (++_sectionCntr % 10 == 0)
+			{
+				Console.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. Generated {_sectionCntr} Map Sections.");
+			}
 
 			return mapSectionResponse;
 		}

@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MapSectionProviderLib\MapSectionProviderLib.csproj" />
     <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
+    <ProjectReference Include="..\MSetGenP\MSetGenP.csproj" />
     <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>

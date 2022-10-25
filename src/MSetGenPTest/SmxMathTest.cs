@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace EngineTest
 {
-	public class UnitTest1
+	public class SmxMathTest
 	{
 		[Fact]
 		public void FullMultiply_Returns_Correct_Value()
@@ -98,6 +98,29 @@ namespace EngineTest
 			var s2 = RValueHelper.ConvertToString(bRValue);
 
 			var areClose = SmxMathHelper.AreClose(bSmxRValue, bRValue);
+			Assert.True(areClose);
+		}
+
+		[Fact]
+		public void AddTwoRValues()
+		{
+			//var aRvalue = new RValue(new BigInteger(-414219082), -36, 53); // -6.02768096723593793141715568851e-3
+			//var bRvalue = new RValue(new BigInteger(67781838), -36, 53); // 9.8635556059889517056815666506964e-4
+
+			var aRValue = new RValue(new BigInteger(27797772040142849), -62, 53); // -6.02768096723593793141715568851e-3
+			var bRValue = new RValue(new BigInteger(4548762148012033), -62, 53); // 9.8635556059889517056815666506964e-4
+
+			var a = new Smx(aRValue);
+			var b = new Smx(bRValue);
+			var c = SmxMathHelper.Add(a, b);
+
+			var cSmxRValue = c.GetRValue();
+			var s1 = RValueHelper.ConvertToString(cSmxRValue);
+
+			var cRValue = aRValue.Add(bRValue);
+			var s2 = RValueHelper.ConvertToString(cRValue);
+
+			var areClose = SmxMathHelper.AreClose(cSmxRValue, cRValue);
 			Assert.True(areClose);
 		}
 

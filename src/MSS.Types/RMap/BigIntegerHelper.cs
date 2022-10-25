@@ -16,7 +16,7 @@ namespace MSS.Types
 		// Largest integer that can be represented by a double for which it and all smaller integers can be reduced by 1 without loosing precision.
 		private static readonly BigInteger MAX_DP_INTEGER = BigInteger.Pow(2, 53);
 
-		// Integer used to convert BigIntegers to/from array of ulongs.
+		// Integer used to convert BigIntegers to/from array of longs.
 		private static readonly BigInteger LONG_FACTOR = new BigInteger(long.MaxValue); // BigInteger.Add(BigInteger.One, BigInteger.Pow(2, 63));
 
 		#region Division
