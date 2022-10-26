@@ -8,8 +8,8 @@
 		VectorIntRecord CanvasControlOffset
 		)
 	{
+		// TODO: Define a precision property on all JobRecord.MapAreaInfoRecord instances in MongoDb 
+		public int? Precision { get; set; }
 	}
-
-
 
 }

@@ -29,24 +29,27 @@ namespace MEngineDataContracts
 		public RPointDto Position { get; set; }
 
 		[DataMember(Order = 7)]
-		public SizeInt BlockSize { get; set; }
+		public int Precision { get; set; }
 
 		[DataMember(Order = 8)]
-		public RSizeDto SamplePointDelta { get; set; }
+		public SizeInt BlockSize { get; set; }
 
 		[DataMember(Order = 9)]
-		public MapCalcSettings MapCalcSettings { get; set; }
+		public RSizeDto SamplePointDelta { get; set; }
 
 		[DataMember(Order = 10)]
-		public ushort[] Counts { get; set; }
+		public MapCalcSettings MapCalcSettings { get; set; }
 
 		[DataMember(Order = 11)]
-		public ushort[] EscapeVelocities { get; set; }
+		public ushort[] Counts { get; set; }
 
 		[DataMember(Order = 12)]
-		public bool[] DoneFlags { get; set; }
+		public ushort[] EscapeVelocities { get; set; }
 
 		[DataMember(Order = 13)]
+		public bool[] DoneFlags { get; set; }
+
+		[DataMember(Order = 14)]
 		public double[] ZValues { get; set; }
 
 		public bool IsInverted { get; init; }

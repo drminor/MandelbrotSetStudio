@@ -64,7 +64,7 @@ namespace MSS.Types
 		public BigVector Divide(RSize amount)
 		{
 			return amount.Exponent != Exponent
-				? throw new InvalidOperationException($"Cannot InvScale a RSize with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
+				? throw new InvalidOperationException($"Cannot Divide an RVector with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
 				: new BigVector(XNumerator / amount.WidthNumerator, YNumerator / amount.HeightNumerator);
 		}
 

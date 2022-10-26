@@ -11,6 +11,7 @@ namespace MSS.Types.MSet
 		public SizeInt CanvasSize { get; init; }
 		public Subdivision Subdivision { get; init; }
 		public BigVector MapBlockOffset { get; init; }
+		public int Precision { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
 
 		public bool IsEmpty => Subdivision.BlockSize.Width == 0;
@@ -20,14 +21,16 @@ namespace MSS.Types.MSet
 			Coords = new RRectangle();
 			Subdivision = new Subdivision();
 			MapBlockOffset = new BigVector();
+			Precision = 1;
 		}
 
-		public MapAreaInfo(RRectangle coords, SizeInt canvasSize, Subdivision subdivision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
+		public MapAreaInfo(RRectangle coords, SizeInt canvasSize, Subdivision subdivision, BigVector mapBlockOffset, int precision, VectorInt canvasControlOffset)
 		{
 			Coords = coords;
 			CanvasSize = canvasSize;
 			Subdivision = subdivision;
 			MapBlockOffset = mapBlockOffset;
+			Precision = precision;	
 			CanvasControlOffset = canvasControlOffset;
 		}
 
@@ -38,7 +41,7 @@ namespace MSS.Types.MSet
 
 		public MapAreaInfo Clone()
 		{
-			return new MapAreaInfo(Coords.Clone(), CanvasSize, Subdivision.Clone(), MapBlockOffset.Clone(), CanvasControlOffset);
+			return new MapAreaInfo(Coords.Clone(), CanvasSize, Subdivision.Clone(), MapBlockOffset.Clone(), Precision, CanvasControlOffset);
 		}
 	}
 }

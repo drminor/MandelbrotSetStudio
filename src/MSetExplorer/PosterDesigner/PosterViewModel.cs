@@ -600,7 +600,10 @@ namespace MSetExplorer
 			var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
 			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
 
-			var result = new MapAreaInfo(newCoords, logicalDisplaySize, subdivision, newMapBlockOffset, newCanvasControlOffset);
+			// TODO: Calculate the precision as the new Map Coordinates are calculated.
+			var precision = RMapConstants.DEFAULT_PRECISION;
+
+			var result = new MapAreaInfo(newCoords, logicalDisplaySize, subdivision, newMapBlockOffset, precision, newCanvasControlOffset);
 
 			return result;
 		}

@@ -15,6 +15,8 @@ namespace MSS.Common
 		public static readonly RRectangle TEST_RECTANGLE;
 		public static readonly RRectangle TEST_RECTANGLE_HALF;
 
+		public static readonly int DEFAULT_PRECISION;
+
 		static RMapConstants()
 		{
 			BLOCK_SIZE = new SizeInt(128, 128);
@@ -35,6 +37,7 @@ namespace MSS.Common
 
 			TEST_RECTANGLE_HALF = new RRectangle(1, 2, 1, 2, -2);
 
+			DEFAULT_PRECISION = 55;
 		}
 
 		public static ColorBandSet BuildInitialColorBandSet(int maxIterations)

@@ -135,6 +135,7 @@ namespace ImageBuilderOld
 				SubdivisionId = "TestId",
 				BlockPosition = new BigVectorDto(new BigInteger[] { 0, 0 }),
 				Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
+				Precision = RMapConstants.DEFAULT_PRECISION,
 				BlockSize = RMapConstants.BLOCK_SIZE,
 				SamplePointDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
 				MapCalcSettings = new MapCalcSettings(targetIterations: 100, requestsPerJob: 100),

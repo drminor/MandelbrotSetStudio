@@ -19,6 +19,7 @@ namespace MapSectionGeneratorLib
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
         public long[] positionY;
         public int positionExponent;
+        public int positionPrecision;
 
         // BlockSize
         public int blockSizeWidth;

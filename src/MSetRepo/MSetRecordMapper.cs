@@ -154,6 +154,7 @@ namespace MSetRepo
 				canvasSize: MapFrom(target.CanvasSize),
 				subdivision: MapFrom(target.SubdivisionRecord),
 				mapBlockOffset: MapFrom(target.MapBlockOffset),
+				precision: target.Precision ?? RMapConstants.DEFAULT_PRECISION,
 				canvasControlOffset: MapFrom(target.CanvasControlOffset)
 				);
 
@@ -169,6 +170,8 @@ namespace MSetRepo
 				MapBlockOffset: MapTo(source.MapBlockOffset),
 				CanvasControlOffset: MapTo(source.CanvasControlOffset)
 				);
+
+			result.Precision = source.Precision;
 
 			return result;
 		}

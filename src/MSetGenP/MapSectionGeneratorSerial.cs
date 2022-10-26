@@ -18,10 +18,11 @@ namespace MSetGenP
 			var mapPositionDto = mapSectionRequest.Position;
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
+			var precision = mapSectionRequest.Precision;
 
-			var startingCx = CreateSmx(mapPositionDto.X, mapPositionDto.Exponent);
-			var startingCy = CreateSmx(mapPositionDto.Y, mapPositionDto.Exponent);
-			var delta = CreateSmx(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent);
+			var startingCx = CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
+			var startingCy = CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
+			var delta = CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
 
 			var counts = GenerateMapSection(startingCx, startingCy, delta, blockSize);
 			var escapeVelocities = new ushort[128 * 128];
@@ -50,9 +51,36 @@ namespace MSetGenP
 			var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
 			var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
 
+			for(int j = 0; j < samplePointsY.Length; j++)
+			{
+				for (int i = 0; i < samplePointsX.Length; i++)
+				{
+					var zR = Smx.Zero;
+					var zI = Smx.Zero;
+
+					ushort cntr;
+					for (cntr = 0; cntr < 10; cntr++)
+					{
+						if (! Iterate(ref zR, ref zI, samplePointsX[i], samplePointsY[j]) )
+						{
+							break;
+						}
+					}
+
+					result[j * 128 + i] = cntr;
+				}
+			}
 
 
 			return result;
+		}
+
+		private static bool Iterate(ref Smx zR, ref Smx zI, Smx cR, Smx cI)
+		{
+			zR = SmxMathHelper.Add(zR, cR);
+			zI = SmxMathHelper.Add(zI, cI);
+
+			return true;
 		}
 
 		private static Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePoints)
@@ -80,7 +108,7 @@ namespace MSetGenP
 		}
 
 
-		private static Smx CreateSmx(long[] values, int exponent, int precision = 70)
+		private static Smx CreateSmxFromDto(long[] values, int exponent, int precision = 70)
 		{
 			var sign = !values.Any(x => x < 0);
 			var mantissa = ConvertDtoLongsToSmxULongs(values, out var shiftAmount);

@@ -382,7 +382,10 @@ namespace MSetExplorer.XPoc
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, subdivision, out var canvasControlOffset);
 
-			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, canvasControlOffset);
+			// TODO: Calculate the precision as the new Map Coordinates are calculated.
+			var precision = RMapConstants.DEFAULT_PRECISION;
+
+			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, precision, canvasControlOffset);
 
 			return result;
 		}

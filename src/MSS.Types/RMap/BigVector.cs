@@ -6,7 +6,10 @@ namespace MSS.Types
 {
 	public class BigVector : IEquatable<BigVector>, IEqualityComparer<BigVector>, ICloneable
 	{
-		public BigInteger[] Values { get; init; }
+		private const int DEFAULT_PRECISION = 55;
+
+		// TODO: Add Constructors to the BigVector class to support initializing the precision property.
+		#region Constructors
 
 		public BigVector() : this(0, 0)
 		{ }
@@ -24,20 +27,23 @@ namespace MSS.Types
 		public BigVector(BigInteger x, BigInteger y)
 		{
 			Values = new BigInteger[] { x, y };
+			Precision = DEFAULT_PRECISION;
 		}
+
+		#endregion
+
+		#region Public Properties
+
+		public BigInteger[] Values { get; init; }
+
+		public int Precision { get; set; }
 
 		public BigInteger X => Values[0];
 		public BigInteger Y => Values[1];
 
-		object ICloneable.Clone()
-		{
-			return Clone();
-		}
+		#endregion
 
-		public BigVector Clone()
-		{
-			return new BigVector(X, Y);
-		}
+		#region Public Methods
 
 		public BigVector Scale(SizeInt factor)
 		{
@@ -80,6 +86,8 @@ namespace MSS.Types
 			return result;
 		}
 
+		#endregion
+
 		public static BigVector ConvertToBigVector(RVector rVector)
 		{
 			var vector = Reducer.Reduce(rVector);
@@ -93,11 +101,25 @@ namespace MSS.Types
 			return new BigVector(rVector.XNumerator * factor, rVector.YNumerator * factor);
 		}
 
+		#region ToString / ICloneable Support
+
 		public override string ToString()
 		{
 			var result = $"{X}, {Y}";
 			return result;
 		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public BigVector Clone()
+		{
+			return new BigVector(X, Y);
+		}
+
+		#endregion
 
 		#region IEqualityComparer / IEquatable Support
 

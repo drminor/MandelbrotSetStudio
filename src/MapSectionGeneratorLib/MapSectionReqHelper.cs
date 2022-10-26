@@ -18,6 +18,7 @@ namespace MapSectionGeneratorLib
 			result.positionX = mapSectionRequest.Position.X;
 			result.positionY = mapSectionRequest.Position.Y;
 			result.positionExponent = mapSectionRequest.Position.Exponent;
+			result.positionPrecision = mapSectionRequest.Precision;
 
 			// BlockSize
 			result.blockSizeWidth = mapSectionRequest.BlockSize.Width;

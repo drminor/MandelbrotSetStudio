@@ -116,6 +116,7 @@ namespace MSS.Common
 				BlockPosition = _dtoMapper.MapTo(repoPosition),
 				BlockSize = subdivision.BlockSize,
 				Position = _dtoMapper.MapTo(mapPosition),
+				Precision = repoPosition.Precision,
 				SamplePointDelta = _dtoMapper.MapTo(subdivision.SamplePointDelta),
 				MapCalcSettings = mapCalcSettings,
 				Counts = null,

@@ -181,7 +181,7 @@ namespace MSetExplorer
 			//Task.Run(async bitmapBuilder.BuildAsync(poster.))
 
 			var posterAreaInfo = job.MapAreaInfo;
-			var previewMapArea = new MapAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.MapBlockOffset, posterAreaInfo.CanvasControlOffset);
+			var previewMapArea = new MapAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.MapBlockOffset, posterAreaInfo.Precision, posterAreaInfo.CanvasControlOffset);
 
 			//byte[]? result = null;
 

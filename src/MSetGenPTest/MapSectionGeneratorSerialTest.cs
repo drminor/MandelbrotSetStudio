@@ -21,6 +21,8 @@ namespace MSetGenPTest
 
 		private MapSectionRequest BuildTestRequest()
 		{
+			var precision = 55;
+
 			var xPos = new long[] { 0, -414219082 }; // Big-Endian  // TODO: Update to use Little-Endian
 			var yPos = new long[] { 0, 67781838 };
 
@@ -38,6 +40,7 @@ namespace MSetGenPTest
 			request.BlockPosition = blockPositionDto;
 			request.SamplePointDelta = samplePointDeltaDto;
 			request.Position = mapPositionDto;
+			request.Precision = precision;
 			request.BlockSize = blockSize;
 			request.MapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 4);
 

@@ -8,6 +8,8 @@ namespace MSetGenP
 	{
 		#region Constructor
 
+		public static readonly Smx Zero = new Smx(0, 0, 53);
+
 		public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision)
 		{ }
 

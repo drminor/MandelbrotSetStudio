@@ -82,7 +82,7 @@ namespace MSetExplorer
 
 		public MapAreaInfo CurrentMapAreaInfo
 		{
-			get => _currentMapAreaInfo ?? new MapAreaInfo(new RRectangle(), new SizeInt(), new Subdivision(), new BigVector(), new VectorInt());
+			get => _currentMapAreaInfo ?? new MapAreaInfo();
 			set
 			{
 				if (value != _currentMapAreaInfo)
