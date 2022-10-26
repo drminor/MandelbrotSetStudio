@@ -4,7 +4,6 @@ using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
-using System.Numerics;
 
 namespace MSetGenPTest
 {
@@ -13,25 +12,40 @@ namespace MSetGenPTest
 		[Fact]
 		public void SimpleGeneratateSectionResponse()
 		{
-			var request = BuildTestRequest();
-			var reponse = MapSectionGeneratorSerial.GenerateMapSection(request);
+			var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
+			var yPos = new long[] { 0, 67781838 };
+			var precision = 55;
+			var samplePointDelta = new RSize(1, 1, -36);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 4);
+			var request = AssembleRequest(xPos, yPos, precision, samplePointDelta, mapCalcSettings);
+
+			var reponse = MapSectionGeneratorScalar.GenerateMapSection(request);
 
 			Assert.NotNull(reponse);
 		}
 
-		private MapSectionRequest BuildTestRequest()
+		#region Support Methods
+
+		//private MapSectionRequest BuildTestRequest()
+		//{
+		//	var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
+		//	var yPos = new long[] { 0, 67781838 };
+		//	var precision = 55;
+
+		//	var samplePointDelta = new RSize(1, 1, -36);
+		//	var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 4);
+
+		//	var result = AssembleRequest(xPos, yPos, precision, samplePointDelta, mapCalcSettings);
+
+		//	return result;
+		//}
+
+		private MapSectionRequest AssembleRequest(long[] xPos, long[] yPos, int precision, RSize samplePointDelta, MapCalcSettings mapCalcSettings)
 		{
-			var precision = 55;
-
-			var xPos = new long[] { 0, -414219082 }; // Big-Endian  // TODO: Update to use Little-Endian
-			var yPos = new long[] { 0, 67781838 };
-
-			var blockPosValues = new long[2][];
-			blockPosValues[0] = xPos;
-			blockPosValues[1] = yPos;
-
+			var blockPosValues = new long[2][] {xPos, yPos};
 			var blockPositionDto = new BigVectorDto(blockPosValues);
-			var samplePointDeltaDto = new RSizeDto(new BigInteger[] { 1, 1 }, -36);
+
+			var samplePointDeltaDto = new RSizeDto(samplePointDelta.Values, samplePointDelta.Exponent);
 			var blockSize = new SizeInt(128, 128);
 			var mapPositionDto = GetMapPosition(blockPositionDto, samplePointDeltaDto, blockSize);
 
@@ -42,7 +56,7 @@ namespace MSetGenPTest
 			request.Position = mapPositionDto;
 			request.Precision = precision;
 			request.BlockSize = blockSize;
-			request.MapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 4);
+			request.MapCalcSettings = mapCalcSettings;
 
 			return request;
 		}
@@ -71,6 +85,8 @@ namespace MSetGenPTest
 			return result;
 		}
 
+		#endregion
+
 
 		/*
 
@@ -78,11 +94,11 @@ namespace MSetGenPTest
 
 		XPos:
 			Hi: 0
-		Lo: -414219082
+			Lo: -414219082
 
 		YPos
-		Hi: 0
-		Lo: 67781838
+			Hi: 0
+			Lo: 67781838
 
 		*/
 

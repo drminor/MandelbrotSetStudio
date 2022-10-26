@@ -4,11 +4,11 @@ using System.Diagnostics;
 
 namespace MSetGenP
 {
-	public class MClientLocal : IMEngineClient
+	public class MClientLocalScalar : IMEngineClient
 	{
 		private static int _sectionCntr;
 
-		public MClientLocal()
+		public MClientLocalScalar()
 		{
 			_sectionCntr = 0;
 		}
@@ -33,7 +33,7 @@ namespace MSetGenP
 				await Task.Delay(100);
 			}
 
-			var mapSectionResponse = MapSectionGeneratorSerial.GenerateMapSection(mapSectionRequest);
+			var mapSectionResponse = MapSectionGeneratorScalar.GenerateMapSection(mapSectionRequest);
 
 			if (++_sectionCntr % 10 == 0)
 			{

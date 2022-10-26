@@ -1,6 +1,7 @@
 ﻿using MapSectionGeneratorLib;
 using MapSectionProviderLib;
 using MEngineClient;
+using MSetGenP;
 using MSetRepo;
 using MSS.Common;
 using MSS.Types.MSet;
@@ -31,7 +32,7 @@ namespace MSetExplorer
 		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
-		private static readonly bool USE_M_ENGINE_SERVICE = false; 
+		private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.LocalScalar;
 
 		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
 		private static readonly bool USE_LOCAL_ENGINE = false; // If true, we will host a server -- AND include it in the list of servers to use by our client.
@@ -91,9 +92,7 @@ namespace MSetExplorer
 				mEngineAddresses.Add(LOCAL_M_ENGINE_ADDRESS);
 			}
 
-			var mEngineClients = USE_M_ENGINE_SERVICE 
-				? CreateMEngineClients(mEngineAddresses) 
-				: CreateInProcessMEngineClient(_repositoryAdapters.MapSectionAdapter, out _mapSectionPersistProcessor);
+			var mEngineClients = ChooseMEngineClientImplementation(CLIENT_IMPLEMENTATION, mEngineAddresses, _repositoryAdapters.MapSectionAdapter);
 
 			_mapLoaderManager = BuildMapLoaderManager(mEngineClients, _repositoryAdapters.MapSectionAdapter, FETCH_ZVALUES_LOCALLY);
 
@@ -133,9 +132,24 @@ namespace MSetExplorer
 			return appNavWindow;
 		}
 
-		private IMEngineClient[] CreateMEngineClients(IList<string> mEngineEndPointAddress)
+
+		private IMEngineClient[] ChooseMEngineClientImplementation(MEngineClientImplementation clientImplementation, IList<string> mEngineEndPointAddresses, IMapSectionAdapter mapSectionAdapter)
 		{
-			var mEngineClients = mEngineEndPointAddress.Select(x => new MClient(x)).ToArray();
+			var result = clientImplementation switch
+			{
+				MEngineClientImplementation.Remote => CreateMEngineClients(mEngineEndPointAddresses),
+				MEngineClientImplementation.InProcess => CreateInProcessMEngineClient(mapSectionAdapter, out _mapSectionPersistProcessor),
+				MEngineClientImplementation.LocalScalar => new IMEngineClient[] { new MClientLocalScalar() },
+				MEngineClientImplementation.LocalVector => throw new NotImplementedException(),
+				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
+			};
+
+			return result;
+		}
+
+		private IMEngineClient[] CreateMEngineClients(IList<string> mEngineEndPointAddresses)
+		{
+			var mEngineClients = mEngineEndPointAddresses.Select(x => new MClient(x)).ToArray();
 			return mEngineClients;
 		}
 
@@ -252,6 +266,13 @@ namespace MSetExplorer
 			return sb.ToString();
 		}
 
+		private enum MEngineClientImplementation
+		{
+			Remote,
+			InProcess,
+			LocalScalar,
+			LocalVector
+		}
 
 	}
 }

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace MSetGenP
 {
-	public class MapSectionGeneratorSerial
+	public class MapSectionGeneratorScalar
 	{
 		public static MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
@@ -38,12 +38,7 @@ namespace MSetGenP
 			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
 			var s3 = RValueHelper.ConvertToString(delta.GetRValue());
 
-			var mapPosPrecision = SmxMathHelper.GetPrecision(startingCx);
-
-			var samplePrecision = SmxMathHelper.GetPrecision(delta);
-
-
-			Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Position Precision: {mapPosPrecision}. Sample Precision: {samplePrecision}.");
+			Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Precision: {startingCx.Precision}");
 
 			var result = new ushort[blockSize.NumberOfCells];
 
