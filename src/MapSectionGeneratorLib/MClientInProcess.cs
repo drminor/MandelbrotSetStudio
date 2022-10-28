@@ -16,14 +16,19 @@ namespace MapSectionGeneratorLib
 
 		private static int _sectionCntr;
 
+		MClientInProcess()
+		{
+			_sectionCntr = 0;
+		}
+
 		public MClientInProcess(IMapSectionAdapter mapSectionAdapter, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapSectionPersistProcessor = mapSectionPersistProcessor;
-			_sectionCntr = 0;
 		}
 
-		public string EndPointAddress => "InProcessServer";
+		public string EndPointAddress => "C++_InProcessServer";
+		public bool IsLocal => true;
 
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		{

@@ -150,12 +150,12 @@ namespace MapSectionGeneratorLib
 			if (!doneFlags.Any(x => x != 1))
 			{
 				// All ones
-				result = new bool[1] { true };
+				result = new bool[] { true };
 			}
 			else if (!doneFlags.Any(x => x != 0))
 			{
 				// all Zeros
-				result = new bool[1] { false };
+				result = new bool[] { false };
 			}
 			else
 			{

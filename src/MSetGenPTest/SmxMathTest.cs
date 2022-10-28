@@ -27,8 +27,11 @@ namespace EngineTest
 			var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
 
 			var bMantissa = SmxMathHelper.Multiply(aMantissa, aMantissa);
+
 			var b1Mantissa = SmxMathHelper.TrimLeadingZeros(bMantissa);
 			var t1Longs = SmxMathHelper.FillMsb(b1Mantissa, out var shiftAmount);
+			//var t1Longs = SmxMathHelper.FillMsb(bMantissa, out var shiftAmount);
+
 			var t1BigInteger = SmxMathHelper.FromPwULongs(t1Longs);
 			var t2BigInteger = t1BigInteger / BigInteger.Pow(2, shiftAmount);
 
@@ -43,8 +46,10 @@ namespace EngineTest
 			var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
 
 			var bMantissa = SmxMathHelper.Multiply(aMantissa, aMantissa);
+
 			var b1Mantissa = SmxMathHelper.TrimLeadingZeros(bMantissa);
 			var t1Longs = SmxMathHelper.FillMsb(b1Mantissa, out var shiftAmount);
+			//var t1Longs = SmxMathHelper.FillMsb(bMantissa, out var shiftAmount);
 
 			// Discard 2 digits from the LSB end. (Divide by 2^64)
 			var t2Longs = new ulong[t1Longs.Length - 2];

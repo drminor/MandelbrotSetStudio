@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using System.Collections;
 using System.Numerics;
 
@@ -8,7 +9,7 @@ namespace MSetGenP
 	{
 		#region Constructor
 
-		public static readonly Smx Zero = new Smx(0, 0, 53);
+		public static readonly Smx Zero = new Smx(true, new ulong[] { 0 }, 0, 1000);
 
 		public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision)
 		{ }
@@ -41,17 +42,27 @@ namespace MSetGenP
 		public int Exponent { get; set; }
 		public int Precision { get; set; } // Number of significant binary digits.
 
+		public bool IsZero => Mantissa.Length == 1 && Mantissa[0] == 0;
+
 		#endregion
 
 		#region Public Methods
 
 		public RValue GetRValue()
 		{
-			var mantissa = SmxMathHelper.FromPwULongs(Mantissa);
-			mantissa = Sign ? mantissa : -1 * mantissa;
-			var result = new RValue(mantissa, Exponent, Precision);
+			var biValue = SmxMathHelper.FromPwULongs(Mantissa);
+			biValue = Sign ? biValue : -1 * biValue;
+			var result = new RValue(biValue, Exponent, Precision);
 
 			return result;
+		}
+
+		public string GetStringValue()
+		{
+			var rValue = GetRValue();
+			var strValue = RValueHelper.ConvertToString(rValue);
+
+			return strValue;
 		}
 
 		#endregion

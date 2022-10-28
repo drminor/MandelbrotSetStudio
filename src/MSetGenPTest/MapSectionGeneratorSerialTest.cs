@@ -19,10 +19,30 @@ namespace MSetGenPTest
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 4);
 			var request = AssembleRequest(xPos, yPos, precision, samplePointDelta, mapCalcSettings);
 
-			var reponse = MapSectionGeneratorScalar.GenerateMapSection(request);
+			var reponse = new MapSectionGeneratorScalar().GenerateMapSection(request);
 
 			Assert.NotNull(reponse);
 		}
+
+		//[Fact]
+		//public void TrimLeadingZeros_FromZeroValuedSmx_Returns_Zero()
+		//{
+		//	var mantissa = new ulong[] { 0 };
+
+		//	var trimmedMantissa = SmxMathHelper.TrimLeadingZeros(mantissa);
+
+		//	Assert.Equal(1, trimmedMantissa.Length);
+		//}
+
+		//[Fact]
+		//public void TrimLeadingZeros_FromSmxWithOneNonZeroDigit_Returns_Same()
+		//{
+		//	var mantissa = new ulong[] { 1 };
+
+		//	var trimmedMantissa = SmxMathHelper.TrimLeadingZeros(mantissa);
+
+		//	Assert.True(trimmedMantissa.Length == 1 && trimmedMantissa[0] == 1);
+		//}
 
 		#region Support Methods
 

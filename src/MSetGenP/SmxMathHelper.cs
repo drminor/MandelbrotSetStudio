@@ -1,7 +1,9 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace MSetGenP
@@ -281,6 +283,11 @@ namespace MSetGenP
 			{
 				var cmp = Compare(nrmA.Mantissa, nrmB.Mantissa);
 
+				if (cmp == 0)
+				{
+					return Smx.Zero;
+				}
+
 				if (cmp > 0)
 				{
 					sign = a.Sign;
@@ -294,9 +301,12 @@ namespace MSetGenP
 			}
 
 			var spMantissa = ReSplit(mantissa);
-			var trMantissa = TrimLeadingZeros(spMantissa);
 
+			var trMantissa = TrimLeadingZeros(spMantissa);
 			var adjMantissa = FillMsb(trMantissa, out var shiftAmount);
+			//var adjMantissa = FillMsb(spMantissa, out var shiftAmount);
+
+
 			exponent -= shiftAmount;
 
 			var result = new Smx(sign, adjMantissa, exponent, precision);
@@ -321,7 +331,10 @@ namespace MSetGenP
 
 		private static ulong[] AddInternal(ulong[] ax, ulong[] bx)
 		{
-			Debug.Assert(ax.Length >= bx.Length, "AddInternal expects ax to have as many (or more) digits as bx.");
+			if (ax.Length < bx.Length)
+			{
+				throw new Exception("AddInternal expects ax to have as many (or more) digits as bx.");
+			}
 
 			var maxLen = Math.Max(ax.Length, bx.Length);
 			ulong[] result = new ulong[maxLen];
@@ -343,7 +356,10 @@ namespace MSetGenP
 
 		public static ulong[] Sub(ulong[] ax, ulong[] bx)
 		{
-			Debug.Assert(ax.Length >= bx.Length, "While subtracting b from a, b was found to have more digits than a. A should be larger and therefor have 0 or more digis than b.");
+			if (bx.Length > ax.Length)
+			{
+				throw new Exception($"While subtracting b: {bx} from a: {ax}, b was found to have more digits than a. A should be larger and therefor should have the same or more digits than b.");
+			}
 
 			var maxLen = Math.Max(ax.Length, bx.Length);
 			ulong[] result = new ulong[maxLen];
@@ -356,11 +372,25 @@ namespace MSetGenP
 
 				if (diff < 0)
 				{
-					Borrow(ax, i + 1);
+					var t = (ulong)(diff * -1);
+					Debug.Assert(t < MAX_DIGIT_VALUE, $"When subtracting {(long)bx[i]} from {(long)ax[i]}, the result is larger than MAX_DIGIT_VALUE.");
+
+					try
+					{
+						Borrow(ax, i + 1);
+					}
+					catch (OverflowException oe)
+					{
+						throw new Exception($"While subtracting b: {bx} from a: {ax}, Borrow threw an execption.", oe);
+					}	
+
 					diff = (long)ax[i] - (long)bx[i];
 				}
 
-				Debug.Assert(!(diff < 0), "After borrow, the difference is still negative.");
+				if (diff < 0)
+				{
+					throw new Exception("While subtracting b: {bx} from a: {ax}, after borrow, the difference is still negative.");
+				}
 
 				result[i] = (ulong)diff;
 			}
@@ -377,7 +407,7 @@ namespace MSetGenP
 		{
 			if (index >= x.Length)
 			{
-				throw new Exception("UnderFlow while subtracting. Attempting to borrow from a digit past the msb.");
+				throw new OverflowException("UnderFlow while subtracting. Attempting to borrow from a digit past the msb.");
 			}
 
 			if (x[index] == 0)
@@ -385,24 +415,27 @@ namespace MSetGenP
 				Borrow(x, index + 1);
 			}
 
-			x[index] --;
+			x[index] = x[index] - 1;
 			x[index - 1] += MAX_DIGIT_VALUE;
-
-			Debug.Assert(x[index] > 0);
 		}
 
 		private static int Compare(ulong[] ax, ulong[] bx)
 		{
-			if (ax.Length != bx.Length)
+			var sdA = GetNumberOfSignificantB32Digits(ax);
+			var sdB = GetNumberOfSignificantB32Digits(bx);
+
+			if (sdA != sdB)
 			{
-				return ax.Length > bx.Length ? 1 : -1;
+				return sdA > sdB ? 1 : -1;
 			}
 
-			for(int i = ax.Length - 1; i >= 0; i--)
+			var i = -1 + Math.Min(ax.Length, bx.Length);
+
+			for (; i >= 0; i--)
 			{
 				if (ax[i] != bx[i])
 				{
-					return ax[i] > bx[i] ? 1 : -1;	
+					return ax[i] > bx[i] ? 1 : -1;
 				}
 			}
 
@@ -493,7 +526,7 @@ namespace MSetGenP
 			var result = new ulong[numBaseUInt32Digits];
 			var startIndex = mantissa.Length - numBaseUInt32Digits;
 
-			Debug.Assert(startIndex > 0);
+			Debug.Assert(startIndex > 0, "Expecting startIndex to be > 0 when rounding.");
 
 			Array.Copy(mantissa, startIndex, result, 0, numBaseUInt32Digits);
 
@@ -508,7 +541,17 @@ namespace MSetGenP
 		public static ulong[] FillMsb(ulong[] mantissa, out int shiftAmount)
 		{
 			shiftAmount = 0;
+
+			//var msbIndex = -1 + GetNumberOfSignificantB32Digits(mantissa);
+			//var msb = mantissa[msbIndex];
+
 			var msb = mantissa[^1];
+
+			if (msb == 0)
+			{
+				Debug.Assert(mantissa.Length == 1, "Msb is zero upon call to FillMsb, but the mantissa has more than 1 B32 digit.");
+				return mantissa;
+			}
 
 			while((msb << 1) < MAX_MSB)
 			{
@@ -521,11 +564,8 @@ namespace MSetGenP
 				return mantissa;
 			}
 
-			var mTest = Math.Pow(2, shiftAmount);
-
-			Debug.Assert(mTest <= MAX_DIGIT_VALUE);
-
 			var multiplyer = (ulong)Math.Pow(2, shiftAmount);
+			Debug.Assert(multiplyer <= MAX_DIGIT_VALUE, "FillMsb is using a multiplyer > MAX_DIGIT_VALUE");
 
 			var result = new ulong[mantissa.Length];
 
@@ -555,34 +595,51 @@ namespace MSetGenP
 				throw new OverflowException($"FillMsb overflowed the most signifcant digit.");
 			}
 
-			var lz = BitOperations.LeadingZeroCount(result[^1]);
-			Debug.WriteLine($"Upon completing a FillMsb op, the MSD has {lz} leading zeros.");
+			//var lz = BitOperations.LeadingZeroCount(result[^1]);
+			//Debug.WriteLine($"Upon completing a FillMsb op, the MSD has {lz} leading zeros.");
 
 			return result;
+		}
+
+		public static int GetNumberOfSignificantB32Digits(ulong[] mantissa)
+		{
+			var i = mantissa.Length;
+			for (; i > 0; i--)
+			{
+				if (mantissa[i - 1] != 0)
+				{
+					break;
+				}
+			}
+
+			return i;
 		}
 
 		public static ulong[] TrimLeadingZeros(ulong[] mantissa)
 		{
 			var i = mantissa.Length;
-			for(; i > 0; i--)
+			for (; i > 0; i--)
 			{
 				if (mantissa[i - 1] != 0)
 				{
 					break;
-				}	
+				}
 			}
 
-			if (i < mantissa.Length)
-			{
-				var result = new ulong[i];
-				Array.Copy(mantissa, 0, result, 0, i);
-				return result;
-			}
-			else
+			if (i == mantissa.Length)
 			{
 				return mantissa;
 			}
 
+			if (i == 0)
+			{
+				// All digits are zero
+				return new ulong[] { 0 };
+			}
+
+			var result = new ulong[i];
+			Array.Copy(mantissa, 0, result, 0, i);
+			return result;
 		}
 
 		public static ulong[] Reduce(ulong[] mantissa, out int shiftAmount)
@@ -685,7 +742,7 @@ namespace MSetGenP
 
 		private static ulong[] Pack(ulong[] splitValues)
 		{
-			Debug.Assert(splitValues.Length % 2 == 0);	
+			Debug.Assert(splitValues.Length % 2 == 0, "The array being split has a length that is not an even multiple of two.");	
 
 			var result = new ulong[splitValues.Length / 2];
 
@@ -750,7 +807,7 @@ namespace MSetGenP
 
 		private static string GetHiLoDiagDisplay(string name, ulong[] values)
 		{
-			Debug.Assert(values.Length % 2 == 0);
+			Debug.Assert(values.Length % 2 == 0, "GetHiLoDiagDisplay is being called with an array that has a length that is not an even multiple of two.");
 
 			var strAry = GetStrArray(values);
 			var pairs = new string[values.Length / 2];
@@ -837,7 +894,7 @@ namespace MSetGenP
 
 		#endregion
 
-		#region RValue Comparison
+		#region Comparison
 
 		public static bool AreClose(RValue a, RValue b)
 		{
@@ -870,6 +927,35 @@ namespace MSetGenP
 			return strA == strB;
 		}
 
+		public static int SumAndCompare(Smx a, Smx b, uint c)
+		{
+			var aMsb = GetMsb(a.Mantissa, out var indexA);
+			var aValue = aMsb * Math.Pow(2, a.Exponent + (indexA * 32));
+
+			var bMsb = GetMsb(b.Mantissa, out var indexB);
+			var bValue = bMsb * Math.Pow(2, b.Exponent + (indexB * 32));
+
+			var sum = aValue + bValue;
+			var result = sum < c ? -1 : sum > c ? 1 : 0;
+
+			return result;
+		}
+
+		private static ulong GetMsb(ulong[] x, out int index)
+		{
+			for(int i = x.Length - 1; i >= 0; i--)
+			{
+				if (x[i] != 0)
+				{
+					index = i;
+					return x[i];
+				}
+			}
+
+			index = 0;
+			return 0;
+		}
+
 		#endregion
 
 		#region Precision Support
@@ -882,15 +968,19 @@ namespace MSetGenP
 
 		public static int GetPrecision(ulong[] mantissa, int exponent)
 		{
+			var absExponent = (int)Math.Round((double)exponent);
+
 			var reducedMantissa = Reduce(mantissa, out var shiftAmount);
-			var adjustedExponent = exponent + shiftAmount;
+			var adjustedExponent = absExponent - shiftAmount;
 
-			var numberOfSignificanDecimalDigits = GetNumberOfSignificantDigits(reducedMantissa);
-			var numberOfSignificantBinaryDigits = Math.Log10(2) * numberOfSignificanDecimalDigits;
+			var numberOfSignificantBinaryDigits = GetNumberOfSignificantDigits(reducedMantissa);
+			var typicalNumSignBinDigits = adjustedExponent / 4;
 
+			// reduce the exponent by the amount of the number of significant digits above the typical amount.
+			var scaledExponent = adjustedExponent - (numberOfSignificantBinaryDigits - typicalNumSignBinDigits);
 
-
-			var result = (int) Math.Round(Math.Abs(adjustedExponent) - numberOfSignificantBinaryDigits);
+			// Return which ever is greatest between the scaled exponent and the number of significant digits.
+			var result = Math.Max(scaledExponent, typicalNumSignBinDigits);
 
 			return result;
 		}

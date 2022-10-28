@@ -63,3 +63,9 @@ Translate l to a color and paint the pixel at c with that color
 		zisqr = square(z.i);
 	}
 
+	Subtraction is not associative:
+	
+	8 - 3 - 1 = (8 - 3) - 1 = 5 - 1 = 4
+	8 - (3 - 1) = 8 - 2 = 6
+
+
