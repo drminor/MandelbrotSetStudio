@@ -81,17 +81,22 @@ namespace MSetGenP
 			return result;
 		}
 
-		private Smx CreateSmxFromDto(long[] values, int exponent, int precision = 70)
+		private Smx CreateSmxFromDto(long[] values, int exponent, int precision)
 		{
 			var sign = !values.Any(x => x < 0);
-			var mantissa = ConvertDtoLongsToSmxULongs(values, out var shiftAmount);
-			var adjExponent = exponent - shiftAmount;
-			var result = new Smx(sign, mantissa, adjExponent, precision);
+
+			//var mantissa = ConvertDtoLongsToSmxULongs(values, out var shiftAmount);
+			//var adjExponent = exponent - shiftAmount;
+			//var result = new Smx(sign, mantissa, adjExponent, precision);
+
+			var mantissa = ConvertDtoLongsToSmxULongs(values);
+			var nrmMantissa = SmxMathHelper.NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
+			var result = new Smx(sign, nrmMantissa, nrmExponent, precision);
 
 			return result;
 		}
 
-		private ulong[] ConvertDtoLongsToSmxULongs(long[] values, out int shiftAmount)
+		private ulong[] ConvertDtoLongsToSmxULongs(long[] values/*, out int shiftAmount*/)
 		{
 			// DtoLongs are in Big-Endian order, convert to Little-Endian order.
 			//var leValues = values.Reverse().ToArray();
@@ -115,11 +120,11 @@ namespace MSetGenP
 				result[2 * i + 1] = hi;
 			}
 
-			var trResult = SmxMathHelper.TrimLeadingZeros(result);
-			var adjResult = SmxMathHelper.FillMsb(trResult, out shiftAmount);
-			//var adjResult = SmxMathHelper.FillMsb(result, out shiftAmount);
+			//var trResult = SmxMathHelper.TrimLeadingZeros(result);
+			//var adjResult = SmxMathHelper.FillMsb(trResult, out shiftAmount);
+			//return adjResult;
 
-			return adjResult;
+			return result;
 		}
 
 		// Trim Leading Zeros for a Big-Endian formatted array of longs.

@@ -14,7 +14,7 @@ namespace MSS.Types
 
 		public int Exponent { get; init; }
 
-		public int Precision { get; set; }	// Number of significan binary digits
+		public int Precision { get; set; }	// Number of binary digits
 
 		public RRectangle() : this(0, 0, 0, 0, 0)
 		{ }

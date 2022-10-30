@@ -219,7 +219,44 @@ namespace MSS.Common
 
 		#endregion
 
+		#region Compare
+
+		public static bool AreClose(RValue a, RValue b)
+		{
+			var aNrm = RNormalizer.Normalize(a, b, out var bNrm);
+			var strA = aNrm.Value.ToString();
+			var strB = bNrm.Value.ToString();
+
+			var precision = Math.Min(a.Precision, b.Precision);
+			var numberOfDecimalDigits = (int)Math.Round(precision * Math.Log10(2), MidpointRounding.ToZero);
+
+			if (strA.Length < numberOfDecimalDigits)
+			{
+				Debug.WriteLine($"Value A has {strA.Length} decimal digits which is less than {numberOfDecimalDigits}.");
+				return false;
+			}
+
+			if (strB.Length < numberOfDecimalDigits)
+			{
+				Debug.WriteLine($"Value B has {strB.Length} decimal digits which is less than {numberOfDecimalDigits}.");
+				return false;
+			}
+
+			Debug.WriteLine($"AreClose is comparing {numberOfDecimalDigits} characters of {strA} and {strB}.");
+
+			strA = strA.Substring(0, numberOfDecimalDigits);
+			strB = strB.Substring(0, numberOfDecimalDigits);
+
+			Debug.WriteLine($"AreClose is comparing {strA} with {strB} and returning {strA == strB}.");
+
+			return strA == strB;
+		}
+
+		#endregion
+
 		#region Precision
+
+		// 16 decimal digits, 53 log10(2) ≈ 15.955).
 
 		public static int GetPrecision(RValue rValue1, RValue rValue2, out RValue diff)
 		{
@@ -228,8 +265,8 @@ namespace MSS.Common
 
 			var doubles = ConvertToDoubles(diffNoPrecision);
 			var msd = doubles[0];
-			var logB10 = Math.Log10(msd);
 
+			var logB10 = Math.Log10(msd);
 			var result = (int)Math.Ceiling(Math.Abs(logB10));
 
 			diff = new RValue(diffNoPrecision.Value, diffNoPrecision.Exponent, result);

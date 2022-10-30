@@ -2,6 +2,7 @@
 using MSS.Types;
 using System.Collections;
 using System.Numerics;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
@@ -27,10 +28,20 @@ namespace MSetGenP
 
 		public Smx(bool sign, ulong[] mantissa, int exponent, int precision)
 		{
+			ValidatePWValues(mantissa);
+
 			Sign = sign;
 			Mantissa = (ulong[])mantissa.Clone(); // SmxMathHelper.GetPwULongs(mantissa);
 			Exponent = exponent;
-			Precision=precision;
+			Precision = precision;
+		}
+
+		private static void ValidatePWValues(ulong[] mantissa)
+		{
+			if (SmxMathHelper.CheckPWValues(mantissa))
+			{
+				throw new ArgumentException($"Cannot create a Smx from an array of ulongs where any of the values is greater than MAX_DIGIT.");
+			}
 		}
 
 		#endregion

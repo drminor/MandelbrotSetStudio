@@ -12,8 +12,8 @@ namespace MSetGenP
 	{
 		#region Constants
 
-		private static readonly ulong MAX_MSB = (ulong)Math.Pow(2, 30);
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
+		private static readonly ulong HALF_DIGIT_VALUE = (ulong)Math.Pow(2, 16);
 
 		// Integer used to convert BigIntegers to/from array of ulongs.
 		private static readonly BigInteger BI_ULONG_FACTOR = BigInteger.Pow(2, 64);
@@ -36,7 +36,10 @@ namespace MSetGenP
 			var exponent = a.Exponent + b.Exponent;
 			var precision = Math.Min(a.Precision, b.Precision);
 
-			Smx result = BuildSmx(sign, mantissa, exponent, precision);
+			//Smx result = BuildSmx(sign, mantissa, exponent, precision);
+
+			var nrmMantissa = NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
+			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
 
 			return result;
 		}
@@ -86,7 +89,11 @@ namespace MSetGenP
 		public static Smx Square(Smx a)
 		{
 			var mantissa = Square(a.Mantissa);
-			Smx result = BuildSmx(true, mantissa, a.Exponent * 2, a.Precision);
+
+			//Smx result = BuildSmx(true, mantissa, a.Exponent * 2, a.Precision);
+
+			var nrmMantissa = NormalizeFPV(mantissa, a.Exponent * 2, a.Precision, out var nrmExponent);
+			Smx result = new Smx(true, nrmMantissa, nrmExponent, a.Precision);
 
 			return result;
 		}
@@ -160,7 +167,11 @@ namespace MSetGenP
 			var exponent = a.Exponent;
 			var precision = a.Precision;
 
-			Smx result = BuildSmx(sign, mantissa, exponent, precision);
+			//Smx result = BuildSmx(sign, mantissa, exponent, precision);
+
+			var nrmMantissa = NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
+			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
+
 
 			return result;
 		}
@@ -267,7 +278,27 @@ namespace MSetGenP
 
 		public static Smx Add(Smx a, Smx b)
 		{
-			var nrmA = Normalize(a, b, out var nrmB);
+			//if (CheckPWValues(a.Mantissa))
+			//{
+			//	throw new ArgumentException($"During Add, a: {a.GetStringValue()} has 1 or more limbs that are greater than MAX_DIGIT.");
+			//}
+
+			//if (CheckPWValues(b.Mantissa))
+			//{
+			//	throw new ArgumentException($"During Add, b: {b.GetStringValue()} has 1 or more limbs that are greater than MAX_DIGIT.");
+			//}
+
+			var nrmA = AlignExponents(a, b, out var nrmB);
+
+			//if (CheckPWValues(nrmA.Mantissa))
+			//{
+			//	throw new ArgumentException($"During Add, nrmA: {nrmA.GetStringValue()} has 1 or more limbs that are greater than MAX_DIGIT.");
+			//}
+
+			//if (CheckPWValues(nrmB.Mantissa))
+			//{
+			//	throw new ArgumentException($"During Add, nrmB: {nrmB.GetStringValue()} has 1 or more limbs that are greater than MAX_DIGIT.");
+			//}
 
 			bool sign;
 			ulong[] mantissa;
@@ -300,16 +331,22 @@ namespace MSetGenP
 				}
 			}
 
+			// TODO: Check the logic used to normalize an Smx after addition / subtraction
 			var spMantissa = ReSplit(mantissa);
 
 			var trMantissa = TrimLeadingZeros(spMantissa);
-			var adjMantissa = FillMsb(trMantissa, out var shiftAmount);
-			//var adjMantissa = FillMsb(spMantissa, out var shiftAmount);
+			//var adjMantissa = FillMsb(trMantissa, out var shiftAmount);
+			//exponent -= shiftAmount;
+			//var result = new Smx(sign, adjMantissa, exponent, precision);
 
+			var result = new Smx(sign, trMantissa, exponent, precision);
 
-			exponent -= shiftAmount;
+			return result;
+		}
 
-			var result = new Smx(sign, adjMantissa, exponent, precision);
+		public static bool CheckPWValues(ulong[] values)
+		{
+			var result = values.Any(x => x > MAX_DIGIT_VALUE);
 			return result;
 		}
 
@@ -361,19 +398,27 @@ namespace MSetGenP
 				throw new Exception($"While subtracting b: {bx} from a: {ax}, b was found to have more digits than a. A should be larger and therefor should have the same or more digits than b.");
 			}
 
-			var maxLen = Math.Max(ax.Length, bx.Length);
-			ulong[] result = new ulong[maxLen];
+			//var maxLen = Math.Max(ax.Length, bx.Length);
+			//ulong[] result = new ulong[maxLen];
+
+			var result = new ulong[ax.Length];
+
+			var axPtr = ax.Length - bx.Length;
+			
+			if (axPtr < 0)
+			{
+				throw new Exception($"While subtracting b: {bx} from a: {ax}, b was found to have more digits than a. A should be larger and therefor should have the same or more digits than b.");
+			}
 
 			var i = 0;
-
 			for (; i < bx.Length; i++)
 			{
 				var diff = (long)ax[i] - (long)bx[i];
 
 				if (diff < 0)
 				{
-					var t = (ulong)(diff * -1);
-					Debug.Assert(t < MAX_DIGIT_VALUE, $"When subtracting {(long)bx[i]} from {(long)ax[i]}, the result is larger than MAX_DIGIT_VALUE.");
+					//var t = (ulong)Math.Abs(diff);
+					//Debug.Assert(t < MAX_DIGIT_VALUE, $"When subtracting {(long)bx[i]} from {(long)ax[i]}, the result is larger than MAX_DIGIT_VALUE.");
 
 					try
 					{
@@ -385,11 +430,11 @@ namespace MSetGenP
 					}	
 
 					diff = (long)ax[i] - (long)bx[i];
-				}
 
-				if (diff < 0)
-				{
-					throw new Exception("While subtracting b: {bx} from a: {ax}, after borrow, the difference is still negative.");
+					if (diff < 0)
+					{
+						throw new Exception("While subtracting b: {bx} from a: {ax}, after borrow, the difference is still negative.");
+					}
 				}
 
 				result[i] = (ulong)diff;
@@ -415,34 +460,14 @@ namespace MSetGenP
 				Borrow(x, index + 1);
 			}
 
-			x[index] = x[index] - 1;
+			x[index] -= 1;
 			x[index - 1] += MAX_DIGIT_VALUE;
+
+			//x[index - 1] += x[index] * MAX_DIGIT_VALUE;
+			//x[index] = 0;
 		}
 
-		private static int Compare(ulong[] ax, ulong[] bx)
-		{
-			var sdA = GetNumberOfSignificantB32Digits(ax);
-			var sdB = GetNumberOfSignificantB32Digits(bx);
-
-			if (sdA != sdB)
-			{
-				return sdA > sdB ? 1 : -1;
-			}
-
-			var i = -1 + Math.Min(ax.Length, bx.Length);
-
-			for (; i >= 0; i--)
-			{
-				if (ax[i] != bx[i])
-				{
-					return ax[i] > bx[i] ? 1 : -1;
-				}
-			}
-
-			return 0;
-		}
-
-		private static Smx Normalize(Smx a, Smx b, out Smx normalizedB)
+		private static Smx AlignExponents(Smx a, Smx b, out Smx normalizedB)
 		{
 			if (a.Exponent == b.Exponent)
 			{
@@ -455,25 +480,34 @@ namespace MSetGenP
 			if (diff > 0)
 			{
 				normalizedB = b;
-				var newAMantissa = Scale(a.Mantissa, (uint)diff);
+				var newAMantissa = Scale(a.Mantissa, diff);
 				var result = new Smx(a.Sign, newAMantissa, b.Exponent, a.Precision);
 				return result;
-			}	
+			}
 			else
 			{
-				var newBMantissa = Scale(b.Mantissa, (uint)diff);
+				var newBMantissa = Scale(b.Mantissa, diff * -1);
 				normalizedB = new Smx(b.Sign, newBMantissa, a.Exponent, b.Precision);
 				return a;
 			}
 		}
 
-		private static ulong[] Scale(ulong[] x, uint factor)
+		private static ulong[] Scale(ulong[] x, int power)
 		{
-			var result = new ulong[x.Length];
-
-			for(var i = 0; i < result.Length; i++)
+			if (power <= 0)
 			{
-				result[i] = x[i] * factor;
+				throw new ArgumentException("The value of power must be 1 or greater.");
+			}
+
+			var qr = Math.DivRem(power, 32);
+			var newLimbs = qr.Quotient;
+			var factor = (ulong) Math.Pow(2, qr.Remainder);
+
+			var result = new ulong[x.Length + newLimbs];
+
+			for (var i = newLimbs; i < result.Length; i++)
+			{
+				result[i] = x[i - newLimbs] * factor;
 			}
 
 			result = ReSplit(result);
@@ -485,207 +519,105 @@ namespace MSetGenP
 
 		#region Build Smx Support
 
-		private static Smx BuildSmx(bool sign, ulong[] mantissa, int exponent, int precision)
-		{
-			Smx result;
+		//private static Smx BuildSmx(bool sign, ulong[] mantissa, int exponent, int precision)
+		//{
+		//	Smx result;
 
-			mantissa = TrimLeadingZeros(mantissa);
+		//	mantissa = TrimLeadingZeros(mantissa);
 
-			var numBaseUInt32Digits = BigIntegerHelper.GetNumBaseUIntDigits(precision);
-			//numBaseUInt32Digits++; // Include an extra digit for 'working room' -- Will round more aggressively when returning final value.
+		//	var numBaseUInt32Digits = GetNumBaseUIntDigits(precision);
+		//	//numBaseUInt32Digits++; // Include an extra digit for 'working room' -- Will round more aggressively when returning final value.
 
-			if (mantissa.Length > numBaseUInt32Digits)
-			{
-				mantissa = FillMsb(mantissa, out var shiftAmount);
-				exponent -= shiftAmount;
+		//	if (mantissa.Length > numBaseUInt32Digits)
+		//	{
+		//		mantissa = FillMsb(mantissa, out var shiftAmount);
+		//		exponent -= shiftAmount;
 
-				var adjMantissa = Round(mantissa, numBaseUInt32Digits);
-				var adjExponent = exponent + 32 * (mantissa.Length - numBaseUInt32Digits);
+		//		var adjMantissa = Round(mantissa, numBaseUInt32Digits);
+		//		var adjExponent = exponent + 32 * (mantissa.Length - numBaseUInt32Digits);
 
-				//var reducedMantissa = Reduce(adjMantissa, out shiftAmount);
-				//adjExponent += shiftAmount;
-				//result = new Smx(sign, reducedMantissa, adjExponent, precision);
+		//		//var reducedMantissa = Reduce(adjMantissa, out shiftAmount);
+		//		//adjExponent += shiftAmount;
+		//		//result = new Smx(sign, reducedMantissa, adjExponent, precision);
 
-				result = new Smx(sign, adjMantissa, adjExponent, precision);
+		//		result = new Smx(sign, adjMantissa, adjExponent, precision);
 
-			}
-			else
-			{
-				//var reducedMantissa = Reduce(mantissa, out var shiftAmount);
-				//exponent += shiftAmount;
-				//result = new Smx(sign, reducedMantissa, exponent, precision);
+		//	}
+		//	else
+		//	{
+		//		//var reducedMantissa = Reduce(mantissa, out var shiftAmount);
+		//		//exponent += shiftAmount;
+		//		//result = new Smx(sign, reducedMantissa, exponent, precision);
 
-				result = new Smx(sign, mantissa, exponent, precision);
-			}
+		//		result = new Smx(sign, mantissa, exponent, precision);
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		private static ulong[] Round(ulong[] mantissa, int numBaseUInt32Digits)
-		{
-			var result = new ulong[numBaseUInt32Digits];
-			var startIndex = mantissa.Length - numBaseUInt32Digits;
+		//public static ulong[] FillMsb(ulong[] mantissa, out int shiftAmount)
+		//{
+		//	shiftAmount = 0;
 
-			Debug.Assert(startIndex > 0, "Expecting startIndex to be > 0 when rounding.");
+		//	//var msbIndex = -1 + GetNumberOfSignificantB32Digits(mantissa);
+		//	//var msb = mantissa[msbIndex];
 
-			Array.Copy(mantissa, startIndex, result, 0, numBaseUInt32Digits);
+		//	var msb = mantissa[^1];
 
-			if (mantissa[startIndex - 1] >= Math.Pow(2, 16))
-			{
-				result[0] += 1;
-			}
+		//	if (msb == 0)
+		//	{
+		//		Debug.Assert(mantissa.Length == 1, "Msb is zero upon call to FillMsb, but the mantissa has more than 1 B32 digit.");
+		//		return mantissa;
+		//	}
 
-			return result;
-		}
+		//	var maxMsbValue = (ulong)Math.Pow(2, 30);
+		//	while((msb << 1) < maxMsbValue)
+		//	{
+		//		msb <<= 1; // Multiply x 2
+		//		shiftAmount++;
+		//	}
 
-		public static ulong[] FillMsb(ulong[] mantissa, out int shiftAmount)
-		{
-			shiftAmount = 0;
+		//	if (shiftAmount == 0)
+		//	{
+		//		return mantissa;
+		//	}
 
-			//var msbIndex = -1 + GetNumberOfSignificantB32Digits(mantissa);
-			//var msb = mantissa[msbIndex];
+		//	var multiplyer = (ulong)Math.Pow(2, shiftAmount);
+		//	Debug.Assert(multiplyer <= MAX_DIGIT_VALUE, "FillMsb is using a multiplyer > MAX_DIGIT_VALUE");
 
-			var msb = mantissa[^1];
+		//	var result = new ulong[mantissa.Length];
 
-			if (msb == 0)
-			{
-				Debug.Assert(mantissa.Length == 1, "Msb is zero upon call to FillMsb, but the mantissa has more than 1 B32 digit.");
-				return mantissa;
-			}
+		//	for (int i = 0; i < mantissa.Length; i++)
+		//	{
+		//		var td = mantissa[i] * multiplyer;
 
-			while((msb << 1) < MAX_MSB)
-			{
-				msb <<= 1; // Multiply x 2
-				shiftAmount++;
-			}
+		//		if (td > ulong.MaxValue)
+		//		{
+		//			throw new OverflowException($"FillMsb overflowed digit at index {i} while multiplying");
+		//		}
 
-			if (shiftAmount == 0)
-			{
-				return mantissa;
-			}
+		//		result[i] = td;
+		//	}
 
-			var multiplyer = (ulong)Math.Pow(2, shiftAmount);
-			Debug.Assert(multiplyer <= MAX_DIGIT_VALUE, "FillMsb is using a multiplyer > MAX_DIGIT_VALUE");
+		//	for (int i = 0; i < mantissa.Length - 1; i++)
+		//	{
+		//		var lo = Split(result[i], out var hi);
+		//		result[i] = lo;
 
-			var result = new ulong[mantissa.Length];
+		//		var hiTemp = result[i + 1] + hi;
+		//		result[i + 1] = hiTemp;
+		//	}
 
-			for (int i = 0; i < mantissa.Length; i++)
-			{
-				var td = mantissa[i] * multiplyer;
+		//	if (result[^1] > MAX_DIGIT_VALUE)
+		//	{
+		//		throw new OverflowException($"FillMsb overflowed the most signifcant digit.");
+		//	}
 
-				if (td > ulong.MaxValue)
-				{
-					throw new OverflowException($"FillMsb overflowed digit at index {i} while multiplying");
-				}
+		//	//var lz = BitOperations.LeadingZeroCount(result[^1]);
+		//	//Debug.WriteLine($"Upon completing a FillMsb op, the MSD has {lz} leading zeros.");
 
-				result[i] = td;
-			}
-
-			for (int i = 0; i < mantissa.Length - 1; i++)
-			{
-				var lo = Split(result[i], out var hi);
-				result[i] = lo;
-
-				var hiTemp = result[i + 1] + hi;
-				result[i + 1] = hiTemp;
-			}
-
-			if (result[^1] > MAX_DIGIT_VALUE)
-			{
-				throw new OverflowException($"FillMsb overflowed the most signifcant digit.");
-			}
-
-			//var lz = BitOperations.LeadingZeroCount(result[^1]);
-			//Debug.WriteLine($"Upon completing a FillMsb op, the MSD has {lz} leading zeros.");
-
-			return result;
-		}
-
-		public static int GetNumberOfSignificantB32Digits(ulong[] mantissa)
-		{
-			var i = mantissa.Length;
-			for (; i > 0; i--)
-			{
-				if (mantissa[i - 1] != 0)
-				{
-					break;
-				}
-			}
-
-			return i;
-		}
-
-		public static ulong[] TrimLeadingZeros(ulong[] mantissa)
-		{
-			var i = mantissa.Length;
-			for (; i > 0; i--)
-			{
-				if (mantissa[i - 1] != 0)
-				{
-					break;
-				}
-			}
-
-			if (i == mantissa.Length)
-			{
-				return mantissa;
-			}
-
-			if (i == 0)
-			{
-				// All digits are zero
-				return new ulong[] { 0 };
-			}
-
-			var result = new ulong[i];
-			Array.Copy(mantissa, 0, result, 0, i);
-			return result;
-		}
-
-		public static ulong[] Reduce(ulong[] mantissa, out int shiftAmount)
-		{
-			shiftAmount = 0;
-
-			if (AreComponentsEven(mantissa))
-			{
-				shiftAmount++;
-				var w = new ulong[mantissa.Length];
-
-				for(int i = 0; i < w.Length; i++)
-				{
-					w[i] = mantissa[i] / 2;	
-				}
-
-				while(AreComponentsEven(w))
-				{
-					shiftAmount++;
-
-					for (int i = 0; i < w.Length; i++)
-					{
-						w[i] = w[i] / 2;
-					}
-				}
-
-				return w;
-			}
-			else
-			{
-				return mantissa;	
-			}
-		}
-
-		public static bool AreComponentsEven(ulong[] mantissa)
-		{
-			foreach(var value in mantissa)
-			{
-				if (value % 2 != 0)
-				{
-					return false;
-				}
-			}
-
-			return true;
-		}
+		//	return result;
+		//}
 
 		#endregion
 
@@ -707,23 +639,20 @@ namespace MSetGenP
 
 		private static ulong[] ReSplit(ulong[] values)
 		{
-			for (int i = 0; i < values.Length - 1; i++)
+			ulong carry = 0;
+
+			for (int i = 0; i < values.Length; i++)
 			{
-				var lo = Split(values[i], out var hi);
+				var lo = Split(values[i] + carry, out var hi);
 				values[i] = lo;
-				values[i + 1] += hi;
+				carry = hi;
 			}
 
-			var lo1 = Split(values[^1], out var hi1);
-			values[^1] = lo1;
-
-			var carryOut = hi1;
-
-			if (carryOut > 0)
+			if (carry != 0)
 			{
 				var newResult = new ulong[values.Length + 1];
 				Array.Copy(values, 0, newResult, 0, values.Length);
-				newResult[^1] = carryOut;
+				newResult[^1] = carry;
 				return newResult;
 			}
 			else
@@ -734,9 +663,10 @@ namespace MSetGenP
 
 		public static ulong Split(ulong x, out ulong hi)
 		{
-			var hiTemp = (uint)(x >> 32); // Move bits 32-63 -> bits 0-31
+			var hiTemp = (uint)(x >> 32); // Copy bits 32-63 into bits 0-31 of a new long.
 			hi = hiTemp;
-			var lo = (uint)x;
+
+			var lo = (uint)x; // Copy bits 0 - 31 into a new long
 			return lo;
 		}
 
@@ -894,37 +824,246 @@ namespace MSetGenP
 
 		#endregion
 
+		#region Normalization Support
+
+		public static ulong[] NormalizeFPV(ulong[] mantissa, int exponent, int precision, out int nrmExponent)
+		{
+			mantissa = TrimLeadingZeros(mantissa);
+
+			if (mantissa.Length == 1 && mantissa[0] == 0)
+			{
+				nrmExponent = exponent;
+				return mantissa;
+			}
+
+			var limbsCount = GetLimbsCount(precision);
+
+			if (mantissa.Length <= limbsCount)
+			{
+				nrmExponent = exponent;
+				return mantissa;
+			}
+
+			var numSignificantDigits = GetNumberOfSignificantDigits(mantissa, limbsCount);
+
+			var additionalSignificantDigitsDesired = precision - numSignificantDigits;
+
+			if (additionalSignificantDigitsDesired <= 0)
+			{
+				var rndMantissa = Round(mantissa, exponent, limbsCount, out var rndExponent);
+				nrmExponent = rndExponent;
+				return rndMantissa;
+			}
+
+			var potentialShiftAmount = BitOperations.LeadingZeroCount(mantissa[^1]) - 32;
+			if (potentialShiftAmount < 0)
+			{
+				// TODO: Convert this to a Conditional Method base on compilation symbol = 'DEBUG.'
+				throw new ArgumentException("NormalizeFPV requires each mantissa element to be no greater than 2^32.");
+			}
+
+			var shiftAmount = Math.Min(additionalSignificantDigitsDesired, potentialShiftAmount);
+
+			// Compensate for shifting towards the MSB (i.e., multiplying)
+			nrmExponent = exponent - shiftAmount;
+
+			var startIndex = mantissa.Length - limbsCount;
+
+			var result = new ulong[limbsCount];
+			Array.Copy(mantissa, startIndex, result, 0, limbsCount);
+
+			// Fill x number of high-order bits having value zero within the low half of the MSB, creating range of zero value bits at the low-order end.
+			result[^1] <<= shiftAmount;
+
+			for (int i = result.Length - 2; i >= 0; i--)
+			{
+				// Fill the x amount of zero value bits at the low-order end of the previous digit
+				// with the top x bits of this digit. The bits from this digit are multiplied by 2^shiftAmount and then divided by 2^32.
+				result[i + 1] |= result[i] >> 32 - shiftAmount;
+
+				// Set the top x bits of this value to zero and then multiply by 2^shiftAmount.
+				result[i] = (result[i] << 32 + shiftAmount) >> 32;
+			}
+
+			// If there were more digits in the source mantissa than the number of digits being returned,
+			// use the top x bits of that digit.
+			if (startIndex > 0)
+			{
+				var preceedingDigit = mantissa[startIndex - 1];
+				result[0] |= preceedingDigit >> 32 - shiftAmount;
+
+				// Get the new value of the preceeding digit
+				preceedingDigit = (preceedingDigit << 32 + shiftAmount) >> 32;
+
+				// Round up, if the value of the next LS digit is >= 2^16.
+				if (preceedingDigit >= HALF_DIGIT_VALUE)
+				{
+					result[0] += 1;
+				}
+
+				// Compensate for discarding startIndex number of LSB
+				nrmExponent += 32 * startIndex;
+			}
+
+			return result;
+		}
+
+		private static void ValidateUsingPartialWordValues(ulong mantissa)
+		{
+
+		}
+
+		public static int GetLimbsCount(int precision)
+		{
+			if (precision <= 32)
+			{
+				return 1;
+			}
+
+			var result = Math.DivRem(precision, 32, out var remainder);
+			if (remainder > 0)
+			{
+				result++;
+			}
+
+			return result;
+		}
+
+		public static ulong[] TrimLeadingZeros(ulong[] mantissa)
+		{
+			if (mantissa.Length == 1 && mantissa[0] == 0)
+			{
+				return mantissa;
+			}
+
+			var i = mantissa.Length;
+			for (; i > 0; i--)
+			{
+				if (mantissa[i - 1] != 0)
+				{
+					break;
+				}
+			}
+
+			if (i == mantissa.Length)
+			{
+				return mantissa;
+			}
+
+			if (i == 0)
+			{
+				// All digits are zero
+				return new ulong[] { 0 };
+			}
+
+			var result = new ulong[i];
+			Array.Copy(mantissa, 0, result, 0, i);
+			return result;
+		}
+
+		private static ulong[] Round(ulong[] mantissa, int exponent, int limbs, out int rndExponent)
+		{
+			var result = new ulong[limbs];
+			var startIndex = mantissa.Length - limbs;
+
+			Debug.Assert(startIndex > 0, "Expecting startIndex to be > 0 when rounding.");
+
+			Array.Copy(mantissa, startIndex, result, 0, limbs);
+
+			if (mantissa[startIndex - 1] >= HALF_DIGIT_VALUE)
+			{
+				result[0] += 1;
+			}
+
+			rndExponent = exponent + 32 * startIndex;
+
+			return result;
+		}
+
+		public static ulong[] Reduce(ulong[] mantissa, out int shiftAmount)
+		{
+			shiftAmount = 0;
+
+			if (AreComponentsEven(mantissa))
+			{
+				shiftAmount++;
+				var w = new ulong[mantissa.Length];
+
+				for (int i = 0; i < w.Length; i++)
+				{
+					w[i] = mantissa[i] / 2;
+				}
+
+				while (AreComponentsEven(w))
+				{
+					shiftAmount++;
+
+					for (int i = 0; i < w.Length; i++)
+					{
+						w[i] = w[i] / 2;
+					}
+				}
+
+				return w;
+			}
+			else
+			{
+				return mantissa;
+			}
+		}
+
+		public static bool AreComponentsEven(ulong[] mantissa)
+		{
+			foreach (var value in mantissa)
+			{
+				if (value % 2 != 0)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		#endregion
+
 		#region Comparison
 
-		public static bool AreClose(RValue a, RValue b)
+		private static int Compare(ulong[] ax, ulong[] bx)
 		{
-			var aNrm = RNormalizer.Normalize(a, b, out var bNrm);
-			var strA = aNrm.Value.ToString();
-			var strB = bNrm.Value.ToString();
+			var sdA = GetNumberOfSignificantB32Digits(ax);
+			var sdB = GetNumberOfSignificantB32Digits(bx);
 
-			var precision = Math.Min(a.Precision, b.Precision);
-			var numberOfDecimalDigits = (int)Math.Round(precision * Math.Log10(2), MidpointRounding.ToZero);
-
-			if (strA.Length < numberOfDecimalDigits)
+			if (sdA != sdB)
 			{
-				Debug.WriteLine($"Value A has {strA.Length} decimal digits which is less than {numberOfDecimalDigits}.");
-				return false;
+				return sdA > sdB ? 1 : -1;
 			}
 
-			if (strB.Length < numberOfDecimalDigits)
+			var i = -1 + Math.Min(ax.Length, bx.Length);
+
+			for (; i >= 0; i--)
 			{
-				Debug.WriteLine($"Value B has {strB.Length} decimal digits which is less than {numberOfDecimalDigits}.");
-				return false;
+				if (ax[i] != bx[i])
+				{
+					return ax[i] > bx[i] ? 1 : -1;
+				}
 			}
 
-			Debug.WriteLine($"AreClose is comparing {numberOfDecimalDigits} characters of {strA} and {strB}.");
+			return 0;
+		}
 
-			strA = strA.Substring(0, numberOfDecimalDigits);
-			strB = strB.Substring(0, numberOfDecimalDigits);
+		public static int GetNumberOfSignificantB32Digits(ulong[] mantissa)
+		{
+			var i = mantissa.Length;
+			for (; i > 0; i--)
+			{
+				if (mantissa[i - 1] != 0)
+				{
+					break;
+				}
+			}
 
-			Debug.WriteLine($"AreClose is comparing {strA} with {strB} and returning {strA == strB}.");
-
-			return strA == strB;
+			return i;
 		}
 
 		public static int SumAndCompare(Smx a, Smx b, uint c)
@@ -960,13 +1099,15 @@ namespace MSetGenP
 
 		#region Precision Support
 
-		public static int GetPrecision(Smx a)
+		// Use RValueHelper.GetPrecision Instead
+
+		public static int GetPrecisionExperimental(Smx a)
 		{
-			var result = GetPrecision(a.Mantissa, a.Exponent);
+			var result = GetPrecisionExperimental(a.Mantissa, a.Exponent);
 			return result;
 		}
 
-		public static int GetPrecision(ulong[] mantissa, int exponent)
+		public static int GetPrecisionExperimental(ulong[] mantissa, int exponent)
 		{
 			var absExponent = (int)Math.Round((double)exponent);
 
@@ -985,14 +1126,19 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static int GetNumberOfSignificantDigits(ulong[] mantissa)
+		public static int GetNumberOfSignificantDigits(ulong[] mantissa, int numberOfPlacesToInspect = int.MaxValue)
 		{
+			numberOfPlacesToInspect = Math.Min(mantissa.Length, numberOfPlacesToInspect);
+			var endIndex = mantissa.Length - numberOfPlacesToInspect;
+
 			var result = 0;
 
-			for(int i = 0; i < mantissa.Length; i++)
+			for(int i = mantissa.Length - 1; i >= endIndex; i--)
 			{
-				var lz = 64 - BitOperations.LeadingZeroCount(mantissa[i]);
-				result += lz;
+				var lz = BitOperations.LeadingZeroCount(mantissa[i]);
+				Debug.Assert(lz >= 32);
+
+				result += 64 - lz;
 			}
 
 			return result;

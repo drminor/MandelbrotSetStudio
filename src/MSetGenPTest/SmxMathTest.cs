@@ -20,46 +20,46 @@ namespace EngineTest
 			Assert.Equal(bBigInteger, bCompBigInteger);
 		}
 
+		//[Fact]
+		//public void FillMsb_Returns_Correct_Value()
+		//{
+		//	var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
+		//	var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
+
+		//	var bMantissa = SmxMathHelper.Multiply(aMantissa, aMantissa);
+
+		//	var b1Mantissa = SmxMathHelper.TrimLeadingZeros(bMantissa);
+		//	var t1Longs = SmxMathHelper.FillMsb(b1Mantissa, out var shiftAmount);
+
+		//	var t1BigInteger = SmxMathHelper.FromPwULongs(t1Longs);
+		//	var t2BigInteger = t1BigInteger / BigInteger.Pow(2, shiftAmount);
+
+		//	var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
+		//	Assert.Equal(t2BigInteger, bCompBigInteger);
+		//}
+
 		[Fact]
-		public void FillMsb_Returns_Correct_Value()
-		{
-			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
-			var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
-
-			var bMantissa = SmxMathHelper.Multiply(aMantissa, aMantissa);
-
-			var b1Mantissa = SmxMathHelper.TrimLeadingZeros(bMantissa);
-			var t1Longs = SmxMathHelper.FillMsb(b1Mantissa, out var shiftAmount);
-			//var t1Longs = SmxMathHelper.FillMsb(bMantissa, out var shiftAmount);
-
-			var t1BigInteger = SmxMathHelper.FromPwULongs(t1Longs);
-			var t2BigInteger = t1BigInteger / BigInteger.Pow(2, shiftAmount);
-
-			var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
-			Assert.Equal(t2BigInteger, bCompBigInteger);
-		}
-
-		[Fact]
-		public void Round_Returns_Correct_Value()
+		public void NormalizeFPV_Returns_Correct_Value()
 		{
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017"); // 0.0000000000353482168348864539511122006373007661 (or possibly: 0.000000000035348216834895204420066149556547602)
 			var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
 
 			var bMantissa = SmxMathHelper.Multiply(aMantissa, aMantissa);
 
-			var b1Mantissa = SmxMathHelper.TrimLeadingZeros(bMantissa);
-			var t1Longs = SmxMathHelper.FillMsb(b1Mantissa, out var shiftAmount);
-			//var t1Longs = SmxMathHelper.FillMsb(bMantissa, out var shiftAmount);
+			//var b1Mantissa = SmxMathHelper.TrimLeadingZeros(bMantissa);
+			//var t1Longs = SmxMathHelper.FillMsb(b1Mantissa, out var shiftAmount);
+
+			var nrmBMantissa = SmxMathHelper.NormalizeFPV(bMantissa, -124, 55, out var nrmExponent);
 
 			// Discard 2 digits from the LSB end. (Divide by 2^64)
-			var t2Longs = new ulong[t1Longs.Length - 2];
-			Array.Copy(t1Longs, 2, t2Longs, 0, t2Longs.Length);
+			//var t2Longs = new ulong[t1Longs.Length - 2];
+			//Array.Copy(t1Longs, 2, t2Longs, 0, t2Longs.Length);
 
-			var t1BigInteger = SmxMathHelper.FromPwULongs(t2Longs);
-			var t2BigInteger = t1BigInteger / BigInteger.Pow(2, shiftAmount);
+			var t1BigInteger = SmxMathHelper.FromPwULongs(nrmBMantissa);
+			var t2BigInteger = t1BigInteger / BigInteger.Pow(2, nrmExponent);
 
 			var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
-			var b2CompBigInteger = bCompBigInteger / BigInteger.Pow(2, 64);
+			var b2CompBigInteger = bCompBigInteger / BigInteger.Pow(2, 192);
 
 			Assert.Equal(t2BigInteger, b2CompBigInteger);
 		}
@@ -83,7 +83,7 @@ namespace EngineTest
 			var cRValue = aRValue.Mul(bRValue);
 			var s2 = RValueHelper.ConvertToString(cRValue);
 
-			var areClose = SmxMathHelper.AreClose(cSmxRValue, cRValue);
+			var areClose = RValueHelper.AreClose(cSmxRValue, cRValue);
 			Assert.True(areClose);
 		}
 
@@ -102,7 +102,26 @@ namespace EngineTest
 			var bRValue = aRValue.Square();
 			var s2 = RValueHelper.ConvertToString(bRValue);
 
-			var areClose = SmxMathHelper.AreClose(bSmxRValue, bRValue);
+			var areClose = RValueHelper.AreClose(bSmxRValue, bRValue);
+			Assert.True(areClose);
+		}
+
+		[Fact]
+		public void SquareAnRValueSm()
+		{
+			var aRValue = new RValue(BigInteger.Parse("-12644545325526901863503869090"), -124, 53); // 5.9454366395492942314714087866438e-10
+			var s0 = RValueHelper.ConvertToString(aRValue);
+
+			var a = new Smx(aRValue);
+
+			var b = SmxMathHelper.Square(a);                            //3.5348216834895204420064645514845e-19
+			var bSmxRValue = b.GetRValue();
+			var s1 = RValueHelper.ConvertToString(bSmxRValue);
+
+			var bRValue = aRValue.Square();
+			var s2 = RValueHelper.ConvertToString(bRValue);
+
+			var areClose = RValueHelper.AreClose(bSmxRValue, bRValue);
 			Assert.True(areClose);
 		}
 
@@ -125,11 +144,48 @@ namespace EngineTest
 			var cRValue = aRValue.Add(bRValue);
 			var s2 = RValueHelper.ConvertToString(cRValue);
 
-			var areClose = SmxMathHelper.AreClose(cSmxRValue, cRValue);
+			var areClose = RValueHelper.AreClose(cSmxRValue, cRValue);
+			Assert.True(areClose);
+		}
+
+		[Fact]
+		public void AddTwoRValuesUseSub()
+		{
+			//var aBi = BigIntegerHelper.FromLongs(new long[] { -1, 55238551, 151263699 });
+			//var bBi = BigIntegerHelper.FromLongs(new long[] { 2, 86140672 });
+			//var aRValue = new RValue(aBi, -63, 55);
+			//var bRValue = new RValue(bBi, -36, 55);
+			//var a = new Smx(aRValue);
+			//var b = new Smx(bRValue);
+
+			var a = new Smx(false, new ulong[] { 151263699, 55238551, 1 }, -63, 55);
+			var b = new Smx(true, new ulong[] { 86140672, 2 }, -36, 55);
+
+			var aRValue = a.GetRValue();
+			var bRValue = b.GetRValue();
+			var c = SmxMathHelper.Add(a, b);
+
+			var cSmxRValue = c.GetRValue();
+			var s1 = RValueHelper.ConvertToString(cSmxRValue);
+
+			var nrmA = RNormalizer.Normalize(aRValue, bRValue, out var nrmB);
+			var cRValue = nrmA.Add(nrmB);
+			var s2 = RValueHelper.ConvertToString(cRValue);
+
+			var areClose = RValueHelper.AreClose(cSmxRValue, cRValue);
 			Assert.True(areClose);
 		}
 
 	}
+
+	/*
+
+		x = 4381107968, 1 * 2^-36
+		y = -3 * 2^-36
+
+
+
+	*/
 
 	/*
 		6258ffcd712f62b28ce55cf3

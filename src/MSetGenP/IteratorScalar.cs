@@ -23,15 +23,15 @@ namespace MSetGenP
 			var zRSqr = SmxMathHelper.Square(zR);
 			var zISqr = SmxMathHelper.Square(zI);
 
+			// z.r + z.i
+			var zRZi = SmxMathHelper.Add(zR, zI);
+
 			while (SmxMathHelper.SumAndCompare(zRSqr, zISqr, 4) < 1 && cntr++ < _targetIterations)
 			{
-				// z.r + z.i
-				var zRZi = SmxMathHelper.Add(zR, zI);
-				
 				// square(z.r + z.i)
 				var zRZiSqr = SmxMathHelper.Square(zRZi);
 
-				// z.i = square(z.r + z.i) - zrsqr - zisqr
+				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
 				zI = SmxMathHelper.Sub(zRZiSqr, zRSqr);
 				zI = SmxMathHelper.Sub(zI, zISqr);
 				zI = SmxMathHelper.Add(zI, cI);
@@ -39,6 +39,9 @@ namespace MSetGenP
 				// z.r = zrsqr - zisqr + c.r
 				zR = SmxMathHelper.Sub(zRSqr, zISqr);
 				zR = SmxMathHelper.Add(zR, cR);
+
+				// z.r + z.i
+				zRZi = SmxMathHelper.Add(zR, zI);
 
 				zRSqr = SmxMathHelper.Square(zR);
 				zISqr = SmxMathHelper.Square(zI);

@@ -9,7 +9,8 @@ namespace MSS.Types
 {
 	public static class BigIntegerHelper
 	{
-		public const int DEFAULT_PRECISION = 33; // Number of significan binary digits
+		// Same as RMapConstants.DEFAULT_PRECISION
+		public const int DEFAULT_PRECISION = 55; // Number of significant binary digits 
 
 		private static readonly double NAT_LOG_OF_2 = Math.Log(2);
 
@@ -17,7 +18,7 @@ namespace MSS.Types
 		private static readonly BigInteger MAX_DP_INTEGER = BigInteger.Pow(2, 53);
 
 		// Integer used to convert BigIntegers to/from array of longs.
-		private static readonly BigInteger LONG_FACTOR = new BigInteger(long.MaxValue); // BigInteger.Add(BigInteger.One, BigInteger.Pow(2, 63));
+		private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, 53); //new BigInteger(long.MaxValue); // BigInteger.Add(BigInteger.One, BigInteger.Pow(2, 63));
 
 		#region Division
 
@@ -388,6 +389,9 @@ namespace MSS.Types
 
 		#region Precision Support
 
+
+
+
 		public static RValue TrimToMatchPrecision(RValue rValue)
 		{
 			var result = TrimToMatchPrecision(rValue, rValue.Precision);
@@ -459,23 +463,6 @@ namespace MSS.Types
 
 			return precision;
 		}
-
-		public static int GetNumBaseUIntDigits(int precision)
-		{
-			if (precision <= 32)
-			{
-				return 1;
-			}
-
-			var result = Math.DivRem(precision, 32, out var remainder);	
-			if (remainder > 0)
-			{
-				result++;
-			}
-
-			return result;
-		}
-
 
 		#endregion
 
