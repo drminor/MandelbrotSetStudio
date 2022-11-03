@@ -15,9 +15,10 @@ namespace MSetGenPTest
 			var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
 			var yPos = new long[] { 0, 67781838 };
 			var precision = 55;
+			var extent = 16;
 			var samplePointDelta = new RSize(1, 1, -36);
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 4);
-			var request = AssembleRequest(xPos, yPos, precision, samplePointDelta, mapCalcSettings);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
+			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
 
 			var reponse = new MapSectionGeneratorScalar().GenerateMapSection(request);
 
@@ -60,13 +61,13 @@ namespace MSetGenPTest
 		//	return result;
 		//}
 
-		private MapSectionRequest AssembleRequest(long[] xPos, long[] yPos, int precision, RSize samplePointDelta, MapCalcSettings mapCalcSettings)
+		private MapSectionRequest AssembleRequest(long[] xPos, long[] yPos, int precision, int extent, RSize samplePointDelta, MapCalcSettings mapCalcSettings)
 		{
 			var blockPosValues = new long[2][] {xPos, yPos};
 			var blockPositionDto = new BigVectorDto(blockPosValues);
 
 			var samplePointDeltaDto = new RSizeDto(samplePointDelta.Values, samplePointDelta.Exponent);
-			var blockSize = new SizeInt(128, 128);
+			var blockSize = new SizeInt(extent, extent);
 			var mapPositionDto = GetMapPosition(blockPositionDto, samplePointDeltaDto, blockSize);
 
 			MapSectionRequest request = new MapSectionRequest();

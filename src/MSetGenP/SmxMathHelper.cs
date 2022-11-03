@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
+using System;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Numerics;
@@ -161,7 +162,7 @@ namespace MSetGenP
 
 			var mantissa = Multiply(a.Mantissa, (uint) Math.Abs(b));
 
-			var signOfB = b < 0;
+			var signOfB = b >= 0;
 
 			var sign = a.Sign == signOfB;
 			var exponent = a.Exponent;
@@ -270,35 +271,39 @@ namespace MSetGenP
 
 		public static Smx Sub(Smx a, Smx b)
 		{
+			var result = Sub(a, b, out _);
+			return result;
+		}
+
+		public static Smx Sub(Smx a, Smx b, out Smx normalizedB)
+		{
+			if (b.IsZero)
+			{
+				normalizedB = b;
+				return a;
+			}
+
 			var bNegated = new Smx(!b.Sign, b.Mantissa, b.Exponent, b.Precision);
-			var result = Add(a, bNegated);
+			var result = Add(a, bNegated, out normalizedB);
 
 			return result;
 		}
 
 		public static Smx Add(Smx a, Smx b)
 		{
-			//if (CheckPWValues(a.Mantissa))
-			//{
-			//	throw new ArgumentException($"During Add, a: {a.GetStringValue()} has 1 or more limbs that are greater than MAX_DIGIT.");
-			//}
+			var result = Add(a, b, out _);
+			return result;
+		}
 
-			//if (CheckPWValues(b.Mantissa))
-			//{
-			//	throw new ArgumentException($"During Add, b: {b.GetStringValue()} has 1 or more limbs that are greater than MAX_DIGIT.");
-			//}
+		public static Smx Add(Smx a, Smx b, out Smx normalizedB)
+		{
+			if (b.IsZero)
+			{
+				normalizedB = b;
+				return a;
+			}
 
-			var nrmA = AlignExponents(a, b, out var nrmB);
-
-			//if (CheckPWValues(nrmA.Mantissa))
-			//{
-			//	throw new ArgumentException($"During Add, nrmA: {nrmA.GetStringValue()} has 1 or more limbs that are greater than MAX_DIGIT.");
-			//}
-
-			//if (CheckPWValues(nrmB.Mantissa))
-			//{
-			//	throw new ArgumentException($"During Add, nrmB: {nrmB.GetStringValue()} has 1 or more limbs that are greater than MAX_DIGIT.");
-			//}
+			var nrmA = AlignExponents(a, b, out normalizedB);
 
 			bool sign;
 			ulong[] mantissa;
@@ -308,36 +313,37 @@ namespace MSetGenP
 			if (a.Sign == b.Sign)
 			{
 				sign = a.Sign;
-				mantissa = Add(nrmA.Mantissa, nrmB.Mantissa);
+				mantissa = Add(nrmA.Mantissa, normalizedB.Mantissa);
 			}
 			else
 			{
-				var cmp = Compare(nrmA.Mantissa, nrmB.Mantissa);
+				var cmp = Compare(nrmA.Mantissa, normalizedB.Mantissa);
 
-				if (cmp == 0)
-				{
-					return Smx.Zero;
-				}
-
-				if (cmp > 0)
+				if (cmp >= 0)
 				{
 					sign = a.Sign;
-					mantissa = Sub(nrmA.Mantissa, nrmB.Mantissa);
+					mantissa = Sub(nrmA.Mantissa, normalizedB.Mantissa);
 				}
 				else
 				{
 					sign = b.Sign;
-					mantissa = Sub(nrmB.Mantissa, nrmA.Mantissa);
+					mantissa = Sub(normalizedB.Mantissa, nrmA.Mantissa);
 				}
 			}
 
 			// TODO: Check the logic used to normalize an Smx after addition / subtraction
-			var spMantissa = ReSplit(mantissa);
-
+			var spMantissa = ReSplit(mantissa, out var leadingZeroLimbCnt);
 			var trMantissa = TrimLeadingZeros(spMantissa);
-			//var adjMantissa = FillMsb(trMantissa, out var shiftAmount);
-			//exponent -= shiftAmount;
-			//var result = new Smx(sign, adjMantissa, exponent, precision);
+
+			if (trMantissa.Length < spMantissa.Length || leadingZeroLimbCnt > 0)
+			{
+				Debug.WriteLine($"{leadingZeroLimbCnt} LSB limbs were found with value zero AND {spMantissa.Length - trMantissa.Length} leading zeroes were removed.");
+
+				if (leadingZeroLimbCnt != spMantissa.Length - trMantissa.Length)
+				{
+					throw new Exception("leading limb count does not match reduction due to TrimLeadingZeroes.");
+				}
+			}
 
 			var result = new Smx(sign, trMantissa, exponent, precision);
 
@@ -373,8 +379,7 @@ namespace MSetGenP
 				throw new Exception("AddInternal expects ax to have as many (or more) digits as bx.");
 			}
 
-			var maxLen = Math.Max(ax.Length, bx.Length);
-			ulong[] result = new ulong[maxLen];
+			var result = new ulong[ax.Length];
 
 			var i = 0;
 
@@ -397,9 +402,6 @@ namespace MSetGenP
 			{
 				throw new Exception($"While subtracting b: {bx} from a: {ax}, b was found to have more digits than a. A should be larger and therefor should have the same or more digits than b.");
 			}
-
-			//var maxLen = Math.Max(ax.Length, bx.Length);
-			//ulong[] result = new ulong[maxLen];
 
 			var result = new ulong[ax.Length];
 
@@ -462,11 +464,9 @@ namespace MSetGenP
 
 			x[index] -= 1;
 			x[index - 1] += MAX_DIGIT_VALUE;
-
-			//x[index - 1] += x[index] * MAX_DIGIT_VALUE;
-			//x[index] = 0;
 		}
 
+		// TODO: Make AlignExponents Reduce as well as Scale. 
 		private static Smx AlignExponents(Smx a, Smx b, out Smx normalizedB)
 		{
 			if (a.Exponent == b.Exponent)
@@ -487,6 +487,18 @@ namespace MSetGenP
 			else
 			{
 				var newBMantissa = Scale(b.Mantissa, diff * -1);
+
+				var limbCountIncrease = newBMantissa.Length - b.Mantissa.Length;
+
+				if (limbCountIncrease > 0)
+				{
+					Debug.WriteLine($"Adjusting exp for C by {diff}. Limb cnt increased by: {limbCountIncrease}.");
+				}
+				else
+				{
+					Debug.WriteLine($"Adjusting exp for C by {diff}. Limb cnt stays at: {newBMantissa.Length}.");
+				}
+
 				normalizedB = new Smx(b.Sign, newBMantissa, a.Exponent, b.Precision);
 				return a;
 			}
@@ -510,7 +522,8 @@ namespace MSetGenP
 				result[i] = x[i - newLimbs] * factor;
 			}
 
-			result = ReSplit(result);
+			result = ReSplit(result, out var leadingZeroLimbCnt);
+			Debug.WriteLine($"ReSplit operation left {leadingZeroLimbCnt} LSB limbs with value zero.");
 
 			return result;
 		}
@@ -637,37 +650,46 @@ namespace MSetGenP
 			return result;
 		}
 
-		private static ulong[] ReSplit(ulong[] values)
+		private static ulong[] ReSplit(ulong[] values, out int leadingZeroLimbCnt)
 		{
+			var carryCnt = 0;
+			var indexOfFirstNonZeroLimb = 0;
+
 			ulong carry = 0;
 
 			for (int i = 0; i < values.Length; i++)
 			{
 				var lo = Split(values[i] + carry, out var hi);
 				values[i] = lo;
+
+				if (lo > 0)
+				{
+					indexOfFirstNonZeroLimb = i;
+				}
+
 				carry = hi;
+
+				if (carry > 0)
+				{
+					carryCnt++;
+				}
 			}
 
 			if (carry != 0)
 			{
+				Debug.WriteLine($"ReSplit did {carryCnt} carries and increased the limb count.");
 				var newResult = new ulong[values.Length + 1];
 				Array.Copy(values, 0, newResult, 0, values.Length);
 				newResult[^1] = carry;
+				leadingZeroLimbCnt = 0;
 				return newResult;
 			}
 			else
 			{
+				leadingZeroLimbCnt = values.Length - 1 - indexOfFirstNonZeroLimb;
+				Debug.WriteLine($"ReSplit did {carryCnt} carries.");
 				return values;
 			}
-		}
-
-		public static ulong Split(ulong x, out ulong hi)
-		{
-			var hiTemp = (uint)(x >> 32); // Copy bits 32-63 into bits 0-31 of a new long.
-			hi = hiTemp;
-
-			var lo = (uint)x; // Copy bits 0 - 31 into a new long
-			return lo;
 		}
 
 		private static ulong[] Pack(ulong[] splitValues)
@@ -704,6 +726,12 @@ namespace MSetGenP
 			}
 
 			return tResult.ToArray();
+		}
+
+		public static ulong Split(ulong x, out ulong hi)
+		{
+			hi = x >> 32; // Create new ulong from bits 32 - 63.
+			return x & 0x00000000FFFFFFFF; // Create new ulong from bits 0 - 31.
 		}
 
 		#endregion
@@ -908,11 +936,6 @@ namespace MSetGenP
 			return result;
 		}
 
-		private static void ValidateUsingPartialWordValues(ulong mantissa)
-		{
-
-		}
-
 		public static int GetLimbsCount(int precision)
 		{
 			if (precision <= 32)
@@ -1025,6 +1048,54 @@ namespace MSetGenP
 			return true;
 		}
 
+		private static int GetWholeExp(ulong[] mantissa)
+		{
+			var result = 0;
+
+			for(var i = 0; i < mantissa.Length; i++)
+			{
+				if (mantissa[i] == 0)
+				{
+					result += 32;
+				}
+				else
+				{
+					var we = GetWholeExp(mantissa[i]);
+
+					if (we > 0)
+					{
+						result += we;
+						return result;
+					}
+					else
+					{
+						result -= we;
+					}
+				}
+			}
+
+			result *= -1;
+			return result;
+		}
+
+		private static int GetWholeExp(ulong limb)
+		{
+			var result = 0;
+
+			while(limb > 0 && limb % 2 == 0)
+			{
+				limb <<= 1;
+				result++;
+			}
+
+			if (limb == 0)
+			{
+				result *= -1;
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Comparison
@@ -1066,34 +1137,51 @@ namespace MSetGenP
 			return i;
 		}
 
-		public static int SumAndCompare(Smx a, Smx b, uint c)
+		public static bool IsGreaterOrEqThan(Smx a, uint b)
 		{
-			var aMsb = GetMsb(a.Mantissa, out var indexA);
-			var aValue = aMsb * Math.Pow(2, a.Exponent + (indexA * 32));
+			var aAsDouble = 0d;
 
-			var bMsb = GetMsb(b.Mantissa, out var indexB);
-			var bValue = bMsb * Math.Pow(2, b.Exponent + (indexB * 32));
-
-			var sum = aValue + bValue;
-			var result = sum < c ? -1 : sum > c ? 1 : 0;
-
-			return result;
-		}
-
-		private static ulong GetMsb(ulong[] x, out int index)
-		{
-			for(int i = x.Length - 1; i >= 0; i--)
+			for(var i = a.Mantissa.Length - 1; i >= 0; i--)
 			{
-				if (x[i] != 0)
+				aAsDouble += a.Mantissa[i] * Math.Pow(2, a.Exponent + (i * 32));
+
+				if (aAsDouble >= b)
 				{
-					index = i;
-					return x[i];
+					return true;
 				}
 			}
 
-			index = 0;
-			return 0;
+			return false;
 		}
+
+		//public static int SumAndCompare(Smx a, Smx b, uint c)
+		//{
+		//	var aMsb = GetMsb(a.Mantissa, out var indexA);
+		//	var aValue = aMsb * Math.Pow(2, a.Exponent + (indexA * 32));
+
+		//	var bMsb = GetMsb(b.Mantissa, out var indexB);
+		//	var bValue = bMsb * Math.Pow(2, b.Exponent + (indexB * 32));
+
+		//	var sum = aValue + bValue;
+		//	var result = sum < c ? -1 : sum > c ? 1 : 0;
+
+		//	return result;
+		//}
+
+		//private static ulong GetMsb(ulong[] x, out int index)
+		//{
+		//	for(int i = x.Length - 1; i >= 0; i--)
+		//	{
+		//		if (x[i] != 0)
+		//		{
+		//			index = i;
+		//			return x[i];
+		//		}
+		//	}
+
+		//	index = 0;
+		//	return 0;
+		//}
 
 		#endregion
 

@@ -23,40 +23,40 @@ namespace MSetGenP
 			var zRSqr = SmxMathHelper.Square(zR);
 			var zISqr = SmxMathHelper.Square(zI);
 
-			// z.r + z.i
-			var zRZi = SmxMathHelper.Add(zR, zI);
+			var sumOfSqrs = SmxMathHelper.Add(zRSqr, zISqr);
 
-			while (SmxMathHelper.SumAndCompare(zRSqr, zISqr, 4) < 1 && cntr++ < _targetIterations)
+			while (!SmxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntr++ < _targetIterations)
 			{
+				// z.r + z.i
+				var zRZi = SmxMathHelper.Add(zR, zI);               
+				
 				// square(z.r + z.i)
 				var zRZiSqr = SmxMathHelper.Square(zRZi);
 
 				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
 				zI = SmxMathHelper.Sub(zRZiSqr, zRSqr);
 				zI = SmxMathHelper.Sub(zI, zISqr);
+				//zI = SmxMathHelper.Add(zI, cI, out cI);
 				zI = SmxMathHelper.Add(zI, cI);
 
 				// z.r = zrsqr - zisqr + c.r
 				zR = SmxMathHelper.Sub(zRSqr, zISqr);
+				//zR = SmxMathHelper.Add(zR, cR, out cR);
 				zR = SmxMathHelper.Add(zR, cR);
-
-				// z.r + z.i
-				zRZi = SmxMathHelper.Add(zR, zI);
 
 				zRSqr = SmxMathHelper.Square(zR);
 				zISqr = SmxMathHelper.Square(zI);
+
+				sumOfSqrs = SmxMathHelper.Add(zRSqr, zISqr);
 			}
 
-			if (cntr < _targetIterations)
-			{
-				var sacResult = SmxMathHelper.SumAndCompare(zRSqr, zISqr, 4);
-
-				var sumOfZrSqrAndZiSqr = SmxMathHelper.Add(zRSqr, zISqr);
-
-				var rValDiag = sumOfZrSqrAndZiSqr.GetStringValue();
-
-				Debug.WriteLine($"Balied out: The value is {rValDiag}. SumAndCompare returned: {sacResult}.");
-			}
+			//if (cntr < _targetIterations)
+			//{
+			//	var sacResult = SmxMathHelper.SumAndCompare(zRSqr, zISqr, 4);
+			//	var sumOfZrSqrAndZiSqr = SmxMathHelper.Add(zRSqr, zISqr);
+			//	var rValDiag = sumOfZrSqrAndZiSqr.GetStringValue();
+			//	Debug.WriteLine($"Balied out: The value is {rValDiag}. SumAndCompare returned: {sacResult}.");
+			//}
 
 			return cntr;
 		}

@@ -21,6 +21,7 @@ typedef struct _MSETREQ
     LONGLONG positionX[2];
     LONGLONG positionY[2];
     int positionExponent;
+    int positionPrecision;
 
     // BlockSize
     int blockSizeWidth;

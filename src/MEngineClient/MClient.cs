@@ -19,7 +19,7 @@ namespace MEngineClient
 		}
 
 		public string EndPointAddress { get; init; }
-		public bool IsLocal => false;
+		public bool IsLocal => true;
 
 		//public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		//{

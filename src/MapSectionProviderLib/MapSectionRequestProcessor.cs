@@ -305,12 +305,19 @@ namespace MapSectionProviderLib
 
 		private async Task<MapSectionResponse?> FetchAsync(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
 		{
-			var mapSectionRequest = mapSectionWorkRequest.Request;
-			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-			var blockPosition = mapSectionRequest.BlockPosition;
-			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, _fetchZValues, ct);
+			//var mapSectionRequest = mapSectionWorkRequest.Request;
+			//var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+			//var blockPosition = mapSectionRequest.BlockPosition;
+			//var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, _fetchZValues, ct);
 
-			return mapSectionResponse;
+			//return mapSectionResponse;
+
+			if (ct.IsCancellationRequested)
+			{
+				await Task.Delay(100);
+			}
+
+			return null;
 		}
 
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse)

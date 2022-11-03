@@ -45,14 +45,17 @@ namespace MapSectionGeneratorLib
 		{
 			var mapSectionResponse = await MapSectionGenerator.GenerateMapSectionAsync(mapSectionRequest, _mapSectionAdapter);
 
-			var idStr = string.IsNullOrEmpty(mapSectionResponse.MapSectionId) ? "new" : mapSectionResponse.MapSectionId;
+			//var idStr = string.IsNullOrEmpty(mapSectionResponse.MapSectionId) ? "new" : mapSectionResponse.MapSectionId;
+			//if (++_sectionCntr % 10 == 0)
+			//{
+			//	Debug.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. Generated {_sectionCntr} Map Sections.");
+			//}
+			//_mapSectionPersistProcessor.AddWork(mapSectionResponse);
 
 			if (++_sectionCntr % 10 == 0)
 			{
-				Debug.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. Generated {_sectionCntr} Map Sections.");
+				Debug.WriteLine($"Generated {_sectionCntr} Map Sections.");
 			}
-
-			_mapSectionPersistProcessor.AddWork(mapSectionResponse);
 
 			mapSectionResponse.IncludeZValues = false;
 

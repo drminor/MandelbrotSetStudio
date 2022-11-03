@@ -12,7 +12,7 @@ namespace MSetGenP
 			var mapPositionDto = mapSectionRequest.Position;
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
-			var precision = mapSectionRequest.Precision;
+			var precision = mapSectionRequest.Precision; // + 20;
 
 			var startingCx = CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
 			var startingCy = CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
@@ -39,7 +39,8 @@ namespace MSetGenP
 
 			var result = new ushort[blockSize.NumberOfCells];
 
-			var samplePointOffsets = BuildSamplePointOffsets(delta, blockSize.Width);
+			var stride = blockSize.Width;
+			var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
 			var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
 			var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
 
@@ -48,9 +49,10 @@ namespace MSetGenP
 			for (int j = 0; j < samplePointsY.Length; j++)
 			{
 				for (int i = 0; i < samplePointsX.Length; i++)
+
 				{
 					var cntr = scalarIterator.Iterate(samplePointsX[i], samplePointsY[j]);
-					result[j * 128 + i] = cntr;
+					result[j * stride + i] = cntr;
 				}
 			}
 

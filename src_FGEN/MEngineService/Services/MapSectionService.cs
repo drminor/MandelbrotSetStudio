@@ -33,22 +33,24 @@ namespace MEngineService.Services
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default)
 		{
 			var stringVals = MapSectionGenerator.GetStringVals(mapSectionRequest);
-
 			Debug.WriteLine($"The string vals are {stringVals[0]}, {stringVals[1]}, {stringVals[2]}, {stringVals[3]}.");
 
 			var mapSectionResponse = await MapSectionGenerator.GenerateMapSectionAsync(mapSectionRequest, _mapSectionAdapter);
 
-			var idStr = string.IsNullOrEmpty(mapSectionResponse.MapSectionId) ? "new" : mapSectionResponse.MapSectionId;
-
-			//Debug.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. ");
-			_mapSectionPersistProcessor.AddWork(mapSectionResponse);
-
-			mapSectionResponse.IncludeZValues = false;
+			//var idStr = string.IsNullOrEmpty(mapSectionResponse.MapSectionId) ? "new" : mapSectionResponse.MapSectionId;
+			//if (++_sectionCntr % 10 == 0)
+			//{
+			//	Debug.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. Generated {_sectionCntr} Map Sections.");
+			//}
+			//_mapSectionPersistProcessor.AddWork(mapSectionResponse);
 
 			if (++_sectionCntr % 10 == 0)
 			{
-				Console.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. Generated {_sectionCntr} Map Sections.");
+				Debug.WriteLine($"Generated {_sectionCntr} Map Sections.");
 			}
+
+			mapSectionResponse.IncludeZValues = false;
+
 
 			return mapSectionResponse;
 		}
