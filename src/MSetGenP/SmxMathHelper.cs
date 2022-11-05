@@ -489,132 +489,6 @@ namespace MSetGenP
 			x[index - 1] += MAX_DIGIT_VALUE;
 		}
 
-		// TODO: Make AlignExponents Reduce as well as Scale. 
-		private static Smx AlignExponents(Smx a, Smx b, out Smx normalizedB)
-		{
-			if (a.Exponent == b.Exponent)
-			{
-				normalizedB = b;
-				return a;
-			}
-
-			var diff = a.Exponent - b.Exponent;
-
-			if (diff > 0)
-			{
-				normalizedB = b;
-				var newAMantissa = ScaleAndSplit(a.Mantissa, diff, out var numberOfCarries);
-				var result = new Smx(a.Sign, newAMantissa, b.Exponent, a.Precision);
-				return result;
-			}
-			else
-			{
-				var newBMantissa = ScaleAndSplit(b.Mantissa, diff * -1, out var numberOfCarries);
-
-				//var limbCountIncrease = newBMantissa.Length - b.Mantissa.Length;
-				//if (limbCountIncrease > 0)
-				//{
-				//	Debug.WriteLine($"Adjusting exp for C by {diff}. Limb cnt increased by: {limbCountIncrease}.");
-				//}
-				//else
-				//{
-				//	Debug.WriteLine($"Adjusting exp for C by {diff}. Limb cnt stays at: {newBMantissa.Length}.");
-				//}
-
-				normalizedB = new Smx(b.Sign, newBMantissa, a.Exponent, b.Precision);
-				return a;
-			}
-		}
-
-		//private static ulong[] Scale(ulong[] x, int power)
-		//{
-		//	if (power <= 0)
-		//	{
-		//		throw new ArgumentException("The value of power must be 1 or greater.");
-		//	}
-
-		//	var qr = Math.DivRem(power, 32);
-		//	var newLimbs = qr.Quotient;
-		//	var factor = (ulong) Math.Pow(2, qr.Remainder);
-
-		//	var result = new ulong[x.Length + newLimbs];
-
-		//	for (var i = 0; i < x.Length; i++)
-		//	{
-		//		result[i + newLimbs] = x[i] * factor;
-		//	}
-
-		//	//result = ReSplit(result, out var leadingZeroLimbCnt);
-		//	//Debug.WriteLine($"ReSplit operation left {leadingZeroLimbCnt} LSB limbs with value zero.");
-
-		//	result = ReSplit(result);
-
-		//	return result;
-		//}
-
-		private static ulong[] ScaleAndSplit(ulong[] values, int power, out int numberOfCarries)
-		{
-			if (power <= 0)
-			{
-				throw new ArgumentException("The value of power must be 1 or greater.");
-			}
-
-			numberOfCarries = 0;
-
-			if (!values.Any(x => x > 0))
-			{
-				return new ulong[] { 0 };
-			}
-
-			var qr = Math.DivRem(power, 32);
-			var newLimbs = qr.Quotient;
-			var factor = (ulong)Math.Pow(2, qr.Remainder);
-
-			var result = new ulong[values.Length + newLimbs];
-
-			var indexOfLastNonZeroLimb = 0;
-			ulong carry = 0;
-
-			for (var i = 0; i < values.Length; i++)
-			{
-				var newLimbVal = values[i] * factor + carry;
-				var lo = Split(newLimbVal, out var hi); // :Spliter
-				result[i + newLimbs] = lo;
-
-				if (lo > 0)
-				{
-					indexOfLastNonZeroLimb = i;
-				}
-
-				carry = hi;
-
-				if (carry > 0)
-				{
-					numberOfCarries++;
-				}
-			}
-
-			if (carry != 0)
-			{
-				//Debug.WriteLine($"ReSplit did {carryCnt} carries and increased the limb count.");
-				var newResult = new ulong[result.Length + 1];
-				Array.Copy(result, 0, newResult, 0, result.Length);
-				newResult[^1] = carry;
-				return newResult;
-			}
-			else if (indexOfLastNonZeroLimb < values.Length - 1)
-			{
-				// Remove leading zeros
-				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
-				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
-				return newResult;
-			}
-			else
-			{
-				return result;
-			}
-		}
-
 		#endregion
 
 		#region Split and Pack 
@@ -908,18 +782,184 @@ namespace MSetGenP
 
 		public static int GetLimbsCount(int precision)
 		{
-			if (precision <= 32)
-			{
-				return 1;
-			}
+			var dResult = precision / 32d;
+			var result = (int)Math.Ceiling(dResult);
 
-			var result = Math.DivRem(precision, 32, out var remainder);
-			if (remainder > 0)
+			//if (precision <= 32)
+			//{
+			//	return 1;
+			//}
+
+			//var result = Math.DivRem(precision, 32, out var remainder);
+			//if (remainder > 0)
+			//{
+			//	result++;
+			//}
+
+			return result;
+		}
+
+		public static int GetNumberOfSignificantDigits(ulong[] mantissa, int numberOfPlacesToInspect = int.MaxValue)
+		{
+			numberOfPlacesToInspect = Math.Min(mantissa.Length, numberOfPlacesToInspect);
+			var endIndex = mantissa.Length - numberOfPlacesToInspect;
+
+			var result = 0;
+
+			for (int i = mantissa.Length - 1; i >= endIndex; i--)
 			{
-				result++;
+				var lz = BitOperations.LeadingZeroCount(mantissa[i]);
+				Debug.Assert(lz >= 32);
+
+				result += 64 - lz;
 			}
 
 			return result;
+		}
+
+		private static ulong[] Round(ulong[] mantissa, int exponent, int limbs, out int rndExponent)
+		{
+			var result = new ulong[limbs];
+			var startIndex = mantissa.Length - limbs;
+
+			Debug.Assert(startIndex > 0, "Expecting startIndex to be > 0 when rounding.");
+
+			Array.Copy(mantissa, startIndex, result, 0, limbs);
+
+			if (mantissa[startIndex - 1] >= HALF_DIGIT_VALUE)
+			{
+				result[0] += 1;
+			}
+
+			rndExponent = exponent + 32 * startIndex;
+
+			return result;
+		}
+
+		// TODO: Make AlignExponents Reduce as well as Scale. 
+		private static Smx AlignExponents(Smx a, Smx b, out Smx normalizedB)
+		{
+			if (a.Exponent == b.Exponent)
+			{
+				normalizedB = b;
+				return a;
+			}
+
+			var diff = a.Exponent - b.Exponent;
+
+			if (diff > 0)
+			{
+				normalizedB = b;
+				var newAMantissa = ScaleAndSplit(a.Mantissa, diff, out var numberOfCarries);
+				var result = new Smx(a.Sign, newAMantissa, b.Exponent, a.Precision);
+				return result;
+			}
+			else
+			{
+				var newBMantissa = ScaleAndSplit(b.Mantissa, diff * -1, out var numberOfCarries);
+
+				//var limbCountIncrease = newBMantissa.Length - b.Mantissa.Length;
+				//if (limbCountIncrease > 0)
+				//{
+				//	Debug.WriteLine($"Adjusting exp for C by {diff}. Limb cnt increased by: {limbCountIncrease}.");
+				//}
+				//else
+				//{
+				//	Debug.WriteLine($"Adjusting exp for C by {diff}. Limb cnt stays at: {newBMantissa.Length}.");
+				//}
+
+				normalizedB = new Smx(b.Sign, newBMantissa, a.Exponent, b.Precision);
+				return a;
+			}
+		}
+
+		//private static ulong[] Scale(ulong[] x, int power)
+		//{
+		//	if (power <= 0)
+		//	{
+		//		throw new ArgumentException("The value of power must be 1 or greater.");
+		//	}
+
+		//	var qr = Math.DivRem(power, 32);
+		//	var newLimbs = qr.Quotient;
+		//	var factor = (ulong) Math.Pow(2, qr.Remainder);
+
+		//	var result = new ulong[x.Length + newLimbs];
+
+		//	for (var i = 0; i < x.Length; i++)
+		//	{
+		//		result[i + newLimbs] = x[i] * factor;
+		//	}
+
+		//	//result = ReSplit(result, out var leadingZeroLimbCnt);
+		//	//Debug.WriteLine($"ReSplit operation left {leadingZeroLimbCnt} LSB limbs with value zero.");
+
+		//	result = ReSplit(result);
+
+		//	return result;
+		//}
+
+		private static ulong[] ScaleAndSplit(ulong[] values, int power, out int numberOfCarries)
+		{
+			if (power <= 0)
+			{
+				throw new ArgumentException("The value of power must be 1 or greater.");
+			}
+
+			numberOfCarries = 0;
+
+			if (!values.Any(x => x > 0))
+			{
+				return new ulong[] { 0 };
+			}
+
+			var qr = Math.DivRem(power, 32);
+			var newLimbs = qr.Quotient;
+			var factor = (ulong)Math.Pow(2, qr.Remainder);
+
+			var result = new ulong[values.Length + newLimbs];
+
+			var indexOfLastNonZeroLimb = 0;
+			ulong carry = 0;
+
+			for (var i = 0; i < values.Length; i++)
+			{
+				var newLimbVal = values[i] * factor + carry;
+				var lo = Split(newLimbVal, out var hi); // :Spliter
+				result[i + newLimbs] = lo;
+
+				if (lo > 0)
+				{
+					indexOfLastNonZeroLimb = i;
+				}
+
+				carry = hi;
+
+				if (carry > 0)
+				{
+					numberOfCarries++;
+				}
+			}
+
+			if (carry != 0)
+			{
+				//Debug.WriteLine($"ReSplit did {carryCnt} carries and increased the limb count.");
+				var newResult = new ulong[result.Length + 1];
+				Array.Copy(result, 0, newResult, 0, result.Length);
+				newResult[^1] = carry;
+				return newResult;
+			}
+			else if (indexOfLastNonZeroLimb < values.Length - 1)
+			{
+				// Remove leading zeros
+				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				return newResult;
+			}
+			else
+			{
+				return result;
+			}
 		}
 
 		private static Smx TrimLeadingZeros(Smx a)
@@ -929,7 +969,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static ulong[] TrimLeadingZeros(ulong[] mantissa)
+		private static ulong[] TrimLeadingZeros(ulong[] mantissa)
 		{
 			if (mantissa.Length == 1 && mantissa[0] == 0)
 			{
@@ -961,24 +1001,9 @@ namespace MSetGenP
 			return result;
 		}
 
-		private static ulong[] Round(ulong[] mantissa, int exponent, int limbs, out int rndExponent)
-		{
-			var result = new ulong[limbs];
-			var startIndex = mantissa.Length - limbs;
+		#endregion
 
-			Debug.Assert(startIndex > 0, "Expecting startIndex to be > 0 when rounding.");
-
-			Array.Copy(mantissa, startIndex, result, 0, limbs);
-
-			if (mantissa[startIndex - 1] >= HALF_DIGIT_VALUE)
-			{
-				result[0] += 1;
-			}
-
-			rndExponent = exponent + 32 * startIndex;
-
-			return result;
-		}
+		#region Reduce - Not Used
 
 		public static ulong[] Reduce(ulong[] mantissa, out int shiftAmount)
 		{
@@ -1159,56 +1184,6 @@ namespace MSetGenP
 		//	index = 0;
 		//	return 0;
 		//}
-
-		#endregion
-
-		#region Precision Support
-
-		// Use RValueHelper.GetPrecision Instead
-
-		public static int GetPrecisionExperimental(Smx a)
-		{
-			var result = GetPrecisionExperimental(a.Mantissa, a.Exponent);
-			return result;
-		}
-
-		public static int GetPrecisionExperimental(ulong[] mantissa, int exponent)
-		{
-			var absExponent = (int)Math.Round((double)exponent);
-
-			var reducedMantissa = Reduce(mantissa, out var shiftAmount);
-			var adjustedExponent = absExponent - shiftAmount;
-
-			var numberOfSignificantBinaryDigits = GetNumberOfSignificantDigits(reducedMantissa);
-			var typicalNumSignBinDigits = adjustedExponent / 4;
-
-			// reduce the exponent by the amount of the number of significant digits above the typical amount.
-			var scaledExponent = adjustedExponent - (numberOfSignificantBinaryDigits - typicalNumSignBinDigits);
-
-			// Return which ever is greatest between the scaled exponent and the number of significant digits.
-			var result = Math.Max(scaledExponent, typicalNumSignBinDigits);
-
-			return result;
-		}
-
-		public static int GetNumberOfSignificantDigits(ulong[] mantissa, int numberOfPlacesToInspect = int.MaxValue)
-		{
-			numberOfPlacesToInspect = Math.Min(mantissa.Length, numberOfPlacesToInspect);
-			var endIndex = mantissa.Length - numberOfPlacesToInspect;
-
-			var result = 0;
-
-			for(int i = mantissa.Length - 1; i >= endIndex; i--)
-			{
-				var lz = BitOperations.LeadingZeroCount(mantissa[i]);
-				Debug.Assert(lz >= 32);
-
-				result += 64 - lz;
-			}
-
-			return result;
-		}
-
 
 		#endregion
 	}
