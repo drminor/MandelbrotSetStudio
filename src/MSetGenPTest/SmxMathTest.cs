@@ -44,11 +44,8 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017"); // 0.0000000000353482168348864539511122006373007661 (or possibly: 0.000000000035348216834895204420066149556547602)
 			var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
 
-			var bMantissa = SmxMathHelper.Multiply(aMantissa, aMantissa);
-
-			//var b1Mantissa = SmxMathHelper.TrimLeadingZeros(bMantissa);
-			//var t1Longs = SmxMathHelper.FillMsb(b1Mantissa, out var shiftAmount);
-
+			var bRawMantissa = SmxMathHelper.Multiply(aMantissa, aMantissa);
+			var bMantissa = SmxMathHelper.PropagateCarries(bRawMantissa);
 			var nrmBMantissa = SmxMathHelper.NormalizeFPV(bMantissa, -124, 55, out var nrmExponent);
 
 			// Discard 2 digits from the LSB end. (Divide by 2^64)

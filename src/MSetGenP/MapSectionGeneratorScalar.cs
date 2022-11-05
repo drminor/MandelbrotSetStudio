@@ -117,7 +117,7 @@ namespace MSetGenP
 			for (int i = 0; i < leValues.Length; i++)
 			{
 				var value = (ulong)Math.Abs(leValues[i]);
-				var lo = SmxMathHelper.Split(value, out var hi);
+				var lo = Split(value, out var hi);
 				result[2 * i] = lo;
 				result[2 * i + 1] = hi;
 			}
@@ -130,7 +130,7 @@ namespace MSetGenP
 		}
 
 		// Trim Leading Zeros for a Big-Endian formatted array of longs.
-		public static long[] TrimLeadingZeros(long[] mantissa)
+		private long[] TrimLeadingZeros(long[] mantissa)
 		{
 			var i = 0;
 			for (; i < mantissa.Length; i++)
@@ -155,6 +155,12 @@ namespace MSetGenP
 			var result = new long[mantissa.Length - i];
 			Array.Copy(mantissa, i, result, 0, i);
 			return result;
+		}
+
+		private ulong Split(ulong x, out ulong hi)
+		{
+			hi = x >> 32; // Create new ulong from bits 32 - 63.
+			return x & 0x00000000FFFFFFFF; // Create new ulong from bits 0 - 31.
 		}
 
 		private bool[] CalculateTheDoneFlags(ushort[] counts, int targetIterations)
