@@ -173,6 +173,25 @@ namespace EngineTest
 			Assert.True(areClose);
 		}
 
+		[Fact]
+		public void NormalizeFPV_Via_Square()
+		{
+			var a = new Smx(false, new ulong[] { 4155170372, 1433657343, 4294967295, 566493183 }, -171, 55);
+
+			var aRValue = a.GetRValue();
+			var s0 = RValueHelper.ConvertToString(aRValue);
+
+			var b = SmxMathHelper.Square(a);
+			var bSmxRValue = b.GetRValue();
+			var s1 = RValueHelper.ConvertToString(bSmxRValue);
+
+			var bRValue = aRValue.Square();
+			var s2 = RValueHelper.ConvertToString(bRValue);
+
+			var areClose = RValueHelper.AreClose(bSmxRValue, bRValue);
+			Assert.True(areClose);
+		}
+
 	}
 
 	/*

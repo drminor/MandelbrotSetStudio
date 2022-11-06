@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Driver.Core.Operations;
+using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
@@ -196,16 +197,18 @@ namespace MSetGenP
 			// This will leave each result bin with a value <= 2^32 for the final digit.
 			// Don't include the least significant limb, as this value will always be discarded as the result is rounded.
 
-			// If the MSL is zero, remove it.
+			// Remove all zero-valued leading limbs 
 			// If the MSL produces a carry, throw an exception.
+
+			var result = new ulong[mantissa.Length];
 
 			var indexOfLastNonZeroLimb = 0;
 			var carry = 0ul;
 
-			for (int i = 1; i < mantissa.Length; i++)
+			for (int i = 0; i < mantissa.Length; i++)
 			{
 				var lo = Split(mantissa[i] + carry, out var hi);  // :Spliter
-				mantissa[i] = lo;
+				result[i] = lo;
 
 				if (lo > 0)
 				{
@@ -223,13 +226,13 @@ namespace MSetGenP
 			if (indexOfLastNonZeroLimb < mantissa.Length - 1)
 			{
 				// Trim Leading Zeros
-				var result = new ulong[indexOfLastNonZeroLimb + 1];
-				Array.Copy(mantissa, 0, result, 0, indexOfLastNonZeroLimb + 1);
-				return result;
+				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				return newResult;
 			}
 			else
 			{
-				return mantissa;
+				return result;
 			}
 		}
 
@@ -340,12 +343,8 @@ namespace MSetGenP
 			if (a.Sign == b.Sign)
 			{
 				sign = a.Sign;
-				//var rawMantissa = Add(nrmA.Mantissa, normalizedB.Mantissa);
-				//mantissa = ReSplit(rawMantissa);
-
-				//mantissa = Add(nrmA.Mantissa, normalizedB.Mantissa);
 				var aMantissa = ExtendLimbs(normalizedA.Mantissa, normalizedB.Mantissa, out var bMantissa);
-				mantissa = Add2(aMantissa, bMantissa);
+				mantissa = Add(aMantissa, bMantissa);
 			}
 			else
 			{
@@ -354,84 +353,24 @@ namespace MSetGenP
 				if (cmp >= 0)
 				{
 					sign = a.Sign;
-					var rawMantissa = SubOld(normalizedA.Mantissa, normalizedB.Mantissa);
-					mantissa = ReSplit(rawMantissa);
-
-					//var aMantissa = ExtendLimbs(normalizedA.Mantissa, normalizedB.Mantissa, out var bMantissa);
-					//mantissa = Sub(aMantissa, bMantissa);
+					var aMantissa = ExtendLimbs(normalizedA.Mantissa, normalizedB.Mantissa, out var bMantissa);
+					mantissa = Sub(aMantissa, bMantissa);
 				}
 				else
 				{
 					sign = b.Sign;
-					var rawMantissa = SubOld(normalizedB.Mantissa, normalizedA.Mantissa);
-					mantissa = ReSplit(rawMantissa);
-
-					//var aMantissa = ExtendLimbs(normalizedA.Mantissa, normalizedB.Mantissa, out var bMantissa);
-					//mantissa = Sub(bMantissa, aMantissa);
+					var aMantissa = ExtendLimbs(normalizedA.Mantissa, normalizedB.Mantissa, out var bMantissa);
+					mantissa = Sub(bMantissa, aMantissa);
 				}
 			}
 
+			// TODO: Consider calling NormalizeFPV or removing trailing zeros.
 			var result = new Smx(sign, mantissa, exponent, precision);
 
 			return result;
 		}
 
 		public static ulong[] Add(ulong[] ax, ulong[] bx)
-		{
-			var resultLength = ax.Length > bx.Length ? ax.Length : bx.Length;
-			var result = new ulong[resultLength];
-
-			var indexOfLastNonZeroLimb = 0;
-			var carry = 0ul;
-
-			var i = 0;
-			for (; i < ax.Length && i < bx.Length; i++)
-			{
-				var nv = ax[i] + bx[i] + carry;
-				result[i] = Split(nv, out carry);
-				indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
-			}
-
-			if (ax.Length > bx.Length)
-			{
-				for (; i < ax.Length; i++)
-				{
-					var nv = ax[i] + carry;
-					result[i] = Split(nv, out carry);
-					indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
-				}
-			}
-			else if (bx.Length > ax.Length)
-			{
-				for (; i < bx.Length; i++)
-				{
-					var nv = bx[i] + carry;
-					result[i] = Split(nv, out carry);
-					indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
-				}
-			}
-
-			if (carry != 0)
-			{
-				var newResult = new ulong[resultLength + 1];
-				Array.Copy(result, 0, newResult, 0, resultLength);
-				newResult[^1] = carry;
-				return newResult;
-			}
-			else if (indexOfLastNonZeroLimb < resultLength - 1)
-			{
-				// Remove leading zeros
-				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
-				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
-				return newResult;
-			}
-			else
-			{
-				return result;
-			}
-		}
-
-		public static ulong[] Add2(ulong[] ax, ulong[] bx)
 		{
 			Debug.Assert(ax.Length == bx.Length);
 
@@ -457,7 +396,7 @@ namespace MSetGenP
 			}
 			else if (indexOfLastNonZeroLimb < resultLength - 1)
 			{
-				// Remove leading zeros
+				// Trim leading zeros
 				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
 				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
 				return newResult;
@@ -469,6 +408,61 @@ namespace MSetGenP
 		}
 
 		//public static ulong[] AddOld(ulong[] ax, ulong[] bx)
+		//{
+		//	var resultLength = ax.Length > bx.Length ? ax.Length : bx.Length;
+		//	var result = new ulong[resultLength];
+
+		//	var indexOfLastNonZeroLimb = 0;
+		//	var carry = 0ul;
+
+		//	var i = 0;
+		//	for (; i < ax.Length && i < bx.Length; i++)
+		//	{
+		//		var nv = ax[i] + bx[i] + carry;
+		//		result[i] = Split(nv, out carry);
+		//		indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
+		//	}
+
+		//	if (ax.Length > bx.Length)
+		//	{
+		//		for (; i < ax.Length; i++)
+		//		{
+		//			var nv = ax[i] + carry;
+		//			result[i] = Split(nv, out carry);
+		//			indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
+		//		}
+		//	}
+		//	else if (bx.Length > ax.Length)
+		//	{
+		//		for (; i < bx.Length; i++)
+		//		{
+		//			var nv = bx[i] + carry;
+		//			result[i] = Split(nv, out carry);
+		//			indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
+		//		}
+		//	}
+
+		//	if (carry != 0)
+		//	{
+		//		var newResult = new ulong[resultLength + 1];
+		//		Array.Copy(result, 0, newResult, 0, resultLength);
+		//		newResult[^1] = carry;
+		//		return newResult;
+		//	}
+		//	else if (indexOfLastNonZeroLimb < resultLength - 1)
+		//	{
+		//		// Remove leading zeros
+		//		var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+		//		Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+		//		return newResult;
+		//	}
+		//	else
+		//	{
+		//		return result;
+		//	}
+		//}
+
+		//public static ulong[] AddOldOld(ulong[] ax, ulong[] bx)
 		//{
 		//	ulong[] result;
 
@@ -561,68 +555,68 @@ namespace MSetGenP
 			}
 		}
 
-		public static ulong[] SubOld(ulong[] ax, ulong[] bx)
-		{
-			if (bx.Length > ax.Length)
-			{
-				throw new Exception($"While subtracting {GetDiagDisplay("b", bx)} from {GetDiagDisplay("a", ax)}, b was found to have more digits than a. A should be larger and therefor should have the same or more digits than b.");
-			}
+		//public static ulong[] SubOld(ulong[] ax, ulong[] bx)
+		//{
+		//	if (bx.Length > ax.Length)
+		//	{
+		//		throw new Exception($"While subtracting {GetDiagDisplay("b", bx)} from {GetDiagDisplay("a", ax)}, b was found to have more digits than a. A should be larger and therefor should have the same or more digits than b.");
+		//	}
 
-			var result = new ulong[ax.Length];
+		//	var result = new ulong[ax.Length];
 
-			var i = 0;
-			for (; i < bx.Length; i++)
-			{
-				var diff = (long)ax[i] - (long)bx[i];
+		//	var i = 0;
+		//	for (; i < bx.Length; i++)
+		//	{
+		//		var diff = (long)ax[i] - (long)bx[i];
 
-				if (diff < 0)
-				{
-					//var t = (ulong)Math.Abs(diff);
-					//Debug.Assert(t < MAX_DIGIT_VALUE, $"When subtracting {(long)bx[i]} from {(long)ax[i]}, the result is larger than MAX_DIGIT_VALUE.");
+		//		if (diff < 0)
+		//		{
+		//			//var t = (ulong)Math.Abs(diff);
+		//			//Debug.Assert(t < MAX_DIGIT_VALUE, $"When subtracting {(long)bx[i]} from {(long)ax[i]}, the result is larger than MAX_DIGIT_VALUE.");
 
-					try
-					{
-						Borrow(ax, i + 1);
-					}
-					catch (OverflowException oe)
-					{
-						throw new Exception($"While subtracting {GetDiagDisplay("b", bx)} {GetDiagDisplay("a", ax)}, Borrow threw an execption.", oe);
-					}	
+		//			try
+		//			{
+		//				Borrow(ax, i + 1);
+		//			}
+		//			catch (OverflowException oe)
+		//			{
+		//				throw new Exception($"While subtracting {GetDiagDisplay("b", bx)} {GetDiagDisplay("a", ax)}, Borrow threw an execption.", oe);
+		//			}
 
-					diff = (long)ax[i] - (long)bx[i];
+		//			diff = (long)ax[i] - (long)bx[i];
 
-					if (diff < 0)
-					{
-						throw new Exception($"While subtracting {GetDiagDisplay("b", bx)} from {GetDiagDisplay("a", ax)}, after borrow, the difference is still negative.");
-					}
-				}
+		//			if (diff < 0)
+		//			{
+		//				throw new Exception($"While subtracting {GetDiagDisplay("b", bx)} from {GetDiagDisplay("a", ax)}, after borrow, the difference is still negative.");
+		//			}
+		//		}
 
-				result[i] = (ulong)diff;
-			}
+		//		result[i] = (ulong)diff;
+		//	}
 
-			for (; i < ax.Length; i++)
-			{
-				result[i] = ax[i];
-			}
+		//	for (; i < ax.Length; i++)
+		//	{
+		//		result[i] = ax[i];
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		private static void Borrow(ulong[] x, int index)
-		{
-			if (index >= x.Length)
-			{
-				throw new OverflowException("UnderFlow while subtracting. Attempting to borrow from a digit past the msb.");
-			}
+		//private static void Borrow(ulong[] x, int index)
+		//{
+		//	if (index >= x.Length)
+		//	{
+		//		throw new OverflowException("UnderFlow while subtracting. Attempting to borrow from a digit past the msb.");
+		//	}
 
-			if (x[index] == 0)
-			{
-				Borrow(x, index + 1);
-			}
+		//	if (x[index] == 0)
+		//	{
+		//		Borrow(x, index + 1);
+		//	}
 
-			x[index] -= 1;
-			x[index - 1] += MAX_DIGIT_VALUE;
-		}
+		//	x[index] -= 1;
+		//	x[index - 1] += MAX_DIGIT_VALUE;
+		//}
 
 		#endregion
 
@@ -663,22 +657,25 @@ namespace MSetGenP
 			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
 		}
 
-		private static ulong[] ReSplit(ulong[] values)
+		private static ulong[] ReSplit(ulong[] mantissa)
 		{
 			// To be used after a addition or subtraction operation.
 			// Process the carry portion of each result bin.
 			// This will leave each result bin with a value <= 2^32 for the final digit.
 			// Include the least significant limb.
 
-			// If the MSL produces a carry, prepend an additional limb.
+			// Remove all zero-valued leading limbs 
+			// If the MSL produces a carry, append an additional limb.
+
+			var result = new ulong[mantissa.Length];
 
 			var indexOfLastNonZeroLimb = 0;
 			var carry = 0ul;
 
-			for (int i = 0; i < values.Length; i++)
+			for (int i = 0; i < mantissa.Length; i++)
 			{
-				var lo = Split(values[i] + carry, out var hi);  // :Spliter
-				values[i] = lo;
+				var lo = Split(mantissa[i] + carry, out var hi);  // :Spliter
+				result[i] = lo;
 
 				if (lo > 0)
 				{
@@ -690,21 +687,21 @@ namespace MSetGenP
 
 			if (carry != 0)
 			{
-				var result = new ulong[values.Length + 1];
-				Array.Copy(values, 0, result, 0, values.Length);
-				result[^1] = carry;
-				return result;
+				var newResult = new ulong[mantissa.Length + 1];
+				Array.Copy(result, 0, newResult, 0, mantissa.Length);
+				newResult[^1] = carry;
+				return newResult;
 			}
-			else if (indexOfLastNonZeroLimb < values.Length - 1)
+			else if (indexOfLastNonZeroLimb < mantissa.Length - 1)
 			{
-				// Remove leading zeros
-				var result = new ulong[indexOfLastNonZeroLimb + 1];
-				Array.Copy(values, 0, result, 0, indexOfLastNonZeroLimb + 1);
-				return result;
+				// Trim Leading Zeros
+				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				return newResult;
 			}
 			else
 			{
-				return values;
+				return result;
 			}
 		}
 
@@ -834,6 +831,7 @@ namespace MSetGenP
 
 		#region Normalization Support
 
+		// TODO: Update NormalizeFPV to remove trailing zeros (and update the exponent accordingly.)
 		public static ulong[] NormalizeFPV(ulong[] mantissa, int exponent, int precision, out int nrmExponent)
 		{
 			if (mantissa.Length == 1 && mantissa[0] == 0)
@@ -851,74 +849,92 @@ namespace MSetGenP
 			}
 
 			var numSignificantDigits = GetNumberOfSignificantDigits(mantissa, limbsCount);
-
 			var additionalSignificantDigitsDesired = precision - numSignificantDigits;
+
+			ulong[] result;
+			int newExponent;
 
 			if (additionalSignificantDigitsDesired <= 0)
 			{
-				var rndMantissa = Round(mantissa, exponent, limbsCount, out var rndExponent);
-				nrmExponent = rndExponent;
-				return rndMantissa;
+				result = Round(mantissa, exponent, limbsCount, out newExponent);
 			}
-
-			var potentialShiftAmount = BitOperations.LeadingZeroCount(mantissa[^1]) - 32;
-			if (potentialShiftAmount < 0)
+			else
 			{
-				// TODO: Convert this to a Conditional Method base on compilation symbol = 'DEBUG.'
-				throw new ArgumentException("NormalizeFPV requires each mantissa element to be no greater than 2^32.");
-
-				//nrmExponent = exponent;
-				//return mantissa;
-			}
-
-			var shiftAmount = Math.Min(additionalSignificantDigitsDesired, potentialShiftAmount);
-
-			// Compensate for shifting towards the MSB (i.e., multiplying)
-			nrmExponent = exponent - shiftAmount;
-
-			var startIndex = mantissa.Length - limbsCount;
-
-			var result = new ulong[limbsCount];
-			Array.Copy(mantissa, startIndex, result, 0, limbsCount);
-
-			// Fill x number of high-order bits having value zero within the low half of the MSB, creating range of zero value bits at the low-order end.
-			result[^1] <<= shiftAmount;
-
-			for (int i = result.Length - 2; i >= 0; i--)
-			{
-				// Fill the x amount of zero value bits at the low-order end of the previous digit
-				// with the top x bits of this digit. The bits from this digit are multiplied by 2^shiftAmount and then divided by 2^32.
-				result[i + 1] |= result[i] >> 32 - shiftAmount;
-
-				// Set the top x bits of this value to zero and then multiply by 2^shiftAmount.
-				result[i] = (result[i] << 32 + shiftAmount) >> 32;
-			}
-
-			// If there were more digits in the source mantissa than the number of digits being returned,
-			// use the top x bits of that digit.
-			if (startIndex > 0)
-			{
-				var preceedingDigit = mantissa[startIndex - 1];
-				result[0] |= preceedingDigit >> 32 - shiftAmount;
-
-				// Get the new value of the preceeding digit
-				preceedingDigit = (preceedingDigit << 32 + shiftAmount) >> 32;
-
-				// Round up, if the value of the next LS digit is >= 2^16.
-				if (preceedingDigit >= HALF_DIGIT_VALUE)
+				var potentialShiftAmount = BitOperations.LeadingZeroCount(mantissa[^1]) - 32;
+				if (potentialShiftAmount < 0)
 				{
-					result[0] += 1;
+					// TODO: Convert this to a Conditional Method base on compilation symbol = 'DEBUG.'
+					throw new ArgumentException("NormalizeFPV requires each mantissa element to be no greater than 2^32.");
+
+					//nrmExponent = exponent;
+					//return mantissa;
 				}
 
-				// Compensate for discarding startIndex number of LSB
-				nrmExponent += 32 * startIndex;
+				var shiftAmount = Math.Min(additionalSignificantDigitsDesired, potentialShiftAmount);
+
+				// Compensate for shifting towards the MSB (i.e., multiplying)
+				newExponent = exponent - shiftAmount;
+
+				var startIndex = mantissa.Length - limbsCount;
+
+				result = new ulong[limbsCount];
+				Array.Copy(mantissa, startIndex, result, 0, limbsCount);
+
+				// Fill x number of high-order bits having value zero within the low half of the MSB, creating range of zero value bits at the low-order end.
+				result[^1] <<= shiftAmount;
+
+				for (int i = result.Length - 2; i >= 0; i--)
+				{
+					// Fill the x amount of zero value bits at the low-order end of the previous digit
+					// with the top x bits of this digit. The bits from this digit are multiplied by 2^shiftAmount and then divided by 2^32.
+					result[i + 1] |= result[i] >> 32 - shiftAmount;
+
+					// Set the top x bits of this value to zero and then multiply by 2^shiftAmount.
+					result[i] = (result[i] << 32 + shiftAmount) >> 32;
+				}
+
+				// If there were more digits in the source mantissa than the number of digits being returned,
+				// use the top x bits of that digit.
+				if (startIndex > 0)
+				{
+					// Compensate for discarding startIndex number of LSB
+					newExponent += 32 * startIndex;
+
+					var preceedingDigit = mantissa[startIndex - 1];
+					result[0] |= preceedingDigit >> 32 - shiftAmount;
+
+					// TODO: Update NormalizeFPV to round using the value of the first truncated limb.
+					// See implementation of Round
+
+					// Get the new value of the preceeding digit
+					preceedingDigit = (preceedingDigit << 32 + shiftAmount) >> 32;
+
+					// Round up, if the value of the next LS digit is >= 2^16.
+					if (preceedingDigit >= HALF_DIGIT_VALUE)
+					{
+						var rndResult = (ulong[])result.Clone();
+						rndResult[0] += 1;
+						result = ReSplit(rndResult);
+					}
+				}
+
 			}
+
+			//var ltResult = TrimTrailingZeros(result, newExponent, out nrmExponent);
+
+			//if (ltResult.Any(x => x >= MAX_DIGIT_VALUE))
+			//{
+			//	throw new InvalidOperationException("NormalizeFPV is returning a value that is not normalized.");
+			//}
+
+			//return ltResult;
 
 			if (result.Any(x => x >= MAX_DIGIT_VALUE))
 			{
 				throw new InvalidOperationException("NormalizeFPV is returning a value that is not normalized.");
 			}
 
+			nrmExponent = newExponent;
 			return result;
 		}
 
@@ -959,22 +975,37 @@ namespace MSetGenP
 			return result;
 		}
 
-		private static ulong[] Round(ulong[] mantissa, int exponent, int limbs, out int rndExponent)
+		private static ulong[] Round(ulong[] mantissa, int exponent, int limbs, out int newExponent)
 		{
 			var result = new ulong[limbs];
 			var startIndex = mantissa.Length - limbs;
 
-			Debug.Assert(startIndex > 0, "Expecting startIndex to be > 0 when rounding.");
+			if (startIndex == 0)
+			{
+				newExponent = exponent;
+				return mantissa;
+			}
+
+			if (startIndex < 0)
+			{
+				throw new ArgumentException("limbs must be greater or equal to the current number of limbs.");
+			}
 
 			Array.Copy(mantissa, startIndex, result, 0, limbs);
 
 			if (mantissa[startIndex - 1] >= HALF_DIGIT_VALUE)
 			{
-				result[0] += 1;
+				var rndResult = (ulong[])result.Clone();
+				rndResult[0] += 1;
+				result = ReSplit(rndResult);
 			}
 
-			rndExponent = exponent + 32 * startIndex;
+			//var rndExponent = exponent + 32 * startIndex;
+			//var ltResult = TrimTrailingZeros(result, rndExponent, out newExponent);
 
+			//return ltResult;
+
+			newExponent = exponent + 32 * startIndex;
 			return result;
 		}
 
@@ -1157,6 +1188,38 @@ namespace MSetGenP
 
 			var result = new ulong[i];
 			Array.Copy(mantissa, 0, result, 0, i);
+			return result;
+		}
+
+		private static ulong[] TrimTrailingZeros(ulong[] mantissa, int exponent, out int newExponent)
+		{
+			newExponent = exponent;
+
+			var i = 0;
+			for (; i < mantissa.Length; i++)
+			{
+				if (mantissa[i] != 0)
+				{
+					break;
+				}
+			}
+
+			if (i == 0)
+			{
+				return mantissa;
+			}
+
+			if (i == mantissa.Length)
+			{
+				// All digits are zero
+				return new ulong[] { 0 };
+			}
+
+			var result = new ulong[mantissa.Length - i];
+			Array.Copy(mantissa, i, result, 0, result.Length);
+
+			newExponent += i * 32;
+
 			return result;
 		}
 

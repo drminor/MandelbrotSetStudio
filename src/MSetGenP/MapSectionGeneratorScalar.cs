@@ -127,10 +127,9 @@ namespace MSetGenP
 			}
 
 			var trResult = SmxMathHelper.TrimLeadingZeros(result);
-			//var adjResult = SmxMathHelper.FillMsb(trResult, out shiftAmount);
-			//return adjResult;
-
 			return trResult;
+
+			//return result;
 		}
 
 		// Trim Leading Zeros for a Big-Endian formatted array of longs.
@@ -157,7 +156,7 @@ namespace MSetGenP
 			}
 
 			var result = new long[mantissa.Length - i];
-			Array.Copy(mantissa, i, result, 0, i);
+			Array.Copy(mantissa, i, result, 0, result.Length);
 			return result;
 		}
 
