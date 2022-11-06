@@ -1,14 +1,17 @@
 ﻿using MSS.Common;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace MSetGenP
 {
-	internal class IteratorScalar
+	internal class IteratorVector
 	{
+		private SmxVecMathHelper _smxVecMathHelper;
 		private int _targetIterations;
 
-		public IteratorScalar(int targetIterations)
+		public IteratorVector(SmxVecMathHelper smxVecMathHelper, int targetIterations)
 		{
+			_smxVecMathHelper = smxVecMathHelper;
 			_targetIterations = targetIterations;
 		}
 
@@ -69,5 +72,61 @@ namespace MSetGenP
 			return cntr;
 		}
 
-	}
+		public Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePoints)
+		{
+			var result = new Smx[samplePoints.Length];
+
+			for (var i = 0; i < samplePoints.Length; i++)
+			{
+				result[i] = SmxMathHelper.Add(startValue, samplePoints[i]);
+			}
+
+			return result;
+		}
+
+		public Smx[] BuildSamplePointOffsets(Smx delta, int sampleCount)
+		{
+			var result = new Smx[sampleCount];
+
+			for (var i = 0; i < sampleCount; i++)
+			{
+				result[i] = SmxMathHelper.Multiply(delta, i);
+			}
+
+			return result;
+		}
+
+		public void Sample()
+		{
+			var lanes = Vector<int>.Count;
+
+			int[] a = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+			int[] b = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+			int[] c = new int[a.Length];
+
+			for (int i = 0; i < a.Length; i += lanes)
+			{
+				var a8 = new Vector<int>(a, i);
+				var b8 = new Vector<int>(b, i);
+				(a8 + b8).CopyTo(c, i);
+			}
+		}
+
+			/*
+			1 using System.Numerics;
+			2 namespace test { class P { static void Main(string[] args)
+			3 {
+			4 var lanes = Vector<int>.Count;
+			5 int[] a = { 1, 2, 3, 4, 5, 6, 7, 8 };
+			6 int[] b = { 1, 1, 1, 1, 1, 1, 1, 1 };
+			7 int[] c = new int[a.Length];
+			8 for( int i = 0; i < a.Length; i += lanes )
+			9 {
+			10 var a8 = new Vector<int>(a, i);
+			11 var b8 = new Vector<int>(b, i);
+			12 (a8 + b8).CopyTo(c, i);
+			13 }}}}
+			*/
+
+		}
 }

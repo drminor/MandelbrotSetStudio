@@ -178,9 +178,9 @@ namespace MSetGenP
 				var product = ax[j] * b;
 				//seive[j] = product;
 
-				var lo = Split(product, out var hi);		//  2 x 1					3 x 1			4 x 1
-				mantissa[j] += lo;			            // 0, 1				0, 1, 2				0, 1, 2, 3
-				mantissa[j + 1] += hi;			        // 1, 2				1, 2, 3				1, 2, 3, 4
+				var lo = Split(product, out var hi);	//		2 x 1			3 x 1			4 x 1
+				mantissa[j] += lo;			            //			0, 1			0, 1, 2			0, 1, 2, 3
+				mantissa[j + 1] += hi;			        //			1, 2			1, 2, 3			1, 2, 3, 4
 			}
 
 			//var splitSieve = Split(seive);
@@ -195,7 +195,8 @@ namespace MSetGenP
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
 			// This will leave each result bin with a value <= 2^32 for the final digit.
-			// Don't include the least significant limb, as this value will always be discarded as the result is rounded.
+			// Sometimes we need the LS-Limb. We are including
+			// #Don't include the least significant limb, as this value will always be discarded as the result is rounded.
 
 			// Remove all zero-valued leading limbs 
 			// If the MSL produces a carry, throw an exception.
@@ -226,8 +227,10 @@ namespace MSetGenP
 			if (indexOfLastNonZeroLimb < mantissa.Length - 1)
 			{
 				// Trim Leading Zeros
-				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
-				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				//var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				//Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				var newResult = CopyFirstXElements(result, indexOfLastNonZeroLimb + 1);
+
 				return newResult;
 			}
 			else
@@ -389,16 +392,19 @@ namespace MSetGenP
 
 			if (carry != 0)
 			{
-				var newResult = new ulong[resultLength + 1];
-				Array.Copy(result, 0, newResult, 0, resultLength);
+				//var newResult = new ulong[resultLength + 1];
+				//Array.Copy(result, 0, newResult, 0, resultLength);
+				var newResult = Extend(result, resultLength + 1);
 				newResult[^1] = carry;
 				return newResult;
 			}
 			else if (indexOfLastNonZeroLimb < resultLength - 1)
 			{
 				// Trim leading zeros
-				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
-				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				//var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				//Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				var newResult = CopyFirstXElements(result, indexOfLastNonZeroLimb + 1);
+
 				return newResult;
 			}
 			else
@@ -545,8 +551,10 @@ namespace MSetGenP
 			if (result[^1] == 0 && indexOfLastNonZeroLimb < resultLength - 1)
 			{
 				// Remove leading zeros
-				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
-				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				//var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				//Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				var newResult = CopyFirstXElements(result, indexOfLastNonZeroLimb + 1);
+
 				return newResult;
 			}
 			else
@@ -687,16 +695,20 @@ namespace MSetGenP
 
 			if (carry != 0)
 			{
-				var newResult = new ulong[mantissa.Length + 1];
-				Array.Copy(result, 0, newResult, 0, mantissa.Length);
+				//var newResult = new ulong[mantissa.Length + 1];
+				//Array.Copy(result, 0, newResult, 0, mantissa.Length);
+				var newResult = Extend(result, mantissa.Length + 1);
+
 				newResult[^1] = carry;
 				return newResult;
 			}
 			else if (indexOfLastNonZeroLimb < mantissa.Length - 1)
 			{
 				// Trim Leading Zeros
-				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
-				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				//var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				//Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				var newResult = CopyFirstXElements(result, indexOfLastNonZeroLimb + 1);
+
 				return newResult;
 			}
 			else
@@ -1107,16 +1119,18 @@ namespace MSetGenP
 
 			if (carry != 0)
 			{
-				var newResult = new ulong[result.Length + 1];
-				Array.Copy(result, 0, newResult, 0, result.Length);
+				var newResult = Extend(result, result.Length + 1);
+				//var newResult = new ulong[result.Length + 1];
+				//Array.Copy(result, 0, newResult, 0, result.Length);
 				newResult[^1] = carry;
 				return newResult;
 			}
 			else if (indexOfLastNonZeroLimb < values.Length - 1)
 			{
 				// Remove leading zeros
-				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
-				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				//var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				//Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				var newResult = CopyFirstXElements(result, indexOfLastNonZeroLimb + 1);
 				return newResult;
 			}
 			else
@@ -1148,6 +1162,14 @@ namespace MSetGenP
 		{
 			var result = new ulong[newLength];
 			Array.Copy(values, 0, result, 0, values.Length);
+
+			return result;
+		}
+
+		private static ulong[] CopyFirstXElements(ulong[] values, int newLength)
+		{
+			var result = new ulong[newLength];
+			Array.Copy(values, 0, result, 0, newLength);
 
 			return result;
 		}

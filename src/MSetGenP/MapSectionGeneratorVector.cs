@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace MSetGenP
 {
-	public class MapSectionGeneratorScalar
+	public class MapSectionGeneratorVector
 	{
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
@@ -14,13 +14,15 @@ namespace MSetGenP
 			var blockSize = mapSectionRequest.BlockSize;
 			var precision = mapSectionRequest.Precision; // + 20;
 
+			var smxVecMathHelper = new SmxVecMathHelper(precision);
+
 			var startingCx = CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
 			var startingCy = CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
 			var delta = CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
 
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 
-			var counts = GenerateMapSection(startingCx, startingCy, delta, blockSize, targetIterations);
+			var counts = GenerateMapSection(smxVecMathHelper, startingCx, startingCy, delta, blockSize, targetIterations);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[128 * 128];
@@ -29,7 +31,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ushort[] GenerateMapSection(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
+		private ushort[] GenerateMapSection(SmxVecMathHelper smxVecMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
 		{
 			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
 			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
@@ -39,12 +41,14 @@ namespace MSetGenP
 
 			var result = new ushort[blockSize.NumberOfCells];
 
-			var stride = blockSize.Width;
-			var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
-			var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
-			var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
+			var iterator = new IteratorVector(smxVecMathHelper, targetIterations);
 
-			var iterator = new IteratorScalar(targetIterations);
+			iterator.Sample();
+
+			var stride = blockSize.Width;
+			var samplePointOffsets = iterator.BuildSamplePointOffsets(delta, stride);
+			var samplePointsX = iterator.BuildSamplePoints(startingCx, samplePointOffsets);
+			var samplePointsY = iterator.BuildSamplePoints(startingCy, samplePointOffsets);
 
 			for (int j = 0; j < samplePointsY.Length; j++)
 			{
@@ -58,29 +62,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		private Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePoints)
-		{
-			var result = new Smx[samplePoints.Length];
 
-			for (var i = 0; i < samplePoints.Length; i++)
-			{
-				result[i] = SmxMathHelper.Add(startValue, samplePoints[i]);
-			}
-
-			return result;
-		}
-
-		private Smx[] BuildSamplePointOffsets(Smx delta, int sampleCount)
-		{
-			var result = new Smx[sampleCount];
-
-			for (var i = 0; i < sampleCount; i++)
-			{
-				result[i] = SmxMathHelper.Multiply(delta, i);
-			}
-
-			return result;
-		}
 
 		private Smx CreateSmxFromDto(long[] values, int exponent, int precision)
 		{

@@ -20,30 +20,28 @@ namespace MSetGenPTest
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
 			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
 
-			var reponse = new MapSectionGeneratorScalar().GenerateMapSection(request);
+			var generatorScalar = new MapSectionGeneratorScalar();
+			var reponse = generatorScalar.GenerateMapSection(request);
 
 			Assert.NotNull(reponse);
 		}
 
-		//[Fact]
-		//public void TrimLeadingZeros_FromZeroValuedSmx_Returns_Zero()
-		//{
-		//	var mantissa = new ulong[] { 0 };
+		[Fact]
+		public void SimpleVectorGeneratateSectionResponse()
+		{
+			var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
+			var yPos = new long[] { 0, 67781838 };
+			var precision = 55;
+			var extent = 16;
+			var samplePointDelta = new RSize(1, 1, -36);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
+			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
 
-		//	var trimmedMantissa = SmxMathHelper.TrimLeadingZeros(mantissa);
+			var generatorVector = new MapSectionGeneratorVector();
+			var reponse = generatorVector.GenerateMapSection(request);
 
-		//	Assert.Equal(1, trimmedMantissa.Length);
-		//}
-
-		//[Fact]
-		//public void TrimLeadingZeros_FromSmxWithOneNonZeroDigit_Returns_Same()
-		//{
-		//	var mantissa = new ulong[] { 1 };
-
-		//	var trimmedMantissa = SmxMathHelper.TrimLeadingZeros(mantissa);
-
-		//	Assert.True(trimmedMantissa.Length == 1 && trimmedMantissa[0] == 1);
-		//}
+			Assert.NotNull(reponse);
+		}
 
 		#region Support Methods
 

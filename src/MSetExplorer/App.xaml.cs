@@ -31,7 +31,7 @@ namespace MSetExplorer
 		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
-		private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.LocalScalar;
+		private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.LocalVector;
 		//private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.InProcess;
 
 		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
@@ -140,7 +140,7 @@ namespace MSetExplorer
 				MEngineClientImplementation.Remote => CreateMEngineClients(mEngineEndPointAddresses),
 				MEngineClientImplementation.InProcess => CreateInProcessMEngineClient(mapSectionAdapter, out _mapSectionPersistProcessor),
 				MEngineClientImplementation.LocalScalar => new IMEngineClient[] { new MClientLocalScalar() },
-				MEngineClientImplementation.LocalVector => throw new NotImplementedException(),
+				MEngineClientImplementation.LocalVector => new IMEngineClient[] { new MClientLocalVector() },
 				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
 			};
 
