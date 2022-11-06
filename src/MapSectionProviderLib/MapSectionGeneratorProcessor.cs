@@ -37,11 +37,11 @@ namespace MapSectionProviderLib
 			_cancelledJobIds = new List<int>();
 
 			var numberOfLogicalProc = Environment.ProcessorCount;
-			//var localTaskCnt = 1;
-			//var remoteTaskCnt = 0;
+			var localTaskCnt = 1;
+			var remoteTaskCnt = 0;
 
-			var localTaskCnt = numberOfLogicalProc - 1;
-			var remoteTaskCnt = localTaskCnt - 1;
+			//var localTaskCnt = numberOfLogicalProc - 1;
+			//var remoteTaskCnt = localTaskCnt - 1;
 
 			_workQueueProcessors = new List<Task>();
 			foreach (var client in _mEngineClients)

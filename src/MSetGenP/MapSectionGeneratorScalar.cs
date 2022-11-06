@@ -29,7 +29,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		public ushort[] GenerateMapSection(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
+		private ushort[] GenerateMapSection(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
 		{
 			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
 			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
@@ -49,7 +49,6 @@ namespace MSetGenP
 			for (int j = 0; j < samplePointsY.Length; j++)
 			{
 				for (int i = 0; i < samplePointsX.Length; i++)
-
 				{
 					var cntr = scalarIterator.Iterate(samplePointsX[i], samplePointsY[j]);
 					result[j * stride + i] = cntr;
@@ -93,6 +92,11 @@ namespace MSetGenP
 
 			var mantissa = ConvertDtoLongsToSmxULongs(values);
 			var nrmMantissa = SmxMathHelper.NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
+
+			if (SmxMathHelper.CheckPWValues(nrmMantissa))
+			{
+				Debug.WriteLine("XXX");
+			}
 			var result = new Smx(sign, nrmMantissa, nrmExponent, precision);
 
 			return result;
@@ -122,11 +126,11 @@ namespace MSetGenP
 				result[2 * i + 1] = hi;
 			}
 
-			//var trResult = SmxMathHelper.TrimLeadingZeros(result);
+			var trResult = SmxMathHelper.TrimLeadingZeros(result);
 			//var adjResult = SmxMathHelper.FillMsb(trResult, out shiftAmount);
 			//return adjResult;
 
-			return result;
+			return trResult;
 		}
 
 		// Trim Leading Zeros for a Big-Endian formatted array of longs.

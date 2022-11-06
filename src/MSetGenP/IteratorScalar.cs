@@ -27,27 +27,36 @@ namespace MSetGenP
 
 			while (!SmxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntr++ < _targetIterations)
 			{
-				// z.r + z.i
-				var zRZi = SmxMathHelper.Add(zR, zI);               
-				
-				// square(z.r + z.i)
-				var zRZiSqr = SmxMathHelper.Square(zRZi);
+				try
+				{
 
-				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
-				zI = SmxMathHelper.Sub(zRZiSqr, zRSqr);
-				zI = SmxMathHelper.Sub(zI, zISqr);
-				//zI = SmxMathHelper.Add(zI, cI, out cI);
-				zI = SmxMathHelper.Add(zI, cI);
+					// z.r + z.i
+					var zRZi = SmxMathHelper.Add(zR, zI);
 
-				// z.r = zrsqr - zisqr + c.r
-				zR = SmxMathHelper.Sub(zRSqr, zISqr);
-				//zR = SmxMathHelper.Add(zR, cR, out cR);
-				zR = SmxMathHelper.Add(zR, cR);
+					// square(z.r + z.i)
+					var zRZiSqr = SmxMathHelper.Square(zRZi);
 
-				zRSqr = SmxMathHelper.Square(zR);
-				zISqr = SmxMathHelper.Square(zI);
+					// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
+					zI = SmxMathHelper.Sub(zRZiSqr, zRSqr);
+					zI = SmxMathHelper.Sub(zI, zISqr);
+					//zI = SmxMathHelper.Add(zI, cI, out cI);
+					zI = SmxMathHelper.Add(zI, cI);
 
-				sumOfSqrs = SmxMathHelper.Add(zRSqr, zISqr);
+					// z.r = zrsqr - zisqr + c.r
+					zR = SmxMathHelper.Sub(zRSqr, zISqr);
+					//zR = SmxMathHelper.Add(zR, cR, out cR);
+					zR = SmxMathHelper.Add(zR, cR);
+
+					zRSqr = SmxMathHelper.Square(zR);
+					zISqr = SmxMathHelper.Square(zI);
+
+					sumOfSqrs = SmxMathHelper.Add(zRSqr, zISqr);
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"Iterator received exception: {e}.");
+					throw;
+				}
 			}
 
 			//if (cntr < _targetIterations)

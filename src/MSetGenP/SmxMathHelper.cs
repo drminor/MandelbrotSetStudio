@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Text;
 
@@ -19,6 +20,9 @@ namespace MSetGenP
 
 		// Integer used to pack a pair of ulong values into a single ulong.
 		private static readonly ulong UL_UINT_FACTOR = (ulong)Math.Pow(2, 32);
+
+		private static readonly ulong LOW_MASK =    0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
 		#endregion
 
@@ -196,7 +200,7 @@ namespace MSetGenP
 			// If the MSL produces a carry, throw an exception.
 
 			var indexOfLastNonZeroLimb = 0;
-			ulong carry = 0;
+			var carry = 0ul;
 
 			for (int i = 1; i < mantissa.Length; i++)
 			{
@@ -326,100 +330,238 @@ namespace MSetGenP
 				return trimmedB;
 			}
 
-			var nrmA = AlignExponents(a, b, out normalizedB);
+			var normalizedA = AlignExponents(a, b, out normalizedB);
 
 			bool sign;
 			ulong[] mantissa;
-			var exponent = nrmA.Exponent;
+			var exponent = normalizedA.Exponent;
 			var precision = Math.Min(a.Precision, b.Precision);
 
 			if (a.Sign == b.Sign)
 			{
 				sign = a.Sign;
-				mantissa = Add(nrmA.Mantissa, normalizedB.Mantissa);
+				//var rawMantissa = Add(nrmA.Mantissa, normalizedB.Mantissa);
+				//mantissa = ReSplit(rawMantissa);
+
+				//mantissa = Add(nrmA.Mantissa, normalizedB.Mantissa);
+				var aMantissa = ExtendLimbs(normalizedA.Mantissa, normalizedB.Mantissa, out var bMantissa);
+				mantissa = Add2(aMantissa, bMantissa);
 			}
 			else
 			{
-				var cmp = Compare(nrmA.Mantissa, normalizedB.Mantissa);
+				var cmp = Compare(normalizedA.Mantissa, normalizedB.Mantissa);
 
 				if (cmp >= 0)
 				{
 					sign = a.Sign;
-					mantissa = Sub(nrmA.Mantissa, normalizedB.Mantissa);
+					var rawMantissa = SubOld(normalizedA.Mantissa, normalizedB.Mantissa);
+					mantissa = ReSplit(rawMantissa);
+
+					//var aMantissa = ExtendLimbs(normalizedA.Mantissa, normalizedB.Mantissa, out var bMantissa);
+					//mantissa = Sub(aMantissa, bMantissa);
 				}
 				else
 				{
 					sign = b.Sign;
-					mantissa = Sub(normalizedB.Mantissa, nrmA.Mantissa);
+					var rawMantissa = SubOld(normalizedB.Mantissa, normalizedA.Mantissa);
+					mantissa = ReSplit(rawMantissa);
+
+					//var aMantissa = ExtendLimbs(normalizedA.Mantissa, normalizedB.Mantissa, out var bMantissa);
+					//mantissa = Sub(bMantissa, aMantissa);
 				}
 			}
 
-			// TODO: Check the logic used to normalize an Smx after addition / subtraction
-			var spMantissa = ReSplit(mantissa);
+			var result = new Smx(sign, mantissa, exponent, precision);
 
-			//var trMantissa = TrimLeadingZeros(spMantissa);
-			//if (trMantissa.Length < spMantissa.Length || leadingZeroLimbCnt > 0)
-			//{
-			//	Debug.WriteLine($"{leadingZeroLimbCnt} LSB limbs were found with value zero AND {spMantissa.Length - trMantissa.Length} leading zeroes were removed.");
-
-			//	if (leadingZeroLimbCnt != spMantissa.Length - trMantissa.Length)
-			//	{
-			//		throw new Exception("leading limb count does not match reduction due to TrimLeadingZeroes.");
-			//	}
-			//}
-
-			var result = new Smx(sign, spMantissa, exponent, precision);
-
-			return result;
-		}
-
-		public static bool CheckPWValues(ulong[] values)
-		{
-			var result = values.Any(x => x > MAX_DIGIT_VALUE);
 			return result;
 		}
 
 		public static ulong[] Add(ulong[] ax, ulong[] bx)
 		{
-			ulong[] result;
+			var resultLength = ax.Length > bx.Length ? ax.Length : bx.Length;
+			var result = new ulong[resultLength];
 
-			if (ax.Length < bx.Length)
+			var indexOfLastNonZeroLimb = 0;
+			var carry = 0ul;
+
+			var i = 0;
+			for (; i < ax.Length && i < bx.Length; i++)
 			{
-				result = AddInternal(bx, ax);
+				var nv = ax[i] + bx[i] + carry;
+				result[i] = Split(nv, out carry);
+				indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
+			}
+
+			if (ax.Length > bx.Length)
+			{
+				for (; i < ax.Length; i++)
+				{
+					var nv = ax[i] + carry;
+					result[i] = Split(nv, out carry);
+					indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
+				}
+			}
+			else if (bx.Length > ax.Length)
+			{
+				for (; i < bx.Length; i++)
+				{
+					var nv = bx[i] + carry;
+					result[i] = Split(nv, out carry);
+					indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
+				}
+			}
+
+			if (carry != 0)
+			{
+				var newResult = new ulong[resultLength + 1];
+				Array.Copy(result, 0, newResult, 0, resultLength);
+				newResult[^1] = carry;
+				return newResult;
+			}
+			else if (indexOfLastNonZeroLimb < resultLength - 1)
+			{
+				// Remove leading zeros
+				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				return newResult;
 			}
 			else
 			{
-				result = AddInternal(ax, bx);
+				return result;
 			}
-
-			return result;
 		}
 
-		private static ulong[] AddInternal(ulong[] ax, ulong[] bx)
+		public static ulong[] Add2(ulong[] ax, ulong[] bx)
 		{
-			if (ax.Length < bx.Length)
+			Debug.Assert(ax.Length == bx.Length);
+
+			var resultLength = ax.Length;
+			var result = new ulong[resultLength];
+
+			var indexOfLastNonZeroLimb = 0;
+			var carry = 0ul;
+
+			for (var i = 0; i < resultLength; i++)
 			{
-				throw new Exception("AddInternal expects ax to have as many (or more) digits as bx.");
+				var nv = ax[i] + bx[i] + carry;
+				result[i] = Split(nv, out carry);
+				indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
 			}
 
-			var result = new ulong[ax.Length];
-
-			var i = 0;
-
-			for(; i < bx.Length; i++)
+			if (carry != 0)
 			{
-				result[i] = ax[i] + bx[i];	
+				var newResult = new ulong[resultLength + 1];
+				Array.Copy(result, 0, newResult, 0, resultLength);
+				newResult[^1] = carry;
+				return newResult;
 			}
-
-			for(; i < ax.Length; i++)
+			else if (indexOfLastNonZeroLimb < resultLength - 1)
 			{
-				result[i] = ax[i];
+				// Remove leading zeros
+				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				return newResult;
 			}
-
-			return result;
+			else
+			{
+				return result;
+			}
 		}
+
+		//public static ulong[] AddOld(ulong[] ax, ulong[] bx)
+		//{
+		//	ulong[] result;
+
+		//	if (ax.Length < bx.Length)
+		//	{
+		//		result = AddInternal(bx, ax);
+		//	}
+		//	else
+		//	{
+		//		result = AddInternal(ax, bx);
+		//	}
+
+		//	return result;
+		//}
+
+		//private static ulong[] AddInternal(ulong[] ax, ulong[] bx)
+		//{
+		//	if (ax.Length < bx.Length)
+		//	{
+		//		throw new Exception("AddInternal expects ax to have as many (or more) digits as bx.");
+		//	}
+
+		//	var result = new ulong[ax.Length];
+
+		//	var i = 0;
+
+		//	for(; i < bx.Length; i++)
+		//	{
+		//		result[i] = ax[i] + bx[i];	
+		//	}
+
+		//	for(; i < ax.Length; i++)
+		//	{
+		//		result[i] = ax[i];
+		//	}
+
+		//	return result;
+		//}
 
 		public static ulong[] Sub(ulong[] ax, ulong[] bx)
+		{
+			Debug.Assert(ax.Length == bx.Length);
+
+			var resultLength = ax.Length;
+			var result = new ulong[resultLength];
+
+			var indexOfLastNonZeroLimb = 0;
+			var borrow = 0ul;
+
+			for (var i = 0; i < resultLength - 1; i++)
+			{
+				// Set the lsb of the high part of a.
+				var sax = ax[i] | TEST_BIT_32;
+
+				result[i] = sax - bx[i] - borrow;
+
+				if ((result[i] & TEST_BIT_32) > 0)
+				{
+					result[i] &= LOW_MASK;
+					borrow = 0;
+				}
+				else
+				{
+					borrow = 1;
+				}
+
+				if (result[i] > 0)
+				{
+					indexOfLastNonZeroLimb = i;
+				}
+			}
+
+			if (ax[^1] < (bx[^1] + borrow))
+			{
+				throw new OverflowException("MSB too small.");
+			}
+
+			result[^1] = ax[^1] - bx[^1] - borrow;
+
+			if (result[^1] == 0 && indexOfLastNonZeroLimb < resultLength - 1)
+			{
+				// Remove leading zeros
+				var newResult = new ulong[indexOfLastNonZeroLimb + 1];
+				Array.Copy(result, 0, newResult, 0, indexOfLastNonZeroLimb + 1);
+				return newResult;
+			}
+			else
+			{
+				return result;
+			}
+		}
+
+		public static ulong[] SubOld(ulong[] ax, ulong[] bx)
 		{
 			if (bx.Length > ax.Length)
 			{
@@ -427,13 +569,6 @@ namespace MSetGenP
 			}
 
 			var result = new ulong[ax.Length];
-
-			var axPtr = ax.Length - bx.Length;
-			
-			if (axPtr < 0)
-			{
-				throw new Exception($"While subtracting {GetDiagDisplay("b", bx)} from {GetDiagDisplay("a", ax)}, b was found to have more digits than a. A should be larger and therefor should have the same or more digits than b.");
-			}
 
 			var i = 0;
 			for (; i < bx.Length; i++)
@@ -514,7 +649,7 @@ namespace MSetGenP
 
 			for (int i = 0; i < packedValues.Length; i++)
 			{
-				var lo = Split(packedValues[i], out var hi); // :Spliter
+				var lo = Split(packedValues[i], out var hi);
 				result[2 * i] = lo;
 				result[2 * i + 1] = hi;
 			}
@@ -525,7 +660,7 @@ namespace MSetGenP
 		public static ulong Split(ulong x, out ulong hi)
 		{
 			hi = x >> 32; // Create new ulong from bits 32 - 63.
-			return x & 0x00000000FFFFFFFF; // Create new ulong from bits 0 - 31.
+			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
 		}
 
 		private static ulong[] ReSplit(ulong[] values)
@@ -537,9 +672,8 @@ namespace MSetGenP
 
 			// If the MSL produces a carry, prepend an additional limb.
 
-			//var carryCnt = 0;
 			var indexOfLastNonZeroLimb = 0;
-			ulong carry = 0;
+			var carry = 0ul;
 
 			for (int i = 0; i < values.Length; i++)
 			{
@@ -552,16 +686,10 @@ namespace MSetGenP
 				}
 
 				carry = hi;
-
-				//if (carry > 0)
-				//{
-				//	carryCnt++;
-				//}
 			}
 
 			if (carry != 0)
 			{
-				//Debug.WriteLine($"ReSplit did {carryCnt} carries and increased the limb count.");
 				var result = new ulong[values.Length + 1];
 				Array.Copy(values, 0, result, 0, values.Length);
 				result[^1] = carry;
@@ -580,9 +708,15 @@ namespace MSetGenP
 			}
 		}
 
+		public static bool CheckPWValues(ulong[] values)
+		{
+			var result = values.Any(x => x >= MAX_DIGIT_VALUE);
+			return result;
+		}
+
 		#endregion
 
-		#region ToString Support
+		#region To String Support
 
 		private static string GetDiagDisplay(string name, ulong[] values, int stride)
 		{
@@ -732,6 +866,9 @@ namespace MSetGenP
 			{
 				// TODO: Convert this to a Conditional Method base on compilation symbol = 'DEBUG.'
 				throw new ArgumentException("NormalizeFPV requires each mantissa element to be no greater than 2^32.");
+
+				//nrmExponent = exponent;
+				//return mantissa;
 			}
 
 			var shiftAmount = Math.Min(additionalSignificantDigitsDesired, potentialShiftAmount);
@@ -775,6 +912,11 @@ namespace MSetGenP
 
 				// Compensate for discarding startIndex number of LSB
 				nrmExponent += 32 * startIndex;
+			}
+
+			if (result.Any(x => x >= MAX_DIGIT_VALUE))
+			{
+				throw new InvalidOperationException("NormalizeFPV is returning a value that is not normalized.");
 			}
 
 			return result;
@@ -850,13 +992,13 @@ namespace MSetGenP
 			if (diff > 0)
 			{
 				normalizedB = b;
-				var newAMantissa = ScaleAndSplit(a.Mantissa, diff, out var numberOfCarries);
+				var newAMantissa = ScaleAndSplit(a.Mantissa, diff);
 				var result = new Smx(a.Sign, newAMantissa, b.Exponent, a.Precision);
 				return result;
 			}
 			else
 			{
-				var newBMantissa = ScaleAndSplit(b.Mantissa, diff * -1, out var numberOfCarries);
+				var newBMantissa = ScaleAndSplit(b.Mantissa, diff * -1);
 
 				//var limbCountIncrease = newBMantissa.Length - b.Mantissa.Length;
 				//if (limbCountIncrease > 0)
@@ -899,14 +1041,12 @@ namespace MSetGenP
 		//	return result;
 		//}
 
-		private static ulong[] ScaleAndSplit(ulong[] values, int power, out int numberOfCarries)
+		private static ulong[] ScaleAndSplit(ulong[] values, int power)
 		{
 			if (power <= 0)
 			{
 				throw new ArgumentException("The value of power must be 1 or greater.");
 			}
-
-			numberOfCarries = 0;
 
 			if (!values.Any(x => x > 0))
 			{
@@ -920,30 +1060,22 @@ namespace MSetGenP
 			var result = new ulong[values.Length + newLimbs];
 
 			var indexOfLastNonZeroLimb = 0;
-			ulong carry = 0;
+			var carry = 0ul;
 
 			for (var i = 0; i < values.Length; i++)
 			{
 				var newLimbVal = values[i] * factor + carry;
-				var lo = Split(newLimbVal, out var hi); // :Spliter
+				var lo = Split(newLimbVal, out carry); // :Spliter
 				result[i + newLimbs] = lo;
 
 				if (lo > 0)
 				{
 					indexOfLastNonZeroLimb = i;
 				}
-
-				carry = hi;
-
-				if (carry > 0)
-				{
-					numberOfCarries++;
-				}
 			}
 
 			if (carry != 0)
 			{
-				//Debug.WriteLine($"ReSplit did {carryCnt} carries and increased the limb count.");
 				var newResult = new ulong[result.Length + 1];
 				Array.Copy(result, 0, newResult, 0, result.Length);
 				newResult[^1] = carry;
@@ -962,6 +1094,33 @@ namespace MSetGenP
 			}
 		}
 
+		private static ulong[] ExtendLimbs(ulong[] ax, ulong[] bx, out ulong[] extendedBx)
+		{
+			if (ax.Length == bx.Length)
+			{
+				extendedBx = bx;
+				return ax;
+			}
+			else if (ax.Length < bx.Length)
+			{
+				extendedBx = bx;
+				return Extend(ax, bx.Length);
+			}
+			else
+			{
+				extendedBx = Extend(bx, ax.Length);
+				return ax;
+			}
+		}
+
+		private static ulong[] Extend(ulong[] values, int newLength)
+		{
+			var result = new ulong[newLength];
+			Array.Copy(values, 0, result, 0, values.Length);
+
+			return result;
+		}
+
 		private static Smx TrimLeadingZeros(Smx a)
 		{
 			var mantissa = TrimLeadingZeros(a.Mantissa);
@@ -969,7 +1128,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		private static ulong[] TrimLeadingZeros(ulong[] mantissa)
+		public static ulong[] TrimLeadingZeros(ulong[] mantissa)
 		{
 			if (mantissa.Length == 1 && mantissa[0] == 0)
 			{
