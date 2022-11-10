@@ -43,7 +43,7 @@ namespace MSetGenP
 
 			var iterator = new IteratorVector(smxVecMathHelper, targetIterations);
 
-			iterator.Sample();
+			//iterator.Sample();
 
 			var stride = blockSize.Width;
 			var samplePointOffsets = iterator.BuildSamplePointOffsets(delta, stride);

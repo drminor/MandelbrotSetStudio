@@ -10,7 +10,7 @@ namespace MSetGenPTest
 	public class MapSectionGeneratorSerialTest
 	{
 		[Fact]
-		public void SimpleGeneratateSectionResponse()
+		public void SimpleScalarGeneratateSectionResponse()
 		{
 			var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
 			var yPos = new long[] { 0, 67781838 };
@@ -43,6 +43,18 @@ namespace MSetGenPTest
 			Assert.NotNull(reponse);
 		}
 
+		[Fact]
+		public void CallIteratorSample()
+		{
+			var precision = 55;
+			var smxVecMathHelper = new SmxVecMathHelper(precision);
+			var targetIterations = 10;
+
+			var iterator = new IteratorVector(smxVecMathHelper, targetIterations);
+
+			iterator.Sample();
+		}
+
 		#region Support Methods
 
 		//private MapSectionRequest BuildTestRequest()
@@ -65,7 +77,7 @@ namespace MSetGenPTest
 			var blockPositionDto = new BigVectorDto(blockPosValues);
 
 			var samplePointDeltaDto = new RSizeDto(samplePointDelta.Values, samplePointDelta.Exponent);
-			var blockSize = new SizeInt(extent, extent);
+			var blockSize = new SizeInt(extent);
 			var mapPositionDto = GetMapPosition(blockPositionDto, samplePointDeltaDto, blockSize);
 
 			MapSectionRequest request = new MapSectionRequest();

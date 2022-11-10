@@ -1,27 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace MSetGenP
 {
-	internal class SmxVecMathHelper
+	public class SmxVecMathHelper
 	{
+		private int _precision;
+		#region Constructors
+
 		public SmxVecMathHelper(int precision)
 		{
 			Precision = precision;
-			Limbs = SmxMathHelper.GetLimbsCount(precision);
 		}
 
-		public SmxVecMathHelper(int precision, int limbs)
+		#endregion
+
+		#region Public Properties
+
+		public int Precision
 		{
-			Precision = precision;
-			Limbs = limbs;
+			get => _precision;
+			set
+			{
+				_precision = value;
+				Limbs = SmxMathHelper.GetLimbsCount(_precision);
+			}
 		}
-		
-		public int Precision { get; }
-		public int Limbs { get; }
+
+		public int Limbs { get; private set; }
+
+		#endregion
+
+
 
 
 

@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace MSetGenP
 {
-	internal class IteratorVector
+	public class IteratorVector
 	{
 		private SmxVecMathHelper _smxVecMathHelper;
 		private int _targetIterations;
@@ -72,13 +72,13 @@ namespace MSetGenP
 			return cntr;
 		}
 
-		public Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePoints)
+		public Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePointOffsets)
 		{
-			var result = new Smx[samplePoints.Length];
+			var result = new Smx[samplePointOffsets.Length];
 
-			for (var i = 0; i < samplePoints.Length; i++)
+			for (var i = 0; i < samplePointOffsets.Length; i++)
 			{
-				result[i] = SmxMathHelper.Add(startValue, samplePoints[i]);
+				result[i] = SmxMathHelper.Add(startValue, samplePointOffsets[i]);
 			}
 
 			return result;
@@ -98,35 +98,25 @@ namespace MSetGenP
 
 		public void Sample()
 		{
-			var lanes = Vector<int>.Count;
+			var lanes = Vector<ulong>.Count;
 
-			int[] a = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-			int[] b = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-			int[] c = new int[a.Length];
+			ulong[] a = { 1, 2, 3, 4, 5, 6, 7, 8 };
+			ulong[] b = { 1, 1, 1, 1, 1, 1, 1, 1 };
+			ulong[] c = new ulong[a.Length];
 
 			for (int i = 0; i < a.Length; i += lanes)
 			{
-				var a8 = new Vector<int>(a, i);
-				var b8 = new Vector<int>(b, i);
+				var a8 = new Vector<ulong>(a, i);
+				var b8 = new Vector<ulong>(b, i);
 				(a8 + b8).CopyTo(c, i);
+			}
+
+			for (int i = 0; i < a.Length; i++)
+			{
+				Debug.WriteLine($"item: {i}: {c[i]}.");
 			}
 		}
 
-			/*
-			1 using System.Numerics;
-			2 namespace test { class P { static void Main(string[] args)
-			3 {
-			4 var lanes = Vector<int>.Count;
-			5 int[] a = { 1, 2, 3, 4, 5, 6, 7, 8 };
-			6 int[] b = { 1, 1, 1, 1, 1, 1, 1, 1 };
-			7 int[] c = new int[a.Length];
-			8 for( int i = 0; i < a.Length; i += lanes )
-			9 {
-			10 var a8 = new Vector<int>(a, i);
-			11 var b8 = new Vector<int>(b, i);
-			12 (a8 + b8).CopyTo(c, i);
-			13 }}}}
-			*/
 
-		}
+	}
 }

@@ -28,7 +28,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients)
+		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients, bool useAllCores)
 		{
 			_mEngineClients = mEngineClients;
 
@@ -36,12 +36,20 @@ namespace MapSectionProviderLib
 			_workQueue = new BlockingCollection<MapSectionGenerateRequest>(QUEUE_CAPACITY);
 			_cancelledJobIds = new List<int>();
 
-			var numberOfLogicalProc = Environment.ProcessorCount;
-			var localTaskCnt = 1;
-			var remoteTaskCnt = 0;
+			int localTaskCnt;
+			int remoteTaskCnt;
 
-			//var localTaskCnt = numberOfLogicalProc - 1;
-			//var remoteTaskCnt = localTaskCnt - 1;
+			if (useAllCores)
+			{
+				var numberOfLogicalProc = Environment.ProcessorCount;
+				localTaskCnt = numberOfLogicalProc - 1;
+				remoteTaskCnt = localTaskCnt - 1;
+			}
+			else
+			{
+				localTaskCnt = 1;
+				remoteTaskCnt = 0;
+			}
 
 			_workQueueProcessors = new List<Task>();
 			foreach (var client in _mEngineClients)
