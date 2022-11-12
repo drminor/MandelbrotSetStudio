@@ -21,7 +21,7 @@ namespace MSetGenP
 
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 
-			var counts = GenerateMapSection2(startingCx, startingCy, delta, blockSize, targetIterations);
+			var counts = GenerateMapSection(startingCx, startingCy, delta, blockSize, targetIterations);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[128 * 128];
@@ -30,41 +30,41 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ushort[] GenerateMapSection2(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
-		{
-			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
-			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
-			var s3 = RValueHelper.ConvertToString(delta.GetRValue());
+		//private ushort[] GenerateMapSection2(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
+		//{
+		//	var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
+		//	var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
+		//	var s3 = RValueHelper.ConvertToString(delta.GetRValue());
 
-			Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Precision: {startingCx.Precision}");
+		//	Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Precision: {startingCx.Precision}");
 
-			var result = new ushort[blockSize.NumberOfCells];
+		//	var result = new ushort[blockSize.NumberOfCells];
 
-			var stride = blockSize.Width;
-			var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
+		//	var stride = blockSize.Width;
+		//	var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
 
-			ReportExponents(samplePointOffsets);
+		//	ReportExponents(samplePointOffsets);
 
-			var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
-			var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
+		//	var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
+		//	var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
 
-			var spx = new FPValues(samplePointsX);
-			var spy = new FPValues(samplePointsY);	
+		//	var spx = new FPValues(samplePointsX);
+		//	var spy = new FPValues(samplePointsY);	
 
-			var iterator = new IteratorScalar(targetIterations);
+		//	var iterator = new IteratorScalar(targetIterations);
 
-			for (int j = 0; j < samplePointsY.Length; j++)
-			{
-				for (int i = 0; i < samplePointsX.Length; i++)
-				{
-					//var cntr = iterator.Iterate(samplePointsX[i], samplePointsY[j]);
-					var cntr = iterator.Iterate(spx, i, spy, j);
-					result[j * stride + i] = cntr;
-				}
-			}
+		//	for (int j = 0; j < samplePointsY.Length; j++)
+		//	{
+		//		for (int i = 0; i < samplePointsX.Length; i++)
+		//		{
+		//			//var cntr = iterator.Iterate(samplePointsX[i], samplePointsY[j]);
+		//			var cntr = iterator.Iterate(spx, i, spy, j);
+		//			result[j * stride + i] = cntr;
+		//		}
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private ushort[] GenerateMapSection(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
 		{

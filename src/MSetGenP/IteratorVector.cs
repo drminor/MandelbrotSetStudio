@@ -72,6 +72,42 @@ namespace MSetGenP
 			return cntr;
 		}
 
+		public void Iterate(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+		{
+			try
+			{
+				//	// z.r + z.i
+				//	var zRZi = SmxMathHelper.Add(zR, zI);
+
+				//	// square(z.r + z.i)
+				//	var zRZiSqr = SmxMathHelper.Square(zRZi);
+
+				var zRZiSqrs = _smxVecMathHelper.Square(zRs);
+
+
+				//	// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
+				//	zI = SmxMathHelper.Sub(zRZiSqr, zRSqr);
+				//	zI = SmxMathHelper.Sub(zI, zISqr);
+				//	//zI = SmxMathHelper.Add(zI, cI, out cI);
+				//	zI = SmxMathHelper.Add(zI, cI);
+
+				//	// z.r = zrsqr - zisqr + c.r
+				//	zR = SmxMathHelper.Sub(zRSqr, zISqr);
+				//	//zR = SmxMathHelper.Add(zR, cR, out cR);
+				//	zR = SmxMathHelper.Add(zR, cR);
+
+				//	zRSqr = SmxMathHelper.Square(zR);
+				//	zISqr = SmxMathHelper.Square(zI);
+
+				//	sumOfSqrs = SmxMathHelper.Add(zRSqr, zISqr);
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Iterator received exception: {e}.");
+				throw;
+			}
+		}
+		
 		public Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePointOffsets)
 		{
 			var result = new Smx[samplePointOffsets.Length];
@@ -116,7 +152,5 @@ namespace MSetGenP
 				Debug.WriteLine($"item: {i}: {c[i]}.");
 			}
 		}
-
-
 	}
 }

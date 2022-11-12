@@ -33,7 +33,6 @@ the repeatly calcualte a new z (z') using z as an input
 
 Translate l to a color and paint the pixel at c with that color
 
-
 	z.r = 0;
 	z.i = 0;
 	zrsqr = square(z.r);
@@ -49,6 +48,7 @@ Translate l to a color and paint the pixel at c with that color
 		zisqr = square(z.i);
 	}
 
+Instead of multiplying, use Squaring
 
 	z.r = 0;
 	z.i = 0;
@@ -63,7 +63,7 @@ Translate l to a color and paint the pixel at c with that color
 		zisqr = square(z.i);
 	}
 
-	Subtraction is not associative:
+Note: Subtraction is not associative:
 	
 	8 - 3 - 1 = (8 - 3) - 1 = 5 - 1 = 4
 	8 - (3 - 1) = 8 - 2 = 6

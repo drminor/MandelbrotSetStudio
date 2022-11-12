@@ -53,6 +53,7 @@ namespace MSetGenP
 		public int Precision { get; set; } // Number of significant binary digits.
 
 		public bool IsZero => Mantissa.Length == 1 && Mantissa[0] == 0;
+		public int LimbCount => Mantissa.Length;
 
 		#endregion
 

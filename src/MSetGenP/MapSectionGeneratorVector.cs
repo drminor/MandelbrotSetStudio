@@ -1,7 +1,9 @@
 ﻿using MEngineDataContracts;
 using MSS.Common;
 using MSS.Types;
+using System.Buffers;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace MSetGenP
 {
@@ -39,30 +41,54 @@ namespace MSetGenP
 
 			Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Precision: {startingCx.Precision}");
 
-			var result = new ushort[blockSize.NumberOfCells];
-
 			var iterator = new IteratorVector(smxVecMathHelper, targetIterations);
-
 			//iterator.Sample();
 
 			var stride = blockSize.Width;
 			var samplePointOffsets = iterator.BuildSamplePointOffsets(delta, stride);
+
 			var samplePointsX = iterator.BuildSamplePoints(startingCx, samplePointOffsets);
 			var samplePointsY = iterator.BuildSamplePoints(startingCy, samplePointOffsets);
 
-			for (int j = 0; j < samplePointsY.Length; j++)
+			var cRs = new FPValues(samplePointsX);
+			var cIs = new FPValues(samplePointsY);
+
+			var resultLength = blockSize.NumberOfCells;
+			var numberOfLimbs = samplePointsX[0].LimbCount;
+
+			var zRs = new FPValues(resultLength, numberOfLimbs);
+			var zIs = new FPValues(resultLength, numberOfLimbs);
+
+			var zRSqrs = new FPValues(resultLength, numberOfLimbs);
+			var zISqrs = new FPValues(resultLength, numberOfLimbs);
+
+			var cntrs = new ushort[resultLength];
+			//var doneFlags = new bool[resultLength];
+
+			var sumOfSqrs = SmxMathHelper.Add(zRSqrs.CreateSmx(0), zISqrs.CreateSmx(0));
+
+			while (!SmxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntrs[0]++ < targetIterations)
 			{
-				for (int i = 0; i < samplePointsX.Length; i++)
-				{
-					var cntr = iterator.Iterate(samplePointsX[i], samplePointsY[j]);
-					result[j * stride + i] = cntr;
-				}
+				iterator.Iterate(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+				sumOfSqrs = SmxMathHelper.Add(zRSqrs.CreateSmx(0), zISqrs.CreateSmx(0));
 			}
 
-			return result;
+			return cntrs;
+
+			//var abw = new Vector<ulong>[samplePointsX.Length];
+			//smxVecMathHelper.Add2(spx.GetSequenceReader(0), spy.GetSequenceReader(0), abw);
+
+
+			//for (int j = 0; j < samplePointsY.Length; j++)
+			//{
+			//	for (int i = 0; i < samplePointsX.Length; i++)
+			//	{
+			//		var cntr = iterator.Iterate(samplePointsX[i], samplePointsY[j]);
+			//		result[j * stride + i] = cntr;
+			//	}
+			//}
+
 		}
-
-
 
 		private Smx CreateSmxFromDto(long[] values, int exponent, int precision)
 		{

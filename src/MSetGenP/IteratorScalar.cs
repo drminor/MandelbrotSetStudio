@@ -12,28 +12,28 @@ namespace MSetGenP
 			_targetIterations = targetIterations;
 		}
 
-		public ushort Iterate(FPValues cRs, int rIndex, FPValues cIs, int iIndex)
-		{
-			var cR = new Smx(cRs.Signs[rIndex], GetMantissa(cRs, rIndex), cRs.Exponents[rIndex], 55);
-			var cI = new Smx(cIs.Signs[iIndex], GetMantissa(cIs, iIndex), cIs.Exponents[iIndex], 55);
+		//public ushort Iterate(FPValues cRs, int rIndex, FPValues cIs, int iIndex)
+		//{
+		//	var cR = new Smx(cRs.Signs[rIndex], GetMantissa(cRs, rIndex), cRs.Exponents[rIndex], 55);
+		//	var cI = new Smx(cIs.Signs[iIndex], GetMantissa(cIs, iIndex), cIs.Exponents[iIndex], 55);
 
-			var result = Iterate(cR, cI);
+		//	var result = Iterate(cR, cI);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		private ulong[] GetMantissa(FPValues fPValues, int index)
-		{
-			var numberOfLimbs = fPValues.Mantissas.Length;
-			var result = new ulong[numberOfLimbs];
+		//private ulong[] GetMantissa(FPValues fPValues, int index)
+		//{
+		//	var numberOfLimbs = fPValues.Mantissas.Length;
+		//	var result = new ulong[numberOfLimbs];
 
-			for (var i = 0; i < numberOfLimbs; i++)
-			{
-				result[i] = fPValues.Mantissas[i][index];
-			}
+		//	for (var i = 0; i < numberOfLimbs; i++)
+		//	{
+		//		result[i] = fPValues.Mantissas[i][index];
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public ushort Iterate(Smx cR, Smx cI)
 		{

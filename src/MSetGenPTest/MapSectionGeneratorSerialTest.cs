@@ -34,7 +34,7 @@ namespace MSetGenPTest
 			var precision = 55;
 			var extent = 16;
 			var samplePointDelta = new RSize(1, 1, -36);
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 10, threshold: 4, requestsPerJob: 4);
 			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
 
 			var generatorVector = new MapSectionGeneratorVector();
