@@ -26,7 +26,6 @@ namespace MSetGenP
 
 		#endregion
 
-
 		#region Constructor
 
 		public SmxMathHelper(int precision)

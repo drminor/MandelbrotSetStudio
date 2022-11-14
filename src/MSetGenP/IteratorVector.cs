@@ -82,7 +82,7 @@ namespace MSetGenP
 				//	// square(z.r + z.i)
 				//	var zRZiSqr = SmxMathHelper.Square(zRZi);
 
-				var zRZiSqrs = _smxVecMathHelper.Square(zRs);
+				var zRZiSqrs = _smxVecMathHelper.Square(cRs);
 
 
 				//	// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i

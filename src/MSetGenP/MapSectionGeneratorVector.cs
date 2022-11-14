@@ -50,53 +50,54 @@ namespace MSetGenP
 			var samplePointsX = iterator.BuildSamplePoints(startingCx, samplePointOffsets);
 			var samplePointsY = iterator.BuildSamplePoints(startingCy, samplePointOffsets);
 
-			var cRs = new FPValues(samplePointsX);
-			var cIs = new FPValues(samplePointsY);
-
 			var resultLength = blockSize.NumberOfCells;
-			var numberOfLimbs = samplePointsX[0].LimbCount;
+			//var numberOfLimbs = samplePointsX[0].LimbCount;
 
-			var zRs = new FPValues(resultLength, numberOfLimbs);
-			var zIs = new FPValues(resultLength, numberOfLimbs);
+			var crSmxes = new Smx[resultLength];
+			var ciSmxes = new Smx[resultLength];
 
-			var zRSqrs = new FPValues(resultLength, numberOfLimbs);
-			var zISqrs = new FPValues(resultLength, numberOfLimbs);
-
-			var cntrs = new ushort[resultLength];
-			//var doneFlags = new bool[resultLength];
-
-			var sumOfSqrs = SmxMathHelper.Add(zRSqrs.CreateSmx(0), zISqrs.CreateSmx(0));
-
-			while (!SmxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntrs[0]++ < targetIterations)
+			var resultPtr = 0;
+			for (int j = 0; j < samplePointsY.Length; j++)
 			{
-				iterator.Iterate(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
-				sumOfSqrs = SmxMathHelper.Add(zRSqrs.CreateSmx(0), zISqrs.CreateSmx(0));
+				for (int i = 0; i < samplePointsX.Length; i++)
+				{
+					ciSmxes[resultPtr] = samplePointsY[j];
+					crSmxes[resultPtr++] = samplePointsX[i];	
+				}
 			}
 
-			return cntrs;
+			var cRs = new FPValues(crSmxes);
+			var cIs = new FPValues(ciSmxes);
 
-			//var abw = new Vector<ulong>[samplePointsX.Length];
-			//smxVecMathHelper.Add2(spx.GetSequenceReader(0), spy.GetSequenceReader(0), abw);
+			var zRs = cRs.Clone();
+			var zIs = cIs.Clone();
 
+			var zRSqrs = smxVecMathHelper.Square(zRs); //new FPValues(resultLength, numberOfLimbs);
+			var zISqrs = smxVecMathHelper.Square(zIs); // new FPValues(resultLength, numberOfLimbs);
 
-			//for (int j = 0; j < samplePointsY.Length; j++)
+			var cntrs = Enumerable.Repeat((ushort)1, resultLength).ToArray();
+
+			////var doneFlags = new bool[resultLength];
+
+			////var sumOfSqrs = SmxMathHelper.Add(zRSqrs.CreateSmx(0), zISqrs.CreateSmx(0));
+
+			////while (!SmxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntrs[0]++ < targetIterations)
+			////{
+			////	iterator.Iterate(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+			////	sumOfSqrs = SmxMathHelper.Add(zRSqrs.CreateSmx(0), zISqrs.CreateSmx(0));
+			////}
+
+			//while (cntrs[0]++ < targetIterations)
 			//{
-			//	for (int i = 0; i < samplePointsX.Length; i++)
-			//	{
-			//		var cntr = iterator.Iterate(samplePointsX[i], samplePointsY[j]);
-			//		result[j * stride + i] = cntr;
-			//	}
+			//	iterator.Iterate(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 			//}
 
+			return cntrs;
 		}
 
 		private Smx CreateSmxFromDto(long[] values, int exponent, int precision)
 		{
 			var sign = !values.Any(x => x < 0);
-
-			//var mantissa = ConvertDtoLongsToSmxULongs(values, out var shiftAmount);
-			//var adjExponent = exponent - shiftAmount;
-			//var result = new Smx(sign, mantissa, adjExponent, precision);
 
 			var mantissa = ConvertDtoLongsToSmxULongs(values);
 			var nrmMantissa = SmxMathHelper.NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
@@ -136,8 +137,6 @@ namespace MSetGenP
 
 			var trResult = SmxMathHelper.TrimLeadingZeros(result);
 			return trResult;
-
-			//return result;
 		}
 
 		// Trim Leading Zeros for a Big-Endian formatted array of longs.
