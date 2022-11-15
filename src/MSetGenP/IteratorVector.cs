@@ -76,30 +76,25 @@ namespace MSetGenP
 		{
 			try
 			{
-				//	// z.r + z.i
-				//	var zRZi = SmxMathHelper.Add(zR, zI);
+				// z.r + z.i
+				var zRZIs = _smxVecMathHelper.Add(zRs, zIs);
 
-				//	// square(z.r + z.i)
-				//	var zRZiSqr = SmxMathHelper.Square(zRZi);
+				// square(z.r + z.i)
+				var zRZiSqrs = _smxVecMathHelper.Square(zRZIs);
 
-				var zRZiSqrs = _smxVecMathHelper.Square(cRs);
+				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
+				zIs = _smxVecMathHelper.Sub(zRZiSqrs, zRSqrs);
+				zIs = _smxVecMathHelper.Sub(zIs, zISqrs);
+				zIs = _smxVecMathHelper.Add(zIs, cIs);
 
+				// z.r = zrsqr - zisqr + c.r
+				zRs = _smxVecMathHelper.Sub(zRSqrs, zISqrs);
+				zRs = _smxVecMathHelper.Add(zRs, cRs);
 
-				//	// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
-				//	zI = SmxMathHelper.Sub(zRZiSqr, zRSqr);
-				//	zI = SmxMathHelper.Sub(zI, zISqr);
-				//	//zI = SmxMathHelper.Add(zI, cI, out cI);
-				//	zI = SmxMathHelper.Add(zI, cI);
+				zRSqrs = _smxVecMathHelper.Square(zRs);
+				zISqrs = _smxVecMathHelper.Square(zIs);
 
-				//	// z.r = zrsqr - zisqr + c.r
-				//	zR = SmxMathHelper.Sub(zRSqr, zISqr);
-				//	//zR = SmxMathHelper.Add(zR, cR, out cR);
-				//	zR = SmxMathHelper.Add(zR, cR);
-
-				//	zRSqr = SmxMathHelper.Square(zR);
-				//	zISqr = SmxMathHelper.Square(zI);
-
-				//	sumOfSqrs = SmxMathHelper.Add(zRSqr, zISqr);
+				//sumOfSqrs = _smxVecMathHelper.Add(zRSqrs, zISqrs);
 			}
 			catch (Exception e)
 			{

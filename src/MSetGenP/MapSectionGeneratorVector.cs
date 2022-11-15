@@ -72,20 +72,21 @@ namespace MSetGenP
 			var zRs = cRs.Clone();
 			var zIs = cIs.Clone();
 
-			var zRSqrs = smxVecMathHelper.Square(zRs); //new FPValues(resultLength, numberOfLimbs);
-			var zISqrs = smxVecMathHelper.Square(zIs); // new FPValues(resultLength, numberOfLimbs);
+			var zRSqrs = smxVecMathHelper.Square(zRs);
+			var zISqrs = smxVecMathHelper.Square(zIs);
 
 			var cntrs = Enumerable.Repeat((ushort)1, resultLength).ToArray();
+			var doneFlags = new bool[resultLength];
 
-			////var doneFlags = new bool[resultLength];
+			var sumOfSqrs = smxVecMathHelper.Add(zRSqrs, zISqrs);
+			var escapedFlags = smxVecMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4, doneFlags);
 
-			////var sumOfSqrs = SmxMathHelper.Add(zRSqrs.CreateSmx(0), zISqrs.CreateSmx(0));
-
-			////while (!SmxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntrs[0]++ < targetIterations)
-			////{
-			////	iterator.Iterate(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
-			////	sumOfSqrs = SmxMathHelper.Add(zRSqrs.CreateSmx(0), zISqrs.CreateSmx(0));
-			////}
+			while (!escapedFlags[0] && cntrs[0]++ < targetIterations)
+			{
+				iterator.Iterate(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+				sumOfSqrs = smxVecMathHelper.Add(zRSqrs, zISqrs);
+				escapedFlags = smxVecMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4, doneFlags);
+			}
 
 			//while (cntrs[0]++ < targetIterations)
 			//{

@@ -24,7 +24,7 @@ namespace MSetGenP
 
 			//SignsMemory = new Memory<bool>(Signs);
 			//ExponentsMemory = new Memory<short>(Exponents);
-			MantissaVectors = BuildMantissaMemoryVectors(Mantissas);
+			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
 		public FPValues(FPValuesDto fPValuesDto)
@@ -35,7 +35,7 @@ namespace MSetGenP
 
 			//SignsMemory = new Memory<bool>(Signs);
 			//ExponentsMemory = new Memory<short>(Exponents);
-			MantissaVectors = BuildMantissaMemoryVectors(Mantissas);
+			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
 		public FPValues(bool[] signs, ulong[][] mantissas, short[] exponents)
@@ -65,10 +65,10 @@ namespace MSetGenP
 
 			//SignsMemory = new Memory<bool>(Signs);
 			//ExponentsMemory = new Memory<short>(Exponents);
-			MantissaVectors = BuildMantissaMemoryVectors(Mantissas);
+			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		public FPValues(bool[] signs, Vector<ulong>[][] mantissVectors, short[] exponents)
+		public FPValues(bool[] signs, Vector<ulong>[][] mantissaVectors, short[] exponents)
 		{
 			// ValueArrays[0] = Least Significant Limb (Number of 1's)
 			// ValuesArray[1] = Number of 2^64s
@@ -81,28 +81,23 @@ namespace MSetGenP
 				throw new ArgumentException("The number of sign values is different from the number of exponentsl.");
 			}
 
-			var mantissas = new ulong[mantissVectors.Length][];
+			Signs = signs;
 
-			for(var i = 0; i < mantissVectors.Length; i++)
-			{
-				mantissas[i] = MemoryMarshal.Cast<Vector<ulong>, ulong>(mantissVectors[i]).ToArray();
-			}
+			Mantissas = GetMantissasFromVectors(mantissaVectors);
 
-			for (int i = 0; i < mantissas.Length; i++)
+			for(var i = 0; i < Mantissas.Length; i++)
 			{
-				if (mantissas[i].Length != len)
+				if (Mantissas[i].Length != len)
 				{
 					throw new ArgumentException($"The number of values in the {i}th array of mantissas is differnt from the number of exponents.");
 				}
 			}
 
-			Signs = signs;
-			Mantissas = mantissas;
 			Exponents = exponents;
 
 			//SignsMemory = new Memory<bool>(Signs);
 			//ExponentsMemory = new Memory<short>(Exponents);
-			MantissaVectors = BuildMantissaMemoryVectors(Mantissas);
+			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
 		public FPValues(Smx[] smxes)
@@ -132,17 +127,30 @@ namespace MSetGenP
 				}
 			}
 
-			MantissaVectors = BuildMantissaMemoryVectors(Mantissas);
+			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		private Vector<ulong>[][] BuildMantissaMemoryVectors(ulong[][] mantissas)
+		public static ulong[][] GetMantissasFromVectors(Vector<ulong>[][] mantissaVectors)
 		{
-			var result = new Vector<ulong>[LimbCount][];
+			var result = new ulong[mantissaVectors.Length][];
 
-			for (var j = 0; j < LimbCount; j++)
+			for (var i = 0; i < mantissaVectors.Length; i++)
 			{
-				var vecArray = MemoryMarshal.Cast<ulong, Vector<ulong>>(mantissas[j]);
-				result[j] = vecArray.ToArray();
+				result[i] = MemoryMarshal.Cast<Vector<ulong>, ulong>(mantissaVectors[i]).ToArray();
+			}
+
+			return result;
+		}
+
+		//ReadOnlySpan<Vector<float>> rightVecArray = MemoryMarshal.Cast<float, Vector<float>>(rightMemory.Span);
+
+		public static Memory<ulong>[] BuildMantissaMemoryVectors(ulong[][] mantissas)
+		{
+			var result = new Memory<ulong>[mantissas.Length];
+
+			for (var i = 0; i < mantissas.Length; i++)
+			{
+				result[i] = new Memory<ulong>(mantissas[i]);
 			}
 
 			return result;
@@ -154,44 +162,58 @@ namespace MSetGenP
 
 		public int Length => Signs.Length;
 		public int LimbCount => Mantissas.Length;
-		public int VectorCount => Length == 0 ? 0 : MantissaVectors[0].Length;
+		public int VectorCount => Length / Vector<ulong>.Count;
 
 		public bool[] Signs { get; init; }
 		public ulong[][] Mantissas { get; init; } 
 		public short[] Exponents { get; init; }
 
 		//public Memory<bool> SignsMemory { get; init; }
-		public Vector<ulong>[][] MantissaVectors { get; init; }
+
+		public Memory<ulong>[] MantissaMemories { get; init; }
+
+		public static ReadOnlySpan<Vector<ulong>> GetMantissaVectors(Memory<ulong>[] mantissaMemories, int limbIndex) 
+		{
+			var x = mantissaMemories[limbIndex];
+			ReadOnlySpan<Vector<ulong>> result = MemoryMarshal.Cast<ulong, Vector<ulong>>(x.Span);
+
+			return result;
+		}
+
 		//public Memory<short> ExponentsMemory { get; init; }
 
 		#endregion
 
 		#region Public Methods
 
-		public IEnumerator<Vector<ulong>> GetInPlayEnumerator(int limbIndex)
+		public InPlayEnumerator<Vector<ulong>> GetInPlayEnumerator(int limbIndex)
 		{
-			return new InPlayEnumerator<Vector<ulong>>(MantissaVectors[limbIndex]);
+			var mantissaVectors = GetMantissaVectors(MantissaMemories, limbIndex);
+			return new InPlayEnumerator<Vector<ulong>>(mantissaVectors);
 		}
 
-		public IEnumerator<ValueTuple<Vector<ulong>, Vector<ulong>>> GetInPlayEnumerator(int limbIndexA, int limbIndexB)
+		public InPlayPairsEnumerator<Vector<ulong>> GetInPlayEnumerator(int limbIndexA, int limbIndexB)
 		{
-			var result = new InPlayPairsEnumerator<Vector<ulong>>(MantissaVectors[limbIndexA], MantissaVectors[limbIndexB]);
+			var mantissaVectorsA = GetMantissaVectors(MantissaMemories, limbIndexA);
+			var mantissaVectorsB = GetMantissaVectors(MantissaMemories, limbIndexB);
+
+			var result = new InPlayPairsEnumerator<Vector<ulong>>(mantissaVectorsA, mantissaVectorsB);
 
 			return result;
 		}
 
 
-		public SequenceReader<Vector<ulong>> GetSequenceReader(int limbIndex)
-		{
-			var ros = new ReadOnlySequence<Vector<ulong>>(MantissaVectors[limbIndex]);
+		//public SequenceReader<Vector<ulong>> GetSequenceReader(int limbIndex)
+		//{
+		//	var ros = new ReadOnlySequence<Vector<ulong>>(MantissaMemories[limbIndex]);
 
-			//var seg1 = 
-			//var xx = new ReadOnlySequence<Vector<ulong>>()
+		//	//var seg1 = 
+		//	//var xx = new ReadOnlySequence<Vector<ulong>>()
 
-			var result = new SequenceReader<Vector<ulong>>(ros);
+		//	var result = new SequenceReader<Vector<ulong>>(ros);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public Smx CreateSmx(int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{

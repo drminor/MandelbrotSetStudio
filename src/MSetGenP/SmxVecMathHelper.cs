@@ -59,7 +59,7 @@ namespace MSetGenP
 			var signs = Enumerable.Repeat(true, valuesCount).ToArray();
 
 			//var exponent = a.Exponent * 2;
-			var exponents = a.Exponents.Select(x => (short)(x * 2)).ToArray();
+			//var exponents = a.Exponents.Select(x => (short)(x * 2)).ToArray();
 			//var precision = a.Precision;
 
 			//var rawMantissa = Square(a.Mantissa);
@@ -80,7 +80,7 @@ namespace MSetGenP
 			}
 
 			//Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
-			var result = new FPValues(signs, truncRawMantissas, exponents);
+			var result = new FPValues(signs, truncRawMantissas, a.Exponents);
 
 			return result;
 		}
@@ -112,7 +112,7 @@ namespace MSetGenP
 					if (i > j)
 					{
 						//product *= 2;
-						for (var q = 0; i < products.Length; i++)
+						for (var q = 0; q < products.Length; q++)
 						{
 							products[q] = products[q] * 2;
 						}
@@ -127,7 +127,7 @@ namespace MSetGenP
 
 					var lows = Split(products, out var highs);
 
-					for(var p = 0; i < products.Length; i++)
+					for(var p = 0; p < products.Length; p++)
 					{
 						result[resultPtr][p] = result[resultPtr][p] + lows[p];
 						result[resultPtr + 1][p] = result[resultPtr + 1][p] + highs[p];
@@ -138,7 +138,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		public void MultiplyVecs(IEnumerator<ValueTuple<Vector<ulong>, Vector<ulong>>> pairs, Vector<ulong>[] result)
+		public void MultiplyVecs(InPlayPairsEnumerator<Vector<ulong>> pairs, Vector<ulong>[] result)
 		{
 			var resultPtr = 0;
 
@@ -352,33 +352,30 @@ namespace MSetGenP
 
 		#region Add and Subtract
 
-		public static Smx Sub(Smx a, Smx b)
+		public FPValues Sub(FPValues a, FPValues b)
 		{
-			var result = Sub(a, b, out _);
-			return result;
+			return a;
 		}
 
-		public static Smx Sub(Smx a, Smx b, out Smx normalizedB)
+		public static Smx Sub(Smx a, Smx b)
 		{
 			if (b.IsZero)
 			{
-				normalizedB = b;
 				return a;
 			}
 
 			var bNegated = new Smx(!b.Sign, b.Mantissa, b.Exponent, b.Precision);
-			var result = Add(a, bNegated, out normalizedB);
+			var result = Add(a, bNegated);
 
 			return result;
+		}
+
+		public FPValues Add(FPValues a, FPValues b)
+		{
+			return a;
 		}
 
 		public static Smx Add(Smx a, Smx b)
-		{
-			var result = Add(a, b, out _);
-			return result;
-		}
-
-		public static Smx Add(Smx a, Smx b, out Smx normalizedB)
 		{
 			//if (b.IsZero)
 			//{
@@ -440,7 +437,6 @@ namespace MSetGenP
 			//	return result;
 			//}
 
-			normalizedB = b;
 			return a;
 		}
 
@@ -600,6 +596,92 @@ namespace MSetGenP
 
 			return result;
 		}
+
+		#endregion
+
+		#region Comparison
+
+		private static int Compare(ulong[] ax, ulong[] bx)
+		{
+			var sdA = GetNumberOfSignificantB32Digits(ax);
+			var sdB = GetNumberOfSignificantB32Digits(bx);
+
+			if (sdA != sdB)
+			{
+				return sdA > sdB ? 1 : -1;
+			}
+
+			var i = -1 + Math.Min(ax.Length, bx.Length);
+
+			for (; i >= 0; i--)
+			{
+				if (ax[i] != bx[i])
+				{
+					return ax[i] > bx[i] ? 1 : -1;
+				}
+			}
+
+			return 0;
+		}
+
+		public static int GetNumberOfSignificantB32Digits(ulong[] mantissa)
+		{
+			var i = mantissa.Length;
+			for (; i > 0; i--)
+			{
+				if (mantissa[i - 1] != 0)
+				{
+					break;
+				}
+			}
+
+			return i;
+		}
+
+		//public static bool IsGreaterOrEqThan(Smx a, uint b)
+		//{
+		//	var aAsDouble = 0d;
+
+		//	for (var i = a.Mantissa.Length - 1; i >= 0; i--)
+		//	{
+		//		aAsDouble += a.Mantissa[i] * Math.Pow(2, a.Exponent + (i * 32));
+
+		//		if (aAsDouble >= b)
+		//		{
+		//			return true;
+		//		}
+		//	}
+
+		//	return false;
+		//}
+
+		public bool[] IsGreaterOrEqThan(FPValues a, uint b, bool[] doneFlags)
+		{
+			for (var i = 0; i < a.Length; i++)
+			{
+				doneFlags[i] = IsGreaterOrEqThan(a.Mantissas, i, a.Exponents[i], b);
+			}
+
+			return doneFlags;
+		}
+
+		private static bool IsGreaterOrEqThan(ulong[][] mantissas, int valueIndex, int exponent, uint b)
+		{
+			var aAsDouble = 0d;
+
+			for (var i = mantissas.Length - 1; i >= 0; i--)
+			{
+				aAsDouble += mantissas[i][valueIndex] * Math.Pow(2, exponent + (i * 32));
+
+				if (aAsDouble >= b)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 
 		#endregion
 	}
