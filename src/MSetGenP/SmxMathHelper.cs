@@ -44,7 +44,7 @@ namespace MSetGenP
 			set
 			{
 				_precision = value;
-				Limbs = SmxMathHelper.GetLimbsCount(_precision);
+				Limbs = SmxMathHelper.GetLimbCount(_precision);
 			}
 		}
 
@@ -862,15 +862,15 @@ namespace MSetGenP
 				return mantissa;
 			}
 
-			var limbsCount = GetLimbsCount(precision);
+			var limbCount = GetLimbCount(precision);
 
-			if (mantissa.Length <= limbsCount)
+			if (mantissa.Length <= limbCount)
 			{
 				nrmExponent = exponent;
 				return mantissa;
 			}
 
-			var numSignificantDigits = GetNumberOfSignificantDigits(mantissa, limbsCount);
+			var numSignificantDigits = GetNumberOfSignificantDigits(mantissa, limbCount);
 			var additionalSignificantDigitsDesired = precision - numSignificantDigits;
 
 			ulong[] result;
@@ -878,7 +878,7 @@ namespace MSetGenP
 
 			if (additionalSignificantDigitsDesired <= 0)
 			{
-				result = Round(mantissa, exponent, limbsCount, out newExponent);
+				result = Round(mantissa, exponent, limbCount, out newExponent);
 			}
 			else
 			{
@@ -888,10 +888,10 @@ namespace MSetGenP
 				// Compensate for shifting towards the MSB (i.e., multiplying)
 				newExponent = exponent - shiftAmount;
 
-				var startIndex = mantissa.Length - limbsCount;
+				var startIndex = mantissa.Length - limbCount;
 
-				result = new ulong[limbsCount];
-				Array.Copy(mantissa, startIndex, result, 0, limbsCount);
+				result = new ulong[limbCount];
+				Array.Copy(mantissa, startIndex, result, 0, limbCount);
 
 				// Fill x number of high-order bits having value zero within the low half of the MSB, creating range of zero value bits at the low-order end.
 				result[^1] <<= shiftAmount;
@@ -955,7 +955,7 @@ namespace MSetGenP
 			}
 		}
 
-		public static int GetLimbsCount(int precision)
+		public static int GetLimbCount(int precision)
 		{
 			var dResult = precision / 32d;
 			var result = (int)Math.Ceiling(dResult);

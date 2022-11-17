@@ -16,7 +16,7 @@ namespace MSetGenP
 			var blockSize = mapSectionRequest.BlockSize;
 			var precision = mapSectionRequest.Precision; // + 20;
 
-			var smxVecMathHelper = new SmxVecMathHelper(precision);
+			var smxVecMathHelper = new SmxVecMathHelper(blockSize.NumberOfCells, precision);
 
 			var startingCx = CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
 			var startingCy = CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);

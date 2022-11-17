@@ -1,5 +1,6 @@
 ﻿
 using System.Buffers;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -9,6 +10,7 @@ namespace MSetGenP
 {
 	public class SmxVecMathHelper
 	{
+		#region Private Properties
 
 		private const ulong LOW_MASK =  0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private const ulong HIGH_MASK = 0xFFFFFFFF00000000; // bits 32 - 63 are set.
@@ -16,15 +18,68 @@ namespace MSetGenP
 		private static readonly Vector<ulong> LOW_MASK_VEC = new Vector<ulong>(LOW_MASK);
 		private static readonly Vector<ulong> HIGH_MASK_VEC = new Vector<ulong>(HIGH_MASK);
 
+		private static readonly int _ulongSlots = Vector<ulong>.Count;
+
+		private int _valueCount;
 		private int _precision;
 
-		private static readonly int _uLongSlots = Vector<ulong>.Count;
+		private Memory<ulong>[] _squareResult1Mems;
+		private Memory<ulong>[] _squareResult2Mems;
+		private Memory<ulong> _productsMem;
+		private Memory<ulong> _productLowsMem;
+		private Memory<ulong> _productHighsMem;
 
-		#region Constructors
+		private Memory<ulong> _carriesMem;
+		private Memory<ulong> _withCarriesMem;
 
-		public SmxVecMathHelper(int precision)
+		private Memory<ulong>[] _addResult1Mem;
+
+		#endregion
+
+		#region Constructor
+
+		public SmxVecMathHelper(int valueCount, int precision)
 		{
+			_valueCount = valueCount;
+			VecCount = Math.DivRem(valueCount, _ulongSlots, out var remainder);
+
+			if (remainder != 0)
+			{
+				throw new ArgumentException("The valueCount must be an even multiple of Vector<ulong>.Count.");
+			}
+
 			Precision = precision;
+
+			InPlayList = Enumerable.Range(0, VecCount).ToList();
+
+			_squareResult1Mems = BuildMantissaMemoryArray(LimbCount * 2, _valueCount);
+			_squareResult2Mems = BuildMantissaMemoryArray(LimbCount * 2, _valueCount);
+
+			_productsMem = new Memory<ulong>(new ulong[_valueCount]);
+			_productLowsMem = new Memory<ulong>(new ulong[_valueCount]);
+			_productHighsMem = new Memory<ulong>(new ulong[_valueCount]);
+
+			_carriesMem = new Memory<ulong>(new ulong[_valueCount]);
+			_withCarriesMem = new Memory<ulong>(new ulong[_valueCount]);
+			_addResult1Mem = BuildMantissaMemoryArray(LimbCount + 1, _valueCount);
+		}
+
+		private Memory<ulong>[] BuildMantissaMemoryArray(int limbCount, int vectorCount)
+		{
+			var result = new Memory<ulong>[limbCount];
+
+			for (var i = 0; i < limbCount; i++)
+			{
+				result[i] = new Memory<ulong>(new ulong[vectorCount]);
+			}
+
+			return result;
+		}
+
+		private Span<Vector<ulong>> GetLimbVectors(Memory<ulong> memory)
+		{
+			Span<Vector<ulong>> result = MemoryMarshal.Cast<ulong, Vector<ulong>>(memory.Span);
+			return result;
 		}
 
 		#endregion
@@ -37,11 +92,14 @@ namespace MSetGenP
 			set
 			{
 				_precision = value;
-				Limbs = SmxMathHelper.GetLimbsCount(_precision);
+				LimbCount = SmxMathHelper.GetLimbCount(_precision);
 			}
 		}
 
-		public int Limbs { get; private set; }
+		public int VecCount { get; private set; }
+		public int LimbCount { get; private set; }
+
+		public List<int> InPlayList;
 
 		#endregion
 
@@ -54,9 +112,9 @@ namespace MSetGenP
 			//	return a;
 			//}
 
-			var valuesCount = a.Length;
+			var valueCount = a.Length;
 			//var sign = true;
-			var signs = Enumerable.Repeat(true, valuesCount).ToArray();
+			var signs = Enumerable.Repeat(true, valueCount).ToArray();
 
 			//var exponent = a.Exponent * 2;
 			//var exponents = a.Exponents.Select(x => (short)(x * 2)).ToArray();
@@ -67,47 +125,48 @@ namespace MSetGenP
 			var mantissas = PropagateCarries(rawMantissas);
 
 			//var nrmMantissa = NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
+			//Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
 
 			// Instead of Normalizing, discard all 'extra' limbs starting from the Least Significant.
 			var targetLimbCount = a.LimbCount;
-			var truncRawMantissas = new Vector<ulong>[targetLimbCount][];
-			var currentLimbCount = mantissas.Length;
-			var startIndex = currentLimbCount - targetLimbCount;
 
-			for(var i = 0; i < targetLimbCount; i++)
-			{
-				truncRawMantissas[i] = mantissas[i + startIndex];
-			}
+			var result = new FPValues(signs, a.Exponents, targetLimbCount);
 
-			//Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
-			var result = new FPValues(signs, truncRawMantissas, a.Exponents);
+			//var currentLimbCount = mantissas.Length;
+			//var startIndex = currentLimbCount - targetLimbCount;
+
+			//for(var j = 0; j < targetLimbCount; j++)
+			//{
+			//	var limbWriter = result.GetInPlayEnumerator(j);
+			//	limbWriter.WriteValues(mantissas[j + startIndex]);
+			//}
 
 			return result;
 		}
 
-		private Vector<ulong>[][] SquareInternal(FPValues a)
+		private Memory<ulong>[] SquareInternal(FPValues a)
 		{
-			var vCnt = a.VectorCount;
+			//var result = new Vector<ulong>[a.LimbCount * 2][];
 
-			var result = new Vector<ulong>[a.LimbCount * 2][];
+			//for(var s = 0; s < a.LimbCount * 2; s++)
+			//{
+			//	result[s] = new Vector<ulong>[vCnt]; // TODO: Use the "InPlayCount"
+			//}
 
-			for(var s = 0; s < a.LimbCount * 2; s++)
-			{
-				result[s] = new Vector<ulong>[vCnt]; // TODO: Use the "InPlayCount"
-			}
+			var result = _squareResult1Mems;
+			var products = GetLimbVectors(_productsMem);
 
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 			for (int j = 0; j < a.LimbCount; j++)
 			{
 				for (int i = j; i < a.LimbCount; i++)
 				{
-					//if (i < j) continue;
+					//var products = new Vector<ulong>[vCnt];
 
-					var products = new Vector<ulong>[vCnt];
+					var left = a.GetLimbVectors(j);
+					var right = a.GetLimbVectors(i);
 
-					var pairEnumerator = a.GetInPlayEnumerator(j, i);
-
-					MultiplyVecs(pairEnumerator, products);
+					MultiplyVecs(left, right, products);
 
 					if (i > j)
 					{
@@ -120,17 +179,25 @@ namespace MSetGenP
 					}
 
 					var resultPtr = j + i;  // 0, 1, 1, 2
-											
+
 					//var lo = Split(product, out var hi);
 					//mantissa[resultPtr] += lo;
 					//mantissa[resultPtr + 1] += hi;
 
-					var lows = Split(products, out var highs);
+					var resultLows = GetLimbVectors(result[resultPtr]);
+					var resultHighs = GetLimbVectors(result[resultPtr + 1]);
+
+					var productHighs = GetLimbVectors(_productHighsMem);
+					var productLows = GetLimbVectors(_productLowsMem);
+
+					Split(products, productHighs, productLows);
 
 					for(var p = 0; p < products.Length; p++)
 					{
-						result[resultPtr][p] = result[resultPtr][p] + lows[p];
-						result[resultPtr + 1][p] = result[resultPtr + 1][p] + highs[p];
+						resultLows[p] = resultLows[p] + productLows[p];
+						resultHighs[p] = resultHighs[p] + productHighs[p];
+						//result[resultPtr][p] = result[resultPtr][p] + lows[p];
+						//result[resultPtr + 1][p] = result[resultPtr + 1][p] + highs[p];
 					}
 				}
 			}
@@ -138,112 +205,27 @@ namespace MSetGenP
 			return result;
 		}
 
-		public void MultiplyVecs(InPlayPairsEnumerator<Vector<ulong>> pairs, Vector<ulong>[] result)
+		public void MultiplyVecs(Span<Vector<ulong>> left, Span<Vector<ulong>> right, Span<Vector<ulong>> result)
 		{
-			var resultPtr = 0;
-
-			while (pairs.MoveNext())	
+			foreach(var idx in InPlayList)
 			{
-				var pair = pairs.Current;
-				result[resultPtr++] = pair.Item1 * pair.Item2;
+				result[idx] = left[idx] * right[idx];
 			}
 		}
 
-		private Vector<ulong>[] Split(Vector<ulong>[] x, out Vector<ulong>[] hi)
+		private void Split(Span<Vector<ulong>> x, Span<Vector<ulong>> highs, Span<Vector<ulong>> lows)
 		{
-			var result = new Vector<ulong>[x.Length];
-			hi = new Vector<ulong>[x.Length];
-
 			for (var i = 0; i < x.Length; i++)
 			{
-				hi[i] = x[i] & HIGH_MASK_VEC;
-				result[i] = x[i] & LOW_MASK_VEC;
+				highs[i] = x[i] & HIGH_MASK_VEC;
+				lows[i] = x[i] & LOW_MASK_VEC;
 			}
 
 			//hi = x. x >> 32; // Create new ulong from bits 32 - 63.
 			//return x & LOW_MASK; // Create new ulong from bits 0 - 31.
-
-			return result;
 		}
 
-		//public static ulong[] Square(ulong[] ax)
-		//{
-		//	var mantissa = new ulong[ax.Length * 2];
-
-		//	// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
-		//	for (int j = 0; j < ax.Length; j++)
-		//	{
-		//		for (int i = j; i < ax.Length; i++)
-		//		{
-		//			//if (i < j) continue;
-
-		//			var product = ax[j] * ax[i];
-
-		//			if (i > j)
-		//			{
-		//				product *= 2;
-		//			}
-
-		//			var resultPtr = j + i;  // 0, 1, 1, 2
-		//			var lo = Split(product, out var hi);
-		//			mantissa[resultPtr] += lo;
-		//			mantissa[resultPtr + 1] += hi;
-		//		}
-		//	}
-
-		//	return mantissa;
-		//}
-
-		public static Smx Multiply(Smx a, int b)
-		{
-			//if (a.IsZero || b == 0)
-			//{
-			//	return new Smx(0, 1, a.Precision);
-			//}
-
-			//var signOfB = b >= 0;
-			//var sign = a.Sign == signOfB;
-			//var exponent = a.Exponent;
-			//var precision = a.Precision;
-
-			//var rawMantissa = Multiply(a.Mantissa, (uint)Math.Abs(b));
-			//var mantissa = PropagateCarries(rawMantissa);
-			//var nrmMantissa = NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
-			//Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
-
-			//return result;
-
-			return a;
-		}
-
-		//public static ulong[] Multiply(ulong[] ax, uint b)
-		//{
-		//	//Debug.WriteLine(GetDiagDisplay("ax", ax));
-		//	//Debug.WriteLine($"b = {b}");
-
-		//	//var seive = new ulong[ax.Length];
-
-		//	var mantissa = new ulong[ax.Length + 1];
-
-		//	// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
-		//	for (int j = 0; j < ax.Length; j++)
-		//	{
-		//		var product = ax[j] * b;
-		//		//seive[j] = product;
-
-		//		var lo = Split(product, out var hi);    //		2 x 1			3 x 1			4 x 1
-		//		mantissa[j] += lo;                      //			0, 1			0, 1, 2			0, 1, 2, 3
-		//		mantissa[j + 1] += hi;                  //			1, 2			1, 2, 3			1, 2, 3, 4
-		//	}
-
-		//	//var splitSieve = Split(seive);
-		//	//Debug.WriteLine(GetDiagDisplay("sieve", splitSieve, 2));
-		//	//Debug.WriteLine(GetDiagDisplay("result", mantissa));
-
-		//	return mantissa;
-		//}
-
-		private Vector<ulong>[][] PropagateCarries(Vector<ulong>[][] mantissas)
+		private Memory<ulong>[] PropagateCarries(Memory<ulong>[] mantissaMems)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
@@ -254,26 +236,30 @@ namespace MSetGenP
 			// Remove all zero-valued leading limbs 
 			// If the MSL produces a carry, throw an exception.
 
-			if (mantissas.Length == 0)
+			if (mantissaMems.Length == 0)
 			{
-				return mantissas;
+				return mantissaMems;
 			}
 
 			//var indexOfLastNonZeroLimb = 0;
 
-			var result = new Vector<ulong>[mantissas.Length][];
+			//var result = new Vector<ulong>[mantissas.Length][];
+			var result = _squareResult2Mems;
 
-			var low = Split(mantissas[0], out var carries);  // :Spliter
-			result[0] = low;
+			var carries = GetLimbVectors(_carriesMem);
+			var withCarries = GetLimbVectors(_withCarriesMem);
 
-			var withCarries = new Vector<ulong>[mantissas[0].Length];
+			var limbVecs = GetLimbVectors(mantissaMems[0]);
+			var resultLimbVecs = GetLimbVectors(result[0]);
+			Split(limbVecs, carries, resultLimbVecs);
 
-			for (int i = 0; i < mantissas.Length; i++)
+			for (int i = 0; i < mantissaMems.Length; i++)
 			{
-				AddVecs(mantissas[i], carries, withCarries);
+				limbVecs = GetLimbVectors(mantissaMems[i]);
+				resultLimbVecs = GetLimbVectors(result[i]);
 
-				low = Split(withCarries, out carries);  // :Spliter
-				result[i] = low;
+				AddVecs(limbVecs, carries, withCarries);
+				Split(withCarries, carries, resultLimbVecs);
 			}
 
 			// TODO: Check to see if any of the carries have any zero value.
@@ -439,23 +425,27 @@ namespace MSetGenP
 
 			return a;
 		}
-
-		public static ulong[] Add(ulong[] ax, ulong[] bx)
+		
+		private Memory<ulong>[] AddF(FPValues a, FPValues b)
 		{
-			//Debug.Assert(ax.Length == bx.Length);
+			Debug.Assert(a.Length == b.Length);
 
-			//var resultLength = ax.Length;
-			//var result = new ulong[resultLength];
+			var result = _addResult1Mem;
 
-			//var indexOfLastNonZeroLimb = 0;
-			//var carry = 0ul;
+			Span<Vector<ulong>> carries = GetLimbVectors(_carriesMem);
+			Span<Vector<ulong>> withCarries = GetLimbVectors(_withCarriesMem);
 
-			//for (var i = 0; i < resultLength; i++)
-			//{
-			//	var nv = ax[i] + bx[i] + carry;
-			//	result[i] = Split(nv, out carry);
-			//	indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
-			//}
+			for (var i = 0; i < a.Length; i++)
+			{
+				var limbVecsA = GetLimbVectors(a.MantissaMemories[i]);
+				var limbVecsB = GetLimbVectors(b.MantissaMemories[i]);
+				var resultLimbVecs = GetLimbVectors(result[i]);
+
+				AddVecs(limbVecsA, limbVecsB, withCarries);
+				AddVecs(withCarries, carries, withCarries);
+
+				Split(withCarries, carries, resultLimbVecs);
+			}
 
 			//if (carry != 0)
 			//{
@@ -476,7 +466,8 @@ namespace MSetGenP
 			//	return result;
 			//}
 
-			return ax;
+
+			return result;
 		}
 
 		public static ulong[] Sub(ulong[] ax, ulong[] bx)
@@ -534,53 +525,14 @@ namespace MSetGenP
 			return ax;
 		}
 
-		//public void Add(FPValues a, FPValues b, FPValues c, int limbIndex)
-		//{
-
-		//	int numVectors = a.Mantissas[limbIndex].Length / _uLongSlots;
-		//	int ceiling = numVectors * _uLongSlots;
-
-		//	var aMantissasVec = MemoryMarshal.Cast<ulong, Vector<ulong>>(a.MantissasMemory[limbIndex].Span);
-
-		//	//var bMantissasVec = MemoryMarshal.Cast<ulong, Vector<ulong>>(new Span<ulong>(b.Mantissas[limbIndex], bIndex, uLongSlots));
-		//	//var cMantissasVec = MemoryMarshal.Cast<ulong, Vector<ulong>>(new Span<ulong>(c.Mantissas[limbIndex], cIndex, uLongSlots));
-
-		//	var bMantissasVec = MemoryMarshal.Cast<ulong, Vector<ulong>>(b.MantissasMemory[limbIndex].Span);
-		//	var cMantissasVec = MemoryMarshal.Cast<ulong, Vector<ulong>>(c.MantissasMemory[limbIndex].Span);
-
-		//	for (int i = 0; i < numVectors; i++)
-		//	{
-		//		cMantissasVec[i] = aMantissasVec[i] + bMantissasVec[i];
-		//	}
-
-		//	// Finish operation with any numbers leftover
-		//	for (int i = ceiling; i < a.Mantissas[limbIndex].Length; i++)
-		//	{
-		//		c.Mantissas[limbIndex][i] = a.Mantissas[limbIndex][i] + b.Mantissas[limbIndex][i];
-		//	}
-
-		//	//return a;
-		//}
-
-		private void AddVecs(Vector<ulong>[] a, Vector<ulong>[] b, Vector<ulong>[] result)
+		private void AddVecs(Span<Vector<ulong>> left, Span<Vector<ulong>> right, Span<Vector<ulong>> result)
 		{
-			for(var i = 0; i < a.Length; i++)
+			for(var i = 0; i < left.Length; i++)
 			{
-				result[i] = a[i] + b[i];
+				result[i] = left[i] + right[i];
 			}
 		}
 		
-		public void AddVecs(IEnumerator<ValueTuple<Vector<ulong>, Vector<ulong>>> pairs, Vector<ulong>[] result)
-		{
-			var resultPtr = 0;
-
-			while (pairs.MoveNext())
-			{
-				var pair = pairs.Current;
-				result[resultPtr++] = pair.Item1 + pair.Item2;
-			}
-		}
-
 		#endregion
 
 		#region Normalization Support

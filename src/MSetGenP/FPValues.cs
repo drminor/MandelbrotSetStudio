@@ -10,32 +10,24 @@ namespace MSetGenP
 	{
 		#region Constructors
 
-		public FPValues(int valuesCount, int limbsCount)
+		public FPValues(int limbCount, int valueCount) 
+			: this(Enumerable.Repeat(true, valueCount).ToArray(), BuildLimbs(limbCount, valueCount), new short[valueCount])
+		{ }
+
+		public FPValues(bool[] signs, short[] exponents, int limbCount) 
+			: this(signs, BuildLimbs(limbCount, signs.Length), exponents)
+		{ }
+
+		private static ulong[][] BuildLimbs(int limbCount, int valueCount)
 		{
-			Signs = Enumerable.Repeat(true, valuesCount).ToArray();
+			var result = new ulong[limbCount][];
 
-			Exponents = new short[valuesCount];
-			Mantissas = new ulong[limbsCount][];
-
-			for (var i = 0; i < limbsCount; i++)
+			for (var i = 0; i < limbCount; i++)
 			{
-				Mantissas[i] = new ulong[valuesCount];
+				result[i] = new ulong[valueCount];
 			}
 
-			//SignsMemory = new Memory<bool>(Signs);
-			//ExponentsMemory = new Memory<short>(Exponents);
-			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
-		}
-
-		public FPValues(FPValuesDto fPValuesDto)
-		{
-			Mantissas = fPValuesDto.GetValues(out var signs, out var exponents);
-			Signs = signs;
-			Exponents = exponents;
-
-			//SignsMemory = new Memory<bool>(Signs);
-			//ExponentsMemory = new Memory<short>(Exponents);
-			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
+			return result;
 		}
 
 		public FPValues(bool[] signs, ulong[][] mantissas, short[] exponents)
@@ -68,38 +60,49 @@ namespace MSetGenP
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		public FPValues(bool[] signs, Vector<ulong>[][] mantissaVectors, short[] exponents)
+		//public FPValues(bool[] signs, Vector<ulong>[][] mantissaVectors, short[] exponents)
+		//{
+		//	// ValueArrays[0] = Least Significant Limb (Number of 1's)
+		//	// ValuesArray[1] = Number of 2^64s
+		//	// ValuesArray[2] = Number of 2^128s
+		//	// ValuesArray[n] = Most Significant Limb
+
+		//	var len = exponents.Length;
+		//	if (signs.Length != len)
+		//	{
+		//		throw new ArgumentException("The number of sign values is different from the number of exponentsl.");
+		//	}
+
+		//	Signs = signs;
+
+		//	Mantissas = GetMantissasFromVectors(mantissaVectors);
+
+		//	for(var i = 0; i < Mantissas.Length; i++)
+		//	{
+		//		if (Mantissas[i].Length != len)
+		//		{
+		//			throw new ArgumentException($"The number of values in the {i}th array of mantissas is differnt from the number of exponents.");
+		//		}
+		//	}
+
+		//	Exponents = exponents;
+
+		//	//SignsMemory = new Memory<bool>(Signs);
+		//	//ExponentsMemory = new Memory<short>(Exponents);
+		//	MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
+		//}
+
+		public FPValues(FPValuesDto fPValuesDto)
 		{
-			// ValueArrays[0] = Least Significant Limb (Number of 1's)
-			// ValuesArray[1] = Number of 2^64s
-			// ValuesArray[2] = Number of 2^128s
-			// ValuesArray[n] = Most Significant Limb
-
-			var len = exponents.Length;
-			if (signs.Length != len)
-			{
-				throw new ArgumentException("The number of sign values is different from the number of exponentsl.");
-			}
-
+			Mantissas = fPValuesDto.GetValues(out var signs, out var exponents);
 			Signs = signs;
-
-			Mantissas = GetMantissasFromVectors(mantissaVectors);
-
-			for(var i = 0; i < Mantissas.Length; i++)
-			{
-				if (Mantissas[i].Length != len)
-				{
-					throw new ArgumentException($"The number of values in the {i}th array of mantissas is differnt from the number of exponents.");
-				}
-			}
-
 			Exponents = exponents;
 
 			//SignsMemory = new Memory<bool>(Signs);
 			//ExponentsMemory = new Memory<short>(Exponents);
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
-
+		
 		public FPValues(Smx[] smxes)
 		{
 			Signs = new bool[smxes.Length];
@@ -130,17 +133,17 @@ namespace MSetGenP
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		public static ulong[][] GetMantissasFromVectors(Vector<ulong>[][] mantissaVectors)
-		{
-			var result = new ulong[mantissaVectors.Length][];
+		//public static ulong[][] GetMantissasFromVectors(Vector<ulong>[][] mantissaVectors)
+		//{
+		//	var result = new ulong[mantissaVectors.Length][];
 
-			for (var i = 0; i < mantissaVectors.Length; i++)
-			{
-				result[i] = MemoryMarshal.Cast<Vector<ulong>, ulong>(mantissaVectors[i]).ToArray();
-			}
+		//	for (var i = 0; i < mantissaVectors.Length; i++)
+		//	{
+		//		result[i] = MemoryMarshal.Cast<Vector<ulong>, ulong>(mantissaVectors[i]).ToArray();
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		//ReadOnlySpan<Vector<float>> rightVecArray = MemoryMarshal.Cast<float, Vector<float>>(rightMemory.Span);
 
@@ -169,39 +172,44 @@ namespace MSetGenP
 		public short[] Exponents { get; init; }
 
 		//public Memory<bool> SignsMemory { get; init; }
-
 		public Memory<ulong>[] MantissaMemories { get; init; }
-
-		public static ReadOnlySpan<Vector<ulong>> GetMantissaVectors(Memory<ulong>[] mantissaMemories, int limbIndex) 
-		{
-			var x = mantissaMemories[limbIndex];
-			ReadOnlySpan<Vector<ulong>> result = MemoryMarshal.Cast<ulong, Vector<ulong>>(x.Span);
-
-			return result;
-		}
-
 		//public Memory<short> ExponentsMemory { get; init; }
 
 		#endregion
 
 		#region Public Methods
 
-		public InPlayEnumerator<Vector<ulong>> GetInPlayEnumerator(int limbIndex)
-		{
-			var mantissaVectors = GetMantissaVectors(MantissaMemories, limbIndex);
-			return new InPlayEnumerator<Vector<ulong>>(mantissaVectors);
-		}
+		//public InPlayEnumerator<Vector<ulong>> GetInPlayEnumerator(int limbIndex)
+		//{
+		//	var mantissaVectors = GetLimbVectors(limbIndex);
+		//	return new InPlayEnumerator<Vector<ulong>>(mantissaVectors);
+		//}
 
-		public InPlayPairsEnumerator<Vector<ulong>> GetInPlayEnumerator(int limbIndexA, int limbIndexB)
-		{
-			var mantissaVectorsA = GetMantissaVectors(MantissaMemories, limbIndexA);
-			var mantissaVectorsB = GetMantissaVectors(MantissaMemories, limbIndexB);
+		//public InPlayPairsEnumerator<Vector<ulong>> GetInPlayEnumerator(int limbIndexA, int limbIndexB)
+		//{
+		//	var mantissaVectorsA = GetLimbVectors(limbIndexA);
+		//	var mantissaVectorsB = GetLimbVectors(limbIndexB);
 
-			var result = new InPlayPairsEnumerator<Vector<ulong>>(mantissaVectorsA, mantissaVectorsB);
+		//	var result = new InPlayPairsEnumerator<Vector<ulong>>(mantissaVectorsA, mantissaVectorsB);
+
+		//	return result;
+		//}
+
+		//public static Span<Vector<ulong>> GetLimbVectors(Memory<ulong>[] mantissaMemories, int limbIndex)
+		//{
+		//	var x = mantissaMemories[limbIndex];
+		//	Span<Vector<ulong>> result = MemoryMarshal.Cast<ulong, Vector<ulong>>(x.Span);
+
+		//	return result;
+		//}
+
+		public Span<Vector<ulong>> GetLimbVectors(int limbIndex)
+		{
+			var x = MantissaMemories[limbIndex];
+			Span<Vector<ulong>> result = MemoryMarshal.Cast<ulong, Vector<ulong>>(x.Span);
 
 			return result;
 		}
-
 
 		//public SequenceReader<Vector<ulong>> GetSequenceReader(int limbIndex)
 		//{
@@ -223,14 +231,6 @@ namespace MSetGenP
 
 		private ulong[] GetMantissa(int index)
 		{
-			//var numberOfLimbs = Mantissas.Length;
-			//var result = new ulong[numberOfLimbs];
-
-			//for (var i = 0; i < numberOfLimbs; i++)
-			//{
-			//	result[i] = Mantissas[i][index];
-			//}
-
 			var result = Mantissas.Select(x => x[index]).ToArray();
 			return result;
 		}

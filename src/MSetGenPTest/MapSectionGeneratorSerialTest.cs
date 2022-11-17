@@ -47,7 +47,7 @@ namespace MSetGenPTest
 		public void CallIteratorSample()
 		{
 			var precision = 55;
-			var smxVecMathHelper = new SmxVecMathHelper(precision);
+			var smxVecMathHelper = new SmxVecMathHelper(4, precision);
 			var targetIterations = 10;
 
 			var iterator = new IteratorVector(smxVecMathHelper, targetIterations);

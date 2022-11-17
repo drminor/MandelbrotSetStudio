@@ -2,14 +2,14 @@
 
 namespace MSetGenP
 {
-	public ref struct InPlayEnumerator<T> 
+	public ref struct InPlayEnumerator<T>
 	{
-		private readonly ReadOnlySpan<T> _array1;
+		private readonly Span<T> _array1;
 		//private readonly bool[] _includeFlags;
 
 		private int _position;
 
-		public InPlayEnumerator(ReadOnlySpan<T> array1)
+		public InPlayEnumerator(Span<T> array1)
 		{
 			_array1 = array1;
 			//_includeFlags = Enumerable.Repeat(true, array1.Length).ToArray();
@@ -26,6 +26,20 @@ namespace MSetGenP
 		//}
 
 		public T Current => _array1[_position];
+
+		public T this[int index]
+		{
+			get => _array1[index];
+			set => _array1[index] = value;
+		}
+
+		public void WriteValues(T[] values)
+		{
+			for(var i = 0; i < values.Length; i++)
+			{
+				_array1[i] = values[i];
+			}
+		}
 
 		public bool MoveNext()
 		{
