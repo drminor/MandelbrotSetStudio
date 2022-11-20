@@ -661,7 +661,7 @@ namespace MSetExplorer
 		private void LoadNewProject()
 		{
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, requestsPerJob: 100);
 
 			LoadNewProject(coords, mapCalcSettings);
 		}

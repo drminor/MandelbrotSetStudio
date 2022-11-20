@@ -10,10 +10,12 @@ namespace EngineTest
 		[Fact]
 		public void FullMultiply_Returns_Correct_Value()
 		{
+			var smxMathHelper = new SmxMathHelper(55);
+
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
 			var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
 
-			var bMantissa = SmxMathHelper.Multiply(aMantissa, aMantissa);
+			var bMantissa = smxMathHelper.Multiply(aMantissa, aMantissa);
 			var bBigInteger = SmxMathHelper.FromPwULongs(bMantissa);
 
 			var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
@@ -41,12 +43,14 @@ namespace EngineTest
 		[Fact]
 		public void NormalizeFPV_Returns_Correct_Value()
 		{
+			var smxMathHelper = new SmxMathHelper(55);
+
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017"); // 0.0000000000353482168348864539511122006373007661 (or possibly: 0.000000000035348216834895204420066149556547602)
 			var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
 
-			var bRawMantissa = SmxMathHelper.Multiply(aMantissa, aMantissa);
-			var bMantissa = SmxMathHelper.PropagateCarries(bRawMantissa);
-			var nrmBMantissa = SmxMathHelper.NormalizeFPV(bMantissa, -124, 55, out var nrmExponent);
+			var bRawMantissa = smxMathHelper.Multiply(aMantissa, aMantissa);
+			var bMantissa = smxMathHelper.PropagateCarries(bRawMantissa);
+			var nrmBMantissa = smxMathHelper.NormalizeFPV(bMantissa, -124, 55, out var nrmExponent);
 
 			// Discard 2 digits from the LSB end. (Divide by 2^64)
 			//var t2Longs = new ulong[t1Longs.Length - 2];
@@ -64,6 +68,8 @@ namespace EngineTest
 		[Fact]
 		public void MultiplyTwoRValues()
 		{
+			var smxMathHelper = new SmxMathHelper(55);
+
 			//var aRvalue = new RValue(new BigInteger(-414219082), -36, 53); // -6.02768096723593793141715568851e-3
 			//var bRvalue = new RValue(new BigInteger(67781838), -36, 53); // 9.8635556059889517056815666506964e-4
 
@@ -72,7 +78,7 @@ namespace EngineTest
 
 			var a = new Smx(aRValue);
 			var b = new Smx(bRValue);
-			var c = SmxMathHelper.Multiply(a, b);
+			var c = smxMathHelper.Multiply(a, b);
 
 			var cSmxRValue = c.GetRValue();
 			var s1 = RValueHelper.ConvertToString(cSmxRValue);
@@ -87,12 +93,14 @@ namespace EngineTest
 		[Fact]
 		public void SquareAnRValue()
 		{
+			var smxMathHelper = new SmxMathHelper(55);
+
 			var aRValue = new RValue(BigInteger.Parse("-126445453255269018635038690902017"), -124, 53); // -0.0000059454366395492942314714083927915125745469
 			var s0 = RValueHelper.ConvertToString(aRValue);
 
 			var a = new Smx(aRValue);
 
-			var b = SmxMathHelper.Square(a);
+			var b = smxMathHelper.Square(a);
 			var bSmxRValue = b.GetRValue();
 			var s1 = RValueHelper.ConvertToString(bSmxRValue);
 
@@ -106,12 +114,14 @@ namespace EngineTest
 		[Fact]
 		public void SquareAnRValueSm()
 		{
+			var smxMathHelper = new SmxMathHelper(55);
+
 			var aRValue = new RValue(BigInteger.Parse("-12644545325526901863503869090"), -124, 53); // 5.9454366395492942314714087866438e-10
 			var s0 = RValueHelper.ConvertToString(aRValue);
 
 			var a = new Smx(aRValue);
 
-			var b = SmxMathHelper.Square(a);                            //3.5348216834895204420064645514845e-19
+			var b = smxMathHelper.Square(a);                            //3.5348216834895204420064645514845e-19
 			var bSmxRValue = b.GetRValue();
 			var s1 = RValueHelper.ConvertToString(bSmxRValue);
 
@@ -125,6 +135,8 @@ namespace EngineTest
 		[Fact]
 		public void AddTwoRValues()
 		{
+			var smxMathHelper = new SmxMathHelper(55);
+
 			//var aRvalue = new RValue(new BigInteger(-414219082), -36, 53); // -6.02768096723593793141715568851e-3
 			//var bRvalue = new RValue(new BigInteger(67781838), -36, 53); // 9.8635556059889517056815666506964e-4
 
@@ -133,7 +145,7 @@ namespace EngineTest
 
 			var a = new Smx(aRValue);
 			var b = new Smx(bRValue);
-			var c = SmxMathHelper.Add(a, b);
+			var c = smxMathHelper.Add(a, b);
 
 			var cSmxRValue = c.GetRValue();
 			var s1 = RValueHelper.ConvertToString(cSmxRValue);
@@ -148,6 +160,8 @@ namespace EngineTest
 		[Fact]
 		public void AddTwoRValuesUseSub()
 		{
+			var smxMathHelper = new SmxMathHelper(55);
+
 			//var aBi = BigIntegerHelper.FromLongs(new long[] { -1, 55238551, 151263699 });
 			//var bBi = BigIntegerHelper.FromLongs(new long[] { 2, 86140672 });
 			//var aRValue = new RValue(aBi, -63, 55);
@@ -160,7 +174,7 @@ namespace EngineTest
 
 			var aRValue = a.GetRValue();
 			var bRValue = b.GetRValue();
-			var c = SmxMathHelper.Add(a, b);
+			var c = smxMathHelper.Add(a, b);
 
 			var cSmxRValue = c.GetRValue();
 			var s1 = RValueHelper.ConvertToString(cSmxRValue);
@@ -176,12 +190,14 @@ namespace EngineTest
 		[Fact]
 		public void NormalizeFPV_Via_Square()
 		{
+			var smxMathHelper = new SmxMathHelper(55);
+
 			var a = new Smx(false, new ulong[] { 4155170372, 1433657343, 4294967295, 566493183 }, -171, 55);
 
 			var aRValue = a.GetRValue();
 			var s0 = RValueHelper.ConvertToString(aRValue);
 
-			var b = SmxMathHelper.Square(a);
+			var b = smxMathHelper.Square(a);
 			var bSmxRValue = b.GetRValue();
 			var s1 = RValueHelper.ConvertToString(bSmxRValue);
 

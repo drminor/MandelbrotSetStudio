@@ -4,6 +4,7 @@ using MSS.Types;
 using System.Buffers;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace MSetGenP
 {
@@ -16,15 +17,17 @@ namespace MSetGenP
 			var blockSize = mapSectionRequest.BlockSize;
 			var precision = mapSectionRequest.Precision; // + 20;
 
-			var smxVecMathHelper = new SmxVecMathHelper(blockSize.NumberOfCells, precision);
+			var smxMathHelper = new SmxMathHelper(precision);
+			var smxVecMathHelper = new SmxVecMathHelper(mapSectionRequest.DoneFlags, precision);
 
-			var startingCx = CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
-			var startingCy = CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
-			var delta = CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
+			var startingCx = CreateSmxFromDto(smxMathHelper, mapPositionDto.X, mapPositionDto.Exponent, precision);
+			var startingCy = CreateSmxFromDto(smxMathHelper, mapPositionDto.Y, mapPositionDto.Exponent, precision);
+			var delta = CreateSmxFromDto(smxMathHelper, samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
 
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 
-			var counts = GenerateMapSection(smxVecMathHelper, startingCx, startingCy, delta, blockSize, targetIterations);
+			uint threshold = 0; // 4;
+			var counts = GenerateMapSection(smxVecMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, threshold);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[128 * 128];
@@ -33,7 +36,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ushort[] GenerateMapSection(SmxVecMathHelper smxVecMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
+		private ushort[] GenerateMapSection(SmxVecMathHelper smxVecMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, uint threshold)
 		{
 			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
 			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
@@ -41,7 +44,7 @@ namespace MSetGenP
 
 			Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Precision: {startingCx.Precision}");
 
-			var iterator = new IteratorVector(smxVecMathHelper, targetIterations);
+			var iterator = new IteratorVector(smxVecMathHelper);
 			//iterator.Sample();
 
 			var stride = blockSize.Width;
@@ -62,7 +65,7 @@ namespace MSetGenP
 				for (int i = 0; i < samplePointsX.Length; i++)
 				{
 					ciSmxes[resultPtr] = samplePointsY[j];
-					crSmxes[resultPtr++] = samplePointsX[i];	
+					crSmxes[resultPtr++] = samplePointsX[i];
 				}
 			}
 
@@ -76,32 +79,61 @@ namespace MSetGenP
 			var zISqrs = smxVecMathHelper.Square(zIs);
 
 			var cntrs = Enumerable.Repeat((ushort)1, resultLength).ToArray();
-			var doneFlags = new bool[resultLength];
 
-			var sumOfSqrs = smxVecMathHelper.Add(zRSqrs, zISqrs);
-			var escapedFlags = smxVecMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4, doneFlags);
+			var escapedFlagsMem = new Memory<ulong>(new ulong[resultLength]);
+			var escapedFlagVectors = MemoryMarshal.Cast<ulong, Vector<ulong>>(escapedFlagsMem.Span);
 
-			while (!escapedFlags[0] && cntrs[0]++ < targetIterations)
+			var inPlayList = smxVecMathHelper.InPlayList;
+
+			while (inPlayList.Count > 0)
 			{
 				iterator.Iterate(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
-				sumOfSqrs = smxVecMathHelper.Add(zRSqrs, zISqrs);
-				escapedFlags = smxVecMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4, doneFlags);
-			}
+				var sumOfSqrs = smxVecMathHelper.Add(zRSqrs, zISqrs);
 
-			//while (cntrs[0]++ < targetIterations)
-			//{
-			//	iterator.Iterate(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
-			//}
+				smxVecMathHelper.IsGreaterOrEqThan(sumOfSqrs, threshold, escapedFlagVectors);
+				var vectorsNoLongerInPlay = UpdateCounts(inPlayList, escapedFlagVectors, cntrs);
+				foreach (var vectorIndex in vectorsNoLongerInPlay)
+				{
+					inPlayList.Remove(vectorIndex);
+				}
+			}
 
 			return cntrs;
 		}
 
-		private Smx CreateSmxFromDto(long[] values, int exponent, int precision)
+		private List<int> UpdateCounts(List<int> inPlayList, Span<Vector<ulong>> escapedFlagVectors, ushort[] cntrs)
+		{
+			var lanes = Vector<ulong>.Count;
+			var toBeRemoved = new List<int>();
+
+			foreach (var idx in inPlayList)
+			{
+				var escapedFlagVector = escapedFlagVectors[idx];
+
+				if (Vector.EqualsAny(escapedFlagVector, Vector<ulong>.One))
+				{
+					toBeRemoved.Add(idx);
+				}
+
+				var cntrPtr = idx * lanes;
+				for(var lanePtr = 0; lanePtr < lanes; lanePtr++)
+				{
+					if (escapedFlagVector[lanePtr] == 0)
+					{
+						cntrs[cntrPtr + lanePtr]++;
+					}
+				}
+			}
+
+			return toBeRemoved;
+		}
+
+		private Smx CreateSmxFromDto(SmxMathHelper smxMathHelper, long[] values, int exponent, int precision)
 		{
 			var sign = !values.Any(x => x < 0);
 
 			var mantissa = ConvertDtoLongsToSmxULongs(values);
-			var nrmMantissa = SmxMathHelper.NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
+			var nrmMantissa = smxMathHelper.NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
 
 			if (SmxMathHelper.CheckPWValues(nrmMantissa))
 			{

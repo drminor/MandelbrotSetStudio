@@ -47,10 +47,9 @@ namespace MSetGenPTest
 		public void CallIteratorSample()
 		{
 			var precision = 55;
-			var smxVecMathHelper = new SmxVecMathHelper(4, precision);
-			var targetIterations = 10;
+			var smxVecMathHelper = new SmxVecMathHelper(new bool[4], precision);
 
-			var iterator = new IteratorVector(smxVecMathHelper, targetIterations);
+			var iterator = new IteratorVector(smxVecMathHelper);
 
 			iterator.Sample();
 		}
@@ -88,6 +87,8 @@ namespace MSetGenPTest
 			request.Precision = precision;
 			request.BlockSize = blockSize;
 			request.MapCalcSettings = mapCalcSettings;
+
+			request.DoneFlags = new bool[blockSize.NumberOfCells];
 
 			return request;
 		}

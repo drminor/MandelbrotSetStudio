@@ -5,10 +5,12 @@ namespace MSetGenP
 {
 	internal class IteratorScalar
 	{
+		private SmxMathHelper _smxMathHelper;
 		private int _targetIterations;
 
-		public IteratorScalar(int targetIterations)
+		public IteratorScalar(SmxMathHelper smxMathHelper, int targetIterations)
 		{
+			_smxMathHelper = smxMathHelper;
 			_targetIterations = targetIterations;
 		}
 
@@ -43,36 +45,36 @@ namespace MSetGenP
 
 		public ushort Iterate(Smx cR, Smx cI, ushort cntr, Smx zR, Smx zI)
 		{
-			var zRSqr = SmxMathHelper.Square(zR);
-			var zISqr = SmxMathHelper.Square(zI);
+			var zRSqr = _smxMathHelper.Square(zR);
+			var zISqr = _smxMathHelper.Square(zI);
 
-			var sumOfSqrs = SmxMathHelper.Add(zRSqr, zISqr);
+			var sumOfSqrs = _smxMathHelper.Add(zRSqr, zISqr);
 
-			while (!SmxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntr++ < _targetIterations)
+			while (!_smxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntr++ < _targetIterations)
 			{
 				try
 				{
 					// z.r + z.i
-					var zRZi = SmxMathHelper.Add(zR, zI);
+					var zRZi = _smxMathHelper.Add(zR, zI);
 
 					// square(z.r + z.i)
-					var zRZiSqr = SmxMathHelper.Square(zRZi);
+					var zRZiSqr = _smxMathHelper.Square(zRZi);
 
 					// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
-					zI = SmxMathHelper.Sub(zRZiSqr, zRSqr);
-					zI = SmxMathHelper.Sub(zI, zISqr);
-					//zI = SmxMathHelper.Add(zI, cI, out cI);
-					zI = SmxMathHelper.Add(zI, cI);
+					zI = _smxMathHelper.Sub(zRZiSqr, zRSqr);
+					zI = _smxMathHelper.Sub(zI, zISqr);
+					//zI = _smxMathHelper.Add(zI, cI, out cI);
+					zI = _smxMathHelper.Add(zI, cI);
 
 					// z.r = zrsqr - zisqr + c.r
-					zR = SmxMathHelper.Sub(zRSqr, zISqr);
-					//zR = SmxMathHelper.Add(zR, cR, out cR);
-					zR = SmxMathHelper.Add(zR, cR);
+					zR = _smxMathHelper.Sub(zRSqr, zISqr);
+					//zR = _smxMathHelper.Add(zR, cR, out cR);
+					zR = _smxMathHelper.Add(zR, cR);
 
-					zRSqr = SmxMathHelper.Square(zR);
-					zISqr = SmxMathHelper.Square(zI);
+					zRSqr = _smxMathHelper.Square(zR);
+					zISqr = _smxMathHelper.Square(zI);
 
-					sumOfSqrs = SmxMathHelper.Add(zRSqr, zISqr);
+					sumOfSqrs = _smxMathHelper.Add(zRSqr, zISqr);
 				}
 				catch (Exception e)
 				{
@@ -83,8 +85,8 @@ namespace MSetGenP
 
 			//if (cntr < _targetIterations)
 			//{
-			//	var sacResult = SmxMathHelper.SumAndCompare(zRSqr, zISqr, 4);
-			//	var sumOfZrSqrAndZiSqr = SmxMathHelper.Add(zRSqr, zISqr);
+			//	var sacResult = _smxMathHelper.SumAndCompare(zRSqr, zISqr, 4);
+			//	var sumOfZrSqrAndZiSqr = _smxMathHelper.Add(zRSqr, zISqr);
 			//	var rValDiag = sumOfZrSqrAndZiSqr.GetStringValue();
 			//	Debug.WriteLine($"Balied out: The value is {rValDiag}. SumAndCompare returned: {sacResult}.");
 			//}

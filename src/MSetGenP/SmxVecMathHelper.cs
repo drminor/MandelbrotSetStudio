@@ -1,9 +1,6 @@
-﻿
-using System.Buffers;
-using System.ComponentModel.DataAnnotations;
+﻿using System.Buffers;
 using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace MSetGenP
@@ -12,7 +9,7 @@ namespace MSetGenP
 	{
 		#region Private Properties
 
-		private const ulong LOW_MASK =  0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private const ulong LOW_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private const ulong HIGH_MASK = 0xFFFFFFFF00000000; // bits 32 - 63 are set.
 
 		private static readonly Vector<ulong> LOW_MASK_VEC = new Vector<ulong>(LOW_MASK);
@@ -38,10 +35,10 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public SmxVecMathHelper(int valueCount, int precision)
+		public SmxVecMathHelper(bool[] doneFlags, int precision)
 		{
-			_valueCount = valueCount;
-			VecCount = Math.DivRem(valueCount, _ulongSlots, out var remainder);
+			_valueCount = doneFlags.Length;
+			VecCount = Math.DivRem(_valueCount, _ulongSlots, out var remainder);
 
 			if (remainder != 0)
 			{
@@ -50,7 +47,7 @@ namespace MSetGenP
 
 			Precision = precision;
 
-			InPlayList = Enumerable.Range(0, VecCount).ToList();
+			InPlayList = BuildTheInplayList(doneFlags, VecCount);
 
 			_squareResult1Mems = BuildMantissaMemoryArray(LimbCount * 2, _valueCount);
 			_squareResult2Mems = BuildMantissaMemoryArray(LimbCount * 2, _valueCount);
@@ -62,6 +59,27 @@ namespace MSetGenP
 			_carriesMem = new Memory<ulong>(new ulong[_valueCount]);
 			_withCarriesMem = new Memory<ulong>(new ulong[_valueCount]);
 			_addResult1Mem = BuildMantissaMemoryArray(LimbCount + 1, _valueCount);
+		}
+
+		private List<int> BuildTheInplayList(bool[] doneFlags, int vecCount)
+		{
+			var result = Enumerable.Range(0, vecCount).ToList();
+
+			for (int j = 0; j < vecCount; j++)
+			{
+				var arrayPtr = j * _ulongSlots;
+
+				for(var lanePtr = 0; lanePtr < _ulongSlots; lanePtr++)
+				{
+					if (doneFlags[arrayPtr + lanePtr])
+					{
+						result.Remove(j);
+						break;
+					}
+				}
+			}
+
+			return result;
 		}
 
 		private Memory<ulong>[] BuildMantissaMemoryArray(int limbCount, int vectorCount)
@@ -99,7 +117,7 @@ namespace MSetGenP
 		public int VecCount { get; private set; }
 		public int LimbCount { get; private set; }
 
-		public List<int> InPlayList;
+		public List<int> InPlayList { get; }
 
 		#endregion
 
@@ -129,30 +147,24 @@ namespace MSetGenP
 
 			// Instead of Normalizing, discard all 'extra' limbs starting from the Least Significant.
 			var targetLimbCount = a.LimbCount;
-
 			var result = new FPValues(signs, a.Exponents, targetLimbCount);
 
-			//var currentLimbCount = mantissas.Length;
-			//var startIndex = currentLimbCount - targetLimbCount;
+			var currentLimbCount = mantissas.Length;
+			var startIndex = currentLimbCount - targetLimbCount;
 
-			//for(var j = 0; j < targetLimbCount; j++)
-			//{
-			//	var limbWriter = result.GetInPlayEnumerator(j);
-			//	limbWriter.WriteValues(mantissas[j + startIndex]);
-			//}
+			for (var i = 0; i < targetLimbCount; i++)
+			{
+				if(!mantissas[i + startIndex].TryCopyTo(result.MantissaMemories[i]))
+				{
+					throw new InvalidOperationException($"Cannot copy limb {i} to the result.");
+				}
+			}
 
 			return result;
 		}
 
 		private Memory<ulong>[] SquareInternal(FPValues a)
 		{
-			//var result = new Vector<ulong>[a.LimbCount * 2][];
-
-			//for(var s = 0; s < a.LimbCount * 2; s++)
-			//{
-			//	result[s] = new Vector<ulong>[vCnt]; // TODO: Use the "InPlayCount"
-			//}
-
 			var result = _squareResult1Mems;
 			var products = GetLimbVectors(_productsMem);
 
@@ -442,9 +454,14 @@ namespace MSetGenP
 				var resultLimbVecs = GetLimbVectors(result[i]);
 
 				AddVecs(limbVecsA, limbVecsB, withCarries);
-				AddVecs(withCarries, carries, withCarries);
 
-				Split(withCarries, carries, resultLimbVecs);
+				if (i > 0)
+				{
+					// add the caries produced from splitting the previous limb's
+					AddVecs(withCarries, carries, withCarries);
+				}
+
+				Split(x:withCarries, highs:carries, lows:resultLimbVecs);
 			}
 
 			//if (carry != 0)
@@ -590,34 +607,26 @@ namespace MSetGenP
 			return i;
 		}
 
-		//public static bool IsGreaterOrEqThan(Smx a, uint b)
-		//{
-		//	var aAsDouble = 0d;
-
-		//	for (var i = a.Mantissa.Length - 1; i >= 0; i--)
-		//	{
-		//		aAsDouble += a.Mantissa[i] * Math.Pow(2, a.Exponent + (i * 32));
-
-		//		if (aAsDouble >= b)
-		//		{
-		//			return true;
-		//		}
-		//	}
-
-		//	return false;
-		//}
-
-		public bool[] IsGreaterOrEqThan(FPValues a, uint b, bool[] doneFlags)
+		public void IsGreaterOrEqThan(FPValues a, uint b, Span<Vector<ulong>> escapedFlagVectors)
 		{
-			for (var i = 0; i < a.Length; i++)
-			{
-				doneFlags[i] = IsGreaterOrEqThan(a.Mantissas, i, a.Exponents[i], b);
-			}
+			var escapedFlags = new bool[_ulongSlots];
 
-			return doneFlags;
+			foreach (var idx in InPlayList)
+			{
+				var arrayPtr = idx * _ulongSlots;
+
+				for (var i = 0; i < _ulongSlots ; i++)
+				{
+					escapedFlags[i] = IsGreaterOrEqThan(a.Mantissas, arrayPtr, a.Exponents[arrayPtr], b);
+					arrayPtr++;
+				}
+
+				var escapeFlagVecValues = escapedFlags.Select(x => x ? 1ul : 0ul).ToArray();
+				escapedFlagVectors[idx] = new Vector<ulong>(escapeFlagVecValues);
+			}
 		}
 
-		private static bool IsGreaterOrEqThan(ulong[][] mantissas, int valueIndex, int exponent, uint b)
+		public bool IsGreaterOrEqThan(ulong[][] mantissas, int valueIndex, int exponent, uint b)
 		{
 			var aAsDouble = 0d;
 

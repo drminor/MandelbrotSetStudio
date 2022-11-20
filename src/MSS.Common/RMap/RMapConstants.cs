@@ -52,8 +52,8 @@ namespace MSS.Common
 				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(70, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#000000")
+				//new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
 			};
 
 			var colorBandsSerialNumber = new Guid("{00112233-4455-6677-8899-AABBCCDDEEFF}");

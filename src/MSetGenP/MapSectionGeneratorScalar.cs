@@ -15,13 +15,16 @@ namespace MSetGenP
 			var blockSize = mapSectionRequest.BlockSize;
 			var precision = mapSectionRequest.Precision; // + 20;
 
-			var startingCx = CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
-			var startingCy = CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
-			var delta = CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
+			var smxMathHelper = new SmxMathHelper(precision);
+
+
+			var startingCx = CreateSmxFromDto(smxMathHelper, mapPositionDto.X, mapPositionDto.Exponent, precision);
+			var startingCy = CreateSmxFromDto(smxMathHelper, mapPositionDto.Y, mapPositionDto.Exponent, precision);
+			var delta = CreateSmxFromDto(smxMathHelper, samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
 
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 
-			var counts = GenerateMapSection(startingCx, startingCy, delta, blockSize, targetIterations);
+			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[128 * 128];
@@ -66,7 +69,7 @@ namespace MSetGenP
 		//	return result;
 		//}
 
-		private ushort[] GenerateMapSection(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
+		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
 		{
 			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
 			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
@@ -77,15 +80,15 @@ namespace MSetGenP
 			var result = new ushort[blockSize.NumberOfCells];
 
 			var stride = blockSize.Width;
-			var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
+			var samplePointOffsets = BuildSamplePointOffsets(smxMathHelper, delta, stride);
 
-			ReportExponents(samplePointOffsets);
+			//ReportExponents(samplePointOffsets);
 
 
-			var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
-			var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
+			var samplePointsX = BuildSamplePoints(smxMathHelper, startingCx, samplePointOffsets);
+			var samplePointsY = BuildSamplePoints(smxMathHelper, startingCy, samplePointOffsets);
 
-			var iterator = new IteratorScalar(targetIterations);
+			var iterator = new IteratorScalar(smxMathHelper, targetIterations);
 
 			for (int j = 0; j < samplePointsY.Length; j++)
 			{
@@ -107,31 +110,31 @@ namespace MSetGenP
 			}
 		}
 
-		private Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePointOffsets)
+		private Smx[] BuildSamplePoints(SmxMathHelper smxMathHelper, Smx startValue, Smx[] samplePointOffsets)
 		{
 			var result = new Smx[samplePointOffsets.Length];
 
 			for (var i = 0; i < samplePointOffsets.Length; i++)
 			{
-				result[i] = SmxMathHelper.Add(startValue, samplePointOffsets[i]);
+				result[i] = smxMathHelper.Add(startValue, samplePointOffsets[i]);
 			}
 
 			return result;
 		}
 
-		private Smx[] BuildSamplePointOffsets(Smx delta, int sampleCount)
+		private Smx[] BuildSamplePointOffsets(SmxMathHelper smxMathHelper, Smx delta, int sampleCount)
 		{
 			var result = new Smx[sampleCount];
 
 			for (var i = 0; i < sampleCount; i++)
 			{
-				result[i] = SmxMathHelper.Multiply(delta, i);
+				result[i] = smxMathHelper.Multiply(delta, i);
 			}
 
 			return result;
 		}
 
-		private Smx CreateSmxFromDto(long[] values, int exponent, int precision)
+		private Smx CreateSmxFromDto(SmxMathHelper smxMathHelper, long[] values, int exponent, int precision)
 		{
 			var sign = !values.Any(x => x < 0);
 
@@ -140,7 +143,7 @@ namespace MSetGenP
 			//var result = new Smx(sign, mantissa, adjExponent, precision);
 
 			var mantissa = ConvertDtoLongsToSmxULongs(values);
-			var nrmMantissa = SmxMathHelper.NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
+			var nrmMantissa = smxMathHelper.NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
 
 			if (SmxMathHelper.CheckPWValues(nrmMantissa))
 			{
