@@ -5,12 +5,10 @@ namespace MSetGenP
 {
 	public class IteratorVector
 	{
-		private readonly SmxMathHelper _smxMathHelper;
 		private SmxVecMathHelper _smxVecMathHelper;
 
 		public IteratorVector(SmxVecMathHelper smxVecMathHelper)
 		{
-			_smxMathHelper = new SmxMathHelper(smxVecMathHelper.Precision);
 			_smxVecMathHelper = smxVecMathHelper;
 		}
 
@@ -45,30 +43,6 @@ namespace MSetGenP
 			}
 		}
 		
-		public Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePointOffsets)
-		{
-			var result = new Smx[samplePointOffsets.Length];
-
-			for (var i = 0; i < samplePointOffsets.Length; i++)
-			{
-				result[i] = _smxMathHelper.Add(startValue, samplePointOffsets[i]);
-			}
-
-			return result;
-		}
-
-		public Smx[] BuildSamplePointOffsets(Smx delta, int sampleCount)
-		{
-			var result = new Smx[sampleCount];
-
-			for (var i = 0; i < sampleCount; i++)
-			{
-				result[i] = _smxMathHelper.Multiply(delta, i);
-			}
-
-			return result;
-		}
-
 		public void Sample()
 		{
 			var lanes = Vector<ulong>.Count;

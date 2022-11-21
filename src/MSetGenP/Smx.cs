@@ -52,7 +52,7 @@ namespace MSetGenP
 		public int Exponent { get; set; }
 		public int Precision { get; set; } // Number of significant binary digits.
 
-		public bool IsZero => Mantissa.Length == 1 && Mantissa[0] == 0;
+		public bool IsZero => !Mantissa.Any(x => x > 0);
 		public int LimbCount => Mantissa.Length;
 
 		#endregion

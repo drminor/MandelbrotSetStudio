@@ -15,10 +15,12 @@ namespace MSetGenP
 		private static readonly Vector<ulong> LOW_MASK_VEC = new Vector<ulong>(LOW_MASK);
 		private static readonly Vector<ulong> HIGH_MASK_VEC = new Vector<ulong>(HIGH_MASK);
 
+		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
+
 		private static readonly int _ulongSlots = Vector<ulong>.Count;
 
-		private int _valueCount;
-		private int _precision;
+		private readonly SmxMathHelper _smxMathHelper;
+		private readonly int _valueCount;
 
 		private Memory<ulong>[] _squareResult1Mems;
 		private Memory<ulong>[] _squareResult2Mems;
@@ -37,6 +39,7 @@ namespace MSetGenP
 
 		public SmxVecMathHelper(bool[] doneFlags, int precision)
 		{
+			_smxMathHelper = new SmxMathHelper(precision);
 			_valueCount = doneFlags.Length;
 			VecCount = Math.DivRem(_valueCount, _ulongSlots, out var remainder);
 
@@ -46,6 +49,7 @@ namespace MSetGenP
 			}
 
 			Precision = precision;
+			LimbCount = SmxMathHelper.GetLimbCount(precision);
 
 			InPlayList = BuildTheInplayList(doneFlags, VecCount);
 
@@ -104,18 +108,10 @@ namespace MSetGenP
 
 		#region Public Properties
 
-		public int Precision
-		{
-			get => _precision;
-			set
-			{
-				_precision = value;
-				LimbCount = SmxMathHelper.GetLimbCount(_precision);
-			}
-		}
+		public int Precision { get; init; }
 
-		public int VecCount { get; private set; }
-		public int LimbCount { get; private set; }
+		public int VecCount { get; init; }
+		public int LimbCount { get; init; }
 
 		public List<int> InPlayList { get; }
 
@@ -217,7 +213,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		public void MultiplyVecs(Span<Vector<ulong>> left, Span<Vector<ulong>> right, Span<Vector<ulong>> result)
+		private void MultiplyVecs(Span<Vector<ulong>> left, Span<Vector<ulong>> right, Span<Vector<ulong>> result)
 		{
 			foreach(var idx in InPlayList)
 			{
@@ -487,45 +483,84 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static ulong[] Sub(ulong[] ax, ulong[] bx)
+		private ulong[] Add(ShiftedArray<ulong> left, ShiftedArray<ulong> right)
 		{
-			//Debug.Assert(ax.Length == bx.Length);
+			Debug.Assert(left.Length == right.Length);
 
-			//var resultLength = ax.Length;
-			//var result = new ulong[resultLength];
+			var resultLength = left.Length;
+			var result = new ulong[resultLength];
 
-			//var indexOfLastNonZeroLimb = 0;
-			//var borrow = 0ul;
+			var indexOfLastNonZeroLimb = 0;
+			var carry = 0ul;
 
-			//for (var i = 0; i < resultLength - 1; i++)
+			for (var i = 0; i < resultLength; i++)
+			{
+				var nv = left[i] + right[i] + carry;
+				result[i] = _smxMathHelper.Split(nv, out carry);
+				indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
+			}
+
+			//if (carry != 0)
 			//{
-			//	// Set the lsb of the high part of a.
-			//	var sax = ax[i] | TEST_BIT_32;
+			//	// Add a Limb
+			//	var newResult = _smxMathHelper.Extend(result, resultLength + 1);
+			//	newResult[^1] = carry;
+			//	return newResult;
+			//}
+			////else if (indexOfLastNonZeroLimb < resultLength - 1)
+			////{
+			////	// Trim leading zeros
+			////	var newResult = CopyFirstXElements(result, indexOfLastNonZeroLimb + 1);
 
-			//	result[i] = sax - bx[i] - borrow;
-
-			//	if ((result[i] & TEST_BIT_32) > 0)
-			//	{
-			//		result[i] &= LOW_MASK;
-			//		borrow = 0;
-			//	}
-			//	else
-			//	{
-			//		borrow = 1;
-			//	}
-
-			//	if (result[i] > 0)
-			//	{
-			//		indexOfLastNonZeroLimb = i;
-			//	}
+			////	return newResult;
+			////}
+			//else
+			//{
+			//	return result;
 			//}
 
-			//if (ax[^1] < (bx[^1] + borrow))
-			//{
-			//	throw new OverflowException("MSB too small.");
-			//}
+			return result;
+		}
 
-			//result[^1] = ax[^1] - bx[^1] - borrow;
+		private ulong[] Sub(ShiftedArray<ulong> left, ShiftedArray<ulong> right)
+		{
+			Debug.Assert(left.Length == right.Length);
+
+			var resultLength = left.Length;
+			var result = new ulong[resultLength];
+
+			var indexOfLastNonZeroLimb = 0;
+			var borrow = 0ul;
+
+			for (var i = 0; i < resultLength - 1; i++)
+			{
+				// Set the lsb of the high part of a.
+				var sax = left[i] | TEST_BIT_32;
+
+				result[i] = sax - right[i] - borrow;
+
+				if ((result[i] & TEST_BIT_32) > 0)
+				{
+					result[i] &= LOW_MASK;
+					borrow = 0;
+				}
+				else
+				{
+					borrow = 1;
+				}
+
+				if (result[i] > 0)
+				{
+					indexOfLastNonZeroLimb = i;
+				}
+			}
+
+			if (left[^1] < (right[^1] + borrow))
+			{
+				throw new OverflowException("MSB too small.");
+			}
+
+			result[^1] = left[^1] - right[^1] - borrow;
 
 			//if (result[^1] == 0 && indexOfLastNonZeroLimb < resultLength - 1)
 			//{
@@ -539,7 +574,7 @@ namespace MSetGenP
 			//	return result;
 			//}
 
-			return ax;
+			return result;
 		}
 
 		private void AddVecs(Span<Vector<ulong>> left, Span<Vector<ulong>> right, Span<Vector<ulong>> result)
@@ -570,30 +605,30 @@ namespace MSetGenP
 
 		#region Comparison
 
-		private static int Compare(ulong[] ax, ulong[] bx)
+		private int Compare(ShiftedArray<ulong> left, ShiftedArray<ulong> right)
 		{
-			var sdA = GetNumberOfSignificantB32Digits(ax);
-			var sdB = GetNumberOfSignificantB32Digits(bx);
+			var sdA = GetNumberOfSignificantB32Digits(left);
+			var sdB = GetNumberOfSignificantB32Digits(right);
 
 			if (sdA != sdB)
 			{
 				return sdA > sdB ? 1 : -1;
 			}
 
-			var i = -1 + Math.Min(ax.Length, bx.Length);
+			var i = -1 + Math.Min(left.Length, right.Length);
 
 			for (; i >= 0; i--)
 			{
-				if (ax[i] != bx[i])
+				if (left[i] != right[i])
 				{
-					return ax[i] > bx[i] ? 1 : -1;
+					return left[i] > right[i] ? 1 : -1;
 				}
 			}
 
 			return 0;
 		}
 
-		public static int GetNumberOfSignificantB32Digits(ulong[] mantissa)
+		private int GetNumberOfSignificantB32Digits(ShiftedArray<ulong> mantissa)
 		{
 			var i = mantissa.Length;
 			for (; i > 0; i--)
@@ -606,6 +641,8 @@ namespace MSetGenP
 
 			return i;
 		}
+
+
 
 		public void IsGreaterOrEqThan(FPValues a, uint b, Span<Vector<ulong>> escapedFlagVectors)
 		{

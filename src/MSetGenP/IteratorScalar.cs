@@ -48,33 +48,48 @@ namespace MSetGenP
 			var zRSqr = _smxMathHelper.Square(zR);
 			var zISqr = _smxMathHelper.Square(zI);
 
-			var sumOfSqrs = _smxMathHelper.Add(zRSqr, zISqr);
+			var zRSqrSa = _smxMathHelper.Convert(zRSqr);
+			var zISqrSa = _smxMathHelper.Convert(zISqr);
+			var sumOfSqrsSa = _smxMathHelper.Add(zRSqrSa, zISqrSa);
 
-			while (!_smxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntr++ < _targetIterations)
+			while (!_smxMathHelper.IsGreaterOrEqThan(sumOfSqrsSa, 4) && cntr++ < _targetIterations)
 			{
 				try
 				{
 					// z.r + z.i
-					var zRZi = _smxMathHelper.Add(zR, zI);
+					var zRSa = _smxMathHelper.Convert(zR);
+					var zISa = _smxMathHelper.Convert(zI);
+					var zRZiSa = _smxMathHelper.Add(zRSa, zISa);
+
 
 					// square(z.r + z.i)
+					var zRZi = _smxMathHelper.Convert(zRZiSa);
 					var zRZiSqr = _smxMathHelper.Square(zRZi);
 
 					// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
-					zI = _smxMathHelper.Sub(zRZiSqr, zRSqr);
-					zI = _smxMathHelper.Sub(zI, zISqr);
+					var zRZiSqrSa = _smxMathHelper.Convert(zRZiSqr);
+					zISa = _smxMathHelper.Sub(zRZiSqrSa, zRSqrSa);
+					zISa = _smxMathHelper.Sub(zISa, zISqrSa);
 					//zI = _smxMathHelper.Add(zI, cI, out cI);
-					zI = _smxMathHelper.Add(zI, cI);
+
+					var cISa = _smxMathHelper.Convert(cI);
+					zISa = _smxMathHelper.Add(zISa, cISa);
 
 					// z.r = zrsqr - zisqr + c.r
-					zR = _smxMathHelper.Sub(zRSqr, zISqr);
+					zRSa = _smxMathHelper.Sub(zRSqrSa, zISqrSa);
 					//zR = _smxMathHelper.Add(zR, cR, out cR);
-					zR = _smxMathHelper.Add(zR, cR);
 
+					var cRSa = _smxMathHelper.Convert(cR);
+					zRSa = _smxMathHelper.Add(zRSa, cRSa);
+
+					zR = _smxMathHelper.Convert(zRSa);
+					zI = _smxMathHelper.Convert(zISa);
 					zRSqr = _smxMathHelper.Square(zR);
 					zISqr = _smxMathHelper.Square(zI);
 
-					sumOfSqrs = _smxMathHelper.Add(zRSqr, zISqr);
+					zRSqrSa = _smxMathHelper.Convert(zRSqr);
+					zISqrSa = _smxMathHelper.Convert(zISqr);
+					sumOfSqrsSa = _smxMathHelper.Add(zRSqrSa, zISqrSa);
 				}
 				catch (Exception e)
 				{

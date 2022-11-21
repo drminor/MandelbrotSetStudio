@@ -2,7 +2,6 @@
 using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace MSetGenP
 {
@@ -17,10 +16,9 @@ namespace MSetGenP
 
 			var smxMathHelper = new SmxMathHelper(precision);
 
-
-			var startingCx = CreateSmxFromDto(smxMathHelper, mapPositionDto.X, mapPositionDto.Exponent, precision);
-			var startingCy = CreateSmxFromDto(smxMathHelper, mapPositionDto.Y, mapPositionDto.Exponent, precision);
-			var delta = CreateSmxFromDto(smxMathHelper, samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
+			var startingCx = smxMathHelper.CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
+			var startingCy = smxMathHelper.CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
+			var delta = smxMathHelper.CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
 
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 
@@ -80,13 +78,12 @@ namespace MSetGenP
 			var result = new ushort[blockSize.NumberOfCells];
 
 			var stride = blockSize.Width;
-			var samplePointOffsets = BuildSamplePointOffsets(smxMathHelper, delta, stride);
+			var samplePointOffsets = smxMathHelper.BuildSamplePointOffsets(delta, stride);
 
 			//ReportExponents(samplePointOffsets);
 
-
-			var samplePointsX = BuildSamplePoints(smxMathHelper, startingCx, samplePointOffsets);
-			var samplePointsY = BuildSamplePoints(smxMathHelper, startingCy, samplePointOffsets);
+			var samplePointsX = smxMathHelper.BuildSamplePoints(startingCx, samplePointOffsets);
+			var samplePointsY = smxMathHelper.BuildSamplePoints(startingCy, samplePointOffsets);
 
 			var iterator = new IteratorScalar(smxMathHelper, targetIterations);
 
@@ -108,114 +105,6 @@ namespace MSetGenP
 			{
 				Debug.WriteLine($"{value.Exponent}.");
 			}
-		}
-
-		private Smx[] BuildSamplePoints(SmxMathHelper smxMathHelper, Smx startValue, Smx[] samplePointOffsets)
-		{
-			var result = new Smx[samplePointOffsets.Length];
-
-			for (var i = 0; i < samplePointOffsets.Length; i++)
-			{
-				result[i] = smxMathHelper.Add(startValue, samplePointOffsets[i]);
-			}
-
-			return result;
-		}
-
-		private Smx[] BuildSamplePointOffsets(SmxMathHelper smxMathHelper, Smx delta, int sampleCount)
-		{
-			var result = new Smx[sampleCount];
-
-			for (var i = 0; i < sampleCount; i++)
-			{
-				result[i] = smxMathHelper.Multiply(delta, i);
-			}
-
-			return result;
-		}
-
-		private Smx CreateSmxFromDto(SmxMathHelper smxMathHelper, long[] values, int exponent, int precision)
-		{
-			var sign = !values.Any(x => x < 0);
-
-			//var mantissa = ConvertDtoLongsToSmxULongs(values, out var shiftAmount);
-			//var adjExponent = exponent - shiftAmount;
-			//var result = new Smx(sign, mantissa, adjExponent, precision);
-
-			var mantissa = ConvertDtoLongsToSmxULongs(values);
-			var nrmMantissa = smxMathHelper.NormalizeFPV(mantissa, exponent, precision, out var nrmExponent);
-
-			if (SmxMathHelper.CheckPWValues(nrmMantissa))
-			{
-				Debug.WriteLine("XXX");
-			}
-			var result = new Smx(sign, nrmMantissa, nrmExponent, precision);
-
-			return result;
-		}
-
-		private ulong[] ConvertDtoLongsToSmxULongs(long[] values/*, out int shiftAmount*/)
-		{
-			// DtoLongs are in Big-Endian order, convert to Little-Endian order.
-			//var leValues = values.Reverse().ToArray();
-
-			// Currently the Dto classes produce an array of longs with length of either 1 or 2.
-
-			var leValues = TrimLeadingZeros(values);
-
-			if (leValues.Length > 1)
-			{
-				throw new NotSupportedException("ConvertDtoLongsToSmxULongs only supports values with a single 'digit.'");
-			}
-
-			var result = new ulong[leValues.Length * 2];
-
-			for (int i = 0; i < leValues.Length; i++)
-			{
-				var value = (ulong)Math.Abs(leValues[i]);
-				var lo = Split(value, out var hi);
-				result[2 * i] = lo;
-				result[2 * i + 1] = hi;
-			}
-
-			var trResult = SmxMathHelper.TrimLeadingZeros(result);
-			return trResult;
-
-			//return result;
-		}
-
-		// Trim Leading Zeros for a Big-Endian formatted array of longs.
-		private long[] TrimLeadingZeros(long[] mantissa)
-		{
-			var i = 0;
-			for (; i < mantissa.Length; i++)
-			{
-				if (mantissa[i] != 0)
-				{
-					break;
-				}
-			}
-
-			if (i == 0)
-			{
-				return mantissa;
-			}
-
-			if (i == mantissa.Length)
-			{
-				// All digits are zero
-				return new long[] { 0 };
-			}
-
-			var result = new long[mantissa.Length - i];
-			Array.Copy(mantissa, i, result, 0, result.Length);
-			return result;
-		}
-
-		private ulong Split(ulong x, out ulong hi)
-		{
-			hi = x >> 32; // Create new ulong from bits 32 - 63.
-			return x & 0x00000000FFFFFFFF; // Create new ulong from bits 0 - 31.
 		}
 
 		private bool[] CalculateTheDoneFlags(ushort[] counts, int targetIterations)
