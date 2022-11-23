@@ -221,7 +221,7 @@ namespace MSS.Common
 
 		#region Compare
 
-		public static bool AreClose(RValue a, RValue b)
+		public static bool AreClose(RValue a, RValue b, bool failOnTooFewDigits = true)
 		{
 			var aNrm = RNormalizer.Normalize(a, b, out var bNrm);
 			var strA = aNrm.Value.ToString();
@@ -230,13 +230,13 @@ namespace MSS.Common
 			var precision = Math.Min(a.Precision, b.Precision);
 			var numberOfDecimalDigits = (int)Math.Round(precision * Math.Log10(2), MidpointRounding.ToZero);
 
-			if (strA.Length < numberOfDecimalDigits)
+			if (strA.Length < numberOfDecimalDigits && failOnTooFewDigits)
 			{
 				Debug.WriteLine($"Value A has {strA.Length} decimal digits which is less than {numberOfDecimalDigits}.");
 				return false;
 			}
 
-			if (strB.Length < numberOfDecimalDigits)
+			if (strB.Length < numberOfDecimalDigits && failOnTooFewDigits)
 			{
 				Debug.WriteLine($"Value B has {strB.Length} decimal digits which is less than {numberOfDecimalDigits}.");
 				return false;
@@ -244,8 +244,8 @@ namespace MSS.Common
 
 			Debug.WriteLine($"AreClose is comparing {numberOfDecimalDigits} characters of {strA} and {strB}.");
 
-			strA = strA.Substring(0, numberOfDecimalDigits);
-			strB = strB.Substring(0, numberOfDecimalDigits);
+			strA = strA.Substring(0, Math.Min(numberOfDecimalDigits, strA.Length));
+			strB = strB.Substring(0, Math.Min(numberOfDecimalDigits, strB.Length));
 
 			Debug.WriteLine($"AreClose is comparing {strA} with {strB} and returning {strA == strB}.");
 

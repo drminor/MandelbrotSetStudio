@@ -174,7 +174,7 @@ namespace EngineTest
 			//var a = new Smx(aRValue);
 			//var b = new Smx(bRValue);
 
-			var aSa = new SmxSa(false, new ulong[] { 151263699, 55238551, 1 }, 1, -63, 55);
+			var aSa = new SmxSa(false, new ulong[] { 151263699, 55238551, 1 }, 2, -63, 55);
 			var bSa = new SmxSa(true, new ulong[] { 86140672, 2 }, 1, -36, 55);
 
 			var a = smxMathHelper.Convert(aSa);

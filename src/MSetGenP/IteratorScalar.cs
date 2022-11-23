@@ -52,7 +52,9 @@ namespace MSetGenP
 			var zISqrSa = _smxMathHelper.Convert(zISqr);
 			var sumOfSqrsSa = _smxMathHelper.Add(zRSqrSa, zISqrSa);
 
-			while (!_smxMathHelper.IsGreaterOrEqThan(sumOfSqrsSa, 4) && cntr++ < _targetIterations)
+			var sumOfSqrs = _smxMathHelper.Convert(sumOfSqrsSa);
+
+			while (!_smxMathHelper.IsGreaterOrEqThan(sumOfSqrs, 4) && cntr++ < _targetIterations)
 			{
 				try
 				{
@@ -60,7 +62,6 @@ namespace MSetGenP
 					var zRSa = _smxMathHelper.Convert(zR);
 					var zISa = _smxMathHelper.Convert(zI);
 					var zRZiSa = _smxMathHelper.Add(zRSa, zISa);
-
 
 					// square(z.r + z.i)
 					var zRZi = _smxMathHelper.Convert(zRZiSa);
@@ -70,14 +71,12 @@ namespace MSetGenP
 					var zRZiSqrSa = _smxMathHelper.Convert(zRZiSqr);
 					zISa = _smxMathHelper.Sub(zRZiSqrSa, zRSqrSa);
 					zISa = _smxMathHelper.Sub(zISa, zISqrSa);
-					//zI = _smxMathHelper.Add(zI, cI, out cI);
 
 					var cISa = _smxMathHelper.Convert(cI);
 					zISa = _smxMathHelper.Add(zISa, cISa);
 
 					// z.r = zrsqr - zisqr + c.r
 					zRSa = _smxMathHelper.Sub(zRSqrSa, zISqrSa);
-					//zR = _smxMathHelper.Add(zR, cR, out cR);
 
 					var cRSa = _smxMathHelper.Convert(cR);
 					zRSa = _smxMathHelper.Add(zRSa, cRSa);
@@ -90,6 +89,8 @@ namespace MSetGenP
 					zRSqrSa = _smxMathHelper.Convert(zRSqr);
 					zISqrSa = _smxMathHelper.Convert(zISqr);
 					sumOfSqrsSa = _smxMathHelper.Add(zRSqrSa, zISqrSa);
+					sumOfSqrs = _smxMathHelper.Convert(sumOfSqrsSa);
+
 				}
 				catch (Exception e)
 				{

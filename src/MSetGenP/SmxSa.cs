@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using MSS.Common;
+using MSS.Types;
+using System.Collections;
 
 namespace MSetGenP
 {
@@ -60,22 +62,28 @@ namespace MSetGenP
 
 		#region Public Methods
 
-		//public RValue GetRValue()
-		//{
-		//	var biValue = SmxMathHelper.FromPwULongs(Mantissa);
-		//	biValue = Sign ? biValue : -1 * biValue;
-		//	var result = new RValue(biValue, Exponent, Precision);
+		public ulong[] Materialize()
+		{
+			var result = Mantissa.Materialize();
+			return result;
+		}
 
-		//	return result;
-		//}
+		public RValue GetRValue()
+		{
+			var biValue = SmxMathHelper.FromPwULongs(Mantissa.Materialize());
+			biValue = Sign ? biValue : -1 * biValue;
+			var result = new RValue(biValue, Exponent, Precision);
 
-		//public string GetStringValue()
-		//{
-		//	var rValue = GetRValue();
-		//	var strValue = RValueHelper.ConvertToString(rValue);
+			return result;
+		}
 
-		//	return strValue;
-		//}
+		public string GetStringValue()
+		{
+			var rValue = GetRValue();
+			var strValue = RValueHelper.ConvertToString(rValue);
+
+			return strValue;
+		}
 
 		#endregion
 
