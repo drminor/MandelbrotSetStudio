@@ -1,5 +1,6 @@
 ﻿using MEngineDataContracts;
 using MSetGenP;
+using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.DataTransferObjects;
@@ -14,7 +15,7 @@ namespace MSetGenPTest
 		{
 			var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
 			var yPos = new long[] { 0, 67781838 };
-			var precision = 55;
+			var precision = RMapConstants.DEFAULT_PRECISION;
 			var extent = 16;
 			var samplePointDelta = new RSize(1, 1, -36);
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
@@ -31,7 +32,7 @@ namespace MSetGenPTest
 		{
 			var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
 			var yPos = new long[] { 0, 67781838 };
-			var precision = 55;
+			var precision = RMapConstants.DEFAULT_PRECISION;
 			var extent = 16;
 			var samplePointDelta = new RSize(1, 1, -36);
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);

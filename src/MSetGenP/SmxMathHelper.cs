@@ -1,5 +1,6 @@
 ﻿using Grpc.Core;
 using MSS.Common;
+using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
@@ -25,6 +26,9 @@ namespace MSetGenP
 
 		private static readonly ulong LOW_MASK =    0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
+
+		// Integer used to convert BigIntegers to/from array of longs.
+		private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, 53);
 
 		#endregion
 
@@ -771,7 +775,7 @@ namespace MSetGenP
 		{
 			ValidateIsSplit(mantissa);
 
-			Debug.Assert(indexOfLastNonZeroLimb >= -1, "indexOfLastNonZeroLimb should not be negative.");
+			Debug.Assert(indexOfLastNonZeroLimb >= -1, "indexOfLastNonZeroLimb should >= -1.");
 
 			DblChkIndexOfLastNonZeroLimb(indexOfLastNonZeroLimb, mantissa);
 
@@ -814,11 +818,24 @@ namespace MSetGenP
 				// Compensate for shifting towards the MSB (i.e., multiplying)
 				newExponent = exponent - shiftAmount;
 
-				//var startIndex = mantissa.Length - LimbCount;
-				var startIndex = indexOfLastNonZeroLimb + 1 - LimbCount;
+				int startIndex;
+				var logicalLength = indexOfLastNonZeroLimb + 1;
+				if (logicalLength > LimbCount)
+				{
+					//var startIndex = mantissa.Length - LimbCount;
+					startIndex = logicalLength - LimbCount;
+					
+					result = new ulong[LimbCount];
+					Array.Copy(mantissa, startIndex, result, 0, LimbCount);
+				}
+				else
+				{
+					//var startIndex = mantissa.Length - LimbCount;
+					startIndex = 0;
 
-				result = new ulong[LimbCount];
-				Array.Copy(mantissa, startIndex, result, 0, LimbCount);
+					result = new ulong[logicalLength];
+					Array.Copy(mantissa, startIndex, result, 0, logicalLength);
+				}
 
 				Debug.Assert(result[^1] != 0, "Normalize Result should not have 0 as the MSL.");
 
@@ -1060,7 +1077,7 @@ namespace MSetGenP
 
 			(var limbOffset, var remainder) = Math.DivRem(power, BITS_PER_LIMB);
 
-			if (limbOffset > LimbCount + 1)
+			if (limbOffset > LimbCount * 2 + 1)
 			{
 				return new ShiftedArray<ulong>();
 			}
@@ -1140,7 +1157,7 @@ namespace MSetGenP
 
 		private void ExtendLimbs(ShiftedArray<ulong> left, ShiftedArray<ulong> right)
 		{
-			if (Math.Abs(left.Length - right.Length) > 3)
+			if (Math.Abs(left.Length - right.Length) > LimbCount * 2 + 1)
 			{
 				Debug.WriteLine($"Left and Right have significant difference in lengths.");
 			}
@@ -1157,9 +1174,9 @@ namespace MSetGenP
 				}
 			}
 
-			if (left.Length > 10 || right.Length > 10)
+			if (left.Length > LimbCount * 4)
 			{
-				Debug.WriteLine($"The left length is {left.Length} and the right length is {right.Length}.");
+				Debug.WriteLine($"With the exponents aligned, the value now have {left.Length} limbs.");
 			}
 
 		}
@@ -1458,86 +1475,127 @@ namespace MSetGenP
 		public Smx CreateSmxFromDto(long[] values, int exponent, int precision)
 		{
 			var sign = !values.Any(x => x < 0);
-			var mantissa = ConvertDtoLongsToSmxULongs(values, out var indexOfLastNonZeroLimb);
-			DblChkIndexOfLastNonZeroLimb(indexOfLastNonZeroLimb, mantissa);
+
+			//var mantissa = ConvertDtoLongsToSmxULongs(values, out var indexOfLastNonZeroLimb);
+
+			var mantissa = ConvertDtoLongsToPwUlongs(values);
+			var indexOfLastNonZeroLimb = GetNumberOfSignificantB32Digits(mantissa) - 1;
 			var nrmMantissa = NormalizeFPV(mantissa, indexOfLastNonZeroLimb, exponent, precision, out var nrmExponent);
-			var result = new Smx(sign, nrmMantissa, nrmExponent, precision);
+
+			if (exponent < -120)
+			{
+				throw new InvalidOperationException("Dto values with an exponent < -120 are not yet supported.");
+			}
+
+			// Force the exponent to be -120
+			var shiftAmount = exponent + 120;
+
+			if (shiftAmount > BITS_PER_LIMB * (LimbCount * 2 + 1))
+			{
+				throw new InvalidOperationException("Cannot convert Dto, the LimbCount is too small.");
+			}
+
+			indexOfLastNonZeroLimb = GetNumberOfSignificantB32Digits(nrmMantissa) - 1;
+			var scaledMantissa = ScaleAndSplit(new ShiftedArray<ulong>(nrmMantissa, 0, indexOfLastNonZeroLimb), shiftAmount);
+
+			var result = new Smx(sign, scaledMantissa.Materialize(), -120, precision);
 
 			return result;
 		}
 
-		public ulong[] ConvertDtoLongsToSmxULongs(long[] values, out int indexOfLastNonZeroLimb)
+		private ulong[] ConvertDtoLongsToPwUlongs(long[] values)
 		{
-			// DtoLongs are in Big-Endian order, convert to Little-Endian order.
-			//var leValues = values.Reverse().ToArray();
-
-			// Currently the Dto classes produce an array of longs with length of either 1 or 2.
-
-			var leValues = TrimLeadingZerosBigEndian(values);
-
-			if (leValues.Length > 1)
-			{
-				throw new NotSupportedException("ConvertDtoLongsToSmxULongs only supports values with a single 'digit.'");
-			}
-
-			indexOfLastNonZeroLimb = -1;
-
-			var result = new ulong[leValues.Length * 2];
-
-			for (int i = 0; i < leValues.Length; i++)
-			{
-				var value = (ulong)Math.Abs(leValues[i]);
-				var lo = Split(value, out var hi);
-				result[2 * i] = lo;
-				result[2 * i + 1] = hi;
-
-				if (hi > 0)
-				{
-					indexOfLastNonZeroLimb = i + 1;
-				}
-				else
-				{
-					if (lo > 0)
-					{
-						indexOfLastNonZeroLimb = i;
-					}
-				}
-
-			}
-
-			//var trResult = TrimLeadingZeros(result);
-			//return trResult;
-
+			var bi = FromLongs(values);
+			var result = ToPwULongs(bi);
 			return result;
 		}
 
-		// Trim Leading Zeros for a Big-Endian formatted array of longs.
-		private long[] TrimLeadingZerosBigEndian(long[] mantissa)
+		private BigInteger FromLongs(long[] values)
 		{
-			var i = 0;
-			for (; i < mantissa.Length; i++)
+			//DtoLongs are in Big - Endian order
+			var result = BigInteger.Zero;
+
+			for (var i = 0; i < values.Length; i++)
 			{
-				if (mantissa[i] != 0)
-				{
-					break;
-				}
+				result *= LONG_FACTOR;
+				result += values[i];
 			}
 
-			if (i == 0)
-			{
-				return mantissa;
-			}
-
-			if (i == mantissa.Length)
-			{
-				// All digits are zero
-				return new long[] { 0 };
-			}
-
-			var result = new long[mantissa.Length - i];
-			Array.Copy(mantissa, i, result, 0, result.Length);
 			return result;
 		}
+
+		//private ulong[] ConvertDtoLongsToSmxULongs(long[] values, out int indexOfLastNonZeroLimb)
+		//{
+		//	// DtoLongs are in Big-Endian order, convert to Little-Endian order.
+		//	//var leValues = values.Reverse().ToArray();
+
+		//	// Currently the Dto classes produce an array of longs with length of either 1 or 2.
+
+		//	var leValues = TrimLeadingZerosBigEndian(values);
+
+		//	if (leValues.Length > 1)
+		//	{
+		//		throw new NotSupportedException("ConvertDtoLongsToSmxULongs only supports values with a single 'digit.'");
+		//	}
+
+		//	indexOfLastNonZeroLimb = -1;
+
+		//	var result = new ulong[leValues.Length * 2];
+
+		//	for (int i = 0; i < leValues.Length; i++)
+		//	{
+		//		var value = (ulong)Math.Abs(leValues[i]);
+		//		var lo = Split(value, out var hi);
+		//		result[2 * i] = lo;
+		//		result[2 * i + 1] = hi;
+
+		//		if (hi > 0)
+		//		{
+		//			indexOfLastNonZeroLimb = i + 1;
+		//		}
+		//		else
+		//		{
+		//			if (lo > 0)
+		//			{
+		//				indexOfLastNonZeroLimb = i;
+		//			}
+		//		}
+
+		//	}
+
+		//	//var trResult = TrimLeadingZeros(result);
+		//	//return trResult;
+
+		//	return result;
+		//}
+
+		//// Trim Leading Zeros for a Big-Endian formatted array of longs.
+		//private long[] TrimLeadingZerosBigEndian(long[] mantissa)
+		//{
+		//	var i = 0;
+		//	for (; i < mantissa.Length; i++)
+		//	{
+		//		if (mantissa[i] != 0)
+		//		{
+		//			break;
+		//		}
+		//	}
+
+		//	if (i == 0)
+		//	{
+		//		return mantissa;
+		//	}
+
+		//	if (i == mantissa.Length)
+		//	{
+		//		// All digits are zero
+		//		return new long[] { 0 };
+		//	}
+
+		//	var result = new long[mantissa.Length - i];
+		//	Array.Copy(mantissa, i, result, 0, result.Length);
+		//	return result;
+		//}
 
 		#endregion
 	}
