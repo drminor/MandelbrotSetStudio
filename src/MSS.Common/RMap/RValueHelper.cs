@@ -264,6 +264,35 @@ namespace MSS.Common
 			return true;
 		}
 
+		public static int GetNumberOfMatchingDigits(RValue a, RValue b, out int expected)
+		{
+			var precision = Math.Min(a.Precision, b.Precision);
+			expected = (int)Math.Round(precision * Math.Log10(2), MidpointRounding.ToZero);
+
+			var strA = GetStringsToCompare(a, b, out var strB);
+			Debug.WriteLine($"GetNumberOfMatchingDigits found a:{strA}, b:{strB}");
+
+			var result = GetNumberOfMatchingChars(strA, strB);
+
+			return result;
+		}
+
+		private static int GetNumberOfMatchingChars(string a, string b)
+		{
+			var len = Math.Min(a.Length, b.Length);
+
+			var i = 0;
+			for(; i < len; i++)
+			{
+				if (a[i] != b[i])
+				{
+					break;
+				}
+			}
+
+			return i;
+		}
+
 		public static string GetStringsToCompare(RValue a, RValue b, out string strB)
 		{
 			var aNrm = RNormalizer.Normalize(a, b, out var bNrm);

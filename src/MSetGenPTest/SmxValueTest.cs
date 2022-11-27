@@ -14,12 +14,14 @@ namespace EngineTest
 		[Fact]
 		public void RoundTrip_ToRValue_IsSuccessful()
 		{
+			var smxMathHelper = new SmxMathHelper(TARGET_EXPONENT);
+
 			//var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
 			var aBigInteger = BigInteger.Parse("-34359738368");
+			var aRValue = new RValue(aBigInteger, -10, 20);
 
-			var aRValue = new RValue(aBigInteger, -10);
-
-			var aSmx = new Smx(aRValue, 20);
+			//var aSmx = new Smx(aRValue, 20);
+			var aSmx = smxMathHelper.CreateSmx(aRValue);
 			var aSmxRValue = aSmx.GetRValue();
 
 			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(aRValue, aSmxRValue, failOnTooFewDigits: true, out var strA, out var strB);
