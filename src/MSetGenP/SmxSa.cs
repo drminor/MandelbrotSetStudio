@@ -8,12 +8,12 @@ namespace MSetGenP
 	{
 		#region Constructor
 
-		public SmxSa(bool sign, ShiftedArray<ulong> mantissa, int exponent, int precision)
+		public SmxSa(bool sign, ShiftedArray<ulong> mantissaSa, int exponent, int precision)
 		{
-			ValidatePWValues(mantissa);
+			ValidatePWValues(mantissaSa);
 
 			Sign = sign;
-			Mantissa = mantissa;
+			MantissaSa = mantissaSa;
 			Exponent = exponent;
 			Precision = precision;
 		}
@@ -23,7 +23,7 @@ namespace MSetGenP
 			ValidatePWValues(mantissa);
 
 			Sign = sign;
-			Mantissa = new ShiftedArray<ulong>(mantissa, 0, indexOfLastNonZeroLimb); // SmxMathHelper.GetPwULongs(mantissa);
+			MantissaSa = new ShiftedArray<ulong>(mantissa, 0, indexOfLastNonZeroLimb); // SmxMathHelper.GetPwULongs(mantissa);
 			Exponent = exponent;
 			Precision = precision;
 		}
@@ -49,14 +49,14 @@ namespace MSetGenP
 		#region Public Properties
 
 		public bool Sign { get; set; }
-		public ShiftedArray<ulong> Mantissa { get; init; }
+		public ShiftedArray<ulong> MantissaSa { get; init; }
 		public int Exponent { get; set; }
 		public int Precision { get; set; } // Number of significant binary digits.
 
-		public bool IsZero => !Mantissa.Array.Any(x => x > 0) && !Mantissa.Carry.HasValue;
+		public bool IsZero => !MantissaSa.Array.Any(x => x > 0) && !MantissaSa.Carry.HasValue;
 
-		public int LimbCount => Mantissa.Length;
-		public int IndexOfLastNonZeroLimb => Mantissa.IndexOfLastNonZeroLimb;
+		public int LimbCount => MantissaSa.Length;
+		public int IndexOfLastNonZeroLimb => MantissaSa.IndexOfLastNonZeroLimb;
 
 		#endregion
 
@@ -64,13 +64,14 @@ namespace MSetGenP
 
 		public ulong[] Materialize()
 		{
-			var result = Mantissa.Materialize();
+			var result = MantissaSa.Materialize();
 			return result;
 		}
 
 		public RValue GetRValue()
 		{
-			var biValue = SmxMathHelper.FromPwULongs(Mantissa.Materialize());
+			var mantissa = MantissaSa.Materialize();
+			var biValue = SmxMathHelper.FromPwULongs(mantissa);
 			biValue = Sign ? biValue : -1 * biValue;
 			var result = new RValue(biValue, Exponent, Precision);
 
@@ -97,13 +98,13 @@ namespace MSetGenP
 		public bool Equals(SmxSa other)
 		{
 			return Sign == other.Sign &&
-				((IStructuralEquatable)Mantissa).Equals(other.Mantissa, StructuralComparisons.StructuralEqualityComparer) &&
+				((IStructuralEquatable)MantissaSa).Equals(other.MantissaSa, StructuralComparisons.StructuralEqualityComparer) &&
 				Exponent == other.Exponent;
 		}
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(Sign, Mantissa, Exponent);
+			return HashCode.Combine(Sign, MantissaSa, Exponent);
 		}
 
 		public static bool operator ==(SmxSa left, SmxSa right)

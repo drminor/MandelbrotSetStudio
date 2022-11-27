@@ -2,6 +2,7 @@
 using MSS.Types;
 using System.Collections;
 using System.Numerics;
+using System.Text;
 
 namespace MSetGenP
 {
@@ -9,7 +10,7 @@ namespace MSetGenP
 	{
 		#region Constructor
 
-		public static readonly Smx Zero = new Smx(true, new ulong[] { 0 }, 0, 1000);
+		public static readonly Smx Zero = new Smx(true, new ulong[] { 0 }, 1, 1000);
 
 		public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision)
 		{ }
@@ -61,6 +62,11 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
+			//var rMantissa = SmxMathHelper.Reduce(Mantissa, Exponent, out var rExponent);
+			//var biValue = SmxMathHelper.FromPwULongs(rMantissa);
+			//biValue = Sign ? biValue : -1 * biValue;
+			//var result = new RValue(biValue, rExponent, Precision);
+
 			var biValue = SmxMathHelper.FromPwULongs(Mantissa);
 			biValue = Sign ? biValue : -1 * biValue;
 			var result = new RValue(biValue, Exponent, Precision);
@@ -74,6 +80,15 @@ namespace MSetGenP
 			var strValue = RValueHelper.ConvertToString(rValue);
 
 			return strValue;
+		}
+
+		public override string ToString()
+		{
+			var result = Sign
+				? "-" + SmxMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}"
+				: SmxMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}";
+
+			return result;
 		}
 
 		#endregion

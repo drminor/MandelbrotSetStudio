@@ -1,4 +1,7 @@
-﻿namespace MSetGenP
+﻿using System;
+using System.Diagnostics;
+
+namespace MSetGenP
 {
 	public class ShiftedArray<T> where T : struct
 	{
@@ -76,33 +79,37 @@
 
 		public T[] Materialize()
 		{
-			int len;
-
-			if (Carry.HasValue)
+			try
 			{
-				len = CarryIndex + 1;
+				if (IndexOfLastNonZeroLimb < 0)
+				{
+					return new T[] { default };
+				}
+
+				var len = IndexOfLastNonZeroLimb + 1;
+
+				var result = new T[len];
+
+				var i = 0;
+
+				for (; i < Offset; i++)
+				{
+					result[i] = default;
+				}
+
+				for (; i < len; i++)
+				{
+					result[i] = this[i];
+				}
+
+				return result;
 			}
-			else
+			catch (Exception ee)
 			{
-				len = Array.Length + Offset;
+				Debug.WriteLine($"Got ee: {ee}.");
+				throw;
+
 			}
-
-			var result = new T[len];
-
-			var i = 0;
-
-			for (; i < Offset; i++)
-			{
-				result[i] = default;
-			}
-
-			// TODO: Replace this with a call to Array.Copy
-			for (; i < len; i++)
-			{
-				result[i] = this[i];
-			}
-
-			return result;
 		}
 
 		#endregion

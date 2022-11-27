@@ -12,17 +12,26 @@ namespace MSetGenP
 			var mapPositionDto = mapSectionRequest.Position;
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
-			var precision = mapSectionRequest.Precision + 10;
+			var precision = mapSectionRequest.Precision;
 
-			var smxMathHelper = new SmxMathHelper(precision);
+			var targetExponent = samplePointDeltaDto.Exponent - 20;
+			var smxMathHelper = new SmxMathHelper(targetExponent);
 
 			var startingCx = smxMathHelper.CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
 			var startingCy = smxMathHelper.CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
 			var delta = smxMathHelper.CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
 
-			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
+			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
+			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
+			var s3 = RValueHelper.ConvertToString(delta.GetRValue());
 
-			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations);
+			var blockPos = mapSectionRequest.BlockPosition;
+			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
+
+			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
+			var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
+
+			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, threshold);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[128 * 128];
@@ -31,21 +40,13 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
+		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, uint threshold)
 		{
-			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
-			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
-			var s3 = RValueHelper.ConvertToString(delta.GetRValue());
-
-			Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Precision: {startingCx.Precision}");
-
 			var result = new ushort[blockSize.NumberOfCells];
 
 			var stride = blockSize.Width;
 			var samplePointOffsets = smxMathHelper.BuildSamplePointOffsets(delta, stride);
-
 			//ReportExponents(samplePointOffsets);
-
 			var samplePointsX = smxMathHelper.BuildSamplePoints(startingCx, samplePointOffsets);
 			var samplePointsY = smxMathHelper.BuildSamplePoints(startingCy, samplePointOffsets);
 
@@ -55,7 +56,7 @@ namespace MSetGenP
 			{
 				for (int i = 0; i < samplePointsX.Length; i++)
 				{
-					var cntr = iterator.Iterate(samplePointsX[i], samplePointsY[j]);
+					var cntr = iterator.Iterate(samplePointsX[i], samplePointsY[j], threshold);
 					result[j * stride + i] = cntr;
 				}
 			}

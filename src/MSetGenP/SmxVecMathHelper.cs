@@ -9,6 +9,9 @@ namespace MSetGenP
 	{
 		#region Private Properties
 
+		private const int BITS_PER_LIMB = 32;
+		private const int BITS_BEFORE_BP = 8;
+
 		private const ulong LOW_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private const ulong HIGH_MASK = 0xFFFFFFFF00000000; // bits 32 - 63 are set.
 
@@ -20,7 +23,6 @@ namespace MSetGenP
 		private static readonly int _ulongSlots = Vector<ulong>.Count;
 
 		private readonly SmxMathHelper _smxMathHelper;
-		private readonly int _valueCount;
 
 		private Memory<ulong>[] _squareResult1Mems;
 		private Memory<ulong>[] _squareResult2Mems;
@@ -37,32 +39,38 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public SmxVecMathHelper(bool[] doneFlags, int precision)
+		public SmxVecMathHelper(bool[] doneFlags, int targetExponent)
 		{
-			_smxMathHelper = new SmxMathHelper(precision);
-			_valueCount = doneFlags.Length;
-			VecCount = Math.DivRem(_valueCount, _ulongSlots, out var remainder);
+			ValueCount = doneFlags.Length;
+			VecCount = Math.DivRem(ValueCount, _ulongSlots, out var remainder);
 
 			if (remainder != 0)
 			{
 				throw new ArgumentException("The valueCount must be an even multiple of Vector<ulong>.Count.");
 			}
 
-			Precision = precision;
-			LimbCount = SmxMathHelper.GetLimbCount(precision);
+			LimbCount = SmxMathHelper.GetLimbCount(targetExponent, out var adjustedTargetExponent);
+
+			if (adjustedTargetExponent != targetExponent)
+			{
+				Debug.WriteLine($"WARNING: Increasing the TargetExponent to {adjustedTargetExponent} from {targetExponent}.");
+			}
+
+			TargetExponent = adjustedTargetExponent;
+			_smxMathHelper = new SmxMathHelper(TargetExponent);
 
 			InPlayList = BuildTheInplayList(doneFlags, VecCount);
 
-			_squareResult1Mems = BuildMantissaMemoryArray(LimbCount * 2, _valueCount);
-			_squareResult2Mems = BuildMantissaMemoryArray(LimbCount * 2, _valueCount);
+			_squareResult1Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
+			_squareResult2Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
 
-			_productsMem = new Memory<ulong>(new ulong[_valueCount]);
-			_productLowsMem = new Memory<ulong>(new ulong[_valueCount]);
-			_productHighsMem = new Memory<ulong>(new ulong[_valueCount]);
+			_productsMem = new Memory<ulong>(new ulong[ValueCount]);
+			_productLowsMem = new Memory<ulong>(new ulong[ValueCount]);
+			_productHighsMem = new Memory<ulong>(new ulong[ValueCount]);
 
-			_carriesMem = new Memory<ulong>(new ulong[_valueCount]);
-			_withCarriesMem = new Memory<ulong>(new ulong[_valueCount]);
-			_addResult1Mem = BuildMantissaMemoryArray(LimbCount + 1, _valueCount);
+			_carriesMem = new Memory<ulong>(new ulong[ValueCount]);
+			_withCarriesMem = new Memory<ulong>(new ulong[ValueCount]);
+			_addResult1Mem = BuildMantissaMemoryArray(LimbCount + 1, ValueCount);
 		}
 
 		private List<int> BuildTheInplayList(bool[] doneFlags, int vecCount)
@@ -108,10 +116,12 @@ namespace MSetGenP
 
 		#region Public Properties
 
-		public int Precision { get; init; }
-
-		public int VecCount { get; init; }
+		//public int Precision { get; init; }
 		public int LimbCount { get; init; }
+		public int TargetExponent { get; init; }
+
+		public int ValueCount { get; init; }
+		public int VecCount { get; init; }
 
 		public List<int> InPlayList { get; }
 

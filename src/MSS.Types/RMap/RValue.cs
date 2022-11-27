@@ -109,6 +109,7 @@ namespace MSS.Types
 		public RValue Clone()
 		{
 			return Reducer.Reduce(this);
+			//return new RValue(Value, Exponent, Precision);
 		}
 
 		public override string ToString()

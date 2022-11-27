@@ -28,6 +28,26 @@ namespace MSetGenPTest
 		}
 
 		[Fact]
+		public void SimpleScalarGeneratateSectionResponseNearZero()
+		{
+
+			//Precision: 65, BP: X: -1, 0, Y: 0
+
+			var xPos = new long[] { 0, -1 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
+			var yPos = new long[] { 0, 0 };
+			var precision = RMapConstants.DEFAULT_PRECISION;
+			var extent = 128;
+			var samplePointDelta = new RSize(1, 1, -8);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
+			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
+
+			var generatorScalar = new MapSectionGeneratorScalar();
+			var reponse = generatorScalar.GenerateMapSection(request);
+
+			Assert.NotNull(reponse);
+		}
+
+		[Fact]
 		public void SimpleVectorGeneratateSectionResponse()
 		{
 			var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
@@ -56,20 +76,6 @@ namespace MSetGenPTest
 		}
 
 		#region Support Methods
-
-		//private MapSectionRequest BuildTestRequest()
-		//{
-		//	var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
-		//	var yPos = new long[] { 0, 67781838 };
-		//	var precision = 55;
-
-		//	var samplePointDelta = new RSize(1, 1, -36);
-		//	var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 4);
-
-		//	var result = AssembleRequest(xPos, yPos, precision, samplePointDelta, mapCalcSettings);
-
-		//	return result;
-		//}
 
 		private MapSectionRequest AssembleRequest(long[] xPos, long[] yPos, int precision, int extent, RSize samplePointDelta, MapCalcSettings mapCalcSettings)
 		{

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types
@@ -65,6 +66,11 @@ namespace MSS.Types
 				return value;
 			}
 
+			if (Math.Abs(exponent) > 63)
+			{
+				value = ReduceByLongFactor(value, exponent, out exponent);
+			}
+
 			var reductionFactor = 0;
 			long divisor = 1;
 
@@ -78,6 +84,23 @@ namespace MSS.Types
 			var result = value / divisor;
 			return result;
 		}
+
+		private static BigInteger ReduceByLongFactor(BigInteger value, int exponent, out int newExponent)
+		{
+			var reductionFactor = 0;
+
+			var remainder = BigInteger.Remainder(value, BigInteger.Pow(2, reductionFactor + 64));
+
+			while (exponent + reductionFactor + 64 < 0 && remainder == 0)
+			{
+				reductionFactor += 64;
+			}
+
+			newExponent = exponent + reductionFactor;
+			var result = value / BigInteger.Pow(2, reductionFactor);
+			return result;
+		}
+
 
 		// TODO: Use BigInteger instead of long for the divisor
 		private static bool IsDivisibleBy(BigInteger[] dividends, long divisor)

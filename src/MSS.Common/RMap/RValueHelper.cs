@@ -223,33 +223,55 @@ namespace MSS.Common
 
 		public static bool AreClose(RValue a, RValue b, bool failOnTooFewDigits = true)
 		{
-			var aNrm = RNormalizer.Normalize(a, b, out var bNrm);
-			var strA = aNrm.Value.ToString();
-			var strB = bNrm.Value.ToString();
+			if (GetStringsToCompare(a, b, failOnTooFewDigits, out var strA, out var strB))
+			{
+				Debug.WriteLine($"AreClose is comparing {strA} with {strB} and returning {strA == strB}.");
+				return strA == strB;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public static bool GetStringsToCompare(RValue a, RValue b, bool failOnTooFewDigits, out string strA, out string strB)
+		{
+			strA = string.Empty;
+			strB = string.Empty;
+
+			var strARaw = GetStringsToCompare(a, b, out var strBRaw);
 
 			var precision = Math.Min(a.Precision, b.Precision);
 			var numberOfDecimalDigits = (int)Math.Round(precision * Math.Log10(2), MidpointRounding.ToZero);
 
-			if (strA.Length < numberOfDecimalDigits && failOnTooFewDigits)
+			if (strARaw.Length < numberOfDecimalDigits && failOnTooFewDigits)
 			{
-				Debug.WriteLine($"Value A has {strA.Length} decimal digits which is less than {numberOfDecimalDigits}.");
+				Debug.WriteLine($"Value A has {strARaw.Length} decimal digits which is less than {numberOfDecimalDigits}.");
 				return false;
 			}
 
-			if (strB.Length < numberOfDecimalDigits && failOnTooFewDigits)
+			if (strBRaw.Length < numberOfDecimalDigits && failOnTooFewDigits)
 			{
-				Debug.WriteLine($"Value B has {strB.Length} decimal digits which is less than {numberOfDecimalDigits}.");
+				Debug.WriteLine($"Value B has {strBRaw.Length} decimal digits which is less than {numberOfDecimalDigits}.");
 				return false;
 			}
 
-			Debug.WriteLine($"AreClose is comparing {numberOfDecimalDigits} characters of {strA} and {strB}.");
+			strA = strARaw.Substring(0, Math.Min(numberOfDecimalDigits, strARaw.Length));
+			strB = strBRaw.Substring(0, Math.Min(numberOfDecimalDigits, strBRaw.Length));
 
-			strA = strA.Substring(0, Math.Min(numberOfDecimalDigits, strA.Length));
-			strB = strB.Substring(0, Math.Min(numberOfDecimalDigits, strB.Length));
+			Debug.WriteLine($"GetString found a:{strARaw}, b:{strBRaw} and is returning a:{strA}, b:{strB}");
 
-			Debug.WriteLine($"AreClose is comparing {strA} with {strB} and returning {strA == strB}.");
+			return true;
+		}
 
-			return strA == strB;
+		public static string GetStringsToCompare(RValue a, RValue b, out string strB)
+		{
+			var aNrm = RNormalizer.Normalize(a, b, out var bNrm);
+
+			var result = aNrm.Value.ToString();
+			strB = bNrm.Value.ToString();
+
+			return result;
 		}
 
 		#endregion

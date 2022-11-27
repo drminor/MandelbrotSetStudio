@@ -15,18 +15,28 @@ namespace MSetGenP
 			var mapPositionDto = mapSectionRequest.Position;
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
-			var precision = mapSectionRequest.Precision; // + 20;
+			var precision = mapSectionRequest.Precision;
 
-			var smxMathHelper = new SmxMathHelper(precision);
-			var smxVecMathHelper = new SmxVecMathHelper(mapSectionRequest.DoneFlags, precision);
+			var targetExponent = samplePointDeltaDto.Exponent - 20;
+
+
+			var smxMathHelper = new SmxMathHelper(targetExponent);
+			var smxVecMathHelper = new SmxVecMathHelper(mapSectionRequest.DoneFlags, targetExponent);
 
 			var startingCx = smxMathHelper.CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
 			var startingCy = smxMathHelper.CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
 			var delta = smxMathHelper.CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
 
-			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
+			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
+			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
+			var s3 = RValueHelper.ConvertToString(delta.GetRValue());
 
-			uint threshold = 0; // 4;
+			Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Precision: {startingCx.Precision}");
+			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
+			
+			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
+			uint threshold = 0;
+
 			var counts = GenerateMapSection(smxMathHelper, smxVecMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, threshold);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
@@ -38,12 +48,6 @@ namespace MSetGenP
 
 		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, SmxVecMathHelper smxVecMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, uint threshold)
 		{
-			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
-			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
-			var s3 = RValueHelper.ConvertToString(delta.GetRValue());
-
-			Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Precision: {startingCx.Precision}");
-
 			var iterator = new IteratorVector(smxVecMathHelper);
 			//iterator.Sample();
 

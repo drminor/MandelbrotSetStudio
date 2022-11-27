@@ -15,7 +15,9 @@ namespace MSS.Common
 		public static readonly RRectangle TEST_RECTANGLE;
 		public static readonly RRectangle TEST_RECTANGLE_HALF;
 
-		public const int DEFAULT_PRECISION = 65;
+		public const int DEFAULT_PRECISION = 53;
+		public const int DEFAULT_TARGET_EXPONENT = -64;
+
 
 		static RMapConstants()
 		{
