@@ -97,7 +97,7 @@ namespace EngineTest
 		{
 			var aRValue = new RValue(BigInteger.Parse("-126445453255269018635038690902017"), -124, 53); // -0.0000059454366395492942314714083927915125745469
 
-			var targetExponent = -4 * 32; // -128
+			var targetExponent = -1 * (SmxMathHelper.BITS_PER_LIMB * 3 - SmxMathHelper.BITS_BEFORE_BP);
 			var smxMathHelper = new SmxMathHelper(targetExponent);
 
 			var a = new Smx(aRValue);
@@ -116,8 +116,46 @@ namespace EngineTest
 			Debug.WriteLine(SmxMathHelper.GetDiagDisplay("b", b.Mantissa));
 			Debug.WriteLine(SmxMathHelper.GetDiagDisplay("bRSmx", bRSmx.Mantissa));
 
-			var areClose = RValueHelper.AreClose(bSmxRValue, bRValue);
-			Assert.True(areClose);
+			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: true, out var strA, out var strB);
+			Assert.True(haveRequiredPrecion);
+			Assert.Equal(strA, strB);
+		}
+
+		[Fact]
+		public void SquareAnRValue2()
+		{
+			var aRValue = new RValue(BigInteger.Parse("-126445453255269018635038690902017"), -124, 53); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+
+			//var targetExponent = -1 * (SmxMathHelper.BITS_PER_LIMB * 4 - SmxMathHelper.BITS_BEFORE_BP);
+			//var smxMathHelper = new SmxMathHelper(targetExponent);
+
+			var targetExponent = -4 * 32; // -128
+			var smxMathHelper = new SmxMathHelper(targetExponent);
+
+			var s0 = RValueHelper.ConvertToString(aRValue); // -5.94543663954929423147140869492508049e-10
+
+			var a = new Smx(aRValue);
+
+			var a2Mantissa = smxMathHelper.Square(a.Mantissa);
+			//var a2 = new Smx(true, a2Mantissa, -248, 53);
+			//var a2SmxRvalue = a2.GetRValue();
+			//var sA2 = a2.GetStringValue();
+
+			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa, out var indexOfLastNonZeroLimb);
+			var a3 = new Smx(true, a3Mantissa, -248, 53);
+			var a3SmxRvalue = a3.GetRValue();
+			var sA3 = a3.GetStringValue();
+
+			var b = smxMathHelper.Square(a);                            //3.5348216834895204420064645071512155149938836924682889e-19 -- Windows Calc: 3.5348216834895e-19 
+			var bSmxRValue = b.GetRValue();
+			var s1 = b.GetStringValue();
+
+			var bRValue = aRValue.Square();
+			var s2 = RValueHelper.ConvertToString(bRValue);
+
+			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: true, out var strA, out var strB);
+			Assert.True(haveRequiredPrecion);
+			Assert.Equal(strA, strB);
 		}
 
 		[Fact]
@@ -133,9 +171,9 @@ namespace EngineTest
 			var a = new Smx(aRValue);
 
 			var a2Mantissa = smxMathHelper.Square(a.Mantissa);
-			var a2 = new Smx(true, a2Mantissa, -248, 53);
-			var a2SmxRvalue = a2.GetRValue();
-			var sA2 = a2.GetStringValue();
+			//var a2 = new Smx(true, a2Mantissa, -248, 53);
+			//var a2SmxRvalue = a2.GetRValue();
+			//var sA2 = a2.GetStringValue();
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa, out var indexOfLastNonZeroLimb);
 			var a3 = new Smx(true, a3Mantissa, -248, 53);
@@ -149,8 +187,9 @@ namespace EngineTest
 			var bRValue = aRValue.Square();
 			var s2 = RValueHelper.ConvertToString(bRValue);
 
-			var areClose = RValueHelper.AreClose(bSmxRValue, bRValue); //3.5348216834895203909277564e-19
-			Assert.True(areClose);
+			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: true, out var strA, out var strB);
+			Assert.True(haveRequiredPrecion);
+			Assert.Equal(strA, strB);
 		}
 
 		[Fact]
@@ -158,8 +197,7 @@ namespace EngineTest
 		{
 			var a = new Smx(true, new ulong[] { 353384068, 3154753262, 3994887299, 3390983361, 1473799878, 109397432 }, -248, 55);
 
-			var targetExponent = -4 * 32; // -128
-			//targetExponent = -192;
+			var targetExponent = -1 * (SmxMathHelper.BITS_PER_LIMB * 4 - SmxMathHelper.BITS_BEFORE_BP);
 			var smxMathHelper = new SmxMathHelper(targetExponent);
 
 			var aRValue = a.GetRValue();
@@ -173,8 +211,9 @@ namespace EngineTest
 			var aNrmRValue = aNrm.GetRValue();
 			var s1 = aNrm.GetStringValue();
 
-			var areClose = RValueHelper.AreClose(aNrmRValue, aRValue);
-			Assert.True(areClose);
+			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(aNrmRValue, aRValue, failOnTooFewDigits: true, out var strA, out var strB);
+			Assert.True(haveRequiredPrecion);
+			Assert.Equal(strA, strB);
 		}
 
 		[Fact]

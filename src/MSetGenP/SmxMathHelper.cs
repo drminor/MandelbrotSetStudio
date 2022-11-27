@@ -1,9 +1,11 @@
 ﻿using MongoDB.Driver.Core.Authentication.Libgssapi;
 using MSS.Common;
 using MSS.Common.MSet;
+using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
@@ -28,9 +30,6 @@ namespace MSetGenP
 
 		private static readonly ulong LOW_MASK =    0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
-
-		// Integer used to convert BigIntegers to/from array of longs.
-		private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, 53);
 
 		#endregion
 
@@ -794,8 +793,10 @@ namespace MSetGenP
 			var nrmMantissa = ForceExp(trimmedMantissa, indexOfLastNonZeroLimb, smx.Exponent, out var nrmExponent);
 
 			indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(nrmMantissa);
+			var result = new SmxSa(smx.Sign, nrmMantissa, indexOfLastNonZeroLimb, nrmExponent, smx.Precision);
+			CheckForceExpResult(result);
 
-			return new SmxSa(smx.Sign, nrmMantissa, indexOfLastNonZeroLimb, nrmExponent, smx.Precision);
+			return result;
 		}
 
 		[Conditional("DEBUG")]
@@ -927,10 +928,10 @@ namespace MSetGenP
 			ulong[] result;
 			nrmExponent = TargetExponent;
 
-			//var logicalLength = indexOfLastNonZeroLimb + 1;
+			var logicalLength = indexOfLastNonZeroLimb + 1;
 			//var limbsToDiscard = logicalLength - LimbCount;
 
-			var limbsToDiscard = Math.Max(mantissa.Length - LimbCount, 0);
+			var limbsToDiscard = Math.Max(logicalLength - LimbCount, 0);
 			var adjExponent = exponent + limbsToDiscard * 32;
 
 			var shiftAmount = TargetExponent - adjExponent;
@@ -1562,70 +1563,16 @@ namespace MSetGenP
 			return mantissa.Any(x => x != 0);
 		}
 
-		//private int GetWholeExp(ulong[] mantissa)
-		//{
-		//	var result = 0;
-
-		//	for(var i = 0; i < mantissa.Length; i++)
-		//	{
-		//		if (mantissa[i] == 0)
-		//		{
-		//			result += 32;
-		//		}
-		//		else
-		//		{
-		//			var we = GetWholeExp(mantissa[i]);
-
-		//			if (we > 0)
-		//			{
-		//				result += we;
-		//				return result;
-		//			}
-		//			else
-		//			{
-		//				result -= we;
-		//			}
-		//		}
-		//	}
-
-		//	result *= -1;
-		//	return result;
-		//}
-
-		//private int GetWholeExp(ulong limb)
-		//{
-		//	var result = 0;
-
-		//	while(limb > 0 && limb % 2 == 0)
-		//	{
-		//		limb <<= 1;
-		//		result++;
-		//	}
-
-		//	if (limb == 0)
-		//	{
-		//		result *= -1;
-		//	}
-
-		//	return result;
-		//}
-
 		#endregion
 
 		#region Comparison
 
 		private int Compare(ShiftedArray<ulong> left, ShiftedArray<ulong> right)
 		{
-			//var sdA = GetNumberOfSignificantB32Digits(left);
-			//var sdB = GetNumberOfSignificantB32Digits(right);
-
-			//var numberOfSignificantDigitsA = 1 + left.IndexOfLastNonZeroLimb;
-			//var numberOfSignificantDigitsB = 1 + right.IndexOfLastNonZeroLimb;
-
-			//if (numberOfSignificantDigitsA != numberOfSignificantDigitsB)
-			//{
-			//	return numberOfSignificantDigitsA > numberOfSignificantDigitsB ? 1 : -1;
-			//}
+			if (left.Length != right.Length)
+			{
+				throw new ArgumentException($"The left and right arguments must have equal length. left.Length: {left.Length}, right.Length: {right.Length}.");
+			}
 
 			var i = -1 + Math.Min(left.Length, right.Length);
 
@@ -1639,21 +1586,6 @@ namespace MSetGenP
 
 			return 0;
 		}
-
-		private int GetNumberOfSignificantB32Digits(ulong[] mantissa)
-		{
-			var i = mantissa.Length;
-			for (; i > 0; i--)
-			{
-				if (mantissa[i - 1] != 0)
-				{
-					break;
-				}
-			}
-
-			return i;
-		}
-
 
 		public int GetIndexOfLastNonZeroLimb(ulong[] mantissa)
 		{
@@ -1726,46 +1658,109 @@ namespace MSetGenP
 
 			for (var i = 0; i < sampleCount; i++)
 			{
-				result[i] = Multiply(delta, i);
+				var t = Multiply(delta, i);
+				var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(t.Mantissa);
+				var nrmMantissa = ForceExp(t.Mantissa, indexOfLastNonZeroLimb, t.Exponent, out var nrmExponent);
+				var r = new Smx(t.Sign, nrmMantissa, nrmExponent, t.Precision);
+				result[i] = r;
 			}
 
 			return result;
 		}
 
-		public Smx CreateSmxFromDto(long[] values, int exponent, int precision)
+		//public Smx CreateSmxFromDto(long[] values, int exponent, int precision)
+		//{
+		//	var sign = !values.Any(x => x < 0);
+		//	var mantissa = ConvertDtoLongsToPwUlongs(values);
+		//	var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(mantissa);
+
+		//	//var nrmMantissa = NormalizeFPV(mantissa, indexOfLastNonZeroLimb, exponent, precision, out var nrmExponent);
+		//	var nrmMantissa = ForceExp(mantissa, indexOfLastNonZeroLimb, exponent, out var nrmExponent);
+
+		//	Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
+
+		//	CheckForceExpResult(result);
+
+		//	return result;
+		//}
+
+		public Smx CreateSmx(RValue rValue)
 		{
-			var sign = !values.Any(x => x < 0);
-			var mantissa = ConvertDtoLongsToPwUlongs(values);
+			var sign = rValue.Value >= 0;
+			var mantissa = ToPwULongs(rValue.Value);
 			var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(mantissa);
+			var exponent = rValue.Exponent;
+			var precision = rValue.Precision;
 
 			//var nrmMantissa = NormalizeFPV(mantissa, indexOfLastNonZeroLimb, exponent, precision, out var nrmExponent);
 			var nrmMantissa = ForceExp(mantissa, indexOfLastNonZeroLimb, exponent, out var nrmExponent);
 
-			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
-
+			var result = new Smx(sign, nrmMantissa, nrmExponent, precision);
 			return result;
 		}
 
-		private ulong[] ConvertDtoLongsToPwUlongs(long[] values)
+		public static RValue GetRValue(Smx smx)
 		{
-			var bi = FromLongs(values);
-			var result = ToPwULongs(bi);
+			//var rMantissa = SmxMathHelper.Reduce(Mantissa, Exponent, out var rExponent);
+			//var biValue = SmxMathHelper.FromPwULongs(rMantissa);
+			//biValue = Sign ? biValue : -1 * biValue;
+			//var result = new RValue(biValue, rExponent, Precision);
+
+			var biValue = FromPwULongs(smx.Mantissa);
+			biValue = smx.Sign ? biValue : -1 * biValue;
+			var result = new RValue(biValue, smx.Exponent, smx.Precision);
+
 			return result;
 		}
 
-		private BigInteger FromLongs(long[] values)
+		public static RValue GetRValue(SmxSa smxSa)
 		{
-			//DtoLongs are in Big - Endian order
-			var result = BigInteger.Zero;
-
-			for (var i = 0; i < values.Length; i++)
-			{
-				result *= LONG_FACTOR;
-				result += values[i];
-			}
+			var mantissa = smxSa. MantissaSa.Materialize();
+			var biValue = FromPwULongs(mantissa);
+			biValue = smxSa.Sign ? biValue : -1 * biValue;
+			var result = new RValue(biValue, smxSa.Exponent, smxSa.Precision);
 
 			return result;
 		}
+
+		[Conditional("DEBUG")]
+		private void CheckForceExpResult(Smx smx)
+		{
+			//if (smx.Mantissa.Length > LimbCount)
+			//{
+			//	throw new InvalidOperationException($"The value {smx.GetStringValue()}({smx}) is too large to fit within {LimbCount} limbs.");
+			//}
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckForceExpResult(SmxSa smxSa)
+		{
+			//if (smxSa.MantissaSa.Length > LimbCount)
+			//{
+			//	throw new InvalidOperationException($"The value {smxSa.GetStringValue()}({smxSa}) is too large to fit within {LimbCount} limbs.");
+			//}
+		}
+
+		//private ulong[] ConvertDtoLongsToPwUlongs(long[] values)
+		//{
+		//	var bi = FromLongs(values);
+		//	var result = ToPwULongs(bi);
+		//	return result;
+		//}
+
+		//private BigInteger FromLongs(long[] values)
+		//{
+		//	//DtoLongs are in Big - Endian order
+		//	var result = BigInteger.Zero;
+
+		//	for (var i = 0; i < values.Length; i++)
+		//	{
+		//		result *= LONG_FACTOR;
+		//		result += values[i];
+		//	}
+
+		//	return result;
+		//}
 
 		//private ulong[] ConvertDtoLongsToSmxULongs(long[] values, out int indexOfLastNonZeroLimb)
 		//{

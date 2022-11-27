@@ -67,8 +67,8 @@ namespace MSetGenPTest
 		[Fact]
 		public void CallIteratorSample()
 		{
-			var precision = 55;
-			var smxVecMathHelper = new SmxVecMathHelper(new bool[4], precision);
+			var targetExponent = -88;
+			var smxVecMathHelper = new SmxVecMathHelper(new bool[4], targetExponent);
 
 			var iterator = new IteratorVector(smxVecMathHelper);
 

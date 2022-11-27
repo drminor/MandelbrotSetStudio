@@ -257,12 +257,26 @@ namespace MSS.Types
 			return result;
 		}
 
+		//public static BigInteger FromLongs(long[] values)
+		//{
+		//	Debug.Assert(values.Length == 2, "FromLongs received array of values whose length is not 2.");
+
+		//	var result = LONG_FACTOR * values[0];
+		//	result += values[1];
+
+		//	return result;
+		//}
+
 		public static BigInteger FromLongs(long[] values)
 		{
-			Debug.Assert(values.Length == 2, "FromLongs received array of values whose length is not 2.");
+			//DtoLongs are in Big - Endian order
+			var result = BigInteger.Zero;
 
-			var result = LONG_FACTOR * values[0];
-			result += values[1];
+			for (var i = 0; i < values.Length; i++)
+			{
+				result *= LONG_FACTOR;
+				result += values[i];
+			}
 
 			return result;
 		}

@@ -62,15 +62,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			//var rMantissa = SmxMathHelper.Reduce(Mantissa, Exponent, out var rExponent);
-			//var biValue = SmxMathHelper.FromPwULongs(rMantissa);
-			//biValue = Sign ? biValue : -1 * biValue;
-			//var result = new RValue(biValue, rExponent, Precision);
-
-			var biValue = SmxMathHelper.FromPwULongs(Mantissa);
-			biValue = Sign ? biValue : -1 * biValue;
-			var result = new RValue(biValue, Exponent, Precision);
-
+			var result = SmxMathHelper.GetRValue(this); 
 			return result;
 		}
 

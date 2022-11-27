@@ -70,11 +70,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			var mantissa = MantissaSa.Materialize();
-			var biValue = SmxMathHelper.FromPwULongs(mantissa);
-			biValue = Sign ? biValue : -1 * biValue;
-			var result = new RValue(biValue, Exponent, Precision);
-
+			var result = SmxMathHelper.GetRValue(this);
 			return result;
 		}
 

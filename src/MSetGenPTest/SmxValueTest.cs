@@ -9,7 +9,7 @@ namespace EngineTest
 	public class SmxValueTest
 	{
 		private const int TARGET_EXPONENT = -1 * (SmxMathHelper.BITS_PER_LIMB * 3 - SmxMathHelper.BITS_BEFORE_BP);
-		private const int PRECISION = 53;
+		//private const int PRECISION = 53;
 
 		[Fact]
 		public void RoundTrip_ToRValue_IsSuccessful()

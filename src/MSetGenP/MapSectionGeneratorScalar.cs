@@ -1,5 +1,6 @@
 ﻿using MEngineDataContracts;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using System.Diagnostics;
 
@@ -14,16 +15,20 @@ namespace MSetGenP
 			var blockSize = mapSectionRequest.BlockSize;
 			var precision = mapSectionRequest.Precision;
 
-			var targetExponent = samplePointDeltaDto.Exponent - 20;
+			var targetExponent = -88; // samplePointDeltaDto.Exponent - 20;
 			var smxMathHelper = new SmxMathHelper(targetExponent);
 
-			var startingCx = smxMathHelper.CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
-			var startingCy = smxMathHelper.CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
-			var delta = smxMathHelper.CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
+			var dtoMapper = new DtoMapper();
+			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
+			var samplePointDelta = dtoMapper.MapFrom(samplePointDeltaDto);
 
-			var s1 = RValueHelper.ConvertToString(startingCx.GetRValue());
-			var s2 = RValueHelper.ConvertToString(startingCy.GetRValue());
-			var s3 = RValueHelper.ConvertToString(delta.GetRValue());
+			var startingCx = smxMathHelper.CreateSmx(mapPosition.X); // .CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
+			var startingCy = smxMathHelper.CreateSmx(mapPosition.Y); // .CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
+			var delta = smxMathHelper.CreateSmx(samplePointDelta.Width); //.CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
+
+			var s1 = startingCx.GetStringValue();
+			var s2 = startingCy.GetStringValue();
+			var s3 = delta.GetStringValue();
 
 			var blockPos = mapSectionRequest.BlockPosition;
 			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
