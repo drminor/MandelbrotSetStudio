@@ -17,8 +17,9 @@ namespace EngineTest
 			var smxMathHelper = new SmxMathHelper(TARGET_EXPONENT);
 
 			//var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
-			var aBigInteger = BigInteger.Parse("-34359738368");
-			var aRValue = new RValue(aBigInteger, -10, 20);
+			//var aBigInteger = BigInteger.Parse("-34359738368");
+			var aBigInteger = BigInteger.Parse("-343597");
+			var aRValue = new RValue(aBigInteger, -11, 20);
 
 			//var aSmx = new Smx(aRValue, 20);
 			var aSmx = smxMathHelper.CreateSmx(aRValue);
@@ -35,7 +36,7 @@ namespace EngineTest
 			var smxMathHelper = new SmxMathHelper(TARGET_EXPONENT);
 
 			var aBigInteger = BigInteger.Parse("-34359738368");
-			var aRValue = new RValue(aBigInteger, -33);
+			var aRValue = new RValue(aBigInteger, -33, 20);
 
 			var aSmx = new Smx(aRValue, 20);
 			var aSmxRValue = aSmx.GetRValue();

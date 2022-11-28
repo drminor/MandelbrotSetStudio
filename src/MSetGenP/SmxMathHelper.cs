@@ -1,9 +1,9 @@
-﻿using MSS.Common;
+﻿using MongoDB.Driver.Core.Authentication.Libgssapi;
+using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
@@ -43,6 +43,9 @@ namespace MSetGenP
 			}
 
 			TargetExponent = adjustedTargetExponent;
+
+			var maxIntegerRValue = new RValue(BigInteger.Pow(2, BITS_BEFORE_BP) - 1, 0, RMapConstants.DEFAULT_PRECISION);
+			MaxIntegerValue = CreateSmx(maxIntegerRValue);
 		}
 
 		public static int GetLimbCount(int targetExponent, out int adjustedTargetExponent)
@@ -67,6 +70,8 @@ namespace MSetGenP
 		//public int Precision { get; init; }
 		public int LimbCount { get; init; }
 		public int TargetExponent { get; init; }
+
+		public Smx MaxIntegerValue { get; init; }
 
 		#endregion
 
@@ -365,6 +370,21 @@ namespace MSetGenP
 			int indexOfLastNonZeroLimb;
 			var precision = Math.Min(a.Precision, b.Precision);
 
+			if (a.LimbCount != LimbCount)
+			{
+				Debug.WriteLine($"WARNING: The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+			}
+
+			if (a.LimbCount != LimbCount)
+			{
+				Debug.WriteLine($"WARNING: The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
+			}
+
+			if (a.Exponent != b.Exponent)
+			{
+				Debug.WriteLine($"Warning:the exponents do not match.");
+			}
+
 			(var left, var right) = AlignExponents(a, b, desc, out var exponent);
 
 			if (right.IsZero)
@@ -377,12 +397,17 @@ namespace MSetGenP
 				return b;
 			}
 
-			ExtendLimbs(left.MantissaSa, right.MantissaSa);
+			if (left.LimbCount != right.LimbCount)
+			{
+				ExtendLimbs(left.MantissaSa, right.MantissaSa);
+			}
+
+			var carry = 0ul;
 
 			if (a.Sign == b.Sign)
 			{
 				sign = a.Sign;
-				mantissa = Add(left.MantissaSa, right.MantissaSa, out indexOfLastNonZeroLimb);
+				mantissa = Add(left.MantissaSa, right.MantissaSa, out indexOfLastNonZeroLimb, out carry);
 			}
 			else
 			{
@@ -417,11 +442,21 @@ namespace MSetGenP
 			//	return result;
 			//}
 
-			var result = new SmxSa(sign, mantissa, indexOfLastNonZeroLimb, exponent, precision);
+			SmxSa result;
+
+			if (carry != 0)
+			{
+				result = Convert(MaxIntegerValue);
+			}
+			else
+			{
+				result = new SmxSa(sign, mantissa, indexOfLastNonZeroLimb, exponent, precision);
+			}
+
 			return result;
 		}
 
-		private ulong[] Add(ShiftedArray<ulong> left, ShiftedArray<ulong> right, out int indexOfLastNonZeroLimb)
+		private ulong[] Add(ShiftedArray<ulong> left, ShiftedArray<ulong> right, out int indexOfLastNonZeroLimb, out ulong carry)
 		{
 			//Debug.Assert(left.Length == right.Length);
 			if (left.Length != right.Length)
@@ -430,10 +465,10 @@ namespace MSetGenP
 			}
 
 			var resultLength = left.Length;
-			var result = new ulong[resultLength + 1];
+			var result = new ulong[resultLength];
 
 			indexOfLastNonZeroLimb = -1;
-			var carry = 0ul;
+			carry = 0ul;
 
 			for (var i = 0; i < resultLength; i++)
 			{
@@ -447,11 +482,11 @@ namespace MSetGenP
 				}
 			}
 
-			if (carry > 0)
-			{
-				result[resultLength] = carry;
-				indexOfLastNonZeroLimb = resultLength;
-			}
+			//if (carry > 0)
+			//{
+			//	result[resultLength] = carry;
+			//	indexOfLastNonZeroLimb = resultLength;
+			//}
 
 			return result;
 		}
@@ -742,6 +777,11 @@ namespace MSetGenP
 			//var nrmMantissa = ForceExp(mantissa, indexOfLastNonZeroLimb, smxSa.Exponent, out var nrmExponent);
 			//Smx result = new Smx(smxSa.Sign, nrmMantissa, nrmExponent, smxSa.Precision);
 
+			if (mantissa.Length < LimbCount)
+			{
+				mantissa = Extend(mantissa, LimbCount);
+			}
+
 			var result = new Smx(smxSa.Sign, mantissa, smxSa.Exponent, smxSa.Precision);
 
 			return result;
@@ -749,15 +789,24 @@ namespace MSetGenP
 
 		public SmxSa Convert(Smx smx)
 		{
-			//var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(smx.Mantissa);
-			var trimmedMantissa = TrimLeadingZeros(smx.Mantissa);
-			var indexOfLastNonZeroLimb = smx.IsZero ? -1 : trimmedMantissa.Length - 1;
+			var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(smx.Mantissa);
+			//var trimmedMantissa = TrimLeadingZeros(smx.Mantissa);
+			//var indexOfLastNonZeroLimb = smx.IsZero ? -1 : trimmedMantissa.Length - 1;
 
-			var nrmMantissa = ForceExp(trimmedMantissa, indexOfLastNonZeroLimb, smx.Exponent, out var nrmExponent);
+			var nrmMantissa = ForceExp(smx.Mantissa, indexOfLastNonZeroLimb, smx.Exponent, out var nrmExponent);
 
-			indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(nrmMantissa);
-			var result = new SmxSa(smx.Sign, nrmMantissa, indexOfLastNonZeroLimb, nrmExponent, smx.Precision);
-			CheckForceExpResult(result);
+			SmxSa result;
+
+			if (nrmMantissa.Length > LimbCount)
+			{
+				result = Convert(MaxIntegerValue);	
+			}
+			else
+			{
+				indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(nrmMantissa);
+				result = new SmxSa(smx.Sign, nrmMantissa, indexOfLastNonZeroLimb, nrmExponent, smx.Precision);
+				CheckForceExpResult(result, "Convert to SmxSa");
+			}
 
 			return result;
 		}
@@ -1240,13 +1289,14 @@ namespace MSetGenP
 			//}
 		}
 
-		//private ulong[] Extend(ulong[] values, int newLength)
-		//{
-		//	var result = new ulong[newLength];
-		//	Array.Copy(values, 0, result, 0, values.Length);
+		// Pad with leading zeros.
+		private ulong[] Extend(ulong[] values, int newLength)
+		{
+			var result = new ulong[newLength];
+			Array.Copy(values, 0, result, 0, values.Length);
 
-		//	return result;
-		//}
+			return result;
+		}
 
 		private ulong[] CopyFirstXElements(ulong[] values, int newLength)
 		{
@@ -1481,6 +1531,9 @@ namespace MSetGenP
 				var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(t.Mantissa);
 				var nrmMantissa = ForceExp(t.Mantissa, indexOfLastNonZeroLimb, t.Exponent, out var nrmExponent);
 				var r = new Smx(t.Sign, nrmMantissa, nrmExponent, t.Precision);
+
+				CheckForceExpResult(r, "BuildSPOffsets");
+
 				result[i] = r;
 			}
 
@@ -1499,6 +1552,9 @@ namespace MSetGenP
 			var nrmMantissa = ForceExp(mantissa, indexOfLastNonZeroLimb, exponent, out var nrmExponent);
 
 			var result = new Smx(sign, nrmMantissa, nrmExponent, precision);
+
+			CheckForceExpResult(result, "CreateSmx");
+
 			return result;
 		}
 
@@ -1530,21 +1586,23 @@ namespace MSetGenP
 		}
 
 		[Conditional("DEBUG")]
-		private void CheckForceExpResult(Smx smx)
+		private void CheckForceExpResult(Smx smx, string desc)
 		{
-			//if (smx.Mantissa.Length > LimbCount)
-			//{
-			//	throw new InvalidOperationException($"The value {smx.GetStringValue()}({smx}) is too large to fit within {LimbCount} limbs.");
-			//}
+			if (smx.Mantissa.Length > LimbCount)
+			{
+				throw new InvalidOperationException($"The value {smx.GetStringValue()}({smx}) is too large to fit within {LimbCount} limbs. Desc: {desc}.");
+				//Debug.WriteLine($"The value {smx.GetStringValue()}({smx}) is too large to fit within {LimbCount} limbs.");
+			}
 		}
 
 		[Conditional("DEBUG")]
-		private void CheckForceExpResult(SmxSa smxSa)
+		private void CheckForceExpResult(SmxSa smxSa, string desc)
 		{
-			//if (smxSa.MantissaSa.Length > LimbCount)
-			//{
-			//	throw new InvalidOperationException($"The value {smxSa.GetStringValue()}({smxSa}) is too large to fit within {LimbCount} limbs.");
-			//}
+			if (smxSa.MantissaSa.Length > LimbCount)
+			{
+				throw new InvalidOperationException($"The value {smxSa.GetStringValue()}({smxSa}) is too large to fit within {LimbCount} limbs. Desc: {desc}.");
+				//Debug.WriteLine($"The value {smxSa.GetStringValue()}({smxSa}) is too large to fit within {LimbCount} limbs.");
+			}
 		}
 
 		#endregion

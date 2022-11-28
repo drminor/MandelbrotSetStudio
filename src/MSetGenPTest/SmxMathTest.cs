@@ -188,6 +188,7 @@ namespace EngineTest
 			var s0 = a.GetStringValue(); // -5.94543663954929423147140869492508049e-10
 
 			var nrmMantissa = smxMathHelper.ForceExp(a.Mantissa, 5, -248, out var nrmExponent);
+			Debug.Assert(nrmMantissa.Length == smxMathHelper.LimbCount, $"ForceExp returned a result with {nrmMantissa.Length} limbs, expecting {smxMathHelper.LimbCount}.");
 
 			var aNrm = new Smx(true, nrmMantissa, nrmExponent, 55);
 			var aNrmRValue = aNrm.GetRValue();
