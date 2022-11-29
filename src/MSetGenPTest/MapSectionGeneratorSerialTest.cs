@@ -5,6 +5,7 @@ using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
+using System.Numerics;
 
 namespace MSetGenPTest
 {
@@ -30,7 +31,6 @@ namespace MSetGenPTest
 		[Fact]
 		public void SimpleScalarGeneratateSectionResponseNearZero()
 		{
-
 			//Precision: 65, BP: X: -1, 0, Y: 0
 
 			var xPos = new long[] { 0, -1 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
@@ -40,6 +40,27 @@ namespace MSetGenPTest
 			var samplePointDelta = new RSize(1, 1, -8);
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
 			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
+
+			var generatorScalar = new MapSectionGeneratorScalar();
+			var reponse = generatorScalar.GenerateMapSection(request);
+
+			Assert.NotNull(reponse);
+		}
+
+		[Fact]
+		public void SimpleScalarGeneratateSectionDirect()
+		{
+			//Precision: 65, BP: X: -1, 0, Y: 0
+
+			var xPos = new long[] { 0, -1 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
+			var yPos = new long[] { 0, 0 };
+			var precision = RMapConstants.DEFAULT_PRECISION;
+			var extent = 128;
+			var samplePointDelta = new RSize(1, 1, -8);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
+			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
+
+			request.Position = new RPointDto(new BigInteger[] { 4, 3 }, -1);
 
 			var generatorScalar = new MapSectionGeneratorScalar();
 			var reponse = generatorScalar.GenerateMapSection(request);
@@ -67,8 +88,7 @@ namespace MSetGenPTest
 		[Fact]
 		public void CallIteratorSample()
 		{
-			var targetExponent = -88;
-			var smxVecMathHelper = new SmxVecMathHelper(new bool[4], targetExponent);
+			var smxVecMathHelper = new SmxVecMathHelper(new bool[4], new ApFixedPointFormat(8, 3 * 32 - 8));
 
 			var iterator = new IteratorVector(smxVecMathHelper);
 

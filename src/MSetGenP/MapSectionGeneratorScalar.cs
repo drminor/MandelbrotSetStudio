@@ -13,9 +13,9 @@ namespace MSetGenP
 			var mapPositionDto = mapSectionRequest.Position;
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
-			var precision = mapSectionRequest.Precision;
-
-			var targetExponent = -88; // samplePointDeltaDto.Exponent - 20;
+			
+			//var precision = mapSectionRequest.Precision;
+			var targetExponent = -88; // -56; // samplePointDeltaDto.Exponent - 20;
 			var smxMathHelper = new SmxMathHelper(targetExponent);
 
 			var dtoMapper = new DtoMapper();
@@ -34,7 +34,8 @@ namespace MSetGenP
 			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
-			var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
+			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
+			uint threshold = 4;
 
 			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, threshold);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);

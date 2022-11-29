@@ -16,7 +16,7 @@ namespace MSetGenP
 
 		public ushort Iterate(Smx cR, Smx cI, uint threshold)
 		{
-			var result = Iterate(cR, cI, cntr: 0, Smx.Zero, Smx.Zero, threshold);
+			var result = Iterate(cR, cI, cntr: 0, _smxMathHelper.CreateNewZeroSmx(), _smxMathHelper.CreateNewZeroSmx(), threshold);
 			return result;
 		}
 

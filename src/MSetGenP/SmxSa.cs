@@ -48,10 +48,11 @@ namespace MSetGenP
 
 		#region Public Properties
 
-		public bool Sign { get; set; }
+		public bool Sign { get; init; }
 		public ShiftedArray<ulong> MantissaSa { get; init; }
-		public int Exponent { get; set; }
-		public int Precision { get; set; } // Number of significant binary digits.
+		public int Exponent { get; init; }
+		public int Precision { get; init; } // Number of significant binary digits.
+
 
 		public bool IsZero => !MantissaSa.Array.Any(x => x > 0) && !MantissaSa.Carry.HasValue;
 

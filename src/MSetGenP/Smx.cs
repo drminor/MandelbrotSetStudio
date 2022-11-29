@@ -10,23 +10,24 @@ namespace MSetGenP
 	{
 		#region Constructor
 
-		public static readonly Smx Zero = new Smx(true, new ulong[] { 0 }, 1, 1000);
+		//public static readonly Smx Zero = new Smx(true, new ulong[] { 0 }, 1, 1000, 0);
 
-		public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision)
+		public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision, bitsBeforeBP: 0)
 		{ }
 
-		public Smx(RValue rValue, int precision) : this(rValue.Value, rValue.Exponent, precision)
+		public Smx(RValue rValue, int precision) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP: 0)
 		{ }
 
-		public Smx(BigInteger bigInteger, int exponent, int precision)
+		public Smx(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
 		{
 			Sign = bigInteger < 0 ? false : true;
 			Mantissa = SmxMathHelper.ToPwULongs(bigInteger);
 			Exponent = exponent;
 			Precision = precision;
+			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		public Smx(bool sign, ulong[] mantissa, int exponent, int precision)
+		public Smx(bool sign, ulong[] mantissa, int exponent, int precision, int bitsBeforeBP)
 		{
 			ValidatePWValues(mantissa);
 
@@ -34,6 +35,7 @@ namespace MSetGenP
 			Mantissa = (ulong[])mantissa.Clone(); // SmxMathHelper.GetPwULongs(mantissa);
 			Exponent = exponent;
 			Precision = precision;
+			BitsBeforeBP = bitsBeforeBP;
 		}
 
 		private static void ValidatePWValues(ulong[] mantissa)
@@ -48,10 +50,13 @@ namespace MSetGenP
 
 		#region Public Properties
 
-		public bool Sign { get; set; }
-		public ulong[] Mantissa { get; set; }
-		public int Exponent { get; set; }
-		public int Precision { get; set; } // Number of significant binary digits.
+		public bool Sign { get; init; }
+		public ulong[] Mantissa { get; init; }
+		public int Exponent { get; init; }
+		public int Precision { get; init; } // Number of significant binary digits.
+
+		// TODO: Create a new class for Fixed Point values. Currently this class is being used to representg Fixed Point values as well as Floating Point values.
+		public int BitsBeforeBP { get; init; }
 
 		public bool IsZero => !Mantissa.Any(x => x > 0);
 		public int LimbCount => Mantissa.Length;

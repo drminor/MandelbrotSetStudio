@@ -175,6 +175,8 @@ namespace MSetGenP
 		public Memory<ulong>[] MantissaMemories { get; init; }
 		//public Memory<short> ExponentsMemory { get; init; }
 
+		public int BitsBeforeBP { get; init; }
+
 		#endregion
 
 		#region Public Methods
@@ -225,7 +227,7 @@ namespace MSetGenP
 
 		public Smx CreateSmx(int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			var result = new Smx(Signs[index], GetMantissa(index), Exponents[index], precision);
+			var result = new Smx(Signs[index], GetMantissa(index), Exponents[index], precision, BitsBeforeBP);
 			return result;
 		}
 

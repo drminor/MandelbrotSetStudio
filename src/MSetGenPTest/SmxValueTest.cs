@@ -8,13 +8,10 @@ namespace EngineTest
 {
 	public class SmxValueTest
 	{
-		private const int TARGET_EXPONENT = -1 * (SmxMathHelper.BITS_PER_LIMB * 3 - SmxMathHelper.BITS_BEFORE_BP);
-		//private const int PRECISION = 53;
-
 		[Fact]
 		public void RoundTrip_ToRValue_IsSuccessful()
 		{
-			var smxMathHelper = new SmxMathHelper(TARGET_EXPONENT);
+			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(8, 2 * 32 - 8));
 
 			//var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
 			//var aBigInteger = BigInteger.Parse("-34359738368");
@@ -33,7 +30,7 @@ namespace EngineTest
 		[Fact]
 		public void RoundTrip_ForceExp_And_Convert_ToRValue_IsSuccessful()
 		{
-			var smxMathHelper = new SmxMathHelper(TARGET_EXPONENT);
+			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(8, 2 * 32 - 8));
 
 			var aBigInteger = BigInteger.Parse("-34359738368");
 			var aRValue = new RValue(aBigInteger, -33, 20);
@@ -47,7 +44,7 @@ namespace EngineTest
 
 			Debug.Assert(nrmMantissa.Length == smxMathHelper.LimbCount, $"ForceExp returned a result with {nrmMantissa.Length} limbs, expecting {smxMathHelper.LimbCount}.");
 
-			var a2Smx = new Smx(aSmx.Sign, nrmMantissa, nrmExponent, aSmx.Precision);
+			var a2Smx = new Smx(aSmx.Sign, nrmMantissa, nrmExponent, aSmx.Precision, aSmx.BitsBeforeBP);
 
 			var a2SmxRValue = a2Smx.GetRValue();
 			var a2Str = a2Smx.GetStringValue();

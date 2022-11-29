@@ -1,4 +1,6 @@
-﻿using System.Buffers;
+﻿using MSS.Common;
+using MSS.Types;
+using System.Buffers;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -39,7 +41,7 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public SmxVecMathHelper(bool[] doneFlags, int targetExponent)
+		public SmxVecMathHelper(bool[] doneFlags, ApFixedPointFormat apFixedPointFormat)
 		{
 			ValueCount = doneFlags.Length;
 			VecCount = Math.DivRem(ValueCount, _ulongSlots, out var remainder);
@@ -49,15 +51,20 @@ namespace MSetGenP
 				throw new ArgumentException("The valueCount must be an even multiple of Vector<ulong>.Count.");
 			}
 
-			LimbCount = SmxMathHelper.GetLimbCount(targetExponent, out var adjustedTargetExponent);
+			ApFixedPointFormat = SmxMathHelper.CreateApFixedPointFormat(apFixedPointFormat.BitsBeforeBinaryPoint, apFixedPointFormat.NumberOfFractionalBits);
 
-			if (adjustedTargetExponent != targetExponent)
+			if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			{
-				Debug.WriteLine($"WARNING: Increasing the TargetExponent to {adjustedTargetExponent} from {targetExponent}.");
+				Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
 			}
 
-			TargetExponent = adjustedTargetExponent;
-			_smxMathHelper = new SmxMathHelper(TargetExponent);
+			TargetExponent = -1 * FractionalBits;
+			LimbCount = SmxMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
+
+			//var maxIntegerRValue = new RValue(BigInteger.Pow(2, BitsBeforeBp) - 1, 0, RMapConstants.DEFAULT_PRECISION);
+			//MaxIntegerValue = SmxMathHelper.CreateSmx(maxIntegerRValue);
+
+			_smxMathHelper = new SmxMathHelper(ApFixedPointFormat);
 
 			InPlayList = BuildTheInplayList(doneFlags, VecCount);
 
@@ -116,6 +123,8 @@ namespace MSetGenP
 
 		#region Public Properties
 
+		public ApFixedPointFormat ApFixedPointFormat { get; init; }
+
 		//public int Precision { get; init; }
 		public int LimbCount { get; init; }
 		public int TargetExponent { get; init; }
@@ -124,6 +133,9 @@ namespace MSetGenP
 		public int VecCount { get; init; }
 
 		public List<int> InPlayList { get; }
+
+		public int BitsBeforeBp => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		#endregion
 
@@ -368,7 +380,7 @@ namespace MSetGenP
 				return a;
 			}
 
-			var bNegated = new Smx(!b.Sign, b.Mantissa, b.Exponent, b.Precision);
+			var bNegated = new Smx(!b.Sign, b.Mantissa, b.Exponent, b.Precision, a.BitsBeforeBP);
 			var result = Add(a, bNegated);
 
 			return result;

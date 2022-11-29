@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver.Core.Authentication.Libgssapi;
+﻿using MongoDB.Driver;
+using MongoDB.Driver.Core.Authentication.Libgssapi;
 using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
@@ -12,7 +13,7 @@ namespace MSetGenP
 		#region Constants
 
 		public const int BITS_PER_LIMB = 32;
-		public const int BITS_BEFORE_BP = 8;
+		private const int DEFAULT_BITS_BEFORE_BP = 8;
 
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
 		private static readonly ulong HALF_DIGIT_VALUE = (ulong)Math.Pow(2, 16);
@@ -33,34 +34,46 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public SmxMathHelper(int targetExponent)
-		{
-			LimbCount = GetLimbCount(targetExponent, out var adjustedTargetExponent);
+		public SmxMathHelper(int targetExponent) : this(new ApFixedPointFormat(DEFAULT_BITS_BEFORE_BP, -1 * targetExponent))
+		{ }
 
-			if (adjustedTargetExponent != targetExponent)
+		public SmxMathHelper(ApFixedPointFormat apFixedPointFormat)
+		{
+			ApFixedPointFormat = CreateApFixedPointFormat(apFixedPointFormat.BitsBeforeBinaryPoint, apFixedPointFormat.NumberOfFractionalBits);
+
+			if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			{
-				Debug.WriteLine($"WARNING: Increasing the TargetExponent to {adjustedTargetExponent} from {targetExponent}.");
+				Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
 			}
 
-			TargetExponent = adjustedTargetExponent;
+			TargetExponent = -1 * FractionalBits;
+			LimbCount = GetLimbCount(ApFixedPointFormat.TotalBits);
 
-			var maxIntegerRValue = new RValue(BigInteger.Pow(2, BITS_BEFORE_BP) - 1, 0, RMapConstants.DEFAULT_PRECISION);
+			var maxIntegerRValue = new RValue(BigInteger.Pow(2, BitsBeforeBp) - 1, 0, RMapConstants.DEFAULT_PRECISION);
 			MaxIntegerValue = CreateSmx(maxIntegerRValue);
 		}
 
-		public static int GetLimbCount(int targetExponent, out int adjustedTargetExponent)
+		public static ApFixedPointFormat CreateApFixedPointFormat(int bitsBeforeBP, int fractionalBits)
 		{
-			var range = -1 * targetExponent;
-			range += BITS_BEFORE_BP;
+			var range = bitsBeforeBP + fractionalBits;
 
 			var dResult = range / (double)BITS_PER_LIMB;
 			var limbCount = (int)Math.Ceiling(dResult);
 
-			// Make sure that the target exponent is BITS_BEFORE_BP less than an integral multiple of BITS_PER_LIMB.
-			// For example, in the case of 4 limbs, the targetExponent will be 4 x 32 - 8, which is 128 - 8, which is 120
-			adjustedTargetExponent = -1 * (limbCount * BITS_PER_LIMB - BITS_BEFORE_BP);
+			// Make sure the resulting FixPointFormat uses an integral number of limbs.
+			var adjustedFractionalBits = limbCount * BITS_PER_LIMB - bitsBeforeBP;
 
-			return limbCount;
+			var result = new ApFixedPointFormat(bitsBeforeBP, adjustedFractionalBits);
+
+			return result;
+		}
+
+		public static int GetLimbCount(int numberOfBits)
+		{
+			var dResult = numberOfBits / (double)BITS_PER_LIMB;
+			var result = (int)Math.Ceiling(dResult);
+
+			return result;
 		}
 
 		#endregion
@@ -68,10 +81,15 @@ namespace MSetGenP
 		#region Public Properties
 
 		//public int Precision { get; init; }
+
+		public ApFixedPointFormat ApFixedPointFormat { get; init; }
 		public int LimbCount { get; init; }
 		public int TargetExponent { get; init; }
 
 		public Smx MaxIntegerValue { get; init; }
+
+		public int BitsBeforeBp => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		#endregion
 
@@ -81,7 +99,7 @@ namespace MSetGenP
 		{
 			if (a.IsZero || b.IsZero)
 			{
-				return new Smx(0, 1, Math.Min(a.Precision, b.Precision));
+				return new Smx(0, 1, Math.Min(a.Precision, b.Precision), a.BitsBeforeBP);
 			}
 
 			var sign = a.Sign == b.Sign;
@@ -94,7 +112,7 @@ namespace MSetGenP
 			//var nrmMantissa = NormalizeFPV(mantissa, indexOfLastNonZeroLimb, exponent, precision, out var nrmExponent);
 			var nrmMantissa = ForceExp(mantissa, indexOfLastNonZeroLimb, exponent, out var nrmExponent);
 
-			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
+			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision, a.BitsBeforeBP);
 
 			return result;
 		}
@@ -148,7 +166,7 @@ namespace MSetGenP
 			//var nrmMantissa = NormalizeFPV(mantissa, indexOfLastNonZeroLimb, exponent, precision, out var nrmExponent);
 			var nrmMantissa = ForceExp(mantissa, indexOfLastNonZeroLimb, exponent, out var nrmExponent);
 
-			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
+			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision, a.BitsBeforeBP);
 
 			return result;
 		}
@@ -170,8 +188,8 @@ namespace MSetGenP
 					{
 						product *= 2;
 					}
-
-					var resultPtr = j + i;  // 0, 1, 1, 2
+															// j = 
+					var resultPtr = j + i;					// 0, 1		1, 2		0, 1, 2		1, 2, 3, 
 					var lo = Split(product, out var hi);
 					mantissa[resultPtr] += lo;
 					mantissa[resultPtr + 1] += hi;
@@ -181,11 +199,26 @@ namespace MSetGenP
 			return mantissa;
 		}
 
+		/* What partial product gets added to which bin
+
+			//  2 limbs						3 limbs										4 limbs
+
+			j = 0, i = 0, 1			j = 0, i = 0, 1, 2		j = 0, i = 0, 1, 2, 3
+			j = 1, i = 1			j = 1, i = 1, 2			j = 1, i = 1, 2, 3
+									j = 2, i = 2,			j = 2, i = 2, 3
+															j = 3, i = 3
+
+			//    d				   d  d		   d			   d  d  d		   d  d		   d
+			// 0, 1		2		0, 1, 2,	2, 3	4		0, 1, 2, 3		2, 3, 4		4, 5	6	-> (Index C)
+			// 1, 2		3       1, 2, 3,	3, 4	5       1, 2, 3, 4		3, 4, 5		5, 6	7	-> (Index C + 1)
+
+		 */
+
 		public Smx Multiply(Smx a, int b)
 		{
 			if (a.IsZero || b == 0 )
 			{
-				return new Smx(0, 1, a.Precision);
+				return new Smx(0, 1, a.Precision, a.BitsBeforeBP);
 			}
 
 			var signOfB = b >= 0;
@@ -199,7 +232,7 @@ namespace MSetGenP
 			//var nrmMantissa = NormalizeFPV(mantissa, indexOfLastNonZeroLimb, exponent, precision, out var nrmExponent);
 			var nrmMantissa = ForceExp(mantissa, indexOfLastNonZeroLimb, exponent, out var nrmExponent);
 
-			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision);
+			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision, a.BitsBeforeBP);
 
 			return result;
 		}
@@ -284,8 +317,8 @@ namespace MSetGenP
 		/* What partial product gets added to which bin
 
 			//  2 x 2						3 x 3										4 x 4
-			// 0, 1,   1, 2		 0, 1, 2,   1, 2, 3,  2, 3  4		0, 1, 2, 3,   1, 2, 3, 4,    2, 3, 4, 5,    3, 4, 5, 6 
-			// 1, 2,   2, 3      1, 2, 3,   2, 3, 4,  3, 4, 5       1, 2, 3, 4,   2, 3, 4, 5,    3, 4, 5, 6,    4, 5, 6, 7
+			// 0, 1,   1, 2		 0, 1, 2,   1, 2, 3,  2, 3  4		0, 1, 2, 3,   1, 2, 3, 4,    2, 3, 4, 5,    3, 4, 5, 6	-> (Index C)
+			// 1, 2,   2, 3      1, 2, 3,   2, 3, 4,  3, 4, 5       1, 2, 3, 4,   2, 3, 4, 5,    3, 4, 5, 6,    4, 5, 6, 7  -> (Index C + 1)
 
 				2 x 2
 			index a index b	index c	on, or below the diagonal 
@@ -782,7 +815,7 @@ namespace MSetGenP
 				mantissa = Extend(mantissa, LimbCount);
 			}
 
-			var result = new Smx(smxSa.Sign, mantissa, smxSa.Exponent, smxSa.Precision);
+			var result = new Smx(smxSa.Sign, mantissa, smxSa.Exponent, smxSa.Precision, BitsBeforeBp);
 
 			return result;
 		}
@@ -935,7 +968,12 @@ namespace MSetGenP
 			Debug.Assert(indexOfLastNonZeroLimb >= -1, "indexOfLastNonZeroLimb should >= -1.");
 			DblChkIndexOfLastNonZeroLimb(indexOfLastNonZeroLimb, mantissa);
 
-			//var numberOfLeadingZeros = mantissa.Length - (indexOfLastNonZeroLimb + 1);
+			var numberOfLeadingZeros = mantissa.Length - (indexOfLastNonZeroLimb + 1);
+
+			if (numberOfLeadingZeros > 0)
+			{
+				Debug.WriteLine($"ForceExp is adjusting the exponent up by {numberOfLeadingZeros * 32} due to leading zeros.");
+			}
 
 			ulong[] result;
 			nrmExponent = TargetExponent;
@@ -954,7 +992,13 @@ namespace MSetGenP
 
 				// Shift Left, adding zeros to the Least Significant end. If there are not enough leading zeros then the result will overflow.
 
-				result = ScaleAndSplit(mantissa, shiftAmount * -1, "Force Exp");
+				if (shiftAmount < 31)
+				{
+					Debug.WriteLine($"ForceExp is having to decrease the exponent by more than 1 whole limb.");
+				}
+
+				var sResult = ScaleAndSplit(mantissa, shiftAmount * -1, "Force Exp");
+				result = CopyLastXElements(sResult, LimbCount);
 			}
 			else
 			{
@@ -969,7 +1013,7 @@ namespace MSetGenP
 
 				(var limbOffset, var remainder) = Math.DivRem(shiftAmount, BITS_PER_LIMB);
 
-				var sourceLimbPtr = logicalLength - LimbCount;
+				var sourceLimbPtr = Math.Max(logicalLength - LimbCount, 0);
 				sourceLimbPtr += limbOffset;
 				sourceLimbPtr = Math.Max(sourceLimbPtr, 0);
 
@@ -1306,6 +1350,20 @@ namespace MSetGenP
 			return result;
 		}
 
+		private ulong[] CopyLastXElements(ulong[] values, int newLength)
+		{
+			var result = new ulong[newLength];
+
+			var startIndex = Math.Max(values.Length - newLength, 0);
+
+			var cLen = values.Length - startIndex;
+
+			Array.Copy(values, startIndex, result, 0, cLen);
+
+			return result;
+		}
+
+
 		//private Smx TrimLeadingZeros(Smx a)
 		//{
 		//	var mantissa = TrimLeadingZeros(a.Mantissa);
@@ -1477,11 +1535,12 @@ namespace MSetGenP
 
 		public bool IsGreaterOrEqThan(Smx a, uint b)
 		{
+			var exponent = a.Exponent + 17;
 			var aAsDouble = 0d;
 
 			for(var i = a.Mantissa.Length - 1; i >= 0; i--)
 			{
-				aAsDouble += a.Mantissa[i] * Math.Pow(2, a.Exponent + (i * 32));
+				aAsDouble += a.Mantissa[i] * Math.Pow(2, exponent + (i * 32));
 
 				if (aAsDouble >= b)
 				{
@@ -1530,7 +1589,7 @@ namespace MSetGenP
 				var t = Multiply(delta, i);
 				var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(t.Mantissa);
 				var nrmMantissa = ForceExp(t.Mantissa, indexOfLastNonZeroLimb, t.Exponent, out var nrmExponent);
-				var r = new Smx(t.Sign, nrmMantissa, nrmExponent, t.Precision);
+				var r = new Smx(t.Sign, nrmMantissa, nrmExponent, t.Precision, BitsBeforeBp);
 
 				CheckForceExpResult(r, "BuildSPOffsets");
 
@@ -1540,18 +1599,24 @@ namespace MSetGenP
 			return result;
 		}
 
+		public Smx CreateNewZeroSmx()
+		{
+			var result = new Smx(true, new ulong[LimbCount], 1, RMapConstants.DEFAULT_PRECISION, BitsBeforeBp);
+			return result;
+		}
+
 		public Smx CreateSmx(RValue rValue)
 		{
 			var sign = rValue.Value >= 0;
 			var mantissa = ToPwULongs(rValue.Value);
 			var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(mantissa);
-			var exponent = rValue.Exponent - BITS_BEFORE_BP;
+			var exponent = rValue.Exponent - BitsBeforeBp;
 			var precision = rValue.Precision;
 
 			//var nrmMantissa = NormalizeFPV(mantissa, indexOfLastNonZeroLimb, exponent, precision, out var nrmExponent);
 			var nrmMantissa = ForceExp(mantissa, indexOfLastNonZeroLimb, exponent, out var nrmExponent);
 
-			var result = new Smx(sign, nrmMantissa, nrmExponent, precision);
+			var result = new Smx(sign, nrmMantissa, nrmExponent, precision, BitsBeforeBp);
 
 			CheckForceExpResult(result, "CreateSmx");
 
@@ -1565,7 +1630,7 @@ namespace MSetGenP
 			//biValue = Sign ? biValue : -1 * biValue;
 			//var result = new RValue(biValue, rExponent, Precision);
 
-			var exponent = smx.Exponent + BITS_BEFORE_BP;
+			var exponent = smx.Exponent + smx.BitsBeforeBP;
 			var precision = smx.Precision;
 
 			var biValue = FromPwULongs(smx.Mantissa);
