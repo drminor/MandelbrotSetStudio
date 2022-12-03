@@ -63,9 +63,23 @@ namespace MSetGenP
 
 		#region Public Methods
 
+		//public ulong[] Materialize(bool includeAll = false)
+		//{
+		//	if (includeAll)
+		//	{
+		//		var result = MantissaSa.MaterializeAll();
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		var result = MantissaSa.Materialize();
+		//		return result;
+		//	}
+		//}
+
 		public ulong[] Materialize()
 		{
-			var result = MantissaSa.Materialize();
+			var result = MantissaSa.MaterializeAll();
 			return result;
 		}
 

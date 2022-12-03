@@ -32,9 +32,6 @@ namespace MSetGenP
 
 		#endregion
 
-		//private RValue _standardRValue;
-
-
 		#region Constructor
 
 		public SmxMathHelper(int targetExponent) : this(new ApFixedPointFormat(DEFAULT_BITS_BEFORE_BP, -1 * targetExponent))
@@ -55,21 +52,16 @@ namespace MSetGenP
 			}
 
 			LimbCount = GetLimbCount(ApFixedPointFormat.TotalBits);
-
 			TargetExponent = -1 * FractionalBits;
-			//TargetExponent = -1 * ApFixedPointFormat.TotalBits;
-
-			// Add one additional Limb to provide room to represent smaller values with some precision.
-			//TargetExponent -= BITS_PER_LIMB;
-
-			//_standardRValue = new RValue(BigInteger.Parse("17"), TargetExponent);
-
 			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
 		}
 
 		public static ApFixedPointFormat GetAdjustedFixedPointFormat(ApFixedPointFormat fpFormat)
 		{
 			var range = fpFormat.TotalBits;
+
+			// Add one additional Limb to provide room to represent smaller values with some precision.
+			//range += BITS_PER_LIMB;
 
 			var dResult = range / (double)BITS_PER_LIMB;
 			var limbCount = (int)Math.Ceiling(dResult);
@@ -120,6 +112,8 @@ namespace MSetGenP
 			Debug.Assert(a.Exponent == TargetExponent, $"A should have an exponent of {TargetExponent}, instead of {a.Exponent}.");
 			Debug.Assert(b.Exponent == TargetExponent, $"B should have an exponent of {TargetExponent}, instead of {b.Exponent}.");
 
+			var numberOfLeadingZerosA = GetNumberOfLeadingZeroLimbs(a);
+			var numberOfLeadingZerosB = GetNumberOfLeadingZeroLimbs(b);
 
 			//var logicalLengthA = GetLogicalLength(a);
 			//var logicalLengthB = GetLogicalLength(b);
@@ -144,7 +138,7 @@ namespace MSetGenP
 
 			//logicalExponent -= BitsBeforeBP;
 
-			var nrmMantissa = ForceExp(mantissa/*, logicalLength, logicalExponent*/, out var nrmExponent);
+			var nrmMantissa = ForceExp(mantissa, numberOfLeadingZerosA + numberOfLeadingZerosB, out var nrmExponent);
 
 			var sign = a.Sign == b.Sign;
 			var precision = Math.Min(a.Precision, b.Precision);
@@ -154,28 +148,28 @@ namespace MSetGenP
 			return result;
 		}
 
-		public Smx MultiplyC(Smx a, Smx b)
-		{
-			if (a.IsZero || b.IsZero)
-			{
-				return new Smx(0, 1, Math.Min(a.Precision, b.Precision), a.BitsBeforeBP);
-			}
+		//public Smx MultiplyC(Smx a, Smx b)
+		//{
+		//	if (a.IsZero || b.IsZero)
+		//	{
+		//		return new Smx(0, 1, Math.Min(a.Precision, b.Precision), a.BitsBeforeBP);
+		//	}
 
-			var sign = a.Sign == b.Sign;
+		//	var sign = a.Sign == b.Sign;
 
-			var exponent = a.Exponent + b.Exponent;
+		//	var exponent = a.Exponent + b.Exponent;
 
-			var precision = Math.Min(a.Precision, b.Precision);
+		//	var precision = Math.Min(a.Precision, b.Precision);
 
-			var rawMantissa = Multiply(a.Mantissa, b.Mantissa);
-			var mantissa = PropagateCarries(rawMantissa, out var indexOfLastNonZeroLimb);
+		//	var rawMantissa = Multiply(a.Mantissa, b.Mantissa);
+		//	var mantissa = PropagateCarries(rawMantissa, out var indexOfLastNonZeroLimb);
 
-			var nrmMantissa = ConvertExp(mantissa, exponent, out var nrmExponent);
+		//	var nrmMantissa = ConvertExp(mantissa, exponent, out var nrmExponent);
 
-			Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision, a.BitsBeforeBP);
+		//	Smx result = new Smx(sign, nrmMantissa, nrmExponent, precision, a.BitsBeforeBP);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public ulong[] Multiply(ulong[] ax, ulong[] bx)
 		{
@@ -222,6 +216,8 @@ namespace MSetGenP
 			//var logicalLengthA = GetLogicalLength(a);
 			//var logicalExpA = -1 * GetNumberOfBitsAfterBP(a);
 
+			var numberOfLeadingZeros = GetNumberOfLeadingZeroLimbs(a);
+
 			var rawMantissa = Square(a.Mantissa);
 			var mantissa = PropagateCarries(rawMantissa, out var indexOfLastNonZeroLimb);
 
@@ -242,7 +238,7 @@ namespace MSetGenP
 
 			//logicalExponent += BitsBeforeBP;
 
-			var nrmMantissa = ForceExp(mantissa/*, logicalLength, logicalExponent*/, out var nrmExponent);
+			var nrmMantissa = ForceExp(mantissa, numberOfLeadingZeros * 2, out var nrmExponent);
 
 			var sign = true;
 			var precision = a.Precision;
@@ -290,8 +286,8 @@ namespace MSetGenP
 															j = 3, i = 3
 
 			//    d				   d  d		   d			   d  d  d		   d  d		   d
-			// 0, 1		2		0, 1, 2,	2, 3	4		0, 1, 2, 3		2, 3, 4		4, 5	6	-> (Index C)
-			// 1, 2		3       1, 2, 3,	3, 4	5       1, 2, 3, 4		3, 4, 5		5, 6	7	-> (Index C + 1)
+			// 0, 1		2		0, 1, 2		2, 3	4		0, 1, 2, 3		2, 3, 4		4, 5	6	-> (Index C)
+			// 1, 2		3       1, 2, 3		3, 4	5       1, 2, 3, 4		3, 4, 5		5, 6	7	-> (Index C + 1)
 
 		 */
 
@@ -311,6 +307,8 @@ namespace MSetGenP
 			//var logicalLengthA = GetLogicalLength(a);
 			//var logicalExpA = -1 * GetNumberOfBitsAfterBP(a);
 
+			var numberOfLeadingZeros = GetNumberOfLeadingZeroLimbs(a);
+
 			var rawMantissa = Multiply(a.Mantissa, (uint)Math.Abs(b));
 			var mantissa = PropagateCarries(rawMantissa, out var indexOfLastNonZeroLimb);
 
@@ -323,7 +321,7 @@ namespace MSetGenP
 			//Debug.Assert(bitsBeforeBPInResult == BitsBeforeBP, "BitsBeforeBPResult Miss Match -- Smx x Integer.");
 
 			//var nrmMantissa = ConvertExp(mantissa, exponent, out var nrmExponent);
-			var nrmMantissa = ForceExp(mantissa/*, logicalLength, logicalExponent*/, out var nrmExponent);
+			var nrmMantissa = ForceExp(mantissa, numberOfLeadingZeros, out var nrmExponent);
 
 			var sign = a.Sign;
 			var precision = a.Precision;
@@ -852,102 +850,63 @@ namespace MSetGenP
 
 		#region Normalization Support
 
-		public ulong[] ForceExp(ulong[] mantissa/*, int logicalLength, int exponent*/, out int nrmExponent)
+		public ulong[] ForceExp(ulong[] mantissa, int numberOfLeadingZeros, out int nrmExponent)
 		{
+			//ValidateIsSplit(mantissa);
+
+			//nrmExponent = TargetExponent;
+
+			//var shiftAmount = -1 * (numberOfLeadingZeros * BITS_PER_LIMB);
+			//shiftAmount += 8;
+
+			//ulong[] result;
+
+			//if (shiftAmount == 0)
+			//{
+			//	if (mantissa.Length == LimbCount)
+			//	{
+			//		result = mantissa;
+			//	}
+			//	else if (mantissa.Length < LimbCount)
+			//	{
+			//		result = Extend(mantissa, LimbCount);
+			//	}
+			//	else
+			//	{
+			//		result = CopyLastXElements(mantissa, LimbCount);
+			//	}
+			//}
+			//else if (shiftAmount > 0)
+			//{
+			//	var sResult = ScaleAndSplit(mantissa, shiftAmount, "Force Exp");
+			//	result = CopyLastXElements(sResult, LimbCount);
+			//}
+			//else
+			//{
+			//	//var sResult = ScaleAndSplit(mantissa, -1 * shiftAmount, "Force Exp");
+			//	//result = CopyLastXElements(sResult, LimbCount);
+			//	throw new NotImplementedException($"Shift amount {shiftAmount} is not yet supported.");
+			//}
+
+			//return result;
+
 			ValidateIsSplit(mantissa);
 
 			nrmExponent = TargetExponent;
-			var sResult = ScaleAndSplit(mantissa, 8, "Force Exp");
-			var result = CopyLastXElements(sResult, LimbCount);
+			var sResult = ScaleAndSplit(mantissa, 8, "Force Exp", takeMsbs: true);
 
-			return result;
-		}
+			//ulong[] tResult;
 
+			//if (numberOfLeadingZeros > 0)
+			//{
+			//	tResult = Extend(sResult, sResult.Length + numberOfLeadingZeros);
+			//}
+			//else
+			//{
+			//	tResult = sResult;
+			//}
 
-		public ulong[] ForceExp2(ulong[] mantissa, int logicalLength, int exponent, out int nrmExponent)
-		{
-			ValidateIsSplit(mantissa);
-
-			ulong[] result;
-
-			nrmExponent = TargetExponent;
-
-			//var limbsToDiscard = Math.Max(logicalLength - LimbCount, 0);
-			//var adjExponent = exponent + limbsToDiscard * 32;
-			//var shiftAmount = TargetExponent - adjExponent;
-
-			var shiftAmount = TargetExponent - exponent;
-
-			if (shiftAmount == 0)
-			{
-				if (mantissa.Length == LimbCount)
-				{
-					result = mantissa;
-				}
-				else
-				{
-					// TODO: round this result
-					result = CopyLastXElements(mantissa, LimbCount);
-				}
-			}
-			else if (shiftAmount < 0)
-			{
-				// For example target is -125, and currently we have -100
-				// -125 - -100 = -25
-				// Multiply coefficient by 2^25 and exponent by 1/2^25
-				// (v) * (1/2^100) => (v * 2^25) * (1/2^100 * 1/2^25) => (v * 2^25) * (1/2^125)
-
-				// Shift Left, adding zeros to the Least Significant end. If there are not enough leading zeros then the result will overflow.
-
-				var sResult = ScaleAndSplit(mantissa, shiftAmount * -1, "Force Exp");
-				result = CopyLastXElements(sResult, LimbCount);
-			}
-			else
-			{
-				// For example target is -125, and currently we have -160
-				// -125 - -160 = 35
-				// Multiply coefficient by 1/2^35 and exponent by 2^35
-				// (v) * (1/2^160) => (v * 1/2^35) * (1/2^160 * 2^35)  => (v * 1/2^35) * (1/2^125)
-
-				// Shift Right, adding zeros to the Most Significant end, if there are too many leading zeros then this will cause loss of precision.
-
-				result = new ulong[LimbCount];
-
-				(var limbOffset, var remainder) = Math.DivRem(shiftAmount, BITS_PER_LIMB);
-
-				//var sourceLimbPtr = logicalLength - LimbCount;
-				//sourceLimbPtr += limbOffset;
-				//sourceLimbPtr = Math.Max(sourceLimbPtr, 0);
-
-				var sourceLimbPtr = logicalLength - mantissa.Length;
-				sourceLimbPtr += limbOffset;
-				sourceLimbPtr = Math.Max(sourceLimbPtr, 0);
-
-				var resultLimbPtr = 0;
-				//var resultAdjLen = result.Length - limbOffset;
-
-				while (resultLimbPtr < result.Length - 1 && sourceLimbPtr < mantissa.Length - 1)
-				{
-					// discard (remainder count) source bits off the lsb end, leaving (32 - remainder) source bits on the low end, and zeros for the first remainder count msbs.
-					var hx = mantissa[sourceLimbPtr] >> remainder;
-					result[resultLimbPtr] |= hx;
-					sourceLimbPtr++;
-					var lx = (mantissa[sourceLimbPtr] << 64 - remainder) >> 32;
-					result[resultLimbPtr] |= lx;
-
-					resultLimbPtr++;
-				}
-
-				var hx2 = mantissa[sourceLimbPtr] >> remainder;
-				result[resultLimbPtr] |= hx2;
-				sourceLimbPtr++;
-
-				if (sourceLimbPtr < mantissa.Length)
-				{
-					var lx2 = (mantissa[sourceLimbPtr] << 64 - remainder) >> 32;
-					result[resultLimbPtr] |= lx2;
-				}
-			}
+			var result = TakeMostSignificantLimbs(sResult, LimbCount);
 
 			return result;
 		}
@@ -986,7 +945,7 @@ namespace MSetGenP
 				//	Debug.WriteLine($"ConvertExp is having to decrease the exponent by more than 1 whole limb.");
 				//}
 
-				var sResult = ScaleAndSplit(mantissa, shiftAmount * -1, "Force Exp");
+				var sResult = ScaleAndSplit(mantissa, shiftAmount * -1, "Force Exp", takeMsbs: true);
 				result = CopyLastXElements(sResult, LimbCount);
 			}
 			else
@@ -1379,7 +1338,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ulong[] ScaleAndSplit(ulong[] mantissa, int power, string desc)
+		private ulong[] ScaleAndSplit(ulong[] mantissa, int power, string desc, bool takeMsbs)
 		{
 			if (power <= 0)
 			{
@@ -1425,7 +1384,38 @@ namespace MSetGenP
 				resultSa.SetCarry(carry);
 			}
 
-			var result = resultSa.Materialize();
+			//var resultA = resultSa.MaterializeAll();
+			//var resultB = resultSa.Materialize();
+
+			//if (resultA.Length != resultB.Length)
+			//{
+			//	Debug.WriteLine("Look here.");
+			//}
+
+			//var result = takeMsbs ? resultA : resultB;			
+
+			var result = resultSa.MaterializeAll();
+
+			return result;
+		}
+
+		private ulong[] TakeMostSignificantLimbs(ulong[] partialWordLimbs, int length)
+		{
+			ulong[] result;
+
+			if (partialWordLimbs.Length == length)
+			{
+				result = partialWordLimbs;
+			}
+			else if (partialWordLimbs.Length > length)
+			{
+				result = CopyLastXElements(partialWordLimbs, length);
+			}
+			else
+			{
+				result = Extend(partialWordLimbs, length);
+			}
+
 			return result;
 		}
 
@@ -1699,10 +1689,15 @@ namespace MSetGenP
 			//}
 		}
 
+		public int GetNumberOfLeadingZeroLimbs(Smx a)
+		{
+			var result = a.Mantissa.Length - GetLogicalLength(a);
+			return result;
+		}
+
 		public int GetLogicalLength(Smx a)
 		{
-			//var result = 1 + GetIndexOfLastNonZeroLimb(a.Mantissa);
-			var result = a.LimbCount;
+			var result = 1 + GetIndexOfLastNonZeroLimb(a.Mantissa);
 			return result;
 		}
 
@@ -1722,10 +1717,14 @@ namespace MSetGenP
 
 		public bool IsGreaterOrEqThan(Smx a, uint b)
 		{
-			var exponent = a.Exponent + 8;
+			//var ip =  GetIntegerPart(a.Mantissa, ApFixedPointFormat);
+
+			//return ip > b;
+
+			var exponent = a.Exponent; // + a.BitsBeforeBP; // 0; // a.Exponent + 8;
 			var aAsDouble = 0d;
 
-			for(var i = a.Mantissa.Length - 1; i >= 0; i--)
+			for (var i = a.Mantissa.Length - 1; i >= 0; i--)
 			{
 				aAsDouble += a.Mantissa[i] * Math.Pow(2, exponent + (i * 32));
 
@@ -1803,20 +1802,14 @@ namespace MSetGenP
 			var limbCount = partialWordLimbs.Length;
 
 			var fpFormat = GetCurrentFpFormat(limbCount, rValue.Exponent);
+			//Debug.WriteLine($"The format is {fpFormat}");
+
 			var integerPortion = GetIntegerPart(partialWordLimbs, fpFormat);
-			var maxIntegerPortion = Math.Pow(2, BitsBeforeBP);
 
-			if (integerPortion > Math.Pow(2, BitsBeforeBP))
+			if (integerPortion > MaxIntegerValue)
 			{
-				throw new ArgumentException($"An RValue with integer portion > {maxIntegerPortion} cannot be used to create an Smx.");
+				throw new ArgumentException($"An RValue with integer portion > {MaxIntegerValue} cannot be used to create an Smx.");
 			}
-
-			//var exponent = rValue.Exponent - BitsBeforeBP;
-			//var precision = rValue.Precision;
-
-			//var nrmMantissa = ConvertExp(partialWordLimbs, exponent, out var nrmExponent);
-			//var result = new Smx(sign, nrmMantissa, nrmExponent, precision, BitsBeforeBP);
-			//CheckForceExpResult(result, "CreateSmx");
 
 			//(var limbIndex, var bitOffset) = Math.DivRem(shiftAmount, BITS_PER_LIMB);
 
@@ -1843,7 +1836,7 @@ namespace MSetGenP
 
 			if (shiftAmount == 0)
 			{
-				newPartialWordLimbs = partialWordLimbs;
+				newPartialWordLimbs = TakeMostSignificantLimbs(partialWordLimbs, LimbCount);
 			}
 			else if (shiftAmount > 0)
 			{
@@ -1852,20 +1845,9 @@ namespace MSetGenP
 			else
 			{
 				shiftAmount = -1 * shiftAmount;
-				var sResult = ScaleAndSplit(partialWordLimbs, shiftAmount, "Create Smx");
+				var sResult = ScaleAndSplit(partialWordLimbs, shiftAmount, "Create Smx", takeMsbs:true);
 
-				if (sResult.Length == LimbCount)
-				{
-					newPartialWordLimbs = sResult;
-				}
-				else if (sResult.Length > LimbCount)
-				{
-					newPartialWordLimbs = CopyLastXElements(sResult, LimbCount);
-				}
-				else
-				{
-					newPartialWordLimbs = Extend(sResult, LimbCount);
-				}
+				newPartialWordLimbs = TakeMostSignificantLimbs(sResult, LimbCount);
 			}
 
 			var result = new Smx(sign, newPartialWordLimbs, exponent, precision, BitsBeforeBP);
@@ -1953,36 +1935,6 @@ namespace MSetGenP
 			return (uint)v2;
 		}
 
-		public Smx CreateSmxOld(RValue rValue)
-		{
-			var sign = rValue.Value >= 0;
-			var mantissa = ToPwULongs(rValue.Value);
-			var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(mantissa);
-			var exponent = rValue.Exponent - BitsBeforeBP;
-			var precision = rValue.Precision;
-
-			var nrmMantissa = ConvertExp(mantissa, exponent, out var nrmExponent);
-
-			var result = new Smx(sign, nrmMantissa, nrmExponent, precision, BitsBeforeBP);
-
-			CheckForceExpResult(result, "CreateSmx");
-
-			return result;
-		}
-
-		private int GetExponentOfLeastSignficantLimb(int limbCount, int exponent)
-		{
-			(var limbIndex, var bitOffset) = GetIndexOfBitBeforeBP(exponent); // 				(limbIndex, bitOffset) = Math.DivRem(-1 * exponent, BITS_PER_LIMB);
-			var fractionalBits = limbIndex * BITS_PER_LIMB + bitOffset;
-			var result = fractionalBits + exponent;
-
-			var nativeExponent = BITS_PER_LIMB * (limbCount - 1);
-
-			var result2 = exponent - nativeExponent;
-
-			return result;
-		}
-
 		private (int index, int offset) GetIndexOfBitBeforeBP(int exponent)
 		{
 			// What is the index of the limb that is the 1's place 
@@ -2067,7 +2019,7 @@ namespace MSetGenP
 
 		public static RValue GetRValue(SmxSa smxSa)
 		{
-			var mantissa = smxSa.MantissaSa.Materialize();
+			var mantissa = smxSa.MantissaSa.MaterializeAll();
 			var biValue = FromPwULongs(mantissa);
 			biValue = smxSa.Sign ? biValue : -1 * biValue;
 			var result = new RValue(biValue, smxSa.Exponent, smxSa.Precision);

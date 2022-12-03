@@ -67,6 +67,14 @@ namespace MSS.Types
 			return result;
 		}
 
+		public RValue Mul(int factor)
+		{
+			var result = new RValue(Value * factor, Exponent, Precision);
+			//result = BigIntegerHelper.TrimToMatchPrecision(result);
+
+			return result;
+		}
+
 		public RValue Square()
 		{
 			var result = new RValue(BigInteger.Pow(Value, 2), Exponent * 2, Precision);

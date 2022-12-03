@@ -13,5 +13,10 @@ namespace MSetGenP
 		public int NumberOfFractionalBits { get; init; }
 
 		public int TotalBits => BitsBeforeBinaryPoint + NumberOfFractionalBits;
+
+		public override string ToString()
+		{
+			return $"fmt:{BitsBeforeBinaryPoint}:{NumberOfFractionalBits}";
+		}
 	}
 }

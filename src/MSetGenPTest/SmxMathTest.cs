@@ -1,8 +1,10 @@
 using MSetGenP;
 using MSS.Common;
 using MSS.Types;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.Intrinsics.X86;
 
 namespace EngineTest
 {
@@ -47,7 +49,13 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			//var bRValue = SquareAdjusted(aRValue, smxMathHelper);
+			var bMantissaDisp = SmxMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
+
+			var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
+			var bP32Str = bP32Smx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the bSmxPlus32 is {bP32Str}.");
+
 			var bRValue = aRValue.Square();
 			var bStrComp = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
@@ -71,132 +79,198 @@ namespace EngineTest
 
 			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(8, 4 * 32 - 8));
 
-
-			//var a = new Smx(aRValue);
-			//var b = new Smx(bRValue);
-
 			var a = smxMathHelper.CreateSmx(aRValue);
 			var b = smxMathHelper.CreateSmx(bRValue);
 
-			var c = smxMathHelper.MultiplyC(a, b);
-			var cSmxRValue = c.GetRValue();
-			var s1 = c.GetStringValue();
+			//var c = smxMathHelper.MultiplyC(a, b);
+			//var cSmxRValue = c.GetRValue();
+			//var s1 = c.GetStringValue();
 
 			var cN = smxMathHelper.Multiply(a, b);
 			var cNSmxRValue = cN.GetRValue();
 			var sN1 = cN.GetStringValue();
 
-
 			var cRValue = aRValue.Mul(bRValue);
-			//var cRValue = MulAdjusted(aRValue, bRValue, smxMathHelper);
 			var s2 = RValueHelper.ConvertToString(cRValue);
 
-			var numberOfMatchingDigits = RValueHelper.GetNumberOfMatchingDigits(cSmxRValue, cRValue, out var expected);
+			//var numberOfMatchingDigits = RValueHelper.GetNumberOfMatchingDigits(cSmxRValue, cRValue, out var expected);
 
 			var numberOfMatchingDigitsN = RValueHelper.GetNumberOfMatchingDigits(cNSmxRValue, cRValue, out var expectedN);
 
-			Assert.Equal(expected, Math.Min(numberOfMatchingDigitsN, expectedN));
+			Assert.Equal(expectedN, Math.Min(numberOfMatchingDigitsN, expectedN));
 		}
 
 		[Fact]
 		public void SquareAnRValueSm()
 		{
-			var precision = 110;    // Binary Digits of precision, 30 Decimal Digits
+			var precision = 75;    // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 6;      // TargetExponent = -184, Total Bits = 192
 			var smxMathHelper = BuildTheMathHelper(limbCount);
 
 			var aBigInteger = BigInteger.Parse("-12644545325526901863503869090"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			var aRValue = new RValue(aBigInteger, -124, precision); // 0.25
 			var aSmx = smxMathHelper.CreateSmx(aRValue);
-
-			var aMantissaDisp = SmxMathHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
-			Debug.WriteLine($"The StringValue for the aSmx is {aMantissaDisp}.");
-
-
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
+			var aMantissaDisp = SmxMathHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
+			Debug.WriteLine($"The StringValue for the a mantissa is {aMantissaDisp}.");
+
 			var a2Mantissa = smxMathHelper.Square(aSmx.Mantissa);
 			var a2Str = SmxMathHelper.GetDiagDisplay("raw products", a2Mantissa);
-			Debug.WriteLine($"The StringValue for the aSmx is {a2Str}.");
+			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa, out var indexOfLastNonZeroLimb);
-			var a3MantissaNrm = smxMathHelper.ForceExp(a3Mantissa, out var a3NrmExponent);
-
+			var numberOfLeadingZeros = smxMathHelper.GetNumberOfLeadingZeroLimbs(aSmx);
+			var a3MantissaNrm = smxMathHelper.ForceExp(a3Mantissa, numberOfLeadingZeros * 2, out var a3NrmExponent);
 			var a3 = new Smx(true, a3MantissaNrm, a3NrmExponent, aSmx.Precision, aSmx.BitsBeforeBP);
 			var a3Str = a3.GetStringValue();
-			Debug.WriteLine($"The StringValue for the aSmx is {a3Str}.");
+			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
 			var bSmx = smxMathHelper.Square(aSmx);                          //3.5348216834895204420064645071512155149938836924682889e-19 -- Windows Calc: 3.5348216834895204420064645514845e-19
 			var bSmxRValue = bSmx.GetRValue();
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
+			var bMantissaDisp = SmxMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
+
+			var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
+			var bP32Str = bP32Smx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the bSmxPlus32 is {bP32Str}.");
+
 			var bRValue = aRValue.Square();
 			var bStrComp = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
-			var numberOfMatchingDigits = RValueHelper.GetNumberOfMatchingDigits(bSmxRValue, bRValue, out var expected);
-			Assert.Equal(expected, Math.Min(numberOfMatchingDigits, expected));
+			var smxMH2 = BuildTheMathHelper(10);
+			var aBiSqr = BigInteger.Multiply(aBigInteger, aBigInteger);
+			var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, -248, precision));
+			//var aBiSmxRValue = aBiSmx.GetRValue();
+			var aBiStr = aBiSmx.GetStringValue();
+			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
+
+			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecion);
+			Assert.Equal(strA, strB);
 		}
 
 		[Fact]
 		public void SquareAnRValue()
 		{
-			var precision = 53; // Binary Digits
-			var aRValue = new RValue(BigInteger.Parse("-126445453255269018635038690902017"), -133, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+			var precision = 70;    // Binary Digits of precision, 30 Decimal Digits
+			var limbCount = 6;      // TargetExponent = -184, Total Bits = 192
+			var smxMathHelper = BuildTheMathHelper(limbCount);
 
-			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(8, 6 * 32 - 8));
+			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+			var aRValue = new RValue(aBigInteger, -134, precision); // 0.25
+			var aSmx = smxMathHelper.CreateSmx(aRValue);
+			var aStr = aSmx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var s0 = RValueHelper.ConvertToString(aRValue); // -5.94543663954929423147140869492508049e-10
+			var aMantissaDisp = SmxMathHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
+			Debug.WriteLine($"The StringValue for the a mantissa is {aMantissaDisp}.");
 
-			//var a = new Smx(aRValue);
-			var a = smxMathHelper.CreateSmx(aRValue);
+			var a2Mantissa = smxMathHelper.Square(aSmx.Mantissa);
+			var a2Str = SmxMathHelper.GetDiagDisplay("raw products", a2Mantissa);
+			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
-			//var a2Mantissa = smxMathHelper.Square(a.Mantissa);
-			////var a2 = new Smx(true, a2Mantissa, -248, 53);
-			////var a2SmxRvalue = a2.GetRValue();
-			////var sA2 = a2.GetStringValue();
+			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa, out var indexOfLastNonZeroLimb);
+			var numberOfLeadingZeros = smxMathHelper.GetNumberOfLeadingZeroLimbs(aSmx);
+			var a3MantissaNrm = smxMathHelper.ForceExp(a3Mantissa, numberOfLeadingZeros * 2, out var a3NrmExponent);
+			var a3 = new Smx(true, a3MantissaNrm, a3NrmExponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3Str = a3.GetStringValue();
+			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
-			//var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa, out var indexOfLastNonZeroLimb);
-			//var a3 = new Smx(true, a3Mantissa, -248, 53, a.BitsBeforeBP);
-			//var a3SmxRvalue = a3.GetRValue();
-			//var sA3 = a3.GetStringValue();
+			var bSmx = smxMathHelper.Square(aSmx);                          //3.5348216834895204420064645071512155149938836924682889e-19 -- Windows Calc: 3.5348216834895204420064645514845e-19
+			var bSmxRValue = bSmx.GetRValue();
+			var bStr = bSmx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var b = smxMathHelper.Square(a);                            //3.5348216834895204420064645071512155149938836924682889e-19 -- Windows Calc: 3.5348216834895e-19 
-			var bSmxRValue = b.GetRValue();
-			var s1 = b.GetStringValue();
+			var bMantissaDisp = SmxMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
+
+			var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
+			var bP32Str = bP32Smx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the bSmxPlus32 is {bP32Str}.");
 
 			var bRValue = aRValue.Square();
-			//var bRValue = SquareAdjusted(aRValue, smxMathHelper);
-			var s2 = RValueHelper.ConvertToString(bRValue);
+			var bStrComp = RValueHelper.ConvertToString(bRValue);
+			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
-			var numberOfMatchingDigits = RValueHelper.GetNumberOfMatchingDigits(bSmxRValue, bRValue, out var expected);
-			Assert.Equal(expected, Math.Min(numberOfMatchingDigits, expected));
+			var smxMH2 = BuildTheMathHelper(10);
+			var aBiSqr = BigInteger.Multiply(aBigInteger, aBigInteger);
+			var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, -268, precision));
+			//var aBiSmxRValue = aBiSmx.GetRValue();
+			var aBiStr = aBiSmx.GetStringValue();
+			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
+
+			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecion);
+			Assert.Equal(strA, strB);
 		}
 
 		[Fact]
 		public void Square_ValueWith_7_Limbs()
 		{
 			//var smxMathHelper = new SmxMathHelper(-170);
-			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(8, 7 * 32 - 8));
+			var precision = 37;    // Binary Digits of precision, 30 Decimal Digits
+			var limbCount = 7;      // TargetExponent = -184, Total Bits = 192
+			var smxMathHelper = BuildTheMathHelper(limbCount);
 
-			var precision = 37;
-			var a = new Smx(false, new ulong[] { 0, 0, 4155170372, 1433657343, 4294967295, 566493183, 0 }, -216, precision, smxMathHelper.BitsBeforeBP); // TODO: a
+			var avSmx = new Smx(false, new ulong[] { 0, 0, 4155170372, 1433657343, 4294967295, 566493183, 1 }, -216, precision, smxMathHelper.BitsBeforeBP); // TODO: a
 
-			var aRValue = a.GetRValue();
-			var s0 = RValueHelper.ConvertToString(aRValue);
+			var avRValue = avSmx.GetRValue();
+			var avStr = avSmx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the avSmx is {avStr}.");
+			var atMantissaDisp = SmxMathHelper.GetDiagDisplay("av raw operand", avSmx.Mantissa);
+			Debug.WriteLine($"The StringValue for the av mantissa is {atMantissaDisp}.");
 
-			var b = smxMathHelper.Square(a);
-			var bSmxRValue = b.GetRValue();
-			var s1 = RValueHelper.ConvertToString(bSmxRValue);
+			var aSmx = smxMathHelper.CreateSmx(avRValue);
+			var aRValue = aSmx.GetRValue();
+			var aStr = aSmx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the atSmx is {aStr}.");
+			var aMantissaDisp = SmxMathHelper.GetDiagDisplay("raw operand", avSmx.Mantissa);
+			Debug.WriteLine($"The StringValue for the mantissa is {aMantissaDisp}.");
+
+			var a2Mantissa = smxMathHelper.Square(aSmx.Mantissa);
+			var a2Str = SmxMathHelper.GetDiagDisplay("raw products", a2Mantissa);
+			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
+
+			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa, out var indexOfLastNonZeroLimb);
+			var numberOfLeadingZeros = smxMathHelper.GetNumberOfLeadingZeroLimbs(aSmx);
+			var a3MantissaNrm = smxMathHelper.ForceExp(a3Mantissa, numberOfLeadingZeros * 2, out var a3NrmExponent);
+			var a3 = new Smx(true, a3MantissaNrm, a3NrmExponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3Str = a3.GetStringValue();
+			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
+
+			var bSmx = smxMathHelper.Square(aSmx);
+			var bSmxRValue = bSmx.GetRValue();
+			var bStr = bSmx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
+
+			var bMantissaDisp = SmxMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
+
+			var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent - 32);
+			var bP32Str = bP32Smx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the bSmxPlus32 is {bP32Str}.");
 
 			var bRValue = aRValue.Square();
-			//var bRValue = SquareAdjusted(aRValue, smxMathHelper);
-			var s2 = RValueHelper.ConvertToString(bRValue);
+			var bStrComp = RValueHelper.ConvertToString(bRValue);
+			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
-			var numberOfMatchingDigits = RValueHelper.GetNumberOfMatchingDigits(bSmxRValue, bRValue, out var expected);
-			Assert.Equal(expected, Math.Min(numberOfMatchingDigits, expected));
+			var smxMH2 = BuildTheMathHelper(14);
+			var aBigInteger = SmxMathHelper.FromPwULongs(aSmx.Mantissa);
+			var aBiSqr = BigInteger.Multiply(aBigInteger, aBigInteger);
+			var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, aSmx.Exponent * 2, precision));
+			//var aBiSmxRValue = aBiSmx.GetRValue();
+			var aBiStr = aBiSmx.GetStringValue();
+			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
+
+			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecion);
+			Assert.Equal(strA, strB);
 		}
 
 		[Fact]
@@ -254,26 +328,48 @@ namespace EngineTest
 			Assert.Equal(t2BigInteger, b2CompBigInteger);
 		}
 
-		[Fact]
-		public void TestForceExp()
-		{
-			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(8, 7 * 32 - 8));
+		//[Fact]
+		//public void TestForceExp()
+		//{
+		//	var precision = 37;    // Binary Digits of precision, 30 Decimal Digits
+		//	var limbCount = 7;      // TargetExponent = -184, Total Bits = 192
+		//	var smxMathHelper = BuildTheMathHelper(limbCount);
 
-			var a = new Smx(true, new ulong[] { 0, 353384068, 3154753262, 3994887299, 3390983361, 1473799878, 109397432 }, -216, 55, smxMathHelper.BitsBeforeBP);
+		//	var avSmx = new Smx(true, new ulong[] { 0, 353384068, 3154753262, 3994887299, 3390983361, 1473799878, 109397432 }, -216, precision, smxMathHelper.BitsBeforeBP);
 
-			var aRValue = a.GetRValue();
-			var s0 = a.GetStringValue(); // -5.94543663954929423147140869492508049e-10
+		//	var avRValue = avSmx.GetRValue();
+		//	var avStr = avSmx.GetStringValue();
+		//	Debug.WriteLine($"The StringValue for the avSmx is {avStr}."); // -5.94543663954929423147140869492508049e-10
+		//	var atMantissaDisp = SmxMathHelper.GetDiagDisplay("av raw operand", avSmx.Mantissa);
+		//	Debug.WriteLine($"The StringValue for the av mantissa is {atMantissaDisp}.");
 
-			var nrmMantissa = smxMathHelper.ForceExp(a.Mantissa/*, 6, -248*/, out var nrmExponent);
-			Debug.Assert(nrmMantissa.Length == smxMathHelper.LimbCount, $"ForceExp returned a result with {nrmMantissa.Length} limbs, expecting {smxMathHelper.LimbCount}.");
+		//	var aSmx = smxMathHelper.CreateSmx(avRValue);
+		//	var aRValue = aSmx.GetRValue();
+		//	var aStr = aSmx.GetStringValue();
+		//	Debug.WriteLine($"The StringValue for the atSmx is {aStr}.");
+		//	var aMantissaDisp = SmxMathHelper.GetDiagDisplay("raw operand", avSmx.Mantissa);
+		//	Debug.WriteLine($"The StringValue for the mantissa is {aMantissaDisp}.");
 
-			var aNrm = new Smx(true, nrmMantissa, nrmExponent, 55, a.BitsBeforeBP);
-			var aNrmRValue = aNrm.GetRValue();
-			var s1 = aNrm.GetStringValue();
+		//	//var bStgSmx = AdjustExponent(aSmx, aSmx.Exponent - aSmx.BitsBeforeBP);
 
-			var numberOfMatchingDigits = RValueHelper.GetNumberOfMatchingDigits(aNrmRValue, aRValue, out var expected);
-			Assert.Equal(expected, Math.Min(numberOfMatchingDigits, expected));
-		}
+		//	var bStgRValue = aRValue.Mul(aSmx.BitsBeforeBP);
+		//	var bStg1Smx = new Smx(bStgRValue);
+
+		//	var bStgSmx = new Smx(aSmx.Sign, bStg1Smx.Mantissa, bStg1Smx.Exponent, bStg1Smx.Precision, aSmx.BitsBeforeBP);
+
+
+		//	var bMantissa = smxMathHelper.ForceExp(bStgSmx.Mantissa, 0, out var bExponent);
+		//	Debug.Assert(bMantissa.Length == smxMathHelper.LimbCount, $"ForceExp returned a result with {bMantissa.Length} limbs, expecting {smxMathHelper.LimbCount}.");
+
+		//	var bSmx = new Smx(aSmx.Sign, bMantissa, bExponent, precision, aSmx.BitsBeforeBP);
+		//	var bSmxRValue = bSmx.GetRValue();
+		//	var bStr = bSmx.GetStringValue();
+		//	Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
+
+		//	var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, aRValue, failOnTooFewDigits: false, out var strA, out var strB);
+		//	Assert.True(haveRequiredPrecion);
+		//	Assert.Equal(strA, strB);
+		//}
 
 		[Fact]
 		public void AddTwoRValues()
@@ -393,6 +489,13 @@ namespace EngineTest
 
 			var result = new RValue(b.Value, b.Exponent + smxMathHelper.BitsBeforeBP);
 
+			return result;
+		}
+
+
+		private Smx AdjustExponent(Smx o, int newExponent)
+		{
+			var result = new Smx(o.Sign, o.Mantissa, newExponent, o.Precision, o.BitsBeforeBP);
 			return result;
 		}
 

@@ -15,8 +15,11 @@ namespace MSetGenP
 			var blockSize = mapSectionRequest.BlockSize;
 			
 			//var precision = mapSectionRequest.Precision;
-			var targetExponent = -88; // -56; // samplePointDeltaDto.Exponent - 20;
-			var smxMathHelper = new SmxMathHelper(targetExponent);
+			//var targetExponent = -88; // -56; // samplePointDeltaDto.Exponent - 20;
+
+			var lc = 4;
+			var fixedPointFormat = new ApFixedPointFormat(8, lc * 32 - 8);
+			var smxMathHelper = new SmxMathHelper(fixedPointFormat);
 
 			var dtoMapper = new DtoMapper();
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
