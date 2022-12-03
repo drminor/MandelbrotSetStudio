@@ -186,7 +186,7 @@ namespace MSetExplorer
 			//byte[]? result = null;
 
 			var cts = new CancellationTokenSource();
-			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+			var bitmapBuilder = new ImageBuilder.BitmapBuilder(_mapLoaderManager);
 			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, job.MapCalcSettings, _useEscapeVelocities, cts.Token, StatusCallBack));
 
 			var result = task.Result;

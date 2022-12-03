@@ -51,7 +51,7 @@ namespace MSetGenP
 				throw new ArgumentException("The valueCount must be an even multiple of Vector<ulong>.Count.");
 			}
 
-			ApFixedPointFormat = SmxMathHelper.CreateApFixedPointFormat(apFixedPointFormat.BitsBeforeBinaryPoint, apFixedPointFormat.NumberOfFractionalBits);
+			ApFixedPointFormat = SmxMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			{
@@ -61,7 +61,7 @@ namespace MSetGenP
 			TargetExponent = -1 * FractionalBits;
 			LimbCount = SmxMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 
-			//var maxIntegerRValue = new RValue(BigInteger.Pow(2, BitsBeforeBp) - 1, 0, RMapConstants.DEFAULT_PRECISION);
+			//var maxIntegerRValue = new RValue(BigInteger.Pow(2, BitsBeforeBP) - 1, 0, RMapConstants.DEFAULT_PRECISION);
 			//MaxIntegerValue = SmxMathHelper.CreateSmx(maxIntegerRValue);
 
 			_smxMathHelper = new SmxMathHelper(ApFixedPointFormat);
@@ -134,7 +134,7 @@ namespace MSetGenP
 
 		public List<int> InPlayList { get; }
 
-		public int BitsBeforeBp => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		#endregion

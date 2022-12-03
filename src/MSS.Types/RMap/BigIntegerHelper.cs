@@ -403,24 +403,23 @@ namespace MSS.Types
 
 		#region Precision Support
 
-
-
-
 		public static RValue TrimToMatchPrecision(RValue rValue)
 		{
 			var result = TrimToMatchPrecision(rValue, rValue.Precision);
 			return result;
 		}
 
-		public static RValue TrimToNumBaseUIntDigits(RValue rValue, int numberOfBaseUIntDigits)
-		{
-			var result = TrimToMatchPrecision(rValue, numberOfBaseUIntDigits * 32);
-			return result;
-		}
+		//public static RValue TrimToNumBaseUIntDigits(RValue rValue, int numberOfBaseUIntDigits)
+		//{
+		//	var result = TrimToMatchPrecision(rValue, numberOfBaseUIntDigits * 32);
+		//	return result;
+		//}
 
 		public static RValue TrimToMatchPrecision(RValue rValue, int precision)
 		{
-			var numberOfDecimalDigits = (int)Math.Round(Math.Log10(2) * precision, MidpointRounding.AwayFromZero);
+			//var numberOfDecimalDigits = (int)Math.Round(Math.Log10(2) * precision, MidpointRounding.AwayFromZero);
+			var numberOfDecimalDigits = DoubleHelper.RoundToZero(DoubleHelper.GetNumberOfDecimalDigits(precision));
+
 			numberOfDecimalDigits++; // Leave an extra decimal digit for padding or rounding
 
 			var bStr = rValue.Value.ToString(CultureInfo.InvariantCulture);
@@ -432,9 +431,9 @@ namespace MSS.Types
 			{
 				var dDiff = bStrLength - numberOfDecimalDigits;
 
-				var diffInBinaryDigits = (int)Math.Round(dDiff / Math.Log10(2), MidpointRounding.ToZero);
+				//var diffInBinaryDigits = (int)Math.Round(dDiff / Math.Log10(2), MidpointRounding.ToZero);
+				var diffInBinaryDigits = DoubleHelper.RoundToZero(DoubleHelper.GetNumberOfBinaryDigits(dDiff));
 
-				//var divisorPow =  (int)Math.Round(Math.Log2(bDiff), MidpointRounding.ToZero);
 				var divisor = BigInteger.Pow(2, diffInBinaryDigits);
 
 				var result = new RValue(rValue.Value / divisor, rValue.Exponent + diffInBinaryDigits, rValue.Precision);

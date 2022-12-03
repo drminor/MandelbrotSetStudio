@@ -50,7 +50,7 @@ namespace MSetGenP
 		{
 			var result = new ushort[blockSize.NumberOfCells];
 
-			var stride = blockSize.Width;
+			var stride = (byte)blockSize.Width;
 			var samplePointOffsets = smxMathHelper.BuildSamplePointOffsets(delta, stride);
 			//ReportExponents(samplePointOffsets);
 			var samplePointsX = smxMathHelper.BuildSamplePoints(startingCx, samplePointOffsets);

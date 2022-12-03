@@ -242,7 +242,7 @@ namespace MSS.Common
 			var strARaw = GetStringsToCompare(a, b, out var strBRaw);
 
 			var precision = Math.Min(a.Precision, b.Precision);
-			var numberOfDecimalDigits = (int)Math.Round(precision * Math.Log10(2), MidpointRounding.ToZero);
+			var numberOfDecimalDigits = DoubleHelper.RoundToZero(DoubleHelper.GetNumberOfDecimalDigits(precision)); // (int)Math.Round(precision * Math.Log10(2), MidpointRounding.ToZero);
 
 			if (strARaw.Length < numberOfDecimalDigits && failOnTooFewDigits)
 			{
@@ -267,7 +267,9 @@ namespace MSS.Common
 		public static int GetNumberOfMatchingDigits(RValue a, RValue b, out int expected)
 		{
 			var precision = Math.Min(a.Precision, b.Precision);
-			expected = (int)Math.Round(precision * Math.Log10(2), MidpointRounding.ToZero);
+
+			//expected = (int)Math.Round(precision * Math.Log10(2), MidpointRounding.ToZero);
+			expected = DoubleHelper.RoundToZero(DoubleHelper.GetNumberOfDecimalDigits(precision));
 
 			var strA = GetStringsToCompare(a, b, out var strB);
 			Debug.WriteLine($"GetNumberOfMatchingDigits found a:{strA}, b:{strB}");
@@ -307,8 +309,15 @@ namespace MSS.Common
 
 		#region Precision
 
-		// 16 decimal digits, 53 log10(2) ≈ 15.955).
+		// Each decimal digits is equal to ≈ 3.3218 binary digits. (53 log10(2) ≈ 15.955).
 
+		/// <summary>
+		/// Calculates the number of decimal digits required to resolve rValue2 from rValue1.
+		/// </summary>
+		/// <param name="rValue1"></param>
+		/// <param name="rValue2"></param>
+		/// <param name="diff">The absolute difference between rValue1 and rValue2</param>
+		/// <returns>Number of decimal digits</returns>
 		public static int GetPrecision(RValue rValue1, RValue rValue2, out RValue diff)
 		{
 			var nrmRVal1 = RNormalizer.Normalize(rValue1, rValue2, out var nrmRVal2);
