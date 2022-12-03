@@ -518,7 +518,7 @@ namespace MSetGenP
 			for (var i = 0; i < resultLength; i++)
 			{
 				var nv = left[i] + right[i] + carry;
-				result[i] = _smxMathHelper.Split(nv, out carry);
+				result[i] = SmxMathHelper.Split(nv, out carry);
 				indexOfLastNonZeroLimb = result[i] == 0 ? indexOfLastNonZeroLimb : i;
 			}
 

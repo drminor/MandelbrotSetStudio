@@ -1,31 +1,24 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using System.Collections;
-using System.Diagnostics;
 using System.Numerics;
-using System.Text;
 
 namespace MSetGenP
 {
-	public struct Smx : IEquatable<Smx>
+	public struct SmxFloating : IEquatable<SmxFloating>
 	{
 		#region Constructor
 
 		//public static readonly Smx Zero = new Smx(true, new ulong[] { 0 }, 1, 1000, 0);
 
-		public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision, bitsBeforeBP: 0)
+		public SmxFloating(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision, bitsBeforeBP: 0)
 		{ }
 
-		public Smx(RValue rValue, int precision) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP: 0)
+		public SmxFloating(RValue rValue, int precision) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP: 0)
 		{ }
 
-		public Smx(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
+		public SmxFloating(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
 		{
-			if (exponent == 1)
-			{
-				Debug.WriteLine("WARNING the exponent is 1.");
-			}
-
 			Sign = bigInteger < 0 ? false : true;
 			Mantissa = SmxMathHelper.ToPwULongs(bigInteger);
 			Exponent = exponent;
@@ -33,13 +26,8 @@ namespace MSetGenP
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		public Smx(bool sign, ulong[] mantissa, int exponent, int precision, int bitsBeforeBP)
+		public SmxFloating(bool sign, ulong[] mantissa, int exponent, int precision, int bitsBeforeBP)
 		{
-			if (exponent == 1)
-			{
-				Debug.WriteLine("WARNING the exponent is 1.");
-			}
-
 			ValidatePWValues(mantissa);
 
 			Sign = sign;
@@ -78,7 +66,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			var result = SmxMathHelper.GetRValue(this); 
+			var result = SmxMathHelperFloating.GetRValue(this); 
 			return result;
 		}
 
@@ -108,7 +96,7 @@ namespace MSetGenP
 			return obj is Smx smx && Equals(smx);
 		}
 
-		public bool Equals(Smx other)
+		public bool Equals(SmxFloating other)
 		{
 			return Sign == other.Sign &&
 				((IStructuralEquatable)Mantissa).Equals(other.Mantissa, StructuralComparisons.StructuralEqualityComparer) &&
@@ -120,12 +108,12 @@ namespace MSetGenP
 			return HashCode.Combine(Sign, Mantissa, Exponent);
 		}
 
-		public static bool operator ==(Smx left, Smx right)
+		public static bool operator ==(SmxFloating left, SmxFloating right)
 		{
 			return left.Equals(right);
 		}
 
-		public static bool operator !=(Smx left, Smx right)
+		public static bool operator !=(SmxFloating left, SmxFloating right)
 		{
 			return !(left == right);
 		}

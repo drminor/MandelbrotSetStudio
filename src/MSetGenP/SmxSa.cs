@@ -85,7 +85,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			var result = SmxMathHelper.GetRValue(this);
+			var result = SmxMathHelperFloating.GetRValue(this);
 			return result;
 		}
 

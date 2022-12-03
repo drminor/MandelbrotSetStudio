@@ -38,7 +38,7 @@ namespace MSetGenP
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 			
 			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
-			uint threshold = 4;
+			uint threshold = 0;
 
 			var counts = GenerateMapSection(smxMathHelper, smxVecMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, threshold);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
