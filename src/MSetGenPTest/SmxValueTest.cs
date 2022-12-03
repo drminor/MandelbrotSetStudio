@@ -34,22 +34,11 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse("-34359738368");
 			var aRValue = new RValue(aBigInteger, -33, precision); // -4
 
-			//var aSmx = new Smx(aRValue, 20);
 			var aSmx = smxMathHelper.CreateSmx(aRValue);
 
 			var aSmxRValue = aSmx.GetRValue();
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
-
-			//var indexOfLastNonZeroLimb = smxMathHelper.GetIndexOfLastNonZeroLimb(aSmx.Mantissa);
-			//var nrmMantissa = smxMathHelper.ConvertExp(aSmx.Mantissa, aSmx.Exponent, out var nrmExponent);
-
-			//Debug.Assert(nrmMantissa.Length == smxMathHelper.LimbCount, $"ForceExp returned a result with {nrmMantissa.Length} limbs, expecting {smxMathHelper.LimbCount}.");
-
-			//var a2Smx = new Smx(aSmx.Sign, nrmMantissa, nrmExponent, aSmx.Precision, aSmx.BitsBeforeBP);
-
-			//var a2SmxRValue = a2Smx.GetRValue();
-			//var a2Str = a2Smx.GetStringValue();
 
 			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(aSmxRValue, aRValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecion);
@@ -99,7 +88,7 @@ namespace EngineTest
 
 		private SmxMathHelper BuildTheMathHelper(int limbCount)
 		{
-			var result = new SmxMathHelper(new ApFixedPointFormat(8, limbCount * 32 - 8));
+			var result = new SmxMathHelper(new ApFixedPointFormat(limbCount));
 			return result;
 		}
 

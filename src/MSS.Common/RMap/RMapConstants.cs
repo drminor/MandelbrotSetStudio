@@ -7,6 +7,7 @@ namespace MSS.Common
 	public class RMapConstants
 	{
 		public static readonly SizeInt BLOCK_SIZE;
+		public const int BITS_BEFORE_BP = 8;
 
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE;
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE_EVEN;

@@ -18,9 +18,7 @@ namespace MSetGenP
 			var blockSize = mapSectionRequest.BlockSize;
 			var precision = mapSectionRequest.Precision;
 
-			//var targetExponent = -88; // samplePointDeltaDto.Exponent - 20;
-
-			var fixedPointFormat = new ApFixedPointFormat(8, 3 * 32 - 8);
+			var fixedPointFormat = new ApFixedPointFormat(8, precision);
 			var smxMathHelper = new SmxMathHelper(fixedPointFormat);
 			var smxVecMathHelper = new SmxVecMathHelper(mapSectionRequest.DoneFlags, fixedPointFormat);
 
@@ -28,9 +26,9 @@ namespace MSetGenP
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
 			var samplePointDelta = dtoMapper.MapFrom(samplePointDeltaDto);
 
-			var startingCx = smxMathHelper.CreateSmx(mapPosition.X); // .CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
-			var startingCy = smxMathHelper.CreateSmx(mapPosition.Y); // .CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
-			var delta = smxMathHelper.CreateSmx(samplePointDelta.Width); //.CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
+			var startingCx = smxMathHelper.CreateSmx(mapPosition.X);
+			var startingCy = smxMathHelper.CreateSmx(mapPosition.Y);
+			var delta = smxMathHelper.CreateSmx(samplePointDelta.Width);
 
 			var s1 = startingCx.GetStringValue();
 			var s2 = startingCy.GetStringValue();
@@ -40,7 +38,7 @@ namespace MSetGenP
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 			
 			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
-			uint threshold = 0;
+			uint threshold = 4;
 
 			var counts = GenerateMapSection(smxMathHelper, smxVecMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, threshold);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);

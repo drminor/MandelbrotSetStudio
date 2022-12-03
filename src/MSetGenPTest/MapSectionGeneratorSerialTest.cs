@@ -88,7 +88,7 @@ namespace MSetGenPTest
 		[Fact]
 		public void CallIteratorSample()
 		{
-			var smxVecMathHelper = new SmxVecMathHelper(new bool[4], new ApFixedPointFormat(8, 3 * 32 - 8));
+			var smxVecMathHelper = new SmxVecMathHelper(new bool[4], new ApFixedPointFormat(3));
 
 			var iterator = new IteratorVector(smxVecMathHelper);
 

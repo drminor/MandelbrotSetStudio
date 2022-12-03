@@ -14,20 +14,17 @@ namespace MSetGenP
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
 			
-			//var precision = mapSectionRequest.Precision;
-			//var targetExponent = -88; // -56; // samplePointDeltaDto.Exponent - 20;
-
-			var lc = 4;
-			var fixedPointFormat = new ApFixedPointFormat(8, lc * 32 - 8);
+			var precision = mapSectionRequest.Precision;
+			var fixedPointFormat = new ApFixedPointFormat(8, precision);
 			var smxMathHelper = new SmxMathHelper(fixedPointFormat);
 
 			var dtoMapper = new DtoMapper();
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
 			var samplePointDelta = dtoMapper.MapFrom(samplePointDeltaDto);
 
-			var startingCx = smxMathHelper.CreateSmx(mapPosition.X); // .CreateSmxFromDto(mapPositionDto.X, mapPositionDto.Exponent, precision);
-			var startingCy = smxMathHelper.CreateSmx(mapPosition.Y); // .CreateSmxFromDto(mapPositionDto.Y, mapPositionDto.Exponent, precision);
-			var delta = smxMathHelper.CreateSmx(samplePointDelta.Width); //.CreateSmxFromDto(samplePointDeltaDto.Width, samplePointDeltaDto.Exponent, precision);
+			var startingCx = smxMathHelper.CreateSmx(mapPosition.X);
+			var startingCy = smxMathHelper.CreateSmx(mapPosition.Y);
+			var delta = smxMathHelper.CreateSmx(samplePointDelta.Width);
 
 			var s1 = startingCx.GetStringValue();
 			var s2 = startingCy.GetStringValue();
