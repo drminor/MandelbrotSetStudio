@@ -34,9 +34,10 @@ namespace MSetGenP
 			var s2 = startingCy.GetStringValue();
 			var s3 = delta.GetStringValue();
 
-			Debug.WriteLine($"Value of C at origin: real: {s1}, imaginary: {s2}. Delta: {s3}. Precision: {startingCx.Precision}");
+			var blockPos = mapSectionRequest.BlockPosition;
+			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
+
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
-			
 			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
 			uint threshold = 0;
 
@@ -56,7 +57,6 @@ namespace MSetGenP
 
 			var stride = (byte)blockSize.Width;
 			var samplePointOffsets = smxMathHelper.BuildSamplePointOffsets(delta, stride);
-
 			var samplePointsX = smxMathHelper.BuildSamplePoints(startingCx, samplePointOffsets);
 			var samplePointsY = smxMathHelper.BuildSamplePoints(startingCy, samplePointOffsets);
 

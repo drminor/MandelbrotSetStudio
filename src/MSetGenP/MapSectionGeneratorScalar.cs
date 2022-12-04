@@ -16,6 +16,7 @@ namespace MSetGenP
 			
 			var precision = mapSectionRequest.Precision;
 			var fixedPointFormat = new ApFixedPointFormat(8, precision);
+			//var fixedPointFormat = new ApFixedPointFormat(8, 129);
 			var smxMathHelper = new SmxMathHelper(fixedPointFormat);
 
 			var dtoMapper = new DtoMapper();
