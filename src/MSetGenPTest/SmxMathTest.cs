@@ -165,8 +165,8 @@ namespace EngineTest
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
-			var a3MantissaNrm = smxMathHelper.ForceExp(a3Mantissa, out var a3NrmExponent);
-			var a3 = new Smx(true, a3MantissaNrm, a3NrmExponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3MantissaNrm = smxMathHelper.ShiftAndTrim(a3Mantissa);
+			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.Precision, aSmx.BitsBeforeBP);
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
@@ -219,8 +219,8 @@ namespace EngineTest
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
-			var a3MantissaNrm = smxMathHelper.ForceExp(a3Mantissa, out var a3NrmExponent);
-			var a3 = new Smx(true, a3MantissaNrm, a3NrmExponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3MantissaNrm = smxMathHelper.ShiftAndTrim(a3Mantissa);
+			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.Precision, aSmx.BitsBeforeBP);
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
@@ -280,8 +280,8 @@ namespace EngineTest
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
-			var a3MantissaNrm = smxMathHelper.ForceExp(a3Mantissa, out var a3NrmExponent);
-			var a3 = new Smx(true, a3MantissaNrm, a3NrmExponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3MantissaNrm = smxMathHelper.ShiftAndTrim(a3Mantissa);
+			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.Precision, aSmx.BitsBeforeBP);
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
@@ -318,7 +318,7 @@ namespace EngineTest
 		public void SquareCompareWithAndWithoutLeadingZeros()
 		{
 			var precision = 35;    // Binary Digits of precision, 30 Decimal Digits
-			var limbCount = 3;      // TargetExponent = -184, Total Bits = 192
+			var limbCount = 4;      // TargetExponent = -184, Total Bits = 192
 			var smxMathHelper = BuildTheMathHelper(limbCount);
 
 			var aBigInteger = BigInteger.Parse("-343597");

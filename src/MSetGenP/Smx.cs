@@ -11,8 +11,6 @@ namespace MSetGenP
 	{
 		#region Constructor
 
-		//public static readonly Smx Zero = new Smx(true, new ulong[] { 0 }, 1, 1000, 0);
-
 		public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision, bitsBeforeBP: 0)
 		{ }
 

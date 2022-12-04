@@ -38,7 +38,7 @@ namespace MSetGenP
 
 		private static void ValidatePWValues(ShiftedArray<ulong> mantissa)
 		{
-			if (SmxMathHelper.CheckPWValues(mantissa))
+			if (SmxMathHelperFloating.CheckPWValues(mantissa))
 			{
 				throw new ArgumentException($"Cannot create a SmxSa from an array of ulongs where any of the values is greater than MAX_DIGIT.");
 			}
