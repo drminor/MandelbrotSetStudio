@@ -42,26 +42,6 @@ namespace MSetGenP
 				throw;
 			}
 		}
-		
-		public void Sample()
-		{
-			var lanes = Vector<ulong>.Count;
 
-			ulong[] a = { 1, 2, 3, 4, 5, 6, 7, 8 };
-			ulong[] b = { 1, 1, 1, 1, 1, 1, 1, 1 };
-			ulong[] c = new ulong[a.Length];
-
-			for (int i = 0; i < a.Length; i += lanes)
-			{
-				var a8 = new Vector<ulong>(a, i);
-				var b8 = new Vector<ulong>(b, i);
-				(a8 + b8).CopyTo(c, i);
-			}
-
-			for (int i = 0; i < a.Length; i++)
-			{
-				Debug.WriteLine($"item: {i}: {c[i]}.");
-			}
-		}
 	}
 }

@@ -86,13 +86,20 @@ namespace MSetGenPTest
 		}
 
 		[Fact]
-		public void CallIteratorSample()
+		public void CallIntrincsSample()
 		{
-			var smxVecMathHelper = new SmxVecMathHelper(new bool[4], new ApFixedPointFormat(3));
+			var simdSamples = new SimdSamples();
 
-			var iterator = new IteratorVector(smxVecMathHelper);
+			var nums = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+			simdSamples.SumVectorized(nums);
+		}
 
-			iterator.Sample();
+		[Fact]
+		public void CallVectorSample()
+		{
+			var simdSamples = new SimdSamples();
+
+			simdSamples.Sample();
 		}
 
 		#region Support Methods

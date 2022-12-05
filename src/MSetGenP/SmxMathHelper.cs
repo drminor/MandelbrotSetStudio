@@ -558,7 +558,7 @@ namespace MSetGenP
 
 			for (var i = 0; i < result.Length; i++)
 			{
-				result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;
+				result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;	// Discard the top shiftAmount of bits.
 				if (sourceIndex > 0)
 				{
 					result[i] |= (mantissa[sourceIndex - 1] >> 32 - shiftAmount); // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions

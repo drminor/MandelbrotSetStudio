@@ -3,6 +3,7 @@ using MSS.Types.DataTransferObjects;
 using System.Buffers;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 
 namespace MSetGenP
 {
@@ -212,6 +213,23 @@ namespace MSetGenP
 
 			return result;
 		}
+
+		public Span<Vector256<ulong>> GetLimbVectors2L(int limbIndex)
+		{
+			var x = MantissaMemories[limbIndex];
+			Span<Vector256<ulong>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(x.Span);
+
+			return result;
+		}
+
+		public Span<Vector256<uint>> GetLimbVectors2S(int limbIndex)
+		{
+			var x = MantissaMemories[limbIndex];
+			Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<uint>>(x.Span);
+
+			return result;
+		}
+
 
 		//public SequenceReader<Vector<ulong>> GetSequenceReader(int limbIndex)
 		//{
