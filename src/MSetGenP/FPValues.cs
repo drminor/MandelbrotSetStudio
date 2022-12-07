@@ -206,13 +206,13 @@ namespace MSetGenP
 		//	return result;
 		//}
 
-		public Span<Vector<ulong>> GetLimbVectors(int limbIndex)
-		{
-			var x = MantissaMemories[limbIndex];
-			Span<Vector<ulong>> result = MemoryMarshal.Cast<ulong, Vector<ulong>>(x.Span);
+		//public Span<Vector<ulong>> GetLimbVectors(int limbIndex)
+		//{
+		//	var x = MantissaMemories[limbIndex];
+		//	Span<Vector<ulong>> result = MemoryMarshal.Cast<ulong, Vector<ulong>>(x.Span);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public Span<Vector256<ulong>> GetLimbVectors2L(int limbIndex)
 		{

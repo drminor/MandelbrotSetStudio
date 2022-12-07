@@ -1,12 +1,9 @@
-﻿using MSS.Common;
-using MSS.Types;
-using System.Buffers;
+﻿using System.Buffers;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Threading;
 
 namespace MSetGenP
 {
@@ -20,18 +17,14 @@ namespace MSetGenP
 		private const ulong LOW_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private const ulong HIGH_MASK = 0xFFFFFFFF00000000; // bits 32 - 63 are set.
 
-		private static readonly Vector<ulong> LOW_MASK_VEC = new Vector<ulong>(LOW_MASK);
-		private static readonly Vector<ulong> HIGH_MASK_VEC = new Vector<ulong>(HIGH_MASK);
-
-		private static readonly Vector256<ulong> LOW_MASK_VEC2 = Vector256.Create(LOW_MASK);
-		private static readonly Vector256<ulong> HIGH_MASK_VEC2 = Vector256.Create(HIGH_MASK);
-
+		private static readonly Vector256<ulong> LOW_MASK_VEC = Vector256.Create(LOW_MASK);
+		private static readonly Vector256<ulong> HIGH_MASK_VEC = Vector256.Create(HIGH_MASK);
 
 		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
 		private static readonly int _ulongSlots = Vector<ulong>.Count;
 
-		private readonly SmxMathHelper _smxMathHelper;
+		//private readonly SmxMathHelper _smxMathHelper;
 
 		private Memory<ulong>[] _squareResult1Mems;
 		private Memory<ulong>[] _squareResult2Mems;
@@ -45,11 +38,6 @@ namespace MSetGenP
 		private Memory<ulong> _withCarriesMem;
 
 		private Memory<ulong>[] _addResult1Mem;
-
-		private readonly Vector256<ulong> _shiftLeft;
-		private readonly Vector256<ulong> _shiftRight1;
-		private readonly Vector256<ulong> _shiftRight2;
-
 
 		#endregion
 
@@ -72,18 +60,11 @@ namespace MSetGenP
 			//	Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
 			//}
 
-			TargetExponent = -1 * FractionalBits;
 			LimbCount = SmxMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
+			TargetExponent = -1 * FractionalBits;
+			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
 
-			_shiftLeft = Vector256.Create((ulong)( 32 + BitsBeforeBP));
-			_shiftRight1 = Vector256.Create(32ul);
-			_shiftRight2 = Vector256.Create((ulong)(32 - BitsBeforeBP));
-
-
-			//var maxIntegerRValue = new RValue(BigInteger.Pow(2, BitsBeforeBP) - 1, 0, RMapConstants.DEFAULT_PRECISION);
-			//MaxIntegerValue = SmxMathHelper.CreateSmx(maxIntegerRValue);
-
-			_smxMathHelper = new SmxMathHelper(ApFixedPointFormat);
+			//_smxMathHelper = new SmxMathHelper(ApFixedPointFormat);
 
 			InPlayList = BuildTheInplayList(doneFlags, VecCount);
 
@@ -133,12 +114,6 @@ namespace MSetGenP
 			return result;
 		}
 
-		private Span<Vector<ulong>> GetLimbVectors(Memory<ulong> memory)
-		{
-			Span<Vector<ulong>> result = MemoryMarshal.Cast<ulong, Vector<ulong>>(memory.Span);
-			return result;
-		}
-
 		private Span<Vector256<ulong>> GetLimbVectors2L(Memory<ulong> memory)
 		{
 			Span<Vector256<ulong>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(memory.Span);
@@ -165,6 +140,9 @@ namespace MSetGenP
 
 		public List<int> InPlayList { get; }
 
+		public uint MaxIntegerValue { get; init; }
+
+
 		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
@@ -173,7 +151,7 @@ namespace MSetGenP
 
 		#region Multiply and Square
 
-		public FPValues Square(FPValues a)
+		public void Square(FPValues a, FPValues result)
 		{
 			//if (a.IsZero)
 			//{
@@ -183,12 +161,12 @@ namespace MSetGenP
 			var valueCount = a.Length;
 			var signs = Enumerable.Repeat(true, valueCount).ToArray();
 
-			var rawMantissas = SquareInternal2(a);
-			var mantissas = PropagateCarries2(rawMantissas);
+			var rawMantissas = SquareInternal(a);
+			var mantissas = PropagateCarries(rawMantissas);
 			var nrmMantissa = ShiftAndTrim(mantissas);			// TODO: Give the ShiftAndTrim method a reference to the new FPValues's MantissaMemories to avoid copying
 
 			var targetLimbCount = a.LimbCount;
-			var result = new FPValues(signs, a.Exponents, targetLimbCount);
+			//var result = new FPValues(signs, a.Exponents, targetLimbCount);
 
 			for (var i = 0; i < nrmMantissa.Length; i++)
 			{
@@ -198,64 +176,10 @@ namespace MSetGenP
 				}
 			}
 
-			return result;
+			//return result;
 		}
 
-		//private Memory<ulong>[] SquareInternal(FPValues a)
-		//{
-		//	var result = _squareResult1Mems;
-		//	var products = GetLimbVectors(_productsMem);
-
-		//	// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
-		//	for (int j = 0; j < a.LimbCount; j++)
-		//	{
-		//		for (int i = j; i < a.LimbCount; i++)
-		//		{
-		//			//var products = new Vector<ulong>[vCnt];
-
-		//			var left = a.GetLimbVectors(j);
-		//			var right = a.GetLimbVectors(i);
-
-		//			MultiplyVecs(left, right, products);
-
-		//			if (i > j)
-		//			{
-		//				//product *= 2;
-		//				for (var q = 0; q < products.Length; q++)
-		//				{
-		//					products[q] = products[q] * 2;
-		//				}
-
-		//			}
-
-		//			var resultPtr = j + i;  // 0, 1, 1, 2
-
-		//			//var lo = Split(product, out var hi);
-		//			//mantissa[resultPtr] += lo;
-		//			//mantissa[resultPtr + 1] += hi;
-
-		//			var resultLows = GetLimbVectors(result[resultPtr]);
-		//			var resultHighs = GetLimbVectors(result[resultPtr + 1]);
-
-		//			var productHighs = GetLimbVectors(_productHighsMem);
-		//			var productLows = GetLimbVectors(_productLowsMem);
-
-		//			Split(products, productHighs, productLows);
-
-		//			for(var p = 0; p < products.Length; p++)
-		//			{
-		//				resultLows[p] = resultLows[p] + productLows[p];
-		//				resultHighs[p] = resultHighs[p] + productHighs[p];
-		//				//result[resultPtr][p] = result[resultPtr][p] + lows[p];
-		//				//result[resultPtr + 1][p] = result[resultPtr + 1][p] + highs[p];
-		//			}
-		//		}
-		//	}
-
-		//	return result;
-		//}
-
-		private Memory<ulong>[] SquareInternal2(FPValues a)
+		private Memory<ulong>[] SquareInternal(FPValues a)
 		{
 			var result = _squareResult1Mems;
 			var products = GetLimbVectors2L(_productsMem);
@@ -265,12 +189,10 @@ namespace MSetGenP
 			{
 				for (int i = j; i < a.LimbCount; i++)
 				{
-					//var products = new Vector<ulong>[vCnt];
-
 					var left = a.GetLimbVectors2S(j);
 					var right = a.GetLimbVectors2S(i);
 
-					MultiplyVecs2(left, right, products);
+					MultiplyVecs(left, right, products);
 
 					if (i > j)
 					{
@@ -279,14 +201,9 @@ namespace MSetGenP
 						{
 							products[q] = Avx2.ShiftLeftLogical(products[q],1);
 						}
-
 					}
 
 					var resultPtr = j + i;  // 0, 1, 1, 2
-
-					//var lo = Split(product, out var hi);
-					//mantissa[resultPtr] += lo;
-					//mantissa[resultPtr + 1] += hi;
 
 					var resultLows = GetLimbVectors2L(result[resultPtr]);
 					var resultHighs = GetLimbVectors2L(result[resultPtr + 1]);
@@ -294,14 +211,12 @@ namespace MSetGenP
 					var productHighs = GetLimbVectors2L(_productHighsMem);
 					var productLows = GetLimbVectors2L(_productLowsMem);
 
-					Split2(products, productHighs, productLows);
+					Split(products, productHighs, productLows);
 
 					for (var p = 0; p < products.Length; p++)
 					{
 						resultLows[p] = Avx2.Add(resultLows[p], productLows[p]);
 						resultHighs[p] = Avx2.Add(resultHighs[p], productHighs[p]);
-						//result[resultPtr][p] = result[resultPtr][p] + lows[p];
-						//result[resultPtr + 1][p] = result[resultPtr + 1][p] + highs[p];
 					}
 				}
 			}
@@ -309,15 +224,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		//private void MultiplyVecs(Span<Vector<ulong>> left, Span<Vector<ulong>> right, Span<Vector<ulong>> result)
-		//{
-		//	foreach(var idx in InPlayList)
-		//	{
-		//		result[idx] = left[idx] * right[idx];
-		//	}
-		//}
-
-		private void MultiplyVecs2(Span<Vector256<uint>> left, Span<Vector256<uint>> right, Span<Vector256<ulong>> result)
+		private void MultiplyVecs(Span<Vector256<uint>> left, Span<Vector256<uint>> right, Span<Vector256<ulong>> result)
 		{
 			foreach (var idx in InPlayList)
 			{
@@ -325,82 +232,20 @@ namespace MSetGenP
 			}
 		}
 
-		//private void Split(Span<Vector<ulong>> x, Span<Vector<ulong>> highs, Span<Vector<ulong>> lows)
-		//{
-		//	for (var i = 0; i < x.Length; i++)
-		//	{
-		//		highs[i] = x[i] & HIGH_MASK_VEC;
-		//		lows[i] = x[i] & LOW_MASK_VEC;
-		//	}
-
-		//	//hi = x. x >> 32; // Create new ulong from bits 32 - 63.
-		//	//return x & LOW_MASK; // Create new ulong from bits 0 - 31.
-		//}
-
-		private void Split2(Span<Vector256<ulong>> x, Span<Vector256<ulong>> highs, Span<Vector256<ulong>> lows)
+		private void Split(Span<Vector256<ulong>> x, Span<Vector256<ulong>> highs, Span<Vector256<ulong>> lows)
 		{
 			for (var i = 0; i < x.Length; i++)
 			{
-				highs[i] = Avx2.And(x[i], HIGH_MASK_VEC2);	// Create new ulong from bits 32 - 63.
-				lows[i] = Avx2.And(x[i], LOW_MASK_VEC2);    // Create new ulong from bits 0 - 31.
+				highs[i] = Avx2.And(x[i], HIGH_MASK_VEC);	// Create new ulong from bits 32 - 63.
+				lows[i] = Avx2.And(x[i], LOW_MASK_VEC);    // Create new ulong from bits 0 - 31.
 			}
 		}
 
-		//private Memory<ulong>[] PropagateCarries(Memory<ulong>[] mantissaMems)
-		//{
-		//	// To be used after a multiply operation.
-		//	// Process the carry portion of each result bin.
-		//	// This will leave each result bin with a value <= 2^32 for the final digit.
-		//	// Sometimes we need the LS-Limb. We are including
-		//	// #Don't include the least significant limb, as this value will always be discarded as the result is rounded.
-
-		//	// Remove all zero-valued leading limbs 
-		//	// If the MSL produces a carry, throw an exception.
-
-		//	if (mantissaMems.Length == 0)
-		//	{
-		//		return mantissaMems;
-		//	}
-
-		//	//var indexOfLastNonZeroLimb = 0;
-
-		//	//var result = new Vector<ulong>[mantissas.Length][];
-		//	var result = _squareResult2Mems;
-
-		//	var carries = GetLimbVectors(_carriesMem);
-		//	var withCarries = GetLimbVectors(_withCarriesMem);
-
-		//	var limbVecs = GetLimbVectors(mantissaMems[0]);
-		//	var resultLimbVecs = GetLimbVectors(result[0]);
-		//	Split(limbVecs, carries, resultLimbVecs);
-
-		//	for (int i = 0; i < mantissaMems.Length; i++)
-		//	{
-		//		limbVecs = GetLimbVectors(mantissaMems[i]);
-		//		resultLimbVecs = GetLimbVectors(result[i]);
-
-		//		AddVecs(limbVecs, carries, withCarries);
-		//		Split(withCarries, carries, resultLimbVecs);
-		//	}
-
-		//	// TODO: Check to see if any of the carries have any zero value.
-		//	//if (carry != 0)
-		//	//{
-		//	//	throw new OverflowException("While propagating carries after a multiply operation, the MSL produced a carry.");
-		//	//}
-
-		//	return result;
-		//}
-
-		private Memory<ulong>[] PropagateCarries2(Memory<ulong>[] mantissaMems)
+		private Memory<ulong>[] PropagateCarries(Memory<ulong>[] mantissaMems)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
 			// This will leave each result bin with a value <= 2^32 for the final digit.
-			// Sometimes we need the LS-Limb. We are including
-			// #Don't include the least significant limb, as this value will always be discarded as the result is rounded.
-
-			// Remove all zero-valued leading limbs 
 			// If the MSL produces a carry, throw an exception.
 
 			if (mantissaMems.Length == 0)
@@ -408,9 +253,7 @@ namespace MSetGenP
 				return mantissaMems;
 			}
 
-			//var indexOfLastNonZeroLimb = 0;
 
-			//var result = new Vector<ulong>[mantissas.Length][];
 			var result = _squareResult2Mems;
 
 			var carries = GetLimbVectors2L(_carriesMem);
@@ -418,15 +261,15 @@ namespace MSetGenP
 
 			var limbVecs = GetLimbVectors2L(mantissaMems[0]);
 			var resultLimbVecs = GetLimbVectors2L(result[0]);
-			Split2(limbVecs, carries, resultLimbVecs);
+			Split(limbVecs, carries, resultLimbVecs);
 
 			for (int i = 0; i < mantissaMems.Length; i++)
 			{
 				limbVecs = GetLimbVectors2L(mantissaMems[i]);
 				resultLimbVecs = GetLimbVectors2L(result[i]);
 
-				AddVecs2(limbVecs, carries, withCarries);
-				Split2(withCarries, carries, resultLimbVecs);
+				AddVecs(limbVecs, carries, withCarries);
+				Split(withCarries, carries, resultLimbVecs);
 			}
 
 			// TODO: Check to see if any of the carries have any zero value.
@@ -438,64 +281,12 @@ namespace MSetGenP
 			return result;
 		}
 
-		/* What partial product gets added to which bin
-
-			//  2 x 2						3 x 3										4 x 4
-			// 0, 1,   1, 2		 0, 1, 2,   1, 2, 3,  2, 3  4		0, 1, 2, 3,   1, 2, 3, 4,    2, 3, 4, 5,    3, 4, 5, 6 
-			// 1, 2,   2, 3      1, 2, 3,   2, 3, 4,  3, 4, 5       1, 2, 3, 4,   2, 3, 4, 5,    3, 4, 5, 6,    4, 5, 6, 7
-
-				2 x 2
-			index a index b	index c	on, or below the diagonal 
-			0		0		0		D		E
-			0		1		1		B		E
-			1		0		1		A		S
-			1		1		2		D		E
-
-				3 x 3
-			0		0		0		D		E
-			0		1		1		B		E
-			0		2		2		B		E
-
-			1		0		1		A		S
-			1		1		2		D		E
-			1		2		3		B		E
-
-			2		0		2		A		S
-			2		1		3		A		S
-			2		2		4		D		E
-
-				4 x 4
-			0		0		0		D		E
-			0		1		1		B		E
-			0		2		2		B		E	**
-			0		3		3		B		E
-
-			1		0		1		A		S
-			1		1		2		D		E
-			1		2		3		B		E
-			1		3		4		B		E
-
-			2		0		2		A		S	**
-			2		1		3		A		S
-			2		2		4		D		E
-			2		3		5		B		E
-
-			3		0		3		A		S
-			3		1		4		A		S
-			3		2		5		A		S
-			3		3		6		D		E
-
-
-
-		*/
-
 		#endregion
 
 		#region Add and Subtract
 
-		public FPValues Sub(FPValues a, FPValues b)
+		public void Sub(FPValues a, FPValues b, FPValues c)
 		{
-			return a;
 		}
 
 		public static Smx Sub(Smx a, Smx b)
@@ -511,9 +302,9 @@ namespace MSetGenP
 			return result;
 		}
 
-		public FPValues Add(FPValues a, FPValues b)
+		public void Add(FPValues a, FPValues b, FPValues c)
 		{
-			return a;
+			
 		}
 
 		public static Smx Add(Smx a, Smx b)
@@ -724,15 +515,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		//private void AddVecs(Span<Vector<ulong>> left, Span<Vector<ulong>> right, Span<Vector<ulong>> result)
-		//{
-		//	for(var i = 0; i < left.Length; i++)
-		//	{
-		//		result[i] = left[i] + right[i];
-		//	}
-		//}
-
-		private void AddVecs2(Span<Vector256<ulong>> left, Span<Vector256<ulong>> right, Span<Vector256<ulong>> result)
+		private void AddVecs(Span<Vector256<ulong>> left, Span<Vector256<ulong>> right, Span<Vector256<ulong>> result)
 		{
 			for (var i = 0; i < left.Length; i++)
 			{
@@ -873,19 +656,26 @@ namespace MSetGenP
 
 		private bool IsGreaterOrEqThan(ulong[][] mantissas, int valueIndex, int exponent, uint b)
 		{
-			var aAsDouble = 0d;
+			var mslWeight = Math.Pow(2, exponent + (mantissas.Length - 1) * 32); // TODO: Make this a member field.
+			var val = mantissas[^1][valueIndex] * mslWeight;
 
-			for (var i = mantissas.Length - 1; i >= 0; i--)
-			{
-				aAsDouble += mantissas[i][valueIndex] * Math.Pow(2, exponent + (i * 32));
+			var result = val >= b;
 
-				if (aAsDouble >= b)
-				{
-					return true;
-				}
-			}
+			return result;
 
-			return false;
+			//var aAsDouble = 0d;
+
+			//for (var i = mantissas.Length - 1; i >= 0; i--)
+			//{
+			//	aAsDouble += mantissas[i][valueIndex] * Math.Pow(2, exponent + (i * 32));
+
+			//	if (aAsDouble >= b)
+			//	{
+			//		return true;
+			//	}
+			//}
+
+			//return false;
 		}
 
 		#endregion

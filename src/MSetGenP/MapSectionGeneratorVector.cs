@@ -37,11 +37,13 @@ namespace MSetGenP
 			var blockPos = mapSectionRequest.BlockPosition;
 			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 
+			var cRs = BuildMapPoints(smxMathHelper, startingCx, startingCy, delta, blockSize, out var cIs);
+
 			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
 			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
 			uint threshold = 0;
 
-			var counts = GenerateMapSection(smxMathHelper, smxVecMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, threshold);
+			var counts = GenerateMapSection(smxVecMathHelper, cRs, cIs, targetIterations, threshold);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[128 * 128];
@@ -50,40 +52,18 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, SmxVecMathHelper smxVecMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, uint threshold)
+		private ushort[] GenerateMapSection(SmxVecMathHelper smxVecMathHelper, FPValues cRs, FPValues cIs, int targetIterations, uint threshold)
 		{
-			var iterator = new IteratorVector(smxVecMathHelper);
-			//iterator.Sample();
-
-			var stride = (byte)blockSize.Width;
-			var samplePointOffsets = smxMathHelper.BuildSamplePointOffsets(delta, stride);
-			var samplePointsX = smxMathHelper.BuildSamplePoints(startingCx, samplePointOffsets);
-			var samplePointsY = smxMathHelper.BuildSamplePoints(startingCy, samplePointOffsets);
-
-			var resultLength = blockSize.NumberOfCells;
-			//var numberOfLimbs = samplePointsX[0].LimbCount;
-
-			var crSmxes = new Smx[resultLength];
-			var ciSmxes = new Smx[resultLength];
-
-			var resultPtr = 0;
-			for (int j = 0; j < samplePointsY.Length; j++)
-			{
-				for (int i = 0; i < samplePointsX.Length; i++)
-				{
-					ciSmxes[resultPtr] = samplePointsY[j];
-					crSmxes[resultPtr++] = samplePointsX[i];
-				}
-			}
-
-			var cRs = new FPValues(crSmxes);
-			var cIs = new FPValues(ciSmxes);
+			var resultLength = cRs.Length;
 
 			var zRs = cRs.Clone();
 			var zIs = cIs.Clone();
 
-			var zRSqrs = smxVecMathHelper.Square(zRs);
-			var zISqrs = smxVecMathHelper.Square(zIs);
+			var zRSqrs = new FPValues(cRs.LimbCount, cRs.Length);
+			var zISqrs = new FPValues(cIs.LimbCount, cIs.Length);
+
+			smxVecMathHelper.Square(zRs, zRSqrs);
+			smxVecMathHelper.Square(zIs, zISqrs);
 
 			var cntrs = Enumerable.Repeat((ushort)1, resultLength).ToArray();
 
@@ -92,43 +72,58 @@ namespace MSetGenP
 
 			var inPlayList = smxVecMathHelper.InPlayList;
 
+			var iterator = new IteratorVector(smxVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+
+			var sumOfSqrs = new FPValues(cRs.LimbCount, cRs.Length);
+
+
 			while (inPlayList.Count > 0)
 			{
-				iterator.Iterate(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
-				var sumOfSqrs = smxVecMathHelper.Add(zRSqrs, zISqrs);
+				smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
 
 				smxVecMathHelper.IsGreaterOrEqThan(sumOfSqrs, threshold, escapedFlagVectors);
-				var vectorsNoLongerInPlay = UpdateCounts(inPlayList, escapedFlagVectors, cntrs);
+				var vectorsNoLongerInPlay = UpdateCounts(inPlayList, targetIterations, escapedFlagVectors, cntrs);
+
 				foreach (var vectorIndex in vectorsNoLongerInPlay)
 				{
 					inPlayList.Remove(vectorIndex);
 				}
+
+				iterator.Iterate();
 			}
 
 			return cntrs;
 		}
 
-		private List<int> UpdateCounts(List<int> inPlayList, Span<Vector<ulong>> escapedFlagVectors, ushort[] cntrs)
+		private List<int> UpdateCounts(List<int> inPlayList, int targetIterations, Span<Vector<ulong>> escapedFlagVectors, ushort[] cntrs)
 		{
 			var lanes = Vector<ulong>.Count;
 			var toBeRemoved = new List<int>();
 
 			foreach (var idx in inPlayList)
 			{
+				var oneOrMoreReachedTargetIterations = false;
+
 				var escapedFlagVector = escapedFlagVectors[idx];
 
-				if (Vector.EqualsAny(escapedFlagVector, Vector<ulong>.One))
-				{
-					toBeRemoved.Add(idx);
-				}
-
 				var cntrPtr = idx * lanes;
-				for(var lanePtr = 0; lanePtr < lanes; lanePtr++)
+				for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
 				{
 					if (escapedFlagVector[lanePtr] == 0)
 					{
-						cntrs[cntrPtr + lanePtr]++;
+						var cnt = cntrs[cntrPtr + lanePtr] + 1;
+						cntrs[cntrPtr + lanePtr] = (ushort) cnt;
+
+						if (cnt >= targetIterations)
+						{
+							oneOrMoreReachedTargetIterations = true;
+						}
 					}
+				}
+
+				if (oneOrMoreReachedTargetIterations || Vector.EqualsAny(escapedFlagVector, Vector<ulong>.One))
+				{
+					toBeRemoved.Add(idx);
 				}
 			}
 
@@ -157,5 +152,34 @@ namespace MSetGenP
 
 			return result;
 		}
+
+		private FPValues BuildMapPoints(SmxMathHelper smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, out FPValues cIValues)
+		{
+			var stride = (byte)blockSize.Width;
+			var samplePointOffsets = smxMathHelper.BuildSamplePointOffsets(delta, stride);
+			var samplePointsX = smxMathHelper.BuildSamplePoints(startingCx, samplePointOffsets);
+			var samplePointsY = smxMathHelper.BuildSamplePoints(startingCy, samplePointOffsets);
+
+			var resultLength = blockSize.NumberOfCells;
+
+			var crSmxes = new Smx[resultLength];
+			var ciSmxes = new Smx[resultLength];
+
+			var resultPtr = 0;
+			for (int j = 0; j < samplePointsY.Length; j++)
+			{
+				for (int i = 0; i < samplePointsX.Length; i++)
+				{
+					ciSmxes[resultPtr] = samplePointsY[j];
+					crSmxes[resultPtr++] = samplePointsX[i];
+				}
+			}
+
+			var result = new FPValues(crSmxes);
+			cIValues = new FPValues(ciSmxes);
+
+			return result;
+		}
+
 	}
 }

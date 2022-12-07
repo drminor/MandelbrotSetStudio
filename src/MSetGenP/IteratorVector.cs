@@ -7,32 +7,53 @@ namespace MSetGenP
 	{
 		private SmxVecMathHelper _smxVecMathHelper;
 
-		public IteratorVector(SmxVecMathHelper smxVecMathHelper)
+		private FPValues _cRs;
+		private FPValues _cIs;
+		private FPValues _zRs;
+		private FPValues _zIs;
+		private FPValues _zRSqrs;
+		private FPValues _zISqrs;
+
+		private FPValues _zRZIs;
+		private FPValues _zRZiSqrs;
+
+
+		public IteratorVector(SmxVecMathHelper smxVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
 		{
 			_smxVecMathHelper = smxVecMathHelper;
+
+			_cRs = cRs;
+			_cIs = cIs;
+			_zRs = zRs;
+			_zIs = zIs;
+			_zRSqrs = zRSqrs;
+			_zISqrs = zISqrs;
+
+			_zRZIs = new FPValues(_cRs.LimbCount, _cRs.Length);
+			_zRZiSqrs = new FPValues(_cRs.LimbCount, _cRs.Length);
 		}
 
-		public void Iterate(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+		public void Iterate()
 		{
 			try
 			{
 				// z.r + z.i
-				var zRZIs = _smxVecMathHelper.Add(zRs, zIs);
+				_smxVecMathHelper.Add(_zRs, _zIs, _zRZIs);
 
 				// square(z.r + z.i)
-				var zRZiSqrs = _smxVecMathHelper.Square(zRZIs);
+				_smxVecMathHelper.Square(_zRZIs, _zRZiSqrs);
 
 				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
-				zIs = _smxVecMathHelper.Sub(zRZiSqrs, zRSqrs);
-				zIs = _smxVecMathHelper.Sub(zIs, zISqrs);
-				zIs = _smxVecMathHelper.Add(zIs, cIs);
+				_smxVecMathHelper.Sub(_zRZiSqrs, _zRSqrs, _zIs);
+				_smxVecMathHelper.Sub(_zIs, _zISqrs, _zIs);
+				_smxVecMathHelper.Add(_zIs, _cIs, _zIs);
 
 				// z.r = zrsqr - zisqr + c.r
-				zRs = _smxVecMathHelper.Sub(zRSqrs, zISqrs);
-				zRs = _smxVecMathHelper.Add(zRs, cRs);
+				_smxVecMathHelper.Sub(_zRSqrs, _zISqrs, _zRs);
+				_smxVecMathHelper.Add(_zRs, _cRs, _zRs);
 
-				zRSqrs = _smxVecMathHelper.Square(zRs);
-				zISqrs = _smxVecMathHelper.Square(zIs);
+				_smxVecMathHelper.Square(_zRs, _zRSqrs);
+				_smxVecMathHelper.Square(_zIs, _zISqrs);
 
 				//sumOfSqrs = _smxVecMathHelper.Add(zRSqrs, zISqrs);
 			}
