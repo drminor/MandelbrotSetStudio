@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 
 namespace MSetGenP
 {
@@ -17,10 +18,16 @@ namespace MSetGenP
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
 			var precision = mapSectionRequest.Precision;
+			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
+			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
+			uint threshold = 4;
+			var doneFlags = mapSectionRequest.DoneFlags;
 
 			var fixedPointFormat = new ApFixedPointFormat(8, precision);
 			var smxMathHelper = new SmxMathHelper(fixedPointFormat);
-			var smxVecMathHelper = new SmxVecMathHelper(mapSectionRequest.DoneFlags, fixedPointFormat);
+			var smxVecMathHelper = new SmxVecMathHelper(fixedPointFormat, threshold, doneFlags);
+
+
 
 			var dtoMapper = new DtoMapper();
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
@@ -39,15 +46,11 @@ namespace MSetGenP
 
 			var cRs = BuildMapPoints(smxMathHelper, startingCx, startingCy, delta, blockSize, out var cIs);
 
-			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
-			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
-			uint threshold = 0;
-
 			var counts = GenerateMapSection(smxVecMathHelper, cRs, cIs, targetIterations, threshold);
-			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
+			var doneFlagsCompressed = CompressTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[128 * 128];
-			var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlags, zValues: null);
+			var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlagsCompressed, zValues: null);
 
 			return result;
 		}
@@ -67,51 +70,66 @@ namespace MSetGenP
 
 			var cntrs = Enumerable.Repeat((ushort)1, resultLength).ToArray();
 
-			var escapedFlagsMem = new Memory<ulong>(new ulong[resultLength]);
-			var escapedFlagVectors = MemoryMarshal.Cast<ulong, Vector<ulong>>(escapedFlagsMem.Span);
+			var escapedFlagsMem = new Memory<long>(new long[resultLength]);
+			var escapedFlagVectors = MemoryMarshal.Cast<long, Vector256<long>>(escapedFlagsMem.Span);
 
 			var inPlayList = smxVecMathHelper.InPlayList;
 
 			var iterator = new IteratorVector(smxVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
 			var sumOfSqrs = new FPValues(cRs.LimbCount, cRs.Length);
+			
+			smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
+			smxVecMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlagVectors);
+			var vectorsNoLongerInPlay = UpdateCounts(inPlayList, targetIterations, escapedFlagVectors, cntrs);
 
+			foreach (var vectorIndex in vectorsNoLongerInPlay)
+			{
+				inPlayList.Remove(vectorIndex);
+			}
 
 			while (inPlayList.Count > 0)
 			{
-				smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
+				iterator.Iterate();
 
-				smxVecMathHelper.IsGreaterOrEqThan(sumOfSqrs, threshold, escapedFlagVectors);
-				var vectorsNoLongerInPlay = UpdateCounts(inPlayList, targetIterations, escapedFlagVectors, cntrs);
+				smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
+				smxVecMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlagVectors);
+				vectorsNoLongerInPlay = UpdateCounts(inPlayList, targetIterations, escapedFlagVectors, cntrs);
 
 				foreach (var vectorIndex in vectorsNoLongerInPlay)
 				{
 					inPlayList.Remove(vectorIndex);
 				}
-
-				iterator.Iterate();
 			}
 
 			return cntrs;
 		}
 
-		private List<int> UpdateCounts(List<int> inPlayList, int targetIterations, Span<Vector<ulong>> escapedFlagVectors, ushort[] cntrs)
+		private List<int> UpdateCounts(List<int> inPlayList, int targetIterations, Span<Vector256<long>> escapedFlagVectors, ushort[] cntrs)
 		{
-			var lanes = Vector<ulong>.Count;
+			var lanes = Vector256<ulong>.Count;
 			var toBeRemoved = new List<int>();
 
 			foreach (var idx in inPlayList)
 			{
 				var oneOrMoreReachedTargetIterations = false;
+				var anyEscaped = false;
 
 				var escapedFlagVector = escapedFlagVectors[idx];
 
 				var cntrPtr = idx * lanes;
 				for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
 				{
-					if (escapedFlagVector[lanePtr] == 0)
+					if (escapedFlagVector.GetElement(lanePtr) == 0)
 					{
-						var cnt = cntrs[cntrPtr + lanePtr] + 1;
+						var cnt = (cntrs[cntrPtr + lanePtr] + 1);
+
+						if (cnt >= ushort.MaxValue)
+						{
+							Debug.WriteLine($"WARNING: The Count is > ushort.Max.");
+							cnt = ushort.MaxValue;
+						}
+
 						cntrs[cntrPtr + lanePtr] = (ushort) cnt;
 
 						if (cnt >= targetIterations)
@@ -119,9 +137,13 @@ namespace MSetGenP
 							oneOrMoreReachedTargetIterations = true;
 						}
 					}
+					else
+					{
+						anyEscaped = true;
+					}
 				}
 
-				if (oneOrMoreReachedTargetIterations || Vector.EqualsAny(escapedFlagVector, Vector<ulong>.One))
+				if (oneOrMoreReachedTargetIterations || anyEscaped)
 				{
 					toBeRemoved.Add(idx);
 				}
@@ -130,7 +152,7 @@ namespace MSetGenP
 			return toBeRemoved;
 		}
 
-		private bool[] CalculateTheDoneFlags(ushort[] counts, int targetIterations)
+		private bool[] CompressTheDoneFlags(ushort[] counts, int targetIterations)
 		{
 			bool[] result;
 

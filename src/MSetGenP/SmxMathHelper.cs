@@ -34,11 +34,6 @@ namespace MSetGenP
 
 		public SmxMathHelper(ApFixedPointFormat apFixedPointFormat)
 		{
-			if (apFixedPointFormat.BitsBeforeBinaryPoint > 32)
-			{
-				throw new NotSupportedException("An APFixedFormat with a BitsBeforeBinaryPoint of 32 is not supported.");
-			}
-
 			ApFixedPointFormat = GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
@@ -53,6 +48,11 @@ namespace MSetGenP
 
 		public static ApFixedPointFormat GetAdjustedFixedPointFormat(ApFixedPointFormat fpFormat)
 		{
+			if (fpFormat.BitsBeforeBinaryPoint > 32)
+			{
+				throw new NotSupportedException("An APFixedFormat with a BitsBeforeBinaryPoint of 32 is not supported.");
+			}
+
 			var range = fpFormat.TotalBits;
 
 			// Add one additional Limb to provide room to represent smaller values with some precision.
@@ -730,32 +730,8 @@ namespace MSetGenP
 			//var result = new Smx(sign, newPartialWordLimbs, exponent, precision, BitsBeforeBP);
 			//return result;
 
-
-
-
 			ulong[] newPartialWordLimbs;
-
-			//var exponentOfLeastSignficantBit = rValue.Exponent;
-			//var shiftAmount = TargetExponent - exponentOfLeastSignficantBit;
-
-			//if (shiftAmount == 0)
-			//{
-			//	newPartialWordLimbs = TakeMostSignificantLimbs(partialWordLimbs, LimbCount);
-			//}
-			//else if (shiftAmount > 0)
-			//{
-			//	throw new NotImplementedException();
-			//}
-			//else
-			//{
-			//	shiftAmount = -1 * shiftAmount;
-			//	var sResult = ScaleAndSplit(partialWordLimbs, shiftAmount, "Create Smx");
-
-			//	newPartialWordLimbs = TakeMostSignificantLimbs(sResult, LimbCount);
-			//}
-
 			var shiftAmount = GetShiftAmount(rValue.Exponent, TargetExponent);
-
 
 			if (shiftAmount == 0)
 			{
@@ -1462,7 +1438,7 @@ namespace MSetGenP
 		//	return result;
 		//}
 
-		public static ulong Split(ulong x, out ulong hi)
+		private ulong Split(ulong x, out ulong hi)
 		{
 			hi = x >> 32; // Create new ulong from bits 32 - 63.
 			return x & LOW_MASK; // Create new ulong from bits 0 - 31.

@@ -91,8 +91,8 @@ namespace MSetGenP
 		public override string ToString()
 		{
 			var result = Sign
-				? "-" + SmxMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}"
-				: SmxMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}";
+				? SmxMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}"
+				: "-" + SmxMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}";
 
 			return result;
 		}

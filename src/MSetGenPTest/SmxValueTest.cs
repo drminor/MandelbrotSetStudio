@@ -86,6 +86,13 @@ namespace EngineTest
 			Assert.Equal(strA, strB);
 		}
 
+		/*
+
+		TODO: Write unit a unit test to check this
+					var testMaxVal = smxMathHelper.CreateSmx(new RValue(smxVecMathHelper.MaxIntegerValue, 0));
+			var testMaxVal2 = smxVecMathHelper.CreateNewMaxIntegerSmx();
+
+		*/
 		private SmxMathHelper BuildTheMathHelper(int limbCount)
 		{
 			var result = new SmxMathHelper(new ApFixedPointFormat(limbCount));
