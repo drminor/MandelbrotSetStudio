@@ -22,7 +22,7 @@ l is an integer
 c and z are complex numbers
 set l to 0
 set z to 0
-set c to some point within the region -2, 1 through 1, 1
+set c to some point within the region -2, -1.5 through 1, 1.5
 
 the repeatly calcualte a new z (z') using z as an input
 

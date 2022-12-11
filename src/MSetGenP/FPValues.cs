@@ -1,4 +1,5 @@
 ﻿using MSS.Types.DataTransferObjects;
+using System;
 using System.Buffers;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -50,11 +51,37 @@ namespace MSetGenP
 
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
-		
+
+		public FPValues(Smx smx, int count)
+		{
+			var smxes = new Smx[count];
+
+			for (int i = 0; i < count; i++)
+			{
+				smxes[i] = smx;
+			}
+
+			_signsBackingArray = smxes.Select(x => x.Sign ? ALL_BITS_SET : 0L).ToArray();
+			SignsMemory = new Memory<ulong>(_signsBackingArray);
+
+			var numberOfLimbs = smxes[0].Mantissa.Length;
+			Mantissas = new ulong[numberOfLimbs][];
+
+			for (var j = 0; j < numberOfLimbs; j++)
+			{
+				Mantissas[j] = new ulong[smxes.Length];
+
+				for (var i = 0; i < smxes.Length; i++)
+				{
+					Mantissas[j][i] = smxes[i].Mantissa[j];
+				}
+			}
+
+			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
+		}
+
 		public FPValues(Smx[] smxes)
 		{
-			//Signs = new bool[smxes.Length];
-
 			_signsBackingArray = smxes.Select(x => x.Sign ? ALL_BITS_SET : 0L).ToArray();
 			SignsMemory = new Memory<ulong>(_signsBackingArray);
 
@@ -137,25 +164,24 @@ namespace MSetGenP
 		{
 			var signs = GetSigns().Select(x => !x).ToArray();
 
-			var result = new FPValues(
-				GetSigns(),
-				(ulong[][])Mantissas.Clone()
-				);
+			var result = new FPValues(signs, CloneMantissas());
 
 			return result;
 		}
 
-		//public Smx CreateSmx(int index, int precision = RMapConstants.DEFAULT_PRECISION)
-		//{
-		//	var result = new Smx(GetSign(index), GetMantissa(index), Exponents[index], precision, BitsBeforeBP);
-		//	return result;
-		//}
+		public ulong[] GetMantissa(int index)
+		{
+			var result = Mantissas.Select(x => x[index]).ToArray();
+			return result;
+		}
 
-		//private ulong[] GetMantissa(int index)
-		//{
-		//	var result = Mantissas.Select(x => x[index]).ToArray();
-		//	return result;
-		//}
+		public void SetMantissa(int index, ulong[] values)
+		{
+			for(var i = 0; i < values.Length; i++)
+			{
+				Mantissas[i][index] = values[i];
+			}
+		}
 
 		private static ulong[][] BuildLimbs(int limbCount, int valueCount)
 		{
@@ -188,10 +214,20 @@ namespace MSetGenP
 
 		public FPValues Clone()
 		{
-			var result = new FPValues(
-				GetSigns(), 
-				(ulong[][])Mantissas.Clone() 
-				);
+			var result = new FPValues(GetSigns(), CloneMantissas());
+
+			return result;
+		}
+
+
+		private ulong[][] CloneMantissas()
+		{
+			ulong[][] result = new ulong[Mantissas.Length][];
+			
+			for(var i = 0; i < Mantissas.Length; i++)
+			{
+				result[i] = (ulong[])Mantissas[i].Clone();
+			}
 
 			return result;
 		}

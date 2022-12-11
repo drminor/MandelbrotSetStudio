@@ -18,11 +18,13 @@ namespace MapSectionProviderLib
 
 		private Task _workQueueProcessor;
 		private bool disposedValue;
+		private bool _isStopped;
 
 		#region Constructor
 
 		public MapSectionResponseProcessor()
 		{
+			_isStopped = false;
 			_cts = new CancellationTokenSource();
 
 			_workQueue = new BlockingCollection<MapSectionWorkRequest>(QUEUE_CAPACITY);
@@ -62,6 +64,11 @@ namespace MapSectionProviderLib
 		{
 			lock (_cancelledJobsLock)
 			{
+				if (_isStopped)
+				{
+					return;
+				}
+
 				if (immediately)
 				{
 					_cts.Cancel();
@@ -73,6 +80,8 @@ namespace MapSectionProviderLib
 						_workQueue.CompleteAdding();
 					}
 				}
+
+				_isStopped = true;
 			}
 
 			// Don't block the UI thread, since the task may be waiting for the UI thread to complete its work as it executes the RunWorkAction.

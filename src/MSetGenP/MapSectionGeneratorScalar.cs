@@ -13,11 +13,16 @@ namespace MSetGenP
 			var mapPositionDto = mapSectionRequest.Position;
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
-			
 			var precision = mapSectionRequest.Precision;
+
+			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
+
+			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
+			uint threshold = 4;
+
 			var fixedPointFormat = new ApFixedPointFormat(8, precision);
 			//var fixedPointFormat = new ApFixedPointFormat(8, 129);
-			var smxMathHelper = new SmxMathHelper(fixedPointFormat);
+			var smxMathHelper = new SmxMathHelper(fixedPointFormat, threshold);
 
 			var dtoMapper = new DtoMapper();
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
@@ -34,15 +39,13 @@ namespace MSetGenP
 			var blockPos = mapSectionRequest.BlockPosition;
 			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 
-			var targetIterations = mapSectionRequest.MapCalcSettings.TargetIterations;
-			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
-			uint threshold = 4;
-
 			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, threshold);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[128 * 128];
 			var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlags, zValues: null);
+
+			Debug.WriteLine($"There were {smxMathHelper.NumberOfACarries} ACarries and {smxMathHelper.NumberOfMCarries} MCarries.");
 
 			return result;
 		}
@@ -61,10 +64,14 @@ namespace MSetGenP
 
 			for (int j = 0; j < samplePointsY.Length; j++)
 			{
+				var y = samplePointsY[j];
+				var resultPtr = j * stride;
+
 				for (int i = 0; i < samplePointsX.Length; i++)
 				{
-					var cntr = iterator.Iterate(samplePointsX[i], samplePointsY[j], threshold);
-					result[j * stride + i] = cntr;
+					var x = samplePointsX[i];
+					var cntr = iterator.Iterate(x, y, threshold);
+					result[resultPtr + i] = cntr;
 				}
 			}
 

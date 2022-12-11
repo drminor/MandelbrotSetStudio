@@ -48,7 +48,6 @@ namespace MSetGenP
 					zISqr = _smxMathHelper.Square(zI);
 
 					sumOfSqrs = _smxMathHelper.Add(zRSqr, zISqr, "SumOfSqrs");
-
 				}
 				catch (Exception e)
 				{
@@ -59,10 +58,15 @@ namespace MSetGenP
 
 			//if (cntr < _targetIterations)
 			//{
-			//	var sacResult = _smxMathHelper.SumAndCompare(zRSqr, zISqr, 4);
-			//	var sumOfZrSqrAndZiSqr = _smxMathHelper.Add(zRSqr, zISqr);
-			//	var rValDiag = sumOfZrSqrAndZiSqr.GetStringValue();
-			//	Debug.WriteLine($"Balied out: The value is {rValDiag}. SumAndCompare returned: {sacResult}.");
+			//	var sacResult = _smxMathHelper.IsGreaterOrEqThan(sumOfSqrs, threshold);
+			//	var rValDiag = sumOfSqrs.GetStringValue();
+			//	Debug.WriteLine($"Bailed out: The value is {rValDiag}. Compare returned: {sacResult}.");
+			//}
+			//else
+			//{
+			//	var sacResult = _smxMathHelper.IsGreaterOrEqThan(sumOfSqrs, threshold);
+			//	var rValDiag = sumOfSqrs.GetStringValue();
+			//	Debug.WriteLine($"Target reached: The value is {rValDiag}. Compare returned: {sacResult}.");
 			//}
 
 			return cntr;

@@ -26,10 +26,13 @@ namespace MapSectionProviderLib
 
 		private bool disposedValue;
 
+		private bool _stopped;
+
 		#region Constructor
 
 		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients, bool useAllCores)
 		{
+			_stopped = false;
 			_mEngineClients = mEngineClients;
 
 			_cts = new CancellationTokenSource();
@@ -102,6 +105,11 @@ namespace MapSectionProviderLib
 		{
 			lock (_cancelledJobsLock)
 			{
+				if (_stopped)
+				{
+					return;
+				}
+
 				if (immediately)
 				{
 					_cts.Cancel();
@@ -113,6 +121,8 @@ namespace MapSectionProviderLib
 						_workQueue.CompleteAdding();
 					}
 				}
+
+				_stopped = true;
 			}
 
 			try

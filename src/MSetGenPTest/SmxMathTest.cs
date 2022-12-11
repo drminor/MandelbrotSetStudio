@@ -74,8 +74,8 @@ namespace EngineTest
 		//	var bStr = bSmx.GetStringValue();
 		//	Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-		//	var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, aRValue, failOnTooFewDigits: false, out var strA, out var strB);
-		//	Assert.True(haveRequiredPrecion);
+		//	var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bSmxRValue, aRValue, failOnTooFewDigits: false, out var strA, out var strB);
+		//	Assert.True(haveRequiredPrecision);
 		//	Assert.Equal(strA, strB);
 		//}
 
@@ -139,8 +139,8 @@ namespace EngineTest
 			//var numberOfMatchingDigits = RValueHelper.GetNumberOfMatchingDigits(bSmxRValue, bRValue, out var expected);
 			//Assert.Equal(expected, Math.Min(numberOfMatchingDigits, expected));
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -193,8 +193,8 @@ namespace EngineTest
 			var aBiStr = aBiSmx.GetStringValue();
 			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -247,8 +247,8 @@ namespace EngineTest
 			var aBiStr = aBiSmx.GetStringValue();
 			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -309,8 +309,8 @@ namespace EngineTest
 			var aBiStr = aBiSmx.GetStringValue();
 			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -349,8 +349,8 @@ namespace EngineTest
 			var b3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the b3Smx is {b3Str}.");
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(b3SmxRValue, a3SmxRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(b3SmxRValue, a3SmxRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -375,7 +375,7 @@ namespace EngineTest
 		{
 			var precision = 53;
 			var limbCount = 4;
-			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount));
+			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount), 4u);
 
 			//var aRvalue = new RValue(new BigInteger(-414219082), -36, precision); // -6.02768096723593793141715568851e-3
 			//var bRvalue = new RValue(new BigInteger(67781838), -36, precision); // 9.8635556059889517056815666506964e-4
@@ -410,7 +410,7 @@ namespace EngineTest
 		{
 			var precision = 53;
 			var limbCount = 3;
-			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount));
+			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount), 4u);
 
 			//var aRvalue = new RValue(new BigInteger(-414219082), -36, precision); // -6.02768096723593793141715568851e-3
 			//var bRvalue = new RValue(new BigInteger(67781838), -36, precision); // 9.8635556059889517056815666506964e-4
@@ -437,8 +437,8 @@ namespace EngineTest
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the cRValue is {cStrComp}.");
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(cSmxRValue, cRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cSmxRValue, cRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -451,7 +451,7 @@ namespace EngineTest
 		{
 			var precision = 53;
 			var limbCount = 3;
-			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount));
+			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount), 4u);
 
 			//var aRvalue = new RValue(new BigInteger(-414219082), -36, precision); // -6.02768096723593793141715568851e-3
 			//var bRvalue = new RValue(new BigInteger(67781838), -36, precision); // 9.8635556059889517056815666506964e-4
@@ -480,7 +480,7 @@ namespace EngineTest
 		{
 			var precision = 25;
 			var limbCount = 5;
-			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount));
+			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount), 4u);
 
 			//var a = new Smx(false, new ulong[] { 151263699, 55238551, 1 }, 2, -63, precision);
 			//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
@@ -524,7 +524,7 @@ namespace EngineTest
 
 		private SmxMathHelper BuildTheMathHelper(int limbCount)
 		{
-			var result = new SmxMathHelper(new ApFixedPointFormat(limbCount));
+			var result = new SmxMathHelper(new ApFixedPointFormat(limbCount), 4u);
 			return result;
 		}
 

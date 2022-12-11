@@ -32,7 +32,7 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public SmxMathHelper(ApFixedPointFormat apFixedPointFormat)
+		public SmxMathHelper(ApFixedPointFormat apFixedPointFormat, uint thresold)
 		{
 			ApFixedPointFormat = GetAdjustedFixedPointFormat(apFixedPointFormat);
 
@@ -44,6 +44,8 @@ namespace MSetGenP
 			LimbCount = GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
+
+			ThresholdMsl = GetThreshold(thresold);
 		}
 
 		public static ApFixedPointFormat GetAdjustedFixedPointFormat(ApFixedPointFormat fpFormat)
@@ -77,6 +79,21 @@ namespace MSetGenP
 			return result;
 		}
 
+		private ulong GetThreshold(uint threshold)
+		{
+			if (threshold > MaxIntegerValue)
+			{
+				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat: {ApFixedPointFormat}.");
+			}
+
+			var thresholdSmx = CreateSmx(new RValue(threshold, 0));
+			//var ss = thresholdSmx.GetStringValue();
+
+			var result = thresholdSmx.Mantissa[^1] - 1; // Subtract 1 * 2^-24
+
+			return result;
+		}
+
 		#endregion
 
 		#region Public Properties
@@ -86,9 +103,13 @@ namespace MSetGenP
 		public int TargetExponent { get; init; }
 
 		public uint MaxIntegerValue { get; init; }
+		public ulong ThresholdMsl { get; init; }
 
 		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
+
+		public int NumberOfMCarries { get; private set; }
+		public int NumberOfACarries { get; private set; }
 
 		#endregion
 
@@ -449,6 +470,7 @@ namespace MSetGenP
 			if (carry != 0)
 			{
 				result = CreateNewMaxIntegerSmx();
+				NumberOfACarries++;
 			}
 			else
 			{
@@ -785,6 +807,34 @@ namespace MSetGenP
 		#endregion
 
 		#region Map Generartion Support
+
+		public FPValues BuildMapPoints(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, out FPValues cIValues)
+		{
+			var stride = (byte)blockSize.Width;
+			var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
+			var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
+			var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
+
+			var resultLength = blockSize.NumberOfCells;
+
+			var crSmxes = new Smx[resultLength];
+			var ciSmxes = new Smx[resultLength];
+
+			var resultPtr = 0;
+			for (int j = 0; j < samplePointsY.Length; j++)
+			{
+				for (int i = 0; i < samplePointsX.Length; i++)
+				{
+					ciSmxes[resultPtr] = samplePointsY[j];
+					crSmxes[resultPtr++] = samplePointsX[i];
+				}
+			}
+
+			var result = new FPValues(crSmxes);
+			cIValues = new FPValues(ciSmxes);
+
+			return result;
+		}
 
 		public Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePointOffsets)
 		{
@@ -1321,7 +1371,7 @@ namespace MSetGenP
 			return 0;
 		}
 
-		public bool IsGreaterOrEqThan(Smx a, uint b)
+		public bool IsGreaterOrEqThanOld(Smx a, uint b)
 		{
 			var exponent = a.Exponent;
 			var aAsDouble = 0d;
@@ -1337,6 +1387,15 @@ namespace MSetGenP
 			}
 
 			return false;
+		}
+
+		public bool IsGreaterOrEqThan(Smx a, uint b)
+		{
+			var left = a.Mantissa[^1];
+			var right = b * Math.Pow(2, 24);
+			var result = left >= right;
+
+			return result;
 		}
 
 		#endregion

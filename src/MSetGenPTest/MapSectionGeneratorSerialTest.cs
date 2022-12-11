@@ -12,12 +12,12 @@ namespace MSetGenPTest
 	public class MapSectionGeneratorSerialTest
 	{
 		[Fact]
-		public void SimpleScalarGeneratateSectionResponse()
+		public void ScalarGeneratateSectionResponse()
 		{
 			var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
 			var yPos = new long[] { 0, 67781838 };
 			var precision = RMapConstants.DEFAULT_PRECISION;
-			var extent = 16;
+			var extent = 128;
 			var samplePointDelta = new RSize(1, 1, -36);
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
 			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
@@ -29,7 +29,7 @@ namespace MSetGenPTest
 		}
 
 		[Fact]
-		public void SimpleScalarGeneratateSectionResponseNearZero()
+		public void ScalarGeneratateSectionResponseNearZero()
 		{
 			//Precision: 65, BP: X: -1, 0, Y: 0
 
@@ -48,7 +48,7 @@ namespace MSetGenPTest
 		}
 
 		[Fact]
-		public void SimpleScalarGeneratateSectionDirect()
+		public void ScalarGeneratateSectionDirect()
 		{
 			//Precision: 65, BP: X: -1, 0, Y: 0
 
@@ -69,7 +69,7 @@ namespace MSetGenPTest
 		}
 
 		[Fact]
-		public void SimpleVectorGeneratateSectionResponse()
+		public void VectorGeneratateSectionResponse()
 		{
 			var xPos = new long[] { 0, -414219082 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
 			var yPos = new long[] { 0, 67781838 };
@@ -86,11 +86,51 @@ namespace MSetGenPTest
 		}
 
 		[Fact]
+		public void VectorGeneratateSectionResponseNearZero()
+		{
+			//Precision: 65, BP: X: -1, 0, Y: 0
+
+			var xPos = new long[] { 0, -1 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
+			var yPos = new long[] { 0, 0 };
+			var precision = RMapConstants.DEFAULT_PRECISION;
+			var extent = 128;
+			var samplePointDelta = new RSize(1, 1, -8);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
+			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
+
+			var generatorScalar = new MapSectionGeneratorVector();
+			var reponse = generatorScalar.GenerateMapSection(request);
+
+			Assert.NotNull(reponse);
+		}
+
+		[Fact]
+		public void VectorGeneratateSectionDirect()
+		{
+			//Precision: 65, BP: X: -1, 0, Y: 0
+
+			var xPos = new long[] { 0, -1 }; // Big-Endian, MSB first  // TODO: Update to use Little-Endian
+			var yPos = new long[] { 0, 0 };
+			var precision = RMapConstants.DEFAULT_PRECISION;
+			var extent = 128;
+			var samplePointDelta = new RSize(1, 1, -8);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 100, threshold: 4, requestsPerJob: 4);
+			var request = AssembleRequest(xPos, yPos, precision, extent, samplePointDelta, mapCalcSettings);
+
+			request.Position = new RPointDto(new BigInteger[] { 4, 3 }, -1);
+
+			var generatorScalar = new MapSectionGeneratorVector();
+			var reponse = generatorScalar.GenerateMapSection(request);
+
+			Assert.NotNull(reponse);
+		}
+
+		[Fact]
 		public void CallIntrincsSample()
 		{
 			var simdSamples = new SimdSamples();
 
-			var nums = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+			var nums = Enumerable.Range(0, 21).ToArray();
 			simdSamples.SumVectorized(nums);
 		}
 

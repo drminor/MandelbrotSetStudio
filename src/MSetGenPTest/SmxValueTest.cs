@@ -19,8 +19,8 @@ namespace EngineTest
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(aRValue, aSmxRValue, failOnTooFewDigits: true, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aRValue, aSmxRValue, failOnTooFewDigits: true, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -40,8 +40,8 @@ namespace EngineTest
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(aSmxRValue, aRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aSmxRValue, aRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -61,8 +61,8 @@ namespace EngineTest
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(aSmxRValue, aRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aSmxRValue, aRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -81,8 +81,8 @@ namespace EngineTest
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var haveRequiredPrecion = RValueHelper.GetStringsToCompare(aSmxRValue, aRValue, failOnTooFewDigits: true, out var strA, out var strB);
-			Assert.True(haveRequiredPrecion);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aSmxRValue, aRValue, failOnTooFewDigits: true, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -95,7 +95,7 @@ namespace EngineTest
 		*/
 		private SmxMathHelper BuildTheMathHelper(int limbCount)
 		{
-			var result = new SmxMathHelper(new ApFixedPointFormat(limbCount));
+			var result = new SmxMathHelper(new ApFixedPointFormat(limbCount), 4u);
 			return result;
 		}
 
