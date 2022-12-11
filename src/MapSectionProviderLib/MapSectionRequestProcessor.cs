@@ -39,13 +39,13 @@ namespace MapSectionProviderLib
 		private int _nextJobId;
 		private bool disposedValue;
 
-		private bool _isStopped;
+		//private bool _isStopped;
 
 		#region Constructor
 
 		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, bool fetchZValues)
 		{
-			_isStopped = false;
+			//_isStopped = false;
 			_nextJobId = 0;
 			_mapSectionAdapter = mapSectionAdapter;
 			_dtoMapper = new DtoMapper();
@@ -131,7 +131,7 @@ namespace MapSectionProviderLib
 					}
 				}
 
-				_isStopped = true;
+				//_isStopped = true;
 			}
 
 			try

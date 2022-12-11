@@ -51,8 +51,12 @@ namespace MSS.Common
 				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
+
 				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(52, "#00ccff", ColorBandBlendStyle.Next, "#000000"),
+
+				//new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
+				//new ColorBand(52, "#00ccff", ColorBandBlendStyle.Next, "#000000"),
+
 				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(70, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),

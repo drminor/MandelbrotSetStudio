@@ -39,7 +39,7 @@ namespace MSetGenP
 			var blockPos = mapSectionRequest.BlockPosition;
 			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 
-			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, threshold);
+			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[128 * 128];
@@ -50,7 +50,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, uint threshold)
+		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
 		{
 			var result = new ushort[blockSize.NumberOfCells];
 
@@ -70,7 +70,7 @@ namespace MSetGenP
 				for (int i = 0; i < samplePointsX.Length; i++)
 				{
 					var x = samplePointsX[i];
-					var cntr = iterator.Iterate(x, y, threshold);
+					var cntr = iterator.Iterate(x, y);
 					result[resultPtr + i] = cntr;
 				}
 			}

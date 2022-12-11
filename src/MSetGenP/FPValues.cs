@@ -226,7 +226,11 @@ namespace MSetGenP
 			
 			for(var i = 0; i < Mantissas.Length; i++)
 			{
-				result[i] = (ulong[])Mantissas[i].Clone();
+				var a = new ulong[Mantissas[i].Length];
+
+				Array.Copy(Mantissas[i], a, a.Length);
+
+				result[i] = a;
 			}
 
 			return result;

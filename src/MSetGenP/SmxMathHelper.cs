@@ -1389,10 +1389,11 @@ namespace MSetGenP
 			return false;
 		}
 
-		public bool IsGreaterOrEqThan(Smx a, uint b)
+		public bool IsGreaterOrEqThanThreshold(Smx a)
 		{
 			var left = a.Mantissa[^1];
-			var right = b * Math.Pow(2, 24);
+			//var right = b * Math.Pow(2, 24);
+			var right = ThresholdMsl;
 			var result = left >= right;
 
 			return result;

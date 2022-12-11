@@ -158,7 +158,7 @@ namespace EngineTest
 
 		private SmxVecMathHelper BuildTheVecMathHelper(int limbCount, int valueCount, uint threshold)
 		{
-			var result = new SmxVecMathHelper(new ApFixedPointFormat(limbCount), threshold, new bool[valueCount]);
+			var result = new SmxVecMathHelper(new ApFixedPointFormat(limbCount), valueCount, threshold);
 			return result;
 		}
 

@@ -13,19 +13,19 @@ namespace MSetGenP
 			_targetIterations = targetIterations;
 		}
 
-		public ushort Iterate(Smx cR, Smx cI, uint threshold)
+		public ushort Iterate(Smx cR, Smx cI)
 		{
-			var result = Iterate(cR, cI, cntr: 0, _smxMathHelper.CreateNewZeroSmx(cR.Precision), _smxMathHelper.CreateNewZeroSmx(cI.Precision), threshold);
+			var result = Iterate(cR, cI, cntr: 0, _smxMathHelper.CreateNewZeroSmx(cR.Precision), _smxMathHelper.CreateNewZeroSmx(cI.Precision));
 			return result;
 		}
 
-		public ushort Iterate(Smx cR, Smx cI, ushort cntr, Smx zR, Smx zI, uint threshold)
+		public ushort Iterate(Smx cR, Smx cI, ushort cntr, Smx zR, Smx zI)
 		{
 			var zRSqr = _smxMathHelper.Square(zR);
 			var zISqr = _smxMathHelper.Square(zI);
 			var sumOfSqrs = _smxMathHelper.Add(zRSqr, zISqr, "SumOfSqrs");
 
-			while (!_smxMathHelper.IsGreaterOrEqThan(sumOfSqrs, threshold) && cntr++ < _targetIterations)
+			while (!_smxMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs) && cntr++ < _targetIterations)
 			{
 				try
 				{
