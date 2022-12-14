@@ -146,6 +146,14 @@ namespace MSetGenP
 			return result;
 		}
 
+		public Span<Vector256<long>> GetLimbVectorsL(int limbIndex)
+		{
+			var x = MantissaMemories[limbIndex];
+			Span<Vector256<long>> result = MemoryMarshal.Cast<ulong, Vector256<long>>(x.Span);
+
+			return result;
+		}
+
 		public Span<Vector256<uint>> GetLimbVectorsUW(int limbIndex)
 		{
 			var x = MantissaMemories[limbIndex];

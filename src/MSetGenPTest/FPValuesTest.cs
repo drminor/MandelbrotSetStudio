@@ -20,7 +20,7 @@ namespace EngineTest
 			var threshold = 4u;
 
 			var smxMathHelper = BuildTheMathHelper(limbCount);
-			var smxMathVecHelper = BuildTheVecMathHelper(limbCount, valueCount, threshold);
+			var smxVecMathHelper = BuildTheVecMathHelper(limbCount, valueCount, threshold);
 
 			//var aBigInteger = BigInteger.Parse("-36507222016");
 			//var aRValue = new RValue(aBigInteger, -33, precision); // -4.25
@@ -35,14 +35,14 @@ namespace EngineTest
 			var aFPVals = CreateTestValues(aSmx, valueCount);
 			var rFPValus = new FPValues(limbCount, valueCount);
 
-			var aCompSmx = smxMathVecHelper.GetSmxAtIndex(aFPVals, index: 0);
+			var aCompSmx = smxVecMathHelper.GetSmxAtIndex(aFPVals, index: 0);
 			var aCompSmxRValue = aCompSmx.GetRValue();
 			var aCompStr = aCompSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aCompSmx is {aCompStr}.");
 
-			smxMathVecHelper.Square(aFPVals, result: rFPValus);
+			smxVecMathHelper.Square(aFPVals, result: rFPValus);
 
-			var bSmx = smxMathVecHelper.GetSmxAtIndex(rFPValus, index: 0);
+			var bSmx = smxVecMathHelper.GetSmxAtIndex(rFPValus, index: 0);
 
 			var bSmxRValue = bSmx.GetRValue();
 			var bStr = bSmx.GetStringValue();

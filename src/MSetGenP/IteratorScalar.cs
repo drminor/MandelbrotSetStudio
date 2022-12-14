@@ -2,7 +2,7 @@
 
 namespace MSetGenP
 {
-	internal class IteratorScalar
+	internal ref struct IteratorScalar
 	{
 		private SmxMathHelper _smxMathHelper;
 		private int _targetIterations;

@@ -2,7 +2,7 @@
 
 namespace MSetGenP
 {
-	public class IteratorVector
+	internal ref struct IteratorVector
 	{
 		private SmxVecMathHelper _smxVecMathHelper;
 

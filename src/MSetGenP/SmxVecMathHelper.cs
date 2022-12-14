@@ -1,14 +1,11 @@
 ﻿using MSS.Common;
-using MSS.Types;
 using System.Buffers;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-
-using System.Linq;
-using Microsoft.VisualBasic;
+using System.Text;
 
 namespace MSetGenP
 {
@@ -18,6 +15,7 @@ namespace MSetGenP
 
 		private const int BITS_PER_LIMB = 32;
 		private const int BITS_BEFORE_BP = 8;
+		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
 
 		private const ulong LOW_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private const ulong HIGH_MASK = 0xFFFFFFFF00000000; // bits 32 - 63 are set.
@@ -25,17 +23,26 @@ namespace MSetGenP
 		private static readonly Vector256<ulong> LOW_MASK_VEC = Vector256.Create(LOW_MASK);
 		private static readonly Vector256<ulong> HIGH_MASK_VEC = Vector256.Create(HIGH_MASK);
 
+		private const ulong SIGN_BIT_MASK = 0x7FFFFFFFFFFFFFFF;
+		private static readonly Vector256<ulong> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
+
+		private const ulong TOP_BITS_MASK = 0xFF00000000000000;
+		private static readonly Vector256<ulong> TOP_BITS_MASK_VEC = Vector256.Create(TOP_BITS_MASK);
+
 		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
 		private static readonly int _lanes = Vector256<ulong>.Count;
 
-		//private ulong[][] _squareResult1Ba;
 		private Memory<ulong>[] _squareResult1Mems;
-
 		private Memory<ulong>[] _squareResult2Mems;
+
+		private ulong[][] _squareResult3Ba;
+		private Memory<ulong>[] _squareResult3Mems;
+
 
 		private Vector256<long> _thresholdVector;
 		private Vector256<ulong> _zeroVector;
+		private Vector256<long> _maxDigitValueVector;
 
 		#endregion
 
@@ -58,7 +65,11 @@ namespace MSetGenP
 				throw new ArgumentException("The valueCount must be an even multiple of Vector<ulong>.Count.");
 			}
 
+			// Initially, all vectors are 'In Play.'
 			InPlayList = Enumerable.Range(0, VecCount).ToArray();
+
+			// Initially, all values are 'In Play.'
+			DoneFlags = new bool[ValueCount];
 
 			LimbCount = SmxMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
@@ -69,13 +80,32 @@ namespace MSetGenP
 
 			_thresholdVector = BuildTheThresholdVector(threshold);
 			_zeroVector = Vector256<ulong>.Zero;
+			_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE - 1);
 
-			//_squareResult1Ba = BuildMantissaBackingArray(LimbCount * 2, ValueCount);
-			//_squareResult1Mems = BuildMantissaMemoryArray(_squareResult1Ba);
 			_squareResult1Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
-
 			_squareResult2Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
+
+			_squareResult3Ba = BuildMantissaBackingArray(LimbCount * 2, ValueCount);
+			_squareResult3Mems = BuildMantissaMemoryArray(_squareResult3Ba);
 		}
+
+		private Vector256<long> BuildTheThresholdVector(uint threshold)
+		{
+			if (threshold > MaxIntegerValue)
+			{
+				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat: {ApFixedPointFormat}.");
+			}
+
+			var smxMathHelper = new SmxMathHelper(ApFixedPointFormat, threshold);
+			var thresholdMslIntegerVector = Vector256.Create(smxMathHelper.ThresholdMsl);
+			var thresholdVector = thresholdMslIntegerVector.AsInt64();
+
+			return thresholdVector;
+		}
+
+		#endregion
+
+		#region Mantissa Support
 
 		private Memory<ulong>[] BuildMantissaMemoryArray(int limbCount, int valueCount)
 		{
@@ -109,17 +139,32 @@ namespace MSetGenP
 			return result;
 		}
 
-		private void ClearManatissMems(Memory<ulong>[] mantissaMems)
+		private void ClearManatissMems(Memory<ulong>[] mantissaMems, bool onlyInPlayItems)
 		{
-			var indexes = InPlayList;
-
-			for (var j = 0; j < mantissaMems.Length; j++)
+			if (onlyInPlayItems)
 			{
-				var vectors = GetLimbVectorsUL(mantissaMems[j]);
+				var indexes = InPlayList;
 
-				for (var i = 0; i < indexes.Length; i++)
+				for (var j = 0; j < mantissaMems.Length; j++)
 				{
-					vectors[indexes[i]] = Vector256<ulong>.Zero;
+					var vectors = GetLimbVectorsUL(mantissaMems[j]);
+
+					for (var i = 0; i < indexes.Length; i++)
+					{
+						vectors[indexes[i]] = Vector256<ulong>.Zero;
+					}
+				}
+			}
+			else
+			{
+				for (var j = 0; j < mantissaMems.Length; j++)
+				{
+					var vectors = GetLimbVectorsUL(mantissaMems[j]);
+
+					for (var i = 0; i < VecCount; i++)
+					{
+						vectors[i] = Vector256<ulong>.Zero;
+					}
 				}
 			}
 		}
@@ -154,20 +199,6 @@ namespace MSetGenP
 			}
 		}
 
-		private Vector256<long> BuildTheThresholdVector(uint threshold)
-		{
-			if (threshold > MaxIntegerValue)
-			{
-				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat: {ApFixedPointFormat}.");
-			}
-
-			var smxMathHelper = new SmxMathHelper(ApFixedPointFormat, threshold);
-			var thresholdMslIntegerVector = Vector256.Create(smxMathHelper.ThresholdMsl);
-			var thresholdVector = thresholdMslIntegerVector.AsInt64();
-
-			return thresholdVector;
-		}
-
 		private Span<Vector256<ulong>> GetLimbVectorsUL(Memory<ulong> memory)
 		{
 			Span<Vector256<ulong>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(memory.Span);
@@ -186,7 +217,8 @@ namespace MSetGenP
 		public int ValueCount { get; init; }
 		public int VecCount { get; init; }
 
-		public int[] InPlayList { get; set; }
+		public int[] InPlayList { get; set; }	// Vector-Level 
+		public bool[] DoneFlags { get; set; }	// Value-Level
 
 		public uint MaxIntegerValue { get; init; }
 		public double MslWeight { get; init; }
@@ -210,16 +242,39 @@ namespace MSetGenP
 			//	return a;
 			//}
 
-			//ClearBackingArray(_squareResult1Ba, onlyInPlayItems:true);
-			ClearManatissMems(_squareResult1Mems);
+			//_ = CheckPWValues(result.MantissaMemories, out var errors);
+
+			//if (errors.Length > 1)
+			//{
+			//	Debug.WriteLine($"PW Errors found at Square, Errors:\n{errors}.");
+			//}
+
+
+			//ClearManatissMems(_squareResult1Mems, onlyInPlayItems: false);
+			//ClearManatissMems(_squareResult2Mems, onlyInPlayItems: false);
+			//ClearManatissMems(result.MantissaMemories, onlyInPlayItems: false);
 
 			SquareInternal(a, _squareResult1Mems);
 			PropagateCarries(_squareResult1Mems, _squareResult2Mems);
 			ShiftAndTrim(_squareResult2Mems, result.MantissaMemories);
+
+			//_ = CheckPWValues(result.MantissaMemories, out errors);
+
+			//if(errors.Length > 1)
+			//{
+			//	Debug.WriteLine($"PW Errors found at Square, Errors:\n{errors}.");
+			//}
+
+			//if (flags.Any(x => x != 0))
+			//{
+			//	Debug.WriteLine($"Found a prb.");
+			//}
 		}
 
 		private void SquareInternal(FPValues a, Memory<ulong>[] resultLimbs)
 		{
+			ClearManatissMems(resultLimbs, onlyInPlayItems: true);
+
 			var indexes = InPlayList;
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 			for (int j = 0; j < a.LimbCount; j++)
@@ -286,26 +341,26 @@ namespace MSetGenP
 					resultLimbVecs[idx] = Avx2.And(withCarries, LOW_MASK_VEC);	// The low 32 bits of the sum is the result.
 				}
 
-				var isZeroFlags = Avx2.CompareEqual(carries, _zeroVector);
-				var isZeroComposite = (uint)Avx2.MoveMask(isZeroFlags.AsByte());
+				//var isZeroFlags = Avx2.CompareEqual(carries, _zeroVector);
+				//var isZeroComposite = (uint)Avx2.MoveMask(isZeroFlags.AsByte());
 
-				if (isZeroComposite != 0xffffffff)
-				{
-					// At least one carry is not zero.
-					throw new OverflowException("Overflow on PropagateCarries.");
+				//if (isZeroComposite != 0xffffffff)
+				//{
+				//	// At least one carry is not zero.
+				//	throw new OverflowException("Overflow on PropagateCarries.");
 
-					//ulong maxValueBeforeShift = 16711679;
-					//var valuePtr = idx * _lanes;
-					//for (var i = 0; i < _lanes; i++)
-					//{
-					//	if (carries.GetElement(i) > 0)
-					//	{
-					//		//throw new OverflowException("While propagating carries after a multiply operation, the MSL produced a carry.");
-					//		SetMantissa(resultBa, valuePtr + i, new ulong[] { 0, maxValueBeforeShift });
-					//		NumberOfMCarries++;
-					//	}
-					//}
-				}
+				//	//ulong maxValueBeforeShift = 16711679;
+				//	//var valuePtr = idx * _lanes;
+				//	//for (var i = 0; i < _lanes; i++)
+				//	//{
+				//	//	if (carries.GetElement(i) > 0)
+				//	//	{
+				//	//		//throw new OverflowException("While propagating carries after a multiply operation, the MSL produced a carry.");
+				//	//		SetMantissa(resultBa, valuePtr + i, new ulong[] { 0, maxValueBeforeShift });
+				//	//		NumberOfMCarries++;
+				//	//	}
+				//	//}
+				//}
 
 			}
 		}
@@ -329,6 +384,16 @@ namespace MSetGenP
 
 		public void Add(FPValues a, FPValues b, FPValues c)
 		{
+			//ClearManatissMems(c.MantissaMemories, onlyInPlayItems: false);
+
+			//CheckPWValues(a.MantissaMemories, out var errors);
+			//CheckPWValues(b.MantissaMemories, out var errors2);
+
+			//if (errors.Length > 1 || errors2.Length > 1)
+			//{
+			//	Debug.WriteLine("Got an error.");
+			//}
+
 			var signsA = a.GetSignVectorsUL();
 			var signsB = b.GetSignVectorsUL();
 
@@ -339,73 +404,145 @@ namespace MSetGenP
 				Vector256<ulong> areEqualFlags = Avx2.CompareEqual(signsA[idx], signsB[idx]);
 				var areEqualComposite = (uint) Avx2.MoveMask(areEqualFlags.AsByte());
 
+				var resultPtr = idx * _lanes;
+
 				if (areEqualComposite == 0xffffffff)
 				{
-					var resultPtr = idx * _lanes;
-
-					for (var i = 0; i < _lanes; i++)
-					{
-						c.SetSign(resultPtr + i, a.GetSign(resultPtr + i));
-					}
-
-					AddInternal(idx, a, b, c);
+					// All are the same.
+					NumberOfMCarries += _lanes;
+					AddInternal(resultPtr, a, b, c);
 				}
-				else
+				else if (areEqualComposite == 0)
 				{
-					var comps = Compare(idx, a.MantissaMemories, b.MantissaMemories);
-					//var dComps = string.Join(", ", comps);
-					//Debug.WriteLine($"{dComps}");
-
-					SubInternal(idx, comps, a, b, c);
+					// Each pair has one + and one -
+					NumberOfACarries += _lanes;
+					//var comps = Compare(idx, a.MantissaMemories, b.MantissaMemories);
+					//SubInternal(idx, comps, a, b, c);
+					SubInternal(resultPtr, a, b, c);
+				}
+				else 
+				{
+					AddSubInternal(resultPtr, a, b, c);
 				}
 			}
 		}
 
-		private void AddInternal(int idx, FPValues a, FPValues b, FPValues c)
+		private void AddInternal(int resultPtr, FPValues a, FPValues b, FPValues c)
 		{
-			var resultPtr = idx * _lanes;
-
 			for (var i = 0; i < _lanes; i++)
 			{
-				var result = Add(a.GetMantissa(resultPtr + i), b.GetMantissa(resultPtr + i), out var carry);
+				var valPtr = resultPtr + i;
+				if (DoneFlags[valPtr]) continue;
+
+				var aMantissa = a.GetMantissa(valPtr);
+				var bMantissa = b.GetMantissa(valPtr);
+
+				var result = Add(aMantissa, bMantissa, out var carry);
 
 				if (carry > 0)
 				{
-					result = CreateNewMaxIntegerSmx().Mantissa;
-					NumberOfACarries++;
+					//Debug.WriteLine($"A-Carry: a:{SmxMathHelper.GetDiagDisplay("a", aMantissa)}, {SmxMathHelper.GetDiagDisplay("b", bMantissa)}.");
+					result = new ulong[LimbCount]; // CreateNewMaxIntegerSmx().Mantissa;
+					DoneFlags[valPtr] = true;
+					//NumberOfACarries++;
 				}
 
-				c.SetMantissa(resultPtr + i, result);
+				c.SetMantissa(valPtr, result);
+				c.SetSign(valPtr, a.GetSign(valPtr));
 			}
 		}
 
-		private void SubInternal(int idx, int[] comps, FPValues a, FPValues b, FPValues c)
+		private void SubInternal(int resultPtr, FPValues a, FPValues b, FPValues c)
 		{
-			var resultPtr = idx * _lanes;
-
-			for (var i = 0; i < comps.Length; i++)
+			for (var i = 0; i < _lanes; i++)
 			{
-				var comp = comps[i];
+				var valPtr = resultPtr + i;
+				if (DoneFlags[valPtr]) continue;
+
+				//var comp = comps[i];
+				var aMantissa = a.GetMantissa(valPtr);
+				var bMantissa = b.GetMantissa(valPtr);
+
+				var comp = Compare(aMantissa, bMantissa);
+
 				if (comp == 0)
 				{
-					c.SetMantissa(resultPtr + i, a.GetMantissa(resultPtr + i));
-					c.SetSign(resultPtr + i, a.GetSign(resultPtr + i));
+					// Result is zero
+					c.SetMantissa(valPtr, new ulong[LimbCount]);
+					c.SetSign(valPtr, true);
 				}
 				else if (comp > 0)
 				{
-					var result = Sub(a.GetMantissa(resultPtr + i), b.GetMantissa(resultPtr + i));
-					c.SetMantissa(resultPtr + i, result);
-					c.SetSign(resultPtr + i, a.GetSign(resultPtr + i));
+					//var result = Sub(a.GetMantissa(valPtr), b.GetMantissa(valPtr));
+					var result = Sub(aMantissa, bMantissa);
+					c.SetMantissa(valPtr, result);
+					c.SetSign(valPtr, a.GetSign(valPtr));
 				}
 				else
 				{
-					var result = Sub(b.GetMantissa(resultPtr + i), a.GetMantissa(resultPtr + i));
-					c.SetMantissa(resultPtr + i, result);
-					c.SetSign(resultPtr + i, b.GetSign(resultPtr + i));
+					//var result = Sub(b.GetMantissa(valPtr), a.GetMantissa(valPtr));
+					var result = Sub(bMantissa, aMantissa);
+					c.SetMantissa(valPtr, result);
+					c.SetSign(valPtr, b.GetSign(valPtr));
 				}
 			}
+		}
 
-			//return signs;
+		public void AddSubInternal(int resultPtr, FPValues a, FPValues b, FPValues c)
+		{
+			for (var i = 0; i < _lanes; i++)
+			{
+				var valPtr = resultPtr + i;
+				if (DoneFlags[valPtr]) continue;
+
+				var aSign = a.GetSign(valPtr);
+				var bSign = b.GetSign(valPtr);
+
+				var aMantissa = a.GetMantissa(valPtr);
+				var bMantissa = b.GetMantissa(valPtr);
+
+				if (aSign == bSign)
+				{
+					NumberOfMCarries++;
+					var result = Add(aMantissa, bMantissa, out var carry);
+					if (carry > 0)
+					{
+						//Debug.WriteLine($"A-Carry: a:{SmxMathHelper.GetDiagDisplay("a", aMantissa)}, {SmxMathHelper.GetDiagDisplay("b", bMantissa)}.");
+						result = new ulong[LimbCount]; // CreateNewMaxIntegerSmx().Mantissa;
+						DoneFlags[valPtr] = true;
+						//NumberOfACarries++;
+					}
+
+					c.SetMantissa(valPtr, result);
+					c.SetSign(valPtr, a.GetSign(valPtr));
+				}
+				else
+				{
+					NumberOfACarries++;
+					var comp = Compare(aMantissa, bMantissa);
+
+					if (comp == 0)
+					{
+						// Result is zero
+						c.SetMantissa(valPtr, new ulong[LimbCount]);
+						c.SetSign(valPtr, true);
+					}
+					else if (comp > 0)
+					{
+						//var result = Sub(a.GetMantissa(valPtr), b.GetMantissa(valPtr));
+						var result = Sub(aMantissa, bMantissa);
+						c.SetMantissa(valPtr, result);
+						c.SetSign(valPtr, a.GetSign(valPtr));
+					}
+					else
+					{
+						//var result = Sub(b.GetMantissa(valPtr), a.GetMantissa(valPtr));
+						var result = Sub(bMantissa, aMantissa);
+						c.SetMantissa(valPtr, result);
+						c.SetSign(valPtr, b.GetSign(valPtr));
+					}
+				}
+			}
 		}
 
 		#endregion
@@ -483,6 +620,26 @@ namespace MSetGenP
 			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
 		}
 
+		private int Compare(ulong[] left, ulong[] right)
+		{
+			if (left.Length != right.Length)
+			{
+				throw new ArgumentException($"The left and right arguments must have equal length. left.Length: {left.Length}, right.Length: {right.Length}.");
+			}
+
+			var i = -1 + Math.Min(left.Length, right.Length);
+
+			for (; i >= 0; i--)
+			{
+				if (left[i] != right[i])
+				{
+					return left[i] > right[i] ? 1 : -1;
+				}
+			}
+
+			return 0;
+		}
+
 		#endregion
 
 		#region Create Smx Support
@@ -513,13 +670,16 @@ namespace MSetGenP
 
 		#region Normalization Support
 
-		public void ShiftAndTrim(Memory<ulong>[] mantissaMems, Memory<ulong>[] resultLimbs)
+		private void ShiftAndTrim(Memory<ulong>[] mantissaMems, Memory<ulong>[] resultLimbs)
 		{
 			//ValidateIsSplit(mantissa);
 
 			// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
 			// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
 			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
+
+			// Check to see if any of these values are larger than the FP Format.
+			//_ = CheckForOverflow(resultLimbs);
 
 			var sourceIndex = Math.Max(mantissaMems.Length - LimbCount, 0);
 
@@ -569,6 +729,35 @@ namespace MSetGenP
 				// Take the bits from the source limb, discarding the top shiftAmount of bits.
 				result[idx] = Avx2.ShiftRightLogical(Avx2.ShiftLeftLogical(source[idx], (byte)(32 + shiftAmount)), 32);
 			}
+		}
+
+		private bool[] CheckForOverflow(Memory<ulong>[] resultLimbs)
+		{
+			var limbVecs = GetLimbVectorsUL(resultLimbs[^1]);
+
+			var result = Enumerable.Repeat(false, VecCount).ToArray();
+
+			var indexes = InPlayList;
+			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			{
+				var idx = indexes[idxPtr];
+				var onlyTopBits = Avx2.And(limbVecs[idx], TOP_BITS_MASK_VEC);
+				var areEqualFlags = Avx2.CompareEqual(onlyTopBits, _zeroVector);
+				var compositeFlags = (uint)Avx2.MoveMask(areEqualFlags.AsByte());
+
+				if (compositeFlags != 0xffffffff)
+				{
+					// One or more limbs have some of their top bits set.
+					result[idx] = true;
+				}
+			}
+
+			if (result.Any())
+			{
+				Debug.WriteLine("Overflow occured upon multiplication, discarding upper bits.");
+			}
+
+			return result;
 		}
 
 		#endregion
@@ -665,15 +854,98 @@ namespace MSetGenP
 			return result;
 		}
 
-		public void IsGreaterOrEqThanThreshold(FPValues a, Span<Vector256<long>> escapedFlagVectors)
+		private uint[][] CheckPWValues(Memory<ulong>[] resultLimbs, out string errors)
+		{
+			var result = new uint[resultLimbs.Length][];
+			var sb = new StringBuilder();
+
+			var indexes = InPlayList;
+
+			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+			{
+				result[limbPtr] = new uint[ValueCount];
+
+				var limbs = GetLimbVectorsUL(resultLimbs[limbPtr]);
+
+				var oneFound = false;
+
+				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+				{
+					var idx = indexes[idxPtr];
+					var vector = limbs[idx];
+
+					var sansSign = Avx2.And(vector, SIGN_BIT_MASK_VEC);
+					var cFlags = Avx2.CompareEqual(vector, sansSign);
+					var cComposite = Avx2.MoveMask(cFlags.AsByte());
+					if (cComposite != -1)
+					{
+						sb.AppendLine("Top bit was set.");
+					}
+
+					var areGtFlags = (Avx2.CompareGreaterThan(sansSign.AsInt64(), _maxDigitValueVector)).AsUInt64();
+					var compositeFlags = (uint)Avx2.MoveMask(areGtFlags.AsByte());
+
+					result[limbPtr][idx] = compositeFlags;
+
+					if (compositeFlags != 0)
+					{
+						if (!oneFound)
+						{
+							oneFound = true;
+							sb.Append($"Limb: {limbPtr}::");
+						}
+						sb.AppendLine($"{idx} ");
+					}
+				}
+
+				if (oneFound)
+				{
+					sb.AppendLine();
+				}
+			}
+
+			errors = sb.ToString();
+
+			return result;
+		}
+
+		//public void IsGreaterOrEqThanThreshold_Old(FPValues a, Span<Vector256<long>> escapedFlagVectors)
+		//{
+		//	var left = a.GetLimbVectorsL(LimbCount - 1);
+		//	var right = _thresholdVector;
+
+		//	IsGreaterOrEqThan_Old(left, right, escapedFlagVectors);
+		//}
+
+		//private void IsGreaterOrEqThan_Old(Span<Vector256<long>> left, Vector256<long> right, Span<Vector256<long>> escapedFlagVectors)
+		//{
+		//	var indexes = InPlayList;
+		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+		//	{
+		//		var idx = indexes[idxPtr];
+		//		//var ta = new ulong[_ulongSlots];
+		//		//left[idx].AsVector().CopyTo(ta);
+
+		//		//var bi = SmxMathHelper.FromPwULongs(ta);
+		//		//var rv = new RValue(bi, -24);
+
+		//		//var rvS = RValueHelper.ConvertToString(rv);
+
+		//		var resultVector = Avx2.CompareGreaterThan(left[idx], right);
+
+		//		escapedFlagVectors[idx] = resultVector;
+		//	}
+		//}
+
+		public void IsGreaterOrEqThanThreshold(FPValues a, bool[] results)
 		{
 			var left = a.GetLimbVectorsUL(LimbCount - 1);
 			var right = _thresholdVector;
 
-			IsGreaterOrEqThan(left, right, escapedFlagVectors);
+			IsGreaterOrEqThan(left, right, results);
 		}
 
-		private void IsGreaterOrEqThan(Span<Vector256<ulong>> left, Vector256<long> right, Span<Vector256<long>> escapedFlagVectors)
+		private void IsGreaterOrEqThan(Span<Vector256<ulong>> left, Vector256<long> right, bool[] results)
 		{
 			var indexes = InPlayList;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
@@ -687,12 +959,18 @@ namespace MSetGenP
 
 				//var rvS = RValueHelper.ConvertToString(rv);
 
-				var x = Vector256.AsInt64(left[idx]);
-				var y = Avx2.CompareGreaterThan(x, right);
+				var sansSign = Avx2.And(left[idx], SIGN_BIT_MASK_VEC);
+				var resultVector = Avx2.CompareGreaterThan(sansSign.AsInt64(), right);
 
-				escapedFlagVectors[idx] = y;
+				var vectorPtr = idx * _lanes;
+
+				for(var i = 0; i < _lanes; i++)
+				{
+					results[vectorPtr + i] = resultVector.GetElement(i) == -1;
+				}
 			}
 		}
+
 
 		#endregion
 

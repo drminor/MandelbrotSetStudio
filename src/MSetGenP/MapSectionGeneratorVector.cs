@@ -63,27 +63,35 @@ namespace MSetGenP
 				//Array.Copy(doneFlags, j * stride, rowDoneFlags, 0, stride);
 				var rowCounts = subSectionGeneratorVector.GenerateMapSection(cRs, cIs, out var rowDoneFlags);
 				Array.Copy(rowCounts, 0, counts, j * stride, stride);
+				Array.Copy(rowDoneFlags, 0, doneFlags, j * stride, stride);
 			}
 
 			//Debug.WriteLine($"Completed: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). ACarries: {aCarries}, MCarries:{mCarries}.");
-			Debug.WriteLine($"Completed: BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. ACarries: {subSectionGeneratorVector.NumberOfACarries}, MCarries:{subSectionGeneratorVector.NumberOfMCarries}.");
+			//Debug.WriteLine($"Completed: BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. ACarries: {subSectionGeneratorVector.NumberOfACarries}, MCarries:{subSectionGeneratorVector.NumberOfMCarries}.");
+			Debug.WriteLine($"{s1}, {s2}: Adds: {subSectionGeneratorVector.NumberOfACarries}\tSubtracts: {subSectionGeneratorVector.NumberOfMCarries} MCarries.");
 
-			var escapeVelocities = new ushort[128 * 128];
-			var compressedDoneFlags = CompressTheDoneFlags(counts, targetIterations);
+			var escapeVelocities = new ushort[blockSize.NumberOfCells];
+			var compressedDoneFlags = CompressTheDoneFlags(doneFlags);
+
+			if(compressedDoneFlags.Length != 1 || !compressedDoneFlags[0])
+			{
+				Debug.WriteLine("WARNING: Some sample points are not complete.");
+			}
+
 			var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
 			return result;
 		}
 
-		private bool[] CompressTheDoneFlags(ushort[] counts, int targetIterations)
+		private bool[] CompressTheDoneFlags(bool[] doneFlags)
 		{
 			bool[] result;
 
-			if (!counts.Any(x => x < targetIterations))
+			if (!doneFlags.Any(x => !x))
 			{
 				// All reached the target
 				result = new bool[] { true };
 			}
-			else if (!counts.Any(x => x >= targetIterations))
+			else if (!doneFlags.Any(x => x))
 			{
 				// none reached the target
 				result = new bool[] { false };
@@ -91,7 +99,7 @@ namespace MSetGenP
 			else
 			{
 				// Mix
-				result = counts.Select(x => x >= targetIterations).ToArray();
+				result = doneFlags;
 			}
 
 			return result;

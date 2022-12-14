@@ -1,4 +1,5 @@
 ﻿using MEngineDataContracts;
+using MSetGenP;
 using MSS.Common;
 using System;
 using System.Collections.Concurrent;
@@ -33,12 +34,25 @@ namespace MapSectionProviderLib
 		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients, bool useAllCores)
 		{
 			_stopped = false;
-			_mEngineClients = mEngineClients;
 
 			_cts = new CancellationTokenSource();
 			_workQueue = new BlockingCollection<MapSectionGenerateRequest>(QUEUE_CAPACITY);
 			_cancelledJobIds = new List<int>();
 
+			if (mEngineClients.Length == 1)
+			{
+				_workQueueProcessors = CreateTheQueueProcessorsN(useAllCores, ref mEngineClients);
+				_mEngineClients = mEngineClients;
+			}
+			else
+			{
+				_mEngineClients = mEngineClients;
+				_workQueueProcessors = CreateTheQueueProcessorsStandard(useAllCores);
+			}
+		}
+
+		private IList<Task> CreateTheQueueProcessorsStandard(bool useAllCores)
+		{
 			int localTaskCnt;
 			int remoteTaskCnt;
 
@@ -54,7 +68,7 @@ namespace MapSectionProviderLib
 				remoteTaskCnt = 0;
 			}
 
-			_workQueueProcessors = new List<Task>();
+			var workQueueProcessors = new List<Task>();
 			foreach (var client in _mEngineClients)
 			{
 				if (client.IsLocal)
@@ -72,6 +86,48 @@ namespace MapSectionProviderLib
 					}
 				}
 			}
+
+			return workQueueProcessors;
+		}
+
+		private IList<Task> CreateTheQueueProcessorsN(bool useAllCores, ref IMEngineClient[] clients)
+		{
+			int localTaskCnt;
+
+			if (useAllCores)
+			{
+				var numberOfLogicalProc = Environment.ProcessorCount;
+				localTaskCnt = numberOfLogicalProc - 1;
+			}
+			else
+			{
+				localTaskCnt = 1;
+			}
+
+			var workQueueProcessors = new List<Task>();
+
+			var newClients = new IMEngineClient[localTaskCnt];
+
+			for (var i = 0; i < localTaskCnt; i++)
+			{
+				IMEngineClient nClient;
+
+				if (clients[0].GetType() == typeof(MClientLocalVector))
+				{
+					nClient = new MClientLocalVector();
+				}
+				else
+				{
+					nClient = new MClientLocalScalar();
+				}
+
+				workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(nClient/*, _mapSectionPersistProcessor*/, _cts.Token)));
+				newClients[i] = nClient;
+			}
+
+			clients = newClients;
+
+			return workQueueProcessors;
 		}
 
 		#endregion

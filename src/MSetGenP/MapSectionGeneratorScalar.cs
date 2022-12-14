@@ -37,15 +37,15 @@ namespace MSetGenP
 			var s3 = delta.GetStringValue();
 
 			var blockPos = mapSectionRequest.BlockPosition;
-			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
+			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 
 			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
-			var escapeVelocities = new ushort[128 * 128];
+			var escapeVelocities = new ushort[blockSize.NumberOfCells];
 			var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlags, zValues: null);
 
-			Debug.WriteLine($"There were {smxMathHelper.NumberOfACarries} ACarries and {smxMathHelper.NumberOfMCarries} MCarries.");
+			Debug.WriteLine($"{s1}, {s2}: Adds: {smxMathHelper.NumberOfACarries}\tSubtracts: {smxMathHelper.NumberOfMCarries} MCarries.");
 
 			return result;
 		}

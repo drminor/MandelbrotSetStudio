@@ -647,11 +647,6 @@ namespace MSetGenP
 				sourceIndex++;
 			}
 
-			//var sResult = ScaleAndSplit(mantissa, BitsBeforeBP, "Force Exp"); // Shift Bits towards the most significant end. After a multiply, the portion of the mantissa before the BP is doubled, this discards the high bits.
-			//var tResult = TakeMostSignificantLimbs(sResult, LimbCount);
-			//Debug.WriteLine($"ShiftAndTrim is returing {GetDiagDisplay("result", result)}, prev: {GetDiagDisplay("tResult", tResult)}");
-
-			//return tResult;
 			return result;
 		}
 
@@ -774,7 +769,6 @@ namespace MSetGenP
 			return result;
 		}
 
-
 		private ulong[] ScaleAndSplit(ulong[] mantissa, int power, string desc)
 		{
 			if (power <= 0)
@@ -833,51 +827,30 @@ namespace MSetGenP
 			var magnitude = GetMagnitudeOfIntegerPart(partialWordLimbs, rValue.Exponent);
 			if (magnitude > BitsBeforeBP)
 			{
-				// magnitude is the exponent of the most significant bit from set of BitsBeforeBP at the top of the most significant limb.
+				// Magnitude is the exponent of the most significant bit within the first BitsBeforeBP at the top of the most significant limb.
 				throw new ArgumentException($"An RValue with integer portion > {MaxIntegerValue} cannot be used to create an Smx.");
 			}
 
-			//(var limbIndex, var bitOffset) = Math.DivRem(shiftAmount, BITS_PER_LIMB);
-
-			//var sourceIndex = 0; // - limbIndex;
-			//var sourceOffset = fpFormat.BitsBeforeBinaryPoint;
-
-			//var newPartialWordLimbs = new ulong[LimbCount];
-			//var destinationIndex = 0;
-			//var destinationOffset = BitsBeforeBP;
-
-
-			//CopyPWBits(partialWordLimbs, sourceIndex, sourceOffset, newPartialWordLimbs, destinationIndex, destinationOffset);
-			//var result = new Smx(sign, newPartialWordLimbs, exponent, precision, BitsBeforeBP);
-			//return result;
-
-			ulong[] newPartialWordLimbs;
-
-			//var exponentOfLeastSignficantBit = rValue.Exponent;
-			//var shiftAmount = TargetExponent - exponentOfLeastSignficantBit;
-
-			//if (shiftAmount == 0)
-			//{
-			//	newPartialWordLimbs = TakeMostSignificantLimbs(partialWordLimbs, LimbCount);
-			//}
-			//else if (shiftAmount > 0)
-			//{
-			//	throw new NotImplementedException();
-			//}
-			//else
-			//{
-			//	shiftAmount = -1 * shiftAmount;
-			//	var sResult = ScaleAndSplit(partialWordLimbs, shiftAmount, "Create Smx");
-
-			//	newPartialWordLimbs = TakeMostSignificantLimbs(sResult, LimbCount);
-			//}
+			var sign = rValue.Value >= 0;
 
 			var shiftAmount = GetShiftAmount(rValue.Exponent, TargetExponent);
+			var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount);
 
+			var exponent = TargetExponent;
+			var precision = rValue.Precision;
+			var bitsBeforeBP = BitsBeforeBP;
+			var result = new Smx(sign, newPartialWordLimbs, exponent, precision, bitsBeforeBP);
+
+			return result;
+		}
+
+		private ulong[] ShiftBits(ulong[] partialWordLimbs, int shiftAmount)
+		{
+			ulong[] result;
 
 			if (shiftAmount == 0)
 			{
-				newPartialWordLimbs = TakeMostSignificantLimbs(partialWordLimbs, LimbCount);
+				result = TakeMostSignificantLimbs(partialWordLimbs, LimbCount);
 			}
 			else if (shiftAmount < 0)
 			{
@@ -887,14 +860,8 @@ namespace MSetGenP
 			{
 				var sResult = ScaleAndSplit(partialWordLimbs, shiftAmount, "Create Smx");
 
-				newPartialWordLimbs = TakeMostSignificantLimbs(sResult, LimbCount);
+				result = TakeMostSignificantLimbs(sResult, LimbCount);
 			}
-
-			var sign = rValue.Value >= 0;
-			var exponent = TargetExponent;
-			var precision = rValue.Precision;
-			var bitsBeforeBP = BitsBeforeBP;
-			var result = new Smx(sign, newPartialWordLimbs, exponent, precision, bitsBeforeBP);
 
 			return result;
 		}

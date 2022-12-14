@@ -11,13 +11,13 @@ namespace MSetGenP
 	{
 		#region Constructor
 
-		public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision, bitsBeforeBP: 0)
+		//public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision, bitsBeforeBP: 0)
+		//{ }
+
+		public Smx(RValue rValue, int precision, int bitsBeforeBP) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP)
 		{ }
 
-		public Smx(RValue rValue, int precision) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP: 0)
-		{ }
-
-		public Smx(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
+		private Smx(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
 		{
 			if (exponent == 1)
 			{
