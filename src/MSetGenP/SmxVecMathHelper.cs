@@ -96,8 +96,8 @@ namespace MSetGenP
 				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat: {ApFixedPointFormat}.");
 			}
 
-			var smxMathHelper = new SmxMathHelper(ApFixedPointFormat, threshold);
-			var thresholdMslIntegerVector = Vector256.Create(smxMathHelper.ThresholdMsl);
+			var thresholdMsl = SmxMathHelper.GetThreshold(threshold, TargetExponent, LimbCount, BitsBeforeBP);
+			var thresholdMslIntegerVector = Vector256.Create(thresholdMsl);
 			var thresholdVector = thresholdMslIntegerVector.AsInt64();
 
 			return thresholdVector;
