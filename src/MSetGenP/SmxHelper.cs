@@ -77,7 +77,7 @@ namespace MSetGenP
 
 		public static RValue GetRValue(Smx smx)
 		{
-			var biValue = SmxHelper.FromPwULongs(smx.Mantissa);
+			var biValue = FromPwULongs(smx.Mantissa);
 			biValue = smx.Sign ? biValue : -1 * biValue;
 			var exponent = smx.Exponent;
 			var precision = smx.Precision;
@@ -86,6 +86,8 @@ namespace MSetGenP
 
 			return result;
 		}
+
+
 
 		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, int bitsBeforeBP)
 		{
@@ -569,7 +571,7 @@ namespace MSetGenP
 		//	return -1;
 		//}
 
-		private static int GetShiftAmount(int currentExponent, int targetExponent)
+		public static int GetShiftAmount(int currentExponent, int targetExponent)
 		{
 			var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
 			return shiftAmount;
