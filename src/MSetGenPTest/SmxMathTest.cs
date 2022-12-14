@@ -19,7 +19,7 @@ namespace EngineTest
 			var smxMathHelperFloating = new SmxMathHelperFloating(new ApFixedPointFormat(limbCount));
 
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017"); // 0.0000000000353482168348864539511122006373007661 (or possibly: 0.000000000035348216834895204420066149556547602)
-			var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
+			var aMantissa = SmxHelper.ToPwULongs(aBigInteger);
 
 			var bRawMantissa = smxMathHelperFloating.Multiply(aMantissa, aMantissa);
 			var bMantissa = smxMathHelperFloating.PropagateCarries(bRawMantissa);
@@ -27,7 +27,7 @@ namespace EngineTest
 			var indexOfLastNonZeroLimb = smxMathHelperFloating.GetIndexOfLastNonZeroLimb(bMantissa);
 			var nrmBMantissa = smxMathHelperFloating.NormalizeFPV(bMantissa, indexOfLastNonZeroLimb, -128, precision, out var nrmExponent);
 
-			var t1BigInteger = SmxMathHelper.FromPwULongs(nrmBMantissa);
+			var t1BigInteger = SmxHelper.FromPwULongs(nrmBMantissa);
 			var t2BigInteger = t1BigInteger / BigInteger.Pow(2, nrmExponent);
 
 			var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
@@ -302,7 +302,7 @@ namespace EngineTest
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
 			var smxMH2 = BuildTheMathHelper(14);
-			var aBigInteger = SmxMathHelper.FromPwULongs(aSmx.Mantissa);
+			var aBigInteger = SmxHelper.FromPwULongs(aSmx.Mantissa);
 			var aBiSqr = BigInteger.Multiply(aBigInteger, aBigInteger);
 			var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, aSmx.Exponent * 2, precision));
 			//var aBiSmxRValue = aBiSmx.GetRValue();
@@ -361,10 +361,10 @@ namespace EngineTest
 			var smxMathHelper = BuildTheMathHelper(limbCount);
 
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
-			var aMantissa = SmxMathHelper.ToPwULongs(aBigInteger);
+			var aMantissa = SmxHelper.ToPwULongs(aBigInteger);
 
 			var bMantissa = smxMathHelper.Multiply(aMantissa, aMantissa);
-			var bBigInteger = SmxMathHelper.FromPwULongs(bMantissa);
+			var bBigInteger = SmxHelper.FromPwULongs(bMantissa);
 
 			var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
 			Assert.Equal(bBigInteger, bCompBigInteger);
@@ -486,11 +486,11 @@ namespace EngineTest
 			//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
 
 			var aLongs = new ulong[] {1512, 552, 1 };
-			var aBigInteger = -1 * SmxMathHelper.FromPwULongs(aLongs);
+			var aBigInteger = -1 * SmxHelper.FromPwULongs(aLongs);
 			var aRValueStg = new RValue(aBigInteger, -63, precision);
 
 			var bLongs = new ulong[] { 8614, 2, 0 };
-			var bBigInteger = SmxMathHelper.FromPwULongs(bLongs);
+			var bBigInteger = SmxHelper.FromPwULongs(bLongs);
 			var bRValueStg = new RValue(bBigInteger, -36, precision);
 
 			var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);

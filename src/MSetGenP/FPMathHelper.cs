@@ -45,7 +45,7 @@ namespace MSetGenP
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
 
-			ThresholdMsl = SmxMathHelper.GetThreshold(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
+			ThresholdMsl = SmxHelper.GetThreshold(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
 		}
 
 		public static ApFixedPointFormat GetAdjustedFixedPointFormat(ApFixedPointFormat fpFormat)
@@ -646,7 +646,7 @@ namespace MSetGenP
 
 			var rValue = new RValue(MaxIntegerValue, 0, precision);
 
-			var result = SmxMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var result = SmxHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
 			return result;
 		}
 

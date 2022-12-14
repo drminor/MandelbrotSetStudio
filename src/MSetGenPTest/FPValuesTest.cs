@@ -114,11 +114,11 @@ namespace EngineTest
 			//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
 
 			var aLongs = new ulong[] {1512, 552, 1 };
-			var aBigInteger = -1 * SmxMathHelper.FromPwULongs(aLongs);
+			var aBigInteger = -1 * SmxHelper.FromPwULongs(aLongs);
 			var aRValueStg = new RValue(aBigInteger, -63, precision);
 
 			var bLongs = new ulong[] { 8614, 2, 0 };
-			var bBigInteger = SmxMathHelper.FromPwULongs(bLongs);
+			var bBigInteger = SmxHelper.FromPwULongs(bLongs);
 			var bRValueStg = new RValue(bBigInteger, -36, precision);
 
 			var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);
