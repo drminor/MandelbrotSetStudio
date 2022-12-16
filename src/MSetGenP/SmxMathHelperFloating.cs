@@ -16,15 +16,6 @@ namespace MSetGenP
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
 		private static readonly ulong HALF_DIGIT_VALUE = (ulong)Math.Pow(2, 16);
 
-		// Integer used to convert BigIntegers to/from array of ulongs.
-		private static readonly BigInteger BI_ULONG_FACTOR = BigInteger.Pow(2, 64);
-
-		// Integer used to convert BigIntegers to/from array of ulongs containing partial-words
-		private static readonly BigInteger BI_UINT_FACTOR = BigInteger.Pow(2, 32);
-
-		// Integer used to pack a pair of ulong values into a single ulong.
-		private static readonly ulong UL_UINT_FACTOR = (ulong)Math.Pow(2, 32);
-
 		private static readonly ulong LOW_MASK =    0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
@@ -1260,7 +1251,6 @@ namespace MSetGenP
 		}
 
 		#endregion
-
 
 		#region Comparison
 

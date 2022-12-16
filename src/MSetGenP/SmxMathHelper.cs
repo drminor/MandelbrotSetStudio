@@ -30,11 +30,13 @@ namespace MSetGenP
 			//	Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
 			//}
 
+			Threshold = thresold;
 			LimbCount = SmxHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
 
-			ThresholdMsl = SmxHelper.GetThreshold(thresold, TargetExponent, LimbCount, BitsBeforeBP);
+
+			ThresholdMsl = SmxHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, BitsBeforeBP);
 		}
 
 		#endregion
@@ -46,6 +48,7 @@ namespace MSetGenP
 		public int TargetExponent { get; init; }
 
 		public uint MaxIntegerValue { get; init; }
+		public uint Threshold { get; init; }
 		public ulong ThresholdMsl { get; init; }
 
 		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
@@ -239,7 +242,7 @@ namespace MSetGenP
 
 			if (hi2 != 0)
 			{
-				throw new OverflowException($"Multiply {GetDiagDisplay("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
+				throw new OverflowException($"Multiply {SmxHelper.GetDiagDisplay("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
 			}
 
 			//var splitSieve = Split(seive);
@@ -705,56 +708,6 @@ namespace MSetGenP
 			var right = ThresholdMsl;
 			var result = left >= right;
 
-			return result;
-		}
-
-		#endregion
-
-		#region To String Support
-
-		public string GetDiagDisplay(string name, ulong[] values, int stride)
-		{
-			var rowCnt = values.Length / stride;
-
-			var sb = new StringBuilder();
-			sb.AppendLine($"{name}:");
-
-			for (int i = 0; i < rowCnt; i++)
-			{
-				var rowValues = new ulong[stride];
-
-				Array.Copy(values, i * stride, rowValues, 0, stride);
-				sb.AppendLine(GetDiagDisplay($"Row {i}", rowValues));
-			}
-
-			return sb.ToString();
-		}
-
-		public static string GetDiagDisplay(string name, ulong[] values)
-		{
-			var strAry = GetStrArray(values);
-
-			return $"{name}:{string.Join("; ", strAry)}";
-		}
-
-		//private string GetHiLoDiagDisplay(string name, ulong[] values)
-		//{
-		//	Debug.Assert(values.Length % 2 == 0, "GetHiLoDiagDisplay is being called with an array that has a length that is not an even multiple of two.");
-
-		//	var strAry = GetStrArray(values);
-		//	var pairs = new string[values.Length / 2];
-
-		//	for (int i = 0; i < values.Length; i += 2)
-		//	{
-		//		pairs[i / 2] = $"{strAry[i]}, {strAry[i + 1]}";
-		//	}
-
-		//	return $"{name}: {string.Join("; ", pairs)}";
-		//}
-
-		private static string[] GetStrArray(ulong[] values)
-		{
-			var result = values.Select(x => x.ToString()).ToArray();
 			return result;
 		}
 

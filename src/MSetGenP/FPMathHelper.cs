@@ -3,7 +3,6 @@ using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
-using System.Text;
 
 namespace MSetGenP
 {
@@ -11,22 +10,8 @@ namespace MSetGenP
 	{
 		#region Constants
 
-		private const int BITS_PER_LIMB = 32;
-
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
-		private static readonly ulong HALF_DIGIT_VALUE = (ulong)Math.Pow(2, 16);
-
-		// Integer used to convert BigIntegers to/from array of ulongs.
-		private static readonly BigInteger BI_ULONG_FACTOR = BigInteger.Pow(2, 64);
-
-		// Integer used to convert BigIntegers to/from array of ulongs containing partial-words
-		private static readonly BigInteger BI_UINT_FACTOR = BigInteger.Pow(2, 32);
-
-		// Integer used to pack a pair of ulong values into a single ulong.
-		private static readonly ulong UL_UINT_FACTOR = (ulong)Math.Pow(2, 32);
-
 		private static readonly ulong LOW_MASK =    0x00000000FFFFFFFF; // bits 0 - 31 are set.
-		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
 		#endregion
 
@@ -34,49 +19,19 @@ namespace MSetGenP
 
 		public FPMathHelper(ApFixedPointFormat apFixedPointFormat, uint thresold)
 		{
-			ApFixedPointFormat = GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = SmxHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
 			//	Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
 			//}
 
-			LimbCount = GetLimbCount(ApFixedPointFormat.TotalBits);
+			LimbCount = SmxHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
+			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP - 1) - 1; // 2^7 - 1 = 127
 
-			ThresholdMsl = SmxHelper.GetThreshold(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
-		}
-
-		public static ApFixedPointFormat GetAdjustedFixedPointFormat(ApFixedPointFormat fpFormat)
-		{
-			if (fpFormat.BitsBeforeBinaryPoint > 32)
-			{
-				throw new NotSupportedException("An APFixedFormat with a BitsBeforeBinaryPoint of 32 is not supported.");
-			}
-
-			var range = fpFormat.TotalBits;
-
-			// Add one additional Limb to provide room to represent smaller values with some precision.
-			//range += BITS_PER_LIMB;
-
-			var dResult = range / (double)BITS_PER_LIMB;
-			var limbCount = (int)Math.Ceiling(dResult);
-
-			// Make sure the resulting FixPointFormat uses an integral number of limbs.
-			var adjustedFractionalBits = limbCount * BITS_PER_LIMB - fpFormat.BitsBeforeBinaryPoint;
-
-			var result = new ApFixedPointFormat(fpFormat.BitsBeforeBinaryPoint, adjustedFractionalBits);
-
-			return result;
-		}
-
-		public static int GetLimbCount(int numberOfBits)
-		{
-			var dResult = numberOfBits / (double)BITS_PER_LIMB;
-			var result = (int)Math.Ceiling(dResult);
-
-			return result;
+			Threshold = thresold;
+			ThresholdMsl = SmxHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
 		}
 
 		#endregion
@@ -88,6 +43,7 @@ namespace MSetGenP
 		public int TargetExponent { get; init; }
 
 		public uint MaxIntegerValue { get; init; }
+		public uint Threshold { get; init; }
 		public ulong ThresholdMsl { get; init; }
 
 		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
@@ -100,11 +56,11 @@ namespace MSetGenP
 
 		#region Multiply and Square
 
-		public Smx Multiply(Smx a, Smx b)
+		public Smx2C Multiply(Smx2C a, Smx2C b)
 		{
 			if (a.IsZero || b.IsZero)
 			{
-				return CreateNewZeroSmx(Math.Min(a.Precision, b.Precision));
+				return CreateNewZeroSmx2C(Math.Min(a.Precision, b.Precision));
 			}
 
 			Debug.Assert(a.LimbCount == LimbCount, $"A should have {LimbCount} limbs, instead it has {a.LimbCount}.");
@@ -120,18 +76,13 @@ namespace MSetGenP
 			var sign = a.Sign == b.Sign;
 			var precision = Math.Min(a.Precision, b.Precision);
 			var bitsBeforeBP = a.BitsBeforeBP;
-			Smx result = new Smx(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
+			Smx2C result = new Smx2C(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
 
 			return result;
 		}
 
 		public ulong[] Multiply(ulong[] ax, ulong[] bx)
 		{
-			//Debug.WriteLine(GetDiagDisplay("ax", ax));
-			//Debug.WriteLine(GetDiagDisplay("bx", bx));
-
-			//var seive = new ulong[ax.Length * bx.Length];
-
 			var mantissa = new ulong[ax.Length + bx.Length];
 
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
@@ -140,7 +91,6 @@ namespace MSetGenP
 				for (int i = 0; i < bx.Length; i++)
 				{
 					var product = ax[j] * bx[i];
-					//seive[j * bx.Length + i] = product;
 
 					var resultPtr = j + i;  // 0, 1, 1, 2
 
@@ -150,14 +100,10 @@ namespace MSetGenP
 				}
 			}
 
-			//var splitSieve = Split(seive);
-			//Debug.WriteLine(GetDiagDisplay("sieve", splitSieve, bx.Length * 2));
-			//Debug.WriteLine(GetDiagDisplay("result", fullMantissa));
-
 			return mantissa;
 		}
 
-		public Smx Square(Smx a)
+		public Smx2C Square(Smx2C a)
 		{
 			if (a.IsZero)
 			{
@@ -174,7 +120,7 @@ namespace MSetGenP
 			var sign = true;
 			var precision = a.Precision;
 			var bitsBeforeBP = a.BitsBeforeBP;
-			Smx result = new Smx(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
+			Smx2C result = new Smx2C(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
 
 			return result;
 		}
@@ -188,16 +134,15 @@ namespace MSetGenP
 			{
 				for (int i = j; i < ax.Length; i++)
 				{
-					//if (i < j) continue;
-
 					var product = ax[j] * ax[i];
 
 					if (i > j)
 					{
 						product *= 2;
 					}
-															// j = 
-					var resultPtr = j + i;					// 0, 1		1, 2		0, 1, 2		1, 2, 3, 
+
+					var resultPtr = j + i;                  // 0, 1		1, 2		0, 1, 2		1, 2, 3, 
+
 					var lo = Split(product, out var hi);
 					mantissa[resultPtr] += lo;
 					mantissa[resultPtr + 1] += hi;
@@ -222,76 +167,7 @@ namespace MSetGenP
 
 		 */
 
-		public Smx Multiply(Smx a, int b)
-		{
-			Smx result;
-
-			if (a.IsZero || b == 0 )
-			{
-				result = CreateNewZeroSmx(a.Precision);
-				return result;
-			}
-
-			Debug.Assert(a.LimbCount == LimbCount, $"A should have {LimbCount} limbs, instead it has {a.LimbCount}.");
-			Debug.Assert(a.Exponent == TargetExponent, $"A should have an exponent of {TargetExponent}, instead of {a.Exponent}.");
-
-			var bVal = (uint)Math.Abs(b);
-			var lzc =  BitOperations.LeadingZeroCount(bVal);
-
-			if (lzc < 32 - a.BitsBeforeBP)
-			{
-				throw new ArgumentException("The integer multiplyer should fit into the integer portion of the Smx value.");
-			}
-
-			var bSign = b >= 0;
-			var sign = a.Sign == bSign;
-
-			var rawMantissa = Multiply(a.Mantissa, bVal);
-			var mantissa = PropagateCarries(rawMantissa);
-
-			result = new Smx(sign, mantissa, a.Exponent, a.Precision, a.BitsBeforeBP);
-
-			return result;
-		}
-
-		public ulong[] Multiply(ulong[] ax, uint b)
-		{
-			//Debug.WriteLine(GetDiagDisplay("ax", ax));
-			//Debug.WriteLine($"b = {b}");
-
-			//var seive = new ulong[ax.Length];
-
-			var mantissa = new ulong[ax.Length];
-
-			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
-			for (int j = 0; j < ax.Length - 1; j++)
-			{
-				var product = ax[j] * b;
-				//seive[j] = product;
-
-				var lo = Split(product, out var hi);	//		2 x 1			3 x 1			4 x 1
-				mantissa[j] += lo;			            //			0, 1			0, 1, 2			0, 1, 2, 3
-				mantissa[j + 1] += hi;			        //			1, 2			1, 2, 3			1, 2, 3, 4
-			}
-
-			var product2 = ax[^1] * b;
-			var lo2 = Split(product2, out var hi2);
-
-			mantissa[^1] = lo2;
-
-			if (hi2 != 0)
-			{
-				throw new OverflowException($"Multiply {SmxMathHelper.GetDiagDisplay("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
-			}
-
-			//var splitSieve = Split(seive);
-			//Debug.WriteLine(GetDiagDisplay("sieve", splitSieve, 2));
-			//Debug.WriteLine(GetDiagDisplay("result", mantissa));
-
-			return mantissa;
-		}
-
-		public ulong[] PropagateCarries(ulong[] mantissa/*, out int indexOfLastNonZeroLimb*/)
+		public ulong[] PropagateCarries(ulong[] mantissa)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
@@ -299,20 +175,12 @@ namespace MSetGenP
 			// If the MSL produces a carry, throw an exception.
 
 			var result = new ulong[mantissa.Length];
-
-			//indexOfLastNonZeroLimb = -1;
 			var carry = 0ul;
 
 			for (int i = 0; i < mantissa.Length; i++)
 			{
 				var lo = Split(mantissa[i] + carry, out var hi);  // :Spliter
 				result[i] = lo;
-
-				if (lo > 0)
-				{
-					//indexOfLastNonZeroLimb = i;
-				}
-
 				carry = hi;
 			}
 
@@ -379,14 +247,14 @@ namespace MSetGenP
 
 		#region Add and Subtract
 
-		public Smx Sub(Smx a, Smx b, string desc)
+		public Smx2C Sub(Smx2C a, Smx2C b, string desc)
 		{
 			if (b.IsZero)
 			{
 				return a;
 			}
 
-			var bNegated = new Smx(!b.Sign, b.Mantissa, b.Exponent, b.Precision, b.BitsBeforeBP);
+			var bNegated = SmxHelper.Negate(b);
 
 			if (a.IsZero)
 			{
@@ -398,7 +266,66 @@ namespace MSetGenP
 			return result;
 		}
 
-		public Smx Add(Smx a, Smx b, string desc)
+		public Smx2C Add(Smx2C a, Smx2C b, string desc)
+		{
+			CheckLimbs(a, b, desc);
+			if (b.IsZero) return a;
+			if (a.IsZero) return b;
+
+			var precision = Math.Min(a.Precision, b.Precision);
+			var mantissa = Add(a.Mantissa, b.Mantissa, out var carry);
+
+			Smx2C result;
+
+			if (carry != 0)
+			{
+				result = CreateNewMaxIntegerSmx2C(precision);
+			}
+			else
+			{
+				result = BuildSmx2C(mantissa, precision);
+			}
+
+			return result;
+		}
+
+		private ulong[] Add(ulong[] left, ulong[] right, out ulong carry)
+		{
+			if (left.Length != right.Length)
+			{
+				throw new ArgumentException($"The left and right arguments must have equal length. left.Length: {left.Length}, right.Length: {right.Length}.");
+			}
+
+			var resultLength = left.Length;
+			var result = new ulong[resultLength];
+
+			carry = 0uL;
+
+			//ulong nv;
+			for (var i = 0; i < resultLength; i++)
+			{
+				var nv = left[i] + right[i] + carry;
+				//Debug.Write($"Adding {left[i]}, {right[i]} wc:{carry} -> {nv}, split: ");
+
+				//nv = left[i] + right[i];
+				//if ((long)carry < 0)
+				//{
+				//	nv = (ulong)((long)nv + (long)carry);
+				//}
+				//else
+				//{
+				//	nv += carry;
+				//}
+
+				var lo = Split(nv, out carry);
+				//Debug.WriteLine($"hi:{carry}, lo:{lo}");
+				result[i] = lo;
+			}
+
+			return result;
+		}
+
+		private void CheckLimbs(Smx2C a, Smx2C b, string desc)
 		{
 			if (a.LimbCount != LimbCount)
 			{
@@ -417,142 +344,19 @@ namespace MSetGenP
 				Debug.WriteLine($"Warning:the exponents do not match.");
 				throw new InvalidOperationException($"The exponents do not match.");
 			}
-
-			if (b.IsZero)
-			{
-				return a;
-			}
-
-			if (a.IsZero)
-			{
-				return b;
-			}
-
-			bool sign;
-			ulong[] mantissa;
-			int indexOfLastNonZeroLimb;
-			var precision = Math.Min(a.Precision, b.Precision);
-
-			var carry = 0ul;
-
-			if (a.Sign == b.Sign)
-			{
-				NumberOfMCarries++;
-				sign = a.Sign;
-				mantissa = Add(a.Mantissa, b.Mantissa, out indexOfLastNonZeroLimb, out carry);
-			}
-			else
-			{
-				NumberOfACarries++;
-				var cmp = Compare(a.Mantissa, b.Mantissa);
-
-				if (cmp >= 0)
-				{
-					sign = a.Sign;
-					mantissa = Sub(a.Mantissa, b.Mantissa, out indexOfLastNonZeroLimb);
-				}
-				else
-				{
-					sign = b.Sign;
-					mantissa = Sub(b.Mantissa, a.Mantissa, out indexOfLastNonZeroLimb);
-				}
-			}
-
-			Smx result;
-
-			if (carry != 0)
-			{
-				result = CreateNewMaxIntegerSmx();
-				//NumberOfACarries++;
-			}
-			else
-			{
-				result = new Smx(sign, mantissa, a.Exponent, precision, a.BitsBeforeBP);
-			}
-
-			return result;
 		}
 
-		private ulong[] Add(ulong[] left, ulong[] right, out int indexOfLastNonZeroLimb, out ulong carry)
+		private Smx2C BuildSmx2C(ulong[] partialWordLimbs, int precision)
 		{
-			if (left.Length != right.Length)
-			{
-				throw new ArgumentException($"The left and right arguments must have equal length. left.Length: {left.Length}, right.Length: {right.Length}.");
-			}
+			var msl = partialWordLimbs[^1] &= LOW_MASK;
+			var lzc = BitOperations.LeadingZeroCount(msl);
+			var sign = lzc != 32;
 
-			var resultLength = left.Length;
-			var result = new ulong[resultLength];
-
-			indexOfLastNonZeroLimb = -1;
-			carry = 0ul;
-
-			for (var i = 0; i < resultLength; i++)
-			{
-				var nv = left[i] + right[i] + carry;
-				var lo = Split(nv, out carry);
-				result[i] = lo;
-
-				if (lo > 0)
-				{
-					indexOfLastNonZeroLimb = i;
-				}
-			}
+			var result = new Smx2C(sign, partialWordLimbs, TargetExponent, precision, BitsBeforeBP);
 
 			return result;
 		}
 
-		private ulong[] Sub(ulong[] left, ulong[] right, out int indexOfLastNonZeroLimb)
-		{
-			if (left.Length != right.Length)
-			{
-				throw new ArgumentException($"The left and right arguments must have equal length. left.Length: {left.Length}, right.Length: {right.Length}.");
-			}
-
-			var resultLength = left.Length;
-			var result = new ulong[resultLength];
-
-			indexOfLastNonZeroLimb = -1;
-			var borrow = 0ul;
-
-			for (var i = 0; i < resultLength - 1; i++)
-			{
-				// Set the least significant bit of the high part of a.
-				var sax = left[i] | TEST_BIT_32;
-
-				result[i] = sax - right[i] - borrow;
-
-				if ((result[i] & TEST_BIT_32) > 0)
-				{
-					// if the least significant bit of the high part of the result is still set, no borrow occured.
-					result[i] &= LOW_MASK;
-					borrow = 0;
-				}
-				else
-				{
-					borrow = 1;
-				}
-
-				if (result[i] > 0)
-				{
-					indexOfLastNonZeroLimb = i;
-				}
-			}
-
-			if (left[^1] < (right[^1] + borrow))
-			{
-				// TOOD: Since we always call sub with the left argument > the right argument, then this should never occur.
-				throw new OverflowException("MSB too small.");
-			}
-
-			result[^1] = left[^1] - right[^1] - borrow;
-
-			if (result[^1] > 0)
-			{
-				indexOfLastNonZeroLimb = resultLength - 1;
-			}
-
-			return result;
-		}
 
 		#endregion
 
@@ -583,25 +387,26 @@ namespace MSetGenP
 			return result;
 		}
 
-		public Smx CreateNewZeroSmx(int precision = RMapConstants.DEFAULT_PRECISION)
+		private ulong Split(ulong x, out ulong hi)
 		{
-			var result = new Smx(true, new ulong[LimbCount], TargetExponent, precision, BitsBeforeBP);
+			hi = x >> 32; // Create new ulong from bits 32 - 63.
+			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
+		}
+
+		public Smx2C CreateNewZeroSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			var result = new Smx2C(true, new ulong[LimbCount], TargetExponent, precision, BitsBeforeBP);
 			return result;
 		}
 
-		public Smx CreateNewMaxIntegerSmx(int precision = RMapConstants.DEFAULT_PRECISION)
+		public Smx2C CreateNewMaxIntegerSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			// TODO: Create a Static Readonly value and the use Clone to make copies
-
 			var rValue = new RValue(MaxIntegerValue, 0, precision);
+			var tResult = SmxHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var result = Convert(tResult);
 
-			var result = SmxHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
 			return result;
 		}
-
-		#endregion
-
-
 
 		[Conditional("DEBUG")]
 		private void ValidateIsSplit(ulong[] mantissa)
@@ -612,48 +417,23 @@ namespace MSetGenP
 			}
 		}
 
-		[Conditional("DEBUG")]
-		private void CheckForceExpResult(Smx smx, string desc)
-		{
-			if (smx.Mantissa.Length > LimbCount)
-			{
-				throw new InvalidOperationException($"The value {smx.GetStringValue()}({smx}) is too large to fit within {LimbCount} limbs. Desc: {desc}.");
-				//Debug.WriteLine($"The value {smx.GetStringValue()}({smx}) is too large to fit within {LimbCount} limbs.");
-			}
-		}
-
 		public static bool CheckPWValues(ulong[] values)
 		{
 			var result = values.Any(x => x >= MAX_DIGIT_VALUE);
 			return result;
 		}
 
+		#endregion
+
 		#region Comparison
 
-		private int Compare(ulong[] left, ulong[] right)
-		{
-			if (left.Length != right.Length)
-			{
-				throw new ArgumentException($"The left and right arguments must have equal length. left.Length: {left.Length}, right.Length: {right.Length}.");
-			}
-
-			var i = -1 + Math.Min(left.Length, right.Length);
-
-			for (; i >= 0; i--)
-			{
-				if (left[i] != right[i])
-				{
-					return left[i] > right[i] ? 1 : -1;
-				}
-			}
-
-			return 0;
-		}
-
-		public bool IsGreaterOrEqThanThreshold(Smx a)
+		public bool IsGreaterOrEqThanThreshold(Smx2C a)
 		{
 			var left = a.Mantissa[^1];
-			//var right = b * Math.Pow(2, 24);
+
+			Debug.Assert(BitOperations.LeadingZeroCount(left) > 32, "IsGreaterOrEqThanThresold found a limb with a negative mantissa.");
+			Debug.Assert(a.Sign, "IsGreaterOrEqThanThresold found a limb with a negative sign, but the mantissa is positive.");
+
 			var right = ThresholdMsl;
 			var result = left >= right;
 
@@ -662,81 +442,43 @@ namespace MSetGenP
 
 		#endregion
 
-		#region To ULong Support
+		#region Conversion
 
-		//public ulong[] ToULongs(BigInteger bi)
-		//{
-		//	var tResult = new List<ulong>();
-		//	var hi = BigInteger.Abs(bi);
-
-		//	while (hi > ulong.MaxValue)
-		//	{
-		//		hi = BigInteger.DivRem(hi, BI_ULONG_FACTOR, out var lo);
-		//		tResult.Add((ulong)lo);
-		//	}
-
-		//	tResult.Add((ulong)hi);
-
-		//	return tResult.ToArray();
-		//}
-
-		//public BigInteger FromULongs(ulong[] values)
-		//{
-		//	var result = BigInteger.Zero;
-
-		//	for (int i = values.Length - 1; i >= 0; i--)
-		//	{
-		//		result *= BI_ULONG_FACTOR;
-		//		result += values[i];
-		//	}
-
-		//	return result;
-		//}
-
-		#endregion
-
-		#region Convert to Partial-Word ULongs
-
-		public static ulong[] ToPwULongs(BigInteger bi)
+		public Smx Convert(Smx2C smx2C)
 		{
-			var tResult = new List<ulong>();
-			var hi = BigInteger.Abs(bi);
-
-			while (hi > uint.MaxValue)
+			if (smx2C.LimbCount != LimbCount)
 			{
-				hi = BigInteger.DivRem(hi, BI_UINT_FACTOR, out var lo);
-				tResult.Add((ulong)lo);
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx2C.LimbCount} limbs instead of {LimbCount}.");
 			}
 
-			tResult.Add((ulong)hi);
+			if (smx2C.BitsBeforeBP != BitsBeforeBP)
+			{
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx2C.BitsBeforeBP} limbs instead of {BitsBeforeBP}.");
+			}
 
-			return tResult.ToArray();
+			var un2cMantissa = SmxHelper.ConvertFrom2C(smx2C.Mantissa);
+			var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision, BitsBeforeBP);
+			return result;
 		}
 
-		public static BigInteger FromPwULongs(ulong[] values)
+		public Smx2C Convert(Smx smx, bool overrideFormatChecks = false)
 		{
-			var result = BigInteger.Zero;
-
-			for (var i = values.Length - 1; i >= 0; i--)
+			if (!overrideFormatChecks && smx.LimbCount != LimbCount)
 			{
-				result *= BI_UINT_FACTOR;
-				result += values[i];
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx.LimbCount} limbs instead of {LimbCount}.");
 			}
+
+			if (!overrideFormatChecks && smx.BitsBeforeBP != BitsBeforeBP)
+			{
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx.BitsBeforeBP} limbs instead of {BitsBeforeBP}.");
+			}
+
+			var twoCMantissa = SmxHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
 
 			return result;
 		}
 
 		#endregion
-
-		#region Split and Pack 
-
-		private ulong Split(ulong x, out ulong hi)
-		{
-			hi = x >> 32; // Create new ulong from bits 32 - 63.
-			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
-		}
-
-		#endregion
-
 	}
 }

@@ -48,7 +48,7 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var bMantissaDisp = SmxMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			//var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);

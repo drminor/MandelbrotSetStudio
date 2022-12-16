@@ -7,14 +7,17 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public struct Smx : IEquatable<Smx>
+	public struct Smx2C : IEquatable<Smx2C>
 	{
 		#region Constructor
 
-		public Smx(RValue rValue, int precision, int bitsBeforeBP) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP)
+		//public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision, bitsBeforeBP: 0)
+		//{ }
+
+		public Smx2C(RValue rValue, int precision, int bitsBeforeBP) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP)
 		{ }
 
-		private Smx(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
+		private Smx2C(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
 		{
 			if (exponent == 1)
 			{
@@ -22,13 +25,16 @@ namespace MSetGenP
 			}
 
 			Sign = bigInteger < 0 ? false : true;
-			Mantissa = SmxHelper.ToPwULongs(bigInteger);
+			var un2Cmantissa = SmxHelper.ToPwULongs(bigInteger);
+
+			Mantissa = Sign ? un2Cmantissa : SmxHelper.ConvertTo2C(un2Cmantissa, Sign);
+
 			Exponent = exponent;
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		public Smx(bool sign, ulong[] mantissa, int exponent, int precision, int bitsBeforeBP)
+		public Smx2C(bool sign, ulong[] mantissa, int exponent, int precision, int bitsBeforeBP)
 		{
 			if (exponent == 1)
 			{
@@ -46,7 +52,7 @@ namespace MSetGenP
 
 		private static void ValidatePWValues(ulong[] mantissa)
 		{
-			if (SmxHelper.CheckPWValues(mantissa))
+			if (SmxHelper.CheckPW2CValues(mantissa))
 			{
 				throw new ArgumentException($"Cannot create a Smx from an array of ulongs where any of the values is greater than MAX_DIGIT.");
 			}
@@ -61,7 +67,6 @@ namespace MSetGenP
 		public int Exponent { get; init; }
 		public int Precision { get; init; } // Number of significant binary digits.
 
-		// TODO: Create a new class for Fixed Point values. Currently this class is being used to representg Fixed Point values as well as Floating Point values.
 		public int BitsBeforeBP { get; init; }
 
 		public bool IsZero => !Mantissa.Any(x => x > 0);
@@ -71,9 +76,17 @@ namespace MSetGenP
 
 		#region Public Methods
 
+		public Smx ConvertToSmx()
+		{
+			var un2cMantissa = SmxHelper.ConvertFrom2C(Mantissa);
+			var result = new Smx(Sign, un2cMantissa, Exponent, Precision, BitsBeforeBP);
+			return result;
+		}
+
 		public RValue GetRValue()
 		{
-			var result = SmxHelper.GetRValue(this); 
+			var un2CSmx = ConvertToSmx();
+			var result = SmxHelper.GetRValue(un2CSmx); 
 			return result;
 		}
 
@@ -84,15 +97,6 @@ namespace MSetGenP
 
 			return strValue;
 		}
-
-		//public override string ToString()
-		//{
-		//	var result = Sign
-		//		? SmxHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}"
-		//		: "-" + SmxHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}";
-
-		//	return result;
-		//}
 
 		public override string ToString()
 		{
@@ -109,10 +113,10 @@ namespace MSetGenP
 
 		public override bool Equals(object? obj)
 		{
-			return obj is Smx smx && Equals(smx);
+			return obj is Smx2C smx && Equals(smx);
 		}
 
-		public bool Equals(Smx other)
+		public bool Equals(Smx2C other)
 		{
 			return Sign == other.Sign &&
 				((IStructuralEquatable)Mantissa).Equals(other.Mantissa, StructuralComparisons.StructuralEqualityComparer) &&
@@ -124,12 +128,12 @@ namespace MSetGenP
 			return HashCode.Combine(Sign, Mantissa, Exponent);
 		}
 
-		public static bool operator ==(Smx left, Smx right)
+		public static bool operator ==(Smx2C left, Smx2C right)
 		{
 			return left.Equals(right);
 		}
 
-		public static bool operator !=(Smx left, Smx right)
+		public static bool operator !=(Smx2C left, Smx2C right)
 		{
 			return !(left == right);
 		}

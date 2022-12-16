@@ -48,14 +48,14 @@ namespace EngineTest
 		//	var avRValue = avSmx.GetRValue();
 		//	var avStr = avSmx.GetStringValue();
 		//	Debug.WriteLine($"The StringValue for the avSmx is {avStr}."); // -5.94543663954929423147140869492508049e-10
-		//	var atMantissaDisp = SmxMathHelper.GetDiagDisplay("av raw operand", avSmx.Mantissa);
+		//	var atMantissaDisp = SmxHelper.GetDiagDisplay("av raw operand", avSmx.Mantissa);
 		//	Debug.WriteLine($"The StringValue for the av mantissa is {atMantissaDisp}.");
 
 		//	var aSmx = smxMathHelper.CreateSmx(avRValue);
 		//	var aRValue = aSmx.GetRValue();
 		//	var aStr = aSmx.GetStringValue();
 		//	Debug.WriteLine($"The StringValue for the atSmx is {aStr}.");
-		//	var aMantissaDisp = SmxMathHelper.GetDiagDisplay("raw operand", avSmx.Mantissa);
+		//	var aMantissaDisp = SmxHelper.GetDiagDisplay("raw operand", avSmx.Mantissa);
 		//	Debug.WriteLine($"The StringValue for the mantissa is {aMantissaDisp}.");
 
 		//	//var bStgSmx = AdjustExponent(aSmx, aSmx.Exponent - aSmx.BitsBeforeBP);
@@ -125,7 +125,7 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var bMantissaDisp = SmxMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
@@ -157,11 +157,11 @@ namespace EngineTest
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var aMantissaDisp = SmxMathHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
+			var aMantissaDisp = SmxHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the a mantissa is {aMantissaDisp}.");
 
 			var a2Mantissa = smxMathHelper.Square(aSmx.Mantissa);
-			var a2Str = SmxMathHelper.GetDiagDisplay("raw products", a2Mantissa);
+			var a2Str = SmxHelper.GetDiagDisplay("raw products", a2Mantissa);
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
@@ -175,7 +175,7 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var bMantissaDisp = SmxMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
@@ -211,11 +211,11 @@ namespace EngineTest
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var aMantissaDisp = SmxMathHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
+			var aMantissaDisp = SmxHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the a mantissa is {aMantissaDisp}.");
 
 			var a2Mantissa = smxMathHelper.Square(aSmx.Mantissa);
-			var a2Str = SmxMathHelper.GetDiagDisplay("raw products", a2Mantissa);
+			var a2Str = SmxHelper.GetDiagDisplay("raw products", a2Mantissa);
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
@@ -229,7 +229,7 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var bMantissaDisp = SmxMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
@@ -265,18 +265,18 @@ namespace EngineTest
 			var avRValue = avSmx.GetRValue();
 			var avStr = avSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the avSmx is {avStr}.");
-			var atMantissaDisp = SmxMathHelper.GetDiagDisplay("av raw operand", avSmx.Mantissa);
+			var atMantissaDisp = SmxHelper.GetDiagDisplay("av raw operand", avSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the av mantissa is {atMantissaDisp}.");
 
 			var aSmx = smxMathHelper.CreateSmx(avRValue);
 			var aRValue = aSmx.GetRValue();
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the atSmx is {aStr}.");
-			var aMantissaDisp = SmxMathHelper.GetDiagDisplay("raw operand", avSmx.Mantissa);
+			var aMantissaDisp = SmxHelper.GetDiagDisplay("raw operand", avSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the mantissa is {aMantissaDisp}.");
 
 			var a2Mantissa = smxMathHelper.Square(aSmx.Mantissa);
-			var a2Str = SmxMathHelper.GetDiagDisplay("raw products", a2Mantissa);
+			var a2Str = SmxHelper.GetDiagDisplay("raw products", a2Mantissa);
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
@@ -290,7 +290,7 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var bMantissaDisp = SmxMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent - 32);

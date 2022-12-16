@@ -68,7 +68,7 @@ namespace MSetGenP
 
 			//Debug.WriteLine($"Completed: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). ACarries: {aCarries}, MCarries:{mCarries}.");
 			//Debug.WriteLine($"Completed: BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. ACarries: {subSectionGeneratorVector.NumberOfACarries}, MCarries:{subSectionGeneratorVector.NumberOfMCarries}.");
-			Debug.WriteLine($"{s1}, {s2}: Adds: {subSectionGeneratorVector.NumberOfACarries}\tSubtracts: {subSectionGeneratorVector.NumberOfMCarries} MCarries.");
+			Debug.WriteLine($"{s1}, {s2}: Adds: {subSectionGeneratorVector.NumberOfACarries}\tSubtracts: {subSectionGeneratorVector.NumberOfMCarries}.");
 
 			var escapeVelocities = new ushort[blockSize.NumberOfCells];
 			var compressedDoneFlags = CompressTheDoneFlags(doneFlags);

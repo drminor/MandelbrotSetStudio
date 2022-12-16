@@ -78,6 +78,8 @@ namespace MSetGenP
 			MslWeight = Math.Pow(2, TargetExponent + (LimbCount - 1) * BITS_PER_LIMB);
 			MslWeightVector = Vector256.Create(MslWeight);
 
+			Threshold = threshold;
+
 			_thresholdVector = BuildTheThresholdVector(threshold);
 			_zeroVector = Vector256<ulong>.Zero;
 			_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE - 1);
@@ -96,7 +98,7 @@ namespace MSetGenP
 				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat: {ApFixedPointFormat}.");
 			}
 
-			var thresholdMsl = SmxHelper.GetThreshold(threshold, TargetExponent, LimbCount, BitsBeforeBP);
+			var thresholdMsl = SmxHelper.GetThresholdMsl(threshold, TargetExponent, LimbCount, BitsBeforeBP);
 			var thresholdMslIntegerVector = Vector256.Create(thresholdMsl);
 			var thresholdVector = thresholdMslIntegerVector.AsInt64();
 
@@ -221,8 +223,9 @@ namespace MSetGenP
 		public bool[] DoneFlags { get; set; }	// Value-Level
 
 		public uint MaxIntegerValue { get; init; }
-		public double MslWeight { get; init; }
 
+		public uint Threshold { get; init; }
+		public double MslWeight { get; init; }
 		public Vector256<double> MslWeightVector { get; init; }
 
 		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
@@ -647,22 +650,6 @@ namespace MSetGenP
 		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			var result = new Smx(fPValues.GetSign(index), fPValues.GetMantissa(index), TargetExponent, precision, BitsBeforeBP);
-			return result;
-		}
-
-		public Smx CreateNewZeroSmx(int precision = RMapConstants.DEFAULT_PRECISION)
-		{
-			var result = new Smx(true, new ulong[LimbCount], TargetExponent, precision, BitsBeforeBP);
-			return result;
-		}
-
-		public Smx CreateNewMaxIntegerSmx(int precision = RMapConstants.DEFAULT_PRECISION)
-		{
-			var mantissa = new ulong[LimbCount];
-			mantissa[^1] = (ulong)(MaxIntegerValue * Math.Pow(2, BITS_PER_LIMB - BitsBeforeBP));
-
-			var result = new Smx(true, mantissa, TargetExponent, precision, BitsBeforeBP);
-
 			return result;
 		}
 

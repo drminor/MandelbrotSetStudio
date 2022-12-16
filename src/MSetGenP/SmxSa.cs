@@ -97,6 +97,16 @@ namespace MSetGenP
 			return strValue;
 		}
 
+		public override string ToString()
+		{
+			var mantissa = Materialize();
+			var result = Sign
+				? SmxHelper.GetDiagDisplayHex("m", mantissa) + $" e:{Exponent}"
+				: "-" + SmxHelper.GetDiagDisplayHex("m", mantissa) + $" e:{Exponent}";
+
+			return result;
+		}
+
 		#endregion
 
 		#region IEquatable Support

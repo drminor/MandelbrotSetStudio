@@ -2,6 +2,7 @@
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
+using System.Text;
 
 namespace MSetGenP
 {
@@ -10,19 +11,11 @@ namespace MSetGenP
 		private const int BITS_PER_LIMB = 32;
 
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
-		//private static readonly ulong HALF_DIGIT_VALUE = (ulong)Math.Pow(2, 16);
-
-		// Integer used to convert BigIntegers to/from array of ulongs.
-		private static readonly BigInteger BI_ULONG_FACTOR = BigInteger.Pow(2, 64);
 
 		// Integer used to convert BigIntegers to/from array of ulongs containing partial-words
 		private static readonly BigInteger BI_UINT_FACTOR = BigInteger.Pow(2, 32);
 
-		// Integer used to pack a pair of ulong values into a single ulong.
-		//private static readonly ulong UL_UINT_FACTOR = (ulong)Math.Pow(2, 32);
-
 		private static readonly ulong LOW_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
-		//private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
 		#region Construction Support
 
@@ -34,10 +27,6 @@ namespace MSetGenP
 			}
 
 			var range = fpFormat.TotalBits;
-
-			// Add one additional Limb to provide room to represent smaller values with some precision.
-			//range += BITS_PER_LIMB;
-
 			var dResult = range / (double)BITS_PER_LIMB;
 			var limbCount = (int)Math.Ceiling(dResult);
 
@@ -57,20 +46,16 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static ulong GetThreshold(uint threshold, int targetExponent, int limbCount, int bitsBeforeBP)
+		public static ulong GetThresholdMsl(uint threshold, int targetExponent, int limbCount, int bitsBeforeBP)
 		{
 			var maxIntegerValue = (uint)Math.Pow(2, bitsBeforeBP) - 1;
-
-
 			if (threshold > maxIntegerValue)
 			{
 				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat.");
 			}
 
 			var thresholdSmx = CreateSmx(new RValue(threshold, 0), targetExponent, limbCount, bitsBeforeBP);
-			//var ss = thresholdSmx.GetStringValue();
-
-			var result = thresholdSmx.Mantissa[^1] - 1; // Subtract 1 * 2^-24
+			var result = thresholdSmx.Mantissa[^1] - 1;
 
 			return result;
 		}
@@ -86,8 +71,6 @@ namespace MSetGenP
 
 			return result;
 		}
-
-
 
 		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, int bitsBeforeBP)
 		{
@@ -583,6 +566,13 @@ namespace MSetGenP
 			return result;
 		}
 
+		public static bool CheckPW2CValues(ulong[] values)
+		{
+			//var result = values.Any(x => x >= MAX_DIGIT_VALUE);
+			//return result;
+
+			return false;
+		}
 
 		#endregion
 
@@ -759,5 +749,166 @@ namespace MSetGenP
 		}
 
 		#endregion
+
+		#region To String Support
+
+		public static string GetDiagDisplay(string name, ulong[] values, int stride)
+		{
+			var rowCnt = values.Length / stride;
+
+			var sb = new StringBuilder();
+			sb.AppendLine($"{name}:");
+
+			for (int i = 0; i < rowCnt; i++)
+			{
+				var rowValues = new ulong[stride];
+
+				Array.Copy(values, i * stride, rowValues, 0, stride);
+				sb.AppendLine(GetDiagDisplay($"Row {i}", rowValues));
+			}
+
+			return sb.ToString();
+		}
+
+		public static string GetDiagDisplay(string name, ulong[] values)
+		{
+			var strAry = GetStrArray(values);
+
+			return $"{name}:{string.Join("; ", strAry)}";
+		}
+
+		// TODO: Implement the GetgDiagDisplayHex method.
+		public static string GetDiagDisplayHex(string name, ulong[] values)
+		{
+			var strAry = GetStrArrayHex(values);
+
+			return $"{name}:{string.Join("; ", strAry)}";
+		}
+
+
+		//private string GetHiLoDiagDisplay(string name, ulong[] values)
+		//{
+		//	Debug.Assert(values.Length % 2 == 0, "GetHiLoDiagDisplay is being called with an array that has a length that is not an even multiple of two.");
+
+		//	var strAry = GetStrArray(values);
+		//	var pairs = new string[values.Length / 2];
+
+		//	for (int i = 0; i < values.Length; i += 2)
+		//	{
+		//		pairs[i / 2] = $"{strAry[i]}, {strAry[i + 1]}";
+		//	}
+
+		//	return $"{name}: {string.Join("; ", pairs)}";
+		//}
+
+		public static string[] GetStrArray(ulong[] values)
+		{
+			var result = values.Select(x => x.ToString()).ToArray();
+			return result;
+		}
+
+		public static string[] GetStrArrayHex(ulong[] values)
+		{
+			var result = values.Select(x => string.Format("0x{0:X4}", x)).ToArray();
+			return result;
+		}
+
+		#endregion
+
+		#region 2C Support
+
+		public static Smx2C Negate(Smx2C smx2C)
+		{
+			var negatedPartialWordLimbs = ConvertTo2C(smx2C.Mantissa, sign: false);
+			var result = new Smx2C(!smx2C.Sign, negatedPartialWordLimbs, smx2C.Exponent, smx2C.Precision, smx2C.BitsBeforeBP);
+
+			return result;
+		}
+
+		public static ulong[] Negate(ulong[] partialWordLimbs)
+		{
+			// Force the conversion by indicating we have a negative value.
+			var result = ConvertTo2C(partialWordLimbs, sign: false);
+			return result;
+		}
+
+		public static ulong[] ConvertTo2C(ulong[] partialWordLimbs, bool sign)
+		{
+			if (sign)
+			{
+				return partialWordLimbs;
+			}
+
+			//	Start at the least significant bit (LSB), copy all the zeros, until the first 1 is reached;
+			//	then copy that 1, and flip all the remaining bits.
+
+			var resultLength = partialWordLimbs.Length;
+
+			var result = new ulong[resultLength];
+			var limbPtr = 0;
+
+			while (limbPtr < resultLength && partialWordLimbs[limbPtr] == 0)
+			{
+				result[limbPtr] = partialWordLimbs[limbPtr];
+				limbPtr++;
+			}
+
+			if (limbPtr < resultLength)
+			{
+				var tzc = BitOperations.TrailingZeroCount(partialWordLimbs[limbPtr]);
+				var numToKeep = tzc + 1;
+				var numToFlip = 64 - numToKeep;
+
+				var flipped = partialWordLimbs[limbPtr] ^ LOW_MASK;
+				flipped = (flipped >> numToKeep) << numToKeep; // set the bottom bits to zero
+
+				var target = partialWordLimbs[limbPtr];
+				target = (target << numToFlip) >> numToFlip; // set the top bits to zero
+
+				var newVal = target | flipped;
+				result[limbPtr] = newVal;
+
+				limbPtr++;
+			}
+
+			for (; limbPtr < resultLength; limbPtr++)
+			{
+				var flipped = partialWordLimbs[limbPtr] ^ LOW_MASK;
+				result[limbPtr] = flipped;
+			}
+
+			//for (var i = 0; i < result.Length; i++)
+			//{
+			//	result[i] = result[i] & LOW_MASK;
+			//}
+
+			return result;
+		}
+
+		public static ulong[] ConvertFrom2C(ulong[] partialWordLimbs)
+		{
+			var lzc = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
+
+			ulong[] result;
+
+			if (lzc == 32)
+			{
+				var cpy = new ulong[partialWordLimbs.Length];
+				Array.Copy(partialWordLimbs, cpy, partialWordLimbs.Length);
+
+				cpy[^1] = (cpy[^1] << 1) >> 1;
+
+				result = ConvertTo2C(cpy, sign: false);
+			}
+			else
+			{
+				result = partialWordLimbs;
+			}
+
+			return result;
+		}
+
+		#endregion
+
 	}
 }
