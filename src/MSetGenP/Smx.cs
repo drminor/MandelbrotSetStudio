@@ -11,10 +11,16 @@ namespace MSetGenP
 	{
 		#region Constructor
 
-		public Smx(RValue rValue, int precision, int bitsBeforeBP) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP)
+		public Smx(RValue rValue, byte bitsBeforeBP) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, rValue.Precision)
 		{ }
 
-		private Smx(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
+		public Smx(RValue rValue, byte bitsBeforeBP, int precision) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, precision)
+		{ }
+
+		private Smx(BigInteger bigInteger, int exponent, byte bitsBeforeBP) : this(bigInteger, exponent, bitsBeforeBP, RMapConstants.DEFAULT_PRECISION)
+		{ }
+
+		private Smx(BigInteger bigInteger, int exponent, byte bitsBeforeBP, int precision)
 		{
 			if (exponent == 1)
 			{
@@ -28,7 +34,7 @@ namespace MSetGenP
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		public Smx(bool sign, ulong[] mantissa, int exponent, int precision, int bitsBeforeBP)
+		public Smx(bool sign, ulong[] mantissa, int exponent, byte bitsBeforeBP, int precision)
 		{
 			if (exponent == 1)
 			{
@@ -62,7 +68,7 @@ namespace MSetGenP
 		public int Precision { get; init; } // Number of significant binary digits.
 
 		// TODO: Create a new class for Fixed Point values. Currently this class is being used to representg Fixed Point values as well as Floating Point values.
-		public int BitsBeforeBP { get; init; }
+		public byte BitsBeforeBP { get; init; }
 
 		public bool IsZero => !Mantissa.Any(x => x > 0);
 		public int LimbCount => Mantissa.Length;

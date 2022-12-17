@@ -166,7 +166,7 @@ namespace EngineTest
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
 			var a3MantissaNrm = smxMathHelper.ShiftAndTrim(a3Mantissa);
-			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.BitsBeforeBP, aSmx.Precision);
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
@@ -220,7 +220,7 @@ namespace EngineTest
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
 			var a3MantissaNrm = smxMathHelper.ShiftAndTrim(a3Mantissa);
-			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.BitsBeforeBP, aSmx.Precision);
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
@@ -260,7 +260,7 @@ namespace EngineTest
 			var limbCount = 7;      // TargetExponent = -184, Total Bits = 192
 			var smxMathHelper = BuildTheMathHelper(limbCount);
 
-			var avSmx = new Smx(false, new ulong[] { 0, 0, 4155170372, 1433657343, 4294967295, 566493183, 1 }, -216, precision, smxMathHelper.BitsBeforeBP); // TODO: a
+			var avSmx = new Smx(false, new ulong[] { 0, 0, 4155170372, 1433657343, 4294967295, 566493183, 1 }, -216, smxMathHelper.BitsBeforeBP, precision); // TODO: a
 
 			var avRValue = avSmx.GetRValue();
 			var avStr = avSmx.GetStringValue();
@@ -281,7 +281,7 @@ namespace EngineTest
 
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
 			var a3MantissaNrm = smxMathHelper.ShiftAndTrim(a3Mantissa);
-			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.BitsBeforeBP, aSmx.Precision);
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
@@ -330,7 +330,7 @@ namespace EngineTest
 
 			var a2Mantissa = smxMathHelper.Square(aSmx.Mantissa);
 			var a3Mantissa = smxMathHelper.PropagateCarries(a2Mantissa);
-			var a3 = new Smx(true, a3Mantissa, aSmx.Exponent * 2, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3 = new Smx(true, a3Mantissa, aSmx.Exponent * 2, aSmx.BitsBeforeBP, aSmx.Precision);
 			var a3SmxRValue = a3.GetRValue();
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Smx is {a3Str}.");
@@ -344,7 +344,7 @@ namespace EngineTest
 
 			var b2Mantissa = smxMathHelper.Square(bMantissa);
 			var b3Mantissa = smxMathHelper.PropagateCarries(b2Mantissa);
-			var b3 = new Smx(true, b3Mantissa, bExponent * 2, bPrecision, aSmx.BitsBeforeBP);
+			var b3 = new Smx(true, b3Mantissa, bExponent * 2, aSmx.BitsBeforeBP, bPrecision);
 			var b3SmxRValue = b3.GetRValue();
 			var b3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the b3Smx is {b3Str}.");
@@ -530,7 +530,7 @@ namespace EngineTest
 
 		private Smx AdjustExponent(Smx o, int newExponent)
 		{
-			var result = new Smx(o.Sign, o.Mantissa, newExponent, o.Precision, o.BitsBeforeBP);
+			var result = new Smx(o.Sign, o.Mantissa, newExponent, o.BitsBeforeBP, o.Precision);
 			return result;
 		}
 

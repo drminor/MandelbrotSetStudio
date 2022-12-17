@@ -8,14 +8,25 @@ namespace MSetGenP
 {
 	public static class SmxHelper
 	{
+		#region Private Members
+
 		private const int BITS_PER_LIMB = 32;
 
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
 
-		// Integer used to convert BigIntegers to/from array of ulongs containing partial-words
+		// Integer used to convert BigIntegers to/from array of ulongs containing full-word values
+		private static readonly BigInteger BI_ULONG_FACTOR = BigInteger.Pow(2, 64);
+
+		// Integer used to split full-word values into partial-word values.
+		private static readonly ulong UL_UINT_FACTOR = (ulong) Math.Pow(2, 64);
+
+		// Integer used to convert BigIntegers to/from array of ulongs containing partial-word values
 		private static readonly BigInteger BI_UINT_FACTOR = BigInteger.Pow(2, 32);
 
 		private static readonly ulong LOW_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private static readonly ulong ALL_BITS_MASK = 0xFFFFFFFFFFFFFFFF; // bits 0 - 64 are set.
+
+		#endregion
 
 		#region Construction Support
 
@@ -46,7 +57,20 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static ulong GetThresholdMsl(uint threshold, int targetExponent, int limbCount, int bitsBeforeBP)
+		public static int GetMaxSignedIntegerValue(byte bitsBeforeBP)
+		{
+			var result = (int)Math.Pow(2, bitsBeforeBP - 1) - 1; // 2^7 - 1 = 127
+			return result;
+		}
+
+		public static uint GetMaxIntegerValue(byte bitsBeforeBP)
+		{
+			var result = (uint)Math.Pow(2, bitsBeforeBP) - 1; // 2^8 - 1 = 255
+			return result;
+		}
+
+
+		public static ulong GetThresholdMsl(uint threshold, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
 			var maxIntegerValue = (uint)Math.Pow(2, bitsBeforeBP) - 1;
 			if (threshold > maxIntegerValue)
@@ -60,19 +84,11 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static RValue GetRValue(Smx smx)
-		{
-			var biValue = FromPwULongs(smx.Mantissa);
-			biValue = smx.Sign ? biValue : -1 * biValue;
-			var exponent = smx.Exponent;
-			var precision = smx.Precision;
+		#endregion
 
-			var result = new RValue(biValue, exponent, precision);
+		#region Smx and RValue Support
 
-			return result;
-		}
-
-		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, int bitsBeforeBP)
+		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
 			var partialWordLimbs = ToPwULongs(rValue.Value);
 
@@ -92,7 +108,7 @@ namespace MSetGenP
 
 			var exponent = targetExponent;
 			var precision = rValue.Precision;
-			var result = new Smx(sign, newPartialWordLimbs, exponent, precision, bitsBeforeBP);
+			var result = new Smx(sign, newPartialWordLimbs, exponent, bitsBeforeBP, precision);
 
 			return result;
 		}
@@ -170,86 +186,6 @@ namespace MSetGenP
 			return result;
 		}
 
-		//private void CopyPWBits(ulong[] source, int sourceIndex, int sourceOffset, ulong[] destination, int destinationIndex, int destinationOffset)
-		//{
-		//	destination = new ulong[LimbCount];
-
-		//	var sourceLimbPtr = sourceIndex;
-
-		//	var resultLimbPtr = 0;
-
-		//	var shiftAmount = 1;
-
-		//	while (resultLimbPtr < destination.Length - 1 && sourceLimbPtr < source.Length - 1)
-		//	{
-		//		// discard (remainder count) source bits off the lsb end, leaving (32 - remainder) source bits on the low end, and zeros for the first remainder count msbs.
-		//		var hx = source[sourceLimbPtr] >> shiftAmount;
-		//		destination[resultLimbPtr] |= hx;
-		//		sourceLimbPtr++;
-		//		var lx = (source[sourceLimbPtr] << 64 - shiftAmount) >> 32;
-		//		destination[resultLimbPtr] |= lx;
-
-		//		resultLimbPtr++;
-		//	}
-
-		//	var hx2 = source[sourceLimbPtr] >> shiftAmount;
-		//	destination[resultLimbPtr] |= hx2;
-		//	sourceLimbPtr++;
-
-		//	if (sourceLimbPtr < source.Length)
-		//	{
-		//		var lx2 = (source[sourceLimbPtr] << 64 - shiftAmount) >> 32;
-		//		destination[resultLimbPtr] |= lx2;
-		//	}
-		//}
-
-		private static uint GetTopBits(ulong partialWordValue, int numberOfBits)
-		{
-			if (numberOfBits < 0 || numberOfBits > 32)
-			{
-				throw new ArgumentException($"The number of bits must be between 0 and 32.");
-			}
-
-			var v1 = partialWordValue >> (32 - numberOfBits);
-			return (uint)v1;
-		}
-
-		//private uint GetBottomBits(ulong partialWordValue, int numberOfBits)
-		//{
-		//	if (numberOfBits < 0 || numberOfBits > 32)
-		//	{
-		//		throw new ArgumentException($"The number of bits must be between 0 and 32.");
-		//	}
-
-		//	var v1 = partialWordValue << (64 - numberOfBits);
-		//	var v2 = v1 >> (64 - numberOfBits);
-		//	return (uint) v2;
-		//}
-
-
-		//private ulong ShiftTopBitsDown(ulong partialWordValue, int shiftAmount)
-		//{
-		//	if (shiftAmount < 0 || shiftAmount > 32)
-		//	{
-		//		throw new ArgumentException($"The number of bits must be between 0 and 32.");
-		//	}
-
-		//	var v1 = partialWordValue >> shiftAmount;
-		//	return (uint)v1;
-		//}
-
-		//private ulong ShiftBottomBitsUp(ulong partialWordValue, int shiftAmount)
-		//{
-		//	if (shiftAmount < 0 || shiftAmount > 32)
-		//	{
-		//		throw new ArgumentException($"The number of bits must be between 0 and 32.");
-		//	}
-
-		//	var v1 = partialWordValue << (32 + shiftAmount);
-		//	var v2 = v1 >> 32;
-		//	return (uint)v2;
-		//}
-
 		private static byte GetMagnitudeOfIntegerPart(ulong[] partialWordLimbs, int exponent)
 		{
 			var bitsBeforeBP = GetNumberOfBitsBeforeBP(partialWordLimbs.Length, exponent);
@@ -286,33 +222,45 @@ namespace MSetGenP
 			return (byte)sizeInBitsOfIntegerVal;
 		}
 
-		//private uint GetIntegerPart(ulong[] partialWordLimbs, ApFixedPointFormat fpFormat)
-		//{
-		//	if (fpFormat.BitsBeforeBinaryPoint <= 0)
-		//	{
-		//		return 0;
-		//	}
+		private static uint GetIntegerPart(ulong[] partialWordLimbs, ApFixedPointFormat fpFormat)
+		{
+			if (fpFormat.BitsBeforeBinaryPoint <= 0)
+			{
+				return 0;
+			}
 
-		//	if (fpFormat.BitsBeforeBinaryPoint > 32)
-		//	{
-		//		throw new OverflowException("The integer portion is larger than uint max.");
-		//	}
+			if (fpFormat.BitsBeforeBinaryPoint > 32)
+			{
+				throw new OverflowException("The integer portion is larger than uint max.");
+			}
 
-		//	var topBits = GetTopBits(partialWordLimbs[^1], fpFormat.BitsBeforeBinaryPoint);
+			var topBits = GetTopBits(partialWordLimbs[^1], fpFormat.BitsBeforeBinaryPoint);
 
-		//	return topBits;
+			return topBits;
 
-		//	//var msl = partialWordLimbs[^1];
-		//	//var digitFactor = exponent + BITS_PER_LIMB * (partialWordLimbs.Length - 1);
+			//var msl = partialWordLimbs[^1];
+			//var digitFactor = exponent + BITS_PER_LIMB * (partialWordLimbs.Length - 1);
 
-		//	//Debug.Assert(digitFactor <= 0, "digitFactor is > 0.");
-		//	//Debug.Assert(digitFactor >= -32, "digitFactor < -32.");
+			//Debug.Assert(digitFactor <= 0, "digitFactor is > 0.");
+			//Debug.Assert(digitFactor >= -32, "digitFactor < -32.");
 
-		//	//var digitWeight = Math.Pow(2, digitFactor);
-		//	//var result = (uint)Math.Round(msl * digitWeight);
+			//var digitWeight = Math.Pow(2, digitFactor);
+			//var result = (uint)Math.Round(msl * digitWeight);
 
-		//	//return result;
-		//}
+			//return result;
+		}
+
+		private static uint GetTopBits(ulong partialWordValue, int numberOfBits)
+		{
+			if (numberOfBits < 0 || numberOfBits > 32)
+			{
+				throw new ArgumentException($"The number of bits must be between 0 and 32.");
+			}
+
+			var v1 = partialWordValue >> (32 - numberOfBits);
+			return (uint)v1;
+		}
+
 
 		private static int GetNumberOfBitsBeforeBP(int limbCount, int exponent)
 		{
@@ -326,18 +274,18 @@ namespace MSetGenP
 			return bitsBeforeBP;
 		}
 
-		//private ApFixedPointFormat GetCurrentFpFormat(int limbCount, int exponent)
-		//{
-		//	var totalBits = BITS_PER_LIMB * limbCount;
+		private static ApFixedPointFormat GetCurrentFpFormat(int limbCount, int exponent)
+		{
+			var totalBits = BITS_PER_LIMB * limbCount;
 
-		//	(var limbIndex, var bitOffset) = GetIndexOfBitBeforeBP(exponent);
+			(var limbIndex, var bitOffset) = GetIndexOfBitBeforeBP(exponent);
 
-		//	var fractionalBits = limbIndex * BITS_PER_LIMB + bitOffset;
-		//	var bitsBeforeBP = totalBits - fractionalBits;
+			var fractionalBits = limbIndex * BITS_PER_LIMB + bitOffset;
+			var bitsBeforeBP = (byte)(totalBits - fractionalBits);
 
-		//	var result = new ApFixedPointFormat(bitsBeforeBP, fractionalBits);
-		//	return result;
-		//}
+			var result = new ApFixedPointFormat(bitsBeforeBP, fractionalBits);
+			return result;
+		}
 
 		private static (int index, int offset) GetIndexOfBitBeforeBP(int exponent)
 		{
@@ -396,13 +344,13 @@ namespace MSetGenP
 			return result;
 		}
 
-		//private ulong[] CopyFirstXElements(ulong[] values, int newLength)
-		//{
-		//	var result = new ulong[newLength];
-		//	Array.Copy(values, 0, result, 0, newLength);
+		private static ulong[] CopyFirstXElements(ulong[] values, int newLength)
+		{
+			var result = new ulong[newLength];
+			Array.Copy(values, 0, result, 0, newLength);
 
-		//	return result;
-		//}
+			return result;
+		}
 
 		private static ulong[] CopyLastXElements(ulong[] values, int newLength)
 		{
@@ -417,249 +365,146 @@ namespace MSetGenP
 			return result;
 		}
 
-		//private Smx TrimLeadingZeros(Smx a)
-		//{
-		//	var mantissa = TrimLeadingZeros(a.Mantissa);
-		//	var result = new Smx(a.Sign, mantissa, a.Exponent, a.Precision, a.BitsBeforeBP);
-		//	return result;
-		//}
-
-		//// Remove zero-valued limbs from the Most Significant end.
-		//// Leaving all least significant limbs intact.
-		//public ulong[] TrimLeadingZeros(ulong[] mantissa)
-		//{
-		//	if (mantissa.Length == 1 && mantissa[0] == 0)
-		//	{
-		//		return mantissa;
-		//	}
-
-		//	var i = mantissa.Length;
-		//	for (; i > 0; i--)
-		//	{
-		//		if (mantissa[i - 1] != 0)
-		//		{
-		//			break;
-		//		}
-		//	}
-
-		//	if (i == mantissa.Length)
-		//	{
-		//		return mantissa;
-		//	}
-
-		//	if (i == 0)
-		//	{
-		//		// All digits are zero
-		//		return new ulong[] { 0 };
-		//	}
-
-		//	var result = new ulong[i];
-		//	Array.Copy(mantissa, 0, result, 0, i);
-		//	return result;
-		//}
-
-		//// Remove zero-valued limbs from the Least Significant end.
-		//// Leaving all most significant limbs intact.
-		//// The out parameter is set to the new exponent
-		//public static ulong[] TrimTrailingZeros(ulong[] mantissa, int exponent, out int newExponent)
-		//{
-		//	newExponent = exponent;
-
-		//	if (mantissa.Length == 0 || mantissa[0] != 0)
-		//	{
-		//		return mantissa;
-		//	}
-
-		//	var i = 1;
-		//	for (; i < mantissa.Length; i++)
-		//	{
-		//		if (mantissa[i] != 0)
-		//		{
-		//			break;
-		//		}
-		//	}
-
-		//	if (i == mantissa.Length)
-		//	{
-		//		// All digits are zero
-		//		newExponent = 1;
-		//		return new ulong[] { 0 };
-		//	}
-
-		//	var result = new ulong[mantissa.Length - i];
-		//	Array.Copy(mantissa, i, result, 0, result.Length);
-
-		//	newExponent += i * 32;
-
-		//	return result;
-		//}
-
-		//private int GetNumberOfNonZeroBitsAfterBP_NotUsed(ulong[] mantissa)
-		//{
-		//	var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(mantissa);
-
-		//	if (indexOfLastNonZeroLimb == -1)
-		//	{
-		//		return 0;
-		//	}
-
-		//	if (indexOfLastNonZeroLimb == mantissa.Length - 1)
-		//	{
-		//		var m = (mantissa[^1] << 32 + BitsBeforeBP) >> 32;
-		//		var lzc = BitOperations.LeadingZeroCount(m) - BITS_PER_LIMB;
-
-		//		var bitsAfterBp = 32 - lzc;
-
-		//		return bitsAfterBp;
-		//	}
-
-		//	var result = ((indexOfLastNonZeroLimb + 1) * BITS_PER_LIMB) - BitsBeforeBP;
-		//	return result;
-		//}
-
-		//private int GetNumberOfBitsAfterBP(Smx a)
-		//{
-		//	var result = a.LimbCount * BITS_PER_LIMB - a.BitsBeforeBP;
-		//	return result;
-		//}
-
-		//private int GetNumberOfLeadingZeroLimbs(Smx a)
-		//{
-		//	var result = a.Mantissa.Length - GetLogicalLength(a);
-		//	return result;
-		//}
-
-		//private int GetLogicalLength(Smx a)
-		//{
-		//	var result = 1 + GetIndexOfLastNonZeroLimb(a.Mantissa);
-		//	return result;
-		//}
-
-		//private int GetLogicalLength(ulong[] mantissa)
-		//{
-		//	var result = 1 + GetIndexOfLastNonZeroLimb(mantissa);
-		//	return result;
-		//}
-
-		//private int GetIndexOfLastNonZeroLimb(ulong[] mantissa)
-		//{
-		//	for (var i = mantissa.Length - 1; i >= 0; i--)
-		//	{
-		//		if (mantissa[i] != 0)
-		//		{
-		//			break;
-		//		}
-		//	}
-
-		//	return -1;
-		//}
-
 		public static int GetShiftAmount(int currentExponent, int targetExponent)
 		{
 			var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
 			return shiftAmount;
 		}
 
-		public static bool CheckPWValues(ulong[] values)
+		public static RValue GetRValue(Smx smx)
 		{
-			var result = values.Any(x => x >= MAX_DIGIT_VALUE);
+			var biValue = FromPwULongs(smx.Mantissa);
+			biValue = smx.Sign ? biValue : -1 * biValue;
+			var exponent = smx.Exponent;
+			var precision = smx.Precision;
+
+			var result = new RValue(biValue, exponent, precision);
+
 			return result;
-		}
-
-		public static bool CheckPW2CValues(ulong[] values)
-		{
-			//var result = values.Any(x => x >= MAX_DIGIT_VALUE);
-			//return result;
-
-			return false;
 		}
 
 		#endregion
 
-		#region Reduce 
+		#region 2C Support
 
-		//public static ulong[] Reduce(ulong[] mantissa, int exponent, out int newExponent)
+		public static ulong[] ConvertTo2C(ulong[] partialWordLimbs, bool sign)
+		{
+			if (sign)
+			{
+				// Postive values have the same representation in both two's compliment and standard form.
+				return partialWordLimbs;
+			}
+
+			//	Start at the least significant bit (LSB), copy all the zeros, until the first 1 is reached;
+			//	then copy that 1, and flip all the remaining bits.
+
+			var resultLength = partialWordLimbs.Length;
+
+			var result = new ulong[resultLength];
+			var limbPtr = 0;
+
+			while (limbPtr < resultLength && partialWordLimbs[limbPtr] == 0)
+			{
+				result[limbPtr] = partialWordLimbs[limbPtr];
+				limbPtr++;
+			}
+
+			if (limbPtr < resultLength)
+			{
+				var tzc = BitOperations.TrailingZeroCount(partialWordLimbs[limbPtr]);
+				var numToKeep = tzc + 1;
+				var numToFlip = 64 - numToKeep;
+
+				var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_MASK;
+				flipped = (flipped >> numToKeep) << numToKeep; // set the bottom bits to zero
+
+				var target = partialWordLimbs[limbPtr];
+				target = (target << numToFlip) >> numToFlip; // set the top bits to zero
+
+				var newVal = target | flipped;
+				result[limbPtr] = newVal;
+
+				limbPtr++;
+			}
+
+			for (; limbPtr < resultLength; limbPtr++)
+			{
+				var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_MASK;
+				result[limbPtr] = flipped;
+			}
+
+			//for (var i = 0; i < result.Length; i++)
+			//{
+			//	result[i] = result[i] & LOW_MASK;
+			//}
+
+			return result;
+		}
+
+		public static ulong[] ConvertFrom2C(ulong[] partialWordLimbs, bool sign)
+		{
+			ulong[] result;
+
+			if (sign)
+			{
+				result = partialWordLimbs;
+			}
+			else
+			{
+				// Convert negative values back to 'standard' representation
+				result = ConvertTo2C(partialWordLimbs, sign);
+			}
+
+			return result;
+		}
+
+		public static Smx2C Negate(Smx2C smx2C)
+		{
+			var negatedPartialWordLimbs = ConvertTo2C(smx2C.Mantissa, sign: false);
+			var result = new Smx2C(!smx2C.Sign, negatedPartialWordLimbs, smx2C.Exponent, smx2C.Precision, smx2C.BitsBeforeBP);
+
+			return result;
+		}
+
+		//public static ulong[] Negate(ulong[] partialWordLimbs)
 		//{
-		//	var w = TrimTrailingZeros(mantissa, exponent, out newExponent);
-
-		//	if (w.Length == 0)
-		//	{
-		//		return w;
-		//	}
-
-		//	if (AreComponentsEven(mantissa))
-		//	{
-		//		newExponent++;
-		//		w = new ulong[mantissa.Length];
-
-		//		for (int i = 0; i < w.Length; i++)
-		//		{
-		//			w[i] = mantissa[i] / 2;
-		//		}
-
-		//		while (AreComponentsEven(w))
-		//		{
-		//			newExponent++;
-
-		//			for (int i = 0; i < w.Length; i++)
-		//			{
-		//				w[i] = w[i] / 2;
-		//			}
-		//		}
-
-		//		return w;
-		//	}
-		//	else
-		//	{
-		//		return mantissa;
-		//	}
-		//}
-
-		//private static bool AreComponentsEven(ulong[] mantissa)
-		//{
-		//	foreach (var value in mantissa)
-		//	{
-		//		if (value % 2 != 0)
-		//		{
-		//			return false;
-		//		}
-		//	}
-
-		//	return mantissa.Any(x => x != 0);
+		//	// Force the conversion by indicating we have a negative value.
+		//	var result = ConvertTo2C(partialWordLimbs, sign: false);
+		//	return result;
 		//}
 
 		#endregion
 
 		#region Split and Pack 
 
-		//public static ulong[] Pack(ulong[] splitValues)
-		//{
-		//	Debug.Assert(splitValues.Length % 2 == 0, "The array being split has a length that is not an even multiple of two.");
+		public static ulong[] PackPartialWordLimbs(ulong[] partialWordLimbs)
+		{
+			Debug.Assert(partialWordLimbs.Length % 2 == 0, "The array being split has a length that is not an even multiple of two.");
 
-		//	var result = new ulong[splitValues.Length / 2];
+			var result = new ulong[partialWordLimbs.Length / 2];
 
-		//	for (int i = 0; i < splitValues.Length; i += 2)
-		//	{
-		//		result[i / 2] = splitValues[i] + UL_UINT_FACTOR * splitValues[i + 1];
-		//	}
+			for (int i = 0; i < partialWordLimbs.Length; i += 2)
+			{
+				result[i / 2] = partialWordLimbs[i] + UL_UINT_FACTOR * partialWordLimbs[i + 1];
+			}
 
-		//	return result;
-		//}
+			return result;
+		}
 
-		//// Values are ordered from least significant to most significant.
-		//public static ulong[] Split(ulong[] packedValues)
-		//{
-		//	var result = new ulong[packedValues.Length * 2];
+		// Values are ordered from least significant to most significant.
+		public static ulong[] SplitFullWordLimbs(ulong[] packedValues)
+		{
+			var result = new ulong[packedValues.Length * 2];
 
-		//	for (int i = 0; i < packedValues.Length; i++)
-		//	{
-		//		var lo = Split(packedValues[i], out var hi);
-		//		result[2 * i] = lo;
-		//		result[2 * i + 1] = hi;
-		//	}
+			for (int i = 0; i < packedValues.Length; i++)
+			{
+				var lo = Split(packedValues[i], out var hi);
+				result[2 * i] = lo;
+				result[2 * i + 1] = hi;
+			}
 
-		//	return result;
-		//}
+			return result;
+		}
 
 		public static ulong Split(ulong x, out ulong hi)
 		{
@@ -667,57 +512,72 @@ namespace MSetGenP
 			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
 		}
 
-		//public static ulong[] ReSplit(ulong[] splitValues, out ulong carry)
-		//{
-		//	var result = new ulong[splitValues.Length];
-		//	carry = 0ul;
+		public static bool CheckPWValues(ulong[] partialWordLimbs)
+		{
+			var result = partialWordLimbs.Any(x => x >= MAX_DIGIT_VALUE);
+			return result;
+		}
 
-		//	for (int i = 0; i < splitValues.Length; i++)
-		//	{
-		//		var lo = Split(splitValues[i] + carry, out var hi);  // :Spliter
-		//		result[i] = lo;
-		//		carry = hi;
-		//	}
+		public static bool CheckPW2CValues(ulong[] partialWordLimbs)
+		{
+			var lzc = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
+			var firstBitIsAOne = lzc == 0;
 
-		//	return result;
-		//}
+			return CheckPW2CValues(partialWordLimbs, !firstBitIsAOne);
+		}
+
+		public static bool CheckPW2CValues(ulong[] partialWordLimbs, bool sign)
+		{
+			if (sign)
+			{
+				var result = partialWordLimbs.Any(x => (x >> 32) != 0);
+			}
+			else
+			{
+				var result = partialWordLimbs.Any(x => (x >> 32) != LOW_MASK);
+			}
+
+			return false;
+		}
 
 		#endregion
 
 		#region To ULong Support
 
-		//public ulong[] ToULongs(BigInteger bi)
-		//{
-		//	var tResult = new List<ulong>();
-		//	var hi = BigInteger.Abs(bi);
+		public static ulong[] ToULongs(BigInteger bi)
+		{
+			var tResult = new List<ulong>();
+			var hi = BigInteger.Abs(bi);
 
-		//	while (hi > ulong.MaxValue)
-		//	{
-		//		hi = BigInteger.DivRem(hi, BI_ULONG_FACTOR, out var lo);
-		//		tResult.Add((ulong)lo);
-		//	}
+			while (hi > ulong.MaxValue)
+			{
+				hi = BigInteger.DivRem(hi, BI_ULONG_FACTOR, out var lo);
+				tResult.Add((ulong)lo);
+			}
 
-		//	tResult.Add((ulong)hi);
+			tResult.Add((ulong)hi);
 
-		//	return tResult.ToArray();
-		//}
+			return tResult.ToArray();
+		}
 
-		//public BigInteger FromULongs(ulong[] values)
-		//{
-		//	var result = BigInteger.Zero;
+		public static BigInteger FromULongs(ulong[] values)
+		{
+			var result = BigInteger.Zero;
 
-		//	for (int i = values.Length - 1; i >= 0; i--)
-		//	{
-		//		result *= BI_ULONG_FACTOR;
-		//		result += values[i];
-		//	}
+			for (int i = values.Length - 1; i >= 0; i--)
+			{
+				result *= BI_ULONG_FACTOR;
+				result += values[i];
+			}
 
-		//	return result;
-		//}
+			return result;
+		}
 
 		#endregion
 
-		#region Convert to Partial-Word ULongs
+		#region Convert to Partial-Word Limbs
+
+		// TOOD: Consider first using ToLongs and then calling Split(
 
 		public static ulong[] ToPwULongs(BigInteger bi)
 		{
@@ -735,14 +595,14 @@ namespace MSetGenP
 			return tResult.ToArray();
 		}
 
-		public static BigInteger FromPwULongs(ulong[] values)
+		public static BigInteger FromPwULongs(ulong[] partialWordLimbs)
 		{
 			var result = BigInteger.Zero;
 
-			for (var i = values.Length - 1; i >= 0; i--)
+			for (var i = partialWordLimbs.Length - 1; i >= 0; i--)
 			{
 				result *= BI_UINT_FACTOR;
-				result += values[i];
+				result += partialWordLimbs[i];
 			}
 
 			return result;
@@ -815,100 +675,268 @@ namespace MSetGenP
 
 		#endregion
 
-		#region 2C Support
+		#region Unused 
 
-		public static Smx2C Negate(Smx2C smx2C)
+		private static Smx TrimLeadingZeros(Smx a)
 		{
-			var negatedPartialWordLimbs = ConvertTo2C(smx2C.Mantissa, sign: false);
-			var result = new Smx2C(!smx2C.Sign, negatedPartialWordLimbs, smx2C.Exponent, smx2C.Precision, smx2C.BitsBeforeBP);
+			var mantissa = TrimLeadingZeros(a.Mantissa);
+			var result = new Smx(a.Sign, mantissa, a.Exponent, a.BitsBeforeBP, a.Precision);
+			return result;
+		}
+
+		// Remove zero-valued limbs from the Most Significant end.
+		// Leaving all least significant limbs intact.
+		private static ulong[] TrimLeadingZeros(ulong[] mantissa)
+		{
+			if (mantissa.Length == 1 && mantissa[0] == 0)
+			{
+				return mantissa;
+			}
+
+			var i = mantissa.Length;
+			for (; i > 0; i--)
+			{
+				if (mantissa[i - 1] != 0)
+				{
+					break;
+				}
+			}
+
+			if (i == mantissa.Length)
+			{
+				return mantissa;
+			}
+
+			if (i == 0)
+			{
+				// All digits are zero
+				return new ulong[] { 0 };
+			}
+
+			var result = new ulong[i];
+			Array.Copy(mantissa, 0, result, 0, i);
+			return result;
+		}
+
+		// Remove zero-valued limbs from the Least Significant end.
+		// Leaving all most significant limbs intact.
+		// The out parameter is set to the new exponent
+		private static ulong[] TrimTrailingZeros(ulong[] mantissa, int exponent, out int newExponent)
+		{
+			newExponent = exponent;
+
+			if (mantissa.Length == 0 || mantissa[0] != 0)
+			{
+				return mantissa;
+			}
+
+			var i = 1;
+			for (; i < mantissa.Length; i++)
+			{
+				if (mantissa[i] != 0)
+				{
+					break;
+				}
+			}
+
+			if (i == mantissa.Length)
+			{
+				// All digits are zero
+				newExponent = 1;
+				return new ulong[] { 0 };
+			}
+
+			var result = new ulong[mantissa.Length - i];
+			Array.Copy(mantissa, i, result, 0, result.Length);
+
+			newExponent += i * 32;
 
 			return result;
 		}
 
-		public static ulong[] Negate(ulong[] partialWordLimbs)
+		private static int GetNumberOfNonZeroBitsAfterBP_NotUsed(ulong[] mantissa, byte bitsBeforeBP)
 		{
-			// Force the conversion by indicating we have a negative value.
-			var result = ConvertTo2C(partialWordLimbs, sign: false);
+			var indexOfLastNonZeroLimb = GetIndexOfLastNonZeroLimb(mantissa);
+
+			if (indexOfLastNonZeroLimb == -1)
+			{
+				return 0;
+			}
+
+			if (indexOfLastNonZeroLimb == mantissa.Length - 1)
+			{
+				var m = (mantissa[^1] << 32 + bitsBeforeBP) >> 32;
+				var lzc = BitOperations.LeadingZeroCount(m) - BITS_PER_LIMB;
+
+				var bitsAfterBp = 32 - lzc;
+
+				return bitsAfterBp;
+			}
+
+			var result = ((indexOfLastNonZeroLimb + 1) * BITS_PER_LIMB) - bitsBeforeBP;
 			return result;
 		}
 
-		public static ulong[] ConvertTo2C(ulong[] partialWordLimbs, bool sign)
+		private static int GetNumberOfBitsAfterBP(Smx a)
 		{
-			if (sign)
-			{
-				return partialWordLimbs;
-			}
-
-			//	Start at the least significant bit (LSB), copy all the zeros, until the first 1 is reached;
-			//	then copy that 1, and flip all the remaining bits.
-
-			var resultLength = partialWordLimbs.Length;
-
-			var result = new ulong[resultLength];
-			var limbPtr = 0;
-
-			while (limbPtr < resultLength && partialWordLimbs[limbPtr] == 0)
-			{
-				result[limbPtr] = partialWordLimbs[limbPtr];
-				limbPtr++;
-			}
-
-			if (limbPtr < resultLength)
-			{
-				var tzc = BitOperations.TrailingZeroCount(partialWordLimbs[limbPtr]);
-				var numToKeep = tzc + 1;
-				var numToFlip = 64 - numToKeep;
-
-				var flipped = partialWordLimbs[limbPtr] ^ LOW_MASK;
-				flipped = (flipped >> numToKeep) << numToKeep; // set the bottom bits to zero
-
-				var target = partialWordLimbs[limbPtr];
-				target = (target << numToFlip) >> numToFlip; // set the top bits to zero
-
-				var newVal = target | flipped;
-				result[limbPtr] = newVal;
-
-				limbPtr++;
-			}
-
-			for (; limbPtr < resultLength; limbPtr++)
-			{
-				var flipped = partialWordLimbs[limbPtr] ^ LOW_MASK;
-				result[limbPtr] = flipped;
-			}
-
-			//for (var i = 0; i < result.Length; i++)
-			//{
-			//	result[i] = result[i] & LOW_MASK;
-			//}
-
+			var result = a.LimbCount * BITS_PER_LIMB - a.BitsBeforeBP;
 			return result;
 		}
 
-		public static ulong[] ConvertFrom2C(ulong[] partialWordLimbs)
+		private static int GetNumberOfLeadingZeroLimbs(Smx a)
 		{
-			var lzc = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
-
-			ulong[] result;
-
-			if (lzc == 32)
-			{
-				var cpy = new ulong[partialWordLimbs.Length];
-				Array.Copy(partialWordLimbs, cpy, partialWordLimbs.Length);
-
-				cpy[^1] = (cpy[^1] << 1) >> 1;
-
-				result = ConvertTo2C(cpy, sign: false);
-			}
-			else
-			{
-				result = partialWordLimbs;
-			}
-
+			var result = a.Mantissa.Length - GetLogicalLength(a);
 			return result;
 		}
+
+		private static int GetLogicalLength(Smx a)
+		{
+			var result = 1 + GetIndexOfLastNonZeroLimb(a.Mantissa);
+			return result;
+		}
+
+		private static int GetLogicalLength(ulong[] mantissa)
+		{
+			var result = 1 + GetIndexOfLastNonZeroLimb(mantissa);
+			return result;
+		}
+
+		private static int GetIndexOfLastNonZeroLimb(ulong[] mantissa)
+		{
+			for (var i = mantissa.Length - 1; i >= 0; i--)
+			{
+				if (mantissa[i] != 0)
+				{
+					break;
+				}
+			}
+
+			return -1;
+		}
+
+		private static uint GetBottomBits(ulong partialWordValue, int numberOfBits)
+		{
+			if (numberOfBits < 0 || numberOfBits > 32)
+			{
+				throw new ArgumentException($"The number of bits must be between 0 and 32.");
+			}
+
+			var v1 = partialWordValue << (64 - numberOfBits);
+			var v2 = v1 >> (64 - numberOfBits);
+			return (uint)v2;
+		}
+
+
+		private static ulong ShiftTopBitsDown(ulong partialWordValue, int shiftAmount)
+		{
+			if (shiftAmount < 0 || shiftAmount > 32)
+			{
+				throw new ArgumentException($"The number of bits must be between 0 and 32.");
+			}
+
+			var v1 = partialWordValue >> shiftAmount;
+			return (uint)v1;
+		}
+
+		private static ulong ShiftBottomBitsUp(ulong partialWordValue, int shiftAmount)
+		{
+			if (shiftAmount < 0 || shiftAmount > 32)
+			{
+				throw new ArgumentException($"The number of bits must be between 0 and 32.");
+			}
+
+			var v1 = partialWordValue << (32 + shiftAmount);
+			var v2 = v1 >> 32;
+			return (uint)v2;
+		}
+
+		//private void CopyPWBits(ulong[] source, int sourceIndex, int sourceOffset, ulong[] destination, int destinationIndex, int destinationOffset)
+		//{
+		//	destination = new ulong[LimbCount];
+
+		//	var sourceLimbPtr = sourceIndex;
+
+		//	var resultLimbPtr = 0;
+
+		//	var shiftAmount = 1;
+
+		//	while (resultLimbPtr < destination.Length - 1 && sourceLimbPtr < source.Length - 1)
+		//	{
+		//		// discard (remainder count) source bits off the lsb end, leaving (32 - remainder) source bits on the low end, and zeros for the first remainder count msbs.
+		//		var hx = source[sourceLimbPtr] >> shiftAmount;
+		//		destination[resultLimbPtr] |= hx;
+		//		sourceLimbPtr++;
+		//		var lx = (source[sourceLimbPtr] << 64 - shiftAmount) >> 32;
+		//		destination[resultLimbPtr] |= lx;
+
+		//		resultLimbPtr++;
+		//	}
+
+		//	var hx2 = source[sourceLimbPtr] >> shiftAmount;
+		//	destination[resultLimbPtr] |= hx2;
+		//	sourceLimbPtr++;
+
+		//	if (sourceLimbPtr < source.Length)
+		//	{
+		//		var lx2 = (source[sourceLimbPtr] << 64 - shiftAmount) >> 32;
+		//		destination[resultLimbPtr] |= lx2;
+		//	}
+		//}
 
 		#endregion
 
+		#region Reduce 
+
+		//public static ulong[] Reduce(ulong[] mantissa, int exponent, out int newExponent)
+		//{
+		//	var w = TrimTrailingZeros(mantissa, exponent, out newExponent);
+
+		//	if (w.Length == 0)
+		//	{
+		//		return w;
+		//	}
+
+		//	if (AreComponentsEven(mantissa))
+		//	{
+		//		newExponent++;
+		//		w = new ulong[mantissa.Length];
+
+		//		for (int i = 0; i < w.Length; i++)
+		//		{
+		//			w[i] = mantissa[i] / 2;
+		//		}
+
+		//		while (AreComponentsEven(w))
+		//		{
+		//			newExponent++;
+
+		//			for (int i = 0; i < w.Length; i++)
+		//			{
+		//				w[i] = w[i] / 2;
+		//			}
+		//		}
+
+		//		return w;
+		//	}
+		//	else
+		//	{
+		//		return mantissa;
+		//	}
+		//}
+
+		//private static bool AreComponentsEven(ulong[] mantissa)
+		//{
+		//	foreach (var value in mantissa)
+		//	{
+		//		if (value % 2 != 0)
+		//		{
+		//			return false;
+		//		}
+		//	}
+
+		//	return mantissa.Any(x => x != 0);
+		//}
+
+		#endregion
 	}
 }

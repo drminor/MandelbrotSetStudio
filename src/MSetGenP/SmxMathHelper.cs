@@ -51,7 +51,7 @@ namespace MSetGenP
 		public uint Threshold { get; init; }
 		public ulong ThresholdMsl { get; init; }
 
-		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		public int NumberOfMCarries { get; private set; }
@@ -81,7 +81,7 @@ namespace MSetGenP
 			var sign = a.Sign == b.Sign;
 			var precision = Math.Min(a.Precision, b.Precision);
 			var bitsBeforeBP = a.BitsBeforeBP;
-			Smx result = new Smx(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
+			Smx result = new Smx(sign, nrmMantissa, TargetExponent, bitsBeforeBP, precision);
 
 			return result;
 		}
@@ -135,7 +135,7 @@ namespace MSetGenP
 			var sign = true;
 			var precision = a.Precision;
 			var bitsBeforeBP = a.BitsBeforeBP;
-			Smx result = new Smx(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
+			Smx result = new Smx(sign, nrmMantissa, TargetExponent, bitsBeforeBP, precision);
 
 			return result;
 		}
@@ -210,7 +210,7 @@ namespace MSetGenP
 			var rawMantissa = Multiply(a.Mantissa, bVal);
 			var mantissa = PropagateCarries(rawMantissa);
 
-			result = new Smx(sign, mantissa, a.Exponent, a.Precision, a.BitsBeforeBP);
+			result = new Smx(sign, mantissa, a.Exponent, a.BitsBeforeBP, a.Precision);
 
 			return result;
 		}
@@ -347,7 +347,7 @@ namespace MSetGenP
 				return a;
 			}
 
-			var bNegated = new Smx(!b.Sign, b.Mantissa, b.Exponent, b.Precision, b.BitsBeforeBP);
+			var bNegated = new Smx(!b.Sign, b.Mantissa, b.Exponent, b.BitsBeforeBP, b.Precision);
 
 			if (a.IsZero)
 			{
@@ -398,13 +398,13 @@ namespace MSetGenP
 
 			if (a.Sign == b.Sign)
 			{
-				NumberOfMCarries++;
+				//NumberOfMCarries++;
 				sign = a.Sign;
 				mantissa = Add(a.Mantissa, b.Mantissa, out indexOfLastNonZeroLimb, out carry);
 			}
 			else
 			{
-				NumberOfACarries++;
+				//NumberOfACarries++;
 				var cmp = Compare(a.Mantissa, b.Mantissa);
 
 				if (cmp >= 0)
@@ -424,11 +424,11 @@ namespace MSetGenP
 			if (carry != 0)
 			{
 				result = CreateNewMaxIntegerSmx();
-				//NumberOfACarries++;
+				NumberOfACarries++;
 			}
 			else
 			{
-				result = new Smx(sign, mantissa, a.Exponent, precision, a.BitsBeforeBP);
+				result = new Smx(sign, mantissa, a.Exponent, a.BitsBeforeBP, precision);
 			}
 
 			return result;
@@ -558,7 +558,7 @@ namespace MSetGenP
 
 		public Smx CreateNewZeroSmx(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			var result = new Smx(true, new ulong[LimbCount], TargetExponent, precision, BitsBeforeBP);
+			var result = new Smx(true, new ulong[LimbCount], TargetExponent, BitsBeforeBP, precision);
 			return result;
 		}
 

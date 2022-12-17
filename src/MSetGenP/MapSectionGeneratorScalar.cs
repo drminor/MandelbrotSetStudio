@@ -45,7 +45,7 @@ namespace MSetGenP
 			var escapeVelocities = new ushort[blockSize.NumberOfCells];
 			var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlags, zValues: null);
 
-			Debug.WriteLine($"{s1}, {s2}: Adds: {smxMathHelper.NumberOfACarries}\tSubtracts: {smxMathHelper.NumberOfMCarries}.");
+			Debug.WriteLine($"{s1}, {s2}: ACarries: {smxMathHelper.NumberOfACarries}\tMCarries: {smxMathHelper.NumberOfMCarries}.");
 
 			return result;
 		}
@@ -69,7 +69,7 @@ namespace MSetGenP
 
 				for (int i = 0; i < samplePointsX.Length; i++)
 				{
-					if (i == 63) Debug.WriteLine("Here");
+					//if (i == 63) Debug.WriteLine("Here");
 
 					var x = samplePointsX[i];
 					var cntr = iterator.IterateSmxC2(x, y);

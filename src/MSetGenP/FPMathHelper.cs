@@ -10,8 +10,8 @@ namespace MSetGenP
 	{
 		#region Constants
 
-		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
-		private static readonly ulong LOW_MASK =    0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private static readonly ulong LOW_MASK =		0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private static readonly ulong LOW_MASK_SIGNED = 0x000000007FFFFFFF; // bits 0 - 30 are set.
 
 		#endregion
 
@@ -28,7 +28,7 @@ namespace MSetGenP
 
 			LimbCount = SmxHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP - 1) - 1; // 2^7 - 1 = 127
+			MaxIntegerValue = SmxHelper.GetMaxSignedIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
 
 			Threshold = thresold;
 			ThresholdMsl = SmxHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
@@ -42,11 +42,11 @@ namespace MSetGenP
 		public int LimbCount { get; init; }
 		public int TargetExponent { get; init; }
 
-		public uint MaxIntegerValue { get; init; }
+		public int MaxIntegerValue { get; init; }
 		public uint Threshold { get; init; }
 		public ulong ThresholdMsl { get; init; }
 
-		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		public int NumberOfMCarries { get; private set; }
@@ -63,20 +63,32 @@ namespace MSetGenP
 				return CreateNewZeroSmx2C(Math.Min(a.Precision, b.Precision));
 			}
 
-			Debug.Assert(a.LimbCount == LimbCount, $"A should have {LimbCount} limbs, instead it has {a.LimbCount}.");
-			Debug.Assert(b.LimbCount == LimbCount, $"B should have {LimbCount} limbs, instead it has {b.LimbCount}.");
-
-			Debug.Assert(a.Exponent == TargetExponent, $"A should have an exponent of {TargetExponent}, instead of {a.Exponent}.");
-			Debug.Assert(b.Exponent == TargetExponent, $"B should have an exponent of {TargetExponent}, instead of {b.Exponent}.");
+			CheckLimbs(a, b, "Multiply");
 
 			var rawMantissa = Multiply(a.Mantissa, b.Mantissa);
-			var mantissa = PropagateCarries(rawMantissa);
-			var nrmMantissa = ShiftAndTrim(mantissa);
+			var mantissa = PropagateCarries(rawMantissa, out var carry);
+			var precision = a.Precision;
 
-			var sign = a.Sign == b.Sign;
-			var precision = Math.Min(a.Precision, b.Precision);
-			var bitsBeforeBP = a.BitsBeforeBP;
-			Smx2C result = new Smx2C(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
+			Smx2C result;
+
+			if (carry > 0)
+			{
+				NumberOfMCarries++;
+				result = CreateNewMaxIntegerSmx2C(precision);
+			}
+			else
+			{
+				var nrmMantissa = ShiftAndTrim(mantissa, out var overflowed);
+				if (overflowed)
+				{
+					NumberOfMCarries++;
+					result = CreateNewMaxIntegerSmx2C(precision);
+				}
+				else
+				{
+					result = BuildSmx2C(nrmMantissa, precision);
+				}
+			}
 
 			return result;
 		}
@@ -90,9 +102,9 @@ namespace MSetGenP
 			{
 				for (int i = 0; i < bx.Length; i++)
 				{
-					var product = ax[j] * bx[i];
-
 					var resultPtr = j + i;  // 0, 1, 1, 2
+
+					var product = ax[j] * bx[i];
 
 					var lo = Split(product, out var hi);        //  2 x 2						3 x 3										4 x 4
 					mantissa[resultPtr] += lo;              // 0, 1,   1, 2		 0, 1, 2,   1, 2, 3,  2, 3  4		0, 1, 2, 3,   1, 2, 3, 4,    2, 3, 4, 5,    3, 4, 5, 6 
@@ -110,17 +122,32 @@ namespace MSetGenP
 				return a;
 			}
 
-			Debug.Assert(a.LimbCount == LimbCount, $"A should have {LimbCount} limbs, instead it has {a.LimbCount}.");
-			Debug.Assert(a.Exponent == TargetExponent, $"A should have an exponent of {TargetExponent}, instead of {a.Exponent}.");
+			CheckLimb(a, "Square");
 
 			var rawMantissa = Square(a.Mantissa);
-			var mantissa = PropagateCarries(rawMantissa);
-			var nrmMantissa = ShiftAndTrim(mantissa);
-
-			var sign = true;
+			var mantissa = PropagateCarries(rawMantissa, out var carry);
 			var precision = a.Precision;
-			var bitsBeforeBP = a.BitsBeforeBP;
-			Smx2C result = new Smx2C(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
+
+			Smx2C result;
+
+			if (carry > 0)
+			{
+				NumberOfMCarries++;
+				result = CreateNewMaxIntegerSmx2C(precision);
+			}
+			else
+			{
+				var nrmMantissa = ShiftAndTrim(mantissa, out var overflowed);
+				if (overflowed)
+				{
+					NumberOfMCarries++;
+					result = CreateNewMaxIntegerSmx2C(precision);
+				}
+				else
+				{
+					result = BuildSmx2C(nrmMantissa, precision);
+				}
+			}
 
 			return result;
 		}
@@ -134,14 +161,14 @@ namespace MSetGenP
 			{
 				for (int i = j; i < ax.Length; i++)
 				{
+					var resultPtr = j + i;                  // 0, 1		1, 2		0, 1, 2		1, 2, 3, 
+
 					var product = ax[j] * ax[i];
 
 					if (i > j)
 					{
 						product *= 2;
 					}
-
-					var resultPtr = j + i;                  // 0, 1		1, 2		0, 1, 2		1, 2, 3, 
 
 					var lo = Split(product, out var hi);
 					mantissa[resultPtr] += lo;
@@ -167,7 +194,80 @@ namespace MSetGenP
 
 		 */
 
-		public ulong[] PropagateCarries(ulong[] mantissa)
+		public Smx2C Multiply(Smx2C a, int b)
+		{
+			Smx2C result;
+
+			if (a.IsZero || b == 0)
+			{
+				result = CreateNewZeroSmx2C(a.Precision);
+				return result;
+			}
+
+			CheckLimb(a, "MultiplyByInt");
+
+			var bVal = (uint)Math.Abs(b);
+			var lzc = BitOperations.LeadingZeroCount(bVal);
+
+			if (lzc < 32 - a.BitsBeforeBP)
+			{
+				throw new ArgumentException("The integer multiplyer should fit into the integer portion of the Smx value.");
+			}
+
+			var rawMantissa = Multiply(a.Mantissa, bVal);
+			var mantissa = PropagateCarries(rawMantissa, out var carry);
+			var precision = a.Precision;
+
+			if (carry > 0)
+			{
+				NumberOfMCarries++;
+				result = CreateNewMaxIntegerSmx2C(precision);
+			}
+			else
+			{
+				var nrmMantissa = ShiftAndTrim(mantissa, out var overflowed);
+				if (overflowed)
+				{
+					NumberOfMCarries++;
+					result = CreateNewMaxIntegerSmx2C(precision);
+				}
+				else
+				{
+					result = BuildSmx2C(nrmMantissa, precision);
+				}
+			}
+
+			return result;
+		}
+
+		public ulong[] Multiply(ulong[] ax, uint b)
+		{
+			var mantissa = new ulong[ax.Length];
+
+			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
+			for (int j = 0; j < ax.Length - 1; j++)
+			{
+				var product = ax[j] * b;
+
+				var lo = Split(product, out var hi);    //		2 x 1			3 x 1			4 x 1
+				mantissa[j] += lo;                      //			0, 1			0, 1, 2			0, 1, 2, 3
+				mantissa[j + 1] += hi;                  //			1, 2			1, 2, 3			1, 2, 3, 4
+			}
+
+			var product2 = ax[^1] * b;
+			var lo2 = Split(product2, out var hi2);
+
+			mantissa[^1] = lo2;
+
+			if (hi2 != 0)
+			{
+				throw new OverflowException($"Multiply {SmxHelper.GetDiagDisplayHex("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
+			}
+
+			return mantissa;
+		}
+
+		public ulong[] PropagateCarries(ulong[] mantissa, out ulong carry)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
@@ -175,19 +275,18 @@ namespace MSetGenP
 			// If the MSL produces a carry, throw an exception.
 
 			var result = new ulong[mantissa.Length];
-			var carry = 0ul;
+			carry = 0ul;
 
-			for (int i = 0; i < mantissa.Length; i++)
+			for (int i = 0; i < mantissa.Length - 1; i++)
 			{
 				var lo = Split(mantissa[i] + carry, out var hi);  // :Spliter
 				result[i] = lo;
 				carry = hi;
 			}
 
-			if (carry != 0)
-			{
-				throw new OverflowException("While propagating carries after a multiply operation, the MSL produced a carry.");
-			}
+			var lo2 = SplitSignedLimb(mantissa[^1] + carry, out var hi2);  // :Spliter
+			result[^1] = lo2;
+			carry = hi2;
 
 			return result;
 		}
@@ -279,6 +378,7 @@ namespace MSetGenP
 
 			if (carry != 0)
 			{
+				NumberOfACarries++;
 				result = CreateNewMaxIntegerSmx2C(precision);
 			}
 			else
@@ -302,25 +402,20 @@ namespace MSetGenP
 			carry = 0uL;
 
 			//ulong nv;
-			for (var i = 0; i < resultLength; i++)
+			for (var i = 0; i < resultLength - 1; i++)
 			{
 				var nv = left[i] + right[i] + carry;
 				//Debug.Write($"Adding {left[i]}, {right[i]} wc:{carry} -> {nv}, split: ");
-
-				//nv = left[i] + right[i];
-				//if ((long)carry < 0)
-				//{
-				//	nv = (ulong)((long)nv + (long)carry);
-				//}
-				//else
-				//{
-				//	nv += carry;
-				//}
-
 				var lo = Split(nv, out carry);
 				//Debug.WriteLine($"hi:{carry}, lo:{lo}");
 				result[i] = lo;
 			}
+
+			var nv2 = left[^1] + right[^1] + carry;
+			//Debug.Write($"AddingLL {left[^1]}, {right[^1]} wc:{carry} -> {nv2}, split: ");
+			var lo2 = SplitSignedLimb(nv2, out carry);
+			//Debug.WriteLine($"hi:{carry}, lo:{lo2}");
+			result[^1] = lo2;
 
 			return result;
 		}
@@ -333,7 +428,7 @@ namespace MSetGenP
 				throw new InvalidOperationException($"The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
 			}
 
-			if (a.LimbCount != LimbCount)
+			if (b.LimbCount != LimbCount)
 			{
 				Debug.WriteLine($"WARNING: The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
 				throw new InvalidOperationException($"The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
@@ -346,23 +441,37 @@ namespace MSetGenP
 			}
 		}
 
+		private void CheckLimb(Smx2C a, string desc)
+		{
+			if (a.LimbCount != LimbCount)
+			{
+				Debug.WriteLine($"WARNING: The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+				throw new InvalidOperationException($"The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+			}
+
+			if (a.Exponent != TargetExponent)
+			{
+				Debug.WriteLine($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
+				throw new InvalidOperationException($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
+			}
+		}
+
 		private Smx2C BuildSmx2C(ulong[] partialWordLimbs, int precision)
 		{
-			var msl = partialWordLimbs[^1] &= LOW_MASK;
-			var lzc = BitOperations.LeadingZeroCount(msl);
-			var sign = lzc != 32;
+			var lzc = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
+			var firstBitIsAOne = lzc == 0;
 
-			var result = new Smx2C(sign, partialWordLimbs, TargetExponent, precision, BitsBeforeBP);
+
+			var result = new Smx2C(!firstBitIsAOne, partialWordLimbs, TargetExponent, precision, BitsBeforeBP);
 
 			return result;
 		}
-
 
 		#endregion
 
 		#region Normalization Support
 
-		public ulong[] ShiftAndTrim(ulong[] mantissa)
+		public ulong[] ShiftAndTrim(ulong[] mantissa, out bool overflowed)
 		{
 			ValidateIsSplit(mantissa);
 
@@ -384,6 +493,18 @@ namespace MSetGenP
 				}
 				sourceIndex++;
 			}
+
+			// Discard 1 more bit.
+			// Start with 1:7:56 (Sign:Integer:Fraction 
+			// Intermediate has 0:16:112
+			// Push 8 from behind to in front and drop the least two significant limbs for a total of 64 - 8 = 56 bits from behind
+			// Push 8 off the top, for a total of 64 bits discarded.
+			// The result must be positive, so if the most significant bit is a '1', we know there is an overflow.
+
+			var lzc = BitOperations.LeadingZeroCount(result[^1]);
+
+			overflowed = lzc == 32;
+
 			return result;
 		}
 
@@ -391,6 +512,12 @@ namespace MSetGenP
 		{
 			hi = x >> 32; // Create new ulong from bits 32 - 63.
 			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
+		}
+
+		private ulong SplitSignedLimb(ulong x, out ulong hi)
+		{
+			hi = x >> 31; // Create new ulong from bits 31 - 63.
+			return x & LOW_MASK_SIGNED; // Create new ulong from bits 0 - 30.
 		}
 
 		public Smx2C CreateNewZeroSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
@@ -411,16 +538,10 @@ namespace MSetGenP
 		[Conditional("DEBUG")]
 		private void ValidateIsSplit(ulong[] mantissa)
 		{
-			if (CheckPWValues(mantissa))
+			if (SmxHelper.CheckPW2CValues(mantissa))
 			{
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}
-		}
-
-		public static bool CheckPWValues(ulong[] values)
-		{
-			var result = values.Any(x => x >= MAX_DIGIT_VALUE);
-			return result;
 		}
 
 		#endregion
@@ -431,8 +552,8 @@ namespace MSetGenP
 		{
 			var left = a.Mantissa[^1];
 
-			Debug.Assert(BitOperations.LeadingZeroCount(left) > 32, "IsGreaterOrEqThanThresold found a limb with a negative mantissa.");
-			Debug.Assert(a.Sign, "IsGreaterOrEqThanThresold found a limb with a negative sign, but the mantissa is positive.");
+			Debug.Assert(BitOperations.LeadingZeroCount(left) > 32, "IsGreaterOrEqThanThreshold found a limb with a negative mantissa.");
+			Debug.Assert(a.Sign, "IsGreaterOrEqThanThreshold found a limb with a negative sign, but the mantissa is positive.");
 
 			var right = ThresholdMsl;
 			var result = left >= right;
@@ -446,37 +567,38 @@ namespace MSetGenP
 
 		public Smx Convert(Smx2C smx2C)
 		{
-			if (smx2C.LimbCount != LimbCount)
-			{
-				throw new ArgumentException($"While converting an Smx2C found it to have {smx2C.LimbCount} limbs instead of {LimbCount}.");
-			}
-
-			if (smx2C.BitsBeforeBP != BitsBeforeBP)
-			{
-				throw new ArgumentException($"While converting an Smx2C found it to have {smx2C.BitsBeforeBP} limbs instead of {BitsBeforeBP}.");
-			}
-
-			var un2cMantissa = SmxHelper.ConvertFrom2C(smx2C.Mantissa);
-			var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision, BitsBeforeBP);
+			var un2cMantissa = SmxHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
+			var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
 			return result;
 		}
 
 		public Smx2C Convert(Smx smx, bool overrideFormatChecks = false)
 		{
-			if (!overrideFormatChecks && smx.LimbCount != LimbCount)
-			{
-				throw new ArgumentException($"While converting an Smx2C found it to have {smx.LimbCount} limbs instead of {LimbCount}.");
-			}
-
-			if (!overrideFormatChecks && smx.BitsBeforeBP != BitsBeforeBP)
-			{
-				throw new ArgumentException($"While converting an Smx2C found it to have {smx.BitsBeforeBP} limbs instead of {BitsBeforeBP}.");
-			}
+			if (!overrideFormatChecks) CheckLimbCountAndFPFormat(smx);
 
 			var twoCMantissa = SmxHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
 
 			return result;
+		}
+
+		private void CheckLimbCountAndFPFormat(Smx smx)
+		{
+			if (smx.LimbCount != LimbCount)
+			{
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx.LimbCount} limbs instead of {LimbCount}.");
+			}
+
+			if (smx.Exponent != TargetExponent)
+			{
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx.Exponent} limbs instead of {TargetExponent}.");
+			}
+
+
+			if (smx.BitsBeforeBP != BitsBeforeBP)
+			{
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx.BitsBeforeBP} limbs instead of {BitsBeforeBP}.");
+			}
 		}
 
 		#endregion

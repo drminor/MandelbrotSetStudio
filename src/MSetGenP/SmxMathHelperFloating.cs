@@ -53,7 +53,7 @@ namespace MSetGenP
 
 		public uint MaxIntegerValue { get; init; }
 
-		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		#endregion
@@ -104,7 +104,7 @@ namespace MSetGenP
 			var sign = a.Sign == b.Sign;
 			var precision = Math.Min(a.Precision, b.Precision);
 			var bitsBeforeBP = a.BitsBeforeBP;
-			Smx result = new Smx(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
+			Smx result = new Smx(sign, nrmMantissa, TargetExponent, bitsBeforeBP, precision);
 
 			return result;
 		}
@@ -198,7 +198,7 @@ namespace MSetGenP
 			var sign = true;
 			var precision = a.Precision;
 			var bitsBeforeBP = a.BitsBeforeBP;
-			Smx result = new Smx(sign, nrmMantissa, TargetExponent, precision, bitsBeforeBP);
+			Smx result = new Smx(sign, nrmMantissa, TargetExponent, bitsBeforeBP, precision);
 
 			return result;
 		}
@@ -273,7 +273,7 @@ namespace MSetGenP
 			var rawMantissa = Multiply(a.Mantissa, bVal);
 			var mantissa = PropagateCarries(rawMantissa);
 
-			result = new Smx(sign, mantissa, a.Exponent, a.Precision, a.BitsBeforeBP);
+			result = new Smx(sign, mantissa, a.Exponent, a.BitsBeforeBP, a.Precision);
 
 			return result;
 		}
@@ -710,7 +710,7 @@ namespace MSetGenP
 				mantissa = Extend(mantissa, LimbCount);
 			}
 
-			var result = new Smx(smxSa.Sign, mantissa, smxSa.Exponent, smxSa.Precision, BitsBeforeBP);
+			var result = new Smx(smxSa.Sign, mantissa, smxSa.Exponent, BitsBeforeBP, smxSa.Precision);
 
 			return result;
 		}
@@ -788,7 +788,7 @@ namespace MSetGenP
 
 		public Smx CreateNewZeroSmx(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			var result = new Smx(true, new ulong[LimbCount], TargetExponent, precision, BitsBeforeBP);
+			var result = new Smx(true, new ulong[LimbCount], TargetExponent, BitsBeforeBP, precision);
 			return result;
 		}
 

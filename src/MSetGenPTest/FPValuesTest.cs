@@ -171,7 +171,7 @@ namespace EngineTest
 
 		private Smx AdjustExponent(Smx o, int newExponent)
 		{
-			var result = new Smx(o.Sign, o.Mantissa, newExponent, o.Precision, o.BitsBeforeBP);
+			var result = new Smx(o.Sign, o.Mantissa, newExponent, o.BitsBeforeBP, o.Precision);
 			return result;
 		}
 

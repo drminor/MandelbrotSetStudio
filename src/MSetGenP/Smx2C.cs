@@ -11,13 +11,16 @@ namespace MSetGenP
 	{
 		#region Constructor
 
-		//public Smx(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision, bitsBeforeBP: 0)
-		//{ }
-
-		public Smx2C(RValue rValue, int precision, int bitsBeforeBP) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP)
+		public Smx2C(RValue rValue, byte bitsBeforeBP) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, rValue.Precision)
 		{ }
 
-		private Smx2C(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
+		public Smx2C(RValue rValue, byte bitsBeforeBP, int precision) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, precision)
+		{ }
+
+		private Smx2C(BigInteger bigInteger, int exponent, byte bitsBeforeBP) : this(bigInteger, exponent, bitsBeforeBP, RMapConstants.DEFAULT_PRECISION)
+		{ }
+
+		private Smx2C(BigInteger bigInteger, int exponent, byte bitsBeforeBP, int precision)
 		{
 			if (exponent == 1)
 			{
@@ -27,14 +30,14 @@ namespace MSetGenP
 			Sign = bigInteger < 0 ? false : true;
 			var un2Cmantissa = SmxHelper.ToPwULongs(bigInteger);
 
-			Mantissa = Sign ? un2Cmantissa : SmxHelper.ConvertTo2C(un2Cmantissa, Sign);
+			Mantissa = SmxHelper.ConvertTo2C(un2Cmantissa, Sign);
 
 			Exponent = exponent;
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		public Smx2C(bool sign, ulong[] mantissa, int exponent, int precision, int bitsBeforeBP)
+		public Smx2C(bool sign, ulong[] mantissa, int exponent, int precision, byte bitsBeforeBP)
 		{
 			if (exponent == 1)
 			{
@@ -67,7 +70,7 @@ namespace MSetGenP
 		public int Exponent { get; init; }
 		public int Precision { get; init; } // Number of significant binary digits.
 
-		public int BitsBeforeBP { get; init; }
+		public byte BitsBeforeBP { get; init; }
 
 		public bool IsZero => !Mantissa.Any(x => x > 0);
 		public int LimbCount => Mantissa.Length;
@@ -76,17 +79,12 @@ namespace MSetGenP
 
 		#region Public Methods
 
-		public Smx ConvertToSmx()
+		public override string ToString()
 		{
-			var un2cMantissa = SmxHelper.ConvertFrom2C(Mantissa);
-			var result = new Smx(Sign, un2cMantissa, Exponent, Precision, BitsBeforeBP);
-			return result;
-		}
+			var result = Sign
+				? SmxHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
+				: "-" + SmxHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
 
-		public RValue GetRValue()
-		{
-			var un2CSmx = ConvertToSmx();
-			var result = SmxHelper.GetRValue(un2CSmx); 
 			return result;
 		}
 
@@ -98,12 +96,17 @@ namespace MSetGenP
 			return strValue;
 		}
 
-		public override string ToString()
+		public RValue GetRValue()
 		{
-			var result = Sign
-				? SmxHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
-				: "-" + SmxHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
+			var un2CSmx = ConvertToSmx();
+			var result = SmxHelper.GetRValue(un2CSmx);
+			return result;
+		}
 
+		public Smx ConvertToSmx()
+		{
+			var un2cMantissa = SmxHelper.ConvertFrom2C(Mantissa, Sign);
+			var result = new Smx(Sign, un2cMantissa, Exponent, BitsBeforeBP, Precision);
 			return result;
 		}
 

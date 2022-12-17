@@ -11,13 +11,13 @@ namespace MSetGenP
 
 		//public static readonly Smx Zero = new Smx(true, new ulong[] { 0 }, 1, 1000, 0);
 
-		public SmxFloating(RValue rValue) : this(rValue.Value, rValue.Exponent, rValue.Precision, bitsBeforeBP: 0)
+		public SmxFloating(RValue rValue) : this(rValue.Value, rValue.Exponent, bitsBeforeBP: 0, precision: rValue.Precision)
 		{ }
 
-		public SmxFloating(RValue rValue, int precision) : this(rValue.Value, rValue.Exponent, precision, bitsBeforeBP: 0)
+		public SmxFloating(RValue rValue, int precision) : this(rValue.Value, rValue.Exponent, bitsBeforeBP: 0, precision: precision)
 		{ }
 
-		public SmxFloating(BigInteger bigInteger, int exponent, int precision, int bitsBeforeBP)
+		public SmxFloating(BigInteger bigInteger, int exponent, byte bitsBeforeBP, int precision)
 		{
 			Sign = bigInteger < 0 ? false : true;
 			Mantissa = SmxHelper.ToPwULongs(bigInteger);
@@ -26,7 +26,7 @@ namespace MSetGenP
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		public SmxFloating(bool sign, ulong[] mantissa, int exponent, int precision, int bitsBeforeBP)
+		public SmxFloating(bool sign, ulong[] mantissa, int exponent, byte bitsBeforeBP, int precision)
 		{
 			ValidatePWValues(mantissa);
 
@@ -55,7 +55,7 @@ namespace MSetGenP
 		public int Precision { get; init; } // Number of significant binary digits.
 
 		// TODO: Create a new class for Fixed Point values. Currently this class is being used to representg Fixed Point values as well as Floating Point values.
-		public int BitsBeforeBP { get; init; }
+		public byte BitsBeforeBP { get; init; }
 
 		public bool IsZero => !Mantissa.Any(x => x > 0);
 		public int LimbCount => Mantissa.Length;

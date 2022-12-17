@@ -14,7 +14,7 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse("-343597");
 			var aRValue = new RValue(aBigInteger, -11, 20);
 
-			var aSmx = new Smx(aRValue, precision:20, bitsBeforeBP:0);
+			var aSmx = new Smx(aRValue, bitsBeforeBP: 0);
 			var aSmxRValue = aSmx.GetRValue();
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");

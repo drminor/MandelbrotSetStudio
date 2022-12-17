@@ -75,7 +75,8 @@ namespace MSetGenP
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
 
-			MslWeight = Math.Pow(2, TargetExponent + (LimbCount - 1) * BITS_PER_LIMB);
+			var mslPower = ((LimbCount - 1) * BITS_PER_LIMB) - FractionalBits;
+			MslWeight = Math.Pow(2, mslPower);
 			MslWeightVector = Vector256.Create(MslWeight);
 
 			Threshold = threshold;
@@ -228,7 +229,7 @@ namespace MSetGenP
 		public double MslWeight { get; init; }
 		public Vector256<double> MslWeightVector { get; init; }
 
-		public int BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		public int NumberOfMCarries { get; private set; }
@@ -649,7 +650,7 @@ namespace MSetGenP
 
 		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			var result = new Smx(fPValues.GetSign(index), fPValues.GetMantissa(index), TargetExponent, precision, BitsBeforeBP);
+			var result = new Smx(fPValues.GetSign(index), fPValues.GetMantissa(index), TargetExponent, BitsBeforeBP, precision);
 			return result;
 		}
 

@@ -170,9 +170,9 @@ namespace EngineTest
 			var a2Str = SmxHelper.GetDiagDisplay("raw products", a2Mantissa);
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
-			var a3Mantissa = fpMathHelper.PropagateCarries(a2Mantissa);
-			var a3MantissaNrm = fpMathHelper.ShiftAndTrim(a3Mantissa);
-			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3Mantissa = fpMathHelper.PropagateCarries(a2Mantissa, out _);
+			var a3MantissaNrm = fpMathHelper.ShiftAndTrim(a3Mantissa, out _);
+			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.BitsBeforeBP, aSmx.Precision);
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
@@ -231,9 +231,9 @@ namespace EngineTest
 			var a2Str = SmxHelper.GetDiagDisplay("raw products", a2Mantissa);
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
-			var a3Mantissa = fpMathHelper.PropagateCarries(a2Mantissa);
-			var a3MantissaNrm = fpMathHelper.ShiftAndTrim(a3Mantissa);
-			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3Mantissa = fpMathHelper.PropagateCarries(a2Mantissa, out _);
+			var a3MantissaNrm = fpMathHelper.ShiftAndTrim(a3Mantissa, out _);
+			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.BitsBeforeBP, aSmx.Precision);
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
@@ -367,8 +367,8 @@ namespace EngineTest
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
 			var a2Mantissa = fpMathHelper.Square(aSmx.Mantissa);
-			var a3Mantissa = fpMathHelper.PropagateCarries(a2Mantissa);
-			var a3 = new Smx(true, a3Mantissa, aSmx.Exponent * 2, aSmx.Precision, aSmx.BitsBeforeBP);
+			var a3Mantissa = fpMathHelper.PropagateCarries(a2Mantissa, out _);
+			var a3 = new Smx(true, a3Mantissa, aSmx.Exponent * 2, aSmx.BitsBeforeBP, aSmx.Precision);
 			var a3SmxRValue = a3.GetRValue();
 			var a3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Smx is {a3Str}.");
@@ -381,8 +381,8 @@ namespace EngineTest
 			var bPrecision = aSmx.Precision;
 
 			var b2Mantissa = fpMathHelper.Square(bMantissa);
-			var b3Mantissa = fpMathHelper.PropagateCarries(b2Mantissa);
-			var b3 = new Smx(true, b3Mantissa, bExponent * 2, bPrecision, aSmx.BitsBeforeBP);
+			var b3Mantissa = fpMathHelper.PropagateCarries(b2Mantissa, out _);
+			var b3 = new Smx(true, b3Mantissa, bExponent * 2, aSmx.BitsBeforeBP, bPrecision);
 			var b3SmxRValue = b3.GetRValue();
 			var b3Str = a3.GetStringValue();
 			Debug.WriteLine($"The StringValue for the b3Smx is {b3Str}.");
@@ -555,37 +555,32 @@ namespace EngineTest
 			var bRValueStg = new RValue(bBigInteger, -36, precision);
 
 			var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);
-			var aSmx = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
 
-			//var aSmx2C = new Smx2C(aRValue, precision, bitsBeforeBP);
-			//var aStr = aSmx2C.GetStringValue();
-
-			var aStr = aSmx.GetStringValue();
+			var aSmx = SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
+			var aSmx2C = fpMathHelper.Convert(aSmx);
+			var aStr = aSmx2C.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var bSmx = fpMathHelper.Convert(SmxHelper.CreateSmx(bRValue, targetExponent, limbCount, bitsBeforeBP));
-
-			//var bSmx2C = new Smx2C(bRValue, precision, bitsBeforeBP);
-			//var bStr = bSmx2C.GetStringValue();
-
-			var bStr = bSmx.GetStringValue();
+			var bSmx = SmxHelper.CreateSmx(bRValue, targetExponent, limbCount, bitsBeforeBP);
+			var bSmx2C = fpMathHelper.Convert(bSmx);
+			var bStr = bSmx2C.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
 
-			var cSmx2C = fpMathHelper.Add(aSmx, bSmx, "Test");
+			var cSmx2C = fpMathHelper.Add(aSmx2C, bSmx2C, "Test");
 			var cSmx = fpMathHelper.Convert(cSmx2C);
 
 			var cSmxRValue = cSmx.GetRValue();
 			var cStr = cSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the cSmx is {cStr}.");
 
-			//var nrmA = RNormalizer.Normalize(aRValue, bRValue, out var nrmB);
 			var cRValue = aRValue.Add(bRValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the cRValue is {cStrComp}.");
 
-			var numberOfMatchingDigits = RValueHelper.GetNumberOfMatchingDigits(cSmxRValue, cRValue, out var expected);
-			Assert.Equal(expected, Math.Min(numberOfMatchingDigits, expected));
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cSmxRValue, cRValue, failOnTooFewDigits: true, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
+			Assert.Equal(strA, strB);
 		}
 
 		#endregion
@@ -600,7 +595,7 @@ namespace EngineTest
 
 		private Smx AdjustExponent(Smx o, int newExponent)
 		{
-			var result = new Smx(o.Sign, o.Mantissa, newExponent, o.Precision, o.BitsBeforeBP);
+			var result = new Smx(o.Sign, o.Mantissa, newExponent, o.BitsBeforeBP, o.Precision);
 			return result;
 		}
 

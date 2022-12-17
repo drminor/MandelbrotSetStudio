@@ -115,7 +115,7 @@ namespace MSetGenP
 		public Memory<ulong> SignsMemory { get; init; }
 		public Memory<ulong>[] MantissaMemories { get; init; }
 
-		public int BitsBeforeBP { get; init; }
+		public byte BitsBeforeBP { get; init; }
 
 		#endregion
 
