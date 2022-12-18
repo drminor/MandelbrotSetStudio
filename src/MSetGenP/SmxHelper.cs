@@ -23,8 +23,10 @@ namespace MSetGenP
 		// Integer used to convert BigIntegers to/from array of ulongs containing partial-word values
 		private static readonly BigInteger BI_UINT_FACTOR = BigInteger.Pow(2, 32);
 
-		private static readonly ulong LOW_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
-		private static readonly ulong ALL_BITS_MASK = 0xFFFFFFFFFFFFFFFF; // bits 0 - 64 are set.
+		private const ulong LOW_BITS_SET =	0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private const ulong ALL_BITS_SET =	0xFFFFFFFFFFFFFFFF; // bits 0 - 64 are set.
+
+		private const ulong HIGH_MASK = LOW_BITS_SET;
 
 		#endregion
 
@@ -415,7 +417,7 @@ namespace MSetGenP
 				var numToKeep = tzc + 1;
 				var numToFlip = 64 - numToKeep;
 
-				var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_MASK;
+				var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_SET;
 				flipped = (flipped >> numToKeep) << numToKeep; // set the bottom bits to zero
 
 				var target = partialWordLimbs[limbPtr];
@@ -429,14 +431,39 @@ namespace MSetGenP
 
 			for (; limbPtr < resultLength; limbPtr++)
 			{
-				var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_MASK;
+				var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_SET;
 				result[limbPtr] = flipped;
 			}
 
-			//for (var i = 0; i < result.Length; i++)
-			//{
-			//	result[i] = result[i] & LOW_MASK;
-			//}
+			return result;
+		}
+
+		public static double ConvertFrom2C(ulong partialWordLimb)
+		{
+			var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimb);
+			var isNegative = lzcMsl == 0;
+
+			double result;
+
+			if (isNegative)
+			{
+				var resultLimbs = ConvertTo2C(new ulong[] { partialWordLimb }, false);
+				result = resultLimbs[0];
+			}
+			else
+			{
+				result = partialWordLimb;
+			}
+
+			return isNegative ? result * -1 : result;
+		}
+
+		public static ulong[] ConvertFrom2C(ulong[] partialWordLimbs)
+		{
+			var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
+			var isNegative = lzcMsl == 0;
+
+			var result = ConvertFrom2C(partialWordLimbs, !isNegative);
 
 			return result;
 		}
@@ -455,7 +482,9 @@ namespace MSetGenP
 				result = ConvertTo2C(partialWordLimbs, sign);
 			}
 
-			return result;
+			var clearedResults = ClearPW2CValues(result, null);
+
+			return clearedResults;
 		}
 
 		public static Smx2C Negate(Smx2C smx2C)
@@ -509,7 +538,7 @@ namespace MSetGenP
 		public static ulong Split(ulong x, out ulong hi)
 		{
 			hi = x >> 32; // Create new ulong from bits 32 - 63.
-			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
+			return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
 		}
 
 		public static bool CheckPWValues(ulong[] partialWordLimbs)
@@ -520,31 +549,82 @@ namespace MSetGenP
 
 		public static bool CheckPW2CValues(ulong[] partialWordLimbs)
 		{
-			var lzc = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
-			var firstBitIsAOne = lzc == 0;
+			for (var i = 0; i < partialWordLimbs.Length; i++)
+			{
+				var limb = partialWordLimbs[i] >> 32;
+				if (!(limb == 0 || limb == LOW_BITS_SET)) return true;
+			}
 
-			return CheckPW2CValues(partialWordLimbs, !firstBitIsAOne);
+			return false;
 		}
 
 		public static bool CheckPW2CValues(ulong[] partialWordLimbs, bool sign)
 		{
+			var topHalf = partialWordLimbs[^1] >> 32;
 			if (sign)
 			{
-				var result = partialWordLimbs.Any(x => (x >> 32) != 0);
+				if (topHalf != 0)
+				{
+					return true;
+				}
 			}
 			else
 			{
-				var result = partialWordLimbs.Any(x => (x >> 32) != LOW_MASK);
+				if (topHalf != LOW_BITS_SET)
+				{
+					return true;
+				}
+			}
+
+			for(var i = 0; i < partialWordLimbs.Length - 1; i++)
+			{
+				topHalf = partialWordLimbs[i] >> 32;
+				if (! (topHalf == 0 || topHalf == LOW_BITS_SET )) return true;
 			}
 
 			return false;
+		}
+
+		public static ulong[] ClearPW2CValues(ulong[] partialWordLimbs, bool? sign = null)
+		{
+			CheckPW2CValuesBeforeClear(partialWordLimbs, sign);
+
+			var result = new ulong[partialWordLimbs.Length];
+
+			Array.Copy(partialWordLimbs, result, partialWordLimbs.Length);
+
+			for (var i = 0; i < result.Length; i++)
+			{
+				result[i] = result[i] & HIGH_MASK;
+			}
+
+			return result;
+		}
+
+		[Conditional("DEBUG")]
+		private static void CheckPW2CValuesBeforeClear(ulong[] partialWordLimbs, bool? sign = null)
+		{
+			bool checkFails;
+			if (sign.HasValue)
+			{
+				checkFails = CheckPW2CValues(partialWordLimbs, sign.Value);
+			}
+			else
+			{
+				checkFails = CheckPW2CValues(partialWordLimbs);
+			}
+
+			if (checkFails)
+			{
+				throw new InvalidOperationException("One or more partial-word limbs has a non-zero value in the top half.");
+			}
 		}
 
 		#endregion
 
 		#region To ULong Support
 
-		public static ulong[] ToULongs(BigInteger bi)
+			public static ulong[] ToULongs(BigInteger bi)
 		{
 			var tResult = new List<ulong>();
 			var hi = BigInteger.Abs(bi);

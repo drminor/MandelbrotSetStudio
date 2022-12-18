@@ -17,11 +17,9 @@ namespace MSetGenP
 		private const int BITS_BEFORE_BP = 8;
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
 
-		private const ulong LOW_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
-		private const ulong HIGH_MASK = 0xFFFFFFFF00000000; // bits 32 - 63 are set.
+		private const ulong HIGH_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 
-		private static readonly Vector256<ulong> LOW_MASK_VEC = Vector256.Create(LOW_MASK);
-		private static readonly Vector256<ulong> HIGH_MASK_VEC = Vector256.Create(HIGH_MASK);
+		private static readonly Vector256<ulong> LOW_MASK_VEC = Vector256.Create(HIGH_MASK);
 
 		private const ulong SIGN_BIT_MASK = 0x7FFFFFFFFFFFFFFF;
 		private static readonly Vector256<ulong> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
@@ -597,7 +595,7 @@ namespace MSetGenP
 				if ((result[i] & TEST_BIT_32) > 0)
 				{
 					// if the least significant bit of the high part of the result is still set, no borrow occured.
-					result[i] &= LOW_MASK;
+					result[i] &= HIGH_MASK;
 					borrow = 0;
 				}
 				else
@@ -621,7 +619,7 @@ namespace MSetGenP
 		private ulong Split(ulong x, out ulong hi)
 		{
 			hi = x >> 32; // Create new ulong from bits 32 - 63.
-			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
+			return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
 		}
 
 		private int Compare(ulong[] left, ulong[] right)

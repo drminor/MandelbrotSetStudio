@@ -7,11 +7,21 @@ namespace MSetGenP
 		private SmxMathHelper _smxMathHelper;
 		private int _targetIterations;
 
+		private FPMathHelper _fPMathHelper;
+
 		public IteratorScalar(SmxMathHelper smxMathHelper, int targetIterations)
 		{
 			_smxMathHelper = smxMathHelper;
+			_fPMathHelper = new FPMathHelper(_smxMathHelper.ApFixedPointFormat, _smxMathHelper.Threshold);
+
 			_targetIterations = targetIterations;
 		}
+
+		public long NumberOfSplits => _fPMathHelper.NumberOfSplits;
+		public long NumberOfGetCarries => _fPMathHelper.NumberOfGetCarries;
+
+		public long NumberOfIsGrtrOpsFP => _fPMathHelper.NumberOfGrtrThanOps;
+		public long NumberOfIsGrtrOpsSc => _smxMathHelper.NumberOfGrtrThanOps;
 
 		public ushort Iterate(Smx cR, Smx cI)
 		{
@@ -72,47 +82,44 @@ namespace MSetGenP
 			return cntr;
 		}
 
-
 		public ushort IterateSmxC2(Smx cR, Smx cI)
 		{
-			var fPMathHelper = new FPMathHelper(_smxMathHelper.ApFixedPointFormat, _smxMathHelper.Threshold);
+			var cRn = _fPMathHelper.Convert(cR);
+			var cIn = _fPMathHelper.Convert(cI);
 
-			var cRn = fPMathHelper.Convert(cR);
-			var cIn = fPMathHelper.Convert(cI);
-
-			var result = IterateSmxC2(fPMathHelper, cRn, cIn, cntr: 0, fPMathHelper.CreateNewZeroSmx2C(cRn.Precision), fPMathHelper.CreateNewZeroSmx2C(cR.Precision));
+			var result = IterateSmxC2(cRn, cIn, cntr: 0, _fPMathHelper.CreateNewZeroSmx2C(cRn.Precision), _fPMathHelper.CreateNewZeroSmx2C(cR.Precision));
 			return result;
 		}
 
-		public ushort IterateSmxC2(FPMathHelper fPMathHelper, Smx2C cR, Smx2C cI, ushort cntr, Smx2C zR, Smx2C zI)
+		public ushort IterateSmxC2(Smx2C cR, Smx2C cI, ushort cntr, Smx2C zR, Smx2C zI)
 		{
-			var zRSqr = fPMathHelper.Square(zR);
-			var zISqr = fPMathHelper.Square(zI);
-			var sumOfSqrs = fPMathHelper.Add(zRSqr, zISqr, "SumOfSqrs");
+			var zRSqr = _fPMathHelper.Square(zR);
+			var zISqr = _fPMathHelper.Square(zI);
+			var sumOfSqrs = _fPMathHelper.Add(zRSqr, zISqr, "SumOfSqrs");
 
-			while (!fPMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs) && cntr++ < _targetIterations)
+			while (!_fPMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs) && cntr++ < _targetIterations)
 			{
 				try
 				{
 					// z.r + z.i
-					var zRZi = fPMathHelper.Add(zR, zI, "adding zR and zI");
+					var zRZi = _fPMathHelper.Add(zR, zI, "adding zR and zI");
 
 					// square(z.r + z.i)
-					var zRZiSqr = fPMathHelper.Square(zRZi);
+					var zRZiSqr = _fPMathHelper.Square(zRZi);
 
 					// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
-					zI = fPMathHelper.Sub(zRZiSqr, zRSqr, "zRZiSqr - zRSqr");
-					zI = fPMathHelper.Sub(zI, zISqr, "- zISqr");
-					zI = fPMathHelper.Add(zI, cI, "adding cI");
+					zI = _fPMathHelper.Sub(zRZiSqr, zRSqr, "zRZiSqr - zRSqr");
+					zI = _fPMathHelper.Sub(zI, zISqr, "- zISqr");
+					zI = _fPMathHelper.Add(zI, cI, "adding cI");
 
 					// z.r = zrsqr - zisqr + c.r
-					zR = fPMathHelper.Sub(zRSqr, zISqr, "zRSqr - zISqr");
-					zR = fPMathHelper.Add(zR, cR, "adding cR");
+					zR = _fPMathHelper.Sub(zRSqr, zISqr, "zRSqr - zISqr");
+					zR = _fPMathHelper.Add(zR, cR, "adding cR");
 
-					zRSqr = fPMathHelper.Square(zR);
-					zISqr = fPMathHelper.Square(zI);
+					zRSqr = _fPMathHelper.Square(zR);
+					zISqr = _fPMathHelper.Square(zI);
 
-					sumOfSqrs = fPMathHelper.Add(zRSqr, zISqr, "SumOfSqrs");
+					sumOfSqrs = _fPMathHelper.Add(zRSqr, zISqr, "SumOfSqrs");
 				}
 				catch (Exception e)
 				{

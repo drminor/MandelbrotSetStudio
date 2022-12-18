@@ -39,18 +39,21 @@ namespace MSetGenP
 			var blockPos = mapSectionRequest.BlockPosition;
 			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 
-			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations);
+			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, out var numberOfSplits, out var numberOfGetCarries, out var gtOpsFP, out var gtOpsSc);
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[blockSize.NumberOfCells];
 			var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlags, zValues: null);
 
-			Debug.WriteLine($"{s1}, {s2}: ACarries: {smxMathHelper.NumberOfACarries}\tMCarries: {smxMathHelper.NumberOfMCarries}.");
+			//Debug.WriteLine($"{s1}, {s2}: ACarries: {smxMathHelper.NumberOfACarries}\tMCarries: {smxMathHelper.NumberOfMCarries}\tSplits: {smxMathHelper.NumberOfSplits}\tCarries: {smxMathHelper.NumberOfGetCarries}");
+
+			Debug.WriteLine($"{s1}, {s2}: Splits: {smxMathHelper.NumberOfSplits}\tCarries: {smxMathHelper.NumberOfGetCarries}\tGrtrThanOps: {gtOpsSc}\tFP-Splits: {numberOfSplits}\tFP-Carries: {numberOfGetCarries}\tGrtrThanOps: {gtOpsFP}");
+			
 
 			return result;
 		}
 
-		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations)
+		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, out long numberOfSplits, out long numberOfGetCarries, out long numberOfGtrThanOpsFP, out long numberOfGtrThanOpsSc)
 		{
 			var result = new ushort[blockSize.NumberOfCells];
 
@@ -72,10 +75,17 @@ namespace MSetGenP
 					//if (i == 63) Debug.WriteLine("Here");
 
 					var x = samplePointsX[i];
+					//var cntr = iterator.Iterate(x, y);
 					var cntr = iterator.IterateSmxC2(x, y);
 					result[resultPtr + i] = cntr;
 				}
 			}
+
+			numberOfSplits = iterator.NumberOfSplits;
+			numberOfGetCarries = iterator.NumberOfGetCarries;
+			numberOfGtrThanOpsFP = iterator.NumberOfIsGrtrOpsFP;
+			numberOfGtrThanOpsSc = iterator.NumberOfIsGrtrOpsSc;
+
 
 			return result;
 		}

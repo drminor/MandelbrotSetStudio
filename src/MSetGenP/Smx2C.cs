@@ -44,7 +44,7 @@ namespace MSetGenP
 				Debug.WriteLine("WARNING the exponent is 1.");
 			}
 
-			ValidatePWValues(mantissa);
+			//ValidatePWValues(mantissa);
 
 			Sign = sign;
 			Mantissa = (ulong[])mantissa.Clone(); // SmxMathHelper.GetPwULongs(mantissa);
@@ -53,6 +53,7 @@ namespace MSetGenP
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
+		[Conditional("DETAIL")]
 		private static void ValidatePWValues(ulong[] mantissa)
 		{
 			if (SmxHelper.CheckPW2CValues(mantissa))

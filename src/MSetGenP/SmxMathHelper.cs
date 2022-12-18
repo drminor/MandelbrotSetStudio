@@ -14,7 +14,7 @@ namespace MSetGenP
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
 		private static readonly ulong HALF_DIGIT_VALUE = (ulong)Math.Pow(2, 16);
 
-		private static readonly ulong LOW_MASK =    0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private static readonly ulong HIGH_MASK =    0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
 		#endregion
@@ -56,6 +56,9 @@ namespace MSetGenP
 
 		public int NumberOfMCarries { get; private set; }
 		public int NumberOfACarries { get; private set; }
+		public int NumberOfSplits { get; private set; }
+		public long NumberOfGetCarries { get; private set; }
+		public long NumberOfGrtrThanOps { get; private set; }
 
 		#endregion
 
@@ -485,7 +488,7 @@ namespace MSetGenP
 				if ((result[i] & TEST_BIT_32) > 0)
 				{
 					// if the least significant bit of the high part of the result is still set, no borrow occured.
-					result[i] &= LOW_MASK;
+					result[i] &= HIGH_MASK;
 					borrow = 0;
 				}
 				else
@@ -571,11 +574,12 @@ namespace MSetGenP
 
 		private ulong Split(ulong x, out ulong hi)
 		{
+			NumberOfSplits++;
 			hi = x >> 32; // Create new ulong from bits 32 - 63.
-			return x & LOW_MASK; // Create new ulong from bits 0 - 31.
+			return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DETAIL")]
 		private void ValidateIsSplit(ulong[] mantissa)
 		{
 			if (CheckPWValues(mantissa))
@@ -584,7 +588,7 @@ namespace MSetGenP
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DETAIL")]
 		private void CheckForceExpResult(Smx smx, string desc)
 		{
 			if (smx.Mantissa.Length > LimbCount)
@@ -703,6 +707,7 @@ namespace MSetGenP
 
 		public bool IsGreaterOrEqThanThreshold(Smx a)
 		{
+			NumberOfGrtrThanOps++;
 			var left = a.Mantissa[^1];
 			//var right = b * Math.Pow(2, 24);
 			var right = ThresholdMsl;
