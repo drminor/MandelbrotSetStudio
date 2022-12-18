@@ -1,6 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Numerics;
 
 namespace MSetGenP
@@ -89,17 +90,6 @@ namespace MSetGenP
 			}
 			else
 			{
-				//var nrmMantissa = ShiftAndTrim(mantissa, out carry);
-				//if (carry > 0)
-				//{
-				//	NumberOfMCarries++;
-				//	result = CreateNewMaxIntegerSmx2C(precision);
-				//}
-				//else
-				//{
-				//	result = BuildSmx2C(nrmMantissa, precision);
-				//}
-
 				var nrmMantissa = ShiftAndTrim(mantissa);
 				result = BuildSmx2C(nrmMantissa, precision);
 			}
@@ -123,15 +113,6 @@ namespace MSetGenP
 					var (hi, lo) = Split(product);
 					mantissa[resultPtr] += lo;
 					mantissa[resultPtr + 1] += hi;
-
-					//var (lo, hi) = SplitAndGetCarry(product, out var carry);
-					//mantissa[resultPtr] += lo;
-					//mantissa[resultPtr + 1] += hi;
-
-					//if (carry != 0)
-					//{
-					//	throw new OverflowException("NewCarry is not zero. Multiply two Smx2C values.");
-					//}
 				}
 			}
 
@@ -160,17 +141,6 @@ namespace MSetGenP
 			}
 			else
 			{
-				//var nrmMantissa = ShiftAndTrim(mantissa, out carry);
-				//if (carry > 0)
-				//{
-				//	NumberOfMCarries++;
-				//	result = CreateNewMaxIntegerSmx2C(precision);
-				//}
-				//else
-				//{
-				//	result = BuildSmx2C(nrmMantissa, precision);
-				//}
-
 				var nrmMantissa = ShiftAndTrim(mantissa);
 				result = BuildSmx2C(nrmMantissa, precision);
 			}
@@ -240,18 +210,6 @@ namespace MSetGenP
 			}
 			else
 			{
-				//var nrmMantissa = ShiftAndTrim(mantissa, out carry);
-
-				//if (carry > 0)
-				//{
-				//	NumberOfMCarries++;
-				//	result = CreateNewMaxIntegerSmx2C(precision);
-				//}
-				//else
-				//{
-				//	result = BuildSmx2C(nrmMantissa, precision);
-				//}
-
 				var nrmMantissa = ShiftAndTrim(mantissa);
 				result = BuildSmx2C(nrmMantissa, precision);
 			}
@@ -284,6 +242,10 @@ namespace MSetGenP
 
 			return mantissa;
 		}
+
+		#endregion
+
+		#region Multiply Post Processing 
 
 		public ulong[] PropagateCarries(ulong[] mantissa, out ulong carry)
 		{
@@ -328,6 +290,57 @@ namespace MSetGenP
 			if (carry > 0) throw new OverflowException("PropagateCarries found a value larger than MAX DIGIT in the top 'bin'.");
 
 			return result;
+		}
+
+		public ulong[] ShiftAndTrim(ulong[] mantissa)
+		{
+			// The upper uint half of each limb should be a simple sign extension: either all 1's or all 0's
+			//ValidateIsSplit(mantissa);
+
+			// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
+			// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
+			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
+
+			// TODO: As the integer portion is 'trimmed', we need to check to see the result is
+			// larger than the largest integer supported by the current format.
+
+			// Discard 1 more bit?
+			// Start with 1:7:56 (Sign:Integer:Fraction 
+			// Intermediate has 0:16:112
+			// Push 8 from behind to in front and drop the least two significant limbs for a total of 64 - 8 = 56 bits from behind
+			// Push 8 off the top, for a total of 64 bits discarded.
+			// The result must be positive, so if the most significant bit is a '1', we know there is an overflow.
+
+			var shiftAmount = BitsBeforeBP;
+			var result = new ulong[LimbCount];
+			var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
+
+			for (var i = 0; i < result.Length; i++)
+			{
+				result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
+				
+				if (sourceIndex > 0)
+				{
+					var previousLimb = mantissa[sourceIndex - 1];
+					previousLimb &= HIGH_MASK;                      // Clear the bits from the uppper half, these will either be all 0's or all 1'. Our values are confirmed to be split at this point.
+					result[i] |= previousLimb >> 32 - shiftAmount;  // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
+				}
+
+				sourceIndex++;
+			}
+
+			return result;
+		}
+
+		private (ulong hi, ulong lo) Split(ulong x)
+		{
+			// TODO: Upon splitting a result limb into hi and lo halves, do these values need to be signed extended?
+
+			NumberOfSplits++;
+			var hi = x >> 32;           // Create new ulong from bits 32 - 63.
+			var lo = x & HIGH_MASK;     // Create new ulong from bits 0 - 31.
+
+			return (hi, lo);
 		}
 
 		#endregion
@@ -411,85 +424,16 @@ namespace MSetGenP
 			return result;
 		}
 
-		private void Report(int step, ulong left, ulong right, ulong carry, ulong nv, ulong lo, ulong newCarry)
-		{
-			var ld = SmxHelper.ConvertFrom2C(left);
-			var rd = SmxHelper.ConvertFrom2C(right);
-			var cd = SmxHelper.ConvertFrom2C(carry);
-			var nvd = SmxHelper.ConvertFrom2C(nv);
-			var hid = SmxHelper.ConvertFrom2C(newCarry);
-			var lod = SmxHelper.ConvertFrom2C(lo);
-
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, {right:X4} wc:{carry:X4} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, {rd} wc:{cd} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv:X4}: hi:{newCarry:X4}, lo:{lo:X4}");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}\n");
-		}
-
-		private Smx2C BuildSmx2C(ulong[] partialWordLimbs, int precision)
-		{
-			var lzc = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
-			var firstBitIsAOne = lzc == 0;
-
-			var result = new Smx2C(!firstBitIsAOne, partialWordLimbs, TargetExponent, precision, BitsBeforeBP);
-
-			return result;
-		}
-
 		#endregion
 
-		#region Normalization Support
-
-		// Discard 1 more bit.
-		// Start with 1:7:56 (Sign:Integer:Fraction 
-		// Intermediate has 0:16:112
-		// Push 8 from behind to in front and drop the least two significant limbs for a total of 64 - 8 = 56 bits from behind
-		// Push 8 off the top, for a total of 64 bits discarded.
-		// The result must be positive, so if the most significant bit is a '1', we know there is an overflow.
-
-		public ulong[] ShiftAndTrim(ulong[] mantissa)
-		{
-			// The upper uint half of each limb should be a simple sign extension: either all 1's or all 0's
-			//ValidateIsSplit(mantissa);
-
-			// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
-			// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
-			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
-
-			var shiftAmount = BitsBeforeBP;
-
-			var result = new ulong[LimbCount];
-			var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
-
-			for (var i = 0; i < result.Length; i++)
-			{
-				result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;	// Discard the top shiftAmount of bits.
-				if (sourceIndex > 0)
-				{
-					var previousLimb = mantissa[sourceIndex - 1];
-					previousLimb &= HIGH_MASK;						// Clear the bits from the uppper half, these will either be all 0's or all 1'. Our values are confirmed to be split at this point.
-					result[i] |= previousLimb >> 32 - shiftAmount;	// Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
-				}
-				sourceIndex++;
-			}
-
-			return result;
-		}
-
-		private (ulong hi, ulong lo) Split(ulong x)
-		{
-			NumberOfSplits++;
-			var hi = x >> 32;           // Create new ulong from bits 32 - 63. TODO: This value is not being signed extended. Is this correct?
-			var lo = x & HIGH_MASK;		// Create new ulong from bits 0 - 31.
-
-			return (hi, lo);
-		}
+		#region Add Subtract Post Processing
 
 		private (ulong limb, ulong carry) GetResultWithCarry(ulong x)
 		{
-			NumberOfGetCarries++;
-			// carry occurs any time the bit just above the result limb is different than msb of the limb
+			// A carry is generated any time the bit just above the result limb is different than msb of the limb
 			// i.e. this next higher bit is not an extension of the sign.
+
+			NumberOfGetCarries++;
 
 			var limbValue = x & HIGH_MASK;
 			bool carryFlag;
@@ -499,7 +443,7 @@ namespace MSetGenP
 
 			if (resultIsNegative)
 			{
-				limbValue |= HIGH_FILL;	// sign extend the result
+				limbValue |= HIGH_FILL; // sign extend the result
 				carryFlag = !nextBitIsNegative; // true if next higher bit is zero
 			}
 			else
@@ -508,129 +452,6 @@ namespace MSetGenP
 			}
 
 			var result = (limbValue, carryFlag ? 1uL : 0uL);
-			return result;
-		}
-
-		//private (ulong hi, ulong lo) SplitSignedLimb(ulong x)
-		//{
-		//	var hi = x >> 31;               // Create new ulong from bits 32 - 63.
-		//	var lo = x & LOW_MASK_SIGNED;      // Create new ulong from bits 0 - 31.
-
-		//	return (hi, lo);
-		//}
-
-		// The carryWidth = 1 for addition and BitsBeforeBP for Multiplication.
-
-		//private (ulong hi, ulong lo) SplitMslV1(ulong x, /*byte carryWidth, */out bool overflowFlag/*, out ulong hiLoSignInfo*/)
-		//{
-		//	var bit31set = (x & TEST_BIT_31) > 0;
-		//	var bit32set = (x & TEST_BIT_32) > 0;
-
-		//	overflowFlag = bit31set != bit32set;
-
-		//	ulong hi;
-		//	ulong lo;
-
-		//	if (bit31set)
-		//	{
-		//		hi = (x >> 32) & HIGH_FILL;
-		//		lo = x | HIGH_FILL;
-		//	}
-		//	else
-		//	{
-		//		hi = x >> 32;
-		//		lo = x & HIGH_MASK;
-		//	}
-
-
-		//	//hiLoSignInfo = ObserveHiSign(result.Item1, result.Item2);
-		//	//overflowFlag = DetectOverflow(/*carryWidth, */result.Item1, result.Item2);
-
-		//	var result = (hi, lo);
-
-		//	return result;
-		//}
-
-		//private (ulong hi, ulong lo) SplitOld(ulong x/*, out ulong hiLoSignInfo*/)
-		//{
-		//	var hi = x >> 32;           // Create new ulong from bits 32 - 63.
-		//	var lo = x & HIGH_MASK;      // Create new ulong from bits 0 - 31.
-
-		//	var result = (hi, lo);
-		//	//hiLoSignInfo = ObserveHiSign(result.Item1, result.Item2);
-
-		//	return result;
-		//}
-
-		//private bool DetectOverflow(/*byte carryWidth, */ulong hiPart, ulong limbResult)
-		//{
-		//	var lzcHiPart = BitOperations.LeadingZeroCount(hiPart);
-		//	var hiPartIsNegative = lzcHiPart == 0;
-
-		//	var lzcLimb = BitOperations.LeadingZeroCount(limbResult);
-		//	var limbIsNegative = lzcLimb == 0;
-
-		//	bool result = hiPartIsNegative != limbIsNegative;
-
-		//	//if (hiPartIsNegative == limbIsNegative)
-		//	//{
-		//	//	result = false;
-		//	//}
-		//	//else if (hiPartIsNegative && !limbIsNegative)
-		//	//{
-		//	//	// We have a carry out
-		//	//	result = true;
-		//	//}
-		//	//else
-		//	//{
-		//	//	// We have a borrow out
-		//	//	result = true;
-		//	//}
-
-		//	return result;
-		//}
-
-		//private ulong ObserveHiSign(ulong hiPart, ulong limbResult)
-		//{
-		//	var lzcHiPart = BitOperations.LeadingZeroCount(hiPart);
-		//	var hiPartIsNegative = lzcHiPart == 0;
-
-		//	var lzcLimb = BitOperations.LeadingZeroCount(limbResult);
-		//	var limbIsNegative = lzcLimb == 0;
-
-		//	ulong result;
-
-		//	if (hiPartIsNegative == limbIsNegative)
-		//	{
-		//		result = 0;
-		//	}
-		//	else if (hiPartIsNegative && !limbIsNegative)
-		//	{
-		//		// We have a carry out
-		//		result = 1;
-		//	}
-		//	else
-		//	{
-		//		// We have a borrow out
-		//		result = ALL_BITS_MASK; 
-		//	}
-
-		//	return result;
-		//}
-
-		public Smx2C CreateNewZeroSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
-		{
-			var result = new Smx2C(true, new ulong[LimbCount], TargetExponent, precision, BitsBeforeBP);
-			return result;
-		}
-
-		// TODO: Create a singleton for each FPMathHelper instance.
-		public Smx2C CreateNewMaxIntegerSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
-		{
-			var rValue = new RValue(MaxIntegerValue, 0, precision);
-			var tResult = SmxHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
-			var result = Convert(tResult);
-
 			return result;
 		}
 
@@ -657,7 +478,7 @@ namespace MSetGenP
 
 		#endregion
 
-		#region Conversion
+		#region Smx2C Support
 
 		public Smx Convert(Smx2C smx2C)
 		{
@@ -674,6 +495,46 @@ namespace MSetGenP
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
 
 			return result;
+		}
+
+		public Smx2C CreateNewZeroSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			var result = new Smx2C(true, new ulong[LimbCount], TargetExponent, precision, BitsBeforeBP);
+			return result;
+		}
+
+		public Smx2C CreateNewMaxIntegerSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			var rValue = new RValue(MaxIntegerValue, 0, precision);
+			var tResult = SmxHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var result = Convert(tResult);
+
+			return result;
+		}
+
+		private Smx2C BuildSmx2C(ulong[] partialWordLimbs, int precision)
+		{
+			var lzc = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
+			var firstBitIsAOne = lzc == 0;
+
+			var result = new Smx2C(!firstBitIsAOne, partialWordLimbs, TargetExponent, precision, BitsBeforeBP);
+
+			return result;
+		}
+
+		private void Report(int step, ulong left, ulong right, ulong carry, ulong nv, ulong lo, ulong newCarry)
+		{
+			var ld = SmxHelper.ConvertFrom2C(left);
+			var rd = SmxHelper.ConvertFrom2C(right);
+			var cd = SmxHelper.ConvertFrom2C(carry);
+			var nvd = SmxHelper.ConvertFrom2C(nv);
+			var hid = SmxHelper.ConvertFrom2C(newCarry);
+			var lod = SmxHelper.ConvertFrom2C(lo);
+
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, {right:X4} wc:{carry:X4} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, {rd} wc:{cd} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv:X4}: hi:{newCarry:X4}, lo:{lo:X4}");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}\n");
 		}
 
 		#endregion
@@ -761,6 +622,5 @@ namespace MSetGenP
 		}
 
 		#endregion
-
 	}
 }

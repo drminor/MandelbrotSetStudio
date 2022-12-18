@@ -42,7 +42,6 @@ namespace MSetGenP
 			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
 		}
 
-
 		#endregion
 
 		#region Public Properties
