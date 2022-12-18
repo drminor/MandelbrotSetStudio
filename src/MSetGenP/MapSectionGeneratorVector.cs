@@ -55,7 +55,10 @@ namespace MSetGenP
 
 			var cRs = new FPValues(samplePointsX);
 
-			var subSectionGeneratorVector = new SubSectionGeneratorVector(fixedPointFormat, targetIterations, threshold);
+			//var subSectionGeneratorVector = new SubSectionGeneratorVector(fixedPointFormat, targetIterations, threshold);
+
+			// USE the new 2's Compliment implementation
+			var subSectionGeneratorVector = new SubSectionGeneratorVector2C(fixedPointFormat, targetIterations, threshold);
 
 			for (int j = 0; j < samplePointsY.Length; j++)
 			{

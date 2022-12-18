@@ -236,7 +236,6 @@ namespace MSetGenP
 		public long NumberOfGetCarries { get; private set; }
 		public long NumberOfGrtrThanOps { get; private set; }
 
-
 		#endregion
 
 		#region Multiply and Square
@@ -744,7 +743,7 @@ namespace MSetGenP
 
 		#endregion
 
-		 #region Create Smx Support
+		#region Create Smx Support
 
 		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
