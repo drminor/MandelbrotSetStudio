@@ -90,6 +90,22 @@ namespace MSetGenP
 
 		#region Smx and RValue Support
 
+		public static RValue GetRValue(Smx smx)
+		{
+			var result = GetRValue(smx.Sign, smx.Mantissa, smx.Exponent, smx.Precision);
+			return result;
+		}
+
+		public static RValue GetRValue(bool sign, ulong[] partialWordLimbs, int exponent, int precision)
+		{
+			var biValue = FromPwULongs(partialWordLimbs);
+			biValue = sign ? biValue : -1 * biValue;
+			var result = new RValue(biValue, exponent, precision);
+			return result;
+		}
+
+		// Creates a Smx to be compatible with a fixed point format with
+		// the specified target exponent and limb count.
 		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
 			var partialWordLimbs = ToPwULongs(rValue.Value);
@@ -371,18 +387,6 @@ namespace MSetGenP
 		{
 			var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
 			return shiftAmount;
-		}
-
-		public static RValue GetRValue(Smx smx)
-		{
-			var biValue = FromPwULongs(smx.Mantissa);
-			biValue = smx.Sign ? biValue : -1 * biValue;
-			var exponent = smx.Exponent;
-			var precision = smx.Precision;
-
-			var result = new RValue(biValue, exponent, precision);
-
-			return result;
 		}
 
 		#endregion

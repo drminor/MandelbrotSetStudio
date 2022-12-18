@@ -483,7 +483,12 @@ namespace MSetGenP
 		public Smx Convert(Smx2C smx2C)
 		{
 			var un2cMantissa = SmxHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
-			var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
+
+			//var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
+
+			var rvalue = SmxHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
+			var result = SmxHelper.CreateSmx(rvalue, TargetExponent, LimbCount, BitsBeforeBP);
+
 			return result;
 		}
 

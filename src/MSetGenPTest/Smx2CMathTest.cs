@@ -56,7 +56,10 @@ namespace EngineTest
 			var targetExponent = fpMathHelper.TargetExponent;
 			var bitsBeforeBP = fpMathHelper.BitsBeforeBP;
 
-			var aBigInteger = BigInteger.Parse("-12644545325526901863503869090"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+
+			//var aBigInteger = BigInteger.Parse("-12644545325526901863503869090"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+
+			var aBigInteger = BigInteger.Parse("-1264454532552690186350"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			var aRValue = new RValue(aBigInteger, -124, precision); // 0.25
 			var aSmx2C = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
 
@@ -84,8 +87,8 @@ namespace EngineTest
 			//var smxMH2 = BuildTheMathHelper(10);
 			//var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, -248, precision));
 
-			var aBiSmx2C = fpMathHelper.Convert(SmxHelper.CreateSmx(aBiRValue, targetExponent: -248, limbCount: 8, bitsBeforeBP:8), overrideFormatChecks:true);
-			var aBiSmx = fpMathHelper.Convert(aBiSmx2C);
+			var aBiSmx = SmxHelper.CreateSmx(aBiRValue, targetExponent: -280, limbCount: 9, bitsBeforeBP: 8);
+			var aBiSmx2C = fpMathHelper.Convert(aBiSmx, overrideFormatChecks:true);
 
 			var aBiSmxRValue = aBiSmx.GetRValue();
 			var aBiStr = aBiSmx.GetStringValue();
