@@ -9,6 +9,8 @@ namespace MSetGenP
 
 		private FPMathHelper _fPMathHelper;
 
+		#region Constructor
+
 		public IteratorScalar(SmxMathHelper smxMathHelper, int targetIterations)
 		{
 			_smxMathHelper = smxMathHelper;
@@ -17,11 +19,19 @@ namespace MSetGenP
 			_targetIterations = targetIterations;
 		}
 
+		#endregion
+
+		#region Public Properties
+
 		public long NumberOfSplits => _fPMathHelper.NumberOfSplits;
 		public long NumberOfGetCarries => _fPMathHelper.NumberOfGetCarries;
 
 		public long NumberOfIsGrtrOpsFP => _fPMathHelper.NumberOfGrtrThanOps;
 		public long NumberOfIsGrtrOpsSc => _smxMathHelper.NumberOfGrtrThanOps;
+
+		#endregion
+
+		#region Iterate - Smx
 
 		public ushort Iterate(Smx cR, Smx cI)
 		{
@@ -82,7 +92,11 @@ namespace MSetGenP
 			return cntr;
 		}
 
-		public ushort IterateSmxC2(Smx cR, Smx cI)
+		#endregion
+
+		#region Iterate - Smx2C
+
+		public ushort IterateSmx2C(Smx cR, Smx cI)
 		{
 			var cRn = _fPMathHelper.Convert(cR);
 			var cIn = _fPMathHelper.Convert(cI);
@@ -131,6 +145,7 @@ namespace MSetGenP
 			return cntr;
 		}
 
+		#endregion
 
 	}
 }

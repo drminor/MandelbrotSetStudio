@@ -6,7 +6,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSetGenP
 {
-	internal class SubSectionGeneratorVector
+	internal class SubSectionGeneratorVector2C
 	{
 		private readonly ApFixedPointFormat _apFixedPointFormat1;
 
@@ -18,7 +18,7 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public SubSectionGeneratorVector(ApFixedPointFormat apFixedPointFormat, int targetIterations, uint threshold)
+		public SubSectionGeneratorVector2C(ApFixedPointFormat apFixedPointFormat, int targetIterations, uint threshold)
 		{
 			_apFixedPointFormat1 = apFixedPointFormat;
 
@@ -53,22 +53,22 @@ namespace MSetGenP
 
 			var escapedFlags = new bool[resultLength];
 
-			var smxVecMathHelper = new SmxVecMathHelper(_apFixedPointFormat1, resultLength, _threshold);
+			var fPVecMathHelper = new FPVecMathHelper(_apFixedPointFormat1, resultLength, _threshold);
 
 			var inPlayList = BuildTheInplayList(doneFlags, resultLength);
-			smxVecMathHelper.InPlayList = inPlayList;
+			fPVecMathHelper.InPlayList = inPlayList;
 
-			var iterator = new IteratorVector(smxVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+			var iterator = new IteratorVector(fPVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
 			while (inPlayList.Length > 0)
 			{
 				iterator.Iterate();
-				smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
-				UpdateTheDoneFlags(smxVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
+				fPVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
+				UpdateTheDoneFlags(fPVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
 			}
 
-			NumberOfACarries += smxVecMathHelper.NumberOfACarries;
-			NumberOfMCarries += smxVecMathHelper.NumberOfMCarries;
+			NumberOfACarries += fPVecMathHelper.NumberOfACarries;
+			NumberOfMCarries += fPVecMathHelper.NumberOfMCarries;
 		}
 
 		public ushort[] GenerateMapSection(FPValues cRs, FPValues cIs, out bool[] doneFlags)
@@ -86,30 +86,30 @@ namespace MSetGenP
 
 			var escapedFlags = new bool[resultLength];
 
-			var smxVecMathHelper = new SmxVecMathHelper(_apFixedPointFormat1, resultLength, _threshold);
-			smxVecMathHelper.DoneFlags = doneFlags;
+			var fPVecMathHelper = new FPVecMathHelper(_apFixedPointFormat1, resultLength, _threshold);
+			fPVecMathHelper.DoneFlags = doneFlags;
 
-			var inPlayList = smxVecMathHelper.InPlayList;
+			var inPlayList = fPVecMathHelper.InPlayList;
 
 			// Perform the first iteration. 
 			var zRs = cRs.Clone();
 			var zIs = cIs.Clone();
 
-			smxVecMathHelper.Square(zRs, zRSqrs);
-			smxVecMathHelper.Square(zIs, zISqrs);
-			smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
-			inPlayList = UpdateTheDoneFlags(smxVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
-			smxVecMathHelper.InPlayList = inPlayList;
+			fPVecMathHelper.Square(zRs, zRSqrs);
+			fPVecMathHelper.Square(zIs, zISqrs);
+			fPVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
+			inPlayList = UpdateTheDoneFlags(fPVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
+			fPVecMathHelper.InPlayList = inPlayList;
 
-			var iterator = new IteratorVector(smxVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+			var iterator = new IteratorVector(fPVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
 			while (inPlayList.Length > 0)
 			{
-				var aCarriesSnap = smxVecMathHelper.NumberOfACarries;
+				var aCarriesSnap = fPVecMathHelper.NumberOfACarries;
 				var doneFlagsCnt = doneFlags.Count(x => x);
 
 				iterator.Iterate();
-				smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
+				fPVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
 
 				//var aCarriesDif = smxVecMathHelper.NumberOfACarries - aCarriesSnap;
 				//if (aCarriesDif > 0)
@@ -119,25 +119,22 @@ namespace MSetGenP
 				//	Debug.Assert(doneFlagsDiff == aCarriesDif, "Not All Done Flags were updated.");
 				//}
 
-				inPlayList = UpdateTheDoneFlags(smxVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
-				smxVecMathHelper.InPlayList = inPlayList;
-
-
-
+				inPlayList = UpdateTheDoneFlags(fPVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
+				fPVecMathHelper.InPlayList = inPlayList;
 			}
 
-			NumberOfACarries += smxVecMathHelper.NumberOfACarries;
-			NumberOfMCarries += smxVecMathHelper.NumberOfMCarries;
+			NumberOfACarries += fPVecMathHelper.NumberOfACarries;
+			NumberOfMCarries += fPVecMathHelper.NumberOfMCarries;
 
 			// TODO: Need to keep track if a sample point has escaped or not, currently the DoneFlag is set if 'Escaped' or 'Reached Target Iteration.'
 
-			doneFlags = smxVecMathHelper.DoneFlags;
+			doneFlags = fPVecMathHelper.DoneFlags;
 			return counts;
 		}
 
-		private int[] UpdateTheDoneFlags(SmxVecMathHelper smxVecMathHelper, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
+		private int[] UpdateTheDoneFlags(FPVecMathHelper fpVecMathHelper, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
 		{
-			smxVecMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
+			fpVecMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
 
 			var vectorsNoLongerInPlay = UpdateCounts(inPlayList, escapedFlags, counts, doneFlags);
 			var updatedInPlayList = GetUpdatedInPlayList(inPlayList, vectorsNoLongerInPlay);

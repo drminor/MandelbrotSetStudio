@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public class SmxVecMathHelper
+	public class FPVecMathHelper
 	{
 		#region Private Properties
 
@@ -46,7 +46,7 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public SmxVecMathHelper(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
+		public FPVecMathHelper(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
 			ApFixedPointFormat = SmxHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
@@ -744,7 +744,7 @@ namespace MSetGenP
 
 		#endregion
 
-		 #region Create Smx Support
+		#region Create Smx Support
 
 		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
@@ -760,6 +760,7 @@ namespace MSetGenP
 		//{
 		//	return new int[0];
 		//}
+
 
 		private int[] Compare(int idx, Memory<ulong>[] mantissaMemsA, Memory<ulong>[] mantissaMemsB)
 		{

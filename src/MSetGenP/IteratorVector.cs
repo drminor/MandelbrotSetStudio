@@ -4,7 +4,10 @@ namespace MSetGenP
 {
 	internal ref struct IteratorVector
 	{
+		#region Private Properties
+
 		private SmxVecMathHelper _smxVecMathHelper;
+		private FPVecMathHelper _fPVecMathHelper;
 
 		private FPValues _cRs;
 		private FPValues _cIs;
@@ -19,9 +22,22 @@ namespace MSetGenP
 		private FPValues _zRs2;
 		private FPValues _zIs2;
 
+		#endregion
+
+		#region Constructors
+
 		public IteratorVector(SmxVecMathHelper smxVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+			: this(smxVecMathHelper, GetFpVecHelper(smxVecMathHelper, cRs.Length), cRs, cIs, zRs, zIs, zRSqrs, zISqrs)
+		{ }
+
+		public IteratorVector(FPVecMathHelper fPVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+			: this(GetSmxVecHelper(fPVecMathHelper, cRs.Length), fPVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs)
+		{ }
+
+		public IteratorVector(SmxVecMathHelper smxVecMathHelper, FPVecMathHelper fPVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
 		{
 			_smxVecMathHelper = smxVecMathHelper;
+			_fPVecMathHelper = new FPVecMathHelper(_smxVecMathHelper.ApFixedPointFormat, cRs.Length, _smxVecMathHelper.Threshold);
 
 			_cRs = cRs;
 			_cIs = cIs;
@@ -36,6 +52,20 @@ namespace MSetGenP
 			_zRs2 = new FPValues(_cRs.LimbCount, _cRs.Length);
 			_zIs2 = new FPValues(_cRs.LimbCount, _cRs.Length);
 		}
+
+		private static SmxVecMathHelper GetSmxVecHelper(FPVecMathHelper fPVecMathHelper, int valueCount)
+		{
+			return new SmxVecMathHelper(fPVecMathHelper.ApFixedPointFormat, valueCount, fPVecMathHelper.Threshold);
+		}
+
+		private static FPVecMathHelper GetFpVecHelper(SmxVecMathHelper smxVecMathHelper, int valueCount)
+		{
+			return new FPVecMathHelper(smxVecMathHelper.ApFixedPointFormat, valueCount, smxVecMathHelper.Threshold);
+		}
+
+		#endregion
+
+		#region Public Methods
 
 		public void Iterate()
 		{
@@ -68,5 +98,37 @@ namespace MSetGenP
 			}
 		}
 
+		public void IterateSmx2C()
+		{
+			try
+			{
+				// z.r + z.i
+				_fPVecMathHelper.Add(_zRs, _zIs, _zRZIs);
+
+				// square(z.r + z.i)
+				_fPVecMathHelper.Square(_zRZIs, _zRZiSqrs);
+
+				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
+				_fPVecMathHelper.Sub(_zRZiSqrs, _zRSqrs, _zIs);
+				_fPVecMathHelper.Sub(_zIs, _zISqrs, _zIs2);
+				_fPVecMathHelper.Add(_zIs2, _cIs, _zIs);
+
+				// z.r = zrsqr - zisqr + c.r
+				_fPVecMathHelper.Sub(_zRSqrs, _zISqrs, _zRs2);
+				_fPVecMathHelper.Add(_zRs2, _cRs, _zRs);
+
+				_fPVecMathHelper.Square(_zRs, _zRSqrs);
+				_fPVecMathHelper.Square(_zIs, _zISqrs);
+
+				//sumOfSqrs = _smxVecMathHelper.Add(zRSqrs, zISqrs);
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Iterator received exception: {e}.");
+				throw;
+			}
+		}
+
+		#endregion
 	}
 }
