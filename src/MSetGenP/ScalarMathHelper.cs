@@ -6,7 +6,7 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public static class ScalerMathHelper
+	public static class ScalarMathHelper
 	{
 		#region Private Members
 

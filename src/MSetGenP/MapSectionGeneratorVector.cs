@@ -28,7 +28,7 @@ namespace MSetGenP
 			var fixedPointFormat = new ApFixedPointFormat(8, precision);
 			//var fixedPointFormat = new ApFixedPointFormat(3);
 
-			var smxMathHelper = new ScalerMath(fixedPointFormat, threshold);
+			var smxMathHelper = new ScalarMath(fixedPointFormat, threshold);
 
 			var dtoMapper = new DtoMapper();
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);

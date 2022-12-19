@@ -30,14 +30,14 @@ namespace MSetGenP
 				throw new NotSupportedException("An APFixedFormat with a BitsBeforeBinaryPoint of 32 is not supported.");
 			}
 
-			ApFixedPointFormat = ScalerMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			{
 				Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
 			}
 
-			LimbCount = ScalerMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
+			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
 		}
@@ -626,7 +626,7 @@ namespace MSetGenP
 			var limbsToDiscard = Math.Max(logicalLength - LimbCount, 0);
 			var adjExponent = exponent + limbsToDiscard * 32;
 
-			var shiftAmount = ScalerMathHelper.GetShiftAmount(adjExponent, TargetExponent);
+			var shiftAmount = ScalarMathHelper.GetShiftAmount(adjExponent, TargetExponent);
 
 			if (shiftAmount > 0)
 			{
@@ -795,12 +795,12 @@ namespace MSetGenP
 		{
 			// TODO: Create a Static Readonly value and the use Clone to make copies
 			var rValue = new RValue(MaxIntegerValue, 0, precision);
-			var result = ScalerMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var result = ScalarMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
 			return result;
 		}
 		public static RValue GetRValue(SmxSa smx)
 		{
-			var biValue = ScalerMathHelper.FromPwULongs(smx.MantissaSa.MaterializeAll());
+			var biValue = ScalarMathHelper.FromPwULongs(smx.MantissaSa.MaterializeAll());
 			biValue = smx.Sign ? biValue : -1 * biValue;
 			var exponent = smx.Exponent;
 			var precision = smx.Precision;
@@ -811,7 +811,7 @@ namespace MSetGenP
 		}
 		public static RValue GetRValue(SmxFloating smx)
 		{
-			var biValue = ScalerMathHelper.FromPwULongs(smx.Mantissa);
+			var biValue = ScalarMathHelper.FromPwULongs(smx.Mantissa);
 			biValue = smx.Sign ? biValue : -1 * biValue;
 			var exponent = smx.Exponent;
 			var precision = smx.Precision;

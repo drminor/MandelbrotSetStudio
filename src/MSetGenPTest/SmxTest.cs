@@ -93,9 +93,9 @@ namespace EngineTest
 			var testMaxVal2 = smxVecMathHelper.CreateNewMaxIntegerSmx();
 
 		*/
-		private ScalerMath BuildTheMathHelper(int limbCount)
+		private ScalarMath BuildTheMathHelper(int limbCount)
 		{
-			var result = new ScalerMath(new ApFixedPointFormat(limbCount), 4u);
+			var result = new ScalarMath(new ApFixedPointFormat(limbCount), 4u);
 			return result;
 		}
 

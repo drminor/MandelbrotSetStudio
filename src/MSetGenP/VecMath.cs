@@ -48,7 +48,7 @@ namespace MSetGenP
 
 		public VecMath(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
-			ApFixedPointFormat = ScalerMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
@@ -69,7 +69,7 @@ namespace MSetGenP
 			// Initially, all values are 'In Play.'
 			DoneFlags = new bool[ValueCount];
 
-			LimbCount = ScalerMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
+			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
 
@@ -97,7 +97,7 @@ namespace MSetGenP
 				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat: {ApFixedPointFormat}.");
 			}
 
-			var thresholdMsl = ScalerMathHelper.GetThresholdMsl(threshold, TargetExponent, LimbCount, BitsBeforeBP);
+			var thresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, TargetExponent, LimbCount, BitsBeforeBP);
 			var thresholdMslIntegerVector = Vector256.Create(thresholdMsl);
 			var thresholdVector = thresholdMslIntegerVector.AsInt64();
 

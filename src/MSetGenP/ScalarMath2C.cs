@@ -29,19 +29,19 @@ namespace MSetGenP
 
 		public ScalarMath2C(ApFixedPointFormat apFixedPointFormat, uint thresold)
 		{
-			ApFixedPointFormat = ScalerMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
 			//	Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
 			//}
 
-			LimbCount = ScalerMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
+			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = ScalerMathHelper.GetMax2CIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
+			MaxIntegerValue = ScalarMathHelper.GetMax2CIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
 
 			Threshold = thresold;
-			ThresholdMsl = ScalerMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
+			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
 		}
 
 		#endregion
@@ -238,7 +238,7 @@ namespace MSetGenP
 
 			if (hi2 != 0)
 			{ 
-				throw new OverflowException($"Multiply {ScalerMathHelper.GetDiagDisplayHex("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
+				throw new OverflowException($"Multiply {ScalarMathHelper.GetDiagDisplayHex("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
 			}
 
 			return mantissa;
@@ -355,7 +355,7 @@ namespace MSetGenP
 				return a;
 			}
 
-			var bNegated = ScalerMathHelper.Negate(b);
+			var bNegated = ScalarMathHelper.Negate(b);
 
 			if (a.IsZero)
 			{
@@ -483,12 +483,12 @@ namespace MSetGenP
 
 		public Smx Convert(Smx2C smx2C)
 		{
-			var un2cMantissa = ScalerMathHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
+			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
 
 			//var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
 
-			var rvalue = ScalerMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
-			var result = ScalerMathHelper.CreateSmx(rvalue, TargetExponent, LimbCount, BitsBeforeBP);
+			var rvalue = ScalarMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
+			var result = ScalarMathHelper.CreateSmx(rvalue, TargetExponent, LimbCount, BitsBeforeBP);
 
 			return result;
 		}
@@ -497,7 +497,7 @@ namespace MSetGenP
 		{
 			if (!overrideFormatChecks) CheckLimbCountAndFPFormat(smx);
 
-			var twoCMantissa = ScalerMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
 
 			return result;
@@ -512,7 +512,7 @@ namespace MSetGenP
 		public Smx2C CreateNewMaxIntegerSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			var rValue = new RValue(MaxIntegerValue, 0, precision);
-			var tResult = ScalerMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var tResult = ScalarMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
 			var result = Convert(tResult);
 
 			return result;
@@ -531,9 +531,9 @@ namespace MSetGenP
 		public Smx2C CreateSmx2C(RValue aRValue)
 		{
 			// CreateSmx produces a value that has the TargetExponent and is compatible for this LimbCount and Format.
-			var smx = ScalerMathHelper.CreateSmx(aRValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var smx = ScalarMathHelper.CreateSmx(aRValue, TargetExponent, LimbCount, BitsBeforeBP);
 
-			var twoCMantissa = ScalerMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
 
 			return result;
@@ -542,12 +542,12 @@ namespace MSetGenP
 
 		private void Report(int step, ulong left, ulong right, ulong carry, ulong nv, ulong lo, ulong newCarry)
 		{
-			var ld = ScalerMathHelper.ConvertFrom2C(left);
-			var rd = ScalerMathHelper.ConvertFrom2C(right);
-			var cd = ScalerMathHelper.ConvertFrom2C(carry);
-			var nvd = ScalerMathHelper.ConvertFrom2C(nv);
-			var hid = ScalerMathHelper.ConvertFrom2C(newCarry);
-			var lod = ScalerMathHelper.ConvertFrom2C(lo);
+			var ld = ScalarMathHelper.ConvertFrom2C(left);
+			var rd = ScalarMathHelper.ConvertFrom2C(right);
+			var cd = ScalarMathHelper.ConvertFrom2C(carry);
+			var nvd = ScalarMathHelper.ConvertFrom2C(nv);
+			var hid = ScalarMathHelper.ConvertFrom2C(newCarry);
+			var lod = ScalarMathHelper.ConvertFrom2C(lo);
 
 			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, {right:X4} wc:{carry:X4} ");
 			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, {rd} wc:{cd} ");
@@ -625,7 +625,7 @@ namespace MSetGenP
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit2C(ulong[] mantissa)
 		{
-			if (ScalerMathHelper.CheckPW2CValues(mantissa))
+			if (ScalarMathHelper.CheckPW2CValues(mantissa))
 			{
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}
@@ -634,7 +634,7 @@ namespace MSetGenP
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
 		{
-			if (ScalerMathHelper.CheckPW2CValues(mantissa, sign))
+			if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
 			{
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}

@@ -20,7 +20,7 @@ namespace MSetGenP
 		public SmxFloating(BigInteger bigInteger, int exponent, byte bitsBeforeBP, int precision)
 		{
 			Sign = bigInteger < 0 ? false : true;
-			Mantissa = ScalerMathHelper.ToPwULongs(bigInteger);
+			Mantissa = ScalarMathHelper.ToPwULongs(bigInteger);
 			Exponent = exponent;
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;
@@ -39,7 +39,7 @@ namespace MSetGenP
 
 		private static void ValidatePWValues(ulong[] mantissa)
 		{
-			if (ScalerMathHelper.CheckPWValues(mantissa))
+			if (ScalarMathHelper.CheckPWValues(mantissa))
 			{
 				throw new ArgumentException($"Cannot create a Smx from an array of ulongs where any of the values is greater than MAX_DIGIT.");
 			}
@@ -81,8 +81,8 @@ namespace MSetGenP
 		public override string ToString()
 		{
 			var result = Sign
-				? ScalerMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}"
-				: "-" + ScalerMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}";
+				? ScalarMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}"
+				: "-" + ScalarMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}";
 
 			return result;
 		}

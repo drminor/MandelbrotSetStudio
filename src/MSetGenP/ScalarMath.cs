@@ -7,7 +7,7 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public class ScalerMath : IScalerMath
+	public class ScalarMath : IScalerMath
 	{
 		#region Constants
 
@@ -21,9 +21,9 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public ScalerMath(ApFixedPointFormat apFixedPointFormat, uint thresold)
+		public ScalarMath(ApFixedPointFormat apFixedPointFormat, uint thresold)
 		{
-			ApFixedPointFormat = ScalerMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
@@ -31,12 +31,12 @@ namespace MSetGenP
 			//}
 
 			Threshold = thresold;
-			LimbCount = ScalerMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
+			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
 
 
-			ThresholdMsl = ScalerMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, BitsBeforeBP);
+			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, BitsBeforeBP);
 		}
 
 		#endregion
@@ -239,7 +239,7 @@ namespace MSetGenP
 
 			if (hi2 != 0)
 			{
-				throw new OverflowException($"Multiply {ScalerMathHelper.GetDiagDisplay("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
+				throw new OverflowException($"Multiply {ScalarMathHelper.GetDiagDisplay("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
 			}
 
 			//var splitSieve = Split(seive);
@@ -525,7 +525,7 @@ namespace MSetGenP
 
 		public Smx CreateSmx(RValue rValue)
 		{
-			var result = ScalerMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var result = ScalarMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
 			return result;
 		}
 
@@ -538,7 +538,7 @@ namespace MSetGenP
 		public Smx CreateNewMaxIntegerSmx(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			// TODO: Create a Static Readonly value and the use Clone to make copies
-			var result = ScalerMathHelper.CreateSmx(new RValue(MaxIntegerValue, 0, precision), TargetExponent, LimbCount, BitsBeforeBP);
+			var result = ScalarMathHelper.CreateSmx(new RValue(MaxIntegerValue, 0, precision), TargetExponent, LimbCount, BitsBeforeBP);
 			return result;
 		}
 
@@ -555,12 +555,12 @@ namespace MSetGenP
 
 		public Smx Convert(Smx2C smx2C)
 		{
-			var un2cMantissa = ScalerMathHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
+			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
 
 			//var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
 
-			var rvalue = ScalerMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
-			var result = ScalerMathHelper.CreateSmx(rvalue, TargetExponent, LimbCount, BitsBeforeBP);
+			var rvalue = ScalarMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
+			var result = ScalarMathHelper.CreateSmx(rvalue, TargetExponent, LimbCount, BitsBeforeBP);
 
 			return result;
 		}
@@ -569,7 +569,7 @@ namespace MSetGenP
 		{
 			if (!overrideFormatChecks) CheckLimbCountAndFPFormat(smx);
 
-			var twoCMantissa = ScalerMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
 
 			return result;
@@ -714,7 +714,7 @@ namespace MSetGenP
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit2C(ulong[] mantissa)
 		{
-			if (ScalerMathHelper.CheckPW2CValues(mantissa))
+			if (ScalarMathHelper.CheckPW2CValues(mantissa))
 			{
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}
@@ -723,7 +723,7 @@ namespace MSetGenP
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
 		{
-			if (ScalerMathHelper.CheckPW2CValues(mantissa, sign))
+			if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
 			{
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}

@@ -14,18 +14,23 @@ namespace EngineTest
 		public RValue RValue { get; init; }
 		public string StringValue { get; init; }
 
-		public SmxTestValue(string number, int exponent, int precision, ScalerMath smxMathHelper)
+		public SmxTestValue(string number, int exponent, int precision, ScalarMath scalarMath) : this("+", number, exponent, precision, scalarMath)
+		{ }
+
+		public SmxTestValue(string sign, string number, int exponent, int precision, ScalarMath smxMathHelper)
 		{
 			var bi = BigInteger.Parse(number);
+			if (sign == "-") { bi = BigInteger.Negate(bi); }
+
 			RValue = new RValue(bi, exponent, precision);
 
-			SmxValue = ScalerMathHelper.CreateSmx(RValue, smxMathHelper.TargetExponent, smxMathHelper.LimbCount, smxMathHelper.BitsBeforeBP);
+			SmxValue = ScalarMathHelper.CreateSmx(RValue, smxMathHelper.TargetExponent, smxMathHelper.LimbCount, smxMathHelper.BitsBeforeBP);
 			Smx2CValue = smxMathHelper.Convert(SmxValue);
 
 			StringValue = Smx2CValue.GetStringValue();
 		}
 
-		public SmxTestValue(Smx smxValue, ScalerMath smxMathHelper)
+		public SmxTestValue(Smx smxValue, ScalarMath smxMathHelper)
 		{
 			SmxValue = smxValue;
 
@@ -34,7 +39,7 @@ namespace EngineTest
 			StringValue = Smx2CValue.GetStringValue();
 		}
 
-		public SmxTestValue(Smx2C smx2CValue, ScalerMath smxMathHelper)
+		public SmxTestValue(Smx2C smx2CValue, ScalarMath smxMathHelper)
 		{
 			Smx2CValue = smx2CValue;
 

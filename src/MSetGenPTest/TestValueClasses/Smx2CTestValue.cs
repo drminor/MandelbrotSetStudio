@@ -20,11 +20,8 @@ namespace EngineTest
 		public Smx2CTestValue(string sign, string number, int exponent, int precision, ScalarMath2C scalarMath2C)
 		{
 			var bi = BigInteger.Parse(number);
-			if (sign == "-") bi *= -1;
+			if (sign == "-") { bi = BigInteger.Negate(bi); }
 			RValue = new RValue(bi, exponent, precision);
-
-			//SmxValue = SmxHelper.CreateSmx(RValue, fPMathHelper.TargetExponent, fPMathHelper.LimbCount, fPMathHelper.BitsBeforeBP);
-			//Smx2CValue = fPMathHelper.Convert(SmxValue);
 
 			Smx2CValue = scalarMath2C.CreateSmx2C(RValue);
 			SmxValue = scalarMath2C.Convert(Smx2CValue);
@@ -32,12 +29,21 @@ namespace EngineTest
 			StringValue = Smx2CValue.GetStringValue();
 		}
 
-		public Smx2CTestValue(Smx2C smx2CValue, ScalarMath2C fPMathHelper)
+		public Smx2CTestValue(Smx2C smx2CValue, ScalarMath2C scalarMath2C)
 		{
 			Smx2CValue = smx2CValue;
-			SmxValue = fPMathHelper.Convert(smx2CValue);
+			SmxValue = scalarMath2C.Convert(smx2CValue);
 			RValue = SmxValue.GetRValue();
 			StringValue = Smx2CValue.GetStringValue();	
+		}
+
+		public Smx2CTestValue(Smx smxValue, ScalarMath2C scalarMath2C)
+		{
+			SmxValue = smxValue;
+
+			Smx2CValue = scalarMath2C.Convert(SmxValue);
+			RValue = SmxValue.GetRValue();
+			StringValue = Smx2CValue.GetStringValue();
 		}
 
 		public override string ToString()
