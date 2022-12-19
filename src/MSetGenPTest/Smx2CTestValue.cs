@@ -14,7 +14,7 @@ namespace EngineTest
 		public RValue RValue { get; init; }
 		public string StringValue { get; init; }
 
-		public Smx2CTestValue(string number, int exponent, int precision, FPMathHelper fPMathHelper)
+		public Smx2CTestValue(string number, int exponent, int precision, ScalarMath2C fPMathHelper)
 		{
 			var bi = BigInteger.Parse(number);
 			RValue = new RValue(bi, exponent, precision);
@@ -28,7 +28,7 @@ namespace EngineTest
 			StringValue = Smx2CValue.GetStringValue();
 		}
 
-		public Smx2CTestValue(Smx2C smx2CValue, FPMathHelper fPMathHelper)
+		public Smx2CTestValue(Smx2C smx2CValue, ScalarMath2C fPMathHelper)
 		{
 			Smx2CValue = smx2CValue;
 			SmxValue = fPMathHelper.Convert(smx2CValue);

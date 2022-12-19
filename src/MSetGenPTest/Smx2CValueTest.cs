@@ -54,7 +54,7 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse("-34359738368");
 			var aRValue = new RValue(aBigInteger, -33, precision); // -4
 
-			var aSmx = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
+			var aSmx = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
 
 			var aSmxRValue = aSmx.GetRValue();
 			var aStr = aSmx.GetStringValue();
@@ -77,7 +77,7 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse("-34359738368");
 			var aRValue = new RValue(aBigInteger, -33, precision); // -4
 
-			var aSmx = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
+			var aSmx = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
 
 			var aSmxRValue = aSmx.GetRValue();
 			var aStr = aSmx.GetStringValue();
@@ -100,7 +100,7 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse("36507222016");
 			var aRValue = new RValue(aBigInteger, -33, precision); // -4.25
 
-			var aSmx = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
+			var aSmx = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
 
 
 			var aSmxRValue = aSmx.GetRValue();
@@ -123,7 +123,7 @@ namespace EngineTest
 
 			var aRValue = new RValue(BigInteger.Parse("12644545325526901863503869090"), -124, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 
-			var aSmx = SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
+			var aSmx = ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
 			var aSmx2C = fpMathHelper.Convert(aSmx);
 
 			var aSmx2CRValue = aSmx2C.GetRValue();
@@ -146,7 +146,7 @@ namespace EngineTest
 
 			var aRValue = new RValue(BigInteger.Parse("-12644545325526901863503869090"), -124, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 
-			var aSmx = SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
+			var aSmx = ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
 			var aSmx2C = fpMathHelper.Convert(aSmx);
 
 			var aSmx2CRValue = aSmx2C.GetRValue();
@@ -173,7 +173,7 @@ namespace EngineTest
 
 			var aRValue = aSmx.GetRValue();
 
-			var bRValue = new RValue(SmxHelper.GetMaxSignedIntegerValue(bitsBeforeBP), 0);
+			var bRValue = new RValue(ScalerMathHelper.GetMaxSignedIntegerValue(bitsBeforeBP), 0);
 			var bStr = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the aSmx is {bStr}.");
 
@@ -193,10 +193,10 @@ namespace EngineTest
 
 			var aRValue = new RValue(BigInteger.Parse("-12644545325526901863503869090"), -124, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 
-			var aSmx = SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
+			var aSmx = ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
 			var aSmx2C = fpMathHelper.Convert(aSmx);
 
-			var aSmx2CNeg = SmxHelper.Negate(aSmx2C);
+			var aSmx2CNeg = ScalerMathHelper.Negate(aSmx2C);
 
 			var aSmx2CNegRValue = aSmx2CNeg.GetRValue();
 			var aStr = aSmx2C.GetStringValue();
@@ -220,11 +220,11 @@ namespace EngineTest
 
 			var aRValue = new RValue(BigInteger.Parse("-12644545325526901863503869090"), -124, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 
-			var aSmx = SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
+			var aSmx = ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
 			var aSmx2C = fpMathHelper.Convert(aSmx);
 
-			var aSmx2CNeg = SmxHelper.Negate(aSmx2C);
-			var aSmx2C2 = SmxHelper.Negate(aSmx2CNeg);
+			var aSmx2CNeg = ScalerMathHelper.Negate(aSmx2C);
+			var aSmx2C2 = ScalerMathHelper.Negate(aSmx2CNeg);
 
 			var aSmx2C2RValue = aSmx2C2.GetRValue();
 			var aStr = aSmx2C2.GetStringValue();
@@ -235,9 +235,9 @@ namespace EngineTest
 			Assert.Equal(strA, strB);
 		}
 
-		private FPMathHelper BuildTheMathHelper(int limbCount)
+		private ScalarMath2C BuildTheMathHelper(int limbCount)
 		{
-			var result = new FPMathHelper(new ApFixedPointFormat(limbCount), 4u);
+			var result = new ScalarMath2C(new ApFixedPointFormat(limbCount), 4u);
 			return result;
 		}
 

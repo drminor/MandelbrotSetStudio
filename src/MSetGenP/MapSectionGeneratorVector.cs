@@ -28,7 +28,7 @@ namespace MSetGenP
 			var fixedPointFormat = new ApFixedPointFormat(8, precision);
 			//var fixedPointFormat = new ApFixedPointFormat(3);
 
-			var smxMathHelper = new SmxMathHelper(fixedPointFormat, threshold);
+			var smxMathHelper = new ScalerMath(fixedPointFormat, threshold);
 
 			var dtoMapper = new DtoMapper();
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
@@ -53,7 +53,7 @@ namespace MSetGenP
 			var samplePointsX = smxMathHelper.BuildSamplePoints(startingCx, samplePointOffsets);
 			var samplePointsY = smxMathHelper.BuildSamplePoints(startingCy, samplePointOffsets);
 
-			var use2CVersion = true;
+			var use2CVersion = false;
 
 			if (use2CVersion)
 			{

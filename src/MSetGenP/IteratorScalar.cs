@@ -4,17 +4,17 @@ namespace MSetGenP
 {
 	internal ref struct IteratorScalar
 	{
-		private SmxMathHelper _smxMathHelper;
+		private ScalerMath _smxMathHelper;
 		private int _targetIterations;
 
-		private FPMathHelper _fPMathHelper;
+		private ScalarMath2C _fPMathHelper;
 
 		#region Constructor
 
-		public IteratorScalar(SmxMathHelper smxMathHelper, int targetIterations)
+		public IteratorScalar(ScalerMath smxMathHelper, int targetIterations)
 		{
 			_smxMathHelper = smxMathHelper;
-			_fPMathHelper = new FPMathHelper(_smxMathHelper.ApFixedPointFormat, _smxMathHelper.Threshold);
+			_fPMathHelper = new ScalarMath2C(_smxMathHelper.ApFixedPointFormat, _smxMathHelper.Threshold);
 
 			_targetIterations = targetIterations;
 		}

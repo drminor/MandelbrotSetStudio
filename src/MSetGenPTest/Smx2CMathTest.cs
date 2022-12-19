@@ -50,7 +50,7 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse("2147483648");
 			var aRValue = new RValue(aBigInteger, -33, precision); // 0.25
 
-			var aSmx = SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
+			var aSmx = ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
 			var aSmx2C = fpMathHelper.Convert(aSmx);
 
 			var aStr = aSmx2C.GetStringValue();
@@ -86,7 +86,7 @@ namespace EngineTest
 
 			var aBigInteger = BigInteger.Parse("-1264454532552690186350"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			var aRValue = new RValue(aBigInteger, -124, precision); // 0.25
-			var aSmx2C = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
+			var aSmx2C = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
 
 			var aStr = RValueHelper.ConvertToString(aRValue);
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
@@ -99,7 +99,7 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			var bMantissaDisp = ScalerMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			var bRValue = aRValue.Square();
@@ -112,7 +112,7 @@ namespace EngineTest
 			//var smxMH2 = BuildTheMathHelper(10);
 			//var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, -248, precision));
 
-			var aBiSmx = SmxHelper.CreateSmx(aBiRValue, targetExponent: -280, limbCount: 9, bitsBeforeBP: 8);
+			var aBiSmx = ScalerMathHelper.CreateSmx(aBiRValue, targetExponent: -280, limbCount: 9, bitsBeforeBP: 8);
 			var aBiSmx2C = fpMathHelper.Convert(aBiSmx, overrideFormatChecks:true);
 
 			var aBiSmxRValue = aBiSmx.GetRValue();
@@ -135,15 +135,15 @@ namespace EngineTest
 
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			var aRValue = new RValue(aBigInteger, -134, precision); // 0.25
-			var aSmx = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
+			var aSmx = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var aMantissaDisp = SmxHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
+			var aMantissaDisp = ScalerMathHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the a mantissa is {aMantissaDisp}.");
 
 			var a2Mantissa = fpMathHelper.Square(aSmx.Mantissa);
-			var a2Str = SmxHelper.GetDiagDisplay("raw products", a2Mantissa);
+			var a2Str = ScalerMathHelper.GetDiagDisplay("raw products", a2Mantissa);
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = fpMathHelper.PropagateCarries(a2Mantissa, out _);
@@ -157,7 +157,7 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			var bMantissaDisp = ScalerMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			//var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
@@ -174,7 +174,7 @@ namespace EngineTest
 			//var smxMH2 = BuildTheMathHelper(10);
 			//var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, -268, precision));
 
-			var aBiSmx = fpMathHelper.Convert(SmxHelper.CreateSmx(aBiSqrRValue, targetExponent: -312, limbCount: 10, bitsBeforeBP: 8), overrideFormatChecks: true);
+			var aBiSmx = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(aBiSqrRValue, targetExponent: -312, limbCount: 10, bitsBeforeBP: 8), overrideFormatChecks: true);
 			//var aBiSmxRValue = aBiSmx.GetRValue();
 			var aBiStr = aBiSmx.GetStringValue();
 			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
@@ -277,7 +277,7 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse("-343597");
 			var aRValue = new RValue(aBigInteger, -11, precision);
 
-			var aSmx = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
+			var aSmx = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
@@ -314,10 +314,10 @@ namespace EngineTest
 			var fpMathHelper = BuildTheMathHelper(limbCount);
 
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
-			var aMantissa = SmxHelper.ToPwULongs(aBigInteger);
+			var aMantissa = ScalerMathHelper.ToPwULongs(aBigInteger);
 
 			var bMantissa = fpMathHelper.Multiply(aMantissa, aMantissa);
-			var bBigInteger = SmxHelper.FromPwULongs(bMantissa);
+			var bBigInteger = ScalerMathHelper.FromPwULongs(bMantissa);
 
 			var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
 			Assert.Equal(bBigInteger, bCompBigInteger);
@@ -417,7 +417,7 @@ namespace EngineTest
 		{
 			var precision = 53;
 			var limbCount = 3;
-			var fpMathHelper = new FPMathHelper(new ApFixedPointFormat(limbCount), 4u);
+			var fpMathHelper = new ScalarMath2C(new ApFixedPointFormat(limbCount), 4u);
 			var targetExponent = fpMathHelper.TargetExponent;
 			var bitsBeforeBP = fpMathHelper.BitsBeforeBP;
 
@@ -428,8 +428,8 @@ namespace EngineTest
 			var aRValue = new RValue(new BigInteger(27797772040142849), -62, precision); // -6.02768096723593793141715568851e-3
 			var bRValue = new RValue(new BigInteger(4548762148012033), -62, precision); // 9.8635556059889517056815666506964e-4
 
-			var a = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
-			var b = fpMathHelper.Convert(SmxHelper.CreateSmx(bRValue, targetExponent, limbCount, bitsBeforeBP));
+			var a = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
+			var b = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(bRValue, targetExponent, limbCount, bitsBeforeBP));
  
 			var cSmx2C = fpMathHelper.Add(a, b, "Test");
 			var cSmx = fpMathHelper.Convert(cSmx2C);
@@ -452,7 +452,7 @@ namespace EngineTest
 		{
 			var precision = 53;
 			var limbCount = 3;
-			var fpMathHelper = new FPMathHelper(new ApFixedPointFormat(limbCount), 4u);
+			var fpMathHelper = new ScalarMath2C(new ApFixedPointFormat(limbCount), 4u);
 			var targetExponent = fpMathHelper.TargetExponent;
 			var bitsBeforeBP = fpMathHelper.BitsBeforeBP;
 
@@ -470,8 +470,8 @@ namespace EngineTest
 			var bRValue = new RValue(new BigInteger(67781838), -36, precision); // 9.8635556059889517056815666506964e-4
 
 
-			var a = fpMathHelper.Convert(SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
-			var b = fpMathHelper.Convert(SmxHelper.CreateSmx(bRValue, targetExponent, limbCount, bitsBeforeBP));
+			var a = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP));
+			var b = fpMathHelper.Convert(ScalerMathHelper.CreateSmx(bRValue, targetExponent, limbCount, bitsBeforeBP));
 
 			var cSmx2C = fpMathHelper.Add(a, b, "Test");
 			var cSmx = fpMathHelper.Convert(cSmx2C);
@@ -494,7 +494,7 @@ namespace EngineTest
 		{
 			var precision = 25;
 			var limbCount = 5;
-			var fpMathHelper = new FPMathHelper(new ApFixedPointFormat(limbCount), 4u);
+			var fpMathHelper = new ScalarMath2C(new ApFixedPointFormat(limbCount), 4u);
 			var targetExponent = fpMathHelper.TargetExponent;
 			var bitsBeforeBP = fpMathHelper.BitsBeforeBP;
 
@@ -503,21 +503,21 @@ namespace EngineTest
 			//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
 
 			var aLongs = new ulong[] {1512, 552, 1 };
-			var aBigInteger = -1 * SmxHelper.FromPwULongs(aLongs);
+			var aBigInteger = -1 * ScalerMathHelper.FromPwULongs(aLongs);
 			var aRValueStg = new RValue(aBigInteger, -63, precision);
 
 			var bLongs = new ulong[] { 8614, 2, 0 };
-			var bBigInteger = SmxHelper.FromPwULongs(bLongs);
+			var bBigInteger = ScalerMathHelper.FromPwULongs(bLongs);
 			var bRValueStg = new RValue(bBigInteger, -36, precision);
 
 			var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);
 
-			var aSmx = SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
+			var aSmx = ScalerMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
 			var aSmx2C = fpMathHelper.Convert(aSmx);
 			var aStr = aSmx2C.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var bSmx = SmxHelper.CreateSmx(bRValue, targetExponent, limbCount, bitsBeforeBP);
+			var bSmx = ScalerMathHelper.CreateSmx(bRValue, targetExponent, limbCount, bitsBeforeBP);
 			var bSmx2C = fpMathHelper.Convert(bSmx);
 			var bStr = bSmx2C.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
@@ -543,9 +543,9 @@ namespace EngineTest
 
 		#region Support Methods
 
-		private FPMathHelper BuildTheMathHelper(int limbCount)
+		private ScalarMath2C BuildTheMathHelper(int limbCount)
 		{
-			var result = new FPMathHelper(new ApFixedPointFormat(limbCount), 4u);
+			var result = new ScalarMath2C(new ApFixedPointFormat(limbCount), 4u);
 			return result;
 		}
 

@@ -28,7 +28,7 @@ namespace MSetGenP
 			}
 
 			Sign = bigInteger < 0 ? false : true;
-			Mantissa = SmxHelper.ToPwULongs(bigInteger);
+			Mantissa = ScalerMathHelper.ToPwULongs(bigInteger);
 			Exponent = exponent;
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;
@@ -52,7 +52,7 @@ namespace MSetGenP
 
 		private static void ValidatePWValues(ulong[] mantissa)
 		{
-			if (SmxHelper.CheckPWValues(mantissa))
+			if (ScalerMathHelper.CheckPWValues(mantissa))
 			{
 				throw new ArgumentException($"Cannot create a Smx from an array of ulongs where any of the values is greater than MAX_DIGIT.");
 			}
@@ -79,7 +79,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			var result = SmxHelper.GetRValue(this); 
+			var result = ScalerMathHelper.GetRValue(this); 
 			return result;
 		}
 
@@ -103,8 +103,8 @@ namespace MSetGenP
 		public override string ToString()
 		{
 			var result = Sign
-				? SmxHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
-				: "-" + SmxHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
+				? ScalerMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
+				: "-" + ScalerMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
 
 			return result;
 		}

@@ -30,7 +30,7 @@ namespace MSetGenP
 
 		private static void ValidatePWValues(ulong[] mantissa)
 		{
-			if (SmxHelper.CheckPWValues(mantissa))
+			if (ScalerMathHelper.CheckPWValues(mantissa))
 			{
 				throw new ArgumentException($"Cannot create a SmxSa from an array of ulongs where any of the values is greater than MAX_DIGIT.");
 			}
@@ -38,7 +38,7 @@ namespace MSetGenP
 
 		private static void ValidatePWValues(ShiftedArray<ulong> mantissa)
 		{
-			if (SmxMathHelperFloating.CheckPWValues(mantissa))
+			if (ScalarMathFloating.CheckPWValues(mantissa))
 			{
 				throw new ArgumentException($"Cannot create a SmxSa from an array of ulongs where any of the values is greater than MAX_DIGIT.");
 			}
@@ -85,7 +85,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			var result = SmxMathHelperFloating.GetRValue(this);
+			var result = ScalarMathFloating.GetRValue(this);
 			return result;
 		}
 
@@ -101,8 +101,8 @@ namespace MSetGenP
 		{
 			var mantissa = Materialize();
 			var result = Sign
-				? SmxHelper.GetDiagDisplayHex("m", mantissa) + $" e:{Exponent}"
-				: "-" + SmxHelper.GetDiagDisplayHex("m", mantissa) + $" e:{Exponent}";
+				? ScalerMathHelper.GetDiagDisplayHex("m", mantissa) + $" e:{Exponent}"
+				: "-" + ScalerMathHelper.GetDiagDisplayHex("m", mantissa) + $" e:{Exponent}";
 
 			return result;
 		}

@@ -22,7 +22,7 @@ namespace MSetGenP
 
 			var fixedPointFormat = new ApFixedPointFormat(8, precision);
 			//var fixedPointFormat = new ApFixedPointFormat(8, 129);
-			var smxMathHelper = new SmxMathHelper(fixedPointFormat, threshold);
+			var smxMathHelper = new ScalerMath(fixedPointFormat, threshold);
 
 			var dtoMapper = new DtoMapper();
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
@@ -53,7 +53,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ushort[] GenerateMapSection(SmxMathHelper smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, out long numberOfSplits, out long numberOfGetCarries, out long numberOfGtrThanOpsFP, out long numberOfGtrThanOpsSc)
+		private ushort[] GenerateMapSection(ScalerMath smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, out long numberOfSplits, out long numberOfGetCarries, out long numberOfGtrThanOpsFP, out long numberOfGtrThanOpsSc)
 		{
 			var result = new ushort[blockSize.NumberOfCells];
 

@@ -53,7 +53,7 @@ namespace MSetGenP
 
 			var escapedFlags = new bool[resultLength];
 
-			var smxVecMathHelper = new SmxVecMathHelper(_apFixedPointFormat1, resultLength, _threshold);
+			var smxVecMathHelper = new VecMath(_apFixedPointFormat1, resultLength, _threshold);
 
 			var inPlayList = BuildTheInplayList(doneFlags, resultLength);
 			smxVecMathHelper.InPlayList = inPlayList;
@@ -86,7 +86,7 @@ namespace MSetGenP
 
 			var escapedFlags = new bool[resultLength];
 
-			var smxVecMathHelper = new SmxVecMathHelper(_apFixedPointFormat1, resultLength, _threshold);
+			var smxVecMathHelper = new VecMath(_apFixedPointFormat1, resultLength, _threshold);
 			smxVecMathHelper.DoneFlags = doneFlags;
 
 			var inPlayList = smxVecMathHelper.InPlayList;
@@ -135,7 +135,7 @@ namespace MSetGenP
 			return counts;
 		}
 
-		private int[] UpdateTheDoneFlags(SmxVecMathHelper smxVecMathHelper, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
+		private int[] UpdateTheDoneFlags(VecMath smxVecMathHelper, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
 		{
 			smxVecMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
 

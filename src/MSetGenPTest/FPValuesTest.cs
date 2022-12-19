@@ -61,7 +61,7 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			var bMantissaDisp = ScalerMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			//var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
@@ -114,7 +114,7 @@ namespace EngineTest
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			var bMantissaDisp = ScalerMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			//var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
@@ -142,7 +142,7 @@ namespace EngineTest
 			//var valueCount = 8;
 			var threshold = 4u;
 
-			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount), threshold);
+			var smxMathHelper = new ScalerMath(new ApFixedPointFormat(limbCount), threshold);
 
 			//var aRvalue = new RValue(new BigInteger(-414219082), -36, precision); // -6.02768096723593793141715568851e-3
 			//var bRvalue = new RValue(new BigInteger(67781838), -36, precision); // 9.8635556059889517056815666506964e-4
@@ -174,17 +174,17 @@ namespace EngineTest
 			//var valueCount = 8;
 			var threshold = 4u;
 
-			var smxMathHelper = new SmxMathHelper(new ApFixedPointFormat(limbCount), threshold);
+			var smxMathHelper = new ScalerMath(new ApFixedPointFormat(limbCount), threshold);
 
 			//var a = new Smx(false, new ulong[] { 151263699, 55238551, 1 }, 2, -63, precision);
 			//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
 
 			var aLongs = new ulong[] {1512, 552, 1 };
-			var aBigInteger = -1 * SmxHelper.FromPwULongs(aLongs);
+			var aBigInteger = -1 * ScalerMathHelper.FromPwULongs(aLongs);
 			var aRValueStg = new RValue(aBigInteger, -63, precision);
 
 			var bLongs = new ulong[] { 8614, 2, 0 };
-			var bBigInteger = SmxHelper.FromPwULongs(bLongs);
+			var bBigInteger = ScalerMathHelper.FromPwULongs(bLongs);
 			var bRValueStg = new RValue(bBigInteger, -36, precision);
 
 			var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);
@@ -216,15 +216,15 @@ namespace EngineTest
 
 		#region Support Methods
 
-		private SmxMathHelper BuildTheMathHelper(int limbCount)
+		private ScalerMath BuildTheMathHelper(int limbCount)
 		{
-			var result = new SmxMathHelper(new ApFixedPointFormat(limbCount), 4u);
+			var result = new ScalerMath(new ApFixedPointFormat(limbCount), 4u);
 			return result;
 		}
 
-		private SmxVecMathHelper BuildTheVecMathHelper(int limbCount, int valueCount, uint threshold)
+		private VecMath BuildTheVecMathHelper(int limbCount, int valueCount, uint threshold)
 		{
-			var result = new SmxVecMathHelper(new ApFixedPointFormat(limbCount), valueCount, threshold);
+			var result = new VecMath(new ApFixedPointFormat(limbCount), valueCount, threshold);
 			return result;
 		}
 

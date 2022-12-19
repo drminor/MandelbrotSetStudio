@@ -7,7 +7,7 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public class SmxMathHelper
+	public class ScalerMath
 	{
 		#region Constants
 
@@ -21,9 +21,9 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public SmxMathHelper(ApFixedPointFormat apFixedPointFormat, uint thresold)
+		public ScalerMath(ApFixedPointFormat apFixedPointFormat, uint thresold)
 		{
-			ApFixedPointFormat = SmxHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = ScalerMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
@@ -31,12 +31,12 @@ namespace MSetGenP
 			//}
 
 			Threshold = thresold;
-			LimbCount = SmxHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
+			LimbCount = ScalerMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
 
 
-			ThresholdMsl = SmxHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, BitsBeforeBP);
+			ThresholdMsl = ScalerMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, BitsBeforeBP);
 		}
 
 		#endregion
@@ -239,7 +239,7 @@ namespace MSetGenP
 
 			if (hi2 != 0)
 			{
-				throw new OverflowException($"Multiply {SmxHelper.GetDiagDisplay("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
+				throw new OverflowException($"Multiply {ScalerMathHelper.GetDiagDisplay("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
 			}
 
 			//var splitSieve = Split(seive);
@@ -525,7 +525,7 @@ namespace MSetGenP
 
 		public Smx CreateSmx(RValue rValue)
 		{
-			var result = SmxHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var result = ScalerMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
 			return result;
 		}
 
@@ -538,7 +538,7 @@ namespace MSetGenP
 		public Smx CreateNewMaxIntegerSmx(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			// TODO: Create a Static Readonly value and the use Clone to make copies
-			var result = SmxHelper.CreateSmx(new RValue(MaxIntegerValue, 0, precision), TargetExponent, LimbCount, BitsBeforeBP);
+			var result = ScalerMathHelper.CreateSmx(new RValue(MaxIntegerValue, 0, precision), TargetExponent, LimbCount, BitsBeforeBP);
 			return result;
 		}
 
@@ -555,12 +555,12 @@ namespace MSetGenP
 
 		public Smx Convert(Smx2C smx2C)
 		{
-			var un2cMantissa = SmxHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
+			var un2cMantissa = ScalerMathHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
 
 			//var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
 
-			var rvalue = SmxHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
-			var result = SmxHelper.CreateSmx(rvalue, TargetExponent, LimbCount, BitsBeforeBP);
+			var rvalue = ScalerMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
+			var result = ScalerMathHelper.CreateSmx(rvalue, TargetExponent, LimbCount, BitsBeforeBP);
 
 			return result;
 		}
@@ -569,7 +569,7 @@ namespace MSetGenP
 		{
 			if (!overrideFormatChecks) CheckLimbCountAndFPFormat(smx);
 
-			var twoCMantissa = SmxHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var twoCMantissa = ScalerMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
 
 			return result;
@@ -714,7 +714,7 @@ namespace MSetGenP
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit2C(ulong[] mantissa)
 		{
-			if (SmxHelper.CheckPW2CValues(mantissa))
+			if (ScalerMathHelper.CheckPW2CValues(mantissa))
 			{
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}
@@ -723,7 +723,7 @@ namespace MSetGenP
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
 		{
-			if (SmxHelper.CheckPW2CValues(mantissa, sign))
+			if (ScalerMathHelper.CheckPW2CValues(mantissa, sign))
 			{
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}

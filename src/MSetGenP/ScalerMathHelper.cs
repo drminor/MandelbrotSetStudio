@@ -6,7 +6,7 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public static class SmxHelper
+	public static class ScalerMathHelper
 	{
 		#region Private Members
 
