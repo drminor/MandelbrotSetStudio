@@ -12,9 +12,75 @@ namespace EngineTest
 		#region Square and Multiply
 
 		[Fact]
-		public void SquareFourAndAQuarter()
+		public void SquareFourAndAQuarterNewTech()
 		{
 			var precision = 14;		// Binary Digits of precision, 30 Decimal Digits
+			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
+			var valueCount = 8;
+			var threshold = 4u;
+
+			var smxMathHelper = BuildTheMathHelper(limbCount);
+			var smxVecMathHelper = BuildTheVecMathHelper(limbCount, valueCount, threshold);
+
+			//var aBigInteger = BigInteger.Parse("-36507222016");
+			//var aRValue = new RValue(aBigInteger, -33, precision); // -4.25
+
+			var aBigInteger = BigInteger.Parse("2147483648");
+			var aRValue = new RValue(aBigInteger, -33, precision); // 0.25
+
+			var aSmx = smxMathHelper.CreateSmx(aRValue);
+			var aStr = aSmx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
+
+			/* New Stuff
+			var m2C = new Smx2CTestValue("-36507222016", -33, precision, fpMathHelper); // -4.25
+
+			var aTv = new Smx2CTestValue("2147483648", -33, precision, smxVecMathHelper); // 0.25
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
+
+			var aSmx = smxMathHelper.CreateSmx(aRValue);
+			var aStr = aSmx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
+
+			*/
+
+
+			var aFPVals = CreateTestValues(aSmx, valueCount);
+			var rFPValus = new FPValues(limbCount, valueCount);
+
+			var aCompSmx = smxVecMathHelper.GetSmxAtIndex(aFPVals, index: 0);
+			var aCompSmxRValue = aCompSmx.GetRValue();
+			var aCompStr = aCompSmx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the aCompSmx is {aCompStr}.");
+
+			smxVecMathHelper.Square(aFPVals, result: rFPValus);
+
+			var bSmx = smxVecMathHelper.GetSmxAtIndex(rFPValus, index: 0);
+
+			var bSmxRValue = bSmx.GetRValue();
+			var bStr = bSmx.GetStringValue();
+			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
+
+			var bMantissaDisp = SmxHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
+			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
+
+			//var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
+			//var bP32Str = bP32Smx.GetStringValue();
+			//Debug.WriteLine($"The StringValue for the bSmxPlus32 is {bP32Str}.");
+
+			var bRValue = aRValue.Square();
+			var bStrComp = RValueHelper.ConvertToString(bRValue);
+			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
+
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
+			Assert.Equal(strA, strB);
+		}
+
+		[Fact]
+		public void SquareFourAndAQuarter()
+		{
+			var precision = 14;     // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
 			var valueCount = 8;
 			var threshold = 4u;

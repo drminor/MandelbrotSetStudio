@@ -101,6 +101,55 @@ namespace MSetGenP
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
+		public FPValues(Smx2C smx, int count)
+		{
+			var smxes = new Smx2C[count];
+
+			for (int i = 0; i < count; i++)
+			{
+				smxes[i] = smx;
+			}
+
+			_signsBackingArray = smxes.Select(x => x.Sign ? ALL_BITS_SET : 0L).ToArray();
+			SignsMemory = new Memory<ulong>(_signsBackingArray);
+
+			var numberOfLimbs = smxes[0].Mantissa.Length;
+			Mantissas = new ulong[numberOfLimbs][];
+
+			for (var j = 0; j < numberOfLimbs; j++)
+			{
+				Mantissas[j] = new ulong[smxes.Length];
+
+				for (var i = 0; i < smxes.Length; i++)
+				{
+					Mantissas[j][i] = smxes[i].Mantissa[j];
+				}
+			}
+
+			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
+		}
+
+		public FPValues(Smx2C[] smxes)
+		{
+			_signsBackingArray = smxes.Select(x => x.Sign ? ALL_BITS_SET : 0L).ToArray();
+			SignsMemory = new Memory<ulong>(_signsBackingArray);
+
+			var numberOfLimbs = smxes[0].Mantissa.Length;
+			Mantissas = new ulong[numberOfLimbs][];
+
+			for (var j = 0; j < numberOfLimbs; j++)
+			{
+				Mantissas[j] = new ulong[smxes.Length];
+
+				for (var i = 0; i < smxes.Length; i++)
+				{
+					Mantissas[j][i] = smxes[i].Mantissa[j];
+				}
+			}
+
+			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
+		}
+
 		#endregion
 
 		#region Public Properties
@@ -169,6 +218,15 @@ namespace MSetGenP
 		}
 
 		public FPValues Negate()
+		{
+			var signs = GetSigns().Select(x => !x).ToArray();
+
+			var result = new FPValues(signs, CloneMantissas());
+
+			return result;
+		}
+
+		public FPValues Negate2C()
 		{
 			var signs = GetSigns().Select(x => !x).ToArray();
 

@@ -71,11 +71,7 @@ namespace MSetGenP
 				return CreateNewZeroSmx(Math.Min(a.Precision, b.Precision));
 			}
 
-			Debug.Assert(a.LimbCount == LimbCount, $"A should have {LimbCount} limbs, instead it has {a.LimbCount}.");
-			Debug.Assert(b.LimbCount == LimbCount, $"B should have {LimbCount} limbs, instead it has {b.LimbCount}.");
-
-			Debug.Assert(a.Exponent == TargetExponent, $"A should have an exponent of {TargetExponent}, instead of {a.Exponent}.");
-			Debug.Assert(b.Exponent == TargetExponent, $"B should have an exponent of {TargetExponent}, instead of {b.Exponent}.");
+			CheckLimbs(a, b, "Multiply");
 
 			var rawMantissa = Multiply(a.Mantissa, b.Mantissa);
 			var mantissa = PropagateCarries(rawMantissa);
@@ -128,8 +124,7 @@ namespace MSetGenP
 				return a;
 			}
 
-			Debug.Assert(a.LimbCount == LimbCount, $"A should have {LimbCount} limbs, instead it has {a.LimbCount}.");
-			Debug.Assert(a.Exponent == TargetExponent, $"A should have an exponent of {TargetExponent}, instead of {a.Exponent}.");
+			CheckLimb(a, "Square");
 
 			var rawMantissa = Square(a.Mantissa);
 			var mantissa = PropagateCarries(rawMantissa);
@@ -196,8 +191,7 @@ namespace MSetGenP
 				return result;
 			}
 
-			Debug.Assert(a.LimbCount == LimbCount, $"A should have {LimbCount} limbs, instead it has {a.LimbCount}.");
-			Debug.Assert(a.Exponent == TargetExponent, $"A should have an exponent of {TargetExponent}, instead of {a.Exponent}.");
+			CheckLimb(a, "MultiplyByInt");
 
 			var bVal = (uint)Math.Abs(b);
 			var lzc =  BitOperations.LeadingZeroCount(bVal);
@@ -364,33 +358,9 @@ namespace MSetGenP
 
 		public Smx Add(Smx a, Smx b, string desc)
 		{
-			if (a.LimbCount != LimbCount)
-			{
-				Debug.WriteLine($"WARNING: The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
-				throw new InvalidOperationException($"The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
-			}
-
-			if (a.LimbCount != LimbCount)
-			{
-				Debug.WriteLine($"WARNING: The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
-				throw new InvalidOperationException($"The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
-			}
-
-			if (a.Exponent != b.Exponent)
-			{
-				Debug.WriteLine($"Warning:the exponents do not match.");
-				throw new InvalidOperationException($"The exponents do not match.");
-			}
-
-			if (b.IsZero)
-			{
-				return a;
-			}
-
-			if (a.IsZero)
-			{
-				return b;
-			}
+			CheckLimbs(a, b, "Add");
+			if (b.IsZero) return a;
+			if (a.IsZero) return b;
 
 			bool sign;
 			ulong[] mantissa;
@@ -579,6 +549,100 @@ namespace MSetGenP
 			return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
 		}
 
+		#endregion
+
+		#region Smx2C Support 
+
+		public Smx Convert(Smx2C smx2C)
+		{
+			var un2cMantissa = SmxHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
+
+			//var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
+
+			var rvalue = SmxHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
+			var result = SmxHelper.CreateSmx(rvalue, TargetExponent, LimbCount, BitsBeforeBP);
+
+			return result;
+		}
+
+		public Smx2C Convert(Smx smx, bool overrideFormatChecks = false)
+		{
+			if (!overrideFormatChecks) CheckLimbCountAndFPFormat(smx);
+
+			var twoCMantissa = SmxHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
+
+			return result;
+		}
+
+		#endregion
+
+		#region DEBUG Checks
+
+		[Conditional("DETAIL")]
+		private void CheckLimbCountAndFPFormat(Smx smx)
+		{
+			if (smx.LimbCount != LimbCount)
+			{
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx.LimbCount} limbs instead of {LimbCount}.");
+			}
+
+			if (smx.Exponent != TargetExponent)
+			{
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx.Exponent} limbs instead of {TargetExponent}.");
+			}
+
+			if (smx.BitsBeforeBP != BitsBeforeBP)
+			{
+				throw new ArgumentException($"While converting an Smx2C found it to have {smx.BitsBeforeBP} limbs instead of {BitsBeforeBP}.");
+			}
+		}
+
+
+		[Conditional("DETAIL")]
+		private void CheckLimbs(Smx a, Smx b, string desc)
+		{
+			if (a.LimbCount != LimbCount)
+			{
+				Debug.WriteLine($"WARNING: The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+				throw new InvalidOperationException($"The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+			}
+
+			if (b.LimbCount != LimbCount)
+			{
+				Debug.WriteLine($"WARNING: The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
+				throw new InvalidOperationException($"The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
+			}
+
+			if (a.Exponent != b.Exponent)
+			{
+				Debug.WriteLine($"Warning:the exponents do not match.");
+				throw new InvalidOperationException($"The exponents do not match.");
+			}
+
+			ValidateIsSplit2C(a.Mantissa, a.Sign);
+			ValidateIsSplit2C(b.Mantissa, b.Sign);
+		}
+
+		[Conditional("DETAIL")]
+		private void CheckLimb(Smx a, string desc)
+		{
+			if (a.LimbCount != LimbCount)
+			{
+				Debug.WriteLine($"WARNING: The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+				throw new InvalidOperationException($"The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+			}
+
+			if (a.Exponent != TargetExponent)
+			{
+				Debug.WriteLine($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
+				throw new InvalidOperationException($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
+			}
+
+			ValidateIsSplit2C(a.Mantissa, a.Sign);
+		}
+
+
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit(ulong[] mantissa)
 		{
@@ -603,6 +667,68 @@ namespace MSetGenP
 			var result = values.Any(x => x >= MAX_DIGIT_VALUE);
 			return result;
 		}
+
+		[Conditional("DETAIL")]
+		private void CheckLimbs2C(Smx2C a, Smx2C b, string desc)
+		{
+			if (a.LimbCount != LimbCount)
+			{
+				Debug.WriteLine($"WARNING: The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+				throw new InvalidOperationException($"The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+			}
+
+			if (b.LimbCount != LimbCount)
+			{
+				Debug.WriteLine($"WARNING: The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
+				throw new InvalidOperationException($"The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
+			}
+
+			if (a.Exponent != b.Exponent)
+			{
+				Debug.WriteLine($"Warning:the exponents do not match.");
+				throw new InvalidOperationException($"The exponents do not match.");
+			}
+
+			ValidateIsSplit2C(a.Mantissa, a.Sign);
+			ValidateIsSplit2C(b.Mantissa, b.Sign);
+		}
+
+		[Conditional("DETAIL")]
+		private void CheckLimb2C(Smx2C a, string desc)
+		{
+			if (a.LimbCount != LimbCount)
+			{
+				Debug.WriteLine($"WARNING: The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+				throw new InvalidOperationException($"The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+			}
+
+			if (a.Exponent != TargetExponent)
+			{
+				Debug.WriteLine($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
+				throw new InvalidOperationException($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
+			}
+
+			ValidateIsSplit2C(a.Mantissa, a.Sign);
+		}
+
+		[Conditional("DETAIL")]
+		private void ValidateIsSplit2C(ulong[] mantissa)
+		{
+			if (SmxHelper.CheckPW2CValues(mantissa))
+			{
+				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
+			}
+		}
+
+		[Conditional("DETAIL")]
+		private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
+		{
+			if (SmxHelper.CheckPW2CValues(mantissa, sign))
+			{
+				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
+			}
+		}
+
 
 		#endregion
 

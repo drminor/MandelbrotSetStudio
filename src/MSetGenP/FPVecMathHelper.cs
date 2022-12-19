@@ -21,14 +21,14 @@ namespace MSetGenP
 		private static readonly Vector256<ulong> HIGH_MASK_VEC = Vector256.Create(HIGH_MASK);
 
 		private const ulong HIGH_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
-		//private const ulong HIGH_FILL = HIGH_BITS_SET;
-		//private static readonly Vector256<ulong> HIGH_FILL_VEC = Vector256.Create(HIGH_FILL);
+		private const ulong HIGH_FILL = HIGH_BITS_SET;
+		private static readonly Vector256<ulong> HIGH_FILL_VEC = Vector256.Create(HIGH_FILL);
 
 		private const ulong SIGN_BIT_MASK = 0x7FFFFFFFFFFFFFFF;
 		private static readonly Vector256<ulong> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
 
-		private const ulong TOP_BITS_MASK = 0xFF00000000000000;
-		private static readonly Vector256<ulong> TOP_BITS_MASK_VEC = Vector256.Create(TOP_BITS_MASK);
+		//private const ulong TOP_BITS_MASK = 0xFF00000000000000;
+		//private static readonly Vector256<ulong> TOP_BITS_MASK_VEC = Vector256.Create(TOP_BITS_MASK);
 
 		//private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
@@ -446,7 +446,22 @@ namespace MSetGenP
 
 		public void Sub(FPValues a, FPValues b, FPValues c)
 		{
-			Add(a, b.Negate(), c);
+			var bNegated = b.Clone();
+
+			var l = bNegated.Length;
+
+			var signs = bNegated.GetSigns();
+
+			for (var i = 0; i < l; i++)
+			{
+				var sgn = signs[i];
+				//var m2C = SmxHelper.ConvertTo2C(bNegated.GetMantissa(i), sgn);
+				var m2C = SmxHelper.ConvertTo2C(bNegated.GetMantissa(i), false);
+				bNegated.SetMantissa(i, m2C);
+				bNegated.SetSign(i, !sgn);
+			}
+
+			Add(a, bNegated, c);
 		}
 
 		public void Add(FPValues a, FPValues b, FPValues c)
@@ -458,15 +473,18 @@ namespace MSetGenP
 
 				var limbVecsA = a.GetLimbVectorsUL(0);
 				var limbVecsB = b.GetLimbVectorsUL(0);
-				var resultLimbVecs = GetLimbVectorsUL(c.MantissaMemories[0]);
+				var resultLimbVecs = c.GetLimbVectorsUL(0);
 
 				var carryVector = Vector256<ulong>.Zero;
 
-				var sumVector = Avx2.Add(limbVecsA[0], limbVecsB[0]);
+				var va = Avx2.And(limbVecsA[idx], SIGN_BIT_MASK_VEC);
+				var vb = Avx2.And(limbVecsB[idx], SIGN_BIT_MASK_VEC);
+
+				var sumVector = Avx2.Add(va, vb);
 				var withCarriesVector = Avx2.Add(sumVector, carryVector);
 
-				var (lo, newCarries) = GetResultWithCarry(withCarriesVector);
-				resultLimbVecs[0] = lo;
+				var (los, newCarries) = GetResultWithCarry(withCarriesVector);
+				resultLimbVecs[idx] = los;
 
 				carryVector = newCarries;
 
@@ -474,15 +492,19 @@ namespace MSetGenP
 				{
 					limbVecsA = a.GetLimbVectorsUL(i);
 					limbVecsB = b.GetLimbVectorsUL(i);
-					resultLimbVecs = GetLimbVectorsUL(c.MantissaMemories[i]);
+					resultLimbVecs = c.GetLimbVectorsUL(i);
 
-					sumVector = Avx2.Add(limbVecsA[idx], limbVecsB[idx]);
+
+					va = Avx2.And(limbVecsA[idx], SIGN_BIT_MASK_VEC);
+					vb = Avx2.And(limbVecsB[idx], SIGN_BIT_MASK_VEC);
+
+					sumVector = Avx2.Add(va, vb);
 					withCarriesVector = Avx2.Add(sumVector, carryVector);
 
-					(lo, newCarries) = GetResultWithCarry(withCarriesVector);
-					resultLimbVecs[idx] = lo;
+					(los, newCarries) = GetResultWithCarry(withCarriesVector);
+					resultLimbVecs[idx] = los;
 
-					carryVector = newCarries;
+					carryVector = Avx2.And(newCarries, SIGN_BIT_MASK_VEC);
 				}
 
 				// TODO: If the final carry > 0
@@ -498,37 +520,35 @@ namespace MSetGenP
 			// A carry is generated any time the bit just above the result limb is different than msb of the limb
 			// i.e. this next higher bit is not an extension of the sign.
 
-
-			//var limbValue = x & HIGH_MASK;
-
-			var limbs = Avx2.And(nvs, HIGH_MASK_VEC); // The low 32 bits of the sum is the result.
-
-			//bool carryFlag;
-
-
-
-			//var resultIsNegative = BitOperations.LeadingZeroCount(limbValue) == 32;
-			//var nextBitIsNegative = BitOperations.TrailingZeroCount(x >> 32) == 0;
-
-			//if (resultIsNegative)
-			//{
-			//	limbValue |= HIGH_FILL; // sign extend the result
-			//	carryFlag = !nextBitIsNegative; // true if next higher bit is zero
-			//}
-			//else
-			//{
-			//	carryFlag = nextBitIsNegative; // true if next higher bit is one
-			//}
-
-			//var result = (limbValue, carryFlag ? 1uL : 0uL);
-			//return result;
-
+			var ltemp = new ulong[_lanes];
+			var ctemp = new ulong[_lanes];
 
 			for (var i = 0; i < _lanes; i++)
 			{
+				bool carryFlag;
+
+				var limbValue = nvs.GetElement(i) & HIGH_MASK;
+				var resultIsNegative = BitOperations.LeadingZeroCount(limbValue) == 32;
+				var nextBitIsNegative = BitOperations.TrailingZeroCount(limbValue >> 32) == 0;
+
+				if (resultIsNegative)
+				{
+					limbValue |= HIGH_FILL; // sign extend the result
+					carryFlag = !nextBitIsNegative; // true if next higher bit is zero
+				}
+				else
+				{
+					carryFlag = nextBitIsNegative; // true if next higher bit is one
+				}
+
+				ltemp[i] = limbValue;
+				ctemp[i] = 0uL; // carryFlag ? 1uL : 0uL;
 			}
 
-			var carryVector = TOP_BITS_MASK_VEC; //  Vector256<ulong>.Zero;
+			var limbs = Vector256.Create(ltemp[0], ltemp[1], ltemp[2], ltemp[3]);
+
+			//var carryVector = Vector256<ulong>.Zero;
+			var carryVector = Vector256.Create(ctemp[0], ctemp[1], ctemp[2], ctemp[3]);	
 
 			return (limbs, carryVector);
 		}

@@ -43,6 +43,25 @@ namespace MSetGenP
 
 		#region Public Methods
 
+		public Smx2C[] Convert(Smx[] smxes)
+		{
+			var fPVecMathHelper = new FPVecMathHelper(_apFixedPointFormat1, smxes.Length, _threshold);
+
+
+			var result = smxes.Select(x => Convert(x)).ToArray();
+			return result;
+		}
+
+		public Smx2C Convert(Smx smx)
+		{
+
+			var twoCMantissa = SmxHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, _apFixedPointFormat1.BitsBeforeBinaryPoint);
+
+			return result;
+		}
+
+
 		public void GenerateMapSection(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, ushort[] counts, bool[] doneFlags)
 		{
 			var resultLength = cRs.Length;
@@ -98,6 +117,7 @@ namespace MSetGenP
 			fPVecMathHelper.Square(zRs, zRSqrs);
 			fPVecMathHelper.Square(zIs, zISqrs);
 			fPVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
+
 			inPlayList = UpdateTheDoneFlags(fPVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
 			fPVecMathHelper.InPlayList = inPlayList;
 
@@ -108,7 +128,7 @@ namespace MSetGenP
 				var aCarriesSnap = fPVecMathHelper.NumberOfACarries;
 				var doneFlagsCnt = doneFlags.Count(x => x);
 
-				iterator.Iterate();
+				iterator.IterateSmx2C();
 				fPVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
 
 				//var aCarriesDif = smxVecMathHelper.NumberOfACarries - aCarriesSnap;

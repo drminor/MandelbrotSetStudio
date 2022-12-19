@@ -11,9 +11,34 @@ namespace EngineTest
 		#region Square and Multiply
 
 		[Fact]
-		public void SquareFourAndAQuarter()
+		public void SquareFourAndAQuarterNewTec()
 		{
-			var precision = 14;		// Binary Digits of precision, 30 Decimal Digits
+			var precision = 14;     // Binary Digits of precision, 30 Decimal Digits
+			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
+			var fpMathHelper = BuildTheMathHelper(limbCount);
+
+			//var m2C = new Smx2CTestValue("-36507222016", -33, precision, fpMathHelper); // -4.25
+
+			var aTv = new Smx2CTestValue("2147483648", -33, precision, fpMathHelper); // 0.25
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
+
+			var b = fpMathHelper.Square(aTv.Smx2CValue);
+			var bTv = new Smx2CTestValue(b, fpMathHelper);
+			Debug.WriteLine($"The StringValue for b is {bTv}.");
+
+			var bRValue = aTv.RValue.Square();
+			var bStrComp = RValueHelper.ConvertToString(bRValue);
+			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
+
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bTv.RValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
+			Assert.Equal(strA, strB);
+		}
+
+		[Fact]
+		public void SquareFourAndAQuarterXX()
+		{
+			var precision = 14;     // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
 			var fpMathHelper = BuildTheMathHelper(limbCount);
 			var targetExponent = fpMathHelper.TargetExponent;
@@ -465,43 +490,6 @@ namespace EngineTest
 		}
 
 		[Fact]
-		public void SquareFourAndAQuarterXX()
-		{
-			var precision = 14;     // Binary Digits of precision, 30 Decimal Digits
-			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
-			var fpMathHelper = BuildTheMathHelper(limbCount);
-			var targetExponent = fpMathHelper.TargetExponent;
-			var bitsBeforeBP = fpMathHelper.BitsBeforeBP;
-
-			//var aBigInteger = BigInteger.Parse("-36507222016");
-			//var aRValue = new RValue(aBigInteger, -33, precision); // -4.25
-
-			var aBigInteger = BigInteger.Parse("2147483648");
-			var aRValue = new RValue(aBigInteger, -33, precision); // 0.25
-
-			var aSmx = SmxHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
-			var aSmx2C = fpMathHelper.Convert(aSmx);
-
-			var aStr = aSmx2C.GetStringValue();
-			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
-
-			var bSmx2C = fpMathHelper.Square(aSmx2C);
-			var bSmx = fpMathHelper.Convert(bSmx2C);
-
-			var bSmxRValue = bSmx.GetRValue();
-			var bStr = bSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
-
-			var bRValue = aRValue.Square();
-			var bStrComp = RValueHelper.ConvertToString(bRValue);
-			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
-
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecision);
-			Assert.Equal(strA, strB);
-		}
-
-		[Fact]
 		public void AddTwoRValuesUseSub()
 		{
 			var precision = 25;
@@ -569,4 +557,5 @@ namespace EngineTest
 
 		#endregion
 	}
+
 }
