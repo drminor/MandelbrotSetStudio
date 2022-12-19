@@ -3,11 +3,10 @@ using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
-using System.Xml.Schema;
 
 namespace EngineTest
 {
-	public class FPValuesTest
+	public class VecMathTest
 	{
 		#region Square and Multiply
 
@@ -22,6 +21,7 @@ namespace EngineTest
 			var smxMathHelper = BuildTheMathHelper(limbCount);
 			var smxVecMathHelper = BuildTheVecMathHelper(limbCount, valueCount, threshold);
 
+			/* Old stuff
 			//var aBigInteger = BigInteger.Parse("-36507222016");
 			//var aRValue = new RValue(aBigInteger, -33, precision); // -4.25
 
@@ -32,20 +32,15 @@ namespace EngineTest
 			var aStr = aSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			/* New Stuff
-			var m2C = new Smx2CTestValue("-36507222016", -33, precision, fpMathHelper); // -4.25
-
-			var aTv = new Smx2CTestValue("2147483648", -33, precision, smxVecMathHelper); // 0.25
-			Debug.WriteLine($"The StringValue for a is {aTv}.");
-
-			var aSmx = smxMathHelper.CreateSmx(aRValue);
-			var aStr = aSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
-
 			*/
 
+			// New Stuff
+			//var aTvC = new Smx2CTestValue("-36507222016", -33, precision, fpMathHelper); // -4.25
 
-			var aFPVals = CreateTestValues(aSmx, valueCount);
+			var aTv = new SmxTestValue("2147483648", -33, precision, smxMathHelper); // 0.25
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
+
+			var aFPVals = CreateTestValues(aTv.SmxValue, valueCount);
 			var rFPValus = new FPValues(limbCount, valueCount);
 
 			var aCompSmx = smxVecMathHelper.GetSmxAtIndex(aFPVals, index: 0);
@@ -56,23 +51,17 @@ namespace EngineTest
 			smxVecMathHelper.Square(aFPVals, result: rFPValus);
 
 			var bSmx = smxVecMathHelper.GetSmxAtIndex(rFPValus, index: 0);
-
-			var bSmxRValue = bSmx.GetRValue();
-			var bStr = bSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
+			var bTv = new SmxTestValue(bSmx, smxMathHelper);
+			Debug.WriteLine($"The StringValue for the bSmx is {bTv}.");
 
 			var bMantissaDisp = ScalerMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
-			//var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
-			//var bP32Str = bP32Smx.GetStringValue();
-			//Debug.WriteLine($"The StringValue for the bSmxPlus32 is {bP32Str}.");
-
-			var bRValue = aRValue.Square();
+			var bRValue = aTv.RValue.Square();
 			var bStrComp = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bTv.RValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}

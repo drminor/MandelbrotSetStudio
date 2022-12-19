@@ -6,7 +6,7 @@ using System.Numerics;
 
 namespace EngineTest
 {
-	public class SmxMathTest
+	public class ScalarMathTest
 	{
 		#region Normalize and Convert
 

@@ -6,7 +6,7 @@ using System.Numerics;
 
 namespace EngineTest
 {
-	public class Smx2CMathTest
+	public class ScalarMath2CTest
 	{
 		#region Square and Multiply
 
@@ -17,7 +17,7 @@ namespace EngineTest
 			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
 			var fpMathHelper = BuildTheMathHelper(limbCount);
 
-			//var m2C = new Smx2CTestValue("-36507222016", -33, precision, fpMathHelper); // -4.25
+			//var aTv = new Smx2CTestValue("-36507222016", -33, precision, fpMathHelper); // -4.25
 
 			var aTv = new Smx2CTestValue("2147483648", -33, precision, fpMathHelper); // 0.25
 			Debug.WriteLine($"The StringValue for a is {aTv}.");

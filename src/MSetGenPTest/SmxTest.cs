@@ -6,7 +6,7 @@ using System.Numerics;
 
 namespace EngineTest
 {
-	public class SmxValueTest
+	public class SmxTest
 	{
 		[Fact]
 		public void RoundTrip_ToRValue_IsSuccessful()
