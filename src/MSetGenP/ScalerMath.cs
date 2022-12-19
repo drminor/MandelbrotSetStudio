@@ -7,14 +7,14 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public class ScalerMath
+	public class ScalerMath : IScalerMath
 	{
 		#region Constants
 
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
 		private static readonly ulong HALF_DIGIT_VALUE = (ulong)Math.Pow(2, 16);
 
-		private static readonly ulong HIGH_MASK =    0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private static readonly ulong HIGH_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
 		#endregion
@@ -33,7 +33,7 @@ namespace MSetGenP
 			Threshold = thresold;
 			LimbCount = ScalerMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
+			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
 
 
 			ThresholdMsl = ScalerMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, BitsBeforeBP);
@@ -155,8 +155,8 @@ namespace MSetGenP
 					{
 						product *= 2;
 					}
-															// j = 
-					var resultPtr = j + i;					// 0, 1		1, 2		0, 1, 2		1, 2, 3, 
+					// j = 
+					var resultPtr = j + i;                  // 0, 1		1, 2		0, 1, 2		1, 2, 3, 
 					var lo = Split(product, out var hi);
 					mantissa[resultPtr] += lo;
 					mantissa[resultPtr + 1] += hi;
@@ -185,7 +185,7 @@ namespace MSetGenP
 		{
 			Smx result;
 
-			if (a.IsZero || b == 0 )
+			if (a.IsZero || b == 0)
 			{
 				result = CreateNewZeroSmx(a.Precision);
 				return result;
@@ -194,7 +194,7 @@ namespace MSetGenP
 			CheckLimb(a, "MultiplyByInt");
 
 			var bVal = (uint)Math.Abs(b);
-			var lzc =  BitOperations.LeadingZeroCount(bVal);
+			var lzc = BitOperations.LeadingZeroCount(bVal);
 
 			if (lzc < 32 - a.BitsBeforeBP)
 			{
@@ -227,9 +227,9 @@ namespace MSetGenP
 				var product = ax[j] * b;
 				//seive[j] = product;
 
-				var lo = Split(product, out var hi);	//		2 x 1			3 x 1			4 x 1
-				mantissa[j] += lo;			            //			0, 1			0, 1, 2			0, 1, 2, 3
-				mantissa[j + 1] += hi;			        //			1, 2			1, 2, 3			1, 2, 3, 4
+				var lo = Split(product, out var hi);    //		2 x 1			3 x 1			4 x 1
+				mantissa[j] += lo;                      //			0, 1			0, 1, 2			0, 1, 2, 3
+				mantissa[j + 1] += hi;                  //			1, 2			1, 2, 3			1, 2, 3, 4
 			}
 
 			var product2 = ax[^1] * b;
@@ -507,7 +507,7 @@ namespace MSetGenP
 
 			for (var i = 0; i < result.Length; i++)
 			{
-				result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;	// Discard the top shiftAmount of bits.
+				result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
 				if (sourceIndex > 0)
 				{
 					result[i] |= (mantissa[sourceIndex - 1] >> 32 - shiftAmount); // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions

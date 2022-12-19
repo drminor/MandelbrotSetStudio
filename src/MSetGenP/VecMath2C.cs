@@ -8,7 +8,7 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public class VecMath2
+	public class VecMath2C : IVecMath
 	{
 		#region Private Properties
 
@@ -49,7 +49,7 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public VecMath2(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
+		public VecMath2C(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
 			ApFixedPointFormat = ScalerMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
@@ -559,7 +559,12 @@ namespace MSetGenP
 
 		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			var result = new Smx(fPValues.GetSign(index), fPValues.GetMantissa(index), TargetExponent, BitsBeforeBP, precision);
+			throw new NotImplementedException();
+		}
+
+		public Smx2C GetSmx2CAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			var result = new Smx2C(fPValues.GetSign(index), fPValues.GetMantissa(index), TargetExponent, precision, BitsBeforeBP);
 			return result;
 		}
 

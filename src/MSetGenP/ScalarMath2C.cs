@@ -7,7 +7,7 @@ using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
-	public class ScalarMath2C
+	public class ScalarMath2C : IScalerMath2C
 	{
 		#region Constants
 
@@ -38,7 +38,7 @@ namespace MSetGenP
 
 			LimbCount = ScalerMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = ScalerMathHelper.GetMaxSignedIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
+			MaxIntegerValue = ScalerMathHelper.GetMax2CIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
 
 			Threshold = thresold;
 			ThresholdMsl = ScalerMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
@@ -52,7 +52,7 @@ namespace MSetGenP
 		public int LimbCount { get; init; }
 		public int TargetExponent { get; init; }
 
-		public int MaxIntegerValue { get; init; }
+		public uint MaxIntegerValue { get; init; }
 		public uint Threshold { get; init; }
 		public ulong ThresholdMsl { get; init; }
 
@@ -61,7 +61,7 @@ namespace MSetGenP
 
 		public int NumberOfMCarries { get; private set; }
 		public int NumberOfACarries { get; private set; }
-		public long NumberOfSplits { get; private set; }
+		public int NumberOfSplits { get; private set; }
 		public long NumberOfGetCarries { get; private set; }
 		public long NumberOfGrtrThanOps { get; private set; }
 
@@ -528,7 +528,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		public Smx2C Create(RValue aRValue)
+		public Smx2C CreateSmx2C(RValue aRValue)
 		{
 			// CreateSmx produces a value that has the TargetExponent and is compatible for this LimbCount and Format.
 			var smx = ScalerMathHelper.CreateSmx(aRValue, TargetExponent, LimbCount, BitsBeforeBP);

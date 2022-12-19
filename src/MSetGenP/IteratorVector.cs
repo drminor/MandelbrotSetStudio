@@ -7,7 +7,7 @@ namespace MSetGenP
 		#region Private Properties
 
 		private VecMath _smxVecMathHelper;
-		private VecMath2 _fPVecMathHelper;
+		private VecMath2C _fPVecMathHelper;
 
 		private FPValues _cRs;
 		private FPValues _cIs;
@@ -30,14 +30,14 @@ namespace MSetGenP
 			: this(smxVecMathHelper, GetFpVecHelper(smxVecMathHelper, cRs.Length), cRs, cIs, zRs, zIs, zRSqrs, zISqrs)
 		{ }
 
-		public IteratorVector(VecMath2 fPVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+		public IteratorVector(VecMath2C fPVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
 			: this(GetSmxVecHelper(fPVecMathHelper, cRs.Length), fPVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs)
 		{ }
 
-		public IteratorVector(VecMath smxVecMathHelper, VecMath2 fPVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+		public IteratorVector(VecMath smxVecMathHelper, VecMath2C fPVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
 		{
 			_smxVecMathHelper = smxVecMathHelper;
-			_fPVecMathHelper = new VecMath2(_smxVecMathHelper.ApFixedPointFormat, cRs.Length, _smxVecMathHelper.Threshold);
+			_fPVecMathHelper = new VecMath2C(_smxVecMathHelper.ApFixedPointFormat, cRs.Length, _smxVecMathHelper.Threshold);
 
 			_cRs = cRs;
 			_cIs = cIs;
@@ -53,14 +53,14 @@ namespace MSetGenP
 			_zIs2 = new FPValues(_cRs.LimbCount, _cRs.Length);
 		}
 
-		private static VecMath GetSmxVecHelper(VecMath2 fPVecMathHelper, int valueCount)
+		private static VecMath GetSmxVecHelper(VecMath2C fPVecMathHelper, int valueCount)
 		{
 			return new VecMath(fPVecMathHelper.ApFixedPointFormat, valueCount, fPVecMathHelper.Threshold);
 		}
 
-		private static VecMath2 GetFpVecHelper(VecMath smxVecMathHelper, int valueCount)
+		private static VecMath2C GetFpVecHelper(VecMath smxVecMathHelper, int valueCount)
 		{
-			return new VecMath2(smxVecMathHelper.ApFixedPointFormat, valueCount, smxVecMathHelper.Threshold);
+			return new VecMath2C(smxVecMathHelper.ApFixedPointFormat, valueCount, smxVecMathHelper.Threshold);
 		}
 
 		#endregion

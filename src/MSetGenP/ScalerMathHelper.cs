@@ -59,9 +59,9 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static int GetMaxSignedIntegerValue(byte bitsBeforeBP)
+		public static uint GetMax2CIntegerValue(byte bitsBeforeBP)
 		{
-			var result = (int)Math.Pow(2, bitsBeforeBP - 1) - 1; // 2^7 - 1 = 127
+			var result = (uint)Math.Pow(2, bitsBeforeBP - 1) - 1; // 2^7 - 1 = 127
 			return result;
 		}
 

@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public class VecMath
+	public class VecMath : IVecMath
 	{
 		#region Private Properties
 
@@ -73,8 +73,8 @@ namespace MSetGenP
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
 
-			Threshold = threshold; 
-			
+			Threshold = threshold;
+
 			var mslPower = ((LimbCount - 1) * BITS_PER_LIMB) - FractionalBits;
 			MslWeight = Math.Pow(2, mslPower);
 			MslWeightVector = Vector256.Create(MslWeight);
@@ -218,8 +218,8 @@ namespace MSetGenP
 		public int ValueCount { get; init; }
 		public int VecCount { get; init; }
 
-		public int[] InPlayList { get; set; }	// Vector-Level 
-		public bool[] DoneFlags { get; set; }	// Value-Level
+		public int[] InPlayList { get; set; }   // Vector-Level 
+		public bool[] DoneFlags { get; set; }   // Value-Level
 
 		public uint MaxIntegerValue { get; init; }
 
@@ -294,7 +294,7 @@ namespace MSetGenP
 					var resultLows = GetLimbVectorsUL(resultLimbs[resultPtr]);
 					var resultHighs = GetLimbVectorsUL(resultLimbs[resultPtr + 1]);
 
-					for(var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+					for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 					{
 						var idx = indexes[idxPtr];
 						var productVector = Avx2.Multiply(left[idx], right[idx]);
@@ -374,7 +374,7 @@ namespace MSetGenP
 
 			}
 		}
-		
+
 		private void ShiftAndTrim(Memory<ulong>[] mantissaMems, Memory<ulong>[] resultLimbs)
 		{
 			//ValidateIsSplit(mantissa);
@@ -466,7 +466,7 @@ namespace MSetGenP
 			{
 				var idx = indexes[idxPtr];
 				Vector256<ulong> areEqualFlags = Avx2.CompareEqual(signsA[idx], signsB[idx]);
-				var areEqualComposite = (uint) Avx2.MoveMask(areEqualFlags.AsByte());
+				var areEqualComposite = (uint)Avx2.MoveMask(areEqualFlags.AsByte());
 
 				var resultPtr = idx * _lanes;
 
@@ -484,7 +484,7 @@ namespace MSetGenP
 					//SubInternal(idx, comps, a, b, c);
 					SubInternal(resultPtr, a, b, c);
 				}
-				else 
+				else
 				{
 					AddSubInternal(resultPtr, a, b, c);
 				}
@@ -751,6 +751,11 @@ namespace MSetGenP
 			return result;
 		}
 
+		public Smx2C GetSmx2CAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			throw new NotImplementedException();
+		}
+
 		#endregion
 
 		#region Comparison
@@ -773,13 +778,13 @@ namespace MSetGenP
 			var areEqualFlags = Avx2.CompareEqual(limb0A[idx], limb0B[idx]);
 			var compositeFlags = (uint)Avx2.MoveMask(areEqualFlags.AsByte());
 
-			while(--limbPtr >= 0 && compositeFlags == 0xffffffff)
+			while (--limbPtr >= 0 && compositeFlags == 0xffffffff)
 			{
 				limb0A = GetLimbVectorsUL(mantissaMemsA[limbPtr]);
 				limb0B = GetLimbVectorsUL(mantissaMemsB[limbPtr]);
 
 				areEqualFlags = Avx2.CompareEqual(limb0A[idx], limb0B[idx]);
-				compositeFlags = (uint) Avx2.MoveMask(areEqualFlags.AsByte());
+				compositeFlags = (uint)Avx2.MoveMask(areEqualFlags.AsByte());
 			}
 
 			if (compositeFlags == 0xffffffff)
@@ -812,7 +817,7 @@ namespace MSetGenP
 			var gtFlags = new ulong[_lanes];
 			areGtFlags.AsVector().CopyTo(gtFlags);
 
-			for(var i = 0; i < _lanes; i++)
+			for (var i = 0; i < _lanes; i++)
 			{
 				if (eqFlags[i] == 0)
 				{
@@ -956,7 +961,7 @@ namespace MSetGenP
 
 				var vectorPtr = idx * _lanes;
 
-				for(var i = 0; i < _lanes; i++)
+				for (var i = 0; i < _lanes; i++)
 				{
 					results[vectorPtr + i] = resultVector.GetElement(i) == -1;
 				}

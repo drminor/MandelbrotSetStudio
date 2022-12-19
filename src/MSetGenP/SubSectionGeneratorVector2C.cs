@@ -45,7 +45,7 @@ namespace MSetGenP
 
 		public Smx2C[] Convert(Smx[] smxes)
 		{
-			var fPVecMathHelper = new VecMath2(_apFixedPointFormat1, smxes.Length, _threshold);
+			var fPVecMathHelper = new VecMath2C(_apFixedPointFormat1, smxes.Length, _threshold);
 
 
 			var result = smxes.Select(x => Convert(x)).ToArray();
@@ -72,7 +72,7 @@ namespace MSetGenP
 
 			var escapedFlags = new bool[resultLength];
 
-			var fPVecMathHelper = new VecMath2(_apFixedPointFormat1, resultLength, _threshold);
+			var fPVecMathHelper = new VecMath2C(_apFixedPointFormat1, resultLength, _threshold);
 
 			var inPlayList = BuildTheInplayList(doneFlags, resultLength);
 			fPVecMathHelper.InPlayList = inPlayList;
@@ -105,7 +105,7 @@ namespace MSetGenP
 
 			var escapedFlags = new bool[resultLength];
 
-			var fPVecMathHelper = new VecMath2(_apFixedPointFormat1, resultLength, _threshold);
+			var fPVecMathHelper = new VecMath2C(_apFixedPointFormat1, resultLength, _threshold);
 			fPVecMathHelper.DoneFlags = doneFlags;
 
 			var inPlayList = fPVecMathHelper.InPlayList;
@@ -152,7 +152,7 @@ namespace MSetGenP
 			return counts;
 		}
 
-		private int[] UpdateTheDoneFlags(VecMath2 fpVecMathHelper, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
+		private int[] UpdateTheDoneFlags(VecMath2C fpVecMathHelper, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
 		{
 			fpVecMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
 

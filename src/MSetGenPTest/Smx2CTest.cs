@@ -173,7 +173,7 @@ namespace EngineTest
 
 			var aRValue = aSmx.GetRValue();
 
-			var bRValue = new RValue(ScalerMathHelper.GetMaxSignedIntegerValue(bitsBeforeBP), 0);
+			var bRValue = new RValue(ScalerMathHelper.GetMax2CIntegerValue(bitsBeforeBP), 0);
 			var bStr = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the aSmx is {bStr}.");
 

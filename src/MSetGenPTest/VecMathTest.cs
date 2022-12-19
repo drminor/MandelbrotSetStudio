@@ -21,36 +21,21 @@ namespace EngineTest
 			var smxMathHelper = BuildTheMathHelper(limbCount);
 			var smxVecMathHelper = BuildTheVecMathHelper(limbCount, valueCount, threshold);
 
-			/* Old stuff
-			//var aBigInteger = BigInteger.Parse("-36507222016");
-			//var aRValue = new RValue(aBigInteger, -33, precision); // -4.25
-
-			var aBigInteger = BigInteger.Parse("2147483648");
-			var aRValue = new RValue(aBigInteger, -33, precision); // 0.25
-
-			var aSmx = smxMathHelper.CreateSmx(aRValue);
-			var aStr = aSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
-
-			*/
-
-			// New Stuff
-			//var aTvC = new Smx2CTestValue("-36507222016", -33, precision, fpMathHelper); // -4.25
+			//var aTv = new Smx2CTestValue("-36507222016", -33, precision, fpMathHelper); // -4.25
 
 			var aTv = new SmxTestValue("2147483648", -33, precision, smxMathHelper); // 0.25
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var aFPVals = CreateTestValues(aTv.SmxValue, valueCount);
-			var rFPValus = new FPValues(limbCount, valueCount);
 
 			var aCompSmx = smxVecMathHelper.GetSmxAtIndex(aFPVals, index: 0);
-			var aCompSmxRValue = aCompSmx.GetRValue();
 			var aCompStr = aCompSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aCompSmx is {aCompStr}.");
 
-			smxVecMathHelper.Square(aFPVals, result: rFPValus);
+			var bFPValus = new FPValues(limbCount, valueCount);
+			smxVecMathHelper.Square(aFPVals, result: bFPValus);
 
-			var bSmx = smxVecMathHelper.GetSmxAtIndex(rFPValus, index: 0);
+			var bSmx = smxVecMathHelper.GetSmxAtIndex(bFPValus, index: 0);
 			var bTv = new SmxTestValue(bSmx, smxMathHelper);
 			Debug.WriteLine($"The StringValue for the bSmx is {bTv}.");
 

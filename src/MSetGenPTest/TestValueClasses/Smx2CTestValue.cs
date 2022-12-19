@@ -14,16 +14,20 @@ namespace EngineTest
 		public RValue RValue { get; init; }
 		public string StringValue { get; init; }
 
-		public Smx2CTestValue(string number, int exponent, int precision, ScalarMath2C fPMathHelper)
+		public Smx2CTestValue(string number, int exponent, int precision, ScalarMath2C scalarMath2C) : this ("+", number, exponent, precision, scalarMath2C)
+		{ }
+
+		public Smx2CTestValue(string sign, string number, int exponent, int precision, ScalarMath2C scalarMath2C)
 		{
 			var bi = BigInteger.Parse(number);
+			if (sign == "-") bi *= -1;
 			RValue = new RValue(bi, exponent, precision);
 
 			//SmxValue = SmxHelper.CreateSmx(RValue, fPMathHelper.TargetExponent, fPMathHelper.LimbCount, fPMathHelper.BitsBeforeBP);
 			//Smx2CValue = fPMathHelper.Convert(SmxValue);
 
-			Smx2CValue = fPMathHelper.Create(RValue);
-			SmxValue = fPMathHelper.Convert(Smx2CValue);
+			Smx2CValue = scalarMath2C.CreateSmx2C(RValue);
+			SmxValue = scalarMath2C.Convert(Smx2CValue);
 
 			StringValue = Smx2CValue.GetStringValue();
 		}
