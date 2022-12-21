@@ -23,7 +23,7 @@ namespace MSetGenP
 
 		public ScalarMath(ApFixedPointFormat apFixedPointFormat, uint thresold)
 		{
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat, useTwosComplimentEncodingOverride: false);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
@@ -525,7 +525,7 @@ namespace MSetGenP
 
 		public Smx CreateSmx(RValue rValue)
 		{
-			var result = ScalarMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var result = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
 			return result;
 		}
 
@@ -538,7 +538,7 @@ namespace MSetGenP
 		public Smx CreateNewMaxIntegerSmx(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			// TODO: Create a Static Readonly value and the use Clone to make copies
-			var result = ScalarMathHelper.CreateSmx(new RValue(MaxIntegerValue, 0, precision), TargetExponent, LimbCount, BitsBeforeBP);
+			var result = ScalarMathHelper.CreateSmx(new RValue(MaxIntegerValue, 0, precision), ApFixedPointFormat);
 			return result;
 		}
 
@@ -560,7 +560,13 @@ namespace MSetGenP
 			//var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
 
 			var rvalue = ScalarMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
-			var result = ScalarMathHelper.CreateSmx(rvalue, TargetExponent, LimbCount, BitsBeforeBP);
+
+			if (!smx2C.Sign)
+			{
+
+			}
+
+			var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
 
 			return result;
 		}
@@ -569,7 +575,7 @@ namespace MSetGenP
 		{
 			if (!overrideFormatChecks) CheckLimbCountAndFPFormat(smx);
 
-			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var twoCMantissa = ScalarMathHelper.ConvertAbsValTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
 
 			return result;
@@ -596,6 +602,9 @@ namespace MSetGenP
 			{
 				throw new ArgumentException($"While converting an Smx2C found it to have {smx.BitsBeforeBP} limbs instead of {BitsBeforeBP}.");
 			}
+
+			// All Smx variables store the mantissa as a positive value.
+			CheckPWValues(smx.Mantissa);
 		}
 
 
@@ -620,8 +629,8 @@ namespace MSetGenP
 				throw new InvalidOperationException($"The exponents do not match.");
 			}
 
-			ValidateIsSplit2C(a.Mantissa, a.Sign);
-			ValidateIsSplit2C(b.Mantissa, b.Sign);
+			CheckPWValues(a.Mantissa);
+			CheckPWValues(b.Mantissa);
 		}
 
 		[Conditional("DETAIL")]
@@ -639,7 +648,7 @@ namespace MSetGenP
 				throw new InvalidOperationException($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
 			}
 
-			ValidateIsSplit2C(a.Mantissa, a.Sign);
+			CheckPWValues(a.Mantissa);
 		}
 
 
@@ -723,7 +732,19 @@ namespace MSetGenP
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
 		{
-			if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
+			//if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
+			//{
+			//	throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
+			//}
+
+			_ = ScalarMathHelper.GetLowHalf(mantissa[^1], out var resultIsNegative, out _);
+
+			if (sign != resultIsNegative)
+			{
+				throw new ArgumentException($"Expected the mantissa to have sign: {sign}.");
+			}
+
+			if (ScalarMathHelper.CheckPW2CValues(mantissa))
 			{
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}

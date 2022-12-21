@@ -507,10 +507,10 @@ namespace EngineTest
 			var cTv = new SmxTestValue(c, scalarMath);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
-			var d = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "d");
-			var dTv = new Smx2CTestValue(d, scalarMath2C);
-			Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
+			//var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
+			//var d = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "d");
+			//var dTv = new Smx2CTestValue(d, scalarMath2C);
+			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
 
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
@@ -548,10 +548,10 @@ namespace EngineTest
 			var cTv = new SmxTestValue(c, scalarMath);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
-			var d = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "d");
-			var dTv = new Smx2CTestValue(d, scalarMath2C);
-			Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
+			//var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
+			//var d = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "d");
+			//var dTv = new Smx2CTestValue(d, scalarMath2C);
+			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
 
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
@@ -589,10 +589,10 @@ namespace EngineTest
 			var cTv = new SmxTestValue(c, scalarMath);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
-			var d = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "d");
-			var dTv = new Smx2CTestValue(d, scalarMath2C);
-			Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
+			//var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
+			//var d = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "d");
+			//var dTv = new Smx2CTestValue(d, scalarMath2C);
+			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
 
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);

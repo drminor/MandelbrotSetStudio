@@ -3,12 +3,14 @@ using MSetGenP;
 using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
-using System.Numerics;
 
 namespace EngineTest
 {
 	public class VecMath2CTest
 	{
+		private const int valueCount = 8;
+		private const uint threshold = 4;
+
 		#region Square and Multiply
 
 		//[Fact]
@@ -19,16 +21,15 @@ namespace EngineTest
 			var valueCount = 8;
 			var threshold = 4u;
 
-			var scalarMath2C = BuildTheMathHelper(limbCount);
-			var vecMath2C = BuildTheVecMathHelper(limbCount, valueCount, threshold);
+			var vecMath2C = BuildTheVecMathHelper2C(limbCount, valueCount, threshold);
 
 			//var aTv = new VecTestValue("36507222016", -33, precision, smxMathHelper); // -4.25
 
-			var aTv = new Vec2CTestValue("2147483648", -33, precision, scalarMath2C); // 0.25
+			var aTv = new Vec2CTestValue("2147483648", -33, precision, vecMath2C); // 0.25
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			// Vec Square
-			var bFPValus = new FPValues(limbCount, valueCount);
+			var bFPValus = aTv.CreateNewFPValues();
 			vecMath2C.Square(aTv.Vectors, result: bFPValus);
 
 			var bTv = new Vec2CTestValue(bFPValus, vecMath2C);
@@ -58,7 +59,7 @@ namespace EngineTest
 			var precision = 53;
 			var limbCount = 3;
 
-			var scalarMath2C = BuildTheMathHelper(limbCount);
+			var vecMath2C = BuildTheVecMathHelper2C(limbCount, valueCount, threshold);
 
 			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			//Debug.WriteLine($"The StringValue for a is {aTv}.");
@@ -66,19 +67,20 @@ namespace EngineTest
 			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new Vec2CTestValue("27797772040142849", -62, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			var aTv = new Vec2CTestValue("27797772040142849", -63, precision, vecMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Vec2CTestValue("4548762148012033", -62, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Vec2CTestValue("4548762148012033", -63, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
-			var cTv = new Smx2CTestValue(c, scalarMath2C);
+			var cFPValues = aTv.CreateNewFPValues();
+			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
 			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
-			Debug.WriteLine($"The StringValue for the aSmx is {cStrComp}.");
+			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
@@ -91,7 +93,7 @@ namespace EngineTest
 			var precision = 53;
 			var limbCount = 3;
 
-			var scalarMath2C = BuildTheMathHelper(limbCount);
+			var vecMath2C = BuildTheVecMathHelper2C(limbCount, valueCount, threshold);
 
 			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			//Debug.WriteLine($"The StringValue for a is {aTv}.");
@@ -99,19 +101,20 @@ namespace EngineTest
 			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new Vec2CTestValue("-","27797772040142849", -62, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			var aTv = new Vec2CTestValue("-","27797772040142849", -63, precision, vecMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Vec2CTestValue("-", "4548762148012033", -62, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Vec2CTestValue("-", "4548762148012033", -63, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
-			var cTv = new Smx2CTestValue(c, scalarMath2C);
+			var cFPValues = aTv.CreateNewFPValues();
+			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
 			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
-			Debug.WriteLine($"The StringValue for the aSmx is {cStrComp}.");
+			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
@@ -124,7 +127,7 @@ namespace EngineTest
 			var precision = 53;
 			var limbCount = 3;
 
-			var scalarMath2C = BuildTheMathHelper(limbCount);
+			var vecMath2C = BuildTheVecMathHelper2C(limbCount, valueCount, threshold);
 
 			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			//Debug.WriteLine($"The StringValue for a is {aTv}.");
@@ -132,19 +135,20 @@ namespace EngineTest
 			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new Vec2CTestValue("+", "27797772040142849", -62, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
-			Debug.WriteLine($"The StringValue for a is {aTv}.");
+			var aTv = new Vec2CTestValue("+", "4548762148012033", -63, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
+			Debug.WriteLine($"The StringValue for b is {aTv}.");
 
-			var bTv = new Vec2CTestValue("-", "4548762148012033", -62, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
-			Debug.WriteLine($"The StringValue for b is {bTv}.");
+			var bTv = new Vec2CTestValue("-", "27797772040142849", -63, precision, vecMath2C); // -6.02768096723593793141715568851e-3
+			Debug.WriteLine($"The StringValue for a is {bTv}.");
 
-			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
-			var cTv = new Smx2CTestValue(c, scalarMath2C);
+			var cFPValues = aTv.CreateNewFPValues();
+			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
 			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
-			Debug.WriteLine($"The StringValue for the aSmx is {cStrComp}.");
+			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
@@ -157,7 +161,7 @@ namespace EngineTest
 			var precision = 53;
 			var limbCount = 3;
 
-			var scalarMath2C = BuildTheMathHelper(limbCount);
+			var vecMath2C = BuildTheVecMathHelper2C(limbCount, valueCount, threshold);
 
 			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			//Debug.WriteLine($"The StringValue for a is {aTv}.");
@@ -165,19 +169,29 @@ namespace EngineTest
 			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new Vec2CTestValue("-", "27797772040142849", -62, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			//var aTv = new Vec2CTestValue("-", "27797772040142849", -65, precision, vecMath2C); // -6.02768096723593793141715568851e-3
+			//Debug.WriteLine($"The StringValue for a is {aTv}.");
+
+			//var bTv = new Vec2CTestValue("+", "4548762148012033", -65, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
+			//Debug.WriteLine($"The StringValue for b is {bTv}.");
+
+
+			var aTv = new Vec2CTestValue("-", "2779777204014", -65, precision, vecMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Vec2CTestValue("+", "4548762148012033", -62, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Vec2CTestValue("+", "454876214801", -65, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
-			var cTv = new Smx2CTestValue(c, scalarMath2C);
+
+
+			var cFPValues = aTv.CreateNewFPValues();
+			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
 			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
-			Debug.WriteLine($"The StringValue for the aSmx is {cStrComp}.");
+			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
@@ -192,7 +206,7 @@ namespace EngineTest
 			//var valueCount = 8;
 			var threshold = 4u;
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
+			var vecMath2C = BuildTheVecMathHelper2C(limbCount, valueCount, threshold);
 
 			//var a = new Smx(false, new ulong[] { 151263699, 55238551, 1 }, 2, -63, precision);
 			//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
@@ -209,26 +223,23 @@ namespace EngineTest
 
 			var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);
 
-			var aSmx = scalarMath2C.CreateSmx2C(aRValue);
-			var aStr = aSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
+			var aTv = new Vec2CTestValue(aRValue, vecMath2C);
+			Debug.WriteLine($"The StringValue for the aSmx is {aTv}.");
 
-			var bSmx = scalarMath2C.CreateSmx2C(bRValue);
-			var bStr = bSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
+			var bTv = new Vec2CTestValue(bRValue, vecMath2C);
+			Debug.WriteLine($"The StringValue for the bSmx is {bTv}.");
 
-			var cSmx = scalarMath2C.Add(aSmx, bSmx, "Test");   // 5 Limbs, Exp -152, Mantissa: { 0, 0, 3489660928, 899678219, 31457282 }, Value: -1.875000131694832980651377
+			var cFPValues = bTv.CreateNewFPValues();
+			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);        // 5 Limbs, Exp -152, Mantissa: { 0, 0, 3489660928, 899678219, 31457282 }, Value: -1.875000131694832980651377
 
-			var cSmxRValue = cSmx.GetRValue();
-			var cStr = cSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the cSmx is {cStr}.");
+			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
+			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			//var nrmA = RNormalizer.Normalize(aRValue, bRValue, out var nrmB);
-			var cRValue = aRValue.Add(bRValue);
+			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
-			Debug.WriteLine($"The StringValue for the cRValue is {cStrComp}.");
+			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cSmxRValue, cRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			//Assert.True(haveRequiredPrecision);
 
 			Assert.Equal(strA, strB);
@@ -244,7 +255,7 @@ namespace EngineTest
 			return result;
 		}
 
-		private VecMath2C BuildTheVecMathHelper(int limbCount, int valueCount, uint threshold)
+		private VecMath2C BuildTheVecMathHelper2C(int limbCount, int valueCount, uint threshold)
 		{
 			var result = new VecMath2C(new ApFixedPointFormat(limbCount), valueCount, threshold);
 			return result;

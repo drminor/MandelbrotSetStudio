@@ -30,7 +30,7 @@ namespace MSetGenP
 			Sign = bigInteger < 0 ? false : true;
 			var un2Cmantissa = ScalarMathHelper.ToPwULongs(bigInteger);
 
-			Mantissa = ScalarMathHelper.ConvertTo2C(un2Cmantissa, Sign);
+			Mantissa = ScalarMathHelper.ConvertAbsValTo2C(un2Cmantissa, Sign);
 
 			Exponent = exponent;
 			Precision = precision;

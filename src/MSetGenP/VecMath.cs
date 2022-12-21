@@ -48,7 +48,7 @@ namespace MSetGenP
 
 		public VecMath(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat, useTwosComplimentEncodingOverride: false);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
@@ -71,7 +71,7 @@ namespace MSetGenP
 
 			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
+			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue(BitsBeforeBP);
 
 			Threshold = threshold;
 

@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using System.Buffers;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -43,7 +44,7 @@ namespace MSetGenP
 		private Vector256<ulong> _zeroVector;
 		private Vector256<long> _maxDigitValueVector;
 
-		//private static readonly bool USE_DET_DEBUG = false;
+		private static readonly bool USE_DET_DEBUG = true;
 
 		#endregion
 
@@ -51,7 +52,7 @@ namespace MSetGenP
 
 		public VecMath2C(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat, useTwosComplimentEncodingOverride: true);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
@@ -74,7 +75,7 @@ namespace MSetGenP
 
 			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
+			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue2C(BitsBeforeBP);
 
 			Threshold = threshold; 
 			
@@ -262,7 +263,13 @@ namespace MSetGenP
 			//ClearManatissMems(_squareResult2Mems, onlyInPlayItems: false);
 			//ClearManatissMems(result.MantissaMemories, onlyInPlayItems: false);
 
-			SquareInternal(a, _squareResult1Mems);
+			// Convert back to standard, i.e., non two's compliment.
+			var non2CFPValues = a.ConvertFrom2C(InPlayList, _lanes);
+
+			SquareInternal(non2CFPValues, _squareResult1Mems);
+
+			// All results are positive -- no need to convert to two's compliments.
+
 			PropagateCarries(_squareResult1Mems, _squareResult2Mems);
 			ShiftAndTrim(_squareResult2Mems, result.MantissaMemories);
 
@@ -278,6 +285,8 @@ namespace MSetGenP
 			//	Debug.WriteLine($"Found a prb.");
 			//}
 		}
+
+
 
 		private void SquareInternal(FPValues a, Memory<ulong>[] resultLimbs)
 		{
@@ -446,22 +455,7 @@ namespace MSetGenP
 
 		public void Sub(FPValues a, FPValues b, FPValues c)
 		{
-			var bNegated = b.Clone();
-
-			var l = bNegated.Length;
-
-			var signs = bNegated.GetSigns();
-
-			for (var i = 0; i < l; i++)
-			{
-				var sgn = signs[i];
-				//var m2C = SmxHelper.ConvertTo2C(bNegated.GetMantissa(i), sgn);
-				var m2C = ScalarMathHelper.ConvertTo2C(bNegated.GetMantissa(i), false);
-				bNegated.SetMantissa(i, m2C);
-				bNegated.SetSign(i, !sgn);
-			}
-
-			Add(a, bNegated, c);
+			Add(a, b.Negate2C(), c);
 		}
 
 		public void Add(FPValues a, FPValues b, FPValues c)
@@ -477,14 +471,20 @@ namespace MSetGenP
 
 				var carryVector = Vector256<ulong>.Zero;
 
-				var va = Avx2.And(limbVecsA[idx], SIGN_BIT_MASK_VEC);
-				var vb = Avx2.And(limbVecsB[idx], SIGN_BIT_MASK_VEC);
+				//Debug.WriteLine($"a: {limbVecsA[idx].GetElement(0)}, b: {limbVecsB[idx].GetElement(0)}");
+				//var va = Avx2.And(limbVecsA[idx], HIGH_MASK_VEC);
+				//var vb = Avx2.And(limbVecsB[idx], HIGH_MASK_VEC);
+
+				var va = limbVecsA[idx];
+				var vb = limbVecsB[idx];
 
 				var sumVector = Avx2.Add(va, vb);
 				var withCarriesVector = Avx2.Add(sumVector, carryVector);
 
 				var (los, newCarries) = GetResultWithCarry(withCarriesVector);
 				resultLimbVecs[idx] = los;
+
+				//ReportForAddition(0, va, vb, carryVector, withCarriesVector, los, newCarries);
 
 				carryVector = newCarries;
 
@@ -494,9 +494,22 @@ namespace MSetGenP
 					limbVecsB = b.GetLimbVectorsUL(i);
 					resultLimbVecs = c.GetLimbVectorsUL(i);
 
+					//if (i < LimbCount - 1)
+					//{
+					//	va = Avx2.And(limbVecsA[idx], HIGH_MASK_VEC);
+					//	vb = Avx2.And(limbVecsB[idx], HIGH_MASK_VEC);
+					//}
+					//else
+					//{
+					//	va = limbVecsA[idx];
+					//	vb = limbVecsB[idx];
+					//}
 
-					va = Avx2.And(limbVecsA[idx], SIGN_BIT_MASK_VEC);
-					vb = Avx2.And(limbVecsB[idx], SIGN_BIT_MASK_VEC);
+					//va = Avx2.And(limbVecsA[idx], HIGH_MASK_VEC);
+					//vb = Avx2.And(limbVecsB[idx], HIGH_MASK_VEC);
+
+					va = limbVecsA[idx];
+					vb = limbVecsB[idx];
 
 					sumVector = Avx2.Add(va, vb);
 					withCarriesVector = Avx2.Add(sumVector, carryVector);
@@ -504,7 +517,10 @@ namespace MSetGenP
 					(los, newCarries) = GetResultWithCarry(withCarriesVector);
 					resultLimbVecs[idx] = los;
 
-					carryVector = Avx2.And(newCarries, SIGN_BIT_MASK_VEC);
+					//ReportForAddition(i, va, vb, carryVector, withCarriesVector, los, newCarries); 
+
+
+					carryVector = Avx2.And(newCarries, HIGH_MASK_VEC);
 				}
 
 				// TODO: If the final carry > 0
@@ -527,22 +543,21 @@ namespace MSetGenP
 			{
 				bool carryFlag;
 
-				var limbValue = nvs.GetElement(i) & HIGH_MASK;
-				var resultIsNegative = BitOperations.LeadingZeroCount(limbValue) == 32;
-				var nextBitIsNegative = BitOperations.TrailingZeroCount(limbValue >> 32) == 0;
+				var limbValue = ScalarMathHelper.GetLowHalf(nvs.GetElement(i), out var resultIsNegative, out var extendedCarryOutIsNegative);
 
 				if (resultIsNegative)
 				{
 					limbValue |= HIGH_FILL; // sign extend the result
-					carryFlag = !nextBitIsNegative; // true if next higher bit is zero
+					carryFlag = !extendedCarryOutIsNegative; // true if next higher bit is zero
 				}
 				else
 				{
-					carryFlag = nextBitIsNegative; // true if next higher bit is one
+					carryFlag = extendedCarryOutIsNegative; // true if next higher bit is one
 				}
 
 				ltemp[i] = limbValue;
-				ctemp[i] = 0uL; // carryFlag ? 1uL : 0uL;
+				//ctemp[i] = 0uL; // carryFlag ? 1uL : 0uL;
+				ctemp[i] = carryFlag ? 1uL : 0uL;
 			}
 
 			var limbs = Vector256.Create(ltemp[0], ltemp[1], ltemp[2], ltemp[3]);
@@ -552,6 +567,29 @@ namespace MSetGenP
 
 			return (limbs, carryVector);
 		}
+
+		private void ReportForAddition(int step, Vector256<ulong> left, Vector256<ulong> right, Vector256<ulong> carry, Vector256<ulong> nv, Vector256<ulong> lo, Vector256<ulong> newCarry)
+		{
+			var leftVal0 = left.GetElement(0);
+			var rightVal0 = right.GetElement(0);
+			var carryVal0 = carry.GetElement(0);
+			var nvVal0 = nv.GetElement(0);
+			var newCarryVal0 = newCarry.GetElement(0);
+			var loVal0 = lo.GetElement(0);
+
+			var ld = ScalarMathHelper.ConvertFrom2C(leftVal0);
+			var rd = ScalarMathHelper.ConvertFrom2C(rightVal0);
+			var cd = ScalarMathHelper.ConvertFrom2C(carryVal0);
+			var nvd = ScalarMathHelper.ConvertFrom2C(nvVal0);
+			var hid = ScalarMathHelper.ConvertFrom2C(newCarryVal0);
+			var lod = ScalarMathHelper.ConvertFrom2C(loVal0);
+
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, {right:X4} wc:{carry:X4} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, {rd} wc:{cd} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv:X4}: hi:{newCarry:X4}, lo:{lo:X4}");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}\n");
+		}
+
 
 		#endregion
 

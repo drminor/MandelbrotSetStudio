@@ -30,7 +30,7 @@ namespace MSetGenP
 				throw new NotSupportedException("An APFixedFormat with a BitsBeforeBinaryPoint of 32 is not supported.");
 			}
 
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat, useTwosComplimentEncodingOverride: false);
 
 			if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			{
@@ -795,7 +795,7 @@ namespace MSetGenP
 		{
 			// TODO: Create a Static Readonly value and the use Clone to make copies
 			var rValue = new RValue(MaxIntegerValue, 0, precision);
-			var result = ScalarMathHelper.CreateSmx(rValue, TargetExponent, LimbCount, BitsBeforeBP);
+			var result = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
 			return result;
 		}
 		public static RValue GetRValue(SmxSa smx)

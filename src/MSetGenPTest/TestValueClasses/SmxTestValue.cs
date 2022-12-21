@@ -1,4 +1,5 @@
-﻿using MSetGenP;
+﻿using Microsoft.VisualBasic;
+using MSetGenP;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
@@ -24,7 +25,7 @@ namespace EngineTest
 
 			RValue = new RValue(bi, exponent, precision);
 
-			SmxValue = ScalarMathHelper.CreateSmx(RValue, smxMathHelper.TargetExponent, smxMathHelper.LimbCount, smxMathHelper.BitsBeforeBP);
+			SmxValue = ScalarMathHelper.CreateSmx(RValue, smxMathHelper.ApFixedPointFormat);
 			Smx2CValue = smxMathHelper.Convert(SmxValue);
 
 			StringValue = Smx2CValue.GetStringValue();
@@ -38,6 +39,15 @@ namespace EngineTest
 			RValue = SmxValue.GetRValue();
 			StringValue = Smx2CValue.GetStringValue();
 		}
+
+		public SmxTestValue(RValue rValue, VecMath vecMath) : this(ScalarMathHelper.CreateSmx(rValue, vecMath.ApFixedPointFormat),
+				new ScalarMath(vecMath.ApFixedPointFormat, vecMath.Threshold))
+
+
+
+		{ }
+
+		//this(ScalarMathHelper.CreateSmx(rValue, vecMath.TargetExponent, vecMath.LimbCount, vecMath.BitsBeforeBP), vecMath)
 
 		public SmxTestValue(Smx2C smx2CValue, ScalarMath smxMathHelper)
 		{

@@ -37,6 +37,11 @@ namespace EngineTest
 			StringValue = Smx2CValue.GetStringValue();	
 		}
 
+		public Smx2CTestValue(RValue rValue, VecMath vecMath) : 
+			this(ScalarMathHelper.CreateSmx(rValue, vecMath.ApFixedPointFormat),
+				new ScalarMath2C(vecMath.ApFixedPointFormat, vecMath.Threshold))
+		{ }
+
 		public Smx2CTestValue(Smx smxValue, ScalarMath2C scalarMath2C)
 		{
 			SmxValue = smxValue;

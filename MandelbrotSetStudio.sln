@@ -29,10 +29,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\RValueToStringLogic.txt = Notes\RValueToStringLogic.txt
 		Notes\SampleCoordValues.txt = Notes\SampleCoordValues.txt
 		SelectionRectangleKeyInput.txt = SelectionRectangleKeyInput.txt
-		src\MSetGenP\SmxVecMathHelper.cs = src\MSetGenP\SmxVecMathHelper.cs
 		Notes\SpatialCoordsAndHashes.txt = Notes\SpatialCoordsAndHashes.txt
 		Notes\SpatialDivisionsIn8x8sections.txt = Notes\SpatialDivisionsIn8x8sections.txt
 		Notes\Top-level regions.txt = Notes\Top-level regions.txt
+		Notes\Two'sComplimentLogic.txt = Notes\Two'sComplimentLogic.txt
+		Notes\Two'sComplimentLogic_MultipleLimbs.txt = Notes\Two'sComplimentLogic_MultipleLimbs.txt
 		Notes\ZoomAndBlockConsiderations.txt = Notes\ZoomAndBlockConsiderations.txt
 	EndProjectSection
 EndProject

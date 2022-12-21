@@ -1,4 +1,6 @@
-﻿using MSetGenP;
+﻿using Microsoft.VisualBasic;
+using MSetGenP;
+using MSS.Types;
 
 namespace EngineTest
 {
@@ -8,33 +10,48 @@ namespace EngineTest
 		public FPValues Vectors { get; init; }
 
 		public Smx2C Smx2CValue => Smx2CTestValue.Smx2CValue;
+		public RValue RValue => Smx2CTestValue.RValue;
+
+		#region Constructors
 
 		public Vec2CTestValue(FPValues fPValues, VecMath2C vecMath2C)
 		{
 			Vectors = fPValues;
 			var smx2C = vecMath2C.GetSmx2CAtIndex(fPValues, index: 0);
-			Smx2CTestValue = new Smx2CTestValue(smx2C, new ScalarMath2C(vecMath2C.ApFixedPointFormat, vecMath2C.Threshold));
+			Smx2CTestValue = new Smx2CTestValue(smx2C, BuildTheScalarMath2C(vecMath2C));
 		}
 
-		public Vec2CTestValue(string number, int exponent, int precision, ScalarMath2C scalarMath2C) : this ("+", number, exponent, precision, scalarMath2C)
+		public Vec2CTestValue(string number, int exponent, int precision, VecMath2C vecMath2C) : this ("+", number, exponent, precision, vecMath2C)
 		{ }
 
-		public Vec2CTestValue(string sign, string number, int exponent, int precision, ScalarMath2C scalarMath2C)
+		public Vec2CTestValue(string sign, string number, int exponent, int precision, VecMath2C vecMath2C)
 		{
-			Smx2CTestValue = new Smx2CTestValue(sign, number, exponent, precision, scalarMath2C);
-			Vectors = CreateFPValues(Smx2CTestValue.Smx2CValue, 4);
+			Smx2CTestValue = new Smx2CTestValue(sign, number, exponent, precision, BuildTheScalarMath2C(vecMath2C));
+			Vectors = CreateFPValues(Smx2CTestValue.Smx2CValue, vecMath2C.ValueCount);
 		}
 
-		public Vec2CTestValue(Smx2C smx2CValue, ScalarMath2C scalarMath2C)
+		public Vec2CTestValue(Smx2C smx2CValue, VecMath2C vecMath2C)
 		{
-			Smx2CTestValue = new Smx2CTestValue(smx2CValue, scalarMath2C);
-			Vectors = CreateFPValues(Smx2CTestValue.Smx2CValue, 4);
+			Smx2CTestValue = new Smx2CTestValue(smx2CValue, BuildTheScalarMath2C(vecMath2C));
+			Vectors = CreateFPValues(Smx2CTestValue.Smx2CValue, vecMath2C.ValueCount);
 		}
 
-		public Vec2CTestValue(Smx smxValue, ScalarMath2C scalarMath2C)
+		public Vec2CTestValue(RValue rValue, VecMath2C vecMath2C) : this(ScalarMathHelper.CreateSmx(rValue, vecMath2C.ApFixedPointFormat), vecMath2C)
+		{ }
+
+
+		public Vec2CTestValue(Smx smxValue, VecMath2C vecMath2C)
 		{
-			Smx2CTestValue = new Smx2CTestValue(smxValue, scalarMath2C);
-			Vectors = CreateFPValues(Smx2CTestValue.Smx2CValue, 4);
+			Smx2CTestValue = new Smx2CTestValue(smxValue, BuildTheScalarMath2C(vecMath2C));
+			Vectors = CreateFPValues(Smx2CTestValue.Smx2CValue, vecMath2C.ValueCount);
+		}
+
+		#endregion
+
+		public FPValues CreateNewFPValues()
+		{
+			var result = new FPValues(Vectors.LimbCount, Vectors.Length);
+			return result;
 		}
 
 		public override string ToString()
@@ -47,6 +64,12 @@ namespace EngineTest
 			var xx = Enumerable.Repeat(smx2C, valueCount).ToArray();
 			var result = new FPValues(xx);
 			return result;
+		}
+
+
+		private ScalarMath2C BuildTheScalarMath2C(VecMath2C vecMath2C)
+		{
+			return new ScalarMath2C(vecMath2C.ApFixedPointFormat, vecMath2C.Threshold);
 		}
 
 

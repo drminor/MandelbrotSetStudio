@@ -23,16 +23,23 @@ namespace MSetGenP
 		// Integer used to convert BigIntegers to/from array of ulongs containing partial-word values
 		private static readonly BigInteger BI_UINT_FACTOR = BigInteger.Pow(2, 32);
 
+		private const ulong HIGH_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
 		private const ulong LOW_BITS_SET =	0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private const ulong ALL_BITS_SET =	0xFFFFFFFFFFFFFFFF; // bits 0 - 64 are set.
 
+		private const ulong TEST_BIT_32 =	0x0000000100000000; // bit 32 is set.
+		private const ulong TEST_BIT_31 =	0x0000000080000000; // bit 31 is set.
+
 		private const ulong HIGH_MASK = LOW_BITS_SET;
+		private const ulong LOW_MASK = HIGH_BITS_SET;
+
+		private const ulong HIGH_FILL = HIGH_BITS_SET;
 
 		#endregion
 
 		#region Construction Support
 
-		public static ApFixedPointFormat GetAdjustedFixedPointFormat(ApFixedPointFormat fpFormat)
+		public static ApFixedPointFormat GetAdjustedFixedPointFormat(ApFixedPointFormat fpFormat, bool? useTwosComplimentEncodingOverride = null)
 		{
 			if (fpFormat.BitsBeforeBinaryPoint > 32)
 			{
@@ -46,7 +53,9 @@ namespace MSetGenP
 			// Make sure the resulting FixPointFormat uses an integral number of limbs.
 			var adjustedFractionalBits = limbCount * BITS_PER_LIMB - fpFormat.BitsBeforeBinaryPoint;
 
-			var result = new ApFixedPointFormat(fpFormat.BitsBeforeBinaryPoint, adjustedFractionalBits);
+			bool useTwosComp = useTwosComplimentEncodingOverride ?? fpFormat.UsesTwosComplimentEncoding;
+
+			var result = new ApFixedPointFormat(fpFormat.BitsBeforeBinaryPoint, adjustedFractionalBits, useTwosComp);
 
 			return result;
 		}
@@ -59,9 +68,17 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static uint GetMax2CIntegerValue(byte bitsBeforeBP)
+		public static ulong GetThresholdMsl(uint threshold, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
-			var result = (uint)Math.Pow(2, bitsBeforeBP - 1) - 1; // 2^7 - 1 = 127
+			var maxIntegerValue = GetMaxIntegerValue(bitsBeforeBP);
+			if (threshold > maxIntegerValue)
+			{
+				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat.");
+			}
+
+			var thresholdSmx = CreateSmx(new RValue(threshold, 0), targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: false);
+			var result = thresholdSmx.Mantissa[^1] - 1;
+
 			return result;
 		}
 
@@ -71,18 +88,23 @@ namespace MSetGenP
 			return result;
 		}
 
-
-		public static ulong GetThresholdMsl(uint threshold, int targetExponent, int limbCount, byte bitsBeforeBP)
+		public static ulong GetThresholdMsl2C(uint threshold, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
-			var maxIntegerValue = (uint)Math.Pow(2, bitsBeforeBP) - 1;
+			var maxIntegerValue = GetMaxIntegerValue2C(bitsBeforeBP);
 			if (threshold > maxIntegerValue)
 			{
 				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat.");
 			}
 
-			var thresholdSmx = CreateSmx(new RValue(threshold, 0), targetExponent, limbCount, bitsBeforeBP);
+			var thresholdSmx = CreateSmx(new RValue(threshold, 0), targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: true);
 			var result = thresholdSmx.Mantissa[^1] - 1;
 
+			return result;
+		}
+
+		public static uint GetMaxIntegerValue2C(byte bitsBeforeBP)
+		{
+			var result = (uint)Math.Pow(2, bitsBeforeBP - 1) - 1; // 2^7 - 1 = 127
 			return result;
 		}
 
@@ -104,14 +126,35 @@ namespace MSetGenP
 			return result;
 		}
 
+		public static Smx CreateSmx(RValue rValue, ApFixedPointFormat apFixedPointFormat)
+		{
+			var fpFormat = apFixedPointFormat;
+			var result = CreateSmx(rValue, fpFormat.TargetExponent, fpFormat.LimbCount, fpFormat.BitsBeforeBinaryPoint, fpFormat.UsesTwosComplimentEncoding);
+			return result;
+		}
+
+		//public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
+		//{
+		//	var result = CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: false);
+		//	return result;
+		//}
+
 		// Creates a Smx to be compatible with a fixed point format with
 		// the specified target exponent and limb count.
-		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
+		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP, bool useTwoComplementEncoding)
 		{
 			var partialWordLimbs = ToPwULongs(rValue.Value);
 
 			var magnitude = GetMagnitudeOfIntegerPart(partialWordLimbs, rValue.Exponent);
-			if (magnitude > bitsBeforeBP)
+
+			var maxMagnitude = bitsBeforeBP;
+			if (useTwoComplementEncoding)
+			{
+				// Signed integers have 1 less bit encode their value.
+				maxMagnitude--;
+			}
+
+			if (magnitude > maxMagnitude)
 			{
 				// Magnitude is the exponent of the most significant bit within the first BitsBeforeBP at the top of the most significant limb.
 				var maxIntegerValue = (uint)Math.Pow(2, bitsBeforeBP) - 1;
@@ -393,85 +436,21 @@ namespace MSetGenP
 
 		#region 2C Support
 
-		public static ulong[] ConvertTo2C(ulong[] partialWordLimbs, bool sign)
-		{
-			if (sign)
-			{
-				// Postive values have the same representation in both two's compliment and standard form.
-				return partialWordLimbs;
-			}
-
-			//	Start at the least significant bit (LSB), copy all the zeros, until the first 1 is reached;
-			//	then copy that 1, and flip all the remaining bits.
-
-			var resultLength = partialWordLimbs.Length;
-
-			var result = new ulong[resultLength];
-			var limbPtr = 0;
-
-			while (limbPtr < resultLength && partialWordLimbs[limbPtr] == 0)
-			{
-				result[limbPtr] = partialWordLimbs[limbPtr];
-				limbPtr++;
-			}
-
-			if (limbPtr < resultLength)
-			{
-				var tzc = BitOperations.TrailingZeroCount(partialWordLimbs[limbPtr]);
-				var numToKeep = tzc + 1;
-				var numToFlip = 64 - numToKeep;
-
-				var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_SET;
-				flipped = (flipped >> numToKeep) << numToKeep; // set the bottom bits to zero
-
-				var target = partialWordLimbs[limbPtr];
-				target = (target << numToFlip) >> numToFlip; // set the top bits to zero
-
-				var newVal = target | flipped;
-				result[limbPtr] = newVal;
-
-				limbPtr++;
-			}
-
-			for (; limbPtr < resultLength; limbPtr++)
-			{
-				var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_SET;
-				result[limbPtr] = flipped;
-			}
-
-			return result;
-		}
-
-		public static double ConvertFrom2C(ulong partialWordLimb)
-		{
-			var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimb);
-			var isNegative = lzcMsl == 0;
-
-			double result;
-
-			if (isNegative)
-			{
-				var resultLimbs = ConvertTo2C(new ulong[] { partialWordLimb }, false);
-				result = resultLimbs[0];
-			}
-			else
-			{
-				result = partialWordLimb;
-			}
-
-			return isNegative ? result * -1 : result;
-		}
-
+		// Convert from two's compliment, use the sign bit of the mantissa, remove sign extensions
 		public static ulong[] ConvertFrom2C(ulong[] partialWordLimbs)
 		{
-			var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
-			var isNegative = lzcMsl == 0;
+			//var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
+			//var isNegative = lzcMsl == 0;
 
-			var result = ConvertFrom2C(partialWordLimbs, !isNegative);
+			var signBitIsSet = (partialWordLimbs[^1] & TEST_BIT_31) > 0;
+			var sign = !signBitIsSet;
+
+			var result = ConvertFrom2C(partialWordLimbs, sign);
 
 			return result;
 		}
 
+		// Convert from two's compliment, using the specified sign, remove sign extensions
 		public static ulong[] ConvertFrom2C(ulong[] partialWordLimbs, bool sign)
 		{
 			ulong[] result;
@@ -482,27 +461,156 @@ namespace MSetGenP
 			}
 			else
 			{
+				// TODO: Should these limbs be sign-extended before converting back from 2C?
 				// Convert negative values back to 'standard' representation
-				result = ConvertTo2C(partialWordLimbs, sign);
+				result = FlipBitsAndAdd1(partialWordLimbs);
 			}
 
-			var clearedResults = ClearPW2CValues(result, null);
+			var clearedResults = SetHighHalvesToZero(result, null);
 
 			return clearedResults;
 		}
 
+		// Flip all bits and add 1, update the sign to be !sign
 		public static Smx2C Negate(Smx2C smx2C)
 		{
-			var negatedPartialWordLimbs = ConvertTo2C(smx2C.Mantissa, sign: false);
+			// TODO: Should these limbs be sign-extended before converting back from 2C?
+			var negatedPartialWordLimbs = FlipBitsAndAdd1(smx2C.Mantissa);
 			var result = new Smx2C(!smx2C.Sign, negatedPartialWordLimbs, smx2C.Exponent, smx2C.Precision, smx2C.BitsBeforeBP);
 
 			return result;
 		}
 
-		//public static ulong[] Negate(ulong[] partialWordLimbs)
+		// Used for diagnostics
+		public static double ConvertFrom2C(ulong partialWordLimb)
+		{
+			//var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimb);
+			//var isNegative = lzcMsl == 0;
+
+			//double result;
+
+			//if (isNegative)
+			//{
+			//	var resultLimbs = ConvertAbsValTo2C(new ulong[] { partialWordLimb }, false);
+			//	result = resultLimbs[0];
+			//}
+			//else
+			//{
+			//	result = partialWordLimb;
+			//}
+
+			var signBitIsSet = (partialWordLimb & TEST_BIT_31) > 0;
+			var isNegative = signBitIsSet;
+
+			double result;
+
+			if (isNegative)
+			{
+				var resultLimbs = FlipBitsAndAdd1(new ulong[] { partialWordLimb });
+				result = resultLimbs[0];
+			}
+			else
+			{
+				result = partialWordLimb;
+			}
+
+			return isNegative ? result * -1 : result;
+		}
+
+		public static ulong[] ConvertAbsValTo2C(ulong[] partialWordLimbs, bool sign)
+		{
+
+			//var signBitIsSet = ((int)partialWordLimbs[^1] < 0);
+
+			var signBitIsSet = (partialWordLimbs[^1] & TEST_BIT_31) > 0;
+
+			if (signBitIsSet)
+			{
+				throw new OverflowException($"Cannot ConvertAbsValTo2C, the msb is already set. {GetDiagDisplay("limbs", partialWordLimbs)}");
+			}
+
+			ulong[] result;
+
+			if (sign)
+			{
+				//Debug.WriteLine($"Converting an absolute value to 2C, {GetDiagDisplay("limbs", partialWordLimbs)}.");
+
+				// Postive values have the same representation in both two's compliment and standard form.
+				result = partialWordLimbs;
+			}
+			else
+			{
+				//Debug.WriteLine($"Converting and negating an absolute value to 2C, {GetDiagDisplay("limbs", partialWordLimbs)}.");
+
+
+				// TODO: Should these limbs be sign-extended before converting back from 2C?
+				result = FlipBitsAndAdd1(partialWordLimbs);
+
+				var signBitIsSet1 = (result[^1] & TEST_BIT_31) > 0;
+
+				if (!signBitIsSet1)
+				{
+					var signBitWasSet = ((int)partialWordLimbs[^1] < 0);
+					throw new OverflowException($"Cannot ConvertAbsValTo2C, after the conversion the msb is NOT set to 1. {GetDiagDisplay("OrigVal", partialWordLimbs)}. {GetDiagDisplay("Result", result)}. SignBitBefore: {signBitWasSet}.");
+				}
+			}
+
+			return result;
+		}
+
+		public static ulong[] FlipBitsAndAdd1(ulong[] partialWordLimbs)
+		{
+			var result = new ulong[partialWordLimbs.Length];
+			Array.Copy(partialWordLimbs, result, result.Length);
+
+			if (result[^1] != 0)
+			{
+				result[^1] = ~result[^1] + 1;
+			}
+
+			return result;
+		}
+
+		//public static ulong[] FlipBitsAndAdd1(ulong[] partialWordLimbs)
 		//{
-		//	// Force the conversion by indicating we have a negative value.
-		//	var result = ConvertTo2C(partialWordLimbs, sign: false);
+		//	//	Start at the least significant bit (LSB), copy all the zeros, until the first 1 is reached;
+		//	//	then copy that 1, and flip all the remaining bits.
+
+		//	var resultLength = partialWordLimbs.Length;
+
+		//	var result = new ulong[resultLength];
+		//	var limbPtr = 0;
+
+		//	while (limbPtr < resultLength && partialWordLimbs[limbPtr] == 0)
+		//	{
+		//		result[limbPtr] = partialWordLimbs[limbPtr];
+		//		limbPtr++;
+		//	}
+
+		//	if (limbPtr < resultLength)
+		//	{
+		//		var tzc = BitOperations.TrailingZeroCount(partialWordLimbs[limbPtr]);
+		//		var numToKeep = tzc + 1;
+		//		var numToFlip = 64 - numToKeep;
+
+		//		var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_SET;
+		//		flipped = (flipped >> numToKeep) << numToKeep; // set the bottom bits to zero
+
+		//		var target = partialWordLimbs[limbPtr];
+		//		target = (target << numToFlip) >> numToFlip; // set the top bits to zero
+
+		//		var newVal = target | flipped;
+		//		result[limbPtr] = newVal;
+
+		//		limbPtr++;
+		//	}
+
+		//	for (; limbPtr < resultLength; limbPtr++)
+		//	{
+		//		var flipped = partialWordLimbs[limbPtr] ^ ALL_BITS_SET;
+		//		result[limbPtr] = flipped;
+		//	}
+
 		//	return result;
 		//}
 
@@ -555,80 +663,110 @@ namespace MSetGenP
 		{
 			for (var i = 0; i < partialWordLimbs.Length; i++)
 			{
-				var limb = partialWordLimbs[i] >> 32;
-				if (!(limb == 0 || limb == LOW_BITS_SET)) return true;
+				var limb = partialWordLimbs[i];
+
+				if ((limb & TEST_BIT_31) > 0)
+				{
+					// Top half should be all ones.
+					if ((limb & LOW_MASK) != HIGH_BITS_SET)
+					{
+						return true;
+					}
+				}
+				else
+				{
+					if ((limb & LOW_MASK) != 0)
+					{
+						return true;
+					}
+				}
 			}
 
 			return false;
 		}
 
-		public static bool CheckPW2CValues(ulong[] partialWordLimbs, bool sign)
+		public static ulong[] SetHighHalvesToZero(ulong[] partialWordLimbs, bool? sign = null)
 		{
-			var topHalf = partialWordLimbs[^1] >> 32;
-			if (sign)
-			{
-				if (topHalf != 0)
-				{
-					return true;
-				}
-			}
-			else
-			{
-				if (topHalf != LOW_BITS_SET)
-				{
-					return true;
-				}
-			}
-
-			for(var i = 0; i < partialWordLimbs.Length - 1; i++)
-			{
-				topHalf = partialWordLimbs[i] >> 32;
-				if (! (topHalf == 0 || topHalf == LOW_BITS_SET )) return true;
-			}
-
-			return false;
-		}
-
-		public static ulong[] ClearPW2CValues(ulong[] partialWordLimbs, bool? sign = null)
-		{
-			CheckPW2CValuesBeforeClear(partialWordLimbs, sign);
-
 			var result = new ulong[partialWordLimbs.Length];
-
-			Array.Copy(partialWordLimbs, result, partialWordLimbs.Length);
 
 			for (var i = 0; i < result.Length; i++)
 			{
-				result[i] = result[i] & HIGH_MASK;
+				result[i] = partialWordLimbs[i] & HIGH_MASK;
 			}
 
 			return result;
 		}
 
-		[Conditional("DEBUG")]
-		private static void CheckPW2CValuesBeforeClear(ulong[] partialWordLimbs, bool? sign = null)
+		public static ulong[] ExtendSignBits(ulong[] partialWordLimbs)
 		{
-			bool checkFails;
-			if (sign.HasValue)
+			var result = new ulong[partialWordLimbs.Length];
+
+			for (var i = 0; i < partialWordLimbs.Length; i++)
 			{
-				checkFails = CheckPW2CValues(partialWordLimbs, sign.Value);
-			}
-			else
-			{
-				checkFails = CheckPW2CValues(partialWordLimbs);
+				var limb = partialWordLimbs[i];
+
+				result[i] = (limb & TEST_BIT_31) > 0
+						? limb & HIGH_FILL
+						: limb & HIGH_MASK;
 			}
 
-			if (checkFails)
-			{
-				throw new InvalidOperationException("One or more partial-word limbs has a non-zero value in the top half.");
-			}
+			return result;
 		}
+
+		public static ulong ExtendSignBit(ulong mSignificantpartialWordLimb)
+		{
+			return (mSignificantpartialWordLimb & TEST_BIT_31) > 0
+				? mSignificantpartialWordLimb & HIGH_FILL
+				: mSignificantpartialWordLimb & HIGH_MASK;
+		}
+
+		public static ulong GetLowHalf(ulong partialWordLimb, out bool resultIsNegative, out bool extendedCarryOutIsNegative)
+		{
+			var lo = partialWordLimb & HIGH_MASK;
+			resultIsNegative = BitOperations.LeadingZeroCount(lo) == 32; // The first bit of the limb is set.
+			extendedCarryOutIsNegative = BitOperations.TrailingZeroCount(partialWordLimb >> 32) == 0; // The first bit of the top half is set.
+
+			return lo;
+		}
+
+		//public static bool CheckPW2CValues(ulong[] partialWordLimbs)
+		//{
+		//	for (var i = 0; i < partialWordLimbs.Length; i++)
+		//	{
+		//		var limb = partialWordLimbs[i] >> 32;
+		//		if (!(limb == 0 || limb == LOW_BITS_SET))
+		//		{
+		//			return true;
+		//		}
+		//	}
+
+		//	return false;
+		//}
+
+		//[Conditional("DEBUG")]
+		//private static void CheckPW2CValuesBeforeClearingHighs(ulong[] partialWordLimbs, bool? sign = null)
+		//{
+		//	bool checkFails;
+		//	if (sign.HasValue)
+		//	{
+		//		checkFails = CheckPW2CValues(partialWordLimbs, sign.Value);
+		//	}
+		//	else
+		//	{
+		//		checkFails = CheckPW2CValues(partialWordLimbs);
+		//	}
+
+		//	if (checkFails)
+		//	{
+		//		throw new InvalidOperationException("One or more partial-word limbs has a non-zero value in the top half.");
+		//	}
+		//}
 
 		#endregion
 
 		#region To ULong Support
 
-			public static ulong[] ToULongs(BigInteger bi)
+		public static ulong[] ToULongs(BigInteger bi)
 		{
 			var tResult = new List<ulong>();
 			var hi = BigInteger.Abs(bi);
@@ -728,7 +866,6 @@ namespace MSetGenP
 
 			return $"{name}:{string.Join("; ", strAry)}";
 		}
-
 
 		//private string GetHiLoDiagDisplay(string name, ulong[] values)
 		//{

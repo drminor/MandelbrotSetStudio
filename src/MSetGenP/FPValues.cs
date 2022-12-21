@@ -234,11 +234,138 @@ namespace MSetGenP
 
 		public FPValues Negate2C()
 		{
-			var signs = GetSigns().Select(x => !x).ToArray();
+			var result = Clone2C(out var signs);
 
-			var result = new FPValues(signs, CloneMantissas());
+			for (var i = 0; i < Mantissas.Length; i++)
+			{
+				var partialWordLimbs = GetMantissa(i);
+
+				var newSign = !signs[i];
+				var non2CPWLimbs = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, newSign);
+
+				SetSign(i, newSign);
+				SetMantissa(result.Mantissas, i, non2CPWLimbs);
+			}
 
 			return result;
+		}
+
+		public ulong[] GetNon2CMantissa(int index)
+		{
+			var partialWordLimbs = GetMantissa(index);
+
+			var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
+			var currentSign = !(lzcMsl == 0);
+
+			var newSign = !currentSign;
+			var result = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, newSign);
+
+			return result;
+		}
+
+		public FPValues ConvertFrom2C(int[] inPlayList, int numberOfLanes)
+		{
+			var result = Clone2C(out var signs);
+
+			var anyNegativeValues = !signs.Any(x => !x);
+
+			if (!anyNegativeValues)
+			{
+				// all signs are plus
+				return result;
+			}
+
+			var indexes = inPlayList;
+			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			{
+				var idx = indexes[idxPtr];
+				var resultPtr = idx * numberOfLanes;
+
+				for (var i = 0; i < numberOfLanes; i++)
+				{
+					var valPtr = resultPtr + i;
+
+					if (!signs[valPtr])
+					{
+						var partialWordLimbs = GetMantissa(valPtr);
+
+						var non2CPWLimbs = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, false);
+
+						SetMantissa(result.Mantissas, valPtr, non2CPWLimbs);
+					}
+				}
+			}
+
+			return result;
+		}
+
+		//public bool[] GetSigns2C(int[] inPlayList, int numberOfLanes)
+		//{
+		//	bool[] signs = new bool[Mantissas.Length];
+
+		//	var indexes = inPlayList;
+
+		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+		//	{
+		//		var idx = indexes[idxPtr];
+		//		var resultPtr = idx * numberOfLanes;
+
+		//		for (var i = 0; i < numberOfLanes; i++)
+		//		{
+		//			var valPtr = resultPtr + i;
+		//			var msLimb = Mantissas[0][valPtr];
+
+		//			var lzcMsl = BitOperations.LeadingZeroCount(msLimb);
+
+		//			signs[valPtr] = !(lzcMsl == 0);
+		//		}
+		//	}
+
+		//	return signs;
+		//}
+
+		//public FPValues ConvertFrom2C()
+		//{
+		//	ulong[][] mArrays = CloneMantissas();
+
+		//	bool[] signs = new bool[Mantissas.Length];
+
+		//	for (var i = 0; i < Mantissas.Length; i++)
+		//	{
+		//		var partialWordLimbs = GetMantissa(i);
+
+		//		var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
+		//		var sign = !(lzcMsl == 0);
+
+		//		var non2CPWLimbs = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, sign);
+
+		//		SetMantissa(mArrays, i, non2CPWLimbs);
+		//	}
+
+		//	var result = new FPValues(signs, mArrays);
+
+		//	return result;
+		//}
+
+		//public bool[] GetSigns2C()
+		//{
+		//	bool[] signs = Mantissas[0].Select(x => BitOperations.LeadingZeroCount(x) != 0).ToArray();
+
+		//	return signs;
+		//}
+
+		private ulong[] GetMantissa(ulong[][] mArrays, int index)
+		{
+			var result = mArrays.Select(x => x[index]).ToArray();
+			return result;
+		}
+
+		public void SetMantissa(ulong[][] mArrays, int index, ulong[] values)
+		{
+			for (var i = 0; i < values.Length; i++)
+			{
+				mArrays[i][index] = values[i];
+			}
 		}
 
 		public ulong[] GetMantissa(int index)
@@ -291,6 +418,14 @@ namespace MSetGenP
 			return result;
 		}
 
+		public FPValues Clone2C(out bool[] signs)
+		{
+			signs = Mantissas[0].Select(x => BitOperations.LeadingZeroCount(x) != 0).ToArray();
+
+			var result = new FPValues(signs, CloneMantissas());
+
+			return result;
+		}
 
 		private ulong[][] CloneMantissas()
 		{

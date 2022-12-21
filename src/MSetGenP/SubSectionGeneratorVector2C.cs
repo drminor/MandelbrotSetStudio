@@ -55,7 +55,7 @@ namespace MSetGenP
 		public Smx2C Convert(Smx smx)
 		{
 
-			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var twoCMantissa = ScalarMathHelper.ConvertAbsValTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, _apFixedPointFormat1.BitsBeforeBinaryPoint);
 
 			return result;
