@@ -35,7 +35,7 @@ namespace EngineTest
 			var bTv = new Vec2CTestValue(bFPValus, vecMath2C);
 			Debug.WriteLine($"The StringValue for the bSmx is {bTv}.");
 
-			var bMantissaDisp = ScalarMathHelper.GetDiagDisplay("raw result", bTv.Smx2CTestValue.SmxValue.Mantissa);
+			var bMantissaDisp = ScalarMathHelper.GetDiagDisplay("raw result", bTv.Smx2CTestValue.Smx2CValue.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
 			// RValue Square 
@@ -101,10 +101,10 @@ namespace EngineTest
 			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new Vec2CTestValue("-","27797772040142849", -63, precision, vecMath2C); // -6.02768096723593793141715568851e-3
+			var aTv = new Vec2CTestValue("-27797772040142849", -63, precision, vecMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Vec2CTestValue("-", "4548762148012033", -63, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Vec2CTestValue("-4548762148012033", -63, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFPValues();
@@ -135,10 +135,10 @@ namespace EngineTest
 			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new Vec2CTestValue("+", "4548762148012033", -63, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
+			var aTv = new Vec2CTestValue("4548762148012033", -63, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {aTv}.");
 
-			var bTv = new Vec2CTestValue("-", "27797772040142849", -63, precision, vecMath2C); // -6.02768096723593793141715568851e-3
+			var bTv = new Vec2CTestValue("27797772040142849", -63, precision, vecMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFPValues();
@@ -176,10 +176,10 @@ namespace EngineTest
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 
-			var aTv = new Vec2CTestValue("-", "2779777204014", -65, precision, vecMath2C); // -6.02768096723593793141715568851e-3
+			var aTv = new Vec2CTestValue("-2779777204014", -65, precision, vecMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Vec2CTestValue("+", "454876214801", -65, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Vec2CTestValue("454876214801", -65, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 

@@ -537,15 +537,9 @@ namespace MSetGenP
 
 		public Smx2C CreateSmx2C(RValue aRValue)
 		{
-			// CreateSmx produces a value that has the TargetExponent and is compatible for this LimbCount and Format.
-			var smx = ScalarMathHelper.CreateSmx(aRValue, ApFixedPointFormat);
-
-			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
-			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, BitsBeforeBP, smx.Precision);
-
+			var result = ScalarMathHelper.CreateSmx2C(aRValue, ApFixedPointFormat);
 			return result;
 		}
-
 
 		private void ReportForAddition(int step, ulong left, ulong right, ulong carry, ulong nv, ulong lo, ulong newCarry)
 		{
