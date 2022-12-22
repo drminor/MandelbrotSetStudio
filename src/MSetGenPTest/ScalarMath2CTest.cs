@@ -22,7 +22,7 @@ namespace EngineTest
 			var aTv = new Smx2CTestValue("2147483648", -33, precision, scalarMath2C); // 0.25
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var b = scalarMath2C.Square(aTv.Smx2CValue);
+			Smx2C b = scalarMath2C.Square(aTv.Smx2CValue);
 			var bTv = new Smx2CTestValue(b, scalarMath2C);
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
@@ -50,9 +50,7 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse("2147483648");
 			var aRValue = new RValue(aBigInteger, -33, precision); // 0.25
 
-			var aSmx = ScalarMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: true);
-			var aSmx2C = scalarMath2C.Convert(aSmx);
-
+			var aSmx2C = ScalarMathHelper.CreateSmx2C(aRValue, targetExponent, limbCount, bitsBeforeBP);
 			var aStr = aSmx2C.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
@@ -86,7 +84,7 @@ namespace EngineTest
 
 			var aBigInteger = BigInteger.Parse("-1264454532552690186350"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			var aRValue = new RValue(aBigInteger, -124, precision); // 0.25
-			var aSmx2C = scalarMath2C.Convert(ScalarMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: true));
+			var aSmx2C = ScalarMathHelper.CreateSmx2C(aRValue, targetExponent, limbCount, bitsBeforeBP);
 
 			var aStr = RValueHelper.ConvertToString(aRValue);
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
@@ -112,11 +110,10 @@ namespace EngineTest
 			//var smxMH2 = BuildTheMathHelper(10);
 			//var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, -248, precision));
 
-			var aBiSmx = ScalarMathHelper.CreateSmx(aBiRValue, targetExponent: -280, limbCount: 9, bitsBeforeBP: 8, useTwoComplementEncoding: true);
-			var aBiSmx2C = scalarMath2C.Convert(aBiSmx, overrideFormatChecks:true);
+			var aBiSmx2C = ScalarMathHelper.CreateSmx2C(aBiRValue, targetExponent: -280, limbCount: 9, bitsBeforeBP: 8);
 
-			var aBiSmxRValue = aBiSmx.GetRValue();
-			var aBiStr = aBiSmx.GetStringValue();
+			var aBiSmxRValue = aBiSmx2C.GetRValue();
+			var aBiStr = aBiSmx2C.GetStringValue();
 			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aBiSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
@@ -135,24 +132,28 @@ namespace EngineTest
 
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			var aRValue = new RValue(aBigInteger, -134, precision); // 0.25
-			var aSmx = scalarMath2C.Convert(ScalarMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: true));
-			var aStr = aSmx.GetStringValue();
+
+
+			//var aSmx = scalarMath2C.Convert(ScalarMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: true));
+			var aSmx2C = ScalarMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
+			var aStr = aSmx2C.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var aMantissaDisp = ScalarMathHelper.GetDiagDisplay("raw operand", aSmx.Mantissa);
+			var aMantissaDisp = ScalarMathHelper.GetDiagDisplay("raw operand", aSmx2C.Mantissa);
 			Debug.WriteLine($"The StringValue for the a mantissa is {aMantissaDisp}.");
 
-			var a2Mantissa = scalarMath2C.Square(aSmx.Mantissa);
+			var a2Mantissa = scalarMath2C.Square(aSmx2C.Mantissa);
 			var a2Str = ScalarMathHelper.GetDiagDisplay("raw products", a2Mantissa);
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = scalarMath2C.PropagateCarries(a2Mantissa, out _);
 			var a3MantissaNrm = scalarMath2C.ShiftAndTrim(a3Mantissa);
-			var a3 = new Smx(true, a3MantissaNrm, aSmx.Exponent, aSmx.BitsBeforeBP, aSmx.Precision);
-			var a3Str = a3.GetStringValue();
+
+			var a3Smx2C = new Smx2C(true, a3MantissaNrm, aSmx2C.Exponent, aSmx2C.BitsBeforeBP, aSmx2C.Precision);
+			var a3Str = a3Smx2C.GetStringValue();
 			Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
 
-			var bSmx = scalarMath2C.Square(aSmx);                          //3.5348216834895204420064645071512155149938836924682889e-19 -- Windows Calc: 3.5348216834895204420064645514845e-19
+			var bSmx = scalarMath2C.Square(a3Smx2C);                          //3.5348216834895204420064645071512155149938836924682889e-19 -- Windows Calc: 3.5348216834895204420064645514845e-19
 			var bSmxRValue = bSmx.GetRValue();
 			var bStr = bSmx.GetStringValue();
 			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
@@ -174,9 +175,12 @@ namespace EngineTest
 			//var smxMH2 = BuildTheMathHelper(10);
 			//var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, -268, precision));
 
-			var aBiSmx = scalarMath2C.Convert(ScalarMathHelper.CreateSmx(aBiSqrRValue, targetExponent: -312, limbCount: 10, bitsBeforeBP: 8, useTwoComplementEncoding:true), overrideFormatChecks: true);
+			//var aBiSmx = scalarMath2C.Convert(ScalarMathHelper.CreateSmx(aBiSqrRValue, targetExponent: -312, limbCount: 10, bitsBeforeBP: 8, useTwoComplementEncoding:true), overrideFormatChecks: true);
+			var aBiSmx2C = ScalarMathHelper.CreateSmx2C(aBiSqrRValue, targetExponent: -312, limbCount: 1, bitsBeforeBP: 8);
+
+
 			//var aBiSmxRValue = aBiSmx.GetRValue();
-			var aBiStr = aBiSmx.GetStringValue();
+			var aBiStr = aBiSmx2C.GetStringValue();
 			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aBiSqrRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
@@ -281,7 +285,11 @@ namespace EngineTest
 			// Create a3Smx
 			var a2Mantissa = scalarMath2C.Square(aTv.Smx2CValue.Mantissa);
 			var a3Mantissa = scalarMath2C.PropagateCarries(a2Mantissa, out var carry);
-			var a3 = new Smx(true, a3Mantissa, aTv.Smx2CValue.Exponent * 2, aTv.Smx2CValue.BitsBeforeBP, aTv.Smx2CValue.Precision);
+
+
+
+			var a3 = new Smx2C(true, a3Mantissa, aTv.Smx2CValue.Exponent * 2, aTv.Smx2CValue.BitsBeforeBP, aTv.Smx2CValue.Precision);
+
 			var a3Tv = new Smx2CTestValue(a3, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the a3 is {a3Tv}.");
 
@@ -293,7 +301,7 @@ namespace EngineTest
 			// Create b3Smx
 			var b2Mantissa = scalarMath2C.Square(bMantissa);
 			var b3Mantissa = scalarMath2C.PropagateCarries(b2Mantissa, out var carry2);
-			var b3 = new Smx(true, b3Mantissa, aTv.Smx2CValue.Exponent * 2, aTv.Smx2CValue.BitsBeforeBP, aTv.Smx2CValue.Precision);
+			var b3 = new Smx2C(true, b3Mantissa, aTv.Smx2CValue.Exponent * 2, aTv.Smx2CValue.BitsBeforeBP, aTv.Smx2CValue.Precision);
 			var b3Tv = new Smx2CTestValue(b3, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the b3 is {b3Tv}.");
 

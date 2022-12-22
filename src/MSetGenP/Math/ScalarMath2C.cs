@@ -30,7 +30,7 @@ namespace MSetGenP
 
 		public ScalarMath2C(ApFixedPointFormat apFixedPointFormat, uint thresold)
 		{
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat, useTwosComplimentEncodingOverride: true);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
@@ -39,7 +39,7 @@ namespace MSetGenP
 
 			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue2C(ApFixedPointFormat.BitsBeforeBinaryPoint);
+			MaxIntegerValue = ScalarMathHelper.GetMaxSignedIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
 
 			Threshold = thresold;
 			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
@@ -489,14 +489,13 @@ namespace MSetGenP
 
 		public Smx Convert(Smx2C smx2C)
 		{
+			// Convert the partial word limbs into standard binary form
 			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
 
-			//var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
-
+			// Use an RValue to prepare for the call to CreateSmx
 			var rvalue = ScalarMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
 
-			var fpFmt = ApFixedPointFormat;
-			var result = ScalarMathHelper.CreateSmx(rvalue, fpFmt.TargetExponent, fpFmt.LimbCount, fpFmt.BitsBeforeBinaryPoint, useTwoComplementEncoding: false);
+			var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
 
 			return result;
 		}
@@ -505,15 +504,15 @@ namespace MSetGenP
 		{
 			if (!overrideFormatChecks) CheckLimbCountAndFPFormat(smx);
 
-			var twoCMantissa = ScalarMathHelper.ConvertAbsValTo2C(smx.Mantissa, smx.Sign);
-			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
+			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, BitsBeforeBP, smx.Precision);
 
 			return result;
 		}
 
 		public Smx2C CreateNewZeroSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			var result = new Smx2C(true, new ulong[LimbCount], TargetExponent, precision, BitsBeforeBP);
+			var result = new Smx2C(true, new ulong[LimbCount], TargetExponent, BitsBeforeBP, precision);
 			return result;
 		}
 
@@ -531,7 +530,7 @@ namespace MSetGenP
 			var lzc = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
 			var firstBitIsAOne = lzc == 0;
 
-			var result = new Smx2C(!firstBitIsAOne, partialWordLimbs, TargetExponent, precision, BitsBeforeBP);
+			var result = new Smx2C(!firstBitIsAOne, partialWordLimbs, TargetExponent, BitsBeforeBP, precision);
 
 			return result;
 		}
@@ -541,8 +540,8 @@ namespace MSetGenP
 			// CreateSmx produces a value that has the TargetExponent and is compatible for this LimbCount and Format.
 			var smx = ScalarMathHelper.CreateSmx(aRValue, ApFixedPointFormat);
 
-			var twoCMantissa = ScalarMathHelper.ConvertAbsValTo2C(smx.Mantissa, smx.Sign);
-			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.Precision, BitsBeforeBP);
+			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, BitsBeforeBP, smx.Precision);
 
 			return result;
 		}

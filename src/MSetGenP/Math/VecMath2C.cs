@@ -52,7 +52,7 @@ namespace MSetGenP
 
 		public VecMath2C(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat, useTwosComplimentEncodingOverride: true);
+			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
 			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
 			//{
@@ -75,7 +75,7 @@ namespace MSetGenP
 
 			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue2C(BitsBeforeBP);
+			MaxIntegerValue = ScalarMathHelper.GetMaxSignedIntegerValue(BitsBeforeBP);
 
 			Threshold = threshold; 
 			
@@ -602,7 +602,7 @@ namespace MSetGenP
 
 		public Smx2C GetSmx2CAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			var result = new Smx2C(fPValues.GetSign(index), fPValues.GetMantissa(index), TargetExponent, precision, BitsBeforeBP);
+			var result = new Smx2C(fPValues.GetSign(index), fPValues.GetMantissa(index), TargetExponent, BitsBeforeBP, precision);
 			return result;
 		}
 

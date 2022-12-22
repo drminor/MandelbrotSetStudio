@@ -30,14 +30,14 @@ namespace MSetGenP
 			Sign = bigInteger < 0 ? false : true;
 			var un2Cmantissa = ScalarMathHelper.ToPwULongs(bigInteger);
 
-			Mantissa = ScalarMathHelper.ConvertAbsValTo2C(un2Cmantissa, Sign);
+			Mantissa = ScalarMathHelper.ConvertTo2C(un2Cmantissa, Sign);
 
 			Exponent = exponent;
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		public Smx2C(bool sign, ulong[] mantissa, int exponent, int precision, byte bitsBeforeBP)
+		public Smx2C(bool sign, ulong[] mantissa, int exponent, byte bitsBeforeBP, int precision)
 		{
 			if (exponent == 1)
 			{

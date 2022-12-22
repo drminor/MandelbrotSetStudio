@@ -3,6 +3,7 @@ using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
@@ -39,7 +40,7 @@ namespace MSetGenP
 
 		#region Construction Support
 
-		public static ApFixedPointFormat GetAdjustedFixedPointFormat(ApFixedPointFormat fpFormat, bool? useTwosComplimentEncodingOverride = null)
+		public static ApFixedPointFormat GetAdjustedFixedPointFormat(ApFixedPointFormat fpFormat)
 		{
 			if (fpFormat.BitsBeforeBinaryPoint > 32)
 			{
@@ -53,9 +54,7 @@ namespace MSetGenP
 			// Make sure the resulting FixPointFormat uses an integral number of limbs.
 			var adjustedFractionalBits = limbCount * BITS_PER_LIMB - fpFormat.BitsBeforeBinaryPoint;
 
-			bool useTwosComp = useTwosComplimentEncodingOverride ?? fpFormat.UsesTwosComplimentEncoding;
-
-			var result = new ApFixedPointFormat(fpFormat.BitsBeforeBinaryPoint, adjustedFractionalBits, useTwosComp);
+			var result = new ApFixedPointFormat(fpFormat.BitsBeforeBinaryPoint, adjustedFractionalBits);
 
 			return result;
 		}
@@ -76,7 +75,21 @@ namespace MSetGenP
 				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat.");
 			}
 
-			var thresholdSmx = CreateSmx(new RValue(threshold, 0), targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: false);
+			var thresholdSmx = CreateSmx(new RValue(threshold, 0), targetExponent, limbCount, bitsBeforeBP);
+			var result = thresholdSmx.Mantissa[^1] - 1;
+
+			return result;
+		}
+
+		public static ulong GetThresholdMsl2C(uint threshold, int targetExponent, int limbCount, byte bitsBeforeBP)
+		{
+			var maxIntegerValue = GetMaxSignedIntegerValue(bitsBeforeBP);
+			if (threshold > maxIntegerValue)
+			{
+				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat.");
+			}
+
+			var thresholdSmx = CreateSmx(new RValue(threshold, 0), targetExponent, limbCount, bitsBeforeBP);
 			var result = thresholdSmx.Mantissa[^1] - 1;
 
 			return result;
@@ -88,21 +101,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static ulong GetThresholdMsl2C(uint threshold, int targetExponent, int limbCount, byte bitsBeforeBP)
-		{
-			var maxIntegerValue = GetMaxIntegerValue2C(bitsBeforeBP);
-			if (threshold > maxIntegerValue)
-			{
-				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat.");
-			}
-
-			var thresholdSmx = CreateSmx(new RValue(threshold, 0), targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: true);
-			var result = thresholdSmx.Mantissa[^1] - 1;
-
-			return result;
-		}
-
-		public static uint GetMaxIntegerValue2C(byte bitsBeforeBP)
+		public static uint GetMaxSignedIntegerValue(byte bitsBeforeBP)
 		{
 			var result = (uint)Math.Pow(2, bitsBeforeBP - 1) - 1; // 2^7 - 1 = 127
 			return result;
@@ -129,47 +128,55 @@ namespace MSetGenP
 		public static Smx CreateSmx(RValue rValue, ApFixedPointFormat apFixedPointFormat)
 		{
 			var fpFormat = apFixedPointFormat;
-			var result = CreateSmx(rValue, fpFormat.TargetExponent, fpFormat.LimbCount, fpFormat.BitsBeforeBinaryPoint, fpFormat.UsesTwosComplimentEncoding);
+			var result = CreateSmx(rValue, fpFormat.TargetExponent, fpFormat.LimbCount, fpFormat.BitsBeforeBinaryPoint);
 			return result;
 		}
 
-		//public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
-		//{
-		//	var result = CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: false);
-		//	return result;
-		//}
-
-		// Creates a Smx to be compatible with a fixed point format with
-		// the specified target exponent and limb count.
-		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP, bool useTwoComplementEncoding)
+		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
 			var partialWordLimbs = ToPwULongs(rValue.Value);
 
-			var magnitude = GetMagnitudeOfIntegerPart(partialWordLimbs, rValue.Exponent);
-
-			var maxMagnitude = bitsBeforeBP;
-			if (useTwoComplementEncoding)
-			{
-				// Signed integers have 1 less bit encode their value.
-				maxMagnitude--;
-			}
-
-			if (magnitude > maxMagnitude)
+			if (IsValueTooLarge(partialWordLimbs, rValue.Exponent, bitsBeforeBP, isSigned: false, out var maxMagnitude))
 			{
 				// Magnitude is the exponent of the most significant bit within the first BitsBeforeBP at the top of the most significant limb.
-				var maxIntegerValue = (uint)Math.Pow(2, bitsBeforeBP) - 1;
+				var maxIntegerValue = (uint)Math.Pow(2, maxMagnitude) - 1;
 
 				throw new ArgumentException($"An RValue with integer portion > {maxIntegerValue} cannot be used to create an Smx.");
 			}
 
+			var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
+			var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount, limbCount);
+
 			var sign = rValue.Value >= 0;
+			var result = new Smx(sign, newPartialWordLimbs, targetExponent, bitsBeforeBP, rValue.Precision);
+			return result;
+		}
+
+		public static Smx2C CreateSmx2C(RValue rValue, ApFixedPointFormat apFixedPointFormat)
+		{
+			var fpFormat = apFixedPointFormat;
+			var result = CreateSmx2C(rValue, fpFormat.TargetExponent, fpFormat.LimbCount, fpFormat.BitsBeforeBinaryPoint);
+			return result;
+		}
+
+		public static Smx2C CreateSmx2C(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
+		{
+			var partialWordLimbs = ToPwULongs(rValue.Value);
+
+			if (IsValueTooLarge(partialWordLimbs, rValue.Exponent, bitsBeforeBP, isSigned: true, out var maxMagnitude))
+			{
+				// Magnitude is the exponent of the most significant bit within the first BitsBeforeBP at the top of the most significant limb.
+				var maxIntegerValue = (uint)Math.Pow(2, maxMagnitude) - 1;
+
+				throw new ArgumentException($"An RValue with integer portion > {maxIntegerValue} cannot be used to create an Smx.");
+			}
 
 			var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
 			var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount, limbCount);
 
-			var exponent = targetExponent;
-			var precision = rValue.Precision;
-			var result = new Smx(sign, newPartialWordLimbs, exponent, bitsBeforeBP, precision);
+			var sign = rValue.Value >= 0;
+			var partialWordLimbs2C = ConvertTo2C(newPartialWordLimbs, sign);
+			var result = new Smx2C(sign, partialWordLimbs2C, targetExponent, bitsBeforeBP, rValue.Precision);
 
 			return result;
 		}
@@ -243,6 +250,15 @@ namespace MSetGenP
 			}
 
 			var result = resultSa.MaterializeAll();
+
+			return result;
+		}
+
+		private static bool IsValueTooLarge(ulong[] partialWordLimbs, int currentExponent, byte bitsBeforeBP, bool isSigned, out byte maxMagnitude)
+		{
+			var magnitude = GetMagnitudeOfIntegerPart(partialWordLimbs, currentExponent);
+			maxMagnitude = isSigned ? (byte)(bitsBeforeBP - 1): bitsBeforeBP;
+			var result = magnitude > maxMagnitude;
 
 			return result;
 		}
@@ -321,7 +337,6 @@ namespace MSetGenP
 			var v1 = partialWordValue >> (32 - numberOfBits);
 			return (uint)v1;
 		}
-
 
 		private static int GetNumberOfBitsBeforeBP(int limbCount, int exponent)
 		{
@@ -476,7 +491,7 @@ namespace MSetGenP
 		{
 			// TODO: Should these limbs be sign-extended before converting back from 2C?
 			var negatedPartialWordLimbs = FlipBitsAndAdd1(smx2C.Mantissa);
-			var result = new Smx2C(!smx2C.Sign, negatedPartialWordLimbs, smx2C.Exponent, smx2C.Precision, smx2C.BitsBeforeBP);
+			var result = new Smx2C(!smx2C.Sign, negatedPartialWordLimbs, smx2C.Exponent, smx2C.BitsBeforeBP, smx2C.Precision);
 
 			return result;
 		}
@@ -517,7 +532,15 @@ namespace MSetGenP
 			return isNegative ? result * -1 : result;
 		}
 
-		public static ulong[] ConvertAbsValTo2C(ulong[] partialWordLimbs, bool sign)
+		/// <summary>
+		/// Creates the two's compliment representation of a mantissa using the 
+		/// partialWordLimbs that represent the absolute value in standard binary.
+		/// </summary>
+		/// <param name="partialWordLimbs"></param>
+		/// <param name="sign"></param>
+		/// <returns></returns>
+		/// <exception cref="OverflowException"></exception>
+		public static ulong[] ConvertTo2C(ulong[] partialWordLimbs, bool sign)
 		{
 
 			//var signBitIsSet = ((int)partialWordLimbs[^1] < 0);
