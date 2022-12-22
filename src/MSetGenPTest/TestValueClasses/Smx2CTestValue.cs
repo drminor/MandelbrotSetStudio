@@ -18,18 +18,20 @@ namespace EngineTest
 
 			RValue = new RValue(bi, exponent, precision);
 
-			Smx2CValue = scalarMath2C.CreateSmx2C(RValue);
-			//SmxValue = scalarMath2C.Convert(Smx2CValue);
-
+			//Smx2CValue = scalarMath2C.CreateSmx2C(RValue);
+			Smx2CValue = ScalarMathHelper.CreateSmx2C(RValue, scalarMath2C.ApFixedPointFormat);
 			StringValue = Smx2CValue.GetStringValue();
+
+			//SmxValue = scalarMath2C.Convert(Smx2CValue);
 		}
 
 		public Smx2CTestValue(Smx2C smx2CValue, ScalarMath2C scalarMath2C)
 		{
 			Smx2CValue = smx2CValue;
-			//SmxValue = scalarMath2C.Convert(smx2CValue);
 			RValue = Smx2CValue.GetRValue();
-			StringValue = Smx2CValue.GetStringValue();	
+			StringValue = Smx2CValue.GetStringValue();
+
+			//SmxValue = scalarMath2C.Convert(smx2CValue);
 		}
 
 		public Smx2CTestValue(RValue rValue, VecMath vecMath)
@@ -47,6 +49,14 @@ namespace EngineTest
 		//	RValue = SmxValue.GetRValue();
 		//	StringValue = Smx2CValue.GetStringValue();
 		//}
+
+		public string GetDiagDisplay()
+		{
+			//var result = ScalarMathHelper.GetDiagDisplayHexBlocked("raw result", Smx2CValue.Mantissa);
+			
+			var result = ScalarMathHelper.GetDiagDisplayHex("raw result", Smx2CValue.Mantissa);
+			return result;
+		}
 
 		public override string ToString()
 		{

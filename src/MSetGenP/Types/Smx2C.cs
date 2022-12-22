@@ -100,14 +100,17 @@ namespace MSetGenP
 		public RValue GetRValue()
 		{
 			var un2CSmx = ConvertToSmx();
+
 			var result = ScalarMathHelper.GetRValue(un2CSmx);
 			return result;
 		}
 
 		public Smx ConvertToSmx()
 		{
-			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(Mantissa, Sign);
-			var result = new Smx(Sign, un2cMantissa, Exponent, BitsBeforeBP, Precision);
+			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(Mantissa.Length), 4u);
+
+			var result = scalarMath2C.Convert(this);
+
 			return result;
 		}
 

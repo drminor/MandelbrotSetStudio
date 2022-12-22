@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using MSetGenP;
+﻿using MSetGenP;
 using MSS.Types;
 
 namespace EngineTest
@@ -58,11 +57,6 @@ namespace EngineTest
 			return result;
 		}
 
-		public override string ToString()
-		{
-			return Smx2CTestValue.StringValue;
-		}
-
 		private static FPValues CreateFPValues(Smx2C smx2C, int valueCount)
 		{
 			var xx = Enumerable.Repeat(smx2C, valueCount).ToArray();
@@ -70,11 +64,23 @@ namespace EngineTest
 			return result;
 		}
 
-
 		private ScalarMath2C BuildTheScalarMath2C(VecMath2C vecMath2C)
 		{
 			return new ScalarMath2C(vecMath2C.ApFixedPointFormat, vecMath2C.Threshold);
 		}
+
+		public string GetDiagDisplay()
+		{
+			var result = ScalarMathHelper.GetDiagDisplayHex("raw result", Smx2CValue.Mantissa);
+			return result;
+		}
+
+		public override string ToString()
+		{
+			return Smx2CTestValue.StringValue;
+		}
+
+
 
 
 	}

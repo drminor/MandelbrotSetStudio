@@ -13,14 +13,14 @@ namespace EngineTest
 		{
 			var precision = 20;
 			var aBigInteger = BigInteger.Parse("-343597");
-			var aRValue = new RValue(aBigInteger, 31, precision);
+			var aRValue = new RValue(aBigInteger, -11, precision);
 
 			var aSmx2C = new Smx2C(aRValue, bitsBeforeBP: 0);
 			var aSmx2CRValue = aSmx2C.GetRValue();
 			var aStr = aSmx2C.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aRValue, aSmx2CRValue, failOnTooFewDigits: true, out var strA, out var strB);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aRValue, aSmx2CRValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}

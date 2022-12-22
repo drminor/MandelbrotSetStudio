@@ -23,12 +23,9 @@ namespace EngineTest
 			SmxTestValue = new SmxTestValue(bSmx, BuildTheScalarMath(vecMath));
 		}
 
-		public VecTestValue(string number, int exponent, int precision, VecMath vecMath) : this("+", number, exponent, precision, vecMath)
-		{ }
-
-		public VecTestValue(string sign, string number, int exponent, int precision, VecMath vecMath)
+		public VecTestValue(string number, int exponent, int precision, VecMath vecMath)
 		{
-			SmxTestValue = new SmxTestValue(sign, number, exponent, precision, BuildTheScalarMath(vecMath));
+			SmxTestValue = new SmxTestValue(number, exponent, precision, BuildTheScalarMath(vecMath));
 			Vectors = CreateFPValues(SmxTestValue.SmxValue, vecMath.ValueCount);
 		}
 

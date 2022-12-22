@@ -241,7 +241,9 @@ namespace MSetGenP
 				var partialWordLimbs = GetMantissa(i);
 
 				var newSign = !signs[i];
-				var non2CPWLimbs = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, newSign);
+
+				//var non2CPWLimbs = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, newSign);
+				var non2CPWLimbs = ScalarMathHelper.FlipBitsAndAdd1(partialWordLimbs);
 
 				SetSign(i, newSign);
 				SetMantissa(result.Mantissas, i, non2CPWLimbs);

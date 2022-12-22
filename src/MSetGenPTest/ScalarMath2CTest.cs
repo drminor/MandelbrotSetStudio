@@ -10,63 +10,42 @@ namespace EngineTest
 	{
 		#region Square and Multiply
 
+		private const uint THRESHOLD = 4;
+
 		[Fact]
-		public void SquareFourAndAQuarterNewTec()
+		public void SquareFourAndAQuarter()
 		{
 			var precision = 14;     // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
 			var scalarMath2C = BuildTheMathHelper(limbCount);
 
-			//var aTv = new Smx2CTestValue("-36507222016", -33, precision, scalarMath2C); // -4.25
+			//var number = "-36507222016"; // \w -33 Exp
+			
+			var number = "2147483648";
+			var exponent = -33;
 
-			var aTv = new Smx2CTestValue("2147483648", -33, precision, scalarMath2C); // 0.25
+			var aTv = new Smx2CTestValue(number, exponent, precision, scalarMath2C); // 0.25
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			Smx2C b = scalarMath2C.Square(aTv.Smx2CValue);
 			var bTv = new Smx2CTestValue(b, scalarMath2C);
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
+			Debug.WriteLine($"The StringValue for the result mantissa is {bTv.GetDiagDisplay()}.");
+
+			//var bNon2C = ScalarMathHelper.ConvertFrom2C(b.Mantissa);
+
+			var bNonCSmx = scalarMath2C.Convert(bTv.Smx2CValue);
+
+			var cTv = new SmxTestValue(bNonCSmx, new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD));
+
+			// RValue Square 
 			var bRValue = aTv.RValue.Square();
 			var bStrComp = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bTv.RValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecision);
-			Assert.Equal(strA, strB);
-		}
-
-		[Fact]
-		public void SquareFourAndAQuarterXX()
-		{
-			var precision = 14;     // Binary Digits of precision, 30 Decimal Digits
-			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
-			var scalarMath2C = BuildTheMathHelper(limbCount);
-			var targetExponent = scalarMath2C.TargetExponent;
-			var bitsBeforeBP = scalarMath2C.BitsBeforeBP;
-
-			//var aBigInteger = BigInteger.Parse("-36507222016");
-			//var aRValue = new RValue(aBigInteger, -33, precision); // -4.25
-
-			var aBigInteger = BigInteger.Parse("2147483648");
-			var aRValue = new RValue(aBigInteger, -33, precision); // 0.25
-
-			var aSmx2C = ScalarMathHelper.CreateSmx2C(aRValue, targetExponent, limbCount, bitsBeforeBP);
-			var aStr = aSmx2C.GetStringValue();
-			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
-
-			var bSmx2C = scalarMath2C.Square(aSmx2C);
-			var bSmx = scalarMath2C.Convert(bSmx2C);
-
-			var bSmxRValue = bSmx.GetRValue();
-			var bStr = bSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
-
-			var bRValue = aRValue.Square();
-			var bStrComp = RValueHelper.ConvertToString(bRValue);
-			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
-
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecision);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
+			//Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -76,47 +55,27 @@ namespace EngineTest
 			var precision = 70;    // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 6;      // TargetExponent = -184, Total Bits = 192
 			var scalarMath2C = BuildTheMathHelper(limbCount);
-			var targetExponent = scalarMath2C.TargetExponent;
-			var bitsBeforeBP = scalarMath2C.BitsBeforeBP;
 
+			//var number = "-12644545325526901863503869090"; // with exponent -124
+			var number = "-1264454532552690186350";
+			var exponent = -33;
 
-			//var aBigInteger = BigInteger.Parse("-12644545325526901863503869090"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+			var aTv = new Smx2CTestValue(number, exponent, precision, scalarMath2C); // 0.25
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var aBigInteger = BigInteger.Parse("-1264454532552690186350"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
-			var aRValue = new RValue(aBigInteger, -124, precision); // 0.25
-			var aSmx2C = ScalarMathHelper.CreateSmx2C(aRValue, targetExponent, limbCount, bitsBeforeBP);
+			Smx2C b = scalarMath2C.Square(aTv.Smx2CValue);
+			var bTv = new Smx2CTestValue(b, scalarMath2C);
+			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aStr = RValueHelper.ConvertToString(aRValue);
-			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
+			Debug.WriteLine($"The StringValue for the result mantissa is {bTv.GetDiagDisplay()}.");
 
-
-			var bSmx2C = scalarMath2C.Square(aSmx2C);                          //3.5348216834895204420064645071512155149938836924682889e-19 -- Windows Calc: 3.5348216834895204420064645514845e-19
-			var bSmx = scalarMath2C.Convert(bSmx2C);
-
-			var bSmxRValue = bSmx.GetRValue();
-			var bStr = bSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
-
-			var bMantissaDisp = ScalarMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
-			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
-
-			var bRValue = aRValue.Square();
+			// RValue Square 
+			var bRValue = aTv.RValue.Square();
 			var bStrComp = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
-			var aBiSqr = BigInteger.Multiply(aBigInteger, aBigInteger);
-			var aBiRValue = new RValue(aBiSqr, -248, precision);
 
-			//var smxMH2 = BuildTheMathHelper(10);
-			//var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, -248, precision));
-
-			var aBiSmx2C = ScalarMathHelper.CreateSmx2C(aBiRValue, targetExponent: -280, limbCount: 9, bitsBeforeBP: 8);
-
-			var aBiSmxRValue = aBiSmx2C.GetRValue();
-			var aBiStr = aBiSmx2C.GetStringValue();
-			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
-
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aBiSmxRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bRValue, bTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
@@ -127,14 +86,42 @@ namespace EngineTest
 			var precision = 70;    // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 6;      // TargetExponent = -184, Total Bits = 192
 			var scalarMath2C = BuildTheMathHelper(limbCount);
+
+
+			var number = "-126445453255269018635038690902017";
+			var exponent = -134;
+
+			var aTv = new Smx2CTestValue(number, exponent, precision, scalarMath2C); // 0.25
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
+
+			Smx2C b = scalarMath2C.Square(aTv.Smx2CValue);
+			var bTv = new Smx2CTestValue(b, scalarMath2C);
+			Debug.WriteLine($"The StringValue for b is {bTv}.");
+
+			Debug.WriteLine($"The StringValue for the result mantissa is {bTv.GetDiagDisplay()}.");
+
+			// RValue Square 
+			var bRValue = aTv.RValue.Square();
+			var bStrComp = RValueHelper.ConvertToString(bRValue);
+			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
+
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bRValue, bTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
+			Assert.Equal(strA, strB);
+		}
+
+		[Fact]
+		public void SquareAnRValueDetail()
+		{
+			var precision = 70;    // Binary Digits of precision, 30 Decimal Digits
+			var limbCount = 6;      // TargetExponent = -184, Total Bits = 192
+			var scalarMath2C = BuildTheMathHelper(limbCount);
 			var targetExponent = scalarMath2C.TargetExponent;
 			var bitsBeforeBP = scalarMath2C.BitsBeforeBP;
 
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			var aRValue = new RValue(aBigInteger, -134, precision); // 0.25
 
-
-			//var aSmx = scalarMath2C.Convert(ScalarMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP, useTwoComplementEncoding: true));
 			var aSmx2C = ScalarMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
 			var aStr = aSmx2C.GetStringValue();
 			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
@@ -161,10 +148,6 @@ namespace EngineTest
 			var bMantissaDisp = ScalarMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
 			Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
 
-			//var bP32Smx = AdjustExponent(bSmx, bSmx.Exponent + 32);
-			//var bP32Str = bP32Smx.GetStringValue();
-			//Debug.WriteLine($"The StringValue for the bSmxPlus32 is {bP32Str}.");
-
 			var bRValue = aRValue.Square();
 			var bStrComp = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
@@ -172,10 +155,6 @@ namespace EngineTest
 			var aBiSqr = BigInteger.Multiply(aBigInteger, aBigInteger);
 			var aBiSqrRValue = new RValue(aBiSqr, -268, precision);
 
-			//var smxMH2 = BuildTheMathHelper(10);
-			//var aBiSmx = smxMH2.CreateSmx(new RValue(aBiSqr, -268, precision));
-
-			//var aBiSmx = scalarMath2C.Convert(ScalarMathHelper.CreateSmx(aBiSqrRValue, targetExponent: -312, limbCount: 10, bitsBeforeBP: 8, useTwoComplementEncoding:true), overrideFormatChecks: true);
 			var aBiSmx2C = ScalarMathHelper.CreateSmx2C(aBiSqrRValue, targetExponent: -312, limbCount: 1, bitsBeforeBP: 8);
 
 
@@ -420,9 +399,8 @@ namespace EngineTest
 		{
 			var precision = 53;
 			var limbCount = 3;
-			var threshold = 4u;
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
+			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
 			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			//Debug.WriteLine($"The StringValue for a is {aTv}.");
@@ -454,27 +432,33 @@ namespace EngineTest
 		{
 			var precision = 53;
 			var limbCount = 3;
-			var threshold = 4u;
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
+			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
-			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
-			//Debug.WriteLine($"The StringValue for a is {aTv}.");
+			var aNumber = "-343597";
+			var bNumber = "-343707";
+			var exponent = -12;
 
-			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
-			//Debug.WriteLine($"The StringValue for b is {bTv}.");
+			//var aNumber = "-414219082";
+			//var bNumber = "-7781838";
+			//var exponent = -36;
 
-			var aTv = new Smx2CTestValue("-27797772040142849", -62, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			//var aNumber = "-27797772040142849";
+			//var bNumber = "-4548762148012033";
+			//var exponent = -63;
+
+
+			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Smx2CTestValue("-4548762148012033", -62, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
 			var cTv = new Smx2CTestValue(c, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), threshold);
+			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD);
 			//var d = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "d");
 			//var dTv = new SmxTestValue(d, scalarMath);
 			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
@@ -490,25 +474,26 @@ namespace EngineTest
 		}
 
 		[Fact]
-		public void AddLeftIsPosRightIsNeg()
+		public void AddLeftIs_Pos_RightIsNeg()
 		{
 			var precision = 53;
 			var limbCount = 3;
-			var threshold = 4u;
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
+			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
-			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
-			//Debug.WriteLine($"The StringValue for a is {aTv}.");
+			//var aNumber = "-414219082";
+			//var bNumber = "67781838";
+			//var exponent = -36;
 
-			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
-			//Debug.WriteLine($"The StringValue for b is {bTv}.");
+			var aNumber = "27797772040142849";
+			var bNumber = "-4548762148012033";
+			var exponent = -62;
 
 			// SWITCHED
-			var aTv = new Smx2CTestValue("4548762148012033", -62, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {aTv}.");
 
-			var bTv = new Smx2CTestValue("-27797772040142849", -62, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {bTv}.");
 
 
@@ -516,7 +501,7 @@ namespace EngineTest
 			var cTv = new Smx2CTestValue(c, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), threshold);
+			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD);
 			//var d = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "d");
 			//var dTv = new SmxTestValue(d, scalarMath);
 			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
@@ -532,31 +517,76 @@ namespace EngineTest
 		}
 
 		[Fact]
+		public void AddLeftIs_Big_Pos_RightIsNeg()
+		{
+			var precision = 53;
+			var limbCount = 3;
+
+			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
+
+			//var aNumber = "-414219082";
+			//var bNumber = "67781838";
+			//var exponent = -36;
+
+			var aNumber = "4548762148012033";
+			var bNumber = "-27797772040142849";
+			var exponent = -62;
+
+			// SWITCHED
+			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			Debug.WriteLine($"The StringValue for b is {aTv}.");
+
+			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			Debug.WriteLine($"The StringValue for a is {bTv}.");
+
+
+			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
+			var cTv = new Smx2CTestValue(c, scalarMath2C);
+			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
+
+			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD);
+			//var d = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "d");
+			//var dTv = new SmxTestValue(d, scalarMath);
+			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
+
+			var cRValue = aTv.RValue.Add(bTv.RValue);
+			var cStrComp = RValueHelper.ConvertToString(cRValue);
+			Debug.WriteLine($"The StringValue for the cRef is {cStrComp}.");
+
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
+			//Assert.True(haveRequiredPrecision);
+
+			Assert.Equal(strA, strB);
+		}
+
+
+		[Fact]
 		public void AddLeftIsNegRightIsPos()
 		{
 			var precision = 53;
 			var limbCount = 3;
-			var threshold = 4u;
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
+			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
-			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
-			//Debug.WriteLine($"The StringValue for a is {aTv}.");
+			//var aNumber = "-414219082";
+			//var bNumber = "67781838";
+			//var exponent = -36;
 
-			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
-			//Debug.WriteLine($"The StringValue for b is {bTv}.");
+			var aNumber = "-27797772040142849";
+			var bNumber = "4548762148012033";
+			var exponent = -62;
 
-			var aTv = new Smx2CTestValue("-27797772040142849", -62, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Smx2CTestValue("4548762148012033", -62, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
 			var cTv = new Smx2CTestValue(c, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), threshold);
+			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD);
 			//var d = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "d");
 			//var dTv = new SmxTestValue(d, scalarMath);
 			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
@@ -577,9 +607,8 @@ namespace EngineTest
 			var precision = 25;
 			var limbCount = 5;
 			//var valueCount = 8;
-			var threshold = 4u;
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
+			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
 			//var a = new Smx(false, new ulong[] { 151263699, 55238551, 1 }, 2, -63, precision);
 			//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
@@ -627,7 +656,7 @@ namespace EngineTest
 
 		private ScalarMath2C BuildTheMathHelper(int limbCount)
 		{
-			var result = new ScalarMath2C(new ApFixedPointFormat(limbCount), 4u);
+			var result = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 			return result;
 		}
 

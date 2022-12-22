@@ -21,7 +21,7 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public ScalarMath(ApFixedPointFormat apFixedPointFormat, uint thresold)
+		public ScalarMath(ApFixedPointFormat apFixedPointFormat, uint threshold)
 		{
 			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
@@ -30,13 +30,13 @@ namespace MSetGenP
 			//	Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
 			//}
 
-			Threshold = thresold;
+			Threshold = threshold;
 			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
 
 
-			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, BitsBeforeBP);
+			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, TargetExponent, LimbCount, BitsBeforeBP);
 		}
 
 		#endregion

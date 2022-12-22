@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
+using System.Threading;
 
 namespace MSetGenP
 {
@@ -242,38 +243,9 @@ namespace MSetGenP
 
 		public void Square(FPValues a, FPValues result)
 		{
-			//if (a.IsZero)
-			//{
-			//	return a;
-			//}
-
-			//_ = CheckPWValues(result.MantissaMemories, out var errors);
-
-			//if (errors.Length > 1)
-			//{
-			//	Debug.WriteLine($"PW Errors found at Square, Errors:\n{errors}.");
-			//}
-
-
-			//ClearManatissMems(_squareResult1Mems, onlyInPlayItems: false);
-			//ClearManatissMems(_squareResult2Mems, onlyInPlayItems: false);
-			//ClearManatissMems(result.MantissaMemories, onlyInPlayItems: false);
-
 			SquareInternal(a, _squareResult1Mems);
 			PropagateCarries(_squareResult1Mems, _squareResult2Mems);
 			ShiftAndTrim(_squareResult2Mems, result.MantissaMemories);
-
-			//_ = CheckPWValues(result.MantissaMemories, out errors);
-
-			//if(errors.Length > 1)
-			//{
-			//	Debug.WriteLine($"PW Errors found at Square, Errors:\n{errors}.");
-			//}
-
-			//if (flags.Any(x => x != 0))
-			//{
-			//	Debug.WriteLine($"Found a prb.");
-			//}
 		}
 
 		private void SquareInternal(FPValues a, Memory<ulong>[] resultLimbs)
@@ -281,6 +253,7 @@ namespace MSetGenP
 			ClearManatissMems(resultLimbs, onlyInPlayItems: true);
 
 			var indexes = InPlayList;
+
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 			for (int j = 0; j < a.LimbCount; j++)
 			{
@@ -308,8 +281,13 @@ namespace MSetGenP
 						var lows = Avx2.And(productVector, HIGH_MASK_VEC);    // Create new ulong from bits 0 - 31.
 						var highs = Avx2.ShiftRightLogical(productVector, 32);   // Create new ulong from bits 32 - 63.
 
-						resultLows[idx] = Avx2.Add(resultLows[idx], lows);
-						resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
+						//resultLows[idx] = Avx2.Add(resultLows[idx], lows);
+						//resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
+
+						resultLows[idx] = UnsignedAddition(resultLows[idx], lows);
+						resultHighs[idx] = UnsignedAddition(resultHighs[idx], highs);
+
+
 					}
 				}
 			}
@@ -333,18 +311,19 @@ namespace MSetGenP
 			{
 				var idx = indexes[idxPtr];
 
-				var limbVecs = GetLimbVectorsUL(mantissaMems[0]);
-				var resultLimbVecs = GetLimbVectorsUL(resultLimbs[0]);
+				var limbVecs = GetLimbVectorsUL(mantissaMems[0]);				// Array of Least Signficant input Limb values
+				var resultLimbVecs = GetLimbVectorsUL(resultLimbs[0]);			// Array of least signficant result limb values
 
-				var carries = Avx2.ShiftRightLogical(limbVecs[idx], 32); // The high 32 bits of sum becomes the new carry.
-				resultLimbVecs[idx] = Avx2.And(limbVecs[idx], HIGH_MASK_VEC);    // The low 32 bits of the sum is the result.
+				var carries = Avx2.ShiftRightLogical(limbVecs[idx], 32);		// The high 32 bits of sum becomes the new carry.
+				resultLimbVecs[idx] = Avx2.And(limbVecs[idx], HIGH_MASK_VEC);   // The low 32 bits of the sum is the result.
 
 				for (int i = 1; i < intermediateLimbCount; i++)
 				{
-					limbVecs = GetLimbVectorsUL(mantissaMems[i]);
-					resultLimbVecs = GetLimbVectorsUL(resultLimbs[i]);
+					limbVecs = GetLimbVectorsUL(mantissaMems[i]);				// Array of next 'stack' of input limbs
+					resultLimbVecs = GetLimbVectorsUL(resultLimbs[i]);			// Array of next 'stack' of result limbs
 
-					var withCarries = Avx2.Add(limbVecs[idx], carries);
+					//var withCarries = Avx2.Add(limbVecs[idx], carries);         // SIGNED Addition!!
+					var withCarries = UnsignedAddition(limbVecs[idx], carries);
 
 					NumberOfSplits++;
 					carries = Avx2.ShiftRightLogical(withCarries, 32);          // The high 32 bits of sum becomes the new carry.
@@ -373,6 +352,20 @@ namespace MSetGenP
 				//}
 
 			}
+		}
+
+		private Vector256<ulong> UnsignedAddition(Vector256<ulong> a, Vector256<ulong> b)
+		{
+			var tr = new ulong[_lanes];
+
+			for (var i = 0; i < _lanes; i++)
+			{
+				tr[i] = a.GetElement(i) + b.GetElement(i);
+			}
+
+			var result = Vector256.Create(tr[0], tr[1], tr[2], tr[3]);
+
+			return result;
 		}
 
 		private void ShiftAndTrim(Memory<ulong>[] mantissaMems, Memory<ulong>[] resultLimbs)
@@ -996,6 +989,50 @@ namespace MSetGenP
 		//		result[i] = Avx2.Add(left[i], right[i]);
 		//	}
 		//}
+
+		#endregion
+
+
+		#region Old Versions of good Methods
+
+		public void Square_OLD(FPValues a, FPValues result)
+		{
+			//if (a.IsZero)
+			//{
+			//	return a;
+			//}
+
+			//_ = CheckPWValues(result.MantissaMemories, out var errors);
+
+			//if (errors.Length > 1)
+			//{
+			//	Debug.WriteLine($"PW Errors found at Square, Errors:\n{errors}.");
+			//}
+
+
+			//ClearManatissMems(_squareResult1Mems, onlyInPlayItems: false);
+			//ClearManatissMems(_squareResult2Mems, onlyInPlayItems: false);
+			//ClearManatissMems(result.MantissaMemories, onlyInPlayItems: false);
+
+			SquareInternal(a, _squareResult1Mems);
+			PropagateCarries(_squareResult1Mems, _squareResult2Mems);
+			ShiftAndTrim(_squareResult2Mems, result.MantissaMemories);
+
+			//_ = CheckPWValues(result.MantissaMemories, out errors);
+
+			//if(errors.Length > 1)
+			//{
+			//	Debug.WriteLine($"PW Errors found at Square, Errors:\n{errors}.");
+			//}
+
+			//if (flags.Any(x => x != 0))
+			//{
+			//	Debug.WriteLine($"Found a prb.");
+			//}
+		}
+
+
+
 
 		#endregion
 

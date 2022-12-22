@@ -497,10 +497,10 @@ namespace EngineTest
 			//var bTv = new SmxTestValue("67781838", -36, precision, scalarMath); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new SmxTestValue("-", "27797772040142849", -62, precision, scalarMath); // -6.02768096723593793141715568851e-3
+			var aTv = new SmxTestValue("-27797772040142849", -62, precision, scalarMath); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new SmxTestValue("-", "4548762148012033", -62, precision, scalarMath); // 9.8635556059889517056815666506964e-4
+			var bTv = new SmxTestValue("-4548762148012033", -62, precision, scalarMath); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var c = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "Test");
@@ -538,20 +538,15 @@ namespace EngineTest
 			//var bTv = new SmxTestValue("67781838", -36, precision, scalarMath); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new SmxTestValue("+", "27797772040142849", -62, precision, scalarMath); // -6.02768096723593793141715568851e-3
+			var aTv = new SmxTestValue("27797772040142849", -62, precision, scalarMath); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new SmxTestValue("-", "4548762148012033", -62, precision, scalarMath); // 9.8635556059889517056815666506964e-4
+			var bTv = new SmxTestValue("-4548762148012033", -62, precision, scalarMath); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var c = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "Test");
 			var cTv = new SmxTestValue(c, scalarMath);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
-
-			//var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), threshold);
-			//var d = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "d");
-			//var dTv = new Smx2CTestValue(d, scalarMath2C);
-			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
 
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
@@ -579,10 +574,10 @@ namespace EngineTest
 			//var bTv = new SmxTestValue("67781838", -36, precision, scalarMath); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new SmxTestValue("-", "27797772040142849", -62, precision, scalarMath); // -6.02768096723593793141715568851e-3
+			var aTv = new SmxTestValue("-27797772040142849", -62, precision, scalarMath); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new SmxTestValue("+", "4548762148012033", -62, precision, scalarMath); // 9.8635556059889517056815666506964e-4
+			var bTv = new SmxTestValue("+4548762148012033", -62, precision, scalarMath); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var c = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "Test");

@@ -102,9 +102,14 @@ namespace MSetGenP
 
 		public override string ToString()
 		{
+
 			var result = Sign
 				? ScalarMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
 				: "-" + ScalarMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
+
+			//var result = Sign
+			//	? ScalarMathHelper.GetDiagDisplayHexBlocked("m", Mantissa) + $" e:{Exponent}"
+			//	: "-" + ScalarMathHelper.GetDiagDisplayHexBlocked("m", Mantissa) + $" e:{Exponent}";
 
 			return result;
 		}

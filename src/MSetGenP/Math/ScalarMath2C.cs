@@ -22,13 +22,13 @@ namespace MSetGenP
 		private const ulong HIGH_MASK = LOW_BITS_SET;
 		private const ulong HIGH_FILL = HIGH_BITS_SET;
 
-		private static readonly bool USE_DET_DEBUG = false;
+		private static readonly bool USE_DET_DEBUG = true;
 
 		#endregion
 
 		#region Constructor
 
-		public ScalarMath2C(ApFixedPointFormat apFixedPointFormat, uint thresold)
+		public ScalarMath2C(ApFixedPointFormat apFixedPointFormat, uint threshold)
 		{
 			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
 
@@ -41,8 +41,8 @@ namespace MSetGenP
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = ScalarMathHelper.GetMaxSignedIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
 
-			Threshold = thresold;
-			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(thresold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
+			Threshold = threshold;
+			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
 		}
 
 		#endregion
@@ -130,7 +130,9 @@ namespace MSetGenP
 
 			CheckLimb2C(a, "Square");
 
-			var rawMantissa = Square(a.Mantissa);
+			var non2CMantissa = ScalarMathHelper.ConvertFrom2C(a.Mantissa, false);
+
+			var rawMantissa = Square(non2CMantissa);
 			var mantissa = PropagateCarries(rawMantissa, out var carry);
 			var precision = a.Precision;
 
@@ -144,7 +146,9 @@ namespace MSetGenP
 			else
 			{
 				var nrmMantissa = ShiftAndTrim(mantissa);
-				result = BuildSmx2C(nrmMantissa, precision);
+
+				var mantissa2C = ScalarMathHelper.ConvertTo2C(nrmMantissa, true); // TODO: Converting to / from 2C needs to be done for the other Multiply methods.
+				result = BuildSmx2C(mantissa2C, precision);
 			}
 
 			return result;
@@ -377,10 +381,14 @@ namespace MSetGenP
 
 			var precision = Math.Min(a.Precision, b.Precision);
 
-			var aMantissa =  ScalarMathHelper.ExtendSignBits(a.Mantissa);
-			var bMantissa = ScalarMathHelper.ExtendSignBits(b.Mantissa);
+			//var aMantissa =  ScalarMathHelper.ExtendSignBit(a.Mantissa);
+			//var bMantissa = ScalarMathHelper.ExtendSignBit(b.Mantissa);
 
-			var mantissa = Add(aMantissa, bMantissa, out var carry);
+			ValidateIsSplit2C(a.Mantissa, a.Sign);
+
+			ValidateIsSplit2C(b.Mantissa, b.Sign);
+
+			var mantissa = Add(a.Mantissa, b.Mantissa, out var carry);
 
 			Smx2C result;
 
@@ -492,8 +500,10 @@ namespace MSetGenP
 			// Convert the partial word limbs into standard binary form
 			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
 
+			var clearedResults = ScalarMathHelper.SetHighHalvesToZero(un2cMantissa, null);
+
 			// Use an RValue to prepare for the call to CreateSmx
-			var rvalue = ScalarMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
+			var rvalue = ScalarMathHelper.GetRValue(smx2C.Sign, clearedResults, smx2C.Exponent, smx2C.Precision);
 
 			var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
 
@@ -619,27 +629,8 @@ namespace MSetGenP
 				throw new InvalidOperationException($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
 			}
 
-			ValidateIsSplit2C(a.Mantissa, a.Sign);
+			//ValidateIsSplit2C(a.Mantissa, a.Sign);
 		}
-
-
-		//[Conditional("DETAIL")]
-		//private void ValidateIsSplit2C(ulong[] mantissa)
-		//{
-		//	if (ScalarMathHelper.CheckPW2CValues(mantissa))
-		//	{
-		//		throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
-		//	}
-		//}
-
-		//[Conditional("DETAIL")]
-		//private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
-		//{
-		//	if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
-		//	{
-		//		throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
-		//	}
-		//}
 
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit2C(ulong[] mantissa)
@@ -673,6 +664,16 @@ namespace MSetGenP
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}
 		}
+
+		// Older version
+		//[Conditional("DETAIL")]
+		//private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
+		//{
+		//	if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
+		//	{
+		//		throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
+		//	}
+		//}
 
 		#endregion
 	}
