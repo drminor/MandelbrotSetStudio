@@ -112,7 +112,10 @@ namespace EngineTest
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFPValues();
+			
 			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+
+
 			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 

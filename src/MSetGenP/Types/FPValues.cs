@@ -252,18 +252,18 @@ namespace MSetGenP
 			return result;
 		}
 
-		public ulong[] GetNon2CMantissa(int index)
-		{
-			var partialWordLimbs = GetMantissa(index);
+		//public ulong[] GetNon2CMantissa(int index)
+		//{
+		//	var partialWordLimbs = GetMantissa(index);
 
-			var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
-			var currentSign = !(lzcMsl == 0);
+		//	var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
+		//	var currentSign = !(lzcMsl == 0);
 
-			var newSign = !currentSign;
-			var result = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, newSign);
+		//	var newSign = !currentSign;
+		//	var result = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, newSign);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public FPValues ConvertFrom2C(int[] inPlayList, int numberOfLanes)
 		{
@@ -420,9 +420,15 @@ namespace MSetGenP
 			return result;
 		}
 
+		//private const ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
+		private const ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
+
 		public FPValues Clone2C(out bool[] signs)
 		{
-			signs = Mantissas[0].Select(x => BitOperations.LeadingZeroCount(x) != 0).ToArray();
+			//signs = Mantissas[^1].Select(x => BitOperations.LeadingZeroCount(x) != 0).ToArray();
+
+			signs = Mantissas[^1].Select(x => (x & TEST_BIT_31) > 0).ToArray();
+
 
 			var result = new FPValues(signs, CloneMantissas());
 

@@ -22,7 +22,7 @@ namespace MSetGenP
 		private const ulong HIGH_MASK = LOW_BITS_SET;
 		private const ulong HIGH_FILL = HIGH_BITS_SET;
 
-		private static readonly bool USE_DET_DEBUG = true;
+		private static readonly bool USE_DET_DEBUG = false;
 
 		#endregion
 
@@ -384,9 +384,9 @@ namespace MSetGenP
 			//var aMantissa =  ScalarMathHelper.ExtendSignBit(a.Mantissa);
 			//var bMantissa = ScalarMathHelper.ExtendSignBit(b.Mantissa);
 
-			ValidateIsSplit2C(a.Mantissa, a.Sign);
+			//ValidateIsSplit2C(a.Mantissa, a.Sign);
 
-			ValidateIsSplit2C(b.Mantissa, b.Sign);
+			//ValidateIsSplit2C(b.Mantissa, b.Sign);
 
 			var mantissa = Add(a.Mantissa, b.Mantissa, out var carry);
 
@@ -419,11 +419,16 @@ namespace MSetGenP
 
 			for (var i = 0; i < resultLength - 1; i++)
 			{
-				var nv = left[i] + right[i] + carry;
-				var (lo, newCarry) = GetResultWithCarry(nv);
+				ulong newValue;
+				checked
+				{
+					newValue = left[i] + right[i] + carry;
+				}
+
+				var (lo, newCarry) = GetResultWithCarry(newValue);
 				result[i] = lo;
 
-				//Report(i, left[i], right[i], carry, nv, lo, newCarry);
+				if (USE_DET_DEBUG) ReportForAddition(i, left[i], right[i], carry, newValue, lo, newCarry);
 
 				carry = newCarry;
 			}
@@ -432,38 +437,32 @@ namespace MSetGenP
 			var (lo2, newCarry2) = GetResultWithCarry(nv2);
 			result[^1] = lo2;
 
-			//Report(resultLength - 1, left[^1], right[^1], carry, nv2, lo2, newCarry2);
+			if (USE_DET_DEBUG) ReportForAddition(resultLength - 1, left[^1], right[^1], carry, nv2, lo2, newCarry2);
 			
 			carry = newCarry2;
 
 			return result;
 		}
 
-		#endregion
-
-		#region Add Subtract Post Processing
-
-		private (ulong limb, ulong carry) GetResultWithCarry(ulong x)
+		private (ulong limbs, ulong carry) GetResultWithCarry(ulong partialWordLimb)
 		{
 			// A carry is generated any time the bit just above the result limb is different than msb of the limb
 			// i.e. this next higher bit is not an extension of the sign.
 
 			NumberOfGetCarries++;
 
-			var limbValue = x & HIGH_MASK;
 			bool carryFlag;
 
-			var resultIsNegative = BitOperations.LeadingZeroCount(limbValue) == 32;
-			var nextBitIsNegative = BitOperations.TrailingZeroCount(x >> 32) == 0;
+			var limbValue = ScalarMathHelper.GetLowHalf(partialWordLimb, out var resultIsNegative, out bool extendedCaryOutIsNegative);
 
 			if (resultIsNegative)
 			{
-				limbValue |= HIGH_FILL; // sign extend the result
-				carryFlag = !nextBitIsNegative; // true if next higher bit is zero
+				//limbValue |= HIGH_FILL; // sign extend the result
+				carryFlag = !extendedCaryOutIsNegative; // true if next higher bit is zero
 			}
 			else
 			{
-				carryFlag = nextBitIsNegative; // true if next higher bit is one
+				carryFlag = extendedCaryOutIsNegative; // true if next higher bit is one
 			}
 
 			var result = (limbValue, carryFlag ? 1uL : 0uL);

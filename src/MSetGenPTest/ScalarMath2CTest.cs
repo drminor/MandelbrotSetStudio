@@ -528,15 +528,21 @@ namespace EngineTest
 			//var bNumber = "67781838";
 			//var exponent = -36;
 
-			var aNumber = "4548762148012033";
-			var bNumber = "-27797772040142849";
-			var exponent = -62;
+			//Expected: ??; Actual: ??
+
+
+			var aNumber = "4548762148012033";					// 9.8635556059889517056815666506964e-4
+			var bNumber = "-27797772040142849";					//-6.02768096723593793141715568851e-3
+			var exponent = -62;                     // Result: -0.00504132540663704276084899902344
+
+			//Expected: -86609311; Actual: 4397959902817
+
 
 			// SWITCHED
-			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C);
 			Debug.WriteLine($"The StringValue for b is {aTv}.");
 
-			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C);
 			Debug.WriteLine($"The StringValue for a is {bTv}.");
 
 

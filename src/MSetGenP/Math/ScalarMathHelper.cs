@@ -734,22 +734,22 @@ namespace MSetGenP
 		// Returns true if not correct!!
 		public static bool CheckPW2CValues(ulong[] partialWordLimbs)
 		{
-			var msl = partialWordLimbs[^1];
+			//var msl = partialWordLimbs[^1];
 
-			if (CheckPw2cMsl(msl))
-			{
-				return true;
-			}
+			//if (CheckPw2cMsl(msl))
+			//{
+			//	return true;
+			//}
 
-			for (var i = 0; i < partialWordLimbs.Length - 1; i++)
-			{
-				var hiBits = partialWordLimbs[i] & LOW_MASK;
+			//for (var i = 0; i < partialWordLimbs.Length - 1; i++)
+			//{
+			//	var hiBits = partialWordLimbs[i] & LOW_MASK;
 
-				if (hiBits != 0)
-				{
-					return true;
-				}
-			}
+			//	if (hiBits != 0)
+			//	{
+			//		return true;
+			//	}
+			//}
 
 			return false;
 		}
@@ -819,7 +819,11 @@ namespace MSetGenP
 		public static ulong GetLowHalf(ulong partialWordLimb, out bool resultIsNegative, out bool extendedCarryOutIsNegative)
 		{
 			var lo = partialWordLimb & HIGH_MASK;
-			resultIsNegative = BitOperations.LeadingZeroCount(lo) == 32; // The first bit of the limb is set.
+
+			var lzc = BitOperations.LeadingZeroCount(lo);
+
+			resultIsNegative = lzc == 32; // The first bit of the limb is set.
+
 			extendedCarryOutIsNegative = BitOperations.TrailingZeroCount(partialWordLimb >> 32) == 0; // The first bit of the top half is set.
 
 			return lo;

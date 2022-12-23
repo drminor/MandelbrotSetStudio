@@ -45,7 +45,7 @@ namespace MSetGenP
 		private Vector256<ulong> _zeroVector;
 		private Vector256<long> _maxDigitValueVector;
 
-		private static readonly bool USE_DET_DEBUG = true;
+		private static readonly bool USE_DET_DEBUG = false;
 
 		#endregion
 
@@ -484,16 +484,16 @@ namespace MSetGenP
 				var va = limbVecsA[idx];
 				var vb = limbVecsB[idx];
 
-				//var sumVector = Avx2.Add(va, vb);
-				var sumVector = UnsignedAddition(va, vb);
+				var sumVector = Avx2.Add(va, vb);
+				//var sumVector = UnsignedAddition(va, vb);
 
-				//var withCarriesVector = Avx2.Add(sumVector, carryVector);
-				var withCarriesVector = UnsignedAddition(sumVector, carryVector);
+				var newValuesVector = Avx2.Add(sumVector, carryVector);
+				//var withCarriesVector = UnsignedAddition(sumVector, carryVector);
 
-				var (los, newCarries) = GetResultWithCarry(withCarriesVector);
+				var (los, newCarries) = GetResultWithCarry(newValuesVector);
 				resultLimbVecs[idx] = los;
 
-				//ReportForAddition(0, va, vb, carryVector, withCarriesVector, los, newCarries);
+				if (USE_DET_DEBUG) ReportForAddition(0, va, vb, carryVector, newValuesVector, los, newCarries);
 
 				carryVector = newCarries;
 
@@ -521,17 +521,16 @@ namespace MSetGenP
 					vb = limbVecsB[idx];
 
 					//sumVector = Avx2.Add(va, vb);
-					sumVector = UnsignedAddition(va, vb);
+					//sumVector = UnsignedAddition(va, vb);
 
-					//withCarriesVector = Avx2.Add(sumVector, carryVector);
-					withCarriesVector = UnsignedAddition(sumVector, carryVector);
+					newValuesVector = Avx2.Add(sumVector, carryVector);
+					//withCarriesVector = UnsignedAddition(sumVector, carryVector);
 
 
-					(los, newCarries) = GetResultWithCarry(withCarriesVector);
+					(los, newCarries) = GetResultWithCarry(newValuesVector);
 					resultLimbVecs[idx] = los;
 
-					//ReportForAddition(i, va, vb, carryVector, withCarriesVector, los, newCarries); 
-
+					if (USE_DET_DEBUG) ReportForAddition(i, va, vb, carryVector, newValuesVector, los, newCarries); 
 
 					carryVector = Avx2.And(newCarries, HIGH_MASK_VEC);
 				}
@@ -560,7 +559,7 @@ namespace MSetGenP
 
 				if (resultIsNegative)
 				{
-					limbValue |= HIGH_FILL; // sign extend the result
+					//limbValue |= HIGH_FILL; // sign extend the result
 					carryFlag = !extendedCarryOutIsNegative; // true if next higher bit is zero
 				}
 				else
@@ -595,7 +594,6 @@ namespace MSetGenP
 			return result;
 		}
 
-
 		private void ReportForAddition(int step, Vector256<ulong> left, Vector256<ulong> right, Vector256<ulong> carry, Vector256<ulong> nv, Vector256<ulong> lo, Vector256<ulong> newCarry)
 		{
 			var leftVal0 = left.GetElement(0);
@@ -618,10 +616,9 @@ namespace MSetGenP
 			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}\n");
 		}
 
-
 		#endregion
 
-		#region Create Smx Support
+		#region Retrieve Smx From FPValues
 
 		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
