@@ -20,7 +20,7 @@ namespace EngineTest
 			Smx2CTestValue = new Smx2CTestValue(smx2C, BuildTheScalarMath2C(vecMath2C));
 		}
 
-		public Vec2CTestValue(string number, int exponent, int precision, VecMath2C vecMath2C) //: this ("+", number, exponent, precision, vecMath2C)
+		public Vec2CTestValue(string number, int exponent, int precision, VecMath2C vecMath2C)
 		{
 			Smx2CTestValue = new Smx2CTestValue(number, exponent, precision, BuildTheScalarMath2C(vecMath2C));
 			Vectors = CreateFPValues(Smx2CTestValue.Smx2CValue, vecMath2C.ValueCount);
@@ -34,20 +34,11 @@ namespace EngineTest
 
 		public Vec2CTestValue(RValue rValue, VecMath2C vecMath2C)
 		{
-			//Smx2CTestValue = new Smx2CTestValue(rValue, vce)
-			//(rValue smx2CValue, BuildTheScalarMath2C(vecMath2C));
-
 			Smx2C smx2CValue = ScalarMathHelper.CreateSmx2C(rValue, vecMath2C.ApFixedPointFormat);
 
 			Smx2CTestValue = new Smx2CTestValue(smx2CValue, BuildTheScalarMath2C(vecMath2C));
 			Vectors = CreateFPValues(Smx2CTestValue.Smx2CValue, vecMath2C.ValueCount);
 		}
-
-		//public Vec2CTestValue(Smx smxValue, VecMath2C vecMath2C)
-		//{
-		//	Smx2CTestValue = new Smx2CTestValue(smxValue, BuildTheScalarMath2C(vecMath2C));
-		//	Vectors = CreateFPValues(Smx2CTestValue.Smx2CValue, vecMath2C.ValueCount);
-		//}
 
 		#endregion
 
@@ -80,9 +71,5 @@ namespace EngineTest
 			return Smx2CTestValue.StringValue;
 		}
 
-
-
-
 	}
-
 }

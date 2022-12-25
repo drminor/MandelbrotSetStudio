@@ -14,9 +14,11 @@ namespace MSetGenP
 	{
 		#region Private Properties
 
-		private const int BITS_PER_LIMB = 32;
+		public bool IsSigned => true;
+
+		private const int EFFECTIVE_BITS_PER_LIMB = 31;
 		//private const int BITS_BEFORE_BP = 8;
-		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
+		private static readonly ulong MAX_DIGIT_VALUE = (ulong)(-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
 		private const ulong LOW_BITS_SET = 0x00000000FFFFFFFF;  // bits 0 - 31 are set.
 		private const ulong HIGH_MASK = LOW_BITS_SET;			// bits 0 - 31 are set.
@@ -53,13 +55,6 @@ namespace MSetGenP
 
 		public VecMath2C(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
-
-			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
-			//{
-			//	Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
-			//}
-
 			ValueCount = valueCount;
 			VecCount = Math.DivRem(ValueCount, _lanes, out var remainder);
 
@@ -74,17 +69,18 @@ namespace MSetGenP
 			// Initially, all values are 'In Play.'
 			DoneFlags = new bool[ValueCount];
 
-			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
-			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = ScalarMathHelper.GetMaxSignedIntegerValue(BitsBeforeBP);
+			ApFixedPointFormat = apFixedPointFormat;
+			Threshold = threshold;
+			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint, IsSigned);
+			var thresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, ApFixedPointFormat, IsSigned);
 
-			Threshold = threshold; 
-			
-			var mslPower = ((LimbCount - 1) * BITS_PER_LIMB) - FractionalBits;
+			var thresholdMslIntegerVector = Vector256.Create(thresholdMsl);
+			_thresholdVector = thresholdMslIntegerVector.AsInt64();
+
+			var mslPower = ((LimbCount - 1) * EFFECTIVE_BITS_PER_LIMB) - FractionalBits;
 			MslWeight = Math.Pow(2, mslPower);
 			MslWeightVector = Vector256.Create(MslWeight);
 
-			_thresholdVector = BuildTheThresholdVector(threshold);
 			_zeroVector = Vector256<ulong>.Zero;
 			_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE - 1);
 
@@ -92,20 +88,6 @@ namespace MSetGenP
 			_squareResult2Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
 
 			_squareResult3Ba = BuildMantissaBackingArray(LimbCount * 2, ValueCount);
-		}
-
-		private Vector256<long> BuildTheThresholdVector(uint threshold)
-		{
-			if (threshold > MaxIntegerValue)
-			{
-				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat: {ApFixedPointFormat}.");
-			}
-
-			var thresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, TargetExponent, LimbCount, BitsBeforeBP);
-			var thresholdMslIntegerVector = Vector256.Create(thresholdMsl);
-			var thresholdVector = thresholdMslIntegerVector.AsInt64();
-
-			return thresholdVector;
 		}
 
 		#endregion
@@ -216,8 +198,8 @@ namespace MSetGenP
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
 
-		public int LimbCount { get; init; }
-		public int TargetExponent { get; init; }
+		public int LimbCount => ApFixedPointFormat.LimbCount;
+		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
 		public int ValueCount { get; init; }
 		public int VecCount { get; init; }

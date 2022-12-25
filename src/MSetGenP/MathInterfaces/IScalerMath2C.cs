@@ -6,11 +6,13 @@ namespace MSetGenP
 	{
 		ApFixedPointFormat ApFixedPointFormat { get; init; }
 
+		bool IsSigned { get; }
+
 		byte BitsBeforeBP { get; }
 		int FractionalBits { get; }
 
-		int TargetExponent { get; init; }
-		int LimbCount { get; init; }
+		int TargetExponent { get; }
+		int LimbCount { get; }
 
 		uint MaxIntegerValue { get; init; }
 		uint Threshold { get; init; }

@@ -12,6 +12,8 @@ namespace MSetGenP
 	{
 		#region Constants
 
+		public bool IsSigned => true;
+
 		//private const ulong ALL_BITS_SET =	0xFFFFFFFFFFFFFFFF; // bits 0 - 64 are set.
 		//private const ulong TEST_BIT_32 =		0x0000000100000000; // bit 32 is set.
 		//private const ulong TEST_BIT_31 =		0x0000000080000000; // bit 31 is set.
@@ -30,19 +32,10 @@ namespace MSetGenP
 
 		public ScalarMath2C(ApFixedPointFormat apFixedPointFormat, uint threshold)
 		{
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
-
-			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
-			//{
-			//	Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
-			//}
-
-			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
-			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = ScalarMathHelper.GetMaxSignedIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
-
+			ApFixedPointFormat = apFixedPointFormat;
 			Threshold = threshold;
-			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, TargetExponent, LimbCount, ApFixedPointFormat.BitsBeforeBinaryPoint);
+			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint, IsSigned);
+			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, ApFixedPointFormat, IsSigned);
 		}
 
 		#endregion
@@ -50,8 +43,8 @@ namespace MSetGenP
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
-		public int LimbCount { get; init; }
-		public int TargetExponent { get; init; }
+		public int LimbCount => ApFixedPointFormat.LimbCount;
+		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
 		public uint MaxIntegerValue { get; init; }
 		public uint Threshold { get; init; }
@@ -130,7 +123,7 @@ namespace MSetGenP
 
 			CheckLimb2C(a, "Square");
 
-			var non2CMantissa = ScalarMathHelper.ConvertFrom2C(a.Mantissa, false);
+			var non2CMantissa = ScalarMathHelper.ConvertFrom2C(a.Mantissa);
 
 			var rawMantissa = Square(non2CMantissa);
 			var mantissa = PropagateCarries(rawMantissa, out var carry);
@@ -497,12 +490,13 @@ namespace MSetGenP
 		public Smx Convert(Smx2C smx2C)
 		{
 			// Convert the partial word limbs into standard binary form
-			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
+			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa);
 
 			var clearedResults = ScalarMathHelper.SetHighHalvesToZero(un2cMantissa, null);
 
 			// Use an RValue to prepare for the call to CreateSmx
-			var rvalue = ScalarMathHelper.GetRValue(smx2C.Sign, clearedResults, smx2C.Exponent, smx2C.Precision);
+			var sign = ScalarMathHelper.GetSign(clearedResults);
+			var rvalue = ScalarMathHelper.GetRValue(sign, clearedResults, smx2C.Exponent, smx2C.Precision);
 
 			var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
 

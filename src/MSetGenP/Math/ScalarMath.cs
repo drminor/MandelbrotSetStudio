@@ -11,8 +11,11 @@ namespace MSetGenP
 	{
 		#region Constants
 
-		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
-		private static readonly ulong HALF_DIGIT_VALUE = (ulong)Math.Pow(2, 16);
+		public bool IsSigned => false;
+
+		private const int EFFECTIVE_BITS_PER_LIMB = 31;
+
+		private static readonly ulong MAX_DIGIT_VALUE = (ulong)(-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
 		private static readonly ulong HIGH_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
@@ -23,20 +26,10 @@ namespace MSetGenP
 
 		public ScalarMath(ApFixedPointFormat apFixedPointFormat, uint threshold)
 		{
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
-
-			//if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
-			//{
-			//	Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
-			//}
-
+			ApFixedPointFormat = apFixedPointFormat;	
 			Threshold = threshold;
-			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
-			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = (uint)Math.Pow(2, BitsBeforeBP) - 1;
-
-
-			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, TargetExponent, LimbCount, BitsBeforeBP);
+			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint, IsSigned);
+			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, ApFixedPointFormat, IsSigned);
 		}
 
 		#endregion
@@ -44,8 +37,8 @@ namespace MSetGenP
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
-		public int LimbCount { get; init; }
-		public int TargetExponent { get; init; }
+		public int LimbCount => ApFixedPointFormat.LimbCount;
+		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
 		public uint MaxIntegerValue { get; init; }
 		public uint Threshold { get; init; }
@@ -555,16 +548,8 @@ namespace MSetGenP
 
 		public Smx Convert(Smx2C smx2C)
 		{
-			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa, smx2C.Sign);
-
-			//var result = new Smx(smx2C.Sign, un2cMantissa, smx2C.Exponent, BitsBeforeBP, smx2C.Precision);
-
+			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa);
 			var rvalue = ScalarMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
-
-			if (!smx2C.Sign)
-			{
-
-			}
 
 			var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
 

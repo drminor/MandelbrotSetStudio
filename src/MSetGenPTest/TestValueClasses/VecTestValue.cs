@@ -1,7 +1,5 @@
 ﻿using MSetGenP;
 using MSS.Types;
-using System.Diagnostics;
-using System.Numerics;
 
 namespace EngineTest
 {
@@ -35,14 +33,13 @@ namespace EngineTest
 			Vectors = CreateFPValues(SmxTestValue.SmxValue, vecMath.ValueCount);
 		}
 
-		public VecTestValue(Smx2C smx2CValue, VecMath vecMath)
+		public VecTestValue(RValue rValue, VecMath vecMath)
 		{
-			SmxTestValue = new SmxTestValue(smx2CValue, BuildTheScalarMath(vecMath));
+			var smx = ScalarMathHelper.CreateSmx(rValue, vecMath.ApFixedPointFormat);
+			SmxTestValue = new SmxTestValue(smx, BuildTheScalarMath(vecMath));
+
 			Vectors = CreateFPValues(SmxTestValue.SmxValue, vecMath.ValueCount);
 		}
-
-		public VecTestValue(RValue rValue, VecMath vecMath) : this(ScalarMathHelper.CreateSmx(rValue, vecMath.ApFixedPointFormat),vecMath)
-		{ }
 
 		#endregion
 

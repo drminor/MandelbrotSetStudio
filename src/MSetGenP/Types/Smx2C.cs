@@ -48,6 +48,11 @@ namespace MSetGenP
 
 			Sign = sign;
 			Mantissa = (ulong[])mantissa.Clone(); // SmxMathHelper.GetPwULongs(mantissa);
+
+			var cSign = ScalarMathHelper.GetSign(Mantissa);
+
+			Debug.Assert(cSign == sign, "Signs don't match in Constructor of Smx2C.");
+
 			Exponent = exponent;
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;
@@ -80,12 +85,9 @@ namespace MSetGenP
 
 		#region Public Methods
 
-		public override string ToString()
+		public RValue GetRValue()
 		{
-			var result = Sign
-				? ScalarMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
-				: "-" + ScalarMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
-
+			var result = ScalarMathHelper.GetRValue(this);
 			return result;
 		}
 
@@ -97,19 +99,20 @@ namespace MSetGenP
 			return strValue;
 		}
 
-		public RValue GetRValue()
+		//public Smx ConvertToSmx()
+		//{
+		//	var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(Mantissa.Length), 4u);
+
+		//	var result = scalarMath2C.Convert(this);
+
+		//	return result;
+		//}
+
+		public override string ToString()
 		{
-			var un2CSmx = ConvertToSmx();
-
-			var result = ScalarMathHelper.GetRValue(un2CSmx);
-			return result;
-		}
-
-		public Smx ConvertToSmx()
-		{
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(Mantissa.Length), 4u);
-
-			var result = scalarMath2C.Convert(this);
+			var result = Sign
+				? ScalarMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
+				: "-" + ScalarMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
 
 			return result;
 		}

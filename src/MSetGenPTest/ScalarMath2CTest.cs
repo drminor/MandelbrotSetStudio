@@ -398,20 +398,26 @@ namespace EngineTest
 		public void AddTwoPositive()
 		{
 			var precision = 53;
-			var limbCount = 3;
+			var limbCount = 4;
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
-			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
-			//Debug.WriteLine($"The StringValue for a is {aTv}.");
+			//var aNumber = "-343597";
+			//var bNumber = "-343707";
+			//var exponent = -12;
 
-			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
-			//Debug.WriteLine($"The StringValue for b is {bTv}.");
+			var aNumber = "414219082";
+			var bNumber = "67781838";
+			var exponent = -35;
 
-			var aTv = new Smx2CTestValue("27797772040142849", -63, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			//var aNumber = "27797772040142849";
+			//var bNumber = "4548762148012033";
+			//var exponent = -62;
+
+			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Smx2CTestValue("4548762148012033", -63, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
@@ -437,10 +443,10 @@ namespace EngineTest
 
 			var aNumber = "-343597";
 			var bNumber = "-343707";
-			var exponent = -12;
+			var exponent = -13;
 
 			//var aNumber = "-414219082";
-			//var bNumber = "-7781838";
+			//var bNumber = "-7781838"; //67781838
 			//var exponent = -36;
 
 			//var aNumber = "-27797772040142849";
@@ -477,7 +483,7 @@ namespace EngineTest
 		public void AddLeftIs_Pos_RightIsNeg()
 		{
 			var precision = 53;
-			var limbCount = 3;
+			var limbCount = 4;
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
@@ -485,9 +491,9 @@ namespace EngineTest
 			//var bNumber = "67781838";
 			//var exponent = -36;
 
-			var aNumber = "27797772040142849";
-			var bNumber = "-4548762148012033";
-			var exponent = -62;
+			var aNumber = "-27797772040142849";
+			var bNumber = "4548762148012033";
+			var exponent = -63;
 
 			// SWITCHED
 			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
@@ -520,7 +526,7 @@ namespace EngineTest
 		public void AddLeftIs_Big_Pos_RightIsNeg()
 		{
 			var precision = 53;
-			var limbCount = 3;
+			var limbCount = 5;
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
@@ -533,7 +539,7 @@ namespace EngineTest
 
 			var aNumber = "4548762148012033";					// 9.8635556059889517056815666506964e-4
 			var bNumber = "-27797772040142849";					//-6.02768096723593793141715568851e-3
-			var exponent = -62;                     // Result: -0.00504132540663704276084899902344
+			var exponent = -63;                     // Result: -0.00504132540663704276084899902344
 
 			//Expected: -86609311; Actual: 4397959902817
 
@@ -570,7 +576,7 @@ namespace EngineTest
 		public void AddLeftIsNegRightIsPos()
 		{
 			var precision = 53;
-			var limbCount = 3;
+			var limbCount = 5;
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
@@ -580,7 +586,7 @@ namespace EngineTest
 
 			var aNumber = "-27797772040142849";
 			var bNumber = "4548762148012033";
-			var exponent = -62;
+			var exponent = -63;
 
 			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");

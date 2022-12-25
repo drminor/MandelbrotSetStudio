@@ -291,7 +291,7 @@ namespace MSetGenP
 					{
 						var partialWordLimbs = GetMantissa(valPtr);
 
-						var non2CPWLimbs = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, false);
+						var non2CPWLimbs = ScalarMathHelper.FlipBitsAndAdd1(partialWordLimbs);
 
 						SetMantissa(result.Mantissas, valPtr, non2CPWLimbs);
 					}

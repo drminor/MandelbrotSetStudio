@@ -11,9 +11,9 @@ namespace MSetGenP
 	{
 		#region Constants
 
-		private const int BITS_PER_LIMB = 32;
+		private const int EFFECTIVE_BITS_PER_LIMB = 31;
 
-		private static readonly ulong MAX_DIGIT_VALUE = (ulong)Math.Pow(2, 32);
+		private static readonly ulong MAX_DIGIT_VALUE = (ulong)(-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 		private static readonly ulong HALF_DIGIT_VALUE = (ulong)Math.Pow(2, 16);
 
 		private static readonly ulong HIGH_MASK =	 0x00000000FFFFFFFF; // bits 0 - 31 are set.
@@ -25,19 +25,7 @@ namespace MSetGenP
 
 		public ScalarMathFloating(ApFixedPointFormat apFixedPointFormat)
 		{
-			if (apFixedPointFormat.BitsBeforeBinaryPoint > 32)
-			{
-				throw new NotSupportedException("An APFixedFormat with a BitsBeforeBinaryPoint of 32 is not supported.");
-			}
-
-			ApFixedPointFormat = ScalarMathHelper.GetAdjustedFixedPointFormat(apFixedPointFormat);
-
-			if (FractionalBits != apFixedPointFormat.NumberOfFractionalBits)
-			{
-				Debug.WriteLine($"WARNING: Increasing the number of fractional bits to {FractionalBits} from {apFixedPointFormat.NumberOfFractionalBits}.");
-			}
-
-			LimbCount = ScalarMathHelper.GetLimbCount(ApFixedPointFormat.TotalBits);
+			ApFixedPointFormat = apFixedPointFormat;
 			TargetExponent = -1 * FractionalBits;
 			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
 		}
@@ -47,7 +35,7 @@ namespace MSetGenP
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
-		public int LimbCount { get; init; }
+		public int LimbCount => ApFixedPointFormat.LimbCount;
 		public int TargetExponent { get; init; }
 
 		public uint MaxIntegerValue { get; init; }
@@ -656,7 +644,7 @@ namespace MSetGenP
 
 				result = new ulong[LimbCount];
 
-				(var limbOffset, var remainder) = Math.DivRem(-1 * shiftAmount, BITS_PER_LIMB);
+				(var limbOffset, var remainder) = Math.DivRem(-1 * shiftAmount, EFFECTIVE_BITS_PER_LIMB);
 
 				//var sourceLimbPtr = mantissa.Length - LimbCount;
 				var sourceLimbPtr = logicalLength - LimbCount;
@@ -741,7 +729,7 @@ namespace MSetGenP
 				throw new ArgumentException("The value of power must be 1 or greater.");
 			}
 
-			(var limbOffset, var remainder) = Math.DivRem(power, BITS_PER_LIMB);
+			(var limbOffset, var remainder) = Math.DivRem(power, EFFECTIVE_BITS_PER_LIMB);
 
 			if (limbOffset > LimbCount + 3)
 			{
@@ -1046,7 +1034,7 @@ namespace MSetGenP
 				throw new ArgumentException("The value of power must be 1 or greater.");
 			}
 
-			(var limbOffset, var remainder) = Math.DivRem(power, BITS_PER_LIMB);
+			(var limbOffset, var remainder) = Math.DivRem(power, EFFECTIVE_BITS_PER_LIMB);
 
 			if (limbOffset > LimbCount + 3)
 			{

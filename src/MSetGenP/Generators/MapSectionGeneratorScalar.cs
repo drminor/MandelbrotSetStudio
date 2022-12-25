@@ -20,8 +20,11 @@ namespace MSetGenP
 			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
 			uint threshold = 4;
 
-			var fixedPointFormat = new ApFixedPointFormat(8, precision);
+			//var fixedPointFormat = new ApFixedPointFormat(8, precision);
 			//var fixedPointFormat = new ApFixedPointFormat(8, 129);
+
+			var fixedPointFormat = new ApFixedPointFormat(precision);
+
 			var smxMathHelper = new ScalarMath(fixedPointFormat, threshold);
 
 			var dtoMapper = new DtoMapper();
