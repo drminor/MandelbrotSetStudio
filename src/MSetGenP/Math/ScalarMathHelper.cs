@@ -28,8 +28,8 @@ namespace MSetGenP
 		private const ulong TEST_BIT_31 =	0x0000000080000000; // bit 31 is set.
 		private const ulong TEST_BIT_30 =   0x0000000040000000; // bit 30 is set.
 
-		private const ulong HIGH_MASK = LOW_BITS_SET;
-		private const ulong LOW_MASK = HIGH_BITS_SET;
+		private const ulong HIGH_MASK_OLD = LOW_BITS_SET;
+		private const ulong LOW_MASK_OLD = HIGH_BITS_SET;
 
 		private const ulong HIGH_FILL = HIGH_BITS_SET;
 
@@ -198,8 +198,11 @@ namespace MSetGenP
 			for (var i = 0; i < mantissa.Length; i++)
 			{
 				var newLimbVal = mantissa[i] * factor + carry;
-				var lo = Split(newLimbVal, out carry); // :Spliter
+
+				var (hi, lo) = Split(newLimbVal); // :Spliter
 				resultArray[i] = lo;
+
+				carry = hi;
 
 				if (lo > 0)
 				{
@@ -541,7 +544,7 @@ namespace MSetGenP
 
 			while (limbPtr < resultLength && !foundASetBit)
 			{
-				var ourVal = partialWordLimbs[limbPtr] & HIGH_MASK;         // Set all high bits to zero
+				var ourVal = partialWordLimbs[limbPtr] & HIGH_MASK_OLD;         // Set all high bits to zero
 				if (ourVal == 0)
 				{
 					result[limbPtr] = ourVal;
@@ -564,7 +567,7 @@ namespace MSetGenP
 
 				for (; limbPtr < resultLength; limbPtr++)
 				{
-					var ourVal = partialWordLimbs[limbPtr] & HIGH_MASK;         // Set all high bits to zero	
+					var ourVal = partialWordLimbs[limbPtr] & HIGH_MASK_OLD;         // Set all high bits to zero	
 					var lowBitsFlipped = FlipAllLowBits(ourVal);
 					result[limbPtr] = lowBitsFlipped;
 				}
@@ -589,7 +592,7 @@ namespace MSetGenP
 
 		private static ulong FlipLowBitsAfterFirst1Old(ulong limb)
 		{
-			limb &= HIGH_MASK;
+			limb &= HIGH_MASK_OLD;
 
 			var tzc = BitOperations.TrailingZeroCount(limb);
 
@@ -608,7 +611,7 @@ namespace MSetGenP
 
 		private static ulong FlipAllLowBitsOld(ulong limb)
 		{
-			limb &= HIGH_MASK;
+			limb &= HIGH_MASK_OLD;
 			var newVal = limb ^ LOW_BITS_SET;
 
 			return newVal;
@@ -639,10 +642,24 @@ namespace MSetGenP
 
 		#region Split and Pack -- 31
 
-		private static ulong Split(ulong x, out ulong hi)
+		//public static ulong Split(ulong x, out ulong hi)
+		//{
+		//	hi = x >> BITS_PER_LIMB; // Create new ulong from bits 32 - 63.
+		//	return x & HIGH_MASK_OLD; // Create new ulong from bits 0 - 31.
+		//}
+
+		public static (ulong hi, ulong lo) Split(ulong x)
 		{
-			hi = x >> EFFECTIVE_BITS_PER_LIMB; // Create new ulong from bits 33 - 63.
-			return x & HIGH33_MASK; // Create new ulong from bits 0 - 30.
+			// bit 31 (and 63) is being reserved to detect carries when adding / subtracting.
+			// this bit should be zero at this point.
+
+			// The low value is in the low 30 bits
+			// The high value is in bits 32-62
+
+			var hi = x >> EFFECTIVE_BITS_PER_LIMB; // Create new ulong from bits 32 - 63.
+			var lo = x & HIGH33_MASK; // Create new ulong from bits 0 - 30.
+
+			return (hi, lo);
 		}
 
 		public static ulong[] SetHighHalvesToZero(ulong[] partialWordLimbs, bool? sign = null)
@@ -670,22 +687,75 @@ namespace MSetGenP
 		{
 			var result = (limb & TEST_BIT_30) > 0
 						? limb | HIGH_FILL
-						: limb & HIGH_MASK;
+						: limb & HIGH_MASK_OLD;
 
 			return result;
 		}
 
-		public static ulong GetLowHalf(ulong partialWordLimb, out bool resultIsNegative, out bool extendedCarryOutIsNegative)
+		public static (ulong limbValue, ulong carry) GetSignedResultWithCarry(ulong partialWordLimb, bool isMsl)
+		{
+			// A carry is generated any time the bit just above the result limb is different than msb of the limb
+			// i.e. this next higher bit is not an extension of the sign.
+
+			bool carryFlag;
+
+			var limbValue = GetLowHalfSigned(partialWordLimb, isMsl, out var topBitIsSet, out bool overflowBitIsSet);
+
+			if (topBitIsSet)
+			{
+				//limbValue |= HIGH_FILL; // sign extend the result
+				carryFlag = !overflowBitIsSet; // true if next higher bit is zero
+			}
+			else
+			{
+				carryFlag = overflowBitIsSet; // true if next higher bit is one
+			}
+
+			var result = (limbValue, carryFlag ? 1uL : 0uL);
+			return result;
+		}
+
+		private static ulong GetLowHalfSigned(ulong partialWordLimb, bool isMsl, out bool topBitIsSet, out bool overflowBitIsSet)
 		{
 			var result = partialWordLimb & HIGH33_MASK;
 
 			var lzc = BitOperations.LeadingZeroCount(result);
 
-			resultIsNegative = lzc == 33; // The first bit of the limb is set.
+			topBitIsSet = lzc == 33; // The first bit of the limb is set.
 
-			extendedCarryOutIsNegative = BitOperations.TrailingZeroCount(partialWordLimb >> 31) == 0; // The first bit of the top half is set.
+			overflowBitIsSet = BitOperations.TrailingZeroCount(partialWordLimb >> 31) == 0; // The 'overflow' bit is set.
+
+
+			// For diagnositics only
+
+			var hi = partialWordLimb >> 32;
+
+			if (topBitIsSet && isMsl)
+			{
+				if (hi == 0)
+				{
+					throw new InvalidOperationException("Limb was not sign extended. Expecting this negative limb to have bits 32 - 63 be set to 1.");
+				}
+			}
+			else
+			{
+				if (hi > 0)
+				{
+					throw new InvalidOperationException("Limb was not sign extended. Expecting this postive limb to have bits 32 - 63 be set to 0");
+				}
+			}
 
 			return result;
+		}
+
+		public static (ulong limbValue, ulong carry) GetResultWithCarry(ulong partialWordLimb)
+		{
+			// A carry is generated any time the bit just above the result limb is different than msb of the limb
+			// i.e. this next higher bit is not an extension of the sign.
+
+			var (hi, lo) = Split(partialWordLimb);
+
+			return (lo, hi);
 		}
 
 		public static bool GetSign(ulong[] partialWordLimbs)
@@ -738,14 +808,28 @@ namespace MSetGenP
 			return !isGood;
 		}
 
+		public static byte[] GetLZCounts(ulong[] values)
+		{
+			var result = new byte[values.Length];
+
+			for (var i = 0; i < values.Length; i++)
+			{
+				result[i] = (byte)BitOperations.LeadingZeroCount(values[i]);
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Split and Pack -- 32
 
-		private static ulong SplitOld(ulong x, out ulong hi)
+		public static (ulong hi, ulong lo) Split32(ulong x)
 		{
-			hi = x >> EFFECTIVE_BITS_PER_LIMB; // Create new ulong from bits 33 - 63.
-			return x & HIGH33_MASK; // Create new ulong from bits 0 - 30.
+			var hi = x >> BITS_PER_LIMB; // Create new ulong from bits 33 - 63.
+			var lo = x & HIGH_MASK_OLD; // Create new ulong from bits 0 - 30.
+
+			return (hi, lo);
 		}
 
 		private static ulong[] SetHighHalvesToZeroOld(ulong[] partialWordLimbs, bool? sign = null)
@@ -754,7 +838,7 @@ namespace MSetGenP
 
 			for (var i = 0; i < result.Length; i++)
 			{
-				result[i] = partialWordLimbs[i] & HIGH_MASK;
+				result[i] = partialWordLimbs[i] & HIGH_MASK_OLD;
 			}
 
 			return result;
@@ -773,14 +857,14 @@ namespace MSetGenP
 		{
 			var result = (limb & TEST_BIT_31) > 0
 						? limb | HIGH_FILL
-						: limb & HIGH_MASK;
+						: limb & HIGH_MASK_OLD;
 
 			return result;
 		}
 
 		public static ulong GetLowHalfOld(ulong partialWordLimb, out bool resultIsNegative, out bool extendedCarryOutIsNegative)
 		{
-			var result = partialWordLimb & HIGH_MASK;
+			var result = partialWordLimb & HIGH_MASK_OLD;
 
 			var lzc = BitOperations.LeadingZeroCount(result);
 
@@ -812,7 +896,7 @@ namespace MSetGenP
 
 			for (var i = 0; i < partialWordLimbs.Length - 1; i++)
 			{
-				var hiBits = partialWordLimbs[i] & LOW_MASK;
+				var hiBits = partialWordLimbs[i] & LOW_MASK_OLD;
 
 				if (hiBits != 0)
 				{
@@ -827,7 +911,7 @@ namespace MSetGenP
 		public static bool CheckPw2cMslOld(ulong limb)
 		{
 			var isNegative = (limb & TEST_BIT_31) > 0;
-			var hi = limb & LOW_MASK;
+			var hi = limb & LOW_MASK_OLD;
 			var result = isNegative ? hi == 0 : hi != 0;
 
 			return result;
@@ -1011,7 +1095,8 @@ namespace MSetGenP
 
 			for (int i = 0; i < packedValues.Length; i++)
 			{
-				var lo = Split(packedValues[i], out var hi);
+				var (hi, lo) = Split32(packedValues[i]);
+
 				result[2 * i] = lo;
 				result[2 * i + 1] = hi;
 			}
@@ -1120,7 +1205,7 @@ namespace MSetGenP
 				throw new ArgumentException($"The number of bits must be between 0 and 32.");
 			}
 
-			var v1 = (partialWordValue & HIGH_MASK) >> (32 - numberOfBits);
+			var v1 = (partialWordValue & HIGH_MASK_OLD) >> (32 - numberOfBits);
 			return (uint)v1;
 		}
 

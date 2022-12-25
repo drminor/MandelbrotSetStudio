@@ -4,6 +4,7 @@ using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
@@ -19,6 +20,8 @@ namespace MSetGenP
 
 		private static readonly ulong HIGH_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
+
+		private static readonly bool USE_DET_DEBUG = false;
 
 		#endregion
 
@@ -67,7 +70,7 @@ namespace MSetGenP
 			CheckLimbs(a, b, "Multiply");
 
 			var rawMantissa = Multiply(a.Mantissa, b.Mantissa);
-			var mantissa = PropagateCarries(rawMantissa);
+			var mantissa = SumThePartials(rawMantissa);
 			var nrmMantissa = ShiftAndTrim(mantissa);
 
 			var sign = a.Sign == b.Sign;
@@ -97,9 +100,22 @@ namespace MSetGenP
 
 					var resultPtr = j + i;  // 0, 1, 1, 2
 
-					var lo = Split(product, out var hi);        //  2 x 2						3 x 3										4 x 4
-					mantissa[resultPtr] += lo;              // 0, 1,   1, 2		 0, 1, 2,   1, 2, 3,  2, 3  4		0, 1, 2, 3,   1, 2, 3, 4,    2, 3, 4, 5,    3, 4, 5, 6 
-					mantissa[resultPtr + 1] += hi;          // 1, 2,   2, 3      1, 2, 3,   2, 3, 4,  3, 4, 5       1, 2, 3, 4,   2, 3, 4, 5,    3, 4, 5, 6,    4, 5, 6, 7
+					//var lo = Split(product, out var hi);
+
+					NumberOfSplits++;
+					var (hi, lo) = ScalarMathHelper.Split(product);
+
+					//var loPreviousLzc = BitOperations.LeadingZeroCount(mantissa[resultPtr]);
+					//var hiPreviousLzc = BitOperations.LeadingZeroCount(mantissa[resultPtr + 1]);
+
+					mantissa[resultPtr] += lo;
+					mantissa[resultPtr + 1] += hi;
+
+					//var loLzc = BitOperations.LeadingZeroCount(mantissa[resultPtr]);
+					//var hiLzc = BitOperations.LeadingZeroCount(mantissa[resultPtr + 1]);
+					//var prodLzc = BitOperations.LeadingZeroCount(product);
+
+					//Debug.WriteLine($"Leading Zero Counts: lo:{loPreviousLzc}, {loLzc} // hi:{hiPreviousLzc}, {hiLzc}. Prod:{prodLzc}.");
 				}
 			}
 
@@ -120,7 +136,7 @@ namespace MSetGenP
 			CheckLimb(a, "Square");
 
 			var rawMantissa = Square(a.Mantissa);
-			var mantissa = PropagateCarries(rawMantissa);
+			var mantissa = SumThePartials(rawMantissa);
 			var nrmMantissa = ShiftAndTrim(mantissa);
 
 			var sign = true;
@@ -140,17 +156,19 @@ namespace MSetGenP
 			{
 				for (int i = j; i < ax.Length; i++)
 				{
-					//if (i < j) continue;
-
 					var product = ax[j] * ax[i];
 
 					if (i > j)
 					{
 						product *= 2;
 					}
-					// j = 
-					var resultPtr = j + i;                  // 0, 1		1, 2		0, 1, 2		1, 2, 3, 
-					var lo = Split(product, out var hi);
+					var resultPtr = j + i;
+
+					//var lo = Split(product, out var hi);
+
+					NumberOfSplits++;
+					var (hi, lo) = ScalarMathHelper.Split(product);
+
 					mantissa[resultPtr] += lo;
 					mantissa[resultPtr + 1] += hi;
 				}
@@ -158,21 +176,6 @@ namespace MSetGenP
 
 			return mantissa;
 		}
-
-		/* What partial product gets added to which bin
-
-			//  2 limbs						3 limbs										4 limbs
-
-			j = 0, i = 0, 1			j = 0, i = 0, 1, 2		j = 0, i = 0, 1, 2, 3
-			j = 1, i = 1			j = 1, i = 1, 2			j = 1, i = 1, 2, 3
-									j = 2, i = 2,			j = 2, i = 2, 3
-															j = 3, i = 3
-
-			//    d				   d  d		   d			   d  d  d		   d  d		   d
-			// 0, 1		2		0, 1, 2		2, 3	4		0, 1, 2, 3		2, 3, 4		4, 5	6	-> (Index C)
-			// 1, 2		3       1, 2, 3		3, 4	5       1, 2, 3, 4		3, 4, 5		5, 6	7	-> (Index C + 1)
-
-		 */
 
 		public Smx Multiply(Smx a, int b)
 		{
@@ -198,7 +201,7 @@ namespace MSetGenP
 			var sign = a.Sign == bSign;
 
 			var rawMantissa = Multiply(a.Mantissa, bVal);
-			var mantissa = PropagateCarries(rawMantissa);
+			var mantissa = SumThePartials(rawMantissa);
 
 			result = new Smx(sign, mantissa, a.Exponent, a.BitsBeforeBP, a.Precision);
 
@@ -220,13 +223,17 @@ namespace MSetGenP
 				var product = ax[j] * b;
 				//seive[j] = product;
 
-				var lo = Split(product, out var hi);    //		2 x 1			3 x 1			4 x 1
-				mantissa[j] += lo;                      //			0, 1			0, 1, 2			0, 1, 2, 3
-				mantissa[j + 1] += hi;                  //			1, 2			1, 2, 3			1, 2, 3, 4
+				NumberOfSplits++;
+				var (hi, lo) = ScalarMathHelper.Split(product);
+
+				mantissa[j] += lo;
+				mantissa[j + 1] += hi;
 			}
 
 			var product2 = ax[^1] * b;
-			var lo2 = Split(product2, out var hi2);
+
+			NumberOfSplits++;
+			var (hi2, lo2) = ScalarMathHelper.Split(product2);
 
 			mantissa[^1] = lo2;
 
@@ -242,7 +249,7 @@ namespace MSetGenP
 			return mantissa;
 		}
 
-		public ulong[] PropagateCarries(ulong[] mantissa/*, out int indexOfLastNonZeroLimb*/)
+		public ulong[] SumThePartials(ulong[] mantissa)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
@@ -256,15 +263,23 @@ namespace MSetGenP
 
 			for (int i = 0; i < mantissa.Length; i++)
 			{
-				var lo = Split(mantissa[i] + carry, out var hi);  // :Spliter
+				//var lo = Split(mantissa[i] + carry, out var hi);  // :Spliter
+
+				NumberOfGetCarries++;
+				var sum = mantissa[i] + carry;
+				var (lo, newCarry) = ScalarMathHelper.GetResultWithCarry(sum);
+
+				ReportForAddition(i, mantissa[i], carry, sum, lo, newCarry);
+
+				//var sumLzc = BitOperations.LeadingZeroCount(sum);
+				//var loLzc = BitOperations.LeadingZeroCount(lo);
+				//var hiLzc = BitOperations.LeadingZeroCount(hi);
+
+				//Debug.WriteLine($"Leading Zero Counts: sum:{sumLzc}, lo:{loLzc}, hi:{hiLzc}.");
+
 				result[i] = lo;
 
-				if (lo > 0)
-				{
-					//indexOfLastNonZeroLimb = i;
-				}
-
-				carry = hi;
+				carry = newCarry;
 			}
 
 			if (carry != 0)
@@ -275,56 +290,21 @@ namespace MSetGenP
 			return result;
 		}
 
-		/* What partial product gets added to which bin
+		private void ReportForAddition(int step, ulong left, ulong carry, ulong nv, ulong lo, ulong newCarry)
+		{
+			var ld = ScalarMathHelper.ConvertFrom2C(left);
+			//var rd = ScalarMathHelper.ConvertFrom2C(right);
+			var cd = ScalarMathHelper.ConvertFrom2C(carry);
+			var nvd = ScalarMathHelper.ConvertFrom2C(nv);
+			var hid = ScalarMathHelper.ConvertFrom2C(newCarry);
+			var lod = ScalarMathHelper.ConvertFrom2C(lo);
 
-			//  2 x 2						3 x 3										4 x 4
-			// 0, 1,   1, 2		 0, 1, 2,   1, 2, 3,  2, 3  4		0, 1, 2, 3,   1, 2, 3, 4,    2, 3, 4, 5,    3, 4, 5, 6	-> (Index C)
-			// 1, 2,   2, 3      1, 2, 3,   2, 3, 4,  3, 4, 5       1, 2, 3, 4,   2, 3, 4, 5,    3, 4, 5, 6,    4, 5, 6, 7  -> (Index C + 1)
-
-				2 x 2
-			index a index b	index c	on, or below the diagonal 
-			0		0		0		D		E
-			0		1		1		B		E
-			1		0		1		A		S
-			1		1		2		D		E
-
-				3 x 3
-			0		0		0		D		E
-			0		1		1		B		E
-			0		2		2		B		E
-
-			1		0		1		A		S
-			1		1		2		D		E
-			1		2		3		B		E
-
-			2		0		2		A		S
-			2		1		3		A		S
-			2		2		4		D		E
-
-				4 x 4
-			0		0		0		D		E
-			0		1		1		B		E
-			0		2		2		B		E	**
-			0		3		3		B		E
-
-			1		0		1		A		S
-			1		1		2		D		E
-			1		2		3		B		E
-			1		3		4		B		E
-
-			2		0		2		A		S	**
-			2		1		3		A		S
-			2		2		4		D		E
-			2		3		5		B		E
-
-			3		0		3		A		S
-			3		1		4		A		S
-			3		2		5		A		S
-			3		3		6		D		E
-
-
-
-		*/
+			//Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, {right:X4} wc:{carry:X4} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, wc:{carry:X4} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, wc:{cd} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv:X4}: hi:{newCarry:X4}, lo:{lo:X4}");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}\n");
+		}
 
 		#endregion
 
@@ -416,7 +396,11 @@ namespace MSetGenP
 			for (var i = 0; i < resultLength; i++)
 			{
 				var nv = left[i] + right[i] + carry;
-				var lo = Split(nv, out carry);
+
+				NumberOfSplits++;
+				var (hi, lo) = ScalarMathHelper.Split(nv);
+				carry = hi;
+
 				result[i] = lo;
 
 				if (lo > 0)
@@ -485,34 +469,119 @@ namespace MSetGenP
 
 		#region Normalization Support
 
-		public ulong[] ShiftAndTrim(ulong[] mantissa)
+		public ulong[] ShiftAndTrimOld(ulong[] mantissa)
 		{
-			ValidateIsSplit(mantissa);
+			//ValidateIsSplit(mantissa); // Conditional Method
+
+			var lZCounts = ScalarMathHelper.GetLZCounts(mantissa);
+
+			Debug.WriteLine($"S&T LZCounts:");
+			for(var lzcPtr = 0; lzcPtr < lZCounts.Length; lzcPtr++) 
+			{
+				Debug.WriteLine($"{lzcPtr}: {lZCounts[lzcPtr]} {mantissa[lzcPtr]}");
+			}
+
+			Debug.Assert(lZCounts[^1] >= 33 + BitsBeforeBP, "The multiplication result is > Max Integer.");
+
 
 			// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
 			// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
 			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
 
-			var shiftAmount = BitsBeforeBP;
+			var shiftAmount = BitsBeforeBP + 1;
 
 			var result = new ulong[LimbCount];
 			var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
 
-			for (var i = 0; i < result.Length; i++)
+			var i = 0;
+
+			for (; i < result.Length; i++)
 			{
-				result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
+				result[i] = (mantissa[sourceIndex] << 33 + shiftAmount) >> 33;  // Discard the top shiftAmount of bits.
+
 				if (sourceIndex > 0)
 				{
-					result[i] |= (mantissa[sourceIndex - 1] >> 32 - shiftAmount); // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
+					result[i] |= (mantissa[sourceIndex - 1] >> 32 - shiftAmount) << 1; // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
 				}
 				sourceIndex++;
 			}
 
-			//var sResult = ScaleAndSplit(mantissa, BitsBeforeBP, "Force Exp"); // Shift Bits towards the most significant end. After a multiply, the portion of the mantissa before the BP is doubled, this discards the high bits.
-			//var tResult = TakeMostSignificantLimbs(sResult, LimbCount);
-			//Debug.WriteLine($"ShiftAndTrim is returing {GetDiagDisplay("result", result)}, prev: {GetDiagDisplay("tResult", tResult)}");
+			var lZCounts2 = ScalarMathHelper.GetLZCounts(result);
+			Debug.WriteLine($"S&T LZCounts2:");
+			for (var lzcPtr = 0; lzcPtr < lZCounts2.Length; lzcPtr++)
+			{
+				Debug.WriteLine($"{lzcPtr}: {lZCounts2[lzcPtr]} {result[lzcPtr]}");
+			}
 
-			//return tResult;
+			return result;
+		}
+
+		public ulong[] ShiftAndTrim(ulong[] mantissa)
+		{
+			//ValidateIsSplit(mantissa); // Conditional Method
+
+			var lZCounts = ScalarMathHelper.GetLZCounts(mantissa);
+
+			Debug.WriteLine($"S&T LZCounts:");
+			for (var lzcPtr = 0; lzcPtr < lZCounts.Length; lzcPtr++)
+			{
+				Debug.WriteLine($"{lzcPtr}: {lZCounts[lzcPtr]} {mantissa[lzcPtr]}");
+			}
+
+			Debug.Assert(lZCounts[^1] >= 33 + BitsBeforeBP, "The multiplication result is > Max Integer.");
+
+
+			// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
+			// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
+			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
+
+			var shiftAmount = 8; // (LimbCount * 32) - TargetExponent;
+
+			var result = new ulong[LimbCount];
+			
+			//var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
+			var sourceIndex = mantissa.Length - 1;	
+			var i = result.Length - 1;
+
+			for (; i >= 0; i--)
+			{
+				if (sourceIndex > 0)
+				{
+					var topH = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
+					var botH = mantissa[sourceIndex - 1] >> 32 - shiftAmount; // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
+
+					result[i] = topH | botH;
+
+					var strResult = string.Format("0x{0:X4}", result[i]);
+					var strTopH = string.Format("0x{0:X4}", topH);
+					var strBotH = string.Format("0x{0:X4}", botH);
+
+
+					Debug.WriteLine($"Result, index: {i} is {strResult} from {strTopH} and {strBotH}.");
+				}
+				else
+				{
+					var topH = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
+
+					result[i] = topH;
+
+					var strResult = string.Format("0x{0:X4}", result[i]);
+					var strTopH = string.Format("0x{0:X4}", topH);
+
+					Debug.WriteLine($"Result, index: {i} is {strResult} from {strTopH}."); 
+
+				}
+
+				sourceIndex--;
+			}
+
+			var lZCounts2 = ScalarMathHelper.GetLZCounts(result);
+			Debug.WriteLine($"S&T LZCounts2:");
+			for (var lzcPtr = 0; lzcPtr < lZCounts2.Length; lzcPtr++)
+			{
+				Debug.WriteLine($"{lzcPtr}: {lZCounts2[lzcPtr]} {result[lzcPtr]}");
+			}
+
 			return result;
 		}
 
@@ -535,12 +604,12 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ulong Split(ulong x, out ulong hi)
-		{
-			NumberOfSplits++;
-			hi = x >> 32; // Create new ulong from bits 32 - 63.
-			return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
-		}
+		//private ulong Split(ulong x, out ulong hi)
+		//{
+		//	NumberOfSplits++;
+		//	hi = x >> 32; // Create new ulong from bits 32 - 63.
+		//	return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
+		//}
 
 		#endregion
 
@@ -722,9 +791,9 @@ namespace MSetGenP
 			//	throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			//}
 
-			_ = ScalarMathHelper.GetLowHalf(mantissa[^1], out var resultIsNegative, out _);
+			var signFromMantissa = ScalarMathHelper.GetSign(mantissa);
 
-			if (sign != resultIsNegative)
+			if (sign != signFromMantissa)
 			{
 				throw new ArgumentException($"Expected the mantissa to have sign: {sign}.");
 			}

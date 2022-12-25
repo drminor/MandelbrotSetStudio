@@ -30,21 +30,17 @@ namespace EngineTest
 			Smx2C b = scalarMath2C.Square(aTv.Smx2CValue);
 			var bTv = new Smx2CTestValue(b, scalarMath2C);
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
-
 			Debug.WriteLine($"The StringValue for the result mantissa is {bTv.GetDiagDisplay()}.");
 
-			//var bNon2C = ScalarMathHelper.ConvertFrom2C(b.Mantissa);
-
-			var bNonCSmx = scalarMath2C.Convert(bTv.Smx2CValue);
-
-			var cTv = new SmxTestValue(bNonCSmx, new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD));
+			//var bSmx = scalarMath2C.Convert(bTv.Smx2CValue);
+			//var cTv = new SmxTestValue(bSmx, new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD));
 
 			// RValue Square 
 			var bRValue = aTv.RValue.Square();
 			var bStrComp = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bRValue, bTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			//Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
@@ -57,8 +53,10 @@ namespace EngineTest
 			var scalarMath2C = BuildTheMathHelper(limbCount);
 
 			//var number = "-12644545325526901863503869090"; // with exponent -124
-			var number = "-1264454532552690186350";
-			var exponent = -33;
+
+
+			var number = "-1264454532552690186350"; // 1.0710346493771638176866460188605
+			var exponent = -70;
 
 			var aTv = new Smx2CTestValue(number, exponent, precision, scalarMath2C); // 0.25
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
@@ -66,7 +64,6 @@ namespace EngineTest
 			Smx2C b = scalarMath2C.Square(aTv.Smx2CValue);
 			var bTv = new Smx2CTestValue(b, scalarMath2C);
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
-
 			Debug.WriteLine($"The StringValue for the result mantissa is {bTv.GetDiagDisplay()}.");
 
 			// RValue Square 
@@ -133,7 +130,7 @@ namespace EngineTest
 			var a2Str = ScalarMathHelper.GetDiagDisplay("raw products", a2Mantissa);
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
-			var a3Mantissa = scalarMath2C.PropagateCarries(a2Mantissa, out _);
+			var a3Mantissa = scalarMath2C.SumThePartials(a2Mantissa, out _);
 			var a3MantissaNrm = scalarMath2C.ShiftAndTrim(a3Mantissa);
 
 			var a3Smx2C = new Smx2C(true, a3MantissaNrm, aSmx2C.Exponent, aSmx2C.BitsBeforeBP, aSmx2C.Precision);
@@ -263,7 +260,7 @@ namespace EngineTest
 
 			// Create a3Smx
 			var a2Mantissa = scalarMath2C.Square(aTv.Smx2CValue.Mantissa);
-			var a3Mantissa = scalarMath2C.PropagateCarries(a2Mantissa, out var carry);
+			var a3Mantissa = scalarMath2C.SumThePartials(a2Mantissa, out var carry);
 
 
 
@@ -279,7 +276,7 @@ namespace EngineTest
 
 			// Create b3Smx
 			var b2Mantissa = scalarMath2C.Square(bMantissa);
-			var b3Mantissa = scalarMath2C.PropagateCarries(b2Mantissa, out var carry2);
+			var b3Mantissa = scalarMath2C.SumThePartials(b2Mantissa, out var carry2);
 			var b3 = new Smx2C(true, b3Mantissa, aTv.Smx2CValue.Exponent * 2, aTv.Smx2CValue.BitsBeforeBP, aTv.Smx2CValue.Precision);
 			var b3Tv = new Smx2CTestValue(b3, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the b3 is {b3Tv}.");

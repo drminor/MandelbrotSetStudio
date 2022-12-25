@@ -19,11 +19,13 @@ namespace MSetGenP
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
 		private const int BITS_BEFORE_BP = 8;
 
-		private static readonly ulong MAX_DIGIT_VALUE = (ulong) (-1 +Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
+		private static readonly ulong MAX_DIGIT_VALUE = (ulong) (-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
-		private const ulong HIGH_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		//private const ulong HIGH_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		//private static readonly Vector256<ulong> HIGH_MASK_VEC = Vector256.Create(HIGH_MASK);
 
-		private static readonly Vector256<ulong> HIGH_MASK_VEC = Vector256.Create(HIGH_MASK);
+		private const ulong HIGH33_MASK = 0x000000007FFFFFFF; // bits 0 - 30 are set.
+		private static readonly Vector256<ulong> HIGH33_MASK_VEC = Vector256.Create(HIGH33_MASK);
 
 		private const ulong SIGN_BIT_MASK = 0x7FFFFFFFFFFFFFFF;
 		private static readonly Vector256<ulong> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
@@ -31,7 +33,8 @@ namespace MSetGenP
 		private const ulong TOP_BITS_MASK = 0xFF00000000000000;
 		private static readonly Vector256<ulong> TOP_BITS_MASK_VEC = Vector256.Create(TOP_BITS_MASK);
 
-		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
+		//private static readonly ulong TEST_BIT_32 =	0x0000000100000000; // bit 32 is set.
+		private static readonly ulong TEST_BIT_31 =		0x0000000080000000; // bit 31 is set.
 
 		private static readonly int _lanes = Vector256<ulong>.Count;
 
@@ -79,7 +82,7 @@ namespace MSetGenP
 			MslWeightVector = Vector256.Create(MslWeight);
 
 			_zeroVector = Vector256<ulong>.Zero;
-			_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE - 1);
+			_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE);
 
 			_squareResult1Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
 			_squareResult2Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
@@ -261,14 +264,14 @@ namespace MSetGenP
 							productVector = Avx2.ShiftLeftLogical(productVector, 1);
 						}
 
-						var lows = Avx2.And(productVector, HIGH_MASK_VEC);    // Create new ulong from bits 0 - 31.
-						var highs = Avx2.ShiftRightLogical(productVector, 32);   // Create new ulong from bits 32 - 63.
+						var lows = Avx2.And(productVector, HIGH33_MASK_VEC);    // Create new ulong from bits 0 - 30.
+						var highs = Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB);   // Create new ulong from bits 31 - 62.
 
-						//resultLows[idx] = Avx2.Add(resultLows[idx], lows);
-						//resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
+						resultLows[idx] = Avx2.Add(resultLows[idx], lows);
+						resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
 
-						resultLows[idx] = UnsignedAddition(resultLows[idx], lows);
-						resultHighs[idx] = UnsignedAddition(resultHighs[idx], highs);
+						//resultLows[idx] = UnsignedAddition(resultLows[idx], lows);
+						//resultHighs[idx] = UnsignedAddition(resultHighs[idx], highs);
 
 
 					}
@@ -297,20 +300,20 @@ namespace MSetGenP
 				var limbVecs = GetLimbVectorsUL(mantissaMems[0]);				// Array of Least Signficant input Limb values
 				var resultLimbVecs = GetLimbVectorsUL(resultLimbs[0]);			// Array of least signficant result limb values
 
-				var carries = Avx2.ShiftRightLogical(limbVecs[idx], 32);		// The high 32 bits of sum becomes the new carry.
-				resultLimbVecs[idx] = Avx2.And(limbVecs[idx], HIGH_MASK_VEC);   // The low 32 bits of the sum is the result.
+				var carries = Avx2.ShiftRightLogical(limbVecs[idx], EFFECTIVE_BITS_PER_LIMB);		// The high 32 bits of sum becomes the new carry.
+				resultLimbVecs[idx] = Avx2.And(limbVecs[idx], HIGH33_MASK_VEC);   // The low 32 bits of the sum is the result.
 
 				for (int i = 1; i < intermediateLimbCount; i++)
 				{
 					limbVecs = GetLimbVectorsUL(mantissaMems[i]);				// Array of next 'stack' of input limbs
 					resultLimbVecs = GetLimbVectorsUL(resultLimbs[i]);			// Array of next 'stack' of result limbs
 
-					//var withCarries = Avx2.Add(limbVecs[idx], carries);         // SIGNED Addition!!
-					var withCarries = UnsignedAddition(limbVecs[idx], carries);
+					var withCarries = Avx2.Add(limbVecs[idx], carries);         // SIGNED Addition!!
+					//var withCarries = UnsignedAddition(limbVecs[idx], carries);
 
 					NumberOfSplits++;
-					carries = Avx2.ShiftRightLogical(withCarries, 32);          // The high 32 bits of sum becomes the new carry.
-					resultLimbVecs[idx] = Avx2.And(withCarries, HIGH_MASK_VEC); // The low 32 bits of the sum is the result.
+					carries = Avx2.ShiftRightLogical(withCarries, EFFECTIVE_BITS_PER_LIMB);          // The high 32 bits of sum becomes the new carry.
+					resultLimbVecs[idx] = Avx2.And(withCarries, HIGH33_MASK_VEC); // The low 32 bits of the sum is the result.
 				}
 
 				//var isZeroFlags = Avx2.CompareEqual(carries, _zeroVector);
@@ -394,7 +397,7 @@ namespace MSetGenP
 				result[idx] = Avx2.ShiftRightLogical(Avx2.ShiftLeftLogical(source[idx], (byte)(32 + shiftAmount)), 32);
 
 				// Take the top shiftAmount of bits from the previous limb
-				var previousLimbVector = Avx2.And(prevSource[idx], HIGH_MASK_VEC);
+				var previousLimbVector = Avx2.And(prevSource[idx], HIGH33_MASK_VEC);
 				result[idx] = Avx2.Or(result[idx], Avx2.ShiftRightLogical(previousLimbVector, (byte)(32 - shiftAmount)));
 			}
 		}
@@ -641,7 +644,10 @@ namespace MSetGenP
 			for (var i = 0; i < resultLength; i++)
 			{
 				var nv = left[i] + right[i] + carry;
-				var lo = Split(nv, out carry);
+
+				var (hi, lo) = ScalarMathHelper.Split(nv);
+				carry = hi;
+
 				result[i] = lo;
 			}
 
@@ -663,14 +669,14 @@ namespace MSetGenP
 			for (var i = 0; i < resultLength - 1; i++)
 			{
 				// Set the least significant bit of the high part of a.
-				var sax = left[i] | TEST_BIT_32;
+				var sax = left[i] | TEST_BIT_31;
 
 				result[i] = sax - right[i] - borrow;
 
-				if ((result[i] & TEST_BIT_32) > 0)
+				if ((result[i] & TEST_BIT_31) > 0)
 				{
 					// if the least significant bit of the high part of the result is still set, no borrow occured.
-					result[i] &= HIGH_MASK;
+					result[i] &= HIGH33_MASK;
 					borrow = 0;
 				}
 				else
@@ -691,11 +697,11 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ulong Split(ulong x, out ulong hi)
-		{
-			hi = x >> 32; // Create new ulong from bits 32 - 63.
-			return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
-		}
+		//private ulong Split(ulong x, out ulong hi)
+		//{
+		//	hi = x >> 32; // Create new ulong from bits 32 - 63.
+		//	return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
+		//}
 
 		private int Compare(ulong[] left, ulong[] right)
 		{

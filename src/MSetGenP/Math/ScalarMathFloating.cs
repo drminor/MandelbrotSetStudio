@@ -138,9 +138,9 @@ namespace MSetGenP
 
 					var resultPtr = j + i;  // 0, 1, 1, 2
 
-					var lo = Split(product, out var hi);        //  2 x 2						3 x 3										4 x 4
-					mantissa[resultPtr] += lo;              // 0, 1,   1, 2		 0, 1, 2,   1, 2, 3,  2, 3  4		0, 1, 2, 3,   1, 2, 3, 4,    2, 3, 4, 5,    3, 4, 5, 6 
-					mantissa[resultPtr + 1] += hi;          // 1, 2,   2, 3      1, 2, 3,   2, 3, 4,  3, 4, 5       1, 2, 3, 4,   2, 3, 4, 5,    3, 4, 5, 6,    4, 5, 6, 7
+					var lo = Split(product, out var hi);
+					mantissa[resultPtr] += lo;
+					mantissa[resultPtr + 1] += hi;
 				}
 			}
 
@@ -199,16 +199,14 @@ namespace MSetGenP
 			{
 				for (int i = j; i < ax.Length; i++)
 				{
-					//if (i < j) continue;
-
 					var product = ax[j] * ax[i];
 
 					if (i > j)
 					{
 						product *= 2;
 					}
-															// j = 
-					var resultPtr = j + i;					// 0, 1		1, 2		0, 1, 2		1, 2, 3, 
+
+					var resultPtr = j + i;
 					var lo = Split(product, out var hi);
 					mantissa[resultPtr] += lo;
 					mantissa[resultPtr + 1] += hi;
@@ -217,21 +215,6 @@ namespace MSetGenP
 
 			return mantissa;
 		}
-
-		/* What partial product gets added to which bin
-
-			//  2 limbs						3 limbs										4 limbs
-
-			j = 0, i = 0, 1			j = 0, i = 0, 1, 2		j = 0, i = 0, 1, 2, 3
-			j = 1, i = 1			j = 1, i = 1, 2			j = 1, i = 1, 2, 3
-									j = 2, i = 2,			j = 2, i = 2, 3
-															j = 3, i = 3
-
-			//    d				   d  d		   d			   d  d  d		   d  d		   d
-			// 0, 1		2		0, 1, 2		2, 3	4		0, 1, 2, 3		2, 3, 4		4, 5	6	-> (Index C)
-			// 1, 2		3       1, 2, 3		3, 4	5       1, 2, 3, 4		3, 4, 5		5, 6	7	-> (Index C + 1)
-
-		 */
 
 		public Smx Multiply(Smx a, int b)
 		{
@@ -280,9 +263,9 @@ namespace MSetGenP
 				var product = ax[j] * b;
 				//seive[j] = product;
 
-				var lo = Split(product, out var hi);	//		2 x 1			3 x 1			4 x 1
-				mantissa[j] += lo;			            //			0, 1			0, 1, 2			0, 1, 2, 3
-				mantissa[j + 1] += hi;			        //			1, 2			1, 2, 3			1, 2, 3, 4
+				var lo = Split(product, out var hi);
+				mantissa[j] += lo;
+				mantissa[j + 1] += hi;
 			}
 
 			var product2 = ax[^1] * b;
@@ -334,57 +317,6 @@ namespace MSetGenP
 
 			return result;
 		}
-
-		/* What partial product gets added to which bin
-
-			//  2 x 2						3 x 3										4 x 4
-			// 0, 1,   1, 2		 0, 1, 2,   1, 2, 3,  2, 3  4		0, 1, 2, 3,   1, 2, 3, 4,    2, 3, 4, 5,    3, 4, 5, 6	-> (Index C)
-			// 1, 2,   2, 3      1, 2, 3,   2, 3, 4,  3, 4, 5       1, 2, 3, 4,   2, 3, 4, 5,    3, 4, 5, 6,    4, 5, 6, 7  -> (Index C + 1)
-
-				2 x 2
-			index a index b	index c	on, or below the diagonal 
-			0		0		0		D		E
-			0		1		1		B		E
-			1		0		1		A		S
-			1		1		2		D		E
-
-				3 x 3
-			0		0		0		D		E
-			0		1		1		B		E
-			0		2		2		B		E
-
-			1		0		1		A		S
-			1		1		2		D		E
-			1		2		3		B		E
-
-			2		0		2		A		S
-			2		1		3		A		S
-			2		2		4		D		E
-
-				4 x 4
-			0		0		0		D		E
-			0		1		1		B		E
-			0		2		2		B		E	**
-			0		3		3		B		E
-
-			1		0		1		A		S
-			1		1		2		D		E
-			1		2		3		B		E
-			1		3		4		B		E
-
-			2		0		2		A		S	**
-			2		1		3		A		S
-			2		2		4		D		E
-			2		3		5		B		E
-
-			3		0		3		A		S
-			3		1		4		A		S
-			3		2		5		A		S
-			3		3		6		D		E
-
-
-
-		*/
 
 		#endregion
 

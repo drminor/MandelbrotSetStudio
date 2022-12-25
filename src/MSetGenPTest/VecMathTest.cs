@@ -16,7 +16,7 @@ namespace EngineTest
 		[Fact]
 		public void SquareFourAndAQuarterNewTech()
 		{
-			var precision = 14;		// Binary Digits of precision, 30 Decimal Digits
+			var precision = 30;		// Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
 
 			var vecMath = BuildTheVecMathHelper(limbCount, VALUE_COUNT, THRESHOLD);
@@ -236,12 +236,6 @@ namespace EngineTest
 		#endregion
 
 		#region Support Methods
-
-		private ScalarMath BuildTheMathHelper(int limbCount)
-		{
-			var result = new ScalarMath(new ApFixedPointFormat(limbCount), 4u);
-			return result;
-		}
 
 		private VecMath BuildTheVecMathHelper(int limbCount, int valueCount, uint threshold)
 		{

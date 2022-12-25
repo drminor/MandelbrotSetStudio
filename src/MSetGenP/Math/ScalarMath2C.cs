@@ -14,15 +14,11 @@ namespace MSetGenP
 
 		public bool IsSigned => true;
 
-		//private const ulong ALL_BITS_SET =	0xFFFFFFFFFFFFFFFF; // bits 0 - 64 are set.
-		//private const ulong TEST_BIT_32 =		0x0000000100000000; // bit 32 is set.
-		//private const ulong TEST_BIT_31 =		0x0000000080000000; // bit 31 is set.
-
 		private const ulong LOW_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private const ulong HIGH_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
 
 		private const ulong HIGH_MASK = LOW_BITS_SET;
-		private const ulong HIGH_FILL = HIGH_BITS_SET;
+		//private const ulong HIGH_FILL = HIGH_BITS_SET;
 
 		private static readonly bool USE_DET_DEBUG = false;
 
@@ -73,7 +69,7 @@ namespace MSetGenP
 			CheckLimbs2C(a, b, "Multiply");
 
 			var rawMantissa = Multiply(a.Mantissa, b.Mantissa);
-			var mantissa = PropagateCarries(rawMantissa, out var carry);
+			var mantissa = SumThePartials(rawMantissa, out var carry);
 			var precision = a.Precision;
 
 			Smx2C result;
@@ -105,7 +101,8 @@ namespace MSetGenP
 
 					var product = ax[j] * bx[i];
 
-					var (hi, lo) = Split(product);
+					NumberOfSplits++;
+					var (hi, lo) = ScalarMathHelper.Split(product);
 					mantissa[resultPtr] += lo;
 					mantissa[resultPtr + 1] += hi;
 				}
@@ -126,7 +123,7 @@ namespace MSetGenP
 			var non2CMantissa = ScalarMathHelper.ConvertFrom2C(a.Mantissa);
 
 			var rawMantissa = Square(non2CMantissa);
-			var mantissa = PropagateCarries(rawMantissa, out var carry);
+			var mantissa = SumThePartials(rawMantissa, out var carry);
 			var precision = a.Precision;
 
 			Smx2C result;
@@ -169,7 +166,8 @@ namespace MSetGenP
 						product *= 2;
 					}
 
-					var (hi, lo) = Split(product);
+					NumberOfSplits++;
+					var (hi, lo) = ScalarMathHelper.Split(product);
 					mantissa[resultPtr] += lo;
 					mantissa[resultPtr + 1] += hi;
 				}
@@ -199,7 +197,7 @@ namespace MSetGenP
 			}
 
 			var rawMantissa = Multiply(a.Mantissa, bVal);
-			var mantissa = PropagateCarries(rawMantissa, out var carry);
+			var mantissa = SumThePartials(rawMantissa, out var carry);
 			var precision = a.Precision;
 
 			if (carry > 0)
@@ -225,13 +223,16 @@ namespace MSetGenP
 			{
 				var product = ax[j] * b;
 
-				var (hi, lo) = Split(product);
+				NumberOfSplits++;
+				var (hi, lo) = ScalarMathHelper.Split(product);
 				mantissa[j] += lo;
 				mantissa[j + 1] += hi;
 			}
 
 			var product2 = ax[^1] * b;
-			var (hi2, lo2) = Split(product2);
+
+			NumberOfSplits++;
+			var (hi2, lo2) = ScalarMathHelper.Split(product2);
 			mantissa[^1] = lo2;
 
 			if (hi2 != 0)
@@ -246,7 +247,7 @@ namespace MSetGenP
 
 		#region Multiply Post Processing 
 
-		public ulong[] PropagateCarries(ulong[] mantissa, out ulong carry)
+		public ulong[] SumThePartials(ulong[] mantissa, out ulong carry)
 		{
 			// Currently we are not producing any carries out -- the limbs are split and only a single partial product contributes to the top-half of the msl.
 			// TODO: As the top half of the bin is added, we need to detect carries as we do in the Add routine.
@@ -267,7 +268,11 @@ namespace MSetGenP
 			for (int i = 0; i < mantissa.Length - 1; i++)
 			{
 				var nv = mantissa[i] + carry;
-				var (hi, lo) = Split(nv);
+				
+				NumberOfSplits++;
+				var (hi, lo) = ScalarMathHelper.Split(nv);
+
+
 				result[i] = lo;
 
 				//Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{mantissa.Length - 1}: Propagating {mantissa[i]:X4} wc:{carry:X4}");
@@ -277,7 +282,9 @@ namespace MSetGenP
 			}
 
 			var nv2 = mantissa[^1] + carry;
-			var (hi2, lo2) = Split(nv2);
+
+			NumberOfSplits++;
+			var (hi2, lo2) = ScalarMathHelper.Split(nv2);
 
 			result[^1] = lo2;
 
@@ -331,16 +338,16 @@ namespace MSetGenP
 			return result;
 		}
 
-		private (ulong hi, ulong lo) Split(ulong x)
-		{
-			// TODO: Upon splitting a result limb into hi and lo halves, do these values need to be signed extended?
+		//private (ulong hi, ulong lo) Split(ulong x)
+		//{
+		//	// TODO: Upon splitting a result limb into hi and lo halves, do these values need to be signed extended?
 
-			NumberOfSplits++;
-			var hi = x >> 32;           // Create new ulong from bits 32 - 63.
-			var lo = x & HIGH_MASK;     // Create new ulong from bits 0 - 31.
+		//	NumberOfSplits++;
+		//	var hi = x >> 32;           // Create new ulong from bits 32 - 63.
+		//	var lo = x & HIGH_MASK;     // Create new ulong from bits 0 - 31.
 
-			return (hi, lo);
-		}
+		//	return (hi, lo);
+		//}
 
 		#endregion
 
@@ -418,7 +425,7 @@ namespace MSetGenP
 					newValue = left[i] + right[i] + carry;
 				}
 
-				var (lo, newCarry) = GetResultWithCarry(newValue);
+				var (lo, newCarry) = ScalarMathHelper.GetSignedResultWithCarry(newValue, isMsl: false);
 				result[i] = lo;
 
 				if (USE_DET_DEBUG) ReportForAddition(i, left[i], right[i], carry, newValue, lo, newCarry);
@@ -427,7 +434,7 @@ namespace MSetGenP
 			}
 
 			var nv2 = left[^1] + right[^1] + carry;
-			var (lo2, newCarry2) = GetResultWithCarry(nv2);
+			var (lo2, newCarry2) = ScalarMathHelper.GetSignedResultWithCarry(nv2, isMsl: true);
 			result[^1] = lo2;
 
 			if (USE_DET_DEBUG) ReportForAddition(resultLength - 1, left[^1], right[^1], carry, nv2, lo2, newCarry2);
@@ -437,30 +444,30 @@ namespace MSetGenP
 			return result;
 		}
 
-		private (ulong limbs, ulong carry) GetResultWithCarry(ulong partialWordLimb)
-		{
-			// A carry is generated any time the bit just above the result limb is different than msb of the limb
-			// i.e. this next higher bit is not an extension of the sign.
+		//private (ulong limbValue, ulong carry) GetResultWithCarry(ulong partialWordLimb)
+		//{
+		//	// A carry is generated any time the bit just above the result limb is different than msb of the limb
+		//	// i.e. this next higher bit is not an extension of the sign.
 
-			NumberOfGetCarries++;
+		//	NumberOfGetCarries++;
 
-			bool carryFlag;
+		//	bool carryFlag;
 
-			var limbValue = ScalarMathHelper.GetLowHalf(partialWordLimb, out var resultIsNegative, out bool extendedCaryOutIsNegative);
+		//	var limbValue = ScalarMathHelper.GetLowHalf(partialWordLimb, out var resultIsNegative, out bool extendedCaryOutIsNegative);
 
-			if (resultIsNegative)
-			{
-				//limbValue |= HIGH_FILL; // sign extend the result
-				carryFlag = !extendedCaryOutIsNegative; // true if next higher bit is zero
-			}
-			else
-			{
-				carryFlag = extendedCaryOutIsNegative; // true if next higher bit is one
-			}
+		//	if (resultIsNegative)
+		//	{
+		//		//limbValue |= HIGH_FILL; // sign extend the result
+		//		carryFlag = !extendedCaryOutIsNegative; // true if next higher bit is zero
+		//	}
+		//	else
+		//	{
+		//		carryFlag = extendedCaryOutIsNegative; // true if next higher bit is one
+		//	}
 
-			var result = (limbValue, carryFlag ? 1uL : 0uL);
-			return result;
-		}
+		//	var result = (limbValue, carryFlag ? 1uL : 0uL);
+		//	return result;
+		//}
 
 		#endregion
 
@@ -642,12 +649,9 @@ namespace MSetGenP
 			//	throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			//}
 
-			_ = ScalarMathHelper.GetLowHalf(mantissa[^1], out var resultIsNegative, out _);
+			var signFromMantissa = ScalarMathHelper.GetSign(mantissa);
 
-			var topBitIsSet = resultIsNegative;
-			var signOfTheMantissas = !topBitIsSet;
-
-			if (sign != signOfTheMantissas)
+			if (sign != signFromMantissa)
 			{
 				throw new ArgumentException($"Expected the mantissa to have sign: {sign}.");
 			}
@@ -656,6 +660,7 @@ namespace MSetGenP
 			{
 				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			}
+
 		}
 
 		// Older version

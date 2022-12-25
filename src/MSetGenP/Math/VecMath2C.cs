@@ -472,10 +472,10 @@ namespace MSetGenP
 				var newValuesVector = Avx2.Add(sumVector, carryVector);
 				//var withCarriesVector = UnsignedAddition(sumVector, carryVector);
 
-				var (los, newCarries) = GetResultWithCarry(newValuesVector);
-				resultLimbVecs[idx] = los;
+				var (limbValues, newCarries) = GetResultWithCarry(newValuesVector, isMsl: false);
+				resultLimbVecs[idx] = limbValues;
 
-				if (USE_DET_DEBUG) ReportForAddition(0, va, vb, carryVector, newValuesVector, los, newCarries);
+				if (USE_DET_DEBUG) ReportForAddition(0, va, vb, carryVector, newValuesVector, limbValues, newCarries);
 
 				carryVector = newCarries;
 
@@ -509,12 +509,12 @@ namespace MSetGenP
 					//withCarriesVector = UnsignedAddition(sumVector, carryVector);
 
 
-					(los, newCarries) = GetResultWithCarry(newValuesVector);
-					resultLimbVecs[idx] = los;
+					(limbValues, newCarries) = GetResultWithCarry(newValuesVector, isMsl: (i == LimbCount - 1));
+					resultLimbVecs[idx] = limbValues;
 
-					if (USE_DET_DEBUG) ReportForAddition(i, va, vb, carryVector, newValuesVector, los, newCarries); 
+					if (USE_DET_DEBUG) ReportForAddition(i, va, vb, carryVector, newValuesVector, limbValues, newCarries);
 
-					carryVector = Avx2.And(newCarries, HIGH_MASK_VEC);
+					carryVector = newCarries; // Avx2.And(newCarries, HIGH_MASK_VEC);
 				}
 
 				// TODO: If the final carry > 0
@@ -523,7 +523,7 @@ namespace MSetGenP
 			}
 		}
 
-		private (Vector256<ulong> limbs, Vector256<ulong> carry) GetResultWithCarry(Vector256<ulong> nvs)
+		private (Vector256<ulong> limbs, Vector256<ulong> carry) GetResultWithCarry(Vector256<ulong> nvs, bool isMsl)
 		{
 			NumberOfGetCarries++;
 
@@ -535,23 +535,11 @@ namespace MSetGenP
 
 			for (var i = 0; i < _lanes; i++)
 			{
-				bool carryFlag;
-
-				var limbValue = ScalarMathHelper.GetLowHalf(nvs.GetElement(i), out var resultIsNegative, out var extendedCarryOutIsNegative);
-
-				if (resultIsNegative)
-				{
-					//limbValue |= HIGH_FILL; // sign extend the result
-					carryFlag = !extendedCarryOutIsNegative; // true if next higher bit is zero
-				}
-				else
-				{
-					carryFlag = extendedCarryOutIsNegative; // true if next higher bit is one
-				}
+				//var limbValue = ScalarMathHelper.GetLowHalf(nvs.GetElement(i), out var resultIsNegative, out var extendedCarryOutIsNegative);
+				var (limbValue, newCarry) = ScalarMathHelper.GetSignedResultWithCarry(nvs.GetElement(i), isMsl);
 
 				ltemp[i] = limbValue;
-				//ctemp[i] = 0uL; // carryFlag ? 1uL : 0uL;
-				ctemp[i] = carryFlag ? 1uL : 0uL;
+				ctemp[i] = newCarry;
 			}
 
 			var limbs = Vector256.Create(ltemp[0], ltemp[1], ltemp[2], ltemp[3]);

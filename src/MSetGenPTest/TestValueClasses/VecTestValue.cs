@@ -19,6 +19,10 @@ namespace EngineTest
 			Vectors = fPValues;	
 			var bSmx = vecMath.GetSmxAtIndex(fPValues, index: 0);
 			SmxTestValue = new SmxTestValue(bSmx, BuildTheScalarMath(vecMath));
+
+			var sb = bSmx.GetStringValue();
+
+			var st = SmxTestValue.StringValue;
 		}
 
 		public VecTestValue(string number, int exponent, int precision, VecMath vecMath)

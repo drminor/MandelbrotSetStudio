@@ -10,6 +10,8 @@ namespace EngineTest
 		public RValue RValue { get; init; }
 		public string StringValue { get; init; }
 
+		#region Constructors
+
 		public SmxTestValue(string number, int exponent, int precision, ScalarMath scalarMath)
 		{
 			var bi = BigInteger.Parse(number);
@@ -35,6 +37,14 @@ namespace EngineTest
 			SmxValue =  scalarMath.Convert(smx2CValue);
 			RValue = SmxValue.GetRValue();
 			StringValue = SmxValue.GetStringValue();	
+		}
+
+		#endregion 
+
+		public string GetDiagDisplay()
+		{
+			var result = ScalarMathHelper.GetDiagDisplayHex("raw result", SmxValue.Mantissa);
+			return result;
 		}
 
 		public override string ToString()
