@@ -70,7 +70,7 @@ namespace MSS.Types
 		public RValue Mul(int factor)
 		{
 			var result = new RValue(Value * factor, Exponent, Precision);
-			//result = BigIntegerHelper.TrimToMatchPrecision(result);
+			result = BigIntegerHelper.TrimToMatchPrecision(result);
 
 			return result;
 		}

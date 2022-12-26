@@ -131,7 +131,7 @@ namespace EngineTest
 			Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
 
 			var a3Mantissa = scalarMath2C.SumThePartials(a2Mantissa, out _);
-			var a3MantissaNrm = scalarMath2C.ShiftAndTrim(a3Mantissa);
+			var a3MantissaNrm = ScalarMathHelper.ShiftAndTrim(a3Mantissa, scalarMath2C.ApFixedPointFormat, isSigned: true);
 
 			var a3Smx2C = new Smx2C(true, a3MantissaNrm, aSmx2C.Exponent, aSmx2C.BitsBeforeBP, aSmx2C.Precision);
 			var a3Str = a3Smx2C.GetStringValue();
@@ -255,14 +255,12 @@ namespace EngineTest
 			//var aBigInteger = BigInteger.Parse("-343597");
 			//var aRValue = new RValue(aBigInteger, -11, precision);
 
-			var aTv = new Smx2CTestValue("-343597", -11, precision, scalarMath2C); // -167.77197265625
+			var aTv = new Smx2CTestValue("343597", -12, precision, scalarMath2C); // -167.77197265625
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			// Create a3Smx
 			var a2Mantissa = scalarMath2C.Square(aTv.Smx2CValue.Mantissa);
 			var a3Mantissa = scalarMath2C.SumThePartials(a2Mantissa, out var carry);
-
-
 
 			var a3 = new Smx2C(true, a3Mantissa, aTv.Smx2CValue.Exponent * 2, aTv.Smx2CValue.BitsBeforeBP, aTv.Smx2CValue.Precision);
 
@@ -276,6 +274,7 @@ namespace EngineTest
 
 			// Create b3Smx
 			var b2Mantissa = scalarMath2C.Square(bMantissa);
+
 			var b3Mantissa = scalarMath2C.SumThePartials(b2Mantissa, out var carry2);
 			var b3 = new Smx2C(true, b3Mantissa, aTv.Smx2CValue.Exponent * 2, aTv.Smx2CValue.BitsBeforeBP, aTv.Smx2CValue.Precision);
 			var b3Tv = new Smx2CTestValue(b3, scalarMath2C);
@@ -283,7 +282,9 @@ namespace EngineTest
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(a3Tv.RValue, b3Tv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
-			Assert.Equal(strA, strB);
+
+			// Adding a leading zero will change the result since this zero is being added before the binary point.
+			Assert.NotEqual(strA, strB);
 		}
 
 		[Fact]

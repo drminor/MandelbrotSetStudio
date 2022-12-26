@@ -15,7 +15,8 @@ namespace EngineTest
 		{
 			var bi = BigInteger.Parse(number);
 			RValue = new RValue(bi, exponent, precision);
-			Smx2CValue = ScalarMathHelper.CreateSmx2C(RValue, scalarMath2C.ApFixedPointFormat);
+			Smx2CValue = scalarMath2C.CreateSmx2C(RValue);
+			//Smx2CValue = ScalarMathHelper.CreateSmx2C(RValue, scalarMath2C.ApFixedPointFormat);
 			StringValue = Smx2CValue.GetStringValue();
 		}
 

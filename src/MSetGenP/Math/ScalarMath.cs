@@ -15,11 +15,15 @@ namespace MSetGenP
 		public bool IsSigned => false;
 
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
-
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)(-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
-		private static readonly ulong HIGH_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
-		private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
+		//private const ulong LOW_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		//private const ulong HIGH_MASK = LOW_BITS_SET;
+		//private const ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
+
+		private const ulong LOW31_BITS_SET = 0x000000007FFFFFFF;    // bits 0 - 30 are set.
+		private const ulong HIGH33_MASK = LOW31_BITS_SET;
+		private const ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
 
 		private static readonly bool USE_DET_DEBUG = false;
 
@@ -71,7 +75,8 @@ namespace MSetGenP
 
 			var rawMantissa = Multiply(a.Mantissa, b.Mantissa);
 			var mantissa = SumThePartials(rawMantissa);
-			var nrmMantissa = ShiftAndTrim(mantissa);
+
+			var nrmMantissa = ScalarMathHelper.ShiftAndTrim(mantissa, ApFixedPointFormat, IsSigned, USE_DET_DEBUG);
 
 			var sign = a.Sign == b.Sign;
 			var precision = Math.Min(a.Precision, b.Precision);
@@ -137,7 +142,9 @@ namespace MSetGenP
 
 			var rawMantissa = Square(a.Mantissa);
 			var mantissa = SumThePartials(rawMantissa);
-			var nrmMantissa = ShiftAndTrim(mantissa);
+
+			//var nrmMantissa = ShiftAndTrim(mantissa);
+			var nrmMantissa = ScalarMathHelper.ShiftAndTrim(mantissa, ApFixedPointFormat, IsSigned, USE_DET_DEBUG);
 
 			var sign = true;
 			var precision = a.Precision;
@@ -249,6 +256,10 @@ namespace MSetGenP
 			return mantissa;
 		}
 
+		#endregion
+
+		#region Multiply Post Processing 
+
 		public ulong[] SumThePartials(ulong[] mantissa)
 		{
 			// To be used after a multiply operation.
@@ -290,21 +301,116 @@ namespace MSetGenP
 			return result;
 		}
 
-		private void ReportForAddition(int step, ulong left, ulong carry, ulong nv, ulong lo, ulong newCarry)
-		{
-			var ld = ScalarMathHelper.ConvertFrom2C(left);
-			//var rd = ScalarMathHelper.ConvertFrom2C(right);
-			var cd = ScalarMathHelper.ConvertFrom2C(carry);
-			var nvd = ScalarMathHelper.ConvertFrom2C(nv);
-			var hid = ScalarMathHelper.ConvertFrom2C(newCarry);
-			var lod = ScalarMathHelper.ConvertFrom2C(lo);
+		//public ulong[] ShiftAndTrimOld(ulong[] mantissa)
+		//{
+		//	//ValidateIsSplit(mantissa); // Conditional Method
 
-			//Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, {right:X4} wc:{carry:X4} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, wc:{carry:X4} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, wc:{cd} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv:X4}: hi:{newCarry:X4}, lo:{lo:X4}");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}\n");
-		}
+		//	var lZCounts = ScalarMathHelper.GetLZCounts(mantissa);
+
+		//	Debug.WriteLine($"S&T LZCounts:");
+		//	for (var lzcPtr = 0; lzcPtr < lZCounts.Length; lzcPtr++)
+		//	{
+		//		Debug.WriteLine($"{lzcPtr}: {lZCounts[lzcPtr]} {mantissa[lzcPtr]}");
+		//	}
+
+		//	Debug.Assert(lZCounts[^1] >= 33 + BitsBeforeBP, "The multiplication result is > Max Integer.");
+
+
+		//	// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
+		//	// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
+		//	// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
+
+		//	var shiftAmount = BitsBeforeBP + 1;
+
+		//	var result = new ulong[LimbCount];
+		//	var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
+
+		//	var i = 0;
+
+		//	for (; i < result.Length; i++)
+		//	{
+		//		result[i] = (mantissa[sourceIndex] << 33 + shiftAmount) >> 33;  // Discard the top shiftAmount of bits.
+
+		//		if (sourceIndex > 0)
+		//		{
+		//			result[i] |= (mantissa[sourceIndex - 1] >> 32 - shiftAmount) << 1; // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
+		//		}
+		//		sourceIndex++;
+		//	}
+
+		//	var lZCounts2 = ScalarMathHelper.GetLZCounts(result);
+		//	Debug.WriteLine($"S&T LZCounts2:");
+		//	for (var lzcPtr = 0; lzcPtr < lZCounts2.Length; lzcPtr++)
+		//	{
+		//		Debug.WriteLine($"{lzcPtr}: {lZCounts2[lzcPtr]} {result[lzcPtr]}");
+		//	}
+
+		//	return result;
+		//}
+
+		//public ulong[] ShiftAndTrim_Superceded(ulong[] mantissa)
+		//{
+		//	// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
+		//	// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
+		//	// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
+
+		//	// Clear the bits from the uppper half + the reserved bit, these will either be all 0's or all 1'. Our values are confirmed to be split at this point.
+
+		//	var shiftAmount = 8; // (LimbCount * 32) - TargetExponent;
+
+		//	var result = new ulong[LimbCount];
+
+		//	//var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
+		//	var sourceIndex = mantissa.Length - 1;
+		//	var i = result.Length - 1;
+
+		//	for (; i >= 0; i--)
+		//	{
+		//		if (sourceIndex > 0)
+		//		{
+		//			// Discard the top shiftAmount of bits, moving the remainder of this limb up to fill the opening.
+		//			var topHalf = mantissa[sourceIndex] << shiftAmount; 
+		//			topHalf &= HIGH33_MASK;
+
+		//			// Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
+		//			var bottomHalf = mantissa[sourceIndex - 1] & HIGH33_MASK;
+		//			bottomHalf >>= 32 - shiftAmount;
+
+		//			result[i] = topHalf | bottomHalf;
+
+		//			var strResult = string.Format("0x{0:X4}", result[i]);
+		//			var strTopHalf = string.Format("0x{0:X4}", topHalf);
+		//			var strBottomHalf = string.Format("0x{0:X4}", bottomHalf);
+		//			Debug.WriteLine($"Result, index: {i} is {strResult} from {strTopHalf} and {strBottomHalf}.");
+		//		}
+		//		else
+		//		{
+		//			// Discard the top shiftAmount of bits, moving the remainder of this limb up to fill the opening.
+		//			var topHalf = mantissa[sourceIndex] << shiftAmount;
+		//			topHalf &= HIGH33_MASK;
+
+		//			result[i] = topHalf;
+
+		//			var strResult = string.Format("0x{0:X4}", result[i]);
+		//			var strTopH = string.Format("0x{0:X4}", topHalf);
+		//			Debug.WriteLine($"Result, index: {i} is {strResult} from {strTopH}.");
+		//		}
+
+		//		sourceIndex--;
+		//	}
+
+		//	// SignExtend the MSL
+		//	result[^1] = ScalarMathHelper.ExtendSignBit(result[^1]);	
+
+		//	return result;
+		//}
+
+		//private ulong Split(ulong x, out ulong hi)
+		//{
+		//	NumberOfSplits++;
+		//	hi = x >> 32; // Create new ulong from bits 32 - 63.
+		//	return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
+		//}
 
 		#endregion
 
@@ -337,7 +443,6 @@ namespace MSetGenP
 
 			bool sign;
 			ulong[] mantissa;
-			int indexOfLastNonZeroLimb;
 			var precision = Math.Min(a.Precision, b.Precision);
 
 			var carry = 0ul;
@@ -346,7 +451,7 @@ namespace MSetGenP
 			{
 				//NumberOfMCarries++;
 				sign = a.Sign;
-				mantissa = Add(a.Mantissa, b.Mantissa, out indexOfLastNonZeroLimb, out carry);
+				mantissa = Add(a.Mantissa, b.Mantissa, out carry);
 			}
 			else
 			{
@@ -356,12 +461,12 @@ namespace MSetGenP
 				if (cmp >= 0)
 				{
 					sign = a.Sign;
-					mantissa = Sub(a.Mantissa, b.Mantissa, out indexOfLastNonZeroLimb);
+					mantissa = Sub(a.Mantissa, b.Mantissa);
 				}
 				else
 				{
 					sign = b.Sign;
-					mantissa = Sub(b.Mantissa, a.Mantissa, out indexOfLastNonZeroLimb);
+					mantissa = Sub(b.Mantissa, a.Mantissa);
 				}
 			}
 
@@ -380,7 +485,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		private ulong[] Add(ulong[] left, ulong[] right, out int indexOfLastNonZeroLimb, out ulong carry)
+		private ulong[] Add(ulong[] left, ulong[] right, out ulong carry)
 		{
 			if (left.Length != right.Length)
 			{
@@ -390,7 +495,6 @@ namespace MSetGenP
 			var resultLength = left.Length;
 			var result = new ulong[resultLength];
 
-			indexOfLastNonZeroLimb = -1;
 			carry = 0ul;
 
 			for (var i = 0; i < resultLength; i++)
@@ -402,17 +506,12 @@ namespace MSetGenP
 				carry = hi;
 
 				result[i] = lo;
-
-				if (lo > 0)
-				{
-					indexOfLastNonZeroLimb = i;
-				}
 			}
 
 			return result;
 		}
 
-		private ulong[] Sub(ulong[] left, ulong[] right, out int indexOfLastNonZeroLimb)
+		private ulong[] Sub(ulong[] left, ulong[] right)
 		{
 			if (left.Length != right.Length)
 			{
@@ -422,20 +521,19 @@ namespace MSetGenP
 			var resultLength = left.Length;
 			var result = new ulong[resultLength];
 
-			indexOfLastNonZeroLimb = -1;
 			var borrow = 0ul;
 
 			for (var i = 0; i < resultLength - 1; i++)
 			{
 				// Set the least significant bit of the high part of a.
-				var sax = left[i] | TEST_BIT_32;
+				var sax = left[i] | TEST_BIT_31;
 
 				result[i] = sax - right[i] - borrow;
 
-				if ((result[i] & TEST_BIT_32) > 0)
+				if ((result[i] & TEST_BIT_31) > 0)
 				{
 					// if the least significant bit of the high part of the result is still set, no borrow occured.
-					result[i] &= HIGH_MASK;
+					result[i] &= HIGH33_MASK;
 					borrow = 0;
 				}
 				else
@@ -443,10 +541,6 @@ namespace MSetGenP
 					borrow = 1;
 				}
 
-				if (result[i] > 0)
-				{
-					indexOfLastNonZeroLimb = i;
-				}
 			}
 
 			if (left[^1] < (right[^1] + borrow))
@@ -457,159 +551,24 @@ namespace MSetGenP
 
 			result[^1] = left[^1] - right[^1] - borrow;
 
-			if (result[^1] > 0)
-			{
-				indexOfLastNonZeroLimb = resultLength - 1;
-			}
-
 			return result;
 		}
 
-		#endregion
-
-		#region Normalization Support
-
-		public ulong[] ShiftAndTrimOld(ulong[] mantissa)
+		private void ReportForAddition(int step, ulong left, ulong carry, ulong nv, ulong lo, ulong newCarry)
 		{
-			//ValidateIsSplit(mantissa); // Conditional Method
+			var ld = ScalarMathHelper.ConvertFrom2C(left);
+			//var rd = ScalarMathHelper.ConvertFrom2C(right);
+			var cd = ScalarMathHelper.ConvertFrom2C(carry);
+			var nvd = ScalarMathHelper.ConvertFrom2C(nv);
+			var hid = ScalarMathHelper.ConvertFrom2C(newCarry);
+			var lod = ScalarMathHelper.ConvertFrom2C(lo);
 
-			var lZCounts = ScalarMathHelper.GetLZCounts(mantissa);
-
-			Debug.WriteLine($"S&T LZCounts:");
-			for(var lzcPtr = 0; lzcPtr < lZCounts.Length; lzcPtr++) 
-			{
-				Debug.WriteLine($"{lzcPtr}: {lZCounts[lzcPtr]} {mantissa[lzcPtr]}");
-			}
-
-			Debug.Assert(lZCounts[^1] >= 33 + BitsBeforeBP, "The multiplication result is > Max Integer.");
-
-
-			// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
-			// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
-			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
-
-			var shiftAmount = BitsBeforeBP + 1;
-
-			var result = new ulong[LimbCount];
-			var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
-
-			var i = 0;
-
-			for (; i < result.Length; i++)
-			{
-				result[i] = (mantissa[sourceIndex] << 33 + shiftAmount) >> 33;  // Discard the top shiftAmount of bits.
-
-				if (sourceIndex > 0)
-				{
-					result[i] |= (mantissa[sourceIndex - 1] >> 32 - shiftAmount) << 1; // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
-				}
-				sourceIndex++;
-			}
-
-			var lZCounts2 = ScalarMathHelper.GetLZCounts(result);
-			Debug.WriteLine($"S&T LZCounts2:");
-			for (var lzcPtr = 0; lzcPtr < lZCounts2.Length; lzcPtr++)
-			{
-				Debug.WriteLine($"{lzcPtr}: {lZCounts2[lzcPtr]} {result[lzcPtr]}");
-			}
-
-			return result;
+			//Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, {right:X4} wc:{carry:X4} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, wc:{carry:X4} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, wc:{cd} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv:X4}: hi:{newCarry:X4}, lo:{lo:X4}");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}\n");
 		}
-
-		public ulong[] ShiftAndTrim(ulong[] mantissa)
-		{
-			//ValidateIsSplit(mantissa); // Conditional Method
-
-			var lZCounts = ScalarMathHelper.GetLZCounts(mantissa);
-
-			Debug.WriteLine($"S&T LZCounts:");
-			for (var lzcPtr = 0; lzcPtr < lZCounts.Length; lzcPtr++)
-			{
-				Debug.WriteLine($"{lzcPtr}: {lZCounts[lzcPtr]} {mantissa[lzcPtr]}");
-			}
-
-			Debug.Assert(lZCounts[^1] >= 33 + BitsBeforeBP, "The multiplication result is > Max Integer.");
-
-
-			// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
-			// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
-			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
-
-			var shiftAmount = 8; // (LimbCount * 32) - TargetExponent;
-
-			var result = new ulong[LimbCount];
-			
-			//var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
-			var sourceIndex = mantissa.Length - 1;	
-			var i = result.Length - 1;
-
-			for (; i >= 0; i--)
-			{
-				if (sourceIndex > 0)
-				{
-					var topH = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
-					var botH = mantissa[sourceIndex - 1] >> 32 - shiftAmount; // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
-
-					result[i] = topH | botH;
-
-					var strResult = string.Format("0x{0:X4}", result[i]);
-					var strTopH = string.Format("0x{0:X4}", topH);
-					var strBotH = string.Format("0x{0:X4}", botH);
-
-
-					Debug.WriteLine($"Result, index: {i} is {strResult} from {strTopH} and {strBotH}.");
-				}
-				else
-				{
-					var topH = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
-
-					result[i] = topH;
-
-					var strResult = string.Format("0x{0:X4}", result[i]);
-					var strTopH = string.Format("0x{0:X4}", topH);
-
-					Debug.WriteLine($"Result, index: {i} is {strResult} from {strTopH}."); 
-
-				}
-
-				sourceIndex--;
-			}
-
-			var lZCounts2 = ScalarMathHelper.GetLZCounts(result);
-			Debug.WriteLine($"S&T LZCounts2:");
-			for (var lzcPtr = 0; lzcPtr < lZCounts2.Length; lzcPtr++)
-			{
-				Debug.WriteLine($"{lzcPtr}: {lZCounts2[lzcPtr]} {result[lzcPtr]}");
-			}
-
-			return result;
-		}
-
-		public Smx CreateSmx(RValue rValue)
-		{
-			var result = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
-			return result;
-		}
-
-		public Smx CreateNewZeroSmx(int precision = RMapConstants.DEFAULT_PRECISION)
-		{
-			var result = new Smx(true, new ulong[LimbCount], TargetExponent, BitsBeforeBP, precision);
-			return result;
-		}
-
-		public Smx CreateNewMaxIntegerSmx(int precision = RMapConstants.DEFAULT_PRECISION)
-		{
-			// TODO: Create a Static Readonly value and the use Clone to make copies
-			var result = ScalarMathHelper.CreateSmx(new RValue(MaxIntegerValue, 0, precision), ApFixedPointFormat);
-			return result;
-		}
-
-		//private ulong Split(ulong x, out ulong hi)
-		//{
-		//	NumberOfSplits++;
-		//	hi = x >> 32; // Create new ulong from bits 32 - 63.
-		//	return x & HIGH_MASK; // Create new ulong from bits 0 - 31.
-		//}
 
 		#endregion
 
@@ -632,6 +591,25 @@ namespace MSetGenP
 			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, BitsBeforeBP, smx.Precision);
 
+			return result;
+		}
+
+		public Smx CreateSmx(RValue rValue)
+		{
+			var result = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
+			return result;
+		}
+
+		public Smx CreateNewZeroSmx(int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			var result = new Smx(true, new ulong[LimbCount], TargetExponent, BitsBeforeBP, precision);
+			return result;
+		}
+
+		public Smx CreateNewMaxIntegerSmx(int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			// TODO: Create a Static Readonly value and the use Clone to make copies
+			var result = ScalarMathHelper.CreateSmx(new RValue(MaxIntegerValue, 0, precision), ApFixedPointFormat);
 			return result;
 		}
 
@@ -725,12 +703,6 @@ namespace MSetGenP
 			}
 		}
 
-		private bool CheckPWValues(ulong[] values)
-		{
-			var result = values.Any(x => x >= MAX_DIGIT_VALUE);
-			return result;
-		}
-
 		[Conditional("DETAIL")]
 		private void CheckLimbs2C(Smx2C a, Smx2C b, string desc)
 		{
@@ -804,6 +776,11 @@ namespace MSetGenP
 			}
 		}
 
+		private bool CheckPWValues(ulong[] values)
+		{
+			var result = values.Any(x => x >= MAX_DIGIT_VALUE);
+			return result;
+		}
 
 		#endregion
 

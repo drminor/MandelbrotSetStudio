@@ -14,13 +14,7 @@ namespace MSetGenP
 
 		public bool IsSigned => true;
 
-		private const ulong LOW_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
-		private const ulong HIGH_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
-
-		private const ulong HIGH_MASK = LOW_BITS_SET;
-		//private const ulong HIGH_FILL = HIGH_BITS_SET;
-
-		private static readonly bool USE_DET_DEBUG = false;
+		private static readonly bool USE_DET_DEBUG = true;
 
 		#endregion
 
@@ -81,7 +75,7 @@ namespace MSetGenP
 			}
 			else
 			{
-				var nrmMantissa = ShiftAndTrim(mantissa);
+				var nrmMantissa = ScalarMathHelper.ShiftAndTrim(mantissa, ApFixedPointFormat, IsSigned);
 				result = BuildSmx2C(nrmMantissa, precision);
 			}
 
@@ -135,7 +129,9 @@ namespace MSetGenP
 			}
 			else
 			{
-				var nrmMantissa = ShiftAndTrim(mantissa);
+				//var nrmMantissa = ShiftAndTrim(mantissa);
+
+				var nrmMantissa = ScalarMathHelper.ShiftAndTrim(mantissa, ApFixedPointFormat, IsSigned);
 
 				var mantissa2C = ScalarMathHelper.ConvertTo2C(nrmMantissa, true); // TODO: Converting to / from 2C needs to be done for the other Multiply methods.
 				result = BuildSmx2C(mantissa2C, precision);
@@ -207,7 +203,9 @@ namespace MSetGenP
 			}
 			else
 			{
-				var nrmMantissa = ShiftAndTrim(mantissa);
+				//var nrmMantissa = ShiftAndTrim(mantissa);
+				var nrmMantissa = ScalarMathHelper.ShiftAndTrim(mantissa, ApFixedPointFormat, IsSigned, USE_DET_DEBUG);
+
 				result = BuildSmx2C(nrmMantissa, precision);
 			}
 
@@ -298,45 +296,45 @@ namespace MSetGenP
 			return result;
 		}
 
-		public ulong[] ShiftAndTrim(ulong[] mantissa)
-		{
-			// The upper uint half of each limb should be a simple sign extension: either all 1's or all 0's
-			//ValidateIsSplit(mantissa);
+		//public ulong[] ShiftAndTrimOld(ulong[] mantissa)
+		//{
+		//	// The upper uint half of each limb should be a simple sign extension: either all 1's or all 0's
+		//	//ValidateIsSplit(mantissa);
 
-			// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
-			// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
-			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
+		//	// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
+		//	// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
+		//	// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
 
-			// TODO: As the integer portion is 'trimmed', we need to check to see the result is
-			// larger than the largest integer supported by the current format.
+		//	// TODO: As the integer portion is 'trimmed', we need to check to see the result is
+		//	// larger than the largest integer supported by the current format.
 
-			// Discard 1 more bit?
-			// Start with 1:7:56 (Sign:Integer:Fraction 
-			// Intermediate has 0:16:112
-			// Push 8 from behind to in front and drop the least two significant limbs for a total of 64 - 8 = 56 bits from behind
-			// Push 8 off the top, for a total of 64 bits discarded.
-			// The result must be positive, so if the most significant bit is a '1', we know there is an overflow.
+		//	// Discard 1 more bit?
+		//	// Start with 1:7:56 (Sign:Integer:Fraction 
+		//	// Intermediate has 0:16:112
+		//	// Push 8 from behind to in front and drop the least two significant limbs for a total of 64 - 8 = 56 bits from behind
+		//	// Push 8 off the top, for a total of 64 bits discarded.
+		//	// The result must be positive, so if the most significant bit is a '1', we know there is an overflow.
 
-			var shiftAmount = BitsBeforeBP;
-			var result = new ulong[LimbCount];
-			var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
+		//	var shiftAmount = BitsBeforeBP;
+		//	var result = new ulong[LimbCount];
+		//	var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
 
-			for (var i = 0; i < result.Length; i++)
-			{
-				result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
+		//	for (var i = 0; i < result.Length; i++)
+		//	{
+		//		result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
 				
-				if (sourceIndex > 0)
-				{
-					var previousLimb = mantissa[sourceIndex - 1];
-					previousLimb &= HIGH_MASK;                      // Clear the bits from the uppper half, these will either be all 0's or all 1'. Our values are confirmed to be split at this point.
-					result[i] |= previousLimb >> 32 - shiftAmount;  // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
-				}
+		//		if (sourceIndex > 0)
+		//		{
+		//			var previousLimb = mantissa[sourceIndex - 1];
+		//			previousLimb &= HIGH33_MASK;                      // Clear the bits from the uppper half, these will either be all 0's or all 1'. Our values are confirmed to be split at this point.
+		//			result[i] |= previousLimb >> 32 - shiftAmount;  // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
+		//		}
 
-				sourceIndex++;
-			}
+		//		sourceIndex++;
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		//private (ulong hi, ulong lo) Split(ulong x)
 		//{
@@ -425,7 +423,7 @@ namespace MSetGenP
 					newValue = left[i] + right[i] + carry;
 				}
 
-				var (lo, newCarry) = ScalarMathHelper.GetSignedResultWithCarry(newValue, isMsl: false);
+				var (lo, newCarry) = ScalarMathHelper.GetResultWithCarrySigned(newValue, isMsl: false);
 				result[i] = lo;
 
 				if (USE_DET_DEBUG) ReportForAddition(i, left[i], right[i], carry, newValue, lo, newCarry);
@@ -434,7 +432,7 @@ namespace MSetGenP
 			}
 
 			var nv2 = left[^1] + right[^1] + carry;
-			var (lo2, newCarry2) = ScalarMathHelper.GetSignedResultWithCarry(nv2, isMsl: true);
+			var (lo2, newCarry2) = ScalarMathHelper.GetResultWithCarrySigned(nv2, isMsl: true);
 			result[^1] = lo2;
 
 			if (USE_DET_DEBUG) ReportForAddition(resultLength - 1, left[^1], right[^1], carry, nv2, lo2, newCarry2);
@@ -453,7 +451,7 @@ namespace MSetGenP
 
 		//	bool carryFlag;
 
-		//	var limbValue = ScalarMathHelper.GetLowHalf(partialWordLimb, out var resultIsNegative, out bool extendedCaryOutIsNegative);
+		//	var limbValue = ScalarMathHelper.Gets .GetLowHalf(partialWordLimb, out var resultIsNegative, out bool extendedCaryOutIsNegative);
 
 		//	if (resultIsNegative)
 		//	{
@@ -468,6 +466,44 @@ namespace MSetGenP
 		//	var result = (limbValue, carryFlag ? 1uL : 0uL);
 		//	return result;
 		//}
+
+		//public static (ulong limbValue, ulong carry) GetSignedResultWithCarry(ulong partialWordLimb, bool isMsl)
+		//{
+		//	// A carry is generated any time the bit just above the result limb is different than msb of the limb
+		//	// i.e. this next higher bit is not an extension of the sign.
+
+		//	bool carryFlag;
+
+		//	var limbValue = ScalarMathHelper.GetLowHalfSigned(partialWordLimb, isMsl, out var topBitIsSet, out bool overflowBitIsSet);
+
+		//	if (topBitIsSet)
+		//	{
+		//		limbValue |= HIGH33_FILL; // sign extend the result
+		//		carryFlag = !overflowBitIsSet; // true if next higher bit is zero
+		//	}
+		//	else
+		//	{
+		//		carryFlag = overflowBitIsSet; // true if next higher bit is one
+		//	}
+
+		//	var result = (limbValue, carryFlag ? 1uL : 0uL);
+		//	return result;
+		//}
+
+		private void ReportForAddition(int step, ulong left, ulong right, ulong carry, ulong nv, ulong lo, ulong newCarry)
+		{
+			var ld = ScalarMathHelper.ConvertFrom2C(left);
+			var rd = ScalarMathHelper.ConvertFrom2C(right);
+			var cd = ScalarMathHelper.ConvertFrom2C(carry);
+			var nvd = ScalarMathHelper.ConvertFrom2C(nv);
+			var hid = ScalarMathHelper.ConvertFrom2C(newCarry);
+			var lod = ScalarMathHelper.ConvertFrom2C(lo);
+
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, {right:X4} wc:{carry:X4} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, {rd} wc:{cd} ");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv:X4}: hi:{newCarry:X4}, lo:{lo:X4}");
+			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}\n");
+		}
 
 		#endregion
 
@@ -549,21 +585,6 @@ namespace MSetGenP
 		{
 			var result = ScalarMathHelper.CreateSmx2C(aRValue, ApFixedPointFormat);
 			return result;
-		}
-
-		private void ReportForAddition(int step, ulong left, ulong right, ulong carry, ulong nv, ulong lo, ulong newCarry)
-		{
-			var ld = ScalarMathHelper.ConvertFrom2C(left);
-			var rd = ScalarMathHelper.ConvertFrom2C(right);
-			var cd = ScalarMathHelper.ConvertFrom2C(carry);
-			var nvd = ScalarMathHelper.ConvertFrom2C(nv);
-			var hid = ScalarMathHelper.ConvertFrom2C(newCarry);
-			var lod = ScalarMathHelper.ConvertFrom2C(lo);
-
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {left:X4}, {right:X4} wc:{carry:X4} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, {rd} wc:{cd} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv:X4}: hi:{newCarry:X4}, lo:{lo:X4}");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}\n");
 		}
 
 		#endregion

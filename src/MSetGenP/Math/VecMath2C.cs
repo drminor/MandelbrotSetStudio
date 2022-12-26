@@ -536,7 +536,7 @@ namespace MSetGenP
 			for (var i = 0; i < _lanes; i++)
 			{
 				//var limbValue = ScalarMathHelper.GetLowHalf(nvs.GetElement(i), out var resultIsNegative, out var extendedCarryOutIsNegative);
-				var (limbValue, newCarry) = ScalarMathHelper.GetSignedResultWithCarry(nvs.GetElement(i), isMsl);
+				var (limbValue, newCarry) = ScalarMathHelper.GetResultWithCarrySigned(nvs.GetElement(i), isMsl);
 
 				ltemp[i] = limbValue;
 				ctemp[i] = newCarry;

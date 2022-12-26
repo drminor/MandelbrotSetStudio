@@ -19,6 +19,8 @@ namespace MSetGenP
 		private static readonly ulong HIGH_MASK =	 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private static readonly ulong TEST_BIT_32 =	 0x0000000100000000; // bit 32 is set.
 
+		public bool IsSigned => false;
+
 		#endregion
 
 		#region Constructor
@@ -26,8 +28,7 @@ namespace MSetGenP
 		public ScalarMathFloating(ApFixedPointFormat apFixedPointFormat)
 		{
 			ApFixedPointFormat = apFixedPointFormat;
-			TargetExponent = -1 * FractionalBits;
-			MaxIntegerValue = (uint) Math.Pow(2, BitsBeforeBP) - 1;
+			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue(apFixedPointFormat.BitsBeforeBinaryPoint, isSigned: false);
 		}
 
 		#endregion
@@ -36,7 +37,7 @@ namespace MSetGenP
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
 		public int LimbCount => ApFixedPointFormat.LimbCount;
-		public int TargetExponent { get; init; }
+		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
 		public uint MaxIntegerValue { get; init; }
 
