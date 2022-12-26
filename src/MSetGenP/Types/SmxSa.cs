@@ -85,7 +85,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			var result = ScalarMathFloating.GetRValue(this);
+			var result = ScalarMathFloating.CreateRValue(this);
 			return result;
 		}
 

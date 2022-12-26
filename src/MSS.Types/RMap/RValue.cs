@@ -46,7 +46,10 @@ namespace MSS.Types
 				throw new InvalidOperationException("Cannot add two RValues if their Exponents do not agree.");
 			}
 
-			return new RValue(Value + rValue.Value, Exponent, Math.Min(Precision, rValue.Precision));
+			var result =  new RValue(Value + rValue.Value, Exponent, Math.Min(Precision, rValue.Precision));
+			result = BigIntegerHelper.TrimToMatchPrecision(result);
+
+			return result;
 		}
 
 		public RValue Sub(RValue rValue)

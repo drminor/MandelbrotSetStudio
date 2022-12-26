@@ -577,16 +577,16 @@ namespace MSetGenP
 		public Smx Convert(Smx2C smx2C)
 		{
 			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa);
-			var rvalue = ScalarMathHelper.GetRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
+			var rvalue = ScalarMathHelper.CreateRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
 
 			var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
 
 			return result;
 		}
 
-		public Smx2C Convert(Smx smx, bool overrideFormatChecks = false)
+		public Smx2C Convert(Smx smx)
 		{
-			if (!overrideFormatChecks) CheckLimbCountAndFPFormat(smx);
+			CheckLimbCountAndFPFormat(smx);
 
 			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, BitsBeforeBP, smx.Precision);
@@ -703,82 +703,82 @@ namespace MSetGenP
 			}
 		}
 
-		[Conditional("DETAIL")]
-		private void CheckLimbs2C(Smx2C a, Smx2C b, string desc)
-		{
-			if (a.LimbCount != LimbCount)
-			{
-				Debug.WriteLine($"WARNING: The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
-				throw new InvalidOperationException($"The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
-			}
+		//[Conditional("DETAIL")]
+		//private void CheckLimbs2C(Smx2C a, Smx2C b, string desc)
+		//{
+		//	if (a.LimbCount != LimbCount)
+		//	{
+		//		Debug.WriteLine($"WARNING: The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+		//		throw new InvalidOperationException($"The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+		//	}
 
-			if (b.LimbCount != LimbCount)
-			{
-				Debug.WriteLine($"WARNING: The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
-				throw new InvalidOperationException($"The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
-			}
+		//	if (b.LimbCount != LimbCount)
+		//	{
+		//		Debug.WriteLine($"WARNING: The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
+		//		throw new InvalidOperationException($"The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
+		//	}
 
-			if (a.Exponent != b.Exponent)
-			{
-				Debug.WriteLine($"Warning:the exponents do not match.");
-				throw new InvalidOperationException($"The exponents do not match.");
-			}
+		//	if (a.Exponent != b.Exponent)
+		//	{
+		//		Debug.WriteLine($"Warning:the exponents do not match.");
+		//		throw new InvalidOperationException($"The exponents do not match.");
+		//	}
 
-			ValidateIsSplit2C(a.Mantissa, a.Sign);
-			ValidateIsSplit2C(b.Mantissa, b.Sign);
-		}
+		//	ValidateIsSplit2C(a.Mantissa, a.Sign);
+		//	ValidateIsSplit2C(b.Mantissa, b.Sign);
+		//}
 
-		[Conditional("DETAIL")]
-		private void CheckLimb2C(Smx2C a, string desc)
-		{
-			if (a.LimbCount != LimbCount)
-			{
-				Debug.WriteLine($"WARNING: The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
-				throw new InvalidOperationException($"The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
-			}
+		//[Conditional("DETAIL")]
+		//private void CheckLimb2C(Smx2C a, string desc)
+		//{
+		//	if (a.LimbCount != LimbCount)
+		//	{
+		//		Debug.WriteLine($"WARNING: The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+		//		throw new InvalidOperationException($"The value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+		//	}
 
-			if (a.Exponent != TargetExponent)
-			{
-				Debug.WriteLine($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
-				throw new InvalidOperationException($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
-			}
+		//	if (a.Exponent != TargetExponent)
+		//	{
+		//		Debug.WriteLine($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
+		//		throw new InvalidOperationException($"Warning: The exponent is not the TargetExponent:{TargetExponent}.");
+		//	}
 
-			ValidateIsSplit2C(a.Mantissa, a.Sign);
-		}
+		//	ValidateIsSplit2C(a.Mantissa, a.Sign);
+		//}
 
-		[Conditional("DETAIL")]
-		private void ValidateIsSplit2C(ulong[] mantissa)
-		{
-			if (ScalarMathHelper.CheckPW2CValues(mantissa))
-			{
-				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
-			}
-		}
+		//[Conditional("DETAIL")]
+		//private void ValidateIsSplit2C(ulong[] mantissa)
+		//{
+		//	if (ScalarMathHelper.CheckPW2CValues(mantissa))
+		//	{
+		//		throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
+		//	}
+		//}
 
-		[Conditional("DETAIL")]
-		private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
-		{
-			//if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
-			//{
-			//	throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
-			//}
+		//[Conditional("DETAIL")]
+		//private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
+		//{
+		//	//if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
+		//	//{
+		//	//	throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
+		//	//}
 
-			var signFromMantissa = ScalarMathHelper.GetSign(mantissa);
+		//	var signFromMantissa = ScalarMathHelper.GetSign(mantissa);
 
-			if (sign != signFromMantissa)
-			{
-				throw new ArgumentException($"Expected the mantissa to have sign: {sign}.");
-			}
+		//	if (sign != signFromMantissa)
+		//	{
+		//		throw new ArgumentException($"Expected the mantissa to have sign: {sign}.");
+		//	}
 
-			if (ScalarMathHelper.CheckPW2CValues(mantissa))
-			{
-				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
-			}
-		}
+		//	if (ScalarMathHelper.CheckPW2CValues(mantissa))
+		//	{
+		//		throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
+		//	}
+		//}
 
 		private bool CheckPWValues(ulong[] values)
 		{
-			var result = values.Any(x => x >= MAX_DIGIT_VALUE);
+			var result = values.Any(x => x > MAX_DIGIT_VALUE);
 			return result;
 		}
 

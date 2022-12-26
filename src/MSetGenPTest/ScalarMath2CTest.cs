@@ -41,7 +41,7 @@ namespace EngineTest
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bRValue, bTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
-			//Assert.True(haveRequiredPrecision);
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
@@ -406,16 +406,16 @@ namespace EngineTest
 
 			var aNumber = "414219082";
 			var bNumber = "67781838";
-			var exponent = -35;
+			var exponent = -37;                 //9.8635556059889495372772216796875e-4
 
 			//var aNumber = "27797772040142849";
 			//var bNumber = "4548762148012033";
 			//var exponent = -62;
 
-			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
+			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C);
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C);
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
@@ -441,7 +441,7 @@ namespace EngineTest
 
 			var aNumber = "-343597";
 			var bNumber = "-343707";
-			var exponent = -13;
+			var exponent = -17;
 
 			//var aNumber = "-414219082";
 			//var bNumber = "-7781838"; //67781838
@@ -450,7 +450,6 @@ namespace EngineTest
 			//var aNumber = "-27797772040142849";
 			//var bNumber = "-4548762148012033";
 			//var exponent = -63;
-
 
 			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
@@ -462,25 +461,19 @@ namespace EngineTest
 			var cTv = new Smx2CTestValue(c, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD);
-			//var d = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "d");
-			//var dTv = new SmxTestValue(d, scalarMath);
-			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
-
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the cRef is {cStrComp}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
-			//Assert.True(haveRequiredPrecision);
-
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
 		[Fact]
 		public void AddLeftIs_Pos_RightIsNeg()
 		{
-			var precision = 53;
+			var precision = 36;
 			var limbCount = 4;
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
@@ -491,31 +484,25 @@ namespace EngineTest
 
 			var aNumber = "-27797772040142849";
 			var bNumber = "4548762148012033";
-			var exponent = -63;
+			var exponent = -65;
 
 			// SWITCHED
 			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
-			Debug.WriteLine($"The StringValue for b is {aTv}.");
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
-			Debug.WriteLine($"The StringValue for a is {bTv}.");
-
+			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
 			var cTv = new Smx2CTestValue(c, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
-
-			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD);
-			//var d = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "d");
-			//var dTv = new SmxTestValue(d, scalarMath);
-			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
 
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the cRef is {cStrComp}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
-			//Assert.True(haveRequiredPrecision);
+			Assert.True(haveRequiredPrecision);
 
 			Assert.Equal(strA, strB);
 		}
@@ -523,8 +510,8 @@ namespace EngineTest
 		[Fact]
 		public void AddLeftIs_Big_Pos_RightIsNeg()
 		{
-			var precision = 53;
-			var limbCount = 5;
+			var precision = 38;
+			var limbCount = 5; // Target Exponent = -147 (31 x 5 = 155, subtract 8 = 147. 5 x 32 = 160
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
@@ -534,13 +521,15 @@ namespace EngineTest
 
 			//Expected: ??; Actual: ??
 
-
 			var aNumber = "4548762148012033";					// 9.8635556059889517056815666506964e-4
 			var bNumber = "-27797772040142849";					//-6.02768096723593793141715568851e-3
-			var exponent = -63;                     // Result: -0.00504132540663704276084899902344
+			var exponent = -75;                     // Result: -0.00504132540663704276084899902344
+
+			// 4,548,762,148,012,033 + -27,797,772,040,142,849 = -23,249,009,892,130,816
+
+			// -23,249,009 B = 2,838,013,902,848 2^147 / 2^160 (or * 1/2^13)
 
 			//Expected: -86609311; Actual: 4397959902817
-
 
 			// SWITCHED
 			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C);
@@ -549,31 +538,24 @@ namespace EngineTest
 			var bTv = new Smx2CTestValue(bNumber, exponent, precision, scalarMath2C);
 			Debug.WriteLine($"The StringValue for a is {bTv}.");
 
-
 			var c = scalarMath2C.Add(aTv.Smx2CValue, bTv.Smx2CValue, "Test");
 			var cTv = new Smx2CTestValue(c, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
-
-			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD);
-			//var d = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "d");
-			//var dTv = new SmxTestValue(d, scalarMath);
-			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
 
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the cRef is {cStrComp}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
-			//Assert.True(haveRequiredPrecision);
+			Assert.True(haveRequiredPrecision);
 
 			Assert.Equal(strA, strB);
 		}
 
-
 		[Fact]
 		public void AddLeftIsNegRightIsPos()
 		{
-			var precision = 53;
+			var precision = 38;
 			var limbCount = 5;
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
@@ -584,7 +566,7 @@ namespace EngineTest
 
 			var aNumber = "-27797772040142849";
 			var bNumber = "4548762148012033";
-			var exponent = -63;
+			var exponent = -65;
 
 			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
@@ -596,69 +578,63 @@ namespace EngineTest
 			var cTv = new Smx2CTestValue(c, scalarMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			//var scalarMath = new ScalarMath(new ApFixedPointFormat(limbCount), THRESHOLD);
-			//var d = scalarMath.Add(aTv.SmxValue, bTv.SmxValue, "d");
-			//var dTv = new SmxTestValue(d, scalarMath);
-			//Debug.WriteLine($"The StringValue for the dSmx is {dTv}.");
-
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
-			Debug.WriteLine($"The StringValue for the cRef is {cStrComp}.");
+			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
-			//Assert.True(haveRequiredPrecision);
-
+			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
 
 		//[Fact]
-		public void AddLeftIsNegRightIsPosSmall()
-		{
-			var precision = 25;
-			var limbCount = 5;
-			//var valueCount = 8;
+		//public void AddLeftIsNegRightIsPosSmall()
+		//{
+		//	var precision = 25;
+		//	var limbCount = 5;
+		//	//var valueCount = 8;
 
-			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
+		//	var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
-			//var a = new Smx(false, new ulong[] { 151263699, 55238551, 1 }, 2, -63, precision);
-			//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
+		//	//var a = new Smx(false, new ulong[] { 151263699, 55238551, 1 }, 2, -63, precision);
+		//	//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
 
-			//var aLongs = new ulong[] {1512, 552, 1 };
-			var aLongs5 = new ulong[] { 0, 0, 3489660928, 1342177291, 33554436 }; // 5 Limbs, Exp -152, Value: -2.000000257045030757803438
-			var aBigInteger = -1 * ScalarMathHelper.FromPwULongs(aLongs5);
-			var aRValueStg = new RValue(aBigInteger, -63, precision);
+		//	//var aLongs = new ulong[] {1512, 552, 1 };
+		//	var aLongs5 = new ulong[] { 0, 0, 3489660928, 1342177291, 33554436 }; // 5 Limbs, Exp -152, Value: -2.000000257045030757803438
+		//	var aBigInteger = -1 * ScalarMathHelper.FromPwULongs(aLongs5);
+		//	var aRValueStg = new RValue(aBigInteger, -63, precision);
 
-			//var bLongs = new ulong[] { 8614, 2, 0 };
-			var bLongs5 = new ulong[] { 0, 0, 0, 442499072, 2097154 }; // 5 Limbs, Exp: -152, Value: 0.1250001253501977771520615
-			var bBigInteger = ScalarMathHelper.FromPwULongs(bLongs5);
-			var bRValueStg = new RValue(bBigInteger, -36, precision);
+		//	//var bLongs = new ulong[] { 8614, 2, 0 };
+		//	var bLongs5 = new ulong[] { 0, 0, 0, 442499072, 2097154 }; // 5 Limbs, Exp: -152, Value: 0.1250001253501977771520615
+		//	var bBigInteger = ScalarMathHelper.FromPwULongs(bLongs5);
+		//	var bRValueStg = new RValue(bBigInteger, -36, precision);
 
-			var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);
+		//	var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);
 
-			var aSmx = scalarMath2C.CreateSmx2C(aRValue);
-			var aStr = aSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
+		//	var aSmx = scalarMath2C.CreateSmx2C(aRValue);
+		//	var aStr = aSmx.GetStringValue();
+		//	Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
 
-			var bSmx = scalarMath2C.CreateSmx2C(bRValue);
-			var bStr = bSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
+		//	var bSmx = scalarMath2C.CreateSmx2C(bRValue);
+		//	var bStr = bSmx.GetStringValue();
+		//	Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
 
-			var cSmx = scalarMath2C.Add(aSmx, bSmx, "Test");   // 5 Limbs, Exp -152, Mantissa: { 0, 0, 3489660928, 899678219, 31457282 }, Value: -1.875000131694832980651377
+		//	var cSmx = scalarMath2C.Add(aSmx, bSmx, "Test");   // 5 Limbs, Exp -152, Mantissa: { 0, 0, 3489660928, 899678219, 31457282 }, Value: -1.875000131694832980651377
 
-			var cSmxRValue = cSmx.GetRValue();
-			var cStr = cSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the cSmx is {cStr}.");
+		//	var cSmxRValue = cSmx.GetRValue();
+		//	var cStr = cSmx.GetStringValue();
+		//	Debug.WriteLine($"The StringValue for the cSmx is {cStr}.");
 
-			//var nrmA = RNormalizer.Normalize(aRValue, bRValue, out var nrmB);
-			var cRValue = aRValue.Add(bRValue);
-			var cStrComp = RValueHelper.ConvertToString(cRValue);
-			Debug.WriteLine($"The StringValue for the cRValue is {cStrComp}.");
+		//	//var nrmA = RNormalizer.Normalize(aRValue, bRValue, out var nrmB);
+		//	var cRValue = aRValue.Add(bRValue);
+		//	var cStrComp = RValueHelper.ConvertToString(cRValue);
+		//	Debug.WriteLine($"The StringValue for the cRValue is {cStrComp}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cSmxRValue, cRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			//Assert.True(haveRequiredPrecision);
+		//	var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cSmxRValue, cRValue, failOnTooFewDigits: false, out var strA, out var strB);
+		//	//Assert.True(haveRequiredPrecision);
 
-			Assert.Equal(strA, strB);
-		}
+		//	Assert.Equal(strA, strB);
+		//}
 
 		#endregion
 

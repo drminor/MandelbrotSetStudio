@@ -58,14 +58,14 @@ namespace MSetGenP
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		[Conditional("DETAIL")]
-		private static void ValidatePWValues(ulong[] mantissa)
-		{
-			if (ScalarMathHelper.CheckPW2CValues(mantissa))
-			{
-				throw new ArgumentException($"Cannot create a Smx from an array of ulongs where any of the values is greater than MAX_DIGIT.");
-			}
-		}
+		//[Conditional("DETAIL")]
+		//private static void ValidatePWValues(ulong[] mantissa)
+		//{
+		//	if (ScalarMathHelper.CheckPW2CValues(mantissa))
+		//	{
+		//		throw new ArgumentException($"Cannot create a Smx from an array of ulongs where any of the values is greater than MAX_DIGIT.");
+		//	}
+		//}
 
 		#endregion
 
@@ -87,7 +87,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			var result = ScalarMathHelper.GetRValue(this);
+			var result = ScalarMathHelper.CreateRValue(this);
 			return result;
 		}
 

@@ -94,6 +94,7 @@ namespace MSS.Types
 			while (exponent + reductionFactor + 64 < 0 && remainder == 0)
 			{
 				reductionFactor += 64;
+				remainder = BigInteger.Remainder(value, BigInteger.Pow(2, reductionFactor + 64));
 			}
 
 			newExponent = exponent + reductionFactor;

@@ -719,7 +719,7 @@ namespace MSetGenP
 			var result = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
 			return result;
 		}
-		public static RValue GetRValue(SmxSa smx)
+		public static RValue CreateRValue(SmxSa smx)
 		{
 			var biValue = ScalarMathHelper.FromPwULongs(smx.MantissaSa.MaterializeAll());
 			biValue = smx.Sign ? biValue : -1 * biValue;
@@ -730,7 +730,7 @@ namespace MSetGenP
 
 			return result;
 		}
-		public static RValue GetRValue(SmxFloating smx)
+		public static RValue CreateRValue(SmxFloating smx)
 		{
 			var biValue = ScalarMathHelper.FromPwULongs(smx.Mantissa);
 			biValue = smx.Sign ? biValue : -1 * biValue;

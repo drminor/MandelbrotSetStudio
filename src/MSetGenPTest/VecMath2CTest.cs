@@ -76,7 +76,7 @@ namespace EngineTest
 			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
+			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
@@ -88,14 +88,14 @@ namespace EngineTest
 		[Fact]
 		public void AddTwoNegative()
 		{
-			var precision = 53;
+			var precision = 23;
 			var limbCount = 3;
 
 			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, THRESHOLD);
 
 			var aNumber = "-343597";
 			var bNumber = "-343707";
-			var exponent = -12;
+			var exponent = -17;
 
 			//var aNumber = "-414219082";
 			//var bNumber = "67781838";
@@ -115,11 +115,10 @@ namespace EngineTest
 			
 			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
 
-
 			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
+			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
@@ -155,7 +154,7 @@ namespace EngineTest
 			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
+			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
@@ -191,7 +190,7 @@ namespace EngineTest
 			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
+			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
@@ -214,7 +213,7 @@ namespace EngineTest
 
 			var aNumber = "-27797772040142849";
 			var bNumber = "4548762148012033";
-			var exponent = -65;
+			var exponent = -66;
 
 
 			var aTv = new Vec2CTestValue(aNumber, exponent, precision, vecMath2C); // -6.02768096723593793141715568851e-3
@@ -223,14 +222,12 @@ namespace EngineTest
 			var bTv = new Vec2CTestValue(bNumber, exponent, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-
-
 			var cFPValues = aTv.CreateNewFPValues();
 			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
 			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
+			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 

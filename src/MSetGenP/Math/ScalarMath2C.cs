@@ -14,6 +14,15 @@ namespace MSetGenP
 
 		public bool IsSigned => true;
 
+		private const ulong HIGH33_BITS_SET = 0xFFFFFFFF80000000; // bits 63 - 31 are set.
+		private const ulong LOW31_BITS_SET = 0x000000007FFFFFFF;    // bits 0 - 30 are set.
+
+		private const ulong HIGH33_MASK = LOW31_BITS_SET;
+		private const ulong LOW31_MASK = HIGH33_BITS_SET;
+
+		private const ulong HIGH33_FILL = HIGH33_BITS_SET;
+
+
 		private static readonly bool USE_DET_DEBUG = true;
 
 		#endregion
@@ -76,7 +85,7 @@ namespace MSetGenP
 			else
 			{
 				var nrmMantissa = ScalarMathHelper.ShiftAndTrim(mantissa, ApFixedPointFormat, IsSigned);
-				result = BuildSmx2C(nrmMantissa, precision);
+				result = CreateSmx2C(nrmMantissa, precision);
 			}
 
 			return result;
@@ -116,6 +125,8 @@ namespace MSetGenP
 
 			var non2CMantissa = ScalarMathHelper.ConvertFrom2C(a.Mantissa);
 
+			// TODO: Consider creating a method to set the high bits to all zeros or all ones -- explicitly for multiplication -- in prep of only having longs for multiplication.
+
 			var rawMantissa = Square(non2CMantissa);
 			var mantissa = SumThePartials(rawMantissa, out var carry);
 			var precision = a.Precision;
@@ -134,7 +145,7 @@ namespace MSetGenP
 				var nrmMantissa = ScalarMathHelper.ShiftAndTrim(mantissa, ApFixedPointFormat, IsSigned);
 
 				var mantissa2C = ScalarMathHelper.ConvertTo2C(nrmMantissa, true); // TODO: Converting to / from 2C needs to be done for the other Multiply methods.
-				result = BuildSmx2C(mantissa2C, precision);
+				result = CreateSmx2C(mantissa2C, precision);
 			}
 
 			return result;
@@ -206,7 +217,7 @@ namespace MSetGenP
 				//var nrmMantissa = ShiftAndTrim(mantissa);
 				var nrmMantissa = ScalarMathHelper.ShiftAndTrim(mantissa, ApFixedPointFormat, IsSigned, USE_DET_DEBUG);
 
-				result = BuildSmx2C(nrmMantissa, precision);
+				result = CreateSmx2C(nrmMantissa, precision);
 			}
 
 			return result;
@@ -381,9 +392,7 @@ namespace MSetGenP
 
 			//var aMantissa =  ScalarMathHelper.ExtendSignBit(a.Mantissa);
 			//var bMantissa = ScalarMathHelper.ExtendSignBit(b.Mantissa);
-
 			//ValidateIsSplit2C(a.Mantissa, a.Sign);
-
 			//ValidateIsSplit2C(b.Mantissa, b.Sign);
 
 			var mantissa = Add(a.Mantissa, b.Mantissa, out var carry);
@@ -397,7 +406,7 @@ namespace MSetGenP
 			}
 			else
 			{
-				result = BuildSmx2C(mantissa, precision);
+				result = CreateSmx2C(mantissa, precision);
 			}
 
 			return result;
@@ -418,6 +427,7 @@ namespace MSetGenP
 			for (var i = 0; i < resultLength - 1; i++)
 			{
 				ulong newValue;
+
 				checked
 				{
 					newValue = left[i] + right[i] + carry;
@@ -426,7 +436,7 @@ namespace MSetGenP
 				var (lo, newCarry) = ScalarMathHelper.GetResultWithCarrySigned(newValue, isMsl: false);
 				result[i] = lo;
 
-				if (USE_DET_DEBUG) ReportForAddition(i, left[i], right[i], carry, newValue, lo, newCarry);
+				//if (USE_DET_DEBUG) ReportForAddition(i, left[i], right[i], carry, newValue, lo, newCarry);
 
 				carry = newCarry;
 			}
@@ -435,7 +445,7 @@ namespace MSetGenP
 			var (lo2, newCarry2) = ScalarMathHelper.GetResultWithCarrySigned(nv2, isMsl: true);
 			result[^1] = lo2;
 
-			if (USE_DET_DEBUG) ReportForAddition(resultLength - 1, left[^1], right[^1], carry, nv2, lo2, newCarry2);
+			//if (USE_DET_DEBUG) ReportForAddition(resultLength - 1, left[^1], right[^1], carry, nv2, lo2, newCarry2);
 			
 			carry = newCarry2;
 
@@ -539,16 +549,16 @@ namespace MSetGenP
 
 			// Use an RValue to prepare for the call to CreateSmx
 			var sign = ScalarMathHelper.GetSign(clearedResults);
-			var rvalue = ScalarMathHelper.GetRValue(sign, clearedResults, smx2C.Exponent, smx2C.Precision);
+			var rvalue = ScalarMathHelper.CreateRValue(sign, clearedResults, smx2C.Exponent, smx2C.Precision);
 
 			var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
 
 			return result;
 		}
 
-		public Smx2C Convert(Smx smx, bool overrideFormatChecks = false)
+		public Smx2C Convert(Smx smx)
 		{
-			if (!overrideFormatChecks) CheckLimbCountAndFPFormat(smx);
+			CheckLimbCountAndFPFormat(smx);
 
 			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, BitsBeforeBP, smx.Precision);
@@ -565,25 +575,30 @@ namespace MSetGenP
 		public Smx2C CreateNewMaxIntegerSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			var rValue = new RValue(MaxIntegerValue, 0, precision);
-			var tResult = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
-			var result = Convert(tResult);
+
+			//var tResult = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
+			//var result = Convert(tResult);
+
+			var result = ScalarMathHelper.CreateSmx2C(rValue, ApFixedPointFormat);
 
 			return result;
 		}
 
-		private Smx2C BuildSmx2C(ulong[] partialWordLimbs, int precision)
+		private Smx2C CreateSmx2C(ulong[] partialWordLimbs, int precision)
 		{
-			var lzc = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
-			var firstBitIsAOne = lzc == 0;
+			var sign = ScalarMathHelper.GetSign(partialWordLimbs);
 
-			var result = new Smx2C(!firstBitIsAOne, partialWordLimbs, TargetExponent, BitsBeforeBP, precision);
+			var rValue = ScalarMathHelper.CreateRValue(sign, partialWordLimbs, TargetExponent, precision);
+
+			var result = new Smx2C(sign, partialWordLimbs, TargetExponent, BitsBeforeBP, precision);
+			//var result = ScalarMathHelper.CreateSmx2C(rValue, ApFixedPointFormat);
 
 			return result;
 		}
 
-		public Smx2C CreateSmx2C(RValue aRValue)
+		public Smx2C CreateSmx2C(RValue rValue)
 		{
-			var result = ScalarMathHelper.CreateSmx2C(aRValue, ApFixedPointFormat);
+			var result = ScalarMathHelper.CreateSmx2C(rValue, ApFixedPointFormat);
 			return result;
 		}
 
@@ -656,10 +671,10 @@ namespace MSetGenP
 		[Conditional("DETAIL")]
 		private void ValidateIsSplit2C(ulong[] mantissa)
 		{
-			if (ScalarMathHelper.CheckPW2CValues(mantissa))
-			{
-				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
-			}
+			//if (ScalarMathHelper.CheckPW2CValues(mantissa))
+			//{
+			//	throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
+			//}
 		}
 
 		[Conditional("DETAIL")]

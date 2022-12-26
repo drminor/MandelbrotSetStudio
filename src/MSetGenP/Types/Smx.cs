@@ -79,7 +79,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			var result = ScalarMathHelper.GetRValue(this); 
+			var result = ScalarMathHelper.CreateRValue(this); 
 			return result;
 		}
 

@@ -54,13 +54,11 @@ namespace MSetGenP
 
 		public Smx2C Convert(Smx smx)
 		{
-
 			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
 			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, _apFixedPointFormat1.BitsBeforeBinaryPoint, smx.Precision);
 
 			return result;
 		}
-
 
 		public void GenerateMapSection(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, ushort[] counts, bool[] doneFlags)
 		{

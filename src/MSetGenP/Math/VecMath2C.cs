@@ -303,11 +303,11 @@ namespace MSetGenP
 						var lows = Avx2.And(productVector, HIGH_MASK_VEC);    // Create new ulong from bits 0 - 31.
 						var highs = Avx2.ShiftRightLogical(productVector, 32);   // Create new ulong from bits 32 - 63.
 
-						//resultLows[idx] = Avx2.Add(resultLows[idx], lows);
-						//resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
+						resultLows[idx] = Avx2.Add(resultLows[idx], lows);
+						resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
 
-						resultLows[idx] = UnsignedAddition(resultLows[idx], lows);
-						resultHighs[idx] = UnsignedAddition(resultHighs[idx], highs);
+						//resultLows[idx] = UnsignedAddition(resultLows[idx], lows);
+						//resultHighs[idx] = UnsignedAddition(resultHighs[idx], highs);
 					}
 				}
 			}
@@ -342,9 +342,8 @@ namespace MSetGenP
 					limbVecs = GetLimbVectorsUL(mantissaMems[i]);
 					resultLimbVecs = GetLimbVectorsUL(resultLimbs[i]);
 
-					//var withCarries = Avx2.Add(limbVecs[idx], carries);
-					var withCarries = UnsignedAddition(limbVecs[idx], carries);
-
+					var withCarries = Avx2.Add(limbVecs[idx], carries);
+					//var withCarries = UnsignedAddition(limbVecs[idx], carries);
 
 					NumberOfSplits++;
 					carries = Avx2.ShiftRightLogical(withCarries, 32);          // The high 32 bits of sum becomes the new carry.
@@ -459,18 +458,12 @@ namespace MSetGenP
 
 				var carryVector = Vector256<ulong>.Zero;
 
-				//Debug.WriteLine($"a: {limbVecsA[idx].GetElement(0)}, b: {limbVecsB[idx].GetElement(0)}");
-				//var va = Avx2.And(limbVecsA[idx], HIGH_MASK_VEC);
-				//var vb = Avx2.And(limbVecsB[idx], HIGH_MASK_VEC);
-
 				var va = limbVecsA[idx];
 				var vb = limbVecsB[idx];
 
 				var sumVector = Avx2.Add(va, vb);
-				//var sumVector = UnsignedAddition(va, vb);
 
 				var newValuesVector = Avx2.Add(sumVector, carryVector);
-				//var withCarriesVector = UnsignedAddition(sumVector, carryVector);
 
 				var (limbValues, newCarries) = GetResultWithCarry(newValuesVector, isMsl: false);
 				resultLimbVecs[idx] = limbValues;
@@ -485,29 +478,11 @@ namespace MSetGenP
 					limbVecsB = b.GetLimbVectorsUL(i);
 					resultLimbVecs = c.GetLimbVectorsUL(i);
 
-					//if (i < LimbCount - 1)
-					//{
-					//	va = Avx2.And(limbVecsA[idx], HIGH_MASK_VEC);
-					//	vb = Avx2.And(limbVecsB[idx], HIGH_MASK_VEC);
-					//}
-					//else
-					//{
-					//	va = limbVecsA[idx];
-					//	vb = limbVecsB[idx];
-					//}
-
-					//va = Avx2.And(limbVecsA[idx], HIGH_MASK_VEC);
-					//vb = Avx2.And(limbVecsB[idx], HIGH_MASK_VEC);
-
 					va = limbVecsA[idx];
 					vb = limbVecsB[idx];
 
-					//sumVector = Avx2.Add(va, vb);
-					//sumVector = UnsignedAddition(va, vb);
-
+					sumVector = Avx2.Add(va, vb);
 					newValuesVector = Avx2.Add(sumVector, carryVector);
-					//withCarriesVector = UnsignedAddition(sumVector, carryVector);
-
 
 					(limbValues, newCarries) = GetResultWithCarry(newValuesVector, isMsl: (i == LimbCount - 1));
 					resultLimbVecs[idx] = limbValues;
@@ -550,19 +525,19 @@ namespace MSetGenP
 			return (limbs, carryVector);
 		}
 
-		private Vector256<ulong> UnsignedAddition(Vector256<ulong> a, Vector256<ulong> b)
-		{
-			var tr = new ulong[_lanes];
+		//private Vector256<ulong> UnsignedAddition(Vector256<ulong> a, Vector256<ulong> b)
+		//{
+		//	var tr = new ulong[_lanes];
 
-			for (var i = 0; i < _lanes; i++)
-			{
-				tr[i] = a.GetElement(i) + b.GetElement(i);
-			}
+		//	for (var i = 0; i < _lanes; i++)
+		//	{
+		//		tr[i] = a.GetElement(i) + b.GetElement(i);
+		//	}
 
-			var result = Vector256.Create(tr[0], tr[1], tr[2], tr[3]);
+		//	var result = Vector256.Create(tr[0], tr[1], tr[2], tr[3]);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private void ReportForAddition(int step, Vector256<ulong> left, Vector256<ulong> right, Vector256<ulong> carry, Vector256<ulong> nv, Vector256<ulong> lo, Vector256<ulong> newCarry)
 		{
