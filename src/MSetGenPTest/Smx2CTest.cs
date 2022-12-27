@@ -211,11 +211,14 @@ namespace EngineTest
 			var scalarMath2C = BuildTheMathHelper(limbCount);
 
 			var aSmx2C = scalarMath2C.CreateNewMaxIntegerSmx2C(precision);
-			var aSmx = scalarMath2C.Convert(aSmx2C);
-			var aStr = aSmx.GetStringValue();
-			Debug.WriteLine($"The StringValue for the MaxIntegerSmx2C is {aStr}.");
+			var aTv = new Smx2CTestValue(aSmx2C, scalarMath2C);
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var aRValue = aSmx.GetRValue();
+			//var aSmx = scalarMath2C.Convert(aSmx2C);
+			//var aStr = aSmx.GetStringValue();
+			//Debug.WriteLine($"The StringValue for the MaxIntegerSmx2C is {aStr}.");
+
+			//var aRValue = aSmx.GetRValue();
 
 			//var maxSignedIntegerValue = scalarMath2C.MaxIntegerValue;
 			var bitsBeforeBP = scalarMath2C.BitsBeforeBP;
@@ -225,7 +228,7 @@ namespace EngineTest
 			var bStr = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the maxSignedIntegerValue is {bStr}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bRValue, aRValue, failOnTooFewDigits: false, out var strA, out var strB);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bRValue, aTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}

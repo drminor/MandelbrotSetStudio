@@ -14,8 +14,8 @@ namespace MSetGenP
 		public ApFixedPointFormat(int limbCount) : this(RMapConstants.BITS_BEFORE_BP, limbCount * EFFECTIVE_BITS_PER_LIMB - RMapConstants.BITS_BEFORE_BP)
 		{ }
 
-		public ApFixedPointFormat(float precision) : this(RMapConstants.BITS_BEFORE_BP, (int)precision)
-		{ }
+		//public ApFixedPointFormat(float precision) : this(RMapConstants.BITS_BEFORE_BP, (int)precision)
+		//{ }
 
 		public ApFixedPointFormat(byte bitsBeforeBinaryPoint, int minimumFractionalBits)
 		{

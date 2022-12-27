@@ -32,12 +32,12 @@ namespace EngineTest
 				new ScalarMath(vecMath.ApFixedPointFormat, vecMath.Threshold))
 		{ }
 
-		public SmxTestValue(Smx2C smx2CValue, ScalarMath scalarMath)
-		{
-			SmxValue =  scalarMath.Convert(smx2CValue);
-			RValue = SmxValue.GetRValue();
-			StringValue = SmxValue.GetStringValue();	
-		}
+		//public SmxTestValue(Smx2C smx2CValue, ScalarMath scalarMath)
+		//{
+		//	SmxValue =  scalarMath.Convert(smx2CValue);
+		//	RValue = SmxValue.GetRValue();
+		//	StringValue = SmxValue.GetStringValue();	
+		//}
 
 		#endregion 
 

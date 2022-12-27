@@ -1,10 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
-using System.Net.NetworkInformation;
 using System.Numerics;
-using System.Runtime.InteropServices;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
@@ -13,15 +10,6 @@ namespace MSetGenP
 		#region Constants
 
 		public bool IsSigned => true;
-
-		private const ulong HIGH33_BITS_SET = 0xFFFFFFFF80000000; // bits 63 - 31 are set.
-		private const ulong LOW31_BITS_SET = 0x000000007FFFFFFF;    // bits 0 - 30 are set.
-
-		private const ulong HIGH33_MASK = LOW31_BITS_SET;
-		private const ulong LOW31_MASK = HIGH33_BITS_SET;
-
-		private const ulong HIGH33_FILL = HIGH33_BITS_SET;
-
 
 		private static readonly bool USE_DET_DEBUG = false;
 
@@ -42,15 +30,14 @@ namespace MSetGenP
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
+		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 		public int LimbCount => ApFixedPointFormat.LimbCount;
 		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
 		public uint MaxIntegerValue { get; init; }
 		public uint Threshold { get; init; }
 		public ulong ThresholdMsl { get; init; }
-
-		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
-		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		public int NumberOfMCarries { get; private set; }
 		public int NumberOfACarries { get; private set; }
@@ -497,7 +484,7 @@ namespace MSetGenP
 			// Convert the partial word limbs into standard binary form
 			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa);
 
-			var clearedResults = ScalarMathHelper.SetHighHalvesToZero(un2cMantissa, null);
+			var clearedResults = ScalarMathHelper.ClearHighHalves(un2cMantissa, null);
 
 			// Use an RValue to prepare for the call to CreateSmx
 			var sign = ScalarMathHelper.GetSign(clearedResults);
@@ -548,11 +535,11 @@ namespace MSetGenP
 			return result;
 		}
 
-		public Smx2C CreateSmx2C(RValue rValue)
-		{
-			var result = ScalarMathHelper.CreateSmx2C(rValue, ApFixedPointFormat);
-			return result;
-		}
+		//public Smx2C CreateSmx2C(RValue rValue)
+		//{
+		//	var result = ScalarMathHelper.CreateSmx2C(rValue, ApFixedPointFormat);
+		//	return result;
+		//}
 
 		#endregion
 

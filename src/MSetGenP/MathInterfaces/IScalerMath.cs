@@ -37,8 +37,8 @@ namespace MSetGenP
 		Smx CreateNewZeroSmx(int precision = 53);
 		Smx CreateSmx(RValue rValue);
 
-		Smx2C Convert(Smx smx);
-		Smx Convert(Smx2C smx2C);
+		//Smx2C Convert(Smx smx);
+		//Smx Convert(Smx2C smx2C);
 
 
 	}

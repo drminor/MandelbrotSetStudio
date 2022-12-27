@@ -572,25 +572,25 @@ namespace MSetGenP
 
 		#region Smx2C Support 
 
-		public Smx Convert(Smx2C smx2C)
-		{
-			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa);
-			var rvalue = ScalarMathHelper.CreateRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
+		//public Smx Convert(Smx2C smx2C)
+		//{
+		//	var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa);
+		//	var rvalue = ScalarMathHelper.CreateRValue(smx2C.Sign, un2cMantissa, smx2C.Exponent, smx2C.Precision);
 
-			var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
+		//	var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public Smx2C Convert(Smx smx)
-		{
-			CheckLimbCountAndFPFormat(smx);
+		//public Smx2C Convert(Smx smx)
+		//{
+		//	CheckLimbCountAndFPFormat(smx);
 
-			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
-			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, BitsBeforeBP, smx.Precision);
+		//	var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+		//	var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, BitsBeforeBP, smx.Precision);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public Smx CreateSmx(RValue rValue)
 		{

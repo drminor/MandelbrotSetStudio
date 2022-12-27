@@ -1,6 +1,5 @@
 ﻿using MEngineDataContracts;
 using MSS.Common.DataTransferObjects;
-using System.Buffers;
 using System.Diagnostics;
 
 namespace MSetGenP
@@ -25,8 +24,8 @@ namespace MSetGenP
 			//var doneFlags = mapSectionRequest.DoneFlags;
 			var doneFlags = new bool[blockSize.NumberOfCells];
 
-			var fixedPointFormat = new ApFixedPointFormat(8, precision);
-			//var fixedPointFormat = new ApFixedPointFormat(3);
+			//var fixedPointFormat = new ApFixedPointFormat(bitsBeforeBinaryPoint: 8, minimumFractionalBits: precision);
+			var fixedPointFormat = new ApFixedPointFormat(2);
 
 			var smxMathHelper = new ScalarMath(fixedPointFormat, threshold);
 

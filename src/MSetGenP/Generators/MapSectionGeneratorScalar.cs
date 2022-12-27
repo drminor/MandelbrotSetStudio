@@ -23,7 +23,9 @@ namespace MSetGenP
 			//var fixedPointFormat = new ApFixedPointFormat(8, precision);
 			//var fixedPointFormat = new ApFixedPointFormat(8, 129);
 
-			var fixedPointFormat = new ApFixedPointFormat(precision);
+			//var fixedPointFormat = new ApFixedPointFormat(bitsBeforeBinaryPoint: RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: precision);
+			var fixedPointFormat = new ApFixedPointFormat(limbCount: 2);
+
 
 			var smxMathHelper = new ScalarMath(fixedPointFormat, threshold);
 
@@ -78,8 +80,8 @@ namespace MSetGenP
 					//if (i == 63) Debug.WriteLine("Here");
 
 					var x = samplePointsX[i];
-					var cntr = iterator.Iterate(x, y);
-					//var cntr = iterator.IterateSmx2C(x, y);
+					//var cntr = iterator.Iterate(x, y);
+					var cntr = iterator.IterateSmx2C(x, y);
 					result[resultPtr + i] = cntr;
 				}
 			}

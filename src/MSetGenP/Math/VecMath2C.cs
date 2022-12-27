@@ -1,12 +1,10 @@
 ﻿using MSS.Common;
 using System.Buffers;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
-using System.Threading;
 
 namespace MSetGenP
 {
@@ -197,7 +195,8 @@ namespace MSetGenP
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
-
+		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 		public int LimbCount => ApFixedPointFormat.LimbCount;
 		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
@@ -213,8 +212,6 @@ namespace MSetGenP
 		public double MslWeight { get; init; }
 		public Vector256<double> MslWeightVector { get; init; }
 
-		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
-		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		public int NumberOfMCarries { get; private set; }
 		public int NumberOfACarries { get; private set; }

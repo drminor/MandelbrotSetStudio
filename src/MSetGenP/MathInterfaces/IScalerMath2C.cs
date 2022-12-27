@@ -35,7 +35,7 @@ namespace MSetGenP
 
 		Smx2C CreateNewMaxIntegerSmx2C(int precision = 53);
 		Smx2C CreateNewZeroSmx2C(int precision = 53);
-		Smx2C CreateSmx2C(RValue rValue);
+		//Smx2C CreateSmx2C(RValue rValue);
 
 		Smx2C Convert(Smx smx);
 		Smx Convert(Smx2C smx2C);
