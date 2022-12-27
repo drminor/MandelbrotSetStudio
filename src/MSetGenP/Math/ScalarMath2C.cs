@@ -23,7 +23,7 @@ namespace MSetGenP
 		private const ulong HIGH33_FILL = HIGH33_BITS_SET;
 
 
-		private static readonly bool USE_DET_DEBUG = true;
+		private static readonly bool USE_DET_DEBUG = false;
 
 		#endregion
 
@@ -424,7 +424,7 @@ namespace MSetGenP
 
 			carry = 0uL;
 
-			for (var i = 0; i < resultLength - 1; i++)
+			for (var i = 0; i < resultLength; i++)
 			{
 				ulong newValue;
 
@@ -441,64 +441,16 @@ namespace MSetGenP
 				carry = newCarry;
 			}
 
-			var nv2 = left[^1] + right[^1] + carry;
-			var (lo2, newCarry2) = ScalarMathHelper.GetResultWithCarrySigned(nv2, isMsl: true);
-			result[^1] = lo2;
+			//var nv2 = left[^1] + right[^1] + carry;
+			//var (lo2, newCarry2) = ScalarMathHelper.GetResultWithCarrySigned(nv2, isMsl: true);
+			//result[^1] = lo2;
 
-			//if (USE_DET_DEBUG) ReportForAddition(resultLength - 1, left[^1], right[^1], carry, nv2, lo2, newCarry2);
+			////if (USE_DET_DEBUG) ReportForAddition(resultLength - 1, left[^1], right[^1], carry, nv2, lo2, newCarry2);
 			
-			carry = newCarry2;
+			//carry = newCarry2;
 
 			return result;
 		}
-
-		//private (ulong limbValue, ulong carry) GetResultWithCarry(ulong partialWordLimb)
-		//{
-		//	// A carry is generated any time the bit just above the result limb is different than msb of the limb
-		//	// i.e. this next higher bit is not an extension of the sign.
-
-		//	NumberOfGetCarries++;
-
-		//	bool carryFlag;
-
-		//	var limbValue = ScalarMathHelper.Gets .GetLowHalf(partialWordLimb, out var resultIsNegative, out bool extendedCaryOutIsNegative);
-
-		//	if (resultIsNegative)
-		//	{
-		//		//limbValue |= HIGH_FILL; // sign extend the result
-		//		carryFlag = !extendedCaryOutIsNegative; // true if next higher bit is zero
-		//	}
-		//	else
-		//	{
-		//		carryFlag = extendedCaryOutIsNegative; // true if next higher bit is one
-		//	}
-
-		//	var result = (limbValue, carryFlag ? 1uL : 0uL);
-		//	return result;
-		//}
-
-		//public static (ulong limbValue, ulong carry) GetSignedResultWithCarry(ulong partialWordLimb, bool isMsl)
-		//{
-		//	// A carry is generated any time the bit just above the result limb is different than msb of the limb
-		//	// i.e. this next higher bit is not an extension of the sign.
-
-		//	bool carryFlag;
-
-		//	var limbValue = ScalarMathHelper.GetLowHalfSigned(partialWordLimb, isMsl, out var topBitIsSet, out bool overflowBitIsSet);
-
-		//	if (topBitIsSet)
-		//	{
-		//		limbValue |= HIGH33_FILL; // sign extend the result
-		//		carryFlag = !overflowBitIsSet; // true if next higher bit is zero
-		//	}
-		//	else
-		//	{
-		//		carryFlag = overflowBitIsSet; // true if next higher bit is one
-		//	}
-
-		//	var result = (limbValue, carryFlag ? 1uL : 0uL);
-		//	return result;
-		//}
 
 		private void ReportForAddition(int step, ulong left, ulong right, ulong carry, ulong nv, ulong lo, ulong newCarry)
 		{

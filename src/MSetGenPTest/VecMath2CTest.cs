@@ -130,8 +130,8 @@ namespace EngineTest
 		[Fact]
 		public void AddLeftIsPosRightIsNeg()
 		{
-			var precision = 53;
-			var limbCount = 3;
+			var precision = 25;
+			var limbCount = 4;
 
 			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, THRESHOLD);
 
@@ -141,13 +141,13 @@ namespace EngineTest
 
 			var aNumber = "27797772040142849";
 			var bNumber = "-4548762148012033";
-			var exponent = -63;
+			var exponent = -55;
 
 			var aTv = new Vec2CTestValue(aNumber, exponent, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
-			Debug.WriteLine($"The StringValue for b is {aTv}.");
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var bTv = new Vec2CTestValue(bNumber, exponent, precision, vecMath2C); // -6.02768096723593793141715568851e-3
-			Debug.WriteLine($"The StringValue for a is {bTv}.");
+			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFPValues();
 			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
@@ -166,8 +166,8 @@ namespace EngineTest
 		[Fact]
 		public void AddLeftIs_Big_Pos_RightIsNeg()
 		{
-			var precision = 53;
-			var limbCount = 3;
+			var precision = 38;
+			var limbCount = 5;
 
 			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, THRESHOLD);
 
@@ -177,13 +177,13 @@ namespace EngineTest
 
 			var aNumber = "4548762148012033";
 			var bNumber = "-27797772040142849";
-			var exponent = -63;
+			var exponent = -75;
 
 			var aTv = new Vec2CTestValue(aNumber, exponent, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
-			Debug.WriteLine($"The StringValue for b is {aTv}.");
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var bTv = new Vec2CTestValue(bNumber, exponent, precision, vecMath2C); // -6.02768096723593793141715568851e-3
-			Debug.WriteLine($"The StringValue for a is {bTv}.");
+			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFPValues();
 			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
@@ -202,7 +202,7 @@ namespace EngineTest
 		[Fact]
 		public void AddLeftIsNegRightIsPos()
 		{
-			var precision = 53;
+			var precision = 40;
 			var limbCount = 3;
 
 			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, THRESHOLD);
@@ -236,52 +236,52 @@ namespace EngineTest
 			Assert.Equal(strA, strB);
 		}
 
-		//[Fact]
-		public void AddLeftIsNegRightIsPosSmall()
-		{
-			var precision = 25;
-			var limbCount = 5;
-			//var valueCount = 8;
-			var threshold = 4u;
+		////[Fact]
+		//public void AddLeftIsNegRightIsPosSmall()
+		//{
+		//	var precision = 25;
+		//	var limbCount = 5;
+		//	//var valueCount = 8;
+		//	var threshold = 4u;
 
-			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, threshold);
+		//	var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, threshold);
 
-			//var a = new Smx(false, new ulong[] { 151263699, 55238551, 1 }, 2, -63, precision);
-			//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
+		//	//var a = new Smx(false, new ulong[] { 151263699, 55238551, 1 }, 2, -63, precision);
+		//	//var b = new Smx(true, new ulong[] { 86140672, 2, 0 }, 1, -36, precision);
 
-			//var aLongs = new ulong[] {1512, 552, 1 };
-			var aLongs5 = new ulong[] { 0, 0, 3489660928, 1342177291, 33554436 }; // 5 Limbs, Exp -152, Value: -2.000000257045030757803438
-			var aBigInteger = -1 * ScalarMathHelper.FromPwULongs(aLongs5);
-			var aRValueStg = new RValue(aBigInteger, -63, precision);
+		//	//var aLongs = new ulong[] {1512, 552, 1 };
+		//	var aLongs5 = new ulong[] { 0, 0, 3489660928, 1342177291, 33554436 }; // 5 Limbs, Exp -152, Value: -2.000000257045030757803438
+		//	var aBigInteger = -1 * ScalarMathHelper.FromPwULongs(aLongs5);
+		//	var aRValueStg = new RValue(aBigInteger, -63, precision);
 
-			//var bLongs = new ulong[] { 8614, 2, 0 };
-			var bLongs5 = new ulong[] { 0, 0, 0, 442499072, 2097154 }; // 5 Limbs, Exp: -152, Value: 0.1250001253501977771520615
-			var bBigInteger = ScalarMathHelper.FromPwULongs(bLongs5);
-			var bRValueStg = new RValue(bBigInteger, -36, precision);
+		//	//var bLongs = new ulong[] { 8614, 2, 0 };
+		//	var bLongs5 = new ulong[] { 0, 0, 0, 442499072, 2097154 }; // 5 Limbs, Exp: -152, Value: 0.1250001253501977771520615
+		//	var bBigInteger = ScalarMathHelper.FromPwULongs(bLongs5);
+		//	var bRValueStg = new RValue(bBigInteger, -36, precision);
 
-			var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);
+		//	var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);
 
-			var aTv = new Vec2CTestValue(aRValue, vecMath2C);
-			Debug.WriteLine($"The StringValue for the aSmx is {aTv}.");
+		//	var aTv = new Vec2CTestValue(aRValue, vecMath2C);
+		//	Debug.WriteLine($"The StringValue for the aSmx is {aTv}.");
 
-			var bTv = new Vec2CTestValue(bRValue, vecMath2C);
-			Debug.WriteLine($"The StringValue for the bSmx is {bTv}.");
+		//	var bTv = new Vec2CTestValue(bRValue, vecMath2C);
+		//	Debug.WriteLine($"The StringValue for the bSmx is {bTv}.");
 
-			var cFPValues = bTv.CreateNewFPValues();
-			vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);        // 5 Limbs, Exp -152, Mantissa: { 0, 0, 3489660928, 899678219, 31457282 }, Value: -1.875000131694832980651377
+		//	var cFPValues = bTv.CreateNewFPValues();
+		//	vecMath2C.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);        // 5 Limbs, Exp -152, Mantissa: { 0, 0, 3489660928, 899678219, 31457282 }, Value: -1.875000131694832980651377
 
-			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
-			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
+		//	var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
+		//	Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
-			var cStrComp = RValueHelper.ConvertToString(cRValue);
-			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
+		//	var cRValue = aTv.Smx2CTestValue.RValue.Add(bTv.Smx2CTestValue.RValue);
+		//	var cStrComp = RValueHelper.ConvertToString(cRValue);
+		//	Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
-			//Assert.True(haveRequiredPrecision);
+		//	var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
+		//	//Assert.True(haveRequiredPrecision);
 
-			Assert.Equal(strA, strB);
-		}
+		//	Assert.Equal(strA, strB);
+		//}
 
 		#endregion
 

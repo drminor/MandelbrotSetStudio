@@ -242,7 +242,8 @@ namespace MSetGenP
 
 				var newSign = !signs[i];
 
-				//var non2CPWLimbs = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, newSign);
+
+				ScalarMathHelper.UpdateTheReserveBit(partialWordLimbs, !newSign);
 				var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, signExtendIntoHiWord: true);
 
 				SetSign(i, newSign);
@@ -422,12 +423,14 @@ namespace MSetGenP
 
 		//private const ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 		private const ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
+		private const ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
+
 
 		public FPValues Clone2C(out bool[] signs)
 		{
 			//signs = Mantissas[^1].Select(x => BitOperations.LeadingZeroCount(x) != 0).ToArray();
 
-			signs = Mantissas[^1].Select(x => (x & TEST_BIT_31) > 0).ToArray();
+			signs = Mantissas[^1].Select(x => (x & TEST_BIT_30) > 0).ToArray();
 
 
 			var result = new FPValues(signs, CloneMantissas());

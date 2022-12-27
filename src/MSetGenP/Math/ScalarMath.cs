@@ -3,8 +3,6 @@ using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
-using System.Text;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
@@ -280,7 +278,7 @@ namespace MSetGenP
 				var sum = mantissa[i] + carry;
 				var (lo, newCarry) = ScalarMathHelper.GetResultWithCarry(sum);
 
-				ReportForAddition(i, mantissa[i], carry, sum, lo, newCarry);
+				//ReportForAddition(i, mantissa[i], carry, sum, lo, newCarry);
 
 				//var sumLzc = BitOperations.LeadingZeroCount(sum);
 				//var loLzc = BitOperations.LeadingZeroCount(lo);

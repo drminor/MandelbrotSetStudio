@@ -7,7 +7,7 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public struct Smx2C : IEquatable<Smx2C>
+	public struct Smx2C : IEquatable<Smx2C>, ICloneable
 	{
 		#region Constructor
 
@@ -116,6 +116,19 @@ namespace MSetGenP
 
 			return result;
 		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public Smx2C Clone()
+		{
+			var result = new Smx2C(Sign, (ulong[]) Mantissa.Clone(), Exponent, BitsBeforeBP, Precision);
+
+			return result;
+		}
+
 
 		#endregion
 

@@ -78,8 +78,8 @@ namespace MSetGenP
 					//if (i == 63) Debug.WriteLine("Here");
 
 					var x = samplePointsX[i];
-					//var cntr = iterator.Iterate(x, y);
-					var cntr = iterator.IterateSmx2C(x, y);
+					var cntr = iterator.Iterate(x, y);
+					//var cntr = iterator.IterateSmx2C(x, y);
 					result[resultPtr + i] = cntr;
 				}
 			}

@@ -572,7 +572,11 @@ namespace MSetGenP
 
 		public Smx2C GetSmx2CAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			var result = new Smx2C(fPValues.GetSign(index), fPValues.GetMantissa(index), TargetExponent, BitsBeforeBP, precision);
+			var mantissa = fPValues.GetMantissa(index);
+
+			var sign = ScalarMathHelper.GetSign(mantissa);
+
+			var result = new Smx2C(sign, mantissa, TargetExponent, BitsBeforeBP, precision);
 			return result;
 		}
 
