@@ -14,7 +14,7 @@ namespace EngineTest
 
 		#region Square and Multiply
 
-		//[Fact]
+		[Fact]
 		public void SquareFourAndAQuarter()
 		{
 			var precision = 14;		// Binary Digits of precision, 30 Decimal Digits
@@ -37,7 +37,7 @@ namespace EngineTest
 			Debug.WriteLine($"The StringValue for the result mantissa is {bTv.GetDiagDisplay()}.");
 
 			// RValue Square 
-			var bRValue = aTv.Smx2CTestValue.RValue.Square();
+			var bRValue = aTv.RValue.Square();
 			var bStrComp = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
 
@@ -45,6 +45,37 @@ namespace EngineTest
 			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 
+		}
+
+		[Fact]
+		public void SquareFourAndAQuarterNewTech()
+		{
+			var precision = 30;     // Binary Digits of precision, 30 Decimal Digits
+			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
+
+			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, THRESHOLD);
+
+			//var aTv = new VecTestValue("36507222016", -33, precision, smxMathHelper); // -4.25
+
+			var aTv = new Vec2CTestValue("2147483648", -33, precision, vecMath2C); // 0.25
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
+
+			// Vec Square
+			var bFPValus = aTv.CreateNewFPValues();
+			vecMath2C.Square(aTv.Vectors, result: bFPValus);
+
+			var bTv = new Vec2CTestValue(bFPValus, vecMath2C);
+			Debug.WriteLine($"The StringValue for the bSmx is {bTv}.");
+			Debug.WriteLine($"The StringValue for the result mantissa is {bTv.GetDiagDisplay()}.");
+			
+			// RValue Square 
+			var bRValue = aTv.RValue.Square();
+			var bStrComp = RValueHelper.ConvertToString(bRValue);
+			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
+
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(bRValue, bTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
+			Assert.Equal(strA, strB);
 		}
 
 		#endregion

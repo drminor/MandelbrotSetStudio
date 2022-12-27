@@ -981,7 +981,6 @@ namespace MSetGenP
 
 		#endregion
 
-
 		#region Old Versions of good Methods
 
 		public void Square_OLD(FPValues a, FPValues result)

@@ -15,24 +15,41 @@ namespace MSetGenP
 		public bool IsSigned => true;
 
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
-		//private const int BITS_BEFORE_BP = 8;
+		private const int BITS_BEFORE_BP = 8;
+
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)(-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
-		private const ulong LOW_BITS_SET = 0x00000000FFFFFFFF;  // bits 0 - 31 are set.
-		private const ulong HIGH_MASK = LOW_BITS_SET;			// bits 0 - 31 are set.
-		private static readonly Vector256<ulong> HIGH_MASK_VEC = Vector256.Create(HIGH_MASK);
+		private const ulong LOW32_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private const ulong HIGH32_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
 
-		private const ulong HIGH_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
-		private const ulong HIGH_FILL = HIGH_BITS_SET;
-		private static readonly Vector256<ulong> HIGH_FILL_VEC = Vector256.Create(HIGH_FILL);
+		private const ulong HIGH33_BITS_SET = 0xFFFFFFFF80000000; // bits 63 - 31 are set.
+		private const ulong LOW31_BITS_SET = 0x000000007FFFFFFF;    // bits 0 - 30 are set.
 
-		private const ulong SIGN_BIT_MASK = 0x7FFFFFFFFFFFFFFF;
-		private static readonly Vector256<ulong> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
+		private const ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
+		private const ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
+
+		//private const ulong HIGH32_FILL = HIGH32_BITS_SET;
+		//private const ulong HIGH32_CLEAR = LOW32_BITS_SET;
+
+		//private const ulong HIGH32_MASK = LOW31_BITS_SET;
+		//private const ulong LOW31_MASK = HIGH33_BITS_SET;
+
+		//private const ulong HIGH33_FILL = HIGH33_BITS_SET;
+		//private const ulong HIGH33_CLEAR = LOW31_BITS_SET;
+
+
+		//private const ulong HIGH32_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private static readonly Vector256<ulong> HIGH32_MASK_VEC = Vector256.Create(LOW32_BITS_SET);
+
+		//private const ulong HIGH33_MASK = 0x000000007FFFFFFF; // bits 0 - 30 are set.
+		private static readonly Vector256<ulong> HIGH33_MASK_VEC = Vector256.Create(LOW31_BITS_SET);
+
+		// Clear the reserved bit as well as the sign bit
+		private const uint SIGN_BIT_MASK = 0x3FFFFFFF;
+		private static readonly Vector256<uint> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
 
 		//private const ulong TOP_BITS_MASK = 0xFF00000000000000;
 		//private static readonly Vector256<ulong> TOP_BITS_MASK_VEC = Vector256.Create(TOP_BITS_MASK);
-
-		//private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 
 		private static readonly int _lanes = Vector256<ulong>.Count;
 
@@ -190,6 +207,13 @@ namespace MSetGenP
 			return result;
 		}
 
+		private Span<Vector256<uint>> GetLimbVectorsUW(Memory<ulong> memory)
+		{
+			Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<uint>>(memory.Span);
+
+			//Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(memory.Span);
+			return result;
+		}
 		#endregion
 
 		#region Public Properties
@@ -266,8 +290,6 @@ namespace MSetGenP
 			//}
 		}
 
-
-
 		private void SquareInternal(FPValues a, Memory<ulong>[] resultLimbs)
 		{
 			ClearManatissMems(resultLimbs, onlyInPlayItems: true);
@@ -297,8 +319,8 @@ namespace MSetGenP
 							productVector = Avx2.ShiftLeftLogical(productVector, 1);
 						}
 
-						var lows = Avx2.And(productVector, HIGH_MASK_VEC);    // Create new ulong from bits 0 - 31.
-						var highs = Avx2.ShiftRightLogical(productVector, 32);   // Create new ulong from bits 32 - 63.
+						var lows = Avx2.And(productVector, HIGH33_MASK_VEC);    // Create new ulong from bits 0 - 31.
+						var highs = Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB);   // Create new ulong from bits 32 - 63.
 
 						resultLows[idx] = Avx2.Add(resultLows[idx], lows);
 						resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
@@ -331,8 +353,8 @@ namespace MSetGenP
 				var limbVecs = GetLimbVectorsUL(mantissaMems[0]);
 				var resultLimbVecs = GetLimbVectorsUL(resultLimbs[0]);
 
-				var carries = Avx2.ShiftRightLogical(limbVecs[idx], 32); // The high 32 bits of sum becomes the new carry.
-				resultLimbVecs[idx] = Avx2.And(limbVecs[idx], HIGH_MASK_VEC);    // The low 32 bits of the sum is the result.
+				var carries = Avx2.ShiftRightLogical(limbVecs[idx], EFFECTIVE_BITS_PER_LIMB); // The high 32 bits of sum becomes the new carry.
+				resultLimbVecs[idx] = Avx2.And(limbVecs[idx], HIGH33_MASK_VEC);    // The low 32 bits of the sum is the result.
 
 				for (int i = 1; i < intermediateLimbCount; i++)
 				{
@@ -343,8 +365,8 @@ namespace MSetGenP
 					//var withCarries = UnsignedAddition(limbVecs[idx], carries);
 
 					NumberOfSplits++;
-					carries = Avx2.ShiftRightLogical(withCarries, 32);          // The high 32 bits of sum becomes the new carry.
-					resultLimbVecs[idx] = Avx2.And(withCarries, HIGH_MASK_VEC); // The low 32 bits of the sum is the result.
+					carries = Avx2.ShiftRightLogical(withCarries, EFFECTIVE_BITS_PER_LIMB);          // The high 32 bits of sum becomes the new carry.
+					resultLimbVecs[idx] = Avx2.And(withCarries, HIGH33_MASK_VEC); // The low 32 bits of the sum is the result.
 				}
 
 				//var isZeroFlags = Avx2.CompareEqual(carries, _zeroVector);
@@ -411,11 +433,11 @@ namespace MSetGenP
 			{
 				var idx = indexes[idxPtr];
 				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				result[idx] = Avx2.ShiftRightLogical(Avx2.ShiftLeftLogical(source[idx], (byte)(32 + shiftAmount)), 32);
+				result[idx] = Avx2.And(Avx2.ShiftLeftLogical(source[idx], shiftAmount), HIGH33_MASK_VEC);
 
 				// Take the top shiftAmount of bits from the previous limb
-				var previousLimbVector = Avx2.And(prevSource[idx], HIGH_MASK_VEC);
-				result[idx] = Avx2.Or(result[idx], Avx2.ShiftRightLogical(previousLimbVector, (byte)(32 - shiftAmount)));
+				var previousLimbVector = Avx2.And(prevSource[idx], HIGH33_MASK_VEC); // TODO: Combine this and the next operation.
+				result[idx] = Avx2.Or(result[idx], Avx2.ShiftRightLogical(previousLimbVector, (byte)(31 - shiftAmount)));
 			}
 		}
 
@@ -429,7 +451,7 @@ namespace MSetGenP
 			{
 				var idx = indexes[idxPtr];
 				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				result[idx] = Avx2.ShiftRightLogical(Avx2.ShiftLeftLogical(source[idx], (byte)(32 + shiftAmount)), 32);
+				result[idx] = Avx2.And(Avx2.ShiftLeftLogical(source[idx], shiftAmount), HIGH33_MASK_VEC);
 			}
 		}
 
@@ -583,13 +605,13 @@ namespace MSetGenP
 
 		public void IsGreaterOrEqThanThreshold(FPValues a, bool[] results)
 		{
-			var left = a.GetLimbVectorsUL(LimbCount - 1);
+			var left = a.GetLimbVectorsUW(LimbCount - 1);
 			var right = _thresholdVector;
 
 			IsGreaterOrEqThan(left, right, results);
 		}
 
-		private void IsGreaterOrEqThan(Span<Vector256<ulong>> left, Vector256<long> right, bool[] results)
+		private void IsGreaterOrEqThan(Span<Vector256<uint>> left, Vector256<long> right, bool[] results)
 		{
 			var indexes = InPlayList;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
@@ -605,6 +627,7 @@ namespace MSetGenP
 
 				// TODO: Add a check confirm the value we receiving is positive.
 
+				//var sansSign = Avx2.And(left[idx], SIGN_BIT_MASK_VEC);
 				var sansSign = Avx2.And(left[idx], SIGN_BIT_MASK_VEC);
 				var resultVector = Avx2.CompareGreaterThan(sansSign.AsInt64(), right);
 
@@ -628,7 +651,7 @@ namespace MSetGenP
 			{
 				result[limbPtr] = new uint[ValueCount];
 
-				var limbs = GetLimbVectorsUL(resultLimbs[limbPtr]);
+				var limbs = GetLimbVectorsUW(resultLimbs[limbPtr]);
 
 				var oneFound = false;
 

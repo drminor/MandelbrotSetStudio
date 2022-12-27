@@ -137,17 +137,6 @@ namespace MSetGenP
 			var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount, limbCount);
 
 			var sign = rValue.Value >= 0;
-			var isNegative = !sign;
-
-			//// TODO: Sign Extend -- Remove this, ShiftBits has already done it.
-			//if (UpdateTheReserveBit(newPartialWordLimbs, isNegative))
-			//{
-			//	Debug.WriteLineIf(USE_DET_DEBUG,"WARNING: The reserved bit did not match the sign on call to CreateSmx2C.");
-			//}
-
-
-
-
 			var partialWordLimbs2C = ConvertTo2C(newPartialWordLimbs, sign);
 
 			var cSign = GetSign(partialWordLimbs2C);
@@ -305,8 +294,6 @@ namespace MSetGenP
 
 		public static ulong[] Toggle2C(ulong[] partialWordLimbs, bool signExtendIntoHiWord)
 		{
-			// TODO: Sign Extend -- Don't Check: Update
-
 			//if (!CheckReserveBit(partialWordLimbs))
 			//{
 			//	throw new InvalidOperationException($"Cannot Toggle2C unless the reserve bit agrees with the sign bit. {GetDiagDisplayHex("input", partialWordLimbs)}.");
@@ -754,8 +741,6 @@ namespace MSetGenP
 
 				result = TakeMostSignificantLimbs(sResult, limbCount);
 			}
-
-			// TODO: SignExtend
 
 			result[^1] =  ExtendSignBit(result[^1], includeHighHalf: false);
 

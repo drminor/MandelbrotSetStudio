@@ -52,7 +52,7 @@ namespace MSetGenP
 			var samplePointsX = smxMathHelper.BuildSamplePoints(startingCx, samplePointOffsets);
 			var samplePointsY = smxMathHelper.BuildSamplePoints(startingCy, samplePointOffsets);
 
-			var use2CVersion = false;
+			var use2CVersion = true;
 
 			if (use2CVersion)
 			{

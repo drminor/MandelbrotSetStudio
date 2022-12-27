@@ -127,12 +127,12 @@ namespace MSetGenP
 			}
 			else
 			{
-				//var nrmMantissa = ShiftAndTrim(mantissa);
-
 				var nrmMantissa = ScalarMathHelper.ShiftAndTrim(mantissa, ApFixedPointFormat, IsSigned);
 
-				var mantissa2C = ScalarMathHelper.ConvertTo2C(nrmMantissa, true); // TODO: Converting to / from 2C needs to be done for the other Multiply methods.
-				result = CreateSmx2C(mantissa2C, precision);
+				// Do not need to convert positive values to 2C format.
+				//var mantissa2C = ScalarMathHelper.ConvertTo2C(nrmMantissa, true); // TODO: Converting to / from 2C needs to be done for the other Multiply methods.
+
+				result = CreateSmx2C(nrmMantissa, precision);
 			}
 
 			return result;
@@ -294,57 +294,6 @@ namespace MSetGenP
 			return result;
 		}
 
-		//public ulong[] ShiftAndTrimOld(ulong[] mantissa)
-		//{
-		//	// The upper uint half of each limb should be a simple sign extension: either all 1's or all 0's
-		//	//ValidateIsSplit(mantissa);
-
-		//	// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
-		//	// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
-		//	// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
-
-		//	// TODO: As the integer portion is 'trimmed', we need to check to see the result is
-		//	// larger than the largest integer supported by the current format.
-
-		//	// Discard 1 more bit?
-		//	// Start with 1:7:56 (Sign:Integer:Fraction 
-		//	// Intermediate has 0:16:112
-		//	// Push 8 from behind to in front and drop the least two significant limbs for a total of 64 - 8 = 56 bits from behind
-		//	// Push 8 off the top, for a total of 64 bits discarded.
-		//	// The result must be positive, so if the most significant bit is a '1', we know there is an overflow.
-
-		//	var shiftAmount = BitsBeforeBP;
-		//	var result = new ulong[LimbCount];
-		//	var sourceIndex = Math.Max(mantissa.Length - LimbCount, 0);
-
-		//	for (var i = 0; i < result.Length; i++)
-		//	{
-		//		result[i] = (mantissa[sourceIndex] << 32 + shiftAmount) >> 32;  // Discard the top shiftAmount of bits.
-				
-		//		if (sourceIndex > 0)
-		//		{
-		//			var previousLimb = mantissa[sourceIndex - 1];
-		//			previousLimb &= HIGH33_MASK;                      // Clear the bits from the uppper half, these will either be all 0's or all 1'. Our values are confirmed to be split at this point.
-		//			result[i] |= previousLimb >> 32 - shiftAmount;  // Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
-		//		}
-
-		//		sourceIndex++;
-		//	}
-
-		//	return result;
-		//}
-
-		//private (ulong hi, ulong lo) Split(ulong x)
-		//{
-		//	// TODO: Upon splitting a result limb into hi and lo halves, do these values need to be signed extended?
-
-		//	NumberOfSplits++;
-		//	var hi = x >> 32;           // Create new ulong from bits 32 - 63.
-		//	var lo = x & HIGH_MASK;     // Create new ulong from bits 0 - 31.
-
-		//	return (hi, lo);
-		//}
-
 		#endregion
 
 		#region Add and Subtract
@@ -377,8 +326,6 @@ namespace MSetGenP
 
 			var precision = Math.Min(a.Precision, b.Precision);
 
-			//var aMantissa =  ScalarMathHelper.ExtendSignBit(a.Mantissa);
-			//var bMantissa = ScalarMathHelper.ExtendSignBit(b.Mantissa);
 			//ValidateIsSplit2C(a.Mantissa, a.Sign);
 			//ValidateIsSplit2C(b.Mantissa, b.Sign);
 
@@ -427,14 +374,6 @@ namespace MSetGenP
 
 				carry = newCarry;
 			}
-
-			//var nv2 = left[^1] + right[^1] + carry;
-			//var (lo2, newCarry2) = ScalarMathHelper.GetResultWithCarrySigned(nv2, isMsl: true);
-			//result[^1] = lo2;
-
-			////if (USE_DET_DEBUG) ReportForAddition(resultLength - 1, left[^1], right[^1], carry, nv2, lo2, newCarry2);
-			
-			//carry = newCarry2;
 
 			return result;
 		}
@@ -514,10 +453,6 @@ namespace MSetGenP
 		public Smx2C CreateNewMaxIntegerSmx2C(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			var rValue = new RValue(MaxIntegerValue, 0, precision);
-
-			//var tResult = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
-			//var result = Convert(tResult);
-
 			var result = ScalarMathHelper.CreateSmx2C(rValue, ApFixedPointFormat);
 
 			return result;
@@ -526,20 +461,10 @@ namespace MSetGenP
 		private Smx2C CreateSmx2C(ulong[] partialWordLimbs, int precision)
 		{
 			var sign = ScalarMathHelper.GetSign(partialWordLimbs);
-
-			var rValue = ScalarMathHelper.CreateRValue(sign, partialWordLimbs, TargetExponent, precision);
-
 			var result = new Smx2C(sign, partialWordLimbs, TargetExponent, BitsBeforeBP, precision);
-			//var result = ScalarMathHelper.CreateSmx2C(rValue, ApFixedPointFormat);
 
 			return result;
 		}
-
-		//public Smx2C CreateSmx2C(RValue rValue)
-		//{
-		//	var result = ScalarMathHelper.CreateSmx2C(rValue, ApFixedPointFormat);
-		//	return result;
-		//}
 
 		#endregion
 

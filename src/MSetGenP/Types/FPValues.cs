@@ -247,7 +247,7 @@ namespace MSetGenP
 				//ScalarMathHelper.UpdateTheReserveBit(partialWordLimbs, !newSign);
 
 
-				var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, signExtendIntoHiWord: true);
+				var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, signExtendIntoHiWord: false);
 
 				SetSign(i, newSign);
 				SetMantissa(result.Mantissas, i, non2CPWLimbs);
@@ -295,7 +295,7 @@ namespace MSetGenP
 					{
 						var partialWordLimbs = GetMantissa(valPtr);
 
-						var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, signExtendIntoHiWord: false);
+						var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, signExtendIntoHiWord: true);
 
 						SetMantissa(result.Mantissas, valPtr, non2CPWLimbs);
 					}
