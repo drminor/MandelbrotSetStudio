@@ -47,15 +47,16 @@ namespace MSetGenP
 			Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}.");
 
 
-			if (startingCx.Sign && startingCy.Sign)
-			{
-				var escapeVelocities = new ushort[blockSize.NumberOfCells];
-				var compressedDoneFlags = CompressTheDoneFlags(doneFlags);
+			//// Skip positive 'blocks'
+			//if (startingCx.Sign && startingCy.Sign)
+			//{
+			//	var escapeVelocities = new ushort[blockSize.NumberOfCells];
+			//	var compressedDoneFlags = CompressTheDoneFlags(doneFlags);
 
-				var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
-				return result;
+			//	var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
+			//	return result;
 
-			}
+			//}
 
 			//var cRs = smxMathHelper.BuildMapPoints(startingCx, startingCy, delta, blockSize, out var cIs);
 

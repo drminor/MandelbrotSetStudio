@@ -139,8 +139,10 @@ namespace MSetGenP
 		//	return true;
 		//}
 
-		public bool CheckReservedBit(int[] inPlayList, int numberOfLanes)
+		public List<int> CheckReservedBit(int[] inPlayList, int numberOfLanes)
 		{
+			var result = new List<int>();
+
 			var indexes = inPlayList;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
@@ -153,12 +155,12 @@ namespace MSetGenP
 					if (!CheckReservedBit(valPtr))
 					{
 						//Debug.WriteLine($"Reserved Bit does not match the sign bit for value at index: {valPtr}.");
-						return false;
+						result.Add(valPtr);
 					}	
 				}
 			}
 
-			return true;
+			return result;
 		}
 
 		private bool CheckReservedBit(int valPtr)

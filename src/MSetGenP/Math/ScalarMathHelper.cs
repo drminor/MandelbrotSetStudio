@@ -27,10 +27,13 @@ namespace MSetGenP
 		private const ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
 		private const ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
 
+		private const ulong MOST_NEG_VAL = 0x00000000C0000000;
+		private const ulong MOST_NEG_VAL_REPLACMENT = 0x00000000C0000001;		// Most negative value + 1.
+
 		private const ulong HIGH32_FILL = HIGH32_BITS_SET;
 		private const ulong HIGH32_CLEAR = LOW32_BITS_SET;
 
-		private const ulong HIGH32_MASK = LOW31_BITS_SET;
+		private const ulong HIGH33_MASK = LOW31_BITS_SET;
 		private const ulong LOW31_MASK = HIGH33_BITS_SET;
 
 		private const ulong HIGH33_FILL = HIGH33_BITS_SET;
@@ -285,7 +288,8 @@ namespace MSetGenP
 				var signBitIsClear = GetSign(result);
 				if (signBitIsClear)
 				{
-					throw new OverflowException($"Cannot ConvertAbsValTo2C, after the conversion the msb is NOT set to 1. {GetDiagDisplayHex("OrigVal", partialWordLimbs)}. {GetDiagDisplayHex("Result", result)}.");
+					//throw new OverflowException($"Cannot ConvertAbsValTo2C, after the conversion the msb is NOT set to 1. {GetDiagDisplayHex("OrigVal", partialWordLimbs)}. {GetDiagDisplayHex("Result", result)}.");
+					Debug.WriteLine($"Cannot ConvertAbsValTo2C, after the conversion the msb is NOT set to 1. {GetDiagDisplayHex("OrigVal", partialWordLimbs)}. {GetDiagDisplayHex("Result", result)}.");
 				}
 			}
 
@@ -309,10 +313,15 @@ namespace MSetGenP
 			if (signExtendIntoHiWord)
 			{
 				// Sign extend the msl
-				result[^1] = ExtendSignBit(result[^1], includeHighHalf: true);
+				//result[^1] = ExtendSignBit(result[^1], includeHighHalf: true);
+				var seResult = ExtendSignBit(result);
+				return seResult;
 			}
+			else
+			{
+				return result;
 
-			return result;
+			}
 		}
 
 		private static ulong[] FlipBitsAndAdd1(ulong[] partialWordLimbs)
@@ -333,6 +342,11 @@ namespace MSetGenP
 				if (ourVal == 0)
 				{
 					result[limbPtr] = ourVal;
+				}
+				else if (ourVal == MOST_NEG_VAL && limbPtr == resultLength - 1)
+				{
+					result[limbPtr] = MOST_NEG_VAL_REPLACMENT;
+					Debug.WriteLine("WARNING: Encountered the most negative number.");
 				}
 				else
 				{
@@ -357,8 +371,7 @@ namespace MSetGenP
 					result[limbPtr] = lowBitsFlipped;
 				}
 
-
-				result[^1] = ExtendSignBit(result[^1], includeHighHalf:false);
+				result = ExtendSignBit(result, includeHighHalf:false);
 			}
 
 			//if (CheckPW2CValues(result))
@@ -374,7 +387,7 @@ namespace MSetGenP
 		{
 			var tzc = BitOperations.TrailingZeroCount(limb);
 
-			Debug.Assert(tzc <= 30, "Expecting Trailing Zero Count to be between 0 and 30, inclusive.");
+			Debug.Assert(tzc < 32, "Expecting Trailing Zero Count to be between 0 and 31, inclusive.");
 
 			var numToKeep = tzc + 1;
 			var numToFlip = 64 - numToKeep;
@@ -426,33 +439,46 @@ namespace MSetGenP
 		}
 
 
-		public static ulong[] ExtendSignBit(ulong[] partialWordLimbs)
+		public static ulong[] ExtendSignBit(ulong[] partialWordLimbs, bool includeHighHalf = false)
 		{
 			var result = new ulong[partialWordLimbs.Length];
-			Array.Copy(result, partialWordLimbs, result.Length);
-			result[^1] = ExtendSignBit(result[^1]);
+			Array.Copy(partialWordLimbs, result, result.Length);
 
-			return result;
-		}
-
-		public static ulong ExtendSignBit(ulong limb, bool includeHighHalf = false)
-		{
-			ulong result;
 			if (includeHighHalf)
 			{
-				result = (limb & TEST_BIT_30) > 0
-							? limb | HIGH33_FILL
-							: limb & HIGH33_CLEAR;
+				result[^1] = (result[^1] & TEST_BIT_30) > 0
+							? result[^1] | HIGH33_FILL
+							: result[^1] & HIGH33_CLEAR;
 			}
 			else
 			{
-				result = (limb & TEST_BIT_30) > 0
-							? limb | TEST_BIT_31
-							: limb & ~TEST_BIT_31;
+				result[^1] = (result[^1] & TEST_BIT_30) > 0
+							? result[^1] | TEST_BIT_31
+							: result[^1] & ~TEST_BIT_31;
+
 			}
 
 			return result;
 		}
+
+		//private static ulong ExtendSignBitInternal(ulong limb, bool includeHighHalf = false)
+		//{
+		//	ulong result;
+		//	if (includeHighHalf)
+		//	{
+		//		result = (limb & TEST_BIT_30) > 0
+		//					? limb | HIGH33_FILL
+		//					: limb & HIGH33_CLEAR;
+		//	}
+		//	else
+		//	{
+		//		result = (limb & TEST_BIT_30) > 0
+		//					? limb | TEST_BIT_31
+		//					: limb & ~TEST_BIT_31;
+		//	}
+
+		//	return result;
+		//}
 
 		public static bool GetSign(ulong[] partialWordLimbs)
 		{
@@ -471,7 +497,7 @@ namespace MSetGenP
 			// The high value is in bits 32-62
 
 			var hi = x >> EFFECTIVE_BITS_PER_LIMB; // Create new ulong from bits 32 - 62.
-			var lo = x & HIGH32_MASK; // Create new ulong from bits 0 - 31.
+			var lo = x & HIGH33_MASK; // Create new ulong from bits 0 - 31.
 
 			return (hi, lo);
 		}
@@ -530,9 +556,9 @@ namespace MSetGenP
 
 		public static (ulong limbValue, ulong carry) GetResultWithCarrySigned(ulong partialWordLimb, bool isMsl)
 		{
-			// A carry is generated any time the bit just above the result limb is different than msb of the limb
-			// i.e. this next higher bit is not an extension of the sign.
-
+			// A carry is generated any time the bit just above the result limb is different than the
+			// most significant bit of the limb.msb of the limb
+			// i.e. when this next bit is not an extension of the sign.
 
 			var limbValue = GetLowHalfSigned(partialWordLimb, isMsl, out var topBitIsSet, out bool reserveBitIsSet);
 
@@ -540,12 +566,14 @@ namespace MSetGenP
 
 			if (carryFlag)
 			{
-				var updatedLimb =  FlipBitsAndAdd1(new ulong[] {limbValue});
+				//var updatedLimb =  FlipBitsAndAdd1(new ulong[] {limbValue});
 
-				limbValue = updatedLimb[0];
+				//limbValue = updatedLimb[0];
 
-				//var te = GetLowHalfSigned(limbValue, isMsl, out var topIsSet, out var reservIsSet);
-				//Debug.WriteLineIf(USE_DET_DEBUG, $"GetResultWithCarrySigned is handling a carry, now for the updated result, topBitIsSet: {topIsSet}, reserveBitIsSet: {reservIsSet}.. Compare: topBitIsSet: {topBitIsSet}, reserveBitIsSet: {reserveBitIsSet}");
+				limbValue = UpdateTheReservedBit(limbValue, topBitIsSet);
+
+				_ = GetLowHalfSigned(limbValue, isMsl, out var topBitIsSetNew, out var reserveBitIsSetNew);
+				//Debug.WriteLine($"GetResultWithCarrySigned: new value: {limbValue} (with t/r: {topBitIsSetNew}/{reserveBitIsSetNew}). The input is {partialWordLimb} (with t/r: {reserveBitIsSet}/{topBitIsSet}");
 			}
 
 			var result = (limbValue, carryFlag ? 1uL : 0uL);
@@ -592,11 +620,28 @@ namespace MSetGenP
 			// The high value is in bits 32-62
 
 			var hi = partialWordLimb >> EFFECTIVE_BITS_PER_LIMB; // Create new ulong from bits 32 - 62.
-			var lo = partialWordLimb & HIGH32_MASK; // Create new ulong from bits 0 - 31.
+			var lo = partialWordLimb & HIGH33_MASK; // Create new ulong from bits 0 - 31.
 
 			return (lo, hi);
-
 		}
+
+		private static ulong UpdateTheReservedBit(ulong limb, bool newValue)
+		{
+			var result = newValue ? limb | TEST_BIT_31 : limb & ~TEST_BIT_31;
+			return result;
+		}
+
+		//private static void UpdateTheReservedBitToAgree(ulong limb)
+		//{
+		//	if ((limb & TEST_BIT_30) > 0)
+		//	{
+		//		limb |= TEST_BIT_31;
+		//	}
+		//	else
+		//	{
+		//		limb &= ~TEST_BIT_31;
+		//	}
+		//}
 
 		#endregion
 
@@ -629,10 +674,10 @@ namespace MSetGenP
 				{
 					// Discard the top shiftAmount of bits, moving the remainder of this limb up to fill the opening.
 					var topHalf = mantissa[sourceIndex] << shiftAmount;
-					topHalf &= HIGH32_MASK;										// This will clear the top 32 bits as well as the reserved bit.
+					topHalf &= HIGH33_MASK;										// This will clear the top 32 bits as well as the reserved bit.
 
 					// Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
-					var bottomHalf = mantissa[sourceIndex - 1] & HIGH32_MASK;
+					var bottomHalf = mantissa[sourceIndex - 1] & HIGH33_MASK;
 					bottomHalf >>= 31 - shiftAmount;							// Don't include the reserved bit.
 
 					result[i] = topHalf | bottomHalf;
@@ -649,7 +694,7 @@ namespace MSetGenP
 				{
 					// Discard the top shiftAmount of bits, moving the remainder of this limb up to fill the opening.
 					var topHalf = mantissa[sourceIndex] << shiftAmount;
-					topHalf &= HIGH32_MASK;
+					topHalf &= HIGH33_MASK;
 
 					result[i] = topHalf;
 
@@ -667,7 +712,7 @@ namespace MSetGenP
 			if (isSigned)
 			{
 				// SignExtend the MSL
-				result[^1] = ExtendSignBit(result[^1]);
+				result = ExtendSignBit(result);
 			}
 
 			if (includeDebugStatements)
@@ -726,7 +771,7 @@ namespace MSetGenP
 				result = TakeMostSignificantLimbs(sResult, limbCount);
 			}
 
-			result[^1] =  ExtendSignBit(result[^1], includeHighHalf: false);
+			result =  ExtendSignBit(result, includeHighHalf: false);
 
 			return result;
 		}

@@ -45,8 +45,23 @@ namespace MSetGenP
 
 		public Smx2C Convert(Smx smx)
 		{
-			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
-			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, _apFixedPointFormat1.BitsBeforeBinaryPoint, smx.Precision);
+			Smx2C result;
+
+			if (smx.IsZero)
+			{
+				if (!smx.Sign)
+				{
+					Debug.WriteLine("WARNING: Found a value of -0.");
+				}
+
+				result = new Smx2C(true, smx.Mantissa, smx.Exponent, _apFixedPointFormat1.BitsBeforeBinaryPoint, smx.Precision);
+			}
+			else
+			{
+				var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+				result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, _apFixedPointFormat1.BitsBeforeBinaryPoint, smx.Precision);
+			}
+
 
 			return result;
 		}
