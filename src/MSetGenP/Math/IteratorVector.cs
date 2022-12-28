@@ -6,8 +6,8 @@ namespace MSetGenP
 	{
 		#region Private Properties
 
-		private VecMath _smxVecMathHelper;
-		private VecMath2C _fPVecMathHelper;
+		private VecMath _vecMath;
+		private VecMath2C _vecMath2C;
 
 		private FPValues _cRs;
 		private FPValues _cIs;
@@ -26,18 +26,18 @@ namespace MSetGenP
 
 		#region Constructors
 
-		public IteratorVector(VecMath smxVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
-			: this(smxVecMathHelper, GetFpVecHelper(smxVecMathHelper, cRs.Length), cRs, cIs, zRs, zIs, zRSqrs, zISqrs)
+		public IteratorVector(VecMath unsignedVecMath, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+			: this(unsignedVecMath, GetSignedVecMath(unsignedVecMath, cRs.Length), cRs, cIs, zRs, zIs, zRSqrs, zISqrs)
 		{ }
 
-		public IteratorVector(VecMath2C fPVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
-			: this(GetSmxVecHelper(fPVecMathHelper, cRs.Length), fPVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs)
+		public IteratorVector(VecMath2C signedVecMath, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+			: this(GetUnsignedVecMath(signedVecMath, cRs.Length), signedVecMath, cRs, cIs, zRs, zIs, zRSqrs, zISqrs)
 		{ }
 
-		public IteratorVector(VecMath smxVecMathHelper, VecMath2C fPVecMathHelper, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+		public IteratorVector(VecMath unsignedVecMath, VecMath2C signedVecMath, FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
 		{
-			_smxVecMathHelper = smxVecMathHelper;
-			_fPVecMathHelper = new VecMath2C(_smxVecMathHelper.ApFixedPointFormat, cRs.Length, _smxVecMathHelper.Threshold);
+			_vecMath = unsignedVecMath;
+			_vecMath2C = signedVecMath;
 
 			_cRs = cRs;
 			_cIs = cIs;
@@ -53,12 +53,12 @@ namespace MSetGenP
 			_zIs2 = new FPValues(_cRs.LimbCount, _cRs.Length);
 		}
 
-		private static VecMath GetSmxVecHelper(VecMath2C fPVecMathHelper, int valueCount)
+		private static VecMath GetUnsignedVecMath(VecMath2C fPVecMathHelper, int valueCount)
 		{
 			return new VecMath(fPVecMathHelper.ApFixedPointFormat, valueCount, fPVecMathHelper.Threshold);
 		}
 
-		private static VecMath2C GetFpVecHelper(VecMath smxVecMathHelper, int valueCount)
+		private static VecMath2C GetSignedVecMath(VecMath smxVecMathHelper, int valueCount)
 		{
 			return new VecMath2C(smxVecMathHelper.ApFixedPointFormat, valueCount, smxVecMathHelper.Threshold);
 		}
@@ -72,22 +72,22 @@ namespace MSetGenP
 			try
 			{
 				// z.r + z.i
-				_smxVecMathHelper.Add(_zRs, _zIs, _zRZIs);
+				_vecMath.Add(_zRs, _zIs, _zRZIs);
 
 				// square(z.r + z.i)
-				_smxVecMathHelper.Square(_zRZIs, _zRZiSqrs);
+				_vecMath.Square(_zRZIs, _zRZiSqrs);
 
 				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
-				_smxVecMathHelper.Sub(_zRZiSqrs, _zRSqrs, _zIs);
-				_smxVecMathHelper.Sub(_zIs, _zISqrs, _zIs2);
-				_smxVecMathHelper.Add(_zIs2, _cIs, _zIs);
+				_vecMath.Sub(_zRZiSqrs, _zRSqrs, _zIs);
+				_vecMath.Sub(_zIs, _zISqrs, _zIs2);
+				_vecMath.Add(_zIs2, _cIs, _zIs);
 
 				// z.r = zrsqr - zisqr + c.r
-				_smxVecMathHelper.Sub(_zRSqrs, _zISqrs, _zRs2);
-				_smxVecMathHelper.Add(_zRs2, _cRs, _zRs);
+				_vecMath.Sub(_zRSqrs, _zISqrs, _zRs2);
+				_vecMath.Add(_zRs2, _cRs, _zRs);
 
-				_smxVecMathHelper.Square(_zRs, _zRSqrs);
-				_smxVecMathHelper.Square(_zIs, _zISqrs);
+				_vecMath.Square(_zRs, _zRSqrs);
+				_vecMath.Square(_zIs, _zISqrs);
 
 				//sumOfSqrs = _smxVecMathHelper.Add(zRSqrs, zISqrs);
 			}
@@ -103,22 +103,22 @@ namespace MSetGenP
 			try
 			{
 				// z.r + z.i
-				_fPVecMathHelper.Add(_zRs, _zIs, _zRZIs);
+				_vecMath2C.Add(_zRs, _zIs, _zRZIs);
 
 				// square(z.r + z.i)
-				_fPVecMathHelper.Square(_zRZIs, _zRZiSqrs);
+				_vecMath2C.Square(_zRZIs, _zRZiSqrs);
 
 				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
-				_fPVecMathHelper.Sub(_zRZiSqrs, _zRSqrs, _zIs);
-				_fPVecMathHelper.Sub(_zIs, _zISqrs, _zIs2);
-				_fPVecMathHelper.Add(_zIs2, _cIs, _zIs);
+				_vecMath2C.Sub(_zRZiSqrs, _zRSqrs, _zIs);
+				_vecMath2C.Sub(_zIs, _zISqrs, _zIs2);
+				_vecMath2C.Add(_zIs2, _cIs, _zIs);
 
 				// z.r = zrsqr - zisqr + c.r
-				_fPVecMathHelper.Sub(_zRSqrs, _zISqrs, _zRs2);
-				_fPVecMathHelper.Add(_zRs2, _cRs, _zRs);
+				_vecMath2C.Sub(_zRSqrs, _zISqrs, _zRs2);
+				_vecMath2C.Add(_zRs2, _cRs, _zRs);
 
-				_fPVecMathHelper.Square(_zRs, _zRSqrs);
-				_fPVecMathHelper.Square(_zIs, _zISqrs);
+				_vecMath2C.Square(_zRs, _zRSqrs);
+				_vecMath2C.Square(_zIs, _zISqrs);
 
 				//sumOfSqrs = _smxVecMathHelper.Add(zRSqrs, zISqrs);
 			}

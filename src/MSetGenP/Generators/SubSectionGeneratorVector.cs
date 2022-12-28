@@ -13,9 +13,6 @@ namespace MSetGenP
 		private readonly int _targetIterations;
 		private readonly uint _threshold;
 
-		//private readonly SmxMathHelper _smxMathHelper;
-		//private IteratorScalar _iteratorScaler;
-
 		#region Constructor
 
 		public SubSectionGeneratorVector(ApFixedPointFormat apFixedPointFormat, int targetIterations, uint threshold)
@@ -24,9 +21,6 @@ namespace MSetGenP
 
 			_targetIterations = targetIterations;
 			_threshold = threshold;
-
-			//_smxMathHelper = new SmxMathHelper(apFixedPointFormat, threshold);
-			//_iteratorScaler = new IteratorScalar(_smxMathHelper, _targetIterations);
 		}
 
 		#endregion
@@ -53,22 +47,22 @@ namespace MSetGenP
 
 			var escapedFlags = new bool[resultLength];
 
-			var smxVecMathHelper = new VecMath(_apFixedPointFormat1, resultLength, _threshold);
+			var unsignedVecMath = new VecMath(_apFixedPointFormat1, resultLength, _threshold);
 
 			var inPlayList = BuildTheInplayList(doneFlags, resultLength);
-			smxVecMathHelper.InPlayList = inPlayList;
+			unsignedVecMath.InPlayList = inPlayList;
 
-			var iterator = new IteratorVector(smxVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+			var iterator = new IteratorVector(unsignedVecMath, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
 			while (inPlayList.Length > 0)
 			{
 				iterator.Iterate();
-				smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
-				UpdateTheDoneFlags(smxVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
+				unsignedVecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
+				UpdateTheDoneFlags(unsignedVecMath, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
 			}
 
-			NumberOfACarries += smxVecMathHelper.NumberOfACarries;
-			NumberOfMCarries += smxVecMathHelper.NumberOfMCarries;
+			NumberOfACarries += unsignedVecMath.NumberOfACarries;
+			NumberOfMCarries += unsignedVecMath.NumberOfMCarries;
 		}
 
 		public ushort[] GenerateMapSection(FPValues cRs, FPValues cIs, out bool[] doneFlags)
@@ -86,30 +80,30 @@ namespace MSetGenP
 
 			var escapedFlags = new bool[resultLength];
 
-			var smxVecMathHelper = new VecMath(_apFixedPointFormat1, resultLength, _threshold);
-			smxVecMathHelper.DoneFlags = doneFlags;
+			var unsignedVecMath = new VecMath(_apFixedPointFormat1, resultLength, _threshold);
+			unsignedVecMath.DoneFlags = doneFlags;
 
-			var inPlayList = smxVecMathHelper.InPlayList;
+			var inPlayList = unsignedVecMath.InPlayList;
 
 			// Perform the first iteration. 
 			var zRs = cRs.Clone();
 			var zIs = cIs.Clone();
 
-			smxVecMathHelper.Square(zRs, zRSqrs);
-			smxVecMathHelper.Square(zIs, zISqrs);
-			smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
-			inPlayList = UpdateTheDoneFlags(smxVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
-			smxVecMathHelper.InPlayList = inPlayList;
+			unsignedVecMath.Square(zRs, zRSqrs);
+			unsignedVecMath.Square(zIs, zISqrs);
+			unsignedVecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
+			inPlayList = UpdateTheDoneFlags(unsignedVecMath, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
+			unsignedVecMath.InPlayList = inPlayList;
 
-			var iterator = new IteratorVector(smxVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+			var iterator = new IteratorVector(unsignedVecMath, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
 			while (inPlayList.Length > 0)
 			{
-				var aCarriesSnap = smxVecMathHelper.NumberOfACarries;
+				var aCarriesSnap = unsignedVecMath.NumberOfACarries;
 				var doneFlagsCnt = doneFlags.Count(x => x);
 
 				iterator.Iterate();
-				smxVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
+				unsignedVecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
 
 				//var aCarriesDif = smxVecMathHelper.NumberOfACarries - aCarriesSnap;
 				//if (aCarriesDif > 0)
@@ -119,19 +113,16 @@ namespace MSetGenP
 				//	Debug.Assert(doneFlagsDiff == aCarriesDif, "Not All Done Flags were updated.");
 				//}
 
-				inPlayList = UpdateTheDoneFlags(smxVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
-				smxVecMathHelper.InPlayList = inPlayList;
-
-
-
+				inPlayList = UpdateTheDoneFlags(unsignedVecMath, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
+				unsignedVecMath.InPlayList = inPlayList;
 			}
 
-			NumberOfACarries += smxVecMathHelper.NumberOfACarries;
-			NumberOfMCarries += smxVecMathHelper.NumberOfMCarries;
+			NumberOfACarries += unsignedVecMath.NumberOfACarries;
+			NumberOfMCarries += unsignedVecMath.NumberOfMCarries;
 
 			// TODO: Need to keep track if a sample point has escaped or not, currently the DoneFlag is set if 'Escaped' or 'Reached Target Iteration.'
 
-			doneFlags = smxVecMathHelper.DoneFlags;
+			doneFlags = unsignedVecMath.DoneFlags;
 			return counts;
 		}
 

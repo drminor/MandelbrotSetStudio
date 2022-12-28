@@ -249,7 +249,6 @@ namespace MSetGenP
 			// TODO: As the top half of the bin is added, we need to detect carries as we do in the Add routine.
 			// TODO: If (when) this is updated to accept an incoming carry, we need to return a '1' or '0' as the Add routine does. Currently we are returning the top-half of the msl
 
-
 			// To be used after a multiply operation.
 			// This renormalizes the result so that each result bin with a value <= 2^32 for the final digit.
 
@@ -257,37 +256,21 @@ namespace MSetGenP
 
 			// This will be updated to take a carry coming in, as well as providing the carry out
 
-
 			var result = new ulong[mantissa.Length];
 			carry = 0ul;
 
-			for (int i = 0; i < mantissa.Length - 1; i++)
+			for (int i = 0; i < mantissa.Length; i++)
 			{
-				var nv = mantissa[i] + carry;
+				var sum = mantissa[i] + carry;
 				
 				NumberOfSplits++;
-				var (hi, lo) = ScalarMathHelper.Split(nv);
-
-
+				var (lo, newCarry) = ScalarMathHelper.GetResultWithCarry(sum);
 				result[i] = lo;
 
-				//Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{mantissa.Length - 1}: Propagating {mantissa[i]:X4} wc:{carry:X4}");
-				//Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv:X4}: hi:{hi:X4}, lo:{lo:X4}");
+				ReportForAddition(i, mantissa[i], right: 0, carry, sum, lo, newCarry);
 
-				carry = hi;
+				carry = newCarry;
 			}
-
-			var nv2 = mantissa[^1] + carry;
-
-			NumberOfSplits++;
-			var (hi2, lo2) = ScalarMathHelper.Split(nv2);
-
-			result[^1] = lo2;
-
-			//Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{mantissa.Length - 1}: Propagating {mantissa[^1]:X4} wc:{carry:X4}");
-			//Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nv2:X4}: hi:{hi2:X4}, lo:{lo2:X4}");
-
-			carry = hi2;
 
 			if (carry > 0) throw new OverflowException("PropagateCarries found a value larger than MAX DIGIT in the top 'bin'.");
 
@@ -458,6 +441,12 @@ namespace MSetGenP
 			return result;
 		}
 
+		/// <summary>
+		/// This is used to create our results. It should only be used internally.
+		/// </summary>
+		/// <param name="partialWordLimbs"></param>
+		/// <param name="precision"></param>
+		/// <returns></returns>
 		private Smx2C CreateSmx2C(ulong[] partialWordLimbs, int precision)
 		{
 			var sign = ScalarMathHelper.GetSign(partialWordLimbs);

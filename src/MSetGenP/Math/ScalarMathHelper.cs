@@ -126,26 +126,33 @@ namespace MSetGenP
 
 		public static Smx2C CreateSmx2C(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
-			var partialWordLimbs = ToPwULongs(rValue.Value);
-			if (IsValueTooLarge(rValue, bitsBeforeBP, isSigned: true, out var bitExpInfo))
-			{
-				var maxIntegerValue = GetMaxIntegerValue(bitsBeforeBP, isSigned: true);
-				throw new ArgumentException($"An RValue with integer portion > {maxIntegerValue} cannot be used to create an Smx. {GetDiagDisplayHex("limbs", partialWordLimbs)}. Info: {bitExpInfo}.");
-			}
+			var smx = CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP);
 
-			var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
-			var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount, limbCount);
-
-			var sign = rValue.Value >= 0;
-			var partialWordLimbs2C = ConvertTo2C(newPartialWordLimbs, sign);
-
-			var cSign = GetSign(partialWordLimbs2C);
-
-			Debug.Assert(cSign == sign, $"Signs don't match on CreateSmx2C from RValue. RValue has sign: {sign}, new Smx2C has sign: {cSign}.");
-
-			var result = new Smx2C(cSign, partialWordLimbs2C, targetExponent, bitsBeforeBP, rValue.Precision);
+			var twoCMantissa = ConvertTo2C(smx.Mantissa, smx.Sign);
+			var result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
 
 			return result;
+
+			//var partialWordLimbs = ToPwULongs(rValue.Value);
+			//if (IsValueTooLarge(rValue, bitsBeforeBP, isSigned: true, out var bitExpInfo))
+			//{
+			//	var maxIntegerValue = GetMaxIntegerValue(bitsBeforeBP, isSigned: true);
+			//	throw new ArgumentException($"An RValue with integer portion > {maxIntegerValue} cannot be used to create an Smx. {GetDiagDisplayHex("limbs", partialWordLimbs)}. Info: {bitExpInfo}.");
+			//}
+
+			//var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
+			//var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount, limbCount);
+
+			//var sign = rValue.Value >= 0;
+			//var partialWordLimbs2C = ConvertTo2C(newPartialWordLimbs, sign);
+
+			//var cSign = GetSign(partialWordLimbs2C);
+
+			//Debug.Assert(cSign == sign, $"Signs don't match on CreateSmx2C from RValue. RValue has sign: {sign}, new Smx2C has sign: {cSign}.");
+
+			//var result = new Smx2C(cSign, partialWordLimbs2C, targetExponent, bitsBeforeBP, rValue.Precision);
+
+			//return result;
 		}
 
 		private static bool IsValueTooLarge(RValue rValue, byte bitsBeforeBP, bool isSigned, out string bitExpInfo)
@@ -157,7 +164,7 @@ namespace MSetGenP
 			var magnitude = rValue.Value.GetBitLength() + rValue.Exponent;
 
 			bitExpInfo = $"NumBits: {numberOfBitsInVal}, Exponent: {rValue.Exponent}, Max Magnitude: {maxMagnitude}.";
-			var result = magnitude > maxMagnitude + 10;
+			var result = magnitude > maxMagnitude + 1; // TODO: Why are we fudging this??
 
 			return result;
 		}
@@ -185,21 +192,14 @@ namespace MSetGenP
 		// Convert from two's compliment, use the sign bit of the mantissa
 		public static ulong[] ConvertFrom2C(ulong[] partialWordLimbs)
 		{
-			var sign = GetSign(partialWordLimbs);
-			var result = ConvertFrom2C(partialWordLimbs, sign);
-
-			return result;
-		}
-
-		// Convert from two's compliment, using the specified sign
-		private static ulong[] ConvertFrom2C(ulong[] partialWordLimbs, bool sign)
-		{
-			ulong[] result;
-
 			if (!CheckReserveBit(partialWordLimbs))
 			{
 				throw new InvalidOperationException($"Cannot ConvertFrom2C, unless the reserve bit agrees with the sign bit. {GetDiagDisplayHex("input", partialWordLimbs)}.");
 			}
+
+			ulong[] result;
+
+			var sign = GetSign(partialWordLimbs);
 
 			if (sign)
 			{
@@ -257,7 +257,7 @@ namespace MSetGenP
 
 				if (reserveBitIsSet)
 				{
-					throw new ArgumentException($"The reserve bit is does not match the sign bit while calling to ConvertTo2C for a positive value. {GetDiagDisplayHex("limbs", partialWordLimbs)}");
+					throw new ArgumentException($"The reserve bit does not match the sign bit while calling to ConvertTo2C for a positive value. {GetDiagDisplayHex("limbs", partialWordLimbs)}");
 				}
 
 				//Debug.WriteLine($"Converting a value to 2C format, {GetDiagDisplayHex("limbs", partialWordLimbs)}.");
@@ -374,7 +374,7 @@ namespace MSetGenP
 		{
 			var tzc = BitOperations.TrailingZeroCount(limb);
 
-			Debug.Assert(tzc < 31, "Expecting Trailing Zero Count to be between 0 and 30, inclusive.");
+			Debug.Assert(tzc <= 30, "Expecting Trailing Zero Count to be between 0 and 30, inclusive.");
 
 			var numToKeep = tzc + 1;
 			var numToFlip = 64 - numToKeep;
@@ -470,7 +470,7 @@ namespace MSetGenP
 			// The low value is in the low 31 bits, indexes 0 - 30.
 			// The high value is in bits 32-62
 
-			var hi = x >> EFFECTIVE_BITS_PER_LIMB; // Create new ulong from bits 32 - 63.
+			var hi = x >> EFFECTIVE_BITS_PER_LIMB; // Create new ulong from bits 32 - 62.
 			var lo = x & HIGH32_MASK; // Create new ulong from bits 0 - 31.
 
 			return (hi, lo);
@@ -501,10 +501,7 @@ namespace MSetGenP
 		// Used for diagnostics
 		public static double ConvertFrom2C(ulong partialWordLimb)
 		{
-			var signBitIsSet = (partialWordLimb & TEST_BIT_30) > 0;
-			var lzc = BitOperations.LeadingZeroCount(partialWordLimb);
-
-			var isNegative = signBitIsSet || lzc == 0;
+			var isNegative = (partialWordLimb & TEST_BIT_30) > 0 | BitOperations.LeadingZeroCount(partialWordLimb) == 0;
 
 			double result;
 
@@ -512,20 +509,16 @@ namespace MSetGenP
 			{
 				var resultLimbs = FlipBitsAndAdd1(new ulong[] { partialWordLimb });
 				result = resultLimbs[0];
-
-				if (!CheckReserveBit(resultLimbs))
-				{
-					Debug.WriteLineIf(USE_DET_DEBUG, "WARNING: The reserve bit did not agree with the sign bit on ConvertFrom2C a negative value to a Double.");
-				}
 			}
 			else
 			{
 				result = partialWordLimb;
+			}
 
-				if (!CheckReserveBit(new ulong[] { partialWordLimb }))
-				{
-					Debug.WriteLineIf(USE_DET_DEBUG, "WARNING: The reserve bit did not agree with the sign bit on ConvertFrom2C a positive value to a Double.");
-				}
+			if (!CheckReserveBit(new ulong[] { partialWordLimb }))
+			{
+				var strAdjective = isNegative ? "negative" : "positive";
+				Debug.WriteLineIf(USE_DET_DEBUG, $"WARNING: The reserve bit did not agree with the sign bit on ConvertFrom2C a {strAdjective} value to a Double.");
 			}
 
 			return isNegative ? result * -1 : result;
@@ -540,36 +533,19 @@ namespace MSetGenP
 			// A carry is generated any time the bit just above the result limb is different than msb of the limb
 			// i.e. this next higher bit is not an extension of the sign.
 
-			var carryFlag = false;
 
 			var limbValue = GetLowHalfSigned(partialWordLimb, isMsl, out var topBitIsSet, out bool reserveBitIsSet);
 
-			var saveLimbValue = limbValue;
-
-			if (topBitIsSet)
-			{
-				carryFlag = !reserveBitIsSet; // true if next higher bit is zero
-				if (!reserveBitIsSet)
-				{
-					carryFlag = true;
-					limbValue += (ulong)Math.Pow(2, 31);
-				}
-			}
-			else
-			{
-				if (reserveBitIsSet)
-				{
-					carryFlag = true;
-					limbValue -= (ulong)Math.Pow(2, 31);
-				}
-			}
+			var carryFlag = topBitIsSet != reserveBitIsSet;
 
 			if (carryFlag)
 			{
-				var te = GetLowHalfSigned(limbValue, isMsl, out var topIsSet, out var reservIsSet);
+				var updatedLimb =  FlipBitsAndAdd1(new ulong[] {limbValue});
 
+				limbValue = updatedLimb[0];
 
-				Debug.WriteLineIf(USE_DET_DEBUG, $"GetResultWithCarrySigned is handling a carry, now for the updated result, topBitIsSet: {topIsSet}, reserveBitIsSet: {reservIsSet}.. Compare: topBitIsSet: {topBitIsSet}, reserveBitIsSet: {reserveBitIsSet}");
+				//var te = GetLowHalfSigned(limbValue, isMsl, out var topIsSet, out var reservIsSet);
+				//Debug.WriteLineIf(USE_DET_DEBUG, $"GetResultWithCarrySigned is handling a carry, now for the updated result, topBitIsSet: {topIsSet}, reserveBitIsSet: {reservIsSet}.. Compare: topBitIsSet: {topBitIsSet}, reserveBitIsSet: {reserveBitIsSet}");
 			}
 
 			var result = (limbValue, carryFlag ? 1uL : 0uL);
@@ -606,12 +582,20 @@ namespace MSetGenP
 
 		public static (ulong limbValue, ulong carry) GetResultWithCarry(ulong partialWordLimb)
 		{
-			// A carry is generated any time the bit just above the result limb is different than msb of the limb
-			// i.e. this next higher bit is not an extension of the sign.
+			//var (hi, lo) = Split(partialWordLimb);
+			//return (lo, hi);
 
-			var (hi, lo) = Split(partialWordLimb);
+			// bit 31 (and 63) is being reserved to detect carries when adding / subtracting.
+			// this bit should be zero at this point.
+
+			// The low value is in the low 31 bits, indexes 0 - 30.
+			// The high value is in bits 32-62
+
+			var hi = partialWordLimb >> EFFECTIVE_BITS_PER_LIMB; // Create new ulong from bits 32 - 62.
+			var lo = partialWordLimb & HIGH32_MASK; // Create new ulong from bits 0 - 31.
 
 			return (lo, hi);
+
 		}
 
 		#endregion

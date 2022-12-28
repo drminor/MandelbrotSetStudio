@@ -643,7 +643,11 @@ namespace MSetGenP
 
 			for (var i = 0; i < resultLength; i++)
 			{
-				var nv = left[i] + right[i] + carry;
+				ulong nv;
+				checked
+				{
+					nv = left[i] + right[i] + carry;
+				}
 
 				var (hi, lo) = ScalarMathHelper.Split(nv);
 				carry = hi;

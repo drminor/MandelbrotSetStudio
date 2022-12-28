@@ -1,6 +1,7 @@
 ﻿using MSS.Types.DataTransferObjects;
 using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -55,34 +56,6 @@ namespace MSetGenP
 		public FPValues(Smx smx, int count) : this(Enumerable.Repeat(smx, count).ToArray())
 		{ }
 
-		//public FPValues(Smx smx, int count)
-		//{
-		//	var smxes = new Smx[count];
-
-		//	for (int i = 0; i < count; i++)
-		//	{
-		//		smxes[i] = smx;
-		//	}
-
-		//	_signsBackingArray = smxes.Select(x => x.Sign ? ALL_BITS_SET : 0L).ToArray();
-		//	SignsMemory = new Memory<ulong>(_signsBackingArray);
-
-		//	var numberOfLimbs = smxes[0].Mantissa.Length;
-		//	Mantissas = new ulong[numberOfLimbs][];
-
-		//	for (var j = 0; j < numberOfLimbs; j++)
-		//	{
-		//		Mantissas[j] = new ulong[smxes.Length];
-
-		//		for (var i = 0; i < smxes.Length; i++)
-		//		{
-		//			Mantissas[j][i] = smxes[i].Mantissa[j];
-		//		}
-		//	}
-
-		//	MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
-		//}
-
 		public FPValues(Smx[] smxes)
 		{
 			_signsBackingArray = smxes.Select(x => x.Sign ? ALL_BITS_SET : 0L).ToArray();
@@ -107,34 +80,6 @@ namespace MSetGenP
 		public FPValues(Smx2C smx2C, int count) : this(Enumerable.Repeat(smx2C, count).ToArray())
 		{ }
 		
-		//public FPValues(Smx2C smx, int count)
-		//{
-		//	var smxes = new Smx2C[count];
-
-		//	for (int i = 0; i < count; i++)
-		//	{
-		//		smxes[i] = smx;
-		//	}
-
-		//	_signsBackingArray = smxes.Select(x => x.Sign ? ALL_BITS_SET : 0L).ToArray();
-		//	SignsMemory = new Memory<ulong>(_signsBackingArray);
-
-		//	var numberOfLimbs = smxes[0].Mantissa.Length;
-		//	Mantissas = new ulong[numberOfLimbs][];
-
-		//	for (var j = 0; j < numberOfLimbs; j++)
-		//	{
-		//		Mantissas[j] = new ulong[smxes.Length];
-
-		//		for (var i = 0; i < smxes.Length; i++)
-		//		{
-		//			Mantissas[j][i] = smxes[i].Mantissa[j];
-		//		}
-		//	}
-
-		//	MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
-		//}
-
 		public FPValues(Smx2C[] smxes)
 		{
 			_signsBackingArray = smxes.Select(x => x.Sign ? ALL_BITS_SET : 0L).ToArray();
@@ -175,6 +120,56 @@ namespace MSetGenP
 		#endregion
 
 		#region Public Methods
+
+		//private const ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
+		//private const ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
+
+		//public bool CheckReservedBit(int[] inPlayList, int numberOfLanes)
+		//{
+		//	for (var i = 0; i < Mantissas.Length; i++)
+		//	{
+		//		var valPtr = CheckReservedBit(Mantissas[i], inPlayList, numberOfLanes);
+		//		if (valPtr >= 0)
+		//		{
+		//			Debug.WriteLine($"Reserved Bit Mismatch val: {valPtr}, limb: {i}.");
+		//			return false;
+		//		}
+		//	}
+
+		//	return true;
+		//}
+
+		public bool CheckReservedBit(int[] inPlayList, int numberOfLanes)
+		{
+			var indexes = inPlayList;
+			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			{
+				var idx = indexes[idxPtr];
+				var resultPtr = idx * numberOfLanes;
+
+				for (var i = 0; i < numberOfLanes; i++)
+				{
+					var valPtr = resultPtr + i;
+					if (!CheckReservedBit(valPtr))
+					{
+						//Debug.WriteLine($"Reserved Bit does not match the sign bit for value at index: {valPtr}.");
+						return false;
+					}	
+				}
+			}
+
+			return true;
+		}
+
+		private bool CheckReservedBit(int valPtr)
+		{
+			var reserveBitIsSet = (Mantissas[^1][valPtr] & TEST_BIT_31) > 0;
+			var signBitIsSet = (Mantissas[^1][valPtr] & TEST_BIT_30) > 0;
+
+			var result = reserveBitIsSet == signBitIsSet;
+
+			return result;
+		}
 
 		public bool[] GetSigns()
 		{
@@ -242,11 +237,6 @@ namespace MSetGenP
 
 				var newSign = !signs[i];
 
-
-				// TODO: Sign Extension -- Remove this --Toggle2C does it.
-				//ScalarMathHelper.UpdateTheReserveBit(partialWordLimbs, !newSign);
-
-
 				var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, signExtendIntoHiWord: false);
 
 				SetSign(i, newSign);
@@ -273,7 +263,7 @@ namespace MSetGenP
 		{
 			var result = Clone2C(out var signs);
 
-			var anyNegativeValues = !signs.Any(x => !x);
+			var anyNegativeValues = signs.Any(x => !x);
 
 			if (!anyNegativeValues)
 			{
@@ -305,60 +295,6 @@ namespace MSetGenP
 			return result;
 		}
 
-		//public bool[] GetSigns2C(int[] inPlayList, int numberOfLanes)
-		//{
-		//	bool[] signs = new bool[Mantissas.Length];
-
-		//	var indexes = inPlayList;
-
-		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-		//	{
-		//		var idx = indexes[idxPtr];
-		//		var resultPtr = idx * numberOfLanes;
-
-		//		for (var i = 0; i < numberOfLanes; i++)
-		//		{
-		//			var valPtr = resultPtr + i;
-		//			var msLimb = Mantissas[0][valPtr];
-
-		//			var lzcMsl = BitOperations.LeadingZeroCount(msLimb);
-
-		//			signs[valPtr] = !(lzcMsl == 0);
-		//		}
-		//	}
-
-		//	return signs;
-		//}
-
-		//public FPValues ConvertFrom2C()
-		//{
-		//	ulong[][] mArrays = CloneMantissas();
-
-		//	bool[] signs = new bool[Mantissas.Length];
-
-		//	for (var i = 0; i < Mantissas.Length; i++)
-		//	{
-		//		var partialWordLimbs = GetMantissa(i);
-
-		//		var lzcMsl = BitOperations.LeadingZeroCount(partialWordLimbs[^1]);
-		//		var sign = !(lzcMsl == 0);
-
-		//		var non2CPWLimbs = ScalarMathHelper.ConvertFrom2C(partialWordLimbs, sign);
-
-		//		SetMantissa(mArrays, i, non2CPWLimbs);
-		//	}
-
-		//	var result = new FPValues(signs, mArrays);
-
-		//	return result;
-		//}
-
-		//public bool[] GetSigns2C()
-		//{
-		//	bool[] signs = Mantissas[0].Select(x => BitOperations.LeadingZeroCount(x) != 0).ToArray();
-
-		//	return signs;
-		//}
 
 		private ulong[] GetMantissa(ulong[][] mArrays, int index)
 		{
@@ -433,7 +369,9 @@ namespace MSetGenP
 		{
 			//signs = Mantissas[^1].Select(x => BitOperations.LeadingZeroCount(x) != 0).ToArray();
 
-			signs = Mantissas[^1].Select(x => (x & TEST_BIT_30) > 0).ToArray();
+			// If Bit30 is set, the value is negative
+
+			signs = Mantissas[^1].Select(x => (x & TEST_BIT_30) == 0).ToArray();
 
 
 			var result = new FPValues(signs, CloneMantissas());

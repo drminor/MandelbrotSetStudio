@@ -42,8 +42,20 @@ namespace MSetGenP
 			var s3 = delta.GetStringValue();
 
 			var blockPos = mapSectionRequest.BlockPosition;
-			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
-			//Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}.");
+
+			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
+			Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}.");
+
+
+			if (startingCx.Sign && startingCy.Sign)
+			{
+				var escapeVelocities = new ushort[blockSize.NumberOfCells];
+				var compressedDoneFlags = CompressTheDoneFlags(doneFlags);
+
+				var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
+				return result;
+
+			}
 
 			//var cRs = smxMathHelper.BuildMapPoints(startingCx, startingCy, delta, blockSize, out var cIs);
 
@@ -120,9 +132,6 @@ namespace MSetGenP
 
 			}
 		}
-
-
-
 
 		private bool[] CompressTheDoneFlags(bool[] doneFlags)
 		{
