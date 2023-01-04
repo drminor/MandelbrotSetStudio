@@ -1,5 +1,6 @@
 ﻿using MEngineDataContracts;
 using MSS.Common.DataTransferObjects;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Numerics;
 
@@ -80,14 +81,16 @@ namespace MSetGenP
 			{
 				var subSectionGeneratorVector = new SubSectionGeneratorVector2C(fixedPointFormat, targetIterations, threshold);
 
-				var samplePointsX2C = subSectionGeneratorVector.Convert(samplePointsX);
-				var samplePointsY2C = subSectionGeneratorVector.Convert(samplePointsY);
+				var samplePointsX2C = Convert(samplePointsX);
+				var samplePointsY2C = Convert(samplePointsY);
 
 				var cRs = new FPValues(samplePointsX2C);
 
 				for (int j = 0; j < samplePointsY.Length; j++)
 				{
-					var cIs = new FPValues(samplePointsY2C[j], stride);
+					var yPoints = Duplicate(samplePointsY2C[j], stride);
+					var cIs = new FPValues(yPoints);
+
 					//Array.Copy(doneFlags, j * stride, rowDoneFlags, 0, stride);
 					var rowCounts = subSectionGeneratorVector.GenerateMapSection(blockPos, j, cRs, cIs, out var rowDoneFlags);
 					Array.Copy(rowCounts, 0, counts, j * stride, stride);
@@ -118,7 +121,9 @@ namespace MSetGenP
 
 				for (int j = 0; j < samplePointsY.Length; j++)
 				{
-					var cIs = new FPValues(samplePointsY[j], stride);
+					var yPoints = Duplicate(samplePointsY[j], stride);
+					var cIs = new FPValues(yPoints);
+
 					//Array.Copy(doneFlags, j * stride, rowDoneFlags, 0, stride);
 					var rowCounts = subSectionGeneratorVector.GenerateMapSection(blockPos, j, cRs, cIs, out var rowDoneFlags);
 					Array.Copy(rowCounts, 0, counts, j * stride, stride);
@@ -165,6 +170,68 @@ namespace MSetGenP
 
 			return result;
 		}
+
+		private Smx2C[] Duplicate(Smx2C smx2C, int count)
+		{
+			var result = new Smx2C[count];
+
+			for(int i = 0; i < count; i++)
+			{
+				result[i] = smx2C.Clone();
+			}
+
+			return result;
+		}
+
+		private Smx[] Duplicate(Smx smx, int count)
+		{
+			var result = new Smx[count];
+
+			for (int i = 0; i < count; i++)
+			{
+				result[i] = smx.Clone();
+			}
+
+			return result;
+		}
+
+		private Smx2C[] Convert(Smx[] smxes)
+		{
+			var temp = new List<Smx2C>();
+
+			foreach (var smx in smxes)
+			{
+				temp.Add(Convert(smx));	
+			}
+
+			var result = temp.ToArray();
+
+			return result;
+		}
+
+		private Smx2C Convert(Smx smx)
+		{
+			Smx2C result;
+
+			if (smx.IsZero)
+			{
+				if (!smx.Sign)
+				{
+					Debug.WriteLine("WARNING: Found a value of -0.");
+				}
+
+				result = new Smx2C(true, smx.Mantissa, smx.Exponent, smx.BitsBeforeBP, smx.Precision);
+			}
+			else
+			{
+				var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
+				result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.BitsBeforeBP, smx.Precision);
+			}
+
+
+			return result;
+		}
+
 
 	}
 }

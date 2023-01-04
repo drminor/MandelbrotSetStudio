@@ -17,44 +17,35 @@ namespace MSetGenP
 		public bool IsSigned => true;
 
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
-		//private const int BITS_BEFORE_BP = 8;
-
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)(-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
-		private const ulong LOW32_BITS_SET =	0x00000000FFFFFFFF; // bits 0 - 31 are set.
-		
-		private const ulong HIGH32_BITS_SET =	0xFFFFFFFF00000000; // bits 63 - 32 are set.
-
-		private const ulong LOW31_BITS_SET =	0x000000007FFFFFFF; // bits 0 - 30 are set.
-		
-		private const ulong HIGH33_BITS_SET =	0xFFFFFFFF80000000; // bits 63 - 31 are set.
-
-
-		private const ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
-		private const ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
-
-		//private const ulong HIGH32_FILL = HIGH32_BITS_SET;
-		//private const ulong HIGH32_CLEAR = LOW32_BITS_SET;
-
-		//private const ulong HIGH32_MASK = LOW31_BITS_SET;
-		//private const ulong LOW31_MASK = HIGH33_BITS_SET;
-
-		//private const ulong HIGH33_FILL = HIGH33_BITS_SET;
-		//private const ulong HIGH33_CLEAR = LOW31_BITS_SET;
-
+		private const ulong HIGH32_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
+		private const ulong LOW32_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private static readonly Vector256<ulong> HIGH32_MASK_VEC = Vector256.Create(LOW32_BITS_SET);
 
-		private static readonly Vector256<ulong> HIGH33_MASK_VEC = Vector256.Create(LOW31_BITS_SET);
+		private const ulong HIGH33_BITS_SET = 0xFFFFFFFF80000000; // bits 63 - 31 are set.
 		private static readonly Vector256<ulong> LOW31_MASK_VEC = Vector256.Create(HIGH33_BITS_SET); // diagnostics
 
+
+		private const ulong LOW31_BITS_SET = 0x000000007FFFFFFF; // bits 0 - 30 are set.
+		private const ulong HIGH33_MASK = LOW31_BITS_SET; // bits 0 - 30 are set.
+		private static readonly Vector256<ulong> HIGH33_MASK_VEC = Vector256.Create(LOW31_BITS_SET);
+
+		private const ulong SIGN64_BIT_MASK = 0x7FFFFFFFFFFFFFFF;
+		private static readonly Vector256<ulong> SIGN64_BIT_MASK_VEC = Vector256.Create(SIGN64_BIT_MASK);
 
 		private const ulong SIGN_BIT_MASK = 0x000000003FFFFFFF;
 		private static readonly Vector256<ulong> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
 
-		//private const ulong TOP_BITS_MASK = 0xFF00000000000000;
-		//private static readonly Vector256<ulong> TOP_BITS_MASK_VEC = Vector256.Create(TOP_BITS_MASK);
+		private const ulong TOP_BITS_MASK = 0xFF00000000000000;
+		private static readonly Vector256<ulong> TOP_BITS_MASK_VEC = Vector256.Create(TOP_BITS_MASK);
+
+		//private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
+		//private static readonly ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
+		//private static readonly ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
 
 		private static readonly int _lanes = Vector256<ulong>.Count;
+
 
 		private Memory<ulong>[] _squareResult1Mems;
 		private Memory<ulong>[] _squareResult2Mems;
@@ -106,7 +97,7 @@ namespace MSetGenP
 			//MslWeightVector = Vector256.Create(MslWeight);
 
 			_zeroVector = Vector256<ulong>.Zero;
-			_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE - 1);
+			_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE);
 
 			_squareResult1Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
 
@@ -253,13 +244,11 @@ namespace MSetGenP
 		//public double MslWeight { get; init; }
 		//public Vector256<double> MslWeightVector { get; init; }
 
-
 		public int NumberOfMCarries { get; private set; }
 		public int NumberOfACarries { get; private set; }
 		public long NumberOfSplits { get; private set; }
 		public long NumberOfGetCarries { get; private set; }
 		public long NumberOfGrtrThanOps { get; private set; }
-
 
 		#endregion
 

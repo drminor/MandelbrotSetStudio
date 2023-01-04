@@ -1,9 +1,5 @@
 ﻿using MSS.Types;
-using MSS.Types.DataTransferObjects;
-using System;
 using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
 namespace MSetGenP
@@ -38,35 +34,6 @@ namespace MSetGenP
 		#endregion
 
 		#region Public Methods
-
-		public Smx2C[] Convert(Smx[] smxes)
-		{
-			var result = smxes.Select(x => Convert(x)).ToArray();
-			return result;
-		}
-
-		public Smx2C Convert(Smx smx)
-		{
-			Smx2C result;
-
-			if (smx.IsZero)
-			{
-				if (!smx.Sign)
-				{
-					Debug.WriteLine("WARNING: Found a value of -0.");
-				}
-
-				result = new Smx2C(true, smx.Mantissa, smx.Exponent, _apFixedPointFormat1.BitsBeforeBinaryPoint, smx.Precision);
-			}
-			else
-			{
-				var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
-				result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, _apFixedPointFormat1.BitsBeforeBinaryPoint, smx.Precision);
-			}
-
-
-			return result;
-		}
 
 		public void GenerateMapSection(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, ushort[] counts, bool[] doneFlags)
 		{
@@ -110,12 +77,10 @@ namespace MSetGenP
 			var sumOfSqrs = new FPValues(cRs.LimbCount, cRs.Length);
 
 			var escapedFlags = new bool[resultLength];
-
 			var vecMath2C = new VecMath2C(_apFixedPointFormat1, resultLength, _threshold);
 
 			// The vecMath instance holds and uses the doneFlags as well as the inPlayList.
 			vecMath2C.DoneFlags = doneFlags;
-
 			var inPlayList = vecMath2C.InPlayList;
 
 			// Perform the first iteration. 
@@ -204,7 +169,6 @@ namespace MSetGenP
 					if (escaped)
 					{
 						doneFlags[cntrPtr] = true;
-
 						//var sacResult = escaped;
 						//var rValDiag = vecMath2C.GetSmx2CAtIndex(sumOfSqrs, stPtr).GetStringValue();
 						//Debug.WriteLine($"Bailed out after {cnt}: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {vecMath2C.BlockPosition}, Row: {vecMath2C.RowNumber}, Col: {cntrPtr}.");
@@ -212,11 +176,9 @@ namespace MSetGenP
 					else if (cnt >= _targetIterations)
 					{
 						doneFlags[cntrPtr] = true;
-
 						//var sacResult = escaped;
 						//var rValDiag = vecMath2C.GetSmx2CAtIndex(sumOfSqrs, stPtr).GetStringValue();
 						//Debug.WriteLine($"Target reached: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {vecMath2C.BlockPosition}, Row: {vecMath2C.RowNumber}, Col: {cntrPtr}.");
-
 					}
 					else
 					{
@@ -281,7 +243,6 @@ namespace MSetGenP
 
 			return result.ToArray();
 		}
-
 
 		//private List<int> UpdateCounts(int[] inPlayList, Span<Vector256<long>> escapedFlagVectors, ushort[] cntrs, FPValues sumOfSqrs)
 		//{

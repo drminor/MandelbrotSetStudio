@@ -20,25 +20,32 @@ namespace MSetGenP
 		public bool IsSigned => false;
 
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
-		private const int BITS_BEFORE_BP = 8;
-
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong) (-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
-		//private const ulong HIGH_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
-		//private static readonly Vector256<ulong> HIGH_MASK_VEC = Vector256.Create(HIGH_MASK);
+		private const ulong HIGH32_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
+		private const ulong LOW32_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private static readonly Vector256<ulong> HIGH32_MASK_VEC = Vector256.Create(LOW32_BITS_SET);
+
+		private const ulong HIGH33_BITS_SET = 0xFFFFFFFF80000000; // bits 63 - 31 are set.
+		private static readonly Vector256<ulong> LOW31_MASK_VEC = Vector256.Create(HIGH33_BITS_SET); // diagnostics
 
 
-		private const ulong HIGH33_MASK = 0x000000007FFFFFFF; // bits 0 - 30 are set.
-		private static readonly Vector256<ulong> HIGH33_MASK_VEC = Vector256.Create(HIGH33_MASK);
+		private const ulong LOW31_BITS_SET = 0x000000007FFFFFFF; // bits 0 - 30 are set.
+		private const ulong HIGH33_MASK = LOW31_BITS_SET; // bits 0 - 30 are set.
+		private static readonly Vector256<ulong> HIGH33_MASK_VEC = Vector256.Create(LOW31_BITS_SET);
 
-		private const ulong SIGN_BIT_MASK = 0x7FFFFFFFFFFFFFFF;
+		private const ulong SIGN64_BIT_MASK = 0x7FFFFFFFFFFFFFFF;
+		private static readonly Vector256<ulong> SIGN64_BIT_MASK_VEC = Vector256.Create(SIGN64_BIT_MASK);
+
+		private const ulong SIGN_BIT_MASK = 0x000000003FFFFFFF;
 		private static readonly Vector256<ulong> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
 
 		private const ulong TOP_BITS_MASK = 0xFF00000000000000;
 		private static readonly Vector256<ulong> TOP_BITS_MASK_VEC = Vector256.Create(TOP_BITS_MASK);
 
-		//private static readonly ulong TEST_BIT_32 =	0x0000000100000000; // bit 32 is set.
-		private static readonly ulong TEST_BIT_31 =		0x0000000080000000; // bit 31 is set.
+		//private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
+		private static readonly ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
+		//private static readonly ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
 
 		private static readonly int _lanes = Vector256<ulong>.Count;
 
@@ -84,9 +91,9 @@ namespace MSetGenP
 			var thresholdMslIntegerVector = Vector256.Create(thresholdMsl);
 			_thresholdVector = thresholdMslIntegerVector.AsInt64();
 
-			var mslPower = ((LimbCount - 1) * EFFECTIVE_BITS_PER_LIMB) - FractionalBits;
-			MslWeight = Math.Pow(2, mslPower);
-			MslWeightVector = Vector256.Create(MslWeight);
+			//var mslPower = ((LimbCount - 1) * EFFECTIVE_BITS_PER_LIMB) - FractionalBits;
+			//MslWeight = Math.Pow(2, mslPower);
+			//MslWeightVector = Vector256.Create(MslWeight);
 
 			_zeroVector = Vector256<ulong>.Zero;
 			_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE);
@@ -205,7 +212,8 @@ namespace MSetGenP
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
-
+		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 		public int LimbCount => ApFixedPointFormat.LimbCount;
 		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
@@ -218,13 +226,10 @@ namespace MSetGenP
 		public int RowNumber { get; set; }
 
 		public uint MaxIntegerValue { get; init; }
-
 		public uint Threshold { get; init; }
-		public double MslWeight { get; init; }
-		public Vector256<double> MslWeightVector { get; init; }
 
-		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
-		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
+		//public double MslWeight { get; init; }
+		//public Vector256<double> MslWeightVector { get; init; }
 
 		public int NumberOfMCarries { get; private set; }
 		public int NumberOfACarries { get; private set; }
@@ -749,11 +754,16 @@ namespace MSetGenP
 
 		#endregion
 
-		#region Create Smx Support
+		#region Retrieve Smx From FPValues
 
 		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			var result = new Smx(fPValues.GetSign(index), fPValues.GetMantissa(index), TargetExponent, BitsBeforeBP, precision);
+			var mantissa = fPValues.GetMantissa(index);
+
+			//var sign = ScalarMathHelper.GetSign(mantissa);
+			var sign = fPValues.GetSign(index);
+
+			var result = new Smx(sign, mantissa, TargetExponent, BitsBeforeBP, precision);
 			return result;
 		}
 
@@ -765,150 +775,6 @@ namespace MSetGenP
 		#endregion
 
 		#region Comparison
-
-		//private int[] Compare(int idx, Memory<ulong>[] mantissaMemsA, Memory<ulong>[] mantissaMemsB)
-		//{
-		//	return new int[0];
-		//}
-
-		private int[] Compare(int idx, Memory<ulong>[] mantissaMemsA, Memory<ulong>[] mantissaMemsB)
-		{
-			var limbPtr = LimbCount - 1;
-
-			var limb0A = GetLimbVectorsUL(mantissaMemsA[limbPtr]);
-			var limb0B = GetLimbVectorsUL(mantissaMemsB[limbPtr]);
-
-			//var a = Vector256.AsInt64(limb0A[idx]);
-			//var b = Vector256.AsInt64(limb0B[idx]);
-
-			var areEqualFlags = Avx2.CompareEqual(limb0A[idx], limb0B[idx]);
-			var compositeFlags = (uint)Avx2.MoveMask(areEqualFlags.AsByte());
-
-			while (--limbPtr >= 0 && compositeFlags == 0xffffffff)
-			{
-				limb0A = GetLimbVectorsUL(mantissaMemsA[limbPtr]);
-				limb0B = GetLimbVectorsUL(mantissaMemsB[limbPtr]);
-
-				areEqualFlags = Avx2.CompareEqual(limb0A[idx], limb0B[idx]);
-				compositeFlags = (uint)Avx2.MoveMask(areEqualFlags.AsByte());
-			}
-
-			if (compositeFlags == 0xffffffff)
-			{
-				// All comparisons return equal
-				return new int[_lanes];
-			}
-
-			var areGtFlags = (Avx2.CompareGreaterThan(limb0A[idx].AsInt64(), limb0B[idx].AsInt64())).AsUInt64();
-			compositeFlags = (uint)Avx2.MoveMask(areGtFlags.AsByte());
-
-			if (compositeFlags == 0xffffffff)
-			{
-				// All comparisons return greater than
-				return Enumerable.Repeat(1, _lanes).ToArray();
-			}
-
-			if (compositeFlags == 0x0)
-			{
-				/// All comparisons return less than
-				return Enumerable.Repeat(-1, _lanes).ToArray();
-			}
-
-			// Compare each pair, individually
-			var result = new int[_lanes];
-
-			var eqFlags = new ulong[_lanes];
-			areEqualFlags.AsVector().CopyTo(eqFlags);
-
-			var gtFlags = new ulong[_lanes];
-			areGtFlags.AsVector().CopyTo(gtFlags);
-
-			for (var i = 0; i < _lanes; i++)
-			{
-				if (eqFlags[i] == 0)
-				{
-					// AreEqual = false, use gTFlags for the result
-
-					result[i] = (gtFlags[i] == 0xffffffff ? 1 : -1);
-				}
-				else
-				{
-					// Compare each remaining limbs.
-					var j = limbPtr - 1;
-					for (; j >= 0; j--)
-					{
-						limb0A = GetLimbVectorsUL(mantissaMemsA[limbPtr]);
-						limb0B = GetLimbVectorsUL(mantissaMemsB[limbPtr]);
-
-						var a = limb0A[idx].GetElement(i);
-						var b = limb0B[idx].GetElement(i);
-
-						if (a != b)
-						{
-							result[i] = a > b ? 1 : -1;
-							break;
-						}
-					}
-				}
-			}
-
-			return result;
-		}
-
-		private uint[][] CheckPWValues(Memory<ulong>[] resultLimbs, out string errors)
-		{
-			var result = new uint[resultLimbs.Length][];
-			var sb = new StringBuilder();
-
-			var indexes = InPlayList;
-
-			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
-			{
-				result[limbPtr] = new uint[ValueCount];
-
-				var limbs = GetLimbVectorsUL(resultLimbs[limbPtr]);
-
-				var oneFound = false;
-
-				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-				{
-					var idx = indexes[idxPtr];
-					var vector = limbs[idx];
-
-					var sansSign = Avx2.And(vector, SIGN_BIT_MASK_VEC);
-					var cFlags = Avx2.CompareEqual(vector, sansSign);
-					var cComposite = Avx2.MoveMask(cFlags.AsByte());
-					if (cComposite != -1)
-					{
-						sb.AppendLine("Top bit was set.");
-					}
-
-					var areGtFlags = (Avx2.CompareGreaterThan(sansSign.AsInt64(), _maxDigitValueVector)).AsUInt64();
-					var compositeFlags = (uint)Avx2.MoveMask(areGtFlags.AsByte());
-
-					result[limbPtr][idx] = compositeFlags;
-
-					if (compositeFlags != 0)
-					{
-						if (!oneFound)
-						{
-							oneFound = true;
-							sb.Append($"Limb: {limbPtr}::");
-						}
-						sb.AppendLine($"{idx} ");
-					}
-				}
-
-				if (oneFound)
-				{
-					sb.AppendLine();
-				}
-			}
-
-			errors = sb.ToString();
-
-			return result;
-		}
 
 		//public void IsGreaterOrEqThanThreshold_Old(FPValues a, Span<Vector256<long>> escapedFlagVectors)
 		//{
@@ -962,7 +828,7 @@ namespace MSetGenP
 
 				// TODO: Add a check confirm the value we receiving is positive.
 
-				var sansSign = Avx2.And(left[idx], SIGN_BIT_MASK_VEC);
+				var sansSign = Avx2.And(left[idx], SIGN64_BIT_MASK_VEC);
 				var resultVector = Avx2.CompareGreaterThan(sansSign.AsInt64(), right);
 
 				var vectorPtr = idx * _lanes;

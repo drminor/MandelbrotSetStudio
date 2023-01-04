@@ -42,19 +42,19 @@ namespace MSetGenP
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		public FPValues(FPValuesDto fPValuesDto)
-		{
-			Mantissas = fPValuesDto.GetValues(out var signs, out var exponents);
-			//Signs = signs;
+		//public FPValues(FPValuesDto fPValuesDto)
+		//{
+		//	Mantissas = fPValuesDto.GetValues(out var signs, out var exponents);
+		//	//Signs = signs;
 
-			_signsBackingArray = signs.Select(x => x ? ALL_BITS_SET : 0L).ToArray();
-			SignsMemory = new Memory<ulong>(_signsBackingArray);
+		//	_signsBackingArray = signs.Select(x => x ? ALL_BITS_SET : 0L).ToArray();
+		//	SignsMemory = new Memory<ulong>(_signsBackingArray);
 
-			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
-		}
+		//	MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
+		//}
 
-		public FPValues(Smx smx, int count) : this(Enumerable.Repeat(smx, count).ToArray())
-		{ }
+		//public FPValues(Smx smx, int count) : this(Enumerable.Repeat(smx, count).ToArray())
+		//{ }
 
 		public FPValues(Smx[] smxes)
 		{
@@ -77,8 +77,8 @@ namespace MSetGenP
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		public FPValues(Smx2C smx2C, int count) : this(Enumerable.Repeat(smx2C, count).ToArray())
-		{ }
+		//public FPValues(Smx2C smx2C, int count) : this(Enumerable.Repeat(smx2C, count).ToArray())
+		//{ }
 		
 		public FPValues(Smx2C[] smxes)
 		{

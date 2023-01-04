@@ -51,7 +51,12 @@ namespace MSetGenP
 
 			var cSign = ScalarMathHelper.GetSign(Mantissa);
 
-			Debug.Assert(cSign == sign, "Signs don't match in Constructor of Smx2C.");
+			if (cSign != sign)
+			{
+				throw new ArgumentException("Signs don't match in Constructor of Smx2C.");
+			}
+
+			//Debug.Assert(cSign == sign, "Signs don't match in Constructor of Smx2C.");
 
 			Exponent = exponent;
 			Precision = precision;
