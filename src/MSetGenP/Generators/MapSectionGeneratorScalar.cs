@@ -60,6 +60,9 @@ namespace MSetGenP
 
 		private ushort[] GenerateMapSection(ScalarMath smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, out long numberOfSplits, out long numberOfGetCarries, out long numberOfGtrThanOpsFP, out long numberOfGtrThanOpsSc)
 		{
+
+			var use2CVersion = true;
+
 			var result = new ushort[blockSize.NumberOfCells];
 
 			var stride = (byte)blockSize.Width;
@@ -80,8 +83,12 @@ namespace MSetGenP
 					//if (i == 63) Debug.WriteLine("Here");
 
 					var x = samplePointsX[i];
+
 					//var cntr = iterator.Iterate(x, y);
-					var cntr = iterator.IterateSmx2C(x, y);
+					//var cntr = iterator.IterateSmx2C(x, y);
+
+					var cntr = use2CVersion ? iterator.IterateSmx2C(x, y) : iterator.Iterate(x, y);
+
 					result[resultPtr + i] = cntr;
 				}
 			}

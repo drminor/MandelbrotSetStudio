@@ -12,6 +12,7 @@ namespace EngineTest
 		public void RoundTrip_2C_ToRValue_IsSuccessful_Small()
 		{
 			var precision = 20;
+			var limbCount = 2;
 
 			var number = "343597";
 			var exponent = -13;
@@ -19,16 +20,63 @@ namespace EngineTest
 			var aBigInteger = BigInteger.Parse(number);
 			var aRValue = new RValue(aBigInteger, exponent, precision);
 
-			var aSmx2C = new Smx2C(aRValue, bitsBeforeBP: 0);
+			var aSmx2C = ScalarMathHelper.CreateSmx2C(aRValue, new ApFixedPointFormat(limbCount));
+			var strA = aSmx2C.GetStringValue();
+			Debug.WriteLine($"The StringValue for the aSmx2C is {strA}.");
 
-			var aSmx2CRValue = aSmx2C.GetRValue();
-			var aStr = aSmx2C.GetStringValue();
-			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
+			var bRValue = ScalarMathHelper.CreateRValue(aSmx2C);
+			var strB = RValueHelper.ConvertToString(bRValue);
+			Debug.WriteLine($"The StringValue for the bRValue is {strB}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aRValue, aSmx2CRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
+
+		[Fact]
+		public void RoundTrip_2C_ToRValue_IsSuccessful_Large()
+		{
+			var precision = 20;
+			var limbCount = 5;
+
+			var number = "126445453255269018635038690902017";
+			var exponent = -134;
+
+			var aBigInteger = BigInteger.Parse(number);
+			var aRValue = new RValue(aBigInteger, exponent, precision);
+
+			var aSmx2C = ScalarMathHelper.CreateSmx2C(aRValue, new ApFixedPointFormat(limbCount));
+			var strA = aSmx2C.GetStringValue();
+			Debug.WriteLine($"The StringValue for the aSmx2C is {strA}.");
+
+			var bRValue = ScalarMathHelper.CreateRValue(aSmx2C);
+			var strB = RValueHelper.ConvertToString(bRValue);
+			Debug.WriteLine($"The StringValue for the bRValue is {strB}.");
+
+			Assert.Equal(strA, strB);
+		}
+
+		[Fact]
+		public void RoundTrip_2C_ToRValue_IsSuccessful_LargeNeg()
+		{
+			var precision = 20;
+			var limbCount = 5;
+			var number = "-126445453255269018635038690902017";
+			var exponent = -134;
+
+			var aBigInteger = BigInteger.Parse(number);
+			var aRValue = new RValue(aBigInteger, exponent, precision);
+
+			var aSmx2C = ScalarMathHelper.CreateSmx2C(aRValue, new ApFixedPointFormat(limbCount));
+			var strA = aSmx2C.GetStringValue();
+			Debug.WriteLine($"The StringValue for the aSmx2C is {strA}.");
+
+			var bRValue = ScalarMathHelper.CreateRValue(aSmx2C);
+			var strB = RValueHelper.ConvertToString(bRValue);
+			Debug.WriteLine($"The StringValue for the bRValue is {strB}.");
+
+			Assert.Equal(strA, strB);
+		}
+
+
 
 		[Fact]
 		public void RoundTrip_2C_ToRValue_IsSuccessful_Small_NewTec()
@@ -273,8 +321,8 @@ namespace EngineTest
 			var number = "-12644545325526901863503869090";
 			var exponent = -124;
 
-			var aRValue = new RValue(BigInteger.Parse(number), exponent, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
-			Debug.WriteLine($"The StringValue for the inital RValue is {RValueHelper.ConvertToString(aRValue)}.");
+			//var aRValue = new RValue(BigInteger.Parse(number), exponent, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+			//Debug.WriteLine($"The StringValue for the inital RValue is {RValueHelper.ConvertToString(aRValue)}.");
 
 			var aTv = new Smx2CTestValue(number, exponent, precision, scalarMath2C); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			Debug.WriteLine($"The StringValue before negation from the Smx2C var is {aTv}.");
@@ -285,7 +333,7 @@ namespace EngineTest
 			var bTv = new Smx2CTestValue(aSmx2C2, scalarMath2C);
 			Debug.WriteLine($"The StringValue after negation (and back) from the aSmx2C2 var is {bTv}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aRValue, bTv.RValue, failOnTooFewDigits: true, out var strA, out var strB);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aTv.RValue, bTv.RValue, failOnTooFewDigits: true, out var strA, out var strB);
 			Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}
@@ -301,7 +349,7 @@ namespace EngineTest
 			var exponent = -13;
 
 			var aRValue = new RValue(BigInteger.Parse(number), exponent, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
-			Debug.WriteLine($"The StringValue for the inital RValue is {RValueHelper.ConvertToString(aRValue)}.");
+			//Debug.WriteLine($"The StringValue for the inital RValue is {RValueHelper.ConvertToString(aRValue)}.");
 
 			var aTv = new Smx2CTestValue(number, exponent, precision, scalarMath2C); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			Debug.WriteLine($"The StringValue before negation from the Smx2C var is {aTv}.");
@@ -312,7 +360,7 @@ namespace EngineTest
 			var bTv = new Smx2CTestValue(aSmx2C2, scalarMath2C);
 			Debug.WriteLine($"The StringValue after negation (and back) from the aSmx2C2 var is {bTv}.");
 
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aRValue, bTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aTv.RValue, bTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
 			//Assert.True(haveRequiredPrecision);
 			Assert.Equal(strA, strB);
 		}

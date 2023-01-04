@@ -497,7 +497,19 @@ namespace MSetGenP
 
 			for (var i = 0; i < resultLength; i++)
 			{
-				var nv = left[i] + right[i] + carry;
+				//var nv = left[i] + right[i] + carry;
+
+				// Since we are not using two's compliment, we don't need to use the Reserved Bit
+
+				ulong nv;
+
+				var lChopped = left[i] & HIGH33_MASK;
+				var rChopped = right[i] & HIGH33_MASK;
+
+				checked
+				{
+					nv = lChopped + rChopped + carry;
+				}
 
 				NumberOfSplits++;
 				var (hi, lo) = ScalarMathHelper.Split(nv);

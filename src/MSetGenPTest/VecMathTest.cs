@@ -132,7 +132,7 @@ namespace EngineTest
 			//var bTv = new Smx2CTestValue("67781838", -36, precision, vecMath); // 9.8635556059889517056815666506964e-4
 			//Debug.WriteLine($"The StringValue for b is {bTv}.");
 
-			var aTv = new VecTestValue("+27797772040142849", -62, precision, vecMath); // -6.02768096723593793141715568851e-3
+			var aTv = new VecTestValue("27797772040142849", -62, precision, vecMath); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var bTv = new VecTestValue("-4548762148012033", -62, precision, vecMath); // 9.8635556059889517056815666506964e-4

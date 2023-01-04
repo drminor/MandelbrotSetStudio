@@ -1,4 +1,6 @@
 ﻿using MSS.Common;
+using MSS.Types;
+using MSS.Types.DataTransferObjects;
 using System.Buffers;
 using System.Diagnostics;
 using System.Numerics;
@@ -7,6 +9,7 @@ using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
@@ -23,6 +26,7 @@ namespace MSetGenP
 
 		//private const ulong HIGH_MASK = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		//private static readonly Vector256<ulong> HIGH_MASK_VEC = Vector256.Create(HIGH_MASK);
+
 
 		private const ulong HIGH33_MASK = 0x000000007FFFFFFF; // bits 0 - 30 are set.
 		private static readonly Vector256<ulong> HIGH33_MASK_VEC = Vector256.Create(HIGH33_MASK);
@@ -68,6 +72,9 @@ namespace MSetGenP
 
 			// Initially, all values are 'In Play.'
 			DoneFlags = new bool[ValueCount];
+
+			BlockPosition = new BigVector();
+			RowNumber = 0;
 
 			ApFixedPointFormat = apFixedPointFormat;
 			Threshold = threshold;
@@ -207,6 +214,8 @@ namespace MSetGenP
 
 		public int[] InPlayList { get; set; }   // Vector-Level 
 		public bool[] DoneFlags { get; set; }   // Value-Level
+		public BigVector BlockPosition { get; set; }
+		public int RowNumber { get; set; }
 
 		public uint MaxIntegerValue { get; init; }
 
@@ -644,9 +653,20 @@ namespace MSetGenP
 			for (var i = 0; i < resultLength; i++)
 			{
 				ulong nv;
+
+				//checked
+				//{
+				//	nv = left[i] + right[i] + carry;
+				//}
+
+				// Since we are not using two's compliment, we don't need to use the Reserved Bit
+
+				var lChopped = left[i] & HIGH33_MASK;
+				var rChopped = right[i] & HIGH33_MASK;
+
 				checked
 				{
-					nv = left[i] + right[i] + carry;
+					nv =  lChopped + rChopped + carry;
 				}
 
 				var (hi, lo) = ScalarMathHelper.Split(nv);

@@ -1,6 +1,7 @@
 ﻿using MEngineDataContracts;
 using MSS.Common.DataTransferObjects;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace MSetGenP
 {
@@ -41,7 +42,8 @@ namespace MSetGenP
 			var s2 = startingCy.GetStringValue();
 			var s3 = delta.GetStringValue();
 
-			var blockPos = mapSectionRequest.BlockPosition;
+			//var blockPos = mapSectionRequest.BlockPosition;
+			var blockPos = dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
 
 			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 			Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}.");
@@ -55,10 +57,17 @@ namespace MSetGenP
 
 			//	var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
 			//	return result;
-
 			//}
 
-			//var cRs = smxMathHelper.BuildMapPoints(startingCx, startingCy, delta, blockSize, out var cIs);
+			//// Move directly to a block where at least one sample point reaches the iteration target.
+			//if (BigInteger.Abs(blockPos.Y) > 1 || BigInteger.Abs(blockPos.X) > 3)
+			//{
+			//	var escapeVelocities = new ushort[blockSize.NumberOfCells];
+			//	var compressedDoneFlags = CompressTheDoneFlags(doneFlags);
+
+			//	var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
+			//	return result;
+			//}
 
 			var stride = (byte)blockSize.Width;
 			var samplePointOffsets = smxMathHelper.BuildSamplePointOffsets(delta, stride);
@@ -80,7 +89,7 @@ namespace MSetGenP
 				{
 					var cIs = new FPValues(samplePointsY2C[j], stride);
 					//Array.Copy(doneFlags, j * stride, rowDoneFlags, 0, stride);
-					var rowCounts = subSectionGeneratorVector.GenerateMapSection(cRs, cIs, out var rowDoneFlags);
+					var rowCounts = subSectionGeneratorVector.GenerateMapSection(blockPos, j, cRs, cIs, out var rowDoneFlags);
 					Array.Copy(rowCounts, 0, counts, j * stride, stride);
 					Array.Copy(rowDoneFlags, 0, doneFlags, j * stride, stride);
 				}
@@ -111,7 +120,7 @@ namespace MSetGenP
 				{
 					var cIs = new FPValues(samplePointsY[j], stride);
 					//Array.Copy(doneFlags, j * stride, rowDoneFlags, 0, stride);
-					var rowCounts = subSectionGeneratorVector.GenerateMapSection(cRs, cIs, out var rowDoneFlags);
+					var rowCounts = subSectionGeneratorVector.GenerateMapSection(blockPos, j, cRs, cIs, out var rowDoneFlags);
 					Array.Copy(rowCounts, 0, counts, j * stride, stride);
 					Array.Copy(rowDoneFlags, 0, doneFlags, j * stride, stride);
 				}

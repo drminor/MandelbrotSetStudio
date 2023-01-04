@@ -11,6 +11,8 @@ namespace MSetGenP
 
 		public bool IsSigned => true;
 
+		private const ulong LOW31_BITS_SET = 0x000000007FFFFFFF; // bits 0 - 30 are set.
+
 		private static readonly bool USE_DET_DEBUG = false;
 
 		#endregion
@@ -319,12 +321,16 @@ namespace MSetGenP
 			if (carry > 0)
 			{
 				NumberOfACarries++;
-				result = CreateNewMaxIntegerSmx2C(precision);
+				result = CreateSmx2C(mantissa, precision);
+				//result = CreateNewMaxIntegerSmx2C(precision);
 			}
 			else
 			{
 				result = CreateSmx2C(mantissa, precision);
 			}
+
+			//result = CreateSmx2C(mantissa, precision);
+
 
 			return result;
 		}
@@ -336,24 +342,33 @@ namespace MSetGenP
 				throw new ArgumentException($"The left and right arguments must have equal length. left.Length: {left.Length}, right.Length: {right.Length}.");
 			}
 
-			var resultLength = left.Length;
-			var result = new ulong[resultLength];
+			var limbCount = left.Length;
+			var result = new ulong[limbCount];
 
 			carry = 0uL;
 
-			for (var i = 0; i < resultLength; i++)
+			for (var limbPtr = 0; limbPtr < limbCount; limbPtr++)
 			{
 				ulong newValue;
 
+				//var lChopped = left[limbPtr] & LOW31_BITS_SET;
+				//var rChopped = right[limbPtr] & LOW31_BITS_SET;
+
+				//checked
+				//{
+				//	newValue =  lChopped + rChopped + carry;
+				//}
+
 				checked
 				{
-					newValue = left[i] + right[i] + carry;
+					newValue = left[limbPtr] + right[limbPtr] + carry;
 				}
 
-				var (lo, newCarry) = ScalarMathHelper.GetResultWithCarrySigned(newValue, isMsl: false);
-				result[i] = lo;
+				var (lo, newCarry) = ScalarMathHelper.GetResultWithCarrySigned(newValue, isMsl: limbPtr == limbCount - 1);
+				result[limbPtr] = lo;
 
-				//if (USE_DET_DEBUG) ReportForAddition(i, left[i], right[i], carry, newValue, lo, newCarry);
+				if (USE_DET_DEBUG)
+					ReportForAddition(limbPtr, left[limbPtr], right[limbPtr], carry, newValue, lo, newCarry);
 
 				carry = newCarry;
 			}
@@ -403,16 +418,18 @@ namespace MSetGenP
 
 		public Smx Convert(Smx2C smx2C)
 		{
-			// Convert the partial word limbs into standard binary form
-			var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa);
+			//// Convert the partial word limbs into standard binary form
+			//var un2cMantissa = ScalarMathHelper.ConvertFrom2C(smx2C.Mantissa);
 
-			var clearedResults = ScalarMathHelper.ClearHighHalves(un2cMantissa, null);
+			//var clearedResults = ScalarMathHelper.ClearHighHalves(un2cMantissa, null);
 
-			// Use an RValue to prepare for the call to CreateSmx
-			var sign = ScalarMathHelper.GetSign(clearedResults);
-			var rvalue = ScalarMathHelper.CreateRValue(sign, clearedResults, smx2C.Exponent, smx2C.Precision);
+			//// Use an RValue to prepare for the call to CreateSmx
+			//var sign = ScalarMathHelper.GetSign(clearedResults);
+			//var rValue = ScalarMathHelper.CreateRValue(sign, clearedResults, smx2C.Exponent, smx2C.Precision);
 
-			var result = ScalarMathHelper.CreateSmx(rvalue, ApFixedPointFormat);
+			var rValue = ScalarMathHelper.CreateRValue(smx2C);
+
+			var result = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
 
 			return result;
 		}

@@ -239,10 +239,11 @@ namespace MSetGenP
 
 				var newSign = !signs[i];
 
-				var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, signExtendIntoHiWord: false);
+				var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, includeTopHalves: false);
 
-				SetSign(i, newSign);
-				SetMantissa(result.Mantissas, i, non2CPWLimbs);
+				result.SetSign(i, newSign);
+				result.SetMantissa(i, non2CPWLimbs);
+				//SetMantissa(result.Mantissas, i, non2CPWLimbs);
 			}
 
 			return result;
@@ -285,11 +286,9 @@ namespace MSetGenP
 
 					if (!signs[valPtr])
 					{
-						var partialWordLimbs = GetMantissa(valPtr);
-
-						var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, signExtendIntoHiWord: true);
-
-						SetMantissa(result.Mantissas, valPtr, non2CPWLimbs);
+						var partialWordLimbs = result.GetMantissa(valPtr);
+						var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, includeTopHalves: true);
+						result.SetMantissa(valPtr, non2CPWLimbs);
 					}
 				}
 			}
@@ -297,20 +296,19 @@ namespace MSetGenP
 			return result;
 		}
 
+		//private ulong[] GetMantissa(ulong[][] mArrays, int index)
+		//{
+		//	var result = mArrays.Select(x => x[index]).ToArray();
+		//	return result;
+		//}
 
-		private ulong[] GetMantissa(ulong[][] mArrays, int index)
-		{
-			var result = mArrays.Select(x => x[index]).ToArray();
-			return result;
-		}
-
-		public void SetMantissa(ulong[][] mArrays, int index, ulong[] values)
-		{
-			for (var i = 0; i < values.Length; i++)
-			{
-				mArrays[i][index] = values[i];
-			}
-		}
+		//public void SetMantissa(ulong[][] mArrays, int index, ulong[] values)
+		//{
+		//	for (var i = 0; i < values.Length; i++)
+		//	{
+		//		mArrays[i][index] = values[i];
+		//	}
+		//}
 
 		public ulong[] GetMantissa(int index)
 		{

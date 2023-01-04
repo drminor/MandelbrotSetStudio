@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MSS.Types;
+using MSS.Types.DataTransferObjects;
+using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -65,7 +67,7 @@ namespace MSetGenP
 			NumberOfMCarries += unsignedVecMath.NumberOfMCarries;
 		}
 
-		public ushort[] GenerateMapSection(FPValues cRs, FPValues cIs, out bool[] doneFlags)
+		public ushort[] GenerateMapSection(BigVector blockPosition, int rowNumber, FPValues cRs, FPValues cIs, out bool[] doneFlags)
 		{
 			var resultLength = cRs.Length;
 
@@ -84,6 +86,8 @@ namespace MSetGenP
 			unsignedVecMath.DoneFlags = doneFlags;
 
 			var inPlayList = unsignedVecMath.InPlayList;
+			unsignedVecMath.BlockPosition = blockPosition;
+			unsignedVecMath.RowNumber = rowNumber;
 
 			// Perform the first iteration. 
 			var zRs = cRs.Clone();
@@ -126,17 +130,85 @@ namespace MSetGenP
 			return counts;
 		}
 
-		private int[] UpdateTheDoneFlags(VecMath smxVecMathHelper, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
+		private int[] UpdateTheDoneFlags(VecMath unsignedVecMath, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
 		{
-			smxVecMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
+			unsignedVecMath.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
 
-			var vectorsNoLongerInPlay = UpdateCounts(inPlayList, escapedFlags, counts, doneFlags);
+			var vectorsNoLongerInPlay = UpdateCounts(unsignedVecMath, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags);
 			var updatedInPlayList = GetUpdatedInPlayList(inPlayList, vectorsNoLongerInPlay);
 
 			return updatedInPlayList;
 		}
 
-		private List<int> UpdateCounts(int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags)
+		private List<int> UpdateCounts(VecMath unsignedVecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags)
+		{
+			var numberOfLanes = Vector256<ulong>.Count;
+			var toBeRemoved = new List<int>();
+
+			var indexes = inPlayList;
+			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			{
+				var idx = indexes[idxPtr];
+
+				var allCompleted = true;
+
+				var stPtr = idx * numberOfLanes;
+
+				for (var cntrPtr = stPtr; cntrPtr < stPtr + numberOfLanes; cntrPtr++)
+				{
+					var doneFlag = doneFlags[cntrPtr];
+
+					if (doneFlag)
+					{
+						continue;
+					}
+
+					var cnt = counts[cntrPtr] + 1;
+					counts[cntrPtr] = (ushort)cnt;
+
+					var escaped = escapedFlags[cntrPtr];
+
+					// TODO: Need to save the ZValues to a safe place to prevent further updates.
+					if (escaped)
+					{
+						doneFlags[cntrPtr] = true;
+						//var sacResult = escaped;
+						//var rValDiag = unsignedVecMath.GetSmxAtIndex(sumOfSqrs, stPtr).GetStringValue();
+						//Debug.WriteLine($"Bailed out after {cnt}: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {unsignedVecMath.BlockPosition}, Row: {unsignedVecMath.RowNumber}, Col: {cntrPtr}.");
+					}
+					else if (cnt >= _targetIterations)
+					{
+						doneFlags[cntrPtr] = true;
+						//var sacResult = escaped;
+						//var rValDiag = unsignedVecMath.GetSmxAtIndex(sumOfSqrs, stPtr).GetStringValue();
+						//Debug.WriteLine($"Target reached: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {unsignedVecMath.BlockPosition}, Row: {unsignedVecMath.RowNumber}, Col: {cntrPtr}.");
+					}
+					else
+					{
+						allCompleted = false;
+					}
+				}
+
+				if (allCompleted)
+				{
+					toBeRemoved.Add(idx);
+
+					ConfirmDoneFlags(stPtr, numberOfLanes, doneFlags);
+				}
+			}
+
+			return toBeRemoved;
+		}
+
+		private void ConfirmDoneFlags(int stPtr, int numberOfLanes, bool[] doneFlags)
+		{
+			if (doneFlags.Skip(stPtr).Take(numberOfLanes).Any(x => !x))
+			{
+				Debug.WriteLine("Huh?");
+			}
+		}
+
+		private List<int> UpdateCountsOld (int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags)
 		{
 			var lanes = Vector256<ulong>.Count;
 			var toBeRemoved = new List<int>();

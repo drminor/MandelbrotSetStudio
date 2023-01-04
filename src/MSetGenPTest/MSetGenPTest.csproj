@@ -42,7 +42,6 @@
   <ItemGroup>
     <ProjectReference Include="..\MSetGenP\MSetGenP.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
-    <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
   </ItemGroup>
 
 </Project>

@@ -90,16 +90,22 @@ namespace EngineTest
 
 			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, THRESHOLD);
 
-			//var aTv = new Smx2CTestValue("-414219082", -36, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
-			//Debug.WriteLine($"The StringValue for a is {aTv}.");
+			//var aNumber = "-343597";
+			//var bNumber = "-343707";
+			//var exponent = -12;
 
-			//var bTv = new Smx2CTestValue("67781838", -36, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
-			//Debug.WriteLine($"The StringValue for b is {bTv}.");
+			var aNumber = "414219082";
+			var bNumber = "67781838";
+			var exponent = -37;                 //9.8635556059889495372772216796875e-4
 
-			var aTv = new Vec2CTestValue("27797772040142849", -63, precision, vecMath2C); // -6.02768096723593793141715568851e-3
+			//var aNumber = "27797772040142849";
+			//var bNumber = "4548762148012033";
+			//var exponent = -62;
+
+			var aTv = new Vec2CTestValue(aNumber, exponent, precision, vecMath2C); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			var bTv = new Vec2CTestValue("4548762148012033", -63, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
+			var bTv = new Vec2CTestValue(bNumber, exponent, precision, vecMath2C); // 9.8635556059889517056815666506964e-4
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFPValues();
@@ -159,10 +165,10 @@ namespace EngineTest
 		}
 
 		[Fact]
-		public void AddLeftIsPosRightIsNeg()
+		public void Add_LeftIs_Pos_RightIs_Neg()
 		{
 			var precision = 25;
-			var limbCount = 4;
+			var limbCount = 5;
 
 			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, THRESHOLD);
 
@@ -195,10 +201,10 @@ namespace EngineTest
 		}
 
 		[Fact]
-		public void AddLeftIs_Big_Pos_RightIsNeg()
+		public void Add_LeftIs_BigPos_RightIs_Neg()
 		{
 			var precision = 38;
-			var limbCount = 5;
+			var limbCount = 6;
 
 			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, THRESHOLD);
 
@@ -221,6 +227,10 @@ namespace EngineTest
 			var cTv = new Vec2CTestValue(cFPValues, vecMath2C);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
+			var doneFlags = vecMath2C.DoneFlags.Select(x => x.ToString()).ToArray();
+			var doneFlagsStr = string.Join(", ", doneFlags);
+			Debug.WriteLine(doneFlagsStr);
+
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
 			Debug.WriteLine($"The StringValue for the expected cSmx is {cStrComp}.");
@@ -231,10 +241,10 @@ namespace EngineTest
 		}
 
 		[Fact]
-		public void AddLeftIsNegRightIsPos()
+		public void Add_LeftIs_Neg_RightIs_Pos()
 		{
 			var precision = 40;
-			var limbCount = 3;
+			var limbCount = 4;
 
 			var vecMath2C = BuildTheVecMathHelper2C(limbCount, VALUE_COUNT, THRESHOLD);
 

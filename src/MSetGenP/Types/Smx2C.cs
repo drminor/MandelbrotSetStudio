@@ -11,31 +11,31 @@ namespace MSetGenP
 	{
 		#region Constructor
 
-		public Smx2C(RValue rValue, byte bitsBeforeBP) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, rValue.Precision)
-		{ }
+		//public Smx2C(RValue rValue, byte bitsBeforeBP) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, rValue.Precision)
+		//{ }
 
-		public Smx2C(RValue rValue, byte bitsBeforeBP, int precision) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, precision)
-		{ }
+		////public Smx2C(RValue rValue, byte bitsBeforeBP, int precision) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, precision)
+		////{ }
 
-		private Smx2C(BigInteger bigInteger, int exponent, byte bitsBeforeBP) : this(bigInteger, exponent, bitsBeforeBP, RMapConstants.DEFAULT_PRECISION)
-		{ }
+		////private Smx2C(BigInteger bigInteger, int exponent, byte bitsBeforeBP) : this(bigInteger, exponent, bitsBeforeBP, RMapConstants.DEFAULT_PRECISION)
+		////{ }
 
-		private Smx2C(BigInteger bigInteger, int exponent, byte bitsBeforeBP, int precision)
-		{
-			if (exponent == 1)
-			{
-				Debug.WriteLine("WARNING the exponent is 1.");
-			}
+		//private Smx2C(BigInteger bigInteger, int exponent, byte bitsBeforeBP, int precision)
+		//{
+		//	if (exponent == 1)
+		//	{
+		//		Debug.WriteLine("WARNING the exponent is 1.");
+		//	}
 
-			Sign = bigInteger < 0 ? false : true;
-			var un2Cmantissa = ScalarMathHelper.ToPwULongs(bigInteger);
+		//	Sign = bigInteger < 0 ? false : true;
+		//	var un2Cmantissa = ScalarMathHelper.ToPwULongs(bigInteger);
 
-			Mantissa = ScalarMathHelper.ConvertTo2C(un2Cmantissa, Sign);
+		//	Mantissa = ScalarMathHelper.ConvertTo2C(un2Cmantissa, Sign);
 
-			Exponent = exponent;
-			Precision = precision;
-			BitsBeforeBP = bitsBeforeBP;
-		}
+		//	Exponent = exponent;
+		//	Precision = precision;
+		//	BitsBeforeBP = bitsBeforeBP;
+		//}
 
 		public Smx2C(bool sign, ulong[] mantissa, int exponent, byte bitsBeforeBP, int precision)
 		{

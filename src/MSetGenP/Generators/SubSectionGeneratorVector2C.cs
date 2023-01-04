@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MSS.Types;
+using MSS.Types.DataTransferObjects;
+using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -94,7 +96,7 @@ namespace MSetGenP
 			NumberOfMCarries += fPVecMathHelper.NumberOfMCarries;
 		}
 
-		public ushort[] GenerateMapSection(FPValues cRs, FPValues cIs, out bool[] doneFlags)
+		public ushort[] GenerateMapSection(BigVector blockPosition, int rowNumber, FPValues cRs, FPValues cIs, out bool[] doneFlags)
 		{
 			var resultLength = cRs.Length;
 
@@ -126,6 +128,8 @@ namespace MSetGenP
 
 			inPlayList = UpdateTheDoneFlags(vecMath2C, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
 			vecMath2C.InPlayList = inPlayList;
+			vecMath2C.BlockPosition = blockPosition;
+			vecMath2C.RowNumber = rowNumber;
 
 			var iterator = new IteratorVector(vecMath2C, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
@@ -158,17 +162,17 @@ namespace MSetGenP
 			return counts;
 		}
 
-		private int[] UpdateTheDoneFlags(VecMath2C fpVecMathHelper, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
+		private int[] UpdateTheDoneFlags(VecMath2C vecMath2C, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
 		{
-			fpVecMathHelper.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
+			vecMath2C.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
 
-			var vectorsNoLongerInPlay = UpdateCounts(inPlayList, escapedFlags, counts, doneFlags);
+			var vectorsNoLongerInPlay = UpdateCounts(vecMath2C, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags);
 			var updatedInPlayList = GetUpdatedInPlayList(inPlayList, vectorsNoLongerInPlay);
 
 			return updatedInPlayList;
 		}
 
-		private List<int> UpdateCounts(int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags)
+		private List<int> UpdateCounts(VecMath2C vecMath2C, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags)
 		{
 			var numberOfLanes = Vector256<ulong>.Count;
 			var toBeRemoved = new List<int>();
@@ -200,10 +204,19 @@ namespace MSetGenP
 					if (escaped)
 					{
 						doneFlags[cntrPtr] = true;
+
+						//var sacResult = escaped;
+						//var rValDiag = vecMath2C.GetSmx2CAtIndex(sumOfSqrs, stPtr).GetStringValue();
+						//Debug.WriteLine($"Bailed out after {cnt}: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {vecMath2C.BlockPosition}, Row: {vecMath2C.RowNumber}, Col: {cntrPtr}.");
 					}
 					else if (cnt >= _targetIterations)
 					{
 						doneFlags[cntrPtr] = true;
+
+						//var sacResult = escaped;
+						//var rValDiag = vecMath2C.GetSmx2CAtIndex(sumOfSqrs, stPtr).GetStringValue();
+						//Debug.WriteLine($"Target reached: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {vecMath2C.BlockPosition}, Row: {vecMath2C.RowNumber}, Col: {cntrPtr}.");
+
 					}
 					else
 					{

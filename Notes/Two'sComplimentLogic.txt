@@ -162,5 +162,34 @@ If we were given 64 bits, we could compute the sum where the total bits being su
 For example we could sum a 30-bit and a 31-bit pair in one go.
 
 
+Examples of sign extension and how to handle the carried bit
+
+  00 111		(carry)
+  00 0111		(7)
++ 00 0011		(3)
+==========
+  00 1010		(10) => 2 (0010),  carry 8 (1000)
+
+
+ 11 111		`	(carry)
+ 00 0111		(7)
++01 1101		(-3)
+==========
+ 10 0100		(4) => 4 (0100), carry 0
+
+
+ 11 100		(carry)
+ 11 1110		(-2)
++11 1101		(-3)
+==========
+ 01 1011		(-5) => -5 (1011), carry 0
+
+ 11 000		(carry)
+ 11 1101		(-3)
++11 1010		(-6)
+==========
+ 11 0111		(-9) => 7 (111), carry -16 (10000)
+
+
 
 

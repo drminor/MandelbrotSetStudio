@@ -22,8 +22,8 @@ namespace MSetGenP
 
 		uint MaxIntegerValue { get; init; }
 		uint Threshold { get; init; }
-		double MslWeight { get; init; }
-		Vector256<double> MslWeightVector { get; init; }
+		//double MslWeight { get; init; }
+		//Vector256<double> MslWeightVector { get; init; }
 
 		int NumberOfACarries { get; }
 		int NumberOfMCarries { get; }

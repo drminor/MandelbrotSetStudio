@@ -396,7 +396,7 @@ namespace EngineTest
 		public void AddTwoPositive()
 		{
 			var precision = 53;
-			var limbCount = 4;
+			var limbCount = 3;
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
@@ -434,7 +434,7 @@ namespace EngineTest
 		[Fact]
 		public void AddTwoNegative()
 		{
-			var precision = 53;
+			var precision = 23;
 			var limbCount = 3;
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
@@ -471,10 +471,10 @@ namespace EngineTest
 		}
 
 		[Fact]
-		public void AddLeftIs_Pos_RightIsNeg()
+		public void Add_LeftIs_Pos_RightIs_Neg()
 		{
-			var precision = 36;
-			var limbCount = 4;
+			var precision = 25;
+			var limbCount = 5;
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
@@ -482,9 +482,9 @@ namespace EngineTest
 			//var bNumber = "67781838";
 			//var exponent = -36;
 
-			var aNumber = "-27797772040142849";
-			var bNumber = "4548762148012033";
-			var exponent = -65;
+			var aNumber = "27797772040142849";
+			var bNumber = "-4548762148012033";
+			var exponent = -55;
 
 			// SWITCHED
 			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // 9.8635556059889517056815666506964e-4
@@ -508,10 +508,10 @@ namespace EngineTest
 		}
 
 		[Fact]
-		public void AddLeftIs_Big_Pos_RightIsNeg()
+		public void Add_LeftIs_BigPos_RightIs_Neg()
 		{
 			var precision = 38;
-			var limbCount = 5; // Target Exponent = -147 (31 x 5 = 155, subtract 8 = 147. 5 x 32 = 160
+			var limbCount = 6; // Target Exponent = -147 (31 x 5 = 155, subtract 8 = 147. 5 x 32 = 160
 
 			var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(limbCount), THRESHOLD);
 
@@ -553,7 +553,7 @@ namespace EngineTest
 		}
 
 		[Fact]
-		public void AddLeftIsNegRightIsPos()
+		public void AddLeftIs_Neg_RightIs_Pos()
 		{
 			var precision = 38;
 			var limbCount = 5;
@@ -565,7 +565,7 @@ namespace EngineTest
 			//var exponent = -36;
 
 			var aNumber = "-27797772040142849";
-			var bNumber = "4548762148012033";
+			var bNumber =   "4548762148012033";
 			var exponent = -65;
 
 			var aTv = new Smx2CTestValue(aNumber, exponent, precision, scalarMath2C); // -6.02768096723593793141715568851e-3
