@@ -1,8 +1,6 @@
 ﻿using MEngineDataContracts;
 using MSS.Common.DataTransferObjects;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.Numerics;
 
 namespace MSetGenP
 {
@@ -79,7 +77,8 @@ namespace MSetGenP
 
 			if (use2CVersion)
 			{
-				var subSectionGeneratorVector = new SubSectionGeneratorVector2C(fixedPointFormat, targetIterations, threshold);
+				IVecMath vecMath2C = new VecMath2C(fixedPointFormat, stride, threshold);
+				var subSectionGeneratorVector = new SubSectionGeneratorVector(vecMath2C, targetIterations);
 
 				var samplePointsX2C = Convert(samplePointsX);
 				var samplePointsY2C = Convert(samplePointsY);
@@ -115,9 +114,11 @@ namespace MSetGenP
 			}
 			else
 			{
+				IVecMath vecMath = new VecMath(fixedPointFormat, stride, threshold);
+				var subSectionGeneratorVector = new SubSectionGeneratorVector(vecMath, targetIterations);
+
 				var cRs = new FPValues(samplePointsX);
 
-				var subSectionGeneratorVector = new SubSectionGeneratorVector(fixedPointFormat, targetIterations, threshold);
 
 				for (int j = 0; j < samplePointsY.Length; j++)
 				{

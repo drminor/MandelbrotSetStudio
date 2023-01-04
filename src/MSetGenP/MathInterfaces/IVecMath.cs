@@ -1,11 +1,17 @@
-﻿using System.Runtime.Intrinsics;
+﻿using MSS.Common;
+using MSS.Types;
+using System.Runtime.Intrinsics;
 
 namespace MSetGenP
 {
 	public interface IVecMath
 	{
-		int[] InPlayList { get; set; }
-		bool[] DoneFlags { get; set; }
+		int[] InPlayList { get; set; }   // Vector-Level 
+		bool[] DoneFlags { get; set; }   // Value-Level	
+
+		BigVector BlockPosition { get; set; }
+		int RowNumber { get; set; }
+
 
 		int VecCount { get; init; }
 		int ValueCount { get; init; }
@@ -38,8 +44,9 @@ namespace MSetGenP
 
 		void IsGreaterOrEqThanThreshold(FPValues a, bool[] results);
 
-		Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = 53);
+		Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION);
 
+		Smx2C GetSmx2CAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION);
 
 	}
 }

@@ -35,33 +35,33 @@ namespace MSetGenP
 
 		#region Public Methods
 
-		public void GenerateMapSection(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, ushort[] counts, bool[] doneFlags)
-		{
-			var resultLength = cRs.Length;
+		//public void GenerateMapSection(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, ushort[] counts, bool[] doneFlags)
+		//{
+		//	var resultLength = cRs.Length;
 
-			var zRSqrs = new FPValues(cRs.LimbCount, cRs.Length);
-			var zISqrs = new FPValues(cIs.LimbCount, cIs.Length);
-			var sumOfSqrs = new FPValues(cRs.LimbCount, cRs.Length);
+		//	var zRSqrs = new FPValues(cRs.LimbCount, cRs.Length);
+		//	var zISqrs = new FPValues(cIs.LimbCount, cIs.Length);
+		//	var sumOfSqrs = new FPValues(cRs.LimbCount, cRs.Length);
 
-			var escapedFlags = new bool[resultLength];
+		//	var escapedFlags = new bool[resultLength];
 
-			var fPVecMathHelper = new VecMath2C(_apFixedPointFormat1, resultLength, _threshold);
+		//	var fPVecMathHelper = new VecMath2C(_apFixedPointFormat1, resultLength, _threshold);
 
-			var inPlayList = BuildTheInplayList(doneFlags, resultLength);
-			fPVecMathHelper.InPlayList = inPlayList;
+		//	var inPlayList = BuildTheInplayList(doneFlags, resultLength);
+		//	fPVecMathHelper.InPlayList = inPlayList;
 
-			var iterator = new IteratorVector(fPVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+		//	var iterator = new IteratorVector(fPVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
-			while (inPlayList.Length > 0)
-			{
-				iterator.Iterate();
-				fPVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
-				UpdateTheDoneFlags(fPVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
-			}
+		//	while (inPlayList.Length > 0)
+		//	{
+		//		iterator.Iterate();
+		//		fPVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
+		//		UpdateTheDoneFlags(fPVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
+		//	}
 
-			NumberOfACarries += fPVecMathHelper.NumberOfACarries;
-			NumberOfMCarries += fPVecMathHelper.NumberOfMCarries;
-		}
+		//	NumberOfACarries += fPVecMathHelper.NumberOfACarries;
+		//	NumberOfMCarries += fPVecMathHelper.NumberOfMCarries;
+		//}
 
 		public ushort[] GenerateMapSection(BigVector blockPosition, int rowNumber, FPValues cRs, FPValues cIs, out bool[] doneFlags)
 		{
@@ -96,14 +96,14 @@ namespace MSetGenP
 			vecMath2C.BlockPosition = blockPosition;
 			vecMath2C.RowNumber = rowNumber;
 
-			var iterator = new IteratorVector(vecMath2C, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+			var iterator = new IteratorVector(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
 			while (inPlayList.Length > 0)
 			{
 				var aCarriesSnap = vecMath2C.NumberOfACarries;
 				var doneFlagsCnt = doneFlags.Count(x => x);
 
-				iterator.IterateSmx2C();
+				iterator.IterateSmx2C(vecMath2C);
 				vecMath2C.Add(zRSqrs, zISqrs, sumOfSqrs);
 
 				//var aCarriesDif = smxVecMathHelper.NumberOfACarries - aCarriesSnap;

@@ -5,15 +5,15 @@ namespace MSetGenP
 	internal ref struct IteratorScalar
 	{
 		private ScalarMath _scalarMath;
-		private int _targetIterations;
-
 		private ScalarMath2C _scalarMath2C;
 
-		#region Constructor
+		private int _targetIterations;
 
-		public IteratorScalar(ScalarMath smxMathHelper, int targetIterations)
+		#region Constructors
+
+		public IteratorScalar(ScalarMath scalarMath, int targetIterations)
 		{
-			_scalarMath = smxMathHelper;
+			_scalarMath = scalarMath;
 			_scalarMath2C = new ScalarMath2C(_scalarMath.ApFixedPointFormat, _scalarMath.Threshold);
 
 			_targetIterations = targetIterations;

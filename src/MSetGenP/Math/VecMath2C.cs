@@ -600,16 +600,22 @@ namespace MSetGenP
 
 		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			throw new NotImplementedException();
+			var mantissa = fPValues.GetMantissa(index);
+			var sign = ScalarMathHelper.GetSign(mantissa);
+
+			var nrmMantissa = ScalarMathHelper.ConvertFrom2C(mantissa);
+
+			var result = new Smx(sign, nrmMantissa, TargetExponent, BitsBeforeBP, precision);
+
+			return result;
 		}
 
 		public Smx2C GetSmx2CAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			var mantissa = fPValues.GetMantissa(index);
-
 			var sign = ScalarMathHelper.GetSign(mantissa);
-
 			var result = new Smx2C(sign, mantissa, TargetExponent, BitsBeforeBP, precision);
+
 			return result;
 		}
 

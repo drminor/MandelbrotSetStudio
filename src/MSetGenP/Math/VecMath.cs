@@ -1,15 +1,10 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using MSS.Types.DataTransferObjects;
 using System.Buffers;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Threading;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGenP
 {
@@ -759,17 +754,22 @@ namespace MSetGenP
 		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			var mantissa = fPValues.GetMantissa(index);
-
-			//var sign = ScalarMathHelper.GetSign(mantissa);
 			var sign = fPValues.GetSign(index);
-
 			var result = new Smx(sign, mantissa, TargetExponent, BitsBeforeBP, precision);
+
 			return result;
 		}
 
 		public Smx2C GetSmx2CAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			throw new NotImplementedException();
+			var mantissa = fPValues.GetMantissa(index);
+			var sign = ScalarMathHelper.GetSign(mantissa);
+
+			var nrmMantissa = ScalarMathHelper.ConvertTo2C(mantissa, sign);
+
+			var result = new Smx2C(sign, nrmMantissa, TargetExponent, BitsBeforeBP, precision);
+
+			return result;
 		}
 
 		#endregion
