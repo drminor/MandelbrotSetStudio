@@ -43,7 +43,9 @@ namespace MSetGenP
 			var s2 = startingCy.GetStringValue();
 			var s3 = delta.GetStringValue();
 
-			var blockPos = mapSectionRequest.BlockPosition;
+			//var blockPos = mapSectionRequest.BlockPosition;
+			var blockPos = dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+
 			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 
 			var counts = GenerateMapSection(scalarMath, startingCx, startingCy, delta, blockSize, targetIterations, 

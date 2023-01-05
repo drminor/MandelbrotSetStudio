@@ -1,4 +1,5 @@
-﻿namespace MSS.Common.APValues
+﻿
+namespace MSS.Common.APValues
 {
 	public class MathOpCounts
 	{
@@ -20,6 +21,17 @@
 
 		public long NumberOfGrtrThanOpsFP { get; set; }
 		public long NumberOfGrtrThanOps { get; set; }
+
+
+		public override string ToString()
+		{
+			var result = $"Splits: {NumberOfSplits}\tCarries: {NumberOfGetCarries}\tGrtrThanOps: {NumberOfGrtrThanOps}" +
+				$"\tAdd Carries: {NumberOfACarries}\tMult-Carries: {NumberOfMCarries}";
+
+			return result;
+		}
+
+
 
 	}
 }
