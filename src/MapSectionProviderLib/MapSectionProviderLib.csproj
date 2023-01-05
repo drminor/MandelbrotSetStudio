@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
     <ProjectReference Include="..\MSetGenP\MSetGenP.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>

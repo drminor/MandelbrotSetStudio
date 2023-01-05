@@ -1,4 +1,5 @@
-﻿using MEngineDataContracts;
+﻿using MEngineClient;
+using MEngineDataContracts;
 using MSetGenP;
 using MSS.Common;
 using System;
@@ -90,6 +91,8 @@ namespace MapSectionProviderLib
 			return workQueueProcessors;
 		}
 
+		// TODO: Fix the MapSectionGeneratorProcessor's Constructor. We need to provide a IMEngineClient factory instead of an array of IMEngineClient instances.
+
 		private IList<Task> CreateTheQueueProcessorsN(bool useAllCores, ref IMEngineClient[] clients)
 		{
 			int localTaskCnt;
@@ -118,7 +121,8 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					nClient = new MClientLocalScalar();
+					//nClient = new MClientLocalScalar();
+					nClient = new MClientLocal();
 				}
 
 				workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(nClient/*, _mapSectionPersistProcessor*/, _cts.Token)));

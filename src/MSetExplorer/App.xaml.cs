@@ -31,8 +31,11 @@ namespace MSetExplorer
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
 		//private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.InProcess;
-		private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.LocalVector;
 		//private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.LocalScalar;
+
+		//private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.LocalVector;
+		private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.LocalVectorMark2;
+
 
 		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
 		private static readonly bool USE_LOCAL_ENGINE = false; // If true, we will host a server -- AND include it in the list of servers to use by our client.
@@ -142,6 +145,7 @@ namespace MSetExplorer
 				MEngineClientImplementation.InProcess => throw new NotImplementedException("The MSetExplorer project is not compatible with the MapSetGenerator C++ project."), // CreateInProcessMEngineClient(mapSectionAdapter, out _mapSectionPersistProcessor),
 				MEngineClientImplementation.LocalScalar => new IMEngineClient[] { new MClientLocalScalar() },
 				MEngineClientImplementation.LocalVector => new IMEngineClient[] { new MClientLocalVector() },
+				MEngineClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal() },
 				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
 			};
 
@@ -272,7 +276,8 @@ namespace MSetExplorer
 			Remote,
 			InProcess,
 			LocalScalar,
-			LocalVector
+			LocalVector,
+			LocalVectorMark2
 		}
 
 	}

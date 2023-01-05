@@ -32,8 +32,6 @@ namespace MSetGeneratorPrototype
 			//var fixedPointFormat = new ApFixedPointFormat(bitsBeforeBinaryPoint: 8, minimumFractionalBits: precision);
 			var fixedPointFormat = new ApFixedPointFormat(2);
 
-			//var scalarMath = new ScalarMath(fixedPointFormat, threshold);
-
 			var dtoMapper = new DtoMapper();
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
 			var samplePointDelta = dtoMapper.MapFrom(samplePointDeltaDto);
@@ -73,9 +71,12 @@ namespace MSetGeneratorPrototype
 			//}
 
 			var stride = (byte)blockSize.Width;
-			var samplePointOffsets = ScalarMathHelper.BuildSamplePointOffsets(delta, stride);
-			var samplePointsX = ScalarMathHelper.BuildSamplePoints(startingCx, samplePointOffsets);
-			var samplePointsY = ScalarMathHelper.BuildSamplePoints(startingCy, samplePointOffsets);
+
+
+			var scalarMath9 = new ScalarMath9(fixedPointFormat, threshold);
+			var samplePointOffsets = scalarMath9.BuildSamplePointOffsets(delta, stride);
+			var samplePointsX = scalarMath9.BuildSamplePoints(startingCx, samplePointOffsets);
+			var samplePointsY = scalarMath9.BuildSamplePoints(startingCy, samplePointOffsets);
 
 
 			var numberOfMCarries = 0;
