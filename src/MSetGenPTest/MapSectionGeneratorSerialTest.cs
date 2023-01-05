@@ -125,22 +125,22 @@ namespace MSetGenPTest
 			Assert.NotNull(reponse);
 		}
 
-		[Fact]
-		public void CallIntrincsSample()
-		{
-			var simdSamples = new SimdSamples();
+		//[Fact]
+		//public void CallIntrincsSample()
+		//{
+		//	var simdSamples = new SimdSamples();
 
-			var nums = Enumerable.Range(0, 21).ToArray();
-			simdSamples.SumVectorized(nums);
-		}
+		//	var nums = Enumerable.Range(0, 21).ToArray();
+		//	simdSamples.SumVectorized(nums);
+		//}
 
-		[Fact]
-		public void CallVectorSample()
-		{
-			var simdSamples = new SimdSamples();
+		//[Fact]
+		//public void CallVectorSample()
+		//{
+		//	var simdSamples = new SimdSamples();
 
-			simdSamples.Sample();
-		}
+		//	simdSamples.Sample();
+		//}
 
 		#region Support Methods
 

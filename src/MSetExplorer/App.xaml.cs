@@ -1,5 +1,4 @@
-﻿using MapSectionGeneratorLib;
-using MapSectionProviderLib;
+﻿using MapSectionProviderLib;
 using MEngineClient;
 using MSetGenP;
 using MSetRepo;
@@ -45,7 +44,7 @@ namespace MSetExplorer
 		private readonly MEngineServerManager? _mEngineServerManager;
 		private RepositoryAdapters? _repositoryAdapters;
 		private IMapLoaderManager? _mapLoaderManager;
-		private MapSectionPersistProcessor? _mapSectionPersistProcessor;
+		//private MapSectionPersistProcessor? _mapSectionPersistProcessor;
 
 		private AppNavWindow? _appNavWindow;
 
@@ -112,10 +111,10 @@ namespace MSetExplorer
 				_mapLoaderManager.Dispose();
 			}
 
-			if (_mapSectionPersistProcessor != null)
-			{
-				_mapSectionPersistProcessor.Dispose();
-			}
+			//if (_mapSectionPersistProcessor != null)
+			//{
+			//	_mapSectionPersistProcessor.Dispose();
+			//}
 
 			_mEngineServerManager?.Stop();
 		}
@@ -140,7 +139,7 @@ namespace MSetExplorer
 			var result = clientImplementation switch
 			{
 				MEngineClientImplementation.Remote => CreateMEngineClients(mEngineEndPointAddresses),
-				MEngineClientImplementation.InProcess => CreateInProcessMEngineClient(mapSectionAdapter, out _mapSectionPersistProcessor),
+				MEngineClientImplementation.InProcess => throw new NotImplementedException("The MSetExplorer project is not compatible with the MapSetGenerator C++ project."), // CreateInProcessMEngineClient(mapSectionAdapter, out _mapSectionPersistProcessor),
 				MEngineClientImplementation.LocalScalar => new IMEngineClient[] { new MClientLocalScalar() },
 				MEngineClientImplementation.LocalVector => new IMEngineClient[] { new MClientLocalVector() },
 				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
@@ -155,13 +154,13 @@ namespace MSetExplorer
 			return mEngineClients;
 		}
 
-		private IMEngineClient[] CreateInProcessMEngineClient(IMapSectionAdapter mapSectionAdapter, out MapSectionPersistProcessor mapSectionPersistProcessor)
-		{
-			mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter);
-			var inProcessClient = new MClientInProcess(mapSectionAdapter, mapSectionPersistProcessor);
-			var mEngineClients = new[] { inProcessClient };
-			return mEngineClients;
-		}
+		//private IMEngineClient[] CreateInProcessMEngineClient(IMapSectionAdapter mapSectionAdapter, out MapSectionPersistProcessor mapSectionPersistProcessor)
+		//{
+		//	mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter);
+		//	var inProcessClient = new MClientInProcess(mapSectionAdapter, mapSectionPersistProcessor);
+		//	var mEngineClients = new[] { inProcessClient };
+		//	return mEngineClients;
+		//}
 
 		private IMapLoaderManager BuildMapLoaderManager(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
 		{

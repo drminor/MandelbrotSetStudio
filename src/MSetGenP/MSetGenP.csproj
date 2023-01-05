@@ -2,9 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>x64</Platforms>
   </PropertyGroup>
 
@@ -15,6 +13,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DefineConstants>$(DefineConstants)TRACE;DETAIL</DefineConstants>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="SimdSamples.cs" />
+    <Compile Remove="Types\M256IntData.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="SimdSamples.cs" />
+    <None Include="Types\M256IntData.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
