@@ -1,9 +1,10 @@
 ﻿using MSS.Common;
+using MSS.Common.APValues;
 using MSS.Types;
 
 namespace MSetGenP
 {
-	public interface IVecMath
+    public interface IVecMath
 	{
 		bool IsSigned { get; }
 

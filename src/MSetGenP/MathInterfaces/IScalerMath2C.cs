@@ -1,9 +1,10 @@
 ﻿using MSS.Common;
+using MSS.Common.APValues;
 using MSS.Types;
 
 namespace MSetGenP
 {
-	public interface IScalerMath2C
+    public interface IScalerMath2C
 	{
 		bool IsSigned { get; }
 

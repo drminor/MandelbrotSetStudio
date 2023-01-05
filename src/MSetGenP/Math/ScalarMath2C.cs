@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using MSS.Common.APValues;
 using MSS.Types;
 using System;
 using System.Diagnostics;
@@ -6,7 +7,7 @@ using System.Numerics;
 
 namespace MSetGenP
 {
-	public class ScalarMath2C : IScalerMath2C
+    public class ScalarMath2C : IScalerMath2C
 	{
 		#region Constants
 

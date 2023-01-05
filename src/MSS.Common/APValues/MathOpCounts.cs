@@ -1,4 +1,4 @@
-﻿namespace MSetGenP
+﻿namespace MSS.Common.APValues
 {
 	public class MathOpCounts
 	{

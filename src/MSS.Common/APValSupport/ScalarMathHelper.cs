@@ -5,12 +5,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using System.Text;
 
-namespace MSetGenP
+namespace MSS.Common.APValues
 {
-	public static class ScalarMathHelper
+    public static class ScalarMathHelper
 	{
 		#region Private Members
 
@@ -946,6 +945,70 @@ namespace MSetGenP
 		{
 			var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
 			return shiftAmount;
+		}
+
+		#endregion
+
+
+		#region Map Generartion Support
+
+		public static FPValues BuildMapPoints(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, out FPValues cIValues)
+		{
+			var stride = (byte)blockSize.Width;
+			var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
+			var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
+			var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
+
+			var resultLength = blockSize.NumberOfCells;
+
+			var crSmxes = new Smx[resultLength];
+			var ciSmxes = new Smx[resultLength];
+
+			var resultPtr = 0;
+			for (int j = 0; j < samplePointsY.Length; j++)
+			{
+				for (int i = 0; i < samplePointsX.Length; i++)
+				{
+					ciSmxes[resultPtr] = samplePointsY[j];
+					crSmxes[resultPtr++] = samplePointsX[i];
+				}
+			}
+
+			var result = new FPValues(crSmxes);
+			cIValues = new FPValues(ciSmxes);
+
+			return result;
+		}
+
+		public static Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePointOffsets)
+		{
+			var result = new Smx[samplePointOffsets.Length];
+
+			// TODO: Implement BuildSamplePoints
+
+			//for (var i = 0; i < samplePointOffsets.Length; i++)
+			//{
+			//	var samplePointSa = Add(startValue, samplePointOffsets[i], "add spd offset to start value");
+			//	result[i] = samplePointSa;
+			//}
+
+			return result;
+		}
+
+		public static Smx[] BuildSamplePointOffsets(Smx delta, byte extent)
+		{
+			var result = new Smx[extent];
+
+			// TODO: Implement BuildSamplePointOffsets
+
+			//for (var i = 0; i < extent; i++)
+			//{
+			//	var samplePointOffset = Multiply(delta, (byte)i);
+			//	CheckForceExpResult(samplePointOffset, "BuildSPOffsets");
+			//	result[i] = samplePointOffset;
+			//}
+
+			return result;
 		}
 
 		#endregion

@@ -1,5 +1,6 @@
 ﻿using MongoDB.Driver;
 using MSS.Common;
+using MSS.Common.APValues;
 using MSS.Types;
 using System;
 using System.Diagnostics;
@@ -9,7 +10,7 @@ using System.Text;
 
 namespace MSetGenP
 {
-	public class ScalarMathFloating
+    public class ScalarMathFloating
 	{
 		#region Constants
 
@@ -721,28 +722,6 @@ namespace MSetGenP
 			var result = ScalarMathHelper.CreateSmx(rValue, ApFixedPointFormat);
 			return result;
 		}
-		public static RValue CreateRValue(SmxSa smx)
-		{
-			var biValue = ScalarMathHelper.FromPwULongs(smx.MantissaSa.MaterializeAll());
-			biValue = smx.Sign ? biValue : -1 * biValue;
-			var exponent = smx.Exponent;
-			var precision = smx.Precision;
-
-			var result = new RValue(biValue, exponent, precision);
-
-			return result;
-		}
-		public static RValue CreateRValue(SmxFloating smx)
-		{
-			var biValue = ScalarMathHelper.FromPwULongs(smx.Mantissa);
-			biValue = smx.Sign ? biValue : -1 * biValue;
-			var exponent = smx.Exponent;
-			var precision = smx.Precision;
-
-			var result = new RValue(biValue, exponent, precision);
-
-			return result;
-		}
 
 		public ulong[] NormalizeFPV(ulong[] mantissa, int indexOfLastNonZeroLimb, int exponent, int precision, out int nrmExponent)
 		{
@@ -1156,11 +1135,7 @@ namespace MSetGenP
 			return result;
 		}
 
-		public static bool CheckPWValues(ShiftedArray<ulong> values)
-		{
-			var result = values.Array.Any(x => x >= MAX_DIGIT_VALUE);
-			return result;
-		}
+
 
 		[Conditional("DEBUG")]
 		private void CheckForceExpResult(SmxSa smx, string desc)

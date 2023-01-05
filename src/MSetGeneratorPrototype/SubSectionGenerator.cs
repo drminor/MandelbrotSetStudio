@@ -4,9 +4,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Intrinsics;
 
-namespace MSetGenP
+namespace MSetGeneratorPrototype
 {
-	internal class SubSectionGeneratorVector
+	internal class SubSectionGenerator
 	{
 		#region Public Methods
 
@@ -38,7 +38,7 @@ namespace MSetGenP
 		//	NumberOfMCarries += fPVecMathHelper.NumberOfMCarries;
 		//}
 
-		public ushort[] GenerateMapSection(IVecMath vecMath, int targetIterations, FPValues cRs, FPValues cIs, out bool[] doneFlags)
+		public ushort[] GenerateMapSection(VecMath9 vecMath, int targetIterations, FPValues cRs, FPValues cIs, out bool[] doneFlags)
 		{
 			var resultLength = cRs.Length;
 
@@ -68,7 +68,7 @@ namespace MSetGenP
 			inPlayList = UpdateTheDoneFlags(vecMath, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags, targetIterations);
 			vecMath.InPlayList = inPlayList;
 
-			var iterator = new IteratorVector(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
+			var iterator = new IteratorSimd(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
 			while (inPlayList.Length > 0)
 			{
@@ -99,7 +99,7 @@ namespace MSetGenP
 			return counts;
 		}
 
-		private int[] UpdateTheDoneFlags(IVecMath vecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
+		private int[] UpdateTheDoneFlags(VecMath9 vecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
 		{
 			vecMath.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
 
@@ -109,7 +109,7 @@ namespace MSetGenP
 			return updatedInPlayList;
 		}
 
-		private List<int> UpdateCounts(IVecMath vecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
+		private List<int> UpdateCounts(VecMath9 vecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
 		{
 			var numberOfLanes = Vector256<ulong>.Count;
 			var toBeRemoved = new List<int>();

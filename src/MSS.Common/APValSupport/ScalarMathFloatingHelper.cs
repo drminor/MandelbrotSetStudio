@@ -1,20 +1,19 @@
 ﻿using MSS.Types;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MSetGenP
+namespace MSS.Common.APValues
 {
-	internal class ScalarMathFloatingHelper
+    internal class ScalarMathFloatingHelper
 	{
 		#region Private Members
 
 		private const int BITS_PER_LIMB = 32;
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
+
+		private static readonly ulong MAX_DIGIT_VALUE = (ulong)(Math.Pow(2, EFFECTIVE_BITS_PER_LIMB) - 1);
 
 		// Integer used to split full-word values into partial-word values.
 		private static readonly ulong UL_HALF_WORD_FACTOR = (ulong)Math.Pow(2, EFFECTIVE_BITS_PER_LIMB);
@@ -712,6 +711,35 @@ namespace MSetGenP
 
 		#endregion
 
+		public static bool CheckPWValues(ShiftedArray<ulong> values)
+		{
+			var result = values.Array.Any(x => x >= MAX_DIGIT_VALUE);
+			return result;
+		}
+
+		public static RValue CreateRValue(SmxFloating smx)
+		{
+			var biValue = ScalarMathHelper.FromPwULongs(smx.Mantissa);
+			biValue = smx.Sign ? biValue : -1 * biValue;
+			var exponent = smx.Exponent;
+			var precision = smx.Precision;
+
+			var result = new RValue(biValue, exponent, precision);
+
+			return result;
+		}
+
+		public static RValue CreateRValue(SmxSa smx)
+		{
+			var biValue = ScalarMathHelper.FromPwULongs(smx.MantissaSa.MaterializeAll());
+			biValue = smx.Sign ? biValue : -1 * biValue;
+			var exponent = smx.Exponent;
+			var precision = smx.Precision;
+
+			var result = new RValue(biValue, exponent, precision);
+
+			return result;
+		}
 
 
 	}

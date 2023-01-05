@@ -1,5 +1,6 @@
 ﻿using MongoDB.Driver;
 using MSS.Common;
+using MSS.Common.APValues;
 using MSS.Types;
 using System;
 using System.Diagnostics;
@@ -8,7 +9,7 @@ using System.Numerics;
 
 namespace MSetGenP
 {
-	public class ScalarMath : IScalerMath
+    public class ScalarMath : IScalerMath
 	{
 		#region Constants
 
@@ -796,6 +797,8 @@ namespace MSetGenP
 		#endregion
 
 		#region Map Generartion Support
+
+		// TODO: Check to see if there is other code that duplicates this -- in the MSS.Common.APValues namespace....
 
 		public FPValues BuildMapPoints(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, out FPValues cIValues)
 		{

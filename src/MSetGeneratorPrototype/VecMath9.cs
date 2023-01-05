@@ -11,9 +11,9 @@ using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading;
 
-namespace MSetGenP
+namespace MSetGeneratorPrototype
 {
-    public class VecMath2C : IVecMath
+    public class VecMath9
 	{
 		#region Private Properties
 
@@ -65,7 +65,7 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public VecMath2C(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
+		public VecMath9(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
 			ValueCount = valueCount;
 			VecCount = Math.DivRem(ValueCount, _lanes, out var remainder);

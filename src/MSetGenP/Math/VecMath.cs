@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using MSS.Common.APValues;
 using MSS.Types;
 using System;
 using System.Buffers;
@@ -10,7 +11,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace MSetGenP
 {
-	public class VecMath : IVecMath
+    public class VecMath : IVecMath
 	{
 		#region Private Properties
 

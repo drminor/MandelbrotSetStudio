@@ -2,9 +2,9 @@
 using System;
 using System.Diagnostics;
 
-namespace MSetGenP
+namespace MSetGeneratorPrototype
 {
-	internal ref struct IteratorVector
+	internal ref struct IteratorSimd
 	{
 		#region Private Properties
 
@@ -25,7 +25,7 @@ namespace MSetGenP
 
 		#region Constructor
 
-		public IteratorVector(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+		public IteratorSimd(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
 		{
 			_cRs = cRs;
 			_cIs = cIs;
@@ -45,7 +45,7 @@ namespace MSetGenP
 
 		#region Public Methods
 
-		public void Iterate(IVecMath vecMath)
+		public void Iterate(VecMath9 vecMath)
 		{
 			try
 			{

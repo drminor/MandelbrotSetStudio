@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 using System.Linq;
 
-namespace MSetGenP
+namespace MSS.Common.APValues
 {
 	public struct SmxSa : IEquatable<SmxSa>
 	{
@@ -40,7 +40,7 @@ namespace MSetGenP
 
 		private static void ValidatePWValues(ShiftedArray<ulong> mantissa)
 		{
-			if (ScalarMathFloating.CheckPWValues(mantissa))
+			if (ScalarMathFloatingHelper.CheckPWValues(mantissa))
 			{
 				throw new ArgumentException($"Cannot create a SmxSa from an array of ulongs where any of the values is greater than MAX_DIGIT.");
 			}
@@ -87,7 +87,7 @@ namespace MSetGenP
 
 		public RValue GetRValue()
 		{
-			var result = ScalarMathFloating.CreateRValue(this);
+			var result = ScalarMathFloatingHelper.CreateRValue(this);
 			return result;
 		}
 

@@ -1,4 +1,5 @@
 ﻿using MEngineDataContracts;
+using MSS.Common.APValues;
 using MSS.Common.DataTransferObjects;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Linq;
 
 namespace MSetGenP
 {
-	public class MapSectionGeneratorVector
+    public class MapSectionGeneratorVector
 	{
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
@@ -80,7 +81,7 @@ namespace MSetGenP
 			var numberOfACarries = 0;
 
 			var use2CVersion = true;
-			var useExp2CVersion = false;
+			//var useExp2CVersion = false;
 
 			if (use2CVersion)
 			{
@@ -96,7 +97,7 @@ namespace MSetGenP
 
 					//Array.Copy(doneFlags, j * stride, rowDoneFlags, 0, stride);
 
-					IVecMath vecMath = GetTheMathImplementation(use2CVersion, useExp2CVersion, fixedPointFormat, stride, threshold);
+					IVecMath vecMath = GetTheMathImplementation(use2CVersion, fixedPointFormat, stride, threshold);
 					vecMath.BlockPosition = blockPos;
 					vecMath.RowNumber = j;
 
@@ -132,7 +133,7 @@ namespace MSetGenP
 					var cIs = new FPValues(yPoints);
 
 					//Array.Copy(doneFlags, j * stride, rowDoneFlags, 0, stride);
-					IVecMath vecMath = GetTheMathImplementation(use2CVersion, useExp2CVersion, fixedPointFormat, stride, threshold);
+					IVecMath vecMath = GetTheMathImplementation(use2CVersion, fixedPointFormat, stride, threshold);
 					vecMath.BlockPosition = blockPos;
 					vecMath.RowNumber = j;
 					var rowCounts = new SubSectionGeneratorVector().GenerateMapSection(vecMath, targetIterations, cRs, cIs, out var rowDoneFlags);
@@ -160,20 +161,24 @@ namespace MSetGenP
 			}
 		}
 
-		private IVecMath GetTheMathImplementation(bool use2CVersion, bool useExp2CVersion, ApFixedPointFormat fixedPointFormat, int stride, uint threshold)
+		private IVecMath GetTheMathImplementation(bool use2CVersion, ApFixedPointFormat fixedPointFormat, int stride, uint threshold)
 		{
 			IVecMath result;
 			
 			if (use2CVersion)
 			{
-				if (useExp2CVersion)
-				{
-					result = new VecMathExp2C(fixedPointFormat, stride, threshold);
-				}
-				else
-				{
-					result = new VecMath2C(fixedPointFormat, stride, threshold);
-				}
+				//if (useExp2CVersion)
+				//{
+				//	result = new VecMathExp2C(fixedPointFormat, stride, threshold);
+				//}
+				//else
+				//{
+				//	result = new VecMath2C(fixedPointFormat, stride, threshold);
+				//}
+
+				result = new VecMath2C(fixedPointFormat, stride, threshold);
+
+
 			}
 			else
 			{

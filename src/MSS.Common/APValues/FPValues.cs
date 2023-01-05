@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
-namespace MSetGenP
+namespace MSS.Common.APValues
 {
 	public class FPValues : ICloneable
 	{
