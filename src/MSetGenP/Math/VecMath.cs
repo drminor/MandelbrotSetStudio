@@ -12,8 +12,6 @@ namespace MSetGenP
 	{
 		#region Private Properties
 
-		public bool IsSigned => false;
-
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong) (-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
@@ -41,6 +39,8 @@ namespace MSetGenP
 		//private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
 		private static readonly ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
 		//private static readonly ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
+
+		private const uint ALL_BITS_SET_UINT = 0xFFFFFFFF;
 
 		private static readonly int _lanes = Vector256<ulong>.Count;
 
@@ -206,6 +206,8 @@ namespace MSetGenP
 
 		#region Public Properties
 
+		public bool IsSigned => false;
+
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
 		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
@@ -238,15 +240,15 @@ namespace MSetGenP
 
 		public void Square(FPValues a, FPValues result)
 		{
+			ClearManatissMems(_squareResult1Mems, onlyInPlayItems: true);
 			SquareInternal(a, _squareResult1Mems);
-			PropagateCarries(_squareResult1Mems, _squareResult2Mems);
+
+			SumThePartials(_squareResult1Mems, _squareResult2Mems);
 			ShiftAndTrim(_squareResult2Mems, result.MantissaMemories);
 		}
 
 		private void SquareInternal(FPValues a, Memory<ulong>[] resultLimbs)
 		{
-			ClearManatissMems(resultLimbs, onlyInPlayItems: true);
-
 			var indexes = InPlayList;
 
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
@@ -292,7 +294,7 @@ namespace MSetGenP
 
 		#region Multiply Post Processing
 
-		private void PropagateCarries(Memory<ulong>[] mantissaMems, Memory<ulong>[] resultLimbs)
+		private void SumThePartials(Memory<ulong>[] mantissaMems, Memory<ulong>[] resultLimbs)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
@@ -328,7 +330,7 @@ namespace MSetGenP
 				//var isZeroFlags = Avx2.CompareEqual(carries, _zeroVector);
 				//var isZeroComposite = (uint)Avx2.MoveMask(isZeroFlags.AsByte());
 
-				//if (isZeroComposite != 0xffffffff)
+				//if (isZeroComposite != ALL_BITS_SET_UINT)
 				//{
 				//	// At least one carry is not zero.
 				//	throw new OverflowException("Overflow on PropagateCarries.");
@@ -458,7 +460,7 @@ namespace MSetGenP
 
 				var resultPtr = idx * _lanes;
 
-				if (areEqualComposite == 0xffffffff)
+				if (areEqualComposite == ALL_BITS_SET_UINT)
 				{
 					// All are the same.
 					NumberOfMCarries += _lanes;
@@ -611,7 +613,7 @@ namespace MSetGenP
 				var areEqualFlags = Avx2.CompareEqual(onlyTopBits, _zeroVector);
 				var compositeFlags = (uint)Avx2.MoveMask(areEqualFlags.AsByte());
 
-				if (compositeFlags != 0xffffffff)
+				if (compositeFlags != ALL_BITS_SET_UINT)
 				{
 					// One or more limbs have some of their top bits set.
 					result[idx] = true;
@@ -893,7 +895,7 @@ namespace MSetGenP
 			//ClearManatissMems(result.MantissaMemories, onlyInPlayItems: false);
 
 			SquareInternal(a, _squareResult1Mems);
-			PropagateCarries(_squareResult1Mems, _squareResult2Mems);
+			SumThePartials(_squareResult1Mems, _squareResult2Mems);
 			ShiftAndTrim(_squareResult2Mems, result.MantissaMemories);
 
 			//_ = CheckPWValues(result.MantissaMemories, out errors);

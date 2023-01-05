@@ -27,15 +27,15 @@ namespace MSetGenP
 			var fixedPointFormat = new ApFixedPointFormat(limbCount: 2);
 
 
-			var smxMathHelper = new ScalarMath(fixedPointFormat, threshold);
+			var scalarMath = new ScalarMath(fixedPointFormat, threshold);
 
 			var dtoMapper = new DtoMapper();
 			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
 			var samplePointDelta = dtoMapper.MapFrom(samplePointDeltaDto);
 
-			var startingCx = smxMathHelper.CreateSmx(mapPosition.X);
-			var startingCy = smxMathHelper.CreateSmx(mapPosition.Y);
-			var delta = smxMathHelper.CreateSmx(samplePointDelta.Width);
+			var startingCx = scalarMath.CreateSmx(mapPosition.X);
+			var startingCy = scalarMath.CreateSmx(mapPosition.Y);
+			var delta = scalarMath.CreateSmx(samplePointDelta.Width);
 
 			var s1 = startingCx.GetStringValue();
 			var s2 = startingCy.GetStringValue();
@@ -44,7 +44,9 @@ namespace MSetGenP
 			var blockPos = mapSectionRequest.BlockPosition;
 			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 
-			var counts = GenerateMapSection(smxMathHelper, startingCx, startingCy, delta, blockSize, targetIterations, out var numberOfSplits, out var numberOfGetCarries, out var gtOpsFP, out var gtOpsSc);
+			var counts = GenerateMapSection(scalarMath, startingCx, startingCy, delta, blockSize, targetIterations, 
+				out var mathOpCounts);
+			
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[blockSize.NumberOfCells];
@@ -52,14 +54,17 @@ namespace MSetGenP
 
 			//Debug.WriteLine($"{s1}, {s2}: ACarries: {smxMathHelper.NumberOfACarries}\tMCarries: {smxMathHelper.NumberOfMCarries}\tSplits: {smxMathHelper.NumberOfSplits}\tCarries: {smxMathHelper.NumberOfGetCarries}");
 
-			Debug.WriteLine($"{s1}, {s2}: Splits: {smxMathHelper.NumberOfSplits}\tCarries: {smxMathHelper.NumberOfGetCarries}\tGrtrThanOps: {gtOpsSc}\tFP-Splits: {numberOfSplits}\tFP-Carries: {numberOfGetCarries}\tGrtrThanOps: {gtOpsFP}");
+			Debug.WriteLine($"{s1}, {s2}: Splits: {scalarMath.NumberOfSplits}\tCarries: {scalarMath.NumberOfGetCarries}\tGrtrThanOps: {mathOpCounts.NumberOfGrtrThanOps}\tFP-Splits: {mathOpCounts.NumberOfSplits}\tFP-Carries: {mathOpCounts.NumberOfGetCarries}\tGrtrThanOps: {mathOpCounts.NumberOfGrtrThanOpsFP}");
 			
 
 			return result;
 		}
 
-		private ushort[] GenerateMapSection(ScalarMath smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations, out long numberOfSplits, out long numberOfGetCarries, out long numberOfGtrThanOpsFP, out long numberOfGtrThanOpsSc)
+		private ushort[] GenerateMapSection(ScalarMath smxMathHelper, Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, int targetIterations,
+			out MathOpCounts mathOpCounts)
 		{
+
+			mathOpCounts = new MathOpCounts();
 
 			var use2CVersion = true;
 
@@ -93,10 +98,10 @@ namespace MSetGenP
 				}
 			}
 
-			numberOfSplits = iterator.NumberOfSplits;
-			numberOfGetCarries = iterator.NumberOfGetCarries;
-			numberOfGtrThanOpsFP = iterator.NumberOfIsGrtrOpsFP;
-			numberOfGtrThanOpsSc = iterator.NumberOfIsGrtrOpsSc;
+			mathOpCounts.NumberOfSplits = iterator.NumberOfSplits;
+			mathOpCounts.NumberOfGetCarries = iterator.NumberOfGetCarries;
+			mathOpCounts.NumberOfGrtrThanOpsFP = iterator.NumberOfIsGrtrOpsFP;
+			mathOpCounts.NumberOfGrtrThanOps = iterator.NumberOfIsGrtrOpsSc;
 
 
 			return result;

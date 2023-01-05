@@ -1,30 +1,25 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using System.Runtime.Intrinsics;
 
 namespace MSetGenP
 {
 	public interface IVecMath
 	{
-		int[] InPlayList { get; set; }   // Vector-Level 
-		bool[] DoneFlags { get; set; }   // Value-Level	
+		bool IsSigned { get; }
 
-		BigVector BlockPosition { get; set; }
-		int RowNumber { get; set; }
-
+		ApFixedPointFormat ApFixedPointFormat { get; init; }
+		byte BitsBeforeBP { get; }
+		int FractionalBits { get; }
+		int LimbCount { get; }
+		int TargetExponent { get; }
 
 		int VecCount { get; init; }
 		int ValueCount { get; init; }
 
-		ApFixedPointFormat ApFixedPointFormat { get; init; }
-
-		bool IsSigned { get; }
-
-		byte BitsBeforeBP { get; }
-		int FractionalBits { get; }
-
-		int TargetExponent { get; }
-		int LimbCount { get; }
+		int[] InPlayList { get; set; }   // Vector-Level 
+		bool[] DoneFlags { get; set; }   // Value-Level	
+		BigVector BlockPosition { get; set; }
+		int RowNumber { get; set; }
 
 		uint MaxIntegerValue { get; init; }
 		uint Threshold { get; init; }

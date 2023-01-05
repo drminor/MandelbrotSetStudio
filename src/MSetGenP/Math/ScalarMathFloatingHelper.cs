@@ -155,8 +155,6 @@ namespace MSetGenP
 
 		#region Split and Pack -- 32
 
-		private const ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
-		private const ulong ALL_BITS_SET = 0xFFFFFFFFFFFFFFFF; // bits 0 - 63 are set.
 		private const ulong HIGH_MASK_OLD = LOW32_BITS_SET;
 		private const ulong LOW_MASK_OLD = HIGH32_BITS_SET;
 

@@ -9,8 +9,6 @@ namespace MSetGenP
 	{
 		#region Constants
 
-		public bool IsSigned => true;
-
 		private const ulong LOW31_BITS_SET = 0x000000007FFFFFFF; // bits 0 - 30 are set.
 
 		private static readonly bool USE_DET_DEBUG = false;
@@ -30,6 +28,8 @@ namespace MSetGenP
 		#endregion
 
 		#region Public Properties
+
+		public bool IsSigned => true;
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
 		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
@@ -351,18 +351,18 @@ namespace MSetGenP
 			{
 				ulong newValue;
 
-				//var lChopped = left[limbPtr] & LOW31_BITS_SET;
-				//var rChopped = right[limbPtr] & LOW31_BITS_SET;
-
-				//checked
-				//{
-				//	newValue =  lChopped + rChopped + carry;
-				//}
+				var lChopped = left[limbPtr] & LOW31_BITS_SET;
+				var rChopped = right[limbPtr] & LOW31_BITS_SET;
 
 				checked
 				{
-					newValue = left[limbPtr] + right[limbPtr] + carry;
+					newValue = lChopped + rChopped + carry;
 				}
+
+				//checked
+				//{
+				//	newValue = left[limbPtr] + right[limbPtr] + carry;
+				//}
 
 				var (lo, newCarry) = ScalarMathHelper.GetResultWithCarrySigned(newValue, isMsl: limbPtr == limbCount - 1);
 				result[limbPtr] = lo;

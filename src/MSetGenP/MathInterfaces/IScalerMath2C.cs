@@ -1,18 +1,17 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 
 namespace MSetGenP
 {
 	public interface IScalerMath2C
 	{
-		ApFixedPointFormat ApFixedPointFormat { get; init; }
-
 		bool IsSigned { get; }
 
+		ApFixedPointFormat ApFixedPointFormat { get; init; }
 		byte BitsBeforeBP { get; }
 		int FractionalBits { get; }
-
-		int TargetExponent { get; }
 		int LimbCount { get; }
+		int TargetExponent { get; }
 
 		uint MaxIntegerValue { get; init; }
 		uint Threshold { get; init; }
@@ -33,13 +32,10 @@ namespace MSetGenP
 
 		bool IsGreaterOrEqThanThreshold(Smx2C a);
 
-		Smx2C CreateNewMaxIntegerSmx2C(int precision = 53);
-		Smx2C CreateNewZeroSmx2C(int precision = 53);
-		
-		//Smx2C CreateSmx2C(RValue rValue);
+		Smx2C CreateNewMaxIntegerSmx2C(int precision = RMapConstants.DEFAULT_PRECISION);
+		Smx2C CreateNewZeroSmx2C(int precision = RMapConstants.DEFAULT_PRECISION);
 
-		//Smx2C Convert(Smx smx);
-		//Smx Convert(Smx2C smx2C);
+		//Smx2C CreateSmx2C(RValue rValue);
 
 	}
 }

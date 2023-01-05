@@ -1,35 +1,10 @@
-﻿using MSS.Common;
-using MSS.Types;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.Intrinsics;
 
 namespace MSetGenP
 {
 	internal class SubSectionGeneratorVector
 	{
-		private readonly IVecMath _vecMath;
-		private readonly int _targetIterations;
-
-		#region Constructor
-
-		public SubSectionGeneratorVector(IVecMath vecMath, int targetIterations)
-		{
-			_vecMath = vecMath;
-			_targetIterations = targetIterations;
-		}
-
-		#endregion
-
-		#region Public Properties
-
-		public int NumberOfMCarries { get; private set; }
-		public int NumberOfACarries { get; private set; }
-		public long NumberOfSplits { get; private set; }
-		public long NumberOfGetCarries { get; private set; }
-		public long NumberOfGrtrThanOps { get; private set; }
-
-		#endregion
-
 		#region Public Methods
 
 		//public void GenerateMapSection(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, ushort[] counts, bool[] doneFlags)
@@ -60,14 +35,14 @@ namespace MSetGenP
 		//	NumberOfMCarries += fPVecMathHelper.NumberOfMCarries;
 		//}
 
-		public ushort[] GenerateMapSection(BigVector blockPosition, int rowNumber, FPValues cRs, FPValues cIs, out bool[] doneFlags)
+		public ushort[] GenerateMapSection(IVecMath vecMath, int targetIterations, FPValues cRs, FPValues cIs, out bool[] doneFlags)
 		{
 			var resultLength = cRs.Length;
 
 			//var counts = Enumerable.Repeat((ushort)1, resultLength).ToArray();
 
 			var counts = new ushort[resultLength];
-			doneFlags = new bool[resultLength];
+			//doneFlags = new bool[resultLength];
 
 			var zRSqrs = new FPValues(cRs.LimbCount, cRs.Length);
 			var zISqrs = new FPValues(cIs.LimbCount, cIs.Length);
@@ -76,35 +51,29 @@ namespace MSetGenP
 			var escapedFlags = new bool[resultLength];
 			//var vecMath = new VecMath(_apFixedPointFormat1, resultLength, _threshold);
 
-			// refresh the InPlayList to include all vectors.
-			var inPlayList = Enumerable.Range(0, _vecMath.VecCount).ToArray();
-
-			// The vecMath instance holds and uses the doneFlags as well as the inPlayList.
-			_vecMath.DoneFlags = doneFlags;
-			_vecMath.InPlayList = inPlayList;
+			doneFlags = vecMath.DoneFlags;
+			var inPlayList = vecMath.InPlayList;
 
 			// Perform the first iteration. 
 			var zRs = cRs.Clone();
 			var zIs = cIs.Clone();
 
-			_vecMath.Square(zRs, zRSqrs);
-			_vecMath.Square(zIs, zISqrs);
-			_vecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
+			vecMath.Square(zRs, zRSqrs);
+			vecMath.Square(zIs, zISqrs);
+			vecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
 
-			inPlayList = UpdateTheDoneFlags(_vecMath, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
-			_vecMath.InPlayList = inPlayList;
-			_vecMath.BlockPosition = blockPosition;
-			_vecMath.RowNumber = rowNumber;
+			inPlayList = UpdateTheDoneFlags(vecMath, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags, targetIterations);
+			vecMath.InPlayList = inPlayList;
 
 			var iterator = new IteratorVector(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
 
 			while (inPlayList.Length > 0)
 			{
-				var aCarriesSnap = _vecMath.NumberOfACarries;
+				var aCarriesSnap = vecMath.NumberOfACarries;
 				var doneFlagsCnt = doneFlags.Count(x => x);
 
-				iterator.Iterate(_vecMath);
-				_vecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
+				iterator.Iterate(vecMath);
+				vecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
 
 				//var aCarriesDif = smxVecMathHelper.NumberOfACarries - aCarriesSnap;
 				//if (aCarriesDif > 0)
@@ -114,30 +83,30 @@ namespace MSetGenP
 				//	Debug.Assert(doneFlagsDiff == aCarriesDif, "Not All Done Flags were updated.");
 				//}
 
-				inPlayList = UpdateTheDoneFlags(_vecMath, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
-				_vecMath.InPlayList = inPlayList;
+				inPlayList = UpdateTheDoneFlags(vecMath, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags, targetIterations);
+				vecMath.InPlayList = inPlayList;
 			}
 
-			NumberOfACarries += _vecMath.NumberOfACarries;
-			NumberOfMCarries += _vecMath.NumberOfMCarries;
+			//NumberOfACarries += _vecMath.NumberOfACarries;
+			//NumberOfMCarries += _vecMath.NumberOfMCarries;
 
 			// TODO: Need to keep track if a sample point has escaped or not, currently the DoneFlag is set if 'Escaped' or 'Reached Target Iteration.'
 
-			doneFlags = _vecMath.DoneFlags;
+			doneFlags = vecMath.DoneFlags;
 			return counts;
 		}
 
-		private int[] UpdateTheDoneFlags(IVecMath vecMath, FPValues sumOfSqrs, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int[] inPlayList)
+		private int[] UpdateTheDoneFlags(IVecMath vecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
 		{
 			vecMath.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
 
-			var vectorsNoLongerInPlay = UpdateCounts(vecMath, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags);
+			var vectorsNoLongerInPlay = UpdateCounts(vecMath, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags, targetIterations);
 			var updatedInPlayList = GetUpdatedInPlayList(inPlayList, vectorsNoLongerInPlay);
 
 			return updatedInPlayList;
 		}
 
-		private List<int> UpdateCounts(IVecMath vecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags)
+		private List<int> UpdateCounts(IVecMath vecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
 		{
 			var numberOfLanes = Vector256<ulong>.Count;
 			var toBeRemoved = new List<int>();
@@ -173,7 +142,7 @@ namespace MSetGenP
 						//var rValDiag = vecMath.GetSmxAtIndex(sumOfSqrs, stPtr).GetStringValue();
 						//Debug.WriteLine($"Bailed out after {cnt}: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {vecMath.BlockPosition}, Row: {vecMath.RowNumber}, Col: {cntrPtr}.");
 					}
-					else if (cnt >= _targetIterations)
+					else if (cnt >= targetIterations)
 					{
 						doneFlags[cntrPtr] = true;
 						//var sacResult = escaped;

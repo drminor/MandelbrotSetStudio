@@ -10,8 +10,6 @@ namespace MSetGenP
 	{
 		#region Constants
 
-		public bool IsSigned => false;
-
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
 		private static readonly ulong MAX_DIGIT_VALUE = (ulong)(-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
@@ -41,16 +39,17 @@ namespace MSetGenP
 
 		#region Public Properties
 
+		public bool IsSigned => false;
+
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
+		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 		public int LimbCount => ApFixedPointFormat.LimbCount;
 		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
 		public uint MaxIntegerValue { get; init; }
 		public uint Threshold { get; init; }
 		public ulong ThresholdMsl { get; init; }
-
-		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
-		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
 
 		public int NumberOfMCarries { get; private set; }
 		public int NumberOfACarries { get; private set; }
