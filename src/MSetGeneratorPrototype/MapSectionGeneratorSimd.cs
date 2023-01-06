@@ -14,8 +14,8 @@ namespace MSetGeneratorPrototype
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
 			
-			////var fixedPointFormat = new ApFixedPointFormat(bitsBeforeBinaryPoint: 8, minimumFractionalBits: precision);
-			var apFixedPointFormat = new ApFixedPointFormat(2);
+			//var fixedPointFormat = new ApFixedPointFormat(bitsBeforeBinaryPoint: 8, minimumFractionalBits: precision);
+			var apFixedPointFormat = new ApFixedPointFormat(3);
 
 			var (blockPos, startingCx, startingCy, delta) = GetCoordinates(mapSectionRequest, apFixedPointFormat);
 
@@ -24,7 +24,7 @@ namespace MSetGeneratorPrototype
 			var s3 = delta.GetStringValue();
 
 			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
-			Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}.");
+			Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");
 
 			MapSectionResponse result;
 
@@ -35,7 +35,7 @@ namespace MSetGeneratorPrototype
 			}
 
 			// Move directly to a block where at least one sample point reaches the iteration target.
-			else if (skipLowDetailBlocks && BigInteger.Abs(blockPos.Y) > 1 || BigInteger.Abs(blockPos.X) > 3)
+			else if (skipLowDetailBlocks && (BigInteger.Abs(blockPos.Y) > 1 || BigInteger.Abs(blockPos.X) > 3))
 			{
 				result = BuildEmptyResponse(mapSectionRequest);
 			}
@@ -49,7 +49,7 @@ namespace MSetGeneratorPrototype
 				//Debug.WriteLine($"Completed: BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. ACarries: {subSectionGeneratorVector.NumberOfACarries}, MCarries:{subSectionGeneratorVector.NumberOfMCarries}.");
 				//Debug.WriteLine($"{s1}, {s2}: Adds: {mathOpCounts.NumberOfACarries}\tSubtracts: {numberOfMCarries}.");
 
-				Debug.WriteLine($"{s1}, {s2}: {mathOpCounts}");
+				//Debug.WriteLine($"{s1}, {s2}: {mathOpCounts}");
 
 				var compressedDoneFlags = CompressTheDoneFlags(doneFlags);
 
@@ -59,12 +59,14 @@ namespace MSetGeneratorPrototype
 				}
 
 				result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
+				result.MathOpCounts = mathOpCounts;
 			}
 
 			return result;
 		}
 
-		private (ushort[] counts, ushort[] escapeVelocities, bool[] doneFlags) GenerateMapSection(MapSectionRequest mapSectionRequest, BigVector blockPos, Smx startingCx, Smx startingCy, Smx delta, ApFixedPointFormat apFixedPointFormat, out MathOpCounts mathOpCounts)
+		private (ushort[] counts, ushort[] escapeVelocities, bool[] doneFlags) 
+			GenerateMapSection(MapSectionRequest mapSectionRequest, BigVector blockPos, Smx startingCx, Smx startingCy, Smx delta, ApFixedPointFormat apFixedPointFormat, out MathOpCounts mathOpCounts)
 		{
 			var (blockSize, targetIterations, threshold, counts, escapeVelocities, doneFlags) = GetMapParameters(mapSectionRequest);
 
@@ -73,19 +75,21 @@ namespace MSetGeneratorPrototype
 			var stride = (byte)blockSize.Width;
 
 			var scalarMath9 = new ScalarMath9(apFixedPointFormat, threshold);
-			var samplePointOffsets = scalarMath9.BuildSamplePointOffsets(delta, stride);
-			var samplePointsX = scalarMath9.BuildSamplePoints(startingCx, samplePointOffsets);
-			var samplePointsY = scalarMath9.BuildSamplePoints(startingCy, samplePointOffsets);
 
+			var samplePointOffsets = scalarMath9.BuildSamplePointOffsets(delta, stride);
+			
+			var samplePointsX = scalarMath9.BuildSamplePoints(startingCx, samplePointOffsets);
 			var samplePointsX2C = Convert(samplePointsX);
+
+			var samplePointsY = scalarMath9.BuildSamplePoints(startingCy, samplePointOffsets);
 			var samplePointsY2C = Convert(samplePointsY);
 
-			var cRs = new FPValues(samplePointsX2C);
+			var cRs = new FP31Deck(samplePointsX2C);
 
 			for (int j = 0; j < samplePointsY.Length; j++)
 			{
 				var yPoints = Duplicate(samplePointsY2C[j], stride);
-				var cIs = new FPValues(yPoints);
+				var cIs = new FP31Deck(yPoints);
 
 				//Array.Copy(doneFlags, j * stride, rowDoneFlags, 0, stride);
 
@@ -97,11 +101,14 @@ namespace MSetGeneratorPrototype
 				Array.Copy(rowCounts, 0, counts, j * stride, stride);
 				Array.Copy(rowDoneFlags, 0, doneFlags, j * stride, stride);
 
-				mathOpCounts.NumberOfSplits += vecMath.NumberOfSplits;
-				mathOpCounts.NumberOfGetCarries += vecMath.NumberOfGetCarries;
-				mathOpCounts.NumberOfGrtrThanOpsFP += vecMath.NumberOfGrtrThanOps;
 				mathOpCounts.NumberOfACarries += vecMath.NumberOfACarries;
 				mathOpCounts.NumberOfMCarries += vecMath.NumberOfMCarries;
+				mathOpCounts.NumberOfConversions += vecMath.NumberOfConversions;
+
+				mathOpCounts.NumberOfSplits += vecMath.NumberOfSplits;
+				mathOpCounts.NumberOfGetCarries += vecMath.NumberOfGetCarries;
+
+				mathOpCounts.NumberOfGrtrThanOps += vecMath.NumberOfGrtrThanOps;
 			}
 
 			return (counts, escapeVelocities, doneFlags);

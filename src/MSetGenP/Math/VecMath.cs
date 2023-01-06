@@ -69,7 +69,7 @@ namespace MSetGenP
 
 			if (remainder != 0)
 			{
-				throw new ArgumentException("The valueCount must be an even multiple of Vector<ulong>.Count.");
+				throw new ArgumentException($"The valueCount must be an even multiple of {_lanes}.");
 			}
 
 			// Initially, all vectors are 'In Play.'

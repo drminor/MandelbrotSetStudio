@@ -15,12 +15,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Math\VecMathExp2C.cs" />
     <Compile Remove="SimdSamples.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Math\VecMathExp2C.cs" />
     <None Include="SimdSamples.cs" />
   </ItemGroup>
 

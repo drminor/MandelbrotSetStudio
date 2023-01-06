@@ -1,63 +1,47 @@
-﻿using MSS.Common;
+﻿using MSS.Common.APValSupport;
 using MSS.Common.APValues;
 using MSS.Types;
-using System;
 using System.Buffers;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Threading;
 
 namespace MSetGeneratorPrototype
 {
-    public class VecMath9
+	public class VecMath9
 	{
 		#region Private Properties
 
-		private const int EFFECTIVE_BITS_PER_LIMB = 31;
-		private static readonly ulong MAX_DIGIT_VALUE = (ulong)(-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
+		//private const int EFFECTIVE_BITS_PER_LIMB = 31;
+		//private static readonly ulong MAX_DIGIT_VALUE = (ulong)(-1 + Math.Pow(2, EFFECTIVE_BITS_PER_LIMB));
 
-		private const ulong HIGH32_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
+		//private const ulong HIGH32_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
+
 		//private const ulong LOW32_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		//private static readonly Vector256<ulong> HIGH32_MASK_VEC = Vector256.Create(LOW32_BITS_SET);
 
-		private const ulong HIGH33_BITS_SET = 0xFFFFFFFF80000000; // bits 63 - 31 are set.
-		private static readonly Vector256<ulong> LOW31_MASK_VEC = Vector256.Create(HIGH33_BITS_SET); // diagnostics
+		//private const ulong HIGH33_BITS_SET = 0xFFFFFFFF80000000; // bits 63 - 31 are set.
+		//private static readonly Vector256<ulong> LOW31_MASK_VEC = Vector256.Create(HIGH33_BITS_SET); // diagnostics
 
+		private const uint LOW31_BITS_SET = 0x7FFFFFFF; // bits 0 - 30 are set.
+		private static readonly Vector256<uint> HIGH33_MASK_VEC = Vector256.Create(LOW31_BITS_SET);
 
-		private const ulong LOW31_BITS_SET = 0x000000007FFFFFFF; // bits 0 - 30 are set.
-		//private const ulong HIGH33_MASK = LOW31_BITS_SET; // bits 0 - 30 are set.
-		private static readonly Vector256<ulong> HIGH33_MASK_VEC = Vector256.Create(LOW31_BITS_SET);
+		private const ulong LOW31_BITS_SET_L = 0x000000007FFFFFFF; // bits 0 - 30 are set.
+		private static readonly Vector256<ulong> HIGH33_MASK_VEC_L = Vector256.Create(LOW31_BITS_SET_L);
 
-		//private const ulong SIGN64_BIT_MASK = 0x7FFFFFFFFFFFFFFF;
-		//private static readonly Vector256<ulong> SIGN64_BIT_MASK_VEC = Vector256.Create(SIGN64_BIT_MASK);
+		private const uint SIGN_BIT_MASK = 0x3FFFFFFF;
+		private static readonly Vector256<uint> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
 
-		private const ulong SIGN_BIT_MASK = 0x000000003FFFFFFF;
-		private static readonly Vector256<ulong> SIGN_BIT_MASK_VEC = Vector256.Create(SIGN_BIT_MASK);
-
-		//private const ulong TOP_BITS_MASK = 0xFF00000000000000;
-		//private static readonly Vector256<ulong> TOP_BITS_MASK_VEC = Vector256.Create(TOP_BITS_MASK);
-
-		//private static readonly ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
-		//private static readonly ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
-		//private static readonly ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
-
-		private static readonly int _lanes = Vector256<ulong>.Count;
-
+		//private static readonly int _lanes = Vector256<ulong>.Count;
+		private static readonly int _lanes = Vector256<uint>.Count;
 
 		private Memory<ulong>[] _squareResult1Mems;
 		private Memory<ulong>[] _squareResult2Mems;
-		private ulong[][] _squareResult2BackingArray;
 
-
-		private ulong[][] _squareResult3Ba;
-
-		private Vector256<long> _thresholdVector;
-		private Vector256<ulong> _zeroVector;
-		private Vector256<long> _maxDigitValueVector;
+		private Vector256<int> _thresholdVector;
+		//private Vector256<ulong> _zeroVector;
+		//private Vector256<long> _maxDigitValueVector;
 
 		private static readonly bool USE_DET_DEBUG = false;
 
@@ -72,11 +56,12 @@ namespace MSetGeneratorPrototype
 
 			if (remainder != 0)
 			{
-				throw new ArgumentException("The valueCount must be an even multiple of Vector<ulong>.Count.");
+				throw new ArgumentException($"The valueCount must be an even multiple of {_lanes}.");
 			}
 
 			// Initially, all vectors are 'In Play.'
 			InPlayList = Enumerable.Range(0, VecCount).ToArray();
+			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
 
 			// Initially, all values are 'In Play.'
 			DoneFlags = new bool[ValueCount];
@@ -88,40 +73,29 @@ namespace MSetGeneratorPrototype
 			Threshold = threshold;
 			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint, IsSigned);
 			
-			ThresholdMsl = ScalarMathHelper.GetThresholdMsl(threshold, ApFixedPointFormat, IsSigned);
+			ThresholdMsl = FP31ValHelper.GetThresholdMsl(threshold, ApFixedPointFormat, IsSigned);
+			_thresholdVector = Vector256.Create(ThresholdMsl).AsInt32();
 
-			var thresholdMslIntegerVector = Vector256.Create(ThresholdMsl);
-			_thresholdVector = thresholdMslIntegerVector.AsInt64();
+			//_zeroVector = Vector256<ulong>.Zero;
+			//_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE);
 
-			//var mslPower = ((LimbCount - 1) * EFFECTIVE_BITS_PER_LIMB) - FractionalBits;
-			//MslWeight = Math.Pow(2, mslPower);
-			//MslWeightVector = Vector256.Create(MslWeight);
-
-			_zeroVector = Vector256<ulong>.Zero;
-			_maxDigitValueVector = Vector256.Create((long)MAX_DIGIT_VALUE);
-
-			_squareResult1Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
-
-			//_squareResult2Mems = BuildMantissaMemoryArray(LimbCount * 2, ValueCount);
-			_squareResult2BackingArray = BuildMantissaBackingArray(LimbCount * 2, ValueCount);
-			_squareResult2Mems = BuildMantissaMemoryArray(_squareResult2BackingArray);
-
-			_squareResult3Ba = BuildMantissaBackingArray(LimbCount * 2, ValueCount);
+			_squareResult1Mems = BuildMantissaMemoryArrayL(LimbCount * 2, ValueCount);
+			_squareResult2Mems = BuildMantissaMemoryArrayL(LimbCount * 2, ValueCount);
 		}
 
 		#endregion
 
 		#region Mantissa Support
 
-		private Memory<ulong>[] BuildMantissaMemoryArray(int limbCount, int valueCount)
+		private Memory<ulong>[] BuildMantissaMemoryArrayL(int limbCount, int valueCount)
 		{
-			var ba = BuildMantissaBackingArray(limbCount, valueCount);
-			var result = BuildMantissaMemoryArray(ba);
+			var ba = BuildMantissaBackingArrayL(limbCount, valueCount);
+			var result = BuildMantissaMemoryArrayL(ba);
 
 			return result;
 		}
 
-		private ulong[][] BuildMantissaBackingArray(int limbCount, int valueCount)
+		private ulong[][] BuildMantissaBackingArrayL(int limbCount, int valueCount)
 		{
 			var result = new ulong[limbCount][];
 
@@ -133,7 +107,7 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private Memory<ulong>[] BuildMantissaMemoryArray(ulong[][] backingArray)
+		private Memory<ulong>[] BuildMantissaMemoryArrayL(ulong[][] backingArray)
 		{
 			var result = new Memory<ulong>[backingArray.Length];
 
@@ -145,11 +119,11 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private void ClearManatissMems(Memory<ulong>[] mantissaMems, bool onlyInPlayItems)
+		private void ClearManatissMemsL(Memory<ulong>[] mantissaMems, bool onlyInPlayItems)
 		{
 			if (onlyInPlayItems)
 			{
-				var indexes = InPlayList;
+				var indexes = InPlayListNarrow;
 
 				for (var j = 0; j < mantissaMems.Length; j++)
 				{
@@ -167,39 +141,9 @@ namespace MSetGeneratorPrototype
 				{
 					var vectors = GetLimbVectorsUL(mantissaMems[j]);
 
-					for (var i = 0; i < VecCount; i++)
+					for (var i = 0; i < vectors.Length; i++)
 					{
 						vectors[i] = Vector256<ulong>.Zero;
-					}
-				}
-			}
-		}
-
-		private void ClearBackingArray(ulong[][] backingArray, bool onlyInPlayItems)
-		{
-			if (onlyInPlayItems)
-			{
-				var template = new ulong[_lanes];
-
-				var indexes = InPlayList;
-
-				for (var j = 0; j < backingArray.Length; j++)
-				{
-					for (var i = 0; i < indexes.Length; i++)
-					{
-						Array.Copy(template, 0, backingArray[j], indexes[i] * _lanes, _lanes);
-					}
-				}
-			}
-			else
-			{
-				var vc = backingArray[0].Length;
-
-				for (var j = 0; j < backingArray.Length; j++)
-				{
-					for (var i = 0; i < vc; i++)
-					{
-						backingArray[j][i] = 0;
 					}
 				}
 			}
@@ -211,13 +155,30 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private Span<Vector256<uint>> GetLimbVectorsUW(Memory<ulong> memory)
+		private Span<Vector256<uint>> GetLimbVectorsUW(Memory<uint> memory)
 		{
-			Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<uint>>(memory.Span);
-
-			//Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(memory.Span);
+			Span<Vector256<uint>> result = MemoryMarshal.Cast<uint, Vector256<uint>>(memory.Span);
 			return result;
 		}
+
+		private int[] BuildNarowInPlayList(int[] inPlayList)
+		{
+			var result = new int[inPlayList.Length * 2];
+
+			var indexes = inPlayList;
+			var resultIdxPtr = 0;
+
+			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++, resultIdxPtr += 2)
+			{
+				var resultIdx = indexes[idxPtr] * 2;
+
+				result[resultIdxPtr] = resultIdx;
+				result[resultIdxPtr + 1] = resultIdx + 1;
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Public Properties
@@ -233,22 +194,24 @@ namespace MSetGeneratorPrototype
 		public int ValueCount { get; init; }
 		public int VecCount { get; init; }
 
-		public int[] InPlayList { get; set; }	// Vector-Level 
-		public bool[] DoneFlags { get; set; }	// Value-Level
+		public int[] InPlayList { get; set; }			// Vector-Level
+		public int[] InPlayListNarrow { get; set; }		// Vector-Level for Squaring
+		public bool[] DoneFlags { get; set; }			// Value-Level
+
 		public BigVector BlockPosition { get; set; }
 		public int RowNumber { get; set; }
-
 
 		public uint MaxIntegerValue { get; init; }
 
 		public uint Threshold { get; init; }
-		public ulong ThresholdMsl { get; init; }
+		public uint ThresholdMsl { get; init; }
 
 		//public double MslWeight { get; init; }
 		//public Vector256<double> MslWeightVector { get; init; }
 
 		public int NumberOfMCarries { get; private set; }
 		public int NumberOfACarries { get; private set; }
+		public long NumberOfConversions { get; private set; }
 		public long NumberOfSplits { get; private set; }
 		public long NumberOfGetCarries { get; private set; }
 		public long NumberOfGrtrThanOps { get; private set; }
@@ -257,32 +220,34 @@ namespace MSetGeneratorPrototype
 
 		#region Multiply and Square
 
-		public void Square(FPValues a, FPValues result)
+		public void Square(FP31Deck a, FP31Deck result)
 		{
 			// Convert back to standard, i.e., non two's compliment.
 			// Our multiplication routines don't support 2's compliment.
 			// The result of squaring is always positive,
 			// so we don't have to convert them to 2's compliment afterwards.
 
-			var non2CFPValues = a.ConvertFrom2C(InPlayList, _lanes);
+			FPValues non2CFPValues = a.ConvertFrom2C(InPlayList, _lanes);
+			NumberOfConversions++;
 
-			ClearManatissMems(_squareResult1Mems, onlyInPlayItems: false);
+			// There are 8 ints to a Vector, but only 4 longs. Adjust the InPlayList to support multiplication
+			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
+
 			SquareInternal(non2CFPValues, _squareResult1Mems);
-
-			//ClearManatissMems(_squareResult2Mems, onlyInPlayItems: false);
 			SumThePartials(_squareResult1Mems, _squareResult2Mems);
 
-			//ClearManatissMems(result.MantissaMemories, onlyInPlayItems: false);
-			ShiftAndTrim(_squareResult2Mems, result);
+			ShiftAndTrim(_squareResult2Mems, non2CFPValues);
 
-			//ExtendSigns(result.Mantissas);
+			result.UpdateFrom(non2CFPValues, InPlayList, _lanes);
 		}
 
 		private void SquareInternal(FPValues a, Memory<ulong>[] resultLimbs)
 		{
-
-			var indexes = InPlayList;
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
+
+			ClearManatissMemsL(resultLimbs, onlyInPlayItems: false);
+
+			var indexes = InPlayListNarrow;
 			for (int j = 0; j < a.LimbCount; j++)
 			{
 				for (int i = j; i < a.LimbCount; i++)
@@ -299,6 +264,7 @@ namespace MSetGeneratorPrototype
 					{
 						var idx = indexes[idxPtr];
 						var productVector = Avx2.Multiply(left[idx], right[idx]);
+						NumberOfMCarries++;
 
 						if (i > j)
 						{
@@ -306,18 +272,35 @@ namespace MSetGeneratorPrototype
 							productVector = Avx2.ShiftLeftLogical(productVector, 1);
 						}
 
-						var lows = Avx2.And(productVector, HIGH33_MASK_VEC);    // Create new ulong from bits 0 - 31.
+						var lows = Avx2.And(productVector, HIGH33_MASK_VEC_L);    // Create new ulong from bits 0 - 31.
 						var highs = Avx2.ShiftRightLogical(productVector, 31);   // Create new ulong from bits 32 - 63.
+						NumberOfSplits++;
 
 						resultLows[idx] = Avx2.Add(resultLows[idx], lows);
 						resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
-
-						//resultLows[idx] = UnsignedAddition(resultLows[idx], lows);
-						//resultHighs[idx] = UnsignedAddition(resultHighs[idx], highs);
+						NumberOfACarries += 2;
 					}
 				}
 			}
 		}
+
+		//private void Di(int idx, bool isAfterTheDiagonal, Span<Vector256<uint>> left, Span<Vector256<uint>> right, Span<Vector256<ulong>> resultLows, Span<Vector256<ulong>> resultHighs)
+		//{
+		//	//var idx = indexes[idxPtr];
+		//	var productVector = Avx2.Multiply(left[idx], right[idx]);
+
+		//	if (isAfterTheDiagonal)
+		//	{
+		//		//product *= 2;
+		//		productVector = Avx2.ShiftLeftLogical(productVector, 1);
+		//	}
+
+		//	var lows = Avx2.And(productVector, HIGH33_MASK_VEC_L);    // Create new ulong from bits 0 - 31.
+		//	var highs = Avx2.ShiftRightLogical(productVector, 31);   // Create new ulong from bits 32 - 63.
+
+		//	resultLows[idx] = Avx2.Add(resultLows[idx], lows);
+		//	resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
+		//}
 
 		#endregion
 
@@ -332,12 +315,10 @@ namespace MSetGeneratorPrototype
 
 			var limbCnt = mantissaMems.Length;
 
-			var indexes = InPlayList;
+			var indexes = InPlayListNarrow;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
-
-				NumberOfSplits++;
 
 				var limbPtr = 0;
 
@@ -345,18 +326,19 @@ namespace MSetGeneratorPrototype
 				var resultVectors = GetLimbVectorsUL(resultLimbs[limbPtr]);
 
 				var carries = Avx2.ShiftRightLogical(pProductVectors[idx], 31);	// The high 32 bits of sum becomes the new carry.
-				resultVectors[idx] = Avx2.And(pProductVectors[idx], HIGH33_MASK_VEC);					// The low 32 bits of the sum is the result.
+				resultVectors[idx] = Avx2.And(pProductVectors[idx], HIGH33_MASK_VEC_L);                 // The low 32 bits of the sum is the result.
+				NumberOfSplits++;
 
 				for (; limbPtr < limbCnt; limbPtr++)
 				{
-					NumberOfSplits++;
 
 					pProductVectors = GetLimbVectorsUL(mantissaMems[limbPtr]);
 					resultVectors = GetLimbVectorsUL(resultLimbs[limbPtr]);
 
 					var withCarries = Avx2.Add(pProductVectors[idx], carries);
 					carries = Avx2.ShiftRightLogical(withCarries, 31);     // The high 32 bits of sum becomes the new carry.
-					resultVectors[idx] = Avx2.And(withCarries, HIGH33_MASK_VEC);				 // The low 32 bits of the sum is the result.
+					resultVectors[idx] = Avx2.And(withCarries, HIGH33_MASK_VEC_L);               // The low 32 bits of the sum is the result.
+					NumberOfSplits++;
 				}
 			}
 		}
@@ -398,16 +380,18 @@ namespace MSetGeneratorPrototype
 		{
 			var shiftAmount = BitsBeforeBP;
 
-			var indexes = InPlayList;
+			var indexes = InPlayListNarrow;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
 				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				result[idx] = Avx2.And(Avx2.ShiftLeftLogical(source[idx], shiftAmount), HIGH33_MASK_VEC);
+				result[idx] = Avx2.And(Avx2.ShiftLeftLogical(source[idx], shiftAmount), HIGH33_MASK_VEC_L);
 
 				// Take the top shiftAmount of bits from the previous limb
-				var previousLimbVector = Avx2.And(prevSource[idx], HIGH33_MASK_VEC); // TODO: Combine this and the next operation.
+				var previousLimbVector = Avx2.And(prevSource[idx], HIGH33_MASK_VEC_L); // TODO: Combine this and the next operation.
 				result[idx] = Avx2.Or(result[idx], Avx2.ShiftRightLogical(previousLimbVector, (byte)(31 - shiftAmount)));
+
+				NumberOfSplits += 2;
 			}
 		}
 
@@ -416,12 +400,14 @@ namespace MSetGeneratorPrototype
 		{
 			var shiftAmount = BitsBeforeBP;
 
-			var indexes = InPlayList;
+			var indexes = InPlayListNarrow;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
 				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				result[idx] = Avx2.And(Avx2.ShiftLeftLogical(source[idx], shiftAmount), HIGH33_MASK_VEC);
+				result[idx] = Avx2.And(Avx2.ShiftLeftLogical(source[idx], shiftAmount), HIGH33_MASK_VEC_L);
+
+				NumberOfSplits++;
 			}
 		}
 
@@ -429,40 +415,31 @@ namespace MSetGeneratorPrototype
 
 		#region Add and Subtract
 
-		public void Sub(FPValues a, FPValues b, FPValues c)
+		public void Sub(FP31Deck a, FP31Deck b, FP31Deck c)
 		{
-			var notB = b.Negate2C(InPlayList);
+			NumberOfConversions++;
+
+			var notB = b.Negate(InPlayList);
 			Add(a, notB, c);
 		}
 
-		public void Add(FPValues a, FPValues b, FPValues c)
+		public void Add(FP31Deck a, FP31Deck b, FP31Deck c)
 		{
-			//var mmListA = a.CheckReservedBit(InPlayList, _lanes);
-			//var mmListB = b.CheckReservedBit(InPlayList, _lanes);
-
-			//if (mmListA.Count > 0 || mmListB.Count > 0)
-			//{
-			//	Debug.WriteLine("hi Reserved Bit miss match as we are beginning to add/sub.");
-			//}
-
-			//ClearManatissMems(c.MantissaMemories, onlyInPlayItems: false);
-
-
 			var indexes = InPlayList;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
 				//var resultPtr = idx * _lanes;
 
-				var carryVector = Vector256<ulong>.Zero;
+				var carryVector = Vector256<uint>.Zero;
 
 				//var aCarryOccured = false;
 
 				for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 				{
-					var limbVecsA = a.GetLimbVectorsUL(limbPtr);
-					var limbVecsB = b.GetLimbVectorsUL(limbPtr);
-					var resultLimbVecs = c.GetLimbVectorsUL(limbPtr);
+					var limbVecsA = a.GetLimbVectorsUW(limbPtr);
+					var limbVecsB = b.GetLimbVectorsUW(limbPtr);
+					var resultLimbVecs = c.GetLimbVectorsUW(limbPtr);
 
 					//var va = limbVecsA[idx];
 					//var vb = limbVecsB[idx];
@@ -474,14 +451,16 @@ namespace MSetGeneratorPrototype
 					var sumVector = Avx2.Add(va, vb);
 					var newValuesVector = Avx2.Add(sumVector, carryVector);
 
-					NumberOfSplits++;
+					NumberOfACarries += 2;
+
+					//NumberOfSplits++;
 					//var newCarries = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);          // The high 32 bits of sum becomes the new carry.
 					//var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC); // The low 32 bits of the sum is the result.
 					//resultLimbVecs[idx] = limbValues;
 
-
 					var (limbValues, newCarries) = GetResultWithCarry(newValuesVector, isMsl: (limbPtr == LimbCount - 1), out var aCarryOccured);
 					resultLimbVecs[idx] = limbValues;
+					NumberOfGetCarries++;
 
 					if (USE_DET_DEBUG)
 						ReportForAddition(limbPtr, va, vb, carryVector, newValuesVector, limbValues, newCarries);
@@ -506,7 +485,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		private (Vector256<ulong> limbs, Vector256<ulong> carry) GetResultWithCarry(Vector256<ulong> nvs, bool isMsl, out bool aCarryOccured)
+		private (Vector256<uint> limbs, Vector256<uint> carry) GetResultWithCarry(Vector256<uint> nvs, bool isMsl, out bool aCarryOccured)
 		{
 			NumberOfGetCarries++;
 
@@ -514,28 +493,28 @@ namespace MSetGeneratorPrototype
 			// A carry is generated any time the bit just above the result limb is different than msb of the limb
 			// i.e. this next higher bit is not an extension of the sign.
 
-			var ltemp = new ulong[_lanes];
-			var ctemp = new ulong[_lanes];
+			var ltemp = new uint[_lanes];
+			var ctemp = new uint[_lanes];
 
 			for (var i = 0; i < _lanes; i++)
 			{
 				//var limbValue = ScalarMathHelper.GetLowHalf(nvs.GetElement(i), out var resultIsNegative, out var extendedCarryOutIsNegative);
 				var (limbValue, newCarry) = ScalarMathHelper.GetResultWithCarrySigned(nvs.GetElement(i), isMsl);
 
-				ltemp[i] = limbValue;
-				ctemp[i] = newCarry;
+				ltemp[i] = (uint)limbValue;
+				ctemp[i] = (uint) newCarry;
 
 				if (newCarry > 0) aCarryOccured = true;
 			}
 
-			var limbs = Vector256.Create(ltemp[0], ltemp[1], ltemp[2], ltemp[3]);
+			var limbs = Vector256.Create(ltemp[0], ltemp[1], ltemp[2], ltemp[3], ltemp[4], ltemp[5], ltemp[6], ltemp[7]);
 
-			var carryVector = Vector256.Create(ctemp[0], ctemp[1], ctemp[2], ctemp[3]);	
+			var carryVector = Vector256.Create(ctemp[0], ctemp[1], ctemp[2], ctemp[3], ctemp[4], ctemp[5], ctemp[6], ctemp[7]);	
 
 			return (limbs, carryVector);
 		}
 
-		private void ReportForAddition(int step, Vector256<ulong> left, Vector256<ulong> right, Vector256<ulong> carry, Vector256<ulong> nv, Vector256<ulong> lo, Vector256<ulong> newCarry)
+		private void ReportForAddition(int step, Vector256<uint> left, Vector256<uint> right, Vector256<uint> carry, Vector256<uint> nv, Vector256<uint> lo, Vector256<uint> newCarry)
 		{
 			var leftVal0 = left.GetElement(0);
 			var rightVal0 = right.GetElement(0);
@@ -551,7 +530,7 @@ namespace MSetGeneratorPrototype
 			var hid = ScalarMathHelper.ConvertFrom2C(newCarryVal0);
 			var lod = ScalarMathHelper.ConvertFrom2C(loVal0);
 
-			var nvHiPart = nvVal0 & HIGH32_BITS_SET;
+			var nvHiPart = nvVal0;
 			var unSNv = leftVal0 + rightVal0 + carryVal0;
 
 
@@ -563,140 +542,25 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
-		#region Retrieve Smx From FPValues
-
-		public Smx GetSmxAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
-		{
-			var mantissa = fPValues.GetMantissa(index);
-			var sign = ScalarMathHelper.GetSign(mantissa);
-
-			var nrmMantissa = ScalarMathHelper.ConvertFrom2C(mantissa);
-
-			var result = new Smx(sign, nrmMantissa, TargetExponent, BitsBeforeBP, precision);
-
-			return result;
-		}
-
-		public Smx2C GetSmx2CAtIndex(FPValues fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
-		{
-			var mantissa = fPValues.GetMantissa(index);
-			var sign = ScalarMathHelper.GetSign(mantissa);
-			var result = new Smx2C(sign, mantissa, TargetExponent, BitsBeforeBP, precision);
-
-			return result;
-		}
-
-		#endregion
-
 		#region Comparison
 
-		//public void IsGreaterOrEqThanThreshold(FPValues a, bool[] results)
-		//{
-
-		//	var indexes = InPlayList;
-		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-		//	{
-		//		var idx = indexes[idxPtr];
-		//		var resultPtr = idx * _lanes;
-
-		//		for (var i = 0; i < _lanes; i++)
-		//		{
-		//			var valPtr = resultPtr + i;
-
-		//			var partialWordLimbs = a.GetMantissa(valPtr);
-
-		//			var res = IsGreaterOrEqThanThresholdSingle(partialWordLimbs[^1]);
-		//			results[valPtr] = res;
-		//		}
-		//	}
-
-
-
-		//	//var non2CFPValues = a.ConvertFrom2C(InPlayList, _lanes);
-
-		//	//var left = non2CFPValues.GetLimbVectorsUL(LimbCount - 1);
-		//	//var right = _thresholdVector;
-
-		//	//IsGreaterOrEqThan(left, right, results);
-		//}
-
-		//private bool IsGreaterOrEqThanThresholdSingle(ulong left)
-		//{
-		//	NumberOfGrtrThanOps++;
-		//	var right = ThresholdMsl;
-		//	var result = left >= right;
-
-		//	return result;
-		//}
-
-		//private void IsGreaterOrEqThan(Span<Vector256<ulong>> left, Vector256<long> right, bool[] results)
-		//{
-		//	var indexes = InPlayList;
-		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-		//	{
-		//		var idx = indexes[idxPtr];
-		//		//var ta = new ulong[_ulongSlots];
-		//		//left[idx].AsVector().CopyTo(ta);
-
-		//		//var bi = SmxMathHelper.FromPwULongs(ta);
-		//		//var rv = new RValue(bi, -24);
-
-		//		//var rvS = RValueHelper.ConvertToString(rv);
-
-		//		// TODO: Add a check confirm the value we receiving is positive.
-
-		//		//var sansSign = Avx2.And(left[idx], SIGN_BIT_MASK_VEC);
-
-
-		//		//var hiHalf = Avx2.And(left[idx], LOW31_MASK_VEC);
-		//		//var compareVector = Avx2.CompareEqual(hiHalf, _zeroVector);
-				
-		//		//var cComposite = Avx2.MoveMask(compareVector.AsByte());
-		//		//if (cComposite != -1)
-		//		//{
-		//		//	Debug.WriteLine($"Found a negative result from summing two squares.");
-		//		//}
-
-
-		//		var sansSign = Avx2.And(left[idx], SIGN_BIT_MASK_VEC);
-		//		var resultVector = Avx2.CompareGreaterThan(sansSign.AsInt64(), right);
-
-		//		var vectorPtr = idx * _lanes;
-
-		//		for(var i = 0; i < _lanes; i++)
-		//		{
-		//			results[vectorPtr + i] = resultVector.GetElement(i) == -1;
-		//		}
-		//	}
-		//}
-
-
-		public void IsGreaterOrEqThanThreshold(FPValues a, bool[] results)
+		public void IsGreaterOrEqThanThreshold(FP31Deck a, bool[] results)
 		{
-			var left = a.GetLimbVectorsUL(LimbCount - 1);
+			var left = a.GetLimbVectorsUW(LimbCount - 1);
 			var right = _thresholdVector;
 
 			IsGreaterOrEqThan(left, right, results);
 		}
 
-		private void IsGreaterOrEqThan(Span<Vector256<ulong>> left, Vector256<long> right, bool[] results)
+		private void IsGreaterOrEqThan(Span<Vector256<uint>> left, Vector256<int> right, bool[] results)
 		{
 			var indexes = InPlayList;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
-				//var ta = new ulong[_ulongSlots];
-				//left[idx].AsVector().CopyTo(ta);
-
-				//var bi = SmxMathHelper.FromPwULongs(ta);
-				//var rv = new RValue(bi, -24);
-
-				//var rvS = RValueHelper.ConvertToString(rv);
-
-				// TODO: Add a check confirm the value we receiving is positive.
-
 				var sansSign = Avx2.And(left[idx], SIGN_BIT_MASK_VEC);
-				var resultVector = Avx2.CompareGreaterThan(sansSign.AsInt64(), right);
+				var resultVector = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
+				NumberOfGrtrThanOps++;
 
 				var vectorPtr = idx * _lanes;
 
@@ -707,89 +571,101 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		private uint[][] CheckPWValues(Memory<ulong>[] resultLimbs, out string errors)
+		#endregion
+
+		#region Mantissa Support - Not Used
+
+		private Memory<uint>[] BuildMantissaMemoryArray(int limbCount, int valueCount)
 		{
-			var result = new uint[resultLimbs.Length][];
-			var sb = new StringBuilder();
-
-			var indexes = InPlayList;
-
-			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
-			{
-				result[limbPtr] = new uint[ValueCount];
-
-				var limbs = GetLimbVectorsUL(resultLimbs[limbPtr]);
-
-				var oneFound = false;
-
-				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-				{
-					var idx = indexes[idxPtr];
-					var vector = limbs[idx];
-
-					var sansSign = Avx2.And(vector, SIGN_BIT_MASK_VEC);
-					var cFlags = Avx2.CompareEqual(vector, sansSign);
-					var cComposite = Avx2.MoveMask(cFlags.AsByte());
-					if (cComposite != -1)
-					{
-						sb.AppendLine("Top bit was set.");
-					}
-
-					var areGtFlags = (Avx2.CompareGreaterThan(sansSign.AsInt64(), _maxDigitValueVector)).AsUInt64();
-					var compositeFlags = (uint)Avx2.MoveMask(areGtFlags.AsByte());
-
-					result[limbPtr][idx] = compositeFlags;
-
-					if (compositeFlags != 0)
-					{
-						if (!oneFound)
-						{
-							oneFound = true;
-							sb.Append($"Limb: {limbPtr}::");
-						}
-						sb.AppendLine($"{idx} ");
-					}
-				}
-
-				if (oneFound)
-				{
-					sb.AppendLine();
-				}
-			}
-
-			errors = sb.ToString();
+			var ba = BuildMantissaBackingArray(limbCount, valueCount);
+			var result = BuildMantissaMemoryArray(ba);
 
 			return result;
 		}
 
-		#endregion
+		private uint[][] BuildMantissaBackingArray(int limbCount, int valueCount)
+		{
+			var result = new uint[limbCount][];
 
-		#region TEMPLATES
+			for (var i = 0; i < limbCount; i++)
+			{
+				result[i] = new uint[valueCount];
+			}
 
-		//private void MultiplyVecs(Span<Vector256<uint>> left, Span<Vector256<uint>> right, Span<Vector256<ulong>> result)
-		//{
-		//	foreach (var idx in InPlayList)
-		//	{
-		//		result[idx] = Avx2.Multiply(left[idx], right[idx]);
-		//	}
-		//}
+			return result;
+		}
 
-		//private void Split(Span<Vector256<ulong>> x, Span<Vector256<ulong>> highs, Span<Vector256<ulong>> lows)
-		//{
-		//	foreach (var idx in InPlayList)
-		//	{
-		//		highs[idx] = Avx2.And(x[idx], HIGH_MASK_VEC);   // Create new ulong from bits 32 - 63.
-		//		lows[idx] = Avx2.And(x[idx], LOW_MASK_VEC);    // Create new ulong from bits 0 - 31.
-		//	}
-		//}
+		private Memory<uint>[] BuildMantissaMemoryArray(uint[][] backingArray)
+		{
+			var result = new Memory<uint>[backingArray.Length];
 
-		//private void AddVecs(Span<Vector256<ulong>> left, Span<Vector256<ulong>> right, Span<Vector256<ulong>> result)
-		//{
-		//	for (var i = 0; i < left.Length; i++)
-		//	{
-		//		result[i] = Avx2.Add(left[i], right[i]);
-		//	}
-		//}
+			for (var i = 0; i < backingArray.Length; i++)
+			{
+				result[i] = new Memory<uint>(backingArray[i]);
+			}
+
+			return result;
+		}
+
+		private void ClearManatissMems(Memory<uint>[] mantissaMems, bool onlyInPlayItems)
+		{
+			if (onlyInPlayItems)
+			{
+				var indexes = InPlayList;
+
+				for (var j = 0; j < mantissaMems.Length; j++)
+				{
+					var vectors = GetLimbVectorsUW(mantissaMems[j]);
+
+					for (var i = 0; i < indexes.Length; i++)
+					{
+						vectors[indexes[i]] = Vector256<uint>.Zero;
+					}
+				}
+			}
+			else
+			{
+				for (var j = 0; j < mantissaMems.Length; j++)
+				{
+					var vectors = GetLimbVectorsUW(mantissaMems[j]);
+
+					for (var i = 0; i < VecCount; i++)
+					{
+						vectors[i] = Vector256<uint>.Zero;
+					}
+				}
+			}
+		}
+
+		private void ClearBackingArray(ulong[][] backingArray, bool onlyInPlayItems)
+		{
+			if (onlyInPlayItems)
+			{
+				var template = new ulong[_lanes];
+
+				var indexes = InPlayListNarrow;
+
+				for (var j = 0; j < backingArray.Length; j++)
+				{
+					for (var i = 0; i < indexes.Length; i++)
+					{
+						Array.Copy(template, 0, backingArray[j], indexes[i] * _lanes, _lanes);
+					}
+				}
+			}
+			else
+			{
+				var vc = backingArray[0].Length;
+
+				for (var j = 0; j < backingArray.Length; j++)
+				{
+					for (var i = 0; i < vc; i++)
+					{
+						backingArray[j][i] = 0;
+					}
+				}
+			}
+		}
 
 		#endregion
 

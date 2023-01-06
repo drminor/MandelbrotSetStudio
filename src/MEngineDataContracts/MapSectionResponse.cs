@@ -16,16 +16,16 @@ namespace MEngineDataContracts
 		}
 
 		public MapSectionResponse(MapSectionRequest mapSectionRequest)
-			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition, 
+			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings, null, null, null, null)
 		{ }
 
 		public MapSectionResponse(MapSectionRequest mapSectionRequest, ushort[] counts, ushort[] escapeVelocities, bool[] doneFlags, double[] zValues)
-			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition, 
+			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings, counts, escapeVelocities, doneFlags, zValues)
 		{ }
 
-		public MapSectionResponse(string mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition, 
+		public MapSectionResponse(string mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition,
 			MapCalcSettings mapCalcSettings, ushort[] counts, ushort[] escapeVelocities, bool[] doneFlags, double[] zValues)
 		{
 			MapSectionId = mapSectionId;
@@ -73,7 +73,7 @@ namespace MEngineDataContracts
 
 		[DataMember(Order = 10)]
 		public double[] ZValues
-		{ 
+		{
 			get => IncludeZValues ? ZValuesForLocalStorage : null;
 			init
 			{
@@ -86,6 +86,8 @@ namespace MEngineDataContracts
 		public bool RequestCancelled { get; set; }
 
 		public bool IsEmpty => string.IsNullOrEmpty(SubdivisionId);
+
+		public MathOpCounts MathOpCounts { get; set; }
 
 		//object ICloneable.Clone()
 		//{

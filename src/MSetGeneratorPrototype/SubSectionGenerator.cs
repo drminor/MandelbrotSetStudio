@@ -1,7 +1,5 @@
 ﻿using MSS.Common.APValues;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
@@ -10,35 +8,7 @@ namespace MSetGeneratorPrototype
 	{
 		#region Public Methods
 
-		//public void GenerateMapSection(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, ushort[] counts, bool[] doneFlags)
-		//{
-		//	var resultLength = cRs.Length;
-
-		//	var zRSqrs = new FPValues(cRs.LimbCount, cRs.Length);
-		//	var zISqrs = new FPValues(cIs.LimbCount, cIs.Length);
-		//	var sumOfSqrs = new FPValues(cRs.LimbCount, cRs.Length);
-
-		//	var escapedFlags = new bool[resultLength];
-
-		//	var fPVecMathHelper = new VecMath2C(_apFixedPointFormat1, resultLength, _threshold);
-
-		//	var inPlayList = BuildTheInplayList(doneFlags, resultLength);
-		//	fPVecMathHelper.InPlayList = inPlayList;
-
-		//	var iterator = new IteratorVector(fPVecMathHelper, cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
-
-		//	while (inPlayList.Length > 0)
-		//	{
-		//		iterator.Iterate();
-		//		fPVecMathHelper.Add(zRSqrs, zISqrs, sumOfSqrs);
-		//		UpdateTheDoneFlags(fPVecMathHelper, sumOfSqrs, escapedFlags, counts, doneFlags, inPlayList);
-		//	}
-
-		//	NumberOfACarries += fPVecMathHelper.NumberOfACarries;
-		//	NumberOfMCarries += fPVecMathHelper.NumberOfMCarries;
-		//}
-
-		public ushort[] GenerateMapSection(VecMath9 vecMath, int targetIterations, FPValues cRs, FPValues cIs, out bool[] doneFlags)
+		public ushort[] GenerateMapSection(VecMath9 vecMath, int targetIterations, FP31Deck cRs, FP31Deck cIs, out bool[] doneFlags)
 		{
 			var resultLength = cRs.Length;
 
@@ -47,9 +17,9 @@ namespace MSetGeneratorPrototype
 			var counts = new ushort[resultLength];
 			//doneFlags = new bool[resultLength];
 
-			var zRSqrs = new FPValues(cRs.LimbCount, cRs.Length);
-			var zISqrs = new FPValues(cIs.LimbCount, cIs.Length);
-			var sumOfSqrs = new FPValues(cRs.LimbCount, cRs.Length);
+			var zRSqrs = new FP31Deck(cRs.LimbCount, cRs.Length);
+			var zISqrs = new FP31Deck(cIs.LimbCount, cIs.Length);
+			var sumOfSqrs = new FP31Deck(cRs.LimbCount, cRs.Length);
 
 			var escapedFlags = new bool[resultLength];
 			//var vecMath = new VecMath(_apFixedPointFormat1, resultLength, _threshold);
@@ -72,8 +42,8 @@ namespace MSetGeneratorPrototype
 
 			while (inPlayList.Length > 0)
 			{
-				var aCarriesSnap = vecMath.NumberOfACarries;
-				var doneFlagsCnt = doneFlags.Count(x => x);
+				//var aCarriesSnap = vecMath.NumberOfACarries;
+				//var doneFlagsCnt = doneFlags.Count(x => x);
 
 				iterator.Iterate(vecMath);
 				vecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
@@ -90,16 +60,13 @@ namespace MSetGeneratorPrototype
 				vecMath.InPlayList = inPlayList;
 			}
 
-			//NumberOfACarries += _vecMath.NumberOfACarries;
-			//NumberOfMCarries += _vecMath.NumberOfMCarries;
-
 			// TODO: Need to keep track if a sample point has escaped or not, currently the DoneFlag is set if 'Escaped' or 'Reached Target Iteration.'
 
 			doneFlags = vecMath.DoneFlags;
 			return counts;
 		}
 
-		private int[] UpdateTheDoneFlags(VecMath9 vecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
+		private int[] UpdateTheDoneFlags(VecMath9 vecMath, FP31Deck sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
 		{
 			vecMath.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
 
@@ -109,9 +76,9 @@ namespace MSetGeneratorPrototype
 			return updatedInPlayList;
 		}
 
-		private List<int> UpdateCounts(VecMath9 vecMath, FPValues sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
+		private List<int> UpdateCounts(VecMath9 vecMath, FP31Deck sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
 		{
-			var numberOfLanes = Vector256<ulong>.Count;
+			var numberOfLanes = Vector256<uint>.Count;
 			var toBeRemoved = new List<int>();
 
 			var indexes = inPlayList;
@@ -193,7 +160,7 @@ namespace MSetGeneratorPrototype
 
 		private int[] BuildTheInplayList(bool[] doneFlags, int vecCount)
 		{
-			var lanes = Vector256<ulong>.Count;
+			var lanes = Vector256<uint>.Count;
 
 			Debug.Assert(doneFlags.Length * lanes == vecCount, $"The doneFlags length: {doneFlags.Length} does not match {lanes} times the vector count: {vecCount}.");
 
@@ -215,116 +182,6 @@ namespace MSetGeneratorPrototype
 
 			return result.ToArray();
 		}
-
-		//private List<int> UpdateCounts(int[] inPlayList, Span<Vector256<long>> escapedFlagVectors, ushort[] cntrs, FPValues sumOfSqrs)
-		//{
-		//	var lanes = Vector256<ulong>.Count;
-		//	var toBeRemoved = new List<int>();
-
-		//	foreach (var idx in inPlayList)
-		//	{
-		//		var anyReachedTargetIterations = false;
-		//		var anyEscaped = false;
-
-		//		var allCompleted = true;
-
-		//		var escapedFlagVector = escapedFlagVectors[idx];
-
-		//		var cntrsBuf = Enumerable.Repeat(-1, lanes).ToArray();
-
-		//		var cntrPtr = idx * lanes;
-		//		for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
-		//		{
-		//			if (escapedFlagVector.GetElement(lanePtr) == 0)
-		//			{
-		//				var cnt = (cntrs[cntrPtr + lanePtr] + 1);
-
-		//				if (cnt >= ushort.MaxValue)
-		//				{
-		//					Debug.WriteLine($"WARNING: The Count is > ushort.Max.");
-		//					cnt = ushort.MaxValue;
-		//				}
-
-		//				//cntrs[cntrPtr + lanePtr] = (ushort) cnt;
-		//				cntrsBuf[lanePtr] = (ushort)cnt;
-
-		//				if (cnt >= _targetIterations)
-		//				{
-		//					// Target reached
-		//					anyReachedTargetIterations = true;
-
-		//					//var sacResult = escapedFlagVector.GetElement(lanePtr);
-		//					//var rValDiag = smxVecMathHelper.GetSmxAtIndex(sumOfSqrs, idx + lanePtr).GetStringValue();
-		//					//Debug.WriteLine($"Target reached: The value is {rValDiag}. Compare returned: {sacResult}.");
-		//				}
-		//				else
-		//				{
-		//					// Didn't escape and didn't reach target
-		//					allCompleted = false;
-		//				}
-		//			}
-		//			else
-		//			{
-		//				//cntrsBuf[lanePtr] = cntrs[cntrPtr + lanePtr]; // record current counter.
-		//				// Escaped
-		//				anyEscaped = true;
-		//				//var sacResult = escapedFlagVector.GetElement(lanePtr);
-		//				//var rValDiag = smxVecMathHelper.GetSmxAtIndex(sumOfSqrs, idx + lanePtr).GetStringValue();
-		//				//Debug.WriteLine($"Bailed out: The value is {rValDiag}. Compare returned: {sacResult}.");
-		//			}
-		//		}
-
-		//		//if (allCompleted)
-		//		//{
-		//		//	toBeRemoved.Add(idx);
-		//		//}
-
-		//		if (anyReachedTargetIterations || anyEscaped)
-		//		{
-		//			if (!allCompleted)
-		//			{
-		//				for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
-		//				{
-		//					if (cntrsBuf[lanePtr] != -1)
-		//					{
-		//						cntrs[cntrPtr + lanePtr] = (ushort)cntrsBuf[lanePtr];
-		//					}
-		//					else
-		//					{
-		//						//iteratorScalar.Iterate()
-		//						//cntrs[cntrPtr + lanePtr] = 51;
-		//					}
-		//				}
-		//			}
-		//			else
-		//			{
-		//				for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
-		//				{
-		//					if (cntrsBuf[lanePtr] != -1)
-		//					{
-		//						cntrs[cntrPtr + lanePtr] = (ushort)cntrsBuf[lanePtr];
-		//					}
-		//				}
-		//			}
-
-		//			toBeRemoved.Add(idx);
-		//		}
-		//		else
-		//		{
-		//			for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
-		//			{
-		//				if (cntrsBuf[lanePtr] != -1)
-		//				{
-		//					cntrs[cntrPtr + lanePtr] = (ushort)cntrsBuf[lanePtr];
-		//				}
-		//			}
-
-		//		}
-		//	}
-
-		//	return toBeRemoved;
-		//}
-
 
 		#endregion
 	}

@@ -56,10 +56,7 @@ namespace MSetGenP
 			var escapeVelocities = new ushort[blockSize.NumberOfCells];
 			var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlags, zValues: null);
 
-			//Debug.WriteLine($"{s1}, {s2}: ACarries: {smxMathHelper.NumberOfACarries}\tMCarries: {smxMathHelper.NumberOfMCarries}\tSplits: {smxMathHelper.NumberOfSplits}\tCarries: {smxMathHelper.NumberOfGetCarries}");
-
-			Debug.WriteLine($"{s1}, {s2}: Splits: {scalarMath.NumberOfSplits}\tCarries: {scalarMath.NumberOfGetCarries}\tGrtrThanOps: {mathOpCounts.NumberOfGrtrThanOps}\tFP-Splits: {mathOpCounts.NumberOfSplits}\tFP-Carries: {mathOpCounts.NumberOfGetCarries}\tGrtrThanOps: {mathOpCounts.NumberOfGrtrThanOpsFP}");
-			
+			Debug.WriteLine($"{s1}, {s2}: {mathOpCounts}");
 
 			return result;
 		}
@@ -104,9 +101,7 @@ namespace MSetGenP
 
 			mathOpCounts.NumberOfSplits = iterator.NumberOfSplits;
 			mathOpCounts.NumberOfGetCarries = iterator.NumberOfGetCarries;
-			mathOpCounts.NumberOfGrtrThanOpsFP = iterator.NumberOfIsGrtrOpsFP;
 			mathOpCounts.NumberOfGrtrThanOps = iterator.NumberOfIsGrtrOpsSc;
-
 
 			return result;
 		}

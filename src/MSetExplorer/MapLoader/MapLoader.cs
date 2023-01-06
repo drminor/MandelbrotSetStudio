@@ -39,6 +39,8 @@ namespace MSetExplorer
 			_sectionsRequested = 0;
 			_sectionsCompleted = 0;
 			_tcs = null;
+
+			MathOpCounts = new MathOpCounts();
 		}
 
 		#endregion
@@ -46,6 +48,8 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
+
+		public MathOpCounts MathOpCounts { get; private set; }
 
 		public int JobNumber { get; init; }
 
@@ -129,6 +133,12 @@ namespace MSetExplorer
 			{
 				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
 
+				if (mapSectionResponse?.MathOpCounts != null)
+				{
+					MathOpCounts.Update(mapSectionResponse.MathOpCounts);
+				}
+
+
 				if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
 				{
 					//Log: MapSection BlockPosition and TimeToCompleteRequest
@@ -181,6 +191,8 @@ namespace MSetExplorer
 				}
 
 				mapSectionRequest.Handled = true;
+
+				Debug.WriteLine($"Job completed: Totals: {MathOpCounts}");
 			}
 
 		}

@@ -11,7 +11,8 @@ namespace MSS.Common.APValues
 	{
 		private const ulong ALL_BITS_SET = 0xFFFFFFFFFFFFFFFF;
 
-		private static readonly int _lanes = Vector256<ulong>.Count;
+		private const ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
+		private const ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
 
 		#region Constructors
 
@@ -22,8 +23,8 @@ namespace MSS.Common.APValues
 		public FPValues(bool[] signs, ulong[][] mantissas)
 		{
 			// ValueArrays[0] = Least Significant Limb (Number of 1's)
-			// ValuesArray[1] = Number of 2^64s
-			// ValuesArray[2] = Number of 2^128s
+			// ValuesArray[1] = Number of 2^31
+			// ValuesArray[2] = Number of 2^62
 			// ValuesArray[n] = Most Significant Limb
 
 			var len = signs.Length;	
@@ -89,9 +90,11 @@ namespace MSS.Common.APValues
 
 		#region Public Properties
 
+		public readonly int Lanes = Vector256<ulong>.Count;
+
 		public int Length => Mantissas[0].Length;
 		public int LimbCount => Mantissas.Length;
-		public int VectorCount => Length / _lanes;
+		public int VectorCount => Length / Lanes;
 
 		public ulong[][] Mantissas { get; init; } 
 
@@ -99,45 +102,9 @@ namespace MSS.Common.APValues
 		public Memory<ulong> SignsMemory { get; init; }
 		public Memory<ulong>[] MantissaMemories { get; init; }
 
-		public byte BitsBeforeBP { get; init; }
-
 		#endregion
 
 		#region Public Methods
-
-		public List<int> CheckReservedBit(int[] inPlayList)
-		{
-			var result = new List<int>();
-
-			var indexes = inPlayList;
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-			{
-				var idx = indexes[idxPtr];
-				var resultPtr = idx * _lanes;
-
-				for (var i = 0; i < _lanes; i++)
-				{
-					var valPtr = resultPtr + i;
-					if (!CheckReservedBit(valPtr))
-					{
-						//Debug.WriteLine($"Reserved Bit does not match the sign bit for value at index: {valPtr}.");
-						result.Add(valPtr);
-					}	
-				}
-			}
-
-			return result;
-		}
-
-		private bool CheckReservedBit(int valPtr)
-		{
-			var reserveBitIsSet = (Mantissas[^1][valPtr] & TEST_BIT_31) > 0;
-			var signBitIsSet = (Mantissas[^1][valPtr] & TEST_BIT_30) > 0;
-
-			var result = reserveBitIsSet == signBitIsSet;
-
-			return result;
-		}
 
 		public bool[] GetSigns()
 		{
@@ -154,36 +121,6 @@ namespace MSS.Common.APValues
 		public void SetSign(int index, bool value)
 		{
 			_signsBackingArray[index] = value ? ALL_BITS_SET : 0L;
-		}
-
-		public Span<Vector256<ulong>> GetLimbVectorsUL(int limbIndex)
-		{
-			var x = MantissaMemories[limbIndex];
-			Span<Vector256<ulong>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(x.Span);
-
-			return result;
-		}
-
-		public Span<Vector256<long>> GetLimbVectorsL(int limbIndex)
-		{
-			var x = MantissaMemories[limbIndex];
-			Span<Vector256<long>> result = MemoryMarshal.Cast<ulong, Vector256<long>>(x.Span);
-
-			return result;
-		}
-
-		public Span<Vector256<uint>> GetLimbVectorsUW(int limbIndex)
-		{
-			var x = MantissaMemories[limbIndex];
-			Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<uint>>(x.Span);
-
-			return result;
-		}
-
-		public Span<Vector256<ulong>> GetSignVectorsUL()
-		{
-			Span<Vector256<ulong>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(SignsMemory.Span);
-			return result;
 		}
 
 		public FPValues Negate()
@@ -203,9 +140,9 @@ namespace MSS.Common.APValues
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
-				var resultPtr = idx * _lanes;
+				var resultPtr = idx * Lanes;
 
-				for (var i = 0; i < _lanes; i++)
+				for (var i = 0; i < Lanes; i++)
 				{
 					var valPtr = resultPtr + i;
 					var partialWordLimbs = result.GetMantissa(valPtr);
@@ -263,10 +200,70 @@ namespace MSS.Common.APValues
 
 		public void SetMantissa(int index, ulong[] values)
 		{
-			for(var i = 0; i < values.Length; i++)
+			for (var i = 0; i < values.Length; i++)
 			{
 				Mantissas[i][index] = values[i];
 			}
+		}
+
+		public List<int> CheckReservedBit(int[] inPlayList)
+		{
+			var result = new List<int>();
+
+			var indexes = inPlayList;
+			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			{
+				var idx = indexes[idxPtr];
+				var resultPtr = idx * Lanes;
+
+				for (var i = 0; i < Lanes; i++)
+				{
+					var valPtr = resultPtr + i;
+					if (!CheckReservedBit(valPtr))
+					{
+						//Debug.WriteLine($"Reserved Bit does not match the sign bit for value at index: {valPtr}.");
+						result.Add(valPtr);
+					}
+				}
+			}
+
+			return result;
+		}
+
+		private bool CheckReservedBit(int valPtr)
+		{
+			var reserveBitIsSet = (Mantissas[^1][valPtr] & TEST_BIT_31) > 0;
+			var signBitIsSet = (Mantissas[^1][valPtr] & TEST_BIT_30) > 0;
+
+			var result = reserveBitIsSet == signBitIsSet;
+
+			return result;
+		}
+
+		#endregion
+
+		#region Mantissa Support
+
+		public Span<Vector256<ulong>> GetLimbVectorsUL(int limbIndex)
+		{
+			var x = MantissaMemories[limbIndex];
+			Span<Vector256<ulong>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(x.Span);
+
+			return result;
+		}
+
+		public Span<Vector256<uint>> GetLimbVectorsUW(int limbIndex)
+		{
+			var x = MantissaMemories[limbIndex];
+			Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<uint>>(x.Span);
+
+			return result;
+		}
+
+		public Span<Vector256<ulong>> GetSignVectorsUL()
+		{
+			Span<Vector256<ulong>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(SignsMemory.Span);
+			return result;
 		}
 
 		private static ulong[][] BuildLimbs(int limbCount, int valueCount)
@@ -293,6 +290,10 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
+		#endregion
+
+		#region ICloneable Support
+
 		object ICloneable.Clone()
 		{
 			return Clone();
@@ -304,11 +305,6 @@ namespace MSS.Common.APValues
 
 			return result;
 		}
-
-		//private const ulong TEST_BIT_32 = 0x0000000100000000; // bit 32 is set.
-		private const ulong TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
-		private const ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
-
 
 		public FPValues Clone2C(out bool[] signs)
 		{

@@ -8,24 +8,24 @@ namespace MSetGeneratorPrototype
 	{
 		#region Private Properties
 
-		private FPValues _cRs;
-		private FPValues _cIs;
-		private FPValues _zRs;
-		private FPValues _zIs;
-		private FPValues _zRSqrs;
-		private FPValues _zISqrs;
+		private FP31Deck _cRs;
+		private FP31Deck _cIs;
+		private FP31Deck _zRs;
+		private FP31Deck _zIs;
+		private FP31Deck _zRSqrs;
+		private FP31Deck _zISqrs;
 
-		private FPValues _zRZIs;
-		private FPValues _zRZiSqrs;
+		private FP31Deck _zRZIs;
+		private FP31Deck _zRZiSqrs;
 
-		private FPValues _zRs2;
-		private FPValues _zIs2;
+		private FP31Deck _zRs2;
+		private FP31Deck _zIs2;
 
 		#endregion
 
 		#region Constructor
 
-		public IteratorSimd(FPValues cRs, FPValues cIs, FPValues zRs, FPValues zIs, FPValues zRSqrs, FPValues zISqrs)
+		public IteratorSimd(FP31Deck cRs, FP31Deck cIs, FP31Deck zRs, FP31Deck zIs, FP31Deck zRSqrs, FP31Deck zISqrs)
 		{
 			_cRs = cRs;
 			_cIs = cIs;
@@ -34,11 +34,11 @@ namespace MSetGeneratorPrototype
 			_zRSqrs = zRSqrs;
 			_zISqrs = zISqrs;
 
-			_zRZIs = new FPValues(_cRs.LimbCount, _cRs.Length);
-			_zRZiSqrs = new FPValues(_cRs.LimbCount, _cRs.Length);
+			_zRZIs = new FP31Deck(_cRs.LimbCount, _cRs.Length);
+			_zRZiSqrs = new FP31Deck(_cRs.LimbCount, _cRs.Length);
 
-			_zRs2 = new FPValues(_cRs.LimbCount, _cRs.Length);
-			_zIs2 = new FPValues(_cRs.LimbCount, _cRs.Length);
+			_zRs2 = new FP31Deck(_cRs.LimbCount, _cRs.Length);
+			_zIs2 = new FP31Deck(_cRs.LimbCount, _cRs.Length);
 		}
 
 		#endregion

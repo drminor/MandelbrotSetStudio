@@ -72,7 +72,7 @@ namespace MSetGenP
 
 			if (remainder != 0)
 			{
-				throw new ArgumentException("The valueCount must be an even multiple of Vector<ulong>.Count.");
+				throw new ArgumentException($"The valueCount must be an even multiple of {_lanes}.");
 			}
 
 			// Initially, all vectors are 'In Play.'
@@ -280,9 +280,9 @@ namespace MSetGenP
 
 		private void SquareInternal(FPValues a, Memory<ulong>[] resultLimbs)
 		{
+			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
 			var indexes = InPlayList;
-			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 			for (int j = 0; j < a.LimbCount; j++)
 			{
 				for (int i = j; i < a.LimbCount; i++)
@@ -311,9 +311,6 @@ namespace MSetGenP
 
 						resultLows[idx] = Avx2.Add(resultLows[idx], lows);
 						resultHighs[idx] = Avx2.Add(resultHighs[idx], highs);
-
-						//resultLows[idx] = UnsignedAddition(resultLows[idx], lows);
-						//resultHighs[idx] = UnsignedAddition(resultHighs[idx], highs);
 					}
 				}
 			}
