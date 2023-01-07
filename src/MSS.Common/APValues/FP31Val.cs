@@ -83,15 +83,6 @@ namespace MSS.Common.APValues
 			return strValue;
 		}
 
-		//public Smx ConvertToSmx()
-		//{
-		//	var scalarMath2C = new ScalarMath2C(new ApFixedPointFormat(Mantissa.Length), 4u);
-
-		//	var result = scalarMath2C.Convert(this);
-
-		//	return result;
-		//}
-
 		public override string ToString()
 		{
 			var result = Sign
@@ -106,9 +97,9 @@ namespace MSS.Common.APValues
 			return Clone();
 		}
 
-		public Smx2C Clone()
+		public FP31Val Clone()
 		{
-			var result = new Smx2C(Sign, (ulong[]) Mantissa.Clone(), Exponent, BitsBeforeBP, Precision);
+			var result = new FP31Val(Sign, (uint[]) Mantissa.Clone(), Exponent, BitsBeforeBP, Precision);
 
 			return result;
 		}
@@ -120,7 +111,7 @@ namespace MSS.Common.APValues
 
 		public override bool Equals(object? obj)
 		{
-			return obj is FP31Val smx && Equals(smx);
+			return obj is FP31Val fp31Val && Equals(fp31Val);
 		}
 
 		public bool Equals(FP31Val other)

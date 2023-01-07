@@ -1,7 +1,6 @@
 ﻿using MSS.Common.APValSupport;
 using System;
 using System.Buffers;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -38,30 +37,23 @@ namespace MSS.Common.APValues
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		//public FP31Deck(Smx[] smxes)
-		//{
-		//	var numberOfLimbs = smxes[0].Mantissa.Length;
-		//	Mantissas = new uint[numberOfLimbs][];
+		public FP31Deck(FP31Val[] fp31Vals)
+		{
+			var numberOfLimbs = fp31Vals[0].LimbCount;
+			Mantissas = new uint[numberOfLimbs][];
 
-		//	for (var i = 0; i < smxes.Length; i++)
-		//	{
-		//		if (smxes[i].Sign)
-		//		{
-		//			var lows = FP31ValHelper.TakeLowerHalves(smxes[i].Mantissa);
-		//			SetMantissa(i, lows);
-		//		}
-		//		else
-		//		{
-		//			var non2CPWLimbs = ScalarMathHelper.Toggle2C(smxes[i].Mantissa, includeTopHalves: false);
+			for (var j = 0; j < numberOfLimbs; j++)
+			{
+				Mantissas[j] = new uint[fp31Vals.Length];
 
-		//			var lows = FP31ValHelper.TakeLowerHalves(non2CPWLimbs);
+				for (var i = 0; i < fp31Vals.Length; i++)
+				{
+					Mantissas[j][i] = fp31Vals[i].Mantissa[j];
+				}
+			}
 
-		//			SetMantissa(i, lows);
-		//		}
-		//	}
-
-		//	MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
-		//}
+			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
+		}
 
 		public FP31Deck(Smx2C[] smxes)
 		{
@@ -188,7 +180,7 @@ namespace MSS.Common.APValues
 			}
 		}
 
-		private uint[] GetMantissa(int index)
+		public uint[] GetMantissa(int index)
 		{
 			var result = Mantissas.Select(x => x[index]).ToArray();
 			return result;
@@ -213,19 +205,6 @@ namespace MSS.Common.APValues
 
 			return result;
 		}
-
-		//public Span<Vector256<uint>> GetLimbVectorsUWExpanded(int limbIndex)
-		//{
-		//	var limb = Mantissas[limbIndex];
-		//	var partialWordLimb = limb.Select(i => (ulong)i).ToArray();
-		//	var x = new Memory<ulong>(partialWordLimb);
-
-		//	Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<uint>>(x.Span);
-
-		//	Debug.Assert(result.Length == 2 * limb.Length, "GetLimbUWExpanded did not double the number of elements.");
-
-		//	return result;
-		//}
 
 		private static uint[][] BuildLimbs(int limbCount, int valueCount)
 		{

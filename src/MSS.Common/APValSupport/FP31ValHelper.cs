@@ -84,6 +84,9 @@ namespace MSS.Common.APValSupport
 			var smx = ScalarMathHelper.CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP);
 			var packedMantissa = TakeLowerHalves(smx.Mantissa);
 			var twoCMantissa = ConvertTo2C(packedMantissa, smx.Sign);
+
+
+
 			var result = new FP31Val(smx.Sign, twoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
 			return result;
 		}
@@ -236,7 +239,7 @@ namespace MSS.Common.APValSupport
 
 			while (limbPtr < resultLength && !foundASetBit)
 			{
-				var ourVal = partialWordLimbs[limbPtr];
+				var ourVal = partialWordLimbs[limbPtr] & LOW31_BITS_SET;
 				if (ourVal == 0)
 				{
 					result[limbPtr] = ourVal;
@@ -248,7 +251,8 @@ namespace MSS.Common.APValSupport
 				}
 				else
 				{
-					result[limbPtr] = FlipLowBitsAfterFirst1(ourVal);
+					var someFlipped = FlipLowBitsAfterFirst1(ourVal);
+					result[limbPtr] = someFlipped & LOW31_BITS_SET;
 
 					foundASetBit = true;
 				}
@@ -263,7 +267,7 @@ namespace MSS.Common.APValSupport
 
 				for (; limbPtr < resultLength; limbPtr++)
 				{
-					result[limbPtr] = ~partialWordLimbs[limbPtr];
+					result[limbPtr] = ~partialWordLimbs[limbPtr] & LOW31_BITS_SET;
 				}
 			}
 

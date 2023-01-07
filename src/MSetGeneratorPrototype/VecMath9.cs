@@ -1,14 +1,12 @@
-﻿using MSS.Common.APValSupport;
+﻿using MSS.Common;
+using MSS.Common.APValSupport;
 using MSS.Common.APValues;
 using MSS.Types;
-using System;
 using System.Buffers;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Threading;
 
 namespace MSetGeneratorPrototype
 {
@@ -61,7 +59,7 @@ namespace MSetGeneratorPrototype
 			RowNumber = 0;
 
 			ApFixedPointFormat = apFixedPointFormat;
-			MaxIntegerValue = ScalarMathHelper.GetMaxIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint, IsSigned);
+			MaxIntegerValue = FP31ValHelper.GetMaxIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint, IsSigned);
 			
 			var thresholdMsl = FP31ValHelper.GetThresholdMsl(threshold, ApFixedPointFormat, IsSigned);
 			_thresholdVector = Vector256.Create(thresholdMsl).AsInt32();
@@ -427,11 +425,6 @@ namespace MSetGeneratorPrototype
 					resultLimbVecs[idx] = limbValues;
 					NumberOfSplits++;
 
-
-					//var (limbValues, newCarries) = GetResultWithCarry(newValuesVector, isMsl: (limbPtr == LimbCount - 1), out var aCarryOccured);
-					//resultLimbVecs[idx] = limbValues;
-					//NumberOfGetCarries++;
-
 					if (USE_DET_DEBUG)
 						ReportForAddition(limbPtr, va, vb, carryVector, newValuesVector, limbValues, newCarries);
 
@@ -483,38 +476,22 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
+		#region Retrieve Smx From FP31Deck
+
+		public FP31Val GetFP31ValAtIndex(FP31Deck fPValues, int index, int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			var mantissa = fPValues.GetMantissa(index);
+			var sign = FP31ValHelper.GetSign(mantissa);
+
+			var result = new FP31Val(sign, mantissa, TargetExponent, BitsBeforeBP, precision);
+
+			return result;
+		}
+
+		#endregion
+
+
 		#region Comparison
-
-		//// By Deck
-		//public void IsGreaterOrEqThanThreshold(FP31Deck a, bool[] results)
-		//{
-		//	var left = a.GetLimbVectorsUW(LimbCount - 1);
-		//	var right = _thresholdVector;
-
-		//	IsGreaterOrEqThan(left, right, results);
-		//}
-
-		//// By Vector
-		//private void IsGreaterOrEqThan(Span<Vector256<uint>> left, Vector256<int> right, bool[] results)
-		//{
-		//	var indexes = InPlayList;
-		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-		//	{
-		//		var idx = indexes[idxPtr];
-		//		var sansSign = Avx2.And(left[idx], SIGN_BIT_MASK_VEC);
-		//		var resultVector = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
-
-		//		var x = Avx2.MoveMask(resultVector.AsByte());
-		//		NumberOfGrtrThanOps++;
-
-		//		var vectorPtr = idx * _lanes;
-
-		//		for (var i = 0; i < _lanes; i++)
-		//		{
-		//			results[vectorPtr + i] = resultVector.GetElement(i) == -1;
-		//		}
-		//	}
-		//}
 
 		// By Deck
 		public void IsGreaterOrEqThanThreshold(FP31Deck a, Memory<int> results)
@@ -536,102 +513,6 @@ namespace MSetGeneratorPrototype
 				var sansSign = Avx2.And(left[idx], SIGN_BIT_MASK_VEC);
 				results[idx] = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
 				NumberOfGrtrThanOps++;
-			}
-		}
-
-		#endregion
-
-		#region Mantissa Support - Not Used
-
-		private Memory<uint>[] BuildMantissaMemoryArray(int limbCount, int valueCount)
-		{
-			var ba = BuildMantissaBackingArray(limbCount, valueCount);
-			var result = BuildMantissaMemoryArray(ba);
-
-			return result;
-		}
-
-		private uint[][] BuildMantissaBackingArray(int limbCount, int valueCount)
-		{
-			var result = new uint[limbCount][];
-
-			for (var i = 0; i < limbCount; i++)
-			{
-				result[i] = new uint[valueCount];
-			}
-
-			return result;
-		}
-
-		private Memory<uint>[] BuildMantissaMemoryArray(uint[][] backingArray)
-		{
-			var result = new Memory<uint>[backingArray.Length];
-
-			for (var i = 0; i < backingArray.Length; i++)
-			{
-				result[i] = new Memory<uint>(backingArray[i]);
-			}
-
-			return result;
-		}
-
-		private void ClearManatissMems(Memory<uint>[] mantissaMems, bool onlyInPlayItems)
-		{
-			if (onlyInPlayItems)
-			{
-				var indexes = InPlayList;
-
-				for (var j = 0; j < mantissaMems.Length; j++)
-				{
-					var vectors = GetLimbVectorsUW(mantissaMems[j]);
-
-					for (var i = 0; i < indexes.Length; i++)
-					{
-						vectors[indexes[i]] = Vector256<uint>.Zero;
-					}
-				}
-			}
-			else
-			{
-				for (var j = 0; j < mantissaMems.Length; j++)
-				{
-					var vectors = GetLimbVectorsUW(mantissaMems[j]);
-
-					for (var i = 0; i < VecCount; i++)
-					{
-						vectors[i] = Vector256<uint>.Zero;
-					}
-				}
-			}
-		}
-
-		private void ClearBackingArray(ulong[][] backingArray, bool onlyInPlayItems)
-		{
-			if (onlyInPlayItems)
-			{
-				var template = new ulong[_lanes];
-
-				var indexes = InPlayListNarrow;
-
-				for (var j = 0; j < backingArray.Length; j++)
-				{
-					for (var i = 0; i < indexes.Length; i++)
-					{
-						Array.Copy(template, 0, backingArray[j], indexes[i] * _lanes, _lanes);
-					}
-				}
-			}
-			else
-			{
-				var vc = backingArray[0].Length;
-
-				for (var j = 0; j < backingArray.Length; j++)
-				{
-					for (var i = 0; i < vc; i++)
-					{
-						backingArray[j][i] = 0;
-					}
-				}
 			}
 		}
 
