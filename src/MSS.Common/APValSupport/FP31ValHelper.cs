@@ -392,43 +392,6 @@ namespace MSS.Common.APValSupport
 			return result;
 		}
 
-		//public static string GetDiagDisplayHexBlocked(string name, ulong[] values)
-		//{
-		//	var strAry = GetStrArrayHexBlocked(values);
-
-		//	return $"{name}:{string.Join("; ", strAry)}";
-		//}
-
-		//public static string[] GetStrArrayHexBlocked(ulong[] values)
-		//{
-		//	var strAry = GetStrArrayHex(values);
-
-		//	var result = new string[values.Length];
-		//	for (var i = 0; i < values.Length; i++)
-		//	{
-		//		var hexFormattedULong = strAry[i];
-		//		result[i] = hexFormattedULong[0..3] + hexFormattedULong[4..7] + hexFormattedULong[8..11] + hexFormattedULong[12..15] + hexFormattedULong[16..19] + hexFormattedULong[20..23] + hexFormattedULong[24..27] + hexFormattedULong[28..31];
-		//	}
-
-		//	return result;
-		//}
-
-		//private string GetHiLoDiagDisplay(string name, ulong[] values)
-		//{
-		//	Debug.Assert(values.Length % 2 == 0, "GetHiLoDiagDisplay is being called with an array that has a length that is not an even multiple of two.");
-
-		//	var strAry = GetStrArray(values);
-		//	var pairs = new string[values.Length / 2];
-
-		//	for (int i = 0; i < values.Length; i += 2)
-		//	{
-		//		pairs[i / 2] = $"{strAry[i]}, {strAry[i + 1]}";
-		//	}
-
-		//	return $"{name}: {string.Join("; ", pairs)}";
-		//}
-
-
 		#endregion
 
 	}

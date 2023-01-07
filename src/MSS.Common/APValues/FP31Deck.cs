@@ -158,25 +158,13 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
-		public void UpdateFrom(FPValues fPValues, int[] inPlayList, int numberOfLanes)
+		public void UpdateFrom(ulong[][] mantissas)
 		{
-			var indexes = inPlayList;
-
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			for (var i = 0; i < Mantissas.Length; i++)
 			{
-				var idx = indexes[idxPtr];
-				var resultPtr = idx * numberOfLanes;
+				var lows = FP31ValHelper.TakeLowerHalves(mantissas[i]);
 
-				for (var i = 0; i < numberOfLanes; i++)
-				{
-					var valPtr = resultPtr + i;
-
-					var limbs = fPValues.GetMantissa(valPtr);
-
-					var lows = FP31ValHelper.TakeLowerHalves(limbs);
-
-					SetMantissa(valPtr, lows);
-				}
+				Array.Copy(lows, Mantissas[i], Length);
 			}
 		}
 

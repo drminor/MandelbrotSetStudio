@@ -1,7 +1,9 @@
-﻿using MSS.Common;
+﻿using MongoDB.Bson.Serialization.Options;
+using MSS.Common;
 using MSS.Common.APValSupport;
 using MSS.Common.APValues;
 using MSS.Types;
+using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -29,6 +31,8 @@ namespace MSetGeneratorPrototype
 
 		private Memory<ulong>[] _squareResult1Mems;
 		private Memory<ulong>[] _squareResult2Mems;
+
+		private Memory<uint>[] _negationResultMems;
 
 		private Vector256<int> _thresholdVector;
 
@@ -67,12 +71,14 @@ namespace MSetGeneratorPrototype
 			_squareResult1Mems = BuildMantissaMemoryArrayL(LimbCount * 2, ValueCount);
 			_squareResult2Mems = BuildMantissaMemoryArrayL(LimbCount * 2, ValueCount);
 
+			_negationResultMems = BuildMantissaMemoryArray(LimbCount, ValueCount);
+
 			UnusedCalcs = new long[valueCount];
 		}
 
 		#endregion
 
-		#region Mantissa Support
+		#region Mantissa Support - Long
 
 		private Memory<ulong>[] BuildMantissaMemoryArrayL(int limbCount, int valueCount)
 		{
@@ -168,6 +174,102 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
+		#region Mantissa Support - Short
+
+		private Memory<uint>[] BuildMantissaMemoryArray(int limbCount, int valueCount)
+		{
+			var ba = BuildMantissaBackingArray(limbCount, valueCount);
+			var result = BuildMantissaMemoryArray(ba);
+
+			return result;
+		}
+
+		private uint[][] BuildMantissaBackingArray(int limbCount, int valueCount)
+		{
+			var result = new uint[limbCount][];
+
+			for (var i = 0; i < limbCount; i++)
+			{
+				result[i] = new uint[valueCount];
+			}
+
+			return result;
+		}
+
+		private Memory<uint>[] BuildMantissaMemoryArray(uint[][] backingArray)
+		{
+			var result = new Memory<uint>[backingArray.Length];
+
+			for (var i = 0; i < backingArray.Length; i++)
+			{
+				result[i] = new Memory<uint>(backingArray[i]);
+			}
+
+			return result;
+		}
+
+		private void ClearManatissMems(Memory<uint>[] mantissaMems, bool onlyInPlayItems)
+		{
+			if (onlyInPlayItems)
+			{
+				var indexes = InPlayList;
+
+				for (var j = 0; j < mantissaMems.Length; j++)
+				{
+					var vectors = GetLimbVectorsUW(mantissaMems[j]);
+
+					for (var i = 0; i < indexes.Length; i++)
+					{
+						vectors[indexes[i]] = Vector256<uint>.Zero;
+					}
+				}
+			}
+			else
+			{
+				for (var j = 0; j < mantissaMems.Length; j++)
+				{
+					var vectors = GetLimbVectorsUW(mantissaMems[j]);
+
+					for (var i = 0; i < VecCount; i++)
+					{
+						vectors[i] = Vector256<uint>.Zero;
+					}
+				}
+			}
+		}
+
+		private void ClearBackingArray(ulong[][] backingArray, bool onlyInPlayItems)
+		{
+			if (onlyInPlayItems)
+			{
+				var template = new ulong[_lanes];
+
+				var indexes = InPlayListNarrow;
+
+				for (var j = 0; j < backingArray.Length; j++)
+				{
+					for (var i = 0; i < indexes.Length; i++)
+					{
+						Array.Copy(template, 0, backingArray[j], indexes[i] * _lanes, _lanes);
+					}
+				}
+			}
+			else
+			{
+				var vc = backingArray[0].Length;
+
+				for (var j = 0; j < backingArray.Length; j++)
+				{
+					for (var i = 0; i < vc; i++)
+					{
+						backingArray[j][i] = 0;
+					}
+				}
+			}
+		}
+
+		#endregion
+
 		#region Public Properties
 
 		public bool IsSigned => true;
@@ -220,9 +322,11 @@ namespace MSetGeneratorPrototype
 			SquareInternal(non2CFPValues, _squareResult1Mems);
 			SumThePartials(_squareResult1Mems, _squareResult2Mems);
 
-			ShiftAndTrim(_squareResult2Mems, non2CFPValues);
+			ShiftAndTrim(_squareResult2Mems, non2CFPValues.MantissaMemories);
 
-			result.UpdateFrom(non2CFPValues, InPlayList, _lanes);
+			//result.UpdateFrom(non2CFPValues, InPlayList);
+
+			result.UpdateFrom(non2CFPValues.Mantissas);
 		}
 
 		// By Limb, By Vector
@@ -273,7 +377,7 @@ namespace MSetGeneratorPrototype
 
 		#region Multiply Post Processing
 
-		// By Vector, By Limb
+		// By Limb, By Vector
 		private void SumThePartials(Memory<ulong>[] mantissaMems, Memory<ulong>[] resultLimbs)
 		{
 			// To be used after a multiply operation.
@@ -281,38 +385,31 @@ namespace MSetGeneratorPrototype
 			// This will leave each result bin with a value <= 2^32 for the final digit.
 			// If the MSL produces a carry, throw an exception.
 
+			var carryVectors = Enumerable.Repeat(Vector256<ulong>.Zero, VecCount * 2).ToArray();
+			var indexes = InPlayListNarrow;
+
 			var limbCnt = mantissaMems.Length;
 
-			var indexes = InPlayListNarrow;
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			for (int limbPtr = 0; limbPtr < limbCnt; limbPtr++)
 			{
-				var idx = indexes[idxPtr];
-
-				var limbPtr = 0;
-
 				var pProductVectors = GetLimbVectorsUL(mantissaMems[limbPtr]);
 				var resultVectors = GetLimbVectorsUL(resultLimbs[limbPtr]);
 
-				var carries = Avx2.ShiftRightLogical(pProductVectors[idx], EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
-				resultVectors[idx] = Avx2.And(pProductVectors[idx], HIGH33_MASK_VEC_L);					// The low 31 bits of the sum is the result.
-				NumberOfSplits++;
-
-				for (; limbPtr < limbCnt; limbPtr++)
+				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 				{
-					pProductVectors = GetLimbVectorsUL(mantissaMems[limbPtr]);
-					resultVectors = GetLimbVectorsUL(resultLimbs[limbPtr]);
+					var idx = indexes[idxPtr];
 
-					var withCarries = Avx2.Add(pProductVectors[idx], carries);
+					var withCarries = Avx2.Add(pProductVectors[idx], carryVectors[idx]);
 
-					carries = Avx2.ShiftRightLogical(withCarries, EFFECTIVE_BITS_PER_LIMB);				// The high 31 bits of sum becomes the new carry.
 					resultVectors[idx] = Avx2.And(withCarries, HIGH33_MASK_VEC_L);						// The low 31 bits of the sum is the result.
+					carryVectors[idx] = Avx2.ShiftRightLogical(withCarries, EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
 					NumberOfSplits++;
 				}
 			}
 		}
-		
+
 		// By Limb, By Vector
-		private void ShiftAndTrim(Memory<ulong>[] mantissaMems, FPValues result)
+		private void ShiftAndTrim(Memory<ulong>[] mantissaMems, Memory<ulong>[] resultLimbs)
 		{
 			//ValidateIsSplit(mantissa);
 
@@ -322,8 +419,6 @@ namespace MSetGeneratorPrototype
 
 			// Check to see if any of these values are larger than the FP Format.
 			//_ = CheckForOverflow(resultLimbs);
-
-			Memory<ulong>[] resultLimbs = result.MantissaMemories;
 
 			var sourceIndex = Math.Max(mantissaMems.Length - LimbCount, 0);
 
@@ -390,12 +485,77 @@ namespace MSetGeneratorPrototype
 		{
 			NumberOfConversions++;
 
+			//Negate(b.MantissaMemories, _negationResultMems, InPlayList);
+			//AddInternal(a.MantissaMemories, _negationResultMems, c.MantissaMemories);
+
 			var notB = b.Negate(InPlayList);
-			Add(a, notB, c);
+
+			//Add(a, notB, c);
+
+			AddInternal(a.MantissaMemories, notB.MantissaMemories, c.MantissaMemories);
+		}
+
+		public void Add(FP31Deck a, FP31Deck b, FP31Deck c)
+		{
+			AddInternal(a.MantissaMemories, b.MantissaMemories, c.MantissaMemories);
+		}
+
+		// By Limb, By Vector
+		private void AddInternal(Memory<uint>[] a, Memory<uint>[] b, Memory<uint>[] c)
+		{
+			var carryVectors = Enumerable.Repeat(Vector256<uint>.Zero, VecCount).ToArray();
+			var indexes = InPlayList;
+
+			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+			{
+				var limbVecsA = GetLimbVectorsUW(a[limbPtr]);
+				var limbVecsB = GetLimbVectorsUW(b[limbPtr]);
+				var resultLimbVecs = GetLimbVectorsUW(c[limbPtr]);
+
+				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+				{
+					var idx = indexes[idxPtr];
+
+					var va = Avx2.And(limbVecsA[idx], HIGH33_MASK_VEC);
+					var vb = Avx2.And(limbVecsB[idx], HIGH33_MASK_VEC);
+
+					var sumVector = Avx2.Add(va, vb);
+					var newValuesVector = Avx2.Add(sumVector, carryVectors[idx]);
+					NumberOfAdditions += 2;
+
+					var newCarries = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+					var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
+					resultLimbVecs[idx] = limbValues;
+					NumberOfSplits++;
+
+					if (USE_DET_DEBUG)
+						ReportForAddition(limbPtr, va, vb, carryVectors[idx], newValuesVector, limbValues, newCarries);
+
+					carryVectors[idx] = newCarries;
+				}
+			}
+
+			//for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			//{
+			//	var idx = indexes[idxPtr];
+
+			//	var cVec = carryVectors[idx];
+
+			//	var resultPtr = idx * _lanes;
+
+			//	for (var i = 0; i < _lanes; i++)
+			//	{
+			//		if (cVec.GetElement(i) > 1)
+			//		{
+			//			DoneFlags[resultPtr + i] = true;
+			//		}
+			//	}
+			//}
+
 		}
 
 		// By Vector, By Limb
-		public void Add(FP31Deck a, FP31Deck b, FP31Deck c)
+		private void AddInternalOld(Memory<uint>[] a, Memory<uint>[] b, Memory<uint>[] c)
 		{
 			var indexes = InPlayList;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
@@ -409,9 +569,9 @@ namespace MSetGeneratorPrototype
 
 				for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 				{
-					var limbVecsA = a.GetLimbVectorsUW(limbPtr);
-					var limbVecsB = b.GetLimbVectorsUW(limbPtr);
-					var resultLimbVecs = c.GetLimbVectorsUW(limbPtr);
+					var limbVecsA = GetLimbVectorsUW(a[limbPtr]);
+					var limbVecsB = GetLimbVectorsUW(b[limbPtr]);
+					var resultLimbVecs = GetLimbVectorsUW(c[limbPtr]);
 
 					var va = Avx2.And(limbVecsA[idx], HIGH33_MASK_VEC);
 					var vb = Avx2.And(limbVecsB[idx], HIGH33_MASK_VEC);
@@ -448,6 +608,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
+		// By Vector
 		private void ReportForAddition(int step, Vector256<uint> left, Vector256<uint> right, Vector256<uint> carry, Vector256<uint> nv, Vector256<uint> lo, Vector256<uint> newCarry)
 		{
 			var leftVal0 = left.GetElement(0);
@@ -474,6 +635,29 @@ namespace MSetGeneratorPrototype
 			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}. hpOfNv: {nvHiPart}. unSNv: {unSNv}\n");
 		}
 
+		// By Vector, By Limb
+		public void Negate(Memory<uint>[] sourceLimbs, Memory<uint>[] resultLimbs, int[] inPlayList)
+		{
+			//var result = Clone();
+
+			//var indexes = inPlayList;
+			//for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			//{
+			//	var idx = indexes[idxPtr];
+			//	var resultPtr = idx * Lanes;
+
+			//	for (var i = 0; i < Lanes; i++)
+			//	{
+			//		var valPtr = resultPtr + i;
+			//		var limbs = result.GetMantissa(valPtr);
+			//		var non2CPWLimbs = FP31ValHelper.FlipBitsAndAdd1(limbs);
+			//		result.SetMantissa(valPtr, non2CPWLimbs);
+			//	}
+			//}
+
+			//return result;
+		}
+
 		#endregion
 
 		#region Retrieve Smx From FP31Deck
@@ -489,7 +673,6 @@ namespace MSetGeneratorPrototype
 		}
 
 		#endregion
-
 
 		#region Comparison
 
