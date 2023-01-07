@@ -10,14 +10,14 @@ namespace MSS.Common.APValues
 {
 	public class FP31Deck : ICloneable
 	{
-		private const ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
+		private const uint TEST_BIT_30 = 0x40000000; // bit 30 is set.
 
 		#region Constructors
 
 		public FP31Deck(int limbCount, int valueCount) : this(BuildLimbs(limbCount, valueCount))
 		{ }
 
-		public FP31Deck(uint[][] mantissas)
+		private FP31Deck(uint[][] mantissas)
 		{
 			// ValueArrays[0] = Least Significant Limb (Number of 1's)
 			// ValuesArray[1] = Number of 2^31
@@ -124,21 +124,15 @@ namespace MSS.Common.APValues
 				{
 					var valPtr = resultPtr + i;
 					var limbs = result.GetMantissa(valPtr);
-
-					var extendedLimbs = FP31ValHelper.ExtendToPartialWords(limbs);
-
-					var non2CPWLimbs = ScalarMathHelper.Toggle2C(extendedLimbs, includeTopHalves: false);
-
-					var lows = FP31ValHelper.TakeLowerHalves(non2CPWLimbs);
-
-					result.SetMantissa(valPtr, lows);
+					var non2CPWLimbs = FP31ValHelper.FlipBitsAndAdd1(limbs);
+					result.SetMantissa(valPtr, non2CPWLimbs);
 				}
 			}
 
 			return result;
 		}
 
-		public FPValues ConvertFrom2C(int[] inPlayList, int numberOfLanes)
+		public FPValues ConvertFrom2C(int[] inPlayList)
 		{
 			var result = new FPValues(LimbCount, Length);
 
@@ -148,23 +142,23 @@ namespace MSS.Common.APValues
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
-				var resultPtr = idx * numberOfLanes;
+				var resultPtr = idx * Lanes;
 
-				for (var i = 0; i < numberOfLanes; i++)
+				for (var i = 0; i < Lanes; i++)
 				{
 					var valPtr = resultPtr + i;
-
 					var limbs = GetMantissa(valPtr);
-					var partialWordLimbs = FP31ValHelper.ExtendToPartialWords(limbs);
 
 					if (!signs[valPtr])
 					{
-						var non2CPWLimbs = ScalarMathHelper.Toggle2C(partialWordLimbs, includeTopHalves: false);
-						result.SetMantissa(valPtr, non2CPWLimbs);
+						var non2CLimbs = FP31ValHelper.FlipBitsAndAdd1(limbs);
+						var seNon2CPWLimbs = FP31ValHelper.ExtendSignBit(non2CLimbs);
+						result.SetMantissa(valPtr, seNon2CPWLimbs);
 					}
 					else
 					{
-						result.SetMantissa(valPtr, partialWordLimbs);
+						var seNon2CPWLimbs = FP31ValHelper.ExtendSignBit(limbs);
+						result.SetMantissa(valPtr, seNon2CPWLimbs);
 					}
 				}
 			}

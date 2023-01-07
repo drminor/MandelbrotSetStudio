@@ -761,34 +761,5 @@ namespace MSetGenP
 
 		#endregion
 
-		#region TEMPLATES
-
-		//private void MultiplyVecs(Span<Vector256<uint>> left, Span<Vector256<uint>> right, Span<Vector256<ulong>> result)
-		//{
-		//	foreach (var idx in InPlayList)
-		//	{
-		//		result[idx] = Avx2.Multiply(left[idx], right[idx]);
-		//	}
-		//}
-
-		//private void Split(Span<Vector256<ulong>> x, Span<Vector256<ulong>> highs, Span<Vector256<ulong>> lows)
-		//{
-		//	foreach (var idx in InPlayList)
-		//	{
-		//		highs[idx] = Avx2.And(x[idx], HIGH_MASK_VEC);   // Create new ulong from bits 32 - 63.
-		//		lows[idx] = Avx2.And(x[idx], LOW_MASK_VEC);    // Create new ulong from bits 0 - 31.
-		//	}
-		//}
-
-		//private void AddVecs(Span<Vector256<ulong>> left, Span<Vector256<ulong>> right, Span<Vector256<ulong>> result)
-		//{
-		//	for (var i = 0; i < left.Length; i++)
-		//	{
-		//		result[i] = Avx2.Add(left[i], right[i]);
-		//	}
-		//}
-
-		#endregion
-
 	}
 }

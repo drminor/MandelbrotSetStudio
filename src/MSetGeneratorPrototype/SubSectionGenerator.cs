@@ -1,5 +1,6 @@
 ﻿using MSS.Common.APValues;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
@@ -22,7 +23,8 @@ namespace MSetGeneratorPrototype
 			var sumOfSqrs = new FP31Deck(cRs.LimbCount, cRs.Length);
 
 			var escapedFlags = new bool[resultLength];
-			//var vecMath = new VecMath(_apFixedPointFormat1, resultLength, _threshold);
+			var escapedFlagsBackingArray = new int[resultLength];
+			var escapedFlagMemory = new Memory<int>(escapedFlagsBackingArray);
 
 			doneFlags = vecMath.DoneFlags;
 			var inPlayList = vecMath.InPlayList;
@@ -35,7 +37,7 @@ namespace MSetGeneratorPrototype
 			vecMath.Square(zIs, zISqrs);
 			vecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
 
-			inPlayList = UpdateTheDoneFlags(vecMath, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags, targetIterations);
+			inPlayList = UpdateTheDoneFlags(vecMath, sumOfSqrs, inPlayList, escapedFlagMemory, escapedFlagsBackingArray, counts, doneFlags, targetIterations);
 			vecMath.InPlayList = inPlayList;
 
 			var iterator = new IteratorSimd(cRs, cIs, zRs, zIs, zRSqrs, zISqrs);
@@ -56,7 +58,7 @@ namespace MSetGeneratorPrototype
 				//	Debug.Assert(doneFlagsDiff == aCarriesDif, "Not All Done Flags were updated.");
 				//}
 
-				inPlayList = UpdateTheDoneFlags(vecMath, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags, targetIterations);
+				inPlayList = UpdateTheDoneFlags(vecMath, sumOfSqrs, inPlayList, escapedFlagMemory, escapedFlagsBackingArray, counts, doneFlags, targetIterations);
 				vecMath.InPlayList = inPlayList;
 			}
 
@@ -66,17 +68,19 @@ namespace MSetGeneratorPrototype
 			return counts;
 		}
 
-		private int[] UpdateTheDoneFlags(VecMath9 vecMath, FP31Deck sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
+		private int[] UpdateTheDoneFlags(VecMath9 vecMath, FP31Deck sumOfSqrs, int[] inPlayList, Memory<int> escapedFlags, int[] escapedFlagsBackingArray, ushort[] counts, bool[] doneFlags, int targetIterations)
 		{
 			vecMath.IsGreaterOrEqThanThreshold(sumOfSqrs, escapedFlags);
 
-			var vectorsNoLongerInPlay = UpdateCounts(vecMath, sumOfSqrs, inPlayList, escapedFlags, counts, doneFlags, targetIterations);
+
+
+			var vectorsNoLongerInPlay = UpdateCounts(vecMath, sumOfSqrs, inPlayList, escapedFlagsBackingArray, counts, doneFlags, targetIterations);
 			var updatedInPlayList = GetUpdatedInPlayList(inPlayList, vectorsNoLongerInPlay);
 
 			return updatedInPlayList;
 		}
 
-		private List<int> UpdateCounts(VecMath9 vecMath, FP31Deck sumOfSqrs, int[] inPlayList, bool[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
+		private List<int> UpdateCounts(VecMath9 vecMath, FP31Deck sumOfSqrs, int[] inPlayList, int[] escapedFlags, ushort[] counts, bool[] doneFlags, int targetIterations)
 		{
 			var numberOfLanes = Vector256<uint>.Count;
 			var toBeRemoved = new List<int>();
@@ -96,13 +100,14 @@ namespace MSetGeneratorPrototype
 
 					if (doneFlag)
 					{
+						vecMath.UnusedCalcs[idx]++;
 						continue;
 					}
 
 					var cnt = counts[cntrPtr] + 1;
 					counts[cntrPtr] = (ushort)cnt;
 
-					var escaped = escapedFlags[cntrPtr];
+					var escaped = escapedFlags[cntrPtr] == -1;
 
 					// TODO: Need to save the ZValues to a safe place to prevent further updates.
 					if (escaped)

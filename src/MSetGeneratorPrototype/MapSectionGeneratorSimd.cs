@@ -13,9 +13,11 @@ namespace MSetGeneratorPrototype
 		{
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
-			
+
 			//var fixedPointFormat = new ApFixedPointFormat(bitsBeforeBinaryPoint: 8, minimumFractionalBits: precision);
-			var apFixedPointFormat = new ApFixedPointFormat(3);
+
+			var howManyLimbs = 2;
+			var apFixedPointFormat = new ApFixedPointFormat(howManyLimbs);
 
 			var (blockPos, startingCx, startingCy, delta) = GetCoordinates(mapSectionRequest, apFixedPointFormat);
 
@@ -24,7 +26,7 @@ namespace MSetGeneratorPrototype
 			var s3 = delta.GetStringValue();
 
 			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
-			Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");
+			//Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");
 
 			MapSectionResponse result;
 
@@ -101,14 +103,15 @@ namespace MSetGeneratorPrototype
 				Array.Copy(rowCounts, 0, counts, j * stride, stride);
 				Array.Copy(rowDoneFlags, 0, doneFlags, j * stride, stride);
 
-				mathOpCounts.NumberOfACarries += vecMath.NumberOfACarries;
-				mathOpCounts.NumberOfMCarries += vecMath.NumberOfMCarries;
+				mathOpCounts.NumberOfAdditions += vecMath.NumberOfAdditions;
+				mathOpCounts.NumberOfMultiplications += vecMath.NumberOfMultiplications;
 				mathOpCounts.NumberOfConversions += vecMath.NumberOfConversions;
 
 				mathOpCounts.NumberOfSplits += vecMath.NumberOfSplits;
 				mathOpCounts.NumberOfGetCarries += vecMath.NumberOfGetCarries;
-
 				mathOpCounts.NumberOfGrtrThanOps += vecMath.NumberOfGrtrThanOps;
+
+				mathOpCounts.NumberOfUnusedCalcs += vecMath.UnusedCalcs.Sum();
 			}
 
 			return (counts, escapeVelocities, doneFlags);

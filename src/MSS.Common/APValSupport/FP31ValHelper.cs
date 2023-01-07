@@ -2,6 +2,7 @@
 using MSS.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -21,28 +22,18 @@ namespace MSS.Common.APValSupport
 		// Integer used to convert BigIntegers to/from array of ulongs containing partial-word values
 		private static readonly BigInteger BI_HALF_WORD_FACTOR = BigInteger.Pow(2, EFFECTIVE_BITS_PER_LIMB);
 
-		private const uint LOW32_BITS_SET = 0xFFFFFFFF; // bits 0 - 31 are set.
-		//private const uint HIGH32_BITS_SET = 0xFFFFFFFF00000000; // bits 63 - 32 are set.
+		private const uint LOW31_BITS_SET = 0x7FFFFFFF;			    // bits 0 - 30 are set.
 
-		private const uint HIGH33_BITS_SET = 0x80000000; // bits 63 - 31 are set.
-		private const uint LOW31_BITS_SET = 0x7FFFFFFF;    // bits 0 - 30 are set.
+		private const uint TEST_BIT_31 = 0x80000000;				// bit 31 is set.
+		private const uint TEST_BIT_30 = 0x40000000;				// bit 30 is set.
 
-		private const uint TEST_BIT_31 = 0x0000000080000000; // bit 31 is set.
-		private const uint TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
+		private const uint MOST_NEG_VAL = 0x40000000;				// Most negative value
+		private const uint MOST_NEG_VAL_REPLACMENT = 0x40000001;    // Most negative value + 1.
 
-		private const uint MOST_NEG_VAL = 0x40000000;
-		private const uint MOST_NEG_VAL_REPLACMENT = 0x40000001;       // Most negative value + 1.
+		private const ulong HIGH33_FILL = 0xFFFFFFFF80000000;       // bits 63 - 31 are set.
+		private const ulong HIGH33_CLEAR = 0x000000007FFFFFFF;      // bits 63 - 31 are reset.
 
-		//private const ulong HIGH32_FILL = HIGH32_BITS_SET;
-		//private const ulong HIGH32_CLEAR = LOW32_BITS_SET;
-
-		private const ulong HIGH33_MASK = LOW31_BITS_SET;
-		private const ulong LOW31_MASK = HIGH33_BITS_SET;
-
-		private const ulong HIGH33_FILL = HIGH33_BITS_SET;
-		private const ulong HIGH33_CLEAR = LOW31_BITS_SET;
-
-		//private static readonly bool USE_DET_DEBUG = false;
+		private static readonly bool USE_DET_DEBUG = false;
 
 		#endregion
 
@@ -64,34 +55,22 @@ namespace MSS.Common.APValSupport
 
 		#endregion
 
-		#region Smx and RValue Support
+		#region RValue Support
 
 		public static RValue CreateRValue(FP31Val fP31Val)
 		{
-			var sign = GetSign(fP31Val.Mantissa);
-
-			var extendedLimbs = ExtendToPartialWords(fP31Val.Mantissa);
-
-			var negatedPartialWordLimbs = ScalarMathHelper.ConvertFrom2C(extendedLimbs);
-
-			var result = ScalarMathHelper.CreateRValue(sign, negatedPartialWordLimbs, fP31Val.Exponent, fP31Val.Precision);
-
+			var negatedPartialWordLimbs = ConvertFrom2C(fP31Val.Mantissa, out var sign);
+			var result = CreateRValue(sign, negatedPartialWordLimbs, fP31Val.Exponent, fP31Val.Precision);
 			return result;
 		}
 
 		public static RValue CreateRValue(bool sign, uint[] partialWordLimbs, int exponent, int precision)
 		{
-			//if (CheckPWValues(partialWordLimbs))
-			//{
-			//	throw new ArgumentException($"Cannot create an RValue from an array of ulongs where any of the values is greater than MAX_DIGIT.");
-			//}
-
 			var biValue = FromFwUInts(partialWordLimbs);
 			biValue = sign ? biValue : -1 * biValue;
 			var result = new RValue(biValue, exponent, precision);
 			return result;
 		}
-
 
 		public static FP31Val CreateFP31Val(RValue rValue, ApFixedPointFormat apFixedPointFormat)
 		{
@@ -103,13 +82,9 @@ namespace MSS.Common.APValSupport
 		public static FP31Val CreateFP31Val(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
 			var smx = ScalarMathHelper.CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP);
-
-			var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
-
-			var packedTwoCMantissa = TakeLowerHalves(twoCMantissa);
-
-			var result = new FP31Val(smx.Sign, packedTwoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
-
+			var packedMantissa = TakeLowerHalves(smx.Mantissa);
+			var twoCMantissa = ConvertTo2C(packedMantissa, smx.Sign);
+			var result = new FP31Val(smx.Sign, twoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
 			return result;
 		}
 
@@ -125,40 +100,17 @@ namespace MSS.Common.APValSupport
 			return result;
 		}
 
-		public static ulong[] ExtendToPartialWords(uint[] limbs)
+		public static ulong[] ExtendSignBit(uint[] partialWordLimbs)
 		{
-			var result = new ulong[limbs.Length];
 
-			for (var i = 0; i < result.Length; i++)
+			var result = new ulong[partialWordLimbs.Length];
+
+			for (var i = 0; i < partialWordLimbs.Length; i++)
 			{
-				result[i] = limbs[i];
+				result[i] = (partialWordLimbs[i] & TEST_BIT_30) > 0
+							? partialWordLimbs[i] | HIGH33_FILL
+							: partialWordLimbs[i] & HIGH33_CLEAR;
 			}
-
-			return result;
-		}
-
-		//public static uint[] Expand(uint[] limbs)
-		//{
-		//	var result = new uint[limbs.Length * 2];
-
-		//	for (var i = 0; i < limbs.Length; i++)
-		//	{
-		//		result[i * 2] = limbs[i];
-		//	}
-
-		//	return result;
-		//}
-
-		private static bool IsValueTooLarge(RValue rValue, byte bitsBeforeBP, bool isSigned, out string bitExpInfo)
-		{
-			var maxMagnitude = GetMaxMagnitude(bitsBeforeBP, isSigned);
-
-			var numberOfBitsInVal = rValue.Value.GetBitLength();
-
-			var magnitude = rValue.Value.GetBitLength() + rValue.Exponent;
-
-			bitExpInfo = $"NumBits: {numberOfBitsInVal}, Exponent: {rValue.Exponent}, Max Magnitude: {maxMagnitude}.";
-			var result = magnitude > maxMagnitude + 1; // TODO: Why are we fudging this??
 
 			return result;
 		}
@@ -181,15 +133,181 @@ namespace MSS.Common.APValSupport
 
 		public static bool GetSign(uint[] limbs)
 		{
-			var signBitIsSet = (limbs[^1] & TEST_BIT_30) > 0;
-			var result = !signBitIsSet; // Bit 30 is set for negative values.
+			var result = (limbs[^1] & TEST_BIT_30) == 0;
+			return result;
+		}
+
+		#endregion
+
+		#region Two's Compliment Support
+
+		// Convert from two's compliment, use the sign bit of the mantissa
+		public static uint[] ConvertFrom2C(uint[] partialWordLimbs, out bool sign)
+		{
+			uint[] result;
+
+			sign = GetSign(partialWordLimbs);
+
+			if (sign)
+			{
+				result = partialWordLimbs;
+			}
+			else
+			{
+				// Convert negative values back to 'standard' representation
+				result = FlipBitsAndAdd1(partialWordLimbs);
+			}
 
 			return result;
 		}
 
+		/// <summary>
+		/// Creates the two's compliment representation of a mantissa using the 
+		/// partialWordLimbs that represent the absolute value in standard binary.
+		/// </summary>
+		/// <param name="partialWordLimbs"></param>
+		/// <param name="sign"></param>
+		/// <returns></returns>
+		/// <exception cref="OverflowException"></exception>
+		public static uint[] ConvertTo2C(uint[] partialWordLimbs, bool sign)
+		{
+			uint[] result;
+
+			var signBitIsSet = !GetSign(partialWordLimbs);
+
+			if (sign)
+			{
+				if (signBitIsSet)
+				{
+					throw new OverflowException($"Cannot Convert to 2C format, the msb is already set. {GetDiagDisplayHex("limbs", partialWordLimbs)}");
+				}
+
+				var reserveBitIsSet = (partialWordLimbs[^1] & TEST_BIT_31) > 0;
+
+				if (reserveBitIsSet)
+				{
+					throw new ArgumentException($"The reserve bit does not match the sign bit while calling to ConvertTo2C for a positive value. {GetDiagDisplayHex("limbs", partialWordLimbs)}");
+				}
+
+				//Debug.WriteLine($"Converting a value to 2C format, {GetDiagDisplayHex("limbs", partialWordLimbs)}.");
+
+				// Postive values have the same representation in both two's compliment and standard form.
+				result = partialWordLimbs;
+			}
+			else
+			{
+				//Debug.WriteLine($"Converting and negating a value to 2C format, {GetDiagDisplayHex("limbs", partialWordLimbs)}.");
+
+				if (signBitIsSet)
+				{
+					throw new ArgumentException($"Cannot Convert to 2C format, the value is negative and is already in two's compliment form. {GetDiagDisplayHex("limbs", partialWordLimbs)}");
+				}
+
+				//// Reset the Reserve bit so that it will be updated as the Sign bit is updated.
+				//if (UpdateTheReserveBit(partialWordLimbs, false))
+				//{
+				//	Debug.WriteLineIf(USE_DET_DEBUG, "WARNING: The ReserveBit did not match the sign bit on call to ConvertTo2C a positive value.");
+				//}
+
+				result = FlipBitsAndAdd1(partialWordLimbs);
+
+				var signBitIsClear = GetSign(result);
+				if (signBitIsClear)
+				{
+					//throw new OverflowException($"Cannot ConvertAbsValTo2C, after the conversion the msb is NOT set to 1. {GetDiagDisplayHex("OrigVal", partialWordLimbs)}. {GetDiagDisplayHex("Result", result)}.");
+					Debug.WriteLine($"Cannot ConvertAbsValTo2C, after the conversion the msb is NOT set to 1. {GetDiagDisplayHex("OrigVal", partialWordLimbs)}. {GetDiagDisplayHex("Result", result)}.");
+				}
+			}
+
+			return result;
+		}
+
+		public static uint[] FlipBitsAndAdd1(uint[] partialWordLimbs)
+		{
+			//	Start at the least significant bit (LSB), copy all the zeros, until the first 1 is reached;
+			//	then copy that 1, and flip all the remaining bits.
+
+			var resultLength = partialWordLimbs.Length;
+
+			var result = new uint[resultLength];
+
+			var foundASetBit = false;
+			var limbPtr = 0;
+
+			while (limbPtr < resultLength && !foundASetBit)
+			{
+				var ourVal = partialWordLimbs[limbPtr];
+				if (ourVal == 0)
+				{
+					result[limbPtr] = ourVal;
+				}
+				else if (ourVal == MOST_NEG_VAL && limbPtr == resultLength - 1)
+				{
+					result[limbPtr] = MOST_NEG_VAL_REPLACMENT;
+					Debug.WriteLineIf(USE_DET_DEBUG, "WARNING: Encountered the most negative number.");
+				}
+				else
+				{
+					result[limbPtr] = FlipLowBitsAfterFirst1(ourVal);
+
+					foundASetBit = true;
+				}
+
+				limbPtr++;
+			}
+
+			if (foundASetBit)
+			{
+				// For all remaining limbs...
+				// flip the low bits and clear the high bits
+
+				for (; limbPtr < resultLength; limbPtr++)
+				{
+					result[limbPtr] = ~partialWordLimbs[limbPtr];
+				}
+			}
+
+			return result;
+		}
+
+		private static uint FlipLowBitsAfterFirst1(uint limb)
+		{
+			var tzc = BitOperations.TrailingZeroCount(limb);
+
+			Debug.Assert(tzc < 31, "Expecting Trailing Zero Count to be between 0 and 31, inclusive.");
+
+			var numToKeep = tzc + 1;
+			var numToFlip = 32 - numToKeep;
+
+			var flipMask = ~limb;								// flips all bits
+			flipMask = (flipMask >> numToKeep) << numToKeep;    // set the bottom bits to zero -- by pushing them off the end, and then moving the top back to where it was
+			var target = (limb << numToFlip) >> numToFlip;      // set the top bits to zero -- by pushing them off the top and then moving the bottom to where it was.
+			var newVal = target | flipMask;
+
+			return newVal;
+		}
+
+		// Used for diagnostics
+		public static double ConvertFrom2C(uint partialWordLimb)
+		{
+			var isNegative = (partialWordLimb & TEST_BIT_30) > 0;
+
+			double result;
+
+			if (isNegative)
+			{
+				var resultLimbs = FlipBitsAndAdd1(new uint[] { partialWordLimb });
+				result = resultLimbs[0];
+			}
+			else
+			{
+				result = partialWordLimb;
+			}
+
+			return isNegative ? result * -1 : result;
+		}
 
 		#endregion
-
 
 		#region Convert to Full-31Bit-Word Limbs
 
