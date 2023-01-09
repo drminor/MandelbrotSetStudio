@@ -1,5 +1,4 @@
-﻿using MSS.Common.APValSupport;
-using System;
+﻿using System;
 using System.Buffers;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -9,8 +8,6 @@ namespace MSS.Common.APValues
 {
 	public class FP31Deck : ICloneable
 	{
-		private const uint TEST_BIT_30 = 0x40000000; // bit 30 is set.
-
 		#region Constructors
 
 		public FP31Deck(int limbCount, int valueCount) : this(BuildLimbs(limbCount, valueCount))
@@ -55,24 +52,6 @@ namespace MSS.Common.APValues
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		public FP31Deck(Smx2C[] smxes)
-		{
-			var numberOfLimbs = smxes[0].LimbCount;
-			Mantissas = new uint[numberOfLimbs][];
-
-			for (var j = 0; j < numberOfLimbs; j++)
-			{
-				Mantissas[j] = new uint[smxes.Length];
-
-				for (var i = 0; i < smxes.Length; i++)
-				{
-					Mantissas[j][i] = (uint) smxes[i].Mantissa[j];
-				}
-			}
-
-			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
-		}
-
 		#endregion
 
 		#region Public Properties
@@ -90,11 +69,12 @@ namespace MSS.Common.APValues
 
 		#region Public Methods
 
-		public bool[] GetSigns()
-		{
-			var result = Mantissas[^1].Select(x => (x & TEST_BIT_30) == 0).ToArray();
-			return result;
-		}
+		//public bool[] GetSigns()
+		//{
+		//	//var result = Mantissas[^1].Select(x => (x & TEST_BIT_30) == 0).ToArray();
+		//	var result = FP31ValHelper.GetSigns(Mantissas[^1]);
+		//	return result;
+		//}
 
 		//public bool GetSign(int index)
 		//{
@@ -102,71 +82,71 @@ namespace MSS.Common.APValues
 		//	return result;
 		//}
 
-		public FP31Deck Negate(int[] inPlayList)
-		{
-			var result = Clone();
+		//public FP31Deck Negate(int[] inPlayList)
+		//{
+		//	var result = Clone();
 
-			var indexes = inPlayList;
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-			{
-				var idx = indexes[idxPtr];
-				var resultPtr = idx * Lanes;
+		//	var indexes = inPlayList;
+		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+		//	{
+		//		var idx = indexes[idxPtr];
+		//		var resultPtr = idx * Lanes;
 
-				for (var i = 0; i < Lanes; i++)
-				{
-					var valPtr = resultPtr + i;
-					var limbs = result.GetMantissa(valPtr);
-					var non2CPWLimbs = FP31ValHelper.FlipBitsAndAdd1(limbs);
-					result.SetMantissa(valPtr, non2CPWLimbs);
-				}
-			}
+		//		for (var i = 0; i < Lanes; i++)
+		//		{
+		//			var valPtr = resultPtr + i;
+		//			var limbs = result.GetMantissa(valPtr);
+		//			var non2CPWLimbs = FP31ValHelper.FlipBitsAndAdd1(limbs);
+		//			result.SetMantissa(valPtr, non2CPWLimbs);
+		//		}
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public FPValues ConvertFrom2C(int[] inPlayList)
-		{
-			var result = new FPValues(LimbCount, Length);
+		//public FPValues ConvertFrom2C(int[] inPlayList)
+		//{
+		//	var result = new FPValues(LimbCount, Length);
 
-			var signs = GetSigns();
+		//	var signs = GetSigns();
 
-			var indexes = inPlayList;
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-			{
-				var idx = indexes[idxPtr];
-				var resultPtr = idx * Lanes;
+		//	var indexes = inPlayList;
+		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+		//	{
+		//		var idx = indexes[idxPtr];
+		//		var resultPtr = idx * Lanes;
 
-				for (var i = 0; i < Lanes; i++)
-				{
-					var valPtr = resultPtr + i;
-					var limbs = GetMantissa(valPtr);
+		//		for (var i = 0; i < Lanes; i++)
+		//		{
+		//			var valPtr = resultPtr + i;
+		//			var limbs = GetMantissa(valPtr);
 
-					if (!signs[valPtr])
-					{
-						var non2CLimbs = FP31ValHelper.FlipBitsAndAdd1(limbs);
-						var seNon2CPWLimbs = FP31ValHelper.ExtendSignBit(non2CLimbs);
-						result.SetMantissa(valPtr, seNon2CPWLimbs);
-					}
-					else
-					{
-						var seNon2CPWLimbs = FP31ValHelper.ExtendSignBit(limbs);
-						result.SetMantissa(valPtr, seNon2CPWLimbs);
-					}
-				}
-			}
+		//			if (!signs[valPtr])
+		//			{
+		//				var non2CLimbs = FP31ValHelper.FlipBitsAndAdd1(limbs);
+		//				var seNon2CPWLimbs = FP31ValHelper.ExtendSignBit(non2CLimbs);
+		//				result.SetMantissa(valPtr, seNon2CPWLimbs);
+		//			}
+		//			else
+		//			{
+		//				var seNon2CPWLimbs = FP31ValHelper.ExtendSignBit(limbs);
+		//				result.SetMantissa(valPtr, seNon2CPWLimbs);
+		//			}
+		//		}
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public void UpdateFrom(ulong[][] mantissas)
-		{
-			for (var i = 0; i < Mantissas.Length; i++)
-			{
-				var lows = FP31ValHelper.TakeLowerHalves(mantissas[i]);
+		//public void UpdateFrom(ulong[][] mantissas)
+		//{
+		//	for (var i = 0; i < Mantissas.Length; i++)
+		//	{
+		//		var lows = FP31ValHelper.TakeLowerHalves(mantissas[i]);
 
-				Array.Copy(lows, Mantissas[i], Length);
-			}
-		}
+		//		Array.Copy(lows, Mantissas[i], Length);
+		//	}
+		//}
 
 		public uint[] GetMantissa(int index)
 		{

@@ -14,46 +14,19 @@ namespace MSS.Common.APValues
 	{
 		#region Constructor
 
-		public FP31Val(bool sign, uint[] mantissa, int exponent, byte bitsBeforeBP, int precision)
+		public FP31Val(uint[] mantissa, int exponent, byte bitsBeforeBP, int precision)
 		{
-			if (exponent == 1)
-			{
-				Debug.WriteLine("WARNING the exponent is 1.");
-			}
-
-			//ValidatePWValues(mantissa);
-
-			Sign = sign;
 			Mantissa = (uint[])mantissa.Clone(); // SmxMathHelper.GetPwULongs(mantissa);
-
-			var cSign = FP31ValHelper.GetSign(Mantissa);
-
-			if (cSign != sign)
-			{
-				throw new ArgumentException("Signs don't match in Constructor of Smx2C.");
-			}
-
-			//Debug.Assert(cSign == sign, "Signs don't match in Constructor of Smx2C.");
-
 			Exponent = exponent;
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		//[Conditional("DETAIL")]
-		//private static void ValidatePWValues(ulong[] mantissa)
-		//{
-		//	if (ScalarMathHelper.CheckPW2CValues(mantissa))
-		//	{
-		//		throw new ArgumentException($"Cannot create a Smx from an array of ulongs where any of the values is greater than MAX_DIGIT.");
-		//	}
-		//}
 
 		#endregion
 
 		#region Public Properties
 
-		public bool Sign { get; init; }
 		public uint[] Mantissa { get; init; }
 		public int Exponent { get; init; }
 		public int Precision { get; init; } // Number of significant binary digits.
@@ -85,7 +58,9 @@ namespace MSS.Common.APValues
 
 		public override string ToString()
 		{
-			var result = Sign
+			var sign = GetSign();
+
+			var result = sign
 				? FP31ValHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
 				: "-" + FP31ValHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
 
@@ -99,7 +74,7 @@ namespace MSS.Common.APValues
 
 		public FP31Val Clone()
 		{
-			var result = new FP31Val(Sign, (uint[]) Mantissa.Clone(), Exponent, BitsBeforeBP, Precision);
+			var result = new FP31Val((uint[]) Mantissa.Clone(), Exponent, BitsBeforeBP, Precision);
 
 			return result;
 		}
@@ -116,14 +91,14 @@ namespace MSS.Common.APValues
 
 		public bool Equals(FP31Val other)
 		{
-			return Sign == other.Sign &&
-				((IStructuralEquatable)Mantissa).Equals(other.Mantissa, StructuralComparisons.StructuralEqualityComparer) &&
-				Exponent == other.Exponent;
+			return Exponent == other.Exponent
+				&& BitsBeforeBP == other.BitsBeforeBP
+				&& 	((IStructuralEquatable)Mantissa).Equals(other.Mantissa, StructuralComparisons.StructuralEqualityComparer);
 		}
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(Sign, Mantissa, Exponent);
+			return HashCode.Combine(Mantissa, Exponent, BitsBeforeBP);
 		}
 
 		public static bool operator ==(FP31Val left, FP31Val right)

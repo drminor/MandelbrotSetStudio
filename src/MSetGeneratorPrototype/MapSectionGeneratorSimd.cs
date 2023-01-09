@@ -1,4 +1,5 @@
 ﻿using MEngineDataContracts;
+using MSS.Common.APValSupport;
 using MSS.Common.APValues;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
@@ -103,15 +104,8 @@ namespace MSetGeneratorPrototype
 				Array.Copy(rowCounts, 0, counts, j * stride, stride);
 				Array.Copy(rowDoneFlags, 0, doneFlags, j * stride, stride);
 
-				mathOpCounts.NumberOfAdditions += vecMath.NumberOfAdditions;
-				mathOpCounts.NumberOfMultiplications += vecMath.NumberOfMultiplications;
-				mathOpCounts.NumberOfConversions += vecMath.NumberOfConversions;
-
-				mathOpCounts.NumberOfSplits += vecMath.NumberOfSplits;
-				mathOpCounts.NumberOfGetCarries += vecMath.NumberOfGetCarries;
-				mathOpCounts.NumberOfGrtrThanOps += vecMath.NumberOfGrtrThanOps;
-
-				mathOpCounts.NumberOfUnusedCalcs += vecMath.UnusedCalcs.Sum();
+				vecMath.MathOpCounts.NumberOfUnusedCalcs = vecMath.UnusedCalcs.Sum();
+				mathOpCounts.Update(vecMath.MathOpCounts);
 			}
 
 			return (counts, escapeVelocities, doneFlags);
@@ -193,21 +187,21 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private Smx2C[] Duplicate(Smx2C smx2C, int count)
+		private FP31Val[] Duplicate(FP31Val fp31Val, int count)
 		{
-			var result = new Smx2C[count];
+			var result = new FP31Val[count];
 
 			for(int i = 0; i < count; i++)
 			{
-				result[i] = smx2C.Clone();
+				result[i] = fp31Val.Clone();
 			}
 
 			return result;
 		}
 
-		private Smx2C[] Convert(Smx[] smxes)
+		private FP31Val[] Convert(Smx[] smxes)
 		{
-			var temp = new List<Smx2C>();
+			var temp = new List<FP31Val>();
 
 			foreach (var smx in smxes)
 			{
@@ -219,9 +213,12 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private Smx2C Convert(Smx smx)
+		private FP31Val Convert(Smx smx)
 		{
-			Smx2C result;
+			FP31Val result;
+
+			var packedMantissa = FP31ValHelper.TakeLowerHalves(smx.Mantissa);
+
 
 			if (smx.IsZero)
 			{
@@ -230,12 +227,12 @@ namespace MSetGeneratorPrototype
 					Debug.WriteLine("WARNING: Found a value of -0.");
 				}
 
-				result = new Smx2C(true, smx.Mantissa, smx.Exponent, smx.BitsBeforeBP, smx.Precision);
+				result = new FP31Val(packedMantissa, smx.Exponent, smx.BitsBeforeBP, smx.Precision);
 			}
 			else
 			{
-				var twoCMantissa = ScalarMathHelper.ConvertTo2C(smx.Mantissa, smx.Sign);
-				result = new Smx2C(smx.Sign, twoCMantissa, smx.Exponent, smx.BitsBeforeBP, smx.Precision);
+				var twoCMantissa = FP31ValHelper.ConvertTo2C(packedMantissa, smx.Sign);
+				result = new FP31Val(twoCMantissa, smx.Exponent, smx.BitsBeforeBP, smx.Precision);
 			}
 
 			return result;
