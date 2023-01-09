@@ -1,9 +1,7 @@
-﻿using MongoDB.Bson.Serialization.Options;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Common.APValSupport;
 using MSS.Common.APValues;
 using MSS.Types;
-using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -32,13 +30,11 @@ namespace MSetGeneratorPrototype
 		private const uint RESERVED_BIT_MASK = 0x80000000;
 		private static readonly Vector256<uint> RESERVED_BIT_MASK_VEC = Vector256.Create(RESERVED_BIT_MASK);
 
-		private static readonly Vector256<uint> ALL_BITS_SET_VEC = Vector256<uint>.AllBitsSet;
-
-		private static readonly Vector256<int> ZERO_VEC = Vector256<int>.Zero;
-		private static readonly Vector256<uint> UINT_ZERO_VEC = Vector256<uint>.Zero;
-
 		private const int TEST_BIT_30 = 0x40000000; // bit 30 is set.
 		private static readonly Vector256<int> TEST_BIT_30_VEC = Vector256.Create(TEST_BIT_30);
+
+		private static readonly Vector256<int> ZERO_VEC = Vector256<int>.Zero;
+		private static readonly Vector256<uint> ALL_BITS_SET_VEC = Vector256<uint>.AllBitsSet;
 
 		private ulong[][] _squareResult0Ba;
 		private Memory<ulong>[] _squareResult0Mems;
@@ -57,11 +53,6 @@ namespace MSetGeneratorPrototype
 		private Vector256<int> _thresholdVector;
 
 		private static readonly bool USE_DET_DEBUG = false;
-
-		private Vector256<byte> _lutLow;
-		private Vector256<byte> _lutHigh;
-		private Vector256<uint> _nibbleMask;
-		private Vector256<uint> _byteOffset;
 
 		#endregion
 
@@ -111,12 +102,6 @@ namespace MSetGeneratorPrototype
 			_ones = Enumerable.Repeat(justOne, VecCount).ToArray();
 
 			UnusedCalcs = new long[valueCount];
-
-			_lutLow = Vector256.Create(0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 32, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 32).AsByte();
-			_lutHigh = Vector256.Create(4, 5, 4, 6, 4, 5, 4, 7, 4, 5, 4, 6, 4, 5, 4, 32, 4, 5, 4, 6, 4, 5, 4, 7, 4, 5, 4, 6, 4, 5, 4, 32).AsByte();
-
-			_nibbleMask = Vector256.Create(0x0F).AsUInt32();
-			_byteOffset = Vector256.Create(0x18100800).AsUInt32();
 		}
 
 		#endregion
@@ -357,29 +342,6 @@ namespace MSetGeneratorPrototype
 
 		#region Multiply and Square
 
-		//// By Deck
-		//public void SquareOld(FP31Deck a, FP31Deck result)
-		//{
-		//	// Convert back to standard, i.e., non two's compliment.
-		//	// Our multiplication routines don't support 2's compliment.
-		//	// The result of squaring is always positive,
-		//	// so we don't have to convert them to 2's compliment afterwards.
-
-		//	CheckReservedBitIsClear(a.MantissaMemories, "Squaring");
-
-		//	FPValues non2CFPValues = a.ConvertFrom2C(InPlayList);
-		//	MathOpCounts.NumberOfConversions++;
-
-		//	// There are 8 ints to a Vector, but only 4 longs. Adjust the InPlayList to support multiplication
-		//	InPlayListNarrow = BuildNarowInPlayList(InPlayList);
-
-		//	SquareInternal(non2CFPValues.MantissaMemories, _squareResult1Mems);
-		//	SumThePartials(_squareResult1Mems, _squareResult2Mems);
-		//	ShiftAndTrim(_squareResult2Mems, non2CFPValues.MantissaMemories);
-
-		//	result.UpdateFrom(non2CFPValues.Mantissas);
-		//}
-
 		// By Deck
 		public void Square(FP31Deck a, FP31Deck result)
 		{
@@ -403,7 +365,6 @@ namespace MSetGeneratorPrototype
 
 			FP31ValHelper.PackTo(_squareResult3Ba, result.Mantissas);
 		}
-
 
 		// By Limb, By Vector
 		private void SquareInternal(Memory<ulong>[] sourceLimbs, Memory<ulong>[] resultLimbs)
@@ -542,42 +503,6 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		// By Vector
-		private void ShiftAndCopyBits(Span<Vector256<ulong>> source, Span<Vector256<ulong>> prevSource, Span<Vector256<ulong>> result)
-		{
-			var shiftAmount = BitsBeforeBP;
-
-			var indexes = InPlayListNarrow;
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-			{
-				var idx = indexes[idxPtr];
-				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				result[idx] = Avx2.And(Avx2.ShiftLeftLogical(source[idx], shiftAmount), HIGH33_MASK_VEC_L);
-
-				// Take the top shiftAmount of bits from the previous limb
-				var previousLimbVector = Avx2.And(prevSource[idx], HIGH33_MASK_VEC_L); // TODO: Combine this and the next operation.
-				result[idx] = Avx2.Or(result[idx], Avx2.ShiftRightLogical(previousLimbVector, (byte)(31 - shiftAmount)));
-
-				MathOpCounts.NumberOfSplits += 2;
-			}
-		}
-
-		// By Vector
-		private void ShiftAndCopyBits(Span<Vector256<ulong>> source, Span<Vector256<ulong>> result)
-		{
-			var shiftAmount = BitsBeforeBP;
-
-			var indexes = InPlayListNarrow;
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-			{
-				var idx = indexes[idxPtr];
-				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				result[idx] = Avx2.And(Avx2.ShiftLeftLogical(source[idx], shiftAmount), HIGH33_MASK_VEC_L);
-
-				MathOpCounts.NumberOfSplits++;
-			}
-		}
-
 		#endregion
 
 		#region Add and Subtract
@@ -585,18 +510,11 @@ namespace MSetGeneratorPrototype
 		// By Deck
 		public void Sub(FP31Deck a, FP31Deck b, FP31Deck c)
 		{
-			MathOpCounts.NumberOfConversions++;
-
-			//var sourceLimbsA = a.MantissaMemories;
-			//CheckReservedBitIsClear(sourceLimbsA, "Negating A");
-
-			var sourceLimbsB = b.MantissaMemories;
-			CheckReservedBitIsClear(sourceLimbsB, "Negating B");
-
-			//var notB = b.Negate(InPlayList);
-			//AddInternal(a.MantissaMemories, notB.MantissaMemories, c.MantissaMemories);
+			CheckReservedBitIsClear(b.MantissaMemories, "Negating B");
 
 			Negate(b.MantissaMemories, _negationResultMems, InPlayList);
+			MathOpCounts.NumberOfConversions++;
+
 			AddInternal(a.MantissaMemories, _negationResultMems, c.MantissaMemories);
 		}
 
@@ -868,105 +786,6 @@ namespace MSetGeneratorPrototype
 			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, wc:{cd} ");
 			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvVal0:X4}: hi:{newCarryVal0:X4}, lo:{loVal0:X4}");
 			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}. hpOfNv: {nvHiPart}. unSNv: {unSNv}\n");
-		}
-
-		// By Limb, By Vector
-		private void NegateExp(Memory<uint>[] sourceLimbs, Memory<uint>[] resultLimbs, int[] inPlayList)
-		{
-			CheckReservedBitIsClear(sourceLimbs, "Negate");
-
-			ClearManatissMems(resultLimbs, onlyInPlayItems: true);
-
-			var foundASetBit = Enumerable.Repeat(Vector256<int>.Zero, VecCount).ToArray();
-			var tzCnts = Enumerable.Repeat(Vector256<uint>.Zero, VecCount).ToArray();
-
-			var indexes = InPlayList;
-
-			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
-			{
-				var limbVecs = GetLimbVectorsUW(sourceLimbs[limbPtr]);
-				var resultLimbVecs = GetLimbVectorsUW(resultLimbs[limbPtr]);
-
-				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-				{
-					var idx = indexes[idxPtr];
-
-					if (Avx.TestZ(limbVecs[idx], ALL_BITS_SET_VEC))
-					{
-						resultLimbVecs[idx] = UINT_ZERO_VEC;
-					}
-					else
-					{
-						tzCnts[idx] = GetTzCnts(limbVecs[idx]);
-					}
-				}
-			}
-
-			//var result = Clone();
-
-			//var indexes = inPlayList;
-			//for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-			//{
-			//	var idx = indexes[idxPtr];
-			//	var resultPtr = idx * Lanes;
-
-			//	for (var i = 0; i < Lanes; i++)
-			//	{
-			//		var valPtr = resultPtr + i;
-			//		var limbs = result.GetMantissa(valPtr);
-			//		var non2CPWLimbs = FP31ValHelper.FlipBitsAndAdd1(limbs);
-			//		result.SetMantissa(valPtr, non2CPWLimbs);
-			//	}
-			//}
-
-			//return result;
-		}
-
-		// Credit: YumiYumiYumi
-		// https://old.reddit.com/r/simd/comments/b3k1oa/looking_for_sseavx_bitscan_discussions/
-		private Vector256<uint> GetTzCnts(Vector256<uint> limbVecs)
-		{
-
-			//const __m256i lut_lo = _mm256_set_epi8(
-			//	0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 32,
-			//	0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 32
-			//);
-			//const __m256i lut_hi = _mm256_set_epi8(
-			//	4, 5, 4, 6, 4, 5, 4, 7, 4, 5, 4, 6, 4, 5, 4, 32,
-			//	4, 5, 4, 6, 4, 5, 4, 7, 4, 5, 4, 6, 4, 5, 4, 32
-			//);
-			//const __m256i nibble_mask = _mm256_set1_epi8(0x0F);
-			//const __m256i byte_offset = _mm256_set1_epi32(0x18100800);
-			//__m256i t;
-
-			///* find tzcnt for each byte */
-			//t = _mm256_and_si256(nibble_mask, v);
-			var t = Avx2.And(_nibbleMask, limbVecs);
-
-			//v = _mm256_and_si256(_mm256_srli_epi16(v, 4), nibble_mask);
-			var v = Avx2.And(Avx2.ShiftRightLogical(limbVecs, 4), _nibbleMask);
-
-			//t = _mm256_shuffle_epi8(lut_lo, t);
-			t = Avx2.Shuffle(_lutLow, t.AsByte()).AsUInt32();
-
-			//v = _mm256_shuffle_epi8(lut_hi, v);
-			v = Avx2.Shuffle(_lutHigh, v.AsByte()).AsUInt32();
-
-			//v = _mm256_min_epu8(v, t);
-			v = Avx2.Min(v, t);
-
-
-			///* find tzcnt for each dword */
-			//v = _mm256_or_si256(v, byte_offset);
-			v = Avx2.Or(v, _byteOffset);
-
-			//v = _mm256_min_epu8(v, _mm256_srli_epi16(v, 8));
-			v = Avx2.Or(v, Avx2.ShiftRightLogical(v, 8));
-
-			//v = _mm256_min_epu8(v, _mm256_srli_epi32(v, 16));
-			v = Avx2.Min(v, Avx2.ShiftRightLogical(v, 16));
-
-			return v;
 		}
 
 		#endregion
