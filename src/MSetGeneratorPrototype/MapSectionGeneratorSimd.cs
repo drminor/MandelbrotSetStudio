@@ -78,6 +78,8 @@ namespace MSetGeneratorPrototype
 			var stride = (byte)blockSize.Width;
 
 			var scalarMath9 = new ScalarMath9(apFixedPointFormat, threshold);
+			var vecMath = new VecMath9(apFixedPointFormat, stride, threshold);
+			var iteratorSimd = new IteratorSimd(vecMath);
 
 			var samplePointOffsets = scalarMath9.BuildSamplePointOffsets(delta, stride);
 			
@@ -96,11 +98,11 @@ namespace MSetGeneratorPrototype
 
 				//Array.Copy(doneFlags, j * stride, rowDoneFlags, 0, stride);
 
-				var vecMath = new VecMath9(apFixedPointFormat, stride, threshold);
+				vecMath.Refresh();
 				vecMath.BlockPosition = blockPos;
 				vecMath.RowNumber = j;
 
-				var rowCounts = new SubSectionGenerator().GenerateMapSection(vecMath, targetIterations, cRs, cIs, out var rowDoneFlags);
+				var rowCounts = SubSectionGenerator.GenerateMapSection(vecMath, iteratorSimd, targetIterations, cRs, cIs, out var rowDoneFlags);
 				Array.Copy(rowCounts, 0, counts, j * stride, stride);
 				Array.Copy(rowDoneFlags, 0, doneFlags, j * stride, stride);
 

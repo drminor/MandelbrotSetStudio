@@ -48,6 +48,9 @@ namespace MSetGeneratorPrototype
 		private uint[][] _negationResultBa;
 		private Memory<uint>[] _negationResultMems;
 
+		private uint[][] _additionResultBa;
+		private Memory<uint>[] _additionResultMems;
+
 		private Vector256<uint>[] _ones;
 
 		private Vector256<int> _thresholdVector;
@@ -60,6 +63,11 @@ namespace MSetGeneratorPrototype
 
 		public VecMath9(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
+			ApFixedPointFormat = apFixedPointFormat;
+
+			var thresholdMsl = GetThresholdMsl(threshold, ApFixedPointFormat);
+			_thresholdVector = Vector256.Create(thresholdMsl);
+
 			ValueCount = valueCount;
 			VecCount = Math.DivRem(ValueCount, _lanes, out var remainder);
 
@@ -78,12 +86,6 @@ namespace MSetGeneratorPrototype
 			BlockPosition = new BigVector();
 			RowNumber = 0;
 
-			ApFixedPointFormat = apFixedPointFormat;
-			MaxIntegerValue = FP31ValHelper.GetMaxIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint, IsSigned);
-
-			var thresholdMsl = FP31ValHelper.GetThresholdMsl(threshold, ApFixedPointFormat, IsSigned);
-			_thresholdVector = Vector256.Create(thresholdMsl).AsInt32();
-
 			MathOpCounts = new MathOpCounts();
 
 			_squareResult0Ba = BuildMantissaBackingArrayL(LimbCount * 2, ValueCount);
@@ -98,10 +100,49 @@ namespace MSetGeneratorPrototype
 			_negationResultBa = BuildMantissaBackingArray(LimbCount, ValueCount);
 			_negationResultMems = BuildMantissaMemoryArray(_negationResultBa);
 
+			_additionResultBa = BuildMantissaBackingArray(LimbCount, ValueCount);
+			_additionResultMems = BuildMantissaMemoryArray(_additionResultBa);
+
+
 			var justOne = Vector256.Create(1u);
 			_ones = Enumerable.Repeat(justOne, VecCount).ToArray();
 
 			UnusedCalcs = new long[valueCount];
+		}
+
+		public void Refresh()
+		{
+			// Initially, all vectors are 'In Play.'
+			InPlayList = Enumerable.Range(0, VecCount).ToArray();
+			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
+
+			// Initially, all values are 'In Play.'
+			DoneFlags = new bool[ValueCount];
+
+			BlockPosition = new BigVector();
+			RowNumber = 0;
+
+			ClearManatissMemsL(_squareResult0Mems, onlyInPlayItems: false);
+			ClearManatissMemsL(_squareResult1Mems, onlyInPlayItems: false);
+			ClearManatissMemsL(_squareResult2Mems, onlyInPlayItems: false);
+			ClearManatissMemsL(_squareResult3Mems, onlyInPlayItems: false);
+			ClearManatissMems(_negationResultMems, onlyInPlayItems: false);
+			ClearManatissMems(_additionResultMems, onlyInPlayItems: false);
+
+		}
+
+		private int GetThresholdMsl(uint threshold, ApFixedPointFormat apFixedPointFormat)
+		{
+			var maxIntegerValue = FP31ValHelper.GetMaxIntegerValue(apFixedPointFormat.BitsBeforeBinaryPoint);
+			if (threshold > maxIntegerValue)
+			{
+				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat.");
+			}
+
+			var thresholdFP31Val = FP31ValHelper.CreateFP31Val(new RValue(threshold, 0), apFixedPointFormat);
+			var result = (int)thresholdFP31Val.Mantissa[^1] - 1;
+
+			return result;
 		}
 
 		#endregion
@@ -140,7 +181,7 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private void ClearManatissMemsL(Memory<ulong>[] mantissaMems, bool onlyInPlayItems)
+		public void ClearManatissMemsL(Memory<ulong>[] mantissaMems, bool onlyInPlayItems)
 		{
 			if (onlyInPlayItems)
 			{
@@ -307,8 +348,6 @@ namespace MSetGeneratorPrototype
 
 		#region Public Properties
 
-		public bool IsSigned => true;
-
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
 		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
@@ -325,17 +364,7 @@ namespace MSetGeneratorPrototype
 		public BigVector BlockPosition { get; set; }
 		public int RowNumber { get; set; }
 
-		public uint MaxIntegerValue { get; init; }
-
 		public MathOpCounts MathOpCounts { get; init; }
-
-		//public int NumberOfMultiplications { get; private set; }
-		//public int NumberOfAdditions { get; private set; }
-		//public long NumberOfConversions { get; private set; }
-		//public long NumberOfSplits { get; private set; }
-		//public long NumberOfGetCarries { get; private set; }
-		//public long NumberOfGrtrThanOps { get; private set; }
-
 		public long[] UnusedCalcs { get; init; }
 
 		#endregion
@@ -345,14 +374,20 @@ namespace MSetGeneratorPrototype
 		// By Deck
 		public void Square(FP31Deck a, FP31Deck result)
 		{
+			SquareEm(a.MantissaMemories, a.Mantissas, result);
+		}
+
+		// By Deck
+		public void SquareEm(Memory<uint>[] sourceLimbs, uint[][] sourceVals, FP31Deck result)
+		{
 			// Convert back to standard, i.e., non two's compliment.
 			// Our multiplication routines don't support 2's compliment.
 			// The result of squaring is always positive,
 			// so we don't have to convert them to 2's compliment afterwards.
 
-			CheckReservedBitIsClear(a.MantissaMemories, "Squaring");
+			CheckReservedBitIsClear(sourceLimbs, "Squaring");
 
-			ConvertFrom2C(a.MantissaMemories, a.Mantissas, _negationResultMems, _negationResultBa, InPlayList);
+			ConvertFrom2C(sourceLimbs, sourceVals, _negationResultMems, _negationResultBa, InPlayList);
 			FP31ValHelper.ExpandTo(_negationResultBa, _squareResult0Ba);
 			MathOpCounts.NumberOfConversions++;
 
@@ -523,6 +558,12 @@ namespace MSetGeneratorPrototype
 			AddInternal(a.MantissaMemories, b.MantissaMemories, c.MantissaMemories);
 		}
 
+		public void AddThenSquare(FP31Deck a, FP31Deck b, FP31Deck c)
+		{
+			AddInternal(a.MantissaMemories, b.MantissaMemories, _additionResultMems);
+			SquareEm(_additionResultMems, _additionResultBa, c);
+		}
+
 		// By Limb, By Vector
 		private void AddInternal(Memory<uint>[] a, Memory<uint>[] b, Memory<uint>[] c)
 		{
@@ -538,9 +579,6 @@ namespace MSetGeneratorPrototype
 				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 				{
 					var idx = indexes[idxPtr];
-
-					//var va = Avx2.And(limbVecsA[idx], HIGH33_MASK_VEC);
-					//var vb = Avx2.And(limbVecsB[idx], HIGH33_MASK_VEC);
 
 					var left = limbVecsA[idx];
 					var right = limbVecsB[idx];
@@ -580,6 +618,10 @@ namespace MSetGeneratorPrototype
 
 		}
 
+		#endregion
+
+		#region Two Compliment Support
+
 		// By Limb, By Vector
 		private void Negate(Memory<uint>[] sourceLimbs, Memory<uint>[] resultLimbs, int[] inPlayList)
 		{
@@ -614,6 +656,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
+		// By Limb, By Vector
 		private void ConvertFrom2C(Memory<uint>[] sourceLimbs, uint[][] sourceVals, Memory<uint>[] resultLimbs, uint[][] resultVals, int[] inPlayList)
 		{
 			CheckReservedBitIsClear(sourceLimbs, "ConvertFrom2C");
@@ -696,6 +739,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
+		// By Limb, By Vector
 		private void CheckReservedBitIsClear(Memory<uint>[] resultLimbs, string description)
 		{
 			var sb = new StringBuilder();

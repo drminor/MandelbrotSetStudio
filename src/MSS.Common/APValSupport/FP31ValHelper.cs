@@ -36,24 +36,6 @@ namespace MSS.Common.APValSupport
 
 		#endregion
 
-		#region Construction Support
-
-		public static uint GetThresholdMsl(uint threshold, ApFixedPointFormat apFixedPointFormat, bool isSigned)
-		{
-			var maxIntegerValue = GetMaxIntegerValue(apFixedPointFormat.BitsBeforeBinaryPoint, isSigned);
-			if (threshold > maxIntegerValue)
-			{
-				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat.");
-			}
-
-			var thresholdFP31Val = CreateFP31Val(new RValue(threshold, 0), apFixedPointFormat);
-			var result = thresholdFP31Val.Mantissa[^1] - 1;
-
-			return result;
-		}
-
-		#endregion
-
 		#region RValue Support
 
 		public static RValue CreateRValue(FP31Val fP31Val)
@@ -94,18 +76,18 @@ namespace MSS.Common.APValSupport
 			return result;
 		}
 
-		public static uint GetMaxIntegerValue(byte bitsBeforeBP, bool isSigned)
+		public static uint GetMaxIntegerValue(byte bitsBeforeBP)
 		{
-			var maxMagnitude = GetMaxMagnitude(bitsBeforeBP, isSigned);
+			var maxMagnitude = GetMaxMagnitude(bitsBeforeBP);
 
 			var result = (uint)Math.Pow(2, maxMagnitude) - 1; // 2^8 - 1 = 255
 			return result;
 		}
 
-		public static byte GetMaxMagnitude(byte bitsBeforeBP, bool isSigned)
+		public static byte GetMaxMagnitude(byte bitsBeforeBP)
 		{
 			// If using signed values the range of positive (and negative) values is halved. (For example  0 to 127 instead of 0 to 255. (or -128 to 0)
-			var maxMagnitude = (byte)(bitsBeforeBP - (isSigned ? 1 : 0));
+			var maxMagnitude = (byte)(bitsBeforeBP - 1);
 
 			return maxMagnitude;
 		}
