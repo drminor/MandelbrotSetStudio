@@ -13,31 +13,7 @@ namespace MSetGeneratorPrototype
 		{
 			var resultLength = cRs.Length;
 
-			//var counts = Enumerable.Repeat((ushort)1, resultLength).ToArray();
-
 			var counts = new ushort[resultLength];
-			//doneFlags = new bool[resultLength];
-
-			//var zRSqrs = new FP31Deck(cRs.LimbCount, cRs.Length);
-			//var zISqrs = new FP31Deck(cIs.LimbCount, cIs.Length);
-			//var sumOfSqrs = new FP31Deck(cRs.LimbCount, cRs.Length);
-
-			//var escapedFlagsBackingArray = new int[resultLength];
-			//var escapedFlagMemory = new Memory<int>(escapedFlagsBackingArray);
-
-			//doneFlags = vecMath.DoneFlags;
-			//var inPlayList = vecMath.InPlayList;
-
-			//// Perform the first iteration. 
-			//var zRs = cRs.Clone();
-			//var zIs = cIs.Clone();
-
-			//vecMath.Square(zRs, zRSqrs);
-			//vecMath.Square(zIs, zISqrs);
-			//vecMath.Add(zRSqrs, zISqrs, sumOfSqrs);
-
-			//inPlayList = UpdateTheDoneFlags(vecMath, sumOfSqrs, inPlayList, escapedFlagMemory, escapedFlagsBackingArray, counts, doneFlags, targetIterations);
-			//vecMath.InPlayList = inPlayList;
 
 			doneFlags = vecMath.DoneFlags;
 			var inPlayList = vecMath.InPlayList;
@@ -58,14 +34,6 @@ namespace MSetGeneratorPrototype
 
 			return counts;
 		}
-
-		//private int[] UpdateTheDoneFlags(int[] inPlayList, int[] escapedFlags, ushort[] counts, bool[] doneFlags, long[] unusedCalcs, int targetIterations)
-		//{
-		//	var vectorsNoLongerInPlay = UpdateCounts(inPlayList, escapedFlags, counts, doneFlags, unusedCalcs, targetIterations);
-		//	var updatedInPlayList = GetUpdatedInPlayList(inPlayList, vectorsNoLongerInPlay);
-
-		//	return updatedInPlayList;
-		//}
 
 		private static List<int> UpdateCounts(int[] inPlayList, int[] escapedFlags, ushort[] counts, bool[] doneFlags, long[] unusedCalcs, int targetIterations)
 		{

@@ -5,7 +5,7 @@ using System.Collections;
 using System.Linq;
 using System.Numerics;
 
-namespace MSS.Common.APValues
+namespace MSS.Common.SmxVals
 {
 	public struct SmxFloating : IEquatable<SmxFloating>
 	{

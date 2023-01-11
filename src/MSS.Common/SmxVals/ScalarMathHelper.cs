@@ -7,7 +7,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 
-namespace MSS.Common.APValues
+namespace MSS.Common.SmxVals
 {
     public static class ScalarMathHelper
 	{

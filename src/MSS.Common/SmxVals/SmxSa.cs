@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 using System.Linq;
 
-namespace MSS.Common.APValues
+namespace MSS.Common.SmxVals
 {
 	public struct SmxSa : IEquatable<SmxSa>
 	{

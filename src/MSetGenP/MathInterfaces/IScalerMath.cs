@@ -1,5 +1,5 @@
 ﻿using MSS.Common;
-using MSS.Common.APValues;
+using MSS.Common.SmxVals;
 using MSS.Types;
 
 namespace MSetGenP

@@ -1,4 +1,4 @@
-﻿using MSS.Common.APValues;
+﻿using MSS.Common.SmxVals;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 
-namespace MSS.Common.APValSupport
+namespace MSS.Common.APValues
 {
 	public class FP31ValHelper
 	{
@@ -24,7 +24,7 @@ namespace MSS.Common.APValSupport
 		private const uint LOW31_BITS_SET = 0x7FFFFFFF;			    // bits 0 - 30 are set.
 
 		private const uint TEST_BIT_31 = 0x80000000;				// bit 31 is set.
-		private const uint TEST_BIT_30 = 0x40000000;				// bit 30 is set.
+		private const uint TEST_BIT_30 = 0x40000000;                // bit 30 is set.
 
 		//private const uint MOST_NEG_VAL = 0x40000000;				// Most negative value
 		//private const uint MOST_NEG_VAL_REPLACMENT = 0x40000001;    // Most negative value + 1.
@@ -102,11 +102,11 @@ namespace MSS.Common.APValSupport
 			return result;
 		}
 
-		public static bool[] GetSigns(uint[] msLimbs)
-		{
-			var result = msLimbs.Select(x => (x & TEST_BIT_30) == 0).ToArray();
-			return result;
-		}
+		//public static bool[] GetSigns(uint[] msLimbs)
+		//{
+		//	var result = msLimbs.Select(x => (x & TEST_BIT_30) == 0).ToArray();
+		//	return result;
+		//}
 
 		public static void ExpandTo(FP31Deck source, FP31DeckPW result)
 		{
@@ -140,7 +140,7 @@ namespace MSS.Common.APValSupport
 			return result;
 		}
 
-		public static ulong[] ExtendSignBit(uint[] partialWordLimbs)
+		private static ulong[] ExtendSignBit(uint[] partialWordLimbs)
 		{
 			var result = new ulong[partialWordLimbs.Length];
 

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
-namespace MSS.Common.APValues
+namespace MSS.Common.SmxVals
 {
     internal class ScalarMathFloatingHelper
 	{

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
-namespace MSS.Common.APValues
+namespace MSS.Common.SmxVals
 {
 	public class FPValues : ICloneable
 	{

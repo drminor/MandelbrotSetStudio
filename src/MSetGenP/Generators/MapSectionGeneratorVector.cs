@@ -1,10 +1,11 @@
 ﻿using MEngineDataContracts;
-using MSS.Common.APValues;
+using MSS.Common.SmxVals;
 using MSS.Common.DataTransferObjects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MSS.Common;
 
 namespace MSetGenP
 {

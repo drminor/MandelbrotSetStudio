@@ -1,12 +1,7 @@
-﻿using MSS.Common;
-using MSS.Common.APValSupport;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Collections;
-using System.Diagnostics;
 using System.Linq;
-using System.Numerics;
-using System.Text;
 
 namespace MSS.Common.APValues
 {
@@ -21,7 +16,6 @@ namespace MSS.Common.APValues
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;
 		}
-
 
 		#endregion
 
@@ -78,7 +72,6 @@ namespace MSS.Common.APValues
 
 			return result;
 		}
-
 
 		#endregion
 
