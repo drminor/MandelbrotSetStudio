@@ -2,6 +2,7 @@
 using MSS.Common.APValSupport;
 using MSS.Common.APValues;
 using MSS.Types;
+using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -36,22 +37,20 @@ namespace MSetGeneratorPrototype
 		private static readonly Vector256<int> ZERO_VEC = Vector256<int>.Zero;
 		private static readonly Vector256<uint> ALL_BITS_SET_VEC = Vector256<uint>.AllBitsSet;
 
+		private static readonly Vector256<uint> SHUFFLE_EXP_LOW_VEC = Vector256.Create(0u, 0u, 1u, 1u, 2u, 2u, 3u, 3u);
+		private static readonly Vector256<uint> SHUFFLE_EXP_HIGH_VEC = Vector256.Create(4u, 4u, 5u, 5u, 6u, 6u, 7u, 7u);
+
+
 
 		private FP31DeckPW _squareResult0;
 		private FP31DeckPW _squareResult1;
 		private FP31DeckPW _squareResult2;
-
-		//private Memory<ulong>[] _squareResult1Mems;
-		//private Memory<ulong>[] _squareResult2Mems;
-
 		private FP31DeckPW _squareResult3;
 
 		private FP31Deck _negationResult;
 		private FP31Deck _additionResult;
-		private FP31Deck _squareResult4;
 
 		private Vector256<uint>[] _ones;
-
 		private Vector256<int> _thresholdVector;
 
 		private static readonly bool USE_DET_DEBUG = false;
@@ -88,19 +87,13 @@ namespace MSetGeneratorPrototype
 			MathOpCounts = new MathOpCounts();
 
 			_squareResult0 = new FP31DeckPW(LimbCount, ValueCount);
-
-			//_squareResult1Mems = BuildMantissaMemoryArrayL(LimbCount * 2, ValueCount);
-			//_squareResult2Mems = BuildMantissaMemoryArrayL(LimbCount * 2, ValueCount);
-
 			_squareResult1 = new FP31DeckPW(LimbCount * 2, ValueCount);
 			_squareResult2 = new FP31DeckPW(LimbCount * 2, ValueCount);
-
+			
 			_squareResult3 = new FP31DeckPW(LimbCount, ValueCount);
+
 			_negationResult = new FP31Deck(LimbCount, ValueCount);
 			_additionResult = new FP31Deck(LimbCount, ValueCount);
-
-			_squareResult4 = new FP31Deck(LimbCount, ValueCount);
-
 
 			var justOne = Vector256.Create(1u);
 			_ones = Enumerable.Repeat(justOne, VecCount).ToArray();
@@ -119,16 +112,6 @@ namespace MSetGeneratorPrototype
 
 			BlockPosition = new BigVector();
 			RowNumber = 0;
-
-			_squareResult0.ClearManatissMems();
-			_squareResult1.ClearManatissMems();
-			_squareResult2.ClearManatissMems();
-			_squareResult3.ClearManatissMems();
-
-			_squareResult4.ClearManatissMems();
-
-			_negationResult.ClearManatissMems();
-			_additionResult.ClearManatissMems();
 		}
 
 		private int GetThresholdMsl(uint threshold, ApFixedPointFormat apFixedPointFormat)
@@ -144,29 +127,6 @@ namespace MSetGeneratorPrototype
 
 			return result;
 		}
-
-		#endregion
-
-		#region Mantissa Support - Long
-
-		//private Span<Vector256<ulong>> GetLimbVectorsUL(Memory<ulong> memory)
-		//{
-		//	Span<Vector256<ulong>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(memory.Span);
-		//	return result;
-		//}
-
-		//private Span<Vector256<uint>> GetLimbVectorsUW(Memory<uint> memory)
-		//{
-		//	Span<Vector256<uint>> result = MemoryMarshal.Cast<uint, Vector256<uint>>(memory.Span);
-		//	return result;
-		//}
-
-		//private Span<Vector256<uint>> GetLimbVectorsUW(Memory<ulong> memory)
-		//{
-		//	Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<uint>>(memory.Span);
-
-		//	return result;
-		//}
 
 		private int[] BuildNarowInPlayList(int[] inPlayList)
 		{
@@ -214,6 +174,31 @@ namespace MSetGeneratorPrototype
 		#region Multiply and Square
 
 		// By Deck
+		public void SquareOld(FP31Deck a, FP31Deck result)
+		{
+			//// Convert back to standard, i.e., non two's compliment.
+			//// Our multiplication routines don't support 2's compliment.
+			//// The result of squaring is always positive,
+			//// so we don't have to convert them to 2's compliment afterwards.
+
+			//CheckReservedBitIsClear(a, "Squaring");
+
+			//ConvertFrom2C(a, _negationResult, InPlayList);
+			//ExpandTo(_negationResult, _squareResult0);
+			//MathOpCounts.NumberOfConversions++;
+
+			//// There are 8 ints to a Vector, but only 4 longs. Adjust the InPlayList to support multiplication
+			//InPlayListNarrow = BuildNarowInPlayList(InPlayList);
+
+			//SquareInternal(_squareResult0, _squareResult1);
+			//SumThePartials(_squareResult1, _squareResult2);
+			//ShiftAndTrim(_squareResult2, _squareResult3);
+
+			//FP31ValHelper.PackTo(_squareResult3, result);
+
+			////PackTo(_squareResult3, result);
+		}
+
 		public void Square(FP31Deck a, FP31Deck result)
 		{
 			// Convert back to standard, i.e., non two's compliment.
@@ -223,8 +208,7 @@ namespace MSetGeneratorPrototype
 
 			CheckReservedBitIsClear(a, "Squaring");
 
-			ConvertFrom2C(a, _negationResult, InPlayList);
-			FP31ValHelper.ExpandTo(_negationResult, _squareResult0);
+			ConvertFrom2C(a, _squareResult0, InPlayList);
 			MathOpCounts.NumberOfConversions++;
 
 			// There are 8 ints to a Vector, but only 4 longs. Adjust the InPlayList to support multiplication
@@ -235,32 +219,9 @@ namespace MSetGeneratorPrototype
 			ShiftAndTrim(_squareResult2, _squareResult3);
 
 			FP31ValHelper.PackTo(_squareResult3, result);
+
+			//PackTo(_squareResult3, result);
 		}
-
-		// By Deck
-		//public void SquareNew(FP31Deck a, FP31Deck result)
-		//{
-		//	// Convert back to standard, i.e., non two's compliment.
-		//	// Our multiplication routines don't support 2's compliment.
-		//	// The result of squaring is always positive,
-		//	// so we don't have to convert them to 2's compliment afterwards.
-
-		//	CheckReservedBitIsClear(a.MantissaMemories, "Squaring");
-
-		//	ConvertFrom2C(a, _squareResult4, InPlayList);
-		//	MathOpCounts.NumberOfConversions++;
-
-		//	// There are 8 ints to a Vector, but only 4 longs. Adjust the InPlayList to support multiplication
-		//	InPlayListNarrow = BuildNarowInPlayList(InPlayList);
-
-		//	SquareInternal(_squareResult4Mems, _squareResult1Mems);
-		//	SumThePartials(_squareResult1Mems, _squareResult2Mems);
-		//	ShiftAndTrim(_squareResult2Mems, _squareResult3Mems);
-
-		//	FP31ValHelper.PackTo(_squareResult3Ba, result.Mantissas);
-		//}
-
-
 
 		// By Limb, By Vector
 		private void SquareInternal(FP31DeckPW source, FP31DeckPW result)
@@ -511,208 +472,239 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		//public static void ExpandTo(uint[][] mantissas, ulong[][] results)
+		//private void ConvertFrom2C(FP31Deck source, FP31Deck result, int[] inPlayList)
 		//{
-		//	for (var i = 0; i < mantissas.Length; i++)
-		//	{
-		//		var signExtendedLimbs = ExtendSignBit(mantissas[i]);
+		//	CheckReservedBitIsClear(source, "ConvertFrom2C");
 
-		//		Array.Copy(signExtendedLimbs, results[i], signExtendedLimbs.Length);
+		//	var indexes = inPlayList;
+
+		//	var signBitFlags = new int[VecCount];
+		//	var signBitVecs = new Vector256<int>[VecCount];
+		//	var msls = source.GetLimbVectorsUW(LimbCount - 1);
+
+		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+		//	{
+		//		var idx = indexes[idxPtr];
+
+		//		var left = Avx2.And(msls[idx].AsInt32(), TEST_BIT_30_VEC);
+		//		var areZerosVec = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
+		//		signBitVecs[idx] = areZerosVec;
+		//		signBitFlags[idx] = Avx2.MoveMask(areZerosVec.AsByte());
+		//	}
+
+		//	var carryVectors = _ones;
+
+		//	for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+		//	{
+		//		var limbVecs = source.GetLimbVectorsUW(limbPtr);
+		//		var resultLimbVecs = result.GetLimbVectorsUW(limbPtr);
+
+		//		for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+		//		{
+		//			var idx = indexes[idxPtr];
+
+		//			if (signBitFlags[idx] == -1)
+		//			{
+		//				// All positive values
+		//				resultLimbVecs[idx] = limbVecs[idx];
+		//			}
+		//			else
+		//			{
+		//				// All negative values or a mix
+
+		//				var left = limbVecs[idx];
+
+		//				var notVector = Avx2.Xor(left, ALL_BITS_SET_VEC);
+		//				var newValuesVector = Avx2.Add(notVector, carryVectors[idx]);
+		//				MathOpCounts.NumberOfAdditions += 2;
+
+		//				var newCarries = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+		//				var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
+		//				resultLimbVecs[idx] = limbValues;
+		//				MathOpCounts.NumberOfSplits++;
+
+		//				if (USE_DET_DEBUG)
+		//					ReportForNegation(limbPtr, left, carryVectors[idx], newValuesVector, limbValues, newCarries);
+
+		//				carryVectors[idx] = newCarries;
+
+		//				if (signBitFlags[idx] != 0)
+		//				{
+		//					// We have a mix of positive and negative values.
+		//					// For each postive value, set each vector element back to the original value.
+
+		//					var signBitVec = signBitVecs[idx];
+		//					var resultPtr = idx * _lanes;
+
+		//					for (var i = 0; i < _lanes; i++)
+		//					{
+		//						var signBit = signBitVec.GetElement(i);
+		//						if (signBit == -1)
+		//						{
+		//							var valPtr = resultPtr + i;
+
+		//							result.Mantissas[limbPtr][valPtr] = source.Mantissas[limbPtr][valPtr];
+		//						}
+		//					}
+		//				}
+
+		//			}
+
+		//		}
 		//	}
 		//}
 
-		private int[] BuildNarowInPlayListTemp(int[] inPlayList)
+		// By Limb, By Vector
+		
+		private void ConvertFrom2C(FP31Deck source, FP31DeckPW result, int[] inPlayList)
 		{
-			var result = new int[inPlayList.Length * 2];
+			CheckReservedBitIsClear(source, "ConvertFrom2C");
 
 			var indexes = inPlayList;
-			var resultIdxPtr = 0;
 
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++, resultIdxPtr += 2)
+			var signBitFlags = new int[VecCount];
+			var signBitVecs = new Vector256<int>[VecCount];
+			var msls = source.GetLimbVectorsUW(LimbCount - 1);
+
+			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
-				var resultIdx = indexes[idxPtr] * 2;
+				var idx = indexes[idxPtr];
 
-				result[resultIdxPtr] = resultIdx;
-				result[resultIdxPtr + 1] = resultIdx + 1;
+				var left = Avx2.And(msls[idx].AsInt32(), TEST_BIT_30_VEC);
+				var areZerosVec = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
+				signBitVecs[idx] = areZerosVec;
+				signBitFlags[idx] = Avx2.MoveMask(areZerosVec.AsByte());
+			}
+
+			var carryVectors = _ones;
+
+			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+			{
+				var limbVecs = source.GetLimbVectorsUW(limbPtr);
+				var resultLimbVecs = result.GetLimbVectorsUW(limbPtr);
+
+				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+				{
+					var idx = indexes[idxPtr];
+					var resultIdx = idx * 2;
+
+					if (signBitFlags[idx] == -1)
+					{
+						// All positive values
+						
+						////resultLimbVecs[idx] = limbVecs[idx];
+
+						// Take the lower 4 values and set the low halves of each result
+						resultLimbVecs[resultIdx] = Avx2.And(Avx2.PermuteVar8x32(limbVecs[idx], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+
+						// Take the lower 4 values and set the low halves of each result
+						resultLimbVecs[resultIdx + 1] = Avx2.And(Avx2.PermuteVar8x32(limbVecs[idx], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+					}
+					else
+					{
+						// All negative values or a mix
+
+						var left = limbVecs[idx];
+
+						var notVector = Avx2.Xor(left, ALL_BITS_SET_VEC);
+						var newValuesVector = Avx2.Add(notVector, carryVectors[idx]);
+						MathOpCounts.NumberOfAdditions += 2;
+
+						var newCarries = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+						var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
+						MathOpCounts.NumberOfSplits++;
+
+						////resultLimbVecs[idx] = limbValues;
+
+						// Take the lower 4 values and set the low halves of each result
+						resultLimbVecs[resultIdx] = Avx2.And(Avx2.PermuteVar8x32(limbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+
+						// Take the lower 4 values and set the low halves of each result
+						resultLimbVecs[resultIdx + 1] = Avx2.And(Avx2.PermuteVar8x32(limbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+
+						if (USE_DET_DEBUG)
+							ReportForNegation(limbPtr, left, carryVectors[idx], newValuesVector, limbValues, newCarries);
+
+						carryVectors[idx] = newCarries;
+
+						if (signBitFlags[idx] != 0)
+						{
+							// We have a mix of positive and negative values.
+							// For each postive value, set each vector element back to the original value.
+
+							var signBitVec = signBitVecs[idx];
+							var resultPtr = idx * _lanes;
+
+							for (var i = 0; i < _lanes; i++)
+							{
+								var signBit = signBitVec.GetElement(i);
+								if (signBit == -1)
+								{
+									var valPtr = resultPtr + i;
+
+									result.Mantissas[limbPtr][valPtr] = source.Mantissas[limbPtr][valPtr];
+								}
+							}
+						}
+
+					}
+
+				}
+			}
+		}
+
+		private void PackTo(FP31DeckPW source, FP31Deck result)
+		{
+			var indexes = InPlayList;
+
+			for (var limbPtr = 0; limbPtr < source.LimbCount; limbPtr++)
+			{
+				var leftNarrow = source.GetLimbVectorsUW(limbPtr);      // Walk through the source at 2x rate
+				var resultVectors = result.GetLimbVectorsUW(limbPtr);   // Walk through the result at 1x rate
+
+				//var left = source.GetLimbVectorsUL(limbPtr);
+
+				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+				{
+					var idx = indexes[idxPtr];
+
+					var sIdx = idx * 2;
+					//var v1 = left[sIdx];                // 4 ulongs
+					//var v2 = left[sIdx + 1];            // 4 ulongs
+
+					//var vn = leftNarrow[idx];			// 8 uints -- low, high of each ulong.
+
+
+					//var r = resultVectors[idx];         // 8 units
+
+					resultVectors[idx] = leftNarrow[sIdx];
+					resultVectors[idx] = Avx2.Or(resultVectors[idx], leftNarrow[sIdx + 1]);
+				}
+
+			}
+		}
+
+		private void PackToOld(FP31DeckPW source, FP31Deck result)
+		{
+			for (var i = 0; i < source.Mantissas.Length; i++)
+			{
+				var lows = TakeLowerHalves(source.Mantissas[i]);
+
+				Array.Copy(lows, result.Mantissas[i], lows.Length);
+			}
+		}
+
+		private static uint[] TakeLowerHalves(ulong[] partialWordLimbs)
+		{
+			var result = new uint[partialWordLimbs.Length];
+
+			for (var i = 0; i < result.Length; i++)
+			{
+				result[i] = (uint)partialWordLimbs[i];
 			}
 
 			return result;
 		}
-
-		// By Limb, By Vector
-		private void ConvertFrom2C(FP31Deck source, FP31Deck result, int[] inPlayList)
-		{
-			CheckReservedBitIsClear(source, "ConvertFrom2C");
-
-			var indexes = inPlayList;
-
-			var signBitFlags = new int[VecCount];
-			var signBitVecs = new Vector256<int>[VecCount];
-			var msls = source.GetLimbVectorsUW(LimbCount - 1);
-
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-			{
-				var idx = indexes[idxPtr];
-
-				var left = Avx2.And(msls[idx].AsInt32(), TEST_BIT_30_VEC);
-				var areZerosVec = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
-				signBitVecs[idx] = areZerosVec;
-				signBitFlags[idx] = Avx2.MoveMask(areZerosVec.AsByte());
-			}
-
-			var carryVectors = _ones;
-
-			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
-			{
-				var limbVecs = source.GetLimbVectorsUW(limbPtr);
-				var resultLimbVecs = result.GetLimbVectorsUW(limbPtr);
-
-				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-				{
-					var idx = indexes[idxPtr];
-
-					if (signBitFlags[idx] == -1)
-					{
-						// All positive values
-						resultLimbVecs[idx] = limbVecs[idx];
-					}
-					else
-					{
-						// All negative values or a mix
-
-						var left = limbVecs[idx];
-
-						var notVector = Avx2.Xor(left, ALL_BITS_SET_VEC);
-						var newValuesVector = Avx2.Add(notVector, carryVectors[idx]);
-						MathOpCounts.NumberOfAdditions += 2;
-
-						var newCarries = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
-						var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
-						resultLimbVecs[idx] = limbValues;
-						MathOpCounts.NumberOfSplits++;
-
-						if (USE_DET_DEBUG)
-							ReportForNegation(limbPtr, left, carryVectors[idx], newValuesVector, limbValues, newCarries);
-
-						carryVectors[idx] = newCarries;
-
-						if (signBitFlags[idx] != 0)
-						{
-							// We have a mix of positive and negative values.
-							// For each postive value, set each vector element back to the original value.
-
-							var signBitVec = signBitVecs[idx];
-							var resultPtr = idx * _lanes;
-
-							for (var i = 0; i < _lanes; i++)
-							{
-								var signBit = signBitVec.GetElement(i);
-								if (signBit == -1)
-								{
-									var valPtr = resultPtr + i;
-
-									result.Mantissas[limbPtr][valPtr] = source.Mantissas[limbPtr][valPtr];
-								}
-							}
-						}
-
-					}
-
-				}
-			}
-		}
-
-
-
-		private void ConvertFrom2CNew(FP31Deck source, FP31Deck result, int[] inPlayList)
-		{
-			CheckReservedBitIsClear(source, "ConvertFrom2C");
-
-			var indexes = inPlayList;
-
-			var signBitFlags = new int[VecCount];
-			var signBitVecs = new Vector256<int>[VecCount];
-			var msls = source.GetLimbVectorsUW(LimbCount - 1);
-
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-			{
-				var idx = indexes[idxPtr];
-
-				var left = Avx2.And(msls[idx].AsInt32(), TEST_BIT_30_VEC);
-				var areZerosVec = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
-				signBitVecs[idx] = areZerosVec;
-				signBitFlags[idx] = Avx2.MoveMask(areZerosVec.AsByte());
-			}
-
-			var carryVectors = _ones;
-
-			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
-			{
-				var limbVecs = source.GetLimbVectorsUW(limbPtr);
-				var resultLimbVecs = result.GetLimbVectorsUW(limbPtr);
-
-				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
-				{
-					var idx = indexes[idxPtr];
-
-					if (signBitFlags[idx] == -1)
-					{
-						// All positive values
-						resultLimbVecs[idx] = limbVecs[idx];
-					}
-					else
-					{
-						// All negative values or a mix
-
-						var left = limbVecs[idx];
-
-						var notVector = Avx2.Xor(left, ALL_BITS_SET_VEC);
-						var newValuesVector = Avx2.Add(notVector, carryVectors[idx]);
-						MathOpCounts.NumberOfAdditions += 2;
-
-						var newCarries = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
-						var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
-
-
-						var narrowIdx = idx * 2;
-						resultLimbVecs[idx] = limbValues;
-
-
-						MathOpCounts.NumberOfSplits++;
-
-						if (USE_DET_DEBUG)
-							ReportForNegation(limbPtr, left, carryVectors[idx], newValuesVector, limbValues, newCarries);
-
-						carryVectors[idx] = newCarries;
-
-						if (signBitFlags[idx] != 0)
-						{
-							// We have a mix of positive and negative values.
-							// For each postive value, set each vector element back to the original value.
-
-							var signBitVec = signBitVecs[idx];
-							var resultPtr = idx * _lanes;
-
-							for (var i = 0; i < _lanes; i++)
-							{
-								var signBit = signBitVec.GetElement(i);
-								if (signBit == -1)
-								{
-									var valPtr = resultPtr + i;
-
-									result.Mantissas[limbPtr][valPtr] = source.Mantissas[limbPtr][valPtr];
-								}
-							}
-						}
-
-					}
-
-				}
-			}
-		}
-
-
-
 
 		// By Limb, By Vector
 		private void CheckReservedBitIsClear(FP31Deck sourceLimbs, string description)
@@ -806,6 +798,30 @@ namespace MSetGeneratorPrototype
 			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvVal0:X4}: hi:{newCarryVal0:X4}, lo:{loVal0:X4}");
 			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}. hpOfNv: {nvHiPart}. unSNv: {unSNv}\n");
 		}
+
+		private void ExpandTo(FP31Deck source, FP31DeckPW result)
+		{
+			var indexes = InPlayList;
+
+			for (var limbPtr = 0; limbPtr < source.LimbCount; limbPtr++)
+			{
+				var left = source.GetLimbVectorsUW(limbPtr);                // Walk through the source at 1x rate.
+				var resultVectorsNarrow = result.GetLimbVectorsUW(limbPtr); // Walk through the result at 2x rate.
+
+				for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+				{
+					var idx = indexes[idxPtr];
+					var rIdx = idx * 2;
+
+					// Take the lower 4 values and set the low halves of each result
+					resultVectorsNarrow[rIdx] = Avx2.And(Avx2.PermuteVar8x32(left[idx], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+
+					// Take the lower 4 values and set the low halves of each result
+					resultVectorsNarrow[rIdx + 1] = Avx2.And(Avx2.PermuteVar8x32(left[idx], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+				}
+			}
+		}
+
 
 		#endregion
 
