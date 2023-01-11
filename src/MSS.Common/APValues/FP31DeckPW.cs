@@ -4,27 +4,27 @@ using System.Runtime.Intrinsics;
 
 namespace MSS.Common.APValues
 {
-	public class FP31Deck : ICloneable
+	public class FP31DeckPW : ICloneable
 	{
 		#region Constructors
 
-		public FP31Deck(int limbCount, int valueCount) : this(BuildLimbs(limbCount, valueCount))
+		public FP31DeckPW(int limbCount, int valueCount) : this(BuildLimbs(limbCount, valueCount))
 		{ }
 
-		private FP31Deck(uint[][] mantissas)
+		private FP31DeckPW(ulong[][] mantissas)
 		{
 			Mantissas = mantissas;
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		public FP31Deck(FP31Val[] fp31Vals)
+		public FP31DeckPW(FP31Val[] fp31Vals)
 		{
 			var numberOfLimbs = fp31Vals[0].LimbCount;
-			Mantissas = new uint[numberOfLimbs][];
+			Mantissas = new ulong[numberOfLimbs][];
 
 			for (var j = 0; j < numberOfLimbs; j++)
 			{
-				Mantissas[j] = new uint[fp31Vals.Length];
+				Mantissas[j] = new ulong[fp31Vals.Length];
 
 				for (var i = 0; i < fp31Vals.Length; i++)
 				{
@@ -35,55 +35,54 @@ namespace MSS.Common.APValues
 			MantissaMemories = BuildMantissaMemoryVectors(Mantissas);
 		}
 
-		private static uint[][] BuildLimbs(int limbCount, int valueCount)
+		private static ulong[][] BuildLimbs(int limbCount, int valueCount)
 		{
-			var result = new uint[limbCount][];
+			var result = new ulong[limbCount][];
 
 			for (var i = 0; i < limbCount; i++)
 			{
-				result[i] = new uint[valueCount];
+				result[i] = new ulong[valueCount];
 			}
 
 			return result;
 		}
 
-		private Memory<uint>[] BuildMantissaMemoryVectors(uint[][] mantissas)
+		private Memory<ulong>[] BuildMantissaMemoryVectors(ulong[][] mantissas)
 		{
-			var result = new Memory<uint>[mantissas.Length];
+			var result = new Memory<ulong>[mantissas.Length];
 
 			for (var i = 0; i < mantissas.Length; i++)
 			{
-				result[i] = new Memory<uint>(mantissas[i]);
+				result[i] = new Memory<ulong>(mantissas[i]);
 			}
 
 			return result;
 		}
-
 
 		#endregion
 
 		#region Public Properties
 
-		public readonly int Lanes = Vector256<uint>.Count;
+		public readonly int Lanes = Vector256<ulong>.Count;
 
 		public int Length => Mantissas[0].Length;
 		public int LimbCount => Mantissas.Length;
 		public int VectorCount => Length / Lanes;
 
-		public uint[][] Mantissas { get; init; } 
-		public Memory<uint>[] MantissaMemories { get; init; }
+		public ulong[][] Mantissas { get; init; } 
+		public Memory<ulong>[] MantissaMemories { get; init; }
 
 		#endregion
 
 		#region Public Methods
 
-		//private uint[] GetMantissa(int index)
+		//private ulong[] GetMantissa(int index)
 		//{
 		//	var result = Mantissas.Select(x => x[index]).ToArray();
 		//	return result;
 		//}
 
-		//private void SetMantissa(int index, uint[] values)
+		//private void SetMantissa(int index, ulong[] values)
 		//{
 		//	for(var i = 0; i < values.Length; i++)
 		//	{
@@ -91,25 +90,33 @@ namespace MSS.Common.APValues
 		//	}
 		//}
 
-		public Span<Vector256<uint>> GetLimbVectorsUW(int limbIndex)
+		public Span<Vector256<ulong>> GetLimbVectorsUL(int limbIndex)
 		{
 			var x = MantissaMemories[limbIndex];
-			Span<Vector256<uint>> result = MemoryMarshal.Cast<uint, Vector256<uint>>(x.Span);
+			Span<Vector256<ulong>> result = MemoryMarshal.Cast<ulong, Vector256<ulong>>(x.Span);
 
 			return result;
 		}
 
-		public void ClearManatissMems(int[] inPlayList)
+		public Span<Vector256<uint>> GetLimbVectorsUW(int limbIndex)
 		{
-			var indexes = inPlayList;
+			var x = MantissaMemories[limbIndex];
+			Span<Vector256<uint>> result = MemoryMarshal.Cast<ulong, Vector256<uint>>(x.Span);
+
+			return result;
+		}
+
+		public void ClearManatissMems(int[] inPlayListNarrow)
+		{
+			var indexes = inPlayListNarrow;
 
 			for (var j = 0; j < MantissaMemories.Length; j++)
 			{
-				var vectors = GetLimbVectorsUW(j);
+				var vectors = GetLimbVectorsUL(j);
 
 				for (var i = 0; i < indexes.Length; i++)
 				{
-					vectors[indexes[i]] = Vector256<uint>.Zero;
+					vectors[indexes[i]] = Vector256<ulong>.Zero;
 				}
 			}
 		}
@@ -118,11 +125,11 @@ namespace MSS.Common.APValues
 		{
 			for (var j = 0; j < MantissaMemories.Length; j++)
 			{
-				var vectors = GetLimbVectorsUW(j);
+				var vectors = GetLimbVectorsUL(j);
 
 				for (var i = 0; i < vectors.Length; i++)
 				{
-					vectors[i] = Vector256<uint>.Zero;
+					vectors[i] = Vector256<ulong>.Zero;
 				}
 			}
 		}
@@ -157,7 +164,6 @@ namespace MSS.Common.APValues
 		//	}
 		//}
 
-
 		#endregion
 
 		#region ICloneable Support
@@ -167,19 +173,19 @@ namespace MSS.Common.APValues
 			return Clone();
 		}
 
-		public FP31Deck Clone()
+		public FP31DeckPW Clone()
 		{
-			var result = new FP31Deck(CloneMantissas());
+			var result = new FP31DeckPW(CloneMantissas());
 			return result;
 		}
 
-		private uint[][] CloneMantissas()
+		private ulong[][] CloneMantissas()
 		{
-			uint[][] result = new uint[Mantissas.Length][];
+			ulong[][] result = new ulong[Mantissas.Length][];
 			
 			for(var i = 0; i < Mantissas.Length; i++)
 			{
-				var a = new uint[Mantissas[i].Length];
+				var a = new ulong[Mantissas[i].Length];
 
 				Array.Copy(Mantissas[i], a, a.Length);
 

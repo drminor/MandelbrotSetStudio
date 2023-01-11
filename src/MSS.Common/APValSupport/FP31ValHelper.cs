@@ -94,7 +94,6 @@ namespace MSS.Common.APValSupport
 
 		#endregion
 
-
 		#region FP31Deck Support
 
 		public static bool GetSign(uint[] limbs)
@@ -109,23 +108,23 @@ namespace MSS.Common.APValSupport
 			return result;
 		}
 
-		public static void ExpandTo(uint[][] mantissas, ulong[][] results)
+		public static void ExpandTo(FP31Deck source, FP31DeckPW result)
 		{
-			for (var i = 0; i < mantissas.Length; i++)
+			for (var i = 0; i < source.Mantissas.Length; i++)
 			{
-				var signExtendedLimbs = ExtendSignBit(mantissas[i]);
+				var signExtendedLimbs = ExtendSignBit(source.Mantissas[i]);
 
-				Array.Copy(signExtendedLimbs, results[i], signExtendedLimbs.Length);
+				Array.Copy(signExtendedLimbs, result.Mantissas[i], signExtendedLimbs.Length);
 			}
 		}
 
-		public static void PackTo(ulong[][] mantissas, uint[][] results)
+		public static void PackTo(FP31DeckPW source, FP31Deck result)
 		{
-			for (var i = 0; i < mantissas.Length; i++)
+			for (var i = 0; i < source.Mantissas.Length; i++)
 			{
-				var lows = TakeLowerHalves(mantissas[i]);
+				var lows = TakeLowerHalves(source.Mantissas[i]);
 
-				Array.Copy(lows, results[i], lows.Length);
+				Array.Copy(lows, result.Mantissas[i], lows.Length);
 			}
 		}
 

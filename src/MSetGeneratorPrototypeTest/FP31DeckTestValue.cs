@@ -1,4 +1,5 @@
 ﻿using MSetGeneratorPrototype;
+using MSS.Common;
 using MSS.Common.APValSupport;
 using MSS.Common.APValues;
 using MSS.Types;
@@ -18,7 +19,7 @@ namespace EngineTest
 		public FP31DeckTestVal(FP31Deck fp31Deck, VecMath9 vecMath9)
 		{
 			Vectors = fp31Deck;
-			var smx2C = vecMath9.GetFP31ValAtIndex(fp31Deck, index: 0);
+			var smx2C = GetFP31ValAtIndex(fp31Deck, index: 0, vecMath9.TargetExponent, vecMath9.BitsBeforeBP);
 			FP31ValTestVal = new FP31ValTestValue(smx2C);
 		}
 
@@ -44,22 +45,30 @@ namespace EngineTest
 
 		#endregion
 
-		public FP31Deck CreateNewFP31Deck()
-		{
-			var result = new FP31Deck(Vectors.LimbCount, Vectors.Length);
-			return result;
-		}
-
-		private static FP31Deck CreateFP31Deck(FP31Val fP31Val, int valueCount)
+		private FP31Deck CreateFP31Deck(FP31Val fP31Val, int valueCount)
 		{
 			var elements = new List<FP31Val>();
 
-			for(var i = 0; i < valueCount; i++)
+			for (var i = 0; i < valueCount; i++)
 			{
 				elements.Add(fP31Val.Clone());
 			}
 
 			var result = new FP31Deck(elements.ToArray());
+			return result;
+		}
+
+		private FP31Val GetFP31ValAtIndex(FP31Deck vectors, int index, int targetExponent, byte bitsBeforeBP, int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			var mantissa = vectors.Mantissas.Select(x => x[index]).ToArray();
+			var result = new FP31Val(mantissa, targetExponent, bitsBeforeBP, precision);
+
+			return result;
+		}
+
+		public FP31Deck CreateNewFP31Deck()
+		{
+			var result = new FP31Deck(Vectors.LimbCount, Vectors.Length);
 			return result;
 		}
 
