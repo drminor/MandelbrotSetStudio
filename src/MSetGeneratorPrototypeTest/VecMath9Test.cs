@@ -18,7 +18,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 14;     // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
 
-			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD);
+			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD, out var inPlayList);
 
 			//var aTv = new VecTestValue("36507222016", -33, precision, smxMathHelper); // -4.25
 
@@ -27,7 +27,7 @@ namespace MSetGeneratorPrototypeTest
 
 			// Vec Square
 			var bFPValus = aTv.CreateNewFP31Deck();
-			vecMath9.Square(aTv.Vectors, result: bFPValus);
+			vecMath9.Square(aTv.Vectors, result: bFPValus, inPlayList);
 
 			var bTv = new FP31DeckTestVal(bFPValus, vecMath9);
 			Debug.WriteLine($"The StringValue for the bSmx is {bTv}.");
@@ -51,7 +51,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 30;     // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
 
-			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD);
+			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD, out var inPlayList);
 
 			//var aTv = new VecTestValue("36507222016", -33, precision, smxMathHelper); // -4.25
 
@@ -60,7 +60,7 @@ namespace MSetGeneratorPrototypeTest
 
 			// Vec Square
 			var bFPValus = aTv.CreateNewFP31Deck();
-			vecMath9.Square(aTv.Vectors, result: bFPValus);
+			vecMath9.Square(aTv.Vectors, result: bFPValus, inPlayList);
 
 			var bTv = new FP31DeckTestVal(bFPValus, vecMath9);
 			Debug.WriteLine($"The StringValue for the bSmx is {bTv}.");
@@ -86,7 +86,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 53;
 			var limbCount = 3;
 
-			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD);
+			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD, out var inPlayList);
 
 			//var aNumber = "-343597";
 			//var bNumber = "-343707";
@@ -107,7 +107,7 @@ namespace MSetGeneratorPrototypeTest
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFP31Deck();
-			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues, inPlayList);
 			var cTv = new FP31DeckTestVal(cFPValues, vecMath9);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
@@ -126,7 +126,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 23;
 			var limbCount = 3;
 
-			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD);
+			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD, out var inPlayList);
 
 			var aNumber = "-343597";
 			var bNumber = "-343707";
@@ -148,7 +148,7 @@ namespace MSetGeneratorPrototypeTest
 
 			var cFPValues = aTv.CreateNewFP31Deck();
 
-			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues, inPlayList);
 
 			var cTv = new FP31DeckTestVal(cFPValues, vecMath9);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
@@ -168,7 +168,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 25;
 			var limbCount = 5;
 
-			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD);
+			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD, out var inPlayList);
 
 			//var aNumber = "-414219082";
 			//var bNumber = "67781838";
@@ -185,7 +185,7 @@ namespace MSetGeneratorPrototypeTest
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFP31Deck();
-			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues, inPlayList);
 			var cTv = new FP31DeckTestVal(cFPValues, vecMath9);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
@@ -204,7 +204,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 38;
 			var limbCount = 6;
 
-			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD);
+			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD, out var inPlayList);
 
 			//var aNumber = "-414219082";
 			//var bNumber = "67781838";
@@ -221,13 +221,13 @@ namespace MSetGeneratorPrototypeTest
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFP31Deck();
-			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues, inPlayList);
 			var cTv = new FP31DeckTestVal(cFPValues, vecMath9);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
-			var doneFlags = vecMath9.DoneFlags.Select(x => x.ToString()).ToArray();
-			var doneFlagsStr = string.Join(", ", doneFlags);
-			Debug.WriteLine(doneFlagsStr);
+			//var doneFlags = vecMath9.DoneFlags.Select(x => x.ToString()).ToArray();
+			//var doneFlagsStr = string.Join(", ", doneFlags);
+			//Debug.WriteLine(doneFlagsStr);
 
 			var cRValue = aTv.RValue.Add(bTv.RValue);
 			var cStrComp = RValueHelper.ConvertToString(cRValue);
@@ -244,7 +244,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 40;
 			var limbCount = 4;
 
-			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD);
+			var vecMath9 = BuildTheVecMath9(limbCount, VALUE_COUNT, THRESHOLD, out var inPlayList);
 
 			//var aNumber = "-414219082";
 			//var bNumber = "67781838";
@@ -262,7 +262,7 @@ namespace MSetGeneratorPrototypeTest
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 
 			var cFPValues = aTv.CreateNewFP31Deck();
-			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues);
+			vecMath9.Add(aTv.Vectors, bTv.Vectors, c: cFPValues, inPlayList);
 			var cTv = new FP31DeckTestVal(cFPValues, vecMath9);
 			Debug.WriteLine($"The StringValue for the cSmx is {cTv}.");
 
@@ -326,9 +326,11 @@ namespace MSetGeneratorPrototypeTest
 
 		#region Support Methods
 
-		private VecMath9 BuildTheVecMath9(int limbCount, int valueCount, uint threshold)
+		private VecMath9 BuildTheVecMath9(int limbCount, int valueCount, uint threshold, out int[] inPlayList)
 		{
 			var result = new VecMath9(new ApFixedPointFormat(limbCount), valueCount, threshold);
+			inPlayList = Enumerable.Range(0, result.VecCount).ToArray();
+
 			return result;
 		}
 

@@ -9,7 +9,9 @@ namespace MSS.Common.APValues
 		#region Constructors
 
 		public FP31DeckPW(int limbCount, int valueCount) : this(BuildLimbs(limbCount, valueCount))
-		{ }
+		{
+			IsZero = true;
+		}
 
 		private FP31DeckPW(ulong[][] mantissas)
 		{
@@ -63,14 +65,16 @@ namespace MSS.Common.APValues
 
 		#region Public Properties
 
-		public readonly int Lanes = Vector256<ulong>.Count;
+		public static readonly int Lanes = Vector256<ulong>.Count;
 
-		public int Length => Mantissas[0].Length;
+		public int ValueCount => Mantissas[0].Length;
 		public int LimbCount => Mantissas.Length;
-		public int VectorCount => Length / Lanes;
+		public int VectorCount => ValueCount / Lanes;
 
 		public ulong[][] Mantissas { get; init; } 
 		public Memory<ulong>[] MantissaMemories { get; init; }
+
+		public bool IsZero { get; private set; }
 
 		#endregion
 
@@ -132,6 +136,8 @@ namespace MSS.Common.APValues
 					vectors[i] = Vector256<ulong>.Zero;
 				}
 			}
+
+			IsZero = true;
 		}
 
 		//private void ClearBackingArray(ulong[][] backingArray, bool onlyInPlayItems)
@@ -176,6 +182,7 @@ namespace MSS.Common.APValues
 		public FP31DeckPW Clone()
 		{
 			var result = new FP31DeckPW(CloneMantissas());
+			result.IsZero = IsZero;
 			return result;
 		}
 

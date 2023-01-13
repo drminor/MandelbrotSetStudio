@@ -121,7 +121,7 @@ namespace MSetGenP
 					Debug.WriteLine("WARNING: Some sample points are not complete.");
 				}
 
-				var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
+				var result = new MapSectionResponse(mapSectionRequest, compressedDoneFlags, counts, escapeVelocities, zValues: null);
 				return result;
 			}
 			else
@@ -156,7 +156,7 @@ namespace MSetGenP
 
 				//var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
 
-				var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlags, zValues: null);
+				var result = new MapSectionResponse(mapSectionRequest, doneFlags, counts, escapeVelocities, zValues: null);
 
 				return result;
 			}

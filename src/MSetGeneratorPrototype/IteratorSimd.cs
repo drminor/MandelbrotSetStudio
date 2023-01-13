@@ -1,5 +1,5 @@
-﻿using MSS.Common.APValues;
-using System;
+﻿using MSS.Common;
+using MSS.Common.APValues;
 using System.Diagnostics;
 
 namespace MSetGeneratorPrototype
@@ -57,13 +57,18 @@ namespace MSetGeneratorPrototype
 			_zIs2 = new FP31Deck(limbCount, valueCount);
 		}
 
-		public void SetCoords(FP31Deck cRs, FP31Deck cIs)
-		{
-			_cRs = cRs;
-			_cIs = cIs;
+		public ApFixedPointFormat ApFixedPointFormat => _vecMath.ApFixedPointFormat;
 
-			_zValuesAreZero = true;
-		}
+
+		#region Public Methods
+
+		//public void SetCoords(FP31Deck cRs, FP31Deck cIs)
+		//{
+		//	_cRs = cRs;
+		//	_cIs = cIs;
+
+		//	_zValuesAreZero = true;
+		//}
 
 		public void SetCoords(FP31Deck cRs, FP31Deck cIs, FP31Deck zRs, FP31Deck zIs)
 		{
@@ -72,22 +77,17 @@ namespace MSetGeneratorPrototype
 			_zRs = zRs;
 			_zIs = zIs;
 
-			_zValuesAreZero = false;
+			_zValuesAreZero = zRs.IsZero || zIs.IsZero;
+
+			if (_zValuesAreZero)
+			{
+				Debug.Assert(zRs.IsZero && zIs.IsZero, "One of zRs or zIs is zero, but both zRs and zIs are not zero.");
+			}
 		}
 
 		#endregion
 
-		#region Public Properties
-
-		public bool[] DoneFlags => _vecMath.DoneFlags;
-		public int[] InPlayList => _vecMath.InPlayList;
-		public long[] UnusedCalcs => _vecMath.UnusedCalcs;
-
-		#endregion
-
-		#region Public Methods
-
-		public int[] Iterate(VecMath9 vecMath)
+		public int[] Iterate(int[] inPlayList, out FP31Deck sumOfSquares)
 		{
 			try
 			{
@@ -101,24 +101,25 @@ namespace MSetGeneratorPrototype
 				else
 				{
 					// square(z.r + z.i)
-					vecMath.AddThenSquare(_zRs, _zIs, _zRZiSqrs);
+					_vecMath.AddThenSquare(_zRs, _zIs, _zRZiSqrs, inPlayList);
 
 					// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
-					vecMath.Sub(_zRZiSqrs, _zRSqrs, _zIs);
-					vecMath.Sub(_zIs, _zISqrs, _zIs2);
-					vecMath.Add(_zIs2, _cIs, _zIs);
+					_vecMath.Sub(_zRZiSqrs, _zRSqrs, _zIs, inPlayList);
+					_vecMath.Sub(_zIs, _zISqrs, _zIs2, inPlayList);
+					_vecMath.Add(_zIs2, _cIs, _zIs, inPlayList);
 
 					// z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
-					vecMath.Sub(_zRSqrs, _zISqrs, _zRs2);
-					vecMath.Add(_zRs2, _cRs, _zRs);
+					_vecMath.Sub(_zRSqrs, _zISqrs, _zRs2, inPlayList);
+					_vecMath.Add(_zRs2, _cRs, _zRs, inPlayList);
 				}
 
-				vecMath.Square(_zRs, _zRSqrs);
-				vecMath.Square(_zIs, _zISqrs);
-				vecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
+				_vecMath.Square(_zRs, _zRSqrs, inPlayList);
+				_vecMath.Square(_zIs, _zISqrs, inPlayList);
+				_vecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, inPlayList);
 
-				vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagMemory);
+				_vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagMemory, inPlayList);
 
+				sumOfSquares = _sumOfSqrs;
 				return _escapedFlagsBackingArray;
 			}
 			catch (Exception e)

@@ -20,13 +20,13 @@ namespace MEngineDataContracts
 				  mapSectionRequest.MapCalcSettings, null, null, null, null)
 		{ }
 
-		public MapSectionResponse(MapSectionRequest mapSectionRequest, ushort[] counts, ushort[] escapeVelocities, bool[] doneFlags, double[] zValues)
+		public MapSectionResponse(MapSectionRequest mapSectionRequest, bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities, double[] zValues)
 			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
-				  mapSectionRequest.MapCalcSettings, counts, escapeVelocities, doneFlags, zValues)
+				  mapSectionRequest.MapCalcSettings, hasEscapedFlags, counts, escapeVelocities, zValues)
 		{ }
 
 		public MapSectionResponse(string mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition,
-			MapCalcSettings mapCalcSettings, ushort[] counts, ushort[] escapeVelocities, bool[] doneFlags, double[] zValues)
+			MapCalcSettings mapCalcSettings, bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities, double[] zValues)
 		{
 			MapSectionId = mapSectionId;
 			OwnerId = ownerId;
@@ -36,7 +36,7 @@ namespace MEngineDataContracts
 			MapCalcSettings = mapCalcSettings;
 			Counts = counts;
 			EscapeVelocities = escapeVelocities;
-			DoneFlags = doneFlags;
+			DoneFlags = hasEscapedFlags;
 			ZValues = zValues;
 			IncludeZValues = zValues != null;
 			RequestCancelled = false;
@@ -65,6 +65,8 @@ namespace MEngineDataContracts
 
 		[DataMember(Order = 8)]
 		public ushort[] EscapeVelocities { get; init; }
+
+		// TODO: Move this to position 7 and rename to HasEscapedFlags
 
 		[DataMember(Order = 9)]
 		public bool[] DoneFlags { get; init; }

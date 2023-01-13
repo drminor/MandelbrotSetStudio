@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -9,6 +10,11 @@ namespace MSS.Common.APValues
 		#region Constructors
 
 		public FP31Deck(int limbCount, int valueCount) : this(BuildLimbs(limbCount, valueCount))
+		{
+			IsZero = true;
+		}
+
+		public FP31Deck(FP31Val fP31Val, int extent) : this(Duplicate(fP31Val, extent))
 		{ }
 
 		private FP31Deck(uint[][] mantissas)
@@ -59,37 +65,49 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
+		private static FP31Val[] Duplicate(FP31Val fp31Val, int count)
+		{
+			var result = new FP31Val[count];
 
+			for (int i = 0; i < count; i++)
+			{
+				result[i] = fp31Val.Clone();
+			}
+
+			return result;
+		}
 		#endregion
 
 		#region Public Properties
 
-		public readonly int Lanes = Vector256<uint>.Count;
+		public static readonly int Lanes = Vector256<uint>.Count;
 
-		public int Length => Mantissas[0].Length;
+		public int ValueCount => Mantissas[0].Length;
 		public int LimbCount => Mantissas.Length;
-		public int VectorCount => Length / Lanes;
+		public int VectorCount => ValueCount / Lanes;
 
 		public uint[][] Mantissas { get; init; } 
 		public Memory<uint>[] MantissaMemories { get; init; }
+
+		public bool IsZero { get; private set; }
 
 		#endregion
 
 		#region Public Methods
 
-		//private uint[] GetMantissa(int index)
-		//{
-		//	var result = Mantissas.Select(x => x[index]).ToArray();
-		//	return result;
-		//}
+		public uint[] GetMantissa(int index)
+		{
+			var result = Mantissas.Select(x => x[index]).ToArray();
+			return result;
+		}
 
-		//private void SetMantissa(int index, uint[] values)
-		//{
-		//	for(var i = 0; i < values.Length; i++)
-		//	{
-		//		Mantissas[i][index] = values[i];
-		//	}
-		//}
+		public void SetMantissa(int index, uint[] values)
+		{
+			for (var i = 0; i < values.Length; i++)
+			{
+				Mantissas[i][index] = values[i];
+			}
+		}
 
 		public Span<Vector256<uint>> GetLimbVectorsUW(int limbIndex)
 		{
@@ -125,6 +143,8 @@ namespace MSS.Common.APValues
 					vectors[i] = Vector256<uint>.Zero;
 				}
 			}
+
+			IsZero = true;
 		}
 
 		//private void ClearBackingArray(ulong[][] backingArray, bool onlyInPlayItems)
@@ -157,7 +177,6 @@ namespace MSS.Common.APValues
 		//	}
 		//}
 
-
 		#endregion
 
 		#region ICloneable Support
@@ -170,6 +189,7 @@ namespace MSS.Common.APValues
 		public FP31Deck Clone()
 		{
 			var result = new FP31Deck(CloneMantissas());
+			result.IsZero = IsZero;
 			return result;
 		}
 

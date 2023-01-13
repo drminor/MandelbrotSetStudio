@@ -66,7 +66,7 @@ namespace EngineTest
 
 		public FP31Deck CreateNewFP31Deck()
 		{
-			var result = new FP31Deck(Vectors.LimbCount, Vectors.Length);
+			var result = new FP31Deck(Vectors.LimbCount, Vectors.ValueCount);
 			return result;
 		}
 

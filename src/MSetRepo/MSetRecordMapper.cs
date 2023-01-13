@@ -295,13 +295,13 @@ namespace MSetRepo
 				mapSectionId: target.Id.ToString(),
 				ownerId: string.Empty,
 				jobOwnerType: (int)JobOwnerType.Undetermined,
-				subdivisionId:  target.SubdivisionId.ToString(),
+				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
+				hasEscapedFlags: GetBools(target.DoneFlags),
 				counts: GetUShorts(target.Counts),
 
-				escapeVelocities:  GetUShorts(target.EscapeVelocities),
-				doneFlags: GetBools(target.DoneFlags),
+				escapeVelocities: GetUShorts(target.EscapeVelocities),
 				zValues: target.ZValues.GetZValuesAsDoubleArray()
 			);
 
@@ -344,10 +344,10 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
+				hasEscapedFlags: GetBools(target.DoneFlags),
 				counts: GetUShorts(target.Counts),
 
 				escapeVelocities: GetUShorts(target.EscapeVelocities),
-				doneFlags: GetBools(target.DoneFlags),
 				zValues: null
 			);
 

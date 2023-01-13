@@ -1,6 +1,7 @@
-﻿using MSS.Common.APValues;
+﻿using MSS.Common;
+using MSS.Common.APValues;
+using MSS.Types;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
@@ -9,33 +10,41 @@ namespace MSetGeneratorPrototype
 	{
 		#region Public Methods
 
-		public static ushort[] GenerateMapSection(VecMath9 vecMath, IteratorSimd iteratorSimd, int targetIterations, FP31Deck cRs, FP31Deck cIs, out bool[] doneFlags)
+		public static long[] GenerateMapSection(SamplePointValues samplePointValues, IteratorSimd iteratorSimd, BigVector blockPos, int rowNumber, int targetIterations) 
 		{
-			var resultLength = cRs.Length;
+			var valueCount = samplePointValues.ValueCount;
+			var vectorCount = samplePointValues.VectorCount;
 
-			var counts = new ushort[resultLength];
+			// Initially, all vectors are 'In Play.'
+			var inPlayList = Enumerable.Range(0, vectorCount).ToArray();
 
-			doneFlags = vecMath.DoneFlags;
-			var inPlayList = vecMath.InPlayList;
-			var unusedCalcs = vecMath.UnusedCalcs;
+			// Initially, all values are 'In Play.'
+			var unusedCalcs = new long[valueCount];
 
-			iteratorSimd.SetCoords(cRs, cIs);
+			iteratorSimd.SetCoords(samplePointValues.Crs, samplePointValues.Cis, samplePointValues.Zrs, samplePointValues.Zis);
+
+			var hasEscapedFlags = samplePointValues.HasEscapedFlags;
+			var counts = samplePointValues.Counts;
+			var escapeVelocitites = samplePointValues.EscapeVelocities;
+
+			// TODO: Set the value of each doneFlag: true if either hasEscaped or count >= targetIterations, false otherwise
+			var doneFlags = new bool[valueCount];
 
 			while (inPlayList.Length > 0)
 			{
-				var escapedFlags = iteratorSimd.Iterate(vecMath);
+				var escapedFlags = iteratorSimd.Iterate(inPlayList, out var sumOfSquares);
 
-				var vectorsNoLongerInPlay = UpdateCounts(inPlayList, escapedFlags, counts, doneFlags, unusedCalcs, targetIterations);
-				inPlayList = GetUpdatedInPlayList(inPlayList, vectorsNoLongerInPlay);
-				vecMath.InPlayList = inPlayList;
+				inPlayList = UpdateCounts(escapedFlags, inPlayList, iteratorSimd.ApFixedPointFormat, blockPos, rowNumber, sumOfSquares, 
+					hasEscapedFlags, counts, escapeVelocitites, doneFlags, unusedCalcs, targetIterations);
 			}
 
 			// TODO: Need to keep track if a sample point has escaped or not, currently the DoneFlag is set if 'Escaped' or 'Reached Target Iteration.'
 
-			return counts;
+			return unusedCalcs;
 		}
 
-		private static List<int> UpdateCounts(int[] inPlayList, int[] escapedFlags, ushort[] counts, bool[] doneFlags, long[] unusedCalcs, int targetIterations)
+		private static int[] UpdateCounts(int[] escapedFlags, int[] inPlayList, ApFixedPointFormat apFixedPointFormat, BigVector blockPos, int rowNumber, FP31Deck sumOfSquares, 
+			Span<bool> hasEscapedFlags, Span<ushort> counts, Span<ushort> escapeVelocities, bool[] doneFlags, long[] unusedCalcs, int targetIterations)
 		{
 			var numberOfLanes = Vector256<uint>.Count;
 			var toBeRemoved = new List<int>();
@@ -51,11 +60,9 @@ namespace MSetGeneratorPrototype
 
 				for (var cntrPtr = stPtr; cntrPtr < stPtr + numberOfLanes; cntrPtr++)
 				{
-					var doneFlag = doneFlags[cntrPtr];
-
-					if (doneFlag)
+					if (doneFlags[cntrPtr])
 					{
-						unusedCalcs[idx]++;
+						unusedCalcs[cntrPtr]++;
 						continue;
 					}
 
@@ -67,17 +74,25 @@ namespace MSetGeneratorPrototype
 					// TODO: Need to save the ZValues to a safe place to prevent further updates.
 					if (escaped)
 					{
+						hasEscapedFlags[cntrPtr] = true;
 						doneFlags[cntrPtr] = true;
+
 						//var sacResult = escaped;
-						//var rValDiag = vecMath.GetSmxAtIndex(sumOfSqrs, stPtr).GetStringValue();
-						//Debug.WriteLine($"Bailed out after {cnt}: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {vecMath.BlockPosition}, Row: {vecMath.RowNumber}, Col: {cntrPtr}.");
+						//var mantissa = sumOfSquares.GetMantissa(idx);
+						//var rValue = FP31ValHelper.CreateRValue(true, mantissa, apFixedPointFormat.TargetExponent, apFixedPointFormat.NumberOfFractionalBits);
+						//var rValDiag = RValueHelper.ConvertToString(rValue);
+						//Debug.WriteLine($"Bailed out after {cnt}: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {blockPos}, Row: {rowNumber}, Col: {cntrPtr}.");
 					}
 					else if (cnt >= targetIterations)
 					{
 						doneFlags[cntrPtr] = true;
+						escapeVelocities[cntrPtr] = 5; // TODO: calculate the EscapeVelocity
+
 						//var sacResult = escaped;
-						//var rValDiag = vecMath.GetSmxAtIndex(sumOfSqrs, stPtr).GetStringValue();
-						//Debug.WriteLine($"Target reached: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {vecMath.BlockPosition}, Row: {vecMath.RowNumber}, Col: {cntrPtr}.");
+						//var mantissa = sumOfSquares.GetMantissa(idx);
+						//var rValue = FP31ValHelper.CreateRValue(true, mantissa, apFixedPointFormat.TargetExponent, apFixedPointFormat.NumberOfFractionalBits);
+						//var rValDiag = RValueHelper.ConvertToString(rValue);
+						//Debug.WriteLine($"Target reached: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {blockPos}, Row: {rowNumber}, Col: {cntrPtr}.");
 					}
 					else
 					{
@@ -89,19 +104,16 @@ namespace MSetGeneratorPrototype
 				{
 					toBeRemoved.Add(idx);
 
-					ConfirmDoneFlags(stPtr, numberOfLanes, doneFlags);	
+					if (doneFlags.Skip(stPtr).Take(numberOfLanes).Any(x => !x))
+					{
+						Debug.WriteLine("Huh?");
+					}
 				}
 			}
 
-			return toBeRemoved;
-		}
+			var newInPlayList = GetUpdatedInPlayList(inPlayList, toBeRemoved);
 
-		private static void ConfirmDoneFlags(int stPtr, int numberOfLanes, bool[] doneFlags)
-		{
-			if (doneFlags.Skip(stPtr).Take(numberOfLanes).Any(x => !x))
-			{
-				Debug.WriteLine("Huh?");
-			}
+			return newInPlayList;
 		}
 
 		private static int[] GetUpdatedInPlayList(int[] inPlayList, List<int> vectorsNoLongerInPlay)

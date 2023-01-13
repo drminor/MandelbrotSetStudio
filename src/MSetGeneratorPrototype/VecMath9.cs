@@ -72,16 +72,6 @@ namespace MSetGeneratorPrototype
 				throw new ArgumentException($"The valueCount must be an even multiple of {_lanes}.");
 			}
 
-			// Initially, all vectors are 'In Play.'
-			InPlayList = Enumerable.Range(0, VecCount).ToArray();
-			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
-
-			// Initially, all values are 'In Play.'
-			DoneFlags = new bool[ValueCount];
-
-			BlockPosition = new BigVector();
-			RowNumber = 0;
-
 			MathOpCounts = new MathOpCounts();
 
 			_squareResult0 = new FP31DeckPW(LimbCount, ValueCount);
@@ -93,22 +83,8 @@ namespace MSetGeneratorPrototype
 
 			var justOne = Vector256.Create(1u);
 			_ones = Enumerable.Repeat(justOne, VecCount).ToArray();
-
-			UnusedCalcs = new long[valueCount];
 		}
 
-		public void Refresh()
-		{
-			// Initially, all vectors are 'In Play.'
-			InPlayList = Enumerable.Range(0, VecCount).ToArray();
-			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
-
-			// Initially, all values are 'In Play.'
-			DoneFlags = new bool[ValueCount];
-
-			BlockPosition = new BigVector();
-			RowNumber = 0;
-		}
 
 		private int GetThresholdMsl(uint threshold, ApFixedPointFormat apFixedPointFormat)
 		{
@@ -120,24 +96,6 @@ namespace MSetGeneratorPrototype
 
 			var thresholdFP31Val = FP31ValHelper.CreateFP31Val(new RValue(threshold, 0), apFixedPointFormat);
 			var result = (int)thresholdFP31Val.Mantissa[^1] - 1;
-
-			return result;
-		}
-
-		private int[] BuildNarowInPlayList(int[] inPlayList)
-		{
-			var result = new int[inPlayList.Length * 2];
-
-			var indexes = inPlayList;
-			var resultIdxPtr = 0;
-
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++, resultIdxPtr += 2)
-			{
-				var resultIdx = indexes[idxPtr] * 2;
-
-				result[resultIdxPtr] = resultIdx;
-				result[resultIdxPtr + 1] = resultIdx + 1;
-			}
 
 			return result;
 		}
@@ -155,21 +113,13 @@ namespace MSetGeneratorPrototype
 		public int ValueCount { get; init; }
 		public int VecCount { get; init; }
 
-		public int[] InPlayList { get; set; }           // Vector-Level
-		public int[] InPlayListNarrow { get; set; }     // Vector-Level for Squaring
-		public bool[] DoneFlags { get; set; }           // Value-Level
-
-		public BigVector BlockPosition { get; set; }
-		public int RowNumber { get; set; }
-
 		public MathOpCounts MathOpCounts { get; init; }
-		public long[] UnusedCalcs { get; init; }
 
 		#endregion
 
 		#region Multiply and Square
 
-		public void Square(FP31Deck a, FP31Deck result)
+		public void Square(FP31Deck a, FP31Deck result, int[] inPlayList)
 		{
 			// Convert back to standard, i.e., non two's compliment.
 			// Our multiplication routines don't support 2's compliment.
@@ -178,24 +128,24 @@ namespace MSetGeneratorPrototype
 
 			//CheckReservedBitIsClear(a, "Squaring");
 
-			ConvertFrom2C(a, _squareResult0, InPlayList);
+			ConvertFrom2C(a, _squareResult0, inPlayList);
 			MathOpCounts.NumberOfConversions++;
 
 			// There are 8 ints to a Vector, but only 4 longs. Adjust the InPlayList to support multiplication
-			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
+			var inPlayListNarrow = BuildNarowInPlayList(inPlayList);
 
-			SquareInternal(_squareResult0, _squareResult1);
-			SumThePartials(_squareResult1, _squareResult2);
-			ShiftAndTrim(_squareResult2, result);
+			SquareInternal(_squareResult0, _squareResult1, inPlayListNarrow);
+			SumThePartials(_squareResult1, _squareResult2, inPlayListNarrow);
+			ShiftAndTrim(_squareResult2, result, inPlayList);
 		}
 
-		private void SquareInternal(FP31DeckPW source, FP31DeckPW result)
+		private void SquareInternal(FP31DeckPW source, FP31DeckPW result, int[] inPlayListNarrow)
 		{
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
 			result.ClearManatissMems();
 
-			var indexes = InPlayListNarrow;
+			var indexes = inPlayListNarrow;
 			for (int j = 0; j < LimbCount; j++)
 			{
 				for (int i = j; i < LimbCount; i++)
@@ -232,11 +182,29 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
+		private int[] BuildNarowInPlayList(int[] inPlayList)
+		{
+			var result = new int[inPlayList.Length * 2];
+
+			var indexes = inPlayList;
+			var resultIdxPtr = 0;
+
+			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++, resultIdxPtr += 2)
+			{
+				var resultIdx = indexes[idxPtr] * 2;
+
+				result[resultIdxPtr] = resultIdx;
+				result[resultIdxPtr + 1] = resultIdx + 1;
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Multiply Post Processing
 
-		private void SumThePartials(FP31DeckPW source, FP31DeckPW result)
+		private void SumThePartials(FP31DeckPW source, FP31DeckPW result, int[] inPlayListNarrow)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
@@ -244,7 +212,7 @@ namespace MSetGeneratorPrototype
 			// If the MSL produces a carry, throw an exception.
 
 			var carryVectors = Enumerable.Repeat(Vector256<ulong>.Zero, VecCount * 2).ToArray();
-			var indexes = InPlayListNarrow;
+			var indexes = inPlayListNarrow;
 
 			var limbCnt = source.LimbCount;
 
@@ -266,7 +234,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		private void ShiftAndTrim(FP31DeckPW sourceLimbs, FP31Deck resultLimbs)
+		private void ShiftAndTrim(FP31DeckPW sourceLimbs, FP31Deck resultLimbs, int[] inPlayList)
 		{
 			//ValidateIsSplit(mantissa);
 
@@ -279,7 +247,7 @@ namespace MSetGeneratorPrototype
 
 			var shiftAmount = BitsBeforeBP;
 			byte inverseShiftAmount = (byte)(31 - shiftAmount);
-			var indexes = InPlayList;
+			var indexes = inPlayList;
 
 			var sourceIndex = Math.Max(sourceLimbs.LimbCount - LimbCount, 0);
 
@@ -352,20 +320,20 @@ namespace MSetGeneratorPrototype
 
 		#region Add and Subtract
 
-		public void Sub(FP31Deck a, FP31Deck b, FP31Deck c)
+		public void Sub(FP31Deck a, FP31Deck b, FP31Deck c, int[] inPlayList)
 		{
 			//CheckReservedBitIsClear(b, "Negating B");
 
-			Negate(b, _negationResult, InPlayList);
+			Negate(b, _negationResult, inPlayList);
 			MathOpCounts.NumberOfConversions++;
 
-			Add(a, _negationResult, c);
+			Add(a, _negationResult, c, inPlayList);
 		}
 
-		public void Add(FP31Deck a, FP31Deck b, FP31Deck c)
+		public void Add(FP31Deck a, FP31Deck b, FP31Deck c, int[] inPlayList)
 		{
 			var carryVectors = Enumerable.Repeat(Vector256<uint>.Zero, VecCount).ToArray();
-			var indexes = InPlayList;
+			var indexes = inPlayList;
 
 			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 			{
@@ -414,10 +382,10 @@ namespace MSetGeneratorPrototype
 			//}
 		}
 
-		public void AddThenSquare(FP31Deck a, FP31Deck b, FP31Deck c)
+		public void AddThenSquare(FP31Deck a, FP31Deck b, FP31Deck c, int[] inPlayList)
 		{
-			Add(a, b, _additionResult);
-			Square(_additionResult, c);
+			Add(a, b, _additionResult, inPlayList);
+			Square(_additionResult, c, inPlayList);
 		}
 
 		#endregion
@@ -550,11 +518,11 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		private void CheckReservedBitIsClear(FP31Deck sourceLimbs, string description)
+		private void CheckReservedBitIsClear(FP31Deck sourceLimbs, string description, int[] inPlayList)
 		{
 			var sb = new StringBuilder();
 
-			var indexes = InPlayList;
+			var indexes = inPlayList;
 
 			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 			{
@@ -640,9 +608,9 @@ namespace MSetGeneratorPrototype
 			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}. hpOfNv: {nvHiPart}. unSNv: {unSNv}\n");
 		}
 
-		private void ExpandTo(FP31Deck source, FP31DeckPW result)
+		private void ExpandTo(FP31Deck source, FP31DeckPW result, int[] inPlayList)
 		{
-			var indexes = InPlayList;
+			var indexes = inPlayList;
 
 			for (var limbPtr = 0; limbPtr < source.LimbCount; limbPtr++)
 			{
@@ -663,9 +631,9 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		private void PackTo(FP31DeckPW source, FP31Deck result)
+		private void PackTo(FP31DeckPW source, FP31Deck result, int[] inPlayList)
 		{
-			var indexes = InPlayList;
+			var indexes = inPlayList;
 
 			for (var limbPtr = 0; limbPtr < source.LimbCount; limbPtr++)
 			{
@@ -689,18 +657,18 @@ namespace MSetGeneratorPrototype
 
 		#region Comparison
 
-		public void IsGreaterOrEqThanThreshold(FP31Deck a, Memory<int> results)
+		public void IsGreaterOrEqThanThreshold(FP31Deck a, Memory<int> results, int[] inPlayList)
 		{
 			var left = a.GetLimbVectorsUW(LimbCount - 1);
 			var right = _thresholdVector;
 
 			Span<Vector256<int>> resultVectors = MemoryMarshal.Cast<int, Vector256<int>>(results.Span);
-			IsGreaterOrEqThan(left, right, resultVectors);
+			IsGreaterOrEqThan(left, right, resultVectors, inPlayList);
 		}
 
-		private void IsGreaterOrEqThan(Span<Vector256<uint>> left, Vector256<int> right, Span<Vector256<int>> results)
+		private void IsGreaterOrEqThan(Span<Vector256<uint>> left, Vector256<int> right, Span<Vector256<int>> results, int[] inPlayList)
 		{
-			var indexes = InPlayList;
+			var indexes = inPlayList;
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
