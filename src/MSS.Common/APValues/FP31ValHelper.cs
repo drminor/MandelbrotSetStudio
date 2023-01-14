@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSS.Common.APValues
 {
@@ -32,7 +33,7 @@ namespace MSS.Common.APValues
 		private const ulong HIGH33_FILL = 0xFFFFFFFF80000000;       // bits 63 - 31 are set.
 		private const ulong HIGH33_CLEAR = 0x000000007FFFFFFF;      // bits 63 - 31 are reset.
 
-		//private static readonly bool USE_DET_DEBUG = false;
+		private static readonly bool USE_DET_DEBUG = false;
 
 		#endregion
 
@@ -70,7 +71,7 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
-		public FP31Val CreateNewZeroFP31Val(ApFixedPointFormat apFixedPointFormat, int precision = RMapConstants.DEFAULT_PRECISION)
+		public static FP31Val CreateNewZeroFP31Val(ApFixedPointFormat apFixedPointFormat, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			var result = new FP31Val(new uint[apFixedPointFormat.LimbCount], apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, precision);
 			return result;
@@ -154,7 +155,6 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
-
 		#endregion
 
 		#region Two's Compliment Support
@@ -174,6 +174,16 @@ namespace MSS.Common.APValues
 			var result = sign ? partialWordLimb : FlipBitsAndAdd1(partialWordLimb) * -1;
 			return result;
 		}
+
+		public static double ConvertFrom2C(ulong partialWordLimb, out double hi)
+		{
+			hi = partialWordLimb >> EFFECTIVE_BITS_PER_LIMB;
+			var lo = (uint) (partialWordLimb & HIGH33_CLEAR);
+
+			var result = ConvertFrom2C(lo);
+			return result;
+		}
+
 
 		// Convert to two's compliment, if negative
 		public static uint[] ConvertTo2C(uint[] partialWordLimbs, bool sign)
@@ -225,6 +235,32 @@ namespace MSS.Common.APValues
 					Debug.WriteLine($"Cannot ConvertAbsValTo2C, after the conversion the msb is NOT set to 1. {GetDiagDisplayHex("OrigVal", partialWordLimbs)}. {GetDiagDisplayHex("Result", result)}.");
 				}
 			}
+
+			return result;
+		}
+
+		// Flip all bits and add 1, update the sign to be !sign
+		public static FP31Val Negate(FP31Val fp31Val)
+		{
+			//if (!CheckReserveBit(smx2C.Mantissa))
+			//{
+			//	throw new InvalidOperationException($"Cannot Negate a Smx2C value, unless the reserve bit agrees with the sign bit. {GetDiagDisplayHex("input", smx2C.Mantissa)}.");
+			//}
+
+			var currentSign = GetSign(fp31Val.Mantissa);
+			var negatedPartialWordLimbs = FlipBitsAndAdd1(fp31Val.Mantissa);
+			var sign = GetSign(negatedPartialWordLimbs);
+
+			if (sign != currentSign)
+			{
+				Debug.WriteLineIf(USE_DET_DEBUG, $"Negate an FP31Val var did not change the sign. Prev: {GetDiagDisplay("Prev", fp31Val.Mantissa)}, {GetDiagDisplay("New", negatedPartialWordLimbs)}");
+			}
+
+			//var withReserveBitsUpdated = ExtendSignBit(negatedPartialWordLimbs);
+
+			var result = new FP31Val(negatedPartialWordLimbs, fp31Val.Exponent, fp31Val.BitsBeforeBP, fp31Val.Precision);
+
+			//Debug.Assert(GetSign(smx2C.Mantissa) == !sign, "Negate an Smx2C var did not change the sign.");
 
 			return result;
 		}

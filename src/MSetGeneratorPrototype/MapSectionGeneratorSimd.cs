@@ -6,6 +6,7 @@ using MSS.Common.SmxVals;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace MSetGeneratorPrototype
 {
@@ -27,8 +28,8 @@ namespace MSetGeneratorPrototype
 			var s2 = startingCy.GetStringValue();
 			var s3 = delta.GetStringValue();
 
-			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
-			//Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");
+			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
+			Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");
 
 			MapSectionResponse result;
 
@@ -62,28 +63,38 @@ namespace MSetGeneratorPrototype
 
 		// Generate MapSection
 		private (bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities) 
-			GenerateMapSection(MapSectionRequest mapSectionRequest, BigVector blockPos, Smx startingCx, Smx startingCy, Smx delta, ApFixedPointFormat apFixedPointFormat, out MathOpCounts mathOpCounts)
+			GenerateMapSectionOld(MapSectionRequest mapSectionRequest, BigVector blockPos, Smx startingCx, Smx startingCy, Smx delta, ApFixedPointFormat apFixedPointFormat, out MathOpCounts mathOpCounts)
 		{
 			var (blockSize, targetIterations, threshold, hasEscapedFlags, counts, escapeVelocities) = GetMapParameters(mapSectionRequest);
+			var rowCount = blockSize.Height;
 			var stride = (byte)blockSize.Width;
 
-			var scalarMath9 = new ScalarMath9(apFixedPointFormat, threshold);
+			//var scalarMath9 = new ScalarMath9(apFixedPointFormat, threshold);
+			//var samplePointOffsets = scalarMath9.BuildSamplePointOffsets(delta, stride);
+
+			//var samplePointsX = scalarMath9.BuildSamplePoints(startingCx, samplePointOffsets);
+			//var samplePointsX2C = Convert(samplePointsX);
+
+			//var samplePointsY = scalarMath9.BuildSamplePoints(startingCy, samplePointOffsets);
+			//var samplePointsY2C = Convert(samplePointsY);
+
 			var vecMath = new VecMath9(apFixedPointFormat, stride, threshold);
 			var iteratorSimd = new IteratorSimd(vecMath);
 
-			var samplePointOffsets = scalarMath9.BuildSamplePointOffsets(delta, stride);
-			
-			var samplePointsX = scalarMath9.BuildSamplePoints(startingCx, samplePointOffsets);
-			var samplePointsX2C = Convert(samplePointsX);
+			var fp31Delta = Convert(delta);
+			var fp31StartingCx = Convert(startingCx);
+			var cRs = SamplePointBuilder.BuildSamplePointOffsets(fp31StartingCx, fp31Delta, stride, vecMath);
 
-			var samplePointsY = scalarMath9.BuildSamplePoints(startingCy, samplePointOffsets);
-			var samplePointsY2C = Convert(samplePointsY);
+			var fp31StartingCy = Convert(startingCy);
+			var samplePointsY = SamplePointBuilder.BuildSamplePointOffsets(fp31StartingCy, fp31Delta, stride, vecMath);
 
-			var cRs = new FP31Deck(samplePointsX2C);
+			//var cRs = new FP31Deck(samplePointsX2C);
 
-			for (int rowNumber = 0; rowNumber < samplePointsY.Length; rowNumber++)
+			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
-				var cIs = new FP31Deck(samplePointsY2C[rowNumber], stride);
+				var yPoint = samplePointsY.GetMantissa(rowNumber);
+				var fp31YPoint = new FP31Val(yPoint, apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, startingCx.Precision);
+				var cIs = new FP31Deck(fp31YPoint, stride);
 
 				var resultIndex = rowNumber * stride;
 				var hasEscapedSpan = new Span<bool>(hasEscapedFlags, resultIndex, stride);
@@ -104,9 +115,52 @@ namespace MSetGeneratorPrototype
 			return (hasEscapedFlags, counts, escapeVelocities);
 		}
 
-		// GetCoordinates
+		// Generate MapSection
+		private (bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
+			GenerateMapSection(MapSectionRequest mapSectionRequest, BigVector blockPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta, ApFixedPointFormat apFixedPointFormat, out MathOpCounts mathOpCounts)
+		{
+			var (blockSize, targetIterations, threshold, hasEscapedFlags, counts, escapeVelocities) = GetMapParameters(mapSectionRequest);
+			var rowCount = blockSize.Height;
+			var stride = (byte)blockSize.Width;
+
+			var vecMath = new VecMath9(apFixedPointFormat, stride, threshold);
+			var iteratorSimd = new IteratorSimd(vecMath);
+
+			var scalarMath9 = new ScalarMath9(apFixedPointFormat);
+			var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(delta, stride, scalarMath9);
+			var samplePointsY = SamplePointBuilder.BuildSamplePoints(startingCy, samplePointOffsets, scalarMath9);
+
+			var cRs = SamplePointBuilder.BuildSamplePoints(startingCx, samplePointOffsets, scalarMath9);
+
+			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
+			{
+				var yPoint = samplePointsY.GetMantissa(rowNumber);
+				var fp31YPoint = new FP31Val(yPoint, apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, startingCx.Precision);
+				var cIs = new FP31Deck(fp31YPoint, stride);
+
+				var resultIndex = rowNumber * stride;
+				var hasEscapedSpan = new Span<bool>(hasEscapedFlags, resultIndex, stride);
+				var countsSpan = new Span<ushort>(counts, resultIndex, stride);
+				var escapeVelocitiesSpan = new Span<ushort>(escapeVelocities, resultIndex, stride);
+
+				var zValues = GetZValues(mapSectionRequest, rowNumber, apFixedPointFormat.LimbCount, stride);
+
+				var samplePointValues = new SamplePointValues(cRs, cIs, zValues.zRs, zValues.zIs, hasEscapedSpan, countsSpan, escapeVelocitiesSpan);
+
+				var unusedCalcs = SubSectionGenerator.GenerateMapSection(samplePointValues, iteratorSimd, blockPos, rowNumber, targetIterations);
+
+				vecMath.MathOpCounts.NumberOfUnusedCalcs += unusedCalcs.Sum();
+			}
+
+			mathOpCounts = vecMath.MathOpCounts;
+
+			return (hasEscapedFlags, counts, escapeVelocities);
+		}
+
+
+		// GetCoordinates OLD
 		private (BigVector blockPos, Smx startingCx, Smx startingCy, Smx delta)
-			GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
+			GetCoordinatesOld(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
 		{
 			var dtoMapper = new DtoMapper();
 
@@ -117,6 +171,23 @@ namespace MSetGeneratorPrototype
 			var startingCx = ScalarMathHelper.CreateSmx(mapPosition.X, apFixedPointFormat);
 			var startingCy = ScalarMathHelper.CreateSmx(mapPosition.Y, apFixedPointFormat);
 			var delta = ScalarMathHelper.CreateSmx(samplePointDelta.Width, apFixedPointFormat);
+
+			return (blockPos, startingCx, startingCy, delta);
+		}
+
+		// GetCoordinates
+		private (BigVector blockPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta)
+			GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
+		{
+			var dtoMapper = new DtoMapper();
+
+			var blockPos = dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+			var mapPosition = dtoMapper.MapFrom(mapSectionRequest.Position);
+			var samplePointDelta = dtoMapper.MapFrom(mapSectionRequest.SamplePointDelta);
+
+			var startingCx = FP31ValHelper.CreateFP31Val(mapPosition.X, apFixedPointFormat);
+			var startingCy = FP31ValHelper.CreateFP31Val(mapPosition.Y, apFixedPointFormat);
+			var delta = FP31ValHelper.CreateFP31Val(samplePointDelta.Width, apFixedPointFormat);
 
 			return (blockPos, startingCx, startingCy, delta);
 		}
@@ -233,59 +304,6 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private FP31Deck BuildSamplePointOffsets(FP31Val delta, byte extent, VecMath9 vecMath9)
-		{
-			var result = new FP31Deck(delta.LimbCount, extent);
-			//var resultLimbs = result.GetLimbVectorsUW();
-
-			var vResult = new FP31Deck(delta.LimbCount, FP31Deck.Lanes);
-
-			// Create a vector, vec2 that has 1, 2, 3, 4, 5, 6 and 7 times the value of delta.
-			var vec1 = new FP31Deck(delta, FP31Deck.Lanes);
-			var vec2 = vec1.Clone();
-
-			//vecMath9.Add(vec1, vec2, vResult);
-			//vec2.SetMantissa(1, vResult.GetMantissa(0));
-
-			//vecMath9.Add(vec1, vec2, vResult);
-			//vec2.SetMantissa(2, vResult.GetMantissa(1));
-
-			//vecMath9.Add(vec1, vec2, vResult);
-			//vec2.SetMantissa(3, vResult.GetMantissa(2));
-
-			//result.MantissaMemories[] .SetMantissa() = vec2;
-
-			// Create the result value so that each vector value is set to vec2
-
-			// Update the result by limb, by vector
-			// For each succesive vector, create a vector that is a duplicate of the right-most value from the last vector
-			// get the limb values from that vector, and add this to the next set of limb values
-
-
-
-			//for (var i = 0; i < extent; i++)
-			//{
-			//	var samplePointOffset = Multiply(delta, (byte)i);
-			//	CheckForceExpResult(samplePointOffset, "BuildSPOffsets");
-			//	result[i] = samplePointOffset;
-			//}
-
-			return result;
-		}
-
-		private FP31Deck BuildSamplePoints(FP31Val startValue, FP31Deck samplePointOffsets)
-		{
-			var result = new FP31Deck(startValue.LimbCount, samplePointOffsets.ValueCount);
-
-			//for (var i = 0; i < samplePointOffsets.ValueCount; i++)
-			//{
-			//	var samplePointSa = Add(startValue, samplePointOffsets[i], "add spd offset to start value");
-			//	result[i] = samplePointSa;
-			//}
-
-			return result;
-		}
-
 		private void ReportExponents(Smx[] values)
 		{
 			foreach (var value in values)
@@ -311,5 +329,25 @@ namespace MSetGeneratorPrototype
 			return false;
 		}
 
+		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, FP31Val startingCx, FP31Val startingCy, BigVector blockPos)
+		{
+			// Skip positive 'blocks'
+
+			if (skipPositiveBlocks)
+			{
+				var xSign = startingCx.GetSign();
+				var ySign = startingCy.GetSign();
+
+				return xSign && ySign;
+			}
+
+			// Move directly to a block where at least one sample point reaches the iteration target.
+			else if (skipLowDetailBlocks && (BigInteger.Abs(blockPos.Y) > 1 || BigInteger.Abs(blockPos.X) > 3))
+			{
+				return true;
+			}
+
+			return false;
+		}
 	}
 }

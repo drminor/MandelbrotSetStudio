@@ -95,6 +95,12 @@ namespace MSS.Common.APValues
 
 		#region Public Methods
 
+		public int[] GetNewInPlayList()
+		{
+			var inPlayList = Enumerable.Range(0, VectorCount).ToArray();
+			return inPlayList;
+		}
+
 		public uint[] GetMantissa(int index)
 		{
 			var result = Mantissas.Select(x => x[index]).ToArray();
@@ -115,6 +121,47 @@ namespace MSS.Common.APValues
 			Span<Vector256<uint>> result = MemoryMarshal.Cast<uint, Vector256<uint>>(x.Span);
 
 			return result;
+		}
+
+		public void UpdateFrom(FP31Deck source)
+		{
+			if (source.LimbCount != LimbCount)
+			{
+				throw new ArgumentException("The source deck has a different LimbCount.");
+			}
+
+			if (source.ValueCount != ValueCount)
+			{
+				throw new ArgumentException("The source deck has a different ValueCount.");
+			}
+
+			for (var i = 0; i < Mantissas.Length; i++)
+			{
+				Array.Copy(source.Mantissas[i], Mantissas[i], ValueCount);
+			}
+		}
+
+		public void UpdateFrom(FP31Deck source, int sourceIndex, int destinationIndex, int length)
+		{
+			if (source.LimbCount != LimbCount)
+			{
+				throw new ArgumentException("The source deck has a different LimbCount.");
+			}
+
+			if (sourceIndex + length > source.ValueCount)
+			{
+				throw new ArgumentException("The target deck is shorter than startIndex + length.");
+			}
+
+			if (destinationIndex + length > ValueCount)
+			{
+				throw new ArgumentException("The target deck is shorter than startIndex + length.");
+			}
+
+			for (var i = 0; i < Mantissas.Length; i++)
+			{
+				Array.Copy(source.Mantissas[i], sourceIndex, Mantissas[i], destinationIndex, length);
+			}
 		}
 
 		public void ClearManatissMems(int[] inPlayList)
