@@ -85,7 +85,6 @@ namespace MSetGeneratorPrototype
 			_ones = Enumerable.Repeat(justOne, VecCount).ToArray();
 		}
 
-
 		private int GetThresholdMsl(uint threshold, ApFixedPointFormat apFixedPointFormat)
 		{
 			var maxIntegerValue = FP31ValHelper.GetMaxIntegerValue(apFixedPointFormat.BitsBeforeBinaryPoint);

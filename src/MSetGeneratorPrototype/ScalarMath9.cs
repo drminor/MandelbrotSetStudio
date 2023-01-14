@@ -1,6 +1,5 @@
 ﻿using MSS.Common;
 using MSS.Common.APValues;
-using MSS.Common.SmxVals;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
@@ -570,7 +569,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("DETAIL")]
-		private void CheckLimbCountAndFPFormat(Smx smx)
+		private void CheckLimbCountAndFPFormat(FP31Val smx)
 		{
 			if (smx.LimbCount != LimbCount)
 			{
@@ -589,7 +588,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("DETAIL")]
-		private void CheckLimbs2C(Smx2C a, Smx2C b, string desc)
+		private void CheckLimbs2C(FP31Val a, FP31Val b, string desc)
 		{
 			if (a.LimbCount != LimbCount)
 			{
@@ -614,7 +613,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("DETAIL")]
-		private void CheckLimb2C(Smx2C a, string desc)
+		private void CheckLimb2C(FP31Val a, string desc)
 		{
 			if (a.LimbCount != LimbCount)
 			{
@@ -641,36 +640,26 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("DETAIL")]
-		private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
+		private void ValidateIsSplit2C(uint[] mantissa, bool sign)
 		{
 			//if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
 			//{
 			//	throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
 			//}
 
-			var signFromMantissa = ScalarMathHelper.GetSign(mantissa);
+			var signFromMantissa = FP31ValHelper.GetSign(mantissa);
 
 			if (sign != signFromMantissa)
 			{
 				throw new ArgumentException($"Expected the mantissa to have sign: {sign}.");
 			}
 
-			if (ScalarMathHelper.CheckPW2CValues(mantissa))
-			{
-				throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
-			}
+			//if (ScalarMathHelper.CheckPW2CValues(mantissa))
+			//{
+			//	throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
+			//}
 
 		}
-
-		// Older version
-		//[Conditional("DETAIL")]
-		//private void ValidateIsSplit2C(ulong[] mantissa, bool sign)
-		//{
-		//	if (ScalarMathHelper.CheckPW2CValues(mantissa, sign))
-		//	{
-		//		throw new ArgumentException($"Expected the mantissa to be split into uint32 values.");
-		//	}
-		//}
 
 		#endregion
 	}

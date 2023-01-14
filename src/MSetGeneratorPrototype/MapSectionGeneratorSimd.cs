@@ -2,11 +2,9 @@
 using MSS.Common;
 using MSS.Common.APValues;
 using MSS.Common.DataTransferObjects;
-using MSS.Common.SmxVals;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.InteropServices;
 
 namespace MSetGeneratorPrototype
 {
@@ -62,60 +60,6 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private (bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities) 
-			GenerateMapSectionOld(MapSectionRequest mapSectionRequest, BigVector blockPos, Smx startingCx, Smx startingCy, Smx delta, ApFixedPointFormat apFixedPointFormat, out MathOpCounts mathOpCounts)
-		{
-			var (blockSize, targetIterations, threshold, hasEscapedFlags, counts, escapeVelocities) = GetMapParameters(mapSectionRequest);
-			var rowCount = blockSize.Height;
-			var stride = (byte)blockSize.Width;
-
-			//var scalarMath9 = new ScalarMath9(apFixedPointFormat, threshold);
-			//var samplePointOffsets = scalarMath9.BuildSamplePointOffsets(delta, stride);
-
-			//var samplePointsX = scalarMath9.BuildSamplePoints(startingCx, samplePointOffsets);
-			//var samplePointsX2C = Convert(samplePointsX);
-
-			//var samplePointsY = scalarMath9.BuildSamplePoints(startingCy, samplePointOffsets);
-			//var samplePointsY2C = Convert(samplePointsY);
-
-			var vecMath = new VecMath9(apFixedPointFormat, stride, threshold);
-			var iteratorSimd = new IteratorSimd(vecMath);
-
-			var fp31Delta = Convert(delta);
-			var fp31StartingCx = Convert(startingCx);
-			var cRs = SamplePointBuilder.BuildSamplePointOffsets(fp31StartingCx, fp31Delta, stride, vecMath);
-
-			var fp31StartingCy = Convert(startingCy);
-			var samplePointsY = SamplePointBuilder.BuildSamplePointOffsets(fp31StartingCy, fp31Delta, stride, vecMath);
-
-			//var cRs = new FP31Deck(samplePointsX2C);
-
-			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
-			{
-				var yPoint = samplePointsY.GetMantissa(rowNumber);
-				var fp31YPoint = new FP31Val(yPoint, apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, startingCx.Precision);
-				var cIs = new FP31Deck(fp31YPoint, stride);
-
-				var resultIndex = rowNumber * stride;
-				var hasEscapedSpan = new Span<bool>(hasEscapedFlags, resultIndex, stride);
-				var countsSpan = new Span<ushort>(counts, resultIndex, stride);
-				var escapeVelocitiesSpan = new Span<ushort>(escapeVelocities, resultIndex, stride);
-
-				var zValues = GetZValues(mapSectionRequest, rowNumber, apFixedPointFormat.LimbCount, stride);
-
-				var samplePointValues = new SamplePointValues(cRs, cIs, zValues.zRs, zValues.zIs, hasEscapedSpan, countsSpan, escapeVelocitiesSpan);
-
-				var unusedCalcs = SubSectionGenerator.GenerateMapSection(samplePointValues, iteratorSimd, blockPos, rowNumber, targetIterations);
-
-				vecMath.MathOpCounts.NumberOfUnusedCalcs += unusedCalcs.Sum();
-			}
-
-			mathOpCounts = vecMath.MathOpCounts;
-
-			return (hasEscapedFlags, counts, escapeVelocities);
-		}
-
-		// Generate MapSection
 		private (bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
 			GenerateMapSection(MapSectionRequest mapSectionRequest, BigVector blockPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta, ApFixedPointFormat apFixedPointFormat, out MathOpCounts mathOpCounts)
 		{
@@ -128,6 +72,8 @@ namespace MSetGeneratorPrototype
 
 			var scalarMath9 = new ScalarMath9(apFixedPointFormat);
 			var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(delta, stride, scalarMath9);
+			//ReportExponents(samplePointOffsets);
+
 			var samplePointsY = SamplePointBuilder.BuildSamplePoints(startingCy, samplePointOffsets, scalarMath9);
 
 			var cRs = SamplePointBuilder.BuildSamplePoints(startingCx, samplePointOffsets, scalarMath9);
@@ -155,24 +101,6 @@ namespace MSetGeneratorPrototype
 			mathOpCounts = vecMath.MathOpCounts;
 
 			return (hasEscapedFlags, counts, escapeVelocities);
-		}
-
-
-		// GetCoordinates OLD
-		private (BigVector blockPos, Smx startingCx, Smx startingCy, Smx delta)
-			GetCoordinatesOld(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
-		{
-			var dtoMapper = new DtoMapper();
-
-			var blockPos = dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-			var mapPosition = dtoMapper.MapFrom(mapSectionRequest.Position);
-			var samplePointDelta = dtoMapper.MapFrom(mapSectionRequest.SamplePointDelta);
-
-			var startingCx = ScalarMathHelper.CreateSmx(mapPosition.X, apFixedPointFormat);
-			var startingCy = ScalarMathHelper.CreateSmx(mapPosition.Y, apFixedPointFormat);
-			var delta = ScalarMathHelper.CreateSmx(samplePointDelta.Width, apFixedPointFormat);
-
-			return (blockPos, startingCx, startingCy, delta);
 		}
 
 		// GetCoordinates
@@ -263,70 +191,12 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-
-
-		private FP31Val[] Convert(Smx[] smxes)
-		{
-			var temp = new List<FP31Val>();
-
-			foreach (var smx in smxes)
-			{
-				temp.Add(Convert(smx));	
-			}
-
-			var result = temp.ToArray();
-
-			return result;
-		}
-
-		private FP31Val Convert(Smx smx)
-		{
-			FP31Val result;
-
-			var packedMantissa = FP31ValHelper.TakeLowerHalves(smx.Mantissa);
-
-
-			if (smx.IsZero)
-			{
-				if (!smx.Sign)
-				{
-					Debug.WriteLine("WARNING: Found a value of -0.");
-				}
-
-				result = new FP31Val(packedMantissa, smx.Exponent, smx.BitsBeforeBP, smx.Precision);
-			}
-			else
-			{
-				var twoCMantissa = FP31ValHelper.ConvertTo2C(packedMantissa, smx.Sign);
-				result = new FP31Val(twoCMantissa, smx.Exponent, smx.BitsBeforeBP, smx.Precision);
-			}
-
-			return result;
-		}
-
-		private void ReportExponents(Smx[] values)
+		private void ReportExponents(FP31Val[] values)
 		{
 			foreach (var value in values)
 			{
 				Debug.WriteLine($"{value.Exponent}.");
 			}
-		}
-
-		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, Smx startingCx, Smx startingCy, BigVector blockPos)
-		{
-			// Skip positive 'blocks'
-			if (skipPositiveBlocks && startingCx.Sign && startingCy.Sign)
-			{
-				return true;
-			}
-
-			// Move directly to a block where at least one sample point reaches the iteration target.
-			else if (skipLowDetailBlocks && (BigInteger.Abs(blockPos.Y) > 1 || BigInteger.Abs(blockPos.X) > 3))
-			{
-				return true;
-			}
-
-			return false;
 		}
 
 		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, FP31Val startingCx, FP31Val startingCy, BigVector blockPos)
