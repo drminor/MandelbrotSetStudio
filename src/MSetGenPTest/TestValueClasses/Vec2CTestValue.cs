@@ -4,7 +4,7 @@ using MSS.Types;
 using System.Diagnostics;
 using static MongoDB.Driver.WriteConcern;
 
-namespace EngineTest
+namespace MSetGenPTest
 {
 	internal class Vec2CTestValue
 	{

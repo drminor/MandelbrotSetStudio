@@ -65,7 +65,7 @@ namespace MSetGeneratorPrototype
 			_thresholdVector = Vector256.Create(thresholdMsl);
 
 			ValueCount = valueCount;
-			VecCount = Math.DivRem(ValueCount, _lanes, out var remainder);
+			VectorCount = Math.DivRem(ValueCount, _lanes, out var remainder);
 
 			if (remainder != 0)
 			{
@@ -82,7 +82,7 @@ namespace MSetGeneratorPrototype
 			_additionResult = new FP31Deck(LimbCount, ValueCount);
 
 			var justOne = Vector256.Create(1u);
-			_ones = Enumerable.Repeat(justOne, VecCount).ToArray();
+			_ones = Enumerable.Repeat(justOne, VectorCount).ToArray();
 		}
 
 		private int GetThresholdMsl(uint threshold, ApFixedPointFormat apFixedPointFormat)
@@ -110,7 +110,7 @@ namespace MSetGeneratorPrototype
 		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
 		public int ValueCount { get; init; }
-		public int VecCount { get; init; }
+		public int VectorCount { get; init; }
 
 		public MathOpCounts MathOpCounts { get; init; }
 
@@ -210,7 +210,7 @@ namespace MSetGeneratorPrototype
 			// This will leave each result bin with a value <= 2^32 for the final digit.
 			// If the MSL produces a carry, throw an exception.
 
-			var carryVectors = Enumerable.Repeat(Vector256<ulong>.Zero, VecCount * 2).ToArray();
+			var carryVectors = Enumerable.Repeat(Vector256<ulong>.Zero, VectorCount * 2).ToArray();
 			var indexes = inPlayListNarrow;
 
 			var limbCnt = source.LimbCount;
@@ -331,7 +331,7 @@ namespace MSetGeneratorPrototype
 
 		public void Add(FP31Deck a, FP31Deck b, FP31Deck c, int[] inPlayList)
 		{
-			var carryVectors = Enumerable.Repeat(Vector256<uint>.Zero, VecCount).ToArray();
+			var carryVectors = Enumerable.Repeat(Vector256<uint>.Zero, VectorCount).ToArray();
 			var indexes = inPlayList;
 
 			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
@@ -430,8 +430,8 @@ namespace MSetGeneratorPrototype
 
 			var indexes = inPlayList;
 
-			var signBitFlags = new int[VecCount];
-			var signBitVecs = new Vector256<int>[VecCount];
+			var signBitFlags = new int[VectorCount];
+			var signBitVecs = new Vector256<int>[VectorCount];
 			var msls = source.GetLimbVectorsUW(LimbCount - 1);
 
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)

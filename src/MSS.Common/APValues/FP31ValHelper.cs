@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common.SmxVals;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -72,17 +73,17 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
-		//public static FP31Val CreateFP31Val(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
-		//{
-		//	var smx = ScalarMathHelper.CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP);
-		//	var packedMantissa = TakeLowerHalves(smx.Mantissa);
-		//	var twoCMantissa = ConvertTo2C(packedMantissa, smx.Sign);
-
-		//	var result = new FP31Val(twoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
-		//	return result;
-		//}
-
 		public static FP31Val CreateFP31Val(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
+		{
+			var smx = ScalarMathHelper.CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP);
+			var packedMantissa = TakeLowerHalves(smx.Mantissa);
+			var twoCMantissa = ConvertTo2C(packedMantissa, smx.Sign);
+
+			var result = new FP31Val(twoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
+			return result;
+		}
+
+		public static FP31Val CreateFP31ValOLD(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
 			var limbs = ToFwUInts(rValue.Value, out var sign);
 
@@ -621,7 +622,6 @@ namespace MSS.Common.APValues
 			var result = newValue ? limb | TEST_BIT_31 : limb & ~TEST_BIT_31;
 			return result;
 		}
-
 
 		#endregion
 

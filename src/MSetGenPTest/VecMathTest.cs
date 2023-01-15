@@ -5,7 +5,7 @@ using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 
-namespace EngineTest
+namespace MSetGenPTest
 {
 	public class VecMathTest
 	{
@@ -202,12 +202,13 @@ namespace EngineTest
 
 			//var aLongs = new ulong[] {1512, 552, 1 };
 			var aLongs5 = new ulong[] { 0, 0, 3489660928, 1342177291, 33554436 }; // 5 Limbs, Exp -152, Value: -2.000000257045030757803438
-			var aBigInteger = -1 * ScalarMathHelper.FromPwULongs(aLongs5);
+			//var aBigInteger = -1 * ScalarMathHelper.FromPwULongs(aLongs5);
+			var aBigInteger = ScalarMathHelper.FromPwULongs(aLongs5, sign: false);
 			var aRValueStg = new RValue(aBigInteger, -63, precision);
 
 			//var bLongs = new ulong[] { 8614, 2, 0 };
 			var bLongs5 = new ulong[] { 0, 0, 0, 442499072, 2097154 }; // 5 Limbs, Exp: -152, Value: 0.1250001253501977771520615
-			var bBigInteger = ScalarMathHelper.FromPwULongs(bLongs5);
+			var bBigInteger = ScalarMathHelper.FromPwULongs(bLongs5, sign: true);
 			var bRValueStg = new RValue(bBigInteger, -36, precision);
 
 			var aRValue = RNormalizer.Normalize(aRValueStg, bRValueStg, out var bRValue);

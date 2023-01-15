@@ -719,8 +719,8 @@ namespace MSS.Common.SmxVals
 
 		public static RValue CreateRValue(SmxFloating smx)
 		{
-			var biValue = ScalarMathHelper.FromPwULongs(smx.Mantissa);
-			biValue = smx.Sign ? biValue : -1 * biValue;
+			var biValue = ScalarMathHelper.FromPwULongs(smx.Mantissa, smx.Sign);
+			//biValue = smx.Sign ? biValue : -1 * biValue;
 			var exponent = smx.Exponent;
 			var precision = smx.Precision;
 
@@ -731,8 +731,8 @@ namespace MSS.Common.SmxVals
 
 		public static RValue CreateRValue(SmxSa smx)
 		{
-			var biValue = ScalarMathHelper.FromPwULongs(smx.MantissaSa.MaterializeAll());
-			biValue = smx.Sign ? biValue : -1 * biValue;
+			var biValue = ScalarMathHelper.FromPwULongs(smx.MantissaSa.MaterializeAll(), smx.Sign);
+			//biValue = smx.Sign ? biValue : -1 * biValue;
 			var exponent = smx.Exponent;
 			var precision = smx.Precision;
 

@@ -94,8 +94,8 @@ namespace MSS.Common.SmxVals
 			//	throw new ArgumentException($"Cannot create an RValue from an array of ulongs where any of the values is greater than MAX_DIGIT.");
 			//}
 
-			var biValue = FromPwULongs(partialWordLimbs);
-			biValue = sign ? biValue : -1 * biValue;
+			var biValue = FromPwULongs(partialWordLimbs, sign);
+			//biValue = sign ? biValue : -1 * biValue;
 			var result = new RValue(biValue, exponent, precision);
 			return result;
 		}
@@ -109,7 +109,7 @@ namespace MSS.Common.SmxVals
 
 		public static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
-			var partialWordLimbs = ToPwULongs(rValue.Value);
+			var partialWordLimbs = ToPwULongs(rValue.Value, out var sign);
 
 			if (IsValueTooLarge(rValue, bitsBeforeBP, isSigned: false, out var bitExpInfo))
 			{
@@ -119,7 +119,7 @@ namespace MSS.Common.SmxVals
 
 			var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
 
-			var sign = rValue.Value >= 0;
+			//var sign = rValue.Value >= 0;
 
 
 			var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount, limbCount, "CreateSmx");
@@ -1201,10 +1201,14 @@ namespace MSS.Common.SmxVals
 
 		// TOOD: Consider first using ToLongs and then calling Split(
 
-		public static ulong[] ToPwULongs(BigInteger bi)
+		public static ulong[] ToPwULongs(BigInteger bi, out bool sign)
 		{
 			var tResult = new List<ulong>();
-			var hi = BigInteger.Abs(bi);
+
+			//var hi = BigInteger.Abs(bi);
+
+			sign = bi.Sign >= 0;
+			var hi = sign ? bi : BigInteger.Negate(bi);
 
 			while (hi > MAX_DIGIT_VALUE)
 			{
@@ -1217,7 +1221,7 @@ namespace MSS.Common.SmxVals
 			return tResult.ToArray();
 		}
 
-		public static BigInteger FromPwULongs(ulong[] partialWordLimbs)
+		public static BigInteger FromPwULongs(ulong[] partialWordLimbs, bool sign)
 		{
 			var result = BigInteger.Zero;
 
@@ -1226,6 +1230,8 @@ namespace MSS.Common.SmxVals
 				result *= BI_HALF_WORD_FACTOR;
 				result += partialWordLimbs[i];
 			}
+
+			result = sign ? result : BigInteger.Negate(result);
 
 			return result;
 		}

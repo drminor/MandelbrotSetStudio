@@ -29,8 +29,9 @@ namespace MSS.Common.SmxVals
 				Debug.WriteLine("WARNING the exponent is 1.");
 			}
 
-			Sign = bigInteger < 0 ? false : true;
-			Mantissa = ScalarMathHelper.ToPwULongs(bigInteger);
+			//Sign = bigInteger < 0 ? false : true;
+			Mantissa = ScalarMathHelper.ToPwULongs(bigInteger, out var sign);
+			Sign = sign;
 			Exponent = exponent;
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;

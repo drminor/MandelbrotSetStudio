@@ -2,7 +2,7 @@
 using MSS.Common.SmxVals;
 using MSS.Types;
 
-namespace EngineTest
+namespace MSetGenPTest
 {
 	internal class VecTestValue
 	{
@@ -11,7 +11,6 @@ namespace EngineTest
 
 		public Smx SmxValue => SmxTestValue.SmxValue;
 		public RValue RValue => SmxTestValue.RValue;
-
 
 		#region Constructors
 

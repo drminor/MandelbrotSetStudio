@@ -21,8 +21,9 @@ namespace MSS.Common.SmxVals
 
 		public SmxFloating(BigInteger bigInteger, int exponent, byte bitsBeforeBP, int precision)
 		{
-			Sign = bigInteger < 0 ? false : true;
-			Mantissa = ScalarMathHelper.ToPwULongs(bigInteger);
+			//Sign = bigInteger < 0 ? false : true;
+			Mantissa = ScalarMathHelper.ToPwULongs(bigInteger, out var sign);
+			Sign = sign;
 			Exponent = exponent;
 			Precision = precision;
 			BitsBeforeBP = bitsBeforeBP;

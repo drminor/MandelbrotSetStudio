@@ -23,7 +23,7 @@ namespace EngineTest
 
 		public FP31DeckTestVal(string number, int exponent, int precision, VecMath9 vecMath9)
 		{
-			FP31ValTestVal = new FP31ValTestValue(number, exponent, precision, vecMath9);
+			FP31ValTestVal = new FP31ValTestValue(number, exponent, precision, BuildTheScalarMath(vecMath9));
 			Vectors = CreateFP31Deck(FP31ValTestVal.FP31Val, vecMath9.ValueCount);
 		}
 
@@ -79,6 +79,11 @@ namespace EngineTest
 		public override string ToString()
 		{
 			return FP31ValTestVal.StringValue;
+		}
+
+		private ScalarMath9 BuildTheScalarMath(VecMath9 vecMath9)
+		{
+			return new ScalarMath9(vecMath9.ApFixedPointFormat);
 		}
 
 	}

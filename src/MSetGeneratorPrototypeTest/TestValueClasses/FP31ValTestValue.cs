@@ -12,11 +12,11 @@ namespace EngineTest
 		public RValue RValue { get; init; }
 		public string StringValue { get; init; }
 
-		public FP31ValTestValue(string number, int exponent, int precision, VecMath9 vecMath9)
+		public FP31ValTestValue(string number, int exponent, int precision, ScalarMath9 scalarMath9)
 		{
 			var bi = BigInteger.Parse(number);
 			RValue = new RValue(bi, exponent, precision);
-			FP31Val = FP31ValHelper.CreateFP31Val(RValue, vecMath9.ApFixedPointFormat);
+			FP31Val = FP31ValHelper.CreateFP31Val(RValue, scalarMath9.ApFixedPointFormat);
 			StringValue = FP31Val.GetStringValue();
 		}
 

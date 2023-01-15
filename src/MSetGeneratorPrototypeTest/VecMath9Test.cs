@@ -329,7 +329,7 @@ namespace MSetGeneratorPrototypeTest
 		private VecMath9 BuildTheVecMath9(int limbCount, int valueCount, uint threshold, out int[] inPlayList)
 		{
 			var result = new VecMath9(new ApFixedPointFormat(limbCount), valueCount, threshold);
-			inPlayList = Enumerable.Range(0, result.VecCount).ToArray();
+			inPlayList = Enumerable.Range(0, result.VectorCount).ToArray();
 
 			return result;
 		}

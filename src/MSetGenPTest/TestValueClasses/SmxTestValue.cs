@@ -3,7 +3,7 @@ using MSS.Common.SmxVals;
 using MSS.Types;
 using System.Numerics;
 
-namespace EngineTest
+namespace MSetGenPTest
 {
 	internal class SmxTestValue
 	{

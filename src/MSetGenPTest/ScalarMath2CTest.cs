@@ -5,7 +5,7 @@ using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 
-namespace EngineTest
+namespace MSetGenPTest
 {
 	public class ScalarMath2CTest
 	{
@@ -295,10 +295,10 @@ namespace EngineTest
 			var scalarMath2C = BuildTheMathHelper(limbCount);
 
 			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
-			var aMantissa = ScalarMathHelper.ToPwULongs(aBigInteger);
+			var aMantissa = ScalarMathHelper.ToPwULongs(aBigInteger, out _);
 
 			var bMantissa = scalarMath2C.Multiply(aMantissa, aMantissa);
-			var bBigInteger = ScalarMathHelper.FromPwULongs(bMantissa);
+			var bBigInteger = ScalarMathHelper.FromPwULongs(bMantissa, true);
 
 			var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
 			Assert.Equal(bBigInteger, bCompBigInteger);

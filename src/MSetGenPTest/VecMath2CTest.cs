@@ -6,7 +6,7 @@ using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 
-namespace EngineTest
+namespace MSetGenPTest
 {
 	public class VecMath2CTest
 	{

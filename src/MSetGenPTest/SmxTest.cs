@@ -5,7 +5,7 @@ using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 
-namespace EngineTest
+namespace MSetGenPTest
 {
 	public class SmxTest
 	{
