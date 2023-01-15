@@ -1,13 +1,12 @@
-using MSetGenP;
 using MSS.Common;
 using MSS.Common.SmxVals;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
 
-namespace EngineTest
+namespace MSetGeneratorPrototypeTest
 {
-	public class ScalarMath2CTest
+	public class ScalarMath9Test
 	{
 		#region Square and Multiply
 

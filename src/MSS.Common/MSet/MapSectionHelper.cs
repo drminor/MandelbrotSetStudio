@@ -90,7 +90,7 @@ namespace MSS.Common
 		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
-			var result = CreateRequest(repoPosition, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
+			var result = CreateRequest(screenPosition, repoPosition, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
 
 			return result;
 		}
@@ -105,7 +105,7 @@ namespace MSS.Common
 		/// <param name="mapCalcSettings"></param>
 		/// <param name="mapPosition"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(BigVector repoPosition, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector repoPosition, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
 			var mapSectionRequest = new MapSectionRequest
@@ -113,6 +113,7 @@ namespace MSS.Common
 				OwnerId = ownerId,
 				JobOwnerType = jobOwnerType,
 				SubdivisionId = subdivision.Id.ToString(),
+				ScreenPosition = screenPosition,
 				BlockPosition = _dtoMapper.MapTo(repoPosition),
 				BlockSize = subdivision.BlockSize,
 				Position = _dtoMapper.MapTo(mapPosition),
@@ -120,7 +121,7 @@ namespace MSS.Common
 				SamplePointDelta = _dtoMapper.MapTo(subdivision.SamplePointDelta),
 				MapCalcSettings = mapCalcSettings,
 				Counts = null,
-				DoneFlags = null,
+				HasEscapedFlags = null,
 				ZValues = null,
 				IsInverted = isInverted,
 				TimeToCompleteGenRequest = null,

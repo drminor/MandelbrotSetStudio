@@ -1,5 +1,4 @@
-﻿//using MSS.Common.SmxVals;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,16 +21,23 @@ namespace MSS.Common.APValues
 		// Integer used to convert BigIntegers to/from array of ulongs containing partial-word values
 		private static readonly BigInteger BI_HALF_WORD_FACTOR = BigInteger.Pow(2, EFFECTIVE_BITS_PER_LIMB);
 
-		private const uint LOW31_BITS_SET = 0x7FFFFFFF;			    // bits 0 - 30 are set.
+		private const uint LOW31_BITS_SET = 0x7FFFFFFF;		            // bits 0 - 30 are set.
 
-		private const uint TEST_BIT_31 = 0x80000000;				// bit 31 is set.
-		private const uint TEST_BIT_30 = 0x40000000;                // bit 30 is set.
+		private const uint HIGH33_MASK = LOW31_BITS_SET;
+		private const uint CLEAR_RESERVED_BIT = LOW31_BITS_SET;
 
-		//private const uint MOST_NEG_VAL = 0x40000000;				// Most negative value
-		//private const uint MOST_NEG_VAL_REPLACMENT = 0x40000001;    // Most negative value + 1.
+		private const ulong HIGH_33_BITS_SET_L =	0xFFFFFFFF80000000; // bits 0 - 30 are set.
+		private const ulong LOW31_BITS_SET_L =		0x000000007FFFFFFF; // bits 0 - 30 are set.
 
-		private const ulong HIGH33_FILL = 0xFFFFFFFF80000000;       // bits 63 - 31 are set.
-		private const ulong HIGH33_CLEAR = 0x000000007FFFFFFF;      // bits 63 - 31 are reset.
+		private const ulong HIGH33_FILL_L = HIGH_33_BITS_SET_L;			// bits 63 - 31 are set.
+		private const ulong HIGH33_CLEAR_L = LOW31_BITS_SET_L;			// bits 63 - 31 are reset.
+
+		private const uint TEST_BIT_31 = 0x80000000;					// bit 31 is set.
+		private const uint TEST_BIT_30 = 0x40000000;	                // bit 30 is set.
+
+
+		private const uint MOST_NEG_VAL = 0x40000000;					// This negative number causes an overflow when negated.
+		private const ulong MOST_NEG_VAL_REPLACMENT = 0x40000001;		// Most negative value + 1.
 
 		private static readonly bool USE_DET_DEBUG = false;
 
@@ -48,9 +54,14 @@ namespace MSS.Common.APValues
 
 		public static RValue CreateRValue(bool sign, uint[] partialWordLimbs, int exponent, int precision)
 		{
-			var biValue = FromFwUInts(partialWordLimbs);
-			biValue = sign ? biValue : -1 * biValue;
+			var biValue = FromFwUInts(partialWordLimbs, sign);
 			var result = new RValue(biValue, exponent, precision);
+			return result;
+		}
+
+		public static FP31Val CreateNewZeroFP31Val(ApFixedPointFormat apFixedPointFormat, int precision = RMapConstants.DEFAULT_PRECISION)
+		{
+			var result = new FP31Val(new uint[apFixedPointFormat.LimbCount], apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, precision);
 			return result;
 		}
 
@@ -61,19 +72,63 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
+		//public static FP31Val CreateFP31Val(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
+		//{
+		//	var smx = ScalarMathHelper.CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP);
+		//	var packedMantissa = TakeLowerHalves(smx.Mantissa);
+		//	var twoCMantissa = ConvertTo2C(packedMantissa, smx.Sign);
+
+		//	var result = new FP31Val(twoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
+		//	return result;
+		//}
+
 		public static FP31Val CreateFP31Val(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
-			var smx = ScalarMathHelper.CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP);
-			var packedMantissa = TakeLowerHalves(smx.Mantissa);
-			var twoCMantissa = ConvertTo2C(packedMantissa, smx.Sign);
+			var limbs = ToFwUInts(rValue.Value, out var sign);
 
-			var result = new FP31Val(twoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
+			if (IsValueTooLarge(rValue, bitsBeforeBP, out var bitExpInfo))
+			{
+				var maxMagnitude = GetMaxMagnitude(bitsBeforeBP);
+				throw new ArgumentException($"An RValue with magnitude > {maxMagnitude} cannot be used to create a FP31Val. " +
+					$"IndexOfMsb: {GetDiagDisplayHex("limbs", limbs)}. Info: {bitExpInfo}.");
+			}
+
+			var rValueStrVal = RValueHelper.ConvertToString(rValue);	
+
+			var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
+			var newLimbs = ShiftBits(limbs, shiftAmount, limbCount, nameof(CreateFP31Val));
+
+			var result = CreateFP31Val(sign, newLimbs, targetExponent, bitsBeforeBP, rValue.Precision);
+
+			var resultStrVal = result.GetStringValue();
+			Debug.WriteLine($"Got FP31Val: {resultStrVal} from: {rValueStrVal}. {bitExpInfo}");
+
+			if (rValueStrVal.Length - resultStrVal.Length > 5)
+			{
+				Debug.WriteLine("CreateFP31Val failed.");
+			}
+
 			return result;
 		}
 
-		public static FP31Val CreateNewZeroFP31Val(ApFixedPointFormat apFixedPointFormat, int precision = RMapConstants.DEFAULT_PRECISION)
+		public static FP31Val CreateFP31Val(bool sign, uint[] limbs, int targetExponent, byte bitsBeforeBP, int precision)
 		{
-			var result = new FP31Val(new uint[apFixedPointFormat.LimbCount], apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, precision);
+			var twoCMantissa = ConvertTo2C(limbs, sign);
+			var result = new FP31Val(twoCMantissa, targetExponent, bitsBeforeBP, precision);
+			return result;
+		}
+
+		private static bool IsValueTooLarge(RValue rValue, byte bitsBeforeBP, out string bitExpInfo)
+		{
+			var maxMagnitude = GetMaxMagnitude(bitsBeforeBP);
+
+			var numberOfBitsInVal = rValue.Value.GetBitLength();
+
+			var magnitude = rValue.Value.GetBitLength() + rValue.Exponent;
+
+			bitExpInfo = $"Magnitude:{magnitude} (NumBits:{numberOfBitsInVal}, Exponent:{rValue.Exponent}). Max Magnitude:{maxMagnitude}.";
+			var result = magnitude > maxMagnitude + 1;
+
 			return result;
 		}
 
@@ -95,6 +150,174 @@ namespace MSS.Common.APValues
 
 		#endregion
 
+		#region Shift Bits / Scale and Split
+
+		private static uint[] ShiftBits(uint[] partialWordLimbs, int shiftAmount, int limbCount, string desc)
+		{
+			uint[] result;
+
+			if (shiftAmount == 0)
+			{
+				result = TakeMostSignificantLimbs(partialWordLimbs, limbCount);
+			}
+			else if (shiftAmount < 0)
+			{
+				throw new NotImplementedException();
+			}
+			else
+			{
+				result = ScaleAndSplit(partialWordLimbs, shiftAmount, limbCount, desc);
+			}
+
+			return result;
+		}
+
+		private static uint[] ScaleAndSplit(uint[] mantissa, int power, int limbCount, string desc)
+		{
+			if (power <= 0)
+			{
+				throw new ArgumentException("The value of power must be 1 or greater.");
+			}
+
+			(var limbOffset, var remainder) = Math.DivRem(power, EFFECTIVE_BITS_PER_LIMB);
+
+			if (limbOffset > limbCount + 3)
+			{
+				return Enumerable.Repeat(0u, limbCount).ToArray();
+			}
+
+			var factor = (ulong)Math.Pow(2, remainder);
+
+			var resultArray = new uint[mantissa.Length];
+
+			var carry = 0u;
+
+			for (var i = 0; i < mantissa.Length; i++)
+			{
+				var newLimbVal = (mantissa[i] * factor) + carry;
+
+				var (hi, lo) = Split(newLimbVal); // :Spliter
+				resultArray[i] = lo;
+
+				carry = hi;
+			}
+
+			if (carry > 0)
+			{
+				//Debug.WriteLine($"While {desc}, setting carry: {carry}, ll: {result.IndexOfLastNonZeroLimb}, len: {result.Length}, power: {power}, factor: {factor}.");
+			}
+
+			var result = AssembleScaledValue(resultArray, limbOffset, carry, limbCount);
+
+			return result;
+		}
+
+		private static uint[] AssembleScaledValue(uint[] resultArray, int offset, uint carry, int limbCount)
+		{
+			uint[] wArray;
+
+			if (carry > 0)
+			{
+				if (offset > 0) offset -= 1;
+
+				var len = resultArray.Length + 1 + offset;
+				wArray = new uint[len];
+
+				Array.Copy(resultArray, 0, wArray, offset, resultArray.Length);
+				wArray[^1] = carry;
+			}
+			else
+			{
+				var len = resultArray.Length + offset;
+				wArray = new uint[len];
+
+				//Array.Copy(resultArray, 0, wArray, offset, resultArray.Length);
+				Array.Copy(resultArray, 0, wArray, 0, resultArray.Length);
+			}
+
+			var result = TakeMostSignificantLimbs(wArray, limbCount);	
+
+			return result;
+		}
+
+		private static uint[] TakeMostSignificantLimbs(uint[] partialWordLimbs, int length)
+		{
+			uint[] result;
+
+			var diff = length - partialWordLimbs.Length;
+
+			if (diff > 0)
+			{
+				result = PadLeft(partialWordLimbs, diff);
+			}
+			else if(diff < 0)
+			{
+				result = TrimLeft(partialWordLimbs, -1 * diff);
+			}
+			else
+			{
+				result = partialWordLimbs;
+			}
+
+			return result;
+		}
+
+		// Pad with leading zeros.
+		private static uint[] PadLeft(uint[] values, int amount)
+		{
+			var newLength = values.Length + amount;
+			var result = new uint[newLength];
+			Array.Copy(values, 0, result, amount, values.Length);
+
+			return result;
+		}
+
+		private static uint[] TrimLeft(uint[] values, int amount)
+		{
+			var newLength = values.Length - amount;
+			var result = new uint[newLength];
+			Array.Copy(values, amount, result, 0, newLength);
+
+			return result;
+		}
+
+		//private static uint[] CopyLastXElements(uint[] values, int newLength)
+		//{
+		//	var result = new uint[newLength];
+
+		//	var sourceStartIndex = Math.Max(values.Length - newLength, 0);
+
+		//	var cLen = values.Length - sourceStartIndex;
+
+		//	var destinationStartIndex = newLength - cLen;
+
+		//	Array.Copy(values, sourceStartIndex, result, destinationStartIndex, cLen);
+
+		//	return result;
+		//}
+
+		public static int GetShiftAmount(int currentExponent, int targetExponent)
+		{
+			var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
+			return shiftAmount;
+		}
+
+		public static (uint hi, uint lo) Split(ulong x)
+		{
+			// bit 31 is being reserved to detect carries when adding / subtracting.
+			// this bit should be zero at this point.
+
+			// The low value is in the low 31 bits, indexes 0 - 30.
+			// The high value is in bits 32-63
+
+			var hi = (uint) (x >> 32); // Create new ulong from bits 32 - 63.
+			var lo = (uint) x & CLEAR_RESERVED_BIT;  // Create new ulong from bits 0 - 31.
+
+			return (hi, lo);
+		}
+
+		#endregion
+
 		#region FP31Deck Support
 
 		public static bool GetSign(uint[] limbs)
@@ -102,12 +325,6 @@ namespace MSS.Common.APValues
 			var result = (limbs[^1] & TEST_BIT_30) == 0;
 			return result;
 		}
-
-		//public static bool[] GetSigns(uint[] msLimbs)
-		//{
-		//	var result = msLimbs.Select(x => (x & TEST_BIT_30) == 0).ToArray();
-		//	return result;
-		//}
 
 		public static void ExpandTo(FP31Deck source, FP31DeckPW result)
 		{
@@ -148,8 +365,8 @@ namespace MSS.Common.APValues
 			for (var i = 0; i < partialWordLimbs.Length; i++)
 			{
 				result[i] = (partialWordLimbs[i] & TEST_BIT_30) > 0
-							? partialWordLimbs[i] | HIGH33_FILL
-							: partialWordLimbs[i] & HIGH33_CLEAR;
+							? partialWordLimbs[i] | HIGH33_FILL_L
+							: partialWordLimbs[i] & HIGH33_CLEAR_L;
 			}
 
 			return result;
@@ -178,7 +395,7 @@ namespace MSS.Common.APValues
 		public static double ConvertFrom2C(ulong partialWordLimb, out double hi)
 		{
 			hi = partialWordLimb >> EFFECTIVE_BITS_PER_LIMB;
-			var lo = (uint) (partialWordLimb & HIGH33_CLEAR);
+			var lo = (uint) (partialWordLimb & HIGH33_CLEAR_L);
 
 			var result = ConvertFrom2C(lo);
 			return result;
@@ -217,7 +434,14 @@ namespace MSS.Common.APValues
 
 				if (signBitIsSet)
 				{
-					throw new ArgumentException($"Cannot Convert to 2C format, the value is negative and is already in two's compliment form. {GetDiagDisplayHex("limbs", partialWordLimbs)}");
+					if (partialWordLimbs[^1] == MOST_NEG_VAL)
+					{
+						Debug.WriteLine("WARNING: About to take the two's compliment of the most negative number.");
+					}
+					else
+					{
+						throw new ArgumentException($"Cannot Convert to 2C format, the value is negative and is already in two's compliment form. {GetDiagDisplayHex("limbs", partialWordLimbs)}");
+					}
 				}
 
 				//// Reset the Reserve bit so that it will be updated as the Sign bit is updated.
@@ -361,14 +585,54 @@ namespace MSS.Common.APValues
 			return newVal;
 		}
 
+		// Returns false, if not correct!!
+		public static bool CheckReserveBit(ulong[] partialWordLimbs)
+		{
+			var reserveBitIsSet = (partialWordLimbs[^1] & TEST_BIT_31) > 0;
+			var signBitIsSet = (partialWordLimbs[^1] & TEST_BIT_30) > 0;
+
+			var result = reserveBitIsSet == signBitIsSet;
+
+			return result;
+		}
+
+		// Returns true if the ReserveBit was updated.
+		public static bool UpdateTheReserveBit(ulong[] partialWordLimbs, bool newValue)
+		{
+			var msl = partialWordLimbs[^1];
+			var reserveBitWasSet = (msl & TEST_BIT_31) > 0;
+
+			var valueWasUpdated = reserveBitWasSet != newValue;
+
+			if (newValue)
+			{
+				partialWordLimbs[^1] = msl | TEST_BIT_31;
+			}
+			else
+			{
+				partialWordLimbs[^1] = msl & ~TEST_BIT_31;
+			}
+
+			return valueWasUpdated;
+		}
+
+		private static ulong UpdateTheReservedBit(ulong limb, bool newValue)
+		{
+			var result = newValue ? limb | TEST_BIT_31 : limb & ~TEST_BIT_31;
+			return result;
+		}
+
+
 		#endregion
 
 		#region Convert to Full-31Bit-Word Limbs
 
-		public static uint[] ToFwUInts(BigInteger bi)
+		public static uint[] ToFwUInts(BigInteger bi, out bool sign)
 		{
 			var tResult = new List<uint>();
-			var hi = BigInteger.Abs(bi);
+
+			sign = bi.Sign >= 0;
+			var hi = sign? bi : BigInteger.Negate(bi);
 
 			while (hi > MAX_DIGIT_VALUE)
 			{
@@ -381,7 +645,7 @@ namespace MSS.Common.APValues
 			return tResult.ToArray();
 		}
 
-		public static BigInteger FromFwUInts(uint[] partialWordLimbs)
+		public static BigInteger FromFwUInts(uint[] partialWordLimbs, bool sign)
 		{
 			var result = BigInteger.Zero;
 
@@ -390,6 +654,8 @@ namespace MSS.Common.APValues
 				result *= BI_HALF_WORD_FACTOR;
 				result += partialWordLimbs[i];
 			}
+
+			result = sign ? result : BigInteger.Negate(result);
 
 			return result;
 		}

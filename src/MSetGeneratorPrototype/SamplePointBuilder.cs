@@ -6,6 +6,52 @@ namespace MSetGeneratorPrototype
 {
 	internal static class SamplePointBuilder
 	{
+		public static FP31Val[] BuildSamplePoints(FP31Val startValue, FP31Val[] offsets, ScalarMath9 scalarMath9)
+		{
+			var result = new FP31Val[offsets.Length];
+
+			for (var i = 0; i < offsets.Length; i++)
+			{
+				result[i] = scalarMath9.Add(startValue, offsets[i], "add spd offset to start value");
+			}
+
+			return result;
+		}
+
+		public static FP31Val[] BuildSamplePointOffsets(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
+		{
+			var offsets = new FP31Val[extent];
+
+			var acc = FP31ValHelper.CreateNewZeroFP31Val(scalarMath9.ApFixedPointFormat, delta.Precision);
+
+			for (var i = 0; i < extent; i++)
+			{
+				offsets[i] = acc;
+
+				acc = scalarMath9.Add(acc, delta, "BuildSamplePointOffsets"); 
+			}
+
+			return offsets;
+		}
+
+
+		#region NOT USED
+
+		public static FP31Val[] BuildSamplePointOffsetsOld(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
+		{
+			var offsets = new FP31Val[extent];
+
+			for (var i = 0; i < extent; i++)
+			{
+				var samplePointOffset = scalarMath9.Multiply(delta, (byte)i);
+				offsets[i] = samplePointOffset;
+			}
+
+			//var result = new FP31Deck(offsets);
+
+			return offsets;
+		}
+
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
 
 		private const uint LOW31_BITS_SET = 0x7FFFFFFF; // bits 0 - 30 are set.
@@ -87,10 +133,10 @@ namespace MSetGeneratorPrototype
 
 			var inPlayList = vResult.GetNewInPlayList();
 
-			vecMath9.Add(vec1, vec2, vResult, inPlayList);	//		0, 0, 1, 1, 1, 1, 1, 1
-			vec2.SetMantissa(2, vResult.GetMantissa(0));	//	 +  0, 1, 1, 1, 1, 1, 1, 1
+			vecMath9.Add(vec1, vec2, vResult, inPlayList);  //		0, 0, 1, 1, 1, 1, 1, 1
+			vec2.SetMantissa(2, vResult.GetMantissa(0));    //	 +  0, 1, 1, 1, 1, 1, 1, 1
 															//      0, 1, 2, 2, 2, 2, 2, 2 
-			
+
 			vecMath9.Add(vec1, vec2, vResult, inPlayList);  //		0, 0, 0, 1, 1, 1, 1, 1
 			vec2.SetMantissa(2, vResult.GetMantissa(1));    //	 +  0, 1, 2, 2, 2, 2, 2, 2
 															//      0, 1, 2, 3, 3, 3, 3, 3 
@@ -106,51 +152,7 @@ namespace MSetGeneratorPrototype
 			return vec2;
 		}
 
-
-		public static FP31Val[] BuildSamplePointOffsetsOld(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
-		{
-			var offsets = new FP31Val[extent];
-
-			for (var i = 0; i < extent; i++)
-			{
-				var samplePointOffset = scalarMath9.Multiply(delta, (byte)i);
-				offsets[i] = samplePointOffset;
-			}
-
-			//var result = new FP31Deck(offsets);
-
-			return offsets;
-		}
-
-		public static FP31Val[] BuildSamplePointOffsets(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
-		{
-			var offsets = new FP31Val[extent];
-
-			var acc = FP31ValHelper.CreateNewZeroFP31Val(scalarMath9.ApFixedPointFormat, delta.Precision);
-
-			for (var i = 0; i < extent; i++)
-			{
-				offsets[i] = acc;
-
-				acc = scalarMath9.Add(acc, delta, "BuildSamplePointOffsets"); 
-			}
-
-			return offsets;
-		}
-
-		public static FP31Deck BuildSamplePoints(FP31Val startValue, FP31Val[] offsets, ScalarMath9 scalarMath9)
-		{
-			var samplePoints = new FP31Val[offsets.Length];
-
-			for (var i = 0; i < offsets.Length; i++)
-			{
-				samplePoints[i] = scalarMath9.Add(startValue, offsets[i], "add spd offset to start value");
-			}
-
-			var result = new FP31Deck(samplePoints);
-
-			return result;
-		}
+		#endregion
 
 
 	}

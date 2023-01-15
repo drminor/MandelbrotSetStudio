@@ -40,7 +40,7 @@ namespace MSetExplorer
 		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
 		private static readonly bool USE_LOCAL_ENGINE = false; // If true, we will host a server -- AND include it in the list of servers to use by our client.
 		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
-		private static readonly bool USE_ALL_CORES = false; // If true, a MEngine thread for each processor will be created, otherwise all requests will be serviced on a single thread.
+		private static readonly bool USE_ALL_CORES = true; // If true, a MEngine thread for each processor will be created, otherwise all requests will be serviced on a single thread.
 
 		private const bool FETCH_ZVALUES_LOCALLY = false;
 

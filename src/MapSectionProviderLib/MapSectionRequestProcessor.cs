@@ -234,7 +234,7 @@ namespace MapSectionProviderLib
 					request.IncreasingIterations = true;
 					request.Counts = mapSectionResponse.Counts;
 					request.EscapeVelocities = mapSectionResponse.EscapeVelocities;
-					request.DoneFlags = mapSectionResponse.DoneFlags;
+					request.HasEscapedFlags = mapSectionResponse.DoneFlags;
 					request.ZValues = null;
 
 					QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);

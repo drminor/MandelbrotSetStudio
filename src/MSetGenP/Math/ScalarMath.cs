@@ -798,35 +798,33 @@ namespace MSetGenP
 
 		#region Map Generartion Support
 
-		// TODO: Check to see if there is other code that duplicates this -- in the MSS.Common.APValues namespace....
+		//public FPValues BuildMapPoints(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, out FPValues cIValues)
+		//{
+		//	var stride = (byte)blockSize.Width;
+		//	var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
+		//	var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
+		//	var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
 
-		public FPValues BuildMapPoints(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, out FPValues cIValues)
-		{
-			var stride = (byte)blockSize.Width;
-			var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
-			var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
-			var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
+		//	var resultLength = blockSize.NumberOfCells;
 
-			var resultLength = blockSize.NumberOfCells;
+		//	var crSmxes = new Smx[resultLength];
+		//	var ciSmxes = new Smx[resultLength];
 
-			var crSmxes = new Smx[resultLength];
-			var ciSmxes = new Smx[resultLength];
+		//	var resultPtr = 0;
+		//	for (int j = 0; j < samplePointsY.Length; j++)
+		//	{
+		//		for (int i = 0; i < samplePointsX.Length; i++)
+		//		{
+		//			ciSmxes[resultPtr] = samplePointsY[j];
+		//			crSmxes[resultPtr++] = samplePointsX[i];
+		//		}
+		//	}
 
-			var resultPtr = 0;
-			for (int j = 0; j < samplePointsY.Length; j++)
-			{
-				for (int i = 0; i < samplePointsX.Length; i++)
-				{
-					ciSmxes[resultPtr] = samplePointsY[j];
-					crSmxes[resultPtr++] = samplePointsX[i];
-				}
-			}
+		//	var result = new FPValues(crSmxes);
+		//	cIValues = new FPValues(ciSmxes);
 
-			var result = new FPValues(crSmxes);
-			cIValues = new FPValues(ciSmxes);
-
-			return result;
-		}
+		//	return result;
+		//}
 
 		public Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePointOffsets)
 		{

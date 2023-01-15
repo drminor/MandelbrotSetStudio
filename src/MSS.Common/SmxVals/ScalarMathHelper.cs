@@ -31,7 +31,9 @@ namespace MSS.Common.SmxVals
 		private const ulong TEST_BIT_30 = 0x0000000040000000; // bit 30 is set.
 
 		private const ulong MOST_NEG_VAL = 0x0000000040000000;
-		private const ulong MOST_NEG_VAL_REPLACMENT = 0x0000000040000001;		// Most negative value + 1.
+		private const ulong MOST_NEG_VAL_REPLACMENT = 0x0000000040000001;       // Most negative value + 1.
+
+		//limbs:0x0000; 0x0000; 0x40000000
 
 		private const ulong HIGH32_FILL = HIGH32_BITS_SET;
 		private const ulong HIGH32_CLEAR = LOW32_BITS_SET;
@@ -116,12 +118,21 @@ namespace MSS.Common.SmxVals
 			}
 
 			var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
-			var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount, limbCount);
-
-			var partialWordLimbsTopCleared = ClearHighHalves(newPartialWordLimbs, null);
 
 			var sign = rValue.Value >= 0;
+
+
+			var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount, limbCount, "CreateSmx");
+
+			var partialWordLimbsTopCleared = ClearHighHalves(newPartialWordLimbs, null);
 			var result = new Smx(sign, partialWordLimbsTopCleared, targetExponent, bitsBeforeBP, rValue.Precision);
+
+			//var result2 = new Smx(sign, newPartialWordLimbs, targetExponent, bitsBeforeBP, rValue.Precision);
+
+			//if (result != result2)
+			//{
+			//	Debug.WriteLine("H");
+			//}
 
 			return result;
 		}
@@ -818,9 +829,179 @@ namespace MSS.Common.SmxVals
 
 		#endregion
 
+		#region Shift Bits / Scale and Split EXPERIMENTAL
+
+		//private static ulong[] ShiftBits(ulong[] partialWordLimbs, int shiftAmount, int limbCount, string desc)
+		//{
+		//	ulong[] result;
+
+		//	if (shiftAmount == 0)
+		//	{
+		//		result = TakeMostSignificantLimbs(partialWordLimbs, limbCount);
+		//	}
+		//	else if (shiftAmount < 0)
+		//	{
+		//		throw new NotImplementedException();
+		//	}
+		//	else
+		//	{
+		//		result = ScaleAndSplit(partialWordLimbs, shiftAmount, limbCount, desc);
+		//	}
+
+		//	// ExtendSignBits, into the Reserved bit, clear the top half!
+		//	result = ExtendSignBit(result, includeTopHalves: false);
+
+		//	return result;
+		//}
+
+		//private static ulong[] ScaleAndSplit(ulong[] mantissa, int power, int limbCount, string desc)
+		//{
+		//	if (power <= 0)
+		//	{
+		//		throw new ArgumentException("The value of power must be 1 or greater.");
+		//	}
+
+		//	(var limbOffset, var remainder) = Math.DivRem(power, EFFECTIVE_BITS_PER_LIMB);
+
+		//	if (limbOffset > limbCount + 3)
+		//	{
+		//		return Enumerable.Repeat(0ul, limbCount).ToArray();
+		//	}
+
+		//	var factor = (ulong)Math.Pow(2, remainder);
+
+		//	var resultArray = new ulong[mantissa.Length];
+
+		//	var carry = 0ul;
+
+		//	for (var i = 0; i < mantissa.Length; i++)
+		//	{
+		//		var newLimbVal = mantissa[i] * factor + carry;
+
+		//		var (hi, lo) = Split(newLimbVal); // :Spliter
+		//		resultArray[i] = lo;
+
+		//		carry = hi;
+		//	}
+
+		//	if (carry > 0)
+		//	{
+		//		//Debug.WriteLine($"While {desc}, setting carry: {carry}, ll: {result.IndexOfLastNonZeroLimb}, len: {result.Length}, power: {power}, factor: {factor}.");
+		//	}
+
+		//	var result = AssembleScaledValue(resultArray, limbOffset, carry, limbCount);
+
+		//	return result;
+		//}
+
+		//private static ulong[] AssembleScaledValue(ulong[] resultArray, int offset, ulong carry, int limbCount)
+		//{
+		//	ulong[] wArray;
+
+		//	if (carry > 0)
+		//	{
+		//		if (offset > 0) offset -= 1;
+
+		//		var len = resultArray.Length + 1 + offset;
+		//		wArray = new ulong[len];
+
+		//		Array.Copy(resultArray, 0, wArray, offset, resultArray.Length);
+		//		wArray[^1] = carry;
+		//	}
+		//	else
+		//	{
+		//		var len = resultArray.Length + offset;
+		//		wArray = new ulong[len];
+
+		//		Array.Copy(resultArray, 0, wArray, offset, resultArray.Length);
+		//	}
+
+		//	var result = TakeMostSignificantLimbs(wArray, limbCount);
+
+		//	return result;
+		//}
+
+		//private static ulong[] TakeMostSignificantLimbs(ulong[] partialWordLimbs, int length)
+		//{
+		//	ulong[] result;
+
+		//	var diff = length - partialWordLimbs.Length;
+
+		//	if (diff > 0)
+		//	{
+		//		result = PadLeft(partialWordLimbs, diff);
+		//	}
+		//	else if (diff < 0)
+		//	{
+		//		result = TrimLeft(partialWordLimbs, -1 * diff);
+		//	}
+		//	else
+		//	{
+		//		result = partialWordLimbs;
+		//	}
+
+		//	return result;
+		//}
+
+		//// Pad with leading zeros.
+		//private static ulong[] PadLeft(ulong[] values, int amount)
+		//{
+		//	var newLength = values.Length + amount;
+		//	var result = new ulong[newLength];
+		//	Array.Copy(values, 0, result, amount, values.Length);
+
+		//	return result;
+		//}
+
+		//private static ulong[] TrimLeft(ulong[] values, int amount)
+		//{
+		//	var newLength = values.Length - amount;
+		//	var result = new ulong[newLength];
+		//	Array.Copy(values, amount, result, 0, newLength);
+
+		//	return result;
+		//}
+
+		////private static uint[] CopyLastXElements(uint[] values, int newLength)
+		////{
+		////	var result = new uint[newLength];
+
+		////	var sourceStartIndex = Math.Max(values.Length - newLength, 0);
+
+		////	var cLen = values.Length - sourceStartIndex;
+
+		////	var destinationStartIndex = newLength - cLen;
+
+		////	Array.Copy(values, sourceStartIndex, result, destinationStartIndex, cLen);
+
+		////	return result;
+		////}
+
+		//public static int GetShiftAmount(int currentExponent, int targetExponent)
+		//{
+		//	var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
+		//	return shiftAmount;
+		//}
+
+		////public static (uint hi, uint lo) Split(ulong x)
+		////{
+		////	// bit 31 is being reserved to detect carries when adding / subtracting.
+		////	// this bit should be zero at this point.
+
+		////	// The low value is in the low 31 bits, indexes 0 - 30.
+		////	// The high value is in bits 32-63
+
+		////	var hi = (uint)(x >> 32); // Create new ulong from bits 32 - 63.
+		////	var lo = (uint)x & CLEAR_RESERVED_BIT;  // Create new ulong from bits 0 - 31.
+
+		////	return (hi, lo);
+		////}
+
+		#endregion
+
 		#region Shift Bits / Scale and Split
 
-		private static ulong[] ShiftBits(ulong[] partialWordLimbs, int shiftAmount, int limbCount)
+		private static ulong[] ShiftBits(ulong[] partialWordLimbs, int shiftAmount, int limbCount, string desc)
 		{
 			ulong[] result;
 
@@ -840,7 +1021,7 @@ namespace MSS.Common.SmxVals
 			}
 
 			// ExtendSignBits, into the Reserved bit, clear the top half
-			result =  ExtendSignBit(result);
+			result = ExtendSignBit(result);
 
 			return result;
 		}
@@ -945,70 +1126,6 @@ namespace MSS.Common.SmxVals
 		{
 			var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
 			return shiftAmount;
-		}
-
-		#endregion
-
-
-		#region Map Generartion Support
-
-		public static FPValues BuildMapPoints(Smx startingCx, Smx startingCy, Smx delta, SizeInt blockSize, out FPValues cIValues)
-		{
-			var stride = (byte)blockSize.Width;
-			var samplePointOffsets = BuildSamplePointOffsets(delta, stride);
-			var samplePointsX = BuildSamplePoints(startingCx, samplePointOffsets);
-			var samplePointsY = BuildSamplePoints(startingCy, samplePointOffsets);
-
-			var resultLength = blockSize.NumberOfCells;
-
-			var crSmxes = new Smx[resultLength];
-			var ciSmxes = new Smx[resultLength];
-
-			var resultPtr = 0;
-			for (int j = 0; j < samplePointsY.Length; j++)
-			{
-				for (int i = 0; i < samplePointsX.Length; i++)
-				{
-					ciSmxes[resultPtr] = samplePointsY[j];
-					crSmxes[resultPtr++] = samplePointsX[i];
-				}
-			}
-
-			var result = new FPValues(crSmxes);
-			cIValues = new FPValues(ciSmxes);
-
-			return result;
-		}
-
-		public static Smx[] BuildSamplePoints(Smx startValue, Smx[] samplePointOffsets)
-		{
-			var result = new Smx[samplePointOffsets.Length];
-
-			// TODO: Implement BuildSamplePoints
-
-			//for (var i = 0; i < samplePointOffsets.Length; i++)
-			//{
-			//	var samplePointSa = Add(startValue, samplePointOffsets[i], "add spd offset to start value");
-			//	result[i] = samplePointSa;
-			//}
-
-			return result;
-		}
-
-		public static Smx[] BuildSamplePointOffsets(Smx delta, byte extent)
-		{
-			var result = new Smx[extent];
-
-			// TODO: Implement BuildSamplePointOffsets
-
-			//for (var i = 0; i < extent; i++)
-			//{
-			//	var samplePointOffset = Multiply(delta, (byte)i);
-			//	CheckForceExpResult(samplePointOffset, "BuildSPOffsets");
-			//	result[i] = samplePointOffset;
-			//}
-
-			return result;
 		}
 
 		#endregion

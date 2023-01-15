@@ -162,7 +162,7 @@ namespace MSetGenPTest
 			request.BlockSize = blockSize;
 			request.MapCalcSettings = mapCalcSettings;
 
-			request.DoneFlags = new bool[blockSize.NumberOfCells];
+			request.HasEscapedFlags = new bool[blockSize.NumberOfCells];
 
 			return request;
 		}

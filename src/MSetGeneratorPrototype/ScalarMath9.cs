@@ -12,11 +12,18 @@ namespace MSetGeneratorPrototype
 
 		private const int EFFECTIVE_BITS_PER_LIMB = 31;
 
-		private const uint LOW31_BITS_SET = 0x000000007FFFFFFF; // bits 0 - 30 are set.
-		private const uint HIGH33_MASK = LOW31_BITS_SET;
+		private const uint LOW31_BITS_SET = 0x7FFFFFFF; // bits 0 - 30 are set.
+		//private const uint HIGH33_MASK = LOW31_BITS_SET;
+		private const uint CLEAR_RESERVED_BIT = LOW31_BITS_SET;
 
 		private const ulong LOW31_BITS_SET_L = 0x000000007FFFFFFF; // bits 0 - 30 are set.
 		private const ulong HIGH33_MASK_L = LOW31_BITS_SET_L;
+
+		//private const ulong HIGH_33_BITS_SET_L = 0xFFFFFFFF80000000; // bits 0 - 30 are set.
+
+		//private const ulong HIGH33_FILL = HIGH_33_BITS_SET_L;           // bits 63 - 31 are set.
+		//private const ulong HIGH33_CLEAR_L = LOW31_BITS_SET_L;          // bits 63 - 31 are reset.
+
 
 		private static readonly bool USE_DET_DEBUG = false;
 
@@ -217,7 +224,7 @@ namespace MSetGeneratorPrototype
 			for (int j = 0; j < ax.Length; j++)
 			{
 				//var product = ax[j] * b;
-				var left = (int) (ax[j] & HIGH33_MASK); 
+				var left = (int) (ax[j] & CLEAR_RESERVED_BIT); 
 				var product = (ulong)Math.BigMul(left, (int)b);
 				MathOpCounts.NumberOfMultiplications++;
 
@@ -306,10 +313,10 @@ namespace MSetGeneratorPrototype
 				{
 					// Discard the top shiftAmount of bits, moving the remainder of this limb up to fill the opening.
 					var topHalf = mantissa[sourceIndex] << shiftAmount;
-					topHalf &= HIGH33_MASK;                                     // This will clear the top 32 bits as well as the reserved bit.
+					topHalf &= CLEAR_RESERVED_BIT;                                     // This will clear the top 32 bits as well as the reserved bit.
 
 					// Take the top shiftAmount of bits from the previous limb and place them in the last shiftAmount bit positions
-					var bottomHalf = mantissa[sourceIndex - 1] & HIGH33_MASK;
+					var bottomHalf = mantissa[sourceIndex - 1] & CLEAR_RESERVED_BIT;
 					bottomHalf >>= 31 - shiftAmount;                            // Don't include the reserved bit.
 
 					result[i] = (uint) (topHalf | bottomHalf);
@@ -326,7 +333,7 @@ namespace MSetGeneratorPrototype
 				{
 					// Discard the top shiftAmount of bits, moving the remainder of this limb up to fill the opening.
 					var topHalf = mantissa[sourceIndex] << shiftAmount;
-					topHalf &= HIGH33_MASK;
+					topHalf &= CLEAR_RESERVED_BIT;
 
 					result[i] = (uint) topHalf;
 
@@ -426,8 +433,8 @@ namespace MSetGeneratorPrototype
 					newValue = left[limbPtr] + right[limbPtr] + carry;
 				}
 
-				var newCarry = newValue >> EFFECTIVE_BITS_PER_LIMB; // The high 31 bits of sum becomes the new carry.
-				var limbValue = newValue & HIGH33_MASK;				// The low 31 bits of the sum is the result.
+				var newCarry = newValue >> EFFECTIVE_BITS_PER_LIMB;		// The high 31 bits of sum becomes the new carry.
+				var limbValue = newValue & CLEAR_RESERVED_BIT;			// The low 31 bits of the sum is the result.
 
 				result[limbPtr] = limbValue;
 

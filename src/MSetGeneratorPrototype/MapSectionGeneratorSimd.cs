@@ -15,23 +15,28 @@ namespace MSetGeneratorPrototype
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
 
-			//var fixedPointFormat = new ApFixedPointFormat(bitsBeforeBinaryPoint: 8, minimumFractionalBits: precision);
+			var precision = mapSectionRequest.Precision;
+			var fpmTest = new ApFixedPointFormat(bitsBeforeBinaryPoint: 8, minimumFractionalBits: precision);
 
-			var howManyLimbs = 2;
+			var howManyLimbs = 3;
 			var apFixedPointFormat = new ApFixedPointFormat(howManyLimbs);
 
 			var (blockPos, startingCx, startingCy, delta) = GetCoordinates(mapSectionRequest, apFixedPointFormat);
+			var screenPos = mapSectionRequest.ScreenPosition;
 
 			var s1 = startingCx.GetStringValue();
 			var s2 = startingCy.GetStringValue();
 			var s3 = delta.GetStringValue();
 
-			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
-			Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");
+			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
+			//Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");
+
+			Debug.WriteLine($"Starting : {screenPos}: {blockPos}, delta: {s3}, #oflimbs: {apFixedPointFormat.LimbCount}. MapSecReq Precision: {precision}. Test # of Limbs: {fpmTest.LimbCount}.");
+
 
 			MapSectionResponse result;
 
-			if (ShouldSkipThisSection(skipPositiveBlocks, skipLowDetailBlocks, startingCx, startingCy, blockPos))
+			if (ShouldSkipThisSection(skipPositiveBlocks, skipLowDetailBlocks, startingCx, startingCy, screenPos))
 			{
 				result = BuildEmptyResponse(mapSectionRequest);
 			}
@@ -72,17 +77,25 @@ namespace MSetGeneratorPrototype
 
 			var scalarMath9 = new ScalarMath9(apFixedPointFormat);
 			var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(delta, stride, scalarMath9);
-			//ReportExponents(samplePointOffsets);
-
+			var samplePointsX = SamplePointBuilder.BuildSamplePoints(startingCx, samplePointOffsets, scalarMath9);
 			var samplePointsY = SamplePointBuilder.BuildSamplePoints(startingCy, samplePointOffsets, scalarMath9);
 
-			var cRs = SamplePointBuilder.BuildSamplePoints(startingCx, samplePointOffsets, scalarMath9);
+			var bx = mapSectionRequest.ScreenPosition.X;
+			var by = mapSectionRequest.ScreenPosition.Y;
+
+			if (bx == 0 && by == 0 || bx == 3 && by == 4)
+			{
+				ReportSamplePoints(samplePointOffsets);
+				ReportSamplePoints(samplePointsX);
+			}
+
+			var cRs = new FP31Deck(samplePointsX);
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
-				var yPoint = samplePointsY.GetMantissa(rowNumber);
-				var fp31YPoint = new FP31Val(yPoint, apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, startingCx.Precision);
-				var cIs = new FP31Deck(fp31YPoint, stride);
+				var yPoint = samplePointsY[rowNumber];
+				//var fp31YPoint = new FP31Val(yPoint, apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, startingCx.Precision);
+				var cIs = new FP31Deck(yPoint, stride);
 
 				var resultIndex = rowNumber * stride;
 				var hasEscapedSpan = new Span<bool>(hasEscapedFlags, resultIndex, stride);
@@ -146,7 +159,7 @@ namespace MSetGeneratorPrototype
 
 		// Get the Z values
 		private (FP31Deck zRs, FP31Deck zIs)
-			GetZValues(MapSectionRequest mapSectionRequest, int rowNumber, int valueCount, int limbCount)
+			GetZValues(MapSectionRequest mapSectionRequest, int rowNumber, int limbCount, int valueCount)
 		{
 			var zRs = new FP31Deck(limbCount, valueCount);
 			var zIs = new FP31Deck(limbCount, valueCount);
@@ -191,15 +204,15 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private void ReportExponents(FP31Val[] values)
+		private void ReportSamplePoints(FP31Val[] values)
 		{
 			foreach (var value in values)
 			{
-				Debug.WriteLine($"{value.Exponent}.");
+				Debug.WriteLine($"{FP31ValHelper.GetDiagDisplay("x", value.Mantissa)} {value.Exponent}.");
 			}
 		}
 
-		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, FP31Val startingCx, FP31Val startingCy, BigVector blockPos)
+		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, FP31Val startingCx, FP31Val startingCy, PointInt screenPosition)
 		{
 			// Skip positive 'blocks'
 
@@ -212,7 +225,7 @@ namespace MSetGeneratorPrototype
 			}
 
 			// Move directly to a block where at least one sample point reaches the iteration target.
-			else if (skipLowDetailBlocks && (BigInteger.Abs(blockPos.Y) > 1 || BigInteger.Abs(blockPos.X) > 3))
+			else if (skipLowDetailBlocks && (BigInteger.Abs(screenPosition.Y) > 1 || BigInteger.Abs(screenPosition.X) > 3))
 			{
 				return true;
 			}
