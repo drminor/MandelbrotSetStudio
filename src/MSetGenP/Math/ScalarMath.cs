@@ -1,5 +1,6 @@
 ﻿using MongoDB.Driver;
 using MSS.Common;
+using MSS.Common.APValues;
 using MSS.Common.SmxVals;
 using MSS.Types;
 using System;
@@ -223,30 +224,39 @@ namespace MSetGenP
 			//var seive = new ulong[ax.Length];
 
 			var mantissa = new ulong[ax.Length];
+			ulong carry = 0;
 
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
-			for (int j = 0; j < ax.Length - 1; j++)
+			for (int j = 0; j < ax.Length; j++)
 			{
 				var product = ax[j] * b;
 				//seive[j] = product;
 
-				NumberOfSplits++;
-				var (hi, lo) = ScalarMathHelper.Split(product);
+				var sum = product + carry;
 
-				mantissa[j] += lo;
-				mantissa[j + 1] += hi;
+				var (hi, lo) = ScalarMathHelper.Split(sum);
+				NumberOfSplits++;
+
+				mantissa[j] = lo;
+				//mantissa[j + 1] += hi;
+				carry = hi;
 			}
 
-			var product2 = ax[^1] * b;
+			//var product2 = ax[^1] * b;
 
-			NumberOfSplits++;
-			var (hi2, lo2) = ScalarMathHelper.Split(product2);
+			//NumberOfSplits++;
+			//var (hi2, lo2) = ScalarMathHelper.Split(product2);
 
-			mantissa[^1] = lo2;
+			//mantissa[^1] = lo2;
 
-			if (hi2 != 0)
+			//if (hi2 != 0)
+			//{
+			//	throw new OverflowException($"Multiply {ScalarMathHelper.GetDiagDisplay("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
+			//}
+
+			if (carry != 0)
 			{
-				throw new OverflowException($"Multiply {ScalarMathHelper.GetDiagDisplay("ax", ax)} x {b} resulted in a overflow. The hi value is {hi2}.");
+				throw new OverflowException($"Multiply {ScalarMathHelper.GetDiagDisplayHex("ax", ax)} x {b} resulted in a overflow. The hi value is {carry}.");
 			}
 
 			//var splitSieve = Split(seive);

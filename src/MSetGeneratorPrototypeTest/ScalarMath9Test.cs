@@ -6,12 +6,13 @@ using MSS.Common.SmxVals;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
+using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
 
 namespace MSetGeneratorPrototypeTest
 {
 	public class ScalarMath9Test
 	{
-		#region Square and Multiply
+		#region Square
 
 		[Fact]
 		public void SquareFourAndAQuarter()
@@ -175,10 +176,44 @@ namespace MSetGeneratorPrototypeTest
 			var aMantissa = FP31ValHelper.ToFwUInts(aBigInteger, out var sign);
 
 			var bMantissa = scalarMath9.Multiply(aMantissa, aMantissa);
-			var bBigInteger = ScalarMathHelper.FromPwULongs(bMantissa);
+			var bBigInteger = ScalarMathHelper.FromPwULongs(bMantissa, sign: true);
 
 			var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
 			Assert.Equal(bBigInteger, bCompBigInteger);
+		}
+
+		#endregion
+
+		#region Multiply Smx x Int
+
+		[Fact]
+		public void MultiplyAnRValueWithInt()
+		{
+			var precision = 53;
+			var limbCount = 3;
+			var scalarMath9 = BuildTheMathHelper(limbCount);
+
+			var aNumber = "-36507222016";		// -4.25
+			var exponent = -33;
+
+			var aTv = new FP31ValTestValue(aNumber, exponent, precision, scalarMath9);
+			Debug.WriteLine($"The StringValue for a is {aTv}.");
+
+			var b = 3u;
+			Debug.WriteLine($"The StringValue for the bSmx is {b}.");
+
+			var cFP31Val = scalarMath9.Multiply(aTv.FP31Val, b);
+
+			var cTv = new FP31ValTestValue(cFP31Val);
+			Debug.WriteLine($"The StringValue for c is {cTv}.");	// -12.75
+
+			var cRValue = aTv.RValue.Mul((int)b);
+			var cStrComp = RValueHelper.ConvertToString(cRValue);
+			Debug.WriteLine($"The StringValue for the cRValue is {cStrComp}.");
+
+			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(cRValue, cTv.RValue, failOnTooFewDigits: false, out var strA, out var strB);
+			Assert.True(haveRequiredPrecision);
+			Assert.Equal(strA, strB);
 		}
 
 		#endregion

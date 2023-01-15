@@ -3,6 +3,7 @@ using MSS.Common.APValues;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace MSetGeneratorPrototype
 {
@@ -179,7 +180,7 @@ namespace MSetGeneratorPrototype
 			return mantissa;
 		}
 
-		public FP31Val Multiply(FP31Val a, int b)
+		public FP31Val Multiply(FP31Val a, uint b)
 		{
 			FP31Val result;
 
@@ -191,25 +192,48 @@ namespace MSetGeneratorPrototype
 
 			//CheckLimb2C(a, "MultiplyByInt");
 
-			var bVal = (uint)Math.Abs(b);
-			var lzc = BitOperations.LeadingZeroCount(bVal);
+			var lzc = BitOperations.LeadingZeroCount(b);
 
 			if (lzc < 32 - a.BitsBeforeBP)
 			{
-				throw new ArgumentException("The integer multiplyer should fit into the integer portion of the Smx value.");
+				throw new ArgumentException("The integer multiplyer should fit into the integer portion of a FP31Val value.");
 			}
 
-			var rawMantissa = Multiply(a.Mantissa, bVal);
-			var mantissa = SumThePartials(rawMantissa, out var carry);
+			var sign = FP31ValHelper.GetSign(a.Mantissa);
 
-			if (carry > 0)
+			if (sign)
 			{
-				result = CreateNewMaxIntegerFP31Val(a.Precision);
+				var rawMantissa = Multiply(a.Mantissa, b);
+				var mantissa = SumThePartials(rawMantissa, out var carry);
+
+				if (carry > 0)
+				{
+					result = CreateNewMaxIntegerFP31Val(a.Precision);
+				}
+				else
+				{
+					var nrmMantissa = FP31ValHelper.TakeLowerHalves(mantissa);
+					result = CreateFP31Val(nrmMantissa, a.Precision);
+				}
 			}
 			else
 			{
-				var nrmMantissa = ShiftAndTrim(mantissa);
-				result = CreateFP31Val(nrmMantissa, a.Precision);
+				var aNegated = FP31ValHelper.Negate(a);
+
+				var rawMantissa = Multiply(aNegated.Mantissa, b);
+				var mantissa = SumThePartials(rawMantissa, out var carry);
+
+				if (carry > 0)
+				{
+					result = CreateNewMaxIntegerFP31Val(a.Precision);
+				}
+				else
+				{
+					var nrmMantissa = FP31ValHelper.TakeLowerHalves(mantissa);
+					var unNegatedResult = CreateFP31Val(nrmMantissa, a.Precision);
+
+					result = FP31ValHelper.Negate(unNegatedResult);
+				}
 			}
 
 			return result;

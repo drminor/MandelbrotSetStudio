@@ -117,22 +117,21 @@ namespace MSS.Common.SmxVals
 				throw new ArgumentException($"An RValue with integer portion > {maxIntegerValue} cannot be used to create an Smx. IndexOfMsb: {GetDiagDisplayHex("limbs", partialWordLimbs)}. Info: {bitExpInfo}.");
 			}
 
+			var rValueStrVal = RValueHelper.ConvertToString(rValue);
+
 			var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
-
-			//var sign = rValue.Value >= 0;
-
-
 			var newPartialWordLimbs = ShiftBits(partialWordLimbs, shiftAmount, limbCount, "CreateSmx");
 
 			var partialWordLimbsTopCleared = ClearHighHalves(newPartialWordLimbs, null);
 			var result = new Smx(sign, partialWordLimbsTopCleared, targetExponent, bitsBeforeBP, rValue.Precision);
 
-			//var result2 = new Smx(sign, newPartialWordLimbs, targetExponent, bitsBeforeBP, rValue.Precision);
-
-			//if (result != result2)
-			//{
-			//	Debug.WriteLine("H");
-			//}
+			var resultStrVal = result.GetStringValue();
+			Debug.WriteLine($"Got Smx: {resultStrVal} from: {rValueStrVal}. {bitExpInfo}");
+			
+			if (rValueStrVal.Length - resultStrVal.Length > 5)
+			{
+				Debug.WriteLine("CreateFP31Val failed.");
+			}
 
 			return result;
 		}
