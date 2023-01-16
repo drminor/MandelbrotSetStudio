@@ -12,6 +12,8 @@ namespace MEngineClient
 		private static int _sectionCntr;
 		private readonly MapSectionGeneratorSimd _generator;
 
+		#region Constructors
+
 		static MClientLocal()
 		{
 			_sectionCntr = 0;
@@ -22,8 +24,16 @@ namespace MEngineClient
 			_generator = new MapSectionGeneratorSimd();		
 		}
 
+		#endregion
+
+		#region Public Properties
+
 		public string EndPointAddress => "CSharp_ScalerGenerator";
 		public bool IsLocal => true;
+
+		#endregion
+
+		#region Async Methods
 
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		{
@@ -57,5 +67,37 @@ namespace MEngineClient
 			return mapSectionResponse;
 		}
 
+		#endregion
+
+		#region Synchronous Methods
+
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		{
+			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
+
+			var stopWatch = Stopwatch.StartNew();
+			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest);
+			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
+
+			Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
+
+			return mapSectionResponse;
+		}
+
+		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest)
+		{
+			var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest);
+
+			if (++_sectionCntr % 10 == 0)
+			{
+				Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {++_sectionCntr} requests.");
+			}
+
+			mapSectionResponse.IncludeZValues = false;
+
+			return mapSectionResponse;
+		}
+
+		#endregion
 	}
 }

@@ -3,6 +3,7 @@ using MSS.Common;
 using MSS.Common.APValues;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
+using System;
 using System.Diagnostics;
 using System.Numerics;
 
@@ -10,18 +11,32 @@ namespace MSetGeneratorPrototype
 {
 	public class MapSectionGeneratorSimd
 	{
+		private readonly ApFixedPointFormat _apFixedPointFormat;
+
+		private readonly int _stride;
+		private readonly uint _threshold;
+
+		private readonly IIterator _iterator;
+
+		public MapSectionGeneratorSimd()
+		{
+			var howManyLimbs = 3;
+			_apFixedPointFormat = new ApFixedPointFormat(howManyLimbs);
+			_stride = 128;
+			_threshold = 4u;
+
+			var vecMath = new VecMath9(_apFixedPointFormat, _stride, _threshold);
+			_iterator = new IteratorSimd(vecMath);
+		}
+
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
 
 			var precision = mapSectionRequest.Precision;
-			var fpmTest = new ApFixedPointFormat(bitsBeforeBinaryPoint: 8, minimumFractionalBits: precision);
 
-			var howManyLimbs = 3;
-			var apFixedPointFormat = new ApFixedPointFormat(howManyLimbs);
-
-			var (blockPos, startingCx, startingCy, delta) = GetCoordinates(mapSectionRequest, apFixedPointFormat);
+			var (blockPos, startingCx, startingCy, delta) = GetCoordinates(mapSectionRequest, _apFixedPointFormat);
 			var screenPos = mapSectionRequest.ScreenPosition;
 
 			var s1 = startingCx.GetStringValue();
@@ -31,8 +46,7 @@ namespace MSetGeneratorPrototype
 			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 			//Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");
 
-			Debug.WriteLine($"Starting : {screenPos}: {blockPos}, delta: {s3}, #oflimbs: {apFixedPointFormat.LimbCount}. MapSecReq Precision: {precision}. Test # of Limbs: {fpmTest.LimbCount}.");
-
+			Debug.WriteLine($"Starting : {screenPos}: {blockPos}, delta: {s3}, #oflimbs: {_apFixedPointFormat.LimbCount}. MapSecReq Precision: {precision}.");
 
 			MapSectionResponse result;
 
@@ -42,7 +56,7 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				var (hasEscapedFlags, counts, escapeVelocities) = GenerateMapSection(mapSectionRequest, blockPos, startingCx, startingCy, delta, apFixedPointFormat, out var mathOpCounts);
+				var (hasEscapedFlags, counts, escapeVelocities) = GenerateMapSection(_iterator, mapSectionRequest, blockPos, startingCx, startingCy, delta, _apFixedPointFormat, out var mathOpCounts);
 
 				//Debug.WriteLine($"Completed: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). ACarries: {aCarries}, MCarries:{mCarries}.");
 				//Debug.WriteLine($"Completed: BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. ACarries: {subSectionGeneratorVector.NumberOfACarries}, MCarries:{subSectionGeneratorVector.NumberOfMCarries}.");
@@ -51,11 +65,6 @@ namespace MSetGeneratorPrototype
 				//Debug.WriteLine($"{s1}, {s2}: {mathOpCounts}");
 
 				var compressedHasEscapedFlags = CompressHasEscapedFlags(hasEscapedFlags);
-
-				//if (compressedDoneFlags.Length != 1 || !compressedDoneFlags[0])
-				//{
-				//	Debug.WriteLine("WARNING: Some sample points are not complete.");
-				//}
 
 				result = new MapSectionResponse(mapSectionRequest, compressedHasEscapedFlags, counts, escapeVelocities, zValues: null);
 				result.MathOpCounts = mathOpCounts;
@@ -66,14 +75,11 @@ namespace MSetGeneratorPrototype
 
 		// Generate MapSection
 		private (bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
-			GenerateMapSection(MapSectionRequest mapSectionRequest, BigVector blockPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta, ApFixedPointFormat apFixedPointFormat, out MathOpCounts mathOpCounts)
+			GenerateMapSection(IIterator iterator, MapSectionRequest mapSectionRequest, BigVector blockPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta, ApFixedPointFormat apFixedPointFormat, out MathOpCounts mathOpCounts)
 		{
 			var (blockSize, targetIterations, threshold, hasEscapedFlags, counts, escapeVelocities) = GetMapParameters(mapSectionRequest);
 			var rowCount = blockSize.Height;
 			var stride = (byte)blockSize.Width;
-
-			var vecMath = new VecMath9(apFixedPointFormat, stride, threshold);
-			var iteratorSimd = new IteratorSimd(vecMath);
 
 			var scalarMath9 = new ScalarMath9(apFixedPointFormat);
 			var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(delta, stride, scalarMath9);
@@ -94,7 +100,6 @@ namespace MSetGeneratorPrototype
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
 				var yPoint = samplePointsY[rowNumber];
-				//var fp31YPoint = new FP31Val(yPoint, apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, startingCx.Precision);
 				var cIs = new FP31Deck(yPoint, stride);
 
 				var resultIndex = rowNumber * stride;
@@ -106,12 +111,10 @@ namespace MSetGeneratorPrototype
 
 				var samplePointValues = new SamplePointValues(cRs, cIs, zValues.zRs, zValues.zIs, hasEscapedSpan, countsSpan, escapeVelocitiesSpan);
 
-				var unusedCalcs = SubSectionGenerator.GenerateMapSection(samplePointValues, iteratorSimd, blockPos, rowNumber, targetIterations);
-
-				vecMath.MathOpCounts.NumberOfUnusedCalcs += unusedCalcs.Sum();
+				SubSectionGenerator.GenerateMapSection(samplePointValues, iterator, blockPos, rowNumber, targetIterations);
 			}
 
-			mathOpCounts = vecMath.MathOpCounts;
+			mathOpCounts = iterator.MathOpCounts;
 
 			return (hasEscapedFlags, counts, escapeVelocities);
 		}
@@ -181,24 +184,24 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private bool[] CompressHasEscapedFlags(bool[] doneFlags)
+		private bool[] CompressHasEscapedFlags(bool[] hasEscapedFlags)
 		{
 			bool[] result;
 
-			if (!doneFlags.Any(x => !x))
+			if (!hasEscapedFlags.Any(x => !x))
 			{
-				// All reached the target
+				// All have escaped
 				result = new bool[] { true };
 			}
-			else if (!doneFlags.Any(x => x))
+			else if (!hasEscapedFlags.Any(x => x))
 			{
-				// none reached the target
+				// none have escaped
 				result = new bool[] { false };
 			}
 			else
 			{
 				// Mix
-				result = doneFlags;
+				result = hasEscapedFlags;
 			}
 
 			return result;

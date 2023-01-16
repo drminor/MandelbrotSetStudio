@@ -1,10 +1,12 @@
 ﻿using MSS.Common;
 using MSS.Common.APValues;
+using MSS.Types;
 using System.Diagnostics;
+using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
-	internal ref struct IteratorSimd
+	internal class IteratorSimd : IIterator
 	{
 		#region Private Properties
 
@@ -21,8 +23,7 @@ namespace MSetGeneratorPrototype
 
 		private FP31Deck _sumOfSqrs;
 
-		private int[] _escapedFlagsBackingArray;
-		private Memory<int> _escapedFlagMemory;
+		private Vector256<int>[] _escapedFlagVectors;
 
 		private FP31Deck _zRZiSqrs;
 		private FP31Deck _zRs2;
@@ -39,6 +40,7 @@ namespace MSetGeneratorPrototype
 
 			var limbCount = vecMath.LimbCount;
 			var valueCount = vecMath.ValueCount;
+			var vectorCount = vecMath.VectorCount;
 
 			_cRs = new FP31Deck(limbCount, valueCount);
 			_cIs = new FP31Deck(limbCount, valueCount);
@@ -49,26 +51,24 @@ namespace MSetGeneratorPrototype
 			_zISqrs = new FP31Deck(limbCount, valueCount);
 			_sumOfSqrs = new FP31Deck(limbCount, valueCount);
 
-			_escapedFlagsBackingArray = new int[valueCount];
-			_escapedFlagMemory = new Memory<int>(_escapedFlagsBackingArray);
+			_escapedFlagVectors = new Vector256<int>[vectorCount];
 
 			_zRZiSqrs = new FP31Deck(limbCount, valueCount);
 			_zRs2 = new FP31Deck(limbCount, valueCount);
 			_zIs2 = new FP31Deck(limbCount, valueCount);
 		}
 
+		#endregion
+
+		#region Public Properties
+
 		public ApFixedPointFormat ApFixedPointFormat => _vecMath.ApFixedPointFormat;
 
+		public MathOpCounts MathOpCounts => _vecMath.MathOpCounts;
+
+		#endregion
 
 		#region Public Methods
-
-		//public void SetCoords(FP31Deck cRs, FP31Deck cIs)
-		//{
-		//	_cRs = cRs;
-		//	_cIs = cIs;
-
-		//	_zValuesAreZero = true;
-		//}
 
 		public void SetCoords(FP31Deck cRs, FP31Deck cIs, FP31Deck zRs, FP31Deck zIs)
 		{
@@ -85,9 +85,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		#endregion
-
-		public int[] Iterate(int[] inPlayList, out FP31Deck sumOfSquares)
+		public Vector256<int>[] Iterate(int[] inPlayList, out FP31Deck sumOfSquares)
 		{
 			try
 			{
@@ -117,10 +115,11 @@ namespace MSetGeneratorPrototype
 				_vecMath.Square(_zIs, _zISqrs, inPlayList);
 				_vecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, inPlayList);
 
-				_vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagMemory, inPlayList);
+				_vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagVectors, inPlayList);
 
 				sumOfSquares = _sumOfSqrs;
-				return _escapedFlagsBackingArray;
+
+				return _escapedFlagVectors;
 			}
 			catch (Exception e)
 			{

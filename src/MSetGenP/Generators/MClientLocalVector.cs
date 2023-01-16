@@ -56,5 +56,35 @@ namespace MSetGenP
 			return mapSectionResponse;
 		}
 
+		#region Synchronous Methods
+
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		{
+			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
+
+			var stopWatch = Stopwatch.StartNew();
+			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest);
+			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
+
+			Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
+
+			return mapSectionResponse;
+		}
+
+		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest)
+		{
+			var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest);
+
+			if (++_sectionCntr % 10 == 0)
+			{
+				Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {++_sectionCntr} requests.");
+			}
+
+			mapSectionResponse.IncludeZValues = false;
+
+			return mapSectionResponse;
+		}
+
+		#endregion
 	}
 }

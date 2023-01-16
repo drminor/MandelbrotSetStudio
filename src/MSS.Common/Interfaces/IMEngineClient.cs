@@ -7,10 +7,12 @@ namespace MSS.Common
 	{
 		string EndPointAddress { get; }
 
-
 		// True if running on the same machine as the Explorer program.
 		bool IsLocal { get; }
 
 		Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest);
+
+		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest);
+
 	}
 }

@@ -10,41 +10,27 @@ namespace MSetGeneratorPrototype
 	{
 		#region Public Methods
 
-		public static long[] GenerateMapSection(SamplePointValues samplePointValues, IteratorSimd iteratorSimd, BigVector blockPos, int rowNumber, int targetIterations) 
+		public static void GenerateMapSection(SamplePointValues samplePointValues, IIterator iteratorSimd, BigVector blockPos, int rowNumber, int targetIterations) 
 		{
-			var valueCount = samplePointValues.ValueCount;
-			var vectorCount = samplePointValues.VectorCount;
-
-			// Initially, all vectors are 'In Play.'
-			var inPlayList = Enumerable.Range(0, vectorCount).ToArray();
-
-			// Initially, all values are 'In Play.'
-			var unusedCalcs = new long[valueCount];
+			var inPlayList = samplePointValues.InPlayList;
+			var doneFlags = samplePointValues.DoneFlags;
+			var unusedCalcs = samplePointValues.UnusedCalcs;
 
 			iteratorSimd.SetCoords(samplePointValues.Crs, samplePointValues.Cis, samplePointValues.Zrs, samplePointValues.Zis);
-
-			var hasEscapedFlags = samplePointValues.HasEscapedFlags;
-			var counts = samplePointValues.Counts;
-			var escapeVelocitites = samplePointValues.EscapeVelocities;
-
-			// TODO: Set the value of each doneFlag: true if either hasEscaped or count >= targetIterations, false otherwise
-			var doneFlags = new bool[valueCount];
 
 			while (inPlayList.Length > 0)
 			{
 				var escapedFlags = iteratorSimd.Iterate(inPlayList, out var sumOfSquares);
 
 				inPlayList = UpdateCounts(escapedFlags, inPlayList, iteratorSimd.ApFixedPointFormat, blockPos, rowNumber, sumOfSquares, 
-					hasEscapedFlags, counts, escapeVelocitites, doneFlags, unusedCalcs, targetIterations);
+					samplePointValues, doneFlags, unusedCalcs, targetIterations);
 			}
 
-			// TODO: Need to keep track if a sample point has escaped or not, currently the DoneFlag is set if 'Escaped' or 'Reached Target Iteration.'
-
-			return unusedCalcs;
+			iteratorSimd.MathOpCounts.NumberOfUnusedCalcs = unusedCalcs.Sum();
 		}
 
-		private static int[] UpdateCounts(int[] escapedFlags, int[] inPlayList, ApFixedPointFormat apFixedPointFormat, BigVector blockPos, int rowNumber, FP31Deck sumOfSquares, 
-			Span<bool> hasEscapedFlags, Span<ushort> counts, Span<ushort> escapeVelocities, bool[] doneFlags, long[] unusedCalcs, int targetIterations)
+		private static int[] UpdateCounts(Vector256<int>[] escapedFlagVectors, int[] inPlayList, ApFixedPointFormat apFixedPointFormat, BigVector blockPos, int rowNumber, FP31Deck sumOfSquares, 
+			SamplePointValues samplePointValues, bool[] doneFlags, long[] unusedCalcs, int targetIterations)
 		{
 			var numberOfLanes = Vector256<uint>.Count;
 			var toBeRemoved = new List<int>();
@@ -53,6 +39,8 @@ namespace MSetGeneratorPrototype
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
+
+				var escapedFlagVector = escapedFlagVectors[idx];
 
 				var allCompleted = true;
 
@@ -66,15 +54,15 @@ namespace MSetGeneratorPrototype
 						continue;
 					}
 
-					var cnt = counts[cntrPtr] + 1;
-					counts[cntrPtr] = (ushort)cnt;
+					var cnt = ++samplePointValues.Counts[cntrPtr];
 
-					var escaped = escapedFlags[cntrPtr] == -1;
+					//var escaped = escapedFlags[cntrPtr] == -1;
+					var escaped = escapedFlagVector.GetElement(cntrPtr - stPtr) == -1;
 
 					// TODO: Need to save the ZValues to a safe place to prevent further updates.
 					if (escaped)
 					{
-						hasEscapedFlags[cntrPtr] = true;
+						samplePointValues.HasEscapedFlags[cntrPtr] = true;
 						doneFlags[cntrPtr] = true;
 
 						//var sacResult = escaped;
@@ -86,7 +74,7 @@ namespace MSetGeneratorPrototype
 					else if (cnt >= targetIterations)
 					{
 						doneFlags[cntrPtr] = true;
-						escapeVelocities[cntrPtr] = 5; // TODO: calculate the EscapeVelocity
+						samplePointValues.EscapeVelocities[cntrPtr] = 5; // TODO: calculate the EscapeVelocity
 
 						//var sacResult = escaped;
 						//var mantissa = sumOfSquares.GetMantissa(idx);

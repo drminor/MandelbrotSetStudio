@@ -6,8 +6,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace MapSectionProviderLib
 {
@@ -76,14 +78,16 @@ namespace MapSectionProviderLib
 				{
 					for (var i = 0; i < localTaskCnt; i++)
 					{
-						_workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(client/*, _mapSectionPersistProcessor*/, _cts.Token)));
+						//workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(client/*, _mapSectionPersistProcessor*/, _cts.Token)));
+						workQueueProcessors.Add(Task.Run(() => ProcessTheQueue(client, _cts.Token)));
 					}
 				}
 				else
 				{
 					for (var i = 0; i < remoteTaskCnt; i++)
 					{
-						_workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(client/*, _mapSectionPersistProcessor*/, _cts.Token)));
+						//workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(client/*, _mapSectionPersistProcessor*/, _cts.Token)));
+						workQueueProcessors.Add(Task.Run(() => ProcessTheQueue(client, _cts.Token)));
 					}
 				}
 			}
@@ -125,7 +129,9 @@ namespace MapSectionProviderLib
 					nClient = new MClientLocal();
 				}
 
-				workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(nClient/*, _mapSectionPersistProcessor*/, _cts.Token)));
+				//workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(nClient/*, _mapSectionPersistProcessor*/, _cts.Token)));
+				workQueueProcessors.Add(Task.Run(() => ProcessTheQueue(nClient, _cts.Token)));
+
 				newClients[i] = nClient;
 			}
 
@@ -245,6 +251,56 @@ namespace MapSectionProviderLib
 				catch (Exception e)
 				{
 					Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client" }. The exception is {e}.");
+					throw;
+				}
+			}
+		}
+
+		private void ProcessTheQueue(IMEngineClient mEngineClient, CancellationToken ct)
+		{
+			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+			{
+				try
+				{
+					var mapSectionGenerateRequest = _workQueue.Take(ct);
+
+					// The original request is in the Request's Request property.
+					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
+
+					MapSectionResponse? mapSectionResponse;
+
+					if (IsJobCancelled(mapSectionGenerateRequest.JobId))
+					{
+						mapSectionResponse = null;
+					}
+					else
+					{
+						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest);
+
+						if (mapSectionResponse.IsEmpty)
+						{
+							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
+						}
+
+						if (mapSectionRequest.MapSectionId != null)
+						{
+							Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
+						}
+
+						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
+					}
+
+					mapSectionGenerateRequest.Response = mapSectionResponse;
+					mapSectionGenerateRequest.RunWorkAction();
+				}
+				catch (OperationCanceledException)
+				{
+					//Debug.WriteLine("The response queue got a OCE.");
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client"}. The exception is {e}.");
 					throw;
 				}
 			}

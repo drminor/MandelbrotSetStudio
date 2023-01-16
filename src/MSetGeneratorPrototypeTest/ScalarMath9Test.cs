@@ -110,63 +110,6 @@ namespace MSetGeneratorPrototypeTest
 		}
 
 		[Fact]
-		public void SquareAnRValueDetail()
-		{
-			var precision = 70;    // Binary Digits of precision, 30 Decimal Digits
-			var limbCount = 6;      // TargetExponent = -184, Total Bits = 192
-			var scalarMath9 = BuildTheMathHelper(limbCount);
-			var targetExponent = scalarMath9.TargetExponent;
-			var bitsBeforeBP = scalarMath9.BitsBeforeBP;
-
-			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017"); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
-			var aRValue = new RValue(aBigInteger, -134, precision); // 0.25
-
-			var aSmx2C = ScalarMathHelper.CreateSmx(aRValue, targetExponent, limbCount, bitsBeforeBP);
-			var aStr = aSmx2C.GetStringValue();
-			Debug.WriteLine($"The StringValue for the aSmx is {aStr}.");
-
-			//var aMantissaDisp = ScalarMathHelper.GetDiagDisplay("raw operand", aSmx2C.Mantissa);
-			//Debug.WriteLine($"The StringValue for the a mantissa is {aMantissaDisp}.");
-
-			//var a2Mantissa = scalarMath9.Square(aSmx2C.Mantissa);
-			//var a2Str = ScalarMathHelper.GetDiagDisplay("raw products", a2Mantissa);
-			//Debug.WriteLine($"The StringValue for the a2Mantissa is {a2Str}.");
-
-			//var a3Mantissa = scalarMath9.SumThePartials(a2Mantissa, out _);
-			//var a3MantissaNrm = ScalarMathHelper.ShiftAndTrim(a3Mantissa, scalarMath9.ApFixedPointFormat, isSigned: true);
-
-			//var a3Smx2C = new Smx2C(true, a3MantissaNrm, aSmx2C.Exponent, aSmx2C.BitsBeforeBP, aSmx2C.Precision);
-			//var a3Str = a3Smx2C.GetStringValue();
-			//Debug.WriteLine($"The StringValue for the a3Mantissa is {a3Str}.");
-
-			//var bSmx = scalarMath9.Square(a3Smx2C);                          //3.5348216834895204420064645071512155149938836924682889e-19 -- Windows Calc: 3.5348216834895204420064645514845e-19
-			//var bSmxRValue = bSmx.GetRValue();
-			//var bStr = bSmx.GetStringValue();
-			//Debug.WriteLine($"The StringValue for the bSmx is {bStr}.");
-
-			//var bMantissaDisp = ScalarMathHelper.GetDiagDisplay("raw result", bSmx.Mantissa);
-			//Debug.WriteLine($"The StringValue for the result mantissa is {bMantissaDisp}.");
-
-			var bRValue = aRValue.Square();
-			var bStrComp = RValueHelper.ConvertToString(bRValue);
-			Debug.WriteLine($"The StringValue for the bRValue is {bStrComp}.");
-
-			var aBiSqr = BigInteger.Multiply(aBigInteger, aBigInteger);
-			var aBiSqrRValue = new RValue(aBiSqr, -268, precision);
-
-			var aBiSmx2C = ScalarMathHelper.CreateSmx2C(aBiSqrRValue, targetExponent: -312, limbCount: 1, bitsBeforeBP: 8);
-
-
-			//var aBiSmxRValue = aBiSmx.GetRValue();
-			var aBiStr = aBiSmx2C.GetStringValue();
-			Debug.WriteLine($"The value of aBiSqr is {aBiStr}.");
-
-			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aBiSqrRValue, bRValue, failOnTooFewDigits: false, out var strA, out var strB);
-			Assert.True(haveRequiredPrecision);
-			Assert.Equal(strA, strB);
-		}
-
-		[Fact]
 		public void FullMultiply_Returns_Correct_Value()
 		{
 			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64

@@ -130,7 +130,8 @@ namespace MSS.Common.SmxVals
 			
 			if (rValueStrVal.Length - resultStrVal.Length > 5)
 			{
-				Debug.WriteLine("CreateFP31Val failed.");
+				//Debug.WriteLine("CreateFP31Val failed.");
+				throw new InvalidOperationException("CreateFP31Val failed.");
 			}
 
 			return result;
