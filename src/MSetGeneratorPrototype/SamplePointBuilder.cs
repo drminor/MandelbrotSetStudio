@@ -108,13 +108,6 @@ namespace MSetGeneratorPrototype
 				}
 			}
 
-			//for (var i = 0; i < extent; i++)
-			//{
-			//	var samplePointOffset = Multiply(delta, (byte)i);
-			//	CheckForceExpResult(samplePointOffset, "BuildSPOffsets");
-			//	result[i] = samplePointOffset;
-			//}
-
 			return result;
 		}
 

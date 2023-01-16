@@ -1,8 +1,7 @@
-﻿using MSS.Common;
-using MSS.Common.APValues;
-using MSS.Types;
+﻿using MSS.Types;
 using System.Diagnostics;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace MSetGeneratorPrototype
 {
@@ -10,137 +9,199 @@ namespace MSetGeneratorPrototype
 	{
 		#region Public Methods
 
-		public static void GenerateMapSection(SamplePointValues samplePointValues, IIterator iteratorSimd, BigVector blockPos, int rowNumber, int targetIterations) 
+		public static void GenerateMapSection(IIterator iteratorSimd, SamplePointValues samplePointValues, uint threshold, BigVector blockPos, int rowNumber) 
 		{
 			var inPlayList = samplePointValues.InPlayList;
-			var doneFlags = samplePointValues.DoneFlags;
 			var unusedCalcs = samplePointValues.UnusedCalcs;
 
 			iteratorSimd.SetCoords(samplePointValues.Crs, samplePointValues.Cis, samplePointValues.Zrs, samplePointValues.Zis);
+			iteratorSimd.Threshold = threshold;
 
 			while (inPlayList.Length > 0)
 			{
 				var escapedFlags = iteratorSimd.Iterate(inPlayList, out var sumOfSquares);
 
-				inPlayList = UpdateCounts(escapedFlags, inPlayList, iteratorSimd.ApFixedPointFormat, blockPos, rowNumber, sumOfSquares, 
-					samplePointValues, doneFlags, unusedCalcs, targetIterations);
+				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, samplePointValues /*, iteratorSimd.ApFixedPointFormat, blockPos, rowNumber, sumOfSquares*/);
+				inPlayList = samplePointValues.UpdateTheInPlayList(vectorsNoLongerInPlay);
 			}
 
-			iteratorSimd.MathOpCounts.NumberOfUnusedCalcs = unusedCalcs.Sum();
+			long sumOfAllUnusedCalcs = 0;
+
+			foreach(var i in unusedCalcs)
+			{
+				sumOfAllUnusedCalcs += i;
+			}
+
+			iteratorSimd.MathOpCounts.NumberOfUnusedCalcs = sumOfAllUnusedCalcs;
+
+			//samplePointValues.UpdateTheCounts();
 		}
 
-		private static int[] UpdateCounts(Vector256<int>[] escapedFlagVectors, int[] inPlayList, ApFixedPointFormat apFixedPointFormat, BigVector blockPos, int rowNumber, FP31Deck sumOfSquares, 
-			SamplePointValues samplePointValues, bool[] doneFlags, long[] unusedCalcs, int targetIterations)
+		private static List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, SamplePointValues samplePointValues/*, ApFixedPointFormat apFixedPointFormat, BigVector blockPos, int rowNumber, FP31Deck sumOfSquares*/)
 		{
-			var numberOfLanes = Vector256<uint>.Count;
 			var toBeRemoved = new List<int>();
 
-			var indexes = inPlayList;
+			var targetIterationsVector = samplePointValues.TargetIterationsVector;
+
+			//ushort one = 1;
+			var justOne = Vector256.Create(1);
+			var justOneUnsigned = Vector256.Create(1u);
+
+			//var doneFlags = samplePointValues.DoneFlags;
+			//var unusedCalcs = samplePointValues.UnusedCalcs;
+
+			var hasEscapedFlagsVectors = samplePointValues.HasEscapedFlagsV;
+			var countsVectors = samplePointValues.CountsV;
+			//var escapeVelocitiesVectors = samplePointValues.EscapeVelocitiesV;
+			var doneFlagsVectors = samplePointValues.DoneFlagsV;
+			var unusedCalcsVectors = samplePointValues.UnusedCalcsV;	
+			
+			var indexes = samplePointValues.InPlayList;
+
 			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 			{
 				var idx = indexes[idxPtr];
 
-				var escapedFlagVector = escapedFlagVectors[idx];
+				var doneFlagsV = doneFlagsVectors[idx];
 
-				var allCompleted = true;
+				// Increment all counts
+				var countsVt = Avx2.Add(countsVectors[idx], justOne);
+				// Take the incremented count, only if the doneFlags is false for each vector position.
+				var countsV = Avx2.BlendVariable(countsVt.AsByte(), countsVectors[idx].AsByte(), doneFlagsV.AsByte()).AsInt32(); // use First if Zero, second if 1
+				countsVectors[idx] = countsV;
 
-				var stPtr = idx * numberOfLanes;
+				// Increment all unused calculations
+				var unusedCalcsVt = Avx2.Add(unusedCalcsVectors[idx], justOneUnsigned);
+				// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
+				var unusedCalcsV = Avx2.BlendVariable(unusedCalcsVectors[idx].AsByte(), unusedCalcsVt.AsByte(), doneFlagsV.AsByte()).AsUInt32();
+				unusedCalcsVectors[idx] = unusedCalcsV;
 
-				for (var cntrPtr = stPtr; cntrPtr < stPtr + numberOfLanes; cntrPtr++)
-				{
-					if (doneFlags[cntrPtr])
-					{
-						unusedCalcs[cntrPtr]++;
-						continue;
-					}
+				// Apply the new escapeFlags, only if the doneFlags is false for each vector position
+				var updatedHaveEscapedFlagsV = Avx2.BlendVariable(escapedFlagVectors[idx].AsByte(), hasEscapedFlagsVectors[idx].AsByte(), doneFlagsV.AsByte()).AsInt32();
+				hasEscapedFlagsVectors[idx] = updatedHaveEscapedFlagsV;
 
-					var cnt = ++samplePointValues.Counts[cntrPtr];
+				// Compare the new Counts with the TargetIterations
 
-					//var escaped = escapedFlags[cntrPtr] == -1;
-					var escaped = escapedFlagVector.GetElement(cntrPtr - stPtr) == -1;
+				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector);
+				var escapedOrReachedVec = Avx2.Or(updatedHaveEscapedFlagsV, targetReachedCompVec);
 
-					// TODO: Need to save the ZValues to a safe place to prevent further updates.
-					if (escaped)
-					{
-						samplePointValues.HasEscapedFlags[cntrPtr] = true;
-						doneFlags[cntrPtr] = true;
+				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
+				var updatedDoneFlagsV = Avx2.BlendVariable(doneFlagsVectors[idx].AsByte(), Vector256<int>.AllBitsSet.AsByte(), escapedOrReachedVec.AsByte()).AsInt32();
 
-						//var sacResult = escaped;
-						//var mantissa = sumOfSquares.GetMantissa(idx);
-						//var rValue = FP31ValHelper.CreateRValue(true, mantissa, apFixedPointFormat.TargetExponent, apFixedPointFormat.NumberOfFractionalBits);
-						//var rValDiag = RValueHelper.ConvertToString(rValue);
-						//Debug.WriteLine($"Bailed out after {cnt}: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {blockPos}, Row: {rowNumber}, Col: {cntrPtr}.");
-					}
-					else if (cnt >= targetIterations)
-					{
-						doneFlags[cntrPtr] = true;
-						samplePointValues.EscapeVelocities[cntrPtr] = 5; // TODO: calculate the EscapeVelocity
+				samplePointValues.DoneFlagsV[idx] = updatedDoneFlagsV;
 
-						//var sacResult = escaped;
-						//var mantissa = sumOfSquares.GetMantissa(idx);
-						//var rValue = FP31ValHelper.CreateRValue(true, mantissa, apFixedPointFormat.TargetExponent, apFixedPointFormat.NumberOfFractionalBits);
-						//var rValDiag = RValueHelper.ConvertToString(rValue);
-						//Debug.WriteLine($"Target reached: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {blockPos}, Row: {rowNumber}, Col: {cntrPtr}.");
-					}
-					else
-					{
-						allCompleted = false;
-					}
-				}
+				var compositeIsDone = Avx2.MoveMask(updatedDoneFlagsV.AsByte());
 
-				if (allCompleted)
+				if (compositeIsDone == -1)
 				{
 					toBeRemoved.Add(idx);
-
-					if (doneFlags.Skip(stPtr).Take(numberOfLanes).Any(x => !x))
-					{
-						Debug.WriteLine("Huh?");
-					}
 				}
 			}
 
-			var newInPlayList = GetUpdatedInPlayList(inPlayList, toBeRemoved);
-
-			return newInPlayList;
+			return toBeRemoved;
 		}
 
-		private static int[] GetUpdatedInPlayList(int[] inPlayList, List<int> vectorsNoLongerInPlay)
-		{
-			var lst = inPlayList.ToList();
+		/*
 
-			foreach (var vectorIndex in vectorsNoLongerInPlay)
-			{
-				lst.Remove(vectorIndex);
-			}
+Instruction: vpblendvb ymm, ymm, ymm, ymm
+CPUID Flags: AVX2		  
+				FOR j := 0 to 31
+					i := j*8
+					IF mask[i+7]
+						dst[i+7:i] := b[i+7:i]
+					ELSE
+						dst[i+7:i] := a[i+7:i]
+					FI
+				ENDFOR
+				dst[MAX:256] := 0	
 
-			var updatedLst = lst.ToArray();
+Instruction: vpcmpgtd ymm, ymm, ymm
+CPUID Flags: AVX2			
+		
+				FOR j := 0 to 7
+					i := j*32
+					dst[i+31:i] := ( a[i+31:i] > b[i+31:i] ) ? 0xFFFFFFFF : 0
+				ENDFOR
+				dst[MAX:256] := 0
 
-			return updatedLst;
-		}
 
-		//private int[] BuildTheInplayList(bool[] doneFlags, int vecCount)
+
+		*/
+
+		//private static List<int> UpdateCountsOld(Vector256<int>[] escapedFlagVectors, SamplePointValues samplePointValues/*, ApFixedPointFormat apFixedPointFormat, BigVector blockPos, int rowNumber, FP31Deck sumOfSquares*/) 
 		//{
-		//	var lanes = Vector256<uint>.Count;
+		//	var numberOfLanes = Vector256<uint>.Count;
+		//	var toBeRemoved = new List<int>();
 
-		//	Debug.Assert(doneFlags.Length * lanes == vecCount, $"The doneFlags length: {doneFlags.Length} does not match {lanes} times the vector count: {vecCount}.");
+		//	var targetIterations = samplePointValues.TargetIterations;
+		//	var doneFlags = samplePointValues.DoneFlags;
+		//	var unusedCalcs = samplePointValues.UnusedCalcs;
+		//	var indexes = samplePointValues.InPlayList;
 
-		//	var result = Enumerable.Range(0, vecCount).ToList();
-
-		//	for (int j = 0; j < vecCount; j++)
+		//	for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
 		//	{
-		//		var arrayPtr = j * lanes;
+		//		var idx = indexes[idxPtr];
 
-		//		for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
+		//		var escapedFlagVector = escapedFlagVectors[idx];
+
+		//		var allCompleted = true;
+
+		//		var stPtr = idx * numberOfLanes;
+
+		//		for (var cntrPtr = stPtr; cntrPtr < stPtr + numberOfLanes; cntrPtr++)
 		//		{
-		//			if (doneFlags[arrayPtr + lanePtr])
+		//			if (doneFlags[cntrPtr])
 		//			{
-		//				result.Remove(j);
-		//				break;
+		//				unusedCalcs[cntrPtr]++;
+		//				continue;
+		//			}
+
+		//			var cnt = ++samplePointValues.Counts[cntrPtr];
+
+		//			//var escaped = escapedFlags[cntrPtr] == -1;
+		//			var escaped = escapedFlagVector.GetElement(cntrPtr - stPtr) == -1;
+
+		//			// TODO: Need to save the ZValues to a safe place to prevent further updates.
+		//			if (escaped)
+		//			{
+		//				samplePointValues.HasEscapedFlags[cntrPtr] = true;
+		//				doneFlags[cntrPtr] = true;
+
+		//				//var sacResult = escaped;
+		//				//var mantissa = sumOfSquares.GetMantissa(idx);
+		//				//var rValue = FP31ValHelper.CreateRValue(true, mantissa, apFixedPointFormat.TargetExponent, apFixedPointFormat.NumberOfFractionalBits);
+		//				//var rValDiag = RValueHelper.ConvertToString(rValue);
+		//				//Debug.WriteLine($"Bailed out after {cnt}: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {blockPos}, Row: {rowNumber}, Col: {cntrPtr}.");
+		//			}
+		//			else if (cnt >= targetIterations)
+		//			{
+		//				doneFlags[cntrPtr] = true;
+		//				samplePointValues.EscapeVelocities[cntrPtr] = 5; // TODO: calculate the EscapeVelocity
+
+		//				//var sacResult = escaped;
+		//				//var mantissa = sumOfSquares.GetMantissa(idx);
+		//				//var rValue = FP31ValHelper.CreateRValue(true, mantissa, apFixedPointFormat.TargetExponent, apFixedPointFormat.NumberOfFractionalBits);
+		//				//var rValDiag = RValueHelper.ConvertToString(rValue);
+		//				//Debug.WriteLine($"Target reached: The value is {rValDiag}. Compare returned: {sacResult}. BlockPos: {blockPos}, Row: {rowNumber}, Col: {cntrPtr}.");
+		//			}
+		//			else
+		//			{
+		//				allCompleted = false;
+		//			}
+		//		}
+
+		//		if (allCompleted)
+		//		{
+		//			toBeRemoved.Add(idx);
+
+		//			if (doneFlags.Skip(stPtr).Take(numberOfLanes).Any(x => !x))
+		//			{
+		//				Debug.WriteLine("Huh?");
 		//			}
 		//		}
 		//	}
 
-		//	return result.ToArray();
+		//	return toBeRemoved;
 		//}
 
 		#endregion

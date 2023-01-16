@@ -123,6 +123,29 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
+		public void UpdateFrom(FP31Val[] fp31Vals)
+		{
+			if (fp31Vals[0].Mantissa.Length != LimbCount)
+			{
+				throw new ArgumentException("The first fp31Val has a different number of limbs than the FP31Decks's LimbCount.");
+			}
+
+			if (fp31Vals.Length != ValueCount)
+			{
+				throw new ArgumentException("The number of FP31Vals is different for the FP31Deck's ValueCount.");
+			}
+
+			for (var j = 0; j < LimbCount; j++)
+			{
+				for (var i = 0; i < fp31Vals.Length; i++)
+				{
+					Mantissas[j][i] = fp31Vals[i].Mantissa[j];
+				}
+			}
+
+			IsZero = false;
+		}
+
 		public void UpdateFrom(FP31Deck source)
 		{
 			if (source.LimbCount != LimbCount)
@@ -139,6 +162,9 @@ namespace MSS.Common.APValues
 			{
 				Array.Copy(source.Mantissas[i], Mantissas[i], ValueCount);
 			}
+
+			IsZero = source.IsZero;
+
 		}
 
 		public void UpdateFrom(FP31Deck source, int sourceIndex, int destinationIndex, int length)
@@ -162,6 +188,8 @@ namespace MSS.Common.APValues
 			{
 				Array.Copy(source.Mantissas[i], sourceIndex, Mantissas[i], destinationIndex, length);
 			}
+
+			IsZero = false;
 		}
 
 		public void ClearManatissMems(int[] inPlayList)

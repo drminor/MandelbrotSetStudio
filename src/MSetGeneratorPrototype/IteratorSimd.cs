@@ -11,12 +11,12 @@ namespace MSetGeneratorPrototype
 		#region Private Properties
 
 		private VecMath9 _vecMath;
-		private bool _zValuesAreZero;
 
 		private FP31Deck _cRs;
 		private FP31Deck _cIs;
 		private FP31Deck _zRs;
 		private FP31Deck _zIs;
+		private bool _zValuesAreZero;
 
 		private FP31Deck _zRSqrs;
 		private FP31Deck _zISqrs;
@@ -33,19 +33,25 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IteratorSimd(VecMath9 vecMath)
+		//public IteratorSimd(VecMath9 vecMath)
+		public IteratorSimd(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
-			_vecMath = vecMath;
+			//_vecMath = vecMath;
+
+			_vecMath = new VecMath9(apFixedPointFormat, valueCount, threshold);
+
 			_zValuesAreZero = true;
 
-			var limbCount = vecMath.LimbCount;
-			var valueCount = vecMath.ValueCount;
-			var vectorCount = vecMath.VectorCount;
+			var limbCount = _vecMath.LimbCount;
+			//var valueCount = vecMath.ValueCount;
+			var vectorCount = _vecMath.VectorCount;
 
 			_cRs = new FP31Deck(limbCount, valueCount);
 			_cIs = new FP31Deck(limbCount, valueCount);
 			_zRs = new FP31Deck(limbCount, valueCount);
 			_zIs = new FP31Deck(limbCount, valueCount);
+			_zValuesAreZero = true;
+
 
 			_zRSqrs = new FP31Deck(limbCount, valueCount);
 			_zISqrs = new FP31Deck(limbCount, valueCount);
@@ -63,6 +69,12 @@ namespace MSetGeneratorPrototype
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat => _vecMath.ApFixedPointFormat;
+
+		public uint Threshold
+		{
+			get => _vecMath.Threshold;
+			set => _vecMath.Threshold = value;
+		}
 
 		public MathOpCounts MathOpCounts => _vecMath.MathOpCounts;
 

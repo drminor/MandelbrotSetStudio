@@ -3,7 +3,6 @@ using MSS.Common.APValues;
 using MSS.Types;
 using System.Buffers;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
@@ -61,6 +60,7 @@ namespace MSetGeneratorPrototype
 		{
 			ApFixedPointFormat = apFixedPointFormat;
 
+			_threshold = threshold;
 			var thresholdMsl = GetThresholdMsl(threshold, ApFixedPointFormat);
 			_thresholdVector = Vector256.Create(thresholdMsl);
 
@@ -104,15 +104,29 @@ namespace MSetGeneratorPrototype
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
-		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
-		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
-		public int LimbCount => ApFixedPointFormat.LimbCount;
-		public int TargetExponent => ApFixedPointFormat.TargetExponent;
-
 		public int ValueCount { get; init; }
 		public int VectorCount { get; init; }
 
 		public MathOpCounts MathOpCounts { get; init; }
+
+		private uint _threshold;
+		public uint Threshold
+		{
+			get => _threshold;
+			set
+			{
+				if (value != _threshold)
+				{
+					var thresholdMsl = GetThresholdMsl(value, ApFixedPointFormat);
+					_thresholdVector = Vector256.Create(thresholdMsl);
+				}
+			}
+		}
+
+		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
+		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
+		public int LimbCount => ApFixedPointFormat.LimbCount;
+		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
 		#endregion
 

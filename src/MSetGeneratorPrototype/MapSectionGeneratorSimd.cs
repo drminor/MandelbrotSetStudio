@@ -20,13 +20,15 @@ namespace MSetGeneratorPrototype
 
 		public MapSectionGeneratorSimd()
 		{
-			var howManyLimbs = 3;
+			var howManyLimbs = 2;
 			_apFixedPointFormat = new ApFixedPointFormat(howManyLimbs);
 			_stride = 128;
 			_threshold = 4u;
 
-			var vecMath = new VecMath9(_apFixedPointFormat, _stride, _threshold);
-			_iterator = new IteratorSimd(vecMath);
+			//var vecMath = new VecMath9(_apFixedPointFormat, _stride, _threshold);
+			//_iterator = new IteratorSimd(vecMath);
+
+			_iterator = new IteratorSimd(_apFixedPointFormat, _stride, _threshold);
 		}
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
@@ -89,11 +91,11 @@ namespace MSetGeneratorPrototype
 			var bx = mapSectionRequest.ScreenPosition.X;
 			var by = mapSectionRequest.ScreenPosition.Y;
 
-			if (bx == 0 && by == 0 || bx == 3 && by == 4)
-			{
-				ReportSamplePoints(samplePointOffsets);
-				ReportSamplePoints(samplePointsX);
-			}
+			//if (bx == 0 && by == 0 || bx == 3 && by == 4)
+			//{
+			//	ReportSamplePoints(samplePointOffsets);
+			//	ReportSamplePoints(samplePointsX);
+			//}
 
 			var cRs = new FP31Deck(samplePointsX);
 
@@ -104,19 +106,24 @@ namespace MSetGeneratorPrototype
 
 				var resultIndex = rowNumber * stride;
 				var hasEscapedSpan = new Span<bool>(hasEscapedFlags, resultIndex, stride);
-				var countsSpan = new Span<ushort>(counts, resultIndex, stride);
+				//var countsSpan = new Span<int>(counts, resultIndex, stride);
+
+				var mc = new Memory<int>(counts, resultIndex, stride);
+
 				var escapeVelocitiesSpan = new Span<ushort>(escapeVelocities, resultIndex, stride);
 
 				var zValues = GetZValues(mapSectionRequest, rowNumber, apFixedPointFormat.LimbCount, stride);
 
-				var samplePointValues = new SamplePointValues(cRs, cIs, zValues.zRs, zValues.zIs, hasEscapedSpan, countsSpan, escapeVelocitiesSpan);
+				var samplePointValues = new SamplePointValues(cRs, cIs, zValues.zRs, zValues.zIs, targetIterations, hasEscapedSpan, mc, escapeVelocitiesSpan);
 
-				SubSectionGenerator.GenerateMapSection(samplePointValues, iterator, blockPos, rowNumber, targetIterations);
+				SubSectionGenerator.GenerateMapSection(iterator, samplePointValues, threshold, blockPos, rowNumber);
 			}
 
 			mathOpCounts = iterator.MathOpCounts;
 
-			return (hasEscapedFlags, counts, escapeVelocities);
+			var shortCounts = counts.Select(x => (ushort)x).ToArray();
+
+			return (hasEscapedFlags, shortCounts, escapeVelocities);
 		}
 
 		// GetCoordinates
@@ -137,7 +144,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Get Map Parameters
-		private (SizeInt blockSize, int targetIterations, uint threshold, bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
+		private (SizeInt blockSize, int targetIterations, uint threshold, bool[] hasEscapedFlags, int[] counts, ushort[] escapeVelocities)
 			GetMapParameters(MapSectionRequest mapSectionRequest)
 		{
 			var blockSize = mapSectionRequest.BlockSize;
@@ -152,7 +159,7 @@ namespace MSetGeneratorPrototype
 			var hasEscapedFlags = new bool[blockSize.NumberOfCells];
 			
 			//var counts = mapSectionRequest.Counts;
-			var counts = new ushort[blockSize.NumberOfCells];
+			var counts = new int[blockSize.NumberOfCells];
 
 			//var escapeVelocities = mapSectionRequest.EscapeVelocities;
 			var escapeVelocities = new ushort[blockSize.NumberOfCells];
