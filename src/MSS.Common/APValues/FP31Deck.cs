@@ -123,6 +123,27 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
+		public void UpdateFrom(FP31Val fp31Val)
+		{
+			if (fp31Val.Mantissa.Length != LimbCount)
+			{
+				throw new ArgumentException("The first fp31Val has a different number of limbs than the FP31Decks's LimbCount.");
+			}
+
+			for (var j = 0; j < LimbCount; j++)
+			{
+				var destLimb = Mantissas[j];
+				var sourceLimbVal = fp31Val.Mantissa[j];
+
+				for (int i = 0; i < ValueCount; i++)
+				{
+					destLimb[i] = sourceLimbVal;
+				}
+			}
+
+			IsZero = false;
+		}
+
 		public void UpdateFrom(FP31Val[] fp31Vals)
 		{
 			if (fp31Vals[0].Mantissa.Length != LimbCount)
@@ -137,9 +158,11 @@ namespace MSS.Common.APValues
 
 			for (var j = 0; j < LimbCount; j++)
 			{
+				var destLimb = Mantissas[j];
+
 				for (var i = 0; i < fp31Vals.Length; i++)
 				{
-					Mantissas[j][i] = fp31Vals[i].Mantissa[j];
+					destLimb[i] = fp31Vals[i].Mantissa[j];
 				}
 			}
 

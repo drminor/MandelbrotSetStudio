@@ -1,4 +1,6 @@
 ﻿
+using System.Linq;
+
 namespace MSS.Types
 {
 	public class MathOpCounts
@@ -12,6 +14,7 @@ namespace MSS.Types
 			NumberOfSplits = 0;
 			NumberOfGetCarries = 0;
 			NumberOfGrtrThanOps = 0;
+			NumberOfUnusedCalcs = 0;
 		}
 
 		public long NumberOfMultiplications { get; set; }
@@ -35,6 +38,11 @@ namespace MSS.Types
 			NumberOfGrtrThanOps += mathOpCounts.NumberOfGrtrThanOps;
 
 			NumberOfUnusedCalcs += mathOpCounts.NumberOfUnusedCalcs;
+		}
+
+		public void RollUpNumberOfUnusedCalcs(int[] unusedCalcRowValues)
+		{
+			NumberOfUnusedCalcs += unusedCalcRowValues.Sum();
 		}
 
 		public override string ToString()

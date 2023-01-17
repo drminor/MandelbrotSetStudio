@@ -33,17 +33,11 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		//public IteratorSimd(VecMath9 vecMath)
 		public IteratorSimd(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
 		{
-			//_vecMath = vecMath;
-
 			_vecMath = new VecMath9(apFixedPointFormat, valueCount, threshold);
 
-			_zValuesAreZero = true;
-
 			var limbCount = _vecMath.LimbCount;
-			//var valueCount = vecMath.ValueCount;
 			var vectorCount = _vecMath.VectorCount;
 
 			_cRs = new FP31Deck(limbCount, valueCount);
@@ -97,7 +91,25 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		public Vector256<int>[] Iterate(int[] inPlayList, out FP31Deck sumOfSquares)
+		public void SetCoords(FP31Val[] samplePointsX, FP31Val samplePointY)
+		{
+			//_cRs = cRs;
+			_cRs.UpdateFrom(samplePointsX);
+			
+			//_cIs = cIs;
+			_cIs.UpdateFrom(samplePointY);
+
+			//_zRs = zRs;
+			//_zIs = zIs;
+
+			_zRs.ClearManatissMems();
+			_zIs.ClearManatissMems();
+
+			_zValuesAreZero = true;
+		}
+
+
+		public Vector256<int>[] Iterate(int[] inPlayList)
 		{
 			try
 			{
@@ -128,8 +140,6 @@ namespace MSetGeneratorPrototype
 				_vecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, inPlayList);
 
 				_vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagVectors, inPlayList);
-
-				sumOfSquares = _sumOfSqrs;
 
 				return _escapedFlagVectors;
 			}

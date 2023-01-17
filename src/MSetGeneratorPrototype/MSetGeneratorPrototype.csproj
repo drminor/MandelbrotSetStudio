@@ -8,6 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SamplePointValues.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="SamplePointValues.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>
 

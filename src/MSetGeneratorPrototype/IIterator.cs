@@ -11,11 +11,10 @@ namespace MSetGeneratorPrototype
 		uint Threshold { get; set; } 
 		MathOpCounts MathOpCounts { get; }
 
-		Vector256<int>[] Iterate(int[] inPlayList, out FP31Deck sumOfSquares);
-
-		//Vector256<int>[] Iterate(SamplePointValues samplePointValues, out FP31Deck sumOfSquares);
-
-
+		void SetCoords(FP31Val[] samplePointsX, FP31Val samplePointY);
 		void SetCoords(FP31Deck cRs, FP31Deck cIs, FP31Deck zRs, FP31Deck zIs);
+
+
+		Vector256<int>[] Iterate(int[] inPlayList);
 	}
 }
