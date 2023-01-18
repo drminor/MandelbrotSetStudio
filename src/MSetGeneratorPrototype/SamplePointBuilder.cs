@@ -1,6 +1,4 @@
 ﻿using MSS.Common.APValues;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
 
 namespace MSetGeneratorPrototype
 {
@@ -18,6 +16,20 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
+		public static FP31Val[] BuildSamplePointOffsets(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
+		{
+			var offsets = new FP31Val[extent];
+
+			for (var i = 0; i < extent; i++)
+			{
+				offsets[i] = scalarMath9.Multiply(delta, (byte)i);
+			}
+
+			return offsets;
+		}
+
+		#region NOT USED
+
 		public static FP31Val[] BuildSamplePointOffsetsOld(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
 		{
 			var offsets = new FP31Val[extent];
@@ -28,29 +40,11 @@ namespace MSetGeneratorPrototype
 			{
 				offsets[i] = acc;
 
-				acc = scalarMath9.Add(acc, delta, "BuildSamplePointOffsets"); 
+				acc = scalarMath9.Add(acc, delta, "BuildSamplePointOffsets");
 			}
 
 			return offsets;
 		}
-
-		public static FP31Val[] BuildSamplePointOffsets(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
-		{
-			var offsets = new FP31Val[extent];
-
-			offsets[0] = FP31ValHelper.CreateNewZeroFP31Val(scalarMath9.ApFixedPointFormat, delta.Precision);
-
-			for (var i = 1; i < extent; i++)
-			{
-				var samplePointOffset = scalarMath9.Multiply(delta, (byte)i);
-				offsets[i] = samplePointOffset;
-			}
-
-			return offsets;
-		}
-
-
-		#region NOT USED
 
 		//public static FP31Val[] BuildSamplePointOffsetsOld(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
 		//{

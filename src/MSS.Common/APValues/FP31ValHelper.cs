@@ -645,14 +645,14 @@ namespace MSS.Common.APValues
 			return tResult.ToArray();
 		}
 
-		public static BigInteger FromFwUInts(uint[] partialWordLimbs, bool sign)
+		public static BigInteger FromFwUInts(uint[] fullWordLimbs, bool sign)
 		{
 			var result = BigInteger.Zero;
 
-			for (var i = partialWordLimbs.Length - 1; i >= 0; i--)
+			for (var i = fullWordLimbs.Length - 1; i >= 0; i--)
 			{
 				result *= BI_HALF_WORD_FACTOR;
-				result += partialWordLimbs[i];
+				result += fullWordLimbs[i];
 			}
 
 			result = sign ? result : BigInteger.Negate(result);

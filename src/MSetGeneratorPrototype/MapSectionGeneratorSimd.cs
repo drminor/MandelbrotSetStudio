@@ -27,9 +27,6 @@ namespace MSetGeneratorPrototype
 			_stride = 128;
 			_threshold = 4u;
 
-			//var vecMath = new VecMath9(_apFixedPointFormat, _stride, _threshold);
-			//_iterator = new IteratorSimd(vecMath);
-
 			_iterator = new IteratorSimd(_apFixedPointFormat, _stride, _threshold);
 		}
 
@@ -152,12 +149,6 @@ namespace MSetGeneratorPrototype
 			var targetIterationsVector = iterationState.TargetIterationsVector;
 
 			iterationState.GetVectors(out var hasEscapedFlagsVectors, out var countsVectors, out var escapeVelocitiesVectors, out var doneFlagsVectors, out var unusedCalcsVectors);
-
-			//var hasEscapedFlagsVectors = samplePointValues.HasEscapedFlagsV;
-			//var countsVectors = samplePointValues.CountsV;
-			//var escapeVelocitiesVectors = samplePointValues.EscapeVelocitiesV;
-			//var doneFlagsVectors = samplePointValues.DoneFlagsV;
-			//var unusedCalcsVectors = samplePointValues.UnusedCalcsV;
 
 			var indexes = iterationState.InPlayList;
 

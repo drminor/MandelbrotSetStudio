@@ -40,15 +40,19 @@ namespace MSetGeneratorPrototype
 		private static readonly Vector256<uint> SHUFFLE_PACK_LOW_VEC = Vector256.Create(0u, 2u, 4u, 6u, 0u, 0u, 0u, 0u);
 		private static readonly Vector256<uint> SHUFFLE_PACK_HIGH_VEC = Vector256.Create(0u, 0u, 0u, 0u, 0u, 2u, 4u, 6u);
 
-		private FP31DeckPW _squareResult0;
-		private FP31DeckPW _squareResult1;
-		private FP31DeckPW _squareResult2;
+		private FP31VectorsPW _squareResult0;
+		private FP31VectorsPW _squareResult1;
+		private FP31VectorsPW _squareResult2;
 
-		private FP31Deck _negationResult;
-		private FP31Deck _additionResult;
+		private FP31Vectors _negationResult;
+		private FP31Vectors _additionResult;
+
 
 		private Vector256<uint>[] _ones;
 		private Vector256<int> _thresholdVector;
+
+		private Vector256<uint>[] _carryVectors;
+		private Vector256<ulong>[] _carryVectorsLong;
 
 		private static readonly bool USE_DET_DEBUG = false;
 
@@ -74,15 +78,21 @@ namespace MSetGeneratorPrototype
 
 			MathOpCounts = new MathOpCounts();
 
-			_squareResult0 = new FP31DeckPW(LimbCount, ValueCount);
-			_squareResult1 = new FP31DeckPW(LimbCount * 2, ValueCount);
-			_squareResult2 = new FP31DeckPW(LimbCount * 2, ValueCount);
+			_squareResult0 = new FP31VectorsPW(LimbCount, ValueCount);
+			_squareResult1 = new FP31VectorsPW(LimbCount * 2, ValueCount);
+			_squareResult2 = new FP31VectorsPW(LimbCount * 2, ValueCount);
 
-			_negationResult = new FP31Deck(LimbCount, ValueCount);
-			_additionResult = new FP31Deck(LimbCount, ValueCount);
+			//_negationResult = new FP31Deck(LimbCount, ValueCount);
+			//_additionResult = new FP31Deck(LimbCount, ValueCount);
+
+			_negationResult = new FP31Vectors(LimbCount, ValueCount);
+			_additionResult = new FP31Vectors(LimbCount, ValueCount);
 
 			var justOne = Vector256.Create(1u);
 			_ones = Enumerable.Repeat(justOne, VectorCount).ToArray();
+
+			_carryVectors = Enumerable.Repeat(Vector256<uint>.Zero, VectorCount * 2).ToArray();
+			_carryVectorsLong = Enumerable.Repeat(Vector256<ulong>.Zero, VectorCount * 2).ToArray();
 		}
 
 		private int GetThresholdMsl(uint threshold, ApFixedPointFormat apFixedPointFormat)
@@ -132,7 +142,7 @@ namespace MSetGeneratorPrototype
 
 		#region Multiply and Square
 
-		public void Square(FP31Deck a, FP31Deck result, int[] inPlayList)
+		public void Square(FP31Vectors a, FP31Vectors result, int[] inPlayList)
 		{
 			// Convert back to standard, i.e., non two's compliment.
 			// Our multiplication routines don't support 2's compliment.
@@ -152,7 +162,7 @@ namespace MSetGeneratorPrototype
 			ShiftAndTrim(_squareResult2, result, inPlayList);
 		}
 
-		private void SquareInternal(FP31DeckPW source, FP31DeckPW result, int[] inPlayListNarrow)
+		private void SquareInternal(FP31VectorsPW source, FP31VectorsPW result, int[] inPlayListNarrow)
 		{
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
@@ -165,6 +175,10 @@ namespace MSetGeneratorPrototype
 				{
 					var left = source.GetLimbVectorsUW(j);
 					var right = source.GetLimbVectorsUW(i);
+
+					//var left = source.GetLimbVectorsUL(j);
+					//var right = source.GetLimbVectorsUL(i);
+
 
 					var resultPtr = j + i;  // 0, 1, 1, 2
 
@@ -217,14 +231,16 @@ namespace MSetGeneratorPrototype
 
 		#region Multiply Post Processing
 
-		private void SumThePartials(FP31DeckPW source, FP31DeckPW result, int[] inPlayListNarrow)
+		private void SumThePartials(FP31VectorsPW source, FP31VectorsPW result, int[] inPlayListNarrow)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
 			// This will leave each result bin with a value <= 2^32 for the final digit.
 			// If the MSL produces a carry, throw an exception.
 
-			var carryVectors = Enumerable.Repeat(Vector256<ulong>.Zero, VectorCount * 2).ToArray();
+			Array.Clear(_carryVectorsLong);
+			//var carryVectors = Enumerable.Repeat(Vector256<ulong>.Zero, VectorCount * 2).ToArray();
+
 			var indexes = inPlayListNarrow;
 
 			var limbCnt = source.LimbCount;
@@ -238,16 +254,16 @@ namespace MSetGeneratorPrototype
 				{
 					var idx = indexes[idxPtr];
 
-					var withCarries = Avx2.Add(pProductVectors[idx], carryVectors[idx]);
+					var withCarries = Avx2.Add(pProductVectors[idx], _carryVectorsLong[idx]);
 
 					resultVectors[idx] = Avx2.And(withCarries, HIGH33_MASK_VEC_L);						// The low 31 bits of the sum is the result.
-					carryVectors[idx] = Avx2.ShiftRightLogical(withCarries, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+					_carryVectorsLong[idx] = Avx2.ShiftRightLogical(withCarries, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 					MathOpCounts.NumberOfSplits++;
 				}
 			}
 		}
 
-		private void ShiftAndTrim(FP31DeckPW sourceLimbs, FP31Deck resultLimbs, int[] inPlayList)
+		private void ShiftAndTrim(FP31VectorsPW sourceLimbs, FP31Vectors resultLimbs, int[] inPlayList)
 		{
 			//ValidateIsSplit(mantissa);
 
@@ -333,7 +349,7 @@ namespace MSetGeneratorPrototype
 
 		#region Add and Subtract
 
-		public void Sub(FP31Deck a, FP31Deck b, FP31Deck c, int[] inPlayList)
+		public void Sub(FP31Vectors a, FP31Vectors b, FP31Vectors c, int[] inPlayList)
 		{
 			//CheckReservedBitIsClear(b, "Negating B");
 
@@ -343,9 +359,12 @@ namespace MSetGeneratorPrototype
 			Add(a, _negationResult, c, inPlayList);
 		}
 
-		public void Add(FP31Deck a, FP31Deck b, FP31Deck c, int[] inPlayList)
+		public void Add(FP31Vectors a, FP31Vectors b, FP31Vectors c, int[] inPlayList)
 		{
-			var carryVectors = Enumerable.Repeat(Vector256<uint>.Zero, VectorCount).ToArray();
+
+			//var carryVectors = Enumerable.Repeat(Vector256<uint>.Zero, VectorCount).ToArray();
+			Array.Clear(_carryVectors);
+
 			var indexes = inPlayList;
 
 			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
@@ -362,7 +381,7 @@ namespace MSetGeneratorPrototype
 					var right = limbVecsB[idx];
 
 					var sumVector = Avx2.Add(left, right);
-					var newValuesVector = Avx2.Add(sumVector, carryVectors[idx]);
+					var newValuesVector = Avx2.Add(sumVector, _carryVectors[idx]);
 					MathOpCounts.NumberOfAdditions += 2;
 
 					var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
@@ -371,9 +390,9 @@ namespace MSetGeneratorPrototype
 					MathOpCounts.NumberOfSplits++;
 
 					if (USE_DET_DEBUG)
-						ReportForAddition(limbPtr, left, right, carryVectors[idx], newValuesVector, limbValues, newCarries);
+						ReportForAddition(limbPtr, left, right, _carryVectors[idx], newValuesVector, limbValues, newCarries);
 
-					carryVectors[idx] = newCarries;
+					_carryVectors[idx] = newCarries;
 				}
 			}
 
@@ -395,7 +414,7 @@ namespace MSetGeneratorPrototype
 			//}
 		}
 
-		public void AddThenSquare(FP31Deck a, FP31Deck b, FP31Deck c, int[] inPlayList)
+		public void AddThenSquare(FP31Vectors a, FP31Vectors b, FP31Vectors c, int[] inPlayList)
 		{
 			Add(a, b, _additionResult, inPlayList);
 			Square(_additionResult, c, inPlayList);
@@ -405,7 +424,7 @@ namespace MSetGeneratorPrototype
 
 		#region Two Compliment Support
 
-		private void Negate(FP31Deck source, FP31Deck result, int[] inPlayList)
+		private void Negate(FP31Vectors source, FP31Vectors result, int[] inPlayList)
 		{
 			var carryVectors = _ones;
 			var indexes = inPlayList;
@@ -438,7 +457,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		private void ConvertFrom2C(FP31Deck source, FP31DeckPW result, int[] inPlayList)
+		private void ConvertFrom2C(FP31Vectors source, FP31VectorsPW result, int[] inPlayList)
 		{
 			//CheckReservedBitIsClear(source, "ConvertFrom2C");
 
@@ -457,6 +476,7 @@ namespace MSetGeneratorPrototype
 					var idx = indexes[idxPtr];
 					var resultIdx = idx * 2;
 
+
 					if (signBitFlags[idx] == -1)
 					{
 						// All positive values
@@ -464,7 +484,7 @@ namespace MSetGeneratorPrototype
 						// Take the lower 4 values and set the low halves of each result
 						resultLimbVecs[resultIdx] = Avx2.And(Avx2.PermuteVar8x32(limbVecs[idx], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
 
-						// Take the lower 4 values and set the low halves of each result
+						// Take the higher 4 values and set the low halves of each result
 						resultLimbVecs[resultIdx + 1] = Avx2.And(Avx2.PermuteVar8x32(limbVecs[idx], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 					}
 					//else if (signBitFlags[idx] == 0)
@@ -545,7 +565,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		private int[] GetSignBits(FP31Deck source, int[] inPlayList, out Vector256<int>[] signBitVecs)
+		private int[] GetSignBits(FP31Vectors source, int[] inPlayList, out Vector256<int>[] signBitVecs)
 		{
 			var indexes = inPlayList;
 
@@ -566,7 +586,7 @@ namespace MSetGeneratorPrototype
 			return signBitFlags;
 		}
 
-		private void CheckReservedBitIsClear(FP31Deck sourceLimbs, string description, int[] inPlayList)
+		private void CheckReservedBitIsClear(FP31Vectors sourceLimbs, string description, int[] inPlayList)
 		{
 			var sb = new StringBuilder();
 
@@ -656,7 +676,7 @@ namespace MSetGeneratorPrototype
 			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}. hpOfNv: {nvHiPart}. unSNv: {unSNv}\n");
 		}
 
-		private void ExpandTo(FP31Deck source, FP31DeckPW result, int[] inPlayList)
+		private void ExpandTo(FP31Vectors source, FP31VectorsPW result, int[] inPlayList)
 		{
 			var indexes = inPlayList;
 
@@ -679,7 +699,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		private void PackTo(FP31DeckPW source, FP31Deck result, int[] inPlayList)
+		private void PackTo(FP31VectorsPW source, FP31Vectors result, int[] inPlayList)
 		{
 			var indexes = inPlayList;
 
@@ -705,7 +725,7 @@ namespace MSetGeneratorPrototype
 
 		#region Comparison
 
-		public void IsGreaterOrEqThanThreshold(FP31Deck a, Vector256<int>[] results, int[] inPlayList)
+		public void IsGreaterOrEqThanThreshold(FP31Vectors a, Vector256<int>[] results, int[] inPlayList)
 		{
 			var left = a.GetLimbVectorsUW(LimbCount - 1);
 			var right = _thresholdVector;

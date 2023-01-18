@@ -12,22 +12,25 @@ namespace MSetGeneratorPrototype
 
 		private VecMath9 _vecMath;
 
-		private FP31Deck _cRs;
-		private FP31Deck _cIs;
-		private FP31Deck _zRs;
-		private FP31Deck _zIs;
+		private FP31Deck _cRsTemp;
+		private FP31Deck _cIsTemp;
+
+		private FP31Vectors _cRs;
+		private FP31Vectors _cIs;
+		private FP31Vectors _zRs;
+		private FP31Vectors _zIs;
 		private bool _zValuesAreZero;
 
-		private FP31Deck _zRSqrs;
-		private FP31Deck _zISqrs;
+		private FP31Vectors _zRSqrs;
+		private FP31Vectors _zISqrs;
 
-		private FP31Deck _sumOfSqrs;
+		private FP31Vectors _sumOfSqrs;
 
 		private Vector256<int>[] _escapedFlagVectors;
 
-		private FP31Deck _zRZiSqrs;
-		private FP31Deck _zRs2;
-		private FP31Deck _zIs2;
+		private FP31Vectors _zRZiSqrs;
+		private FP31Vectors _zRs2;
+		private FP31Vectors _zIs2;
 
 		#endregion
 
@@ -40,22 +43,25 @@ namespace MSetGeneratorPrototype
 			var limbCount = _vecMath.LimbCount;
 			var vectorCount = _vecMath.VectorCount;
 
-			_cRs = new FP31Deck(limbCount, valueCount);
-			_cIs = new FP31Deck(limbCount, valueCount);
-			_zRs = new FP31Deck(limbCount, valueCount);
-			_zIs = new FP31Deck(limbCount, valueCount);
+			_cRsTemp = new FP31Deck(limbCount, valueCount);
+			_cIsTemp = new FP31Deck(limbCount, valueCount);
+
+			_cRs = new FP31Vectors(limbCount, valueCount);
+			_cIs = new FP31Vectors(limbCount, valueCount);
+			_zRs = new FP31Vectors(limbCount, valueCount);
+			_zIs = new FP31Vectors(limbCount, valueCount);
 			_zValuesAreZero = true;
 
 
-			_zRSqrs = new FP31Deck(limbCount, valueCount);
-			_zISqrs = new FP31Deck(limbCount, valueCount);
-			_sumOfSqrs = new FP31Deck(limbCount, valueCount);
+			_zRSqrs = new FP31Vectors(limbCount, valueCount);
+			_zISqrs = new FP31Vectors(limbCount, valueCount);
+			_sumOfSqrs = new FP31Vectors(limbCount, valueCount);
 
 			_escapedFlagVectors = new Vector256<int>[vectorCount];
 
-			_zRZiSqrs = new FP31Deck(limbCount, valueCount);
-			_zRs2 = new FP31Deck(limbCount, valueCount);
-			_zIs2 = new FP31Deck(limbCount, valueCount);
+			_zRZiSqrs = new FP31Vectors(limbCount, valueCount);
+			_zRs2 = new FP31Vectors(limbCount, valueCount);
+			_zIs2 = new FP31Vectors(limbCount, valueCount);
 		}
 
 		#endregion
@@ -78,26 +84,29 @@ namespace MSetGeneratorPrototype
 
 		public void SetCoords(FP31Deck cRs, FP31Deck cIs, FP31Deck zRs, FP31Deck zIs)
 		{
-			_cRs = cRs;
-			_cIs = cIs;
-			_zRs = zRs;
-			_zIs = zIs;
+			throw new NotImplementedException();
+			//_cRs = cRs;
+			//_cIs = cIs;
+			//_zRs = zRs;
+			//_zIs = zIs;
 
-			_zValuesAreZero = zRs.IsZero || zIs.IsZero;
+			//_zValuesAreZero = zRs.IsZero || zIs.IsZero;
 
-			if (_zValuesAreZero)
-			{
-				Debug.Assert(zRs.IsZero && zIs.IsZero, "One of zRs or zIs is zero, but both zRs and zIs are not zero.");
-			}
+			//if (_zValuesAreZero)
+			//{
+			//	Debug.Assert(zRs.IsZero && zIs.IsZero, "One of zRs or zIs is zero, but both zRs and zIs are not zero.");
+			//}
 		}
 
 		public void SetCoords(FP31Val[] samplePointsX, FP31Val samplePointY)
 		{
 			//_cRs = cRs;
-			_cRs.UpdateFrom(samplePointsX);
+			_cRsTemp.UpdateFrom(samplePointsX);
+			_cRs = new FP31Vectors(_cRsTemp);
 			
 			//_cIs = cIs;
-			_cIs.UpdateFrom(samplePointY);
+			_cIsTemp.UpdateFrom(samplePointY);
+			_cIs = new FP31Vectors(_cIsTemp);
 
 			//_zRs = zRs;
 			//_zIs = zIs;

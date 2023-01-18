@@ -16,7 +16,7 @@ namespace MSetGeneratorPrototype
 
 		private readonly Memory<int> _hasEscapedFlagsM;
 		private readonly Memory<int> _countsM;
-		private readonly  Memory<int> _escapeVelocitiesM;
+		private readonly Memory<int> _escapeVelocitiesM;
 
 		private readonly Memory<int> _doneFlagsM;
 		private readonly Memory<int> _unusedCalcsM;
