@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+//using MSS.Common.SmxVals;
 
 namespace MSS.Common.APValues
 {
@@ -31,27 +32,27 @@ namespace MSS.Common.APValues
 			}
 		}
 
-		public FP31Vectors(FP31Deck fP31Deck)
-		{
-			var limbCount = fP31Deck.LimbCount;
-			var valueCount = fP31Deck.ValueCount;
-			var vectorCount = fP31Deck.VectorCount;
+		//public FP31Vectors(FP31Deck fP31Deck)
+		//{
+		//	var limbCount = fP31Deck.LimbCount;
+		//	var valueCount = fP31Deck.ValueCount;
+		//	var vectorCount = fP31Deck.VectorCount;
 
-			Mantissas = new Vector256<uint>[limbCount][];
+		//	Mantissas = new Vector256<uint>[limbCount][];
 
-			for (var j = 0; j < limbCount; j++)
-			{
-				var destVectors = new Vector256<uint>[valueCount];
-				Mantissas[j] = destVectors;
+		//	for (var j = 0; j < limbCount; j++)
+		//	{
+		//		var destVectors = new Vector256<uint>[valueCount];
+		//		Mantissas[j] = destVectors;
 
-				var sourceVectors = fP31Deck.GetLimbVectorsUW(j);
+		//		var sourceVectors = fP31Deck.GetLimbVectorsUW(j);
 
-				for (var i = 0; i < vectorCount; i++)
-				{
-					destVectors[i] = sourceVectors[i];
-				}
-			}
-		}
+		//		for (var i = 0; i < vectorCount; i++)
+		//		{
+		//			destVectors[i] = sourceVectors[i];
+		//		}
+		//	}
+		//}
 
 		public FP31Vectors(FP31Val fp31Val, int extent) : this(CreateASingleVector(fp31Val), extent / Lanes)
 		{ }

@@ -1,10 +1,11 @@
 ﻿using MSetGeneratorPrototype;
 using MSS.Common.APValues;
+using MSS.Common.SmxVals;
 using MSS.Types;
 
 namespace EngineTest
 {
-	internal class FP31DeckTestVal
+    internal class FP31DeckTestVal
 	{
 		public FP31ValTestValue FP31ValTestVal { get; init; }
 		public FP31Deck Vectors { get; init; }
