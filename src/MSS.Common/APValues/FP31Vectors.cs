@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
 namespace MSS.Common.APValues
@@ -17,9 +18,18 @@ namespace MSS.Common.APValues
 		{
 			Mantissas = mantissas;
 		}
-		
-		//public FP31Vectors(FP31Val fP31Val, int extent) : this(Duplicate(fP31Val, extent))
-		//{ }
+
+		public FP31Vectors(Vector256<uint>[] mantissa, int vectorCount)
+		{
+			var limbCount = mantissa.Length;
+
+			Mantissas = new Vector256<uint>[limbCount][];
+
+			for (var j = 0; j < limbCount; j++)
+			{
+				Mantissas[j] = Enumerable.Repeat(mantissa[j], vectorCount).ToArray();
+			}
+		}
 
 		public FP31Vectors(FP31Deck fP31Deck)
 		{
@@ -43,21 +53,45 @@ namespace MSS.Common.APValues
 			}
 		}
 
-		//public FP31Vectors(FP31Val[] fp31Vals)
-		//{
-		//	var numberOfLimbs = fp31Vals[0].LimbCount;
-		//	Mantissas = new Vector256<uint>[numberOfLimbs][];
+		public FP31Vectors(FP31Val fp31Val, int extent) : this(CreateASingleVector(fp31Val), extent / Lanes)
+		{ }
 
-		//	for (var j = 0; j < numberOfLimbs; j++)
-		//	{
-		//		Mantissas[j] = new Vector256<uint>[fp31Vals.Length];
+		private static Vector256<uint>[] CreateASingleVector(FP31Val fp31Val)
+		{
+			var limbCount = fp31Val.LimbCount;
 
-		//		for (var i = 0; i < fp31Vals.Length; i++)
-		//		{
-		//			Mantissas[j][i] = fp31Vals[i].Mantissa[j];
-		//		}
-		//	}
-		//}
+			var single = new Vector256<uint>[limbCount];
+
+			for (var j = 0; j < limbCount; j++)
+			{
+				single[j] = Vector256.Create(fp31Val.Mantissa[j]);
+			}
+
+			return single;
+		}
+
+		public FP31Vectors(FP31Val[] fp31Vals)
+		{
+			var limbCount = fp31Vals[0].LimbCount;
+			var valueCount = fp31Vals.Length;
+
+			Mantissas = new Vector256<uint>[limbCount][];
+
+			for (var j = 0; j < limbCount; j++)
+			{
+				var limbs = new Vector256<uint>[fp31Vals.Length];
+
+				Span<Vector256<uint>> x = new Span<Vector256<uint>>(limbs);
+				var elements = MemoryMarshal.Cast<Vector256<uint>, uint>(x);
+
+				for (var i = 0; i < valueCount; i++)
+				{
+					elements[i] = fp31Vals[i].Mantissa[j];
+				}
+
+				Mantissas[j] = limbs;
+			}
+		}
 
 		private static Vector256<uint>[][] BuildLimbs(int limbCount, int valueCount)
 		{
@@ -77,7 +111,7 @@ namespace MSS.Common.APValues
 
 		public static readonly int Lanes = Vector256<uint>.Count;
 
-		public int ValueCount => Mantissas[0].Length / Lanes;
+		public int ValueCount => Mantissas[0].Length * Lanes;
 		public int LimbCount => Mantissas.Length;
 		public int VectorCount => Mantissas[0].Length;
 

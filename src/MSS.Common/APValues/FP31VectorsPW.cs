@@ -19,43 +19,79 @@ namespace MSS.Common.APValues
 			Mantissas = mantissas;
 		}
 
-		public FP31VectorsPW(FP31DeckPW fP31Deck)
+		public FP31VectorsPW(Vector256<ulong>[] mantissa, int vectorCount)
 		{
-			var limbCount = fP31Deck.LimbCount;
-			var valueCount = fP31Deck.ValueCount;
-			var vectorCount = fP31Deck.VectorCount;
+			var limbCount = mantissa.Length;
 
 			Mantissas = new Vector256<ulong>[limbCount][];
 
 			for (var j = 0; j < limbCount; j++)
 			{
-				var destVectors = new Vector256<ulong>[valueCount];
-				Mantissas[j] = destVectors;
-
-				var sourceVectors = fP31Deck.GetLimbVectorsUL(j);
-
-				for (var i = 0; i < vectorCount; i++)
-				{
-					destVectors[i] = sourceVectors[i];
-				}
+				Mantissas[j] = Enumerable.Repeat(mantissa[j], vectorCount).ToArray();
 			}
 		}
 
-		//public FP31VectorsPW(FP31Val[] fp31Vals)
+		//public FP31VectorsPW(FP31DeckPW fP31Deck)
 		//{
-		//	var numberOfLimbs = fp31Vals[0].LimbCount;
-		//	Mantissas = new Vector256<ulong>[numberOfLimbs][];
+		//	var limbCount = fP31Deck.LimbCount;
+		//	var valueCount = fP31Deck.ValueCount;
+		//	var vectorCount = fP31Deck.VectorCount;
 
-		//	for (var j = 0; j < numberOfLimbs; j++)
+		//	Mantissas = new Vector256<ulong>[limbCount][];
+
+		//	for (var j = 0; j < limbCount; j++)
 		//	{
-		//		Mantissas[j] = new Vector256<ulong>[fp31Vals.Length];
+		//		var destVectors = new Vector256<ulong>[valueCount];
+		//		Mantissas[j] = destVectors;
 
-		//		for (var i = 0; i < fp31Vals.Length; i++)
+		//		var sourceVectors = fP31Deck.GetLimbVectorsUL(j);
+
+		//		for (var i = 0; i < vectorCount; i++)
 		//		{
-		//			Mantissas[j][i] = fp31Vals[i].Mantissa[j];
+		//			destVectors[i] = sourceVectors[i];
 		//		}
 		//	}
 		//}
+
+		public FP31VectorsPW(FP31Val fp31Val, int extent) : this(CreateASingleVector(fp31Val), extent / Lanes)
+		{ }
+
+		private static Vector256<ulong>[] CreateASingleVector(FP31Val fp31Val)
+		{
+			var limbCount = fp31Val.LimbCount;
+
+			var single = new Vector256<ulong>[limbCount];
+
+			for (var j = 0; j < limbCount; j++)
+			{
+				single[j] = Vector256.Create((ulong)fp31Val.Mantissa[j]);
+			}
+
+			return single;
+		}
+
+		public FP31VectorsPW(FP31Val[] fp31Vals)
+		{
+			var limbCount = fp31Vals[0].LimbCount;
+			var valueCount = fp31Vals.Length;
+
+			Mantissas = new Vector256<ulong>[limbCount][];
+
+			for (var j = 0; j < limbCount; j++)
+			{
+				var limbs = new Vector256<ulong>[fp31Vals.Length];
+
+				Span<Vector256<ulong>> x = new Span<Vector256<ulong>>(limbs);
+				var elements = MemoryMarshal.Cast<Vector256<ulong>, ulong>(x);
+
+				for (var i = 0; i < valueCount; i++)
+				{
+					elements[i] = fp31Vals[i].Mantissa[j];
+				}
+
+				Mantissas[j] = limbs;
+			}
+		}
 
 		private static Vector256<ulong>[][] BuildLimbs(int limbCount, int valueCount)
 		{
@@ -75,7 +111,7 @@ namespace MSS.Common.APValues
 
 		public static readonly int Lanes = Vector256<ulong>.Count;
 
-		public int ValueCount => Mantissas[0].Length / Lanes;
+		public int ValueCount => Mantissas[0].Length * Lanes;
 		public int LimbCount => Mantissas.Length;
 		public int VectorCount => Mantissas[0].Length;
 

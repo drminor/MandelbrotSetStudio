@@ -86,7 +86,7 @@ namespace MSetGeneratorPrototype
 			//	ReportSamplePoints(samplePointsX);
 			//}
 
-			//var cRs = new FP31Deck(samplePointsX);
+			iterator.Crs = new FP31Vectors(samplePointsX);
 
 			iterator.Threshold = threshold;
 			IterationState iterationState = new IterationState(stride, targetIterations);
@@ -103,11 +103,13 @@ namespace MSetGeneratorPrototype
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
-				//var cIs = new FP31Deck(yPoint, stride);
-				//var (zRs, zIs) = GetZValues(mapSectionRequest, rowNumber, apFixedPointFormat.LimbCount, stride);
+				iterator.Cis = new FP31Vectors(yPoint, stride);
 
-				//iterator.SetCoords(cRs, cIs, zRs, zIs);
-				iterator.SetCoords(samplePointsX, yPoint);
+				//var (zRs, zIs) = GetZValues(mapSectionRequest, rowNumber, apFixedPointFormat.LimbCount, stride);
+				iterator.Zrs.ClearManatissMems();
+				iterator.Zis.ClearManatissMems();
+				iterator.ZValuesAreZero = true;
+
 				GenerateMapRow(iterator, iterationState);
 
 				iterationState.Counts.CopyTo(countsRow);
@@ -236,11 +238,11 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Get the Z values
-		private (FP31Deck zRs, FP31Deck zIs)
+		private (FP31Vectors zRs, FP31Vectors zIs)
 			GetZValues(MapSectionRequest mapSectionRequest, int rowNumber, int limbCount, int valueCount)
 		{
-			var zRs = new FP31Deck(limbCount, valueCount);
-			var zIs = new FP31Deck(limbCount, valueCount);
+			var zRs = new FP31Vectors(limbCount, valueCount);
+			var zIs = new FP31Vectors(limbCount, valueCount);
 
 			return (zRs, zIs);
 		}

@@ -12,15 +12,6 @@ namespace MSetGeneratorPrototype
 
 		private VecMath9 _vecMath;
 
-		private FP31Deck _cRsTemp;
-		private FP31Deck _cIsTemp;
-
-		private FP31Vectors _cRs;
-		private FP31Vectors _cIs;
-		private FP31Vectors _zRs;
-		private FP31Vectors _zIs;
-		private bool _zValuesAreZero;
-
 		private FP31Vectors _zRSqrs;
 		private FP31Vectors _zISqrs;
 
@@ -43,15 +34,12 @@ namespace MSetGeneratorPrototype
 			var limbCount = _vecMath.LimbCount;
 			var vectorCount = _vecMath.VectorCount;
 
-			_cRsTemp = new FP31Deck(limbCount, valueCount);
-			_cIsTemp = new FP31Deck(limbCount, valueCount);
+			Crs = new FP31Vectors(limbCount, valueCount);
+			Cis = new FP31Vectors(limbCount, valueCount);
+			Zrs = new FP31Vectors(limbCount, valueCount);
+			Zis = new FP31Vectors(limbCount, valueCount);
 
-			_cRs = new FP31Vectors(limbCount, valueCount);
-			_cIs = new FP31Vectors(limbCount, valueCount);
-			_zRs = new FP31Vectors(limbCount, valueCount);
-			_zIs = new FP31Vectors(limbCount, valueCount);
-			_zValuesAreZero = true;
-
+			ZValuesAreZero = true;
 
 			_zRSqrs = new FP31Vectors(limbCount, valueCount);
 			_zISqrs = new FP31Vectors(limbCount, valueCount);
@@ -70,6 +58,13 @@ namespace MSetGeneratorPrototype
 
 		public ApFixedPointFormat ApFixedPointFormat => _vecMath.ApFixedPointFormat;
 
+		public FP31Vectors Crs { get; set; }
+		public FP31Vectors Cis { get; set; }
+		public FP31Vectors Zrs { get; set; }
+		public FP31Vectors Zis { get; set; }
+
+		public bool ZValuesAreZero { get; set; }
+
 		public uint Threshold
 		{
 			get => _vecMath.Threshold;
@@ -82,70 +77,69 @@ namespace MSetGeneratorPrototype
 
 		#region Public Methods
 
-		public void SetCoords(FP31Deck cRs, FP31Deck cIs, FP31Deck zRs, FP31Deck zIs)
-		{
-			throw new NotImplementedException();
-			//_cRs = cRs;
-			//_cIs = cIs;
-			//_zRs = zRs;
-			//_zIs = zIs;
+		//public void SetCoords(FP31Deck cRs, FP31Deck cIs, FP31Deck zRs, FP31Deck zIs)
+		//{
+		//	throw new NotImplementedException();
+		//	//_cRs = cRs;
+		//	//_cIs = cIs;
+		//	//_zRs = zRs;
+		//	//_zIs = zIs;
 
-			//_zValuesAreZero = zRs.IsZero || zIs.IsZero;
+		//	//_zValuesAreZero = zRs.IsZero || zIs.IsZero;
 
-			//if (_zValuesAreZero)
-			//{
-			//	Debug.Assert(zRs.IsZero && zIs.IsZero, "One of zRs or zIs is zero, but both zRs and zIs are not zero.");
-			//}
-		}
+		//	//if (_zValuesAreZero)
+		//	//{
+		//	//	Debug.Assert(zRs.IsZero && zIs.IsZero, "One of zRs or zIs is zero, but both zRs and zIs are not zero.");
+		//	//}
+		//}
 
-		public void SetCoords(FP31Val[] samplePointsX, FP31Val samplePointY)
-		{
-			//_cRs = cRs;
-			_cRsTemp.UpdateFrom(samplePointsX);
-			_cRs = new FP31Vectors(_cRsTemp);
+		//public void SetCoords(FP31Val[] samplePointsX, FP31Val samplePointY)
+		//{
+		//	//_cRs = cRs;
+		//	_cRsTemp.UpdateFrom(samplePointsX);
+		//	Crs = new FP31Vectors(_cRsTemp);
 			
-			//_cIs = cIs;
-			_cIsTemp.UpdateFrom(samplePointY);
-			_cIs = new FP31Vectors(_cIsTemp);
+		//	//_cIs = cIs;
+		//	_cIsTemp.UpdateFrom(samplePointY);
+		//	Cis = new FP31Vectors(_cIsTemp);
 
-			//_zRs = zRs;
-			//_zIs = zIs;
+		//	//Zrs = zRs;
+		//	//_zIs = zIs;
 
-			_zRs.ClearManatissMems();
-			_zIs.ClearManatissMems();
+		//	Zrs.ClearManatissMems();
+		//	Zis.ClearManatissMems();
 
-			_zValuesAreZero = true;
-		}
-
+		//	ZValuesAreZero = true;
+		//}
 
 		public Vector256<int>[] Iterate(int[] inPlayList)
 		{
 			try
 			{
-				if (_zValuesAreZero)
+				if (ZValuesAreZero)
 				{
 					// Perform the first iteration. 
-					_zRs = _cRs.Clone();
-					_zIs = _cIs.Clone();
-					_zValuesAreZero = false;
+					Zrs = Crs.Clone();
+					Zis = Cis.Clone();
+					ZValuesAreZero = false;
 				}
 				else
 				{
 					// square(z.r + z.i)
-					_vecMath.AddThenSquare(_zRs, _zIs, _zRZiSqrs, inPlayList);
+					_vecMath.AddThenSquare(Zrs, Zis, _zRZiSqrs, inPlayList);
 
 					// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
-					_vecMath.Sub(_zRZiSqrs, _zRSqrs, _zIs, inPlayList);
-					_vecMath.Sub(_zIs, _zISqrs, _zIs2, inPlayList);
-					_vecMath.Add(_zIs2, _cIs, _zIs, inPlayList);
+					_vecMath.Sub(_zRZiSqrs, _zRSqrs, Zis, inPlayList);
+					_vecMath.Sub(Zis, _zISqrs, _zIs2, inPlayList);
+					_vecMath.Add(_zIs2, Cis, Zis, inPlayList);
 
 					// z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
 					_vecMath.Sub(_zRSqrs, _zISqrs, _zRs2, inPlayList);
-					_vecMath.Add(_zRs2, _cRs, _zRs, inPlayList);
+					_vecMath.Add(_zRs2, Crs, Zrs, inPlayList);
 				}
 
-				_vecMath.Square(_zRs, _zRSqrs, inPlayList);
-				_vecMath.Square(_zIs, _zISqrs, inPlayList);
+				_vecMath.Square(Zrs, _zRSqrs, inPlayList);
+				_vecMath.Square(Zis, _zISqrs, inPlayList);
 				_vecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, inPlayList);
 
 				_vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagVectors, inPlayList);

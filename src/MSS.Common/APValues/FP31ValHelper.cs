@@ -327,25 +327,25 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
-		public static void ExpandTo(FP31Deck source, FP31DeckPW result)
-		{
-			for (var i = 0; i < source.Mantissas.Length; i++)
-			{
-				var signExtendedLimbs = ExtendSignBit(source.Mantissas[i]);
+		//public static void ExpandTo(FP31Deck source, FP31DeckPW result)
+		//{
+		//	for (var i = 0; i < source.Mantissas.Length; i++)
+		//	{
+		//		var signExtendedLimbs = ExtendSignBit(source.Mantissas[i]);
 
-				Array.Copy(signExtendedLimbs, result.Mantissas[i], signExtendedLimbs.Length);
-			}
-		}
+		//		Array.Copy(signExtendedLimbs, result.Mantissas[i], signExtendedLimbs.Length);
+		//	}
+		//}
 
-		public static void PackTo(FP31DeckPW source, FP31Deck result)
-		{
-			for (var i = 0; i < source.Mantissas.Length; i++)
-			{
-				var lows = TakeLowerHalves(source.Mantissas[i]);
+		//public static void PackTo(FP31DeckPW source, FP31Deck result)
+		//{
+		//	for (var i = 0; i < source.Mantissas.Length; i++)
+		//	{
+		//		var lows = TakeLowerHalves(source.Mantissas[i]);
 
-				Array.Copy(lows, result.Mantissas[i], lows.Length);
-			}
-		}
+		//		Array.Copy(lows, result.Mantissas[i], lows.Length);
+		//	}
+		//}
 
 		public static uint[] TakeLowerHalves(ulong[] partialWordLimbs)
 		{

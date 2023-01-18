@@ -25,14 +25,16 @@ namespace MSS.Common.APValues
 
 		public FP31Deck(FP31Val[] fp31Vals)
 		{
-			var numberOfLimbs = fp31Vals[0].LimbCount;
-			Mantissas = new uint[numberOfLimbs][];
+			var limbCount = fp31Vals[0].LimbCount;
+			var valueCount = fp31Vals.Length;
 
-			for (var j = 0; j < numberOfLimbs; j++)
+			Mantissas = new uint[limbCount][];
+
+			for (var j = 0; j < limbCount; j++)
 			{
-				Mantissas[j] = new uint[fp31Vals.Length];
+				Mantissas[j] = new uint[valueCount];
 
-				for (var i = 0; i < fp31Vals.Length; i++)
+				for (var i = 0; i < valueCount; i++)
 				{
 					Mantissas[j][i] = fp31Vals[i].Mantissa[j];
 				}
@@ -76,6 +78,7 @@ namespace MSS.Common.APValues
 
 			return result;
 		}
+
 		#endregion
 
 		#region Public Properties
