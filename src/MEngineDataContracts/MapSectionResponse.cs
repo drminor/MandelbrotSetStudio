@@ -36,7 +36,7 @@ namespace MEngineDataContracts
 			MapCalcSettings = mapCalcSettings;
 			Counts = counts;
 			EscapeVelocities = escapeVelocities;
-			DoneFlags = hasEscapedFlags;
+			HasEscapedFlags = hasEscapedFlags;
 			ZValues = zValues;
 			IncludeZValues = zValues != null;
 			RequestCancelled = false;
@@ -61,15 +61,13 @@ namespace MEngineDataContracts
 		public MapCalcSettings MapCalcSettings { get; init; }
 
 		[DataMember(Order = 7)]
-		public ushort[] Counts { get; init; }
+		public bool[] HasEscapedFlags { get; init; }
 
 		[DataMember(Order = 8)]
-		public ushort[] EscapeVelocities { get; init; }
-
-		// TODO: Move this to position 7 and rename to HasEscapedFlags
+		public ushort[] Counts { get; init; }
 
 		[DataMember(Order = 9)]
-		public bool[] DoneFlags { get; init; }
+		public ushort[] EscapeVelocities { get; init; }
 
 		public double[] ZValuesForLocalStorage { get; init; }
 

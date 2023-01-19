@@ -20,14 +20,20 @@ namespace MSetGeneratorPrototype
 
 		private readonly IIterator _iterator;
 
+		private int _vectorCount;
+		private Vector256<int> _targetIterationsVector;
+
 		public MapSectionGeneratorSimd()
 		{
 			var howManyLimbs = 2;
 			_apFixedPointFormat = new ApFixedPointFormat(howManyLimbs);
 			_stride = 128;
+			_vectorCount = _stride / Vector256<uint>.Count;
 			_threshold = 4u;
 
 			_iterator = new IteratorSimd(_apFixedPointFormat, _stride, _threshold);
+
+			_targetIterationsVector = new Vector256<int>();
 		}
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
@@ -89,7 +95,11 @@ namespace MSetGeneratorPrototype
 			iterator.Crs = new FP31Vectors(samplePointsX);
 
 			iterator.Threshold = threshold;
-			IterationState iterationState = new IterationState(stride, targetIterations);
+
+			var vectorCount = iterator.Crs.VectorCount;
+			_targetIterationsVector = Vector256.Create(targetIterations);
+
+			IterationState iterationState = new IterationState(stride);
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
@@ -112,16 +122,22 @@ namespace MSetGeneratorPrototype
 
 				GenerateMapRow(iterator, iterationState);
 
-				iterationState.Counts.CopyTo(countsRow);
-				iterationState.EscapeVelocities.CopyTo(escapeVelocitiesRow);
+				//iterationState.Counts.CopyTo(countsRow);
+				//iterationState.EscapeVelocities.CopyTo(escapeVelocitiesRow);
+
+				iterationState.CopyBackHasEscapedFlags(hasEscapedFlagsRow);
+				iterationState.CopyBackCounts(countsRow);
+				iterationState.CopyBackEscapeVelocities(escapeVelocitiesRow);
+
 			}
 
 			var shortCounts = counts.Select(x => (ushort)x).ToArray();
 			var shortEscVels = escapeVelocities.Select(x => (ushort)x).ToArray();
+			var hasEscapedFlaggs = hasEscapedFlags.Select(x => x == 1).ToArray();
 
-			var compressedHasEscapedFlags = CompressHasEscapedFlags(hasEscapedFlags);
+			//var compressedHasEscapedFlags = CompressHasEscapedFlags(hasEscapedFlags);
 
-			var result = new MapSectionResponse(mapSectionRequest, compressedHasEscapedFlags, shortCounts, shortEscVels, zValues: null);
+			var result = new MapSectionResponse(mapSectionRequest, hasEscapedFlaggs, shortCounts, shortEscVels, zValues: null);
 			result.MathOpCounts = iterator.MathOpCounts;
 
 			return result;
@@ -129,34 +145,35 @@ namespace MSetGeneratorPrototype
 
 		private void GenerateMapRow(IIterator iteratorSimd, IterationState iterationState)
 		{
-			var inPlayList = iterationState.InPlayList;
+			var inPlayList = Enumerable.Range(0, _vectorCount).ToArray();
 
 			while (inPlayList.Length > 0)
 			{
-
 				var escapedFlags = iteratorSimd.Iterate(inPlayList);
 
-				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, iterationState);
-				inPlayList = iterationState.UpdateTheInPlayList(vectorsNoLongerInPlay);
+				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, inPlayList, iterationState);
+				inPlayList = UpdateTheInPlayList(inPlayList, vectorsNoLongerInPlay);
 			}
 
-			iteratorSimd.MathOpCounts.RollUpNumberOfUnusedCalcs(iterationState.UnusedCalcs);
+			iteratorSimd.MathOpCounts.RollUpNumberOfUnusedCalcs(iterationState.GetUnusedCalcs());
 		}
 
-		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, IterationState iterationState)
+		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, int[] inPLayList, IterationState iterationState)
 		{
 			var toBeRemoved = new List<int>();
 
 			var justOne = Vector256.Create(1);
-			var targetIterationsVector = iterationState.TargetIterationsVector;
 
-			iterationState.GetVectors(out var hasEscapedFlagsVectors, out var countsVectors, out var escapeVelocitiesVectors, out var doneFlagsVectors, out var unusedCalcsVectors);
+			var hasEscapedFlagsVectors = iterationState.HasEscapedFlagsVectors;
 
-			var indexes = iterationState.InPlayList;
+			var countsVectors = iterationState.CountsVectors;
+			var escapeVelocitiesVectors = iterationState.EscapeVelocitiesVectors;
+			var doneFlagsVectors = iterationState.DoneFlagsVectors;
+			var unusedCalcsVectors = iterationState.UnusedCalcsVectors;
 
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++)
+			for (var idxPtr = 0; idxPtr < inPLayList.Length; idxPtr++)
 			{
-				var idx = indexes[idxPtr];
+				var idx = inPLayList[idxPtr];
 
 				var doneFlagsV = doneFlagsVectors[idx];
 
@@ -177,7 +194,7 @@ namespace MSetGeneratorPrototype
 				hasEscapedFlagsVectors[idx] = updatedHaveEscapedFlagsV;
 
 				// Compare the new Counts with the TargetIterations
-				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector);
+				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, _targetIterationsVector);
 
 				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
 				var escapedOrReachedVec = Avx2.Or(updatedHaveEscapedFlagsV, targetReachedCompVec);
@@ -312,5 +329,62 @@ namespace MSetGeneratorPrototype
 
 			return false;
 		}
+
+		private int[] UpdateTheInPlayList(int[] inPlayList, List<int> vectorsNoLongerInPlay)
+		{
+			var lst = inPlayList.ToList();
+
+			foreach (var vectorIndex in vectorsNoLongerInPlay)
+			{
+				lst.Remove(vectorIndex);
+			}
+
+			var updatedLst = lst.ToArray();
+
+			return updatedLst;
+		}
+
+		private int[] BuildTheInplayList(Span<bool> hasEscapedFlags, Span<ushort> counts, int targetIterations, out bool[] doneFlags)
+		{
+			var lanes = Vector256<uint>.Count;
+			var vectorCount = hasEscapedFlags.Length / lanes;
+
+			doneFlags = new bool[hasEscapedFlags.Length];
+
+			for (int i = 0; i < hasEscapedFlags.Length; i++)
+			{
+				if (hasEscapedFlags[i] | counts[i] >= targetIterations)
+				{
+					doneFlags[i] = true;
+				}
+			}
+
+			var result = Enumerable.Range(0, vectorCount).ToList();
+
+			for (int j = 0; j < vectorCount; j++)
+			{
+				var arrayPtr = j * lanes;
+
+				var allDone = true;
+
+				for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
+				{
+					if (!doneFlags[arrayPtr + lanePtr])
+					{
+						allDone = false;
+						break;
+					}
+				}
+
+				if (allDone)
+				{
+					result.Remove(j);
+				}
+			}
+
+			return result.ToArray();
+		}
+
+
 	}
 }

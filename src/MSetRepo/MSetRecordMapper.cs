@@ -250,7 +250,7 @@ namespace MSetRepo
 				source.MapCalcSettings,
 				Counts: GetBytes(source.Counts),
 				EscapeVelocities: GetBytes(source.EscapeVelocities),
-				DoneFlags: GetBytes(source.DoneFlags),
+				DoneFlags: GetBytes(source.HasEscapedFlags),
 				ZValues: zVals
 				)
 			{

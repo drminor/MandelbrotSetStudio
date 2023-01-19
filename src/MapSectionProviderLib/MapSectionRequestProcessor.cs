@@ -234,7 +234,7 @@ namespace MapSectionProviderLib
 					request.IncreasingIterations = true;
 					request.Counts = mapSectionResponse.Counts;
 					request.EscapeVelocities = mapSectionResponse.EscapeVelocities;
-					request.HasEscapedFlags = mapSectionResponse.DoneFlags;
+					request.HasEscapedFlags = mapSectionResponse.HasEscapedFlags;
 					request.ZValues = null;
 
 					QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
@@ -263,16 +263,16 @@ namespace MapSectionProviderLib
 				return true;
 			}
 
-			if (mapSectionResponse.DoneFlags.Length == 1)
+			if (mapSectionResponse.HasEscapedFlags.Length == 1)
 			{
 				// All are either done or not done
-				var result = mapSectionResponse.DoneFlags[0];
+				var result = mapSectionResponse.HasEscapedFlags[0];
 				return result;
 			}
 
 			for (var i = 0; i < mapSectionResponse.Counts.Length; i++)
 			{
-				if (!mapSectionResponse.DoneFlags[i] && mapSectionResponse.Counts[i] < requestedIterations)
+				if (!mapSectionResponse.HasEscapedFlags[i] && mapSectionResponse.Counts[i] < requestedIterations)
 				{
 					return false;
 				}

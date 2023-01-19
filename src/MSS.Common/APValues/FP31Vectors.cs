@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-//using MSS.Common.SmxVals;
 
 namespace MSS.Common.APValues
 {
