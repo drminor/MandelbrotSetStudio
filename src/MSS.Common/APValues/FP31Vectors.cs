@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -9,7 +10,7 @@ namespace MSS.Common.APValues
 	{
 		#region Constructors
 
-		public FP31Vectors(int limbCount, int valueCount) : this(BuildLimbs(limbCount, valueCount))
+		public FP31Vectors(int limbCount, int vectorCount) : this(BuildLimbs(limbCount, vectorCount))
 		{
 			IsZero = true;
 		}
@@ -93,13 +94,13 @@ namespace MSS.Common.APValues
 			}
 		}
 
-		private static Vector256<uint>[][] BuildLimbs(int limbCount, int valueCount)
+		private static Vector256<uint>[][] BuildLimbs(int limbCount, int vectorCount)
 		{
 			var result = new Vector256<uint>[limbCount][];
 
 			for (var i = 0; i < limbCount; i++)
 			{
-				result[i] = new Vector256<uint>[valueCount];
+				result[i] = new Vector256<uint>[vectorCount];
 			}
 
 			return result;
@@ -183,15 +184,7 @@ namespace MSS.Common.APValues
 
 		public void UpdateFrom(FP31Vectors source)
 		{
-			if (source.LimbCount != LimbCount)
-			{
-				throw new ArgumentException("The source deck has a different LimbCount.");
-			}
-
-			if (source.ValueCount != ValueCount)
-			{
-				throw new ArgumentException("The source deck has a different ValueCount.");
-			}
+			CheckSize(source);
 
 			for (var i = 0; i < Mantissas.Length; i++)
 			{
@@ -199,7 +192,6 @@ namespace MSS.Common.APValues
 			}
 
 			IsZero = source.IsZero;
-
 		}
 
 		public void UpdateFrom(FP31Vectors source, int sourceIndex, int destinationIndex, int length)
@@ -227,6 +219,20 @@ namespace MSS.Common.APValues
 			IsZero = false;
 		}
 
+		[Conditional("DEBUG")]
+		private void CheckSize(FP31Vectors source)
+		{
+			if (source.LimbCount != LimbCount)
+			{
+				throw new ArgumentException("The source deck has a different LimbCount.");
+			}
+
+			if (source.ValueCount != ValueCount)
+			{
+				throw new ArgumentException("The source deck has a different ValueCount.");
+			}
+		}
+
 		public void ClearManatissMems(int[] inPlayList)
 		{
 			var indexes = inPlayList;
@@ -246,12 +252,13 @@ namespace MSS.Common.APValues
 		{
 			for (var i = 0; i < LimbCount; i++)
 			{
-				var vectors = Mantissas[i];
+				//var vectors = Mantissas[i];
 
-				for (var j = 0; j < VectorCount; j++)
-				{
-					vectors[j] = Vector256<uint>.Zero;
-				}
+				//for (var j = 0; j < VectorCount; j++)
+				//{
+				//	vectors[j] = Vector256<uint>.Zero;
+				//}
+				Array.Clear(Mantissas[i]);
 			}
 
 			IsZero = true;

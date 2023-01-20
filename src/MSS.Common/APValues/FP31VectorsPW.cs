@@ -9,7 +9,7 @@ namespace MSS.Common.APValues
 	{
 		#region Constructors
 
-		public FP31VectorsPW(int limbCount, int valueCount) : this(BuildLimbs(limbCount, valueCount))
+		public FP31VectorsPW(int limbCount, int vectorCount) : this(BuildLimbs(limbCount, vectorCount))
 		{
 			IsZero = true;
 		}
@@ -93,13 +93,13 @@ namespace MSS.Common.APValues
 			}
 		}
 
-		private static Vector256<ulong>[][] BuildLimbs(int limbCount, int valueCount)
+		private static Vector256<ulong>[][] BuildLimbs(int limbCount, int vectorCount)
 		{
 			var result = new Vector256<ulong>[limbCount][];
 
 			for (var i = 0; i < limbCount; i++)
 			{
-				result[i] = Enumerable.Repeat(Vector256<ulong>.Zero, valueCount).ToArray();
+				result[i] = Enumerable.Repeat(Vector256<ulong>.Zero, vectorCount).ToArray();
 			}
 
 			return result;
@@ -170,12 +170,13 @@ namespace MSS.Common.APValues
 		{
 			for (var i = 0; i < LimbCount; i++)
 			{
-				var vectors = Mantissas[i];
+				//var vectors = Mantissas[i];
 
-				for (var j = 0; j < VectorCount; j++)
-				{
-					vectors[j] = Vector256<ulong>.Zero;
-				}
+				//for (var j = 0; j < VectorCount; j++)
+				//{
+				//	vectors[j] = Vector256<ulong>.Zero;
+				//}
+				Array.Clear(Mantissas[i]);	
 			}
 
 			IsZero = true;

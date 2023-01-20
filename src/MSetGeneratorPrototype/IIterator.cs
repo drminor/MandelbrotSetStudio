@@ -22,6 +22,6 @@ namespace MSetGeneratorPrototype
 		//void SetCoords(FP31Val[] samplePointsX, FP31Val samplePointY);
 		//void SetCoords(FP31Deck cRs, FP31Deck cIs, FP31Deck zRs, FP31Deck zIs);
 
-		Vector256<int>[] Iterate(int[] inPlayList);
+		Vector256<int>[] Iterate(int[] inPlayList, int[] inPlayListNarrow);
 	}
 }

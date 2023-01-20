@@ -34,22 +34,22 @@ namespace MSetGeneratorPrototype
 			var limbCount = _vecMath.LimbCount;
 			var vectorCount = _vecMath.VectorCount;
 
-			Crs = new FP31Vectors(limbCount, valueCount);
-			Cis = new FP31Vectors(limbCount, valueCount);
-			Zrs = new FP31Vectors(limbCount, valueCount);
-			Zis = new FP31Vectors(limbCount, valueCount);
+			Crs = new FP31Vectors(limbCount, vectorCount);
+			Cis = new FP31Vectors(limbCount, vectorCount);
+			Zrs = new FP31Vectors(limbCount, vectorCount);
+			Zis = new FP31Vectors(limbCount, vectorCount);
 
 			ZValuesAreZero = true;
 
-			_zRSqrs = new FP31Vectors(limbCount, valueCount);
-			_zISqrs = new FP31Vectors(limbCount, valueCount);
-			_sumOfSqrs = new FP31Vectors(limbCount, valueCount);
+			_zRSqrs = new FP31Vectors(limbCount, vectorCount);
+			_zISqrs = new FP31Vectors(limbCount, vectorCount);
+			_sumOfSqrs = new FP31Vectors(limbCount, vectorCount);
 
 			_escapedFlagVectors = new Vector256<int>[vectorCount];
 
-			_zRZiSqrs = new FP31Vectors(limbCount, valueCount);
-			_zRs2 = new FP31Vectors(limbCount, valueCount);
-			_zIs2 = new FP31Vectors(limbCount, valueCount);
+			_zRZiSqrs = new FP31Vectors(limbCount, vectorCount);
+			_zRs2 = new FP31Vectors(limbCount, vectorCount);
+			_zIs2 = new FP31Vectors(limbCount, vectorCount);
 		}
 
 		#endregion
@@ -112,21 +112,21 @@ namespace MSetGeneratorPrototype
 		//	ZValuesAreZero = true;
 		//}
 
-		public Vector256<int>[] Iterate(int[] inPlayList)
+		public Vector256<int>[] Iterate(int[] inPlayList, int[] inPlayListNarrow)
 		{
 			try
 			{
 				if (ZValuesAreZero)
 				{
-					// Perform the first iteration. 
-					Zrs = Crs.Clone();
-					Zis = Cis.Clone();
+					// Perform the first iteration.
+					Zrs.UpdateFrom(Crs);
+					Zis.UpdateFrom(Cis);
 					ZValuesAreZero = false;
 				}
 				else
 				{
 					// square(z.r + z.i)
-					_vecMath.AddThenSquare(Zrs, Zis, _zRZiSqrs, inPlayList);
+					_vecMath.AddThenSquare(Zrs, Zis, _zRZiSqrs, inPlayList, inPlayListNarrow);
 
 					// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
 					_vecMath.Sub(_zRZiSqrs, _zRSqrs, Zis, inPlayList);
@@ -138,8 +138,8 @@ namespace MSetGeneratorPrototype
 					_vecMath.Add(_zRs2, Crs, Zrs, inPlayList);
 				}
 
-				_vecMath.Square(Zrs, _zRSqrs, inPlayList);
-				_vecMath.Square(Zis, _zISqrs, inPlayList);
+				_vecMath.Square(Zrs, _zRSqrs, inPlayList, inPlayListNarrow);
+				_vecMath.Square(Zis, _zISqrs, inPlayList, inPlayListNarrow);
 				_vecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, inPlayList);
 
 				_vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagVectors, inPlayList);
