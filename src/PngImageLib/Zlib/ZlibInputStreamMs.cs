@@ -8,7 +8,7 @@ using System.IO.Compression;
 // ONLY FOR .NET 4.5
 namespace PngImageLib.Zlib {
 
-#if NET_FIVE_ZERO  || NET_SIX_ZERO
+#if NET_FIVE_ZERO
 
     /// <summary>
     /// Zip input (deflater) based on Ms DeflateStream (.net 4.5)

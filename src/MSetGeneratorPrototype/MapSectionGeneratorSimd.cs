@@ -146,18 +146,13 @@ namespace MSetGeneratorPrototype
 		private void GenerateMapRow(IIterator iteratorSimd, IterationState iterationState)
 		{
 			var inPlayList = Enumerable.Range(0, _vectorCount).ToArray();
-			var inPlayListNarrow = BuildNarowInPlayList(inPlayList);
 
 			while (inPlayList.Length > 0)
 			{
-				var escapedFlags = iteratorSimd.Iterate(inPlayList, inPlayListNarrow);
+				var escapedFlags = iteratorSimd.Iterate(inPlayList);
 
 				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, inPlayList, iterationState);
-				if (vectorsNoLongerInPlay.Count > 0)
-				{ 
-					inPlayList = UpdateTheInPlayList(inPlayList, vectorsNoLongerInPlay);
-					inPlayListNarrow = BuildNarowInPlayList(inPlayList);
-				}
+				inPlayList = UpdateTheInPlayList(inPlayList, vectorsNoLongerInPlay);
 			}
 
 			iteratorSimd.MathOpCounts.RollUpNumberOfUnusedCalcs(iterationState.GetUnusedCalcs());
@@ -184,14 +179,12 @@ namespace MSetGeneratorPrototype
 
 				// Increment all counts
 				var countsVt = Avx2.Add(countsVectors[idx], justOne);
-
 				// Take the incremented count, only if the doneFlags is false for each vector position.
 				var countsV = Avx2.BlendVariable(countsVt.AsByte(), countsVectors[idx].AsByte(), doneFlagsV.AsByte()).AsInt32(); // use First if Zero, second if 1
 				countsVectors[idx] = countsV;
 
 				// Increment all unused calculations
 				var unusedCalcsVt = Avx2.Add(unusedCalcsVectors[idx], justOne);
-
 				// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
 				var unusedCalcsV = Avx2.BlendVariable(unusedCalcsVectors[idx].AsByte(), unusedCalcsVt.AsByte(), doneFlagsV.AsByte()).AsInt32();
 				unusedCalcsVectors[idx] = unusedCalcsV;
@@ -263,10 +256,10 @@ namespace MSetGeneratorPrototype
 
 		// Get the Z values
 		private (FP31Vectors zRs, FP31Vectors zIs)
-			GetZValues(MapSectionRequest mapSectionRequest, int rowNumber, int limbCount, int vectorCount)
+			GetZValues(MapSectionRequest mapSectionRequest, int rowNumber, int limbCount, int valueCount)
 		{
-			var zRs = new FP31Vectors(limbCount, vectorCount);
-			var zIs = new FP31Vectors(limbCount, vectorCount);
+			var zRs = new FP31Vectors(limbCount, valueCount);
+			var zIs = new FP31Vectors(limbCount, valueCount);
 
 			return (zRs, zIs);
 		}
@@ -349,25 +342,6 @@ namespace MSetGeneratorPrototype
 			var updatedLst = lst.ToArray();
 
 			return updatedLst;
-		}
-
-		// There are 8 ints to a Vector, but only 4 longs. Adjust the InPlayList to support multiplication
-		private int[] BuildNarowInPlayList(int[] inPlayList)
-		{
-			var result = new int[inPlayList.Length * 2];
-
-			var indexes = inPlayList;
-			var resultIdxPtr = 0;
-
-			for (var idxPtr = 0; idxPtr < indexes.Length; idxPtr++, resultIdxPtr += 2)
-			{
-				var resultIdx = indexes[idxPtr] * 2;
-
-				result[resultIdxPtr] = resultIdx;
-				result[resultIdxPtr + 1] = resultIdx + 1;
-			}
-
-			return result;
 		}
 
 		private int[] BuildTheInplayList(Span<bool> hasEscapedFlags, Span<ushort> counts, int targetIterations, out bool[] doneFlags)

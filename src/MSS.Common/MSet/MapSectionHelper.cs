@@ -202,9 +202,9 @@ namespace MSS.Common
 					}
 
 					escapeVelocity = 0;
-					//var ccv = Convert.ToUInt16(countVal);
+					var ccv = Convert.ToUInt16(countVal);
 
-					colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(result, curResultPtr, 4));
+					colorMap.PlaceColor(ccv, escapeVelocity, new Span<byte>(result, curResultPtr, 4));
 					curResultPtr += 4;
 
 					curSourcePtr++;
