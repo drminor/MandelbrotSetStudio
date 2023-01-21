@@ -19,9 +19,10 @@ namespace MSS.Common.APValues
 			Mantissas = mantissas;
 		}
 
-		public FP31VectorsPW(Vector256<ulong>[] mantissa, int vectorCount)
+		public FP31VectorsPW(Vector256<ulong>[] mantissa, int valueCount)
 		{
 			var limbCount = mantissa.Length;
+			var vectorCount = valueCount / Lanes;
 
 			Mantissas = new Vector256<ulong>[limbCount][];
 
@@ -53,7 +54,7 @@ namespace MSS.Common.APValues
 		//	}
 		//}
 
-		public FP31VectorsPW(FP31Val fp31Val, int extent) : this(CreateASingleVector(fp31Val), extent / Lanes)
+		public FP31VectorsPW(FP31Val fp31Val, int valueCount) : this(CreateASingleVector(fp31Val), valueCount)
 		{ }
 
 		private static Vector256<ulong>[] CreateASingleVector(FP31Val fp31Val)
@@ -74,15 +75,14 @@ namespace MSS.Common.APValues
 		{
 			var limbCount = fp31Vals[0].LimbCount;
 			var valueCount = fp31Vals.Length;
+			var vectorCount = valueCount / Lanes;
 
 			Mantissas = new Vector256<ulong>[limbCount][];
 
 			for (var j = 0; j < limbCount; j++)
 			{
-				var limbs = new Vector256<ulong>[fp31Vals.Length];
-
-				Span<Vector256<ulong>> x = new Span<Vector256<ulong>>(limbs);
-				var elements = MemoryMarshal.Cast<Vector256<ulong>, ulong>(x);
+				var limbs = new Vector256<ulong>[vectorCount];
+				var elements = MemoryMarshal.Cast<Vector256<ulong>, ulong>(limbs);
 
 				for (var i = 0; i < valueCount; i++)
 				{
@@ -151,31 +151,11 @@ namespace MSS.Common.APValues
 			return resultLimbVecs;
 		}
 
-		public void ClearManatissMems(int[] inPlayListNarrow)
-		{
-			var indexes = inPlayListNarrow;
-
-			for (var i = 0; i < LimbCount; i++)
-			{
-				var vectors = Mantissas[i];
-
-				for (var j = 0; j < indexes.Length; j++)
-				{
-					vectors[indexes[j]] = Vector256<ulong>.Zero;
-				}
-			}
-		}
-
 		public void ClearManatissMems()
 		{
 			for (var i = 0; i < LimbCount; i++)
 			{
-				var vectors = Mantissas[i];
-
-				for (var j = 0; j < VectorCount; j++)
-				{
-					vectors[j] = Vector256<ulong>.Zero;
-				}
+				Array.Clear(Mantissas[i]);
 			}
 
 			IsZero = true;

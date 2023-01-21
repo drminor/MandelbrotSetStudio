@@ -19,9 +19,10 @@ namespace MSS.Common.APValues
 			Mantissas = mantissas;
 		}
 
-		public FP31Vectors(Vector256<uint>[] mantissa, int vectorCount)
+		public FP31Vectors(Vector256<uint>[] mantissa, int valueCount)
 		{
 			var limbCount = mantissa.Length;
+			var vectorCount = valueCount / Lanes;
 
 			Mantissas = new Vector256<uint>[limbCount][];
 
@@ -53,7 +54,7 @@ namespace MSS.Common.APValues
 		//	}
 		//}
 
-		public FP31Vectors(FP31Val fp31Val, int extent) : this(CreateASingleVector(fp31Val), extent / Lanes)
+		public FP31Vectors(FP31Val fp31Val, int valueCount) : this(CreateASingleVector(fp31Val), valueCount)
 		{ }
 
 		private static Vector256<uint>[] CreateASingleVector(FP31Val fp31Val)
@@ -74,15 +75,14 @@ namespace MSS.Common.APValues
 		{
 			var limbCount = fp31Vals[0].LimbCount;
 			var valueCount = fp31Vals.Length;
+			var vectorCount = valueCount / Lanes;
 
 			Mantissas = new Vector256<uint>[limbCount][];
 
 			for (var j = 0; j < limbCount; j++)
 			{
-				var limbs = new Vector256<uint>[fp31Vals.Length];
-
-				Span<Vector256<uint>> x = new Span<Vector256<uint>>(limbs);
-				var elements = MemoryMarshal.Cast<Vector256<uint>, uint>(x);
+				var limbs = new Vector256<uint>[vectorCount];
+				var elements = MemoryMarshal.Cast<Vector256<uint>, uint>(limbs);
 
 				for (var i = 0; i < valueCount; i++)
 				{
@@ -95,11 +95,12 @@ namespace MSS.Common.APValues
 
 		private static Vector256<uint>[][] BuildLimbs(int limbCount, int valueCount)
 		{
+			var vectorCount = valueCount / Lanes;
 			var result = new Vector256<uint>[limbCount][];
 
 			for (var i = 0; i < limbCount; i++)
 			{
-				result[i] = new Vector256<uint>[valueCount];
+				result[i] = new Vector256<uint>[vectorCount];
 			}
 
 			return result;
@@ -135,51 +136,55 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
-		//public void UpdateFrom(FP31Val fp31Val)
-		//{
-		//	if (fp31Val.Mantissa.Length != LimbCount)
-		//	{
-		//		throw new ArgumentException("The first fp31Val has a different number of limbs than the FP31Decks's LimbCount.");
-		//	}
+		public void UpdateFrom(FP31Val fp31Val)
+		{
+			if (fp31Val.Mantissa.Length != LimbCount)
+			{
+				throw new ArgumentException("The first fp31Val has a different number of limbs than the FP31Decks's LimbCount.");
+			}
 
-		//	for (var j = 0; j < LimbCount; j++)
-		//	{
-		//		var destLimb = Mantissas[j];
-		//		var sourceLimbVal = fp31Val.Mantissa[j];
+			var sourceVectors = CreateASingleVector(fp31Val);
 
-		//		for (int i = 0; i < ValueCount; i++)
-		//		{
-		//			destLimb[i] = sourceLimbVal;
-		//		}
-		//	}
+			for (var j = 0; j < LimbCount; j++)
+			{
+				var destLimb = Mantissas[j];
+				var sourceLimbVal = sourceVectors[j];
 
-		//	IsZero = false;
-		//}
+				for (int i = 0; i < VectorCount; i++)
+				{
+					destLimb[i] = sourceLimbVal;
+				}
+			}
 
-		//public void UpdateFrom(FP31Val[] fp31Vals)
-		//{
-		//	if (fp31Vals[0].Mantissa.Length != LimbCount)
-		//	{
-		//		throw new ArgumentException("The first fp31Val has a different number of limbs than the FP31Decks's LimbCount.");
-		//	}
+			IsZero = false;
+		}
 
-		//	if (fp31Vals.Length != ValueCount)
-		//	{
-		//		throw new ArgumentException("The number of FP31Vals is different for the FP31Deck's ValueCount.");
-		//	}
+		public void UpdateFrom(FP31Val[] fp31Vals)
+		{
+			if (fp31Vals[0].Mantissa.Length != LimbCount)
+			{
+				throw new ArgumentException("The first fp31Val has a different number of limbs than the FP31Decks's LimbCount.");
+			}
 
-		//	for (var j = 0; j < LimbCount; j++)
-		//	{
-		//		var destLimb = Mantissas[j];
+			if (fp31Vals.Length != ValueCount)
+			{
+				throw new ArgumentException("The number of FP31Vals is different for the FP31Deck's ValueCount.");
+			}
 
-		//		for (var i = 0; i < fp31Vals.Length; i++)
-		//		{
-		//			destLimb[i] = fp31Vals[i].Mantissa[j];
-		//		}
-		//	}
+			for (var j = 0; j < LimbCount; j++)
+			{
+				var destLimb = Mantissas[j];
 
-		//	IsZero = false;
-		//}
+				var elements = MemoryMarshal.Cast<Vector256<uint>, uint>(destLimb);
+
+				for (var i = 0; i < ValueCount; i++)
+				{
+					elements[i] = fp31Vals[i].Mantissa[j];
+				}
+			}
+
+			IsZero = false;
+		}
 
 		public void UpdateFrom(FP31Vectors source)
 		{
@@ -195,7 +200,7 @@ namespace MSS.Common.APValues
 
 			for (var i = 0; i < Mantissas.Length; i++)
 			{
-				Array.Copy(source.Mantissas[i], Mantissas[i], ValueCount);
+				Array.Copy(source.Mantissas[i], Mantissas[i], VectorCount);
 			}
 
 			IsZero = source.IsZero;
@@ -227,31 +232,11 @@ namespace MSS.Common.APValues
 			IsZero = false;
 		}
 
-		public void ClearManatissMems(int[] inPlayList)
-		{
-			var indexes = inPlayList;
-
-			for (var i = 0; i < LimbCount; i++)
-			{
-				var vectors = Mantissas[i];
-
-				for (var j = 0; j < indexes.Length; j++)
-				{
-					vectors[indexes[j]] = Vector256<uint>.Zero;
-				}
-			}
-		}
-
 		public void ClearManatissMems()
 		{
 			for (var i = 0; i < LimbCount; i++)
 			{
-				var vectors = Mantissas[i];
-
-				for (var j = 0; j < VectorCount; j++)
-				{
-					vectors[j] = Vector256<uint>.Zero;
-				}
+				Array.Clear(Mantissas[i]);
 			}
 
 			IsZero = true;

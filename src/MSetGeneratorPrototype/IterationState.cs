@@ -87,16 +87,14 @@ namespace MSetGeneratorPrototype
 
 		private void LoadVectors(Span<int> values, Vector256<int>[] vectors)
 		{
-			Span<Vector256<int>> x = new Span<Vector256<int>>(vectors);
-			var elements = MemoryMarshal.Cast<Vector256<int>, int>(x);
-
+			var elements = MemoryMarshal.Cast<Vector256<int>, int>(vectors);
 			values.CopyTo(elements);
 		}
 
 		private void LoadInts(Vector256<int>[] vectors, Span<int> values)
 		{
-			Span<Vector256<int>> x = new Span<Vector256<int>>(vectors);
-			MemoryMarshal.Cast<Vector256<int>, int>(vectors).CopyTo(values);
+			var elements = MemoryMarshal.Cast<Vector256<int>, int>(vectors);
+			elements.CopyTo(values);
 		}
 
 		#endregion

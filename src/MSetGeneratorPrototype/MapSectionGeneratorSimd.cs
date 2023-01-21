@@ -138,7 +138,7 @@ namespace MSetGeneratorPrototype
 			//var compressedHasEscapedFlags = CompressHasEscapedFlags(hasEscapedFlags);
 
 			var result = new MapSectionResponse(mapSectionRequest, hasEscapedFlaggs, shortCounts, shortEscVels, zValues: null);
-			result.MathOpCounts = iterator.MathOpCounts;
+			//result.MathOpCounts = iterator.MathOpCounts;
 
 			return result;
 		}
@@ -146,16 +146,21 @@ namespace MSetGeneratorPrototype
 		private void GenerateMapRow(IIterator iteratorSimd, IterationState iterationState)
 		{
 			var inPlayList = Enumerable.Range(0, _vectorCount).ToArray();
+			var inPlayListNarrow = BuildNarowInPlayList(inPlayList);
 
 			while (inPlayList.Length > 0)
 			{
-				var escapedFlags = iteratorSimd.Iterate(inPlayList);
+				var escapedFlags = iteratorSimd.Iterate(inPlayList, inPlayListNarrow);
 
 				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, inPlayList, iterationState);
-				inPlayList = UpdateTheInPlayList(inPlayList, vectorsNoLongerInPlay);
+				if (vectorsNoLongerInPlay.Count > 0)
+				{
+					inPlayList = UpdateTheInPlayList(inPlayList, vectorsNoLongerInPlay);
+					inPlayListNarrow = BuildNarowInPlayList(inPlayList);
+				}
 			}
 
-			iteratorSimd.MathOpCounts.RollUpNumberOfUnusedCalcs(iterationState.GetUnusedCalcs());
+			//iteratorSimd.MathOpCounts.RollUpNumberOfUnusedCalcs(iterationState.GetUnusedCalcs());
 		}
 
 		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, int[] inPLayList, IterationState iterationState)
@@ -342,6 +347,23 @@ namespace MSetGeneratorPrototype
 			var updatedLst = lst.ToArray();
 
 			return updatedLst;
+		}
+
+		private int[] BuildNarowInPlayList(int[] inPlayList)
+		{
+			var result = new int[inPlayList.Length * 2];
+
+			var resultIdxPtr = 0;
+
+			for (var idxPtr = 0; idxPtr < inPlayList.Length; idxPtr++, resultIdxPtr += 2)
+			{
+				var resultIdx = inPlayList[idxPtr] * 2;
+
+				result[resultIdxPtr] = resultIdx;
+				result[resultIdxPtr + 1] = resultIdx + 1;
+			}
+
+			return result;
 		}
 
 		private int[] BuildTheInplayList(Span<bool> hasEscapedFlags, Span<ushort> counts, int targetIterations, out bool[] doneFlags)
