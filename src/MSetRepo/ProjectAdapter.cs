@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -577,9 +578,9 @@ namespace MSetRepo
 			var targetIterations = job.MapCalcSettings.TargetIterations;
 			var highCutoff = colorBandSet.HighCutoff;
 
-			var jobHelper = new MapSectionHelper();
+			var mapSectionHelper = new MapSectionHelper(new MapSectionValuesPool(RMapConstants.BLOCK_SIZE));
 
-			var mapSectionRequests = jobHelper.CreateSectionRequests(job.Id.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
+			var mapSectionRequests = mapSectionHelper.CreateSectionRequests(job.Id.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
 
 			// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.
 

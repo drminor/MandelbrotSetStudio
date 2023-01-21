@@ -3,6 +3,8 @@ using MEngineClient;
 using MSetGenP;
 using MSetRepo;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -170,7 +172,7 @@ namespace MSetExplorer
 		{
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, fetchZValues);
 
-			var mapSectionHelper = new MapSectionHelper();
+			var mapSectionHelper = new MapSectionHelper(new MapSectionValuesPool(RMapConstants.BLOCK_SIZE));
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
 
 			return result;

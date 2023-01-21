@@ -1,0 +1,128 @@
+﻿using MSS.Types;
+using System;
+using System.Linq;
+
+namespace MSS.Common.DataTransferObjects
+{
+	public class MapSectionValues : IPoolable
+	{
+		public MapSectionValues(SizeInt blockSize)
+		{
+			BlockSize = blockSize;
+			Length = blockSize.NumberOfCells;
+
+			HasEscapedFlags = new bool[Length];
+			Counts = new ushort[Length];
+			EscapeVelocities = new ushort[Length];
+		}
+
+		public MapSectionValues(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
+		{
+			HasEscapedFlags = hasEscapedFlags ?? throw new ArgumentNullException(nameof(hasEscapedFlags));
+			Counts = counts ?? throw new ArgumentNullException(nameof(counts));
+			EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
+		}
+
+		public SizeInt BlockSize { get; init; }
+		public int Length { get; init; }
+		public bool[] HasEscapedFlags {get; init;} 
+		public ushort[] Counts { get; init; }
+		public ushort[] EscapeVelocities { get; init; }
+
+
+		public void Load(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
+		{
+			CheckArguments(hasEscapedFlags, counts, escapeVelocities);
+
+			Array.Copy(hasEscapedFlags, HasEscapedFlags, Length);
+			Array.Copy(counts.Select(x => x).ToArray(), Counts, Length);
+			Array.Copy(escapeVelocities.Select(x => x).ToArray(), EscapeVelocities, Length);
+		}
+
+		public void Load(bool[] hasEscapedFlags, int[] counts, int[] escapeVelocities)
+		{
+			CheckArguments(hasEscapedFlags, counts, escapeVelocities);
+
+			Array.Copy(hasEscapedFlags, HasEscapedFlags, Length);
+			Array.Copy(counts.Select(x => (ushort)x).ToArray(), Counts, Length);
+			Array.Copy(escapeVelocities.Select(x => (ushort)x).ToArray(), EscapeVelocities, Length);
+		}
+
+		private void CheckArguments(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
+		{
+			if (hasEscapedFlags == null || hasEscapedFlags.Length != BlockSize.NumberOfCells)
+			{
+				throw new ArgumentException($"The {nameof(hasEscapedFlags)} has a length different than {Length}.");
+			}
+
+			if (counts == null || counts.Length != BlockSize.NumberOfCells)
+			{
+				throw new ArgumentException($"The {nameof(counts)} has a length different than {Length}.");
+			}
+
+			if (escapeVelocities == null || escapeVelocities.Length != BlockSize.NumberOfCells)
+			{
+				throw new ArgumentException($"The {nameof(escapeVelocities)} has a length different than {Length}.");
+			}
+		}
+
+		private void CheckArguments(bool[] hasEscapedFlags, int[] counts, int[] escapeVelocities)
+		{
+			if (hasEscapedFlags == null || hasEscapedFlags.Length != BlockSize.NumberOfCells)
+			{
+				throw new ArgumentException($"The {nameof(hasEscapedFlags)} has a length different than {Length}.");
+			}
+
+			if (counts == null || counts.Length != BlockSize.NumberOfCells)
+			{
+				throw new ArgumentException($"The {nameof(counts)} has a length different than {Length}.");
+			}
+
+			if (escapeVelocities == null || escapeVelocities.Length != BlockSize.NumberOfCells)
+			{
+				throw new ArgumentException($"The {nameof(escapeVelocities)} has a length different than {Length}.");
+			}
+		}
+
+		void IPoolable.ResetObject()
+		{
+			Array.Clear(HasEscapedFlags, 0, Length);
+			Array.Clear(Counts, 0, Length);
+			Array.Clear(EscapeVelocities, 0, Length);
+		}
+
+		#region IDisposable Support
+
+		private bool _disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!_disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+				}
+
+				// TODO: set large fields to null
+				_disposedValue = true;
+			}
+		}
+
+		// // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+		// ~MapSectionValues()
+		// {
+		//     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		//     Dispose(disposing: false);
+		// }
+
+		void IDisposable.Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
+	}
+}

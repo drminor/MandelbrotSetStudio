@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common.DataTransferObjects;
+using MSS.Types;
 
 namespace MSetExplorer
 {

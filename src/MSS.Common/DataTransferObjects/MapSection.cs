@@ -1,8 +1,9 @@
-﻿using System;
+﻿using MSS.Types;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MSS.Types
+namespace MSS.Common.DataTransferObjects
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>
 	{

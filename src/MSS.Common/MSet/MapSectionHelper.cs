@@ -13,11 +13,14 @@ namespace MSS.Common
 		private const double VALUE_FACTOR = 10000;
 		private readonly DtoMapper _dtoMapper;
 
+		private readonly MapSectionValuesPool _mapSectionValuesPool;
+
 		#region Constructor
 
-		public MapSectionHelper()
+		public MapSectionHelper(MapSectionValuesPool mapSectionValuesPool)
 		{
 			_dtoMapper = new DtoMapper();
+			_mapSectionValuesPool = mapSectionValuesPool;
 		}
 
 		#endregion
@@ -162,6 +165,10 @@ namespace MSS.Common
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var blockSize = mapSectionRequest.BlockSize;
+
+			var mapSectionValues = _mapSectionValuesPool.Obtain();
+
+			mapSectionValues.Load(mapSectionResponse.HasEscapedFlags, mapSectionResponse.Counts, mapSectionResponse.EscapeVelocities);
 
 			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionResponse.EscapeVelocities, mapSectionResponse.MapCalcSettings.TargetIterations,
 				mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted, BuildHistogram);

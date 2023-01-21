@@ -126,7 +126,7 @@ namespace MSS.Common.SmxVals
 			var result = new Smx(sign, partialWordLimbsTopCleared, targetExponent, bitsBeforeBP, rValue.Precision);
 
 			var resultStrVal = result.GetStringValue();
-			Debug.WriteLine($"Got Smx: {resultStrVal} from: {rValueStrVal}. {bitExpInfo}");
+			//Debug.WriteLine($"Got Smx: {resultStrVal} from: {rValueStrVal}. {bitExpInfo}");
 			
 			if (rValueStrVal.Length - resultStrVal.Length > 5)
 			{

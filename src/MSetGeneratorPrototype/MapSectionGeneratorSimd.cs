@@ -53,7 +53,7 @@ namespace MSetGeneratorPrototype
 			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 			//Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");
 
-			Debug.WriteLine($"Starting : {screenPos}: {blockPos}, delta: {s3}, #oflimbs: {_apFixedPointFormat.LimbCount}. MapSecReq Precision: {precision}.");
+			//Debug.WriteLine($"Starting : {screenPos}: {blockPos}, delta: {s3}, #oflimbs: {_apFixedPointFormat.LimbCount}. MapSecReq Precision: {precision}.");
 
 			MapSectionResponse result;
 

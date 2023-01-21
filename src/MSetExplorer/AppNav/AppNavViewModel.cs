@@ -1,6 +1,7 @@
 ﻿using MSetExplorer.XPoc;
 using MSetRepo;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -41,7 +42,8 @@ namespace MSetExplorer
 			var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			var mapSectionHelper = new MapSectionHelper();
+			var mapSectionHelper = new MapSectionHelper(new MapSectionValuesPool(RMapConstants.BLOCK_SIZE));
+
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
@@ -66,7 +68,7 @@ namespace MSetExplorer
 			var posterViewModel = new PosterViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			var mapSectionHelper = new MapSectionHelper();
+			var mapSectionHelper = new MapSectionHelper(new MapSectionValuesPool(RMapConstants.BLOCK_SIZE));
 			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);

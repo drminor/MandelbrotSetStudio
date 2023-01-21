@@ -102,7 +102,7 @@ namespace MSS.Common.APValues
 			var result = CreateFP31Val(sign, newLimbs, targetExponent, bitsBeforeBP, rValue.Precision);
 
 			var resultStrVal = result.GetStringValue();
-			Debug.WriteLine($"Got FP31Val: {resultStrVal} from: {rValueStrVal}. {bitExpInfo}");
+			//Debug.WriteLine($"Got FP31Val: {resultStrVal} from: {rValueStrVal}. {bitExpInfo}");
 
 			if (rValueStrVal.Length - resultStrVal.Length > 5)
 			{

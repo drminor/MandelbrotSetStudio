@@ -1,6 +1,7 @@
 ﻿using MEngineDataContracts;
 using MongoDB.Bson;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -25,7 +26,8 @@ namespace ImageBuilder
 		public BitmapBuilder(IMapLoaderManager mapLoaderManager)
 		{
 			_mapLoaderManager = mapLoaderManager;
-			_mapSectionHelper = new MapSectionHelper();
+			_mapSectionHelper = new MapSectionHelper(new MapSectionValuesPool(RMapConstants.BLOCK_SIZE));
+
 			_currentJobNumber = null;
 			_currentResponses = null;
 			_isStopping = false;

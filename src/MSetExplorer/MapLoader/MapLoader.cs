@@ -1,6 +1,7 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
 using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
@@ -192,7 +193,7 @@ namespace MSetExplorer
 
 				mapSectionRequest.Handled = true;
 
-				Debug.WriteLine($"Job completed: Totals: {MathOpCounts}");
+				//Debug.WriteLine($"Job completed: Totals: {MathOpCounts}");
 			}
 
 		}
