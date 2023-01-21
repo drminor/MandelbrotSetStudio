@@ -114,6 +114,9 @@ namespace MSetExplorer
 		{
 			foreach (var histogram in histograms)
 			{
+				if (histogram.IsEmpty)
+					continue;	
+
 				_histogram.Add(histogram);
 			}
 

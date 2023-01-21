@@ -1,6 +1,7 @@
 ﻿using MEngineDataContracts;
 using MSetGeneratorPrototype;
 using MSS.Common;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -10,7 +11,11 @@ namespace MEngineClient
 	public class MClientLocal : IMEngineClient
 	{
 		private static int _sectionCntr;
+
+
+		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionGeneratorSimd _generator;
+
 
 		#region Constructors
 
@@ -21,7 +26,8 @@ namespace MEngineClient
 
 		public MClientLocal()
 		{
-			_generator = new MapSectionGeneratorSimd();		
+			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: 20);
+			_generator = new MapSectionGeneratorSimd(_mapSectionVectorsPool);		
 		}
 
 		#endregion

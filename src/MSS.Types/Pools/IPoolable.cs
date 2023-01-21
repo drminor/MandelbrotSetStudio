@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MSS.Common.DataTransferObjects
+namespace MSS.Types
 {
 	public interface IPoolable : IDisposable
 	{

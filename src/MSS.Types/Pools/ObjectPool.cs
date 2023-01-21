@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MSS.Common.DataTransferObjects
+namespace MSS.Types
 {
 	public abstract class ObjectPool<T> where T : IPoolable
 	{

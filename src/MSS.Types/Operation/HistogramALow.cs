@@ -33,15 +33,26 @@ namespace MSS.Types
 
 		public HistogramALow(IEnumerable<ushort> values)
 		{
-			var low = values.Min();
-			var high = values.Max();
-
-			_values = new int[1 + high - low];
-			_lowBound = low;
-
-			foreach(var val in values)
+			if (values == null || values.Count() < 1)
 			{
-				_ = Increment(val);
+				IsEmpty = true;
+				_values = Array.Empty<int>();
+				_lowBound = 0;
+			}
+			else
+			{
+				IsEmpty = false;
+
+				var low = values.Min();
+				var high = values.Max();
+
+				_values = new int[1 + high - low];
+				_lowBound = low;
+
+				foreach (var val in values)
+				{
+					_ = Increment(val);
+				}
 			}
 		}
 
@@ -75,6 +86,8 @@ namespace MSS.Types
 		public int LowerBound => _lowBound;
 		public int UpperBound => _values.Length - 1 + _lowBound;
 		public int Length => _values.Length;
+
+		public bool IsEmpty { get; set; }
 
 		public long UpperCatchAllValue { get; set; }
 

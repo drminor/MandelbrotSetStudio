@@ -1,9 +1,8 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MSS.Common.DataTransferObjects
+namespace MSS.Types
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>, IDisposable
 	{
@@ -14,11 +13,11 @@ namespace MSS.Common.DataTransferObjects
 
 		#region Constructor
 
-		public MapSection() : this(new PointInt(), new SizeInt(), mapSectionValues: null, 0, string.Empty, new BigVector(), false, BuildHstFake)
+		public MapSection() : this(mapSectionValues: null, subdivisionId: string.Empty, repoBlockPosition: new BigVector(), isInverted: false, blockPosition: new PointInt(), size: new SizeInt(), targetIterations: 0, histogramBuilder: BuildHstFake)
 		{ }
 
-		public MapSection(PointInt blockPosition, SizeInt size, MapSectionValues? mapSectionValues, int targetIterations, string subdivisionId
-			, BigVector repoBlockPosition, bool isInverted, Func<ushort[], IHistogram> histogramBuilder)
+		public MapSection(MapSectionValues? mapSectionValues, string subdivisionId
+, BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			BlockPosition = blockPosition;
 			Size = size;

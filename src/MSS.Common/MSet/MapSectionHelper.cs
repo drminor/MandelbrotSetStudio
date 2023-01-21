@@ -95,8 +95,8 @@ namespace MSS.Common
 				//var mapSection = new MapSection(screenPosition, mapAreaInfo.Subdivision.BlockSize, emptyCountsData, emptyEscapeVelocities, targetIterations,
 				//	subdivisionId, repoPosition, isInverted, BuildHistogram);
 
-				var mapSection = new MapSection(screenPosition, mapAreaInfo.Subdivision.BlockSize, mapSectionValues: null, targetIterations,
-					subdivisionId, repoPosition, isInverted, BuildHistogram);
+				var mapSection = new MapSection(mapSectionValues: null, subdivisionId: subdivisionId, repoBlockPosition: repoPosition, isInverted: isInverted,
+					blockPosition: screenPosition, size: mapAreaInfo.Subdivision.BlockSize, targetIterations: targetIterations, histogramBuilder: BuildHistogram);
 
 
 				result.Add(mapSection);
@@ -183,14 +183,13 @@ namespace MSS.Common
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
-			var blockSize = mapSectionRequest.BlockSize;
-
 			var mapSectionValues = _mapSectionValuesPool.Obtain();
+			//mapSectionValues.Load(mapSectionResponse.HasEscapedFlags, mapSectionResponse.Counts, mapSectionResponse.EscapeVelocities);
 
-			mapSectionValues.Load(mapSectionResponse.HasEscapedFlags, mapSectionResponse.Counts, mapSectionResponse.EscapeVelocities);
+			mapSectionResponse.MapSectionVectors.LoadValuesInto(mapSectionValues);
 
-			var mapSection = new MapSection(screenPosition, blockSize, mapSectionValues, mapSectionResponse.MapCalcSettings.TargetIterations,
-				mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted, BuildHistogram);
+			var mapSection = new MapSection(mapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
+				screenPosition, mapSectionRequest.BlockSize, mapSectionResponse.MapCalcSettings.TargetIterations, BuildHistogram);
 
 			return mapSection;
 		}

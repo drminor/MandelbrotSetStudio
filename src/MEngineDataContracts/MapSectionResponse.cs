@@ -69,6 +69,10 @@ namespace MEngineDataContracts
 		[DataMember(Order = 9)]
 		public ushort[] EscapeVelocities { get; init; }
 
+
+		public MapSectionVectors MapSectionVectors { get; set; }
+
+
 		public double[] ZValuesForLocalStorage { get; init; }
 
 		[DataMember(Order = 10)]

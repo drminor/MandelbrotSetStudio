@@ -477,6 +477,7 @@ namespace MSetExplorer
 				else
 				{
 					Debug.WriteLine($"UpdateUi is skipping. The jobNumber = {jobNumber}, our JobNumber = {_currentMapLoaderJobNumber}.");
+					_mapSectionHelper.ReturnMapSection(mapSection);
 				}
 			}
 

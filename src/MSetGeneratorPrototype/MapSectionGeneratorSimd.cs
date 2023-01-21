@@ -13,18 +13,23 @@ namespace MSetGeneratorPrototype
 {
 	public class MapSectionGeneratorSimd
 	{
+		MapSectionVectorsPool _mapSectionVectorsPool;
+
 		private readonly ApFixedPointFormat _apFixedPointFormat;
 
 		private readonly int _stride;
 		private readonly uint _threshold;
 
 		private readonly IIterator _iterator;
+		//private readonly IterationState _iterationState;
 
 		private int _vectorCount;
 		private Vector256<int> _targetIterationsVector;
 
-		public MapSectionGeneratorSimd()
+		public MapSectionGeneratorSimd(MapSectionVectorsPool mapSectionVectorsPool)
 		{
+			_mapSectionVectorsPool = mapSectionVectorsPool;
+
 			var howManyLimbs = 2;
 			_apFixedPointFormat = new ApFixedPointFormat(howManyLimbs);
 			_stride = 128;
@@ -42,7 +47,6 @@ namespace MSetGeneratorPrototype
 			var skipLowDetailBlocks = false;
 
 			var precision = mapSectionRequest.Precision;
-
 			var (blockPos, startingCx, startingCy, delta) = GetCoordinates(mapSectionRequest, _apFixedPointFormat);
 			var screenPos = mapSectionRequest.ScreenPosition;
 
@@ -63,7 +67,11 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				result = GenerateMapSection(_iterator, mapSectionRequest, blockPos, startingCx, startingCy, delta, _apFixedPointFormat);
+				var mapSectionVectors = _mapSectionVectorsPool.Obtain();
+
+				var iterationState = new IterationState(mapSectionVectors, _stride);
+
+				result = GenerateMapSection(_iterator, iterationState, mapSectionRequest, blockPos, startingCx, startingCy, delta, _apFixedPointFormat);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 			}
 
@@ -71,7 +79,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private MapSectionResponse GenerateMapSection(IIterator iterator, MapSectionRequest mapSectionRequest, BigVector blockPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta, ApFixedPointFormat apFixedPointFormat)
+		private MapSectionResponse GenerateMapSection(IIterator iterator, IterationState iterationState, MapSectionRequest mapSectionRequest, BigVector blockPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta, ApFixedPointFormat apFixedPointFormat)
 		{
 			var (blockSize, targetIterations, threshold, hasEscapedFlags, counts, escapeVelocities) = GetMapParameters(mapSectionRequest);
 			var rowCount = blockSize.Height;
@@ -95,21 +103,19 @@ namespace MSetGeneratorPrototype
 			iterator.Crs = new FP31Vectors(samplePointsX);
 
 			iterator.Threshold = threshold;
-
-			var vectorCount = iterator.Crs.VectorCount;
 			_targetIterationsVector = Vector256.Create(targetIterations);
-
-			IterationState iterationState = new IterationState(stride);
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
-				var resultIndex = rowNumber * stride;
+				//var resultIndex = rowNumber * stride;
 
-				//  Load Iteration State
-				var hasEscapedFlagsRow = new Span<int>(hasEscapedFlags, resultIndex, stride);
-				var countsRow = new Span<int>(counts, resultIndex, stride);
-				var escapeVelocitiesRow = new Span<int>(escapeVelocities, resultIndex, stride);
-				iterationState.LoadRow(hasEscapedFlagsRow, countsRow, escapeVelocitiesRow);
+				////  Load Iteration State
+				//var hasEscapedFlagsRow = new Span<int>(hasEscapedFlags, resultIndex, stride);
+				//var countsRow = new Span<int>(counts, resultIndex, stride);
+				//var escapeVelocitiesRow = new Span<int>(escapeVelocities, resultIndex, stride);
+				//iterationState.LoadRow(hasEscapedFlagsRow, countsRow, escapeVelocitiesRow);
+
+				iterationState.RowNumber = rowNumber;
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
@@ -120,30 +126,31 @@ namespace MSetGeneratorPrototype
 				iterator.Zis.ClearManatissMems();
 				iterator.ZValuesAreZero = true;
 
-				GenerateMapRow(iterator, iterationState);
+				GenerateMapRow(iterator, iterationState, rowNumber);
 
 				//iterationState.Counts.CopyTo(countsRow);
 				//iterationState.EscapeVelocities.CopyTo(escapeVelocitiesRow);
 
-				iterationState.CopyBackHasEscapedFlags(hasEscapedFlagsRow);
-				iterationState.CopyBackCounts(countsRow);
-				iterationState.CopyBackEscapeVelocities(escapeVelocitiesRow);
+				//iterationState.CopyBackHasEscapedFlags(hasEscapedFlagsRow);
+				//iterationState.CopyBackCounts(countsRow);
+				//iterationState.CopyBackEscapeVelocities(escapeVelocitiesRow);
 
 			}
 
-			var shortCounts = counts.Select(x => (ushort)x).ToArray();
-			var shortEscVels = escapeVelocities.Select(x => (ushort)x).ToArray();
-			var hasEscapedFlaggs = hasEscapedFlags.Select(x => x == 1).ToArray();
+			//var shortCounts = counts.Select(x => (ushort)x).ToArray();
+			//var shortEscVels = escapeVelocities.Select(x => (ushort)x).ToArray();
+			//var hasEscapedFlaggs = hasEscapedFlags.Select(x => x == 1).ToArray();
 
 			//var compressedHasEscapedFlags = CompressHasEscapedFlags(hasEscapedFlags);
 
-			var result = new MapSectionResponse(mapSectionRequest, hasEscapedFlaggs, shortCounts, shortEscVels, zValues: null);
+			var result = new MapSectionResponse(mapSectionRequest, hasEscapedFlags, counts, escapeVelocities, zValues: null);
+			result.MapSectionVectors = iterationState.MapSectionVectors;
 			//result.MathOpCounts = iterator.MathOpCounts;
 
 			return result;
 		}
 
-		private void GenerateMapRow(IIterator iteratorSimd, IterationState iterationState)
+		private void GenerateMapRow(IIterator iteratorSimd, IterationState iterationState, int rowNumber)
 		{
 			var inPlayList = Enumerable.Range(0, _vectorCount).ToArray();
 			var inPlayListNarrow = BuildNarowInPlayList(inPlayList);
@@ -152,7 +159,7 @@ namespace MSetGeneratorPrototype
 			{
 				var escapedFlags = iteratorSimd.Iterate(inPlayList, inPlayListNarrow);
 
-				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, inPlayList, iterationState);
+				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, inPlayList, iterationState, rowNumber);
 				if (vectorsNoLongerInPlay.Count > 0)
 				{
 					inPlayList = UpdateTheInPlayList(inPlayList, vectorsNoLongerInPlay);
@@ -163,16 +170,20 @@ namespace MSetGeneratorPrototype
 			//iteratorSimd.MathOpCounts.RollUpNumberOfUnusedCalcs(iterationState.GetUnusedCalcs());
 		}
 
-		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, int[] inPLayList, IterationState iterationState)
+		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, int[] inPLayList, IterationState iterationState, int rowNumber)
 		{
 			var toBeRemoved = new List<int>();
 
 			var justOne = Vector256.Create(1);
 
-			var hasEscapedFlagsVectors = iterationState.HasEscapedFlagsVectors;
+			//var hasEscapedFlagsVectors = iterationState.HasEscapedFlagsVectors;
+			//var countsVectors = iterationState.CountsVectors;
+			//var escapeVelocitiesVectors = iterationState.EscapeVelocitiyVectors;
 
-			var countsVectors = iterationState.CountsVectors;
-			var escapeVelocitiesVectors = iterationState.EscapeVelocitiesVectors;
+			var hasEscapedFlagsVectors = iterationState.GetHasEscapedFlagsRow(rowNumber);
+			var countsVectors = iterationState.GetCountsRow(rowNumber);
+			var escapeVelocitiesVectors = iterationState.GetEscapeVelocitiesRow(rowNumber);
+
 			var doneFlagsVectors = iterationState.DoneFlagsVectors;
 			var unusedCalcsVectors = iterationState.UnusedCalcsVectors;
 
@@ -236,7 +247,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Get Map Parameters
-		private (SizeInt blockSize, int targetIterations, uint threshold, int[] hasEscapedFlags, int[] counts, int[] escapeVelocities)
+		private (SizeInt blockSize, int targetIterations, uint threshold, bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
 			GetMapParameters(MapSectionRequest mapSectionRequest)
 		{
 			var blockSize = mapSectionRequest.BlockSize;
@@ -247,14 +258,18 @@ namespace MSetGeneratorPrototype
 			//var threshold = (uint) mapSectionRequest.MapCalcSettings.Threshold;
 			uint threshold = 4;
 
-			//var doneFlags = mapSectionRequest.DoneFlags;
-			var hasEscapedFlags = new int[blockSize.NumberOfCells];
+			////var doneFlags = mapSectionRequest.DoneFlags;
+			//var hasEscapedFlags = new int[blockSize.NumberOfCells];
 			
-			//var counts = mapSectionRequest.Counts;
-			var counts = new int[blockSize.NumberOfCells];
+			////var counts = mapSectionRequest.Counts;
+			//var counts = new int[blockSize.NumberOfCells];
 
-			//var escapeVelocities = mapSectionRequest.EscapeVelocities;
-			var escapeVelocities = new int[blockSize.NumberOfCells];
+			////var escapeVelocities = mapSectionRequest.EscapeVelocities;
+			//var escapeVelocities = new int[blockSize.NumberOfCells];
+
+			var hasEscapedFlags = new bool[0];
+			var counts = new ushort[0];
+			var escapeVelocities = new ushort[0];
 
 			return (blockSize, targetIterations, threshold, hasEscapedFlags, counts, escapeVelocities);
 		}

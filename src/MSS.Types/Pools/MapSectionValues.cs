@@ -2,10 +2,12 @@
 using System;
 using System.Linq;
 
-namespace MSS.Common.DataTransferObjects
+namespace MSS.Types
 {
 	public class MapSectionValues : IPoolable
 	{
+		#region Constructor
+
 		public MapSectionValues(SizeInt blockSize)
 		{
 			BlockSize = blockSize;
@@ -23,20 +25,27 @@ namespace MSS.Common.DataTransferObjects
 			EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
 		}
 
+		#endregion
+
+		#region Public Properties
+
 		public SizeInt BlockSize { get; init; }
 		public int Length { get; init; }
 		public bool[] HasEscapedFlags {get; private set;}
 		public ushort[] Counts { get; private set; }
 		public ushort[] EscapeVelocities { get; private set; }
 
+		#endregion
+
+		#region Methods
 
 		public void Load(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
 		{
 			CheckArguments(hasEscapedFlags, counts, escapeVelocities);
 
 			Array.Copy(hasEscapedFlags, HasEscapedFlags, Length);
-			Array.Copy(counts.Select(x => x).ToArray(), Counts, Length);
-			Array.Copy(escapeVelocities.Select(x => x).ToArray(), EscapeVelocities, Length);
+			Array.Copy(counts, Counts, Length);
+			Array.Copy(escapeVelocities, EscapeVelocities, Length);
 		}
 
 		public void Load(bool[] hasEscapedFlags, int[] counts, int[] escapeVelocities)
@@ -48,25 +57,7 @@ namespace MSS.Common.DataTransferObjects
 			Array.Copy(escapeVelocities.Select(x => (ushort)x).ToArray(), EscapeVelocities, Length);
 		}
 
-		private void CheckArguments(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
-		{
-			if (hasEscapedFlags == null || hasEscapedFlags.Length != BlockSize.NumberOfCells)
-			{
-				throw new ArgumentException($"The {nameof(hasEscapedFlags)} has a length different than {Length}.");
-			}
-
-			if (counts == null || counts.Length != BlockSize.NumberOfCells)
-			{
-				throw new ArgumentException($"The {nameof(counts)} has a length different than {Length}.");
-			}
-
-			if (escapeVelocities == null || escapeVelocities.Length != BlockSize.NumberOfCells)
-			{
-				throw new ArgumentException($"The {nameof(escapeVelocities)} has a length different than {Length}.");
-			}
-		}
-
-		private void CheckArguments(bool[] hasEscapedFlags, int[] counts, int[] escapeVelocities)
+		private void CheckArguments<T>(bool[] hasEscapedFlags, T[] counts, T[] escapeVelocities)
 		{
 			if (hasEscapedFlags == null || hasEscapedFlags.Length != BlockSize.NumberOfCells)
 			{
@@ -90,6 +81,8 @@ namespace MSS.Common.DataTransferObjects
 			//Array.Clear(Counts, 0, Length);
 			//Array.Clear(EscapeVelocities, 0, Length);
 		}
+
+		#endregion
 
 		#region IDisposable Support
 

@@ -1,7 +1,6 @@
-﻿using MSS.Types;
-
-namespace MSS.Common.DataTransferObjects
-{
+﻿
+namespace MSS.Types
+{ 
 	public class MapSectionValuesPool : ObjectPool<MapSectionValues>
 	{
 		private readonly SizeInt _blockSize;

@@ -9,6 +9,8 @@ namespace MSS.Types
 		int UpperBound { get; }
 		int Length { get; }
 
+		bool IsEmpty { get; }
+
 		int this[int index] { get; set; }
 
 		long UpperCatchAllValue { get; set; }
