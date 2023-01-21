@@ -5,32 +5,33 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Common.DataTransferObjects
 {
-	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>
+	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>, IDisposable
 	{
 		private static readonly Lazy<MapSection> _lazyMapSection = new Lazy<MapSection>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static readonly MapSection Empty = _lazyMapSection.Value;
 
-		private readonly Lazy<IHistogram> _histogram;
+		private Lazy<IHistogram> _histogram;
 
 		#region Constructor
 
-		public MapSection() : this(new PointInt(), new SizeInt(), Array.Empty<ushort>(), Array.Empty<ushort>(), 0, string.Empty, new BigVector(), false, BuildHstFake)
+		public MapSection() : this(new PointInt(), new SizeInt(), mapSectionValues: null, 0, string.Empty, new BigVector(), false, BuildHstFake)
 		{ }
 
-		public MapSection(PointInt blockPosition, SizeInt size, ushort[] counts, ushort[] escapeVelocities, int targetIterations, string subdivisionId
+		public MapSection(PointInt blockPosition, SizeInt size, MapSectionValues? mapSectionValues, int targetIterations, string subdivisionId
 			, BigVector repoBlockPosition, bool isInverted, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			BlockPosition = blockPosition;
 			Size = size;
-			Counts = counts ?? throw new ArgumentNullException(nameof(counts));
-			EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
+			MapSectionValues = mapSectionValues;
+			//Counts = counts ?? throw new ArgumentNullException(nameof(counts));
+			//EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
 			TargetIterations = targetIterations;
 
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
 			IsInverted = isInverted;
 
-			_histogram = new Lazy<IHistogram>(() => histogramBuilder(Counts), System.Threading.LazyThreadSafetyMode.PublicationOnly);
+			_histogram = new Lazy<IHistogram>(() => histogramBuilder(MapSectionValues?.Counts ?? new ushort[0]), System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		}
 
 		#endregion
@@ -42,8 +43,11 @@ namespace MSS.Common.DataTransferObjects
 		public PointInt BlockPosition { get; set; }
 		public SizeInt Size { get; init; }
 
-		public ushort[] Counts { get; init; }
-		public ushort[] EscapeVelocities { get; init; }
+		//public ushort[] Counts { get; init; }
+		//public ushort[] EscapeVelocities { get; init; }
+
+		public MapSectionValues? MapSectionValues { get; private set; }
+
 		public int TargetIterations { get; init; }
 
 		public string SubdivisionId { get; init; }
@@ -115,6 +119,45 @@ namespace MSS.Common.DataTransferObjects
 		{
 			return new HistogramALow(dummy);
 		}
+
+		#region IDisposable Support
+
+		private bool _disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!_disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+					if (MapSectionValues != null)
+					{
+						MapSectionValues = null;
+					}
+					//_histogram.Value.di = null;
+				}
+
+				// Set large fields to null
+				_disposedValue = true;
+			}
+		}
+
+		// // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+		// ~MapSection()
+		// {
+		//     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		//     Dispose(disposing: false);
+		// }
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }
 

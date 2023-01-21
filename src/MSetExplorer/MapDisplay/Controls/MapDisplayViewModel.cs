@@ -329,6 +329,11 @@ namespace MSetExplorer
 			lock (_paintLocker)
 			{
 				_screenSectionCollection.HideScreenSections();
+				foreach(var ms in MapSections)
+				{
+					_mapSectionHelper.ReturnMapSection(ms);
+				}
+
 				MapSections.Clear();
 			}
 		}
@@ -401,7 +406,7 @@ namespace MSetExplorer
 					return false;
 				}
 
-				if ( (!mapSection.IsEmpty) && mapSection.Counts != null)
+				if ( (!mapSection.IsEmpty) && mapSection.MapSectionValues?.Counts != null)
 				{
 					try
 					{
@@ -706,10 +711,10 @@ namespace MSetExplorer
 
 		private void DrawASection(MapSection mapSection, ColorMap? colorMap, bool useEscapVelocities, bool drawOffline)
 		{
-			if (mapSection.Counts != null && colorMap != null)
+			if (mapSection.MapSectionValues != null && colorMap != null)
 			{
 				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-				var pixels = _mapSectionHelper.GetPixelArray(mapSection.Counts, mapSection.EscapeVelocities, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
+				var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionValues, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
 
 				_screenSectionCollection.Draw(mapSection.BlockPosition, pixels, drawOffline);
 			}

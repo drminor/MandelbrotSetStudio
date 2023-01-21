@@ -15,7 +15,7 @@ namespace MSS.Common.DataTransferObjects
 		public int TotalFree { get { return _pool.Count; } }
 
 		///<summary>The pool of free objects, waiting to be obtained.</summary> 
-		private Stack<T> _pool;
+		protected Stack<T> _pool;
 
 		/// <summary>
 		/// Create a new <see cref="ObjectPool{T}"/>.
@@ -25,6 +25,7 @@ namespace MSS.Common.DataTransferObjects
 		public ObjectPool(int initialSize = 16, int maxSize = int.MaxValue)
 		{
 			_pool = new Stack<T>(initialSize);
+
 			MaxSize = maxSize;
 			MaxPeak = 0;
 		}

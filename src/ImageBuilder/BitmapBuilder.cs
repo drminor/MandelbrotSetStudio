@@ -96,8 +96,8 @@ namespace ImageBuilder
 								Debug.WriteLine($"Got a null mapSection.");
 							}
 
-							var countsForThisSegment = GetOneLineFromCountsBlock(mapSection?.Counts, linePtr, blockSize.Width);
-							var escVelsForThisSegment = GetOneLineFromCountsBlock(mapSection?.EscapeVelocities, linePtr, blockSize.Width);
+							var countsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.Counts, linePtr, blockSize.Width);
+							var escVelsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.EscapeVelocities, linePtr, blockSize.Width);
 							var segmentLength = GetSegmentLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
 
 							try

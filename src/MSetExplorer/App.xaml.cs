@@ -46,6 +46,10 @@ namespace MSetExplorer
 
 		private const bool FETCH_ZVALUES_LOCALLY = false;
 
+		private const int MAP_SECTION_VALUE_POOL_SIZE = 30;
+
+		private readonly MapSectionValuesPool _mapSectionValuesPool;
+		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly MEngineServerManager? _mEngineServerManager;
 		private RepositoryAdapters? _repositoryAdapters;
 		private IMapLoaderManager? _mapLoaderManager;
@@ -56,6 +60,9 @@ namespace MSetExplorer
 		public App()
 		{
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+			_mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, initialSize: MAP_SECTION_VALUE_POOL_SIZE);
+			_mapSectionHelper = new MapSectionHelper(_mapSectionValuesPool);
 
 			if (START_LOCAL_ENGINE)
 			{
@@ -100,9 +107,10 @@ namespace MSetExplorer
 
 			var mEngineClients = ChooseMEngineClientImplementation(CLIENT_IMPLEMENTATION, mEngineAddresses, _repositoryAdapters.MapSectionAdapter);
 
-			_mapLoaderManager = BuildMapLoaderManager(mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter, FETCH_ZVALUES_LOCALLY);
 
-			_appNavWindow = GetAppNavWindow(_repositoryAdapters, _mapLoaderManager);
+			_mapLoaderManager = BuildMapLoaderManager(_mapSectionHelper, mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter, FETCH_ZVALUES_LOCALLY);
+
+			_appNavWindow = GetAppNavWindow(_mapSectionHelper, _repositoryAdapters, _mapLoaderManager);
 			_appNavWindow.Show();
 		}
 
@@ -122,11 +130,13 @@ namespace MSetExplorer
 			//}
 
 			_mEngineServerManager?.Stop();
+
+			_mapSectionValuesPool.Clear();
 		}
 
-		private AppNavWindow GetAppNavWindow(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
+		private AppNavWindow GetAppNavWindow(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
 		{
-			var appNavViewModel = new AppNavViewModel(repositoryAdapters, mapLoaderManager);
+			var appNavViewModel = new AppNavViewModel(mapSectionHelper, repositoryAdapters, mapLoaderManager);
 
 			var appNavWindow = new AppNavWindow
 			{
@@ -168,11 +178,10 @@ namespace MSetExplorer
 		//	return mEngineClients;
 		//}
 
-		private IMapLoaderManager BuildMapLoaderManager(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
+		private IMapLoaderManager BuildMapLoaderManager(MapSectionHelper mapSectionHelper, IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
 		{
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, fetchZValues);
 
-			var mapSectionHelper = new MapSectionHelper(new MapSectionValuesPool(RMapConstants.BLOCK_SIZE));
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
 
 			return result;

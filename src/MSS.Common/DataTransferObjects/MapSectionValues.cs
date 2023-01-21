@@ -25,9 +25,9 @@ namespace MSS.Common.DataTransferObjects
 
 		public SizeInt BlockSize { get; init; }
 		public int Length { get; init; }
-		public bool[] HasEscapedFlags {get; init;} 
-		public ushort[] Counts { get; init; }
-		public ushort[] EscapeVelocities { get; init; }
+		public bool[] HasEscapedFlags {get; private set;}
+		public ushort[] Counts { get; private set; }
+		public ushort[] EscapeVelocities { get; private set; }
 
 
 		public void Load(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
@@ -86,9 +86,9 @@ namespace MSS.Common.DataTransferObjects
 
 		void IPoolable.ResetObject()
 		{
-			Array.Clear(HasEscapedFlags, 0, Length);
-			Array.Clear(Counts, 0, Length);
-			Array.Clear(EscapeVelocities, 0, Length);
+			//Array.Clear(HasEscapedFlags, 0, Length);
+			//Array.Clear(Counts, 0, Length);
+			//Array.Clear(EscapeVelocities, 0, Length);
 		}
 
 		#region IDisposable Support
@@ -102,9 +102,11 @@ namespace MSS.Common.DataTransferObjects
 				if (disposing)
 				{
 					// Dispose managed state (managed objects)
+					HasEscapedFlags = Array.Empty<bool>();
+					Counts = Array.Empty<ushort>();
+					EscapeVelocities = Array.Empty<ushort>();
 				}
 
-				// TODO: set large fields to null
 				_disposedValue = true;
 			}
 		}
@@ -116,7 +118,7 @@ namespace MSS.Common.DataTransferObjects
 		//     Dispose(disposing: false);
 		// }
 
-		void IDisposable.Dispose()
+		public void Dispose()
 		{
 			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
 			Dispose(disposing: true);

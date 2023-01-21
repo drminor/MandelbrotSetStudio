@@ -27,6 +27,19 @@ namespace MSS.Common
 
 		public long NumberOfCountValSwitches { get; private set; }
 
+		public void ReturnMapSection(MapSection mapSection)
+		{
+			if (mapSection.MapSectionValues != null)
+			{
+				if (!_mapSectionValuesPool.Free(mapSection.MapSectionValues))
+				{
+					mapSection.MapSectionValues.Dispose();
+				}
+
+				mapSection.Dispose();
+			}
+		}
+
 		#region Create MapSectionRequests
 
 		public IList<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
@@ -63,8 +76,8 @@ namespace MSS.Common
 
 		public IList<MapSection> CreateEmptyMapSections(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
-			var emptyCountsData = new ushort[0];
-			var emptyEscapeVelocities = new ushort[0];
+			//var emptyCountsData = new ushort[0];
+			//var emptyEscapeVelocities = new ushort[0];
 
 			var result = new List<MapSection>();
 
@@ -78,8 +91,14 @@ namespace MSS.Common
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
 				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapAreaInfo.MapBlockOffset, out var isInverted);
-				var mapSection = new MapSection(screenPosition, mapAreaInfo.Subdivision.BlockSize, emptyCountsData, emptyEscapeVelocities, targetIterations,
+
+				//var mapSection = new MapSection(screenPosition, mapAreaInfo.Subdivision.BlockSize, emptyCountsData, emptyEscapeVelocities, targetIterations,
+				//	subdivisionId, repoPosition, isInverted, BuildHistogram);
+
+				var mapSection = new MapSection(screenPosition, mapAreaInfo.Subdivision.BlockSize, mapSectionValues: null, targetIterations,
 					subdivisionId, repoPosition, isInverted, BuildHistogram);
+
+
 				result.Add(mapSection);
 			}
 
@@ -170,16 +189,19 @@ namespace MSS.Common
 
 			mapSectionValues.Load(mapSectionResponse.HasEscapedFlags, mapSectionResponse.Counts, mapSectionResponse.EscapeVelocities);
 
-			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionResponse.EscapeVelocities, mapSectionResponse.MapCalcSettings.TargetIterations,
+			var mapSection = new MapSection(screenPosition, blockSize, mapSectionValues, mapSectionResponse.MapCalcSettings.TargetIterations,
 				mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted, BuildHistogram);
 
 			return mapSection;
 		}
 
-		public byte[] GetPixelArray(ushort[] counts, ushort[] escapeVelocities, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
+		public byte[] GetPixelArray(MapSectionValues mapSectionValues, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
 			var numberofCells = blockSize.NumberOfCells;
 			var result = new byte[4 * numberofCells];
+
+			var counts = mapSectionValues.Counts;
+			var escapeVelocities = mapSectionValues.EscapeVelocities;
 
 			var previousCountVal = counts[0];
 
@@ -205,7 +227,7 @@ namespace MSS.Common
 
 					if (escapeVelocity > 1.0)
 					{
-						Debug.WriteLine($"The Escape Velocity is greater that 1.0");
+						Debug.WriteLine($"The Escape Velocity is greater than 1.0");
 					}
 
 					escapeVelocity = 0;

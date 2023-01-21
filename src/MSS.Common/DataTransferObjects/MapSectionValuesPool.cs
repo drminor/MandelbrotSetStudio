@@ -6,9 +6,14 @@ namespace MSS.Common.DataTransferObjects
 	{
 		private readonly SizeInt _blockSize;
 
-		public MapSectionValuesPool(SizeInt BlockSize)
+		public MapSectionValuesPool(SizeInt BlockSize, int initialSize = 16) : base(initialSize)
 		{
 			_blockSize = BlockSize;
+
+			for (var i = 0; i < initialSize; i++)
+			{
+				_pool.Push(NewObject());
+			}
 		}
 
 		protected override MapSectionValues NewObject()
