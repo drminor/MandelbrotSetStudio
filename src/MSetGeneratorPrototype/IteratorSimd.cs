@@ -21,7 +21,6 @@ namespace MSetGeneratorPrototype
 		private FP31Vectors _sumOfSqrs;
 
 		private Vector256<int>[] _escapedFlagVectors;
-		//private Vector256<int>[] _escapedFlagVectors2;
 
 		private FP31Vectors _zRZiSqrs;
 		private FP31Vectors _zRs2;
@@ -35,7 +34,6 @@ namespace MSetGeneratorPrototype
 		{
 			_vecMath = vecMath;
 			_escapedFlagVectors = new Vector256<int>[VectorCount];
-			//_escapedFlagVectors2 = new Vector256<int>[VectorCount];
 
 			Crs = new FP31Vectors(LimbCount, ValueCount);
 			Cis = new FP31Vectors(LimbCount, ValueCount);
@@ -155,11 +153,7 @@ namespace MSetGeneratorPrototype
 				_vecMath.Square(Zis, _zISqrs, inPlayList, inPlayListNarrow);
 				_vecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, inPlayList);
 
-				//_vecMath.Threshold = threshold;
-
-				//_vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagVectors, inPlayList);
 				_vecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, _escapedFlagVectors, inPlayList);
-
 				return _escapedFlagVectors;
 			}
 			catch (Exception e)

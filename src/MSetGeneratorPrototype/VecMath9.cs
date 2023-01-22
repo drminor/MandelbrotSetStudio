@@ -48,7 +48,6 @@ namespace MSetGeneratorPrototype
 		private FP31Vectors _additionResult;
 
 		private Vector256<uint>[] _ones;
-		//private Vector256<int> _thresholdVector;
 
 		private Vector256<uint>[] _carryVectors;
 		private Vector256<ulong>[] _carryVectorsLong;
@@ -65,13 +64,9 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public VecMath9(ApFixedPointFormat apFixedPointFormat, int valueCount/*, uint threshold*/)
+		public VecMath9(ApFixedPointFormat apFixedPointFormat, int valueCount)
 		{
 			ApFixedPointFormat = apFixedPointFormat;
-
-			//var threshold = 4u;
-			//var thresholdMsl = GetThresholdMsl(threshold, ApFixedPointFormat);
-			//_thresholdVector = Vector256.Create(thresholdMsl);
 
 			ValueCount = valueCount;
 			VectorCount = Math.DivRem(ValueCount, _lanes, out var remainder);
@@ -80,8 +75,6 @@ namespace MSetGeneratorPrototype
 			{
 				throw new ArgumentException($"The valueCount must be an even multiple of {_lanes}.");
 			}
-
-			//MathOpCounts = new MathOpCounts();
 
 			_squareResult0 = new FP31VectorsPW(LimbCount, ValueCount);
 			_squareResult1 = new FP31VectorsPW(LimbCount * 2, ValueCount);
@@ -101,20 +94,8 @@ namespace MSetGeneratorPrototype
 
 			_shiftAmount = BitsBeforeBP;
 			_inverseShiftAmount = (byte)(31 - _shiftAmount);
-		}
 
-		private int GetThresholdMsl(uint threshold, ApFixedPointFormat apFixedPointFormat)
-		{
-			var maxIntegerValue = FP31ValHelper.GetMaxIntegerValue(apFixedPointFormat.BitsBeforeBinaryPoint);
-			if (threshold > maxIntegerValue)
-			{
-				throw new ArgumentException($"The threshold must be less than or equal to the maximum integer value supported by the ApFixedPointformat.");
-			}
-
-			var thresholdFP31Val = FP31ValHelper.CreateFP31Val(new RValue(threshold, 0), apFixedPointFormat);
-			var result = (int)thresholdFP31Val.Mantissa[^1] - 1;
-
-			return result;
+			//MathOpCounts = new MathOpCounts();
 		}
 
 		#endregion
@@ -125,24 +106,7 @@ namespace MSetGeneratorPrototype
 		public int ValueCount { get; init; }
 		public int VectorCount { get; init; }
 
-		//public Vector256<int> ThresholdVector => _thresholdVector;
-
 		//public MathOpCounts MathOpCounts { get; init; }
-
-		//private uint _threshold;
-		//public uint Threshold
-		//{
-		//	get => _threshold;
-		//	set
-		//	{
-		//		if (value != _threshold)
-		//		{
-		//			_threshold = value;
-		//			var thresholdMsl = GetThresholdMsl(value, ApFixedPointFormat);
-		//			_thresholdVector = Vector256.Create(thresholdMsl);
-		//		}
-		//	}
-		//}
 
 		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
@@ -689,14 +653,6 @@ namespace MSetGeneratorPrototype
 
 			return result;
 		}
-
-		//public void IsGreaterOrEqThanThreshold(FP31Vectors a, Vector256<int>[] results, int[] inPlayList)
-		//{
-		//	//var left = a.GetLimbVectorsUW(LimbCount - 1);
-		//	var right = _thresholdVector;
-
-		//	IsGreaterOrEqThan(a, right, results, inPlayList);
-		//}
 
 		public void IsGreaterOrEqThan(FP31Vectors a, Vector256<int> right, Vector256<int>[] results, int[] inPlayList)
 		{

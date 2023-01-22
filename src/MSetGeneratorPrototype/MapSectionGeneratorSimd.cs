@@ -90,9 +90,8 @@ namespace MSetGeneratorPrototype
 			//	ReportSamplePoints(samplePointsX);
 			//}
 
-			//iterator.Threshold = 4u;
 			iterator.Threshold = (uint)mapCalcSettings.Threshold;
-			iterator.Crs.UpdateFrom(samplePointsX); //= new FP31Vectors(samplePointsX);
+			iterator.Crs.UpdateFrom(samplePointsX);
 			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
 			var iterationCountsRow = new IterationCountsRow(mapSectionVectors);
@@ -103,7 +102,6 @@ namespace MSetGeneratorPrototype
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
-				//iterator.Cis = new FP31Vectors(yPoint, stride);
 				iterator.Cis.UpdateFrom(yPoint);
 
 				//var (zRs, zIs) = GetZValues(mapSectionRequest, rowNumber, apFixedPointFormat.LimbCount, stride);
