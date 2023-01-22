@@ -47,7 +47,7 @@ namespace MSS.Types.MSet
 
 		public MapCalcSettings Clone()
 		{
-			var result = new MapCalcSettings(TargetIterations, RequestsPerJob, Threshold);
+			var result = new MapCalcSettings(TargetIterations, Threshold, RequestsPerJob);
 			return result;
 		}
 

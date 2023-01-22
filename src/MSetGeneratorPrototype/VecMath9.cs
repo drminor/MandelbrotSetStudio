@@ -47,9 +47,8 @@ namespace MSetGeneratorPrototype
 		private FP31Vectors _negationResult;
 		private FP31Vectors _additionResult;
 
-
 		private Vector256<uint>[] _ones;
-		private Vector256<int> _thresholdVector;
+		//private Vector256<int> _thresholdVector;
 
 		private Vector256<uint>[] _carryVectors;
 		private Vector256<ulong>[] _carryVectorsLong;
@@ -66,13 +65,13 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public VecMath9(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
+		public VecMath9(ApFixedPointFormat apFixedPointFormat, int valueCount/*, uint threshold*/)
 		{
 			ApFixedPointFormat = apFixedPointFormat;
 
-			_threshold = threshold;
-			var thresholdMsl = GetThresholdMsl(threshold, ApFixedPointFormat);
-			_thresholdVector = Vector256.Create(thresholdMsl);
+			//var threshold = 4u;
+			//var thresholdMsl = GetThresholdMsl(threshold, ApFixedPointFormat);
+			//_thresholdVector = Vector256.Create(thresholdMsl);
 
 			ValueCount = valueCount;
 			VectorCount = Math.DivRem(ValueCount, _lanes, out var remainder);
@@ -126,21 +125,24 @@ namespace MSetGeneratorPrototype
 		public int ValueCount { get; init; }
 		public int VectorCount { get; init; }
 
+		//public Vector256<int> ThresholdVector => _thresholdVector;
+
 		//public MathOpCounts MathOpCounts { get; init; }
 
-		private uint _threshold;
-		public uint Threshold
-		{
-			get => _threshold;
-			set
-			{
-				if (value != _threshold)
-				{
-					var thresholdMsl = GetThresholdMsl(value, ApFixedPointFormat);
-					_thresholdVector = Vector256.Create(thresholdMsl);
-				}
-			}
-		}
+		//private uint _threshold;
+		//public uint Threshold
+		//{
+		//	get => _threshold;
+		//	set
+		//	{
+		//		if (value != _threshold)
+		//		{
+		//			_threshold = value;
+		//			var thresholdMsl = GetThresholdMsl(value, ApFixedPointFormat);
+		//			_thresholdVector = Vector256.Create(thresholdMsl);
+		//		}
+		//	}
+		//}
 
 		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
 		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
@@ -678,16 +680,28 @@ namespace MSetGeneratorPrototype
 
 		#region Comparison
 
-		public void IsGreaterOrEqThanThreshold(FP31Vectors a, Vector256<int>[] results, int[] inPlayList)
+		public Vector256<int> CreateVectorForComparison(uint value)
 		{
-			var left = a.GetLimbVectorsUW(LimbCount - 1);
-			var right = _thresholdVector;
+			var fp31Val = FP31ValHelper.CreateFP31Val(new RValue(value, 0), ApFixedPointFormat);
+			var msl = (int)fp31Val.Mantissa[^1] - 1;
 
-			IsGreaterOrEqThan(left, right, results, inPlayList);
+			var result = Vector256.Create(msl);
+
+			return result;
 		}
 
-		private void IsGreaterOrEqThan(Span<Vector256<uint>> left, Vector256<int> right, Vector256<int>[] results, int[] inPlayList)
+		//public void IsGreaterOrEqThanThreshold(FP31Vectors a, Vector256<int>[] results, int[] inPlayList)
+		//{
+		//	//var left = a.GetLimbVectorsUW(LimbCount - 1);
+		//	var right = _thresholdVector;
+
+		//	IsGreaterOrEqThan(a, right, results, inPlayList);
+		//}
+
+		public void IsGreaterOrEqThan(FP31Vectors a, Vector256<int> right, Vector256<int>[] results, int[] inPlayList)
 		{
+			var left = a.GetLimbVectorsUW(LimbCount - 1);
+
 			for (var idxPtr = 0; idxPtr < inPlayList.Length; idxPtr++)
 			{
 				var idx = inPlayList[idxPtr];

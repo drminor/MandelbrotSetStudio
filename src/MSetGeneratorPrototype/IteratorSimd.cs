@@ -12,12 +12,16 @@ namespace MSetGeneratorPrototype
 
 		private VecMath9 _vecMath;
 
+		private uint _threshold;
+		private Vector256<int> _thresholdVector;
+
 		private FP31Vectors _zRSqrs;
 		private FP31Vectors _zISqrs;
 
 		private FP31Vectors _sumOfSqrs;
 
 		private Vector256<int>[] _escapedFlagVectors;
+		//private Vector256<int>[] _escapedFlagVectors2;
 
 		private FP31Vectors _zRZiSqrs;
 		private FP31Vectors _zRs2;
@@ -29,9 +33,9 @@ namespace MSetGeneratorPrototype
 
 		public IteratorSimd(VecMath9 vecMath)
 		{
-			//_vecMath = new VecMath9(apFixedPointFormat, valueCount, threshold);
 			_vecMath = vecMath;
 			_escapedFlagVectors = new Vector256<int>[VectorCount];
+			//_escapedFlagVectors2 = new Vector256<int>[VectorCount];
 
 			Crs = new FP31Vectors(LimbCount, ValueCount);
 			Cis = new FP31Vectors(LimbCount, ValueCount);
@@ -53,24 +57,29 @@ namespace MSetGeneratorPrototype
 
 		#region Public Properties
 
-		//public ApFixedPointFormat ApFixedPointFormat => _vecMath.ApFixedPointFormat;
-
 		public int LimbCount => _vecMath.LimbCount;
 		public int ValueCount => _vecMath.ValueCount;
 		public int VectorCount => _vecMath.VectorCount;
 
-		public FP31Vectors Crs { get; set; }
-		public FP31Vectors Cis { get; set; }
-		public FP31Vectors Zrs { get; set; }
-		public FP31Vectors Zis { get; set; }
+		public FP31Vectors Crs { get; init; }
+		public FP31Vectors Cis { get; init; }
+		public FP31Vectors Zrs { get; init; }
+		public FP31Vectors Zis { get; init; }
 
 		public bool ZValuesAreZero { get; set; }
 
-		//public uint Threshold
-		//{
-		//	get => _vecMath.Threshold;
-		//	set => _vecMath.Threshold = value;
-		//}
+		public uint Threshold
+		{
+			get => _threshold;
+			set
+			{
+				if (value != _threshold)
+				{
+					_threshold = value;
+					_thresholdVector = _vecMath.CreateVectorForComparison(_threshold);
+				}
+			}
+		}
 
 		//public MathOpCounts MathOpCounts => _vecMath.MathOpCounts;
 
@@ -99,7 +108,7 @@ namespace MSetGeneratorPrototype
 		//	//_cRs = cRs;
 		//	_cRsTemp.UpdateFrom(samplePointsX);
 		//	Crs = new FP31Vectors(_cRsTemp);
-			
+
 		//	//_cIs = cIs;
 		//	_cIsTemp.UpdateFrom(samplePointY);
 		//	Cis = new FP31Vectors(_cIsTemp);
@@ -120,8 +129,11 @@ namespace MSetGeneratorPrototype
 				if (ZValuesAreZero)
 				{
 					// Perform the first iteration. 
-					Zrs = Crs.Clone();
-					Zis = Cis.Clone();
+					//Zrs = Crs.Clone();
+					//Zis = Cis.Clone();
+
+					Zrs.UpdateFrom(Crs);
+					Zis.UpdateFrom(Cis);
 					ZValuesAreZero = false;
 				}
 				else
@@ -143,7 +155,10 @@ namespace MSetGeneratorPrototype
 				_vecMath.Square(Zis, _zISqrs, inPlayList, inPlayListNarrow);
 				_vecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, inPlayList);
 
-				_vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagVectors, inPlayList);
+				//_vecMath.Threshold = threshold;
+
+				//_vecMath.IsGreaterOrEqThanThreshold(_sumOfSqrs, _escapedFlagVectors, inPlayList);
+				_vecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, _escapedFlagVectors, inPlayList);
 
 				return _escapedFlagVectors;
 			}

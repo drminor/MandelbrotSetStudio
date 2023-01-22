@@ -14,25 +14,14 @@ namespace MSetGeneratorPrototype
 {
 	public class MapSectionGeneratorSimd
 	{
-		//private readonly ApFixedPointFormat _apFixedPointFormat;
-
 		private readonly VecMath9 _vecMath;
 		private readonly IIterator _iterator;
 
-		private Vector256<int> _targetIterationsVector;
-
-		public MapSectionGeneratorSimd()
+		public MapSectionGeneratorSimd(SizeInt blockSize, int limbCount)
 		{
-			var howManyLimbs = 2;
-			var apFixedPointFormat = new ApFixedPointFormat(howManyLimbs);
-			
-			var valuesPerRow = 128;
-			var threshold = 4u;
-
-			_vecMath = new VecMath9(apFixedPointFormat, valuesPerRow, threshold);
+			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
+			_vecMath = new VecMath9(apFixedPointFormat, blockSize.Width);
 			_iterator = new IteratorSimd(_vecMath);
-
-			_targetIterationsVector = new Vector256<int>();
 		}
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
@@ -65,15 +54,7 @@ namespace MSetGeneratorPrototype
 				var mapSectionVectors = mapSectionRequest.MapSectionVectors;
 				mapSectionRequest.MapSectionVectors = null;
 
-				var blockSize = mapSectionRequest.BlockSize;
-
-				//_vecMath.Threshold = (uint)mapCalcSettings.Threshold;
-				_vecMath.Threshold = 4u;
-
-				var targetIterations = mapCalcSettings.TargetIterations;
-				_targetIterationsVector = Vector256.Create(targetIterations);
-
-				GenerateMapSection(_iterator, mapSectionVectors, mapCalcSettings, blockSize, blockPos, startingCx, startingCy, delta);
+				GenerateMapSection(_iterator, mapSectionVectors, startingCx, startingCy, delta, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 				var hasEscapedFlags = new bool[0];
@@ -82,27 +63,24 @@ namespace MSetGeneratorPrototype
 
 				result = new MapSectionResponse(mapSectionRequest, hasEscapedFlags, counts, escapeVelocities, zValues: null);
 				result.MapSectionVectors = mapSectionVectors;
+				//result.MathOpCounts = iterator.MathOpCounts;
 			}
 
 			return result;
 		}
 
 		// Generate MapSection
-		private void GenerateMapSection(IIterator iterator, MapSectionVectors mapSectionVectors, MapCalcSettings mapCalcSettings, SizeInt blockSize, BigVector blockPos, 
-			FP31Val startingCx, FP31Val startingCy, FP31Val delta)
+		private void GenerateMapSection(IIterator iterator, MapSectionVectors mapSectionVectors, FP31Val startingCx, FP31Val startingCy, FP31Val delta, MapCalcSettings mapCalcSettings)
 		{
-			//var mapCalcSettings = mapSectionRequest.MapCalcSettings;
-			//var blockSize = mapSectionRequest.BlockSize;
-
-
+			var blockSize = mapSectionVectors.BlockSize;
 			var rowCount = blockSize.Height;
 			var stride = (byte)blockSize.Width;
-
 
 			var scalarMath9 = new ScalarMath9(_vecMath.ApFixedPointFormat);
 			var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(delta, stride, scalarMath9);
 			var samplePointsX = SamplePointBuilder.BuildSamplePoints(startingCx, samplePointOffsets, scalarMath9);
 			var samplePointsY = SamplePointBuilder.BuildSamplePoints(startingCy, samplePointOffsets, scalarMath9);
+
 
 			//var bx = mapSectionRequest.ScreenPosition.X;
 			//var by = mapSectionRequest.ScreenPosition.Y;
@@ -112,9 +90,10 @@ namespace MSetGeneratorPrototype
 			//	ReportSamplePoints(samplePointsX);
 			//}
 
-			iterator.Crs = new FP31Vectors(samplePointsX);
-
-
+			//iterator.Threshold = 4u;
+			iterator.Threshold = (uint)mapCalcSettings.Threshold;
+			iterator.Crs.UpdateFrom(samplePointsX); //= new FP31Vectors(samplePointsX);
+			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
 			var iterationCountsRow = new IterationCountsRow(mapSectionVectors);
 
@@ -124,57 +103,38 @@ namespace MSetGeneratorPrototype
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
-				iterator.Cis = new FP31Vectors(yPoint, stride);
+				//iterator.Cis = new FP31Vectors(yPoint, stride);
+				iterator.Cis.UpdateFrom(yPoint);
 
 				//var (zRs, zIs) = GetZValues(mapSectionRequest, rowNumber, apFixedPointFormat.LimbCount, stride);
 				iterator.Zrs.ClearManatissMems();
 				iterator.Zis.ClearManatissMems();
 				iterator.ZValuesAreZero = true;
 
-				GenerateMapRow(iterator, ref iterationCountsRow);
+				GenerateMapRow(iterator, ref iterationCountsRow, targetIterationsVector);
 			}
-
-			//var compressedHasEscapedFlags = CompressHasEscapedFlags(hasEscapedFlags);
-
-			//var result = new MapSectionResponse(mapSectionRequest, hasEscapedFlags, counts, escapeVelocities, zValues: null);
-			//result.MapSectionVectors = mapSectionVectors;
-			//result.MathOpCounts = iterator.MathOpCounts;
-
-			//return result;
 		}
 
-		private void GenerateMapRow(IIterator iteratorSimd, ref IterationCountsRow itState)
+		private void GenerateMapRow(IIterator iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
 		{
-			//var inPlayList = Enumerable.Range(0, iterationCountsBlock.VectorsPerRow).ToArray();
-			//var inPlayListNarrow = BuildNarowInPlayList(inPlayList);
-
 			while (itState.InPlayList.Length > 0)
 			{
-				var escapedFlags = iteratorSimd.Iterate(itState.InPlayList, itState.InPlayListNarrow);
+				var escapedFlags = iterator.Iterate(itState.InPlayList, itState.InPlayListNarrow);
 
-				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, ref itState);
+				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, ref itState, targetIterationsVector);
 				if (vectorsNoLongerInPlay.Count > 0)
 				{
 					itState.UpdateTheInPlayList(vectorsNoLongerInPlay);
-					//inPlayList = UpdateTheInPlayList(inPlayList, vectorsNoLongerInPlay);
-					//inPlayListNarrow = BuildNarowInPlayList(inPlayList);
 				}
 			}
 
 			//iteratorSimd.MathOpCounts.RollUpNumberOfUnusedCalcs(iterationState.GetUnusedCalcs());
 		}
 
-		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, ref IterationCountsRow itState)
+		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
 		{
 			var toBeRemoved = new List<int>();
 			var justOne = Vector256.Create(1);
-
-			//var hasEscapedFlagsVectors = iterationState.GetHasEscapedFlagsRow(rowNumber);
-			//var countsVectors = iterationState.GetCountsRow(rowNumber);
-			//var escapeVelocitiesVectors = iterationState.GetEscapeVelocitiesRow(rowNumber);
-
-			//var doneFlagsVectors = iterationState.DoneFlagsVectors;
-			//var unusedCalcsVectors = iterationState.UnusedCalcsVectors;
 
 			for (var idxPtr = 0; idxPtr < itState.InPlayList.Length; idxPtr++)
 			{
@@ -205,7 +165,7 @@ namespace MSetGeneratorPrototype
 				itState.HasEscapedFlags[idx] = updatedHaveEscapedFlagsV;
 
 				// Compare the new Counts with the TargetIterations
-				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, _targetIterationsVector);
+				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector);
 
 
 				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
@@ -319,79 +279,6 @@ namespace MSetGeneratorPrototype
 
 			return false;
 		}
-
-		private int[] UpdateTheInPlayList(int[] inPlayList, List<int> vectorsNoLongerInPlay)
-		{
-			var lst = inPlayList.ToList();
-
-			foreach (var vectorIndex in vectorsNoLongerInPlay)
-			{
-				lst.Remove(vectorIndex);
-			}
-
-			var updatedLst = lst.ToArray();
-
-			return updatedLst;
-		}
-
-		private int[] BuildNarowInPlayList(int[] inPlayList)
-		{
-			var result = new int[inPlayList.Length * 2];
-
-			var resultIdxPtr = 0;
-
-			for (var idxPtr = 0; idxPtr < inPlayList.Length; idxPtr++, resultIdxPtr += 2)
-			{
-				var resultIdx = inPlayList[idxPtr] * 2;
-
-				result[resultIdxPtr] = resultIdx;
-				result[resultIdxPtr + 1] = resultIdx + 1;
-			}
-
-			return result;
-		}
-
-		private int[] BuildTheInplayList(Span<bool> hasEscapedFlags, Span<ushort> counts, int targetIterations, out bool[] doneFlags)
-		{
-			var lanes = Vector256<uint>.Count;
-			var vectorCount = hasEscapedFlags.Length / lanes;
-
-			doneFlags = new bool[hasEscapedFlags.Length];
-
-			for (int i = 0; i < hasEscapedFlags.Length; i++)
-			{
-				if (hasEscapedFlags[i] | counts[i] >= targetIterations)
-				{
-					doneFlags[i] = true;
-				}
-			}
-
-			var result = Enumerable.Range(0, vectorCount).ToList();
-
-			for (int j = 0; j < vectorCount; j++)
-			{
-				var arrayPtr = j * lanes;
-
-				var allDone = true;
-
-				for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
-				{
-					if (!doneFlags[arrayPtr + lanePtr])
-					{
-						allDone = false;
-						break;
-					}
-				}
-
-				if (allDone)
-				{
-					result.Remove(j);
-				}
-			}
-
-			return result.ToArray();
-		}
-
 
 	}
 }
