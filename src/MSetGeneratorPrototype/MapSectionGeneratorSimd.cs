@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.Intrinsics.X86;
 using System.Runtime.Intrinsics;
+using MSS.Types.MSet;
 
 namespace MSetGeneratorPrototype
 {
@@ -59,27 +60,40 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
+				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
+
 				var mapSectionVectors = mapSectionRequest.MapSectionVectors;
 				mapSectionRequest.MapSectionVectors = null;
 
-				var iterationState = new IterationState(mapSectionVectors);
+				var blockSize = mapSectionRequest.BlockSize;
 
-				result = GenerateMapSection(_iterator, iterationState, mapSectionRequest, blockPos, startingCx, startingCy, delta);
+				//_vecMath.Threshold = (uint)mapCalcSettings.Threshold;
+				_vecMath.Threshold = 4u;
+
+				var targetIterations = mapCalcSettings.TargetIterations;
+				_targetIterationsVector = Vector256.Create(targetIterations);
+
+				GenerateMapSection(_iterator, mapSectionVectors, mapCalcSettings, blockSize, blockPos, startingCx, startingCy, delta);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
+
+				var hasEscapedFlags = new bool[0];
+				var counts = new ushort[0];
+				var escapeVelocities = new ushort[0];
+
+				result = new MapSectionResponse(mapSectionRequest, hasEscapedFlags, counts, escapeVelocities, zValues: null);
+				result.MapSectionVectors = mapSectionVectors;
 			}
 
 			return result;
 		}
 
 		// Generate MapSection
-		private MapSectionResponse GenerateMapSection(IIterator iterator, IterationState iterationState, MapSectionRequest mapSectionRequest, BigVector blockPos, 
+		private void GenerateMapSection(IIterator iterator, MapSectionVectors mapSectionVectors, MapCalcSettings mapCalcSettings, SizeInt blockSize, BigVector blockPos, 
 			FP31Val startingCx, FP31Val startingCy, FP31Val delta)
 		{
-			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
-			var blockSize = mapSectionRequest.BlockSize;
-			var hasEscapedFlags = new bool[0];
-			var counts = new ushort[0];
-			var escapeVelocities = new ushort[0];
+			//var mapCalcSettings = mapSectionRequest.MapCalcSettings;
+			//var blockSize = mapSectionRequest.BlockSize;
+
 
 			var rowCount = blockSize.Height;
 			var stride = (byte)blockSize.Width;
@@ -100,14 +114,13 @@ namespace MSetGeneratorPrototype
 
 			iterator.Crs = new FP31Vectors(samplePointsX);
 
-			//_vecMath.Threshold = (uint)mapCalcSettings.Threshold;
-			_vecMath.Threshold = 4u;
-			var targetIterations = mapCalcSettings.TargetIterations;
-			_targetIterationsVector = Vector256.Create(targetIterations);
+
+
+			var iterationCountsRow = new IterationCountsRow(mapSectionVectors);
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
-				iterationState.ResetDoneFlags();
+				iterationCountsRow.SetRowNumber(rowNumber);
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
@@ -118,80 +131,88 @@ namespace MSetGeneratorPrototype
 				iterator.Zis.ClearManatissMems();
 				iterator.ZValuesAreZero = true;
 
-				GenerateMapRow(iterator, iterationState, rowNumber);
+				GenerateMapRow(iterator, ref iterationCountsRow);
 			}
 
 			//var compressedHasEscapedFlags = CompressHasEscapedFlags(hasEscapedFlags);
 
-			var result = new MapSectionResponse(mapSectionRequest, hasEscapedFlags, counts, escapeVelocities, zValues: null);
-			result.MapSectionVectors = iterationState.MapSectionVectors;
+			//var result = new MapSectionResponse(mapSectionRequest, hasEscapedFlags, counts, escapeVelocities, zValues: null);
+			//result.MapSectionVectors = mapSectionVectors;
 			//result.MathOpCounts = iterator.MathOpCounts;
 
-			return result;
+			//return result;
 		}
 
-		private void GenerateMapRow(IIterator iteratorSimd, IterationState iterationState, int rowNumber)
+		private void GenerateMapRow(IIterator iteratorSimd, ref IterationCountsRow itState)
 		{
-			var inPlayList = Enumerable.Range(0, iterationState.VectorsPerRow).ToArray();
-			var inPlayListNarrow = BuildNarowInPlayList(inPlayList);
+			//var inPlayList = Enumerable.Range(0, iterationCountsBlock.VectorsPerRow).ToArray();
+			//var inPlayListNarrow = BuildNarowInPlayList(inPlayList);
 
-			while (inPlayList.Length > 0)
+			while (itState.InPlayList.Length > 0)
 			{
-				var escapedFlags = iteratorSimd.Iterate(inPlayList, inPlayListNarrow);
+				var escapedFlags = iteratorSimd.Iterate(itState.InPlayList, itState.InPlayListNarrow);
 
-				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, inPlayList, iterationState, rowNumber);
+				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, ref itState);
 				if (vectorsNoLongerInPlay.Count > 0)
 				{
-					inPlayList = UpdateTheInPlayList(inPlayList, vectorsNoLongerInPlay);
-					inPlayListNarrow = BuildNarowInPlayList(inPlayList);
+					itState.UpdateTheInPlayList(vectorsNoLongerInPlay);
+					//inPlayList = UpdateTheInPlayList(inPlayList, vectorsNoLongerInPlay);
+					//inPlayListNarrow = BuildNarowInPlayList(inPlayList);
 				}
 			}
 
 			//iteratorSimd.MathOpCounts.RollUpNumberOfUnusedCalcs(iterationState.GetUnusedCalcs());
 		}
 
-		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, int[] inPLayList, IterationState iterationState, int rowNumber)
+		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, ref IterationCountsRow itState)
 		{
 			var toBeRemoved = new List<int>();
 			var justOne = Vector256.Create(1);
 
-			var hasEscapedFlagsVectors = iterationState.GetHasEscapedFlagsRow(rowNumber);
-			var countsVectors = iterationState.GetCountsRow(rowNumber);
-			var escapeVelocitiesVectors = iterationState.GetEscapeVelocitiesRow(rowNumber);
+			//var hasEscapedFlagsVectors = iterationState.GetHasEscapedFlagsRow(rowNumber);
+			//var countsVectors = iterationState.GetCountsRow(rowNumber);
+			//var escapeVelocitiesVectors = iterationState.GetEscapeVelocitiesRow(rowNumber);
 
-			var doneFlagsVectors = iterationState.DoneFlagsVectors;
-			var unusedCalcsVectors = iterationState.UnusedCalcsVectors;
+			//var doneFlagsVectors = iterationState.DoneFlagsVectors;
+			//var unusedCalcsVectors = iterationState.UnusedCalcsVectors;
 
-			for (var idxPtr = 0; idxPtr < inPLayList.Length; idxPtr++)
+			for (var idxPtr = 0; idxPtr < itState.InPlayList.Length; idxPtr++)
 			{
-				var idx = inPLayList[idxPtr];
+				var idx = itState.InPlayList[idxPtr];
 
-				var doneFlagsV = doneFlagsVectors[idx];
+				var doneFlagsV = itState.DoneFlags[idx];
+				var countsV = itState.Counts[idx];
 
 				// Increment all counts
-				var countsVt = Avx2.Add(countsVectors[idx], justOne);
+				var countsVt = Avx2.Add(countsV, justOne);
+
 				// Take the incremented count, only if the doneFlags is false for each vector position.
-				var countsV = Avx2.BlendVariable(countsVt.AsByte(), countsVectors[idx].AsByte(), doneFlagsV.AsByte()).AsInt32(); // use First if Zero, second if 1
-				countsVectors[idx] = countsV;
+				countsV = Avx2.BlendVariable(countsVt.AsByte(), countsV.AsByte(), doneFlagsV.AsByte()).AsInt32(); // use First if Zero, second if 1
+				itState.Counts[idx] = countsV;
+
+				var unusedCalcsV = itState.UnusedCalcs[idx];
 
 				// Increment all unused calculations
-				var unusedCalcsVt = Avx2.Add(unusedCalcsVectors[idx], justOne);
+				var unusedCalcsVt = Avx2.Add(unusedCalcsV, justOne);
+
 				// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
-				var unusedCalcsV = Avx2.BlendVariable(unusedCalcsVectors[idx].AsByte(), unusedCalcsVt.AsByte(), doneFlagsV.AsByte()).AsInt32();
-				unusedCalcsVectors[idx] = unusedCalcsV;
+				itState.UnusedCalcs[idx] = Avx2.BlendVariable(unusedCalcsV.AsByte(), unusedCalcsVt.AsByte(), doneFlagsV.AsByte()).AsInt32();
+
+				var hasEscapedFlagsV = itState.HasEscapedFlags[idx];
 
 				// Apply the new escapeFlags, only if the doneFlags is false for each vector position
-				var updatedHaveEscapedFlagsV = Avx2.BlendVariable(escapedFlagVectors[idx].AsByte(), hasEscapedFlagsVectors[idx].AsByte(), doneFlagsV.AsByte()).AsInt32();
-				hasEscapedFlagsVectors[idx] = updatedHaveEscapedFlagsV;
+				var updatedHaveEscapedFlagsV = Avx2.BlendVariable(escapedFlagVectors[idx].AsByte(), hasEscapedFlagsV.AsByte(), doneFlagsV.AsByte()).AsInt32();
+				itState.HasEscapedFlags[idx] = updatedHaveEscapedFlagsV;
 
 				// Compare the new Counts with the TargetIterations
 				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, _targetIterationsVector);
 
+
 				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
 				var escapedOrReachedVec = Avx2.Or(updatedHaveEscapedFlagsV, targetReachedCompVec);
-				var updatedDoneFlagsV = Avx2.BlendVariable(doneFlagsVectors[idx].AsByte(), Vector256<int>.AllBitsSet.AsByte(), escapedOrReachedVec.AsByte()).AsInt32();
+				var updatedDoneFlagsV = Avx2.BlendVariable(doneFlagsV.AsByte(), Vector256<int>.AllBitsSet.AsByte(), escapedOrReachedVec.AsByte()).AsInt32();
 
-				doneFlagsVectors[idx] = updatedDoneFlagsV;
+				itState.DoneFlags[idx] = updatedDoneFlagsV;
 
 				var compositeIsDone = Avx2.MoveMask(updatedDoneFlagsV.AsByte());
 
