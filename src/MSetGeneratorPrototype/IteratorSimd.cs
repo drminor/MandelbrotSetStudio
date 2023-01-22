@@ -27,36 +27,37 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IteratorSimd(ApFixedPointFormat apFixedPointFormat, int valueCount, uint threshold)
+		public IteratorSimd(VecMath9 vecMath)
 		{
-			_vecMath = new VecMath9(apFixedPointFormat, valueCount, threshold);
+			//_vecMath = new VecMath9(apFixedPointFormat, valueCount, threshold);
+			_vecMath = vecMath;
+			_escapedFlagVectors = new Vector256<int>[VectorCount];
 
-			var limbCount = _vecMath.LimbCount;
-			var vectorCount = _vecMath.VectorCount;
-
-			Crs = new FP31Vectors(limbCount, valueCount);
-			Cis = new FP31Vectors(limbCount, valueCount);
-			Zrs = new FP31Vectors(limbCount, valueCount);
-			Zis = new FP31Vectors(limbCount, valueCount);
+			Crs = new FP31Vectors(LimbCount, ValueCount);
+			Cis = new FP31Vectors(LimbCount, ValueCount);
+			Zrs = new FP31Vectors(LimbCount, ValueCount);
+			Zis = new FP31Vectors(LimbCount, ValueCount);
 
 			ZValuesAreZero = true;
 
-			_zRSqrs = new FP31Vectors(limbCount, valueCount);
-			_zISqrs = new FP31Vectors(limbCount, valueCount);
-			_sumOfSqrs = new FP31Vectors(limbCount, valueCount);
+			_zRSqrs = new FP31Vectors(LimbCount, ValueCount);
+			_zISqrs = new FP31Vectors(LimbCount, ValueCount);
+			_sumOfSqrs = new FP31Vectors(LimbCount, ValueCount);
 
-			_escapedFlagVectors = new Vector256<int>[vectorCount];
-
-			_zRZiSqrs = new FP31Vectors(limbCount, valueCount);
-			_zRs2 = new FP31Vectors(limbCount, valueCount);
-			_zIs2 = new FP31Vectors(limbCount, valueCount);
+			_zRZiSqrs = new FP31Vectors(LimbCount, ValueCount);
+			_zRs2 = new FP31Vectors(LimbCount, ValueCount);
+			_zIs2 = new FP31Vectors(LimbCount, ValueCount);
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public ApFixedPointFormat ApFixedPointFormat => _vecMath.ApFixedPointFormat;
+		//public ApFixedPointFormat ApFixedPointFormat => _vecMath.ApFixedPointFormat;
+
+		public int LimbCount => _vecMath.LimbCount;
+		public int ValueCount => _vecMath.ValueCount;
+		public int VectorCount => _vecMath.VectorCount;
 
 		public FP31Vectors Crs { get; set; }
 		public FP31Vectors Cis { get; set; }
@@ -65,11 +66,11 @@ namespace MSetGeneratorPrototype
 
 		public bool ZValuesAreZero { get; set; }
 
-		public uint Threshold
-		{
-			get => _vecMath.Threshold;
-			set => _vecMath.Threshold = value;
-		}
+		//public uint Threshold
+		//{
+		//	get => _vecMath.Threshold;
+		//	set => _vecMath.Threshold = value;
+		//}
 
 		//public MathOpCounts MathOpCounts => _vecMath.MathOpCounts;
 

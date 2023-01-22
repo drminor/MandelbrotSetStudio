@@ -13,7 +13,6 @@ namespace MSS.Types
 		{
 			BlockSize = blockSize;
 			Length = blockSize.NumberOfCells;
-			TotalVectorCount = Length / Vector256<uint>.Count;
 
 			HasEscapedVectors = new Vector256<int>[TotalVectorCount];
 			HasEscapedMems = new Memory<Vector256<int>>(HasEscapedVectors);
@@ -29,10 +28,13 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public SizeInt BlockSize { get; init; }
+		public int Lanes => Vector256<int>.Count;
 		public int Length { get; init; }
+		public int TotalVectorCount => Length / Lanes;
 
-		public int TotalVectorCount { get; init; }
+		public SizeInt BlockSize { get; init; }
+		public int VectorsPerRow => BlockSize.Width / Lanes;
+
 
 		public Vector256<int>[] HasEscapedVectors;
 		public Memory<Vector256<int>> HasEscapedMems;

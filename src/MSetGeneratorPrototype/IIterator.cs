@@ -7,8 +7,12 @@ namespace MSetGeneratorPrototype
 {
 	internal interface IIterator
 	{
-		ApFixedPointFormat ApFixedPointFormat { get; }
-		uint Threshold { get; set; }
+		//ApFixedPointFormat ApFixedPointFormat { get; }
+		//uint Threshold { get; set; }
+
+		int LimbCount { get; }
+		int ValueCount { get; }
+		int VectorCount { get; }
 
 		FP31Vectors Crs { get; set; }
 		FP31Vectors Cis { get; set; }

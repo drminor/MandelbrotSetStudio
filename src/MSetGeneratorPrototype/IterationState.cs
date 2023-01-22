@@ -14,31 +14,9 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		//public IterationState(int valueCount) 
-		//{
-		//	ValueCount = valueCount;
-		//	VectorCount = valueCount / Vector256<int>.Count;
-
-		//	_unusedCalcsBuffer = new int[ValueCount];
-
-		//	HasEscapedFlagsVectors = new Vector256<int>[VectorCount];
-		//	CountsVectors = new Vector256<int>[VectorCount];
-		//	EscapeVelocitiesVectors = new Vector256<int>[VectorCount];
-
-		//	DoneFlagsVectors = new Vector256<int>[VectorCount];
-		//	UnusedCalcsVectors = new Vector256<int>[VectorCount];
-		//}
-
-		public IterationState(MapSectionVectors mapSectionVectors, int stride)
+		public IterationState(MapSectionVectors mapSectionVectors)
 		{
 			MapSectionVectors = mapSectionVectors;
-			Stride = stride;
-			TotalVectorCount = mapSectionVectors.TotalVectorCount;
-			VectorsPerRow = stride / Vector256<int>.Count;
-
-			//HasEscapedFlagsVectors = new Vector256<int>[VectorCount];
-			//CountsVectors = new Vector256<int>[VectorCount];
-			//EscapeVelocitiesVectors = new Vector256<int>[VectorCount];
 
 			DoneFlagsVectors = new Vector256<int>[TotalVectorCount];
 			UnusedCalcsVectors = new Vector256<int>[TotalVectorCount];
@@ -51,18 +29,12 @@ namespace MSetGeneratorPrototype
 		#region Public Properties
 
 		public MapSectionVectors MapSectionVectors;
-
-
-		public int Stride { get; init; }
-		public int TotalVectorCount { get; init; }
-		public int VectorsPerRow { get; init; }
+		public int Stride => MapSectionVectors.BlockSize.Width;
+		public int VectorsPerRow => MapSectionVectors.VectorsPerRow;
+		public int TotalVectorCount => MapSectionVectors.TotalVectorCount;
 
 		public Vector256<int>[] DoneFlagsVectors { get; private set; }
 		public Vector256<int>[] UnusedCalcsVectors { get; private set; }
-
-		//public Vector256<int>[] HasEscapedFlagsVectors;
-		//public Vector256<int>[] CountsVectors;
-		//public Vector256<int>[] EscapeVelocitiesVectors;
 
 		public Vector256<int>[] HasEscapedFlagsVectors => MapSectionVectors.HasEscapedVectors;
 		public Vector256<int>[] CountsVectors => MapSectionVectors.CountVectors;
@@ -72,18 +44,10 @@ namespace MSetGeneratorPrototype
 
 		#region Public Methods
 
-		private int _rowNumber;
-
-		public int RowNumber
+		public void ResetDoneFlags()
 		{
-			get => _rowNumber;
-			set
-			{
-				_rowNumber = value;
-
-				Array.Clear(DoneFlagsVectors, 0, DoneFlagsVectors.Length);
-				Array.Clear(UnusedCalcsVectors, 0, UnusedCalcsVectors.Length);
-			}
+			Array.Clear(DoneFlagsVectors, 0, DoneFlagsVectors.Length);
+			Array.Clear(UnusedCalcsVectors, 0, UnusedCalcsVectors.Length);
 		}
 
 		public Span<Vector256<int>> GetHasEscapedFlagsRow(int rowNumber)
