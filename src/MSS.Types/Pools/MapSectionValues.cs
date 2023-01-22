@@ -1,6 +1,8 @@
 ﻿using MSS.Types;
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 
 namespace MSS.Types
 {
@@ -55,6 +57,20 @@ namespace MSS.Types
 			Array.Copy(hasEscapedFlags, HasEscapedFlags, Length);
 			Array.Copy(counts.Select(x => (ushort)x).ToArray(), Counts, Length);
 			Array.Copy(escapeVelocities.Select(x => (ushort)x).ToArray(), EscapeVelocities, Length);
+		}
+
+		public void Load(MapSectionVectors mapSectionVectors)
+		{
+			var hefs = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.HasEscapedVectors);
+			var counts = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.CountVectors);
+			var ecvs = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.EscapeVelocityVectors);
+
+			for (var i = 0; i < Length; i++)
+			{
+				HasEscapedFlags[i] = hefs[i] != 0;
+				Counts[i] = (ushort)counts[i];
+				EscapeVelocities[i] = (ushort)ecvs[i];
+			}
 		}
 
 		private void CheckArguments<T>(bool[] hasEscapedFlags, T[] counts, T[] escapeVelocities)

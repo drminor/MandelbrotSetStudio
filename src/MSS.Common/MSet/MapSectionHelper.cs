@@ -158,8 +158,9 @@ namespace MSS.Common
 				Precision = repoPosition.Precision,
 				SamplePointDelta = _dtoMapper.MapTo(subdivision.SamplePointDelta),
 				MapCalcSettings = mapCalcSettings,
-				Counts = null,
-				HasEscapedFlags = null,
+				//Counts = null,
+				//HasEscapedFlags = null,
+				MapSectionVectors = null,
 				ZValues = null,
 				IsInverted = isInverted,
 				TimeToCompleteGenRequest = null,
@@ -202,7 +203,7 @@ namespace MSS.Common
 			if (mapSectionResponse.MapSectionVectors != null)
 			{
 				var mapSectionValues = _mapSectionValuesPool.Obtain();
-				mapSectionResponse.MapSectionVectors.LoadValuesInto(mapSectionValues);
+				mapSectionValues.Load(mapSectionResponse.MapSectionVectors);
 
 				var mapSection = new MapSection(mapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
 					screenPosition, mapSectionRequest.BlockSize, mapSectionResponse.MapCalcSettings.TargetIterations, BuildHistogram);

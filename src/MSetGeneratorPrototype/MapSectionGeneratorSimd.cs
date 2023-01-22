@@ -45,7 +45,7 @@ namespace MSetGeneratorPrototype
 
 			if (ShouldSkipThisSection(skipPositiveBlocks, skipLowDetailBlocks, startingCx, startingCy, screenPos))
 			{
-				result = BuildEmptyResponse(mapSectionRequest);
+				result = new MapSectionResponse(mapSectionRequest);
 			}
 			else
 			{
@@ -57,12 +57,7 @@ namespace MSetGeneratorPrototype
 				GenerateMapSection(_iterator, mapSectionVectors, startingCx, startingCy, delta, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				var hasEscapedFlags = new bool[0];
-				var counts = new ushort[0];
-				var escapeVelocities = new ushort[0];
-
-				result = new MapSectionResponse(mapSectionRequest, hasEscapedFlags, counts, escapeVelocities, zValues: null);
-				result.MapSectionVectors = mapSectionVectors;
+				result = new MapSectionResponse(mapSectionRequest, mapSectionVectors, zValues: null);
 				//result.MathOpCounts = iterator.MathOpCounts;
 			}
 
@@ -210,20 +205,6 @@ namespace MSetGeneratorPrototype
 			var zIs = new FP31Vectors(limbCount, valueCount);
 
 			return (zRs, zIs);
-		}
-
-		private MapSectionResponse BuildEmptyResponse(MapSectionRequest mapSectionRequest)
-		{
-			var blockSize = mapSectionRequest.BlockSize;
-			var counts = new ushort[blockSize.NumberOfCells];
-			var escapeVelocities = new ushort[blockSize.NumberOfCells];
-
-			//var doneFlags = new bool[blockSize.NumberOfCells];
-			//var compressedDoneFlags = CompressTheDoneFlags(doneFlags);
-			var compressedDoneFlags = new bool[] { false };
-
-			var result = new MapSectionResponse(mapSectionRequest, compressedDoneFlags, counts, escapeVelocities, zValues: null);
-			return result;
 		}
 
 		private bool[] CompressHasEscapedFlags(int[] hasEscapedFlags)

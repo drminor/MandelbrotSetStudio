@@ -248,9 +248,9 @@ namespace MSetRepo
 				BlockPosYLo: source.BlockPosition.Y[1],
 
 				source.MapCalcSettings,
-				Counts: GetBytes(source.Counts),
-				EscapeVelocities: GetBytes(source.EscapeVelocities),
-				DoneFlags: GetBytes(source.HasEscapedFlags),
+				Counts: new byte[0], //GetBytes(source.Counts),
+				EscapeVelocities: new byte[0], // GetBytes(source.EscapeVelocities),
+				DoneFlags: new byte[0], // GetBytes(source.HasEscapedFlags),
 				ZValues: zVals
 				)
 			{
@@ -298,10 +298,11 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
-				hasEscapedFlags: GetBools(target.DoneFlags),
-				counts: GetUShorts(target.Counts),
+				//hasEscapedFlags: GetBools(target.DoneFlags),
+				//counts: GetUShorts(target.Counts),
 
-				escapeVelocities: GetUShorts(target.EscapeVelocities),
+				//escapeVelocities: GetUShorts(target.EscapeVelocities),
+				new MapSectionVectors(RMapConstants.BLOCK_SIZE),
 				zValues: target.ZValues.GetZValuesAsDoubleArray()
 			);
 
@@ -344,10 +345,11 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
-				hasEscapedFlags: GetBools(target.DoneFlags),
-				counts: GetUShorts(target.Counts),
+				//hasEscapedFlags: GetBools(target.DoneFlags),
+				//counts: GetUShorts(target.Counts),
 
-				escapeVelocities: GetUShorts(target.EscapeVelocities),
+				//escapeVelocities: GetUShorts(target.EscapeVelocities),
+				mapSectionVectors: new MapSectionVectors(RMapConstants.BLOCK_SIZE),
 				zValues: null
 			);
 

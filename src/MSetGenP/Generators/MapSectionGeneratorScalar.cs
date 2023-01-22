@@ -54,7 +54,9 @@ namespace MSetGenP
 			var doneFlags = CalculateTheDoneFlags(counts, targetIterations);
 
 			var escapeVelocities = new ushort[blockSize.NumberOfCells];
-			var result = new MapSectionResponse(mapSectionRequest, doneFlags, counts, escapeVelocities, zValues: null);
+
+			// TODO: Fix the MapSectionGeneratorScaler to produce MapSectionVectors.
+			var result = new MapSectionResponse(mapSectionRequest/*, doneFlags, counts, escapeVelocities, zValues: null*/);
 
 			Debug.WriteLine($"{s1}, {s2}: {mathOpCounts}");
 

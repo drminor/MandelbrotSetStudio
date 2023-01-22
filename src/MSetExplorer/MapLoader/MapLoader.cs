@@ -149,7 +149,7 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"Cannot create a mapSectionResult from the mapSectionResponse. The request's block position is {mapSectionRequest.BlockPosition}. " +
-					$"IsCancelled: {mapSectionResponse?.RequestCancelled}, HasCounts: {mapSectionResponse?.Counts != null}.");
+					$"IsCancelled: {mapSectionResponse?.RequestCancelled}, HasCounts: {mapSectionResponse?.MapSectionVectors != null}.");
 			}
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);

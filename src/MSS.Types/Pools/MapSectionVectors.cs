@@ -35,7 +35,6 @@ namespace MSS.Types
 		public SizeInt BlockSize { get; init; }
 		public int VectorsPerRow => BlockSize.Width / Lanes;
 
-
 		public Vector256<int>[] HasEscapedVectors;
 		public Memory<Vector256<int>> HasEscapedMems;
 
@@ -49,30 +48,26 @@ namespace MSS.Types
 
 		#region Methods
 
-		public void LoadValuesInto(MapSectionValues mapSectionValues)
-		{
-			var hefs = MemoryMarshal.Cast<Vector256<int>, int>(HasEscapedVectors);
-			var hasEscapedFlags = new bool[Length];
+		//public void LoadValuesInto(MapSectionValues mapSectionValues)
+		//{
+		//	var hefs = MemoryMarshal.Cast<Vector256<int>, int>(HasEscapedVectors);
+		//	var hasEscapedFlags = new bool[Length];
 
-			var counts = MemoryMarshal.Cast<Vector256<int>, int>(CountVectors);
-			var shortCounts = new ushort[Length];
+		//	var counts = MemoryMarshal.Cast<Vector256<int>, int>(CountVectors);
+		//	var shortCounts = new ushort[Length];
 
-			var ecvs = MemoryMarshal.Cast<Vector256<int>, int>(EscapeVelocityVectors);
-			var shortEscVels = new ushort[Length];
+		//	var ecvs = MemoryMarshal.Cast<Vector256<int>, int>(EscapeVelocityVectors);
+		//	var shortEscVels = new ushort[Length];
 
-			for (var i = 0; i < Length; i++)
-			{
-				hasEscapedFlags[i] = hefs[i] != 0;
-				shortCounts[i] = (ushort)counts[i];
-				shortEscVels[i] = (ushort)ecvs[i];
-			}
+		//	for (var i = 0; i < Length; i++)
+		//	{
+		//		hasEscapedFlags[i] = hefs[i] != 0;
+		//		shortCounts[i] = (ushort)counts[i];
+		//		shortEscVels[i] = (ushort)ecvs[i];
+		//	}
 
-			//var shortCounts = counts.Select(x => (ushort)x).ToArray();
-			//var shortEscVels = escapeVelocities.Select(x => (ushort)x).ToArray();
-			//var hasEscapedFlaggs = hasEscapedFlags.Select(x => x == 1).ToArray();
-
-			mapSectionValues.Load(hasEscapedFlags, shortCounts, shortEscVels);
-		}
+		//	mapSectionValues.Load(hasEscapedFlags, shortCounts, shortEscVels);
+		//}
 
 		public Span<Vector256<int>> GetHasEscapedFlagsRow(int start, int length)
 		{

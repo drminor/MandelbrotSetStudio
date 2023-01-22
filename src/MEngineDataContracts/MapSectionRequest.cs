@@ -43,18 +43,18 @@ namespace MEngineDataContracts
 		[DataMember(Order = 11)]
 		public MapCalcSettings MapCalcSettings { get; set; }
 
-		[DataMember(Order = 12)]
-		public bool[] HasEscapedFlags { get; set; }
+		//[DataMember(Order = 12)]
+		//public bool[] HasEscapedFlags { get; set; }
 
-		[DataMember(Order = 13)]
-		public ushort[] Counts { get; set; }
+		//[DataMember(Order = 13)]
+		//public ushort[] Counts { get; set; }
 
-		[DataMember(Order = 14)]
-		public ushort[] EscapeVelocities { get; set; }
+		//[DataMember(Order = 14)]
+		//public ushort[] EscapeVelocities { get; set; }
 
 		public MapSectionVectors MapSectionVectors { get; set; }
 
-		[DataMember(Order = 15)]
+		[DataMember(Order = 12)]
 		public double[] ZValues { get; set; }
 
 		public bool IsInverted { get; init; }
@@ -78,13 +78,16 @@ namespace MEngineDataContracts
 
 		public bool GetIsDone()
 		{
-			if (HasEscapedFlags == null)
+			if (MapSectionVectors == null)
 			{
 				return false;
 			}
 
-			var result = !HasEscapedFlags.Any(x => !x);
-			return result;
+			// TODO: Implement GetIsDone on the MapSectionRequest class.
+			//var result = !HasEscapedFlags.Any(x => !x);
+			//return result;
+
+			return false;
 		}
 
 		public override string ToString()

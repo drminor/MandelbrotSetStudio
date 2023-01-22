@@ -92,7 +92,7 @@ namespace MapSectionProviderLib
 						Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
 					}
 
-					if (mapSectionResponse.Counts != null)
+					if (mapSectionResponse.MapSectionVectors != null)
 					{
 						if (mapSectionResponse.MapSectionId != null)
 						{
