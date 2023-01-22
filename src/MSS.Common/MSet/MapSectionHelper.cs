@@ -13,13 +13,15 @@ namespace MSS.Common
 		private const double VALUE_FACTOR = 10000;
 		private readonly DtoMapper _dtoMapper;
 
+		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionValuesPool _mapSectionValuesPool;
 
 		#region Constructor
 
-		public MapSectionHelper(MapSectionValuesPool mapSectionValuesPool)
+		public MapSectionHelper(MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool)
 		{
 			_dtoMapper = new DtoMapper();
+			_mapSectionVectorsPool = mapSectionVectorsPool;
 			_mapSectionValuesPool = mapSectionValuesPool;
 		}
 
@@ -37,6 +39,20 @@ namespace MSS.Common
 				}
 
 				mapSection.Dispose();
+			}
+		}
+
+		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
+		{
+			if (mapSectionResponse.MapSectionVectors != null)
+			{
+				var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+				mapSectionResponse.MapSectionVectors = null;
+
+				if (!_mapSectionVectorsPool.Free(mapSectionVectors))
+				{
+					mapSectionVectors.Dispose();
+				}
 			}
 		}
 
@@ -183,15 +199,24 @@ namespace MSS.Common
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
-			var mapSectionValues = _mapSectionValuesPool.Obtain();
-			//mapSectionValues.Load(mapSectionResponse.HasEscapedFlags, mapSectionResponse.Counts, mapSectionResponse.EscapeVelocities);
+			if (mapSectionResponse.MapSectionVectors != null)
+			{
+				var mapSectionValues = _mapSectionValuesPool.Obtain();
+				mapSectionResponse.MapSectionVectors.LoadValuesInto(mapSectionValues);
 
-			mapSectionResponse.MapSectionVectors.LoadValuesInto(mapSectionValues);
+				var mapSection = new MapSection(mapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
+					screenPosition, mapSectionRequest.BlockSize, mapSectionResponse.MapCalcSettings.TargetIterations, BuildHistogram);
 
-			var mapSection = new MapSection(mapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
-				screenPosition, mapSectionRequest.BlockSize, mapSectionResponse.MapCalcSettings.TargetIterations, BuildHistogram);
+				ReturnMapSectionResponse(mapSectionResponse);
 
-			return mapSection;
+				return mapSection;
+			}
+			else
+			{
+				throw new InvalidOperationException("Could not create the MapSection, the MapSectionVectors had a null value.");
+				//var mapSection = new MapSection();
+				//return mapSection;
+			}
 		}
 
 		public byte[] GetPixelArray(MapSectionValues mapSectionValues, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)

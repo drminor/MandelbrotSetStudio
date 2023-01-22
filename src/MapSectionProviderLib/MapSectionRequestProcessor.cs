@@ -2,6 +2,7 @@
 using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
+using MSS.Types;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace MapSectionProviderLib
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly DtoMapper _dtoMapper;
 
+		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionGeneratorProcessor _mapSectionGeneratorProcessor;
 		private readonly MapSectionResponseProcessor _mapSectionResponseProcessor;
 		private readonly bool _fetchZValues;
@@ -43,12 +45,15 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, bool fetchZValues)
+		public MapSectionRequestProcessor(MapSectionVectorsPool mapSectionVectorsPool, IMapSectionAdapter mapSectionAdapter, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, bool fetchZValues)
 		{
 			//_isStopped = false;
+
 			_nextJobId = 0;
 			_mapSectionAdapter = mapSectionAdapter;
 			_dtoMapper = new DtoMapper();
+
+			_mapSectionVectorsPool = mapSectionVectorsPool;
 			_mapSectionGeneratorProcessor = mapSectionGeneratorProcessor;
 			_mapSectionResponseProcessor = mapSectionResponseProcessor;
 			_fetchZValues = fetchZValues;
@@ -244,10 +249,13 @@ namespace MapSectionProviderLib
 			else
 			{
 				request.MapSectionId = null;
+
+				var mapSectionVectors = _mapSectionVectorsPool.Obtain();
+				request.MapSectionVectors = mapSectionVectors;
+
 				QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
 				return null;
 			}
-
 		}
 
 		private bool IsResponseComplete(MapSectionResponse mapSectionResponse, int requestedIterations)
@@ -339,14 +347,17 @@ namespace MapSectionProviderLib
 
 			var mapSectionRequest = mapSectionWorkRequest.Request;
 
-			// if the mapSectionResponse is null, create a mapSectionResponse with null counts, null, escape velocities, etc., from the request.
+			// If the mapSectionResponse is null, create a mapSectionResponse with null MapSectionVectors from the request.
 			var response = mapSectionResponse ?? new MapSectionResponse(mapSectionRequest);
 
 			// Set the original request's repsonse to the generated response.
 			mapSectionWorkRequest.Response = response;
 
-			// Send the original request to the response processor.
-			_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
+			//// Send the original request to the response processor.
+			//_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
+
+			// Start a list of new work items
+			var workList = new List<MapSectionWorkRequest> { mapSectionWorkRequest };
 
 			_requestsLock.EnterUpgradeableReadLock();
 
@@ -379,14 +390,25 @@ namespace MapSectionProviderLib
 				{
 					if (workItem != mapSectionWorkRequest)
 					{
-						workItem.Response = response;
-						_mapSectionResponseProcessor.AddWork(workItem);
+						//_mapSectionResponseProcessor.AddWork(workItem);
+
+						var mapSectionVecs = _mapSectionVectorsPool.DuplicateFrom(response.MapSectionVectors);
+						var newDup = new MapSectionResponse(mapSectionRequest);
+						newDup.MapSectionVectors = mapSectionVecs;
+
+						workItem.Response = newDup;
+						workList.Add(workItem);
 					}
 				}
 			}
 			finally
 			{
 				_requestsLock.ExitUpgradeableReadLock();
+			}
+
+			foreach(var workItem in workList)
+			{
+				_mapSectionResponseProcessor.AddWork(workItem);
 			}
 		}
 

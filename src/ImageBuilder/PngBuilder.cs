@@ -27,7 +27,9 @@ namespace ImageBuilder
 		public PngBuilder(IMapLoaderManager mapLoaderManager)
 		{
 			_mapLoaderManager = mapLoaderManager;
-			_mapSectionHelper = new MapSectionHelper(new MapSectionValuesPool(RMapConstants.BLOCK_SIZE));
+			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			var mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			_mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool, mapSectionValuesPool);
 
 			_currentJobNumber = null;
 			_currentResponses = null;

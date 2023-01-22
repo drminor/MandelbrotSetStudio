@@ -52,6 +52,8 @@ namespace MEngineDataContracts
 		[DataMember(Order = 14)]
 		public ushort[] EscapeVelocities { get; set; }
 
+		public MapSectionVectors MapSectionVectors { get; set; }
+
 		[DataMember(Order = 15)]
 		public double[] ZValues { get; set; }
 

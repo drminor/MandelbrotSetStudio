@@ -75,12 +75,39 @@ namespace MSS.Types
 			}
 		}
 
+		#region IPoolable Support
+
 		void IPoolable.ResetObject()
 		{
-			//Array.Clear(HasEscapedFlags, 0, Length);
-			//Array.Clear(Counts, 0, Length);
-			//Array.Clear(EscapeVelocities, 0, Length);
+			Array.Clear(HasEscapedFlags, 0, Length);
+			Array.Clear(Counts, 0, Length);
+			Array.Clear(EscapeVelocities, 0, Length);
 		}
+
+		object IPoolable.DuplicateFrom(object obj)
+		{
+			if (obj != null && obj is MapSectionValues msv)
+			{
+				return DuplicateFrom(msv);
+			}
+			else
+			{
+				throw new ArgumentException($"DuplicateFrom required an object of type {nameof(MapSectionValues)}");
+			}
+		}
+
+		MapSectionValues DuplicateFrom(MapSectionValues mapSectionValues)
+		{
+			var result = mapSectionValues;
+
+			Array.Copy(HasEscapedFlags, result.HasEscapedFlags, Length);
+			Array.Copy(Counts, result.Counts, Length);
+			Array.Copy(EscapeVelocities, result.EscapeVelocities, Length);
+
+			return result;
+		}
+
+		#endregion
 
 		#endregion
 

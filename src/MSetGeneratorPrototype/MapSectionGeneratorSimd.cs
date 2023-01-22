@@ -13,7 +13,7 @@ namespace MSetGeneratorPrototype
 {
 	public class MapSectionGeneratorSimd
 	{
-		MapSectionVectorsPool _mapSectionVectorsPool;
+		//MapSectionVectorsPool _mapSectionVectorsPool;
 
 		private readonly ApFixedPointFormat _apFixedPointFormat;
 
@@ -26,9 +26,9 @@ namespace MSetGeneratorPrototype
 		private int _vectorCount;
 		private Vector256<int> _targetIterationsVector;
 
-		public MapSectionGeneratorSimd(MapSectionVectorsPool mapSectionVectorsPool)
+		public MapSectionGeneratorSimd(/*MapSectionVectorsPool mapSectionVectorsPool*/)
 		{
-			_mapSectionVectorsPool = mapSectionVectorsPool;
+			//_mapSectionVectorsPool = mapSectionVectorsPool;
 
 			var howManyLimbs = 2;
 			_apFixedPointFormat = new ApFixedPointFormat(howManyLimbs);
@@ -67,7 +67,9 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				var mapSectionVectors = _mapSectionVectorsPool.Obtain();
+				//var mapSectionVectors = _mapSectionVectorsPool.Obtain();
+				var mapSectionVectors = mapSectionRequest.MapSectionVectors;
+				mapSectionRequest.MapSectionVectors = null;
 
 				var iterationState = new IterationState(mapSectionVectors, _stride);
 

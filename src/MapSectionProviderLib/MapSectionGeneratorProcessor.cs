@@ -2,6 +2,7 @@
 using MEngineDataContracts;
 using MSetGenP;
 using MSS.Common;
+using MSS.Types;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -217,6 +218,8 @@ namespace MapSectionProviderLib
 					// The original request is in the Request's Request property.
 					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
 
+					mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
+
 					MapSectionResponse? mapSectionResponse;
 
 					if (IsJobCancelled(mapSectionGenerateRequest.JobId))
@@ -266,6 +269,7 @@ namespace MapSectionProviderLib
 
 					// The original request is in the Request's Request property.
 					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
+					//mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
 
 					MapSectionResponse? mapSectionResponse;
 

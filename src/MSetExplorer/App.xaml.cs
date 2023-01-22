@@ -46,8 +46,7 @@ namespace MSetExplorer
 
 		private const bool FETCH_ZVALUES_LOCALLY = false;
 
-		private const int MAP_SECTION_VALUE_POOL_SIZE = 30;
-
+		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionValuesPool _mapSectionValuesPool;
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly MEngineServerManager? _mEngineServerManager;
@@ -61,8 +60,10 @@ namespace MSetExplorer
 		{
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-			_mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, initialSize: MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionHelper(_mapSectionValuesPool);
+			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			_mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+
+			_mapSectionHelper = new MapSectionHelper(_mapSectionVectorsPool, _mapSectionValuesPool);
 
 			if (START_LOCAL_ENGINE)
 			{
@@ -108,7 +109,7 @@ namespace MSetExplorer
 			var mEngineClients = ChooseMEngineClientImplementation(CLIENT_IMPLEMENTATION, mEngineAddresses, _repositoryAdapters.MapSectionAdapter);
 
 
-			_mapLoaderManager = BuildMapLoaderManager(_mapSectionHelper, mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter, FETCH_ZVALUES_LOCALLY);
+			_mapLoaderManager = BuildMapLoaderManager(_mapSectionVectorsPool, _mapSectionHelper, mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter, FETCH_ZVALUES_LOCALLY);
 
 			_appNavWindow = GetAppNavWindow(_mapSectionHelper, _repositoryAdapters, _mapLoaderManager);
 			_appNavWindow.Show();
@@ -178,20 +179,20 @@ namespace MSetExplorer
 		//	return mEngineClients;
 		//}
 
-		private IMapLoaderManager BuildMapLoaderManager(MapSectionHelper mapSectionHelper, IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
+		private IMapLoaderManager BuildMapLoaderManager(MapSectionVectorsPool mapSectionVectorsPool, MapSectionHelper mapSectionHelper, IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
 		{
-			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, fetchZValues);
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, mapSectionVectorsPool, fetchZValues);
 
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
 
 			return result;
 		}
 
-		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
+		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, MapSectionVectorsPool mapSectionVectorsPool, bool fetchZValues)
 		{
 			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients, useAllCores);
 			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
-			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionGeneratorProcessor, mapSectionResponseProcessor, fetchZValues);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionVectorsPool, mapSectionAdapter, mapSectionGeneratorProcessor, mapSectionResponseProcessor, fetchZValues);
 
 			return mapSectionRequestProcessor;
 		}

@@ -74,9 +74,10 @@ namespace MSS.Types
 		/// <param name="obj"></param>
 		protected virtual void Reset(T obj)
 		{
-			IPoolable poolObj = obj as IPoolable;
-			if (poolObj != null)
-				poolObj.ResetObject();
+			if (obj != null)
+			{
+				obj.ResetObject();
+			}
 		}
 
 		/// <summary>
@@ -88,6 +89,20 @@ namespace MSS.Types
 			_pool.Clear();
 			if (clearPeak)
 				MaxPeak = 0;
+		}
+
+		public virtual T DuplicateFrom(T obj)
+		{
+			if (obj == null)
+			{
+				throw new ArgumentException("DuplicateFrom must be supplied a non-null value.");
+			}
+
+			var source = Obtain();
+
+			var result = (T) obj.DuplicateFrom(source);
+
+			return result;
 		}
 
 		public override string ToString()

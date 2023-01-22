@@ -130,7 +130,7 @@ namespace MSetExplorer
 				Debug.WriteLine("The MapSectionResponse is empty in the HandleResponse callback for the MapLoader.");
 			}
 
-			if (mapSectionResponse != null && mapSectionResponse.Counts != null && !mapSectionResponse.RequestCancelled)
+			if (mapSectionResponse != null && mapSectionResponse.MapSectionVectors != null && !mapSectionResponse.RequestCancelled)
 			{
 				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
 

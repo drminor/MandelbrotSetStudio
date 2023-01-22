@@ -49,24 +49,27 @@ namespace MSS.Types
 
 		public void LoadValuesInto(MapSectionValues mapSectionValues)
 		{
+			var hefs = MemoryMarshal.Cast<Vector256<int>, int>(HasEscapedVectors);
 			var hasEscapedFlags = new bool[Length];
 
 			var counts = MemoryMarshal.Cast<Vector256<int>, int>(CountVectors);
-			ushort[] shortCounts = new ushort[Length];
+			var shortCounts = new ushort[Length];
+
+			var ecvs = MemoryMarshal.Cast<Vector256<int>, int>(EscapeVelocityVectors);
+			var shortEscVels = new ushort[Length];
 
 			for (var i = 0; i < Length; i++)
 			{
+				hasEscapedFlags[i] = hefs[i] != 0;
 				shortCounts[i] = (ushort)counts[i];
+				shortEscVels[i] = (ushort)ecvs[i];
 			}
-
-			ushort[] escapeVelocities = new ushort[Length];
 
 			//var shortCounts = counts.Select(x => (ushort)x).ToArray();
 			//var shortEscVels = escapeVelocities.Select(x => (ushort)x).ToArray();
 			//var hasEscapedFlaggs = hasEscapedFlags.Select(x => x == 1).ToArray();
 
-
-			mapSectionValues.Load(hasEscapedFlags, shortCounts, escapeVelocities);
+			mapSectionValues.Load(hasEscapedFlags, shortCounts, shortEscVels);
 		}
 
 		public Span<Vector256<int>> GetHasEscapedFlagsRow(int start, int length)
@@ -86,12 +89,51 @@ namespace MSS.Types
 			var result = new Span<Vector256<int>>(EscapeVelocityVectors, start, length);
 			return result;
 		}
+
+		// IPoolable Support
 		void IPoolable.ResetObject()
 		{
-			//Array.Clear(HasEscapedFlags, 0, Length);
-			//Array.Clear(Counts, 0, Length);
-			//Array.Clear(EscapeVelocities, 0, Length);
+			Array.Clear(HasEscapedVectors, 0, TotalVectorCount);
+			Array.Clear(CountVectors, 0, TotalVectorCount);
+			Array.Clear(EscapeVelocityVectors, 0, TotalVectorCount);
 		}
+
+		//// ICloneable Support
+
+		//object ICloneable.Clone()
+		//{
+		//	return Clone();
+		//}
+
+		//public MapSectionVectors Clone()
+		//{
+		//	var result = new MapSectionVectors(BlockSize);
+		//	return result;
+		//}
+
+		object IPoolable.DuplicateFrom(object obj)
+		{
+			if (obj != null && obj is MapSectionVectors msv)
+			{
+				return DuplicateFrom(msv);
+			}
+			else
+			{
+				throw new ArgumentException($"DuplicateFrom required an object of type {nameof(MapSectionVectors)}");
+			}
+		}
+
+		MapSectionVectors DuplicateFrom(MapSectionVectors mapSectionVectors)
+		{
+			var result = mapSectionVectors;
+
+			HasEscapedMems.CopyTo(result.HasEscapedMems);
+			CountMems.CopyTo(result.CountMems);
+			EscapeVelocitiyMems.CopyTo(result.EscapeVelocitiyMems);
+
+			return result;
+		}
+
 
 		#endregion
 

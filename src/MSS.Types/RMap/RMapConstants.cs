@@ -18,6 +18,8 @@ namespace MSS.Types
 		public const int DEFAULT_PRECISION = 53;
 		public const int DEFAULT_TARGET_EXPONENT = -64;
 
+		public const int MAP_SECTION_VALUE_POOL_SIZE = 30;
+
 
 		static RMapConstants()
 		{

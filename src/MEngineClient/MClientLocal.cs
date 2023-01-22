@@ -12,10 +12,8 @@ namespace MEngineClient
 	{
 		private static int _sectionCntr;
 
-
-		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
+		//private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionGeneratorSimd _generator;
-
 
 		#region Constructors
 
@@ -26,8 +24,9 @@ namespace MEngineClient
 
 		public MClientLocal()
 		{
-			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: 20);
-			_generator = new MapSectionGeneratorSimd(_mapSectionVectorsPool);		
+			//_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: 20);
+			//_generator = new MapSectionGeneratorSimd(_mapSectionVectorsPool);		
+			_generator = new MapSectionGeneratorSimd();
 		}
 
 		#endregion
