@@ -48,27 +48,6 @@ namespace MSS.Types
 
 		#region Methods
 
-		//public void LoadValuesInto(MapSectionValues mapSectionValues)
-		//{
-		//	var hefs = MemoryMarshal.Cast<Vector256<int>, int>(HasEscapedVectors);
-		//	var hasEscapedFlags = new bool[Length];
-
-		//	var counts = MemoryMarshal.Cast<Vector256<int>, int>(CountVectors);
-		//	var shortCounts = new ushort[Length];
-
-		//	var ecvs = MemoryMarshal.Cast<Vector256<int>, int>(EscapeVelocityVectors);
-		//	var shortEscVels = new ushort[Length];
-
-		//	for (var i = 0; i < Length; i++)
-		//	{
-		//		hasEscapedFlags[i] = hefs[i] != 0;
-		//		shortCounts[i] = (ushort)counts[i];
-		//		shortEscVels[i] = (ushort)ecvs[i];
-		//	}
-
-		//	mapSectionValues.Load(hasEscapedFlags, shortCounts, shortEscVels);
-		//}
-
 		public Span<Vector256<int>> GetHasEscapedFlagsRow(int start, int length)
 		{
 			var result = new Span<Vector256<int>>(HasEscapedVectors, start, length);

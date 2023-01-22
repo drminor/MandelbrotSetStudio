@@ -43,18 +43,10 @@ namespace MEngineDataContracts
 		[DataMember(Order = 11)]
 		public MapCalcSettings MapCalcSettings { get; set; }
 
-		//[DataMember(Order = 12)]
-		//public bool[] HasEscapedFlags { get; set; }
-
-		//[DataMember(Order = 13)]
-		//public ushort[] Counts { get; set; }
-
-		//[DataMember(Order = 14)]
-		//public ushort[] EscapeVelocities { get; set; }
-
+		[DataMember(Order = 12)]
 		public MapSectionVectors MapSectionVectors { get; set; }
 
-		[DataMember(Order = 12)]
+		[DataMember(Order = 13)]
 		public double[] ZValues { get; set; }
 
 		public bool IsInverted { get; init; }

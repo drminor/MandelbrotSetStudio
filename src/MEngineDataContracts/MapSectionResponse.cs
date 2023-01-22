@@ -8,7 +8,7 @@ using System.Runtime.Serialization;
 namespace MEngineDataContracts
 {
 	[DataContract]
-	public class MapSectionResponse //: ICloneable
+	public class MapSectionResponse
 	{
 		public MapSectionResponse()
 		{
@@ -19,29 +19,6 @@ namespace MEngineDataContracts
 			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings, null, null)
 		{ }
-
-		//public MapSectionResponse(MapSectionRequest mapSectionRequest, bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities, double[] zValues)
-		//	: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
-		//		  mapSectionRequest.MapCalcSettings, hasEscapedFlags, counts, escapeVelocities, zValues)
-		//{ }
-
-		//public MapSectionResponse(string mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition,
-		//	MapCalcSettings mapCalcSettings, bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities, double[] zValues)
-		//{
-		//	MapSectionId = mapSectionId;
-		//	OwnerId = ownerId;
-		//	JobOwnerType = jobOwnerType;
-		//	SubdivisionId = subdivisionId;
-		//	BlockPosition = blockPosition;
-		//	MapCalcSettings = mapCalcSettings;
-		//	Counts = counts;
-		//	EscapeVelocities = escapeVelocities;
-		//	HasEscapedFlags = hasEscapedFlags;
-		//	ZValues = zValues;
-		//	IncludeZValues = zValues != null;
-		//	RequestCancelled = false;
-		//}
-
 
 		public MapSectionResponse(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, double[] zValues)
 			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
@@ -63,7 +40,6 @@ namespace MEngineDataContracts
 			RequestCancelled = false;
 		}
 
-
 		[DataMember(Order = 1)]
 		public string MapSectionId { get; set; }
 
@@ -81,15 +57,6 @@ namespace MEngineDataContracts
 
 		[DataMember(Order = 6)]
 		public MapCalcSettings MapCalcSettings { get; init; }
-
-		//[DataMember(Order = 7)]
-		//public bool[] HasEscapedFlags { get; init; }
-
-		//[DataMember(Order = 8)]
-		//public ushort[] Counts { get; init; }
-
-		//[DataMember(Order = 9)]
-		//public ushort[] EscapeVelocities { get; init; }
 
 		public MapSectionVectors MapSectionVectors { get; set; }
 
@@ -113,20 +80,5 @@ namespace MEngineDataContracts
 
 		public MathOpCounts MathOpCounts { get; set; }
 
-		//object ICloneable.Clone()
-		//{
-		//	return Clone();
-		//}
-
-		//public MapSectionResponse Clone()
-		//{
-		//	var result = new MapSectionResponse(MapSectionId, OwnerId, JobOwnerType, SubdivisionId, BlockPosition, MapCalcSettings, 
-		//		Counts, EscapeVelocities, DoneFlags, ZValuesForLocalStorage);
-
-		//	result.IncludeZValues = IncludeZValues;
-		//	result.RequestCancelled = RequestCancelled;
-
-		//	return result;
-		//}
 	}
 }

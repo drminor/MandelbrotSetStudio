@@ -1,6 +1,4 @@
-﻿using MSS.Common;
-using MSS.Common.APValues;
-using MSS.Types;
+﻿using MSS.Common.APValues;
 using System.Diagnostics;
 using System.Runtime.Intrinsics;
 
@@ -14,13 +12,11 @@ namespace MSetGeneratorPrototype
 
 		private uint _threshold;
 		private Vector256<int> _thresholdVector;
+		private Vector256<int>[] _escapedFlagVectors;
 
 		private FP31Vectors _zRSqrs;
 		private FP31Vectors _zISqrs;
-
 		private FP31Vectors _sumOfSqrs;
-
-		private Vector256<int>[] _escapedFlagVectors;
 
 		private FP31Vectors _zRZiSqrs;
 		private FP31Vectors _zRs2;
@@ -33,6 +29,9 @@ namespace MSetGeneratorPrototype
 		public IteratorSimd(VecMath9 vecMath)
 		{
 			_vecMath = vecMath;
+
+			_threshold = 0;
+			_thresholdVector = new Vector256<int>();
 			_escapedFlagVectors = new Vector256<int>[VectorCount];
 
 			Crs = new FP31Vectors(LimbCount, ValueCount);
@@ -85,41 +84,6 @@ namespace MSetGeneratorPrototype
 
 		#region Public Methods
 
-		//public void SetCoords(FP31Deck cRs, FP31Deck cIs, FP31Deck zRs, FP31Deck zIs)
-		//{
-		//	throw new NotImplementedException();
-		//	//_cRs = cRs;
-		//	//_cIs = cIs;
-		//	//_zRs = zRs;
-		//	//_zIs = zIs;
-
-		//	//_zValuesAreZero = zRs.IsZero || zIs.IsZero;
-
-		//	//if (_zValuesAreZero)
-		//	//{
-		//	//	Debug.Assert(zRs.IsZero && zIs.IsZero, "One of zRs or zIs is zero, but both zRs and zIs are not zero.");
-		//	//}
-		//}
-
-		//public void SetCoords(FP31Val[] samplePointsX, FP31Val samplePointY)
-		//{
-		//	//_cRs = cRs;
-		//	_cRsTemp.UpdateFrom(samplePointsX);
-		//	Crs = new FP31Vectors(_cRsTemp);
-
-		//	//_cIs = cIs;
-		//	_cIsTemp.UpdateFrom(samplePointY);
-		//	Cis = new FP31Vectors(_cIsTemp);
-
-		//	//Zrs = zRs;
-		//	//_zIs = zIs;
-
-		//	Zrs.ClearManatissMems();
-		//	Zis.ClearManatissMems();
-
-		//	ZValuesAreZero = true;
-		//}
-
 		public Vector256<int>[] Iterate(int[] inPlayList, int[] inPlayListNarrow)
 		{
 			try
@@ -127,9 +91,6 @@ namespace MSetGeneratorPrototype
 				if (ZValuesAreZero)
 				{
 					// Perform the first iteration. 
-					//Zrs = Crs.Clone();
-					//Zis = Cis.Clone();
-
 					Zrs.UpdateFrom(Crs);
 					Zis.UpdateFrom(Cis);
 					ZValuesAreZero = false;
