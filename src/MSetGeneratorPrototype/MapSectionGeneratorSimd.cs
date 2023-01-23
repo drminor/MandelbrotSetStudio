@@ -160,7 +160,6 @@ namespace MSetGeneratorPrototype
 				// Compare the new Counts with the TargetIterations
 				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector);
 
-
 				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
 				var escapedOrReachedVec = Avx2.Or(updatedHaveEscapedFlagsV, targetReachedCompVec);
 				var updatedDoneFlagsV = Avx2.BlendVariable(doneFlagsV.AsByte(), Vector256<int>.AllBitsSet.AsByte(), escapedOrReachedVec.AsByte()).AsInt32();

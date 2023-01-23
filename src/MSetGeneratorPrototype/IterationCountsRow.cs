@@ -7,6 +7,8 @@ namespace MSetGeneratorPrototype
 	{
 		private readonly MapSectionVectors _mapSectionVectors;
 
+		private List<int> _inPlayBackingList;
+
 		#region Constructor
 
 		public IterationCountsRow(MapSectionVectors mapSectionVectors)
@@ -27,6 +29,8 @@ namespace MSetGeneratorPrototype
 
 			InPlayList = Enumerable.Range(0, VectorCount).ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
+
+			_inPlayBackingList = InPlayList.ToList();
 
 			//_unusedCalcsBuffer = new int[Stride];
 		}
@@ -83,7 +87,13 @@ namespace MSetGeneratorPrototype
 			Array.Clear(DoneFlags, 0, DoneFlags.Length);
 			Array.Clear(UnusedCalcs, 0, UnusedCalcs.Length);
 
-			InPlayList = Enumerable.Range(0, VectorCount).ToArray();
+			_inPlayBackingList.Clear();
+			for(var i = 0; i < VectorCount; i++)
+			{
+				_inPlayBackingList.Add(i);
+			}
+
+			InPlayList = _inPlayBackingList.ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
 		}
 
@@ -98,14 +108,12 @@ namespace MSetGeneratorPrototype
 
 		public int[] UpdateTheInPlayList(List<int> vectorsNoLongerInPlay)
 		{
-			var lst = InPlayList.ToList();
-
 			foreach (var vectorIndex in vectorsNoLongerInPlay)
 			{
-				lst.Remove(vectorIndex);
+				_inPlayBackingList.Remove(vectorIndex);
 			}
 
-			InPlayList = lst.ToArray();
+			InPlayList = _inPlayBackingList.ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
 
 			return InPlayList;

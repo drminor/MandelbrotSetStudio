@@ -92,7 +92,7 @@ namespace MSetGeneratorPrototype
 			_signBitVecs = new Vector256<int>[VectorCount];
 			_signBitFlags = new int[VectorCount];
 
-			_shiftAmount = BitsBeforeBP;
+			_shiftAmount = apFixedPointFormat.BitsBeforeBinaryPoint;
 			_inverseShiftAmount = (byte)(31 - _shiftAmount);
 
 			//MathOpCounts = new MathOpCounts();
@@ -103,15 +103,11 @@ namespace MSetGeneratorPrototype
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
+		public int LimbCount => ApFixedPointFormat.LimbCount;
 		public int ValueCount { get; init; }
 		public int VectorCount { get; init; }
 
 		//public MathOpCounts MathOpCounts { get; init; }
-
-		public byte BitsBeforeBP => ApFixedPointFormat.BitsBeforeBinaryPoint;
-		public int FractionalBits => ApFixedPointFormat.NumberOfFractionalBits;
-		public int LimbCount => ApFixedPointFormat.LimbCount;
-		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
 		#endregion
 

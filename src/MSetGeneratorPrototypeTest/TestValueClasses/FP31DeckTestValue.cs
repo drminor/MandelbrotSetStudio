@@ -1,4 +1,5 @@
 ﻿using MSetGeneratorPrototype;
+using MSS.Common;
 using MSS.Common.APValues;
 using MSS.Common.SmxVals;
 using MSS.Types;
@@ -18,7 +19,7 @@ namespace EngineTest
 		public FP31DeckTestVal(FP31Deck fp31Deck, VecMath9 vecMath9)
 		{
 			Vectors = fp31Deck;
-			var smx2C = GetFP31ValAtIndex(fp31Deck, index: 0, vecMath9.TargetExponent, vecMath9.BitsBeforeBP);
+			var smx2C = GetFP31ValAtIndex(fp31Deck, index: 0, vecMath9.ApFixedPointFormat);
 			FP31ValTestVal = new FP31ValTestValue(smx2C);
 		}
 
@@ -57,10 +58,10 @@ namespace EngineTest
 			return result;
 		}
 
-		private FP31Val GetFP31ValAtIndex(FP31Deck vectors, int index, int targetExponent, byte bitsBeforeBP, int precision = RMapConstants.DEFAULT_PRECISION)
+		private FP31Val GetFP31ValAtIndex(FP31Deck vectors, int index, ApFixedPointFormat apFixedPointFormat, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			var mantissa = vectors.Mantissas.Select(x => x[index]).ToArray();
-			var result = new FP31Val(mantissa, targetExponent, bitsBeforeBP, precision);
+			var result = new FP31Val(mantissa, apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, precision);
 
 			return result;
 		}

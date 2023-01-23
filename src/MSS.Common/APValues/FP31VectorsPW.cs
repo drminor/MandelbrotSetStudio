@@ -5,7 +5,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSS.Common.APValues
 {
-	public class FP31VectorsPW : ICloneable
+	public class FP31VectorsPW /*: ICloneable*/
 	{
 		#region Constructors
 
@@ -165,33 +165,33 @@ namespace MSS.Common.APValues
 
 		#region ICloneable Support
 
-		object ICloneable.Clone()
-		{
-			return Clone();
-		}
+		//object ICloneable.Clone()
+		//{
+		//	return Clone();
+		//}
 
-		public FP31VectorsPW Clone()
-		{
-			var result = new FP31VectorsPW(CloneMantissas());
-			result.IsZero = IsZero;
-			return result;
-		}
+		//public FP31VectorsPW Clone()
+		//{
+		//	var result = new FP31VectorsPW(CloneMantissas());
+		//	result.IsZero = IsZero;
+		//	return result;
+		//}
 
-		private Vector256<ulong>[][] CloneMantissas()
-		{
-			Vector256<ulong>[][] result = new Vector256<ulong>[Mantissas.Length][];
+		//private Vector256<ulong>[][] CloneMantissas()
+		//{
+		//	Vector256<ulong>[][] result = new Vector256<ulong>[Mantissas.Length][];
 			
-			for(var i = 0; i < Mantissas.Length; i++)
-			{
-				var a = new Vector256<ulong>[Mantissas[i].Length];
+		//	for(var i = 0; i < Mantissas.Length; i++)
+		//	{
+		//		var a = new Vector256<ulong>[Mantissas[i].Length];
 
-				Array.Copy(Mantissas[i], a, a.Length);
+		//		Array.Copy(Mantissas[i], a, a.Length);
 
-				result[i] = a;
-			}
+		//		result[i] = a;
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 	}
