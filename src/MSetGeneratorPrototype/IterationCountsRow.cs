@@ -35,25 +35,6 @@ namespace MSetGeneratorPrototype
 			//_unusedCalcsBuffer = new int[Stride];
 		}
 
-		//public IterationCountsRow(MapSectionVectors mapSectionVectors, int rowNumber)
-		//{
-		//	RowNumber = rowNumber;
-
-		//	VectorCount = mapSectionVectors.VectorsPerRow;
-
-		//	HasEscapedFlags = new Span<Vector256<int>>(mapSectionVectors.HasEscapedVectors, rowNumber * VectorCount, VectorCount);
-		//	Counts = new Span<Vector256<int>>(mapSectionVectors.CountVectors, rowNumber * VectorCount, VectorCount);
-		//	EscapeVelocities = new Span<Vector256<int>>(mapSectionVectors.EscapeVelocityVectors, rowNumber * VectorCount, VectorCount);
-
-		//	DoneFlags = new Vector256<int>[VectorCount];
-		//	UnusedCalcs = new Vector256<int>[VectorCount];
-
-		//	InPlayList = Enumerable.Range(0, VectorCount).ToArray();
-		//	InPlayListNarrow = BuildNarowInPlayList(InPlayList);
-
-		//	//_unusedCalcsBuffer = new int[Stride];
-		//}
-
 		#endregion
 
 		#region Public Properties
@@ -176,8 +157,6 @@ namespace MSetGeneratorPrototype
 
 			return result.ToArray();
 		}
-
-
 
 		#endregion
 	}

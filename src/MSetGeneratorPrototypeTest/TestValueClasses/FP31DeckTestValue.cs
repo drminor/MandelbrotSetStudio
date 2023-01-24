@@ -16,20 +16,20 @@ namespace EngineTest
 
 		#region Constructors
 
-		public FP31DeckTestVal(FP31Deck fp31Deck, VecMath9 vecMath9)
+		public FP31DeckTestVal(FP31Deck fp31Deck, FP31VectorsMath vecMath9)
 		{
 			Vectors = fp31Deck;
 			var smx2C = GetFP31ValAtIndex(fp31Deck, index: 0, vecMath9.ApFixedPointFormat);
 			FP31ValTestVal = new FP31ValTestValue(smx2C);
 		}
 
-		public FP31DeckTestVal(string number, int exponent, int precision, VecMath9 vecMath9)
+		public FP31DeckTestVal(string number, int exponent, int precision, FP31VectorsMath vecMath9)
 		{
 			FP31ValTestVal = new FP31ValTestValue(number, exponent, precision, BuildTheScalarMath(vecMath9));
 			Vectors = CreateFP31Deck(FP31ValTestVal.FP31Val, vecMath9.ValueCount);
 		}
 
-		public FP31DeckTestVal(FP31Val fP31Val, VecMath9 vecMath9)
+		public FP31DeckTestVal(FP31Val fP31Val, FP31VectorsMath vecMath9)
 		{
 			FP31ValTestVal = new FP31ValTestValue(fP31Val);
 			Vectors = CreateFP31Deck(FP31ValTestVal.FP31Val, vecMath9.ValueCount);
@@ -83,9 +83,9 @@ namespace EngineTest
 			return FP31ValTestVal.StringValue;
 		}
 
-		private ScalarMath9 BuildTheScalarMath(VecMath9 vecMath9)
+		private FP31ScalarMath BuildTheScalarMath(FP31VectorsMath vecMath9)
 		{
-			return new ScalarMath9(vecMath9.ApFixedPointFormat);
+			return new FP31ScalarMath(vecMath9.ApFixedPointFormat);
 		}
 
 	}

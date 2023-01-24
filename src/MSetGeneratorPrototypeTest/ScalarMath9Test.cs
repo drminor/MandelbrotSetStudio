@@ -169,7 +169,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 53;
 			var limbCount = 3;
 
-			var scalarMath9 = new ScalarMath9(new ApFixedPointFormat(limbCount));
+			var scalarMath9 = new FP31ScalarMath(new ApFixedPointFormat(limbCount));
 
 			//var aNumber = "-343597";
 			//var bNumber = "-343707";
@@ -208,7 +208,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 23;
 			var limbCount = 3;
 
-			var scalarMath9 = new ScalarMath9(new ApFixedPointFormat(limbCount));
+			var scalarMath9 = new FP31ScalarMath(new ApFixedPointFormat(limbCount));
 
 			var aNumber = "-343597";
 			var bNumber = "-343707";
@@ -247,7 +247,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 25;
 			var limbCount = 5;
 
-			var scalarMath9 = new ScalarMath9(new ApFixedPointFormat(limbCount));
+			var scalarMath9 = new FP31ScalarMath(new ApFixedPointFormat(limbCount));
 
 			//var aNumber = "-414219082";
 			//var bNumber = "67781838";
@@ -284,7 +284,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 38;
 			var limbCount = 6; // Target Exponent = -147 (31 x 5 = 155, subtract 8 = 147. 5 x 32 = 160
 
-			var scalarMath9 = new ScalarMath9(new ApFixedPointFormat(limbCount));
+			var scalarMath9 = new FP31ScalarMath(new ApFixedPointFormat(limbCount));
 
 			//var aNumber = "-414219082";
 			//var bNumber = "67781838";
@@ -329,7 +329,7 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 38;
 			var limbCount = 5;
 
-			var scalarMath9 = new ScalarMath9(new ApFixedPointFormat(limbCount));
+			var scalarMath9 = new FP31ScalarMath(new ApFixedPointFormat(limbCount));
 
 			//var aNumber = "-414219082";
 			//var bNumber = "67781838";
@@ -411,9 +411,9 @@ namespace MSetGeneratorPrototypeTest
 
 		#region Support Methods
 
-		private ScalarMath9 BuildTheMathHelper(int limbCount)
+		private FP31ScalarMath BuildTheMathHelper(int limbCount)
 		{
-			var result = new ScalarMath9(new ApFixedPointFormat(limbCount));
+			var result = new FP31ScalarMath(new ApFixedPointFormat(limbCount));
 			return result;
 		}
 

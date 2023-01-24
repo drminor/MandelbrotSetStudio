@@ -8,7 +8,7 @@ namespace MSetGeneratorPrototype
 	{
 		#region Private Properties
 
-		private VecMath9 _vecMath;
+		private FP31VectorsMath _fp31VectorsMath;
 
 		private uint _threshold;
 		private Vector256<int> _thresholdVector;
@@ -26,9 +26,9 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IteratorSimd(VecMath9 vecMath)
+		public IteratorSimd(FP31VectorsMath fp31VectorsMath)
 		{
-			_vecMath = vecMath;
+			_fp31VectorsMath = fp31VectorsMath;
 
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
@@ -54,9 +54,9 @@ namespace MSetGeneratorPrototype
 
 		#region Public Properties
 
-		public int LimbCount => _vecMath.LimbCount;
-		public int ValueCount => _vecMath.ValueCount;
-		public int VectorCount => _vecMath.VectorCount;
+		public int LimbCount => _fp31VectorsMath.LimbCount;
+		public int ValueCount => _fp31VectorsMath.ValueCount;
+		public int VectorCount => _fp31VectorsMath.VectorCount;
 
 		public FP31Vectors Crs { get; init; }
 		public FP31Vectors Cis { get; init; }
@@ -73,7 +73,7 @@ namespace MSetGeneratorPrototype
 				if (value != _threshold)
 				{
 					_threshold = value;
-					_thresholdVector = _vecMath.CreateVectorForComparison(_threshold);
+					_thresholdVector = _fp31VectorsMath.CreateVectorForComparison(_threshold);
 				}
 			}
 		}
@@ -98,23 +98,23 @@ namespace MSetGeneratorPrototype
 				else
 				{
 					// square(z.r + z.i)
-					_vecMath.AddThenSquare(Zrs, Zis, _zRZiSqrs, inPlayList, inPlayListNarrow);
+					_fp31VectorsMath.AddThenSquare(Zrs, Zis, _zRZiSqrs, inPlayList, inPlayListNarrow);
 
 					// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
-					_vecMath.Sub(_zRZiSqrs, _zRSqrs, Zis, inPlayList);
-					_vecMath.Sub(Zis, _zISqrs, _zIs2, inPlayList);
-					_vecMath.Add(_zIs2, Cis, Zis, inPlayList);
+					_fp31VectorsMath.Sub(_zRZiSqrs, _zRSqrs, Zis, inPlayList);
+					_fp31VectorsMath.Sub(Zis, _zISqrs, _zIs2, inPlayList);
+					_fp31VectorsMath.Add(_zIs2, Cis, Zis, inPlayList);
 
 					// z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
-					_vecMath.Sub(_zRSqrs, _zISqrs, _zRs2, inPlayList);
-					_vecMath.Add(_zRs2, Crs, Zrs, inPlayList);
+					_fp31VectorsMath.Sub(_zRSqrs, _zISqrs, _zRs2, inPlayList);
+					_fp31VectorsMath.Add(_zRs2, Crs, Zrs, inPlayList);
 				}
 
-				_vecMath.Square(Zrs, _zRSqrs, inPlayList, inPlayListNarrow);
-				_vecMath.Square(Zis, _zISqrs, inPlayList, inPlayListNarrow);
-				_vecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, inPlayList);
+				_fp31VectorsMath.Square(Zrs, _zRSqrs, inPlayList, inPlayListNarrow);
+				_fp31VectorsMath.Square(Zis, _zISqrs, inPlayList, inPlayListNarrow);
+				_fp31VectorsMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, inPlayList);
 
-				_vecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, _escapedFlagVectors, inPlayList);
+				_fp31VectorsMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, _escapedFlagVectors, inPlayList);
 				return _escapedFlagVectors;
 			}
 			catch (Exception e)

@@ -368,9 +368,9 @@ namespace MSetGeneratorPrototypeTest
 			Assert.Equal(strA, strB);
 		}
 
-		private ScalarMath9 BuildTheMathHelper(int limbCount)
+		private FP31ScalarMath BuildTheMathHelper(int limbCount)
 		{
-			var result = new ScalarMath9(new ApFixedPointFormat(limbCount));
+			var result = new FP31ScalarMath(new ApFixedPointFormat(limbCount));
 			return result;
 		}
 

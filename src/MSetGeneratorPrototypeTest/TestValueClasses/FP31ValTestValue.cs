@@ -12,7 +12,7 @@ namespace EngineTest
 		public RValue RValue { get; init; }
 		public string StringValue { get; init; }
 
-		public FP31ValTestValue(string number, int exponent, int precision, ScalarMath9 scalarMath9)
+		public FP31ValTestValue(string number, int exponent, int precision, FP31ScalarMath scalarMath9)
 		{
 			var bi = BigInteger.Parse(number);
 			RValue = new RValue(bi, exponent, precision);

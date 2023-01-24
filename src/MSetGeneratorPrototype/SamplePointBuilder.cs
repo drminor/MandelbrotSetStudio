@@ -4,25 +4,25 @@ namespace MSetGeneratorPrototype
 {
 	internal static class SamplePointBuilder
 	{
-		public static FP31Val[] BuildSamplePoints(FP31Val startValue, FP31Val[] offsets, ScalarMath9 scalarMath9)
+		public static FP31Val[] BuildSamplePoints(FP31Val startValue, FP31Val[] offsets, FP31ScalarMath scalarMath)
 		{
 			var result = new FP31Val[offsets.Length];
 
 			for (var i = 0; i < offsets.Length; i++)
 			{
-				result[i] = scalarMath9.Add(startValue, offsets[i], "add spd offset to start value");
+				result[i] = scalarMath.Add(startValue, offsets[i], "add spd offset to start value");
 			}
 
 			return result;
 		}
 
-		public static FP31Val[] BuildSamplePointOffsets(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
+		public static FP31Val[] BuildSamplePointOffsets(FP31Val delta, byte extent, FP31ScalarMath scalarMath)
 		{
 			var offsets = new FP31Val[extent];
 
 			for (var i = 0; i < extent; i++)
 			{
-				offsets[i] = scalarMath9.Multiply(delta, (byte)i);
+				offsets[i] = scalarMath.Multiply(delta, (byte)i);
 			}
 
 			return offsets;
@@ -30,29 +30,29 @@ namespace MSetGeneratorPrototype
 
 		#region NOT USED
 
-		public static FP31Val[] BuildSamplePointOffsetsOld(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
+		public static FP31Val[] BuildSamplePointOffsetsOld(FP31Val delta, byte extent, FP31ScalarMath scalarMath)
 		{
 			var offsets = new FP31Val[extent];
 
-			var acc = FP31ValHelper.CreateNewZeroFP31Val(scalarMath9.ApFixedPointFormat, delta.Precision);
+			var acc = FP31ValHelper.CreateNewZeroFP31Val(scalarMath.ApFixedPointFormat, delta.Precision);
 
 			for (var i = 0; i < extent; i++)
 			{
 				offsets[i] = acc;
 
-				acc = scalarMath9.Add(acc, delta, "BuildSamplePointOffsets");
+				acc = scalarMath.Add(acc, delta, "BuildSamplePointOffsets");
 			}
 
 			return offsets;
 		}
 
-		//public static FP31Val[] BuildSamplePointOffsetsOld(FP31Val delta, byte extent, ScalarMath9 scalarMath9)
+		//public static FP31Val[] BuildSamplePointOffsetsOld(FP31Val delta, byte extent, scalarMath scalarMath)
 		//{
 		//	var offsets = new FP31Val[extent];
 
 		//	for (var i = 0; i < extent; i++)
 		//	{
-		//		var samplePointOffset = scalarMath9.Multiply(delta, (byte)i);
+		//		var samplePointOffset = scalarMath.Multiply(delta, (byte)i);
 		//		offsets[i] = samplePointOffset;
 		//	}
 

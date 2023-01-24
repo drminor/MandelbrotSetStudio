@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace MSetGeneratorPrototype
 {
-	public class ScalarMath9
+	public class FP31ScalarMath
 	{
 		#region Constants
 
@@ -34,7 +34,7 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public ScalarMath9(ApFixedPointFormat apFixedPointFormat)
+		public FP31ScalarMath(ApFixedPointFormat apFixedPointFormat)
 		{
 			ApFixedPointFormat = apFixedPointFormat;
 			MaxIntegerValue = FP31ValHelper.GetMaxIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
@@ -194,7 +194,7 @@ namespace MSetGeneratorPrototype
 
 			var lzc = BitOperations.LeadingZeroCount(b);
 
-			if (lzc < 32 - a.BitsBeforeBP)
+			if (lzc < 32 - BitsBeforeBP)
 			{
 				throw new ArgumentException("The integer multiplyer should fit into the integer portion of a FP31Val value.");
 			}
@@ -423,7 +423,7 @@ namespace MSetGeneratorPrototype
 
 			if (carry > 0)
 			{
-				//throw new OverflowException($"ScalarMath9 -- Overflow on Add. {desc}");
+				//throw new OverflowException($"scalarMath -- Overflow on Add. {desc}");
 				//result = CreateNewMaxIntegerFP31Val(a.Precision);
 				result = CreateFP31Val(mantissa, precision);
 
@@ -526,7 +526,7 @@ namespace MSetGeneratorPrototype
 
 		public FP31Val CreateNewMaxIntegerFP31Val(int precision = RMapConstants.DEFAULT_PRECISION)
 		{
-			//throw new InvalidOperationException("Some ScalarMath9 Multiplication op overflowed");
+			//throw new InvalidOperationException("Some scalarMath Multiplication op overflowed");
 			var rValue = new RValue(MaxIntegerValue, 0, precision);
 			var result = FP31ValHelper.CreateFP31Val(rValue, ApFixedPointFormat);
 			return result;
@@ -599,49 +599,49 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		[Conditional("DETAIL")]
-		private void CheckLimbCountAndFPFormat(FP31Val smx)
-		{
-			if (smx.LimbCount != LimbCount)
-			{
-				throw new ArgumentException($"While converting an Smx2C found it to have {smx.LimbCount} limbs instead of {LimbCount}.");
-			}
+		//[Conditional("DETAIL")]
+		//private void CheckLimbCountAndFPFormat(FP31Val smx)
+		//{
+		//	if (smx.LimbCount != LimbCount)
+		//	{
+		//		throw new ArgumentException($"While converting an Smx2C found it to have {smx.LimbCount} limbs instead of {LimbCount}.");
+		//	}
 
-			if (smx.Exponent != TargetExponent)
-			{
-				throw new ArgumentException($"While converting an Smx2C found it to have {smx.Exponent} limbs instead of {TargetExponent}.");
-			}
+		//	if (smx.Exponent != TargetExponent)
+		//	{
+		//		throw new ArgumentException($"While converting an Smx2C found it to have {smx.Exponent} limbs instead of {TargetExponent}.");
+		//	}
 
-			if (smx.BitsBeforeBP != BitsBeforeBP)
-			{
-				throw new ArgumentException($"While converting an Smx2C found it to have {smx.BitsBeforeBP} limbs instead of {BitsBeforeBP}.");
-			}
-		}
+		//	if (smx.BitsBeforeBP != BitsBeforeBP)
+		//	{
+		//		throw new ArgumentException($"While converting an Smx2C found it to have {smx.BitsBeforeBP} limbs instead of {BitsBeforeBP}.");
+		//	}
+		//}
 
-		[Conditional("DETAIL")]
-		private void CheckLimbs2C(FP31Val a, FP31Val b, string desc)
-		{
-			if (a.LimbCount != LimbCount)
-			{
-				Debug.WriteLine($"WARNING: The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
-				throw new InvalidOperationException($"The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
-			}
+		//[Conditional("DETAIL")]
+		//private void CheckLimbs2C(FP31Val a, FP31Val b, string desc)
+		//{
+		//	if (a.LimbCount != LimbCount)
+		//	{
+		//		Debug.WriteLine($"WARNING: The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+		//		throw new InvalidOperationException($"The left value has a limbcount of {a.LimbCount}, expecting: {LimbCount}.");
+		//	}
 
-			if (b.LimbCount != LimbCount)
-			{
-				Debug.WriteLine($"WARNING: The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
-				throw new InvalidOperationException($"The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
-			}
+		//	if (b.LimbCount != LimbCount)
+		//	{
+		//		Debug.WriteLine($"WARNING: The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
+		//		throw new InvalidOperationException($"The right value has a limbcount of {b.LimbCount}, expecting: {LimbCount}.");
+		//	}
 
-			if (a.Exponent != b.Exponent)
-			{
-				Debug.WriteLine($"Warning:the exponents do not match.");
-				throw new InvalidOperationException($"The exponents do not match.");
-			}
+		//	if (a.Exponent != b.Exponent)
+		//	{
+		//		Debug.WriteLine($"Warning:the exponents do not match.");
+		//		throw new InvalidOperationException($"The exponents do not match.");
+		//	}
 
-			//ValidateIsSplit2C(a.Mantissa, a.Sign);
-			//ValidateIsSplit2C(b.Mantissa, b.Sign);
-		}
+		//	//ValidateIsSplit2C(a.Mantissa, a.Sign);
+		//	//ValidateIsSplit2C(b.Mantissa, b.Sign);
+		//}
 
 		[Conditional("DETAIL")]
 		private void CheckLimb2C(FP31Val a, string desc)
