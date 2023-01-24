@@ -136,6 +136,18 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
+		public Vector256<uint>[] GetLimbSet(int valueIndex)
+		{
+			var result = new Vector256<uint>[LimbCount];
+
+			for(var i = 0; i < LimbCount; i++)
+			{
+				result[i] = Mantissas[i][valueIndex];
+			}
+
+			return result;
+		}
+
 		public void UpdateFrom(FP31Val fp31Val)
 		{
 			if (fp31Val.Mantissa.Length != LimbCount)

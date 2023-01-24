@@ -21,5 +21,7 @@ namespace MSetGeneratorPrototype
 		//MathOpCounts MathOpCounts { get; }
 
 		Vector256<int>[] Iterate(int[] inPlayList, int[] inPlayListNarrow);
+
+		Vector256<int> Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis);
 	}
 }

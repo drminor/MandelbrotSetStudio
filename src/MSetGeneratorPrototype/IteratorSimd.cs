@@ -124,6 +124,11 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
+		public Vector256<int> Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
+		{
+			throw new NotImplementedException();
+		}
+
 		#endregion
 	}
 }
