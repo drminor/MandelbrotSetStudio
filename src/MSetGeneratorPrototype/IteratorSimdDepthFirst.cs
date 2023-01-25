@@ -4,11 +4,11 @@ using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
-	internal class IteratorSimdDepthFirst : IIterator
+	internal class IteratorSimdDepthFirst //: IIterator
 	{
 		#region Private Properties
 
-		private VecMath9 _fp31VecMath;
+		private FP31VecMath _fp31VecMath;
 
 		private uint _threshold;
 		private Vector256<int> _thresholdVector;
@@ -25,7 +25,7 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IteratorSimdDepthFirst(VecMath9 fp31VecMath, int valueCount)
+		public IteratorSimdDepthFirst(FP31VecMath fp31VecMath, int valueCount)
 		{
 			_fp31VecMath = fp31VecMath;
 			ValueCount = valueCount;
@@ -33,10 +33,10 @@ namespace MSetGeneratorPrototype
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
-			Crs = new FP31Vectors(LimbCount, ValueCount);
-			Cis = new FP31Vectors(LimbCount, ValueCount);
-			Zrs = new FP31Vectors(LimbCount, ValueCount);
-			Zis = new FP31Vectors(LimbCount, ValueCount);
+			Crs = new FP31ValArray(LimbCount, ValueCount);
+			Cis = new FP31ValArray(LimbCount, ValueCount);
+			Zrs = new FP31ValArray(LimbCount, ValueCount);
+			Zis = new FP31ValArray(LimbCount, ValueCount);
 
 			ZValuesAreZero = true;
 
@@ -57,10 +57,10 @@ namespace MSetGeneratorPrototype
 		public int VectorCount { get; init; }
 
 
-		public FP31Vectors Crs { get; init; }
-		public FP31Vectors Cis { get; init; }
-		public FP31Vectors Zrs { get; init; }
-		public FP31Vectors Zis { get; init; }
+		public FP31ValArray Crs { get; set; }
+		public FP31ValArray Cis { get; set; }
+		public FP31ValArray Zrs { get; set; }
+		public FP31ValArray Zis { get; set; }
 
 		public bool ZValuesAreZero { get; set; }
 
@@ -94,9 +94,9 @@ namespace MSetGeneratorPrototype
 			{
 				if (ZValuesAreZero)
 				{
-					// Perform the first iteration.
 					Array.Copy(crs, zrs, crs.Length);
 					Array.Copy(cis, zis, cis.Length);
+
 					ZValuesAreZero = false;
 				}
 				else

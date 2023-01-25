@@ -1,7 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Common.APValues;
 using MSS.Types;
-using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -9,7 +8,7 @@ using System.Text;
 
 namespace MSetGeneratorPrototype
 {
-	public class VecMath9
+	public class FP31VecMath
 	{
 		#region Private Properties
 
@@ -67,9 +66,10 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public VecMath9(ApFixedPointFormat apFixedPointFormat)
+		public FP31VecMath(ApFixedPointFormat apFixedPointFormat)
 		{
 			ApFixedPointFormat = apFixedPointFormat;
+			LimbCount = apFixedPointFormat.LimbCount;
 
 			_squareResult0Lo = new Vector256<uint>[LimbCount * 2];
 			_squareResult0Hi = new Vector256<uint>[LimbCount * 2];
@@ -102,7 +102,7 @@ namespace MSetGeneratorPrototype
 		#region Public Properties
 
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
-		public int LimbCount => ApFixedPointFormat.LimbCount;
+		public int LimbCount { get; private set; }
 
 		//public MathOpCounts MathOpCounts { get; init; }
 
@@ -141,12 +141,9 @@ namespace MSetGeneratorPrototype
 			{
 				for (int i = j; i < LimbCount; i++)
 				{
-					var left = source[j];
-					var right = source[i];
-
 					var resultPtr = j + i;  // 0, 1, 1, 2
 
-					var productVector = Avx2.Multiply(left, right);
+					var productVector = Avx2.Multiply(source[j], source[i]);
 					//MathOpCounts.NumberOfMultiplications++;
 
 					if (i > j)
@@ -180,9 +177,7 @@ namespace MSetGeneratorPrototype
 
 			for (int limbPtr = 0; limbPtr < limbCnt; limbPtr++)
 			{
-				var pProductVectors = source[limbPtr];
-
-				var withCarries = Avx2.Add(pProductVectors, _carryVectorsLong);
+				var withCarries = Avx2.Add(source[limbPtr], _carryVectorsLong);
 
 				result[limbPtr] = Avx2.And(withCarries, HIGH33_MASK_VEC_L);						// The low 31 bits of the sum is the result.
 				_carryVectorsLong = Avx2.ShiftRightLogical(withCarries, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
@@ -207,13 +202,11 @@ namespace MSetGeneratorPrototype
 
 			for (int limbPtr = 0; limbPtr < resultLimbs.Length; limbPtr++)
 			{
-				//var resultVectors = resultLimbs.GetLimbVectorsUW(limbPtr);
 
 				if (sourceIndex > 0)
 				{
 					var source = sourceLimbsLo[limbPtr + sourceIndex];
 					var prevSource = sourceLimbsLo[limbPtr + sourceIndex - 1];
-
 
 					// Take the bits from the source limb, discarding the top shiftAmount of bits.
 					var wideResultLow = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
@@ -300,18 +293,16 @@ namespace MSetGeneratorPrototype
 
 		private void Negate(Vector256<uint>[] source, Vector256<uint>[] result)
 		{
-			var carryVectors = _ones;
+			_carryVectors = _ones;
 
 			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 			{
-				var left = source[limbPtr];
-
-				var notVector = Avx2.Xor(left, ALL_BITS_SET_VEC);
-				var newValuesVector = Avx2.Add(notVector, carryVectors);
+				var notVector = Avx2.Xor(source[limbPtr], ALL_BITS_SET_VEC);
+				var newValuesVector = Avx2.Add(notVector, _carryVectors);
 				//MathOpCounts.NumberOfAdditions += 2;
 
 				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC); ;
-				carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
+				_carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
 				//MathOpCounts.NumberOfSplits++;
 			}
 		}
@@ -320,45 +311,45 @@ namespace MSetGeneratorPrototype
 		{
 			//CheckReservedBitIsClear(source, "ConvertFrom2C");
 
-			var signBitFlag = GetSignBits(source, out _signBitVecs);
-			var carryVectors = _ones;
+			var signBitFlags = GetSignBits(source, out _signBitVecs);
 
-			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+			if (signBitFlags == -1)
 			{
-				var limbVec = source[limbPtr];
-
-				if (signBitFlag == -1)
+				// All positive values
+				for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 				{
-					// All positive values
-
 					// Take the lower 4 values and set the low halves of each result
-					resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(limbVec, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
 
 					// Take the higher 4 values and set the low halves of each result
-					resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(limbVec, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+					resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 				}
-				else
-				{
-					// Mixed Positive and Negative values
+			}
+			else
+			{
+				// Mixed Positive and Negative values
+				_carryVectors = _ones;
 
-					var notVector = Avx2.Xor(limbVec, ALL_BITS_SET_VEC);
-					var newValuesVector = Avx2.Add(notVector, carryVectors);
+				for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+				{
+					var notVector = Avx2.Xor(source[limbPtr], ALL_BITS_SET_VEC);
+					var newValuesVector = Avx2.Add(notVector, _carryVectors);
 					//MathOpCounts.NumberOfAdditions += 2;
 
 					var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
-					carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+					_carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 
 					//MathOpCounts.NumberOfSplits++;
 
-					var cLimbValues = (Avx2.BlendVariable(limbValues.AsByte(), limbVec.AsByte(), _signBitVecs.AsByte())).AsUInt32();
+					var cLimbValues = (Avx2.BlendVariable(limbValues.AsByte(), source[limbPtr].AsByte(), _signBitVecs.AsByte())).AsUInt32();
 
 					// Take the lower 4 values and set the low halves of each result
 					resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
 
 					// Take the lower 4 values and set the low halves of each result
 					resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
-				}
 
+				}
 			}
 		}
 
@@ -530,7 +521,6 @@ namespace MSetGeneratorPrototype
 			//MathOpCounts.NumberOfGrtrThanOps++;
 
 			return result;
-
 		}
 
 		#endregion

@@ -12,7 +12,7 @@ namespace MEngineClient
 	{
 		private static int _sectionCntr;
 
-		private readonly MapSectionGeneratorSimd _generator;
+		private readonly IMapSectionGenerator _generator;
 
 		#region Constructors
 
@@ -23,14 +23,26 @@ namespace MEngineClient
 
 		public MClientLocal()
 		{
-			_generator = new MapSectionGeneratorSimd(RMapConstants.BLOCK_SIZE, limbCount: 2);
+			UsingDepthFirst = true; 
+
+			if (UsingDepthFirst)
+			{
+				_generator = new MapSectionGeneratorDepthFirst(RMapConstants.BLOCK_SIZE, limbCount: 2);
+				EndPointAddress = "CSharp_DepthFirstSimdGenerator";
+			}
+			else
+			{
+				_generator = new MapSectionGenerator(RMapConstants.BLOCK_SIZE, limbCount: 2);
+				EndPointAddress = "CSharp_SimdGenerator";
+			}
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public string EndPointAddress => "CSharp_ScalerGenerator";
+		public bool UsingDepthFirst { get; init; }
+		public string EndPointAddress { get; init; }
 		public bool IsLocal => true;
 
 		#endregion

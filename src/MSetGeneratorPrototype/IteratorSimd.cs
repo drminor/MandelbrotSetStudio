@@ -4,7 +4,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
-	internal class IteratorSimd : IIterator
+	internal class IteratorSimd //: IIterator
 	{
 		#region Private Properties
 
@@ -58,10 +58,10 @@ namespace MSetGeneratorPrototype
 		public int ValueCount => _fp31VectorsMath.ValueCount;
 		public int VectorCount => _fp31VectorsMath.VectorCount;
 
-		public FP31Vectors Crs { get; init; }
-		public FP31Vectors Cis { get; init; }
-		public FP31Vectors Zrs { get; init; }
-		public FP31Vectors Zis { get; init; }
+		public FP31Vectors Crs { get; set; }
+		public FP31Vectors Cis { get; set; }
+		public FP31Vectors Zrs { get; set; }
+		public FP31Vectors Zis { get; set; }
 
 		public bool ZValuesAreZero { get; set; }
 

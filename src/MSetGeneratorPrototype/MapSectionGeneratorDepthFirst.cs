@@ -3,7 +3,6 @@ using MSS.Common;
 using MSS.Common.APValues;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
-using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.Intrinsics.X86;
@@ -12,34 +11,23 @@ using MSS.Types.MSet;
 
 namespace MSetGeneratorPrototype
 {
-	public class MapSectionGeneratorSimd
+	public class MapSectionGeneratorDepthFirst : IMapSectionGenerator
 	{
-		private readonly FP31VectorsMath _fp31VectorsMath;
-		private readonly VecMath9 _fp31VecMath;
-
-		private readonly IIterator _iterator;
-
-		private readonly bool USE_NEW_GEN_DEPTH_FIRST;
+		private readonly FP31VecMath _fp31VecMath;
+		private readonly IteratorSimdDepthFirst _iterator;
 
 		#region Constructor
 
-		public MapSectionGeneratorSimd(SizeInt blockSize, int limbCount)
+		public MapSectionGeneratorDepthFirst(SizeInt blockSize, int limbCount)
 		{
 			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
+			_fp31VecMath = new FP31VecMath(apFixedPointFormat);
+			_iterator = new IteratorSimdDepthFirst(_fp31VecMath, blockSize.Width);
 
-			_fp31VectorsMath = new FP31VectorsMath(apFixedPointFormat, blockSize.Width);
-			_fp31VecMath = new VecMath9(apFixedPointFormat);
-
-			USE_NEW_GEN_DEPTH_FIRST = true;
-
-			if (USE_NEW_GEN_DEPTH_FIRST)
-			{
-				_iterator = new IteratorSimdDepthFirst(_fp31VecMath, blockSize.Width);
-			}
-			else
-			{
-				_iterator = new IteratorSimd(_fp31VectorsMath);
-			}
+			_crs = new Vector256<uint>[limbCount];
+			_cis = new Vector256<uint>[limbCount];
+			_zrs = new Vector256<uint>[limbCount];
+			_zis = new Vector256<uint>[limbCount];
 		}
 
 		#endregion
@@ -51,7 +39,7 @@ namespace MSetGeneratorPrototype
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
 
-			var coords = GetCoordinates(mapSectionRequest, _fp31VectorsMath.ApFixedPointFormat);
+			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
 
 			MapSectionResponse result;
 
@@ -78,13 +66,13 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private void GenerateMapSection(IIterator iterator, MapSectionVectors mapSectionVectors, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private void GenerateMapSection(IteratorSimdDepthFirst iterator, MapSectionVectors mapSectionVectors, IteratorCoords coords, MapCalcSettings mapCalcSettings)
 		{
 			var blockSize = mapSectionVectors.BlockSize;
 			var rowCount = blockSize.Height;
 			var stride = (byte)blockSize.Width;
 
-			var scalarMath = new FP31ScalarMath(_fp31VectorsMath.ApFixedPointFormat);
+			var scalarMath = new FP31ScalarMath(_fp31VecMath.ApFixedPointFormat);
 			var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(coords.Delta, stride, scalarMath);
 			var samplePointsX = SamplePointBuilder.BuildSamplePoints(coords.StartingCx, samplePointOffsets, scalarMath);
 			var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, scalarMath);
@@ -94,11 +82,11 @@ namespace MSetGeneratorPrototype
 			iterator.Crs.UpdateFrom(samplePointsX);
 			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
-			var iterationCountsRow = new IterationCountsRow(mapSectionVectors);
+			var itState = new IterationCountsRow(mapSectionVectors);
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
-				iterationCountsRow.SetRowNumber(rowNumber);
+				itState.SetRowNumber(rowNumber);
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
@@ -109,113 +97,36 @@ namespace MSetGeneratorPrototype
 				iterator.Zis.ClearManatissMems();
 				iterator.ZValuesAreZero = true;
 
-				if (USE_NEW_GEN_DEPTH_FIRST)
+				//GenerateMapRowDepthFirst(iterator, ref iterationCountsRow, targetIterationsVector);
+
+				for (var idxPtr = 0; idxPtr < itState.InPlayList.Length; idxPtr++)
 				{
-					GenerateMapRowDepthFirst(iterator, ref iterationCountsRow, targetIterationsVector);
+					var idx = itState.InPlayList[idxPtr];
+					GenerateMapCol(idx, iterator, ref itState, targetIterationsVector);
 				}
-				else
-				{
-					GenerateMapRow(iterator, ref iterationCountsRow, targetIterationsVector);
-				}
+
+				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 			}
 		}
 
 		#endregion
 
-		#region Original GenerateMapRow
+		#region Generate One Vector
 
-		private void GenerateMapRow(IIterator iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
-		{
-			while (itState.InPlayList.Length > 0)
-			{
-				var escapedFlags = iterator.Iterate(itState.InPlayList, itState.InPlayListNarrow);
+		private Vector256<uint>[] _crs;
+		private Vector256<uint>[] _cis;
+		private Vector256<uint>[] _zrs;
+		private Vector256<uint>[] _zis;
 
-				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, ref itState, targetIterationsVector);
-				if (vectorsNoLongerInPlay.Count > 0)
-				{
-					itState.UpdateTheInPlayList(vectorsNoLongerInPlay);
-				}
-			}
 
-			//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
-		}
-
-		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
-		{
-			var toBeRemoved = new List<int>();
-			var justOne = Vector256.Create(1);
-
-			for (var idxPtr = 0; idxPtr < itState.InPlayList.Length; idxPtr++)
-			{
-				var idx = itState.InPlayList[idxPtr];
-
-				var doneFlagsV = itState.DoneFlags[idx];
-				var countsV = itState.Counts[idx];
-
-				// Increment all counts
-				var countsVt = Avx2.Add(countsV, justOne);
-
-				// Take the incremented count, only if the doneFlags is false for each vector position.
-				countsV = Avx2.BlendVariable(countsVt.AsByte(), countsV.AsByte(), doneFlagsV.AsByte()).AsInt32(); // use First if Zero, second if 1
-				itState.Counts[idx] = countsV;
-
-				var unusedCalcsV = itState.UnusedCalcs[idx];
-
-				// Increment all unused calculations
-				var unusedCalcsVt = Avx2.Add(unusedCalcsV, justOne);
-
-				// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
-				itState.UnusedCalcs[idx] = Avx2.BlendVariable(unusedCalcsV.AsByte(), unusedCalcsVt.AsByte(), doneFlagsV.AsByte()).AsInt32();
-
-				var hasEscapedFlagsV = itState.HasEscapedFlags[idx];
-
-				// Apply the new escapeFlags, only if the doneFlags is false for each vector position
-				var updatedHaveEscapedFlagsV = Avx2.BlendVariable(escapedFlagVectors[idx].AsByte(), hasEscapedFlagsV.AsByte(), doneFlagsV.AsByte()).AsInt32();
-				itState.HasEscapedFlags[idx] = updatedHaveEscapedFlagsV;
-
-				// Compare the new Counts with the TargetIterations
-				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector);
-
-				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
-				var escapedOrReachedVec = Avx2.Or(updatedHaveEscapedFlagsV, targetReachedCompVec);
-				var updatedDoneFlagsV = Avx2.BlendVariable(doneFlagsV.AsByte(), Vector256<int>.AllBitsSet.AsByte(), escapedOrReachedVec.AsByte()).AsInt32();
-
-				itState.DoneFlags[idx] = updatedDoneFlagsV;
-
-				var compositeIsDone = Avx2.MoveMask(updatedDoneFlagsV.AsByte());
-
-				if (compositeIsDone == -1)
-				{
-					toBeRemoved.Add(idx);
-				}
-			}
-
-			return toBeRemoved;
-		}
-
-		#endregion
-
-		#region New GenerateMapRow DepthFirst
-
-		private void GenerateMapRowDepthFirst(IIterator iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
-		{
-			for (var idxPtr = 0; idxPtr < itState.InPlayList.Length; idxPtr++)
-			{
-				var idx = itState.InPlayList[idxPtr];
-				GenerateMapCol(idx, iterator, ref itState, targetIterationsVector);
-			}
-
-			//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
-		}
-
-		private void GenerateMapCol(int idx, IIterator iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
+		private void GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
 		{
 			var justOne = Vector256.Create(1);
 
-			var crs = iterator.Crs.GetLimbSet(idx);
-			var cis = iterator.Cis.GetLimbSet(idx);
-			var zrs = iterator.Zrs.GetLimbSet(idx);
-			var zis = iterator.Zis.GetLimbSet(idx);
+			iterator.Crs.FillLimbSet(idx, _crs);
+			iterator.Cis.FillLimbSet(idx, _cis);
+			iterator.Zrs.FillLimbSet(idx, _zrs);
+			iterator.Zis.FillLimbSet(idx, _zis);
 
 			iterator.ZValuesAreZero = true;
 
@@ -229,7 +140,7 @@ namespace MSetGeneratorPrototype
 
 			while (!allDone)
 			{
-				var escapedFlagsVec = iterator.Iterate(crs, cis, zrs, zis);
+				var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
 
 				// Increment all counts
 				var countsVt = Avx2.Add(countsV, justOne);
@@ -310,7 +221,7 @@ namespace MSetGeneratorPrototype
 			else
 			{
 				// Mix
-				result = hasEscapedFlags.Select(x => x == 0 ? false: true).ToArray();
+				result = hasEscapedFlags.Select(x => x == 0 ? false : true).ToArray();
 			}
 
 			return result;
