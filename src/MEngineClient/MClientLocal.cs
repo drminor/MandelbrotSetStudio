@@ -21,9 +21,9 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClientLocal()
+		public MClientLocal(bool useDepthFirst)
 		{
-			UsingDepthFirst = true; 
+			UsingDepthFirst = useDepthFirst; 
 
 			if (UsingDepthFirst)
 			{

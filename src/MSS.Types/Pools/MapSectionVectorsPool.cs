@@ -3,11 +3,9 @@ namespace MSS.Types
 {
 	public class MapSectionVectorsPool : ObjectPool<MapSectionVectors>
 	{
-		private readonly SizeInt _blockSize;
-
-		public MapSectionVectorsPool(SizeInt BlockSize, int initialSize = 16) : base(initialSize)
+		public MapSectionVectorsPool(SizeInt blockSize, int initialSize = 16) : base(initialSize)
 		{
-			_blockSize = BlockSize;
+			BlockSize = blockSize;
 
 			for (var i = 0; i < initialSize; i++)
 			{
@@ -15,9 +13,11 @@ namespace MSS.Types
 			}
 		}
 
+		public SizeInt BlockSize { get; init; }
+
 		protected override MapSectionVectors NewObject()
 		{
-			return new MapSectionVectors(_blockSize);
+			return new MapSectionVectors(BlockSize);
 		}
 	}
 }

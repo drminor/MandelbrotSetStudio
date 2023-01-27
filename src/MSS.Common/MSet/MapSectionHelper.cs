@@ -16,6 +16,15 @@ namespace MSS.Common
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionValuesPool _mapSectionValuesPool;
 
+		private SizeInt _blockSize;
+		private readonly int _rowCount;
+		private readonly int _sourceStride;
+		private readonly int _maxRowIndex;
+
+		private readonly int _pixelArraySize;
+		private readonly int _pixelStride;	
+
+
 		#region Constructor
 
 		public MapSectionHelper(MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool)
@@ -23,6 +32,15 @@ namespace MSS.Common
 			_dtoMapper = new DtoMapper();
 			_mapSectionVectorsPool = mapSectionVectorsPool;
 			_mapSectionValuesPool = mapSectionValuesPool;
+
+			_blockSize = mapSectionVectorsPool.BlockSize;
+			_rowCount = _blockSize.Height;
+			_sourceStride = _blockSize.Width;
+			_maxRowIndex = _blockSize.Height - 1;
+
+			_pixelArraySize = _blockSize.NumberOfCells * 4;
+			_pixelStride = _sourceStride * 4;
+
 		}
 
 		#endregion
@@ -222,23 +240,26 @@ namespace MSS.Common
 
 		public byte[] GetPixelArray(MapSectionValues mapSectionValues, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
-			var numberofCells = blockSize.NumberOfCells;
-			var result = new byte[4 * numberofCells];
+			Debug.Assert(blockSize == _blockSize, "The block sizes do not match.");
+
+			//var numberofCells = blockSize.NumberOfCells;
+			var result = new byte[_pixelArraySize];
 
 			var counts = mapSectionValues.Counts;
 			var escapeVelocities = mapSectionValues.EscapeVelocities;
 
 			var previousCountVal = counts[0];
 
-			for (var rowPtr = 0; rowPtr < blockSize.Height; rowPtr++)
+			for (var rowPtr = 0; rowPtr < _rowCount; rowPtr++)
 			{
 				// Calculate the array index for the beginning of this destination and source row.
-				var resultRowPtr = GetResultRowPtr(blockSize.Height - 1, rowPtr, invert);
+				//var resultRowPtr = GetResultRowPtr(blockSize.Height - 1, rowPtr, invert);
+				var resultRowPtr = invert ? _maxRowIndex - rowPtr : rowPtr;
 
-				var curResultPtr = resultRowPtr * blockSize.Width * 4;
-				var curSourcePtr = rowPtr * blockSize.Width;
+				var curSourcePtr = rowPtr * _sourceStride;
+				var curResultPtr = resultRowPtr * _pixelStride;
 
-				for (var colPtr = 0; colPtr < blockSize.Width; colPtr++)
+				for (var colPtr = 0; colPtr < _sourceStride; colPtr++)
 				{
 					var countVal = counts[curSourcePtr];
 
@@ -256,9 +277,9 @@ namespace MSS.Common
 					}
 
 					escapeVelocity = 0;
-					var ccv = Convert.ToUInt16(countVal);
+					//var ccv = Convert.ToUInt16(countVal);
 
-					colorMap.PlaceColor(ccv, escapeVelocity, new Span<byte>(result, curResultPtr, 4));
+					colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(result, curResultPtr, 4));
 					curResultPtr += 4;
 
 					curSourcePtr++;
@@ -268,13 +289,13 @@ namespace MSS.Common
 			return result;
 		}
 
-		private int GetResultRowPtr(int maxRowIndex, int rowPtr, bool invert)
-		{
-			// The Source's origin is at the bottom, left.
-			// If inverted, the Destination's origin is at the top, left, otherwise bottom, left. 
-			var result = invert ? maxRowIndex - rowPtr : rowPtr;
-			return result;
-		}
+		//private int GetResultRowPtr(int maxRowIndex, int rowPtr, bool invert)
+		//{
+		//	// The Source's origin is at the bottom, left.
+		//	// If inverted, the Destination's origin is at the top, left, otherwise bottom, left. 
+		//	var result = invert ? maxRowIndex - rowPtr : rowPtr;
+		//	return result;
+		//}
 
 		private IHistogram BuildHistogram(ushort[] counts)
 		{

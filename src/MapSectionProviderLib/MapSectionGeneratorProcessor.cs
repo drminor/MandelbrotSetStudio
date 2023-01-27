@@ -120,14 +120,14 @@ namespace MapSectionProviderLib
 			{
 				IMEngineClient nClient;
 
-				if (clients[0].GetType() == typeof(MClientLocalVector))
+				if (clients[0] is MClientLocal mClientLocal)
 				{
-					nClient = new MClientLocalVector();
+					//nClient = new MClientLocalScalar();
+					nClient = new MClientLocal(mClientLocal.UsingDepthFirst);
 				}
 				else
 				{
-					//nClient = new MClientLocalScalar();
-					nClient = new MClientLocal();
+					nClient = new MClientLocalVector();
 				}
 
 				//workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(nClient/*, _mapSectionPersistProcessor*/, _cts.Token)));
