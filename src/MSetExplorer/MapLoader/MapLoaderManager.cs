@@ -67,7 +67,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public int Push(BigVector mapBlockOffset, IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int, bool> callback)
+		public int Push(BigVector mapBlockOffset, IList<MapSectionServiceRequest> mapSectionRequests, Action<MapSection, int, bool> callback)
 		{
 			var result = 0;
 

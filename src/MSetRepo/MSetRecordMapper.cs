@@ -27,7 +27,7 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse, MapSectionRecord>,
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionServiceResponse, MapSectionRecord>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
@@ -224,7 +224,7 @@ namespace MSetRepo
 		/// </summary>
 		/// <param name="source"></param>
 		/// <returns></returns>
-		public MapSectionRecord MapTo(MapSectionResponse source)
+		public MapSectionRecord MapTo(MapSectionServiceResponse source)
 		{
 			ZValuesDto zVals;
 
@@ -286,11 +286,11 @@ namespace MSetRepo
 		}
 
 		// Take a record from the repo and prepare it for display.
-		public MapSectionResponse MapFrom(MapSectionRecord target)
+		public MapSectionServiceResponse MapFrom(MapSectionRecord target)
 		{
 			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
 
-			var result = new MapSectionResponse
+			var result = new MapSectionServiceResponse
 			(
 				mapSectionId: target.Id.ToString(),
 				ownerId: string.Empty,
@@ -333,11 +333,11 @@ namespace MSetRepo
 			return result;
 		}
 
-		public MapSectionResponse MapFrom(MapSectionRecordJustCounts target)
+		public MapSectionServiceResponse MapFrom(MapSectionRecordJustCounts target)
 		{
 			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
 
-			var result = new MapSectionResponse
+			var result = new MapSectionServiceResponse
 			(
 				mapSectionId: target.Id.ToString(),
 				ownerId: string.Empty,

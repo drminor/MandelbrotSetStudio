@@ -19,7 +19,7 @@ namespace MSetExplorer
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapSectionHelper _mapSectionHelper;
 
-		private IList<MapSectionRequest>? _mapSectionRequests;
+		private IList<MapSectionServiceRequest>? _mapSectionRequests;
 		private bool _isStopping;
 		private int _sectionsRequested;
 		private int _sectionsCompleted;
@@ -58,7 +58,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public Task Start(IList<MapSectionRequest> mapSectionRequests)
+		public Task Start(IList<MapSectionServiceRequest> mapSectionRequests)
 		{
 			if (_tcs != null)
 			{
@@ -120,7 +120,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)
+		private void HandleResponse(MapSectionServiceRequest mapSectionRequest, MapSectionServiceResponse? mapSectionResponse)
 		{
 			var mapSectionResult = MapSection.Empty;
 			bool isLastSection;
@@ -198,7 +198,7 @@ namespace MSetExplorer
 
 		}
 
-		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest mapSectionRequest)
+		private MapSectionProcessInfo CreateMSProcInfo(MapSectionServiceRequest mapSectionRequest)
 		{
 			var result = new MapSectionProcessInfo(JobNumber, _sectionsCompleted, mapSectionRequest.TimeToCompleteGenRequest, mapSectionRequest.ProcessingDuration, mapSectionRequest.FoundInRepo);
 			return result;

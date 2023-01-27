@@ -15,7 +15,7 @@ namespace MapSectionProviderLib
 
 		private const int QUEUE_CAPACITY = 200;
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<MapSectionResponse> _workQueue;
+		private readonly BlockingCollection<MapSectionServiceResponse> _workQueue;
 
 		private Task _workQueueProcessor;
 		private bool disposedValue;
@@ -29,7 +29,7 @@ namespace MapSectionProviderLib
 			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
-			_workQueue = new BlockingCollection<MapSectionResponse>(QUEUE_CAPACITY);
+			_workQueue = new BlockingCollection<MapSectionServiceResponse>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
 		}
 
@@ -37,7 +37,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(MapSectionResponse mapSectionResponse)
+		public void AddWork(MapSectionServiceResponse mapSectionResponse)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{

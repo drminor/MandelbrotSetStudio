@@ -10,9 +10,9 @@ namespace MSS.Common
 		// True if running on the same machine as the Explorer program.
 		bool IsLocal { get; }
 
-		Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest);
+		Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest);
 
-		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest);
+		MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest);
 
 	}
 }

@@ -220,7 +220,7 @@ namespace MapSectionProviderLib
 
 					mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
 
-					MapSectionResponse? mapSectionResponse;
+					MapSectionServiceResponse? mapSectionResponse;
 
 					if (IsJobCancelled(mapSectionGenerateRequest.JobId))
 					{
@@ -271,7 +271,7 @@ namespace MapSectionProviderLib
 					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
 					//mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
 
-					MapSectionResponse? mapSectionResponse;
+					MapSectionServiceResponse? mapSectionResponse;
 
 					if (IsJobCancelled(mapSectionGenerateRequest.JobId))
 					{

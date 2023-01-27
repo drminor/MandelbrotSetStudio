@@ -10,7 +10,7 @@ namespace MSetGenP
 {
 	public class MapSectionGeneratorScalar
 	{
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest)
 		{
 			var mapPositionDto = mapSectionRequest.Position;
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
@@ -56,7 +56,7 @@ namespace MSetGenP
 			var escapeVelocities = new ushort[blockSize.NumberOfCells];
 
 			// TODO: Fix the MapSectionGeneratorScaler to produce MapSectionVectors.
-			var result = new MapSectionResponse(mapSectionRequest/*, doneFlags, counts, escapeVelocities, zValues: null*/);
+			var result = new MapSectionServiceResponse(mapSectionRequest/*, doneFlags, counts, escapeVelocities, zValues: null*/);
 
 			Debug.WriteLine($"{s1}, {s2}: {mathOpCounts}");
 

@@ -8,24 +8,24 @@ using System.Runtime.Serialization;
 namespace MEngineDataContracts
 {
 	[DataContract]
-	public class MapSectionResponse
+	public class MapSectionServiceResponse
 	{
-		public MapSectionResponse()
+		public MapSectionServiceResponse()
 		{
 			SubdivisionId = string.Empty;
 		}
 
-		public MapSectionResponse(MapSectionRequest mapSectionRequest)
+		public MapSectionServiceResponse(MapSectionServiceRequest mapSectionRequest)
 			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings, null, null)
 		{ }
 
-		public MapSectionResponse(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, double[] zValues)
+		public MapSectionServiceResponse(MapSectionServiceRequest mapSectionRequest, MapSectionVectors mapSectionVectors, double[] zValues)
 			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings, mapSectionVectors, zValues)
 		{ }
 
-		public MapSectionResponse(string mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition,
+		public MapSectionServiceResponse(string mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition,
 			MapCalcSettings mapCalcSettings, MapSectionVectors mapSectionVectors, double[] zValues)
 		{
 			MapSectionId = mapSectionId;
@@ -52,17 +52,36 @@ namespace MEngineDataContracts
 		[DataMember(Order = 4)]
 		public string SubdivisionId { get; init; }
 
-		[DataMember(Order = 5)]
+		// On Request -- Not on Response
+		//[DataMember(Order = 5)]
+		//public PointInt ScreenPosition { get; set; }
+
+		[DataMember(Order = 5)]										// 6
 		public BigVectorDto BlockPosition { get; init; }
 
-		[DataMember(Order = 6)]
-		public MapCalcSettings MapCalcSettings { get; init; }
+		/* On Request -- Not on Response
+		[DataMember(Order = 7)]
+		public RPointDto Position { get; set; }
 
-		public MapSectionVectors MapSectionVectors { get; set; }
+		[DataMember(Order = 8)]
+		public int Precision { get; set; }
 
-		public double[] ZValuesForLocalStorage { get; init; }
+		[DataMember(Order = 9)]
+		public SizeInt BlockSize { get; set; }
 
 		[DataMember(Order = 10)]
+		public RSizeDto SamplePointDelta { get; set; }
+		*/
+
+		[DataMember(Order = 6)]										// 11
+		public MapCalcSettings MapCalcSettings { get; init; }
+
+		public MapSectionVectors MapSectionVectors { get; set; }    // 12
+
+		public bool IncludeZValues { get; set; }
+		public double[] ZValuesForLocalStorage { get; init; }		// 13
+
+		[DataMember(Order = 7)]
 		public double[] ZValues
 		{
 			get => IncludeZValues ? ZValuesForLocalStorage : null;
@@ -72,7 +91,8 @@ namespace MEngineDataContracts
 			}
 		}
 
-		public bool IncludeZValues { get; set; }
+		// On Request -- Not on Response
+		//public bool IsInverted { get; init; }
 
 		public bool RequestCancelled { get; set; }
 

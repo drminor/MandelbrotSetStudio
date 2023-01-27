@@ -80,7 +80,7 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues, CancellationToken ct)
+		public async Task<MapSectionServiceResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues, CancellationToken ct)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
@@ -138,7 +138,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
+		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionServiceResponse mapSectionResponse)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
@@ -148,7 +148,7 @@ namespace MSetRepo
 			return mapSectionId;
 		}
 
-		public async Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse)
+		public async Task<long?> UpdateMapSectionZValuesAsync(MapSectionServiceResponse mapSectionResponse)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
@@ -170,18 +170,18 @@ namespace MSetRepo
 
 		#region JobMapSection
 
-		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse)
+		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionServiceResponse mapSectionResponse)
 		{
 			var mapSectionIdStr = mapSectionResponse.MapSectionId;
 			if (string.IsNullOrEmpty(mapSectionIdStr))
 			{
-				throw new ArgumentNullException(nameof(MapSectionResponse.MapSectionId), "The MapSectionId cannot be null.");
+				throw new ArgumentNullException(nameof(MapSectionServiceResponse.MapSectionId), "The MapSectionId cannot be null.");
 			}
 
 			var subdivisionIdStr = mapSectionResponse.SubdivisionId;
 			if (string.IsNullOrEmpty(subdivisionIdStr))
 			{
-				throw new ArgumentNullException(nameof(MapSectionResponse.SubdivisionId), "The SubdivisionId cannot be null.");
+				throw new ArgumentNullException(nameof(MapSectionServiceResponse.SubdivisionId), "The SubdivisionId cannot be null.");
 			}
 
 			var ownerIdStr = mapSectionResponse.OwnerId;

@@ -11,7 +11,7 @@ namespace MSetGenP
 {
     public class MapSectionGeneratorVector
 	{
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest)
 		{
 			var mapPositionDto = mapSectionRequest.Position;
 			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
@@ -122,7 +122,7 @@ namespace MSetGenP
 				}
 
 				// TODO: Fix the MapSectionGeneratorScaler to produce MapSectionVectors.
-				var result = new MapSectionResponse(mapSectionRequest/*, compressedDoneFlags, counts, escapeVelocities, zValues: null*/);
+				var result = new MapSectionServiceResponse(mapSectionRequest/*, compressedDoneFlags, counts, escapeVelocities, zValues: null*/);
 				return result;
 			}
 			else
@@ -158,7 +158,7 @@ namespace MSetGenP
 				//var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
 
 				// TODO: Fix the MapSectionGeneratorScaler to produce MapSectionVectors.
-				var result = new MapSectionResponse(mapSectionRequest/*, doneFlags, counts, escapeVelocities, zValues: null*/);
+				var result = new MapSectionServiceResponse(mapSectionRequest/*, doneFlags, counts, escapeVelocities, zValues: null*/);
 
 				return result;
 			}

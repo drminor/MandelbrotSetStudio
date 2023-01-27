@@ -16,7 +16,7 @@ namespace MSS.Common
 		int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection, int, bool> callback);
 		int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection, int, bool> callback);
 
-		int Push(BigVector mapBlockOffset, IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int, bool> callback);
+		int Push(BigVector mapBlockOffset, IList<MapSectionServiceRequest> mapSectionRequests, Action<MapSection, int, bool> callback);
 
 		Task? GetTaskForJob(int jobNumber);
 

@@ -24,7 +24,7 @@ namespace MSetGenP
 		public string EndPointAddress => "CSharp_ScalerGenerator";
 		public bool IsLocal => true;
 
-		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
+		public async Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest)
 		{
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
@@ -37,7 +37,7 @@ namespace MSetGenP
 			return mapSectionResponse;
 		}
 
-		private async Task<MapSectionResponse> GenerateMapSectionAsyncInternal(MapSectionRequest mapSectionRequest)
+		private async Task<MapSectionServiceResponse> GenerateMapSectionAsyncInternal(MapSectionServiceRequest mapSectionRequest)
 		{
 			if (DateTime.Now > DateTime.Today.AddDays(1d))
 			{
@@ -58,7 +58,7 @@ namespace MSetGenP
 
 		#region Synchronous Methods
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest)
 		{
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
@@ -71,7 +71,7 @@ namespace MSetGenP
 			return mapSectionResponse;
 		}
 
-		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest)
+		private MapSectionServiceResponse GenerateMapSectionInternal(MapSectionServiceRequest mapSectionRequest)
 		{
 			var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest);
 

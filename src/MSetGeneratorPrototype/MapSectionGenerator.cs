@@ -30,18 +30,18 @@ namespace MSetGeneratorPrototype
 
 		#region Generate MapSection
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest)
 		{
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
 
 			var coords = GetCoordinates(mapSectionRequest, _fp31VectorsMath.ApFixedPointFormat);
 
-			MapSectionResponse result;
+			MapSectionServiceResponse result;
 
 			if (ShouldSkipThisSection(skipPositiveBlocks, skipLowDetailBlocks, coords))
 			{
-				result = new MapSectionResponse(mapSectionRequest);
+				result = new MapSectionServiceResponse(mapSectionRequest);
 			}
 			else
 			{
@@ -54,7 +54,7 @@ namespace MSetGeneratorPrototype
 				GenerateMapSection(_iterator, mapSectionVectors, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				result = new MapSectionResponse(mapSectionRequest, mapSectionVectors, zValues: null);
+				result = new MapSectionServiceResponse(mapSectionRequest, mapSectionVectors, zValues: null);
 				//result.MathOpCounts = _iterator.MathOpCounts;
 			}
 
@@ -174,7 +174,7 @@ namespace MSetGeneratorPrototype
 
 		#region Support Methods
 
-		private IteratorCoords GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
+		private IteratorCoords GetCoordinates(MapSectionServiceRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
 		{
 			var dtoMapper = new DtoMapper();
 
@@ -191,7 +191,7 @@ namespace MSetGeneratorPrototype
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
 		}
 
-		private (FP31Vectors zRs, FP31Vectors zIs) GetZValues(MapSectionRequest mapSectionRequest, int rowNumber, int limbCount, int valueCount)
+		private (FP31Vectors zRs, FP31Vectors zIs) GetZValues(MapSectionServiceRequest mapSectionRequest, int rowNumber, int limbCount, int valueCount)
 		{
 			var zRs = new FP31Vectors(limbCount, valueCount);
 			var zIs = new FP31Vectors(limbCount, valueCount);

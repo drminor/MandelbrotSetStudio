@@ -28,7 +28,7 @@ namespace MEngineClient
 		//	return reply;
 		//}
 
-		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
+		public async Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest)
 		{
 			var mEngineService = GetMapSectionService();
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
@@ -42,7 +42,7 @@ namespace MEngineClient
 			return mapSectionResponse;
 		}
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest)
 		{
 			var mEngineService = GetMapSectionService();
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;

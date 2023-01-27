@@ -8,7 +8,7 @@ using System.Runtime.Serialization;
 namespace MEngineDataContracts
 {
 	[DataContract]
-	public class MapSectionRequest
+	public class MapSectionServiceRequest
 	{
 		[DataMember(Order = 1)]
 		public string MapSectionId { get; set; }

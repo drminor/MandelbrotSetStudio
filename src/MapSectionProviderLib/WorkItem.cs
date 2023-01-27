@@ -30,16 +30,16 @@ namespace MapSectionProviderLib
 		}
 	}
 
-	internal class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSectionResponse>
+	internal class MapSectionWorkRequest : WorkItem<MapSectionServiceRequest, MapSectionServiceResponse>
 	{
-		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSectionResponse?> workAction) : base(jobId, request, workAction)
+		public MapSectionWorkRequest(int jobId, MapSectionServiceRequest request, Action<MapSectionServiceRequest, MapSectionServiceResponse?> workAction) : base(jobId, request, workAction)
 		{
 		}
 	}
 
-	internal class MapSectionGenerateRequest : WorkItem<MapSectionWorkRequest, MapSectionResponse>
+	internal class MapSectionGenerateRequest : WorkItem<MapSectionWorkRequest, MapSectionServiceResponse>
 	{
-		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse?> workAction) : base(jobId, request, workAction)
+		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionServiceResponse?> workAction) : base(jobId, request, workAction)
 		{
 		}
 	}
