@@ -19,12 +19,12 @@ namespace MSS.Types
 			EscapeVelocities = new ushort[Length];
 		}
 
-		public MapSectionValues(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
-		{
-			HasEscapedFlags = hasEscapedFlags ?? throw new ArgumentNullException(nameof(hasEscapedFlags));
-			Counts = counts ?? throw new ArgumentNullException(nameof(counts));
-			EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
-		}
+		//public MapSectionValues(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
+		//{
+		//	HasEscapedFlags = hasEscapedFlags ?? throw new ArgumentNullException(nameof(hasEscapedFlags));
+		//	Counts = counts ?? throw new ArgumentNullException(nameof(counts));
+		//	EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
+		//}
 
 		#endregion
 
@@ -32,7 +32,8 @@ namespace MSS.Types
 
 		public SizeInt BlockSize { get; init; }
 		public int Length { get; init; }
-		public bool[] HasEscapedFlags {get; private set;}
+
+		public bool[] HasEscapedFlags { get; private set;}
 		public ushort[] Counts { get; private set; }
 		public ushort[] EscapeVelocities { get; private set; }
 
@@ -40,23 +41,23 @@ namespace MSS.Types
 
 		#region Methods
 
-		public void Load(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
-		{
-			CheckArguments(hasEscapedFlags, counts, escapeVelocities);
+		//public void Load(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
+		//{
+		//	CheckArguments(hasEscapedFlags, counts, escapeVelocities);
 
-			Array.Copy(hasEscapedFlags, HasEscapedFlags, Length);
-			Array.Copy(counts, Counts, Length);
-			Array.Copy(escapeVelocities, EscapeVelocities, Length);
-		}
+		//	Array.Copy(hasEscapedFlags, HasEscapedFlags, Length);
+		//	Array.Copy(counts, Counts, Length);
+		//	Array.Copy(escapeVelocities, EscapeVelocities, Length);
+		//}
 
-		public void Load(bool[] hasEscapedFlags, int[] counts, int[] escapeVelocities)
-		{
-			CheckArguments(hasEscapedFlags, counts, escapeVelocities);
+		//public void Load(bool[] hasEscapedFlags, int[] counts, int[] escapeVelocities)
+		//{
+		//	CheckArguments(hasEscapedFlags, counts, escapeVelocities);
 
-			Array.Copy(hasEscapedFlags, HasEscapedFlags, Length);
-			Array.Copy(counts.Select(x => (ushort)x).ToArray(), Counts, Length);
-			Array.Copy(escapeVelocities.Select(x => (ushort)x).ToArray(), EscapeVelocities, Length);
-		}
+		//	Array.Copy(hasEscapedFlags, HasEscapedFlags, Length);
+		//	Array.Copy(counts.Select(x => (ushort)x).ToArray(), Counts, Length);
+		//	Array.Copy(escapeVelocities.Select(x => (ushort)x).ToArray(), EscapeVelocities, Length);
+		//}
 
 		public void Load(MapSectionVectors mapSectionVectors)
 		{

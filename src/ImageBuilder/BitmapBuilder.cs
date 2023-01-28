@@ -184,7 +184,7 @@ namespace ImageBuilder
 
 		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(int rowPtr, int stride, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
-			var requests = new List<MapSectionServiceRequest>();
+			var requests = new List<MapSectionRequest>();
 			var ownerId = ObjectId.GenerateNewId().ToString();
 			var jobOwnerType = JobOwnerType.ImageBuilder;
 

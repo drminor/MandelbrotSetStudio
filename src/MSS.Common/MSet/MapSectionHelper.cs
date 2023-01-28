@@ -56,29 +56,48 @@ namespace MSS.Common
 					mapSection.MapSectionValues.Dispose();
 				}
 
-				mapSection.Dispose();
+				//mapSection.MapSectionValues = null;
 			}
+
+			//mapSection.Dispose();
 		}
 
-		public void ReturnMapSectionResponse(MapSectionServiceResponse mapSectionResponse)
+		public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
+		{
+			if (mapSectionRequest.MapSectionVectors != null)
+			{
+				if (!_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors))
+				{
+					mapSectionRequest.MapSectionVectors.Dispose();
+				}
+
+				mapSectionRequest.MapSectionVectors = null;
+			}
+
+			//mapSectionRequest.Dispose();
+		}
+
+		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
 		{
 			if (mapSectionResponse.MapSectionVectors != null)
 			{
-				var mapSectionVectors = mapSectionResponse.MapSectionVectors;
-				mapSectionResponse.MapSectionVectors = null;
-
-				if (!_mapSectionVectorsPool.Free(mapSectionVectors))
+				if (!_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors))
 				{
-					mapSectionVectors.Dispose();
+					mapSectionResponse.MapSectionVectors.Dispose();
 				}
+
+				mapSectionResponse.MapSectionVectors = null;
 			}
+
+			//mapSectionRequest.Dispose();
 		}
+
 
 		#region Create MapSectionRequests
 
-		public IList<MapSectionServiceRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
+		public IList<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
 		{
-			var result = new List<MapSectionServiceRequest>();
+			var result = new List<MapSectionRequest>();
 
 			Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
 
@@ -92,9 +111,9 @@ namespace MSS.Common
 			return result;
 		}
 
-		public IList<MapSectionServiceRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		public IList<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
-			var result = new List<MapSectionServiceRequest>();
+			var result = new List<MapSectionRequest>();
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
@@ -143,7 +162,7 @@ namespace MSS.Common
 
 		#region Create Single MapSectionRequest
 
-		public MapSectionServiceRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
 			var result = CreateRequest(screenPosition, repoPosition, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
@@ -161,29 +180,30 @@ namespace MSS.Common
 		/// <param name="mapCalcSettings"></param>
 		/// <param name="mapPosition"></param>
 		/// <returns></returns>
-		public MapSectionServiceRequest CreateRequest(PointInt screenPosition, BigVector repoPosition, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector repoPosition, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
-			var mapSectionRequest = new MapSectionServiceRequest
-			{
-				OwnerId = ownerId,
-				JobOwnerType = jobOwnerType,
-				SubdivisionId = subdivision.Id.ToString(),
-				ScreenPosition = screenPosition,
-				BlockPosition = _dtoMapper.MapTo(repoPosition),
-				BlockSize = subdivision.BlockSize,
-				Position = _dtoMapper.MapTo(mapPosition),
-				Precision = repoPosition.Precision,
-				SamplePointDelta = _dtoMapper.MapTo(subdivision.SamplePointDelta),
-				MapCalcSettings = mapCalcSettings,
+
+			var mapSectionVectors = _mapSectionVectorsPool.Obtain();
+
+			var mapSectionRequest = new MapSectionRequest
+			(
+				ownerId: ownerId,
+				jobOwnerType: jobOwnerType,
+				subdivisionId: subdivision.Id.ToString(),
+				screenPosition: screenPosition,
+				blockPosition: repoPosition, // _dtoMapper.MapTo(repoPosition),
+				isInverted: isInverted,
+				position: mapPosition, // _dtoMapper.MapTo(mapPosition),
+				precision: repoPosition.Precision,
+				blockSize: subdivision.BlockSize,
+				samplePointDelta: subdivision.SamplePointDelta, // _dtoMapper.MapTo(subdivision.SamplePointDelta),
+				mapCalcSettings: mapCalcSettings,
 				//Counts = null,
 				//HasEscapedFlags = null,
-				MapSectionVectors = null,
-				ZValues = null,
-				IsInverted = isInverted,
-				TimeToCompleteGenRequest = null,
-				ProcessingStartTime = DateTime.UtcNow
-			};
+				mapSectionVectors: mapSectionVectors
+				//ZValues = null,
+			);
 
 			return mapSectionRequest;
 		}
@@ -211,31 +231,29 @@ namespace MSS.Common
 
 		#region Create MapSection
 
-		public MapSection CreateMapSection(MapSectionServiceRequest mapSectionRequest, MapSectionServiceResponse mapSectionResponse, BigVector mapBlockOffset)
+		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, BigVector mapBlockOffset)
 		{
-			var repoBlockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+			if (mapSectionResponse.MapSectionVectors == null)
+			{
+				throw new InvalidOperationException("Cannot create the MapSection: the MapSectionResponse has no value for the MapSectionVectors.");
+			}
+
+			var repoBlockPosition = mapSectionRequest.BlockPosition;
 			var isInverted = mapSectionRequest.IsInverted;
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
-			if (mapSectionResponse.MapSectionVectors != null)
-			{
-				var mapSectionValues = _mapSectionValuesPool.Obtain();
-				mapSectionValues.Load(mapSectionResponse.MapSectionVectors);
+			var mapSectionValues = _mapSectionValuesPool.Obtain();
 
-				var mapSection = new MapSection(mapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
-					screenPosition, mapSectionRequest.BlockSize, mapSectionResponse.MapCalcSettings.TargetIterations, BuildHistogram);
+			mapSectionValues.Load(mapSectionResponse.MapSectionVectors);
 
-				ReturnMapSectionResponse(mapSectionResponse);
+			var mapSection = new MapSection(mapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
+				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
 
-				return mapSection;
-			}
-			else
-			{
-				throw new InvalidOperationException("Could not create the MapSection, the MapSectionVectors had a null value.");
-				//var mapSection = new MapSection();
-				//return mapSection;
-			}
+			//ReturnMapSectionRequest(mapSectionRequest);
+			ReturnMapSectionResponse(mapSectionResponse);
+
+			return mapSection;
 		}
 
 		public byte[] GetPixelArray(MapSectionValues mapSectionValues, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)

@@ -30,31 +30,32 @@ namespace MSetGeneratorPrototype
 
 		#region Generate MapSection
 
-		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest)
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
 
 			var coords = GetCoordinates(mapSectionRequest, _fp31VectorsMath.ApFixedPointFormat);
 
-			MapSectionServiceResponse result;
+			MapSectionResponse result;
 
 			if (ShouldSkipThisSection(skipPositiveBlocks, skipLowDetailBlocks, coords))
 			{
-				result = new MapSectionServiceResponse(mapSectionRequest);
+				result = new MapSectionResponse(mapSectionRequest);
 			}
 			else
 			{
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 
-				var mapSectionVectors = mapSectionRequest.MapSectionVectors;
+				var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? new MapSectionVectors(mapSectionRequest.BlockSize);
 				mapSectionRequest.MapSectionVectors = null;
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 				GenerateMapSection(_iterator, mapSectionVectors, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				result = new MapSectionServiceResponse(mapSectionRequest, mapSectionVectors, zValues: null);
+				result = new MapSectionResponse(mapSectionRequest);
+				result.MapSectionVectors = mapSectionVectors;
 				//result.MathOpCounts = _iterator.MathOpCounts;
 			}
 
@@ -174,13 +175,15 @@ namespace MSetGeneratorPrototype
 
 		#region Support Methods
 
-		private IteratorCoords GetCoordinates(MapSectionServiceRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
+		private IteratorCoords GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
 		{
-			var dtoMapper = new DtoMapper();
+			//var blockPos = dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+			//var mapPosition = dtoMapper.MapFrom(mapSectionRequest.Position);
+			//var samplePointDelta = dtoMapper.MapFrom(mapSectionRequest.SamplePointDelta);
 
-			var blockPos = dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-			var mapPosition = dtoMapper.MapFrom(mapSectionRequest.Position);
-			var samplePointDelta = dtoMapper.MapFrom(mapSectionRequest.SamplePointDelta);
+			var blockPos = mapSectionRequest.BlockPosition;
+			var mapPosition = mapSectionRequest.Position;
+			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 
 			var startingCx = FP31ValHelper.CreateFP31Val(mapPosition.X, apFixedPointFormat);
 			var startingCy = FP31ValHelper.CreateFP31Val(mapPosition.Y, apFixedPointFormat);

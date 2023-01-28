@@ -48,23 +48,23 @@ namespace MSS.Types
 
 		#region Methods
 
-		public Span<Vector256<int>> GetHasEscapedFlagsRow(int start, int length)
-		{
-			var result = new Span<Vector256<int>>(HasEscapedVectors, start, length);
-			return result;
-		}
+		//public Span<Vector256<int>> GetHasEscapedFlagsRow(int start, int length)
+		//{
+		//	var result = new Span<Vector256<int>>(HasEscapedVectors, start, length);
+		//	return result;
+		//}
 
-		public Span<Vector256<int>> GetCountsRow(int start, int length)
-		{
-			var result = new Span<Vector256<int>>(CountVectors, start, length);
-			return result;
-		}
+		//public Span<Vector256<int>> GetCountsRow(int start, int length)
+		//{
+		//	var result = new Span<Vector256<int>>(CountVectors, start, length);
+		//	return result;
+		//}
 
-		public Span<Vector256<int>> GetEscapeVelocitiesRow(int start, int length)
-		{
-			var result = new Span<Vector256<int>>(EscapeVelocityVectors, start, length);
-			return result;
-		}
+		//public Span<Vector256<int>> GetEscapeVelocitiesRow(int start, int length)
+		//{
+		//	var result = new Span<Vector256<int>>(EscapeVelocityVectors, start, length);
+		//	return result;
+		//}
 
 		// IPoolable Support
 		void IPoolable.ResetObject()

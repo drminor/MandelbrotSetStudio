@@ -1,0 +1,81 @@
+﻿using System;
+
+namespace MSS.Types.MSet
+{
+	public class MapSectionRequest
+	{
+		public MapSectionRequest(string ownerId, JobOwnerType jobOwnerType, string subdivisionId, 
+			PointInt screenPosition, BigVector blockPosition, bool isInverted, RPoint position, int precision, 
+			SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, 
+			MapSectionVectors mapSectionVectors)
+		{
+			MapSectionId = null;
+			OwnerId = ownerId;
+			JobOwnerType = jobOwnerType;
+			SubdivisionId = subdivisionId;
+			ScreenPosition = screenPosition;
+			BlockPosition = blockPosition;
+			IsInverted = isInverted;
+			Position = position;
+			Precision = precision;
+			BlockSize = blockSize;
+			SamplePointDelta = samplePointDelta;
+			MapCalcSettings = mapCalcSettings;
+			MapSectionVectors = mapSectionVectors;
+			ProcessingStartTime = DateTime.UtcNow;
+		}
+
+		public string? MapSectionId { get; set; }
+		public string OwnerId { get; set; }
+		public JobOwnerType JobOwnerType { get; set; }
+		public string SubdivisionId { get; set; }
+		public PointInt ScreenPosition { get; set; }
+		public BigVector BlockPosition { get; set; }
+		public RPoint Position { get; set; }
+		public int Precision { get; set; }
+		public SizeInt BlockSize { get; set; }
+		public RSize SamplePointDelta { get; set; }
+		public MapCalcSettings MapCalcSettings { get; set; }
+		public MapSectionVectors? MapSectionVectors { get; set; }
+
+		//public double[]? ZValues { get; set; }
+
+		public bool IsInverted { get; init; }
+
+		public bool Pending { get; set; }
+		public bool Sent { get; set; }
+		public bool FoundInRepo { get; set; }
+		public bool Completed { get; set; }
+		public bool Saved { get; set; }
+		public bool Handled { get; set; }
+
+		public bool IncreasingIterations { get; set; }
+
+		public string? ClientEndPointAddress { get; set; }
+		public TimeSpan? TimeToCompleteGenRequest { get; set; }
+
+		public DateTime? ProcessingStartTime { get; set; }
+		public DateTime? ProcessingEndTime { get; set; }
+
+		public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
+
+		public bool GetIsDone()
+		{
+			if (MapSectionVectors == null)
+			{
+				return false;
+			}
+
+			// TODO: Implement GetIsDone on the MapSectionRequest class.
+			//var result = !HasEscapedFlags.Any(x => !x);
+			//return result;
+
+			return false;
+		}
+
+		public override string ToString()
+		{
+			return $"S:{SubdivisionId}, BPos:{BlockPosition}.";
+		}
+	}
+}

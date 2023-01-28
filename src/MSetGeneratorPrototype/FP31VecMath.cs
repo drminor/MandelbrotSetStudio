@@ -507,7 +507,6 @@ namespace MSetGeneratorPrototype
 		{
 			var fp31Val = FP31ValHelper.CreateFP31Val(new RValue(value, 0), ApFixedPointFormat);
 			var msl = (int)fp31Val.Mantissa[^1] - 1;
-
 			var result = Vector256.Create(msl);
 
 			return result;
@@ -515,7 +514,6 @@ namespace MSetGeneratorPrototype
 
 		public Vector256<int> IsGreaterOrEqThan(Vector256<uint> left, Vector256<int> right)
 		{
-
 			var sansSign = Avx2.And(left, SIGN_BIT_MASK_VEC);
 			var result = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
 			//MathOpCounts.NumberOfGrtrThanOps++;

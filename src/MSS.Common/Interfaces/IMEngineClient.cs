@@ -1,4 +1,4 @@
-﻿using MEngineDataContracts;
+﻿using MSS.Types.MSet;
 using System.Threading.Tasks;
 
 namespace MSS.Common
@@ -10,9 +10,9 @@ namespace MSS.Common
 		// True if running on the same machine as the Explorer program.
 		bool IsLocal { get; }
 
-		Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest);
+		Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest);
 
-		MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest);
+		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest);
 
 	}
 }

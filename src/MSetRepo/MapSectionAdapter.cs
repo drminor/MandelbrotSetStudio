@@ -80,7 +80,7 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionServiceResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues, CancellationToken ct)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues, CancellationToken ct)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
@@ -138,25 +138,27 @@ namespace MSetRepo
 			return result;
 		}
 
-		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionServiceResponse mapSectionResponse)
+		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
+
+			//var mapSectionRecord = new MapSectionRecord()
 
 			var mapSectionId = await mapSectionReaderWriter.InsertAsync(mapSectionRecord);
 
 			return mapSectionId;
 		}
 
-		public async Task<long?> UpdateMapSectionZValuesAsync(MapSectionServiceResponse mapSectionResponse)
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
+		//public async Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse)
+		//{
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
 
-			var result = await mapSectionReaderWriter.UpdateZValuesAync(mapSectionRecord);
+		//	var result = await mapSectionReaderWriter.UpdateZValuesAync(mapSectionRecord);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false)
 		{
@@ -170,7 +172,7 @@ namespace MSetRepo
 
 		#region JobMapSection
 
-		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionServiceResponse mapSectionResponse)
+		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse)
 		{
 			var mapSectionIdStr = mapSectionResponse.MapSectionId;
 			if (string.IsNullOrEmpty(mapSectionIdStr))

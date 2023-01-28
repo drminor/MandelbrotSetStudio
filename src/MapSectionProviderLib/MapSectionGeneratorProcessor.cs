@@ -1,8 +1,8 @@
 ﻿using MEngineClient;
 using MEngineDataContracts;
-using MSetGenP;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -125,9 +125,14 @@ namespace MapSectionProviderLib
 					//nClient = new MClientLocalScalar();
 					nClient = new MClientLocal(mClientLocal.UsingDepthFirst);
 				}
+				else if (clients[0] is MClient mClient)
+				{
+					nClient = new MClient(mClient.EndPointAddress);
+				}
 				else
 				{
-					nClient = new MClientLocalVector();
+					throw new NotSupportedException("Currently, only the MClient and MClientLocal implementations of IMEngineClient are supported.");
+					//nClient = new MClientLocalVector();
 				}
 
 				//workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(nClient/*, _mapSectionPersistProcessor*/, _cts.Token)));
@@ -218,9 +223,7 @@ namespace MapSectionProviderLib
 					// The original request is in the Request's Request property.
 					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
 
-					mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
-
-					MapSectionServiceResponse? mapSectionResponse;
+					MapSectionResponse? mapSectionResponse;
 
 					if (IsJobCancelled(mapSectionGenerateRequest.JobId))
 					{
@@ -228,10 +231,13 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
+						//mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
+
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
+						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-						if (mapSectionResponse.IsEmpty)
+						if (mapSectionResponse.MapSectionVectors == null)
 						{
 							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
 						}
@@ -240,8 +246,6 @@ namespace MapSectionProviderLib
 						{
 							Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
 						}
-
-						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 					}
 
 					mapSectionGenerateRequest.Response = mapSectionResponse;
@@ -269,9 +273,8 @@ namespace MapSectionProviderLib
 
 					// The original request is in the Request's Request property.
 					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
-					//mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
 
-					MapSectionServiceResponse? mapSectionResponse;
+					MapSectionResponse? mapSectionResponse;
 
 					if (IsJobCancelled(mapSectionGenerateRequest.JobId))
 					{
@@ -279,10 +282,13 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
+						//mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
+
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest);
+						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-						if (mapSectionResponse.IsEmpty)
+						if (mapSectionResponse.MapSectionVectors == null)
 						{
 							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
 						}
@@ -291,8 +297,6 @@ namespace MapSectionProviderLib
 						{
 							Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
 						}
-
-						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 					}
 
 					mapSectionGenerateRequest.Response = mapSectionResponse;

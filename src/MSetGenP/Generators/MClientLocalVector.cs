@@ -1,5 +1,6 @@
 ﻿using MEngineDataContracts;
 using MSS.Common;
+using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -24,7 +25,7 @@ namespace MSetGenP
 		public string EndPointAddress => "CSharp_ScalerGenerator";
 		public bool IsLocal => true;
 
-		public async Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest)
+		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		{
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
@@ -32,12 +33,12 @@ namespace MSetGenP
 			var mapSectionResponse = await GenerateMapSectionAsyncInternal(mapSectionRequest);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-			Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
+			//Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
 
 			return mapSectionResponse;
 		}
 
-		private async Task<MapSectionServiceResponse> GenerateMapSectionAsyncInternal(MapSectionServiceRequest mapSectionRequest)
+		private async Task<MapSectionResponse> GenerateMapSectionAsyncInternal(MapSectionRequest mapSectionRequest)
 		{
 			if (DateTime.Now > DateTime.Today.AddDays(1d))
 			{
@@ -51,14 +52,14 @@ namespace MSetGenP
 				Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {++_sectionCntr} requests.");
 			}
 
-			mapSectionResponse.IncludeZValues = false;
+			//mapSectionResponse.IncludeZValues = false;
 
 			return mapSectionResponse;
 		}
 
 		#region Synchronous Methods
 
-		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest)
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
@@ -66,12 +67,12 @@ namespace MSetGenP
 			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-			Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
+			//Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
 
 			return mapSectionResponse;
 		}
 
-		private MapSectionServiceResponse GenerateMapSectionInternal(MapSectionServiceRequest mapSectionRequest)
+		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest)
 		{
 			var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest);
 
@@ -80,7 +81,7 @@ namespace MSetGenP
 				Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {++_sectionCntr} requests.");
 			}
 
-			mapSectionResponse.IncludeZValues = false;
+			//mapSectionResponse.IncludeZValues = false;
 
 			return mapSectionResponse;
 		}

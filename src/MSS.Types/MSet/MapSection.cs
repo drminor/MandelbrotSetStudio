@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types
 {
-	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>, IDisposable
+	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>//, IDisposable
 	{
 		private static readonly Lazy<MapSection> _lazyMapSection = new Lazy<MapSection>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static readonly MapSection Empty = _lazyMapSection.Value;
@@ -121,40 +121,40 @@ namespace MSS.Types
 
 		#region IDisposable Support
 
-		private bool _disposedValue;
+		//private bool _disposedValue;
 
-		protected virtual void Dispose(bool disposing)
-		{
-			if (!_disposedValue)
-			{
-				if (disposing)
-				{
-					// Dispose managed state (managed objects)
-					if (MapSectionValues != null)
-					{
-						MapSectionValues = null;
-					}
-					//_histogram.Value.di = null;
-				}
+		//protected virtual void Dispose(bool disposing)
+		//{
+		//	if (!_disposedValue)
+		//	{
+		//		if (disposing)
+		//		{
+		//			// Dispose managed state (managed objects)
+		//			if (MapSectionValues != null)
+		//			{
+		//				MapSectionValues = null;
+		//			}
+		//			//_histogram.Value.di = null;
+		//		}
 
-				// Set large fields to null
-				_disposedValue = true;
-			}
-		}
+		//		// Set large fields to null
+		//		_disposedValue = true;
+		//	}
+		//}
 
-		// // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-		// ~MapSection()
-		// {
-		//     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-		//     Dispose(disposing: false);
-		// }
+		//// // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+		//// ~MapSection()
+		//// {
+		////     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		////     Dispose(disposing: false);
+		//// }
 
-		public void Dispose()
-		{
-			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-			Dispose(disposing: true);
-			GC.SuppressFinalize(this);
-		}
+		//public void Dispose()
+		//{
+		//	// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		//	Dispose(disposing: true);
+		//	GC.SuppressFinalize(this);
+		//}
 
 		#endregion
 	}

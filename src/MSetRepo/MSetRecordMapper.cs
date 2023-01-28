@@ -27,7 +27,7 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionServiceResponse, MapSectionRecord>,
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse, MapSectionRecord>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
@@ -224,30 +224,36 @@ namespace MSetRepo
 		/// </summary>
 		/// <param name="source"></param>
 		/// <returns></returns>
-		public MapSectionRecord MapTo(MapSectionServiceResponse source)
+		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
-			ZValuesDto zVals;
+			//ZValuesDto zVals;
 
-			try
-			{
-				zVals = new ZValuesDto(source.ZValuesForLocalStorage);
-			}
-			catch (Exception e)
-			{
-				Debug.WriteLine($"While parsing the ZValues as a MapSectionRecord is created from a MapSectionResponse, an exception was encountered: {e}.");
-				throw;
-			}
+			//try
+			//{
+			//	zVals = new ZValuesDto(source.ZValuesForLocalStorage);
+			//}
+			//catch (Exception e)
+			//{
+			//	Debug.WriteLine($"While parsing the ZValues as a MapSectionRecord is created from a MapSectionResponse, an exception was encountered: {e}.");
+			//	throw;
+			//}
+
+
+			var blockPositionDto = _dtoMapper.MapTo(source.BlockPosition);
+
+			ZValuesDto zVals = new ZValuesDto(new byte[0][]);
 
 			var result = new MapSectionRecord
 				(
 				DateCreatedUtc: DateTime.UtcNow,
 				SubdivisionId: new ObjectId(source.SubdivisionId),
-				BlockPosXHi: source.BlockPosition.X[0],
-				BlockPosXLo: source.BlockPosition.X[1],
-				BlockPosYHi: source.BlockPosition.Y[0],
-				BlockPosYLo: source.BlockPosition.Y[1],
 
-				source.MapCalcSettings,
+				BlockPosXHi: blockPositionDto.X[0],
+				BlockPosXLo: blockPositionDto.X[1],
+				BlockPosYHi: blockPositionDto.Y[0],
+				BlockPosYLo: blockPositionDto.Y[1],
+
+				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
 				Counts: new byte[0], //GetBytes(source.Counts),
 				EscapeVelocities: new byte[0], // GetBytes(source.EscapeVelocities),
 				DoneFlags: new byte[0], // GetBytes(source.HasEscapedFlags),
@@ -286,28 +292,43 @@ namespace MSetRepo
 		}
 
 		// Take a record from the repo and prepare it for display.
-		public MapSectionServiceResponse MapFrom(MapSectionRecord target)
+		public MapSectionResponse MapFrom(MapSectionRecord target)
 		{
-			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
+			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
 
-			var result = new MapSectionServiceResponse
+			// TODO: Create a MapSectionValues object from a MapSectionRecord
+			var result = new MapSectionResponse
 			(
 				mapSectionId: target.Id.ToString(),
 				ownerId: string.Empty,
-				jobOwnerType: (int)JobOwnerType.Undetermined,
+				jobOwnerType: JobOwnerType.Undetermined,
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
-				mapCalcSettings: target.MapCalcSettings,
+				mapCalcSettings: target.MapCalcSettings
 				//hasEscapedFlags: GetBools(target.DoneFlags),
 				//counts: GetUShorts(target.Counts),
 
 				//escapeVelocities: GetUShorts(target.EscapeVelocities),
-				new MapSectionVectors(RMapConstants.BLOCK_SIZE),
-				zValues: target.ZValues.GetZValuesAsDoubleArray()
+				//new MapSectionVectors(RMapConstants.BLOCK_SIZE),
+				//zValues: target.ZValues.GetZValuesAsDoubleArray()
 			);
 
 			return result;
 		}
+
+		private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
+		{
+			var blockPosition = new BigVectorDto(new long[][]
+				{
+					new long[] { blockPosXHi, blockPosXLo }, 
+					new long[] { blockPosYHi, blockPosYLo }
+				});
+
+			var result = _dtoMapper.MapFrom(blockPosition);
+
+			return result;
+		}
+
 
 		private ushort[] GetUShorts(byte[] raw)
 		{
@@ -333,24 +354,24 @@ namespace MSetRepo
 			return result;
 		}
 
-		public MapSectionServiceResponse MapFrom(MapSectionRecordJustCounts target)
+		public MapSectionResponse MapFrom(MapSectionRecordJustCounts target)
 		{
-			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
+			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
 
-			var result = new MapSectionServiceResponse
+			var result = new MapSectionResponse
 			(
 				mapSectionId: target.Id.ToString(),
 				ownerId: string.Empty,
 				jobOwnerType: JobOwnerType.Poster,
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
-				mapCalcSettings: target.MapCalcSettings,
+				mapCalcSettings: target.MapCalcSettings
 				//hasEscapedFlags: GetBools(target.DoneFlags),
 				//counts: GetUShorts(target.Counts),
 
 				//escapeVelocities: GetUShorts(target.EscapeVelocities),
-				mapSectionVectors: new MapSectionVectors(RMapConstants.BLOCK_SIZE),
-				zValues: null
+				//mapSectionVectors: new MapSectionVectors(RMapConstants.BLOCK_SIZE),
+				//zValues: null
 			);
 
 			return result;

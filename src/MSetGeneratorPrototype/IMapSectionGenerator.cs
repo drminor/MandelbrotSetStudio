@@ -1,9 +1,9 @@
-﻿using MEngineDataContracts;
+﻿using MSS.Types.MSet;
 
 namespace MSetGeneratorPrototype
 {
 	public interface IMapSectionGenerator
 	{
-		MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest);
+		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest);
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using Grpc.Net.Client;
 using MEngineDataContracts;
 using MSS.Common;
+using MSS.Types.MSet;
 using ProtoBuf.Grpc.Client;
 using System;
 using System.Diagnostics;
@@ -80,5 +81,17 @@ namespace MEngineClient
 				return _grpcChannel;
 			}
 		}
+
+
+		public Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
+		{
+			throw new NotImplementedException();
+		}
+
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		{
+			throw new NotImplementedException();
+		}
+
 	}
 }

@@ -1,9 +1,7 @@
 ﻿using MapSectionProviderLib;
 using MEngineClient;
-using MSetGenP;
 using MSetRepo;
 using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
@@ -158,8 +156,10 @@ namespace MSetExplorer
 			{
 				MEngineClientImplementation.Remote => CreateMEngineClients(mEngineEndPointAddresses),
 				MEngineClientImplementation.InProcess => throw new NotImplementedException("The MSetExplorer project is not compatible with the MapSetGenerator C++ project."), // CreateInProcessMEngineClient(mapSectionAdapter, out _mapSectionPersistProcessor),
-				MEngineClientImplementation.LocalScalar => new IMEngineClient[] { new MClientLocalScalar() },
-				MEngineClientImplementation.LocalVector => new IMEngineClient[] { new MClientLocalVector() },
+
+
+				MEngineClientImplementation.LocalScalar => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalScalar() },
+				MEngineClientImplementation.LocalVector => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalVector() },
 				MEngineClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_DEPTH_FIRST_ITERATOR) },
 				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
 			};

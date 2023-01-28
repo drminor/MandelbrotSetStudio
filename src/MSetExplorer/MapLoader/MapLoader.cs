@@ -3,6 +3,7 @@ using MEngineDataContracts;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,7 +20,7 @@ namespace MSetExplorer
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapSectionHelper _mapSectionHelper;
 
-		private IList<MapSectionServiceRequest>? _mapSectionRequests;
+		private IList<MapSectionRequest>? _mapSectionRequests;
 		private bool _isStopping;
 		private int _sectionsRequested;
 		private int _sectionsCompleted;
@@ -58,7 +59,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public Task Start(IList<MapSectionServiceRequest> mapSectionRequests)
+		public Task Start(IList<MapSectionRequest> mapSectionRequests)
 		{
 			if (_tcs != null)
 			{
@@ -120,17 +121,17 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleResponse(MapSectionServiceRequest mapSectionRequest, MapSectionServiceResponse? mapSectionResponse)
+		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)
 		{
 			var mapSectionResult = MapSection.Empty;
 			bool isLastSection;
 
-			if (mapSectionResponse == null || mapSectionResponse.IsEmpty)
+			if (mapSectionResponse == null || mapSectionResponse.MapSectionVectors == null)
 			{
 				Debug.WriteLine("The MapSectionResponse is empty in the HandleResponse callback for the MapLoader.");
 			}
 
-			if (mapSectionResponse != null && mapSectionResponse.MapSectionVectors != null && !mapSectionResponse.RequestCancelled)
+			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled && mapSectionResponse.MapSectionVectors != null)
 			{
 				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
 
@@ -149,7 +150,7 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"Cannot create a mapSectionResult from the mapSectionResponse. The request's block position is {mapSectionRequest.BlockPosition}. " +
-					$"IsCancelled: {mapSectionResponse?.RequestCancelled}, HasCounts: {mapSectionResponse?.MapSectionVectors != null}.");
+					$"IsCancelled: {mapSectionResponse?.RequestCancelled}, HasCounts: {mapSectionRequest.MapSectionVectors != null}.");
 			}
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
@@ -198,7 +199,7 @@ namespace MSetExplorer
 
 		}
 
-		private MapSectionProcessInfo CreateMSProcInfo(MapSectionServiceRequest mapSectionRequest)
+		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest mapSectionRequest)
 		{
 			var result = new MapSectionProcessInfo(JobNumber, _sectionsCompleted, mapSectionRequest.TimeToCompleteGenRequest, mapSectionRequest.ProcessingDuration, mapSectionRequest.FoundInRepo);
 			return result;

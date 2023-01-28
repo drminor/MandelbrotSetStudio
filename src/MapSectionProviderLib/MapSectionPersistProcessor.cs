@@ -81,47 +81,48 @@ namespace MapSectionProviderLib
 
 		private async Task ProcessTheQueueAsync(CancellationToken ct)
 		{
-			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
-			{
-				try
-				{
-					var mapSectionResponse = _workQueue.Take(ct);
+			await Task.Delay(10);
+			//while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+			//{
+			//	try
+			//	{
+			//		var mapSectionResponse = _workQueue.Take(ct);
 
-					if (mapSectionResponse.IsEmpty)
-					{
-						Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
-					}
+			//		if (mapSectionResponse.IsEmpty)
+			//		{
+			//			Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
+			//		}
 
-					if (mapSectionResponse.MapSectionVectors != null)
-					{
-						if (mapSectionResponse.MapSectionId != null)
-						{
-							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
-							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
+			//		if (mapSectionResponse.MapSectionVectors != null)
+			//		{
+			//			if (mapSectionResponse.MapSectionId != null)
+			//			{
+			//				Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+			//				_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
 
-							// TODO: The OwnerId may already be on file for this MapSection -- or not.
-						}
-						else
-						{
-							Debug.WriteLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
-							var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
-							mapSectionResponse.MapSectionId = mapSectionId.ToString();
+			//				// TODO: The OwnerId may already be on file for this MapSection -- or not.
+			//			}
+			//			else
+			//			{
+			//				Debug.WriteLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
+			//				var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+			//				mapSectionResponse.MapSectionId = mapSectionId.ToString();
 
-							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
-						}
-					}
-				}
-				catch (OperationCanceledException)
-				{
-					//Debug.WriteLine("The persist queue got a OCE.");
-				}
-				catch (Exception e)
-				{
-					Debug.WriteLine($"The persist queue got an exception: {e}.");
-					Console.WriteLine($"\n\nWARNING:The persist queue got an exception: {e}.\n\n");
-					//throw;
-				}
-			}
+			//				_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
+			//			}
+			//		}
+			//	}
+			//	catch (OperationCanceledException)
+			//	{
+			//		//Debug.WriteLine("The persist queue got a OCE.");
+			//	}
+			//	catch (Exception e)
+			//	{
+			//		Debug.WriteLine($"The persist queue got an exception: {e}.");
+			//		Console.WriteLine($"\n\nWARNING:The persist queue got an exception: {e}.\n\n");
+			//		//throw;
+			//	}
+			//}
 		}
 
 		#endregion

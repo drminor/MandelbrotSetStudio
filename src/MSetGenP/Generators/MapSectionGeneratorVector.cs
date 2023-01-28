@@ -6,15 +6,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using MSS.Common;
+using MSS.Types.MSet;
 
 namespace MSetGenP
 {
     public class MapSectionGeneratorVector
 	{
-		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest)
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
-			var mapPositionDto = mapSectionRequest.Position;
-			var samplePointDeltaDto = mapSectionRequest.SamplePointDelta;
+			var mapPosition = mapSectionRequest.Position;
+			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
 			//var precision = mapSectionRequest.Precision;
 
@@ -34,9 +35,8 @@ namespace MSetGenP
 
 			var scalarMath = new ScalarMath(fixedPointFormat, threshold);
 
-			var dtoMapper = new DtoMapper();
-			var mapPosition = dtoMapper.MapFrom(mapPositionDto);
-			var samplePointDelta = dtoMapper.MapFrom(samplePointDeltaDto);
+			//var mapPosition = dtoMapper.MapFrom(mapPositionDto);
+			//var samplePointDelta = dtoMapper.MapFrom(samplePointDeltaDto);
 
 			var startingCx = scalarMath.CreateSmx(mapPosition.X);
 			var startingCy = scalarMath.CreateSmx(mapPosition.Y);
@@ -46,7 +46,7 @@ namespace MSetGenP
 			var s2 = startingCy.GetStringValue();
 			var s3 = delta.GetStringValue();
 
-			var blockPos = dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+			var blockPos = mapSectionRequest.BlockPosition; 
 
 			Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 			Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}.");
@@ -122,7 +122,7 @@ namespace MSetGenP
 				}
 
 				// TODO: Fix the MapSectionGeneratorScaler to produce MapSectionVectors.
-				var result = new MapSectionServiceResponse(mapSectionRequest/*, compressedDoneFlags, counts, escapeVelocities, zValues: null*/);
+				var result = new MapSectionResponse(mapSectionRequest);
 				return result;
 			}
 			else
@@ -158,7 +158,8 @@ namespace MSetGenP
 				//var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, compressedDoneFlags, zValues: null);
 
 				// TODO: Fix the MapSectionGeneratorScaler to produce MapSectionVectors.
-				var result = new MapSectionServiceResponse(mapSectionRequest/*, doneFlags, counts, escapeVelocities, zValues: null*/);
+				var result = new MapSectionResponse(mapSectionRequest);
+
 
 				return result;
 			}

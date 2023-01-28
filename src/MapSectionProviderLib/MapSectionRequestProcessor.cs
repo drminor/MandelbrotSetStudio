@@ -3,6 +3,7 @@ using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -76,7 +77,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(int jobNumber, MapSectionServiceRequest mapSectionRequest, Action<MapSectionServiceRequest, MapSectionServiceResponse?> responseHandler) 
+		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSectionResponse?> responseHandler) 
 		{
 			var mapSectionWorkItem = new MapSectionWorkRequest(jobNumber, mapSectionRequest, responseHandler);
 
@@ -201,9 +202,9 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private MapSectionServiceResponse CreateCancelledResponse(MapSectionServiceRequest mapSectionRequest)
+		private MapSectionResponse CreateCancelledResponse(MapSectionRequest mapSectionRequest)
 		{
-			var result = new MapSectionServiceResponse(mapSectionRequest)
+			var result = new MapSectionResponse(mapSectionRequest)
 			{
 				RequestCancelled = true
 			};
@@ -211,7 +212,7 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		private async Task<MapSectionServiceResponse?> FetchOrQueueForGenerationAsync(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
+		private async Task<MapSectionResponse?> FetchOrQueueForGenerationAsync(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
 		{
 			var request = mapSectionWorkRequest.Request;
 
@@ -242,7 +243,7 @@ namespace MapSectionProviderLib
 					//request.Counts = mapSectionResponse.Counts;
 					//request.EscapeVelocities = mapSectionResponse.EscapeVelocities;
 					//request.HasEscapedFlags = mapSectionResponse.HasEscapedFlags;
-					request.ZValues = null;
+					//request.ZValues = null;
 
 					QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
 					return null;
@@ -260,14 +261,16 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private bool IsResponseComplete(MapSectionServiceResponse mapSectionResponse, int requestedIterations)
+		private bool IsResponseComplete(MapSectionResponse mapSectionResponse, int requestedIterations)
 		{
-			if (mapSectionResponse.MapSectionVectors == null)
+			if (mapSectionResponse.MapSectionValues == null)
 			{
 				return false;
 			}
 
-			if (mapSectionResponse.MapCalcSettings.TargetIterations >= requestedIterations)
+			var fetchedTargetIterations = mapSectionResponse.MapCalcSettings?.TargetIterations ?? 0;
+
+			if (fetchedTargetIterations >= requestedIterations)
 			{
 				//The MapSection fetched from the repository is the result of a request to generate at or above the current request's target iterations.
 				return true;
@@ -325,7 +328,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionServiceResponse?> FetchAsync(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
+		private async Task<MapSectionResponse?> FetchAsync(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
 		{
 			//var mapSectionRequest = mapSectionWorkRequest.Request;
 			//var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
@@ -342,11 +345,11 @@ namespace MapSectionProviderLib
 			return null;
 		}
 
-		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionServiceResponse? mapSectionResponse)
+		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse)
 		{
-			if (mapSectionResponse == null || mapSectionResponse.IsEmpty)
+			if (mapSectionResponse?.MapSectionVectors == null)
 			{
-				Debug.WriteLine("The MapSectionResponse is empty in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
+				Debug.WriteLine("The MapSectionResponse has no MapSectionVectors in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
 			}
 
 			var mapSectionRequest = mapSectionWorkRequest.Request;
@@ -355,11 +358,8 @@ namespace MapSectionProviderLib
 			// Consider updating each request with the contents of the response and then disposing the response
 			// instead of keeping the request and response. 
 
-			// If the mapSectionResponse is null, create a mapSectionResponse with null MapSectionVectors from the request.
-			var response = mapSectionResponse ?? new MapSectionServiceResponse(mapSectionRequest);
-
-			// Set the original request's repsonse to the generated response.
-			mapSectionWorkRequest.Response = response;
+			// Set the original request's repsonse to the generated response. If the response is null create a new response using the request data.
+			mapSectionWorkRequest.Response = mapSectionResponse ?? new MapSectionResponse(mapSectionRequest);
 
 			//// Send the original request to the response processor.
 			//_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
@@ -398,13 +398,15 @@ namespace MapSectionProviderLib
 				{
 					if (workItem != mapSectionWorkRequest)
 					{
-						//_mapSectionResponseProcessor.AddWork(workItem);
+						workItem.Response = new MapSectionResponse(workItem.Request);
 
-						var mapSectionVecs = _mapSectionVectorsPool.DuplicateFrom(response.MapSectionVectors);
-						var newDup = new MapSectionServiceResponse(mapSectionRequest);
-						newDup.MapSectionVectors = mapSectionVecs;
+						if (mapSectionResponse?.MapSectionVectors != null)
+						{
+							var newCopyOfMapSectionVectors = _mapSectionVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionVectors);
+							workItem.Response.MapSectionVectors = newCopyOfMapSectionVectors;
 
-						workItem.Response = newDup;
+						}
+
 						workList.Add(workItem);
 					}
 				}
@@ -421,22 +423,24 @@ namespace MapSectionProviderLib
 		}
 
 		// Returns true, if there is a "Primary" Request already in the queue
-		private bool ThereIsAMatchingRequest(MapSectionServiceRequest mapSectionRequest)
+		private bool ThereIsAMatchingRequest(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-			var result = _pendingRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition);
+			//var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+			//var result = _pendingRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition);
+			var result = _pendingRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition);
 
 			return result;
 		}
 
 		// Find all matching requests.
-		private List<MapSectionWorkRequest> GetPendingRequests(MapSectionServiceRequest mapSectionRequest)
+		private List<MapSectionWorkRequest> GetPendingRequests(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+			//var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
 
-			var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition).ToList();
+			//var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition).ToList();
+			var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition).ToList();
 
 			return result;
 		}
@@ -456,12 +460,13 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		private bool RequestExists(MapSectionServiceRequest mapSectionRequest, IEnumerable<MapSectionWorkRequest> workRequests)
+		private bool RequestExists(MapSectionRequest mapSectionRequest, IEnumerable<MapSectionWorkRequest> workRequests)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+			//var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
 
-			var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition);
+			//var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition);
+			var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition);
 
 			return result;
 		}
