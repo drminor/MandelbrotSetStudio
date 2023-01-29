@@ -121,19 +121,19 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)
+		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse, int jobId)
 		{
 			var mapSectionResult = MapSection.Empty;
 			bool isLastSection;
 
-			if (mapSectionResponse == null || mapSectionResponse.MapSectionVectors == null)
+			if (mapSectionResponse == null || mapSectionResponse.MapSectionValues == null)
 			{
 				Debug.WriteLine("The MapSectionResponse is empty in the HandleResponse callback for the MapLoader.");
 			}
 
-			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled && mapSectionResponse.MapSectionVectors != null)
+			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled && mapSectionResponse.MapSectionValues != null)
 			{
-				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, _mapBlockOffset);
+				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, jobId, _mapBlockOffset);
 
 				if (mapSectionResponse?.MathOpCounts != null)
 				{
@@ -144,7 +144,11 @@ namespace MSetExplorer
 				if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
 				{
 					//Log: MapSection BlockPosition and TimeToCompleteRequest
-					Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}.");
+
+					/****************************************************************/
+					/****** UN COMMENT ME TO Report on generation duration. *********/
+					//Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}.");
+					/****************************************************************/
 				}
 			}
 			else

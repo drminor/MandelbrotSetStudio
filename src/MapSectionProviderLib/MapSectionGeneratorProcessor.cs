@@ -231,8 +231,6 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						//mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
-
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
 						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
@@ -282,8 +280,6 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						//mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
-
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest);
 						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;

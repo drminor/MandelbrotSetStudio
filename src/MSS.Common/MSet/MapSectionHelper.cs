@@ -24,7 +24,6 @@ namespace MSS.Common
 		private readonly int _pixelArraySize;
 		private readonly int _pixelStride;	
 
-
 		#region Constructor
 
 		public MapSectionHelper(MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool)
@@ -51,46 +50,48 @@ namespace MSS.Common
 		{
 			if (mapSection.MapSectionValues != null)
 			{
-				if (!_mapSectionValuesPool.Free(mapSection.MapSectionValues))
+				if (_mapSectionValuesPool.Free(mapSection.MapSectionValues))
 				{
-					mapSection.MapSectionValues.Dispose();
+					//mapSection.MapSectionValues = null;
 				}
-
-				//mapSection.MapSectionValues = null;
+				else
+				{
+					//mapSection.MapSectionValues.Dispose();
+				}
 			}
 
 			//mapSection.Dispose();
 		}
 
-		public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
-		{
-			if (mapSectionRequest.MapSectionVectors != null)
-			{
-				if (!_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors))
-				{
-					mapSectionRequest.MapSectionVectors.Dispose();
-				}
+		//public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
+		//{
+		//	if (mapSectionRequest.MapSectionVectors != null)
+		//	{
+		//		if (!_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors))
+		//		{
+		//			mapSectionRequest.MapSectionVectors.Dispose();
+		//		}
 
-				mapSectionRequest.MapSectionVectors = null;
-			}
+		//		mapSectionRequest.MapSectionVectors = null;
+		//	}
 
-			//mapSectionRequest.Dispose();
-		}
+		//	//mapSectionRequest.Dispose();
+		//}
 
-		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
-		{
-			if (mapSectionResponse.MapSectionVectors != null)
-			{
-				if (!_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors))
-				{
-					mapSectionResponse.MapSectionVectors.Dispose();
-				}
+		//public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
+		//{
+		//	if (mapSectionResponse.MapSectionVectors != null)
+		//	{
+		//		if (!_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors))
+		//		{
+		//			mapSectionResponse.MapSectionVectors.Dispose();
+		//		}
 
-				mapSectionResponse.MapSectionVectors = null;
-			}
+		//		mapSectionResponse.MapSectionVectors = null;
+		//	}
 
-			//mapSectionRequest.Dispose();
-		}
+		//	//mapSectionRequest.Dispose();
+		//}
 
 
 		#region Create MapSectionRequests
@@ -148,7 +149,7 @@ namespace MSS.Common
 				//var mapSection = new MapSection(screenPosition, mapAreaInfo.Subdivision.BlockSize, emptyCountsData, emptyEscapeVelocities, targetIterations,
 				//	subdivisionId, repoPosition, isInverted, BuildHistogram);
 
-				var mapSection = new MapSection(mapSectionValues: null, subdivisionId: subdivisionId, repoBlockPosition: repoPosition, isInverted: isInverted,
+				var mapSection = new MapSection(jobId: -1, mapSectionValues: null, subdivisionId: subdivisionId, repoBlockPosition: repoPosition, isInverted: isInverted,
 					blockPosition: screenPosition, size: mapAreaInfo.Subdivision.BlockSize, targetIterations: targetIterations, histogramBuilder: BuildHistogram);
 
 
@@ -184,7 +185,7 @@ namespace MSS.Common
 		{
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
 
-			var mapSectionVectors = _mapSectionVectorsPool.Obtain();
+			//var mapSectionVectors = _mapSectionVectorsPool.Obtain();
 
 			var mapSectionRequest = new MapSectionRequest
 			(
@@ -198,10 +199,10 @@ namespace MSS.Common
 				precision: repoPosition.Precision,
 				blockSize: subdivision.BlockSize,
 				samplePointDelta: subdivision.SamplePointDelta, // _dtoMapper.MapTo(subdivision.SamplePointDelta),
-				mapCalcSettings: mapCalcSettings,
+				mapCalcSettings: mapCalcSettings
 				//Counts = null,
 				//HasEscapedFlags = null,
-				mapSectionVectors: mapSectionVectors
+				//mapSectionVectors: mapSectionVectors
 				//ZValues = null,
 			);
 
@@ -231,11 +232,11 @@ namespace MSS.Common
 
 		#region Create MapSection
 
-		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, BigVector mapBlockOffset)
+		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, int jobId, BigVector mapBlockOffset)
 		{
-			if (mapSectionResponse.MapSectionVectors == null)
+			if (mapSectionResponse.MapSectionValues == null)
 			{
-				throw new InvalidOperationException("Cannot create the MapSection: the MapSectionResponse has no value for the MapSectionVectors.");
+				throw new InvalidOperationException("Cannot create the MapSection: the MapSectionResponse is empty.");
 			}
 
 			var repoBlockPosition = mapSectionRequest.BlockPosition;
@@ -243,15 +244,16 @@ namespace MSS.Common
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
-			var mapSectionValues = _mapSectionValuesPool.Obtain();
+			//var mapSectionValues = _mapSectionValuesPool.Obtain();
+			//mapSectionValues.Load(mapSectionResponse.MapSectionVectors);
 
-			mapSectionValues.Load(mapSectionResponse.MapSectionVectors);
-
-			var mapSection = new MapSection(mapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
+			var mapSection = new MapSection(jobId, mapSectionResponse.MapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
 				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
 
+			mapSectionResponse.MapSectionValues = null;
+
 			//ReturnMapSectionRequest(mapSectionRequest);
-			ReturnMapSectionResponse(mapSectionResponse);
+			//ReturnMapSectionResponse(mapSectionResponse);
 
 			return mapSection;
 		}

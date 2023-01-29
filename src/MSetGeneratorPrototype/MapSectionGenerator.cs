@@ -47,7 +47,8 @@ namespace MSetGeneratorPrototype
 			{
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 
-				var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? new MapSectionVectors(mapSectionRequest.BlockSize);
+				//var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? new MapSectionVectors(mapSectionRequest.BlockSize);
+				var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
 				mapSectionRequest.MapSectionVectors = null;
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);

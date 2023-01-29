@@ -6,8 +6,7 @@ namespace MSS.Types.MSet
 	{
 		public MapSectionRequest(string ownerId, JobOwnerType jobOwnerType, string subdivisionId, 
 			PointInt screenPosition, BigVector blockPosition, bool isInverted, RPoint position, int precision, 
-			SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, 
-			MapSectionVectors mapSectionVectors)
+			SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings)
 		{
 			MapSectionId = null;
 			OwnerId = ownerId;
@@ -21,9 +20,11 @@ namespace MSS.Types.MSet
 			BlockSize = blockSize;
 			SamplePointDelta = samplePointDelta;
 			MapCalcSettings = mapCalcSettings;
-			MapSectionVectors = mapSectionVectors;
 			ProcessingStartTime = DateTime.UtcNow;
 		}
+
+		public MapSectionVectors? MapSectionVectors { get; set; }
+
 
 		public string? MapSectionId { get; set; }
 		public string OwnerId { get; set; }
@@ -36,7 +37,7 @@ namespace MSS.Types.MSet
 		public SizeInt BlockSize { get; set; }
 		public RSize SamplePointDelta { get; set; }
 		public MapCalcSettings MapCalcSettings { get; set; }
-		public MapSectionVectors? MapSectionVectors { get; set; }
+
 
 		//public double[]? ZValues { get; set; }
 

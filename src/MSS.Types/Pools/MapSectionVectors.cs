@@ -87,19 +87,19 @@ namespace MSS.Types
 		//	return result;
 		//}
 
-		object IPoolable.DuplicateFrom(object obj)
+		object IPoolable.CopyTo(object obj)
 		{
 			if (obj != null && obj is MapSectionVectors msv)
 			{
-				return DuplicateFrom(msv);
+				return CopyTo(msv);
 			}
 			else
 			{
-				throw new ArgumentException($"DuplicateFrom required an object of type {nameof(MapSectionVectors)}");
+				throw new ArgumentException($"CopyTo required an object of type {nameof(MapSectionVectors)}");
 			}
 		}
 
-		MapSectionVectors DuplicateFrom(MapSectionVectors mapSectionVectors)
+		MapSectionVectors CopyTo(MapSectionVectors mapSectionVectors)
 		{
 			var result = mapSectionVectors;
 

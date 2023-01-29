@@ -13,23 +13,35 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public MapSection() : this(mapSectionValues: null, subdivisionId: string.Empty, repoBlockPosition: new BigVector(), isInverted: false, blockPosition: new PointInt(), size: new SizeInt(), targetIterations: 0, histogramBuilder: BuildHstFake)
+		public MapSection()
+			: this(
+				  jobId: -1,
+				  mapSectionValues: null, 
+				  subdivisionId: string.Empty, 
+				  repoBlockPosition: new BigVector(), 
+				  isInverted: false, 
+				  blockPosition: new PointInt(), 
+				  size: new SizeInt(), 
+				  targetIterations: 0, 
+				  histogramBuilder: BuildHstFake
+				  )
 		{ }
 
-		public MapSection(MapSectionValues? mapSectionValues, string subdivisionId
-, BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
+		public MapSection(int jobId, MapSectionValues? mapSectionValues, string subdivisionId,
+			BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
-			BlockPosition = blockPosition;
-			Size = size;
+			JobId = jobId;
 			MapSectionValues = mapSectionValues;
-			//Counts = counts ?? throw new ArgumentNullException(nameof(counts));
-			//EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
-			TargetIterations = targetIterations;
-
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
 			IsInverted = isInverted;
+			BlockPosition = blockPosition;
+			Size = size;
 
+			//Counts = counts ?? throw new ArgumentNullException(nameof(counts));
+			//EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
+
+			TargetIterations = targetIterations;
 			_histogram = new Lazy<IHistogram>(() => histogramBuilder(MapSectionValues?.Counts ?? new ushort[0]), System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		}
 
@@ -37,15 +49,16 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public bool IsEmpty => SubdivisionId == string.Empty;
+		public int JobId { get; init; }
+		public MapSectionValues? MapSectionValues { get; set; }
+
+		public bool IsEmpty => MapSectionValues == null;
 
 		public PointInt BlockPosition { get; set; }
 		public SizeInt Size { get; init; }
 
 		//public ushort[] Counts { get; init; }
 		//public ushort[] EscapeVelocities { get; init; }
-
-		public MapSectionValues? MapSectionValues { get; private set; }
 
 		public int TargetIterations { get; init; }
 

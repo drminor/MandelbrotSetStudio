@@ -1,13 +1,12 @@
 ﻿using MEngineDataContracts;
 using MSS.Common;
 using MSS.Common.APValues;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
+using MSS.Types.MSet;
 using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.Intrinsics.X86;
 using System.Runtime.Intrinsics;
-using MSS.Types.MSet;
+using System.Runtime.Intrinsics.X86;
 
 namespace MSetGeneratorPrototype
 {
@@ -15,6 +14,10 @@ namespace MSetGeneratorPrototype
 	{
 		private readonly FP31VecMath _fp31VecMath;
 		private readonly IteratorSimdDepthFirst _iterator;
+
+		private readonly Vector256<int> _justOne;
+
+		private readonly Vector256<byte> ALL_BITS_SET;
 
 		#region Constructor
 
@@ -28,6 +31,10 @@ namespace MSetGeneratorPrototype
 			_cis = new Vector256<uint>[limbCount];
 			_zrs = new Vector256<uint>[limbCount];
 			_zis = new Vector256<uint>[limbCount];
+
+			ALL_BITS_SET = Vector256<byte>.AllBitsSet;
+
+			_justOne = Vector256.Create(1);
 		}
 
 		#endregion
@@ -51,7 +58,9 @@ namespace MSetGeneratorPrototype
 			{
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 
-				var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? new MapSectionVectors(mapSectionRequest.BlockSize);
+				//var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? new MapSectionVectors(mapSectionRequest.BlockSize);
+				var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
+
 				mapSectionRequest.MapSectionVectors = null;
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
@@ -121,8 +130,6 @@ namespace MSetGeneratorPrototype
 
 		private void GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
 		{
-			var justOne = Vector256.Create(1);
-
 			iterator.Crs.FillLimbSet(idx, _crs);
 			iterator.Cis.FillLimbSet(idx, _cis);
 			iterator.Zrs.FillLimbSet(idx, _zrs);
@@ -130,10 +137,10 @@ namespace MSetGeneratorPrototype
 
 			iterator.ZValuesAreZero = true;
 
-			var hasEscapedFlagsV = itState.HasEscapedFlags[idx];
+			var hasEscapedFlagsV = itState.HasEscapedFlags[idx].AsByte();
 			var countsV = itState.Counts[idx];
 
-			var doneFlagsV = itState.DoneFlags[idx];
+			var doneFlagsV = itState.DoneFlags[idx].AsByte();
 			var unusedCalcsV = itState.UnusedCalcs[idx];
 
 			var allDone = false;
@@ -143,37 +150,92 @@ namespace MSetGeneratorPrototype
 				var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
 
 				// Increment all counts
-				var countsVt = Avx2.Add(countsV, justOne);
+				var countsVt = Avx2.Add(countsV, _justOne).AsByte();
 
 				// Take the incremented count, only if the doneFlags is false for each vector position.
-				countsV = Avx2.BlendVariable(countsVt.AsByte(), countsV.AsByte(), doneFlagsV.AsByte()).AsInt32(); // use First if Zero, second if 1
+				countsV = Avx2.BlendVariable(countsVt, countsV.AsByte(), doneFlagsV).AsInt32(); // use First if Zero, second if 1
 
 				// Increment all unused calculations
-				var unusedCalcsVt = Avx2.Add(unusedCalcsV, justOne);
+				var unusedCalcsVt = Avx2.Add(unusedCalcsV, _justOne).AsByte();
 
 				// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
-				unusedCalcsV = Avx2.BlendVariable(unusedCalcsV.AsByte(), unusedCalcsVt.AsByte(), doneFlagsV.AsByte()).AsInt32();
+				unusedCalcsV = Avx2.BlendVariable(unusedCalcsV.AsByte(), unusedCalcsVt, doneFlagsV).AsInt32();
 
 				// Apply the new escapeFlags, only if the doneFlags is false for each vector position
-				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec.AsByte(), hasEscapedFlagsV.AsByte(), doneFlagsV.AsByte()).AsInt32();
+				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec.AsByte(), hasEscapedFlagsV, doneFlagsV);
 
 				// Compare the new Counts with the TargetIterations
-				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector);
+				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector).AsByte();
 
 				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
-				var escapedOrReachedVec = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
-				doneFlagsV = Avx2.BlendVariable(doneFlagsV.AsByte(), Vector256<int>.AllBitsSet.AsByte(), escapedOrReachedVec.AsByte()).AsInt32();
+				var escapedOrReachedVec = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec).AsByte();
+				doneFlagsV = Avx2.BlendVariable(doneFlagsV, ALL_BITS_SET, escapedOrReachedVec);
 
-				var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
+				var compositeIsDone = Avx2.MoveMask(doneFlagsV);
 				allDone = compositeIsDone == -1;
 			}
 
-			itState.HasEscapedFlags[idx] = hasEscapedFlagsV;
+			itState.HasEscapedFlags[idx] = hasEscapedFlagsV.AsInt32();
 			itState.Counts[idx] = countsV;
 
-			itState.DoneFlags[idx] = doneFlagsV;
+			itState.DoneFlags[idx] = doneFlagsV.AsInt32();
 			itState.UnusedCalcs[idx] = unusedCalcsV;
 		}
+
+		private void GenerateMapColNew(int idx, IteratorSimdDepthFirst iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
+		{
+			iterator.Crs.FillLimbSet(idx, _crs);
+			iterator.Cis.FillLimbSet(idx, _cis);
+			iterator.Zrs.FillLimbSet(idx, _zrs);
+			iterator.Zis.FillLimbSet(idx, _zis);
+
+			iterator.ZValuesAreZero = true;
+
+			var hasEscapedFlagsV = itState.HasEscapedFlags[idx].AsByte();
+			var countsV = itState.Counts[idx];
+
+			var doneFlagsV = itState.DoneFlags[idx].AsByte();
+			var unusedCalcsV = itState.UnusedCalcs[idx];
+
+			var allDone = false;
+
+			while (!allDone)
+			{
+				var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
+
+				// Increment all counts
+				var countsVt = Avx2.Add(countsV, _justOne).AsByte();
+
+				// Take the incremented count, only if the doneFlags is false for each vector position.
+				countsV = Avx2.BlendVariable(countsVt, countsV.AsByte(), doneFlagsV).AsInt32(); // use First if Zero, second if 1
+
+				// Increment all unused calculations
+				var unusedCalcsVt = Avx2.Add(unusedCalcsV, _justOne).AsByte();
+
+				// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
+				unusedCalcsV = Avx2.BlendVariable(unusedCalcsV.AsByte(), unusedCalcsVt, doneFlagsV).AsInt32();
+
+				// Apply the new escapeFlags, only if the doneFlags is false for each vector position
+				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec.AsByte(), hasEscapedFlagsV, doneFlagsV);
+
+				// Compare the new Counts with the TargetIterations
+				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector).AsByte();
+
+				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
+				var escapedOrReachedVec = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec).AsByte();
+				doneFlagsV = Avx2.BlendVariable(doneFlagsV, ALL_BITS_SET, escapedOrReachedVec);
+
+				var compositeIsDone = Avx2.MoveMask(doneFlagsV);
+				allDone = compositeIsDone == -1;
+			}
+
+			itState.HasEscapedFlags[idx] = hasEscapedFlagsV.AsInt32();
+			itState.Counts[idx] = countsV;
+
+			itState.DoneFlags[idx] = doneFlagsV.AsInt32();
+			itState.UnusedCalcs[idx] = unusedCalcsV;
+		}
+
 
 		#endregion
 

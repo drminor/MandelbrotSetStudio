@@ -1,5 +1,7 @@
 ﻿using MEngineDataContracts;
 using MSS.Common;
+using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -11,11 +13,12 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionPersistProcessor : IDisposable
 	{
+		private readonly MapSectionValuesPool _mapSectionValuesPool;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
 		private const int QUEUE_CAPACITY = 200;
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<MapSectionServiceResponse> _workQueue;
+		private readonly BlockingCollection<MapSectionResponse> _workQueue;
 
 		private Task _workQueueProcessor;
 		private bool disposedValue;
@@ -24,12 +27,13 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter)
+		public MapSectionPersistProcessor(MapSectionValuesPool mapSectionValuesPool, IMapSectionAdapter mapSectionAdapter)
 		{
+			_mapSectionValuesPool = mapSectionValuesPool;
 			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
-			_workQueue = new BlockingCollection<MapSectionServiceResponse>(QUEUE_CAPACITY);
+			_workQueue = new BlockingCollection<MapSectionResponse>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
 		}
 
@@ -37,7 +41,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(MapSectionServiceResponse mapSectionResponse)
+		public void AddWork(MapSectionResponse mapSectionResponse)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
@@ -81,48 +85,53 @@ namespace MapSectionProviderLib
 
 		private async Task ProcessTheQueueAsync(CancellationToken ct)
 		{
-			await Task.Delay(10);
-			//while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
-			//{
-			//	try
-			//	{
-			//		var mapSectionResponse = _workQueue.Take(ct);
+			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+			{
+				try
+				{
+					var mapSectionResponse = _workQueue.Take(ct);
 
-			//		if (mapSectionResponse.IsEmpty)
-			//		{
-			//			Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
-			//		}
+					var mapSectionValues = mapSectionResponse.MapSectionValues;
 
-			//		if (mapSectionResponse.MapSectionVectors != null)
-			//		{
-			//			if (mapSectionResponse.MapSectionId != null)
-			//			{
-			//				Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
-			//				_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
+					if (mapSectionValues != null)
+					{
+						if (mapSectionResponse.RecordOnFile)
+						{
+							//Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+							//_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
 
-			//				// TODO: The OwnerId may already be on file for this MapSection -- or not.
-			//			}
-			//			else
-			//			{
-			//				Debug.WriteLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
-			//				var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
-			//				mapSectionResponse.MapSectionId = mapSectionId.ToString();
+							// TODO: The OwnerId may already be on file for this MapSection -- or not.
+						}
+						else
+						{
+							Debug.WriteLine($"Creating MapSection with block position: {mapSectionResponse.BlockPosition}. MapSectionId: {mapSectionResponse.MapSectionId}.");
+							var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+							mapSectionResponse.MapSectionId = mapSectionId.ToString();
 
-			//				_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
-			//			}
-			//		}
-			//	}
-			//	catch (OperationCanceledException)
-			//	{
-			//		//Debug.WriteLine("The persist queue got a OCE.");
-			//	}
-			//	catch (Exception e)
-			//	{
-			//		Debug.WriteLine($"The persist queue got an exception: {e}.");
-			//		Console.WriteLine($"\n\nWARNING:The persist queue got an exception: {e}.\n\n");
-			//		//throw;
-			//	}
-			//}
+							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
+						}
+
+						if (!_mapSectionValuesPool.Free(mapSectionValues))
+						{
+							mapSectionValues.Dispose();
+						}
+					}
+					else
+					{
+						Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
+					}
+				}
+				catch (OperationCanceledException)
+				{
+					//Debug.WriteLine("The persist queue got a OCE.");
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"The persist queue got an exception: {e}.");
+					Console.WriteLine($"\n\nWARNING:The persist queue got an exception: {e}.\n\n");
+					//throw;
+				}
+			}
 		}
 
 		#endregion

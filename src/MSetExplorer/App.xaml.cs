@@ -36,23 +36,20 @@ namespace MSetExplorer
 		//private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.LocalVector;
 		private static readonly MEngineClientImplementation CLIENT_IMPLEMENTATION = MEngineClientImplementation.LocalVectorMark2;
 
-		private static readonly bool USE_DEPTH_FIRST_ITERATOR = false;
-
+		private static readonly bool USE_DEPTH_FIRST_ITERATOR = true;
 
 		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
 		private static readonly bool USE_LOCAL_ENGINE = false; // If true, we will host a server -- AND include it in the list of servers to use by our client.
 		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
 		private static readonly bool USE_ALL_CORES = true; // If true, a MEngine thread for each processor will be created, otherwise all requests will be serviced on a single thread.
 
-		private const bool FETCH_ZVALUES_LOCALLY = false;
-
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionValuesPool _mapSectionValuesPool;
 		private readonly MapSectionHelper _mapSectionHelper;
-		private readonly MEngineServerManager? _mEngineServerManager;
+
 		private RepositoryAdapters? _repositoryAdapters;
+		private readonly MEngineServerManager? _mEngineServerManager;
 		private IMapLoaderManager? _mapLoaderManager;
-		//private MapSectionPersistProcessor? _mapSectionPersistProcessor;
 
 		private AppNavWindow? _appNavWindow;
 
@@ -109,7 +106,7 @@ namespace MSetExplorer
 			var mEngineClients = ChooseMEngineClientImplementation(CLIENT_IMPLEMENTATION, mEngineAddresses, _repositoryAdapters.MapSectionAdapter);
 
 
-			_mapLoaderManager = BuildMapLoaderManager(_mapSectionVectorsPool, _mapSectionHelper, mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter, FETCH_ZVALUES_LOCALLY);
+			_mapLoaderManager = BuildMapLoaderManager(_mapSectionVectorsPool, _mapSectionValuesPool, _mapSectionHelper, mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter);
 
 			_appNavWindow = GetAppNavWindow(_mapSectionHelper, _repositoryAdapters, _mapLoaderManager);
 			_appNavWindow.Show();
@@ -121,14 +118,9 @@ namespace MSetExplorer
 
 			if (_mapLoaderManager != null)
 			{
-				// This disposes the MapSectionRequestProcessor, MapSectionGeneratorProcessor and MapSectionResponseProcessor.
+				// This disposes the MapSectionRequestProcessor, MapSectionGeneratorProcessor, MapSectionResponseProcessor, MapSectionPersistProcessor
 				_mapLoaderManager.Dispose();
 			}
-
-			//if (_mapSectionPersistProcessor != null)
-			//{
-			//	_mapSectionPersistProcessor.Dispose();
-			//}
 
 			_mEngineServerManager?.Stop();
 
@@ -155,11 +147,11 @@ namespace MSetExplorer
 			var result = clientImplementation switch
 			{
 				MEngineClientImplementation.Remote => CreateMEngineClients(mEngineEndPointAddresses),
+
 				MEngineClientImplementation.InProcess => throw new NotImplementedException("The MSetExplorer project is not compatible with the MapSetGenerator C++ project."), // CreateInProcessMEngineClient(mapSectionAdapter, out _mapSectionPersistProcessor),
-
-
 				MEngineClientImplementation.LocalScalar => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalScalar() },
 				MEngineClientImplementation.LocalVector => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalVector() },
+
 				MEngineClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_DEPTH_FIRST_ITERATOR) },
 				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
 			};
@@ -181,20 +173,21 @@ namespace MSetExplorer
 		//	return mEngineClients;
 		//}
 
-		private IMapLoaderManager BuildMapLoaderManager(MapSectionVectorsPool mapSectionVectorsPool, MapSectionHelper mapSectionHelper, IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, bool fetchZValues)
+		private IMapLoaderManager BuildMapLoaderManager(MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool, MapSectionHelper mapSectionHelper, IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter)
 		{
-			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, mapSectionVectorsPool, fetchZValues);
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, mapSectionVectorsPool, mapSectionValuesPool);
 
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
 
 			return result;
 		}
 
-		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, MapSectionVectorsPool mapSectionVectorsPool, bool fetchZValues)
+		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool)
 		{
 			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients, useAllCores);
 			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
-			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionVectorsPool, mapSectionAdapter, mapSectionGeneratorProcessor, mapSectionResponseProcessor, fetchZValues);
+			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionValuesPool, mapSectionAdapter);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionVectorsPool, mapSectionValuesPool, mapSectionAdapter, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
 
 			return mapSectionRequestProcessor;
 		}

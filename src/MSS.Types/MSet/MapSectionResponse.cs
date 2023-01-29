@@ -1,4 +1,6 @@
-﻿namespace MSS.Types.MSet
+﻿using System.Diagnostics;
+
+namespace MSS.Types.MSet
 {
 	public class MapSectionResponse
 	{
@@ -40,11 +42,59 @@
 			MathOpCounts = null;
 		}
 
+		//private MapSectionVectors? _mapSectionVectors;
+
+		//private MapSectionValues? _mapSectionValues;
+
+		//public MapSectionVectors? MapSectionVectors
+		//{
+		//	get => _mapSectionVectors;
+		//	set
+		//	{
+		//		if (_mapSectionVectors != null)
+		//		{
+		//			Debug.WriteLine($"WARNING: Setting the MapSectionVectors value, when it already has a value. This will not be returned to the pool.");
+		//		}
+
+		//		if (value == null)
+		//		{
+		//			Debug.WriteLine($"WARNING: Setting the MapSectionVectors value to null.");
+		//		}
+		//		else
+		//		{
+		//			_mapSectionValues = null;
+		//		}
+		//		_mapSectionVectors = value;
+		//	}
+		//}
+
+		//public MapSectionValues? MapSectionValues
+		//{
+		//	get => _mapSectionValues;
+		//	set
+		//	{
+		//		if (_mapSectionValues != null)
+		//		{
+		//			Debug.WriteLine($"WARNING: Setting the MapSectionVectors value, when it already has a value. This will not be returned to the pool.");
+		//		}
+
+		//		if (value == null)
+		//		{
+		//			Debug.WriteLine($"WARNING: Setting the MapSectionVectors value to null.");
+		//		}
+		//		else
+		//		{
+		//			_mapSectionVectors = null;
+		//		}
+		//		_mapSectionValues = value;
+		//	}
+		//}
+
+
+		//public bool IsEmpty => string.IsNullOrEmpty(SubdivisionId);
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionValues? MapSectionValues { get; set; }
-
-		//public bool IsEmpty => string.IsNullOrEmpty(SubdivisionId);
 
 		public string? MapSectionId { get; set; }
 		public string OwnerId { get; set; }
@@ -55,6 +105,7 @@
 
 		public MathOpCounts? MathOpCounts { get; set; }
 
+		public bool RecordOnFile => !string.IsNullOrEmpty(MapSectionId);
 		public bool RequestCancelled { get; set; }
 	}
 }

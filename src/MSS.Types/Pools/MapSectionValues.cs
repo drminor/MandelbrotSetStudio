@@ -100,19 +100,19 @@ namespace MSS.Types
 			Array.Clear(EscapeVelocities, 0, Length);
 		}
 
-		object IPoolable.DuplicateFrom(object obj)
+		object IPoolable.CopyTo(object obj)
 		{
 			if (obj != null && obj is MapSectionValues msv)
 			{
-				return DuplicateFrom(msv);
+				return CopyTo(msv);
 			}
 			else
 			{
-				throw new ArgumentException($"DuplicateFrom required an object of type {nameof(MapSectionValues)}");
+				throw new ArgumentException($"CopyTo required an object of type {nameof(MapSectionValues)}");
 			}
 		}
 
-		MapSectionValues DuplicateFrom(MapSectionValues mapSectionValues)
+		MapSectionValues CopyTo(MapSectionValues mapSectionValues)
 		{
 			var result = mapSectionValues;
 

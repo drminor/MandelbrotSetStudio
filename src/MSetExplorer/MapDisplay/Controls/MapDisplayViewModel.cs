@@ -240,7 +240,7 @@ namespace MSetExplorer
 			{
 				if (Math.Abs(value  -_displayZoom) > 0.01)
 				{
-					ClearDisplay();
+					ClearDisplay(mapLoaderJobNumber: null);
 
 					//Debug.WriteLine($"The DrawingGroup has {_screenSectionCollection.CurrentDrawingGroupCnt} item.");
 
@@ -324,17 +324,37 @@ namespace MSetExplorer
 			}
 		}
 
-		public void ClearDisplay()
+		public void ClearDisplay(int? mapLoaderJobNumber)
 		{
 			lock (_paintLocker)
 			{
 				_screenSectionCollection.HideScreenSections();
-				foreach(var ms in MapSections)
-				{
-					_mapSectionHelper.ReturnMapSection(ms);
-				}
 
-				MapSections.Clear();
+				if (mapLoaderJobNumber.HasValue)
+				{
+					var sectionsToRemove = new List<MapSection>();
+					foreach (var ms in MapSections)
+					{
+						if (ms.JobId == mapLoaderJobNumber.Value)
+						{
+							sectionsToRemove.Add(ms);
+						}
+					}
+
+					foreach(var ms in sectionsToRemove)
+					{
+						MapSections.Remove(ms);
+						_mapSectionHelper.ReturnMapSection(ms);
+					}
+				}
+				else
+				{
+					foreach (var ms in MapSections)
+					{
+						_mapSectionHelper.ReturnMapSection(ms);
+					}
+					MapSections.Clear();
+				}
 			}
 		}
 
@@ -507,6 +527,10 @@ namespace MSetExplorer
 			if (_currentMapLoaderJobNumber != null)
 			{
 				_mapLoaderManager.StopJob(_currentMapLoaderJobNumber.Value);
+
+				//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
+				ClearDisplay(_currentMapLoaderJobNumber);
+
 				_currentMapLoaderJobNumber = null;
 			}
 
@@ -526,7 +550,7 @@ namespace MSetExplorer
 				//}
 
 				//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
-				ClearDisplay();
+				//ClearDisplay();
 
 				CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
 
@@ -539,7 +563,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				ClearDisplay();
+				//ClearDisplay();
 			}
 		}
 
@@ -728,7 +752,7 @@ namespace MSetExplorer
 		private void RedrawSections(IEnumerable<MapSection> source)
 		{
 			Debug.WriteLine($"Hiding all screen sections and redrawing {source.Count()}.");
-			ClearDisplay();
+			ClearDisplay(mapLoaderJobNumber: null);
 
 			foreach (var mapSection in source)
 			{

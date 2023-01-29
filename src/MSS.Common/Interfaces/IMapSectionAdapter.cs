@@ -1,10 +1,8 @@
-﻿using MEngineDataContracts;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +15,7 @@ namespace MSS.Common
 		//void DropCollections();
 		//void DropSubdivisionsAndMapSectionsCollections();
 
-		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues, CancellationToken ct);
+		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, Func<MapSectionValues> allocateMsvBuf);
 
 		Task<ZValuesDto?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
 

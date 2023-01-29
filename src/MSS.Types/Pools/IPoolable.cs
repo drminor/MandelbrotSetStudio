@@ -4,7 +4,7 @@ namespace MSS.Types
 {
 	public interface IPoolable : IDisposable
 	{
-		object DuplicateFrom(object obj);
+		object CopyTo(object obj);
 
 
 		void ResetObject();

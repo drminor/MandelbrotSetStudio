@@ -18,6 +18,9 @@ namespace MSetExplorer
 			MapCalcSettings = new MapCalcSettings();
 		}
 
+		public AreaColorAndCalcSettings(AreaColorAndCalcSettings current, MapCalcSettings newMapCalcSettings) : this(current.OwnerId, current.OwnerType, current.MapAreaInfo, current.ColorBandSet, newMapCalcSettings)
+		{ }
+
 		public AreaColorAndCalcSettings(string ownerId, JobOwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			OwnerId = ownerId;
@@ -26,9 +29,6 @@ namespace MSetExplorer
 			ColorBandSet = colorBandSet;
 			MapCalcSettings = mapCalcSettings;
 		}
-
-		public AreaColorAndCalcSettings(AreaColorAndCalcSettings current, MapCalcSettings newMapCalcSettings) : this(current.OwnerId, current.OwnerType, current.MapAreaInfo, current.ColorBandSet, newMapCalcSettings)
-		{ }
 
 		public string OwnerId { get; init; }
 		public JobOwnerType OwnerType { get; init; }

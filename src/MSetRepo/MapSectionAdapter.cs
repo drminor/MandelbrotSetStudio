@@ -80,37 +80,51 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, bool includeZValues, CancellationToken ct)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, Func<MapSectionValues> allocateMsvBuf)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
 			try
 			{
-				if (includeZValues)
+				//if (includeZValues)
+				//{
+				//	var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition, ct);
+				//	if (mapSectionRecord != null)
+				//	{
+				//		var mapSectionValues = allocateMsvBuf();
+				//		var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionValues, mapSectionRecord);
+				//		return mapSectionResponse;
+				//	}
+				//	else
+				//	{
+				//		return null;
+				//	}
+				//}
+				//else
+				//{
+				//	var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subdivisionId, blockPosition, ct);
+				//	if (mapSectionRecordCountsOnly != null /*&& mapSectionRecordCountsOnly.Counts.Length == 32768*/)
+				//	{
+				//		var mapSectionValues = allocateMsvBuf();
+				//		var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionValues, mapSectionRecordCountsOnly);
+				//		return mapSectionResponse;
+				//	}
+				//	else
+				//	{
+				//		return null;
+				//	}
+				//}
+
+				var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subdivisionId, blockPosition, ct);
+				if (mapSectionRecordCountsOnly != null /*&& mapSectionRecordCountsOnly.Counts.Length == 32768*/)
 				{
-					var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition, ct);
-					if (mapSectionRecord != null)
-					{
-						var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
-						return mapSectionResponse;
-					}
-					else
-					{
-						return null;
-					}
+					var mapSectionValues = allocateMsvBuf();
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionValues, mapSectionRecordCountsOnly);
+					return mapSectionResponse;
 				}
 				else
 				{
-					var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subdivisionId, blockPosition, ct);
-					if (mapSectionRecordCountsOnly != null)
-					{
-						var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly);
-						return mapSectionResponse;
-					}
-					else
-					{
-						return null;
-					}
+					return null;
 				}
 			}
 			catch (Exception e)

@@ -18,11 +18,11 @@ namespace MSetGeneratorPrototype
 
 			RowNumber = 0;
 
-			var vector256Ints = Enumerable.Repeat(Vector256<int>.Zero, VectorCount).ToArray();
+			//var vector256Ints = Enumerable.Repeat(Vector256<int>.Zero, VectorCount).ToArray();
 
-			HasEscapedFlags = new Span<Vector256<int>>(vector256Ints);
-			Counts = new Span<Vector256<int>>(vector256Ints);
-			EscapeVelocities = new Span<Vector256<int>>(vector256Ints);
+			HasEscapedFlags = new Span<Vector256<int>>(_mapSectionVectors.HasEscapedVectors, 0, VectorCount);		// new Span<Vector256<int>>(vector256Ints);
+			Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, 0, VectorCount);						// new Span<Vector256<int>>(vector256Ints);
+			EscapeVelocities = new Span<Vector256<int>>(_mapSectionVectors.EscapeVelocityVectors, 0, VectorCount);	// new Span<Vector256<int>>(vector256Ints);
 
 			DoneFlags = new Vector256<int>[VectorCount];
 			UnusedCalcs = new Vector256<int>[VectorCount];
