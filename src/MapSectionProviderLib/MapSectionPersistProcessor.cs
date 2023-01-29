@@ -98,7 +98,8 @@ namespace MapSectionProviderLib
 						if (mapSectionResponse.RecordOnFile)
 						{
 							//Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
-							//_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
+
+							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
 
 							// TODO: The OwnerId may already be on file for this MapSection -- or not.
 						}

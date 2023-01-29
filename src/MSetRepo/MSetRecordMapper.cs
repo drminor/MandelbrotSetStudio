@@ -27,7 +27,7 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, // IMapper<MapSectionResponse, MapSectionRecord>,
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse, MapSectionRecord>, // IMapper<MapSectionResponse, MapSectionRecordJustCounts>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
@@ -256,6 +256,70 @@ namespace MSetRepo
 			return result;
 		}
 
+		// Take a record from the repo and prepare it for display.
+		public MapSectionResponse MapFrom(MapSectionRecord target)
+		{
+			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
+
+			// TODO: Create a MapSectionValues object from a MapSectionRecord
+			var result = new MapSectionResponse
+			(
+				mapSectionId: target.Id.ToString(),
+				ownerId: string.Empty,
+				jobOwnerType: JobOwnerType.Undetermined,
+				subdivisionId: target.SubdivisionId.ToString(),
+				blockPosition: blockPosition,
+				mapCalcSettings: target.MapCalcSettings
+			);
+
+			if (!target.ZValues.IsEmpty)
+			{
+				var zValues = target.ZValues;
+				result.MapSectionZVectors = new MapSectionZVectors(zValues.BlockSize, zValues.LimbCount, zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
+			}
+
+			return result;
+		}
+
+		public MapSectionResponse MapFrom(MapSectionRecordJustCounts target)
+		{
+			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
+
+			var result = new MapSectionResponse
+			(
+				mapSectionId: target.Id.ToString(),
+				ownerId: string.Empty,
+				jobOwnerType: JobOwnerType.Poster,
+				subdivisionId: target.SubdivisionId.ToString(),
+				blockPosition: blockPosition,
+				mapCalcSettings: target.MapCalcSettings
+			);
+
+			//FilluShortsFromBytes(target.Counts, buf.Counts);
+			//result.MapSectionValues = buf;
+
+			return result;
+		}
+
+		public void SetMapSectionValues(MapSectionResponse mapSectionResponse, MapSectionValues buf, byte[] counts)
+		{
+			FilluShortsFromBytes(counts, buf.Counts);
+			mapSectionResponse.MapSectionValues = buf;
+		}
+
+		private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
+		{
+			var blockPosition = new BigVectorDto(new long[][]
+				{
+					new long[] { blockPosXHi, blockPosXLo }, 
+					new long[] { blockPosYHi, blockPosYLo }
+				});
+
+			var result = _dtoMapper.MapFrom(blockPosition);
+
+			return result;
+		}
+
 		private ZValues GetZValues(MapSectionResponse mapSectionResponse)
 		{
 			var zVectors = mapSectionResponse.MapSectionZVectors;
@@ -279,14 +343,7 @@ namespace MSetRepo
 			}
 
 			var result = new byte[uShorts.Length * 2];
-
-			//for (var i = 0; i < uShorts.Length; i++)
-			//{
-			//	BitConverter.TryWriteBytes(new Span<byte>(result, i * 2, 2), uShorts[i]);
-			//}
-
 			MemoryMarshal.Cast<ushort, byte>(uShorts).CopyTo(result);
-
 
 			return result;
 		}
@@ -300,92 +357,13 @@ namespace MSetRepo
 
 			var result = new byte[bools.Length];
 
-			//for (var i = 0; i < bools.Length; i++)
-			//{
-			//	BitConverter.TryWriteBytes(new Span<byte>(result, i, 1), bools[i]);
-			//}
-
 			MemoryMarshal.Cast<bool, byte>(bools).CopyTo(result);
 
 			return result;
 		}
 
-		// Take a record from the repo and prepare it for display.
-		public MapSectionResponse MapFrom(MapSectionValues buf, MapSectionRecord target)
+		private void FilluShortsFromBytes(byte[] raw, ushort[] destination)
 		{
-			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
-
-			// TODO: Create a MapSectionValues object from a MapSectionRecord
-			var result = new MapSectionResponse
-			(
-				mapSectionId: target.Id.ToString(),
-				ownerId: string.Empty,
-				jobOwnerType: JobOwnerType.Undetermined,
-				subdivisionId: target.SubdivisionId.ToString(),
-				blockPosition: blockPosition,
-				mapCalcSettings: target.MapCalcSettings
-
-				//hasEscapedFlags: GetBools(target.DoneFlags),
-				//counts: GetUShorts(target.Counts),
-
-				//escapeVelocities: GetUShorts(target.EscapeVelocities),
-				//new MapSectionVectors(RMapConstants.BLOCK_SIZE),
-				//zValues: target.ZValues.GetZValuesAsDoubleArray()
-			);
-
-			//GetBools(target.DoneFlags, buf.HasEscapedFlags);
-			GetUShorts(target.Counts, buf.Counts);
-			result.MapSectionValues = buf;
-
-			if (!target.ZValues.IsEmpty)
-			{
-				var zValues = target.ZValues;
-				result.MapSectionZVectors = new MapSectionZVectors(zValues.BlockSize, zValues.LimbCount, zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
-			}
-
-			return result;
-		}
-
-		public MapSectionResponse MapFrom(MapSectionValues buf, MapSectionRecordJustCounts target)
-		{
-			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
-
-			var result = new MapSectionResponse
-			(
-				mapSectionId: target.Id.ToString(),
-				ownerId: string.Empty,
-				jobOwnerType: JobOwnerType.Poster,
-				subdivisionId: target.SubdivisionId.ToString(),
-				blockPosition: blockPosition,
-				mapCalcSettings: target.MapCalcSettings
-			);
-
-			GetUShorts(target.Counts, buf.Counts);
-			//GetUShorts(target.EscapeVelocities, buf.EscapeVelocities);
-
-			result.MapSectionValues = buf;
-
-			return result;
-		}
-
-		private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
-		{
-			var blockPosition = new BigVectorDto(new long[][]
-				{
-					new long[] { blockPosXHi, blockPosXLo }, 
-					new long[] { blockPosYHi, blockPosYLo }
-				});
-
-			var result = _dtoMapper.MapFrom(blockPosition);
-
-			return result;
-		}
-
-
-		private void GetUShorts(byte[] raw, ushort[] destination)
-		{
-			//var result = new ushort[raw.Length / 2];
-
 			var rawLength = raw.Length / 2;
 
 			for(var i = 0; i < rawLength; i++)
@@ -396,19 +374,13 @@ namespace MSetRepo
 			//return result;
 		}
 
-		private void GetBools(byte[] raw, bool[] destination)
+		private void FillBoolsFromBytes(byte[] raw, bool[] destination)
 		{
-			//var result = new bool[raw.Length];
-
 			for (var i = 0; i < raw.Length; i++)
 			{
 				destination[i] = BitConverter.ToBoolean(raw, i);
 			}
-
-			//return result;
 		}
-
-
 
 		#endregion
 

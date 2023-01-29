@@ -7,13 +7,10 @@ namespace MSS.Types.MSet
 	{
 		private const int VALUE_SIZE = 4;
 
-		private readonly int _lanes;
-		private readonly int _totalByteCount;
-		private readonly int _bytesPerRow;
+		#region Constructors
 
 		public ZValues()
 		{
-			BlockSize = new SizeInt();
 			LimbCount = 0;
 			Zrs = new byte[0];
 			Zis = new byte[0];
@@ -22,15 +19,15 @@ namespace MSS.Types.MSet
 
 		public ZValues(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis)
 		{
-			BlockSize = blockSize;
+			BlockSize = blockSize; 
 			LimbCount = limbCount;
 
-			_lanes = Vector256<uint>.Count;
-			_totalByteCount = blockSize.NumberOfCells * LimbCount * VALUE_SIZE;
-			_bytesPerRow = ValuesPerRow * LimbCount * VALUE_SIZE;
+			var valueCount = blockSize.NumberOfCells;
+			var totalByteCount = blockSize.NumberOfCells * LimbCount * VALUE_SIZE;
+			//var bytesPerRow = BlockWidth * LimbCount * VALUE_SIZE;
 
-			Debug.Assert(zrs.Length == TotalByteCount, $"The length of zrs does not equal the {ValueCount} * {LimbCount} * 4 (values/block) * (limbs/value) x bytes/value).");
-			Debug.Assert(zis.Length == TotalByteCount, $"The length of zis does not equal the {ValueCount} * {LimbCount} * 4 (values/block) * (limbs/value) x bytes/value).");
+			Debug.Assert(zrs.Length == totalByteCount, $"The length of zrs does not equal the {valueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
+			Debug.Assert(zis.Length == totalByteCount, $"The length of zis does not equal the {valueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
 
 			Zrs = zrs;
 			Zis = zis;
@@ -38,7 +35,9 @@ namespace MSS.Types.MSet
 			HasEscapedFlags = new byte[blockSize.NumberOfCells];
 		}
 
-		public bool IsEmpty => Zrs.Length == 0;
+		#endregion
+
+		#region Public Properties 
 
 		public SizeInt BlockSize { get; init; }
 		public int LimbCount { get; init; }
@@ -47,11 +46,18 @@ namespace MSS.Types.MSet
 		public byte[] Zis { get; private set; }
 		public byte[] HasEscapedFlags { get; set; }
 
-		public int ValueCount => BlockSize.NumberOfCells;
-		public int ValuesPerRow => BlockSize.Width;
+		//// Derived properties
+		
+		public bool IsEmpty => Zrs.Length == 0;
 
-		public int Lanes => _lanes;
-		public int TotalByteCount => _totalByteCount;
-		public int BytesPerRow => _bytesPerRow;
+		//public SizeInt BlockSize => _blockSize;
+		//public int ValueCount => BlockSize.NumberOfCells;
+		//public int ValuesPerRow => BlockSize.Width;
+
+		//public int Lanes => _lanes;
+		//public int TotalByteCount => _totalByteCount;
+		//public int BytesPerRow => _bytesPerRow;
+
+		#endregion
 	}
 }

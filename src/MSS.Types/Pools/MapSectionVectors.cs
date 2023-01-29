@@ -14,14 +14,8 @@ namespace MSS.Types
 			BlockSize = blockSize;
 			Length = blockSize.NumberOfCells;
 
-			//HasEscapedVectors = new Vector256<int>[TotalVectorCount];
-			//HasEscapedMems = new Memory<Vector256<int>>(HasEscapedVectors);
-
 			CountVectors = new Vector256<int>[TotalVectorCount];
 			CountMems = new Memory<Vector256<int>>(CountVectors);
-
-			//EscapeVelocityVectors = new Vector256<int>[TotalVectorCount];
-			//EscapeVelocitiyMems = new Memory<Vector256<int>>(EscapeVelocityVectors);
 		}
 
 		#endregion
@@ -35,14 +29,8 @@ namespace MSS.Types
 		public SizeInt BlockSize { get; init; }
 		public int VectorsPerRow => BlockSize.Width / Lanes;
 
-		//public Vector256<int>[] HasEscapedVectors;
-		//public Memory<Vector256<int>> HasEscapedMems;
-
 		public Vector256<int>[] CountVectors;
 		public Memory<Vector256<int>> CountMems;
-
-		//public Vector256<int>[] EscapeVelocityVectors;
-		//public Memory<Vector256<int>> EscapeVelocitiyMems;
 
 		#endregion
 
@@ -58,44 +46,11 @@ namespace MSS.Types
 			}
 		}
 
-		//public Span<Vector256<int>> GetHasEscapedFlagsRow(int start, int length)
-		//{
-		//	var result = new Span<Vector256<int>>(HasEscapedVectors, start, length);
-		//	return result;
-		//}
-
-		//public Span<Vector256<int>> GetCountsRow(int start, int length)
-		//{
-		//	var result = new Span<Vector256<int>>(CountVectors, start, length);
-		//	return result;
-		//}
-
-		//public Span<Vector256<int>> GetEscapeVelocitiesRow(int start, int length)
-		//{
-		//	var result = new Span<Vector256<int>>(EscapeVelocityVectors, start, length);
-		//	return result;
-		//}
-
 		// IPoolable Support
 		void IPoolable.ResetObject()
 		{
-			//Array.Clear(HasEscapedVectors, 0, TotalVectorCount);
 			Array.Clear(CountVectors, 0, TotalVectorCount);
-			//Array.Clear(EscapeVelocityVectors, 0, TotalVectorCount);
 		}
-
-		//// ICloneable Support
-
-		//object ICloneable.Clone()
-		//{
-		//	return Clone();
-		//}
-
-		//public MapSectionVectors Clone()
-		//{
-		//	var result = new MapSectionVectors(BlockSize);
-		//	return result;
-		//}
 
 		void IPoolable.CopyTo(object obj)
 		{
@@ -111,11 +66,8 @@ namespace MSS.Types
 
 		public void CopyTo(MapSectionVectors mapSectionVectors)
 		{
-			//HasEscapedMems.CopyTo(mapSectionVectors.HasEscapedMems);
 			CountMems.CopyTo(mapSectionVectors.CountMems);
-			//EscapeVelocitiyMems.CopyTo(mapSectionVectors.EscapeVelocitiyMems);
 		}
-
 
 		#endregion
 

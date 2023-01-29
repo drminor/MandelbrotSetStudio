@@ -131,19 +131,6 @@ namespace MSS.Types
 			Array.Clear(Zis, 0, TotalByteCount);
 		}
 
-		//// ICloneable Support
-
-		//object ICloneable.Clone()
-		//{
-		//	return Clone();
-		//}
-
-		//public MapSectionVectors Clone()
-		//{
-		//	var result = new MapSectionVectors(BlockSize);
-		//	return result;
-		//}
-
 		void IPoolable.CopyTo(object obj)
 		{
 			if (obj != null && obj is MapSectionZVectors mszv)

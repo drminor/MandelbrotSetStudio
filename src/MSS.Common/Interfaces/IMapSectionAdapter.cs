@@ -23,7 +23,7 @@ namespace MSS.Common
 
 		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse);
 
-		//Task<long?> UpdateMapSectionZValuesAsync(MapSectionServiceResponse mapSectionResponse);
+		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
 
 		bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision);
 		

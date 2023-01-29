@@ -46,17 +46,11 @@ namespace MSetGeneratorPrototype
 			else
 			{
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
-
-				var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
-				mapSectionRequest.MapSectionVectors = null;
-
-				var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? new MapSectionZVectors(mapSectionRequest.BlockSize, _fp31VectorsMath.LimbCount);
-				mapSectionRequest.MapSectionZVectors = null;
-
-				var itState = new IterationCountsRow(mapSectionVectors, mapSectionZVectors);
+				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _fp31VectorsMath.LimbCount);
+				var iterationState = new IterationState(mapSectionVectors, mapSectionZVectors);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				GenerateMapSection(_iterator, itState, mapSectionZVectors, coords, mapCalcSettings);
+				GenerateMapSection(_iterator, iterationState, mapSectionZVectors, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 				result = new MapSectionResponse(mapSectionRequest);
@@ -68,9 +62,9 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private void GenerateMapSection(IteratorSimd iterator, IterationCountsRow itState, MapSectionZVectors mapSectionZVectors, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private void GenerateMapSection(IteratorSimd iterator, IterationState iterationState, MapSectionZVectors mapSectionZVectors, IteratorCoords coords, MapCalcSettings mapCalcSettings)
 		{
-			var blockSize = itState.BlockSize;
+			var blockSize = iterationState.BlockSize;
 			var rowCount = blockSize.Height;
 			var stride = (byte)blockSize.Width;
 
@@ -86,7 +80,7 @@ namespace MSetGeneratorPrototype
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
-				itState.SetRowNumber(rowNumber);
+				iterationState.SetRowNumber(rowNumber);
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
@@ -97,7 +91,7 @@ namespace MSetGeneratorPrototype
 				//iterator.Zis.ClearManatissMems();
 				iterator.ZValuesAreZero = true;
 
-				GenerateMapRow(iterator, ref itState, targetIterationsVector);
+				GenerateMapRow(iterator, ref iterationState, targetIterationsVector);
 
 				//iterator.Zrs.UpdateFromLimbSet(idx, _zrs);
 				//iterator.Zis.UpdateFromLimbSet(idx, _zis);
@@ -108,23 +102,23 @@ namespace MSetGeneratorPrototype
 
 		#region Generate Map Row
 
-		private void GenerateMapRow(IteratorSimd iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
+		private void GenerateMapRow(IteratorSimd iterator, ref IterationState iterationState, Vector256<int> targetIterationsVector)
 		{
-			while (itState.InPlayList.Length > 0)
+			while (iterationState.InPlayList.Length > 0)
 			{
-				var escapedFlags = iterator.Iterate(itState.InPlayList, itState.InPlayListNarrow);
+				var escapedFlags = iterator.Iterate(iterationState.InPlayList, iterationState.InPlayListNarrow);
 
-				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, ref itState, targetIterationsVector);
+				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, ref iterationState, targetIterationsVector);
 				if (vectorsNoLongerInPlay.Count > 0)
 				{
-					itState.UpdateTheInPlayList(vectorsNoLongerInPlay);
+					iterationState.UpdateTheInPlayList(vectorsNoLongerInPlay);
 				}
 			}
 
 			//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 		}
 
-		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
+		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, ref IterationState itState, Vector256<int> targetIterationsVector)
 		{
 			var toBeRemoved = new List<int>();
 			var justOne = Vector256.Create(1);
@@ -198,6 +192,22 @@ namespace MSetGeneratorPrototype
 			var screenPos = mapSectionRequest.ScreenPosition;
 
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
+		}
+
+		private (MapSectionVectors, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest, int limbCount)
+		{
+			var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
+			mapSectionRequest.MapSectionVectors = null;
+
+			if (mapSectionRequest.IncreasingIterations && mapSectionRequest.MapSectionZVectors == null)
+			{
+				throw new ArgumentNullException("The MapSectionZVectors is null.");
+			}
+
+			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? new MapSectionZVectors(mapSectionRequest.BlockSize, limbCount);
+			mapSectionRequest.MapSectionZVectors = null;
+
+			return (mapSectionVectors, mapSectionZVectors);
 		}
 
 		private void FillZValues(MapSectionZVectors mapSectionZVectors, int rowNumber, FP31Vectors zrVectors, FP31Vectors ziVectors)
