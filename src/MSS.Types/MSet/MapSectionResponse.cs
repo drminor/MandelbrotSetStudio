@@ -11,6 +11,8 @@ namespace MSS.Types.MSet
 				  jobOwnerType: JobOwnerType.Undetermined, 
 				  subdivisionId: string.Empty,
 				  blockPosition: new BigVector(),
+				  //blockSize: new SizeInt(),
+				  //limbCount: 0
 				  mapCalcSettings: null
 				  )
 		{
@@ -23,19 +25,23 @@ namespace MSS.Types.MSet
 				  mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
 				  mapSectionRequest.BlockPosition,
+				  //mapSectionRequest.BlockSize,
+				  //mapSectionRequest.LimbCount,
 				  mapSectionRequest.MapCalcSettings
 				  )
 		{
 		}
 
 		public MapSectionResponse(string? mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, 
-			BigVector blockPosition, MapCalcSettings? mapCalcSettings)
+			BigVector blockPosition/*, SizeInt blockSize, int limbCount*/, MapCalcSettings? mapCalcSettings)
 		{
 			MapSectionId = mapSectionId;
 			OwnerId = ownerId;
 			JobOwnerType = jobOwnerType;
 			SubdivisionId = subdivisionId;
 			BlockPosition = blockPosition;
+			//BlockSize = blockSize;
+			//LimbCount = limbCount;
 			MapCalcSettings = mapCalcSettings;
 
 			RequestCancelled = false;
@@ -103,6 +109,10 @@ namespace MSS.Types.MSet
 		public JobOwnerType JobOwnerType { get; set; }
 		public string SubdivisionId { get; init; }
 		public BigVector BlockPosition { get; init; }
+
+		//public SizeInt BlockSize { get; init; }
+		//public int LimbCount { get; init; }
+
 		public MapCalcSettings? MapCalcSettings { get; set; }
 
 		public MathOpCounts? MathOpCounts { get; set; }

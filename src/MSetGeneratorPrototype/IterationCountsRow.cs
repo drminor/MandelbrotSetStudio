@@ -53,6 +53,8 @@ namespace MSetGeneratorPrototype
 		public int[] InPlayList { get; private set; }
 		public int[] InPlayListNarrow { get; private set; }
 
+		public SizeInt BlockSize => _mapSectionVectors.BlockSize;
+
 		#endregion
 
 		#region Public Methods

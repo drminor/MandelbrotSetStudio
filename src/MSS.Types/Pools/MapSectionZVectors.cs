@@ -15,11 +15,12 @@ namespace MSS.Types
 				  blockSize,
 				  limbCount,
 				  new byte[blockSize.NumberOfCells * limbCount * 4],
-				  new byte[blockSize.NumberOfCells * limbCount * 4]
+				  new byte[blockSize.NumberOfCells * limbCount * 4],
+				  new byte[blockSize.NumberOfCells]
 				  )
 		{ }
 
-		public MapSectionZVectors(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis)
+		public MapSectionZVectors(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapedFlags)
 		{
 			BlockSize = blockSize;
 			ValueCount = blockSize.NumberOfCells;
@@ -35,6 +36,7 @@ namespace MSS.Types
 
 			Zrs = zrs;
 			Zis = zis;
+			HasEscapedFlags = hasEscapedFlags;
 		}
 
 		#endregion
@@ -55,6 +57,8 @@ namespace MSS.Types
 		public byte[] Zrs { get; private set; }
 
 		public byte[] Zis { get; private set; }
+
+		public byte[] HasEscapedFlags { get; set; }
 
 		#endregion
 

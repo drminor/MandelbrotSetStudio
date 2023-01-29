@@ -185,25 +185,19 @@ namespace MSS.Common
 		{
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
 
-			//var mapSectionVectors = _mapSectionVectorsPool.Obtain();
-
 			var mapSectionRequest = new MapSectionRequest
 			(
 				ownerId: ownerId,
 				jobOwnerType: jobOwnerType,
 				subdivisionId: subdivision.Id.ToString(),
 				screenPosition: screenPosition,
-				blockPosition: repoPosition, // _dtoMapper.MapTo(repoPosition),
+				blockPosition: repoPosition,
 				isInverted: isInverted,
-				position: mapPosition, // _dtoMapper.MapTo(mapPosition),
+				position: mapPosition,
 				precision: repoPosition.Precision,
 				blockSize: subdivision.BlockSize,
-				samplePointDelta: subdivision.SamplePointDelta, // _dtoMapper.MapTo(subdivision.SamplePointDelta),
+				samplePointDelta: subdivision.SamplePointDelta,
 				mapCalcSettings: mapCalcSettings
-				//Counts = null,
-				//HasEscapedFlags = null,
-				//mapSectionVectors: mapSectionVectors
-				//ZValues = null,
 			);
 
 			return mapSectionRequest;

@@ -17,9 +17,9 @@ namespace ProjectRepo.Entities
 		long BlockPosYLo,
 
 		MapCalcSettings MapCalcSettings,
-		byte[] Counts,
+		byte[] Counts
 		//byte[] EscapeVelocities,
-		byte[] DoneFlags
+		//byte[] DoneFlags
 		)
 	{
 		public DateTime LastSavedUtc { get; set; }

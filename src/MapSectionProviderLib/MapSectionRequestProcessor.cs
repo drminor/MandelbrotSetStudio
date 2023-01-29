@@ -477,7 +477,8 @@ namespace MapSectionProviderLib
 
 		private MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
 		{
-			var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId, mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings);
+			var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId, 
+				mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings);
 
 			if (mapSectionResponse.MapSectionValues != null)
 			{

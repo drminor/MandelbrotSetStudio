@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 
@@ -17,19 +18,12 @@ namespace ProjectRepo.Entities
 		long BlockPosYLo,
 
 		MapCalcSettings MapCalcSettings,
+
 		byte[] Counts,
-		
 		//byte[] EscapeVelocities,
-		
-		byte[] DoneFlags,
+		//byte[] DoneFlags,
 
-		//ZValuesDto
-
-		SizeIntRecord BlockSize,
-		int LimbCount,
-		
-		byte[] ZrValues,
-		byte[] ZiValues
+		ZValues ZValues
 		)
 	{
 		[BsonId]

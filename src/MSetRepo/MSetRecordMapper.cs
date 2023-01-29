@@ -232,44 +232,7 @@ namespace MSetRepo
 		/// <returns></returns>
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
-			//ZValuesDto zVals;
-
-			//try
-			//{
-			//	zVals = new ZValuesDto(source.ZValuesForLocalStorage);
-			//}
-			//catch (Exception e)
-			//{
-			//	Debug.WriteLine($"While parsing the ZValues as a MapSectionRecord is created from a MapSectionResponse, an exception was encountered: {e}.");
-			//	throw;
-			//}
-
 			var blockPositionDto = _dtoMapper.MapTo(source.BlockPosition);
-
-			//ZValuesDto zVals = new ZValuesDto(new byte[0][]);
-
-
-			//byte[] zrValues;
-			//byte[] ziValues;
-			
-			//if (source.MapSectionZVectors == null)
-			//{
-			//	zrValues = new byte[0];
-			//	ziValues = new byte[0];
-			//} 
-			//else
-			//{
-			//	//zrValues = new byte[source.MapSectionZVectors.TotalVectorCount * 8 * 4];
-			//	//var buf = MemoryMarshal.Cast<Vector256<uint>, byte>(source.MapSectionZVectors.Zrs);
-			//	//buf.CopyTo(zrValues);
-
-			//	//ziValues = new byte[source.MapSectionZVectors.TotalVectorCount * 8 * 4];
-			//	//buf = MemoryMarshal.Cast<Vector256<uint>, byte>(source.MapSectionZVectors.Zis);
-			//	//buf.CopyTo(ziValues);
-
-			//	zrValues = source.MapSectionZVectors.Zrs;
-			//	ziValues = source.MapSectionZVectors.Zis;
-			//}
 
 			var result = new MapSectionRecord
 				(
@@ -282,20 +245,8 @@ namespace MSetRepo
 				BlockPosYLo: blockPositionDto.Y[1],
 
 				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
-
-				//Counts: new byte[0],
-				//EscapeVelocities: new byte[0],
-				//DoneFlags: new byte[0],
-
 				Counts: GetBytes(source.MapSectionValues?.Counts),
-				//EscapeVelocities: GetBytes(source.MapSectionValues?.EscapeVelocities),
-				DoneFlags: GetBytes(source.MapSectionValues?.HasEscapedFlags),
-				BlockSize: new SizeIntRecord(128, 128),										// TODO: Add BlockSize and LimbCount properties to the MapSectionResponse class.
-				LimbCount: 2,
-
-				//ZValues: zVals
-				ZrValues: source.MapSectionZVectors?.Zrs ?? new byte[0],
-				ZiValues: source.MapSectionZVectors?.Zis ?? new byte[0]
+				ZValues: GetZValues(source)
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
@@ -303,6 +254,21 @@ namespace MSetRepo
 			};
 
 			return result;
+		}
+
+		private ZValues GetZValues(MapSectionResponse mapSectionResponse)
+		{
+			var zVectors = mapSectionResponse.MapSectionZVectors;
+
+			if (zVectors == null)
+			{
+				return new ZValues();
+			}
+
+			var zValues = new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis);
+			zValues.HasEscapedFlags = zVectors.HasEscapedFlags;
+
+			return zValues;
 		}
 
 		private byte[] GetBytes(ushort[]? uShorts)
@@ -367,13 +333,14 @@ namespace MSetRepo
 				//zValues: target.ZValues.GetZValuesAsDoubleArray()
 			);
 
-			GetBools(target.DoneFlags, buf.HasEscapedFlags);
+			//GetBools(target.DoneFlags, buf.HasEscapedFlags);
 			GetUShorts(target.Counts, buf.Counts);
 			result.MapSectionValues = buf;
 
-			if (target.ZrValues.Length > 0)
+			if (!target.ZValues.IsEmpty)
 			{
-				result.MapSectionZVectors = new MapSectionZVectors(MapFrom(target.BlockSize), target.LimbCount, target.ZrValues, target.ZiValues);
+				var zValues = target.ZValues;
+				result.MapSectionZVectors = new MapSectionZVectors(zValues.BlockSize, zValues.LimbCount, zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
 			}
 
 			return result;
@@ -391,12 +358,8 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings
-
-				//mapSectionVectors: new MapSectionVectors(RMapConstants.BLOCK_SIZE),
-				//zValues: null
 			);
 
-			GetBools(target.DoneFlags, buf.HasEscapedFlags);
 			GetUShorts(target.Counts, buf.Counts);
 			//GetUShorts(target.EscapeVelocities, buf.EscapeVelocities);
 
