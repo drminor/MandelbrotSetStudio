@@ -14,9 +14,9 @@ namespace MSS.Types
 			BlockSize = blockSize;
 			Length = blockSize.NumberOfCells;
 
-			HasEscapedFlags = new bool[Length];
+			//HasEscapedFlags = new bool[Length];
 			Counts = new ushort[Length];
-			EscapeVelocities = new ushort[Length];
+			//EscapeVelocities = new ushort[Length];
 		}
 
 		//public MapSectionValues(bool[] hasEscapedFlags, ushort[] counts, ushort[] escapeVelocities)
@@ -33,9 +33,9 @@ namespace MSS.Types
 		public SizeInt BlockSize { get; init; }
 		public int Length { get; init; }
 
-		public bool[] HasEscapedFlags { get; private set;}
+		//public bool[] HasEscapedFlags { get; private set;}
 		public ushort[] Counts { get; private set; }
-		public ushort[] EscapeVelocities { get; private set; }
+		//public ushort[] EscapeVelocities { get; private set; }
 
 		#endregion
 
@@ -61,43 +61,43 @@ namespace MSS.Types
 
 		public void Load(MapSectionVectors mapSectionVectors)
 		{
-			var hefs = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.HasEscapedVectors);
+			//var hefs = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.HasEscapedVectors);
 			var counts = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.CountVectors);
-			var ecvs = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.EscapeVelocityVectors);
+			//var ecvs = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.EscapeVelocityVectors);
 
 			for (var i = 0; i < Length; i++)
 			{
-				HasEscapedFlags[i] = hefs[i] != 0;
+				//HasEscapedFlags[i] = hefs[i] != 0;
 				Counts[i] = (ushort)counts[i];
-				EscapeVelocities[i] = (ushort)ecvs[i];
+				//EscapeVelocities[i] = (ushort)ecvs[i];
 			}
 		}
 
-		private void CheckArguments<T>(bool[] hasEscapedFlags, T[] counts, T[] escapeVelocities)
-		{
-			if (hasEscapedFlags == null || hasEscapedFlags.Length != BlockSize.NumberOfCells)
-			{
-				throw new ArgumentException($"The {nameof(hasEscapedFlags)} has a length different than {Length}.");
-			}
+		//private void CheckArguments<T>(bool[] hasEscapedFlags, T[] counts, T[] escapeVelocities)
+		//{
+		//	if (hasEscapedFlags == null || hasEscapedFlags.Length != BlockSize.NumberOfCells)
+		//	{
+		//		throw new ArgumentException($"The {nameof(hasEscapedFlags)} has a length different than {Length}.");
+		//	}
 
-			if (counts == null || counts.Length != BlockSize.NumberOfCells)
-			{
-				throw new ArgumentException($"The {nameof(counts)} has a length different than {Length}.");
-			}
+		//	if (counts == null || counts.Length != BlockSize.NumberOfCells)
+		//	{
+		//		throw new ArgumentException($"The {nameof(counts)} has a length different than {Length}.");
+		//	}
 
-			if (escapeVelocities == null || escapeVelocities.Length != BlockSize.NumberOfCells)
-			{
-				throw new ArgumentException($"The {nameof(escapeVelocities)} has a length different than {Length}.");
-			}
-		}
+		//	if (escapeVelocities == null || escapeVelocities.Length != BlockSize.NumberOfCells)
+		//	{
+		//		throw new ArgumentException($"The {nameof(escapeVelocities)} has a length different than {Length}.");
+		//	}
+		//}
 
 		#region IPoolable Support
 
 		void IPoolable.ResetObject()
 		{
-			Array.Clear(HasEscapedFlags, 0, Length);
+			//Array.Clear(HasEscapedFlags, 0, Length);
 			Array.Clear(Counts, 0, Length);
-			Array.Clear(EscapeVelocities, 0, Length);
+			//Array.Clear(EscapeVelocities, 0, Length);
 		}
 
 		void IPoolable.CopyTo(object obj)
@@ -114,9 +114,9 @@ namespace MSS.Types
 
 		public void CopyTo(MapSectionValues mapSectionValues)
 		{
-			Array.Copy(HasEscapedFlags, mapSectionValues.HasEscapedFlags, Length);
+			//Array.Copy(HasEscapedFlags, mapSectionValues.HasEscapedFlags, Length);
 			Array.Copy(Counts, mapSectionValues.Counts, Length);
-			Array.Copy(EscapeVelocities, mapSectionValues.EscapeVelocities, Length);
+			//Array.Copy(EscapeVelocities, mapSectionValues.EscapeVelocities, Length);
 		}
 
 		#endregion
@@ -134,9 +134,9 @@ namespace MSS.Types
 				if (disposing)
 				{
 					// Dispose managed state (managed objects)
-					HasEscapedFlags = Array.Empty<bool>();
+					//HasEscapedFlags = Array.Empty<bool>();
 					Counts = Array.Empty<ushort>();
-					EscapeVelocities = Array.Empty<ushort>();
+					//EscapeVelocities = Array.Empty<ushort>();
 				}
 
 				_disposedValue = true;

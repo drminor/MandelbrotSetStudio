@@ -10,13 +10,15 @@ namespace MSS.Types
 	{
 		#region Constructor
 
+		private const int VALUE_SIZE = 4;
+
 		public MapSectionZVectors(SizeInt blockSize, int limbCount)
 			: this(
 				  blockSize,
 				  limbCount,
-				  new byte[blockSize.NumberOfCells * limbCount * 4],
-				  new byte[blockSize.NumberOfCells * limbCount * 4],
-				  new byte[blockSize.NumberOfCells]
+				  new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
+				  new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
+				  new byte[blockSize.NumberOfCells * VALUE_SIZE]
 				  )
 		{ }
 
@@ -28,11 +30,17 @@ namespace MSS.Types
 			Lanes = Vector256<uint>.Count;
 			ValuesPerRow = blockSize.Width;
 
-			BytesPerRow = ValuesPerRow * LimbCount * 4;
-			TotalByteCount = ValueCount * LimbCount * 4;
+			BytesPerRow = ValuesPerRow * LimbCount * VALUE_SIZE;
+			TotalByteCount = ValueCount * LimbCount * VALUE_SIZE;
 
-			Debug.Assert(zrs.Length == TotalByteCount, $"The length of zrs does not equal the {ValueCount} * {LimbCount} * 4 (values/block) * (limbs/value) x bytes/value).");
-			Debug.Assert(zis.Length == TotalByteCount, $"The length of zis does not equal the {ValueCount} * {LimbCount} * 4 (values/block) * (limbs/value) x bytes/value).");
+			Debug.Assert(zrs.Length == TotalByteCount, $"The length of zrs does not equal the {ValueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
+			Debug.Assert(zis.Length == TotalByteCount, $"The length of zis does not equal the {ValueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
+
+			BytesPerFlagRow = ValuesPerRow * VALUE_SIZE;
+			TotalBytesForFlags = ValueCount * VALUE_SIZE;
+
+
+			Debug.Assert(hasEscapedFlags.Length == TotalBytesForFlags, $"The length of hasEscapedFlags does not equal the {ValueCount} * {VALUE_SIZE} (values/block * bytes/value) .");
 
 			Zrs = zrs;
 			Zis = zis;
@@ -51,8 +59,8 @@ namespace MSS.Types
 		public int BytesPerRow { get; init; }
 		public int TotalByteCount { get; init; }
 
-		//public int TotalVectorCount => (ValueCount * LimbCount) / Lanes;
-		//public int VectorsPerRow => ValuesPerRow / Lanes;
+		public int BytesPerFlagRow { get; init; }
+		public int TotalBytesForFlags { get; init; }
 
 		public byte[] Zrs { get; private set; }
 
@@ -62,7 +70,7 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Methods
+		#region ZValue Methods
 
 		public void FillRRow(Vector256<uint>[] mantissas, int rowNumber)
 		{
@@ -96,24 +104,25 @@ namespace MSS.Types
 			Array.Copy(source, 0, Zis, destinationStartIndex, BytesPerRow);
 		}
 
+		#endregion
 
-		//public Span<Vector256<int>> GetHasEscapedFlagsRow(int start, int length)
-		//{
-		//	var result = new Span<Vector256<int>>(HasEscapedVectors, start, length);
-		//	return result;
-		//}
+		#region HasEscapedFlag Methods
 
-		//public Span<Vector256<int>> GetCountsRow(int start, int length)
-		//{
-		//	var result = new Span<Vector256<int>>(CountVectors, start, length);
-		//	return result;
-		//}
+		public void FillHasEscapedFlagsRow(Vector256<int>[] mantissas, int rowNumber)
+		{
+			var sourceStartIndex = BytesPerFlagRow * rowNumber;
+			var source = new Span<byte>(HasEscapedFlags, sourceStartIndex, BytesPerFlagRow);
 
-		//public Span<Vector256<int>> GetEscapeVelocitiesRow(int start, int length)
-		//{
-		//	var result = new Span<Vector256<int>>(EscapeVelocityVectors, start, length);
-		//	return result;
-		//}
+			Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas);
+			source.CopyTo(destinationByteSpan);
+		}
+
+		public void UpdateHasEscapedFlagsRowFrom(Vector256<int>[] mantissas, int rowNumber)
+		{
+			var source = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas).ToArray();
+			var destinationStartIndex = BytesPerFlagRow * rowNumber;
+			Array.Copy(source, 0, HasEscapedFlags, destinationStartIndex, BytesPerFlagRow);
+		}
 
 		// IPoolable Support
 		void IPoolable.ResetObject()
@@ -151,10 +160,10 @@ namespace MSS.Types
 		{
 			var result = mapSectionZVectors;
 
-			Array.Copy(Zrs, result.Zrs, Zrs.Length);
-			Array.Copy(Zis, result.Zis, Zis.Length);
+			Array.Copy(Zrs, result.Zrs, TotalByteCount);
+			Array.Copy(Zis, result.Zis, TotalByteCount);
+			Array.Copy(HasEscapedFlags, result.HasEscapedFlags, ValueCount);
 		}
-
 
 		#endregion
 

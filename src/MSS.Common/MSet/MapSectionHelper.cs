@@ -260,7 +260,7 @@ namespace MSS.Common
 			var result = new byte[_pixelArraySize];
 
 			var counts = mapSectionValues.Counts;
-			var escapeVelocities = mapSectionValues.EscapeVelocities;
+			var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
 
 			var previousCountVal = counts[0];
 

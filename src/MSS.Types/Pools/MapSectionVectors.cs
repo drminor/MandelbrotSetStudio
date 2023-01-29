@@ -14,14 +14,14 @@ namespace MSS.Types
 			BlockSize = blockSize;
 			Length = blockSize.NumberOfCells;
 
-			HasEscapedVectors = new Vector256<int>[TotalVectorCount];
-			HasEscapedMems = new Memory<Vector256<int>>(HasEscapedVectors);
+			//HasEscapedVectors = new Vector256<int>[TotalVectorCount];
+			//HasEscapedMems = new Memory<Vector256<int>>(HasEscapedVectors);
 
 			CountVectors = new Vector256<int>[TotalVectorCount];
 			CountMems = new Memory<Vector256<int>>(CountVectors);
 
-			EscapeVelocityVectors = new Vector256<int>[TotalVectorCount];
-			EscapeVelocitiyMems = new Memory<Vector256<int>>(EscapeVelocityVectors);
+			//EscapeVelocityVectors = new Vector256<int>[TotalVectorCount];
+			//EscapeVelocitiyMems = new Memory<Vector256<int>>(EscapeVelocityVectors);
 		}
 
 		#endregion
@@ -35,18 +35,28 @@ namespace MSS.Types
 		public SizeInt BlockSize { get; init; }
 		public int VectorsPerRow => BlockSize.Width / Lanes;
 
-		public Vector256<int>[] HasEscapedVectors;
-		public Memory<Vector256<int>> HasEscapedMems;
+		//public Vector256<int>[] HasEscapedVectors;
+		//public Memory<Vector256<int>> HasEscapedMems;
 
 		public Vector256<int>[] CountVectors;
 		public Memory<Vector256<int>> CountMems;
 
-		public Vector256<int>[] EscapeVelocityVectors;
-		public Memory<Vector256<int>> EscapeVelocitiyMems;
+		//public Vector256<int>[] EscapeVelocityVectors;
+		//public Memory<Vector256<int>> EscapeVelocitiyMems;
 
 		#endregion
 
 		#region Methods
+
+		public void UpdateCountsFrom(ushort[] counts)
+		{
+			var dest = MemoryMarshal.Cast<Vector256<int>, int>(CountVectors);
+
+			for (var i = 0; i < Length; i++)
+			{
+				dest[i] = counts[i];
+			}
+		}
 
 		//public Span<Vector256<int>> GetHasEscapedFlagsRow(int start, int length)
 		//{
@@ -69,9 +79,9 @@ namespace MSS.Types
 		// IPoolable Support
 		void IPoolable.ResetObject()
 		{
-			Array.Clear(HasEscapedVectors, 0, TotalVectorCount);
+			//Array.Clear(HasEscapedVectors, 0, TotalVectorCount);
 			Array.Clear(CountVectors, 0, TotalVectorCount);
-			Array.Clear(EscapeVelocityVectors, 0, TotalVectorCount);
+			//Array.Clear(EscapeVelocityVectors, 0, TotalVectorCount);
 		}
 
 		//// ICloneable Support
@@ -101,9 +111,9 @@ namespace MSS.Types
 
 		public void CopyTo(MapSectionVectors mapSectionVectors)
 		{
-			HasEscapedMems.CopyTo(mapSectionVectors.HasEscapedMems);
+			//HasEscapedMems.CopyTo(mapSectionVectors.HasEscapedMems);
 			CountMems.CopyTo(mapSectionVectors.CountMems);
-			EscapeVelocitiyMems.CopyTo(mapSectionVectors.EscapeVelocitiyMems);
+			//EscapeVelocitiyMems.CopyTo(mapSectionVectors.EscapeVelocitiyMems);
 		}
 
 

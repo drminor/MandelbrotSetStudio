@@ -244,13 +244,19 @@ namespace MapSectionProviderLib
 					request.MapSectionId = mapSectionResponse.MapSectionId;
 					request.IncreasingIterations = true;
 
-					//request.Counts = mapSectionResponse.Counts;
-					//request.EscapeVelocities = mapSectionResponse.EscapeVelocities;
-					//request.HasEscapedFlags = mapSectionResponse.HasEscapedFlags;
-					//request.ZValues = null;
+					var mapSectionId = ObjectId.Parse(request.MapSectionId);
+					var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
 
-					// TODO: Load the MapSectionVectors with the existing HasEscapedFlags, Counts, and EscapeVelocities.
+					if (zValues != null)
+					{
+						request.MapSectionZVectors = new MapSectionZVectors(zValues.BlockSize, zValues.LimbCount, zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
+					}
+
 					var mapSectionVectors = _mapSectionVectorsPool.Obtain();
+					if (mapSectionResponse.MapSectionValues != null)
+					{
+						mapSectionVectors.UpdateCountsFrom(mapSectionResponse.MapSectionValues.Counts);
+					}
 					request.MapSectionVectors = mapSectionVectors;
 
 					Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
@@ -349,13 +355,13 @@ namespace MapSectionProviderLib
 			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct, _mapSectionValuesPool.Obtain);
 
 			return mapSectionResponse;
+		}
 
-			//if (ct.IsCancellationRequested)
-			//{
-			//	await Task.Delay(100);
-			//}
+		private async Task<ZValues?> FetchTheZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
+		{
+			var result = await _mapSectionAdapter.GetMapSectionZValuesAsync(mapSectionId);
 
-			//return null;
+			return result;
 		}
 
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse, int jobId)
@@ -388,33 +394,6 @@ namespace MapSectionProviderLib
 					newCopyOfTheResponse.MapSectionZVectors = response.MapSectionZVectors;
 					_mapSectionPersistProcessor.AddWork(newCopyOfTheResponse);
 				}
-
-				//var response = mapSectionResponse ?? new MapSectionResponse(mapSectionRequest);
-
-				//if (response?.MapSectionVectors == null)
-				//{
-				//	Debug.WriteLine("The MapSectionResponse has no MapSectionVectors in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
-
-				//	// Set the response using the request data.
-				//	mapSectionWorkRequest.Response = new MapSectionResponse(mapSectionRequest);
-				//}
-				//else
-				//{
-				//	// Convert the response's MapSectionVectors to MapSectionValues
-
-				//	var mapSectionValues = ConvertVecToVals(response.MapSectionVectors);
-
-				//	response.MapSectionValues = mapSectionValues;
-				//	response.MapSectionVectors = null;
-
-				//	mapSectionWorkRequest.Response = mapSectionResponse;
-
-				//	if (!response.RecordOnFile || mapSectionRequest.IncreasingIterations)
-				//	{
-				//		var newCopyOfTheResponse = Duplicate(response);
-				//		_mapSectionPersistProcessor.AddWork(newCopyOfTheResponse);
-				//	}
-				//}
 
 				workList.Add(mapSectionWorkRequest);
 

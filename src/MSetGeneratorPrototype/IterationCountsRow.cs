@@ -6,23 +6,26 @@ namespace MSetGeneratorPrototype
 	public ref struct IterationCountsRow
 	{
 		private readonly MapSectionVectors _mapSectionVectors;
+		private readonly MapSectionZVectors _mapSectionZVectors;
 
 		private List<int> _inPlayBackingList;
 
 		#region Constructor
 
-		public IterationCountsRow(MapSectionVectors mapSectionVectors)
+		public IterationCountsRow(MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors)
 		{
 			_mapSectionVectors = mapSectionVectors;
+			_mapSectionZVectors = mapSectionZVectors;
 			VectorCount = _mapSectionVectors.VectorsPerRow;
 
-			RowNumber = 0;
+			RowNumber = -1;
 
-			//var vector256Ints = Enumerable.Repeat(Vector256<int>.Zero, VectorCount).ToArray();
+			HasEscapedFlags = new Vector256<int>[_mapSectionZVectors.ValuesPerRow];
 
-			HasEscapedFlags = new Span<Vector256<int>>(_mapSectionVectors.HasEscapedVectors, 0, VectorCount);		// new Span<Vector256<int>>(vector256Ints);
-			Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, 0, VectorCount);						// new Span<Vector256<int>>(vector256Ints);
-			EscapeVelocities = new Span<Vector256<int>>(_mapSectionVectors.EscapeVelocityVectors, 0, VectorCount);	// new Span<Vector256<int>>(vector256Ints);
+			_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, 0);
+
+			Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, 0, VectorCount);
+			//EscapeVelocities = new Span<Vector256<int>>(_mapSectionVectors.EscapeVelocityVectors, 0, VectorCount);
 
 			DoneFlags = new Vector256<int>[VectorCount];
 			UnusedCalcs = new Vector256<int>[VectorCount];
@@ -43,9 +46,10 @@ namespace MSetGeneratorPrototype
 
 		public int VectorCount { get; init; }
 
-		public Span<Vector256<int>> HasEscapedFlags { get; private set; }
+		public Vector256<int>[] HasEscapedFlags { get; private set; }
+
 		public Span<Vector256<int>> Counts { get; private set; }
-		public Span<Vector256<int>> EscapeVelocities { get; private set; }
+		//public Span<Vector256<int>> EscapeVelocities { get; private set; }
 
 		public Vector256<int>[] DoneFlags { get; private set; }
 		public Vector256<int>[] UnusedCalcs { get; private set; }
@@ -61,11 +65,20 @@ namespace MSetGeneratorPrototype
 
 		public void SetRowNumber(int rowNumber)
 		{
+			if (RowNumber != -1)
+			{
+				UpdateTheHasEscapedFlagsSource(RowNumber);
+			}
+
 			RowNumber = rowNumber;
 
-			HasEscapedFlags = new Span<Vector256<int>>(_mapSectionVectors.HasEscapedVectors, rowNumber * VectorCount, VectorCount);
+			// Get the HasEscapedFlags
+			_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, rowNumber);
+
+			// Get the counts
 			Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, rowNumber * VectorCount, VectorCount);
-			EscapeVelocities = new Span<Vector256<int>>(_mapSectionVectors.EscapeVelocityVectors, rowNumber * VectorCount, VectorCount);
+
+			//EscapeVelocities = new Span<Vector256<int>>(_mapSectionVectors.EscapeVelocityVectors, rowNumber * VectorCount, VectorCount);
 
 			Array.Clear(DoneFlags, 0, DoneFlags.Length);
 			Array.Clear(UnusedCalcs, 0, UnusedCalcs.Length);
@@ -78,6 +91,12 @@ namespace MSetGeneratorPrototype
 
 			InPlayList = _inPlayBackingList.ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
+		}
+
+
+		public void UpdateTheHasEscapedFlagsSource(int rowNumber)
+		{
+			_mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(HasEscapedFlags, rowNumber);
 		}
 
 		public long GetTotalUnusedCalcs()

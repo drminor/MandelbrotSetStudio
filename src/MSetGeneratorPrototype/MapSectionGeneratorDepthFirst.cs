@@ -69,7 +69,7 @@ namespace MSetGeneratorPrototype
 				var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? new MapSectionZVectors(mapSectionRequest.BlockSize, _fp31VecMath.LimbCount);
 				mapSectionRequest.MapSectionZVectors = null;
 
-				var itState = new IterationCountsRow(mapSectionVectors);
+				var itState = new IterationCountsRow(mapSectionVectors, mapSectionZVectors);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 				GenerateMapSection(_iterator, itState, mapSectionZVectors, coords, mapCalcSettings);
@@ -125,6 +125,9 @@ namespace MSetGeneratorPrototype
 
 				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 			}
+
+			mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(itState.HasEscapedFlags, itState.RowNumber);
+
 		}
 
 		#endregion

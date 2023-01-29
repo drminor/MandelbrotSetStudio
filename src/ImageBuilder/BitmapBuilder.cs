@@ -99,7 +99,10 @@ namespace ImageBuilder
 							}
 
 							var countsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.Counts, linePtr, blockSize.Width);
-							var escVelsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.EscapeVelocities, linePtr, blockSize.Width);
+							//var escVelsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.EscapeVelocities, linePtr, blockSize.Width);
+							var escVelsForThisSegment = new ushort[countsForThisSegment?.Length ?? 0];
+
+
 							var segmentLength = GetSegmentLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
 
 							try
