@@ -87,11 +87,11 @@ namespace MSS.Types
 		//	return result;
 		//}
 
-		object IPoolable.CopyTo(object obj)
+		void IPoolable.CopyTo(object obj)
 		{
 			if (obj != null && obj is MapSectionVectors msv)
 			{
-				return CopyTo(msv);
+				CopyTo(msv);
 			}
 			else
 			{
@@ -99,15 +99,11 @@ namespace MSS.Types
 			}
 		}
 
-		MapSectionVectors CopyTo(MapSectionVectors mapSectionVectors)
+		public void CopyTo(MapSectionVectors mapSectionVectors)
 		{
-			var result = mapSectionVectors;
-
-			HasEscapedMems.CopyTo(result.HasEscapedMems);
-			CountMems.CopyTo(result.CountMems);
-			EscapeVelocitiyMems.CopyTo(result.EscapeVelocitiyMems);
-
-			return result;
+			HasEscapedMems.CopyTo(mapSectionVectors.HasEscapedMems);
+			CountMems.CopyTo(mapSectionVectors.CountMems);
+			EscapeVelocitiyMems.CopyTo(mapSectionVectors.EscapeVelocitiyMems);
 		}
 
 

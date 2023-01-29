@@ -249,24 +249,27 @@ namespace MSetRepo
 			//ZValuesDto zVals = new ZValuesDto(new byte[0][]);
 
 
-			byte[] zrValues;
-			byte[] ziValues;
+			//byte[] zrValues;
+			//byte[] ziValues;
 			
-			if (source.MapSectionZVectors == null)
-			{
-				zrValues = new byte[0];
-				ziValues = new byte[0];
-			} 
-			else
-			{
-				zrValues = new byte[source.MapSectionZVectors.TotalVectorCount * 8 * 4];
-				var buf = MemoryMarshal.Cast<Vector256<uint>, byte>(source.MapSectionZVectors.Zrs);
-				buf.CopyTo(zrValues);
+			//if (source.MapSectionZVectors == null)
+			//{
+			//	zrValues = new byte[0];
+			//	ziValues = new byte[0];
+			//} 
+			//else
+			//{
+			//	//zrValues = new byte[source.MapSectionZVectors.TotalVectorCount * 8 * 4];
+			//	//var buf = MemoryMarshal.Cast<Vector256<uint>, byte>(source.MapSectionZVectors.Zrs);
+			//	//buf.CopyTo(zrValues);
 
-				ziValues = new byte[source.MapSectionZVectors.TotalVectorCount * 8 * 4];
-				buf = MemoryMarshal.Cast<Vector256<uint>, byte>(source.MapSectionZVectors.Zis);
-				buf.CopyTo(ziValues);
-			}
+			//	//ziValues = new byte[source.MapSectionZVectors.TotalVectorCount * 8 * 4];
+			//	//buf = MemoryMarshal.Cast<Vector256<uint>, byte>(source.MapSectionZVectors.Zis);
+			//	//buf.CopyTo(ziValues);
+
+			//	zrValues = source.MapSectionZVectors.Zrs;
+			//	ziValues = source.MapSectionZVectors.Zis;
+			//}
 
 			var result = new MapSectionRecord
 				(
@@ -287,10 +290,12 @@ namespace MSetRepo
 				Counts: GetBytes(source.MapSectionValues?.Counts),
 				//EscapeVelocities: GetBytes(source.MapSectionValues?.EscapeVelocities),
 				DoneFlags: GetBytes(source.MapSectionValues?.HasEscapedFlags),
+				BlockSize: new SizeIntRecord(128, 128),										// TODO: Add BlockSize and LimbCount properties to the MapSectionResponse class.
+				LimbCount: 2,
 
 				//ZValues: zVals
-				ZrValues: zrValues,
-				ZiValues: ziValues
+				ZrValues: source.MapSectionZVectors?.Zrs ?? new byte[0],
+				ZiValues: source.MapSectionZVectors?.Zis ?? new byte[0]
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
@@ -354,8 +359,6 @@ namespace MSetRepo
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings
 
-
-
 				//hasEscapedFlags: GetBools(target.DoneFlags),
 				//counts: GetUShorts(target.Counts),
 
@@ -364,10 +367,14 @@ namespace MSetRepo
 				//zValues: target.ZValues.GetZValuesAsDoubleArray()
 			);
 
+			GetBools(target.DoneFlags, buf.HasEscapedFlags);
+			GetUShorts(target.Counts, buf.Counts);
 			result.MapSectionValues = buf;
 
-			//buf.
-
+			if (target.ZrValues.Length > 0)
+			{
+				result.MapSectionZVectors = new MapSectionZVectors(MapFrom(target.BlockSize), target.LimbCount, target.ZrValues, target.ZiValues);
+			}
 
 			return result;
 		}

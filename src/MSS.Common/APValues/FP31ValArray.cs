@@ -206,13 +206,25 @@ namespace MSS.Common.APValues
 			IsZero = false;
 		}
 
-		public void UpdateFrom(byte[] mantissas)
+		public void UpdateFrom(byte[] mantissas, int startIndex, int length)
 		{
 			//var x = new Memory<Vector256<uint>>(Mantissas);
 
+			var source = new Span<byte>(mantissas, startIndex, length);
+
 			Span<byte> back = MemoryMarshal.Cast<Vector256<uint>, byte>(Mantissas);
 
-			mantissas.CopyTo(back);
+			source.CopyTo(back);
+		}
+
+		public void UpdateFromLimbSet(int valueIndex, Vector256<uint>[] limbSet)
+		{
+			var vecPtr = valueIndex * LimbCount;
+
+			for (var i = 0; i < LimbCount; i++)
+			{
+				Mantissas[vecPtr++] = limbSet[i];
+			}
 		}
 
 		public void ClearManatissMems()

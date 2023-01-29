@@ -106,17 +106,21 @@ namespace MSetGeneratorPrototype
 				var yPoint = samplePointsY[rowNumber];
 				iterator.Cis.UpdateFrom(yPoint);
 
-				var (zRs, zIs) = GetZValues(mapSectionZVectors, rowNumber, iterator.LimbCount, stride);
-				iterator.Zrs.ClearManatissMems();
-				iterator.Zis.ClearManatissMems();
+				FillZValues(mapSectionZVectors, rowNumber, iterator.Zrs, iterator.Zis);
+				//iterator.Zrs.ClearManatissMems();
+				//iterator.Zis.ClearManatissMems();
 				iterator.ZValuesAreZero = true;
-
 
 				for (var idxPtr = 0; idxPtr < itState.InPlayList.Length; idxPtr++)
 				{
 					var idx = itState.InPlayList[idxPtr];
 					GenerateMapCol(idx, iterator, ref itState, targetIterationsVector);
 				}
+
+				//iterator.Zrs.m mapSectionZVectors.Zrs
+
+				mapSectionZVectors.UpdateRRowFrom(iterator.Zrs.Mantissas, rowNumber);
+				mapSectionZVectors.UpdateIRowFrom(iterator.Zis.Mantissas, rowNumber);
 
 				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 			}
@@ -238,6 +242,9 @@ namespace MSetGeneratorPrototype
 
 			itState.DoneFlags[idx] = doneFlagsV.AsInt32();
 			itState.UnusedCalcs[idx] = unusedCalcsV;
+
+			iterator.Zrs.UpdateFromLimbSet(idx, _zrs);
+			iterator.Zis.UpdateFromLimbSet(idx, _zis);
 		}
 
 
@@ -265,12 +272,10 @@ namespace MSetGeneratorPrototype
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
 		}
 
-		private (FP31Vectors zRs, FP31Vectors zIs) GetZValues(MapSectionZVectors mapSectionZVectors, int rowNumber, int limbCount, int valueCount)
+		private void FillZValues(MapSectionZVectors mapSectionZVectors, int rowNumber, FP31ValArray zrValArray, FP31ValArray ziValArray)
 		{
-			var zRs = new FP31Vectors(limbCount, valueCount);
-			var zIs = new FP31Vectors(limbCount, valueCount);
-
-			return (zRs, zIs);
+			mapSectionZVectors.FillRRow(zrValArray.Mantissas, rowNumber);
+			mapSectionZVectors.FillIRow(ziValArray.Mantissas, rowNumber);
 		}
 
 		private bool[] CompressHasEscapedFlags(int[] hasEscapedFlags)

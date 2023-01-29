@@ -24,6 +24,9 @@ namespace ProjectRepo.Entities
 		byte[] DoneFlags,
 
 		//ZValuesDto
+
+		SizeIntRecord BlockSize,
+		int LimbCount,
 		
 		byte[] ZrValues,
 		byte[] ZiValues
@@ -37,10 +40,5 @@ namespace ProjectRepo.Entities
 		public DateTime LastAccessed { get; set; }
 	}
 
-
-	///// <summary>
-	///// Record used to store just the ZValues found in a MapSectionResponse
-	///// </summary>
-	//public record ZValuesRecord(ZValues ZValues);
 
 }

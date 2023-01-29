@@ -100,11 +100,11 @@ namespace MSS.Types
 			Array.Clear(EscapeVelocities, 0, Length);
 		}
 
-		object IPoolable.CopyTo(object obj)
+		void IPoolable.CopyTo(object obj)
 		{
 			if (obj != null && obj is MapSectionValues msv)
 			{
-				return CopyTo(msv);
+				CopyTo(msv);
 			}
 			else
 			{
@@ -112,15 +112,11 @@ namespace MSS.Types
 			}
 		}
 
-		MapSectionValues CopyTo(MapSectionValues mapSectionValues)
+		public void CopyTo(MapSectionValues mapSectionValues)
 		{
-			var result = mapSectionValues;
-
-			Array.Copy(HasEscapedFlags, result.HasEscapedFlags, Length);
-			Array.Copy(Counts, result.Counts, Length);
-			Array.Copy(EscapeVelocities, result.EscapeVelocities, Length);
-
-			return result;
+			Array.Copy(HasEscapedFlags, mapSectionValues.HasEscapedFlags, Length);
+			Array.Copy(Counts, mapSectionValues.Counts, Length);
+			Array.Copy(EscapeVelocities, mapSectionValues.EscapeVelocities, Length);
 		}
 
 		#endregion

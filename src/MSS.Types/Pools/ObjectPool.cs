@@ -126,8 +126,8 @@ namespace MSS.Types
 			}
 
 			var source = Obtain();
-
-			var result = (T) obj.CopyTo(source);
+			obj.CopyTo(source);
+			var result = source;
 
 			return result;
 		}

@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -10,39 +11,87 @@ namespace MSS.Types
 		#region Constructor
 
 		public MapSectionZVectors(SizeInt blockSize, int limbCount)
+			: this(
+				  blockSize,
+				  limbCount,
+				  new byte[blockSize.NumberOfCells * limbCount * 4],
+				  new byte[blockSize.NumberOfCells * limbCount * 4]
+				  )
+		{ }
+
+		public MapSectionZVectors(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis)
 		{
 			BlockSize = blockSize;
-			Length = blockSize.NumberOfCells;
+			ValueCount = blockSize.NumberOfCells;
 			LimbCount = limbCount;
+			Lanes = Vector256<uint>.Count;
+			ValuesPerRow = blockSize.Width;
 
-			Zrs = new Vector256<uint>[TotalVectorCount];
-			ZrsMems = new Memory<Vector256<uint>>(Zrs);
+			BytesPerRow = ValuesPerRow * LimbCount * 4;
+			TotalByteCount = ValueCount * LimbCount * 4;
 
-			Zis = new Vector256<uint>[TotalVectorCount];
-			ZisMems = new Memory<Vector256<uint>>(Zrs);
+			Debug.Assert(zrs.Length == TotalByteCount, $"The length of zrs does not equal the {ValueCount} * {LimbCount} * 4 (values/block) * (limbs/value) x bytes/value).");
+			Debug.Assert(zis.Length == TotalByteCount, $"The length of zis does not equal the {ValueCount} * {LimbCount} * 4 (values/block) * (limbs/value) x bytes/value).");
+
+			Zrs = zrs;
+			Zis = zis;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public int Lanes => Vector256<int>.Count;
-		public int Length { get; init; }
-		public int LimbCount { get; init; }
-		public int TotalVectorCount => (Length * LimbCount) / Lanes;
-
 		public SizeInt BlockSize { get; init; }
-		public int VectorsPerRow => BlockSize.Width / Lanes;
+		public int ValueCount { get; init; }
+		public int LimbCount { get; init; }
+		public int Lanes { get; init; }
+		public int ValuesPerRow { get; init; }
+		public int BytesPerRow { get; init; }
+		public int TotalByteCount { get; init; }
 
-		public Vector256<uint>[] Zrs;
-		public Memory<Vector256<uint>> ZrsMems;
+		//public int TotalVectorCount => (ValueCount * LimbCount) / Lanes;
+		//public int VectorsPerRow => ValuesPerRow / Lanes;
 
-		public Vector256<uint>[] Zis;
-		public Memory<Vector256<uint>> ZisMems;
+		public byte[] Zrs { get; private set; }
+
+		public byte[] Zis { get; private set; }
 
 		#endregion
 
 		#region Methods
+
+		public void FillRRow(Vector256<uint>[] mantissas, int rowNumber)
+		{
+			var sourceStartIndex = BytesPerRow * rowNumber;
+			var source = new Span<byte>(Zrs, sourceStartIndex, BytesPerRow);
+
+			Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas);
+			source.CopyTo(destinationByteSpan);
+		}
+
+		public void FillIRow(Vector256<uint>[] mantissas, int rowNumber)
+		{
+			var sourceStartIndex = BytesPerRow * rowNumber;
+			var source = new Span<byte>(Zis, sourceStartIndex, BytesPerRow);
+
+			Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas);
+			source.CopyTo(destinationByteSpan);
+		}
+
+		public void UpdateRRowFrom(Vector256<uint>[] mantissas, int rowNumber)
+		{
+			var source = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas).ToArray();
+			var destinationStartIndex = BytesPerRow * rowNumber;
+			Array.Copy(source, 0, Zrs, destinationStartIndex, BytesPerRow);
+		}
+
+		public void UpdateIRowFrom(Vector256<uint>[] mantissas, int rowNumber)
+		{
+			var source = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas).ToArray();
+			var destinationStartIndex = BytesPerRow * rowNumber;
+			Array.Copy(source, 0, Zis, destinationStartIndex, BytesPerRow);
+		}
+
 
 		//public Span<Vector256<int>> GetHasEscapedFlagsRow(int start, int length)
 		//{
@@ -65,8 +114,8 @@ namespace MSS.Types
 		// IPoolable Support
 		void IPoolable.ResetObject()
 		{
-			Array.Clear(Zrs, 0, TotalVectorCount);
-			Array.Clear(Zis, 0, TotalVectorCount);
+			Array.Clear(Zrs, 0, TotalByteCount);
+			Array.Clear(Zis, 0, TotalByteCount);
 		}
 
 		//// ICloneable Support
@@ -82,11 +131,11 @@ namespace MSS.Types
 		//	return result;
 		//}
 
-		object IPoolable.CopyTo(object obj)
+		void IPoolable.CopyTo(object obj)
 		{
-			if (obj != null && obj is MapSectionZVectors msv)
+			if (obj != null && obj is MapSectionZVectors mszv)
 			{
-				return CopyTo(msv);
+				CopyTo(mszv);
 			}
 			else
 			{
@@ -94,14 +143,12 @@ namespace MSS.Types
 			}
 		}
 
-		MapSectionZVectors CopyTo(MapSectionZVectors mapSectionVectors)
+		public void CopyTo(MapSectionZVectors mapSectionZVectors)
 		{
-			var result = mapSectionVectors;
+			var result = mapSectionZVectors;
 
-			Zrs.CopyTo(result.ZrsMems);
-			Zis.CopyTo(result.ZisMems);
-
-			return result;
+			Array.Copy(Zrs, result.Zrs, Zrs.Length);
+			Array.Copy(Zis, result.Zis, Zis.Length);
 		}
 
 
