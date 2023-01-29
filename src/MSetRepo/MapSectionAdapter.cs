@@ -144,7 +144,7 @@ namespace MSetRepo
 			}
 		}
 
-		public async Task<ZValuesDto?> GetMapSectionZValuesAsync(ObjectId mapSectionId)
+		public async Task<ValueTuple<byte[], byte[]>?> GetMapSectionZValuesAsync(ObjectId mapSectionId)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var result = await mapSectionReaderWriter.GetZValuesAsync(mapSectionId);

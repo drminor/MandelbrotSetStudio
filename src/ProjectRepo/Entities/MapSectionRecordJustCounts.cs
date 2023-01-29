@@ -18,7 +18,7 @@ namespace ProjectRepo.Entities
 
 		MapCalcSettings MapCalcSettings,
 		byte[] Counts,
-		byte[] EscapeVelocities,
+		//byte[] EscapeVelocities,
 		byte[] DoneFlags
 		)
 	{

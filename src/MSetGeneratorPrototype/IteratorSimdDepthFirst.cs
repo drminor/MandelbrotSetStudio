@@ -83,11 +83,6 @@ namespace MSetGeneratorPrototype
 
 		#region Public Methods
 
-		public Vector256<int>[] Iterate(int[] inPlayList, int[] inPlayListNarrow)
-		{
-			throw new NotImplementedException();
-		}
-
 		public Vector256<int> Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
 		{
 			try
@@ -126,6 +121,11 @@ namespace MSetGeneratorPrototype
 				Debug.WriteLine($"Iterator received exception: {e}.");
 				throw;
 			}
+		}
+
+		public Vector256<int>[] Iterate(int[] inPlayList, int[] inPlayListNarrow)
+		{
+			throw new NotImplementedException();
 		}
 
 		#endregion

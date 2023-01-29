@@ -17,7 +17,7 @@ namespace MSS.Common
 
 		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, Func<MapSectionValues> allocateMsvBuf);
 
-		Task<ZValuesDto?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
+		Task<ValueTuple<byte[], byte[]>?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
 
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 

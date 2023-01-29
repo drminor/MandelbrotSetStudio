@@ -73,7 +73,7 @@ namespace ProjectRepo
 		{
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression
 				(
-					p => new MapSectionRecordJustCounts(p.Id, p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi, p.BlockPosYLo, p.MapCalcSettings, p.Counts, p.EscapeVelocities, p.DoneFlags)
+					p => new MapSectionRecordJustCounts(p.Id, p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi, p.BlockPosYLo, p.MapCalcSettings, p.Counts, /*p.EscapeVelocities,*/ p.DoneFlags)
 				);
 
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
@@ -100,16 +100,16 @@ namespace ProjectRepo
 			}
 		}
 
-		public async Task<ZValuesDto?> GetZValuesAsync(ObjectId mapSectionId)
+		public async Task<ValueTuple<byte[], byte[]>?> GetZValuesAsync(ObjectId mapSectionId)
 		{
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression
 				(
-					p => p.ZValues
+					p => new ValueTuple<byte[], byte[]>(p.ZrValues, p.ZiValues)
 				);
 
 			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
 
-			IFindFluent<MapSectionRecord, ZValuesDto> operation = Collection.Find(filter).Project(projection1);
+			IFindFluent<MapSectionRecord, ValueTuple<byte[], byte[]>> operation = Collection.Find(filter).Project(projection1);
 
 			var itemsFound = await operation.ToListAsync().ConfigureAwait(false);
 
@@ -152,7 +152,7 @@ namespace ProjectRepo
 				updateDefinition = Builders<MapSectionRecord>.Update
 					.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations)
 					.Set(u => u.Counts, mapSectionRecord.Counts)
-					.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
+					//.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
 					.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 			}
 			else
@@ -160,9 +160,11 @@ namespace ProjectRepo
 				updateDefinition = Builders<MapSectionRecord>.Update
 					.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations)
 					.Set(u => u.Counts, mapSectionRecord.Counts)
-					.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
+					//.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
 					.Set(u => u.DoneFlags, mapSectionRecord.DoneFlags)
-					.Set(u => u.ZValues, mapSectionRecord.ZValues)
+					//.Set(u => u.ZValues, mapSectionRecord.ZValues)
+					.Set(u => u.ZrValues, mapSectionRecord.ZrValues)
+					.Set(u => u.ZiValues, mapSectionRecord.ZiValues)
 					.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 			}
 

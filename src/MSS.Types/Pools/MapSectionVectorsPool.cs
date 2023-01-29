@@ -6,11 +6,7 @@ namespace MSS.Types
 		public MapSectionVectorsPool(SizeInt blockSize, int initialSize = 16) : base(initialSize)
 		{
 			BlockSize = blockSize;
-
-			for (var i = 0; i < initialSize; i++)
-			{
-				_pool.Push(NewObject());
-			}
+			Fill(initialSize);
 		}
 
 		public SizeInt BlockSize { get; init; }

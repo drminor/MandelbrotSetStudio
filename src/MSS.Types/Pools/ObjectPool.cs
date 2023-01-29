@@ -5,6 +5,8 @@ namespace MSS.Types
 {
 	public abstract class ObjectPool<T> where T : IPoolable
 	{
+		private object _stateLock;
+
 		/// <summary>The maximum number of free objects pooled.</summary>
 		public int MaxSize { get; private set; }
 
@@ -24,10 +26,22 @@ namespace MSS.Types
 		/// <param name="maxSize">The maximum number of free objects that can be pooled.</param>
 		public ObjectPool(int initialSize = 16, int maxSize = int.MaxValue)
 		{
+			_stateLock = new object();
 			_pool = new Stack<T>(initialSize);
-
 			MaxSize = maxSize;
 			MaxPeak = 0;
+		}
+
+		protected void Fill(int amount)
+		{
+			lock (_stateLock)
+			{
+				for (var i = 0; i < amount; i++)
+				{
+					_pool.Push(NewObject());
+				}
+				MaxPeak = Math.Max(MaxPeak, TotalFree);
+			}
 		}
 
 		/// <summary>
@@ -42,7 +56,10 @@ namespace MSS.Types
 		/// <returns>Returns a pooled object if one is available, or a new object.</returns>
 		public T Obtain()
 		{
-			return (TotalFree == 0) ? NewObject() : _pool.Pop();
+			lock(_stateLock)
+			{
+				return (TotalFree == 0) ? NewObject() : _pool.Pop();
+			}
 		}
 
 		/// <summary>
@@ -57,11 +74,15 @@ namespace MSS.Types
 				return false;
 
 			Reset(obj);
-			if (TotalFree < MaxSize)
+
+			lock(_stateLock)
 			{
-				_pool.Push(obj);
-				MaxPeak = Math.Max(MaxPeak, TotalFree);
-				return true;
+				if (TotalFree < MaxSize)
+				{
+					_pool.Push(obj);
+					MaxPeak = Math.Max(MaxPeak, TotalFree);
+					return true;
+				}
 			}
 
 			return false;
@@ -86,9 +107,15 @@ namespace MSS.Types
 		/// <param name="clearPeak">If true <see cref="MaxPeak"/> will also be reset.</param>
 		public void Clear(bool clearPeak = false)
 		{
-			_pool.Clear();
-			if (clearPeak)
-				MaxPeak = 0;
+			lock (_stateLock)
+			{ 
+				_pool.Clear();
+
+				if (clearPeak)
+				{
+					MaxPeak = 0;
+				}
+			}
 		}
 
 		public virtual T DuplicateFrom(T obj)

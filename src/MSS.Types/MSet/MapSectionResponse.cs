@@ -96,6 +96,8 @@ namespace MSS.Types.MSet
 		public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionValues? MapSectionValues { get; set; }
 
+		public MapSectionZVectors? MapSectionZVectors { get; set; }
+
 		public string? MapSectionId { get; set; }
 		public string OwnerId { get; set; }
 		public JobOwnerType JobOwnerType { get; set; }

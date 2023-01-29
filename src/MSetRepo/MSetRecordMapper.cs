@@ -9,6 +9,7 @@ using ProjectRepo.Entities;
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 
 namespace MSetRepo
 {
@@ -245,7 +246,27 @@ namespace MSetRepo
 
 			var blockPositionDto = _dtoMapper.MapTo(source.BlockPosition);
 
-			ZValuesDto zVals = new ZValuesDto(new byte[0][]);
+			//ZValuesDto zVals = new ZValuesDto(new byte[0][]);
+
+
+			byte[] zrValues;
+			byte[] ziValues;
+			
+			if (source.MapSectionZVectors == null)
+			{
+				zrValues = new byte[0];
+				ziValues = new byte[0];
+			} 
+			else
+			{
+				zrValues = new byte[source.MapSectionZVectors.TotalVectorCount * 8 * 4];
+				var buf = MemoryMarshal.Cast<Vector256<uint>, byte>(source.MapSectionZVectors.Zrs);
+				buf.CopyTo(zrValues);
+
+				ziValues = new byte[source.MapSectionZVectors.TotalVectorCount * 8 * 4];
+				buf = MemoryMarshal.Cast<Vector256<uint>, byte>(source.MapSectionZVectors.Zis);
+				buf.CopyTo(ziValues);
+			}
 
 			var result = new MapSectionRecord
 				(
@@ -264,10 +285,12 @@ namespace MSetRepo
 				//DoneFlags: new byte[0],
 
 				Counts: GetBytes(source.MapSectionValues?.Counts),
-				EscapeVelocities: GetBytes(source.MapSectionValues?.EscapeVelocities),
+				//EscapeVelocities: GetBytes(source.MapSectionValues?.EscapeVelocities),
 				DoneFlags: GetBytes(source.MapSectionValues?.HasEscapedFlags),
 
-				ZValues: zVals
+				//ZValues: zVals
+				ZrValues: zrValues,
+				ZiValues: ziValues
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
@@ -368,7 +391,7 @@ namespace MSetRepo
 
 			GetBools(target.DoneFlags, buf.HasEscapedFlags);
 			GetUShorts(target.Counts, buf.Counts);
-			GetUShorts(target.EscapeVelocities, buf.EscapeVelocities);
+			//GetUShorts(target.EscapeVelocities, buf.EscapeVelocities);
 
 			result.MapSectionValues = buf;
 

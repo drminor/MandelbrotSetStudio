@@ -60,15 +60,19 @@ namespace MSetGeneratorPrototype
 
 				//var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? new MapSectionVectors(mapSectionRequest.BlockSize);
 				var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
-
 				mapSectionRequest.MapSectionVectors = null;
 
+				var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? new MapSectionZVectors(mapSectionRequest.BlockSize, _fp31VecMath.LimbCount);
+				mapSectionRequest.MapSectionZVectors = null;
+
+
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				GenerateMapSection(_iterator, mapSectionVectors, coords, mapCalcSettings);
+				GenerateMapSection(_iterator, mapSectionVectors, mapSectionZVectors, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 				result = new MapSectionResponse(mapSectionRequest);
 				result.MapSectionVectors = mapSectionVectors;
+				result.MapSectionZVectors = mapSectionZVectors;
 				//result.MathOpCounts = _iterator.MathOpCounts;
 			}
 
@@ -76,7 +80,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private void GenerateMapSection(IteratorSimdDepthFirst iterator, MapSectionVectors mapSectionVectors, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private void GenerateMapSection(IteratorSimdDepthFirst iterator, MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors, IteratorCoords coords, MapCalcSettings mapCalcSettings)
 		{
 			var blockSize = mapSectionVectors.BlockSize;
 			var rowCount = blockSize.Height;
@@ -102,7 +106,7 @@ namespace MSetGeneratorPrototype
 				var yPoint = samplePointsY[rowNumber];
 				iterator.Cis.UpdateFrom(yPoint);
 
-				//var (zRs, zIs) = GetZValues(mapSectionRequest, rowNumber, apFixedPointFormat.LimbCount, stride);
+				var (zRs, zIs) = GetZValues(mapSectionZVectors, rowNumber, iterator.LimbCount, stride);
 				iterator.Zrs.ClearManatissMems();
 				iterator.Zis.ClearManatissMems();
 				iterator.ZValuesAreZero = true;
@@ -128,7 +132,7 @@ namespace MSetGeneratorPrototype
 		private Vector256<uint>[] _zis;
 
 
-		private void GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
+		private void GenerateMapColOld(int idx, IteratorSimdDepthFirst iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
 		{
 			iterator.Crs.FillLimbSet(idx, _crs);
 			iterator.Cis.FillLimbSet(idx, _cis);
@@ -182,7 +186,7 @@ namespace MSetGeneratorPrototype
 			itState.UnusedCalcs[idx] = unusedCalcsV;
 		}
 
-		private void GenerateMapColNew(int idx, IteratorSimdDepthFirst iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
+		private void GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationCountsRow itState, Vector256<int> targetIterationsVector)
 		{
 			iterator.Crs.FillLimbSet(idx, _crs);
 			iterator.Cis.FillLimbSet(idx, _cis);
@@ -261,7 +265,7 @@ namespace MSetGeneratorPrototype
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
 		}
 
-		private (FP31Vectors zRs, FP31Vectors zIs) GetZValues(MapSectionServiceRequest mapSectionRequest, int rowNumber, int limbCount, int valueCount)
+		private (FP31Vectors zRs, FP31Vectors zIs) GetZValues(MapSectionZVectors mapSectionZVectors, int rowNumber, int limbCount, int valueCount)
 		{
 			var zRs = new FP31Vectors(limbCount, valueCount);
 			var zIs = new FP31Vectors(limbCount, valueCount);

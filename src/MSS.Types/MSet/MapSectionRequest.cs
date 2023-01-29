@@ -24,7 +24,7 @@ namespace MSS.Types.MSet
 		}
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
-
+		public MapSectionZVectors? MapSectionZVectors { get; set; }
 
 		public string? MapSectionId { get; set; }
 		public string OwnerId { get; set; }
@@ -37,9 +37,6 @@ namespace MSS.Types.MSet
 		public SizeInt BlockSize { get; set; }
 		public RSize SamplePointDelta { get; set; }
 		public MapCalcSettings MapCalcSettings { get; set; }
-
-
-		//public double[]? ZValues { get; set; }
 
 		public bool IsInverted { get; init; }
 

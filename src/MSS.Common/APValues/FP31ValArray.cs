@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Options;
+using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -75,9 +76,11 @@ namespace MSS.Common.APValues
 				var valPtr = vecPtr * Lanes;
 				for (var lanePtr = 0; lanePtr < Lanes; lanePtr++)
 				{
+					var fp31Val = fp31Vals[valPtr + lanePtr];
+
 					for (var limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 					{
-						back[backPtrs[limbPtr] + lanePtr] = fp31Vals[valPtr + lanePtr].Mantissa[limbPtr];
+						back[backPtrs[limbPtr] + lanePtr] = fp31Val.Mantissa[limbPtr];
 					}
 				}
 			}
@@ -191,9 +194,11 @@ namespace MSS.Common.APValues
 				var valPtr = vecPtr * Lanes;
 				for (var lanePtr = 0; lanePtr < Lanes; lanePtr++)
 				{
+					var fp31Val = fp31Vals[valPtr + lanePtr];
+
 					for (var limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 					{
-						back[backPtrs[limbPtr] + lanePtr] = fp31Vals[valPtr + lanePtr].Mantissa[limbPtr];
+						back[backPtrs[limbPtr] + lanePtr] = fp31Val.Mantissa[limbPtr];
 					}
 				}
 			}
@@ -201,51 +206,14 @@ namespace MSS.Common.APValues
 			IsZero = false;
 		}
 
-		//public void UpdateFrom(FP31Vectors source)
-		//{
-		//	if (source.LimbCount != LimbCount)
-		//	{
-		//		throw new ArgumentException("The source deck has a different LimbCount.");
-		//	}
+		public void UpdateFrom(byte[] mantissas)
+		{
+			//var x = new Memory<Vector256<uint>>(Mantissas);
 
-		//	if (source.ValueCount != ValueCount)
-		//	{
-		//		throw new ArgumentException("The source deck has a different ValueCount.");
-		//	}
+			Span<byte> back = MemoryMarshal.Cast<Vector256<uint>, byte>(Mantissas);
 
-		//	for (var i = 0; i < Mantissas.Length; i++)
-		//	{
-		//		Array.Copy(source.Mantissas[i], Mantissas[i], VectorCount);
-		//	}
-
-		//	IsZero = source.IsZero;
-
-		//}
-
-		//public void UpdateFrom(FP31Vectors source, int sourceIndex, int destinationIndex, int length)
-		//{
-		//	if (source.LimbCount != LimbCount)
-		//	{
-		//		throw new ArgumentException("The source deck has a different LimbCount.");
-		//	}
-
-		//	if (sourceIndex + length > source.ValueCount)
-		//	{
-		//		throw new ArgumentException("The target deck is shorter than startIndex + length.");
-		//	}
-
-		//	if (destinationIndex + length > ValueCount)
-		//	{
-		//		throw new ArgumentException("The target deck is shorter than startIndex + length.");
-		//	}
-
-		//	for (var i = 0; i < Mantissas.Length; i++)
-		//	{
-		//		Array.Copy(source.Mantissas[i], sourceIndex, Mantissas[i], destinationIndex, length);
-		//	}
-
-		//	IsZero = false;
-		//}
+			mantissas.CopyTo(back);
+		}
 
 		public void ClearManatissMems()
 		{

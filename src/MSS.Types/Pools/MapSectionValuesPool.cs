@@ -8,11 +8,7 @@ namespace MSS.Types
 		public MapSectionValuesPool(SizeInt BlockSize, int initialSize = 16) : base(initialSize)
 		{
 			_blockSize = BlockSize;
-
-			for (var i = 0; i < initialSize; i++)
-			{
-				_pool.Push(NewObject());
-			}
+			Fill(initialSize);
 		}
 
 		protected override MapSectionValues NewObject()

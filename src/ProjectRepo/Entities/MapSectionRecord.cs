@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
 
@@ -19,9 +18,15 @@ namespace ProjectRepo.Entities
 
 		MapCalcSettings MapCalcSettings,
 		byte[] Counts,
-		byte[] EscapeVelocities,
+		
+		//byte[] EscapeVelocities,
+		
 		byte[] DoneFlags,
-		ZValuesDto ZValues
+
+		//ZValuesDto
+		
+		byte[] ZrValues,
+		byte[] ZiValues
 		)
 	{
 		[BsonId]

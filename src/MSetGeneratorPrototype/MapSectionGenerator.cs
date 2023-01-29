@@ -90,7 +90,7 @@ namespace MSetGeneratorPrototype
 				var yPoint = samplePointsY[rowNumber];
 				iterator.Cis.UpdateFrom(yPoint);
 
-				//var (zRs, zIs) = GetZValues(mapSectionRequest, rowNumber, apFixedPointFormat.LimbCount, stride);
+				var (zRs, zIs) = GetZValues(mapSectionVectors, rowNumber, iterator.LimbCount, stride);
 				iterator.Zrs.ClearManatissMems();
 				iterator.Zis.ClearManatissMems();
 				iterator.ZValuesAreZero = true;
@@ -195,7 +195,7 @@ namespace MSetGeneratorPrototype
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
 		}
 
-		private (FP31Vectors zRs, FP31Vectors zIs) GetZValues(MapSectionServiceRequest mapSectionRequest, int rowNumber, int limbCount, int valueCount)
+		private (FP31Vectors zRs, FP31Vectors zIs) GetZValues(MapSectionVectors mapSectionVectors, int rowNumber, int limbCount, int valueCount)
 		{
 			var zRs = new FP31Vectors(limbCount, valueCount);
 			var zIs = new FP31Vectors(limbCount, valueCount);

@@ -366,7 +366,6 @@ namespace MapSectionProviderLib
 
 			try
 			{
-
 				if (mapSectionResponse?.MapSectionVectors != null)
 				{
 					var mapSectionValues = ConvertVecToVals(mapSectionResponse.MapSectionVectors);
@@ -386,6 +385,7 @@ namespace MapSectionProviderLib
 				if (!response.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
 				{
 					var newCopyOfTheResponse = Duplicate(response);
+					newCopyOfTheResponse.MapSectionZVectors = response.MapSectionZVectors;
 					_mapSectionPersistProcessor.AddWork(newCopyOfTheResponse);
 				}
 
