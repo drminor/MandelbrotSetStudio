@@ -32,7 +32,9 @@ namespace MSS.Types
 
 		public void Load(MapSectionVectors mapSectionVectors)
 		{
-			var counts = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.CountVectors);
+			//var counts = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.CountVectors);
+
+			var counts = MemoryMarshal.Cast<byte, int>(mapSectionVectors.Counts);
 
 			for (var i = 0; i < Length; i++)
 			{

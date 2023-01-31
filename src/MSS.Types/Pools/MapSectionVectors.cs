@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -7,49 +8,87 @@ namespace MSS.Types
 {
 	public class MapSectionVectors : IPoolable
 	{
+		private const int VALUE_SIZE = 4;
+
 		#region Constructor
 
-		public MapSectionVectors(SizeInt blockSize)
+		public MapSectionVectors(SizeInt blockSize) : this(blockSize, new byte[blockSize.NumberOfCells * VALUE_SIZE])
+		{ }
+
+		public MapSectionVectors(SizeInt blockSize, byte[] counts)
 		{
 			BlockSize = blockSize;
-			Length = blockSize.NumberOfCells;
+			ValueCount = blockSize.NumberOfCells;
+			ValuesPerRow = blockSize.Width;
+			Lanes = Vector256<uint>.Count;
+			VectorsPerRow = BlockSize.Width / Lanes;
 
-			CountVectors = new Vector256<int>[TotalVectorCount];
-			CountMems = new Memory<Vector256<int>>(CountVectors);
+			BytesPerRow = ValuesPerRow * VALUE_SIZE;
+			TotalByteCount = ValueCount * VALUE_SIZE;
+
+			Debug.Assert(counts.Length == TotalByteCount, $"The length of counts does not equal the {ValueCount} * {VALUE_SIZE} (values/block * bytes/value) .");
+
+			Counts = counts;
+
+			//CountVectors = new Vector256<int>[TotalVectorCount];
+			//CountMems = new Memory<Vector256<int>>(CountVectors);
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public int Lanes => Vector256<int>.Count;
-		public int Length { get; init; }
-		public int TotalVectorCount => Length / Lanes;
-
 		public SizeInt BlockSize { get; init; }
-		public int VectorsPerRow => BlockSize.Width / Lanes;
+		public int ValueCount { get; init; }
+		public int Lanes {get; init; }
 
-		public Vector256<int>[] CountVectors;
-		public Memory<Vector256<int>> CountMems;
+		public int ValuesPerRow { get; init; }
+		public int BytesPerRow { get; init; }
+		public int TotalByteCount { get; init; }
+
+		public byte[] Counts { get; init; }
+
+		//public int TotalVectorCount => ValueCount / Lanes;
+		public int VectorsPerRow { get; init; } 
+
+		//public Vector256<int>[] CountVectors;
+		//public Memory<Vector256<int>> CountMems;
 
 		#endregion
 
 		#region Methods
 
-		public void UpdateCountsFrom(ushort[] counts)
+		public void FillCountsRow(Vector256<int>[] mantissas, int rowNumber)
 		{
-			var dest = MemoryMarshal.Cast<Vector256<int>, int>(CountVectors);
+			var sourceStartIndex = BytesPerRow * rowNumber;
+			var source = new Span<byte>(Counts, sourceStartIndex, BytesPerRow);
 
-			for (var i = 0; i < Length; i++)
-			{
-				dest[i] = counts[i];
-			}
+			Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas);
+			source.CopyTo(destinationByteSpan);
 		}
+
+		public void UpdateCountsRowFrom(Vector256<int>[] mantissas, int rowNumber)
+		{
+			var source = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas).ToArray();
+			var destinationStartIndex = BytesPerRow * rowNumber;
+			Array.Copy(source, 0, Counts, destinationStartIndex, BytesPerRow);
+		}
+
+		//public void UpdateCountsFromOld(ushort[] counts)
+		//{
+		//	var dest = MemoryMarshal.Cast<Vector256<int>, int>(CountVectors);
+
+		//	for (var i = 0; i < ValueCount; i++)
+		//	{
+		//		dest[i] = counts[i];
+		//	}
+		//}
 
 		// IPoolable Support
 		void IPoolable.ResetObject()
 		{
-			Array.Clear(CountVectors, 0, TotalVectorCount);
+			//Array.Clear(CountVectors, 0, TotalVectorCount);
+			Array.Clear(Counts, 0, TotalByteCount);
 		}
 
 		void IPoolable.CopyTo(object obj)
@@ -66,7 +105,8 @@ namespace MSS.Types
 
 		public void CopyTo(MapSectionVectors mapSectionVectors)
 		{
-			CountMems.CopyTo(mapSectionVectors.CountMems);
+			//CountMems.CopyTo(mapSectionVectors.CountMems);
+			Array.Copy(Counts, mapSectionVectors.Counts, TotalByteCount);
 		}
 
 		#endregion

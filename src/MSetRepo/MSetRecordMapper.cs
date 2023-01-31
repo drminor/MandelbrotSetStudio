@@ -8,8 +8,6 @@ using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
 
 namespace MSetRepo
 {
@@ -33,12 +31,12 @@ namespace MSetRepo
 	{
 		private readonly DtoMapper _dtoMapper;
 
-		#region Project - Subdivison
-
 		public MSetRecordMapper(DtoMapper dtoMapper)
 		{
 			_dtoMapper = dtoMapper;
 		}
+		
+		#region Public Methods
 		
 		public Project MapFrom(ProjectRecord target)
 		{
@@ -223,16 +221,16 @@ namespace MSetRepo
 
 		#endregion
 
-		#region MapSection
+		#region Public Methods - MapSection
 
-		/// <summary>
-		/// Take a response from the MEngineService and prepare it for storing in the repo.
-		/// </summary>
-		/// <param name="source"></param>
-		/// <returns></returns>
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
 			var blockPositionDto = _dtoMapper.MapTo(source.BlockPosition);
+
+			if (source.MapSectionVectors == null)
+			{
+				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
+			}
 
 			var result = new MapSectionRecord
 				(
@@ -245,8 +243,10 @@ namespace MSetRepo
 				BlockPosYLo: blockPositionDto.Y[1],
 
 				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
-				Counts: GetBytes(source.MapSectionValues?.Counts),
-				ZValues: GetZValues(source)
+
+				//Counts: GetBytes(source.MapSectionValues?.Counts),
+				Counts: source.MapSectionVectors.Counts,
+				ZValues: source.MapSectionZVectors == null ? null : _dtoMapper.MapTo(source.MapSectionZVectors)
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
@@ -269,14 +269,10 @@ namespace MSetRepo
 				jobOwnerType: JobOwnerType.Undetermined,
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
-				mapCalcSettings: target.MapCalcSettings
+				mapCalcSettings: target.MapCalcSettings,
+				mapSectionVectors: new MapSectionVectors(RMapConstants.BLOCK_SIZE, target.Counts), // TODO: Add BlockSize to the MapSectionRecordJustCounts class.
+				mapSectionZVectors: target.ZValues != null && !target.ZValues.IsEmpty ? _dtoMapper.MapFrom(target.ZValues) : null
 			);
-
-			if (!target.ZValues.IsEmpty)
-			{
-				var zValues = target.ZValues;
-				result.MapSectionZVectors = new MapSectionZVectors(zValues.BlockSize, zValues.LimbCount, zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
-			}
 
 			return result;
 		}
@@ -292,19 +288,11 @@ namespace MSetRepo
 				jobOwnerType: JobOwnerType.Poster,
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
-				mapCalcSettings: target.MapCalcSettings
+				mapCalcSettings: target.MapCalcSettings,
+				mapSectionVectors: new MapSectionVectors(RMapConstants.BLOCK_SIZE, target.Counts) // TODO: Add BlockSize to the MapSectionRecordJustCounts class.
 			);
 
-			//FilluShortsFromBytes(target.Counts, buf.Counts);
-			//result.MapSectionValues = buf;
-
 			return result;
-		}
-
-		public void SetMapSectionValues(MapSectionResponse mapSectionResponse, MapSectionValues buf, byte[] counts)
-		{
-			FilluShortsFromBytes(counts, buf.Counts);
-			mapSectionResponse.MapSectionValues = buf;
 		}
 
 		private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
@@ -320,71 +308,76 @@ namespace MSetRepo
 			return result;
 		}
 
-		private ZValues GetZValues(MapSectionResponse mapSectionResponse)
-		{
-			var zVectors = mapSectionResponse.MapSectionZVectors;
+		//public void SetMapSectionValues(MapSectionResponse mapSectionResponse, MapSectionValues buf, byte[] counts)
+		//{
+		//	FilluShortsFromBytes(counts, buf.Counts);
+		//	mapSectionResponse.MapSectionValues = buf;
+		//}
 
-			if (zVectors == null)
-			{
-				return new ZValues();
-			}
+		//private ZValues GetZValues(MapSectionResponse mapSectionResponse)
+		//{
+		//	var zVectors = mapSectionResponse.MapSectionZVectors;
 
-			var zValues = new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis);
-			zValues.HasEscapedFlags = zVectors.HasEscapedFlags;
+		//	if (zVectors == null)
+		//	{
+		//		return new ZValues();
+		//	}
 
-			return zValues;
-		}
+		//	var zValues = new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis);
+		//	zValues.HasEscapedFlags = zVectors.HasEscapedFlags;
 
-		private byte[] GetBytes(ushort[]? uShorts)
-		{
-			if (uShorts == null)
-			{
-				return new byte[0];
-			}
+		//	return zValues;
+		//}
 
-			var result = new byte[uShorts.Length * 2];
-			MemoryMarshal.Cast<ushort, byte>(uShorts).CopyTo(result);
+		//private byte[] GetBytes(ushort[]? uShorts)
+		//{
+		//	if (uShorts == null)
+		//	{
+		//		return new byte[0];
+		//	}
 
-			return result;
-		}
+		//	var result = MemoryMarshal.Cast<ushort, byte>(uShorts).ToArray();
 
-		private byte[] GetBytes(bool[]? bools)
-		{
-			if (bools == null)
-			{
-				return new byte[0];
-			}
+		//	return result;
+		//}
 
-			var result = new byte[bools.Length];
+		//private byte[] GetBytes(bool[]? bools)
+		//{
+		//	if (bools == null)
+		//	{
+		//		return new byte[0];
+		//	}
 
-			MemoryMarshal.Cast<bool, byte>(bools).CopyTo(result);
+		//	var result = new byte[bools.Length];
 
-			return result;
-		}
+		//	MemoryMarshal.Cast<bool, byte>(bools).CopyTo(result);
 
-		private void FilluShortsFromBytes(byte[] raw, ushort[] destination)
-		{
-			var rawLength = raw.Length / 2;
+		//	return result;
+		//}
 
-			for(var i = 0; i < rawLength; i++)
-			{
-				destination[i] = BitConverter.ToUInt16(raw, i * 2);
-			}
+		//private void FilluShortsFromBytes(byte[] raw, ushort[] destination)
+		//{
+		//	var rawLength = raw.Length / 2;
 
-			//return result;
-		}
+		//	for(var i = 0; i < rawLength; i++)
+		//	{
+		//		destination[i] = BitConverter.ToUInt16(raw, i * 2);
+		//	}
 
-		private void FillBoolsFromBytes(byte[] raw, bool[] destination)
-		{
-			for (var i = 0; i < raw.Length; i++)
-			{
-				destination[i] = BitConverter.ToBoolean(raw, i);
-			}
-		}
+		//	//return result;
+		//}
+
+		//private void FillBoolsFromBytes(byte[] raw, bool[] destination)
+		//{
+		//	for (var i = 0; i < raw.Length; i++)
+		//	{
+		//		destination[i] = BitConverter.ToBoolean(raw, i);
+		//	}
+		//}
 
 		#endregion
 
-		#region IMapper<Shape, ShapeRecord> Support
+		#region Public Methods - PointInt, SizeInt, RPoint, etc.
 
 		public PointIntRecord MapTo(PointInt source)
 		{

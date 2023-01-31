@@ -17,16 +17,16 @@ namespace MEngineDataContracts
 
 		public MapSectionServiceResponse(MapSectionServiceRequest mapSectionRequest)
 			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
-				  mapSectionRequest.MapCalcSettings, null, null)
+				  mapSectionRequest.MapCalcSettings/*, null*/, null)
 		{ }
 
-		public MapSectionServiceResponse(MapSectionServiceRequest mapSectionRequest, MapSectionVectors mapSectionVectors, double[] zValues)
+		public MapSectionServiceResponse(MapSectionServiceRequest mapSectionRequest/*, MapSectionVectors mapSectionVectors*/, double[] zValues)
 			: this(mapSectionRequest.MapSectionId, mapSectionRequest.OwnerId, mapSectionRequest.JobOwnerType, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition,
-				  mapSectionRequest.MapCalcSettings, mapSectionVectors, zValues)
+				  mapSectionRequest.MapCalcSettings/*, mapSectionVectors*/, zValues)
 		{ }
 
 		public MapSectionServiceResponse(string mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition,
-			MapCalcSettings mapCalcSettings, MapSectionVectors mapSectionVectors, double[] zValues)
+			MapCalcSettings mapCalcSettings/*, MapSectionVectors mapSectionVectors*/, double[] zValues)
 		{
 			MapSectionId = mapSectionId;
 			OwnerId = ownerId;
@@ -34,7 +34,7 @@ namespace MEngineDataContracts
 			SubdivisionId = subdivisionId;
 			BlockPosition = blockPosition;
 			MapCalcSettings = mapCalcSettings;
-			MapSectionVectors = mapSectionVectors;
+			//MapSectionVectors = mapSectionVectors;
 			ZValues = zValues;
 			IncludeZValues = zValues != null;
 			RequestCancelled = false;
@@ -76,7 +76,7 @@ namespace MEngineDataContracts
 		[DataMember(Order = 6)]										// 11
 		public MapCalcSettings MapCalcSettings { get; init; }
 
-		public MapSectionVectors MapSectionVectors { get; set; }    // 12
+		//public MapSectionVectors MapSectionVectors { get; set; }    // 12
 
 		public bool IncludeZValues { get; set; }
 		public double[] ZValuesForLocalStorage { get; init; }		// 13

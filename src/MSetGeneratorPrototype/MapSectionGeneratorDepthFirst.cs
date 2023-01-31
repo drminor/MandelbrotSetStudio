@@ -120,7 +120,10 @@ namespace MSetGeneratorPrototype
 				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 			}
 
-			mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(iterationState.HasEscapedFlags, iterationState.RowNumber);
+			iterationState.UpdateTheCountsSource(iterationState.RowNumber);
+			iterationState.UpdateTheHasEscapedFlagsSource(iterationState.RowNumber);
+
+			//mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(iterationState.HasEscapedFlags, iterationState.RowNumber);
 
 		}
 

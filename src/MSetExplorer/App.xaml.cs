@@ -106,7 +106,7 @@ namespace MSetExplorer
 			var mEngineClients = ChooseMEngineClientImplementation(CLIENT_IMPLEMENTATION, mEngineAddresses, _repositoryAdapters.MapSectionAdapter);
 
 
-			_mapLoaderManager = BuildMapLoaderManager(_mapSectionVectorsPool, _mapSectionValuesPool, _mapSectionHelper, mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter);
+			_mapLoaderManager = BuildMapLoaderManager(mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter, _mapSectionHelper);
 
 			_appNavWindow = GetAppNavWindow(_mapSectionHelper, _repositoryAdapters, _mapLoaderManager);
 			_appNavWindow.Show();
@@ -173,21 +173,21 @@ namespace MSetExplorer
 		//	return mEngineClients;
 		//}
 
-		private IMapLoaderManager BuildMapLoaderManager(MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool, MapSectionHelper mapSectionHelper, IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter)
+		private IMapLoaderManager BuildMapLoaderManager(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
 		{
-			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, mapSectionVectorsPool, mapSectionValuesPool);
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, mapSectionHelper);
 
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
 
 			return result;
 		}
 
-		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool)
+		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
 		{
 			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients, useAllCores);
 			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
-			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionValuesPool, mapSectionAdapter);
-			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionVectorsPool, mapSectionValuesPool, mapSectionAdapter, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
+			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter, mapSectionHelper);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionHelper, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
 
 			return mapSectionRequestProcessor;
 		}

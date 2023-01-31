@@ -139,7 +139,7 @@ namespace MSS.Types
 			}
 			else
 			{
-				throw new ArgumentException($"CopyTo required an object of type {nameof(MapSectionVectors)}");
+				throw new ArgumentException($"CopyTo required an object of type {nameof(MapSectionZVectors)}");
 			}
 		}
 

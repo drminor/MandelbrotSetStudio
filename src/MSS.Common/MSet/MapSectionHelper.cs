@@ -1,5 +1,4 @@
-﻿using MEngineDataContracts;
-using MSS.Common.DataTransferObjects;
+﻿using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -11,7 +10,7 @@ namespace MSS.Common
 	public class MapSectionHelper
 	{
 		private const double VALUE_FACTOR = 10000;
-		private readonly DtoMapper _dtoMapper;
+		private const int BYTES_PER_PIXEL = 4;
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionValuesPool _mapSectionValuesPool;
@@ -28,7 +27,6 @@ namespace MSS.Common
 
 		public MapSectionHelper(MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool)
 		{
-			_dtoMapper = new DtoMapper();
 			_mapSectionVectorsPool = mapSectionVectorsPool;
 			_mapSectionValuesPool = mapSectionValuesPool;
 
@@ -37,62 +35,14 @@ namespace MSS.Common
 			_sourceStride = _blockSize.Width;
 			_maxRowIndex = _blockSize.Height - 1;
 
-			_pixelArraySize = _blockSize.NumberOfCells * 4;
-			_pixelStride = _sourceStride * 4;
+			_pixelArraySize = _blockSize.NumberOfCells * BYTES_PER_PIXEL;
+			_pixelStride = _sourceStride * BYTES_PER_PIXEL;
 
 		}
 
 		#endregion
 
 		public long NumberOfCountValSwitches { get; private set; }
-
-		public void ReturnMapSection(MapSection mapSection)
-		{
-			if (mapSection.MapSectionValues != null)
-			{
-				if (_mapSectionValuesPool.Free(mapSection.MapSectionValues))
-				{
-					//mapSection.MapSectionValues = null;
-				}
-				else
-				{
-					//mapSection.MapSectionValues.Dispose();
-				}
-			}
-
-			//mapSection.Dispose();
-		}
-
-		//public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
-		//{
-		//	if (mapSectionRequest.MapSectionVectors != null)
-		//	{
-		//		if (!_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors))
-		//		{
-		//			mapSectionRequest.MapSectionVectors.Dispose();
-		//		}
-
-		//		mapSectionRequest.MapSectionVectors = null;
-		//	}
-
-		//	//mapSectionRequest.Dispose();
-		//}
-
-		//public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
-		//{
-		//	if (mapSectionResponse.MapSectionVectors != null)
-		//	{
-		//		if (!_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors))
-		//		{
-		//			mapSectionResponse.MapSectionVectors.Dispose();
-		//		}
-
-		//		mapSectionResponse.MapSectionVectors = null;
-		//	}
-
-		//	//mapSectionRequest.Dispose();
-		//}
-
 
 		#region Create MapSectionRequests
 
@@ -238,78 +188,90 @@ namespace MSS.Common
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
-			//var mapSectionValues = _mapSectionValuesPool.Obtain();
-			//mapSectionValues.Load(mapSectionResponse.MapSectionVectors);
-
 			var mapSection = new MapSection(jobId, mapSectionResponse.MapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
 				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
 
 			mapSectionResponse.MapSectionValues = null;
-
-			//ReturnMapSectionRequest(mapSectionRequest);
-			//ReturnMapSectionResponse(mapSectionResponse);
 
 			return mapSection;
 		}
 
 		public byte[] GetPixelArray(MapSectionValues mapSectionValues, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
+			// Currently EscapeVelocities are not supported.
+			useEscapeVelocities = false;
+
 			Debug.Assert(blockSize == _blockSize, "The block sizes do not match.");
 
-			//var numberofCells = blockSize.NumberOfCells;
 			var result = new byte[_pixelArraySize];
-
 			var counts = mapSectionValues.Counts;
-			var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
-
 			var previousCountVal = counts[0];
 
-			for (var rowPtr = 0; rowPtr < _rowCount; rowPtr++)
+			var sourcePtr = 0;
+			var resultRowPtr = invert ? _maxRowIndex * _pixelStride : 0;
+			var resultRowPtrIncrement = invert ? -1 * _pixelStride : _pixelStride;
+			var sourcePtrUpperBound = _rowCount * _sourceStride;
+
+			if (useEscapeVelocities)
 			{
-				// Calculate the array index for the beginning of this destination and source row.
-				//var resultRowPtr = GetResultRowPtr(blockSize.Height - 1, rowPtr, invert);
-				var resultRowPtr = invert ? _maxRowIndex - rowPtr : rowPtr;
-
-				var curSourcePtr = rowPtr * _sourceStride;
-				var curResultPtr = resultRowPtr * _pixelStride;
-
-				for (var colPtr = 0; colPtr < _sourceStride; colPtr++)
+				var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
+				for (; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
 				{
-					var countVal = counts[curSourcePtr];
-
-					if (countVal != previousCountVal)
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < _sourceStride; colPtr++)
 					{
-						NumberOfCountValSwitches++;
-						previousCountVal = countVal;
+						var countVal = counts[sourcePtr];
+						TrackValueSwitches(countVal, previousCountVal);
+
+						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
+						CheckEscapeVelocity(escapeVelocity);
+
+						colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(result, resultPtr, BYTES_PER_PIXEL));
+
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
 					}
-
-					var escapeVelocity = useEscapeVelocities ? escapeVelocities[curSourcePtr] / VALUE_FACTOR : 0;
-
-					if (escapeVelocity > 1.0)
+				}
+			}
+			else
+			{
+				for (; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+				{
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < _sourceStride; colPtr++)
 					{
-						Debug.WriteLine($"The Escape Velocity is greater than 1.0");
+						var countVal = counts[sourcePtr];
+						TrackValueSwitches(countVal, previousCountVal);
+
+						colorMap.PlaceColor(countVal, escapeVelocity:0, new Span<byte>(result, resultPtr, BYTES_PER_PIXEL));
+						
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
 					}
-
-					escapeVelocity = 0;
-					//var ccv = Convert.ToUInt16(countVal);
-
-					colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(result, curResultPtr, 4));
-					curResultPtr += 4;
-
-					curSourcePtr++;
 				}
 			}
 
 			return result;
 		}
 
-		//private int GetResultRowPtr(int maxRowIndex, int rowPtr, bool invert)
-		//{
-		//	// The Source's origin is at the bottom, left.
-		//	// If inverted, the Destination's origin is at the top, left, otherwise bottom, left. 
-		//	var result = invert ? maxRowIndex - rowPtr : rowPtr;
-		//	return result;
-		//}
+		[Conditional("DEBUG2")]
+		private void TrackValueSwitches(ushort countVal, ushort previousCountVal)
+		{
+			if (countVal != previousCountVal)
+			{
+				NumberOfCountValSwitches++;
+				previousCountVal = countVal;
+			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckEscapeVelocity(double escapeVelocity)
+		{
+			if (escapeVelocity > 1.0)
+			{
+				Debug.WriteLine($"The Escape Velocity is greater than 1.0");
+			}
+		}
 
 		private IHistogram BuildHistogram(ushort[] counts)
 		{
@@ -326,6 +288,89 @@ namespace MSS.Common
 					yield return new PointInt(xBlockPtr, yBlockPtr);
 				}
 			}
+		}
+
+		#endregion
+
+		#region MapSectionValues / MapSectionVectors
+
+		public MapSectionVectors ObtainMapSectionVectors()
+		{
+			var result = _mapSectionVectorsPool.Obtain();
+			return result;
+		}
+
+		public MapSectionValues ObtainMapSectionValues()
+		{
+			var result = _mapSectionValuesPool.Obtain();
+			return result;
+		}
+
+		public void ReturnMapSection(MapSection mapSection)
+		{
+			if (mapSection.MapSectionValues != null)
+			{
+				if (_mapSectionValuesPool.Free(mapSection.MapSectionValues))
+				{
+					//mapSection.MapSectionValues = null;
+				}
+				else
+				{
+					//mapSection.MapSectionValues.Dispose();
+				}
+			}
+
+			//mapSection.Dispose();
+		}
+
+		public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
+		{
+			if (mapSectionRequest.MapSectionVectors != null)
+			{
+				if (!_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors))
+				{
+					mapSectionRequest.MapSectionVectors.Dispose();
+				}
+
+				mapSectionRequest.MapSectionVectors = null;
+			}
+
+			//mapSectionRequest.Dispose();
+		}
+
+		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
+		{
+			if (mapSectionResponse.MapSectionVectors != null)
+			{
+				if (!_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors))
+				{
+					mapSectionResponse.MapSectionVectors.Dispose();
+				}
+
+				mapSectionResponse.MapSectionVectors = null;
+			}
+
+			//mapSectionRequest.Dispose();
+		}
+
+		public MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
+		{
+			var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId,
+				mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings);
+
+			if (mapSectionResponse.MapSectionVectors != null)
+			{
+				var newCopyOfMapSectionVectors = _mapSectionVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionVectors);
+				result.MapSectionVectors = newCopyOfMapSectionVectors;
+			}
+
+			if (mapSectionResponse.MapSectionValues != null)
+			{
+				var newCopyOfMapSectionValues = _mapSectionValuesPool.DuplicateFrom(mapSectionResponse.MapSectionValues);
+				result.MapSectionValues = newCopyOfMapSectionValues;
+			}
+
+			return result;
 		}
 
 		#endregion

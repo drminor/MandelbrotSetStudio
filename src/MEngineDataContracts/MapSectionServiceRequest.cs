@@ -43,8 +43,8 @@ namespace MEngineDataContracts
 		[DataMember(Order = 11)]
 		public MapCalcSettings MapCalcSettings { get; set; }
 
-		[DataMember(Order = 12)]
-		public MapSectionVectors MapSectionVectors { get; set; }
+		//[DataMember(Order = 12)]
+		//public MapSectionVectors MapSectionVectors { get; set; }
 
 		[DataMember(Order = 13)]
 		public double[] ZValues { get; set; }
@@ -70,10 +70,10 @@ namespace MEngineDataContracts
 
 		public bool GetIsDone()
 		{
-			if (MapSectionVectors == null)
-			{
-				return false;
-			}
+			//if (MapSectionVectors == null)
+			//{
+			//	return false;
+			//}
 
 			// TODO: Implement GetIsDone on the MapSectionRequest class.
 			//var result = !HasEscapedFlags.Any(x => !x);

@@ -111,7 +111,7 @@ namespace ProjectRepo
 
 			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
 
-			IFindFluent<MapSectionRecord, ZValues> operation = Collection.Find(filter).Project(projection1);
+			IFindFluent<MapSectionRecord, ZValues?> operation = Collection.Find(filter).Project(projection1);
 
 			var itemsFound = await operation.ToListAsync().ConfigureAwait(false);
 
@@ -149,7 +149,7 @@ namespace ProjectRepo
 
 			UpdateDefinition<MapSectionRecord> updateDefinition;
 
-			if (mapSectionRecord.ZValues.IsEmpty)
+			if (mapSectionRecord.ZValues == null || mapSectionRecord.ZValues.IsEmpty)
 			{
 				updateDefinition = Builders<MapSectionRecord>.Update
 					.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations)

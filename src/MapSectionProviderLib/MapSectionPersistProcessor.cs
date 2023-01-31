@@ -13,8 +13,9 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionPersistProcessor : IDisposable
 	{
-		private readonly MapSectionValuesPool _mapSectionValuesPool;
+		//private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
+		private readonly MapSectionHelper _mapSectionHelper;
 
 		private const int QUEUE_CAPACITY = 200;
 		private readonly CancellationTokenSource _cts;
@@ -27,9 +28,9 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionPersistProcessor(MapSectionValuesPool mapSectionValuesPool, IMapSectionAdapter mapSectionAdapter)
+		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
 		{
-			_mapSectionValuesPool = mapSectionValuesPool;
+			_mapSectionHelper = mapSectionHelper;
 			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
@@ -91,13 +92,18 @@ namespace MapSectionProviderLib
 				{
 					var mapSectionResponse = _workQueue.Take(ct);
 
-					var mapSectionValues = mapSectionResponse.MapSectionValues;
+					var mapSectionVectors = mapSectionResponse.MapSectionVectors;
 
-					if (mapSectionValues != null)
+					if (mapSectionVectors != null)
 					{
+						//if (!mapSectionResponse.RecordOnFile && mapSectionResponse.MapSectionZVectors != null)
+						//{
+						//	Debug.WriteLine($"If we have zVectors, we should also be on file. The id is {mapSectionResponse.MapSectionId}.");
+						//}
+
 						if (mapSectionResponse.RecordOnFile)
 						{
-							//Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 
 							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
 
@@ -105,17 +111,14 @@ namespace MapSectionProviderLib
 						}
 						else
 						{
-							Debug.WriteLine($"Creating MapSection with block position: {mapSectionResponse.BlockPosition}. MapSectionId: {mapSectionResponse.MapSectionId}.");
+							Debug.WriteLine($"Creating MapSection for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 							var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
 							mapSectionResponse.MapSectionId = mapSectionId.ToString();
 
 							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
 						}
 
-						if (!_mapSectionValuesPool.Free(mapSectionValues))
-						{
-							mapSectionValues.Dispose();
-						}
+						_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
 					}
 					else
 					{

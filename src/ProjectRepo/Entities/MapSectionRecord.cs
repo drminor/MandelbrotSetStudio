@@ -23,7 +23,7 @@ namespace ProjectRepo.Entities
 		//byte[] EscapeVelocities,
 		//byte[] DoneFlags,
 
-		ZValues ZValues
+		ZValues? ZValues
 		)
 	{
 		[BsonId]

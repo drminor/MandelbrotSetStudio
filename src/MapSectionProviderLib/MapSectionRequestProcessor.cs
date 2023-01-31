@@ -20,10 +20,12 @@ namespace MapSectionProviderLib
 		private const int QUEUE_CAPACITY = 10; //200;
 
 		private readonly IMapSectionAdapter _mapSectionAdapter;
+		private readonly MapSectionHelper _mapSectionHelper;
+
 		private readonly DtoMapper _dtoMapper;
 
-		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
-		private readonly MapSectionValuesPool _mapSectionValuesPool;
+		//private readonly MapSectionVectorsPool _mapSectionVectorsPool;
+		//private readonly MapSectionValuesPool _mapSectionValuesPool;
 
 		private readonly MapSectionGeneratorProcessor _mapSectionGeneratorProcessor;
 		private readonly MapSectionResponseProcessor _mapSectionResponseProcessor;
@@ -48,17 +50,19 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionRequestProcessor(MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool, IMapSectionAdapter mapSectionAdapter, 
+		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper,
 			MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
 			//_isStopped = false;
 
 			_nextJobId = 0;
 			_mapSectionAdapter = mapSectionAdapter;
+			_mapSectionHelper = mapSectionHelper;
 			_dtoMapper = new DtoMapper();
 
-			_mapSectionVectorsPool = mapSectionVectorsPool;
-			_mapSectionValuesPool = mapSectionValuesPool;	
+			//_mapSectionVectorsPool = mapSectionVectorsPool;
+			//_mapSectionValuesPool = mapSectionValuesPool;	
+
 			_mapSectionGeneratorProcessor = mapSectionGeneratorProcessor;
 			_mapSectionResponseProcessor = mapSectionResponseProcessor;
 			_mapSectionPersistProcessor = mapSectionPersistProcessor;
@@ -186,6 +190,7 @@ namespace MapSectionProviderLib
 
 					if (mapSectionResponse != null)
 					{
+						ConvertVecToVals(mapSectionResponse);
 						mapSectionWorkRequest.Response = mapSectionResponse;
 						_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
 					}
@@ -241,23 +246,21 @@ namespace MapSectionProviderLib
 				else
 				{
 					// Update the request with the values (in progress) retrieved from the repository.
-					request.MapSectionId = mapSectionResponse.MapSectionId;
-					request.IncreasingIterations = true;
 
-					var mapSectionId = ObjectId.Parse(request.MapSectionId);
+					var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
 					var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
 
 					if (zValues != null)
 					{
-						request.MapSectionZVectors = new MapSectionZVectors(zValues.BlockSize, zValues.LimbCount, zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
+						request.MapSectionZVectors = _dtoMapper.MapFrom(zValues);
 					}
 
-					var mapSectionVectors = _mapSectionVectorsPool.Obtain();
-					if (mapSectionResponse.MapSectionValues != null)
-					{
-						mapSectionVectors.UpdateCountsFrom(mapSectionResponse.MapSectionValues.Counts);
-					}
-					request.MapSectionVectors = mapSectionVectors;
+					Debug.Assert(mapSectionResponse.MapSectionVectors != null, "The request processor fetched a MapSectionResponse from the repo which has no MapSectionVectors.");
+
+					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
+
+					request.MapSectionId = mapSectionId.ToString();
+					request.IncreasingIterations = true;
 
 					Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
 					QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
@@ -269,7 +272,7 @@ namespace MapSectionProviderLib
 				request.MapSectionId = null;
 
 				// Create a empty buffer to hold the results.
-				var mapSectionVectors = _mapSectionVectorsPool.Obtain();
+				var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
 				request.MapSectionVectors = mapSectionVectors;
 
 				Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated.");
@@ -280,7 +283,7 @@ namespace MapSectionProviderLib
 
 		private bool IsResponseComplete(MapSectionResponse mapSectionResponse, int requestedIterations)
 		{
-			if (mapSectionResponse.MapSectionValues == null)
+			if (mapSectionResponse.MapSectionVectors == null)
 			{
 				return false;
 			}
@@ -335,8 +338,6 @@ namespace MapSectionProviderLib
 					// Let other's know about our request.
 					_pendingRequests.Add(mapSectionWorkRequest);
 
-					//mapSectionRequest.MapSectionVectors = new MapSectionVectors(new SizeInt(128));
-
 					var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest.JobId, mapSectionWorkRequest, HandleGeneratedResponse);
 					mapSectionGeneratorProcessor.AddWork(mapSectionGenerateRequest);
 				}
@@ -352,7 +353,7 @@ namespace MapSectionProviderLib
 			var mapSectionRequest = mapSectionWorkRequest.Request;
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
-			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct, _mapSectionValuesPool.Obtain);
+			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct);
 
 			return mapSectionResponse;
 		}
@@ -372,33 +373,47 @@ namespace MapSectionProviderLib
 
 			try
 			{
-				if (mapSectionResponse?.MapSectionVectors != null)
+				if (mapSectionResponse != null)
 				{
-					var mapSectionValues = ConvertVecToVals(mapSectionResponse.MapSectionVectors);
+					if (mapSectionResponse.MapSectionVectors != null)
+					{
+						if (!mapSectionResponse.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
+						{
+							var newCopyOfTheResponse = _mapSectionHelper.Duplicate(mapSectionResponse);
+							newCopyOfTheResponse.MapSectionZVectors = mapSectionResponse.MapSectionZVectors;
 
-					mapSectionResponse.MapSectionValues = mapSectionValues;
-					mapSectionResponse.MapSectionVectors = null;
+
+							if (!mapSectionResponse.RecordOnFile)
+							{
+								Debug.WriteLine($"Preparing to save the response, it is not on file. The id is {mapSectionResponse.MapSectionId}.");
+							}
+
+							if (mapSectionWorkRequest.Request.IncreasingIterations)
+							{
+								Debug.WriteLine($"Preparing to save the response, the request's IncreasingIterations is true. The id is {mapSectionResponse.MapSectionId}. OnFile: {mapSectionResponse.RecordOnFile}.");
+							}
+
+							_mapSectionPersistProcessor.AddWork(newCopyOfTheResponse);
+						}
+
+						ConvertVecToVals(mapSectionResponse);
+					}
+					else
+					{
+						Debug.WriteLine("The MapSectionResponse has no MapSectionVectors in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
+					}
 				}
 				else
 				{
-					Debug.WriteLine("The MapSectionResponse has no MapSectionVectors in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
+					Debug.WriteLine("The MapSectionResponse is null in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
 				}
 
-				var response = mapSectionResponse ?? new MapSectionResponse(mapSectionWorkRequest.Request);
-
-				mapSectionWorkRequest.Response = response;
-
-				if (!response.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
-				{
-					var newCopyOfTheResponse = Duplicate(response);
-					newCopyOfTheResponse.MapSectionZVectors = response.MapSectionZVectors;
-					_mapSectionPersistProcessor.AddWork(newCopyOfTheResponse);
-				}
+				mapSectionWorkRequest.Response = mapSectionResponse ?? new MapSectionResponse(mapSectionWorkRequest.Request);
 
 				workList.Add(mapSectionWorkRequest);
 
 				var pendingRequests = GetPendingRequests(mapSectionWorkRequest.Request);
-				//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionRequest}");
+				Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkRequest.Request}");
 
 				if (pendingRequests.Count > 0)
 				{
@@ -424,7 +439,7 @@ namespace MapSectionProviderLib
 				{
 					if (workItem != mapSectionWorkRequest)
 					{
-						var ourResponse = mapSectionResponse != null ? Duplicate(mapSectionResponse) : new MapSectionResponse(workItem.Request);
+						var ourResponse = mapSectionResponse != null ? _mapSectionHelper.Duplicate(mapSectionResponse) : new MapSectionResponse(workItem.Request);
 						workItem.Response = ourResponse;
 						workList.Add(workItem);
 					}
@@ -441,32 +456,40 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private MapSectionValues ConvertVecToVals(MapSectionVectors vectors)
+		private void ConvertVecToVals(MapSectionResponse mapSectionResponse)
 		{
-			var result = _mapSectionValuesPool.Obtain();
-			result.Load(vectors);
+			var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+			if (mapSectionVectors == null) return;
 
-			if (!_mapSectionVectorsPool.Free(vectors))
+			if (!mapSectionResponse.RequestCancelled)
 			{
-				vectors.Dispose();
+				var mapSectionValues = _mapSectionHelper.ObtainMapSectionValues();
+				mapSectionValues.Load(mapSectionVectors);
+				mapSectionResponse.MapSectionValues = mapSectionValues;
 			}
 
-			return result;
+			_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
 		}
 
-		private MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
-		{
-			var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId, 
-				mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings);
+		//private MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
+		//{
+		//	var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId, 
+		//		mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings);
 
-			if (mapSectionResponse.MapSectionValues != null)
-			{
-				var newCopyOfMapSectionValues = _mapSectionValuesPool.DuplicateFrom(mapSectionResponse.MapSectionValues);
-				result.MapSectionValues = newCopyOfMapSectionValues;
-			}
+		//	if (mapSectionResponse.MapSectionVectors != null)
+		//	{
+		//		var newCopyOfMapSectionVectors = _mapSectionVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionVectors);
+		//		result.MapSectionVectors = newCopyOfMapSectionVectors;
+		//	}
 
-			return result;
-		}
+		//	if (mapSectionResponse.MapSectionValues != null)
+		//	{
+		//		var newCopyOfMapSectionValues = _mapSectionValuesPool.DuplicateFrom(mapSectionResponse.MapSectionValues);
+		//		result.MapSectionValues = newCopyOfMapSectionValues;
+		//	}
+
+		//	return result;
+		//}
 
 		// Returns true, if there is a "Primary" Request already in the queue
 		private bool ThereIsAMatchingRequest(MapSectionRequest mapSectionRequest)

@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 
 namespace MSS.Common.DataTransferObjects
 {
@@ -77,6 +78,20 @@ namespace MSS.Common.DataTransferObjects
 		//	var result = new RVector(bVals, target.Exponent);
 		//	return result;
 		//}
+
+
+		public ZValues MapTo(MapSectionZVectors mapSectionZVectors)
+		{
+			var result = new ZValues(mapSectionZVectors.BlockSize, mapSectionZVectors.LimbCount, mapSectionZVectors.Zrs, mapSectionZVectors.Zis, mapSectionZVectors.HasEscapedFlags);
+			return result;
+		}
+
+		public MapSectionZVectors MapFrom(ZValues zValues)
+		{
+			var result = new MapSectionZVectors(zValues.BlockSize, zValues.LimbCount, zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
+			return result;
+		}
+
 
 	}
 }

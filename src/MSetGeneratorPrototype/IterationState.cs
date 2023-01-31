@@ -16,15 +16,18 @@ namespace MSetGeneratorPrototype
 		{
 			_mapSectionVectors = mapSectionVectors;
 			_mapSectionZVectors = mapSectionZVectors;
-			VectorCount = _mapSectionVectors.VectorsPerRow;
+
+			VectorCount = mapSectionVectors.VectorsPerRow;
 
 			RowNumber = -1;
 
 			HasEscapedFlags = new Vector256<int>[_mapSectionZVectors.ValuesPerRow];
-
 			_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, 0);
 
-			Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, 0, VectorCount);
+			Counts = new Vector256<int>[_mapSectionVectors.VectorsPerRow];
+			mapSectionVectors.FillCountsRow(Counts, 0);
+
+			//Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, 0, VectorCount);
 
 			DoneFlags = new Vector256<int>[VectorCount];
 			UnusedCalcs = new Vector256<int>[VectorCount];
@@ -45,7 +48,7 @@ namespace MSetGeneratorPrototype
 		public int RowNumber { get; private set; }
 
 		public Vector256<int>[] HasEscapedFlags { get; private set; }
-		public Span<Vector256<int>> Counts { get; private set; }
+		public Vector256<int>[] Counts { get; private set; }
 
 		public Vector256<int>[] DoneFlags { get; private set; }
 		public int[] InPlayList { get; private set; }
@@ -62,6 +65,7 @@ namespace MSetGeneratorPrototype
 			if (RowNumber != -1)
 			{
 				UpdateTheHasEscapedFlagsSource(RowNumber);
+				UpdateTheCountsSource(RowNumber);
 			}
 
 			RowNumber = rowNumber;
@@ -70,7 +74,8 @@ namespace MSetGeneratorPrototype
 			_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, rowNumber);
 
 			// Get the counts
-			Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, rowNumber * VectorCount, VectorCount);
+			//Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, rowNumber * VectorCount, VectorCount);
+			_mapSectionVectors.FillCountsRow(Counts, rowNumber);
 
 			Array.Clear(DoneFlags, 0, DoneFlags.Length);
 			Array.Clear(UnusedCalcs, 0, UnusedCalcs.Length);
@@ -89,6 +94,11 @@ namespace MSetGeneratorPrototype
 		public void UpdateTheHasEscapedFlagsSource(int rowNumber)
 		{
 			_mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(HasEscapedFlags, rowNumber);
+		}
+
+		public void UpdateTheCountsSource(int rowNumber)
+		{
+			_mapSectionVectors.UpdateCountsRowFrom(Counts, rowNumber);
 		}
 
 		public long GetTotalUnusedCalcs()
