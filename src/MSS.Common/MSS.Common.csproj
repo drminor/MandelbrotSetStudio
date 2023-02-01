@@ -19,11 +19,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="APValues\SpanClassExp.cs" />
     <Compile Remove="RMap\JobHelperNotUsed.cs" />
     <Compile Remove="RMap\RMapHelperOldMethods.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="APValues\SpanClassExp.cs" />
     <None Include="RMap\RMapHelperOldMethods.cs" />
   </ItemGroup>
 

@@ -65,15 +65,14 @@ namespace MSetGeneratorPrototype
 			{
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _fp31VecMath.LimbCount);
-				var iterationState = new IterationStateDepthFirst(mapSectionVectors, mapSectionZVectors);
+				var iterationState = new IterationStateDepthFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				GenerateMapSection(_iterator, iterationState, coords, mapCalcSettings);
+				var allRowsHaveEscaped =  GenerateMapSection(_iterator, iterationState, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				result = new MapSectionResponse(mapSectionRequest);
-				result.MapSectionVectors = mapSectionVectors;
-				result.MapSectionZVectors = mapSectionZVectors;
+				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
+
 				//result.MathOpCounts = _iterator.MathOpCounts;
 			}
 
@@ -81,8 +80,10 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private void GenerateMapSection(IteratorSimdDepthFirst iterator, IterationStateDepthFirst iterationState, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private bool GenerateMapSection(IteratorSimdDepthFirst iterator, IterationStateDepthFirst iterationState, IteratorCoords coords, MapCalcSettings mapCalcSettings)
 		{
+			var allRowsHaveEscaped = true;
+
 			var blockSize = iterationState.BlockSize;
 			var rowCount = blockSize.Height;
 			var stride = (byte)blockSize.Width;
@@ -99,29 +100,53 @@ namespace MSetGeneratorPrototype
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
-				iterationState.SetRowNumber(rowNumber);
+				var allRowSamplesAreDone = iterationState.SetRowNumber(rowNumber, targetIterationsVector);
+				if (allRowSamplesAreDone)
+				{
+					continue;
+				}
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
 				iterationState.Cis.UpdateFrom(yPoint);
 
-				iterator.ZValuesAreZero = true;
+				iterator.ZValuesAreZero = iterationState.ZValuesAreZero;
+
+				var allRowSamplesHaveEscaped = true;
 
 				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length; idxPtr++)
 				{
 					var idx = iterationState.InPlayList[idxPtr];
-					GenerateMapCol(idx, iterator, ref iterationState, targetIterationsVector);
+					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState, targetIterationsVector);
+
+					if (!allSamplesHaveEscaped)
+					{
+						allRowSamplesHaveEscaped = false;
+					}
+				}
+
+				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
+
+				if (allRowSamplesHaveEscaped)
+				{
+					Debug.WriteLine($"All samples have escaped for row: {rowNumber}, Screen Position: {coords.ScreenPos}.");
+				}
+				else
+				{
+					allRowsHaveEscaped = false;
 				}
 
 				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 			}
+
+			return allRowsHaveEscaped;
 		}
 
 		#endregion
 
 		#region Generate One Vector
 
-		private void GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationStateDepthFirst iterationState, Vector256<int> targetIterationsVector)
+		private bool GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationStateDepthFirst iterationState, Vector256<int> targetIterationsVector)
 		{
 			iterationState.Crs.FillLimbSet(idx, _crs);
 			iterationState.Cis.FillLimbSet(idx, _cis);
@@ -176,6 +201,13 @@ namespace MSetGeneratorPrototype
 
 			iterationState.Zrs.UpdateFromLimbSet(idx, _zrs);
 			iterationState.Zis.UpdateFromLimbSet(idx, _zis);
+
+			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV);
+
+			var result = compositeAllEscaped == -1;
+
+			return result;
+
 		}
 
 		#endregion

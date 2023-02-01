@@ -16,9 +16,10 @@ namespace MSS.Types.MSet
 			Zrs = new byte[0];
 			Zis = new byte[0];
 			HasEscapedFlags = new byte[0];
+			RowsHasEscaped = new byte[0];
 		}
 
-		public ZValues(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapeFlags)
+		public ZValues(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapeFlags, byte[] rowHasEscaped)
 		{
 			BlockWidth = blockSize.Width;
 			BlockHeight = blockSize.Height;
@@ -34,7 +35,8 @@ namespace MSS.Types.MSet
 			Zrs = zrs;
 			Zis = zis;
 
-			HasEscapedFlags = hasEscapeFlags; // new byte[blockSize.NumberOfCells];
+			HasEscapedFlags = hasEscapeFlags;
+			RowsHasEscaped = rowHasEscaped;
 		}
 
 		#endregion
@@ -48,6 +50,7 @@ namespace MSS.Types.MSet
 		public byte[] Zrs { get; private set; }
 		public byte[] Zis { get; private set; }
 		public byte[] HasEscapedFlags { get; set; }
+		public byte[] RowsHasEscaped { get; init; }
 
 		//// Derived properties
 		

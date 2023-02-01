@@ -14,6 +14,8 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionRequestProcessor : IDisposable
 	{
+		#region Private Properties
+
 		private const int NUMBER_OF_CONSUMERS = 2;
 		private const int QUEUE_CAPACITY = 10; //200;
 
@@ -45,6 +47,8 @@ namespace MapSectionProviderLib
 		private bool disposedValue;
 
 		//private bool _isStopped;
+
+		#endregion
 
 		#region Constructor
 
@@ -252,7 +256,7 @@ namespace MapSectionProviderLib
 					{
 						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors();
 						mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
-						request.MapSectionZVectors = _dtoMapper.MapFrom(zValues);
+						request.MapSectionZVectors = mapSectionZVectors;
 					}
 
 					Debug.Assert(mapSectionResponse.MapSectionVectors != null, "The request processor fetched a MapSectionResponse from the repo which has no MapSectionVectors.");
@@ -356,7 +360,10 @@ namespace MapSectionProviderLib
 			var mapSectionRequest = mapSectionWorkRequest.Request;
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
-			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct, _mapSectionHelper.ObtainMapSectionVectors);
+
+			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+
+			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct, mapSectionVectors);
 
 			return mapSectionResponse;
 		}
@@ -387,15 +394,15 @@ namespace MapSectionProviderLib
 							mapSectionResponse.MapSectionZVectors = null;
 
 
-							if (!mapSectionResponse.RecordOnFile)
-							{
-								Debug.WriteLine($"Preparing to save the response, it is not on file. The id is {mapSectionResponse.MapSectionId}.");
-							}
+							//if (!mapSectionResponse.RecordOnFile)
+							//{
+							//	Debug.WriteLine($"Preparing to save the response, it is not on file. The id is {mapSectionResponse.MapSectionId}.");
+							//}
 
-							if (mapSectionWorkRequest.Request.IncreasingIterations)
-							{
-								Debug.WriteLine($"Preparing to save the response, the request's IncreasingIterations is true. The id is {mapSectionResponse.MapSectionId}. OnFile: {mapSectionResponse.RecordOnFile}.");
-							}
+							//if (mapSectionWorkRequest.Request.IncreasingIterations)
+							//{
+							//	Debug.WriteLine($"Preparing to save the response, the request's IncreasingIterations is true. The id is {mapSectionResponse.MapSectionId}. OnFile: {mapSectionResponse.RecordOnFile}.");
+							//}
 
 							_mapSectionPersistProcessor.AddWork(newCopyOfTheResponse);
 						}
@@ -417,7 +424,7 @@ namespace MapSectionProviderLib
 				workList.Add(mapSectionWorkRequest);
 
 				var pendingRequests = GetPendingRequests(mapSectionWorkRequest.Request);
-				Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkRequest.Request}");
+				//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkRequest.Request}");
 
 				if (pendingRequests.Count > 0)
 				{
@@ -433,11 +440,11 @@ namespace MapSectionProviderLib
 					}
 				}
 
-				// For diagnostics only
-				if (!RequestExists(mapSectionWorkRequest.Request, pendingRequests))
-				{
-					Debug.WriteLine("WARNING: The primary request was not included in the list of pending requests.");
-				}
+				//// For diagnostics only
+				//if (!RequestExists(mapSectionWorkRequest.Request, pendingRequests))
+				//{
+				//	Debug.WriteLine("WARNING: The primary request was not included in the list of pending requests.");
+				//}
 
 				foreach (var workItem in pendingRequests)
 				{
@@ -459,41 +466,6 @@ namespace MapSectionProviderLib
 				_mapSectionResponseProcessor.AddWork(workItem);
 			}
 		}
-
-		//private void ConvertVecToVals(MapSectionResponse mapSectionResponse)
-		//{
-		//	var mapSectionVectors = mapSectionResponse.MapSectionVectors;
-		//	if (mapSectionVectors == null) return;
-
-		//	if (!mapSectionResponse.RequestCancelled)
-		//	{
-		//		var mapSectionValues = _mapSectionHelper.ObtainMapSectionValues();
-		//		mapSectionValues.Load(mapSectionVectors);
-		//		mapSectionResponse.MapSectionValues = mapSectionValues;
-		//	}
-
-		//	_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
-		//}
-
-		//private MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
-		//{
-		//	var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId, 
-		//		mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings);
-
-		//	if (mapSectionResponse.MapSectionVectors != null)
-		//	{
-		//		var newCopyOfMapSectionVectors = _mapSectionVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionVectors);
-		//		result.MapSectionVectors = newCopyOfMapSectionVectors;
-		//	}
-
-		//	if (mapSectionResponse.MapSectionValues != null)
-		//	{
-		//		var newCopyOfMapSectionValues = _mapSectionValuesPool.DuplicateFrom(mapSectionResponse.MapSectionValues);
-		//		result.MapSectionValues = newCopyOfMapSectionValues;
-		//	}
-
-		//	return result;
-		//}
 
 		// Returns true, if there is a "Primary" Request already in the queue
 		private bool ThereIsAMatchingRequest(MapSectionRequest mapSectionRequest)

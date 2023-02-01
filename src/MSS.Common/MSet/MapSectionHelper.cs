@@ -407,7 +407,7 @@ namespace MSS.Common
 		public MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
 		{
 			var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId,
-				mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings);
+				mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings, mapSectionResponse.AllPointsHaveEscaped);
 
 			if (mapSectionResponse.MapSectionVectors != null)
 			{
@@ -415,11 +415,11 @@ namespace MSS.Common
 				result.MapSectionVectors = newCopyOfMapSectionVectors;
 			}
 
-			//if (mapSectionResponse.MapSectionZVectors != null)
-			//{
-			//	var newCopyOfMapSectionZVectors = _mapSectionZVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionZVectors);
-			//	result.MapSectionZVectors = newCopyOfMapSectionZVectors;
-			//}
+			if (mapSectionResponse.MapSectionZVectors != null)
+			{
+				var newCopyOfMapSectionZVectors = _mapSectionZVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionZVectors);
+				result.MapSectionZVectors = newCopyOfMapSectionZVectors;
+			}
 
 			return result;
 		}

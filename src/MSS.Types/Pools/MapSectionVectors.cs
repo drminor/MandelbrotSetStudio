@@ -63,6 +63,12 @@ namespace MSS.Types
 			return result;
 		}
 
+		public Span<Vector256<int>> GetCountsRow(int rowNumber)
+		{
+			var result = MemoryMarshal.Cast<byte, Vector256<int>>(CountsMemory.Slice(BytesPerRow * rowNumber, BytesPerRow).Span);
+			return result;
+		}
+
 		// IPoolable Support
 		void IPoolable.ResetObject()
 		{

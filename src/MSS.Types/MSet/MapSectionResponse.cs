@@ -11,10 +11,10 @@ namespace MSS.Types.MSet
 				  jobOwnerType: JobOwnerType.Undetermined, 
 				  subdivisionId: string.Empty,
 				  blockPosition: new BigVector(),
-				  mapCalcSettings: null
+				  mapCalcSettings: null,
+				  allPointsHaveEscaped: false
 				  )
-		{
-		}
+		{ }
 
 		public MapSectionResponse(MapSectionRequest mapSectionRequest)
 			: this(
@@ -23,13 +23,33 @@ namespace MSS.Types.MSet
 				  mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
 				  mapSectionRequest.BlockPosition,
-				  mapSectionRequest.MapCalcSettings
+				  mapSectionRequest.MapCalcSettings,
+				  allPointsHaveEscaped: false
 				  )
-		{
-		}
+		{ }
 
-		public MapSectionResponse(string? mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, 
-			BigVector blockPosition, MapCalcSettings? mapCalcSettings, MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null)
+		public MapSectionResponse(MapSectionRequest mapSectionRequest,
+			bool allPointsHaveEscaped, MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null)
+			: this(
+
+				  mapSectionRequest.MapSectionId, 
+				  mapSectionRequest.OwnerId,
+				  mapSectionRequest.JobOwnerType,
+				  mapSectionRequest.SubdivisionId,
+				  mapSectionRequest.BlockPosition,
+				  mapSectionRequest.MapCalcSettings,
+				  allPointsHaveEscaped, mapSectionVectors, mapSectionZVectors
+				  )
+		{ }
+
+		public MapSectionResponse(
+			string? mapSectionId, 
+			string ownerId, 
+			JobOwnerType jobOwnerType, 
+			string subdivisionId, 
+			BigVector blockPosition,
+			MapCalcSettings? mapCalcSettings,
+			bool allPointsHaveEscaped, MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null)
 		{
 			MapSectionId = mapSectionId;
 			OwnerId = ownerId;
@@ -37,6 +57,8 @@ namespace MSS.Types.MSet
 			SubdivisionId = subdivisionId;
 			BlockPosition = blockPosition;
 			MapCalcSettings = mapCalcSettings;
+			AllPointsHaveEscaped = allPointsHaveEscaped;
+			
 			MapSectionVectors = mapSectionVectors;
 			MapSectionZVectors = mapSectionZVectors;
 
@@ -45,9 +67,9 @@ namespace MSS.Types.MSet
 		}
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
-		//public MapSectionValues? MapSectionValues { get; set; }
-
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
+		public bool AllPointsHaveEscaped { get; set; }
+
 
 		public string? MapSectionId { get; set; }
 		public string OwnerId { get; set; }

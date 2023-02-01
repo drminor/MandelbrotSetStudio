@@ -1,11 +1,8 @@
-﻿using MEngineDataContracts;
-using MSS.Common;
-using MSS.Types;
+﻿using MSS.Common;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -96,11 +93,6 @@ namespace MapSectionProviderLib
 
 					if (mapSectionVectors != null)
 					{
-						//if (!mapSectionResponse.RecordOnFile && mapSectionResponse.MapSectionZVectors != null)
-						//{
-						//	Debug.WriteLine($"If we have zVectors, we should also be on file. The id is {mapSectionResponse.MapSectionId}.");
-						//}
-
 						if (mapSectionResponse.RecordOnFile)
 						{
 							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
@@ -111,7 +103,7 @@ namespace MapSectionProviderLib
 						}
 						else
 						{
-							Debug.WriteLine($"Creating MapSection for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+							//Debug.WriteLine($"Creating MapSection for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 							var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
 							mapSectionResponse.MapSectionId = mapSectionId.ToString();
 

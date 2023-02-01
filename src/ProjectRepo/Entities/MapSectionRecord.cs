@@ -18,10 +18,10 @@ namespace ProjectRepo.Entities
 		long BlockPosYLo,
 
 		MapCalcSettings MapCalcSettings,
-
+		bool AllPointsHaveEscaped,
 		byte[] Counts,
 
-		ZValues? ZValues
+		ZValues ZValues
 		)
 	{
 		[BsonId]

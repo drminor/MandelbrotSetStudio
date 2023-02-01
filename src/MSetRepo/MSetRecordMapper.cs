@@ -245,7 +245,8 @@ namespace MSetRepo
 				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
 
 				Counts: source.MapSectionVectors.Counts,
-				ZValues: source.MapSectionZVectors == null ? null : _dtoMapper.MapTo(source.MapSectionZVectors)
+				AllPointsHaveEscaped: source.AllPointsHaveEscaped,
+				ZValues: source.MapSectionZVectors == null ? new ZValues() : _dtoMapper.MapTo(source.MapSectionZVectors)
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
@@ -283,6 +284,7 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
+				allPointsHaveEscaped: target.AllPointsHaveEscaped,
 
 				mapSectionVectors: mapSectionVectors,
 				mapSectionZVectors: mapSectionZVectors
@@ -305,6 +307,7 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
+				allPointsHaveEscaped: target.AllPointsHaveEscaped,
 				mapSectionVectors: mapSectionVectors
 			);
 

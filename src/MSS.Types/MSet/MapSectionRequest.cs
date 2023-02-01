@@ -57,23 +57,10 @@ namespace MSS.Types.MSet
 
 		public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
 
-		public bool GetIsDone()
-		{
-			if (MapSectionVectors == null)
-			{
-				return false;
-			}
-
-			// TODO: Implement GetIsDone on the MapSectionRequest class.
-			//var result = !HasEscapedFlags.Any(x => !x);
-			//return result;
-
-			return false;
-		}
 
 		public override string ToString()
 		{
-			return $"S:{SubdivisionId}, BPos:{BlockPosition}.";
+			return $"Id: {MapSectionId}, S:{SubdivisionId}, ScrPos:{ScreenPosition}.";
 		}
 	}
 }

@@ -17,17 +17,20 @@ namespace MSS.Types
 				  limbCount,
 				  new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
 				  new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
-				  new byte[blockSize.NumberOfCells * VALUE_SIZE]
+				  new byte[blockSize.NumberOfCells * VALUE_SIZE],
+				  new byte[blockSize.Height]
 				  )
 		{ }
 
-		public MapSectionZVectors(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapedFlags)
+		public MapSectionZVectors(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapedFlags, byte[] rowHasEscaped)
 		{
 			BlockSize = blockSize;
 			ValueCount = blockSize.NumberOfCells;
 			LimbCount = limbCount;
 			Lanes = Vector256<uint>.Count;
 			ValuesPerRow = blockSize.Width;
+			RowCount = blockSize.Height;
+			VectorsPerRow = VectorsPerRow / Lanes;
 
 			BytesPerRow = ValuesPerRow * LimbCount * VALUE_SIZE;
 			TotalByteCount = ValueCount * LimbCount * VALUE_SIZE;
@@ -43,34 +46,42 @@ namespace MSS.Types
 			Zrs = zrs;
 			Zis = zis;
 			HasEscapedFlags = hasEscapedFlags;
+			RowHasEscaped = rowHasEscaped;
 
 			ZrsMemory = new Memory<byte>(Zrs);
 			ZisMemory = new Memory<byte>(Zis);
 			HasEscapedFlagsMemory = new Memory<byte>(HasEscapedFlags);
+			RowHasEscapedMemory = new Memory<byte>(RowHasEscaped);
 		}
 
 		#endregion
 
 		#region Public Properties
 
+		public byte[] Zrs { get; init; }
+		public byte[] Zis { get; init; }
+		public byte[] HasEscapedFlags { get; init; }
+		public byte[] RowHasEscaped { get; set; }
+
+		// ---- Supporting Properties ------ //
+
 		public SizeInt BlockSize { get; init; }
 		public int ValueCount { get; init; }
 		public int LimbCount { get; init; }
 		public int Lanes { get; init; }
 		public int ValuesPerRow { get; init; }
+		public int RowCount { get; init; }
+		public int VectorsPerRow { get; init; }	
 		public int BytesPerRow { get; init; }
 		public int TotalByteCount { get; init; }
 
 		public int BytesPerFlagRow { get; init; }
 		public int TotalBytesForFlags { get; init; }
 
-		public byte[] Zrs { get; init; }
-		public byte[] Zis { get; init; }
-		public byte[] HasEscapedFlags { get; init; }
-
 		public Memory<byte> ZrsMemory { get; init; }
 		public Memory<byte> ZisMemory { get; init; }
 		public Memory<byte> HasEscapedFlagsMemory { get; init; }
+		public Memory<byte> RowHasEscapedMemory { get; init; }
 
 		#endregion
 
@@ -101,15 +112,23 @@ namespace MSS.Types
 			return result;
 		}
 
+		public Span<bool> GetRowHasEscaped()
+		{
+			var result = MemoryMarshal.Cast<byte, bool>(RowHasEscapedMemory.Span);
+			return result;
+		}
+
 		#endregion
 
-		#region HasEscapedFlag Methods
+		#region IPoolable Support
 
-		// IPoolable Support
 		void IPoolable.ResetObject()
 		{
 			Array.Clear(Zrs, 0, TotalByteCount);	// TODO: Use Zrs Memory
 			Array.Clear(Zis, 0, TotalByteCount);
+			Array.Clear(HasEscapedFlags, 0, TotalBytesForFlags);
+
+			RowHasEscapedMemory.Span.Clear();
 		}
 
 		void IPoolable.CopyTo(object obj)
@@ -131,6 +150,7 @@ namespace MSS.Types
 			Array.Copy(Zrs, result.Zrs, TotalByteCount);						// TODO: Use ZrsMemory
 			Array.Copy(Zis, result.Zis, TotalByteCount);
 			Array.Copy(HasEscapedFlags, result.HasEscapedFlags, ValueCount);
+			RowHasEscapedMemory.CopyTo(result.RowHasEscapedMemory);
 		}
 
 		#endregion

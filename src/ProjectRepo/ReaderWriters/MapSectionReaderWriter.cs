@@ -75,7 +75,7 @@ namespace ProjectRepo
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression
 				(
 					p => new MapSectionRecordJustCounts(p.Id, p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi,
-					p.BlockPosYLo, p.MapCalcSettings, p.Counts /*, p.EscapeVelocities, p.DoneFlags*/)
+					p.BlockPosYLo, p.MapCalcSettings, p.AllPointsHaveEscaped, p.Counts)
 				);
 
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
@@ -102,7 +102,7 @@ namespace ProjectRepo
 			}
 		}
 
-		public async Task<ZValues?> GetZValuesAsync(ObjectId mapSectionId)
+		public async Task<ZValues> GetZValuesAsync(ObjectId mapSectionId)
 		{
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression
 				(
@@ -111,7 +111,7 @@ namespace ProjectRepo
 
 			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
 
-			IFindFluent<MapSectionRecord, ZValues?> operation = Collection.Find(filter).Project(projection1);
+			IFindFluent<MapSectionRecord, ZValues> operation = Collection.Find(filter).Project(projection1);
 
 			var itemsFound = await operation.ToListAsync().ConfigureAwait(false);
 
@@ -124,12 +124,16 @@ namespace ProjectRepo
 			{
 				// Log: MapSection Not Found
 				//Debug.WriteLine("MapSection Not found.");
-				return default;
+				return new ZValues();
 			}
 		}
 
 		public async Task<ObjectId> InsertAsync(MapSectionRecord mapSectionRecord)
 		{
+			if (mapSectionRecord.ZValues == null)
+			{
+				Debug.WriteLine("Inserting a MapSectionRecord that has a null ZValue.");
+			}
 			try
 			{
 				mapSectionRecord.LastSavedUtc = DateTime.UtcNow;
