@@ -20,8 +20,6 @@ namespace ProjectRepo.Entities
 		MapCalcSettings MapCalcSettings,
 
 		byte[] Counts,
-		//byte[] EscapeVelocities,
-		//byte[] DoneFlags,
 
 		ZValues? ZValues
 		)

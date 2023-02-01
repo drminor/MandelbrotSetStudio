@@ -33,12 +33,12 @@ namespace MSetGeneratorPrototype
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
-			Crs = new FP31ValArray(LimbCount, ValueCount);
-			Cis = new FP31ValArray(LimbCount, ValueCount);
-			Zrs = new FP31ValArray(LimbCount, ValueCount);
-			Zis = new FP31ValArray(LimbCount, ValueCount);
+			//Crs = new FP31ValArray(LimbCount, ValueCount);
+			//Cis = new FP31ValArray(LimbCount, ValueCount);
+			//Zrs = new FP31ValArray(LimbCount, ValueCount);
+			//Zis = new FP31ValArray(LimbCount, ValueCount);
 
-			ZValuesAreZero = true;
+			//ZValuesAreZero = true;
 
 			_zRSqrs = Enumerable.Repeat(Vector256<uint>.Zero, LimbCount).ToArray();
 			_zISqrs = new Vector256<uint>[LimbCount];
@@ -57,10 +57,10 @@ namespace MSetGeneratorPrototype
 		public int VectorCount { get; init; }
 
 
-		public FP31ValArray Crs { get; set; }
-		public FP31ValArray Cis { get; set; }
-		public FP31ValArray Zrs { get; set; }
-		public FP31ValArray Zis { get; set; }
+		//public FP31ValArray Crs { get; set; }
+		//public FP31ValArray Cis { get; set; }
+		//public FP31ValArray Zrs { get; set; }
+		//public FP31ValArray Zis { get; set; }
 
 		public bool ZValuesAreZero { get; set; }
 

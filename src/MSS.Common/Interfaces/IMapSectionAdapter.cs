@@ -16,7 +16,7 @@ namespace MSS.Common
 		//void DropCollections();
 		//void DropSubdivisionsAndMapSectionsCollections();
 
-		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct);
+		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, Func<MapSectionVectors> mapSectionVectorsProvider);
 
 		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
 

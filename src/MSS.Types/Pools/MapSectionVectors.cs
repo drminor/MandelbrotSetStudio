@@ -29,9 +29,7 @@ namespace MSS.Types
 			Debug.Assert(counts.Length == TotalByteCount, $"The length of counts does not equal the {ValueCount} * {VALUE_SIZE} (values/block * bytes/value) .");
 
 			Counts = counts;
-
-			//CountVectors = new Vector256<int>[TotalVectorCount];
-			//CountMems = new Memory<Vector256<int>>(CountVectors);
+			CountsMemory = new Memory<byte>(Counts);
 		}
 
 		#endregion
@@ -40,54 +38,50 @@ namespace MSS.Types
 
 		public SizeInt BlockSize { get; init; }
 		public int ValueCount { get; init; }
-		public int Lanes {get; init; }
-
 		public int ValuesPerRow { get; init; }
+		public int Lanes {get; init; }
+		public int VectorsPerRow { get; init; }
+
 		public int BytesPerRow { get; init; }
 		public int TotalByteCount { get; init; }
 
 		public byte[] Counts { get; init; }
-
-		//public int TotalVectorCount => ValueCount / Lanes;
-		public int VectorsPerRow { get; init; } 
-
-		//public Vector256<int>[] CountVectors;
-		//public Memory<Vector256<int>> CountMems;
+		public Memory<byte> CountsMemory { get; init; }
 
 		#endregion
 
 		#region Methods
 
-		public void FillCountsRow(Vector256<int>[] mantissas, int rowNumber)
+		public void Load(byte[] counts)
 		{
-			var sourceStartIndex = BytesPerRow * rowNumber;
-			var source = new Span<byte>(Counts, sourceStartIndex, BytesPerRow);
-
-			Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas);
-			source.CopyTo(destinationByteSpan);
+			Array.Copy(counts, Counts, Counts.Length);
 		}
 
-		public void UpdateCountsRowFrom(Vector256<int>[] mantissas, int rowNumber)
+		public Span<Vector256<int>> GetCountVectors()
 		{
-			var source = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas).ToArray();
-			var destinationStartIndex = BytesPerRow * rowNumber;
-			Array.Copy(source, 0, Counts, destinationStartIndex, BytesPerRow);
+			var result = MemoryMarshal.Cast<byte, Vector256<int>>(CountsMemory.Span);
+			return result;
 		}
 
-		//public void UpdateCountsFromOld(ushort[] counts)
+		//public void FillCountsRow(Vector256<int>[] mantissas, int rowNumber)
 		//{
-		//	var dest = MemoryMarshal.Cast<Vector256<int>, int>(CountVectors);
+		//	var sourceStartIndex = BytesPerRow * rowNumber;
+		//	var source = new Span<byte>(Counts, sourceStartIndex, BytesPerRow);
 
-		//	for (var i = 0; i < ValueCount; i++)
-		//	{
-		//		dest[i] = counts[i];
-		//	}
+		//	Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas);
+		//	source.CopyTo(destinationByteSpan);
+		//}
+
+		//public void UpdateCountsRowFrom(Vector256<int>[] mantissas, int rowNumber)
+		//{
+		//	var source = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas).ToArray();
+		//	var destinationStartIndex = BytesPerRow * rowNumber;
+		//	Array.Copy(source, 0, Counts, destinationStartIndex, BytesPerRow);
 		//}
 
 		// IPoolable Support
 		void IPoolable.ResetObject()
 		{
-			//Array.Clear(CountVectors, 0, TotalVectorCount);
 			Array.Clear(Counts, 0, TotalByteCount);
 		}
 
@@ -105,7 +99,6 @@ namespace MSS.Types
 
 		public void CopyTo(MapSectionVectors mapSectionVectors)
 		{
-			//CountMems.CopyTo(mapSectionVectors.CountMems);
 			Array.Copy(Counts, mapSectionVectors.Counts, TotalByteCount);
 		}
 

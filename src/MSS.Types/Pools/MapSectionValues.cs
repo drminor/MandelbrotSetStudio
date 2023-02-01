@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
 
 namespace MSS.Types
 {
@@ -32,8 +30,6 @@ namespace MSS.Types
 
 		public void Load(MapSectionVectors mapSectionVectors)
 		{
-			//var counts = MemoryMarshal.Cast<Vector256<int>, int>(mapSectionVectors.CountVectors);
-
 			var counts = MemoryMarshal.Cast<byte, int>(mapSectionVectors.Counts);
 
 			for (var i = 0; i < Length; i++)
@@ -41,24 +37,6 @@ namespace MSS.Types
 				Counts[i] = (ushort)counts[i];
 			}
 		}
-
-		//private void CheckArguments<T>(bool[] hasEscapedFlags, T[] counts, T[] escapeVelocities)
-		//{
-		//	if (hasEscapedFlags == null || hasEscapedFlags.Length != BlockSize.NumberOfCells)
-		//	{
-		//		throw new ArgumentException($"The {nameof(hasEscapedFlags)} has a length different than {Length}.");
-		//	}
-
-		//	if (counts == null || counts.Length != BlockSize.NumberOfCells)
-		//	{
-		//		throw new ArgumentException($"The {nameof(counts)} has a length different than {Length}.");
-		//	}
-
-		//	if (escapeVelocities == null || escapeVelocities.Length != BlockSize.NumberOfCells)
-		//	{
-		//		throw new ArgumentException($"The {nameof(escapeVelocities)} has a length different than {Length}.");
-		//	}
-		//}
 
 		#region IPoolable Support
 

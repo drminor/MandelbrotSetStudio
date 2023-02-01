@@ -9,11 +9,14 @@ namespace MSS.Common
 {
 	public class MapSectionHelper
 	{
+		#region Private Properties
+
 		private const double VALUE_FACTOR = 10000;
 		private const int BYTES_PER_PIXEL = 4;
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionValuesPool _mapSectionValuesPool;
+		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
 
 		private SizeInt _blockSize;
 		private readonly int _rowCount;
@@ -21,14 +24,17 @@ namespace MSS.Common
 		private readonly int _maxRowIndex;
 
 		private readonly int _pixelArraySize;
-		private readonly int _pixelStride;	
+		private readonly int _pixelStride;
+
+		#endregion
 
 		#region Constructor
 
-		public MapSectionHelper(MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool)
+		public MapSectionHelper(MapSectionVectorsPool mapSectionVectorsPool, MapSectionValuesPool mapSectionValuesPool, MapSectionZVectorsPool mapSectionZVectorsPool)
 		{
 			_mapSectionVectorsPool = mapSectionVectorsPool;
 			_mapSectionValuesPool = mapSectionValuesPool;
+			_mapSectionZVectorsPool = mapSectionZVectorsPool;
 
 			_blockSize = mapSectionVectorsPool.BlockSize;
 			_rowCount = _blockSize.Height;
@@ -42,7 +48,11 @@ namespace MSS.Common
 
 		#endregion
 
+		#region Public Properties
+
 		public long NumberOfCountValSwitches { get; private set; }
+
+		#endregion
 
 		#region Create MapSectionRequests
 
@@ -178,7 +188,8 @@ namespace MSS.Common
 
 		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, int jobId, BigVector mapBlockOffset)
 		{
-			if (mapSectionResponse.MapSectionValues == null)
+			var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+			if (mapSectionVectors == null)
 			{
 				throw new InvalidOperationException("Cannot create the MapSection: the MapSectionResponse is empty.");
 			}
@@ -188,13 +199,33 @@ namespace MSS.Common
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
-			var mapSection = new MapSection(jobId, mapSectionResponse.MapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
+			var mapSectionValues = ObtainMapSectionValues();
+			mapSectionValues.Load(mapSectionVectors);
+
+			var mapSection = new MapSection(jobId, mapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
 				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
 
-			mapSectionResponse.MapSectionValues = null;
+			ReturnMapSectionResponse(mapSectionResponse);
+			//mapSectionResponse.MapSectionValues = null;
 
 			return mapSection;
 		}
+
+		//private void ConvertVecToVals(MapSectionResponse mapSectionResponse)
+		//{
+		//	var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+		//	if (mapSectionVectors == null) return;
+
+		//	if (!mapSectionResponse.RequestCancelled)
+		//	{
+		//		var mapSectionValues = _mapSectionHelper.ObtainMapSectionValues();
+		//		mapSectionValues.Load(mapSectionVectors);
+		//		mapSectionResponse.MapSectionValues = mapSectionValues;
+		//	}
+
+		//	_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
+		//}
+
 
 		public byte[] GetPixelArray(MapSectionValues mapSectionValues, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
@@ -306,21 +337,25 @@ namespace MSS.Common
 			return result;
 		}
 
+		public MapSectionZVectors ObtainMapSectionZVectors()
+		{
+			var result = _mapSectionZVectorsPool.Obtain();
+			return result;
+		}
+
 		public void ReturnMapSection(MapSection mapSection)
 		{
 			if (mapSection.MapSectionValues != null)
 			{
-				if (_mapSectionValuesPool.Free(mapSection.MapSectionValues))
+				if (!_mapSectionValuesPool.Free(mapSection.MapSectionValues))
 				{
-					//mapSection.MapSectionValues = null;
+					mapSection.MapSectionValues.Dispose();
 				}
 				else
 				{
-					//mapSection.MapSectionValues.Dispose();
+					mapSection.MapSectionValues = null;
 				}
 			}
-
-			//mapSection.Dispose();
 		}
 
 		public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
@@ -335,7 +370,15 @@ namespace MSS.Common
 				mapSectionRequest.MapSectionVectors = null;
 			}
 
-			//mapSectionRequest.Dispose();
+			if (mapSectionRequest.MapSectionZVectors != null)
+			{
+				if (!_mapSectionZVectorsPool.Free(mapSectionRequest.MapSectionZVectors))
+				{
+					mapSectionRequest.MapSectionZVectors.Dispose();
+				}
+
+				mapSectionRequest.MapSectionZVectors = null;
+			}
 		}
 
 		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
@@ -350,7 +393,15 @@ namespace MSS.Common
 				mapSectionResponse.MapSectionVectors = null;
 			}
 
-			//mapSectionRequest.Dispose();
+			if (mapSectionResponse.MapSectionZVectors != null)
+			{
+				if (!_mapSectionZVectorsPool.Free(mapSectionResponse.MapSectionZVectors))
+				{
+					mapSectionResponse.MapSectionZVectors.Dispose();
+				}
+
+				mapSectionResponse.MapSectionZVectors = null;
+			}
 		}
 
 		public MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
@@ -364,14 +415,20 @@ namespace MSS.Common
 				result.MapSectionVectors = newCopyOfMapSectionVectors;
 			}
 
-			if (mapSectionResponse.MapSectionValues != null)
-			{
-				var newCopyOfMapSectionValues = _mapSectionValuesPool.DuplicateFrom(mapSectionResponse.MapSectionValues);
-				result.MapSectionValues = newCopyOfMapSectionValues;
-			}
+			//if (mapSectionResponse.MapSectionZVectors != null)
+			//{
+			//	var newCopyOfMapSectionZVectors = _mapSectionZVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionZVectors);
+			//	result.MapSectionZVectors = newCopyOfMapSectionZVectors;
+			//}
 
 			return result;
 		}
+
+		#endregion
+
+		#region DTO Support
+
+
 
 		#endregion
 	}

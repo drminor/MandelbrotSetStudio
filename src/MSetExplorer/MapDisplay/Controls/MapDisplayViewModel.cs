@@ -353,8 +353,9 @@ namespace MSetExplorer
 					{
 						_mapSectionHelper.ReturnMapSection(ms);
 					}
-					MapSections.Clear();
 				}
+
+				MapSections.Clear();
 			}
 		}
 

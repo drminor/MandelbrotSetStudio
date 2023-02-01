@@ -45,6 +45,7 @@ namespace MSetExplorer
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionValuesPool _mapSectionValuesPool;
+		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
 		private readonly MapSectionHelper _mapSectionHelper;
 
 		private RepositoryAdapters? _repositoryAdapters;
@@ -60,7 +61,9 @@ namespace MSetExplorer
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 
-			_mapSectionHelper = new MapSectionHelper(_mapSectionVectorsPool, _mapSectionValuesPool);
+			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount: 2, initialSize: 5);
+
+			_mapSectionHelper = new MapSectionHelper(_mapSectionVectorsPool, _mapSectionValuesPool, _mapSectionZVectorsPool);
 
 			if (START_LOCAL_ENGINE)
 			{

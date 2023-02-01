@@ -45,7 +45,7 @@ namespace MSS.Types.MSet
 		}
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
-		public MapSectionValues? MapSectionValues { get; set; }
+		//public MapSectionValues? MapSectionValues { get; set; }
 
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
 

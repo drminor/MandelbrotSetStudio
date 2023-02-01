@@ -80,7 +80,7 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, Func<MapSectionVectors> mapSectionVectorsProvider)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
@@ -89,10 +89,8 @@ namespace MSetRepo
 				var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subdivisionId, blockPosition, ct);
 				if (mapSectionRecordCountsOnly != null)
 				{
-					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly);
-
-					//var mapSectionValues = allocateMsvBuf();
-					//_mSetRecordMapper.SetMapSectionValues(mapSectionResponse, mapSectionValues, mapSectionRecordCountsOnly.Counts);
+					var mapSectionVectors = mapSectionVectorsProvider();
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly, mapSectionVectors);
 
 					return mapSectionResponse;
 				}

@@ -124,12 +124,6 @@ namespace MSS.Common.APValues
 
 		#region Public Methods
 
-		public int[] GetNewInPlayList()
-		{
-			var inPlayList = Enumerable.Range(0, VectorCount).ToArray();
-			return inPlayList;
-		}
-
 		public Vector256<uint>[] GetLimbVectorsUW(int limbIndex)
 		{
 			var result = Mantissas[limbIndex];

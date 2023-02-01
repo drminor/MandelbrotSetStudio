@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -39,12 +38,15 @@ namespace MSS.Types
 			BytesPerFlagRow = ValuesPerRow * VALUE_SIZE;
 			TotalBytesForFlags = ValueCount * VALUE_SIZE;
 
-
 			Debug.Assert(hasEscapedFlags.Length == TotalBytesForFlags, $"The length of hasEscapedFlags does not equal the {ValueCount} * {VALUE_SIZE} (values/block * bytes/value) .");
 
 			Zrs = zrs;
 			Zis = zis;
 			HasEscapedFlags = hasEscapedFlags;
+
+			ZrsMemory = new Memory<byte>(Zrs);
+			ZisMemory = new Memory<byte>(Zis);
+			HasEscapedFlagsMemory = new Memory<byte>(HasEscapedFlags);
 		}
 
 		#endregion
@@ -62,72 +64,99 @@ namespace MSS.Types
 		public int BytesPerFlagRow { get; init; }
 		public int TotalBytesForFlags { get; init; }
 
-		public byte[] Zrs { get; private set; }
+		public byte[] Zrs { get; init; }
+		public byte[] Zis { get; init; }
+		public byte[] HasEscapedFlags { get; init; }
 
-		public byte[] Zis { get; private set; }
-
-		public byte[] HasEscapedFlags { get; set; }
+		public Memory<byte> ZrsMemory { get; init; }
+		public Memory<byte> ZisMemory { get; init; }
+		public Memory<byte> HasEscapedFlagsMemory { get; init; }
 
 		#endregion
 
 		#region ZValue Methods
 
-		public void FillRRow(Vector256<uint>[] mantissas, int rowNumber)
+		public void Load(byte[] zrs, byte[] zis, byte[] hasEscapedFlags)
 		{
-			var sourceStartIndex = BytesPerRow * rowNumber;
-			var source = new Span<byte>(Zrs, sourceStartIndex, BytesPerRow);
-
-			Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas);
-			source.CopyTo(destinationByteSpan);
+			Array.Copy(zrs, Zrs, TotalByteCount);
+			Array.Copy(zis, Zis, TotalByteCount);
+			Array.Copy(hasEscapedFlags, HasEscapedFlags, ValueCount);
 		}
 
-		public void FillIRow(Vector256<uint>[] mantissas, int rowNumber)
+		public Span<Vector256<uint>> GetZrsRow(int rowNumber)
 		{
-			var sourceStartIndex = BytesPerRow * rowNumber;
-			var source = new Span<byte>(Zis, sourceStartIndex, BytesPerRow);
-
-			Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas);
-			source.CopyTo(destinationByteSpan);
+			var result = MemoryMarshal.Cast<byte, Vector256<uint>>(ZrsMemory.Slice(BytesPerRow * rowNumber, BytesPerRow).Span);
+			return result;
 		}
 
-		public void UpdateRRowFrom(Vector256<uint>[] mantissas, int rowNumber)
+		public Span<Vector256<uint>> GetZisRow(int rowNumber)
 		{
-			var source = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas).ToArray();
-			var destinationStartIndex = BytesPerRow * rowNumber;
-			Array.Copy(source, 0, Zrs, destinationStartIndex, BytesPerRow);
+			var result = MemoryMarshal.Cast<byte, Vector256<uint>>(ZisMemory.Slice(BytesPerRow * rowNumber, BytesPerRow).Span);
+			return result;
 		}
 
-		public void UpdateIRowFrom(Vector256<uint>[] mantissas, int rowNumber)
+		public Span<Vector256<int>> GetHasEscapedFlagsRow(int rowNumber)
 		{
-			var source = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas).ToArray();
-			var destinationStartIndex = BytesPerRow * rowNumber;
-			Array.Copy(source, 0, Zis, destinationStartIndex, BytesPerRow);
+			var result = MemoryMarshal.Cast<byte, Vector256<int>>(HasEscapedFlagsMemory.Slice(BytesPerFlagRow * rowNumber, BytesPerFlagRow).Span);
+			return result;
 		}
+
+		//public void FillRRow(Vector256<uint>[] mantissas, int rowNumber)
+		//{
+		//	var sourceStartIndex = BytesPerRow * rowNumber;
+		//	var source = new Span<byte>(Zrs, sourceStartIndex, BytesPerRow);
+
+		//	Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas);
+		//	source.CopyTo(destinationByteSpan);
+		//}
+
+		//public void FillIRow(Vector256<uint>[] mantissas, int rowNumber)
+		//{
+		//	var sourceStartIndex = BytesPerRow * rowNumber;
+		//	var source = new Span<byte>(Zis, sourceStartIndex, BytesPerRow);
+
+		//	Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas);
+		//	source.CopyTo(destinationByteSpan);
+		//}
+
+		//public void UpdateRRowFrom(Vector256<uint>[] mantissas, int rowNumber)
+		//{
+		//	var source = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas).ToArray();
+		//	var destinationStartIndex = BytesPerRow * rowNumber;
+		//	Array.Copy(source, 0, Zrs, destinationStartIndex, BytesPerRow);
+		//}
+
+		//public void UpdateIRowFrom(Vector256<uint>[] mantissas, int rowNumber)
+		//{
+		//	var source = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas).ToArray();
+		//	var destinationStartIndex = BytesPerRow * rowNumber;
+		//	Array.Copy(source, 0, Zis, destinationStartIndex, BytesPerRow);
+		//}
 
 		#endregion
 
 		#region HasEscapedFlag Methods
 
-		public void FillHasEscapedFlagsRow(Vector256<int>[] mantissas, int rowNumber)
-		{
-			var sourceStartIndex = BytesPerFlagRow * rowNumber;
-			var source = new Span<byte>(HasEscapedFlags, sourceStartIndex, BytesPerFlagRow);
+		//public void FillHasEscapedFlagsRow(Vector256<int>[] mantissas, int rowNumber)
+		//{
+		//	var sourceStartIndex = BytesPerFlagRow * rowNumber;
+		//	var source = new Span<byte>(HasEscapedFlags, sourceStartIndex, BytesPerFlagRow);
 
-			Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas);
-			source.CopyTo(destinationByteSpan);
-		}
+		//	Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas);
+		//	source.CopyTo(destinationByteSpan);
+		//}
 
-		public void UpdateHasEscapedFlagsRowFrom(Vector256<int>[] mantissas, int rowNumber)
-		{
-			var source = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas).ToArray();
-			var destinationStartIndex = BytesPerFlagRow * rowNumber;
-			Array.Copy(source, 0, HasEscapedFlags, destinationStartIndex, BytesPerFlagRow);
-		}
+		//public void UpdateHasEscapedFlagsRowFrom(Vector256<int>[] mantissas, int rowNumber)
+		//{
+		//	var source = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas).ToArray();
+		//	var destinationStartIndex = BytesPerFlagRow * rowNumber;
+		//	Array.Copy(source, 0, HasEscapedFlags, destinationStartIndex, BytesPerFlagRow);
+		//}
 
 		// IPoolable Support
 		void IPoolable.ResetObject()
 		{
-			Array.Clear(Zrs, 0, TotalByteCount);
+			Array.Clear(Zrs, 0, TotalByteCount);	// TODO: Use Zrs Memory
 			Array.Clear(Zis, 0, TotalByteCount);
 		}
 
@@ -147,7 +176,7 @@ namespace MSS.Types
 		{
 			var result = mapSectionZVectors;
 
-			Array.Copy(Zrs, result.Zrs, TotalByteCount);
+			Array.Copy(Zrs, result.Zrs, TotalByteCount);						// TODO: Use ZrsMemory
 			Array.Copy(Zis, result.Zis, TotalByteCount);
 			Array.Copy(HasEscapedFlags, result.HasEscapedFlags, ValueCount);
 		}

@@ -126,12 +126,12 @@ namespace MSetExplorer
 			var mapSectionResult = MapSection.Empty;
 			bool isLastSection;
 
-			if (mapSectionResponse == null || mapSectionResponse.MapSectionValues == null)
+			if (mapSectionResponse == null || mapSectionResponse.MapSectionVectors == null)
 			{
 				Debug.WriteLine("The MapSectionResponse is empty in the HandleResponse callback for the MapLoader.");
 			}
 
-			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled && mapSectionResponse.MapSectionValues != null)
+			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled && mapSectionResponse.MapSectionVectors != null)
 			{
 				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, jobId, _mapBlockOffset);
 

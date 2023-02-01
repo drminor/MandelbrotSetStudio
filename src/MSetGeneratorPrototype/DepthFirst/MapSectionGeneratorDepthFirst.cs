@@ -1,5 +1,4 @@
-﻿using MEngineDataContracts;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Common.APValues;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -63,10 +62,10 @@ namespace MSetGeneratorPrototype
 			{
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _fp31VecMath.LimbCount);
-				var iterationState = new IterationState(mapSectionVectors, mapSectionZVectors);
+				var iterationState = new IterationStateDepthFirst(mapSectionVectors, mapSectionZVectors);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				GenerateMapSection(_iterator, iterationState, mapSectionZVectors, coords, mapCalcSettings);
+				GenerateMapSection(_iterator, iterationState/*, mapSectionZVectors*/, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 				result = new MapSectionResponse(mapSectionRequest);
@@ -79,7 +78,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private void GenerateMapSection(IteratorSimdDepthFirst iterator, IterationState iterationState, MapSectionZVectors mapSectionZVectors, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private void GenerateMapSection(IteratorSimdDepthFirst iterator, IterationStateDepthFirst iterationState/*, MapSectionZVectors mapSectionZVectors*/, IteratorCoords coords, MapCalcSettings mapCalcSettings)
 		{
 			var blockSize = iterationState.BlockSize;
 			var rowCount = blockSize.Height;
@@ -92,7 +91,7 @@ namespace MSetGeneratorPrototype
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			iterator.Threshold = (uint)mapCalcSettings.Threshold;
-			iterator.Crs.UpdateFrom(samplePointsX);
+			iterationState.Crs.UpdateFrom(samplePointsX);
 			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
@@ -101,11 +100,9 @@ namespace MSetGeneratorPrototype
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
-				iterator.Cis.UpdateFrom(yPoint);
+				iterationState.Cis.UpdateFrom(yPoint);
 
-				FillZValues(mapSectionZVectors, rowNumber, iterator.Zrs, iterator.Zis);
-				//iterator.Zrs.ClearManatissMems();
-				//iterator.Zis.ClearManatissMems();
+				//FillZValues(mapSectionZVectors, rowNumber, iterationState.Zrs, iterationState.Zis);
 				iterator.ZValuesAreZero = true;
 
 				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length; idxPtr++)
@@ -114,34 +111,31 @@ namespace MSetGeneratorPrototype
 					GenerateMapCol(idx, iterator, ref iterationState, targetIterationsVector);
 				}
 
-				mapSectionZVectors.UpdateRRowFrom(iterator.Zrs.Mantissas, rowNumber);
-				mapSectionZVectors.UpdateIRowFrom(iterator.Zis.Mantissas, rowNumber);
+				//mapSectionZVectors.UpdateRRowFrom(iterationState.Zrs.Mantissas, rowNumber);
+				//mapSectionZVectors.UpdateIRowFrom(iterationState.Zis.Mantissas, rowNumber);
 
 				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 			}
 
-			iterationState.UpdateTheCountsSource(iterationState.RowNumber);
-			iterationState.UpdateTheHasEscapedFlagsSource(iterationState.RowNumber);
-
-			//mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(iterationState.HasEscapedFlags, iterationState.RowNumber);
-
+			//iterationState.UpdateTheCountsSource(iterationState.RowNumber);
+			//iterationState.UpdateTheHasEscapedFlagsSource(iterationState.RowNumber);
 		}
 
 		#endregion
 
 		#region Generate One Vector
 
-		private void GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationState iterationState, Vector256<int> targetIterationsVector)
+		private void GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationStateDepthFirst iterationState, Vector256<int> targetIterationsVector)
 		{
-			iterator.Crs.FillLimbSet(idx, _crs);
-			iterator.Cis.FillLimbSet(idx, _cis);
-			iterator.Zrs.FillLimbSet(idx, _zrs);
-			iterator.Zis.FillLimbSet(idx, _zis);
+			iterationState.Crs.FillLimbSet(idx, _crs);
+			iterationState.Cis.FillLimbSet(idx, _cis);
+			iterationState.Zrs.FillLimbSet(idx, _zrs);
+			iterationState.Zis.FillLimbSet(idx, _zis);
 
 			iterator.ZValuesAreZero = true;
 
-			var hasEscapedFlagsV = iterationState.HasEscapedFlags[idx].AsByte();
-			var countsV = iterationState.Counts[idx];
+			var hasEscapedFlagsV = iterationState.HasEscapedFlagsRow[idx].AsByte();
+			var countsV = iterationState.CountsRow[idx];
 
 			var doneFlagsV = iterationState.DoneFlags[idx].AsByte();
 			var unusedCalcsV = iterationState.UnusedCalcs[idx];
@@ -178,14 +172,14 @@ namespace MSetGeneratorPrototype
 				allDone = compositeIsDone == -1;
 			}
 
-			iterationState.HasEscapedFlags[idx] = hasEscapedFlagsV.AsInt32();
-			iterationState.Counts[idx] = countsV;
+			iterationState.HasEscapedFlagsRow[idx] = hasEscapedFlagsV.AsInt32();
+			iterationState.CountsRow[idx] = countsV;
 
 			iterationState.DoneFlags[idx] = doneFlagsV.AsInt32();
 			iterationState.UnusedCalcs[idx] = unusedCalcsV;
 
-			iterator.Zrs.UpdateFromLimbSet(idx, _zrs);
-			iterator.Zis.UpdateFromLimbSet(idx, _zis);
+			iterationState.Zrs.UpdateFromLimbSet(idx, _zrs);
+			iterationState.Zis.UpdateFromLimbSet(idx, _zis);
 		}
 
 		#endregion
@@ -217,22 +211,22 @@ namespace MSetGeneratorPrototype
 			var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
 			mapSectionRequest.MapSectionVectors = null;
 
-			if (mapSectionRequest.IncreasingIterations && mapSectionRequest.MapSectionZVectors == null) 
-			{
-				throw new ArgumentNullException("The MapSectionZVectors is null.");
-			}
+			//if (mapSectionRequest.IncreasingIterations && mapSectionRequest.MapSectionZVectors == null) 
+			//{
+			//	throw new ArgumentNullException("The MapSectionZVectors is null.");
+			//}
 
-			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? new MapSectionZVectors(mapSectionRequest.BlockSize, limbCount);
+			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? throw new ArgumentNullException("The MapSectionVectors is null."); //new MapSectionZVectors(mapSectionRequest.BlockSize, limbCount);
 			mapSectionRequest.MapSectionZVectors = null;
 
 			return (mapSectionVectors, mapSectionZVectors);
 		}
 
-		private void FillZValues(MapSectionZVectors mapSectionZVectors, int rowNumber, FP31ValArray zrValArray, FP31ValArray ziValArray)
-		{
-			mapSectionZVectors.FillRRow(zrValArray.Mantissas, rowNumber);
-			mapSectionZVectors.FillIRow(ziValArray.Mantissas, rowNumber);
-		}
+		//private void FillZValues(MapSectionZVectors mapSectionZVectors, int rowNumber, FP31ValArray zrValArray, FP31ValArray ziValArray)
+		//{
+		//	mapSectionZVectors.FillRRow(zrValArray.Mantissas, rowNumber);
+		//	mapSectionZVectors.FillIRow(ziValArray.Mantissas, rowNumber);
+		//}
 
 		private bool[] CompressHasEscapedFlags(int[] hasEscapedFlags)
 		{

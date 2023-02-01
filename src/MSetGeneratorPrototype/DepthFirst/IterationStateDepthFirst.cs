@@ -1,9 +1,10 @@
-﻿using MSS.Types;
+﻿using MSS.Common.APValues;
+using MSS.Types;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
-	public ref struct IterationState
+	public ref struct IterationStateDepthFirst
 	{
 		private readonly MapSectionVectors _mapSectionVectors;
 		private readonly MapSectionZVectors _mapSectionZVectors;
@@ -12,22 +13,37 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IterationState(MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors)
+		public IterationStateDepthFirst(MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors)
 		{
 			_mapSectionVectors = mapSectionVectors;
 			_mapSectionZVectors = mapSectionZVectors;
 
+			ValueCount = mapSectionZVectors.ValueCount;
+			LimbCount = mapSectionZVectors.LimbCount;
 			VectorCount = mapSectionVectors.VectorsPerRow;
+			ValuesPerRow = mapSectionVectors.ValuesPerRow;
 
 			RowNumber = -1;
 
-			HasEscapedFlags = new Vector256<int>[_mapSectionZVectors.ValuesPerRow];
-			_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, 0);
+			Crs = new FP31ValArray(LimbCount, ValuesPerRow);
+			Cis = new FP31ValArray(LimbCount, ValuesPerRow);
+			Zrs = new FP31ValArray(LimbCount, ValuesPerRow);
+			Zis = new FP31ValArray(LimbCount, ValuesPerRow);
 
-			Counts = new Vector256<int>[_mapSectionVectors.VectorsPerRow];
-			mapSectionVectors.FillCountsRow(Counts, 0);
+			ZValuesAreZero = true;
 
-			//Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, 0, VectorCount);
+
+			//HasEscapedFlags = new Vector256<int>[_mapSectionZVectors.ValuesPerRow];
+			//_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, 0);
+
+			HasEscapedFlagsRow = _mapSectionZVectors.GetHasEscapedFlagsRow(0);
+
+			Counts = mapSectionVectors.GetCountVectors();
+			CountsRow = Counts.Slice(0, VectorCount);
+
+			ZrsRow = _mapSectionZVectors.GetZrsRow(0);
+			ZisRow = _mapSectionZVectors.GetZisRow(0);
+
 
 			DoneFlags = new Vector256<int>[VectorCount];
 			UnusedCalcs = new Vector256<int>[VectorCount];
@@ -43,12 +59,25 @@ namespace MSetGeneratorPrototype
 		#region Public Properties
 
 		public SizeInt BlockSize => _mapSectionVectors.BlockSize;
+		public int ValueCount { get; init; }
+		public int LimbCount { get; init; }
 		public int VectorCount { get; init; }
+		public int ValuesPerRow { get; init; }
 
 		public int RowNumber { get; private set; }
 
-		public Vector256<int>[] HasEscapedFlags { get; private set; }
-		public Vector256<int>[] Counts { get; private set; }
+		public FP31ValArray Crs { get; set; }
+		public FP31ValArray Cis { get; set; }
+		public FP31ValArray Zrs { get; set; }
+		public FP31ValArray Zis { get; set; }
+
+		public bool ZValuesAreZero { get; set; }
+
+		//public Vector256<int>[] HasEscapedFlags { get; private set; }
+		public Span<Vector256<int>> HasEscapedFlagsRow { get; private set; }
+
+		public Span<Vector256<int>> Counts { get; private set; }
+		public Span<Vector256<int>> CountsRow { get; private set; }
 
 		public Vector256<int>[] DoneFlags { get; private set; }
 		public int[] InPlayList { get; private set; }
@@ -56,26 +85,30 @@ namespace MSetGeneratorPrototype
 
 		public Vector256<int>[] UnusedCalcs { get; private set; }
 
+		public Span<Vector256<uint>> ZrsRow { get; private set; }
+		public Span<Vector256<uint>> ZisRow { get; private set; }
+
+
 		#endregion
 
 		#region Public Methods
 
 		public void SetRowNumber(int rowNumber)
 		{
-			if (RowNumber != -1)
-			{
-				UpdateTheHasEscapedFlagsSource(RowNumber);
-				UpdateTheCountsSource(RowNumber);
-			}
+			//if (RowNumber != -1)
+			//{
+			//	UpdateTheHasEscapedFlagsSource(RowNumber);
+			//}
 
 			RowNumber = rowNumber;
 
-			// Get the HasEscapedFlags
-			_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, rowNumber);
+			//_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, rowNumber);
+			HasEscapedFlagsRow = _mapSectionZVectors.GetHasEscapedFlagsRow(rowNumber);
 
-			// Get the counts
-			//Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, rowNumber * VectorCount, VectorCount);
-			_mapSectionVectors.FillCountsRow(Counts, rowNumber);
+			CountsRow = Counts.Slice(rowNumber * VectorCount, VectorCount);
+
+			ZrsRow = _mapSectionZVectors.GetZrsRow(rowNumber);
+			ZisRow = _mapSectionZVectors.GetZisRow(rowNumber);
 
 			Array.Clear(DoneFlags, 0, DoneFlags.Length);
 			Array.Clear(UnusedCalcs, 0, UnusedCalcs.Length);
@@ -91,15 +124,10 @@ namespace MSetGeneratorPrototype
 		}
 
 
-		public void UpdateTheHasEscapedFlagsSource(int rowNumber)
-		{
-			_mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(HasEscapedFlags, rowNumber);
-		}
-
-		public void UpdateTheCountsSource(int rowNumber)
-		{
-			_mapSectionVectors.UpdateCountsRowFrom(Counts, rowNumber);
-		}
+		//public void UpdateTheHasEscapedFlagsSource(int rowNumber)
+		//{
+		//	_mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(HasEscapedFlags, rowNumber);
+		//}
 
 		public long GetTotalUnusedCalcs()
 		{

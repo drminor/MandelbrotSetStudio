@@ -1,8 +1,6 @@
-﻿using MEngineDataContracts;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
-using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
@@ -190,7 +188,7 @@ namespace MapSectionProviderLib
 
 					if (mapSectionResponse != null)
 					{
-						ConvertVecToVals(mapSectionResponse);
+						//ConvertVecToVals(mapSectionResponse);
 						mapSectionWorkRequest.Response = mapSectionResponse;
 						_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
 					}
@@ -252,6 +250,8 @@ namespace MapSectionProviderLib
 
 					if (zValues != null)
 					{
+						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors();
+						mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
 						request.MapSectionZVectors = _dtoMapper.MapFrom(zValues);
 					}
 
@@ -274,6 +274,9 @@ namespace MapSectionProviderLib
 				// Create a empty buffer to hold the results.
 				var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
 				request.MapSectionVectors = mapSectionVectors;
+
+				var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors();
+				request.MapSectionZVectors = mapSectionZVectors;
 
 				Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated.");
 				QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
@@ -353,7 +356,7 @@ namespace MapSectionProviderLib
 			var mapSectionRequest = mapSectionWorkRequest.Request;
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
-			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct);
+			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct, _mapSectionHelper.ObtainMapSectionVectors);
 
 			return mapSectionResponse;
 		}
@@ -381,6 +384,7 @@ namespace MapSectionProviderLib
 						{
 							var newCopyOfTheResponse = _mapSectionHelper.Duplicate(mapSectionResponse);
 							newCopyOfTheResponse.MapSectionZVectors = mapSectionResponse.MapSectionZVectors;
+							mapSectionResponse.MapSectionZVectors = null;
 
 
 							if (!mapSectionResponse.RecordOnFile)
@@ -396,7 +400,7 @@ namespace MapSectionProviderLib
 							_mapSectionPersistProcessor.AddWork(newCopyOfTheResponse);
 						}
 
-						ConvertVecToVals(mapSectionResponse);
+						//ConvertVecToVals(mapSectionResponse);
 					}
 					else
 					{
@@ -456,20 +460,20 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private void ConvertVecToVals(MapSectionResponse mapSectionResponse)
-		{
-			var mapSectionVectors = mapSectionResponse.MapSectionVectors;
-			if (mapSectionVectors == null) return;
+		//private void ConvertVecToVals(MapSectionResponse mapSectionResponse)
+		//{
+		//	var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+		//	if (mapSectionVectors == null) return;
 
-			if (!mapSectionResponse.RequestCancelled)
-			{
-				var mapSectionValues = _mapSectionHelper.ObtainMapSectionValues();
-				mapSectionValues.Load(mapSectionVectors);
-				mapSectionResponse.MapSectionValues = mapSectionValues;
-			}
+		//	if (!mapSectionResponse.RequestCancelled)
+		//	{
+		//		var mapSectionValues = _mapSectionHelper.ObtainMapSectionValues();
+		//		mapSectionValues.Load(mapSectionVectors);
+		//		mapSectionResponse.MapSectionValues = mapSectionValues;
+		//	}
 
-			_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
-		}
+		//	_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
+		//}
 
 		//private MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
 		//{
