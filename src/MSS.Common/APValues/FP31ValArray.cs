@@ -85,7 +85,6 @@ namespace MSS.Common.APValues
 			}
 		}
 
-
 		private static Vector256<uint>[] BuildLimbs(int limbCount, int valueCount)
 		{
 			var result = new Vector256<uint>[valueCount * limbCount];

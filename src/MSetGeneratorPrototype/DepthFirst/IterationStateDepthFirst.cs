@@ -32,18 +32,13 @@ namespace MSetGeneratorPrototype
 
 			ZValuesAreZero = true;
 
-
-			//HasEscapedFlags = new Vector256<int>[_mapSectionZVectors.ValuesPerRow];
-			//_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, 0);
-
-			HasEscapedFlagsRow = _mapSectionZVectors.GetHasEscapedFlagsRow(0);
+			HasEscapedFlagsRow = _mapSectionZVectors.GetHasEscapedFlagsRow(0); // TODO: Make this the same as Counts.
 
 			Counts = mapSectionVectors.GetCountVectors();
 			CountsRow = Counts.Slice(0, VectorCount);
 
 			ZrsRow = _mapSectionZVectors.GetZrsRow(0);
 			ZisRow = _mapSectionZVectors.GetZisRow(0);
-
 
 			DoneFlags = new Vector256<int>[VectorCount];
 			UnusedCalcs = new Vector256<int>[VectorCount];
@@ -95,14 +90,8 @@ namespace MSetGeneratorPrototype
 
 		public void SetRowNumber(int rowNumber)
 		{
-			//if (RowNumber != -1)
-			//{
-			//	UpdateTheHasEscapedFlagsSource(RowNumber);
-			//}
-
 			RowNumber = rowNumber;
 
-			//_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, rowNumber);
 			HasEscapedFlagsRow = _mapSectionZVectors.GetHasEscapedFlagsRow(rowNumber);
 
 			CountsRow = Counts.Slice(rowNumber * VectorCount, VectorCount);
@@ -122,12 +111,6 @@ namespace MSetGeneratorPrototype
 			InPlayList = _inPlayBackingList.ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
 		}
-
-
-		//public void UpdateTheHasEscapedFlagsSource(int rowNumber)
-		//{
-		//	_mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(HasEscapedFlags, rowNumber);
-		//}
 
 		public long GetTotalUnusedCalcs()
 		{

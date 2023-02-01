@@ -101,57 +101,9 @@ namespace MSS.Types
 			return result;
 		}
 
-		//public void FillRRow(Vector256<uint>[] mantissas, int rowNumber)
-		//{
-		//	var sourceStartIndex = BytesPerRow * rowNumber;
-		//	var source = new Span<byte>(Zrs, sourceStartIndex, BytesPerRow);
-
-		//	Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas);
-		//	source.CopyTo(destinationByteSpan);
-		//}
-
-		//public void FillIRow(Vector256<uint>[] mantissas, int rowNumber)
-		//{
-		//	var sourceStartIndex = BytesPerRow * rowNumber;
-		//	var source = new Span<byte>(Zis, sourceStartIndex, BytesPerRow);
-
-		//	Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas);
-		//	source.CopyTo(destinationByteSpan);
-		//}
-
-		//public void UpdateRRowFrom(Vector256<uint>[] mantissas, int rowNumber)
-		//{
-		//	var source = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas).ToArray();
-		//	var destinationStartIndex = BytesPerRow * rowNumber;
-		//	Array.Copy(source, 0, Zrs, destinationStartIndex, BytesPerRow);
-		//}
-
-		//public void UpdateIRowFrom(Vector256<uint>[] mantissas, int rowNumber)
-		//{
-		//	var source = MemoryMarshal.Cast<Vector256<uint>, byte>(mantissas).ToArray();
-		//	var destinationStartIndex = BytesPerRow * rowNumber;
-		//	Array.Copy(source, 0, Zis, destinationStartIndex, BytesPerRow);
-		//}
-
 		#endregion
 
 		#region HasEscapedFlag Methods
-
-		//public void FillHasEscapedFlagsRow(Vector256<int>[] mantissas, int rowNumber)
-		//{
-		//	var sourceStartIndex = BytesPerFlagRow * rowNumber;
-		//	var source = new Span<byte>(HasEscapedFlags, sourceStartIndex, BytesPerFlagRow);
-
-		//	Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas);
-		//	source.CopyTo(destinationByteSpan);
-		//}
-
-		//public void UpdateHasEscapedFlagsRowFrom(Vector256<int>[] mantissas, int rowNumber)
-		//{
-		//	var source = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas).ToArray();
-		//	var destinationStartIndex = BytesPerFlagRow * rowNumber;
-		//	Array.Copy(source, 0, HasEscapedFlags, destinationStartIndex, BytesPerFlagRow);
-		//}
 
 		// IPoolable Support
 		void IPoolable.ResetObject()

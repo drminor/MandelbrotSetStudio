@@ -1,5 +1,4 @@
-﻿using MSS.Common.APValues;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
@@ -33,11 +32,6 @@ namespace MSetGeneratorPrototype
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
-			//Crs = new FP31ValArray(LimbCount, ValueCount);
-			//Cis = new FP31ValArray(LimbCount, ValueCount);
-			//Zrs = new FP31ValArray(LimbCount, ValueCount);
-			//Zis = new FP31ValArray(LimbCount, ValueCount);
-
 			//ZValuesAreZero = true;
 
 			_zRSqrs = Enumerable.Repeat(Vector256<uint>.Zero, LimbCount).ToArray();
@@ -55,12 +49,6 @@ namespace MSetGeneratorPrototype
 		public int LimbCount => _fp31VecMath.LimbCount;
 		public int ValueCount { get; init; }
 		public int VectorCount { get; init; }
-
-
-		//public FP31ValArray Crs { get; set; }
-		//public FP31ValArray Cis { get; set; }
-		//public FP31ValArray Zrs { get; set; }
-		//public FP31ValArray Zis { get; set; }
 
 		public bool ZValuesAreZero { get; set; }
 

@@ -11,6 +11,8 @@ namespace MSetGeneratorPrototype
 {
 	public class MapSectionGeneratorDepthFirst : IMapSectionGenerator
 	{
+		#region Private Properties
+
 		private readonly FP31VecMath _fp31VecMath;
 		private readonly IteratorSimdDepthFirst _iterator;
 
@@ -20,8 +22,9 @@ namespace MSetGeneratorPrototype
 		private Vector256<uint>[] _zis;
 
 		private readonly Vector256<int> _justOne;
-
 		private readonly Vector256<byte> ALL_BITS_SET;
+
+		#endregion
 
 		#region Constructor
 
@@ -65,7 +68,7 @@ namespace MSetGeneratorPrototype
 				var iterationState = new IterationStateDepthFirst(mapSectionVectors, mapSectionZVectors);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				GenerateMapSection(_iterator, iterationState/*, mapSectionZVectors*/, coords, mapCalcSettings);
+				GenerateMapSection(_iterator, iterationState, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 				result = new MapSectionResponse(mapSectionRequest);
@@ -78,7 +81,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private void GenerateMapSection(IteratorSimdDepthFirst iterator, IterationStateDepthFirst iterationState/*, MapSectionZVectors mapSectionZVectors*/, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private void GenerateMapSection(IteratorSimdDepthFirst iterator, IterationStateDepthFirst iterationState, IteratorCoords coords, MapCalcSettings mapCalcSettings)
 		{
 			var blockSize = iterationState.BlockSize;
 			var rowCount = blockSize.Height;
@@ -102,7 +105,6 @@ namespace MSetGeneratorPrototype
 				var yPoint = samplePointsY[rowNumber];
 				iterationState.Cis.UpdateFrom(yPoint);
 
-				//FillZValues(mapSectionZVectors, rowNumber, iterationState.Zrs, iterationState.Zis);
 				iterator.ZValuesAreZero = true;
 
 				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length; idxPtr++)
@@ -111,14 +113,8 @@ namespace MSetGeneratorPrototype
 					GenerateMapCol(idx, iterator, ref iterationState, targetIterationsVector);
 				}
 
-				//mapSectionZVectors.UpdateRRowFrom(iterationState.Zrs.Mantissas, rowNumber);
-				//mapSectionZVectors.UpdateIRowFrom(iterationState.Zis.Mantissas, rowNumber);
-
 				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 			}
-
-			//iterationState.UpdateTheCountsSource(iterationState.RowNumber);
-			//iterationState.UpdateTheHasEscapedFlagsSource(iterationState.RowNumber);
 		}
 
 		#endregion
@@ -221,12 +217,6 @@ namespace MSetGeneratorPrototype
 
 			return (mapSectionVectors, mapSectionZVectors);
 		}
-
-		//private void FillZValues(MapSectionZVectors mapSectionZVectors, int rowNumber, FP31ValArray zrValArray, FP31ValArray ziValArray)
-		//{
-		//	mapSectionZVectors.FillRRow(zrValArray.Mantissas, rowNumber);
-		//	mapSectionZVectors.FillIRow(ziValArray.Mantissas, rowNumber);
-		//}
 
 		private bool[] CompressHasEscapedFlags(int[] hasEscapedFlags)
 		{

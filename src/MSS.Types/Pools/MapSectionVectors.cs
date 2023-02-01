@@ -63,22 +63,6 @@ namespace MSS.Types
 			return result;
 		}
 
-		//public void FillCountsRow(Vector256<int>[] mantissas, int rowNumber)
-		//{
-		//	var sourceStartIndex = BytesPerRow * rowNumber;
-		//	var source = new Span<byte>(Counts, sourceStartIndex, BytesPerRow);
-
-		//	Span<byte> destinationByteSpan = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas);
-		//	source.CopyTo(destinationByteSpan);
-		//}
-
-		//public void UpdateCountsRowFrom(Vector256<int>[] mantissas, int rowNumber)
-		//{
-		//	var source = MemoryMarshal.Cast<Vector256<int>, byte>(mantissas).ToArray();
-		//	var destinationStartIndex = BytesPerRow * rowNumber;
-		//	Array.Copy(source, 0, Counts, destinationStartIndex, BytesPerRow);
-		//}
-
 		// IPoolable Support
 		void IPoolable.ResetObject()
 		{
