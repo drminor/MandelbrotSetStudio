@@ -12,7 +12,7 @@ namespace MSS.Types.MSet
 				  subdivisionId: string.Empty,
 				  blockPosition: new BigVector(),
 				  mapCalcSettings: null,
-				  allPointsHaveEscaped: false
+				  allRowsHaveEscaped: false
 				  )
 		{ }
 
@@ -24,12 +24,12 @@ namespace MSS.Types.MSet
 				  mapSectionRequest.SubdivisionId,
 				  mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings,
-				  allPointsHaveEscaped: false
+				  allRowsHaveEscaped: false
 				  )
 		{ }
 
 		public MapSectionResponse(MapSectionRequest mapSectionRequest,
-			bool allPointsHaveEscaped, MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null)
+			bool allRowsHaveEscaped, MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null)
 			: this(
 
 				  mapSectionRequest.MapSectionId, 
@@ -38,7 +38,7 @@ namespace MSS.Types.MSet
 				  mapSectionRequest.SubdivisionId,
 				  mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings,
-				  allPointsHaveEscaped, mapSectionVectors, mapSectionZVectors
+				  allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors
 				  )
 		{ }
 
@@ -49,7 +49,7 @@ namespace MSS.Types.MSet
 			string subdivisionId, 
 			BigVector blockPosition,
 			MapCalcSettings? mapCalcSettings,
-			bool allPointsHaveEscaped, MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null)
+			bool allRowsHaveEscaped, MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null)
 		{
 			MapSectionId = mapSectionId;
 			OwnerId = ownerId;
@@ -57,7 +57,7 @@ namespace MSS.Types.MSet
 			SubdivisionId = subdivisionId;
 			BlockPosition = blockPosition;
 			MapCalcSettings = mapCalcSettings;
-			AllPointsHaveEscaped = allPointsHaveEscaped;
+			AllRowsHaveEscaped = allRowsHaveEscaped;
 			
 			MapSectionVectors = mapSectionVectors;
 			MapSectionZVectors = mapSectionZVectors;
@@ -68,7 +68,7 @@ namespace MSS.Types.MSet
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
-		public bool AllPointsHaveEscaped { get; set; }
+		public bool AllRowsHaveEscaped { get; set; }
 
 
 		public string? MapSectionId { get; set; }

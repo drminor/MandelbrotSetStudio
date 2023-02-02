@@ -247,7 +247,7 @@ namespace MSetRepo
 				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
 
 				Counts: source.MapSectionVectors.Counts,
-				AllPointsHaveEscaped: source.AllPointsHaveEscaped,
+				AllRowsHaveEscaped: source.AllRowsHaveEscaped,
 				ZValues: GetZValues(source)
 				)
 			{
@@ -299,7 +299,7 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
-				allPointsHaveEscaped: target.AllPointsHaveEscaped,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
 
 				mapSectionVectors: mapSectionVectors,
 				mapSectionZVectors: mapSectionZVectors
@@ -322,7 +322,7 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
-				allPointsHaveEscaped: target.AllPointsHaveEscaped,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
 				mapSectionVectors: mapSectionVectors
 			);
 

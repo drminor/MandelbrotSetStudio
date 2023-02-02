@@ -61,8 +61,13 @@ namespace MSetGeneratorPrototype
 				var iterationState = new IterationStateDepthFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				var allRowsHaveEscaped =  GenerateMapSection(_iterator, iterationState, coords, mapCalcSettings);
+				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
+
+				if (allRowsHaveEscaped)
+				{
+					Debug.WriteLine($"The entire block: {coords.ScreenPos} is done.");
+				}
 
 				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
 
@@ -118,14 +123,14 @@ namespace MSetGeneratorPrototype
 
 				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
 
-				if (allRowSamplesHaveEscaped)
-				{
-					Debug.WriteLine($"All samples have escaped for row: {rowNumber}, Screen Position: {coords.ScreenPos}.");
-				}
-				else
-				{
-					allRowsHaveEscaped = false;
-				}
+				//if (allRowSamplesHaveEscaped)
+				//{
+				//	Debug.WriteLine($"All samples have escaped for row: {rowNumber}, Screen Position: {coords.ScreenPos}.");
+				//}
+				//else
+				//{
+				//	allRowsHaveEscaped = false;
+				//}
 
 				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 			}

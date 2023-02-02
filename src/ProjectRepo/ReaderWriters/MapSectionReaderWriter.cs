@@ -79,7 +79,7 @@ namespace ProjectRepo
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression
 				(
 					p => new MapSectionRecordJustCounts(p.Id, p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi,
-					p.BlockPosYLo, p.MapCalcSettings, p.AllPointsHaveEscaped, p.Counts)
+					p.BlockPosYLo, p.MapCalcSettings, p.AllRowsHaveEscaped, p.Counts)
 				);
 
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
@@ -138,6 +138,23 @@ namespace ProjectRepo
 			{
 				Debug.WriteLine("Inserting a MapSectionRecord that has a null ZValue.");
 			}
+
+			try
+			{
+				var blockPos = GetBlockPos(mapSectionRecord);
+				var id = await GetId(mapSectionRecord.SubdivisionId, blockPos);
+				if (id != null)
+				{
+					Debug.WriteLine($"Not Inserting MapSectionRecord with BlockPos: {blockPos}. A record already exists for this block position with Id: {id}.");
+					return id.Value;
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Got exception {e} while Calling GetId on Inserting a MapSectionRecord.");
+				throw;
+			}
+
 			try
 			{
 				mapSectionRecord.LastSavedUtc = DateTime.UtcNow;
@@ -146,7 +163,7 @@ namespace ProjectRepo
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine($"Got exception {e}.");
+				Debug.WriteLine($"Got exception {e} on Inserting a MapSectionRecord.");
 				throw;
 			}
 		}
@@ -263,6 +280,17 @@ namespace ProjectRepo
 
 			var itemsFound = operation.ToEnumerable();
 			return itemsFound;
+		}
+
+		private BigVectorDto GetBlockPos(MapSectionRecord msr)
+		{
+			var blockPosition = new BigVectorDto(new long[][]
+				{
+					new long[] { msr.BlockPosXHi, msr.BlockPosXLo },
+					new long[] { msr.BlockPosYHi, msr.BlockPosYLo }
+				});
+
+			return blockPosition;
 		}
 
 		//public void RemoveEscapeVelsFromMapSectionRecords()

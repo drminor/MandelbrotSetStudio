@@ -17,7 +17,8 @@ namespace ProjectRepo.Entities
 		long BlockPosYLo,
 
 		MapCalcSettings MapCalcSettings,
-		bool AllPointsHaveEscaped,
+		bool AllRowsHaveEscaped,
+
 		byte[] Counts
 
 		)

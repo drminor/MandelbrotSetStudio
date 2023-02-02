@@ -407,7 +407,7 @@ namespace MSS.Common
 		public MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
 		{
 			var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId,
-				mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings, mapSectionResponse.AllPointsHaveEscaped);
+				mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings, mapSectionResponse.AllRowsHaveEscaped);
 
 			if (mapSectionResponse.MapSectionVectors != null)
 			{
