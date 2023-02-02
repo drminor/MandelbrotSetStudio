@@ -12,6 +12,7 @@ namespace MSetGeneratorPrototype
 		private readonly bool _updatingIterationsCount;
 
 		private List<int> _inPlayBackingList;
+		private readonly Vector256<byte> ALL_BITS_SET;
 
 		#region Constructor
 
@@ -28,10 +29,10 @@ namespace MSetGeneratorPrototype
 
 			RowNumber = -1;
 
-			Crs = new FP31ValArray(LimbCount, ValuesPerRow);
-			Cis = new FP31ValArray(LimbCount, ValuesPerRow);
-			Zrs = new FP31ValArray(LimbCount, ValuesPerRow);
-			Zis = new FP31ValArray(LimbCount, ValuesPerRow);
+			CrsRow = new FP31ValArray(LimbCount, ValuesPerRow);
+			CisRow = new FP31ValArray(LimbCount, ValuesPerRow);
+			//Zrs = new FP31ValArray(LimbCount, ValuesPerRow);
+			//Zis = new FP31ValArray(LimbCount, ValuesPerRow);
 
 			ZValuesAreZero = !updatingIterationCount;
 
@@ -50,6 +51,8 @@ namespace MSetGeneratorPrototype
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
 
 			_inPlayBackingList = InPlayList.ToList();
+
+			ALL_BITS_SET = Vector256<byte>.AllBitsSet;
 		}
 
 		#endregion
@@ -64,10 +67,10 @@ namespace MSetGeneratorPrototype
 
 		public int RowNumber { get; private set; }
 
-		public FP31ValArray Crs { get; set; }
-		public FP31ValArray Cis { get; set; }
-		public FP31ValArray Zrs { get; set; }
-		public FP31ValArray Zis { get; set; }
+		public FP31ValArray CrsRow { get; set; }
+		public FP31ValArray CisRow { get; set; }
+		//public FP31ValArray Zrs { get; set; }
+		//public FP31ValArray Zis { get; set; }
 
 		public bool ZValuesAreZero { get; set; }
 
@@ -113,10 +116,11 @@ namespace MSetGeneratorPrototype
 					var targetReachedCompVec = Avx2.CompareGreaterThan(CountsRow[i], targetIterationsVector).AsByte();
 
 					// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
-					var escapedOrReachedVec = Avx2.Or(HasEscapedFlagsRow[i].AsByte(), targetReachedCompVec).AsByte();
+					var escapedOrReachedVec = Avx2.Or(HasEscapedFlagsRow[i].AsByte(), targetReachedCompVec).AsByte().AsInt32();
 
-					var compositeAllEscapedOrReached = Avx2.MoveMask(escapedOrReachedVec);
-					if (compositeAllEscapedOrReached != -1)
+					DoneFlags[i] = escapedOrReachedVec; // Avx2.BlendVariable(DoneFlags[i].AsByte(), ALL_BITS_SET, escapedOrReachedVec.AsByte()).AsInt32();
+					var compositeIsDone = Avx2.MoveMask(DoneFlags[i].AsByte());
+					if (compositeIsDone != -1)
 					{
 						_inPlayBackingList.Add(i);
 					}

@@ -79,19 +79,5 @@ namespace MSS.Common.DataTransferObjects
 		//	return result;
 		//}
 
-
-		public ZValues MapTo(MapSectionZVectors mapSectionZVectors)
-		{
-			var result = new ZValues(mapSectionZVectors.BlockSize, mapSectionZVectors.LimbCount, mapSectionZVectors.Zrs, mapSectionZVectors.Zis, mapSectionZVectors.HasEscapedFlags, mapSectionZVectors.RowHasEscaped);
-			return result;
-		}
-
-		//public MapSectionZVectors MapFrom(ZValues zValues)
-		//{
-		//	var result = new MapSectionZVectors(zValues.BlockSize, zValues.LimbCount, zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
-		//	return result;
-		//}
-
-
 	}
 }

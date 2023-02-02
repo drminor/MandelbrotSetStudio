@@ -32,8 +32,6 @@ namespace MSetGeneratorPrototype
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
-			//ZValuesAreZero = true;
-
 			_zRSqrs = Enumerable.Repeat(Vector256<uint>.Zero, LimbCount).ToArray();
 			_zISqrs = new Vector256<uint>[LimbCount];
 			_sumOfSqrs = new Vector256<uint>[LimbCount];
@@ -49,8 +47,6 @@ namespace MSetGeneratorPrototype
 		public int LimbCount => _fp31VecMath.LimbCount;
 		public int ValueCount { get; init; }
 		public int VectorCount { get; init; }
-
-		public bool ZValuesAreZero { get; set; }
 
 		public uint Threshold
 		{
@@ -71,16 +67,14 @@ namespace MSetGeneratorPrototype
 
 		#region Public Methods
 
-		public Vector256<int> Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
+		public Vector256<int> Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, bool zValuesAreZero)
 		{
 			try
 			{
-				if (ZValuesAreZero)
+				if (zValuesAreZero)
 				{
 					Array.Copy(crs, zrs, crs.Length);
 					Array.Copy(cis, zis, cis.Length);
-
-					ZValuesAreZero = false;
 				}
 				else
 				{

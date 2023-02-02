@@ -10,10 +10,14 @@ namespace ProjectRepo
 {
 	public class ColorBandSetReaderWriter : MongoDbCollectionBase<ColorBandSetRecord>
 	{
+		#region Constructor and Collection Support
+
 		private const string COLLECTION_NAME = "ColorBandSets";
 
 		public ColorBandSetReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
+
+		#endregion
 
 		public IEnumerable<ColorBandSetRecord> GetAll()
 		{

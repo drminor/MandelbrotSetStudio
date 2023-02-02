@@ -52,17 +52,17 @@ namespace MSetRepo
 			_ = subdivisionReaderWriter.CreateCollection();
 		}
 
-		//public void DropCollections()
-		//{
-		//	var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
-		//	jobMapSectionReaderWriter.DropCollection();
+		public void DropJobMapSecAndMapSecCollections()
+		{
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			jobMapSectionReaderWriter.DropCollection();
 
-		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-		//	mapSectionReaderWriter.DropCollection();
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			mapSectionReaderWriter.DropCollection();
 
-		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-		//	subdivisionReaderWriter.DropCollection();
-		//}
+			//var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			//subdivisionReaderWriter.DropCollection();
+		}
 
 		//public void DropSubdivisionsAndMapSectionsCollections()
 		//{

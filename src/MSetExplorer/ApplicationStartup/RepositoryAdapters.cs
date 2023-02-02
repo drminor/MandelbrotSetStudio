@@ -6,7 +6,7 @@ namespace MSetExplorer
 {
 	public class RepositoryAdapters
 	{
-		public RepositoryAdapters(string server, int port, bool createCollections)
+		public RepositoryAdapters(string server, int port, bool createCollections, bool dropMapSectionCollections)
 		{
 			// Project Repository Adapter
 			ProjectAdapter = MSetRepoHelper.GetProjectAdapter(server, port);
@@ -16,6 +16,12 @@ namespace MSetExplorer
 
 			// SharedColorBandSet Repository Adapter
 			SharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(server, port);
+
+			if (dropMapSectionCollections)
+			{
+				MapSectionAdapter.DropJobMapSecAndMapSecCollections();
+			}
+
 
 			if (createCollections)
 			{

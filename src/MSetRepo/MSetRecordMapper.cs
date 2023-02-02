@@ -232,6 +232,8 @@ namespace MSetRepo
 				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
 			}
 
+			var zValues = source.MapSectionZVectors == null ? new ZValues() : new ZValues();
+
 			var result = new MapSectionRecord
 				(
 				DateCreatedUtc: DateTime.UtcNow,
@@ -246,7 +248,7 @@ namespace MSetRepo
 
 				Counts: source.MapSectionVectors.Counts,
 				AllPointsHaveEscaped: source.AllPointsHaveEscaped,
-				ZValues: source.MapSectionZVectors == null ? new ZValues() : _dtoMapper.MapTo(source.MapSectionZVectors)
+				ZValues: GetZValues(source)
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
@@ -256,7 +258,20 @@ namespace MSetRepo
 			return result;
 		}
 
-		// Take a record from the repo and prepare it for display.
+		private ZValues GetZValues(MapSectionResponse mapSectionResponse)
+		{
+			var zVectors = mapSectionResponse.MapSectionZVectors;
+
+			var result = zVectors == null
+				? new ZValues()
+				: new ZValues(zVectors.BlockSize, zVectors.LimbCount,
+					zVectors.Zrs, zVectors.Zis,
+					zVectors.HasEscapedFlags, zVectors.RowHasEscaped);
+
+			return result;
+		}
+
+		// NOT USED -- Take a record from the repo and prepare it for display.
 		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors, Func<MapSectionZVectors> mapSectionZVectorsProvider)
 		{
 			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
@@ -268,7 +283,7 @@ namespace MSetRepo
 			if (target.ZValues != null)
 			{
 				mapSectionZVectors = mapSectionZVectorsProvider();
-				mapSectionZVectors.Load(target.ZValues.Zrs, target.ZValues.Zis, target.ZValues.HasEscapedFlags);
+				mapSectionZVectors.Load(target.ZValues.Zrs, target.ZValues.Zis, target.ZValues.HasEscapedFlags, target.ZValues.RowsHasEscaped);
 			}
 			else
 			{

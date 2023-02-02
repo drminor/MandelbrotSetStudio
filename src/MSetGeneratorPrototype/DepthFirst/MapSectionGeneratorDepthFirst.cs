@@ -14,12 +14,9 @@ namespace MSetGeneratorPrototype
 		#region Private Properties
 
 		private readonly FP31VecMath _fp31VecMath;
+		private readonly int _limbCount;
 		private readonly IteratorSimdDepthFirst _iterator;
 
-		private Vector256<uint>[] _crs;
-		private Vector256<uint>[] _cis;
-		private Vector256<uint>[] _zrs;
-		private Vector256<uint>[] _zis;
 
 		private readonly Vector256<int> _justOne;
 		private readonly Vector256<byte> ALL_BITS_SET;
@@ -32,12 +29,8 @@ namespace MSetGeneratorPrototype
 		{
 			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
 			_fp31VecMath = new FP31VecMath(apFixedPointFormat);
+			_limbCount = limbCount;
 			_iterator = new IteratorSimdDepthFirst(_fp31VecMath, blockSize.Width);
-
-			_crs = new Vector256<uint>[limbCount];
-			_cis = new Vector256<uint>[limbCount];
-			_zrs = new Vector256<uint>[limbCount];
-			_zis = new Vector256<uint>[limbCount];
 
 			ALL_BITS_SET = Vector256<byte>.AllBitsSet;
 
@@ -64,7 +57,7 @@ namespace MSetGeneratorPrototype
 			else
 			{
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
-				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _fp31VecMath.LimbCount);
+				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _limbCount);
 				var iterationState = new IterationStateDepthFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
@@ -95,7 +88,7 @@ namespace MSetGeneratorPrototype
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			iterator.Threshold = (uint)mapCalcSettings.Threshold;
-			iterationState.Crs.UpdateFrom(samplePointsX);
+			iterationState.CrsRow.UpdateFrom(samplePointsX);
 			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
@@ -108,9 +101,7 @@ namespace MSetGeneratorPrototype
 
 				// Load C & Z value decks
 				var yPoint = samplePointsY[rowNumber];
-				iterationState.Cis.UpdateFrom(yPoint);
-
-				iterator.ZValuesAreZero = iterationState.ZValuesAreZero;
+				iterationState.CisRow.UpdateFrom(yPoint);
 
 				var allRowSamplesHaveEscaped = true;
 
@@ -148,12 +139,17 @@ namespace MSetGeneratorPrototype
 
 		private bool GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationStateDepthFirst iterationState, Vector256<int> targetIterationsVector)
 		{
-			iterationState.Crs.FillLimbSet(idx, _crs);
-			iterationState.Cis.FillLimbSet(idx, _cis);
-			iterationState.Zrs.FillLimbSet(idx, _zrs);
-			iterationState.Zis.FillLimbSet(idx, _zis);
+			var crs = new Vector256<uint>[_limbCount];
+			var cis = new Vector256<uint>[_limbCount];
+			var zrs = new Vector256<uint>[_limbCount];
+			var zis = new Vector256<uint>[_limbCount];
 
-			iterator.ZValuesAreZero = true;
+			iterationState.CrsRow.FillLimbSet(idx, crs);
+			iterationState.CisRow.FillLimbSet(idx, cis);
+
+			FillLimbSet(iterationState.ZrsRow, idx, zrs);
+			FillLimbSet(iterationState.ZisRow, idx, zis);
+			var zValuesAreZero = iterationState.ZValuesAreZero;
 
 			var hasEscapedFlagsV = iterationState.HasEscapedFlagsRow[idx].AsByte();
 			var countsV = iterationState.CountsRow[idx];
@@ -165,7 +161,8 @@ namespace MSetGeneratorPrototype
 
 			while (!allDone)
 			{
-				var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
+				var escapedFlagsVec = iterator.Iterate(crs, cis, zrs, zis, zValuesAreZero);
+				zValuesAreZero = false;
 
 				// Increment all counts
 				var countsVt = Avx2.Add(countsV, _justOne).AsByte();
@@ -199,8 +196,8 @@ namespace MSetGeneratorPrototype
 			iterationState.DoneFlags[idx] = doneFlagsV.AsInt32();
 			iterationState.UnusedCalcs[idx] = unusedCalcsV;
 
-			iterationState.Zrs.UpdateFromLimbSet(idx, _zrs);
-			iterationState.Zis.UpdateFromLimbSet(idx, _zis);
+			UpdateFromLimbSet(iterationState.ZrsRow, idx, zrs);
+			UpdateFromLimbSet(iterationState.ZisRow, idx, zis);
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV);
 
@@ -208,6 +205,26 @@ namespace MSetGeneratorPrototype
 
 			return result;
 
+		}
+
+		private void FillLimbSet(Span<Vector256<uint>> source, int valueIndex, Vector256<uint>[] limbSet)
+		{
+			var vecPtr = valueIndex * _limbCount;
+
+			for (var i = 0; i < _limbCount; i++)
+			{
+				limbSet[i] = source[vecPtr++];
+			}
+		}
+
+		public void UpdateFromLimbSet(Span<Vector256<uint>> destination, int valueIndex, Vector256<uint>[] limbSet)
+		{
+			var vecPtr = valueIndex * _limbCount;
+
+			for (var i = 0; i < _limbCount; i++)
+			{
+				destination[vecPtr++] = limbSet[i];
+			}
 		}
 
 		#endregion

@@ -13,7 +13,7 @@ namespace MSS.Common
 	public interface IMapSectionAdapter : IMapSectionDuplicator, IMapSectionDeleter
 	{
 		void CreateCollections();
-		//void DropCollections();
+		void DropJobMapSecAndMapSecCollections();
 		//void DropSubdivisionsAndMapSectionsCollections();
 
 		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors);

@@ -13,6 +13,8 @@ namespace ProjectRepo
 {
 	public class MapSectionReaderWriter : MongoDbCollectionBase<MapSectionRecord>
 	{
+		#region Constructor and Collection Support
+
 		private const string COLLECTION_NAME = "MapSections";
 
 		public MapSectionReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
@@ -42,6 +44,8 @@ namespace ProjectRepo
 
 			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<MapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "SubAndPos" }));
 		}
+
+		#endregion
 
 		public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
 		{
@@ -192,7 +196,6 @@ namespace ProjectRepo
 
 			return GetReturnCount(deleteResult);
 		}
-
 
 		public long? DeleteAllWithSubId(ObjectId subdivisionId)
 		{

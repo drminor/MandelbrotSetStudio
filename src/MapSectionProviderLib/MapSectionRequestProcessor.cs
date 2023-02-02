@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
@@ -255,7 +256,7 @@ namespace MapSectionProviderLib
 					if (zValues != null)
 					{
 						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors();
-						mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags);
+						mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
 						request.MapSectionZVectors = mapSectionZVectors;
 					}
 
@@ -279,7 +280,7 @@ namespace MapSectionProviderLib
 				var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
 				request.MapSectionVectors = mapSectionVectors;
 
-				var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors();
+				var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(); // TODO: Get 10 empty buffers at a time to avoid lock contention.
 				request.MapSectionZVectors = mapSectionZVectors;
 
 				Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated.");
@@ -405,6 +406,10 @@ namespace MapSectionProviderLib
 							//}
 
 							_mapSectionPersistProcessor.AddWork(newCopyOfTheResponse);
+						}
+						else
+						{
+							Debug.WriteLine("The MapSectionResponse has MapSectionVectors but is already OnFile and IncreasingIterations is false.");
 						}
 
 						//ConvertVecToVals(mapSectionResponse);

@@ -18,7 +18,7 @@ namespace MSS.Types
 				  new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
 				  new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
 				  new byte[blockSize.NumberOfCells * VALUE_SIZE],
-				  new byte[blockSize.Height]
+				  new byte[blockSize.Height * VALUE_SIZE]
 				  )
 		{ }
 
@@ -30,7 +30,7 @@ namespace MSS.Types
 			Lanes = Vector256<uint>.Count;
 			ValuesPerRow = blockSize.Width;
 			RowCount = blockSize.Height;
-			VectorsPerRow = VectorsPerRow / Lanes;
+			VectorsPerRow = ValuesPerRow / Lanes;
 
 			BytesPerRow = ValuesPerRow * LimbCount * VALUE_SIZE;
 			TotalByteCount = ValueCount * LimbCount * VALUE_SIZE;
@@ -87,11 +87,13 @@ namespace MSS.Types
 
 		#region ZValue Methods
 
-		public void Load(byte[] zrs, byte[] zis, byte[] hasEscapedFlags)
+		public void Load(byte[] zrs, byte[] zis, byte[] hasEscapedFlags, byte[] rowHasEscaped)
 		{
 			Array.Copy(zrs, Zrs, TotalByteCount);
 			Array.Copy(zis, Zis, TotalByteCount);
-			Array.Copy(hasEscapedFlags, HasEscapedFlags, ValueCount);
+			Array.Copy(hasEscapedFlags, HasEscapedFlags, TotalBytesForFlags);
+			Array.Copy(hasEscapedFlags, HasEscapedFlags, TotalBytesForFlags);
+			Array.Copy(rowHasEscaped, RowHasEscaped, RowCount * VALUE_SIZE);
 		}
 
 		public Span<Vector256<uint>> GetZrsRow(int rowNumber)
@@ -149,7 +151,7 @@ namespace MSS.Types
 
 			Array.Copy(Zrs, result.Zrs, TotalByteCount);						// TODO: Use ZrsMemory
 			Array.Copy(Zis, result.Zis, TotalByteCount);
-			Array.Copy(HasEscapedFlags, result.HasEscapedFlags, ValueCount);
+			Array.Copy(HasEscapedFlags, result.HasEscapedFlags, TotalBytesForFlags);
 			RowHasEscapedMemory.CopyTo(result.RowHasEscapedMemory);
 		}
 

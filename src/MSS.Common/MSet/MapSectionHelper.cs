@@ -415,11 +415,11 @@ namespace MSS.Common
 				result.MapSectionVectors = newCopyOfMapSectionVectors;
 			}
 
-			if (mapSectionResponse.MapSectionZVectors != null)
-			{
-				var newCopyOfMapSectionZVectors = _mapSectionZVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionZVectors);
-				result.MapSectionZVectors = newCopyOfMapSectionZVectors;
-			}
+			//if (mapSectionResponse.MapSectionZVectors != null)
+			//{
+			//	var newCopyOfMapSectionZVectors = _mapSectionZVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionZVectors);
+			//	result.MapSectionZVectors = newCopyOfMapSectionZVectors;
+			//}
 
 			return result;
 		}

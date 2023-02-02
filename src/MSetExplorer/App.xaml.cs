@@ -27,6 +27,7 @@ namespace MSetExplorer
 		private const string LOCAL_M_ENGINE_ADDRESS = "https://localhost:5001";
 		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.2.109:5000" };
 
+		private static readonly bool DROP_MAP_SECTION_COLLECTIONS = true;
 		private static readonly bool CREATE_COLLECTIONS = true;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
@@ -77,7 +78,7 @@ namespace MSetExplorer
 
 			_mEngineServerManager?.Start();
 
-			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, CREATE_COLLECTIONS);
+			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, CREATE_COLLECTIONS, DROP_MAP_SECTION_COLLECTIONS);
 			//PrepareRepositories(DROP_ALL_COLLECTIONS, DROP_MAP_SECTIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
 
 			if (_repositoryAdapters.ProjectAdapter is ProjectAdapter pa)
