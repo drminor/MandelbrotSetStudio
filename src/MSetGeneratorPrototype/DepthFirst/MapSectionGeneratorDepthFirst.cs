@@ -56,12 +56,15 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _limbCount);
-				var iterationState = new IterationStateDepthFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations);
+
+				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
+				_iterator.Threshold = (uint)mapCalcSettings.Threshold;
+				var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
+				var iterationState = new IterationStateDepthFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, coords, mapCalcSettings);
+				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, coords);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 				if (allRowsHaveEscaped)
@@ -78,34 +81,23 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private bool GenerateMapSection(IteratorSimdDepthFirst iterator, IterationStateDepthFirst iterationState, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private bool GenerateMapSection(IteratorSimdDepthFirst iterator, IterationStateDepthFirst iterationState, IteratorCoords coords)
 		{
-			var allRowsHaveEscaped = true;
-
-			var blockSize = iterationState.BlockSize;
-			var rowCount = blockSize.Height;
-			var stride = (byte)blockSize.Width;
-
+			var stride = (byte)iterationState.BlockSize.Width;
 			var scalarMath = new FP31ScalarMath(_fp31VecMath.ApFixedPointFormat);
 			var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(coords.Delta, stride, scalarMath);
 			var samplePointsX = SamplePointBuilder.BuildSamplePoints(coords.StartingCx, samplePointOffsets, scalarMath);
 			var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, scalarMath);
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
-			iterator.Threshold = (uint)mapCalcSettings.Threshold;
 			iterationState.CrsRow.UpdateFrom(samplePointsX);
-			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
+			var allRowsHaveEscaped = true;
+			var rowNumber = iterationState.GetNextRowNumber();
 
-			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
-			{
-				var allRowSamplesAreDone = iterationState.SetRowNumber(rowNumber, targetIterationsVector);
-				if (allRowSamplesAreDone)
-				{
-					continue;
-				}
-
+			while(rowNumber != null)
+			{ 
 				// Load C & Z value decks
-				var yPoint = samplePointsY[rowNumber];
+				var yPoint = samplePointsY[rowNumber.Value];
 				iterationState.CisRow.UpdateFrom(yPoint);
 
 				var allRowSamplesHaveEscaped = true;
@@ -113,7 +105,7 @@ namespace MSetGeneratorPrototype
 				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length; idxPtr++)
 				{
 					var idx = iterationState.InPlayList[idxPtr];
-					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState, targetIterationsVector);
+					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState);
 
 					if (!allSamplesHaveEscaped)
 					{
@@ -121,18 +113,16 @@ namespace MSetGeneratorPrototype
 					}
 				}
 
-				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
+				iterationState.RowHasEscaped[rowNumber.Value] = allRowSamplesHaveEscaped;
 
-				//if (allRowSamplesHaveEscaped)
-				//{
-				//	Debug.WriteLine($"All samples have escaped for row: {rowNumber}, Screen Position: {coords.ScreenPos}.");
-				//}
-				//else
-				//{
-				//	allRowsHaveEscaped = false;
-				//}
+				if (!allRowSamplesHaveEscaped)
+				{
+					allRowsHaveEscaped = false;
+				}
 
 				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
+
+				rowNumber = iterationState.GetNextRowNumber();
 			}
 
 			return allRowsHaveEscaped;
@@ -142,7 +132,7 @@ namespace MSetGeneratorPrototype
 
 		#region Generate One Vector
 
-		private bool GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationStateDepthFirst iterationState, Vector256<int> targetIterationsVector)
+		private bool GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationStateDepthFirst iterationState)
 		{
 			var crs = new Vector256<uint>[_limbCount];
 			var cis = new Vector256<uint>[_limbCount];
@@ -154,7 +144,6 @@ namespace MSetGeneratorPrototype
 
 			FillLimbSet(iterationState.ZrsRow, idx, zrs);
 			FillLimbSet(iterationState.ZisRow, idx, zis);
-			var zValuesAreZero = iterationState.ZValuesAreZero;
 
 			var hasEscapedFlagsV = iterationState.HasEscapedFlagsRow[idx].AsByte();
 			var countsV = iterationState.CountsRow[idx];
@@ -162,6 +151,7 @@ namespace MSetGeneratorPrototype
 			var doneFlagsV = iterationState.DoneFlags[idx].AsByte();
 			var unusedCalcsV = iterationState.UnusedCalcs[idx];
 
+			var zValuesAreZero = !iterationState.UpdatingIterationsCount;
 			var allDone = false;
 
 			while (!allDone)
@@ -185,7 +175,7 @@ namespace MSetGeneratorPrototype
 				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec.AsByte(), hasEscapedFlagsV, doneFlagsV);
 
 				// Compare the new Counts with the TargetIterations
-				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector).AsByte();
+				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector).AsByte();
 
 				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
 				var escapedOrReachedVec = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec).AsByte();
