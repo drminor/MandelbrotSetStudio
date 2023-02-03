@@ -24,29 +24,25 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IteratorSimdDepthFirst(FP31VecMath fp31VecMath, int valueCount)
+		public IteratorSimdDepthFirst(FP31VecMath fp31VecMath)
 		{
 			_fp31VecMath = fp31VecMath;
-			ValueCount = valueCount;
 
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
-			_zRSqrs = Enumerable.Repeat(Vector256<uint>.Zero, LimbCount).ToArray();
-			_zISqrs = new Vector256<uint>[LimbCount];
-			_sumOfSqrs = new Vector256<uint>[LimbCount];
-			_zRZiSqrs = new Vector256<uint>[LimbCount];
-			_zRs2 = new Vector256<uint>[LimbCount];
-			_zIs2 = new Vector256<uint>[LimbCount];
+			_zRSqrs = fp31VecMath.GetNewLimbSet();
+			_zISqrs = fp31VecMath.GetNewLimbSet();
+			_sumOfSqrs = fp31VecMath.GetNewLimbSet();
+
+			_zRZiSqrs = fp31VecMath.GetNewLimbSet();
+			_zRs2 = fp31VecMath.GetNewLimbSet();
+			_zIs2 = fp31VecMath.GetNewLimbSet();
 		}
 
 		#endregion
 
 		#region Public Properties
-
-		public int LimbCount => _fp31VecMath.LimbCount;
-		public int ValueCount { get; init; }
-		public int VectorCount { get; init; }
 
 		public uint Threshold
 		{

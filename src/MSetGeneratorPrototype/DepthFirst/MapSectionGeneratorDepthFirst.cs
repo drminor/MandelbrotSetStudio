@@ -17,6 +17,10 @@ namespace MSetGeneratorPrototype
 		private readonly int _limbCount;
 		private readonly IteratorSimdDepthFirst _iterator;
 
+		private Vector256<uint>[] _crs;
+		private Vector256<uint>[] _cis;
+		private Vector256<uint>[] _zrs;
+		private Vector256<uint>[] _zis;
 
 		private readonly Vector256<int> _justOne;
 		private readonly Vector256<byte> ALL_BITS_SET;
@@ -25,15 +29,19 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public MapSectionGeneratorDepthFirst(SizeInt blockSize, int limbCount)
+		public MapSectionGeneratorDepthFirst(int limbCount)
 		{
 			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
 			_fp31VecMath = new FP31VecMath(apFixedPointFormat);
 			_limbCount = limbCount;
-			_iterator = new IteratorSimdDepthFirst(_fp31VecMath, blockSize.Width);
+			_iterator = new IteratorSimdDepthFirst(_fp31VecMath);
+
+			_crs = _fp31VecMath.GetNewLimbSet();
+			_cis = _fp31VecMath.GetNewLimbSet();
+			_zrs = _fp31VecMath.GetNewLimbSet();
+			_zis = _fp31VecMath.GetNewLimbSet();
 
 			ALL_BITS_SET = Vector256<byte>.AllBitsSet;
-
 			_justOne = Vector256.Create(1);
 		}
 
@@ -92,8 +100,8 @@ namespace MSetGeneratorPrototype
 
 			iterationState.CrsRow.UpdateFrom(samplePointsX);
 			var allRowsHaveEscaped = true;
-			var rowNumber = iterationState.GetNextRowNumber();
 
+			var rowNumber = iterationState.GetNextRowNumber();
 			while(rowNumber != null)
 			{ 
 				// Load C & Z value decks
@@ -134,29 +142,23 @@ namespace MSetGeneratorPrototype
 
 		private bool GenerateMapCol(int idx, IteratorSimdDepthFirst iterator, ref IterationStateDepthFirst iterationState)
 		{
-			var crs = new Vector256<uint>[_limbCount];
-			var cis = new Vector256<uint>[_limbCount];
-			var zrs = new Vector256<uint>[_limbCount];
-			var zis = new Vector256<uint>[_limbCount];
-
-			iterationState.CrsRow.FillLimbSet(idx, crs);
-			iterationState.CisRow.FillLimbSet(idx, cis);
-
-			FillLimbSet(iterationState.ZrsRow, idx, zrs);
-			FillLimbSet(iterationState.ZisRow, idx, zis);
-
-			var hasEscapedFlagsV = iterationState.HasEscapedFlagsRow[idx].AsByte();
+			var hasEscapedFlagsV = iterationState.HasEscapedFlagsRowV[idx];
 			var countsV = iterationState.CountsRow[idx];
 
-			var doneFlagsV = iterationState.DoneFlags[idx].AsByte();
+			var doneFlagsV = iterationState.DoneFlags[idx];
 			var unusedCalcsV = iterationState.UnusedCalcs[idx];
+
+			iterationState.FillCrLimbSet(idx, _crs);
+			iterationState.FillCiLimbSet(idx, _cis);
+			iterationState.FillZrLimbSet(idx, _zrs);
+			iterationState.FillZiLimbSet(idx, _zis);
 
 			var zValuesAreZero = !iterationState.UpdatingIterationsCount;
 			var allDone = false;
 
 			while (!allDone)
 			{
-				var escapedFlagsVec = iterator.Iterate(crs, cis, zrs, zis, zValuesAreZero);
+				var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis, zValuesAreZero).AsByte();
 				zValuesAreZero = false;
 
 				// Increment all counts
@@ -172,54 +174,33 @@ namespace MSetGeneratorPrototype
 				unusedCalcsV = Avx2.BlendVariable(unusedCalcsV.AsByte(), unusedCalcsVt, doneFlagsV).AsInt32();
 
 				// Apply the new escapeFlags, only if the doneFlags is false for each vector position
-				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec.AsByte(), hasEscapedFlagsV, doneFlagsV);
+				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
 
 				// Compare the new Counts with the TargetIterations
 				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector).AsByte();
 
 				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
-				var escapedOrReachedVec = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec).AsByte();
+				var escapedOrReachedVec = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
 				doneFlagsV = Avx2.BlendVariable(doneFlagsV, ALL_BITS_SET, escapedOrReachedVec);
 
 				var compositeIsDone = Avx2.MoveMask(doneFlagsV);
 				allDone = compositeIsDone == -1;
 			}
 
-			iterationState.HasEscapedFlagsRow[idx] = hasEscapedFlagsV.AsInt32();
+			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
 			iterationState.CountsRow[idx] = countsV;
 
-			iterationState.DoneFlags[idx] = doneFlagsV.AsInt32();
+			iterationState.DoneFlags[idx] = doneFlagsV;
 			iterationState.UnusedCalcs[idx] = unusedCalcsV;
 
-			UpdateFromLimbSet(iterationState.ZrsRow, idx, zrs);
-			UpdateFromLimbSet(iterationState.ZisRow, idx, zis);
+			iterationState.UpdateZrLimbSet(idx, _zrs);
+			iterationState.UpdateZrLimbSet(idx, _zis);
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV);
 
 			var result = compositeAllEscaped == -1;
 
 			return result;
-
-		}
-
-		private void FillLimbSet(Span<Vector256<uint>> source, int valueIndex, Vector256<uint>[] limbSet)
-		{
-			var vecPtr = valueIndex * _limbCount;
-
-			for (var i = 0; i < _limbCount; i++)
-			{
-				limbSet[i] = source[vecPtr++];
-			}
-		}
-
-		public void UpdateFromLimbSet(Span<Vector256<uint>> destination, int valueIndex, Vector256<uint>[] limbSet)
-		{
-			var vecPtr = valueIndex * _limbCount;
-
-			for (var i = 0; i < _limbCount; i++)
-			{
-				destination[vecPtr++] = limbSet[i];
-			}
 		}
 
 		#endregion

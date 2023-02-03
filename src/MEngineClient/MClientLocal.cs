@@ -28,7 +28,7 @@ namespace MEngineClient
 
 			if (UsingDepthFirst)
 			{
-				_generator = new MapSectionGeneratorDepthFirst(RMapConstants.BLOCK_SIZE, limbCount: 2);
+				_generator = new MapSectionGeneratorDepthFirst(limbCount: 2);
 				EndPointAddress = "CSharp_DepthFirstSimdGenerator";
 			}
 			else

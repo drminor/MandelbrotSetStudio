@@ -76,7 +76,7 @@ namespace MSetGeneratorPrototype
 
 			_squareResult1Lo = new Vector256<ulong>[LimbCount * 2];
 			_squareResult1Hi = new Vector256<ulong>[LimbCount * 2];
-			
+
 			_squareResult2Lo = new Vector256<ulong>[LimbCount * 2];
 			_squareResult2Hi = new Vector256<ulong>[LimbCount * 2];
 
@@ -179,7 +179,7 @@ namespace MSetGeneratorPrototype
 			{
 				var withCarries = Avx2.Add(source[limbPtr], _carryVectorsLong);
 
-				result[limbPtr] = Avx2.And(withCarries, HIGH33_MASK_VEC_L);						// The low 31 bits of the sum is the result.
+				result[limbPtr] = Avx2.And(withCarries, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
 				_carryVectorsLong = Avx2.ShiftRightLogical(withCarries, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 
 				// Clear the source so that square internal will not have to make a separate call.
@@ -277,7 +277,7 @@ namespace MSetGeneratorPrototype
 
 				c[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
 				_carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
-				//MathOpCounts.NumberOfSplits++;
+																								   //MathOpCounts.NumberOfSplits++;
 			}
 		}
 
@@ -519,6 +519,15 @@ namespace MSetGeneratorPrototype
 			//MathOpCounts.NumberOfGrtrThanOps++;
 
 			return result;
+		}
+
+		#endregion
+
+		#region Value Support
+
+		public Vector256<uint>[] GetNewLimbSet()
+		{
+			return new Vector256<uint>[LimbCount];
 		}
 
 		#endregion
