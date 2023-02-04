@@ -4,6 +4,6 @@ namespace MSetGeneratorPrototype
 {
 	public interface IMapSectionGenerator
 	{
-		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest);
+		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct);
 	}
 }

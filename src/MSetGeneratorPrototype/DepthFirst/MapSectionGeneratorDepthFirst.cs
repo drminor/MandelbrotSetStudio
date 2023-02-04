@@ -47,7 +47,7 @@ namespace MSetGeneratorPrototype
 
 		#region Generate MapSection
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
@@ -80,15 +80,22 @@ namespace MSetGeneratorPrototype
 
 				var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
-				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, coords);
+				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, ct);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				if (allRowsHaveEscaped)
+				if (ct.IsCancellationRequested)
 				{
-					Debug.WriteLine($"The entire block: {coords.ScreenPos} is done.");
+					Debug.WriteLine($"The block: {coords.ScreenPos} is cancelled.");
+				}
+				else
+				{
+					if (allRowsHaveEscaped)
+					{
+						Debug.WriteLine($"The entire block: {coords.ScreenPos} is done.");
+					}
 				}
 
-				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
+				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
 
 				//result.MathOpCounts = _iterator.MathOpCounts;
 			}
@@ -97,13 +104,13 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private bool GenerateMapSection(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, IteratorCoords coords)
+		private bool GenerateMapSection(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct)
 		{
 			//iterationState.CrsRow.UpdateFrom(samplePointsX);
 			var allRowsHaveEscaped = true;
 
 			var rowNumber = iterationState.GetNextRowNumber();
-			while(rowNumber != null)
+			while(rowNumber != null && !ct.IsCancellationRequested)
 			{ 
 				// Load C & Z value decks
 				//var yPoint = samplePointsY[rowNumber.Value];
@@ -111,7 +118,7 @@ namespace MSetGeneratorPrototype
 
 				var allRowSamplesHaveEscaped = true;
 
-				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length; idxPtr++)
+				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length && !ct.IsCancellationRequested; idxPtr++)
 				{
 					var idx = iterationState.InPlayList[idxPtr];
 					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState);

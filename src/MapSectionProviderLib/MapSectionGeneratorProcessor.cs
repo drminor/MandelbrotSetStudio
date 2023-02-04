@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -16,7 +17,6 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionGeneratorProcessor : IDisposable
 	{
-		//private const int NUMBER_OF_CONSUMERS = 4;
 		private const int QUEUE_CAPACITY = 200;
 
 		private readonly IMEngineClient[] _mEngineClients;
@@ -27,7 +27,7 @@ namespace MapSectionProviderLib
 		private readonly IList<Task> _workQueueProcessors;
 
 		private readonly object _cancelledJobsLock = new();
-		private readonly List<int> _cancelledJobIds;
+		private readonly Dictionary<int, CancellationTokenSource?> _cancelledJobIds;
 
 		private bool disposedValue;
 
@@ -41,7 +41,7 @@ namespace MapSectionProviderLib
 
 			_cts = new CancellationTokenSource();
 			_workQueue = new BlockingCollection<MapSectionGenerateRequest>(QUEUE_CAPACITY);
-			_cancelledJobIds = new List<int>();
+			_cancelledJobIds = new Dictionary<int, CancellationTokenSource?>();
 
 			if (mEngineClients.Length == 1)
 			{
@@ -166,9 +166,14 @@ namespace MapSectionProviderLib
 		{
 			lock (_cancelledJobsLock)
 			{
-				if (!_cancelledJobIds.Contains(jobId))
+				if (!_cancelledJobIds.ContainsKey(jobId))
 				{
-					_cancelledJobIds.Add(jobId);
+					_cancelledJobIds.Add(jobId, null);
+				}
+				else
+				{
+					// If the job is currently running, the CancellationTokenSource will be present here.
+					_cancelledJobIds[jobId]?.Cancel();
 				}
 			}
 		}
@@ -216,6 +221,9 @@ namespace MapSectionProviderLib
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
+				int? jobId = null;
+				CancellationTokenSource? cts;
+
 				try
 				{
 					var mapSectionGenerateRequest = _workQueue.Take(ct);
@@ -225,17 +233,20 @@ namespace MapSectionProviderLib
 
 					MapSectionResponse? mapSectionResponse;
 
-					if (IsJobCancelled(mapSectionGenerateRequest.JobId))
+					jobId = mapSectionGenerateRequest.JobId;
+					cts = new CancellationTokenSource();
+
+					if (IsJobCancelled(mapSectionGenerateRequest.JobId, cts))
 					{
 						mapSectionResponse = null;
 					}
 					else
 					{
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
-						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest);
+						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest, cts.Token);
 						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-						if (mapSectionResponse.MapSectionVectors == null)
+						if (!cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
 						{
 							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
 						}
@@ -258,6 +269,13 @@ namespace MapSectionProviderLib
 					Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client" }. The exception is {e}.");
 					throw;
 				}
+				finally
+				{
+					if (jobId != null)
+					{
+						RemoveJobId(jobId.Value);
+					}
+				}
 			}
 		}
 
@@ -265,6 +283,9 @@ namespace MapSectionProviderLib
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
+				int? jobId = null;
+				CancellationTokenSource? cts;
+
 				try
 				{
 					var mapSectionGenerateRequest = _workQueue.Take(ct);
@@ -274,17 +295,20 @@ namespace MapSectionProviderLib
 
 					MapSectionResponse? mapSectionResponse;
 
-					if (IsJobCancelled(mapSectionGenerateRequest.JobId))
+					jobId = mapSectionGenerateRequest.JobId;
+					cts = new CancellationTokenSource();
+
+					if (IsJobCancelled(mapSectionGenerateRequest.JobId, cts))
 					{
 						mapSectionResponse = null;
 					}
 					else
 					{
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
-						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest);
+						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, cts.Token);
 						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-						if (mapSectionResponse.MapSectionVectors == null)
+						if (!cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
 						{
 							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
 						}
@@ -307,18 +331,44 @@ namespace MapSectionProviderLib
 					Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client"}. The exception is {e}.");
 					throw;
 				}
+				finally
+				{
+					if (jobId != null)
+					{
+						RemoveJobId(jobId.Value);
+					}
+				}
 			}
 		}
 
-		private bool IsJobCancelled(int jobId)
+		private bool IsJobCancelled(int jobId, CancellationTokenSource cts)
 		{
 			bool result;
 			lock (_cancelledJobsLock)
 			{
-				result = _cancelledJobIds.Contains(jobId);
+				if (_cancelledJobIds.ContainsKey(jobId))
+				{
+					result = true;
+				}
+				else
+				{
+					_cancelledJobIds.Add(jobId, cts);
+					result = false;
+				}
 			}
 
 			return result;
+		}
+
+		private void RemoveJobId(int jobId)
+		{
+			lock (_cancelledJobsLock)
+			{
+				if (_cancelledJobIds.ContainsKey(jobId))
+				{
+					_cancelledJobIds.Remove(jobId);
+				}
+			}
 		}
 
 		#endregion

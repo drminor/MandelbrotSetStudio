@@ -3,6 +3,7 @@ using MSS.Common;
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MSetGenP
@@ -25,12 +26,12 @@ namespace MSetGenP
 		public string EndPointAddress => "CSharp_ScalerGenerator";
 		public bool IsLocal => true;
 
-		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
+		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
 			var stopWatch = Stopwatch.StartNew();
-			var mapSectionResponse = await GenerateMapSectionAsyncInternal(mapSectionRequest);
+			var mapSectionResponse = await GenerateMapSectionAsyncInternal(mapSectionRequest, ct);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
 			//Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
@@ -38,7 +39,7 @@ namespace MSetGenP
 			return mapSectionResponse;
 		}
 
-		private async Task<MapSectionResponse> GenerateMapSectionAsyncInternal(MapSectionRequest mapSectionRequest)
+		private async Task<MapSectionResponse> GenerateMapSectionAsyncInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			if (DateTime.Now > DateTime.Today.AddDays(1d))
 			{
@@ -59,12 +60,12 @@ namespace MSetGenP
 
 		#region Synchronous Methods
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
 			var stopWatch = Stopwatch.StartNew();
-			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest);
+			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, ct);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
 			//Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
@@ -72,7 +73,7 @@ namespace MSetGenP
 			return mapSectionResponse;
 		}
 
-		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest)
+		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest);
 

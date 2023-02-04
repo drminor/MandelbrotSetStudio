@@ -5,6 +5,7 @@ using MSS.Types.MSet;
 using ProtoBuf.Grpc.Client;
 using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MEngineClient
@@ -29,13 +30,13 @@ namespace MEngineClient
 		//	return reply;
 		//}
 
-		public async Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest)
+		public async Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest, CancellationToken ct)
 		{
 			var mEngineService = GetMapSectionService();
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
 			var stopWatch = Stopwatch.StartNew();
-			var mapSectionResponse = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
+			var mapSectionResponse = await mEngineService.GenerateMapSectionAsync(mapSectionRequest, ct);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
 			Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
@@ -43,8 +44,16 @@ namespace MEngineClient
 			return mapSectionResponse;
 		}
 
-		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest)
+		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest, CancellationToken ct)
 		{
+			if (ct.IsCancellationRequested)
+			{
+				return new MapSectionServiceResponse(mapSectionRequest)
+				{
+					RequestCancelled = true
+				};
+			}
+
 			var mEngineService = GetMapSectionService();
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
@@ -83,12 +92,12 @@ namespace MEngineClient
 		}
 
 
-		public Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
+		public Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			throw new NotImplementedException();
 		}
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			throw new NotImplementedException();
 		}

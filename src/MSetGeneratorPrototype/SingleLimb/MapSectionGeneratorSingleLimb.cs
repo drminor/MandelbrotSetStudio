@@ -1,5 +1,4 @@
-﻿using MSS.Common;
-using MSS.Common.APValues;
+﻿using MSS.Common.APValues;
 using MSS.Types;
 using MSS.Types.MSet;
 using System.Diagnostics;
@@ -11,17 +10,14 @@ namespace MSetGeneratorPrototype
 	{
 		#region Private Properties
 
-		private readonly FP31VecMath _fp31VecMath;
 		private readonly IteratorSingleLimb _iterator;
 
 		#endregion
 
 		#region Constructor
 
-		public MapSectionGeneratorSingleLimb(int limbCount)
+		public MapSectionGeneratorSingleLimb()
 		{
-			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
-			_fp31VecMath = new FP31VecMath(apFixedPointFormat);
 			_iterator = new IteratorSingleLimb();
 		}
 
@@ -29,22 +25,19 @@ namespace MSetGeneratorPrototype
 
 		#region Generate MapSection
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
 
-			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
-
-			var blockPos = mapSectionRequest.BlockPosition;
+			//var blockPos = mapSectionRequest.BlockPosition;
 			var mapPosition = mapSectionRequest.Position;
 			var samplePointDelta = mapSectionRequest.SamplePointDelta;
-			var screenPos = mapSectionRequest.ScreenPosition;
-
+			var screenPosition = mapSectionRequest.ScreenPosition;
 
 			MapSectionResponse result;
 
-			if (ShouldSkipThisSection(skipPositiveBlocks, skipLowDetailBlocks, coords))
+			if (ShouldSkipThisSection(skipPositiveBlocks, skipLowDetailBlocks, screenPosition, mapPosition))
 			{
 				result = new MapSectionResponse(mapSectionRequest);
 			}
@@ -66,15 +59,23 @@ namespace MSetGeneratorPrototype
 				var targetIterations = mapCalcSettings.TargetIterations;
 				var iterationState = new IterationStateSingleLimb(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterations);
 
-				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, coords);
+				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, ct);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				if (allRowsHaveEscaped)
+				if (ct.IsCancellationRequested)
 				{
-					Debug.WriteLine($"The entire block: {coords.ScreenPos} is done.");
+					Debug.WriteLine($"The block: {screenPosition} is cancelled.");
+				}
+				else
+				{
+					if (allRowsHaveEscaped)
+					{
+						Debug.WriteLine($"The entire block: {screenPosition} is done.");
+					}
 				}
 
-				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
+				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
+
 
 				//result.MathOpCounts = _iterator.MathOpCounts;
 			}
@@ -83,12 +84,12 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private bool GenerateMapSection(IteratorSingleLimb iterator, IterationStateSingleLimb iterationState, IteratorCoords coords)
+		private bool GenerateMapSection(IteratorSingleLimb iterator, IterationStateSingleLimb iterationState, CancellationToken ct)
 		{
 			var allRowsHaveEscaped = true;
 
 			var rowNumber = iterationState.GetNextRowNumber();
-			while(rowNumber != null)
+			while(rowNumber != null && !ct.IsCancellationRequested)
 			{ 
 				var allRowSamplesHaveEscaped = true;
 
@@ -162,22 +163,6 @@ namespace MSetGeneratorPrototype
 
 		#region Support Methods
 
-		private IteratorCoords GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
-		{
-			var blockPos = mapSectionRequest.BlockPosition;
-			var mapPosition = mapSectionRequest.Position;
-			var samplePointDelta = mapSectionRequest.SamplePointDelta;
-
-
-			var startingCx = FP31ValHelper.CreateFP31Val(mapPosition.X, apFixedPointFormat);
-			var startingCy = FP31ValHelper.CreateFP31Val(mapPosition.Y, apFixedPointFormat);
-			var delta = FP31ValHelper.CreateFP31Val(samplePointDelta.Width, apFixedPointFormat);
-
-			var screenPos = mapSectionRequest.ScreenPosition;
-
-			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
-		}
-
 		private (MapSectionVectors, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
 		{
 			var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
@@ -243,20 +228,20 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, IteratorCoords coords)
+		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, PointInt screenPosition, RPoint mapPosition)
 		{
 			// Skip positive 'blocks'
 
 			if (skipPositiveBlocks)
 			{
-				var xSign = coords.StartingCx.GetSign();
-				var ySign = coords.StartingCy.GetSign();
+				var xSign = mapPosition.X.Value > 0;
+				var ySign = mapPosition.Y.Value > 0;
 
 				return xSign && ySign;
 			}
 
 			// Move directly to a block where at least one sample point reaches the iteration target.
-			else if (skipLowDetailBlocks && (BigInteger.Abs(coords.ScreenPos.Y) > 1 || BigInteger.Abs(coords.ScreenPos.X) > 3))
+			else if (skipLowDetailBlocks && (BigInteger.Abs(screenPosition.Y) > 1 || BigInteger.Abs(screenPosition.X) > 3))
 			{
 				return true;
 			}

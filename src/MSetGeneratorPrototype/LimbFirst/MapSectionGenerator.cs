@@ -30,7 +30,7 @@ namespace MSetGeneratorPrototype
 
 		#region Generate MapSection
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			var skipPositiveBlocks = false;
 			var skipLowDetailBlocks = false;
