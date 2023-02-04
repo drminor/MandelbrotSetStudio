@@ -3,7 +3,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
-	internal class IteratorSimdDepthFirst //: IIterator
+	internal class IteratorDepthFirst //: IIterator
 	{
 		#region Private Properties
 
@@ -24,10 +24,11 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IteratorSimdDepthFirst(FP31VecMath fp31VecMath)
+		public IteratorDepthFirst(FP31VecMath fp31VecMath)
 		{
 			_fp31VecMath = fp31VecMath;
 
+			IsReset = true;
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
@@ -43,6 +44,9 @@ namespace MSetGeneratorPrototype
 		#endregion
 
 		#region Public Properties
+
+		public bool IsReset { get; private set; }
+		public bool IncreasingIterations { get; set; }
 
 		public uint Threshold
 		{
@@ -63,14 +67,28 @@ namespace MSetGeneratorPrototype
 
 		#region Public Methods
 
-		public Vector256<int> Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, bool zValuesAreZero)
+		public void Reset()
+		{
+			IsReset = true;
+		}
+
+		public Vector256<int> Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
 		{
 			try
 			{
-				if (zValuesAreZero)
+				if (IsReset)
 				{
-					Array.Copy(crs, zrs, crs.Length);
-					Array.Copy(cis, zis, cis.Length);
+					if (!IncreasingIterations)
+					{
+						Array.Copy(crs, zrs, crs.Length);
+						Array.Copy(cis, zis, cis.Length);
+					}
+					else
+					{
+						ClearVectors(_zRSqrs);
+						ClearVectors(_zISqrs);
+					}
+					IsReset = false;
 				}
 				else
 				{
@@ -101,11 +119,14 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		public Vector256<int>[] Iterate(int[] inPlayList, int[] inPlayListNarrow)
-		{
-			throw new NotImplementedException();
-		}
-
 		#endregion
+
+		private void ClearVectors(Vector256<uint>[] vectors)
+		{
+			for (var i = 0; i < vectors.Length; i++)
+			{
+				vectors[i] = Vector256<uint>.Zero;
+			}
+		}
 	}
 }

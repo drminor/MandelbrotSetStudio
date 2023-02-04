@@ -15,7 +15,7 @@ namespace MSetGeneratorPrototype
 	public class MapSectionGenerator : IMapSectionGenerator
 	{
 		private readonly FP31VectorsMath _fp31VectorsMath;
-		private readonly IteratorSimd _iterator;
+		private readonly IteratorLimbFirst _iterator;
 
 		#region Constructor
 
@@ -23,7 +23,7 @@ namespace MSetGeneratorPrototype
 		{
 			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
 			_fp31VectorsMath = new FP31VectorsMath(apFixedPointFormat, blockSize.Width);
-			_iterator = new IteratorSimd(_fp31VectorsMath);
+			_iterator = new IteratorLimbFirst(_fp31VectorsMath);
 		}
 
 		#endregion
@@ -45,12 +45,17 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _fp31VectorsMath.LimbCount);
-				var iterationState = new IterationState(mapSectionVectors, mapSectionZVectors);
+
+				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
+				_iterator.Threshold = (uint)mapCalcSettings.Threshold;
+				_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
+
+				var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
+				var iterationState = new IterationStateLimbFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				GenerateMapSection(_iterator, iterationState, mapSectionZVectors, coords, mapCalcSettings);
+				GenerateMapSection(_iterator, iterationState, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 				result = new MapSectionResponse(mapSectionRequest);
@@ -62,7 +67,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private void GenerateMapSection(IteratorSimd iterator, IterationState iterationState, MapSectionZVectors mapSectionZVectors, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private void GenerateMapSection(IteratorLimbFirst iterator, IterationStateLimbFirst iterationState, IteratorCoords coords, MapCalcSettings mapCalcSettings)
 		{
 			var blockSize = iterationState.BlockSize;
 			var rowCount = blockSize.Height;
@@ -74,9 +79,7 @@ namespace MSetGeneratorPrototype
 			var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, scalarMath);
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
-			iterator.Threshold = (uint)mapCalcSettings.Threshold;
 			iterator.Crs.UpdateFrom(samplePointsX);
-			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
@@ -86,29 +89,34 @@ namespace MSetGeneratorPrototype
 				var yPoint = samplePointsY[rowNumber];
 				iterator.Cis.UpdateFrom(yPoint);
 
-				FillZValues(mapSectionZVectors, rowNumber, iterator.Zrs, iterator.Zis);
-				//iterator.Zrs.ClearManatissMems();
-				//iterator.Zis.ClearManatissMems();
-				iterator.ZValuesAreZero = true;
+				//FillZValues(mapSectionZVectors, rowNumber, iterator.Zrs, iterator.Zis);
+				iterator.Zrs.ClearManatissMems();
+				iterator.Zis.ClearManatissMems();
 
-				GenerateMapRow(iterator, ref iterationState, targetIterationsVector);
+				GenerateMapRow(iterator, ref iterationState);
 
 				//iterator.Zrs.UpdateFromLimbSet(idx, _zrs);
 				//iterator.Zis.UpdateFromLimbSet(idx, _zis);
 			}
+
+			iterationState.UpdateTheCountsSource(rowCount - 1);
+			iterationState.UpdateTheHasEscapedFlagsSource(rowCount - 1);
+
 		}
 
 		#endregion
 
 		#region Generate Map Row
 
-		private void GenerateMapRow(IteratorSimd iterator, ref IterationState iterationState, Vector256<int> targetIterationsVector)
+		private void GenerateMapRow(IteratorLimbFirst iterator, ref IterationStateLimbFirst iterationState)
 		{
+			iterator.Reset();
+
 			while (iterationState.InPlayList.Length > 0)
 			{
 				var escapedFlags = iterator.Iterate(iterationState.InPlayList, iterationState.InPlayListNarrow);
 
-				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, ref iterationState, targetIterationsVector);
+				var vectorsNoLongerInPlay = UpdateCounts(escapedFlags, ref iterationState);
 				if (vectorsNoLongerInPlay.Count > 0)
 				{
 					iterationState.UpdateTheInPlayList(vectorsNoLongerInPlay);
@@ -118,7 +126,7 @@ namespace MSetGeneratorPrototype
 			//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 		}
 
-		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, ref IterationState itState, Vector256<int> targetIterationsVector)
+		private List<int> UpdateCounts(Vector256<int>[] escapedFlagVectors, ref IterationStateLimbFirst itState)
 		{
 			var toBeRemoved = new List<int>();
 			var justOne = Vector256.Create(1);
@@ -128,14 +136,14 @@ namespace MSetGeneratorPrototype
 				var idx = itState.InPlayList[idxPtr];
 
 				var doneFlagsV = itState.DoneFlags[idx];
-				var countsV = itState.Counts[idx];
+				var countsV = itState.CountsRow[idx];
 
 				// Increment all counts
 				var countsVt = Avx2.Add(countsV, justOne);
 
 				// Take the incremented count, only if the doneFlags is false for each vector position.
-				countsV = Avx2.BlendVariable(countsVt.AsByte(), countsV.AsByte(), doneFlagsV.AsByte()).AsInt32(); // use First if Zero, second if 1
-				itState.Counts[idx] = countsV;
+				countsV = Avx2.BlendVariable(countsVt, countsV, doneFlagsV); // use First if Zero, second if 1
+				itState.CountsRow[idx] = countsV;
 
 				var unusedCalcsV = itState.UnusedCalcs[idx];
 
@@ -143,20 +151,20 @@ namespace MSetGeneratorPrototype
 				var unusedCalcsVt = Avx2.Add(unusedCalcsV, justOne);
 
 				// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
-				itState.UnusedCalcs[idx] = Avx2.BlendVariable(unusedCalcsV.AsByte(), unusedCalcsVt.AsByte(), doneFlagsV.AsByte()).AsInt32();
+				itState.UnusedCalcs[idx] = Avx2.BlendVariable(unusedCalcsV, unusedCalcsVt, doneFlagsV);
 
 				var hasEscapedFlagsV = itState.HasEscapedFlags[idx];
 
 				// Apply the new escapeFlags, only if the doneFlags is false for each vector position
-				var updatedHaveEscapedFlagsV = Avx2.BlendVariable(escapedFlagVectors[idx].AsByte(), hasEscapedFlagsV.AsByte(), doneFlagsV.AsByte()).AsInt32();
+				var updatedHaveEscapedFlagsV = Avx2.BlendVariable(escapedFlagVectors[idx], hasEscapedFlagsV, doneFlagsV);
 				itState.HasEscapedFlags[idx] = updatedHaveEscapedFlagsV;
 
 				// Compare the new Counts with the TargetIterations
-				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector);
+				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, itState.TargetIterationsVector);
 
 				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
 				var escapedOrReachedVec = Avx2.Or(updatedHaveEscapedFlagsV, targetReachedCompVec);
-				var updatedDoneFlagsV = Avx2.BlendVariable(doneFlagsV.AsByte(), Vector256<int>.AllBitsSet.AsByte(), escapedOrReachedVec.AsByte()).AsInt32();
+				var updatedDoneFlagsV = Avx2.BlendVariable(doneFlagsV, Vector256<int>.AllBitsSet, escapedOrReachedVec);
 
 				itState.DoneFlags[idx] = updatedDoneFlagsV;
 
@@ -199,12 +207,12 @@ namespace MSetGeneratorPrototype
 			var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
 			mapSectionRequest.MapSectionVectors = null;
 
-			if (mapSectionRequest.IncreasingIterations && mapSectionRequest.MapSectionZVectors == null)
-			{
-				throw new ArgumentNullException("The MapSectionZVectors is null.");
-			}
+			//if (mapSectionRequest.IncreasingIterations && mapSectionRequest.MapSectionZVectors == null) 
+			//{
+			//	throw new ArgumentNullException("The MapSectionZVectors is null.");
+			//}
 
-			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? new MapSectionZVectors(mapSectionRequest.BlockSize, limbCount);
+			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? throw new ArgumentNullException("The MapSectionVectors is null."); //new MapSectionZVectors(mapSectionRequest.BlockSize, limbCount);
 			mapSectionRequest.MapSectionZVectors = null;
 
 			return (mapSectionVectors, mapSectionZVectors);

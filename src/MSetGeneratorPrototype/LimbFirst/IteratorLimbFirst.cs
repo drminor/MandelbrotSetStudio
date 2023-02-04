@@ -4,7 +4,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
-	internal class IteratorSimd //: IIterator
+	internal class IteratorLimbFirst //: IIterator
 	{
 		#region Private Properties
 
@@ -26,7 +26,7 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IteratorSimd(FP31VectorsMath fp31VectorsMath)
+		public IteratorLimbFirst(FP31VectorsMath fp31VectorsMath)
 		{
 			_fp31VectorsMath = fp31VectorsMath;
 
@@ -39,7 +39,8 @@ namespace MSetGeneratorPrototype
 			Zrs = new FP31Vectors(LimbCount, ValueCount);
 			Zis = new FP31Vectors(LimbCount, ValueCount);
 
-			ZValuesAreZero = true;
+			IsReset = true;
+			//ZValuesAreZero = true;
 
 			_zRSqrs = new FP31Vectors(LimbCount, ValueCount);
 			_zISqrs = new FP31Vectors(LimbCount, ValueCount);
@@ -63,7 +64,9 @@ namespace MSetGeneratorPrototype
 		public FP31Vectors Zrs { get; set; }
 		public FP31Vectors Zis { get; set; }
 
-		public bool ZValuesAreZero { get; set; }
+
+		public bool IsReset { get; private set; }
+		public bool IncreasingIterations { get; set; }
 
 		public uint Threshold
 		{
@@ -84,16 +87,30 @@ namespace MSetGeneratorPrototype
 
 		#region Public Methods
 
+		public void Reset()
+		{
+			IsReset = true;
+		}
+
 		public Vector256<int>[] Iterate(int[] inPlayList, int[] inPlayListNarrow)
 		{
 			try
 			{
-				if (ZValuesAreZero)
+				if (IsReset)
 				{
-					// Perform the first iteration. 
-					Zrs.UpdateFrom(Crs);
-					Zis.UpdateFrom(Cis);
-					ZValuesAreZero = false;
+					if (!IncreasingIterations)
+					{
+						// Perform the first iteration. 
+						Zrs.UpdateFrom(Crs);
+						Zis.UpdateFrom(Cis);
+						//ZValuesAreZero = false;
+					}
+					else
+					{
+						_zRSqrs.ClearManatissMems();
+						_zISqrs.ClearManatissMems();
+					}
+					IsReset = false;
 				}
 				else
 				{

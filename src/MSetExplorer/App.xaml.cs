@@ -27,12 +27,13 @@ namespace MSetExplorer
 		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.2.109:5000" };
 
 		private static readonly bool USE_ALL_CORES = true;
+		private static readonly bool USE_SINGLE_LIMB_ITERATOR = true;
 		private static readonly bool USE_DEPTH_FIRST_ITERATOR = true;
 		private static readonly ClientImplementation CLIENT_IMPLEMENTATION = ClientImplementation.LocalVectorMark2;
 
 		private static readonly bool CREATE_COLLECTIONS = true;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
-		private static readonly bool DROP_MAP_SECTION_COLLECTIONS = false;
+		private static readonly bool DROP_MAP_SECTION_COLLECTIONS = true;
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 
 		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
@@ -144,7 +145,7 @@ namespace MSetExplorer
 				ClientImplementation.LocalScalar => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalScalar() },
 				ClientImplementation.LocalVector => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalVector() },
 
-				ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_DEPTH_FIRST_ITERATOR) },
+				ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_SINGLE_LIMB_ITERATOR, USE_DEPTH_FIRST_ITERATOR) },
 				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
 			};
 

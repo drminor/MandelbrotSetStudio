@@ -123,7 +123,7 @@ namespace MapSectionProviderLib
 				if (clients[0] is MClientLocal mClientLocal)
 				{
 					//nClient = new MClientLocalScalar();
-					nClient = new MClientLocal(mClientLocal.UsingDepthFirst);
+					nClient = new MClientLocal(mClientLocal.UsingSingleLimb, mClientLocal.UsingDepthFirst);
 				}
 				else if (clients[0] is MClient mClient)
 				{

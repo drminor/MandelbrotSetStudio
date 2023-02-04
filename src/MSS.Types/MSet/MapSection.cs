@@ -6,8 +6,8 @@ namespace MSS.Types
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>//, IDisposable
 	{
-		private static readonly Lazy<MapSection> _lazyMapSection = new Lazy<MapSection>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
-		public static readonly MapSection Empty = _lazyMapSection.Value;
+		//private static readonly Lazy<MapSection> _lazyMapSection = new Lazy<MapSection>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+		//public static readonly MapSection Empty = _lazyMapSection.Value;
 
 		private Lazy<IHistogram> _histogram;
 

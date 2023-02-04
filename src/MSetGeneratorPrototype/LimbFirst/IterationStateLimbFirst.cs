@@ -3,7 +3,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
-	public ref struct IterationState
+	public ref struct IterationStateLimbFirst
 	{
 		private readonly MapSectionVectors _mapSectionVectors;
 		private readonly MapSectionZVectors _mapSectionZVectors;
@@ -12,29 +12,32 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IterationState(MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors)
+		public IterationStateLimbFirst(MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors, bool updatingIterationCount, Vector256<int> targetIterationsVector)
 		{
 			_mapSectionVectors = mapSectionVectors;
 			_mapSectionZVectors = mapSectionZVectors;
 
-			VectorCount = mapSectionVectors.VectorsPerRow;
+			UpdatingIterationsCount = updatingIterationCount;
+			TargetIterationsVector = targetIterationsVector;
+
+			ValueCount = mapSectionZVectors.ValueCount;
+			LimbCount = mapSectionZVectors.LimbCount;
+			ValuesPerRow = mapSectionVectors.ValuesPerRow;
+			VectorsPerRow = mapSectionZVectors.VectorsPerRow;
+			VectorsPerFlagRow = mapSectionZVectors.VectorsPerFlagRow;
 
 			RowNumber = -1;
 
 			HasEscapedFlags = new Vector256<int>[_mapSectionZVectors.ValuesPerRow];
-			//_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, 0);
+			_mapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlags);
 
-			//Counts = new Vector256<int>[_mapSectionVectors.VectorsPerRow];
+			CountsRow = new Vector256<int>[_mapSectionVectors.VectorsPerRow];
+			mapSectionVectors.FillCountsRow(0, CountsRow);
 
-			//mapSectionVectors.FillCountsRow(Counts, 0);
+			DoneFlags = new Vector256<int>[VectorsPerFlagRow];
+			UnusedCalcs = new Vector256<int>[VectorsPerFlagRow];
 
-			Counts = mapSectionVectors.GetCountVectors();
-			CountsRow = Counts.Slice(0, VectorCount);
-
-			DoneFlags = new Vector256<int>[VectorCount];
-			UnusedCalcs = new Vector256<int>[VectorCount];
-
-			InPlayList = Enumerable.Range(0, VectorCount).ToArray();
+			InPlayList = Enumerable.Range(0, VectorsPerFlagRow).ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
 
 			_inPlayBackingList = InPlayList.ToList();
@@ -44,15 +47,20 @@ namespace MSetGeneratorPrototype
 
 		#region Public Properties
 
+		public bool UpdatingIterationsCount { get; private set; }
+		public Vector256<int> TargetIterationsVector { get; private set; }
+
 		public SizeInt BlockSize => _mapSectionVectors.BlockSize;
-		public int VectorCount { get; init; }
+		public int ValueCount { get; init; }
+		public int LimbCount { get; init; }
+		public int VectorsPerRow { get; init; }
+		public int VectorsPerFlagRow { get; init; }
+		public int ValuesPerRow { get; init; }
 
 		public int RowNumber { get; private set; }
 
 		public Vector256<int>[] HasEscapedFlags { get; private set; }
-
-		public Span<Vector256<int>> Counts { get; private set; }
-		public Span<Vector256<int>> CountsRow { get; private set; }
+		public Vector256<int>[] CountsRow { get; private set; }
 
 		public Vector256<int>[] DoneFlags { get; private set; }
 		public int[] InPlayList { get; private set; }
@@ -69,25 +77,22 @@ namespace MSetGeneratorPrototype
 			if (RowNumber != -1)
 			{
 				UpdateTheHasEscapedFlagsSource(RowNumber);
-				//UpdateTheCountsSource(RowNumber);
+				UpdateTheCountsSource(RowNumber);
 			}
 
 			RowNumber = rowNumber;
 
 			// Get the HasEscapedFlags
-			//_mapSectionZVectors.FillHasEscapedFlagsRow(HasEscapedFlags, rowNumber);
+			_mapSectionZVectors.FillHasEscapedFlagsRow(RowNumber, HasEscapedFlags);
 
 			// Get the counts
-			//Counts = new Span<Vector256<int>>(_mapSectionVectors.CountVectors, rowNumber * VectorCount, VectorCount);
-			//_mapSectionVectors.FillCountsRow(Counts, rowNumber);
-
-			CountsRow = Counts.Slice(rowNumber * VectorCount, VectorCount);
+			_mapSectionVectors.FillCountsRow(RowNumber, CountsRow);
 
 			Array.Clear(DoneFlags, 0, DoneFlags.Length);
 			Array.Clear(UnusedCalcs, 0, UnusedCalcs.Length);
 
 			_inPlayBackingList.Clear();
-			for(var i = 0; i < VectorCount; i++)
+			for(var i = 0; i < VectorsPerFlagRow; i++)
 			{
 				_inPlayBackingList.Add(i);
 			}
@@ -99,13 +104,13 @@ namespace MSetGeneratorPrototype
 
 		public void UpdateTheHasEscapedFlagsSource(int rowNumber)
 		{
-			//_mapSectionZVectors.UpdateHasEscapedFlagsRowFrom(HasEscapedFlags, rowNumber);
+			_mapSectionZVectors.UpdateFromHasEscapedFlagsRow(rowNumber, HasEscapedFlags);
 		}
 
-		//public void UpdateTheCountsSource(int rowNumber)
-		//{
-		//	_mapSectionVectors.UpdateCountsRowFrom(Counts, rowNumber);
-		//}
+		public void UpdateTheCountsSource(int rowNumber)
+		{
+			_mapSectionVectors.UpdateFromCountsRow(rowNumber, CountsRow);
+		}
 
 		public long GetTotalUnusedCalcs()
 		{

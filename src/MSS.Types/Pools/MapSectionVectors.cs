@@ -69,6 +69,55 @@ namespace MSS.Types
 			return result;
 		}
 
+		public void FillCountsRow(int rowNumber, Vector256<int>[] dest)
+		{
+			var destBack = MemoryMarshal.Cast<Vector256<int>, byte>(dest);
+
+			var startIndex = BytesPerRow * rowNumber;
+
+			for (var i = 0; i < BytesPerRow; i++)
+			{
+				destBack[i] = Counts[startIndex + i];
+			}
+		}
+
+		public void FillCountsRow(int rowNumber, int[] dest)
+		{
+			var destBack = MemoryMarshal.Cast<int, byte>(dest);
+
+			var startIndex = BytesPerRow * rowNumber;
+
+			for (var i = 0; i < BytesPerRow; i++)
+			{
+				destBack[i] = Counts[startIndex + i];
+			}
+		}
+
+		public void UpdateFromCountsRow(int rowNumber, Vector256<int>[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<Vector256<int>, byte>(source);
+
+			var startIndex = BytesPerRow * rowNumber;
+
+			for (var i = 0; i < BytesPerRow; i++)
+			{
+				Counts[startIndex + i] = sourceBack[i];
+			}
+		}
+
+		// From an Array of Ints
+		public void UpdateFromCountsRow(int rowNumber, int[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<int, byte>(source);
+
+			var startIndex = BytesPerRow * rowNumber;
+
+			for (var i = 0; i < BytesPerRow; i++)
+			{
+				Counts[startIndex + i] = sourceBack[i];
+			}
+		}
+
 		// IPoolable Support
 		void IPoolable.ResetObject()
 		{

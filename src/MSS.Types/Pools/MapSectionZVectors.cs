@@ -141,9 +141,9 @@ namespace MSS.Types
 			}
 		}
 
-		public void FillHasEscapedFlagsRow(int rowNumber, Vector256<byte>[] dest)
+		public void FillHasEscapedFlagsRow(int rowNumber, Vector256<int>[] dest)
 		{
-			var destBack = MemoryMarshal.Cast<Vector256<byte>, byte>(dest);
+			var destBack = MemoryMarshal.Cast<Vector256<int>, byte>(dest);
 
 			var startIndex = BytesPerFlagRow * rowNumber;
 
@@ -153,42 +153,67 @@ namespace MSS.Types
 			}
 		}
 
-		public void UpdateFromZrsRow(int rowNumber, Vector256<uint>[] dest)
+		// Fill an Array of Ints
+		public void FillHasEscapedFlagsRow(int rowNumber, int[] dest)
 		{
-			var destBack = MemoryMarshal.Cast<Vector256<uint>, byte>(dest);
-
-			var startIndex = BytesPerRow * rowNumber;
-
-			for (var i = 0; i < BytesPerRow; i++)
-			{
-				Zrs[startIndex + i] = destBack[i];
-			}
-		}
-
-		public void UpdateFromZisRow(int rowNumber, Vector256<uint>[] dest)
-		{
-			var destBack = MemoryMarshal.Cast<Vector256<uint>, byte>(dest);
-
-			var startIndex = BytesPerRow * rowNumber;
-
-			for (var i = 0; i < BytesPerRow; i++)
-			{
-				Zis[startIndex + i] = destBack[i];
-			}
-		}
-
-		public void UpdateFromHasEscapedFlagsRow(int rowNumber, Vector256<byte>[] dest)
-		{
-			var destBack = MemoryMarshal.Cast<Vector256<byte>, byte>(dest);
+			var destBack = MemoryMarshal.Cast<int, byte>(dest);
 
 			var startIndex = BytesPerFlagRow * rowNumber;
 
 			for (var i = 0; i < BytesPerFlagRow; i++)
 			{
-				HasEscapedFlags[startIndex + i] = destBack[i];
+				destBack[i] = HasEscapedFlags[startIndex + i];
 			}
 		}
 
+		public void UpdateFromZrsRow(int rowNumber, Vector256<uint>[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(source);
+
+			var startIndex = BytesPerRow * rowNumber;
+
+			for (var i = 0; i < BytesPerRow; i++)
+			{
+				Zrs[startIndex + i] = sourceBack[i];
+			}
+		}
+
+		public void UpdateFromZisRow(int rowNumber, Vector256<uint>[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(source);
+
+			var startIndex = BytesPerRow * rowNumber;
+
+			for (var i = 0; i < BytesPerRow; i++)
+			{
+				Zis[startIndex + i] = sourceBack[i];
+			}
+		}
+
+		public void UpdateFromHasEscapedFlagsRow(int rowNumber, Vector256<int>[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<Vector256<int>, byte>(source);
+
+			var startIndex = BytesPerFlagRow * rowNumber;
+
+			for (var i = 0; i < BytesPerFlagRow; i++)
+			{
+				HasEscapedFlags[startIndex + i] = sourceBack[i];
+			}
+		}
+
+		// From an Array of Ints
+		public void UpdateFromHasEscapedFlagsRow(int rowNumber, int[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<int, byte>(source);
+
+			var startIndex = BytesPerFlagRow * rowNumber;
+
+			for (var i = 0; i < BytesPerFlagRow; i++)
+			{
+				HasEscapedFlags[startIndex + i] = sourceBack[i];
+			}
+		}
 
 		public Span<bool> GetRowHasEscaped()
 		{

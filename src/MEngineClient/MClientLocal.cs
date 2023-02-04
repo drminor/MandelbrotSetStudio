@@ -22,19 +22,24 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClientLocal(bool useDepthFirst)
+		public MClientLocal(bool useSingleLimb, bool useDepthFirst)
 		{
 			UsingDepthFirst = useDepthFirst; 
 
-			if (UsingDepthFirst)
+			if (useSingleLimb)
+			{
+				_generator = new MapSectionGeneratorSingleLimb(limbCount: 2);
+				EndPointAddress = "CSharp_SingleLimbGenerator";
+			}
+			else if (UsingDepthFirst)
 			{
 				_generator = new MapSectionGeneratorDepthFirst(limbCount: 2);
-				EndPointAddress = "CSharp_DepthFirstSimdGenerator";
+				EndPointAddress = "CSharp_DepthFirstGenerator";
 			}
 			else
 			{
 				_generator = new MapSectionGenerator(RMapConstants.BLOCK_SIZE, limbCount: 2);
-				EndPointAddress = "CSharp_SimdGenerator";
+				EndPointAddress = "CSharp_LimbFirstGenerator";
 			}
 		}
 
@@ -42,6 +47,7 @@ namespace MEngineClient
 
 		#region Public Properties
 
+		public bool UsingSingleLimb { get; init; }
 		public bool UsingDepthFirst { get; init; }
 		public string EndPointAddress { get; init; }
 		public bool IsLocal => true;

@@ -1,4 +1,5 @@
 ﻿using MSS.Common.APValues;
+using MSS.Types;
 
 namespace MSetGeneratorPrototype
 {
@@ -27,6 +28,37 @@ namespace MSetGeneratorPrototype
 
 			return offsets;
 		}
+
+
+		#region Doubles
+
+		public static double[] BuildSamplePoints(RValue startValue, double[] offsets)
+		{
+			var sValue = BigIntegerHelper.ConvertToDouble(startValue);
+			var result = new double[offsets.Length];
+
+			for (var i = 0; i < offsets.Length; i++)
+			{
+				result[i] = sValue + offsets[i];
+			}
+
+			return result;
+		}
+
+		public static double[] BuildSamplePointOffsets(RSize delta, byte extent)
+		{
+			var dWidth = BigIntegerHelper.ConvertToDouble(delta.Width);
+			var offsets = new double[extent];
+
+			for (var i = 0; i < extent; i++)
+			{
+				offsets[i] = dWidth * i;
+			}
+
+			return offsets;
+		}
+
+		#endregion
 
 		#region NOT USED
 

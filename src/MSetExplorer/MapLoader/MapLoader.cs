@@ -123,7 +123,7 @@ namespace MSetExplorer
 
 		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse, int jobId)
 		{
-			var mapSectionResult = MapSection.Empty;
+			MapSection mapSectionResult;
 			bool isLastSection;
 
 			if (mapSectionResponse == null || mapSectionResponse.MapSectionVectors == null)
@@ -153,6 +153,8 @@ namespace MSetExplorer
 			}
 			else
 			{
+				mapSectionResult = new MapSection();
+
 				Debug.WriteLine($"Cannot create a mapSectionResult from the mapSectionResponse. The request's block position is {mapSectionRequest.BlockPosition}. " +
 					$"IsCancelled: {mapSectionResponse?.RequestCancelled}, HasCounts: {mapSectionRequest.MapSectionVectors != null}.");
 			}

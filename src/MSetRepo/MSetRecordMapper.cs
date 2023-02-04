@@ -232,8 +232,6 @@ namespace MSetRepo
 				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
 			}
 
-			var zValues = source.MapSectionZVectors == null ? new ZValues() : new ZValues();
-
 			var result = new MapSectionRecord
 				(
 				DateCreatedUtc: DateTime.UtcNow,
