@@ -1,4 +1,5 @@
 ﻿using MSetExplorer.XPoc;
+using MSetExplorer.XPoc.PerformanceHarness;
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
@@ -92,6 +93,31 @@ namespace MSetExplorer
 		public XSamplingEditorViewModel GetXSamplingEditorViewModel()
 		{
 			var result = new XSamplingEditorViewModel(_mapSectionAdapter);
+			return result;
+		}
+
+		public PerformanceHarnessMainWinViewModel GetPerformanceHarnessMainWinViewModel()
+		{
+			// Project ViewModel
+			//var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
+
+			// Map Display View Model
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
+
+			// ColorBand ViewModel
+			//var histogram = new HistogramA(0);
+			//var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram);
+			//var colorBandSetViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections, mapSectionHistogramProcessor);
+
+			// ColorBand Histogram ViewModel
+			//var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
+
+			//var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
+			//var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
+			//	_mapLoaderManager,
+			//	CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
+
+			var result = new PerformanceHarnessMainWinViewModel(mapDisplayViewModel, _mapLoaderManager, _mapJobHelper, _mapSectionHelper);
 			return result;
 		}
 

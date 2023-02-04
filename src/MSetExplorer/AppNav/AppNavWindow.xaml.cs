@@ -80,6 +80,11 @@ namespace MSetExplorer
 			GoToDesigner();
 		}
 
+		private void ShowPerformanceHarnessMainWin_Click(object sender, RoutedEventArgs e)
+		{
+			GoToPerformanceHarnessMainWindow();
+		}
+
 		private void SampleTestButton_Click(object sender, RoutedEventArgs e)
 		{
 			GoToSampleTest();
@@ -156,6 +161,25 @@ namespace MSetExplorer
 			_ = designerWindow.Focus();
 		}
 
+		private void GoToPerformanceHarnessMainWindow(AppNavRequestResponse? appNavRequestResponse = null)
+		{
+			Hide();
+
+			var performanceHarnessViewModel = _vm.GetPerformanceHarnessMainWinViewModel();
+			var performanceHarnessMainWindow = new PerformanceHarnessMainWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
+			{
+				DataContext = performanceHarnessViewModel
+			};
+
+			_lastWindow = performanceHarnessMainWindow;
+			_lastWindow.Name = "PerformanceHarness";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			performanceHarnessMainWindow.Owner = Application.Current.MainWindow;
+			performanceHarnessMainWindow.Show();
+			_ = performanceHarnessMainWindow.Focus();
+		}
+
 		private void GoToSampleTest(AppNavRequestResponse? appNavRequestResponse = null)
 		{
 			Hide();
@@ -201,6 +225,7 @@ namespace MSetExplorer
 				case "Designer": return GoToDesigner;
 				case "xSampling": return GoToSampleTest;
 				case "SysColors": return GoToSystemColors;
+				case "PerformanceHarness": return GoToPerformanceHarnessMainWindow;
 				default:
 					return x => WindowState = WindowState.Normal;
 			}
@@ -257,5 +282,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
 	}
 }

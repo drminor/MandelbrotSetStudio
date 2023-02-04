@@ -34,6 +34,8 @@ namespace MSetExplorer
 			_blockSize = blockSize;
 			_maxSizeInBlocks = maxSizeInBlocks;
 
+			_startIndex = new VectorInt();
+
 			_maxYPtr = maxSizeInBlocks.Height - 1;
 
 			_foundationRectangle = BuildFoundationRectangle(maxSizeInBlocks, _blockSize);
@@ -406,7 +408,7 @@ namespace MSetExplorer
 			{
 				if (BlockPosition != position)
 				{
-					//Debug.WriteLine($"Creating new ImageDrawing for {position} while drawing. The previous value is {BlockPosition}");
+					Debug.WriteLine($"Creating new ImageDrawing for {position} while drawing. The previous value is {BlockPosition}");
 
 					BlockPosition = position;
 					//Active = false;
@@ -451,7 +453,7 @@ namespace MSetExplorer
 			{
 				if (BlockPosition != position)
 				{
-					//Debug.WriteLine($"Creating new ImageDrawing for {position} while re-drawing. The previous value is {BlockPosition}");
+					Debug.WriteLine($"Creating new ImageDrawing for {position} while re-drawing. The previous value is {BlockPosition}");
 
 					BlockPosition = position;
 					//Active = false;

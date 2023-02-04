@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="AppNavWindow" Height="250" Width="300">
+        Title="AppNavWindow" Height="320" Width="300">
     <Grid>
 
         <Grid.RowDefinitions>
@@ -23,6 +23,7 @@
             <MenuItem Header="_Other">
                 <MenuItem Header="_SampleTest" Click="SampleTestButton_Click"/>
                 <MenuItem Header="Show System _Colors" Click="ShowSystemColorsButton_Click"/>
+                <MenuItem Header="Performance Tests" Click="ShowPerformanceHarnessMainWin_Click"/>
             </MenuItem>
 
             <!--<MenuItem Header="_Utilities">
@@ -36,6 +37,8 @@
             <Button Width="100" Height="25" TabIndex="1" Click="DesignPosterButton_Click" Margin="0,10">Design Poster</Button>
             
             <Button Width="100" Height="25" TabIndex="2" Click="ExitAppButton_Click" Margin="0,10" >Exit Program</Button>
+
+            <Button Width="100" Height="25" TabIndex="2" Click="ShowPerformanceHarnessMainWin_Click" Margin="0,20" >Perf Test</Button>
         </StackPanel>
     </Grid>
 </Window>
