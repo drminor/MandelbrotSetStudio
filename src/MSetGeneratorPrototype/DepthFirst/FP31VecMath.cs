@@ -94,7 +94,7 @@ namespace MSetGeneratorPrototype
 			_shiftAmount = apFixedPointFormat.BitsBeforeBinaryPoint;
 			_inverseShiftAmount = (byte)(31 - _shiftAmount);
 
-			//MathOpCounts = new MathOpCounts();
+			_mathOpCounts = new MathOpCounts();
 		}
 
 		#endregion
@@ -104,7 +104,8 @@ namespace MSetGeneratorPrototype
 		public ApFixedPointFormat ApFixedPointFormat { get; init; }
 		public int LimbCount { get; private set; }
 
-		//public MathOpCounts MathOpCounts { get; init; }
+		private MathOpCounts _mathOpCounts;
+		public MathOpCounts MathOpCounts => _mathOpCounts;
 
 		#endregion
 
@@ -144,7 +145,7 @@ namespace MSetGeneratorPrototype
 					var resultPtr = j + i;  // 0, 1, 1, 2
 
 					var productVector = Avx2.Multiply(source[j], source[i]);
-					//MathOpCounts.NumberOfMultiplications++;
+					_mathOpCounts.NumberOfMultiplications++;
 
 					if (i > j)
 					{

@@ -4,6 +4,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
@@ -76,6 +77,7 @@ namespace MSetGeneratorPrototype
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 				_iterator.Threshold = (uint)mapCalcSettings.Threshold;
 				_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
+				_iterator.MathOpCounts.Reset();
 				var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
 				var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
@@ -83,39 +85,42 @@ namespace MSetGeneratorPrototype
 				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, ct);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				if (ct.IsCancellationRequested)
-				{
-					Debug.WriteLine($"The block: {coords.ScreenPos} is cancelled.");
-				}
-				else
-				{
-					if (allRowsHaveEscaped)
-					{
-						Debug.WriteLine($"The entire block: {coords.ScreenPos} is done.");
-					}
-				}
+				//if (ct.IsCancellationRequested)
+				//{
+				//	Debug.WriteLine($"The block: {coords.ScreenPos} is cancelled.");
+				//}
+				//else
+				//{
+				//	if (allRowsHaveEscaped)
+				//	{
+				//		Debug.WriteLine($"The entire block: {coords.ScreenPos} is done.");
+				//	}
+				//}
 
 				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
 
-				//result.MathOpCounts = _iterator.MathOpCounts;
+				UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
 			}
 
 			return result;
 		}
 
+		[Conditional("PERF")]
+		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorDepthFirst iterator, IterationStateDepthFirst iterationState)
+		{
+			var mops = iterator.MathOpCounts;
+			mops.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+			mapSectionRequest.MathOpCounts = mops;
+		}
+
 		// Generate MapSection
 		private bool GenerateMapSection(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct)
 		{
-			//iterationState.CrsRow.UpdateFrom(samplePointsX);
 			var allRowsHaveEscaped = true;
 
 			var rowNumber = iterationState.GetNextRowNumber();
 			while(rowNumber != null && !ct.IsCancellationRequested)
 			{ 
-				// Load C & Z value decks
-				//var yPoint = samplePointsY[rowNumber.Value];
-				//iterationState.CisRow.UpdateFrom(yPoint);
-
 				var allRowSamplesHaveEscaped = true;
 
 				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length && !ct.IsCancellationRequested; idxPtr++)
@@ -136,8 +141,6 @@ namespace MSetGeneratorPrototype
 					allRowsHaveEscaped = false;
 				}
 
-				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
-
 				rowNumber = iterationState.GetNextRowNumber();
 			}
 
@@ -154,7 +157,6 @@ namespace MSetGeneratorPrototype
 			var countsV = iterationState.CountsRowV[idx];
 
 			var doneFlagsV = iterationState.DoneFlags[idx];
-			var unusedCalcsV = iterationState.UnusedCalcs[idx];
 
 			iterationState.FillCrLimbSet(idx, _crs);
 			iterationState.FillCiLimbSet(idx, _cis);
@@ -168,19 +170,15 @@ namespace MSetGeneratorPrototype
 			{
 				var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
 
+				TallyUsedAndUnusedCalcs(idx, doneFlagsV, ref iterationState);
+
 				// Increment all counts
 				var countsVt = Avx2.Add(countsV, _justOne);
 
 				// Take the incremented count, only if the doneFlags is false for each vector position.
 				countsV = Avx2.BlendVariable(countsVt, countsV, doneFlagsV); // use First if Zero, second if 1
 
-				// Increment all unused calculations
-				var unusedCalcsVt = Avx2.Add(unusedCalcsV, _justOne);
-
-				// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
-				unusedCalcsV = Avx2.BlendVariable(unusedCalcsV, unusedCalcsVt, doneFlagsV);
-
-				// Apply the new escapeFlags, only if the doneFlags is false for each vector position
+				// Apply the new escapedFlags, only if the doneFlags is false for each vector position
 				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
 
 				// Compare the new Counts with the TargetIterations
@@ -198,7 +196,6 @@ namespace MSetGeneratorPrototype
 			iterationState.CountsRowV[idx] = countsV;
 
 			iterationState.DoneFlags[idx] = doneFlagsV;
-			iterationState.UnusedCalcs[idx] = unusedCalcsV;
 
 			iterationState.UpdateZrLimbSet(idx, _zrs);
 			iterationState.UpdateZrLimbSet(idx, _zis);
@@ -207,7 +204,28 @@ namespace MSetGeneratorPrototype
 
 			var result = compositeAllEscaped == -1;
 
+			//if (!result && compositeAllEscaped != 0)
+			//{
+			//	Debug.WriteLine("Hi");
+			//}
+
 			return result;
+		}
+
+		[Conditional("PERF")]
+		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> doneFlagsV, ref IterationStateDepthFirst iterationState)
+		{
+			iterationState.Calcs[idx]++;
+
+			//var unusedCalcsV = iterationState.UnusedCalcs[idx];
+
+			// Increment all unused calculations
+			var unusedCalcsVt = Avx2.Add(iterationState.UnusedCalcs[idx], _justOne);
+
+			// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
+			iterationState.UnusedCalcs[idx] = Avx2.BlendVariable(iterationState.UnusedCalcs[idx], unusedCalcsVt, doneFlagsV); // use First if Zero, second if 1
+
+			//iterationState.UnusedCalcs[idx] = unusedCalcsV;
 		}
 
 		#endregion

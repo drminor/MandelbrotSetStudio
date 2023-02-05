@@ -1,4 +1,5 @@
-﻿using MSetExplorer.XPoc;
+﻿using MapSectionProviderLib;
+using MSetExplorer.XPoc;
 using MSetExplorer.XPoc.PerformanceHarness;
 using MSetRepo;
 using MSS.Common;
@@ -28,8 +29,9 @@ namespace MSetExplorer
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
-		public AppNavViewModel(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
+		public AppNavViewModel(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor	mapSectionRequestProcessor)
 		{
 			_mapSectionHelper = mapSectionHelper;
 			_projectAdapter = repositoryAdapters.ProjectAdapter;
@@ -37,6 +39,7 @@ namespace MSetExplorer
 			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
 			_mapJobHelper = new MapJobHelper(repositoryAdapters.MapSectionAdapter);
 			_mapLoaderManager = mapLoaderManager;
+			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 		}
 
 		public ExplorerViewModel GetExplorerViewModel()
@@ -117,7 +120,7 @@ namespace MSetExplorer
 			//	_mapLoaderManager,
 			//	CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
 
-			var result = new PerformanceHarnessMainWinViewModel(mapDisplayViewModel, _mapLoaderManager, _mapJobHelper, _mapSectionHelper);
+			var result = new PerformanceHarnessMainWinViewModel(_mapSectionRequestProcessor, _mapJobHelper, _mapSectionHelper);
 			return result;
 		}
 

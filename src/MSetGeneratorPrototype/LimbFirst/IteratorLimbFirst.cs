@@ -1,4 +1,5 @@
 ﻿using MSS.Common.APValues;
+using MSS.Types;
 using System.Diagnostics;
 using System.Runtime.Intrinsics;
 
@@ -81,7 +82,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		//public MathOpCounts MathOpCounts => _vecMath.MathOpCounts;
+		public MathOpCounts MathOpCounts => _fp31VectorsMath.MathOpCounts;
 
 		#endregion
 
@@ -105,11 +106,11 @@ namespace MSetGeneratorPrototype
 						Zis.UpdateFrom(Cis);
 						//ZValuesAreZero = false;
 					}
-					else
-					{
-						_zRSqrs.ClearManatissMems();
-						_zISqrs.ClearManatissMems();
-					}
+					//else
+					//{
+					//	_zRSqrs.ClearManatissMems();
+					//	_zISqrs.ClearManatissMems();
+					//}
 					IsReset = false;
 				}
 				else

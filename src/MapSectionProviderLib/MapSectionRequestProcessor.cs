@@ -58,6 +58,8 @@ namespace MapSectionProviderLib
 		{
 			//_isStopped = false;
 
+			UseRepo = true;
+
 			_nextJobId = 0;
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapSectionHelper = mapSectionHelper;
@@ -83,6 +85,12 @@ namespace MapSectionProviderLib
 				_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionGeneratorProcessor, _cts.Token));
 			}
 		}
+
+		#endregion
+
+		#region Public Properties
+
+		public bool UseRepo { get; set; }
 
 		#endregion
 
@@ -228,8 +236,17 @@ namespace MapSectionProviderLib
 		{
 			var request = mapSectionWorkRequest.Request;
 
-			var mapSectionResponse = await FetchAsync(mapSectionWorkRequest, ct);
+			MapSectionResponse? mapSectionResponse;
 
+			if (UseRepo)
+			{
+				mapSectionResponse = await FetchAsync(mapSectionWorkRequest, ct);
+			}
+			else
+			{
+				mapSectionResponse = null;
+			}
+			
 			if (mapSectionResponse != null)
 			{
 				var requestedIterations = mapSectionWorkRequest.Request.MapCalcSettings.TargetIterations;
@@ -243,7 +260,7 @@ namespace MapSectionProviderLib
 					mapSectionResponse.JobOwnerType = request.JobOwnerType;
 					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
 
-					Debug.WriteLine($"Got {request.ScreenPosition} from repo.");
+					//Debug.WriteLine($"Got {request.ScreenPosition} from repo.");
 					return mapSectionResponse;
 				}
 				else
@@ -283,7 +300,7 @@ namespace MapSectionProviderLib
 				var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(); // TODO: Get 10 empty buffers at a time to avoid lock contention.
 				request.MapSectionZVectors = mapSectionZVectors;
 
-				Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated.");
+				//Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated.");
 				QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
 				return null;
 			}
@@ -388,7 +405,7 @@ namespace MapSectionProviderLib
 				{
 					if (mapSectionResponse.MapSectionVectors != null)
 					{
-						if (!mapSectionResponse.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
+						if (UseRepo && !mapSectionResponse.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
 						{
 							var newCopyOfTheResponse = _mapSectionHelper.Duplicate(mapSectionResponse);
 							newCopyOfTheResponse.MapSectionZVectors = mapSectionResponse.MapSectionZVectors;
@@ -409,7 +426,10 @@ namespace MapSectionProviderLib
 						}
 						else
 						{
-							Debug.WriteLine("The MapSectionResponse has MapSectionVectors but is already OnFile and IncreasingIterations is false.");
+							if (UseRepo)
+							{
+								Debug.WriteLine("The MapSectionResponse has MapSectionVectors but is already OnFile and IncreasingIterations is false.");
+							}
 						}
 
 						//ConvertVecToVals(mapSectionResponse);

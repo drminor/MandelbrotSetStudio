@@ -26,14 +26,14 @@ namespace MSetExplorer
 		private const string LOCAL_M_ENGINE_ADDRESS = "https://localhost:5001";
 		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.2.109:5000" };
 
-		private static readonly bool USE_ALL_CORES = true;
-		private static readonly bool USE_SINGLE_LIMB_ITERATOR = true;
+		private static readonly bool USE_ALL_CORES = false;
+		private static readonly bool USE_SINGLE_LIMB_ITERATOR = false;
 		private static readonly bool USE_DEPTH_FIRST_ITERATOR = true;
 		private static readonly ClientImplementation CLIENT_IMPLEMENTATION = ClientImplementation.LocalVectorMark2;
 
 		private static readonly bool CREATE_COLLECTIONS = true;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
-		private static readonly bool DROP_MAP_SECTION_COLLECTIONS = false;
+		private static readonly bool DROP_MAP_SECTION_COLLECTIONS = true;
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 
 		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
@@ -100,9 +100,9 @@ namespace MSetExplorer
 			var mEngineClients = ChooseMEngineClientImplementation(CLIENT_IMPLEMENTATION, mEngineAddresses, _repositoryAdapters.MapSectionAdapter);
 
 
-			_mapLoaderManager = BuildMapLoaderManager(mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter, _mapSectionHelper);
+			_mapLoaderManager = BuildMapLoaderManager(mEngineClients, USE_ALL_CORES, _repositoryAdapters.MapSectionAdapter, _mapSectionHelper, out var mapSectionRequestPrrocessor);
 
-			_appNavWindow = GetAppNavWindow(_mapSectionHelper, _repositoryAdapters, _mapLoaderManager);
+			_appNavWindow = GetAppNavWindow(_mapSectionHelper, _repositoryAdapters, _mapLoaderManager, mapSectionRequestPrrocessor);
 			_appNavWindow.Show();
 		}
 
@@ -121,9 +121,9 @@ namespace MSetExplorer
 			_mapSectionValuesPool.Clear();
 		}
 
-		private AppNavWindow GetAppNavWindow(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager)
+		private AppNavWindow GetAppNavWindow(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			var appNavViewModel = new AppNavViewModel(mapSectionHelper, repositoryAdapters, mapLoaderManager);
+			var appNavViewModel = new AppNavViewModel(mapSectionHelper, repositoryAdapters, mapLoaderManager, mapSectionRequestProcessor);
 
 			var appNavWindow = new AppNavWindow
 			{
@@ -166,9 +166,9 @@ namespace MSetExplorer
 		//	return mEngineClients;
 		//}
 
-		private IMapLoaderManager BuildMapLoaderManager(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
+		private IMapLoaderManager BuildMapLoaderManager(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper, out MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, mapSectionHelper);
+			mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, useAllCores, mapSectionAdapter, mapSectionHelper);
 
 			var result = new MapLoaderManager(mapSectionHelper, mapSectionRequestProcessor);
 

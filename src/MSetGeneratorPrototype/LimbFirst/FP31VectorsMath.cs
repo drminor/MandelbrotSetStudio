@@ -94,7 +94,7 @@ namespace MSetGeneratorPrototype
 			_shiftAmount = apFixedPointFormat.BitsBeforeBinaryPoint;
 			_inverseShiftAmount = (byte)(31 - _shiftAmount);
 
-			//MathOpCounts = new MathOpCounts();
+			MathOpCounts = new MathOpCounts();
 		}
 
 		#endregion
@@ -106,7 +106,7 @@ namespace MSetGeneratorPrototype
 		public int ValueCount { get; init; }
 		public int VectorCount { get; init; }
 
-		//public MathOpCounts MathOpCounts { get; init; }
+		public MathOpCounts MathOpCounts { get; init; }
 
 		#endregion
 

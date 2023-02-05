@@ -1,21 +1,22 @@
 ﻿
+using System.Diagnostics;
 using System.Linq;
 
 namespace MSS.Types
 {
-	public class MathOpCounts
+	public struct MathOpCounts
 	{
-		public MathOpCounts()
-		{
-			NumberOfMultiplications = 0;
-			NumberOfAdditions = 0;
-			NumberOfConversions = 0;
+		//public MathOpCounts()
+		//{
+		//	NumberOfMultiplications = 0;
+		//	NumberOfAdditions = 0;
+		//	NumberOfConversions = 0;
 
-			NumberOfSplits = 0;
-			NumberOfGetCarries = 0;
-			NumberOfGrtrThanOps = 0;
-			NumberOfUnusedCalcs = 0;
-		}
+		//	NumberOfSplits = 0;
+		//	NumberOfGetCarries = 0;
+		//	NumberOfGrtrThanOps = 0;
+		//	NumberOfUnusedCalcs = 0;
+		//}
 
 		public long NumberOfMultiplications { get; set; }
 		public long NumberOfAdditions { get; set; }
@@ -25,7 +26,8 @@ namespace MSS.Types
 		public long NumberOfGetCarries { get; set; }
 		public long NumberOfGrtrThanOps { get; set; }
 
-		public long NumberOfUnusedCalcs { get; set; }
+		public double NumberOfCalcs { get; set; }
+		public double NumberOfUnusedCalcs { get; set; }
 
 		public void Update(MathOpCounts mathOpCounts)
 		{
@@ -37,11 +39,35 @@ namespace MSS.Types
 			NumberOfGetCarries += mathOpCounts.NumberOfGetCarries;
 			NumberOfGrtrThanOps += mathOpCounts.NumberOfGrtrThanOps;
 
+			NumberOfCalcs += mathOpCounts.NumberOfCalcs;
 			NumberOfUnusedCalcs += mathOpCounts.NumberOfUnusedCalcs;
 		}
 
-		public void RollUpNumberOfUnusedCalcs(int[] unusedCalcRowValues)
+		public void Reset()
 		{
+			NumberOfMultiplications = 0;
+			NumberOfAdditions = 0;
+			NumberOfConversions = 0;
+
+			NumberOfSplits = 0;
+			NumberOfGetCarries = 0;
+			NumberOfGrtrThanOps = 0;
+
+			NumberOfCalcs = 0;
+			NumberOfUnusedCalcs = 0;
+		}
+
+		public void RollUpNumberOfCalcs(long[] usedCalcRowValues, long[] unusedCalcRowValues)
+		{
+			//var used = usedCalcRowValues.Sum();
+			//var unused = unusedCalcRowValues.Sum();
+
+			//if (unused > 0)
+			//{
+			//	Debug.WriteLine($"Hi3");
+			//}
+
+			NumberOfCalcs += usedCalcRowValues.Sum();
 			NumberOfUnusedCalcs += unusedCalcRowValues.Sum();
 		}
 

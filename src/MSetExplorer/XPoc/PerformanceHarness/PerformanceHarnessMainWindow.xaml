@@ -11,18 +11,35 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnOne" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="OneButton_Click" IsCancel="True">_One</Button>
-                <Button Name="btnTwo" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="TwoButton_Click" IsCancel="True">_Two</Button>
+                <Button Name="btnOne" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="OneButton_Click" IsCancel="True">_Run Baseline</Button>
+                <Button Name="btnTwo" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="TwoButton_Click" IsCancel="True">Reserved</Button>
             </StackPanel>
 
-        </Border>        
-        
-        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        </Border>
+
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,5,10">
+            <TextBlock Width="45" Margin="3" FontSize="14" Text="Sections Generated:" />
+            <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding GeneratedCount}"/>
+
+            <TextBlock Width="45" Margin="3" FontSize="14" Text="Milliseconds:" />
+            <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding Elasped}"/>
+
+            <TextBlock Width="45" Margin="55,3,3,3" FontSize="14" Text="Multiplications:" />
+            <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding Multiplications}"/>
+
+            <TextBlock Width="45" Margin="3" FontSize="14" Text="Iterations:" />
+            <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding Calcs}"/>
+
+        </StackPanel>
+
+        <Border Grid.Row="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>

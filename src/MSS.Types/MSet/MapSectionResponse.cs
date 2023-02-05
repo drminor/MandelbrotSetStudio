@@ -67,7 +67,7 @@ namespace MSS.Types.MSet
 			MapSectionZVectors = mapSectionZVectors;
 
 			RequestCancelled = false;
-			MathOpCounts = null;
+			//MathOpCounts = null;
 		}
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
@@ -83,7 +83,7 @@ namespace MSS.Types.MSet
 
 		public MapCalcSettings? MapCalcSettings { get; set; }
 
-		public MathOpCounts? MathOpCounts { get; set; }
+		//public MathOpCounts? MathOpCounts { get; set; }
 
 		public bool RecordOnFile => !string.IsNullOrEmpty(MapSectionId);
 		public bool RequestCancelled { get; set; }

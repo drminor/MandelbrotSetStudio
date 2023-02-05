@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MSS.Types;
+using System.Diagnostics;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
@@ -16,6 +17,7 @@ namespace MSetGeneratorPrototype
 
 		public IteratorSingleLimb()
 		{
+			MathOpCounts = new MathOpCounts();
 			IsReset = true;
 		}
 
@@ -28,7 +30,7 @@ namespace MSetGeneratorPrototype
 
 		public uint Threshold { get; set; }
 
-		//public MathOpCounts MathOpCounts => _vecMath.MathOpCounts;
+		public MathOpCounts MathOpCounts { get; init; }
 
 		#endregion
 
@@ -51,11 +53,11 @@ namespace MSetGeneratorPrototype
 						zr = cr;
 						zi = ci;
 					}
-					else
-					{
-						_zrSqr = 0;
-						_ziSqr = 0;
-					}
+					//else
+					//{
+					//	_zrSqr = 0;
+					//	_ziSqr = 0;
+					//}
 					IsReset = false;
 				}
 				else

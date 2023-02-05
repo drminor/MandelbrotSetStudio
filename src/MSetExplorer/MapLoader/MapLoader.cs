@@ -1,7 +1,5 @@
 ﻿using MapSectionProviderLib;
-using MEngineDataContracts;
 using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -42,7 +40,7 @@ namespace MSetExplorer
 			_sectionsCompleted = 0;
 			_tcs = null;
 
-			MathOpCounts = new MathOpCounts();
+			//MathOpCounts = new MathOpCounts();
 		}
 
 		#endregion
@@ -51,7 +49,7 @@ namespace MSetExplorer
 
 		public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
-		public MathOpCounts MathOpCounts { get; private set; }
+		//public MathOpCounts MathOpCounts { get; private set; }
 
 		public int JobNumber { get; init; }
 
@@ -128,17 +126,17 @@ namespace MSetExplorer
 
 			if (mapSectionResponse == null || mapSectionResponse.MapSectionVectors == null)
 			{
-				Debug.WriteLine("The MapSectionResponse is empty in the HandleResponse callback for the MapLoader.");
+				//Debug.WriteLine("The MapSectionResponse is empty in the HandleResponse callback for the MapLoader.");
 			}
 
 			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled && mapSectionResponse.MapSectionVectors != null)
 			{
 				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, jobId, _mapBlockOffset);
 
-				if (mapSectionResponse?.MathOpCounts != null)
-				{
-					MathOpCounts.Update(mapSectionResponse.MathOpCounts);
-				}
+				//if (mapSectionResponse?.MathOpCounts != null)
+				//{
+				//	MathOpCounts.Update(mapSectionResponse.MathOpCounts);
+				//}
 
 				if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
 				{
@@ -146,8 +144,8 @@ namespace MSetExplorer
 
 					/****************************************************************/
 					/****** UN COMMENT ME TO Report on generation duration. *********/
-					var allEscaped = mapSectionResponse?.AllRowsHaveEscaped == true ? "DONE" : null;
-					Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. {allEscaped}");
+					//var allEscaped = mapSectionResponse?.AllRowsHaveEscaped == true ? "DONE" : null;
+					//Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. {allEscaped}");
 					/****************************************************************/
 				}
 			}
@@ -195,7 +193,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine("Not calling the callback, the mapSectionResult is empty.");
+					//Debug.WriteLine("Not calling the callback, the mapSectionResult is empty.");
 				}
 
 				mapSectionRequest.Handled = true;
@@ -205,9 +203,9 @@ namespace MSetExplorer
 
 		}
 
-		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest mapSectionRequest)
+		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr)
 		{
-			var result = new MapSectionProcessInfo(JobNumber, _sectionsCompleted, mapSectionRequest.TimeToCompleteGenRequest, mapSectionRequest.ProcessingDuration, mapSectionRequest.FoundInRepo);
+			var result = new MapSectionProcessInfo(JobNumber, _sectionsCompleted, msr.TimeToCompleteGenRequest, msr.ProcessingDuration, msr.FoundInRepo, msr.MathOpCounts);
 			return result;
 		}
 

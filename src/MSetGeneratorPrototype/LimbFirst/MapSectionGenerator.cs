@@ -50,6 +50,7 @@ namespace MSetGeneratorPrototype
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 				_iterator.Threshold = (uint)mapCalcSettings.Threshold;
 				_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
+				_iterator.MathOpCounts.Reset();
 
 				var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 				var iterationState = new IterationStateLimbFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
@@ -58,9 +59,9 @@ namespace MSetGeneratorPrototype
 				GenerateMapSection(_iterator, iterationState, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				result = new MapSectionResponse(mapSectionRequest);
-				result.MapSectionVectors = mapSectionVectors;
-				//result.MathOpCounts = _iterator.MathOpCounts;
+				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
+
+				mapSectionRequest.MathOpCounts = _iterator.MathOpCounts;
 			}
 
 			return result;

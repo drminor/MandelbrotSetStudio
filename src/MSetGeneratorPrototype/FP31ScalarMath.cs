@@ -38,7 +38,7 @@ namespace MSetGeneratorPrototype
 		{
 			ApFixedPointFormat = apFixedPointFormat;
 			MaxIntegerValue = FP31ValHelper.GetMaxIntegerValue(ApFixedPointFormat.BitsBeforeBinaryPoint);
-			MathOpCounts = new MathOpCounts();			
+			_mathOpCounts = new MathOpCounts();			
 		}
 
 		#endregion
@@ -51,7 +51,8 @@ namespace MSetGeneratorPrototype
 		public int LimbCount => ApFixedPointFormat.LimbCount;
 		public int TargetExponent => ApFixedPointFormat.TargetExponent;
 
-		public MathOpCounts MathOpCounts { get; init; }
+		private MathOpCounts _mathOpCounts;
+		public MathOpCounts MathOpCounts => _mathOpCounts;
 
 		public uint MaxIntegerValue { get; init; }
 
@@ -99,11 +100,11 @@ namespace MSetGeneratorPrototype
 					var resultPtr = j + i;  // 0, 1, 1, 2
 
 					var product = (ulong)Math.BigMul((int)ax[j], (int) bx[i]);
-					MathOpCounts.NumberOfMultiplications++;
+					_mathOpCounts.NumberOfMultiplications++;
 
 					mantissa[resultPtr] += product & HIGH33_MASK_L;
 					mantissa[resultPtr + 1] += product >> EFFECTIVE_BITS_PER_LIMB;  // The high 31 bits of sum becomes the new carry.
-					MathOpCounts.NumberOfSplits++;
+ 					_mathOpCounts.NumberOfSplits++;
 				}
 			}
 
@@ -164,7 +165,7 @@ namespace MSetGeneratorPrototype
 					//var product = ax[j] * ax[i];
 					var product = (ulong)Math.BigMul((int)ax[j], (int)ax[i]);
 
-					MathOpCounts.NumberOfMultiplications++;
+					_mathOpCounts.NumberOfMultiplications++;
 
 					if (i > j)
 					{
@@ -173,7 +174,7 @@ namespace MSetGeneratorPrototype
 
 					mantissa[resultPtr] += product & HIGH33_MASK_L;
 					mantissa[resultPtr + 1] += product >> EFFECTIVE_BITS_PER_LIMB;  // The high 31 bits of sum becomes the new carry.
-					MathOpCounts.NumberOfSplits++;
+					_mathOpCounts.NumberOfSplits++;
 				}
 			}
 
@@ -250,12 +251,12 @@ namespace MSetGeneratorPrototype
 				//var product = ax[j] * b;
 				var left = (int) (ax[j] & CLEAR_RESERVED_BIT); 
 				var product = (ulong)Math.BigMul(left, (int)b);
-				MathOpCounts.NumberOfMultiplications++;
+				_mathOpCounts.NumberOfMultiplications++;
 
 				var sum = product + carry;
 				mantissa[j] = sum & HIGH33_MASK_L;
 				carry = product >> EFFECTIVE_BITS_PER_LIMB;  // The high 31 bits of sum becomes the new carry.
-				MathOpCounts.NumberOfSplits++;
+				_mathOpCounts.NumberOfSplits++;
 			}
 			
 			if (carry != 0)
@@ -298,7 +299,7 @@ namespace MSetGeneratorPrototype
 				var newCarry = sum >> EFFECTIVE_BITS_PER_LIMB;  // The high 31 bits of sum becomes the new carry.
 				var limbValue = sum & HIGH33_MASK_L;
 				result[i] = limbValue;
-				MathOpCounts.NumberOfSplits++;
+				_mathOpCounts.NumberOfSplits++;
 
 				ReportForMultiplication(i, mantissa[i], carry, sum, limbValue, newCarry);
 
@@ -462,7 +463,7 @@ namespace MSetGeneratorPrototype
 
 				result[limbPtr] = limbValue;
 
-				MathOpCounts.NumberOfSplits++;
+				_mathOpCounts.NumberOfSplits++;
 
 				if (USE_DET_DEBUG)
 					ReportForAddition(limbPtr, left[limbPtr], right[limbPtr], carry, newValue, limbValue, newCarry);

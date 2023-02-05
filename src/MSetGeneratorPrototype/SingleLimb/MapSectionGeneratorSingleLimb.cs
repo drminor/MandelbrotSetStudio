@@ -56,6 +56,7 @@ namespace MSetGeneratorPrototype
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 				_iterator.Threshold = (uint)mapCalcSettings.Threshold;
 				_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
+				_iterator.MathOpCounts.Reset();
 				var targetIterations = mapCalcSettings.TargetIterations;
 				var iterationState = new IterationStateSingleLimb(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterations);
 

@@ -96,6 +96,7 @@ namespace MSS.Types
 			}
 		}
 
+		public bool IsComplete => (_generatedCount + _fetchedCount) == TotalSections;
 
 	}
 }

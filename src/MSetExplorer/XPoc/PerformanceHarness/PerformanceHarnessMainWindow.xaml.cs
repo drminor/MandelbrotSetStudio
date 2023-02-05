@@ -46,8 +46,17 @@ namespace MSetExplorer.XPoc
 			else
 			{
 				_vm = (PerformanceHarnessMainWinViewModel)DataContext;
+				_vm.PropertyChanged += _vm_PropertyChanged;
 
 				Debug.WriteLine("The PerformanceHarness Main Window is now loaded");
+			}
+		}
+
+		private void _vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(PerformanceHarnessMainWinViewModel.MathOpCounts))
+			{
+
 			}
 		}
 

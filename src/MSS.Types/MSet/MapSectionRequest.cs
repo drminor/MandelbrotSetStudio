@@ -57,6 +57,7 @@ namespace MSS.Types.MSet
 
 		public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
 
+		public MathOpCounts? MathOpCounts { get; set; }
 
 		public override string ToString()
 		{

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MSS.Types;
+using System.Diagnostics;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
@@ -61,7 +62,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		//public MathOpCounts MathOpCounts => _vecMath.MathOpCounts;
+		public MathOpCounts MathOpCounts => _fp31VecMath.MathOpCounts;
 
 		#endregion
 
@@ -78,16 +79,17 @@ namespace MSetGeneratorPrototype
 			{
 				if (IsReset)
 				{
+					// Perform the first iteration. 
 					if (!IncreasingIterations)
 					{
 						Array.Copy(crs, zrs, crs.Length);
 						Array.Copy(cis, zis, cis.Length);
 					}
-					else
-					{
-						ClearVectors(_zRSqrs);
-						ClearVectors(_zISqrs);
-					}
+					//else
+					//{
+					//	ClearVectors(_zRSqrs);
+					//	ClearVectors(_zISqrs);
+					//}
 					IsReset = false;
 				}
 				else

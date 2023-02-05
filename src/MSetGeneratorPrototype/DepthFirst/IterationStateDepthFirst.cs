@@ -1,5 +1,7 @@
 ﻿using MSS.Common.APValues;
 using MSS.Types;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
@@ -29,6 +31,7 @@ namespace MSetGeneratorPrototype
 
 			ValueCount = mapSectionZVectors.ValueCount;
 			LimbCount = mapSectionZVectors.LimbCount;
+			RowCount = mapSectionZVectors.BlockSize.Height;
 			ValuesPerRow = mapSectionVectors.ValuesPerRow;
 			VectorsPerRow = mapSectionZVectors.VectorsPerRow;
 			VectorsPerFlagRow = mapSectionZVectors.VectorsPerFlagRow;
@@ -44,6 +47,8 @@ namespace MSetGeneratorPrototype
 			CountsRowV = new Vector256<int>[VectorsPerRow];
 
 			RowHasEscaped = _mapSectionZVectors.GetRowHasEscaped();
+			RowUsedCalcs = new long[RowCount];
+			RowUnusedCalcs = new long[RowCount];
 
 			//HasEscapedFlagsRow = _mapSectionZVectors.GetHasEscapedFlagsRow(0);
 			//ZrsRow = _mapSectionZVectors.GetZrsRow(0);
@@ -58,6 +63,7 @@ namespace MSetGeneratorPrototype
 			_mapSectionZVectors.FillZisRow(0, ZisRowV);
 
 			DoneFlags = new Vector256<int>[VectorsPerFlagRow];
+			Calcs = new long[VectorsPerFlagRow];
 			UnusedCalcs = new Vector256<int>[VectorsPerFlagRow];
 
 			InPlayList = Enumerable.Range(0, VectorsPerFlagRow).ToArray();
@@ -76,6 +82,7 @@ namespace MSetGeneratorPrototype
 		public SizeInt BlockSize => _mapSectionVectors.BlockSize;
 		public int ValueCount { get; init; }
 		public int LimbCount { get; init; }
+		public int RowCount { get; init; }
 		public int VectorsPerRow { get; init; }
 		public int VectorsPerFlagRow { get; init; }
 		public int ValuesPerRow { get; init; }
@@ -88,6 +95,8 @@ namespace MSetGeneratorPrototype
 		//public Span<Vector256<int>> CountsRow { get; private set; }
 		public Vector256<int>[] CountsRowV { get; private set; }
 		public Span<bool> RowHasEscaped { get; init; }
+		public long[] RowUnusedCalcs { get; init; }
+		public long[] RowUsedCalcs { get; init; }
 
 		//public Span<Vector256<byte>> HasEscapedFlagsRow { get; private set; }
 		//public Span<Vector256<uint>> ZrsRow { get; private set; }
@@ -99,6 +108,7 @@ namespace MSetGeneratorPrototype
 
 
 		public Vector256<int>[] DoneFlags { get; private set; }
+		public long[] Calcs { get; private set; }
 		public Vector256<int>[] UnusedCalcs { get; private set; }
 
 		public int[] InPlayList { get; private set; }
@@ -111,8 +121,6 @@ namespace MSetGeneratorPrototype
 		// Returns true if all samples for this row have escaped or reached the target number of iterations.
 		public int? GetNextRowNumber()
 		{
-			Array.Clear(UnusedCalcs, 0, UnusedCalcs.Length);
-
 			if (RowNumber.HasValue)
 			{
 				// Update the _mapSectionVectors with the current row properties
@@ -120,6 +128,8 @@ namespace MSetGeneratorPrototype
 				_mapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
 				_mapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
 				_mapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
+
+				UpdateUsedAndUnsedCalcs(RowNumber.Value);
 			}
 
 			var rowNumber = RowNumber.HasValue ? RowNumber.Value : -1;
@@ -185,9 +195,39 @@ namespace MSetGeneratorPrototype
 			return RowNumber;
 		}
 
-		public long GetTotalUnusedCalcs()
+		[Conditional("PERF")]
+		private void UpdateUsedAndUnsedCalcs(int rowNumber)
 		{
-			return 0L;
+			RowUsedCalcs[rowNumber] = GetUsedCalcs(Calcs, UnusedCalcs, out var unusedCalcs);
+			RowUnusedCalcs[rowNumber] = unusedCalcs;
+			Array.Clear(UnusedCalcs, 0, VectorsPerFlagRow);
+			Array.Clear(Calcs, 0, VectorsPerFlagRow);
+		}
+
+		public long GetUsedCalcs(long[] calcs, Vector256<int>[] unusedCalcsV, out long unusedCalcs)
+		{
+			var lanes = Vector256<int>.Count;
+
+			unusedCalcs = 0;
+			var sourceBack = MemoryMarshal.Cast<Vector256<int>, int>(unusedCalcsV);
+
+			var result = 0L;
+
+			for (var vecPtr = 0; vecPtr < VectorsPerFlagRow; vecPtr++)
+			{
+				var unusedForThisVec = 0L;
+
+				var laneOffset = vecPtr * lanes;
+				for (var lanePtr = 0; lanePtr < lanes; lanePtr++)
+				{
+					unusedForThisVec += sourceBack[laneOffset + lanePtr];
+				}
+
+				unusedCalcs += unusedForThisVec;
+				result += (calcs[vecPtr] * lanes) - unusedForThisVec;
+			}
+
+			return result;
 		}
 
 		public void FillCrLimbSet(int valueIndex, Vector256<uint>[] limbSet)
