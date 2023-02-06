@@ -71,11 +71,12 @@ namespace MSetExplorer.XPoc
 
 		private void TwoButton_Click(object sender, RoutedEventArgs e)
 		{
-			MessageBox.Show("Hi, Im Two.");
+			MessageBox.Show("Button two is reserved.");
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
 		{
+			_vm.ResetMapSectionRequestProcessor();
 			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.ReturnToTopNav);
 			Close();
 		}

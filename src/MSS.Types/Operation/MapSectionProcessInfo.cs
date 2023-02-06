@@ -4,12 +4,13 @@ namespace MSS.Types
 {
 	public class MapSectionProcessInfo
 	{
-		public MapSectionProcessInfo(int jobNumber, int requestsCompleted, TimeSpan? requestDuration, TimeSpan? processingDuration, bool foundInRepo, MathOpCounts? mathOpCounts = null)
+		public MapSectionProcessInfo(int jobNumber, int requestsCompleted, TimeSpan? requestDuration, TimeSpan? processingDuration, TimeSpan? generationDuration, bool foundInRepo, MathOpCounts? mathOpCounts = null)
 		{
 			JobNumber = jobNumber;
 			RequestsCompleted = requestsCompleted;
 			RequestDuration = requestDuration;
 			ProcessingDuration = processingDuration;
+			GenerationDuration = generationDuration;
 			FoundInRepo = foundInRepo;
 			MathOpCounts = mathOpCounts;
 		}
@@ -18,6 +19,7 @@ namespace MSS.Types
 		public int RequestsCompleted { get; init; }
 		public TimeSpan? RequestDuration { get; init; }
 		public TimeSpan? ProcessingDuration { get; init; }
+		public TimeSpan? GenerationDuration { get; init; }
 		public bool FoundInRepo { get; init; }
 		public MathOpCounts? MathOpCounts { get; init; }
 

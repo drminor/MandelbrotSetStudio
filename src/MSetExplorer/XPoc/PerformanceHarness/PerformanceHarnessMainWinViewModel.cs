@@ -1,37 +1,39 @@
-﻿using MSS.Common;
-using MSS.Types.MSet;
+﻿using MapSectionProviderLib;
+using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media;
 using System.Diagnostics;
-using MapSectionProviderLib;
 using System.Threading;
-using System.Printing;
+using System.Threading.Tasks;
 
 namespace MSetExplorer.XPoc.PerformanceHarness
 {
-    class PerformanceHarnessMainWinViewModel : ViewModelBase
+	internal class PerformanceHarnessMainWinViewModel : ViewModelBase
 	{
+		#region Private Properties
+
 		private readonly SynchronizationContext? _synchronizationContext;
 
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly MapSectionHelper _mapSectionHelper;
 
-		private MapLoader? _mapLoader;
-		private Task? _startTask;
-
 		public JobProgressInfo? JobProgressInfo;
 		public List<MapSectionProcessInfo> MapSectionProcessInfos;
 
-		public MathOpCounts MathOpCounts { get; set; } 
+		public MathOpCounts MathOpCounts { get; set; }
 
-		private Stopwatch _stopWatch;
-		private bool _receviedTheLastOne;
+		//private MapLoader? _mapLoader;
+		//private Task? _startTask;
+
+		//private Stopwatch _stopWatch;
+		//private bool _receviedTheLastOne;
+
+		#endregion
+
+		#region Constructor
 
 		public PerformanceHarnessMainWinViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, MapJobHelper mapJobHelper, MapSectionHelper mapSectionHelper)
         {
@@ -43,8 +45,12 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			_mapSectionHelper = mapSectionHelper;
 
 			MapSectionProcessInfos = new List<MapSectionProcessInfo>();
-			_stopWatch = new Stopwatch();
+			MathOpCounts = new MathOpCounts();
+
+			//_stopWatch = new Stopwatch();
 		}
+
+		#endregion
 
 		#region Public Properties
 
@@ -55,13 +61,26 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			set => _generatedCount = value;
 		}
 
-		private long _elasped;
-		public long Elasped
+		private long _overallElapsed;
+		public long OverallElapsed
 		{
-			get => _elasped;
-			set => _elasped = value;
+			get => _overallElapsed;
+			set => _overallElapsed = value;
 		}
 
+		private long _processingElapsed;
+		public long ProcessingElapsed
+		{
+			get => _processingElapsed;
+			set => _processingElapsed = value;
+		}
+
+		private long _generationElapsed;
+		public long GenerationElapsed
+		{
+			get => _generationElapsed;
+			set => _generationElapsed = value;
+		}
 
 		private long _multiplications;
 		public long Multiplications
@@ -79,12 +98,12 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		#endregion
 
-
 		#region Public Methods
 
 		public void RunBaseLine()
 		{
-			_receviedTheLastOne = false;
+			MapSectionProcessInfos.Clear();
+
 			var blockSize = RMapConstants.BLOCK_SIZE;
 			var sizeInWholeBlocks = new SizeInt(8);
 			var canvasSize = sizeInWholeBlocks.Scale(blockSize);
@@ -94,27 +113,102 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
 
-			JobProgressInfo = RunJob(job, out _mapLoader, out _startTask);
-		}
+			//var jobProgressInfo = RunJob(job, out var mapLoader, out var startTask);
 
-		private JobProgressInfo RunJob(Job job, out MapLoader mapLoader, out Task startTask)
-		{
 			var ownerId = job.ProjectId.ToString();
 			var jobOwnerType = JobOwnerType.Project;
 
 			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize, RMapConstants.BLOCK_SIZE);
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);
 
-			mapLoader = new MapLoader(mapAreaInfo.MapBlockOffset, MapSectionReady, _mapSectionHelper, _mapSectionRequestProcessor);
+			var mapLoader = new MapLoader(mapAreaInfo.MapBlockOffset, MapSectionReady, _mapSectionHelper, _mapSectionRequestProcessor);
 
-			_stopWatch = Stopwatch.StartNew();
-			startTask = mapLoader.Start(mapSectionRequests);
-
-			var result = new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count);
+			var stopWatch = Stopwatch.StartNew();
+			var startTask = mapLoader.Start(mapSectionRequests);
+			
+			JobProgressInfo = new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count);
 
 			mapLoader.SectionLoaded += MapLoader_SectionLoaded;
 
-			return result;
+			for (var i = 0; i < 100; i++)
+			{
+				Thread.Sleep(100);
+
+				if (startTask.IsCompleted)
+				{
+					stopWatch.Stop();
+					break;
+				}
+				//Debug.WriteLine($"Cnt: {i}. RunBaseLine is sleeping for 100ms.");
+			}
+
+			if (JobProgressInfo != null)
+			{
+				Debug.WriteLine($"Fetched: {JobProgressInfo.FetchedCount}, Generated: {JobProgressInfo.GeneratedCount}.");
+				UpdateUi(stopWatch, JobProgressInfo);
+			}
+			else
+			{
+				Debug.WriteLine("The JobProgressInfo is null.");
+			}
+		}
+
+		private void UpdateUi(Stopwatch stopwatch, JobProgressInfo jobProgressInfo)
+		{
+			//if (_startTask == null || _mapLoader == null)
+			//{
+			//	Debug.WriteLine("The start task or the MapLoader is null.");
+			//	return;
+			//}
+			//else
+			//{
+			//	if (_startTask.IsCompletedSuccessfully)
+			//	{
+			//		Debug.WriteLine($"Task for {JobProgressInfo.JobNumber} completed successfully.");
+			//	}
+			//	else
+			//	{
+			//		Debug.WriteLine($"Task for {JobProgressInfo.JobNumber} did NOT complete successfully. The exception is {_startTask.Exception}.");
+			//	}
+			//}
+
+			var mops = new MathOpCounts();
+			var sumProcessingDurations = 0d;
+			var sumGenerationDurations = 0d;
+
+			foreach (var x in MapSectionProcessInfos)
+			{
+				if (x.MathOpCounts != null)
+				{
+					mops.Update(x.MathOpCounts);
+				}
+
+				if (x.ProcessingDuration.HasValue)
+				{
+					sumProcessingDurations += x.ProcessingDuration.Value.TotalMilliseconds;
+				}
+
+				if (x.GenerationDuration.HasValue)
+				{
+					sumGenerationDurations += x.GenerationDuration.Value.TotalMilliseconds;
+				}
+			}
+
+			MathOpCounts = mops;
+
+			Debug.WriteLine($"Generated {jobProgressInfo.GeneratedCount} sections in {stopwatch.ElapsedMilliseconds}. Performed: {mops.NumberOfMultiplications}. " +
+				$"Performed: {mops.NumberOfCalcs} used iterations and {mops.NumberOfUnusedCalcs} unused iterations.");
+
+			GeneratedCount = jobProgressInfo.GeneratedCount;
+
+			OverallElapsed = stopwatch.ElapsedMilliseconds;
+			ProcessingElapsed = (long)Math.Round(sumProcessingDurations * 1000);
+			GenerationElapsed = (long)Math.Round(sumGenerationDurations * 1000);
+
+			Multiplications = mops.NumberOfMultiplications;
+			Calcs = (long)mops.NumberOfCalcs;
+
+			HandleRunComplete();
 		}
 
 		private void MapLoader_SectionLoaded(object? sender, MapSectionProcessInfo e)
@@ -133,50 +227,85 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 					JobProgressInfo.GeneratedCount++;
 				}
 
-				if (JobProgressInfo.IsComplete || _receviedTheLastOne)
-				{
-					_stopWatch.Stop();
-					var mops = new MathOpCounts();
+				//if (JobProgressInfo.IsComplete || _receviedTheLastOne)
+				//{
+				//	_stopWatch.Stop();
 
-					foreach(var x in MapSectionProcessInfos)
-					{
-						if (x.MathOpCounts.HasValue)
-						{
-							mops.Update(x.MathOpCounts.Value);
-						}
-					}
+				//	if (_startTask == null || _mapLoader == null)
+				//	{
+				//		Debug.WriteLine("The start task or the MapLoader is null.");
+				//		return;
+				//	}
+				//	else
+				//	{
+				//		if (_startTask.IsCompletedSuccessfully)
+				//		{
+				//			Debug.WriteLine($"Task for {JobProgressInfo.JobNumber} completed successfully.");
+				//		}
+				//		else
+				//		{
+				//			Debug.WriteLine($"Task for {JobProgressInfo.JobNumber} did NOT complete successfully. The exception is {_startTask.Exception}.");
+				//		}
+				//	}
+
+				//	var mops = new MathOpCounts();
+				//	var sumProcessingDurations = new TimeSpan();
+				//	var sumGenerationDurations = new TimeSpan();
+
+				//	foreach (var x in MapSectionProcessInfos)
+				//	{
+				//		if (x.MathOpCounts != null)
+				//		{
+				//			mops.Update(x.MathOpCounts);
+				//		}
+
+				//		if (x.ProcessingDuration.HasValue)
+				//		{
+				//			sumProcessingDurations.Add(x.ProcessingDuration.Value);
+				//		}
+
+				//		if (x.GenerationDuration.HasValue)
+				//		{
+				//			sumGenerationDurations.Add(x.GenerationDuration.Value);
+				//		}
+				//	}
 
 
-					MathOpCounts = mops;
+				//	MathOpCounts = mops;
 
-					Debug.WriteLine($"Generated {JobProgressInfo.GeneratedCount} sections in {_stopWatch.ElapsedMilliseconds}. Performed: {mops.NumberOfMultiplications}." +
-						$"{mops.NumberOfCalcs} iteration calculation used; {mops.NumberOfUnusedCalcs} unused.");
+				//	Debug.WriteLine($"Generated {JobProgressInfo.GeneratedCount} sections in {_stopWatch.ElapsedMilliseconds}. Performed: {mops.NumberOfMultiplications}." +
+				//		$"{mops.NumberOfCalcs} iteration calculation used; {mops.NumberOfUnusedCalcs} unused.");
 
-					GeneratedCount = JobProgressInfo.GeneratedCount;
-					Elasped = _stopWatch.ElapsedMilliseconds;
-					Multiplications = mops.NumberOfMultiplications;
-					Calcs = (long)mops.NumberOfCalcs;
+				//	GeneratedCount = JobProgressInfo.GeneratedCount;
 
-					_synchronizationContext?.Post((o) => HandleRunComplete(), null);
+				//	OverallElapsed = _stopWatch.ElapsedMilliseconds;
+				//	ProcessingElapsed = (long)Math.Round(sumProcessingDurations.TotalMilliseconds);
+				//	GenerationElapsed = (long)Math.Round(sumProcessingDurations.TotalMilliseconds);
 
-				}
+				//	Multiplications = mops.NumberOfMultiplications;
+				//	Calcs = (long)mops.NumberOfCalcs;
+
+				//	_synchronizationContext?.Post((o) => HandleRunComplete(), null);
+
+				//}
 			}
 		}
 
 		private void HandleRunComplete()
 		{
 			OnPropertyChanged(nameof(GeneratedCount));
-			OnPropertyChanged(nameof(Elasped));
+			OnPropertyChanged(nameof(OverallElapsed));
+			OnPropertyChanged(nameof(ProcessingElapsed));
+			OnPropertyChanged(nameof(GenerationElapsed));
 			OnPropertyChanged(nameof(Multiplications));
 			OnPropertyChanged(nameof(Calcs));
 		}
-
 
 		private void MapSectionReady(MapSection mapSection, int jobId, bool isLast)
 		{
 			if (isLast)
 			{
-				_receviedTheLastOne = true;
+				//_receviedTheLastOne = true;
 				Debug.WriteLine($"{jobId} is complete. Received {MapSectionProcessInfos.Count} process infos.");
 			}
 			else
@@ -185,7 +314,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			}
 		}
 
-
 		public void StopJob(int jobNumber)
 		{
 			//DoWithWriteLock(() =>
@@ -193,7 +321,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//	StopCurrentJobInternal(jobNumber);
 			//});
 		}
-
 
 		private void StopCurrentJobInternal(int jobNumber)
 		{
@@ -205,9 +332,31 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//}
 		}
 
+		public void ResetMapSectionRequestProcessor()
+		{
+			_mapSectionRequestProcessor.UseRepo = true;
+		}
+
+		//private JobProgressInfo RunJob(Job job, out MapLoader mapLoader, out Task startTask)
+		//{
+		//	var ownerId = job.ProjectId.ToString();
+		//	var jobOwnerType = JobOwnerType.Project;
+
+		//	var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize, RMapConstants.BLOCK_SIZE);
+		//	var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);
+
+		//	mapLoader = new MapLoader(mapAreaInfo.MapBlockOffset, MapSectionReady, _mapSectionHelper, _mapSectionRequestProcessor);
+
+		//	_stopWatch = Stopwatch.StartNew();
+		//	startTask = mapLoader.Start(mapSectionRequests);
+
+		//	var result = new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count);
+
+		//	mapLoader.SectionLoaded += MapLoader_SectionLoaded;
+
+		//	return result;
+		//}
 
 		#endregion
-
-
 	}
 }

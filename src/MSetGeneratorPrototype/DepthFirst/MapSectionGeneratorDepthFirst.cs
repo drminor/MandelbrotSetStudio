@@ -63,6 +63,7 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
+				var stopwatch = Stopwatch.StartNew();
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
 				var stride = (byte)mapSectionRequest.BlockSize.Width;
@@ -99,6 +100,9 @@ namespace MSetGeneratorPrototype
 
 				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
 
+				stopwatch.Stop();
+				mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
+
 				UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
 			}
 
@@ -108,9 +112,8 @@ namespace MSetGeneratorPrototype
 		[Conditional("PERF")]
 		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorDepthFirst iterator, IterationStateDepthFirst iterationState)
 		{
-			var mops = iterator.MathOpCounts;
-			mops.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
-			mapSectionRequest.MathOpCounts = mops;
+			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
+			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
 
 		// Generate MapSection

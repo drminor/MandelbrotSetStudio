@@ -24,18 +24,36 @@
         </Border>
 
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,5,10">
-            <TextBlock Width="45" Margin="3" FontSize="14" Text="Sections Generated:" />
-            <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding GeneratedCount}"/>
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,10,5,10">
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Sections Generated:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding GeneratedCount}"/>
+            </StackPanel>
 
-            <TextBlock Width="45" Margin="3" FontSize="14" Text="Milliseconds:" />
-            <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding Elasped}"/>
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Iterations:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding Calcs}"/>
+            </StackPanel>
 
-            <TextBlock Width="45" Margin="55,3,3,3" FontSize="14" Text="Multiplications:" />
-            <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding Multiplications}"/>
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Multiplications:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding Multiplications}"/>
+            </StackPanel>
 
-            <TextBlock Width="45" Margin="3" FontSize="14" Text="Iterations:" />
-            <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding Calcs}"/>
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Total Time:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding OverallElapsed}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Processing Time:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding ProcessingElapsed}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Time to Generate:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding GenerationElapsed}"/>
+            </StackPanel>
 
         </StackPanel>
 

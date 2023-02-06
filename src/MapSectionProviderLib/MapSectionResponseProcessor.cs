@@ -121,6 +121,10 @@ namespace MapSectionProviderLib
 
 					mapSectionWorkRequest.Request.Completed = true;
 					mapSectionWorkRequest.RunWorkAction();
+					if (!mapSectionWorkRequest.Request.ProcessingEndTime.HasValue)
+					{
+						mapSectionWorkRequest.Request.ProcessingEndTime = DateTime.UtcNow;
+					}
 				}
 				catch (OperationCanceledException)
 				{

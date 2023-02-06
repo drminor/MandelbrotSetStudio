@@ -45,6 +45,8 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
+				var stopwatch = Stopwatch.StartNew();
+
 				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _fp31VectorsMath.LimbCount);
 
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
@@ -61,10 +63,22 @@ namespace MSetGeneratorPrototype
 
 				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
 
+				stopwatch.Stop();
+				mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
+
+				UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
+
 				mapSectionRequest.MathOpCounts = _iterator.MathOpCounts;
 			}
 
 			return result;
+		}
+
+		[Conditional("PERF")]
+		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorLimbFirst iterator, IterationStateLimbFirst iterationState)
+		{
+			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
+			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
 
 		// Generate MapSection

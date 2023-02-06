@@ -138,7 +138,7 @@ namespace MSetExplorer
 
 		private void RemoveCompletedRequests(List<GenMapRequestInfo> requestInfos, ReaderWriterLockSlim requestsLock, CancellationToken ct)
 		{
-			var timeToWait = TimeSpan.FromSeconds(4);
+			var timeToWait = TimeSpan.FromSeconds(40);
 			var timeToWarn = TimeSpan.FromMinutes(3);
 
 			var countToWarn = 0;
@@ -183,6 +183,7 @@ namespace MSetExplorer
 							{
 								foreach(var requestInfo in requestInfosToBeDisposed)
 								{
+									requestInfo.MapLoader.MarkJobAsComplete();
 									_requests.Remove(requestInfo);
 									requestInfo.Dispose();
 								}
@@ -363,29 +364,29 @@ namespace MSetExplorer
 					{
 						// Dispose managed state (managed objects)
 
-						if (Task != null)
-						{
-							if (Task.IsCompleted)
-							{
-								Task.Dispose();
-							}
-							else
-							{
-								Debug.WriteLine($"The Task is not null and not completed as the GenMapRequestInfo is being disposed.");
-							}
-						}
+						//if (Task != null)
+						//{
+						//	if (Task.IsCompleted)
+						//	{
+						//		Task.Dispose();
+						//	}
+						//	else
+						//	{
+						//		Debug.WriteLine($"The Task is not null and not completed as the GenMapRequestInfo is being disposed.");
+						//	}
+						//}
 
-						if (_onCompletedTask != null)
-						{
-							if (_onCompletedTask.IsCompleted)
-							{
-								_onCompletedTask.Dispose();
-							}
-							else
-							{
-								Debug.WriteLine($"The onCompletedTask is not null and not completed as the GenMapRequestInfo is being disposed.");
-							}
-						}
+						//if (_onCompletedTask != null)
+						//{
+						//	if (_onCompletedTask.IsCompleted)
+						//	{
+						//		_onCompletedTask.Dispose();
+						//	}
+						//	else
+						//	{
+						//		Debug.WriteLine($"The onCompletedTask is not null and not completed as the GenMapRequestInfo is being disposed.");
+						//	}
+						//}
 					}
 
 					disposedValue = true;

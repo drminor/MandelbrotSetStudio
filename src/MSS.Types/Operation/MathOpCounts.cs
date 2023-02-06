@@ -1,22 +1,11 @@
-﻿
-using System.Diagnostics;
+﻿using System;
 using System.Linq;
 
 namespace MSS.Types
 {
-	public struct MathOpCounts
+	public class MathOpCounts : ICloneable
 	{
-		//public MathOpCounts()
-		//{
-		//	NumberOfMultiplications = 0;
-		//	NumberOfAdditions = 0;
-		//	NumberOfConversions = 0;
-
-		//	NumberOfSplits = 0;
-		//	NumberOfGetCarries = 0;
-		//	NumberOfGrtrThanOps = 0;
-		//	NumberOfUnusedCalcs = 0;
-		//}
+		#region Public Propeties
 
 		public long NumberOfMultiplications { get; set; }
 		public long NumberOfAdditions { get; set; }
@@ -28,6 +17,10 @@ namespace MSS.Types
 
 		public double NumberOfCalcs { get; set; }
 		public double NumberOfUnusedCalcs { get; set; }
+
+		#endregion
+
+		#region Pubic Methods
 
 		public void Update(MathOpCounts mathOpCounts)
 		{
@@ -71,6 +64,11 @@ namespace MSS.Types
 			NumberOfUnusedCalcs += unusedCalcRowValues.Sum();
 		}
 
+
+		#endregion
+
+		#region ToString and IClonable Support
+
 		public override string ToString()
 		{
 			var result = $"Splits: {NumberOfSplits:N0}\tCarries: {NumberOfGetCarries:N0}\tGrtrThanOps: {NumberOfGrtrThanOps:N0}" +
@@ -79,7 +77,16 @@ namespace MSS.Types
 			return result;
 		}
 
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
 
+		public MathOpCounts Clone()
+		{
+			return (MathOpCounts)MemberwiseClone();
+		}
 
+		#endregion
 	}
 }

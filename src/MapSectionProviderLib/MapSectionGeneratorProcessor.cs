@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,9 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionGeneratorProcessor : IDisposable
 	{
+
+		#region Private Properties
+
 		private const int QUEUE_CAPACITY = 200;
 
 		private readonly IMEngineClient[] _mEngineClients;
@@ -26,12 +30,14 @@ namespace MapSectionProviderLib
 
 		private readonly IList<Task> _workQueueProcessors;
 
-		private readonly object _cancelledJobsLock = new();
-		private readonly Dictionary<int, CancellationTokenSource?> _cancelledJobIds;
+		private readonly object _jobsStatusLock = new();
+		private readonly Dictionary<int, CancellationTokenSource> _jobs;
 
 		private bool disposedValue;
 
 		private bool _stopped;
+
+		#endregion
 
 		#region Constructor
 
@@ -41,7 +47,7 @@ namespace MapSectionProviderLib
 
 			_cts = new CancellationTokenSource();
 			_workQueue = new BlockingCollection<MapSectionGenerateRequest>(QUEUE_CAPACITY);
-			_cancelledJobIds = new Dictionary<int, CancellationTokenSource?>();
+			_jobs = new Dictionary<int, CancellationTokenSource>();
 
 			if (mEngineClients.Length == 1)
 			{
@@ -164,23 +170,36 @@ namespace MapSectionProviderLib
 
 		public void CancelJob(int jobId)
 		{
-			lock (_cancelledJobsLock)
+			lock (_jobsStatusLock)
 			{
-				if (!_cancelledJobIds.ContainsKey(jobId))
+				if (!_jobs.ContainsKey(jobId))
 				{
-					_cancelledJobIds.Add(jobId, null);
+					var cts = new CancellationTokenSource();
+					cts.Cancel();
+					_jobs.Add(jobId, cts);
 				}
 				else
 				{
-					// If the job is currently running, the CancellationTokenSource will be present here.
-					_cancelledJobIds[jobId]?.Cancel();
+					_jobs[jobId].Cancel();
 				}
 			}
 		}
 
+		public void MarkJobAsComplete(int jobId)
+		{
+			//lock (_jobsStatusLock)
+			//{
+			//	if (_jobs.TryGetValue(jobId, out var cts))
+			//	{
+			//		_jobs.Remove(jobId);
+			//	}
+			//}
+		}
+
+
 		public void Stop(bool immediately)
 		{
-			lock (_cancelledJobsLock)
+			lock (_jobsStatusLock)
 			{
 				if (_stopped)
 				{
@@ -221,7 +240,6 @@ namespace MapSectionProviderLib
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
-				int? jobId = null;
 				CancellationTokenSource? cts;
 
 				try
@@ -233,18 +251,16 @@ namespace MapSectionProviderLib
 
 					MapSectionResponse? mapSectionResponse;
 
-					jobId = mapSectionGenerateRequest.JobId;
-					cts = new CancellationTokenSource();
-
-					if (IsJobCancelled(mapSectionGenerateRequest.JobId, cts))
+					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out cts))
 					{
-						mapSectionResponse = null;
+						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
 					}
 					else
 					{
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest, cts.Token);
-						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
+						//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
 						if (!cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
 						{
@@ -269,13 +285,6 @@ namespace MapSectionProviderLib
 					Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client" }. The exception is {e}.");
 					throw;
 				}
-				finally
-				{
-					if (jobId != null)
-					{
-						RemoveJobId(jobId.Value);
-					}
-				}
 			}
 		}
 
@@ -283,7 +292,6 @@ namespace MapSectionProviderLib
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
-				int? jobId = null;
 				CancellationTokenSource? cts;
 
 				try
@@ -295,18 +303,16 @@ namespace MapSectionProviderLib
 
 					MapSectionResponse? mapSectionResponse;
 
-					jobId = mapSectionGenerateRequest.JobId;
-					cts = new CancellationTokenSource();
-
-					if (IsJobCancelled(mapSectionGenerateRequest.JobId, cts))
+					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out cts))
 					{
-						mapSectionResponse = null;
+						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
 					}
 					else
 					{
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, cts.Token);
-						mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
+						//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
 						if (!cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
 						{
@@ -331,44 +337,33 @@ namespace MapSectionProviderLib
 					Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client"}. The exception is {e}.");
 					throw;
 				}
-				finally
-				{
-					if (jobId != null)
-					{
-						RemoveJobId(jobId.Value);
-					}
-				}
 			}
 		}
 
-		private bool IsJobCancelled(int jobId, CancellationTokenSource cts)
+		private bool IsJobCancelled(int jobId, out CancellationTokenSource cts)
 		{
 			bool result;
-			lock (_cancelledJobsLock)
+			lock (_jobsStatusLock)
 			{
-				if (_cancelledJobIds.ContainsKey(jobId))
+				if (_jobs.ContainsKey(jobId))
 				{
-					result = true;
+					cts = _jobs[jobId];
+					result = cts.IsCancellationRequested;
 				}
 				else
 				{
-					_cancelledJobIds.Add(jobId, cts);
+					cts = new CancellationTokenSource();
+					_jobs.Add(jobId, cts);
 					result = false;
 				}
 			}
 
-			return result;
-		}
-
-		private void RemoveJobId(int jobId)
-		{
-			lock (_cancelledJobsLock)
+			if (result)
 			{
-				if (_cancelledJobIds.ContainsKey(jobId))
-				{
-					_cancelledJobIds.Remove(jobId);
-				}
+				Debug.WriteLine($"The Job: {jobId} has been cancelled.");
 			}
+
+			return result;
 		}
 
 		#endregion

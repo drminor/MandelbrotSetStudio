@@ -86,6 +86,11 @@ namespace MSetExplorer
 			}
 		}
 
+		public void MarkJobAsComplete()
+		{
+			_mapSectionRequestProcessor.MarkJobAsComplete(JobNumber);
+		}
+
 		#endregion
 
 		#region Private Methods
@@ -132,6 +137,7 @@ namespace MSetExplorer
 			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled && mapSectionResponse.MapSectionVectors != null)
 			{
 				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, jobId, _mapBlockOffset);
+				mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
 				//if (mapSectionResponse?.MathOpCounts != null)
 				//{
@@ -180,6 +186,7 @@ namespace MSetExplorer
 				var numberOfPendingRequests = _mapSectionRequestProcessor.GetNumberOfPendingRequests(JobNumber);
 				var notHandled = _mapSectionRequests?.Count(x => !x.Handled) ?? 0;
 				var notSent = _mapSectionRequests?.Count(x => !x.Sent) ?? 0;
+
 				// Log: MapLoader is done with Job:
 				//Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections. There are {numberOfPendingRequests}/{notHandled}/{notSent} requests still pending, not handled, not sent.");
 			}
@@ -205,7 +212,16 @@ namespace MSetExplorer
 
 		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr)
 		{
-			var result = new MapSectionProcessInfo(JobNumber, _sectionsCompleted, msr.TimeToCompleteGenRequest, msr.ProcessingDuration, msr.FoundInRepo, msr.MathOpCounts);
+			var result = new MapSectionProcessInfo
+				(
+				JobNumber, 
+				_sectionsCompleted, 
+				msr.TimeToCompleteGenRequest, 
+				msr.ProcessingDuration, 
+				msr.GenerationDuration, 
+				msr.FoundInRepo, 
+				msr.MathOpCounts
+				);
 			return result;
 		}
 

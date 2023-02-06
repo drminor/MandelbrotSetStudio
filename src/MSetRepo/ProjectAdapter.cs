@@ -102,7 +102,7 @@ namespace MSetRepo
 			{
 				var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
 				var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
-				//colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
+				colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
 
 				project = AssembleProject(projectRecord, jobs, colorBandSets, projectRecord.LastSavedUtc, projectRecord.LastAccessedUtc);
 				return project != null;

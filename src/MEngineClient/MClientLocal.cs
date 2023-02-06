@@ -96,10 +96,7 @@ namespace MEngineClient
 		{
 			if (ct.IsCancellationRequested)
 			{
-				return new MapSectionResponse(mapSectionRequest)
-				{
-					RequestCancelled = true
-				};
+				return new MapSectionResponse(mapSectionRequest, isCancelled: true);
 			}
 
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;

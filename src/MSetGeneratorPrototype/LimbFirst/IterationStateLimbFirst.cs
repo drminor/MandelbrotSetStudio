@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System.Runtime.Intrinsics;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetGeneratorPrototype
 {
@@ -22,19 +23,26 @@ namespace MSetGeneratorPrototype
 
 			ValueCount = mapSectionZVectors.ValueCount;
 			LimbCount = mapSectionZVectors.LimbCount;
+			RowCount = mapSectionZVectors.BlockSize.Height;
+
 			ValuesPerRow = mapSectionVectors.ValuesPerRow;
 			VectorsPerRow = mapSectionZVectors.VectorsPerRow;
 			VectorsPerFlagRow = mapSectionZVectors.VectorsPerFlagRow;
 
 			RowNumber = -1;
 
-			HasEscapedFlags = new Vector256<int>[_mapSectionZVectors.ValuesPerRow];
-			_mapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlags);
-
 			CountsRow = new Vector256<int>[_mapSectionVectors.VectorsPerRow];
 			mapSectionVectors.FillCountsRow(0, CountsRow);
 
+			RowHasEscaped = _mapSectionZVectors.GetRowHasEscaped();
+			RowUsedCalcs = new long[RowCount];
+			RowUnusedCalcs = new long[RowCount];
+
+			HasEscapedFlags = new Vector256<int>[_mapSectionZVectors.ValuesPerRow];
+			_mapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlags);
+			
 			DoneFlags = new Vector256<int>[VectorsPerFlagRow];
+			Calcs = new long[VectorsPerFlagRow];
 			UnusedCalcs = new Vector256<int>[VectorsPerFlagRow];
 
 			InPlayList = Enumerable.Range(0, VectorsPerFlagRow).ToArray();
@@ -53,20 +61,27 @@ namespace MSetGeneratorPrototype
 		public SizeInt BlockSize => _mapSectionVectors.BlockSize;
 		public int ValueCount { get; init; }
 		public int LimbCount { get; init; }
+		public int RowCount { get; init; }
+
 		public int VectorsPerRow { get; init; }
 		public int VectorsPerFlagRow { get; init; }
 		public int ValuesPerRow { get; init; }
 
 		public int RowNumber { get; private set; }
 
-		public Vector256<int>[] HasEscapedFlags { get; private set; }
 		public Vector256<int>[] CountsRow { get; private set; }
+		public Span<bool> RowHasEscaped { get; init; }
+		public long[] RowUnusedCalcs { get; init; }
+		public long[] RowUsedCalcs { get; init; }
+
+		public Vector256<int>[] HasEscapedFlags { get; private set; }
 
 		public Vector256<int>[] DoneFlags { get; private set; }
+		public long[] Calcs { get; private set; }
+		public Vector256<int>[] UnusedCalcs { get; private set; }
+
 		public int[] InPlayList { get; private set; }
 		public int[] InPlayListNarrow { get; private set; }
-
-		public Vector256<int>[] UnusedCalcs { get; private set; }
 
 		#endregion
 

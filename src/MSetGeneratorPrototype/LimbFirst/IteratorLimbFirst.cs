@@ -41,7 +41,6 @@ namespace MSetGeneratorPrototype
 			Zis = new FP31Vectors(LimbCount, ValueCount);
 
 			IsReset = true;
-			//ZValuesAreZero = true;
 
 			_zRSqrs = new FP31Vectors(LimbCount, ValueCount);
 			_zISqrs = new FP31Vectors(LimbCount, ValueCount);
