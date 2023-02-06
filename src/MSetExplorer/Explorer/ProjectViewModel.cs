@@ -309,7 +309,7 @@ namespace MSetExplorer
 
 			var project = (Project)JobOwnerHelper.CreateCopy(currentProject, name, description, _projectAdapter, _mapSectionAdapter);
 
-			if (JobOwnerHelper.Save(currentProject, _projectAdapter))
+			if (JobOwnerHelper.Save(project, _projectAdapter))
 			{
 				CurrentProject = project;
 				errorText = null;

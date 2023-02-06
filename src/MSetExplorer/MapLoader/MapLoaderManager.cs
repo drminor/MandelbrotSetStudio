@@ -154,7 +154,6 @@ namespace MSetExplorer
 
 					try
 					{
-						//requestInfosToBeDisposed.Clear();
 						Debug.Assert(requestInfosToBeDisposed.Count == 0, "RequestInfosToBeCleared is not empty.");
 						var now = DateTime.UtcNow;
 

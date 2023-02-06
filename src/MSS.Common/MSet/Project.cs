@@ -189,6 +189,11 @@ namespace MSS.Common.MSet
 				{
 					if (!value.IsEmpty)
 					{
+						if (!value.OnFile)
+						{
+							LastUpdatedUtc = DateTime.UtcNow;
+						}
+
 						var colorBandSetIdBeforeUpdate = _jobTree.CurrentItem.ColorBandSetId;
 
 						_ = LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");

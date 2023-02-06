@@ -137,15 +137,15 @@ namespace MapSectionProviderLib
 
 		public void MarkJobAsComplete(int jobId)
 		{
-			//lock (_cancelledJobsLock)
-			//{
-			//	if (_cancelledJobIds.Contains(jobId))
-			//	{
-			//		_cancelledJobIds.Remove(jobId);
-			//	}
+			lock (_cancelledJobsLock)
+			{
+				if (_cancelledJobIds.Contains(jobId))
+				{
+					_cancelledJobIds.Remove(jobId);
+				}
 
-			//	_mapSectionGeneratorProcessor.MarkJobAsComplete(jobId);
-			//}
+				_mapSectionGeneratorProcessor.MarkJobAsComplete(jobId);
+			}
 		}
 
 		public void Stop(bool immediately)

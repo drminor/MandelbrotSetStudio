@@ -187,13 +187,13 @@ namespace MapSectionProviderLib
 
 		public void MarkJobAsComplete(int jobId)
 		{
-			//lock (_jobsStatusLock)
-			//{
-			//	if (_jobs.TryGetValue(jobId, out var cts))
-			//	{
-			//		_jobs.Remove(jobId);
-			//	}
-			//}
+			lock (_jobsStatusLock)
+			{
+				if (_jobs.TryGetValue(jobId, out var cts))
+				{
+					_jobs.Remove(jobId);
+				}
+			}
 		}
 
 
