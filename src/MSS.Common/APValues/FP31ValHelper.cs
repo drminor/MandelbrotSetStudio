@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using static MongoDB.Driver.WriteConcern;
 
@@ -43,6 +45,9 @@ namespace MSS.Common.APValues
 
 		private static readonly bool USE_DET_DEBUG = false;
 
+		private const ulong LOW32_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		private const ulong HIGH32_CLEAR = LOW32_BITS_SET;
+
 		#endregion
 
 		#region RValue Support
@@ -67,50 +72,110 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
+		//public static FP31Val CreateFP31ValOld(RValue rValue, ApFixedPointFormat apFixedPointFormat)
+		//{
+		//	var fpFormat = apFixedPointFormat;
+		//	var result = CreateFP31ValOld(rValue, fpFormat.TargetExponent, fpFormat.LimbCount, fpFormat.BitsBeforeBinaryPoint);
+		//	return result;
+		//}
+
+		//public static FP31Val CreateFP31ValOld(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
+		//{
+		//	var smx = /*ScalarMathHelper.*/CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP);
+		//	var packedMantissa = TakeLowerHalves(smx.Mantissa);
+		//	var twoCMantissa = ConvertTo2C(packedMantissa, smx.Sign);
+
+		//	var result = new FP31Val(twoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
+		//	return result;
+		//}
+
+		//public static FP31Val CreateFP31ValFwUints(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
+		//{
+		//	var limbs = ToFwUInts(rValue.Value, out var sign);
+
+		//	if (IsValueTooLarge(rValue, bitsBeforeBP, out var bitExpInfo))
+		//	{
+		//		var maxMagnitude = GetMaxMagnitude(bitsBeforeBP);
+		//		throw new ArgumentException($"An RValue with magnitude > {maxMagnitude} cannot be used to create a FP31Val. " +
+		//			$"IndexOfMsb: {GetDiagDisplayHex("limbs", limbs)}. Info: {bitExpInfo}.");
+		//	}
+
+		//	var rValueStrVal = RValueHelper.ConvertToString(rValue);
+
+		//	var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
+		//	var newLimbs = ShiftBits(limbs, shiftAmount, limbCount, nameof(CreateFP31ValFwUints));
+
+		//	var result = CreateFP31Val(sign, newLimbs, targetExponent, bitsBeforeBP, rValue.Precision);
+
+		//	var resultStrVal = result.GetStringValue();
+		//	//Debug.WriteLine($"Got FP31Val: {resultStrVal} from: {rValueStrVal}. {bitExpInfo}");
+
+		//	if (rValueStrVal.Length - resultStrVal.Length > 5)
+		//	{
+		//		Debug.WriteLine("CreateFP31Val failed.");
+		//	}
+
+		//	return result;
+		//}
+
 		public static FP31Val CreateFP31Val(RValue rValue, ApFixedPointFormat apFixedPointFormat)
 		{
 			var fpFormat = apFixedPointFormat;
 			var result = CreateFP31Val(rValue, fpFormat.TargetExponent, fpFormat.LimbCount, fpFormat.BitsBeforeBinaryPoint);
 			return result;
 		}
-
+		// Adjust the RValue then convert to FW uint Limbs.
 		public static FP31Val CreateFP31Val(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{
-			var smx = ScalarMathHelper.CreateSmx(rValue, targetExponent, limbCount, bitsBeforeBP);
-			var packedMantissa = TakeLowerHalves(smx.Mantissa);
-			var twoCMantissa = ConvertTo2C(packedMantissa, smx.Sign);
-
-			var result = new FP31Val(twoCMantissa, smx.Exponent, bitsBeforeBP, smx.Precision);
-			return result;
-		}
-
-		public static FP31Val CreateFP31ValOLD(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
-		{
-			var limbs = ToFwUInts(rValue.Value, out var sign);
-
 			if (IsValueTooLarge(rValue, bitsBeforeBP, out var bitExpInfo))
 			{
 				var maxMagnitude = GetMaxMagnitude(bitsBeforeBP);
-				throw new ArgumentException($"An RValue with magnitude > {maxMagnitude} cannot be used to create a FP31Val. " +
-					$"IndexOfMsb: {GetDiagDisplayHex("limbs", limbs)}. Info: {bitExpInfo}.");
+				throw new ArgumentException($"An RValue with magnitude > {maxMagnitude} cannot be used to create a FP31Val. ");
 			}
 
-			var rValueStrVal = RValueHelper.ConvertToString(rValue);	
-
 			var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
-			var newLimbs = ShiftBits(limbs, shiftAmount, limbCount, nameof(CreateFP31Val));
 
-			var result = CreateFP31Val(sign, newLimbs, targetExponent, bitsBeforeBP, rValue.Precision);
+			BigInteger adjustedValue;
 
+			if (shiftAmount < 0)
+			{
+				throw new NotSupportedException("Converting an RValue to a FP31Val that has an exponent smaller than the target is not supported.");
+			}
+			else if (shiftAmount > 0)
+			{
+				adjustedValue = rValue.Value * BigInteger.Pow(2, shiftAmount);
+			}
+			else
+			{
+				adjustedValue = rValue.Value;
+			}
+
+			var limbs = ToFwUInts(adjustedValue, out var sign);
+			var result = CreateFP31Val(sign, limbs, targetExponent, bitsBeforeBP, rValue.Precision);
+
+			CheckFP31ValFromRValueResult(rValue, targetExponent, limbCount, bitsBeforeBP, adjustedValue, result, bitExpInfo);
+
+			return result;
+		}
+
+		[Conditional("DEBUG")]
+		private static void CheckFP31ValFromRValueResult(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP, BigInteger adjustedValue, FP31Val result, string bitExpInfo) 
+		{
+			var rValueStrVal = RValueHelper.ConvertToString(rValue);
 			var resultStrVal = result.GetStringValue();
-			//Debug.WriteLine($"Got FP31Val: {resultStrVal} from: {rValueStrVal}. {bitExpInfo}");
 
 			if (rValueStrVal.Length - resultStrVal.Length > 5)
 			{
-				Debug.WriteLine("CreateFP31Val failed.");
+				var adjustedValueStrVal = adjustedValue.ToString();
+				Debug.WriteLine($"CreateFP31Val failed. The result is {resultStrVal}, the adjusted value is {adjustedValueStrVal}, the input is {rValueStrVal}. BitExpInfo: {bitExpInfo}.");
 			}
 
-			return result;
+			//var cResult = CreateFP31ValOld(rValue, targetExponent, limbCount, bitsBeforeBP);
+
+			//if (cResult.Mantissa.Length != result.Mantissa.Length)
+			//{
+			//	Debug.WriteLine("Mantissa Lengths dont' match.");
+			//}
 		}
 
 		public static FP31Val CreateFP31Val(bool sign, uint[] limbs, int targetExponent, byte bitsBeforeBP, int precision)
@@ -152,136 +217,381 @@ namespace MSS.Common.APValues
 
 		#endregion
 
+
+		#region Imported From ScalarMathHelper
+
+		//private static Smx CreateSmx(RValue rValue, ApFixedPointFormat apFixedPointFormat)
+		//{
+		//	var fpFormat = apFixedPointFormat;
+		//	var result = CreateSmx(rValue, fpFormat.TargetExponent, fpFormat.LimbCount, fpFormat.BitsBeforeBinaryPoint);
+		//	return result;
+		//}
+
+		//private static Smx CreateSmx(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
+		//{
+		//	var partialWordLimbs = ToPwULongs(rValue.Value, out var sign);
+
+		//	if (IsValueTooLarge(rValue, bitsBeforeBP/*, isSigned: false*/, out var bitExpInfo))
+		//	{
+		//		var maxIntegerValue = GetMaxIntegerValue(bitsBeforeBP/*, isSigned: false*/);
+		//		throw new ArgumentException($"An RValue with integer portion > {maxIntegerValue} cannot be used to create an Smx. IndexOfMsb: {GetDiagDisplayHex("limbs", partialWordLimbs)}. Info: {bitExpInfo}.");
+		//	}
+
+		//	//var rValueStrVal = RValueHelper.ConvertToString(rValue);
+
+		//	var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
+		//	var newPartialWordLimbs = ShiftBitsOld(partialWordLimbs, shiftAmount, limbCount, "CreateSmx");
+
+		//	var partialWordLimbsTopCleared = ClearHighHalves(newPartialWordLimbs, null);
+		//	var result = new Smx(sign, partialWordLimbsTopCleared, targetExponent, bitsBeforeBP, rValue.Precision);
+
+		//	//var resultStrVal = result.GetStringValue();
+		//	//Debug.WriteLine($"Got Smx: {resultStrVal} from: {rValueStrVal}. {bitExpInfo}");
+
+		//	//if (rValueStrVal.Length - resultStrVal.Length > 5)
+		//	//{
+		//	//	//Debug.WriteLine("CreateFP31Val failed.");
+		//	//	throw new InvalidOperationException("CreateFP31Val failed.");
+		//	//}
+
+		//	return result;
+		//}
+
+
+		//#endregion
+
+		//#region Shift Bits / Scale and Split
+
+		//private static ulong[] ShiftBitsOld(ulong[] partialWordLimbs, int shiftAmount, int limbCount, string desc)
+		//{
+		//	ulong[] result;
+
+		//	if (shiftAmount == 0)
+		//	{
+		//		result = TakeMostSignificantLimbsOld(partialWordLimbs, limbCount);
+		//	}
+		//	else if (shiftAmount < 0)
+		//	{
+		//		throw new NotImplementedException();
+		//	}
+		//	else
+		//	{
+		//		var sResult = ScaleAndSplitOld(partialWordLimbs, shiftAmount, limbCount, "Create Smx");
+
+		//		result = TakeMostSignificantLimbsOld(sResult, limbCount);
+		//	}
+
+		//	// ExtendSignBits, into the Reserved bit, clear the top half
+		//	result = ExtendSignBitOld(result);
+
+		//	return result;
+		//}
+
+		//private static ulong[] ScaleAndSplitOld(ulong[] mantissa, int power, int limbCount, string desc)
+		//{
+		//	if (power <= 0)
+		//	{
+		//		throw new ArgumentException("The value of power must be 1 or greater.");
+		//	}
+
+		//	(var limbOffset, var remainder) = Math.DivRem(power, EFFECTIVE_BITS_PER_LIMB);
+
+		//	if (limbOffset > limbCount + 3)
+		//	{
+		//		return new ulong[] { 0 };
+		//	}
+
+		//	var factor = (ulong)Math.Pow(2, remainder);
+
+		//	var resultArray = new ulong[mantissa.Length];
+
+		//	var carry = 0ul;
+
+		//	var indexOfLastNonZeroLimb = -1;
+		//	for (var i = 0; i < mantissa.Length; i++)
+		//	{
+		//		var newLimbVal = mantissa[i] * factor + carry;
+
+		//		var (hi, lo) = SplitOld(newLimbVal); // :Spliter
+		//		resultArray[i] = lo;
+
+		//		carry = hi;
+
+		//		if (lo > 0)
+		//		{
+		//			indexOfLastNonZeroLimb = i;
+		//		}
+		//	}
+
+		//	if (indexOfLastNonZeroLimb > -1)
+		//	{
+		//		indexOfLastNonZeroLimb += limbOffset;
+		//	}
+
+		//	var resultSa = new ShiftedArray<ulong>(resultArray, limbOffset, indexOfLastNonZeroLimb);
+
+		//	if (carry > 0)
+		//	{
+		//		//Debug.WriteLine($"While {desc}, setting carry: {carry}, ll: {result.IndexOfLastNonZeroLimb}, len: {result.Length}, power: {power}, factor: {factor}.");
+		//		resultSa.SetCarry(carry);
+		//	}
+
+		//	var result = resultSa.MaterializeAll();
+
+		//	return result;
+		//}
+
+		//private static ulong[] TakeMostSignificantLimbsOld(ulong[] partialWordLimbs, int length)
+		//{
+		//	ulong[] result;
+
+		//	if (partialWordLimbs.Length == length)
+		//	{
+		//		result = partialWordLimbs;
+		//	}
+		//	else if (partialWordLimbs.Length > length)
+		//	{
+		//		result = CopyLastXElementsOld(partialWordLimbs, length);
+		//	}
+		//	else
+		//	{
+		//		result = ExtendOld(partialWordLimbs, length);
+		//	}
+
+		//	return result;
+		//}
+
+		//private static ulong[] CopyLastXElementsOld(ulong[] values, int newLength)
+		//{
+		//	var result = new ulong[newLength];
+
+		//	var startIndex = Math.Max(values.Length - newLength, 0);
+
+		//	var cLen = values.Length - startIndex;
+
+		//	Array.Copy(values, startIndex, result, 0, cLen);
+
+		//	return result;
+		//}
+
+		//// Pad with leading zeros.
+		//private static ulong[] ExtendOld(ulong[] values, int newLength)
+		//{
+		//	var result = new ulong[newLength];
+		//	Array.Copy(values, 0, result, 0, values.Length);
+
+		//	return result;
+		//}
+
+		////private static int GetShiftAmount(int currentExponent, int targetExponent)
+		////{
+		////	var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
+		////	return shiftAmount;
+		////}
+
+		//private static (ulong hi, ulong lo) SplitOld(ulong x)
+		//{
+		//	// bit 31 (and 63) is being reserved to detect carries when adding / subtracting.
+		//	// this bit should be zero at this point.
+
+		//	// The low value is in the low 31 bits, indexes 0 - 30.
+		//	// The high value is in bits 32-62
+
+		//	var hi = x >> EFFECTIVE_BITS_PER_LIMB; // Create new ulong from bits 32 - 62.
+		//	var lo = x & HIGH33_MASK; // Create new ulong from bits 0 - 31.
+
+		//	return (hi, lo);
+		//}
+
+		//// Clears Bits 33 bits (From 31 to 63)
+		//// Used when converting back to standard binary representation, i.e., when creating an Smx var.
+		//public static ulong[] ClearHighHalves(ulong[] partialWordLimbs, bool? sign = null)
+		//{
+		//	var result = new ulong[partialWordLimbs.Length];
+
+		//	for (var i = 0; i < result.Length; i++)
+		//	{
+		//		result[i] = partialWordLimbs[i] & HIGH33_CLEAR_L;
+		//	}
+
+		//	return result;
+		//}
+
+		#endregion
+
+
+		#region Convert to Partial-Word Limbs -- COPIED FROM ScalarMathHelper
+
+		// TOOD: Consider first using ToLongs and then calling Split(
+
+		//private static ulong[] ToPwULongs(BigInteger bi, out bool sign)
+		//{
+		//	var tResult = new List<ulong>();
+
+		//	//var hi = BigInteger.Abs(bi);
+
+		//	sign = bi.Sign >= 0;
+		//	var hi = sign ? bi : BigInteger.Negate(bi);
+
+		//	while (hi > MAX_DIGIT_VALUE)
+		//	{
+		//		hi = BigInteger.DivRem(hi, BI_HALF_WORD_FACTOR, out var lo);
+		//		tResult.Add((ulong)lo);
+		//	}
+
+		//	tResult.Add((ulong)hi);
+
+		//	return tResult.ToArray();
+		//}
+
+		//private static BigInteger FromPwULongs(ulong[] partialWordLimbs, bool sign)
+		//{
+		//	var result = BigInteger.Zero;
+
+		//	for (var i = partialWordLimbs.Length - 1; i >= 0; i--)
+		//	{
+		//		result *= BI_HALF_WORD_FACTOR;
+		//		result += partialWordLimbs[i];
+		//	}
+
+		//	result = sign ? result : BigInteger.Negate(result);
+
+		//	return result;
+		//}
+
+		#endregion
+
+
 		#region Shift Bits / Scale and Split
 
-		private static uint[] ShiftBits(uint[] partialWordLimbs, int shiftAmount, int limbCount, string desc)
-		{
-			uint[] result;
+		//private static uint[] ShiftBits(uint[] partialWordLimbs, int shiftAmount, int limbCount, string desc)
+		//{
+		//	uint[] result;
 
-			if (shiftAmount == 0)
-			{
-				result = TakeMostSignificantLimbs(partialWordLimbs, limbCount);
-			}
-			else if (shiftAmount < 0)
-			{
-				throw new NotImplementedException();
-			}
-			else
-			{
-				result = ScaleAndSplit(partialWordLimbs, shiftAmount, limbCount, desc);
-			}
+		//	if (shiftAmount == 0)
+		//	{
+		//		result = TakeMostSignificantLimbs(partialWordLimbs, limbCount);
+		//	}
+		//	else if (shiftAmount < 0)
+		//	{
+		//		throw new NotImplementedException();
+		//	}
+		//	else
+		//	{
+		//		result = ScaleAndSplit(partialWordLimbs, shiftAmount, limbCount, desc);
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		private static uint[] ScaleAndSplit(uint[] mantissa, int power, int limbCount, string desc)
-		{
-			if (power <= 0)
-			{
-				throw new ArgumentException("The value of power must be 1 or greater.");
-			}
+		//private static uint[] ScaleAndSplit(uint[] mantissa, int power, int limbCount, string desc)
+		//{
+		//	if (power <= 0)
+		//	{
+		//		throw new ArgumentException("The value of power must be 1 or greater.");
+		//	}
 
-			(var limbOffset, var remainder) = Math.DivRem(power, EFFECTIVE_BITS_PER_LIMB);
+		//	(var limbOffset, var remainder) = Math.DivRem(power, EFFECTIVE_BITS_PER_LIMB);
 
-			if (limbOffset > limbCount + 3)
-			{
-				return Enumerable.Repeat(0u, limbCount).ToArray();
-			}
+		//	if (limbOffset > limbCount + 3)
+		//	{
+		//		return Enumerable.Repeat(0u, limbCount).ToArray();
+		//	}
 
-			var factor = (ulong)Math.Pow(2, remainder);
+		//	var factor = (ulong)Math.Pow(2, remainder);
 
-			var resultArray = new uint[mantissa.Length];
+		//	var resultArray = new uint[mantissa.Length];
 
-			var carry = 0u;
+		//	var carry = 0u;
 
-			for (var i = 0; i < mantissa.Length; i++)
-			{
-				var newLimbVal = (mantissa[i] * factor) + carry;
+		//	for (var i = 0; i < mantissa.Length; i++)
+		//	{
+		//		var newLimbVal = (mantissa[i] * factor) + carry;
 
-				var (hi, lo) = Split(newLimbVal); // :Spliter
-				resultArray[i] = lo;
+		//		var (hi, lo) = Split(newLimbVal); // :Spliter
+		//		resultArray[i] = lo;
 
-				carry = hi;
-			}
+		//		carry = hi;
+		//	}
 
-			if (carry > 0)
-			{
-				//Debug.WriteLine($"While {desc}, setting carry: {carry}, ll: {result.IndexOfLastNonZeroLimb}, len: {result.Length}, power: {power}, factor: {factor}.");
-			}
+		//	if (carry > 0)
+		//	{
+		//		//Debug.WriteLine($"While {desc}, setting carry: {carry}, ll: {result.IndexOfLastNonZeroLimb}, len: {result.Length}, power: {power}, factor: {factor}.");
+		//	}
 
-			var result = AssembleScaledValue(resultArray, limbOffset, carry, limbCount);
+		//	var result = AssembleScaledValue(resultArray, limbOffset, carry, limbCount);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		private static uint[] AssembleScaledValue(uint[] resultArray, int offset, uint carry, int limbCount)
-		{
-			uint[] wArray;
+		//private static uint[] AssembleScaledValue(uint[] resultArray, int offset, uint carry, int limbCount)
+		//{
+		//	uint[] wArray;
 
-			if (carry > 0)
-			{
-				if (offset > 0) offset -= 1;
+		//	if (carry > 0)
+		//	{
+		//		if (offset > 0) offset -= 1;
 
-				var len = resultArray.Length + 1 + offset;
-				wArray = new uint[len];
+		//		var len = resultArray.Length + 1 + offset;
+		//		wArray = new uint[len];
 
-				Array.Copy(resultArray, 0, wArray, offset, resultArray.Length);
-				wArray[^1] = carry;
-			}
-			else
-			{
-				var len = resultArray.Length + offset;
-				wArray = new uint[len];
+		//		Array.Copy(resultArray, 0, wArray, offset, resultArray.Length);
+		//		wArray[^1] = carry;
+		//	}
+		//	else
+		//	{
+		//		var len = resultArray.Length + offset;
+		//		wArray = new uint[len];
 
-				//Array.Copy(resultArray, 0, wArray, offset, resultArray.Length);
-				Array.Copy(resultArray, 0, wArray, 0, resultArray.Length);
-			}
+		//		//Array.Copy(resultArray, 0, wArray, offset, resultArray.Length);
+		//		Array.Copy(resultArray, 0, wArray, 0, resultArray.Length);
+		//	}
 
-			var result = TakeMostSignificantLimbs(wArray, limbCount);	
+		//	var result = TakeMostSignificantLimbs(wArray, limbCount);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		private static uint[] TakeMostSignificantLimbs(uint[] partialWordLimbs, int length)
-		{
-			uint[] result;
+		//private static uint[] TakeMostSignificantLimbs(uint[] partialWordLimbs, int length)
+		//{
+		//	uint[] result;
 
-			var diff = length - partialWordLimbs.Length;
+		//	var diff = length - partialWordLimbs.Length;
 
-			if (diff > 0)
-			{
-				result = PadLeft(partialWordLimbs, diff);
-			}
-			else if(diff < 0)
-			{
-				result = TrimLeft(partialWordLimbs, -1 * diff);
-			}
-			else
-			{
-				result = partialWordLimbs;
-			}
+		//	if (diff > 0)
+		//	{
+		//		result = PadLeft(partialWordLimbs, diff);
+		//	}
+		//	else if (diff < 0)
+		//	{
+		//		result = TrimLeft(partialWordLimbs, -1 * diff);
+		//	}
+		//	else
+		//	{
+		//		result = partialWordLimbs;
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		// Pad with leading zeros.
-		private static uint[] PadLeft(uint[] values, int amount)
-		{
-			var newLength = values.Length + amount;
-			var result = new uint[newLength];
-			Array.Copy(values, 0, result, amount, values.Length);
+		//// Pad with leading zeros.
+		//private static uint[] PadLeft(uint[] values, int amount)
+		//{
+		//	var newLength = values.Length + amount;
+		//	var result = new uint[newLength];
+		//	Array.Copy(values, 0, result, amount, values.Length);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		private static uint[] TrimLeft(uint[] values, int amount)
-		{
-			var newLength = values.Length - amount;
-			var result = new uint[newLength];
-			Array.Copy(values, amount, result, 0, newLength);
+		//private static uint[] TrimLeft(uint[] values, int amount)
+		//{
+		//	var newLength = values.Length - amount;
+		//	var result = new uint[newLength];
+		//	Array.Copy(values, amount, result, 0, newLength);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		//private static uint[] CopyLastXElements(uint[] values, int newLength)
 		//{
@@ -298,25 +608,27 @@ namespace MSS.Common.APValues
 		//	return result;
 		//}
 
-		public static int GetShiftAmount(int currentExponent, int targetExponent)
+		private static int GetShiftAmount(int currentExponent, int targetExponent)
 		{
-			var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
+			//var shiftAmount = Math.Abs(targetExponent) - Math.Abs(currentExponent);
+			var shiftAmount = -1 * (targetExponent - currentExponent);
+
 			return shiftAmount;
 		}
 
-		public static (uint hi, uint lo) Split(ulong x)
-		{
-			// bit 31 is being reserved to detect carries when adding / subtracting.
-			// this bit should be zero at this point.
+		//public static (uint hi, uint lo) Split(ulong x)
+		//{
+		//	// bit 31 is being reserved to detect carries when adding / subtracting.
+		//	// this bit should be zero at this point.
 
-			// The low value is in the low 31 bits, indexes 0 - 30.
-			// The high value is in bits 32-63
+		//	// The low value is in the low 31 bits, indexes 0 - 30.
+		//	// The high value is in bits 32-63
 
-			var hi = (uint) (x >> 32); // Create new ulong from bits 32 - 63.
-			var lo = (uint) x & CLEAR_RESERVED_BIT;  // Create new ulong from bits 0 - 31.
+		//	var hi = (uint)(x >> 32); // Create new ulong from bits 32 - 63.
+		//	var lo = (uint)x & CLEAR_RESERVED_BIT;  // Create new ulong from bits 0 - 31.
 
-			return (hi, lo);
-		}
+		//	return (hi, lo);
+		//}
 
 		#endregion
 
@@ -360,19 +672,63 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
-		private static ulong[] ExtendSignBit(uint[] partialWordLimbs)
-		{
-			var result = new ulong[partialWordLimbs.Length];
+		//private static ulong[] ExtendSignBit(uint[] partialWordLimbs)
+		//{
+		//	var result = new ulong[partialWordLimbs.Length];
 
-			for (var i = 0; i < partialWordLimbs.Length; i++)
-			{
-				result[i] = (partialWordLimbs[i] & TEST_BIT_30) > 0
-							? partialWordLimbs[i] | HIGH33_FILL_L
-							: partialWordLimbs[i] & HIGH33_CLEAR_L;
-			}
+		//	for (var i = 0; i < partialWordLimbs.Length; i++)
+		//	{
+		//		result[i] = (partialWordLimbs[i] & TEST_BIT_30) > 0
+		//					? partialWordLimbs[i] | HIGH33_FILL_L
+		//					: partialWordLimbs[i] & HIGH33_CLEAR_L;
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
+
+		//public static ulong[] ExtendSignBitOld(ulong[] partialWordLimbs, bool includeTopHalves = false)
+		//{
+		//	var result = new ulong[partialWordLimbs.Length];
+
+		//	//Array.Copy(partialWordLimbs, result, result.Length);
+
+		//	//if (includeHighHalf)
+		//	//{
+		//	//	result[^1] = (result[^1] & TEST_BIT_30) > 0
+		//	//				? result[^1] | HIGH33_FILL
+		//	//				: result[^1] & HIGH33_CLEAR;
+		//	//}
+		//	//else
+		//	//{
+		//	//	result[^1] = (result[^1] & TEST_BIT_30) > 0
+		//	//				? result[^1] | TEST_BIT_31
+		//	//				: result[^1] & ~TEST_BIT_31;
+
+		//	//}
+
+		//	if (includeTopHalves)
+		//	{
+		//		for (var i = 0; i < partialWordLimbs.Length; i++)
+		//		{
+		//			result[i] = (partialWordLimbs[i] & TEST_BIT_30) > 0
+		//						? partialWordLimbs[i] | HIGH33_FILL_L
+		//						: partialWordLimbs[i] & HIGH33_CLEAR_L;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		for (var i = 0; i < partialWordLimbs.Length; i++)
+		//		{
+		//			result[i] = (partialWordLimbs[i] & TEST_BIT_30) > 0
+		//						? partialWordLimbs[i] | TEST_BIT_31
+		//						: partialWordLimbs[i] & ~TEST_BIT_31;
+
+		//			result[i] &= HIGH32_CLEAR;
+		//		}
+		//	}
+
+		//	return result;
+		//}
 
 		#endregion
 
@@ -704,6 +1060,19 @@ namespace MSS.Common.APValues
 		}
 
 		public static string[] GetStrArrayHex(uint[] values)
+		{
+			var result = values.Select(x => string.Format("0x{0:X4}", x)).ToArray();
+			return result;
+		}
+
+		public static string GetDiagDisplayHex(string name, ulong[] values)
+		{
+			var strAry = GetStrArrayHex(values);
+
+			return $"{name}:{string.Join("; ", strAry)}";
+		}
+
+		public static string[] GetStrArrayHex(ulong[] values)
 		{
 			var result = values.Select(x => string.Format("0x{0:X4}", x)).ToArray();
 			return result;

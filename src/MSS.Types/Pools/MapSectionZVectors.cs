@@ -15,10 +15,10 @@ namespace MSS.Types
 			: this(
 				  blockSize,
 				  limbCount,
-				  new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
-				  new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
-				  new byte[blockSize.NumberOfCells * VALUE_SIZE],
-				  new byte[blockSize.Height * VALUE_SIZE]
+				  zrs: new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
+				  zis: new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
+				  hasEscapedFlags: new byte[blockSize.NumberOfCells * VALUE_SIZE],
+				  rowHasEscaped: new byte[blockSize.Height * VALUE_SIZE]
 				  )
 		{ }
 

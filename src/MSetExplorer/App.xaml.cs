@@ -1,5 +1,6 @@
 ﻿using MapSectionProviderLib;
 using MEngineClient;
+using MSetGeneratorPrototype;
 using MSetRepo;
 using MSS.Common;
 using MSS.Types;
@@ -145,7 +146,7 @@ namespace MSetExplorer
 				ClientImplementation.LocalScalar => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalScalar() },
 				ClientImplementation.LocalVector => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalVector() },
 
-				ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_SINGLE_LIMB_ITERATOR, USE_DEPTH_FIRST_ITERATOR) },
+				ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(new SamplePointCache(), USE_SINGLE_LIMB_ITERATOR, USE_DEPTH_FIRST_ITERATOR) },
 				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
 			};
 

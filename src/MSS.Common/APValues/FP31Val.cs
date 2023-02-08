@@ -91,7 +91,7 @@ namespace MSS.Common.APValues
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(Mantissa, Exponent, BitsBeforeBP);
+			return HashCode.Combine(Mantissa[^1], Exponent, BitsBeforeBP);
 		}
 
 		public static bool operator ==(FP31Val left, FP31Val right)

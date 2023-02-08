@@ -22,8 +22,10 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClientLocal(bool useSingleLimb, bool useDepthFirst)
+		public MClientLocal(SamplePointCache samplePointCache, bool useSingleLimb, bool useDepthFirst)
 		{
+			SamplePointCache = samplePointCache;
+			UsingSingleLimb = useSingleLimb;
 			UsingDepthFirst = useDepthFirst; 
 
 			if (useSingleLimb)
@@ -33,7 +35,7 @@ namespace MEngineClient
 			}
 			else if (UsingDepthFirst)
 			{
-				_generator = new MapSectionGeneratorDepthFirst(limbCount: 2);
+				_generator = new MapSectionGeneratorDepthFirst(samplePointCache, limbCount: 2);
 				EndPointAddress = "CSharp_DepthFirstGenerator";
 			}
 			else
@@ -47,6 +49,7 @@ namespace MEngineClient
 
 		#region Public Properties
 
+		public SamplePointCache SamplePointCache { get; init; }	
 		public bool UsingSingleLimb { get; init; }
 		public bool UsingDepthFirst { get; init; }
 		public string EndPointAddress { get; init; }

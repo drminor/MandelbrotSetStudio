@@ -1,6 +1,7 @@
 ﻿using MSS.Common.APValues;
 using MSS.Types;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -18,7 +19,7 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IterationStateDepthFirst(FP31Val[] samplePointsX, FP31Val[] samplePointsY, MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors, 
+		public IterationStateDepthFirst(FP31Val[] samplePointsX, FP31Val[] samplePointsY, MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
 			bool increasingIterations, Vector256<int> targetIterationsVector)
 		{
 			//_samplePointsX = samplePointsX;
@@ -42,6 +43,7 @@ namespace MSetGeneratorPrototype
 			CrsRow.UpdateFrom(samplePointsX);
 
 			CisRow = new FP31ValArray(LimbCount, ValuesPerRow);
+			CisColVec = new Vector256<uint>[LimbCount];
 
 			//CountsRow = mapSectionVectors.GetCountsRow(0);
 			CountsRowV = new Vector256<int>[VectorsPerRow];
@@ -91,6 +93,7 @@ namespace MSetGeneratorPrototype
 
 		public FP31ValArray CrsRow { get; set; }
 		public FP31ValArray CisRow { get; set; }
+		public Vector256<uint>[] CisColVec { get; private set; }
 
 		//public Span<Vector256<int>> CountsRow { get; private set; }
 		public Vector256<int>[] CountsRowV { get; private set; }
@@ -128,9 +131,9 @@ namespace MSetGeneratorPrototype
 				_mapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
 				_mapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
 				_mapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
-
-				UpdateUsedAndUnsedCalcs(RowNumber.Value);
 			}
+
+			UpdateUsedAndUnusedCalcs(RowNumber);
 
 			var rowNumber = RowNumber.HasValue ? RowNumber.Value : -1;
 
@@ -148,6 +151,9 @@ namespace MSetGeneratorPrototype
 						//CountsRow = _mapSectionVectors.GetCountsRow(rowNumber);
 						_mapSectionVectors.FillCountsRow(rowNumber, CountsRowV);
 
+						_mapSectionZVectors.FillZrsRow(rowNumber, ZrsRowV);
+						_mapSectionZVectors.FillZisRow(rowNumber, ZisRowV);
+
 						RowHasEscaped[rowNumber] = BuildTheInPlayBackingList(HasEscapedFlagsRowV, CountsRowV, _inPlayBackingList, DoneFlags);
 						allSamplesForThisRowAreDone = _inPlayBackingList.Count == 0;
 					}
@@ -164,7 +170,12 @@ namespace MSetGeneratorPrototype
 					//CountsRow = _mapSectionVectors.GetCountsRow(rowNumber);
 					_mapSectionVectors.FillCountsRow(rowNumber, CountsRowV);
 
-					Array.Clear(DoneFlags, 0, DoneFlags.Length);
+					// TODO: Is this required.
+					//Array.Clear(ZrsRowV);
+					//Array.Clear(ZisRowV);
+
+					//_mapSectionZVectors.FillZrsRow(rowNumber, ZrsRowV);
+					//_mapSectionZVectors.FillZisRow(rowNumber, ZisRowV);
 
 					_inPlayBackingList.Clear();
 					for (var i = 0; i < VectorsPerFlagRow; i++)
@@ -178,11 +189,11 @@ namespace MSetGeneratorPrototype
 			{
 				RowNumber = rowNumber;
 
+				Array.Clear(DoneFlags, 0, DoneFlags.Length);
+
 				var yPoint = _samplePointsY[rowNumber];
 				CisRow.UpdateFrom(yPoint);
-
-				_mapSectionZVectors.FillZrsRow(rowNumber, ZrsRowV);
-				_mapSectionZVectors.FillZisRow(rowNumber, ZisRowV);
+				//RepeatInto(yPoint, CisColVec);
 
 				InPlayList = _inPlayBackingList.ToArray();
 				InPlayListNarrow = BuildNarowInPlayList(InPlayList);
@@ -195,13 +206,25 @@ namespace MSetGeneratorPrototype
 			return RowNumber;
 		}
 
-		[Conditional("PERF")]
-		private void UpdateUsedAndUnsedCalcs(int rowNumber)
+		private void RepeatInto(FP31Val val, Vector256<uint>[] destination)
 		{
-			RowUsedCalcs[rowNumber] = GetUsedCalcs(Calcs, UnusedCalcs, out var unusedCalcs);
-			RowUnusedCalcs[rowNumber] = unusedCalcs;
-			Array.Clear(UnusedCalcs, 0, VectorsPerFlagRow);
-			Array.Clear(Calcs, 0, VectorsPerFlagRow);
+			for (var i = 0; i < destination.Length; i++)
+			{
+				destination[i] = Vector256.Create(val.Mantissa[i]);
+			}
+		}
+
+		[Conditional("PERF")]
+		private void UpdateUsedAndUnusedCalcs(int? rowNumber)
+		{
+			if (rowNumber.HasValue)
+			{
+				RowUsedCalcs[rowNumber.Value] = GetUsedCalcs(Calcs, UnusedCalcs, out var unusedCalcs);
+				RowUnusedCalcs[rowNumber.Value] = unusedCalcs;
+			}
+
+			Array.Clear(UnusedCalcs);
+			Array.Clear(Calcs);
 		}
 
 		public long GetUsedCalcs(long[] calcs, Vector256<int>[] unusedCalcsV, out long unusedCalcs)
@@ -238,26 +261,72 @@ namespace MSetGeneratorPrototype
 		public void FillCiLimbSet(int valueIndex, Vector256<uint>[] limbSet)
 		{
 			CisRow.FillLimbSet(valueIndex, limbSet);
+
+			//if (RowNumber.HasValue)
+			//{
+			//	var yPoint = _samplePointsY[RowNumber.Value];
+
+			//	for (var i = 0; i < limbSet.Length; i++)
+			//	{
+			//		limbSet[i] = Vector256.Create(yPoint.Mantissa[i]);
+			//	}
+			//}
 		}
 
 		public void FillZrLimbSet(int valueIndex, Vector256<uint>[] limbSet)
 		{
-			var vecPtr = valueIndex * LimbCount;
-
-			for (var i = 0; i < LimbCount; i++)
+			if (!IncreasingIterations)
 			{
-				limbSet[i] = ZrsRowV[vecPtr++];
+				// Clear instead of copying form source
+				for (var i = 0; i < LimbCount; i++)
+				{
+					limbSet[i] = Avx2.Xor(limbSet[i], limbSet[i]);
+				}
 			}
+			else
+			{
+				var vecPtr = valueIndex * LimbCount;
+
+				for (var i = 0; i < LimbCount; i++)
+				{
+					limbSet[i] = ZrsRowV[vecPtr++];
+				}
+			}
+
+			//var vecPtr = valueIndex * LimbCount;
+
+			//for (var i = 0; i < LimbCount; i++)
+			//{
+			//	limbSet[i] = ZrsRowV[vecPtr++];
+			//}
 		}
 
 		public void FillZiLimbSet(int valueIndex, Vector256<uint>[] limbSet)
 		{
-			var vecPtr = valueIndex * LimbCount;
-
-			for (var i = 0; i < LimbCount; i++)
+			if (!IncreasingIterations)
 			{
-				limbSet[i] = ZisRowV[vecPtr++];
+				// Clear instead of copying form source
+				for (var i = 0; i < LimbCount; i++)
+				{
+					limbSet[i] = Avx2.Xor(limbSet[i], limbSet[i]);
+				}
 			}
+			else
+			{
+				var vecPtr = valueIndex * LimbCount;
+
+				for (var i = 0; i < LimbCount; i++)
+				{
+					limbSet[i] = ZisRowV[vecPtr++];
+				}
+			}
+
+			//var vecPtr = valueIndex * LimbCount;
+
+			//for (var i = 0; i < LimbCount; i++)
+			//{
+			//	limbSet[i] = ZisRowV[vecPtr++];
+			//}
 		}
 
 		public void UpdateZrLimbSet(int valueIndex, Vector256<uint>[] limbSet)

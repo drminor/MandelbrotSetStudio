@@ -141,10 +141,10 @@ namespace MSetGeneratorPrototype
 			{
 				for (int i = j; i < LimbCount; i++)
 				{
-					var resultPtr = j + i;  // 0, 1, 1, 2
+					var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
 
 					var productVector = Avx2.Multiply(source[j], source[i]);
-					MathOpCounts.NumberOfMultiplications++;
+					IncrementNoMultiplications();
 
 					if (i > j)
 					{
@@ -152,12 +152,19 @@ namespace MSetGeneratorPrototype
 						productVector = Avx2.ShiftLeftLogical(productVector, 1);
 					}
 
+					// 0/1; 1/2; 2/3
 					result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
 					result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
 					//MathOpCounts.NumberOfSplits++;
 					//MathOpCounts.NumberOfAdditions += 2;
 				}
 			}
+		}
+
+		[Conditional("PERF")]
+		private void IncrementNoMultiplications()
+		{
+			MathOpCounts.NumberOfMultiplications ++;
 		}
 
 		#endregion
@@ -205,23 +212,24 @@ namespace MSetGeneratorPrototype
 
 				if (sourceIndex > 0)
 				{
-					var source = sourceLimbsLo[limbPtr + sourceIndex];
-					var prevSource = sourceLimbsLo[limbPtr + sourceIndex - 1];
+					// Calcualte the lo end
 
 					// Take the bits from the source limb, discarding the top shiftAmount of bits.
+					var source = sourceLimbsLo[limbPtr + sourceIndex];
 					var wideResultLow = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
 					// Take the top shiftAmount of bits from the previous limb
+					var prevSource = sourceLimbsLo[limbPtr + sourceIndex - 1];
 					wideResultLow = Avx2.Or(wideResultLow, Avx2.ShiftRightLogical(Avx2.And(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
-					source = sourceLimbsHi[limbPtr + sourceIndex];
-					prevSource = sourceLimbsHi[limbPtr + sourceIndex - 1];
-
+					// Calculate the hi end
 
 					// Take the bits from the source limb, discarding the top shiftAmount of bits.
+					source = sourceLimbsHi[limbPtr + sourceIndex];
 					var wideResultHigh = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
 					// Take the top shiftAmount of bits from the previous limb
+					prevSource = sourceLimbsHi[limbPtr + sourceIndex - 1];
 					wideResultHigh = Avx2.Or(wideResultHigh, Avx2.ShiftRightLogical(Avx2.And(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
 					var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
@@ -233,12 +241,16 @@ namespace MSetGeneratorPrototype
 				}
 				else
 				{
-					var source = sourceLimbsLo[limbPtr + sourceIndex];
+					// Calcualte the lo end
 
 					// Take the bits from the source limb, discarding the top shiftAmount of bits.
+					var source = sourceLimbsLo[limbPtr + sourceIndex];
 					var wideResultLow = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
+					// Calculate the hi end
+
 					// Take the bits from the source limb, discarding the top shiftAmount of bits.
+					source = sourceLimbsHi[limbPtr + sourceIndex];
 					var wideResultHigh = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
 					var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);

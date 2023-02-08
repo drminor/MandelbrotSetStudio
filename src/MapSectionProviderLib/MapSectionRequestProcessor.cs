@@ -440,8 +440,6 @@ namespace MapSectionProviderLib
 								Debug.WriteLine("The MapSectionResponse has MapSectionVectors but is already OnFile and IncreasingIterations is false.");
 							}
 						}
-
-						//ConvertVecToVals(mapSectionResponse);
 					}
 					else
 					{

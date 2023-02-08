@@ -262,32 +262,26 @@ namespace MSetRepo
 
 			var result = zVectors == null
 				? new ZValues()
-				: new ZValues(zVectors.BlockSize, zVectors.LimbCount,
-					zVectors.Zrs, zVectors.Zis,
-					zVectors.HasEscapedFlags, zVectors.RowHasEscaped);
+				: new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis, zVectors.HasEscapedFlags, zVectors.RowHasEscaped);
 
 			return result;
 		}
 
 		// NOT USED -- Take a record from the repo and prepare it for display.
-		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors, Func<MapSectionZVectors> mapSectionZVectorsProvider)
+		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors)
 		{
 			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
 
 			mapSectionVectors.Load(target.Counts);
 
-			MapSectionZVectors? mapSectionZVectors;
-
 			if (target.ZValues != null)
 			{
-				mapSectionZVectors = mapSectionZVectorsProvider();
 				mapSectionZVectors.Load(target.ZValues.Zrs, target.ZValues.Zis, target.ZValues.HasEscapedFlags, target.ZValues.RowsHasEscaped);
 			}
-			else
-			{
-				mapSectionZVectors = null;
-			}
-
+			//else
+			//{
+			//	mapSectionZVectors = null;
+			//}
 
 			var result = new MapSectionResponse
 			(

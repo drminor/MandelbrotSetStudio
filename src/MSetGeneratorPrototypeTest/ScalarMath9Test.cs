@@ -84,16 +84,16 @@ namespace MSetGeneratorPrototypeTest
 		{
 			var precision = 70;    // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 6;      // TargetExponent = -184, Total Bits = 192
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 
 			var number = "-126445453255269018635038690902017";
 			var exponent = -134;
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // 0.25
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // 0.25
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			FP31Val b = scalarMath9.Square(aTv.FP31Val);
+			FP31Val b = fp31ScalarMath.Square(aTv.FP31Val);
 			var bTv = new FP31ValTestValue(b);
 			Debug.WriteLine($"The StringValue for b is {bTv}.");
 

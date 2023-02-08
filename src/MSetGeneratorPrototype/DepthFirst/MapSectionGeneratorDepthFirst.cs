@@ -14,8 +14,10 @@ namespace MSetGeneratorPrototype
 	{
 		#region Private Properties
 
-		private readonly FP31VecMath _fp31VecMath;
-		private readonly IteratorDepthFirst _iterator;
+		private readonly SamplePointCache _samplePointCache;
+
+		private FP31VecMath _fp31VecMath;
+		private IteratorDepthFirst _iterator;
 
 		private Vector256<uint>[] _crs;
 		private Vector256<uint>[] _cis;
@@ -29,8 +31,10 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public MapSectionGeneratorDepthFirst(int limbCount)
+		public MapSectionGeneratorDepthFirst(SamplePointCache samplePointCache, int limbCount)
 		{
+			_samplePointCache = samplePointCache;
+
 			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
 			_fp31VecMath = new FP31VecMath(apFixedPointFormat);
 			_iterator = new IteratorDepthFirst(_fp31VecMath);
@@ -67,10 +71,13 @@ namespace MSetGeneratorPrototype
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
 				var stride = (byte)mapSectionRequest.BlockSize.Width;
-				var scalarMath = new FP31ScalarMath(_fp31VecMath.ApFixedPointFormat);
-				var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(coords.Delta, stride, scalarMath);
-				var samplePointsX = SamplePointBuilder.BuildSamplePoints(coords.StartingCx, samplePointOffsets, scalarMath);
-				var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, scalarMath);
+				var fP31ScalarMath = new FP31ScalarMath(_fp31VecMath.ApFixedPointFormat);
+
+				var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(coords.Delta, stride, fP31ScalarMath);
+				//var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(coords.Delta);
+
+				var samplePointsX = SamplePointBuilder.BuildSamplePoints(coords.StartingCx, samplePointOffsets, fP31ScalarMath);
+				var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, fP31ScalarMath);
 				//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
@@ -162,7 +169,9 @@ namespace MSetGeneratorPrototype
 			var doneFlagsV = iterationState.DoneFlags[idx];
 
 			iterationState.FillCrLimbSet(idx, _crs);
+
 			iterationState.FillCiLimbSet(idx, _cis);
+			
 			iterationState.FillZrLimbSet(idx, _zrs);
 			iterationState.FillZiLimbSet(idx, _zis);
 
@@ -173,7 +182,7 @@ namespace MSetGeneratorPrototype
 			{
 				var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
 
-				TallyUsedAndUnusedCalcs(idx, doneFlagsV, ref iterationState);
+				TallyUsedAndUnusedCalcs(idx, iterationState.DoneFlags, ref iterationState);
 
 				// Increment all counts
 				var countsVt = Avx2.Add(countsV, _justOne);
@@ -207,28 +216,19 @@ namespace MSetGeneratorPrototype
 
 			var result = compositeAllEscaped == -1;
 
-			//if (!result && compositeAllEscaped != 0)
-			//{
-			//	Debug.WriteLine("Hi");
-			//}
-
 			return result;
 		}
 
 		[Conditional("PERF")]
-		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> doneFlagsV, ref IterationStateDepthFirst iterationState)
+		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int>[] doneFlags, ref IterationStateDepthFirst iterationState)
 		{
 			iterationState.Calcs[idx]++;
-
-			//var unusedCalcsV = iterationState.UnusedCalcs[idx];
 
 			// Increment all unused calculations
 			var unusedCalcsVt = Avx2.Add(iterationState.UnusedCalcs[idx], _justOne);
 
 			// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
-			iterationState.UnusedCalcs[idx] = Avx2.BlendVariable(iterationState.UnusedCalcs[idx], unusedCalcsVt, doneFlagsV); // use First if Zero, second if 1
-
-			//iterationState.UnusedCalcs[idx] = unusedCalcsV;
+			iterationState.UnusedCalcs[idx] = Avx2.BlendVariable(iterationState.UnusedCalcs[idx], unusedCalcsVt, doneFlags[idx]); // use First if Zero, second if 1
 		}
 
 		#endregion

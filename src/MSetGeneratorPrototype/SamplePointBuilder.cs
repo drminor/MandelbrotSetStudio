@@ -1,10 +1,54 @@
 ﻿using MSS.Common.APValues;
 using MSS.Types;
+using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
 	internal static class SamplePointBuilder
 	{
+
+
+
+		public static Vector256<uint>[] BuildSamplePoints(FP31Val startValue, Vector256<uint>[] offsets, FP31VecMath fP31VecMath)
+		{
+			var result = new Vector256<uint>[offsets.Length];
+
+			var limbCount = fP31VecMath.LimbCount;
+			var lanes = Vector256<uint>.Count;
+			var startVec = new Vector256<uint>[limbCount];
+
+			for (var limbPtr = 0; limbPtr < limbCount; limbPtr++)
+			{
+				startVec[limbPtr] = Vector256.Create(startValue.Mantissa[limbPtr]);
+			}
+
+			var offsetVec = new Vector256<uint>[limbCount];
+			var resultVec = new Vector256<uint>[limbCount];
+
+			var valueCount = offsets.Length / limbCount;
+
+			for (var j = 0; j < valueCount; j++)
+			{
+				var valueOffset = j * limbCount;
+
+				for(var i = 0; i < limbCount; i++)
+				{
+					offsetVec[i] = offsets[valueOffset + i];
+				}
+
+				fP31VecMath.Add(startVec, offsetVec, resultVec);
+
+				for (var i = 0; i < limbCount; i++)
+				{
+					result[valueOffset + i] = resultVec[i];
+				}
+			}
+
+			return result;
+		}
+
+
+
 		public static FP31Val[] BuildSamplePoints(FP31Val startValue, FP31Val[] offsets, FP31ScalarMath scalarMath)
 		{
 			var result = new FP31Val[offsets.Length];
