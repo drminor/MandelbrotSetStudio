@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using MSS.Common.APValues;
 
-namespace MSS.Common.SmxVals
+namespace MSetGenP.Types
 {
     public class FP31Deck : ICloneable
     {

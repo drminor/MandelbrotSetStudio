@@ -1,4 +1,5 @@
 ﻿using MongoDB.Driver;
+using MSS.Common;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 
-namespace MSS.Common.SmxVals
+namespace MSetGenP.Types
 {
     public static class ScalarMathHelper
 	{

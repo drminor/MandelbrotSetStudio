@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 using System.Linq;
 
-namespace MSS.Common.SmxVals
+namespace MSetGenP.Types
 {
 	public struct SmxSa : IEquatable<SmxSa>
 	{

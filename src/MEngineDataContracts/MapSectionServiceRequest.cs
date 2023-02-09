@@ -84,7 +84,7 @@ namespace MEngineDataContracts
 
 		public override string ToString()
 		{
-			var bVals = BigIntegerHelper.FromLongs(BlockPosition.GetValues());
+			var bVals = BigIntegerHelper.FromLongsDeprecated(BlockPosition.GetValues());
 			var bp = new BigVector(bVals);
 			return $"S:{SubdivisionId}, BPos:{bp}.";
 		}

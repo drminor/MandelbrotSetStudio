@@ -1,10 +1,11 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
-namespace MSS.Common.SmxVals
+namespace MSetGenP.Types
 {
     internal class ScalarMathFloatingHelper
 	{

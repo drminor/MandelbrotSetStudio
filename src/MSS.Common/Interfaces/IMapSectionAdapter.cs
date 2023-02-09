@@ -14,7 +14,7 @@ namespace MSS.Common
 	{
 		void CreateCollections();
 		void DropJobMapSecAndMapSecCollections();
-		//void DropSubdivisionsAndMapSectionsCollections();
+		void DropSubdivisionsAndMapSectionsCollections();
 
 		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors);
 

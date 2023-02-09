@@ -2,7 +2,6 @@
 using MSetGeneratorPrototype;
 using MSS.Common;
 using MSS.Common.APValues;
-using MSS.Common.SmxVals;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;
@@ -87,14 +86,14 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 20;
 			var limbCount = 6;      // TargetExponent = -180, Total Bits = 186
 
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "343597";
 			var exponent = -13;
 
 			var aRValue = new RValue(BigInteger.Parse(number), exponent, precision);
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // 6.02768096723593793141715568851e-3
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // 6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for the aFP31V is {aTv}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aRValue, aTv.RValue, failOnTooFewDigits: true, out var strA, out var strB);
@@ -108,14 +107,14 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 20;
 			var limbCount = 6;      // TargetExponent = -180, Total Bits = 186
 
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "12644545325526901863503869090";
 			var exponent = -127;
 
 			var aRValue = new RValue(BigInteger.Parse(number), exponent, precision);
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // 6.02768096723593793141715568851e-3
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // 6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for the aFP31V is {aTv}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aRValue, aTv.RValue, failOnTooFewDigits: true, out var strA, out var strB);
@@ -129,13 +128,13 @@ namespace MSetGeneratorPrototypeTest
 			var precision = 20;
 			var limbCount = 6;      // TargetExponent = -180, Total Bits = 186
 
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 			var number = "-12644545325526901863503869090";
 			var exponent = -127;
 
 			var aRValue = new RValue(BigInteger.Parse(number), exponent, precision);
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // 6.02768096723593793141715568851e-3
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // 6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for the aFP31V is {aTv}.");
 
 			var haveRequiredPrecision = RValueHelper.GetStringsToCompare(aRValue, aTv.RValue, failOnTooFewDigits: true, out var strA, out var strB);
@@ -148,12 +147,12 @@ namespace MSetGeneratorPrototypeTest
 		{
 			var precision = 20;    // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 2;     // TargetExponent = -56, Total Bits = 64
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "34359738368";
 			var exponent = -33;
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // 6.02768096723593793141715568851e-3
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // 6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var aFP31VRValue = aTv.RValue;
@@ -170,12 +169,12 @@ namespace MSetGeneratorPrototypeTest
 		{
 			var precision = 20;    // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 2;     // TargetExponent = -56, Total Bits = 64
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "34359738368";
 			var exponent = -33;
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // -6.02768096723593793141715568851e-3
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var aFP31VRValue = aTv.RValue;
@@ -192,12 +191,12 @@ namespace MSetGeneratorPrototypeTest
 		{
 			var precision = 20;    // Binary Digits of precision, 30 Decimal Digits
 			var limbCount = 2;     // TargetExponent = -56, Total Bits = 64
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "34359738368";
 			var exponent = -33;
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // -6.02768096723593793141715568851e-3
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // -6.02768096723593793141715568851e-3
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var aFP31VRValue = aTv.RValue;
@@ -214,12 +213,12 @@ namespace MSetGeneratorPrototypeTest
 		{
 			var precision = 95;	// Binary Digits of precision, 29 Decimal Digits
 			var limbCount = 6;  // TargetExponent = -184, Total Bits = 192
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "12644545325526901863503869090";
 			var exponent = -124;
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var aFP31VRValue = aTv.RValue;
@@ -236,12 +235,12 @@ namespace MSetGeneratorPrototypeTest
 		{
 			var precision = 95; // Binary Digits of precision, 29 Decimal Digits
 			var limbCount = 6;  // TargetExponent = -184, Total Bits = 192
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "12644545325526901863503869090";
 			var exponent = -124;
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
 			var aFP31VRValue = aTv.RValue;
@@ -259,21 +258,23 @@ namespace MSetGeneratorPrototypeTest
 			var precision = RMapConstants.DEFAULT_PRECISION;			// Binary Digits of precision, 29 Decimal Digits
 			var limbCount = 2;											// TargetExponent = -56, Total Bits = 64
 			
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
-			var aFP31Val = scalarMath9.CreateNewMaxIntegerFP31Val(precision);
+			var aFP31Val = fp31ScalarMath.CreateNewMaxIntegerFP31Val(precision);
 			var aTv = new FP31ValTestValue(aFP31Val);
 			Debug.WriteLine($"The StringValue for a is {aTv}.");
 
-			//var aFP31V = scalarMath9.Convert(aFP31Val);
+			//var aFP31V = fp31ScalarMath.Convert(aFP31Val);
 			//var aStr = aFP31V.GetStringValue();
 			//Debug.WriteLine($"The StringValue for the MaxIntegerSmx2C is {aStr}.");
 
 			//var aRValue = aFP31V.GetRValue();
 
-			//var maxSignedIntegerValue = scalarMath9.MaxIntegerValue;
-			var bitsBeforeBP = scalarMath9.BitsBeforeBP;
-			var maxSignedIntegerValue = ScalarMathHelper.GetMaxIntegerValue(bitsBeforeBP, isSigned: true);
+			//var maxSignedIntegerValue = fp31ScalarMath.MaxIntegerValue;
+			var bitsBeforeBP = fp31ScalarMath.BitsBeforeBP;
+			//var maxSignedIntegerValue = ScalarMathHelper.GetMaxIntegerValue(bitsBeforeBP, isSigned: true);
+			var maxSignedIntegerValue = FP31ValHelper.GetMaxIntegerValue(bitsBeforeBP);
+
 
 			var bRValue = new RValue(maxSignedIntegerValue, 0);
 			var bStr = RValueHelper.ConvertToString(bRValue);
@@ -289,7 +290,7 @@ namespace MSetGeneratorPrototypeTest
 		{
 			var precision = 95; // Binary Digits of precision, 29 Decimal Digits
 			var limbCount = 6;  // TargetExponent = -184, Total Bits = 192
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "-12644545325526901863503869090";
 			var exponent = -124;
@@ -298,7 +299,7 @@ namespace MSetGeneratorPrototypeTest
 			Debug.WriteLine($"The StringValue for the inital RValue is {RValueHelper.ConvertToString(aRValue)}.");
 
 
-			var aTv = new FP31ValTestValue(number, -124, precision, scalarMath9); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+			var aTv = new FP31ValTestValue(number, -124, precision, fp31ScalarMath); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			Debug.WriteLine($"The StringValue before negation from the FP31Val var is {aTv}.");
 
 			var aFP31V2Neg = FP31ValHelper.Negate(aTv.FP31Val);
@@ -319,7 +320,7 @@ namespace MSetGeneratorPrototypeTest
 		{
 			var precision = 95; // Binary Digits of precision, 29 Decimal Digits
 			var limbCount = 6;	// TargetExponent = -184, Total Bits = 192
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "-12644545325526901863503869090";
 			var exponent = -124;
@@ -327,7 +328,7 @@ namespace MSetGeneratorPrototypeTest
 			//var aRValue = new RValue(BigInteger.Parse(number), exponent, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			//Debug.WriteLine($"The StringValue for the inital RValue is {RValueHelper.ConvertToString(aRValue)}.");
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			Debug.WriteLine($"The StringValue before negation from the FP31Val var is {aTv}.");
 
 			var aFP31V2CNeg = FP31ValHelper.Negate(aTv.FP31Val);
@@ -346,7 +347,7 @@ namespace MSetGeneratorPrototypeTest
 		{
 			var precision = 53; // Binary Digits of precision, 29 Decimal Digits
 			var limbCount = 2;  // TargetExponent = -56, Total Bits = 64
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+			var fp31ScalarMath = BuildTheMathHelper(limbCount);
 
 			var number = "-343597";
 			var exponent = -13;
@@ -354,7 +355,7 @@ namespace MSetGeneratorPrototypeTest
 			var aRValue = new RValue(BigInteger.Parse(number), exponent, precision); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			//Debug.WriteLine($"The StringValue for the inital RValue is {RValueHelper.ConvertToString(aRValue)}.");
 
-			var aTv = new FP31ValTestValue(number, exponent, precision, scalarMath9); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
+			var aTv = new FP31ValTestValue(number, exponent, precision, fp31ScalarMath); // 5.9454366395492942314714087866438e-10 -- Windows Calc: -5.9454366395492942314714e-10
 			Debug.WriteLine($"The StringValue before negation from the FP31Val var is {aTv}.");
 
 			var aFP31V2CNeg = FP31ValHelper.Negate(aTv.FP31Val);

@@ -11,10 +11,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="TestValueClasses\FP31DeckTestValue.cs" />
     <Compile Remove="VecMath9Test.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="TestValueClasses\FP31DeckTestValue.cs" />
     <None Include="VecMath9Test.cs" />
   </ItemGroup>
 

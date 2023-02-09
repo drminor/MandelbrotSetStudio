@@ -65,7 +65,7 @@ namespace MSetExplorer.XPoc
 					//_stringValOut = RValueHelper.ConvertToString(_rValue);
 					//_double2 = BigIntegerHelper.ConvertToDouble(_rValue);
 
-					var longVals = BigIntegerHelper.ToLongs(_rValue.Value);
+					var longVals = BigIntegerHelper.ToLongsDeprecated(_rValue.Value);
 					_long1 = longVals[0];
 					_long2 = longVals[1];
 
@@ -73,7 +73,7 @@ namespace MSetExplorer.XPoc
 					_double2 = _long2 * Math.Pow(2, Exponent);
 
 
-					var rrNum = BigIntegerHelper.FromLongs(longVals);
+					var rrNum = BigIntegerHelper.FromLongsDeprecated(longVals);
 					var rr = new RValue(rrNum, _exponent, _rValue.Precision);
 					_stringValOut = RValueHelper.ConvertToString(rr);
 

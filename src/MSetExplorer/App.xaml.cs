@@ -190,7 +190,8 @@ namespace MSetExplorer
 		{
 			if (dropMapSections)
 			{
-				repositoryAdapters.MapSectionAdapter.DropJobMapSecAndMapSecCollections();
+				//repositoryAdapters.MapSectionAdapter.DropJobMapSecAndMapSecCollections();
+				repositoryAdapters.MapSectionAdapter.DropSubdivisionsAndMapSectionsCollections();
 			}
 			else if (dropRecentMapSections)
 			{

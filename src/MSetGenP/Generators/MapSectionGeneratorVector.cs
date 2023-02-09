@@ -1,5 +1,5 @@
 ﻿using MEngineDataContracts;
-using MSS.Common.SmxVals;
+using MSetGenP.Types;
 using MSS.Common.DataTransferObjects;
 using System;
 using System.Collections.Generic;

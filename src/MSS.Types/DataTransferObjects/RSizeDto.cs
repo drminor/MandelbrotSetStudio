@@ -18,7 +18,7 @@ namespace MSS.Types.DataTransferObjects
 		public RSizeDto() : this(new BigInteger[] { 0, 0 }, 0)
 		{ }
 
-		public RSizeDto(BigInteger[] values, int exponent) : this(BigIntegerHelper.ToLongs(values), exponent)
+		public RSizeDto(BigInteger[] values, int exponent) : this(BigIntegerHelper.ToLongsDeprecated(values), exponent)
 		{ }
 
 		public RSizeDto(long[][] values, int exponent)

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace MSS.Common.SmxVals
+namespace MSetGenP.Types
 {
 	public class ShiftedArray<T> where T : struct
 	{

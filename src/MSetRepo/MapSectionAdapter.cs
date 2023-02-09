@@ -64,17 +64,17 @@ namespace MSetRepo
 			//subdivisionReaderWriter.DropCollection();
 		}
 
-		//public void DropSubdivisionsAndMapSectionsCollections()
-		//{
-		//	var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
-		//	jobMapSectionReaderWriter.DropCollection();
+		public void DropSubdivisionsAndMapSectionsCollections()
+		{
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			jobMapSectionReaderWriter.DropCollection();
 
-		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-		//	mapSectionReaderWriter.DropCollection();
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			mapSectionReaderWriter.DropCollection();
 
-		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-		//	subdivisionReaderWriter.DropCollection();
-		//}
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			subdivisionReaderWriter.DropCollection();
+		}
 
 		#endregion
 

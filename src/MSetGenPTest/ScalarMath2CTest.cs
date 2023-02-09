@@ -1,6 +1,6 @@
 using MSetGenP;
 using MSS.Common;
-using MSS.Common.SmxVals;
+using MSetGenP.Types;
 using MSS.Types;
 using System.Diagnostics;
 using System.Numerics;

@@ -2,15 +2,11 @@ using EngineTest;
 using MSetGeneratorPrototype;
 using MSS.Common;
 using MSS.Common.APValues;
-using MSS.Common.SmxVals;
-using MSS.Types;
 using System.Diagnostics;
-using System.Numerics;
-using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
 
 namespace MSetGeneratorPrototypeTest
 {
-	public class ScalarMath9Test
+	public class FP31ScalarMathTest
 	{
 		#region Square
 
@@ -109,21 +105,21 @@ namespace MSetGeneratorPrototypeTest
 			Assert.Equal(strA, strB);
 		}
 
-		[Fact]
-		public void FullMultiply_Returns_Correct_Value()
-		{
-			var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
-			var scalarMath9 = BuildTheMathHelper(limbCount);
+		//[Fact]
+		//public void FullMultiply_Returns_Correct_Value()
+		//{
+		//	var limbCount = 2;      // TargetExponent = -56, Total Bits = 64
+		//	var scalarMath9 = BuildTheMathHelper(limbCount);
 
-			var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
-			var aMantissa = FP31ValHelper.ToFwUInts(aBigInteger, out var sign);
+		//	var aBigInteger = BigInteger.Parse("-126445453255269018635038690902017");
+		//	var aMantissa = FP31ValHelper.ToFwUInts(aBigInteger, out var sign);
 
-			var bMantissa = scalarMath9.Multiply(aMantissa, aMantissa);
-			var bBigInteger = ScalarMathHelper.FromPwULongs(bMantissa, sign: true);
+		//	var bMantissa = scalarMath9.Multiply(aMantissa, aMantissa);
+		//	var bBigInteger = ScalarMathHelper.FromPwULongs(bMantissa, sign: true);
 
-			var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
-			Assert.Equal(bBigInteger, bCompBigInteger);
-		}
+		//	var bCompBigInteger = BigInteger.Multiply(aBigInteger, aBigInteger);
+		//	Assert.Equal(bBigInteger, bCompBigInteger);
+		//}
 
 		#endregion
 

@@ -1,7 +1,6 @@
 ﻿using MongoDB.Driver;
 using MSS.Common;
-using MSS.Common.APValues;
-using MSS.Common.SmxVals;
+using MSetGenP.Types;
 using MSS.Types;
 using System;
 using System.Diagnostics;

@@ -4,7 +4,6 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
@@ -54,64 +53,44 @@ namespace MSetGeneratorPrototype
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
-			var skipPositiveBlocks = false;
-			var skipLowDetailBlocks = false;
-
 			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
 
-			MapSectionResponse result;
-
-			if (ShouldSkipThisSection(skipPositiveBlocks, skipLowDetailBlocks, coords))
+			if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
 			{
-				result = new MapSectionResponse(mapSectionRequest);
+				return new MapSectionResponse(mapSectionRequest);
 			}
-			else
-			{
-				var stopwatch = Stopwatch.StartNew();
-				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
-				var stride = (byte)mapSectionRequest.BlockSize.Width;
-				var fP31ScalarMath = new FP31ScalarMath(_fp31VecMath.ApFixedPointFormat);
+			var stopwatch = Stopwatch.StartNew();
+			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
-				var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(coords.Delta, stride, fP31ScalarMath);
-				//var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(coords.Delta);
+			var stride = (byte)mapSectionRequest.BlockSize.Width;
+			var fP31ScalarMath = new FP31ScalarMath(_fp31VecMath.ApFixedPointFormat);
 
-				var samplePointsX = SamplePointBuilder.BuildSamplePoints(coords.StartingCx, samplePointOffsets, fP31ScalarMath);
-				var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, fP31ScalarMath);
-				//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
+			var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(coords.Delta, stride, fP31ScalarMath);
+			//var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(coords.Delta);
 
-				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
+			var samplePointsX = SamplePointBuilder.BuildSamplePoints(coords.StartingCx, samplePointOffsets, fP31ScalarMath);
+			var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, fP31ScalarMath);
+			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
-				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
-				_iterator.Threshold = (uint)mapCalcSettings.Threshold;
-				_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
-				_iterator.MathOpCounts.Reset();
-				var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
+			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
 
-				var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
+			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
+			_iterator.Threshold = (uint)mapCalcSettings.Threshold;
+			_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
+			_iterator.MathOpCounts.Reset();
+			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
-				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, ct);
-				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
+			var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
-				//if (ct.IsCancellationRequested)
-				//{
-				//	Debug.WriteLine($"The block: {coords.ScreenPos} is cancelled.");
-				//}
-				//else
-				//{
-				//	if (allRowsHaveEscaped)
-				//	{
-				//		Debug.WriteLine($"The entire block: {coords.ScreenPos} is done.");
-				//	}
-				//}
+			var allRowsHaveEscaped = GenerateMapSectionRows(_iterator, iterationState, ct);
 
-				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
+			stopwatch.Stop();
 
-				stopwatch.Stop();
-				mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
-
-				UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
-			}
+			var result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
+			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
+			UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
+			//ReportResults(coords, mapSectionRequest, result, ct);
 
 			return result;
 		}
@@ -123,8 +102,7 @@ namespace MSetGeneratorPrototype
 			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
 
-		// Generate MapSection
-		private bool GenerateMapSection(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct)
+		private bool GenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct)
 		{
 			var allRowsHaveEscaped = true;
 
@@ -169,9 +147,7 @@ namespace MSetGeneratorPrototype
 			var doneFlagsV = iterationState.DoneFlags[idx];
 
 			iterationState.FillCrLimbSet(idx, _crs);
-
 			iterationState.FillCiLimbSet(idx, _cis);
-			
 			iterationState.FillZrLimbSet(idx, _zrs);
 			iterationState.FillZiLimbSet(idx, _zis);
 
@@ -313,6 +289,27 @@ namespace MSetGeneratorPrototype
 			{
 				Debug.WriteLine($"{FP31ValHelper.GetDiagDisplay("x", value.Mantissa)} {value.Exponent}.");
 			}
+		}
+
+		private void ReportResults(IteratorCoords coords, MapSectionRequest request, MapSectionResponse result, CancellationToken ct)
+		{
+			var s1 = coords.StartingCx.GetStringValue();
+			var s2 = coords.StartingCy.GetStringValue();
+
+			Debug.WriteLine($"{s1}, {s2}: {request.MathOpCounts}");
+
+			if (ct.IsCancellationRequested)
+			{
+				Debug.WriteLine($"The block: {coords.ScreenPos} is cancelled.");
+			}
+			else
+			{
+				if (result.AllRowsHaveEscaped)
+				{
+					Debug.WriteLine($"The entire block: {coords.ScreenPos} is done.");
+				}
+			}
+
 		}
 
 		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, IteratorCoords coords)

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 
-namespace MSS.Common.SmxVals
+namespace MSetGenP.Types
 {
 	public struct Smx2C : IEquatable<Smx2C>, ICloneable
 	{

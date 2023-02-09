@@ -1,4 +1,4 @@
-﻿using MSS.Common.SmxVals;
+﻿using MSetGenP.Types;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;

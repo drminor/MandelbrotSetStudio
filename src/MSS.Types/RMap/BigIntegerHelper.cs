@@ -221,13 +221,13 @@ namespace MSS.Types
 
 		// TODO: Use Little-Endian format, instead of Big-Endian format when creating an Array of Longs from a BigInteger
 
-		public static long[][] ToLongs(BigInteger[] values)
+		public static long[][] ToLongsDeprecated(BigInteger[] values)
 		{
-			var result = values.Select(v => ToLongs(v)).ToArray();
+			var result = values.Select(v => ToLongsDeprecated(v)).ToArray();
 			return result;
 		}
 
-		public static long[] ToLongs(BigInteger bi)
+		public static long[] ToLongsDeprecated(BigInteger bi)
 		{
 			var hi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
 
@@ -251,9 +251,9 @@ namespace MSS.Types
 			return result;
 		}
 
-		public static BigInteger[] FromLongs(long[][] values)
+		public static BigInteger[] FromLongsDeprecated(long[][] values)
 		{
-			var result = values.Select(v => FromLongs(v)).ToArray();
+			var result = values.Select(v => FromLongsDeprecated(v)).ToArray();
 			return result;
 		}
 
@@ -267,7 +267,7 @@ namespace MSS.Types
 		//	return result;
 		//}
 
-		public static BigInteger FromLongs(long[] values)
+		public static BigInteger FromLongsDeprecated(long[] values)
 		{
 			//DtoLongs are in Big - Endian order
 			var result = BigInteger.Zero;

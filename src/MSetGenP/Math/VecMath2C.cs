@@ -1,5 +1,5 @@
 ﻿using MSS.Common;
-using MSS.Common.SmxVals;
+using MSetGenP.Types;
 using MSS.Types;
 using System;
 using System.Buffers;

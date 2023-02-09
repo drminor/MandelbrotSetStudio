@@ -195,7 +195,7 @@ namespace MSetExplorer
 			_numerator = _rValue.Value.ToString(CultureInfo.InvariantCulture);
 			_exponent = _rValue.Exponent;
 
-			var longVals = BigIntegerHelper.ToLongs(_rValue.Value);
+			var longVals = BigIntegerHelper.ToLongsDeprecated(_rValue.Value);
 			_long1 = longVals[0];
 			_long2 = longVals[1];
 

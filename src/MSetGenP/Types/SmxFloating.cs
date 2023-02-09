@@ -2,33 +2,25 @@
 using MSS.Types;
 using System;
 using System.Collections;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Text;
 
-namespace MSS.Common.SmxVals
+namespace MSetGenP.Types
 {
-	public struct Smx : IEquatable<Smx>, ICloneable
+	public struct SmxFloating : IEquatable<SmxFloating>
 	{
 		#region Constructor
 
-		public Smx(RValue rValue, byte bitsBeforeBP) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, rValue.Precision)
+		//public static readonly Smx Zero = new Smx(true, new ulong[] { 0 }, 1, 1000, 0);
+
+		public SmxFloating(RValue rValue) : this(rValue.Value, rValue.Exponent, bitsBeforeBP: 0, precision: rValue.Precision)
 		{ }
 
-		public Smx(RValue rValue, byte bitsBeforeBP, int precision) : this(rValue.Value, rValue.Exponent, bitsBeforeBP, precision)
+		public SmxFloating(RValue rValue, int precision) : this(rValue.Value, rValue.Exponent, bitsBeforeBP: 0, precision: precision)
 		{ }
 
-		private Smx(BigInteger bigInteger, int exponent, byte bitsBeforeBP) : this(bigInteger, exponent, bitsBeforeBP, RMapConstants.DEFAULT_PRECISION)
-		{ }
-
-		private Smx(BigInteger bigInteger, int exponent, byte bitsBeforeBP, int precision)
+		public SmxFloating(BigInteger bigInteger, int exponent, byte bitsBeforeBP, int precision)
 		{
-			if (exponent == 1)
-			{
-				Debug.WriteLine("WARNING the exponent is 1.");
-			}
-
 			//Sign = bigInteger < 0 ? false : true;
 			Mantissa = ScalarMathHelper.ToPwULongs(bigInteger, out var sign);
 			Sign = sign;
@@ -37,13 +29,8 @@ namespace MSS.Common.SmxVals
 			BitsBeforeBP = bitsBeforeBP;
 		}
 
-		public Smx(bool sign, ulong[] mantissa, int exponent, byte bitsBeforeBP, int precision)
+		public SmxFloating(bool sign, ulong[] mantissa, int exponent, byte bitsBeforeBP, int precision)
 		{
-			if (exponent == 1)
-			{
-				Debug.WriteLine("WARNING the exponent is 1.");
-			}
-
 			ValidatePWValues(mantissa);
 
 			Sign = sign;
@@ -82,7 +69,7 @@ namespace MSS.Common.SmxVals
 
 		public RValue GetRValue()
 		{
-			var result = ScalarMathHelper.CreateRValue(this); 
+			var result = ScalarMathFloatingHelper.CreateRValue(this); 
 			return result;
 		}
 
@@ -94,43 +81,16 @@ namespace MSS.Common.SmxVals
 			return strValue;
 		}
 
-		//public override string ToString()
-		//{
-		//	var result = Sign
-		//		? SmxHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}"
-		//		: "-" + SmxHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}";
-
-		//	return result;
-		//}
-
 		public override string ToString()
 		{
-
 			var result = Sign
-				? ScalarMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
-				: "-" + ScalarMathHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
-
-			//var result = Sign
-			//	? ScalarMathHelper.GetDiagDisplayHexBlocked("m", Mantissa) + $" e:{Exponent}"
-			//	: "-" + ScalarMathHelper.GetDiagDisplayHexBlocked("m", Mantissa) + $" e:{Exponent}";
+				? ScalarMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}"
+				: "-" + ScalarMathHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}";
 
 			return result;
 		}
 
 		#endregion
-
-
-		object ICloneable.Clone()
-		{
-			return Clone();
-		}
-
-		public Smx Clone()
-		{
-			var result = new Smx(Sign, (ulong[])Mantissa.Clone(), Exponent, BitsBeforeBP, Precision);
-
-			return result;
-		}
 
 		#region IEquatable Support
 
@@ -139,7 +99,7 @@ namespace MSS.Common.SmxVals
 			return obj is Smx smx && Equals(smx);
 		}
 
-		public bool Equals(Smx other)
+		public bool Equals(SmxFloating other)
 		{
 			return Sign == other.Sign &&
 				((IStructuralEquatable)Mantissa).Equals(other.Mantissa, StructuralComparisons.StructuralEqualityComparer) &&
@@ -151,12 +111,12 @@ namespace MSS.Common.SmxVals
 			return HashCode.Combine(Sign, Mantissa, Exponent);
 		}
 
-		public static bool operator ==(Smx left, Smx right)
+		public static bool operator ==(SmxFloating left, SmxFloating right)
 		{
 			return left.Equals(right);
 		}
 
-		public static bool operator !=(Smx left, Smx right)
+		public static bool operator !=(SmxFloating left, SmxFloating right)
 		{
 			return !(left == right);
 		}
