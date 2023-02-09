@@ -1,8 +1,8 @@
 ﻿using EngineTest;
 using MSetGeneratorPrototype;
 using MSS.Common;
-using MSS.Common.APValues;
 using MSS.Types;
+using MSS.Types.APValues;
 using System.Diagnostics;
 using System.Numerics;
 
@@ -23,7 +23,7 @@ namespace MSetGeneratorPrototypeTest
 			var aRValue = new RValue(aBigInteger, exponent, precision);
 
 			var aFp31Val = FP31ValHelper.CreateFP31Val(aRValue, new ApFixedPointFormat(limbCount));
-			var strA = aFp31Val.GetStringValue();
+			var strA = RValueHelper.ConvertToString(aFp31Val.GetRValue());
 			Debug.WriteLine($"The StringValue for the aFP31Val is {strA}.");
 
 			var bRValue = FP31ValHelper.CreateRValue(aFp31Val);
@@ -45,11 +45,11 @@ namespace MSetGeneratorPrototypeTest
 			var aBigInteger = BigInteger.Parse(number);
 			var aRValue = new RValue(aBigInteger, exponent, precision);
 
-			var aFP31Val = FP31ValHelper.CreateFP31Val(aRValue, new ApFixedPointFormat(limbCount));
-			var strA = aFP31Val.GetStringValue();
+			var aFp31Val = FP31ValHelper.CreateFP31Val(aRValue, new ApFixedPointFormat(limbCount));
+			var strA = RValueHelper.ConvertToString(aFp31Val.GetRValue());
 			Debug.WriteLine($"The StringValue for the aFP31Val is {strA}.");
 
-			var bRValue = FP31ValHelper.CreateRValue(aFP31Val);
+			var bRValue = FP31ValHelper.CreateRValue(aFp31Val);
 			var strB = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {strB}.");
 
@@ -67,11 +67,11 @@ namespace MSetGeneratorPrototypeTest
 			var aBigInteger = BigInteger.Parse(number);
 			var aRValue = new RValue(aBigInteger, exponent, precision);
 
-			var aFP31Val = FP31ValHelper.CreateFP31Val(aRValue, new ApFixedPointFormat(limbCount));
-			var strA = aFP31Val.GetStringValue();
+			var aFp31Val = FP31ValHelper.CreateFP31Val(aRValue, new ApFixedPointFormat(limbCount));
+			var strA = RValueHelper.ConvertToString(aFp31Val.GetRValue());
 			Debug.WriteLine($"The StringValue for the aFP31Val is {strA}.");
 
-			var bRValue = FP31ValHelper.CreateRValue(aFP31Val);
+			var bRValue = FP31ValHelper.CreateRValue(aFp31Val);
 			var strB = RValueHelper.ConvertToString(bRValue);
 			Debug.WriteLine($"The StringValue for the bRValue is {strB}.");
 

@@ -1,9 +1,6 @@
-﻿using MSS.Common;
-using MSS.Common.APValues;
-using MSS.Types;
+﻿using MSS.Types;
+using MSS.Types.APValues;
 using System.Collections.Concurrent;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {

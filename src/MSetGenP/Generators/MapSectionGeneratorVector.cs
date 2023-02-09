@@ -1,16 +1,14 @@
-﻿using MEngineDataContracts;
-using MSetGenP.Types;
-using MSS.Common.DataTransferObjects;
+﻿using MSetGenP.Types;
+using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using MSS.Common;
-using MSS.Types.MSet;
 
 namespace MSetGenP
 {
-    public class MapSectionGeneratorVector
+	public class MapSectionGeneratorVector
 	{
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{

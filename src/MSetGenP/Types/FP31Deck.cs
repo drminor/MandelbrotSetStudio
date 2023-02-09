@@ -2,7 +2,8 @@
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-using MSS.Common.APValues;
+using MSS.Common;
+using MSS.Types.APValues;
 
 namespace MSetGenP.Types
 {

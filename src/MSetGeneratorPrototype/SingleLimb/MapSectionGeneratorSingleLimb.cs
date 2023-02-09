@@ -1,5 +1,5 @@
-﻿using MSS.Common.APValues;
-using MSS.Types;
+﻿using MSS.Types;
+using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System.Diagnostics;
 using System.Numerics;
@@ -200,9 +200,9 @@ namespace MSetGeneratorPrototype
 
 		private void ReportCoords(IteratorCoords coords, int limbCount, int precision)
 		{
-			var s1 = coords.StartingCx.GetStringValue();
-			var s2 = coords.StartingCy.GetStringValue();
-			var s3 = coords.Delta.GetStringValue();
+			//var s1 = coords.GetStartingCxStringVal();
+			//var s2 = coords.GetStartingCyStringVal();
+			var s3 = coords.GetDeltaStringVal();
 
 			//Debug.WriteLine($"Value of C at origin: real: {s1} ({startingCx}), imaginary: {s2} ({startingCy}). Delta: {s3}. Precision: {startingCx.Precision}, BP: {blockPos}");
 			//Debug.WriteLine($"Starting : BP: {blockPos}. Real: {s1}, {s2}. Delta: {s3}. Limbs: {apFixedPointFormat.LimbCount}.");

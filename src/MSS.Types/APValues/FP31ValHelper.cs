@@ -7,7 +7,7 @@ using System.Numerics;
 using System.Text;
 
 
-namespace MSS.Common.APValues
+namespace MSS.Types.APValues
 {
 	public class FP31ValHelper
 	{
@@ -103,30 +103,30 @@ namespace MSS.Common.APValues
 			var limbs = ToFwUInts(adjustedValue, out var sign);
 			var result = CreateFP31Val(sign, limbs, targetExponent, bitsBeforeBP, rValue.Precision);
 
-			CheckFP31ValFromRValueResult(rValue, targetExponent, limbCount, bitsBeforeBP, adjustedValue, result, bitExpInfo);
+			//CheckFP31ValFromRValueResult(rValue, targetExponent, limbCount, bitsBeforeBP, adjustedValue, result, bitExpInfo);
 
 			return result;
 		}
 
-		[Conditional("DEBUG")]
-		private static void CheckFP31ValFromRValueResult(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP, BigInteger adjustedValue, FP31Val result, string bitExpInfo) 
-		{
-			var rValueStrVal = RValueHelper.ConvertToString(rValue);
-			var resultStrVal = result.GetStringValue();
+		//[Conditional("DEBUG")]
+		//private static void CheckFP31ValFromRValueResult(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP, BigInteger adjustedValue, FP31Val result, string bitExpInfo) 
+		//{
+		//	var rValueStrVal = RValueHelper.ConvertToString(rValue);
+		//	var resultStrVal = result.GetStringValue();
 
-			if (rValueStrVal.Length - resultStrVal.Length > 5)
-			{
-				var adjustedValueStrVal = adjustedValue.ToString();
-				Debug.WriteLine($"CreateFP31Val failed. The result is {resultStrVal}, the adjusted value is {adjustedValueStrVal}, the input is {rValueStrVal}. BitExpInfo: {bitExpInfo}.");
-			}
+		//	if (rValueStrVal.Length - resultStrVal.Length > 5)
+		//	{
+		//		var adjustedValueStrVal = adjustedValue.ToString();
+		//		Debug.WriteLine($"CreateFP31Val failed. The result is {resultStrVal}, the adjusted value is {adjustedValueStrVal}, the input is {rValueStrVal}. BitExpInfo: {bitExpInfo}.");
+		//	}
 
-			//var cResult = CreateFP31ValOld(rValue, targetExponent, limbCount, bitsBeforeBP);
+		//	//var cResult = CreateFP31ValOld(rValue, targetExponent, limbCount, bitsBeforeBP);
 
-			//if (cResult.Mantissa.Length != result.Mantissa.Length)
-			//{
-			//	Debug.WriteLine("Mantissa Lengths dont' match.");
-			//}
-		}
+		//	//if (cResult.Mantissa.Length != result.Mantissa.Length)
+		//	//{
+		//	//	Debug.WriteLine("Mantissa Lengths dont' match.");
+		//	//}
+		//}
 
 		public static FP31Val CreateFP31Val(bool sign, uint[] limbs, int targetExponent, byte bitsBeforeBP, int precision)
 		{

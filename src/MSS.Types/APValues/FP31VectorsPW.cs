@@ -3,7 +3,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
-namespace MSS.Common.APValues
+namespace MSS.Types.APValues
 {
 	public class FP31VectorsPW /*: ICloneable*/
 	{

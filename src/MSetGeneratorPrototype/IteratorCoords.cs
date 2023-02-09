@@ -1,5 +1,6 @@
-﻿using MSS.Common.APValues;
+﻿using MSS.Types.APValues;
 using MSS.Types;
+using MSS.Common;
 
 namespace MSetGeneratorPrototype
 {
@@ -20,7 +21,25 @@ namespace MSetGeneratorPrototype
 		public FP31Val StartingCy { get; init; }
 		public FP31Val Delta { get; init; }
 
+		public string GetStartingCxStringVal()
+		{
+			var result = RValueHelper.ConvertToString(StartingCx.GetRValue());
+			return result;
+		}
 
+		public string GetStartingCyStringVal()
+		{
+			var result = RValueHelper.ConvertToString(StartingCy.GetRValue());
+			return result;
+
+		}
+
+		public string GetDeltaStringVal()
+		{
+			var result = RValueHelper.ConvertToString(Delta.GetRValue());
+			return result;
+
+		}
 
 	}
 }

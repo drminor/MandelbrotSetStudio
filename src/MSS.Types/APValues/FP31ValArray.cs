@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
-namespace MSS.Common.APValues
+namespace MSS.Types.APValues
 {
 	public class FP31ValArray //: ICloneable
 	{

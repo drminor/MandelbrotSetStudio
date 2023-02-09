@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Linq;
 
-namespace MSS.Common.APValues
+namespace MSS.Types.APValues
 {
 	public struct FP31Val : IEquatable<FP31Val>, ICloneable
 	{
@@ -42,13 +42,13 @@ namespace MSS.Common.APValues
 			return result;
 		}
 
-		public string GetStringValue()
-		{
-			var rValue = GetRValue();
-			var strValue = RValueHelper.ConvertToString(rValue);
+		//public string GetStringValue()
+		//{
+		//	var rValue = GetRValue();
+		//	var strValue = RValueHelper.ConvertToString(rValue);
 
-			return strValue;
-		}
+		//	return strValue;
+		//}
 
 		public override string ToString()
 		{

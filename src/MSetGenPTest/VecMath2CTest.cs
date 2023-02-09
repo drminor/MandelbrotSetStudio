@@ -1,5 +1,6 @@
 using MSetGenP;
 using MSS.Common;
+using MSS.Types;
 using System.Diagnostics;
 
 namespace MSetGenPTest

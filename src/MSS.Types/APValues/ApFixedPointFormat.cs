@@ -1,8 +1,7 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.Diagnostics;
 
-namespace MSS.Common
+namespace MSS.Types
 {
     public class ApFixedPointFormat
     {

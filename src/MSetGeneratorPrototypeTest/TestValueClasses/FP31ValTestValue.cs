@@ -1,7 +1,7 @@
 ﻿using MSetGeneratorPrototype;
 using MSS.Common;
-using MSS.Common.APValues;
 using MSS.Types;
+using MSS.Types.APValues;
 using System.Numerics;
 
 namespace EngineTest
@@ -17,7 +17,7 @@ namespace EngineTest
 			var bi = BigInteger.Parse(number);
 			RValue = new RValue(bi, exponent, precision);
 			FP31Val = FP31ValHelper.CreateFP31Val(RValue, scalarMath9.ApFixedPointFormat);
-			StringValue = FP31Val.GetStringValue();
+			StringValue = RValueHelper.ConvertToString(RValue);
 		}
 
 		public FP31ValTestValue(FP31Val fp31Val)

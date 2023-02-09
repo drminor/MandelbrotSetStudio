@@ -1,5 +1,5 @@
-﻿using MSS.Common.APValues;
-using MSS.Types;
+﻿using MSS.Types;
+using MSS.Types.APValues;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
