@@ -13,7 +13,7 @@ namespace MSetGenP
 	{
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
 		{
-			var mapPosition = mapSectionRequest.Position;
+			var mapPosition = mapSectionRequest.MapPosition;
 			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 			var blockSize = mapSectionRequest.BlockSize;
 			var precision = mapSectionRequest.Precision;

@@ -203,7 +203,10 @@ namespace MSetRepo
 		public Subdivision MapFrom(SubdivisionRecord target)
 		{
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.Size);
-			var result = new Subdivision(target.Id, samplePointDelta, MapFrom(target.BlockSize));
+
+			var baseMapPosition = new RVector();
+
+			var result = new Subdivision(target.Id, samplePointDelta, baseMapPosition, MapFrom(target.BlockSize));
 
 			return result;
 		}
@@ -211,7 +214,7 @@ namespace MSetRepo
 		public SubdivisionRecord MapTo(Subdivision source)
 		{
 			var samplePointDelta = MapTo(source.SamplePointDelta);
-			var result = new SubdivisionRecord(samplePointDelta, MapTo(source.BlockSize))
+			var result = new SubdivisionRecord(samplePointDelta, MapTo(source.BaseMapPosition), MapTo(source.BlockSize))
 			{
 				Id = source.Id
 			};
@@ -410,6 +413,22 @@ namespace MSetRepo
 		public RSize MapFrom(RSizeRecord target)
 		{
 			return _dtoMapper.MapFrom(target.Size);
+		}
+
+
+
+		public RVectorRecord MapTo(RVector rSize)
+		{
+			var rSizeDto = _dtoMapper.MapTo(rSize);
+			var display = rSize.ToString();
+			var result = new RVectorRecord(display, rSizeDto);
+
+			return result;
+		}
+
+		public RVector MapFrom(RVectorRecord target)
+		{
+			return _dtoMapper.MapFrom(target.Vector);
 		}
 
 		public RRectangleRecord MapTo(RRectangle rRectangle)

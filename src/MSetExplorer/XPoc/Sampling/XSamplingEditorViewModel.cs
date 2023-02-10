@@ -10,6 +10,7 @@ namespace MSetExplorer.XPoc
 	{
 		private const double TOLERANCE_FACTOR = 10;
 
+		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly SizeInt _blockSize;
 
 		private SizeInt _screenSize;
@@ -26,6 +27,7 @@ namespace MSetExplorer.XPoc
 
 		public XSamplingEditorViewModel(IMapSectionAdapter mapSectionAdapter)
 		{
+			_mapSectionAdapter = mapSectionAdapter;
 			MapAreaInfoViewModelCanS = new MapAreaInfoViewModel(mapSectionAdapter);
 			MapAreaInfoViewModelSelS = new MapAreaInfoViewModel(mapSectionAdapter);
 
@@ -375,15 +377,17 @@ namespace MSetExplorer.XPoc
 			var samplePointDeltaD = RMapHelper.GetSamplePointDiag(coords, canvasSize, out var newDCoords);
 			RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, coords, updatedCoords, newDCoords);
 
-			// Get a subdivision record from the database.
-			//var subdivision = GetSubdivision(samplePointDelta, blockSize);
-			var subdivision = new Subdivision(samplePointDelta, blockSize);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, subdivision, out var canvasControlOffset);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
-			var precision = RValueHelper.GetPrecision(updatedCoords.Right, updatedCoords.Left, out var hExtent);
+			var precision = RValueHelper.GetPrecision(updatedCoords.Right, updatedCoords.Left, out var _);
+
+			// Get a subdivision record from the database.
+			//var subdivision = new Subdivision(samplePointDelta, blockSize);
+
+			var subdivision = new MapJobHelper(_mapSectionAdapter).GetSubdivision(updatedCoords, samplePointDelta);
 
 			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, precision, canvasControlOffset);
 

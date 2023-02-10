@@ -13,8 +13,8 @@ namespace MSS.Common
 	public interface IMapSectionAdapter : IMapSectionDuplicator, IMapSectionDeleter
 	{
 		void CreateCollections();
-		void DropJobMapSecAndMapSecCollections();
-		void DropSubdivisionsAndMapSectionsCollections();
+		void DropMapSections();
+		void DropMapSectionsAndSubdivisions();
 
 		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors);
 
@@ -26,7 +26,7 @@ namespace MSS.Common
 
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
 
-		bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision);
+		bool TryGetSubdivision(RSize samplePointDelta, RVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision);
 		
 		void InsertSubdivision(Subdivision subdivision);
 	}

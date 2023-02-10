@@ -153,7 +153,7 @@ namespace MSS.Common
 				screenPosition: screenPosition,
 				blockPosition: repoPosition,
 				isInverted: isInverted,
-				position: mapPosition,
+				mapPosition: mapPosition,
 				precision: repoPosition.Precision,
 				blockSize: subdivision.BlockSize,
 				samplePointDelta: subdivision.SamplePointDelta,

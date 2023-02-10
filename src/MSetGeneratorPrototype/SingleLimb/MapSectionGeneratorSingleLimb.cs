@@ -31,7 +31,7 @@ namespace MSetGeneratorPrototype
 			var skipLowDetailBlocks = false;
 
 			//var blockPos = mapSectionRequest.BlockPosition;
-			var mapPosition = mapSectionRequest.Position;
+			var mapPosition = mapSectionRequest.MapPosition;
 			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 			var screenPosition = mapSectionRequest.ScreenPosition;
 

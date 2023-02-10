@@ -79,38 +79,36 @@ namespace MSS.Common
 			//var samplePointDeltaD = RMapHelper.GetSamplePointDiag(coords, displaySize, out var newDCoords);
 			//RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, mSetInfo.Coords, coordsWork, newDCoords);
 
-			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(samplePointDelta, blockSize);
-
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, subdivision, out var canvasControlOffset);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
 			var precision = RValueHelper.GetPrecision(updatedCoords.Right, updatedCoords.Left, out var hExtent);
 			//precision += Math.Log10(2d)
+
+			// Get a subdivision record from the database.
+			var subdivision = GetSubdivision(updatedCoords, samplePointDelta);
 
 			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, precision, canvasControlOffset);
 
 			return result;
 		}
 
-		#endregion
-
-		#region Private Methods
-
 		// Find an existing subdivision record that the same SamplePointDelta
-		private Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize)
+		public Subdivision GetSubdivision(RRectangle coords, RSize samplePointDelta)
 		{
-			if (! _mapSectionAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var result))
+			var baseMapPosition = new RVector();
+
+			if (! _mapSectionAdapter.TryGetSubdivision(samplePointDelta, baseMapPosition, out var result))
 			{
-				result = new Subdivision(samplePointDelta, blockSize);
+				result = new Subdivision(samplePointDelta, baseMapPosition);
 				_mapSectionAdapter.InsertSubdivision(result);
 			}
 
 			return result;
 		}
 
-		private string GetJobName(TransformType transformType)
+		public string GetJobName(TransformType transformType)
 		{
 			//var result = transformType == TransformType.Home ? "Home" : transformType.ToString();
 			var result = transformType.ToString();

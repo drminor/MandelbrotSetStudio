@@ -201,7 +201,7 @@ namespace MSetGeneratorPrototype
 			//var samplePointDelta = dtoMapper.MapFrom(mapSectionRequest.SamplePointDelta);
 
 			var blockPos = mapSectionRequest.BlockPosition;
-			var mapPosition = mapSectionRequest.Position;
+			var mapPosition = mapSectionRequest.MapPosition;
 			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 
 			var startingCx = FP31ValHelper.CreateFP31Val(mapPosition.X, apFixedPointFormat);

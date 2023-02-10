@@ -598,10 +598,10 @@ namespace MSetExplorer
 			var subdivision = currentAreaInfo.Subdivision;
 
 			var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
-			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision, out var newCanvasControlOffset);
+			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision.SamplePointDelta, subdivision.BlockSize, out var newCanvasControlOffset);
 
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
-			var precision = RValueHelper.GetPrecision(newCoords.Right, newCoords.Left, out var hExtent);
+			var precision = RValueHelper.GetPrecision(newCoords.Right, newCoords.Left, out var _);
 
 			var result = new MapAreaInfo(newCoords, logicalDisplaySize, subdivision, newMapBlockOffset, precision, newCanvasControlOffset);
 

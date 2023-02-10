@@ -5,7 +5,8 @@ using System;
 namespace ProjectRepo.Entities
 {
 	public record SubdivisionRecord(
-		RSizeRecord SamplePointDelta, 
+		RSizeRecord SamplePointDelta,
+		RVectorRecord BaseMapPosition,
 		SizeIntRecord BlockSize
 		)
 	{

@@ -198,7 +198,7 @@ namespace MSetExplorer.XPoc
 
 		private bool IsSubdivisionOnFile(Subdivision subdivision)
 		{
-			var result = _mapSectionAdapter.TryGetSubdivision(subdivision.SamplePointDelta, subdivision.BlockSize, out var _);
+			var result = _mapSectionAdapter.TryGetSubdivision(subdivision.SamplePointDelta, subdivision.BaseMapPosition, out var _);
 
 			return result;
 		}

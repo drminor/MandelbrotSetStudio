@@ -34,8 +34,9 @@ namespace MSetExplorer
 
 		private static readonly bool CREATE_COLLECTIONS = true;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
-		private static readonly bool DROP_MAP_SECTION_COLLECTIONS = false;
+
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
+		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = true;
 
 		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
 		private static readonly bool USE_LOCAL_ENGINE = false; // If true, we will host a server -- AND include it in the list of servers to use by our client.
@@ -74,7 +75,7 @@ namespace MSetExplorer
 			_mEngineServerManager?.Start();
 
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT);
-			PrepareRepositories(CREATE_COLLECTIONS, DROP_MAP_SECTION_COLLECTIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
+			PrepareRepositories(CREATE_COLLECTIONS, DROP_MAP_SECTIONS_AND_SUBDIVISIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
 
 			if (_repositoryAdapters.ProjectAdapter is ProjectAdapter pa)
 			{
@@ -186,12 +187,11 @@ namespace MSetExplorer
 			return mapSectionRequestProcessor;
 		}
 
-		private void PrepareRepositories(bool createCollections, bool dropMapSections, bool dropRecentMapSections, RepositoryAdapters repositoryAdapters)
+		private void PrepareRepositories(bool createCollections, bool dropMapSectionsAndSubdivions, bool dropRecentMapSections, RepositoryAdapters repositoryAdapters)
 		{
-			if (dropMapSections)
+			if (dropMapSectionsAndSubdivions)
 			{
-				//repositoryAdapters.MapSectionAdapter.DropJobMapSecAndMapSecCollections();
-				repositoryAdapters.MapSectionAdapter.DropSubdivisionsAndMapSectionsCollections();
+				repositoryAdapters.MapSectionAdapter.DropMapSectionsAndSubdivisions();
 			}
 			else if (dropRecentMapSections)
 			{

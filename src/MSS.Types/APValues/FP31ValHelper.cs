@@ -80,7 +80,7 @@ namespace MSS.Types.APValues
 			if (IsValueTooLarge(rValue, bitsBeforeBP, out var bitExpInfo))
 			{
 				var maxMagnitude = GetMaxMagnitude(bitsBeforeBP);
-				throw new ArgumentException($"An RValue with magnitude > {maxMagnitude} cannot be used to create a FP31Val. ");
+				throw new ArgumentException($"An RValue with magnitude > {maxMagnitude} cannot be used to create a FP31Val. BitExpInfo: {bitExpInfo}.");
 			}
 
 			var shiftAmount = GetShiftAmount(rValue.Exponent, targetExponent);
@@ -101,6 +101,11 @@ namespace MSS.Types.APValues
 			}
 
 			var limbs = ToFwUInts(adjustedValue, out var sign);
+			if (limbs.Length < limbCount)
+			{
+				limbs = Extend(limbs, limbCount);
+			}
+
 			var result = CreateFP31Val(sign, limbs, targetExponent, bitsBeforeBP, rValue.Precision);
 
 			//CheckFP31ValFromRValueResult(rValue, targetExponent, limbCount, bitsBeforeBP, adjustedValue, result, bitExpInfo);
@@ -172,6 +177,16 @@ namespace MSS.Types.APValues
 
 			return shiftAmount;
 		}
+
+		// Pad with leading zeros.
+		private static uint[] Extend(uint[] values, int newLength)
+		{
+			var result = new uint[newLength];
+			Array.Copy(values, 0, result, 0, values.Length);
+
+			return result;
+		}
+
 
 		#endregion
 
@@ -437,6 +452,7 @@ namespace MSS.Types.APValues
 		}
 
 		#endregion
+
 
 		#region Convert to Full-31Bit-Word Limbs
 

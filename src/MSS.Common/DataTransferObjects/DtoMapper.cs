@@ -66,18 +66,18 @@ namespace MSS.Common.DataTransferObjects
 			return result;
 		}
 
-		//public RVectorDto MapTo(RVector source)
-		//{
-		//	var result = new RVectorDto(source.Values, source.Exponent);
-		//	return result;
-		//}
+		public RVectorDto MapTo(RVector source)
+		{
+			var result = new RVectorDto(source.Values, source.Exponent);
+			return result;
+		}
 
-		//public RVector MapFrom(RVectorDto target)
-		//{
-		//	var bVals = BigIntegerHelper.FromLongs(target.GetValues());
-		//	var result = new RVector(bVals, target.Exponent);
-		//	return result;
-		//}
+		public RVector MapFrom(RVectorDto target)
+		{
+			var bVals = BigIntegerHelper.FromLongsDeprecated(target.GetValues());
+			var result = new RVector(bVals, target.Exponent);
+			return result;
+		}
 
 	}
 }

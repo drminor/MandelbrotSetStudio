@@ -213,7 +213,7 @@ namespace MSetGeneratorPrototype
 		private IteratorCoords GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
 		{
 			var blockPos = mapSectionRequest.BlockPosition;
-			var mapPosition = mapSectionRequest.Position;
+			var mapPosition = mapSectionRequest.MapPosition;
 			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 
 			var startingCx = FP31ValHelper.CreateFP31Val(mapPosition.X, apFixedPointFormat);

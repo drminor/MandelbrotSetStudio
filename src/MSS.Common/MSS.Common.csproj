@@ -18,6 +18,7 @@
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
   </PropertyGroup>
 
+
   <ItemGroup>
     <Compile Remove="RMap\JobHelperNotUsed.cs" />
     <Compile Remove="RMap\RMapHelperOldMethods.cs" />
@@ -34,11 +35,6 @@
   <ItemGroup>
     <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
     <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="APValues\" />
-    <Folder Include="SmxVals\" />
   </ItemGroup>
 
 </Project>

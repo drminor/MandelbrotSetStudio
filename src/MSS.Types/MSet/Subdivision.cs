@@ -8,20 +8,26 @@ namespace MSS.Types.MSet
 		public ObjectId Id { get; init; }
 		public SizeInt BlockSize { get; init; }
 		public RSize SamplePointDelta { get; init; }
+		public RVector BaseMapPosition { get; init; }
 
 		public Subdivision()
 		{
 			SamplePointDelta = new RSize();
+			BaseMapPosition = new RVector();
 		}
 
-		public Subdivision(RSize samplePointDelta, SizeInt blockSize) : this(ObjectId.GenerateNewId(), samplePointDelta, blockSize)
+		public Subdivision(RSize samplePointDelta, RVector baseMapPositon) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, RMapConstants.BLOCK_SIZE)
 		{ }
 
-		public Subdivision(ObjectId id, RSize samplePointDelta, SizeInt blockSize)
+		public Subdivision(RSize samplePointDelta, RVector baseMapPositon, SizeInt blockSize) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, blockSize)
+		{ }
+
+		public Subdivision(ObjectId id, RSize samplePointDelta, RVector baseMapPosition, SizeInt blockSize)
 		{
 			Id = id;
 			BlockSize = blockSize;
 			SamplePointDelta = samplePointDelta ?? throw new ArgumentNullException(nameof(samplePointDelta));
+			BaseMapPosition = baseMapPosition ?? throw new ArgumentNullException(nameof(baseMapPosition));
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
@@ -35,7 +41,7 @@ namespace MSS.Types.MSet
 
 		public Subdivision Clone()
 		{
-			return new Subdivision(Id, SamplePointDelta.Clone(), BlockSize);
+			return new Subdivision(Id, SamplePointDelta.Clone(), BaseMapPosition.Clone(), BlockSize);
 		}
 	}
 }

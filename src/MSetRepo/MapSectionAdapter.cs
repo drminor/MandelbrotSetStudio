@@ -52,7 +52,7 @@ namespace MSetRepo
 			_ = subdivisionReaderWriter.CreateCollection();
 		}
 
-		public void DropJobMapSecAndMapSecCollections()
+		public void DropMapSections()
 		{
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 			jobMapSectionReaderWriter.DropCollection();
@@ -64,7 +64,7 @@ namespace MSetRepo
 			//subdivisionReaderWriter.DropCollection();
 		}
 
-		public void DropSubdivisionsAndMapSectionsCollections()
+		public void DropMapSectionsAndSubdivisions()
 		{
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 			jobMapSectionReaderWriter.DropCollection();
@@ -404,14 +404,17 @@ namespace MSetRepo
 
 		#region Subdivision
 
-		public bool TryGetSubdivision(RSize samplePointDelta, SizeInt blockSize, [MaybeNullWhen(false)] out Subdivision subdivision)
+		public bool TryGetSubdivision(RSize samplePointDelta, RVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision)
 		{
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			var samplePointDeltaReduced = Reducer.Reduce(samplePointDelta);
 			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDeltaReduced);
 
-			var matches = subdivisionReaderWriter.Get(samplePointDeltaDto, blockSize);
+			var baseMapPositionReduced = Reducer.Reduce(baseMapPosition);
+			var baseMapPositionDto = _dtoMapper.MapTo(baseMapPositionReduced);
+
+			var matches = subdivisionReaderWriter.Get(samplePointDeltaDto, baseMapPositionDto);
 
 			if (matches.Count > 1)
 			{
