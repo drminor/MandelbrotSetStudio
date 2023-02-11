@@ -204,7 +204,7 @@ namespace MSetRepo
 		{
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.Size);
 
-			var baseMapPosition = new RVector();
+			var baseMapPosition = _dtoMapper.MapFrom(target.BaseMapPosition.BigVector);
 
 			var result = new Subdivision(target.Id, samplePointDelta, baseMapPosition, MapFrom(target.BlockSize));
 
@@ -214,9 +214,10 @@ namespace MSetRepo
 		public SubdivisionRecord MapTo(Subdivision source)
 		{
 			var samplePointDelta = MapTo(source.SamplePointDelta);
-			var result = new SubdivisionRecord(samplePointDelta, MapTo(source.BaseMapPosition), MapTo(source.BlockSize))
+			var result = new SubdivisionRecord(samplePointDelta, MapTo(source.BlockSize))
 			{
-				Id = source.Id
+				Id = source.Id,
+				BaseMapPosition = MapTo(source.BaseMapPosition)
 			};
 
 			return result;

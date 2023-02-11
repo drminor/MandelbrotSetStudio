@@ -6,7 +6,6 @@ namespace ProjectRepo.Entities
 {
 	public record SubdivisionRecord(
 		RSizeRecord SamplePointDelta,
-		RVectorRecord BaseMapPosition,
 		SizeIntRecord BlockSize
 		)
 	{
@@ -15,5 +14,9 @@ namespace ProjectRepo.Entities
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
 		public DateTime DateCreated => Id.CreationTime;
+
+		public BigVectorRecord BaseMapPosition { get; set; } = new BigVectorRecord();
+
+
 	}
 }

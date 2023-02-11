@@ -404,15 +404,14 @@ namespace MSetRepo
 
 		#region Subdivision
 
-		public bool TryGetSubdivision(RSize samplePointDelta, RVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision)
+		public bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision)
 		{
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			var samplePointDeltaReduced = Reducer.Reduce(samplePointDelta);
 			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDeltaReduced);
 
-			var baseMapPositionReduced = Reducer.Reduce(baseMapPosition);
-			var baseMapPositionDto = _dtoMapper.MapTo(baseMapPositionReduced);
+			var baseMapPositionDto = _dtoMapper.MapTo(baseMapPosition);
 
 			var matches = subdivisionReaderWriter.Get(samplePointDeltaDto, baseMapPositionDto);
 
@@ -438,12 +437,16 @@ namespace MSetRepo
 			return result;
 		}
 
-		public void InsertSubdivision(Subdivision subdivision)
+		public Subdivision InsertSubdivision(Subdivision subdivision)
 		{
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);
-			_ = subdivisionReaderWriter.Insert(subdivisionRecord);
+			var id = subdivisionReaderWriter.Insert(subdivisionRecord);
+
+			var result = new Subdivision(id, subdivision.SamplePointDelta, subdivision.BaseMapPosition, subdivision.BlockSize);
+
+			return result;
 		}
 
 		//public bool DeleteSubdivision(Subdivision subdivision)

@@ -18,6 +18,10 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class App : Application
 	{
+		private const int LIMB_COUNT = 3;
+
+
+
 		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		private const int MONGO_DB_PORT = 27017;
 
@@ -36,7 +40,7 @@ namespace MSetExplorer
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
-		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = true;
+		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
 
 		private static readonly bool START_LOCAL_ENGINE = false; // If true, we will start the local server's executable. If false, then use Multiple Startup Projects when debugging.
 		private static readonly bool USE_LOCAL_ENGINE = false; // If true, we will host a server -- AND include it in the list of servers to use by our client.
@@ -59,7 +63,7 @@ namespace MSetExplorer
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount: 2, initialSize: 5);
+			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, LIMB_COUNT, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionHelper = new MapSectionHelper(_mapSectionVectorsPool, _mapSectionValuesPool, _mapSectionZVectorsPool);
 
 			if (START_LOCAL_ENGINE)

@@ -51,14 +51,11 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		object ICloneable.Clone()
+		public RVector Diff(RVector amount)
 		{
-			return Clone();
-		}
-
-		public RVector Clone()
-		{
-			return Reducer.Reduce(this);
+			return amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot take the Difference using an RVector with Exponent: {amount.Exponent}, this RVector has exponent: {Exponent}.")
+				: new RVector(XNumerator - amount.XNumerator, YNumerator - amount.YNumerator, Exponent);
 		}
 
 		public BigVector Divide(RSize amount)
@@ -74,10 +71,24 @@ namespace MSS.Types
 			return result;
 		}
 
+		#endregion
+
+		#region ToString and ICloneable
+
 		public override string ToString()
 		{
 			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
 			return result;
+		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public RVector Clone()
+		{
+			return Reducer.Reduce(this);
 		}
 
 		#endregion

@@ -8,21 +8,21 @@ namespace MSS.Types.MSet
 		public ObjectId Id { get; init; }
 		public SizeInt BlockSize { get; init; }
 		public RSize SamplePointDelta { get; init; }
-		public RVector BaseMapPosition { get; init; }
+		public BigVector BaseMapPosition { get; init; }
 
 		public Subdivision()
 		{
 			SamplePointDelta = new RSize();
-			BaseMapPosition = new RVector();
+			BaseMapPosition = new BigVector();
 		}
 
-		public Subdivision(RSize samplePointDelta, RVector baseMapPositon) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, RMapConstants.BLOCK_SIZE)
+		public Subdivision(RSize samplePointDelta, BigVector baseMapPositon) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, RMapConstants.BLOCK_SIZE)
 		{ }
 
-		public Subdivision(RSize samplePointDelta, RVector baseMapPositon, SizeInt blockSize) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, blockSize)
+		public Subdivision(RSize samplePointDelta, BigVector baseMapPositon, SizeInt blockSize) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, blockSize)
 		{ }
 
-		public Subdivision(ObjectId id, RSize samplePointDelta, RVector baseMapPosition, SizeInt blockSize)
+		public Subdivision(ObjectId id, RSize samplePointDelta, BigVector baseMapPosition, SizeInt blockSize)
 		{
 			Id = id;
 			BlockSize = blockSize;

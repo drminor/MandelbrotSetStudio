@@ -50,6 +50,11 @@ namespace MSS.Types
 			return new BigVector(X * factor.Width, Y * factor.Height);
 		}
 
+		public BigVector Scale(BigVector factor)
+		{
+			return new BigVector(X * factor.X, Y * factor.Y);
+		}
+
 		//public BigVector Scale(PointInt factor)
 		//{
 		//	return new BigVector(X * factor.X, Y * factor.Y);
@@ -70,9 +75,14 @@ namespace MSS.Types
 			return new BigVector(X - vector.X, Y - vector.Y);
 		}
 
-		public BigVector Tranlate(PointInt factor)
+		public BigVector Tranlate(PointInt amount)
 		{
-			return new BigVector(X + factor.X, Y + factor.Y);
+			return new BigVector(X + amount.X, Y + amount.Y);
+		}
+
+		public BigVector Tranlate(BigVector amount)
+		{
+			return new BigVector(X + amount.X, Y + amount.Y);
 		}
 
 		public BigVector DivRem(SizeInt dividend, out SizeInt remainder)
@@ -81,6 +91,17 @@ namespace MSS.Types
 			var blocksV = BigInteger.DivRem(Y, dividend.Height, out var remainderV);
 
 			remainder = new SizeInt(remainderH, remainderV);
+			var result = new BigVector(blocksH, blocksV);
+
+			return result;
+		}
+
+		public BigVector DivRem(BigVector dividend, out BigVector remainder)
+		{
+			var blocksH = BigInteger.DivRem(X, dividend.X, out var remainderH);
+			var blocksV = BigInteger.DivRem(Y, dividend.Y, out var remainderV);
+
+			remainder = new BigVector(remainderH, remainderV);
 			var result = new BigVector(blocksH, blocksV);
 
 			return result;

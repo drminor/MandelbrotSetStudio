@@ -1,12 +1,17 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
 using MSS.Types.MSet;
-using System;
+using System.Numerics;
 
 namespace MSS.Common
 {
 	public class MapJobHelper
 	{
+		private const int TERMINAL_LIMB_COUNT = 2;
+
+		//private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, 62));
+		private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB));
+
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
 		public MapJobHelper(IMapSectionAdapter mapSectionAdapter)
@@ -83,30 +88,39 @@ namespace MSS.Common
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
-			var precision = RValueHelper.GetPrecision(updatedCoords.Right, updatedCoords.Left, out var hExtent);
-			//precision += Math.Log10(2d)
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(updatedCoords.Right, updatedCoords.Left, out _);
+			//var decimalPrecision = RValueHelper.GetPrecision(updatedCoords.Right, updatedCoords.Left, out _);
 
 			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(updatedCoords, samplePointDelta);
+			var subdivision = GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 
-			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, precision, canvasControlOffset);
+			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
 
 			return result;
 		}
 
 		// Find an existing subdivision record that the same SamplePointDelta
-		public Subdivision GetSubdivision(RRectangle coords, RSize samplePointDelta)
+		public Subdivision GetSubdivision(RSize samplePointDelta, BigVector mapBlockOffset, out BigVector localMapBlockOffset)
 		{
-			var baseMapPosition = new RVector();
+			var estimatedBaseMapPosition = GetBaseMapPosition(mapBlockOffset, out localMapBlockOffset);
 
-			if (! _mapSectionAdapter.TryGetSubdivision(samplePointDelta, baseMapPosition, out var result))
+			if (! _mapSectionAdapter.TryGetSubdivision(samplePointDelta, estimatedBaseMapPosition, out var result))
 			{
-				result = new Subdivision(samplePointDelta, baseMapPosition);
-				_mapSectionAdapter.InsertSubdivision(result);
+				var subdivision = new Subdivision(samplePointDelta, estimatedBaseMapPosition);
+				result = _mapSectionAdapter.InsertSubdivision(subdivision);
 			}
 
 			return result;
 		}
+
+		public BigVector GetBaseMapPosition(BigVector mapBlockOffset, out BigVector localMapBlockOffset)
+		{
+			var quotient = mapBlockOffset.DivRem(TERMINAL_SUBDIV_SIZE, out localMapBlockOffset);
+
+			var result = quotient.Scale(TERMINAL_SUBDIV_SIZE);
+
+			return result;
+		} 
 
 		public string GetJobName(TransformType transformType)
 		{
@@ -114,6 +128,54 @@ namespace MSS.Common
 			var result = transformType.ToString();
 			return result;
 		}
+
+		//public BigVector GetLocalMapBlockOffset(BigVector mapBlockOffset, RVector baseMapPosition)
+		//{
+		//	var rMapBlockOffset = new RVector(mapBlockOffset);
+
+		//	var scaledBaseMapPosition = baseMapPosition.Scale(new RSize(TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB));
+
+		//	var result = scaledBaseMapPosition.Diff(rMapBlockOffset);
+
+		//	//return result;
+
+		//	return new BigVector();
+		//}
+
+		//public RVector GetBaseMapPosition(BigVector mapBlockOffset, int precisionInBinaryDigits)
+		//{
+		//	RVector result;
+
+		//	var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, precisionInBinaryDigits);
+
+		//	if (apFixedPointFormat.LimbCount <= TERMINAL_LIMB_COUNT)
+		//	{
+		//		result = new RVector();
+		//	}
+		//	else
+		//	{
+		//		//var baseLength = apFixedPointFormat.LimbCount - 3;
+
+		//		var bitsPerLimb = ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB;
+		//		var currentExponent = apFixedPointFormat.TargetExponent;
+		//		var baseExponent = currentExponent - TERMINAL_LIMB_COUNT * bitsPerLimb;
+
+		//		var x = new RValue(mapBlockOffset.X, 0);
+		//		var fp31ValX = FP31ValHelper.CreateFP31Val(x, apFixedPointFormat);
+		//		var baseX = new FP31Val(fp31ValX.Mantissa.Skip(TERMINAL_LIMB_COUNT).ToArray(), baseExponent, fp31ValX.BitsBeforeBP, fp31ValX.Precision);
+
+		//		var y = new RValue(mapBlockOffset.Y, 0);
+		//		var fp31ValY = FP31ValHelper.CreateFP31Val(y, apFixedPointFormat);
+		//		var baseY = new FP31Val(fp31ValY.Mantissa.Skip(TERMINAL_LIMB_COUNT).ToArray(), baseExponent, fp31ValY.BitsBeforeBP, fp31ValY.Precision);
+
+		//		var baseRValX = FP31ValHelper.CreateRValue(baseX);
+		//		var baseRValY = FP31ValHelper.CreateRValue(baseY);
+
+		//		result = new RVector(baseRValX.Value, baseRValY.Value, fp31ValX.Exponent - 62);
+		//	}
+
+		//	return result;
+		//}
 
 		//[Conditional("DEBUG")]
 		//public static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)
@@ -126,7 +188,7 @@ namespace MSS.Common
 		//		//throw new InvalidOperationException("For testing we need the canvas size to be 1024 x 1024.");
 		//	}
 		//}
-
+		
 		#endregion
 	}
 }

@@ -309,7 +309,7 @@ namespace MSS.Common
 
 		#region Precision
 
-		// Each decimal digits is equal to ≈ 3.3218 binary digits. (53 log10(2) ≈ 15.955).
+		// Each decimal digits is equal to ≈ 3.3219 binary digits. (53 log10(2) ≈ 15.955).
 
 		/// <summary>
 		/// Calculates the number of decimal digits required to resolve rValue2 from rValue1.
@@ -333,6 +333,30 @@ namespace MSS.Common
 
 			return result;
 		}
+
+		/// <summary>
+		/// Calculates the number of decimal digits required to resolve rValue2 from rValue1.
+		/// </summary>
+		/// <param name="rValue1"></param>
+		/// <param name="rValue2"></param>
+		/// <param name="diff">The absolute difference between rValue1 and rValue2</param>
+		/// <returns>Number of decimal digits</returns>
+		public static int GetBinaryPrecision(RValue rValue1, RValue rValue2, out int decimalPrecision)
+		{
+			var nrmRVal1 = RNormalizer.Normalize(rValue1, rValue2, out var nrmRVal2);
+			var diffNoPrecision = nrmRVal1.Sub(nrmRVal2).Abs();
+
+			var doubles = ConvertToDoubles(diffNoPrecision);
+			var msd = doubles[0];
+
+			var logB10 = Math.Log10(msd);
+			var result = (int)Math.Ceiling(Math.Abs(logB10 * 3.3219));
+
+			decimalPrecision = (int)Math.Ceiling(Math.Abs(logB10));
+
+			return result;
+		}
+
 
 		public static string GetFormattedResolution(RValue rValue)
 		{

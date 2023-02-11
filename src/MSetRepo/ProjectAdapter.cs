@@ -467,6 +467,11 @@ namespace MSetRepo
 				throw new KeyNotFoundException($"Could not find a job with jobId = {jobId}.");
 			}
 
+			if (jobRecord.MapAreaInfoRecord.SubdivisionRecord.BaseMapPosition == null)
+			{
+				jobRecord.MapAreaInfoRecord.SubdivisionRecord.BaseMapPosition = new BigVectorRecord();
+			}
+
 			var job = new Job(
 				id: jobId,
 				parentJobId: jobRecord.ParentJobId,

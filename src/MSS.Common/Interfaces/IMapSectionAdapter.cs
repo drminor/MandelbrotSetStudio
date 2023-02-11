@@ -26,9 +26,9 @@ namespace MSS.Common
 
 		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
 
-		bool TryGetSubdivision(RSize samplePointDelta, RVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision);
+		bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision);
 		
-		void InsertSubdivision(Subdivision subdivision);
+		Subdivision InsertSubdivision(Subdivision subdivision);
 	}
 
 }

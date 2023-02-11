@@ -9,12 +9,12 @@ namespace MSS.Types
         // for implementations that use unsigned values and signed values.
         // This means that effectively signed values have 1/2 the range of unsigned value.
 
-        private const int EFFECTIVE_BITS_PER_LIMB = 31;
+        public const int EFFECTIVE_BITS_PER_LIMB = 31;
 
         public ApFixedPointFormat(int limbCount) : this(RMapConstants.BITS_BEFORE_BP, limbCount * EFFECTIVE_BITS_PER_LIMB - RMapConstants.BITS_BEFORE_BP)
         { }
 
-        //public ApFixedPointFormat(float precision) : this(RMapConstants.BITS_BEFORE_BP, (int)precision)
+        //public ApFixedPointFormat(double precision) : this(RMapConstants.BITS_BEFORE_BP, (int) precision)
         //{ }
 
         public ApFixedPointFormat(byte bitsBeforeBinaryPoint, int minimumFractionalBits)

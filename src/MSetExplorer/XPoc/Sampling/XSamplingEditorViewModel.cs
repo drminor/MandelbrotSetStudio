@@ -382,14 +382,17 @@ namespace MSetExplorer.XPoc
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
-			var precision = RValueHelper.GetPrecision(updatedCoords.Right, updatedCoords.Left, out var _);
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(updatedCoords.Right, updatedCoords.Left, out _);
 
-			// Get a subdivision record from the database.
-			//var subdivision = new Subdivision(samplePointDelta, blockSize);
+			var mapJobHelper = new MapJobHelper(_mapSectionAdapter);
+			//var baseMapPosition = mapJobHelper.GetBaseMapPosition(mapBlockOffset, binaryPrecision);
 
-			var subdivision = new MapJobHelper(_mapSectionAdapter).GetSubdivision(updatedCoords, samplePointDelta);
+			//// Get a subdivision record from the database.
+			//var subdivision =  mapJobHelper.GetSubdivision(samplePointDelta, baseMapPosition);
 
-			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, precision, canvasControlOffset);
+			var subdivision = mapJobHelper.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+
+			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
 
 			return result;
 		}

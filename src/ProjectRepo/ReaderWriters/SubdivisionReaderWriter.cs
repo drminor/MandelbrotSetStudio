@@ -31,21 +31,20 @@ namespace ProjectRepo
 			return subdivisionRecord;
 		}
 
-		public IList<SubdivisionRecord> Get(RSizeDto samplePointDelta, RVectorDto baseMapPosition)
+		public IList<SubdivisionRecord> Get(RSizeDto samplePointDelta, BigVectorDto baseMapPosition)
 		{
 			var filter1 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.Size.Width", samplePointDelta.Width);
 			//var filter2 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.Size.Height", samplePointDelta.Height);
 			var filter2 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.Size.Exponent", samplePointDelta.Exponent);
 
-			var filter3 = Builders<SubdivisionRecord>.Filter.Eq("BaseMapPosition.Vector.X", baseMapPosition.X);
-			var filter4 = Builders<SubdivisionRecord>.Filter.Eq("BaseMapPosition.Vector.Y", baseMapPosition.Y);
-			var filter5 = Builders<SubdivisionRecord>.Filter.Eq("BaseMapPosition.Vector.Exponent", baseMapPosition.Exponent);
+			var filter3 = Builders<SubdivisionRecord>.Filter.Eq("BaseMapPosition.BigVector.X", baseMapPosition.X);
+			var filter4 = Builders<SubdivisionRecord>.Filter.Eq("BaseMapPosition.BigVector.Y", baseMapPosition.Y);
 
 
 			//var filter4 = Builders<SubdivisionRecord>.Filter.Eq("BlockWidth", blockSize.Width);
 			//var filter5 = Builders<SubdivisionRecord>.Filter.Eq("BlockHeight", blockSize.Height);
 
-			var subdivisionRecords = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5).ToList();
+			var subdivisionRecords = Collection.Find(filter1 & filter2 & filter3 & filter4).ToList();
 
 			return subdivisionRecords;
 		}

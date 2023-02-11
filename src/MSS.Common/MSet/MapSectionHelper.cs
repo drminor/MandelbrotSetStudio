@@ -126,6 +126,7 @@ namespace MSS.Common
 		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
+
 			var result = CreateRequest(screenPosition, repoPosition, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
 
 			return result;
@@ -163,12 +164,14 @@ namespace MSS.Common
 			return mapSectionRequest;
 		}
 
-		private RPoint GetMapPosition(Subdivision subdivision, BigVector blockPosition)
+		private RPoint GetMapPosition(Subdivision subdivision, BigVector localBlockPosition)
 		{
 			//var nrmSubdivisionPosition = RNormalizer.Normalize(subdivision.Position, subdivision.SamplePointDelta, out var nrmSamplePointDelta);
 
+			var mapBlockPosition = subdivision.BaseMapPosition.Tranlate(localBlockPosition);
+
 			// Multiply the blockPosition by the blockSize
-			var numberOfSamplePointsFromSubOrigin = blockPosition.Scale(subdivision.BlockSize);
+			var numberOfSamplePointsFromSubOrigin = mapBlockPosition.Scale(subdivision.BlockSize);
 
 			// Convert sample points to map coordinates.
 			//var mapDistance = nrmSamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);

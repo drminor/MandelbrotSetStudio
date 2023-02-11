@@ -47,32 +47,32 @@ namespace ProjectRepo
 
 		#endregion
 
-		public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
-		{
-			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
+		//public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
+		//{
+		//	var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
+		//	var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
+		//	var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
+		//	var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
+		//	var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
 
 
-			var mapSectionRecord = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5, options: null, ct);
+		//	var mapSectionRecord = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5, options: null, ct);
 
-			var itemsFound = mapSectionRecord.ToList();
+		//	var itemsFound = mapSectionRecord.ToList();
 
-			if (itemsFound.Count > 0)
-			{
-				var result = itemsFound[0];
-				result.LastAccessed = DateTime.UtcNow;
-				return result;
-			}
-			else
-			{
-				// Log: MapSection Not Found
-				//Debug.WriteLine("MapSection Not found.");
-				return default;
-			}
-		}
+		//	if (itemsFound.Count > 0)
+		//	{
+		//		var result = itemsFound[0];
+		//		result.LastAccessed = DateTime.UtcNow;
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		// Log: MapSection Not Found
+		//		//Debug.WriteLine("MapSection Not found.");
+		//		return default;
+		//	}
+		//}
 
 		public async Task<MapSectionRecordJustCounts?> GetJustCountsAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
 		{
