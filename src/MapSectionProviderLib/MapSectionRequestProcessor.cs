@@ -276,7 +276,8 @@ namespace MapSectionProviderLib
 
 					if (zValues != null)
 					{
-						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors();
+
+						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(zValues.LimbCount);
 						mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
 						request.MapSectionZVectors = mapSectionZVectors;
 					}
@@ -308,7 +309,9 @@ namespace MapSectionProviderLib
 			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
 			request.MapSectionVectors = mapSectionVectors;
 
-			var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(); // TODO: Get 10 empty buffers at a time to avoid lock contention.
+			var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: request.Precision);
+
+			var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(apFixedPointFormat.LimbCount); 
 			request.MapSectionZVectors = mapSectionZVectors;
 
 			//Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated.");

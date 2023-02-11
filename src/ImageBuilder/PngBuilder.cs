@@ -66,7 +66,7 @@ namespace ImageBuilder
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
-					var blocksForThisRow = await GetAllBlocksForRowAsync(blockPtrY, w, mapBlockOffset, mapAreaInfo.Subdivision, mapCalcSettings);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(blockPtrY, w, mapBlockOffset, mapAreaInfo.Precision, mapAreaInfo.Subdivision, mapCalcSettings);
 
 					//var checkCnt = blocksForThisRow.Count;
 					//Debug.Assert(checkCnt == w);
@@ -181,7 +181,7 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(int rowPtr, int stride, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(int rowPtr, int stride, BigVector mapBlockOffset, int precision, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var requests = new List<MapSectionRequest>();
 			var ownerId = ObjectId.GenerateNewId().ToString();
@@ -190,7 +190,7 @@ namespace ImageBuilder
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
-				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, ownerId, jobOwnerType, subdivision, mapCalcSettings);
+				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, precision, ownerId, jobOwnerType, subdivision, mapCalcSettings);
 				requests.Add(mapSectionRequest);
 			}
 

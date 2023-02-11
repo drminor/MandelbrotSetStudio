@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace MSS.Types.MSet
 {
@@ -29,11 +30,14 @@ namespace MSS.Types.MSet
 			var totalByteCount = blockSize.NumberOfCells * LimbCount * VALUE_SIZE;
 			//var bytesPerRow = BlockWidth * LimbCount * VALUE_SIZE;
 
-			Debug.Assert(zrs.Length == totalByteCount, $"The length of zrs does not equal the {valueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
-			Debug.Assert(zis.Length == totalByteCount, $"The length of zis does not equal the {valueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
+			//Debug.Assert(zrs.Length == totalByteCount, $"The length of zrs does not equal the {valueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
+			//Debug.Assert(zis.Length == totalByteCount, $"The length of zis does not equal the {valueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
 
-			Zrs = zrs;
-			Zis = zis;
+			Zrs = new byte[totalByteCount];
+			Array.Copy(zrs, 0, Zrs, 0, totalByteCount);
+
+			Zis = new byte[totalByteCount];
+			Array.Copy(zis, 0, Zis, 0, totalByteCount);
 
 			HasEscapedFlags = hasEscapeFlags;
 			RowsHasEscaped = rowHasEscaped;
@@ -81,14 +85,6 @@ namespace MSS.Types.MSet
 
 			}
 		}
-
-		//public SizeInt BlockSize => _blockSize;
-		//public int ValueCount => BlockSize.NumberOfCells;
-		//public int ValuesPerRow => BlockSize.Width;
-
-		//public int Lanes => _lanes;
-		//public int TotalByteCount => _totalByteCount;
-		//public int BytesPerRow => _bytesPerRow;
 
 		#endregion
 	}

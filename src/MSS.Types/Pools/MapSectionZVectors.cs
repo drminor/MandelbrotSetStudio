@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Buffers;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -7,60 +9,89 @@ namespace MSS.Types
 {
 	public class MapSectionZVectors : IPoolable
 	{
+		private static readonly ArrayPool<byte> _arrayPool = ArrayPool<byte>.Shared;
+
 		#region Constructor
 
 		private const int VALUE_SIZE = 4;
 
-		public MapSectionZVectors(SizeInt blockSize, int limbCount)
-			: this(
-				  blockSize,
-				  limbCount,
-				  zrs: new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
-				  zis: new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
-				  hasEscapedFlags: new byte[blockSize.NumberOfCells * VALUE_SIZE],
-				  rowHasEscaped: new byte[blockSize.Height * VALUE_SIZE]
-				  )
-		{ }
+		//public MapSectionZVectors(SizeInt blockSize, int limbCount)
+		//	: this(
+		//		  blockSize,
+		//		  limbCount,
+		//		  zrs: new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
+		//		  zis: new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
+		//		  hasEscapedFlags: new byte[blockSize.NumberOfCells * VALUE_SIZE],
+		//		  rowHasEscaped: new byte[blockSize.Height * VALUE_SIZE]
+		//		  )
+		//{ }
 
-		public MapSectionZVectors(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapedFlags, byte[] rowHasEscaped)
+		public MapSectionZVectors(SizeInt blockSize, int limbCount)
 		{
+			if (limbCount == 2)
+			{
+				Debug.WriteLine("Hi There.");
+			}
+
 			BlockSize = blockSize;
+			_limbCount = limbCount;
+
 			ValueCount = blockSize.NumberOfCells;
-			LimbCount = limbCount;
 			Lanes = Vector256<uint>.Count;
 			ValuesPerRow = blockSize.Width;
 			RowCount = blockSize.Height;
-			VectorsPerRow = ValuesPerRow * LimbCount / Lanes;
 
+			VectorsPerRow = ValuesPerRow * LimbCount / Lanes;
 			BytesPerRow = ValuesPerRow * LimbCount * VALUE_SIZE;
 			TotalByteCount = ValueCount * LimbCount * VALUE_SIZE;
-
-			Debug.Assert(zrs.Length == TotalByteCount, $"The length of zrs does not equal the {ValueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
-			Debug.Assert(zis.Length == TotalByteCount, $"The length of zis does not equal the {ValueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
 
 			BytesPerFlagRow = ValuesPerRow * VALUE_SIZE;
 			TotalBytesForFlags = ValueCount * VALUE_SIZE;
 			VectorsPerFlagRow = ValuesPerRow / Lanes;
 
-			Debug.Assert(hasEscapedFlags.Length == TotalBytesForFlags, $"The length of hasEscapedFlags does not equal the {ValueCount} * {VALUE_SIZE} (values/block * bytes/value) .");
+			Zrs = _arrayPool.Rent(TotalByteCount);
+			Zis = _arrayPool.Rent(TotalByteCount);
 
-			Zrs = zrs;
-			Zis = zis;
-			HasEscapedFlags = hasEscapedFlags;
-			RowHasEscaped = rowHasEscaped;
+			HasEscapedFlags = new byte[TotalBytesForFlags];
+			RowHasEscaped = new byte[RowCount * VALUE_SIZE];
 
-			//ZrsMemory = new Memory<byte>(Zrs);
-			//ZisMemory = new Memory<byte>(Zis);
-			//HasEscapedFlagsMemory = new Memory<byte>(HasEscapedFlags);
 			RowHasEscapedMemory = new Memory<byte>(RowHasEscaped);
+
+			//if (Zrs.Length != TotalByteCount || TotalByteCount != ( 128 * 128 * 4 * 3)) 
+			//{
+			//	Debug.WriteLine("Hi22");
+			//}
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public byte[] Zrs { get; init; }
-		public byte[] Zis { get; init; }
+		private int _limbCount;
+		public int LimbCount
+		{
+			get => _limbCount;
+			set
+			{
+				if (value != _limbCount)
+				{
+					_limbCount = value;
+
+					VectorsPerRow = ValuesPerRow * value / Lanes;
+					BytesPerRow = ValuesPerRow * value * VALUE_SIZE;
+					TotalByteCount = ValueCount * value * VALUE_SIZE;
+
+					_arrayPool.Return(Zrs, clearArray: true);
+					_arrayPool.Return(Zis, clearArray: true);
+
+					Zrs = _arrayPool.Rent(TotalByteCount);
+					Zis = _arrayPool.Rent(TotalByteCount);
+				}
+			}
+		}
+
+		public byte[] Zrs { get; private set; }
+		public byte[] Zis { get; private set; }
 		public byte[] HasEscapedFlags { get; init; }
 		public byte[] RowHasEscaped { get; set; }
 
@@ -68,21 +99,17 @@ namespace MSS.Types
 
 		public SizeInt BlockSize { get; init; }
 		public int ValueCount { get; init; }
-		public int LimbCount { get; init; }
 		public int Lanes { get; init; }
 		public int ValuesPerRow { get; init; }
 		public int RowCount { get; init; }
-		public int VectorsPerRow { get; init; }	
-		public int BytesPerRow { get; init; }
-		public int TotalByteCount { get; init; }
+		public int VectorsPerRow { get; private set; }	
+		public int BytesPerRow { get; private set; }
+		public int TotalByteCount { get; private set; }
 
 		public int BytesPerFlagRow { get; init; }
 		public int TotalBytesForFlags { get; init; }
 		public int VectorsPerFlagRow { get; init; }
 
-		//public Memory<byte> ZrsMemory { get; init; }
-		//public Memory<byte> ZisMemory { get; init; }
-		//public Memory<byte> HasEscapedFlagsMemory { get; init; }
 		public Memory<byte> RowHasEscapedMemory { get; init; }
 
 		#endregion
@@ -225,13 +252,12 @@ namespace MSS.Types
 
 		#region IPoolable Support
 
-		void IPoolable.ResetObject()
+		public void ResetObject()
 		{
-			Array.Clear(Zrs, 0, TotalByteCount);	// TODO: Use Zrs Memory
-			Array.Clear(Zis, 0, TotalByteCount);
-			Array.Clear(HasEscapedFlags, 0, TotalBytesForFlags);
-
-			RowHasEscapedMemory.Span.Clear();
+			Array.Clear(Zrs);
+			Array.Clear(Zis);
+			Array.Clear(HasEscapedFlags);
+			Array.Clear(RowHasEscaped);
 		}
 
 		void IPoolable.CopyTo(object obj)
@@ -250,7 +276,7 @@ namespace MSS.Types
 		{
 			var result = mapSectionZVectors;
 
-			Array.Copy(Zrs, result.Zrs, TotalByteCount);						// TODO: Use ZrsMemory
+			Array.Copy(Zrs, result.Zrs, TotalByteCount);
 			Array.Copy(Zis, result.Zis, TotalByteCount);
 			Array.Copy(HasEscapedFlags, result.HasEscapedFlags, TotalBytesForFlags);
 			RowHasEscapedMemory.CopyTo(result.RowHasEscapedMemory);
@@ -269,9 +295,9 @@ namespace MSS.Types
 				if (disposing)
 				{
 					// Dispose managed state (managed objects)
-					//HasEscapedFlags = Array.Empty<bool>();
-					//Counts = Array.Empty<ushort>();
-					//EscapeVelocities = Array.Empty<ushort>();
+
+					_arrayPool.Return(Zrs, clearArray: true);
+					_arrayPool.Return(Zis, clearArray: true);
 				}
 
 				_disposedValue = true;

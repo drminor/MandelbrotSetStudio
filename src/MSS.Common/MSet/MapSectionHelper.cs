@@ -65,7 +65,7 @@ namespace MSS.Common
 			foreach (var mapSection in emptyMapSections)
 			{
 				var screenPosition = mapSection.BlockPosition;
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
 				result.Add(mapSectionRequest);
 			}
 
@@ -81,7 +81,7 @@ namespace MSS.Common
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
 				result.Add(mapSectionRequest);
 			}
 
@@ -123,11 +123,11 @@ namespace MSS.Common
 
 		#region Create Single MapSectionRequest
 
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, int precision, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
 
-			var result = CreateRequest(screenPosition, repoPosition, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
+			var result = CreateRequest(screenPosition, repoPosition, precision, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
 
 			return result;
 		}
@@ -142,7 +142,7 @@ namespace MSS.Common
 		/// <param name="mapCalcSettings"></param>
 		/// <param name="mapPosition"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector repoPosition, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector repoPosition, int precision, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
 
@@ -340,9 +340,14 @@ namespace MSS.Common
 			return result;
 		}
 
-		public MapSectionZVectors ObtainMapSectionZVectors()
+		public MapSectionZVectors ObtainMapSectionZVectors(int limbCount)
 		{
-			var result = _mapSectionZVectorsPool.Obtain();
+			if (limbCount != 3)
+			{
+				Debug.WriteLine($"Getting Zvectors with Lc = {limbCount}.");
+			}
+
+			var result = _mapSectionZVectorsPool.Obtain(limbCount);
 			return result;
 		}
 
@@ -350,14 +355,8 @@ namespace MSS.Common
 		{
 			if (mapSection.MapSectionValues != null)
 			{
-				if (!_mapSectionValuesPool.Free(mapSection.MapSectionValues))
-				{
-					mapSection.MapSectionValues.Dispose();
-				}
-				else
-				{
-					mapSection.MapSectionValues = null;
-				}
+				_mapSectionValuesPool.Free(mapSection.MapSectionValues);
+				mapSection.MapSectionValues = null;
 			}
 		}
 
@@ -365,21 +364,13 @@ namespace MSS.Common
 		{
 			if (mapSectionRequest.MapSectionVectors != null)
 			{
-				if (!_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors))
-				{
-					mapSectionRequest.MapSectionVectors.Dispose();
-				}
-
+				_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors);
 				mapSectionRequest.MapSectionVectors = null;
 			}
 
 			if (mapSectionRequest.MapSectionZVectors != null)
 			{
-				if (!_mapSectionZVectorsPool.Free(mapSectionRequest.MapSectionZVectors))
-				{
-					mapSectionRequest.MapSectionZVectors.Dispose();
-				}
-
+				_mapSectionZVectorsPool.Free(mapSectionRequest.MapSectionZVectors);
 				mapSectionRequest.MapSectionZVectors = null;
 			}
 		}
@@ -388,21 +379,13 @@ namespace MSS.Common
 		{
 			if (mapSectionResponse.MapSectionVectors != null)
 			{
-				if (!_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors))
-				{
-					mapSectionResponse.MapSectionVectors.Dispose();
-				}
-
+				_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors);
 				mapSectionResponse.MapSectionVectors = null;
 			}
 
 			if (mapSectionResponse.MapSectionZVectors != null)
 			{
-				if (!_mapSectionZVectorsPool.Free(mapSectionResponse.MapSectionZVectors))
-				{
-					mapSectionResponse.MapSectionZVectors.Dispose();
-				}
-
+				_mapSectionZVectorsPool.Free(mapSectionResponse.MapSectionZVectors);
 				mapSectionResponse.MapSectionZVectors = null;
 			}
 		}

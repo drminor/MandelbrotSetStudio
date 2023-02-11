@@ -11,7 +11,7 @@ namespace MEngineClient
 {
 	public class MClientLocal : IMEngineClient
 	{
-		private static int LIMB_COUNT = 3;
+		private static int LIMB_COUNT = 1;
 		private static int _sectionCntr;
 
 		private readonly IMapSectionGenerator _generator;
@@ -36,7 +36,7 @@ namespace MEngineClient
 			}
 			else if (UsingDepthFirst)
 			{
-				_generator = new MapSectionGeneratorDepthFirst(samplePointCache, LIMB_COUNT);
+				_generator = new MapSectionGeneratorDepthFirst(LIMB_COUNT);
 				EndPointAddress = "CSharp_DepthFirstGenerator";
 			}
 			else

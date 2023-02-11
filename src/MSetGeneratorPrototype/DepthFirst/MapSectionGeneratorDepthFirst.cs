@@ -12,7 +12,7 @@ namespace MSetGeneratorPrototype
 	{
 		#region Private Properties
 
-		private readonly SamplePointCache _samplePointCache;
+		//private readonly SamplePointCache _samplePointCache;
 
 		private FP31VecMath _fp31VecMath;
 		private IteratorDepthFirst _iterator;
@@ -29,9 +29,9 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public MapSectionGeneratorDepthFirst(SamplePointCache samplePointCache, int limbCount)
+		public MapSectionGeneratorDepthFirst(int limbCount)
 		{
-			_samplePointCache = samplePointCache;
+			//_samplePointCache = samplePointCache;
 
 			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
 			_fp31VecMath = new FP31VecMath(apFixedPointFormat);
@@ -52,6 +52,25 @@ namespace MSetGeneratorPrototype
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
+			if (mapSectionRequest.MapSectionZVectors == null)
+			{
+				throw new ArgumentNullException("The MapSectionZVectors is null.");
+			}
+
+			var nLimbCnt = mapSectionRequest.MapSectionZVectors.LimbCount;
+
+			if (_fp31VecMath.LimbCount != nLimbCnt)
+			{
+				var apFixedPointFormat = new ApFixedPointFormat(nLimbCnt);
+				_fp31VecMath = new FP31VecMath(apFixedPointFormat);
+				_iterator = new IteratorDepthFirst(_fp31VecMath);
+
+				_crs = _fp31VecMath.GetNewLimbSet();
+				_cis = _fp31VecMath.GetNewLimbSet();
+				_zrs = _fp31VecMath.GetNewLimbSet();
+				_zis = _fp31VecMath.GetNewLimbSet();
+			}
+
 			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
 
 			if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
@@ -230,7 +249,7 @@ namespace MSetGeneratorPrototype
 			var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
 			mapSectionRequest.MapSectionVectors = null;
 
-			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
+			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? throw new ArgumentNullException("The MapSectionZVectors is null.");
 			mapSectionRequest.MapSectionZVectors = null;
 
 			return (mapSectionVectors, mapSectionZVectors);

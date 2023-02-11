@@ -83,6 +83,10 @@ namespace MSS.Types
 					MaxPeak = Math.Max(MaxPeak, TotalFree);
 					return true;
 				}
+				else
+				{
+					obj.Dispose();
+				}
 			}
 
 			return false;
