@@ -7,14 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Entities\MapSectionRecordJustCounts.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Entities\MapSectionRecordJustCounts.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.13.2" />
   </ItemGroup>
 

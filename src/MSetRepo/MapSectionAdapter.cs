@@ -68,9 +68,6 @@ namespace MSetRepo
 
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			mapSectionReaderWriter.DropCollection();
-
-			//var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			//subdivisionReaderWriter.DropCollection();
 		}
 
 		public void DropMapSectionsAndSubdivisions()
@@ -158,14 +155,6 @@ namespace MSetRepo
 		#endregion
 
 		#region MapSection ZValues
-
-		//public async Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId)
-		//{
-		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-		//	var result = await mapSectionReaderWriter.GetZValuesAsync(mapSectionId);
-
-		//	return result;
-		//}
 
 		public async Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
 		{

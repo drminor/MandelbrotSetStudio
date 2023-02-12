@@ -25,7 +25,7 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, //, IMapper<MapSectionResponse, MapSectionRecord>, // IMapper<MapSectionResponse, MapSectionRecordJustCounts>,
+		IMapper<Subdivision, SubdivisionRecord>, //, IMapper<MapSectionResponse, MapSectionRecord>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
@@ -250,7 +250,6 @@ namespace MSetRepo
 
 				Counts: source.MapSectionVectors.Counts,
 				AllRowsHaveEscaped: source.AllRowsHaveEscaped
-				//ZValues: GetZValues(source)
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
@@ -260,7 +259,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors/*, MapSectionZVectors mapSectionZVectors*/)
+		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors)
 		{
 			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
 
@@ -277,32 +276,10 @@ namespace MSetRepo
 				allRowsHaveEscaped: target.AllRowsHaveEscaped,
 
 				mapSectionVectors: mapSectionVectors
-				//mapSectionZVectors: mapSectionZVectors
 			);
 
 			return result;
 		}
-
-		//public MapSectionResponse MapFrom(MapSectionRecordJustCounts target, MapSectionVectors mapSectionVectors)
-		//{
-		//	var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
-
-		//	mapSectionVectors.Load(target.Counts);
-
-		//	var result = new MapSectionResponse
-		//	(
-		//		mapSectionId: target.Id.ToString(),
-		//		ownerId: string.Empty,
-		//		jobOwnerType: JobOwnerType.Poster,
-		//		subdivisionId: target.SubdivisionId.ToString(),
-		//		blockPosition: blockPosition,
-		//		mapCalcSettings: target.MapCalcSettings,
-		//		allRowsHaveEscaped: target.AllRowsHaveEscaped,
-		//		mapSectionVectors: mapSectionVectors
-		//	);
-
-		//	return result;
-		//}
 
 		private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
 		{
@@ -320,36 +297,6 @@ namespace MSetRepo
 		#endregion
 
 		#region Public Methods - MapSectionZValues
-
-		public MapSectionZValuesRecord GetZValues(MapSectionResponse source)
-		{
-			if (source.MapSectionId == null)
-			{
-				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionId.");
-			}
-
-			var zVectors = source.MapSectionZVectors;
-			
-			if (zVectors == null)
-			{
-				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
-			}
-
-			var zValues = new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis, zVectors.HasEscapedFlags, zVectors.RowHasEscaped);
-
-			var result = new MapSectionZValuesRecord
-				(
-				DateCreatedUtc: DateTime.UtcNow,
-				MapSectionId: new ObjectId(source.MapSectionId),
-				ZValues: zValues
-				)
-			{
-				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
-				LastAccessed = DateTime.UtcNow
-			};
-
-			return result;
-		}
 
 		#endregion
 

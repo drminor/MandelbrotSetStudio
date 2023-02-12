@@ -74,64 +74,6 @@ namespace ProjectRepo
 			}
 		}
 
-		//public async Task<MapSectionRecordJustCounts?> GetJustCountsAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
-		//{
-		//	var projection1 = Builders<MapSectionRecord>.Projection.Expression
-		//		(
-		//			p => new MapSectionRecordJustCounts(p.Id, p.DateCreatedUtc, p.SubdivisionId, p.BlockPosXHi, p.BlockPosXLo, p.BlockPosYHi,
-		//			p.BlockPosYLo, p.MapCalcSettings, p.AllRowsHaveEscaped, p.Counts)
-		//		);
-
-		//	var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-		//	var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
-		//	var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
-		//	var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
-		//	var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
-
-		//	var operation = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5).Project(projection1);
-
-		//	var itemsFound = await operation.ToListAsync(ct).ConfigureAwait(false);
-
-		//	if (itemsFound.Count > 0)
-		//	{
-		//		var result = itemsFound[0];
-		//		result.LastAccessed = DateTime.UtcNow;
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		//Log: MapSection Not Found
-		//		//Debug.WriteLine("MapSection Not found.");
-		//		return default;
-		//	}
-		//}
-
-		//public async Task<ZValues> GetZValuesAsync(ObjectId mapSectionId)
-		//{
-		//	var projection1 = Builders<MapSectionRecord>.Projection.Expression
-		//		(
-		//			p => p.ZValues
-		//		);
-
-		//	var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
-
-		//	IFindFluent<MapSectionRecord, ZValues> operation = Collection.Find(filter).Project(projection1);
-
-		//	var itemsFound = await operation.ToListAsync().ConfigureAwait(false);
-
-		//	if (itemsFound.Count > 0)
-		//	{
-		//		var result = itemsFound[0];
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		Log: MapSection Not Found
-		//		Debug.WriteLine("MapSection Not found.");
-		//		return new ZValues();
-		//	}
-		//}
-
 		public async Task<ObjectId> InsertAsync(MapSectionRecord mapSectionRecord)
 		{
 			try
