@@ -1,6 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-using MSS.Common.MSetRepo;
+using MSS.Common;
 using System;
 
 namespace ProjectRepo

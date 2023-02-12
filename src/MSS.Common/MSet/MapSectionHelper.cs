@@ -342,11 +342,6 @@ namespace MSS.Common
 
 		public MapSectionZVectors ObtainMapSectionZVectors(int limbCount)
 		{
-			if (limbCount != 3)
-			{
-				Debug.WriteLine($"Getting Zvectors with Lc = {limbCount}.");
-			}
-
 			var result = _mapSectionZVectorsPool.Obtain(limbCount);
 			return result;
 		}

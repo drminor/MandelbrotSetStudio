@@ -36,7 +36,7 @@ namespace MSetExplorer
 		private static readonly bool USE_DEPTH_FIRST_ITERATOR = true;
 		private static readonly ClientImplementation CLIENT_IMPLEMENTATION = ClientImplementation.LocalVectorMark2;
 
-		private static readonly bool CREATE_COLLECTIONS = true;
+		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;

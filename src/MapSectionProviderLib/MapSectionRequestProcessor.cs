@@ -276,7 +276,6 @@ namespace MapSectionProviderLib
 
 					if (zValues != null)
 					{
-
 						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(zValues.LimbCount);
 						mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
 						request.MapSectionZVectors = mapSectionZVectors;
@@ -400,7 +399,7 @@ namespace MapSectionProviderLib
 
 		private async Task<ZValues?> FetchTheZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
 		{
-			var result = await _mapSectionAdapter.GetMapSectionZValuesAsync(mapSectionId);
+			var result = await _mapSectionAdapter.GetMapSectionZValuesAsync(mapSectionId, ct);
 
 			return result;
 		}

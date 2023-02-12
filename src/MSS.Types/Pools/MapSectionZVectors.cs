@@ -28,11 +28,6 @@ namespace MSS.Types
 
 		public MapSectionZVectors(SizeInt blockSize, int limbCount)
 		{
-			if (limbCount == 2)
-			{
-				Debug.WriteLine("Hi There.");
-			}
-
 			BlockSize = blockSize;
 			_limbCount = limbCount;
 

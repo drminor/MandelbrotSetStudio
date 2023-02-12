@@ -97,7 +97,8 @@ namespace MapSectionProviderLib
 						{
 							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 
-							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
+							_ = await _mapSectionAdapter.UpdateCountValuesAync(mapSectionResponse);
+							_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse);
 
 							// TODO: The OwnerId may already be on file for this MapSection -- or not.
 						}
@@ -107,6 +108,7 @@ namespace MapSectionProviderLib
 							var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
 							mapSectionResponse.MapSectionId = mapSectionId.ToString();
 
+							_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse);
 							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
 						}
 

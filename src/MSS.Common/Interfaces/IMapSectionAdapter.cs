@@ -17,17 +17,16 @@ namespace MSS.Common
 		void DropMapSectionsAndSubdivisions();
 
 		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors);
-
-		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId);
-
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
+		Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse);
 
 		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse);
 
-		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
+		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct);
+		Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
+		Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse);
 
 		bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision);
-		
 		Subdivision InsertSubdivision(Subdivision subdivision);
 	}
 

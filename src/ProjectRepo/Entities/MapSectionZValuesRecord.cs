@@ -8,24 +8,16 @@ namespace ProjectRepo.Entities
 	/// <summary>
 	/// Record used to store the data found in a MapSectionResponse
 	/// </summary>
-	public record MapSectionRecord(
+	public record MapSectionZValuesRecord(
 		DateTime DateCreatedUtc,
-		ObjectId SubdivisionId,
-		long BlockPosXHi,
-		long BlockPosXLo,
-		long BlockPosYHi,
-		long BlockPosYLo,
+		ObjectId MapSectionId,
 
-		MapCalcSettings MapCalcSettings,
-		bool AllRowsHaveEscaped,
-		byte[] Counts
+		ZValues ZValues
 		)
 	{
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
-
-		//public ObjectId? ZValuesId { get; set; }
 
 		public DateTime LastSavedUtc { get; set; }
 		public DateTime LastAccessed { get; set; }

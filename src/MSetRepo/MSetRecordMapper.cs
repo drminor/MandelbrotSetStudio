@@ -249,8 +249,8 @@ namespace MSetRepo
 				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
 
 				Counts: source.MapSectionVectors.Counts,
-				AllRowsHaveEscaped: source.AllRowsHaveEscaped,
-				ZValues: GetZValues(source)
+				AllRowsHaveEscaped: source.AllRowsHaveEscaped
+				//ZValues: GetZValues(source)
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
@@ -260,32 +260,11 @@ namespace MSetRepo
 			return result;
 		}
 
-		private ZValues GetZValues(MapSectionResponse mapSectionResponse)
-		{
-			var zVectors = mapSectionResponse.MapSectionZVectors;
-
-			var result = zVectors == null
-				? new ZValues()
-				: new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis, zVectors.HasEscapedFlags, zVectors.RowHasEscaped);
-
-			return result;
-		}
-
-		// NOT USED -- Take a record from the repo and prepare it for display.
-		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors)
+		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors/*, MapSectionZVectors mapSectionZVectors*/)
 		{
 			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
 
 			mapSectionVectors.Load(target.Counts);
-
-			if (target.ZValues != null)
-			{
-				mapSectionZVectors.Load(target.ZValues.Zrs, target.ZValues.Zis, target.ZValues.HasEscapedFlags, target.ZValues.RowsHasEscaped);
-			}
-			//else
-			//{
-			//	mapSectionZVectors = null;
-			//}
 
 			var result = new MapSectionResponse
 			(
@@ -297,33 +276,33 @@ namespace MSetRepo
 				mapCalcSettings: target.MapCalcSettings,
 				allRowsHaveEscaped: target.AllRowsHaveEscaped,
 
-				mapSectionVectors: mapSectionVectors,
-				mapSectionZVectors: mapSectionZVectors
-			);
-
-			return result;
-		}
-
-		public MapSectionResponse MapFrom(MapSectionRecordJustCounts target, MapSectionVectors mapSectionVectors)
-		{
-			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
-
-			mapSectionVectors.Load(target.Counts);
-
-			var result = new MapSectionResponse
-			(
-				mapSectionId: target.Id.ToString(),
-				ownerId: string.Empty,
-				jobOwnerType: JobOwnerType.Poster,
-				subdivisionId: target.SubdivisionId.ToString(),
-				blockPosition: blockPosition,
-				mapCalcSettings: target.MapCalcSettings,
-				allRowsHaveEscaped: target.AllRowsHaveEscaped,
 				mapSectionVectors: mapSectionVectors
+				//mapSectionZVectors: mapSectionZVectors
 			);
 
 			return result;
 		}
+
+		//public MapSectionResponse MapFrom(MapSectionRecordJustCounts target, MapSectionVectors mapSectionVectors)
+		//{
+		//	var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
+
+		//	mapSectionVectors.Load(target.Counts);
+
+		//	var result = new MapSectionResponse
+		//	(
+		//		mapSectionId: target.Id.ToString(),
+		//		ownerId: string.Empty,
+		//		jobOwnerType: JobOwnerType.Poster,
+		//		subdivisionId: target.SubdivisionId.ToString(),
+		//		blockPosition: blockPosition,
+		//		mapCalcSettings: target.MapCalcSettings,
+		//		allRowsHaveEscaped: target.AllRowsHaveEscaped,
+		//		mapSectionVectors: mapSectionVectors
+		//	);
+
+		//	return result;
+		//}
 
 		private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
 		{
@@ -334,6 +313,40 @@ namespace MSetRepo
 				});
 
 			var result = _dtoMapper.MapFrom(blockPosition);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Public Methods - MapSectionZValues
+
+		public MapSectionZValuesRecord GetZValues(MapSectionResponse source)
+		{
+			if (source.MapSectionId == null)
+			{
+				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionId.");
+			}
+
+			var zVectors = source.MapSectionZVectors;
+			
+			if (zVectors == null)
+			{
+				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
+			}
+
+			var zValues = new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis, zVectors.HasEscapedFlags, zVectors.RowHasEscaped);
+
+			var result = new MapSectionZValuesRecord
+				(
+				DateCreatedUtc: DateTime.UtcNow,
+				MapSectionId: new ObjectId(source.MapSectionId),
+				ZValues: zValues
+				)
+			{
+				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
+				LastAccessed = DateTime.UtcNow
+			};
 
 			return result;
 		}

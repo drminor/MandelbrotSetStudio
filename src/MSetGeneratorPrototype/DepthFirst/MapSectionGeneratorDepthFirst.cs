@@ -57,11 +57,11 @@ namespace MSetGeneratorPrototype
 				throw new ArgumentNullException("The MapSectionZVectors is null.");
 			}
 
-			var nLimbCnt = mapSectionRequest.MapSectionZVectors.LimbCount;
+			var limbCountForThisRequest = mapSectionRequest.MapSectionZVectors.LimbCount;
 
-			if (_fp31VecMath.LimbCount != nLimbCnt)
+			if (_fp31VecMath.LimbCount != limbCountForThisRequest)
 			{
-				var apFixedPointFormat = new ApFixedPointFormat(nLimbCnt);
+				var apFixedPointFormat = new ApFixedPointFormat(limbCountForThisRequest);
 				_fp31VecMath = new FP31VecMath(apFixedPointFormat);
 				_iterator = new IteratorDepthFirst(_fp31VecMath);
 

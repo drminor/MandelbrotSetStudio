@@ -50,12 +50,21 @@ namespace MSetRepo
 
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 			_ = subdivisionReaderWriter.CreateCollection();
+
+			var mapSectionZValuesReaderWriter  = new MapSectionZValuesReaderWriter(_dbProvider);
+			if (mapSectionZValuesReaderWriter.CreateCollection())
+			{
+				mapSectionZValuesReaderWriter.CreateSectionIdIndex();
+			}
 		}
 
 		public void DropMapSections()
 		{
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 			jobMapSectionReaderWriter.DropCollection();
+
+			var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			mapSectionZValuesReaderWriter.DropCollection();
 
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			mapSectionReaderWriter.DropCollection();
@@ -68,6 +77,9 @@ namespace MSetRepo
 		{
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 			jobMapSectionReaderWriter.DropCollection();
+
+			var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			mapSectionZValuesReaderWriter.DropCollection();
 
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			mapSectionReaderWriter.DropCollection();
@@ -86,10 +98,10 @@ namespace MSetRepo
 
 			try
 			{
-				var mapSectionRecordCountsOnly = await mapSectionReaderWriter.GetJustCountsAsync(subdivisionId, blockPosition, ct);
-				if (mapSectionRecordCountsOnly != null)
+				var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition, ct);
+				if (mapSectionRecord != null)
 				{
-					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecordCountsOnly, mapSectionVectors);
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
 
 					return mapSectionResponse;
 				}
@@ -100,7 +112,7 @@ namespace MSetRepo
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine($"While reading JustCounts, got exception: {e}.");
+				Debug.WriteLine($"While fetching a MapSectionRecord, got exception: {e}.");
 				var id = await mapSectionReaderWriter.GetId(subdivisionId, blockPosition);
 				if (id != null)
 				{
@@ -115,14 +127,6 @@ namespace MSetRepo
 			}
 		}
 
-		public async Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId)
-		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var result = await mapSectionReaderWriter.GetZValuesAsync(mapSectionId);
-
-			return result;
-		}
-
 		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
@@ -133,12 +137,12 @@ namespace MSetRepo
 			return mapSectionId;
 		}
 
-		public async Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse)
+		public async Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
 
-			var result = await mapSectionReaderWriter.UpdateZValuesAync(mapSectionRecord);
+			var result = await mapSectionReaderWriter.UpdateCountValuesAync(mapSectionRecord);
 
 			return result;
 		}
@@ -150,6 +154,77 @@ namespace MSetRepo
 
 			return result;
 		}
+
+		#endregion
+
+		#region MapSection ZValues
+
+		//public async Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId)
+		//{
+		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+		//	var result = await mapSectionReaderWriter.GetZValuesAsync(mapSectionId);
+
+		//	return result;
+		//}
+
+		public async Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
+		{
+			var mapSectionZValsReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			var result = await mapSectionZValsReaderWriter.GetBySectionIdAsync(mapSectionId, ct);
+
+			return result?.ZValues;
+		}
+
+		public async Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse)
+		{
+			var mapSectionZValsReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			var mapSectionZValuesRecord = GetZValues(mapSectionResponse);
+
+			var mapSectionId = await mapSectionZValsReaderWriter.InsertAsync(mapSectionZValuesRecord);
+
+			return mapSectionId;
+		}
+
+		public async Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse)
+		{
+			var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			var mapSectionZValuesRecord = GetZValues(mapSectionResponse);
+
+			var result = await mapSectionZValuesReaderWriter.UpdateZValuesAync(mapSectionZValuesRecord);
+
+			return result;
+		}
+
+		public MapSectionZValuesRecord GetZValues(MapSectionResponse source)
+		{
+			if (source.MapSectionId == null)
+			{
+				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionId.");
+			}
+
+			var zVectors = source.MapSectionZVectors;
+
+			if (zVectors == null)
+			{
+				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
+			}
+
+			var zValues = new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis, zVectors.HasEscapedFlags, zVectors.RowHasEscaped);
+
+			var result = new MapSectionZValuesRecord
+				(
+				DateCreatedUtc: DateTime.UtcNow,
+				MapSectionId: new ObjectId(source.MapSectionId),
+				ZValues: zValues
+				)
+			{
+				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
+				LastAccessed = DateTime.UtcNow
+			};
+
+			return result;
+		}
+
 
 		#endregion
 
