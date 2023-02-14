@@ -271,6 +271,8 @@ namespace MapSectionProviderLib
 				{
 					Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
 		
+					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
+
 					var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
 					var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
 
@@ -280,8 +282,10 @@ namespace MapSectionProviderLib
 						mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
 						request.MapSectionZVectors = mapSectionZVectors;
 					}
-
-					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
+					else
+					{
+						request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision);
+					}
 
 					request.MapSectionId = mapSectionId.ToString();
 					request.IncreasingIterations = true;
@@ -304,14 +308,9 @@ namespace MapSectionProviderLib
 
 			request.MapSectionId = null;
 
-			// Create a empty buffer to hold the results.
-			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
-			request.MapSectionVectors = mapSectionVectors;
-
-			var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: request.Precision);
-
-			var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(apFixedPointFormat.LimbCount); 
-			request.MapSectionZVectors = mapSectionZVectors;
+			// Get empty buffers to hold the results.
+			request.MapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+			request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision);
 
 			//Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated.");
 			QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);

@@ -1,5 +1,5 @@
-﻿using MEngineDataContracts;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
@@ -22,15 +22,26 @@ namespace MSetRepo
 	{
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
+		//private readonly MapSectionZVectorsPool _mMapSectionZVectorsPool;
 		private readonly DtoMapper _dtoMapper;
 
 		#region Constructor
 
-		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
+		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper/*, MapSectionZVectorsPool mapSectionZVectorsPool*/)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
+			//_mMapSectionZVectorsPool = mapSectionZVectorsPool;
 			_dtoMapper = new DtoMapper();
+
+			//BsonSerializer.RegisterSerializer(new ZValuesSerializer());
+
+			BsonClassMap.RegisterClassMap<ZValues>(cm => {
+				cm.AutoMap();
+				cm.GetMemberMap(c => c.Zrs).SetSerializer(new ZValuesSerializer());
+				cm.GetMemberMap(c => c.Zis).SetSerializer(new ZValuesSerializer());
+			});
+
 		}
 
 		#endregion
@@ -224,13 +235,13 @@ namespace MSetRepo
 			var mapSectionIdStr = mapSectionResponse.MapSectionId;
 			if (string.IsNullOrEmpty(mapSectionIdStr))
 			{
-				throw new ArgumentNullException(nameof(MapSectionServiceResponse.MapSectionId), "The MapSectionId cannot be null.");
+				throw new ArgumentNullException(nameof(MapSectionResponse.MapSectionId), "The MapSectionId cannot be null.");
 			}
 
 			var subdivisionIdStr = mapSectionResponse.SubdivisionId;
 			if (string.IsNullOrEmpty(subdivisionIdStr))
 			{
-				throw new ArgumentNullException(nameof(MapSectionServiceResponse.SubdivisionId), "The SubdivisionId cannot be null.");
+				throw new ArgumentNullException(nameof(MapSectionResponse.SubdivisionId), "The SubdivisionId cannot be null.");
 			}
 
 			var ownerIdStr = mapSectionResponse.OwnerId;

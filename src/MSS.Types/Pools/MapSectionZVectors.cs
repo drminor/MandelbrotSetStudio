@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -48,7 +46,7 @@ namespace MSS.Types
 			Zis = _arrayPool.Rent(TotalByteCount);
 
 			HasEscapedFlags = new byte[TotalBytesForFlags];
-			RowHasEscaped = new byte[RowCount * VALUE_SIZE];
+			RowHasEscaped = new byte[RowCount];
 
 			RowHasEscapedMemory = new Memory<byte>(RowHasEscaped);
 
@@ -116,8 +114,7 @@ namespace MSS.Types
 			Array.Copy(zrs, Zrs, TotalByteCount);
 			Array.Copy(zis, Zis, TotalByteCount);
 			Array.Copy(hasEscapedFlags, HasEscapedFlags, TotalBytesForFlags);
-			Array.Copy(hasEscapedFlags, HasEscapedFlags, TotalBytesForFlags);
-			Array.Copy(rowHasEscaped, RowHasEscaped, RowCount * VALUE_SIZE);
+			Array.Copy(rowHasEscaped, RowHasEscaped, RowCount);
 		}
 
 		//public Span<Vector256<uint>> GetZrsRow(int rowNumber)

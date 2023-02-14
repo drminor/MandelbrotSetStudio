@@ -328,15 +328,15 @@ namespace MSS.Common
 
 		#region MapSectionValues / MapSectionVectors
 
-		public MapSectionVectors ObtainMapSectionVectors()
-		{
-			var result = _mapSectionVectorsPool.Obtain();
-			return result;
-		}
-
 		public MapSectionValues ObtainMapSectionValues()
 		{
 			var result = _mapSectionValuesPool.Obtain();
+			return result;
+		}
+
+		public MapSectionVectors ObtainMapSectionVectors()
+		{
+			var result = _mapSectionVectorsPool.Obtain();
 			return result;
 		}
 
@@ -344,6 +344,12 @@ namespace MSS.Common
 		{
 			var result = _mapSectionZVectorsPool.Obtain(limbCount);
 			return result;
+		}
+
+		public MapSectionZVectors ObtainMapSectionZVectorsByPrecision(int precision)
+		{
+			var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: precision);
+			return ObtainMapSectionZVectors(apFixedPointFormat.LimbCount);
 		}
 
 		public void ReturnMapSection(MapSection mapSection)

@@ -96,6 +96,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			set => _calcs = value;
 		}
 
+		private long _unusedCalcs;
+		public long UnusedCalcs
+		{
+			get => _unusedCalcs;
+			set => _unusedCalcs = value;
+		}
+
 		#endregion
 
 		#region Public Methods
@@ -207,6 +214,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			Multiplications = mops.NumberOfMultiplications;
 			Calcs = (long)mops.NumberOfCalcs;
+			UnusedCalcs = (long) mops.NumberOfUnusedCalcs;
 
 			HandleRunComplete();
 		}
@@ -299,6 +307,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			OnPropertyChanged(nameof(GenerationElapsed));
 			OnPropertyChanged(nameof(Multiplications));
 			OnPropertyChanged(nameof(Calcs));
+			OnPropertyChanged(nameof(UnusedCalcs));
 		}
 
 		private void MapSectionReady(MapSection mapSection, int jobId, bool isLast)

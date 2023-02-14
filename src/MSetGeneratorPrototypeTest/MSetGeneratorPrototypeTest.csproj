@@ -12,12 +12,10 @@
 
   <ItemGroup>
     <Compile Remove="TestValueClasses\FP31DeckTestValue.cs" />
-    <Compile Remove="VecMath9Test.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="TestValueClasses\FP31DeckTestValue.cs" />
-    <None Include="VecMath9Test.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MSetGeneratorPrototype\MSetGeneratorPrototype.csproj" />
+    <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>
 

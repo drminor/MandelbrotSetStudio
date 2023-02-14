@@ -1,8 +1,10 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.Diagnostics;
 
 namespace MSS.Types.MSet
 {
+	//[BsonSerializer(typeof(ZValuesSerializer))]
 	public class ZValues
 	{
 		private const int VALUE_SIZE = 4;
@@ -27,11 +29,7 @@ namespace MSS.Types.MSet
 			LimbCount = limbCount;
 
 			var valueCount = blockSize.NumberOfCells;
-			var totalByteCount = blockSize.NumberOfCells * LimbCount * VALUE_SIZE;
-			//var bytesPerRow = BlockWidth * LimbCount * VALUE_SIZE;
-
-			//Debug.Assert(zrs.Length == totalByteCount, $"The length of zrs does not equal the {valueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
-			//Debug.Assert(zis.Length == totalByteCount, $"The length of zis does not equal the {valueCount} * {LimbCount} * {VALUE_SIZE} (values/block) * (limbs/value) x bytes/value).");
+			var totalByteCount = valueCount * LimbCount * VALUE_SIZE;
 
 			Zrs = new byte[totalByteCount];
 			Array.Copy(zrs, 0, Zrs, 0, totalByteCount);
@@ -51,6 +49,7 @@ namespace MSS.Types.MSet
 		public int BlockHeight { get; init; }
 		public int LimbCount { get; init; }
 
+		//[BsonSerializer(typeof(MapSectionZVectors))]
 		public byte[] Zrs { get; private set; }
 		public byte[] Zis { get; private set; }
 		public byte[] HasEscapedFlags { get; set; }

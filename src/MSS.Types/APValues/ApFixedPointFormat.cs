@@ -56,10 +56,10 @@ namespace MSS.Types
             {
                 throw new InvalidOperationException("Using less fractional bits than the requested minimum.");
             }
-            else if (NumberOfFractionalBits > minimumFractionalBits)
-            {
-                Debug.WriteLine($"Note: The number of fractional bits is being set to {NumberOfFractionalBits}. This is above the {minimumFractionalBits} requested.");
-            }
+            //else if (NumberOfFractionalBits > minimumFractionalBits)
+            //{
+            //    Debug.WriteLine($"Note: The number of fractional bits is being set to {NumberOfFractionalBits}. This is above the {minimumFractionalBits} requested.");
+            //}
 
         }
 

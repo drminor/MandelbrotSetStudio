@@ -85,11 +85,24 @@ namespace MSetGeneratorPrototype
 						Array.Copy(crs, zrs, crs.Length);
 						Array.Copy(cis, zis, cis.Length);
 					}
-					//else
-					//{
-					//	ClearVectors(_zRSqrs);
-					//	ClearVectors(_zISqrs);
-					//}
+					else
+					{
+						_fp31VecMath.Square(zrs, _zRSqrs);
+						_fp31VecMath.Square(zis, _zISqrs);
+
+						// square(z.r + z.i)
+						_fp31VecMath.AddThenSquare(zrs, zis, _zRZiSqrs);
+
+						// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
+						_fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
+						_fp31VecMath.Sub(zis, _zISqrs, _zIs2);
+						_fp31VecMath.Add(_zIs2, cis, zis);
+
+						// z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
+						_fp31VecMath.Sub(_zRSqrs, _zISqrs, _zRs2);
+						_fp31VecMath.Add(_zRs2, crs, zrs);
+					}
+
 					IsReset = false;
 				}
 				else

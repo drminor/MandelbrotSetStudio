@@ -36,6 +36,11 @@
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Discared Iterations:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding UnusedCalcs}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" >
                 <TextBlock Width="145" Margin="3" FontSize="14" Text="Multiplications:" />
                 <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding Multiplications}"/>
             </StackPanel>

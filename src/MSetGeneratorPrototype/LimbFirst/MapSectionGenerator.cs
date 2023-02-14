@@ -12,6 +12,8 @@ namespace MSetGeneratorPrototype
 	{
 		private readonly FP31VectorsMath _fp31VectorsMath;
 		private readonly IteratorLimbFirst _iterator;
+		private readonly Vector256<int> ALL_BITS_SET;
+
 
 		#region Constructor
 
@@ -20,6 +22,7 @@ namespace MSetGeneratorPrototype
 			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
 			_fp31VectorsMath = new FP31VectorsMath(apFixedPointFormat, blockSize.Width);
 			_iterator = new IteratorLimbFirst(_fp31VectorsMath);
+			ALL_BITS_SET = Vector256<int>.AllBitsSet;
 		}
 
 		#endregion
@@ -175,7 +178,7 @@ namespace MSetGeneratorPrototype
 
 				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
 				var escapedOrReachedVec = Avx2.Or(updatedHaveEscapedFlagsV, targetReachedCompVec);
-				var updatedDoneFlagsV = Avx2.BlendVariable(doneFlagsV, Vector256<int>.AllBitsSet, escapedOrReachedVec);
+				var updatedDoneFlagsV = Avx2.BlendVariable(doneFlagsV, ALL_BITS_SET, escapedOrReachedVec);
 
 				itState.DoneFlags[idx] = updatedDoneFlagsV;
 
