@@ -72,18 +72,18 @@ namespace ProjectRepo
 			}
 		}
 
-		public async Task<ObjectId> InsertAsync(MapSectionZValuesRecord mapSectionRecord)
+		public async Task<ObjectId> InsertAsync(MapSectionZValuesRecord mapSectionZValuesRecord)
 		{
-			if (mapSectionRecord.ZValues == null)
-			{
-				Debug.WriteLine("Inserting a MapSectionRecord that has a null ZValue.");
-			}
+			//if (mapSectionZValuesRecord.ZValues == null)
+			//{
+			//	Debug.WriteLine("Inserting a MapSectionRecord that has a null ZValue.");
+			//}
 
 			try
 			{
-				mapSectionRecord.LastSavedUtc = DateTime.UtcNow;
-				await Collection.InsertOneAsync(mapSectionRecord);
-				return mapSectionRecord.Id;
+				mapSectionZValuesRecord.LastSavedUtc = DateTime.UtcNow;
+				await Collection.InsertOneAsync(mapSectionZValuesRecord);
+				return mapSectionZValuesRecord.Id;
 			}
 			catch (Exception e)
 			{
@@ -92,9 +92,9 @@ namespace ProjectRepo
 			}
 		}
 
-		public async Task<long?> UpdateZValuesAync(MapSectionZValuesRecord mapSectionRecord)
+		public async Task<long?> UpdateZValuesByMapSectionIdAync(MapSectionZValuesRecord mapSectionRecord, ObjectId mapSectionId)
 		{
-			var filter = Builders<MapSectionZValuesRecord>.Filter.Eq("_id", mapSectionRecord.Id);
+			var filter = Builders<MapSectionZValuesRecord>.Filter.Eq("MapSectionId", mapSectionId);
 
 			UpdateDefinition<MapSectionZValuesRecord> updateDefinition;
 

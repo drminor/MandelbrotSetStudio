@@ -26,7 +26,6 @@ namespace MSetGeneratorPrototype
 		private Vector256<uint>[] _resultZis;
 
 		private readonly Vector256<int> _justOne;
-		private readonly Vector256<int> ALL_BITS_SET;
 
 		#endregion
 
@@ -48,8 +47,6 @@ namespace MSetGeneratorPrototype
 			_resultZrs = _fp31VecMath.GetNewLimbSet();
 			_resultZis = _fp31VecMath.GetNewLimbSet();
 
-
-			ALL_BITS_SET = Vector256<int>.AllBitsSet;
 			_justOne = Vector256.Create(1);
 		}
 
@@ -205,7 +202,6 @@ namespace MSetGeneratorPrototype
 
 				var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
 
-
 				//TallyUsedAndUnusedCalcs(idx, iterationState.DoneFlags, ref iterationState);
 
 				// Increment all counts
@@ -222,20 +218,8 @@ namespace MSetGeneratorPrototype
 				// Compare the new Counts with the TargetIterations
 				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
-				// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
-				//var escapedOrReachedVec = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
-				//doneFlagsV = Avx2.BlendVariable(doneFlagsV, ALL_BITS_SET, escapedOrReachedVec);
-
 				//var escapedOrReachedVec = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
 				doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
-
-
-				//// Only keep the new _zrs and _zis if the point is not done.
-				//for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
-				//{
-				//	_zrs[limbPtr] = Avx2.BlendVariable(_zrs[limbPtr].AsInt32(), _resultZrs[limbPtr].AsInt32(), doneFlagsV).AsUInt32(); // use First if Zero, second if 1
-				//	_zis[limbPtr] = Avx2.BlendVariable(_zis[limbPtr].AsInt32(), _resultZis[limbPtr].AsInt32(), doneFlagsV).AsUInt32(); // use First if Zero, second if 1
-				//}
 
 				var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
 
@@ -264,12 +248,8 @@ namespace MSetGeneratorPrototype
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
 			iterationState.CountsRowV[idx] = resultCountsV;
 
-			//iterationState.DoneFlags[idx] = doneFlagsV;
-
 			iterationState.UpdateZrLimbSet(idx, _resultZrs);
 			iterationState.UpdateZiLimbSet(idx, _resultZis);
-			//iterationState.UpdateZrLimbSet(idx, _zrs);
-			//iterationState.UpdateZiLimbSet(idx, _zis);
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV.AsByte());
 

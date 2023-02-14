@@ -23,8 +23,8 @@ namespace MSS.Common
 		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse);
 
 		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct);
-		Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
-		Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse);
+		Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
+		Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
 
 		bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision);
 		Subdivision InsertSubdivision(Subdivision subdivision);

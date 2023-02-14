@@ -1,26 +1,23 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace MSS.Types.MSet
 {
-	//[BsonSerializer(typeof(ZValuesSerializer))]
 	public class ZValues
 	{
 		private const int VALUE_SIZE = 4;
 
 		#region Constructors
 
-		public ZValues()
-		{
-			BlockWidth = 0;
-			BlockHeight = 0;
-			LimbCount = 0;
-			Zrs = new byte[0];
-			Zis = new byte[0];
-			HasEscapedFlags = new byte[0];
-			RowsHasEscaped = new byte[0];
-		}
+		//public ZValues()
+		//{
+		//	BlockWidth = 0;
+		//	BlockHeight = 0;
+		//	LimbCount = 0;
+		//	Zrs = new byte[0];
+		//	Zis = new byte[0];
+		//	HasEscapedFlags = new byte[0];
+		//	RowsHasEscaped = new byte[0];
+		//}
 
 		public ZValues(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapeFlags, byte[] rowHasEscaped)
 		{
@@ -31,11 +28,19 @@ namespace MSS.Types.MSet
 			var valueCount = blockSize.NumberOfCells;
 			var totalByteCount = valueCount * LimbCount * VALUE_SIZE;
 
-			Zrs = new byte[totalByteCount];
-			Array.Copy(zrs, 0, Zrs, 0, totalByteCount);
+			if (zrs.Length != totalByteCount)
+			{
+				Debug.WriteLine($"WARNING: Creating a ZValues object with array data longer than required. Incoming: {zrs.Length}, Required: {totalByteCount}.");
+			}
 
-			Zis = new byte[totalByteCount];
-			Array.Copy(zis, 0, Zis, 0, totalByteCount);
+			//Zrs = new byte[totalByteCount];
+			//Array.Copy(zrs, 0, Zrs, 0, totalByteCount);
+
+			//Zis = new byte[totalByteCount];
+			//Array.Copy(zis, 0, Zis, 0, totalByteCount);
+
+			Zrs = zrs;
+			Zis = zis;
 
 			HasEscapedFlags = hasEscapeFlags;
 			RowsHasEscaped = rowHasEscaped;
@@ -49,7 +54,6 @@ namespace MSS.Types.MSet
 		public int BlockHeight { get; init; }
 		public int LimbCount { get; init; }
 
-		//[BsonSerializer(typeof(MapSectionZVectors))]
 		public byte[] Zrs { get; private set; }
 		public byte[] Zis { get; private set; }
 		public byte[] HasEscapedFlags { get; set; }

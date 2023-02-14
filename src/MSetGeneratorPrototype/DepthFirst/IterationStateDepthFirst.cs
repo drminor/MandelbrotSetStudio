@@ -165,7 +165,6 @@ namespace MSetGeneratorPrototype
 						{
 							Debug.WriteLine($"WARNING: Row has not escaped, but the row is done, even with the new Target Iterations. New Target: {TargetIterationsVector.GetElement(0)}");
 						}
-
 					}
 				}
 			}
@@ -175,21 +174,8 @@ namespace MSetGeneratorPrototype
 				rowNumber++;
 				if (rowNumber < BlockSize.Height)
 				{
-					//HasEscapedFlagsRow = _mapSectionZVectors.GetHasEscapedFlagsRow(rowNumber);
-					//_mapSectionZVectors.FillHasEscapedFlagsRow(rowNumber, HasEscapedFlagsRowV);
 					Array.Clear(HasEscapedFlagsRowV);
-
-					//CountsRow = _mapSectionVectors.GetCountsRow(rowNumber);
-					//_mapSectionVectors.FillCountsRow(rowNumber, CountsRowV);
 					Array.Clear(CountsRowV);
-
-
-					// TODO: Is this required.
-					//Array.Clear(ZrsRowV);
-					//Array.Clear(ZisRowV);
-
-					//_mapSectionZVectors.FillZrsRow(rowNumber, ZrsRowV);
-					//_mapSectionZVectors.FillZisRow(rowNumber, ZisRowV);
 
 					_inPlayBackingList.Clear();
 					for (var i = 0; i < VectorsPerFlagRow; i++)
@@ -204,8 +190,6 @@ namespace MSetGeneratorPrototype
 			if (rowNumber < BlockSize.Height)
 			{
 				RowNumber = rowNumber;
-
-				//Array.Clear(DoneFlags);
 
 				var yPoint = _samplePointsY[rowNumber];
 				CisRow.UpdateFrom(yPoint);

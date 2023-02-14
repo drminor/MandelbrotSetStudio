@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
@@ -95,10 +96,11 @@ namespace MapSectionProviderLib
 					{
 						if (mapSectionResponse.RecordOnFile)
 						{
+							var mapSectionId = new ObjectId(mapSectionResponse.MapSectionId!);
 							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 
 							_ = await _mapSectionAdapter.UpdateCountValuesAync(mapSectionResponse);
-							_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse);
+							_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
 
 							// TODO: The OwnerId may already be on file for this MapSection -- or not.
 						}
@@ -106,10 +108,14 @@ namespace MapSectionProviderLib
 						{
 							//Debug.WriteLine($"Creating MapSection for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 							var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
-							mapSectionResponse.MapSectionId = mapSectionId.ToString();
 
-							_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse);
-							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
+							if (mapSectionId.HasValue)
+							{
+								mapSectionResponse.MapSectionId = mapSectionId.ToString();
+
+								_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
+								_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
+							}
 						}
 
 						_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);

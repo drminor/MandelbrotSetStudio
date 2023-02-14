@@ -34,13 +34,13 @@ namespace MSetRepo
 			//_mMapSectionZVectorsPool = mapSectionZVectorsPool;
 			_dtoMapper = new DtoMapper();
 
-			//BsonSerializer.RegisterSerializer(new ZValuesSerializer());
+			BsonSerializer.RegisterSerializer(new ZValuesSerializer());
 
-			BsonClassMap.RegisterClassMap<ZValues>(cm => {
-				cm.AutoMap();
-				cm.GetMemberMap(c => c.Zrs).SetSerializer(new ZValuesSerializer());
-				cm.GetMemberMap(c => c.Zis).SetSerializer(new ZValuesSerializer());
-			});
+			//BsonClassMap.RegisterClassMap<ZValues>(cm => {
+			//	cm.AutoMap();
+			//	cm.GetMemberMap(c => c.Zrs).SetSerializer(new ZValuesArraySerializer());
+			//	cm.GetMemberMap(c => c.Zis).SetSerializer(new ZValuesArraySerializer());
+			//});
 
 		}
 
@@ -175,27 +175,27 @@ namespace MSetRepo
 			return result?.ZValues;
 		}
 
-		public async Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse)
+		public async Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId)
 		{
 			var mapSectionZValsReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
-			var mapSectionZValuesRecord = GetZValues(mapSectionResponse);
+			var mapSectionZValuesRecord = GetZValues(mapSectionResponse, mapSectionId);
 
-			var mapSectionId = await mapSectionZValsReaderWriter.InsertAsync(mapSectionZValuesRecord);
+			var mapSectionZValuesId = await mapSectionZValsReaderWriter.InsertAsync(mapSectionZValuesRecord);
 
-			return mapSectionId;
+			return mapSectionZValuesId;
 		}
 
-		public async Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse)
+		public async Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId)
 		{
 			var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
-			var mapSectionZValuesRecord = GetZValues(mapSectionResponse);
+			var mapSectionZValuesRecord = GetZValues(mapSectionResponse, mapSectionId);
 
-			var result = await mapSectionZValuesReaderWriter.UpdateZValuesAync(mapSectionZValuesRecord);
+			var result = await mapSectionZValuesReaderWriter.UpdateZValuesByMapSectionIdAync(mapSectionZValuesRecord, mapSectionId);
 
 			return result;
 		}
 
-		public MapSectionZValuesRecord GetZValues(MapSectionResponse source)
+		private MapSectionZValuesRecord GetZValues(MapSectionResponse source, ObjectId mapSectionId)
 		{
 			if (source.MapSectionId == null)
 			{
@@ -214,11 +214,11 @@ namespace MSetRepo
 			var result = new MapSectionZValuesRecord
 				(
 				DateCreatedUtc: DateTime.UtcNow,
-				MapSectionId: new ObjectId(source.MapSectionId),
+				MapSectionId: mapSectionId,
 				ZValues: zValues
 				)
 			{
-				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
+				Id = ObjectId.GenerateNewId(),
 				LastAccessed = DateTime.UtcNow
 			};
 
