@@ -70,8 +70,8 @@ namespace MSetGeneratorPrototype
 			ApFixedPointFormat = apFixedPointFormat;
 			LimbCount = apFixedPointFormat.LimbCount;
 
-			_squareResult0Lo = new Vector256<uint>[LimbCount * 2];
-			_squareResult0Hi = new Vector256<uint>[LimbCount * 2];
+			_squareResult0Lo = new Vector256<uint>[LimbCount];
+			_squareResult0Hi = new Vector256<uint>[LimbCount];
 
 			_squareResult1Lo = new Vector256<ulong>[LimbCount * 2];
 			_squareResult1Hi = new Vector256<ulong>[LimbCount * 2];
@@ -136,9 +136,9 @@ namespace MSetGeneratorPrototype
 
 			//result.ClearManatissMems();
 
-			for (int j = 0; j < LimbCount; j++)
+			for (int j = 0; j < source.Length; j++)
 			{
-				for (int i = j; i < LimbCount; i++)
+				for (int i = j; i < source.Length; i++)
 				{
 					var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
 
@@ -179,9 +179,7 @@ namespace MSetGeneratorPrototype
 
 			_carryVectorsLong = Vector256<ulong>.Zero;
 
-			var limbCnt = source.Length;
-
-			for (int limbPtr = 0; limbPtr < limbCnt; limbPtr++)
+			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
 			{
 				var withCarries = Avx2.Add(source[limbPtr], _carryVectorsLong);
 
@@ -211,7 +209,7 @@ namespace MSetGeneratorPrototype
 
 				if (sourceIndex > 0)
 				{
-					// Calcualte the lo end
+					// Calculate the lo end
 
 					// Take the bits from the source limb, discarding the top shiftAmount of bits.
 					var source = sourceLimbsLo[limbPtr + sourceIndex];
@@ -240,7 +238,7 @@ namespace MSetGeneratorPrototype
 				}
 				else
 				{
-					// Calcualte the lo end
+					// Calculate the lo end
 
 					// Take the bits from the source limb, discarding the top shiftAmount of bits.
 					var source = sourceLimbsLo[limbPtr + sourceIndex];
@@ -280,7 +278,7 @@ namespace MSetGeneratorPrototype
 		{
 			_carryVectors = Vector256<uint>.Zero;
 
-			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+			for (int limbPtr = 0; limbPtr < a.Length; limbPtr++)
 			{
 				var sumVector = Avx2.Add(a[limbPtr], b[limbPtr]);
 				var newValuesVector = Avx2.Add(sumVector, _carryVectors);
@@ -306,7 +304,7 @@ namespace MSetGeneratorPrototype
 		{
 			_carryVectors = _ones;
 
-			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
 			{
 				var notVector = Avx2.Xor(source[limbPtr], ALL_BITS_SET_VEC);
 				var newValuesVector = Avx2.Add(notVector, _carryVectors);
@@ -327,7 +325,7 @@ namespace MSetGeneratorPrototype
 			if (signBitFlags == -1)
 			{
 				// All positive values
-				for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+				for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
 				{
 					// Take the lower 4 values and set the low halves of each result
 					resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
@@ -341,7 +339,7 @@ namespace MSetGeneratorPrototype
 				// Mixed Positive and Negative values
 				_carryVectors = _ones;
 
-				for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+				for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
 				{
 					var notVector = Avx2.Xor(source[limbPtr], ALL_BITS_SET_VEC);
 					var newValuesVector = Avx2.Add(notVector, _carryVectors);

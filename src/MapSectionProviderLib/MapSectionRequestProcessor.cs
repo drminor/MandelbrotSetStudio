@@ -219,7 +219,9 @@ namespace MapSectionProviderLib
 						if (!UseRepo)
 						{
 							await Task.Delay(200);
-							PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor);
+							var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+
+							PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionVectors, mapSectionGeneratorProcessor);
 						}
 						else
 						{
@@ -248,7 +250,10 @@ namespace MapSectionProviderLib
 		private async Task<MapSectionResponse?> FetchOrQueueForGenerationAsync(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
 		{
 			var request = mapSectionWorkRequest.Request;
-			var mapSectionResponse = await FetchAsync(mapSectionWorkRequest, ct);
+
+			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+
+			var mapSectionResponse = await FetchAsync(mapSectionWorkRequest, ct, mapSectionVectors);
 
 			if (mapSectionResponse != null)
 			{
@@ -297,19 +302,19 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor);
+				PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionVectors, mapSectionGeneratorProcessor);
 				return null;
 			}
 		}
 
-		private void PrepareRequestAndQueue(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor)
+		private void PrepareRequestAndQueue(MapSectionWorkRequest mapSectionWorkRequest, MapSectionVectors mapSectionVectors, MapSectionGeneratorProcessor mapSectionGeneratorProcessor)
 		{
 			var request = mapSectionWorkRequest.Request;
 
 			request.MapSectionId = null;
 
 			// Get empty buffers to hold the results.
-			request.MapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+			request.MapSectionVectors = mapSectionVectors;
 			request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision);
 
 			//Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated.");
@@ -383,13 +388,11 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionResponse?> FetchAsync(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
+		private async Task<MapSectionResponse?> FetchAsync(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
 		{
 			var mapSectionRequest = mapSectionWorkRequest.Request;
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
-
-			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
 
 			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct, mapSectionVectors);
 

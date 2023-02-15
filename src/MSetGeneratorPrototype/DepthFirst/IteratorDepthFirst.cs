@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
@@ -29,7 +30,6 @@ namespace MSetGeneratorPrototype
 		{
 			_fp31VecMath = fp31VecMath;
 
-			IsReset = true;
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
@@ -46,7 +46,6 @@ namespace MSetGeneratorPrototype
 
 		#region Public Properties
 
-		public bool IsReset { get; private set; }
 		public bool IncreasingIterations { get; set; }
 
 		public uint Threshold
@@ -68,57 +67,54 @@ namespace MSetGeneratorPrototype
 
 		#region Public Methods
 
-		public void Reset()
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Vector256<int> IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
 		{
-			IsReset = true;
+			if (IncreasingIterations)
+			{
+				_fp31VecMath.Square(zrs, _zRSqrs);
+				_fp31VecMath.Square(zis, _zISqrs);
+
+				return Iterate(crs, cis, zrs, zis);
+			}
+			else
+			{
+				try
+				{
+					Array.Copy(crs, zrs, crs.Length);
+					Array.Copy(cis, zis, cis.Length);
+
+					_fp31VecMath.Square(zrs, _zRSqrs);
+					_fp31VecMath.Square(zis, _zISqrs);
+					_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
+
+					var escapedFlags = _fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs[^1], _thresholdVector);
+					return escapedFlags;
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"Iterator received exception: {e}.");
+					throw;
+				}
+			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector256<int> Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
 		{
 			try
 			{
-				if (IsReset)
-				{
-					// Perform the first iteration. 
-					if (!IncreasingIterations)
-					{
-						Array.Copy(crs, zrs, crs.Length);
-						Array.Copy(cis, zis, cis.Length);
-					}
-					else
-					{
-						_fp31VecMath.Square(zrs, _zRSqrs);
-						_fp31VecMath.Square(zis, _zISqrs);
+				// square(z.r + z.i)
+				_fp31VecMath.AddThenSquare(zrs, zis, _zRZiSqrs);
 
-						// square(z.r + z.i)
-						_fp31VecMath.AddThenSquare(zrs, zis, _zRZiSqrs);
+				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
+				_fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
+				_fp31VecMath.Sub(zis, _zISqrs, _zIs2);
+				_fp31VecMath.Add(_zIs2, cis, zis);
 
-						// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
-						_fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
-						_fp31VecMath.Sub(zis, _zISqrs, _zIs2);
-						_fp31VecMath.Add(_zIs2, cis, zis);
-
-						// z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
-						_fp31VecMath.Sub(_zRSqrs, _zISqrs, _zRs2);
-						_fp31VecMath.Add(_zRs2, crs, zrs);
-					}
-
-					IsReset = false;
-				}
-				else
-				{
-					// square(z.r + z.i)
-					_fp31VecMath.AddThenSquare(zrs, zis, _zRZiSqrs);
-
-					// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
-					_fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
-					_fp31VecMath.Sub(zis, _zISqrs, _zIs2);
-					_fp31VecMath.Add(_zIs2, cis, zis);
-
-					// z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
-					_fp31VecMath.Sub(_zRSqrs, _zISqrs, _zRs2);
-					_fp31VecMath.Add(_zRs2, crs, zrs);
-				}
+				// z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
+				_fp31VecMath.Sub(_zRSqrs, _zISqrs, _zRs2);
+				_fp31VecMath.Add(_zRs2, crs, zrs);
 
 				_fp31VecMath.Square(zrs, _zRSqrs);
 				_fp31VecMath.Square(zis, _zISqrs);

@@ -34,7 +34,7 @@ namespace MSetRepo
 			//_mMapSectionZVectorsPool = mapSectionZVectorsPool;
 			_dtoMapper = new DtoMapper();
 
-			BsonSerializer.RegisterSerializer(new ZValuesSerializer());
+			//BsonSerializer.RegisterSerializer(new ZValuesSerializer());
 
 			//BsonClassMap.RegisterClassMap<ZValues>(cm => {
 			//	cm.AutoMap();

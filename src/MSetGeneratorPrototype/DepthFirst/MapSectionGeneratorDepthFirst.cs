@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using System.Diagnostics.Metrics;
+using System.Runtime.CompilerServices;
 
 namespace MSetGeneratorPrototype
 {
@@ -180,67 +182,13 @@ namespace MSetGeneratorPrototype
 			Array.Copy(_zrs, _resultZrs, _resultZrs.Length);
 			Array.Copy(_zis, _resultZis, _resultZis.Length);
 
-			var allDone = false;
+			var escapedFlagsVec = iterator.IterateFirstRound(_crs, _cis, _zrs, _zis);
+			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 
-			iterator.Reset();
-			//var firstTime = true;
-			while (!allDone)
+			while (compositeIsDone != -1)
 			{
-				var prevDoneFlagsV = doneFlagsV;
-
-				//Vector256<int> escapedFlagsVec;
-				
-				//if (firstTime)
-				//{
-				//	escapedFlagsVec = iterator.IterateFirstRound(_crs, _cis, _zrs, _zis);
-				//	firstTime = false;
-				//}
-				//else
-				//{
-				//	escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
-				//}
-
-				var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
-
-				//TallyUsedAndUnusedCalcs(idx, iterationState.DoneFlags, ref iterationState);
-
-				// Increment all counts
-				//var countsVt = Avx2.Add(countsV, _justOne);
-
-				// Take the incremented count, only if the doneFlags is false for each vector position.
-				//countsV = Avx2.BlendVariable(countsVt, countsV, doneFlagsV); // use First if Zero, second if 1
-
-				countsV = Avx2.Add(countsV, _justOne);
-
-				// Apply the new escapedFlags, only if the doneFlags is false for each vector position
-				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
-
-				// Compare the new Counts with the TargetIterations
-				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
-
-				//var escapedOrReachedVec = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
-				doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
-
-				var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
-
-				var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
-				if (compositeIsDone != prevCompositeIsDone)
-				{
-					var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
-					//justNowDone = Avx2.Xor(justNowDone, ALL_BITS_SET);
-
-					resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
-
-					// Record the resulting ZValues for the sample point just completed.
-					for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
-					{
-						_resultZrs[limbPtr] = Avx2.BlendVariable(_zrs[limbPtr].AsInt32(), _resultZrs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-						_resultZis[limbPtr] = Avx2.BlendVariable(_zis[limbPtr].AsInt32(), _resultZis[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-					}
-
-				}
-
-				allDone = compositeIsDone == -1;
+				escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
+				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 			}
 
 			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, ref iterationState);
@@ -253,22 +201,46 @@ namespace MSetGeneratorPrototype
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV.AsByte());
 
-			var result = compositeAllEscaped == -1;
-
-			return result;
+			return compositeAllEscaped == -1;
 		}
 
-		//[Conditional("PERF")]
-		//private void TallyUsedAndUnusedCalcs(int idx, Vector256<int>[] doneFlags, ref IterationStateDepthFirst iterationState)
-		//{
-		//	iterationState.Calcs[idx]++;
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private int UpdateCounts(Vector256<int> escapedFlagsVec, ref Vector256<int> countsV, ref Vector256<int> resultCountsV, ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
+		{
+			countsV = Avx2.Add(countsV, _justOne);
 
-		//	// Increment all unused calculations
-		//	var unusedCalcsVt = Avx2.Add(iterationState.UnusedCalcs[idx], _justOne);
+			// Apply the new escapedFlags, only if the doneFlags is false for each vector position
+			hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
 
-		//	// Take the incremented unusedCalc, only if the doneFlags is true for each vector position.
-		//	iterationState.UnusedCalcs[idx] = Avx2.BlendVariable(iterationState.UnusedCalcs[idx], unusedCalcsVt, doneFlags[idx]); // use First if Zero, second if 1
-		//}
+			// Compare the new Counts with the TargetIterations
+			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsV);
+
+			var prevDoneFlagsV = doneFlagsV;
+
+			// If escaped or reached the target iterations, we're done 
+			doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
+
+			var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
+			var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
+
+			if (compositeIsDone != prevCompositeIsDone)
+			{
+				var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
+
+				// Save the current count 
+				resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
+
+				// Save the current ZValues.
+				for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
+				{
+					_resultZrs[limbPtr] = Avx2.BlendVariable(_zrs[limbPtr].AsInt32(), _resultZrs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+					_resultZis[limbPtr] = Avx2.BlendVariable(_zis[limbPtr].AsInt32(), _resultZis[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+				}
+			}
+
+			return compositeIsDone;
+		}
+
 
 		[Conditional("PERF")]
 		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, ref IterationStateDepthFirst iterationState)
@@ -404,5 +376,63 @@ namespace MSetGeneratorPrototype
 		}
 
 		#endregion
+
+
+		/*
+
+			var firstTime = true;
+			while (compositeIsDone != -1)
+			{
+				var prevDoneFlagsV = doneFlagsV;
+
+				Vector256<int> escapedFlagsVec;
+
+				if (firstTime)
+				{
+					escapedFlagsVec = iterator.IterateFirstRound(_crs, _cis, _zrs, _zis);
+					firstTime = false;
+				}
+				else
+				{
+					escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
+				}
+
+				//var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
+
+				countsV = Avx2.Add(countsV, _justOne);
+
+				// Apply the new escapedFlags, only if the doneFlags is false for each vector position
+				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
+
+				// Compare the new Counts with the TargetIterations
+				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
+
+				// If escaped or reached the target iterations, we're done 
+				doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
+
+				compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
+				var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
+
+				if (compositeIsDone != prevCompositeIsDone)
+				{
+					var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
+
+					// Save the current count 
+					resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
+
+					// Save the current ZValues.
+					for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
+					{
+						_resultZrs[limbPtr] = Avx2.BlendVariable(_zrs[limbPtr].AsInt32(), _resultZrs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+						_resultZis[limbPtr] = Avx2.BlendVariable(_zis[limbPtr].AsInt32(), _resultZis[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+					}
+				}
+
+			}
+
+
+		*/
+
+
 	}
 }

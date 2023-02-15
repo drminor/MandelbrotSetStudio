@@ -4,6 +4,9 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MSS.Types.MSet;
 using System;
+using System.Buffers;
+using System.IO;
+using System.Runtime.Intrinsics.Arm;
 
 namespace MSetRepo
 {
@@ -66,31 +69,38 @@ namespace MSetRepo
 			wrtr.WriteInt32(nameof(value.BlockHeight), value.BlockHeight);
 			wrtr.WriteInt32(nameof(value.LimbCount), value.LimbCount);
 
-			//wrtr.WriteStartArray(nameof(value.Zrs));
-			wrtr.WriteBytes(nameof(value.Zrs), value.Zrs);
-			//_byteArraySerializer.Serialize(context, value.Zrs);
-			//wrtr.WriteEndArray();
+			var zByteCount = value.BlockSize.NumberOfCells * value.LimbCount * 4;
 
-			wrtr.WriteStartArray(nameof(value.Zis));
-			//wrtr.WriteBytes(value.Zis);
-			_byteArraySerializer.Serialize(context, value.Zis);
-			wrtr.WriteEndArray();
+			// Zrs
+			//var sl = new Span<byte>(value.Zrs).Slice(0, zByteCount);
 
-			wrtr.WriteStartArray(nameof(value.HasEscapedFlags));
-			//wrtr.WriteBytes(value.HasEscapedFlags);
+			//wrtr.WriteBytes(nameof(value.Zrs), value.Zrs.AsSpan().Slice(0, zByteCount).ToArray());
+
+			var sl = new ByteArrayBuffer(value.Zrs, zByteCount, isReadOnly: true);
+			//wrtr.WriteBytes(sl.GetBytes(0,))
+			wrtr.WriteRawBsonArray(nameof(value.Zrs), sl);
+
+			// Zis
+			//wrtr.WriteBytes(nameof(value.Zis), value.Zrs.AsSpan().Slice(0, zByteCount).ToArray());
+
+			sl = new ByteArrayBuffer(value.Zis, zByteCount, isReadOnly: true);
+			wrtr.WriteRawBsonArray(nameof(value.Zis), sl);
+
+			// HasEscapedFlags
+			wrtr.WriteName(nameof(value.HasEscapedFlags));
 			_byteArraySerializer.Serialize(context, value.HasEscapedFlags);
-			wrtr.WriteEndArray();
 
-			wrtr.WriteStartArray(nameof(value.RowsHasEscaped));
-			//wrtr.WriteBytes(value.RowsHasEscaped);
+			// RowHasEscaped
+			wrtr.WriteName(nameof(value.RowsHasEscaped));
 			_byteArraySerializer.Serialize(context, value.RowsHasEscaped);
-			wrtr.WriteEndArray();
 
 			context.Writer.WriteEndDocument();
 		}
 
 		public ZValues Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
 		{
+			ZValues result;
+
 			var rdr = context.Reader;
 
 			rdr.ReadStartDocument();
@@ -99,37 +109,63 @@ namespace MSetRepo
 			var blockHeight = rdr.ReadInt32(nameof(ZValues.BlockHeight));
 			var limbCount = rdr.ReadInt32(nameof(ZValues.LimbCount));
 
-			//rdr.ReadName(nameof(ZValues.Zrs));
-			var bType = rdr.ReadBsonType();
-			rdr.ReadStartArray();
-			var zrs = _byteArraySerializer.Deserialize(context, args);
-			rdr.ReadEndArray();
+			var zByteCount = blockWidth * blockHeight * limbCount * 4;
 
-			//rdr.ReadName(nameof(ZValues.Zis));
-			bType = rdr.ReadBsonType();
+			// Zrs
+			_ = rdr.ReadBsonType();
+			rdr.ReadName();
 			rdr.ReadStartArray();
-			var zis = _byteArraySerializer.Deserialize(context, args);
+			var dd = rdr.ReadRawBsonArray();
 			rdr.ReadEndArray();
+			var zrs = ArrayPool<byte>.Shared.Rent(zByteCount);
+			EfficientCopyTo(dd, zrs);
 
-			//rdr.ReadName(nameof(ZValues.HasEscapedFlags));
-			bType = rdr.ReadBsonType();
+			// Zis
+			_ = rdr.ReadBsonType();
+			rdr.ReadName();
 			rdr.ReadStartArray();
+			dd = rdr.ReadRawBsonArray();
+			rdr.ReadEndArray();
+			var zis = ArrayPool<byte>.Shared.Rent(zByteCount);
+			EfficientCopyTo(dd, zis);
+
+			// Has Escaped Flags
+			_ = rdr.ReadBsonType();
+			rdr.ReadName(nameof(ZValues.HasEscapedFlags));
 			var hasEscapedFlags = _byteArraySerializer.Deserialize(context, args);
-			rdr.ReadEndArray();
 
-
-			//rdr.ReadName(nameof(ZValues.RowsHasEscaped));
-			bType = rdr.ReadBsonType();
-			rdr.ReadStartArray();
+			// RowHasEscaped
+			_ = rdr.ReadBsonType();
+			rdr.ReadName(nameof(ZValues.RowsHasEscaped));
 			var rowHasEscaped = _byteArraySerializer.Deserialize(context, args);
-			rdr.ReadEndArray();
 
 			rdr.ReadEndDocument();
-
-			var result = new ZValues(new MSS.Types.SizeInt(blockWidth, blockHeight), limbCount, zrs, zis, hasEscapedFlags, rowHasEscaped);
+			result = new ZValues(new MSS.Types.SizeInt(blockWidth, blockHeight), limbCount, zrs, zis, hasEscapedFlags, rowHasEscaped);
 
 			return result;
 		}
+
+		#endregion
+
+		#region Private Methods
+
+		public void EfficientCopyTo(IByteBuffer buffer, byte[] destination)
+		{
+			var position = 0;
+			long remainingCount;
+
+			while ((remainingCount = buffer.Length - position) > 0)
+			{
+				var segment = buffer.AccessBackingBytes(position);
+				var count = (int)Math.Min(segment.Count, remainingCount);
+
+				segment.CopyTo(destination, position);
+
+				//destination.Write(segment.Array, segment.Offset, count);
+				position += count;
+			}
+		}
+
 
 		#endregion
 	}

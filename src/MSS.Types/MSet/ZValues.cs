@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace MSS.Types.MSet
 {
@@ -8,16 +9,16 @@ namespace MSS.Types.MSet
 
 		#region Constructors
 
-		//public ZValues()
-		//{
-		//	BlockWidth = 0;
-		//	BlockHeight = 0;
-		//	LimbCount = 0;
-		//	Zrs = new byte[0];
-		//	Zis = new byte[0];
-		//	HasEscapedFlags = new byte[0];
-		//	RowsHasEscaped = new byte[0];
-		//}
+		public ZValues()
+		{
+			BlockWidth = 0;
+			BlockHeight = 0;
+			LimbCount = 0;
+			Zrs = new byte[0];
+			Zis = new byte[0];
+			HasEscapedFlags = new byte[0];
+			RowsHasEscaped = new byte[0];
+		}
 
 		public ZValues(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapeFlags, byte[] rowHasEscaped)
 		{
@@ -30,17 +31,19 @@ namespace MSS.Types.MSet
 
 			if (zrs.Length != totalByteCount)
 			{
-				Debug.WriteLine($"WARNING: Creating a ZValues object with array data longer than required. Incoming: {zrs.Length}, Required: {totalByteCount}.");
+				Debug.WriteLine($"WARNING: While constructing the ZValues, creating new byte arrays since the incomming arrays are too long. Incoming: {zrs.Length}, Required: {totalByteCount}.");
+				Zrs = new byte[totalByteCount];
+				Array.Copy(zrs, 0, Zrs, 0, totalByteCount);
+
+				Zis = new byte[totalByteCount];
+				Array.Copy(zis, 0, Zis, 0, totalByteCount);
+			}
+			else
+			{
+				Zrs = zrs;
+				Zis = zis;
 			}
 
-			//Zrs = new byte[totalByteCount];
-			//Array.Copy(zrs, 0, Zrs, 0, totalByteCount);
-
-			//Zis = new byte[totalByteCount];
-			//Array.Copy(zis, 0, Zis, 0, totalByteCount);
-
-			Zrs = zrs;
-			Zis = zis;
 
 			HasEscapedFlags = hasEscapeFlags;
 			RowsHasEscaped = rowHasEscaped;
