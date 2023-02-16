@@ -127,7 +127,7 @@ namespace MSS.Common
 		{
 			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
 
-			var result = CreateRequest(screenPosition, repoPosition, precision, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
+			var result = CreateRequest(screenPosition, mapBlockOffset, repoPosition, precision, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
 
 			return result;
 		}
@@ -142,7 +142,7 @@ namespace MSS.Common
 		/// <param name="mapCalcSettings"></param>
 		/// <param name="mapPosition"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector repoPosition, int precision, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, BigVector repoPosition, int precision, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
 
@@ -152,6 +152,7 @@ namespace MSS.Common
 				jobOwnerType: jobOwnerType,
 				subdivisionId: subdivision.Id.ToString(),
 				screenPosition: screenPosition,
+				mapBlockOffset: mapBlockOffset,
 				blockPosition: repoPosition,
 				isInverted: isInverted,
 				mapPosition: mapPosition,
@@ -189,13 +190,13 @@ namespace MSS.Common
 
 		#region Create MapSection
 
-		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, int jobId, BigVector mapBlockOffset)
+		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, byte[] countsByteArray, int jobId, BigVector mapBlockOffset)
 		{
-			var mapSectionVectors = mapSectionResponse.MapSectionVectors;
-			if (mapSectionVectors == null)
-			{
-				throw new InvalidOperationException("Cannot create the MapSection: the MapSectionResponse is empty.");
-			}
+			//var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+			//if (mapSectionVectors == null)
+			//{
+			//	throw new InvalidOperationException("Cannot create the MapSection: the MapSectionResponse is empty.");
+			//}
 
 			var repoBlockPosition = mapSectionRequest.BlockPosition;
 			var isInverted = mapSectionRequest.IsInverted;
@@ -203,13 +204,11 @@ namespace MSS.Common
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var mapSectionValues = ObtainMapSectionValues();
-			mapSectionValues.Load(mapSectionVectors);
+			mapSectionValues.Load(countsByteArray);
 
 			var mapSection = new MapSection(jobId, mapSectionValues, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
 				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
 
-			ReturnMapSectionResponse(mapSectionResponse);
-			//mapSectionResponse.MapSectionValues = null;
 
 			return mapSection;
 		}
@@ -363,7 +362,7 @@ namespace MSS.Common
 
 		public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
 		{
-			if (mapSectionRequest.MapSectionVectors != null)
+			if (mapSectionRequest.MapSectionVectors != null && !mapSectionRequest.MapSectionVectors.FromRepo)
 			{
 				_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors);
 				mapSectionRequest.MapSectionVectors = null;
@@ -378,7 +377,7 @@ namespace MSS.Common
 
 		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
 		{
-			if (mapSectionResponse.MapSectionVectors != null)
+			if (mapSectionResponse.MapSectionVectors != null && !mapSectionResponse.MapSectionVectors.FromRepo)
 			{
 				_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors);
 				mapSectionResponse.MapSectionVectors = null;

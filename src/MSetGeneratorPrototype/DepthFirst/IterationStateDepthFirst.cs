@@ -11,7 +11,11 @@ namespace MSetGeneratorPrototype
 	{
 		//private readonly FP31Val[] _samplePointsX;
 		private readonly FP31Val[] _samplePointsY;
+		
 		private readonly MapSectionVectors _mapSectionVectors;
+		//private readonly byte[] _counts;
+		private readonly int _bytesPerFlagRow;
+
 		private readonly MapSectionZVectors _mapSectionZVectors;
 
 		private List<int> _inPlayBackingList;
@@ -25,8 +29,11 @@ namespace MSetGeneratorPrototype
 		{
 			//_samplePointsX = samplePointsX;
 			_samplePointsY = samplePointsY;	
+
 			_mapSectionVectors = mapSectionVectors;
+
 			_mapSectionZVectors = mapSectionZVectors;
+			_bytesPerFlagRow = mapSectionZVectors.BytesPerFlagRow;
 
 			IncreasingIterations = increasingIterations;
 			TargetIterationsVector = targetIterationsVector;
@@ -34,7 +41,7 @@ namespace MSetGeneratorPrototype
 			ValueCount = mapSectionZVectors.ValueCount;
 			LimbCount = mapSectionZVectors.LimbCount;
 			RowCount = mapSectionZVectors.BlockSize.Height;
-			ValuesPerRow = mapSectionVectors.ValuesPerRow;
+			ValuesPerRow = mapSectionZVectors.ValuesPerRow;
 			VectorsPerRow = mapSectionZVectors.VectorsPerRow;
 			VectorsPerFlagRow = mapSectionZVectors.VectorsPerFlagRow;
 
@@ -83,7 +90,6 @@ namespace MSetGeneratorPrototype
 		public bool IncreasingIterations { get; private set; }
 		public Vector256<int> TargetIterationsVector { get; private set; }
 
-		public SizeInt BlockSize => _mapSectionVectors.BlockSize;
 		public int ValueCount { get; init; }
 		public int LimbCount { get; init; }
 		public int RowCount { get; init; }
@@ -143,7 +149,7 @@ namespace MSetGeneratorPrototype
 			{
 				var allSamplesForThisRowAreDone = true;
 
-				while (allSamplesForThisRowAreDone && ++rowNumber < BlockSize.Height)
+				while (allSamplesForThisRowAreDone && ++rowNumber < RowCount)
 				{
 					if (!RowHasEscaped[rowNumber])
 					{
@@ -172,7 +178,7 @@ namespace MSetGeneratorPrototype
 			{
 				// Starting fresh: all ZValues are zero.
 				rowNumber++;
-				if (rowNumber < BlockSize.Height)
+				if (rowNumber < RowCount)
 				{
 					Array.Clear(HasEscapedFlagsRowV);
 					Array.Clear(CountsRowV);
@@ -187,7 +193,7 @@ namespace MSetGeneratorPrototype
 				}
 			}
 
-			if (rowNumber < BlockSize.Height)
+			if (rowNumber < RowCount)
 			{
 				RowNumber = rowNumber;
 
@@ -325,6 +331,31 @@ namespace MSetGeneratorPrototype
 				ZisRowV[vecPtr++] = limbSet[i];
 			}
 		}
+
+
+		//private void FillCountsRow(int rowNumber, Vector256<int>[] dest)
+		//{
+		//	var destBack = MemoryMarshal.Cast<Vector256<int>, byte>(dest);
+
+		//	var startIndex = _bytesPerFlagRow * rowNumber;
+
+		//	for (var i = 0; i < _bytesPerFlagRow; i++)
+		//	{
+		//		destBack[i] = _counts[startIndex + i];
+		//	}
+		//}
+
+		//private void UpdateFromCountsRow(int rowNumber, Vector256<int>[] source)
+		//{
+		//	var sourceBack = MemoryMarshal.Cast<Vector256<int>, byte>(source);
+
+		//	var startIndex = _bytesPerFlagRow * rowNumber;
+
+		//	for (var i = 0; i < _bytesPerFlagRow; i++)
+		//	{
+		//		_counts[startIndex + i] = sourceBack[i];
+		//	}
+		//}
 
 		#endregion
 

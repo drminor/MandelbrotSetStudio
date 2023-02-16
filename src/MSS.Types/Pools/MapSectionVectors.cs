@@ -1,6 +1,5 @@
-﻿
-using System;
-using System.Diagnostics;
+﻿using System;
+using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -12,41 +11,38 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public MapSectionVectors(SizeInt blockSize) : this(blockSize, new byte[blockSize.NumberOfCells * VALUE_SIZE])
-		{ }
+		public MapSectionVectors(SizeInt blockSize) : this(blockSize, ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * VALUE_SIZE))
+		{
+			FromRepo = false;
+		}
 
 		public MapSectionVectors(SizeInt blockSize, byte[] counts)
 		{
 			BlockSize = blockSize;
 			ValueCount = blockSize.NumberOfCells;
 			ValuesPerRow = blockSize.Width;
-			Lanes = Vector256<uint>.Count;
-			VectorsPerRow = BlockSize.Width / Lanes;
 
 			BytesPerRow = ValuesPerRow * VALUE_SIZE;
 			TotalByteCount = ValueCount * VALUE_SIZE;
 
-			Debug.Assert(counts.Length == TotalByteCount, $"The length of counts does not equal the {ValueCount} * {VALUE_SIZE} (values/block * bytes/value) .");
-
 			Counts = counts;
-			CountsMemory = new Memory<byte>(Counts);
+			FromRepo = true;
 		}
 
 		#endregion
 
 		#region Public Properties
 
+		public bool FromRepo { get; init; }
+
 		public SizeInt BlockSize { get; init; }
 		public int ValueCount { get; init; }
 		public int ValuesPerRow { get; init; }
-		public int Lanes {get; init; }
-		public int VectorsPerRow { get; init; }
 
 		public int BytesPerRow { get; init; }
 		public int TotalByteCount { get; init; }
 
 		public byte[] Counts { get; init; }
-		public Memory<byte> CountsMemory { get; init; }
 
 		#endregion
 
@@ -55,18 +51,6 @@ namespace MSS.Types
 		public void Load(byte[] counts)
 		{
 			Array.Copy(counts, Counts, Counts.Length);
-		}
-
-		public Span<Vector256<int>> GetCountVectors()
-		{
-			var result = MemoryMarshal.Cast<byte, Vector256<int>>(CountsMemory.Span);
-			return result;
-		}
-
-		public Span<Vector256<int>> GetCountsRow(int rowNumber)
-		{
-			var result = MemoryMarshal.Cast<byte, Vector256<int>>(CountsMemory.Slice(BytesPerRow * rowNumber, BytesPerRow).Span);
-			return result;
 		}
 
 		public void FillCountsRow(int rowNumber, Vector256<int>[] dest)
@@ -154,9 +138,11 @@ namespace MSS.Types
 				if (disposing)
 				{
 					// Dispose managed state (managed objects)
-					//HasEscapedFlags = Array.Empty<bool>();
-					//Counts = Array.Empty<ushort>();
-					//EscapeVelocities = Array.Empty<ushort>();
+
+					if (!FromRepo)
+					{
+						ArrayPool<byte>.Shared.Return(Counts, clearArray: true);
+					}
 				}
 
 				_disposedValue = true;

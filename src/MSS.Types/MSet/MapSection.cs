@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -12,6 +13,23 @@ namespace MSS.Types
 		private Lazy<IHistogram> _histogram;
 
 		#region Constructor
+
+		public MapSection(MapSectionRequest mapSectionRequest, bool isCancelled = false)
+			: this(
+				  jobId: -1,
+				  mapSectionValues: null,
+				  subdivisionId: mapSectionRequest.SubdivisionId,
+				  repoBlockPosition: mapSectionRequest.BlockPosition,
+				  isInverted: false,
+				  blockPosition: new PointInt(),
+				  size: new SizeInt(),
+				  targetIterations: 0,
+				  histogramBuilder: BuildHstFake
+				  )
+		{
+			RequestCancelled = isCancelled;
+		}
+
 
 		public MapSection()
 			: this(
@@ -48,6 +66,8 @@ namespace MSS.Types
 		#endregion
 
 		#region Public Properties
+
+		public bool RequestCancelled { get; set; }
 
 		public int JobId { get; init; }
 		public MapSectionValues? MapSectionValues { get; set; }

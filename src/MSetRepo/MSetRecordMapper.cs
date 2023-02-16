@@ -25,7 +25,7 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, //, IMapper<MapSectionResponse, MapSectionRecord>,
+		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse, MapSectionRecord>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
@@ -259,11 +259,11 @@ namespace MSetRepo
 			return result;
 		}
 
-		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors)
+		public MapSectionResponse MapFrom(MapSectionRecord target)
 		{
 			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
 
-			mapSectionVectors.Load(target.Counts);
+			var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE, target.Counts); // TODO: Add BlockSize to the MapSectionRecord
 
 			var result = new MapSectionResponse
 			(
@@ -293,10 +293,6 @@ namespace MSetRepo
 
 			return result;
 		}
-
-		#endregion
-
-		#region Public Methods - MapSectionZValues
 
 		#endregion
 

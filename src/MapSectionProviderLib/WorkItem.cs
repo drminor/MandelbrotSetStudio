@@ -1,4 +1,5 @@
 ﻿using MEngineDataContracts;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 
@@ -31,9 +32,9 @@ namespace MapSectionProviderLib
 		}
 	}
 
-	internal class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSectionResponse>
+	internal class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSection>
 	{
-		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSectionResponse?, int> workAction)
+		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSection?, int> workAction)
 			: base(jobId, request, workAction)
 		{
 		}

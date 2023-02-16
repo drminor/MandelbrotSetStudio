@@ -521,13 +521,11 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		public Vector256<int> IsGreaterOrEqThan(Vector256<uint> left, Vector256<int> right)
+		public void IsGreaterOrEqThan(ref Vector256<uint> left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
 		{
 			var sansSign = Avx2.And(left, SIGN_BIT_MASK_VEC);
-			var result = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
+			escapedFlagsVec = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
 			//MathOpCounts.NumberOfGrtrThanOps++;
-
-			return result;
 		}
 
 		#endregion

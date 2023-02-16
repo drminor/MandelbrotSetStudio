@@ -5,7 +5,7 @@ namespace MSS.Types.MSet
 	public class MapSectionRequest
 	{
 		public MapSectionRequest(string ownerId, JobOwnerType jobOwnerType, string subdivisionId, 
-			PointInt screenPosition, BigVector blockPosition, bool isInverted, RPoint mapPosition, int precision, 
+			PointInt screenPosition, BigVector mapBlockOffset, BigVector blockPosition, bool isInverted, RPoint mapPosition, int precision, 
 			SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings)
 		{
 			MapSectionId = null;
@@ -13,6 +13,7 @@ namespace MSS.Types.MSet
 			JobOwnerType = jobOwnerType;
 			SubdivisionId = subdivisionId;
 			ScreenPosition = screenPosition;
+			MapBlockOffset = mapBlockOffset;
 			BlockPosition = blockPosition;
 			IsInverted = isInverted;
 			MapPosition = mapPosition;
@@ -31,6 +32,7 @@ namespace MSS.Types.MSet
 		public JobOwnerType JobOwnerType { get; set; }
 		public string SubdivisionId { get; set; }
 		public PointInt ScreenPosition { get; set; }
+		public BigVector MapBlockOffset { get; set; }
 		public BigVector BlockPosition { get; set; }
 		public RPoint MapPosition { get; set; }
 		public int Precision { get; set; }

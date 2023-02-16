@@ -31,7 +31,7 @@ namespace MSS.Types.MSet
 
 			if (zrs.Length != totalByteCount)
 			{
-				Debug.WriteLine($"WARNING: While constructing the ZValues, creating new byte arrays since the incomming arrays are too long. Incoming: {zrs.Length}, Required: {totalByteCount}.");
+				//Debug.WriteLine($"WARNING: While constructing the ZValues, creating new byte arrays since the incomming arrays are too long. Incoming: {zrs.Length}, Required: {totalByteCount}.");
 				Zrs = new byte[totalByteCount];
 				Array.Copy(zrs, 0, Zrs, 0, totalByteCount);
 

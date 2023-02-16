@@ -30,13 +30,19 @@ namespace MSS.Types
 
 		public void Load(MapSectionVectors mapSectionVectors)
 		{
-			var counts = MemoryMarshal.Cast<byte, int>(mapSectionVectors.Counts);
+			Load(mapSectionVectors.Counts);
+		}
+
+		public void Load(byte[] countsByteArray)
+		{
+			var counts = MemoryMarshal.Cast<byte, int>(countsByteArray);
 
 			for (var i = 0; i < Length; i++)
 			{
 				Counts[i] = (ushort)counts[i];
 			}
 		}
+
 
 		#region IPoolable Support
 

@@ -22,16 +22,14 @@ namespace MSetRepo
 	{
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
-		//private readonly MapSectionZVectorsPool _mMapSectionZVectorsPool;
 		private readonly DtoMapper _dtoMapper;
 
 		#region Constructor
 
-		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper/*, MapSectionZVectorsPool mapSectionZVectorsPool*/)
+		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
-			//_mMapSectionZVectorsPool = mapSectionZVectorsPool;
 			_dtoMapper = new DtoMapper();
 
 			//BsonSerializer.RegisterSerializer(new ZValuesSerializer());
@@ -41,7 +39,6 @@ namespace MSetRepo
 			//	cm.GetMemberMap(c => c.Zrs).SetSerializer(new ZValuesArraySerializer());
 			//	cm.GetMemberMap(c => c.Zis).SetSerializer(new ZValuesArraySerializer());
 			//});
-
 		}
 
 		#endregion
@@ -100,7 +97,7 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
@@ -109,7 +106,7 @@ namespace MSetRepo
 				var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition, ct);
 				if (mapSectionRecord != null)
 				{
-					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
 
 					return mapSectionResponse;
 				}

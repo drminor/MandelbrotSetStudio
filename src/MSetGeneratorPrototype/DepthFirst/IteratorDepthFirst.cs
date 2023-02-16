@@ -68,14 +68,14 @@ namespace MSetGeneratorPrototype
 		#region Public Methods
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Vector256<int> IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
+		public void IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec)
 		{
 			if (IncreasingIterations)
 			{
 				_fp31VecMath.Square(zrs, _zRSqrs);
 				_fp31VecMath.Square(zis, _zISqrs);
 
-				return Iterate(crs, cis, zrs, zis);
+				Iterate(crs, cis, zrs, zis, ref escapedFlagsVec);
 			}
 			else
 			{
@@ -88,8 +88,7 @@ namespace MSetGeneratorPrototype
 					_fp31VecMath.Square(zis, _zISqrs);
 					_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-					var escapedFlags = _fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs[^1], _thresholdVector);
-					return escapedFlags;
+					_fp31VecMath.IsGreaterOrEqThan(ref _sumOfSqrs[^1], ref _thresholdVector, ref escapedFlagsVec);
 				}
 				catch (Exception e)
 				{
@@ -100,7 +99,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Vector256<int> Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
+		public void Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec)
 		{
 			try
 			{
@@ -120,8 +119,7 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.Square(zis, _zISqrs);
 				_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-				var escapedFlags = _fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs[^1], _thresholdVector);
-				return escapedFlags;
+				_fp31VecMath.IsGreaterOrEqThan(ref _sumOfSqrs[^1], ref _thresholdVector, ref escapedFlagsVec);
 			}
 			catch (Exception e)
 			{

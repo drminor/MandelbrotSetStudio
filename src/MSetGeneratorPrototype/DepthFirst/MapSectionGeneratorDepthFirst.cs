@@ -182,12 +182,14 @@ namespace MSetGeneratorPrototype
 			Array.Copy(_zrs, _resultZrs, _resultZrs.Length);
 			Array.Copy(_zis, _resultZis, _resultZis.Length);
 
-			var escapedFlagsVec = iterator.IterateFirstRound(_crs, _cis, _zrs, _zis);
+			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
 			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 
 			while (compositeIsDone != -1)
 			{
-				escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
 				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 			}
 

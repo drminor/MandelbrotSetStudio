@@ -31,7 +31,7 @@ namespace MSetGeneratorPrototype
 
 			RowNumber = -1;
 
-			CountsRow = new Vector256<int>[_mapSectionVectors.VectorsPerRow];
+			CountsRow = new Vector256<int>[VectorsPerFlagRow];
 			mapSectionVectors.FillCountsRow(0, CountsRow);
 
 			RowHasEscaped = _mapSectionZVectors.GetRowHasEscaped();

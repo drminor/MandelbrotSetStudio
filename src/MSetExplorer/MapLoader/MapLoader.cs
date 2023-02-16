@@ -124,43 +124,24 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse, int jobId)
+		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSection? mapSection, int jobId)
 		{
-			MapSection mapSectionResult;
+			var mapSectionResult = mapSection ?? new MapSection();
 			bool isLastSection;
 
-			if (mapSectionResponse == null || mapSectionResponse.MapSectionVectors == null)
+			mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
+
+			//if (mapSectionResponse?.MathOpCounts != null)
+			//{
+			//	MathOpCounts.Update(mapSectionResponse.MathOpCounts);
+			//}
+
+			if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
 			{
-				//Debug.WriteLine("The MapSectionResponse is empty in the HandleResponse callback for the MapLoader.");
-			}
-
-			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled && mapSectionResponse.MapSectionVectors != null)
-			{
-				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse, jobId, _mapBlockOffset);
-				mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-
-				//if (mapSectionResponse?.MathOpCounts != null)
-				//{
-				//	MathOpCounts.Update(mapSectionResponse.MathOpCounts);
-				//}
-
-				if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
-				{
-					//Log: MapSection BlockPosition and TimeToCompleteRequest
-
-					/****************************************************************/
-					/****** UN COMMENT ME TO Report on generation duration. *********/
-					//var allEscaped = mapSectionResponse?.AllRowsHaveEscaped == true ? "DONE" : null;
-					//Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. {allEscaped}");
-					/****************************************************************/
-				}
-			}
-			else
-			{
-				mapSectionResult = new MapSection();
-
-				Debug.WriteLine($"Cannot create a mapSectionResult from the mapSectionResponse. The request's block position is {mapSectionRequest.BlockPosition}. " +
-					$"IsCancelled: {mapSectionResponse?.RequestCancelled}, HasCounts: {mapSectionRequest.MapSectionVectors != null}.");
+				/****** UN COMMENT ME TO Report on generation duration. *********/
+				//var allEscaped = mapSectionResponse?.AllRowsHaveEscaped == true ? "DONE" : null;
+				//Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. {allEscaped}");
+				/****************************************************************/
 			}
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
