@@ -26,6 +26,12 @@ namespace MSS.Types
 		[ProtoMember(2)]
 		public int Y { get; set; }
 
+
+		public bool IsZero()
+		{
+			return X == 0 && Y == 0;
+		}
+
 		public PointInt Scale(SizeInt factor)
 		{
 			return new PointInt(X * factor.Width, Y * factor.Height);

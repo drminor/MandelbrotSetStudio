@@ -309,6 +309,9 @@ namespace MapSectionProviderLib
 			request.MapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
 			request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision);
 
+			//request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(RMapConstants.DEFAULT_LIMB_COUNT);
+
+
 			//Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated.");
 			QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
 		}
@@ -396,53 +399,31 @@ namespace MapSectionProviderLib
 
 			try
 			{
+				MapSection mapSection;
+
 				if (mapSectionResponse != null)
 				{
-					if (mapSectionResponse.MapSectionVectors != null)
+					mapSection = CreateMapSection(mapSectionWorkRequest.Request, mapSectionResponse, mapSectionWorkRequest.JobId);
+
+					if (UseRepo)
 					{
-						if (UseRepo && !mapSectionResponse.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
+						if (!mapSectionResponse.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
 						{
-							var newCopyOfTheResponse = _mapSectionHelper.Duplicate(mapSectionResponse);
-							newCopyOfTheResponse.MapSectionZVectors = mapSectionResponse.MapSectionZVectors;
-							mapSectionResponse.MapSectionZVectors = null;
-
-
-							//if (!mapSectionResponse.RecordOnFile)
-							//{
-							//	Debug.WriteLine($"Preparing to save the response, it is not on file. The id is {mapSectionResponse.MapSectionId}.");
-							//}
-
-							//if (mapSectionWorkRequest.Request.IncreasingIterations)
-							//{
-							//	Debug.WriteLine($"Preparing to save the response, the request's IncreasingIterations is true. The id is {mapSectionResponse.MapSectionId}. OnFile: {mapSectionResponse.RecordOnFile}.");
-							//}
-
-							_mapSectionPersistProcessor.AddWork(newCopyOfTheResponse);
+							_mapSectionPersistProcessor.AddWork(mapSectionResponse);
 						}
 						else
 						{
-							if (UseRepo)
-							{
-								Debug.WriteLine("The MapSectionResponse has MapSectionVectors but is already OnFile and IncreasingIterations is false.");
-							}
+							Debug.WriteLine("The MapSectionRequestProcessor is handling a response that is already OnFile and it's IncreasingIterations is false.");
 						}
-					}
-					else
-					{
-						Debug.WriteLine("The MapSectionResponse has no MapSectionVectors in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
 					}
 				}
 				else
 				{
 					Debug.WriteLine("The MapSectionResponse is null in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
+					mapSection = new MapSection(mapSectionWorkRequest.Request, isCancelled: false);
 				}
 
-				var mapSection = mapSectionResponse != null 
-					? CreateMapSection(mapSectionWorkRequest.Request, mapSectionResponse, mapSectionWorkRequest.JobId) 
-					: new MapSection(mapSectionWorkRequest.Request, isCancelled: false);
-
 				mapSectionWorkRequest.Response = mapSection;
-
 				workList.Add(mapSectionWorkRequest);
 
 				var pendingRequests = GetPendingRequests(mapSectionWorkRequest.Request);
@@ -553,12 +534,14 @@ namespace MapSectionProviderLib
 		{
 			MapSection mapSectionResult;
 
-			if (mapSectionResponse.RequestCancelled || mapSectionResponse.MapSectionVectors == null)
+			if (mapSectionResponse.RequestCancelled)
 			{
-				mapSectionResult = new MapSection();
-
-				Debug.WriteLine($"Cannot create a mapSectionResult from the mapSectionResponse. The request's block position is {mapSectionRequest.BlockPosition}. " +
-					$"IsCancelled: {mapSectionResponse?.RequestCancelled}, HasCounts: {mapSectionRequest.MapSectionVectors != null}.");
+				mapSectionResult = new MapSection(mapSectionRequest, isCancelled: true);
+			}
+			else if (mapSectionResponse.MapSectionVectors == null)
+			{
+				Debug.WriteLine($"Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.BlockPosition}.");
+				mapSectionResult = new MapSection(mapSectionRequest, isCancelled: false);
 			}
 			else
 			{

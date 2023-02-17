@@ -4,7 +4,7 @@ using MSS.Common;
 
 namespace MSetGeneratorPrototype
 {
-	internal class IteratorCoords
+	public class IteratorCoords
 	{
 		public IteratorCoords(BigVector blockPos, PointInt screenPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta)
 		{

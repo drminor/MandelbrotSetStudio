@@ -18,8 +18,6 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class App : Application
 	{
-		private const int LIMB_COUNT = 3;
-
 		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		private const int MONGO_DB_PORT = 27017;
 
@@ -61,7 +59,7 @@ namespace MSetExplorer
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionHelper = new MapSectionHelper(_mapSectionVectorsPool, _mapSectionValuesPool, _mapSectionZVectorsPool);
 
 			if (START_LOCAL_ENGINE)
@@ -148,7 +146,7 @@ namespace MSetExplorer
 				ClientImplementation.LocalScalar => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalScalar() },
 				ClientImplementation.LocalVector => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalVector() },
 
-				ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(new SamplePointCache(), USE_SINGLE_LIMB_ITERATOR, USE_DEPTH_FIRST_ITERATOR) },
+				ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_SINGLE_LIMB_ITERATOR, USE_DEPTH_FIRST_ITERATOR) },
 				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
 			};
 

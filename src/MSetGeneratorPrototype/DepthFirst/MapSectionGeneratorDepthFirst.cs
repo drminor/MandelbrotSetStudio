@@ -14,7 +14,7 @@ namespace MSetGeneratorPrototype
 	{
 		#region Private Properties
 
-		//private readonly SamplePointCache _samplePointCache;
+		private SamplePointBuilder _samplePointBuilder;
 
 		private FP31VecMath _fp31VecMath;
 		private IteratorDepthFirst _iterator;
@@ -33,12 +33,13 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public MapSectionGeneratorDepthFirst(int limbCount)
+		public MapSectionGeneratorDepthFirst(int limbCount, SizeInt blockSize)
 		{
-			//_samplePointCache = samplePointCache;
+			_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
 
-			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
-			_fp31VecMath = new FP31VecMath(apFixedPointFormat);
+			//var apFixedPointFormat = new ApFixedPointFormat(limbCount);
+			//_fp31VecMath = new FP31VecMath(apFixedPointFormat);
+			_fp31VecMath = _samplePointBuilder.GetVecMath(limbCount);
 			_iterator = new IteratorDepthFirst(_fp31VecMath);
 
 			_crs = _fp31VecMath.GetNewLimbSet();
@@ -63,12 +64,23 @@ namespace MSetGeneratorPrototype
 				throw new ArgumentNullException("The MapSectionZVectors is null.");
 			}
 
+			var currentBlockSize = _samplePointBuilder.BlockSize;
+			var blockSizeForThisRequest = mapSectionRequest.BlockSize;
+
+			if (currentBlockSize != blockSizeForThisRequest)
+			{
+				_samplePointBuilder.Dispose();
+				_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSizeForThisRequest));
+			}
+
+			var currentLimbCount = _fp31VecMath.LimbCount;
 			var limbCountForThisRequest = mapSectionRequest.MapSectionZVectors.LimbCount;
 
-			if (_fp31VecMath.LimbCount != limbCountForThisRequest)
+			if (currentLimbCount != limbCountForThisRequest)
 			{
-				var apFixedPointFormat = new ApFixedPointFormat(limbCountForThisRequest);
-				_fp31VecMath = new FP31VecMath(apFixedPointFormat);
+				//var apFixedPointFormat = new ApFixedPointFormat(limbCountForThisRequest);
+				//_fp31VecMath = new FP31VecMath(apFixedPointFormat);
+				_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
 				_iterator = new IteratorDepthFirst(_fp31VecMath);
 
 				_crs = _fp31VecMath.GetNewLimbSet();
@@ -82,6 +94,17 @@ namespace MSetGeneratorPrototype
 
 			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
 
+			if (currentLimbCount != limbCountForThisRequest)
+			{
+				if (coords.ScreenPos.IsZero())
+				{
+					Debug.WriteLine($"Changing Limbcount from {currentLimbCount} to {limbCountForThisRequest}. Precision: {mapSectionRequest.Precision}. " +
+						$"\nCx: {coords.StartingCx.ToStringDec()}; Cy: {coords.StartingCy.ToStringDec()}." +
+						$"\nCx: {coords.StartingCx}; Cy: {coords.StartingCy}" +
+						$"\nCx: {coords.GetStartingCxStringVal()}; Cy: {coords.GetStartingCyStringVal()}.");
+				}
+			}
+
 			if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
 			{
 				return new MapSectionResponse(mapSectionRequest);
@@ -90,14 +113,15 @@ namespace MSetGeneratorPrototype
 			var stopwatch = Stopwatch.StartNew();
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
-			var stride = (byte)mapSectionRequest.BlockSize.Width;
-			var fP31ScalarMath = new FP31ScalarMath(_fp31VecMath.ApFixedPointFormat);
-
-			var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(coords.Delta, stride, fP31ScalarMath);
+			////var stride = (byte)mapSectionRequest.BlockSize.Width;
+			//var fP31ScalarMath = new FP31ScalarMath(_fp31VecMath.ApFixedPointFormat);
+			////var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(coords.Delta, stride, fP31ScalarMath);
 			//var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(coords.Delta);
+			//var samplePointsX = SamplePointBuilder.BuildSamplePoints(coords.StartingCx, samplePointOffsets, fP31ScalarMath);
+			//var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, fP31ScalarMath);
 
-			var samplePointsX = SamplePointBuilder.BuildSamplePoints(coords.StartingCx, samplePointOffsets, fP31ScalarMath);
-			var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, fP31ScalarMath);
+			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(coords);
+
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
@@ -353,7 +377,6 @@ namespace MSetGeneratorPrototype
 					Debug.WriteLine($"The entire block: {coords.ScreenPos} is done.");
 				}
 			}
-
 		}
 
 		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, IteratorCoords coords)
@@ -378,63 +401,5 @@ namespace MSetGeneratorPrototype
 		}
 
 		#endregion
-
-
-		/*
-
-			var firstTime = true;
-			while (compositeIsDone != -1)
-			{
-				var prevDoneFlagsV = doneFlagsV;
-
-				Vector256<int> escapedFlagsVec;
-
-				if (firstTime)
-				{
-					escapedFlagsVec = iterator.IterateFirstRound(_crs, _cis, _zrs, _zis);
-					firstTime = false;
-				}
-				else
-				{
-					escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
-				}
-
-				//var escapedFlagsVec = iterator.Iterate(_crs, _cis, _zrs, _zis);
-
-				countsV = Avx2.Add(countsV, _justOne);
-
-				// Apply the new escapedFlags, only if the doneFlags is false for each vector position
-				hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
-
-				// Compare the new Counts with the TargetIterations
-				var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
-
-				// If escaped or reached the target iterations, we're done 
-				doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
-
-				compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
-				var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
-
-				if (compositeIsDone != prevCompositeIsDone)
-				{
-					var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
-
-					// Save the current count 
-					resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
-
-					// Save the current ZValues.
-					for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
-					{
-						_resultZrs[limbPtr] = Avx2.BlendVariable(_zrs[limbPtr].AsInt32(), _resultZrs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-						_resultZis[limbPtr] = Avx2.BlendVariable(_zis[limbPtr].AsInt32(), _resultZis[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-					}
-				}
-
-			}
-
-
-		*/
-
-
 	}
 }

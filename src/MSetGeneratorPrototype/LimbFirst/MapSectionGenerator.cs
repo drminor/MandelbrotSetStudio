@@ -57,7 +57,7 @@ namespace MSetGeneratorPrototype
 				var iterationState = new IterationStateLimbFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				GenerateMapSection(_iterator, iterationState, coords, mapCalcSettings);
+				GenerateMapSectionRows(_iterator, iterationState, coords, mapCalcSettings);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
@@ -81,7 +81,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private void GenerateMapSection(IteratorLimbFirst iterator, IterationStateLimbFirst iterationState, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private void GenerateMapSectionRows(IteratorLimbFirst iterator, IterationStateLimbFirst iterationState, IteratorCoords coords, MapCalcSettings mapCalcSettings)
 		{
 			var blockSize = iterationState.BlockSize;
 			var rowCount = blockSize.Height;

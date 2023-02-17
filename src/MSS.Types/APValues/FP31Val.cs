@@ -50,15 +50,23 @@ namespace MSS.Types.APValues
 		//	return strValue;
 		//}
 
+
+		public string ToStringDec()
+		{
+			var sign = GetSign();
+
+			return sign
+				? FP31ValHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}"
+				: "-" + FP31ValHelper.GetDiagDisplay("m", Mantissa) + $" e:{Exponent}";
+		}
+
 		public override string ToString()
 		{
 			var sign = GetSign();
 
-			var result = sign
+			return sign
 				? FP31ValHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}"
 				: "-" + FP31ValHelper.GetDiagDisplayHex("m", Mantissa) + $" e:{Exponent}";
-
-			return result;
 		}
 
 		object ICloneable.Clone()

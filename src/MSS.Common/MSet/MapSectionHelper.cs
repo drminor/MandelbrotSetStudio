@@ -52,6 +52,10 @@ namespace MSS.Common
 
 		public long NumberOfCountValSwitches { get; private set; }
 
+		public int MaxPeakSections => _mapSectionValuesPool.MaxPeak;
+		public int MaxPeakSectionVectors => _mapSectionVectorsPool.MaxPeak;
+		public int MaxPeakSectionZVectors => _mapSectionZVectorsPool.MaxPeak;
+
 		#endregion
 
 		#region Create MapSectionRequests
@@ -123,27 +127,22 @@ namespace MSS.Common
 
 		#region Create Single MapSectionRequest
 
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, int precision, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
-		{
-			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
-
-			var result = CreateRequest(screenPosition, mapBlockOffset, repoPosition, precision, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
-
-			return result;
-		}
-
 		/// <summary>
 		/// Calculate the map position of the section being requested 
 		/// and prepare a MapSectionRequest
 		/// </summary>
+		/// <param name="screenPosition"></param>
+		/// <param name="mapBlockOffset"></param>
+		/// <param name="precision"></param>
+		/// <param name="ownerId"></param>
+		/// <param name="jobOwnerType"></param>
 		/// <param name="subdivision"></param>
-		/// <param name="repoPosition"></param>
-		/// <param name="isInverted"></param>
 		/// <param name="mapCalcSettings"></param>
-		/// <param name="mapPosition"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, BigVector repoPosition, int precision, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, int precision, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
+			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
+
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
 
 			var mapSectionRequest = new MapSectionRequest
@@ -156,14 +155,40 @@ namespace MSS.Common
 				blockPosition: repoPosition,
 				isInverted: isInverted,
 				mapPosition: mapPosition,
-				precision: repoPosition.Precision,
+				precision: precision,
 				blockSize: subdivision.BlockSize,
 				samplePointDelta: subdivision.SamplePointDelta,
 				mapCalcSettings: mapCalcSettings
 			);
 
 			return mapSectionRequest;
+
+			//var result = CreateRequest(screenPosition, mapBlockOffset, repoPosition, precision, isInverted, ownerId, jobOwnerType, subdivision, mapCalcSettings);
+			//return result;
 		}
+
+		//public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, BigVector repoPosition, int precision, bool isInverted, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		//{
+		//	var mapPosition = GetMapPosition(subdivision, repoPosition);
+
+		//	var mapSectionRequest = new MapSectionRequest
+		//	(
+		//		ownerId: ownerId,
+		//		jobOwnerType: jobOwnerType,
+		//		subdivisionId: subdivision.Id.ToString(),
+		//		screenPosition: screenPosition,
+		//		mapBlockOffset: mapBlockOffset,
+		//		blockPosition: repoPosition,
+		//		isInverted: isInverted,
+		//		mapPosition: mapPosition,
+		//		precision: repoPosition.Precision,
+		//		blockSize: subdivision.BlockSize,
+		//		samplePointDelta: subdivision.SamplePointDelta,
+		//		mapCalcSettings: mapCalcSettings
+		//	);
+
+		//	return mapSectionRequest;
+		//}
 
 		private RPoint GetMapPosition(Subdivision subdivision, BigVector localBlockPosition)
 		{
@@ -192,12 +217,6 @@ namespace MSS.Common
 
 		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, byte[] countsByteArray, int jobId, BigVector mapBlockOffset)
 		{
-			//var mapSectionVectors = mapSectionResponse.MapSectionVectors;
-			//if (mapSectionVectors == null)
-			//{
-			//	throw new InvalidOperationException("Cannot create the MapSection: the MapSectionResponse is empty.");
-			//}
-
 			var repoBlockPosition = mapSectionRequest.BlockPosition;
 			var isInverted = mapSectionRequest.IsInverted;
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
@@ -212,22 +231,6 @@ namespace MSS.Common
 
 			return mapSection;
 		}
-
-		//private void ConvertVecToVals(MapSectionResponse mapSectionResponse)
-		//{
-		//	var mapSectionVectors = mapSectionResponse.MapSectionVectors;
-		//	if (mapSectionVectors == null) return;
-
-		//	if (!mapSectionResponse.RequestCancelled)
-		//	{
-		//		var mapSectionValues = _mapSectionHelper.ObtainMapSectionValues();
-		//		mapSectionValues.Load(mapSectionVectors);
-		//		mapSectionResponse.MapSectionValues = mapSectionValues;
-		//	}
-
-		//	_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
-		//}
-
 
 		public byte[] GetPixelArray(MapSectionValues mapSectionValues, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
@@ -390,31 +393,25 @@ namespace MSS.Common
 			}
 		}
 
-		public MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
-		{
-			var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId,
-				mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings, mapSectionResponse.AllRowsHaveEscaped);
+		//public MapSectionResponse Duplicate(MapSectionResponse mapSectionResponse)
+		//{
+		//	var result = new MapSectionResponse(mapSectionResponse.MapSectionId, mapSectionResponse.OwnerId, mapSectionResponse.JobOwnerType, mapSectionResponse.SubdivisionId,
+		//		mapSectionResponse.BlockPosition, mapSectionResponse.MapCalcSettings, mapSectionResponse.AllRowsHaveEscaped);
 
-			if (mapSectionResponse.MapSectionVectors != null)
-			{
-				var newCopyOfMapSectionVectors = _mapSectionVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionVectors);
-				result.MapSectionVectors = newCopyOfMapSectionVectors;
-			}
+		//	if (mapSectionResponse.MapSectionVectors != null)
+		//	{
+		//		var newCopyOfMapSectionVectors = _mapSectionVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionVectors);
+		//		result.MapSectionVectors = newCopyOfMapSectionVectors;
+		//	}
 
-			//if (mapSectionResponse.MapSectionZVectors != null)
-			//{
-			//	var newCopyOfMapSectionZVectors = _mapSectionZVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionZVectors);
-			//	result.MapSectionZVectors = newCopyOfMapSectionZVectors;
-			//}
+		//	//if (mapSectionResponse.MapSectionZVectors != null)
+		//	//{
+		//	//	var newCopyOfMapSectionZVectors = _mapSectionZVectorsPool.DuplicateFrom(mapSectionResponse.MapSectionZVectors);
+		//	//	result.MapSectionZVectors = newCopyOfMapSectionZVectors;
+		//	//}
 
-			return result;
-		}
-
-		#endregion
-
-		#region DTO Support
-
-
+		//	return result;
+		//}
 
 		#endregion
 	}

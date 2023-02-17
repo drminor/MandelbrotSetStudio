@@ -25,17 +25,17 @@ namespace MSS.Types
             LimbCount = GetLimbCount(estimatedCountTotalBits);
 
             NumberOfFractionalBits = LimbCount * EFFECTIVE_BITS_PER_LIMB - BitsBeforeBinaryPoint;
+            TotalBits = BitsBeforeBinaryPoint + NumberOfFractionalBits;
+            TargetExponent = -1 * NumberOfFractionalBits;
 
             CheckFractionalBitsValue(minimumFractionalBits);
         }
 
         public byte BitsBeforeBinaryPoint { get; init; }
-        public int NumberOfFractionalBits { get; init; }
-        public int LimbCount { get; init; }
-
-        public int TotalBits => BitsBeforeBinaryPoint + NumberOfFractionalBits;
-
-        public int TargetExponent => -1 * NumberOfFractionalBits;
+		public int LimbCount { get; init; }
+		public int NumberOfFractionalBits { get; init; }
+        public int TotalBits { get; init; }
+        public int TargetExponent { get; init; }
 
         public override string ToString()
         {

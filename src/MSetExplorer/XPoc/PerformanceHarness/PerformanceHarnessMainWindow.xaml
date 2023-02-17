@@ -25,6 +25,23 @@
 
 
         <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,10,5,10">
+
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Peak MapSections:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding MaxPeakSections}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Peak Vectors:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding MaxPeakSectionVectors}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Peak ZVectors:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding MaxPeakSectionZVectors}"/>
+            </StackPanel>            
+            
+
             <StackPanel Orientation="Horizontal" >
                 <TextBlock Width="145" Margin="3" FontSize="14" Text="Sections Generated:" />
                 <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding GeneratedCount}"/>

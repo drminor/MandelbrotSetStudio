@@ -47,7 +47,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			MapSectionProcessInfos = new List<MapSectionProcessInfo>();
 			MathOpCounts = new MathOpCounts();
 
-			//_stopWatch = new Stopwatch();
+			NotifyPropChangedMaxPeek();
 		}
 
 		#endregion
@@ -103,12 +103,32 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			set => _unusedCalcs = value;
 		}
 
+		public int MaxPeakSections
+		{
+			get => _mapSectionHelper.MaxPeakSections;
+			set { }
+		}
+
+		public int MaxPeakSectionVectors
+		{
+			get => _mapSectionHelper.MaxPeakSectionVectors;
+			set { }
+		}
+
+		public int MaxPeakSectionZVectors
+		{
+			get => _mapSectionHelper.MaxPeakSectionZVectors;
+			set { }
+		}
+
 		#endregion
 
 		#region Public Methods
 
 		public void RunBaseLine()
 		{
+			NotifyPropChangedMaxPeek();
+
 			MapSectionProcessInfos.Clear();
 
 			var blockSize = RMapConstants.BLOCK_SIZE;
@@ -217,6 +237,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			UnusedCalcs = (long) mops.NumberOfUnusedCalcs;
 
 			HandleRunComplete();
+			NotifyPropChangedMaxPeek();
 		}
 
 		private void MapLoader_SectionLoaded(object? sender, MapSectionProcessInfo e)
@@ -308,6 +329,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			OnPropertyChanged(nameof(Multiplications));
 			OnPropertyChanged(nameof(Calcs));
 			OnPropertyChanged(nameof(UnusedCalcs));
+		}
+
+		private void NotifyPropChangedMaxPeek()
+		{
+			OnPropertyChanged(nameof(MaxPeakSections));
+			OnPropertyChanged(nameof(MaxPeakSectionVectors));
+			OnPropertyChanged(nameof(MaxPeakSectionZVectors));
 		}
 
 		private void MapSectionReady(MapSection mapSection, int jobId, bool isLast)

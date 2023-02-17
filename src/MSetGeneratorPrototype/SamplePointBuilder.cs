@@ -4,50 +4,27 @@ using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
-	internal static class SamplePointBuilder
+	public class SamplePointBuilder : IDisposable
 	{
+		private readonly SamplePointCache _samplePointCache;
 
-
-
-		public static Vector256<uint>[] BuildSamplePoints(FP31Val startValue, Vector256<uint>[] offsets, FP31VecMath fP31VecMath)
+		public SamplePointBuilder(SamplePointCache samplePointCache)
 		{
-			var result = new Vector256<uint>[offsets.Length];
-
-			var limbCount = fP31VecMath.LimbCount;
-			var lanes = Vector256<uint>.Count;
-			var startVec = new Vector256<uint>[limbCount];
-
-			for (var limbPtr = 0; limbPtr < limbCount; limbPtr++)
-			{
-				startVec[limbPtr] = Vector256.Create(startValue.Mantissa[limbPtr]);
-			}
-
-			var offsetVec = new Vector256<uint>[limbCount];
-			var resultVec = new Vector256<uint>[limbCount];
-
-			var valueCount = offsets.Length / limbCount;
-
-			for (var j = 0; j < valueCount; j++)
-			{
-				var valueOffset = j * limbCount;
-
-				for(var i = 0; i < limbCount; i++)
-				{
-					offsetVec[i] = offsets[valueOffset + i];
-				}
-
-				fP31VecMath.Add(startVec, offsetVec, resultVec);
-
-				for (var i = 0; i < limbCount; i++)
-				{
-					result[valueOffset + i] = resultVec[i];
-				}
-			}
-
-			return result;
+			_samplePointCache = samplePointCache;
 		}
 
+		public SizeInt BlockSize => _samplePointCache.BlockSize;
+		public FP31VecMath GetVecMath(int limbCount) => _samplePointCache.GetVectorMath(limbCount);
 
+		public (FP31Val[] samplePointX, FP31Val[] samplePointY) BuildSamplePoints(IteratorCoords iteratorCoords)
+		{
+			var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
+			var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
+			var samplePointsX = BuildSamplePoints(iteratorCoords.StartingCx, samplePointOffsets, fP31ScalarMath);
+			var samplePointsY = BuildSamplePoints(iteratorCoords.StartingCy, samplePointOffsets, fP31ScalarMath);
+
+			return (samplePointsX, samplePointsY);	
+		}
 
 		public static FP31Val[] BuildSamplePoints(FP31Val startValue, FP31Val[] offsets, FP31ScalarMath scalarMath)
 		{
@@ -72,7 +49,6 @@ namespace MSetGeneratorPrototype
 
 			return offsets;
 		}
-
 
 		#region Doubles
 
@@ -104,7 +80,72 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
+		#region IDisposable Support
+
+		private bool disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+					_samplePointCache.Dispose();
+				}
+
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
+
 		#region NOT USED
+
+		public static Vector256<uint>[] BuildSamplePoints(FP31Val startValue, Vector256<uint>[] offsets, FP31VecMath fP31VecMath)
+		{
+			var result = new Vector256<uint>[offsets.Length];
+
+			var limbCount = fP31VecMath.LimbCount;
+			var lanes = Vector256<uint>.Count;
+			var startVec = new Vector256<uint>[limbCount];
+
+			for (var limbPtr = 0; limbPtr < limbCount; limbPtr++)
+			{
+				startVec[limbPtr] = Vector256.Create(startValue.Mantissa[limbPtr]);
+			}
+
+			var offsetVec = new Vector256<uint>[limbCount];
+			var resultVec = new Vector256<uint>[limbCount];
+
+			var valueCount = offsets.Length / limbCount;
+
+			for (var j = 0; j < valueCount; j++)
+			{
+				var valueOffset = j * limbCount;
+
+				for (var i = 0; i < limbCount; i++)
+				{
+					offsetVec[i] = offsets[valueOffset + i];
+				}
+
+				fP31VecMath.Add(startVec, offsetVec, resultVec);
+
+				for (var i = 0; i < limbCount; i++)
+				{
+					result[valueOffset + i] = resultVec[i];
+				}
+			}
+
+			return result;
+		}
 
 		public static FP31Val[] BuildSamplePointOffsetsOld(FP31Val delta, byte extent, FP31ScalarMath scalarMath)
 		{
@@ -231,7 +272,5 @@ namespace MSetGeneratorPrototype
 		//}
 
 		#endregion
-
-
 	}
 }

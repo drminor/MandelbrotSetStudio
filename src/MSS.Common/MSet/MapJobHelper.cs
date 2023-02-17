@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Numerics;
 
 namespace MSS.Common
@@ -89,7 +90,8 @@ namespace MSS.Common
 
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
 			var binaryPrecision = RValueHelper.GetBinaryPrecision(updatedCoords.Right, updatedCoords.Left, out _);
-			//var decimalPrecision = RValueHelper.GetPrecision(updatedCoords.Right, updatedCoords.Left, out _);
+
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
 
 			// Get a subdivision record from the database.
 			var subdivision = GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
