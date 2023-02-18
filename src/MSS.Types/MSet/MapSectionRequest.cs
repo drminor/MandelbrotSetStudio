@@ -24,23 +24,25 @@ namespace MSS.Types.MSet
 			ProcessingStartTime = DateTime.UtcNow;
 		}
 
+		public string? MapSectionId { get; set; }
+		public string OwnerId { get; init; }
+		public JobOwnerType JobOwnerType { get; init; }
+		public string SubdivisionId { get; init; }
+		public PointInt ScreenPosition { get; init; }
+		public BigVector MapBlockOffset { get; init; }
+		public BigVector BlockPosition { get; init; }
+		public bool IsInverted { get; init; }
+		public RPoint MapPosition { get; init; }
+		public SizeInt BlockSize { get; init; }
+		public RSize SamplePointDelta { get; init; }
+		public MapCalcSettings MapCalcSettings { get; init; }
+
+		public int Precision { get; set; }
 		public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
 
-		public string? MapSectionId { get; set; }
-		public string OwnerId { get; set; }
-		public JobOwnerType JobOwnerType { get; set; }
-		public string SubdivisionId { get; set; }
-		public PointInt ScreenPosition { get; set; }
-		public BigVector MapBlockOffset { get; set; }
-		public BigVector BlockPosition { get; set; }
-		public RPoint MapPosition { get; set; }
-		public int Precision { get; set; }
-		public SizeInt BlockSize { get; set; }
-		public RSize SamplePointDelta { get; set; }
-		public MapCalcSettings MapCalcSettings { get; set; }
-
-		public bool IsInverted { get; init; }
+		public string? ClientEndPointAddress { get; set; }
+		public bool IncreasingIterations { get; set; }
 
 		public bool Pending { get; set; }
 		public bool Sent { get; set; }
@@ -49,16 +51,11 @@ namespace MSS.Types.MSet
 		public bool Saved { get; set; }
 		public bool Handled { get; set; }
 
-		public bool IncreasingIterations { get; set; }
-
-		public string? ClientEndPointAddress { get; set; }
-		public TimeSpan? TimeToCompleteGenRequest { get; set; }
-
 		public DateTime? ProcessingStartTime { get; set; }
 		public DateTime? ProcessingEndTime { get; set; }
 
+		public TimeSpan? TimeToCompleteGenRequest { get; set; }
 		public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
-
 		public TimeSpan? GenerationDuration { get; set; }
 
 		public MathOpCounts? MathOpCounts { get; set; }

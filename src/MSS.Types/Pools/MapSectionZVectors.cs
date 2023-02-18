@@ -254,9 +254,9 @@ namespace MSS.Types
 
 		void IPoolable.CopyTo(object obj)
 		{
-			if (obj != null && obj is MapSectionZVectors mszv)
+			if (obj != null && obj is MapSectionZVectors destination)
 			{
-				CopyTo(mszv);
+				CopyTo(destination);
 			}
 			else
 			{
@@ -264,9 +264,9 @@ namespace MSS.Types
 			}
 		}
 
-		public void CopyTo(MapSectionZVectors mapSectionZVectors)
+		public void CopyTo(MapSectionZVectors destination)
 		{
-			var result = mapSectionZVectors;
+			var result = destination;
 
 			Array.Copy(Zrs, result.Zrs, TotalByteCount);
 			Array.Copy(Zis, result.Zis, TotalByteCount);

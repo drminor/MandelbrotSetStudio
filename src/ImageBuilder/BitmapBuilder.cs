@@ -28,9 +28,9 @@ namespace ImageBuilder
 			_mapLoaderManager = mapLoaderManager;
 
 			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			var mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			//var mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount:2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool, mapSectionValuesPool, mapSectionZVectorsPool);
+			_mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool/*, mapSectionValuesPool*/, mapSectionZVectorsPool);
 
 			_currentJobNumber = null;
 			_currentResponses = null;
@@ -100,7 +100,7 @@ namespace ImageBuilder
 								Debug.WriteLine($"Got a null mapSection.");
 							}
 
-							var countsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.Counts, linePtr, blockSize.Width);
+							var countsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSize.Width);
 							//var escVelsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.EscapeVelocities, linePtr, blockSize.Width);
 							var escVelsForThisSegment = new ushort[countsForThisSegment?.Length ?? 0];
 

@@ -30,7 +30,7 @@ namespace MSS.Types
 
 		public void Load(MapSectionVectors mapSectionVectors)
 		{
-			Load(mapSectionVectors.Counts);
+			//Load(mapSectionVectors.Counts);
 		}
 
 		public void Load(byte[] countsByteArray)

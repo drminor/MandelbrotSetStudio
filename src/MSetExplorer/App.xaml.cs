@@ -43,7 +43,7 @@ namespace MSetExplorer
 		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
-		private readonly MapSectionValuesPool _mapSectionValuesPool;
+		//private readonly MapSectionValuesPool _mapSectionValuesPool;
 		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
 		private readonly MapSectionHelper _mapSectionHelper;
 
@@ -58,9 +58,9 @@ namespace MSetExplorer
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			//_mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionHelper(_mapSectionVectorsPool, _mapSectionValuesPool, _mapSectionZVectorsPool);
+			_mapSectionHelper = new MapSectionHelper(_mapSectionVectorsPool/*, _mapSectionValuesPool*/, _mapSectionZVectorsPool);
 
 			if (START_LOCAL_ENGINE)
 			{
@@ -119,7 +119,7 @@ namespace MSetExplorer
 
 			_mEngineServerManager?.Stop();
 
-			_mapSectionValuesPool.Clear();
+			//_mapSectionValuesPool.Clear();
 		}
 
 		private AppNavWindow GetAppNavWindow(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)

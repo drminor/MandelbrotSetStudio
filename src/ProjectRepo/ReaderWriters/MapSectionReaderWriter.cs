@@ -129,6 +129,14 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
+		public async Task<long?> DeleteAsync(ObjectId mapSectionId)
+		{
+			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionId);
+			var deleteResult = await Collection.DeleteOneAsync(filter);
+
+			return GetReturnCount(deleteResult);
+		}
+
 		public long? Delete(IList<ObjectId> mapSectionIds)
 		{
 			var filter = Builders<MapSectionRecord>.Filter.In(u => u.Id, mapSectionIds);

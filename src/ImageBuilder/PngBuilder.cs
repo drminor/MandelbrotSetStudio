@@ -28,9 +28,9 @@ namespace ImageBuilder
 		{
 			_mapLoaderManager = mapLoaderManager;
 			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			var mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			//var mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount: 2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool, mapSectionValuesPool, mapSectionZVectorsPool);
+			_mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool/*, mapSectionValuesPool*/, mapSectionZVectorsPool);
 
 			_currentJobNumber = null;
 			_currentResponses = null;
@@ -83,7 +83,7 @@ namespace ImageBuilder
 						for (var blockPtrX = 0; blockPtrX < w; blockPtrX++)
 						{
 							var mapSection = blocksForThisRow[blockPtrX];
-							var countsForThisLine = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.Counts, linePtr, blockSize.Width);
+							var countsForThisLine = GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSize.Width);
 							//var escVelsForThisLine = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.EscapeVelocities, linePtr, blockSize.Width);
 							var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
 

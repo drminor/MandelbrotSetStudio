@@ -4,18 +4,6 @@ namespace MSS.Types.MSet
 {
 	public class MapSectionResponse
 	{
-		//public MapSectionResponse()
-		//	: this(
-		//		  mapSectionId: string.Empty,
-		//		  ownerId: string.Empty, 
-		//		  jobOwnerType: JobOwnerType.Undetermined, 
-		//		  subdivisionId: string.Empty,
-		//		  blockPosition: new BigVector(),
-		//		  mapCalcSettings: null,
-		//		  allRowsHaveEscaped: false
-		//		  )
-		//{ }
-
 		public MapSectionResponse(MapSectionRequest mapSectionRequest, bool isCancelled = false)
 			: this(
 				  mapSectionRequest.MapSectionId, 
@@ -69,19 +57,18 @@ namespace MSS.Types.MSet
 			RequestCancelled = false;
 		}
 
-		public MapSectionVectors? MapSectionVectors { get; set; }
-		public MapSectionZVectors? MapSectionZVectors { get; set; }
-		public bool AllRowsHaveEscaped { get; set; }
-
-
 		public string? MapSectionId { get; set; }
 		public string OwnerId { get; set; }
 		public JobOwnerType JobOwnerType { get; set; }
+
 		public string SubdivisionId { get; init; }
 		public BigVector BlockPosition { get; init; }
 
-		public MapCalcSettings? MapCalcSettings { get; set; }
+		public MapCalcSettings? MapCalcSettings { get; init; }
 
+		public MapSectionVectors? MapSectionVectors { get; set; }
+		public MapSectionZVectors? MapSectionZVectors { get; set; }
+		public bool AllRowsHaveEscaped { get; set; }
 
 		public bool RecordOnFile => !string.IsNullOrEmpty(MapSectionId);
 		public bool RequestCancelled { get; set; }

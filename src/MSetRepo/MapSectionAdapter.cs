@@ -97,7 +97,7 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors)
 		{
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
@@ -106,7 +106,7 @@ namespace MSetRepo
 				var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition, ct);
 				if (mapSectionRecord != null)
 				{
-					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord);
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
 
 					return mapSectionResponse;
 				}
@@ -148,6 +148,15 @@ namespace MSetRepo
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
 
 			var result = await mapSectionReaderWriter.UpdateCountValuesAync(mapSectionRecord);
+
+			return result;
+		}
+
+
+		public async Task<long?> DeleteZValuesAync(ObjectId mapSectionId)
+		{
+			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var result = await mapSectionReaderWriter.DeleteAsync(mapSectionId);
 
 			return result;
 		}

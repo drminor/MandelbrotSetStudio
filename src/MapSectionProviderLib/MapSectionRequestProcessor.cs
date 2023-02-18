@@ -8,7 +8,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -212,8 +211,9 @@ namespace MapSectionProviderLib
 					{
 						if (!UseRepo)
 						{
-							await Task.Delay(200);
-							PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor);
+							await Task.Delay(20);
+							var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+							PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
 						}
 						else
 						{
@@ -245,7 +245,9 @@ namespace MapSectionProviderLib
 		{
 			var request = mapSectionWorkRequest.Request;
 
-			var mapSectionResponse = await FetchAsync(mapSectionWorkRequest, ct);
+			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+
+			var mapSectionResponse = await FetchAsync(mapSectionWorkRequest, ct, mapSectionVectors);
 
 			if (mapSectionResponse != null)
 			{
@@ -294,21 +296,19 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor);
+				PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
 				return null;
 			}
 		}
 
-		private void PrepareRequestAndQueue(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor)
+		private void PrepareRequestAndQueue(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionVectors mapSectionVectors)
 		{
 			var request = mapSectionWorkRequest.Request;
 
 			request.MapSectionId = null;
 
-			// Get empty buffers to hold the results.
-			request.MapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+			request.MapSectionVectors = mapSectionVectors;
 			request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision);
-
 			//request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(RMapConstants.DEFAULT_LIMB_COUNT);
 
 
@@ -373,13 +373,13 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionResponse?> FetchAsync(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
+		private async Task<MapSectionResponse?> FetchAsync(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
 		{
 			var mapSectionRequest = mapSectionWorkRequest.Request;
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
 
-			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct);
+			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, ct, mapSectionVectors);
 
 			return mapSectionResponse;
 		}
@@ -409,6 +409,16 @@ namespace MapSectionProviderLib
 					{
 						if (!mapSectionResponse.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
 						{
+							// Create a new copy of the MapSectionVectors
+							// and send it to be persisted.
+							var msv = mapSectionResponse.MapSectionVectors;
+
+							if (msv == null)
+							{
+								throw new InvalidOperationException("The MapSectionVectors is null.");
+							}
+
+							mapSectionResponse.MapSectionVectors = _mapSectionHelper.Duplicate(msv);
 							_mapSectionPersistProcessor.AddWork(mapSectionResponse);
 						}
 						else
@@ -546,7 +556,7 @@ namespace MapSectionProviderLib
 			else
 			{
 				var mapBlockOffset = mapSectionRequest.MapBlockOffset;
-				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors.Counts, jobId, mapBlockOffset);
+				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, jobId, mapBlockOffset);
 			}
 
 			return mapSectionResult;

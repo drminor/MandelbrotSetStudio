@@ -427,7 +427,7 @@ namespace MSetExplorer
 					return false;
 				}
 
-				if ( (!mapSection.IsEmpty) && mapSection.MapSectionValues?.Counts != null)
+				if ( (!mapSection.IsEmpty) && mapSection.MapSectionVectors?.Counts != null)
 				{
 					try
 					{
@@ -737,10 +737,10 @@ namespace MSetExplorer
 
 		private void DrawASection(MapSection mapSection, ColorMap? colorMap, bool useEscapVelocities, bool drawOffline)
 		{
-			if (mapSection.MapSectionValues != null && colorMap != null)
+			if (mapSection.MapSectionVectors != null && colorMap != null)
 			{
 				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-				var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionValues, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
+				var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
 
 				_screenSectionCollection.Draw(mapSection.BlockPosition, pixels, drawOffline);
 			}

@@ -25,7 +25,7 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse, MapSectionRecord>,
+		IMapper<Subdivision, SubdivisionRecord>, //IMapper<MapSectionResponse, MapSectionRecord>,
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
@@ -109,8 +109,13 @@ namespace MSetRepo
 
 		public JobRecord MapTo(Job source)
 		{
-			var coords = MapTo(source.Coords);
-			var mapAreaInfoRecord = new MapAreaInfoRecord(coords, MapTo(source.CanvasSize), MapTo(source.Subdivision), MapTo(source.MapBlockOffset), MapTo(source.CanvasControlOffset));
+			//var coords = MapTo(source.Coords);
+			//var mapAreaInfoRecord = new MapAreaInfoRecord(coords, MapTo(source.CanvasSize), MapTo(source.Subdivision), MapTo(source.MapBlockOffset), MapTo(source.CanvasControlOffset))
+			//{
+			//	Precision = source.MapAreaInfo.Precision
+			//};
+
+			var mapAreaInfoRecord = MapTo(source.MapAreaInfo);
 
 			var result = new JobRecord(
 				ParentJobId: source.ParentJobId,
@@ -248,7 +253,8 @@ namespace MSetRepo
 
 				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
 
-				Counts: source.MapSectionVectors.Counts,
+				Counts: source.MapSectionVectors.GetSerializedCounts(),
+				EscapeVelocities: source.MapSectionVectors.GetSerializedEscapeVelocities(),
 				AllRowsHaveEscaped: source.AllRowsHaveEscaped
 				)
 			{
@@ -259,11 +265,11 @@ namespace MSetRepo
 			return result;
 		}
 
-		public MapSectionResponse MapFrom(MapSectionRecord target)
+		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors)
 		{
 			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
 
-			var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE, target.Counts); // TODO: Add BlockSize to the MapSectionRecord
+			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
 
 			var result = new MapSectionResponse
 			(

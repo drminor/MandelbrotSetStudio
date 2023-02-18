@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 
@@ -18,17 +19,41 @@ namespace ProjectRepo.Entities
 
 		MapCalcSettings MapCalcSettings,
 		bool AllRowsHaveEscaped,
-		byte[] Counts
+		byte[] Counts,
+		byte[] EscapeVelocities
 		)
 	{
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
 
-		//public ObjectId? ZValuesId { get; set; }
+		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(128)]
+		public int BlockWidth { get; init; } = 128;
+
+		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(128)]
+		public int BlockHeight { get; init; } = 128;
 
 		public DateTime LastSavedUtc { get; set; }
 		public DateTime LastAccessed { get; set; }
+
+		[BsonIgnore]
+		public SizeInt BlockSize => new SizeInt(BlockWidth, BlockHeight);
+		//{
+		//	get
+		//	{
+		//		if (BlockWidth == 0 || BlockHeight == 0)
+		//		{
+		//			return RMapConstants.BLOCK_SIZE;
+		//		}
+		//		else
+		//		{
+		//			return new SizeInt(BlockWidth, BlockHeight);
+		//		}
+		//	}
+		//}
+
 	}
 
 

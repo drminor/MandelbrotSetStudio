@@ -16,7 +16,7 @@ namespace MSS.Common
 		void DropMapSections();
 		void DropMapSectionsAndSubdivisions();
 
-		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct);
+		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors);
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 		Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse);
 
@@ -25,6 +25,8 @@ namespace MSS.Common
 		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct);
 		Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
 		Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
+		Task<long?> DeleteZValuesAync(ObjectId mapSectionId);
+
 
 		bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision);
 		Subdivision InsertSubdivision(Subdivision subdivision);

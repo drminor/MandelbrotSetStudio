@@ -7,16 +7,11 @@ namespace MSS.Types
 {
 	public class MapSectionVectors : IPoolable
 	{
-		private const int VALUE_SIZE = 4;
+		private const int VALUE_SIZE = 2;
 
 		#region Constructor
 
-		public MapSectionVectors(SizeInt blockSize) : this(blockSize, ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * VALUE_SIZE))
-		{
-			FromRepo = false;
-		}
-
-		public MapSectionVectors(SizeInt blockSize, byte[] counts)
+		public MapSectionVectors(SizeInt blockSize)
 		{
 			BlockSize = blockSize;
 			ValueCount = blockSize.NumberOfCells;
@@ -25,15 +20,13 @@ namespace MSS.Types
 			BytesPerRow = ValuesPerRow * VALUE_SIZE;
 			TotalByteCount = ValueCount * VALUE_SIZE;
 
-			Counts = counts;
-			FromRepo = true;
+			Counts = ArrayPool<ushort>.Shared.Rent(ValueCount);
+			EscapeVelocities = ArrayPool<ushort>.Shared.Rent(ValueCount);
 		}
 
 		#endregion
 
 		#region Public Properties
-
-		public bool FromRepo { get; init; }
 
 		public SizeInt BlockSize { get; init; }
 		public int ValueCount { get; init; }
@@ -42,36 +35,64 @@ namespace MSS.Types
 		public int BytesPerRow { get; init; }
 		public int TotalByteCount { get; init; }
 
-		public byte[] Counts { get; init; }
+		public ushort[] Counts { get; init; }
+		public ushort[] EscapeVelocities { get; init; }
 
 		#endregion
 
-		#region Methods
+		#region Block Level Methods
 
-		public void Load(byte[] counts)
+		public void Load(byte[] counts, byte[] escapeVelocites)
 		{
-			Array.Copy(counts, Counts, Counts.Length);
-		}
+			var destBackCounts = MemoryMarshal.Cast<ushort, byte>(Counts);
+			var destBackEscapeVelocities = MemoryMarshal.Cast<ushort, byte>(EscapeVelocities);
 
-		public void FillCountsRow(int rowNumber, Vector256<int>[] dest)
-		{
-			var destBack = MemoryMarshal.Cast<Vector256<int>, byte>(dest);
-
-			var startIndex = BytesPerRow * rowNumber;
-
-			for (var i = 0; i < BytesPerRow; i++)
+			for (var i = 0; i < counts.Length; i++)
 			{
-				destBack[i] = Counts[startIndex + i];
+				destBackCounts[i] = counts[i];
+				destBackEscapeVelocities[i] = escapeVelocites[i];
 			}
 		}
 
-		public void FillCountsRow(int rowNumber, int[] dest)
+		public byte[] GetSerializedCounts()
 		{
-			var destBack = MemoryMarshal.Cast<int, byte>(dest);
+			var result = new byte[TotalByteCount];
 
-			var startIndex = BytesPerRow * rowNumber;
+			var destSource = MemoryMarshal.Cast<ushort, byte>(Counts);
 
-			for (var i = 0; i < BytesPerRow; i++)
+			for (var i = 0; i < result.Length; i++)
+			{
+				result[i] = destSource[i];
+			}
+
+			return result;
+		}
+
+		public byte[] GetSerializedEscapeVelocities()
+		{
+			var result = new byte[TotalByteCount];
+
+			var destSource = MemoryMarshal.Cast<ushort, byte>(EscapeVelocities);
+
+			for (var i = 0; i < result.Length; i++)
+			{
+				result[i] = destSource[i];
+			}
+
+			return result;
+		}
+
+		#endregion
+
+		#region Row Level Methods
+
+		public void FillCountsRow(int rowNumber, Vector256<int>[] dest)
+		{
+			var destBack = MemoryMarshal.Cast<Vector256<int>, uint>(dest);
+
+			var startIndex = ValuesPerRow * rowNumber;
+
+			for (var i = 0; i < ValuesPerRow; i++)
 			{
 				destBack[i] = Counts[startIndex + i];
 			}
@@ -79,40 +100,53 @@ namespace MSS.Types
 
 		public void UpdateFromCountsRow(int rowNumber, Vector256<int>[] source)
 		{
-			var sourceBack = MemoryMarshal.Cast<Vector256<int>, byte>(source);
+			var sourceBack = MemoryMarshal.Cast<Vector256<int>, uint>(source);
 
-			var startIndex = BytesPerRow * rowNumber;
+			var startIndex = ValuesPerRow * rowNumber;
 
-			for (var i = 0; i < BytesPerRow; i++)
+			for (var i = 0; i < ValuesPerRow; i++)
 			{
-				Counts[startIndex + i] = sourceBack[i];
+				Counts[startIndex + i] = (ushort)sourceBack[i];
+			}
+		}
+
+		public void FillCountsRow(int rowNumber, int[] dest)
+		{
+			var startIndex = ValuesPerRow * rowNumber;
+
+			for (var i = 0; i < ValuesPerRow; i++)
+			{
+				dest[i] = Counts[startIndex + i];
 			}
 		}
 
 		// From an Array of Ints
 		public void UpdateFromCountsRow(int rowNumber, int[] source)
 		{
-			var sourceBack = MemoryMarshal.Cast<int, byte>(source);
+			var startIndex = ValuesPerRow * rowNumber;
 
-			var startIndex = BytesPerRow * rowNumber;
-
-			for (var i = 0; i < BytesPerRow; i++)
+			for (var i = 0; i < ValuesPerRow; i++)
 			{
-				Counts[startIndex + i] = sourceBack[i];
+				Counts[startIndex + i] = (ushort)source[i];
 			}
 		}
 
-		// IPoolable Support
+
+		#endregion
+
+		#region IPoolable Support
+
 		void IPoolable.ResetObject()
 		{
-			Array.Clear(Counts, 0, TotalByteCount);
+			Array.Clear(Counts);
+			Array.Clear(EscapeVelocities);
 		}
 
 		void IPoolable.CopyTo(object obj)
 		{
-			if (obj != null && obj is MapSectionVectors msv)
+			if (obj != null && obj is MapSectionVectors destination)
 			{
-				CopyTo(msv);
+				CopyTo(destination);
 			}
 			else
 			{
@@ -120,9 +154,10 @@ namespace MSS.Types
 			}
 		}
 
-		public void CopyTo(MapSectionVectors mapSectionVectors)
+		public void CopyTo(MapSectionVectors destination)
 		{
-			Array.Copy(Counts, mapSectionVectors.Counts, TotalByteCount);
+			Array.Copy(Counts, destination.Counts, ValueCount);
+			Array.Copy(EscapeVelocities, destination.EscapeVelocities, ValueCount);
 		}
 
 		#endregion
@@ -139,10 +174,13 @@ namespace MSS.Types
 				{
 					// Dispose managed state (managed objects)
 
-					if (!FromRepo)
-					{
-						ArrayPool<byte>.Shared.Return(Counts, clearArray: true);
-					}
+					//if (!FromRepo)
+					//{
+					//	ArrayPool<ushort>.Shared.Return(Counts, clearArray: true);
+					//}
+
+					ArrayPool<ushort>.Shared.Return(Counts, clearArray: true);
+
 				}
 
 				_disposedValue = true;

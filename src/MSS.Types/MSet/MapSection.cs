@@ -17,7 +17,7 @@ namespace MSS.Types
 		public MapSection(MapSectionRequest mapSectionRequest, bool isCancelled = false)
 			: this(
 				  jobId: -1,
-				  mapSectionValues: null,
+				  mapSectionVectors: null,
 				  subdivisionId: mapSectionRequest.SubdivisionId,
 				  repoBlockPosition: mapSectionRequest.BlockPosition,
 				  isInverted: false,
@@ -34,7 +34,7 @@ namespace MSS.Types
 		public MapSection()
 			: this(
 				  jobId: -1,
-				  mapSectionValues: null, 
+				  mapSectionVectors: null, 
 				  subdivisionId: string.Empty, 
 				  repoBlockPosition: new BigVector(), 
 				  isInverted: false, 
@@ -45,11 +45,11 @@ namespace MSS.Types
 				  )
 		{ }
 
-		public MapSection(int jobId, MapSectionValues? mapSectionValues, string subdivisionId,
+		public MapSection(int jobId, MapSectionVectors? mapSectionVectors, string subdivisionId,
 			BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			JobId = jobId;
-			MapSectionValues = mapSectionValues;
+			MapSectionVectors = mapSectionVectors;
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
 			IsInverted = isInverted;
@@ -60,7 +60,7 @@ namespace MSS.Types
 			//EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
 
 			TargetIterations = targetIterations;
-			_histogram = new Lazy<IHistogram>(() => histogramBuilder(MapSectionValues?.Counts ?? new ushort[0]), System.Threading.LazyThreadSafetyMode.PublicationOnly);
+			_histogram = new Lazy<IHistogram>(() => histogramBuilder(MapSectionVectors?.Counts ?? new ushort[0]), System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		}
 
 		#endregion
@@ -70,9 +70,9 @@ namespace MSS.Types
 		public bool RequestCancelled { get; set; }
 
 		public int JobId { get; init; }
-		public MapSectionValues? MapSectionValues { get; set; }
+		public MapSectionVectors? MapSectionVectors { get; set; }
 
-		public bool IsEmpty => MapSectionValues == null;
+		public bool IsEmpty => MapSectionVectors == null;
 
 		public PointInt BlockPosition { get; set; }
 		public SizeInt Size { get; init; }

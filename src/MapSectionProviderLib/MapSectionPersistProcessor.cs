@@ -100,7 +100,15 @@ namespace MapSectionProviderLib
 							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 
 							_ = await _mapSectionAdapter.UpdateCountValuesAync(mapSectionResponse);
-							_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
+
+							if (mapSectionResponse.AllRowsHaveEscaped)
+							{
+								_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId);
+							}
+							else
+							{
+								_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
+							}
 
 							// TODO: The OwnerId may already be on file for this MapSection -- or not.
 						}
@@ -113,7 +121,11 @@ namespace MapSectionProviderLib
 							{
 								mapSectionResponse.MapSectionId = mapSectionId.ToString();
 
-								_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
+								if (!mapSectionResponse.AllRowsHaveEscaped)
+								{
+									_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
+								}
+
 								_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
 							}
 						}

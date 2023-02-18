@@ -103,11 +103,11 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			set => _unusedCalcs = value;
 		}
 
-		public int MaxPeakSections
-		{
-			get => _mapSectionHelper.MaxPeakSections;
-			set { }
-		}
+		//public int MaxPeakSections
+		//{
+		//	get => _mapSectionHelper.MaxPeakSections;
+		//	set { }
+		//}
 
 		public int MaxPeakSectionVectors
 		{
@@ -333,7 +333,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		private void NotifyPropChangedMaxPeek()
 		{
-			OnPropertyChanged(nameof(MaxPeakSections));
+			//OnPropertyChanged(nameof(MaxPeakSections));
 			OnPropertyChanged(nameof(MaxPeakSectionVectors));
 			OnPropertyChanged(nameof(MaxPeakSectionZVectors));
 		}
