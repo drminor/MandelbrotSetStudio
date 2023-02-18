@@ -40,21 +40,6 @@ namespace ProjectRepo.Entities
 
 		[BsonIgnore]
 		public SizeInt BlockSize => new SizeInt(BlockWidth, BlockHeight);
-		//{
-		//	get
-		//	{
-		//		if (BlockWidth == 0 || BlockHeight == 0)
-		//		{
-		//			return RMapConstants.BLOCK_SIZE;
-		//		}
-		//		else
-		//		{
-		//			return new SizeInt(BlockWidth, BlockHeight);
-		//		}
-		//	}
-		//}
-
 	}
-
 
 }

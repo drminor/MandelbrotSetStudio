@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
@@ -24,6 +23,12 @@ namespace MSetRepo
 		private readonly MSetRecordMapper _mSetRecordMapper;
 		private readonly DtoMapper _dtoMapper;
 
+
+		private readonly MapSectionReaderWriter _mapSectionReaderWriter;
+		private readonly MapSectionZValuesReaderWriter _mapSectionZValuesReaderWriter;
+		private readonly JobMapSectionReaderWriter _jobMapSectionReaderWriter;
+		private readonly SubdivisonReaderWriter _subdivisionReaderWriter;
+
 		#region Constructor
 
 		public MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
@@ -31,6 +36,11 @@ namespace MSetRepo
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
 			_dtoMapper = new DtoMapper();
+
+			_mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			_mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			_jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			_subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			//BsonSerializer.RegisterSerializer(new ZValuesSerializer());
 
@@ -47,50 +57,50 @@ namespace MSetRepo
 
 		public void CreateCollections()
 		{
-			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
-			jobMapSectionReaderWriter.CreateCollection();
+			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			_jobMapSectionReaderWriter.CreateCollection();
 
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			if (mapSectionReaderWriter.CreateCollection())
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			if (_mapSectionReaderWriter.CreateCollection())
 			{
-				mapSectionReaderWriter.CreateSubAndPosIndex();
+				_mapSectionReaderWriter.CreateSubAndPosIndex();
 			}
 
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			_ = subdivisionReaderWriter.CreateCollection();
+			//var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			_ = _subdivisionReaderWriter.CreateCollection();
 
-			var mapSectionZValuesReaderWriter  = new MapSectionZValuesReaderWriter(_dbProvider);
-			if (mapSectionZValuesReaderWriter.CreateCollection())
+			//var mapSectionZValuesReaderWriter  = new MapSectionZValuesReaderWriter(_dbProvider);
+			if (_mapSectionZValuesReaderWriter.CreateCollection())
 			{
-				mapSectionZValuesReaderWriter.CreateSectionIdIndex();
+				_mapSectionZValuesReaderWriter.CreateSectionIdIndex();
 			}
 		}
 
 		public void DropMapSections()
 		{
-			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
-			jobMapSectionReaderWriter.DropCollection();
+			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			_jobMapSectionReaderWriter.DropCollection();
 
-			var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
-			mapSectionZValuesReaderWriter.DropCollection();
+			//var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			_mapSectionZValuesReaderWriter.DropCollection();
 
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			mapSectionReaderWriter.DropCollection();
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			_mapSectionReaderWriter.DropCollection();
 		}
 
 		public void DropMapSectionsAndSubdivisions()
 		{
-			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
-			jobMapSectionReaderWriter.DropCollection();
+			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			_jobMapSectionReaderWriter.DropCollection();
 
-			var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
-			mapSectionZValuesReaderWriter.DropCollection();
+			//var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			_mapSectionZValuesReaderWriter.DropCollection();
 
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			mapSectionReaderWriter.DropCollection();
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			_mapSectionReaderWriter.DropCollection();
 
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-			subdivisionReaderWriter.DropCollection();
+			//var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			_subdivisionReaderWriter.DropCollection();
 		}
 
 		#endregion
@@ -99,11 +109,11 @@ namespace MSetRepo
 
 		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors)
 		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
 			try
 			{
-				var mapSectionRecord = await mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition, ct);
+				var mapSectionRecord = await _mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition, ct);
 				if (mapSectionRecord != null)
 				{
 					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
@@ -118,10 +128,10 @@ namespace MSetRepo
 			catch (Exception e)
 			{
 				Debug.WriteLine($"While fetching a MapSectionRecord, got exception: {e}.");
-				var id = await mapSectionReaderWriter.GetId(subdivisionId, blockPosition);
+				var id = await _mapSectionReaderWriter.GetId(subdivisionId, blockPosition);
 				if (id != null)
 				{
-					mapSectionReaderWriter.Delete(id.Value);
+					_mapSectionReaderWriter.Delete(id.Value);
 				}
 				else
 				{
@@ -134,20 +144,20 @@ namespace MSetRepo
 
 		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
 		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
 
-			var mapSectionId = await mapSectionReaderWriter.InsertAsync(mapSectionRecord);
+			var mapSectionId = await _mapSectionReaderWriter.InsertAsync(mapSectionRecord);
 
 			return mapSectionId;
 		}
 
 		public async Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse)
 		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
 
-			var result = await mapSectionReaderWriter.UpdateCountValuesAync(mapSectionRecord);
+			var result = await _mapSectionReaderWriter.UpdateCountValuesAync(mapSectionRecord);
 
 			return result;
 		}
@@ -155,16 +165,16 @@ namespace MSetRepo
 
 		public async Task<long?> DeleteZValuesAync(ObjectId mapSectionId)
 		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var result = await mapSectionReaderWriter.DeleteAsync(mapSectionId);
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var result = await _mapSectionReaderWriter.DeleteAsync(mapSectionId);
 
 			return result;
 		}
 
 		public long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false)
 		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var result = mapSectionReaderWriter.DeleteMapSectionsSince(dateCreatedUtc, overrideRecentGuard);
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			var result = _mapSectionReaderWriter.DeleteMapSectionsSince(dateCreatedUtc, overrideRecentGuard);
 
 			return result;
 		}
@@ -175,28 +185,28 @@ namespace MSetRepo
 
 		public async Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
 		{
-			var mapSectionZValsReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
-			var result = await mapSectionZValsReaderWriter.GetBySectionIdAsync(mapSectionId, ct);
+			//var mapSectionZValsReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			var result = await _mapSectionZValuesReaderWriter.GetBySectionIdAsync(mapSectionId, ct);
 
 			return result?.ZValues;
 		}
 
 		public async Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId)
 		{
-			var mapSectionZValsReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			//var mapSectionZValsReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
 			var mapSectionZValuesRecord = GetZValues(mapSectionResponse, mapSectionId);
 
-			var mapSectionZValuesId = await mapSectionZValsReaderWriter.InsertAsync(mapSectionZValuesRecord);
+			var mapSectionZValuesId = await _mapSectionZValuesReaderWriter.InsertAsync(mapSectionZValuesRecord);
 
 			return mapSectionZValuesId;
 		}
 
 		public async Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId)
 		{
-			var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
+			//var mapSectionZValuesReaderWriter = new MapSectionZValuesReaderWriter(_dbProvider);
 			var mapSectionZValuesRecord = GetZValues(mapSectionResponse, mapSectionId);
 
-			var result = await mapSectionZValuesReaderWriter.UpdateZValuesByMapSectionIdAync(mapSectionZValuesRecord, mapSectionId);
+			var result = await _mapSectionZValuesReaderWriter.UpdateZValuesByMapSectionIdAync(mapSectionZValuesRecord, mapSectionId);
 
 			return result;
 		}
@@ -262,13 +272,13 @@ namespace MSetRepo
 
 		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId ownerId, JobOwnerType jobOwnerType)
 		{
-			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
-			var existingRecord = await jobMapSectionReaderWriter.GetByMapAndOwnerIdAsync(mapSectionId, ownerId, jobOwnerType);
+			var existingRecord = await _jobMapSectionReaderWriter.GetByMapAndOwnerIdAsync(mapSectionId, ownerId, jobOwnerType);
 			if (existingRecord == null)
 			{
 				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, ownerId, jobOwnerType);
-				var jobMapSectionId = await jobMapSectionReaderWriter.InsertAsync(jobMapSectionRecord);
+				var jobMapSectionId = await _jobMapSectionReaderWriter.InsertAsync(jobMapSectionRecord);
 				return jobMapSectionId;
 			}
 			else
@@ -281,13 +291,13 @@ namespace MSetRepo
 		{
 			var result = 0L;
 
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
 			foreach (var ownerId in ownerIds)
 			{
 				Debug.WriteLine($"Removing MapSections and JobMapSections for {jobOwnerType}: {ownerId}.");
-				var singleResult = DeleteMapSectionsForJobInternal(ownerId, jobOwnerType, mapSectionReaderWriter, jobMapSectionReaderWriter, out var numberJobMapSectionsDeleted);
+				var singleResult = DeleteMapSectionsForJobInternal(ownerId, jobOwnerType, _mapSectionReaderWriter, jobMapSectionReaderWriter, out var numberJobMapSectionsDeleted);
 				Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {singleResult} MapSections.");
 
 				if (singleResult.HasValue)
@@ -303,9 +313,9 @@ namespace MSetRepo
 		{
 			Debug.WriteLine($"Removing MapSections and JobMapSections for {jobOwnerType}: {ownerId}.");
 			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
-			var result = DeleteMapSectionsForJobInternal(ownerId, jobOwnerType, mapSectionReaderWriter, jobMapSectionReaderWriter, out var numberJobMapSectionsDeleted);
+			var result = DeleteMapSectionsForJobInternal(ownerId, jobOwnerType, mapSectionReaderWriter, _jobMapSectionReaderWriter, out var numberJobMapSectionsDeleted);
 
 			Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {result} MapSections.");
 
@@ -356,14 +366,14 @@ namespace MSetRepo
 
 		public long? DuplicateJobMapSections(ObjectId ownerId, JobOwnerType jobOwnerType, ObjectId newOwnerId)
 		{
-			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
-			var jobMapSectionRecords = jobMapSectionReaderWriter.GetByOwnerId(ownerId, jobOwnerType);
+			var jobMapSectionRecords = _jobMapSectionReaderWriter.GetByOwnerId(ownerId, jobOwnerType);
 
 			foreach (var jmsr in jobMapSectionRecords)
 			{
 				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, jmsr.SubdivisionId, newOwnerId, jmsr.OwnerType);
-				_ = jobMapSectionReaderWriter.Insert(newJmsr);
+				_ = _jobMapSectionReaderWriter.Insert(newJmsr);
 			}
 
 			var result = jobMapSectionRecords.Count;
@@ -373,17 +383,17 @@ namespace MSetRepo
 
 		public string GetJobMapSectionsReferenceReport()
 		{
-			var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
-			var mapSectionIds = mapSectionReaderWriter.GetAllMapSectionIds();
+			var mapSectionIds = _mapSectionReaderWriter.GetAllMapSectionIds();
 			var dict = new SortedDictionary<ObjectId, int>();
 			foreach (var msIdRef in mapSectionIds)
 			{
 				dict.Add(msIdRef, 0);
 			}
 
-			var mapSectionIdReferences = jobMapSectionReaderWriter.GetAllMapSectionIdsFromJobMapSections();
+			var mapSectionIdReferences = _jobMapSectionReaderWriter.GetAllMapSectionIdsFromJobMapSections();
 
 			foreach(var msIdRef in mapSectionIdReferences)
 			{
@@ -412,7 +422,7 @@ namespace MSetRepo
 		public List<Tuple<string, long?>> DeleteNonExtantJobsReferenced()
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
 			var jobIds = jobReaderWriter.GetAllJobIds();
 
@@ -425,7 +435,7 @@ namespace MSetRepo
 
 			var jobIdsNotFound = new List<ObjectId>();
 
-			var msJobIds = jobMapSectionReaderWriter.GetDistinctJobIdsFromJobMapSections(JobOwnerType.Project);
+			var msJobIds = _jobMapSectionReaderWriter.GetDistinctJobIdsFromJobMapSections(JobOwnerType.Project);
 
 			foreach (var jobId in msJobIds)
 			{
@@ -439,7 +449,7 @@ namespace MSetRepo
 
 			foreach(var jobId in jobIdsNotFound)
 			{
-				var numberDeleted = jobMapSectionReaderWriter.DeleteJobMapSections(jobId, JobOwnerType.Project);
+				var numberDeleted = _jobMapSectionReaderWriter.DeleteJobMapSections(jobId, JobOwnerType.Project);
 				result.Add(new Tuple<string, long?>(jobId.ToString(), numberDeleted));
 			}
 
@@ -487,14 +497,14 @@ namespace MSetRepo
 
 		public bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision)
 		{
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			//var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			var samplePointDeltaReduced = Reducer.Reduce(samplePointDelta);
 			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDeltaReduced);
 
 			var baseMapPositionDto = _dtoMapper.MapTo(baseMapPosition);
 
-			var matches = subdivisionReaderWriter.Get(samplePointDeltaDto, baseMapPositionDto);
+			var matches = _subdivisionReaderWriter.Get(samplePointDeltaDto, baseMapPositionDto);
 
 			if (matches.Count > 1)
 			{
@@ -520,10 +530,10 @@ namespace MSetRepo
 
 		public Subdivision InsertSubdivision(Subdivision subdivision)
 		{
-			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+			//var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);
-			var id = subdivisionReaderWriter.Insert(subdivisionRecord);
+			var id = _subdivisionReaderWriter.Insert(subdivisionRecord);
 
 			var result = new Subdivision(id, subdivision.SamplePointDelta, subdivision.BaseMapPosition, subdivision.BlockSize);
 

@@ -13,10 +13,8 @@ namespace MSetExplorer
 {
 	internal class MapLoader
 	{
-		private readonly BigVector _mapBlockOffset;
 		private readonly Action<MapSection, int, bool> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly MapSectionHelper _mapSectionHelper;
 
 		private IList<MapSectionRequest>? _mapSectionRequests;
 		private bool _isStopping;
@@ -24,13 +22,13 @@ namespace MSetExplorer
 		private int _sectionsCompleted;
 		private TaskCompletionSource? _tcs;
 
+		private Stopwatch _stopwatch;
+
 		#region Constructor
 
-		public MapLoader(BigVector mapBlockOffset, Action<MapSection, int, bool> callback, MapSectionHelper mapSectionHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(Action<MapSection, int, bool> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			_mapBlockOffset = mapBlockOffset;
 			_callback = callback;
-			_mapSectionHelper = mapSectionHelper;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
 			JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 
@@ -41,6 +39,9 @@ namespace MSetExplorer
 			_tcs = null;
 
 			//MathOpCounts = new MathOpCounts();
+
+			_stopwatch = new Stopwatch();
+			_stopwatch.Stop();
 		}
 
 		#endregion
@@ -52,6 +53,8 @@ namespace MSetExplorer
 		//public MathOpCounts MathOpCounts { get; private set; }
 
 		public int JobNumber { get; init; }
+
+		public TimeSpan ElaspedTime => _stopwatch.Elapsed;
 
 		#endregion
 
@@ -66,6 +69,7 @@ namespace MSetExplorer
 
 			_mapSectionRequests = mapSectionRequests;
 
+			_stopwatch.Start();
 			_ = Task.Run(SubmitSectionRequests);
 
 			_tcs = new TaskCompletionSource();
@@ -149,12 +153,13 @@ namespace MSetExplorer
 			if (_sectionsCompleted >= _mapSectionRequests?.Count || (_isStopping && _sectionsCompleted >= _sectionsRequested))
 			{
 				isLastSection = true;
+				_stopwatch.Stop();
 
 				_callback(mapSectionResult, JobNumber, isLastSection);
 
 				if (!mapSectionResult.IsEmpty)
 				{
-					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
+					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection));
 				}
 
 				mapSectionRequest.Handled = true;
@@ -164,12 +169,7 @@ namespace MSetExplorer
 					_tcs.SetResult();
 				}
 
-				var numberOfPendingRequests = _mapSectionRequestProcessor.GetNumberOfPendingRequests(JobNumber);
-				var notHandled = _mapSectionRequests?.Count(x => !x.Handled) ?? 0;
-				var notSent = _mapSectionRequests?.Count(x => !x.Sent) ?? 0;
-
-				// Log: MapLoader is done with Job:
-				//Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections. There are {numberOfPendingRequests}/{notHandled}/{notSent} requests still pending, not handled, not sent.");
+				//ReportStats();
 			}
 			else
 			{
@@ -177,7 +177,7 @@ namespace MSetExplorer
 				if (!mapSectionResult.IsEmpty)
 				{
 					_callback(mapSectionResult, JobNumber, isLastSection);
-					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
+					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection));
 				}
 				else
 				{
@@ -188,10 +188,19 @@ namespace MSetExplorer
 
 				//Debug.WriteLine($"Job completed: Totals: {MathOpCounts}");
 			}
-
 		}
 
-		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr)
+		private void ReportStats()
+		{
+			var numberOfPendingRequests = _mapSectionRequestProcessor.GetNumberOfPendingRequests(JobNumber);
+			var notHandled = _mapSectionRequests?.Count(x => !x.Handled) ?? 0;
+			var notSent = _mapSectionRequests?.Count(x => !x.Sent) ?? 0;
+
+			Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections in {_stopwatch.Elapsed}. " +
+				$"There are {numberOfPendingRequests}/{notHandled}/{notSent} requests still pending, not handled, not sent.");
+		}
+
+		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr, bool isLastSection)
 		{
 			var result = new MapSectionProcessInfo
 				(
@@ -200,7 +209,8 @@ namespace MSetExplorer
 				msr.TimeToCompleteGenRequest, 
 				msr.ProcessingDuration, 
 				msr.GenerationDuration, 
-				msr.FoundInRepo, 
+				msr.FoundInRepo,
+				isLastSection,
 				msr.MathOpCounts
 				);
 			return result;

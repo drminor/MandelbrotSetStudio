@@ -74,6 +74,7 @@ namespace MSS.Types.APValues
 			var result = CreateFP31Val(rValue, fpFormat.TargetExponent, fpFormat.LimbCount, fpFormat.BitsBeforeBinaryPoint);
 			return result;
 		}
+
 		// Adjust the RValue then convert to FW uint Limbs.
 		public static FP31Val CreateFP31Val(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP)
 		{

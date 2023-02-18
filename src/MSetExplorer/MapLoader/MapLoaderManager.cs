@@ -56,24 +56,24 @@ namespace MSetExplorer
 		public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection, int, bool> callback)
 		{
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
-			var result = Push(mapAreaInfo.MapBlockOffset, mapSectionRequests, callback);
+			var result = Push(mapSectionRequests, callback);
 			return result;
 		}
 
 		public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection, int, bool> callback)
 		{
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
-			var result = Push(mapAreaInfo.MapBlockOffset, mapSectionRequests, callback);
+			var result = Push(mapSectionRequests, callback);
 			return result;
 		}
 
-		public int Push(BigVector mapBlockOffset, IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int, bool> callback)
+		public int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int, bool> callback)
 		{
 			var result = 0;
 
 			DoWithWriteLock(() =>
 			{
-				var mapLoader = new MapLoader(mapBlockOffset, callback, _mapSectionHelper, _mapSectionRequestProcessor);
+				var mapLoader = new MapLoader(callback, _mapSectionRequestProcessor);
 				var startTask = mapLoader.Start(mapSectionRequests);
 
 				var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, _cts.Token);
@@ -108,6 +108,17 @@ namespace MSetExplorer
 			var result = DoWithReadLock(() =>
 			{
 				var t = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.Task;
+				return t;
+			});
+
+			return result;
+		}
+
+		public TimeSpan? GetExecutionTimeForJob(int jobNumber)
+		{
+			var result = DoWithReadLock(() =>
+			{
+				var t = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.TotalExecutionTime;
 				return t;
 			});
 
@@ -334,6 +345,8 @@ namespace MSetExplorer
 
 			public DateTime TaskStartedDate { get; init; }
 			public DateTime? TaskCompletedDate { get; private set; }
+
+			public TimeSpan TotalExecutionTime => MapLoader.ElaspedTime;
 
 			#endregion
 

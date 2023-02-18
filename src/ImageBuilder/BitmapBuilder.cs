@@ -204,7 +204,7 @@ namespace ImageBuilder
 
 			try
 			{
-				_currentJobNumber = _mapLoaderManager.Push(mapBlockOffset, requests, MapSectionReady);
+				_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
 
 				var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
 

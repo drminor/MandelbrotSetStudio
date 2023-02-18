@@ -407,7 +407,7 @@ namespace MapSectionProviderLib
 
 					if (UseRepo)
 					{
-						if (!mapSectionResponse.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
+						if (!mapSectionResponse.RequestCancelled && !mapSectionResponse.RecordOnFile || mapSectionWorkRequest.Request.IncreasingIterations)
 						{
 							// Create a new copy of the MapSectionVectors
 							// and send it to be persisted.

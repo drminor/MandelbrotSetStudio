@@ -56,9 +56,6 @@ namespace MSS.Types
 			BlockPosition = blockPosition;
 			Size = size;
 
-			//Counts = counts ?? throw new ArgumentNullException(nameof(counts));
-			//EscapeVelocities = escapeVelocities ?? throw new ArgumentNullException(nameof(escapeVelocities));
-
 			TargetIterations = targetIterations;
 			_histogram = new Lazy<IHistogram>(() => histogramBuilder(MapSectionVectors?.Counts ?? new ushort[0]), System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		}
@@ -76,9 +73,6 @@ namespace MSS.Types
 
 		public PointInt BlockPosition { get; set; }
 		public SizeInt Size { get; init; }
-
-		//public ushort[] Counts { get; init; }
-		//public ushort[] EscapeVelocities { get; init; }
 
 		public int TargetIterations { get; init; }
 

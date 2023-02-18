@@ -152,8 +152,16 @@ namespace MSetGeneratorPrototype
 					}
 
 					// 0/1; 1/2; 2/3
-					result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
-					result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+
+					if (resultPtr == 0)
+					{
+						result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+					}
+					else
+					{
+						result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
+						result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+					}
 					//MathOpCounts.NumberOfSplits++;
 					//MathOpCounts.NumberOfAdditions += 2;
 				}
@@ -179,7 +187,7 @@ namespace MSetGeneratorPrototype
 
 			_carryVectorsLong = Vector256<ulong>.Zero;
 
-			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
+			for (int limbPtr = 1; limbPtr < source.Length; limbPtr++)
 			{
 				var withCarries = Avx2.Add(source[limbPtr], _carryVectorsLong);
 
@@ -206,7 +214,6 @@ namespace MSetGeneratorPrototype
 
 			for (int limbPtr = 0; limbPtr < resultLimbs.Length; limbPtr++)
 			{
-
 				if (sourceIndex > 0)
 				{
 					// Calculate the lo end

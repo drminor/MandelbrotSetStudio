@@ -1,12 +1,11 @@
-﻿using MSS.Types.APValues;
-using MSS.Types;
+﻿using MSS.Types;
+using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Diagnostics.Metrics;
-using System.Runtime.CompilerServices;
 
 namespace MSetGeneratorPrototype
 {
@@ -37,8 +36,6 @@ namespace MSetGeneratorPrototype
 		{
 			_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
 
-			//var apFixedPointFormat = new ApFixedPointFormat(limbCount);
-			//_fp31VecMath = new FP31VecMath(apFixedPointFormat);
 			_fp31VecMath = _samplePointBuilder.GetVecMath(limbCount);
 			_iterator = new IteratorDepthFirst(_fp31VecMath);
 
@@ -78,8 +75,6 @@ namespace MSetGeneratorPrototype
 
 			if (currentLimbCount != limbCountForThisRequest)
 			{
-				//var apFixedPointFormat = new ApFixedPointFormat(limbCountForThisRequest);
-				//_fp31VecMath = new FP31VecMath(apFixedPointFormat);
 				_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
 				_iterator = new IteratorDepthFirst(_fp31VecMath);
 
@@ -113,15 +108,7 @@ namespace MSetGeneratorPrototype
 			var stopwatch = Stopwatch.StartNew();
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
-			////var stride = (byte)mapSectionRequest.BlockSize.Width;
-			//var fP31ScalarMath = new FP31ScalarMath(_fp31VecMath.ApFixedPointFormat);
-			////var samplePointOffsets = SamplePointBuilder.BuildSamplePointOffsets(coords.Delta, stride, fP31ScalarMath);
-			//var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(coords.Delta);
-			//var samplePointsX = SamplePointBuilder.BuildSamplePoints(coords.StartingCx, samplePointOffsets, fP31ScalarMath);
-			//var samplePointsY = SamplePointBuilder.BuildSamplePoints(coords.StartingCy, samplePointOffsets, fP31ScalarMath);
-
 			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(coords);
-
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);

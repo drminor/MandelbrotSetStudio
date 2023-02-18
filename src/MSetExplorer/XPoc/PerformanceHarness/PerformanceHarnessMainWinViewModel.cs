@@ -14,8 +14,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 	{
 		#region Private Properties
 
-		private readonly SynchronizationContext? _synchronizationContext;
-
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -37,7 +35,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		public PerformanceHarnessMainWinViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, MapJobHelper mapJobHelper, MapSectionHelper mapSectionHelper)
         {
-			_synchronizationContext = SynchronizationContext.Current;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 			_mapSectionRequestProcessor.UseRepo = false;
 
@@ -148,7 +145,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize, RMapConstants.BLOCK_SIZE);
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);
 
-			var mapLoader = new MapLoader(mapAreaInfo.MapBlockOffset, MapSectionReady, _mapSectionHelper, _mapSectionRequestProcessor);
+			var mapLoader = new MapLoader(MapSectionReady, _mapSectionRequestProcessor);
 
 			var stopWatch = Stopwatch.StartNew();
 			var startTask = mapLoader.Start(mapSectionRequests);

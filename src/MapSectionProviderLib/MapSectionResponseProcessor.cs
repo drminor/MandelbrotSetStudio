@@ -14,8 +14,6 @@ namespace MapSectionProviderLib
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<MapSectionWorkRequest> _workQueue;
 
-		//private readonly List<int> _cancelledJobIds;
-
 		private Task _workQueueProcessor;
 		private bool disposedValue;
 		private bool _isStopped;
@@ -48,17 +46,6 @@ namespace MapSectionProviderLib
 				Debug.WriteLine($"Not adding: {mapSectionWorkItem.Request}, Adding has been completed.");
 			}
 		}
-
-		//public void CancelJob(int jobId)
-		//{
-		//	lock (_cancelledJobsLock)
-		//	{
-		//		if (!_cancelledJobIds.Contains(jobId))
-		//		{
-		//			_cancelledJobIds.Add(jobId);
-		//		}
-		//	}
-		//}
 
 		public void Stop(bool immediately)
 		{
@@ -112,12 +99,6 @@ namespace MapSectionProviderLib
 				try
 				{
 					var mapSectionWorkRequest = _workQueue.Take(ct);
-
-					//if (mapSectionWorkRequest.Response != null)
-					//{
-					//	mapSectionWorkRequest.Request.Completed = true;
-					//	mapSectionWorkRequest.RunWorkAction();
-					//}
 
 					mapSectionWorkRequest.Request.Completed = true;
 					mapSectionWorkRequest.RunWorkAction();
