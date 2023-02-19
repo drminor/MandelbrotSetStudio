@@ -12,6 +12,8 @@
         <CommandBinding Command="local:CustomCommands.ProjectSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.EditCoords" CanExecute="EditCoordsCommand_CanExecute" Executed="EditCoordsCommand_Executed" />
 
+        <CommandBinding Command="local:CustomCommands.CreateImage" CanExecute="CreateImageCommand_CanExecute" Executed="CreateImageCommand_Executed" />
+
         <CommandBinding Command="local:CustomCommands.JobGoBack" CanExecute="GoBack_CanExecute" Executed="GoBack_Executed" />
         <CommandBinding Command="local:CustomCommands.JobGoForward" CanExecute="GoForward_CanExecute" Executed="GoForward_Executed" />
 
@@ -56,10 +58,14 @@
                 <MenuItem Header="_Open" Click="OpenButton_Click"/>
                 <MenuItem Header="_Save" Command="local:CustomCommands.ProjectSave" />
                 <MenuItem Header="Save _As" Command="local:CustomCommands.ProjectSaveAs" />
+
                 <Separator/>
                 <MenuItem Header="Edit Coor_ds" Command="local:CustomCommands.EditCoords"/>
+
                 <Separator/>
                 <MenuItem Header="Create P_oster" Click="CreatePosterButton_Click"/>
+                <MenuItem Header="C_reate Image" Command="local:CustomCommands.CreateImage" />
+
                 <Separator/>
                 <MenuItem Header="_Close And Return" Click="CloseAndReturnButton_Click" />
                 <MenuItem Header="_Exit Program" Click="ExitButton_Click" />

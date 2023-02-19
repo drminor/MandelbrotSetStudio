@@ -1,7 +1,5 @@
-﻿using MEngineDataContracts;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using PngImageLib;
@@ -28,9 +26,8 @@ namespace ImageBuilder
 		{
 			_mapLoaderManager = mapLoaderManager;
 			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			//var mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount: 2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool/*, mapSectionValuesPool*/, mapSectionZVectorsPool);
+			_mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool, mapSectionZVectorsPool);
 
 			_currentJobNumber = null;
 			_currentResponses = null;
@@ -56,6 +53,7 @@ namespace ImageBuilder
 				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
 				var imageSize = mapAreaInfo.CanvasSize;
+				imageSize = imageSize.Scale(4);
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
 				var numberOfWholeBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize);

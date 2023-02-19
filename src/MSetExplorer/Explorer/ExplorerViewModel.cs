@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using ImageBuilder;
+using MSS.Common;
 using MSS.Types;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -117,6 +118,13 @@ namespace MSetExplorer
 		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
 		{
 			var result = _posterOpenSaveViewModelCreator(initalName, useEscapeVelocities, dialogType);
+			return result;
+		}
+
+		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath, bool useEscapeVelocities)
+		{
+			var pngBuilder = new PngBuilder(_mapLoaderManager);
+			var result = new CreateImageProgressViewModel(pngBuilder, useEscapeVelocities);
 			return result;
 		}
 

@@ -57,6 +57,23 @@ namespace MSetExplorer
 			//);
 		}
 
+		public void CreateImage(string imageFilePath, Project project)
+		{
+			ImageFilePath = imageFilePath;
+			//Poster = poster;
+
+			var curJob = project.CurrentJob;
+
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, curJob.MapAreaInfo, project.CurrentColorBandSet, curJob.MapCalcSettings, _useEscapeVelocities, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+
+			//_task.ContinueWith(t =>
+			//{
+
+			//}
+			//);
+		}
+
+
 		public void CancelCreateImage()
 		{
 			_cancellationTokenSource.Cancel();

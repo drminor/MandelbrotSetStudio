@@ -9,6 +9,8 @@ using System.Diagnostics.CodeAnalysis;
 using MSS.Types.MSet;
 using MSS.Common;
 using MSS.Common.MSet;
+using System.Linq;
+using System.IO;
 
 namespace MSetExplorer
 {
@@ -18,6 +20,8 @@ namespace MSetExplorer
 	public partial class ExplorerWindow : Window, IHaveAppNavRequestResponse
 	{
 		private IExplorerViewModel _vm;
+
+		private CreateImageProgressWindow? _createImageProgressWindow;
 
 		#region Constructor
 
@@ -438,6 +442,89 @@ namespace MSetExplorer
 
 				}
 			}
+		}
+
+		private void CreateImageCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.ProjectViewModel.CurrentProject != null;
+		}
+
+		private void CreateImageCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (_createImageProgressWindow != null && IsWindowOpen(_createImageProgressWindow))
+			{
+				_createImageProgressWindow.WindowState = WindowState.Normal;
+				return;
+			}
+
+			var curProject = _vm.ProjectViewModel.CurrentProject;
+
+			if (curProject == null)
+			{
+				return;
+			}
+
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
+
+			var imageSize = curProject.CurrentJob.CanvasSize.Scale(4);
+
+			var initialImageFilename = GetImageFilename(curProject.Name, imageSize.Width);
+
+			if (TryGetImagePath(initialImageFilename, out var imageFilePath))
+			{
+				_createImageProgressWindow = StartImageCreation(imageFilePath, curProject, useEscapeVelocities: true);
+
+				_createImageProgressWindow.Show();
+			}
+		}
+
+		private bool IsWindowOpen(Window window)
+		{
+			return window != null && Application.Current.Windows.Cast<Window>().Any(x => x.GetHashCode() == window.GetHashCode());
+		}
+
+		private bool TryGetImagePath(string initalName, [MaybeNullWhen(false)] out string imageFilePath)
+		{
+			var defaultOutputFolderPath = Properties.Settings.Default.DefaultOutputFolderPath;
+			var createImageViewModel = new CreateImageViewModel(defaultOutputFolderPath, initalName);
+			var createImageDialog = new CreateImageDialog()
+			{
+				DataContext = createImageViewModel
+			};
+
+			if (createImageDialog.ShowDialog() == true && createImageViewModel.ImageFileName != null)
+			{
+				imageFilePath = Path.Combine(createImageViewModel.FolderPath, createImageViewModel.ImageFileName);
+				return true;
+			}
+			else
+			{
+				imageFilePath = null;
+				return false;
+			}
+		}
+
+		private CreateImageProgressWindow StartImageCreation(string imageFilePath, Project project, bool useEscapeVelocities)
+		{
+			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(imageFilePath, useEscapeVelocities);
+
+			createImageProgressViewModel.CreateImage(imageFilePath, project);
+
+			var result = new CreateImageProgressWindow()
+			{
+				DataContext = createImageProgressViewModel
+			};
+
+			return result;
+		}
+
+		private string GetImageFilename(string projectName, int imageWidth)
+		{
+			var result = $"{projectName}_{imageWidth}_v4.png";
+			return result;
 		}
 
 		#endregion
