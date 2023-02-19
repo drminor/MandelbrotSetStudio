@@ -45,6 +45,9 @@ namespace MSS.Types
 			Zrs = _arrayPool.Rent(TotalByteCount);
 			Zis = _arrayPool.Rent(TotalByteCount);
 
+			Array.Clear(Zrs);
+			Array.Clear(Zis);
+
 			HasEscapedFlags = new byte[TotalBytesForFlags];
 			RowHasEscaped = new byte[RowCount];
 
@@ -74,11 +77,14 @@ namespace MSS.Types
 					BytesPerRow = ValuesPerRow * value * VALUE_SIZE;
 					TotalByteCount = ValueCount * value * VALUE_SIZE;
 
-					_arrayPool.Return(Zrs, clearArray: true);
-					_arrayPool.Return(Zis, clearArray: true);
+					_arrayPool.Return(Zrs);
+					_arrayPool.Return(Zis);
 
 					Zrs = _arrayPool.Rent(TotalByteCount);
 					Zis = _arrayPool.Rent(TotalByteCount);
+
+					Array.Clear(Zrs);
+					Array.Clear(Zis);
 				}
 			}
 		}

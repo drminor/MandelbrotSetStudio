@@ -105,20 +105,33 @@ namespace ProjectRepo
 			}
 		}
 
-		public async Task<long?> UpdateCountValuesAync(MapSectionRecord mapSectionRecord)
+		public async Task<long?> UpdateCountValuesAync(MapSectionRecord mapSectionRecord, bool requestCompleted)
 		{
 			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionRecord.Id);
 
 			UpdateDefinition<MapSectionRecord> updateDefinition;
 
-			updateDefinition = Builders<MapSectionRecord>.Update
-				.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations)
-				.Set(u => u.Counts, mapSectionRecord.Counts)
-				//.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
-				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
-			var result = await Collection.UpdateOneAsync(filter, updateDefinition);
+			if (requestCompleted)
+			{
+				updateDefinition = Builders<MapSectionRecord>.Update
+					.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations)
+					.Set(u => u.Counts, mapSectionRecord.Counts)
+					//.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
+					.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+				var result = await Collection.UpdateOneAsync(filter, updateDefinition);
 
-			return result?.ModifiedCount;
+				return result?.ModifiedCount;
+			}
+			else
+			{
+				updateDefinition = Builders<MapSectionRecord>.Update
+					.Set(u => u.Counts, mapSectionRecord.Counts)
+					//.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
+					.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+				var result = await Collection.UpdateOneAsync(filter, updateDefinition);
+
+				return result?.ModifiedCount;
+			}
 		}
 
 		public long? Delete(ObjectId mapSectionId)

@@ -279,8 +279,8 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
+				requestCompleted: true,
 				allRowsHaveEscaped: target.AllRowsHaveEscaped,
-
 				mapSectionVectors: mapSectionVectors
 			);
 

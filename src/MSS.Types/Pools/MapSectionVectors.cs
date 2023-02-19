@@ -136,7 +136,7 @@ namespace MSS.Types
 
 		#region IPoolable Support
 
-		void IPoolable.ResetObject()
+		public void ResetObject()
 		{
 			Array.Clear(Counts);
 			Array.Clear(EscapeVelocities);

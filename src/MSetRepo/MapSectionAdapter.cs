@@ -157,7 +157,7 @@ namespace MSetRepo
 			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
 
-			var result = await _mapSectionReaderWriter.UpdateCountValuesAync(mapSectionRecord);
+			var result = await _mapSectionReaderWriter.UpdateCountValuesAync(mapSectionRecord, mapSectionResponse.RequestCompleted);
 
 			return result;
 		}

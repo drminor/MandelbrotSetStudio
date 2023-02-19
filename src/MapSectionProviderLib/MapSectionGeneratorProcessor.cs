@@ -240,8 +240,6 @@ namespace MapSectionProviderLib
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
-				CancellationTokenSource? cts;
-
 				try
 				{
 					var mapSectionGenerateRequest = _workQueue.Take(ct);
@@ -251,9 +249,13 @@ namespace MapSectionProviderLib
 
 					MapSectionResponse? mapSectionResponse;
 
-					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out cts))
+					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out var cts))
 					{
 						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
+						var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
+						mapSectionResponse.MapSectionVectors = msv;
+						mapSectionResponse.MapSectionZVectors = mszv;
+
 					}
 					else
 					{
@@ -292,8 +294,6 @@ namespace MapSectionProviderLib
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
-				CancellationTokenSource? cts;
-
 				try
 				{
 					var mapSectionGenerateRequest = _workQueue.Take(ct);
@@ -303,9 +303,12 @@ namespace MapSectionProviderLib
 
 					MapSectionResponse? mapSectionResponse;
 
-					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out cts))
+					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out var cts))
 					{
 						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
+						var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
+						mapSectionResponse.MapSectionVectors = msv;
+						mapSectionResponse.MapSectionZVectors = mszv;
 					}
 					else
 					{

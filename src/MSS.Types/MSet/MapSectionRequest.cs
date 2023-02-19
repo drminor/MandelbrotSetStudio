@@ -64,5 +64,17 @@ namespace MSS.Types.MSet
 		{
 			return $"Id: {MapSectionId}, S:{SubdivisionId}, ScrPos:{ScreenPosition}.";
 		}
+
+		public (MapSectionVectors? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut()
+		{
+			var msv = MapSectionVectors;
+			var mszv = MapSectionZVectors;
+
+			MapSectionVectors = null;
+			MapSectionZVectors = null;
+
+			return (msv, mszv);
+
+		}
 	}
 }

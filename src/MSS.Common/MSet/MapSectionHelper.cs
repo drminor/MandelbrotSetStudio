@@ -79,9 +79,12 @@ namespace MSS.Common
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
 			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
+			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
+			var precision = GetBinaryPrecision(mapAreaInfo);
+
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
 				result.Add(mapSectionRequest);
 			}
 
@@ -111,6 +114,15 @@ namespace MSS.Common
 			}
 
 			return result;
+		}
+
+		private int GetBinaryPrecision(MapAreaInfo mapAreaInfo)
+		{
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(mapAreaInfo.Coords.Right, mapAreaInfo.Coords.Left, out _);
+
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(mapAreaInfo.Subdivision.SamplePointDelta.Exponent));
+
+			return binaryPrecision;
 		}
 
 		#endregion
@@ -156,19 +168,13 @@ namespace MSS.Common
 
 		private RPoint GetMapPosition(Subdivision subdivision, BigVector localBlockPosition)
 		{
-			//var nrmSubdivisionPosition = RNormalizer.Normalize(subdivision.Position, subdivision.SamplePointDelta, out var nrmSamplePointDelta);
-
 			var mapBlockPosition = subdivision.BaseMapPosition.Tranlate(localBlockPosition);
 
 			// Multiply the blockPosition by the blockSize
 			var numberOfSamplePointsFromSubOrigin = mapBlockPosition.Scale(subdivision.BlockSize);
 
 			// Convert sample points to map coordinates.
-			//var mapDistance = nrmSamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);
 			var mapDistance = subdivision.SamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);
-
-			// Add the map distance to the sub division origin
-			//var result = nrmSubdivisionPosition.Translate(mapDistance);
 
 			var result = new RPoint(mapDistance);
 

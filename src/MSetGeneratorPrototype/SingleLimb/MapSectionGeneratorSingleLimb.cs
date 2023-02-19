@@ -60,7 +60,7 @@ namespace MSetGeneratorPrototype
 				var targetIterations = mapCalcSettings.TargetIterations;
 				var iterationState = new IterationStateSingleLimb(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterations);
 
-				var allRowsHaveEscaped = GenerateMapSection(_iterator, iterationState, ct);
+				var completed = GenerateMapSectionRows(_iterator, iterationState, ct, out var allRowsHaveEscaped);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 				if (ct.IsCancellationRequested)
@@ -75,7 +75,7 @@ namespace MSetGeneratorPrototype
 					}
 				}
 
-				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
+				result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
 
 
 				//result.MathOpCounts = _iterator.MathOpCounts;
@@ -85,10 +85,16 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private bool GenerateMapSection(IteratorSingleLimb iterator, IterationStateSingleLimb iterationState, CancellationToken ct)
+		private bool GenerateMapSectionRows(IteratorSingleLimb iterator, IterationStateSingleLimb iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
-			var allRowsHaveEscaped = true;
+			allRowsHaveEscaped = false;
 
+			if (ct.IsCancellationRequested)
+			{
+				return false;
+			}
+
+			allRowsHaveEscaped = true;
 			var rowNumber = iterationState.GetNextRowNumber();
 			while(rowNumber != null && !ct.IsCancellationRequested)
 			{ 
@@ -114,10 +120,16 @@ namespace MSetGeneratorPrototype
 
 				//_iterator.MathOpCounts.RollUpNumberOfUnusedCalcs(itState.GetUnusedCalcs());
 
+				if (ct.IsCancellationRequested)
+				{
+					allRowsHaveEscaped = false;
+					return false;
+				}
+
 				rowNumber = iterationState.GetNextRowNumber();
 			}
 
-			return allRowsHaveEscaped;
+			return true;
 		}
 
 		#endregion

@@ -100,9 +100,11 @@ namespace MSetGeneratorPrototype
 				}
 			}
 
+			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
+
 			if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
 			{
-				return new MapSectionResponse(mapSectionRequest);
+				return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
 			}
 
 			var stopwatch = Stopwatch.StartNew();
@@ -111,7 +113,6 @@ namespace MSetGeneratorPrototype
 			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(coords);
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
-			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 			_iterator.Threshold = (uint)mapCalcSettings.Threshold;
@@ -121,11 +122,12 @@ namespace MSetGeneratorPrototype
 
 			var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
-			var allRowsHaveEscaped = GenerateMapSectionRows(_iterator, iterationState, ct);
+			var completed = GenerateMapSectionRows(_iterator, iterationState, ct, out var allRowsHaveEscaped);
 
 			stopwatch.Stop();
 
-			var result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
+			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
+
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 			UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
 			//ReportResults(coords, mapSectionRequest, result, ct);
@@ -140,12 +142,19 @@ namespace MSetGeneratorPrototype
 			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
 
-		private bool GenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct)
+		private bool GenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
-			var allRowsHaveEscaped = true;
+			allRowsHaveEscaped = false;
+
+			if (ct.IsCancellationRequested)
+			{
+				return false;
+			}
+
+			allRowsHaveEscaped = true;
 
 			var rowNumber = iterationState.GetNextRowNumber();
-			while(rowNumber != null && !ct.IsCancellationRequested)
+			while(rowNumber != null)
 			{ 
 				var allRowSamplesHaveEscaped = true;
 
@@ -167,10 +176,16 @@ namespace MSetGeneratorPrototype
 					allRowsHaveEscaped = false;
 				}
 
+				if (ct.IsCancellationRequested)
+				{
+					allRowsHaveEscaped = false;
+					return false;
+				}
+
 				rowNumber = iterationState.GetNextRowNumber();
 			}
 
-			return allRowsHaveEscaped;
+			return true;
 		}
 
 		#endregion
@@ -283,13 +298,11 @@ namespace MSetGeneratorPrototype
 
 		private (MapSectionVectors, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
 		{
-			var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
-			mapSectionRequest.MapSectionVectors = null;
+			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
+			if (msv == null) throw new ArgumentException("The MapSectionVectors is null.");
+			if (mszv == null) throw new ArgumentException("The MapSetionZVectors is null.");
 
-			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? throw new ArgumentNullException("The MapSectionZVectors is null.");
-			mapSectionRequest.MapSectionZVectors = null;
-
-			return (mapSectionVectors, mapSectionZVectors);
+			return (msv, mszv);
 		}
 
 		private bool[] CompressHasEscapedFlags(int[] hasEscapedFlags)

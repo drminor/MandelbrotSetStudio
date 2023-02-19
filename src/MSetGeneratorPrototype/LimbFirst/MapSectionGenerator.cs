@@ -57,10 +57,10 @@ namespace MSetGeneratorPrototype
 				var iterationState = new IterationStateLimbFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
-				GenerateMapSectionRows(_iterator, iterationState, coords, mapCalcSettings);
+				var completed = GenerateMapSectionRows(_iterator, iterationState, coords, mapCalcSettings, ct);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				result = new MapSectionResponse(mapSectionRequest, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors, ct.IsCancellationRequested);
+				result = new MapSectionResponse(mapSectionRequest, requestCompleted: completed, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
 
 				stopwatch.Stop();
 				mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
@@ -81,7 +81,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		// Generate MapSection
-		private void GenerateMapSectionRows(IteratorLimbFirst iterator, IterationStateLimbFirst iterationState, IteratorCoords coords, MapCalcSettings mapCalcSettings)
+		private bool GenerateMapSectionRows(IteratorLimbFirst iterator, IterationStateLimbFirst iterationState, IteratorCoords coords, MapCalcSettings mapCalcSettings, CancellationToken ct)
 		{
 			var blockSize = iterationState.BlockSize;
 			var rowCount = blockSize.Height;
@@ -97,6 +97,11 @@ namespace MSetGeneratorPrototype
 
 			for (int rowNumber = 0; rowNumber < rowCount; rowNumber++)
 			{
+				if (ct.IsCancellationRequested)
+				{
+					return false;
+				}
+
 				iterationState.SetRowNumber(rowNumber);
 
 				// Load C & Z value decks
@@ -116,6 +121,7 @@ namespace MSetGeneratorPrototype
 			iterationState.UpdateTheCountsSource(rowCount - 1);
 			iterationState.UpdateTheHasEscapedFlagsSource(rowCount - 1);
 
+			return true;
 		}
 
 		#endregion

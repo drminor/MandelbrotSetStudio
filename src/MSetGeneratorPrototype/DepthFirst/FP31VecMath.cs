@@ -59,6 +59,9 @@ namespace MSetGeneratorPrototype
 		byte _shiftAmount;
 		byte _inverseShiftAmount;
 
+		private int _squareSourceStartIndex;
+		private bool _skipSquareResultLow;
+
 		private const bool USE_DET_DEBUG = false;
 
 		#endregion
@@ -93,7 +96,26 @@ namespace MSetGeneratorPrototype
 			_shiftAmount = apFixedPointFormat.BitsBeforeBinaryPoint;
 			_inverseShiftAmount = (byte)(31 - _shiftAmount);
 
+			(_squareSourceStartIndex, _skipSquareResultLow) = CalculateSqrOpParams(LimbCount);
+
 			MathOpCounts = new MathOpCounts();
+		}
+
+		private (int sqrSrcStartIdx, bool skipSqrResLow) CalculateSqrOpParams(int limbCount)
+		{
+			// TODO: Check the CalculateSqrOpParams method 
+			return limbCount switch
+			{
+				0 => (0, false),
+				1 => (0, false),
+				2 => (0, false),
+				3 => (0, true),
+				4 => (1, false),
+				5 => (1, true),
+				6 => (2, false),
+				7 => (2, true),
+				_ => (3, false),
+			};
 		}
 
 		#endregion
@@ -121,13 +143,37 @@ namespace MSetGeneratorPrototype
 			ConvertFrom2C(a, _squareResult0Lo, _squareResult0Hi);
 			//MathOpCounts.NumberOfConversions++;
 
-			SquareInternal(_squareResult0Lo, _squareResult1Lo);
-			SquareInternal(_squareResult0Hi, _squareResult1Hi);
+			// Unoptimized
+			//SquareInternal(_squareResult0Lo, _squareResult1Lo);
+			//SquareInternal(_squareResult0Hi, _squareResult1Hi);
+
+			SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
+			SquareInternalOptimized(_squareResult0Hi, _squareResult1Hi);
 
 			SumThePartials(_squareResult1Lo, _squareResult2Lo);
 			SumThePartials(_squareResult1Hi, _squareResult2Hi);
 
 			ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, result);
+
+			//// Optimized
+
+			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
+			//SquareInternalOptimized(_squareResult0Hi, _squareResult1Hi);
+
+			//SumThePartials(_squareResult1Lo, _squareResult2Lo);
+			//SumThePartials(_squareResult1Hi, _squareResult2Hi);
+
+			//var optimizedResult = new Vector256<uint>[LimbCount];
+			//ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, optimizedResult);
+
+			//for (var i = 0; i < LimbCount; i++)
+			//{
+			//	var eqFlags = Avx2.CompareEqual(optimizedResult[i], result[i]);
+			//	if (Avx2.MoveMask(eqFlags.AsByte()) != -1)
+			//	{
+			//		Debug.WriteLine("WARNING Optimized != NonOptimized.");
+			//	}
+			//}
 		}
 
 		private void SquareInternal(Vector256<uint>[] source, Vector256<ulong>[] result)
@@ -153,17 +199,58 @@ namespace MSetGeneratorPrototype
 
 					// 0/1; 1/2; 2/3
 
-					if (resultPtr == 0)
+					result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
+					result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+					//MathOpCounts.NumberOfSplits++;
+					//MathOpCounts.NumberOfAdditions += 2;
+				}
+			}
+		}
+
+		private void SquareInternalOptimized(Vector256<uint>[] source, Vector256<ulong>[] result)
+		{
+			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
+
+			//result.ClearManatissMems();
+
+			for (int j = 0; j < source.Length; j++)
+			{
+				for (int i = j; i < source.Length; i++)
+				{
+					var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
+
+					if (resultPtr < _squareSourceStartIndex)
 					{
-						result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+						result[resultPtr] = Vector256<ulong>.Zero;
+						result[resultPtr + 1] = Vector256<ulong>.Zero;
 					}
 					else
 					{
-						result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
-						result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+						var productVector = Avx2.Multiply(source[j], source[i]);
+						IncrementNoMultiplications();
+
+						if (i > j)
+						{
+							//product *= 2;
+							productVector = Avx2.ShiftLeftLogical(productVector, 1);
+						}
+
+						// 0/1; 1/2; 2/3
+
+						if (_skipSquareResultLow & resultPtr == _squareSourceStartIndex)
+						{
+							result[resultPtr] = Vector256<ulong>.Zero;
+							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+						}
+						else
+						{
+							result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
+							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+						}
+
+						//MathOpCounts.NumberOfSplits++;
+
 					}
-					//MathOpCounts.NumberOfSplits++;
-					//MathOpCounts.NumberOfAdditions += 2;
 				}
 			}
 		}
@@ -187,7 +274,7 @@ namespace MSetGeneratorPrototype
 
 			_carryVectorsLong = Vector256<ulong>.Zero;
 
-			for (int limbPtr = 1; limbPtr < source.Length; limbPtr++)
+			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
 			{
 				var withCarries = Avx2.Add(source[limbPtr], _carryVectorsLong);
 
@@ -362,22 +449,24 @@ namespace MSetGeneratorPrototype
 					// Take the lower 4 values and set the low halves of each result
 					resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
 
-					// Take the lower 4 values and set the low halves of each result
+					// Take the higher 4 values and set the low halves of each result
 					resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
-
 				}
 			}
 		}
 
 		private int GetSignBits(Vector256<uint>[] source, out Vector256<int> signBitVecs)
 		{
-			var msl = source[LimbCount - 1];
+			//var msl = source[LimbCount - 1];
 
-			var left = Avx2.And(msl.AsInt32(), TEST_BIT_30_VEC);
-			signBitVecs = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
-			var result = Avx2.MoveMask(signBitVecs.AsByte());
+			//var left = Avx2.And(msl.AsInt32(), TEST_BIT_30_VEC);
+			//signBitVecs = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
+			//var result = Avx2.MoveMask(signBitVecs.AsByte());
 
-			return result;
+			//return result;
+
+			signBitVecs = Avx2.CompareEqual(Avx2.And(source[LimbCount - 1].AsInt32(), TEST_BIT_30_VEC), ZERO_VEC);
+			return Avx2.MoveMask(signBitVecs.AsByte());
 		}
 
 		private void CheckReservedBitIsClear(FP31Vectors sourceLimbs, string description, int[] inPlayList)

@@ -76,12 +76,11 @@ namespace MSS.Types
 			if (obj == null)
 				return false;
 
-			Reset(obj);
-
 			lock (_stateLock)
 			{
 				if (TotalFree < MaxSize)
 				{
+					Reset(obj);
 					_pool.Push(obj);
 					MaxPeak = Math.Max(MaxPeak, TotalFree);
 					return true;

@@ -4,7 +4,8 @@ namespace MSS.Types.MSet
 {
 	public class MapSectionResponse
 	{
-		public MapSectionResponse(MapSectionRequest mapSectionRequest, bool isCancelled = false)
+		public MapSectionResponse(MapSectionRequest mapSectionRequest, 
+			bool isCancelled = false)
 			: this(
 				  mapSectionRequest.MapSectionId, 
 				  mapSectionRequest.OwnerId,
@@ -12,27 +13,32 @@ namespace MSS.Types.MSet
 				  mapSectionRequest.SubdivisionId,
 				  mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings,
-				  allRowsHaveEscaped: false
+				  requestCompleted: false,
+				  allRowsHaveEscaped: false,
+				  mapSectionVectors: null,
+				  mapSectionZVectors: null,
+				  isCancelled
 				  )
-		{
-			RequestCancelled = isCancelled;
-		}
+		{ }
 
-		public MapSectionResponse(MapSectionRequest mapSectionRequest,
-			bool allRowsHaveEscaped, MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool isCancelled = false)
+		public MapSectionResponse(MapSectionRequest mapSectionRequest, 
+			bool requestCompleted,
+			bool allRowsHaveEscaped, 
+			MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool isCancelled = false)
 			: this(
-
 				  mapSectionRequest.MapSectionId, 
 				  mapSectionRequest.OwnerId,
 				  mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
 				  mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings,
-				  allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors
+				  requestCompleted,
+				  allRowsHaveEscaped, 
+				  mapSectionVectors, 
+				  mapSectionZVectors,
+				  isCancelled
 				  )
-		{
-			RequestCancelled = isCancelled;
-		}
+		{ }
 
 		public MapSectionResponse(
 			string? mapSectionId, 
@@ -40,8 +46,10 @@ namespace MSS.Types.MSet
 			JobOwnerType jobOwnerType, 
 			string subdivisionId, 
 			BigVector blockPosition,
-			MapCalcSettings? mapCalcSettings,
-			bool allRowsHaveEscaped, MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null)
+			MapCalcSettings mapCalcSettings,
+			bool requestCompleted,
+			bool allRowsHaveEscaped, 
+			MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool requestCancelled = false)
 		{
 			MapSectionId = mapSectionId;
 			OwnerId = ownerId;
@@ -49,12 +57,12 @@ namespace MSS.Types.MSet
 			SubdivisionId = subdivisionId;
 			BlockPosition = blockPosition;
 			MapCalcSettings = mapCalcSettings;
+			RequestCompleted = requestCompleted;
 			AllRowsHaveEscaped = allRowsHaveEscaped;
+			RequestCancelled = requestCancelled;
 			
 			MapSectionVectors = mapSectionVectors;
 			MapSectionZVectors = mapSectionZVectors;
-
-			RequestCancelled = false;
 		}
 
 		public string? MapSectionId { get; set; }
@@ -64,13 +72,14 @@ namespace MSS.Types.MSet
 		public string SubdivisionId { get; init; }
 		public BigVector BlockPosition { get; init; }
 
-		public MapCalcSettings? MapCalcSettings { get; init; }
+		public MapCalcSettings MapCalcSettings { get; init; }
+		public bool RequestCompleted { get; set; }
+		public bool AllRowsHaveEscaped { get; set; }
+		public bool RequestCancelled { get; set; }
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
-		public bool AllRowsHaveEscaped { get; set; }
 
 		public bool RecordOnFile => !string.IsNullOrEmpty(MapSectionId);
-		public bool RequestCancelled { get; set; }
 	}
 }
