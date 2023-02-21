@@ -14,13 +14,12 @@ namespace MSetGeneratorPrototype
 		private uint _threshold;
 		private Vector256<int> _thresholdVector;
 
+		private Vector256<uint>[] _zRZiSqrs;
+		private Vector256<uint>[] _temp;
+
 		private Vector256<uint>[] _zRSqrs;
 		private Vector256<uint>[] _zISqrs;
 		private Vector256<uint>[] _sumOfSqrs;
-
-		private Vector256<uint>[] _zRZiSqrs;
-		private Vector256<uint>[] _zRs2;
-		private Vector256<uint>[] _zIs2;
 
 		#endregion
 
@@ -33,13 +32,12 @@ namespace MSetGeneratorPrototype
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
+			_zRZiSqrs = fp31VecMath.GetNewLimbSet();
+			_temp = fp31VecMath.GetNewLimbSet();
+
 			_zRSqrs = fp31VecMath.GetNewLimbSet();
 			_zISqrs = fp31VecMath.GetNewLimbSet();
 			_sumOfSqrs = fp31VecMath.GetNewLimbSet();
-
-			_zRZiSqrs = fp31VecMath.GetNewLimbSet();
-			_zRs2 = fp31VecMath.GetNewLimbSet();
-			_zIs2 = fp31VecMath.GetNewLimbSet();
 		}
 
 		#endregion
@@ -104,16 +102,17 @@ namespace MSetGeneratorPrototype
 			try
 			{
 				// square(z.r + z.i)
-				_fp31VecMath.AddThenSquare(zrs, zis, _zRZiSqrs);
+				_fp31VecMath.Add(zrs, zis, _temp);
+				_fp31VecMath.Square(_temp, _zRZiSqrs);
 
 				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
 				_fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
-				_fp31VecMath.Sub(zis, _zISqrs, _zIs2);
-				_fp31VecMath.Add(_zIs2, cis, zis);
+				_fp31VecMath.Sub(zis, _zISqrs, _temp);
+				_fp31VecMath.Add(_temp, cis, zis);
 
 				// z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
-				_fp31VecMath.Sub(_zRSqrs, _zISqrs, _zRs2);
-				_fp31VecMath.Add(_zRs2, crs, zrs);
+				_fp31VecMath.Sub(_zRSqrs, _zISqrs, _temp);
+				_fp31VecMath.Add(_temp, crs, zrs);
 
 				_fp31VecMath.Square(zrs, _zRSqrs);
 				_fp31VecMath.Square(zis, _zISqrs);
@@ -129,13 +128,5 @@ namespace MSetGeneratorPrototype
 		}
 
 		#endregion
-
-		private void ClearVectors(Vector256<uint>[] vectors)
-		{
-			for (var i = 0; i < vectors.Length; i++)
-			{
-				vectors[i] = Vector256<uint>.Zero;
-			}
-		}
 	}
 }

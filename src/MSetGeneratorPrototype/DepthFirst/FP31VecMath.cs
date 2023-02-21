@@ -140,15 +140,17 @@ namespace MSetGeneratorPrototype
 
 			//CheckReservedBitIsClear(a, "Squaring");
 
+			ClearLimbSet(result);
+
 			ConvertFrom2C(a, _squareResult0Lo, _squareResult0Hi);
 			//MathOpCounts.NumberOfConversions++;
 
 			// Unoptimized
-			//SquareInternal(_squareResult0Lo, _squareResult1Lo);
-			//SquareInternal(_squareResult0Hi, _squareResult1Hi);
+			SquareInternal(_squareResult0Lo, _squareResult1Lo);
+			SquareInternal(_squareResult0Hi, _squareResult1Hi);
 
-			SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
-			SquareInternalOptimized(_squareResult0Hi, _squareResult1Hi);
+			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
+			//SquareInternalOptimized(_squareResult0Hi, _squareResult1Hi);
 
 			SumThePartials(_squareResult1Lo, _squareResult2Lo);
 			SumThePartials(_squareResult1Hi, _squareResult2Hi);
@@ -384,11 +386,11 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		public void AddThenSquare(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
-		{
-			Add(a, b, _additionResult);
-			Square(_additionResult, c);
-		}
+		//public void AddThenSquare(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
+		//{
+		//	Add(a, b, _additionResult);
+		//	Square(_additionResult, c);
+		//}
 
 		#endregion
 
@@ -632,6 +634,15 @@ namespace MSetGeneratorPrototype
 		{
 			return new Vector256<uint>[LimbCount];
 		}
+
+		private void ClearLimbSet(Vector256<uint>[] limbs)
+		{
+			for (var i = 0; i < limbs.Length; i++)
+			{
+				limbs[i] = Vector256<uint>.Zero;
+			}
+		}
+
 
 		#endregion
 	}

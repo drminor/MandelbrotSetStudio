@@ -56,63 +56,18 @@ namespace MSetGeneratorPrototype
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
-			if (mapSectionRequest.MapSectionZVectors == null)
-			{
-				throw new ArgumentNullException("The MapSectionZVectors is null.");
-			}
-
-			var currentBlockSize = _samplePointBuilder.BlockSize;
-			var blockSizeForThisRequest = mapSectionRequest.BlockSize;
-
-			if (currentBlockSize != blockSizeForThisRequest)
-			{
-				_samplePointBuilder.Dispose();
-				_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSizeForThisRequest));
-			}
-
-			var currentLimbCount = _fp31VecMath.LimbCount;
-			var limbCountForThisRequest = mapSectionRequest.MapSectionZVectors.LimbCount;
-
-			if (currentLimbCount != limbCountForThisRequest)
-			{
-				_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
-				_iterator = new IteratorDepthFirst(_fp31VecMath);
-
-				_crs = _fp31VecMath.GetNewLimbSet();
-				_cis = _fp31VecMath.GetNewLimbSet();
-				_zrs = _fp31VecMath.GetNewLimbSet();
-				_zis = _fp31VecMath.GetNewLimbSet();
-
-				_resultZrs = _fp31VecMath.GetNewLimbSet();
-				_resultZis = _fp31VecMath.GetNewLimbSet();
-			}
-
+			var (currentLimbCount, limbCountForThisRequest) = GetMathAndAllocateTempVars(mapSectionRequest);
 			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
-
-			if (currentLimbCount != limbCountForThisRequest)
-			{
-				if (coords.ScreenPos.IsZero())
-				{
-					Debug.WriteLine($"Changing Limbcount from {currentLimbCount} to {limbCountForThisRequest}. Precision: {mapSectionRequest.Precision}. " +
-						$"\nCx: {coords.StartingCx.ToStringDec()}; Cy: {coords.StartingCy.ToStringDec()}." +
-						$"\nCx: {coords.StartingCx}; Cy: {coords.StartingCy}" +
-						$"\nCx: {coords.GetStartingCxStringVal()}; Cy: {coords.GetStartingCyStringVal()}.");
-				}
-			}
+			ReportLimbCountUpdate(coords, currentLimbCount, limbCountForThisRequest, mapSectionRequest.Precision);
 
 			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
-
-			if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
-			{
-				return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
-			}
 
 			var stopwatch = Stopwatch.StartNew();
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
-			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(coords);
+			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePointsOld(coords);
+			//var (samplePointsXVArray, samplePointsYVArray) = _samplePointBuilder.BuildSamplePoints(coords);
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
-
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 			_iterator.Threshold = (uint)mapCalcSettings.Threshold;
@@ -120,14 +75,12 @@ namespace MSetGeneratorPrototype
 			_iterator.MathOpCounts.Reset();
 			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
+			//var iterationState = new IterationStateDepthFirst(samplePointsXVArray, samplePointsYVArray, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 			var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
-			var completed = GenerateMapSectionRows(_iterator, iterationState, ct, out var allRowsHaveEscaped);
-
+			var completed = GeneratorOrUpdateRows(_iterator, iterationState, ct, out var allRowsHaveEscaped);
 			stopwatch.Stop();
-
 			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
-
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 			UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
 			//ReportResults(coords, mapSectionRequest, result, ct);
@@ -135,11 +88,20 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		[Conditional("PERF")]
-		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorDepthFirst iterator, IterationStateDepthFirst iterationState)
+		private bool GeneratorOrUpdateRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
-			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
-			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+			bool completed;
+
+			if (_iterator.IncreasingIterations)
+			{
+				completed = UpdateMapSectionRows(_iterator, iterationState, ct, out allRowsHaveEscaped);
+			}
+			else
+			{
+				completed = GenerateMapSectionRows(_iterator, iterationState, ct, out allRowsHaveEscaped);
+			}
+
+			return completed;
 		}
 
 		private bool GenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
@@ -153,9 +115,54 @@ namespace MSetGeneratorPrototype
 
 			allRowsHaveEscaped = true;
 
+			for(var rowNumber = 0; rowNumber < iterationState.RowCount; rowNumber++)
+			{
+				iterationState.SetRowNumber(rowNumber);
+
+				var allRowSamplesHaveEscaped = true;
+				for (var idx = 0; idx < iterationState.VectorsPerRow && !ct.IsCancellationRequested; idx++)
+				{
+					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState);
+
+					if (!allSamplesHaveEscaped)
+					{
+						allRowSamplesHaveEscaped = false;
+					}
+				}
+
+				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
+
+				if (!allRowSamplesHaveEscaped)
+				{
+					allRowsHaveEscaped = false;
+				}
+
+				if (ct.IsCancellationRequested)
+				{
+					allRowsHaveEscaped = false;
+					return false;
+				}
+			}
+
+			iterationState.SetRowNumber(0);
+
+			return true;
+		}
+
+		private bool UpdateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
+		{
+			allRowsHaveEscaped = false;
+
+			if (ct.IsCancellationRequested)
+			{
+				return false;
+			}
+
+			allRowsHaveEscaped = true;
+
 			var rowNumber = iterationState.GetNextRowNumber();
-			while(rowNumber != null)
-			{ 
+			while (rowNumber != null)
+			{
 				var allRowSamplesHaveEscaped = true;
 
 				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length && !ct.IsCancellationRequested; idxPtr++)
@@ -201,7 +208,10 @@ namespace MSetGeneratorPrototype
 			var resultCountsV = countsV;
 
 			iterationState.FillCrLimbSet(idx, _crs);
+
 			iterationState.FillCiLimbSet(idx, _cis);
+			//_cis = iterationState.CiLimbSet;
+
 			iterationState.FillZrLimbSet(idx, _zrs);
 			iterationState.FillZiLimbSet(idx, _zis);
 
@@ -269,17 +279,45 @@ namespace MSetGeneratorPrototype
 			return compositeIsDone;
 		}
 
-
-		[Conditional("PERF")]
-		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, ref IterationStateDepthFirst iterationState)
-		{
-			iterationState.UsedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
-			iterationState.UnusedCalcs[idx] = Avx2.Subtract(newCountsV, resultCountsV);
-		}
-
 		#endregion
 
 		#region Support Methods
+
+		private (int prevLimbCount, int newLimbCount) GetMathAndAllocateTempVars(MapSectionRequest mapSectionRequest)
+		{
+			if (mapSectionRequest.MapSectionZVectors == null)
+			{
+				throw new ArgumentNullException("The MapSectionZVectors is null.");
+			}
+
+			var currentBlockSize = _samplePointBuilder.BlockSize;
+			var blockSizeForThisRequest = mapSectionRequest.BlockSize;
+
+			if (currentBlockSize != blockSizeForThisRequest)
+			{
+				_samplePointBuilder.Dispose();
+				_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSizeForThisRequest));
+			}
+
+			var currentLimbCount = _fp31VecMath.LimbCount;
+			var limbCountForThisRequest = mapSectionRequest.MapSectionZVectors.LimbCount;
+
+			if (currentLimbCount != limbCountForThisRequest)
+			{
+				_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
+				_iterator = new IteratorDepthFirst(_fp31VecMath);
+
+				_crs = _fp31VecMath.GetNewLimbSet();
+				_cis = _fp31VecMath.GetNewLimbSet();
+				_zrs = _fp31VecMath.GetNewLimbSet();
+				_zis = _fp31VecMath.GetNewLimbSet();
+
+				_resultZrs = _fp31VecMath.GetNewLimbSet();
+				_resultZis = _fp31VecMath.GetNewLimbSet();
+			}
+
+			return (currentLimbCount, limbCountForThisRequest);
+		}
 
 		private IteratorCoords GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
 		{
@@ -305,27 +343,15 @@ namespace MSetGeneratorPrototype
 			return (msv, mszv);
 		}
 
-		private bool[] CompressHasEscapedFlags(int[] hasEscapedFlags)
+		private void ReportLimbCountUpdate(IteratorCoords coords, int currentLimbCount, int limbCountForThisRequest, int precision)
 		{
-			bool[] result;
-
-			if (!hasEscapedFlags.Any(x => !(x == 0)))
+			if (currentLimbCount != limbCountForThisRequest && coords.ScreenPos.IsZero())
 			{
-				// All have escaped
-				result = new bool[] { true };
+				Debug.WriteLine($"Changing Limbcount from {currentLimbCount} to {limbCountForThisRequest}. Precision: {precision}. " +
+					$"\nCx: {coords.StartingCx.ToStringDec()}; Cy: {coords.StartingCy.ToStringDec()}." +
+					$"\nCx: {coords.StartingCx}; Cy: {coords.StartingCy}" +
+					$"\nCx: {coords.GetStartingCxStringVal()}; Cy: {coords.GetStartingCyStringVal()}.");
 			}
-			else if (!hasEscapedFlags.Any(x => x > 0))
-			{
-				// none have escaped
-				result = new bool[] { false };
-			}
-			else
-			{
-				// Mix
-				result = hasEscapedFlags.Select(x => x == 0 ? false : true).ToArray();
-			}
-
-			return result;
 		}
 
 		private void ReportCoords(IteratorCoords coords, int limbCount, int precision)
@@ -381,6 +407,12 @@ namespace MSetGeneratorPrototype
 
 		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, IteratorCoords coords)
 		{
+			// Code to call this method...
+			//if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
+			// {
+			//	return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
+			//}
+
 			// Skip positive 'blocks'
 
 			if (skipPositiveBlocks)
@@ -398,6 +430,20 @@ namespace MSetGeneratorPrototype
 			}
 
 			return false;
+		}
+
+		[Conditional("PERF")]
+		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, ref IterationStateDepthFirst iterationState)
+		{
+			iterationState.UsedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
+			iterationState.UnusedCalcs[idx] = Avx2.Subtract(newCountsV, resultCountsV);
+		}
+
+		[Conditional("PERF")]
+		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorDepthFirst iterator, IterationStateDepthFirst iterationState)
+		{
+			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
+			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
 
 		#endregion

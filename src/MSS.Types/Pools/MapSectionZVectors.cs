@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -13,17 +14,6 @@ namespace MSS.Types
 
 		private const int VALUE_SIZE = 4;
 
-		//public MapSectionZVectors(SizeInt blockSize, int limbCount)
-		//	: this(
-		//		  blockSize,
-		//		  limbCount,
-		//		  zrs: new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
-		//		  zis: new byte[blockSize.NumberOfCells * limbCount * VALUE_SIZE],
-		//		  hasEscapedFlags: new byte[blockSize.NumberOfCells * VALUE_SIZE],
-		//		  rowHasEscaped: new byte[blockSize.Height * VALUE_SIZE]
-		//		  )
-		//{ }
-
 		public MapSectionZVectors(SizeInt blockSize, int limbCount)
 		{
 			BlockSize = blockSize;
@@ -34,13 +24,13 @@ namespace MSS.Types
 			ValuesPerRow = blockSize.Width;
 			RowCount = blockSize.Height;
 
-			VectorsPerRow = ValuesPerRow * LimbCount / Lanes;
-			BytesPerRow = ValuesPerRow * LimbCount * VALUE_SIZE;
+			VectorsPerZValueRow = ValuesPerRow * LimbCount / Lanes;
+			BytesPerZValueRow = ValuesPerRow * LimbCount * VALUE_SIZE;
 			TotalByteCount = ValueCount * LimbCount * VALUE_SIZE;
 
-			BytesPerFlagRow = ValuesPerRow * VALUE_SIZE;
+			BytesPerRow = ValuesPerRow * VALUE_SIZE;
 			TotalBytesForFlags = ValueCount * VALUE_SIZE;
-			VectorsPerFlagRow = ValuesPerRow / Lanes;
+			VectorsPerRow = ValuesPerRow / Lanes;
 
 			Zrs = _arrayPool.Rent(TotalByteCount);
 			Zis = _arrayPool.Rent(TotalByteCount);
@@ -52,11 +42,6 @@ namespace MSS.Types
 			RowHasEscaped = new byte[RowCount];
 
 			RowHasEscapedMemory = new Memory<byte>(RowHasEscaped);
-
-			//if (Zrs.Length != TotalByteCount || TotalByteCount != ( 128 * 128 * 4 * 3)) 
-			//{
-			//	Debug.WriteLine("Hi22");
-			//}
 		}
 
 		#endregion
@@ -73,8 +58,8 @@ namespace MSS.Types
 				{
 					_limbCount = value;
 
-					VectorsPerRow = ValuesPerRow * value / Lanes;
-					BytesPerRow = ValuesPerRow * value * VALUE_SIZE;
+					VectorsPerZValueRow = ValuesPerRow * value / Lanes;
+					BytesPerZValueRow = ValuesPerRow * value * VALUE_SIZE;
 					TotalByteCount = ValueCount * value * VALUE_SIZE;
 
 					_arrayPool.Return(Zrs);
@@ -101,13 +86,13 @@ namespace MSS.Types
 		public int Lanes { get; init; }
 		public int ValuesPerRow { get; init; }
 		public int RowCount { get; init; }
-		public int VectorsPerRow { get; private set; }	
-		public int BytesPerRow { get; private set; }
+		public int VectorsPerZValueRow { get; private set; }	
+		public int BytesPerZValueRow { get; private set; }
 		public int TotalByteCount { get; private set; }
 
-		public int BytesPerFlagRow { get; init; }
+		public int BytesPerRow { get; init; }
 		public int TotalBytesForFlags { get; init; }
-		public int VectorsPerFlagRow { get; init; }
+		public int VectorsPerRow { get; init; }
 
 		public Memory<byte> RowHasEscapedMemory { get; init; }
 
@@ -146,9 +131,9 @@ namespace MSS.Types
 		{
 			var destBack = MemoryMarshal.Cast<Vector256<uint>, byte>(dest);
 
-			var startIndex = BytesPerRow * rowNumber;
+			var startIndex = BytesPerZValueRow * rowNumber;
 
-			for (var i = 0; i < BytesPerRow; i++)
+			for (var i = 0; i < BytesPerZValueRow; i++)
 			{
 				destBack[i] = Zrs[startIndex + i];
 			}
@@ -158,9 +143,9 @@ namespace MSS.Types
 		{
 			var destBack = MemoryMarshal.Cast<Vector256<uint>, byte>(dest);
 
-			var startIndex = BytesPerRow * rowNumber;
+			var startIndex = BytesPerZValueRow * rowNumber;
 
-			for (var i = 0; i < BytesPerRow; i++)
+			for (var i = 0; i < BytesPerZValueRow; i++)
 			{
 				destBack[i] = Zis[startIndex + i];
 			}
@@ -170,9 +155,9 @@ namespace MSS.Types
 		{
 			var destBack = MemoryMarshal.Cast<Vector256<int>, byte>(dest);
 
-			var startIndex = BytesPerFlagRow * rowNumber;
+			var startIndex = BytesPerRow * rowNumber;
 
-			for (var i = 0; i < BytesPerFlagRow; i++)
+			for (var i = 0; i < BytesPerRow; i++)
 			{
 				destBack[i] = HasEscapedFlags[startIndex + i];
 			}
@@ -183,9 +168,9 @@ namespace MSS.Types
 		{
 			var destBack = MemoryMarshal.Cast<int, byte>(dest);
 
-			var startIndex = BytesPerFlagRow * rowNumber;
+			var startIndex = BytesPerRow * rowNumber;
 
-			for (var i = 0; i < BytesPerFlagRow; i++)
+			for (var i = 0; i < BytesPerRow; i++)
 			{
 				destBack[i] = HasEscapedFlags[startIndex + i];
 			}
@@ -195,9 +180,9 @@ namespace MSS.Types
 		{
 			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(source);
 
-			var startIndex = BytesPerRow * rowNumber;
+			var startIndex = BytesPerZValueRow * rowNumber;
 
-			for (var i = 0; i < BytesPerRow; i++)
+			for (var i = 0; i < BytesPerZValueRow; i++)
 			{
 				Zrs[startIndex + i] = sourceBack[i];
 			}
@@ -207,9 +192,9 @@ namespace MSS.Types
 		{
 			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(source);
 
-			var startIndex = BytesPerRow * rowNumber;
+			var startIndex = BytesPerZValueRow * rowNumber;
 
-			for (var i = 0; i < BytesPerRow; i++)
+			for (var i = 0; i < BytesPerZValueRow; i++)
 			{
 				Zis[startIndex + i] = sourceBack[i];
 			}
@@ -219,9 +204,9 @@ namespace MSS.Types
 		{
 			var sourceBack = MemoryMarshal.Cast<Vector256<int>, byte>(source);
 
-			var startIndex = BytesPerFlagRow * rowNumber;
+			var startIndex = BytesPerRow * rowNumber;
 
-			for (var i = 0; i < BytesPerFlagRow; i++)
+			for (var i = 0; i < BytesPerRow; i++)
 			{
 				HasEscapedFlags[startIndex + i] = sourceBack[i];
 			}
@@ -232,9 +217,9 @@ namespace MSS.Types
 		{
 			var sourceBack = MemoryMarshal.Cast<int, byte>(source);
 
-			var startIndex = BytesPerFlagRow * rowNumber;
+			var startIndex = BytesPerRow * rowNumber;
 
-			for (var i = 0; i < BytesPerFlagRow; i++)
+			for (var i = 0; i < BytesPerRow; i++)
 			{
 				HasEscapedFlags[startIndex + i] = sourceBack[i];
 			}
@@ -243,6 +228,29 @@ namespace MSS.Types
 		public Span<bool> GetRowHasEscaped()
 		{
 			var result = MemoryMarshal.Cast<byte, bool>(RowHasEscapedMemory.Span);
+			return result;
+		}
+
+		private bool[] CompressHasEscapedFlags(int[] hasEscapedFlags)
+		{
+			bool[] result;
+
+			if (!hasEscapedFlags.Any(x => !(x == 0)))
+			{
+				// All have escaped
+				result = new bool[] { true };
+			}
+			else if (!hasEscapedFlags.Any(x => x > 0))
+			{
+				// none have escaped
+				result = new bool[] { false };
+			}
+			else
+			{
+				// Mix
+				result = hasEscapedFlags.Select(x => x == 0 ? false : true).ToArray();
+			}
+
 			return result;
 		}
 

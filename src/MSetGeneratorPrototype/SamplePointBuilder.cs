@@ -16,14 +16,40 @@ namespace MSetGeneratorPrototype
 		public SizeInt BlockSize => _samplePointCache.BlockSize;
 		public FP31VecMath GetVecMath(int limbCount) => _samplePointCache.GetVectorMath(limbCount);
 
-		public (FP31Val[] samplePointX, FP31Val[] samplePointY) BuildSamplePoints(IteratorCoords iteratorCoords)
+		public (FP31ValArray samplePointXVArray, FP31ValArray samplePointYVArray) BuildSamplePoints(IteratorCoords iteratorCoords)
 		{
 			var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
 			var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
 			var samplePointsX = BuildSamplePoints(iteratorCoords.StartingCx, samplePointOffsets, fP31ScalarMath);
 			var samplePointsY = BuildSamplePoints(iteratorCoords.StartingCy, samplePointOffsets, fP31ScalarMath);
 
-			return (samplePointsX, samplePointsY);	
+			var valArrayX = new FP31ValArray(samplePointsX);
+			var valArrayY = new FP31ValArray(samplePointsY);	
+
+			return (valArrayX, valArrayY);	
+		}
+
+		public (Vector256<uint>[] samplePointXVecs, Vector256<uint>[] samplePointYVecs) BuildSamplePointsNew(IteratorCoords iteratorCoords)
+		{
+			var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
+			var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
+			var samplePointsX = BuildSamplePoints(iteratorCoords.StartingCx, samplePointOffsets, fP31ScalarMath);
+			var samplePointsY = BuildSamplePoints(iteratorCoords.StartingCy, samplePointOffsets, fP31ScalarMath);
+
+			var valArrayX = new FP31ValArray(samplePointsX);
+			var valArrayY = new FP31ValArray(samplePointsY);
+
+			return (valArrayX.Mantissas, valArrayY.Mantissas);
+		}
+
+		public (FP31Val[] samplePointX, FP31Val[] samplePointY) BuildSamplePointsOld(IteratorCoords iteratorCoords)
+		{
+			var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
+			var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
+			var samplePointsX = BuildSamplePoints(iteratorCoords.StartingCx, samplePointOffsets, fP31ScalarMath);
+			var samplePointsY = BuildSamplePoints(iteratorCoords.StartingCy, samplePointOffsets, fP31ScalarMath);
+
+			return (samplePointsX, samplePointsY);
 		}
 
 		public static FP31Val[] BuildSamplePoints(FP31Val startValue, FP31Val[] offsets, FP31ScalarMath scalarMath)

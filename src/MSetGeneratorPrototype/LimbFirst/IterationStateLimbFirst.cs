@@ -26,8 +26,8 @@ namespace MSetGeneratorPrototype
 			RowCount = mapSectionZVectors.BlockSize.Height;
 
 			ValuesPerRow = mapSectionVectors.ValuesPerRow;
-			VectorsPerRow = mapSectionZVectors.VectorsPerRow;
-			VectorsPerFlagRow = mapSectionZVectors.VectorsPerFlagRow;
+			VectorsPerRow = mapSectionZVectors.VectorsPerZValueRow;
+			VectorsPerFlagRow = mapSectionZVectors.VectorsPerRow;
 
 			RowNumber = -1;
 

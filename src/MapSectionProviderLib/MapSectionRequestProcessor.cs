@@ -17,6 +17,8 @@ namespace MapSectionProviderLib
 	{
 		#region Private Properties
 
+		private const int PRECSION_PADDING = 4;
+
 		private const int NUMBER_OF_CONSUMERS = 2;
 		private const int QUEUE_CAPACITY = 10; //200;
 
@@ -283,7 +285,7 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision);
+						request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision + PRECSION_PADDING);
 						request.MapSectionZVectors.ResetObject();
 					}
 
@@ -310,9 +312,8 @@ namespace MapSectionProviderLib
 
 			request.MapSectionVectors = mapSectionVectors;
 			request.MapSectionVectors.ResetObject();
-			request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision);
+			request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision + PRECSION_PADDING);
 			request.MapSectionZVectors.ResetObject();
-			//request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(RMapConstants.DEFAULT_LIMB_COUNT);
 
 			if (request.ScreenPosition.IsZero())
 			{

@@ -11,7 +11,10 @@ namespace MSetGeneratorPrototype
 	{
 		//private readonly FP31Val[] _samplePointsX;
 		private readonly FP31Val[] _samplePointsY;
-		
+
+		//private readonly Vector256<uint>[] _samplePointsXVecs;
+		//private readonly Vector256<uint>[] _samplePointsYVecs;
+
 		private readonly MapSectionVectors _mapSectionVectors;
 		//private readonly byte[] _counts;
 		private readonly int _bytesPerFlagRow;
@@ -24,16 +27,32 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IterationStateDepthFirst(FP31Val[] samplePointsX, FP31Val[] samplePointsY, MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
+		//public IterationStateDepthFirstNew(Vector256<uint>[] samplePointsXVecs, Vector256<uint>[] samplePointsYVecs,
+		//	MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
+		//	bool increasingIterations, Vector256<int> targetIterationsVector)
+
+		//public IterationStateDepthFirst(FP31ValArray samplePointsXVArray, FP31ValArray samplePointsYVArray,
+		//	MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
+		//	bool increasingIterations, Vector256<int> targetIterationsVector)
+
+
+		public IterationStateDepthFirst(FP31Val[] samplePointsX, FP31Val[] samplePointsY,
+			MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
 			bool increasingIterations, Vector256<int> targetIterationsVector)
 		{
-			//_samplePointsX = samplePointsX;
-			_samplePointsY = samplePointsY;	
+
+			_samplePointsY = samplePointsY;
+
+			//CrsRowV = samplePointsXVecs;
+			//CisRowV = samplePointsYVecs;
+
+			//CrsRowVArray = samplePointsXVArray;
+			//CisRowVArray = samplePointsYVArray;
 
 			_mapSectionVectors = mapSectionVectors;
 
 			_mapSectionZVectors = mapSectionZVectors;
-			_bytesPerFlagRow = mapSectionZVectors.BytesPerFlagRow;
+			_bytesPerFlagRow = mapSectionZVectors.BytesPerRow;
 
 			IncreasingIterations = increasingIterations;
 			TargetIterationsVector = targetIterationsVector;
@@ -42,19 +61,22 @@ namespace MSetGeneratorPrototype
 			LimbCount = mapSectionZVectors.LimbCount;
 			RowCount = mapSectionZVectors.BlockSize.Height;
 			ValuesPerRow = mapSectionZVectors.ValuesPerRow;
+			ZValueVectorsPerRow = mapSectionZVectors.VectorsPerZValueRow;
 			VectorsPerRow = mapSectionZVectors.VectorsPerRow;
-			VectorsPerFlagRow = mapSectionZVectors.VectorsPerFlagRow;
 
 			RowNumber = null;
+			//CiLimbSet = new Vector256<uint>[LimbCount];
 
-			CrsRow = new FP31ValArray(LimbCount, ValuesPerRow);
-			CrsRow.UpdateFrom(samplePointsX);
 
-			CisRow = new FP31ValArray(LimbCount, ValuesPerRow);
-			CisColVec = new Vector256<uint>[LimbCount];
+			CrsRowVArray = new FP31ValArray(LimbCount, ValuesPerRow);
+			CrsRowVArray.UpdateFrom(samplePointsX);
+
+			CisRowVArray = new FP31ValArray(LimbCount, ValuesPerRow);
+			//CisColVec = new Vector256<uint>[LimbCount];
+
 
 			//CountsRow = mapSectionVectors.GetCountsRow(0);
-			CountsRowV = new Vector256<int>[VectorsPerFlagRow];
+			CountsRowV = new Vector256<int>[VectorsPerRow];
 
 			RowHasEscaped = _mapSectionZVectors.GetRowHasEscaped();
 			RowUsedCalcs = new long[RowCount];
@@ -64,19 +86,19 @@ namespace MSetGeneratorPrototype
 			//ZrsRow = _mapSectionZVectors.GetZrsRow(0);
 			//ZisRow = _mapSectionZVectors.GetZisRow(0);
 
-			HasEscapedFlagsRowV = new Vector256<int>[VectorsPerFlagRow];
-			ZrsRowV = new Vector256<uint>[VectorsPerRow];
-			ZisRowV = new Vector256<uint>[VectorsPerRow];
+			HasEscapedFlagsRowV = new Vector256<int>[VectorsPerRow];
+			ZrsRowV = new Vector256<uint>[ZValueVectorsPerRow];
+			ZisRowV = new Vector256<uint>[ZValueVectorsPerRow];
 
 			_mapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlagsRowV);
 			_mapSectionZVectors.FillZrsRow(0, ZrsRowV);
 			_mapSectionZVectors.FillZisRow(0, ZisRowV);
 
-			DoneFlags = new Vector256<int>[VectorsPerFlagRow];
-			UsedCalcs = new Vector256<int>[VectorsPerFlagRow];
-			UnusedCalcs = new Vector256<int>[VectorsPerFlagRow];
+			DoneFlags = new Vector256<int>[VectorsPerRow];
+			UsedCalcs = new Vector256<int>[VectorsPerRow];
+			UnusedCalcs = new Vector256<int>[VectorsPerRow];
 
-			InPlayList = Enumerable.Range(0, VectorsPerFlagRow).ToArray();
+			InPlayList = Enumerable.Range(0, VectorsPerRow).ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
 
 			_inPlayBackingList = InPlayList.ToList();
@@ -93,15 +115,19 @@ namespace MSetGeneratorPrototype
 		public int ValueCount { get; init; }
 		public int LimbCount { get; init; }
 		public int RowCount { get; init; }
+		public int ZValueVectorsPerRow { get; init; }
 		public int VectorsPerRow { get; init; }
-		public int VectorsPerFlagRow { get; init; }
 		public int ValuesPerRow { get; init; }
 
 		public int? RowNumber { get; private set; }
 
-		public FP31ValArray CrsRow { get; set; }
-		public FP31ValArray CisRow { get; set; }
-		public Vector256<uint>[] CisColVec { get; private set; }
+		//public Vector256<uint>[] CrsRowV { get; private set; }
+		//public Vector256<uint>[] CisRowV { get; private set; }
+
+		public FP31ValArray CrsRowVArray { get; private set; }
+		public FP31ValArray CisRowVArray { get; private set; }
+
+		//public Vector256<uint>[] CiLimbSet { get; private set; }
 
 		//public Span<Vector256<int>> CountsRow { get; private set; }
 		public Vector256<int>[] CountsRowV { get; private set; }
@@ -129,7 +155,31 @@ namespace MSetGeneratorPrototype
 
 		#region Public Methods
 
-		// Returns true if all samples for this row have escaped or reached the target number of iterations.
+		public void SetRowNumber(int rowNumber)
+		{
+			if (RowNumber.HasValue)
+			{
+				// Update the _mapSectionVectors with the current row properties
+				_mapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
+				_mapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				_mapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
+				_mapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
+			}
+
+			UpdateUsedAndUnusedCalcs(RowNumber);
+
+			Array.Clear(HasEscapedFlagsRowV);
+			Array.Clear(CountsRowV);
+			Array.Clear(DoneFlags);
+
+			var yPoint = _samplePointsY[rowNumber];
+			CisRowVArray.UpdateFrom(yPoint);
+			//FillCiLimbSetForRow(rowNumber, CiLimbSet);
+
+			RowNumber = rowNumber;
+		}
+
+		// Returns the next row number, or null, if all rows have been visited.
 		public int? GetNextRowNumber()
 		{
 			if (RowNumber.HasValue)
@@ -184,7 +234,7 @@ namespace MSetGeneratorPrototype
 					Array.Clear(CountsRowV);
 
 					_inPlayBackingList.Clear();
-					for (var i = 0; i < VectorsPerFlagRow; i++)
+					for (var i = 0; i < VectorsPerRow; i++)
 					{
 						_inPlayBackingList.Add(i);
 					}
@@ -198,8 +248,8 @@ namespace MSetGeneratorPrototype
 				RowNumber = rowNumber;
 
 				var yPoint = _samplePointsY[rowNumber];
-				CisRow.UpdateFrom(yPoint);
-				//RepeatInto(yPoint, CisColVec);
+				CisRowVArray.UpdateFrom(yPoint);
+				//FillCiLimbSetForRow(rowNumber, CiLimbSet);
 
 				InPlayList = _inPlayBackingList.ToArray();
 				InPlayListNarrow = BuildNarowInPlayList(InPlayList);
@@ -211,14 +261,6 @@ namespace MSetGeneratorPrototype
 
 			return RowNumber;
 		}
-
-		//private void RepeatInto(FP31Val val, Vector256<uint>[] destination)
-		//{
-		//	for (var i = 0; i < destination.Length; i++)
-		//	{
-		//		destination[i] = Vector256.Create(val.Mantissa[i]);
-		//	}
-		//}
 
 		[Conditional("PERF")]
 		private void UpdateUsedAndUnusedCalcs(int? rowNumber)
@@ -250,27 +292,44 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		public void FillCrLimbSet(int valueIndex, Vector256<uint>[] limbSet)
+		public void FillCrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
-			CrsRow.FillLimbSet(valueIndex, limbSet);
-		}
+			CrsRowVArray.FillLimbSet(vectorIndex, limbSet);
+			//CrsRow.FillLimbSet(valueIndex, limbSet);
 
-		public void FillCiLimbSet(int valueIndex, Vector256<uint>[] limbSet)
-		{
-			CisRow.FillLimbSet(valueIndex, limbSet);
+			//var vecPtr = valueIndex * LimbCount;
 
-			//if (RowNumber.HasValue)
+			//for (var i = 0; i < LimbCount; i++)
 			//{
-			//	var yPoint = _samplePointsY[RowNumber.Value];
-
-			//	for (var i = 0; i < limbSet.Length; i++)
-			//	{
-			//		limbSet[i] = Vector256.Create(yPoint.Mantissa[i]);
-			//	}
+			//	limbSet[i] = CrsRowVArray.Mantissas[vecPtr++];
 			//}
 		}
 
-		public void FillZrLimbSet(int valueIndex, Vector256<uint>[] limbSet)
+		public void FillCiLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
+		{
+			CisRowVArray.FillLimbSet(vectorIndex, limbSet);
+
+			//var vecPtr = valueIndex * LimbCount;
+
+			//for (var i = 0; i < LimbCount; i++)
+			//{
+			//	limbSet[i] = CisRowVArray.Mantissas[vecPtr++];
+			//}
+		}
+
+		//public void FillCiLimbSetForRow(int rowNumber, Vector256<uint>[] limbSet)
+		//{
+		//	//CisRow.FillLimbSet(valueIndex, limbSet);
+
+		//	var vecPtr = rowNumber * LimbCount;
+
+		//	for (var i = 0; i < LimbCount; i++)
+		//	{
+		//		limbSet[i] = CisRowV[vecPtr++];
+		//	}
+		//}
+
+		public void FillZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
 			if (!IncreasingIterations)
 			{
@@ -282,7 +341,7 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				var vecPtr = valueIndex * LimbCount;
+				var vecPtr = vectorIndex * LimbCount;
 
 				for (var i = 0; i < LimbCount; i++)
 				{
@@ -291,7 +350,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		public void FillZiLimbSet(int valueIndex, Vector256<uint>[] limbSet)
+		public void FillZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
 			if (!IncreasingIterations)
 			{
@@ -303,7 +362,7 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				var vecPtr = valueIndex * LimbCount;
+				var vecPtr = vectorIndex * LimbCount;
 
 				for (var i = 0; i < LimbCount; i++)
 				{
@@ -312,9 +371,9 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		public void UpdateZrLimbSet(int valueIndex, Vector256<uint>[] limbSet)
+		public void UpdateZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
-			var vecPtr = valueIndex * LimbCount;
+			var vecPtr = vectorIndex * LimbCount;
 
 			for (var i = 0; i < LimbCount; i++)
 			{
@@ -322,16 +381,15 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		public void UpdateZiLimbSet(int valueIndex, Vector256<uint>[] limbSet)
+		public void UpdateZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
-			var vecPtr = valueIndex * LimbCount;
+			var vecPtr = vectorIndex * LimbCount;
 
 			for (var i = 0; i < LimbCount; i++)
 			{
 				ZisRowV[vecPtr++] = limbSet[i];
 			}
 		}
-
 
 		//private void FillCountsRow(int rowNumber, Vector256<int>[] dest)
 		//{
@@ -368,7 +426,7 @@ namespace MSetGeneratorPrototype
 
 			var allHaveEscaped = true;
 
-			for (var i = 0; i < VectorsPerFlagRow; i++)
+			for (var i = 0; i < VectorsPerRow; i++)
 			{
 				var compositeHasEscapedFlags = Avx2.MoveMask(hasEscapedFlagsRow[i].AsByte());
 				if (compositeHasEscapedFlags != -1)
