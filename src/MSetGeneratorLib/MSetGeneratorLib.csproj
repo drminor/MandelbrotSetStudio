@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -8,8 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\cpp_src\HpMbGenerator\HpMbGenerator.vcxproj" />
-    <ProjectReference Include="..\MapSectionProviderLib\MapSectionProviderLib.csproj" />
     <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
     <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />

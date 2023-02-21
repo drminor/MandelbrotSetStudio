@@ -34,7 +34,7 @@ namespace MSetGeneratorPrototype
 			CountsRow = new Vector256<int>[VectorsPerFlagRow];
 			mapSectionVectors.FillCountsRow(0, CountsRow);
 
-			RowHasEscaped = _mapSectionZVectors.GetRowHasEscaped();
+			RowHasEscaped = _mapSectionZVectors.RowHasEscaped;
 			RowUsedCalcs = new long[RowCount];
 			RowUnusedCalcs = new long[RowCount];
 

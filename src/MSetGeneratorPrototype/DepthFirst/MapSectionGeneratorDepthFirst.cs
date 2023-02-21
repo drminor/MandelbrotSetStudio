@@ -11,6 +11,8 @@ namespace MSetGeneratorPrototype
 {
 	public class MapSectionGeneratorDepthFirst : IMapSectionGenerator
 	{
+		private readonly bool USE_C_IMPLEMENTATION;
+
 		#region Private Properties
 
 		private SamplePointBuilder _samplePointBuilder;
@@ -34,6 +36,8 @@ namespace MSetGeneratorPrototype
 
 		public MapSectionGeneratorDepthFirst(int limbCount, SizeInt blockSize)
 		{
+			USE_C_IMPLEMENTATION = true;
+
 			_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
 
 			_fp31VecMath = _samplePointBuilder.GetVecMath(limbCount);
@@ -96,10 +100,55 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				completed = GenerateMapSectionRows(_iterator, iterationState, ct, out allRowsHaveEscaped);
+				if (USE_C_IMPLEMENTATION)
+				{
+					completed = HighPerfGenerateMapSectionRows(_iterator, iterationState, ct, out allRowsHaveEscaped);
+				}
+				else
+				{
+					completed = GenerateMapSectionRows(_iterator, iterationState, ct, out allRowsHaveEscaped);
+				}
 			}
 
 			return completed;
+		}
+
+		private bool HighPerfGenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
+		{
+			allRowsHaveEscaped = false;
+
+			if (ct.IsCancellationRequested)
+			{
+				return false;
+			}
+
+			allRowsHaveEscaped = true;
+
+			for (var rowNumber = 0; rowNumber < iterationState.RowCount; rowNumber++)
+			{
+				iterationState.SetRowNumber(rowNumber);
+
+				var allRowSamplesHaveEscaped = MSetGeneratorLib.MapSectionGenerator.GenerateMapSection(iterationState, _fp31VecMath.ApFixedPointFormat, _iterator.Threshold, ct);
+				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
+
+				if (!allRowSamplesHaveEscaped)
+				{
+					allRowsHaveEscaped = false;
+				}
+
+				if (ct.IsCancellationRequested)
+				{
+					allRowsHaveEscaped = false;
+					return false;
+				}
+			}
+
+			// 'Close out' the iterationState
+			iterationState.SetRowNumber(iterationState.RowCount);
+
+			Debug.Assert(iterationState.RowNumber == null, $"The iterationState should have a null RowNumber, but instead has {iterationState.RowNumber}.");
+
+			return true;
 		}
 
 		private bool GenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)

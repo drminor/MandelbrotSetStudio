@@ -225,7 +225,7 @@ namespace MSetRepo
 				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
 			}
 
-			var zValues = new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis, zVectors.HasEscapedFlags, zVectors.RowHasEscaped);
+			var zValues = new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis, zVectors.HasEscapedFlags, zVectors.GetBytesForRowHasEscaped());
 
 			var result = new MapSectionZValuesRecord
 				(

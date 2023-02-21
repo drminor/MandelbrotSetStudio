@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using MSS.Types.APValues;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -7,7 +8,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace MSetGeneratorPrototype
 {
-	public ref struct IterationStateDepthFirst
+	public class IterationStateDepthFirst : IIterationState
 	{
 		private readonly FP31Val[] _samplePointsY;
 
@@ -45,7 +46,7 @@ namespace MSetGeneratorPrototype
 			//CountsRow = mapSectionVectors.GetCountsRow(0);
 			CountsRowV = new Vector256<int>[VectorsPerRow];
 
-			RowHasEscaped = _mapSectionZVectors.GetRowHasEscaped();
+			RowHasEscaped = _mapSectionZVectors.RowHasEscaped;
 			RowUsedCalcs = new long[RowCount];
 			RowUnusedCalcs = new long[RowCount];
 
@@ -93,7 +94,7 @@ namespace MSetGeneratorPrototype
 
 		//public Span<Vector256<int>> CountsRow { get; private set; }
 		public Vector256<int>[] CountsRowV { get; private set; }
-		public Span<bool> RowHasEscaped { get; init; }
+		public bool[] RowHasEscaped { get; init; }
 		public long[] RowUnusedCalcs { get; init; }
 		public long[] RowUsedCalcs { get; init; }
 
@@ -323,7 +324,7 @@ namespace MSetGeneratorPrototype
 
 		#region Private Methods
 
-		private bool BuildTheInPlayBackingList(Vector256<int>[] hasEscapedFlagsRow, Span<Vector256<int>> countsRow, List<int> inPlayBackingList, Vector256<int>[] doneFlags) 
+		private bool BuildTheInPlayBackingList(Vector256<int>[] hasEscapedFlagsRow, Span<Vector256<int>> countsRow, List<int> inPlayBackingList, Vector256<int>[] doneFlags)
 		{
 			inPlayBackingList.Clear();
 			Array.Clear(doneFlags);

@@ -39,9 +39,9 @@ namespace MSS.Types
 			Array.Clear(Zis);
 
 			HasEscapedFlags = new byte[TotalBytesForFlags];
-			RowHasEscaped = new byte[RowCount];
+			RowHasEscaped = new bool[RowCount];
 
-			RowHasEscapedMemory = new Memory<byte>(RowHasEscaped);
+			//RowHasEscapedMemory = new Memory<byte>(RowHasEscaped);
 		}
 
 		#endregion
@@ -77,7 +77,10 @@ namespace MSS.Types
 		public byte[] Zrs { get; private set; }
 		public byte[] Zis { get; private set; }
 		public byte[] HasEscapedFlags { get; init; }
-		public byte[] RowHasEscaped { get; set; }
+
+		public bool[] RowHasEscaped { get; init; }
+
+		//public byte[] RowHasEscaped { get; set; }
 
 		// ---- Supporting Properties ------ //
 
@@ -94,7 +97,7 @@ namespace MSS.Types
 		public int TotalBytesForFlags { get; init; }
 		public int VectorsPerRow { get; init; }
 
-		public Memory<byte> RowHasEscapedMemory { get; init; }
+		//public Memory<byte> RowHasEscapedMemory { get; init; }
 
 		#endregion
 
@@ -105,7 +108,8 @@ namespace MSS.Types
 			Array.Copy(zrs, Zrs, TotalByteCount);
 			Array.Copy(zis, Zis, TotalByteCount);
 			Array.Copy(hasEscapedFlags, HasEscapedFlags, TotalBytesForFlags);
-			Array.Copy(rowHasEscaped, RowHasEscaped, RowCount);
+
+			FillRowHasEscaped(rowHasEscaped, RowHasEscaped);
 		}
 
 		//public Span<Vector256<uint>> GetZrsRow(int rowNumber)
@@ -225,10 +229,25 @@ namespace MSS.Types
 			}
 		}
 
-		public Span<bool> GetRowHasEscaped()
+
+		public byte[] GetBytesForRowHasEscaped()
 		{
-			var result = MemoryMarshal.Cast<byte, bool>(RowHasEscapedMemory.Span);
+			var result = new byte[RowHasEscaped.Length];
+
+			for (var i = 0; i < RowCount; i++)
+			{
+				result[i] = RowHasEscaped[i] ? (byte)1 : (byte)0;
+			}
+
 			return result;
+		}
+
+		public void FillRowHasEscaped(byte[] source, bool[] dest)
+		{
+			for (var i = 0; i < RowCount; i++)
+			{
+				dest[i] = source[i] == 1;
+			}
 		}
 
 		private bool[] CompressHasEscapedFlags(int[] hasEscapedFlags)
@@ -285,7 +304,7 @@ namespace MSS.Types
 			Array.Copy(Zrs, result.Zrs, TotalByteCount);
 			Array.Copy(Zis, result.Zis, TotalByteCount);
 			Array.Copy(HasEscapedFlags, result.HasEscapedFlags, TotalBytesForFlags);
-			RowHasEscapedMemory.CopyTo(result.RowHasEscapedMemory);
+			Array.Copy(RowHasEscaped, result.RowHasEscaped, RowCount);
 		}
 
 		#endregion

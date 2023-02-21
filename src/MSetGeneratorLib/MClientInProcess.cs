@@ -1,5 +1,5 @@
-﻿using MapSectionProviderLib;
-using MEngineDataContracts;
+﻿//using MapSectionProviderLib;
+//using MEngineDataContracts;
 
 using MSS.Common;
 using MSS.Types;
@@ -15,7 +15,7 @@ namespace MSetGeneratorLib
 	public class MClientInProcess : IMEngineClient
 	{
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
+		//private readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 
 		private static int _sectionCntr;
 
@@ -25,10 +25,10 @@ namespace MSetGeneratorLib
 		//	_mapSectionAdapter = new MapSection
 		//}
 
-		public MClientInProcess(IMapSectionAdapter mapSectionAdapter, MapSectionPersistProcessor mapSectionPersistProcessor)
+		public MClientInProcess(IMapSectionAdapter mapSectionAdapter/*, MapSectionPersistProcessor mapSectionPersistProcessor*/)
 		{
 			_mapSectionAdapter = mapSectionAdapter;
-			_mapSectionPersistProcessor = mapSectionPersistProcessor;
+			//_mapSectionPersistProcessor = mapSectionPersistProcessor;
 		}
 
 		public string EndPointAddress => "C++_InProcessServer";
@@ -36,35 +36,10 @@ namespace MSetGeneratorLib
 
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
-			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
-			var stopWatch = Stopwatch.StartNew();
-
-			var mapSectionResponse = await GenerateMapSectionAsyncInternal(mapSectionRequest, ct);
-			
-			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
-			return mapSectionResponse;
+			await Task.Delay(100);
+			throw new NotImplementedException();
 		}
 
-		private async Task<MapSectionResponse> GenerateMapSectionAsyncInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
-		{
-			var mapSectionResponse = await MapSectionGenerator.GenerateMapSectionAsync(mapSectionRequest, _mapSectionAdapter, ct);
-
-			//var idStr = string.IsNullOrEmpty(mapSectionResponse.MapSectionId) ? "new" : mapSectionResponse.MapSectionId;
-			//if (++_sectionCntr % 10 == 0)
-			//{
-			//	Debug.WriteLine($"Adding MapSectionResponse with ID: {idStr} to the MapSection Persist Processor. Generated {_sectionCntr} Map Sections.");
-			//}
-			//_mapSectionPersistProcessor.AddWork(mapSectionResponse);
-
-			if (++_sectionCntr % 10 == 0)
-			{
-				Debug.WriteLine($"Generated {_sectionCntr} Map Sections.");
-			}
-
-			//mapSectionResponse.IncludeZValues = false;
-
-			return mapSectionResponse;
-		}
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			if (ct.IsCancellationRequested)
@@ -85,18 +60,20 @@ namespace MSetGeneratorLib
 
 		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
-			//var mapSectionResponse = MapSectionGenerator.GenerateMapSection(mapSectionRequest, ct);
+			//var mapSectionResponse = MapSectionGenerator.GenerateMapSection(mapSectionRequest, , ct);
 
-			//if (++_sectionCntr % 10 == 0)
-			//{
-			//	Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
-			//}
+			if (++_sectionCntr % 10 == 0)
+			{
+				Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
+			}
 
 			////mapSectionResponse.IncludeZValues = false;
 
 			//return mapSectionResponse;
 
 			throw new NotImplementedException();
+
+
 		}
 	}
 }

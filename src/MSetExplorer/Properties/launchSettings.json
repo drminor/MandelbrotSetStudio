@@ -1,7 +1,8 @@
 {
   "profiles": {
     "MSetExplorer": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "nativeDebugging": true
     }
   }
 }

@@ -19,7 +19,6 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\..\cpp_src\HpMbGenerator\HpMbGenerator.vcxproj" />
     <ProjectReference Include="..\ImageBuilder\ImageBuilder.csproj" />
     <ProjectReference Include="..\MapSectionProviderLib\MapSectionProviderLib.csproj" />
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
