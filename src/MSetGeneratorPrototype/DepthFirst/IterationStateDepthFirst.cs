@@ -1,7 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.APValues;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -13,8 +12,6 @@ namespace MSetGeneratorPrototype
 		private readonly FP31Val[] _samplePointsY;
 
 		private readonly MapSectionVectors _mapSectionVectors;
-		//private readonly byte[] _counts;
-
 		private readonly MapSectionZVectors _mapSectionZVectors;
 
 		private List<int> _inPlayBackingList;
@@ -38,7 +35,7 @@ namespace MSetGeneratorPrototype
 			LimbCount = mapSectionZVectors.LimbCount;
 			RowCount = mapSectionZVectors.BlockSize.Height;
 			ValuesPerRow = mapSectionZVectors.ValuesPerRow;
-			ZValueVectorsPerRow = mapSectionZVectors.VectorsPerZValueRow;
+			VectorsPerZValueRow = mapSectionZVectors.VectorsPerZValueRow;
 			VectorsPerRow = mapSectionZVectors.VectorsPerRow;
 
 			RowNumber = null;
@@ -57,8 +54,8 @@ namespace MSetGeneratorPrototype
 			//ZisRow = _mapSectionZVectors.GetZisRow(0);
 
 			HasEscapedFlagsRowV = new Vector256<int>[VectorsPerRow];
-			ZrsRowV = new Vector256<uint>[ZValueVectorsPerRow];
-			ZisRowV = new Vector256<uint>[ZValueVectorsPerRow];
+			ZrsRowV = new Vector256<uint>[VectorsPerZValueRow];
+			ZisRowV = new Vector256<uint>[VectorsPerZValueRow];
 
 			_mapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlagsRowV);
 			_mapSectionZVectors.FillZrsRow(0, ZrsRowV);
@@ -85,7 +82,7 @@ namespace MSetGeneratorPrototype
 		public int ValueCount { get; init; }
 		public int LimbCount { get; init; }
 		public int RowCount { get; init; }
-		public int ZValueVectorsPerRow { get; init; }
+		public int VectorsPerZValueRow { get; init; }
 		public int VectorsPerRow { get; init; }
 		public int ValuesPerRow { get; init; }
 
@@ -232,39 +229,20 @@ namespace MSetGeneratorPrototype
 			return RowNumber;
 		}
 
-		[Conditional("PERF")]
-		private void UpdateUsedAndUnusedCalcs(int? rowNumber)
-		{
-			if (rowNumber.HasValue)
-			{
-				RowUsedCalcs[rowNumber.Value] = GetUsedCalcs(UsedCalcs, UnusedCalcs, out var unusedCalcs);
-				RowUnusedCalcs[rowNumber.Value] = unusedCalcs;
-			}
+		#endregion
 
-			Array.Clear(UnusedCalcs);
-			Array.Clear(UsedCalcs);
-		}
-
-		public long GetUsedCalcs(Vector256<int>[] usedCalcsV, Vector256<int>[] unusedCalcsV, out long unusedCalcs)
-		{
-			unusedCalcs = 0;
-			var result = 0L;
-
-			var unusedSourceBack = MemoryMarshal.Cast<Vector256<int>, int>(unusedCalcsV);
-			var usedSourceBack = MemoryMarshal.Cast<Vector256<int>, int>(usedCalcsV);
-
-			for (var valuePtr = 0; valuePtr < unusedSourceBack.Length; valuePtr++)
-			{
-				unusedCalcs += unusedSourceBack[valuePtr];
-				result += usedSourceBack[valuePtr];
-			}
-
-			return result;
-		}
+		#region Public Methods - Fill / Update Limb Sets
 
 		public void FillCrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
-			CrsRowVArray.FillLimbSet(vectorIndex, limbSet);
+			//CrsRowVArray.FillLimbSet(vectorIndex, limbSet);
+
+			var vecPtr = vectorIndex * LimbCount;
+
+			for (var i = 0; i < LimbCount; i++)
+			{
+				limbSet[i] = CrsRowVArray.Mantissas[vecPtr++];
+			}
 		}
 
 		public void FillCiLimbSetForRow(int rowNumber, Vector256<uint>[] limbSet)
@@ -393,6 +371,36 @@ namespace MSetGeneratorPrototype
 
 				result[resultIdxPtr] = resultIdx;
 				result[resultIdxPtr + 1] = resultIdx + 1;
+			}
+
+			return result;
+		}
+
+		[Conditional("PERF")]
+		private void UpdateUsedAndUnusedCalcs(int? rowNumber)
+		{
+			if (rowNumber.HasValue)
+			{
+				RowUsedCalcs[rowNumber.Value] = GetUsedCalcs(UsedCalcs, UnusedCalcs, out var unusedCalcs);
+				RowUnusedCalcs[rowNumber.Value] = unusedCalcs;
+			}
+
+			Array.Clear(UnusedCalcs);
+			Array.Clear(UsedCalcs);
+		}
+
+		private long GetUsedCalcs(Vector256<int>[] usedCalcsV, Vector256<int>[] unusedCalcsV, out long unusedCalcs)
+		{
+			unusedCalcs = 0;
+			var result = 0L;
+
+			var unusedSourceBack = MemoryMarshal.Cast<Vector256<int>, int>(unusedCalcsV);
+			var usedSourceBack = MemoryMarshal.Cast<Vector256<int>, int>(usedCalcsV);
+
+			for (var valuePtr = 0; valuePtr < unusedSourceBack.Length; valuePtr++)
+			{
+				unusedCalcs += unusedSourceBack[valuePtr];
+				result += usedSourceBack[valuePtr];
 			}
 
 			return result;

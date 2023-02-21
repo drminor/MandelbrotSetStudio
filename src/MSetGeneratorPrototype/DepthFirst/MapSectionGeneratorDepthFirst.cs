@@ -219,15 +219,15 @@ namespace MSetGeneratorPrototype
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
 
 			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 
 			while (compositeIsDone != -1)
 			{
 				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 			}
 
-			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, ref iterationState);
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
 
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
 			iterationState.CountsRowV[idx] = resultCountsV;
@@ -260,15 +260,15 @@ namespace MSetGeneratorPrototype
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
 
 			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 
 			while (compositeIsDone != -1)
 			{
 				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 			}
 
-			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, ref iterationState);
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
 
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
 			iterationState.CountsRowV[idx] = resultCountsV;
@@ -281,9 +281,12 @@ namespace MSetGeneratorPrototype
 			return compositeAllEscaped == -1;
 		}
 
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private int UpdateCounts(Vector256<int> escapedFlagsVec, ref Vector256<int> countsV, ref Vector256<int> resultCountsV, ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
+		private int UpdateCounts(Vector256<int> escapedFlagsVec, 
+			ref Vector256<int> countsV, ref Vector256<int> resultCountsV,
+			Vector256<uint>[] zRs, Vector256<uint>[] resultZRs, 
+			Vector256<uint>[] zIs, Vector256<uint>[] resultZIs,
+			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
 		{
 			countsV = Avx2.Add(countsV, _justOne);
 
@@ -311,8 +314,8 @@ namespace MSetGeneratorPrototype
 				// Save the current ZValues.
 				for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
 				{
-					_resultZrs[limbPtr] = Avx2.BlendVariable(_zrs[limbPtr].AsInt32(), _resultZrs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-					_resultZis[limbPtr] = Avx2.BlendVariable(_zis[limbPtr].AsInt32(), _resultZis[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+					resultZRs[limbPtr] = Avx2.BlendVariable(zRs[limbPtr].AsInt32(), resultZRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+					resultZIs[limbPtr] = Avx2.BlendVariable(zIs[limbPtr].AsInt32(), resultZIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
 				}
 			}
 
@@ -473,10 +476,10 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("PERF")]
-		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, ref IterationStateDepthFirst iterationState)
+		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, Vector256<int>[] usedCalcs, Vector256<int>[] unusedCalcs)
 		{
-			iterationState.UsedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
-			iterationState.UnusedCalcs[idx] = Avx2.Subtract(newCountsV, resultCountsV);
+			usedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
+			unusedCalcs[idx] = Avx2.Subtract(newCountsV, resultCountsV);
 		}
 
 		[Conditional("PERF")]
@@ -494,7 +497,6 @@ namespace MSetGeneratorPrototype
 				limbSet[i] = Avx2.Xor(limbSet[i], limbSet[i]);
 			}
 		}
-
 
 		#endregion
 	}
