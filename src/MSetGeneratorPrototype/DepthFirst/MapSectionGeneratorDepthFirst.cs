@@ -66,7 +66,6 @@ namespace MSetGeneratorPrototype
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
 			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePointsOld(coords);
-			//var (samplePointsXVArray, samplePointsYVArray) = _samplePointBuilder.BuildSamplePoints(coords);
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
@@ -75,7 +74,6 @@ namespace MSetGeneratorPrototype
 			_iterator.MathOpCounts.Reset();
 			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
-			//var iterationState = new IterationStateDepthFirst(samplePointsXVArray, samplePointsYVArray, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 			var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
 			var completed = GeneratorOrUpdateRows(_iterator, iterationState, ct, out var allRowsHaveEscaped);
@@ -120,7 +118,7 @@ namespace MSetGeneratorPrototype
 				iterationState.SetRowNumber(rowNumber);
 
 				var allRowSamplesHaveEscaped = true;
-				for (var idx = 0; idx < iterationState.VectorsPerRow && !ct.IsCancellationRequested; idx++)
+				for (var idx = 0; idx < iterationState.VectorsPerRow; idx++)
 				{
 					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState);
 
@@ -144,7 +142,10 @@ namespace MSetGeneratorPrototype
 				}
 			}
 
-			iterationState.SetRowNumber(0);
+			// 'Close out' the iterationState
+			iterationState.SetRowNumber(iterationState.RowCount);
+
+			Debug.Assert(iterationState.RowNumber == null, $"The iterationState should have a null RowNumber, but instead has {iterationState.RowNumber}.");
 
 			return true;
 		}
@@ -165,10 +166,10 @@ namespace MSetGeneratorPrototype
 			{
 				var allRowSamplesHaveEscaped = true;
 
-				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length && !ct.IsCancellationRequested; idxPtr++)
+				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length; idxPtr++)
 				{
 					var idx = iterationState.InPlayList[idxPtr];
-					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState);
+					var allSamplesHaveEscaped = UpdateMapCol(idx, iterator, ref iterationState);
 
 					if (!allSamplesHaveEscaped)
 					{
@@ -201,6 +202,46 @@ namespace MSetGeneratorPrototype
 
 		private bool GenerateMapCol(int idx, IteratorDepthFirst iterator, ref IterationStateDepthFirst iterationState)
 		{
+			var hasEscapedFlagsV = Vector256<int>.Zero;
+			var doneFlagsV = Vector256<int>.Zero;
+
+			var countsV = Vector256<int>.Zero;
+			var resultCountsV = countsV;
+
+			iterationState.FillCrLimbSet(idx, _crs);
+			_cis = iterationState.CiLimbSet;
+
+			ClearLimbSet(_zrs);
+			ClearLimbSet(_zis);
+			ClearLimbSet(_resultZrs);
+			ClearLimbSet(_resultZis);
+
+			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+			while (compositeIsDone != -1)
+			{
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+			}
+
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, ref iterationState);
+
+			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
+			iterationState.CountsRowV[idx] = resultCountsV;
+
+			iterationState.UpdateZrLimbSet(idx, _resultZrs);
+			iterationState.UpdateZiLimbSet(idx, _resultZis);
+
+			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV.AsByte());
+
+			return compositeAllEscaped == -1;
+		}
+
+		private bool UpdateMapCol(int idx, IteratorDepthFirst iterator, ref IterationStateDepthFirst iterationState)
+		{
 			var hasEscapedFlagsV = iterationState.HasEscapedFlagsRowV[idx];
 			var doneFlagsV = iterationState.DoneFlags[idx];
 
@@ -209,6 +250,7 @@ namespace MSetGeneratorPrototype
 
 			iterationState.FillCrLimbSet(idx, _crs);
 			_cis = iterationState.CiLimbSet;
+
 			iterationState.FillZrLimbSet(idx, _zrs);
 			iterationState.FillZiLimbSet(idx, _zis);
 
@@ -238,6 +280,7 @@ namespace MSetGeneratorPrototype
 
 			return compositeAllEscaped == -1;
 		}
+
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private int UpdateCounts(Vector256<int> escapedFlagsVec, ref Vector256<int> countsV, ref Vector256<int> resultCountsV, ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
@@ -442,6 +485,16 @@ namespace MSetGeneratorPrototype
 			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
 			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
+
+		private void ClearLimbSet(Vector256<uint>[] limbSet)
+		{
+			// Clear instead of copying form source
+			for (var i = 0; i < limbSet.Length; i++)
+			{
+				limbSet[i] = Avx2.Xor(limbSet[i], limbSet[i]);
+			}
+		}
+
 
 		#endregion
 	}

@@ -133,13 +133,23 @@ namespace MSetGeneratorPrototype
 
 			UpdateUsedAndUnusedCalcs(RowNumber);
 
-			Array.Clear(HasEscapedFlagsRowV);
-			Array.Clear(CountsRowV);
-			Array.Clear(DoneFlags);
+			//Array.Clear(HasEscapedFlagsRowV);
+			//Array.Clear(CountsRowV);
+			//Array.Clear(DoneFlags);
 
-			FillCiLimbSetForRow(rowNumber, CiLimbSet);
+			if (rowNumber < RowCount)
+			{
+				RowNumber = rowNumber;
 
-			RowNumber = rowNumber;
+				FillCiLimbSetForRow(rowNumber, CiLimbSet);
+
+				//InPlayList = _inPlayBackingList.ToArray();
+				//InPlayListNarrow = BuildNarowInPlayList(InPlayList);
+			}
+			else
+			{
+				RowNumber = null;
+			}
 		}
 
 		// Returns the next row number, or null, if all rows have been visited.
@@ -195,14 +205,13 @@ namespace MSetGeneratorPrototype
 				{
 					Array.Clear(HasEscapedFlagsRowV);
 					Array.Clear(CountsRowV);
+					Array.Clear(DoneFlags);
 
 					_inPlayBackingList.Clear();
 					for (var i = 0; i < VectorsPerRow; i++)
 					{
 						_inPlayBackingList.Add(i);
 					}
-
-					Array.Clear(DoneFlags);
 				}
 			}
 
@@ -270,43 +279,21 @@ namespace MSetGeneratorPrototype
 
 		public void FillZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
-			if (!IncreasingIterations)
-			{
-				// Clear instead of copying form source
-				for (var i = 0; i < LimbCount; i++)
-				{
-					limbSet[i] = Avx2.Xor(limbSet[i], limbSet[i]);
-				}
-			}
-			else
-			{
-				var vecPtr = vectorIndex * LimbCount;
+			var vecPtr = vectorIndex * LimbCount;
 
-				for (var i = 0; i < LimbCount; i++)
-				{
-					limbSet[i] = ZrsRowV[vecPtr++];
-				}
+			for (var i = 0; i < LimbCount; i++)
+			{
+				limbSet[i] = ZrsRowV[vecPtr++];
 			}
 		}
 
 		public void FillZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
-			if (!IncreasingIterations)
-			{
-				// Clear instead of copying form source
-				for (var i = 0; i < LimbCount; i++)
-				{
-					limbSet[i] = Avx2.Xor(limbSet[i], limbSet[i]);
-				}
-			}
-			else
-			{
-				var vecPtr = vectorIndex * LimbCount;
+			var vecPtr = vectorIndex * LimbCount;
 
-				for (var i = 0; i < LimbCount; i++)
-				{
-					limbSet[i] = ZisRowV[vecPtr++];
-				}
+			for (var i = 0; i < LimbCount; i++)
+			{
+				limbSet[i] = ZisRowV[vecPtr++];
 			}
 		}
 
