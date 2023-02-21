@@ -208,10 +208,7 @@ namespace MSetGeneratorPrototype
 			var resultCountsV = countsV;
 
 			iterationState.FillCrLimbSet(idx, _crs);
-
-			iterationState.FillCiLimbSet(idx, _cis);
-			//_cis = iterationState.CiLimbSet;
-
+			_cis = iterationState.CiLimbSet;
 			iterationState.FillZrLimbSet(idx, _zrs);
 			iterationState.FillZiLimbSet(idx, _zis);
 

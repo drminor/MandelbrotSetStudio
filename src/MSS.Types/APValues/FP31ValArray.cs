@@ -12,12 +12,13 @@ namespace MSS.Types.APValues
 
 		public FP31ValArray(FP31Val fp31Val, int valueCount) : this(fp31Val.LimbCount, valueCount)
 		{
-			for (var vecPtr = 0; vecPtr < VectorCount; vecPtr++)
+			for (var vectorIndex = 0; vectorIndex < VectorCount; vectorIndex++)
 			{
-				var vectorPtr = vecPtr * LimbCount;
+				var vecPtr = vectorIndex * LimbCount;
+
 				for (var limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 				{
-					Mantissas[vectorPtr + limbPtr] = Vector256.Create(fp31Val.Mantissa[limbPtr]);
+					Mantissas[vecPtr + limbPtr] = Vector256.Create(fp31Val.Mantissa[limbPtr]);
 				}
 			}
 		}
@@ -101,14 +102,12 @@ namespace MSS.Types.APValues
 				throw new ArgumentException("The first fp31Val has a different number of limbs than the FP31Decks's LimbCount.");
 			}
 
-			var vectorCount = ValueCount / Lanes;
-
-			for (var valuePtr = 0; valuePtr < vectorCount; valuePtr++)
+			for (var vectorIndex = 0; vectorIndex < VectorCount; vectorIndex++)
 			{
-				var vectorPtr = valuePtr * LimbCount;
+				var vecPtr = vectorIndex * LimbCount;
 				for (var limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 				{
-					Mantissas[vectorPtr + limbPtr] = Vector256.Create(fp31Val.Mantissa[limbPtr]);
+					Mantissas[vecPtr + limbPtr] = Vector256.Create(fp31Val.Mantissa[limbPtr]);
 				}
 			}
 		}
@@ -186,7 +185,7 @@ namespace MSS.Types.APValues
 
 			for (var i = 0; i < LimbCount; i++)
 			{
-				limbSet[i] = Mantissas[vecPtr++];
+				limbSet[i] = Mantissas[vecPtr + i];
 			}
 		}
 
@@ -196,7 +195,7 @@ namespace MSS.Types.APValues
 
 			for (var i = 0; i < LimbCount; i++)
 			{
-				Mantissas[vecPtr++] = limbSet[i];
+				Mantissas[vecPtr + i] = limbSet[i];
 			}
 		}
 

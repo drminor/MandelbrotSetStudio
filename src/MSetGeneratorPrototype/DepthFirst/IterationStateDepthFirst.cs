@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.APValues;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -9,32 +10,17 @@ namespace MSetGeneratorPrototype
 {
 	public ref struct IterationStateDepthFirst
 	{
-		//private readonly FP31Val[] _samplePointsX;
 		private readonly FP31Val[] _samplePointsY;
-
-		//private readonly Vector256<uint>[] _samplePointsXVecs;
-		//private readonly Vector256<uint>[] _samplePointsYVecs;
 
 		private readonly MapSectionVectors _mapSectionVectors;
 		//private readonly byte[] _counts;
-		private readonly int _bytesPerFlagRow;
 
 		private readonly MapSectionZVectors _mapSectionZVectors;
 
 		private List<int> _inPlayBackingList;
 		private readonly Vector256<int> ALL_BITS_SET;
 
-
 		#region Constructor
-
-		//public IterationStateDepthFirstNew(Vector256<uint>[] samplePointsXVecs, Vector256<uint>[] samplePointsYVecs,
-		//	MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
-		//	bool increasingIterations, Vector256<int> targetIterationsVector)
-
-		//public IterationStateDepthFirst(FP31ValArray samplePointsXVArray, FP31ValArray samplePointsYVArray,
-		//	MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
-		//	bool increasingIterations, Vector256<int> targetIterationsVector)
-
 
 		public IterationStateDepthFirst(FP31Val[] samplePointsX, FP31Val[] samplePointsY,
 			MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
@@ -42,17 +28,8 @@ namespace MSetGeneratorPrototype
 		{
 
 			_samplePointsY = samplePointsY;
-
-			//CrsRowV = samplePointsXVecs;
-			//CisRowV = samplePointsYVecs;
-
-			//CrsRowVArray = samplePointsXVArray;
-			//CisRowVArray = samplePointsYVArray;
-
 			_mapSectionVectors = mapSectionVectors;
-
 			_mapSectionZVectors = mapSectionZVectors;
-			_bytesPerFlagRow = mapSectionZVectors.BytesPerRow;
 
 			IncreasingIterations = increasingIterations;
 			TargetIterationsVector = targetIterationsVector;
@@ -65,15 +42,8 @@ namespace MSetGeneratorPrototype
 			VectorsPerRow = mapSectionZVectors.VectorsPerRow;
 
 			RowNumber = null;
-			//CiLimbSet = new Vector256<uint>[LimbCount];
-
-
-			CrsRowVArray = new FP31ValArray(LimbCount, ValuesPerRow);
-			CrsRowVArray.UpdateFrom(samplePointsX);
-
-			CisRowVArray = new FP31ValArray(LimbCount, ValuesPerRow);
-			//CisColVec = new Vector256<uint>[LimbCount];
-
+			CrsRowVArray = new FP31ValArray(samplePointsX);
+			CiLimbSet = new Vector256<uint>[LimbCount];
 
 			//CountsRow = mapSectionVectors.GetCountsRow(0);
 			CountsRowV = new Vector256<int>[VectorsPerRow];
@@ -121,13 +91,8 @@ namespace MSetGeneratorPrototype
 
 		public int? RowNumber { get; private set; }
 
-		//public Vector256<uint>[] CrsRowV { get; private set; }
-		//public Vector256<uint>[] CisRowV { get; private set; }
-
 		public FP31ValArray CrsRowVArray { get; private set; }
-		public FP31ValArray CisRowVArray { get; private set; }
-
-		//public Vector256<uint>[] CiLimbSet { get; private set; }
+		public Vector256<uint>[] CiLimbSet { get; private set; }
 
 		//public Span<Vector256<int>> CountsRow { get; private set; }
 		public Vector256<int>[] CountsRowV { get; private set; }
@@ -172,9 +137,7 @@ namespace MSetGeneratorPrototype
 			Array.Clear(CountsRowV);
 			Array.Clear(DoneFlags);
 
-			var yPoint = _samplePointsY[rowNumber];
-			CisRowVArray.UpdateFrom(yPoint);
-			//FillCiLimbSetForRow(rowNumber, CiLimbSet);
+			FillCiLimbSetForRow(rowNumber, CiLimbSet);
 
 			RowNumber = rowNumber;
 		}
@@ -247,9 +210,7 @@ namespace MSetGeneratorPrototype
 			{
 				RowNumber = rowNumber;
 
-				var yPoint = _samplePointsY[rowNumber];
-				CisRowVArray.UpdateFrom(yPoint);
-				//FillCiLimbSetForRow(rowNumber, CiLimbSet);
+				FillCiLimbSetForRow(rowNumber, CiLimbSet);
 
 				InPlayList = _inPlayBackingList.ToArray();
 				InPlayListNarrow = BuildNarowInPlayList(InPlayList);
@@ -295,39 +256,17 @@ namespace MSetGeneratorPrototype
 		public void FillCrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
 			CrsRowVArray.FillLimbSet(vectorIndex, limbSet);
-			//CrsRow.FillLimbSet(valueIndex, limbSet);
-
-			//var vecPtr = valueIndex * LimbCount;
-
-			//for (var i = 0; i < LimbCount; i++)
-			//{
-			//	limbSet[i] = CrsRowVArray.Mantissas[vecPtr++];
-			//}
 		}
 
-		public void FillCiLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
+		public void FillCiLimbSetForRow(int rowNumber, Vector256<uint>[] limbSet)
 		{
-			CisRowVArray.FillLimbSet(vectorIndex, limbSet);
+			var fp31Val = _samplePointsY[rowNumber];
 
-			//var vecPtr = valueIndex * LimbCount;
-
-			//for (var i = 0; i < LimbCount; i++)
-			//{
-			//	limbSet[i] = CisRowVArray.Mantissas[vecPtr++];
-			//}
+			for (var limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+			{
+				limbSet[limbPtr] = Vector256.Create(fp31Val.Mantissa[limbPtr]);
+			}
 		}
-
-		//public void FillCiLimbSetForRow(int rowNumber, Vector256<uint>[] limbSet)
-		//{
-		//	//CisRow.FillLimbSet(valueIndex, limbSet);
-
-		//	var vecPtr = rowNumber * LimbCount;
-
-		//	for (var i = 0; i < LimbCount; i++)
-		//	{
-		//		limbSet[i] = CisRowV[vecPtr++];
-		//	}
-		//}
 
 		public void FillZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
