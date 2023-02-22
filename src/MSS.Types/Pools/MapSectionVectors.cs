@@ -86,6 +86,7 @@ namespace MSS.Types
 
 		#region Row Level Methods
 
+		// Vector256<int>
 		public void FillCountsRow(int rowNumber, Vector256<int>[] dest)
 		{
 			var destBack = MemoryMarshal.Cast<Vector256<int>, uint>(dest);
@@ -110,6 +111,7 @@ namespace MSS.Types
 			}
 		}
 
+		// Integer
 		public void FillCountsRow(int rowNumber, int[] dest)
 		{
 			var startIndex = ValuesPerRow * rowNumber;
@@ -120,7 +122,6 @@ namespace MSS.Types
 			}
 		}
 
-		// From an Array of Ints
 		public void UpdateFromCountsRow(int rowNumber, int[] source)
 		{
 			var startIndex = ValuesPerRow * rowNumber;
@@ -128,6 +129,31 @@ namespace MSS.Types
 			for (var i = 0; i < ValuesPerRow; i++)
 			{
 				Counts[startIndex + i] = (ushort)source[i];
+			}
+		}
+
+		// Byte
+		public void FillCountsRow(int rowNumber, byte[] dest)
+		{
+			var destBack = MemoryMarshal.Cast<byte, uint>(dest);
+
+			var startIndex = ValuesPerRow * rowNumber;
+
+			for (var i = 0; i < ValuesPerRow; i++)
+			{
+				destBack[i] = Counts[startIndex + i];
+			}
+		}
+
+		public void UpdateFromCountsRow(int rowNumber, byte[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<byte, uint>(source);
+
+			var startIndex = ValuesPerRow * rowNumber;
+
+			for (var i = 0; i < ValuesPerRow; i++)
+			{
+				Counts[startIndex + i] = (ushort)sourceBack[i];
 			}
 		}
 

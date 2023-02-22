@@ -6,6 +6,10 @@ namespace MSetGeneratorLib
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 	public struct MapSectionRequestStruct
 	{
+		// The row to calculate
+
+		public int RowNumber;
+
         // ApFixedPointFormat
         public int BitsBeforeBinaryPoint;
         public int LimbCount;

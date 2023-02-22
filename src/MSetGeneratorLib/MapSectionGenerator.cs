@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorLib
 {
@@ -28,53 +29,35 @@ namespace MSetGeneratorLib
 		{
 			var requestStruct = MapSectionReqHelper.GetRequestStruct(iterationState, apFixedPointFormat, threshold);
 
-			var counts = new short[requestStruct.blockSizeWidth];
-
-			var countsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(short)) * counts.Length);
+			// Counts
+			var counts = GetCounts(iterationState, requestStruct.RowNumber);
+			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
 			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
 
-
-			//for (var idx = 0; idx < iterationState.VectorsPerRow; idx++)
-			//{
-			//	var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState);
-
-			//	if (!allSamplesHaveEscaped)
-			//	{
-			//		allRowSamplesHaveEscaped = false;
-			//	}
-			//}
-
-
+			// Make the call -- TODO: return allRowSamplesHaveEscaped
 			NativeMethods.GenerateMapSection(requestStruct, countsBuffer);
 
 			// Counts
 			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
 			Marshal.FreeCoTaskMem(countsBuffer);
 
-			//var result = new MapSectionResponse(mapSectionRequest, counts, escapeVelocities, doneFlags, zValues);
-
-
 			var allRowSamplesHaveEscaped = false;
 			return allRowSamplesHaveEscaped;
 		}
 
-		private static short[] GetCounts(MapSectionRequest mapSectionRequest)
+		private static byte[] GetCounts(IIterationState iterationState, int rowNumber)
 		{
-			short[] counts;
+			//for(var i = 0; i < 64; i++)
+			//{
+			//	iterationState.MapSectionVectors.Counts[i] = (ushort)i;
+			//}
 
-			if (mapSectionRequest.MapSectionVectors?.Counts != null)
-			{
-				counts = mapSectionRequest.MapSectionVectors.Counts.Cast<short>().ToArray();
-			}
-			else
-			{
-				counts = new short[mapSectionRequest.BlockSize.NumberOfCells];
-			}
+			var buffer = new byte[iterationState.MapSectionVectors.BytesPerRow * 2]; // Using Vector of uints, not ushorts
+			iterationState.MapSectionVectors.FillCountsRow(rowNumber, buffer);
 
-			return counts;
+			return buffer;
+
 		}
-
-
 
 
 	}

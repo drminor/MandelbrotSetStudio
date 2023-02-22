@@ -139,11 +139,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="fp31VecMath.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="MSetGenerator.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="VecHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="fp31VecMath.cpp" />
     <ClCompile Include="MSetGenerator.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

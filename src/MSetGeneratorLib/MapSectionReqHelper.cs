@@ -13,6 +13,13 @@ namespace MSetGeneratorLib
 		{
 			var result = new MapSectionRequestStruct();
 
+			if (!iterationState.RowNumber.HasValue)
+			{
+				throw new ArgumentException("The iteration state must have a non-null row number.");
+			}
+
+			result.RowNumber = iterationState.RowNumber.Value;
+
 			result.BitsBeforeBinaryPoint = apFixedPointFormat.BitsBeforeBinaryPoint;
 			result.LimbCount = apFixedPointFormat.LimbCount;
 			result.NumberOfFractionalBits = apFixedPointFormat.NumberOfFractionalBits;
