@@ -2,7 +2,6 @@
 
 namespace MSetGeneratorLib
 {
-
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 	public struct MapSectionRequestStruct
 	{

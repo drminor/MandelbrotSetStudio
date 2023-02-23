@@ -1,33 +1,16 @@
-﻿using MSS.Common;
+﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorLib
 {
-	public static class MapSectionGenerator
+	public class MapSectionGenerator
 	{
-		#region GetStringVals
-
-		//public static string[] GetStringVals(MapSectionRequest mapSectionRequest)
-		//{
-		//	var requestStruct = MapSectionReqHelper.GetRequestStruct(mapSectionRequest);
-		//	//var px = new string('1', 200);
-		//	//var py = new string('1', 200);
-		//	//var dw = new string('1', 200);
-		//	//var dh = new string('1', 200);
-
-		//	NativeMethods.GetStringValues(requestStruct, out var px, out var py, out var dw, out var dh);
-
-		//	return new string[] { px, py, dw, dh };
-		//}
-
-		#endregion
-
-		public static bool GenerateMapSection(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, uint threshold, CancellationToken ct)
+		public bool GenerateMapSection(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, uint threshold, CancellationToken ct)
 		{
-			var requestStruct = MapSectionReqHelper.GetRequestStruct(iterationState, apFixedPointFormat, threshold);
+			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, threshold);
 
 			// Counts
 			var counts = GetCounts(iterationState, requestStruct.RowNumber);
@@ -45,7 +28,7 @@ namespace MSetGeneratorLib
 			return allRowSamplesHaveEscaped;
 		}
 
-		private static byte[] GetCounts(IIterationState iterationState, int rowNumber)
+		private byte[] GetCounts(IIterationState iterationState, int rowNumber)
 		{
 			//for(var i = 0; i < 64; i++)
 			//{
@@ -56,9 +39,39 @@ namespace MSetGeneratorLib
 			iterationState.MapSectionVectors.FillCountsRow(rowNumber, buffer);
 
 			return buffer;
-
 		}
 
+		private MapSectionRequestStruct GetRequestStruct(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, uint threshold)
+		{
+			var result = new MapSectionRequestStruct();
+
+			if (!iterationState.RowNumber.HasValue)
+			{
+				throw new ArgumentException("The iteration state must have a non-null row number.");
+			}
+
+			result.RowNumber = iterationState.RowNumber.Value;
+
+			result.BitsBeforeBinaryPoint = apFixedPointFormat.BitsBeforeBinaryPoint;
+			result.LimbCount = apFixedPointFormat.LimbCount;
+			result.NumberOfFractionalBits = apFixedPointFormat.NumberOfFractionalBits;
+			result.TotalBits = apFixedPointFormat.TotalBits;
+			result.TargetExponent = apFixedPointFormat.TargetExponent;
+
+			result.Lanes = Vector256<int>.Count;
+			result.VectorsPerRow = iterationState.VectorsPerRow;
+
+			result.subdivisionId = ObjectId.Empty.ToString();
+
+			result.blockSizeWidth = iterationState.ValuesPerRow;
+			result.blockSizeHeight = iterationState.RowCount;
+
+			result.maxIterations = iterationState.TargetIterationsVector.GetElement(0);
+			result.threshold = (int)threshold;
+			result.iterationsPerStep = -1;
+
+			return result;
+		}
 
 	}
 }

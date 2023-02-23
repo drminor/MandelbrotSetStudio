@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetGeneratorLib;
+using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System.Diagnostics;
@@ -19,6 +20,7 @@ namespace MSetGeneratorPrototype
 
 		private FP31VecMath _fp31VecMath;
 		private IteratorDepthFirst _iterator;
+		private MSetGeneratorLib.MapSectionGenerator _mapSectionGenerator;
 
 		private Vector256<uint>[] _crs;
 		private Vector256<uint>[] _cis;
@@ -42,6 +44,7 @@ namespace MSetGeneratorPrototype
 
 			_fp31VecMath = _samplePointBuilder.GetVecMath(limbCount);
 			_iterator = new IteratorDepthFirst(_fp31VecMath);
+			_mapSectionGenerator = new MSetGeneratorLib.MapSectionGenerator();
 
 			_crs = _fp31VecMath.GetNewLimbSet();
 			_cis = _fp31VecMath.GetNewLimbSet();
@@ -128,7 +131,7 @@ namespace MSetGeneratorPrototype
 			{
 				iterationState.SetRowNumber(rowNumber);
 
-				var allRowSamplesHaveEscaped = MSetGeneratorLib.MapSectionGenerator.GenerateMapSection(iterationState, _fp31VecMath.ApFixedPointFormat, _iterator.Threshold, ct);
+				var allRowSamplesHaveEscaped = _mapSectionGenerator.GenerateMapSection(iterationState, _fp31VecMath.ApFixedPointFormat, _iterator.Threshold, ct);
 				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
 
 				if (!allRowSamplesHaveEscaped)

@@ -1,12 +1,7 @@
 #pragma once
 
 #include "pch.h"
-#include "framework.h"
-#include <immintrin.h>
-#include "VecHelper.h"
-#include "fp31VecMath.h"
 
-#include <iostream>
 
 #if !defined(_RPTW)
 #if defined(_DEBUG)
@@ -39,30 +34,4 @@
 #endif // #if !defined(_RPTT)
 
 
-typedef struct _MSETREQ
-{
-    int RowNumber;
 
-    // ApFixedPointFormat
-    int BitsBeforeBinaryPoint;
-    int LimbCount;
-    int NumberOfFractionalBits;
-    int TotalBits;
-    int TargetExponent;
-
-    int Lanes;
-    int VectorsPerRow;
-
-    // Subdivision
-    char* subdivisionId;
-
-    // BlockSize
-    int blockSizeWidth;
-    int blockSizeHeight;
-
-    // MapCalcSettings;
-    int maxIterations;
-    int threshold;
-    int iterationsPerStep;
-
-} MSETREQ;

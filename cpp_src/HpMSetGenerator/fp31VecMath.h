@@ -9,9 +9,21 @@ class fp31VecMath
 public:
 	void Square(__m256i* source, __m256i* result);
 
+	void Add(__m256i* left, __m256i* right, __m256i* result);
+	void Sub(__m256i* left, __m256i* right, __m256i* result);
+
+	__m256i CreateVectorForComparison(uint8_t value);
+	void IsGreaterOrEqThan(__m256i left, __m256i right, __m256i& escapedFlagsVec);
 
 private:
 
+	void SquareInternal(__m256i* source, __m256i* result);
+	void SumThePartials(__m256i* source, __m256i* result);
+	void ShiftAndTrim(__m256i* sourceLimbsLo, __m256i* sourceLimbsHi, __m256i* resultLimbs);
+
+	void Negate(__m256i* source, __m256i* result);
+	void ConvertFrom2C(__m256i* source, __m256i* resultLo, __m256i* resultHi);
+	int GetSignBits(__m256i* source, __m256i& signBitVecs);
 
 	//private const int EFFECTIVE_BITS_PER_LIMB = 31;
 
