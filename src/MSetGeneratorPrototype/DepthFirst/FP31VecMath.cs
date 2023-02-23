@@ -265,7 +265,7 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
-		#region Multiply Post Processing
+		#region Multiplication Post Processing
 
 		private void SumThePartials(Vector256<ulong>[] source, Vector256<ulong>[] result)
 		{
@@ -360,29 +360,28 @@ namespace MSetGeneratorPrototype
 
 		#region Add and Subtract
 
-		public void Sub(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
+		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
 			//CheckReservedBitIsClear(b, "Negating B");
 
-			Negate(b, _negationResult);
+			Negate(right, _negationResult);
 			//MathOpCounts.NumberOfConversions++;
 
-			Add(a, _negationResult, c);
+			Add(left, _negationResult, result);
 		}
 
-		public void Add(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
+		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
 			_carryVectors = Vector256<uint>.Zero;
 
-			for (int limbPtr = 0; limbPtr < a.Length; limbPtr++)
+			for (int limbPtr = 0; limbPtr < left.Length; limbPtr++)
 			{
-				var sumVector = Avx2.Add(a[limbPtr], b[limbPtr]);
+				var sumVector = Avx2.Add(left[limbPtr], right[limbPtr]);
 				var newValuesVector = Avx2.Add(sumVector, _carryVectors);
 				//MathOpCounts.NumberOfAdditions += 2;
 
-				c[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
+				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
 				_carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
-																								   //MathOpCounts.NumberOfSplits++;
 			}
 		}
 

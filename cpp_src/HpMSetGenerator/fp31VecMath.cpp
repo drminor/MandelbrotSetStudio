@@ -1,12 +1,76 @@
 #include "pch.h"
 #include "fp31VecMath.h"
 
+#pragma region Constructor / Destructor
+
+fp31VecMath::fp31VecMath(size_t limbCount, uint8_t bitsBeforeBp)
+{
+	_vecHelper = new VecHelper();
+
+	_limbCount = limbCount;
+	_bitsBeforeBp = bitsBeforeBp;
+	_targetExponent = _limbCount * EFFECTIVE_BITS_PER_LIMB - bitsBeforeBp;
+
+	//ApFixedPointFormat = apFixedPointFormat;
+
+	_squareResult0Lo = _vecHelper->createVec(limbCount);
+	_squareResult0Hi = _vecHelper->createVec(limbCount);
+
+	_squareResult1Lo = _vecHelper->createVec(limbCount * 2);
+	_squareResult1Hi = _vecHelper->createVec(limbCount * 2);
+
+	_squareResult2Lo = _vecHelper->createVec(limbCount * 2);
+	_squareResult2Hi = _vecHelper->createVec(limbCount * 2);
+
+	_negationResult = _vecHelper->createVec(limbCount);
+	_additionResult = _vecHelper->createVec(limbCount);
+
+	_ones = _vecHelper->createAndInitVec(limbCount, 1);
+
+	_shiftAmount = _bitsBeforeBp;
+	_inverseShiftAmount = EFFECTIVE_BITS_PER_LIMB - _shiftAmount;
+
+	//(_squareSourceStartIndex, _skipSquareResultLow) = CalculateSqrOpParams(LimbCount);
+
+	//MathOpCounts = new MathOpCounts();
+}
+
+fp31VecMath::~fp31VecMath()
+{
+	_vecHelper->clearVec(_limbCount, _squareResult0Lo);
+	_vecHelper->clearVec(_limbCount, _squareResult0Hi);
+
+	_vecHelper->clearVec(_limbCount * 2, _squareResult1Lo);
+	_vecHelper->clearVec(_limbCount * 2, _squareResult1Hi);
+	_vecHelper->clearVec(_limbCount * 2, _squareResult2Lo);
+	_vecHelper->clearVec(_limbCount * 2, _squareResult2Hi);
+
+	_vecHelper->clearVec(_limbCount, _negationResult);
+	_vecHelper->clearVec(_limbCount, _additionResult);
+	delete _vecHelper;
+}
+
+#pragma endregion
+
+#pragma region Multiply and Square
 
 void fp31VecMath::Square(__m256i* source, __m256i* result)
 {
+	//CheckReservedBitIsClear(a, "Squaring");
 
+	//_vecHelper->clearVec(_limbCount, result);
+
+	ConvertFrom2C(source, _squareResult0Lo, _squareResult0Hi);
+	//MathOpCounts.NumberOfConversions++;
+
+	SquareInternal(_squareResult0Lo, _squareResult1Lo);
+	SquareInternal(_squareResult0Hi, _squareResult1Hi);
+
+	SumThePartials(_squareResult1Lo, _squareResult2Lo);
+	SumThePartials(_squareResult1Hi, _squareResult2Hi);
+
+	ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, result);
 }
-
 
 void fp31VecMath::SquareInternal(__m256i* source, __m256i* result)
 {
@@ -39,6 +103,9 @@ void fp31VecMath::SquareInternal(__m256i* source, __m256i* result)
 	//}
 }
 
+#pragma endregion
+
+#pragma region Multiplication Post Processing
 
 void fp31VecMath::SumThePartials(__m256i* source, __m256i* result)
 {
@@ -129,20 +196,40 @@ void fp31VecMath::SumThePartials(__m256i* source, __m256i* result)
 	//}
 }
 
+#pragma endregion
 
+#pragma region Add and Subtract
 
+ void fp31VecMath::Sub(__m256i* left, __m256i* right, __m256i* result)
+ {
+	 //CheckReservedBitIsClear(b, "Negating B");
 
+	 Negate(right, _negationResult);
+	 //MathOpCounts.NumberOfConversions++;
+
+	 Add(left, _negationResult, result);
+ }
+ 
 void fp31VecMath::Add(__m256i* left, __m256i* right, __m256i* result)
 {
+	_carryVectors = _mm256_xor_epi32(_carryVectors, _carryVectors);
 
+	 for (int limbPtr = 0; limbPtr < _limbCount; limbPtr++)
+	 {
+		 __m256i sumVector = _mm256_add_epi32(left[limbPtr], right[limbPtr]);
+		 __m256i newValuesVector = _mm256_add_epi32(sumVector, _carryVectors);
+		 //MathOpCounts.NumberOfAdditions += 2;
+
+		 result[limbPtr] = _mm256_and_epi32(newValuesVector, HIGH33_MASK_VEC);			// The low 31 bits of the sum is the result.
+		 _carryVectors = _mm256_srli_epi32(newValuesVector, EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
+	 }
 }
 
 
-void fp31VecMath::Sub(__m256i* left, __m256i* right, __m256i* result)
-{
 
-}
+#pragma endregion
 
+#pragma region Two Compliment Support
 
 void fp31VecMath::Negate(__m256i* source, __m256i* result)
 {
@@ -207,13 +294,18 @@ void fp31VecMath::ConvertFrom2C(__m256i* source, __m256i* resultLo, __m256i* res
 
 int fp31VecMath::GetSignBits(__m256i* source, __m256i &signBitVecs)
 {
-	////var msl = source[LimbCount - 1];
+	__m256i msl = source[_limbCount - 1];
 
-	////var left = Avx2.And(msl.AsInt32(), TEST_BIT_30_VEC);
-	////signBitVecs = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
-	////var result = Avx2.MoveMask(signBitVecs.AsByte());
+	//var left = Avx2.And(msl.AsInt32(), TEST_BIT_30_VEC);
+	__m256i left = _mm256_and_epi32(msl, TEST_BIT_30_VEC);
+	 
+	//signBitVecs = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
+	signBitVecs = _mm256_cmpeq_epi32(left, ZERO_VEC);
+	
+	//var result = Avx2.MoveMask(signBitVecs.AsByte());
+	int result = _mm256_movemask_epi8(signBitVecs);
 
-	////return result;
+	return result;
 
 	//signBitVecs = Avx2.CompareEqual(Avx2.And(source[LimbCount - 1].AsInt32(), TEST_BIT_30_VEC), ZERO_VEC);
 	//return Avx2.MoveMask(signBitVecs.AsByte());
@@ -221,15 +313,20 @@ int fp31VecMath::GetSignBits(__m256i* source, __m256i &signBitVecs)
 	return 0;
 }
 
+#pragma endregion
 
-__m256i fp31VecMath::CreateVectorForComparison(uint8_t value)
-{
-	__m256i result = _mm256_set1_epi32(0);
-
-	return result;
-}
+#pragma region Comparison
 
 void fp31VecMath::IsGreaterOrEqThan(__m256i left, __m256i right, __m256i& escapedFlagsVec)
 {
+	//var sansSign = Avx2.And(left, SIGN_BIT_MASK_VEC);
+	//escapedFlagsVec = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
+	
+	__m256i sansSign = _mm256_and_epi32(left, SIGN_BIT_MASK_VEC);
+	escapedFlagsVec = _mm256_cmpgt_epi32(sansSign, right);
 
+	 
+	//MathOpCounts.NumberOfGrtrThanOps++;
 }
+
+#pragma endregion

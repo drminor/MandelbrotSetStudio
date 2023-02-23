@@ -35,7 +35,7 @@ public:
 
 	}
 
-	inline void clearVec(int n, __m256i* vec)
+	inline void clearVec(size_t n, __m256i* vec)
 	{
 		for (int i = 0; i < n; i++)
 		{

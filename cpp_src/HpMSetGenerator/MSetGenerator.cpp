@@ -45,13 +45,14 @@ extern "C"
         int targetCount = mapSectionRequest.maxIterations;
         int stride = mapSectionRequest.blockSizeWidth;
         int limbCount = mapSectionRequest.LimbCount;
+        uint8_t bitsBeforeBp = mapSectionRequest.BitsBeforeBinaryPoint;
 
         std::cout << std::endl << "Generating MapSection with LimbCount: " << limbCount << " and Target Count:" << targetCount << std::endl;
 
         bool allRowSamplesHaveEscaped = true;
         int vectorsPerRow = mapSectionRequest.VectorsPerRow;
 
-        Iterator* _iterator = new Iterator();
+        Iterator* _iterator = new Iterator(limbCount, bitsBeforeBp);
 
         VecHelper* _vh = new VecHelper();
         __m256i* cr = _vh->createVec(limbCount);
