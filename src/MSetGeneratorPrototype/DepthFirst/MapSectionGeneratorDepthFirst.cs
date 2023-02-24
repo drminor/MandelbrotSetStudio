@@ -73,7 +73,6 @@ namespace MSetGeneratorPrototype
 				return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
 			}
 
-
 			var stopwatch = Stopwatch.StartNew();
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
@@ -124,7 +123,7 @@ namespace MSetGeneratorPrototype
 		private bool HighPerfGenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 
-			var _mapSectionGenerator = new HpMSetRowClient();
+			var mSetRowClient = new HpMSetRowClient();
 
 
 			allRowsHaveEscaped = false;
@@ -140,7 +139,9 @@ namespace MSetGeneratorPrototype
 			{
 				iterationState.SetRowNumber(rowNumber);
 
-				var allRowSamplesHaveEscaped = _mapSectionGenerator.GenerateMapSection(iterationState, _fp31VecMath.ApFixedPointFormat, _iterator.Threshold, ct);
+				var mapCalcSettings = new MapCalcSettings(iterationState.TargetIterationsVector.GetElement(0), (int) iterator.Threshold, requestsPerJob: 4);
+
+				var allRowSamplesHaveEscaped = mSetRowClient.GenerateMapSection(iterationState, _fp31VecMath.ApFixedPointFormat, mapCalcSettings, ct);
 				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
 
 				if (!allRowSamplesHaveEscaped)

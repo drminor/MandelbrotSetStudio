@@ -1,6 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.APValues;
+using MSS.Types.MSet;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -8,9 +9,9 @@ namespace MSetRowGeneratorClient
 {
 	public class HpMSetRowClient
 	{
-		public bool GenerateMapSection(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, uint threshold, CancellationToken ct)
+		public bool GenerateMapSection(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings, CancellationToken ct)
 		{
-			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, threshold);
+			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
 			// Counts
 			var counts = GetCounts(iterationState, requestStruct.RowNumber);
@@ -41,7 +42,7 @@ namespace MSetRowGeneratorClient
 			return buffer;
 		}
 
-		private MSetRowRequestStruct GetRequestStruct(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, uint threshold)
+		private MSetRowRequestStruct GetRequestStruct(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
 		{
 			var result = new MSetRowRequestStruct();
 
@@ -66,9 +67,9 @@ namespace MSetRowGeneratorClient
 			result.blockSizeWidth = iterationState.ValuesPerRow;
 			result.blockSizeHeight = iterationState.RowCount;
 
-			result.maxIterations = iterationState.TargetIterationsVector.GetElement(0);
+			result.maxIterations = mapCalcSettings.TargetIterations;
 
-			var thresholdForComparison = GetThresholdValueForCompare(threshold, apFixedPointFormat);
+			var thresholdForComparison = GetThresholdValueForCompare(mapCalcSettings.Threshold, apFixedPointFormat);
 
 			result.thresholdForComparison = thresholdForComparison;
 			result.iterationsPerStep = -1;
@@ -76,7 +77,7 @@ namespace MSetRowGeneratorClient
 			return result;
 		}
 
-		private int GetThresholdValueForCompare(uint thresholdRaw, ApFixedPointFormat apFixedPointFormat)
+		private int GetThresholdValueForCompare(int thresholdRaw, ApFixedPointFormat apFixedPointFormat)
 		{
 			var fp31Val = FP31ValHelper.CreateFP31Val(new RValue(thresholdRaw, 0), apFixedPointFormat);
 			var msl = (int)fp31Val.Mantissa[^1] - 1;
