@@ -76,7 +76,7 @@ namespace MSetGeneratorPrototype
 			var stopwatch = Stopwatch.StartNew();
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
-			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePointsOld(coords);
+			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(coords);
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
@@ -141,7 +141,7 @@ namespace MSetGeneratorPrototype
 
 				var mapCalcSettings = new MapCalcSettings(iterationState.TargetIterationsVector.GetElement(0), (int) iterator.Threshold, requestsPerJob: 4);
 
-				var allRowSamplesHaveEscaped = mSetRowClient.GenerateMapSection(iterationState, _fp31VecMath.ApFixedPointFormat, mapCalcSettings, ct);
+				var allRowSamplesHaveEscaped = mSetRowClient.GenerateMapSectionRow(iterationState, _fp31VecMath.ApFixedPointFormat, mapCalcSettings, ct);
 				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
 
 				if (!allRowSamplesHaveEscaped)

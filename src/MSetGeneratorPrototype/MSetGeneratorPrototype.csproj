@@ -16,7 +16,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MSetGeneratorLib\MSetGeneratorLib.csproj" />
     <ProjectReference Include="..\MSetRowGeneratorClient\MSetRowGeneratorClient.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>

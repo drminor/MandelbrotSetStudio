@@ -8,7 +8,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSetRowGeneratorClientTest
 {
-	public class UnitTest1
+	public class BaseSimdTest
 	{
 		[Fact]
 		public void Test1()
@@ -21,12 +21,11 @@ namespace MSetRowGeneratorClientTest
 			var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
 
 			var samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
-			var (samplePointsX, samplePointsY) = samplePointBuilder.BuildSamplePointsOld(iteratorCoords);
+			var (samplePointsX, samplePointsY) = samplePointBuilder.BuildSamplePoints(iteratorCoords);
 			var iterationState = BuildIterationState(samplePointsX, samplePointsY, blockSize, limbCount, mapCalcSettings);
 
 			var mSetRowClient = new HpMSetRowClient();
-			var cts = new CancellationTokenSource();
-			mSetRowClient.GenerateMapSection(iterationState, apfixedPointFormat, mapCalcSettings, cts.Token);
+			mSetRowClient.BaseSimdTest(iterationState, apfixedPointFormat, mapCalcSettings);
 		}
 
 		#region Support Methods

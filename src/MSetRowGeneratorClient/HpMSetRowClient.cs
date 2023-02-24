@@ -9,7 +9,9 @@ namespace MSetRowGeneratorClient
 {
 	public class HpMSetRowClient
 	{
-		public bool GenerateMapSection(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings, CancellationToken ct)
+		#region Public Methods
+
+		public bool GenerateMapSectionRow(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings, CancellationToken ct)
 		{
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
@@ -19,7 +21,7 @@ namespace MSetRowGeneratorClient
 			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
 
 			// Make the call -- TODO: return allRowSamplesHaveEscaped
-			NativeMethods.GenerateMapSection(requestStruct, countsBuffer);
+			NativeMethods.GenerateMapSectionRow(requestStruct, countsBuffer);
 
 			// Counts
 			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
@@ -28,6 +30,10 @@ namespace MSetRowGeneratorClient
 			var allRowSamplesHaveEscaped = false;
 			return allRowSamplesHaveEscaped;
 		}
+
+		#endregion
+
+		#region Support Methods
 
 		private byte[] GetCounts(IIterationState iterationState, int rowNumber)
 		{
@@ -84,6 +90,32 @@ namespace MSetRowGeneratorClient
 
 			return msl;
 		}
+
+		#endregion
+
+		#region Test Support 
+
+		public bool BaseSimdTest(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
+		{
+			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
+
+			// Counts
+			var counts = GetCounts(iterationState, requestStruct.RowNumber);
+			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length * 5);
+			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
+
+			// Make the call -- TODO: return allRowSamplesHaveEscaped
+			NativeMethods.BaseSimdTest(requestStruct, countsBuffer);
+
+			// Counts
+			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
+			Marshal.FreeCoTaskMem(countsBuffer);
+
+			var allRowSamplesHaveEscaped = false;
+			return allRowSamplesHaveEscaped;
+		}
+
+		#endregion
 
 	}
 }

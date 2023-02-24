@@ -16,7 +16,7 @@ namespace MSetGeneratorPrototype
 		public SizeInt BlockSize => _samplePointCache.BlockSize;
 		public FP31VecMath GetVecMath(int limbCount) => _samplePointCache.GetVectorMath(limbCount);
 
-		public (FP31Val[] samplePointX, FP31Val[] samplePointY) BuildSamplePointsOld(IteratorCoords iteratorCoords)
+		public (FP31Val[] samplePointX, FP31Val[] samplePointY) BuildSamplePoints(IteratorCoords iteratorCoords)
 		{
 			var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
 			var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
@@ -109,7 +109,7 @@ namespace MSetGeneratorPrototype
 
 		#region NOT USED
 
-		//public (FP31ValArray samplePointXVArray, FP31ValArray samplePointYVArray) BuildSamplePoints(IteratorCoords iteratorCoords)
+		//public (FP31ValArray samplePointXVArray, FP31ValArray samplePointYVArray) BuildSamplePointsNew(IteratorCoords iteratorCoords)
 		//{
 		//	var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
 		//	var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
@@ -122,7 +122,7 @@ namespace MSetGeneratorPrototype
 		//	return (valArrayX, valArrayY);	
 		//}
 
-		//public (Vector256<uint>[] samplePointXVecs, Vector256<uint>[] samplePointYVecs) BuildSamplePointsNew(IteratorCoords iteratorCoords)
+		//public (Vector256<uint>[] samplePointXVecs, Vector256<uint>[] samplePointYVecs) BuildSamplePointsNew2(IteratorCoords iteratorCoords)
 		//{
 		//	var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
 		//	var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
