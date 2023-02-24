@@ -4,13 +4,11 @@
 #include <immintrin.h>
 
 #include "MSetGenerator.h"
-#include "VecHelper.h"
 #include "fp31VecMath.h"
 #include "Iterator.h"
 
 #include <iostream>
 
-#include "simd_aligned_allocator.h"
 
 typedef struct _MSETREQ
 {
@@ -55,45 +53,39 @@ extern "C"
         _RPTA("Generating MapSectionRow with LimbCount: %d and Target Iterations: %d\n", limbCount, targetIterations);
 
         bool allRowSamplesHaveEscaped = true;
-        int vectorsPerRow = mapSectionRequest.VectorsPerRow;
+        //int vectorsPerRow = mapSectionRequest.VectorsPerRow;
 
-        Iterator* _iterator = new Iterator(limbCount, bitsBeforeBp, targetIterations, thresholdForComparison);
+        //Iterator* _iterator = new Iterator(limbCount, bitsBeforeBp, targetIterations, thresholdForComparison);
 
-        VecHelper* _vh = new VecHelper();
-        __m256i* cr = _vh->createVec(limbCount);
+        //VecHelper* _vh = new VecHelper();
+        //__m256i* cr = _vh->createVec(limbCount);
 
-        for (int idx = 0; idx < vectorsPerRow; idx++)
-        {
-            int vPtr = idx * limbCount;
+        //for (int idx = 0; idx < vectorsPerRow; idx++)
+        //{
+        //    int vPtr = idx * limbCount;
 
-            for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
-            {
-                cr[limbPtr] = crsForARow[vPtr++];
-            }
+        //    for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
+        //    {
+        //        cr[limbPtr] = crsForARow[vPtr++];
+        //    }
 
-            __m256i countsVec = countsForARow[idx];
-        	bool allSamplesHaveEscaped = _iterator->GenerateMapCol(cr, ciVec, countsVec);
+        //    __m256i countsVec = countsForARow[idx];
+        //	bool allSamplesHaveEscaped = _iterator->GenerateMapCol(cr, ciVec, countsVec);
 
-            // Update the caller's counts
-            countsForARow[idx] = countsVec;
+        //    // Update the caller's counts
+        //    countsForARow[idx] = countsVec;
 
-        	if (!allSamplesHaveEscaped)
-        	{
-        		allRowSamplesHaveEscaped = false;
-        	}
-        }
+        //	if (!allSamplesHaveEscaped)
+        //	{
+        //		allRowSamplesHaveEscaped = false;
+        //	}
+        //}
 
-        _vh->freeVec(cr);
-        delete _vh;
-        delete _iterator;
+        //_vh->freeVec(cr);
+        //delete _vh;
+        //delete _iterator;
 
         return allRowSamplesHaveEscaped ? 1 : 0;
-
-        //__m256i epi32_vec_2 = counts[0];
-        //__m256i epi32_vec_3 = counts[1];
-        //__m256i epi32_resultB = _mm256_add_epi32(epi32_vec_2, epi32_vec_3);
-        //uint32_t* i = (uint32_t*)&epi32_resultB;
-        //_RPTA("int:\t\t%d, %d, %d, %d, %d, %d, %d, %d\n", i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7]);
     }
 
     __declspec(dllexport) int BaseSimdTest(MSETREQ mapSectionRequest, int* countsForARow)
@@ -144,9 +136,6 @@ extern "C"
         int vectorsPerRow = mapSectionRequest.VectorsPerRow;
 
         //Iterator* _iterator = new Iterator(limbCount, bitsBeforeBp, targetIterations, thresholdForComparison);
-
-        //VecHelper* _vh = new VecHelper();
-        //__m256i* cr = _vh->createVec(limbCount);
 
         aligned_vector* ci = new aligned_vector(limbCount);
         for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
@@ -199,6 +188,65 @@ extern "C"
         //__m256i epi32_resultB = _mm256_add_epi32(epi32_vec_2, epi32_vec_3);
         //uint32_t* i = (uint32_t*)&epi32_resultB;
         //_RPTA("int:\t\t%d, %d, %d, %d, %d, %d, %d, %d\n", i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7]);
+    }
+
+    __declspec(dllexport) int BaseSimdTest3(MSETREQ mapSectionRequest, __m256i* crsForARow, __m256i* ciVec, __m256i* countsForARow)
+    {
+        typedef std::vector<__m256i, aligned_allocator<__m256i, sizeof(__m256i)> > aligned_vector;
+
+        int limbCount = mapSectionRequest.LimbCount;
+        uint8_t bitsBeforeBp = mapSectionRequest.BitsBeforeBinaryPoint;
+        int targetIterations = mapSectionRequest.maxIterations;
+        int thresholdForComparison = mapSectionRequest.thresholdForComparison;
+
+        _RPTA("Running BaseSimdTest3 with LimbCount: %d and Target Iterations: %d\n", limbCount, targetIterations);
+
+        bool allRowSamplesHaveEscaped = true;
+        int vectorsPerRow = mapSectionRequest.VectorsPerRow;
+
+        fp31VecMath vMath = fp31VecMath(limbCount, bitsBeforeBp);
+        Iterator iterator = Iterator(limbCount, bitsBeforeBp, targetIterations, thresholdForComparison);
+
+        aligned_vector* ci = new aligned_vector(limbCount);
+        for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
+        {
+            ci->push_back(ciVec[limbPtr]);
+        }
+
+        aligned_vector* cr = new aligned_vector(limbCount);
+
+        for (int idx = 0; idx < vectorsPerRow; idx++)
+        {
+            int vPtr = idx * limbCount;
+
+            for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
+            {
+                cr->push_back(crsForARow[vPtr]);
+            }
+
+            __m256i countsVec = countsForARow[idx];
+            bool allSamplesHaveEscaped = iterator.GenerateMapCol(cr, ci, countsVec, vMath);
+
+            //bool allSamplesHaveEscaped = false;
+
+            // Update the caller's counts
+            //countsForARow[idx] = countsVec;
+
+            countsForARow[idx] = _mm256_set1_epi32(1);
+
+            cr->clear();
+
+            if (!allSamplesHaveEscaped)
+            {
+                allRowSamplesHaveEscaped = false;
+            }
+        }
+
+        delete cr;
+        delete ci;
+        //delete iterator;
+
+        return allRowSamplesHaveEscaped ? 1 : 0;
     }
 
 }

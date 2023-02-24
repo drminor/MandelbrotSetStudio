@@ -3,10 +3,12 @@
 #include "pch.h"
 #include <immintrin.h>
 
+//#include "simd_aligned_allocator.h"
+//typedef std::vector<__m256i, aligned_allocator<__m256i, sizeof(__m256i)> > aligned_vector;
+
 class Iterator
 {
-	VecHelper* _vecHelper;
-	fp31VecMath* _vMath;
+	//fp31VecMath* _vMath;
 
 	int _limbCount;
 
@@ -15,12 +17,12 @@ class Iterator
 
 	__m256i _targetIterationsVector;
 
-	__m256i* _zrSqrs;
-	__m256i* _ziSqrs;
-	__m256i* _sumOfSqrs;
+	aligned_vector* _zrSqrs;
+	aligned_vector* _ziSqrs;
+	aligned_vector* _sumOfSqrs;
 
-	__m256i* _zRZiSqrs;
-	__m256i* _tempVec;
+	aligned_vector* _zRZiSqrs;
+	aligned_vector* _tempVec;
 
 	__m256i _justOne;
 
@@ -30,13 +32,13 @@ public:
 	Iterator(int limbCount, uint8_t bitsBeforeBp, int targetIterations, int thresholdForComparison);
 	~Iterator();
 
-	bool GenerateMapCol(__m256i* cr, __m256i* ci, __m256i& counts);
+	bool GenerateMapCol(aligned_vector* cr, aligned_vector* ciVec, __m256i& resultCounts, fp31VecMath vMath);
 
 private:
 
-	void IterateFirstRound(__m256i* cr, __m256i* ci, __m256i* zr, __m256i* zi, __m256i& escapedFlagsVec);
+	void IterateFirstRound(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec, fp31VecMath vMath);
 
-	void Iterate(__m256i* cr, __m256i* ci, __m256i* zr, __m256i* zi, __m256i& escapedFlagsVec);
+	void Iterate(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec, fp31VecMath vMath);
 
 	int UpdateCounts(__m256i escapedFlagsVec, __m256i& counts, __m256i& resultCounts, __m256i& doneFlags, __m256i& haveEscapedFlags);
 

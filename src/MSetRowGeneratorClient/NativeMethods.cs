@@ -20,13 +20,16 @@ namespace MSetRowGeneratorClient
 		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\HpMSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int GenerateMapSectionRow(MSetRowRequestStruct requestStruct, IntPtr counts);
 
-
 		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\HpMSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int BaseSimdTest(MSetRowRequestStruct requestStruct, IntPtr counts);
 
-
 		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\HpMSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int BaseSimdTest2(MSetRowRequestStruct requestStruct, IntPtr crsForARow, IntPtr ciVec, IntPtr countsForARow);
+
+		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\HpMSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern int BaseSimdTest3(MSetRowRequestStruct requestStruct, IntPtr crsForARow, IntPtr ciVec, IntPtr countsForARow);
+
+
 
 		//[DllImport("Whisper.dll", EntryPoint = "Exist", CallingConvention = CallingConvention.Cdecl)]
 		//[return: MarshalAs(UnmanagedType.I1)]

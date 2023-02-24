@@ -55,6 +55,28 @@ namespace MSetRowGeneratorClientTest
 			Debug.WriteLine($"The first 10 counts: {firstTen}.");
 		}
 
+		[Fact]
+		public void Test3()
+		{
+			var blockSize = RMapConstants.BLOCK_SIZE;
+			var limbCount = 2;
+			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
+
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 20, requestsPerJob: 4);
+			var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
+
+			var iterationState = BuildIterationState(blockSize, limbCount, iteratorCoords, mapCalcSettings);
+
+			var mSetRowClient = new HpMSetRowClient();
+			mSetRowClient.BaseSimdTest3(iterationState, apfixedPointFormat, mapCalcSettings);
+
+			var counts = new int[blockSize.NumberOfCells];
+			iterationState.MapSectionVectors.FillCountsRow(iterationState.RowNumber!.Value, counts);
+
+			var firstTen = string.Join("; ", counts.Take(10));
+			Debug.WriteLine($"The first 10 counts: {firstTen}.");
+		}
+
 		#region Support Methods
 
 		private IIterationState BuildIterationState(SizeInt blockSize, int limbCount, IteratorCoords iteratorCoords, MapCalcSettings mapCalcSettings)

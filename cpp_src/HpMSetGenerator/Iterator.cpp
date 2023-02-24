@@ -3,9 +3,13 @@
 #include "framework.h"
 #include <immintrin.h>
 #include "MSetGenerator.h"
-#include "VecHelper.h"
 #include "fp31VecMath.h"
 #include "Iterator.h"
+
+//#include "simd_aligned_allocator.h"
+//
+//typedef std::vector<__m256i, aligned_allocator<__m256i, sizeof(__m256i)> > aligned_vector;
+
 
 #pragma region Constructor / Destructor
 
@@ -13,38 +17,36 @@ Iterator::Iterator(int limbCount, uint8_t bitsBeforeBp, int targetIterations, in
 {
     _limbCount = limbCount;
 
-    _vecHelper = new VecHelper();
-    _vMath = new fp31VecMath(limbCount, bitsBeforeBp);
+    //_vMath = new fp31VecMath(limbCount, bitsBeforeBp);
 
     _thresholdVector = _mm256_set1_epi32(thresholdForComparison);
 
     _targetIterationsVector = _mm256_set1_epi32(targetIterations);
 
-    _zrSqrs = _vecHelper->createVec(limbCount);
-    _ziSqrs = _vecHelper->createVec(limbCount);
-    _sumOfSqrs = _vecHelper->createVec(limbCount);
+    _zrSqrs = new aligned_vector(limbCount);
+    _ziSqrs = new aligned_vector(limbCount);
+    _sumOfSqrs = new aligned_vector(limbCount);
 
-    _zRZiSqrs = _vecHelper->createVec(limbCount);
-    _tempVec = _vecHelper->createVec(limbCount);
+    _zRZiSqrs = new aligned_vector(limbCount);
+    _tempVec = new aligned_vector(limbCount);
 
     _justOne = _mm256_set1_epi32(1);
 }
 
 Iterator::~Iterator()
 {
-    //_vecHelper->freeVec(_zrSqrs);
-    //_vecHelper->freeVec(_ziSqrs);
-    //_vecHelper->freeVec(_sumOfSqrs);
-    //_vecHelper->freeVec(_zRZiSqrs);
-    //_vecHelper->freeVec(_tempVec);
+    delete _zrSqrs;
+    delete _ziSqrs;
+    delete _sumOfSqrs;
+    delete _zRZiSqrs;
+    delete _tempVec;
 
-    delete _vecHelper;
-    delete _vMath;
+    //delete _vMath;
 }
 
 #pragma endregion
 
-bool Iterator::GenerateMapCol(__m256i* cr, __m256i* ci, __m256i& resultCounts)
+bool Iterator::GenerateMapCol(aligned_vector* cr, aligned_vector* ciVec, __m256i& resultCounts, fp31VecMath vMath)
 {
     __m256i haveEscapedFlags = _mm256_set1_epi32(0);
 
@@ -53,79 +55,76 @@ bool Iterator::GenerateMapCol(__m256i* cr, __m256i* ci, __m256i& resultCounts)
     resultCounts = _mm256_set1_epi32(0);
     __m256i counts = _mm256_set1_epi32(0);
 
-    VecHelper* _vh = new VecHelper();
-    __m256i* zr = _vh->createVec(_limbCount);
-    __m256i* zi = _vh->createVec(_limbCount);
+    aligned_vector* zr = new aligned_vector(_limbCount);
+    aligned_vector* zi = new aligned_vector(_limbCount);
+
     //__m256i* resultZr = _vh->createVec(limbCount);
     //__m256i* resultZi = _vh->createVec(limbCount);
 
     __m256i escapedFlagsVec = _mm256_set1_epi32(0);
 
-    IterateFirstRound(cr, ci, zr, zi, escapedFlagsVec);
+    IterateFirstRound(cr, ciVec, zr, zi, escapedFlagsVec, vMath);
     int compositeIsDone = UpdateCounts(escapedFlagsVec, counts, resultCounts, doneFlags, haveEscapedFlags);
 
     while (compositeIsDone != -1)
     {
-        Iterate(cr, ci, zr, zi, escapedFlagsVec);
+        Iterate(cr, ciVec, zr, zi, escapedFlagsVec, vMath);
         compositeIsDone = UpdateCounts(escapedFlagsVec, counts, resultCounts, doneFlags, haveEscapedFlags);
     }
 
-    _vh->freeVec(zr);
-    _vh->freeVec(zi);
-    delete _vh;
 
     return true;
 }
 
-void Iterator::IterateFirstRound(__m256i* cr, __m256i* ci, __m256i* zr, __m256i* zi, __m256i& escapedFlagsVec)
+void Iterator::IterateFirstRound(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec, fp31VecMath vMath)
 {
-    _vecHelper->copyVec(cr, zr, _limbCount);
-    _vecHelper->copyVec(ci, zi, _limbCount);
+    //_vecHelper->copyVec(cr, zr, _limbCount);
+    //_vecHelper->copyVec(ci, zi, _limbCount);
 
-    _vMath->Square(zr, _zrSqrs);
-    _vMath->Square(zi, _ziSqrs);
+    vMath.Square(zr, _zrSqrs);
+    vMath.Square(zi, _ziSqrs);
 
-    _vMath->Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
-    _vMath->IsGreaterOrEqThan(_sumOfSqrs[_limbCount - 1], _thresholdVector, escapedFlagsVec);
+    vMath.Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
+    vMath.IsGreaterOrEqThan(_sumOfSqrs->at((size_t) _limbCount - 1), _thresholdVector, escapedFlagsVec);
 }
 
-void Iterator::Iterate(__m256i* cr, __m256i* ci, __m256i* zr, __m256i* zi, __m256i& escapedFlagsVec)
+void Iterator::Iterate(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec, fp31VecMath vMath)
 {
 
     // square(z.r + z.i)
     //    _fp31VecMath.Add(zrs, zis, _temp);
-    _vMath->Add(zr, zi, _tempVec);
+    vMath.Add(zr, zi, _tempVec);
 
     //    _fp31VecMath.Square(_temp, _zRZiSqrs);
-    _vMath->Square(_tempVec, _zRZiSqrs);
+    vMath.Square(_tempVec, _zRZiSqrs);
 
     // z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd
     //    _fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
-    _vMath->Sub(_zRZiSqrs, _zrSqrs, zi);
+    vMath.Sub(_zRZiSqrs, _zrSqrs, zi);
 
     //    _fp31VecMath.Sub(zis, _zISqrs, _temp);
-    _vMath->Sub(zi, _ziSqrs, _tempVec);
+    vMath.Sub(zi, _ziSqrs, _tempVec);
 
     //    _fp31VecMath.Add(_temp, cis, zis);
-    _vMath->Add(_tempVec, ci, zi);
+    vMath.Add(_tempVec, ci, zi);
 
     // z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
     //    _fp31VecMath.Sub(_zRSqrs, _zISqrs, _temp);
-    _vMath->Sub(_zrSqrs, _ziSqrs, _tempVec);
+    vMath.Sub(_zrSqrs, _ziSqrs, _tempVec);
     
     //    _fp31VecMath.Add(_temp, crs, zrs);
-    _vMath->Add(_tempVec, cr, zr);
+    vMath.Add(_tempVec, cr, zr);
 
     //    _fp31VecMath.Square(zrs, _zRSqrs);
     //    _fp31VecMath.Square(zis, _zISqrs);
     //    _fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-    _vMath->Square(zr, _zrSqrs);
-    _vMath->Square(zi, _ziSqrs);
-    _vMath->Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
+    vMath.Square(zr, _zrSqrs);
+    vMath.Square(zi, _ziSqrs);
+    vMath.Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
 
     //    _fp31VecMath.IsGreaterOrEqThan(ref _sumOfSqrs[^ 1], ref _thresholdVector, ref escapedFlagsVec);
-    _vMath->IsGreaterOrEqThan(_sumOfSqrs[_limbCount - 1], _thresholdVector, escapedFlagsVec);
+    vMath.IsGreaterOrEqThan(_sumOfSqrs->at(_limbCount - 1), _thresholdVector, escapedFlagsVec);
 
 }
 

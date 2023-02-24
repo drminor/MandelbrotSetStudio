@@ -1,18 +1,13 @@
 #pragma once
 
 #include <immintrin.h>
-#include "VecHelper.h"
+#include "simd_aligned_allocator.h"
+
+typedef std::vector<__m256i, aligned_allocator<__m256i, sizeof(__m256i)> > aligned_vector;
 
 class fp31VecMath
 {
-	VecHelper* _vecHelper;
-
 	int _limbCount;
-
-	uint8_t _bitsBeforeBp;
-	int _targetExponent;
-
-	const uint8_t EFFECTIVE_BITS_PER_LIMB = 31;
 
 	const uint32_t LOW31_BITS_SET = 0x7FFFFFFF; // bits 0 - 30 are set.
 	const __m256i HIGH33_MASK_VEC = _mm256_set1_epi32(LOW31_BITS_SET);
@@ -38,17 +33,17 @@ class fp31VecMath
 	const __m256i SHUFFLE_PACK_LOW_VEC = _mm256_set_epi32(0u, 2u, 4u, 6u, 0u, 0u, 0u, 0u);
 	const __m256i SHUFFLE_PACK_HIGH_VEC = _mm256_set_epi32(0u, 0u, 0u, 0u, 0u, 2u, 4u, 6u);
 
-	__m256i* _squareResult0Lo;
-	__m256i* _squareResult0Hi;
+	aligned_vector* _squareResult0Lo;
+	aligned_vector* _squareResult0Hi;
 
-	__m256i* _squareResult1Lo;
-	__m256i* _squareResult1Hi;
+	aligned_vector* _squareResult1Lo;
+	aligned_vector* _squareResult1Hi;
 
-	__m256i* _squareResult2Lo;
-	__m256i* _squareResult2Hi;
+	aligned_vector* _squareResult2Lo;
+	aligned_vector* _squareResult2Hi;
 
-	__m256i* _negationResult;
-	__m256i* _additionResult;
+	aligned_vector* _negationResult;
+	aligned_vector* _additionResult;
 
 	__m256i _ones = _mm256_set1_epi32(1);
 
@@ -60,6 +55,11 @@ class fp31VecMath
 	uint8_t _shiftAmount;
 	uint8_t _inverseShiftAmount;
 
+	uint8_t _bitsBeforeBp;
+	int _targetExponent;
+
+	const uint8_t EFFECTIVE_BITS_PER_LIMB = 31;
+
 	//private const bool USE_DET_DEBUG = false;
 
 public:
@@ -68,22 +68,22 @@ public:
 	~fp31VecMath();
 
 
-	void Square(__m256i* source, __m256i* result);
+	void Square(aligned_vector* const source, aligned_vector* const result);
 
-	void Add(__m256i* left, __m256i* right, __m256i* result);
-	void Sub(__m256i* left, __m256i* right, __m256i* result);
+	void Add(aligned_vector* const left, aligned_vector* const right, aligned_vector* const result);
+	void Sub(aligned_vector* const left, aligned_vector* const right, aligned_vector* const result);
 
 	void IsGreaterOrEqThan(__m256i left, __m256i right, __m256i& escapedFlagsVec);
 
 private:
 
-	void SquareInternal(__m256i* source, __m256i* result);
-	void SumThePartials(__m256i* source, __m256i* result);
-	void ShiftAndTrim(__m256i* sourceLimbsLo, __m256i* sourceLimbsHi, __m256i* resultLimbs);
+	void SquareInternal(aligned_vector* const source, aligned_vector* const result);
+	void SumThePartials(aligned_vector* const source, aligned_vector* const result);
+	void ShiftAndTrim(aligned_vector* const sourceLimbsLo, aligned_vector* const sourceLimbsHi, aligned_vector* const resultLimbs);
 
-	void Negate(__m256i* source, __m256i* result);
-	void ConvertFrom2C(__m256i* source, __m256i* resultLo, __m256i* resultHi);
-	int GetSignBits(__m256i* source, __m256i& signBitVecs);
+	void Negate(aligned_vector* const source, aligned_vector* const result);
+	void ConvertFrom2C(aligned_vector* const source, aligned_vector* const resultLo, aligned_vector* const resultHi);
+	int GetSignBits(aligned_vector* const source, __m256i& signBitVecs);
 
 };
 
