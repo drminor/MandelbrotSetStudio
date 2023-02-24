@@ -123,9 +123,7 @@ namespace MSetGeneratorPrototype
 
 		private bool HighPerfGenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
-
 			var mSetRowClient = new HpMSetRowClient();
-
 
 			allRowsHaveEscaped = false;
 

@@ -4,6 +4,7 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
+using System.Diagnostics;
 using System.Runtime.Intrinsics;
 
 namespace MSetRowGeneratorClientTest
@@ -20,18 +21,47 @@ namespace MSetRowGeneratorClientTest
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 20, requestsPerJob: 4);
 			var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
 
-			var samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
-			var (samplePointsX, samplePointsY) = samplePointBuilder.BuildSamplePoints(iteratorCoords);
-			var iterationState = BuildIterationState(samplePointsX, samplePointsY, blockSize, limbCount, mapCalcSettings);
+			var iterationState = BuildIterationState(blockSize, limbCount, iteratorCoords, mapCalcSettings);
 
 			var mSetRowClient = new HpMSetRowClient();
 			mSetRowClient.BaseSimdTest(iterationState, apfixedPointFormat, mapCalcSettings);
+
+			var counts = new int[blockSize.NumberOfCells];
+			iterationState.MapSectionVectors.FillCountsRow(iterationState.RowNumber!.Value, counts);
+
+			var firstTen = string.Join("; ", counts.Take(10));
+			Debug.WriteLine($"The first 10 counts: {firstTen}.");
+		}
+
+		[Fact]
+		public void Test2()
+		{
+			var blockSize = RMapConstants.BLOCK_SIZE;
+			var limbCount = 2;
+			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
+
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 20, requestsPerJob: 4);
+			var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
+
+			var iterationState = BuildIterationState(blockSize, limbCount, iteratorCoords, mapCalcSettings);
+
+			var mSetRowClient = new HpMSetRowClient();
+			mSetRowClient.BaseSimdTest2(iterationState, apfixedPointFormat, mapCalcSettings);
+
+			var counts = new int[blockSize.NumberOfCells];
+			iterationState.MapSectionVectors.FillCountsRow(iterationState.RowNumber!.Value, counts);
+
+			var firstTen = string.Join("; ", counts.Take(10));
+			Debug.WriteLine($"The first 10 counts: {firstTen}.");
 		}
 
 		#region Support Methods
 
-		private IIterationState BuildIterationState(FP31Val[] samplePointsX, FP31Val[] samplePointsY, SizeInt blockSize, int limbCount, MapCalcSettings mapCalcSettings)
+		private IIterationState BuildIterationState(SizeInt blockSize, int limbCount, IteratorCoords iteratorCoords, MapCalcSettings mapCalcSettings)
 		{
+			var samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
+			var (samplePointsX, samplePointsY) = samplePointBuilder.BuildSamplePoints(iteratorCoords);
+
 			var mapSectionVectors = new MapSectionVectors(blockSize);
 			var mapSectionZVectors = new MapSectionZVectors(blockSize, limbCount);
 

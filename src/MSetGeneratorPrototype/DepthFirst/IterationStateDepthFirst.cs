@@ -322,6 +322,34 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
+		#region Public Methods - Fill / Update SamplePoints
+
+		public void FillSamplePointsXBuffer(byte[] buffer)
+		{
+			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(CrsRowVArray.Mantissas);
+			Debug.Assert(buffer.Length >= sourceBack.Length, $"The Buffer is too short for filling SamplePointsX. BufferLength: {buffer.Length}, SamplePointsX Length: {CrsRowVArray.Mantissas.Length}");
+
+			for (var i = 0; i < sourceBack.Length; i++)
+			{
+				buffer[i] = sourceBack[i];
+			}
+		}
+
+		public void FillSamplePointYBuffer(byte[] buffer)
+		{
+			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(CiLimbSet);
+			Debug.Assert(buffer.Length >= sourceBack.Length, $"The Buffer is too short for filling the SamplePointY Vector. BufferLength: {buffer.Length}, SamplePointY Vector Length: {CiLimbSet.Length}");
+
+			for (var i = 0; i < sourceBack.Length; i++)
+			{
+				buffer[i] = sourceBack[i];
+			}
+		}
+
+
+
+		#endregion
+
 		#region Private Methods
 
 		private bool BuildTheInPlayBackingList(Vector256<int>[] hasEscapedFlagsRow, Span<Vector256<int>> countsRow, List<int> inPlayBackingList, Vector256<int>[] doneFlags)

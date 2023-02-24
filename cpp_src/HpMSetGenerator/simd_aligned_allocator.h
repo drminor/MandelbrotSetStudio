@@ -17,7 +17,7 @@ template <typename T, std::size_t Alignment>
 class aligned_allocator
 {
 	public:
- 
+
 		// The following will be the same for virtually all allocators.
 		typedef T * pointer;
 		typedef const T * const_pointer;
@@ -88,6 +88,8 @@ class aligned_allocator
  
 		~aligned_allocator() { }
  
+
+
  
 		// The following will be different for each allocator.
 		T * allocate(const std::size_t n) const
@@ -144,8 +146,16 @@ class aligned_allocator
 		// base class assignment operator is inaccessible" within
 		// the STL headers, but that warning is useless.
 	private:
-		aligned_allocator& operator=(const aligned_allocator&);
+		//aligned_allocator& operator=(const aligned_allocator&);
+
+		//template<typename T, std::size_t Alignment>
+		aligned_allocator& operator=(const aligned_allocator&)
+		{ }
+
 };
+
+
+
 
 //int main()
 //{
@@ -174,3 +184,5 @@ class aligned_allocator
 //
 //	__m128 mul = _mm_mul_ps(lhs[10], rhs[10]);
 //}
+
+

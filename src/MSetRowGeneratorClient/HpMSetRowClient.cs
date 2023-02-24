@@ -21,20 +21,103 @@ namespace MSetRowGeneratorClient
 			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
 			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
 
-			// Make the call -- TODO: return allRowSamplesHaveEscaped
-			//NativeMethods.GenerateMapSectionRow(requestStruct, countsBuffer);
+			// Call GenerateMapSectionRow
+			var intResult = NativeMethods.GenerateMapSectionRow(requestStruct, countsBuffer);
 
 			// Counts
 			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
 			Marshal.FreeCoTaskMem(countsBuffer);
+			PutCounts(iterationState, requestStruct.RowNumber, counts);
 
-			var allRowSamplesHaveEscaped = false;
+			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
+			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
+
+			return allRowSamplesHaveEscaped;
+		}
+
+		#endregion
+
+		#region Test Support 
+
+		public bool BaseSimdTest(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
+		{
+			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
+
+			// Counts
+			var counts = GetCounts(iterationState, requestStruct.RowNumber);
+			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
+			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
+
+			// Call BaseSimdTest
+			var intResult = NativeMethods.BaseSimdTest(requestStruct, countsBuffer);
+
+			// Counts
+			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
+			Marshal.FreeCoTaskMem(countsBuffer);
+			PutCounts(iterationState, requestStruct.RowNumber, counts);
+
+			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
+			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
+
+			return allRowSamplesHaveEscaped;
+		}
+
+		public bool BaseSimdTest2(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
+		{
+			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
+
+			// SamplePointsX
+			var samplePointsX = GetSamplePointsX(iterationState);
+			var spxBuffer = Marshal.AllocCoTaskMem(samplePointsX.Length);
+			Marshal.Copy(samplePointsX, 0, spxBuffer, samplePointsX.Length);
+
+			// SamplePointY
+			var yPointVecs = GetYPointVecs(iterationState);
+			var ypBuffer = Marshal.AllocCoTaskMem(yPointVecs.Length);
+			Marshal.Copy(yPointVecs, 0, ypBuffer, yPointVecs.Length);
+
+			// Counts
+			var counts = GetCounts(iterationState, requestStruct.RowNumber);
+			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
+			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
+
+			// Call BaseSimdTest
+			var intResult = NativeMethods.BaseSimdTest2(requestStruct, spxBuffer, ypBuffer, countsBuffer);
+
+			// Counts
+			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
+			Marshal.FreeCoTaskMem(countsBuffer);
+			PutCounts(iterationState, requestStruct.RowNumber, counts);
+
+			Marshal.FreeCoTaskMem(ypBuffer);
+			Marshal.FreeCoTaskMem(spxBuffer);
+
+			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
+			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
+
 			return allRowSamplesHaveEscaped;
 		}
 
 		#endregion
 
 		#region Support Methods
+
+		private byte[] GetSamplePointsX(IIterationState iterationState)
+		{
+			var buffer = new byte[iterationState.MapSectionZVectors.BytesPerZValueRow];
+			iterationState.FillSamplePointsXBuffer(buffer);
+			return buffer;
+		}
+
+		private const int BYTES_PER_VECTOR = 32;
+
+		private byte[] GetYPointVecs(IIterationState iterationState)
+		{
+			var buffer = new byte[iterationState.MapSectionZVectors.LimbCount * BYTES_PER_VECTOR]; 
+			iterationState.FillSamplePointYBuffer(buffer);
+
+			return buffer;
+		}
 
 		private byte[] GetCounts(IIterationState iterationState, int rowNumber)
 		{
@@ -47,6 +130,11 @@ namespace MSetRowGeneratorClient
 			iterationState.MapSectionVectors.FillCountsRow(rowNumber, buffer);
 
 			return buffer;
+		}
+
+		private void PutCounts(IIterationState iterationState, int rowNumber, byte[] counts)
+		{
+			iterationState.MapSectionVectors.UpdateFromCountsRow(rowNumber, counts);
 		}
 
 		private MSetRowRequestStruct GetRequestStruct(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
@@ -93,32 +181,5 @@ namespace MSetRowGeneratorClient
 		}
 
 		#endregion
-
-		#region Test Support 
-
-		public bool BaseSimdTest(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
-		{
-			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
-
-			// Counts
-			var counts = GetCounts(iterationState, requestStruct.RowNumber);
-			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length * 5);
-			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
-
-			// Make the call -- TODO: return allRowSamplesHaveEscaped
-			var intResult = NativeMethods.BaseSimdTest(requestStruct, countsBuffer);
-
-			Debug.WriteLine($"The intResult is {intResult}.");
-
-			// Counts
-			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
-			Marshal.FreeCoTaskMem(countsBuffer);
-
-			var allRowSamplesHaveEscaped = false;
-			return allRowSamplesHaveEscaped;
-		}
-
-		#endregion
-
 	}
 }
