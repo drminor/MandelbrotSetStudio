@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -17,11 +18,11 @@ namespace MSetRowGeneratorClient
 
 			// Counts
 			var counts = GetCounts(iterationState, requestStruct.RowNumber);
-			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length * 5);
+			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
 			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
 
 			// Make the call -- TODO: return allRowSamplesHaveEscaped
-			NativeMethods.GenerateMapSectionRow(requestStruct, countsBuffer);
+			//NativeMethods.GenerateMapSectionRow(requestStruct, countsBuffer);
 
 			// Counts
 			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
@@ -105,7 +106,9 @@ namespace MSetRowGeneratorClient
 			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
 
 			// Make the call -- TODO: return allRowSamplesHaveEscaped
-			NativeMethods.BaseSimdTest(requestStruct, countsBuffer);
+			var intResult = NativeMethods.BaseSimdTest(requestStruct, countsBuffer);
+
+			Debug.WriteLine($"The intResult is {intResult}.");
 
 			// Counts
 			Marshal.Copy(countsBuffer, counts, 0, counts.Length);

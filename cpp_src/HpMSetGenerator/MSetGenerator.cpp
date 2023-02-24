@@ -40,7 +40,61 @@ typedef struct _MSETREQ
 
 extern "C"
 {
-    __declspec(dllexport) int GenerateMapSectionRow(MSETREQ mapSectionRequest, __m256i* crForARow, __m256i* ci, __m256i* countsForARow)
+    //__declspec(dllexport) int GenerateMapSectionRow(MSETREQ mapSectionRequest, __m256i* crForARow, __m256i* ci, __m256i* countsForARow)
+    //{
+    //    int targetCount = mapSectionRequest.maxIterations;
+    //    int stride = mapSectionRequest.blockSizeWidth;
+    //    int limbCount = mapSectionRequest.LimbCount;
+    //    uint8_t bitsBeforeBp = mapSectionRequest.BitsBeforeBinaryPoint;
+    //    int targetIterations = mapSectionRequest.maxIterations;
+    //    int thresholdForComparison = mapSectionRequest.thresholdForComparison;
+
+    //    std::cout << std::endl << "Generating MapSection with LimbCount: " << limbCount << " and Target Count:" << targetCount << std::endl;
+
+    //    bool allRowSamplesHaveEscaped = true;
+    //    int vectorsPerRow = mapSectionRequest.VectorsPerRow;
+
+    //    Iterator* _iterator = new Iterator(limbCount, bitsBeforeBp, targetIterations, thresholdForComparison);
+
+    //    VecHelper* _vh = new VecHelper();
+    //    __m256i* cr = _vh->createVec(limbCount);
+
+    //    for (int idx = 0; idx < vectorsPerRow; idx++)
+    //    {
+    //        int vPtr = idx * limbCount;
+
+    //        for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
+    //        {
+    //            cr[limbPtr] = crForARow[vPtr++];
+    //        }
+
+    //        __m256i countsVec = countsForARow[idx];
+    //    	bool allSamplesHaveEscaped = _iterator->GenerateMapCol(cr, ci, countsVec);
+
+    //        // Update the caller's counts
+    //        countsForARow[idx] = countsVec;
+
+    //    	if (!allSamplesHaveEscaped)
+    //    	{
+    //    		allRowSamplesHaveEscaped = false;
+    //    	}
+    //    }
+
+    //    _vh->freeVec(cr);
+    //    delete _vh;
+    //    delete _iterator;
+
+    //    return allRowSamplesHaveEscaped ? 1 : 0;
+
+    //    //__m256i epi32_vec_2 = counts[0];
+    //    //__m256i epi32_vec_3 = counts[1];
+    //    //__m256i epi32_resultB = _mm256_add_epi32(epi32_vec_2, epi32_vec_3);
+    //    //uint32_t* i = (uint32_t*)&epi32_resultB;
+    //    //_RPTA("int:\t\t%d, %d, %d, %d, %d, %d, %d, %d\n", i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7]);
+    //}
+
+    //__declspec(dllexport) int BaseSimdTest(MSETREQ mapSectionRequest, __m256i* crForARow, __m256i* ci, __m256i* countsForARow)
+    __declspec(dllexport) int BaseSimdTest(MSETREQ mapSectionRequest, int* countsForARow)
     {
         int targetCount = mapSectionRequest.maxIterations;
         int stride = mapSectionRequest.blockSizeWidth;
@@ -63,71 +117,18 @@ extern "C"
         {
             int vPtr = idx * limbCount;
 
-            for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
-            {
-                cr[limbPtr] = crForARow[vPtr++];
-            }
+            //for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
+            //{
+            //    cr[limbPtr] = crForARow[vPtr++];
+            //}
 
-            __m256i countsVec = countsForARow[idx];
-        	bool allSamplesHaveEscaped = _iterator->GenerateMapCol(cr, ci, countsVec);
-
-            // Update the caller's counts
-            countsForARow[idx] = countsVec;
-
-        	if (!allSamplesHaveEscaped)
-        	{
-        		allRowSamplesHaveEscaped = false;
-        	}
-        }
-
-        _vh->freeVec(cr);
-        delete _vh;
-        delete _iterator;
-
-        return allRowSamplesHaveEscaped ? 1 : 0;
-
-        //__m256i epi32_vec_2 = counts[0];
-        //__m256i epi32_vec_3 = counts[1];
-        //__m256i epi32_resultB = _mm256_add_epi32(epi32_vec_2, epi32_vec_3);
-        //uint32_t* i = (uint32_t*)&epi32_resultB;
-        //_RPTA("int:\t\t%d, %d, %d, %d, %d, %d, %d, %d\n", i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7]);
-    }
-
-    __declspec(dllexport) int BaseSimdTest(MSETREQ mapSectionRequest, __m256i* crForARow, __m256i* ci, __m256i* countsForARow)
-    {
-        int targetCount = mapSectionRequest.maxIterations;
-        int stride = mapSectionRequest.blockSizeWidth;
-        int limbCount = mapSectionRequest.LimbCount;
-        uint8_t bitsBeforeBp = mapSectionRequest.BitsBeforeBinaryPoint;
-        int targetIterations = mapSectionRequest.maxIterations;
-        int thresholdForComparison = mapSectionRequest.thresholdForComparison;
-
-        std::cout << std::endl << "Generating MapSection with LimbCount: " << limbCount << " and Target Count:" << targetCount << std::endl;
-
-        bool allRowSamplesHaveEscaped = true;
-        int vectorsPerRow = mapSectionRequest.VectorsPerRow;
-
-        Iterator* _iterator = new Iterator(limbCount, bitsBeforeBp, targetIterations, thresholdForComparison);
-
-        VecHelper* _vh = new VecHelper();
-        __m256i* cr = _vh->createVec(limbCount);
-
-        for (int idx = 0; idx < vectorsPerRow; idx++)
-        {
-            int vPtr = idx * limbCount;
-
-            for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
-            {
-                cr[limbPtr] = crForARow[vPtr++];
-            }
-
-            __m256i countsVec = countsForARow[idx];
+            //__m256i countsVec = countsForARow[idx];
             //bool allSamplesHaveEscaped = _iterator->GenerateMapCol(cr, ci, countsVec);
 
             bool allSamplesHaveEscaped = false;
 
             // Update the caller's counts
-            countsForARow[idx] = countsVec;
+            //countsForARow[idx] = countsVec;
 
             if (!allSamplesHaveEscaped)
             {

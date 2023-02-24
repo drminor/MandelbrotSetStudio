@@ -1,8 +1,8 @@
 ﻿using MSS.Types.APValues;
 using MSS.Types;
-using MSS.Common;
+using System;
 
-namespace MSetGeneratorPrototype
+namespace MSS.Common
 {
 	public class IteratorCoords
 	{

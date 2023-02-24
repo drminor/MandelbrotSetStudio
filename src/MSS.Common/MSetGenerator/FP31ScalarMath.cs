@@ -1,9 +1,10 @@
 ﻿using MSS.Types;
 using MSS.Types.APValues;
+using System;
 using System.Diagnostics;
 using System.Numerics;
 
-namespace MSetGeneratorPrototype
+namespace MSS.Common
 {
 	public class FP31ScalarMath
 	{

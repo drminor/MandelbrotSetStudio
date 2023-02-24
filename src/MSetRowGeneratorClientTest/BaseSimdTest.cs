@@ -35,11 +35,10 @@ namespace MSetRowGeneratorClientTest
 			var mapSectionVectors = new MapSectionVectors(blockSize);
 			var mapSectionZVectors = new MapSectionZVectors(blockSize, limbCount);
 
-			var xs = new FP31Val[0];
-			var ys = new FP31Val[0];
-
 			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 			var result = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, increasingIterations: false, targetIterationsVector);
+
+			result.SetRowNumber(0);
 
 			return result;
 		}

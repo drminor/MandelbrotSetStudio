@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.Intrinsics.X86;
 using System.Runtime.Intrinsics;
 using MSS.Types.MSet;
+using MSS.Common;
 
 namespace MSetGeneratorPrototype
 {
@@ -261,7 +262,7 @@ namespace MSetGeneratorPrototype
 			else
 			{
 				// Mix
-				result = hasEscapedFlags.Select(x => x == 0 ? false: true).ToArray();
+				result = hasEscapedFlags.Select(x => x == 0 ? false : true).ToArray();
 			}
 
 			return result;

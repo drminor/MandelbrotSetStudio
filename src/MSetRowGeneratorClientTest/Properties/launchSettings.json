@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MSetRowGeneratorClientTest": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

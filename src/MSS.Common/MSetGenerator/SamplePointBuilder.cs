@@ -1,8 +1,9 @@
 ﻿using MSS.Types;
 using MSS.Types.APValues;
+using System;
 using System.Runtime.Intrinsics;
 
-namespace MSetGeneratorPrototype
+namespace MSS.Common
 {
 	public class SamplePointBuilder : IDisposable
 	{

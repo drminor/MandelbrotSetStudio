@@ -1,6 +1,7 @@
 ﻿using MSS.Types.MSet;
+using System.Threading;
 
-namespace MSetGeneratorPrototype
+namespace MSS.Common
 {
 	public interface IMapSectionGenerator
 	{
