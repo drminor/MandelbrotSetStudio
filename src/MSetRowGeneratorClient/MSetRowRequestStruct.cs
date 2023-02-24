@@ -1,9 +1,9 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace MSetGeneratorLib
+namespace MSetRowGeneratorClient
 {
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-	public struct MapSectionRequestStruct
+	public struct MSetRowRequestStruct
 	{
 		// The row to calculate
 
@@ -20,7 +20,7 @@ namespace MSetGeneratorLib
 		public int VectorsPerRow;
 
         // Subdivision
-		public string subdivisionId;
+		//public string subdivisionId;
 
 		// BlockSize
 		public int blockSizeWidth;
@@ -28,7 +28,7 @@ namespace MSetGeneratorLib
 
 		// MapCalcSettings;
 		public int maxIterations;
-		public int threshold;
+		public int thresholdForComparison;
 		public int iterationsPerStep;
 	}
 }

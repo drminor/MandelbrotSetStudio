@@ -1,9 +1,8 @@
-﻿using MSetGeneratorLib;
+﻿using MSetRowGeneratorClient;
 using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -20,7 +19,7 @@ namespace MSetGeneratorPrototype
 
 		private FP31VecMath _fp31VecMath;
 		private IteratorDepthFirst _iterator;
-		private MSetGeneratorLib.MapSectionGenerator _mapSectionGenerator;
+		//private MSetGeneratorLib.MapSectionGenerator _mapSectionGenerator;
 
 		private Vector256<uint>[] _crs;
 		private Vector256<uint>[] _cis;
@@ -44,7 +43,7 @@ namespace MSetGeneratorPrototype
 
 			_fp31VecMath = _samplePointBuilder.GetVecMath(limbCount);
 			_iterator = new IteratorDepthFirst(_fp31VecMath);
-			_mapSectionGenerator = new MSetGeneratorLib.MapSectionGenerator();
+			//_mapSectionGenerator = new MSetGeneratorLib.MapSectionGenerator();
 
 			_crs = _fp31VecMath.GetNewLimbSet();
 			_cis = _fp31VecMath.GetNewLimbSet();
@@ -68,6 +67,12 @@ namespace MSetGeneratorPrototype
 			ReportLimbCountUpdate(coords, currentLimbCount, limbCountForThisRequest, mapSectionRequest.Precision);
 
 			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
+
+			if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
+			 {
+				return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
+			}
+
 
 			var stopwatch = Stopwatch.StartNew();
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
@@ -118,6 +123,10 @@ namespace MSetGeneratorPrototype
 
 		private bool HighPerfGenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
+
+			var _mapSectionGenerator = new HpMSetRowClient();
+
+
 			allRowsHaveEscaped = false;
 
 			if (ct.IsCancellationRequested)
@@ -502,29 +511,30 @@ namespace MSetGeneratorPrototype
 
 		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, IteratorCoords coords)
 		{
-			// Code to call this method...
-			//if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
-			// {
-			//	return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
+
+			//// Skip positive 'blocks'
+
+			//if (skipPositiveBlocks)
+			//{
+			//	var xSign = coords.StartingCx.GetSign();
+			//	var ySign = coords.StartingCy.GetSign();
+
+			//	return xSign && ySign;
 			//}
 
-			// Skip positive 'blocks'
+			//// Move directly to a block where at least one sample point reaches the iteration target.
+			//else if (skipLowDetailBlocks && (BigInteger.Abs(coords.ScreenPos.Y) > 1 || BigInteger.Abs(coords.ScreenPos.X) > 3))
+			//{
+			//	return true;
+			//}
 
-			if (skipPositiveBlocks)
+			if (coords.ScreenPos.X == 1 && coords.ScreenPos.Y == 1)
 			{
-				var xSign = coords.StartingCx.GetSign();
-				var ySign = coords.StartingCy.GetSign();
-
-				return xSign && ySign;
+				return false;
 			}
 
-			// Move directly to a block where at least one sample point reaches the iteration target.
-			else if (skipLowDetailBlocks && (BigInteger.Abs(coords.ScreenPos.Y) > 1 || BigInteger.Abs(coords.ScreenPos.X) > 3))
-			{
-				return true;
-			}
 
-			return false;
+			return true;
 		}
 
 		[Conditional("PERF")]

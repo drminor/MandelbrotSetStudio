@@ -5,7 +5,7 @@ using MSS.Common;
 using MSS.Types.MSet;
 using System.Diagnostics;
 
-namespace MSetGeneratorLib
+namespace MSetRowGeneratorClient
 {
 	public class MClientInProcess : IMEngineClient
 	{

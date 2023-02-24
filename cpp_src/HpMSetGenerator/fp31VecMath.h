@@ -7,10 +7,10 @@ class fp31VecMath
 {
 	VecHelper* _vecHelper;
 
-	size_t _limbCount;
+	int _limbCount;
 
 	uint8_t _bitsBeforeBp;
-	size_t _targetExponent;
+	int _targetExponent;
 
 	const uint8_t EFFECTIVE_BITS_PER_LIMB = 31;
 
@@ -50,7 +50,7 @@ class fp31VecMath
 	__m256i* _negationResult;
 	__m256i* _additionResult;
 
-	__m256i* _ones;
+	__m256i _ones = _mm256_set1_epi32(1);
 
 	__m256i _carryVectors = _mm256_set1_epi32(0);
 	__m256i _carryVectorsLong = _mm256_set1_epi32(0);
@@ -64,7 +64,7 @@ class fp31VecMath
 
 public:
 
-	fp31VecMath(size_t limbCount, uint8_t bitsBeforeBp);
+	fp31VecMath(int limbCount, uint8_t bitsBeforeBp);
 	~fp31VecMath();
 
 

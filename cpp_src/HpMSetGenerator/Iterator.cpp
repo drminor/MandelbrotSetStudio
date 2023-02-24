@@ -7,18 +7,18 @@
 #include "fp31VecMath.h"
 #include "Iterator.h"
 
-
 #pragma region Constructor / Destructor
 
-Iterator::Iterator(int limbCount, uint8_t bitsBeforeBp)
+Iterator::Iterator(int limbCount, uint8_t bitsBeforeBp, int targetIterations, int thresholdForComparison)
 {
     _limbCount = limbCount;
 
     _vecHelper = new VecHelper();
     _vMath = new fp31VecMath(limbCount, bitsBeforeBp);
 
-    _threshold = 4;
-    _thresholdVector = _mm256_set1_epi32(_threshold);
+    _thresholdVector = _mm256_set1_epi32(thresholdForComparison);
+
+    _targetIterationsVector = _mm256_set1_epi32(targetIterations);
 
     _zrSqrs = _vecHelper->createVec(limbCount);
     _ziSqrs = _vecHelper->createVec(limbCount);
@@ -26,15 +26,17 @@ Iterator::Iterator(int limbCount, uint8_t bitsBeforeBp)
 
     _zRZiSqrs = _vecHelper->createVec(limbCount);
     _tempVec = _vecHelper->createVec(limbCount);
+
+    _justOne = _mm256_set1_epi32(1);
 }
 
 Iterator::~Iterator()
 {
-    _vecHelper->freeVec(_zrSqrs);
-    _vecHelper->freeVec(_ziSqrs);
-    _vecHelper->freeVec(_sumOfSqrs);
-    _vecHelper->freeVec(_zRZiSqrs);
-    _vecHelper->freeVec(_tempVec);
+    //_vecHelper->freeVec(_zrSqrs);
+    //_vecHelper->freeVec(_ziSqrs);
+    //_vecHelper->freeVec(_sumOfSqrs);
+    //_vecHelper->freeVec(_zRZiSqrs);
+    //_vecHelper->freeVec(_tempVec);
 
     delete _vecHelper;
     delete _vMath;
@@ -42,30 +44,30 @@ Iterator::~Iterator()
 
 #pragma endregion
 
-bool Iterator::GenerateMapCol(int stride, int limbCount, __m256i* cr, __m256i* ci, __m256i& counts)
+bool Iterator::GenerateMapCol(__m256i* cr, __m256i* ci, __m256i& resultCounts)
 {
     __m256i haveEscapedFlags = _mm256_set1_epi32(0);
 
-    //__m256i doneFlags = _mm256_set1_epi32(0);
+    __m256i doneFlags = _mm256_set1_epi32(0);
 
-    counts = _mm256_set1_epi32(0);
-    __m256i resultCounts = _mm256_set1_epi32(0);
+    resultCounts = _mm256_set1_epi32(0);
+    __m256i counts = _mm256_set1_epi32(0);
 
     VecHelper* _vh = new VecHelper();
-    __m256i* zr = _vh->createVec(limbCount);
-    __m256i* zi = _vh->createVec(limbCount);
+    __m256i* zr = _vh->createVec(_limbCount);
+    __m256i* zi = _vh->createVec(_limbCount);
     //__m256i* resultZr = _vh->createVec(limbCount);
     //__m256i* resultZi = _vh->createVec(limbCount);
 
-    __m256i escapedFlags = _mm256_set1_epi32(0);
+    __m256i escapedFlagsVec = _mm256_set1_epi32(0);
 
-    IterateFirstRound(cr, ci, zr, zi, escapedFlags);
-    int compositeIsDone = UpdateCounts(limbCount, escapedFlags, counts, haveEscapedFlags);
+    IterateFirstRound(cr, ci, zr, zi, escapedFlagsVec);
+    int compositeIsDone = UpdateCounts(escapedFlagsVec, counts, resultCounts, doneFlags, haveEscapedFlags);
 
     while (compositeIsDone != -1)
     {
-        Iterate(cr, ci, zr, zi, escapedFlags);
-        compositeIsDone = UpdateCounts(limbCount, escapedFlags, counts, haveEscapedFlags);
+        Iterate(cr, ci, zr, zi, escapedFlagsVec);
+        compositeIsDone = UpdateCounts(escapedFlagsVec, counts, resultCounts, doneFlags, haveEscapedFlags);
     }
 
     _vh->freeVec(zr);
@@ -75,33 +77,19 @@ bool Iterator::GenerateMapCol(int stride, int limbCount, __m256i* cr, __m256i* c
     return true;
 }
 
-void Iterator::IterateFirstRound(__m256i* cr, __m256i* ci, __m256i* zr, __m256i* zi, __m256i& escapedFlags)
+void Iterator::IterateFirstRound(__m256i* cr, __m256i* ci, __m256i* zr, __m256i* zi, __m256i& escapedFlagsVec)
 {
-    int threshold = 4;
-    __m256i thresholdVector = _mm256_set1_epi32(threshold);
-
-    //VecHelper* _vh = new VecHelper();
-    
-    //__m256i* zrSqrs = _vh->createVec(limbCount);
-    //__m256i* ziSqrs = _vh->createVec(limbCount);
-    //__m256i* sumOfSqrs = _vh->createVec(limbCount);
-
-    //__m256i* zRZiSqrs = _vh->createVec(limbCount);
-    //__m256i* tempVec = _vh->createVec(limbCount);
-
     _vecHelper->copyVec(cr, zr, _limbCount);
     _vecHelper->copyVec(ci, zi, _limbCount);
-
-    //fp31VecMath* _vMath = new fp31VecMath(limbCount, 8);
 
     _vMath->Square(zr, _zrSqrs);
     _vMath->Square(zi, _ziSqrs);
 
     _vMath->Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
-    _vMath->IsGreaterOrEqThan(_sumOfSqrs[_limbCount - 1], thresholdVector, escapedFlags);
+    _vMath->IsGreaterOrEqThan(_sumOfSqrs[_limbCount - 1], _thresholdVector, escapedFlagsVec);
 }
 
-void Iterator::Iterate(__m256i* cr, __m256i* ci, __m256i* zr, __m256i* zi, __m256i& escapedFlags)
+void Iterator::Iterate(__m256i* cr, __m256i* ci, __m256i* zr, __m256i* zi, __m256i& escapedFlagsVec)
 {
 
     // square(z.r + z.i)
@@ -137,47 +125,45 @@ void Iterator::Iterate(__m256i* cr, __m256i* ci, __m256i* zr, __m256i* zi, __m25
     _vMath->Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
 
     //    _fp31VecMath.IsGreaterOrEqThan(ref _sumOfSqrs[^ 1], ref _thresholdVector, ref escapedFlagsVec);
-    _vMath->IsGreaterOrEqThan(_sumOfSqrs[_limbCount - 1], _thresholdVector, escapedFlags);
+    _vMath->IsGreaterOrEqThan(_sumOfSqrs[_limbCount - 1], _thresholdVector, escapedFlagsVec);
 
 }
 
-int Iterator::UpdateCounts(int limbCount, __m256i escapedFlags, __m256i& counts, __m256i& haveEscapedFlags)
+int Iterator::UpdateCounts(__m256i escapedFlagsVec, __m256i& counts, __m256i& resultCounts, __m256i& doneFlags, __m256i& hasEscapedFlags)
 {
     //counts = Avx2.Add(counts, _justOne);
 
-    //// Apply the new escapedFlags, only if the doneFlags is false for each vector position
+    counts = _mm256_add_epi32(counts, _justOne);
+
+    // Apply the new escapedFlags, only if the doneFlags is false for each vector position
     //hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
+    hasEscapedFlags = _mm256_blendv_epi8(escapedFlagsVec, hasEscapedFlags, doneFlags);
 
-    //// Compare the new Counts with the TargetIterations
+    // Compare the new Counts with the TargetIterations
     //var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsV);
+    __m256i targetReachedCompVec = _mm256_cmpgt_epi32(counts, _targetIterationsVector);
 
-    //var prevDoneFlagsV = doneFlagsV;
+    __m256i prevDoneFlags = doneFlags;
 
-    //// If escaped or reached the target iterations, we're done 
+    // If escaped or reached the target iterations, we're done 
     //doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
+    doneFlags = _mm256_or_epi32(hasEscapedFlags, targetReachedCompVec);
 
     //var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
     //var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
 
-    //if (compositeIsDone != prevCompositeIsDone)
-    //{
-    //    var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
+    int compositeIsDone = _mm256_movemask_epi8(doneFlags);
+    int prevCompositeIsDone = _mm256_movemask_epi8(prevDoneFlags);
 
-    //    // Save the current count 
-    //    resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
+    if (compositeIsDone != prevCompositeIsDone)
+    {
+        //var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
+        __m256i justNowDone = _mm256_cmpeq_epi32(prevDoneFlags, doneFlags);
 
-    //    // Save the current ZValues.
-    //    for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
-    //    {
-    //        resultZRs[limbPtr] = Avx2.BlendVariable(zRs[limbPtr].AsInt32(), resultZRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-    //        resultZIs[limbPtr] = Avx2.BlendVariable(zIs[limbPtr].AsInt32(), resultZIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-    //    }
-    //}
+        // Save the current count 
+        //resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
+        resultCounts = _mm256_blendv_epi8(counts, resultCounts, justNowDone);
+    }
 
-    //return compositeIsDone;
-
-
-    int result = -1;
-
-    return result;
+    return compositeIsDone;
 }

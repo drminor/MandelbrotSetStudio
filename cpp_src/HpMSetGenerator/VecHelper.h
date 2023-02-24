@@ -6,7 +6,7 @@ class VecHelper
 {
 public:
 
-	inline __m256i* createVec(const size_t n)
+	inline __m256i* createVec(const int n)
 	{
 		void* ptr;
 		size_t  alignment;
@@ -27,7 +27,7 @@ public:
 
 		for (int i = 0; i < n; i++)
 		{
-			result[i] = _mm256_xor_epi32(result[i], result[i]);
+			result[i] = _mm256_xor_si256(result[i], result[i]);
 		}
 #pragma warning( pop )
 
@@ -35,11 +35,11 @@ public:
 
 	}
 
-	inline void clearVec(size_t n, __m256i* vec)
+	inline void clearVec(int n, __m256i* vec)
 	{
 		for (int i = 0; i < n; i++)
 		{
-			vec[i] = _mm256_xor_epi32(vec[i], vec[i]);
+			vec[i] = _mm256_xor_si256(vec[i], vec[i]);
 		}
 	}
 

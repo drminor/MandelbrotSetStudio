@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace MSetGeneratorLib
+namespace MSetRowGeneratorClient
 {
 	internal static class NativeMethods
     {
@@ -18,10 +18,12 @@ namespace MSetGeneratorLib
 
 		//C:\Users\david\source\repos\MandelbrotSetStudio\x64\Debug
 		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\HpMSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern int GenerateMapSection(MSetRowRequestStruct requestStruct, IntPtr counts);
 
 
-
-		internal static extern void GenerateMapSection(MapSectionRequestStruct requestStruct, IntPtr counts);
+		//[DllImport("Whisper.dll", EntryPoint = "Exist", CallingConvention = CallingConvention.Cdecl)]
+		//[return: MarshalAs(UnmanagedType.I1)]
+		//public static extern bool Exist([MarshalAs(UnmanagedType.LPStr)] string name);
 
 
 

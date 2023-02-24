@@ -25,7 +25,7 @@ typedef struct _MSETREQ
     int VectorsPerRow;
 
     // Subdivision
-    char* subdivisionId;
+    //char* subdivisionId;
 
     // BlockSize
     int blockSizeWidth;
@@ -33,26 +33,28 @@ typedef struct _MSETREQ
 
     // MapCalcSettings;
     int maxIterations;
-    int threshold;
+    int thresholdForComparison;
     int iterationsPerStep;
 
 } MSETREQ;
 
 extern "C"
 {
-    __declspec(dllexport) bool GenerateMapSection(MSETREQ mapSectionRequest, __m256i* crForARow, __m256i* ci, __m256i* countsForARow)
+    __declspec(dllexport) int GenerateMapSection(MSETREQ mapSectionRequest, __m256i* crForARow, __m256i* ci, __m256i* countsForARow)
     {
         int targetCount = mapSectionRequest.maxIterations;
         int stride = mapSectionRequest.blockSizeWidth;
         int limbCount = mapSectionRequest.LimbCount;
         uint8_t bitsBeforeBp = mapSectionRequest.BitsBeforeBinaryPoint;
+        int targetIterations = mapSectionRequest.maxIterations;
+        int thresholdForComparison = mapSectionRequest.thresholdForComparison;
 
         std::cout << std::endl << "Generating MapSection with LimbCount: " << limbCount << " and Target Count:" << targetCount << std::endl;
 
         bool allRowSamplesHaveEscaped = true;
         int vectorsPerRow = mapSectionRequest.VectorsPerRow;
 
-        Iterator* _iterator = new Iterator(limbCount, bitsBeforeBp);
+        Iterator* _iterator = new Iterator(limbCount, bitsBeforeBp, targetIterations, thresholdForComparison);
 
         VecHelper* _vh = new VecHelper();
         __m256i* cr = _vh->createVec(limbCount);
@@ -67,7 +69,10 @@ extern "C"
             }
 
             __m256i countsVec = countsForARow[idx];
-        	bool allSamplesHaveEscaped = _iterator->GenerateMapCol(stride, limbCount, cr, ci, countsVec);
+        	bool allSamplesHaveEscaped = _iterator->GenerateMapCol(cr, ci, countsVec);
+
+            // Update the caller's counts
+            countsForARow[idx] = countsVec;
 
         	if (!allSamplesHaveEscaped)
         	{
@@ -79,7 +84,7 @@ extern "C"
         delete _vh;
         delete _iterator;
 
-        return allRowSamplesHaveEscaped;
+        return allRowSamplesHaveEscaped ? 1 : 0;
 
         //__m256i epi32_vec_2 = counts[0];
         //__m256i epi32_vec_3 = counts[1];
