@@ -11,6 +11,9 @@ namespace MSetRowGeneratorClientTest
 {
 	public class BaseSimdTest
 	{
+		private SamplePointBuilder? _samplePointBuilder;
+
+
 		[Fact]
 		public void Test1()
 		{
@@ -81,8 +84,8 @@ namespace MSetRowGeneratorClientTest
 
 		private IIterationState BuildIterationState(SizeInt blockSize, int limbCount, IteratorCoords iteratorCoords, MapCalcSettings mapCalcSettings)
 		{
-			var samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
-			var (samplePointsX, samplePointsY) = samplePointBuilder.BuildSamplePoints(iteratorCoords);
+			_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
+			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(iteratorCoords);
 
 			var mapSectionVectors = new MapSectionVectors(blockSize);
 			var mapSectionZVectors = new MapSectionZVectors(blockSize, limbCount);

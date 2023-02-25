@@ -16,23 +16,39 @@ namespace MSetRowGeneratorClient
 		{
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
+			// SamplePointsX
+			var samplePointsX = GetSamplePointsX(iterationState);
+			var spxBuffer = Marshal.AllocCoTaskMem(samplePointsX.Length);
+			Marshal.Copy(samplePointsX, 0, spxBuffer, samplePointsX.Length);
+
+			// SamplePointY
+			var yPointVecs = GetYPointVecs(iterationState);
+			var ypBuffer = Marshal.AllocCoTaskMem(yPointVecs.Length);
+			Marshal.Copy(yPointVecs, 0, ypBuffer, yPointVecs.Length);
+
 			// Counts
 			var counts = GetCounts(iterationState, requestStruct.RowNumber);
 			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
 			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
 
-			// Call GenerateMapSectionRow
-			var intResult = NativeMethods.GenerateMapSectionRow(requestStruct, countsBuffer);
+			// Generate a MapSectionRow
+			var intResult = NativeMethods.GenerateMapSectionRow(requestStruct, spxBuffer, ypBuffer, countsBuffer);
 
 			// Counts
 			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
 			Marshal.FreeCoTaskMem(countsBuffer);
 			PutCounts(iterationState, requestStruct.RowNumber, counts);
 
+			Marshal.FreeCoTaskMem(ypBuffer);
+			Marshal.FreeCoTaskMem(spxBuffer);
+
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
-			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
+			//Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
 
 			return allRowSamplesHaveEscaped;
+
+
+
 		}
 
 		#endregion
@@ -182,7 +198,8 @@ namespace MSetRowGeneratorClient
 				throw new ArgumentException("The iteration state must have a non-null row number.");
 			}
 
-			result.RowNumber = iterationState.RowNumber.Value;
+			result.BlockSizeWidth = iterationState.ValuesPerRow;
+			result.BlockSizeHeight = iterationState.RowCount;
 
 			result.BitsBeforeBinaryPoint = apFixedPointFormat.BitsBeforeBinaryPoint;
 			result.LimbCount = apFixedPointFormat.LimbCount;
@@ -195,15 +212,15 @@ namespace MSetRowGeneratorClient
 
 			//result.subdivisionId = ObjectId.Empty.ToString();
 
-			result.blockSizeWidth = iterationState.ValuesPerRow;
-			result.blockSizeHeight = iterationState.RowCount;
+			// The RowNumber to calculate
+			result.RowNumber = iterationState.RowNumber.Value;
 
-			result.maxIterations = mapCalcSettings.TargetIterations;
+			result.TargetIterations = mapCalcSettings.TargetIterations;
 
 			var thresholdForComparison = GetThresholdValueForCompare(mapCalcSettings.Threshold, apFixedPointFormat);
 
-			result.thresholdForComparison = thresholdForComparison;
-			result.iterationsPerStep = -1;
+			result.ThresholdForComparison = thresholdForComparison;
+			result.IterationsPerStep = -1;
 
 			return result;
 		}

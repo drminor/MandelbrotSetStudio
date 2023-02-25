@@ -12,7 +12,9 @@
 
 typedef struct _MSETREQ
 {
-    int RowNumber;
+    // BlockSize
+    int BlockSizeWidth;
+    int BlockSizeHeight;
 
     // ApFixedPointFormat
     int BitsBeforeBinaryPoint;
@@ -27,63 +29,69 @@ typedef struct _MSETREQ
     // Subdivision
     //char* subdivisionId;
 
-    // BlockSize
-    int blockSizeWidth;
-    int blockSizeHeight;
+    // The row to calculate
+    int RowNumber;
 
     // MapCalcSettings;
-    int maxIterations;
-    int thresholdForComparison;
+    int TargetIterations;
+    int ThresholdForComparison;
     int iterationsPerStep;
 
 } MSETREQ;
-
-
 
 extern "C"
 {
     __declspec(dllexport) int GenerateMapSectionRow(MSETREQ mapSectionRequest, __m256i* crsForARow, __m256i* ciVec, __m256i* countsForARow)
     {
-        int stride = mapSectionRequest.blockSizeWidth;
+        typedef std::vector<__m256i, aligned_allocator<__m256i, sizeof(__m256i)> > aligned_vector;
+
         int limbCount = mapSectionRequest.LimbCount;
         uint8_t bitsBeforeBp = mapSectionRequest.BitsBeforeBinaryPoint;
-        int targetIterations = mapSectionRequest.maxIterations;
-        int thresholdForComparison = mapSectionRequest.thresholdForComparison;
+        int targetExponent = mapSectionRequest.TargetExponent;
 
-        _RPTA("Generating MapSectionRow with LimbCount: %d and Target Iterations: %d\n", limbCount, targetIterations);
+        int targetIterations = mapSectionRequest.TargetIterations;
+        int thresholdForComparison = mapSectionRequest.ThresholdForComparison;
+
+        _RPTA("Generating a MapSectionRow with LimbCount: %d and Target Iterations: %d\n", limbCount, targetIterations);
+
+        fp31VecMath vMath = fp31VecMath(limbCount, bitsBeforeBp, targetExponent);
+        Iterator iterator = Iterator(&vMath, targetIterations, thresholdForComparison);
+
+        aligned_vector* ci = new aligned_vector(limbCount);
+        for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
+        {
+            ci->push_back(ciVec[limbPtr]);
+        }
+
+        aligned_vector* cr = new aligned_vector(limbCount);
 
         bool allRowSamplesHaveEscaped = true;
-        //int vectorsPerRow = mapSectionRequest.VectorsPerRow;
+        int vectorsPerRow = mapSectionRequest.VectorsPerRow;
 
-        //Iterator* _iterator = new Iterator(limbCount, bitsBeforeBp, targetIterations, thresholdForComparison);
+        for (int idx = 0; idx < vectorsPerRow; idx++)
+        {
+            int vPtr = idx * limbCount;
 
-        //VecHelper* _vh = new VecHelper();
-        //__m256i* cr = _vh->createVec(limbCount);
+            for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
+            {
+                cr->push_back(crsForARow[vPtr + limbCount]);
+            }
 
-        //for (int idx = 0; idx < vectorsPerRow; idx++)
-        //{
-        //    int vPtr = idx * limbCount;
+            __m256i countsVec = countsForARow[idx];
+            bool allSamplesHaveEscaped = iterator.GenerateMapCol(cr, ci, countsVec);
 
-        //    for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
-        //    {
-        //        cr[limbPtr] = crsForARow[vPtr++];
-        //    }
+            countsForARow[idx] = countsVec;
 
-        //    __m256i countsVec = countsForARow[idx];
-        //	bool allSamplesHaveEscaped = _iterator->GenerateMapCol(cr, ciVec, countsVec);
+            cr->clear();
 
-        //    // Update the caller's counts
-        //    countsForARow[idx] = countsVec;
+            if (!allSamplesHaveEscaped)
+            {
+                allRowSamplesHaveEscaped = false;
+            }
+        }
 
-        //	if (!allSamplesHaveEscaped)
-        //	{
-        //		allRowSamplesHaveEscaped = false;
-        //	}
-        //}
-
-        //_vh->freeVec(cr);
-        //delete _vh;
-        //delete _iterator;
+        delete ci;
+        delete cr;
 
         return allRowSamplesHaveEscaped ? 1 : 0;
     }
@@ -127,7 +135,7 @@ extern "C"
         //int stride = mapSectionRequest.blockSizeWidth;
         int limbCount = mapSectionRequest.LimbCount;
         //uint8_t bitsBeforeBp = mapSectionRequest.BitsBeforeBinaryPoint;
-        int targetIterations = mapSectionRequest.maxIterations;
+        int targetIterations = mapSectionRequest.TargetIterations;
         //int thresholdForComparison = mapSectionRequest.thresholdForComparison;
 
         _RPTA("Running BaseSimdTest2 with LimbCount: %d and Target Iterations: %d\n", limbCount, targetIterations);
@@ -196,16 +204,18 @@ extern "C"
 
         int limbCount = mapSectionRequest.LimbCount;
         uint8_t bitsBeforeBp = mapSectionRequest.BitsBeforeBinaryPoint;
-        int targetIterations = mapSectionRequest.maxIterations;
-        int thresholdForComparison = mapSectionRequest.thresholdForComparison;
+        int targetIterations = mapSectionRequest.TargetIterations;
+
+        int targetExponent = mapSectionRequest.TargetExponent;
+        int thresholdForComparison = mapSectionRequest.ThresholdForComparison;
 
         _RPTA("Running BaseSimdTest3 with LimbCount: %d and Target Iterations: %d\n", limbCount, targetIterations);
 
         bool allRowSamplesHaveEscaped = true;
         int vectorsPerRow = mapSectionRequest.VectorsPerRow;
 
-        fp31VecMath vMath = fp31VecMath(limbCount, bitsBeforeBp);
-        Iterator iterator = Iterator(limbCount, bitsBeforeBp, targetIterations, thresholdForComparison);
+        fp31VecMath vMath = fp31VecMath(limbCount, bitsBeforeBp, targetExponent);
+        Iterator iterator = Iterator(&vMath, targetIterations, thresholdForComparison);
 
         aligned_vector* ci = new aligned_vector(limbCount);
         for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
@@ -225,14 +235,9 @@ extern "C"
             }
 
             __m256i countsVec = countsForARow[idx];
-            bool allSamplesHaveEscaped = iterator.GenerateMapCol(cr, ci, countsVec, vMath);
+            bool allSamplesHaveEscaped = iterator.GenerateMapCol(cr, ci, countsVec);
 
-            //bool allSamplesHaveEscaped = false;
-
-            // Update the caller's counts
-            //countsForARow[idx] = countsVec;
-
-            countsForARow[idx] = _mm256_set1_epi32(1);
+            countsForARow[idx] = countsVec;
 
             cr->clear();
 

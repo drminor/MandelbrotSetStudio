@@ -18,7 +18,7 @@ namespace MSetRowGeneratorClient
 
 		//C:\Users\david\source\repos\MandelbrotSetStudio\x64\Debug
 		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\HpMSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
-		internal static extern int GenerateMapSectionRow(MSetRowRequestStruct requestStruct, IntPtr counts);
+		internal static extern int GenerateMapSectionRow(MSetRowRequestStruct requestStruct, IntPtr crsForARow, IntPtr ciVec, IntPtr countsForARow);
 
 		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\HpMSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int BaseSimdTest(MSetRowRequestStruct requestStruct, IntPtr counts);

@@ -13,22 +13,20 @@
 
 #pragma region Constructor / Destructor
 
-Iterator::Iterator(int limbCount, uint8_t bitsBeforeBp, int targetIterations, int thresholdForComparison)
+Iterator::Iterator(fp31VecMath* const vMath, int targetIterations, int thresholdForComparison)
 {
-    _limbCount = limbCount;
-
-    //_vMath = new fp31VecMath(limbCount, bitsBeforeBp);
+    _vMath = vMath;
 
     _thresholdVector = _mm256_set1_epi32(thresholdForComparison);
 
     _targetIterationsVector = _mm256_set1_epi32(targetIterations);
 
-    _zrSqrs = new aligned_vector(limbCount);
-    _ziSqrs = new aligned_vector(limbCount);
-    _sumOfSqrs = new aligned_vector(limbCount);
+    _zrSqrs = new aligned_vector(_vMath->LimbCount);
+    _ziSqrs = new aligned_vector(_vMath->LimbCount);
+    _sumOfSqrs = new aligned_vector(_vMath->LimbCount);
 
-    _zRZiSqrs = new aligned_vector(limbCount);
-    _tempVec = new aligned_vector(limbCount);
+    _zRZiSqrs = new aligned_vector(_vMath->LimbCount);
+    _tempVec = new aligned_vector(_vMath->LimbCount);
 
     _justOne = _mm256_set1_epi32(1);
 }
@@ -40,13 +38,11 @@ Iterator::~Iterator()
     delete _sumOfSqrs;
     delete _zRZiSqrs;
     delete _tempVec;
-
-    //delete _vMath;
 }
 
 #pragma endregion
 
-bool Iterator::GenerateMapCol(aligned_vector* cr, aligned_vector* ciVec, __m256i& resultCounts, fp31VecMath vMath)
+bool Iterator::GenerateMapCol(aligned_vector* cr, aligned_vector* ciVec, __m256i& resultCounts)
 {
     __m256i haveEscapedFlags = _mm256_set1_epi32(0);
 
@@ -55,76 +51,81 @@ bool Iterator::GenerateMapCol(aligned_vector* cr, aligned_vector* ciVec, __m256i
     resultCounts = _mm256_set1_epi32(0);
     __m256i counts = _mm256_set1_epi32(0);
 
-    aligned_vector* zr = new aligned_vector(_limbCount);
-    aligned_vector* zi = new aligned_vector(_limbCount);
+    aligned_vector* zr = new aligned_vector(_vMath->LimbCount);
+    aligned_vector* zi = new aligned_vector(_vMath->LimbCount);
 
     //__m256i* resultZr = _vh->createVec(limbCount);
     //__m256i* resultZi = _vh->createVec(limbCount);
 
     __m256i escapedFlagsVec = _mm256_set1_epi32(0);
 
-    IterateFirstRound(cr, ciVec, zr, zi, escapedFlagsVec, vMath);
+    IterateFirstRound(cr, ciVec, zr, zi, escapedFlagsVec);
     int compositeIsDone = UpdateCounts(escapedFlagsVec, counts, resultCounts, doneFlags, haveEscapedFlags);
 
     while (compositeIsDone != -1)
     {
-        Iterate(cr, ciVec, zr, zi, escapedFlagsVec, vMath);
+        Iterate(cr, ciVec, zr, zi, escapedFlagsVec);
         compositeIsDone = UpdateCounts(escapedFlagsVec, counts, resultCounts, doneFlags, haveEscapedFlags);
     }
 
+    int allEscaped = _mm256_movemask_epi8(haveEscapedFlags);
 
-    return true;
+    return allEscaped == -1 ? true : false;
 }
 
-void Iterator::IterateFirstRound(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec, fp31VecMath vMath)
+void Iterator::IterateFirstRound(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec)
 {
+    for (int i = 0; i < _vMath->LimbCount; i++) {
+        zr->at(i) = cr->at(i);
+        zi->at(i) = ci->at(i);
+    }
     //_vecHelper->copyVec(cr, zr, _limbCount);
     //_vecHelper->copyVec(ci, zi, _limbCount);
 
-    vMath.Square(zr, _zrSqrs);
-    vMath.Square(zi, _ziSqrs);
+    _vMath->Square(zr, _zrSqrs);
+    _vMath->Square(zi, _ziSqrs);
 
-    vMath.Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
-    vMath.IsGreaterOrEqThan(_sumOfSqrs->at((size_t) _limbCount - 1), _thresholdVector, escapedFlagsVec);
+    _vMath->Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
+    _vMath->IsGreaterOrEqThan(_sumOfSqrs->at((size_t)_vMath->LimbCount - 1), _thresholdVector, escapedFlagsVec);
 }
 
-void Iterator::Iterate(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec, fp31VecMath vMath)
+void Iterator::Iterate(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec)
 {
 
     // square(z.r + z.i)
     //    _fp31VecMath.Add(zrs, zis, _temp);
-    vMath.Add(zr, zi, _tempVec);
+    _vMath->Add(zr, zi, _tempVec);
 
     //    _fp31VecMath.Square(_temp, _zRZiSqrs);
-    vMath.Square(_tempVec, _zRZiSqrs);
+    _vMath->Square(_tempVec, _zRZiSqrs);
 
     // z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd
     //    _fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
-    vMath.Sub(_zRZiSqrs, _zrSqrs, zi);
+    _vMath->Sub(_zRZiSqrs, _zrSqrs, zi);
 
     //    _fp31VecMath.Sub(zis, _zISqrs, _temp);
-    vMath.Sub(zi, _ziSqrs, _tempVec);
+    _vMath->Sub(zi, _ziSqrs, _tempVec);
 
     //    _fp31VecMath.Add(_temp, cis, zis);
-    vMath.Add(_tempVec, ci, zi);
+    _vMath->Add(_tempVec, ci, zi);
 
     // z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
     //    _fp31VecMath.Sub(_zRSqrs, _zISqrs, _temp);
-    vMath.Sub(_zrSqrs, _ziSqrs, _tempVec);
+    _vMath->Sub(_zrSqrs, _ziSqrs, _tempVec);
     
     //    _fp31VecMath.Add(_temp, crs, zrs);
-    vMath.Add(_tempVec, cr, zr);
+    _vMath->Add(_tempVec, cr, zr);
 
     //    _fp31VecMath.Square(zrs, _zRSqrs);
     //    _fp31VecMath.Square(zis, _zISqrs);
     //    _fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-    vMath.Square(zr, _zrSqrs);
-    vMath.Square(zi, _ziSqrs);
-    vMath.Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
+    _vMath->Square(zr, _zrSqrs);
+    _vMath->Square(zi, _ziSqrs);
+    _vMath->Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
 
     //    _fp31VecMath.IsGreaterOrEqThan(ref _sumOfSqrs[^ 1], ref _thresholdVector, ref escapedFlagsVec);
-    vMath.IsGreaterOrEqThan(_sumOfSqrs->at(_limbCount - 1), _thresholdVector, escapedFlagsVec);
+    _vMath->IsGreaterOrEqThan(_sumOfSqrs->at((size_t)_vMath->LimbCount - 1), _thresholdVector, escapedFlagsVec);
 
 }
 
@@ -146,7 +147,7 @@ int Iterator::UpdateCounts(__m256i escapedFlagsVec, __m256i& counts, __m256i& re
 
     // If escaped or reached the target iterations, we're done 
     //doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
-    doneFlags = _mm256_or_epi32(hasEscapedFlags, targetReachedCompVec);
+    doneFlags = _mm256_or_si256(hasEscapedFlags, targetReachedCompVec);
 
     //var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
     //var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());

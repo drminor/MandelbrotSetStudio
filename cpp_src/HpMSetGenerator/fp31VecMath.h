@@ -7,8 +7,6 @@ typedef std::vector<__m256i, aligned_allocator<__m256i, sizeof(__m256i)> > align
 
 class fp31VecMath
 {
-	int _limbCount;
-
 	const uint32_t LOW31_BITS_SET = 0x7FFFFFFF; // bits 0 - 30 are set.
 	const __m256i HIGH33_MASK_VEC = _mm256_set1_epi32(LOW31_BITS_SET);
 
@@ -30,8 +28,8 @@ class fp31VecMath
 	const __m256i SHUFFLE_EXP_LOW_VEC = _mm256_set_epi32(0u, 0u, 1u, 1u, 2u, 2u, 3u, 3u);
 	const __m256i SHUFFLE_EXP_HIGH_VEC = _mm256_set_epi32(4u, 4u, 5u, 5u, 6u, 6u, 7u, 7u);
 
-	const __m256i SHUFFLE_PACK_LOW_VEC = _mm256_set_epi32(0u, 2u, 4u, 6u, 0u, 0u, 0u, 0u);
-	const __m256i SHUFFLE_PACK_HIGH_VEC = _mm256_set_epi32(0u, 0u, 0u, 0u, 0u, 2u, 4u, 6u);
+	const __m256i SHUFFLE_PACK_LOW_VEC = _mm256_set_epi32(0u, 2u, 4u, 6u, 1u, 1u, 1u, 1u);
+	const __m256i SHUFFLE_PACK_HIGH_VEC = _mm256_set_epi32(1u, 1u, 1u, 1u, 0u, 2u, 4u, 6u);
 
 	aligned_vector* _squareResult0Lo;
 	aligned_vector* _squareResult0Hi;
@@ -48,7 +46,7 @@ class fp31VecMath
 	__m256i _ones = _mm256_set1_epi32(1);
 
 	__m256i _carryVectors = _mm256_set1_epi32(0);
-	__m256i _carryVectorsLong = _mm256_set1_epi32(0);
+	__m256i _carryVectorsLong = _mm256_set1_epi64x(0);
 
 	__m256i _signBitVecs = _mm256_set1_epi32(0);
 
@@ -64,7 +62,9 @@ class fp31VecMath
 
 public:
 
-	fp31VecMath(int limbCount, uint8_t bitsBeforeBp);
+	int LimbCount;
+
+	fp31VecMath(int limbCount, uint8_t bitsBeforeBp, int targetExponent);
 	~fp31VecMath();
 
 

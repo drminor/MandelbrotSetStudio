@@ -5,12 +5,12 @@ namespace MSetRowGeneratorClient
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 	public struct MSetRowRequestStruct
 	{
-		// The row to calculate
-
-		public int RowNumber;
-
-        // ApFixedPointFormat
-        public int BitsBeforeBinaryPoint;
+		// BlockSize
+		public int BlockSizeWidth;
+		public int BlockSizeHeight;
+		
+		// ApFixedPointFormat
+		public int BitsBeforeBinaryPoint;
         public int LimbCount;
         public int NumberOfFractionalBits;
         public int TotalBits;
@@ -19,16 +19,15 @@ namespace MSetRowGeneratorClient
 		public int Lanes;
 		public int VectorsPerRow;
 
-        // Subdivision
+		// Subdivision
 		//public string subdivisionId;
 
-		// BlockSize
-		public int blockSizeWidth;
-		public int blockSizeHeight;
+		// The row to calculate
+		public int RowNumber;
 
 		// MapCalcSettings;
-		public int maxIterations;
-		public int thresholdForComparison;
-		public int iterationsPerStep;
+		public int TargetIterations;
+		public int ThresholdForComparison;
+		public int IterationsPerStep;
 	}
 }

@@ -69,10 +69,10 @@ namespace MSetGeneratorPrototype
 
 			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
 
-			if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
-			 {
-				return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
-			}
+			//if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
+			// {
+			//	return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
+			//}
 
 			var stopwatch = Stopwatch.StartNew();
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
@@ -93,7 +93,7 @@ namespace MSetGeneratorPrototype
 			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 			UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
-			//ReportResults(coords, mapSectionRequest, result, ct);
+			ReportResults(coords, mapSectionRequest, result, ct);
 
 			return result;
 		}
