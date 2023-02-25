@@ -1,29 +1,26 @@
 #include "pch.h"
-#include "fp31VecMath.h"
+#include "Fp31VecMath.h"
 
-//#include "simd_aligned_allocator.h"
-//
-//typedef std::vector<__m256i, aligned_allocator<__m256i, sizeof(__m256i)> > aligned_vector;
 
 #pragma region Constructor / Destructor
 
-fp31VecMath::fp31VecMath(int limbCount, uint8_t bitsBeforeBp, int targetExponent)
+Fp31VecMath::Fp31VecMath(int limbCount, int bitsBeforeBp, int targetExponent)
 {
 	LimbCount = limbCount;
 	_bitsBeforeBp = bitsBeforeBp;
 	_targetExponent = targetExponent;
 
-	_squareResult0Lo = new aligned_vector(limbCount);
-	_squareResult0Hi = new aligned_vector(limbCount);
+	_squareResult0Lo = CreateLimbSet();
+	_squareResult0Hi = CreateLimbSet();
 
-	_squareResult1Lo = new aligned_vector(limbCount * 2);
-	_squareResult1Hi = new aligned_vector(limbCount * 2);
+	_squareResult1Lo = CreateWideLimbSet();
+	_squareResult1Hi = CreateWideLimbSet();
 
-	_squareResult2Lo = new aligned_vector(limbCount * 2);
-	_squareResult2Hi = new aligned_vector(limbCount * 2);
+	_squareResult2Lo = CreateWideLimbSet();
+	_squareResult2Hi = CreateWideLimbSet();
 
-	_negationResult = new aligned_vector(limbCount);
-	_additionResult = new aligned_vector(limbCount);
+	_negationResult = CreateWideLimbSet();
+	_additionResult = CreateWideLimbSet();
 
 	_shiftAmount = _bitsBeforeBp;
 	_inverseShiftAmount = EFFECTIVE_BITS_PER_LIMB - _shiftAmount;
@@ -33,7 +30,7 @@ fp31VecMath::fp31VecMath(int limbCount, uint8_t bitsBeforeBp, int targetExponent
 	//MathOpCounts = new MathOpCounts();
 }
 
-fp31VecMath::~fp31VecMath()
+Fp31VecMath::~Fp31VecMath()
 {
 	delete _squareResult0Lo;
 	delete _squareResult0Hi;
@@ -47,10 +44,10 @@ fp31VecMath::~fp31VecMath()
 
 #pragma endregion
 
+
 #pragma region Multiply and Square
 
-
-void fp31VecMath::Square(aligned_vector* const source, aligned_vector* const result)
+void Fp31VecMath::Square(__m256i* const source, __m256i* const result)
 {
 	//CheckReservedBitIsClear(a, "Squaring");
 
@@ -68,7 +65,7 @@ void fp31VecMath::Square(aligned_vector* const source, aligned_vector* const res
 	ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, result);
 }
 
-void fp31VecMath::SquareInternal(aligned_vector* const source, aligned_vector* const result)
+void Fp31VecMath::SquareInternal(__m256i* const source, __m256i* const result)
 {
 	// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
@@ -81,7 +78,7 @@ void fp31VecMath::SquareInternal(aligned_vector* const source, aligned_vector* c
 			int resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
 
 			//var productVector = Avx2.Multiply(source[j], source[i]);
-			__m256i product = _mm256_mul_epu32(source->at(j), source->at(i));
+			__m256i product = _mm256_mul_epu32(source[j], source[i]);
 			//IncrementNoMultiplications();
 
 			if (i > j)
@@ -96,8 +93,8 @@ void fp31VecMath::SquareInternal(aligned_vector* const source, aligned_vector* c
 			//	result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
 			//	result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
 			
-			result->at(resultPtr) = _mm256_add_epi64(result->at(resultPtr), _mm256_and_si256(product, HIGH33_MASK_VEC_L));
-			result->at((size_t)resultPtr + 1) =_mm256_add_epi64(result->at((size_t)resultPtr + 1), _mm256_srli_epi64(product, EFFECTIVE_BITS_PER_LIMB));
+			result[resultPtr] = _mm256_add_epi64(result[resultPtr], _mm256_and_si256(product, HIGH33_MASK_VEC_L));
+			result[(size_t)resultPtr + 1] = _mm256_add_epi64(result[(size_t)resultPtr + 1], _mm256_srli_epi64(product, EFFECTIVE_BITS_PER_LIMB));
 
 
 			//MathOpCounts.NumberOfSplits++;
@@ -110,7 +107,7 @@ void fp31VecMath::SquareInternal(aligned_vector* const source, aligned_vector* c
 
 #pragma region Multiplication Post Processing
 
-void fp31VecMath::SumThePartials(aligned_vector* const source, aligned_vector* const result)
+void Fp31VecMath::SumThePartials(__m256i* const source, __m256i* const result)
 {
 	// To be used after a multiply operation.
 	// Process the carry portion of each result bin.
@@ -123,17 +120,17 @@ void fp31VecMath::SumThePartials(aligned_vector* const source, aligned_vector* c
 
 	for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 	{
-		__m256i withCarries = _mm256_add_epi64(source->at(limbPtr), _carryVectorsLong);
+		__m256i withCarries = _mm256_add_epi64(source[limbPtr], _carryVectorsLong);
 
-		result->at(limbPtr) = _mm256_and_si256(withCarries, HIGH33_MASK_VEC_L);				// The low 31 bits of the sum is the result.
+		result[limbPtr] = _mm256_and_si256(withCarries, HIGH33_MASK_VEC_L);				// The low 31 bits of the sum is the result.
 		_carryVectorsLong = _mm256_srli_epi64(withCarries, EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
 
 		// Clear the source so that square internal will not have to make a separate call.
-		source->at(limbPtr) = _mm256_xor_si256(source->at(limbPtr), source->at(limbPtr));
+		source[limbPtr] = _mm256_xor_si256(source[limbPtr], source[limbPtr]);
 	}
 }
 
-void fp31VecMath::ShiftAndTrim(aligned_vector* const sourceLimbsLo, aligned_vector* const sourceLimbsHi, aligned_vector* const resultLimbs)
+void Fp31VecMath::ShiftAndTrim(__m256i* const sourceLimbsLo, __m256i* const sourceLimbsHi, __m256i* const resultLimbs)
 {
 	//ValidateIsSplit(mantissa);
 
@@ -154,27 +151,27 @@ void fp31VecMath::ShiftAndTrim(aligned_vector* const sourceLimbsLo, aligned_vect
 			// Calculate the lo end
 
 			// Take the bits from the source limb, discarding the top shiftAmount of bits.
-			__m256i source = sourceLimbsLo->at((size_t)limbPtr + sourceIndex);
+			__m256i source = sourceLimbsLo[(size_t)limbPtr + sourceIndex];
 			__m256i wideResultLow = _mm256_and_si256(_mm256_slli_epi64(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
 			// Take the top shiftAmount of bits from the previous limb
-			__m256i prevSource = sourceLimbsLo->at((size_t)limbPtr + sourceIndex - 1);
+			__m256i prevSource = sourceLimbsLo[(size_t)limbPtr + sourceIndex - 1];
 			wideResultLow = _mm256_or_si256(wideResultLow, _mm256_srli_epi64(_mm256_and_si256(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
 			// Calculate the hi end
 
 			// Take the bits from the source limb, discarding the top shiftAmount of bits.
-			source = sourceLimbsHi->at((size_t)limbPtr + sourceIndex);
+			source = sourceLimbsHi[(size_t)limbPtr + sourceIndex];
 			__m256i wideResultHigh = _mm256_and_si256(_mm256_slli_epi64(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
 			// Take the top shiftAmount of bits from the previous limb
-			prevSource = sourceLimbsHi->at((size_t)limbPtr + sourceIndex - 1);
+			prevSource = sourceLimbsHi[(size_t)limbPtr + sourceIndex - 1];
 			wideResultHigh = _mm256_or_si256(wideResultHigh, _mm256_srli_epi64(_mm256_and_si256(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
 			__m256i low128 = _mm256_permutevar8x32_epi32(wideResultLow, SHUFFLE_PACK_LOW_VEC);
 			__m256i high128 = _mm256_permutevar8x32_epi32(wideResultHigh, SHUFFLE_PACK_HIGH_VEC);
 
-			resultLimbs->at(limbPtr) = _mm256_or_si256(low128, high128);
+			resultLimbs[limbPtr] = _mm256_or_si256(low128, high128);
 
 			//MathOpCounts.NumberOfSplits += 4;
 
@@ -185,7 +182,7 @@ void fp31VecMath::ShiftAndTrim(aligned_vector* const sourceLimbsLo, aligned_vect
 
 #pragma region Add and Subtract
 
- void fp31VecMath::Sub(aligned_vector* const left, aligned_vector* const right, aligned_vector* const result)
+ void Fp31VecMath::Sub(__m256i* const left, __m256i* const right, __m256i* const result)
  {
 	 //CheckReservedBitIsClear(b, "Negating B");
 
@@ -195,17 +192,17 @@ void fp31VecMath::ShiftAndTrim(aligned_vector* const sourceLimbsLo, aligned_vect
 	 Add(left, _negationResult, result);
  }
  
-void fp31VecMath::Add(aligned_vector* const left, aligned_vector* const right, aligned_vector* const result)
+void Fp31VecMath::Add(__m256i* const left, __m256i* const right, __m256i* const result)
 {
 	_carryVectors = _mm256_xor_si256(_carryVectors, _carryVectors);
 
 	 for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 	 {
-		 __m256i sumVector = _mm256_add_epi32(left->at(limbPtr), right->at(limbPtr));
+		 __m256i sumVector = _mm256_add_epi32(left[limbPtr], right[limbPtr]);
 		 __m256i newValuesVector = _mm256_add_epi32(sumVector, _carryVectors);
 		 //MathOpCounts.NumberOfAdditions += 2;
 
-		 result->at(limbPtr) = _mm256_and_si256(newValuesVector, HIGH33_MASK_VEC);			// The low 31 bits of the sum is the result.
+		 result[limbPtr] = _mm256_and_si256(newValuesVector, HIGH33_MASK_VEC);			// The low 31 bits of the sum is the result.
 		 _carryVectors = _mm256_srli_epi32(newValuesVector, EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
 	 }
 }
@@ -214,23 +211,23 @@ void fp31VecMath::Add(aligned_vector* const left, aligned_vector* const right, a
 
 #pragma region Two Compliment Support
 
-void fp31VecMath::Negate(aligned_vector* const source, aligned_vector* const result)
+void Fp31VecMath::Negate(__m256i* const source, __m256i* const result)
 {
 	_carryVectors = _ones;
 
 	for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 	{
-		__m256i notVector = _mm256_xor_si256(source->at(limbPtr), ALL_BITS_SET_VEC);
+		__m256i notVector = _mm256_xor_si256(source[limbPtr], ALL_BITS_SET_VEC);
 		__m256i newValuesVector = _mm256_add_epi32(notVector, _carryVectors);
 		//MathOpCounts.NumberOfAdditions += 2;
 
-		result->at(limbPtr) = _mm256_and_si256(newValuesVector, HIGH33_MASK_VEC); ;
+		result[limbPtr] = _mm256_and_si256(newValuesVector, HIGH33_MASK_VEC); ;
 		_carryVectors = _mm256_srli_epi32(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
 		//MathOpCounts.NumberOfSplits++;
 	}
 }
 
-void fp31VecMath::ConvertFrom2C(aligned_vector* const source, aligned_vector* const resultLo, aligned_vector* const resultHi)
+void Fp31VecMath::ConvertFrom2C(__m256i* const source, __m256i* const resultLo, __m256i* const resultHi)
 {
 	//CheckReservedBitIsClear(source, "ConvertFrom2C");
 
@@ -242,10 +239,10 @@ void fp31VecMath::ConvertFrom2C(aligned_vector* const source, aligned_vector* co
 		for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 		{
 			// Take the lower 4 values and set the low halves of each result
-			resultLo->at(limbPtr) = _mm256_and_si256(_mm256_permutevar8x32_epi32(source->at(limbPtr), SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+			resultLo[limbPtr] = _mm256_and_si256(_mm256_permutevar8x32_epi32(source[limbPtr], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
 
 			// Take the higher 4 values and set the low halves of each result
-			resultHi->at(limbPtr) = _mm256_and_si256(_mm256_permutevar8x32_epi32(source->at(limbPtr), SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+			resultHi[limbPtr] = _mm256_and_si256(_mm256_permutevar8x32_epi32(source[limbPtr], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 		}
 	}
 	else
@@ -255,7 +252,7 @@ void fp31VecMath::ConvertFrom2C(aligned_vector* const source, aligned_vector* co
 
 		for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 		{
-			__m256i notVector = _mm256_xor_si256(source->at(limbPtr), ALL_BITS_SET_VEC);
+			__m256i notVector = _mm256_xor_si256(source[limbPtr], ALL_BITS_SET_VEC);
 			__m256i newValuesVector = _mm256_add_epi32(notVector, _carryVectors);
 			//MathOpCounts.NumberOfAdditions += 2;
 
@@ -264,20 +261,20 @@ void fp31VecMath::ConvertFrom2C(aligned_vector* const source, aligned_vector* co
 
 			//MathOpCounts.NumberOfSplits++;
 
-			__m256i cLimbValues = (_mm256_blendv_epi8(limbValues, source->at(limbPtr), _signBitVecs));
+			__m256i cLimbValues = (_mm256_blendv_epi8(limbValues, source[limbPtr], _signBitVecs));
 
 			// Take the lower 4 values and set the low halves of each result
-			resultLo->at(limbPtr) = _mm256_and_si256(_mm256_permutevar8x32_epi32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+			resultLo[limbPtr] = _mm256_and_si256(_mm256_permutevar8x32_epi32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
 
 			// Take the higher 4 values and set the low halves of each result
-			resultHi->at(limbPtr) = _mm256_and_si256(_mm256_permutevar8x32_epi32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+			resultHi[limbPtr] = _mm256_and_si256(_mm256_permutevar8x32_epi32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 		}
 	}
 }
 
-int fp31VecMath::GetSignBits(aligned_vector* const source, __m256i &signBitVecs)
+int Fp31VecMath::GetSignBits(__m256i* const source, __m256i &signBitVecs)
 {
-	__m256i msl = source->at((size_t)LimbCount - 1);
+	__m256i msl = source[(size_t)LimbCount - 1];
 	__m256i left = _mm256_and_si256(msl, TEST_BIT_30_VEC);
 	signBitVecs = _mm256_cmpeq_epi32(left, ZERO_VEC);
 	
@@ -290,9 +287,9 @@ int fp31VecMath::GetSignBits(aligned_vector* const source, __m256i &signBitVecs)
 
 #pragma region Comparison
 
-void fp31VecMath::IsGreaterOrEqThan(aligned_vector* const source, __m256i right, __m256i& escapedFlagsVec)
+void Fp31VecMath::IsGreaterOrEqThan(__m256i* const source, __m256i right, __m256i& escapedFlagsVec)
 {
-	__m256i msl = source->at((size_t) LimbCount - 1);
+	__m256i msl = source[(size_t)LimbCount - 1];
 
 	__m256i sansSign = _mm256_and_si256(msl, SIGN_BIT_MASK_VEC);
 	escapedFlagsVec = _mm256_cmpgt_epi32(sansSign, right);
@@ -302,3 +299,24 @@ void fp31VecMath::IsGreaterOrEqThan(aligned_vector* const source, __m256i right,
 
 
 #pragma endregion
+
+#pragma region Value Support
+
+#pragma warning( push )
+#pragma warning( disable : 4316 )
+__m256i* Fp31VecMath::CreateLimbSet() {
+	return new __m256i[LimbCount];
+}
+
+__m256i* Fp31VecMath::CreateWideLimbSet() {
+	return new __m256i[LimbCount * 2];
+}
+
+#pragma warning( pop )
+
+#pragma endregion
+
+
+
+
+

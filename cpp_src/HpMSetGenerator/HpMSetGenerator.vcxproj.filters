@@ -24,7 +24,7 @@
     <ClInclude Include="VecHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fp31VecMath.h">
+    <ClInclude Include="Fp31VecMath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MSetGenerator.h">
@@ -44,14 +44,14 @@
     <ClCompile Include="MSetGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fp31VecMath.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Iterator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="simd_aligned_allocator.h">
       <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Fp31VecMath.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

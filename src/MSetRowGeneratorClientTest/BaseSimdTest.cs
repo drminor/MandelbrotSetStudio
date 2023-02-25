@@ -30,12 +30,6 @@ namespace MSetRowGeneratorClientTest
 
 			var mSetRowClient = new HpMSetRowClient();
 			mSetRowClient.BaseSimdTest(iterationState, apfixedPointFormat, mapCalcSettings);
-
-			var counts = new int[blockSize.NumberOfCells];
-			iterationState.MapSectionVectors.FillCountsRow(iterationState.RowNumber!.Value, counts);
-
-			var firstTen = string.Join("; ", counts.Take(10));
-			Debug.WriteLine($"The first 10 counts: {firstTen}.");
 		}
 
 		[Fact]

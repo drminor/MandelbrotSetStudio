@@ -296,43 +296,21 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		//private void FillCountsRow(int rowNumber, Vector256<int>[] dest)
-		//{
-		//	var destBack = MemoryMarshal.Cast<Vector256<int>, byte>(dest);
-
-		//	var startIndex = _bytesPerFlagRow * rowNumber;
-
-		//	for (var i = 0; i < _bytesPerFlagRow; i++)
-		//	{
-		//		destBack[i] = _counts[startIndex + i];
-		//	}
-		//}
-
-		//private void UpdateFromCountsRow(int rowNumber, Vector256<int>[] source)
-		//{
-		//	var sourceBack = MemoryMarshal.Cast<Vector256<int>, byte>(source);
-
-		//	var startIndex = _bytesPerFlagRow * rowNumber;
-
-		//	for (var i = 0; i < _bytesPerFlagRow; i++)
-		//	{
-		//		_counts[startIndex + i] = sourceBack[i];
-		//	}
-		//}
-
 		#endregion
 
-		#region Public Methods - Fill / Update SamplePoints
+		#region Public Methods - SamplePoints And Counts -- Used by the HpMSetRowClient
 
 		public void FillSamplePointsXBuffer(byte[] buffer)
 		{
 			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(CrsRowVArray.Mantissas);
 			Debug.Assert(buffer.Length >= sourceBack.Length, $"The Buffer is too short for filling SamplePointsX. BufferLength: {buffer.Length}, SamplePointsX Length: {CrsRowVArray.Mantissas.Length}");
 
-			for (var i = 0; i < sourceBack.Length; i++)
-			{
-				buffer[i] = sourceBack[i];
-			}
+			//for (var i = 0; i < sourceBack.Length; i++)
+			//{
+			//	buffer[i] = sourceBack[i];
+			//}
+
+			sourceBack.CopyTo(buffer);
 		}
 
 		public void FillSamplePointYBuffer(byte[] buffer)
@@ -346,7 +324,26 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
+		// Used by the HpMSetRowClient
+		public void FillCountsRow(int rowNumber, byte[] dest)
+		{
+			var countsRowVAsB = MemoryMarshal.Cast<Vector256<int>, byte>(CountsRowV);
 
+			for (var i = 0; i < dest.Length; i++)
+			{
+				dest[i] = countsRowVAsB[i];
+			}
+		}
+
+		public void UpdateFromCountsRow(int rowNumber, byte[] source)
+		{
+			var countsRowVAsB = MemoryMarshal.Cast<Vector256<int>, byte>(CountsRowV);
+
+			for (var i = 0; i < source.Length; i++)
+			{
+				countsRowVAsB[i] = source[i];
+			}
+		}
 
 		#endregion
 

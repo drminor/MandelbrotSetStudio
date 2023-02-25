@@ -55,7 +55,11 @@ namespace MSS.Common
 		void UpdateZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 		void UpdateZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 
+		// Used by the HpMSetRowClient
 		void FillSamplePointsXBuffer(byte[] buffer);
 		void FillSamplePointYBuffer(byte[] buffer);
+
+		void FillCountsRow(int rowNumber, byte[] dest);
+		void UpdateFromCountsRow(int rowNumber, byte[] source);
 	}
 }

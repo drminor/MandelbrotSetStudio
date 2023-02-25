@@ -66,7 +66,6 @@ namespace MSetRowGeneratorClient
 			PutCounts(iterationState, requestStruct.RowNumber, counts);
 
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
-			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
 
 			return allRowSamplesHaveEscaped;
 		}
@@ -170,8 +169,13 @@ namespace MSetRowGeneratorClient
 
 		unsafe private byte[] GetCounts(IIterationState iterationState, int rowNumber, out void* countsBuffer)
 		{
-			var resultBuffer = new byte[iterationState.MapSectionVectors.BytesPerRow * 2]; // Using Vector of uints, not ushorts
-			iterationState.MapSectionVectors.FillCountsRow(rowNumber, resultBuffer);
+			// MapSectionVectors uses a VALUE_SIZE of 2
+			// The Generator needs these shorts converted to ints
+			var countsLength = iterationState.MapSectionVectors.BytesPerRow * 2;
+			Debug.Assert(countsLength == iterationState.MapSectionZVectors.BytesPerRow, "Counts Length MisMatch");
+
+			var resultBuffer = new byte[countsLength];
+			iterationState.FillCountsRow(rowNumber, resultBuffer);
 
 			//countsBuffer = Marshal.AllocCoTaskMem(resultBuffer.Length);
 			//Marshal.Copy(resultBuffer, 0, countsBuffer, resultBuffer.Length);
@@ -184,7 +188,7 @@ namespace MSetRowGeneratorClient
 
 		private void PutCounts(IIterationState iterationState, int rowNumber, byte[] counts)
 		{
-			iterationState.MapSectionVectors.UpdateFromCountsRow(rowNumber, counts);
+			iterationState.UpdateFromCountsRow(rowNumber, counts);
 		}
 
 		unsafe private void FreeInteropBuffer(void* buffer)

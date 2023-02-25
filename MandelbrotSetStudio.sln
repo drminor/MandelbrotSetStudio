@@ -16,7 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\Image_Ram_Resource_Requirements.txt = Notes\Image_Ram_Resource_Requirements.txt
 		Notes\JobNavigationWithShiftKey.txt = Notes\JobNavigationWithShiftKey.txt
 		Notes\JobWithDiagonalLines.txt = Notes\JobWithDiagonalLines.txt
-		LatticeMultiplicationIndexGuide.txt = LatticeMultiplicationIndexGuide.txt
+		Notes\LatticeMultiplicationIndexGuide.txt = Notes\LatticeMultiplicationIndexGuide.txt
 		Notes\MapSectionVectors_LifeCycle.txt = Notes\MapSectionVectors_LifeCycle.txt
 		Notes\MapViewerMapInfoDivisionStrategy.txt = Notes\MapViewerMapInfoDivisionStrategy.txt
 		MongoDb_Schemas.txt = MongoDb_Schemas.txt
@@ -89,9 +89,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSetGeneratorPrototypeTest"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HpMSetGenerator", "cpp_src\HpMSetGenerator\HpMSetGenerator.vcxproj", "{ED3527C9-FE2A-4BAE-A64C-3A4DB100C917}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSetRowGeneratorClient", "src\MSetRowGeneratorClient\MSetRowGeneratorClient.csproj", "{7808D154-179F-4381-8966-C0D96341FBCC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSetRowGeneratorClient", "src\MSetRowGeneratorClient\MSetRowGeneratorClient.csproj", "{7808D154-179F-4381-8966-C0D96341FBCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSetRowGeneratorClientTest", "src\MSetRowGeneratorClientTest\MSetRowGeneratorClientTest.csproj", "{6E5CE63A-7DBE-4157-8FA3-3903136DB470}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSetRowGeneratorClientTest", "src\MSetRowGeneratorClientTest\MSetRowGeneratorClientTest.csproj", "{6E5CE63A-7DBE-4157-8FA3-3903136DB470}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

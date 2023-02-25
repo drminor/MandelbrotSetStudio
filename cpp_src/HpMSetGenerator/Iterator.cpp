@@ -3,14 +3,14 @@
 #include "framework.h"
 #include <immintrin.h>
 #include "MSetGenerator.h"
-#include "fp31VecMath.h"
+#include "Fp31VecMath.h"
 #include "Iterator.h"
 
 #include <array>
 
 #pragma region Constructor / Destructor
 
-Iterator::Iterator(fp31VecMath* const vMath, int targetIterations, int thresholdForComparison)
+Iterator::Iterator(Fp31VecMath* const vMath, int targetIterations, int thresholdForComparison)
 {
     _vMath = vMath;
 
@@ -18,12 +18,12 @@ Iterator::Iterator(fp31VecMath* const vMath, int targetIterations, int threshold
 
     _targetIterationsVector = _mm256_set1_epi32(targetIterations);
 
-    _zrSqrs = new aligned_vector(_vMath->LimbCount);
-    _ziSqrs = new aligned_vector(_vMath->LimbCount);
-    _sumOfSqrs = new aligned_vector(_vMath->LimbCount);
+    _zrSqrs = _vMath->CreateLimbSet();
+    _ziSqrs = _vMath->CreateLimbSet();
+    _sumOfSqrs = _vMath->CreateLimbSet();
 
-    _zRZiSqrs = new aligned_vector(_vMath->LimbCount);
-    _tempVec = new aligned_vector(_vMath->LimbCount);
+    _zRZiSqrs = _vMath->CreateLimbSet();
+    _tempVec = _vMath->CreateLimbSet();
 
     _justOne = _mm256_set1_epi32(1);
 }
@@ -39,7 +39,7 @@ Iterator::~Iterator()
 
 #pragma endregion
 
-bool Iterator::GenerateMapCol(aligned_vector* cr, aligned_vector* ciVec, __m256i& resultCounts)
+bool Iterator::GenerateMapCol(__m256i* const cr, __m256i* const ciVec, __m256i& resultCounts)
 {
     __m256i haveEscapedFlags = _mm256_set1_epi32(0);
 
@@ -48,8 +48,8 @@ bool Iterator::GenerateMapCol(aligned_vector* cr, aligned_vector* ciVec, __m256i
     resultCounts = _mm256_set1_epi32(0);
     __m256i counts = _mm256_set1_epi32(0);
 
-    aligned_vector* zr = new aligned_vector(_vMath->LimbCount);
-    aligned_vector* zi = new aligned_vector(_vMath->LimbCount);
+    __m256i* zr = _vMath->CreateLimbSet();
+    __m256i* zi = _vMath->CreateLimbSet();
 
     //__m256i* resultZr = _vh->createVec(limbCount);
     //__m256i* resultZi = _vh->createVec(limbCount);
@@ -70,11 +70,11 @@ bool Iterator::GenerateMapCol(aligned_vector* cr, aligned_vector* ciVec, __m256i
     return allEscaped == -1 ? true : false;
 }
 
-void Iterator::IterateFirstRound(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec)
+void Iterator::IterateFirstRound(__m256i* const cr, __m256i* const ci, __m256i* const zr, __m256i* const zi, __m256i& escapedFlagsVec)
 {
-    for (int i = 0; i < _vMath->LimbCount; i++) {
-        zr->at(i) = cr->at(i);
-        zi->at(i) = ci->at(i);
+    for (int limbPtr = 0; limbPtr < _vMath->LimbCount; limbPtr++) {
+        zr[limbPtr] = cr[limbPtr];
+        zi[limbPtr] = ci[limbPtr];
     }
 
     _vMath->Square(zr, _zrSqrs);
@@ -84,7 +84,7 @@ void Iterator::IterateFirstRound(aligned_vector* cr, aligned_vector* ci, aligned
     _vMath->IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, escapedFlagsVec);
 }
 
-void Iterator::Iterate(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec)
+void Iterator::Iterate(__m256i* const cr, __m256i* const ci, __m256i* const zr, __m256i* const zi, __m256i& escapedFlagsVec)
 {
 
     // square(z.r + z.i)

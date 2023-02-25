@@ -38,7 +38,7 @@ namespace MSetGeneratorPrototype
 
 		public MapSectionGeneratorDepthFirst(int limbCount, SizeInt blockSize)
 		{
-			USE_C_IMPLEMENTATION = false;
+			USE_C_IMPLEMENTATION = true;
 
 			_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
 
@@ -69,12 +69,12 @@ namespace MSetGeneratorPrototype
 
 			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
 
-			var processingSquare1 = coords.ScreenPos.X == 1 && coords.ScreenPos.Y == 1;
+			//var processingSquare1 = coords.ScreenPos.X == 1 && coords.ScreenPos.Y == 1;
 
-			if (!processingSquare1)
-			{
-				return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
-			}
+			//if (!processingSquare1)
+			//{
+			//	return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
+			//}
 
 			var stopwatch = Stopwatch.StartNew();
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
@@ -140,6 +140,7 @@ namespace MSetGeneratorPrototype
 			{
 				iterationState.SetRowNumber(rowNumber);
 
+				// TODO: Include the MapCalcSettings in the iterationState.
 				var mapCalcSettings = new MapCalcSettings(iterationState.TargetIterationsVector.GetElement(0), (int) iterator.Threshold, requestsPerJob: 4);
 
 				var allRowSamplesHaveEscaped = mSetRowClient.GenerateMapSectionRow(iterationState, _fp31VecMath.ApFixedPointFormat, mapCalcSettings, ct);

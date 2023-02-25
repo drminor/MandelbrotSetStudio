@@ -130,6 +130,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -140,7 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="fp31VecMath.h" />
+    <ClInclude Include="Fp31VecMath.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Iterator.h" />
     <ClInclude Include="MSetGenerator.h" />
@@ -149,7 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="fp31VecMath.cpp" />
+    <ClCompile Include="Fp31VecMath.cpp" />
     <ClCompile Include="Iterator.cpp" />
     <ClCompile Include="MSetGenerator.cpp" />
     <ClCompile Include="pch.cpp">
