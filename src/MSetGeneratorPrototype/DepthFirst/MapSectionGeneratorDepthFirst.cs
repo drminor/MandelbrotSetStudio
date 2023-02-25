@@ -38,7 +38,7 @@ namespace MSetGeneratorPrototype
 
 		public MapSectionGeneratorDepthFirst(int limbCount, SizeInt blockSize)
 		{
-			USE_C_IMPLEMENTATION = true;
+			USE_C_IMPLEMENTATION = false;
 
 			_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
 
@@ -69,10 +69,12 @@ namespace MSetGeneratorPrototype
 
 			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
 
-			//if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
-			// {
-			//	return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
-			//}
+			var processingSquare1 = coords.ScreenPos.X == 1 && coords.ScreenPos.Y == 1;
+
+			if (!processingSquare1)
+			{
+				return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
+			}
 
 			var stopwatch = Stopwatch.StartNew();
 			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);

@@ -10,66 +10,59 @@ namespace MSetRowGeneratorClient
 {
 	public class HpMSetRowClient
 	{
+		private const int BYTES_PER_VECTOR = 32; // Also used for alignment
+
 		#region Public Methods
 
-		public bool GenerateMapSectionRow(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings, CancellationToken ct)
+		unsafe public bool GenerateMapSectionRow(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings, CancellationToken ct)
 		{
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
 			// SamplePointsX
-			var samplePointsX = GetSamplePointsX(iterationState);
-			var spxBuffer = Marshal.AllocCoTaskMem(samplePointsX.Length);
-			Marshal.Copy(samplePointsX, 0, spxBuffer, samplePointsX.Length);
+			_ = GetSamplePointsX(iterationState, out var spxBuffer);
 
 			// SamplePointY
-			var yPointVecs = GetYPointVecs(iterationState);
-			var ypBuffer = Marshal.AllocCoTaskMem(yPointVecs.Length);
-			Marshal.Copy(yPointVecs, 0, ypBuffer, yPointVecs.Length);
+			_ = GetYPointVecs(iterationState, out var ypBuffer);
 
 			// Counts
-			var counts = GetCounts(iterationState, requestStruct.RowNumber);
-			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
-			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
+			var counts = GetCounts(iterationState, requestStruct.RowNumber, out var countsBuffer);
 
 			// Generate a MapSectionRow
-			var intResult = NativeMethods.GenerateMapSectionRow(requestStruct, spxBuffer, ypBuffer, countsBuffer);
+			var intResult = HpMSetGeneratorImports.GenerateMapSectionRow(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, (IntPtr)countsBuffer);
 
 			// Counts
-			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
-			Marshal.FreeCoTaskMem(countsBuffer);
+			Marshal.Copy((IntPtr)countsBuffer, counts, 0, counts.Length);
+			FreeInteropBuffer(countsBuffer);
 			PutCounts(iterationState, requestStruct.RowNumber, counts);
 
-			Marshal.FreeCoTaskMem(ypBuffer);
-			Marshal.FreeCoTaskMem(spxBuffer);
+			//Marshal.FreeCoTaskMem(ypBuffer);
+			//Marshal.FreeCoTaskMem(spxBuffer);
+			FreeInteropBuffer(ypBuffer);
+			FreeInteropBuffer(spxBuffer);
 
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
 			//Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
 
 			return allRowSamplesHaveEscaped;
-
-
-
 		}
 
 		#endregion
 
 		#region Test Support 
 
-		public bool BaseSimdTest(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
+		unsafe public bool BaseSimdTest(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
 		{
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
 			// Counts
-			var counts = GetCounts(iterationState, requestStruct.RowNumber);
-			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
-			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
+			var counts = GetCounts(iterationState, requestStruct.RowNumber, out var countsBuffer);
 
 			// Call BaseSimdTest
-			var intResult = NativeMethods.BaseSimdTest(requestStruct, countsBuffer);
+			var intResult = HpMSetGeneratorImports.BaseSimdTest(requestStruct, (IntPtr)countsBuffer);
 
 			// Counts
-			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
-			Marshal.FreeCoTaskMem(countsBuffer);
+			Marshal.Copy((IntPtr)countsBuffer, counts, 0, counts.Length);
+			FreeInteropBuffer(countsBuffer);
 			PutCounts(iterationState, requestStruct.RowNumber, counts);
 
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
@@ -78,35 +71,31 @@ namespace MSetRowGeneratorClient
 			return allRowSamplesHaveEscaped;
 		}
 
-		public bool BaseSimdTest2(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
+		unsafe public bool BaseSimdTest2(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
 		{
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
 			// SamplePointsX
-			var samplePointsX = GetSamplePointsX(iterationState);
-			var spxBuffer = Marshal.AllocCoTaskMem(samplePointsX.Length);
-			Marshal.Copy(samplePointsX, 0, spxBuffer, samplePointsX.Length);
+			_ = GetSamplePointsX(iterationState, out var spxBuffer);
 
 			// SamplePointY
-			var yPointVecs = GetYPointVecs(iterationState);
-			var ypBuffer = Marshal.AllocCoTaskMem(yPointVecs.Length);
-			Marshal.Copy(yPointVecs, 0, ypBuffer, yPointVecs.Length);
+			_ = GetYPointVecs(iterationState, out var ypBuffer);
 
 			// Counts
-			var counts = GetCounts(iterationState, requestStruct.RowNumber);
-			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
-			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
+			var counts = GetCounts(iterationState, requestStruct.RowNumber, out var countsBuffer);
 
-			// Call BaseSimdTest
-			var intResult = NativeMethods.BaseSimdTest2(requestStruct, spxBuffer, ypBuffer, countsBuffer);
+			// Call BaseSimdTest2
+			var intResult = HpMSetGeneratorImports.BaseSimdTest2(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, (IntPtr)countsBuffer);
 
 			// Counts
-			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
-			Marshal.FreeCoTaskMem(countsBuffer);
+			Marshal.Copy((IntPtr)countsBuffer, counts, 0, counts.Length);
+			FreeInteropBuffer(countsBuffer);
 			PutCounts(iterationState, requestStruct.RowNumber, counts);
 
-			Marshal.FreeCoTaskMem(ypBuffer);
-			Marshal.FreeCoTaskMem(spxBuffer);
+			//Marshal.FreeCoTaskMem(ypBuffer);
+			//Marshal.FreeCoTaskMem(spxBuffer);
+			FreeInteropBuffer(ypBuffer);
+			FreeInteropBuffer(spxBuffer);
 
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
 			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
@@ -114,35 +103,31 @@ namespace MSetRowGeneratorClient
 			return allRowSamplesHaveEscaped;
 		}
 
-		public bool BaseSimdTest3(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
+		unsafe public bool BaseSimdTest3(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
 		{
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
 			// SamplePointsX
-			var samplePointsX = GetSamplePointsX(iterationState);
-			var spxBuffer = Marshal.AllocCoTaskMem(samplePointsX.Length);
-			Marshal.Copy(samplePointsX, 0, spxBuffer, samplePointsX.Length);
+			_ = GetSamplePointsX(iterationState, out var spxBuffer);
 
 			// SamplePointY
-			var yPointVecs = GetYPointVecs(iterationState);
-			var ypBuffer = Marshal.AllocCoTaskMem(yPointVecs.Length);
-			Marshal.Copy(yPointVecs, 0, ypBuffer, yPointVecs.Length);
+			_ = GetYPointVecs(iterationState, out var ypBuffer);
 
 			// Counts
-			var counts = GetCounts(iterationState, requestStruct.RowNumber);
-			var countsBuffer = Marshal.AllocCoTaskMem(counts.Length);
-			Marshal.Copy(counts, 0, countsBuffer, counts.Length);
+			var counts = GetCounts(iterationState, requestStruct.RowNumber, out var countsBuffer);
 
 			// Call BaseSimdTest
-			var intResult = NativeMethods.BaseSimdTest3(requestStruct, spxBuffer, ypBuffer, countsBuffer);
+			var intResult = HpMSetGeneratorImports.BaseSimdTest3(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, (IntPtr)countsBuffer);
 
 			// Counts
-			Marshal.Copy(countsBuffer, counts, 0, counts.Length);
-			Marshal.FreeCoTaskMem(countsBuffer);
+			Marshal.Copy((IntPtr)countsBuffer, counts, 0, counts.Length);
+			FreeInteropBuffer(countsBuffer);
 			PutCounts(iterationState, requestStruct.RowNumber, counts);
 
-			Marshal.FreeCoTaskMem(ypBuffer);
-			Marshal.FreeCoTaskMem(spxBuffer);
+			//Marshal.FreeCoTaskMem(ypBuffer);
+			//Marshal.FreeCoTaskMem(spxBuffer);
+			FreeInteropBuffer(ypBuffer);
+			FreeInteropBuffer(spxBuffer);
 
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
 			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
@@ -154,39 +139,58 @@ namespace MSetRowGeneratorClient
 
 		#region Support Methods
 
-		private byte[] GetSamplePointsX(IIterationState iterationState)
+		unsafe private byte[] GetSamplePointsX(IIterationState iterationState, out void* spxBuffer)
 		{
-			var buffer = new byte[iterationState.MapSectionZVectors.BytesPerZValueRow];
-			iterationState.FillSamplePointsXBuffer(buffer);
-			return buffer;
+			var resultBuffer = new byte[iterationState.MapSectionZVectors.BytesPerZValueRow];
+			iterationState.FillSamplePointsXBuffer(resultBuffer);
+
+			//spxBuffer = Marshal.AllocCoTaskMem(resultBuffer.Length);
+			//Marshal.Copy(resultBuffer, 0, spxBuffer, resultBuffer.Length);
+			
+			spxBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, BYTES_PER_VECTOR);
+			Marshal.Copy(resultBuffer, 0, (IntPtr)spxBuffer, resultBuffer.Length);
+
+			return resultBuffer;
 		}
 
-		private const int BYTES_PER_VECTOR = 32;
-
-		private byte[] GetYPointVecs(IIterationState iterationState)
+		unsafe private byte[] GetYPointVecs(IIterationState iterationState, out void* ypBuffer)
 		{
-			var buffer = new byte[iterationState.MapSectionZVectors.LimbCount * BYTES_PER_VECTOR]; 
-			iterationState.FillSamplePointYBuffer(buffer);
+			var resultBuffer = new byte[iterationState.MapSectionZVectors.LimbCount * BYTES_PER_VECTOR]; 
+			iterationState.FillSamplePointYBuffer(resultBuffer);
 
-			return buffer;
+			//ypBuffer =  Marshal.AllocCoTaskMem(resultBuffer.Length);
+			//Marshal.Copy(resultBuffer, 0, ypBuffer, resultBuffer.Length);
+
+			ypBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, BYTES_PER_VECTOR);
+			Marshal.Copy(resultBuffer, 0, (IntPtr)ypBuffer, resultBuffer.Length);
+
+
+			return resultBuffer;
 		}
 
-		private byte[] GetCounts(IIterationState iterationState, int rowNumber)
+		unsafe private byte[] GetCounts(IIterationState iterationState, int rowNumber, out void* countsBuffer)
 		{
-			//for(var i = 0; i < 64; i++)
-			//{
-			//	iterationState.MapSectionVectors.Counts[i] = (ushort)i;
-			//}
+			var resultBuffer = new byte[iterationState.MapSectionVectors.BytesPerRow * 2]; // Using Vector of uints, not ushorts
+			iterationState.MapSectionVectors.FillCountsRow(rowNumber, resultBuffer);
 
-			var buffer = new byte[iterationState.MapSectionVectors.BytesPerRow * 2]; // Using Vector of uints, not ushorts
-			iterationState.MapSectionVectors.FillCountsRow(rowNumber, buffer);
+			//countsBuffer = Marshal.AllocCoTaskMem(resultBuffer.Length);
+			//Marshal.Copy(resultBuffer, 0, countsBuffer, resultBuffer.Length);
 
-			return buffer;
+			countsBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, BYTES_PER_VECTOR);
+			Marshal.Copy(resultBuffer, 0, (IntPtr)countsBuffer, resultBuffer.Length);
+
+			return resultBuffer;
 		}
 
 		private void PutCounts(IIterationState iterationState, int rowNumber, byte[] counts)
 		{
 			iterationState.MapSectionVectors.UpdateFromCountsRow(rowNumber, counts);
+		}
+
+		unsafe private void FreeInteropBuffer(void* buffer)
+		{
+			//Marshal.FreeCoTaskMem(buffer);
+			NativeMemory.AlignedFree(buffer);
 		}
 
 		private MSetRowRequestStruct GetRequestStruct(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)

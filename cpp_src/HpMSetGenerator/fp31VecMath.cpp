@@ -97,7 +97,7 @@ void fp31VecMath::SquareInternal(aligned_vector* const source, aligned_vector* c
 			//	result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
 			
 			result->at(resultPtr) = _mm256_add_epi64(result->at(resultPtr), _mm256_and_si256(product, HIGH33_MASK_VEC_L));
-			result->at(resultPtr + 1) =_mm256_add_epi64(result->at(resultPtr + 1), _mm256_srli_epi64(product, EFFECTIVE_BITS_PER_LIMB));
+			result->at((size_t)resultPtr + 1) =_mm256_add_epi64(result->at((size_t)resultPtr + 1), _mm256_srli_epi64(product, EFFECTIVE_BITS_PER_LIMB));
 
 
 			//MathOpCounts.NumberOfSplits++;
@@ -154,21 +154,21 @@ void fp31VecMath::ShiftAndTrim(aligned_vector* const sourceLimbsLo, aligned_vect
 			// Calculate the lo end
 
 			// Take the bits from the source limb, discarding the top shiftAmount of bits.
-			__m256i source = sourceLimbsLo->at(limbPtr + sourceIndex);
+			__m256i source = sourceLimbsLo->at((size_t)limbPtr + sourceIndex);
 			__m256i wideResultLow = _mm256_and_si256(_mm256_slli_epi64(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
 			// Take the top shiftAmount of bits from the previous limb
-			__m256i prevSource = sourceLimbsLo->at(limbPtr + sourceIndex - 1);
+			__m256i prevSource = sourceLimbsLo->at((size_t)limbPtr + sourceIndex - 1);
 			wideResultLow = _mm256_or_si256(wideResultLow, _mm256_srli_epi64(_mm256_and_si256(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
 			// Calculate the hi end
 
 			// Take the bits from the source limb, discarding the top shiftAmount of bits.
-			source = sourceLimbsHi->at(limbPtr + sourceIndex);
+			source = sourceLimbsHi->at((size_t)limbPtr + sourceIndex);
 			__m256i wideResultHigh = _mm256_and_si256(_mm256_slli_epi64(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
 			// Take the top shiftAmount of bits from the previous limb
-			prevSource = sourceLimbsHi->at(limbPtr + sourceIndex - 1);
+			prevSource = sourceLimbsHi->at((size_t)limbPtr + sourceIndex - 1);
 			wideResultHigh = _mm256_or_si256(wideResultHigh, _mm256_srli_epi64(_mm256_and_si256(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
 			__m256i low128 = _mm256_permutevar8x32_epi32(wideResultLow, SHUFFLE_PACK_LOW_VEC);
@@ -277,37 +277,25 @@ void fp31VecMath::ConvertFrom2C(aligned_vector* const source, aligned_vector* co
 
 int fp31VecMath::GetSignBits(aligned_vector* const source, __m256i &signBitVecs)
 {
-	__m256i msl = source->at(LimbCount - 1);
-
-	//var left = Avx2.And(msl.AsInt32(), TEST_BIT_30_VEC);
+	__m256i msl = source->at((size_t)LimbCount - 1);
 	__m256i left = _mm256_and_si256(msl, TEST_BIT_30_VEC);
-	 
-	//signBitVecs = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
 	signBitVecs = _mm256_cmpeq_epi32(left, ZERO_VEC);
 	
-	//var result = Avx2.MoveMask(signBitVecs.AsByte());
 	int result = _mm256_movemask_epi8(signBitVecs);
 
 	return result;
-
-	//signBitVecs = Avx2.CompareEqual(Avx2.And(source[LimbCount - 1].AsInt32(), TEST_BIT_30_VEC), ZERO_VEC);
-	//return Avx2.MoveMask(signBitVecs.AsByte());
-
-	return 0;
 }
 
 #pragma endregion
 
 #pragma region Comparison
 
-void fp31VecMath::IsGreaterOrEqThan(__m256i left, __m256i right, __m256i& escapedFlagsVec)
+void fp31VecMath::IsGreaterOrEqThan(aligned_vector* const source, __m256i right, __m256i& escapedFlagsVec)
 {
-	//var sansSign = Avx2.And(left, SIGN_BIT_MASK_VEC);
-	//escapedFlagsVec = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
-	
-	__m256i sansSign = _mm256_and_si256(left, SIGN_BIT_MASK_VEC);
-	escapedFlagsVec = _mm256_cmpgt_epi32(sansSign, right);
+	__m256i msl = source->at((size_t) LimbCount - 1);
 
+	__m256i sansSign = _mm256_and_si256(msl, SIGN_BIT_MASK_VEC);
+	escapedFlagsVec = _mm256_cmpgt_epi32(sansSign, right);
 	 
 	//MathOpCounts.NumberOfGrtrThanOps++;
 }

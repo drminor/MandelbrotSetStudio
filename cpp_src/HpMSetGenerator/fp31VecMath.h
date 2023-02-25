@@ -73,7 +73,7 @@ public:
 	void Add(aligned_vector* const left, aligned_vector* const right, aligned_vector* const result);
 	void Sub(aligned_vector* const left, aligned_vector* const right, aligned_vector* const result);
 
-	void IsGreaterOrEqThan(__m256i left, __m256i right, __m256i& escapedFlagsVec);
+	void IsGreaterOrEqThan(aligned_vector* const source, __m256i right, __m256i& escapedFlagsVec);
 
 private:
 

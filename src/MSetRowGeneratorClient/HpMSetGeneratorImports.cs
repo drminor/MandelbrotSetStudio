@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace MSetRowGeneratorClient
 {
-	internal static class NativeMethods
+	internal static class HpMSetGeneratorImports
     {
 		//[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\MSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
 		//internal static extern void GetStringValues(MapSectionRequestStruct requestStruct, 

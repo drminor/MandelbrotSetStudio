@@ -6,10 +6,7 @@
 #include "fp31VecMath.h"
 #include "Iterator.h"
 
-//#include "simd_aligned_allocator.h"
-//
-//typedef std::vector<__m256i, aligned_allocator<__m256i, sizeof(__m256i)> > aligned_vector;
-
+#include <array>
 
 #pragma region Constructor / Destructor
 
@@ -79,53 +76,39 @@ void Iterator::IterateFirstRound(aligned_vector* cr, aligned_vector* ci, aligned
         zr->at(i) = cr->at(i);
         zi->at(i) = ci->at(i);
     }
-    //_vecHelper->copyVec(cr, zr, _limbCount);
-    //_vecHelper->copyVec(ci, zi, _limbCount);
 
     _vMath->Square(zr, _zrSqrs);
     _vMath->Square(zi, _ziSqrs);
 
     _vMath->Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
-    _vMath->IsGreaterOrEqThan(_sumOfSqrs->at((size_t)_vMath->LimbCount - 1), _thresholdVector, escapedFlagsVec);
+    _vMath->IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, escapedFlagsVec);
 }
 
 void Iterator::Iterate(aligned_vector* cr, aligned_vector* ci, aligned_vector* zr, aligned_vector* zi, __m256i& escapedFlagsVec)
 {
 
     // square(z.r + z.i)
-    //    _fp31VecMath.Add(zrs, zis, _temp);
     _vMath->Add(zr, zi, _tempVec);
 
-    //    _fp31VecMath.Square(_temp, _zRZiSqrs);
     _vMath->Square(_tempVec, _zRZiSqrs);
 
     // z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd
-    //    _fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
     _vMath->Sub(_zRZiSqrs, _zrSqrs, zi);
 
-    //    _fp31VecMath.Sub(zis, _zISqrs, _temp);
     _vMath->Sub(zi, _ziSqrs, _tempVec);
 
-    //    _fp31VecMath.Add(_temp, cis, zis);
     _vMath->Add(_tempVec, ci, zi);
 
     // z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
-    //    _fp31VecMath.Sub(_zRSqrs, _zISqrs, _temp);
     _vMath->Sub(_zrSqrs, _ziSqrs, _tempVec);
     
-    //    _fp31VecMath.Add(_temp, crs, zrs);
     _vMath->Add(_tempVec, cr, zr);
-
-    //    _fp31VecMath.Square(zrs, _zRSqrs);
-    //    _fp31VecMath.Square(zis, _zISqrs);
-    //    _fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
     _vMath->Square(zr, _zrSqrs);
     _vMath->Square(zi, _ziSqrs);
     _vMath->Add(_zrSqrs, _ziSqrs, _sumOfSqrs);
 
-    //    _fp31VecMath.IsGreaterOrEqThan(ref _sumOfSqrs[^ 1], ref _thresholdVector, ref escapedFlagsVec);
-    _vMath->IsGreaterOrEqThan(_sumOfSqrs->at((size_t)_vMath->LimbCount - 1), _thresholdVector, escapedFlagsVec);
+    _vMath->IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, escapedFlagsVec);
 
 }
 

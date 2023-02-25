@@ -13,10 +13,11 @@ namespace MSetRowGeneratorClientTest
 	{
 		private SamplePointBuilder? _samplePointBuilder;
 
-
 		[Fact]
 		public void Test1()
 		{
+			var ROW_NUMBER = 45;
+
 			var blockSize = RMapConstants.BLOCK_SIZE;
 			var limbCount = 2;
 			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
@@ -25,6 +26,7 @@ namespace MSetRowGeneratorClientTest
 			var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
 
 			var iterationState = BuildIterationState(blockSize, limbCount, iteratorCoords, mapCalcSettings);
+			iterationState.SetRowNumber(ROW_NUMBER);
 
 			var mSetRowClient = new HpMSetRowClient();
 			mSetRowClient.BaseSimdTest(iterationState, apfixedPointFormat, mapCalcSettings);
@@ -39,6 +41,8 @@ namespace MSetRowGeneratorClientTest
 		[Fact]
 		public void Test2()
 		{
+			var ROW_NUMBER = 45;
+
 			var blockSize = RMapConstants.BLOCK_SIZE;
 			var limbCount = 2;
 			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
@@ -47,6 +51,7 @@ namespace MSetRowGeneratorClientTest
 			var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
 
 			var iterationState = BuildIterationState(blockSize, limbCount, iteratorCoords, mapCalcSettings);
+			iterationState.SetRowNumber(ROW_NUMBER);
 
 			var mSetRowClient = new HpMSetRowClient();
 			mSetRowClient.BaseSimdTest2(iterationState, apfixedPointFormat, mapCalcSettings);
@@ -54,30 +59,42 @@ namespace MSetRowGeneratorClientTest
 			var counts = new int[blockSize.NumberOfCells];
 			iterationState.MapSectionVectors.FillCountsRow(iterationState.RowNumber!.Value, counts);
 
+			var rowSum = counts.Sum();
+
 			var firstTen = string.Join("; ", counts.Take(10));
-			Debug.WriteLine($"The first 10 counts: {firstTen}.");
+			Debug.WriteLine($"The first 10 counts: {firstTen}; Sum of counts for Row {ROW_NUMBER}: {rowSum}.");
 		}
 
 		[Fact]
 		public void Test3()
 		{
+			var ROW_NUMBER = 45;
+
 			var blockSize = RMapConstants.BLOCK_SIZE;
-			var limbCount = 2;
+			var limbCount = 1;
 			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
 
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 20, requestsPerJob: 4);
-			var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
+
+			var blockPosition = new BigVector(-1, 1);
+			var screenPosition = new PointInt(1, 1);
+			var mapPosition = new RPoint(-128, 128, -11);
+			var samplePointDelta = new RSize(1, 1, -11);
+			var iteratorCoords = GetCoordinates(blockPosition, screenPosition, mapPosition, samplePointDelta, apfixedPointFormat);
 
 			var iterationState = BuildIterationState(blockSize, limbCount, iteratorCoords, mapCalcSettings);
+			iterationState.SetRowNumber(ROW_NUMBER);
 
 			var mSetRowClient = new HpMSetRowClient();
 			mSetRowClient.BaseSimdTest3(iterationState, apfixedPointFormat, mapCalcSettings);
 
-			var counts = new int[blockSize.NumberOfCells];
+			var counts = new int[blockSize.Width];
 			iterationState.MapSectionVectors.FillCountsRow(iterationState.RowNumber!.Value, counts);
 
+			var rowSum = counts.Sum();
+
 			var firstTen = string.Join("; ", counts.Take(10));
-			Debug.WriteLine($"The first 10 counts: {firstTen}.");
+			Debug.WriteLine($"The first 10 counts: {firstTen}; Sum of counts for Row {ROW_NUMBER}: {rowSum}.");
 		}
 
 		#region Support Methods
@@ -93,7 +110,7 @@ namespace MSetRowGeneratorClientTest
 			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 			var result = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, increasingIterations: false, targetIterationsVector);
 
-			result.SetRowNumber(0);
+			//result.SetRowNumber(0);
 
 			return result;
 		}

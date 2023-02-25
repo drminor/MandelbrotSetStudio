@@ -98,7 +98,7 @@ extern "C"
 
     __declspec(dllexport) int BaseSimdTest(MSETREQ mapSectionRequest, int* countsForARow)
     {
-        _RPTA("Running BaseSimdTest");
+        _RPTA("Running BaseSimdTest\n");
 
         typedef std::vector<__m128, aligned_allocator<__m128, sizeof(__m128)> > aligned_vector;
         aligned_vector lhs;

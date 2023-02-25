@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include <immintrin.h>
+#include <array>
 
 //#include "simd_aligned_allocator.h"
 //typedef std::vector<__m256i, aligned_allocator<__m256i, sizeof(__m256i)> > aligned_vector;
@@ -21,6 +22,11 @@ class Iterator
 	aligned_vector* _tempVec;
 
 	__m256i _justOne;
+
+
+	std::array<uint32_t, 8> a1;
+
+
 
 public:
 
