@@ -276,6 +276,28 @@ extern "C"
         return allRowSamplesHaveEscaped ? 1 : 0;
     }
 
+    __declspec(dllexport) int BaseSimdTest4(MSETREQ mapSectionRequest, __m256i* crsForARow, __m256i* ciVec, __m256i* countsForARow)
+    {
+        int limbCount = mapSectionRequest.LimbCount;
+        int bitsBeforeBp = mapSectionRequest.BitsBeforeBinaryPoint;
+        int targetIterations = mapSectionRequest.TargetIterations;
+
+        int targetExponent = mapSectionRequest.TargetExponent;
+        int thresholdForComparison = mapSectionRequest.ThresholdForComparison;
+
+        _RPTA("\n\nRunning BaseSimdTest3 with LimbCount: %d and Target Iterations: %d\n", limbCount, targetIterations);
+
+        bool allRowSamplesHaveEscaped = true;
+        int vectorsPerRow = mapSectionRequest.VectorsPerRow;
+
+        __m256i countsVec = _mm256_set_epi32(10, 1000, 10000, 15000, 30000, 10, 10, 10);
+
+        countsForARow[0] = countsVec;
+
+        countsForARow[1] = countsVec;
+
+        return 0;
+    }
 
     /*
     
@@ -338,7 +360,13 @@ extern "C"
         return _mm256_extractf128_si256(ymm,1);
     }
     
-    
+        // Member functions to split into two Vec4ui:
+    Vec4ui get_low() const {
+        return _mm256_castsi256_si128(ymm);
+    }
+    Vec4ui get_high() const {
+        return _mm256_extractf128_si256(ymm,1);
+    }
     
     */
 

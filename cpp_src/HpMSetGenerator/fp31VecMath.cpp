@@ -51,7 +51,8 @@ void Fp31VecMath::Square(__m256i* const source, __m256i* const result)
 {
 	//CheckReservedBitIsClear(a, "Squaring");
 
-	//_vecHelper->clearVec(_limbCount, result);
+	ClearWideLimbSet(_squareResult1Lo);
+	ClearWideLimbSet(_squareResult1Hi);
 
 	ConvertFrom2C(source, _squareResult0Lo, _squareResult0Hi);
 	//MathOpCounts.NumberOfConversions++;
@@ -168,10 +169,11 @@ void Fp31VecMath::ShiftAndTrim(__m256i* const sourceLimbsLo, __m256i* const sour
 			prevSource = sourceLimbsHi[(size_t)limbPtr + sourceIndex - 1];
 			wideResultHigh = _mm256_or_si256(wideResultHigh, _mm256_srli_epi64(_mm256_and_si256(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
-			__m256i low128 = _mm256_permutevar8x32_epi32(wideResultLow, SHUFFLE_PACK_LOW_VEC);
+			__m128i low128 = _mm256_castsi256_si128(_mm256_permutevar8x32_epi32(wideResultLow, SHUFFLE_PACK_LOW_VEC));
 			__m256i high128 = _mm256_permutevar8x32_epi32(wideResultHigh, SHUFFLE_PACK_HIGH_VEC);
 
-			resultLimbs[limbPtr] = _mm256_or_si256(low128, high128);
+			//resultLimbs[limbPtr] = _mm256_or_si256(low128, high128);
+			resultLimbs[limbPtr] = _mm256_inserti128_si256(high128, low128, 0); // Copy high128 to dst, then over write low half with low128.
 
 			//MathOpCounts.NumberOfSplits += 4;
 
@@ -302,17 +304,45 @@ void Fp31VecMath::IsGreaterOrEqThan(__m256i* const source, __m256i right, __m256
 
 #pragma region Value Support
 
+// Create Limb Set
 #pragma warning( push )
 #pragma warning( disable : 4316 )
-__m256i* Fp31VecMath::CreateLimbSet() {
-	return new __m256i[LimbCount];
+
+__m256i* Fp31VecMath::CreateLimbSet()
+{
+	__m256i* result = new __m256i[LimbCount];
+	ClearLimbSet(result);
+
+	return result;
 }
 
-__m256i* Fp31VecMath::CreateWideLimbSet() {
-	return new __m256i[LimbCount * 2];
+__m256i* Fp31VecMath::CreateWideLimbSet()
+{
+	__m256i* result = new __m256i[LimbCount * 2];
+	ClearWideLimbSet(result);
+
+	return result;
 }
 
 #pragma warning( pop )
+
+// Clear Limb Set
+void Fp31VecMath::ClearLimbSet(__m256i* const limbSet)
+{
+	for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+	{
+		limbSet[limbPtr] = _mm256_xor_si256(limbSet[limbPtr], limbSet[limbPtr]);
+	}
+}
+
+void Fp31VecMath::ClearWideLimbSet(__m256i* const limbSet)
+{
+	for (int limbPtr = 0; limbPtr < LimbCount * 2; limbPtr++)
+	{
+		limbSet[limbPtr] = _mm256_xor_si256(limbSet[limbPtr], limbSet[limbPtr]);
+	}
+}
+
 
 #pragma endregion
 

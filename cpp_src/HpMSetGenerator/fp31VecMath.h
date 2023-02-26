@@ -75,6 +75,10 @@ public:
 
 	__m256i* CreateLimbSet();
 	__m256i* CreateWideLimbSet();
+
+	void ClearLimbSet(__m256i* const limbSet);
+	void ClearWideLimbSet(__m256i* const limbSet);
+
 private:
 
 	void SquareInternal(__m256i* const source, __m256i* const result);
