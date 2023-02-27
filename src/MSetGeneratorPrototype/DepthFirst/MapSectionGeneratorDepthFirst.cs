@@ -45,13 +45,13 @@ namespace MSetGeneratorPrototype
 			_useCImplementation = useCImplementation;
 			_hpMSetRowClient = new HpMSetRowClient();
 
-			_crs = _fp31VecMath.GetNewLimbSet();
-			_cis = _fp31VecMath.GetNewLimbSet();
-			_zrs = _fp31VecMath.GetNewLimbSet();
-			_zis = _fp31VecMath.GetNewLimbSet();
+			_crs = _fp31VecMath.CreateNewLimbSet();
+			_cis = _fp31VecMath.CreateNewLimbSet();
+			_zrs = _fp31VecMath.CreateNewLimbSet();
+			_zis = _fp31VecMath.CreateNewLimbSet();
 
-			_resultZrs = _fp31VecMath.GetNewLimbSet();
-			_resultZis = _fp31VecMath.GetNewLimbSet();
+			_resultZrs = _fp31VecMath.CreateNewLimbSet();
+			_resultZis = _fp31VecMath.CreateNewLimbSet();
 
 			_justOne = Vector256.Create(1);
 		}
@@ -363,8 +363,8 @@ namespace MSetGeneratorPrototype
 			doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
 
 			var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
-			var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
 
+			var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
 			if (compositeIsDone != prevCompositeIsDone)
 			{
 				var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
@@ -380,8 +380,35 @@ namespace MSetGeneratorPrototype
 				}
 			}
 
+			//var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
+			//var anyJustNowDone = !Avx.TestC(justNowDone, Vector256<int>.AllBitsSet);
+
+			//if (anyJustNowDone)
+			//{
+
+			//	Debug.Assert(Avx2.MoveMask(prevDoneFlagsV.AsByte()) != compositeIsDone, "Test C -- not the same.");
+
+
+			//	// Save the current count 
+			//	resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
+
+			//	// Save the current ZValues.
+			//	for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
+			//	{
+			//		resultZRs[limbPtr] = Avx2.BlendVariable(zRs[limbPtr].AsInt32(), resultZRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+			//		resultZIs[limbPtr] = Avx2.BlendVariable(zIs[limbPtr].AsInt32(), resultZIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+			//	}
+			//}
+			//else
+			//{
+			//	Debug.Assert(Avx2.MoveMask(prevDoneFlagsV.AsByte()) == compositeIsDone, "Test C -- not the same2.");
+			//}
 			return compositeIsDone;
 		}
+
+		//// horizontal_and. Returns true if all bits are 1
+		//static inline bool horizontal_and(Vec256b const a) {
+        //return _mm256_testc_si256(a, _mm256_set1_epi32(-1)) != 0;
 
 		#endregion
 
@@ -411,13 +438,13 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
 				_iterator = new IteratorDepthFirst(_fp31VecMath);
 
-				_crs = _fp31VecMath.GetNewLimbSet();
-				_cis = _fp31VecMath.GetNewLimbSet();
-				_zrs = _fp31VecMath.GetNewLimbSet();
-				_zis = _fp31VecMath.GetNewLimbSet();
+				_crs = _fp31VecMath.CreateNewLimbSet();
+				_cis = _fp31VecMath.CreateNewLimbSet();
+				_zrs = _fp31VecMath.CreateNewLimbSet();
+				_zis = _fp31VecMath.CreateNewLimbSet();
 
-				_resultZrs = _fp31VecMath.GetNewLimbSet();
-				_resultZis = _fp31VecMath.GetNewLimbSet();
+				_resultZrs = _fp31VecMath.CreateNewLimbSet();
+				_resultZis = _fp31VecMath.CreateNewLimbSet();
 			}
 
 			return (currentLimbCount, limbCountForThisRequest);

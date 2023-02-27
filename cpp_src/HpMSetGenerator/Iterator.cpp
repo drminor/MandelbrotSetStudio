@@ -114,39 +114,54 @@ void Iterator::Iterate(__m256i* const cr, __m256i* const ci, __m256i* const zr, 
 
 int Iterator::UpdateCounts(__m256i escapedFlagsVec, __m256i& counts, __m256i& resultCounts, __m256i& doneFlags, __m256i& hasEscapedFlags)
 {
-    //counts = Avx2.Add(counts, _justOne);
-
     counts = _mm256_add_epi32(counts, _justOne);
 
     // Apply the new escapedFlags, only if the doneFlags is false for each vector position
-    //hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
     hasEscapedFlags = _mm256_blendv_epi8(escapedFlagsVec, hasEscapedFlags, doneFlags);
 
     // Compare the new Counts with the TargetIterations
-    //var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsV);
-    __m256i targetReachedCompVec = _mm256_cmpgt_epi32(counts, _targetIterationsVector);
+    const __m256i targetReachedCompVec = _mm256_cmpgt_epi32(counts, _targetIterationsVector);
 
-    __m256i prevDoneFlags = doneFlags;
+    const __m256i prevDoneFlags = doneFlags;
 
     // If escaped or reached the target iterations, we're done 
-    //doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
     doneFlags = _mm256_or_si256(hasEscapedFlags, targetReachedCompVec);
-
-    //var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
-    //var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
 
     int compositeIsDone = _mm256_movemask_epi8(doneFlags);
     int prevCompositeIsDone = _mm256_movemask_epi8(prevDoneFlags);
 
     if (compositeIsDone != prevCompositeIsDone)
     {
-        //var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
         __m256i justNowDone = _mm256_cmpeq_epi32(prevDoneFlags, doneFlags);
 
         // Save the current count 
-        //resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
-        resultCounts = _mm256_blendv_epi8(counts, resultCounts, justNowDone);
+        resultCounts = _mm256_blendv_epi8(counts, resultCounts, justNowDone); // use First if Zero, second if 1
     }
-
+    
     return compositeIsDone;
 }
+
+
+/*
+
+// Select between two sources, byte by byte. Used in various functions and operators
+// Corresponds to this pseudocode:
+// for (int i = 0; i < 32; i++) result[i] = s[i] ? a[i] : b[i];
+// Each byte in s must be either 0 (false) or 0xFF (true). No other values are allowed.
+// Only bit 7 in each byte of s is checked,
+static inline __m256i selectb (__m256i const s, __m256i const a, __m256i const b) {
+    return _mm256_blendv_epi8 (b, a, s);
+}
+
+// horizontal_and. Returns true if all bits are 1
+static inline bool horizontal_and (Vec256b const a) {
+    return _mm256_testc_si256(a,_mm256_set1_epi32(-1)) != 0;
+}
+
+// horizontal_or. Returns true if at least one bit is 1
+static inline bool horizontal_or (Vec256b const a) {
+    return ! _mm256_testz_si256(a,a);
+}
+
+
+*/

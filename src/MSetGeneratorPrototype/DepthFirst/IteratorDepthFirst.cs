@@ -33,12 +33,12 @@ namespace MSetGeneratorPrototype
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
-			_zRZiSqrs = fp31VecMath.GetNewLimbSet();
-			_temp = fp31VecMath.GetNewLimbSet();
+			_zRZiSqrs = fp31VecMath.CreateNewLimbSet();
+			_temp = fp31VecMath.CreateNewLimbSet();
 
-			_zRSqrs = fp31VecMath.GetNewLimbSet();
-			_zISqrs = fp31VecMath.GetNewLimbSet();
-			_sumOfSqrs = fp31VecMath.GetNewLimbSet();
+			_zRSqrs = fp31VecMath.CreateNewLimbSet();
+			_zISqrs = fp31VecMath.CreateNewLimbSet();
+			_sumOfSqrs = fp31VecMath.CreateNewLimbSet();
 		}
 
 		#endregion
@@ -87,7 +87,7 @@ namespace MSetGeneratorPrototype
 					_fp31VecMath.Square(zis, _zISqrs);
 					_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-					_fp31VecMath.IsGreaterOrEqThan(ref _sumOfSqrs[^1], ref _thresholdVector, ref escapedFlagsVec);
+					_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, ref _thresholdVector, ref escapedFlagsVec);
 				}
 				catch (Exception e)
 				{
@@ -119,7 +119,7 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.Square(zis, _zISqrs);
 				_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-				_fp31VecMath.IsGreaterOrEqThan(ref _sumOfSqrs[^1], ref _thresholdVector, ref escapedFlagsVec);
+				_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, ref _thresholdVector, ref escapedFlagsVec);
 			}
 			catch (Exception e)
 			{

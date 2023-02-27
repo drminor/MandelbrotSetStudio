@@ -38,22 +38,29 @@ namespace MSS.Common
 		private static readonly Vector256<uint> SHUFFLE_PACK_LOW_VEC = Vector256.Create(0u, 2u, 4u, 6u, 0u, 0u, 0u, 0u);
 		private static readonly Vector256<uint> SHUFFLE_PACK_HIGH_VEC = Vector256.Create(0u, 0u, 0u, 0u, 0u, 2u, 4u, 6u);
 
-		private Vector256<uint>[] _squareResult0Lo;
-		private Vector256<uint>[] _squareResult0Hi;
+		//private Vector256<uint>[] _squareResult0Lo;
+		//private Vector256<uint>[] _squareResult0Hi;
 
-		private Vector256<ulong>[] _squareResult1Lo;
-		private Vector256<ulong>[] _squareResult1Hi;
+		private PairOfVec8ui _squareResult0;
 
-		private Vector256<ulong>[] _squareResult2Lo;
-		private Vector256<ulong>[] _squareResult2Hi;
+		//private Vector256<ulong>[] _squareResult1Lo;
+		//private Vector256<ulong>[] _squareResult1Hi;
+
+		private PairOfVec4ui _squareResult1;
+
+		//private Vector256<ulong>[] _squareResult2Lo;
+		//private Vector256<ulong>[] _squareResult2Hi;
+
+		private PairOfVec4ui _squareResult2;
 
 		private Vector256<uint>[] _negationResult;
-		private Vector256<uint>[] _additionResult;
+		//private Vector256<uint>[] _additionResult;
 
 		private Vector256<uint> _ones;
 
 		private Vector256<uint> _carryVectors;
-		private Vector256<ulong> _carryVectorsLong;
+		private Vector256<ulong> _carryVectorsLong1;
+		private Vector256<ulong> _carryVectorsLong2;
 
 		private Vector256<int> _signBitVecs;
 
@@ -74,23 +81,30 @@ namespace MSS.Common
 			ApFixedPointFormat = apFixedPointFormat;
 			LimbCount = apFixedPointFormat.LimbCount;
 
-			_squareResult0Lo = new Vector256<uint>[LimbCount];
-			_squareResult0Hi = new Vector256<uint>[LimbCount];
+			//_squareResult0Lo = CreateNewLimbSet();
+			//_squareResult0Hi = CreateNewLimbSet();
 
-			_squareResult1Lo = new Vector256<ulong>[LimbCount * 2];
-			_squareResult1Hi = new Vector256<ulong>[LimbCount * 2];
+			_squareResult0 = new PairOfVec8ui(LimbCount);
 
-			_squareResult2Lo = new Vector256<ulong>[LimbCount * 2];
-			_squareResult2Hi = new Vector256<ulong>[LimbCount * 2];
+			//_squareResult1Lo = new Vector256<ulong>[LimbCount * 2];
+			//_squareResult1Hi = new Vector256<ulong>[LimbCount * 2];
+
+			_squareResult1 = new PairOfVec4ui(LimbCount);
+
+			//_squareResult2Lo = new Vector256<ulong>[LimbCount * 2];
+			//_squareResult2Hi = new Vector256<ulong>[LimbCount * 2];
+
+			_squareResult2 = new PairOfVec4ui(LimbCount);
 
 
 			_negationResult = new Vector256<uint>[LimbCount];
-			_additionResult = new Vector256<uint>[LimbCount];
+			//_additionResult = new Vector256<uint>[LimbCount];
 
 			_ones = Vector256.Create(1u);
 
 			_carryVectors = Vector256<uint>.Zero;
-			_carryVectorsLong = Vector256<ulong>.Zero;
+			_carryVectorsLong1 = Vector256<ulong>.Zero;
+			_carryVectorsLong2 = Vector256<ulong>.Zero;
 
 			_signBitVecs = Vector256<int>.Zero;
 
@@ -143,20 +157,20 @@ namespace MSS.Common
 
 			ClearLimbSet(result);
 
-			ConvertFrom2C(a, _squareResult0Lo, _squareResult0Hi);
+			ConvertFrom2C(a, _squareResult0);
 			//MathOpCounts.NumberOfConversions++;
 
 			// Unoptimized
-			SquareInternal(_squareResult0Lo, _squareResult1Lo);
-			SquareInternal(_squareResult0Hi, _squareResult1Hi);
+			SquareInternal(_squareResult0, _squareResult1);
+			//SquareInternal(_squareResult0Hi, _squareResult1Hi);
 
 			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
 			//SquareInternalOptimized(_squareResult0Hi, _squareResult1Hi);
 
-			SumThePartials(_squareResult1Lo, _squareResult2Lo);
-			SumThePartials(_squareResult1Hi, _squareResult2Hi);
+			SumThePartials(_squareResult1, _squareResult2);
+			//SumThePartials(_squareResult1Hi, _squareResult2Hi);
 
-			ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, result);
+			ShiftAndTrim(_squareResult2, result);
 
 			//// Optimized
 
@@ -179,33 +193,39 @@ namespace MSS.Common
 			//}
 		}
 
-		private void SquareInternal(Vector256<uint>[] source, Vector256<ulong>[] result)
+		private void SquareInternal(PairOfVec8ui source, PairOfVec4ui result)
 		{
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
 			//result.ClearManatissMems();
 
-			for (int j = 0; j < source.Length; j++)
+			for (int j = 0; j < source.Lower.Length; j++)
 			{
-				for (int i = j; i < source.Length; i++)
+				for (int i = j; i < source.Lower.Length; i++)
 				{
 					var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
 
-					var productVector = Avx2.Multiply(source[j], source[i]);
-					IncrementNoMultiplications();
+					var productVector1 = Avx2.Multiply(source.Lower[j], source.Lower[i]);
+					var productVector2 = Avx2.Multiply(source.Upper[j], source.Upper[i]);
+					IncrementNoMultiplications(8);
 
 					if (i > j)
 					{
 						//product *= 2;
-						productVector = Avx2.ShiftLeftLogical(productVector, 1);
+						productVector1 = Avx2.ShiftLeftLogical(productVector1, 1);
+						productVector2 = Avx2.ShiftLeftLogical(productVector2, 1);
 					}
 
 					// 0/1; 1/2; 2/3
 
-					result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
-					result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
-					//MathOpCounts.NumberOfSplits++;
-					//MathOpCounts.NumberOfAdditions += 2;
+					result.Lower[resultPtr] = Avx2.Add(result.Lower[resultPtr], Avx2.And(productVector1, HIGH33_MASK_VEC_L));
+					result.Lower[resultPtr + 1] = Avx2.Add(result.Lower[resultPtr + 1], Avx2.ShiftRightLogical(productVector1, EFFECTIVE_BITS_PER_LIMB));
+
+					result.Upper[resultPtr] = Avx2.Add(result.Upper[resultPtr], Avx2.And(productVector2, HIGH33_MASK_VEC_L));
+					result.Upper[resultPtr + 1] = Avx2.Add(result.Upper[resultPtr + 1], Avx2.ShiftRightLogical(productVector2, EFFECTIVE_BITS_PER_LIMB));
+
+					//MathOpCounts.NumberOfSplits += 4;
+					//MathOpCounts.NumberOfAdditions += 16;
 				}
 			}
 		}
@@ -230,7 +250,7 @@ namespace MSS.Common
 					else
 					{
 						var productVector = Avx2.Multiply(source[j], source[i]);
-						IncrementNoMultiplications();
+						IncrementNoMultiplications(4);
 
 						if (i > j)
 						{
@@ -259,37 +279,43 @@ namespace MSS.Common
 		}
 
 		[Conditional("PERF")]
-		private void IncrementNoMultiplications()
+		private void IncrementNoMultiplications(int amount)
 		{
-			MathOpCounts.NumberOfMultiplications ++;
+			MathOpCounts.NumberOfMultiplications += amount;
 		}
 
 		#endregion
 
 		#region Multiplication Post Processing
 
-		private void SumThePartials(Vector256<ulong>[] source, Vector256<ulong>[] result)
+		private void SumThePartials(PairOfVec4ui source, PairOfVec4ui result)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
 			// This will leave each result bin with a value <= 2^32 for the final digit.
 			// If the MSL produces a carry, throw an exception.
 
-			_carryVectorsLong = Vector256<ulong>.Zero;
+			_carryVectorsLong1 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong1, _carryVectorsLong1);
+			_carryVectorsLong2 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong2, _carryVectorsLong2);
 
-			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
+			for (int limbPtr = 0; limbPtr < source.Lower.Length; limbPtr++)
 			{
-				var withCarries = Avx2.Add(source[limbPtr], _carryVectorsLong);
+				var withCarries1 = Avx2.Add(source.Lower[limbPtr], _carryVectorsLong1);
+				var withCarries2 = Avx2.Add(source.Upper[limbPtr], _carryVectorsLong2);
 
-				result[limbPtr] = Avx2.And(withCarries, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
-				_carryVectorsLong = Avx2.ShiftRightLogical(withCarries, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+				result.Lower[limbPtr] = Avx2.And(withCarries1, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+				result.Upper[limbPtr] = Avx2.And(withCarries2, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+
+				_carryVectorsLong1 = Avx2.ShiftRightLogical(withCarries1, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+				_carryVectorsLong2 = Avx2.ShiftRightLogical(withCarries2, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 
 				// Clear the source so that square internal will not have to make a separate call.
-				source[limbPtr] = Avx2.Xor(source[limbPtr], source[limbPtr]);
+				source.Lower[limbPtr] = Avx2.Xor(source.Lower[limbPtr], source.Lower[limbPtr]);
+				source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
 			}
 		}
 
-		private void ShiftAndTrim(Vector256<ulong>[] sourceLimbsLo, Vector256<ulong>[] sourceLimbsHi, Vector256<uint>[] resultLimbs)
+		private void ShiftAndTrim(PairOfVec4ui source, Vector256<uint>[] resultLimbs)
 		{
 			//ValidateIsSplit(mantissa);
 
@@ -300,29 +326,29 @@ namespace MSS.Common
 			// Check to see if any of these values are larger than the FP Format.
 			//_ = CheckForOverflow(resultLimbs);
 
-			var sourceIndex = Math.Max(sourceLimbsLo.Length - LimbCount, 0);
+			var sourceIndex = Math.Max(source.Lower.Length - LimbCount, 0);
 
 			for (int limbPtr = 0; limbPtr < resultLimbs.Length; limbPtr++)
 			{
 				// Calculate the lo end
 
 				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				var source = sourceLimbsLo[limbPtr + sourceIndex];
-				var wideResultLow = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
+				var sourceLimb = source.Lower[limbPtr + sourceIndex];
+				var wideResultLow = Avx2.And(Avx2.ShiftLeftLogical(sourceLimb, _shiftAmount), HIGH33_MASK_VEC_L);
 
 				// Take the top shiftAmount of bits from the previous limb
-				var prevSource = sourceLimbsLo[limbPtr + sourceIndex - 1];
-				wideResultLow = Avx2.Or(wideResultLow, Avx2.ShiftRightLogical(Avx2.And(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
+				var prevSourceLimb = source.Lower[limbPtr + sourceIndex - 1];
+				wideResultLow = Avx2.Or(wideResultLow, Avx2.ShiftRightLogical(Avx2.And(prevSourceLimb, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
 				// Calculate the hi end
 
 				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				source = sourceLimbsHi[limbPtr + sourceIndex];
-				var wideResultHigh = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
+				sourceLimb = source.Upper[limbPtr + sourceIndex];
+				var wideResultHigh = Avx2.And(Avx2.ShiftLeftLogical(sourceLimb, _shiftAmount), HIGH33_MASK_VEC_L);
 
 				// Take the top shiftAmount of bits from the previous limb
-				prevSource = sourceLimbsHi[limbPtr + sourceIndex - 1];
-				wideResultHigh = Avx2.Or(wideResultHigh, Avx2.ShiftRightLogical(Avx2.And(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
+				prevSourceLimb = source.Upper[limbPtr + sourceIndex - 1];
+				wideResultHigh = Avx2.Or(wideResultHigh, Avx2.ShiftRightLogical(Avx2.And(prevSourceLimb, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
 				var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
 				var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
@@ -363,6 +389,7 @@ namespace MSS.Common
 
 		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
+			//_carryVectors = Avx2.Xor(_carryVectors, _carryVectors);
 			_carryVectors = Vector256<uint>.Zero;
 
 			for (int limbPtr = 0; limbPtr < left.Length; limbPtr++)
@@ -402,23 +429,24 @@ namespace MSS.Common
 			}
 		}
 
-		private void ConvertFrom2C(Vector256<uint>[] source, Vector256<uint>[] resultLo, Vector256<uint>[] resultHi)
+		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec8ui result)
 		{
 			//CheckReservedBitIsClear(source, "ConvertFrom2C");
 
-			var signBitFlags = GetSignBits(source, out _signBitVecs);
+			var signBitFlags = GetSignBits(source, ref _signBitVecs);
 
 			if (signBitFlags == -1)
 			{
 				// All positive values
 				for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
 				{
+					// TODO: Is Masking the high bits really required.
 					// Take the lower 4 values and set the low halves of each result
-					resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					result.Lower[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
 					//resultLo[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(Avx2.And(source[limbPtr], HIGH33_MASK_VEC), 0)).AsUInt32();
 
 					// Take the higher 4 values and set the high halves of each result
-					resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+					result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 					//resultHi[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(Avx2.And(source[limbPtr], HIGH33_MASK_VEC), 1)).AsUInt32();
 
 
@@ -454,18 +482,18 @@ namespace MSS.Common
 
 					// Take the lower 4 values and set the low halves of each result
 					//resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
-					resultLo[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(cLimbValues, 0)).AsUInt32();
+					result.Lower[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(cLimbValues, 0)).AsUInt32();
 
 
 					// Take the higher 4 values and set the high halves of each result
 					//resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
-					resultHi[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(cLimbValues, 1)).AsUInt32();
+					result.Upper[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(cLimbValues, 1)).AsUInt32();
 
 				}
 			}
 		}
 
-		private int GetSignBits(Vector256<uint>[] source, out Vector256<int> signBitVecs)
+		private int GetSignBits(Vector256<uint>[] source, ref Vector256<int> signBitVecs)
 		{
 			//var msl = source[LimbCount - 1];
 
@@ -569,51 +597,6 @@ namespace MSS.Common
 			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}. hpOfNv: {nvHiPart}. unSNv: {unSNv}\n");
 		}
 
-		private void ExpandTo(FP31Vectors source, FP31VectorsPW result, int[] inPlayList)
-		{
-			var indexes = inPlayList;
-
-			for (var limbPtr = 0; limbPtr < source.LimbCount; limbPtr++)
-			{
-				var left = source.GetLimbVectorsUW(limbPtr);                // Walk through the source at 1x rate.
-				var resultVectorsNarrow = result.GetLimbVectorsUW(limbPtr); // Walk through the result at 2x rate.
-
-				for (var idxPtr = 0; idxPtr < inPlayList.Length; idxPtr++)
-				{
-					var idx = indexes[idxPtr];
-					var rIdx = idx * 2;
-
-					// Take the lower 4 values and set the low halves of each result
-					resultVectorsNarrow[rIdx] = Avx2.And(Avx2.PermuteVar8x32(left[idx], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
-
-					// Take the upper 4 values and set the low halves of each result
-					resultVectorsNarrow[rIdx + 1] = Avx2.And(Avx2.PermuteVar8x32(left[idx], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
-				}
-			}
-		}
-
-		private void PackTo(FP31VectorsPW source, FP31Vectors result, int[] inPlayList)
-		{
-			var indexes = inPlayList;
-
-			for (var limbPtr = 0; limbPtr < source.LimbCount; limbPtr++)
-			{
-				var leftNarrow = source.GetLimbVectorsUW(limbPtr);      // Walk through the source at 2x rate
-				var resultVectors = result.GetLimbVectorsUW(limbPtr);   // Walk through the result at 1x rate
-
-				for (var idxPtr = 0; idxPtr < inPlayList.Length; idxPtr++)
-				{
-					var idx = indexes[idxPtr];
-					var sIdx = idx * 2;
-
-					var low128 = Avx2.PermuteVar8x32(leftNarrow[sIdx], SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
-					var high128 = Avx2.PermuteVar8x32(leftNarrow[sIdx + 1], SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
-
-					resultVectors[idx] = Avx2.Or(low128, high128);
-				}
-			}
-		}
-
 		#endregion
 
 		#region Comparison
@@ -627,10 +610,12 @@ namespace MSS.Common
 			return result;
 		}
 
-		public void IsGreaterOrEqThan(ref Vector256<uint> left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
+		public void IsGreaterOrEqThan(Vector256<uint>[] left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
 		{
-			var sansSign = Avx2.And(left, SIGN_BIT_MASK_VEC);
+			// TODO: Is masking the Sign Bit really necessary.
+			var sansSign = Avx2.And(left[^1], SIGN_BIT_MASK_VEC);
 			escapedFlagsVec = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
+
 			//MathOpCounts.NumberOfGrtrThanOps++;
 		}
 
@@ -638,20 +623,89 @@ namespace MSS.Common
 
 		#region Value Support
 
-		public Vector256<uint>[] GetNewLimbSet()
+		public Vector256<uint>[] CreateNewLimbSet()
 		{
 			return new Vector256<uint>[LimbCount];
+		}
+
+		public Vector256<ulong>[] CreateNewLimbSetWide()
+		{
+			return new Vector256<ulong>[LimbCount * 2];
 		}
 
 		private void ClearLimbSet(Vector256<uint>[] limbs)
 		{
 			for (var i = 0; i < limbs.Length; i++)
 			{
-				limbs[i] = Vector256<uint>.Zero;
+				limbs[i] = Vector256<uint>.Zero; // Avx2.Xor(limbs[i], limbs[i]);
 			}
 		}
 
 
 		#endregion
+
+
+		private class PairOfVec8ui
+		{
+			public PairOfVec8ui(int limbCount)
+			{
+				Lower = new Vector256<uint>[limbCount];
+				Upper = new Vector256<uint>[limbCount];
+
+				ClearLimbSet();
+			}
+
+			//public PairOfVec8ui(Vector256<uint>[] lower, Vector256<uint>[] upper)
+			//{
+			//	Lower = lower ?? throw new ArgumentNullException(nameof(lower));
+			//	Upper = upper ?? throw new ArgumentNullException(nameof(upper));
+			//}
+
+			public Vector256<uint>[] Lower { get; init; }
+			public Vector256<uint>[] Upper { get; init; }
+
+
+			public void ClearLimbSet()
+			{
+				for (var i = 0; i < Lower.Length; i++)
+				{
+					Lower[i] = Vector256<uint>.Zero;
+					Upper[i] = Vector256<uint>.Zero;
+				}
+			}
+		}
+
+		private class PairOfVec4ui
+		{
+			public PairOfVec4ui(int limbCount)
+			{
+				Lower = new Vector256<ulong>[limbCount * 2];
+				Upper = new Vector256<ulong>[limbCount * 2];
+
+				ClearLimbSet();
+			}
+
+			//public PairOfVec4ui(Vector256<ulong>[] lower, Vector256<ulong>[] upper)
+			//{
+			//	Lower = lower ?? throw new ArgumentNullException(nameof(lower));
+			//	Upper = upper ?? throw new ArgumentNullException(nameof(upper));
+			//}
+
+			public Vector256<ulong>[] Lower { get; init; }
+			public Vector256<ulong>[] Upper { get; init; }
+
+			public void ClearLimbSet()
+			{
+				for (var i = 0; i < Lower.Length; i++)
+				{
+					Lower[i] = Vector256<ulong>.Zero;
+					Upper[i] = Vector256<ulong>.Zero;
+				}
+			}
+
+
+		}
+
+
 	}
 }
