@@ -22,10 +22,11 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClientLocal(bool useSingleLimb, bool useDepthFirst)
+		public MClientLocal(bool useSingleLimb, bool useDepthFirst, bool useCImplementation)
 		{
 			UsingSingleLimb = useSingleLimb;
 			UsingDepthFirst = useDepthFirst; 
+			UseCImplementation = useCImplementation;
 
 			if (useSingleLimb)
 			{
@@ -34,7 +35,7 @@ namespace MEngineClient
 			}
 			else if (UsingDepthFirst)
 			{
-				_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
+				_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE, useCImplementation);
 				EndPointAddress = "CSharp_DepthFirstGenerator";
 			}
 			else
@@ -50,6 +51,7 @@ namespace MEngineClient
 
 		public bool UsingSingleLimb { get; init; }
 		public bool UsingDepthFirst { get; init; }
+		public bool UseCImplementation { get; init; }
 		public string EndPointAddress { get; init; }
 		public bool IsLocal => true;
 

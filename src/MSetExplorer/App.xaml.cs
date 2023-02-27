@@ -30,6 +30,9 @@ namespace MSetExplorer
 		private static readonly bool USE_ALL_CORES = true;
 		private static readonly bool USE_SINGLE_LIMB_ITERATOR = false;
 		private static readonly bool USE_DEPTH_FIRST_ITERATOR = true;
+		private static readonly bool USE_C_IMPLEMENTATION = false;
+
+
 		private static readonly ClientImplementation CLIENT_IMPLEMENTATION = ClientImplementation.LocalVectorMark2;
 
 		private static readonly bool CREATE_COLLECTIONS = false;
@@ -146,7 +149,7 @@ namespace MSetExplorer
 				ClientImplementation.LocalScalar => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalScalar() },
 				ClientImplementation.LocalVector => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalVector() },
 
-				ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_SINGLE_LIMB_ITERATOR, USE_DEPTH_FIRST_ITERATOR) },
+				ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_SINGLE_LIMB_ITERATOR, USE_DEPTH_FIRST_ITERATOR, USE_C_IMPLEMENTATION) },
 				_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
 			};
 

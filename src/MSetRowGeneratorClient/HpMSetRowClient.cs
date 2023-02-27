@@ -8,9 +8,24 @@ using System.Runtime.Intrinsics;
 
 namespace MSetRowGeneratorClient
 {
-	public class HpMSetRowClient
+	public class HpMSetRowClient : IDisposable
 	{
-		private const int BYTES_PER_VECTOR = 32; // Also used for alignment
+		private const int MEM_ALLOCATION_ALIGNMENT = 32;
+		private const int BYTES_PER_VECTOR = 32;			// Lanes * VALUE_SIZE				(8 x 4)
+		private const int COUNTS_BUFFER_SIZE = 512;			// BlockSize.Width * VALUE_SIZE		(128 x 4)  
+
+
+		private readonly IntPtr _countsBuffer;
+
+
+		public HpMSetRowClient()
+		{
+			unsafe
+			{
+				_countsBuffer = (IntPtr)NativeMemory.AlignedAlloc(COUNTS_BUFFER_SIZE, MEM_ALLOCATION_ALIGNMENT);
+			}
+		}
+
 
 		#region Public Methods
 
@@ -25,13 +40,13 @@ namespace MSetRowGeneratorClient
 			_ = GetYPointVecs(iterationState, out var ypBuffer);
 
 			// Counts
-			var countsBuffer = GetCounts2(iterationState);
+			GetCounts(iterationState);
 
 			// Generate a MapSectionRow
-			var intResult = HpMSetGeneratorImports.GenerateMapSectionRow(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, (IntPtr)countsBuffer);
+			var intResult = HpMSetGeneratorImports.GenerateMapSectionRow(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, _countsBuffer);
 
 			// Counts
-			PutCounts2(countsBuffer, iterationState);
+			PutCounts(iterationState);
 
 			FreeInteropBuffer(ypBuffer);
 			FreeInteropBuffer(spxBuffer);
@@ -66,18 +81,14 @@ namespace MSetRowGeneratorClient
 			_ = GetYPointVecs(iterationState, out var ypBuffer);
 
 			// Counts
-			var counts = GetCounts(iterationState, requestStruct.RowNumber, out var countsBuffer);
+			GetCounts(iterationState);
 
 			// Call BaseSimdTest2
-			var intResult = HpMSetGeneratorImports.BaseSimdTest2(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, (IntPtr)countsBuffer);
+			var intResult = HpMSetGeneratorImports.BaseSimdTest2(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, _countsBuffer);
 
 			// Counts
-			Marshal.Copy((IntPtr)countsBuffer, counts, 0, counts.Length);
-			FreeInteropBuffer(countsBuffer);
-			PutCounts(iterationState, requestStruct.RowNumber, counts);
+			PutCounts(iterationState);
 
-			//Marshal.FreeCoTaskMem(ypBuffer);
-			//Marshal.FreeCoTaskMem(spxBuffer);
 			FreeInteropBuffer(ypBuffer);
 			FreeInteropBuffer(spxBuffer);
 
@@ -98,13 +109,13 @@ namespace MSetRowGeneratorClient
 			_ = GetYPointVecs(iterationState, out var ypBuffer);
 
 			// Counts
-			var countsBuffer = GetCounts2(iterationState);
+			GetCounts(iterationState);
 
 			// Call BaseSimdTest
-			var intResult = HpMSetGeneratorImports.BaseSimdTest3(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, (IntPtr)countsBuffer);
+			var intResult = HpMSetGeneratorImports.BaseSimdTest3(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, _countsBuffer);
 
 			// Counts
-			PutCounts2(countsBuffer, iterationState);
+			PutCounts(iterationState);
 
 			FreeInteropBuffer(ypBuffer);
 			FreeInteropBuffer(spxBuffer);
@@ -126,13 +137,13 @@ namespace MSetRowGeneratorClient
 			_ = GetYPointVecs(iterationState, out var ypBuffer);
 
 			// Counts
-			var countsBuffer = GetCounts2(iterationState);
+			GetCounts(iterationState);
 
 			// Call BaseSimdTest
-			var intResult = HpMSetGeneratorImports.BaseSimdTest4(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, (IntPtr)countsBuffer);
+			var intResult = HpMSetGeneratorImports.BaseSimdTest4(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, _countsBuffer);
 
 			// Counts
-			PutCounts2(countsBuffer, iterationState);
+			PutCounts(iterationState);
 
 			FreeInteropBuffer(ypBuffer);
 			FreeInteropBuffer(spxBuffer);
@@ -177,10 +188,10 @@ namespace MSetRowGeneratorClient
 			var rowSumBefore = diagCounts.Sum();
 
 			// Fill Unmanaged Buffer -- these are used by the C++ imp.
-			var countsBuffer = GetCounts2(iterationState);
+			GetCounts(iterationState);
 
 			// Updated the interation state from this buffer.
-			PutCounts2(countsBuffer, iterationState);
+			PutCounts(iterationState);
 
 			// Refresh the counts
 			Array.Clear(diagCounts);
@@ -200,11 +211,8 @@ namespace MSetRowGeneratorClient
 		{
 			var resultBuffer = new byte[iterationState.MapSectionZVectors.BytesPerZValueRow];
 			iterationState.FillSamplePointsXBuffer(resultBuffer);
-
-			//spxBuffer = Marshal.AllocCoTaskMem(resultBuffer.Length);
-			//Marshal.Copy(resultBuffer, 0, spxBuffer, resultBuffer.Length);
-			
-			spxBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, BYTES_PER_VECTOR);
+		
+			spxBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, MEM_ALLOCATION_ALIGNMENT);
 			Marshal.Copy(resultBuffer, 0, (IntPtr)spxBuffer, resultBuffer.Length);
 
 			return resultBuffer;
@@ -215,80 +223,32 @@ namespace MSetRowGeneratorClient
 			var resultBuffer = new byte[iterationState.MapSectionZVectors.LimbCount * BYTES_PER_VECTOR]; 
 			iterationState.FillSamplePointYBuffer(resultBuffer);
 
-			//ypBuffer =  Marshal.AllocCoTaskMem(resultBuffer.Length);
-			//Marshal.Copy(resultBuffer, 0, ypBuffer, resultBuffer.Length);
-
-			ypBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, BYTES_PER_VECTOR);
+			ypBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, MEM_ALLOCATION_ALIGNMENT);
 			Marshal.Copy(resultBuffer, 0, (IntPtr)ypBuffer, resultBuffer.Length);
 
-
 			return resultBuffer;
 		}
 
-		unsafe private byte[] GetCounts(IIterationState iterationState, int rowNumber, out void* countsBuffer)
+		private void GetCounts(IIterationState iterationState)
 		{
-			// MapSectionVectors uses a VALUE_SIZE of 2
-			// The Generator needs these shorts converted to ints
-			var countsLength = iterationState.MapSectionVectors.BytesPerRow * 2;
-			Debug.Assert(countsLength == iterationState.MapSectionZVectors.BytesPerRow, "Counts Length MisMatch");
-
-			var resultBuffer = new byte[countsLength];
-			iterationState.FillCountsRow(rowNumber, resultBuffer);
-
-			//countsBuffer = Marshal.AllocCoTaskMem(resultBuffer.Length);
-			//Marshal.Copy(resultBuffer, 0, countsBuffer, resultBuffer.Length);
-
-			countsBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, BYTES_PER_VECTOR);
-			Marshal.Copy(resultBuffer, 0, (IntPtr)countsBuffer, resultBuffer.Length);
-
-			return resultBuffer;
-		}
-
-		private void PutCounts(IIterationState iterationState, int rowNumber, byte[] counts)
-		{
-			iterationState.UpdateFromCountsRow(rowNumber, counts);
-		}
-
-		unsafe void* GetCounts2(IIterationState iterationState)
-		{
-			// MapSectionVectors uses a VALUE_SIZE of 2
-			// The Generator needs these shorts converted to ints
-			var countsLength = iterationState.MapSectionVectors.BytesPerRow * 2;
-			Debug.Assert(countsLength == iterationState.MapSectionZVectors.BytesPerRow, "Counts Length MisMatch");
-
-			//var resultBuffer = new byte[countsLength];
-			//iterationState.FillCountsRow(rowNumber, resultBuffer);
-
-			//countsBuffer = Marshal.AllocCoTaskMem(resultBuffer.Length);
-			//Marshal.Copy(resultBuffer, 0, countsBuffer, resultBuffer.Length);
-
-			//countsBuffer = NativeMemory.AlignedAlloc((nuint)countsLength, BYTES_PER_VECTOR);
-
 			var srcSpan = MemoryMarshal.Cast<Vector256<int>, byte>(iterationState.CountsRowV);
 			
-			var countsBuffer = NativeMemory.AlignedAlloc((nuint)countsLength, BYTES_PER_VECTOR);
-			var dstSpan = new Span<byte>(countsBuffer, countsLength);
-			srcSpan.CopyTo(dstSpan);
+			//var countsBuffer = NativeMemory.AlignedAlloc(COUNTS_BUFFER_SIZE, MEM_ALLOCATION_ALIGNMENT);
 
-			//Marshal.Copy(resultBuffer, 0, (IntPtr)countsBuffer, resultBuffer.Length);
-
-			return countsBuffer;
+			unsafe
+			{
+				var dstSpan = new Span<byte>((void*)_countsBuffer, COUNTS_BUFFER_SIZE);
+				srcSpan.CopyTo(dstSpan);
+			}
 		}
 
-		unsafe private void PutCounts2(void* countsBuffer, IIterationState iterationState)
+		unsafe private void PutCounts(IIterationState iterationState)
 		{
-			//iterationState.UpdateFromCountsRow(rowNumber, counts);
-			
-			//Marshal.Copy((IntPtr)countsBuffer, counts, 0, counts.Length);
-			//FreeInteropBuffer(countsBuffer);
-			//PutCounts(iterationState, requestStruct.RowNumber, counts);
-
 			var countsLength = iterationState.MapSectionVectors.BytesPerRow * 2;
-			var srcSpan = new Span<byte>(countsBuffer, countsLength);
+
+			var srcSpan = new Span<byte>((void*)_countsBuffer, countsLength);
 			var dstSpan = MemoryMarshal.Cast<Vector256<int>, byte>(iterationState.CountsRowV);
 			srcSpan.CopyTo(dstSpan);
-
-			NativeMemory.AlignedFree(countsBuffer);
 		}
 
 		unsafe private void FreeInteropBuffer(void* buffer)
@@ -339,6 +299,48 @@ namespace MSetRowGeneratorClient
 			var msl = (int)fp31Val.Mantissa[^1] - 1;
 
 			return msl;
+		}
+
+		#endregion
+
+		#region IDisposable
+
+		private bool disposedValue;
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// TODO: dispose managed state (managed objects)
+
+					unsafe
+					{
+						FreeInteropBuffer((void*)_countsBuffer);
+					}
+				}
+
+				// TODO: free unmanaged resources (unmanaged objects) and override finalizer
+				// TODO: set large fields to null
+
+
+
+				disposedValue = true;
+			}
+		}
+
+		// // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+		// ~HpMSetRowClient()
+		// {
+		//     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		//     Dispose(disposing: false);
+		// }
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
 		}
 
 		#endregion
