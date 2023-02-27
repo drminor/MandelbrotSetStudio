@@ -164,7 +164,6 @@ namespace MSetRowGeneratorClientTest
 			Debug.WriteLine($"The first 10 counts: {firstTen}; Sum of counts for Row {ROW_NUMBER}: {rowSum}.");
 		}
 
-
 		[Fact]
 		public void RoundTrip_Counts()
 		{
@@ -188,8 +187,6 @@ namespace MSetRowGeneratorClientTest
 			iterationState.SetRowNumber(iterationState.RowCount); //Closeout the Interation State.
 
 		}
-
-
 
 		#region Support Methods
 

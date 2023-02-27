@@ -1,15 +1,10 @@
 
-
 ulong = 64
-
 2 ulongs = 128
-
 
 Fixed Point with 8.120 format
 
-
 Split each ulong into a pair of uints
-
 
 LSL ---> MSL
 
@@ -25,7 +20,6 @@ LSL ---> MSL
 			
 			all 1's = (2^32 / 2^24) - 1 = 2^8 - 1 = 255
 
-
 ff ff ff ff = 2^32 - 1
 
 2^32 - 1 / 2^8
@@ -33,4 +27,18 @@ ff ff ff ff = 2^32 - 1
 4,294,967,295 (32 1's)
 
 16,777,215	(24 1'2)
+
+
+--------
+
+Fixed Point 8:23, 8:55, 8:97, 8:110
+
+
+8:110
+
+	31	31	31	31
+	31	31	31	23:8
+
+	all 1's = -63
+	7fffffff	7fffffff	7fffffff	7fffffff
 

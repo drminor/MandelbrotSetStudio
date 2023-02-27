@@ -19,8 +19,8 @@ Fp31VecMath::Fp31VecMath(int limbCount, int bitsBeforeBp, int targetExponent)
 	_squareResult2Lo = CreateWideLimbSet();
 	_squareResult2Hi = CreateWideLimbSet();
 
-	_negationResult = CreateWideLimbSet();
-	_additionResult = CreateWideLimbSet();
+	_negationResult = CreateLimbSet();
+	_additionResult = CreateLimbSet();
 
 	_shiftAmount = _bitsBeforeBp;
 	_inverseShiftAmount = EFFECTIVE_BITS_PER_LIMB - _shiftAmount;
@@ -119,7 +119,9 @@ void Fp31VecMath::SumThePartials(__m256i* const source, __m256i* const result)
 
 	_carryVectorsLong = _mm256_set1_epi64x(0);
 
-	for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+	int resultLength = LimbCount * 2;
+
+	for (int limbPtr = 0; limbPtr < resultLength; limbPtr++)
 	{
 		__m256i withCarries = _mm256_add_epi64(source[limbPtr], _carryVectorsLong);
 
@@ -169,11 +171,13 @@ void Fp31VecMath::ShiftAndTrim(__m256i* const sourceLimbsLo, __m256i* const sour
 			prevSource = sourceLimbsHi[(size_t)limbPtr + sourceIndex - 1];
 			wideResultHigh = _mm256_or_si256(wideResultHigh, _mm256_srli_epi64(_mm256_and_si256(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
-			__m128i low128 = _mm256_castsi256_si128(_mm256_permutevar8x32_epi32(wideResultLow, SHUFFLE_PACK_LOW_VEC));
-			__m256i high128 = _mm256_permutevar8x32_epi32(wideResultHigh, SHUFFLE_PACK_HIGH_VEC);
+			__m256i low256 = _mm256_permutevar8x32_epi32(wideResultLow, SHUFFLE_PACK_LOW_VEC);
+			__m256i high256 = _mm256_permutevar8x32_epi32(wideResultHigh, SHUFFLE_PACK_HIGH_VEC);
 
-			//resultLimbs[limbPtr] = _mm256_or_si256(low128, high128);
-			resultLimbs[limbPtr] = _mm256_inserti128_si256(high128, low128, 0); // Copy high128 to dst, then over write low half with low128.
+			//__m128i low128 = _mm256_extracti128_si256(low256, 0);
+			//resultLimbs[limbPtr] = _mm256_inserti128_si256(high256, low128, 0); // Copy all of low256 to dst, then over write low half with high128.
+
+			resultLimbs[limbPtr] = _mm256_or_si256(high256, low256);
 
 			//MathOpCounts.NumberOfSplits += 4;
 

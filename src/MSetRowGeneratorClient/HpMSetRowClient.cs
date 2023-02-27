@@ -2,9 +2,7 @@
 using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
-using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
@@ -50,22 +48,11 @@ namespace MSetRowGeneratorClient
 
 		unsafe public bool BaseSimdTest(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)
 		{
-			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
-
-			// Counts
-			var counts = GetCounts(iterationState, requestStruct.RowNumber, out var countsBuffer);
-
 			// Call BaseSimdTest
-			var intResult = HpMSetGeneratorImports.BaseSimdTest(requestStruct, (IntPtr)countsBuffer);
+			var intResult = HpMSetGeneratorImports.BaseSimdTest();
+			var success = intResult == 0 ? false : true;
 
-			// Counts
-			Marshal.Copy((IntPtr)countsBuffer, counts, 0, counts.Length);
-			FreeInteropBuffer(countsBuffer);
-			PutCounts(iterationState, requestStruct.RowNumber, counts);
-
-			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
-
-			return allRowSamplesHaveEscaped;
+			return success;
 		}
 
 		unsafe public bool BaseSimdTest2(IIterationState iterationState, ApFixedPointFormat apFixedPointFormat, MapCalcSettings mapCalcSettings)

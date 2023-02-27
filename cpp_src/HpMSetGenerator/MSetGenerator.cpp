@@ -82,7 +82,7 @@ extern "C"
 
             for (int limbPtr = 0; limbPtr < limbCount; limbPtr++)
             {
-                __m256i crLimb = _mm256_loadu_si256((__m256i const*) (&crsForARow[vPtr + limbCount]));
+                __m256i crLimb = _mm256_loadu_si256((__m256i const*) (&crsForARow[vPtr + limbPtr]));
                 cr[limbPtr] = crLimb;
             }
 
@@ -108,7 +108,7 @@ extern "C"
         return allRowSamplesHaveEscaped ? 1 : 0;
     }
 
-    __declspec(dllexport) int BaseSimdTest(MSETREQ mapSectionRequest, int* countsForARow)
+    __declspec(dllexport) int BaseSimdTest()
     {
         _RPTA("\n\nRunning BaseSimdTest\n");
 

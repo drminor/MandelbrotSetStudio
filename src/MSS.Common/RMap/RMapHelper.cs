@@ -327,7 +327,6 @@ namespace MSS.Common
 			}
 
 			var screenOffsetRat = posT.Diff(mapBlockOffset);
-			//var reducedOffset = Reducer.Reduce(screenOffsetRat);
 
 			if (BigIntegerHelper.TryConvertToInt(screenOffsetRat.Values, out var values))
 			{

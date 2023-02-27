@@ -304,56 +304,46 @@ namespace MSS.Common
 
 			for (int limbPtr = 0; limbPtr < resultLimbs.Length; limbPtr++)
 			{
-				if (sourceIndex > 0)
-				{
-					// Calculate the lo end
+				// Calculate the lo end
 
-					// Take the bits from the source limb, discarding the top shiftAmount of bits.
-					var source = sourceLimbsLo[limbPtr + sourceIndex];
-					var wideResultLow = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
+				// Take the bits from the source limb, discarding the top shiftAmount of bits.
+				var source = sourceLimbsLo[limbPtr + sourceIndex];
+				var wideResultLow = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
-					// Take the top shiftAmount of bits from the previous limb
-					var prevSource = sourceLimbsLo[limbPtr + sourceIndex - 1];
-					wideResultLow = Avx2.Or(wideResultLow, Avx2.ShiftRightLogical(Avx2.And(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
+				// Take the top shiftAmount of bits from the previous limb
+				var prevSource = sourceLimbsLo[limbPtr + sourceIndex - 1];
+				wideResultLow = Avx2.Or(wideResultLow, Avx2.ShiftRightLogical(Avx2.And(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
-					// Calculate the hi end
+				// Calculate the hi end
 
-					// Take the bits from the source limb, discarding the top shiftAmount of bits.
-					source = sourceLimbsHi[limbPtr + sourceIndex];
-					var wideResultHigh = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
+				// Take the bits from the source limb, discarding the top shiftAmount of bits.
+				source = sourceLimbsHi[limbPtr + sourceIndex];
+				var wideResultHigh = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
 
-					// Take the top shiftAmount of bits from the previous limb
-					prevSource = sourceLimbsHi[limbPtr + sourceIndex - 1];
-					wideResultHigh = Avx2.Or(wideResultHigh, Avx2.ShiftRightLogical(Avx2.And(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
+				// Take the top shiftAmount of bits from the previous limb
+				prevSource = sourceLimbsHi[limbPtr + sourceIndex - 1];
+				wideResultHigh = Avx2.Or(wideResultHigh, Avx2.ShiftRightLogical(Avx2.And(prevSource, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
-					var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
-					var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
+				var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
+				var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
+				resultLimbs[limbPtr] = Avx2.Or(low128, high128);
 
-					resultLimbs[limbPtr] = Avx2.Or(low128, high128);
+				//var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC);
+				//var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC);
+				//resultLimbs[limbPtr] = Avx2.InsertVector128(high128, Avx2.ExtractVector128(low128, 0), 0);
 
-					//MathOpCounts.NumberOfSplits += 4;
-				}
-				else
-				{
-					// Calculate the lo end
+				/*
+												Latency			Throughput
+					_mm256_permutevar8x32_epi32 3				1
 
-					// Take the bits from the source limb, discarding the top shiftAmount of bits.
-					var source = sourceLimbsLo[limbPtr + sourceIndex];
-					var wideResultLow = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
+					_mm256_extracti128_si256	3				1
+					_mm256_inserti128_si256		3				1
 
-					// Calculate the hi end
+					_mm256_or_si256				1				0.33
 
-					// Take the bits from the source limb, discarding the top shiftAmount of bits.
-					source = sourceLimbsHi[limbPtr + sourceIndex];
-					var wideResultHigh = Avx2.And(Avx2.ShiftLeftLogical(source, _shiftAmount), HIGH33_MASK_VEC_L);
+				*/
 
-					var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
-					var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
-
-					resultLimbs[limbPtr] = Avx2.Or(low128, high128);
-
-					//MathOpCounts.NumberOfSplits += 2;
-				}
+				//MathOpCounts.NumberOfSplits += 4;
 			}
 		}
 
@@ -425,9 +415,23 @@ namespace MSS.Common
 				{
 					// Take the lower 4 values and set the low halves of each result
 					resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					//resultLo[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(Avx2.And(source[limbPtr], HIGH33_MASK_VEC), 0)).AsUInt32();
 
-					// Take the higher 4 values and set the low halves of each result
+					// Take the higher 4 values and set the high halves of each result
 					resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+					//resultHi[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(Avx2.And(source[limbPtr], HIGH33_MASK_VEC), 1)).AsUInt32();
+
+
+
+					/*
+													Latency			Throughput
+						_mm256_permutevar8x32_epi32 3				1
+
+						_mm256_cvtepu32_epi64		3				1
+						_mm256_extracti128_si256	3				1
+
+					*/
+
 				}
 			}
 			else
@@ -449,10 +453,14 @@ namespace MSS.Common
 					var cLimbValues = (Avx2.BlendVariable(limbValues.AsByte(), source[limbPtr].AsByte(), _signBitVecs.AsByte())).AsUInt32();
 
 					// Take the lower 4 values and set the low halves of each result
-					resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					//resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					resultLo[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(cLimbValues, 0)).AsUInt32();
 
-					// Take the higher 4 values and set the low halves of each result
-					resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+
+					// Take the higher 4 values and set the high halves of each result
+					//resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+					resultHi[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(cLimbValues, 1)).AsUInt32();
+
 				}
 			}
 		}

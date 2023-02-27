@@ -10,7 +10,7 @@ namespace MSetRowGeneratorClient
 		internal static extern int GenerateMapSectionRow(MSetRowRequestStruct requestStruct, IntPtr crsForARow, IntPtr ciVec, IntPtr countsForARow);
 
 		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\HpMSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
-		internal static extern int BaseSimdTest(MSetRowRequestStruct requestStruct, IntPtr counts);
+		internal static extern int BaseSimdTest();
 
 		[DllImport("..\\..\\..\\..\\..\\..\\x64\\Debug\\HpMSetGenerator.dll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int BaseSimdTest2(MSetRowRequestStruct requestStruct, IntPtr crsForARow, IntPtr ciVec, IntPtr countsForARow);
