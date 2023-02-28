@@ -32,6 +32,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\RValueToStringLogic.txt = Notes\RValueToStringLogic.txt
 		Notes\SampleCoordValues.txt = Notes\SampleCoordValues.txt
 		SelectionRectangleKeyInput.txt = SelectionRectangleKeyInput.txt
+		Notes\SIMD Info.txt = Notes\SIMD Info.txt
 		Notes\SpatialCoordsAndHashes.txt = Notes\SpatialCoordsAndHashes.txt
 		Notes\SpatialDivisionsIn8x8sections.txt = Notes\SpatialDivisionsIn8x8sections.txt
 		Notes\Top-level regions.txt = Notes\Top-level regions.txt

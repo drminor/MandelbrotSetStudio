@@ -31,6 +31,7 @@ namespace MSetGeneratorPrototype
 		private Vector256<uint>[] _resultZis;
 
 		private readonly Vector256<int> _justOne;
+		private readonly Vector256<float> _justOneF;
 
 		#endregion
 
@@ -54,6 +55,7 @@ namespace MSetGeneratorPrototype
 			_resultZis = _fp31VecMath.CreateNewLimbSet();
 
 			_justOne = Vector256.Create(1);
+			_justOneF = Vector256.Create(1f);
 		}
 
 		#endregion
@@ -165,6 +167,7 @@ namespace MSetGeneratorPrototype
 
 		private bool GenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
+			var targetIterationsF = iterationState.TargetIterationsVector.AsSingle();
 			allRowsHaveEscaped = false;
 
 			if (ct.IsCancellationRequested)
@@ -181,7 +184,7 @@ namespace MSetGeneratorPrototype
 				var allRowSamplesHaveEscaped = true;
 				for (var idx = 0; idx < iterationState.VectorsPerRow; idx++)
 				{
-					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState);
+					var allSamplesHaveEscaped = GenerateMapColF(idx, iterator, ref iterationState, targetIterationsF);
 
 					if (!allSamplesHaveEscaped)
 					{
@@ -259,7 +262,7 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
-		#region Generate One Vector
+		#region Generate One Vector Int
 
 		private bool GenerateMapCol(int idx, IteratorDepthFirst iterator, ref IterationStateDepthFirst iterationState)
 		{
@@ -408,7 +411,92 @@ namespace MSetGeneratorPrototype
 
 		//// horizontal_and. Returns true if all bits are 1
 		//static inline bool horizontal_and(Vec256b const a) {
-        //return _mm256_testc_si256(a, _mm256_set1_epi32(-1)) != 0;
+		//return _mm256_testc_si256(a, _mm256_set1_epi32(-1)) != 0;
+
+		#endregion
+
+		#region Generate One Vector Float
+
+		private bool GenerateMapColF(int idx, IteratorDepthFirst iterator, ref IterationStateDepthFirst iterationState, Vector256<float> targetIterationsV)
+		{
+			var hasEscapedFlagsV = Vector256<float>.Zero;
+			var doneFlagsV = Vector256<float>.Zero;
+
+			var countsV = Vector256<float>.Zero;
+			var resultCountsV = countsV;
+
+			iterationState.FillCrLimbSet(idx, _crs);
+			_cis = iterationState.CiLimbSet;
+
+			ClearLimbSet(_zrs);
+			ClearLimbSet(_zis);
+			ClearLimbSet(_resultZrs);
+			ClearLimbSet(_resultZis);
+
+			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+			var compositeIsDone = UpdateCountsF(escapedFlagsVec.AsSingle(), ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, targetIterationsV);
+
+			while (compositeIsDone != -1)
+			{
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+				compositeIsDone = UpdateCountsF(escapedFlagsVec.AsSingle(), ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, targetIterationsV);
+			}
+
+			//TallyUsedAndUnusedCalcsF(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+
+			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV.AsInt32();
+			iterationState.CountsRowV[idx] = resultCountsV.AsInt32();
+
+			iterationState.UpdateZrLimbSet(idx, _resultZrs);
+			iterationState.UpdateZiLimbSet(idx, _resultZis);
+
+			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV.AsByte());
+
+			return compositeAllEscaped == -1;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private int UpdateCountsF(Vector256<float> escapedFlagsVec,
+			ref Vector256<float> countsV, ref Vector256<float> resultCountsV,
+			Vector256<uint>[] zRs, Vector256<uint>[] resultZRs,
+			Vector256<uint>[] zIs, Vector256<uint>[] resultZIs,
+			ref Vector256<float> hasEscapedFlagsV, ref Vector256<float> doneFlagsV, Vector256<float> targetIterationsV)
+		{
+			countsV = Avx2.Add(countsV, _justOneF);
+
+			// Apply the new escapedFlags, only if the doneFlags is false for each vector position
+			hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
+
+			// Compare the new Counts with the TargetIterations
+			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsV);
+
+			var prevDoneFlagsV = doneFlagsV;
+
+			// If escaped or reached the target iterations, we're done 
+			doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
+
+			var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
+
+			var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
+			if (compositeIsDone != prevCompositeIsDone)
+			{
+				var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
+
+				// Save the current count 
+				resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
+
+				// Save the current ZValues.
+				for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
+				{
+					resultZRs[limbPtr] = Avx2.BlendVariable(zRs[limbPtr].AsInt32(), resultZRs[limbPtr].AsInt32(), justNowDone.AsInt32()).AsUInt32(); // use First if Zero, second if 1
+					resultZIs[limbPtr] = Avx2.BlendVariable(zIs[limbPtr].AsInt32(), resultZIs[limbPtr].AsInt32(), justNowDone.AsInt32()).AsUInt32(); // use First if Zero, second if 1
+				}
+			}
+
+			return compositeIsDone;
+		}
 
 		#endregion
 
@@ -419,6 +507,11 @@ namespace MSetGeneratorPrototype
 			if (mapSectionRequest.MapSectionZVectors == null)
 			{
 				throw new ArgumentNullException("The MapSectionZVectors is null.");
+			}
+
+			if (_useCImplementation && mapSectionRequest.MapSectionZVectors.LimbCount > 4)
+			{
+				throw new NotSupportedException("The current C++ Imp does not support LimbCount > 4.");
 			}
 
 			var currentBlockSize = _samplePointBuilder.BlockSize;
@@ -566,6 +659,13 @@ namespace MSetGeneratorPrototype
 
 		[Conditional("PERF")]
 		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, Vector256<int>[] usedCalcs, Vector256<int>[] unusedCalcs)
+		{
+			usedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
+			unusedCalcs[idx] = Avx2.Subtract(newCountsV, resultCountsV);
+		}
+
+		[Conditional("PERF")]
+		private void TallyUsedAndUnusedCalcsF(int idx, Vector256<float> originalCountsV, Vector256<float> newCountsV, Vector256<float> resultCountsV, Vector256<float>[] usedCalcs, Vector256<float>[] unusedCalcs)
 		{
 			usedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
 			unusedCalcs[idx] = Avx2.Subtract(newCountsV, resultCountsV);

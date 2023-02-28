@@ -78,25 +78,19 @@ void Fp31VecMath::SquareInternal(__m256i* const source, __m256i* const result)
 		{
 			int resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
 
-			//var productVector = Avx2.Multiply(source[j], source[i]);
 			__m256i product = _mm256_mul_epu32(source[j], source[i]);
 			//IncrementNoMultiplications();
 
 			if (i > j)
 			{
 				//product *= 2;
-				//productVector = Avx2.ShiftLeftLogical(productVector, 1);
 				product = _mm256_slli_epi64(product, 1);
 			}
 
 			// 0/1; 1/2; 2/3
 
-			//	result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
-			//	result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
-			
 			result[resultPtr] = _mm256_add_epi64(result[resultPtr], _mm256_and_si256(product, HIGH33_MASK_VEC_L));
 			result[(size_t)resultPtr + 1] = _mm256_add_epi64(result[(size_t)resultPtr + 1], _mm256_srli_epi64(product, EFFECTIVE_BITS_PER_LIMB));
-
 
 			//MathOpCounts.NumberOfSplits++;
 			//MathOpCounts.NumberOfAdditions += 2;

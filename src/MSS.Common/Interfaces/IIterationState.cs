@@ -24,8 +24,6 @@ namespace MSS.Common
 		int? RowNumber { get; }
 
 		bool[] RowHasEscaped { get; init; }
-		long[] RowUsedCalcs { get; init; }
-		long[] RowUnusedCalcs { get; init; }
 
 		Vector256<int>[] CountsRowV { get; }
 		Vector256<int>[] HasEscapedFlagsRowV { get; }
@@ -39,6 +37,9 @@ namespace MSS.Common
 
 		Vector256<int>[] UsedCalcs { get; }
 		Vector256<int>[] UnusedCalcs { get; }
+
+		long[] RowUsedCalcs { get; init; }
+		long[] RowUnusedCalcs { get; init; }
 
 		int[] InPlayList { get; }
 		int[] InPlayListNarrow { get; }
@@ -55,11 +56,11 @@ namespace MSS.Common
 		void UpdateZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 		void UpdateZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 
-		// Used by the HpMSetRowClient
-		void FillSamplePointsXBuffer(byte[] buffer);
-		void FillSamplePointYBuffer(byte[] buffer);
+		//// Used by the HpMSetRowClient
+		//void FillSamplePointsXBuffer(byte[] buffer);
+		//void FillSamplePointYBuffer(byte[] buffer);
 
-		void FillCountsRow(int rowNumber, byte[] dest);
-		void UpdateFromCountsRow(int rowNumber, byte[] source);
+		//void FillCountsRow(int rowNumber, byte[] dest);
+		//void UpdateFromCountsRow(int rowNumber, byte[] source);
 	}
 }

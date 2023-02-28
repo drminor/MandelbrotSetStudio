@@ -38,23 +38,11 @@ namespace MSS.Common
 		private static readonly Vector256<uint> SHUFFLE_PACK_LOW_VEC = Vector256.Create(0u, 2u, 4u, 6u, 0u, 0u, 0u, 0u);
 		private static readonly Vector256<uint> SHUFFLE_PACK_HIGH_VEC = Vector256.Create(0u, 0u, 0u, 0u, 0u, 2u, 4u, 6u);
 
-		//private Vector256<uint>[] _squareResult0Lo;
-		//private Vector256<uint>[] _squareResult0Hi;
-
 		private PairOfVec8ui _squareResult0;
-
-		//private Vector256<ulong>[] _squareResult1Lo;
-		//private Vector256<ulong>[] _squareResult1Hi;
-
 		private PairOfVec4ui _squareResult1;
-
-		//private Vector256<ulong>[] _squareResult2Lo;
-		//private Vector256<ulong>[] _squareResult2Hi;
-
 		private PairOfVec4ui _squareResult2;
 
 		private Vector256<uint>[] _negationResult;
-		//private Vector256<uint>[] _additionResult;
 
 		private Vector256<uint> _ones;
 
@@ -81,24 +69,11 @@ namespace MSS.Common
 			ApFixedPointFormat = apFixedPointFormat;
 			LimbCount = apFixedPointFormat.LimbCount;
 
-			//_squareResult0Lo = CreateNewLimbSet();
-			//_squareResult0Hi = CreateNewLimbSet();
-
 			_squareResult0 = new PairOfVec8ui(LimbCount);
-
-			//_squareResult1Lo = new Vector256<ulong>[LimbCount * 2];
-			//_squareResult1Hi = new Vector256<ulong>[LimbCount * 2];
-
 			_squareResult1 = new PairOfVec4ui(LimbCount);
-
-			//_squareResult2Lo = new Vector256<ulong>[LimbCount * 2];
-			//_squareResult2Hi = new Vector256<ulong>[LimbCount * 2];
-
 			_squareResult2 = new PairOfVec4ui(LimbCount);
 
-
 			_negationResult = new Vector256<uint>[LimbCount];
-			//_additionResult = new Vector256<uint>[LimbCount];
 
 			_ones = Vector256.Create(1u);
 
@@ -162,24 +137,13 @@ namespace MSS.Common
 
 			// Unoptimized
 			SquareInternal(_squareResult0, _squareResult1);
-			//SquareInternal(_squareResult0Hi, _squareResult1Hi);
-
-			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
-			//SquareInternalOptimized(_squareResult0Hi, _squareResult1Hi);
-
 			SumThePartials(_squareResult1, _squareResult2);
-			//SumThePartials(_squareResult1Hi, _squareResult2Hi);
-
 			ShiftAndTrim(_squareResult2, result);
 
 			//// Optimized
 
 			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
-			//SquareInternalOptimized(_squareResult0Hi, _squareResult1Hi);
-
 			//SumThePartials(_squareResult1Lo, _squareResult2Lo);
-			//SumThePartials(_squareResult1Hi, _squareResult2Hi);
-
 			//var optimizedResult = new Vector256<uint>[LimbCount];
 			//ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, optimizedResult);
 
@@ -354,21 +318,6 @@ namespace MSS.Common
 				var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
 				resultLimbs[limbPtr] = Avx2.Or(low128, high128);
 
-				//var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC);
-				//var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC);
-				//resultLimbs[limbPtr] = Avx2.InsertVector128(high128, Avx2.ExtractVector128(low128, 0), 0);
-
-				/*
-												Latency			Throughput
-					_mm256_permutevar8x32_epi32 3				1
-
-					_mm256_extracti128_si256	3				1
-					_mm256_inserti128_si256		3				1
-
-					_mm256_or_si256				1				0.33
-
-				*/
-
 				//MathOpCounts.NumberOfSplits += 4;
 			}
 		}
@@ -443,23 +392,9 @@ namespace MSS.Common
 					// TODO: Is Masking the high bits really required.
 					// Take the lower 4 values and set the low halves of each result
 					result.Lower[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
-					//resultLo[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(Avx2.And(source[limbPtr], HIGH33_MASK_VEC), 0)).AsUInt32();
 
 					// Take the higher 4 values and set the high halves of each result
 					result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
-					//resultHi[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(Avx2.And(source[limbPtr], HIGH33_MASK_VEC), 1)).AsUInt32();
-
-
-
-					/*
-													Latency			Throughput
-						_mm256_permutevar8x32_epi32 3				1
-
-						_mm256_cvtepu32_epi64		3				1
-						_mm256_extracti128_si256	3				1
-
-					*/
-
 				}
 			}
 			else
@@ -481,13 +416,10 @@ namespace MSS.Common
 					var cLimbValues = (Avx2.BlendVariable(limbValues.AsByte(), source[limbPtr].AsByte(), _signBitVecs.AsByte())).AsUInt32();
 
 					// Take the lower 4 values and set the low halves of each result
-					//resultLo[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
-					result.Lower[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(cLimbValues, 0)).AsUInt32();
-
+					result.Lower[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
 
 					// Take the higher 4 values and set the high halves of each result
-					//resultHi[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
-					result.Upper[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(cLimbValues, 1)).AsUInt32();
+					result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 
 				}
 			}

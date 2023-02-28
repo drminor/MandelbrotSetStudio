@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -11,21 +12,29 @@ namespace MSetRowGeneratorClient
 	public class HpMSetRowClient : IDisposable
 	{
 		private const int MEM_ALLOCATION_ALIGNMENT = 32;
-		private const int BYTES_PER_VECTOR = 32;			// Lanes * VALUE_SIZE				(8 x 4)
-		private const int COUNTS_BUFFER_SIZE = 512;			// BlockSize.Width * VALUE_SIZE		(128 x 4)  
 
+		private const int BLOCK_WIDTH = 128;
+		private const int VALUE_SIZE = 4;
+		private const int LANES = 8;
+		private const int MAX_LIMB_COUNT = 4;
+
+		private const int COUNTS_BUFFER_SIZE = BLOCK_WIDTH * VALUE_SIZE;								//	128 x 4  
+		private const int SAMPLE_POINTS_X_BUFFER_SIZE = MAX_LIMB_COUNT * BLOCK_WIDTH * VALUE_SIZE;		//	4 x 128 x 4
+		private const int SAMPLE_POINT_Y_BUFFER_SIZE = MAX_LIMB_COUNT * LANES * VALUE_SIZE;				//	4 x 8 x 4
 
 		private readonly IntPtr _countsBuffer;
-
+		private readonly IntPtr _samplePointsXBuffer;
+		private readonly IntPtr _yPointBuffer;
 
 		public HpMSetRowClient()
 		{
 			unsafe
 			{
 				_countsBuffer = (IntPtr)NativeMemory.AlignedAlloc(COUNTS_BUFFER_SIZE, MEM_ALLOCATION_ALIGNMENT);
+				_samplePointsXBuffer = (IntPtr)NativeMemory.AlignedAlloc(SAMPLE_POINTS_X_BUFFER_SIZE, MEM_ALLOCATION_ALIGNMENT);
+				_yPointBuffer = (IntPtr)NativeMemory.AlignedAlloc(SAMPLE_POINT_Y_BUFFER_SIZE, MEM_ALLOCATION_ALIGNMENT);
 			}
 		}
-
 
 		#region Public Methods
 
@@ -34,22 +43,22 @@ namespace MSetRowGeneratorClient
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
 			// SamplePointsX
-			_ = GetSamplePointsX(iterationState, out var spxBuffer);
+			GetSamplePointsX(iterationState);
 
 			// SamplePointY
-			_ = GetYPointVecs(iterationState, out var ypBuffer);
+			GetYPointVecs(iterationState);
 
 			// Counts
 			GetCounts(iterationState);
 
 			// Generate a MapSectionRow
-			var intResult = HpMSetGeneratorImports.GenerateMapSectionRow(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, _countsBuffer);
+			var intResult = HpMSetGeneratorImports.GenerateMapSectionRow(requestStruct, _samplePointsXBuffer, _yPointBuffer, _countsBuffer);
 
 			// Counts
 			PutCounts(iterationState);
 
-			FreeInteropBuffer(ypBuffer);
-			FreeInteropBuffer(spxBuffer);
+			//FreeInteropBuffer(ypBuffer);
+			//FreeInteropBuffer(spxBuffer);
 
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
 			//Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
@@ -75,22 +84,19 @@ namespace MSetRowGeneratorClient
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
 			// SamplePointsX
-			_ = GetSamplePointsX(iterationState, out var spxBuffer);
+			GetSamplePointsX(iterationState);
 
 			// SamplePointY
-			_ = GetYPointVecs(iterationState, out var ypBuffer);
+			GetYPointVecs(iterationState);
 
 			// Counts
 			GetCounts(iterationState);
 
 			// Call BaseSimdTest2
-			var intResult = HpMSetGeneratorImports.BaseSimdTest2(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, _countsBuffer);
+			var intResult = HpMSetGeneratorImports.BaseSimdTest2(requestStruct, _samplePointsXBuffer, _yPointBuffer, _countsBuffer);
 
 			// Counts
 			PutCounts(iterationState);
-
-			FreeInteropBuffer(ypBuffer);
-			FreeInteropBuffer(spxBuffer);
 
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
 			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
@@ -103,22 +109,19 @@ namespace MSetRowGeneratorClient
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
 			// SamplePointsX
-			_ = GetSamplePointsX(iterationState, out var spxBuffer);
+			GetSamplePointsX(iterationState);
 
 			// SamplePointY
-			_ = GetYPointVecs(iterationState, out var ypBuffer);
+			GetYPointVecs(iterationState);
 
 			// Counts
 			GetCounts(iterationState);
 
 			// Call BaseSimdTest
-			var intResult = HpMSetGeneratorImports.BaseSimdTest3(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, _countsBuffer);
+			var intResult = HpMSetGeneratorImports.BaseSimdTest3(requestStruct, _samplePointsXBuffer, _yPointBuffer, _countsBuffer);
 
 			// Counts
 			PutCounts(iterationState);
-
-			FreeInteropBuffer(ypBuffer);
-			FreeInteropBuffer(spxBuffer);
 
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
 			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
@@ -131,22 +134,19 @@ namespace MSetRowGeneratorClient
 			var requestStruct = GetRequestStruct(iterationState, apFixedPointFormat, mapCalcSettings);
 
 			// SamplePointsX
-			_ = GetSamplePointsX(iterationState, out var spxBuffer);
+			GetSamplePointsX(iterationState);
 
 			// SamplePointY
-			_ = GetYPointVecs(iterationState, out var ypBuffer);
+			GetYPointVecs(iterationState);
 
 			// Counts
 			GetCounts(iterationState);
 
 			// Call BaseSimdTest
-			var intResult = HpMSetGeneratorImports.BaseSimdTest4(requestStruct, (IntPtr)spxBuffer, (IntPtr)ypBuffer, _countsBuffer);
+			var intResult = HpMSetGeneratorImports.BaseSimdTest4(requestStruct, _samplePointsXBuffer, _yPointBuffer, _countsBuffer);
 
 			// Counts
 			PutCounts(iterationState);
-
-			FreeInteropBuffer(ypBuffer);
-			FreeInteropBuffer(spxBuffer);
 
 			var allRowSamplesHaveEscaped = intResult == 0 ? false : true;
 			Debug.WriteLine($"All row samples have escaped: {allRowSamplesHaveEscaped}.");
@@ -207,33 +207,9 @@ namespace MSetRowGeneratorClient
 
 		#region Support Methods
 
-		unsafe private byte[] GetSamplePointsX(IIterationState iterationState, out void* spxBuffer)
-		{
-			var resultBuffer = new byte[iterationState.MapSectionZVectors.BytesPerZValueRow];
-			iterationState.FillSamplePointsXBuffer(resultBuffer);
-		
-			spxBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, MEM_ALLOCATION_ALIGNMENT);
-			Marshal.Copy(resultBuffer, 0, (IntPtr)spxBuffer, resultBuffer.Length);
-
-			return resultBuffer;
-		}
-
-		unsafe private byte[] GetYPointVecs(IIterationState iterationState, out void* ypBuffer)
-		{
-			var resultBuffer = new byte[iterationState.MapSectionZVectors.LimbCount * BYTES_PER_VECTOR]; 
-			iterationState.FillSamplePointYBuffer(resultBuffer);
-
-			ypBuffer = NativeMemory.AlignedAlloc((nuint)resultBuffer.Length, MEM_ALLOCATION_ALIGNMENT);
-			Marshal.Copy(resultBuffer, 0, (IntPtr)ypBuffer, resultBuffer.Length);
-
-			return resultBuffer;
-		}
-
 		private void GetCounts(IIterationState iterationState)
 		{
 			var srcSpan = MemoryMarshal.Cast<Vector256<int>, byte>(iterationState.CountsRowV);
-			
-			//var countsBuffer = NativeMemory.AlignedAlloc(COUNTS_BUFFER_SIZE, MEM_ALLOCATION_ALIGNMENT);
 
 			unsafe
 			{
@@ -242,18 +218,41 @@ namespace MSetRowGeneratorClient
 			}
 		}
 
-		unsafe private void PutCounts(IIterationState iterationState)
+		private void GetSamplePointsX(IIterationState iterationState)
 		{
-			var countsLength = iterationState.MapSectionVectors.BytesPerRow * 2;
+			var srcSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(iterationState.CrsRowVArray.Mantissas);
 
-			var srcSpan = new Span<byte>((void*)_countsBuffer, countsLength);
+			unsafe
+			{
+				var dstSpan = new Span<byte>((void*)_samplePointsXBuffer, SAMPLE_POINTS_X_BUFFER_SIZE);
+				srcSpan.CopyTo(dstSpan);
+			}
+		}
+
+		private void GetYPointVecs(IIterationState iterationState)
+		{
+			var srcSpan = MemoryMarshal.Cast<Vector256<uint>, byte>(iterationState.CiLimbSet);
+
+			unsafe
+			{
+				var dstSpan = new Span<byte>((void*)_yPointBuffer, SAMPLE_POINT_Y_BUFFER_SIZE);
+				srcSpan.CopyTo(dstSpan);
+			}
+		}
+
+		private void PutCounts(IIterationState iterationState)
+		{
 			var dstSpan = MemoryMarshal.Cast<Vector256<int>, byte>(iterationState.CountsRowV);
-			srcSpan.CopyTo(dstSpan);
+
+			unsafe
+			{
+				var srcSpan = new Span<byte>((void*)_countsBuffer, COUNTS_BUFFER_SIZE);
+				srcSpan.CopyTo(dstSpan);
+			}
 		}
 
 		unsafe private void FreeInteropBuffer(void* buffer)
 		{
-			//Marshal.FreeCoTaskMem(buffer);
 			NativeMemory.AlignedFree(buffer);
 		}
 
@@ -317,6 +316,8 @@ namespace MSetRowGeneratorClient
 					unsafe
 					{
 						FreeInteropBuffer((void*)_countsBuffer);
+						FreeInteropBuffer((void*)_samplePointsXBuffer);
+						FreeInteropBuffer((void*)_yPointBuffer);
 					}
 				}
 

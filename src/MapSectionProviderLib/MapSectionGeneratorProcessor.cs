@@ -69,7 +69,8 @@ namespace MapSectionProviderLib
 			if (useAllCores)
 			{
 				var numberOfLogicalProc = Environment.ProcessorCount;
-				localTaskCnt = numberOfLogicalProc - 1;
+				//localTaskCnt = numberOfLogicalProc - 1;
+				localTaskCnt = 2;
 				remoteTaskCnt = localTaskCnt - 1;
 			}
 			else

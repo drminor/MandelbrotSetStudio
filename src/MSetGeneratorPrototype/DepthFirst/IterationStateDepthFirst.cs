@@ -298,54 +298,54 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
-		#region Public Methods - SamplePoints And Counts -- Used by the HpMSetRowClient
+		//#region Public Methods - SamplePoints And Counts -- Used by the HpMSetRowClient
 
-		public void FillSamplePointsXBuffer(byte[] buffer)
-		{
-			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(CrsRowVArray.Mantissas);
-			Debug.Assert(buffer.Length >= sourceBack.Length, $"The Buffer is too short for filling SamplePointsX. BufferLength: {buffer.Length}, SamplePointsX Length: {CrsRowVArray.Mantissas.Length}");
+		//public void FillSamplePointsXBuffer(byte[] buffer)
+		//{
+		//	var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(CrsRowVArray.Mantissas);
+		//	Debug.Assert(buffer.Length >= sourceBack.Length, $"The Buffer is too short for filling SamplePointsX. BufferLength: {buffer.Length}, SamplePointsX Length: {CrsRowVArray.Mantissas.Length}");
 
-			//for (var i = 0; i < sourceBack.Length; i++)
-			//{
-			//	buffer[i] = sourceBack[i];
-			//}
+		//	//for (var i = 0; i < sourceBack.Length; i++)
+		//	//{
+		//	//	buffer[i] = sourceBack[i];
+		//	//}
 
-			sourceBack.CopyTo(buffer);
-		}
+		//	sourceBack.CopyTo(buffer);
+		//}
 
-		public void FillSamplePointYBuffer(byte[] buffer)
-		{
-			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(CiLimbSet);
-			Debug.Assert(buffer.Length >= sourceBack.Length, $"The Buffer is too short for filling the SamplePointY Vector. BufferLength: {buffer.Length}, SamplePointY Vector Length: {CiLimbSet.Length}");
+		//public void FillSamplePointYBuffer(byte[] buffer)
+		//{
+		//	var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(CiLimbSet);
+		//	Debug.Assert(buffer.Length >= sourceBack.Length, $"The Buffer is too short for filling the SamplePointY Vector. BufferLength: {buffer.Length}, SamplePointY Vector Length: {CiLimbSet.Length}");
 
-			for (var i = 0; i < sourceBack.Length; i++)
-			{
-				buffer[i] = sourceBack[i];
-			}
-		}
+		//	for (var i = 0; i < sourceBack.Length; i++)
+		//	{
+		//		buffer[i] = sourceBack[i];
+		//	}
+		//}
 
-		// Used by the HpMSetRowClient
-		public void FillCountsRow(int rowNumber, byte[] dest)
-		{
-			var countsRowVAsB = MemoryMarshal.Cast<Vector256<int>, byte>(CountsRowV);
+		//// Used by the HpMSetRowClient
+		//public void FillCountsRow(int rowNumber, byte[] dest)
+		//{
+		//	var countsRowVAsB = MemoryMarshal.Cast<Vector256<int>, byte>(CountsRowV);
 
-			for (var i = 0; i < dest.Length; i++)
-			{
-				dest[i] = countsRowVAsB[i];
-			}
-		}
+		//	for (var i = 0; i < dest.Length; i++)
+		//	{
+		//		dest[i] = countsRowVAsB[i];
+		//	}
+		//}
 
-		public void UpdateFromCountsRow(int rowNumber, byte[] source)
-		{
-			var countsRowVAsB = MemoryMarshal.Cast<Vector256<int>, byte>(CountsRowV);
+		//public void UpdateFromCountsRow(int rowNumber, byte[] source)
+		//{
+		//	var countsRowVAsB = MemoryMarshal.Cast<Vector256<int>, byte>(CountsRowV);
 
-			for (var i = 0; i < source.Length; i++)
-			{
-				countsRowVAsB[i] = source[i];
-			}
-		}
+		//	for (var i = 0; i < source.Length; i++)
+		//	{
+		//		countsRowVAsB[i] = source[i];
+		//	}
+		//}
 
-		#endregion
+		//#endregion
 
 		#region Private Methods
 
