@@ -42,6 +42,7 @@ namespace MSetGeneratorPrototype
 
 			//CountsRow = mapSectionVectors.GetCountsRow(0);
 			CountsRowV = new Vector256<int>[VectorsPerRow];
+			CountsRowVF = new Vector256<float>[VectorsPerRow];
 
 			RowHasEscaped = MapSectionZVectors.RowHasEscaped;
 			RowUsedCalcs = new long[RowCount];
@@ -94,6 +95,8 @@ namespace MSetGeneratorPrototype
 
 		//public Span<Vector256<int>> CountsRow { get; private set; }
 		public Vector256<int>[] CountsRowV { get; private set; }
+		public Vector256<float>[] CountsRowVF { get; private set; }
+
 		public bool[] RowHasEscaped { get; init; }
 		public long[] RowUnusedCalcs { get; init; }
 		public long[] RowUsedCalcs { get; init; }
@@ -124,7 +127,10 @@ namespace MSetGeneratorPrototype
 			{
 				// Update the _mapSectionVectors with the current row properties
 				MapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
+
 				MapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				//MapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowVF);
+
 				MapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
 				MapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
 			}
@@ -132,7 +138,10 @@ namespace MSetGeneratorPrototype
 			UpdateUsedAndUnusedCalcs(RowNumber);
 
 			Array.Clear(HasEscapedFlagsRowV);
+
 			Array.Clear(CountsRowV);
+			//Array.Clear(CountsRowVF);
+
 			Array.Clear(DoneFlags);
 
 			if (rowNumber < RowCount)

@@ -111,6 +111,32 @@ namespace MSS.Types
 			}
 		}
 
+		// Vector256<int>
+		public void FillCountsRow(int rowNumber, Vector256<float>[] dest)
+		{
+			var destBack = MemoryMarshal.Cast<Vector256<float>, float>(dest);
+
+			var startIndex = ValuesPerRow * rowNumber;
+
+			for (var i = 0; i < ValuesPerRow; i++)
+			{
+				destBack[i] = Counts[startIndex + i];
+			}
+		}
+
+		public void UpdateFromCountsRow(int rowNumber, Vector256<float>[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<Vector256<float>, float>(source);
+
+			var startIndex = ValuesPerRow * rowNumber;
+
+			for (var i = 0; i < ValuesPerRow; i++)
+			{
+				Counts[startIndex + i] = (ushort)  Math.Round(sourceBack[i]);
+			}
+		}
+
+
 		// Integer
 		public void FillCountsRow(int rowNumber, int[] dest)
 		{

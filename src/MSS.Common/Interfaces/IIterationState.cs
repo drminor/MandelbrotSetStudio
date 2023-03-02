@@ -1,7 +1,5 @@
 ﻿using MSS.Types;
 using MSS.Types.APValues;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
 namespace MSS.Common
@@ -47,9 +45,9 @@ namespace MSS.Common
 		int? GetNextRowNumber();
 		void SetRowNumber(int rowNumber);
 
+		void FillCrLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 		void FillCiLimbSetForRow(int rowNumber, Vector256<uint>[] limbSet);
 
-		void FillCrLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 		void FillZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 		void FillZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 

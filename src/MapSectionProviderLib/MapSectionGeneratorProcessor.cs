@@ -1,18 +1,12 @@
 ﻿using MEngineClient;
-using MEngineDataContracts;
 using MSS.Common;
-using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace MapSectionProviderLib
 {
@@ -69,8 +63,8 @@ namespace MapSectionProviderLib
 			if (useAllCores)
 			{
 				var numberOfLogicalProc = Environment.ProcessorCount;
-				//localTaskCnt = numberOfLogicalProc - 1;
-				localTaskCnt = 2;
+				localTaskCnt = numberOfLogicalProc - 1;
+				//localTaskCnt = 2;
 				remoteTaskCnt = localTaskCnt - 1;
 			}
 			else
