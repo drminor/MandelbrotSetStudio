@@ -29,14 +29,8 @@ namespace MSetExplorer
 
 		private static readonly bool USE_ALL_CORES = false;
 
-		//private static readonly bool USE_SINGLE_LIMB_ITERATOR = false;
-		//private static readonly bool USE_DEPTH_FIRST_ITERATOR = true;
-		//private static readonly bool USE_C_IMPLEMENTATION = false;
-		//private static readonly ClientImplementation CLIENT_IMPLEMENTATION = ClientImplementation.LocalVectorMark2;
-
-		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.UPointers;
-
-
+		//private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.UPointers;
+		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
 
 		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
@@ -49,7 +43,6 @@ namespace MSetExplorer
 		private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
-		//private readonly MapSectionValuesPool _mapSectionValuesPool;
 		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
 		private readonly MapSectionHelper _mapSectionHelper;
 
@@ -64,7 +57,6 @@ namespace MSetExplorer
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			//_mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionHelper = new MapSectionHelper(_mapSectionVectorsPool/*, _mapSectionValuesPool*/, _mapSectionZVectorsPool);
 
@@ -124,8 +116,6 @@ namespace MSetExplorer
 			}
 
 			_mEngineServerManager?.Stop();
-
-			//_mapSectionValuesPool.Clear();
 		}
 
 		private AppNavWindow GetAppNavWindow(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
@@ -141,40 +131,6 @@ namespace MSetExplorer
 
 			return appNavWindow;
 		}
-
-		//private IMEngineClient[] ChooseMEngineClientImplementation(ClientImplementation clientImplementation, IList<string> mEngineEndPointAddresses, IMapSectionAdapter mapSectionAdapter)
-		//{
-		//	var result = clientImplementation switch
-		//	{
-		//		ClientImplementation.Remote => CreateMEngineClients(mEngineEndPointAddresses),
-
-		//		ClientImplementation.InProcess => throw new NotImplementedException("The MSetExplorer project is not compatible with the MapSetGenerator C++ project."), // CreateInProcessMEngineClient(mapSectionAdapter, out _mapSectionPersistProcessor),
-		//		ClientImplementation.LocalScalar => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalScalar() },
-		//		ClientImplementation.LocalVector => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalVector() },
-
-		//		ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_SINGLE_LIMB_ITERATOR, USE_DEPTH_FIRST_ITERATOR, USE_C_IMPLEMENTATION) },
-		//		_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
-		//	};
-
-		//	return result;
-		//}
-
-
-
-
-		private IMEngineClient[] CreateMEngineClients(IList<string> mEngineEndPointAddresses)
-		{
-			var mEngineClients = mEngineEndPointAddresses.Select(x => new MClient(x)).ToArray();
-			return mEngineClients;
-		}
-
-		//private IMEngineClient[] CreateInProcessMEngineClient(IMapSectionAdapter mapSectionAdapter, out MapSectionPersistProcessor mapSectionPersistProcessor)
-		//{
-		//	mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter);
-		//	var inProcessClient = new MClientInProcess(mapSectionAdapter, mapSectionPersistProcessor);
-		//	var mEngineClients = new[] { inProcessClient };
-		//	return mEngineClients;
-		//}
 
 		private IMapLoaderManager BuildMapLoaderManager(IMEngineClient[] mEngineClients, bool useAllCores, IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper, out MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
@@ -293,15 +249,41 @@ namespace MSetExplorer
 			return sb.ToString();
 		}
 
-		private enum ClientImplementation
+
+		/* Old Code to Support calling a remote MEngine 
+
+		//private IMEngineClient[] ChooseMEngineClientImplementation(ClientImplementation clientImplementation, IList<string> mEngineEndPointAddresses, IMapSectionAdapter mapSectionAdapter)
+		//{
+		//	var result = clientImplementation switch
+		//	{
+		//		ClientImplementation.Remote => CreateMEngineClients(mEngineEndPointAddresses),
+
+		//		ClientImplementation.InProcess => throw new NotImplementedException("The MSetExplorer project is not compatible with the MapSetGenerator C++ project."), // CreateInProcessMEngineClient(mapSectionAdapter, out _mapSectionPersistProcessor),
+		//		ClientImplementation.LocalScalar => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalScalar() },
+		//		ClientImplementation.LocalVector => throw new NotImplementedException("The LocalScalar implementation of IMEngineClient is currently not supported"), // => new IMEngineClient[] { new MClientLocalVector() },
+
+		//		ClientImplementation.LocalVectorMark2 => new IMEngineClient[] { new MClientLocal(USE_SINGLE_LIMB_ITERATOR, USE_DEPTH_FIRST_ITERATOR, USE_C_IMPLEMENTATION) },
+		//		_ => throw new NotSupportedException($"The value of {clientImplementation} is not recognized."),
+		//	};
+
+		//	return result;
+		//}
+
+		private IMEngineClient[] CreateMEngineClients(IList<string> mEngineEndPointAddresses)
 		{
-			Remote,
-			InProcess,
-			LocalScalar,
-			LocalVector,
-			LocalVectorMark2
+			var mEngineClients = mEngineEndPointAddresses.Select(x => new MClient(x)).ToArray();
+			return mEngineClients;
 		}
 
+		//private IMEngineClient[] CreateInProcessMEngineClient(IMapSectionAdapter mapSectionAdapter, out MapSectionPersistProcessor mapSectionPersistProcessor)
+		//{
+		//	mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter);
+		//	var inProcessClient = new MClientInProcess(mapSectionAdapter, mapSectionPersistProcessor);
+		//	var mEngineClients = new[] { inProcessClient };
+		//	return mEngineClients;
+		//}
 
-	} 
+
+		*/
+	}
 }

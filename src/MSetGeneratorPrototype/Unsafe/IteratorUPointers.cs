@@ -4,29 +4,29 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 
-namespace MSetGeneratorPrototype.Unsafe
+namespace MSetGeneratorPrototype
 {
-	internal class IteratorUPointers //: IIterator
+	internal class IteratorUPointers
 	{
 		#region Private Properties
 
-		private FP31VecMath _fp31VecMath;
+		private FP31VecMathUPointers _fp31VecMath;
 
 		private uint _threshold;
 		private Vector256<int> _thresholdVector;
 
-		private Vector256<uint>[] _zRZiSqrs;
-		private Vector256<uint>[] _temp;
+		private VecBuffer _zRZiSqrs;
+		private VecBuffer _temp;
 
-		private Vector256<uint>[] _zRSqrs;
-		private Vector256<uint>[] _zISqrs;
-		private Vector256<uint>[] _sumOfSqrs;
+		private VecBuffer _zRSqrs;
+		private VecBuffer _zISqrs;
+		private VecBuffer _sumOfSqrs;
 
 		#endregion
 
 		#region Constructor
 
-		public IteratorUPointers(FP31VecMath fp31VecMath)
+		public IteratorUPointers(FP31VecMathUPointers fp31VecMath)
 		{
 			_fp31VecMath = fp31VecMath;
 
@@ -67,7 +67,7 @@ namespace MSetGeneratorPrototype.Unsafe
 		#region Public Methods
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec)
+		public void IterateFirstRound(VecBuffer crs, VecBuffer cis, VecBuffer zrs, VecBuffer zis, ref Vector256<int> escapedFlagsVec)
 		{
 			if (IncreasingIterations)
 			{
@@ -80,8 +80,8 @@ namespace MSetGeneratorPrototype.Unsafe
 			{
 				try
 				{
-					Array.Copy(crs, zrs, crs.Length);
-					Array.Copy(cis, zis, cis.Length);
+					_fp31VecMath.CopyLimbSet(crs, zrs);
+					_fp31VecMath.CopyLimbSet(cis, zis);
 
 					_fp31VecMath.Square(zrs, _zRSqrs);
 					_fp31VecMath.Square(zis, _zISqrs);
@@ -98,7 +98,7 @@ namespace MSetGeneratorPrototype.Unsafe
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec)
+		public void Iterate(VecBuffer crs, VecBuffer cis, VecBuffer zrs, VecBuffer zis, ref Vector256<int> escapedFlagsVec)
 		{
 			try
 			{

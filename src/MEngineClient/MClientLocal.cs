@@ -1,5 +1,4 @@
 ﻿using MSetGeneratorPrototype;
-using MSetGeneratorPrototype.Unsafe;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -31,7 +30,7 @@ namespace MEngineClient
 			{
 				case MSetGenerationStrategy.UPointers:
 					{
-						_generator = new MapSectionGeneratorUPointers(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE, useCImplementation: false);
+						_generator = new MapSectionGeneratorUPointers(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
 						EndPointAddress = "CSharp_UPointers";
 						break;
 					}

@@ -31,7 +31,6 @@ namespace MSetGeneratorPrototype
 		private Vector256<uint>[] _resultZis;
 
 		private readonly Vector256<int> _justOne;
-		private readonly Vector256<float> _justOneF;
 
 		#endregion
 
@@ -55,7 +54,6 @@ namespace MSetGeneratorPrototype
 			_resultZis = _fp31VecMath.CreateNewLimbSet();
 
 			_justOne = Vector256.Create(1);
-			_justOneF = Vector256.Create(1f);
 		}
 
 		#endregion
