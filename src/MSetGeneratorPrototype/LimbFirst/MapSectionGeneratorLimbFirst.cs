@@ -9,7 +9,7 @@ using MSS.Common;
 
 namespace MSetGeneratorPrototype
 {
-	public class MapSectionGenerator : IMapSectionGenerator
+	public class MapSectionGeneratorLimbFirst : IMapSectionGenerator
 	{
 		private readonly FP31VectorsMath _fp31VectorsMath;
 		private readonly IteratorLimbFirst _iterator;
@@ -18,7 +18,7 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public MapSectionGenerator(SizeInt blockSize, int limbCount)
+		public MapSectionGeneratorLimbFirst(SizeInt blockSize, int limbCount)
 		{
 			var apFixedPointFormat = new ApFixedPointFormat(limbCount);
 			_fp31VectorsMath = new FP31VectorsMath(apFixedPointFormat, blockSize.Width);

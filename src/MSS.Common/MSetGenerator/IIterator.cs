@@ -1,8 +1,7 @@
 ﻿using MSS.Types;
-using MSS.Types.APValues;
 using System.Runtime.Intrinsics;
 
-namespace MSetGeneratorPrototype
+namespace MSS.Common
 {
 	internal interface IIterator
 	{

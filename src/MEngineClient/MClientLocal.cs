@@ -1,4 +1,5 @@
 ﻿using MSetGeneratorPrototype;
+using MSetGeneratorPrototype.Unsafe;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -22,36 +23,66 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClientLocal(bool useSingleLimb, bool useDepthFirst, bool useCImplementation)
+		public MClientLocal(MSetGenerationStrategy mSetGenerationStrategy)
 		{
-			UsingSingleLimb = useSingleLimb;
-			UsingDepthFirst = useDepthFirst; 
-			UseCImplementation = useCImplementation;
+			MSetGenerationStrategy = mSetGenerationStrategy;
 
-			if (useSingleLimb)
+			switch (mSetGenerationStrategy)
 			{
-				_generator = new MapSectionGeneratorSingleLimb();
-				EndPointAddress = "CSharp_SingleLimbGenerator";
+				case MSetGenerationStrategy.UPointers:
+					{
+						_generator = new MapSectionGeneratorUPointers(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE, useCImplementation: false);
+						EndPointAddress = "CSharp_UPointers";
+						break;
+					}
+
+				case MSetGenerationStrategy.DepthFirst:
+					{
+						_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE, useCImplementation: false);
+						EndPointAddress = "CSharp_DepthFirstGenerator";
+						break;
+					}
+
+				case MSetGenerationStrategy.UnManaged:
+					{
+						_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE, useCImplementation: true);
+						EndPointAddress = "C_Unmanaged";
+						break;
+					}
+
+				case MSetGenerationStrategy.SingleLimb:
+					throw new NotSupportedException();
+
+				case MSetGenerationStrategy.LimbFirst:
+					throw new NotSupportedException();
+
+				default:
+					throw new NotSupportedException();
 			}
-			else if (UsingDepthFirst)
-			{
-				_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE, useCImplementation);
-				EndPointAddress = "CSharp_DepthFirstGenerator";
-			}
-			else
-			{
-				_generator = new MapSectionGenerator(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT);
-				EndPointAddress = "CSharp_LimbFirstGenerator";
-			}
+
+			//if (useSingleLimb)
+			//{
+			//	_generator = new MapSectionGeneratorSingleLimb();
+			//	EndPointAddress = "CSharp_SingleLimbGenerator";
+			//}
+			//else if (UsingDepthFirst)
+			//{
+			//	_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE, useCImplementation);
+			//	EndPointAddress = "CSharp_DepthFirstGenerator";
+			//}
+			//else
+			//{
+			//	_generator = new MapSectionGeneratorLimbFirst(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT);
+			//	EndPointAddress = "CSharp_LimbFirstGenerator";
+			//}
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public bool UsingSingleLimb { get; init; }
-		public bool UsingDepthFirst { get; init; }
-		public bool UseCImplementation { get; init; }
+		public MSetGenerationStrategy MSetGenerationStrategy { get; init; }
+
 		public string EndPointAddress { get; init; }
 		public bool IsLocal => true;
 

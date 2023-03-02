@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
-namespace MSetGeneratorPrototype
+namespace MSetGeneratorPrototype.Unsafe
 {
-	public class IterationStateDepthFirst : IIterationState
+	public class IterationStateUPointers : IIterationState
 	{
 		private readonly FP31Val[] _samplePointsY;
 
@@ -17,7 +17,7 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IterationStateDepthFirst(FP31Val[] samplePointsX, FP31Val[] samplePointsY,
+		public IterationStateUPointers(FP31Val[] samplePointsX, FP31Val[] samplePointsY,
 			MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
 			bool increasingIterations, Vector256<int> targetIterationsVector)
 		{

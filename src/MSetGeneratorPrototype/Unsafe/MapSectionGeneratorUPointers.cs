@@ -8,16 +8,16 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
-namespace MSetGeneratorPrototype
+namespace MSetGeneratorPrototype.Unsafe
 {
-	public class MapSectionGeneratorDepthFirst : IMapSectionGenerator
+	public class MapSectionGeneratorUPointers : IMapSectionGenerator
 	{
 		#region Private Properties
 
 		private SamplePointBuilder _samplePointBuilder;
 
 		private FP31VecMath _fp31VecMath;
-		private IteratorDepthFirst _iterator;
+		private IteratorUPointers _iterator;
 
 		private readonly bool _useCImplementation;
 		private HpMSetRowClient _hpMSetRowClient;
@@ -37,12 +37,12 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public MapSectionGeneratorDepthFirst(int limbCount, SizeInt blockSize, bool useCImplementation)
+		public MapSectionGeneratorUPointers(int limbCount, SizeInt blockSize, bool useCImplementation)
 		{
 			_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSize));
 
 			_fp31VecMath = _samplePointBuilder.GetVecMath(limbCount);
-			_iterator = new IteratorDepthFirst(_fp31VecMath);
+			_iterator = new IteratorUPointers(_fp31VecMath);
 			_useCImplementation = useCImplementation;
 			_hpMSetRowClient = new HpMSetRowClient();
 
@@ -89,7 +89,7 @@ namespace MSetGeneratorPrototype
 			_iterator.MathOpCounts.Reset();
 			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
-			var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
+			var iterationState = new IterationStateUPointers(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
 			var completed = GeneratorOrUpdateRows(_iterator, iterationState, _hpMSetRowClient, ct, out var allRowsHaveEscaped);
 			stopwatch.Stop();
@@ -101,7 +101,7 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private bool GeneratorOrUpdateRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool GeneratorOrUpdateRows(IteratorUPointers iterator, IterationStateUPointers iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			bool completed;
 
@@ -124,7 +124,7 @@ namespace MSetGeneratorPrototype
 			return completed;
 		}
 
-		private bool HighPerfGenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool HighPerfGenerateMapSectionRows(IteratorUPointers iterator, IterationStateUPointers iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			allRowsHaveEscaped = false;
 
@@ -165,7 +165,7 @@ namespace MSetGeneratorPrototype
 			return true;
 		}
 
-		private bool GenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool GenerateMapSectionRows(IteratorUPointers iterator, IterationStateUPointers iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			allRowsHaveEscaped = false;
 
@@ -213,7 +213,7 @@ namespace MSetGeneratorPrototype
 			return true;
 		}
 
-		private bool UpdateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool UpdateMapSectionRows(IteratorUPointers iterator, IterationStateUPointers iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			allRowsHaveEscaped = false;
 
@@ -263,7 +263,7 @@ namespace MSetGeneratorPrototype
 
 		#region Generate One Vector Int
 
-		private bool GenerateMapCol(int idx, IteratorDepthFirst iterator, ref IterationStateDepthFirst iterationState)
+		private bool GenerateMapCol(int idx, IteratorUPointers iterator, ref IterationStateUPointers iterationState)
 		{
 			var hasEscapedFlagsV = Vector256<int>.Zero;
 			var doneFlagsV = Vector256<int>.Zero;
@@ -303,7 +303,7 @@ namespace MSetGeneratorPrototype
 			return compositeAllEscaped == -1;
 		}
 
-		private bool UpdateMapCol(int idx, IteratorDepthFirst iterator, ref IterationStateDepthFirst iterationState)
+		private bool UpdateMapCol(int idx, IteratorUPointers iterator, ref IterationStateUPointers iterationState)
 		{
 			var hasEscapedFlagsV = iterationState.HasEscapedFlagsRowV[idx];
 			var doneFlagsV = iterationState.DoneFlags[idx];
@@ -443,7 +443,7 @@ namespace MSetGeneratorPrototype
 			if (currentLimbCount != limbCountForThisRequest)
 			{
 				_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
-				_iterator = new IteratorDepthFirst(_fp31VecMath);
+				_iterator = new IteratorUPointers(_fp31VecMath);
 
 				_crs = _fp31VecMath.CreateNewLimbSet();
 				_cis = _fp31VecMath.CreateNewLimbSet();
@@ -579,7 +579,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("PERF")]
-		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorDepthFirst iterator, IterationStateDepthFirst iterationState)
+		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorUPointers iterator, IterationStateUPointers iterationState)
 		{
 			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
 			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);

@@ -123,8 +123,7 @@ namespace MapSectionProviderLib
 
 				if (clients[0] is MClientLocal mClientLocal)
 				{
-					//nClient = new MClientLocalScalar();
-					nClient = new MClientLocal(mClientLocal.UsingSingleLimb, mClientLocal.UsingDepthFirst, mClientLocal.UseCImplementation);
+					nClient = new MClientLocal(mClientLocal.MSetGenerationStrategy);
 				}
 				else if (clients[0] is MClient mClient)
 				{
@@ -133,7 +132,6 @@ namespace MapSectionProviderLib
 				else
 				{
 					throw new NotSupportedException("Currently, only the MClient and MClientLocal implementations of IMEngineClient are supported.");
-					//nClient = new MClientLocalVector();
 				}
 
 				//workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(nClient/*, _mapSectionPersistProcessor*/, _cts.Token)));
