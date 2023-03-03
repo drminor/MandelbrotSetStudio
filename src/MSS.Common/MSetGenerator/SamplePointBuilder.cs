@@ -15,7 +15,7 @@ namespace MSS.Common
 		}
 
 		public SizeInt BlockSize => _samplePointCache.BlockSize;
-		public FP31VecMath GetVecMath(int limbCount) => _samplePointCache.GetVectorMath(limbCount);
+		public IFP31VecMath GetVecMath(int limbCount) => _samplePointCache.GetVectorMath(limbCount);
 
 		public (FP31Val[] samplePointX, FP31Val[] samplePointY) BuildSamplePoints(IteratorCoords iteratorCoords)
 		{

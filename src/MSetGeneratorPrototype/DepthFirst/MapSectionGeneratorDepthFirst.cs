@@ -1,5 +1,6 @@
 ﻿using MSetRowGeneratorClient;
 using MSS.Common;
+using MSS.Common.MSetGenerator;
 using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
@@ -16,8 +17,8 @@ namespace MSetGeneratorPrototype
 
 		private SamplePointBuilder _samplePointBuilder;
 
-		private FP31VecMath _fp31VecMath;
-		private IteratorDepthFirst _iterator;
+		private IFP31VecMath _fp31VecMath;
+		private IIterator _iterator;
 
 		private readonly bool _useCImplementation;
 		private HpMSetRowClient _hpMSetRowClient;
@@ -45,13 +46,13 @@ namespace MSetGeneratorPrototype
 			_useCImplementation = useCImplementation;
 			_hpMSetRowClient = new HpMSetRowClient();
 
-			_crs = _fp31VecMath.CreateNewLimbSet();
-			_cis = _fp31VecMath.CreateNewLimbSet();
-			_zrs = _fp31VecMath.CreateNewLimbSet();
-			_zis = _fp31VecMath.CreateNewLimbSet();
+			_crs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+			_cis = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+			_zrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+			_zis = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 
-			_resultZrs = _fp31VecMath.CreateNewLimbSet();
-			_resultZis = _fp31VecMath.CreateNewLimbSet();
+			_resultZrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+			_resultZis = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 
 			_justOne = Vector256.Create(1);
 		}
@@ -99,7 +100,7 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private bool GeneratorOrUpdateRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool GeneratorOrUpdateRows(IIterator iterator, IIterationState iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			bool completed;
 
@@ -122,7 +123,7 @@ namespace MSetGeneratorPrototype
 			return completed;
 		}
 
-		private bool HighPerfGenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool HighPerfGenerateMapSectionRows(IIterator iterator, IIterationState iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			allRowsHaveEscaped = false;
 
@@ -163,7 +164,7 @@ namespace MSetGeneratorPrototype
 			return true;
 		}
 
-		private bool GenerateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool GenerateMapSectionRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			allRowsHaveEscaped = false;
 
@@ -181,7 +182,7 @@ namespace MSetGeneratorPrototype
 				var allRowSamplesHaveEscaped = true;
 				for (var idx = 0; idx < iterationState.VectorsPerRow; idx++)
 				{
-					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, ref iterationState);
+					var allSamplesHaveEscaped = GenerateMapCol(idx, iterator, iterationState);
 
 					if (!allSamplesHaveEscaped)
 					{
@@ -211,7 +212,7 @@ namespace MSetGeneratorPrototype
 			return true;
 		}
 
-		private bool UpdateMapSectionRows(IteratorDepthFirst iterator, IterationStateDepthFirst iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool UpdateMapSectionRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			allRowsHaveEscaped = false;
 
@@ -261,7 +262,7 @@ namespace MSetGeneratorPrototype
 
 		#region Generate One Vector Int
 
-		private bool GenerateMapCol(int idx, IteratorDepthFirst iterator, ref IterationStateDepthFirst iterationState)
+		private bool GenerateMapCol(int idx, IIterator iterator, IIterationState iterationState)
 		{
 			var hasEscapedFlagsV = Vector256<int>.Zero;
 			var doneFlagsV = Vector256<int>.Zero;
@@ -272,10 +273,10 @@ namespace MSetGeneratorPrototype
 			iterationState.FillCrLimbSet(idx, _crs);
 			_cis = iterationState.CiLimbSet;
 
-			ClearLimbSet(_zrs);
-			ClearLimbSet(_zis);
-			ClearLimbSet(_resultZrs);
-			ClearLimbSet(_resultZis);
+			FP31VecMathHelper.ClearLimbSet(_zrs);
+			FP31VecMathHelper.ClearLimbSet(_zis);
+			FP31VecMathHelper.ClearLimbSet(_resultZrs);
+			FP31VecMathHelper.ClearLimbSet(_resultZis);
 
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
 
@@ -301,7 +302,7 @@ namespace MSetGeneratorPrototype
 			return compositeAllEscaped == -1;
 		}
 
-		private bool UpdateMapCol(int idx, IteratorDepthFirst iterator, ref IterationStateDepthFirst iterationState)
+		private bool UpdateMapCol(int idx, IIterator iterator, ref IIterationState iterationState)
 		{
 			var hasEscapedFlagsV = iterationState.HasEscapedFlagsRowV[idx];
 			var doneFlagsV = iterationState.DoneFlags[idx];
@@ -443,13 +444,13 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
 				_iterator = new IteratorDepthFirst(_fp31VecMath);
 
-				_crs = _fp31VecMath.CreateNewLimbSet();
-				_cis = _fp31VecMath.CreateNewLimbSet();
-				_zrs = _fp31VecMath.CreateNewLimbSet();
-				_zis = _fp31VecMath.CreateNewLimbSet();
+				_crs = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
+				_cis = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
+				_zrs = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
+				_zis = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
 
-				_resultZrs = _fp31VecMath.CreateNewLimbSet();
-				_resultZis = _fp31VecMath.CreateNewLimbSet();
+				_resultZrs = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
+				_resultZis = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
 			}
 
 			return (currentLimbCount, limbCountForThisRequest);
@@ -577,19 +578,10 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("PERF")]
-		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorDepthFirst iterator, IterationStateDepthFirst iterationState)
+		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IIterator iterator, IIterationState iterationState)
 		{
 			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
 			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
-		}
-
-		private void ClearLimbSet(Vector256<uint>[] limbSet)
-		{
-			// Clear instead of copying form source
-			for (var i = 0; i < limbSet.Length; i++)
-			{
-				limbSet[i] = Avx2.Xor(limbSet[i], limbSet[i]);
-			}
 		}
 
 		#endregion

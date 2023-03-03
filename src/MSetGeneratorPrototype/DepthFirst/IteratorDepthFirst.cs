@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using MSS.Common.MSetGenerator;
 using MSS.Types;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -6,11 +7,11 @@ using System.Runtime.Intrinsics;
 
 namespace MSetGeneratorPrototype
 {
-	internal class IteratorDepthFirst //: IIterator
+	internal class IteratorDepthFirst : IIterator
 	{
 		#region Private Properties
 
-		private FP31VecMath _fp31VecMath;
+		private IFP31VecMath _fp31VecMath;
 
 		private uint _threshold;
 		private Vector256<int> _thresholdVector;
@@ -26,19 +27,20 @@ namespace MSetGeneratorPrototype
 
 		#region Constructor
 
-		public IteratorDepthFirst(FP31VecMath fp31VecMath)
+		public IteratorDepthFirst(IFP31VecMath fp31VecMath)
 		{
 			_fp31VecMath = fp31VecMath;
+			var limbCount = fp31VecMath.LimbCount;
 
 			_threshold = 0;
 			_thresholdVector = new Vector256<int>();
 
-			_zRZiSqrs = fp31VecMath.CreateNewLimbSet();
-			_temp = fp31VecMath.CreateNewLimbSet();
+			_zRZiSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+			_temp = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 
-			_zRSqrs = fp31VecMath.CreateNewLimbSet();
-			_zISqrs = fp31VecMath.CreateNewLimbSet();
-			_sumOfSqrs = fp31VecMath.CreateNewLimbSet();
+			_zRSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+			_zISqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+			_sumOfSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 		}
 
 		#endregion

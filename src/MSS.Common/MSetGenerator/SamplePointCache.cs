@@ -9,7 +9,7 @@ namespace MSS.Common
 	{
 		private readonly ConcurrentDictionary<FP31Val, FP31Val[]> _samplePointOffsets;
 		private readonly ConcurrentDictionary<int, FP31ScalarMath> _mathImplementations;
-		private readonly ConcurrentDictionary<int, FP31VecMath> _vecMathImplementations;
+		private readonly ConcurrentDictionary<int, IFP31VecMath> _vecMathImplementations;
 
 		public SamplePointCache() : this(RMapConstants.BLOCK_SIZE)
 		{ }
@@ -19,7 +19,7 @@ namespace MSS.Common
 			BlockSize = blockSize;
 			_samplePointOffsets = new ConcurrentDictionary<FP31Val, FP31Val[]>();
 			_mathImplementations = new ConcurrentDictionary<int, FP31ScalarMath>();
-			_vecMathImplementations = new ConcurrentDictionary<int, FP31VecMath>();
+			_vecMathImplementations = new ConcurrentDictionary<int, IFP31VecMath>();
 		}
 
 		public SizeInt BlockSize { get; init; }
@@ -60,9 +60,17 @@ namespace MSS.Common
 
 		#region Vector Maths
 
-		public FP31VecMath GetVectorMath(int limbCount) => _vecMathImplementations.GetOrAdd(limbCount, BuildVectorMath);
+		public IFP31VecMath GetVectorMath(int limbCount) => _vecMathImplementations.GetOrAdd(limbCount, BuildVectorMath);
 
-		private FP31VecMath BuildVectorMath(int limbCount) => new FP31VecMath(new ApFixedPointFormat(limbCount));
+		private IFP31VecMath BuildVectorMath(int limbCount)
+		{
+			return limbCount switch
+			{
+				1 => new FP31VecMathL1(new ApFixedPointFormat(limbCount)),
+				2 => new FP31VecMathL2(new ApFixedPointFormat(limbCount)),
+				_ => new FP31VecMath(new ApFixedPointFormat(limbCount)),
+			};
+		}
 
 		#endregion
 

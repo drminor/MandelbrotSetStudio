@@ -305,7 +305,10 @@ namespace MSS.Common
 
 		public MapSectionZVectors ObtainMapSectionZVectors(int limbCount)
 		{
-			var result = _mapSectionZVectorsPool.Obtain(limbCount);
+			// Make sure we are using at least two limbs
+			var adjustedLimbCount = Math.Max(limbCount, 2);
+
+			var result = _mapSectionZVectorsPool.Obtain(adjustedLimbCount);
 			return result;
 		}
 

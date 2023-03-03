@@ -3,7 +3,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSS.Common
 {
-	internal interface IIterator
+	public interface IIterator
 	{
 		bool IncreasingIterations { get; set; }
 		MathOpCounts MathOpCounts { get; }

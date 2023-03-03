@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MSS.Common
 {
-	public class FP31VecMath : IFP31VecMath
+	public class FP31VecMathL1 : IFP31VecMath
 	{
 		#region Private Properties
 
@@ -62,7 +62,7 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public FP31VecMath(ApFixedPointFormat apFixedPointFormat)
+		public FP31VecMathL1(ApFixedPointFormat apFixedPointFormat)
 		{
 			ApFixedPointFormat = apFixedPointFormat;
 			LimbCount = apFixedPointFormat.LimbCount;
