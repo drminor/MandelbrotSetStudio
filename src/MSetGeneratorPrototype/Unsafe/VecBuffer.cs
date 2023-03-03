@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 
 namespace MSetGeneratorPrototype
 {
-	internal class VecBuffer
+	internal class VecBuffer : IDisposable
 	{
 		private MemoryHandle? _byteHandle;
 		private unsafe byte* _bytePtr;
@@ -77,6 +77,20 @@ namespace MSetGeneratorPrototype
 			_offset += read;
 			return ptr;
 		}
+
+		/// <summary>
+		/// Dangerously retrieves the byte pointer at the current position and then increases the _offset after.
+		/// </summary>
+		/// <param name="read"></param>
+		/// <returns></returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public unsafe byte* GetBytePointer(int offset)
+		{
+			byte* ptr = _bytePtr + offset;
+			return ptr;
+		}
+
+
 
 		public bool CanRead
 		{

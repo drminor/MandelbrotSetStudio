@@ -38,9 +38,9 @@ namespace MSS.Common
 		private static readonly Vector256<uint> SHUFFLE_PACK_LOW_VEC = Vector256.Create(0u, 2u, 4u, 6u, 0u, 0u, 0u, 0u);
 		private static readonly Vector256<uint> SHUFFLE_PACK_HIGH_VEC = Vector256.Create(0u, 0u, 0u, 0u, 0u, 2u, 4u, 6u);
 
-		private PairOfVec8ui _squareResult0;
-		private PairOfVec4ui _squareResult1;
-		private PairOfVec4ui _squareResult2;
+		private PairOfVec<uint> _squareResult0;
+		private PairOfVec<ulong> _squareResult1;
+		private PairOfVec<ulong> _squareResult2;
 
 		private Vector256<uint>[] _negationResult;
 
@@ -69,9 +69,9 @@ namespace MSS.Common
 			ApFixedPointFormat = apFixedPointFormat;
 			LimbCount = apFixedPointFormat.LimbCount;
 
-			_squareResult0 = new PairOfVec8ui(LimbCount);
-			_squareResult1 = new PairOfVec4ui(LimbCount);
-			_squareResult2 = new PairOfVec4ui(LimbCount);
+			_squareResult0 = new PairOfVec<uint>(LimbCount);
+			_squareResult1 = new PairOfVec<ulong>(LimbCount * 2);
+			_squareResult2 = new PairOfVec<ulong>(LimbCount * 2);
 
 			_negationResult = new Vector256<uint>[LimbCount];
 
@@ -157,7 +157,7 @@ namespace MSS.Common
 			//}
 		}
 
-		private void SquareInternal(PairOfVec8ui source, PairOfVec4ui result)
+		private void SquareInternal(PairOfVec<uint> source, PairOfVec<ulong> result)
 		{
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
@@ -252,7 +252,7 @@ namespace MSS.Common
 
 		#region Multiplication Post Processing
 
-		private void SumThePartials(PairOfVec4ui source, PairOfVec4ui result)
+		private void SumThePartials(PairOfVec<ulong> source, PairOfVec<ulong> result)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
@@ -279,7 +279,7 @@ namespace MSS.Common
 			}
 		}
 
-		private void ShiftAndTrim(PairOfVec4ui source, Vector256<uint>[] resultLimbs)
+		private void ShiftAndTrim(PairOfVec<ulong> source, Vector256<uint>[] resultLimbs)
 		{
 			//ValidateIsSplit(mantissa);
 
@@ -378,7 +378,7 @@ namespace MSS.Common
 			}
 		}
 
-		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec8ui result)
+		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec<uint> result)
 		{
 			//CheckReservedBitIsClear(source, "ConvertFrom2C");
 
@@ -576,67 +576,54 @@ namespace MSS.Common
 
 		#endregion
 
+		//private class PairOfVec8ui
+		//{
+		//	public PairOfVec8ui(int limbCount)
+		//	{
+		//		Lower = new Vector256<uint>[limbCount];
+		//		Upper = new Vector256<uint>[limbCount];
 
-		private class PairOfVec8ui
-		{
-			public PairOfVec8ui(int limbCount)
-			{
-				Lower = new Vector256<uint>[limbCount];
-				Upper = new Vector256<uint>[limbCount];
+		//		ClearLimbSet();
+		//	}
 
-				ClearLimbSet();
-			}
-
-			//public PairOfVec8ui(Vector256<uint>[] lower, Vector256<uint>[] upper)
-			//{
-			//	Lower = lower ?? throw new ArgumentNullException(nameof(lower));
-			//	Upper = upper ?? throw new ArgumentNullException(nameof(upper));
-			//}
-
-			public Vector256<uint>[] Lower { get; init; }
-			public Vector256<uint>[] Upper { get; init; }
+		//	public Vector256<uint>[] Lower { get; init; }
+		//	public Vector256<uint>[] Upper { get; init; }
 
 
-			public void ClearLimbSet()
-			{
-				for (var i = 0; i < Lower.Length; i++)
-				{
-					Lower[i] = Vector256<uint>.Zero;
-					Upper[i] = Vector256<uint>.Zero;
-				}
-			}
-		}
+		//	public void ClearLimbSet()
+		//	{
+		//		for (var i = 0; i < Lower.Length; i++)
+		//		{
+		//			Lower[i] = Vector256<uint>.Zero;
+		//			Upper[i] = Vector256<uint>.Zero;
+		//		}
+		//	}
+		//}
 
-		private class PairOfVec4ui
-		{
-			public PairOfVec4ui(int limbCount)
-			{
-				Lower = new Vector256<ulong>[limbCount * 2];
-				Upper = new Vector256<ulong>[limbCount * 2];
+		//private class PairOfVec4ui
+		//{
+		//	public PairOfVec4ui(int limbCount)
+		//	{
+		//		Lower = new Vector256<ulong>[limbCount * 2];
+		//		Upper = new Vector256<ulong>[limbCount * 2];
 
-				ClearLimbSet();
-			}
+		//		Clear();
+		//	}
 
-			//public PairOfVec4ui(Vector256<ulong>[] lower, Vector256<ulong>[] upper)
-			//{
-			//	Lower = lower ?? throw new ArgumentNullException(nameof(lower));
-			//	Upper = upper ?? throw new ArgumentNullException(nameof(upper));
-			//}
+		//	public Vector256<ulong>[] Lower { get; init; }
+		//	public Vector256<ulong>[] Upper { get; init; }
 
-			public Vector256<ulong>[] Lower { get; init; }
-			public Vector256<ulong>[] Upper { get; init; }
-
-			public void ClearLimbSet()
-			{
-				for (var i = 0; i < Lower.Length; i++)
-				{
-					Lower[i] = Vector256<ulong>.Zero;
-					Upper[i] = Vector256<ulong>.Zero;
-				}
-			}
+		//	public void Clear()
+		//	{
+		//		for (var i = 0; i < Lower.Length; i++)
+		//		{
+		//			Lower[i] = Vector256<ulong>.Zero;
+		//			Upper[i] = Vector256<ulong>.Zero;
+		//		}
+		//	}
 
 
-		}
+		//}
 
 
 	}

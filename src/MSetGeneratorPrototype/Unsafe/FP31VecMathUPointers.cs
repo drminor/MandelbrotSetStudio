@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MSS.Common
 {
-	internal class FP31VecMathUPointers
+	internal class FP31VecMathUPointers : IDisposable
 	{
 		#region Private Properties
 
@@ -39,25 +39,14 @@ namespace MSS.Common
 		private static readonly Vector256<uint> SHUFFLE_PACK_LOW_VEC = Vector256.Create(0u, 2u, 4u, 6u, 0u, 0u, 0u, 0u);
 		private static readonly Vector256<uint> SHUFFLE_PACK_HIGH_VEC = Vector256.Create(0u, 0u, 0u, 0u, 0u, 2u, 4u, 6u);
 
-		private PairOfVec8ui _squareResult0;
-		private PairOfVec4ui _squareResult1;
-		private PairOfVec4ui _squareResult2;
-
-		private Vector256<uint>[] _negationResult;
+		private PairOfVecBuffer _squareResult0;
+		private PairOfVecBuffer _squareResult1;
+		private PairOfVecBuffer _squareResult2;
 
 		private Vector256<uint> _ones;
 
-		private Vector256<uint> _carryVectors;
-		private Vector256<ulong> _carryVectorsLong1;
-		private Vector256<ulong> _carryVectorsLong2;
-
-		private Vector256<int> _signBitVecs;
-
 		byte _shiftAmount;
 		byte _inverseShiftAmount;
-
-		private int _squareSourceStartIndex;
-		private bool _skipSquareResultLow;
 
 		private const bool USE_DET_DEBUG = false;
 
@@ -70,43 +59,17 @@ namespace MSS.Common
 			ApFixedPointFormat = apFixedPointFormat;
 			LimbCount = apFixedPointFormat.LimbCount;
 
-			_squareResult0 = new PairOfVec8ui(LimbCount);
-			_squareResult1 = new PairOfVec4ui(LimbCount);
-			_squareResult2 = new PairOfVec4ui(LimbCount);
-
-			_negationResult = new Vector256<uint>[LimbCount];
+			_squareResult0 = new PairOfVecBuffer(LimbCount);
+			_squareResult1 = new PairOfVecBuffer(LimbCount, isDeep: true);
+			_squareResult2 = new PairOfVecBuffer(LimbCount, isDeep: true);
 
 			_ones = Vector256.Create(1u);
 
-			_carryVectors = Vector256<uint>.Zero;
-			_carryVectorsLong1 = Vector256<ulong>.Zero;
-			_carryVectorsLong2 = Vector256<ulong>.Zero;
-
-			_signBitVecs = Vector256<int>.Zero;
 
 			_shiftAmount = apFixedPointFormat.BitsBeforeBinaryPoint;
 			_inverseShiftAmount = (byte)(31 - _shiftAmount);
 
-			(_squareSourceStartIndex, _skipSquareResultLow) = CalculateSqrOpParams(LimbCount);
-
 			MathOpCounts = new MathOpCounts();
-		}
-
-		private (int sqrSrcStartIdx, bool skipSqrResLow) CalculateSqrOpParams(int limbCount)
-		{
-			// TODO: Check the CalculateSqrOpParams method 
-			return limbCount switch
-			{
-				0 => (0, false),
-				1 => (0, false),
-				2 => (0, false),
-				3 => (0, true),
-				4 => (1, false),
-				5 => (1, true),
-				6 => (2, false),
-				7 => (2, true),
-				_ => (3, false),
-			};
 		}
 
 		#endregion
@@ -124,12 +87,6 @@ namespace MSS.Common
 
 		public void Square(VecBuffer a, VecBuffer result)
 		{
-
-		}
-
-
-		public void Square(Vector256<uint>[] a, Vector256<uint>[] result)
-		{
 			// Convert back to standard, i.e., non two's compliment.
 			// Our multiplication routines don't support 2's compliment.
 			// The result of squaring is always positive,
@@ -142,45 +99,36 @@ namespace MSS.Common
 			ConvertFrom2C(a, _squareResult0);
 			//MathOpCounts.NumberOfConversions++;
 
-			// Unoptimized
 			SquareInternal(_squareResult0, _squareResult1);
 			SumThePartials(_squareResult1, _squareResult2);
 			ShiftAndTrim(_squareResult2, result);
-
-			//// Optimized
-
-			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
-			//SumThePartials(_squareResult1Lo, _squareResult2Lo);
-			//var optimizedResult = new Vector256<uint>[LimbCount];
-			//ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, optimizedResult);
-
-			//for (var i = 0; i < LimbCount; i++)
-			//{
-			//	var eqFlags = Avx2.CompareEqual(optimizedResult[i], result[i]);
-			//	if (Avx2.MoveMask(eqFlags.AsByte()) != -1)
-			//	{
-			//		Debug.WriteLine("WARNING Optimized != NonOptimized.");
-			//	}
-			//}
 		}
 
-		private void SquareInternal(PairOfVec8ui source, PairOfVec4ui result)
+		private unsafe void SquareInternal(PairOfVecBuffer sourceBuffer, PairOfVecBuffer resultBuffer)
 		{
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
 			//result.ClearManatissMems();
 
-			for (int j = 0; j < source.Lower.Length; j++)
+			for (int leftPtr = 0; leftPtr < LimbCount; leftPtr++)
 			{
-				for (int i = j; i < source.Lower.Length; i++)
+				for (int rightPtr = leftPtr; rightPtr < LimbCount; rightPtr++)
 				{
-					var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
+					var resultPtr = leftPtr + rightPtr;  // 0+0, 0+1; 1+1, 0, 1, 2
 
-					var productVector1 = Avx2.Multiply(source.Lower[j], source.Lower[i]);
-					var productVector2 = Avx2.Multiply(source.Upper[j], source.Upper[i]);
+					// Load, Load, Multiply
+					var left1 = Avx2.LoadDquVector256((uint*)sourceBuffer.Vec1.GetBytePointer(leftPtr * 32));
+					var right1 = Avx2.LoadDquVector256((uint*)sourceBuffer.Vec1.GetBytePointer(rightPtr * 32));
+					var productVector1 = Avx2.Multiply(left1, right1);
+
+					// Load, Load, Multiply
+					var left2 = Avx2.LoadDquVector256((uint*)sourceBuffer.Vec2.GetBytePointer(leftPtr * 32));
+					var right2 = Avx2.LoadDquVector256((uint*)sourceBuffer.Vec2.GetBytePointer(rightPtr * 32));
+					var productVector2 = Avx2.Multiply(left2, right2);
+
 					IncrementNoMultiplications(8);
 
-					if (i > j)
+					if (rightPtr > leftPtr)
 					{
 						//product *= 2;
 						productVector1 = Avx2.ShiftLeftLogical(productVector1, 1);
@@ -189,62 +137,55 @@ namespace MSS.Common
 
 					// 0/1; 1/2; 2/3
 
-					result.Lower[resultPtr] = Avx2.Add(result.Lower[resultPtr], Avx2.And(productVector1, HIGH33_MASK_VEC_L));
-					result.Lower[resultPtr + 1] = Avx2.Add(result.Lower[resultPtr + 1], Avx2.ShiftRightLogical(productVector1, EFFECTIVE_BITS_PER_LIMB));
 
-					result.Upper[resultPtr] = Avx2.Add(result.Upper[resultPtr], Avx2.And(productVector2, HIGH33_MASK_VEC_L));
-					result.Upper[resultPtr + 1] = Avx2.Add(result.Upper[resultPtr + 1], Avx2.ShiftRightLogical(productVector2, EFFECTIVE_BITS_PER_LIMB));
+					// And, SRL
+					var resultLimb1Low = Avx2.And(productVector1, HIGH33_MASK_VEC_L);
+					var resultLimb1Hi = Avx2.ShiftRightLogical(productVector1, EFFECTIVE_BITS_PER_LIMB);
+
+					var result1LowPtr = (ulong*)resultBuffer.Vec1.GetBytePointer(resultPtr * 32);
+					var result1HiPtr = (ulong*)resultBuffer.Vec1.GetBytePointer((resultPtr + 1) * 32);
+
+					//// Load, Load
+					//var result1Low = Avx2.LoadDquVector256(result1LowPtr);
+					//var result1Hi = Avx2.LoadDquVector256(result1HiPtr);
+
+					//// Add, Add
+					//result1Low = Avx2.Add(result1Low, resultLimb1Low);
+					//result1Hi = Avx2.Add(result1Hi, resultLimb1Hi);
+
+					//// Store, Store
+					//Avx2.Store(result1LowPtr, result1Low);
+					//Avx2.Store(result1HiPtr, result1Hi);
+
+					Avx2.Store(result1LowPtr, resultLimb1Low);
+					Avx2.Store(result1HiPtr, resultLimb1Hi);
+
+
+					// And, SRL
+					var resultLimb2Low = Avx2.And(productVector2, HIGH33_MASK_VEC_L);
+					var resultLimb2Hi = Avx2.ShiftRightLogical(productVector2, EFFECTIVE_BITS_PER_LIMB);
+
+					var result2LowPtr = (ulong*)resultBuffer.Vec2.GetBytePointer(resultPtr * 32);
+					var result2HiPtr = (ulong*)resultBuffer.Vec2.GetBytePointer((resultPtr + 1) * 32);
+
+					//// Load, Load
+					//var result2Low = Avx2.LoadDquVector256(result2LowPtr);
+					//var result2Hi = Avx2.LoadDquVector256(result2HiPtr);
+
+					//// Add, Add
+					//result2Low = Avx2.Add(result2Low, resultLimb2Low);
+					//result2Hi = Avx2.Add(result2Hi, resultLimb2Hi);
+
+					//// Store, Store
+					//Avx2.Store(result2LowPtr, result2Low);
+					//Avx2.Store(result2HiPtr, result2Hi);
+
+
+					Avx2.Store(result2LowPtr, resultLimb2Low);
+					Avx2.Store(result2HiPtr, resultLimb2Hi);
 
 					//MathOpCounts.NumberOfSplits += 4;
 					//MathOpCounts.NumberOfAdditions += 16;
-				}
-			}
-		}
-
-		private void SquareInternalOptimized(Vector256<uint>[] source, Vector256<ulong>[] result)
-		{
-			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
-
-			//result.ClearManatissMems();
-
-			for (int j = 0; j < source.Length; j++)
-			{
-				for (int i = j; i < source.Length; i++)
-				{
-					var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
-
-					if (resultPtr < _squareSourceStartIndex)
-					{
-						result[resultPtr] = Vector256<ulong>.Zero;
-						result[resultPtr + 1] = Vector256<ulong>.Zero;
-					}
-					else
-					{
-						var productVector = Avx2.Multiply(source[j], source[i]);
-						IncrementNoMultiplications(4);
-
-						if (i > j)
-						{
-							//product *= 2;
-							productVector = Avx2.ShiftLeftLogical(productVector, 1);
-						}
-
-						// 0/1; 1/2; 2/3
-
-						if (_skipSquareResultLow & resultPtr == _squareSourceStartIndex)
-						{
-							result[resultPtr] = Vector256<ulong>.Zero;
-							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
-						}
-						else
-						{
-							result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
-							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
-						}
-
-						//MathOpCounts.NumberOfSplits++;
-
-					}
 				}
 			}
 		}
@@ -259,34 +200,48 @@ namespace MSS.Common
 
 		#region Multiplication Post Processing
 
-		private void SumThePartials(PairOfVec4ui source, PairOfVec4ui result)
+		private unsafe void SumThePartials(PairOfVecBuffer sourceBuffer, PairOfVecBuffer resultBuffer)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
 			// This will leave each result bin with a value <= 2^32 for the final digit.
 			// If the MSL produces a carry, throw an exception.
 
-			_carryVectorsLong1 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong1, _carryVectorsLong1);
-			_carryVectorsLong2 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong2, _carryVectorsLong2);
+			var carry1 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong1, _carryVectorsLong1);
+			var carry2 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong2, _carryVectorsLong2);
 
-			for (int limbPtr = 0; limbPtr < source.Lower.Length; limbPtr++)
+			var resultLength = LimbCount * 2;
+
+			for (int limbPtr = 0; limbPtr < resultLength; limbPtr++)
 			{
-				var withCarries1 = Avx2.Add(source.Lower[limbPtr], _carryVectorsLong1);
-				var withCarries2 = Avx2.Add(source.Upper[limbPtr], _carryVectorsLong2);
 
-				result.Lower[limbPtr] = Avx2.And(withCarries1, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
-				result.Upper[limbPtr] = Avx2.And(withCarries2, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+				var source1Ptr = (ulong*)sourceBuffer.Vec1.GetBytePointer(limbPtr * 32);
+				var source1Limb = Avx2.LoadDquVector256(source1Ptr);
+				var partialSum1 = Avx2.Add(source1Limb, carry1);
+				source1Limb = Avx2.Xor(source1Limb, source1Limb);
+				Avx2.Store(source1Ptr, source1Limb);
 
-				_carryVectorsLong1 = Avx2.ShiftRightLogical(withCarries1, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
-				_carryVectorsLong2 = Avx2.ShiftRightLogical(withCarries2, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+				var source2Ptr = (ulong*)sourceBuffer.Vec2.GetBytePointer(limbPtr * 32);
+				var source2Limb = Avx2.LoadDquVector256(source2Ptr);
+				var partialSum2 = Avx2.Add(source2Limb, carry2);
+				source2Limb = Avx2.Xor(source2Limb, source2Limb);
+				Avx2.Store(source1Ptr, source2Limb);
 
-				// Clear the source so that square internal will not have to make a separate call.
-				source.Lower[limbPtr] = Avx2.Xor(source.Lower[limbPtr], source.Lower[limbPtr]);
-				source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
+				var result1Limb = Avx2.And(partialSum1, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+				var result2Limb = Avx2.And(partialSum2, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+
+				var result1Ptr = (ulong*)resultBuffer.Vec1.GetBytePointer(limbPtr * 32);
+				var result2Ptr = (ulong*)resultBuffer.Vec2.GetBytePointer(limbPtr * 32);
+
+				Avx2.Store(result1Ptr, result1Limb);
+				Avx2.Store(result2Ptr, result2Limb);
+
+				carry1 = Avx2.ShiftRightLogical(partialSum1, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+				carry2 = Avx2.ShiftRightLogical(partialSum2, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 			}
 		}
 
-		private void ShiftAndTrim(PairOfVec4ui source, Vector256<uint>[] resultLimbs)
+		private unsafe void ShiftAndTrim(PairOfVecBuffer sourceBuffer, VecBuffer resultBuffer)
 		{
 			//ValidateIsSplit(mantissa);
 
@@ -297,33 +252,59 @@ namespace MSS.Common
 			// Check to see if any of these values are larger than the FP Format.
 			//_ = CheckForOverflow(resultLimbs);
 
-			var sourceIndex = Math.Max(source.Lower.Length - LimbCount, 0);
+			var sourceIndex = LimbCount; //Math.Max(sourceBuffer.Vec1.Length - LimbCount, 0);
 
-			for (int limbPtr = 0; limbPtr < resultLimbs.Length; limbPtr++)
+			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 			{
+				// --------------------
 				// Calculate the lo end
 
 				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				var sourceLimb = source.Lower[limbPtr + sourceIndex];
+				// Load
+				var sourcePtr = (ulong*)sourceBuffer.Vec1.GetBytePointer((limbPtr + sourceIndex) * 32);
+				var sourceLimb = Avx2.LoadDquVector256(sourcePtr);
+
+				// Or
 				var wideResultLow = Avx2.And(Avx2.ShiftLeftLogical(sourceLimb, _shiftAmount), HIGH33_MASK_VEC_L);
 
 				// Take the top shiftAmount of bits from the previous limb
-				var prevSourceLimb = source.Lower[limbPtr + sourceIndex - 1];
+				//Load
+				var prevSourcePtr = (ulong*)sourceBuffer.Vec1.GetBytePointer((limbPtr + sourceIndex - 1) * 32);
+				var prevSourceLimb = Avx2.LoadDquVector256(prevSourcePtr);
+				
+				// Or
 				wideResultLow = Avx2.Or(wideResultLow, Avx2.ShiftRightLogical(Avx2.And(prevSourceLimb, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
+				// --------------------
 				// Calculate the hi end
 
 				// Take the bits from the source limb, discarding the top shiftAmount of bits.
-				sourceLimb = source.Upper[limbPtr + sourceIndex];
-				var wideResultHigh = Avx2.And(Avx2.ShiftLeftLogical(sourceLimb, _shiftAmount), HIGH33_MASK_VEC_L);
+				// Load
+				sourcePtr = (ulong*)sourceBuffer.Vec2.GetBytePointer((limbPtr + sourceIndex) * 32);
+				var sourceLimb2 = Avx2.LoadDquVector256(sourcePtr);
+
+				// Or
+				var wideResultHigh = Avx2.And(Avx2.ShiftLeftLogical(sourceLimb2, _shiftAmount), HIGH33_MASK_VEC_L);
 
 				// Take the top shiftAmount of bits from the previous limb
-				prevSourceLimb = source.Upper[limbPtr + sourceIndex - 1];
-				wideResultHigh = Avx2.Or(wideResultHigh, Avx2.ShiftRightLogical(Avx2.And(prevSourceLimb, HIGH33_MASK_VEC_L), _inverseShiftAmount));
+				// Load
+				prevSourcePtr = (ulong*)sourceBuffer.Vec2.GetBytePointer((limbPtr + sourceIndex - 1) * 32);
+				var prevSourceLimb2 = Avx2.LoadDquVector256(prevSourcePtr);
+				
+				// Or
+				wideResultHigh = Avx2.Or(wideResultHigh, Avx2.ShiftRightLogical(Avx2.And(prevSourceLimb2, HIGH33_MASK_VEC_L), _inverseShiftAmount));
 
+				// ---------------
+				// Pack Hi and Low 
+
+				// Permute, Permute, Or
 				var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
 				var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
-				resultLimbs[limbPtr] = Avx2.Or(low128, high128);
+				var resultLimb = Avx2.Or(low128, high128);
+
+				// Store
+				var resultPtr = (uint*)resultBuffer.GetBytePointer(limbPtr * 32);
+				Avx2.Store(resultPtr, resultLimb);
 
 				//MathOpCounts.NumberOfSplits += 4;
 			}
@@ -334,217 +315,153 @@ namespace MSS.Common
 		#region Add and Subtract
 
 		public void Sub(VecBuffer left, VecBuffer right, VecBuffer result)
-		{ }
-
-
-		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
 			//CheckReservedBitIsClear(b, "Negating B");
 
-			Negate(right, _negationResult);
+			using var tempResult = CreateNewLimbSet();
+
+			Negate(right, tempResult);
 			//MathOpCounts.NumberOfConversions++;
 
-			Add(left, _negationResult, result);
+			Add(left, tempResult, result);
 		}
 
-		public void Add(VecBuffer left, VecBuffer right, VecBuffer result)
+		public unsafe void Add(VecBuffer leftBuffer, VecBuffer rightBuffer, VecBuffer resultBuffer)
 		{
+			var carryVectors = Vector256<uint>.Zero;
 
-		}
-
-
-
-		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
-		{
-			//_carryVectors = Avx2.Xor(_carryVectors, _carryVectors);
-			_carryVectors = Vector256<uint>.Zero;
-
-			for (int limbPtr = 0; limbPtr < left.Length; limbPtr++)
+			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 			{
-				var sumVector = Avx2.Add(left[limbPtr], right[limbPtr]);
-				var newValuesVector = Avx2.Add(sumVector, _carryVectors);
+				var left = Avx2.LoadDquVector256((uint*)leftBuffer.GetBytePointer(limbPtr * 32));
+				var right = Avx2.LoadDquVector256((uint*)rightBuffer.GetBytePointer(limbPtr * 32));
+
+				var sum = Avx2.Add(left, right);
+				var newValue = Avx2.Add(sum, carryVectors);
 				//MathOpCounts.NumberOfAdditions += 2;
 
-				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
-				_carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+				var resultlimb = Avx2.And(newValue, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
+				var resultPtr = (uint*)resultBuffer.GetBytePointer(limbPtr * 32);
+				Avx2.Store(resultPtr, resultlimb);
+
+				carryVectors = Avx2.ShiftRightLogical(newValue, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 			}
 		}
 
-		//public void AddThenSquare(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
-		//{
-		//	Add(a, b, _additionResult);
-		//	Square(_additionResult, c);
-		//}
+		public unsafe Vector256<uint> GetMslOfSum(VecBuffer leftBuffer, VecBuffer rightBuffer)
+		{
+			var carryVectors = Vector256<uint>.Zero;
+
+			var result = Vector256<uint>.Zero;
+
+			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+			{
+				var left = Avx2.LoadDquVector256((uint*)leftBuffer.GetBytePointer(limbPtr * 32));
+				var right = Avx2.LoadDquVector256((uint*)rightBuffer.GetBytePointer(limbPtr * 32));
+
+				var sum = Avx2.Add(left, right);
+				var newValue = Avx2.Add(sum, carryVectors);
+				//MathOpCounts.NumberOfAdditions += 2;
+
+				result = Avx2.And(newValue, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
+
+				carryVectors = Avx2.ShiftRightLogical(newValue, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+			}
+
+			return result;
+		}
+
 
 		#endregion
 
 		#region Two Compliment Support
 
-		private void Negate(Vector256<uint>[] source, Vector256<uint>[] result)
+		private unsafe void Negate(VecBuffer sourceBuffer, VecBuffer resultBuffer)
 		{
-			_carryVectors = _ones;
+			var carryVectors = _ones;
 
-			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
+			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 			{
-				var notVector = Avx2.Xor(source[limbPtr], ALL_BITS_SET_VEC);
-				var newValuesVector = Avx2.Add(notVector, _carryVectors);
+				var source = Avx2.LoadDquVector256((uint*)sourceBuffer.GetBytePointer(limbPtr * 32));
+
+				var notVector = Avx2.Xor(source, ALL_BITS_SET_VEC);
+				var newValuesVector = Avx2.Add(notVector, carryVectors);
 				//MathOpCounts.NumberOfAdditions += 2;
 
-				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC); ;
-				_carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
+				var resultLimb = Avx2.And(newValuesVector, HIGH33_MASK_VEC); ;
+				Avx2.Store((uint*)resultBuffer.GetBytePointer(limbPtr * 32), resultLimb);
+
+				carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
 				//MathOpCounts.NumberOfSplits++;
 			}
 		}
 
-		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec8ui result)
+		private unsafe void ConvertFrom2C(VecBuffer sourceBuffer, PairOfVecBuffer resultBufferPair)
 		{
 			//CheckReservedBitIsClear(source, "ConvertFrom2C");
 
-			var signBitFlags = GetSignBits(source, ref _signBitVecs);
+			var signBitFlags = GetSignBits(sourceBuffer, out var signBitVecs);
 
 			if (signBitFlags == -1)
 			{
+
 				// All positive values
-				for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
+				for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 				{
+					var source = Avx2.LoadDquVector256((uint*)sourceBuffer.GetBytePointer(limbPtr * 32));
+
 					// TODO: Is Masking the high bits really required.
 					// Take the lower 4 values and set the low halves of each result
-					result.Lower[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					var resultLimbLower = Avx2.And(Avx2.PermuteVar8x32(source, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					var resultPtr = (uint*)resultBufferPair.Vec1.GetBytePointer(limbPtr * 32);
+					Avx2.Store(resultPtr, resultLimbLower);
 
 					// Take the higher 4 values and set the high halves of each result
-					result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+					var resultLimbUpper = Avx2.And(Avx2.PermuteVar8x32(source, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+					resultPtr = (uint*)resultBufferPair.Vec2.GetBytePointer(limbPtr * 32);
+					Avx2.Store(resultPtr, resultLimbUpper);
 				}
 			}
 			else
 			{
 				// Mixed Positive and Negative values
-				_carryVectors = _ones;
+				var carryVectors = _ones;
 
-				for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
+				for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
 				{
-					var notVector = Avx2.Xor(source[limbPtr], ALL_BITS_SET_VEC);
-					var newValuesVector = Avx2.Add(notVector, _carryVectors);
+					var source = Avx2.LoadDquVector256((uint*)sourceBuffer.GetBytePointer(limbPtr * 32));
+
+					var notVector = Avx2.Xor(source, ALL_BITS_SET_VEC);
+					var newValuesVector = Avx2.Add(notVector, carryVectors);
 					//MathOpCounts.NumberOfAdditions += 2;
 
 					var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
-					_carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+					carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 
 					//MathOpCounts.NumberOfSplits++;
 
-					var cLimbValues = (Avx2.BlendVariable(limbValues.AsByte(), source[limbPtr].AsByte(), _signBitVecs.AsByte())).AsUInt32();
+					var cLimbValues = (Avx2.BlendVariable(limbValues.AsByte(), source.AsByte(), signBitVecs.AsByte())).AsUInt32();
 
 					// Take the lower 4 values and set the low halves of each result
-					result.Lower[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					//result.Lower[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					var resultLimbLower = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+					var resultPtr = (uint*)resultBufferPair.Vec1.GetBytePointer(limbPtr * 32);
+					Avx2.Store(resultPtr, resultLimbLower);
 
 					// Take the higher 4 values and set the high halves of each result
-					result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
-
+					//result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+					var resultLimbUpper = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+					resultPtr = (uint*)resultBufferPair.Vec2.GetBytePointer(limbPtr * 32);
+					Avx2.Store(resultPtr, resultLimbUpper);
 				}
 			}
 		}
 
-		private int GetSignBits(Vector256<uint>[] source, ref Vector256<int> signBitVecs)
+		private unsafe int GetSignBits(VecBuffer sourceBuffer, out Vector256<int> signBitVecs)
 		{
-			//var msl = source[LimbCount - 1];
+			var sourceMsl = Avx2.LoadDquVector256((int*)sourceBuffer.GetBytePointer((LimbCount - 1) * 32));
 
-			//var left = Avx2.And(msl.AsInt32(), TEST_BIT_30_VEC);
-			//signBitVecs = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
-			//var result = Avx2.MoveMask(signBitVecs.AsByte());
-
-			//return result;
-
-			signBitVecs = Avx2.CompareEqual(Avx2.And(source[LimbCount - 1].AsInt32(), TEST_BIT_30_VEC), ZERO_VEC);
+			signBitVecs = Avx2.CompareEqual(Avx2.And(sourceMsl, TEST_BIT_30_VEC), ZERO_VEC);
 			return Avx2.MoveMask(signBitVecs.AsByte());
-		}
-
-		private void CheckReservedBitIsClear(FP31Vectors sourceLimbs, string description, int[] inPlayList)
-		{
-			var sb = new StringBuilder();
-
-			var indexes = inPlayList;
-
-			for (int limbPtr = 0; limbPtr < LimbCount; limbPtr++)
-			{
-				var limbs = sourceLimbs.GetLimbVectorsUW(limbPtr);
-
-				var oneFound = false;
-
-				for (var idxPtr = 0; idxPtr < inPlayList.Length; idxPtr++)
-				{
-					var idx = indexes[idxPtr];
-
-					var justReservedBit = Avx2.And(limbs[idx], RESERVED_BIT_MASK_VEC);
-
-					var cFlags = Avx2.CompareEqual(justReservedBit, Vector256<uint>.Zero);
-					var cComposite = Avx2.MoveMask(cFlags.AsByte());
-					if (cComposite != -1)
-					{
-						sb.AppendLine($"Top bit was set at.\t{idxPtr}\t{limbPtr}\t{cComposite}.");
-					}
-				}
-
-				if (oneFound)
-				{
-					sb.AppendLine();
-				}
-			}
-
-			var errors = sb.ToString();
-
-			if (errors.Length > 1)
-			{
-				throw new InvalidOperationException($"Found a set ReservedBit while {description}.Results:\nIdx\tlimb\tVal\n {errors}");
-			}
-		}
-
-		private void ReportForAddition(int step, Vector256<uint> left, Vector256<uint> right, Vector256<uint> carry, Vector256<uint> nv, Vector256<uint> lo, Vector256<uint> newCarry)
-		{
-			var leftVal0 = left.GetElement(0);
-			var rightVal0 = right.GetElement(0);
-			var carryVal0 = carry.GetElement(0);
-			var nvVal0 = nv.GetElement(0);
-			var newCarryVal0 = newCarry.GetElement(0);
-			var loVal0 = lo.GetElement(0);
-
-			var ld = FP31ValHelper.ConvertFrom2C(leftVal0);
-			var rd = FP31ValHelper.ConvertFrom2C(rightVal0);
-			var cd = FP31ValHelper.ConvertFrom2C(carryVal0);
-			var nvd = FP31ValHelper.ConvertFrom2C(nvVal0);
-			var hid = FP31ValHelper.ConvertFrom2C(newCarryVal0);
-			var lod = FP31ValHelper.ConvertFrom2C(loVal0);
-
-			var nvHiPart = nvVal0;
-			var unSNv = leftVal0 + rightVal0 + carryVal0;
-
-
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {leftVal0:X4}, {rightVal0:X4} wc:{carryVal0:X4} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, {rd} wc:{cd} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvVal0:X4}: hi:{newCarryVal0:X4}, lo:{loVal0:X4}");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}. hpOfNv: {nvHiPart}. unSNv: {unSNv}\n");
-		}
-
-		private void ReportForNegation(int step, Vector256<uint> left, Vector256<uint> carry, Vector256<uint> nv, Vector256<uint> lo, Vector256<uint> newCarry)
-		{
-			var leftVal0 = left.GetElement(0);
-			var carryVal0 = carry.GetElement(0);
-			var nvVal0 = nv.GetElement(0);
-			var newCarryVal0 = newCarry.GetElement(0);
-			var loVal0 = lo.GetElement(0);
-
-			var ld = FP31ValHelper.ConvertFrom2C(leftVal0);
-			var cd = FP31ValHelper.ConvertFrom2C(carryVal0);
-			var nvd = FP31ValHelper.ConvertFrom2C(nvVal0);
-			var hid = FP31ValHelper.ConvertFrom2C(newCarryVal0);
-			var lod = FP31ValHelper.ConvertFrom2C(loVal0);
-
-			var nvHiPart = nvVal0;
-			var unSNv = leftVal0 + carryVal0;
-
-
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {leftVal0:X4}, wc:{carryVal0:X4} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"Step:{step}: Adding {ld}, wc:{cd} ");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvVal0:X4}: hi:{newCarryVal0:X4}, lo:{loVal0:X4}");
-			Debug.WriteLineIf(USE_DET_DEBUG, $"\t-> {nvd}: hi:{hid}, lo:{lod}. hpOfNv: {nvHiPart}. unSNv: {unSNv}\n");
 		}
 
 		#endregion
@@ -560,15 +477,10 @@ namespace MSS.Common
 			return result;
 		}
 
-		public void IsGreaterOrEqThan(VecBuffer left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
-		{
-
-		}
-
-		public void IsGreaterOrEqThan(Vector256<uint>[] left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
+		public unsafe void IsGreaterOrEqThan(ref Vector256<uint> leftMsl, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
 		{
 			// TODO: Is masking the Sign Bit really necessary.
-			var sansSign = Avx2.And(left[^1], SIGN_BIT_MASK_VEC);
+			var sansSign = Avx2.And(leftMsl, SIGN_BIT_MASK_VEC);
 			escapedFlagsVec = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
 
 			//MathOpCounts.NumberOfGrtrThanOps++;
@@ -580,25 +492,9 @@ namespace MSS.Common
 
 		public unsafe VecBuffer CreateNewLimbSet()
 		{
-			var tempArray = new byte[LimbCount * 32];
-			var result = new VecBuffer(tempArray);
-			return result;
-		}
-
-		public VecBuffer CreateNewLimbSetWide()
-		{
-			var tempArray = new byte[LimbCount * 32];
-			var result = new VecBuffer(tempArray);
-			return result;
-		}
-
-		public unsafe VecBuffer CloneLimbSet(VecBuffer source)
-		{
-			var tempArray = new byte[LimbCount * 32];
-
-			source.AsSpan().CopyTo(tempArray);
-
-			var result = new VecBuffer(tempArray);
+			var bytes = new byte[LimbCount];
+			Array.Clear(bytes);
+			var result = new VecBuffer(bytes);
 			return result;
 		}
 
@@ -615,71 +511,136 @@ namespace MSS.Common
 			}
 		}
 
+		private unsafe void ClearLimbSet(VecBuffer sourceBuffer)
+		{
+			for (var limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+			{
+				var resultPtr = (uint*)sourceBuffer.GetBytePointer(limbPtr * 32);
+				Avx2.Store(resultPtr, Vector256<uint>.Zero);
+			}
+		}
+
+		#endregion
+
+		#region IDisposable (Main Class)
+
+		private bool disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+					_squareResult0.Dispose();
+					_squareResult1.Dispose();
+					_squareResult2.Dispose();
+				}
+
+				// TODO: free unmanaged resources (unmanaged objects) and override finalizer
+				// TODO: set large fields to null
+				disposedValue = true;
+			}
+		}
+
+		// // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+		// ~FP31VecMathUPointers()
+		// {
+		//     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		//     Dispose(disposing: false);
+		// }
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
 
 		#endregion
 
 
-		private class PairOfVec8ui
+		private class PairOfVecBuffer : IDisposable
 		{
-			public PairOfVec8ui(int limbCount)
+			public PairOfVecBuffer(int limbCount, bool isDeep = false)
 			{
-				Lower = new Vector256<uint>[limbCount];
-				Upper = new Vector256<uint>[limbCount];
+				if (isDeep)
+				{
+					_vec1Storage = new byte[limbCount * 2 * 32];
+					Array.Clear(_vec1Storage);
+					Vec1 = new VecBuffer(_vec1Storage);
 
-				ClearLimbSet();
+					_vec2Storage = new byte[limbCount * 2 * 32];
+					Array.Clear(_vec2Storage);
+					Vec2 = new VecBuffer(_vec2Storage);
+				}
+				else
+				{
+					_vec1Storage = new byte[limbCount * 32];
+					Array.Clear(_vec1Storage);
+					Vec1 = new VecBuffer(_vec1Storage);
+
+					_vec2Storage = new byte[limbCount * 32];
+					Array.Clear(_vec2Storage);
+					Vec2 = new VecBuffer(_vec2Storage);
+				}
+
+				//ClearLimbSet();
 			}
 
-			//public PairOfVec8ui(Vector256<uint>[] lower, Vector256<uint>[] upper)
+			private byte[] _vec1Storage;
+			private byte[] _vec2Storage;
+
+			public VecBuffer Vec1 { get; init; }
+			public VecBuffer Vec2 { get; init; }
+
+
+			//public void ClearLimbSet()
 			//{
-			//	Lower = lower ?? throw new ArgumentNullException(nameof(lower));
-			//	Upper = upper ?? throw new ArgumentNullException(nameof(upper));
+			//	for (var i = 0; i < Lower.Length; i++)
+			//	{
+			//		Lower[i] = Vector256<uint>.Zero;
+			//		Upper[i] = Vector256<uint>.Zero;
+			//	}
 			//}
 
-			public Vector256<uint>[] Lower { get; init; }
-			public Vector256<uint>[] Upper { get; init; }
+			#region IDisposable
 
+			private bool disposedValue;
 
-			public void ClearLimbSet()
+			protected virtual void Dispose(bool disposing)
 			{
-				for (var i = 0; i < Lower.Length; i++)
+				if (!disposedValue)
 				{
-					Lower[i] = Vector256<uint>.Zero;
-					Upper[i] = Vector256<uint>.Zero;
-				}
-			}
-		}
+					if (disposing)
+					{
+						// Dispose managed state (managed objects)
+						Vec1.Dispose();
+						Vec2.Dispose();
+					}
 
-		private class PairOfVec4ui
-		{
-			public PairOfVec4ui(int limbCount)
-			{
-				Lower = new Vector256<ulong>[limbCount * 2];
-				Upper = new Vector256<ulong>[limbCount * 2];
-
-				ClearLimbSet();
-			}
-
-			//public PairOfVec4ui(Vector256<ulong>[] lower, Vector256<ulong>[] upper)
-			//{
-			//	Lower = lower ?? throw new ArgumentNullException(nameof(lower));
-			//	Upper = upper ?? throw new ArgumentNullException(nameof(upper));
-			//}
-
-			public Vector256<ulong>[] Lower { get; init; }
-			public Vector256<ulong>[] Upper { get; init; }
-
-			public void ClearLimbSet()
-			{
-				for (var i = 0; i < Lower.Length; i++)
-				{
-					Lower[i] = Vector256<ulong>.Zero;
-					Upper[i] = Vector256<ulong>.Zero;
+					// TODO: free unmanaged resources (unmanaged objects) and override finalizer
+					// TODO: set large fields to null
+					disposedValue = true;
 				}
 			}
 
+			// // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+			// ~PairOfVecBuffer()
+			// {
+			//     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			//     Dispose(disposing: false);
+			// }
 
+			public void Dispose()
+			{
+				// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+				Dispose(disposing: true);
+				GC.SuppressFinalize(this);
+			}
+
+			#endregion
 		}
-
-
 	}
 }

@@ -114,6 +114,10 @@ namespace MSetGeneratorPrototype
 			return completed;
 		}
 
+		#endregion
+
+		#region Generate MapSectionRows
+
 		private bool GenerateMapSectionRows(IteratorUPointers iterator, IterationStateUPointers iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			allRowsHaveEscaped = false;
@@ -125,7 +129,7 @@ namespace MSetGeneratorPrototype
 
 			allRowsHaveEscaped = true;
 
-			for(var rowNumber = 0; rowNumber < iterationState.RowCount; rowNumber++)
+			for (var rowNumber = 0; rowNumber < iterationState.RowCount; rowNumber++)
 			{
 				iterationState.SetRowNumber(rowNumber);
 
@@ -162,10 +166,6 @@ namespace MSetGeneratorPrototype
 			return true;
 		}
 
-		#endregion
-
-		#region Generate One Vector Int
-
 		private unsafe bool GenerateMapCol(int idx, IteratorUPointers iterator, IterationStateUPointers iterationState)
 		{
 			var hasEscapedFlagsV = Vector256<int>.Zero;
@@ -179,10 +179,18 @@ namespace MSetGeneratorPrototype
 
 			var vCrs = GetVecBuffer(_crs);
 			var vCis = GetVecBuffer(_cis);
-			var vZrs = GetEmptyVecBuffer(iterationState.LimbCount * 32);
-			var vZis = GetEmptyVecBuffer(iterationState.LimbCount * 32);
+
+			var zrsStorage = new byte[iterationState.LimbCount * 32];
+			Array.Clear(zrsStorage);
+			var vZrs = new VecBuffer(zrsStorage);
+
+			var zisStorage = new byte[iterationState.LimbCount * 32];
+			Array.Clear(zisStorage);
+			var vZis = new VecBuffer(zisStorage);
 
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+
+			var cntr = 0;
 
 			iterator.IterateFirstRound(vCrs, vCis, vZrs, vZis, ref escapedFlagsVec);
 			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
@@ -191,6 +199,11 @@ namespace MSetGeneratorPrototype
 			{
 				iterator.Iterate(vCrs, vCis, vZrs, vZis, ref escapedFlagsVec);
 				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+				if (++cntr > 405)
+				{
+					Debug.WriteLine("Huh?");
+				}
 			}
 
 			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
@@ -198,8 +211,8 @@ namespace MSetGeneratorPrototype
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
 			iterationState.CountsRowV[idx] = resultCountsV;
 
-			iterationState.UpdateZrLimbSet(idx, _resultZrs);
-			iterationState.UpdateZiLimbSet(idx, _resultZis);
+			//iterationState.UpdateZrLimbSet(idx, _resultZrs);
+			//iterationState.UpdateZiLimbSet(idx, _resultZis);
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV.AsByte());
 
@@ -242,29 +255,6 @@ namespace MSetGeneratorPrototype
 				//}
 			}
 
-			//var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
-			//var anyJustNowDone = !Avx.TestC(justNowDone, Vector256<int>.AllBitsSet);
-
-			//if (anyJustNowDone)
-			//{
-
-			//	Debug.Assert(Avx2.MoveMask(prevDoneFlagsV.AsByte()) != compositeIsDone, "Test C -- not the same.");
-
-
-			//	// Save the current count 
-			//	resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
-
-			//	// Save the current ZValues.
-			//	for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
-			//	{
-			//		resultZRs[limbPtr] = Avx2.BlendVariable(zRs[limbPtr].AsInt32(), resultZRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-			//		resultZIs[limbPtr] = Avx2.BlendVariable(zIs[limbPtr].AsInt32(), resultZIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-			//	}
-			//}
-			//else
-			//{
-			//	Debug.Assert(Avx2.MoveMask(prevDoneFlagsV.AsByte()) == compositeIsDone, "Test C -- not the same2.");
-			//}
 			return compositeIsDone;
 		}
 
@@ -278,21 +268,9 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private unsafe VecBuffer GetEmptyVecBuffer(int byteCount)
-		{
-			var tempArray = new byte[byteCount];
-			var result = new VecBuffer(tempArray);
-			return result;
-		}
-
-
-		//// horizontal_and. Returns true if all bits are 1
-		//static inline bool horizontal_and(Vec256b const a) {
-		//return _mm256_testc_si256(a, _mm256_set1_epi32(-1)) != 0;
-
 		#endregion
 
-		#region Update Rows
+		#region Update MapSectionRows
 
 		private bool UpdateMapSectionRows(IteratorUPointers iterator, IterationStateUPointers iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
@@ -409,7 +387,10 @@ namespace MSetGeneratorPrototype
 			{
 				//_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
 
+				_fp31VecMathUPointers.Dispose();
 				_fp31VecMathUPointers = new FP31VecMathUPointers(new ApFixedPointFormat(limbCountForThisRequest));
+
+				_iterator.Dispose();
 				_iterator = new IteratorUPointers(_fp31VecMathUPointers);
 
 				_crs = new Vector256<uint>[limbCountForThisRequest];

@@ -53,6 +53,8 @@ namespace MSS.Types.APValues
 				}
 
 				var valPtr = vecPtr * Lanes;
+
+				//for (var lanePtr = Lanes - 1; lanePtr >= 0; lanePtr--)
 				for (var lanePtr = 0; lanePtr < Lanes; lanePtr++)
 				{
 					var fp31Val = fp31Vals[valPtr + lanePtr];

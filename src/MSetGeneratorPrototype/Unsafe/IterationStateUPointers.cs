@@ -221,7 +221,7 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
-		#region Public Methods - Fill / Update Limb Sets
+		#region Public Methods - Fill / Update Limb Sets - Vector
 
 		public void FillCrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
@@ -284,6 +284,30 @@ namespace MSetGeneratorPrototype
 		}
 
 		#endregion
+
+		//#region Public Methods - Fill / Update Limb Sets -- Primative Type
+
+		//public void FillCrLimbSet(int vectorIndex, uint[] limbSet)
+		//{
+		//	var vecPtr = vectorIndex * LimbCount;
+
+		//	for (var i = 0; i < LimbCount; i++)
+		//	{
+		//		limbSet[i] = CrsRowVArray.Mantissas[vecPtr++];
+		//	}
+		//}
+
+		//public void FillCiLimbSetForRow(int rowNumber, uint[] limbSet)
+		//{
+		//	var fp31Val = _samplePointsY[rowNumber];
+
+		//	for (var limbPtr = 0; limbPtr < LimbCount; limbPtr++)
+		//	{
+		//		limbSet[limbPtr] = fp31Val.Mantissa[limbPtr];
+		//	}
+		//}
+
+		//#endregion
 
 		#region Private Methods
 
