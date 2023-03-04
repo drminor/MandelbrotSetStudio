@@ -1,10 +1,9 @@
-﻿using MSetGeneratorPrototype;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.APValues;
 using System.Numerics;
 
-namespace EngineTest
+namespace VecMathTest
 {
 	internal class FP31ValTestValue
 	{

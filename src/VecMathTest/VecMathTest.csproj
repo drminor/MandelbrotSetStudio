@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -9,6 +9,10 @@
 
     <Platforms>x64</Platforms>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="TestValueClasses\FP31DeckTestValue.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
@@ -24,9 +28,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MSetGeneratorPrototype\MSetGeneratorPrototype.csproj" />
-    <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="TestValueClasses\FP31DeckTestValue.cs" />
   </ItemGroup>
 
 </Project>
