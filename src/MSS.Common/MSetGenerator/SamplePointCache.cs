@@ -11,6 +11,8 @@ namespace MSS.Common
 		private readonly ConcurrentDictionary<int, FP31ScalarMath> _mathImplementations;
 		private readonly ConcurrentDictionary<int, IFP31VecMath> _vecMathImplementations;
 
+		#region Constructors
+
 		public SamplePointCache() : this(RMapConstants.BLOCK_SIZE)
 		{ }
 
@@ -22,7 +24,13 @@ namespace MSS.Common
 			_vecMathImplementations = new ConcurrentDictionary<int, IFP31VecMath>();
 		}
 
+		#endregion
+
+		#region Public Properties
+
 		public SizeInt BlockSize { get; init; }
+
+		#endregion
 
 		#region Sample Point Offsets
 

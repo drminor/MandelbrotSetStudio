@@ -30,8 +30,8 @@ namespace MSS.Common
 		FP31ValArray CrsRowVArray { get; }
 		Vector256<uint>[] CiLimbSet { get; }
 
-		Vector256<uint>[] ZisRowV { get; }
-		Vector256<uint>[] ZrsRowV { get; }
+		//Vector256<uint>[] ZisRowV { get; }
+		//Vector256<uint>[] ZrsRowV { get; }
 
 		Vector256<int>[] UsedCalcs { get; }
 		Vector256<int>[] UnusedCalcs { get; }
@@ -51,7 +51,7 @@ namespace MSS.Common
 		void FillZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 		void FillZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
 
-		void UpdateZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
-		void UpdateZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet);
+		void UpdateZrLimbSet(int rowNumber, int vectorIndex, Vector256<uint>[] limbSet);
+		void UpdateZiLimbSet(int rowNumber, int vectorIndex, Vector256<uint>[] limbSet);
 	}
 }

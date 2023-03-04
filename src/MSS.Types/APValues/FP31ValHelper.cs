@@ -447,12 +447,28 @@ namespace MSS.Types.APValues
 			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = (uint)partialWordLimbs[i];
+
+				CheckPWLimb(partialWordLimbs[i], result[i]);
 			}
 
 			return result;
 		}
 
+		[Conditional("DEBUG")]
+		private static void CheckPWLimb(ulong source, uint result)
+		{
+			var diff = source - result;
+
+			if (diff != 0)
+			{
+				throw new InvalidOperationException("TakeLowerHalfs found data in the top half.");
+			}
+		}
+
+
 		#endregion
+
+
 
 
 		#region Convert to Full-31Bit-Word Limbs

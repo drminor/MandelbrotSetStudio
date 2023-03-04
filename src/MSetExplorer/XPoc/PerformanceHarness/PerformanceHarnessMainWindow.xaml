@@ -17,8 +17,8 @@
         <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnOne" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="OneButton_Click" IsCancel="True">_Run Baseline</Button>
-                <Button Name="btnTwo" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="TwoButton_Click" IsCancel="True">Reserved</Button>
+                <Button Name="btnOne" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="RunHome_Click" IsCancel="True">Run _Home Job</Button>
+                <Button Name="btnTwo" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="RunDense_Click" IsCancel="True">Run _Dense LC2</Button>
             </StackPanel>
 
         </Border>

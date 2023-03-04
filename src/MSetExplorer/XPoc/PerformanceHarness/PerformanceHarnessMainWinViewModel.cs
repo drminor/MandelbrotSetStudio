@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace MSetExplorer.XPoc.PerformanceHarness
 {
@@ -22,12 +21,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		public List<MapSectionProcessInfo> MapSectionProcessInfos;
 
 		public MathOpCounts MathOpCounts { get; set; }
-
-		//private MapLoader? _mapLoader;
-		//private Task? _startTask;
-
-		//private Stopwatch _stopWatch;
-		//private bool _receviedTheLastOne;
 
 		#endregion
 
@@ -135,12 +128,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			set => _unusedCalcs = value;
 		}
 
-		//public int MaxPeakSections
-		//{
-		//	get => _mapSectionHelper.MaxPeakSections;
-		//	set { }
-		//}
-
 		public int MaxPeakSectionVectors
 		{
 			get => _mapSectionHelper.MaxPeakSectionVectors;
@@ -157,20 +144,54 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		#region Public Methods
 
-		public void RunBaseLine()
+		public void RunHomeJob()
+		{
+			var blockSize = RMapConstants.BLOCK_SIZE;
+			var sizeInWholeBlocks = new SizeInt(8);
+			var canvasSize = sizeInWholeBlocks.Scale(blockSize);
+
+			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN; // new RRectangle(-4, 4, -4, 4, -1);
+
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold:4, requestsPerJob: 100);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
+
+			RunTest(job);
+		}
+
+		public void RunDenseLC2()
+		{
+			var blockSize = RMapConstants.BLOCK_SIZE;
+			var sizeInWholeBlocks = new SizeInt(8);
+			var canvasSize = sizeInWholeBlocks.Scale(blockSize);
+
+			//var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
+
+			var x1 = 32;
+			var x2 = 64;
+			var y1 = 32;
+			var y2 = 64;
+			var exponent = -8;
+			var coords = new RRectangle(x1, x2, y1, y2, exponent, precision: RMapConstants.DEFAULT_PRECISION);
+
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold:4, requestsPerJob: 100);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
+
+			RunTest(job);
+		}
+
+
+		#endregion
+
+		#region Private Methods
+
+		private void RunTest(Job job)
 		{
 			NotifyPropChangedMaxPeek();
 
 			MapSectionProcessInfos.Clear();
 
-			var blockSize = RMapConstants.BLOCK_SIZE;
-			var sizeInWholeBlocks = new SizeInt(8);
-			var canvasSize = sizeInWholeBlocks.Scale(blockSize);
-
-			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, requestsPerJob: 100);
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
 
 			//var jobProgressInfo = RunJob(job, out var mapLoader, out var startTask);
 
@@ -184,7 +205,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			var stopWatch = Stopwatch.StartNew();
 			var startTask = mapLoader.Start(mapSectionRequests);
-			
+
 			JobProgressInfo = new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count);
 
 			mapLoader.SectionLoaded += MapLoader_SectionLoaded;
@@ -212,25 +233,9 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			}
 		}
 
+
 		private void UpdateUi(Stopwatch stopwatch, JobProgressInfo jobProgressInfo)
 		{
-			//if (_startTask == null || _mapLoader == null)
-			//{
-			//	Debug.WriteLine("The start task or the MapLoader is null.");
-			//	return;
-			//}
-			//else
-			//{
-			//	if (_startTask.IsCompletedSuccessfully)
-			//	{
-			//		Debug.WriteLine($"Task for {JobProgressInfo.JobNumber} completed successfully.");
-			//	}
-			//	else
-			//	{
-			//		Debug.WriteLine($"Task for {JobProgressInfo.JobNumber} did NOT complete successfully. The exception is {_startTask.Exception}.");
-			//	}
-			//}
-
 			var mops = new MathOpCounts();
 			var sumProcessingDurations = 0d;
 			var sumGenerationDurations = 0d;
@@ -293,68 +298,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 				{
 					JobProgressInfo.GeneratedCount++;
 				}
-
-				//if (JobProgressInfo.IsComplete || _receviedTheLastOne)
-				//{
-				//	_stopWatch.Stop();
-
-				//	if (_startTask == null || _mapLoader == null)
-				//	{
-				//		Debug.WriteLine("The start task or the MapLoader is null.");
-				//		return;
-				//	}
-				//	else
-				//	{
-				//		if (_startTask.IsCompletedSuccessfully)
-				//		{
-				//			Debug.WriteLine($"Task for {JobProgressInfo.JobNumber} completed successfully.");
-				//		}
-				//		else
-				//		{
-				//			Debug.WriteLine($"Task for {JobProgressInfo.JobNumber} did NOT complete successfully. The exception is {_startTask.Exception}.");
-				//		}
-				//	}
-
-				//	var mops = new MathOpCounts();
-				//	var sumProcessingDurations = new TimeSpan();
-				//	var sumGenerationDurations = new TimeSpan();
-
-				//	foreach (var x in MapSectionProcessInfos)
-				//	{
-				//		if (x.MathOpCounts != null)
-				//		{
-				//			mops.Update(x.MathOpCounts);
-				//		}
-
-				//		if (x.ProcessingDuration.HasValue)
-				//		{
-				//			sumProcessingDurations.Add(x.ProcessingDuration.Value);
-				//		}
-
-				//		if (x.GenerationDuration.HasValue)
-				//		{
-				//			sumGenerationDurations.Add(x.GenerationDuration.Value);
-				//		}
-				//	}
-
-
-				//	MathOpCounts = mops;
-
-				//	Debug.WriteLine($"Generated {JobProgressInfo.GeneratedCount} sections in {_stopWatch.ElapsedMilliseconds}. Performed: {mops.NumberOfMultiplications}." +
-				//		$"{mops.NumberOfCalcs} iteration calculation used; {mops.NumberOfUnusedCalcs} unused.");
-
-				//	GeneratedCount = JobProgressInfo.GeneratedCount;
-
-				//	OverallElapsed = _stopWatch.ElapsedMilliseconds;
-				//	ProcessingElapsed = (long)Math.Round(sumProcessingDurations.TotalMilliseconds);
-				//	GenerationElapsed = (long)Math.Round(sumProcessingDurations.TotalMilliseconds);
-
-				//	Multiplications = mops.NumberOfMultiplications;
-				//	Calcs = (long)mops.NumberOfCalcs;
-
-				//	_synchronizationContext?.Post((o) => HandleRunComplete(), null);
-
-				//}
 			}
 		}
 
@@ -379,7 +322,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		private void NotifyPropChangedMaxPeek()
 		{
-			//OnPropertyChanged(nameof(MaxPeakSections));
 			OnPropertyChanged(nameof(MaxPeakSectionVectors));
 			OnPropertyChanged(nameof(MaxPeakSectionZVectors));
 		}
@@ -419,26 +361,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		{
 			_mapSectionRequestProcessor.UseRepo = true;
 		}
-
-		//private JobProgressInfo RunJob(Job job, out MapLoader mapLoader, out Task startTask)
-		//{
-		//	var ownerId = job.ProjectId.ToString();
-		//	var jobOwnerType = JobOwnerType.Project;
-
-		//	var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize, RMapConstants.BLOCK_SIZE);
-		//	var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);
-
-		//	mapLoader = new MapLoader(mapAreaInfo.MapBlockOffset, MapSectionReady, _mapSectionHelper, _mapSectionRequestProcessor);
-
-		//	_stopWatch = Stopwatch.StartNew();
-		//	startTask = mapLoader.Start(mapSectionRequests);
-
-		//	var result = new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count);
-
-		//	mapLoader.SectionLoaded += MapLoader_SectionLoaded;
-
-		//	return result;
-		//}
 
 		#endregion
 	}

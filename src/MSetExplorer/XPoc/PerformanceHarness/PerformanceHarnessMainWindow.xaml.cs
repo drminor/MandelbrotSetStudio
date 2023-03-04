@@ -64,14 +64,14 @@ namespace MSetExplorer.XPoc
 
 		#region Button Handlers
 
-		private void OneButton_Click(object sender, RoutedEventArgs e)
+		private void RunHome_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.RunBaseLine();
+			_vm.RunHomeJob();
 		}
 
-		private void TwoButton_Click(object sender, RoutedEventArgs e)
+		private void RunDense_Click(object sender, RoutedEventArgs e)
 		{
-			MessageBox.Show("Button two is reserved.");
+			_vm.RunDenseLC2();
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)

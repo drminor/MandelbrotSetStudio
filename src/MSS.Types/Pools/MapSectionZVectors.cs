@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace MSS.Types
 {
@@ -101,7 +102,7 @@ namespace MSS.Types
 
 		#endregion
 
-		#region ZValue Methods
+		#region Block Level Methods
 
 		public void Load(byte[] zrs, byte[] zis, byte[] hasEscapedFlags, byte[] rowHasEscaped)
 		{
@@ -116,6 +117,8 @@ namespace MSS.Types
 
 			FillRowHasEscaped(rowHasEscaped, RowHasEscaped);
 		}
+
+		#endregion
 
 		//public Span<Vector256<uint>> GetZrsRow(int rowNumber)
 		//{
@@ -135,6 +138,7 @@ namespace MSS.Types
 		//	return result;
 		//}
 
+		#region Row Level Methods
 
 		public void FillZrsRow(int rowNumber, Vector256<uint>[] dest)
 		{
@@ -277,6 +281,63 @@ namespace MSS.Types
 
 			return result;
 		}
+
+		#endregion
+
+		#region Limb Set Methods
+
+		public void FillZrsLimbSet(int rowNumber, int vecPtr, Vector256<uint>[] dest)
+		{
+			var destBack = MemoryMarshal.Cast<Vector256<uint>, byte>(dest);
+
+			var startIndex = BytesPerZValueRow * rowNumber;
+			startIndex += 32 * vecPtr;
+
+			for (var i = 0; i < destBack.Length; i++)
+			{
+				destBack[i] = Zrs[startIndex + i];
+			}
+		}
+
+		public void FillZisLimbSet(int rowNumber, int vecPtr, Vector256<uint>[] dest)
+		{
+			var destBack = MemoryMarshal.Cast<Vector256<uint>, byte>(dest);
+
+			var startIndex = BytesPerZValueRow * rowNumber;
+			startIndex += 32 * vecPtr;
+
+			for (var i = 0; i < destBack.Length; i++)
+			{
+				destBack[i] = Zis[startIndex + i];
+			}
+		}
+
+		public void UpdateFromZrsLimbSet(int rowNumber, int vecPtr, Vector256<uint>[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(source);
+
+			var startIndex = BytesPerZValueRow * rowNumber;
+			startIndex += 32 * vecPtr;
+
+			for (var i = 0; i < sourceBack.Length; i++)
+			{
+				Zrs[startIndex + i] = sourceBack[i];
+			}
+		}
+
+		public void UpdateFromZisLimbSet(int rowNumber, int vecPtr, Vector256<uint>[] source)
+		{
+			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(source);
+
+			var startIndex = BytesPerZValueRow * rowNumber;
+			startIndex += 32 * vecPtr;
+
+			for (var i = 0; i < sourceBack.Length; i++)
+			{
+				Zis[startIndex + i] = sourceBack[i];
+			}
+		}
+
 
 		#endregion
 

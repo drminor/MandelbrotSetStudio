@@ -573,7 +573,7 @@ namespace MSS.Common
 		[Conditional("PERF")]
 		private void IncrementNegationsCount(int amount)
 		{
-			MathOpCounts.NumberOfAdditions += amount;
+			MathOpCounts.NumberOfNegations += amount;
 		}
 
 		[Conditional("PERF")]

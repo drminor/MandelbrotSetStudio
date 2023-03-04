@@ -270,33 +270,33 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					//Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
+					Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
 
-					//request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
+					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
-					//var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
-					//var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
+					var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
+					var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
 
-					//if (zValues != null)
-					//{
-					//	var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(zValues.LimbCount);
-					//	mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
-					//	request.MapSectionZVectors = mapSectionZVectors;
-					//}
-					//else
-					//{
-					//	request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision + PRECSION_PADDING);
-					//	request.MapSectionZVectors.ResetObject();
-					//}
+					if (zValues != null)
+					{
+						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(zValues.LimbCount);
+						mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
+						request.MapSectionZVectors = mapSectionZVectors;
+					}
+					else
+					{
+						request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision + PRECSION_PADDING);
+						request.MapSectionZVectors.ResetObject();
+					}
 
-					//request.MapSectionId = mapSectionId.ToString();
-					//request.IncreasingIterations = true;
+					request.MapSectionId = mapSectionId.ToString();
+					request.IncreasingIterations = true;
 
-					//Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
-					//QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
+					Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
+					QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
 
-					Debug.WriteLine($"Response found, but is incomplete. Creating brand new request -- not updating for {request.ScreenPosition}.");
-					PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
+					//Debug.WriteLine($"Response found, but is incomplete. Creating brand new request -- not updating for {request.ScreenPosition}.");
+					//PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
 					return null;
 				}
 			}

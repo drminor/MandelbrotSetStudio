@@ -97,7 +97,7 @@ namespace MSetGeneratorPrototype
 			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 			UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
-			ReportResults(coords, mapSectionRequest, result, ct);
+			//ReportResults(coords, mapSectionRequest, result, ct);
 
 			return result;
 		}
@@ -296,8 +296,8 @@ namespace MSetGeneratorPrototype
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
 			iterationState.CountsRowV[idx] = resultCountsV;
 
-			iterationState.UpdateZrLimbSet(idx, _resultZrs);
-			iterationState.UpdateZiLimbSet(idx, _resultZis);
+			iterationState.UpdateZrLimbSet(iterationState.RowNumber!.Value, idx, _resultZrs);
+			iterationState.UpdateZiLimbSet(iterationState.RowNumber!.Value, idx, _resultZis);
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV.AsByte());
 
@@ -337,8 +337,8 @@ namespace MSetGeneratorPrototype
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
 			iterationState.CountsRowV[idx] = resultCountsV;
 
-			iterationState.UpdateZrLimbSet(idx, _resultZrs);
-			iterationState.UpdateZiLimbSet(idx, _resultZis);
+			iterationState.UpdateZrLimbSet(iterationState.RowNumber!.Value, idx, _resultZrs);
+			iterationState.UpdateZiLimbSet(iterationState.RowNumber!.Value, idx, _resultZis);
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV.AsByte());
 
@@ -443,7 +443,7 @@ namespace MSetGeneratorPrototype
 
 			if (currentLimbCount != limbCountForThisRequest)
 			{
-				Debug.WriteLineIf(USE_DET_DEBUG, $"LimbCount Switch. From: {currentLimbCount}, To: {limbCountForThisRequest}. {_fp31VecMath.Implementation}");
+				//Debug.WriteLineIf(USE_DET_DEBUG, $"LimbCount Switch. From: {currentLimbCount}, To: {limbCountForThisRequest}. {_fp31VecMath.Implementation}");
 
 				_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
 				_iterator = new IteratorDepthFirst(_fp31VecMath);

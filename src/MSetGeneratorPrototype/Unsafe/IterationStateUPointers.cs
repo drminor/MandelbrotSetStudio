@@ -243,25 +243,25 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
-		public void FillZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
-		{
-			var vecPtr = vectorIndex * LimbCount;
+		//public void FillZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
+		//{
+		//	var vecPtr = vectorIndex * LimbCount;
 
-			for (var i = 0; i < LimbCount; i++)
-			{
-				limbSet[i] = ZrsRowV[vecPtr++];
-			}
-		}
+		//	for (var i = 0; i < LimbCount; i++)
+		//	{
+		//		limbSet[i] = ZrsRowV[vecPtr++];
+		//	}
+		//}
 
-		public void FillZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
-		{
-			var vecPtr = vectorIndex * LimbCount;
+		//public void FillZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
+		//{
+		//	var vecPtr = vectorIndex * LimbCount;
 
-			for (var i = 0; i < LimbCount; i++)
-			{
-				limbSet[i] = ZisRowV[vecPtr++];
-			}
-		}
+		//	for (var i = 0; i < LimbCount; i++)
+		//	{
+		//		limbSet[i] = ZisRowV[vecPtr++];
+		//	}
+		//}
 
 		public void UpdateZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
 		{
@@ -281,6 +281,76 @@ namespace MSetGeneratorPrototype
 			{
 				ZisRowV[vecPtr++] = limbSet[i];
 			}
+		}
+
+
+
+		public void FillZrLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
+		{
+			if (!IncreasingIterations)
+			{
+				// Clear instead of copying form source
+				for (var i = 0; i < LimbCount; i++)
+				{
+					limbSet[i] = Avx2.Xor(limbSet[i], limbSet[i]);
+				}
+			}
+			else
+			{
+				MapSectionZVectors.FillZrsLimbSet(RowNumber!.Value, vectorIndex, limbSet);
+
+				//var vecPtr = vectorIndex * LimbCount;
+
+				//for (var i = 0; i < LimbCount; i++)
+				//{
+				//	limbSet[i] = ZrsRowV[vecPtr++];
+				//}
+			}
+		}
+
+		public void FillZiLimbSet(int vectorIndex, Vector256<uint>[] limbSet)
+		{
+			if (!IncreasingIterations)
+			{
+				// Clear instead of copying form source
+				for (var i = 0; i < LimbCount; i++)
+				{
+					limbSet[i] = Avx2.Xor(limbSet[i], limbSet[i]);
+				}
+			}
+			else
+			{
+				MapSectionZVectors.FillZisLimbSet(RowNumber!.Value, vectorIndex, limbSet);
+				//var vecPtr = vectorIndex * LimbCount;
+
+				//for (var i = 0; i < LimbCount; i++)
+				//{
+				//	limbSet[i] = ZisRowV[vecPtr++];
+				//}
+			}
+		}
+
+		public void UpdateZrLimbSet(int rowNumber, int vectorIndex, Vector256<uint>[] limbSet)
+		{
+			MapSectionZVectors.UpdateFromZrsLimbSet(rowNumber, vectorIndex, limbSet);
+
+			//var vecPtr = vectorIndex * LimbCount;
+
+			//for (var i = 0; i < LimbCount; i++)
+			//{
+			//	ZrsRowV[vecPtr++] = limbSet[i];
+			//}
+		}
+
+		public void UpdateZiLimbSet(int rowNumber, int vectorIndex, Vector256<uint>[] limbSet)
+		{
+			MapSectionZVectors.UpdateFromZisLimbSet(rowNumber, vectorIndex, limbSet);
+			//var vecPtr = vectorIndex * LimbCount;
+
+			//for (var i = 0; i < LimbCount; i++)
+			//{
+			//	ZisRowV[vecPtr++] = limbSet[i];
+			//}
 		}
 
 		#endregion
