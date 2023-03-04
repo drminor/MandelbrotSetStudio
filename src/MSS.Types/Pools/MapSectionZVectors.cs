@@ -105,6 +105,11 @@ namespace MSS.Types
 
 		public void Load(byte[] zrs, byte[] zis, byte[] hasEscapedFlags, byte[] rowHasEscaped)
 		{
+			if (zrs.Length != TotalByteCount)
+			{
+				throw new ArgumentException($"MapSectionZVectors has a limbcount of {LimbCount}, but is reciving a zrs with length: {zrs.Length}.");
+			}
+
 			Array.Copy(zrs, Zrs, TotalByteCount);
 			Array.Copy(zis, Zis, TotalByteCount);
 			Array.Copy(hasEscapedFlags, HasEscapedFlags, TotalBytesForFlags);

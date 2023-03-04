@@ -33,6 +33,8 @@ namespace MSetGeneratorPrototype
 
 		private readonly Vector256<int> _justOne;
 
+		private const bool USE_DET_DEBUG = true;
+
 		#endregion
 
 		#region Constructor
@@ -441,6 +443,8 @@ namespace MSetGeneratorPrototype
 
 			if (currentLimbCount != limbCountForThisRequest)
 			{
+				Debug.WriteLineIf(USE_DET_DEBUG, $"LimbCount Switch. From: {currentLimbCount}, To: {limbCountForThisRequest}. {_fp31VecMath.Implementation}");
+
 				_fp31VecMath = _samplePointBuilder.GetVecMath(limbCountForThisRequest);
 				_iterator = new IteratorDepthFirst(_fp31VecMath);
 
@@ -451,6 +455,10 @@ namespace MSetGeneratorPrototype
 
 				_resultZrs = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
 				_resultZis = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
+			}
+			else
+			{
+				Debug.WriteLineIf(USE_DET_DEBUG, $"LimbCount continues to be {currentLimbCount}. {_fp31VecMath.Implementation}");
 			}
 
 			return (currentLimbCount, limbCountForThisRequest);

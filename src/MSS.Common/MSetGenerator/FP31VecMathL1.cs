@@ -115,6 +115,8 @@ namespace MSS.Common
 
 		public MathOpCounts MathOpCounts { get; init; }
 
+		public string Implementation => "FP31VecMath-L1";
+
 		#endregion
 
 		#region Multiply and Square

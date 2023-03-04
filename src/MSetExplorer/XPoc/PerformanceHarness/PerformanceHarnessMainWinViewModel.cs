@@ -86,6 +86,41 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			set => _multiplications = value;
 		}
 
+		private long _additions;
+		public long Additions
+		{
+			get => _additions;
+			set => _additions = value;
+		}
+
+		private long _negations;
+		public long Negations
+		{
+			get => _negations;
+			set => _negations = value;
+		}
+
+		private long _conversions;
+		public long Conversions
+		{
+			get => _conversions;
+			set => _conversions = value;
+		}
+
+		private long _splits;
+		public long Splits
+		{
+			get => _splits;
+			set => _splits = value;
+		}
+
+		private long _comparisons;
+		public long Comparisons
+		{
+			get => _comparisons;
+			set => _comparisons = value;
+		}
+
 		private long _calcs;
 		public long Calcs
 		{
@@ -230,6 +265,12 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			GenerationElapsed = (long)Math.Round(sumGenerationDurations * 1000);
 
 			Multiplications = mops.NumberOfMultiplications;
+			Additions = mops.NumberOfAdditions;
+			Negations = mops.NumberOfNegations;
+			Conversions = mops.NumberOfConversions;
+			Splits = mops.NumberOfSplits;
+			Comparisons = mops.NumberOfComparisons;
+
 			Calcs = (long)mops.NumberOfCalcs;
 			UnusedCalcs = (long) mops.NumberOfUnusedCalcs;
 
@@ -323,7 +364,15 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			OnPropertyChanged(nameof(OverallElapsed));
 			OnPropertyChanged(nameof(ProcessingElapsed));
 			OnPropertyChanged(nameof(GenerationElapsed));
+
 			OnPropertyChanged(nameof(Multiplications));
+			OnPropertyChanged(nameof(Additions));
+			OnPropertyChanged(nameof(Negations));
+			OnPropertyChanged(nameof(Conversions));
+			OnPropertyChanged(nameof(Splits));
+			OnPropertyChanged(nameof(Comparisons));
+
+
 			OnPropertyChanged(nameof(Calcs));
 			OnPropertyChanged(nameof(UnusedCalcs));
 		}

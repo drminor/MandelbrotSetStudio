@@ -17,6 +17,8 @@ namespace MSS.Common
 		Vector256<int> CreateVectorForComparison(uint value);
 		void IsGreaterOrEqThan(Vector256<uint>[] left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec);
 
+		string Implementation { get; }
+
 		//Vector256<uint>[] CreateNewLimbSet();
 		//Vector256<ulong>[] CreateNewLimbSetWide();
 	}

@@ -9,11 +9,11 @@ namespace MSS.Types
 
 		public long NumberOfMultiplications { get; set; }
 		public long NumberOfAdditions { get; set; }
+		public long NumberOfNegations { get; set; }
 		public long NumberOfConversions { get; set; }
 
 		public long NumberOfSplits { get;  set; }
-		public long NumberOfGetCarries { get; set; }
-		public long NumberOfGrtrThanOps { get; set; }
+		public long NumberOfComparisons { get; set; }
 
 		public double NumberOfCalcs { get; set; }
 		public double NumberOfUnusedCalcs { get; set; }
@@ -29,8 +29,8 @@ namespace MSS.Types
 			NumberOfConversions += mathOpCounts.NumberOfConversions;
 
 			NumberOfSplits += mathOpCounts.NumberOfSplits;
-			NumberOfGetCarries += mathOpCounts.NumberOfGetCarries;
-			NumberOfGrtrThanOps += mathOpCounts.NumberOfGrtrThanOps;
+			NumberOfNegations += mathOpCounts.NumberOfNegations;
+			NumberOfComparisons += mathOpCounts.NumberOfComparisons;
 
 			NumberOfCalcs += mathOpCounts.NumberOfCalcs;
 			NumberOfUnusedCalcs += mathOpCounts.NumberOfUnusedCalcs;
@@ -43,8 +43,8 @@ namespace MSS.Types
 			NumberOfConversions = 0;
 
 			NumberOfSplits = 0;
-			NumberOfGetCarries = 0;
-			NumberOfGrtrThanOps = 0;
+			NumberOfNegations = 0;
+			NumberOfComparisons = 0;
 
 			NumberOfCalcs = 0;
 			NumberOfUnusedCalcs = 0;
@@ -71,7 +71,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			var result = $"Splits: {NumberOfSplits:N0}\tCarries: {NumberOfGetCarries:N0}\tGrtrThanOps: {NumberOfGrtrThanOps:N0}" +
+			var result = $"Splits: {NumberOfSplits:N0}\tCarries: {NumberOfNegations:N0}\tGrtrThanOps: {NumberOfComparisons:N0}" +
 				$"\tAdditions: {NumberOfAdditions:N0}\tMultiplications: {NumberOfMultiplications:N0}\tNegations: {NumberOfConversions:N0}\tUnusedCalcs: {NumberOfUnusedCalcs:N0}";
 
 			return result;

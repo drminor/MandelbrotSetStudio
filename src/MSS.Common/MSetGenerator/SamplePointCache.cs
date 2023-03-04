@@ -66,8 +66,12 @@ namespace MSS.Common
 		{
 			return limbCount switch
 			{
-				1 => new FP31VecMathL1(new ApFixedPointFormat(limbCount)),
+				//1 => new FP31VecMathL1(new ApFixedPointFormat(limbCount)),
+				1 => throw new NotImplementedException("FP31VecMathL1 is not yet supported."),
+
 				2 => new FP31VecMathL2(new ApFixedPointFormat(limbCount)),
+				//2 => new FP31VecMath(new ApFixedPointFormat(limbCount)),
+
 				_ => new FP31VecMath(new ApFixedPointFormat(limbCount)),
 			};
 		}

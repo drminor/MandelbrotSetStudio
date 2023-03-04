@@ -103,8 +103,8 @@ namespace MSetGenP
 			}
 
 			mathOpCounts.NumberOfSplits = iterator.NumberOfSplits;
-			mathOpCounts.NumberOfGetCarries = iterator.NumberOfGetCarries;
-			mathOpCounts.NumberOfGrtrThanOps = iterator.NumberOfIsGrtrOpsSc;
+			mathOpCounts.NumberOfNegations = iterator.NumberOfGetCarries;
+			mathOpCounts.NumberOfComparisons = iterator.NumberOfIsGrtrOpsSc;
 
 			return result;
 		}

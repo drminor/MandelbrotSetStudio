@@ -26,7 +26,7 @@ namespace MSetExplorer
 		private const string LOCAL_M_ENGINE_ADDRESS = "https://localhost:5001";
 		private static readonly string[] REMOTE_M_ENGINE_ADDRESSES = new string[] { "http://192.168.2.109:5000" };
 
-		private static readonly bool USE_ALL_CORES = false;
+		private static readonly bool USE_ALL_CORES = true;
 
 		//private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.UPointers;
 		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;

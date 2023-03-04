@@ -41,6 +41,13 @@ namespace MSetGeneratorPrototype
 			_zRSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 			_zISqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 			_sumOfSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+
+			FP31VecMathHelper.ClearLimbSet(_zRZiSqrs);
+			FP31VecMathHelper.ClearLimbSet(_temp);
+			FP31VecMathHelper.ClearLimbSet(_zRSqrs);
+			FP31VecMathHelper.ClearLimbSet(_zISqrs);
+			FP31VecMathHelper.ClearLimbSet(_sumOfSqrs);
+
 		}
 
 		#endregion
