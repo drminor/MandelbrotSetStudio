@@ -1,11 +1,9 @@
 ﻿using MSS.Common.MSetGenerator;
 using MSS.Types;
 using MSS.Types.APValues;
-using System;
 using System.Diagnostics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Text;
 
 namespace MSS.Common
 {
@@ -123,17 +121,16 @@ namespace MSS.Common
 
 		public void Square(Vector256<uint>[] a, Vector256<uint>[] result)
 		{
-			// Convert back to standard, i.e., non two's compliment.
-			// Our multiplication routines don't support 2's compliment.
-			// The result of squaring is always positive,
-			// so we don't have to convert them to 2's compliment afterwards.
+			// Our multiplication routines don't support 2's compliment,
+			// So we must convert back from two's complement to standard.
 
-			//CheckReservedBitIsClear(a, "Squaring");
+			// The result of squaring is always positive, so we don't have to convert
+			// back to two's compliment afterwards.
 
+			//FP31VecMathHelper.CheckReservedBitIsClear(a, "Squaring");
 			FP31VecMathHelper.ClearLimbSet(result);
 
 			ConvertFrom2C(a, _squareResult0);
-			//MathOpCounts.NumberOfConversions++;
 
 			// Unoptimized
 			SquareInternal(_squareResult0, _squareResult1);
@@ -141,7 +138,6 @@ namespace MSS.Common
 			ShiftAndTrim(_squareResult2, result);
 
 			//// Optimized
-
 			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
 			//SumThePartials(_squareResult1Lo, _squareResult2Lo);
 			//var optimizedResult = new Vector256<uint>[LimbCount];
@@ -171,7 +167,6 @@ namespace MSS.Common
 
 					var productVector1 = Avx2.Multiply(source.Lower[j], source.Lower[i]);
 					var productVector2 = Avx2.Multiply(source.Upper[j], source.Upper[i]);
-					IncrementNoMultiplications(8);
 
 					if (i > j)
 					{
@@ -187,10 +182,11 @@ namespace MSS.Common
 
 					result.Upper[resultPtr] = Avx2.Add(result.Upper[resultPtr], Avx2.And(productVector2, HIGH33_MASK_VEC_L));
 					result.Upper[resultPtr + 1] = Avx2.Add(result.Upper[resultPtr + 1], Avx2.ShiftRightLogical(productVector2, EFFECTIVE_BITS_PER_LIMB));
-
-					//MathOpCounts.NumberOfSplits += 4;
-					//MathOpCounts.NumberOfAdditions += 16;
 				}
+
+				IncrementMultiplicationsCount(24);
+				IncrementAdditionsCount(16);
+				IncrementSplitsCount(16);
 			}
 		}
 
@@ -214,7 +210,7 @@ namespace MSS.Common
 					else
 					{
 						var productVector = Avx2.Multiply(source[j], source[i]);
-						IncrementNoMultiplications(4);
+						IncrementMultiplicationsCount(4);
 
 						if (i > j)
 						{
@@ -240,12 +236,6 @@ namespace MSS.Common
 					}
 				}
 			}
-		}
-
-		[Conditional("PERF")]
-		private void IncrementNoMultiplications(int amount)
-		{
-			MathOpCounts.NumberOfMultiplications += amount;
 		}
 
 		#endregion
@@ -277,6 +267,9 @@ namespace MSS.Common
 				source.Lower[limbPtr] = Avx2.Xor(source.Lower[limbPtr], source.Lower[limbPtr]);
 				source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
 			}
+
+			IncrementAdditionsCount(24);
+			IncrementSplitsCount(28);
 		}
 
 		private void ShiftAndTrim(PairOfVec<ulong> source, Vector256<uint>[] resultLimbs)
@@ -290,7 +283,7 @@ namespace MSS.Common
 			// Check to see if any of these values are larger than the FP Format.
 			//_ = CheckForOverflow(resultLimbs);
 
-			var sourceIndex = Math.Max(source.Lower.Length - LimbCount, 0);
+			var sourceIndex = System.Math.Max(source.Lower.Length - LimbCount, 0);
 
 			for (int limbPtr = 0; limbPtr < resultLimbs.Length; limbPtr++)
 			{
@@ -317,9 +310,10 @@ namespace MSS.Common
 				var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
 				var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
 				resultLimbs[limbPtr] = Avx2.Or(low128, high128);
-
-				//MathOpCounts.NumberOfSplits += 4;
 			}
+
+			IncrementSplitsCount(32);
+			IncrementConversionsCount(32);
 		}
 
 		#endregion
@@ -350,6 +344,8 @@ namespace MSS.Common
 				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
 				_carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 			}
+
+			IncrementAdditionsCount(16);
 		}
 
 		//public void AddThenSquare(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
@@ -376,6 +372,8 @@ namespace MSS.Common
 				_carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
 				//MathOpCounts.NumberOfSplits++;
 			}
+
+			IncrementNegationsCount(16);
 		}
 
 		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec<uint> result)
@@ -422,18 +420,16 @@ namespace MSS.Common
 					result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 
 				}
+
+				IncrementNegationsCount(16);
 			}
+
+			IncrementConversionsCount(16);
 		}
 
 		private int GetSignBits(Vector256<uint>[] source, ref Vector256<int> signBitVecs)
 		{
-			//var msl = source[LimbCount - 1];
-
-			//var left = Avx2.And(msl.AsInt32(), TEST_BIT_30_VEC);
-			//signBitVecs = Avx2.CompareEqual(left, ZERO_VEC); // dst[i+31:i] := ( a[i+31:i] == b[i+31:i] ) ? 0xFFFFFFFF : 0
-			//var result = Avx2.MoveMask(signBitVecs.AsByte());
-
-			//return result;
+			IncrementComparisonsCount(8);
 
 			signBitVecs = Avx2.CompareEqual(Avx2.And(source[LimbCount - 1].AsInt32(), TEST_BIT_30_VEC), ZERO_VEC);
 			return Avx2.MoveMask(signBitVecs.AsByte());
@@ -458,7 +454,47 @@ namespace MSS.Common
 			var sansSign = Avx2.And(left[^1], SIGN_BIT_MASK_VEC);
 			escapedFlagsVec = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
 
-			//MathOpCounts.NumberOfGrtrThanOps++;
+			IncrementComparisonsCount(8);
+		}
+
+		#endregion
+
+		#region PERF
+
+		[Conditional("PERF")]
+		private void IncrementMultiplicationsCount(int amount)
+		{
+			MathOpCounts.NumberOfMultiplications += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementAdditionsCount(int amount)
+		{
+			MathOpCounts.NumberOfAdditions += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementNegationsCount(int amount)
+		{
+			MathOpCounts.NumberOfAdditions += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementConversionsCount(int amount)
+		{
+			MathOpCounts.NumberOfConversions += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementSplitsCount(int amount)
+		{
+			MathOpCounts.NumberOfSplits += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementComparisonsCount(int amount)
+		{
+			MathOpCounts.NumberOfComparisons += amount;
 		}
 
 		#endregion

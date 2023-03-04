@@ -171,7 +171,7 @@ namespace MSS.Common
 
 					var productVector1 = Avx2.Multiply(source.Lower[j], source.Lower[i]);
 					var productVector2 = Avx2.Multiply(source.Upper[j], source.Upper[i]);
-					IncrementNoMultiplications(8);
+					IncrementMultiplicationsCount(8);
 
 					if (i > j)
 					{
@@ -214,7 +214,7 @@ namespace MSS.Common
 					else
 					{
 						var productVector = Avx2.Multiply(source[j], source[i]);
-						IncrementNoMultiplications(4);
+						IncrementMultiplicationsCount(4);
 
 						if (i > j)
 						{
@@ -240,12 +240,6 @@ namespace MSS.Common
 					}
 				}
 			}
-		}
-
-		[Conditional("PERF")]
-		private void IncrementNoMultiplications(int amount)
-		{
-			MathOpCounts.NumberOfMultiplications += amount;
 		}
 
 		#endregion
@@ -459,6 +453,46 @@ namespace MSS.Common
 			escapedFlagsVec = Avx2.CompareGreaterThan(sansSign.AsInt32(), right);
 
 			//MathOpCounts.NumberOfGrtrThanOps++;
+		}
+
+		#endregion
+
+		#region PERF
+
+		[Conditional("PERF")]
+		private void IncrementMultiplicationsCount(int amount)
+		{
+			MathOpCounts.NumberOfMultiplications += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementAdditionsCount(int amount)
+		{
+			MathOpCounts.NumberOfAdditions += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementNegationsCount(int amount)
+		{
+			MathOpCounts.NumberOfAdditions += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementConversionsCount(int amount)
+		{
+			MathOpCounts.NumberOfConversions += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementSplitsCount(int amount)
+		{
+			MathOpCounts.NumberOfSplits += amount;
+		}
+
+		[Conditional("PERF")]
+		private void IncrementComparisonsCount(int amount)
+		{
+			MathOpCounts.NumberOfComparisons += amount;
 		}
 
 		#endregion
