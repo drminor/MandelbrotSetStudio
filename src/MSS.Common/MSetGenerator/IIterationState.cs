@@ -10,6 +10,7 @@ namespace MSS.Common
 		MapSectionZVectors MapSectionZVectors { get; }
 
 		bool IncreasingIterations { get; }
+		int TargetIterations { get; }
 		Vector256<int> TargetIterationsVector { get; }
 
 		int LimbCount { get; init; }

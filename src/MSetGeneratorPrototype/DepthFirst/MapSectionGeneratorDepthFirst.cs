@@ -33,7 +33,7 @@ namespace MSetGeneratorPrototype
 
 		private readonly Vector256<int> _justOne;
 
-		private const bool USE_DET_DEBUG = true;
+		private const bool USE_DET_DEBUG = false;
 
 		#endregion
 
@@ -78,19 +78,19 @@ namespace MSetGeneratorPrototype
 			//	return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
 			//}
 
+			//ReportCoords(coords, _fp31VecMath.LimbCount, mapSectionRequest.Precision);
 			var stopwatch = Stopwatch.StartNew();
-			//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 
-			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(coords);
+			//var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(coords);
+			var (samplePointsX, samplePointsY, samplePointOffsets) = _samplePointBuilder.BuildSamplePointsDiag(coords);
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 			_iterator.Threshold = (uint)mapCalcSettings.Threshold;
 			_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
 			_iterator.MathOpCounts.Reset();
-			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
-			var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
+			var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
 
 			var completed = GeneratorOrUpdateRows(_iterator, iterationState, _hpMSetRowClient, ct, out var allRowsHaveEscaped);
 			stopwatch.Stop();
@@ -168,10 +168,11 @@ namespace MSetGeneratorPrototype
 
 		private bool GenerateMapSectionRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
-			allRowsHaveEscaped = false;
+			bool completed = true;
 
 			if (ct.IsCancellationRequested)
 			{
+				allRowsHaveEscaped = false;
 				return false;
 			}
 
@@ -194,32 +195,33 @@ namespace MSetGeneratorPrototype
 
 				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
 
-				if (!allRowSamplesHaveEscaped)
-				{
-					allRowsHaveEscaped = false;
-				}
-
 				if (ct.IsCancellationRequested)
 				{
 					allRowsHaveEscaped = false;
-					return false;
+					completed = false;
+					break;
+				}
+
+				if (!allRowSamplesHaveEscaped)
+				{
+					allRowsHaveEscaped = false;
 				}
 			}
 
 			// 'Close out' the iterationState
 			iterationState.SetRowNumber(iterationState.RowCount);
-
 			Debug.Assert(iterationState.RowNumber == null, $"The iterationState should have a null RowNumber, but instead has {iterationState.RowNumber}.");
 
-			return true;
+			return completed;
 		}
 
 		private bool UpdateMapSectionRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
-			allRowsHaveEscaped = false;
+			bool completed = true;
 
 			if (ct.IsCancellationRequested)
 			{
+				allRowsHaveEscaped = false;
 				return false;
 			}
 
@@ -228,6 +230,8 @@ namespace MSetGeneratorPrototype
 			var rowNumber = iterationState.GetNextRowNumber();
 			while (rowNumber != null)
 			{
+				Debug.Assert(iterationState.InPlayList.Length > 0, "GetNextRowNumber returned a non-null value, however the InPlayList is empty.");
+
 				var allRowSamplesHaveEscaped = true;
 
 				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length; idxPtr++)
@@ -243,21 +247,25 @@ namespace MSetGeneratorPrototype
 
 				iterationState.RowHasEscaped[rowNumber.Value] = allRowSamplesHaveEscaped;
 
+				if (ct.IsCancellationRequested)
+				{
+					allRowsHaveEscaped = false;
+					completed = false;
+
+					// 'Close out' the iterationState
+					iterationState.SetRowNumber(iterationState.RowCount);
+					break;
+				}
+
 				if (!allRowSamplesHaveEscaped)
 				{
 					allRowsHaveEscaped = false;
 				}
 
-				if (ct.IsCancellationRequested)
-				{
-					allRowsHaveEscaped = false;
-					return false;
-				}
-
 				rowNumber = iterationState.GetNextRowNumber();
 			}
 
-			return true;
+			return completed;
 		}
 
 		#endregion
@@ -283,12 +291,19 @@ namespace MSetGeneratorPrototype
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
 
 			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
+				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector, _crs, _cis);
+
+			var baseEscapedFlagsVec = escapedFlagsVec;
 
 			while (compositeIsDone != -1)
 			{
 				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
+
+				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
+					_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector, _crs, _cis);
 			}
 
 			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
@@ -300,6 +315,17 @@ namespace MSetGeneratorPrototype
 			iterationState.UpdateZiLimbSet(iterationState.RowNumber!.Value, idx, _resultZis);
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV.AsByte());
+
+			if (compositeAllEscaped == -1)
+			{
+				for(var i = 0; i < 8; i++)
+				{
+					if (resultCountsV.GetElement(i) >= iterationState.TargetIterations)
+					{
+						Debug.WriteLine("Check All Escaped. It looks like some have reached the target iteration count.");
+					}
+				}
+			}
 
 			return compositeAllEscaped == -1;
 		}
@@ -324,12 +350,19 @@ namespace MSetGeneratorPrototype
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
 
 			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
+				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector, _crs, _cis);
+
+			var baseEscapedFlagsVec = escapedFlagsVec;
 
 			while (compositeIsDone != -1)
 			{
 				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
+
+				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
+					_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector, _crs, _cis);
 			}
 
 			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
@@ -350,7 +383,8 @@ namespace MSetGeneratorPrototype
 			ref Vector256<int> countsV, ref Vector256<int> resultCountsV,
 			Vector256<uint>[] zRs, Vector256<uint>[] resultZRs, 
 			Vector256<uint>[] zIs, Vector256<uint>[] resultZIs,
-			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
+			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV,
+			Vector256<uint>[] cRs, Vector256<uint>[] cIs)
 		{
 			countsV = Avx2.Add(countsV, _justOne);
 
@@ -381,37 +415,29 @@ namespace MSetGeneratorPrototype
 					resultZRs[limbPtr] = Avx2.BlendVariable(zRs[limbPtr].AsInt32(), resultZRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
 					resultZIs[limbPtr] = Avx2.BlendVariable(zIs[limbPtr].AsInt32(), resultZIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
 				}
+
+				//ResetWorkingValues(cRs, cIs, zRs, zIs, justNowDone);
 			}
 
-			//var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
-			//var anyJustNowDone = !Avx.TestC(justNowDone, Vector256<int>.AllBitsSet);
-
-			//if (anyJustNowDone)
-			//{
-
-			//	Debug.Assert(Avx2.MoveMask(prevDoneFlagsV.AsByte()) != compositeIsDone, "Test C -- not the same.");
-
-
-			//	// Save the current count 
-			//	resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
-
-			//	// Save the current ZValues.
-			//	for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
-			//	{
-			//		resultZRs[limbPtr] = Avx2.BlendVariable(zRs[limbPtr].AsInt32(), resultZRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-			//		resultZIs[limbPtr] = Avx2.BlendVariable(zIs[limbPtr].AsInt32(), resultZIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-			//	}
-			//}
-			//else
-			//{
-			//	Debug.Assert(Avx2.MoveMask(prevDoneFlagsV.AsByte()) == compositeIsDone, "Test C -- not the same2.");
-			//}
 			return compositeIsDone;
 		}
 
-		//// horizontal_and. Returns true if all bits are 1
-		//static inline bool horizontal_and(Vec256b const a) {
-		//return _mm256_testc_si256(a, _mm256_set1_epi32(-1)) != 0;
+
+
+		//[Conditional("DIAG")]
+		//private void ResetWorkingValues(Vector256<uint>[] cRs, Vector256<uint>[] cIs, Vector256<uint>[] zRs, Vector256<uint>[] zIs, Vector256<int> justNowDone)
+		//{
+		//	for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
+		//	{
+
+		//		// Set the working values to zero -- these values are now 'out of play.'
+		//		cRs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, cRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+		//		cIs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, cIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+
+		//		zRs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, zRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+		//		zIs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, zIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+		//	}
+		//}
 
 		#endregion
 
@@ -513,21 +539,31 @@ namespace MSetGeneratorPrototype
 
 		private void ReportSamplePoints(IteratorCoords coords, FP31Val[] samplePointOffsets, FP31Val[] samplePointsX, FP31Val[] samplePointsY)
 		{
-			var bx = coords.ScreenPos.X;
-			var by = coords.ScreenPos.Y;
-			if (bx == 0 && by == 0 || bx == 3 && by == 4)
+			var spX = coords.ScreenPos.X;
+			var spY = coords.ScreenPos.Y;
+			if (spX == 0 && spY == 0 || spX == 3 && spY == 4)
 			{
-				ReportSamplePoints(samplePointOffsets);
-				ReportSamplePoints(samplePointsX);
+				ReportSamplePoints("Offsets:", samplePointOffsets);
+				Debug.WriteLine($"{FP31ValHelper.GetDiagDisplay("y[0]", samplePointsY[0].Mantissa)} {samplePointsY[0].Exponent}.");
+				ReportSamplePoints("X Points:", samplePointsX);
 			}
 		}
 
-		private void ReportSamplePoints(FP31Val[] fP31Vals)
+		private void ReportSamplePoints(string name, FP31Val[] fP31Vals)
 		{
-			foreach (var value in fP31Vals)
+			Debug.WriteLine("");
+			Debug.WriteLine($"{name}");
+
+			for (var i = 0; i < 32; i++)
 			{
-				Debug.WriteLine($"{FP31ValHelper.GetDiagDisplay("x", value.Mantissa)} {value.Exponent}.");
+				var value = fP31Vals[i];	
+				Debug.WriteLine($"{FP31ValHelper.GetDiagDisplay(i.ToString(), value.Mantissa)} {value.Exponent}.");
 			}
+
+			//foreach (var value in fP31Vals)
+			//{
+			//	Debug.WriteLine($"{FP31ValHelper.GetDiagDisplay("x", value.Mantissa)} {value.Exponent}.");
+			//}
 		}
 
 		private void ReportResults(IteratorCoords coords, MapSectionRequest request, MapSectionResponse result, CancellationToken ct)

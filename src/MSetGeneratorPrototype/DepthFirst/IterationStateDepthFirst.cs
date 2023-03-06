@@ -1,6 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.APValues;
+using MSS.Types.MSet;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -19,15 +20,15 @@ namespace MSetGeneratorPrototype
 
 		public IterationStateDepthFirst(FP31Val[] samplePointsX, FP31Val[] samplePointsY,
 			MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
-			bool increasingIterations, Vector256<int> targetIterationsVector)
+			bool increasingIterations, int targetIterations)
 		{
-
 			_samplePointsY = samplePointsY;
 			MapSectionVectors = mapSectionVectors;
 			MapSectionZVectors = mapSectionZVectors;
 
 			IncreasingIterations = increasingIterations;
-			TargetIterationsVector = targetIterationsVector;
+			TargetIterations = targetIterations;
+			TargetIterationsVector = Vector256.Create(targetIterations);
 
 			ValueCount = mapSectionZVectors.ValueCount;
 			LimbCount = mapSectionZVectors.LimbCount;
@@ -74,6 +75,7 @@ namespace MSetGeneratorPrototype
 		public MapSectionZVectors MapSectionZVectors { get; init; }
 
 		public bool IncreasingIterations { get; private set; }
+		public int TargetIterations { get; private set; }	
 		public Vector256<int> TargetIterationsVector { get; private set; }
 
 		public int ValueCount { get; init; }
@@ -164,18 +166,13 @@ namespace MSetGeneratorPrototype
 					if (!RowHasEscaped[rowNumber])
 					{
 						MapSectionZVectors.FillHasEscapedFlagsRow(rowNumber, HasEscapedFlagsRowV);
+						//Array.Clear(HasEscapedFlagsRowV);
 
 						MapSectionVectors.FillCountsRow(rowNumber, CountsRowV);
-
 						RowHasEscaped[rowNumber] = BuildTheInPlayBackingList(HasEscapedFlagsRowV, CountsRowV, _inPlayBackingList, DoneFlags);
 						allSamplesForThisRowAreDone = _inPlayBackingList.Count == 0;
 
-						if (!allSamplesForThisRowAreDone)
-						{
-							//MapSectionZVectors.FillZrsRow(rowNumber, ZrsRowV);
-							//MapSectionZVectors.FillZisRow(rowNumber, ZisRowV);
-						}
-						else
+						if (allSamplesForThisRowAreDone)
 						{
 							Debug.WriteLine($"WARNING: Row has not escaped, but the row is done, even with the new Target Iterations. New Target: {TargetIterationsVector.GetElement(0)}");
 						}
@@ -323,7 +320,11 @@ namespace MSetGeneratorPrototype
 			for (var i = 0; i < VectorsPerRow; i++)
 			{
 				var compositeHasEscapedFlags = Avx2.MoveMask(hasEscapedFlagsRow[i].AsByte());
-				if (compositeHasEscapedFlags != -1)
+				if (compositeHasEscapedFlags == -1)
+				{
+					doneFlags[i] = ALL_BITS_SET;
+				}
+				else
 				{
 					allHaveEscaped = false;
 
@@ -333,16 +334,18 @@ namespace MSetGeneratorPrototype
 					// Update the DoneFlag, only if the just updatedHaveEscapedFlagsV is true or targetIterations was reached.
 					doneFlags[i] = Avx2.Or(hasEscapedFlagsRow[i], targetReachedCompVec);
 
+					//doneFlags[i] = targetReachedCompVec;
+					//hasEscapedFlagsRow[i] = doneFlags[i];
+
 					var compositeIsDone = Avx2.MoveMask(doneFlags[i].AsByte());
 					if (compositeIsDone != -1)
 					{
 						inPlayBackingList.Add(i);
 					}
-				}
-				else
-				{
-					// TODO: Is this required.
-					doneFlags[i] = ALL_BITS_SET;
+					else
+					{
+						Debug.WriteLine("Done Already? Vec not escaped, but all have reached new target iterations.");
+					}
 				}
 			}
 

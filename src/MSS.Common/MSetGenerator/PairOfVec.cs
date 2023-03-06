@@ -10,7 +10,7 @@ namespace MSS.Common
 			Lower = new Vector256<T>[limbCount];
 			Upper = new Vector256<T>[limbCount];
 
-			Clear();
+			//Clear();
 		}
 
 		public PairOfVec(Vector256<T>[] lower, Vector256<T>[] upper)
@@ -22,13 +22,13 @@ namespace MSS.Common
 		public Vector256<T>[] Lower { get; init; }
 		public Vector256<T>[] Upper { get; init; }
 
-		public void Clear()
-		{
-			for (var i = 0; i < Lower.Length; i++)
-			{
-				Lower[i] = Vector256<T>.Zero;
-				Upper[i] = Vector256<T>.Zero;
-			}
-		}
+		//public void Clear()
+		//{
+		//	for (var i = 0; i < Lower.Length; i++)
+		//	{
+		//		Lower[i] = Vector256<T>.Zero;
+		//		Upper[i] = Vector256<T>.Zero;
+		//	}
+		//}
 	}
 }

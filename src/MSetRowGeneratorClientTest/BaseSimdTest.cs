@@ -198,8 +198,7 @@ namespace MSetRowGeneratorClientTest
 			var mapSectionVectors = new MapSectionVectors(BLOCK_SIZE);
 			var mapSectionZVectors = new MapSectionZVectors(BLOCK_SIZE, limbCount);
 
-			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
-			var result = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, increasingIterations: false, targetIterationsVector);
+			var result = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, increasingIterations: false, mapCalcSettings.TargetIterations);
 
 			//result.SetRowNumber(0);
 

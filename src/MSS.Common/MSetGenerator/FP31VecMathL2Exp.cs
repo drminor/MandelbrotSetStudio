@@ -160,7 +160,7 @@ namespace MSS.Common
 		{
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
-			result.Clear();
+			//result.Clear();
 
 			// j = 0, i = 0, r = 0/1
 			var productVector1 = Avx2.Multiply(source.Lower[0], source.Lower[0]);

@@ -84,9 +84,8 @@ namespace MSetGeneratorPrototype
 			_iterator.Threshold = (uint)mapCalcSettings.Threshold;
 			_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
 			_iterator.MathOpCounts.Reset();
-			var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
 
-			var iterationState = new IterationStateUPointers(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
+			var iterationState = new IterationStateUPointers(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
 
 			var completed = GeneratorOrUpdateRows(_iterator, iterationState, ct, out var allRowsHaveEscaped);
 			stopwatch.Stop();

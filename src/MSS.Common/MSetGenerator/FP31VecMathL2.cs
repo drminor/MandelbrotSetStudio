@@ -141,7 +141,7 @@ namespace MSS.Common
 		{
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
-			result.Clear();
+			//result.Clear();
 
 			// j = 0, i = 0, r = 0/1
 			var productVector11 = Avx2.Multiply(source.Lower[0], source.Lower[0]);
@@ -159,7 +159,7 @@ namespace MSS.Common
 			var productVector22 = Avx2.ShiftLeftLogical(Avx2.Multiply(source.Upper[0], source.Upper[1]), 1);
 
 			result.Lower[1] = Avx2.Add(result.Lower[1], Avx2.And(productVector21, HIGH33_MASK_VEC_L));
-			result.Lower[2] = Avx2.ShiftRightLogical(productVector12, EFFECTIVE_BITS_PER_LIMB);
+			result.Lower[2] = Avx2.ShiftRightLogical(productVector21, EFFECTIVE_BITS_PER_LIMB);
 
 			result.Upper[1] = Avx2.Add(result.Upper[1], Avx2.And(productVector22, HIGH33_MASK_VEC_L));
 			result.Upper[2] = Avx2.ShiftRightLogical(productVector22, EFFECTIVE_BITS_PER_LIMB);
@@ -198,9 +198,9 @@ namespace MSS.Common
 			_carryLong1 = Avx2.ShiftRightLogical(source.Lower[0], EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 			_carryLong2 = Avx2.ShiftRightLogical(source.Upper[0], EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 
-			// Clear the source so that square internal will not have to make a separate call.
-			source.Lower[0] = Avx2.Xor(source.Lower[0], source.Lower[0]);
-			source.Upper[0] = Avx2.Xor(source.Upper[0], source.Upper[0]);
+			//// Clear the source so that square internal will not have to make a separate call.
+			//source.Lower[0] = Avx2.Xor(source.Lower[0], source.Lower[0]);
+			//source.Upper[0] = Avx2.Xor(source.Upper[0], source.Upper[0]);
 
 			// i = 1
 			var partialSum1Low = Avx2.Add(source.Lower[1], _carryLong1);
@@ -212,9 +212,9 @@ namespace MSS.Common
 			_carryLong1 = Avx2.ShiftRightLogical(partialSum1Low, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 			_carryLong2 = Avx2.ShiftRightLogical(partialSum1High, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 
-			// Clear the source so that square internal will not have to make a separate call.
-			source.Lower[1] = Avx2.Xor(source.Lower[1], source.Lower[1]);
-			source.Upper[1] = Avx2.Xor(source.Upper[1], source.Upper[1]);
+			//// Clear the source so that square internal will not have to make a separate call.
+			//source.Lower[1] = Avx2.Xor(source.Lower[1], source.Lower[1]);
+			//source.Upper[1] = Avx2.Xor(source.Upper[1], source.Upper[1]);
 
 			// i = 2
 			var partialSum2Low = Avx2.Add(source.Lower[2], _carryLong1);
@@ -226,9 +226,9 @@ namespace MSS.Common
 			_carryLong1 = Avx2.ShiftRightLogical(partialSum2Low, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 			_carryLong2 = Avx2.ShiftRightLogical(partialSum2High, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 
-			// Clear the source so that square internal will not have to make a separate call.
-			source.Lower[2] = Avx2.Xor(source.Lower[2], source.Lower[2]);
-			source.Upper[2] = Avx2.Xor(source.Upper[2], source.Upper[2]);
+			//// Clear the source so that square internal will not have to make a separate call.
+			//source.Lower[2] = Avx2.Xor(source.Lower[2], source.Lower[2]);
+			//source.Upper[2] = Avx2.Xor(source.Upper[2], source.Upper[2]);
 
 			// i = 3
 			var partialSum3Low = Avx2.Add(source.Lower[3], _carryLong1);
@@ -241,9 +241,9 @@ namespace MSS.Common
 			//_carryLong1 = Avx2.ShiftRightLogical(partialSum3Low, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 			//_carryLong2 = Avx2.ShiftRightLogical(partialSum3High, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 
-			// Clear the source so that square internal will not have to make a separate call.
-			source.Lower[3] = Avx2.Xor(source.Lower[3], source.Lower[3]);
-			source.Upper[3] = Avx2.Xor(source.Upper[3], source.Upper[3]);
+			//// Clear the source so that square internal will not have to make a separate call.
+			//source.Lower[3] = Avx2.Xor(source.Lower[3], source.Lower[3]);
+			//source.Upper[3] = Avx2.Xor(source.Upper[3], source.Upper[3]);
 
 			IncrementAdditionsCount(24);
 			IncrementSplitsCount(28);

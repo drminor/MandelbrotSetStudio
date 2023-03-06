@@ -34,6 +34,7 @@ namespace MSetExplorer
 		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
+		private readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2023-03-03");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
 
@@ -158,8 +159,7 @@ namespace MSetExplorer
 			}
 			else if (dropRecentMapSections)
 			{
-				var lastSaved = DateTime.Parse("2022-05-29");
-				repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
+				repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
 			}
 
 			if (createCollections)

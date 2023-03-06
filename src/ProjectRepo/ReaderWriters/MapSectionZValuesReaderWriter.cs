@@ -123,6 +123,20 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
+		public long? DeleteMapSectionsSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false)
+		{
+			if (!overrideRecentGuard && DateTime.UtcNow - dateCreatedUtc > TimeSpan.FromHours(3))
+			{
+				Debug.WriteLine($"Warning: Not deleting MapSections created since: {dateCreatedUtc}, {dateCreatedUtc} is longer than 3 hours ago.");
+				return 0;
+			}
+
+			var filter = Builders<MapSectionZValuesRecord>.Filter.Gt("DateCreatedUtc", dateCreatedUtc);
+			var deleteResult = Collection.DeleteMany(filter);
+
+			return GetReturnCount(deleteResult);
+		}
+
 
 
 	}

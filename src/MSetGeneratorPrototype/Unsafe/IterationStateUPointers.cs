@@ -19,7 +19,7 @@ namespace MSetGeneratorPrototype
 
 		public IterationStateUPointers(FP31Val[] samplePointsX, FP31Val[] samplePointsY,
 			MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
-			bool increasingIterations, Vector256<int> targetIterationsVector)
+			bool increasingIterations, int targetIterations)
 		{
 
 			_samplePointsY = samplePointsY;
@@ -27,7 +27,8 @@ namespace MSetGeneratorPrototype
 			MapSectionZVectors = mapSectionZVectors;
 
 			IncreasingIterations = increasingIterations;
-			TargetIterationsVector = targetIterationsVector;
+			TargetIterations = targetIterations;
+			TargetIterationsVector = Vector256.Create(targetIterations);
 
 			ValueCount = mapSectionZVectors.ValueCount;
 			LimbCount = mapSectionZVectors.LimbCount;
@@ -74,6 +75,7 @@ namespace MSetGeneratorPrototype
 		public MapSectionZVectors MapSectionZVectors { get; init; }
 
 		public bool IncreasingIterations { get; private set; }
+		public int TargetIterations { get; private set; }
 		public Vector256<int> TargetIterationsVector { get; private set; }
 
 		public int ValueCount { get; init; }

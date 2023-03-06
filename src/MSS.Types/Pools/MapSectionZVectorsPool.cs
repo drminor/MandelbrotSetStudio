@@ -80,7 +80,7 @@ namespace MSS.Types
 			{
 				if (TotalFree < MaxSize)
 				{
-					Reset(obj);
+					//Reset(obj);
 					_pool.Push(obj);
 					MaxPeak = Math.Max(MaxPeak, TotalFree);
 					return true;

@@ -3,7 +3,6 @@ using System.Buffers;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
 
 namespace MSS.Types
 {
@@ -25,13 +24,13 @@ namespace MSS.Types
 			ValuesPerRow = blockSize.Width;
 			RowCount = blockSize.Height;
 
-			VectorsPerZValueRow = ValuesPerRow * LimbCount / Lanes;
-			BytesPerZValueRow = ValuesPerRow * LimbCount * VALUE_SIZE;
-			TotalByteCount = ValueCount * LimbCount * VALUE_SIZE;
-
+			VectorsPerRow = ValuesPerRow / Lanes;
 			BytesPerRow = ValuesPerRow * VALUE_SIZE;
 			TotalBytesForFlags = ValueCount * VALUE_SIZE;
-			VectorsPerRow = ValuesPerRow / Lanes;
+
+			VectorsPerZValueRow = VectorsPerRow * limbCount; // ValuesPerRow * LimbCount / Lanes;
+			BytesPerZValueRow = BytesPerRow * limbCount; // ValuesPerRow * LimbCount * VALUE_SIZE;
+			TotalByteCount = TotalBytesForFlags * limbCount; // ValueCount * LimbCount * VALUE_SIZE;
 
 			Zrs = _arrayPool.Rent(TotalByteCount);
 			Zis = _arrayPool.Rent(TotalByteCount);
@@ -41,8 +40,6 @@ namespace MSS.Types
 
 			HasEscapedFlags = new byte[TotalBytesForFlags];
 			RowHasEscaped = new bool[RowCount];
-
-			//RowHasEscapedMemory = new Memory<byte>(RowHasEscaped);
 		}
 
 		#endregion
@@ -81,8 +78,6 @@ namespace MSS.Types
 
 		public bool[] RowHasEscaped { get; init; }
 
-		//public byte[] RowHasEscaped { get; set; }
-
 		// ---- Supporting Properties ------ //
 
 		public SizeInt BlockSize { get; init; }
@@ -97,9 +92,7 @@ namespace MSS.Types
 		public int BytesPerRow { get; init; }
 		public int TotalBytesForFlags { get; init; }
 		public int VectorsPerRow { get; init; }
-
-		//public Memory<byte> RowHasEscapedMemory { get; init; }
-
+		
 		#endregion
 
 		#region Block Level Methods
@@ -119,24 +112,6 @@ namespace MSS.Types
 		}
 
 		#endregion
-
-		//public Span<Vector256<uint>> GetZrsRow(int rowNumber)
-		//{
-		//	var result = MemoryMarshal.Cast<byte, Vector256<uint>>(ZrsMemory.Slice(BytesPerRow * rowNumber, BytesPerRow).Span);
-		//	return result;
-		//}
-
-		//public Span<Vector256<uint>> GetZisRow(int rowNumber)
-		//{
-		//	var result = MemoryMarshal.Cast<byte, Vector256<uint>>(ZisMemory.Slice(BytesPerRow * rowNumber, BytesPerRow).Span);
-		//	return result;
-		//}
-
-		//public Span<Vector256<byte>> GetHasEscapedFlagsRow(int rowNumber)
-		//{
-		//	var result = MemoryMarshal.Cast<byte, Vector256<byte>>(HasEscapedFlagsMemory.Slice(BytesPerFlagRow * rowNumber, BytesPerFlagRow).Span);
-		//	return result;
-		//}
 
 		#region Row Level Methods
 
@@ -238,7 +213,6 @@ namespace MSS.Types
 			}
 		}
 
-
 		public byte[] GetBytesForRowHasEscaped()
 		{
 			var result = new byte[RowHasEscaped.Length];
@@ -291,7 +265,7 @@ namespace MSS.Types
 			var destBack = MemoryMarshal.Cast<Vector256<uint>, byte>(dest);
 
 			var startIndex = BytesPerZValueRow * rowNumber;
-			startIndex += 32 * vecPtr;
+			startIndex += 32  * LimbCount * vecPtr;
 
 			for (var i = 0; i < destBack.Length; i++)
 			{
@@ -304,7 +278,7 @@ namespace MSS.Types
 			var destBack = MemoryMarshal.Cast<Vector256<uint>, byte>(dest);
 
 			var startIndex = BytesPerZValueRow * rowNumber;
-			startIndex += 32 * vecPtr;
+			startIndex += 32 * LimbCount * vecPtr;
 
 			for (var i = 0; i < destBack.Length; i++)
 			{
@@ -317,7 +291,7 @@ namespace MSS.Types
 			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(source);
 
 			var startIndex = BytesPerZValueRow * rowNumber;
-			startIndex += 32 * vecPtr;
+			startIndex += 32 * LimbCount * vecPtr;
 
 			for (var i = 0; i < sourceBack.Length; i++)
 			{
@@ -330,14 +304,13 @@ namespace MSS.Types
 			var sourceBack = MemoryMarshal.Cast<Vector256<uint>, byte>(source);
 
 			var startIndex = BytesPerZValueRow * rowNumber;
-			startIndex += 32 * vecPtr;
+			startIndex += 32 * LimbCount * vecPtr;
 
 			for (var i = 0; i < sourceBack.Length; i++)
 			{
 				Zis[startIndex + i] = sourceBack[i];
 			}
 		}
-
 
 		#endregion
 

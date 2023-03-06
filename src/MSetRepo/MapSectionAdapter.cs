@@ -174,7 +174,9 @@ namespace MSetRepo
 		public long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false)
 		{
 			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-			var result = _mapSectionReaderWriter.DeleteMapSectionsSince(dateCreatedUtc, overrideRecentGuard);
+			var result = _mapSectionReaderWriter.DeleteMapSectionsSince(dateCreatedUtc, overrideRecentGuard) ?? 0;
+			var result2 = _mapSectionZValuesReaderWriter.DeleteMapSectionsSince(dateCreatedUtc, overrideRecentGuard) ?? 0;
+			result += result2;
 
 			return result;
 		}

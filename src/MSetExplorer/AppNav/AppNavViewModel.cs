@@ -3,9 +3,7 @@ using MSetExplorer.XPoc;
 using MSetExplorer.XPoc.PerformanceHarness;
 using MSetRepo;
 using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 
 namespace MSetExplorer

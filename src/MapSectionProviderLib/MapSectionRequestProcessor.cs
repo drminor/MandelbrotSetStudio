@@ -7,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -255,7 +256,7 @@ namespace MapSectionProviderLib
 			{
 				var requestedIterations = mapSectionWorkRequest.Request.MapCalcSettings.TargetIterations;
 
-				if (IsResponseComplete(mapSectionResponse, requestedIterations))
+				if (IsResponseComplete(mapSectionResponse, requestedIterations, out var reason))
 				{
 					//Debug.WriteLine($"Got {request.ScreenPosition} from repo.");
 
@@ -270,7 +271,7 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
+					Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}. The response was incomplete for reason: {reason}.");
 
 					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
@@ -326,11 +327,14 @@ namespace MapSectionProviderLib
 			QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
 		}
 
-		private bool IsResponseComplete(MapSectionResponse mapSectionResponse, int requestedIterations)
+		private bool IsResponseComplete(MapSectionResponse mapSectionResponse, int requestedIterations, [MaybeNullWhen(true)] out string reason)
 		{
 			if (mapSectionResponse.MapSectionVectors == null)
 			{
-				return false;
+				//reason = "MapSectionVectors is null.";
+				//return false;
+
+				throw new InvalidOperationException("A MapSectionRecords was found in the repo with a null MapSectionVectors.");
 			}
 
 			// TODO: Update the mapSectionResponse to include details about which rows are complete. This is required for those cases where the Generator was given a CancellationToken that got cancelled.
@@ -340,14 +344,17 @@ namespace MapSectionProviderLib
 			if (fetchedTargetIterations >= requestedIterations)
 			{
 				//The MapSection fetched from the repository is the result of a request to generate at or above the current request's target iterations.
+				reason = null;
 				return true;
 			}
 
 			if (mapSectionResponse.AllRowsHaveEscaped)
 			{
+				reason = null;
 				return true;
 			}
 
+			reason = $"IterationCountOnFile: {fetchedTargetIterations} is < requested {requestedIterations} and AllRowsHaveEscaped = false.";
 			return false;
 		}
 

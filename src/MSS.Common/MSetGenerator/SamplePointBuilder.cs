@@ -27,6 +27,17 @@ namespace MSS.Common
 			return (samplePointsX, samplePointsY);
 		}
 
+		public (FP31Val[] samplePointX, FP31Val[] samplePointY, FP31Val[] samplePointOffsets) BuildSamplePointsDiag(IteratorCoords iteratorCoords)
+		{
+			var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
+			var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
+			var samplePointsX = BuildSamplePoints(iteratorCoords.StartingCx, samplePointOffsets, fP31ScalarMath);
+			var samplePointsY = BuildSamplePoints(iteratorCoords.StartingCy, samplePointOffsets, fP31ScalarMath);
+
+			return (samplePointsX, samplePointsY, samplePointOffsets);
+		}
+
+
 		public static FP31Val[] BuildSamplePoints(FP31Val startValue, FP31Val[] offsets, FP31ScalarMath scalarMath)
 		{
 			var result = new FP31Val[offsets.Length];
