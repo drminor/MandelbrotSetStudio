@@ -51,9 +51,6 @@ namespace MSS.Common
 		private byte _shiftAmount;
 		private byte _inverseShiftAmount;
 
-		private int _squareSourceStartIndex;
-		private bool _skipSquareResultLow;
-
 		private const bool USE_DET_DEBUG = false;
 
 		#endregion
@@ -81,27 +78,7 @@ namespace MSS.Common
 
 			_shiftAmount = apFixedPointFormat.BitsBeforeBinaryPoint;
 			_inverseShiftAmount = (byte)(31 - _shiftAmount);
-
-			(_squareSourceStartIndex, _skipSquareResultLow) = CalculateSqrOpParams(LimbCount);
-
 			MathOpCounts = new MathOpCounts();
-		}
-
-		private (int sqrSrcStartIdx, bool skipSqrResLow) CalculateSqrOpParams(int limbCount)
-		{
-			// TODO: Check the CalculateSqrOpParams method 
-			return limbCount switch
-			{
-				0 => (0, false),
-				1 => (0, false),
-				2 => (0, false),
-				3 => (0, true),
-				4 => (1, false),
-				5 => (1, true),
-				6 => (2, false),
-				7 => (2, true),
-				_ => (3, false),
-			};
 		}
 
 		#endregion
@@ -113,13 +90,13 @@ namespace MSS.Common
 
 		public MathOpCounts MathOpCounts { get; init; }
 
-		public string Implementation => "FP31VecMath-L2Stable";
+		public string Implementation => "FP31VecMath-L2";
 
 		#endregion
 
 		#region Multiply and Square
 
-		public void Square(Vector256<uint>[] a, Vector256<uint>[] result)
+		public void Square(Vector256<uint>[] source, Vector256<uint>[] result)
 		{
 			// Our multiplication routines don't support 2's compliment,
 			// So we must convert back from two's complement to standard.
@@ -127,10 +104,10 @@ namespace MSS.Common
 			// The result of squaring is always positive, so we don't have to convert
 			// back to two's compliment afterwards.
 
-			//FP31VecMathHelper.CheckReservedBitIsClear(a, "Squaring");
+			//FP31VecMathHelper.CheckReservedBitIsClear(source, "Squaring");
 			FP31VecMathHelper.ClearLimbSet(result);
 
-			ConvertFrom2C(a, _squareResult0);
+			ConvertFrom2C(source, _squareResult0);
 
 			SquareInternal(_squareResult0, _squareResult1);
 			SumThePartials(_squareResult1, _squareResult2);
@@ -435,7 +412,7 @@ namespace MSS.Common
 				var newValuesVector2 = Avx2.Add(notVector2, _carry);
 
 				var limbValues2 = Avx2.And(newValuesVector2, HIGH33_MASK_VEC);                  // The low 31 bits of the sum is the result.
-				//_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
+																								//_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
 
 				var cLimbValues2 = (Avx2.BlendVariable(limbValues2.AsByte(), source[1].AsByte(), _signBitVecs.AsByte())).AsUInt32();
 

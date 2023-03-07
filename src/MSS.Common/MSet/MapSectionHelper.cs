@@ -307,8 +307,10 @@ namespace MSS.Common
 		{
 			// Make sure we are using at least two limbs
 			var adjustedLimbCount = Math.Max(limbCount, 2);
-
 			var result = _mapSectionZVectorsPool.Obtain(adjustedLimbCount);
+
+			//var result = _mapSectionZVectorsPool.Obtain(limbCount);
+
 			return result;
 		}
 
