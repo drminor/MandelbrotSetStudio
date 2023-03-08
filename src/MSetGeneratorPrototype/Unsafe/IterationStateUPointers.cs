@@ -71,6 +71,8 @@ namespace MSetGeneratorPrototype
 
 		#region Public Properties
 
+		public bool HaveZValues => true;
+
 		public MapSectionVectors MapSectionVectors { get; init; } 
 		public MapSectionZVectors MapSectionZVectors { get; init; }
 

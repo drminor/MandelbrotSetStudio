@@ -101,16 +101,19 @@ namespace MapSectionProviderLib
 
 							_ = await _mapSectionAdapter.UpdateCountValuesAync(mapSectionResponse);
 
-							if (mapSectionResponse.AllRowsHaveEscaped)
+							if (mapSectionResponse.MapSectionZVectors != null)
 							{
-								_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId);
-							}
-							else
-							{
-								_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
-							}
+								if (mapSectionResponse.AllRowsHaveEscaped)
+								{
+									_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId);
+								}
+								else
+								{
+									_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
+								}
 
-							// TODO: The OwnerId may already be on file for this MapSection -- or not.
+								// TODO: The OwnerId may already be on file for this MapSection -- or not.
+							}
 						}
 						else
 						{
@@ -121,7 +124,7 @@ namespace MapSectionProviderLib
 							{
 								mapSectionResponse.MapSectionId = mapSectionId.ToString();
 
-								if (!mapSectionResponse.AllRowsHaveEscaped)
+								if (mapSectionResponse.MapSectionZVectors != null & !mapSectionResponse.AllRowsHaveEscaped)
 								{
 									_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
 								}

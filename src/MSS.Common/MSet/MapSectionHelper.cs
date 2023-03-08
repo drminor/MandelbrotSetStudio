@@ -24,6 +24,9 @@ namespace MSS.Common
 		private readonly int _pixelArraySize;
 		private readonly int _pixelStride;
 
+		private int _currentPrecision;
+		private int _currentLimbCount;
+
 		#endregion
 
 		#region Constructor
@@ -41,6 +44,8 @@ namespace MSS.Common
 			_pixelArraySize = _blockSize.NumberOfCells * BYTES_PER_PIXEL;
 			_pixelStride = _sourceStride * BYTES_PER_PIXEL;
 
+			_currentPrecision = -1;
+			_currentLimbCount = 1;
 		}
 
 		#endregion
@@ -147,6 +152,8 @@ namespace MSS.Common
 
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
 
+			var limbCount = GetLimbCount(precision);
+
 			var mapSectionRequest = new MapSectionRequest
 			(
 				ownerId: ownerId,
@@ -158,6 +165,7 @@ namespace MSS.Common
 				isInverted: isInverted,
 				mapPosition: mapPosition,
 				precision: precision,
+				limbCount: limbCount,
 				blockSize: subdivision.BlockSize,
 				samplePointDelta: subdivision.SamplePointDelta,
 				mapCalcSettings: mapCalcSettings
@@ -179,6 +187,21 @@ namespace MSS.Common
 			var result = new RPoint(mapDistance);
 
 			return result;
+		}
+
+		private const int PRECSION_PADDING = 4;
+
+		private int GetLimbCount(int precision)
+		{
+			if (precision != _currentPrecision)
+			{
+				var adjustedPrecision = precision + PRECSION_PADDING;
+				var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: adjustedPrecision);
+				_currentLimbCount = apFixedPointFormat.LimbCount;
+				_currentPrecision = precision;
+			}
+
+			return _currentLimbCount;	
 		}
 
 		#endregion
@@ -314,11 +337,11 @@ namespace MSS.Common
 			return result;
 		}
 
-		public MapSectionZVectors ObtainMapSectionZVectorsByPrecision(int precision)
-		{
-			var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: precision);
-			return ObtainMapSectionZVectors(apFixedPointFormat.LimbCount);
-		}
+		//public MapSectionZVectors ObtainMapSectionZVectorsByPrecision(int precision)
+		//{
+		//	var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: precision);
+		//	return ObtainMapSectionZVectors(apFixedPointFormat.LimbCount);
+		//}
 
 		public void ReturnMapSection(MapSection mapSection)
 		{

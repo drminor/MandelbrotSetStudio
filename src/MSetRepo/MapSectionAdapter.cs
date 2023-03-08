@@ -23,7 +23,6 @@ namespace MSetRepo
 		private readonly MSetRecordMapper _mSetRecordMapper;
 		private readonly DtoMapper _dtoMapper;
 
-
 		private readonly MapSectionReaderWriter _mapSectionReaderWriter;
 		private readonly MapSectionZValuesReaderWriter _mapSectionZValuesReaderWriter;
 		private readonly JobMapSectionReaderWriter _jobMapSectionReaderWriter;
@@ -162,7 +161,6 @@ namespace MSetRepo
 			return result;
 		}
 
-
 		public async Task<long?> DeleteZValuesAync(ObjectId mapSectionId)
 		{
 			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
@@ -217,14 +215,14 @@ namespace MSetRepo
 		{
 			if (source.MapSectionId == null)
 			{
-				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionId.");
+				throw new InvalidOperationException("The MapSectionResponse has a null MapSectionId.");
 			}
 
 			var zVectors = source.MapSectionZVectors;
 
 			if (zVectors == null)
 			{
-				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
+				throw new InvalidOperationException("The MapSectionResponse has a null MapSectionVectors.");
 			}
 
 			var zValues = new ZValues(zVectors.BlockSize, zVectors.LimbCount, zVectors.Zrs, zVectors.Zis, zVectors.HasEscapedFlags, zVectors.GetBytesForRowHasEscaped());

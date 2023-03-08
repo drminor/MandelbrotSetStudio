@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Driver.Core.Clusters.ServerSelectors;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
@@ -18,7 +19,9 @@ namespace MapSectionProviderLib
 	{
 		#region Private Properties
 
-		private const int PRECSION_PADDING = 4;
+		// TODO: Add a property to the MapSectionRequest to specify whether or not to Save the ZValues.
+
+		private readonly bool SAVE_THE_ZVALUES;
 
 		private const int NUMBER_OF_CONSUMERS = 2;
 		private const int QUEUE_CAPACITY = 10; //200;
@@ -59,6 +62,7 @@ namespace MapSectionProviderLib
 			//_isStopped = false;
 
 			UseRepo = true;
+			SAVE_THE_ZVALUES = false;
 
 			_nextJobId = 0;
 			_mapSectionAdapter = mapSectionAdapter;
@@ -271,29 +275,36 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}. The response was incomplete for reason: {reason}.");
+					//Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}. The response was incomplete for reason: {reason}.");
 
 					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
-					var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
-					var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
-
-					if (zValues != null)
+					if (SAVE_THE_ZVALUES)
 					{
-						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(zValues.LimbCount);
-						mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
+						var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
+						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(request.LimbCount);
 						request.MapSectionZVectors = mapSectionZVectors;
+
+						var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
+						if (zValues != null)
+						{
+							mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
+						}
+						else
+						{
+							request.MapSectionZVectors.ResetObject();
+						}
+
+						request.MapSectionId = mapSectionId.ToString();
+						request.IncreasingIterations = true;
 					}
 					else
 					{
-						request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision + PRECSION_PADDING);
-						request.MapSectionZVectors.ResetObject();
+						request.MapSectionId = mapSectionResponse.MapSectionId;
+						request.IncreasingIterations = false;
 					}
 
-					request.MapSectionId = mapSectionId.ToString();
-					request.IncreasingIterations = true;
-
-					Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
+					//Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
 					QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
 
 					//Debug.WriteLine($"Response found, but is incomplete. Creating brand new request -- not updating for {request.ScreenPosition}.");
@@ -313,15 +324,20 @@ namespace MapSectionProviderLib
 			var request = mapSectionWorkRequest.Request;
 
 			request.MapSectionId = null;
-
+			request.IncreasingIterations = false;
 			request.MapSectionVectors = mapSectionVectors;
 			request.MapSectionVectors.ResetObject();
-			request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectorsByPrecision(request.Precision + PRECSION_PADDING);
-			request.MapSectionZVectors.ResetObject();
+
+			if (SAVE_THE_ZVALUES)
+			{
+				request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(request.LimbCount);
+				request.MapSectionZVectors.ResetObject();
+			}
 
 			if (request.ScreenPosition.IsZero())
 			{
-				Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated. LimbCount = {request.MapSectionZVectors.LimbCount}.");
+				var note = request.MapSectionZVectors == null ? "Not Saving the ZValues." : "LimbCount = { request.MapSectionZVectors.LimbCount}.";
+				Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated. {note}.");
 			}
 
 			QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
@@ -530,7 +546,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				Debug.WriteLine("The MapSectionRequestProcessor is handling a response that is already OnFile and it's IncreasingIterations is false.");
+				//Debug.WriteLine("The MapSectionRequestProcessor is handling a response that is already OnFile and it's IncreasingIterations is false.");
 			}
 		}
 

@@ -7,8 +7,9 @@ namespace MSS.Common
 	public interface IIterationState
 	{
 		MapSectionVectors MapSectionVectors { get;  }
-		MapSectionZVectors MapSectionZVectors { get; }
+		MapSectionZVectors? MapSectionZVectors { get; }
 
+		bool HaveZValues { get; }
 		bool IncreasingIterations { get; }
 		int TargetIterations { get; }
 		Vector256<int> TargetIterationsVector { get; }
@@ -30,9 +31,6 @@ namespace MSS.Common
 
 		FP31ValArray CrsRowVArray { get; }
 		Vector256<uint>[] CiLimbSet { get; }
-
-		//Vector256<uint>[] ZisRowV { get; }
-		//Vector256<uint>[] ZrsRowV { get; }
 
 		Vector256<int>[] UsedCalcs { get; }
 		Vector256<int>[] UnusedCalcs { get; }

@@ -81,8 +81,8 @@ namespace MSetGeneratorPrototype
 			//ReportCoords(coords, _fp31VecMath.LimbCount, mapSectionRequest.Precision);
 			var stopwatch = Stopwatch.StartNew();
 
-			//var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(coords);
-			var (samplePointsX, samplePointsY, samplePointOffsets) = _samplePointBuilder.BuildSamplePointsDiag(coords);
+			var (samplePointsX, samplePointsY) = _samplePointBuilder.BuildSamplePoints(coords);
+			//var (samplePointsX, samplePointsY, samplePointOffsets) = _samplePointBuilder.BuildSamplePointsDiag(coords);
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
@@ -90,7 +90,9 @@ namespace MSetGeneratorPrototype
 			_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
 			_iterator.MathOpCounts.Reset();
 
-			var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
+			IIterationState iterationState = mapSectionZVectors == null
+				? new IterationStateDepthFirstNoZ(samplePointsX, samplePointsY, mapSectionVectors, mapCalcSettings.TargetIterations)
+				: new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
 
 			var completed = GeneratorOrUpdateRows(_iterator, iterationState, _hpMSetRowClient, ct, out var allRowsHaveEscaped);
 			stopwatch.Stop();
@@ -106,21 +108,29 @@ namespace MSetGeneratorPrototype
 		{
 			bool completed;
 
-			if (_iterator.IncreasingIterations)
+			if (!iterationState.HaveZValues)
 			{
-				completed = UpdateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
+				completed = GenerateMapSectionRowsNoZ(iterator, iterationState, ct, out allRowsHaveEscaped);
 			}
 			else
 			{
-				if (_useCImplementation)
+				if (_iterator.IncreasingIterations)
 				{
-					completed = HighPerfGenerateMapSectionRows(iterator, iterationState, hpMSetRowClient, ct, out allRowsHaveEscaped);
+					completed = UpdateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
 				}
 				else
 				{
-					completed = GenerateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
+					if (_useCImplementation)
+					{
+						completed = HighPerfGenerateMapSectionRows(iterator, iterationState, hpMSetRowClient, ct, out allRowsHaveEscaped);
+					}
+					else
+					{
+						completed = GenerateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
+					}
 				}
 			}
+
 
 			return completed;
 		}
@@ -268,9 +278,42 @@ namespace MSetGeneratorPrototype
 			return completed;
 		}
 
+		private bool GenerateMapSectionRowsNoZ(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
+		{
+			allRowsHaveEscaped = false;
+			bool completed = true;
+
+			if (ct.IsCancellationRequested)
+			{
+				return false;
+			}
+
+			for (var rowNumber = 0; rowNumber < iterationState.RowCount; rowNumber++)
+			{
+				iterationState.SetRowNumber(rowNumber);
+
+				for (var idx = 0; idx < iterationState.VectorsPerRow; idx++)
+				{
+					_ = GenerateMapColNoZ(idx, iterator, iterationState);
+				}
+
+				if (ct.IsCancellationRequested)
+				{
+					completed = false;
+					break;
+				}
+			}
+
+			// 'Close out' the iterationState
+			iterationState.SetRowNumber(iterationState.RowCount);
+			Debug.Assert(iterationState.RowNumber == null, $"The iterationState should have a null RowNumber, but instead has {iterationState.RowNumber}.");
+
+			return completed;
+		}
+
 		#endregion
 
-		#region Generate One Vector Int
+		#region Generate One Vector
 
 		private bool GenerateMapCol(int idx, IIterator iterator, IIterationState iterationState)
 		{
@@ -292,18 +335,16 @@ namespace MSetGeneratorPrototype
 
 			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
 			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
-				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector, _crs, _cis);
+				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 
 			var baseEscapedFlagsVec = escapedFlagsVec;
 
 			while (compositeIsDone != -1)
 			{
 				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-
 				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
-
 				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
-					_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector, _crs, _cis);
+					_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 			}
 
 			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
@@ -351,7 +392,7 @@ namespace MSetGeneratorPrototype
 
 			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
 			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
-				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector, _crs, _cis);
+				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 
 			var baseEscapedFlagsVec = escapedFlagsVec;
 
@@ -362,7 +403,7 @@ namespace MSetGeneratorPrototype
 				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
 
 				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
-					_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector, _crs, _cis);
+					_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 			}
 
 			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
@@ -383,8 +424,7 @@ namespace MSetGeneratorPrototype
 			ref Vector256<int> countsV, ref Vector256<int> resultCountsV,
 			Vector256<uint>[] zRs, Vector256<uint>[] resultZRs, 
 			Vector256<uint>[] zIs, Vector256<uint>[] resultZIs,
-			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV,
-			Vector256<uint>[] cRs, Vector256<uint>[] cIs)
+			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
 		{
 			countsV = Avx2.Add(countsV, _justOne);
 
@@ -422,22 +462,73 @@ namespace MSetGeneratorPrototype
 			return compositeIsDone;
 		}
 
+		private bool GenerateMapColNoZ(int idx, IIterator iterator, IIterationState iterationState)
+		{
+			var hasEscapedFlagsV = Vector256<int>.Zero;
+			var doneFlagsV = Vector256<int>.Zero;
 
+			var countsV = Vector256<int>.Zero;
+			var resultCountsV = countsV;
 
-		//[Conditional("DIAG")]
-		//private void ResetWorkingValues(Vector256<uint>[] cRs, Vector256<uint>[] cIs, Vector256<uint>[] zRs, Vector256<uint>[] zIs, Vector256<int> justNowDone)
-		//{
-		//	for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
-		//	{
+			iterationState.FillCrLimbSet(idx, _crs);
+			_cis = iterationState.CiLimbSet;
 
-		//		// Set the working values to zero -- these values are now 'out of play.'
-		//		cRs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, cRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-		//		cIs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, cIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+			FP31VecMathHelper.ClearLimbSet(_zrs);
+			FP31VecMathHelper.ClearLimbSet(_zis);
 
-		//		zRs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, zRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-		//		zIs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, zIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
-		//	}
-		//}
+			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+			var compositeIsDone = UpdateCountsNoZ(escapedFlagsVec, ref countsV, ref resultCountsV,
+				ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+			var baseEscapedFlagsVec = escapedFlagsVec;
+
+			while (compositeIsDone != -1)
+			{
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
+				compositeIsDone = UpdateCountsNoZ(escapedFlagsVec, ref countsV, ref resultCountsV,
+					ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+			}
+
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+
+			iterationState.CountsRowV[idx] = resultCountsV;
+
+			return false;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private int UpdateCountsNoZ(Vector256<int> escapedFlagsVec,	ref Vector256<int> countsV, ref Vector256<int> resultCountsV,
+			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
+		{
+			countsV = Avx2.Add(countsV, _justOne);
+
+			// Apply the new escapedFlags, only if the doneFlags is false for each vector position
+			hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
+
+			// Compare the new Counts with the TargetIterations
+			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsV);
+
+			var prevDoneFlagsV = doneFlagsV;
+
+			// If escaped or reached the target iterations, we're done 
+			doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
+
+			var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
+
+			var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
+			if (compositeIsDone != prevCompositeIsDone)
+			{
+				var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
+
+				// Save the current count 
+				resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
+			}
+
+			return compositeIsDone;
+		}
 
 		#endregion
 
@@ -445,12 +536,13 @@ namespace MSetGeneratorPrototype
 
 		private (int prevLimbCount, int newLimbCount) GetMathAndAllocateTempVars(MapSectionRequest mapSectionRequest)
 		{
-			if (mapSectionRequest.MapSectionZVectors == null)
+			if (mapSectionRequest.MapSectionZVectors != null && mapSectionRequest.MapSectionZVectors.LimbCount != mapSectionRequest.LimbCount)
 			{
-				throw new ArgumentNullException("The MapSectionZVectors is null.");
+				throw new ArgumentException($"The MapSectionRequest's MapSectionZVectors has a LimbCount of {mapSectionRequest.MapSectionZVectors.LimbCount} " +
+					$"that does not match the MapSectionRequest LimbCount setting of {mapSectionRequest.LimbCount}!");
 			}
 
-			if (_useCImplementation && mapSectionRequest.MapSectionZVectors.LimbCount > 4)
+			if (_useCImplementation && mapSectionRequest.LimbCount > 4)
 			{
 				throw new NotSupportedException("The current C++ Imp does not support LimbCount > 4.");
 			}
@@ -465,7 +557,7 @@ namespace MSetGeneratorPrototype
 			}
 
 			var currentLimbCount = _fp31VecMath.LimbCount;
-			var limbCountForThisRequest = mapSectionRequest.MapSectionZVectors.LimbCount;
+			var limbCountForThisRequest = mapSectionRequest.LimbCount;
 
 			if (currentLimbCount != limbCountForThisRequest)
 			{
@@ -505,11 +597,11 @@ namespace MSetGeneratorPrototype
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
 		}
 
-		private (MapSectionVectors, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
+		private (MapSectionVectors, MapSectionZVectors?) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
 		{
 			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
 			if (msv == null) throw new ArgumentException("The MapSectionVectors is null.");
-			if (mszv == null) throw new ArgumentException("The MapSetionZVectors is null.");
+			//if (mszv == null) throw new ArgumentException("The MapSetionZVectors is null.");
 
 			return (msv, mszv);
 		}
@@ -627,6 +719,21 @@ namespace MSetGeneratorPrototype
 			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
 			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
+
+		//[Conditional("DIAG")]
+		//private void ResetWorkingValues(Vector256<uint>[] cRs, Vector256<uint>[] cIs, Vector256<uint>[] zRs, Vector256<uint>[] zIs, Vector256<int> justNowDone)
+		//{
+		//	for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
+		//	{
+
+		//		// Set the working values to zero -- these values are now 'out of play.'
+		//		cRs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, cRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+		//		cIs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, cIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+
+		//		zRs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, zRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+		//		zIs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, zIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+		//	}
+		//}
 
 		#endregion
 	}
