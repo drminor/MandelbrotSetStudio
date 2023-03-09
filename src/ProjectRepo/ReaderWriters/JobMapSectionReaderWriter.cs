@@ -11,10 +11,34 @@ namespace ProjectRepo
 {
 	public class JobMapSectionReaderWriter : MongoDbCollectionBase<JobMapSectionRecord>
 	{
+		#region Constructor and Collection Support
+
 		private const string COLLECTION_NAME = "JobMapSections";
 
 		public JobMapSectionReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
+
+		public void CreateOwnerAndTypeIndex()
+		{
+			var indexKeysDef = Builders<JobMapSectionRecord>.IndexKeys
+				.Ascending(x => x.OwnerId)
+				.Ascending(x => x.OwnerType);
+
+			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<JobMapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "OwnerAndType" }));
+		}
+
+		public void CreateMapSectionIdIndex()
+		{
+			var indexKeysDef = Builders<JobMapSectionRecord>.IndexKeys
+				.Ascending(x => x.OwnerType);
+
+			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<JobMapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "MapSectionId" }));
+		}
+
+
+		#endregion
+
+		#region Get
 
 		public JobMapSectionRecord? Get(ObjectId jobMapSectionId)
 		{
@@ -90,6 +114,10 @@ namespace ProjectRepo
 			return jobMapSectionRecords.FirstOrDefault();
 		}
 
+		#endregion
+
+		#region Insert
+
 		public async Task<ObjectId> InsertAsync(JobMapSectionRecord jobMapSectionRecord)
 		{
 			if (jobMapSectionRecord.Onfile)
@@ -117,6 +145,10 @@ namespace ProjectRepo
 			Collection.InsertOne(jobMapSectionRecord);
 			return jobMapSectionRecord.Id;
 		}
+
+		#endregion
+
+		#region Delete
 
 		public long? Delete(ObjectId jobMapSectionId)
 		{
@@ -146,6 +178,10 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
+		#endregion
+
+		#region Aggregate
+
 		public IEnumerable<Tuple<ObjectId, ObjectId>> GetAllMapSectionIdsFromJobMapSections()
 		{
 			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new Tuple<ObjectId, ObjectId>(p.Id, p.MapSectionId));
@@ -166,6 +202,9 @@ namespace ProjectRepo
 			return ownerIds;
 		}
 
+		#endregion
+
+		#region Maintenance
 
 		//public void AddSubdivisionIdToAllRecords()
 		//{
@@ -178,13 +217,13 @@ namespace ProjectRepo
 		//	_ = Collection.UpdateMany(filter, updateDefinition, options);
 		//}
 
-		public IEnumerable<JobMapSectionRecord> GetAllJobMapSections()
-		{
-			var filter = Builders<JobMapSectionRecord>.Filter.Empty;
-			var jobMapSectionRecords = Collection.Find(filter).ToEnumerable();
+		//public IEnumerable<JobMapSectionRecord> GetAllJobMapSections()
+		//{
+		//	var filter = Builders<JobMapSectionRecord>.Filter.Empty;
+		//	var jobMapSectionRecords = Collection.Find(filter).ToEnumerable();
 
-			return jobMapSectionRecords;
-		}
+		//	return jobMapSectionRecords;
+		//}
 
 		//public void SetSubdivisionId(ObjectId mapSectionId, ObjectId subdivisionId)
 		//{
@@ -196,6 +235,6 @@ namespace ProjectRepo
 		//	_ = Collection.UpdateOne(filter, updateDefinition);
 		//}
 
-
+		#endregion
 	}
 }

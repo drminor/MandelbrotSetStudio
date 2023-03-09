@@ -195,6 +195,7 @@ namespace MSS.Common
 		{
 			if (precision != _currentPrecision)
 			{
+				Debug.WriteLine($"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}.");
 				var adjustedPrecision = precision + PRECSION_PADDING;
 				var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: adjustedPrecision);
 				_currentLimbCount = apFixedPointFormat.LimbCount;

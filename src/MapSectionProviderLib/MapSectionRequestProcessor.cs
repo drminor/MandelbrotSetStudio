@@ -269,6 +269,8 @@ namespace MapSectionProviderLib
 
 					mapSectionResponse.OwnerId = request.OwnerId;
 					mapSectionResponse.JobOwnerType = request.JobOwnerType;
+
+					// TODO: Send this task to the persist processor, to keep this thread as responsive as possible.
 					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
 
 					return mapSectionResponse;

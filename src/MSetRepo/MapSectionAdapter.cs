@@ -57,7 +57,11 @@ namespace MSetRepo
 		public void CreateCollections()
 		{
 			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
-			_jobMapSectionReaderWriter.CreateCollection();
+			if (_jobMapSectionReaderWriter.CreateCollection())
+			{
+				_jobMapSectionReaderWriter.CreateOwnerAndTypeIndex();
+				_jobMapSectionReaderWriter.CreateMapSectionIdIndex();
+			}
 
 			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 			if (_mapSectionReaderWriter.CreateCollection())
