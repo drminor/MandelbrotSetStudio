@@ -31,7 +31,28 @@ ff ff ff ff = 2^32 - 1
 
 --------
 
-Fixed Point 8:23, 8:55, 8:97, 8:110
+
+Fixed Point 8:23, 8:55, 8:97, 8:110 -- in correct
+
+Fixed Point: 8:23, 8:54, 8:85, 8:116 -- correct
+
+Using litle-endian, lsb is at the beginning and positional value increases as the memory address increases.
+
+Low Addresss	--> 		High Address
+
+for the most signficant limb:
+		first 23 bits are after the binary point
+		next 8 bits hold a value ranging from -128 to 127
+		bit 32 is reserved for overflow detection
+
+for all limbs before the most significant limb:
+	first 31 bits are used to store additional bits after the binary point
+	bit 32 is reserved for overflow
+
+there is only one sign bit, at bit position 31 of the MSL.
+
+
+
 
 
 8:110

@@ -420,12 +420,11 @@ namespace MSS.Common
 
 			FP31Val result;
 
-
 			if (carry > 0)
 			{
-				//throw new OverflowException($"scalarMath -- Overflow on Add. {desc}");
+				throw new OverflowException($"scalarMath -- Overflow on Add. {desc}");
 				//result = CreateNewMaxIntegerFP31Val(a.Precision);
-				result = CreateFP31Val(mantissa, precision);
+				//result = CreateFP31Val(mantissa, precision);
 
 			}
 			else

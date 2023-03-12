@@ -30,6 +30,7 @@ namespace MSetExplorer
 
 		//private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.UPointers;
 		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
+		//private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.UnManaged;
 
 		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;

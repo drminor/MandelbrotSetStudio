@@ -413,7 +413,7 @@ namespace MSetGeneratorPrototype
 
 					//carryVectors[idx] = newCarries;
 
-					resultLimbVecs[idx] = Avx2.And(newValuesVector, HIGH33_MASK_VEC); ;
+					resultLimbVecs[idx] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);
 					carryVectors[idx] = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
 					//MathOpCounts.NumberOfSplits++;
 

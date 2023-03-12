@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MongoDB.Driver.Core.Clusters.ServerSelectors;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
@@ -278,7 +277,7 @@ namespace MapSectionProviderLib
 				else
 				{
 					//Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}. The response was incomplete for reason: {reason}.");
-
+					request.IncreasingIterations = true;
 					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
 					if (SAVE_THE_ZVALUES)
@@ -298,12 +297,10 @@ namespace MapSectionProviderLib
 						}
 
 						request.MapSectionId = mapSectionId.ToString();
-						request.IncreasingIterations = true;
 					}
 					else
 					{
 						request.MapSectionId = mapSectionResponse.MapSectionId;
-						request.IncreasingIterations = false;
 					}
 
 					//Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
@@ -326,7 +323,7 @@ namespace MapSectionProviderLib
 			var request = mapSectionWorkRequest.Request;
 
 			request.MapSectionId = null;
-			request.IncreasingIterations = false;
+			//request.IncreasingIterations = false;
 			request.MapSectionVectors = mapSectionVectors;
 			request.MapSectionVectors.ResetObject();
 
@@ -349,9 +346,6 @@ namespace MapSectionProviderLib
 		{
 			if (mapSectionResponse.MapSectionVectors == null)
 			{
-				//reason = "MapSectionVectors is null.";
-				//return false;
-
 				throw new InvalidOperationException("A MapSectionRecords was found in the repo with a null MapSectionVectors.");
 			}
 

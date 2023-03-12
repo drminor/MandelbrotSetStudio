@@ -16,7 +16,7 @@ namespace MapSectionProviderLib
 		public WorkItem(int jobId, T request, Action<T, U?, int> workAction)
 		{
 			JobId = jobId;
-			Request = request ?? throw new ArgumentNullException(nameof(request)); ;
+			Request = request ?? throw new ArgumentNullException(nameof(request));
 			WorkAction = workAction ?? throw new ArgumentNullException(nameof(workAction));
 		}
 

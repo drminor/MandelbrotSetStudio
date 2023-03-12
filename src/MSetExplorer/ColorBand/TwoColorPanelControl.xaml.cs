@@ -154,7 +154,7 @@ namespace MSetExplorer
 		//		BuildBrush(startColor, endColor),
 		//		new Pen(Brushes.Transparent, 0),
 		//		new RectangleGeometry(ScreenTypeHelper.CreateRect(size))
-		//		); ;
+		//		);
 
 		//	return result;
 		//}

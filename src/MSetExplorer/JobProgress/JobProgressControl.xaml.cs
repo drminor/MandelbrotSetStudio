@@ -28,26 +28,27 @@ namespace MSetExplorer
 
 		private void JobProgressControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			if (DataContext is null)
-			{
-				Debug.WriteLine("The DataContext is null as the obProgress Control is being loaded.");
-				return;
-			}
-			else
-			{
-				_vm = (JobProgressViewModel)DataContext;
-				prgBarCurrentJob.Maximum = 100;
-				borderTop.DataContext = DataContext;
+			//if (DataContext is null)
+			//{
+			//	Debug.WriteLine("The DataContext is null as the obProgress Control is being loaded.");
+			//	return;
+			//}
+			//else
+			//{
+			//	_vm = (JobProgressViewModel)DataContext;
+			//	prgBarCurrentJob.Maximum = 100;
+			//	borderTop.DataContext = DataContext;
 
-				lvJobProgressEntries.ItemsSource = _vm.MapSectionProcessInfos;
-				_collectionView = CollectionViewSource.GetDefaultView(_vm.MapSectionProcessInfos);
+			//	lvJobProgressEntries.ItemsSource = _vm.MapSectionProcessInfos;
+			//	_collectionView = CollectionViewSource.GetDefaultView(_vm.MapSectionProcessInfos);
 
 
-				_vm.MapSectionProcessInfos.CollectionChanged += MapSectionProcessInfos_CollectionChanged;
-				_vm.PropertyChanged += ViewModel_PropertyChanged;
+			//	_vm.MapSectionProcessInfos.CollectionChanged += MapSectionProcessInfos_CollectionChanged;
+			//	_vm.PropertyChanged += ViewModel_PropertyChanged;
 
-				Debug.WriteLine("The JobProgress Control is now loaded");
-			}
+			//	Debug.WriteLine("The JobProgress Control is now loaded");
+			//}
+			_collectionView = null;
 		}
 
 		private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)

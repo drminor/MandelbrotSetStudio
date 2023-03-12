@@ -34,6 +34,10 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			_mapJobHelper = mapJobHelper;
 			_mapSectionHelper = mapSectionHelper;
 
+			_overallElapsed = string.Empty;
+			_generationElapsed = string.Empty;
+			_processingElapsed = string.Empty;
+
 			MapSectionProcessInfos = new List<MapSectionProcessInfo>();
 			MathOpCounts = new MathOpCounts();
 

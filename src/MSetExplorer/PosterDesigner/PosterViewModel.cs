@@ -487,7 +487,7 @@ namespace MSetExplorer
 			//var mapCalcSettings = curJob.MapCalcSettings;
 			//LoadMap(currentPoster, curJob, coords, colorBandSetId, mapCalcSettings, transformType, screenArea);
 
-			AddNewCoordinateUpdateJob(currentPoster, transformType, screenArea); ;
+			AddNewCoordinateUpdateJob(currentPoster, transformType, screenArea);
 
 			//currentPoster.DisplayPosition = new VectorInt();
 			//currentPoster.DisplayZoom = 1;

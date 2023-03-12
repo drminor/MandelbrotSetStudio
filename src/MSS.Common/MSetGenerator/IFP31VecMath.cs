@@ -12,6 +12,8 @@ namespace MSS.Common
 		void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result);
 		void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result);
 
+		bool TrySub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlagsVec);
+
 		void Square(Vector256<uint>[] a, Vector256<uint>[] result);
 
 		Vector256<int> CreateVectorForComparison(uint value);

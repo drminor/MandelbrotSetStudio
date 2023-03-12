@@ -66,17 +66,14 @@ namespace MSetGeneratorPrototype
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			var (currentLimbCount, limbCountForThisRequest) = GetMathAndAllocateTempVars(mapSectionRequest);
+
 			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
 			ReportLimbCountUpdate(coords, currentLimbCount, limbCountForThisRequest, mapSectionRequest.Precision);
 
 			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
 
-			//var processingSquare1 = coords.ScreenPos.X == 1 && coords.ScreenPos.Y == 1;
-
-			//if (!processingSquare1)
-			//{
+			//if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
 			//	return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
-			//}
 
 			//ReportCoords(coords, _fp31VecMath.LimbCount, mapSectionRequest.Precision);
 			var stopwatch = Stopwatch.StartNew();
@@ -96,10 +93,12 @@ namespace MSetGeneratorPrototype
 
 			var completed = GeneratorOrUpdateRows(_iterator, iterationState, _hpMSetRowClient, ct, out var allRowsHaveEscaped);
 			stopwatch.Stop();
+
 			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
+			
 			UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
-			//ReportResults(coords, mapSectionRequest, result, ct);
+			ReportResults(coords, mapSectionRequest, result, ct);
 
 			return result;
 		}
@@ -108,21 +107,21 @@ namespace MSetGeneratorPrototype
 		{
 			bool completed;
 
-			if (!iterationState.HaveZValues)
+			if (_useCImplementation)
 			{
-				completed = GenerateMapSectionRowsNoZ(iterator, iterationState, ct, out allRowsHaveEscaped);
+				completed = HighPerfGenerateMapSectionRows(iterator, iterationState, hpMSetRowClient, ct, out allRowsHaveEscaped);
 			}
 			else
 			{
-				if (_iterator.IncreasingIterations)
+				if (!iterationState.HaveZValues)
 				{
-					completed = UpdateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
+					completed = GenerateMapSectionRowsNoZ(iterator, iterationState, ct, out allRowsHaveEscaped);
 				}
 				else
 				{
-					if (_useCImplementation)
+					if (_iterator.IncreasingIterations)
 					{
-						completed = HighPerfGenerateMapSectionRows(iterator, iterationState, hpMSetRowClient, ct, out allRowsHaveEscaped);
+						completed = UpdateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
 					}
 					else
 					{
@@ -154,7 +153,7 @@ namespace MSetGeneratorPrototype
 				var mapCalcSettings = new MapCalcSettings(iterationState.TargetIterationsVector.GetElement(0), (int) iterator.Threshold, requestsPerJob: 4);
 
 				var allRowSamplesHaveEscaped = hpMSetRowClient.GenerateMapSectionRow(iterationState, _fp31VecMath.ApFixedPointFormat, mapCalcSettings, ct);
-				iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
+				//iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
 
 				if (!allRowSamplesHaveEscaped)
 				{
@@ -333,7 +332,7 @@ namespace MSetGeneratorPrototype
 
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
 
-			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
 			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
 				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 
@@ -341,7 +340,7 @@ namespace MSetGeneratorPrototype
 
 			while (compositeIsDone != -1)
 			{
-				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
 				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
 				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
 					_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
@@ -390,7 +389,7 @@ namespace MSetGeneratorPrototype
 
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
 
-			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
 			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
 				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 
@@ -398,7 +397,7 @@ namespace MSetGeneratorPrototype
 
 			while (compositeIsDone != -1)
 			{
-				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
 
 				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
 
@@ -478,18 +477,16 @@ namespace MSetGeneratorPrototype
 
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
 
-			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
-			var compositeIsDone = UpdateCountsNoZ(escapedFlagsVec, ref countsV, ref resultCountsV,
-				ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
+			var compositeIsDone = UpdateCountsNoZ(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 
 			var baseEscapedFlagsVec = escapedFlagsVec;
 
 			while (compositeIsDone != -1)
 			{
-				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec);
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
 				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
-				compositeIsDone = UpdateCountsNoZ(escapedFlagsVec, ref countsV, ref resultCountsV,
-					ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+				compositeIsDone = UpdateCountsNoZ(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
 			}
 
 			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
@@ -697,11 +694,10 @@ namespace MSetGeneratorPrototype
 			//	return true;
 			//}
 
-			if (coords.ScreenPos.X == 1 && coords.ScreenPos.Y == 1)
+			if (coords.ScreenPos.X == 1 && coords.ScreenPos.Y == 0)
 			{
 				return false;
 			}
-
 
 			return true;
 		}

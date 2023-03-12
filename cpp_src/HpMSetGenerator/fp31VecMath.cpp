@@ -221,7 +221,7 @@ void Fp31VecMath::Negate(__m256i* const source, __m256i* const result)
 		__m256i newValuesVector = _mm256_add_epi32(notVector, _carryVectors);
 		//MathOpCounts.NumberOfAdditions += 2;
 
-		result[limbPtr] = _mm256_and_si256(newValuesVector, HIGH33_MASK_VEC); ;
+		result[limbPtr] = _mm256_and_si256(newValuesVector, HIGH33_MASK_VEC);
 		_carryVectors = _mm256_srli_epi32(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
 		//MathOpCounts.NumberOfSplits++;
 	}

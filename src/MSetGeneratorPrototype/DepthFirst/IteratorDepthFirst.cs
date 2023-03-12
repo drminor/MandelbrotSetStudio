@@ -76,14 +76,14 @@ namespace MSetGeneratorPrototype
 		#region Public Methods
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec)
+		public void IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec, ref Vector256<int> doneFlagsVec)
 		{
 			if (IncreasingIterations)
 			{
 				_fp31VecMath.Square(zrs, _zRSqrs);
 				_fp31VecMath.Square(zis, _zISqrs);
 
-				Iterate(crs, cis, zrs, zis, ref escapedFlagsVec);
+				Iterate(crs, cis, zrs, zis, ref escapedFlagsVec, ref doneFlagsVec);
 			}
 			else
 			{
@@ -107,7 +107,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec)
+		public void Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec, ref Vector256<int> doneFlagsVec)
 		{
 			try
 			{
@@ -116,12 +116,25 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.Square(_temp, _zRZiSqrs);
 
 				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i	TODO: Create a method: SubSubAdd		
-				_fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
-				_fp31VecMath.Sub(zis, _zISqrs, _temp);
+				
+				if (!_fp31VecMath.TrySub(_zRZiSqrs, _zRSqrs, zis, ref doneFlagsVec))
+				{
+					//Debug.WriteLine("TrySub failed.");
+				}
+
+				if (!_fp31VecMath.TrySub(zis, _zISqrs, _temp, ref doneFlagsVec))
+				{
+					//Debug.WriteLine("TrySub failed2.");
+				}
+
 				_fp31VecMath.Add(_temp, cis, zis);
 
 				// z.r = zrsqr - zisqr + c.r						TODO: Create a method: SubAdd
-				_fp31VecMath.Sub(_zRSqrs, _zISqrs, _temp);
+				if (!_fp31VecMath.TrySub(_zRSqrs, _zISqrs, _temp, ref doneFlagsVec))
+				{
+					//Debug.WriteLine("TrySub failed3.");
+				}
+
 				_fp31VecMath.Add(_temp, crs, zrs);
 
 				_fp31VecMath.Square(zrs, _zRSqrs);

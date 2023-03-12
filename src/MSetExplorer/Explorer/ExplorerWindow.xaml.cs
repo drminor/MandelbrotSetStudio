@@ -50,7 +50,7 @@ namespace MSetExplorer
 				//_vm = (IExplorerViewModel)DataContext;
 				_vm.ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
 
-				jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
+				//jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
@@ -1035,7 +1035,7 @@ namespace MSetExplorer
 			Debug.WriteLine(l1);
 
 
-			var nPoint = new RPoint(l1.XValues[6].Value * 8, l1.YValues[6].Value * 8, sPoint.Exponent - 3); ;
+			var nPoint = new RPoint(l1.XValues[6].Value * 8, l1.YValues[6].Value * 8, sPoint.Exponent - 3);
 			var l2 = new MapSectionSpIdxItem(nPoint);
 			Debug.WriteLine(l2);
 

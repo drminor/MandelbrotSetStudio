@@ -39,7 +39,7 @@ namespace MSS.Types.APValues
 		private const uint MOST_NEG_VAL = 0x40000000;					// This negative number causes an overflow when negated.
 		private const ulong MOST_NEG_VAL_REPLACMENT = 0x40000001;		// Most negative value + 1.
 
-		private static readonly bool USE_DET_DEBUG = false;
+		private static readonly bool USE_DET_DEBUG = true;
 
 		private const ulong LOW32_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
 		private const ulong HIGH32_CLEAR = LOW32_BITS_SET;
@@ -279,30 +279,27 @@ namespace MSS.Types.APValues
 			return result;
 		}
 
-		// Flip all bits and add 1, update the sign to be !sign
+		// Flip all bits and add 1
 		public static FP31Val Negate(FP31Val fp31Val)
 		{
-			//if (!CheckReserveBit(smx2C.Mantissa))
-			//{
-			//	throw new InvalidOperationException($"Cannot Negate a Smx2C value, unless the reserve bit agrees with the sign bit. {GetDiagDisplayHex("input", smx2C.Mantissa)}.");
-			//}
-
-			var currentSign = GetSign(fp31Val.Mantissa);
 			var negatedPartialWordLimbs = FlipBitsAndAdd1(fp31Val.Mantissa);
-			var sign = GetSign(negatedPartialWordLimbs);
-
-			if (sign != currentSign)
-			{
-				Debug.WriteLineIf(USE_DET_DEBUG, $"Negate an FP31Val var did not change the sign. Prev: {GetDiagDisplay("Prev", fp31Val.Mantissa)}, {GetDiagDisplay("New", negatedPartialWordLimbs)}");
-			}
-
-			//var withReserveBitsUpdated = ExtendSignBit(negatedPartialWordLimbs);
+			CheckNegation(negatedPartialWordLimbs, fp31Val.Mantissa);
 
 			var result = new FP31Val(negatedPartialWordLimbs, fp31Val.Exponent, fp31Val.BitsBeforeBP, fp31Val.Precision);
 
-			//Debug.Assert(GetSign(smx2C.Mantissa) == !sign, "Negate an Smx2C var did not change the sign.");
-
 			return result;
+		}
+
+		[Conditional("DEBUG")]
+		private static void CheckNegation(uint[] originalPartialWordLimbs, uint[] negatedPartialWordLimbs)
+		{
+			var currentSign = GetSign(originalPartialWordLimbs);
+			var sign = GetSign(negatedPartialWordLimbs);
+
+			if (sign == currentSign)
+			{
+				Debug.WriteLine($"Negate an FP31Val var did not change the sign. Prev: {GetDiagDisplay("Prev", originalPartialWordLimbs)}, {GetDiagDisplay("New", negatedPartialWordLimbs)}");
+			}
 		}
 
 		public static uint[] FlipBitsAndAdd1(uint[] partialWordLimbs)
@@ -438,6 +435,20 @@ namespace MSS.Types.APValues
 		{
 			var result = (limbs[^1] & TEST_BIT_30) == 0;
 			return result;
+		}
+
+		public static bool CheckSignForMantissaWithLeadingZero(uint[] limbs)
+		{
+			if (limbs.Length > 0 && limbs[^1] == 0)
+			{
+				if (limbs.Any(x => x != 0))
+				{
+					Debug.WriteLine("Getting Sign of a value with a leading zero.");
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		public static uint[] TakeLowerHalves(ulong[] partialWordLimbs)

@@ -10,6 +10,9 @@ namespace MSS.Common
 	{
 		#region Private Properties
 
+		private const int PRECSION_PADDING = 4;
+		private const int MIN_LIMB_COUNT = 1;
+
 		private const double VALUE_FACTOR = 10000;
 		private const int BYTES_PER_PIXEL = 4;
 
@@ -189,16 +192,25 @@ namespace MSS.Common
 			return result;
 		}
 
-		private const int PRECSION_PADDING = 4;
-
 		private int GetLimbCount(int precision)
 		{
 			if (precision != _currentPrecision)
 			{
-				Debug.WriteLine($"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}.");
 				var adjustedPrecision = precision + PRECSION_PADDING;
 				var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: adjustedPrecision);
-				_currentLimbCount = apFixedPointFormat.LimbCount;
+
+				var adjustedLimbCount = Math.Max(apFixedPointFormat.LimbCount, MIN_LIMB_COUNT);
+
+				if (_currentLimbCount == adjustedLimbCount)
+				{
+					Debug.WriteLine($"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount remains the same at {adjustedLimbCount}.");
+				}
+				else
+				{
+					Debug.WriteLine($"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount is being updated to {adjustedLimbCount}.");
+				}
+
+				_currentLimbCount = adjustedLimbCount;
 				_currentPrecision = precision;
 			}
 
@@ -329,12 +341,8 @@ namespace MSS.Common
 
 		public MapSectionZVectors ObtainMapSectionZVectors(int limbCount)
 		{
-			// Make sure we are using at least two limbs
-			//var adjustedLimbCount = Math.Max(limbCount, 2);
-			//var result = _mapSectionZVectorsPool.Obtain(adjustedLimbCount);
-
-			var result = _mapSectionZVectorsPool.Obtain(limbCount);
-
+			var adjustedLimbCount = Math.Max(limbCount, MIN_LIMB_COUNT);
+			var result = _mapSectionZVectorsPool.Obtain(adjustedLimbCount);
 			return result;
 		}
 

@@ -48,6 +48,11 @@ namespace MSS.Common
 			var fP31ScalarMath = GetScalarMath(delta.LimbCount);
 			var offsets = new FP31Val[BlockSize.Width];
 
+			if (!FP31ValHelper.GetSign(delta.Mantissa))
+			{
+				throw new ArgumentException($"Delta is too large.");
+			}
+
 			for (var i = 0; i < offsets.Length; i++)
 			{
 				offsets[i] = fP31ScalarMath.Multiply(delta, (byte)i);

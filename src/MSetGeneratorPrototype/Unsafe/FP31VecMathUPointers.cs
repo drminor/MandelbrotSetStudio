@@ -384,7 +384,7 @@ namespace MSetGeneratorPrototype
 				var newValuesVector = Avx2.Add(notVector, carryVectors);
 				//MathOpCounts.NumberOfAdditions += 2;
 
-				var resultLimb = Avx2.And(newValuesVector, HIGH33_MASK_VEC); ;
+				var resultLimb = Avx2.And(newValuesVector, HIGH33_MASK_VEC);
 				Avx2.Store((uint*)resultBuffer.GetBytePointer(limbPtr * 32), resultLimb);
 
 				carryVectors = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);

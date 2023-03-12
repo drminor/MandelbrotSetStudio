@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.APValues;
+using System;
 using System.Diagnostics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -25,7 +26,7 @@ namespace MSS.Common
 		private static readonly Vector256<int> TEST_BIT_30_VEC = Vector256.Create(TEST_BIT_30);
 
 		private static readonly Vector256<int> ZERO_VEC = Vector256<int>.Zero;
-		private static readonly Vector256<uint> ALL_BITS_SET_VEC = Vector256<uint>.AllBitsSet;
+		private static readonly Vector256<uint> XOR_BITS_VEC = Vector256.Create(LOW31_BITS_SET);
 
 		private static readonly Vector256<uint> SHUFFLE_EXP_LOW_VEC = Vector256.Create(0u, 0u, 1u, 1u, 2u, 2u, 3u, 3u);
 		private static readonly Vector256<uint> SHUFFLE_EXP_HIGH_VEC = Vector256.Create(4u, 4u, 5u, 5u, 6u, 6u, 7u, 7u);
@@ -121,11 +122,11 @@ namespace MSS.Common
 				// Mixed Positive and Negative values
 
 				// i = 0
-				var notVector1 = Avx2.Xor(source[0], ALL_BITS_SET_VEC);
+				var notVector1 = Avx2.Xor(source[0], XOR_BITS_VEC);
 				var newValuesVector1 = Avx2.Add(notVector1, _ones);
 
 				var limbValues = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);                // The low 31 bits of the sum is the result.
-				//_carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+				var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 
 				var cLimbValues = (Avx2.BlendVariable(limbValues.AsByte(), source[0].AsByte(), signBitVecs.AsByte())).AsUInt32();
 
@@ -136,6 +137,15 @@ namespace MSS.Common
 				result0_High_L0 = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 
 				// TODO: Check the value of _carry for overflow for those _signBitVec values that are zero.
+
+				var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<uint>.Zero);
+				cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<uint>.AllBitsSet, signBitVecs.AsUInt32());
+
+				var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+				if (isZeroComp != -1)
+				{
+					Debug.WriteLine("Found a carry.");
+				}
 
 				IncrementNegationsCount(8);
 			}
@@ -149,40 +159,46 @@ namespace MSS.Common
 			var productVector11 = Avx2.Multiply(result0_Low_L0, result0_Low_L0);
 			var productVector12 = Avx2.Multiply(result0_High_L0, result0_High_L0);
 
-			var result1_Low_L0 = Avx2.And(productVector11, HIGH33_MASK_VEC_L);
-			var result1_Low_L1 = Avx2.ShiftRightLogical(productVector11, EFFECTIVE_BITS_PER_LIMB);
+			//var result1_Low_L0 = Avx2.And(productVector11, HIGH33_MASK_VEC_L);
+			//var result1_Low_L1 = Avx2.ShiftRightLogical(productVector11, EFFECTIVE_BITS_PER_LIMB);
 
-			var result1_High_L0 = Avx2.And(productVector12, HIGH33_MASK_VEC_L);
-			var result1_High_L1 = Avx2.ShiftRightLogical(productVector12, EFFECTIVE_BITS_PER_LIMB);
+			//var result1_High_L0 = Avx2.And(productVector12, HIGH33_MASK_VEC_L);
+			//var result1_High_L1 = Avx2.ShiftRightLogical(productVector12, EFFECTIVE_BITS_PER_LIMB);
 
 			IncrementMultiplicationsCount(16);
-			IncrementSplitsCount(16);
+			//IncrementSplitsCount(16);
 
 			//ShiftAndTrim(_squareResult1, result);
 			// Push x bits off the top of the mantissa to restore the Fixed Point Format, building a new mantissa having LimbCount limbs.
-			// If the Fixed Point Format is, for example: 8:56, then the mantissa we are given will have the format of 16:112, and...
-			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:56.
+			// If the Fixed Point Format is, for example: 8:55, then the mantissa we are given will have the format of 16:110, and...
+			// pusing 8 bits off the top and taking the two most significant limbs will return the format to 8:55.
 
 			// i = 0
 			// Calculate the lo end
 
-			// Take the bits from the source limb, discarding the top shiftAmount of bits.
-			var wideResult1Low = Avx2.And(Avx2.ShiftLeftLogical(result1_Low_L1, _shiftAmount), HIGH33_MASK_VEC_L);
-			// Take the top shiftAmount of bits from the previous limb
-			wideResult1Low = Avx2.Or(wideResult1Low, Avx2.ShiftRightLogical(Avx2.And(result1_Low_L0, HIGH33_MASK_VEC_L), _inverseShiftAmount));
+			//// Take the bits from the source limb, discarding the top shiftAmount of bits.
+			//var wideResult1Low = Avx2.And(Avx2.ShiftLeftLogical(result1_Low_L1, _shiftAmount), HIGH33_MASK_VEC_L);
+			//// Take the top shiftAmount of bits from the previous limb
+			//wideResult1Low = Avx2.Or(wideResult1Low, Avx2.ShiftRightLogical(Avx2.And(result1_Low_L0, HIGH33_MASK_VEC_L), _inverseShiftAmount));
+
+			var wideResult1Low = Avx2.And(Avx2.ShiftRightLogical(productVector11, _inverseShiftAmount), HIGH33_MASK_VEC_L);
+
 
 			// Calculate the hi end
 
-			// Take the bits from the source limb, discarding the top shiftAmount of bits.
-			var wideResult1High = Avx2.And(Avx2.ShiftLeftLogical(result1_High_L1, _shiftAmount), HIGH33_MASK_VEC_L);
-			// Take the top shiftAmount of bits from the previous limb
-			wideResult1High = Avx2.Or(wideResult1High, Avx2.ShiftRightLogical(Avx2.And(result1_High_L0, HIGH33_MASK_VEC_L), _inverseShiftAmount));
+			//// Take the bits from the source limb, discarding the top shiftAmount of bits.
+			//var wideResult1High = Avx2.And(Avx2.ShiftLeftLogical(result1_High_L1, _shiftAmount), HIGH33_MASK_VEC_L);
+			//// Take the top shiftAmount of bits from the previous limb
+			//wideResult1High = Avx2.Or(wideResult1High, Avx2.ShiftRightLogical(Avx2.And(result1_High_L0, HIGH33_MASK_VEC_L), _inverseShiftAmount));
+
+			var wideResult1High = Avx2.And(Avx2.ShiftRightLogical(productVector12, _inverseShiftAmount), HIGH33_MASK_VEC_L);
+
 
 			var result1Low = Avx2.PermuteVar8x32(wideResult1Low.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
 			var result1High = Avx2.PermuteVar8x32(wideResult1High.AsUInt32(), SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
 			result[0] = Avx2.Or(result1Low, result1High);
 
-			IncrementSplitsCount(32);
+			IncrementSplitsCount(16);
 			IncrementConversionsCount(16);
 		}
 
@@ -190,16 +206,64 @@ namespace MSS.Common
 
 		#region Add and Subtract
 
+		public bool TrySub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlagsVec)
+		{
+			//CheckReservedBitIsClear(b, "Negating B");
+			//Negate(right, _negationResult);
+
+			// i = 0
+			var notVector1 = Avx2.Xor(right[0], XOR_BITS_VEC);
+			var newValuesVector1 = Avx2.Add(notVector1, _ones);
+
+			var negatedRight_L0 = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);
+			var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);
+
+			// _carry may be non-zero if this source was the largest negative number
+			// TODO: Handle negating the largest negative number.
+
+			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<uint>.Zero);
+			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<uint>.AllBitsSet, doneFlagsVec.AsUInt32());
+
+			var cIsZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+
+			if (cIsZeroComp != -1)
+			{
+				//Debug.WriteLine("Got a carry when negating right for Sub.");
+				//return false;
+			}
+
+			IncrementNegationsCount(8);
+
+			//Add(left, _negationResult, result);
+
+			// i = 0
+			var newValuesVector = Avx2.Add(left[0], negatedRight_L0);
+
+			result[0] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                     
+			//_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
+
+			// TODO: Check the value of _carry for overflow after addition.
+
+			IncrementAdditionsCount(8);
+
+			if (cIsZeroComp != -1)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
 		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
 			//CheckReservedBitIsClear(b, "Negating B");
 			//Negate(right, _negationResult);
 
 			// i = 0
-			var notVector1 = Avx2.Xor(right[0], ALL_BITS_SET_VEC);
+			var notVector1 = Avx2.Xor(right[0], XOR_BITS_VEC);
 			var newValuesVector1 = Avx2.Add(notVector1, _ones);
 
-			var negatedRight_L0 = Avx2.And(newValuesVector1, HIGH33_MASK_VEC); ;
+			var negatedRight_L0 = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);
 			//_carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);
 
 			// _carry may be non-zero if this source was the largest negative number
