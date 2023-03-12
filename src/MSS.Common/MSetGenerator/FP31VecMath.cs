@@ -43,7 +43,7 @@ namespace MSS.Common
 
 		private Vector256<uint> _ones;
 
-		private Vector256<uint> _carry;
+		//private Vector256<uint> _carry;
 		private Vector256<ulong> _carryVectorsLong1;
 		private Vector256<ulong> _carryVectorsLong2;
 
@@ -74,7 +74,7 @@ namespace MSS.Common
 
 			_ones = Vector256.Create(1u);
 
-			_carry = Vector256<uint>.Zero;
+			//_carry = Vector256<uint>.Zero;
 			_carryVectorsLong1 = Vector256<ulong>.Zero;
 			_carryVectorsLong2 = Vector256<ulong>.Zero;
 
@@ -334,32 +334,26 @@ namespace MSS.Common
 
 		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
-			//CheckReservedBitIsClear(b, "Negating B");
-
-			var doneFlagsVec = Vector256<int>.Zero;
-
-			_ = TryNegate(right, _negationResult, ref doneFlagsVec);
-
+			Negate(right, _negationResult);
 			Add(left, _negationResult, result);
 		}
 
 		public bool TryAdd(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlagsVec)
 		{
-			//_carryVectors = Avx2.Xor(_carryVectors, _carryVectors);
-			_carry = Vector256<uint>.Zero;
+			var carry = Vector256<uint>.Zero;
 
 			for (int limbPtr = 0; limbPtr < left.Length; limbPtr++)
 			{
 				var sumVector = Avx2.Add(left[limbPtr], right[limbPtr]);
-				var newValuesVector = Avx2.Add(sumVector, _carry);
+				var newValuesVector = Avx2.Add(sumVector, carry);
 
 				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
-				_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+				carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 			}
 
 			IncrementAdditionsCount(LimbCount * 8); 
 
-			var cIsZeroFlags = Avx2.CompareEqual(_carry, Vector256<uint>.Zero);
+			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<uint>.Zero);
 			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, XOR_BITS_VEC, doneFlagsVec.AsUInt32());
 			var cIsZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
 
@@ -376,17 +370,16 @@ namespace MSS.Common
 
 		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
-			//_carryVectors = Avx2.Xor(_carryVectors, _carryVectors);
-			_carry = Vector256<uint>.Zero;
+			var carry = Vector256<uint>.Zero;
 
 			for (int limbPtr = 0; limbPtr < left.Length; limbPtr++)
 			{
 				var sumVector = Avx2.Add(left[limbPtr], right[limbPtr]);
-				var newValuesVector = Avx2.Add(sumVector, _carry);
+				var newValuesVector = Avx2.Add(sumVector, carry);
 				//MathOpCounts.NumberOfAdditions += 2;
 
 				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
-				_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+				carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 			}
 
 			IncrementAdditionsCount(16);
@@ -404,22 +397,22 @@ namespace MSS.Common
 
 		private bool TryNegate(Vector256<uint>[] source, Vector256<uint>[] result, ref Vector256<int> doneFlagsVec)
 		{
-			_carry = _ones;
+			var carry = _ones;
 
 			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
 			{
 				var notVector = Avx2.Xor(source[limbPtr], XOR_BITS_VEC);
-				var newValuesVector = Avx2.Add(notVector, _carry);
+				var newValuesVector = Avx2.Add(notVector, carry);
 				//MathOpCounts.NumberOfAdditions += 2;
 
 				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);
-				_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
+				carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
 				//MathOpCounts.NumberOfSplits++;
 			}
 
 			IncrementNegationsCount(16);
 
-			var cIsZeroFlags = Avx2.CompareEqual(_carry, Vector256<uint>.Zero);
+			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<uint>.Zero);
 			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, XOR_BITS_VEC, doneFlagsVec.AsUInt32());
 			var cIsZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
 
@@ -432,6 +425,24 @@ namespace MSS.Common
 			{
 				return true;
 			}
+		}
+
+		private void Negate(Vector256<uint>[] source, Vector256<uint>[] result)
+		{
+			var carry = _ones;
+
+			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
+			{
+				var notVector = Avx2.Xor(source[limbPtr], XOR_BITS_VEC);
+				var newValuesVector = Avx2.Add(notVector, carry);
+				//MathOpCounts.NumberOfAdditions += 2;
+
+				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);
+				carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
+				//MathOpCounts.NumberOfSplits++;
+			}
+
+			IncrementNegationsCount(LimbCount * 24);
 		}
 
 		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec<uint> result)
@@ -456,16 +467,16 @@ namespace MSS.Common
 			else
 			{
 				// Mixed Positive and Negative values
-				_carry = _ones;
+				var carry = _ones;
 
 				for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
 				{
 					var notVector = Avx2.Xor(source[limbPtr], XOR_BITS_VEC);
-					var newValuesVector = Avx2.Add(notVector, _carry);
+					var newValuesVector = Avx2.Add(notVector, carry);
 					//MathOpCounts.NumberOfAdditions += 2;
 
 					var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
-					_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+					carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 
 					//MathOpCounts.NumberOfSplits++;
 
@@ -479,10 +490,10 @@ namespace MSS.Common
 
 				}
 
-				IncrementNegationsCount(16);
+				IncrementNegationsCount(LimbCount * 16);
 			}
 
-			IncrementConversionsCount(16);
+			IncrementConversionsCount(LimbCount * 16);
 		}
 
 		private int GetSignBits(Vector256<uint>[] source, ref Vector256<int> signBitVecs)

@@ -23,13 +23,13 @@ namespace MSS.Types.APValues
 
 		private const uint LOW31_BITS_SET = 0x7FFFFFFF;		            // bits 0 - 30 are set.
 
-		private const uint HIGH33_MASK = LOW31_BITS_SET;
-		private const uint CLEAR_RESERVED_BIT = LOW31_BITS_SET;
+		//private const uint HIGH33_MASK = LOW31_BITS_SET;
+		//private const uint CLEAR_RESERVED_BIT = LOW31_BITS_SET;
 
-		private const ulong HIGH_33_BITS_SET_L =	0xFFFFFFFF80000000; // bits 0 - 30 are set.
+		//private const ulong HIGH_33_BITS_SET_L =	0xFFFFFFFF80000000; // bits 0 - 30 are set.
 		private const ulong LOW31_BITS_SET_L =		0x000000007FFFFFFF; // bits 0 - 30 are set.
 
-		private const ulong HIGH33_FILL_L = HIGH_33_BITS_SET_L;			// bits 63 - 31 are set.
+		//private const ulong HIGH33_FILL_L = HIGH_33_BITS_SET_L;			// bits 63 - 31 are set.
 		private const ulong HIGH33_CLEAR_L = LOW31_BITS_SET_L;			// bits 63 - 31 are reset.
 
 		private const uint TEST_BIT_31 = 0x80000000;					// bit 31 is set.
@@ -37,12 +37,12 @@ namespace MSS.Types.APValues
 
 
 		private const uint MOST_NEG_VAL = 0x40000000;					// This negative number causes an overflow when negated.
-		private const ulong MOST_NEG_VAL_REPLACMENT = 0x40000001;		// Most negative value + 1.
+		//private const ulong MOST_NEG_VAL_REPLACMENT = 0x40000001;		// Most negative value + 1.
 
-		private static readonly bool USE_DET_DEBUG = true;
+		//private static readonly bool USE_DET_DEBUG = true;
 
-		private const ulong LOW32_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
-		private const ulong HIGH32_CLEAR = LOW32_BITS_SET;
+		//private const ulong LOW32_BITS_SET = 0x00000000FFFFFFFF; // bits 0 - 31 are set.
+		//private const ulong HIGH32_CLEAR = LOW32_BITS_SET;
 
 		#endregion
 
