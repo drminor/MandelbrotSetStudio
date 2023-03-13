@@ -85,9 +85,13 @@
             <StackPanel Orientation="Horizontal" >
                 <TextBlock Width="145" Margin="3" FontSize="14" Text="Comparisons:" />
                 <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding Comparisons}"/>
-            </StackPanel>            
-            
-            
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="All Operations:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding TotalCountOfAllOps}"/>
+            </StackPanel>
+
             <StackPanel Orientation="Horizontal" >
                 <TextBlock Width="145" Margin="3" FontSize="14" Text="Total Time:" />
                 <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding OverallElapsed}"/>

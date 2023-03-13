@@ -10,6 +10,8 @@ namespace MSS.Common.MSetGenerator
 {
 	public static class FP31VecMathHelper
 	{
+		private const int EFFECTIVE_BITS_PER_LIMB = 31;
+
 		private const uint RESERVED_BIT_MASK = 0x80000000;
 		private static readonly Vector256<uint> RESERVED_BIT_MASK_VEC = Vector256.Create(RESERVED_BIT_MASK);
 
@@ -45,7 +47,98 @@ namespace MSS.Common.MSetGenerator
 		}
 
 
-		#region Diagnostics 
+		#region Diagnostics
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void ThrowIfAnyCarry(Vector256<uint> source, Vector256<int> mask, string description)
+		{
+			var carry = Avx2.ShiftRightLogical(source, EFFECTIVE_BITS_PER_LIMB).AsInt32();
+			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<int>.Zero);
+			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
+
+			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+
+			if (isZeroComp != -1)
+			{
+				throw new OverflowException($"Found one element with a carry while {description}.");
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void WarnIfAnyCarry(Vector256<uint> source, Vector256<int> mask, string description)
+		{
+			var carry = Avx2.ShiftRightLogical(source, EFFECTIVE_BITS_PER_LIMB).AsInt32();
+			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<int>.Zero);
+			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
+			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+
+			if (isZeroComp != -1)
+			{
+				Debug.WriteLine($"WARNING: Found one element with a carry while {description}.");
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static bool AnyCarryFound(Vector256<uint> source, Vector256<int> mask)
+		{
+			var carry = Avx2.ShiftRightLogical(source, EFFECTIVE_BITS_PER_LIMB).AsInt32();
+			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<int>.Zero);
+			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
+			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+
+			return isZeroComp != -1;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void ThrowIfAnyNotZero(Vector256<uint> carry, Vector256<int> mask, string description)
+		{
+			var cIsZeroFlags = Avx2.CompareEqual(carry.AsInt32(), Vector256<int>.Zero);
+			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
+
+			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+
+			if (isZeroComp != -1)
+			{
+				throw new OverflowException($"Found one element with a carry while {description}.");
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void WarnIfAnyNotZero(Vector256<uint> carry, Vector256<int> mask, string description)
+		{
+			var cIsZeroFlags = Avx2.CompareEqual(carry.AsInt32(), Vector256<int>.Zero);
+			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
+			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+
+			if (isZeroComp != -1)
+			{
+				Debug.WriteLine($"WARNING: Found one element with a carry while {description}.");
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static bool AnyNotZero(Vector256<uint> carry, Vector256<int> mask)
+		{
+			var cIsZeroFlags = Avx2.CompareEqual(carry.AsInt32(), Vector256<int>.Zero);
+			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
+			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+
+			return isZeroComp != -1;
+		}
+
+		public static void CheckReservedBitIsClear(Vector256<uint>[] source, string description)
+		{
+			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
+			{
+				var justReservedBit = Avx2.And(source[limbPtr], RESERVED_BIT_MASK_VEC);
+				var cFlags = Avx2.CompareEqual(justReservedBit, Vector256<uint>.Zero);
+				var cComposite = Avx2.MoveMask(cFlags.AsByte());
+				if (cComposite != -1)
+				{
+					throw new InvalidOperationException($"While {description}, found a limb with bit-31 set.");
+				}
+			}
+		}
 
 		public static void CheckReservedBitIsClear(Vector256<uint>[] source, string description, int[] inPlayList)
 		{

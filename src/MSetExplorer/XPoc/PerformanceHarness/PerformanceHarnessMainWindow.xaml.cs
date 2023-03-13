@@ -71,7 +71,7 @@ namespace MSetExplorer.XPoc
 
 		private void RunDense_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.RunDenseLC2();
+			_vm.RunDenseLC4();
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)

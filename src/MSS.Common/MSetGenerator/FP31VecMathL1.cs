@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common.MSetGenerator;
+using MSS.Types;
 using MSS.Types.APValues;
 using System;
 using System.Diagnostics;
@@ -36,10 +37,6 @@ namespace MSS.Common
 
 		private Vector256<uint> _ones;
 
-		//private Vector256<uint> _carry;
-		//private Vector256<ulong> _carryLong1;
-		//private Vector256<ulong> _carryLong2;
-
 		private byte _shiftAmount;
 		private byte _inverseShiftAmount;
 
@@ -57,10 +54,6 @@ namespace MSS.Common
 			Debug.Assert(LimbCount == 1, $"Attempting to construct a FP31VecMathL2 with a ApFixedPointFormat having a limb count of {LimbCount}.");
 
 			_ones = Vector256.Create(1u);
-
-			//_carry = Vector256<uint>.Zero;
-			//_carryLong1 = Vector256<ulong>.Zero;
-			//_carryLong2 = Vector256<ulong>.Zero;
 
 			_shiftAmount = apFixedPointFormat.BitsBeforeBinaryPoint;
 			_inverseShiftAmount = (byte)(31 - _shiftAmount);
@@ -126,9 +119,9 @@ namespace MSS.Common
 				var newValuesVector1 = Avx2.Add(notVector1, _ones);
 
 				var limbValues = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);                // The low 31 bits of the sum is the result.
-				var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+				//var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 
-				var cLimbValues = (Avx2.BlendVariable(limbValues.AsByte(), source[0].AsByte(), signBitVecs.AsByte())).AsUInt32();
+				var cLimbValues = Avx2.BlendVariable(limbValues, source[0], signBitVecs.AsUInt32());
 
 				// Take the lower 4 values and set the low halves of each result
 				result0_Low_L0 = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
@@ -138,14 +131,8 @@ namespace MSS.Common
 
 				// TODO: Check the value of _carry for overflow for those _signBitVec values that are zero.
 
-				var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<uint>.Zero);
-				cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<uint>.AllBitsSet, signBitVecs.AsUInt32());
 
-				var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
-				if (isZeroComp != -1)
-				{
-					Debug.WriteLine("Found a carry.");
-				}
+				//FP31VecMathHelper.WarnIfAnyCarry(newValuesVector1, signBitVecs, "Negating before Multiplication.");
 
 				IncrementNegationsCount(8);
 			}
@@ -216,21 +203,8 @@ namespace MSS.Common
 			var newValuesVector1 = Avx2.Add(notVector1, _ones);
 
 			var negatedRight_L0 = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);
-			var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);
-
 			// _carry may be non-zero if this source was the largest negative number
-			// TODO: Handle negating the largest negative number.
-
-			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<uint>.Zero);
-			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<uint>.AllBitsSet, doneFlagsVec.AsUInt32());
-
-			var cIsZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
-
-			if (cIsZeroComp != -1)
-			{
-				//Debug.WriteLine("Got a carry when negating right for Sub.");
-				//return false;
-			}
+			FP31VecMathHelper.WarnIfAnyCarry(newValuesVector1, doneFlagsVec, "Negating while subtracting.");
 
 			IncrementNegationsCount(8);
 
@@ -246,12 +220,9 @@ namespace MSS.Common
 
 			IncrementAdditionsCount(8);
 
-			if (cIsZeroComp != -1)
-			{
-				return false;
-			}
+			var anyCarryFound = FP31VecMathHelper.AnyCarryFound(newValuesVector1, doneFlagsVec);
 
-			return true;
+			return !anyCarryFound;
 		}
 
 		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
@@ -266,9 +237,6 @@ namespace MSS.Common
 			var negatedRight_L0 = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);
 			//_carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);
 
-			// _carry may be non-zero if this source was the largest negative number
-			// TODO: Handle negating the largest negative number.
-
 			IncrementNegationsCount(8);
 
 			//Add(left, _negationResult, result);
@@ -278,8 +246,6 @@ namespace MSS.Common
 
 			result[0] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                         // The low 31 bits of the sum is the result.
 			//_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);      // The high 31 bits of sum becomes the new carry.
-
-			// TODO: Check the value of _carry for overflow for those _signBitVec values that are zero.
 
 			IncrementAdditionsCount(8);
 		}
@@ -291,8 +257,6 @@ namespace MSS.Common
 
 			result[0] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                         // The low 31 bits of the sum is the result.
 			//_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);      // The high 31 bits of sum becomes the new carry.
-
-			// TODO: Check the value of _carry for overflow for those _signBitVec values that are zero.
 
 			IncrementAdditionsCount(16);
 		}

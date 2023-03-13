@@ -68,7 +68,7 @@ namespace MSetGeneratorPrototype
 			var (currentLimbCount, limbCountForThisRequest) = GetMathAndAllocateTempVars(mapSectionRequest);
 
 			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
-			ReportLimbCountUpdate(coords, currentLimbCount, limbCountForThisRequest, mapSectionRequest.Precision);
+			//ReportLimbCountUpdate(coords, currentLimbCount, limbCountForThisRequest, mapSectionRequest.Precision);
 
 			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
 
@@ -98,7 +98,7 @@ namespace MSetGeneratorPrototype
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 			
 			UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
-			ReportResults(coords, mapSectionRequest, result, ct);
+			//ReportResults(coords, mapSectionRequest, result, ct);
 
 			return result;
 		}

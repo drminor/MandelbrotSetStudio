@@ -5,6 +5,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 using System.Threading;
 
 namespace MSetExplorer.XPoc.PerformanceHarness
@@ -118,6 +119,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			set => _comparisons = value;
 		}
 
+		private long _totalCountOfAllOps;
+		public long TotalCountOfAllOps
+		{
+			get => _totalCountOfAllOps;
+			set => _totalCountOfAllOps = value;
+		}
+
 		private long _calcs;
 		public long Calcs
 		{
@@ -165,7 +173,29 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			RunTest(job);
 		}
 
-		public void RunDenseLC2()
+		//public void RunDenseLC2()
+		//{
+		//	var blockSize = RMapConstants.BLOCK_SIZE;
+		//	var sizeInWholeBlocks = new SizeInt(8);
+		//	var canvasSize = sizeInWholeBlocks.Scale(blockSize);
+
+		//	//var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
+
+		//	var x1 = 32;
+		//	var x2 = 64;
+		//	var y1 = 32;
+		//	var y2 = 64;
+		//	var exponent = -8;
+		//	var coords = new RRectangle(x1, x2, y1, y2, exponent, precision: RMapConstants.DEFAULT_PRECISION);
+
+		//	var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold:4, requestsPerJob: 100);
+		//	var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+		//	var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
+
+		//	RunTest(job);
+		//}
+
+		public void RunDenseLC4()
 		{
 			var blockSize = RMapConstants.BLOCK_SIZE;
 			var sizeInWholeBlocks = new SizeInt(8);
@@ -173,19 +203,25 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			//var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
 
-			var x1 = 32;
-			var x2 = 64;
-			var y1 = 32;
-			var y2 = 64;
-			var exponent = -8;
+			//P1: -14560970492204182605182 / 2 ^ 74; 2388421341043486517661 / 2 ^ 74,
+			//P2: -14560970492204182605180 / 2 ^ 74; 2388421341043486517663 / 2 ^ 74.
+			//SamplePointDelta: 1 / 2 ^ 83; 1 / 2 ^ 83
+
+
+			var x1 = BigInteger.Parse("-14560970492204182605182");
+			var x2 = BigInteger.Parse("-14560970492204182605180");
+			var y1 = BigInteger.Parse("2388421341043486517661");
+			var y2 = BigInteger.Parse("2388421341043486517663");
+			var exponent = -74;
 			var coords = new RRectangle(x1, x2, y1, y2, exponent, precision: RMapConstants.DEFAULT_PRECISION);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold:4, requestsPerJob: 100);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 100);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
 
 			RunTest(job);
 		}
+
 
 		#endregion
 
@@ -283,6 +319,8 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			Calcs = (long)mops.NumberOfCalcs;
 			UnusedCalcs = (long) mops.NumberOfUnusedCalcs;
 
+			TotalCountOfAllOps = Multiplications + Additions + Negations + Conversions + Splits + Comparisons;
+
 			HandleRunComplete();
 			NotifyPropChangedMaxPeek();
 		}
@@ -318,7 +356,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			OnPropertyChanged(nameof(Conversions));
 			OnPropertyChanged(nameof(Splits));
 			OnPropertyChanged(nameof(Comparisons));
-
+			OnPropertyChanged(nameof(TotalCountOfAllOps));
 
 			OnPropertyChanged(nameof(Calcs));
 			OnPropertyChanged(nameof(UnusedCalcs));
